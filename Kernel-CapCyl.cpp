@@ -21,10 +21,10 @@ const float length_weight, const int total, const int size)
         vol_i[i] = pi*rad_cyl*rad_cyl*len_cyl+2.0*pi/3.0*((rad_cap-hDist)*(rad_cap-hDist)*(2*rad_cap+hDist));
         float vaj = -1.0*hDist/rad_cap;
 
-        for(j=0;j<76;j++) //the value 76 was pre-set in the kernel...
+        for(j=0;j<76;j++) //the 76 corresponds to the Gauss constants
         {
-            zij = ( Gauss76Z[j]*(1.0-vaj) + vaj + 1.0 )/2.0;    //the "t" dummy
-            yyy = Gauss76Wt[j]*ConvLens_kernel(dp,q,zij,alpha);    //uses the same Kernel as the Dumbbell, here L>0
+            zij = (Gauss76Z[j]*(1.0-vaj)+vaj+1.0)/2.0;
+            yyy = Gauss76Wt[j]*ConvLens_kernel(length,rad_cyl,rad_cap,q,zij,alpha);
             summj += yyy;
         }
         float inner = (1.0-vaj)/2.0*summj*4.0*pi*rad_cap*rad_cap*rad_cap;
@@ -34,25 +34,10 @@ const float length_weight, const int total, const int size)
 
         if(arg2 == 0) {be = 0.5;}
         else {
-            float ax=fabs(arg2);
-            if ((ax < 8.0) {
-                y=arg2*arg2;
-                ans1=arg2*(72362614232.0+y*(-7895059235.0+y*(242396853.1+y*(-2972611.439+y*(15704.48260+y*(-30.16036606))))));
-                ans2=144725228442.0+y*(2300535178.0+y*(18583304.74+y*(99447.43394+y*(376.9991397+y*1.0))));
-                ans=ans1/ans2;
-            } 
-            else {
-                y=64.0/(ax*ax);
-                xx=ax-2.356194491;
-                ans1=1.0+y*(0.183105e-2+y*(-0.3516396496e-4+y*(0.2457520174e-5+y*(-0.240337019e-6))));
-                ans2=0.04687499995+y*(-0.2002690873e-3+y*(0.8449199096e-5+y*(-0.88228987e-6+y*0.105787412e-6)));
-                ans=sqrt(0.636619772/ax)*(cos(xx)*ans1-(8.0/ax)*sin(xx)*ans2);
-                if (arg2 < 0.0) {ans *= -1;}
-	        }
-	        be = ans/arg2
+            be = NR_BessJ1(arg2)/arg2;
         }
 
-        if(arg1 == 0.0) {   //limiting value of sinc(0) is 1; sinc is not defined in math.h
+        if(arg1 == 0.0) {
             yyy += pi*rad_cyl*rad_cyl*length*2.0*be;
         } 
         else {

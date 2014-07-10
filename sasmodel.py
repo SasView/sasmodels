@@ -61,6 +61,7 @@ def card():
 
 class SasModel(object):
     def __init__(self, data, model, dtype='float32', **kw):
+        self.__dict__['_parameters'] = {}
         self.index = data.mask==0
         self.iq = data.data[self.index]
         self.diq = data.err_data[self.index]
@@ -78,7 +79,7 @@ class SasModel(object):
         pars.update((base+'_pd_n', 35) for base in model.PD_PARS)
         pars.update((base+'_pd_nsigma', 3) for base in model.PD_PARS)
         pars.update(kw)
-        self._parameters = dict((k, Parameter(v, name=k)) for k, v in pars.items())
+        self._parameters = dict((k, Parameter.default(v, name=k)) for k, v in pars.items())
 
     def numpoints(self):
         return len(self.iq)
@@ -89,9 +90,14 @@ class SasModel(object):
     def __getattr__(self, par):
         return self._parameters[par]
 
+    def __setattr__(self, par, val):
+        if par in self._parameters:
+            self._parameters[par] = val
+        else:
+            self.__dict__[par] = val
+
     def theory(self):
         pars = dict((k,v.value) for k,v in self._parameters.items())
-        print pars
         result = self.gpu.eval(pars)
         return result
 

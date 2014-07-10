@@ -33,12 +33,10 @@ radial.length.range(0, 1000)
 radial.cyl_theta.range(0,90)
 radial.cyl_phi.range(0,90)
 radial.scale.range(0,10)
+trans.cyl_theta = radial.cyl_theta + 90.
 
 
-fv = FreeVariables(names=['radial','trans'],
-                   cyl_theta=radial.cyl_theta,
-                   cyl_phi = radial.cyl_phi)
-problem = FitProblem([radial,trans], freevars=fv)
+problem = FitProblem([radial,trans])
 
 
 
