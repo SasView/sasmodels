@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+import pyopencl as cl
 from bumps.names import Parameter
 from sans.dataloader.loader import Loader
 from sans.dataloader.manipulations import Ringcut
@@ -10,6 +11,8 @@ from sans.dataloader.manipulations import Ringcut
 def load_data(filename):
     loader = Loader()
     data = loader.load(filename)
+    if data is None:
+        raise IOError("Data %r could not be loaded"%filename)
     return data
 
 
@@ -46,15 +49,25 @@ def demo():
     import matplotlib.pyplot as plt; plt.show()
 
 
+GPU_CONTEXT = None
+GPU_QUEUE = None
+def card():
+    global GPU_CONTEXT, GPU_QUEUE
+    if GPU_CONTEXT is None:
+        GPU_CONTEXT = cl.create_some_context()
+        GPU_QUEUE = cl.CommandQueue(GPU_CONTEXT)
+    return GPU_CONTEXT, GPU_QUEUE
+
+
 class SasModel(object):
-    def __init__(self, data, model, **kw):
+    def __init__(self, data, model, dtype='float32', **kw):
         self.index = data.mask==0
         self.iq = data.data[self.index]
         self.diq = data.err_data[self.index]
         self.data = data
         self.qx = data.qx_data
         self.qy = data.qy_data
-        self.gpu = model(self.qx, self.qy)
+        self.gpu = model(self.qx, self.qy, dtype=dtype)
         pd_pars = set(base+attr for base in model.PD_PARS for attr in ('_pd','_pd_n','_pd_nsigma'))
         total_pars = set(model.PARS.keys()) | pd_pars
         extra_pars = set(kw.keys()) - total_pars
@@ -78,6 +91,7 @@ class SasModel(object):
 
     def theory(self):
         pars = dict((k,v.value) for k,v in self._parameters.items())
+        print pars
         result = self.gpu.eval(pars)
         return result
 

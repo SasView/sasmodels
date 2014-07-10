@@ -5,7 +5,21 @@ import numpy as np
 import math
 import pyopencl as cl
 from weights import GaussianDispersion
+from sasmodel import card
 
+def set_precision(src, qx, qy, dtype):
+    qx = np.ascontiguousarray(qx, dtype=dtype)
+    qy = np.ascontiguousarray(qy, dtype=dtype)
+    if np.dtype(dtype) == np.dtype('float32'):
+        header = """\
+#define real float
+"""
+    else:
+        header = """\
+#pragma OPENCL EXTENSION cl_khr_fp64: enable
+#define real double
+"""
+    return header+src, qx, qy
 
 class GpuCylinder(object):
     PARS = {
@@ -14,25 +28,25 @@ class GpuCylinder(object):
     }
     PD_PARS = ['radius', 'length', 'cyl_theta', 'cyl_phi']
 
-    def __init__(self, qx, qy):
+    def __init__(self, qx, qy, dtype='float32'):
 
-        self.qx = np.asarray(qx, np.float32)
-        self.qy = np.asarray(qy, np.float32)
         #create context, queue, and build program
-        self.ctx = cl.create_some_context()
-        self.queue = cl.CommandQueue(self.ctx)
-        self.prg = cl.Program(self.ctx, open('Kernel-Cylinder.cpp').read()).build()
+        ctx,_queue = card()
+        src, qx, qy = set_precision(open('NR_BessJ1.cpp').read()+"\n"+open('Kernel-Cylinder.cpp').read(), qx, qy, dtype=dtype)
+        self.prg = cl.Program(ctx, src).build()
+        self.qx, self.qy = qx, qy
 
         #buffers
         mf = cl.mem_flags
-        self.qx_b = cl.Buffer(self.ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=self.qx)
-        self.qy_b = cl.Buffer(self.ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=self.qy)
-        self.res_b = cl.Buffer(self.ctx, mf.WRITE_ONLY, qx.nbytes)
+        self.qx_b = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=self.qx)
+        self.qy_b = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=self.qy)
+        self.res_b = cl.Buffer(ctx, mf.WRITE_ONLY, qx.nbytes)
         self.res = np.empty_like(self.qx)
 
     def eval(self, pars):
 
-        radius,length,cyl_theta,cyl_phi = \
+        _ctx,queue = card()
+        radius, length, cyl_theta, cyl_phi = \
             [GaussianDispersion(int(pars[base+'_pd_n']), pars[base+'_pd'], pars[base+'_pd_nsigma'])
              for base in GpuCylinder.PD_PARS]
 
@@ -47,18 +61,20 @@ class GpuCylinder(object):
         size = len(cyl_theta.weight)
         sub = pars['sldCyl'] - pars['sldSolv']
 
+        real = np.float32 if self.qx.dtype == np.dtype('float32') else np.float64
         #Loop over radius, length, theta, phi weight points
         for i in xrange(len(radius.weight)):
             for j in xrange(len(length.weight)):
                 for k in xrange(len(cyl_theta.weight)):
                     for l in xrange(len(cyl_phi.weight)):
 
-                        self.prg.CylinderKernel(self.queue, self.qx.shape, None, self.qx_b, self.qy_b, self.res_b, np.float32(sub),
-                                           np.float32(radius.value[i]), np.float32(length.value[j]), np.float32(pars['scale']),
-                                           np.float32(radius.weight[i]), np.float32(length.weight[j]), np.float32(cyl_theta.weight[k]),
-                                           np.float32(cyl_phi.weight[l]), np.float32(cyl_theta.value[k]), np.float32(cyl_phi.value[l]),
+
+                        self.prg.CylinderKernel(queue, self.qx.shape, None, self.qx_b, self.qy_b, self.res_b, real(sub),
+                                           real(radius.value[i]), real(length.value[j]), real(pars['scale']),
+                                           real(radius.weight[i]), real(length.weight[j]), real(cyl_theta.weight[k]),
+                                           real(cyl_phi.weight[l]), real(cyl_theta.value[k]), real(cyl_phi.value[l]),
                                            np.uint32(self.qx.size), np.uint32(size))
-                        cl.enqueue_copy(self.queue, self.res, self.res_b)
+                        cl.enqueue_copy(queue, self.res, self.res_b)
                         sum += self.res
                         vol += radius.weight[i]*length.weight[j]*pow(radius.value[i], 2)*length.value[j]
                         norm_vol += radius.weight[i]*length.weight[j]
