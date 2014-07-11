@@ -10,6 +10,7 @@ const real psi_weight, const real phi_weight, const real theta_weight, const int
         real q_x = qx[i]/q;
         real q_y = qy[i]/q;
         real pi = 4.0*atan(1.0);
+        real answer=0;
         
         //convert angle degree to radian
         real theta = axis_theta*pi/180.0;
@@ -20,8 +21,6 @@ const real psi_weight, const real phi_weight, const real theta_weight, const int
         // calculate the axis of the ellipse wrt q-coord.
         real cos_nu = (-cos(phi)*sin(psi)*sin(theta)+sin(phi)*cos(psi))*q_x + sin(psi)*cos(theta)*q_y;
         real cos_mu = (-sin(theta)*cos(psi)*cos(phi)-sin(psi)*sin(phi))*q_x + cos(theta)*cos(psi)*q_y;
-
-        real answer=0;
         real t = q*sqrt(axisA*axisA*cos_nu*cos_nu+axisB*axisB*cos_mu*cos_mu+axisC*axisC*cos_val*cos_val);
 
         if (t==0.0){

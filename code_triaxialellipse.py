@@ -22,8 +22,8 @@ def set_precision(src, qx, qy, dtype):
     return header+src, qx, qy
 
 class GpuTriEllipse:
-    PARS = {'scale':1, 'axisA':35, 'axisB':100, 'axisC':400, 'sldEll':1e-6, 'sldSolv':6.3e-6, 'background':0, 'theta':0,
-            'phi':0, 'psi':0}
+    PARS = {'scale':1, 'axisA':35, 'axisB':100, 'axisC':400, 'sldEll':1e-6, 'sldSolv':6.3e-6, 'background':0,
+            'theta':0, 'phi':0, 'psi':0}
 
     PD_PARS = ['axisA', 'axisB', 'axisC', 'theta', 'phi', 'psi']
 
