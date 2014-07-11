@@ -13,7 +13,8 @@ real ConvLens_kernel(real len, real rad, real endRad, real x, real tt, real thet
 
 	return(val);
 }
-const real Gauss76Z[76]={
+/*
+real Gauss76Z[76]={
 	 .999505948362153*(-1.0),		//0
 	 .997397786355355*(-1.0),
 	 .993608772723527*(-1.0),
@@ -91,7 +92,7 @@ const real Gauss76Z[76]={
 	-.997397786355355*(-1.0),
 	-.999505948362153*(-1.0)		//75
 };
-const real Gauss76Wt[76]={
+real Gauss76Wt[76]={
 	.00126779163408536,		//0
 	.00294910295364247,
 	.00462793522803742,
@@ -169,3 +170,4 @@ const real Gauss76Wt[76]={
 	.00294910295364247,
 	.00126779163408536		//75 (indexed from 0)
 };
+*/

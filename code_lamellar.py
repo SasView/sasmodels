@@ -10,20 +10,22 @@ def set_precision(src, qx, qy, dtype):
     qy = np.ascontiguousarray(qy, dtype=dtype)
     if dtype == 'double':
         header = """\
+#define real float
+"""
+    else:
+        header = """\
 #pragma OPENCL EXTENSION cl_khr_fp64: enable
 #define real double
 """
-        return header+src,qx,qy
-    else:
-        return src,qx,qy
+    return header+src, qx, qy
 
 
 class GpuLamellar(object):
     PARS = {
         'scale':1, 'bi_thick':1, 'sld_bi':1e-6, 'sld_sol':0, 'background':0,
     }
-
-    def __init__(self, qx, qy, dtype='float'):
+    PD_PARS = {'bi_thick'}
+    def __init__(self, qx, qy, dtype='float32'):
 
         #create context, queue, and build program
         self.ctx = cl.create_some_context()
@@ -50,7 +52,7 @@ class GpuLamellar(object):
         real = np.float32 if self.qx.dtype == np.dtype('float32') else np.float64
         for i in xrange(len(bi_thick.weight)):
             self.prg.LamellarKernel(self.queue, self.qx.shape, None, self.qx_b, self.qy_b, self.res_b, real(bi_thick.value[i]),
-                                    real(pars['scale']), real(sub), real(pars['background']), np.uint32(self.qx.size))
+                                    real(pars['scale']), real(sub), np.uint32(self.qx.size))
             cl.enqueue_copy(self.queue, self.res, self.res_b)
 
             sum += bi_thick.weight[i]*self.res

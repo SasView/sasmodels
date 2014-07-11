@@ -10,11 +10,9 @@ const int size, const int total)
         float q = sqrt(qx[i]*qx[i]+qy[i]*qy[i]);
         float pi = 4.0*atan(1.0);
         float theta = axis_theta*pi/180.0;
-        float phi = axis_phi*pi/180.0;
-        float cyl_x = cos(theta)*cos(phi);
+        float cyl_x = cos(theta)*cos(axis_phi*pi/180.0);
         float cyl_y = sin(theta);
-        float cos_val = cyl_x*qx[i]/q + cyl_y*qx[i]/q;
-        float alpha = acos(cos_val);
+        float alpha = acos(cyl_x*qx[i]/q + cyl_y*qx[i]/q);
 
         if (alpha == 0.0){
         alpha = 1.0e-26;
@@ -22,9 +20,6 @@ const int size, const int total)
 
         float si1=0; float si2=0; float be1=0; float be2=0;
 
-        float dr1 = core_sld-shell_sld;
-        float dr2 = shell_sld-solvent_sld;
-        float vol1 = pi*radius*radius*(length);
         float vol2 = pi*(radius+thickness)*(radius+thickness)*(length+2.0*thickness);
 
         float besarg1 = q*radius*sin(alpha);
@@ -53,11 +48,9 @@ const int size, const int total)
         else{
             si2 = sin(sinarg2)/sinarg2;
         }
+        float tt = 2.0*vol2*(shell_sld-solvent_sld)*si2*be2 + 2.0*(pi*radius*radius*(length))*(core_sld-shell_sld)*si1*be1;
 
-        float t1 = 2.0*vol1*dr1*si1*be1;
-        float t2 = 2.0*vol2*dr2*si2*be2;
-
-        float answer = ((t1+t2)*(t1+t2))*sin(alpha)/fabs(sin(alpha));
+        float answer = (tt*tt)*sin(alpha)/fabs(sin(alpha));
         float vol=pi*(radius+thickness)*(radius+thickness)*(length+2.0*thickness);
         answer = answer/vol*1.0e8*scale;
 

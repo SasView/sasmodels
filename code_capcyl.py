@@ -6,6 +6,7 @@ from math import asin
 import pyopencl as cl
 from weights import GaussianDispersion
 from sasmodel import card
+from Capcyl_Gauss import Gauss76Wt, Gauss76Z
 
 def set_precision(src, qx, qy, dtype):
     qx = np.ascontiguousarray(qx, dtype=dtype)
@@ -33,13 +34,17 @@ class GpuCapCylinder(object):
         ctx,_queue = card()
         trala = open('NR_BessJ1.cpp').read()+"\n"+open('Capcyl_Kfun.cpp').read()+"\n"+open('Kernel-Cylinder.cpp').read()
         src, qx, qy = set_precision(trala, qx, qy, dtype=dtype)
+        self.prg = cl.Program(ctx, src).build()
+        self.qx, self.qy = qx, qy
 
-        self.prg = cl.Program(ctx, open('Kernel-CapCyl.cpp').read()).build()
 
         #buffers
         mf = cl.mem_flags
         self.qx_b = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=self.qx)
         self.qy_b = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=self.qy)
+        G, Z = Gauss76Wt, Gauss76Z
+        self.Gauss76W_b = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=G)
+        self.Gauss76Z_b = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=Z)
         self.res_b = cl.Buffer(ctx, mf.WRITE_ONLY, qx.nbytes)
         self.res = np.empty_like(self.qx)
         self.vol_i = float(0.0)
@@ -72,7 +77,8 @@ class GpuCapCylinder(object):
                                         self.vol_b, np.float32(rad_cyl.value[i]), np.float32(rad_cap.value[m]), np.float32(length.value[j]),
                                         np.float32(theta.value[k]), np.float32(phi.value[l]), np.float32(sub), np.float32(pars['scale']),
                                         np.float32(phi.weight[l]), np.float32(theta.weight[k]), np.float32(rad_cap.weight[m]),
-                                        np.float32(rad_cyl.weight[i]), np.float32(length.weight[j]), np.uint32(self.qx.size), np.uint32(size))
+                                        np.float32(rad_cyl.weight[i]), np.float32(length.weight[j]), np.uint32(self.qx.size), np.uint32(size),
+                                        self.Gauss76W_b, self.Gauss76Z_b)
 
                             cl.enqueue_copy(queue, self.res, self.res_b)
                             cl.enqueue_copy(queue, self.vol_i, self.vol_b)
