@@ -37,10 +37,9 @@ def sasview_eval(model, data):
     theory = model.evalDistribution([data.qx_data, data.qy_data])
     return theory
 
-def demo(N=1):
+def cyl(N=1):
     import sys
     import matplotlib.pyplot as plt
-    import numpy as np
 
     if len(sys.argv) > 1:
         N = int(sys.argv[1])
@@ -60,8 +59,45 @@ def demo(N=1):
         cpu = sasview_eval(model, data)
     cpu_time = toc()*1000./N
 
-    from cylcode import GpuCylinder
+    from code_cylinder import GpuCylinder
     model = SasModel(data, GpuCylinder, dtype='f', **pars)
+    tic()
+    for i in range(N):
+        gpu = model.theory()
+    gpu_time = toc()*1000./N
+
+    relerr = (gpu - cpu)/cpu
+    print "max(|(ocl-omp)/ocl|)", max(abs(relerr))
+    print "omp t=%.1f ms"%cpu_time
+    print "ocl t=%.1f ms"%gpu_time
+
+    plt.subplot(131); plot_data(data, cpu); plt.title("omp t=%.1f ms"%cpu_time)
+    plt.subplot(132); plot_data(data, gpu); plt.title("ocl t=%.1f ms"%gpu_time)
+    plt.subplot(133); plot_data(data, 1e8*relerr); plt.title("relerr x 10^8"); plt.colorbar()
+    plt.show()
+
+def ellipse(N=1):
+    import sys
+    import matplotlib.pyplot as plt
+
+    if len(sys.argv) > 1:
+        N = int(sys.argv[1])
+    data = load_data('JUN03289.DAT')
+    set_beam_stop(data, 0.004)
+
+    pars = dict(scale=.027, radius_a=60, radius_b=180, sldEll=.297e-6, sldSolv=5.773e-6, background=4.9,
+                axis_theta=0, axis_phi=90, radius_a_pd=0.1, radius_a_pd_n=10, radius_a_pd_nsigma=3, radius_b_pd=0.1, radius_b_pd_n=10,
+                radius_b_pd_nsigma=3, axis_theta_pd=0.1, axis_theta_pd_n=6, axis_theta_pd_nsigma=3, axis_phi_pd=0.1,
+                axis_phi_pd_n=6, axis_phi_pd_nsigma=3,)
+
+    model = sasview_model('ellipsoid', **pars)
+    tic()
+    for i in range(N):
+        cpu = sasview_eval(model, data)
+    cpu_time = toc()*1000./N
+
+    from code_ellipse import GpuEllipse
+    model = SasModel(data, GpuEllipse, dtype='f', **pars)
     tic()
     for i in range(N):
         gpu = model.theory()
@@ -79,7 +115,7 @@ def demo(N=1):
 
 
 if __name__ == "__main__":
-    demo()
+    ellipse()
 
 
 

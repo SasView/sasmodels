@@ -1,25 +1,25 @@
-__kernel void CapCylinderKernel(__global const float *qx, __global const float *qy, __global float *_ptvalue, __global float *vol_i,
-const float rad_cyl, const float rad_cap, const float length, const float thet, const float ph, const float sub,
-const float scale, const float phi_weight, const float theta_float, const float rad_cap_weight, const float rad_cyl_weight,
-const float length_weight, const int total, const int size, __const float Gauss76Wt, __const float Gauss76Z)
+__kernel void CapCylinderKernel(__global const real *qx, __global const real *qy, __global real *_ptvalue, __global real *vol_i,
+const real rad_cyl, const real rad_cap, const real length, const real thet, const real ph, const real sub,
+const real scale, const real phi_weight, const real theta_float, const real rad_cap_weight, const real rad_cyl_weight,
+const real length_weight, const int total, const int size, __const real Gauss76Wt, __const real Gauss76Z)
 //ph is phi, sub is sldc-slds, thet is theta
 {
     int i = get_global_id(0);
     if(i < total)
     {
-        float q = sqrt(qx[i]*qx[i] + qy[i]*qy[i]);
-        float pi = 4.0*atan(1.0);
-        float theta = thet*pi/180.0;
-        float phi = ph*pi/180.0;
-        float cyl_x = cos(theta)*cos(phi);
-        float cyl_y = sin(theta);
-        float cos_val = cyl_x*qx[i]/q + cyl_y*qy[i]/q;
-        float alpha = acos(cos_val);
-        float yyy=0; float ans1=0; float ans2=0; float y=0; float xx=0; float ans=0; float zij=0; float be=0; float summj=0;
+        real q = sqrt(qx[i]*qx[i] + qy[i]*qy[i]);
+        real pi = 4.0*atan(1.0);
+        real theta = thet*pi/180.0;
+        real phi = ph*pi/180.0;
+        real cyl_x = cos(theta)*cos(phi);
+        real cyl_y = sin(theta);
+        real cos_val = cyl_x*qx[i]/q + cyl_y*qy[i]/q;
+        real alpha = acos(cos_val);
+        real yyy=0; real ans1=0; real ans2=0; real y=0; real xx=0; real ans=0; real zij=0; real be=0; real summj=0;
 
-        float hDist = -1.0*sqrt(fabs(rad_cap*rad_cap-rad_cyl*rad_cyl));
+        real hDist = -1.0*sqrt(fabs(rad_cap*rad_cap-rad_cyl*rad_cyl));
         vol_i[i] = pi*rad_cyl*rad_cyl*length+2.0*pi/3.0*((rad_cap-hDist)*(rad_cap-hDist)*(2*rad_cap+hDist));
-        float vaj = -1.0*hDist/rad_cap;
+        real vaj = -1.0*hDist/rad_cap;
 
         for(int j=0;j<76;j++) //the 76 corresponds to the Gauss constants
         {
@@ -27,9 +27,9 @@ const float length_weight, const int total, const int size, __const float Gauss7
             yyy = Gauss76Wt[j]*ConvLens_kernel(length,rad_cyl,rad_cap,q,zij,alpha);
             summj += yyy;
         }
-        float inner = (1.0-vaj)/2.0*summj*4.0*pi*rad_cap*rad_cap*rad_cap;
-        float arg1 = q*length/2.0*cos(alpha);
-        float arg2 = q*rad_cyl*sin(alpha);
+        real inner = (1.0-vaj)/2.0*summj*4.0*pi*rad_cap*rad_cap*rad_cap;
+        real arg1 = q*length/2.0*cos(alpha);
+        real arg2 = q*rad_cyl*sin(alpha);
         yyy = inner;
 
         if(arg2 == 0) {be = 0.5;}
@@ -43,7 +43,7 @@ const float length_weight, const int total, const int size, __const float Gauss7
         else {
             yyy += pi*rad_cyl*rad_cyl*length*sin(arg1)/arg1*2.0*be;
         }
-        float answer=yyy*yyy*1.0e8*sub*sub*scale/pi*rad_cyl*rad_cyl*length+2.0*pi*(2.0*rad_cap*rad_cap*rad_cap/3.0+rad_cap*rad_cap*hDist-hDist*hDist*hDist/3.0);
+        real answer=yyy*yyy*1.0e8*sub*sub*scale/pi*rad_cyl*rad_cyl*length+2.0*pi*(2.0*rad_cap*rad_cap*rad_cap/3.0+rad_cap*rad_cap*hDist-hDist*hDist*hDist/3.0);
         answer/=sin(alpha);
 
         _ptvalue[i] = rad_cyl_weight*length_weight*rad_cap_weight*theta_weight*phi_weight*vol_i[i]*answer

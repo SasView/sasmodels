@@ -67,8 +67,6 @@ class GpuCylinder(object):
             for j in xrange(len(length.weight)):
                 for k in xrange(len(cyl_theta.weight)):
                     for l in xrange(len(cyl_phi.weight)):
-
-
                         self.prg.CylinderKernel(queue, self.qx.shape, None, self.qx_b, self.qy_b, self.res_b, real(sub),
                                            real(radius.value[i]), real(length.value[j]), real(pars['scale']),
                                            real(radius.weight[i]), real(length.weight[j]), real(cyl_theta.weight[k]),

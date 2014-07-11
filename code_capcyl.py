@@ -65,7 +65,8 @@ class GpuCapCylinder(object):
 
         sum, norm, norm_vol, vol = 0.0, 0.0, 0.0, 0.0
         size = len(theta.weight)
-        sub = pars['sld_capcyl']-np.float32(['sld_solv'])
+        sub = pars['sld_capcyl']-pars['sld_solv']
+        real = np.float32 if self.qx.dtype == np.dtype('float32') else np.float64
 
         for i in xrange(len(rad_cyl.weight)):
             for m in xrange(len(rad_cap.weight)):
@@ -74,10 +75,10 @@ class GpuCapCylinder(object):
                         for l in xrange(len(phi.weight)):
 
                             self.prg.CapCylinderKernel(queue, self.qx.shape, None, self.qx_b, self.qy_b, self.res_b,
-                                        self.vol_b, np.float32(rad_cyl.value[i]), np.float32(rad_cap.value[m]), np.float32(length.value[j]),
-                                        np.float32(theta.value[k]), np.float32(phi.value[l]), np.float32(sub), np.float32(pars['scale']),
-                                        np.float32(phi.weight[l]), np.float32(theta.weight[k]), np.float32(rad_cap.weight[m]),
-                                        np.float32(rad_cyl.weight[i]), np.float32(length.weight[j]), np.uint32(self.qx.size), np.uint32(size),
+                                        self.vol_b, real(rad_cyl.value[i]), real(rad_cap.value[m]), real(length.value[j]),
+                                        real(theta.value[k]), real(phi.value[l]), real(sub), real(pars['scale']),
+                                        real(phi.weight[l]), real(theta.weight[k]), real(rad_cap.weight[m]),
+                                        real(rad_cyl.weight[i]), real(length.weight[j]), np.uint32(self.qx.size), np.uint32(size),
                                         self.Gauss76W_b, self.Gauss76Z_b)
 
                             cl.enqueue_copy(queue, self.res, self.res_b)
