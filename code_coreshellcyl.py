@@ -56,6 +56,7 @@ class GpuCoreShellCylinder(object):
         sum, norm, norm_vol, vol = 0.0, 0.0, 0.0, 0.0
         size = len(axis_theta.weight)
 
+        real = np.float32 if self.qx.dtype == np.dtype('float32') else np.float64
         for i in xrange(len(radius.weight)):
             for j in xrange(len(length.weight)):
                 for k in xrange(len(axis_theta.weight)):
@@ -63,11 +64,11 @@ class GpuCoreShellCylinder(object):
                         for f in xrange(len(thickness.weight)):
 
                             self.prg.CoreShellCylinderKernel(queue, self.qx.shape, None, self.qx_b, self.qy_b, self.res_b,
-                                    np.float32(axis_theta.value[k]), np.float32(axis_phi.value[l]), np.float32(thickness.value[f]),
-                                    np.float32(length.value[j]), np.float32(radius.value[i]), np.float32(pars['scale']),
-                                    np.float32(radius.weight[i]), np.float32(length.weight[j]), np.float32(thickness.weight[f]),
-                                    np.float32(axis_theta.weight[k]), np.float32(axis_phi.weight[l]), np.float32(pars['core_sld']),
-                                    np.float32(pars['shell_sld']), np.float32(pars['solvent_sld']),np.uint32(size),
+                                    real(axis_theta.value[k]), real(axis_phi.value[l]), real(thickness.value[f]),
+                                    real(length.value[j]), real(radius.value[i]), real(pars['scale']),
+                                    real(radius.weight[i]), real(length.weight[j]), real(thickness.weight[f]),
+                                    real(axis_theta.weight[k]), real(axis_phi.weight[l]), real(pars['core_sld']),
+                                    real(pars['shell_sld']), real(pars['solvent_sld']),np.uint32(size),
                                     np.uint32(self.qx.size))
                             cl.enqueue_copy(queue, self.res, self.res_b)
 

@@ -57,8 +57,8 @@ class GpuTriEllipse:
         sum, norm, norm_vol, vol = 0.0, 0.0, 0.0, 0.0
         size = len(theta.weight)
         sub = pars['sldEll'] - pars['sldSolv']
-        real = np.float32 if self.qx.dtype == np.dtype('float32') else np.float64
 
+        real = np.float32 if self.qx.dtype == np.dtype('float32') else np.float64
         for a in xrange(len(axisA.weight)):
             for b in xrange(len(axisB.weight)):
                 for c in xrange(len(axisC.weight)):

@@ -6,8 +6,6 @@ __kernel void LamellarKernel(__global const real *qx, global const real *qy, __g
     if(i < length)
     {
         real q = sqrt(qx[i]*qx[i]+qy[i]*qy[i]);
-        real pi = 4.0*atan(1.0);
-        real Pq = 2.0*sub*(sub/q)/q*(1.0-cos(q*bi_thick));
-        ret[i] = 2.0*pi*scale*Pq/(q*q)/bi_thick*1.0e8 ;
+        ret[i] = 2.0*4.0*atan(1.0)*scale*2.0*sub*(sub/q)/q*(1.0-cos(q*bi_thick))/(q*q)/bi_thick*1.0e8 ;
     }
 }

@@ -1,31 +1,31 @@
-__kernel void CoreShellCylinderKernel(__global const float *qx, __global const float *qy, __global float *_ptvalue,
-const float axis_theta, const float axis_phi, const float thickness, const float length, const float radius,
-const float scale, const float radius_weight, const float length_weight, const float thickness_weight,
-const float theta_weight, const float phi_weight, const float core_sld, const float shell_sld, const float solvent_sld,
+__kernel void CoreShellCylinderKernel(__global const real *qx, __global const real *qy, __global real *_ptvalue,
+const real axis_theta, const real axis_phi, const real thickness, const real length, const real radius,
+const real scale, const real radius_weight, const real length_weight, const real thickness_weight,
+const real theta_weight, const real phi_weight, const real core_sld, const real shell_sld, const real solvent_sld,
 const int size, const int total)
 {
     int i = get_global_id(0);
     if(i < total)
     {
-        float q = sqrt(qx[i]*qx[i]+qy[i]*qy[i]);
-        float pi = 4.0*atan(1.0);
-        float theta = axis_theta*pi/180.0;
-        float cyl_x = cos(theta)*cos(axis_phi*pi/180.0);
-        float cyl_y = sin(theta);
-        float alpha = acos(cyl_x*qx[i]/q + cyl_y*qx[i]/q);
+        real q = sqrt(qx[i]*qx[i]+qy[i]*qy[i]);
+        real pi = 4.0*atan(1.0);
+        real theta = axis_theta*pi/180.0;
+        real cyl_x = cos(theta)*cos(axis_phi*pi/180.0);
+        real cyl_y = sin(theta);
+        real alpha = acos(cyl_x*qx[i]/q + cyl_y*qy[i]/q);
 
         if (alpha == 0.0){
         alpha = 1.0e-26;
         }
 
-        float si1=0; float si2=0; float be1=0; float be2=0;
+        real si1=0; real si2=0; real be1=0; real be2=0;
 
-        float vol2 = pi*(radius+thickness)*(radius+thickness)*(length+2.0*thickness);
+        real vol2 = pi*(radius+thickness)*(radius+thickness)*(length+2.0*thickness);
 
-        float besarg1 = q*radius*sin(alpha);
-        float besarg2 = q*(radius+thickness)*sin(alpha);
-        float sinarg1 = q*length/2.0*cos(alpha);
-        float sinarg2 = q*(length/2.0+thickness)*cos(alpha);
+        real besarg1 = q*radius*sin(alpha);
+        real besarg2 = q*(radius+thickness)*sin(alpha);
+        real sinarg1 = q*length/2.0*cos(alpha);
+        real sinarg2 = q*(length/2.0+thickness)*cos(alpha);
 
 
         if (besarg1 == 0.0){be1 = 0.5;}
@@ -48,10 +48,10 @@ const int size, const int total)
         else{
             si2 = sin(sinarg2)/sinarg2;
         }
-        float tt = 2.0*vol2*(shell_sld-solvent_sld)*si2*be2 + 2.0*(pi*radius*radius*(length))*(core_sld-shell_sld)*si1*be1;
+        real tt = 2.0*vol2*(shell_sld-solvent_sld)*si2*be2 + 2.0*(pi*radius*radius*(length))*(core_sld-shell_sld)*si1*be1;
 
-        float answer = (tt*tt)*sin(alpha)/fabs(sin(alpha));
-        float vol=pi*(radius+thickness)*(radius+thickness)*(length+2.0*thickness);
+        real answer = (tt*tt)*sin(alpha)/fabs(sin(alpha));
+        real vol=pi*(radius+thickness)*(radius+thickness)*(length+2.0*thickness);
         answer = answer/vol*1.0e8*scale;
 
         _ptvalue[i] = radius_weight*length_weight*thickness_weight*theta_weight*phi_weight*answer;
