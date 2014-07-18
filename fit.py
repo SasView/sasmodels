@@ -11,7 +11,7 @@ from code_triaxialellipse import GpuTriEllipse
 from sasmodel import SasModel, load_data, set_beam_stop, set_half
 
 
-data = load_data('DEC07133.DAT')
+data = load_data('DEC07282.DAT')
 set_beam_stop(data, 0.0048)#, outer=0.025)
 #set_half(data, 'right')
 """
@@ -46,12 +46,12 @@ model.radius_a.range(15, 1000)
 model.scale.range(0, 1)
 """
 """
-model = SasModel(data, GpuLamellar, scale=0.0131, bi_thick=41, sld_bi=.291e-6, sld_sol=5.77e-6, background=18.6,
+model = SasModel(data, GpuLamellar, scale=0.0128, bi_thick=35.1, sld_bi=.291e-6, sld_sol=5.77e-6, background=17.3,
                  bi_thick_pd= 0.000009, bi_thick_pd_n=35, bi_thick_pd_nsigma=3, dtype='float')
-#model.bi_thick.range(0, 1000)
+model.bi_thick.range(0, 1000)
 model.scale.range(0, 1)
 #model.bi_thick_pd.range(0, 1000)
-model.background.range(0, 1000)
+#model.background.range(0, 1000)
 """
 """
 model = SasModel(data, GpuCoreShellCylinder,
@@ -89,22 +89,22 @@ model = SasModel(data, GpuCapCylinder, scale=1, rad_cyl=20, rad_cap=40, length=4
 
 
 model = SasModel(data, GpuTriEllipse,
-                 scale=0.00621, axisA=20, axisB=300, axisC=900,
+                 scale=0.0036, axisA=118, axisB=70, axisC=800,
                  sldEll=7.105e-6, sldSolv=.291e-6,
                  background=15, theta=90, phi=0, psi=0,
-                 theta_pd=30, theta_pd_n=40, theta_pd_nsigma=3,
-
+                 theta_pd=22, theta_pd_n=40, theta_pd_nsigma=3,
                  phi_pd=.1, phi_pd_n=1, phi_pd_nsigma=0,
                  psi_pd=30, psi_pd_n=1, psi_pd_nsigma=0,
                  axisA_pd=.1, axisA_pd_n=1, axisA_pd_nsigma=0,
                  axisB_pd=.1, axisB_pd_n=1, axisB_pd_nsigma=0,
                  axisC_pd=.1, axisC_pd_n=1, axisC_pd_nsigma=0, dtype='float')
+
 #model.axisA.range(15, 1000)
 #model.axisB.range(15, 1000)
 #model.axisC.range(15, 1000)
 #model.background.range(0,1000)
 model.scale.range(0, 1)
-model.theta_pd.range(0, 360)
+#model.theta_pd.range(0, 360)
 #model.phi_pd.range(0, 360)
 #model.psi_pd.range(0, 360)
 
