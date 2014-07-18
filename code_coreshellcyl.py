@@ -57,27 +57,27 @@ class GpuCoreShellCylinder(object):
         size = len(axis_theta.weight)
 
         real = np.float32 if self.qx.dtype == np.dtype('float32') else np.float64
-        for i in xrange(len(radius.weight)):
-            for j in xrange(len(length.weight)):
-                for k in xrange(len(axis_theta.weight)):
-                    for l in xrange(len(axis_phi.weight)):
-                        for f in xrange(len(thickness.weight)):
+        for r in xrange(len(radius.weight)):
+            for l in xrange(len(length.weight)):
+                for at in xrange(len(axis_theta.weight)):
+                    for p in xrange(len(axis_phi.weight)):
+                        for th in xrange(len(thickness.weight)):
 
                             self.prg.CoreShellCylinderKernel(queue, self.qx.shape, None, self.qx_b, self.qy_b, self.res_b,
-                                    real(axis_theta.value[k]), real(axis_phi.value[l]), real(thickness.value[f]),
-                                    real(length.value[j]), real(radius.value[i]), real(pars['scale']),
-                                    real(radius.weight[i]), real(length.weight[j]), real(thickness.weight[f]),
-                                    real(axis_theta.weight[k]), real(axis_phi.weight[l]), real(pars['core_sld']),
+                                    real(axis_theta.value[at]), real(axis_phi.value[p]), real(thickness.value[th]),
+                                    real(length.value[l]), real(radius.value[r]), real(pars['scale']),
+                                    real(radius.weight[r]), real(length.weight[l]), real(thickness.weight[th]),
+                                    real(axis_theta.weight[at]), real(axis_phi.weight[p]), real(pars['core_sld']),
                                     real(pars['shell_sld']), real(pars['solvent_sld']),np.uint32(size),
                                     np.uint32(self.qx.size))
                             cl.enqueue_copy(queue, self.res, self.res_b)
 
                             sum += self.res
-                            vol += radius.weight[i]*length.weight[j]*thickness.weight[f]*pow(radius.value[i]+thickness.value[f],2)\
-                                   *(length.value[j]+2.0*thickness.value[f])
-                            norm_vol += radius.weight[i]*length.weight[j]*thickness.weight[k]
-                            norm += radius.weight[i]*length.weight[j]*thickness.weight[f]*axis_theta.weight[k]\
-                                    *axis_phi.weight[l]
+                            vol += radius.weight[r]*length.weight[l]*thickness.weight[th]*pow(radius.value[r]+thickness.value[th],2)\
+                                   *(length.value[l]+2.0*thickness.value[th])
+                            norm_vol += radius.weight[r]*length.weight[l]*thickness.weight[th]
+                            norm += radius.weight[r]*length.weight[l]*thickness.weight[th]*axis_theta.weight[at]\
+                                    *axis_phi.weight[p]
 
         if size>1:
             norm /= math.asin(1.0)

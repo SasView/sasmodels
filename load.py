@@ -42,7 +42,7 @@ def plot_data(data):
 
 def demo():
 
-    data = load_data('JUN03289.DAT')
+    data = load_data('NOV07090.DAT')
     """
     print data
     print type(data)

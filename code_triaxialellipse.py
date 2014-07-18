@@ -77,8 +77,8 @@ class GpuTriEllipse:
                                 norm_vol += axisA.weight[a]*axisB.weight[b]*axisC.weight[c]
                                 norm += axisA.weight[a]*axisB.weight[b]*axisC.weight[c]*theta.weight[t]*phi.weight[i]*psi.weight[s]
 
-        if size > 1:
-            norm /= asin(1.0)
+      #  if size > 1:
+       #     norm /= asin(1.0)
 
         if vol != 0.0 and norm_vol != 0.0:
             sum *= norm_vol/vol

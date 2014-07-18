@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
 import numpy as np
 import pyopencl as cl
 from bumps.names import Parameter
 from sans.dataloader.loader import Loader
-from sans.dataloader.manipulations import Ringcut
+from sans.dataloader.manipulations import Ringcut, Boxcut
 
 
 def load_data(filename):
@@ -16,11 +17,20 @@ def load_data(filename):
     return data
 
 
-def set_beam_stop(data, radius):
+def set_beam_stop(data, radius, outer=None):
     data.mask = Ringcut(0, radius)(data)
+    if outer is not None:
+        data.mask += Ringcut(outer,np.inf)(data)
+
+def set_half(data, half):
+    if half == 'left':
+        data.mask += Boxcut(x_min=-np.inf, x_max=0.0, y_min=-np.inf, y_max=np.inf)(data)
+    if half == 'right':
+        data.mask += Boxcut(x_min=0.0, x_max=np.inf, y_min=-np.inf, y_max=np.inf)(data)
 
 
-def plot_data(data, iq):
+
+def plot_data(data, iq, vmin=None, vmax=None):
     from numpy.ma import masked_array
     import matplotlib.pyplot as plt
     img = masked_array(iq, data.mask)
@@ -28,16 +38,26 @@ def plot_data(data, iq):
     ymin, ymax = min(data.qy_data), max(data.qy_data)
     plt.imshow(img.reshape(128,128),
                interpolation='nearest', aspect=1, origin='upper',
-               extent=[xmin, xmax, ymin, ymax])
+               extent=[xmin, xmax, ymin, ymax], vmin=vmin, vmax=vmax)
 
 
 def plot_result(data, theory):
     import matplotlib.pyplot as plt
-    plt.subplot(1,3,1)
-    plot_data(data, data.data)
-    plt.subplot(1,3,2)
-    plot_data(data, theory)
-    plt.subplot(1,3,3)
+    plt.subplot(1, 3, 1)
+    #print "not a number",sum(np.isnan(data.data))
+    #data.data[data.data<0.05] = 0.5
+    logdata = np.log10(data.data)
+    #print data.data.min(), data.data.max()
+    clean = logdata[~np.isnan(logdata)]
+    vmin, vmax = clean.min(), clean.max()
+    vmin, vmax = np.percentile(clean, 5), 1.05*vmax
+    #vmin,vmax = None,None
+    plot_data(data, logdata, vmin=vmin, vmax=vmax)
+    plt.colorbar()
+    plt.subplot(1, 3, 2)
+    plot_data(data, np.log10(theory), vmin=vmin, vmax=vmax)
+    plt.colorbar()
+    plt.subplot(1, 3, 3)
     plot_data(data, (theory-data.data)/data.err_data)
     plt.colorbar()
 
@@ -62,7 +82,7 @@ def card():
 class SasModel(object):
     def __init__(self, data, model, dtype='float32', **kw):
         self.__dict__['_parameters'] = {}
-        self.index = data.mask==0
+        self.index = (data.mask==0) & (~np.isnan(data.data))
         self.iq = data.data[self.index]
         self.diq = data.err_data[self.index]
         self.data = data

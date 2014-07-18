@@ -50,8 +50,8 @@ const real length_weight, const int total, const int size, __const real Gauss76W
         if (_ptvalue[i] == INFINITY || _ptvalue == NAN){
             _ptvalue[i] = 0.0;
         }
-        if (size>1) {
-            _ptvalue[i] *= fabs(cos(thet*pi/180.0));
-        }
+     //   if (size>1) {
+   //         _ptvalue[i] *= fabs(cos(thet*pi/180.0));
+     //   }
     }
 }

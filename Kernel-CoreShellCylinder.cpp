@@ -10,9 +10,7 @@ const int size, const int total)
         real q = sqrt(qx[i]*qx[i]+qy[i]*qy[i]);
         real pi = 4.0*atan(1.0);
         real theta = axis_theta*pi/180.0;
-        real cyl_x = cos(theta)*cos(axis_phi*pi/180.0);
-        real cyl_y = sin(theta);
-        real alpha = acos(cyl_x*qx[i]/q + cyl_y*qy[i]/q);
+        real alpha = acos(cos(theta)*cos(axis_phi*pi/180.0)*qx[i]/q + sin(theta)*qy[i]/q);
 
         if (alpha == 0.0){
         alpha = 1.0e-26;
@@ -29,37 +27,26 @@ const int size, const int total)
 
 
         if (besarg1 == 0.0){be1 = 0.5;}
-        else{
-            be1 = NR_BessJ1(besarg1)/besarg1;
-        }
+        else{be1 = NR_BessJ1(besarg1)/besarg1;}
+
         if (besarg2 == 0.0){be2 = 0.5;}
-        else{
-            be2 = NR_BessJ1(besarg2)/besarg2;
-        }
-        if (sinarg1 == 0.0){
-            si1 = 1.0;
-        }
-        else{
-            si1 = sin(sinarg1)/sinarg1;
-        }
-        if (sinarg2 == 0.0){
-            si2 = 1.0;
-        }
-        else{
-            si2 = sin(sinarg2)/sinarg2;
-        }
-        real tt = 2.0*vol2*(shell_sld-solvent_sld)*si2*be2 + 2.0*(pi*radius*radius*(length))*(core_sld-shell_sld)*si1*be1;
+        else{be2 = NR_BessJ1(besarg2)/besarg2;}
+
+        if (sinarg1 == 0.0){si1 = 1.0;}
+        else{si1 = sin(sinarg1)/sinarg1;}
+
+        if (sinarg2 == 0.0){si2 = 1.0;}
+        else{si2 = sin(sinarg2)/sinarg2;}
+
+        real tt = 2.0*vol2*(shell_sld-solvent_sld)*si2*be2+2.0*(pi*radius*radius*(length))*(core_sld-shell_sld)*si1*be1;
 
         real answer = (tt*tt)*sin(alpha)/fabs(sin(alpha));
-        real vol=pi*(radius+thickness)*(radius+thickness)*(length+2.0*thickness);
-        answer = answer/vol*1.0e8*scale;
+        answer *= answer/(pi*(radius+thickness)*(radius+thickness)*(length+2.0*thickness))*1.0e8*scale;
 
-        _ptvalue[i] = radius_weight*length_weight*thickness_weight*theta_weight*phi_weight*answer;
-        _ptvalue[i] *= pow(radius+thickness,2)*(length+2.0*thickness);
-
-        if (size>1) {
-        _ptvalue[i] *= fabs(cos(axis_theta*pi/180.0));
-        }
+        _ptvalue[i] = radius_weight*length_weight*thickness_weight*theta_weight*phi_weight*answer*pow(radius+thickness,2)*(length+2.0*thickness);
+     //   if (size>1) {
+       // _ptvalue[i] *= fabs(cos(axis_theta*pi/180.0));
+        //}
 
     }
 }

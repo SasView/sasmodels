@@ -78,8 +78,8 @@ class GpuCylinder(object):
                         norm_vol += radius.weight[i]*length.weight[j]
                         norm += radius.weight[i]*length.weight[j]*cyl_theta.weight[k]*cyl_phi.weight[l]
 
-        if size > 1:
-            norm /= math.asin(1.0)
+       # if size > 1:
+        #    norm /= math.asin(1.0)
         if vol != 0.0 and norm_vol != 0.0:
             sum *= norm_vol/vol
 

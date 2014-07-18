@@ -83,9 +83,10 @@ class GpuEllipse(object):
         # Averaging in theta needs an extra normalization
         # factor to account for the sin(theta) term in the
         # integration (see documentation).
-        if size > 1:
-            norm /= math.asin(1.0)
-        if vol.any() != 0.0 and norm_vol.any() != 0.0:
+
+    #    if size > 1:
+     #       norm /= math.asin(1.0)
+        if vol != 0.0 and norm_vol != 0.0:
             sum *= norm_vol/vol
 
         return sum/norm+pars['background']
