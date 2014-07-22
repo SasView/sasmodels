@@ -14,7 +14,7 @@ def toc():
     return (now-TIC).total_seconds()
 
 def sasview_model(modelname, **pars):
-    modelname = modelname.capitalize()+"Model"
+    modelname = modelname+"Model"
     sans = __import__('sans.models.'+modelname)
     ModelClass = getattr(getattr(sans.models,modelname,None),modelname,None)
     if ModelClass is None:
@@ -53,7 +53,7 @@ def cyl(N=1):
         cyl_phi_pd=0.1, cyl_phi_pd_n=10, cyl_phi_pd_nsigma=3,
         )
 
-    model = sasview_model('cylinder', **pars)
+    model = sasview_model('Cylinder', **pars)
     tic()
     for i in range(N):
         cpu = sasview_eval(model, data)
@@ -90,7 +90,7 @@ def ellipse(N=4):
                 radius_b_pd_nsigma=3, axis_theta_pd=0.1, axis_theta_pd_n=6, axis_theta_pd_nsigma=3, axis_phi_pd=0.1,
                 axis_phi_pd_n=6, axis_phi_pd_nsigma=3,)
 
-    model = sasview_model('ellipsoid', **pars)
+    model = sasview_model('Ellipsoid', **pars)
     tic()
     for i in range(N):
         cpu = sasview_eval(model, data)
@@ -129,8 +129,8 @@ def coreshell(N=4):
                  radius_pd=0.1, radius_pd_n=1, radius_pd_nsigma=0,
                  length_pd=0.1, length_pd_n=1, length_pd_nsigma=0,
                  thickness_pd=0.1, thickness_pd_n=1, thickness_pd_nsigma=0,
-                 axis_theta_pd_n=10, axis_theta_pd_nsigma=3,
-                 axis_phi_pd=0.0008748, axis_phi_pd_n=10, axis_phi_pd_nsigma=3,)
+                 axis_theta_pd_n=20, axis_theta_pd_nsigma=3,
+                 axis_phi_pd=0.0008748, axis_phi_pd_n=60, axis_phi_pd_nsigma=3,)
 
     model = sasview_model('CoreShellCylinder', **pars)
     tic()

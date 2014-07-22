@@ -40,25 +40,31 @@ def plot_data(data, iq, vmin=None, vmax=None):
                interpolation='nearest', aspect=1, origin='upper',
                extent=[xmin, xmax, ymin, ymax], vmin=vmin, vmax=vmax)
 
-
-def plot_result(data, theory):
+def plot_result(data, theory, view='linear'):
     import matplotlib.pyplot as plt
+    from numpy.ma import masked_array, masked
     plt.subplot(1, 3, 1)
     #print "not a number",sum(np.isnan(data.data))
     #data.data[data.data<0.05] = 0.5
-    logdata = np.log10(data.data)
-    #print data.data.min(), data.data.max()
-    clean = logdata[~np.isnan(logdata)]
-    vmin, vmax = clean.min(), clean.max()
-    vmin, vmax = np.percentile(clean, 5), 1.05*vmax
-    #vmin,vmax = None,None
-    plot_data(data, logdata, vmin=vmin, vmax=vmax)
+    mdata = masked_array(data.data, data.mask)
+    mdata[np.isnan(mdata)] = masked
+    if view is 'log':
+        mdata[mdata <= 0] = masked
+        mdata = np.log10(mdata)
+        mtheory = masked_array(np.log10(theory), mdata.mask)
+    else:
+        mtheory = masked_array(theory, mdata.mask)
+    mresid = masked_array((theory-data.data)/data.err_data, data.mask)
+    vmin = min(mdata.min(), mtheory.min())
+    vmax = max(mdata.max(), mtheory.max())
+
+    plot_data(data, mdata, vmin=vmin, vmax=vmax)
     plt.colorbar()
     plt.subplot(1, 3, 2)
-    plot_data(data, np.log10(theory), vmin=vmin, vmax=vmax)
+    plot_data(data, mtheory, vmin=vmin, vmax=vmax)
     plt.colorbar()
     plt.subplot(1, 3, 3)
-    plot_data(data, (theory-data.data)/data.err_data)
+    plot_data(data, mresid)
     plt.colorbar()
 
 
@@ -101,6 +107,13 @@ class SasModel(object):
         pars.update(kw)
         self._parameters = dict((k, Parameter.default(v, name=k)) for k, v in pars.items())
 
+    def set_result(self, result):
+        self.result = result
+        return self.result
+
+    def get_result(self):
+        return self.result
+
     def numpoints(self):
         return len(self.iq)
 
@@ -123,7 +136,7 @@ class SasModel(object):
 
     def residuals(self):
         #if np.any(self.err ==0): print "zeros in err"
-        return (self.theory()[self.index]-self.iq)/self.diq
+        return (self.get_result()[self.index]-self.iq)/self.diq
 
     def nllf(self):
         R = self.residuals()
@@ -133,8 +146,8 @@ class SasModel(object):
     def __call__(self):
         return 2*self.nllf()/self.dof
 
-    def plot(self, view='linear'):
-        plot_result(self.data, self.theory())
+    def plot(self, view='log'):
+        plot_result(self.data, self.get_result(), view=view)
 
     def save(self, basename):
         pass
