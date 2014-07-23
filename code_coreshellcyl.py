@@ -47,13 +47,20 @@ class GpuCoreShellCylinder(object):
         radius, length, thickness, axis_phi, axis_theta = [GaussianDispersion(int(pars[base+'_pd_n']), pars[base+'_pd'], pars[base+'_pd_nsigma'])
                                      for base in GpuCoreShellCylinder.PD_PARS]
 
-        radius.value, radius.weight = radius.get_weights(pars['radius'], 0, 1000, True)
-        length.value, length.weight = length.get_weights(pars['length'], 0, 1000, True)
-        thickness.value, thickness.weight = thickness.get_weights(pars['thickness'], 0, 1000, True)
+        radius.value, radius.weight = radius.get_weights(pars['radius'], 0, 10000, True)
+        length.value, length.weight = length.get_weights(pars['length'], 0, 10000, True)
+        thickness.value, thickness.weight = thickness.get_weights(pars['thickness'], 0, 10000, True)
         axis_phi.value, axis_phi.weight = axis_phi.get_weights(pars['axis_phi'], -90, 180, False)
         axis_theta.value, axis_theta.weight = axis_theta.get_weights(pars['axis_theta'], -90, 180, False)
 
         sum, norm, norm_vol, vol = 0.0, 0.0, 0.0, 0.0
+
+        print radius.value
+        print thickness.weight
+        print axis_phi.weight
+        print axis_theta.weight
+        print length.value
+
         size = len(axis_theta.weight)
 
         real = np.float32 if self.qx.dtype == np.dtype('float32') else np.float64
@@ -79,8 +86,8 @@ class GpuCoreShellCylinder(object):
                             norm += radius.weight[r]*length.weight[l]*thickness.weight[th]*axis_theta.weight[at]\
                                     *axis_phi.weight[p]
 
-        if size>1:
-            norm /= math.asin(1.0)
+        #if size>1:
+         #   norm /= math.asin(1.0)
         if vol != 0.0 and norm_vol != 0.0:
             sum *= norm_vol/vol
 

@@ -44,7 +44,7 @@ class GpuLamellar(object):
     def eval(self, pars):
 
         bi_thick = GaussianDispersion(int(pars['bi_thick_pd_n']), pars['bi_thick_pd'], pars['bi_thick_pd_nsigma'])
-        bi_thick.value, bi_thick.weight = bi_thick.get_weights(pars['bi_thick'], 0, 1000, True)
+        bi_thick.value, bi_thick.weight = bi_thick.get_weights(pars['bi_thick'], 0, 10000, True)
 
         sum, norm = 0.0, 0.0
         sub = pars['sld_bi'] - pars['sld_sol']

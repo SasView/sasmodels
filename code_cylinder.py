@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import math
 import pyopencl as cl
 from weights import GaussianDispersion
 from sasmodel import card
@@ -20,6 +19,19 @@ def set_precision(src, qx, qy, dtype):
 #define real double
 """
     return header+src, qx, qy
+
+def set_precision_1d(src, q, dtype):
+    q = np.ascontiguousarray(q, dtype=dtype)
+    if np.dtype(dtype) == np.dtype('float32'):
+        header = """\
+#define real float
+"""
+    else:
+        header = """\
+#pragma OPENCL EXTENSION cl_khr_fp64: enable
+#define real double
+"""
+    return header+src, q
 
 class GpuCylinder(object):
     PARS = {
@@ -51,8 +63,8 @@ class GpuCylinder(object):
              for base in GpuCylinder.PD_PARS]
 
         #Get the weights for each
-        radius.value, radius.weight = radius.get_weights(pars['radius'], 0, 1000, True)
-        length.value, length.weight = length.get_weights(pars['length'], 0, 1000, True)
+        radius.value, radius.weight = radius.get_weights(pars['radius'], 0, 10000, True)
+        length.value, length.weight = length.get_weights(pars['length'], 0, 10000, True)
         cyl_theta.value, cyl_theta.weight = cyl_theta.get_weights(pars['cyl_theta'], -90, 180, False)
         cyl_phi.value, cyl_phi.weight = cyl_phi.get_weights(pars['cyl_phi'], -90, 180, False)
 
@@ -85,38 +97,63 @@ class GpuCylinder(object):
 
         return sum/norm+pars['background']
 
-def demo():
-    from time import time
-    import matplotlib.pyplot as plt
+class OneDGpuCylinder(object):
+    PARS = {
+        'scale':1,'radius':1,'length':1,'sldCyl':1e-6,'sldSolv':0,'background':0,
+        'bolim':0, 'uplim':90
+    }
+    PD_PARS = ['radius', 'length']
 
-    #create qx and qy evenly spaces
-    qx = np.linspace(-.02, .02, 128)
-    qy = np.linspace(-.02, .02, 128)
-    qx, qy = np.meshgrid(qx, qy)
+    def __init__(self, q, dtype='float32'):
 
-    #saved shape of qx
-    r_shape = qx.shape
+        #create context, queue, and build program
+        ctx,_queue = card()
+        trala = open('NR_BessJ1.cpp').read()+"\n"+open('OneDCyl_Kfun.cpp').read()+"\n"+open('Kernel-OneDCylinder.cpp').read()
+        src, self.q = set_precision_1d(trala, q, dtype=dtype)
+        self.prg = cl.Program(ctx, src).build()
 
-    #reshape for calculation; resize as float32
-    qx = qx.flatten()
-    qy = qy.flatten()
+        #buffers
+        mf = cl.mem_flags
+        self.q_b = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=self.q)
+        self.res_b = cl.Buffer(ctx, mf.WRITE_ONLY, q.nbytes)
+        self.res = np.empty_like(self.q)
 
-    pars = CylinderParameters(scale=1, radius=64.1, length=266.96, sldCyl=.291e-6, sldSolv=5.77e-6, background=0,
-                              cyl_theta=0, cyl_phi=0)
-    t = time()
-    result = GpuCylinder(qx, qy)
-    result.x = result.cylinder_fit(pars, r_n=10, t_n=10, l_n=10, p_n=10, r_w=.1, t_w=.1, l_w=.1, p_w=.1, sigma=3)
-    result.x = np.reshape(result.x, r_shape)
-    tt = time()
+    def eval(self, pars):
 
-    print("Time taken: %f" % (tt - t))
+        _ctx,queue = card()
+        radius, length = \
+            [GaussianDispersion(int(pars[base+'_pd_n']), pars[base+'_pd'], pars[base+'_pd_nsigma'])
+             for base in OneDGpuCylinder.PD_PARS]
 
-    plt.pcolormesh(result.x)
-    plt.show()
+        #Get the weights for each
+        radius.value, radius.weight = radius.get_weights(pars['radius'], 0, 10000, True)
+        length.value, length.weight = length.get_weights(pars['length'], 0, 10000, True)
 
+        #Perform the computation, with all weight points
+        sum, norm, vol = 0.0, 0.0, 0.0,
+        sub = pars['sldCyl'] - pars['sldSolv']
 
-if __name__=="__main__":
-    demo()
+        real = np.float32 if self.q.dtype == np.dtype('float32') else np.float64
+        #Loop over radius, length, theta, phi weight points
+        for r in xrange(len(radius.weight)):
+            for l in xrange(len(length.weight)):
+                        self.prg.OneDCylKernel(queue, self.q.shape, None, self.q_b, self.res_b, real(sub),
+                                           real(length.value[l]), real(radius.value[r]), real(pars['scale']),
+                                           np.uint32(self.q.size), real(pars['uplim']), real(pars['bolim']))
+                        cl.enqueue_copy(queue, self.res, self.res_b)
+                        sum += radius.weight[r]*length.weight[l]*self.res*pow(radius.value[r],2)*length.value[l]
+                        vol += radius.weight[r]*length.weight[l] *pow(radius.value[r],2)*length.value[l]
+                        norm += radius.weight[r]*length.weight[l]
+
+        if vol != 0.0 and norm != 0.0:
+            sum *= norm/vol
+
+        return sum/norm + pars['background']
+
+       
+
+        
+
 
 
 

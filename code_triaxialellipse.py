@@ -47,9 +47,9 @@ class GpuTriEllipse:
             [GaussianDispersion(int(pars[base+'_pd_n']), pars[base+'_pd'], pars[base+'_pd_nsigma'])
              for base in GpuTriEllipse.PD_PARS]
 
-        axisA.value, axisA.weight = axisA.get_weights(pars['axisA'], 0, 1000, True)
-        axisB.value, axisB.weight = axisB.get_weights(pars['axisB'], 0, 1000, True)
-        axisC.value, axisC.weight = axisC.get_weights(pars['axisC'], 0, 1000, True)
+        axisA.value, axisA.weight = axisA.get_weights(pars['axisA'], 0, 10000, True)
+        axisB.value, axisB.weight = axisB.get_weights(pars['axisB'], 0, 10000, True)
+        axisC.value, axisC.weight = axisC.get_weights(pars['axisC'], 0, 10000, True)
         theta.value, theta.weight = theta.get_weights(pars['theta'], -90, 180, False)
         phi.value, phi.weight = phi.get_weights(pars['phi'], -90, 180, False)
         psi.value, psi.weight = psi.get_weights(pars['psi'], -90, 180, False)

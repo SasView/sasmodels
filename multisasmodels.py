@@ -18,14 +18,9 @@ def load_data(filename):
 
 
 def set_beam_stop(data, radius, outer=None):
-    if hasattr(data, 'qx_data'):
-        data.mask = Ringcut(0, radius)(data)
-        if outer is not None:
-            data.mask += Ringcut(outer,np.inf)(data)
-    else:
-        data.mask = (data.x>=radius)
-        if outer is not None:
-            data.mask &= (data.x<outer)
+    data.mask = Ringcut(0, radius)(data)
+    if outer is not None:
+        data.mask += Ringcut(outer,np.inf)(data)
 
 def set_half(data, half):
     if half == 'left':
@@ -45,9 +40,10 @@ def plot_data(data, iq, vmin=None, vmax=None):
                interpolation='nearest', aspect=1, origin='upper',
                extent=[xmin, xmax, ymin, ymax], vmin=vmin, vmax=vmax)
 
-def plot_result2D(data, theory, view='linear'):
+def plot_result(data, theory, view='linear'):
     import matplotlib.pyplot as plt
     from numpy.ma import masked_array, masked
+    plt.subplot(1, 3, 1)
     #print "not a number",sum(np.isnan(data.data))
     #data.data[data.data<0.05] = 0.5
     mdata = masked_array(data.data, data.mask)
@@ -62,7 +58,6 @@ def plot_result2D(data, theory, view='linear'):
     vmin = min(mdata.min(), mtheory.min())
     vmax = max(mdata.max(), mtheory.max())
 
-    plt.subplot(1, 3, 1)
     plot_data(data, mdata, vmin=vmin, vmax=vmax)
     plt.colorbar()
     plt.subplot(1, 3, 2)
@@ -73,28 +68,11 @@ def plot_result2D(data, theory, view='linear'):
     plt.colorbar()
 
 
-def plot_result1D(data, theory, view='linear'):
-    import matplotlib.pyplot as plt
-    from numpy.ma import masked_array, masked
-    #print "not a number",sum(np.isnan(data.y))
-    #data.y[data.y<0.05] = 0.5
-    mdata = masked_array(data.y, data.mask)
-    mdata[np.isnan(mdata)] = masked
-    if view is 'log':
-        mdata[mdata <= 0] = masked
-    mtheory = masked_array(theory, mdata.mask)
-    mresid = masked_array((theory-data.y)/data.dy, mdata.mask)
-
-    plt.subplot(1,2,1)
-    plt.errorbar(data.x, mdata, yerr=data.dy)
-    plt.plot(data.x, mtheory, '-', hold=True)
-    plt.yscale(view)
-    plt.subplot(1, 2, 2)
-    plt.plot(data.x, mresid, 'x')
-    #plt.axhline(1, color='black', ls='--',lw=1, hold=True)
-    #plt.axhline(0, color='black', lw=1, hold=True)
-    #plt.axhline(-1, color='black', ls='--',lw=1, hold=True)
-
+def demo():
+    data = load_data('JUN03289.DAT')
+    set_beam_stop(data, 0.004)
+    plot_data(data)
+    import matplotlib.pyplot as plt; plt.show()
 
 
 GPU_CONTEXT = None
@@ -110,21 +88,13 @@ def card():
 class SasModel(object):
     def __init__(self, data, model, dtype='float32', **kw):
         self.__dict__['_parameters'] = {}
-        self.is2D = hasattr(data,'qx_data')
+        self.index = (data.mask==0) & (~np.isnan(data.data))
+        self.iq = data.data[self.index]
+        self.diq = data.err_data[self.index]
         self.data = data
-        if self.is2D:
-            self.index = (data.mask==0) & (~np.isnan(data.data))
-            self.iq = data.data[self.index]
-            self.diq = data.err_data[self.index]
-            self.qx = data.qx_data
-            self.qy = data.qy_data
-            self.gpu = model(self.qx, self.qy, dtype=dtype)
-        else:
-            self.index = (data.mask==0) & (~np.isnan(data.y))
-            self.iq = data.y[self.index]
-            self.diq = data.dy[self.index]
-            self.q = data.x
-            self.gpu = model(self.q, dtype=dtype)
+        self.qx = data.qx_data
+        self.qy = data.qy_data
+        self.gpu = model(self.qx, self.qy, dtype=dtype)
         pd_pars = set(base+attr for base in model.PD_PARS for attr in ('_pd','_pd_n','_pd_nsigma'))
         total_pars = set(model.PARS.keys()) | pd_pars
         extra_pars = set(kw.keys()) - total_pars
@@ -136,6 +106,13 @@ class SasModel(object):
         pars.update((base+'_pd_nsigma', 3) for base in model.PD_PARS)
         pars.update(kw)
         self._parameters = dict((k, Parameter.default(v, name=k)) for k, v in pars.items())
+
+    def set_result(self, result):
+        self.result = result
+        return self.result
+
+    def get_result(self):
+        return self.result
 
     def numpoints(self):
         return len(self.iq)
@@ -159,7 +136,7 @@ class SasModel(object):
 
     def residuals(self):
         #if np.any(self.err ==0): print "zeros in err"
-        return (self.theory()[self.index]-self.iq)/self.diq
+        return (self.get_result()[self.index]-self.iq)/self.diq
 
     def nllf(self):
         R = self.residuals()
@@ -170,10 +147,7 @@ class SasModel(object):
         return 2*self.nllf()/self.dof
 
     def plot(self, view='log'):
-        if self.is2D:
-            plot_result2D(self.data, self.theory(), view=view)
-        else:
-            plot_result1D(self.data, self.theory(), view=view)
+        plot_result(self.data, self.get_result(), view=view)
 
     def save(self, basename):
         pass
@@ -181,12 +155,3 @@ class SasModel(object):
     def update(self):
         pass
 
-
-def demo():
-    data = load_data('DEC07086.DAT')
-    set_beam_stop(data, 0.004)
-    plot_data(data)
-    import matplotlib.pyplot as plt; plt.show()
-
-if __name__ == "__main__":
-    demo()

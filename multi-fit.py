@@ -4,15 +4,15 @@
 from bumps.names import *
 from code_lamellar import GpuLamellar
 from code_ellipse import GpuEllipse
-from sasmodel import SasModel, load_data, set_beam_stop, set_half
+from multisasmodels import SasModel, load_data, set_beam_stop, set_half
 import numpy as np
 
-data = load_data('DEC07269.DAT')
+data = load_data('DEC07282.DAT')
 set_beam_stop(data, 0.0052)#, outer=0.025)
 #set_half(data, 'left')
 
 truth = SasModel(data, GpuEllipse,
-                scale=.5, radius_a=45.265, radius_b=600.8, sldEll=.291e-6, sldSolv=7.105e-6,
+                scale=.0011, radius_a=45.265, radius_b=600.8, sldEll=.291e-6, sldSolv=7.105e-6,
                  background=8.30161, axis_theta=0, axis_phi=0,
                  radius_a_pd=0.222296, radius_a_pd_n=1, radius_a_pd_nsigma=0,
                  radius_b_pd=.000128, radius_b_pd_n=1, radius_b_pd_nsigma=0,

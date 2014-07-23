@@ -48,8 +48,8 @@ class GpuEllipse(object):
             [GaussianDispersion(int(pars[base+'_pd_n']), pars[base+'_pd'], pars[base+'_pd_nsigma'])
              for base in GpuEllipse.PD_PARS]
 
-        radius_a.value, radius_a.weight = radius_a.get_weights(pars['radius_a'], 0, 1000, True)
-        radius_b.value, radius_b.weight = radius_b.get_weights(pars['radius_b'], 0, 1000, True)
+        radius_a.value, radius_a.weight = radius_a.get_weights(pars['radius_a'], 0, 10000, True)
+        radius_b.value, radius_b.weight = radius_b.get_weights(pars['radius_b'], 0, 10000, True)
         axis_theta.value, axis_theta.weight = axis_theta.get_weights(pars['axis_theta'], -90, 180, False)
         axis_phi.value, axis_phi.weight = axis_phi.get_weights(pars['axis_phi'], -90, 180, False)
 

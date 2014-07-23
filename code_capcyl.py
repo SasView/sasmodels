@@ -6,7 +6,7 @@ from math import asin
 import pyopencl as cl
 from weights import GaussianDispersion
 from sasmodel import card
-from Capcyl_Gauss import Gauss76Wt, Gauss76Z
+from Gauss import Gauss76Wt, Gauss76Z
 
 def set_precision(src, qx, qy, dtype):
     qx = np.ascontiguousarray(qx, dtype=dtype)
@@ -42,7 +42,8 @@ class GpuCapCylinder(object):
         mf = cl.mem_flags
         self.qx_b = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=self.qx)
         self.qy_b = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=self.qy)
-        G, Z = Gauss76Wt, Gauss76Z
+        G = np.ascontiguousarray(Gauss76Wt, dtype=dtype)
+        Z = np.ascontiguousarray(Gauss76Z, dtype=dtype)
         self.Gauss76W_b = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=G)
         self.Gauss76Z_b = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=Z)
         self.res_b = cl.Buffer(ctx, mf.WRITE_ONLY, qx.nbytes)

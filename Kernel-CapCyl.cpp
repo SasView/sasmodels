@@ -15,7 +15,7 @@ const real length_weight, const int total, const int size, __const real Gauss76W
         real cyl_y = sin(theta);
         real cos_val = cyl_x*qx[i]/q + cyl_y*qy[i]/q;
         real alpha = acos(cos_val);
-        real yyy=0; real ans1=0; real ans2=0; real y=0; real xx=0; real ans=0; real zij=0; real be=0; real summj=0;
+        real ans1=0; real ans2=0; real y=0; real xx=0; real ans=0; real zij=0; real be=0; real summj=0;
 
         real hDist = -1.0*sqrt(fabs(rad_cap*rad_cap-rad_cyl*rad_cyl));
         vol_i[i] = pi*rad_cyl*rad_cyl*length+2.0*pi/3.0*((rad_cap-hDist)*(rad_cap-hDist)*(2*rad_cap+hDist));
@@ -24,13 +24,11 @@ const real length_weight, const int total, const int size, __const real Gauss76W
         for(int j=0;j<76;j++) //the 76 corresponds to the Gauss constants
         {
             zij = (Gauss76Z[j]*(1.0-vaj)+vaj+1.0)/2.0;
-            yyy = Gauss76Wt[j]*ConvLens_kernel(length,rad_cyl,rad_cap,q,zij,alpha);
-            summj += yyy;
+            summj += Gauss76Wt[j]*ConvLens_kernel(length,rad_cyl,rad_cap,q,zij,alpha);
         }
-        real inner = (1.0-vaj)/2.0*summj*4.0*pi*rad_cap*rad_cap*rad_cap;
+        real yyy = (1.0-vaj)/2.0*summj*4.0*pi*rad_cap*rad_cap*rad_cap;
         real arg1 = q*length/2.0*cos(alpha);
         real arg2 = q*rad_cyl*sin(alpha);
-        yyy = inner;
 
         if(arg2 == 0) {be = 0.5;}
         else {
