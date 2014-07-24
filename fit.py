@@ -31,15 +31,15 @@ length_pd=0.1,length_pd_n=5,length_pd_nsigma=0,
 bolim=0.0,
 uplim=90) #bottom limit, upper limit of angle integral
 """
-
-
+"""
 model = SasModel(data, GpuEllipse,
-scale=0.0011,
-radius_a=100, radius_b=800.8,
+scale=0.08,
+radius_a=15, radius_b=200,
 sldEll=.291e-6, sldSolv=7.105e-6,
-background=8.30161,
+background=0,
 axis_theta=0, axis_phi=0,
-axis_theta_pd=20, axis_theta_pd_n=40, axis_theta_pd_nsigma=3,
+axis_theta_pd=20, axis_theta_pd_n=10, axis_theta_pd_nsigma=3,
+
 radius_a_pd=0.222296, radius_a_pd_n=1, radius_a_pd_nsigma=0,
 radius_b_pd=.000128, radius_b_pd_n=1, radius_b_pd_nsigma=0,
 axis_phi_pd=2.63698e-05, axis_phi_pd_n=20, axis_phi_pd_nsigma=0,
@@ -47,12 +47,12 @@ dtype='float')
 
 
 # SET THE FITTING PARAMETERS
-model.radius_a.range(15, 1000)
-model.radius_b.range(15, 1000)
-#model.axis_theta_pd.range(0, 360)
+#model.radius_a.range(15, 1000)
+#model.radius_b.range(15, 1000)
+model.axis_theta_pd.range(0, 360)
 #model.background.range(0,1000)
-model.scale.range(0, 1)
-
+#model.scale.range(0, 1)
+"""
 """
 
 model = SasModel(data, GpuLamellar,
@@ -70,26 +70,25 @@ model.scale.range(0, 1)
 #model.background.range(0, 1000)
 """
 
-
-
-"""
 model = SasModel(data, GpuCylinder,
-scale=0.0013, radius=105, length=1000,
-sldCyl=.291e-6, sldSolv=5.77e-6, background=21,
-cyl_theta=90, cyl_phi=0,
-cyl_theta_pd=534, cyl_theta_pd_n=40, cyl_theta_pd_nsigma=3,
+scale=0.08, radius=46, length=719,
+sldCyl=.291e-6, sldSolv=5.77e-6, background=0,
+cyl_theta=0, cyl_phi=0,
+cyl_theta_pd=23, cyl_theta_pd_n=10, cyl_theta_pd_nsigma=3,
+
+
+radius_pd=0.1, radius_pd_n=20, radius_pd_nsigma=0,
+length_pd=0.1, length_pd_n=20, length_pd_nsigma=0,
+cyl_phi_pd=0.1, cyl_phi_pd_n=20, cyl_phi_pd_nsigma=0,
+dtype='float')
 
 # SET THE FITTING PARAMETERS
-radius_pd=0.1, radius_pd_n=10, radius_pd_nsigma=0,
-length_pd=0.1, length_pd_n=5, length_pd_nsigma=0,
-cyl_phi_pd=0.1, cyl_phi_pd_n=4, cyl_phi_pd_nsigma=0,
-dtype='float')
-#model.radius.range(0, 1000)
+model.radius.range(0, 25)
 #model.length.range(0, 1000)
 #model.cyl_theta_pd.range(0,90)
-model.scale.range(0, 1)
-model.background.range(0, 1000)
-"""
+#model.scale.range(0, 1)
+#model.background.range(0, 1000)
+
 
 """
 model = SasModel(data, GpuCoreShellCylinder,
