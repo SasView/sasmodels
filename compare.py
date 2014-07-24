@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import datetime
-from sasmodel import SasModel, load_data, set_beam_stop, plot_data
+
+from Models.sasmodel import SasModel, load_data, set_beam_stop, plot_data
+
 
 TIC = None
 def tic():

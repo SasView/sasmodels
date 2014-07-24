@@ -60,47 +60,6 @@ class GpuLamellar(object):
 
         return sum/norm + pars['background']
 
-def demo():
-
-    from time import time
-    import matplotlib.pyplot as plt
-
-    #create qx and qy evenly spaces
-    qx = np.linspace(-.01, .01, 128)
-    qy = np.linspace(-.01, .01, 128)
-    qx, qy = np.meshgrid(qx, qy)
-
-    #saved shape of qx
-    r_shape = qx.shape
-
-    #reshape for calculation; resize as float32
-    qx = qx.flatten()
-    qy = qy.flatten()
-
-    pars = LamellarParameters(scale=1, bi_thick=100, sld_bi=.291e-6, sld_sol=5.77e-6, background=0)
-    t = time()
-    result = GpuLamellar(qx, qy)
-    result.x = result.lamellar_fit(pars, b_n=35, b_w=.1, sigma=3)
-    result.x = np.reshape(result.x, r_shape)
-    tt = time()
-
-    print("Time taken: %f" % (tt - t))
-
-    f = open("r.txt", "w")
-    for x in xrange(len(r_shape)):
-        f.write(str(result.x[x]))
-        f.write("\n")
-
-    plt.pcolormesh(np.log10(result.x))
-    plt.show()
-
-
-if __name__ == "__main__":
-    demo()
-
-
-
-
 
 
 

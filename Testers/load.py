@@ -3,7 +3,8 @@
 
 from sans.dataloader.loader import Loader
 from sans.dataloader.manipulations import Ringcut
-import fit
+from Kernel import fit
+
 
 def cylinder(data): ##################################################################################
     from sans.models.CylinderModel import CylinderModel

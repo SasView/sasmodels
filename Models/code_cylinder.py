@@ -3,8 +3,10 @@
 
 import numpy as np
 import pyopencl as cl
+
 from weights import GaussianDispersion
-from sasmodel import card
+from Models.sasmodel import card
+
 
 def set_precision(src, qx, qy, dtype):
     qx = np.ascontiguousarray(qx, dtype=dtype)

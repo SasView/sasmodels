@@ -3,10 +3,7 @@
 
 from bumps.names import *
 from cylcode import GpuCylinder
-from lamellarcode import GpuLamellar
-from ellipsecode import GpuEllipse
-from coreshellcylcode import GpuCoreShellCylinder
-from sasmodel import SasModel, load_data, set_beam_stop
+from Models.sasmodel import SasModel, load_data, set_beam_stop
 
 
 radial_data = load_data('JUN03289.DAT')
