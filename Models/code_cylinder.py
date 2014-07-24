@@ -5,7 +5,7 @@ import numpy as np
 import pyopencl as cl
 
 from weights import GaussianDispersion
-from Models.sasmodel import card
+from sasmodel import card
 
 
 def set_precision(src, qx, qy, dtype):
@@ -46,7 +46,7 @@ class GpuCylinder(object):
 
         #create context, queue, and build program
         ctx,_queue = card()
-        src, qx, qy = set_precision(open('NR_BessJ1.cpp').read()+"\n"+open('Kernel-Cylinder.cpp').read(), qx, qy, dtype=dtype)
+        src, qx, qy = set_precision(open('Kernel/NR_BessJ1.cpp').read()+"\n"+open('Kernel/Kernel-Cylinder.cpp').read(), qx, qy, dtype=dtype)
         self.prg = cl.Program(ctx, src).build()
         self.qx, self.qy = qx, qy
 
@@ -110,7 +110,7 @@ class OneDGpuCylinder(object):
 
         #create context, queue, and build program
         ctx,_queue = card()
-        trala = open('NR_BessJ1.cpp').read()+"\n"+open('OneDCyl_Kfun.cpp').read()+"\n"+open('Kernel-OneDCylinder.cpp').read()
+        trala = open('Kernel/NR_BessJ1.cpp').read()+"\n"+open('Kernel/OneDCyl_Kfun.cpp').read()+"\n"+open('Kernel/Kernel-OneDCylinder.cpp').read()
         src, self.q = set_precision_1d(trala, q, dtype=dtype)
         self.prg = cl.Program(ctx, src).build()
 

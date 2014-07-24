@@ -5,7 +5,7 @@ import numpy as np
 import pyopencl as cl
 
 from weights import GaussianDispersion
-from Models.sasmodel import card
+from sasmodel import card
 
 
 def set_precision(src, qx, qy, dtype):
@@ -30,7 +30,7 @@ class GpuTriEllipse:
 
     def __init__(self, qx, qy, dtype='float32'):
         ctx,_queue = card()
-        src, qx, qy = set_precision(open('Kernel-TriaxialEllipse.cpp').read(), qx, qy, dtype=dtype)
+        src, qx, qy = set_precision(open('Kernel/Kernel-TriaxialEllipse.cpp').read(), qx, qy, dtype=dtype)
         self.prg = cl.Program(ctx, src).build()
         self.qx, self.qy = qx, qy
 

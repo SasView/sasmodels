@@ -3,7 +3,7 @@
 
 import numpy as np
 import pyopencl as cl
-from weights import GaussianDispersion
+from Models.weights import GaussianDispersion
 
 def set_precision(src, qx, qy, dtype):
     qx = np.ascontiguousarray(qx, dtype=dtype)
@@ -30,7 +30,7 @@ class GpuLamellar(object):
         #create context, queue, and build program
         self.ctx = cl.create_some_context()
         self.queue = cl.CommandQueue(self.ctx)
-        src,qx,qy = set_precision(open('Kernel-Lamellar.cpp').read(), qx, qy, dtype=dtype)
+        src,qx,qy = set_precision(open('Kernel/Kernel-Lamellar.cpp').read(), qx, qy, dtype=dtype)
         self.prg = cl.Program(self.ctx, src).build()
         self.qx, self.qy = qx, qy
 

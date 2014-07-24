@@ -2,25 +2,23 @@
 # -*- coding: utf-8 -*-
 
 from bumps.names import *
-from code_cylinder import GpuCylinder, OneDGpuCylinder
-from code_lamellar import GpuLamellar
-from code_ellipse import GpuEllipse
-from code_coreshellcyl import GpuCoreShellCylinder
-from code_capcyl import GpuCapCylinder
-from code_triaxialellipse import GpuTriEllipse
-from sasmodel import SasModel, load_data, set_beam_stop, set_half
-import numpy as np
+from sasmodel import SasModel, load_data, set_beam_stop
+from Models.code_capcyl import GpuCapCylinder
+from Models.code_coreshellcyl import GpuCoreShellCylinder
+from Models.code_cylinder import GpuCylinder, OneDGpuCylinder
+from Models.code_ellipse import GpuEllipse
+from Models.code_lamellar import GpuLamellar
+from Models.code_triaxialellipse import GpuTriEllipse
 
 """ IMPORT THE DATA USED """
-
-data = load_data('December/Tangential/Sector0/DEC07133.ABS')
-#data = load_data('December/DEC07133.DAT')
+#data = load_data('December/Tangential/Sector0/DEC07133.ABS')
+data = load_data('December/DEC07235.DAT')
 
 """ SET INNER BEAM STOP, OUTER RING, AND MASK HALF OF THE DATA """
 set_beam_stop(data, 0.0052)#, outer=0.025)
 #set_half(data, 'left')
 
-
+"""
 
 model = SasModel(data, OneDGpuCylinder,
 scale=0.0013,
@@ -32,9 +30,9 @@ radius_pd=0.1,radius_pd_n=10,radius_pd_nsigma=0,
 length_pd=0.1,length_pd_n=5,length_pd_nsigma=0,
 bolim=0.0,
 uplim=90) #bottom limit, upper limit of angle integral
-
-
 """
+
+
 model = SasModel(data, GpuEllipse,
 scale=0.0011,
 radius_a=100, radius_b=800.8,
@@ -54,9 +52,9 @@ model.radius_b.range(15, 1000)
 #model.axis_theta_pd.range(0, 360)
 #model.background.range(0,1000)
 model.scale.range(0, 1)
-"""
 
 """
+
 model = SasModel(data, GpuLamellar,
 scale=0.70,
 bi_thick=5,
@@ -119,15 +117,23 @@ model.radius.range(15, 1000)
 model.scale.range(0, 1)
 """
 
-"""
 
-model = SasModel(data, GpuCapCylinder, scale=1, rad_cyl=20, rad_cap=40, length=400, sld_capcyl=1e-6, sld_solv=6.3e-6,
-                 background=0, theta=0, phi=0, rad_cyl_pd=.1, rad_cyl_pd_n=10, rad_cyl_nsigma=3, rad_cap_pd=.1, rad_cap_pd_n=1,
-                 rad_cap_pd_nsigma=3, length_pd=.1, length_pd_n=10, length_pd_nsigma=3, theta_pd=.1, theta_pd_n=4,
-                 theta_pd_nsigma=3, phi_pd=.1, phi_pd_n=4, phi_pd_nsigma=3, dtype='float')
 """
-"""
+model = SasModel(data, GpuCapCylinder,
+                 scale=1, rad_cyl=20, rad_cap=40, length=400,
+                 sld_capcyl=1e-6, sld_solv=6.3e-6,
+                 background=0, theta=0, phi=0,
+                 rad_cyl_pd=.1, rad_cyl_pd_n=1, rad_cyl_pd_nsigma=0,
+                 rad_cap_pd=.1, rad_cap_pd_n=1, rad_cap_pd_nsigma=0,
+                 length_pd=.1, length_pd_n=1, length_pd_nsigma=0,
+                 theta_pd=.1, theta_pd_n=1, theta_pd_nsigma=0,
+                 phi_pd=.1, phi_pd_n=1, phi_pd_nsigma=0,
+                 dtype='float')
 
+model.scale.range(0, 1)
+
+"""
+"""
 model = SasModel(data, GpuTriEllipse,
                  scale=0.0036, axisA=118, axisB=70, axisC=800,
                  sldEll=7.105e-6, sldSolv=.291e-6,
@@ -149,8 +155,8 @@ model.scale.range(0, 1)
 #model.phi_pd.range(0, 360)
 #model.psi_pd.range(0, 360)
 
-
 """
+
 
 problem = FitProblem(model)
 
