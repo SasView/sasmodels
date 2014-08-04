@@ -15,6 +15,32 @@ def load_data(filename):
         raise IOError("Data %r could not be loaded"%filename)
     return data
 
+def set_precision(src, qx, qy, dtype):
+    qx = np.ascontiguousarray(qx, dtype=dtype)
+    qy = np.ascontiguousarray(qy, dtype=dtype)
+    if np.dtype(dtype) == np.dtype('float32'):
+        header = """\
+#define real float
+"""
+    else:
+        header = """\
+#pragma OPENCL EXTENSION cl_khr_fp64: enable
+#define real double
+"""
+    return header+src, qx, qy
+
+def set_precision_1d(src, q, dtype):
+    q = np.ascontiguousarray(q, dtype=dtype)
+    if np.dtype(dtype) == np.dtype('float32'):
+        header = """\
+#define real float
+"""
+    else:
+        header = """\
+#pragma OPENCL EXTENSION cl_khr_fp64: enable
+#define real double
+"""
+    return header+src, q
 
 def set_beam_stop(data, radius, outer=None):
     if hasattr(data, 'qx_data'):
@@ -27,12 +53,13 @@ def set_beam_stop(data, radius, outer=None):
             data.mask &= (data.x<outer)
 
 def set_half(data, half):
-    if half == 'left':
-        data.mask += Boxcut(x_min=-np.inf, x_max=0.0, y_min=-np.inf, y_max=np.inf)(data)
     if half == 'right':
+        data.mask += Boxcut(x_min=-np.inf, x_max=0.0, y_min=-np.inf, y_max=np.inf)(data)
+    if half == 'left':
         data.mask += Boxcut(x_min=0.0, x_max=np.inf, y_min=-np.inf, y_max=np.inf)(data)
 
-
+def set_top(data, max):
+    data.mask += Boxcut(x_min=-np.inf, x_max=np.inf, y_min=-np.inf, y_max=max)(data)
 
 def plot_data(data, iq, vmin=None, vmax=None):
     from numpy.ma import masked_array
@@ -68,6 +95,7 @@ def plot_result2D(data, theory, view='linear'):
     plot_data(data, mtheory, vmin=vmin, vmax=vmax)
     plt.colorbar()
     plt.subplot(1, 3, 3)
+    print abs(mresid).max()
     plot_data(data, mresid)
     plt.colorbar()
 
@@ -109,6 +137,7 @@ def card():
 class SasModel(object):
     def __init__(self, data, model, dtype='float32', **kw):
         self.__dict__['_parameters'] = {}
+        #self.name = data.filename
         self.is2D = hasattr(data,'qx_data')
         self.data = data
         if self.is2D:
@@ -134,27 +163,26 @@ class SasModel(object):
         pars.update((base+'_pd_n', 35) for base in model.PD_PARS)
         pars.update((base+'_pd_nsigma', 3) for base in model.PD_PARS)
         pars.update(kw)
-        self._parameters = dict((k, Parameter.default(v, name=k)) for k, v in pars.items())
+        for k,v in pars.items():
+            setattr(self, k, Parameter.default(v, name=k))
+        self._parameter_names = set(pars.keys())
+        self.update()
+
+    def update(self):
+        self._cache = {}
 
     def numpoints(self):
         return len(self.iq)
 
     def parameters(self):
-        return self._parameters
-
-    def __getattr__(self, par):
-        return self._parameters[par]
-
-    def __setattr__(self, par, val):
-        if par in self._parameters:
-            self._parameters[par] = val
-        else:
-            self.__dict__[par] = val
+        return dict((k,getattr(self,k)) for k in self._parameter_names)
 
     def theory(self):
-        pars = dict((k,v.value) for k,v in self._parameters.items())
-        result = self.gpu.eval(pars)
-        return result
+        if 'theory' not in self._cache:
+            pars = dict((k,getattr(self,k).value) for k in self._parameter_names)
+            #print pars
+            self._cache['theory'] = self.gpu.eval(pars)
+        return self._cache['theory']
 
     def residuals(self):
         #if np.any(self.err ==0): print "zeros in err"
@@ -176,10 +204,6 @@ class SasModel(object):
 
     def save(self, basename):
         pass
-
-    def update(self):
-        pass
-
 
 def demo():
     data = load_data('DEC07086.DAT')

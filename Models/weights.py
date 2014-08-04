@@ -18,7 +18,7 @@ class GaussianDispersion(object):
         npts, width, nsigmas = self.npts, self.width, self.nsigmas
         sigma = width * center if relative else width
         if sigma == 0:
-            return np.array([center, 1.], 'd')
+            return np.array([center],'d'), np.array([1.], 'd')
         x = center + np.linspace(-nsigmas * sigma, +nsigmas * sigma, npts)
         x = x[(x >= min) & (x <= max)]
         px = np.exp((x-center)**2 / (-2.0 * sigma * sigma))

@@ -31,7 +31,7 @@ const real psi_weight, const real phi_weight, const real theta_weight, const int
         }
         answer*=answer*sub*sub*4.0*pi/3.0*axisA*axisB*axisC*1.0e8*scale;
 
-        _ptvalue[i] = axisA_weight*axisB_weight*axisC_weight*theta_weight*phi_weight*psi_weight*answer*axisA*axisB*axisC;
+        _ptvalue[i] += axisA_weight*axisB_weight*axisC_weight*theta_weight*phi_weight*psi_weight*answer*axisA*axisB*axisC;
        // if (size>1)
          //   _ptvalue[i] *= fabs(cos(theta*pi/180.0));
 

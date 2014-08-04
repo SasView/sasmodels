@@ -41,7 +41,8 @@ const real cyl_phi, const int count, const int size)
         real form = be*si/sin(alpha);
         real answer = sub*sub*form*acos(-1.0)*rr*rr*h*1.0e8*scale;
 
-        _ptvalue[i] = radius_weight*length_weight*theta_weight*phi_weight*answer*pow(rr,2)*h;
+        _ptvalue[i] += radius_weight*length_weight*theta_weight*phi_weight*answer*pow(rr,2)*h;
+
        // if (size>1) {
          //   _ptvalue[i] *= fabs(cos(cyl_theta*pi/180.0));
       //  }

@@ -2,23 +2,26 @@
 # -*- coding: utf-8 -*-
 
 from bumps.names import *
-from code_lamellar import GpuLamellar
-from code_ellipse import GpuEllipse
+from Models.code_lamellar import GpuLamellar
+from Models.code_ellipse import GpuEllipse
+from Models.code_cylinder import GpuCylinder
 from multisasmodels import SasModel, load_data, set_beam_stop, set_half
 import numpy as np
 
-data = load_data('DEC07282.DAT')
+data = load_data('December/DEC07238.DAT')
 set_beam_stop(data, 0.0052)#, outer=0.025)
 #set_half(data, 'left')
 
-truth = SasModel(data, GpuEllipse,
-                scale=.0011, radius_a=45.265, radius_b=600.8, sldEll=.291e-6, sldSolv=7.105e-6,
-                 background=8.30161, axis_theta=0, axis_phi=0,
-                 radius_a_pd=0.222296, radius_a_pd_n=1, radius_a_pd_nsigma=0,
-                 radius_b_pd=.000128, radius_b_pd_n=1, radius_b_pd_nsigma=0,
-                 axis_theta_pd=20, axis_theta_pd_n=40, axis_theta_pd_nsigma=3,
-                 axis_phi_pd=2.63698e-05, axis_phi_pd_n=20, axis_phi_pd_nsigma=0,
-                 dtype='float')
+truth = SasModel(data, GpuCylinder,
+scale=0.08, radius=46, length=719,
+sldCyl=.291e-6, sldSolv=5.77e-6, background=0,
+cyl_theta=90, cyl_phi=0,
+cyl_theta_pd=23, cyl_theta_pd_n=40, cyl_theta_pd_nsigma=3,
+radius_pd=0.1, radius_pd_n=10, radius_pd_nsigma=3,
+length_pd=0.1, length_pd_n=10, length_pd_nsigma=3,
+cyl_phi_pd=0.1, cyl_phi_pd_n=10, cyl_phi_pd_nsigma=3,
+dtype='float')
+
 
 #model.radius_a.range(15, 1000)
 #model.radius_b.range(15, 1000)
@@ -29,8 +32,16 @@ truth = SasModel(data, GpuEllipse,
 arrayone = truth.theory()
 
 
-lies = SasModel(data, GpuLamellar, scale=0, bi_thick=5, sld_bi=.291e-6, sld_sol=5.77e-6, background=85.23,
-                 bi_thick_pd= 0.0013, bi_thick_pd_n=5, bi_thick_pd_nsigma=3, dtype='float')
+lies = SasModel(data, GpuCylinder,
+scale=0.08, radius=46, length=719,
+sldCyl=.291e-6, sldSolv=5.77e-6, background=0,
+cyl_theta=90, cyl_phi=0,
+cyl_theta_pd=23, cyl_theta_pd_n=40, cyl_theta_pd_nsigma=3,
+radius_pd=0.1, radius_pd_n=10, radius_pd_nsigma=3,
+length_pd=0.1, length_pd_n=10, length_pd_nsigma=3,
+cyl_phi_pd=0.1, cyl_phi_pd_n=10, cyl_phi_pd_nsigma=3,
+dtype='float')
+
 
 
 #modeltwo.bi_thick.range(0, 1000)
@@ -42,7 +53,7 @@ lies = SasModel(data, GpuLamellar, scale=0, bi_thick=5, sld_bi=.291e-6, sld_sol=
 arraytwo = lies.theory()
 
 
-a = np.add(np.multiply(arrayone, .5), np.multiply(arraytwo, 0))
+a = np.add(np.multiply(arrayone, .08), np.multiply(arraytwo, .08))
 truth.set_result(a)
 
 

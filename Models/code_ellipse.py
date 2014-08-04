@@ -5,22 +5,7 @@ import numpy as np
 import pyopencl as cl
 
 from weights import GaussianDispersion
-from sasmodel import card
-
-
-def set_precision(src, qx, qy, dtype):
-    qx = np.ascontiguousarray(qx, dtype=dtype)
-    qy = np.ascontiguousarray(qy, dtype=dtype)
-    if np.dtype(dtype) == np.dtype('float32'):
-        header = """\
-#define real float
-"""
-    else:
-        header = """\
-#pragma OPENCL EXTENSION cl_khr_fp64: enable
-#define real double
-"""
-    return header+src, qx, qy
+from sasmodel import card, set_precision
 
 class GpuEllipse(object):
     PARS = {
@@ -45,6 +30,8 @@ class GpuEllipse(object):
     def eval(self, pars):
     #b_n = radius_b # want, a_n = radius_a # want, etc
         _ctx,queue = card()
+        self.res[:] = 0
+        cl.enqueue_copy(queue, self.res_b, self.res)
         radius_a, radius_b, axis_theta, axis_phi = \
             [GaussianDispersion(int(pars[base+'_pd_n']), pars[base+'_pd'], pars[base+'_pd_nsigma'])
              for base in GpuEllipse.PD_PARS]
@@ -75,9 +62,7 @@ class GpuEllipse(object):
                                         real(radius_b.value[j]), real(sub), real(axis_theta.value[k]),
                                         real(axis_phi.value[l]), self.qx_b, self.qy_b, self.res_b,
                                         np.uint32(self.qx.size), np.uint32(len(axis_theta.weight)))
-                        #copy result back from buffer
-                        cl.enqueue_copy(queue, self.res, self.res_b)
-                        sum += self.res
+
                         vol += radius_a.weight[i]*radius_b.weight[j]*pow(radius_b.value[j], 2)*radius_a.value[i]
                         norm_vol += radius_a.weight[i]*radius_b.weight[j]
                         norm += radius_a.weight[i]*radius_b.weight[j]*axis_theta.weight[k]*axis_phi.weight[l]
@@ -87,6 +72,8 @@ class GpuEllipse(object):
 
     #    if size > 1:
      #       norm /= math.asin(1.0)
+        cl.enqueue_copy(queue, self.res, self.res_b)
+        sum += self.res
         if vol != 0.0 and norm_vol != 0.0:
             sum *= norm_vol/vol
 

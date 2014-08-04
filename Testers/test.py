@@ -1,3 +1,8 @@
+impor
+
+
+
+
 import numpy as np
 
 
@@ -11,3 +16,4 @@ for i in xrange(x.size-1):
     sum += (x[i+1]-x[i])*(y[i]+y[i+1])/2
 
 print sum
+

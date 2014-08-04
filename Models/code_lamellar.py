@@ -4,20 +4,7 @@
 import numpy as np
 import pyopencl as cl
 from Models.weights import GaussianDispersion
-
-def set_precision(src, qx, qy, dtype):
-    qx = np.ascontiguousarray(qx, dtype=dtype)
-    qy = np.ascontiguousarray(qy, dtype=dtype)
-    if dtype == 'double':
-        header = """\
-#define real float
-"""
-    else:
-        header = """\
-#pragma OPENCL EXTENSION cl_khr_fp64: enable
-#define real double
-"""
-    return header+src, qx, qy
+from sasmodel import set_precision
 
 
 class GpuLamellar(object):

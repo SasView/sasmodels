@@ -5,35 +5,8 @@ import numpy as np
 import pyopencl as cl
 
 from weights import GaussianDispersion
-from sasmodel import card
+from sasmodel import card, set_precision, set_precision_1d
 
-
-def set_precision(src, qx, qy, dtype):
-    qx = np.ascontiguousarray(qx, dtype=dtype)
-    qy = np.ascontiguousarray(qy, dtype=dtype)
-    if np.dtype(dtype) == np.dtype('float32'):
-        header = """\
-#define real float
-"""
-    else:
-        header = """\
-#pragma OPENCL EXTENSION cl_khr_fp64: enable
-#define real double
-"""
-    return header+src, qx, qy
-
-def set_precision_1d(src, q, dtype):
-    q = np.ascontiguousarray(q, dtype=dtype)
-    if np.dtype(dtype) == np.dtype('float32'):
-        header = """\
-#define real float
-"""
-    else:
-        header = """\
-#pragma OPENCL EXTENSION cl_khr_fp64: enable
-#define real double
-"""
-    return header+src, q
 
 class GpuCylinder(object):
     PARS = {
@@ -54,12 +27,14 @@ class GpuCylinder(object):
         mf = cl.mem_flags
         self.qx_b = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=self.qx)
         self.qy_b = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=self.qy)
-        self.res_b = cl.Buffer(ctx, mf.WRITE_ONLY, qx.nbytes)
+        self.res_b = cl.Buffer(ctx, cl.mem_flags.READ_WRITE, self.qx.nbytes)
         self.res = np.empty_like(self.qx)
 
     def eval(self, pars):
 
         _ctx,queue = card()
+        self.res[:] = 0
+        cl.enqueue_copy(queue, self.res_b, self.res)
         radius, length, cyl_theta, cyl_phi = \
             [GaussianDispersion(int(pars[base+'_pd_n']), pars[base+'_pd'], pars[base+'_pd_nsigma'])
              for base in GpuCylinder.PD_PARS]
@@ -67,8 +42,8 @@ class GpuCylinder(object):
         #Get the weights for each
         radius.value, radius.weight = radius.get_weights(pars['radius'], 0, 10000, True)
         length.value, length.weight = length.get_weights(pars['length'], 0, 10000, True)
-        cyl_theta.value, cyl_theta.weight = cyl_theta.get_weights(pars['cyl_theta'], -90, 180, False)
-        cyl_phi.value, cyl_phi.weight = cyl_phi.get_weights(pars['cyl_phi'], -90, 180, False)
+        cyl_theta.value, cyl_theta.weight = cyl_theta.get_weights(pars['cyl_theta'], -np.inf, np.inf, False)
+        cyl_phi.value, cyl_phi.weight = cyl_phi.get_weights(pars['cyl_phi'], -np.inf, np.inf, False)
 
         #Perform the computation, with all weight points
         sum, norm, norm_vol, vol = 0.0, 0.0, 0.0, 0.0
@@ -86,14 +61,15 @@ class GpuCylinder(object):
                                            real(radius.weight[i]), real(length.weight[j]), real(cyl_theta.weight[k]),
                                            real(cyl_phi.weight[l]), real(cyl_theta.value[k]), real(cyl_phi.value[l]),
                                            np.uint32(self.qx.size), np.uint32(size))
-                        cl.enqueue_copy(queue, self.res, self.res_b)
-                        sum += self.res
+
                         vol += radius.weight[i]*length.weight[j]*pow(radius.value[i], 2)*length.value[j]
                         norm_vol += radius.weight[i]*length.weight[j]
                         norm += radius.weight[i]*length.weight[j]*cyl_theta.weight[k]*cyl_phi.weight[l]
 
        # if size > 1:
         #    norm /= math.asin(1.0)
+        cl.enqueue_copy(queue, self.res, self.res_b)
+        sum = self.res
         if vol != 0.0 and norm_vol != 0.0:
             sum *= norm_vol/vol
 

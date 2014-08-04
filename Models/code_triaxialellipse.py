@@ -5,22 +5,7 @@ import numpy as np
 import pyopencl as cl
 
 from weights import GaussianDispersion
-from sasmodel import card
-
-
-def set_precision(src, qx, qy, dtype):
-    qx = np.ascontiguousarray(qx, dtype=dtype)
-    qy = np.ascontiguousarray(qy, dtype=dtype)
-    if np.dtype(dtype) == np.dtype('float32'):
-        header = """\
-#define real float
-"""
-    else:
-        header = """\
-#pragma OPENCL EXTENSION cl_khr_fp64: enable
-#define real double
-"""
-    return header+src, qx, qy
+from sasmodel import card, set_precision
 
 class GpuTriEllipse:
     PARS = {'scale':1, 'axisA':35, 'axisB':100, 'axisC':400, 'sldEll':1e-6, 'sldSolv':6.3e-6, 'background':0,
@@ -44,6 +29,8 @@ class GpuTriEllipse:
     def eval(self, pars):
 
         _ctx,queue = card()
+        self.res[:] = 0
+        cl.enqueue_copy(queue, self.res_b, self.res)
         axisA, axisB, axisC, theta, phi, psi = \
             [GaussianDispersion(int(pars[base+'_pd_n']), pars[base+'_pd'], pars[base+'_pd_nsigma'])
              for base in GpuTriEllipse.PD_PARS]
@@ -71,8 +58,6 @@ class GpuTriEllipse:
                                             real(axisC.value[c]), real(phi.value[i]), real(theta.value[t]), real(psi.value[s]),
                                             real(axisA.weight[a]), real(axisB.weight[b]), real(axisC.weight[c]), real(psi.weight[s]),
                                             real(phi.weight[i]), real(theta.weight[t]), np.uint32(self.qx.size), np.uint32(size))
-                                cl.enqueue_copy(queue, self.res, self.res_b)
-                                sum += self.res
 
                                 vol += axisA.weight[a]*axisB.weight[b]*axisC.weight[c]*axisA.value[a]*axisB.value[b]*axisC.value[c]
                                 norm_vol += axisA.weight[a]*axisB.weight[b]*axisC.weight[c]
@@ -80,7 +65,8 @@ class GpuTriEllipse:
 
       #  if size > 1:
        #     norm /= asin(1.0)
-
+        cl.enqueue_copy(queue, self.res, self.res_b)
+        sum = self.res
         if vol != 0.0 and norm_vol != 0.0:
             sum *= norm_vol/vol
 

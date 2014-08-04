@@ -41,7 +41,7 @@ const real length_weight, const real theta_weight, const int total, const int si
         real answer=yyy*yyy*1.0e8*sub*sub*scale/pi*rad_cyl*rad_cyl*length+2.0*pi*(2.0*rad_cap*rad_cap*rad_cap/3.0+rad_cap*rad_cap*hDist-hDist*hDist*hDist/3.0);
         answer/=sin(alpha);
 
-        _ptvalue[i] = rad_cyl_weight*length_weight*rad_cap_weight*theta_weight*phi_weight*vol_i*answer;
+        _ptvalue[i] += rad_cyl_weight*length_weight*rad_cap_weight*theta_weight*phi_weight*vol_i*answer;
      //   if (size>1) {
    //         _ptvalue[i] *= fabs(cos(thet*pi/180.0));
      //   }

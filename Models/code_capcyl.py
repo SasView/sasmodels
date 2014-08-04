@@ -2,26 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-from math import asin, sqrt, fabs, atan
+from math import sqrt, fabs, atan
 import pyopencl as cl
 
 from weights import GaussianDispersion
-from sasmodel import card
+from sasmodel import card, set_precision
 
 
-def set_precision(src, qx, qy, dtype):
-    qx = np.ascontiguousarray(qx, dtype=dtype)
-    qy = np.ascontiguousarray(qy, dtype=dtype)
-    if np.dtype(dtype) == np.dtype('float32'):
-        header = """\
-#define real float
-"""
-    else:
-        header = """\
-#pragma OPENCL EXTENSION cl_khr_fp64: enable
-#define real double
-"""
-    return header+src, qx, qy
 
 class GpuCapCylinder(object):
     PARS = {'scale':1, 'rad_cyl':1, 'rad_cap':1, 'length':1, 'sld_capcyl':1e-6, 'sld_solv':0, 'background':0,
@@ -49,6 +36,8 @@ class GpuCapCylinder(object):
     def eval(self, pars):
 
         _ctx,queue = card()
+        self.res[:] = 0
+        cl.enqueue_copy(queue, self.res_b, self.res)
         rad_cyl,length,rad_cap,theta,phi = \
             [GaussianDispersion(int(pars[base+'_pd_n']), pars[base+'_pd'], pars[base+'_pd_nsigma'])
              for base in GpuCapCylinder.PD_PARS]
@@ -78,16 +67,14 @@ class GpuCapCylinder(object):
                                         real(phi.weight[l]), real(theta.weight[k]), real(rad_cap.weight[m]),
                                         real(rad_cyl.weight[i]), real(length.weight[j]), real(theta.weight[k]), np.uint32(self.qx.size), np.uint32(size))
 
-                            cl.enqueue_copy(queue, self.res, self.res_b)
-
-                            sum += self.res
                             vol += rad_cyl.weight[i]*length.weight[j]*rad_cap.weight[m]*vol_i
                             norm_vol += rad_cyl.weight[i]*length.weight[j]*rad_cap.weight[m]
                             norm += rad_cyl.weight[i]*length.weight[j]*rad_cap.weight[m]*theta.weight[k]*phi.weight[l]
 
-        if size > 1:
-            norm /= asin(1.0)
-
+        #if size > 1:
+         #   norm /= asin(1.0)
+        cl.enqueue_copy(queue, self.res, self.res_b)
+        sum += self.res
         if vol != 0.0 and norm_vol != 0.0:
             sum *= norm_vol/vol
 

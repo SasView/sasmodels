@@ -19,7 +19,7 @@ __global const real *qy, __global real *_ptvalue, const int length, const int si
          }
          ret*=ret*9.0*sub*sub*4.0/3.0*acos(-1.0)*radius_b*radius_b*radius_a*scale*(1.0e8);
 
-         _ptvalue[i] = radius_a_weight*radius_b_weight*axis_theta_weight*radius_a*axis_phi_weight*ret*pow(radius_b, 2);
+         _ptvalue[i] += radius_a_weight*radius_b_weight*axis_theta_weight*radius_a*axis_phi_weight*ret*pow(radius_b, 2);
          //if(size > 1){
           //  _ptvalue[i] *= fabs(cos(axis_theta*pi/180.0));
          //}

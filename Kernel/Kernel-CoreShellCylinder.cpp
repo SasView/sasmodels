@@ -43,7 +43,7 @@ const int size, const int total)
         real answer = (tt*tt)*sin(alpha)/fabs(sin(alpha));
         answer *= answer/(pi*(radius+thickness)*(radius+thickness)*(length+2.0*thickness))*1.0e8*scale;
 
-        _ptvalue[i] = radius_weight*length_weight*thickness_weight*theta_weight*phi_weight*answer*pow(radius+thickness,2)*(length+2.0*thickness);
+        _ptvalue[i] += radius_weight*length_weight*thickness_weight*theta_weight*phi_weight*answer*pow(radius+thickness,2)*(length+2.0*thickness);
      //   if (size>1) {
        // _ptvalue[i] *= fabs(cos(axis_theta*pi/180.0));
         //}

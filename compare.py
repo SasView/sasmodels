@@ -3,7 +3,7 @@
 
 import datetime
 
-from Models.sasmodel import SasModel, load_data, set_beam_stop, plot_data
+from sasmodel import SasModel, load_data, set_beam_stop, plot_data
 
 
 TIC = None
@@ -45,13 +45,16 @@ def cyl(N=1):
 
     if len(sys.argv) > 1:
         N = int(sys.argv[1])
-    data = load_data('JUN03289.DAT')
+    data = load_data('December/DEC07098.DAT')
     set_beam_stop(data, 0.004)
 
+    dtype = "float"
     pars = dict(
-        scale=1, radius=64.1, length=266.96, sldCyl=.291e-6, sldSolv=5.77e-6, background=0,
-        cyl_theta=0, cyl_phi=0, radius_pd=0.1, radius_pd_n=10, radius_pd_nsigma=3,length_pd=0.1,
-        length_pd_n=5, length_pd_nsigma=3, cyl_theta_pd=0.1, cyl_theta_pd_n=5, cyl_theta_pd_nsigma=3,
+        scale=.08, radius=64.1, length=266.96, sldCyl=.291e-6, sldSolv=5.77e-6, background=.1,
+        cyl_theta=0, cyl_phi=0,
+        radius_pd=0.1, radius_pd_n=10, radius_pd_nsigma=3,
+        length_pd=0.1,length_pd_n=5, length_pd_nsigma=3,
+        cyl_theta_pd=0.1, cyl_theta_pd_n=5, cyl_theta_pd_nsigma=3,
         cyl_phi_pd=0.1, cyl_phi_pd_n=10, cyl_phi_pd_nsigma=3,
         )
 
@@ -61,13 +64,16 @@ def cyl(N=1):
         cpu = sasview_eval(model, data)
     cpu_time = toc()*1000./N
 
-    from code_cylinder import GpuCylinder
+
+    from Models.code_cylinder import GpuCylinder
     model = SasModel(data, GpuCylinder, dtype='f', **pars)
     tic()
     for i in range(N):
         gpu = model.theory()
     gpu_time = toc()*1000./N
 
+    print "gpu/cpu", max(gpu/cpu)
+    cpu *= max(gpu/cpu)
     relerr = (gpu - cpu)/cpu
     print "max(|(ocl-omp)/ocl|)", max(abs(relerr))
     print "omp t=%.1f ms"%cpu_time
@@ -75,7 +81,7 @@ def cyl(N=1):
 
     plt.subplot(131); plot_data(data, cpu); plt.title("omp t=%.1f ms"%cpu_time)
     plt.subplot(132); plot_data(data, gpu); plt.title("ocl t=%.1f ms"%gpu_time)
-    plt.subplot(133); plot_data(data, 1e8*relerr); plt.title("relerr x 10^8"); plt.colorbar()
+    plt.subplot(133); plot_data(data, relerr); plt.title("relerr x 10^8"); plt.colorbar()
     plt.show()
 
 def ellipse(N=4):
@@ -84,7 +90,7 @@ def ellipse(N=4):
 
     if len(sys.argv) > 1:
         N = int(sys.argv[1])
-    data = load_data('DEC07133.DAT')
+    data = load_data('DEC07106.DAT')
     set_beam_stop(data, 0.004)
 
     pars = dict(scale=.027, radius_a=60, radius_b=180, sldEll=.297e-6, sldSolv=5.773e-6, background=4.9,
@@ -98,7 +104,7 @@ def ellipse(N=4):
         cpu = sasview_eval(model, data)
     cpu_time = toc()*1000./N
 
-    from code_ellipse import GpuEllipse
+    from Models.code_ellipse import GpuEllipse
     model = SasModel(data, GpuEllipse, dtype='f', **pars)
     tic()
     for i in range(N):
@@ -115,13 +121,13 @@ def ellipse(N=4):
     plt.subplot(133); plot_data(data, 1e8*relerr); plt.title("relerr x 10^8"); plt.colorbar()
     plt.show()
 
-def coreshell(N=4):
+def coreshell(N=1):
     import sys
     import matplotlib.pyplot as plt
 
     if len(sys.argv) > 1:
         N = int(sys.argv[1])
-    data = load_data('DEC07133.DAT')
+    data = load_data('December/DEC07098.DAT')
     set_beam_stop(data, 0.004)
 
     pars = dict(scale= 1.77881e-06, radius=325, thickness=25, length=34.2709,
@@ -140,7 +146,7 @@ def coreshell(N=4):
         cpu = sasview_eval(model, data)
     cpu_time = toc()*1000./N
 
-    from code_coreshellcyl import GpuCoreShellCylinder
+    from Models.code_coreshellcyl import GpuCoreShellCylinder
     model = SasModel(data, GpuCoreShellCylinder, dtype='f', **pars)
     tic()
     for i in range(N):
