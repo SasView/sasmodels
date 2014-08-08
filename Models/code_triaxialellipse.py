@@ -8,10 +8,10 @@ from weights import GaussianDispersion
 from sasmodel import card, set_precision
 
 class GpuTriEllipse:
-    PARS = {'scale':1, 'axisA':35, 'axisB':100, 'axisC':400, 'sldEll':1e-6, 'sldSolv':6.3e-6, 'background':0,
-            'theta':0, 'phi':0, 'psi':0}
+    PARS = {'scale':1, 'semi_axisA':35, 'semi_axisB':100, 'semi_axisC':400, 'sldEll':1e-6, 'sldSolv':6.3e-6, 'background':0,
+            'axis_theta':0, 'axis_phi':0, 'axis_psi':0}
 
-    PD_PARS = ['axisA', 'axisB', 'axisC', 'theta', 'phi', 'psi']
+    PD_PARS = ['semi_axisA', 'semi_axisB', 'semi_axisC', 'axis_theta', 'axis_phi', 'axis_psi']
 
     def __init__(self, qx, qy, dtype='float32'):
         ctx,_queue = card()
@@ -31,37 +31,40 @@ class GpuTriEllipse:
         _ctx,queue = card()
         self.res[:] = 0
         cl.enqueue_copy(queue, self.res_b, self.res)
-        axisA, axisB, axisC, theta, phi, psi = \
+        semi_axisA, semi_axisB, semi_axisC, axis_theta, axis_phi, axis_psi = \
             [GaussianDispersion(int(pars[base+'_pd_n']), pars[base+'_pd'], pars[base+'_pd_nsigma'])
              for base in GpuTriEllipse.PD_PARS]
 
-        axisA.value, axisA.weight = axisA.get_weights(pars['axisA'], 0, 10000, True)
-        axisB.value, axisB.weight = axisB.get_weights(pars['axisB'], 0, 10000, True)
-        axisC.value, axisC.weight = axisC.get_weights(pars['axisC'], 0, 10000, True)
-        theta.value, theta.weight = theta.get_weights(pars['theta'], -90, 180, False)
-        phi.value, phi.weight = phi.get_weights(pars['phi'], -90, 180, False)
-        psi.value, psi.weight = psi.get_weights(pars['psi'], -90, 180, False)
+        semi_axisA.value, semi_axisA.weight = semi_axisA.get_weights(pars['semi_axisA'], 0, 10000, True)
+        semi_axisB.value, semi_axisB.weight = semi_axisB.get_weights(pars['semi_axisB'], 0, 10000, True)
+        semi_axisC.value, semi_axisC.weight = semi_axisC.get_weights(pars['semi_axisC'], 0, 10000, True)
+        axis_theta.value, axis_theta.weight = axis_theta.get_weights(pars['axis_theta'], -90, 180, False)
+        axis_phi.value, axis_phi.weight = axis_phi.get_weights(pars['axis_phi'], -90, 180, False)
+        axis_psi.value, axis_psi.weight = axis_psi.get_weights(pars['axis_psi'], -90, 180, False)
 
         sum, norm, norm_vol, vol = 0.0, 0.0, 0.0, 0.0
-        size = len(theta.weight)
+        size = len(axis_theta.weight)
         sub = pars['sldEll'] - pars['sldSolv']
 
         real = np.float32 if self.qx.dtype == np.dtype('float32') else np.float64
-        for a in xrange(len(axisA.weight)):
-            for b in xrange(len(axisB.weight)):
-                for c in xrange(len(axisC.weight)):
-                    for t in xrange(len(theta.weight)):
-                        for i in xrange(len(phi.weight)):
-                            for s in xrange(len(psi.weight)):
-                                self.prg.TriaxialEllipseKernel(queue, self.qx.shape, None, self.qx_b, self.qy_b, self.res_b,
-                                            real(sub), real(pars['scale']), real(axisA.value[a]), real(axisB.value[b]),
-                                            real(axisC.value[c]), real(phi.value[i]), real(theta.value[t]), real(psi.value[s]),
-                                            real(axisA.weight[a]), real(axisB.weight[b]), real(axisC.weight[c]), real(psi.weight[s]),
-                                            real(phi.weight[i]), real(theta.weight[t]), np.uint32(self.qx.size), np.uint32(size))
+        for a in xrange(len(semi_axisA.weight)):
+            for b in xrange(len(semi_axisB.weight)):
+                for c in xrange(len(semi_axisC.weight)):
 
-                                vol += axisA.weight[a]*axisB.weight[b]*axisC.weight[c]*axisA.value[a]*axisB.value[b]*axisC.value[c]
-                                norm_vol += axisA.weight[a]*axisB.weight[b]*axisC.weight[c]
-                                norm += axisA.weight[a]*axisB.weight[b]*axisC.weight[c]*theta.weight[t]*phi.weight[i]*psi.weight[s]
+                    vol += semi_axisA.weight[a]*semi_axisB.weight[b]*semi_axisC.weight[c]*semi_axisA.value[a]*semi_axisB.value[b]*semi_axisC.value[c]
+                    norm_vol += semi_axisA.weight[a]*semi_axisB.weight[b]*semi_axisC.weight[c]
+
+                    for t in xrange(len(axis_theta.weight)):
+                        for i in xrange(len(axis_phi.weight)):
+                            for s in xrange(len(axis_psi.weight)):
+                                self.prg.TriaxialEllipseKernel(queue, self.qx.shape, None, self.qx_b, self.qy_b, self.res_b,
+                                            real(sub), real(pars['scale']), real(semi_axisA.value[a]), real(semi_axisB.value[b]),
+                                            real(semi_axisC.value[c]), real(axis_phi.value[i]), real(axis_theta.value[t]), real(axis_psi.value[s]),
+                                            real(semi_axisA.weight[a]), real(semi_axisB.weight[b]), real(semi_axisC.weight[c]), real(axis_psi.weight[s]),
+                                            real(axis_phi.weight[i]), real(axis_theta.weight[t]), np.uint32(self.qx.size), np.uint32(size))
+
+                                norm += semi_axisA.weight[a]*semi_axisB.weight[b]*semi_axisC.weight[c]*axis_theta.weight[t]*axis_phi.weight[i]*axis_psi.weight[s]
+
 
       #  if size > 1:
        #     norm /= asin(1.0)

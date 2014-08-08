@@ -11,10 +11,10 @@ from sasmodel import card, set_precision
 
 
 class GpuCapCylinder(object):
-    PARS = {'scale':1, 'rad_cyl':1, 'rad_cap':1, 'length':1, 'sld_capcyl':1e-6, 'sld_solv':0, 'background':0,
+    PARS = {'scale':1, 'rad_cyl':1, 'rad_cap':1, 'len_cyl':1, 'sld_capcyl':1e-6, 'sld_solv':0, 'background':0,
              'theta':0, 'phi':0}
 
-    PD_PARS = ['rad_cyl', 'length', 'rad_cap', 'theta', 'phi']
+    PD_PARS = ['rad_cyl', 'len_cyl', 'rad_cap', 'theta', 'phi']
 
     def __init__(self, qx, qy, dtype='float32'):
 
@@ -38,13 +38,14 @@ class GpuCapCylinder(object):
         _ctx,queue = card()
         self.res[:] = 0
         cl.enqueue_copy(queue, self.res_b, self.res)
-        rad_cyl,length,rad_cap,theta,phi = \
+
+        rad_cyl,len_cyl,rad_cap,theta,phi = \
             [GaussianDispersion(int(pars[base+'_pd_n']), pars[base+'_pd'], pars[base+'_pd_nsigma'])
              for base in GpuCapCylinder.PD_PARS]
 
         rad_cyl.value, rad_cyl.weight = rad_cyl.get_weights(pars['rad_cyl'], 0, 10000, True)
         rad_cap.value, rad_cap.weight = rad_cap.get_weights(pars['rad_cap'], 0, 10000, True)
-        length.value, length.weight = length.get_weights(pars['length'], 0, 10000, True)
+        len_cyl.value, len_cyl.weight = len_cyl.get_weights(pars['len_cyl'], 0, 10000, True)
         theta.value, theta.weight = theta.get_weights(pars['theta'], -90, 180, False)
         phi.value, phi.weight = phi.get_weights(pars['phi'], -90, 180, False)
 
@@ -55,21 +56,26 @@ class GpuCapCylinder(object):
 
         for i in xrange(len(rad_cyl.weight)):
             for m in xrange(len(rad_cap.weight)):
-                for j in xrange(len(length.weight)):
+                for j in xrange(len(len_cyl.weight)):
+
+                    hDist = -1.0*sqrt(fabs(rad_cap.value[m]*rad_cap.value[m]-rad_cyl.value[i]*rad_cyl.value[i]))
+                    vol_i = 4.0*atan(1.0)*rad_cyl.value[i]*rad_cyl.value[i]*len_cyl.value[j]+2.0*4.0*atan(1.0)/3.0\
+                                    *((rad_cap.value[m]-hDist)*(rad_cap.value[m]-hDist)*(2*rad_cap.value[m]+hDist))
+                    vol += rad_cyl.weight[i]*len_cyl.weight[j]*rad_cap.weight[m]*vol_i
+                    norm_vol += rad_cyl.weight[i]*len_cyl.weight[j]*rad_cap.weight[m]
+
                     for k in xrange(len(theta.weight)):
                         for l in xrange(len(phi.weight)):
-                            hDist = -1.0*sqrt(fabs(rad_cap.value[m]*rad_cap.value[m]-rad_cyl.value[i]*rad_cyl.value[i]))
-                            vol_i = 4.0*atan(1.0)*rad_cyl.value[i]*rad_cyl.value[i]*length.value[j]+2.0*4.0*atan(1.0)/3.0\
-                                            *((rad_cap.value[m]-hDist)*(rad_cap.value[m]-hDist)*(2*rad_cap.value[m]+hDist))
+
                             self.prg.CapCylinderKernel(queue, self.qx.shape, None, self.qx_b, self.qy_b, self.res_b,
-                                        real(vol_i), real(hDist), real(rad_cyl.value[i]), real(rad_cap.value[m]), real(length.value[j]),
+                                        real(vol_i), real(hDist), real(rad_cyl.value[i]), real(rad_cap.value[m]), real(len_cyl.value[j]),
                                         real(theta.value[k]), real(phi.value[l]), real(sub), real(pars['scale']),
                                         real(phi.weight[l]), real(theta.weight[k]), real(rad_cap.weight[m]),
-                                        real(rad_cyl.weight[i]), real(length.weight[j]), real(theta.weight[k]), np.uint32(self.qx.size), np.uint32(size))
+                                        real(rad_cyl.weight[i]), real(len_cyl.weight[j]), real(theta.weight[k]), np.uint32(self.qx.size), np.uint32(size))
 
-                            vol += rad_cyl.weight[i]*length.weight[j]*rad_cap.weight[m]*vol_i
-                            norm_vol += rad_cyl.weight[i]*length.weight[j]*rad_cap.weight[m]
-                            norm += rad_cyl.weight[i]*length.weight[j]*rad_cap.weight[m]*theta.weight[k]*phi.weight[l]
+                            norm += rad_cyl.weight[i]*len_cyl.weight[j]*rad_cap.weight[m]*theta.weight[k]*phi.weight[l]
+
+
 
         #if size > 1:
          #   norm /= asin(1.0)

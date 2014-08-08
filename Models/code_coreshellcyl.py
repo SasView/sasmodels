@@ -47,9 +47,14 @@ class GpuCoreShellCylinder(object):
         real = np.float32 if self.qx.dtype == np.dtype('float32') else np.float64
         for r in xrange(len(radius.weight)):
             for l in xrange(len(length.weight)):
-                for at in xrange(len(axis_theta.weight)):
-                    for p in xrange(len(axis_phi.weight)):
-                        for th in xrange(len(thickness.weight)):
+                for th in xrange(len(thickness.weight)):
+
+                    vol += radius.weight[r]*length.weight[l]*thickness.weight[th]*pow(radius.value[r]+thickness.value[th],2)\
+                                   *(length.value[l]+2.0*thickness.value[th])
+                    norm_vol += radius.weight[r]*length.weight[l]*thickness.weight[th]
+
+                    for at in xrange(len(axis_theta.weight)):
+                        for p in xrange(len(axis_phi.weight)):
 
                             self.prg.CoreShellCylinderKernel(queue, self.qx.shape, None, self.qx_b, self.qy_b, self.res_b,
                                     real(axis_theta.value[at]), real(axis_phi.value[p]), real(thickness.value[th]),
@@ -58,9 +63,7 @@ class GpuCoreShellCylinder(object):
                                     real(axis_theta.weight[at]), real(axis_phi.weight[p]), real(pars['core_sld']),
                                     real(pars['shell_sld']), real(pars['solvent_sld']),np.uint32(size),
                                     np.uint32(self.qx.size))
-                            vol += radius.weight[r]*length.weight[l]*thickness.weight[th]*pow(radius.value[r]+thickness.value[th],2)\
-                                   *(length.value[l]+2.0*thickness.value[th])
-                            norm_vol += radius.weight[r]*length.weight[l]*thickness.weight[th]
+
                             norm += radius.weight[r]*length.weight[l]*thickness.weight[th]*axis_theta.weight[at]\
                                     *axis_phi.weight[p]
 

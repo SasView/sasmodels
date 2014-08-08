@@ -1,8 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
+import ctypes
+from ctypes import c_int, c_double, c_void_p
 import numpy as np
 import pyopencl as cl
+from pyopencl import mem_flags as mf
 
 from weights import GaussianDispersion
 from sasmodel import card, set_precision, set_precision_1d, tic, toc
@@ -15,70 +19,79 @@ class GpuCylinder(object):
     }
     PD_PARS = ['radius', 'length', 'cyl_theta', 'cyl_phi']
 
-    def __init__(self, qx, qy, dtype='float32'):
+    def __init__(self, qx, qy, dtype='float32', cutoff=1e-5):
 
         #create context, queue, and build program
         ctx,_queue = card()
-        src, qx, qy = set_precision(open('Kernel/NR_BessJ1.cpp').read()+"\n"+open('Kernel/Kernel-Cylinder.cpp').read(), qx, qy, dtype=dtype)
+        bessel = open('Kernel/NR_BessJ1.cpp').read()
+        kernel = open('Kernel/Kernel-Cylinder_f.cpp').read()
+        src, qx, qy = set_precision("\n".join((bessel,kernel)), qx, qy, dtype=dtype)
         self.prg = cl.Program(ctx, src).build()
         self.qx, self.qy = qx, qy
+        self.cutoff = cutoff
 
         #buffers
-        mf = cl.mem_flags
         self.qx_b = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=self.qx)
         self.qy_b = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=self.qy)
         self.res_b = cl.Buffer(ctx, cl.mem_flags.READ_WRITE, self.qx.nbytes)
         self.res = np.empty_like(self.qx)
 
     def eval(self, pars):
-
         tic()
-        _ctx,queue = card()
-        self.res[:] = 0
-        cl.enqueue_copy(queue, self.res_b, self.res)
-        radius, length, cyl_theta, cyl_phi = \
-            [GaussianDispersion(int(pars[base+'_pd_n']), pars[base+'_pd'], pars[base+'_pd_nsigma'])
-             for base in GpuCylinder.PD_PARS]
 
-        #Get the weights for each
-        radius.value, radius.weight = radius.get_weights(pars['radius'], 0, 10000, True)
-        length.value, length.weight = length.get_weights(pars['length'], 0, 10000, True)
-        cyl_theta.value, cyl_theta.weight = cyl_theta.get_weights(pars['cyl_theta'], -np.inf, np.inf, False)
-        cyl_phi.value, cyl_phi.weight = cyl_phi.get_weights(pars['cyl_phi'], -np.inf, np.inf, False)
-
-        #Perform the computation, with all weight points
-        sum, norm, norm_vol, vol = 0.0, 0.0, 0.0, 0.0
-        size = len(cyl_theta.weight)
-        sub = pars['sldCyl'] - pars['sldSolv']
-
+        ctx,queue = card()
         real = np.float32 if self.qx.dtype == np.dtype('float32') else np.float64
-        #Loop over radius, length, theta, phi weight points
-        for i in xrange(len(radius.weight)):
-            for j in xrange(len(length.weight)):
-
-                vol += radius.weight[i]*length.weight[j]*pow(radius.value[i], 2)*length.value[j]
-                norm_vol += radius.weight[i]*length.weight[j]
-
-                for k in xrange(len(cyl_theta.weight)):
-                    for l in xrange(len(cyl_phi.weight)):
-                        self.prg.CylinderKernel(queue, self.qx.shape, None, self.qx_b, self.qy_b, self.res_b, real(sub),
-                                           real(radius.value[i]), real(length.value[j]), real(pars['scale']),
-                                           real(radius.weight[i]), real(length.weight[j]), real(cyl_theta.weight[k]),
-                                           real(cyl_phi.weight[l]), real(cyl_theta.value[k]), real(cyl_phi.value[l]),
-                                           np.uint32(self.qx.size), np.uint32(size))
-
-                        norm += radius.weight[i]*length.weight[j]*cyl_theta.weight[k]*cyl_phi.weight[l]
-
-
-       # if size > 1:
-        #    norm /= math.asin(1.0)
+        loops, loop_lengths = make_loops(pars, dtype=self.qx.dtype)
+        loops_b = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=loops)
+        loops_l = cl.LocalMemory(len(loops.data))
+        self.prg.CylinderKernel(queue, self.qx.shape, None,
+            self.qx_b, self.qy_b, self.res_b,
+            loops_b, loops_l, real(self.cutoff),
+            real(pars['scale']), real(pars['background']),
+            real(pars['sldCyl']-pars['sldSolv']),
+            *[np.uint32(pn) for pn in loop_lengths])
         cl.enqueue_copy(queue, self.res, self.res_b)
-        sum = self.res
-        if vol != 0.0 and norm_vol != 0.0:
-            sum *= norm_vol/vol
-
         print toc()*1000, self.qx.shape[0]
-        return sum/norm+pars['background']
+
+        return self.res
+
+class CpuCylinder(GpuCylinder): #inherit parameters only
+    def __init__(self, qx, qy, dtype='float32', cutoff=1e-5):
+        self.qx, self.qy = [np.ascontiguousarray(v,'d') for v in qx,qy]
+        self.cutoff = cutoff
+        self.res = np.empty_like(self.qx)
+        self.dll = ctypes.CDLL('Kernel/cylinder.so')
+        self.fn = self.dll['CylinderKernel']
+        self.fn.argtypes = [
+            c_void_p, c_void_p, c_void_p, c_int,
+            c_void_p, c_double, c_double, c_double, c_double,
+            c_int, c_int, c_int, c_int
+        ]
+    def eval(self, pars):
+        loops, loop_lengths = make_loops(pars, dtype=self.qx.dtype)
+        self.fn(self.qx.ctypes.data, self.qy.ctypes.data, self.res.ctypes.data, len(self.qx),
+            loops.ctypes.data, self.cutoff, pars['scale'], pars['background'],
+            pars['sldCyl']-pars['sldSolv'], *loop_lengths)
+
+        return self.res
+
+def make_loops(pars, dtype='double'):
+    # 0.2 ms on sparkle to form the final loops
+    radius, length, theta, phi = \
+       [GaussianDispersion(int(pars[base+'_pd_n']), pars[base+'_pd'], pars[base+'_pd_nsigma'])
+         for base in GpuCylinder.PD_PARS]
+    parts = [
+        radius.get_weights(pars['radius'], 0, 10000, True),
+        length.get_weights(pars['length'], 0, 10000, True),
+        theta.get_weights(pars['cyl_theta'], -np.inf, np.inf, False),
+        theta.get_weights(pars['cyl_phi'], -np.inf, np.inf, False),
+        ]
+    # Make sure that weights are normalized to peaks at 1 so that
+    # the tolerance term can be used properly on truncated distributions
+    loops = np.hstack((v,w/w.max()) for v,w in parts)
+    #loops = np.hstack(parts)
+    loops = np.ascontiguousarray(loops.T, dtype).flatten()
+    return loops, [len(p[0]) for p in parts]
 
 class OneDGpuCylinder(object):
     PARS = {
@@ -132,35 +145,3 @@ class OneDGpuCylinder(object):
             sum *= norm/vol
 
         return sum/norm + pars['background']
-
-       
-
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

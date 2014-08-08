@@ -5,18 +5,19 @@ from bumps.names import *
 from sasmodel import SasModel, load_data, set_beam_stop, set_half, set_top
 from Models.code_capcyl import GpuCapCylinder
 from Models.code_coreshellcyl import GpuCoreShellCylinder
-from Models.code_cylinder import GpuCylinder, OneDGpuCylinder
+from Models.code_cylinder_f import GpuCylinder
+#from Models.code_cylinder import GpuCylinder, OneDGpuCylinder
 from Models.code_ellipse import GpuEllipse
 from Models.code_lamellar import GpuLamellar
 from Models.code_triaxialellipse import GpuTriEllipse
 
 """ IMPORT THE DATA USED """
 #data = load_data('December/Tangential/Sector0/DEC07133.ABS')
-data = load_data('December/DEC07102.DAT')
+data = load_data('December/DEC07098.DAT')
 
 """ SET INNER BEAM STOP, OUTER RING, AND MASK HALF OF THE DATA """
-set_beam_stop(data, 0.00669)#, outer=0.025)
-set_top(data, -.018)
+set_beam_stop(data, 0.004)#, outer=0.025)
+#set_top(data, -.018)
 #set_half(data, 'right')
 
 
@@ -40,7 +41,7 @@ if 0:
     radius_a_pd=0.222296, radius_a_pd_n=1, radius_a_pd_nsigma=0,
     radius_b_pd=.000128, radius_b_pd_n=1, radius_b_pd_nsigma=0,
     axis_phi_pd=2.63698e-05, axis_phi_pd_n=20, axis_phi_pd_nsigma=0,
-    dtype='float')
+    dtype='float32')
 
 
     # SET THE FITTING PARAMETERS
@@ -58,7 +59,7 @@ if 0:
     sld_bi=5.38e-6,sld_sol=7.105e-6,
     background=0.003,
     bi_thick_pd= 0.37765, bi_thick_pd_n=10, bi_thick_pd_nsigma=3,
-    dtype='float')
+    dtype='float32')
 
     # SET THE FITTING PARAMETERS
     #model.bi_thick.range(0, 1000)
@@ -69,21 +70,29 @@ if 0:
 
 
 if 1:
-    model = SasModel(data, GpuCylinder,
-    scale=0.0104, radius=92.5, length=798.3,
-    sldCyl=.29e-6, sldSolv=7.105e-6, background=5,
-    cyl_theta=0, cyl_phi=0,
-    cyl_theta_pd=22.11, cyl_theta_pd_n=20, cyl_theta_pd_nsigma=3,
-    radius_pd=.0084, radius_pd_n=10, radius_pd_nsigma=3,
-    length_pd=0.493, length_pd_n=10, length_pd_nsigma=3,
-    cyl_phi_pd=0, cyl_phi_pd_n=1, cyl_phi_pd_nsigma=3,
-    dtype='float')
+    """
+    pars = dict(scale=0.0023, radius=92.5, length=798.3,
+        sldCyl=.29e-6, sldSolv=7.105e-6, background=5,
+        cyl_theta=0, cyl_phi=0,
+        cyl_theta_pd=22.11, cyl_theta_pd_n=5, cyl_theta_pd_nsigma=3,
+        radius_pd=.0084, radius_pd_n=10, radius_pd_nsigma=3,
+        length_pd=0.493, length_pd_n=10, length_pd_nsigma=3,
+        cyl_phi_pd=0, cyl_phi_pd_n=5, cyl_phi_pd_nsigma=3,)
+        """
+    pars = dict(
+        scale=.01, radius=64.1, length=66.96, sldCyl=.291e-6, sldSolv=5.77e-6, background=.1,
+        cyl_theta=90, cyl_phi=0,
+        radius_pd=0.1, radius_pd_n=10, radius_pd_nsigma=3,
+        length_pd=0.1,length_pd_n=5, length_pd_nsigma=3,
+        cyl_theta_pd=0.1, cyl_theta_pd_n=5, cyl_theta_pd_nsigma=3,
+        cyl_phi_pd=0.1, cyl_phi_pd_n=10, cyl_phi_pd_nsigma=3)
+    model = SasModel(data, GpuCylinder, dtype="float32", **pars)
 
 
 
     # SET THE FITTING PARAMETERS
-    #model.radius.range(1, 500)
-    #model.length.range(1, 4000)
+    model.radius.range(1, 500)
+    model.length.range(1, 4000)
     #model.cyl_theta.range(-90,100)
     #model.cyl_theta_pd.range(0, 90)
     #model.cyl_theta_pd_n = model.cyl_theta_pd + 5
@@ -105,7 +114,7 @@ if 0:
     thickness_pd=1, thickness_pd_n=1, thickness_pd_nsigma=1,
     axis_theta_pd=1, axis_theta_pd_n=10, axis_theta_pd_nsigma=3,
     axis_phi_pd=0.1, axis_phi_pd_n=1, axis_phi_pd_nsigma=1,
-    dtype='float')
+    dtype='float32')
 
     # SET THE FITTING PARAMETERS
     #model.radius.range(115, 1000)
@@ -123,15 +132,15 @@ if 0:
 
 if 0:
     model = SasModel(data, GpuCapCylinder,
-    scale=1, rad_cyl=20, rad_cap=40, length=400,
+    scale=.08, rad_cyl=20, rad_cap=40, len_cyl=400,
     sld_capcyl=1e-6, sld_solv=6.3e-6,
     background=0, theta=0, phi=0,
-    rad_cyl_pd=.1, rad_cyl_pd_n=1, rad_cyl_pd_nsigma=0,
-    rad_cap_pd=.1, rad_cap_pd_n=1, rad_cap_pd_nsigma=0,
-    length_pd=.1, length_pd_n=1, length_pd_nsigma=0,
+    rad_cyl_pd=.1, rad_cyl_pd_n=5, rad_cyl_pd_nsigma=3,
+    rad_cap_pd=.1, rad_cap_pd_n=5, rad_cap_pd_nsigma=3,
+    len_cyl_pd=.1, len_cyl_pd_n=1, len_cyl_pd_nsigma=0,
     theta_pd=.1, theta_pd_n=1, theta_pd_nsigma=0,
     phi_pd=.1, phi_pd_n=1, phi_pd_nsigma=0,
-    dtype='float')
+    dtype='float32')
 
     model.scale.range(0, 1)
 
@@ -146,7 +155,7 @@ if 0:
     psi_pd=30, psi_pd_n=1, psi_pd_nsigma=0,
     axisA_pd=.1, axisA_pd_n=1, axisA_pd_nsigma=0,
     axisB_pd=.1, axisB_pd_n=1, axisB_pd_nsigma=0,
-    axisC_pd=.1, axisC_pd_n=1, axisC_pd_nsigma=0, dtype='float')
+    axisC_pd=.1, axisC_pd_n=1, axisC_pd_nsigma=0, dtype='float32')
 
     # SET THE FITTING PARAMETERS
     model.axisA.range(15, 1000)

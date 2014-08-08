@@ -52,6 +52,9 @@ class GpuEllipse(object):
             #Loop over length weight points
             for j in xrange(len(radius_b.weight)):
                 #Average over theta distribution
+                vol += radius_a.weight[i]*radius_b.weight[j]*pow(radius_b.value[j], 2)*radius_a.value[i]
+                norm_vol += radius_a.weight[i]*radius_b.weight[j]
+
                 for k in xrange(len(axis_theta.weight)):
                     #Average over phi distribution
                     for l in xrange(len(axis_phi.weight)):
@@ -63,9 +66,8 @@ class GpuEllipse(object):
                                         real(axis_phi.value[l]), self.qx_b, self.qy_b, self.res_b,
                                         np.uint32(self.qx.size), np.uint32(len(axis_theta.weight)))
 
-                        vol += radius_a.weight[i]*radius_b.weight[j]*pow(radius_b.value[j], 2)*radius_a.value[i]
-                        norm_vol += radius_a.weight[i]*radius_b.weight[j]
                         norm += radius_a.weight[i]*radius_b.weight[j]*axis_theta.weight[k]*axis_phi.weight[l]
+
         # Averaging in theta needs an extra normalization
         # factor to account for the sin(theta) term in the
         # integration (see documentation).

@@ -1,12 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import datetime
 import numpy as np
 import pyopencl as cl
 from bumps.names import Parameter
 from sans.dataloader.loader import Loader
 from sans.dataloader.manipulations import Ringcut, Boxcut
 
+
+TIC = None
+def tic():
+    global TIC
+    TIC = datetime.datetime.now()
+
+def toc():
+    now = datetime.datetime.now()
+    return (now-TIC).total_seconds()
 
 def load_data(filename):
     loader = Loader()
@@ -20,11 +30,14 @@ def set_precision(src, qx, qy, dtype):
     qy = np.ascontiguousarray(qy, dtype=dtype)
     if np.dtype(dtype) == np.dtype('float32'):
         header = """\
+
+#define REAL(x) (x##f)
 #define real float
 """
     else:
         header = """\
 #pragma OPENCL EXTENSION cl_khr_fp64: enable
+#define REAL(x) (x)
 #define real double
 """
     return header+src, qx, qy
