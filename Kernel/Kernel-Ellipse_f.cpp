@@ -72,8 +72,6 @@ kernel void EllipsoidKernel(global const real *qx, global const real *qy, global
             for (int bi=0; bi < Nradius_b; bi++) {
                 const real rbv = loops[2*(bi+Nradius_a)];
                 const real rbw = loops[2*(bi+Nradius_a)+1];
-                vol += raw*rbw*rav*rbv*rbv*Ntheta*Nphi;
-                norm_vol += raw*rbw*Ntheta*Nphi;
                 for (int thi=0; thi < Ntheta; thi++) {
                     const real thv = loops[2*(thi+Nradius_a+Nradius_b)];
                     const real thw = loops[2*(thi+Nradius_a+Nradius_b)+1];
@@ -87,6 +85,8 @@ kernel void EllipsoidKernel(global const real *qx, global const real *qy, global
                         if (weight > cutoff) {
                             ret += f(qxi, qyi, sub, rav, rbv, weight, thv, phv);
                             norm += weight;
+                            vol += raw*rbw*rav*rbv*rbv;
+                            norm_vol += raw*rbw;
                         }
                     }
                 }

@@ -100,6 +100,7 @@ def plot_result2D(data, theory, view='linear'):
     mresid = masked_array((theory-data.data)/data.err_data, data.mask)
     vmin = min(mdata.min(), mtheory.min())
     vmax = max(mdata.max(), mtheory.max())
+    print np.exp(np.mean(mtheory)), np.std(mtheory),np.max(mtheory),np.min(mtheory)
 
     plt.subplot(1, 3, 1)
     plot_data(data, mdata, vmin=vmin, vmax=vmax)

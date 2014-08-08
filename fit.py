@@ -4,7 +4,7 @@
 from bumps.names import *
 from sasmodel import SasModel, load_data, set_beam_stop, set_half, set_top
 from Models.code_capcyl import GpuCapCylinder
-from Models.code_coreshellcyl import GpuCoreShellCylinder
+from Models.code_coreshellcyl_f import GpuCoreShellCylinder
 from Models.code_cylinder_f import GpuCylinder
 #from Models.code_cylinder import GpuCylinder, OneDGpuCylinder
 from Models.code_ellipse_f import GpuEllipse
@@ -17,7 +17,7 @@ data = load_data('December/DEC07098.DAT')
 
 """ SET INNER BEAM STOP, OUTER RING, AND MASK HALF OF THE DATA """
 set_beam_stop(data, 0.004)#, outer=0.025)
-#set_top(data, -.018)
+set_top(data, -.018)
 #set_half(data, 'right')
 
 
@@ -30,7 +30,7 @@ if 0:
     bolim=0.0, uplim=90) #bottom limit, upper limit of angle integral
 
 
-if 1:
+if 0:
     model = SasModel(data, GpuEllipse,
     scale=0.08,
     radius_a=15, radius_b=800,
@@ -103,11 +103,11 @@ if 0:
     #model.sldCyl.range(0, 1)
 
 
-if 0:
+if 1:
     model = SasModel(data, GpuCoreShellCylinder,
-    scale= .00031, radius=19.5, thickness=30, length=22,
+    scale= .031, radius=19.5, thickness=30, length=22,
     core_sld=7.105e-6, shell_sld=.291e-6, solvent_sld=7.105e-6,
-    background=0.2, axis_theta=0, axis_phi=0,
+    background=0, axis_theta=0, axis_phi=0,
 
     radius_pd=0.26, radius_pd_n=10, radius_pd_nsigma=3,
     length_pd=0.26, length_pd_n=10, length_pd_nsigma=3,

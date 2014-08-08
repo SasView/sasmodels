@@ -84,8 +84,6 @@ kernel void CylinderKernel(global const real *qx, global const real *qy, global 
             for (int li=0; li < Nlength; li++) {
                 const real lv = loops[2*(li+Nradius)];
                 const real lw = loops[2*(li+Nradius)+1];
-                vol += rw*lw*rv*rv*lv*Ntheta*Nphi;
-               norm_vol += rw*lw*Ntheta*Nphi;
                 for (int thi=0; thi < Ntheta; thi++) {
                     const real thv = loops[2*(thi+Nradius+Nlength)];
                     const real thw = loops[2*(thi+Nradius+Nlength)+1];
@@ -99,12 +97,14 @@ kernel void CylinderKernel(global const real *qx, global const real *qy, global 
                         if (weight > cutoff) {
                             ret += f(qxi, qyi, sub, rv, lv, weight, thv, phv);
                             norm += weight;
+                            vol += rw*lw*rv*rv*lv;
+                            norm_vol += rw*lw;
                         }
                     }
                 }
             }
         }
-        if (Ntheta>1) norm = norm/(M_PI/2);
+        //if (Ntheta>1) norm = norm/(M_PI/2);
         if (vol != REAL(0.0) && norm_vol != REAL(0.0)) {
             ret *= norm_vol/vol;
         }

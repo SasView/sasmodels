@@ -116,7 +116,7 @@ def coreshell(N=1):
                  axis_phi_pd=0.0008748, axis_phi_pd_n=5, axis_phi_pd_nsigma=3,)
 
     model = sasview_model('CoreShellCylinder', **pars)
-    from Models.code_coreshellcyl import GpuCoreShellCylinder as gpumodel
+    from Models.code_coreshellcyl_f import GpuCoreShellCylinder as gpumodel
 
     plot(data, model, gpumodel, N, pars)
 
@@ -175,7 +175,7 @@ def cap(N=1):
 
 
 if __name__ == "__main__":
-    cyl(2)
+    coreshell(1)
 
 
 
