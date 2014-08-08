@@ -1,5 +1,7 @@
-__kernel void EllipsoidKernel(const real radius_a_weight, const real radius_b_weight, const real axis_theta_weight,
-const real axis_phi_weight, const real scale, const real radius_a, const real radius_b, const real sub, const real axis_theta, const real axis_phi, __global const real *qx,
+__kernel void EllipsoidKernel(const real radius_a_weight, const real radius_b_weight,
+const real axis_theta_weight,
+const real axis_phi_weight, const real scale, const real radius_a, const real radius_b,
+ const real sub, const real axis_theta, const real axis_phi, __global const real *qx,
 __global const real *qy, __global real *_ptvalue, const int length, const int size)
 {
      int i = get_global_id(0);

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys
+
 import ctypes
 from ctypes import c_int, c_double, c_void_p
 import numpy as np
@@ -44,12 +44,14 @@ class GpuCylinder(object):
         loops, loop_lengths = make_loops(pars, dtype=self.qx.dtype)
         loops_b = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=loops)
         loops_l = cl.LocalMemory(len(loops.data))
+
         self.prg.CylinderKernel(queue, self.qx.shape, None,
             self.qx_b, self.qy_b, self.res_b,
             loops_b, loops_l, real(self.cutoff),
             real(pars['scale']), real(pars['background']),
             real(pars['sldCyl']-pars['sldSolv']),
             *[np.uint32(pn) for pn in loop_lengths])
+
         cl.enqueue_copy(queue, self.res, self.res_b)
         print toc()*1000, self.qx.shape[0]
 
@@ -84,7 +86,7 @@ def make_loops(pars, dtype='double'):
         radius.get_weights(pars['radius'], 0, 10000, True),
         length.get_weights(pars['length'], 0, 10000, True),
         theta.get_weights(pars['cyl_theta'], -np.inf, np.inf, False),
-        theta.get_weights(pars['cyl_phi'], -np.inf, np.inf, False),
+        phi.get_weights(pars['cyl_phi'], -np.inf, np.inf, False),
         ]
     # Make sure that weights are normalized to peaks at 1 so that
     # the tolerance term can be used properly on truncated distributions

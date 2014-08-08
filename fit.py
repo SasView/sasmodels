@@ -7,7 +7,7 @@ from Models.code_capcyl import GpuCapCylinder
 from Models.code_coreshellcyl import GpuCoreShellCylinder
 from Models.code_cylinder_f import GpuCylinder
 #from Models.code_cylinder import GpuCylinder, OneDGpuCylinder
-from Models.code_ellipse import GpuEllipse
+from Models.code_ellipse_f import GpuEllipse
 from Models.code_lamellar import GpuLamellar
 from Models.code_triaxialellipse import GpuTriEllipse
 
@@ -30,7 +30,7 @@ if 0:
     bolim=0.0, uplim=90) #bottom limit, upper limit of angle integral
 
 
-if 0:
+if 1:
     model = SasModel(data, GpuEllipse,
     scale=0.08,
     radius_a=15, radius_b=800,
@@ -40,16 +40,16 @@ if 0:
     axis_theta_pd=15, axis_theta_pd_n=40, axis_theta_pd_nsigma=3,
     radius_a_pd=0.222296, radius_a_pd_n=1, radius_a_pd_nsigma=0,
     radius_b_pd=.000128, radius_b_pd_n=1, radius_b_pd_nsigma=0,
-    axis_phi_pd=2.63698e-05, axis_phi_pd_n=20, axis_phi_pd_nsigma=0,
+    axis_phi_pd=2.63698e-05, axis_phi_pd_n=20, axis_phi_pd_nsigma=3,
     dtype='float32')
 
 
     # SET THE FITTING PARAMETERS
-    model.radius_a.range(15, 1000)
-    model.radius_b.range(15, 1000)
+    #model.radius_a.range(15, 1000)
+    #model.radius_b.range(15, 1000)
     #model.axis_theta_pd.range(0, 360)
     #model.background.range(0,1000)
-    #model.scale.range(0, 1)
+    model.scale.range(0, 1)
 
 
 if 0:
@@ -69,7 +69,7 @@ if 0:
     model.sld_bi.range(0, 1)
 
 
-if 1:
+if 0:
     """
     pars = dict(scale=0.0023, radius=92.5, length=798.3,
         sldCyl=.29e-6, sldSolv=7.105e-6, background=5,
