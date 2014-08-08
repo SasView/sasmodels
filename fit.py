@@ -92,7 +92,7 @@ if 0:
 
     # SET THE FITTING PARAMETERS
     model.radius.range(1, 500)
-    model.length.range(1, 4000)
+    model.length.range(1, 5000)
     #model.cyl_theta.range(-90,100)
     #model.cyl_theta_pd.range(0, 90)
     #model.cyl_theta_pd_n = model.cyl_theta_pd + 5
