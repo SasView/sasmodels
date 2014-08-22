@@ -1,3 +1,4 @@
+real NR_BessJ1(real x);
 real NR_BessJ1(real x)
 {
     real xx=0; real y=0; real ans=0; real ans1=0; real ans2=0;
