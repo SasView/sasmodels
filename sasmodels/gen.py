@@ -9,6 +9,13 @@ from .jsonutil import relaxed_loads
 F64 = np.dtype('float64')
 F32 = np.dtype('float32')
 
+# Scale and background, which are parameters common to every form factor
+COMMON_PARAMETERS = [
+    [ "scale", "", 1, [0, np.inf], "", "Source intensity" ],
+    [ "background", "1/cm", 0, [0, np.inf], "", "Source background" ],
+    ]
+
+
 # Conversion from units defined in the parameter table for each model
 # to units displayed in the sphinx documentation.
 RST_UNITS = {
@@ -28,13 +35,6 @@ PARTABLE_HEADERS = [
     ]
 
 PARTABLE_VALUE_WIDTH = 10
-
-# Scale and background, which are parameters common to every form factor
-COMMON_PARAMETERS = [
-    [ "scale", "", 0, [0, np.inf], "", "Source intensity" ],
-    [ "background", "1/cm", 0, [0, np.inf], "", "Source background" ],
-    ]
-
 
 # Header included before every kernel.
 # This makes sure that the appropriate math constants are defined, and
@@ -59,6 +59,7 @@ KERNEL_HEADER = """\
 #  define constant const
 #  define kernel
 #  define SINCOS(angle,svar,cvar) do {svar=sin(angle);cvar=cos(angle);} while (0)
+#  define powr(a,b) pow(a,b)
 #else
 #  ifdef USE_SINCOS
 #    define SINCOS(angle,svar,cvar) svar=sincos(angle,&cvar)
@@ -92,14 +93,14 @@ KERNEL_HEADER = """\
 # The I(q) kernel and the I(qx, qy) kernel have one and two q parameters
 # respectively, so the template builder will need to do extra work to
 # declare, initialize and pass the q parameters.
-IQ_KERNEL = {
+KERNEL_1D = {
     'fn': "Iq",
     'q_par_decl': "global const real *q,",
     'qinit': "const real qi = q[i];",
     'qcall': "qi",
     }
 
-IQXY_KERNEL = {
+KERNEL_2D = {
     'fn': "Iqxy",
     'q_par_decl': "global const real *qx,\n    global const real *qy,",
     'qinit': "const real qxi = qx[i];\n    const real qyi = qy[i];",
@@ -175,11 +176,12 @@ if (weight > cutoff) {
 
 # Volume normalization.
 # If there are "volume" polydispersity parameters, then these will be used
-# to call the volume function from the user supplied kernel, and accumulate
+# to call the form_volume function from the user supplied kernel, and accumulate
 # a normalized weight.
 VOLUME_NORM="""const real vol_weight = %(weight)s;
-  vol += vol_weight*volume(%(pars)s);
+  vol += vol_weight*form_volume(%(pars)s);
   norm_vol += vol_weight;"""
+
 
 def indent(s, depth):
     """
@@ -190,11 +192,15 @@ def indent(s, depth):
     return spaces + sep.join(s.split("\n"))
 
 
-def make_kernel(meta, form):
+def kernel_name(info, is_2D):
+    return info['name'] + "_" + ("Iqxy" if is_2D else "Iq")
+
+
+def make_kernel(info, is_2D):
     """
     Build a kernel call from metadata supplied by the user.
 
-    *meta* is the json object defined in the kernel file.
+    *info* is the json object defined in the kernel file.
 
     *form* is either "Iq" or "Iqxy".
 
@@ -205,34 +211,18 @@ def make_kernel(meta, form):
 
     # If we are building the Iqxy kernel, we need to propagate qx,qy
     # parameters, otherwise we can
-    if form == "Iqxy":
-        qpars = IQXY_KERNEL
-    else:
-        qpars = IQ_KERNEL
+    dim = "2d" if is_2D else "1d"
+    fixed_pars = info['partype']['fixed-'+dim]
+    pd_pars = info['partype']['pd-'+dim]
+    vol_pars = info['partype']['volume']
+    q_pars = KERNEL_2D if is_2D else KERNEL_1D
 
+    # Build polydispersity loops
     depth = 4
     offset = ""
     loop_head = []
     loop_end = []
-    vol_pars = []
-    fixed_pars = []
-    pd_pars = []
-    fn_pars = []
-    for i,p in enumerate(meta['parameters']):
-        name = p[0]
-        ptype = p[4]
-        if ptype == "volume":
-            vol_pars.append(name)
-        elif ptype == "orientation":
-            if form != "Iqxy": continue  # no orientation for 1D kernels
-        elif ptype == "magnetic":
-            raise NotImplementedError("no magnetic parameters yet")
-        if name not in ['scale','background']: fn_pars.append(name)
-        if ptype == "":
-            fixed_pars.append(name)
-            continue
-        else:
-            pd_pars.append(name)
+    for name in pd_pars:
         subst = { 'name': name, 'offset': offset }
         loop_head.append(indent(LOOP_OPEN%subst, depth))
         loop_end.insert(0, (" "*depth) + "}")
@@ -253,12 +243,18 @@ def make_kernel(meta, form):
         volume_norm = ""
 
     # Define the inner loop function call
+    # The parameters to the f(q,p1,p2...) call should occur in the same
+    # order as given in the parameter info structure.  This may be different
+    # from the parameter order in the call to the kernel since the kernel
+    # call places all fixed parameters before all polydisperse parameters.
+    fq_pars = [p[0] for p in info['parameters'][len(COMMON_PARAMETERS):]
+               if p[0] in set(fixed_pars+pd_pars)]
     subst = {
         'weight_product': "*".join(p+"_w" for p in pd_pars),
         'volume_norm': volume_norm,
-        'fn': qpars['fn'],
-        'qcall': qpars['qcall'],
-        'pcall': ", ".join(fn_pars),
+        'fn': q_pars['fn'],
+        'qcall': q_pars['qcall'],
+        'pcall': ", ".join(fq_pars), # skip scale and background
         }
     loop_body = [indent(LOOP_BODY%subst, depth)]
     loops = "\n".join(loop_head+loop_body+loop_end)
@@ -279,23 +275,23 @@ def make_kernel(meta, form):
     # Finally, put the pieces together in the kernel.
     subst = {
         # kernel name is, e.g., cylinder_Iq
-        'name': "_".join((meta['name'], qpars['fn'])),
+        'name': kernel_name(info, is_2D),
         # to declare, e.g., global real q[],
-        'q_par_decl': qpars['q_par_decl'],
+        'q_par_decl': q_pars['q_par_decl'],
         # to declare, e.g., real sld, int Nradius, int Nlength
         'par_decl': par_decl,
         # to copy global to local pd pars we need, e.g., Nradius+Nlength
         'pd_length': "+".join('N'+p for p in pd_pars),
         # the q initializers, e.g., real qi = q[i];
-        'qinit': qpars['qinit'],
+        'qinit': q_pars['qinit'],
         # the actual polydispersity loop
         'loops': loops,
         }
     kernel = KERNEL_TEMPLATE%subst
     return kernel
 
-def make_partable(meta):
-    pars = meta['parameters']
+def make_partable(info):
+    pars = info['parameters']
     column_widths = [
         max(len(p[0]) for p in pars),
         max(len(RST_UNITS[p[1]]) for p in pars),
@@ -319,15 +315,15 @@ def make_partable(meta):
     lines.append(sep)
     return "\n".join(lines)
 
-def make_doc(kernelfile, meta, doc):
-    doc = doc%{'parameters': make_partable(meta)}
+def make_doc(kernelfile, info, doc):
+    doc = doc%{'parameters': make_partable(info)}
     return doc
 
-def make_model(kernelfile, meta, source):
-    kernel_Iq = make_kernel(meta, "Iq")
-    kernel_Iqxy = make_kernel(meta, "Iqxy")
+def make_model(kernelfile, info, source):
+    kernel_Iq = make_kernel(info, is_2D=False)
+    kernel_Iqxy = make_kernel(info, is_2D=True)
     path = os.path.dirname(kernelfile)
-    extra = [open("%s/%s"%(path,f)).read() for f in meta['include']]
+    extra = [open("%s/%s"%(path,f)).read() for f in info['include']]
     kernel = "\n\n".join([KERNEL_HEADER]+extra+[source, kernel_Iq, kernel_Iqxy])
     return kernel
 
@@ -338,28 +334,78 @@ def parse_file(kernelfile):
     parts = source.split("PARAMETERS")
     if len(parts) != 3:
         raise ValueError("PARAMETERS block missing from %r"%kernelfile)
-    meta_source = parts[1].strip()
+    info_source = parts[1].strip()
     try:
-        meta = relaxed_loads(meta_source)
+        info = relaxed_loads(info_source)
     except:
         print "in json text:"
         print "\n".join("%2d: %s"%(i+1,s)
-                        for i,s in enumerate(meta_source.split('\n')))
+                        for i,s in enumerate(info_source.split('\n')))
         raise
         #raise ValueError("PARAMETERS block could not be parsed from %r"%kernelfile)
-    meta['parameters'] = COMMON_PARAMETERS + meta['parameters']
-    meta['filename'] = kernelfile
 
     # select documentation out of the source file
     parts = source.split("DOCUMENTATION")
     if len(parts) == 3:
-        doc = make_doc(kernelfile, meta, parts[1].strip())
+        doc = make_doc(kernelfile, info, parts[1].strip())
     elif len(parts) == 1:
         raise ValueError("DOCUMENTATION block is missing from %r"%kernelfile)
     else:
         raise ValueError("DOCUMENTATION block incorrect from %r"%kernelfile)
 
-    return source, meta, doc
+    return source, info, doc
+
+def categorize_parameters(pars):
+    """
+    Build parameter categories out of the the parameter definitions.
+
+    Returns a dictionary of categories.
+
+    The function call sequence consists of q inputs and the return vector,
+    followed by the loop value/weight vector, followed by the values for
+    the non-polydisperse parameters, followed by the lengths of the
+    polydispersity loops.  To construct the call for 1D models, the
+    categories *fixed-1d* and *pd-1d* list the names of the parameters
+    of the non-polydisperse and the polydisperse parameters respectively.
+    Similarly, *fixed-2d* and *pd-2d* provide parameter names for 2D models.
+    The *pd-rel* category is a set of those parameters which give
+    polydispersitiy as a portion of the value (so a 10% length dispersity
+    would use a polydispersity value of 0.1) rather than absolute
+    dispersity such as an angle plus or minus 15 degrees.
+
+    The *volume* category lists the volume parameters in order for calls
+    to volume within the kernel (used for volume normalization) and for
+    calls to ER and VR for effective radius and volume ratio respectively.
+
+    The *orientation* and *magnetic* categories list the orientation and
+    magnetic parameters.  These are used by the sasview interface.  The
+    blank category is for parameters such as scale which don't have any
+    other marking.
+    """
+    partype = {
+        'volume': [], 'orientation': [], 'magnetic': [], '': [],
+        'fixed-1d': [], 'fixed-2d': [], 'pd-1d': [], 'pd-2d': [],
+        'pd-rel': set(),
+    }
+
+    for p in pars:
+        name,ptype = p[0],p[4]
+        if ptype == 'volume':
+            partype['pd-1d'].append(name)
+            partype['pd-2d'].append(name)
+            partype['pd-rel'].add(name)
+        elif ptype == 'magnetic':
+            partype['fixed-2d'].append(name)
+        elif ptype == 'orientation':
+            partype['pd-2d'].append(name)
+        elif ptype == '':
+            partype['fixed-1d'].append(name)
+            partype['fixed-2d'].append(name)
+        else:
+            raise ValueError("unknown parameter type %r"%ptype)
+        partype[ptype].append(name)
+
+    return partype
 
 def make(kernelfile):
     """
@@ -369,61 +415,14 @@ def make(kernelfile):
     will be a JSON definition containing
     """
     #print kernelfile
-    source, meta, doc = parse_file(kernelfile)
-    doc = make_doc(kernelfile, meta, doc)
-    model = make_model(kernelfile, meta, source)
-    return model, meta, doc
-
-
-
-# Convert from python float to C float or double, depending on dtype
-FLOAT_CONVERTER = {
-    F32: np.float32,
-    F64: np.float64,
-    }
-
-def kernel_name(meta, is_2D):
-    return meta['name'] + "_" + ("Iqxy" if is_2D else "Iq")
-
-
-def kernel_pars(pars, par_info, is_2D, dtype=F32):
-    """
-    Convert parameter dictionary into arguments for the kernel.
-
-    *pars* is a dictionary of *{ name: value }*, with *name_pd* for the
-    polydispersity width, *name_pd_n* for the number of pd steps, and
-    *name_pd_nsigma* for the polydispersity limits.
-
-    *par_info* is the parameter info structure from the kernel metadata.
-
-    *is_2D* is True if the dataset represents 2D data, with the corresponding
-    orientation parameters.
-
-    *dtype* is F32 or F64, the numpy single and double precision floating
-    point dtypes.  These should not be the strings.
-    """
-    from .weights import GaussianDispersion
-    real = np.float32 if dtype == F32 else np.float64
-    fixed = []
-    parts = []
-    for p in par_info['parameters']:
-        name, ptype = p[0],p[4]
-        value = pars[name]
-        if ptype == "":
-            fixed.append(real(value))
-        elif is_2D or ptype != "orientation":
-            limits, width = p[3], pars[name+'_pd']
-            n, nsigma = pars[name+'_pd_n'], pars[name+'_pd_nsigma']
-            relative = (ptype != "orientation")
-            dist = GaussianDispersion(int(n), width, nsigma)
-            # Make sure that weights are normalized to peaks at 1 so that
-            # the tolerance term can be used properly on truncated distributions
-            v,w = dist.get_weights(value, limits[0], limits[1], relative)
-            parts.append((v, w/w.max()))
-    loops = np.hstack(parts)
-    loops = np.ascontiguousarray(loops.T, dtype).flatten()
-    loopsN = [np.uint32(len(p[0])) for p in parts]
-    return fixed, loops, loopsN
+    source, info, doc = parse_file(kernelfile)
+    info['filename'] = kernelfile
+    info['parameters'] = COMMON_PARAMETERS + info['parameters']
+    info['partype'] = categorize_parameters(info['parameters'])
+    info['limits'] = dict((p[0],p[3]) for p in info['parameters'])
+    doc = make_doc(kernelfile, info, doc)
+    model = make_model(kernelfile, info, source)
+    return model, info, doc
 
 
 def demo_time():
@@ -436,7 +435,7 @@ def demo_time():
 
 def demo():
     from os.path import join as joinpath, dirname
-    c, meta, doc = make_model(joinpath(dirname(__file__), "models", "cylinder.c"))
+    c, info, doc = make_model(joinpath(dirname(__file__), "models", "cylinder.c"))
     #print doc
     #print c
 

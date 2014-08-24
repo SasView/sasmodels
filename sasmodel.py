@@ -3,10 +3,6 @@
 
 import datetime
 import numpy as np
-import pyopencl as cl
-from bumps.names import Parameter
-from sans.dataloader.loader import Loader
-from sans.dataloader.manipulations import Ringcut, Boxcut
 
 
 TIC = None
@@ -19,6 +15,7 @@ def toc():
     return (now-TIC).total_seconds()
 
 def load_data(filename):
+    from sans.dataloader.loader import Loader
     loader = Loader()
     data = loader.load(filename)
     if data is None:
@@ -56,6 +53,7 @@ def set_precision_1d(src, q, dtype):
     return header+src, q
 
 def set_beam_stop(data, radius, outer=None):
+    from sans.dataloader.manipulations import Ringcut
     if hasattr(data, 'qx_data'):
         data.mask = Ringcut(0, radius)(data)
         if outer is not None:
@@ -66,12 +64,14 @@ def set_beam_stop(data, radius, outer=None):
             data.mask &= (data.x<outer)
 
 def set_half(data, half):
+    from sans.dataloader.manipulations import Boxcut
     if half == 'right':
         data.mask += Boxcut(x_min=-np.inf, x_max=0.0, y_min=-np.inf, y_max=np.inf)(data)
     if half == 'left':
         data.mask += Boxcut(x_min=0.0, x_max=np.inf, y_min=-np.inf, y_max=np.inf)(data)
 
 def set_top(data, max):
+    from sans.dataloader.manipulations import Boxcut
     data.mask += Boxcut(x_min=-np.inf, x_max=np.inf, y_min=-np.inf, y_max=max)(data)
 
 def plot_data(data, iq, vmin=None, vmax=None):
@@ -143,6 +143,7 @@ GPU_QUEUE = None
 def card():
     global GPU_CONTEXT, GPU_QUEUE
     if GPU_CONTEXT is None:
+        import pyopencl as cl
         GPU_CONTEXT = cl.create_some_context()
         GPU_QUEUE = cl.CommandQueue(GPU_CONTEXT)
     return GPU_CONTEXT, GPU_QUEUE
@@ -150,6 +151,8 @@ def card():
 
 class SasModel(object):
     def __init__(self, data, model, dtype='float32', **kw):
+        from bumps.names import Parameter
+
         self.__dict__['_parameters'] = {}
         #self.name = data.filename
         self.is2D = hasattr(data,'qx_data')

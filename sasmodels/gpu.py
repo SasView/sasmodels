@@ -45,6 +45,14 @@ F64_DEFS = """\
 #define real double
 """
 
+# The max loops number is limited by the amount of local memory available
+# on the device.  You don't want to make this value too big because it will
+# waste resources, nor too small because it may interfere with users trying
+# to do their polydispersity calculations.  A value of 1024 should be much
+# larger than necessary given that cost grows as npts^k where k is the number
+# of polydisperse parameters.
+MAX_LOOPS = 1024
+
 ENV = None
 def environment():
     """
@@ -95,15 +103,14 @@ def compile_model(context, source, dtype):
     """
     dtype = np.dtype(dtype)
     if dtype==F64 and not all(has_double(d) for d in context.devices):
-        warnings.warn(RuntimeWarning("Double precision not support; using single precision instead"))
-        dtype = F32
+        raise RuntimeError("Double precision not supported for devices")
 
     header = F64_DEFS if dtype == F64 else F32_DEFS
     # Note: USE_SINCOS makes the intel cpu slower under opencl
     if context.devices[0].type == cl.device_type.GPU:
         header += "#define USE_SINCOS\n"
     program  = cl.Program(context, header+source).build()
-    return program, dtype
+    return program
 
 
 def make_result(self, size):
@@ -124,12 +131,25 @@ class GpuEnvironment(object):
                        for d in self.context.devices]
         self.boundary = max(d.min_data_type_align_size
                             for d in self.context.devices)
+        self.has_double = all(has_double(d) for d in self.context.devices)
+        self.compiled = {}
+
+    def compile_program(self, name, source, dtype):
+        if name not in self.compiled:
+            #print "compiling",name
+            self.compiled[name] = compile_model(self.context, source, dtype)
+        return self.compiled[name]
+
+    def release_program(self, name):
+        if name in self.compiled:
+            self.compiled[name].release()
+            del self.compiled[name]
 
 class GpuModel(object):
     """
     GPU wrapper for a single model.
 
-    *source* and *meta* are the model source and interface as returned
+    *source* and *info* are the model source and interface as returned
     from :func:`gen.make`.
 
     *dtype* is the desired model precision.  Any numpy dtype for single
@@ -137,21 +157,33 @@ class GpuModel(object):
     for single and 'd', 'float64' or 'double' for double.  Double precision
     is an optional extension which may not be available on all devices.
     """
-    def __init__(self, source, meta, dtype=F32):
-        context = environment().context
-        self.meta = meta
-        self.program, self.dtype = compile_model(context, source, dtype)
+    def __init__(self, source, info, dtype=F32):
+        self.info = info
+        self.source = source
+        self.dtype = dtype
+        self.program = None # delay program creation
 
-        #TODO: need better interface
-        self.PARS = dict((p[0],p[2]) for p in meta['parameters'])
-        self.PD_PARS = [p[0] for p in meta['parameters'] if p[4] != ""]
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state['program'] = None
+        return state
 
-    def __call__(self, input, cutoff=1e-5):
+    def __setstate__(self, state):
+        self.__dict__ = state.copy()
+
+    def __call__(self, input):
         if self.dtype != input.dtype:
             raise TypeError("data and kernel have different types")
-        kernel_name = gen.kernel_name(self.meta, input.is_2D)
+        if self.program is None:
+            self.program = environment().compile_program(self.info['name'],self.source, self.dtype)
+        kernel_name = gen.kernel_name(self.info, input.is_2D)
         kernel = getattr(self.program, kernel_name)
-        return GpuKernel(kernel, self.meta, input, cutoff)
+        return GpuKernel(kernel, self.info, input)
+
+    def release(self):
+        if self.program is not None:
+            environment().release_program(self.info['name'])
+            self.program = None
 
     def make_input(self, q_vectors):
         """
@@ -209,46 +241,47 @@ class GpuInput(object):
         self.q_buffers = []
 
 class GpuKernel(object):
-    def __init__(self, kernel, meta, input, cutoff):
-        env = environment()
-
-        self.cutoff = cutoff
+    def __init__(self, kernel, info, input):
         self.input = input
         self.kernel = kernel
-        self.meta = meta
+        self.info = info
+        self.res = np.empty(input.nq, input.dtype)
+        dim = '2d' if input.is_2D else '1d'
+        self.fixed_pars = info['partype']['fixed-'+dim]
+        self.pd_pars = info['partype']['pd-'+dim]
 
         # Inputs and outputs for each kernel call
+        # Note: res may be shorter than res_b if global_size != nq
+        env = environment()
         self.loops_b = [cl.Buffer(env.context, mf.READ_WRITE,
-                                  1024*input.dtype.itemsize)
+                                  MAX_LOOPS*input.dtype.itemsize)
                         for _ in env.queues]
         self.res_b = [cl.Buffer(env.context, mf.READ_WRITE,
                                 input.global_size[0]*input.dtype.itemsize)
                       for _ in env.queues]
 
-        # Note: may be shorter than res_b if global_size != nq
-        self.res = np.empty(input.nq, input.dtype)
 
-        # Determine the set of fixed and polydisperse parameters
-        self.fixed_pars = [p[0] for p in meta['parameters'] if p[4] == ""]
-        self.pd_pars = [p for p in meta['parameters']
-               if p[4]=="volume" or (p[4]=="orientation" and input.is_2D)]
+    def __call__(self, pars, pd_pars, cutoff=1e-5):
+        real = np.float32 if self.input.dtype == F32 else np.float64
+        fixed = [real(p) for p in pars]
+        cutoff = real(cutoff)
+        loops = np.hstack(pd_pars)
+        loops = np.ascontiguousarray(loops.T, self.input.dtype).flatten()
+        loops_N = [np.uint32(len(p[0])) for p in pd_pars]
 
-    def eval(self, pars):
+        #print "opencl eval",pars
+        if len(loops) > MAX_LOOPS:
+            raise ValueError("too many polydispersity points")
         device_num = 0
         res_bi = self.res_b[device_num]
         queuei = environment().queues[device_num]
-        fixed, loops, loop_n = \
-            gen.kernel_pars(pars, self.meta, self.input.is_2D, dtype=self.input.dtype)
-        loops_l = cl.LocalMemory(len(loops.data))
-        real = np.float32 if self.input.dtype == F32 else np.float64
-        cutoff = real(self.cutoff)
-
         loops_bi = self.loops_b[device_num]
+        loops_l = cl.LocalMemory(len(loops.data))
         cl.enqueue_copy(queuei, loops_bi, loops)
         #ctx = environment().context
         #loops_bi = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=loops)
-        pars = self.input.q_buffers + [res_bi,loops_bi,loops_l,cutoff] + fixed + loop_n
-        self.kernel(queuei, self.input.global_size, None, *pars)
+        args = self.input.q_buffers + [res_bi,loops_bi,loops_l,cutoff] + fixed + loops_N
+        self.kernel(queuei, self.input.global_size, None, *args)
         cl.enqueue_copy(queuei, self.res, res_bi)
 
         return self.res

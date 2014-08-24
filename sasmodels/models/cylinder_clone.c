@@ -1,23 +1,24 @@
 /* PARAMETERS
 {
-name: "cylinder",
+name: "CylinderModel",
 title: "Cylinder with uniform scattering length density",
-include: [ "lib/J1.c", "lib/gauss76.c", "lib/cylkernel.c" ],
+include: [ "lib/J1.c", "lib/gauss76.c", "lib/cylkernel.c"],
 parameters: [
    // [ "name", "units", default, [lower, upper], "type", "description" ],
-   [ "sld", "1e-6/Ang^2", 4, [-Infinity,Infinity], "",
+   [ "sldCyl", "1e-6/Ang^2", 4e-6, [-Infinity,Infinity], "",
      "Cylinder scattering length density" ],
-   [ "solvent_sld", "1e-6/Ang^2", 1, [-Infinity,Infinity], "",
+   [ "sldSolv", "1e-6/Ang^2", 1e-6, [-Infinity,Infinity], "",
      "Solvent scattering length density" ],
    [ "radius", "Ang",  20, [0, Infinity], "volume",
      "Cylinder radius" ],
    [ "length", "Ang",  400, [0, Infinity], "volume",
      "Cylinder length" ],
-   [ "theta", "degrees", 60, [-Infinity, Infinity], "orientation",
+   [ "cyl_theta", "degrees", 60, [-Infinity, Infinity], "orientation",
      "In plane angle" ],
-   [ "phi", "degrees", 60, [-Infinity, Infinity], "orientation",
+   [ "cyl_phi", "degrees", 60, [-Infinity, Infinity], "orientation",
      "Out of plane angle" ],
 ],
+description: "f(q)= 2*(sldCyl - sldSolv)*V*sin(qLcos(alpha/2))/[qLcos(alpha/2)]*J1(qRsin(alpha/2))/[qRsin(alpha)]",
 }
 PARAMETERS END
 
@@ -150,8 +151,8 @@ real form_volume(real radius, real length)
 }
 
 real Iq(real q,
-    real sld,
-    real solvent_sld,
+    real sldCyl,
+    real sldSolv,
     real radius,
     real length)
 {
@@ -168,28 +169,28 @@ real Iq(real q,
     // Multiply by contrast^2, normalize by cylinder volume and convert to cm-1
     // NOTE that for this (Fournet) definition of the integral, one must MULTIPLY by Vcyl
     // The additional volume factor is for polydisperse volume normalization.
-    const real s = (sld - solvent_sld) * form_volume(radius, length);
-    return REAL(1.0e-4) * form * s * s;
+    const real s = (sldCyl - sldSolv) * form_volume(radius, length);
+    return REAL(1.0e8) * form * s * s;
 }
 
 
 real Iqxy(real qx, real qy,
-    real sld,
-    real solvent_sld,
+    real sldCyl,
+    real sldSolv,
     real radius,
     real length,
-    real theta,
-    real phi)
+    real cyl_theta,
+    real cyl_phi)
 {
     real sn, cn; // slots to hold sincos function output
 
     // Compute angle alpha between q and the cylinder axis
-    SINCOS(theta*M_PI_180, sn, cn);
+    SINCOS(cyl_theta*M_PI_180, sn, cn);
     // # The following correction factor exists in sasview, but it can't be
     // # right, so we are leaving it out for now.
     // const real correction = fabs(cn)*M_PI_2;
     const real q = sqrt(qx*qx+qy*qy);
-    const real cos_val = cn*cos(phi*M_PI_180)*(qx/q) + sn*(qy/q);
+    const real cos_val = cn*cos(cyl_phi*M_PI_180)*(qx/q) + sn*(qy/q);
     const real alpha = acos(cos_val);
 
     // The following is CylKernel() / sin(alpha), but we are doing it in place
@@ -206,6 +207,6 @@ real Iqxy(real qx, real qy,
     // Multiply by contrast^2, normalize by cylinder volume and convert to cm-1
     // NOTE that for this (Fournet) definition of the integral, one must MULTIPLY by Vcyl
     // The additional volume factor is for polydisperse volume normalization.
-    const real s = (sld - solvent_sld) * form_volume(radius, length);
-    return REAL(1.0e-4) * form * s * s; // * correction;
+    const real s = (sldCyl - sldSolv) * form_volume(radius, length);
+    return REAL(1.0e8) * form * s * s; // * correction;
 }

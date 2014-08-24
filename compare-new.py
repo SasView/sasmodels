@@ -47,7 +47,7 @@ def compare(Ncpu, cpuname, cpupars, Ngpu, gpuname, gpupars):
             model.update()
             gpu = model.theory()
         gpu_time = toc()*1000./Ngpu
-        print "ocl t=%.1f ms"%gpu_time
+        print "ocl t=%.1f ms, intensity=%.0f"%(gpu_time, sum(gpu[~np.isnan(gpu)]))
         #print max(gpu), min(gpu)
 
     if 0 and Ncpu > 0: # Hack to compare ctypes vs. opencl
@@ -60,7 +60,7 @@ def compare(Ncpu, cpuname, cpupars, Ngpu, gpuname, gpupars):
         cpu_time = toc()*1000./Ncpu
         print "dll t=%.1f ms"%cpu_time
 
-    elif 1: # Hack to check new vs old for GpuCylinder
+    elif 0: # Hack to check new vs old for GpuCylinder
         from Models.code_cylinder_f import GpuCylinder as oldgpu
         from sasmodel import SasModel
         oldmodel = SasModel(data, oldgpu, dtype='single', **cpupars)
@@ -77,7 +77,7 @@ def compare(Ncpu, cpuname, cpupars, Ngpu, gpuname, gpupars):
         for i in range(Ncpu):
             cpu = cpumodel.evalDistribution([data.qx_data, data.qy_data])
         cpu_time = toc()*1000./Ncpu
-        print "sasview t=%.1f ms"%cpu_time
+        print "sasview t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu[model.index]))
 
     if Ngpu > 0 and Ncpu > 0:
         print "gpu/cpu", max(abs(gpu/cpu)), "%.15g"%max(abs(gpu)), "%.15g"%max(abs(cpu))

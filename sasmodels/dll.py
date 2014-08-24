@@ -18,7 +18,7 @@ class DllModel(object):
     """
     ctypes wrapper for a single model.
 
-    *source* and *meta* are the model source and interface as returned
+    *source* and *info* are the model source and interface as returned
     from :func:`gen.make`.
 
     *dtype* is the desired model precision.  Any numpy dtype for single
@@ -26,26 +26,36 @@ class DllModel(object):
     for single and 'd', 'float64' or 'double' for double.  Double precision
     is an optional extension which may not be available on all devices.
     """
-    def __init__(self, dllpath, meta):
-        self.meta = meta
-        self.dll = ct.CDLL(dllpath)
-        self.Iq = self.dll[gen.kernel_name(self.meta, False)]
-        self.Iqxy = self.dll[gen.kernel_name(self.meta, True)]
+    def __init__(self, dllpath, info):
+        self.info = info
+        self.dllpath = dllpath
+        self.dll = None
 
+    def _load_dll(self):
+        Nfixed1d = len(self.info['partype']['fixed-1d'])
+        Nfixed2d = len(self.info['partype']['fixed-2d'])
+        Npd1d = len(self.info['partype']['pd-1d'])
+        Npd2d = len(self.info['partype']['pd-2d'])
 
-        self.PARS = dict((p[0],p[2]) for p in meta['parameters'])
-        self.PD_PARS = [p[0] for p in meta['parameters'] if p[4] != ""]
+        self.dll = ct.CDLL(self.dllpath)
 
-        # Determine the set of fixed and polydisperse parameters
-        Nfixed = len([p[0] for p in meta['parameters'] if p[4] == ""])
-        N1D = len([p for p in meta['parameters'] if p[4]=="volume"])
-        N2D = len([p for p in meta['parameters'] if p[4]!=""])
-        self.Iq.argtypes = IQ_ARGS + [c_double]*Nfixed + [c_int]*N1D
-        self.Iqxy.argtypes = IQXY_ARGS + [c_double]*Nfixed + [c_int]*N2D
+        self.Iq = self.dll[gen.kernel_name(self.info, False)]
+        self.Iq.argtypes = IQ_ARGS + [c_double]*Nfixed1d + [c_int]*Npd1d
 
-    def __call__(self, input, cutoff=1e-5):
+        self.Iqxy = self.dll[gen.kernel_name(self.info, True)]
+        self.Iqxy.argtypes = IQXY_ARGS + [c_double]*Nfixed2d + [c_int]*Npd2d
+
+    def __getstate__(self):
+        return {'info': self.info, 'dllpath': self.dllpath, 'dll': None}
+
+    def __setstate__(self, state):
+        self.__dict__ = state
+
+    def __call__(self, input):
+        if self.dll is None: self._load_dll()
+
         kernel = self.Iqxy if input.is_2D else self.Iq
-        return DllKernel(kernel, self.meta, input, cutoff)
+        return DllKernel(kernel, self.info, input)
 
     def make_input(self, q_vectors):
         """
@@ -89,36 +99,33 @@ class DllInput(object):
         self.q_vectors = []
 
 class DllKernel(object):
-    def __init__(self, kernel, meta, input, cutoff):
-        self.cutoff = cutoff
+    def __init__(self, kernel, info, input):
         self.input = input
         self.kernel = kernel
-        self.meta = meta
-
+        self.info = info
         self.res = np.empty(input.nq, input.dtype)
+        dim = '2d' if input.is_2D else '1d'
+        self.fixed_pars = info['partype']['fixed-'+dim]
+        self.pd_pars = info['partype']['pd-'+dim]
+
+        # In dll kernel, but not in opencl kernel
         self.p_res = self.res.ctypes.data
 
-        # Determine the set of fixed and polydisperse parameters
-        self.fixed_pars = [p[0] for p in meta['parameters'] if p[4] == ""]
-        self.pd_pars = [p for p in meta['parameters']
-               if p[4]=="volume" or (p[4]=="orientation" and input.is_2D)]
-
-    def eval(self, pars):
-        fixed, loops, loop_n = \
-            gen.kernel_pars(pars, self.meta, self.input.is_2D, dtype=self.input.dtype)
+    def __call__(self, pars, pd_pars, cutoff):
         real = np.float32 if self.input.dtype == F32 else np.float64
-        nq = c_int(self.input.nq)
-        cutoff = real(self.cutoff)
+        fixed = [real(p) for p in pars]
+        cutoff = real(cutoff)
+        loops = np.hstack(pd_pars)
+        loops = np.ascontiguousarray(loops.T, self.input.dtype).flatten()
+        loops_N = [np.uint32(len(p[0])) for p in pd_pars]
 
+        nq = c_int(self.input.nq)
         p_loops = loops.ctypes.data
-        pars = self.input.q_pointers + [self.p_res, nq, p_loops, cutoff] + fixed + loop_n
+        args = self.input.q_pointers + [self.p_res, nq, p_loops, cutoff] + fixed + loops_N
         #print pars
-        self.kernel(*pars)
+        self.kernel(*args)
 
         return self.res
 
     def release(self):
         pass
-
-    def __del__(self):
-        self.release()

@@ -3,6 +3,7 @@
 
 import sys, os
 import datetime
+import warnings
 
 import numpy as np
 
@@ -13,14 +14,16 @@ def load_model(modelname):
                                  modelname+'.c'))
     return gen.make(modelpath)
 
+
+
 def opencl_model(modelname, dtype="single"):
     from sasmodels import gpu
 
-    source, meta, _ = load_model(modelname)
+    source, info, _ = load_model(modelname)
     # for debugging, save source to a .cl file, edit it, and reload as model
     #open(modelname+'.cl','w').write(source)
     #source = open(modelname+'.cl','r').read()
-    return gpu.GpuModel(source, meta, dtype)
+    return gpu.GpuModel(source, info, dtype)
 
 
 if sys.platform == 'darwin':
@@ -30,24 +33,28 @@ elif os.name == 'nt':
 else:
     COMPILE = "cc -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm"
 DLL_PATH = "/tmp"
-def dll_path(meta):
+
+
+def dll_path(info):
     from os.path import join as joinpath, split as splitpath, splitext
-    basename = splitext(splitpath(meta['filename'])[1])[0]
+    basename = splitext(splitpath(info['filename'])[1])[0]
     return joinpath(DLL_PATH, basename+'.so')
+
 
 def dll_model(modelname):
     import os
     from sasmodels import dll
 
-    source, meta, _ = load_model(modelname)
-    dllpath = dll_path(meta)
+    source, info, _ = load_model(modelname)
+    dllpath = dll_path(info)
     if not os.path.exists(dllpath) \
-            or (os.path.getmtime(dllpath) < os.path.getmtime(meta['filename'])):
+            or (os.path.getmtime(dllpath) < os.path.getmtime(info['filename'])):
         # Replace with a proper temp file
         srcfile = '/tmp/%s.c'%modelname
         open(srcfile, 'w').write(source)
         os.system(COMPILE%(srcfile, dllpath))
-    return dll.DllModel(dllpath, meta)
+    return dll.DllModel(dllpath, info)
+
 
 TIC = None
 def tic():
@@ -56,8 +63,10 @@ def tic():
     TIC = lambda: (datetime.datetime.now()-then).total_seconds()
     return TIC
 
+
 def toc():
     return TIC()
+
 
 def load_data(filename):
     from sans.dataloader.loader import Loader
@@ -67,9 +76,9 @@ def load_data(filename):
         raise IOError("Data %r could not be loaded"%filename)
     return data
 
+
 def fake_data2D(qx, qy=None):
     from sans.dataloader.data_info import Data2D, Detector
-
 
     if qy is None:
         qy = qx
@@ -120,6 +129,7 @@ def set_beam_stop(data, radius, outer=None):
         if outer is not None:
             data.mask &= (data.x<outer)
 
+
 def set_half(data, half):
     from sans.dataloader.manipulations import Boxcut
     if half == 'right':
@@ -127,9 +137,11 @@ def set_half(data, half):
     if half == 'left':
         data.mask += Boxcut(x_min=0.0, x_max=np.inf, y_min=-np.inf, y_max=np.inf)(data)
 
+
 def set_top(data, max):
     from sans.dataloader.manipulations import Boxcut
     data.mask += Boxcut(x_min=-np.inf, x_max=np.inf, y_min=-np.inf, y_max=max)(data)
+
 
 def plot_data(data, iq, vmin=None, vmax=None):
     from numpy.ma import masked_array
@@ -140,6 +152,7 @@ def plot_data(data, iq, vmin=None, vmax=None):
     plt.imshow(img.reshape(128,128),
                interpolation='nearest', aspect=1, origin='upper',
                extent=[xmin, xmax, ymin, ymax], vmin=vmin, vmax=vmax)
+
 
 def plot_result2D(data, theory, view='linear'):
     import matplotlib.pyplot as plt
@@ -183,11 +196,11 @@ def plot_result1D(data, theory, view='linear'):
     mtheory = masked_array(theory, mdata.mask)
     mresid = masked_array((theory-data.y)/data.dy, mdata.mask)
 
-    plt.subplot(1,2,1)
+    plt.subplot(121)
     plt.errorbar(data.x, mdata, yerr=data.dy)
     plt.plot(data.x, mtheory, '-', hold=True)
     plt.yscale(view)
-    plt.subplot(1, 2, 2)
+    plt.subplot(122)
     plt.plot(data.x, mresid, 'x')
     #plt.axhline(1, color='black', ls='--',lw=1, hold=True)
     #plt.axhline(0, color='black', lw=1, hold=True)
@@ -218,28 +231,33 @@ class BumpsModel(object):
         input = model.make_input([v[self.index] for v in q_vectors])
 
         # create model
-        self.fn = model(input, cutoff=cutoff)
+        self.fn = model(input)
+        self.cutoff = cutoff
 
         # define bumps parameters
         pars = []
-        for p in model.meta['parameters']:
+        extras = []
+        for p in model.info['parameters']:
             name, default, limits, ptype = p[0], p[2], p[3], p[4]
             value = kw.pop(name, default)
             setattr(self, name, Parameter.default(value, name=name, limits=limits))
             pars.append(name)
-            if ptype != "":
-                for xpart,xdefault,xlimits in [
-                        ('_pd', 0, limits),
-                        ('_pd_n', 35, (0,1000)),
-                        ('_pd_nsigma', 3, (0,10)),
-                        ]:
-                    xname = name+xpart
-                    xvalue = kw.pop(xname, xdefault)
-                    setattr(self, xname, Parameter.default(xvalue, name=xname))
+        for name in model.info['partype']['pd-2d']:
+            for xpart,xdefault,xlimits in [
+                    ('_pd', 0, limits),
+                    ('_pd_n', 35, (0,1000)),
+                    ('_pd_nsigma', 3, (0, 10)),
+                    ('_pd_type', 'gaussian', None),
+                ]:
+                xname = name+xpart
+                xvalue = kw.pop(xname, xdefault)
+                if xlimits is not None:
+                    xvalue = Parameter.default(xvalue, name=xname, limits=xlimits)
                     pars.append(xname)
+                setattr(self, xname, xvalue)
+        self._parameter_names = pars
         if kw:
             raise TypeError("unexpected parameters: %s"%(", ".join(sorted(kw.keys()))))
-        self._parameter_names = pars
         self.update()
 
     def update(self):
@@ -253,10 +271,11 @@ class BumpsModel(object):
 
     def theory(self):
         if 'theory' not in self._cache:
-            pars = dict((k,getattr(self,k).value) for k in self._parameter_names)
+            pars = [getattr(self,p).value for p in self.fn.fixed_pars]
+            pd_pars = [self._get_weights(p) for p in self.fn.pd_pars]
             #print pars
-            self._theory[self.index] = self.fn.eval(pars)
-            #self._theory[:] = self.fn.eval(pars)
+            self._theory[self.index] = self.fn(pars, pd_pars, self.cutoff)
+            #self._theory[:] = self.fn.eval(pars, pd_pars)
             self._cache['theory'] = self._theory
         return self._cache['theory']
 
@@ -281,11 +300,25 @@ class BumpsModel(object):
     def save(self, basename):
         pass
 
+    def _get_weights(self, par):
+        from . import weights
+
+        relative = self.fn.info['partype']['pd-rel']
+        limits = self.fn.info['limits']
+        disperser,value,npts,width,nsigma = [getattr(self, par+ext)
+                for ext in ('_pd_type','','_pd_n','_pd','_pd_nsigma')]
+        v,w = weights.get_weights(
+            disperser, int(npts.value), width.value, nsigma.value,
+            value.value, limits[par], par in relative)
+        return v,w/w.max()
+
+
 def demo():
     data = load_data('DEC07086.DAT')
     set_beam_stop(data, 0.004)
     plot_data(data)
     import matplotlib.pyplot as plt; plt.show()
+
 
 if __name__ == "__main__":
     demo()
