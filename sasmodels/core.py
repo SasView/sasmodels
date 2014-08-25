@@ -7,20 +7,12 @@ import warnings
 
 import numpy as np
 
-def load_model(modelname):
-    from os.path import abspath, join as joinpath, dirname
-    from sasmodels import gen
-    modelpath = abspath(joinpath(dirname(gen.__file__), 'models',
-                                 modelname+'.c'))
-    return gen.make(modelpath)
 
+def opencl_model(kernel_module, dtype="single"):
+    from sasmodels import gen, gpu
 
-
-def opencl_model(modelname, dtype="single"):
-    from sasmodels import gpu
-
-    source, info, _ = load_model(modelname)
-    # for debugging, save source to a .cl file, edit it, and reload as model
+    source, info = gen.make(kernel_module)
+    ## for debugging, save source to a .cl file, edit it, and reload as model
     #open(modelname+'.cl','w').write(source)
     #source = open(modelname+'.cl','r').read()
     return gpu.GpuModel(source, info, dtype)
@@ -41,18 +33,21 @@ def dll_path(info):
     return joinpath(DLL_PATH, basename+'.so')
 
 
-def dll_model(modelname):
+def dll_model(kernel_module):
     import os
-    from sasmodels import dll
+    import tempfile
+    from sasmodels import gen, dll
 
-    source, info, _ = load_model(modelname)
+    source, info = gen.make(kernel_module)
     dllpath = dll_path(info)
     if not os.path.exists(dllpath) \
             or (os.path.getmtime(dllpath) < os.path.getmtime(info['filename'])):
         # Replace with a proper temp file
-        srcfile = '/tmp/%s.c'%modelname
+        srcfile = tempfile.mkstemp(suffix=".c",prefix="sas_"+info['name'])
         open(srcfile, 'w').write(source)
         os.system(COMPILE%(srcfile, dllpath))
+        ## comment the following to keep the generated c file
+        #os.unlink(srcfile)
     return dll.DllModel(dllpath, info)
 
 

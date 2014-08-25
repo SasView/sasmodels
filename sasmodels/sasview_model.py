@@ -3,16 +3,18 @@ from copy import deepcopy
 
 import numpy as np
 
-def make_class(name, class_name=None, dtype='single'):
+def make_class(kernel_module, dtype='single'):
     from .core import opencl_model
-    if class_name is None:
-        class_name = "".join(part.capitalize() for part in name.split('_')+['model'])
-    model =  opencl_model(name, dtype=dtype)
-    class ConstructedModel(SasviewModel):
-        kernel = model
-        def __init__(self, multfactor=1):
-            SasviewModel.__init__(self, self.kernel)
-    ConstructedModel.__name__ = class_name
+    model =  opencl_model(kernel_module, dtype=dtype)
+    def __init__(self, multfactor=1):
+        SasviewModel.__init__(self, self.kernel)
+    attrs = dict(__init__=__init__, kernel=model)
+    ConstructedModel = type(model.info['name'],  (SasviewModel,), attrs)
+    #class ConstructedModel(SasviewModel):
+    #    kernel = model
+    #    def __init__(self, multfactor=1):
+    #        SasviewModel.__init__(self, self.kernel)
+    #ConstructedModel.__name__ = model.info['name']
     return ConstructedModel
 
 class SasviewModel(object):
@@ -266,6 +268,7 @@ class SasviewModel(object):
             vol_pars = self._model.info['partype']['volume']
             values, weights = self._dispersion_mesh(vol_pars)
             fv = ER(*values)
+            #print values[0].shape, weights.shape, fv.shape
             return np.sum(weights*fv) / np.sum(weights)
 
     def calculate_VR(self):
@@ -274,7 +277,7 @@ class SasviewModel(object):
 
         :return: the value of the volf ratio
         """
-        VR = self._model.info.get('ER', None)
+        VR = self._model.info.get('VR', None)
         if VR is None:
             return 1.0
         else:
@@ -322,7 +325,7 @@ class SasviewModel(object):
         values, weights = zip(*[self._get_weights(p) for p in pars])
         values = [v.flatten() for v in np.meshgrid(*values)]
         weights = np.vstack([v.flatten() for v in np.meshgrid(*weights)])
-        weights = np.prod(weights, axis=1)
+        weights = np.prod(weights, axis=0)
         return values, weights
 
     def _get_weights(self, par):

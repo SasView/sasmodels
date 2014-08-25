@@ -315,45 +315,24 @@ def make_partable(info):
     lines.append(sep)
     return "\n".join(lines)
 
-def make_doc(kernelfile, info, doc):
-    doc = doc%{'parameters': make_partable(info)}
-    return doc
+def _search(search_path, filename):
+    """
+    Find *filename* in *search_path*.
 
-def make_model(kernelfile, info, source):
+    Raises ValueError if file does not exist.
+    """
+    for path in search_path:
+        target = os.path.join(path, filename)
+        if os.path.exists(target):
+            return target
+    raise ValueError("%r not found in %s"%(filename, search_path))
+
+def make_model(search_path, info):
     kernel_Iq = make_kernel(info, is_2D=False)
     kernel_Iqxy = make_kernel(info, is_2D=True)
-    path = os.path.dirname(kernelfile)
-    extra = [open("%s/%s"%(path,f)).read() for f in info['include']]
-    kernel = "\n\n".join([KERNEL_HEADER]+extra+[source, kernel_Iq, kernel_Iqxy])
+    source = [open(_search(search_path, f)).read() for f in info['source']]
+    kernel = "\n\n".join([KERNEL_HEADER]+source+[kernel_Iq, kernel_Iqxy])
     return kernel
-
-def parse_file(kernelfile):
-    source = open(kernelfile).read()
-
-    # select parameters out of the source file
-    parts = source.split("PARAMETERS")
-    if len(parts) != 3:
-        raise ValueError("PARAMETERS block missing from %r"%kernelfile)
-    info_source = parts[1].strip()
-    try:
-        info = relaxed_loads(info_source)
-    except:
-        print "in json text:"
-        print "\n".join("%2d: %s"%(i+1,s)
-                        for i,s in enumerate(info_source.split('\n')))
-        raise
-        #raise ValueError("PARAMETERS block could not be parsed from %r"%kernelfile)
-
-    # select documentation out of the source file
-    parts = source.split("DOCUMENTATION")
-    if len(parts) == 3:
-        doc = make_doc(kernelfile, info, parts[1].strip())
-    elif len(parts) == 1:
-        raise ValueError("DOCUMENTATION block is missing from %r"%kernelfile)
-    else:
-        raise ValueError("DOCUMENTATION block incorrect from %r"%kernelfile)
-
-    return source, info, doc
 
 def categorize_parameters(pars):
     """
@@ -407,22 +386,34 @@ def categorize_parameters(pars):
 
     return partype
 
-def make(kernelfile):
+def make(kernel_module):
     """
     Build an OpenCL function from the source in *kernelfile*.
 
     The kernel file needs to define metadata about the parameters.  This
     will be a JSON definition containing
     """
+    # TODO: allow Iq and Iqxy to be defined in python
+    from os.path import abspath, dirname, join as joinpath
     #print kernelfile
-    source, info, doc = parse_file(kernelfile)
-    info['filename'] = kernelfile
-    info['parameters'] = COMMON_PARAMETERS + info['parameters']
-    info['partype'] = categorize_parameters(info['parameters'])
+    info = dict(
+        filename = abspath(kernel_module.__file__),
+        name = kernel_module.name,
+        title = kernel_module.title,
+        source = kernel_module.source,
+        description = kernel_module.description,
+        parameters = COMMON_PARAMETERS + kernel_module.parameters,
+        ER = getattr(kernel_module, 'ER', None),
+        VR = getattr(kernel_module, 'VR', None),
+        )
     info['limits'] = dict((p[0],p[3]) for p in info['parameters'])
-    doc = make_doc(kernelfile, info, doc)
-    model = make_model(kernelfile, info, source)
-    return model, info, doc
+    info['partype'] = categorize_parameters(info['parameters'])
+
+    search_path = [ dirname(info['filename']),
+                    abspath(joinpath(dirname(__file__),'models')) ]
+    source = make_model(search_path, info)
+
+    return source, info
 
 
 def demo_time():
