@@ -202,11 +202,11 @@ real Iqxy(real qx, real qy,
     // lim_{x->0} J1(x)/x = 1/2,   lim_{x->0} sin(x)/x = 1
     const real bj = (besarg == REAL(0.0) ? REAL(0.5) : J1(besarg)/besarg);
     const real si = (siarg == REAL(0.0) ? REAL(1.0) : sin(siarg)/siarg);
-    const real form = bj*bj*si*si;
+    const real form = REAL(4.0)*bj*bj*si*si;
 
     // Multiply by contrast^2, normalize by cylinder volume and convert to cm-1
     // NOTE that for this (Fournet) definition of the integral, one must MULTIPLY by Vcyl
     // The additional volume factor is for polydisperse volume normalization.
     const real s = (sldCyl - sldSolv) * form_volume(radius, length);
-    return REAL(4.0e8) * form * s * s; // * correction;
+    return REAL(1.0e8) * form * s * s; // * correction;
 }
