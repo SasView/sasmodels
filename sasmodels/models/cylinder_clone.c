@@ -208,5 +208,5 @@ real Iqxy(real qx, real qy,
     // NOTE that for this (Fournet) definition of the integral, one must MULTIPLY by Vcyl
     // The additional volume factor is for polydisperse volume normalization.
     const real s = (sldCyl - sldSolv) * form_volume(radius, length);
-    return REAL(1.0e8) * form * s * s; // * correction;
+    return REAL(4.0e8) * form * s * s; // * correction;
 }

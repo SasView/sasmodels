@@ -3,16 +3,14 @@ from copy import deepcopy
 
 import numpy as np
 
-def make_class(name, class_name=None):
+def make_class(name, class_name=None, dtype='single'):
     from .core import opencl_model
     if class_name is None:
         class_name = "".join(part.capitalize() for part in name.split('_')+['model'])
-    model =  opencl_model(name)
+    model =  opencl_model(name, dtype=dtype)
     class ConstructedModel(SasviewModel):
         kernel = model
         def __init__(self, multfactor=1):
-            if self.kernel is None:
-                self.__class__.kernel = opencl_model(name)
             SasviewModel.__init__(self, self.kernel)
     ConstructedModel.__name__ = class_name
     return ConstructedModel
@@ -45,7 +43,7 @@ class SasviewModel(object):
             self.dispersion[name] = {
                 'width': 0,
                 'npts': 35,
-                'nsigma': 3,
+                'nsigmas': 3,
                 'type': 'gaussian',
             }
 
@@ -159,14 +157,12 @@ class SasviewModel(object):
         """
         Return a list of all available parameters for the model
         """
-        list = []
-
-        for item in self.dispersion.keys():
-            for p in self.dispersion[item].keys():
-                if p not in ['type']:
-                    list.append('%s.%s' % (item.lower(), p.lower()))
-
-        return list
+        # TODO: fix test so that parameter order doesn't matter
+        ret = ['%s.%s'%(d.lower(), p)
+               for d in self._model.info['partype']['pd-2d']
+               for p in ('npts', 'nsigmas', 'width')]
+        #print ret
+        return ret
 
     def clone(self):
         """ Return a identical copy of self """
@@ -294,7 +290,23 @@ class SasviewModel(object):
         :param parameter: name of the parameter [string]
         :param dispersion: dispersion object of type Dispersion
         """
-        if parameter.lower() in (s.name.lower() for s in self.params.keys()):
+        if parameter.lower() in (s.lower() for s in self.params.keys()):
+            # TODO: Store the disperser object directly in the model.
+            # The current method of creating one on the fly whenever it is
+            # needed is kind of funky.
+            # Note: can't seem to get disperser parameters from sasview
+            # (1) Could create a sasview model that has not yet # been
+            # converted, assign the disperser to one of its polydisperse
+            # parameters, then retrieve the disperser parameters from the
+            # sasview model.  (2) Could write a disperser parameter retriever
+            # in sasview.  (3) Could modify sasview to use sasmodels.weights
+            # dispersers.
+            # For now, rely on the fact that the sasview only ever uses
+            # new dispersers in the set_dispersion call and create a new
+            # one instead of trying to assign parameters.
+            from . import weights
+            disperser = weights.dispersers[dispersion.__class__.__name__]
+            dispersion = weights.models[disperser]()
             self.dispersion[parameter] = dispersion.get_pars()
         else:
             raise ValueError("%r is not a dispersity or orientation parameter")
@@ -320,6 +332,7 @@ class SasviewModel(object):
         limits = self._model.info['limits']
         dis = self.dispersion[par]
         v,w = weights.get_weights(
-            dis['type'], dis['npts'], dis['width'], dis['nsigma'],
+            dis['type'], dis['npts'], dis['width'], dis['nsigmas'],
             self.params[par], limits[par], par in relative)
         return v,w/w.max()
+

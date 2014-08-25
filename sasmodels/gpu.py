@@ -269,6 +269,7 @@ class GpuKernel(object):
         loops = np.ascontiguousarray(loops.T, self.input.dtype).flatten()
         loops_N = [np.uint32(len(p[0])) for p in pd_pars]
 
+        #import sys; print >>sys.stderr,"opencl eval",pars
         #print "opencl eval",pars
         if len(loops) > MAX_LOOPS:
             raise ValueError("too many polydispersity points")

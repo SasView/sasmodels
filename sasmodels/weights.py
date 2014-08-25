@@ -37,7 +37,6 @@ class Dispersion(object):
         center value instead of absolute.  For polydispersity use relative.
         For orientation parameters use absolute.
         """
-        npts, width, nsigmas = self.npts, self.width, self.nsigmas
         sigma = self.width * center if relative else self.width
         if sigma == 0:
             return np.array([center], 'd'), np.array([1.], 'd')
@@ -121,8 +120,14 @@ models = dict((d.type,d) for d in (
     ArrayDispersion, SchulzDispersion, LogNormalDispersion
 ))
 
-def get_weights(disperser, n, width, nsigma, value, limits, relative):
+
+def get_weights(disperser, n, width, nsigmas, value, limits, relative):
     cls = models[disperser]
-    obj = cls(n, width, nsigma)
+    obj = cls(n, width, nsigmas)
     v,w = obj.get_weights(value, limits[0], limits[1], relative)
     return v,w
+
+# Hack to allow sasview dispersion objects to interoperate with sasmodels
+dispersers = dict((v.__name__,k) for k,v in models.items())
+dispersers['DispersionModel'] = RectangleDispersion.type
+
