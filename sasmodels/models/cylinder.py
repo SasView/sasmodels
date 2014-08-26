@@ -1,9 +1,6 @@
+# Note: model title and parameter table are inserted automatically
 r"""
-CylinderModel
-=============
-
-This model provides the form factor for a right circular cylinder with uniform
-scattering length density. The form factor is normalized by the particle volume.
+The form factor is normalized by the particle volume.
 
 For information about polarised and magnetic scattering, click here_.
 
@@ -37,7 +34,7 @@ are defined in Figure :num:`figure #CylinderModel-orientation`.
 
 .. _CylinderModel-orientation:
 
-.. figure:: img/image061.JPG
+.. figure:: img/image061.JPG   (should be img/cylinder-1.jpg, or img/cylinder-orientation.jpg)
 
     Definition of the angles for oriented cylinders.
 
@@ -48,11 +45,6 @@ are defined in Figure :num:`figure #CylinderModel-orientation`.
 NB: The 2nd virial coefficient of the cylinder is calculated based on the
 radius and length values, and used as the effective radius for $S(Q)$
 when $P(Q) \cdot S(Q)$ is applied.
-
-The returned value is scaled to units of |cm^-1| and the parameters of
-the CylinderModel are the following:
-
-%(parameters)s
 
 The output of the 1D scattering intensity function for randomly oriented
 cylinders is then given by
@@ -66,8 +58,8 @@ The *theta* and *phi* parameters are not used for the 1D output. Our
 implementation of the scattering kernel and the 1D scattering intensity
 use the c-library from NIST.
 
-Validation of the CylinderModel
--------------------------------
+Validation
+----------
 
 Validation of our code was done by comparing the output of the 1D model
 to the output of the software provided by the NIST (Kline, 2006).
@@ -115,45 +107,44 @@ such a cross-check.
 
 from numpy import pi, inf
 
+name = "cylinder"
+title = "Right circular cylinder with uniform scattering length density."
+description = """
+     f(q)= 2*(sldCyl - sldSolv)*V*sin(qLcos(alpha/2))
+            /[qLcos(alpha/2)]*J1(qRsin(alpha/2))/[qRsin(alpha)]
+
+            P(q,alpha)= scale/V*f(q)^(2)+background
+            V: Volume of the cylinder
+            R: Radius of the cylinder
+            L: Length of the cylinder
+            J1: The bessel function
+            alpha: angle betweenthe axis of the
+            cylinder and the q-vector for 1D
+            :the ouput is P(q)=scale/V*integral
+            from pi/2 to zero of...
+            f(q)^(2)*sin(alpha)*dalpha+ bkg
+    """
+
+parameters = [
+#   [ "name", "units", default, [lower, upper], "type",
+#     "description" ],
+    [ "sld", "1e-6/Ang^2", 4, [-inf,inf], "",
+      "Cylinder scattering length density" ],
+    [ "solvent_sld", "1e-6/Ang^2", 1, [-inf,inf], "",
+      "Solvent scattering length density" ],
+    [ "radius", "Ang",  20, [0, inf], "volume",
+      "Cylinder radius" ],
+    [ "length", "Ang",  400, [0, inf], "volume",
+      "Cylinder length" ],
+    [ "theta", "degrees", 60, [-inf, inf], "orientation",
+      "In plane angle" ],
+    [ "phi", "degrees", 60, [-inf, inf], "orientation",
+      "Out of plane angle" ],
+    ]
+
+source = [ "lib/J1.c", "lib/gauss76.c", "lib/cylkernel.c", "cylinder.c"]
+
 def ER(radius, length):
     ddd = 0.75*radius*(2*radius*length + (length+radius)*(length+pi*radius))
     return 0.5 * (ddd)**(1./3.)
-
-INFO = {
-    "name": "cylinder",
-    "title": "Cylinder with uniform scattering length density",
-    "source": [ "lib/J1.c", "lib/gauss76.c", "lib/cylkernel.c", "cylinder.c"],
-    "parameters": [
-    #   [ "name", "units", default, [lower, upper], "type",
-    #     "description" ],
-        [ "sld", "1e-6/Ang^2", 4, [-inf,inf], "",
-          "Cylinder scattering length density" ],
-        [ "solvent_sld", "1e-6/Ang^2", 1, [-inf,inf], "",
-          "Solvent scattering length density" ],
-        [ "radius", "Ang",  20, [0, inf], "volume",
-          "Cylinder radius" ],
-        [ "length", "Ang",  400, [0, inf], "volume",
-          "Cylinder length" ],
-        [ "theta", "degrees", 60, [-inf, inf], "orientation",
-          "In plane angle" ],
-        [ "phi", "degrees", 60, [-inf, inf], "orientation",
-          "Out of plane angle" ],
-        ],
-    "description": """
-         f(q)= 2*(sldCyl - sldSolv)*V*sin(qLcos(alpha/2))
-                /[qLcos(alpha/2)]*J1(qRsin(alpha/2))/[qRsin(alpha)]
-
-                P(q,alpha)= scale/V*f(q)^(2)+background
-                V: Volume of the cylinder
-                R: Radius of the cylinder
-                L: Length of the cylinder
-                J1: The bessel function
-                alpha: angle betweenthe axis of the
-                cylinder and the q-vector for 1D
-                :the ouput is P(q)=scale/V*integral
-                from pi/2 to zero of...
-                f(q)^(2)*sin(alpha)*dalpha+ bkg
-        """,
-    "ER": ER,
-    }
 

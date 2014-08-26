@@ -1,10 +1,133 @@
-__all__ = ["make_opencl"]
+"""
+SAS model constructor.
+
+Small angle scattering models are defined by a set of kernel functions:
+
+    *Iq(q, p1, p2, ...)* returns the scattering at q for a form with
+    particular dimensions averaged over all orientations.
+
+    *Iqxy(qx, qy, p1, p2, ...)* returns the scattering at qx,qy for a form
+    with particular dimensions for a single orientation.
+
+    *Imagnetic(qx, qy, result[], p1, p2, ...)* returns the scattering for the
+    polarized neutron spin states (up-up, up-down, down-up, down-down) for
+    a form with particular dimensions for a single orientation.
+
+    *form_volume(p1, p2, ...)* returns the volume of the form with particular
+    dimension.
+
+    *ER(p1, p2, ...)* returns the effective radius of the form with
+    particular dimensions.
+
+    *VR(p1, p2, ...)* returns the volume ratio for core-shell style forms.
+
+These functions are defined in a kernel module .py script and an associated
+set of .c files.  The model constructor will use them to create models with
+polydispersity across volume and orientation parameters, and provide
+scale and background parameters for each model.
+
+*Iq*, *Iqxy*, *Imagnetic* and *form_volume* should be stylized C-99
+functions written for OpenCL.  Floating point values should be
+declared as *real*.  Depending on how the function is called, a macro
+will replace *real* with *float* or *double*.  Unfortunately, MacOSX
+is picky about floating point constants, which should be defined with
+value + 'f' if they are of type *float* or just a bare value if they
+are of type *double*.  The solution is a macro *REAL(value)* which
+adds the 'f' if compiling for single precision floating point.  This
+does make the code ugly, and may someday be replaced by a clever
+regular expression which does the same job.  OpenCL has a *sincos*
+function which can improve performance when both the *sin* and *cos*
+values are needed for a particular argument.  Since this function
+does not exist in C-99, all use of *sincos* should be replaced by the
+macro *SINCOS(value,sn,cn)* where *sn* and *cn* are previously declared
+*real* values.  *value* may be an expression.  When compiled for systems
+without OpenCL, *SINCOS* will be replaced by *sin* and *cos* calls.  All
+functions need prototype declarations even if the are defined before they
+are used -- another present from MacOSX.  OpenCL does not support
+*#include* preprocessor directives; instead the includes must be listed
+in the kernel metadata, with functions defined before they are used.
+The included files should be listed using relative path to the kernel
+source file, or if using one of the standard models, relative to the
+sasmodels source files.
+
+*ER* and *VR* are python functions which operate on parameter vectors.
+The constructor code will generate the necessary vectors for computing
+them with the desired polydispersity.
+
+The kernel module must set variables defining the kernel meta data:
+
+    *name* is the model name
+
+    *title* is a short description of the model, suitable for a tool tip,
+    or a one line model summary in a table of models.
+
+    *description* is an extended description of the model to be displayed
+    while the model parameters are being edited.
+
+    *parameters* is a list of parameters.  Each parameter is itself a
+    list containing *name*, *units*, *default value*,
+    [*lower bound*, *upper bound*], *type* and *description*.
+
+    *source* is the list of C-99 source files that must be joined to
+    create the OpenCL kernel functions.  The files defining the functions
+    need to be listed before the files which use the functions.
+
+    *ER* is a python function defining the effective radius.  If it is
+    not present, the effective radius is 0.
+
+    *VR* is a python function defining the volume ratio.  If it is not
+    present, the volume ratio is 1.
+
+The doc string at the start of the kernel module will be used to
+construct the model documentation web pages.  Embedded figures should
+appear in the subdirectory "img" beside the model definition, and tagged
+with the kernel module name to avoid collision with other models.  Some
+file systems are case-sensitive, so only use lower case characters for
+file names and extensions.
+
+Parameters are defined as follows:
+
+    *name* is the name that will be used in the call to the kernel
+    function and the name that will be displayed to the user.  Names
+    should be lower case, with words separated by underscore.  If
+    acronyms are used, the whole acronym should be upper case.
+
+    *units* should be one of *degrees* for angles, *Ang* for lengths,
+    *1e-6/Ang^2* for SLDs.
+
+    *default value* will be the initial value for  the model when it
+    is selected, or when an initial value is not otherwise specified.
+
+    *limits* are the valid bounds of the parameter, used to limit the
+    polydispersity density function.   In the fit, the parameter limits
+    given to the fit are the limits  on the central value of the parameter.
+    If there is polydispersity, it will evaluate parameter values outside
+    the fit limits, but not outside the hard limits specified in the model.
+    If there are no limits, use +/-inf imported from numpy.
+
+    *type* indicates how the parameter will be used.  "volume" parameters
+    will be used in all functions.  "orientation" parameters will be used
+    in *Iqxy* and *Imagnetic*.  "magnetic* parameters will be used in
+    *Imagnetic* only.  If *type* is none, the parameter will be used in
+    all of *Iq*, *Iqxy* and *Imagnetic*.  This will probably be a
+    is the empty string if the parameter is used in all model calculations,
+    it is "volu
+
+    *description* is a short description of the parameter.  This will
+    be displayed in the parameter table and used as a tool tip for the
+    parameter value in the user interface.
+
+The function :func:`make` loads the metadata from the module and returns
+the kernel source.  The function :func:`doc` extracts
+"""
+
+# TODO: identify model files which have changed since loading and reload them.
+
+__all__ = ["make, doc"]
 
 import os.path
 
 import numpy as np
-
-from .jsonutil import relaxed_loads
 
 F64 = np.dtype('float64')
 F32 = np.dtype('float32')
@@ -182,6 +305,22 @@ VOLUME_NORM="""const real vol_weight = %(weight)s;
   vol += vol_weight*form_volume(%(pars)s);
   norm_vol += vol_weight;"""
 
+# Documentation header for the module, giving the model name, its short
+# description and its parameter table.  The remainder of the doc comes
+# from the module docstring.
+DOC_HEADER=""".. _%(name)s:
+
+%(name)s
+=======================================================
+
+%(title)s
+
+%(parameters)s
+
+The returned value is scaled to units of |cm^-1|.
+
+%(docs)s
+"""
 
 def indent(s, depth):
     """
@@ -388,10 +527,11 @@ def categorize_parameters(pars):
 
 def make(kernel_module):
     """
-    Build an OpenCL function from the source in *kernelfile*.
+    Build an OpenCL/ctypes function from the definition in *kernel_module*.
 
-    The kernel file needs to define metadata about the parameters.  This
-    will be a JSON definition containing
+    The module can be loaded with a normal python import statement if you
+    know which module you need, or with __import__('sasmodels.model.'+name)
+    if the name is in a string.
     """
     # TODO: allow Iq and Iqxy to be defined in python
     from os.path import abspath, dirname, join as joinpath
@@ -414,6 +554,16 @@ def make(kernel_module):
     source = make_model(search_path, info)
 
     return source, info
+
+def doc(kernel_module):
+    """
+    Return the documentation for the model.
+    """
+    subst = dict(name=kernel_module.name,
+                 title=kernel_module.title,
+                 parameters=make_partable(kernel_module.parameters),
+                 doc=kernel_module.__doc__)
+    return DOC_HEADER%subst
 
 
 def demo_time():

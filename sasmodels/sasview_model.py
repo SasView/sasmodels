@@ -7,14 +7,9 @@ def make_class(kernel_module, dtype='single'):
     from .core import opencl_model
     model =  opencl_model(kernel_module, dtype=dtype)
     def __init__(self, multfactor=1):
-        SasviewModel.__init__(self, self.kernel)
-    attrs = dict(__init__=__init__, kernel=model)
+        SasviewModel.__init__(self, model)
+    attrs = dict(__init__=__init__)
     ConstructedModel = type(model.info['name'],  (SasviewModel,), attrs)
-    #class ConstructedModel(SasviewModel):
-    #    kernel = model
-    #    def __init__(self, multfactor=1):
-    #        SasviewModel.__init__(self, self.kernel)
-    #ConstructedModel.__name__ = model.info['name']
     return ConstructedModel
 
 class SasviewModel(object):
