@@ -5,8 +5,7 @@ import sys
 
 import numpy as np
 
-from sasmodels.core import BumpsModel, fake_data2D, set_beam_stop, plot_data, \
-    tic, opencl_model, dll_model
+from sasmodels.core import BumpsModel, plot_data, tic, opencl_model, dll_model
 
 def sasview_model(modelname, **pars):
     """
@@ -26,20 +25,38 @@ def sasview_model(modelname, **pars):
             model.dispersion[k[:-5]]['npts'] = v
         elif k.endswith("_pd_nsigma"):
             model.dispersion[k[:-10]]['nsigmas'] = v
+        elif k.endswith("_pd_type"):
+            model.dispersion[k[:-8]]['type'] = v
         else:
             model.setParam(k, v)
     return model
+
+def load_opencl(modelname, dtype='single'):
+    sasmodels = __import__('sasmodels.models.'+modelname)
+    module = getattr(sasmodels.models, modelname, None)
+    kernel = opencl_model(module, dtype=dtype)
+    return kernel
+
+def load_dll(modelname, dtype='single'):
+    sasmodels = __import__('sasmodels.models.'+modelname)
+    module = getattr(sasmodels.models, modelname, None)
+    kernel = dll_model(module, dtype=dtype)
+    return kernel
 
 
 def compare(Ncpu, cpuname, cpupars, Ngpu, gpuname, gpupars):
 
     #from sasmodels.core import load_data
     #data = load_data('December/DEC07098.DAT')
-    data = fake_data2D(np.linspace(-0.05, 0.05, 128))
-    set_beam_stop(data, 0.004)
+    from sasmodels.core import empty_data1D
+    data = empty_data1D(np.logspace(-4, -1, 128))
+    #from sasmodels.core import empty_2D, set_beam_stop
+    #data = empty_data2D(np.linspace(-0.05, 0.05, 128))
+    #set_beam_stop(data, 0.004)
+    is2D = hasattr(data, 'qx_data')
 
     if Ngpu > 0:
-        gpumodel = opencl_model(gpuname, dtype='single')
+        gpumodel = load_opencl(gpuname, dtype='single')
         model = BumpsModel(data, gpumodel, **gpupars)
         toc = tic()
         for i in range(Ngpu):
@@ -51,7 +68,7 @@ def compare(Ncpu, cpuname, cpupars, Ngpu, gpuname, gpupars):
         #print max(gpu), min(gpu)
 
     if 0 and Ncpu > 0: # Hack to compare ctypes vs. opencl
-        dllmodel = dll_model(gpuname)
+        dllmodel = load_dll(gpuname, dtype='double')
         model = BumpsModel(data, dllmodel, **gpupars)
         toc = tic()
         for i in range(Ncpu):
@@ -74,8 +91,12 @@ def compare(Ncpu, cpuname, cpupars, Ngpu, gpuname, gpupars):
     elif Ncpu > 0:
         cpumodel = sasview_model(cpuname, **cpupars)
         toc = tic()
-        for i in range(Ncpu):
-            cpu = cpumodel.evalDistribution([data.qx_data, data.qy_data])
+        if is2D:
+            for i in range(Ncpu):
+                cpu = cpumodel.evalDistribution([data.qx_data, data.qy_data])
+        else:
+            for i in range(Ncpu):
+                cpu = cpumodel.evalDistribution(data.x)
         cpu_time = toc()*1000./Ncpu
         print "sasview t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu[model.index]))
 
@@ -91,17 +112,17 @@ def compare(Ncpu, cpuname, cpupars, Ngpu, gpuname, gpupars):
     import matplotlib.pyplot as plt
     if Ncpu > 0:
         if Ngpu > 0: plt.subplot(131)
-        plot_data(data, cpu)
+        plot_data(data, cpu, scale='log')
         plt.title("omp t=%.1f ms"%cpu_time)
     if Ngpu > 0:
         if Ncpu > 0: plt.subplot(132)
-        plot_data(data, gpu)
+        plot_data(data, gpu, scale='log')
         plt.title("ocl t=%.1f ms"%gpu_time)
     if Ncpu > 0 and Ngpu > 0:
         plt.subplot(133)
-        plot_data(data, 1e8*relerr)
+        plot_data(data, 1e8*relerr, scale='linear')
         plt.title("max rel err = %.3g"%max(abs(relerr)))
-        plt.colorbar()
+        if is2D: plt.colorbar()
     plt.show()
 
 def rename(pars, **names):

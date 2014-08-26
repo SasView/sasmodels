@@ -72,7 +72,7 @@ def load_data(filename):
     return data
 
 
-def fake_data2D(qx, qy=None):
+def empty_data2D(qx, qy=None):
     from sans.dataloader.data_info import Data2D, Detector
 
     if qy is None:
@@ -113,6 +113,17 @@ def fake_data2D(qx, qy=None):
     return data
 
 
+def empty_data1D(q):
+    from sans.dataloader.data_info import Data1D
+
+    Iq = 100*np.ones_like(q)
+    dIq = np.sqrt(Iq)
+    data = Data1D(q, Iq, dx=0.05*q, dy=dIq)
+    data.filename = "fake data"
+    data.qmin, data.qmax = q.min(), q.max()
+    return data
+
+
 def set_beam_stop(data, radius, outer=None):
     from sans.dataloader.manipulations import Ringcut
     if hasattr(data, 'qx_data'):
@@ -138,48 +149,43 @@ def set_top(data, max):
     data.mask += Boxcut(x_min=-np.inf, x_max=np.inf, y_min=-np.inf, y_max=max)(data)
 
 
-def plot_data(data, iq, vmin=None, vmax=None):
-    from numpy.ma import masked_array
-    import matplotlib.pyplot as plt
-    img = masked_array(iq, data.mask)
-    xmin, xmax = min(data.qx_data), max(data.qx_data)
-    ymin, ymax = min(data.qy_data), max(data.qy_data)
-    plt.imshow(img.reshape(128,128),
-               interpolation='nearest', aspect=1, origin='upper',
-               extent=[xmin, xmax, ymin, ymax], vmin=vmin, vmax=vmax)
-
-
-def plot_result2D(data, theory, view='linear'):
-    import matplotlib.pyplot as plt
+def plot_data(data, iq, vmin=None, vmax=None, scale='log'):
     from numpy.ma import masked_array, masked
-    #print "not a number",sum(np.isnan(data.data))
-    #data.data[data.data<0.05] = 0.5
-    mdata = masked_array(data.data, data.mask)
-    mdata[np.isnan(mdata)] = masked
-    if view is 'log':
-        mdata[mdata <= 0] = masked
-        mdata = np.log10(mdata)
-        mtheory = masked_array(np.log10(theory), mdata.mask)
-    else:
-        mtheory = masked_array(theory, mdata.mask)
-    mresid = masked_array((theory-data.data)/data.err_data, data.mask)
-    vmin = min(mdata.min(), mtheory.min())
-    vmax = max(mdata.max(), mtheory.max())
-    print np.exp(np.mean(mtheory)), np.std(mtheory),np.max(mtheory),np.min(mtheory)
-
-    plt.subplot(1, 3, 1)
-    plot_data(data, mdata, vmin=vmin, vmax=vmax)
-    plt.colorbar()
-    plt.subplot(1, 3, 2)
-    plot_data(data, mtheory, vmin=vmin, vmax=vmax)
-    plt.colorbar()
-    plt.subplot(1, 3, 3)
-    print abs(mresid).max()
-    plot_data(data, mresid)
-    plt.colorbar()
+    import matplotlib.pyplot as plt
+    if hasattr(data, 'qx_data'):
+        img = masked_array(iq, data.mask)
+        if scale == 'log':
+            img[(img <= 0) | ~np.isfinite(img)] = masked
+            img = np.log10(img)
+        xmin, xmax = min(data.qx_data), max(data.qx_data)
+        ymin, ymax = min(data.qy_data), max(data.qy_data)
+        plt.imshow(img.reshape(128,128),
+                   interpolation='nearest', aspect=1, origin='upper',
+                   extent=[xmin, xmax, ymin, ymax], vmin=vmin, vmax=vmax)
+    else: # 1D data
+        if scale == 'linear':
+            idx = np.isfinite(iq)
+            plt.plot(data.x[idx], iq[idx])
+        else:
+            idx = np.isfinite(iq) & (iq>0)
+            plt.loglog(data.x[idx], iq[idx])
 
 
-def plot_result1D(data, theory, view='linear'):
+def plot_result2D(data, theory, view='log'):
+    import matplotlib.pyplot as plt
+    resid = (theory-data.data)/data.err_data
+    plt.subplot(131)
+    plot_data(data, data.data, scale=view)
+    plt.colorbar()
+    plt.subplot(132)
+    plot_data(data, theory, scale=view)
+    plt.colorbar()
+    plt.subplot(133)
+    plot_data(data, resid, scale='linear')
+    plt.colorbar()
+
+
+def plot_result1D(data, theory, view='log'):
     import matplotlib.pyplot as plt
     from numpy.ma import masked_array, masked
     #print "not a number",sum(np.isnan(data.y))
@@ -217,7 +223,7 @@ class BumpsModel(object):
             self._theory = np.zeros_like(data.data)
             q_vectors = [data.qx_data, data.qy_data]
         else:
-            self.index = (data.mask==0) & (~np.isnan(data.y))
+            self.index = (data.x>=data.qmin) & (data.x<=data.qmax) & ~np.isnan(data.y)
             self.iq = data.y[self.index]
             self.diq = data.dy[self.index]
             self._theory = np.zeros_like(data.y)
