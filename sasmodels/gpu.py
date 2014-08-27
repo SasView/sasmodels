@@ -241,6 +241,24 @@ class GpuInput(object):
         self.q_buffers = []
 
 class GpuKernel(object):
+    """
+    Callable SAS kernel.
+
+    *kernel* is the GpuKernel object to call.
+
+    *info* is the module information
+
+    *input* is the DllInput q vectors at which the kernel should be
+    evaluated.
+
+    The resulting call method takes the *pars*, a list of values for
+    the fixed parameters to the kernel, and *pd_pars*, a list of (value,weight)
+    vectors for the polydisperse parameters.  *cutoff* determines the
+    integration limits: any points with combined weight less than *cutoff*
+    will not be calculated.
+
+    Call :meth:`release` when done with the kernel instance.
+    """
     def __init__(self, kernel, info, input):
         self.input = input
         self.kernel = kernel

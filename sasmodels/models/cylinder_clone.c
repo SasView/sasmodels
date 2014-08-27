@@ -44,7 +44,7 @@ real Iqxy(real qx, real qy,
     SINCOS(cyl_theta*M_PI_180, sn, cn);
     // # The following correction factor exists in sasview, but it can't be
     // # right, so we are leaving it out for now.
-    // const real correction = fabs(cn)*M_PI_2;
+    const real spherical_integration = fabs(cn)*M_PI_2;
     const real q = sqrt(qx*qx+qy*qy);
     const real cos_val = cn*cos(cyl_phi*M_PI_180)*(qx/q) + sn*(qy/q);
     const real alpha = acos(cos_val);
@@ -64,5 +64,5 @@ real Iqxy(real qx, real qy,
     // NOTE that for this (Fournet) definition of the integral, one must MULTIPLY by Vcyl
     // The additional volume factor is for polydisperse volume normalization.
     const real s = (sldCyl - sldSolv) * form_volume(radius, length);
-    return REAL(1.0e8) * form * s * s; // * correction;
+    return REAL(1.0e8) * form * s * s * spherical_integration;
 }

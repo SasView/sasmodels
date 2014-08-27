@@ -13,14 +13,17 @@ real Iq(real q,
     real radius,
     real length)
 {
-    const real h = REAL(0.5)*length;
+    const real halflength = REAL(0.5)*length;
     real summ = REAL(0.0);
+    // real lower=0, upper=M_PI_2;
     for (int i=0; i<76 ;i++) {
-        //const real zi = ( Gauss76Z[i]*(uplim-lolim) + uplim + lolim )/2.0;
+        // translate a point in [-1,1] to a point in [lower,upper]
+        //const real zi = ( Gauss76Z[i]*(upper-lower) + upper + lower )/2.0;
         const real zi = REAL(0.5)*(Gauss76Z[i]*M_PI_2 + M_PI_2);
-        summ += Gauss76Wt[i] * CylKernel(q, radius, h, zi);
+        summ += Gauss76Wt[i] * CylKernel(q, radius, halflength, zi);
     }
-    //const real form = (uplim-lolim)/2.0*summ;
+    // translate dx in [-1,1] to dx in [lower,upper]
+    //const real form = (upper-lower)/2.0*summ;
     const real form = summ * M_PI_4;
 
     // Multiply by contrast^2, normalize by cylinder volume and convert to cm-1

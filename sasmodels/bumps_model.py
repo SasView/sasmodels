@@ -1,69 +1,27 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
+"""
+Sasmodels core.
+"""
 import sys, os
 import datetime
-import warnings
 
 import numpy as np
 
 
-def opencl_model(kernel_module, dtype="single"):
-    from sasmodels import gen, gpu
-
-    source, info = gen.make(kernel_module)
-    ## for debugging, save source to a .cl file, edit it, and reload as model
-    #open(modelname+'.cl','w').write(source)
-    #source = open(modelname+'.cl','r').read()
-    return gpu.GpuModel(source, info, dtype)
-
-
-if sys.platform == 'darwin':
-    COMPILE = "gcc-mp-4.7 -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm -lgomp"
-elif os.name == 'nt':
-    COMPILE = "gcc -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm"
-else:
-    COMPILE = "cc -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm"
-DLL_PATH = "/tmp"
-
-
-def dll_path(info):
-    from os.path import join as joinpath, split as splitpath, splitext
-    basename = splitext(splitpath(info['filename'])[1])[0]
-    return joinpath(DLL_PATH, basename+'.so')
-
-
-def dll_model(kernel_module):
-    import os
-    import tempfile
-    from sasmodels import gen, dll
-
-    source, info = gen.make(kernel_module)
-    dllpath = dll_path(info)
-    if not os.path.exists(dllpath) \
-            or (os.path.getmtime(dllpath) < os.path.getmtime(info['filename'])):
-        # Replace with a proper temp file
-        srcfile = tempfile.mkstemp(suffix=".c",prefix="sas_"+info['name'])
-        open(srcfile, 'w').write(source)
-        os.system(COMPILE%(srcfile, dllpath))
-        ## comment the following to keep the generated c file
-        #os.unlink(srcfile)
-    return dll.DllModel(dllpath, info)
-
-
-TIC = None
 def tic():
-    global TIC
+    """
+    Timer function.
+
+    Use "toc=tic()" to start the clock and "toc()" to measure
+    a time interval.
+    """
     then = datetime.datetime.now()
-    TIC = lambda: (datetime.datetime.now()-then).total_seconds()
-    return TIC
-
-
-def toc():
-    return TIC()
+    return lambda: (datetime.datetime.now()-then).total_seconds()
 
 
 def load_data(filename):
+    """
+    Load data using a sasview loader.
+    """
     from sans.dataloader.loader import Loader
     loader = Loader()
     data = loader.load(filename)
@@ -72,7 +30,31 @@ def load_data(filename):
     return data
 
 
+def empty_data1D(q):
+    """
+    Create empty 1D data using the given *q* as the x value.
+
+    Resolutions dq/q is 5%.
+    """
+
+    from sans.dataloader.data_info import Data1D
+
+    Iq = 100*np.ones_like(q)
+    dIq = np.sqrt(Iq)
+    data = Data1D(q, Iq, dx=0.05*q, dy=dIq)
+    data.filename = "fake data"
+    data.qmin, data.qmax = q.min(), q.max()
+    return data
+
+
 def empty_data2D(qx, qy=None):
+    """
+    Create empty 2D data using the given mesh.
+
+    If *qy* is missing, create a square mesh with *qy=qx*.
+
+    Resolution dq/q is 5%.
+    """
     from sans.dataloader.data_info import Data2D, Detector
 
     if qy is None:
@@ -113,18 +95,10 @@ def empty_data2D(qx, qy=None):
     return data
 
 
-def empty_data1D(q):
-    from sans.dataloader.data_info import Data1D
-
-    Iq = 100*np.ones_like(q)
-    dIq = np.sqrt(Iq)
-    data = Data1D(q, Iq, dx=0.05*q, dy=dIq)
-    data.filename = "fake data"
-    data.qmin, data.qmax = q.min(), q.max()
-    return data
-
-
 def set_beam_stop(data, radius, outer=None):
+    """
+    Add a beam stop of the given *radius*.  If *outer*, make an annulus.
+    """
     from sans.dataloader.manipulations import Ringcut
     if hasattr(data, 'qx_data'):
         data.mask = Ringcut(0, radius)(data)
@@ -137,6 +111,9 @@ def set_beam_stop(data, radius, outer=None):
 
 
 def set_half(data, half):
+    """
+    Select half of the data, either "right" or "left".
+    """
     from sans.dataloader.manipulations import Boxcut
     if half == 'right':
         data.mask += Boxcut(x_min=-np.inf, x_max=0.0, y_min=-np.inf, y_max=np.inf)(data)
@@ -145,11 +122,20 @@ def set_half(data, half):
 
 
 def set_top(data, max):
+    """
+    Chop the top off the data, above *max*.
+    """
     from sans.dataloader.manipulations import Boxcut
     data.mask += Boxcut(x_min=-np.inf, x_max=np.inf, y_min=-np.inf, y_max=max)(data)
 
 
 def plot_data(data, iq, vmin=None, vmax=None, scale='log'):
+    """
+    Plot the target value for the data.  This could be the data itself,
+    the theory calculation, or the residuals.
+
+    *scale* can be 'log' for log scale data, or 'linear'.
+    """
     from numpy.ma import masked_array, masked
     import matplotlib.pyplot as plt
     if hasattr(data, 'qx_data'):
@@ -171,21 +157,10 @@ def plot_data(data, iq, vmin=None, vmax=None, scale='log'):
             plt.loglog(data.x[idx], iq[idx])
 
 
-def plot_result2D(data, theory, view='log'):
-    import matplotlib.pyplot as plt
-    resid = (theory-data.data)/data.err_data
-    plt.subplot(131)
-    plot_data(data, data.data, scale=view)
-    plt.colorbar()
-    plt.subplot(132)
-    plot_data(data, theory, scale=view)
-    plt.colorbar()
-    plt.subplot(133)
-    plot_data(data, resid, scale='linear')
-    plt.colorbar()
-
-
-def plot_result1D(data, theory, view='log'):
+def _plot_result1D(data, theory, view):
+    """
+    Plot the data and residuals for 1D data.
+    """
     import matplotlib.pyplot as plt
     from numpy.ma import masked_array, masked
     #print "not a number",sum(np.isnan(data.y))
@@ -208,15 +183,54 @@ def plot_result1D(data, theory, view='log'):
     #plt.axhline(-1, color='black', ls='--',lw=1, hold=True)
 
 
+def _plot_result2D(data, theory, view):
+    """
+    Plot the data and residuals for 2D data.
+    """
+    import matplotlib.pyplot as plt
+    resid = (theory-data.data)/data.err_data
+    plt.subplot(131)
+    plot_data(data, data.data, scale=view)
+    plt.colorbar()
+    plt.subplot(132)
+    plot_data(data, theory, scale=view)
+    plt.colorbar()
+    plt.subplot(133)
+    plot_data(data, resid, scale='linear')
+    plt.colorbar()
+
+def plot_result(data, theory, view='log'):
+    """
+    Plot the data and residuals.
+    """
+    if hasattr(data, 'qx_data'):
+        _plot_result2D(data, theory, view)
+    else:
+        _plot_result1D(data, theory, view)
+
+
 class BumpsModel(object):
+    """
+    Return a bumps wrapper for a SAS model.
+
+    *data* is the data to be fitted.
+
+    *model* is the SAS model, e.g., from :func:`gen.opencl_model`.
+
+    *cutoff* is the integration cutoff, which avoids computing the
+    the SAS model where the polydispersity weight is low.
+
+    Model parameters can be initialized with additional keyword
+    arguments, or by assigning to model.parameter_name.value.
+
+    The resulting bumps model can be used directly in a FitProblem call.
+    """
     def __init__(self, data, model, cutoff=1e-5, **kw):
         from bumps.names import Parameter
-        from . import gpu
 
         # interpret data
-        self.is2D = hasattr(data,'qx_data')
         self.data = data
-        if self.is2D:
+        if hasattr(data, 'qx_data'):
             self.index = (data.mask==0) & (~np.isnan(data.data))
             self.iq = data.data[self.index]
             self.diq = data.err_data[self.index]
@@ -293,10 +307,7 @@ class BumpsModel(object):
         return 2*self.nllf()/self.dof
 
     def plot(self, view='log'):
-        if self.is2D:
-            plot_result2D(self.data, self.theory(), view=view)
-        else:
-            plot_result1D(self.data, self.theory(), view=view)
+        plot_result(self.data, self.theory(), view=view)
 
     def save(self, basename):
         pass

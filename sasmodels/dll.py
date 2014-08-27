@@ -25,6 +25,8 @@ class DllModel(object):
     or double precision floats will do, such as 'f', 'float32' or 'single'
     for single and 'd', 'float64' or 'double' for double.  Double precision
     is an optional extension which may not be available on all devices.
+
+    Call :meth:`release` when done with the kernel.
     """
     def __init__(self, dllpath, info):
         self.info = info
@@ -68,6 +70,9 @@ class DllModel(object):
         """
         return DllInput(q_vectors)
 
+    def release(self):
+        pass # TODO: should release the dll
+
 
 class DllInput(object):
     """
@@ -99,10 +104,27 @@ class DllInput(object):
         self.q_vectors = []
 
 class DllKernel(object):
+    """
+    Callable SAS kernel.
+
+    *kernel* is the DllKernel object to call.
+
+    *info* is the module information
+
+    *input* is the DllInput q vectors at which the kernel should be
+    evaluated.
+
+    The resulting call method takes the *pars*, a list of values for
+    the fixed parameters to the kernel, and *pd_pars*, a list of (value,weight)
+    vectors for the polydisperse parameters.  *cutoff* determines the
+    integration limits: any points with combined weight less than *cutoff*
+    will not be calculated.
+
+    Call :meth:`release` when done with the kernel instance.
+    """
     def __init__(self, kernel, info, input):
         self.input = input
         self.kernel = kernel
-        self.info = info
         self.res = np.empty(input.nq, input.dtype)
         dim = '2d' if input.is_2D else '1d'
         self.fixed_pars = info['partype']['fixed-'+dim]

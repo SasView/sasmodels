@@ -54,38 +54,8 @@ sasmodels source files.
 The constructor code will generate the necessary vectors for computing
 them with the desired polydispersity.
 
-The kernel module must set variables defining the kernel meta data:
-
-    *name* is the model name
-
-    *title* is a short description of the model, suitable for a tool tip,
-    or a one line model summary in a table of models.
-
-    *description* is an extended description of the model to be displayed
-    while the model parameters are being edited.
-
-    *parameters* is a list of parameters.  Each parameter is itself a
-    list containing *name*, *units*, *default value*,
-    [*lower bound*, *upper bound*], *type* and *description*.
-
-    *source* is the list of C-99 source files that must be joined to
-    create the OpenCL kernel functions.  The files defining the functions
-    need to be listed before the files which use the functions.
-
-    *ER* is a python function defining the effective radius.  If it is
-    not present, the effective radius is 0.
-
-    *VR* is a python function defining the volume ratio.  If it is not
-    present, the volume ratio is 1.
-
-The doc string at the start of the kernel module will be used to
-construct the model documentation web pages.  Embedded figures should
-appear in the subdirectory "img" beside the model definition, and tagged
-with the kernel module name to avoid collision with other models.  Some
-file systems are case-sensitive, so only use lower case characters for
-file names and extensions.
-
-Parameters are defined as follows:
+The available kernel parameters are defined as a list, with each parameter
+defined as a sublist with the following elements:
 
     *name* is the name that will be used in the call to the kernel
     function and the name that will be displayed to the user.  Names
@@ -98,8 +68,8 @@ Parameters are defined as follows:
     *default value* will be the initial value for  the model when it
     is selected, or when an initial value is not otherwise specified.
 
-    *limits* are the valid bounds of the parameter, used to limit the
-    polydispersity density function.   In the fit, the parameter limits
+    [*lb*, *ub*] are the hard limits on the parameter value, used to limit
+    the polydispersity density function.  In the fit, the parameter limits
     given to the fit are the limits  on the central value of the parameter.
     If there is polydispersity, it will evaluate parameter values outside
     the fit limits, but not outside the hard limits specified in the model.
@@ -108,22 +78,82 @@ Parameters are defined as follows:
     *type* indicates how the parameter will be used.  "volume" parameters
     will be used in all functions.  "orientation" parameters will be used
     in *Iqxy* and *Imagnetic*.  "magnetic* parameters will be used in
-    *Imagnetic* only.  If *type* is none, the parameter will be used in
-    all of *Iq*, *Iqxy* and *Imagnetic*.  This will probably be a
-    is the empty string if the parameter is used in all model calculations,
-    it is "volu
+    *Imagnetic* only.  If *type* is the empty string, the parameter will
+    be used in all of *Iq*, *Iqxy* and *Imagnetic*.
 
     *description* is a short description of the parameter.  This will
     be displayed in the parameter table and used as a tool tip for the
     parameter value in the user interface.
 
+The kernel module must set variables defining the kernel meta data:
+
+    *name* is the model name
+
+    *title* is a short description of the model, suitable for a tool tip,
+    or a one line model summary in a table of models.
+
+    *description* is an extended description of the model to be displayed
+    while the model parameters are being edited.
+
+    *parameters* is the list of parameters.  Parameters in the kernel
+    functions must appear in the same order as they appear in the
+    parameters list.  Two additional parameters, *scale* and *background*
+    are added to the beginning of the parameter list.  They will show up
+    in the documentation as model parameters, but they are never sent to
+    the kernel functions.
+
+    *source* is the list of C-99 source files that must be joined to
+    create the OpenCL kernel functions.  The files defining the functions
+    need to be listed before the files which use the functions.
+
+    *ER* is a python function defining the effective radius.  If it is
+    not present, the effective radius is 0.
+
+    *VR* is a python function defining the volume ratio.  If it is not
+    present, the volume ratio is 1.
+
+An *info* dictionary is constructed from the kernel meta data and
+returned to the caller.  It includes the additional fields
+
+
+The model evaluator, function call sequence consists of q inputs and the return vector,
+followed by the loop value/weight vector, followed by the values for
+the non-polydisperse parameters, followed by the lengths of the
+polydispersity loops.  To construct the call for 1D models, the
+categories *fixed-1d* and *pd-1d* list the names of the parameters
+of the non-polydisperse and the polydisperse parameters respectively.
+Similarly, *fixed-2d* and *pd-2d* provide parameter names for 2D models.
+The *pd-rel* category is a set of those parameters which give
+polydispersitiy as a portion of the value (so a 10% length dispersity
+would use a polydispersity value of 0.1) rather than absolute
+dispersity such as an angle plus or minus 15 degrees.
+
+The *volume* category lists the volume parameters in order for calls
+to volume within the kernel (used for volume normalization) and for
+calls to ER and VR for effective radius and volume ratio respectively.
+
+The *orientation* and *magnetic* categories list the orientation and
+magnetic parameters.  These are used by the sasview interface.  The
+blank category is for parameters such as scale which don't have any
+other marking.
+
+The doc string at the start of the kernel module will be used to
+construct the model documentation web pages.  Embedded figures should
+appear in the subdirectory "img" beside the model definition, and tagged
+with the kernel module name to avoid collision with other models.  Some
+file systems are case-sensitive, so only use lower case characters for
+file names and extensions.
+
+
 The function :func:`make` loads the metadata from the module and returns
-the kernel source.  The function :func:`doc` extracts
+the kernel source.  The function :func:`doc` extracts the doc string
+and adds the parameter table to the top.  The function :func:`sources`
+returns a list of files required by the model.
 """
 
 # TODO: identify model files which have changed since loading and reload them.
 
-__all__ = ["make, doc"]
+__all__ = ["make, doc", "sources"]
 
 import os.path
 
@@ -157,10 +187,14 @@ PARTABLE_HEADERS = [
     "Default value",
     ]
 
+# Minimum width for a default value (this is shorter than the column header
+# width, so will be ignored).
 PARTABLE_VALUE_WIDTH = 10
 
 # Header included before every kernel.
-# This makes sure that the appropriate math constants are defined, and
+# This makes sure that the appropriate math constants are defined, and does
+# whatever is required to make the kernel compile as pure C rather than
+# as an OpenCL kernel.
 KERNEL_HEADER = """\
 // GENERATED CODE --- DO NOT EDIT ---
 // Code is produced by sasmodels.gen from sasmodels/models/MODEL.c
@@ -230,7 +264,7 @@ KERNEL_2D = {
     'qcall': "qxi, qyi",
     }
 
-# Generic kernel template for opencl/openmp.
+# Generic kernel template for the polydispersity loop.
 # This defines the opencl kernel that is available to the host.  The same
 # structure is used for Iq and Iqxy kernels, so extra flexibility is needed
 # for q parameters.  The polydispersity loop is built elsewhere and
@@ -332,6 +366,9 @@ def indent(s, depth):
 
 
 def kernel_name(info, is_2D):
+    """
+    Name of the exported kernel symbol.
+    """
     return info['name'] + "_" + ("Iqxy" if is_2D else "Iq")
 
 
@@ -430,6 +467,9 @@ def make_kernel(info, is_2D):
     return kernel
 
 def make_partable(info):
+    """
+    Generate the parameter table to include in the sphinx documentation.
+    """
     pars = info['parameters']
     column_widths = [
         max(len(p[0]) for p in pars),
@@ -466,10 +506,23 @@ def _search(search_path, filename):
             return target
     raise ValueError("%r not found in %s"%(filename, search_path))
 
-def make_model(search_path, info):
+def sources(info):
+    """
+    Return a list of the sources file paths for the module.
+    """
+    from os.path import abspath, dirname, join as joinpath
+    search_path = [ dirname(info['filename']),
+                    abspath(joinpath(dirname(__file__),'models')) ]
+    return [_search(search_path) for f in info['source']]
+
+def make_model(info):
+    """
+    Generate the code for the kernel defined by info, using source files
+    found in the given search path.
+    """
     kernel_Iq = make_kernel(info, is_2D=False)
     kernel_Iqxy = make_kernel(info, is_2D=True)
-    source = [open(_search(search_path, f)).read() for f in info['source']]
+    source = [open(f).read() for f in sources(info)]
     kernel = "\n\n".join([KERNEL_HEADER]+source+[kernel_Iq, kernel_Iqxy])
     return kernel
 
@@ -478,27 +531,6 @@ def categorize_parameters(pars):
     Build parameter categories out of the the parameter definitions.
 
     Returns a dictionary of categories.
-
-    The function call sequence consists of q inputs and the return vector,
-    followed by the loop value/weight vector, followed by the values for
-    the non-polydisperse parameters, followed by the lengths of the
-    polydispersity loops.  To construct the call for 1D models, the
-    categories *fixed-1d* and *pd-1d* list the names of the parameters
-    of the non-polydisperse and the polydisperse parameters respectively.
-    Similarly, *fixed-2d* and *pd-2d* provide parameter names for 2D models.
-    The *pd-rel* category is a set of those parameters which give
-    polydispersitiy as a portion of the value (so a 10% length dispersity
-    would use a polydispersity value of 0.1) rather than absolute
-    dispersity such as an angle plus or minus 15 degrees.
-
-    The *volume* category lists the volume parameters in order for calls
-    to volume within the kernel (used for volume normalization) and for
-    calls to ER and VR for effective radius and volume ratio respectively.
-
-    The *orientation* and *magnetic* categories list the orientation and
-    magnetic parameters.  These are used by the sasview interface.  The
-    blank category is for parameters such as scale which don't have any
-    other marking.
     """
     partype = {
         'volume': [], 'orientation': [], 'magnetic': [], '': [],
@@ -534,7 +566,7 @@ def make(kernel_module):
     if the name is in a string.
     """
     # TODO: allow Iq and Iqxy to be defined in python
-    from os.path import abspath, dirname, join as joinpath
+    from os.path import abspath
     #print kernelfile
     info = dict(
         filename = abspath(kernel_module.__file__),
@@ -549,9 +581,7 @@ def make(kernel_module):
     info['limits'] = dict((p[0],p[3]) for p in info['parameters'])
     info['partype'] = categorize_parameters(info['parameters'])
 
-    search_path = [ dirname(info['filename']),
-                    abspath(joinpath(dirname(__file__),'models')) ]
-    source = make_model(search_path, info)
+    source = make_model(info)
 
     return source, info
 
@@ -564,6 +594,68 @@ def doc(kernel_module):
                  parameters=make_partable(kernel_module.parameters),
                  doc=kernel_module.__doc__)
     return DOC_HEADER%subst
+
+# Compiler platform details
+if sys.platform == 'darwin':
+    COMPILE = "gcc-mp-4.7 -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm -lgomp"
+elif os.name == 'nt':
+    COMPILE = "gcc -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm"
+else:
+    COMPILE = "cc -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm"
+DLL_PATH = "/tmp"
+
+
+def dll_path(info):
+    """
+    Path to the compiled model defined by *info*.
+    """
+    from os.path import join as joinpath, split as splitpath, splitext
+    basename = splitext(splitpath(info['filename'])[1])[0]
+    return joinpath(DLL_PATH, basename+'.so')
+
+
+def dll_model(kernel_module, dtype=None):
+    """
+    Load the compiled model defined by *kernel_module*.
+
+    Recompile if any files are newer than the model file.
+
+    *dtype* is ignored.  Compiled files are always double.
+
+    The DLL is not loaded until the kernel is called so models an
+    be defined without using too many resources.
+    """
+    import tempfile
+    from sasmodels import dll
+
+    source, info = make(kernel_module)
+    source_files = sources(info) + [info['filename']]
+    newest = max(os.path.getmtime(f) for f in source_files)
+    dllpath = dll_path(info)
+    if not os.path.exists(dllpath) or os.path.getmtime(dllpath)<newest:
+        # Replace with a proper temp file
+        srcfile = tempfile.mkstemp(suffix=".c",prefix="sas_"+info['name'])
+        open(srcfile, 'w').write(source)
+        os.system(COMPILE%(srcfile, dllpath))
+        ## comment the following to keep the generated c file
+        os.unlink(srcfile)
+    return dll.DllModel(dllpath, info)
+
+
+def opencl_model(kernel_module, dtype="single"):
+    """
+    Load the OpenCL model defined by *kernel_module*.
+
+    Access to the OpenCL device is delayed until the kernel is called
+    so models can be defined without using too many resources.
+    """
+    from sasmodels import gpu
+
+    source, info = make(kernel_module)
+    ## for debugging, save source to a .cl file, edit it, and reload as model
+    #open(modelname+'.cl','w').write(source)
+    #source = open(modelname+'.cl','r').read()
+    return gpu.GpuModel(source, info, dtype)
 
 
 def demo_time():

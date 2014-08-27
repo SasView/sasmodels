@@ -5,7 +5,8 @@ import sys
 
 import numpy as np
 
-from sasmodels.core import BumpsModel, plot_data, tic, opencl_model, dll_model
+from sasmodels.bumps_model import BumpsModel, plot_data, tic
+from sasmodels.gen import opencl_model, dll_model
 
 def sasview_model(modelname, **pars):
     """

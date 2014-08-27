@@ -1,3 +1,6 @@
+"""
+SAS distributions for polydispersity.
+"""
 # TODO: include dispersion docs with the disperser models
 from math import sqrt
 import numpy as np
@@ -115,6 +118,7 @@ class ArrayDispersion(Dispersion):
         return x, px
 
 
+# dispersion name -> disperser lookup table.
 models = dict((d.type,d) for d in (
     GaussianDispersion, RectangleDispersion,
     ArrayDispersion, SchulzDispersion, LogNormalDispersion
@@ -122,6 +126,26 @@ models = dict((d.type,d) for d in (
 
 
 def get_weights(disperser, n, width, nsigmas, value, limits, relative):
+    """
+    Return the set of values and weights for a polydisperse parameter.
+
+    *disperser* is the name of the disperser.
+
+    *n* is the number of points in the weight vector.
+
+    *width* is the width of the disperser distribution.
+
+    *nsigmas* is the number of sigmas to span for the dispersion convolution.
+
+    *value* is the value of the parameter in the model.
+
+    *limits* is [lb, ub], the lower and upper bound of the weight value.
+
+    *relative* is true if *width* is defined in proportion to the value
+    of the parameter, and false if it is an absolute width.
+
+    Returns *(value,weight)*, where *value* and *weight* are vectors.
+    """
     cls = models[disperser]
     obj = cls(n, width, nsigmas)
     v,w = obj.get_weights(value, limits[0], limits[1], relative)

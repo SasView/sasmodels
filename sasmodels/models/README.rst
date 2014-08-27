@@ -32,3 +32,6 @@ return all desired spin states together so we can share the work of
 computing the form factors for the different magnetic contrasts.  This
 will mean extending the data handler to support multiple cross sections
 in the same data set.
+
+Need to write code to generate the polydispersity loops in python for
+kernels that are only implemented in python.

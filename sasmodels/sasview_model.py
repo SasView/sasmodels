@@ -1,11 +1,25 @@
 import math
 from copy import deepcopy
+import warnings
 
 import numpy as np
 
+try:
+    import pyopencl
+    from .gen import opencl_model as load_model
+except ImportError:
+    warnings.warn("OpenCL not available --- using ctypes instead")
+    from .gen import dll_model as load_model
+
+
 def make_class(kernel_module, dtype='single'):
-    from .core import opencl_model
-    model =  opencl_model(kernel_module, dtype=dtype)
+    """
+    Load the sasview model defined in *kernel_module*.
+    :param kernel_module:
+    :param dtype:
+    :return:
+    """
+    model =  load_model(kernel_module, dtype=dtype)
     def __init__(self, multfactor=1):
         SasviewModel.__init__(self, model)
     attrs = dict(__init__=__init__)
@@ -241,6 +255,14 @@ class SasviewModel(object):
             raise TypeError("evalDistribution expects q or [qx, qy], not %r"%type(qdist))
 
     def calculate_Iq(self, *args):
+        """
+        Calculate Iq for one set of q with the current parameters.
+
+        If the model is 1D, use *q*.  If 2D, use *qx*, *qy*.
+
+        This should NOT be used for fitting since it copies the *q* vectors
+        to the card for each evaluation.
+        """
         q_vectors = [np.asarray(q) for q in args]
         fn = self._model(self._model.make_input(q_vectors))
         pars = [self.params[v] for v in fn.fixed_pars]
