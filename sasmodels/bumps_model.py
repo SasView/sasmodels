@@ -6,6 +6,22 @@ import datetime
 
 import numpy as np
 
+try:
+    from .gpu import load_model as _loader
+except ImportError,exc:
+    warnings.warn(str(exc))
+    warnings.warn("OpenCL not available --- using ctypes instead")
+    from .dll import load_model as _loader
+
+def load_model(modelname, dtype='single'):
+    """
+    Load model by name.
+    """
+    sasmodels = __import__('sasmodels.models.'+modelname)
+    module = getattr(sasmodels.models, modelname, None)
+    model = _loader(module, dtype=dtype)
+    return model
+
 
 def tic():
     """
@@ -234,8 +250,11 @@ class BumpsModel(object):
         from bumps.names import Parameter
         partype = model.info['partype']
 
-        # interpret data
+        # remember inputs so we can inspect from outside
         self.data = data
+        self.model = model
+
+        # interpret data
         if hasattr(data, 'qx_data'):
             self.index = (data.mask==0) & (~np.isnan(data.data))
             self.iq = data.data[self.index]

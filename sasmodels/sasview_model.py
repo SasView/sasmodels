@@ -1,3 +1,22 @@
+"""
+Sasview model constructor.
+
+Given a module defining an OpenCL kernel such as sasmodels.models.cylinder,
+create a sasview model class to run that kernel as follows::
+
+    from sasmodels.sasview_model import make_class
+    from sasmodels.models import cylinder
+    CylinderModel = make_class(cylinder, dtype='single')
+
+The model parameters for sasmodels are different from those in sasview.
+When reloading previously saved models, the parameters should be converted
+using :func:`sasmodels.convert.convert`.
+"""
+
+# TODO: add a sasview=>sasmodels parameter translation layer
+# this will allow us to use the new sasmodels as drop in replacements, and
+# delay renaming parameters until all models have been converted.
+
 import math
 from copy import deepcopy
 import warnings
@@ -15,9 +34,8 @@ except ImportError,exc:
 def make_class(kernel_module, dtype='single'):
     """
     Load the sasview model defined in *kernel_module*.
-    :param kernel_module:
-    :param dtype:
-    :return:
+
+    Returns a class that can be used directly as a sasview model.
     """
     model =  load_model(kernel_module, dtype=dtype)
     def __init__(self, multfactor=1):

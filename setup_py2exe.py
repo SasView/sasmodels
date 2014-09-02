@@ -39,7 +39,7 @@ bumps_gui.exe can be run from the dist directory.
 import os
 import sys
 
-sys.dont_write_bytecode = True
+#sys.dont_write_bytecode = True
 
 # Force build before continuing
 os.system('"%s" setup.py build' % sys.executable)
@@ -227,7 +227,7 @@ if sys.version_info >= (2, 6):
 
 # Specify required packages to bundle in the executable image.
 packages = ['numpy', 'scipy', 'matplotlib', 'pytz', 'pyparsing',
-            'periodictable', 'bumps.names', 'dream'
+            'periodictable', 'bumps', 'sasmodels', 'pyopencl',
             ]
 
 # Specify files to include in the executable image.
