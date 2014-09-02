@@ -149,7 +149,7 @@ parameters = [
     [ "cyl_phi", "degrees", 60, [-inf, inf], "orientation",
       "Out of plane angle" ],
     ]
-source = [ "lib/J1.c", "lib/gauss76.c", "lib/cylkernel.c", "cylinder_clone.c"]
+source = [ "lib/J1.c", "lib/gauss76.c", "cylinder_clone.c" ]
 
 def ER(radius, length):
     ddd = 0.75*radius*(2*radius*length + (length+radius)*(length+pi*radius))

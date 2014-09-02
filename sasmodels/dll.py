@@ -1,7 +1,8 @@
 """
 C types wrapper for sasview models.
 """
-
+import sys
+import os
 import ctypes as ct
 from ctypes import c_void_p, c_int, c_double
 
@@ -10,6 +11,55 @@ import numpy as np
 from . import gen
 
 from .gen import F32, F64
+# Compiler platform details
+if sys.platform == 'darwin':
+    COMPILE = "gcc-mp-4.7 -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm -lgomp"
+elif os.name == 'nt':
+    COMPILE = "gcc -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm"
+else:
+    COMPILE = "cc -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm"
+DLL_PATH = "/tmp"
+
+
+def dll_path(info):
+    """
+    Path to the compiled model defined by *info*.
+    """
+    from os.path import join as joinpath, split as splitpath, splitext
+    basename = splitext(splitpath(info['filename'])[1])[0]
+    return joinpath(DLL_PATH, basename+'.so')
+
+
+def load_model(kernel_module, dtype=None):
+    """
+    Load the compiled model defined by *kernel_module*.
+
+    Recompile if any files are newer than the model file.
+
+    *dtype* is ignored.  Compiled files are always double.
+
+    The DLL is not loaded until the kernel is called so models an
+    be defined without using too many resources.
+    """
+    import tempfile
+
+    source, info = gen.make(kernel_module)
+    source_files = gen.sources(info) + [info['filename']]
+    newest = max(os.path.getmtime(f) for f in source_files)
+    dllpath = dll_path(info)
+    if not os.path.exists(dllpath) or os.path.getmtime(dllpath)<newest:
+        # Replace with a proper temp file
+        fid, filename = tempfile.mkstemp(suffix=".c",prefix="sas_"+info['name'])
+        os.fdopen(fid,"w").write(source)
+        status = os.system(COMPILE%(filename, dllpath))
+        if status != 0:
+            print "compile failed.  File is in %r"%filename
+        else:
+            ## uncomment the following to keep the generated c file
+            #os.unlink(filename); print "saving compiled file in %r"%filename
+            pass
+    return DllModel(dllpath, info)
+
 
 IQ_ARGS = [c_void_p, c_void_p, c_int, c_void_p, c_double]
 IQXY_ARGS = [c_void_p, c_void_p, c_void_p, c_int, c_void_p, c_double]
@@ -123,6 +173,7 @@ class DllKernel(object):
     Call :meth:`release` when done with the kernel instance.
     """
     def __init__(self, kernel, info, input):
+        self.info = info
         self.input = input
         self.kernel = kernel
         self.res = np.empty(input.nq, input.dtype)

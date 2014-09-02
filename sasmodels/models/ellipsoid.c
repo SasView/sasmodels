@@ -1,74 +1,50 @@
-/* PARAMETERS
-{
-name: "ellipsoid",
-title: "Ellipsoid with uniform scattering length density",
-include: [ "lib/gauss76.c" ],
-parameters: [
-   // [ "name", "units", default, [lower, upper], "type", "description" ],
-   [ "sld", "1e-6/Ang^2", 4, [-Infinity,Infinity], "",
-     "Cylinder scattering length density" ],
-   [ "solvent_sld", "1e-6/Ang^2", 1, [-Infinity,Infinity], "",
-     "Solvent scattering length density" ],
-   [ "a", "Ang",  20, [0, Infinity], "volume",
-     "Cylinder radius" ],
-   [ "b", "Ang",  20, [0, Infinity], "volume",
-     "Cylinder length" ],
-   [ "theta", "degrees", 60, [-Infinity, Infinity], "orientation",
-     "In plane angle" ],
-   [ "phi", "degrees", 60, [-Infinity, Infinity], "orientation",
-     "Out of plane angle" ],
-],
-}
-PARAMETERS END
+real form_volume(real rpolar, real requatorial);
+real Iq(real q, real sld, real solvent_sld, real rpolar, real requatorial);
+real Iqxy(real qx, real qy, real sld, real solvent_sld,
+    real rpolar, real requatorial, real theta, real phi);
 
-DOCUMENTATION
-.. _EllipseModel:
-
-DOCUMENTATION END
-*/
-
-real form_volume(real a, real b);
-real Iq(real qx, real qy, real sld, real solvent_sld, real a, real b);
-real Iqxy(real qx, real qy, real sld, real solvent_sld, real a, real b, real theta, real phi);
-
-real form_volume(real a, real b)
-{
-    return REAL(1.333333333333333)*M_PI_2*a*b*b;
-}
-
-real ellipsoid_kernel(double q, double b, double a, double dum)
+real _ellipsoid_kernel(real q, real rpolar, real requatorial, real cos_alpha);
+real _ellipsoid_kernel(real q, real rpolar, real requatorial, real cos_alpha)
 {
     real sn, cn;
-    const real nu = a/b;
-    const real arg = q * b * sqrt(REAL(1.0)+(dum*dum*(nu*nu--REAL(1.0))));
-    SINCOS(arg, sn, cn);
-    const real f = (arg==REAL(0.0) ? REAL(1.0) : REAL(3.0)*(sn-arg*cn)/(arg*arg*arg);
+    real ratio = rpolar/requatorial;
+    const real u = q*requatorial*sqrt(REAL(1.0)
+                   + cos_alpha*cos_alpha*(ratio*ratio - REAL(1.0)));
+    SINCOS(u, sn, cn);
+    const real f = ( u==REAL(0.0) ? REAL(1.0) : REAL(3.0)*(sn-u*cn)/(u*u*u) );
     return f*f;
+}
+
+real form_volume(real rpolar, real requatorial)
+{
+    return REAL(1.333333333333333)*M_PI*rpolar*requatorial*requatorial;
 }
 
 real Iq(real q,
     real sld,
     real solvent_sld,
-    real a,
-    real b)
+    real rpolar,
+    real requatorial)
 {
-    real summ = REAL(0.0);
+    //const real lower = REAL(0.0);
+    //const real upper = REAL(1.0);
+    real total = REAL(0.0);
     for (int i=0;i<76;i++) {
-        //const real zi = ( Gauss76Z[i]*(uplim-lolim) + uplim + lolim )/2.0;
-        zi = ( Gauss76Z[i] + REAL(1.0))/REAL(2.0);
-        summ += Gauss76Wt[i] * ellipsoid_kernel(q, b, a, zi);
+        //const real cos_alpha = (Gauss76Z[i]*(upper-lower) + upper + lower)/2;
+        const real cos_alpha = REAL(0.5)*(Gauss76Z[i] + REAL(1.0));
+        total += Gauss76Wt[i] * _ellipsoid_kernel(q, rpolar, requatorial, cos_alpha);
     }
-    //const real form = (uplim-lolim)/2.0*summ;
-    const real form = REAL(0.5)*summ
-    const real s = (sld - sld_solvent) * form_volume(a, b);
+    //const real form = (upper-lower)/2*total;
+    const real form = REAL(0.5)*total;
+    const real s = (sld - solvent_sld) * form_volume(rpolar, requatorial);
     return REAL(1.0e-4) * form * s * s;
 }
 
 real Iqxy(real qx, real qy,
     real sld,
     real solvent_sld,
-    real a,
-    real b,
+    real rpolar,
+    real requatorial,
     real theta,
     real phi)
 {
@@ -76,9 +52,9 @@ real Iqxy(real qx, real qy,
 
     const real q = sqrt(qx*qx + qy*qy);
     SINCOS(theta*M_PI_180, sn, cn);
-    const real cos_val = cn*cos(phi*M_PI_180)*(qx/q) + sn*(qy/q);
-    const real form = ellipsoid_kernel(q, b, a, cos_val);
-    const real s = (sld - solvent_sld) * form_volume(a, b);
+    const real cos_alpha = cn*cos(phi*M_PI_180)*(qx/q) + sn*(qy/q);
+    const real form = _ellipsoid_kernel(q, rpolar, requatorial, cos_alpha);
+    const real s = (sld - solvent_sld) * form_volume(rpolar, requatorial);
 
     return REAL(1.0e-4) * form * s * s;
 }

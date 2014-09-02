@@ -1,3 +1,4 @@
+# cylinder model
 # Note: model title and parameter table are inserted automatically
 r"""
 The form factor is normalized by the particle volume.
@@ -30,9 +31,9 @@ Bessel function.
 
 To provide easy access to the orientation of the cylinder, we define the
 axis of the cylinder using two angles $\theta$ and $\phi$. Those angles
-are defined in Figure :num:`figure #CylinderModel-orientation`.
+are defined in Figure :num:`figure #cylinder-orientation`.
 
-.. _CylinderModel-orientation:
+.. _cylinder-orientation:
 
 .. figure:: img/image061.JPG   (should be img/cylinder-1.jpg, or img/cylinder-orientation.jpg)
 
@@ -63,10 +64,10 @@ Validation
 
 Validation of our code was done by comparing the output of the 1D model
 to the output of the software provided by the NIST (Kline, 2006).
-Figure :num:`figure #CylinderModel-compare` shows a comparison of
+Figure :num:`figure #cylinder-compare` shows a comparison of
 the 1D output of our model and the output of the NIST software.
 
-.. _CylinderModel-compare:
+.. _cylinder-compare:
 
 .. figure:: img/image065.JPG
 
@@ -90,10 +91,10 @@ and $P_0(q,\alpha)$ is the scattering intensity for the fully oriented
 system. Since we have no other software to compare the implementation of
 the intensity for fully oriented cylinders, we can compare the result of
 averaging our 2D output using a uniform distribution $p(\theta, \phi) = 1.0$.
-Figure :num:`figure #CylinderModel-crosscheck` shows the result of
+Figure :num:`figure #cylinder-crosscheck` shows the result of
 such a cross-check.
 
-.. _CylinderModel-crosscheck:
+.. _cylinder-crosscheck:
 
 .. figure:: img/image066.JPG
 
@@ -110,7 +111,7 @@ from numpy import pi, inf
 name = "cylinder"
 title = "Right circular cylinder with uniform scattering length density."
 description = """
-     f(q)= 2*(sldCyl - sldSolv)*V*sin(qLcos(alpha/2))
+     P(q)= 2*(sld - solvent_sld)*V*sin(qLcos(alpha/2))
             /[qLcos(alpha/2)]*J1(qRsin(alpha/2))/[qRsin(alpha)]
 
             P(q,alpha)= scale/V*f(q)^(2)+background
@@ -118,12 +119,12 @@ description = """
             R: Radius of the cylinder
             L: Length of the cylinder
             J1: The bessel function
-            alpha: angle betweenthe axis of the
+            alpha: angle between the axis of the
             cylinder and the q-vector for 1D
             :the ouput is P(q)=scale/V*integral
             from pi/2 to zero of...
-            f(q)^(2)*sin(alpha)*dalpha+ bkg
-    """
+            f(q)^(2)*sin(alpha)*dalpha + background
+"""
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type",
@@ -142,7 +143,7 @@ parameters = [
       "Out of plane angle" ],
     ]
 
-source = [ "lib/J1.c", "lib/gauss76.c", "lib/cylkernel.c", "cylinder.c"]
+source = [ "lib/J1.c", "lib/gauss76.c", "cylinder.c" ]
 
 def ER(radius, length):
     ddd = 0.75*radius*(2*radius*length + (length+radius)*(length+pi*radius))

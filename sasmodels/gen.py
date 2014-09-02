@@ -27,28 +27,42 @@ polydispersity across volume and orientation parameters, and provide
 scale and background parameters for each model.
 
 *Iq*, *Iqxy*, *Imagnetic* and *form_volume* should be stylized C-99
-functions written for OpenCL.  Floating point values should be
-declared as *real*.  Depending on how the function is called, a macro
-will replace *real* with *float* or *double*.  Unfortunately, MacOSX
-is picky about floating point constants, which should be defined with
-value + 'f' if they are of type *float* or just a bare value if they
-are of type *double*.  The solution is a macro *REAL(value)* which
-adds the 'f' if compiling for single precision floating point.  This
-does make the code ugly, and may someday be replaced by a clever
-regular expression which does the same job.  OpenCL has a *sincos*
-function which can improve performance when both the *sin* and *cos*
-values are needed for a particular argument.  Since this function
-does not exist in C-99, all use of *sincos* should be replaced by the
-macro *SINCOS(value,sn,cn)* where *sn* and *cn* are previously declared
-*real* values.  *value* may be an expression.  When compiled for systems
-without OpenCL, *SINCOS* will be replaced by *sin* and *cos* calls.  All
-functions need prototype declarations even if the are defined before they
-are used -- another present from MacOSX.  OpenCL does not support
-*#include* preprocessor directives; instead the includes must be listed
-in the kernel metadata, with functions defined before they are used.
-The included files should be listed using relative path to the kernel
-source file, or if using one of the standard models, relative to the
-sasmodels source files.
+functions written for OpenCL.  All functions need prototype declarations
+even if the are defined before they are used.  OpenCL does not support
+*#include* preprocessor directives, so instead the list of includes needs
+to be given as part of the metadata in the kernel module definition.
+The included files should be listed using a path relative to the kernel
+module, or if using "lib/file.c" if it is one of the standard includes
+provided with the sasmodels source.  The includes need to be listed in
+order so that functions are defined before they are used.
+
+Floating point values should be declared as *real*.  Depending on how the
+function is called, a macro will replace *real* with *float* or *double*.
+Unfortunately, MacOSX is picky about floating point constants, which
+should be defined with value + 'f' if they are of type *float* or just
+a bare value if they are of type *double*.  The solution is a macro
+*REAL(value)* which adds the 'f' if compiling for single precision
+floating point.  [Note: we could write a clever regular expression
+which automatically detects real-valued constants.  If we wanted to
+make our code more C-like, we could define variables with double but
+replace them with float before compiling for single precision.]
+
+OpenCL has a *sincos* function which can improve performance when both
+the *sin* and *cos* values are needed for a particular argument.  Since
+this function does not exist in C99, all use of *sincos* should be
+replaced by the macro *SINCOS(value,sn,cn)* where *sn* and *cn* are
+previously declared *real* values.  *value* may be an expression.  When
+compiled for systems without OpenCL, *SINCOS* will be replaced by
+*sin* and *cos* calls.
+
+If the input parameters are invalid, the scattering calculator should
+return a negative number. Particularly with polydispersity, there are
+some sets of shape parameters which lead to nonsensical forms, such
+as a capped cylinder where the cap radius is smaller than the
+cylinder radius.  The polydispersity calculation will ignore these points,
+effectively chopping the parameter weight distributions at the boundary
+of the infeasible region.  The resulting scattering will be set to
+background.  This will work correctly even when polydispersity is off.
 
 *ER* and *VR* are python functions which operate on parameter vectors.
 The constructor code will generate the necessary vectors for computing
@@ -112,6 +126,10 @@ The kernel module must set variables defining the kernel meta data:
     *VR* is a python function defining the volume ratio.  If it is not
     present, the volume ratio is 1.
 
+    *form_volume*, *Iq*, *Iqxy*, *Imagnetic* are strings containing the
+    C source code for the body of the volume, Iq, and Iqxy functions
+    respectively.  These can also be defined in the last source file.
+
 An *info* dictionary is constructed from the kernel meta data and
 returned to the caller.  It includes the additional fields
 
@@ -155,6 +173,8 @@ returns a list of files required by the model.
 
 __all__ = ["make, doc", "sources"]
 
+import sys
+import os
 import os.path
 
 import numpy as np
@@ -225,9 +245,9 @@ KERNEL_HEADER = """\
 #  endif
 #endif
 
-// Standard mathematical constants, prefixed with M_:
-//   E, LOG2E, LOG10E, LN2, LN10, PI, PI_2, PI_4, 1_PI, 2_PI,
-//   2_SQRTPI, SQRT2, SQRT1_2
+// Standard mathematical constants:
+//   M_E, M_LOG2E, M_LOG10E, M_LN2, M_LN10, M_PI, M_PI_2=pi/2, M_PI_4=pi/4,
+//   M_1_PI=1/pi, M_2_PI=2/pi, M_2_SQRTPI=2/sqrt(pi), SQRT2, SQRT1_2=sqrt(1/2)
 // OpenCL defines M_constant_F for float constants, and nothing if double
 // is not enabled on the card, which is why these constants may be missing
 #ifndef M_PI
@@ -255,6 +275,7 @@ KERNEL_1D = {
     'q_par_decl': "global const real *q,",
     'qinit': "const real qi = q[i];",
     'qcall': "qi",
+    'qwork': ["q"],
     }
 
 KERNEL_2D = {
@@ -262,6 +283,7 @@ KERNEL_2D = {
     'q_par_decl': "global const real *qx,\n    global const real *qy,",
     'qinit': "const real qxi = qx[i];\n    const real qyi = qy[i];",
     'qcall': "qxi, qyi",
+    'qwork': ["qx", "qy"],
     }
 
 # Generic kernel template for the polydispersity loop.
@@ -317,7 +339,8 @@ kernel void %(name)s(
 LOOP_OPEN="""\
 for (int %(name)s_i=0; %(name)s_i < N%(name)s; %(name)s_i++) {
   const real %(name)s = loops[2*(%(name)s_i%(offset)s)];
-  const real %(name)s_w = loops[2*(%(name)s_i%(offset)s)+1];"""
+  const real %(name)s_w = loops[2*(%(name)s_i%(offset)s)+1];\
+"""
 
 # Polydispersity loop body.
 # This computes the weight, and if it is sufficient, calls the scattering
@@ -326,18 +349,40 @@ for (int %(name)s_i=0; %(name)s_i < N%(name)s; %(name)s_i++) {
 LOOP_BODY="""\
 const real weight = %(weight_product)s;
 if (weight > cutoff) {
-  ret += weight*%(fn)s(%(qcall)s, %(pcall)s);
-  norm += weight;
-  %(volume_norm)s
-}"""
+  const real I = %(fn)s(%(qcall)s, %(pcall)s);
+  if (I>=REAL(0.0)) { // scattering cannot be negative
+    ret += weight*I;
+    norm += weight;
+    %(volume_norm)s
+  }
+  //else { printf("exclude qx,qy,I:%%g,%%g,%%g\\n",%(qcall)s,I); }
+}
+//else { printf("exclude weight:%%g\\n",weight); }\
+"""
+
+# Use this when integrating over orientation
+SPHERICAL_CORRECTION="""\
+// Correction factor for spherical integration p(theta) I(q) sin(theta) dtheta
+real spherical_correction = (Ntheta>1 ? fabs(cos(M_PI_180*phi)) : REAL(1.0));\
+"""
 
 # Volume normalization.
 # If there are "volume" polydispersity parameters, then these will be used
 # to call the form_volume function from the user supplied kernel, and accumulate
 # a normalized weight.
 VOLUME_NORM="""const real vol_weight = %(weight)s;
-  vol += vol_weight*form_volume(%(pars)s);
-  norm_vol += vol_weight;"""
+    vol += vol_weight*form_volume(%(pars)s);
+    norm_vol += vol_weight;\
+"""
+
+# functions defined as strings in the .py module
+WORK_FUNCTION="""\
+real %(name)s(%(pars)s);
+real %(name)s(%(pars)s)
+{
+%(body)s
+}\
+"""
 
 # Documentation header for the module, giving the model name, its short
 # description and its parameter table.  The remainder of the doc comes
@@ -392,6 +437,7 @@ def make_kernel(info, is_2D):
     pd_pars = info['partype']['pd-'+dim]
     vol_pars = info['partype']['volume']
     q_pars = KERNEL_2D if is_2D else KERNEL_1D
+    fn = q_pars['fn']
 
     # Build polydispersity loops
     depth = 4
@@ -425,15 +471,21 @@ def make_kernel(info, is_2D):
     # call places all fixed parameters before all polydisperse parameters.
     fq_pars = [p[0] for p in info['parameters'][len(COMMON_PARAMETERS):]
                if p[0] in set(fixed_pars+pd_pars)]
+    if False and "phi" in pd_pars:
+        spherical_correction = [indent(SPHERICAL_CORRECTION, depth)]
+        weights = [p+"_w" for p in pd_pars]+['spherical_correction']
+    else:
+        spherical_correction = []
+        weights = [p+"_w" for p in pd_pars]
     subst = {
-        'weight_product': "*".join(p+"_w" for p in pd_pars),
+        'weight_product': "*".join(weights),
         'volume_norm': volume_norm,
-        'fn': q_pars['fn'],
+        'fn': fn,
         'qcall': q_pars['qcall'],
         'pcall': ", ".join(fq_pars), # skip scale and background
         }
     loop_body = [indent(LOOP_BODY%subst, depth)]
-    loops = "\n".join(loop_head+loop_body+loop_end)
+    loops = "\n".join(loop_head+spherical_correction+loop_body+loop_end)
 
     # declarations for non-pd followed by pd pars
     # e.g.,
@@ -464,6 +516,17 @@ def make_kernel(info, is_2D):
         'loops': loops,
         }
     kernel = KERNEL_TEMPLATE%subst
+
+    # If the working function is defined in the kernel metadata as a
+    # string, translate the string to an actual function definition
+    # and put it before the kernel.
+    if info[fn]:
+        subst = {
+            'name': fn,
+            'pars': ", ".join("real "+p for p in q_pars['qwork']+fq_pars),
+            'body': info[fn],
+            }
+        kernel = "\n".join((WORK_FUNCTION%subst, kernel))
     return kernel
 
 def make_partable(info):
@@ -513,16 +576,27 @@ def sources(info):
     from os.path import abspath, dirname, join as joinpath
     search_path = [ dirname(info['filename']),
                     abspath(joinpath(dirname(__file__),'models')) ]
-    return [_search(search_path) for f in info['source']]
+    return [_search(search_path, f) for f in info['source']]
 
 def make_model(info):
     """
     Generate the code for the kernel defined by info, using source files
     found in the given search path.
     """
+    source = [open(f).read() for f in sources(info)]
+    # If the form volume is defined as a string, then wrap it in a
+    # function definition and place it after the external sources but
+    # before the kernel functions.  If the kernel functions are strings,
+    # they will be translated in the make_kernel call.
+    if info['form_volume']:
+        subst = {
+            'name': "form_volume",
+            'pars': ", ".join("real "+p for p in info['partype']['volume']),
+            'body': info['form_volume'],
+            }
+        source.append(WORK_FUNCTION%subst)
     kernel_Iq = make_kernel(info, is_2D=False)
     kernel_Iqxy = make_kernel(info, is_2D=True)
-    source = [open(f).read() for f in sources(info)]
     kernel = "\n\n".join([KERNEL_HEADER]+source+[kernel_Iq, kernel_Iqxy])
     return kernel
 
@@ -572,12 +646,14 @@ def make(kernel_module):
         filename = abspath(kernel_module.__file__),
         name = kernel_module.name,
         title = kernel_module.title,
-        source = kernel_module.source,
         description = kernel_module.description,
         parameters = COMMON_PARAMETERS + kernel_module.parameters,
-        ER = getattr(kernel_module, 'ER', None),
-        VR = getattr(kernel_module, 'VR', None),
+        source = getattr(kernel_module, 'source', []),
         )
+    # Fill in attributes which default to None
+    info.update((k,getattr(kernel_module, k, None))
+                for k in ('ER', 'VR', 'form_volume', 'Iq', 'Iqxy'))
+    # Fill in the derived attributes
     info['limits'] = dict((p[0],p[3]) for p in info['parameters'])
     info['partype'] = categorize_parameters(info['parameters'])
 
@@ -595,67 +671,6 @@ def doc(kernel_module):
                  doc=kernel_module.__doc__)
     return DOC_HEADER%subst
 
-# Compiler platform details
-if sys.platform == 'darwin':
-    COMPILE = "gcc-mp-4.7 -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm -lgomp"
-elif os.name == 'nt':
-    COMPILE = "gcc -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm"
-else:
-    COMPILE = "cc -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm"
-DLL_PATH = "/tmp"
-
-
-def dll_path(info):
-    """
-    Path to the compiled model defined by *info*.
-    """
-    from os.path import join as joinpath, split as splitpath, splitext
-    basename = splitext(splitpath(info['filename'])[1])[0]
-    return joinpath(DLL_PATH, basename+'.so')
-
-
-def dll_model(kernel_module, dtype=None):
-    """
-    Load the compiled model defined by *kernel_module*.
-
-    Recompile if any files are newer than the model file.
-
-    *dtype* is ignored.  Compiled files are always double.
-
-    The DLL is not loaded until the kernel is called so models an
-    be defined without using too many resources.
-    """
-    import tempfile
-    from sasmodels import dll
-
-    source, info = make(kernel_module)
-    source_files = sources(info) + [info['filename']]
-    newest = max(os.path.getmtime(f) for f in source_files)
-    dllpath = dll_path(info)
-    if not os.path.exists(dllpath) or os.path.getmtime(dllpath)<newest:
-        # Replace with a proper temp file
-        srcfile = tempfile.mkstemp(suffix=".c",prefix="sas_"+info['name'])
-        open(srcfile, 'w').write(source)
-        os.system(COMPILE%(srcfile, dllpath))
-        ## comment the following to keep the generated c file
-        os.unlink(srcfile)
-    return dll.DllModel(dllpath, info)
-
-
-def opencl_model(kernel_module, dtype="single"):
-    """
-    Load the OpenCL model defined by *kernel_module*.
-
-    Access to the OpenCL device is delayed until the kernel is called
-    so models can be defined without using too many resources.
-    """
-    from sasmodels import gpu
-
-    source, info = make(kernel_module)
-    ## for debugging, save source to a .cl file, edit it, and reload as model
-    #open(modelname+'.cl','w').write(source)
-    #source = open(modelname+'.cl','r').read()
-    return gpu.GpuModel(source, info, dtype)
 
 
 def demo_time():

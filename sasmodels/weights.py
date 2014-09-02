@@ -41,8 +41,11 @@ class Dispersion(object):
         For orientation parameters use absolute.
         """
         sigma = self.width * center if relative else self.width
-        if sigma == 0:
-            return np.array([center], 'd'), np.array([1.], 'd')
+        if sigma == 0 or self.npts < 2:
+            if lb <= center <= ub:
+                return np.array([center], 'd'), np.array([1.], 'd')
+            else:
+                return np.array([], 'd'), np.array([], 'd')
         return self._weights(center, sigma, lb, ub)
 
     def _weights(self, center, sigma, lb, ub):

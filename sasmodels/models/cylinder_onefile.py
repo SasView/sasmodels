@@ -153,11 +153,11 @@ parameters = [
 
 source = [ "lib/J1.c", "lib/gauss76.c", "lib/cylkernel.c" ]
 
-c_form_volume = """
+form_volume = """
     return M_PI*radius*radius*length;
-"""
+    """
 
-c_Iq = """
+Iq = """
     const real h = REAL(0.5)*length;
     real summ = REAL(0.0);
     for (int i=0; i<76 ;i++) {
@@ -173,9 +173,9 @@ c_Iq = """
     // The additional volume factor is for polydisperse volume normalization.
     const real s = (sld - solvent_sld) * form_volume(radius, length);
     return REAL(1.0e-4) * form * s * s;
-"""
+    """
 
-c_Iqxy = """
+Iqxy = """
     real sn, cn; // slots to hold sincos function output
 
     // Compute angle alpha between q and the cylinder axis
@@ -203,7 +203,7 @@ c_Iqxy = """
     // The additional volume factor is for polydisperse volume normalization.
     const real s = (sld - solvent_sld) * form_volume(radius, length);
     return REAL(1.0e-4) * form * s * s; // * correction;
-"""
+    """
 
 def ER(radius, length):
     ddd = 0.75*radius*(2*radius*length + (length+radius)*(length+pi*radius))

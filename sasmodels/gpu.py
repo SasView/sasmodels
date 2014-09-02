@@ -24,15 +24,11 @@ factors and have instrumental resolution effects applied.
 
 
 """
-import warnings
-
 import numpy as np
 import pyopencl as cl
 from pyopencl import mem_flags as mf
 
 from . import gen
-
-from .gen import F32, F64
 
 F32_DEFS = """\
 #define REAL(x) (x##f)
@@ -51,7 +47,20 @@ F64_DEFS = """\
 # to do their polydispersity calculations.  A value of 1024 should be much
 # larger than necessary given that cost grows as npts^k where k is the number
 # of polydisperse parameters.
-MAX_LOOPS = 1024
+MAX_LOOPS = 2048
+
+def load_model(kernel_module, dtype="single"):
+    """
+    Load the OpenCL model defined by *kernel_module*.
+
+    Access to the OpenCL device is delayed until the kernel is called
+    so models can be defined without using too many resources.
+    """
+    source, info = gen.make(kernel_module)
+    ## for debugging, save source to a .cl file, edit it, and reload as model
+    open(info['name']+'.cl','w').write(source)
+    #source = open(info['name']+'.cl','r').read()
+    return GpuModel(source, info, dtype)
 
 ENV = None
 def environment():
@@ -102,10 +111,10 @@ def compile_model(context, source, dtype):
     devices in the context do not support the cl_khr_fp64 extension.
     """
     dtype = np.dtype(dtype)
-    if dtype==F64 and not all(has_double(d) for d in context.devices):
+    if dtype==gen.F64 and not all(has_double(d) for d in context.devices):
         raise RuntimeError("Double precision not supported for devices")
 
-    header = F64_DEFS if dtype == F64 else F32_DEFS
+    header = F64_DEFS if dtype == gen.F64 else F32_DEFS
     # Note: USE_SINCOS makes the intel cpu slower under opencl
     if context.devices[0].type == cl.device_type.GPU:
         header += "#define USE_SINCOS\n"
@@ -157,7 +166,7 @@ class GpuModel(object):
     for single and 'd', 'float64' or 'double' for double.  Double precision
     is an optional extension which may not be available on all devices.
     """
-    def __init__(self, source, info, dtype=F32):
+    def __init__(self, source, info, dtype=gen.F32):
         self.info = info
         self.source = source
         self.dtype = dtype
@@ -220,7 +229,7 @@ class GpuInput(object):
     Call :meth:`release` when complete.  Even if not called directly, the
     buffer will be released when the data object is freed.
     """
-    def __init__(self, q_vectors, dtype=F32):
+    def __init__(self, q_vectors, dtype=gen.F32):
         env = environment()
         self.nq = q_vectors[0].size
         self.dtype = np.dtype(dtype)
@@ -272,7 +281,7 @@ class GpuKernel(object):
         # Note: res may be shorter than res_b if global_size != nq
         env = environment()
         self.loops_b = [cl.Buffer(env.context, mf.READ_WRITE,
-                                  MAX_LOOPS*input.dtype.itemsize)
+                                  2*MAX_LOOPS*input.dtype.itemsize)
                         for _ in env.queues]
         self.res_b = [cl.Buffer(env.context, mf.READ_WRITE,
                                 input.global_size[0]*input.dtype.itemsize)
@@ -280,16 +289,17 @@ class GpuKernel(object):
 
 
     def __call__(self, pars, pd_pars, cutoff=1e-5):
-        real = np.float32 if self.input.dtype == F32 else np.float64
+        real = np.float32 if self.input.dtype == gen.F32 else np.float64
         fixed = [real(p) for p in pars]
         cutoff = real(cutoff)
         loops = np.hstack(pd_pars)
         loops = np.ascontiguousarray(loops.T, self.input.dtype).flatten()
-        loops_N = [np.uint32(len(p[0])) for p in pd_pars]
+        Nloops = [np.uint32(len(p[0])) for p in pd_pars]
+        #print "loops",Nloops, loops
 
         #import sys; print >>sys.stderr,"opencl eval",pars
         #print "opencl eval",pars
-        if len(loops) > MAX_LOOPS:
+        if len(loops) > 2*MAX_LOOPS:
             raise ValueError("too many polydispersity points")
         device_num = 0
         res_bi = self.res_b[device_num]
@@ -299,7 +309,7 @@ class GpuKernel(object):
         cl.enqueue_copy(queuei, loops_bi, loops)
         #ctx = environment().context
         #loops_bi = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=loops)
-        args = self.input.q_buffers + [res_bi,loops_bi,loops_l,cutoff] + fixed + loops_N
+        args = self.input.q_buffers + [res_bi,loops_bi,loops_l,cutoff] + fixed + Nloops
         self.kernel(queuei, self.input.global_size, None, *args)
         cl.enqueue_copy(queuei, self.res, res_bi)
 

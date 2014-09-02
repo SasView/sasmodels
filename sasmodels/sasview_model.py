@@ -5,11 +5,11 @@ import warnings
 import numpy as np
 
 try:
-    import pyopencl
-    from .gen import opencl_model as load_model
-except ImportError:
+    from .gpu import load_model
+except ImportError,exc:
+    warnings.warn(str(exc))
     warnings.warn("OpenCL not available --- using ctypes instead")
-    from .gen import dll_model as load_model
+    from .dll import load_model
 
 
 def make_class(kernel_module, dtype='single'):
@@ -245,7 +245,11 @@ class SasviewModel(object):
         if isinstance(qdist, (list,tuple)):
             # Check whether we have a list of ndarrays [qx,qy]
             qx, qy = qdist
-            return self.calculate_Iq(qx, qy)
+            partype = self._model.info['partype']
+            if not partype['orientation'] and not partype['magnetic']:
+                return self.calculate_Iq(np.sqrt(qx**2+qy**2))
+            else:
+                return self.calculate_Iq(qx, qy)
 
         elif isinstance(qdist, np.ndarray):
             # We have a simple 1D distribution of q-values

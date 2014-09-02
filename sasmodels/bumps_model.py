@@ -139,13 +139,17 @@ def plot_data(data, iq, vmin=None, vmax=None, scale='log'):
     from numpy.ma import masked_array, masked
     import matplotlib.pyplot as plt
     if hasattr(data, 'qx_data'):
-        img = masked_array(iq, data.mask)
+        iq = iq[:]
+        valid = np.isfinite(iq)
         if scale == 'log':
-            img[(img <= 0) | ~np.isfinite(img)] = masked
-            img = np.log10(img)
+            valid[valid] = (iq[valid] > 0)
+            iq[valid] = np.log10(iq[valid])
+        iq[~valid|data.mask] = 0
+        #plottable = iq
+        plottable = masked_array(iq, ~valid|data.mask)
         xmin, xmax = min(data.qx_data), max(data.qx_data)
         ymin, ymax = min(data.qy_data), max(data.qy_data)
-        plt.imshow(img.reshape(128,128),
+        plt.imshow(plottable.reshape(128,128),
                    interpolation='nearest', aspect=1, origin='upper',
                    extent=[xmin, xmax, ymin, ymax], vmin=vmin, vmax=vmax)
     else: # 1D data
@@ -153,7 +157,8 @@ def plot_data(data, iq, vmin=None, vmax=None, scale='log'):
             idx = np.isfinite(iq)
             plt.plot(data.x[idx], iq[idx])
         else:
-            idx = np.isfinite(iq) & (iq>0)
+            idx = np.isfinite(iq)
+            idx[idx] = (iq[idx]>0)
             plt.loglog(data.x[idx], iq[idx])
 
 
@@ -227,6 +232,7 @@ class BumpsModel(object):
     """
     def __init__(self, data, model, cutoff=1e-5, **kw):
         from bumps.names import Parameter
+        partype = model.info['partype']
 
         # interpret data
         self.data = data
@@ -235,7 +241,10 @@ class BumpsModel(object):
             self.iq = data.data[self.index]
             self.diq = data.err_data[self.index]
             self._theory = np.zeros_like(data.data)
-            q_vectors = [data.qx_data, data.qy_data]
+            if not partype['orientation'] and not partype['magnetic']:
+                q_vectors = [np.sqrt(data.qx_data**2+data.qy_data**2)]
+            else:
+                q_vectors = [data.qx_data, data.qy_data]
         else:
             self.index = (data.x>=data.qmin) & (data.x<=data.qmax) & ~np.isnan(data.y)
             self.iq = data.y[self.index]
@@ -257,7 +266,7 @@ class BumpsModel(object):
             value = kw.pop(name, default)
             setattr(self, name, Parameter.default(value, name=name, limits=limits))
             pars.append(name)
-        for name in model.info['partype']['pd-2d']:
+        for name in partype['pd-2d']:
             for xpart,xdefault,xlimits in [
                     ('_pd', 0, limits),
                     ('_pd_n', 35, (0,1000)),
