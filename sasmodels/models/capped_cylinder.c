@@ -21,17 +21,24 @@ real _cap_kernel(real q, real h, real cap_radius, real length,
     // kernel.
     const real upper = REAL(1.0);
     const real lower = h/cap_radius; // integral lower bound
-    const real m = q*cos_alpha*cap_radius; // cos argument slope
-    const real b = q*cos_alpha*(REAL(0.5)*length-h); // cos argument intercept
-    const real qrst = q*sin_alpha*cap_radius; // Q*R*sin(theta)
+    // cos term in integral is:
+    //    cos (q (R t - h + L/2) cos(alpha))
+    // so turn it into:
+    //    cos (m t + b)
+    // where:
+    //    m = q R cos(alpha)
+    //    b = q(L/2-h) cos(alpha)
+    const real m = q*cap_radius*cos_alpha; // cos argument slope
+    const real b = q*(REAL(0.5)*length-h)*cos_alpha; // cos argument intercept
+    const real qrst = q*cap_radius*sin_alpha; // Q*R*sin(theta)
     real total = REAL(0.0);
     for (int i=0; i<76 ;i++) {
         // translate a point in [-1,1] to a point in [lower,upper]
         //const real t = ( Gauss76Z[i]*(upper-lower) + upper + lower )/2.0;
         const real t = REAL(0.5)*(Gauss76Z[i]*(upper-lower)+upper+lower);
         const real radical = REAL(1.0) - t*t;
-        const real caparg = qrst*sqrt(radical); // cap bessel function arg
-        const real be = (caparg == REAL(0.0) ? REAL(0.5) : J1(caparg)/caparg);
+        const real arg = qrst*sqrt(radical); // cap bessel function arg
+        const real be = (arg == REAL(0.0) ? REAL(0.5) : J1(arg)/arg);
         const real Fq = cos(m*t + b) * radical * be;
         total += Gauss76Wt[i] * Fq;
     }
@@ -83,7 +90,7 @@ real Iq(real q,
         // to avoid sin(alpha)/sin(alpha) for alpha = 0.  It is also a teensy bit
         // faster since we don't multiply and divide sin(alpha).
         const real besarg = q*radius*sn;
-        const real siarg = REAL(0.5)*q*length*cn;
+        const real siarg = q*REAL(0.5)*length*cn;
         // lim_{x->0} J1(x)/x = 1/2,   lim_{x->0} sin(x)/x = 1
         const real bj = (besarg == REAL(0.0) ? REAL(0.5) : J1(besarg)/besarg);
         const real si = (siarg == REAL(0.0) ? REAL(1.0) : sin(siarg)/siarg);
@@ -130,11 +137,8 @@ real Iqxy(real qx, real qy,
     const real h = sqrt(cap_radius*cap_radius - radius*radius); // negative h
     const real cap_Fq = _cap_kernel(q, h, cap_radius, length, sn, cn);
 
-    // The following is CylKernel() / sin(alpha), but we are doing it in place
-    // to avoid sin(alpha)/sin(alpha) for alpha = 0.  It is also a teensy bit
-    // faster since we don't multiply and divide sin(alpha).
     const real besarg = q*radius*sn;
-    const real siarg = REAL(0.5)*q*length*cn;
+    const real siarg = q*REAL(0.5)*length*cn;
     // lim_{x->0} J1(x)/x = 1/2,   lim_{x->0} sin(x)/x = 1
     const real bj = (besarg == REAL(0.0) ? REAL(0.5) : J1(besarg)/besarg);
     const real si = (siarg == REAL(0.0) ? REAL(1.0) : sin(siarg)/siarg);

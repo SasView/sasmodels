@@ -351,7 +351,7 @@ const real weight = %(weight_product)s;
 if (weight > cutoff) {
   const real I = %(fn)s(%(qcall)s, %(pcall)s);
   if (I>=REAL(0.0)) { // scattering cannot be negative
-    ret += weight*I;
+    ret += weight*I%(sasview_spherical)s;
     norm += weight;
     %(volume_norm)s
   }
@@ -363,7 +363,12 @@ if (weight > cutoff) {
 # Use this when integrating over orientation
 SPHERICAL_CORRECTION="""\
 // Correction factor for spherical integration p(theta) I(q) sin(theta) dtheta
-real spherical_correction = (Ntheta>1 ? fabs(cos(M_PI_180*phi)) : REAL(1.0));\
+real spherical_correction = (Ntheta>1 ? fabs(sin(M_PI_180*theta)) : REAL(1.0));\
+"""
+# Use this to reproduce sasview behaviour
+SASVIEW_SPHERICAL_CORRECTION="""\
+// Correction factor for spherical integration p(theta) I(q) sin(theta) dtheta
+real spherical_correction = (Ntheta>1 ? fabs(cos(M_PI_180*theta))*M_PI_2 : REAL(1.0));\
 """
 
 # Volume normalization.
@@ -471,18 +476,25 @@ def make_kernel(info, is_2D):
     # call places all fixed parameters before all polydisperse parameters.
     fq_pars = [p[0] for p in info['parameters'][len(COMMON_PARAMETERS):]
                if p[0] in set(fixed_pars+pd_pars)]
-    if False and "phi" in pd_pars:
+    if False and "theta" in pd_pars:
         spherical_correction = [indent(SPHERICAL_CORRECTION, depth)]
         weights = [p+"_w" for p in pd_pars]+['spherical_correction']
+        sasview_spherical = ""
+    elif "theta" in pd_pars:
+        spherical_correction = [indent(SASVIEW_SPHERICAL_CORRECTION,depth)]
+        weights = [p+"_w" for p in pd_pars]
+        sasview_spherical = "*spherical_correction"
     else:
         spherical_correction = []
         weights = [p+"_w" for p in pd_pars]
+        sasview_spherical = ""
     subst = {
         'weight_product': "*".join(weights),
         'volume_norm': volume_norm,
         'fn': fn,
         'qcall': q_pars['qcall'],
         'pcall': ", ".join(fq_pars), # skip scale and background
+        'sasview_spherical': sasview_spherical,
         }
     loop_body = [indent(LOOP_BODY%subst, depth)]
     loops = "\n".join(loop_head+spherical_correction+loop_body+loop_end)

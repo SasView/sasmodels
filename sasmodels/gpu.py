@@ -21,8 +21,6 @@ This kernel is used during fitting, receiving new sets of parameters and
 evaluating them.  The output value is stored in an output buffer on the
 devices, where it can be combined with other structure factors and form
 factors and have instrumental resolution effects applied.
-
-
 """
 import numpy as np
 import pyopencl as cl
@@ -58,7 +56,7 @@ def load_model(kernel_module, dtype="single"):
     """
     source, info = gen.make(kernel_module)
     ## for debugging, save source to a .cl file, edit it, and reload as model
-    open(info['name']+'.cl','w').write(source)
+    #open(info['name']+'.cl','w').write(source)
     #source = open(info['name']+'.cl','r').read()
     return GpuModel(source, info, dtype)
 

@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import math
 
 import numpy as np
 
@@ -14,7 +15,10 @@ def sasview_model(modelname, **pars):
     """
     Load a sasview model given the model name.
     """
-    modelname = modelname
+    # convert model parameters from sasmodel form to sasview form
+    #print "old",sorted(pars.items())
+    modelname, pars = revert_model(modelname, pars)
+    #print "new",sorted(pars.items())
     sans = __import__('sans.models.'+modelname)
     ModelClass = getattr(getattr(sans.models,modelname,None),modelname,None)
     if ModelClass is None:
@@ -40,7 +44,7 @@ def load_opencl(modelname, dtype='single'):
     kernel = gpu.load_model(module, dtype=dtype)
     return kernel
 
-def load_dll(modelname, dtype='single'):
+def load_ctypes(modelname, dtype='single'):
     sasmodels = __import__('sasmodels.models.'+modelname)
     module = getattr(sasmodels.models, modelname, None)
     kernel = dll.load_model(module, dtype=dtype)
@@ -48,17 +52,27 @@ def load_dll(modelname, dtype='single'):
 
 def randomize(p, v):
     """
-    Randomizing pars using sasview names.
-    Guessing at angles and slds.
+    Randomizing parameter.
+
+    Guess the parameter type from name.
     """
-    if any(p.endswith(s) for s in ('_pd_n','_pd_nsigmas','_pd_type')):
+    if any(p.endswith(s) for s in ('_pd_n','_pd_nsigma','_pd_type')):
         return v
-    if any(s in p for s in ('theta','phi','psi')):
-        return np.random.randint(0,90)
-    elif any(s in p for s in ('sld','Sld','SLD')):
-        return np.random.rand()*1e-5
-    else:
+    elif any(s in p for s in ('theta','phi','psi')):
+        # orientation in [-180,180], orientation pd in [0,45]
+        if p.endswith('_pd'):
+            return 45*np.random.rand()
+        else:
+            return 360*np.random.rand() - 180
+    elif 'sld' in p:
+        # sld in in [-0.5,10]
+        return 10.5*np.random.rand() - 0.5
+    elif p.endswith('_pd'):
+        # length pd in [0,1]
         return np.random.rand()
+    else:
+        # length, scale, background in [0,200]
+        return 200*np.random.rand()
 
 def parlist(pars):
     return "\n".join("%s: %s"%(p,v) for p,v in sorted(pars.items()))
@@ -73,97 +87,103 @@ def suppress_pd(pars):
     for p in pars:
         if p.endswith("_pd"): pars[p] = 0
 
-def compare(gpuname, gpupars, Ncpu, Ngpu, opts):
-    #from sasmodels.core import load_data
-    #data = load_data('December/DEC07098.DAT')
+def compare(name, pars, Ncpu, Ngpu, opts, set_pars):
+
+    # Sort out data
     qmax = 1.0 if '-highq' in opts else (0.2 if '-midq' in opts else 0.05)
     if "-1d" in opts:
         from sasmodels.bumps_model import empty_data1D
-        qmax = np.log10(qmax)
+        qmax = math.log10(qmax)
         data = empty_data1D(np.logspace(qmax-3, qmax, 128))
+        index = slice(None, None)
     else:
         from sasmodels.bumps_model import empty_data2D, set_beam_stop
         data = empty_data2D(np.linspace(-qmax, qmax, 128))
         set_beam_stop(data, 0.004)
+        index = ~data.mask
     is2D = hasattr(data, 'qx_data')
+
+    # modelling accuracy is determined by dtype and cutoff
     dtype = 'double' if '-double' in opts else 'single'
     cutoff_opts = [s for s in opts if s.startswith('-cutoff')]
     cutoff = float(cutoff_opts[0].split('=')[1]) if cutoff_opts else 1e-5
 
+    # randomize parameters
+    random_opts = [s for s in opts if s.startswith('-random')]
+    if random_opts:
+        if '=' in random_opts[0]:
+            seed = int(random_opts[0].split('=')[1])
+        else:
+            seed = int(np.random.rand()*10000)
+        np.random.seed(seed)
+        print "Randomize using -random=%i"%seed
+        # Note: the sort guarantees order of calls to random number generator
+        pars = dict((p,randomize(p,v)) for p,v in sorted(pars.items()))
+        # The capped cylinder model has a constraint on its parameters
+        if name == 'capped_cylinder' and pars['cap_radius'] < pars['radius']:
+            pars['radius'],pars['cap_radius'] = pars['cap_radius'],pars['radius']
+    pars.update(set_pars)
 
-    if '-random' in opts:
-        gpupars = dict((p,randomize(p,v)) for p,v in gpupars.items())
-    if '-pars' in opts: print "pars",parlist(gpupars)
-    if '-mono' in opts: suppress_pd(gpupars)
+    # parameter selection
+    if '-mono' in opts:
+        suppress_pd(pars)
+    if '-pars' in opts:
+        print "pars",parlist(pars)
 
-    cpuname, cpupars = revert_model(gpuname, gpupars)
-
-    try:
-        gpumodel = load_opencl(gpuname, dtype=dtype)
-    except Exception,exc:
-        print exc
-        print "... trying again with single precision"
-        gpumodel = load_opencl(gpuname, dtype='single')
-    model = BumpsModel(data, gpumodel, cutoff=cutoff, **gpupars)
+    # OpenCl calculation
     if Ngpu > 0:
+        try:
+            model = load_opencl(name, dtype=dtype)
+        except Exception,exc:
+            print exc
+            print "... trying again with single precision"
+            model = load_opencl(name, dtype='single')
+        problem = BumpsModel(data, model, cutoff=cutoff, **pars)
         toc = tic()
-        for i in range(Ngpu):
+        for _ in range(Ngpu):
             #pars['scale'] = np.random.rand()
-            model.update()
-            gpu = model.theory()
+            problem.update()
+            gpu = problem.theory()
         gpu_time = toc()*1000./Ngpu
-        print "ocl t=%.1f ms, intensity=%f"%(gpu_time, sum(gpu[~np.isnan(gpu)]))
+        print "opencl t=%.1f ms, intensity=%.0f"%(gpu_time, sum(gpu[index]))
         #print max(gpu), min(gpu)
 
-    comp = None
-    if Ncpu > 0 and "-dll" in opts:
-        dllmodel = load_dll(gpuname, dtype=dtype)
-        model = BumpsModel(data, dllmodel, cutoff=cutoff, **gpupars)
+    # ctypes/sasview calculation
+    if Ncpu > 0 and "-ctypes" in opts:
+        model = load_ctypes(name, dtype=dtype)
+        problem = BumpsModel(data, model, cutoff=cutoff, **pars)
         toc = tic()
-        for i in range(Ncpu):
-            model.update()
-            cpu = model.theory()
+        for _ in range(Ncpu):
+            problem.update()
+            cpu = problem.theory()
         cpu_time = toc()*1000./Ncpu
-        comp = "dll"
-
-    elif 0: # Hack to check new vs old for GpuCylinder
-        from Models.code_cylinder_f import GpuCylinder as oldgpu
-        from sasmodel import SasModel
-        oldmodel = SasModel(data, oldgpu, dtype=dtype, **cpupars)
-        toc = tic()
-        for i in range(Ngpu):
-            oldmodel.update()
-            cpu = oldmodel.theory()
-        cpu_time = toc()*1000./Ngpu
-        comp = "old"
-
+        comp = "ctypes"
+        print "ctypes t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu[index]))
     elif Ncpu > 0:
-        cpumodel = sasview_model(cpuname, **cpupars)
+        model = sasview_model(name, **pars)
         toc = tic()
-        if is2D:
-            for i in range(Ncpu):
-                cpu = cpumodel.evalDistribution([data.qx_data, data.qy_data])
-        else:
-            for i in range(Ncpu):
-                cpu = cpumodel.evalDistribution(data.x)
+        for _ in range(Ncpu):
+            if is2D:
+                cpu = model.evalDistribution([data.qx_data, data.qy_data])
+            else:
+                cpu = model.evalDistribution(data.x)
         cpu_time = toc()*1000./Ncpu
-        comp = 'sasview'
-        #print "sasview t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu[model.index]))
+        comp = "sasview"
+        print "sasview t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu[index]))
 
-    if comp:
-        print "%s t=%.1f ms, intensity=%f"%(comp, cpu_time, sum(cpu[model.index]))
+    # Compare, but only if computing both forms
     if Ngpu > 0 and Ncpu > 0:
         #print "speedup %.2g"%(cpu_time/gpu_time)
         #print "max |gpu/cpu|", max(abs(gpu/cpu)), "%.15g"%max(abs(gpu)), "%.15g"%max(abs(cpu))
         #cpu *= max(gpu/cpu)
         resid, relerr = np.zeros_like(gpu), np.zeros_like(gpu)
-        resid[model.index] = (gpu - cpu)[model.index]
-        relerr[model.index] = resid[model.index]/cpu[model.index]
-        print "max(|ocl-%s|)"%comp, max(abs(resid[model.index]))
-        print "max(|(ocl-%s)/ocl|)"%comp, max(abs(relerr[model.index]))
+        resid[index] = (gpu - cpu)[index]
+        relerr[index] = resid[index]/cpu[index]
+        print "max(|ocl-%s|)"%comp, max(abs(resid[index]))
+        print "max(|(ocl-%s)/ocl|)"%comp, max(abs(relerr[index]))
 
+    # Plot if requested
     if '-noplot' in opts: return
-
     import matplotlib.pyplot as plt
     if Ncpu > 0:
         if Ngpu > 0: plt.subplot(131)
@@ -172,12 +192,14 @@ def compare(gpuname, gpupars, Ncpu, Ngpu, opts):
     if Ngpu > 0:
         if Ncpu > 0: plt.subplot(132)
         plot_data(data, gpu, scale='log')
-        plt.title("ocl t=%.1f ms"%gpu_time)
+        plt.title("opencl t=%.1f ms"%gpu_time)
     if Ncpu > 0 and Ngpu > 0:
         plt.subplot(133)
         err = resid if '-abs' in opts else relerr
+        errstr = "abs err" if '-abs' in opts else "rel err"
+        #err,errstr = gpu/cpu,"ratio"
         plot_data(data, err, scale='linear')
-        plt.title("max rel err = %.3g"%max(abs(err[model.index])))
+        plt.title("max %s = %.3g"%(errstr, max(abs(err[index]))))
         if is2D: plt.colorbar()
     plt.show()
 
@@ -199,9 +221,9 @@ Options (* for default):
     -single/-double uses double precision for comparison
     -lowq/-midq/-highq use q values up to 0.05, 0.2 or 1.0
     -2d/-1d uses 1d or 2d random data
-    -preset/-random randomizes the parameters
+    -preset/-random[=seed] preset or random parameters
     -poly/-mono force monodisperse/polydisperse
-    -sasview/-dll whether cpu is tested using sasview or dll
+    -sasview/-ctypes whether cpu is tested using sasview or ctypes
     -cutoff=1e-5/value cutoff for including a point in polydispersity
     -nopars/-pars prints the parameter set or not
     -rel/-abs plot relative or absolute error
@@ -213,6 +235,18 @@ Available models:
 
     %s
 """
+
+VALID_OPTIONS = [
+    'plot','noplot',
+    'single','double',
+    'lowq','midq','highq',
+    '2d','1d',
+    'preset','random',
+    'poly','mono',
+    'sasview','ctypes',
+    'nopars','pars',
+    'rel','abs',
+    ]
 
 def main():
     opts = [arg for arg in sys.argv[1:] if arg.startswith('-')]
@@ -226,6 +260,15 @@ def main():
         print "Model %r not available. Use one of:\n    %s"%(args[0],models)
         sys.exit(1)
 
+    valid_opts = set(VALID_OPTIONS)
+    invalid = [o[1:] for o in opts
+               if o[1:] not in valid_opts
+                  and not o.startswith('-cutoff=')
+                  and not o.startswith('-random=')]
+    if invalid:
+        print "Invalid options: %s"%(", ".join(invalid))
+        sys.exit(1)
+
     name, pars = MODELS[args[0]]()
     Nopencl = int(args[1]) if len(args) > 1 else 5
     Nsasview = int(args[2]) if len(args) > 3 else 1
@@ -237,17 +280,17 @@ def main():
         if p+"_pd_type" not in pars: pars[p+"_pd_type"] = "gaussian"
 
     # Fill in parameters given on the command line
+    set_pars = {}
     for arg in args[3:]:
         k,v = arg.split('=')
         if k not in pars:
             # extract base name without distribution
-            # style may be either a.d or a_pd_d
-            s = set((p.split('_pd')[0]).split('.')[0] for p in pars)
+            s = set(p.split('_pd')[0] for p in pars)
             print "%r invalid; parameters are: %s"%(k,", ".join(sorted(s)))
             sys.exit(1)
-        pars[k] = float(v) if not v.endswith('type') else v
+        set_pars[k] = float(v) if not v.endswith('type') else v
 
-    compare(name, pars, Nsasview, Nopencl, opts)
+    compare(name, pars, Nsasview, Nopencl, opts, set_pars)
 
 # ===========================================================================
 #
@@ -264,13 +307,13 @@ def model(name):
 def cylinder():
     pars = dict(
         scale=1, background=0,
-        sld=6e-6, solvent_sld=1e-6,
+        sld=6, solvent_sld=1,
         #radius=5, length=20,
         radius=260, length=290,
-        theta=30, phi=15,
+        theta=30, phi=0,
         radius_pd=.2, radius_pd_n=1,
         length_pd=.2,length_pd_n=1,
-        theta_pd=15, theta_pd_n=25,
+        theta_pd=15, theta_pd_n=45,
         phi_pd=15, phi_pd_n=1,
         )
     return 'cylinder', pars
@@ -279,13 +322,13 @@ def cylinder():
 def capped_cylinder():
     pars = dict(
         scale=1, background=0,
-        sld=6e-6, solvent_sld=1e-6,
-        radius=260, cap_radius=80000, length=290,
+        sld=6, solvent_sld=1,
+        radius=260, cap_radius=290, length=290,
         theta=30, phi=15,
         radius_pd=.2, radius_pd_n=1,
         cap_radius_pd=.2, cap_radius_pd_n=1,
         length_pd=.2, length_pd_n=1,
-        theta_pd=15, theta_pd_n=25,
+        theta_pd=15, theta_pd_n=45,
         phi_pd=15, phi_pd_n=1,
         )
     return 'capped_cylinder', pars
@@ -295,14 +338,14 @@ def capped_cylinder():
 def core_shell_cylinder():
     pars = dict(
         scale=1, background=0,
-        core_sld=6e-6, shell_sld=8e-6, solvent_sld=1e-6,
-        radius=325, thickness=25, length=34.2709,
-        theta=90, phi=0,
-        radius_pd=0.1, radius_pd_n=10,
-        length_pd=0.1, length_pd_n=5,
-        thickness_pd=0.1, thickness_pd_n=5,
-        theta_pd=15.8, theta_pd_n=5,
-        phi_pd=0.0008748, phi_pd_n=5,
+        core_sld=6, shell_sld=8, solvent_sld=1,
+        radius=45, thickness=25, length=340,
+        theta=30, phi=15,
+        radius_pd=.2, radius_pd_n=1,
+        length_pd=.2, length_pd_n=1,
+        thickness_pd=.2, thickness_pd_n=1,
+        theta_pd=15, theta_pd_n=45,
+        phi_pd=15, phi_pd_n=1,
         )
     return 'core_shell_cylinder', pars
 
@@ -311,13 +354,13 @@ def core_shell_cylinder():
 def ellipsoid():
     pars = dict(
         scale=1, background=0,
-        sld=6e-6, solvent_sld=1e-6,
+        sld=6, solvent_sld=1,
         rpolar=50, requatorial=30,
-        theta=0, phi=0,
-        rpolar_pd=0.3, rpolar_pd_n=10,
-        requatorial_pd=0, requatorial_pd_n=10,
-        theta_pd=0, theta_pd_n=45,
-        phi_pd=0, phi_pd_n=45,
+        theta=30, phi=15,
+        rpolar_pd=.2, rpolar_pd_n=1,
+        requatorial_pd=.2, requatorial_pd_n=1,
+        theta_pd=15, theta_pd_n=45,
+        phi_pd=15, phi_pd_n=1,
         )
     return 'ellipsoid', pars
 
@@ -326,15 +369,15 @@ def ellipsoid():
 def triaxial_ellipsoid():
     pars = dict(
         scale=1, background=0,
-        sld=6e-6, solvent_sld=1e-6,
-        theta=0, phi=0, psi=0,
+        sld=6, solvent_sld=1,
+        theta=30, phi=15, psi=5,
         req_minor=25, req_major=36, rpolar=50,
-        theta_pd=0, theta_pd_n=5,
-        phi_pd=0, phi_pd_n=5,
-        psi_pd=0, psi_pd_n=5,
-        req_minor_pd=0, req_minor_pd_n=5,
-        req_major_pd=0, req_major_pd_n=5,
-        rpolar_pd=.3, rpolar_pd_n=25,
+        req_minor_pd=0, req_minor_pd_n=1,
+        req_major_pd=0, req_major_pd_n=1,
+        rpolar_pd=.2, rpolar_pd_n=1,
+        theta_pd=15, theta_pd_n=45,
+        phi_pd=15, phi_pd_n=1,
+        psi_pd=15, psi_pd_n=1,
         )
     return 'triaxial_ellipsoid', pars
 
@@ -342,9 +385,9 @@ def triaxial_ellipsoid():
 def sphere():
     pars = dict(
         scale=1, background=0,
-        sld=6e-6, solvent_sld=1e-6,
+        sld=6, solvent_sld=1,
         radius=120,
-        radius_pd=.3, radius_pd_n=5,
+        radius_pd=.2, radius_pd_n=45,
         )
     return 'sphere', pars
 
@@ -352,9 +395,9 @@ def sphere():
 def lamellar():
     pars = dict(
         scale=1, background=0,
-        sld=6e-6, solvent_sld=1e-6,
+        sld=6, solvent_sld=1,
         thickness=40,
-        thickness_pd= 0.3, thickness_pd_n=40,
+        thickness_pd= 0.2, thickness_pd_n=40,
         )
     return 'lamellar', pars
 

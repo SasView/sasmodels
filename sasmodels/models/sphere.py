@@ -29,12 +29,12 @@ form_volume = """
     """
 
 Iq = """
-    real sn, cn;
     const real qr = q*radius;
+    real sn, cn;
     SINCOS(qr, sn, cn);
-    const real bes = (qr==REAL(0.0) ? REAL(1.0) : (REAL(3.0)*(sn-qr*cn))/(qr*qr*qr));
-    const real f = bes * (sld - solvent_sld) * form_volume(radius);
-    return REAL(1.0e-4)*f*f;
+    const real bes = qr==REAL(0.0) ? REAL(1.0) : REAL(3.0)*(sn-qr*cn)/(qr*qr*qr);
+    const real fq = bes * (sld - solvent_sld) * form_volume(radius);
+    return REAL(1.0e-4)*fq*fq;
     """
 
 

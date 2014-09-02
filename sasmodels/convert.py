@@ -36,7 +36,7 @@ PARAMETER_MAP = {
     'SphereModel': dict(
         name='sphere',
         sldSph='sld', sldSolv='solvent_sld',
-        #radius='radius',  # DO NOT LIST IDENTICAL PARAMETERS!
+        radius='radius',  # listing identical parameters is optional
         ),
     }
 
@@ -58,6 +58,7 @@ def _rename_pars(pars, mapping):
     """
     newpars = pars.copy()
     for old,new in mapping.items():
+        if old == new: continue
         # Bumps style parameter names
         for variant in ("", "_pd", "_pd_n", "_pd_nsigma", "_pd_type"):
             if old+variant in newpars:

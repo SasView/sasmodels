@@ -1,6 +1,6 @@
 r"""
 Calculates the scattering from a cylinder with spherical section end-caps.
-This model simply becomes the `convex_lens`_ when the length of the cylinder
+This model simply becomes the a convex lens when the length of the cylinder
 $L=0$, that is, a sphereocylinder with end caps that have a radius larger
 than that of the cylinder and the center of the end cap radius lies within
 the cylinder. See the diagram for the details of the geometry and
@@ -127,6 +127,15 @@ parameters = [
       "Solvent scattering length density" ],
     [ "radius", "Ang",  20, [0, inf], "volume",
       "Cylinder radius" ],
+    # TODO: use an expression for cap radius with fixed bounds.
+    # The current form requires cap radius R bigger than cylinder radius r.
+    # Could instead use R/r in [1,inf], r/R in [0,1], or the angle between
+    # cylinder and cap in [0,90].  The problem is similar for the barbell
+    # model.  Propose r/R in [0,1] in both cases, with the model specifying
+    # cylinder radius in the capped cylinder model and sphere radius in the
+    # barbell model.  This leads to the natural value of zero for no cap
+    # in the capped cylinder, and zero for no bar in the barbell model.  In
+    # both models, one would be a pill.
     [ "cap_radius", "Ang", 20, [0, inf], "volume",
       "Cap radius" ],
     [ "length", "Ang",  400, [0, inf], "volume",
