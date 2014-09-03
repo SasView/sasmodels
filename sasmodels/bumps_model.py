@@ -248,11 +248,13 @@ class BumpsModel(object):
     """
     def __init__(self, data, model, cutoff=1e-5, **kw):
         from bumps.names import Parameter
-        partype = model.info['partype']
 
         # remember inputs so we can inspect from outside
         self.data = data
         self.model = model
+        self.cutoff = cutoff
+
+        partype = model.info['partype']
 
         # interpret data
         if hasattr(data, 'qx_data'):
@@ -270,16 +272,14 @@ class BumpsModel(object):
             self.diq = data.dy[self.index]
             self._theory = np.zeros_like(data.y)
             q_vectors = [data.x]
-        #input = model.make_input(q_vectors)
-        input = model.make_input([v[self.index] for v in q_vectors])
 
-        # create model
-        self.fn = model(input)
-        self.cutoff = cutoff
+        # Remember function inputs so we can delay loading the function and
+        # so we can save/restore state
+        self._fn_inputs = [v[self.index] for v in q_vectors]
+        self._fn = None
 
         # define bumps parameters
         pars = []
-        extras = []
         for p in model.info['parameters']:
             name, default, limits, ptype = p[0], p[2], p[3], p[4]
             value = kw.pop(name, default)
@@ -314,11 +314,15 @@ class BumpsModel(object):
 
     def theory(self):
         if 'theory' not in self._cache:
-            pars = [getattr(self,p).value for p in self.fn.fixed_pars]
-            pd_pars = [self._get_weights(p) for p in self.fn.pd_pars]
+            if self._fn is None:
+                input = self.model.make_input(self._fn_inputs)
+                self._fn = self.model(input)
+
+            pars = [getattr(self,p).value for p in self._fn.fixed_pars]
+            pd_pars = [self._get_weights(p) for p in self._fn.pd_pars]
             #print pars
-            self._theory[self.index] = self.fn(pars, pd_pars, self.cutoff)
-            #self._theory[:] = self.fn.eval(pars, pd_pars)
+            self._theory[self.index] = self._fn(pars, pd_pars, self.cutoff)
+            #self._theory[:] = self._fn.eval(pars, pd_pars)
             self._cache['theory'] = self._theory
         return self._cache['theory']
 
@@ -343,14 +347,23 @@ class BumpsModel(object):
     def _get_weights(self, par):
         from . import weights
 
-        relative = self.fn.info['partype']['pd-rel']
-        limits = self.fn.info['limits']
+        relative = self.model.info['partype']['pd-rel']
+        limits = self.model.info['limits']
         disperser,value,npts,width,nsigma = [getattr(self, par+ext)
                 for ext in ('_pd_type','','_pd_n','_pd','_pd_nsigma')]
         v,w = weights.get_weights(
             disperser, int(npts.value), width.value, nsigma.value,
             value.value, limits[par], par in relative)
         return v,w/w.max()
+
+    def __getstate__(self):
+        # Can't pickle gpu functions, so instead make them lazy
+        state = self.__dict__.copy()
+        state['_fn'] = None
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__ = state
 
 
 def demo():

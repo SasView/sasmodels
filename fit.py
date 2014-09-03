@@ -19,6 +19,7 @@ name = "ellipsoid" if len(sys.argv) < 2 else sys.argv[1]
 section = "radial" if len(sys.argv) < 3 else sys.argv[2]
 data = radial_data if section is not "tangent" else tan_data
 kernel = sas.load_model(name, dtype="single")
+cutoff = 1e-3
 
 if name == "ellipsoid":
     model = sas.BumpsModel(data, kernel,
@@ -39,7 +40,7 @@ if name == "ellipsoid":
     #model.requatorial.range(15, 1000)
     #model.theta_pd.range(0, 360)
     #model.background.range(0,1000)
-    model.scale.range(0, 1)
+    model.scale.range(0, 10)
 
 
 elif name == "lamellar":
@@ -70,27 +71,26 @@ elif name == "cylinder":
         phi_pd=0, phi_pd_n=5, phi_pd_nsigma=3,)
         """
     pars = dict(
-        scale=.01, radius=64.1, length=66.96, sld=.291, solvent_sld=5.77, background=.1,
+        scale=.01, background=35,
+        sld=.291, solvent_sld=5.77, 
+        radius=250, length=178, 
         theta=90, phi=0,
-        radius_pd=0.1, radius_pd_n=10, radius_pd_nsigma=3,
+        radius_pd=0.1, radius_pd_n=5, radius_pd_nsigma=3,
         length_pd=0.1,length_pd_n=5, length_pd_nsigma=3,
-        theta_pd=0.1, theta_pd_n=5, theta_pd_nsigma=3,
-        phi_pd=0.1, phi_pd_n=10, phi_pd_nsigma=3)
+        theta_pd=10, theta_pd_n=50, theta_pd_nsigma=3,
+        phi_pd=0, phi_pd_n=10, phi_pd_nsigma=3)
     model = sas.BumpsModel(data, kernel, **pars)
-
-
 
     # SET THE FITTING PARAMETERS
     model.radius.range(1, 500)
     model.length.range(1, 5000)
-    #model.theta.range(-90,100)
-    #model.theta_pd.range(0, 90)
-    #model.theta_pd_n = model.theta_pd + 5
-    #model.radius_pd.range(0, 90)
-    #model.length_pd.range(0, 90)
-    model.scale.range(0, 1)
-    #model.background.range(0, 100)
-    #model.sld.range(0, 1)
+    model.theta.range(-90,100)
+    model.theta_pd.range(0, 30)
+    model.theta_pd_n = model.theta_pd + 5
+    model.radius_pd.range(0, 1)
+    model.length_pd.range(0, 2)
+    model.scale.range(0, 10)
+    model.background.range(0, 100)
 
 
 elif name == "core_shell_cylinder":
@@ -160,10 +160,10 @@ else:
     print "No parameters for %s"%name
     sys.exit(1)
 
+model.cutoff = cutoff
 if section is "both":
    tan_model = sas.BumpsModel(tan_data, model.model, model.parameters())
    tan_model.phi = model.phi - 90
    problem = FitProblem([model, tan_model])
 else:
    problem = FitProblem(model)
-
