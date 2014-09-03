@@ -6,12 +6,12 @@ All three axes are of different lengths with $R_a \le R_b <= R_c$
 
 .. math::
 
-    P(q) = \text{scale} V \left< f^2(q) \right> + \text{background}
+    P(Q) = \text{scale} V \left< F^2(Q) \right> + \text{background}
 
 where the volume $V = 4/3 \pi R_a R_b R_c$, and the averaging
 $\left< \cdots \right>$ is applied over all orientations for 1D.
 
-.. figure:: img/image128.JPG
+.. figure:: img/triaxial_ellipsoid_geometry.jpg
 
     Ellipsoid schematic.
 
@@ -24,8 +24,8 @@ The form factor calculated is
 
 .. math::
 
-    P(q) = \frac{\text{scale}}{V}\int_0^1\int_0^1 \
-        \Phi^2(qR_a^2\cos^2( \pi x/2) + qR_b^2\sin^2(\pi y/2)(1-y^2) + c^2y^2) \
+    P(Q) = \frac{\text{scale}}{V}\int_0^1\int_0^1
+        \Phi^2(QR_a^2\cos^2( \pi x/2) + QR_b^2\sin^2(\pi y/2)(1-y^2) + c^2y^2)
         dx dy
 
 where
@@ -37,18 +37,18 @@ where
 To provide easy access to the orientation of the triaxial ellipsoid,
 we define the axis of the cylinder using the angles $\theta$, $\phi$
 and $\psi$. These angles are defined on
-Figure :num:`figure #triaxial-ellipsoid-angles`.
+:num:`figure #triaxial-ellipsoid-angles`.
 The angle $\psi$ is the rotational angle around its own $c$ axis
-against the $q$ plane. For example, $\psi = 0$ when the
+against the $Q$ plane. For example, $\psi = 0$ when the
 $a$ axis is parallel to the $x$ axis of the detector.
 
 .. _triaxial-ellipsoid-angles:
 
-.. figure:: img/image132.JPG
+.. figure:: img/triaxial_ellipsoid_angles.jpg
 
     The angles for oriented ellipsoid.
 
-The radius-of-gyration for this system is  $Rg^2 = (R_a R_b R_c)^2/5$.
+The radius-of-gyration for this system is  $R_g^2 = (R_a R_b R_c)^2/5$.
 
 The contrast is defined as SLD(ellipsoid) - SLD(solvent).  In the
 parameters, *a* is the minor equatorial radius, *b* is the major
@@ -57,9 +57,9 @@ equatorial radius, and c is the polar radius of the ellipsoid.
 NB: The 2nd virial coefficient of the triaxial solid ellipsoid is
 calculated based on the polar radius $R_p = R_c$ and equatorial
 radius $R_e = \sqrt{R_a R_b}$, and used as the effective radius for
-$S(Q)$ when $P(Q) \dot S(Q)$ is applied.
+$S(Q)$ when $P(Q) \cdot S(Q)$ is applied.
 
-.. figure:: img/image130.JPG
+.. figure:: img/triaxial_ellipsoid_1d.jpg
 
     1D plot using the default values (w/1000 data point).
 
@@ -69,14 +69,14 @@ Validation
 Validation of our code was done by comparing the output of the
 1D calculation to the angular average of the output of 2D calculation
 over all possible angles.
-Figure :num:`figure #triaxial-ellipsoid-compare` shows the comparison where
+:num:`Figure #triaxial-ellipsoid-comparison` shows the comparison where
 the solid dot refers to averaged 2D while the line represents the
 result of 1D calculation (for 2D averaging, 76, 180, and 76 points
 are taken for the angles of $\theta$, $\phi$, and $\psi$ respectively).
 
-.. _triaxial-ellipsoid-compare:
+.. _triaxial-ellipsoid-comparison:
 
-.. figure:: img/image131.GIF
+.. figure:: img/triaxial_ellipsoid_comparison.png
 
     Comparison between 1D and averaged 2D.
 

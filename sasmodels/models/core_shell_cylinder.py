@@ -11,25 +11,28 @@ cylinders is given by (Kline, 2006)
 
 .. math::
 
-    P(q,\alpha) = \frac{\text{scale}}{V_s} f^2(q) + \text{background}
+    P(Q,\alpha) = {\text{scale} \over V_s} F^2(Q) + \text{background}
 
 where
 
 .. math::
 
-    f(q) = (\rho_c - \rho_s) V_c \
-           \frac{\sin( Q L/2 \cos \alpha)}{Q L/2 \cos \alpha} \
-           \frac{2 J_1 (Q R \sin \alpha)}{Q R \sin \alpha}
-           + (\rho_s - \rho_\text{solv}) V_s \
-           \frac{\sin( Q (L/2+T) \cos \alpha)}{Q (L/2+T) \cos \alpha}
-           \frac{2 J_1 (Q (R+T) \sin \alpha)}{Q (R+T) \sin \alpha}
+    F(Q) = &\ (\rho_c - \rho_s) V_c
+           {\sin \left( Q \tfrac12 L\cos\alpha \right)
+               \over Q \tfrac12 L\cos\alpha }
+           {2 J_1 \left( QR\sin\alpha \right)
+               \over QR\sin\alpha } \\
+         &\ + (\rho_s - \rho_\text{solv}) V_s
+           {\sin \left( Q \left(\tfrac12 L+T\right) \cos\alpha \right)
+               \over Q \left(\tfrac12 L +T \right) \cos\alpha }
+           { 2 J_1 \left( Q(R+T)\sin\alpha \right)
+               \over Q(R+T)\sin\alpha }
 
 and
 
 .. math::
 
-    V_s = \pi (R + T)^2 \dot (L + 2T)
-
+    V_s = \pi (R + T)^2 (L + 2T)
 
 and $\alpha$ is the angle between the axis of the cylinder and $\vec q$,
 $V_s$ is the volume of the outer shell (i.e. the total volume, including
@@ -41,18 +44,20 @@ density of the solvent, and *background* is the background level.  The outer
 radius of the shell is given by $R+T$ and the total length of the outer
 shell is given by $L+2T$. $J1$ is the first order Bessel function.
 
-.. figure:: img/image069.JPG
+.. _core-shell-cylinder-geometry:
+
+.. figure:: img/core_shell_cylinder_geometry.jpg
 
     Core shell cylinder schematic.
 
 To provide easy access to the orientation of the core-shell cylinder, we
 define the axis of the cylinder using two angles $\theta$ and $\phi$. As
 for the case of the cylinder, those angles are defined in
-Figure :num:`figure #cylinder-orientation`.
+:num:`figure #cylinder-orientation`.
 
 NB: The 2nd virial coefficient of the cylinder is calculated based on
 the radius and 2 length values, and used as the effective radius for
-$S(Q)$ when $P(Q) \dot S(Q)$ is applied.
+$S(Q)$ when $P(Q) \cdot S(Q)$ is applied.
 
 The $\theta$ and $\phi$ parameters are not used for the 1D output. Our
 implementation of the scattering kernel and the 1D scattering intensity
@@ -63,44 +68,44 @@ Validation
 
 Validation of our code was done by comparing the output of the 1D model to
 the output of the software provided by the NIST (Kline, 2006).
-Figure :num:`figure #core-shell-cylinder-comparison-1d` shows a comparison
+:num:`Figure #core-shell-cylinder-1d` shows a comparison
 of the 1D output of our model and the output of the NIST software.
 
-.. _core-shell-cylinder-comparison-1d:
+.. _core-shell-cylinder-1d:
 
-.. figure:: img/image070.JPG
+.. figure:: img/core_shell_cylinder_1d.jpg
 
     Comparison of the SasView scattering intensity for a core-shell cylinder
     with the output of the NIST SANS analysis software. The parameters were
-    set to: *scale=1.0 |Ang|*, *radius=20 |Ang|*, *thickness=10 |Ang|*,
-    *length=400 |Ang|*, *core_sld=1e-6 |Ang^-2|*, *shell_sld=4e-6 |Ang^-2|*,
-    *solvent_sld=1e-6 |Ang^-2|*, and *background=0.01 |cm^-1|*.
+    set to: *scale* = 1.0 |Ang|, *radius* = 20 |Ang|, *thickness* = 10 |Ang|,
+    *length* =400 |Ang|, *core_sld* =1e-6 |Ang^-2|, *shell_sld* = 4e-6 |Ang^-2|,
+    *solvent_sld* = 1e-6 |Ang^-2|, and *background* = 0.01 |cm^-1|.
 
 Averaging over a distribution of orientation is done by evaluating the
 equation above. Since we have no other software to compare the
 implementation of the intensity for fully oriented cylinders, we can
 compare the result of averaging our 2D output using a uniform
-distribution $p(\theta,\phi)* = 1.0$.
-Figure :num:`figure #core-shell-cylinder-comparison-2d` shows the result
+distribution $p(\theta,\phi) = 1.0$.
+:num:`Figure #core-shell-cylinder-2d` shows the result
 of such a cross-check.
 
-.. _core-shell-cylinder-comparison-2d:
+.. _core-shell-cylinder-2d:
 
-.. figure:: img/image071.JPG
+.. figure:: img/core_shell_cylinder_2d.jpg
 
     Comparison of the intensity for uniformly distributed core-shell
     cylinders calculated from our 2D model and the intensity from the
-    NIST SANS analysis software. The parameters used were: *scale*=1.0*,
-    *radius=20 |Ang|*, *thickness=10 |Ang|*, *length*=400 |Ang|*,
-    *core_sld=1e-6 |Ang^-2|*, *shell_sld=4e-6 |Ang^-2|*,
-    *solvent_sld=1e-6 |Ang^-2|*, and *background=0.0 |cm^-1|*.
+    NIST SANS analysis software. The parameters used were: *scale* = 1.0,
+    *radius* = 20 |Ang|, *thickness* = 10 |Ang|, *length* = 400 |Ang|,
+    *core_sld* = 1e-6 |Ang^-2|, *shell_sld* = 4e-6 |Ang^-2|,
+    *solvent_sld* = 1e-6 |Ang^-2|, and *background* = 0.0 |cm^-1|.
 
 2013/11/26 - Description reviewed by Heenan, R.
 """
 
 from numpy import pi, inf
 
-name = "cylinder"
+name = "core_shell_cylinder"
 title = "Right circular cylinder with a core-shell scattering length density profile."
 description = """
 P(q,alpha)= scale/Vs*f(q)^(2) + background,

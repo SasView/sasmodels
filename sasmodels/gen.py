@@ -202,7 +202,8 @@ RST_UNITS = {
 
 # Headers for the parameters tables in th sphinx documentation
 PARTABLE_HEADERS = [
-    "Parameter name",
+    "Parameter",
+    "Description",
     "Units",
     "Default value",
     ]
@@ -394,7 +395,7 @@ real %(name)s(%(pars)s)
 # from the module docstring.
 DOC_HEADER=""".. _%(name)s:
 
-%(name)s
+%(label)s
 =======================================================
 
 %(title)s
@@ -541,13 +542,14 @@ def make_kernel(info, is_2D):
         kernel = "\n".join((WORK_FUNCTION%subst, kernel))
     return kernel
 
-def make_partable(info):
+def make_partable(pars):
     """
     Generate the parameter table to include in the sphinx documentation.
     """
-    pars = info['parameters']
+    pars = COMMON_PARAMETERS + pars
     column_widths = [
         max(len(p[0]) for p in pars),
+        max(len(p[-1]) for p in pars),
         max(len(RST_UNITS[p[1]]) for p in pars),
         PARTABLE_VALUE_WIDTH,
         ]
@@ -563,8 +565,9 @@ def make_partable(info):
     for p in pars:
         lines.append(" ".join([
             "%-*s"%(column_widths[0],p[0]),
-            "%-*s"%(column_widths[1],RST_UNITS[p[1]]),
-            "%*g"%(column_widths[2],p[2]),
+            "%-*s"%(column_widths[1],p[-1]),
+            "%-*s"%(column_widths[2],RST_UNITS[p[1]]),
+            "%*g"%(column_widths[3],p[2]),
             ]))
     lines.append(sep)
     return "\n".join(lines)
@@ -677,10 +680,11 @@ def doc(kernel_module):
     """
     Return the documentation for the model.
     """
-    subst = dict(name=kernel_module.name,
+    subst = dict(name=kernel_module.name.replace('_','-'),
+                 label=" ".join(kernel_module.name.split('_')).capitalize(),
                  title=kernel_module.title,
                  parameters=make_partable(kernel_module.parameters),
-                 doc=kernel_module.__doc__)
+                 docs=kernel_module.__doc__)
     return DOC_HEADER%subst
 
 

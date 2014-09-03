@@ -11,20 +11,22 @@ is given by (Feigin, 1987)
 
 .. math::
 
-    P(q,\alpha) = \frac{\text{scale}}{V} f^2(q) + \text{background}
+    P(Q,\alpha) = {\text{scale} \over V} F^2(Q) + \text{background}
 
 where
 
 .. math::
 
-    f(q) = \frac{3 (\Delta rho)) V (\sin[qr(R_p,R_e,\alpha)] \
-                 - \cos[qr(R_p,R_e,\alpha)])}{[qr(R_q,R_b,\alpha)]^3}
+    F(Q) = {3 (\Delta rho)) V (\sin[Qr(R_p,R_e,\alpha)]
+                - \cos[Qr(R_p,R_e,\alpha)])
+            \over [Qr(R_p,R_e,\alpha)]^3 }
 
 and
 
 .. math::
 
-    r(R_p,R_e,\alpha) = \left[ R_e^2 \sin^2 \alpha + R_p^2 \cos^2 \alpha \right]^{1/2}
+    r(R_p,R_e,\alpha) = \left[ R_e^2 \sin^2 \alpha
+        + R_p^2 \cos^2 \alpha \right]^{1/2}
 
 
 $\alpha$ is the angle between the axis of the ellipsoid and $\vec q$,
@@ -35,15 +37,18 @@ scattering length density difference between the scatterer and the solvent.
 
 To provide easy access to the orientation of the ellipsoid, we define
 the rotation axis of the ellipsoid using two angles $\theta$ and $\phi$.
-These angles are defined in Figure :num:`figure #cylinder-orientation`.
+These angles are defined in the
+:ref:`cylinder orientation figure <cylinder-orientation>`.
 For the ellipsoid, $\theta$ is the angle between the rotational axis
 and the $z$-axis.
 
 NB: The 2nd virial coefficient of the solid ellipsoid is calculated based
 on the $R_p$ and $R_e$ values, and used as the effective radius for
-$S(Q)$ when $P(Q) \dot S(Q)$ is applied.
+$S(Q)$ when $P(Q) \cdot S(Q)$ is applied.
 
-.. figure:: img/image121.JPG
+.. _ellipsoid-1d:
+
+.. figure:: img/ellipsoid_1d.JPG
 
     The output of the 1D scattering intensity function for randomly oriented
     ellipsoids given by the equation above.
@@ -53,7 +58,9 @@ The $\theta$ and $\phi$ parameters are not used for the 1D output. Our
 implementation of the scattering kernel and the 1D scattering intensity
 use the c-library from NIST.
 
-.. figure:: img/image122.JPG
+.. _ellipsoid-geometry:
+
+.. figure:: img/ellipsoid_geometry.JPG
 
     The angles for oriented ellipsoid.
 
@@ -62,43 +69,44 @@ Validation
 
 Validation of our code was done by comparing the output of the 1D model
 to the output of the software provided by the NIST (Kline, 2006).
-Figure :num:`figure ellipsoid-comparison-1d` below shows a comparison of
+:num:`Figure ellipsoid-comparison-1d` below shows a comparison of
 the 1D output of our model and the output of the NIST software.
 
 .. _ellipsoid-comparison-1d:
 
-.. figure:: img/image123.JPG
+.. figure:: img/ellipsoid_comparison_1d.jpg
 
     Comparison of the SasView scattering intensity for an ellipsoid
     with the output of the NIST SANS analysis software.  The parameters
-    were set to: *scale=1.0*, *a=20 |Ang|*, *b=400 |Ang|*,
-    *sld-solvent_sld=3e-6 |Ang^-2|*, and *background=0.01 |cm^-1|*.
+    were set to: *scale* = 1.0, *rpolar* = 20 |Ang|,
+    *requatorial* =400 |Ang|, *contrast* = 3e-6 |Ang^-2|,
+    and *background* = 0.01 |cm^-1|.
 
 Averaging over a distribution of orientation is done by evaluating the
 equation above. Since we have no other software to compare the
 implementation of the intensity for fully oriented ellipsoids, we can
 compare the result of averaging our 2D output using a uniform distribution
-$p(\theta,\phi) = 1.0$.  Figure :num:`figure #ellipsoid-comparison-2d`
+$p(\theta,\phi) = 1.0$.  :num:`Figure #ellipsoid-comparison-2d`
 shows the result of such a cross-check.
 
 .. _ellipsoid-comparison-2d:
 
-.. figure:: img/image124.jpg
+.. figure:: img/ellipsoid_comparison_2d.jpg
 
     Comparison of the intensity for uniformly distributed ellipsoids
     calculated from our 2D model and the intensity from the NIST SANS
-    analysis software. The parameters used were: *scale=1.0*,
-    *a=20 |Ang|*, *b=400 |Ang|*, *sld-solvent_sld=3e-6 |Ang^-2|*,
-    and *background=0.0 |cm^-1|*.
+    analysis software. The parameters used were: *scale* = 1.0,
+    *rpolar* = 20 |Ang|, *requatorial* = 400 |Ang|,
+    *contrast* = 3e-6 |Ang^-2|, and *background* = 0.0 |cm^-1|.
 
-The discrepancy above *q=0.3 |cm^-1|* is due to the way the form factors
+The discrepancy above *q* = 0.3 |cm^-1| is due to the way the form factors
 are calculated in the c-library provided by NIST. A numerical integration
-has to be performed to obtain *P(q)* for randomly oriented particles.
+has to be performed to obtain $P(Q)$ for randomly oriented particles.
 The NIST software performs that integration with a 76-point Gaussian
-quadrature rule, which will become imprecise at high q where the amplitude
-varies quickly as a function of $q$. The SasView result shown has been
+quadrature rule, which will become imprecise at high $Q$ where the amplitude
+varies quickly as a function of $Q$. The SasView result shown has been
 obtained by summing over 501 equidistant points. Our result was found
-to be stable over the range of *q* shown for a number of points higher
+to be stable over the range of $Q$ shown for a number of points higher
 than 500.
 
 REFERENCE
