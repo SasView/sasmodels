@@ -17,7 +17,11 @@ sas.set_top(tan_data, -.0185)
 
 name = "ellipsoid" if len(sys.argv) < 2 else sys.argv[1]
 section = "radial" if len(sys.argv) < 3 else sys.argv[2]
-data = radial_data if section is not "tangent" else tan_data
+if section not in ("radial","tangential","both"):
+    raise ValueError("section %r should be 'radial', 'tangential' or 'both'"
+            % section)
+data = radial_data if section != "tangential" else tan_data
+phi = 0 if section != "tangential" else 90
 kernel = sas.load_model(name, dtype="single")
 cutoff = 1e-3
 
@@ -27,7 +31,7 @@ if name == "ellipsoid":
     rpolar=15, requatorial=800,
     sld=.291, solvent_sld=7.105,
     background=0,
-    theta=90, phi=0,
+    theta=90, phi=phi,
     theta_pd=15, theta_pd_n=40, theta_pd_nsigma=3,
     rpolar_pd=0.222296, rpolar_pd_n=1, rpolar_pd_nsigma=0,
     requatorial_pd=.000128, requatorial_pd_n=1, requatorial_pd_nsigma=0,
@@ -64,7 +68,7 @@ elif name == "cylinder":
     """
     pars = dict(scale=0.0023, radius=92.5, length=798.3,
         sld=.29, solvent_sld=7.105, background=5,
-        theta=0, phi=0,
+        theta=0, phi=phi,
         theta_pd=22.11, theta_pd_n=5, theta_pd_nsigma=3,
         radius_pd=.0084, radius_pd_n=10, radius_pd_nsigma=3,
         length_pd=0.493, length_pd_n=10, length_pd_nsigma=3,
@@ -74,7 +78,7 @@ elif name == "cylinder":
         scale=.01, background=35,
         sld=.291, solvent_sld=5.77, 
         radius=250, length=178, 
-        theta=90, phi=0,
+        theta=90, phi=phi,
         radius_pd=0.1, radius_pd_n=5, radius_pd_nsigma=3,
         length_pd=0.1,length_pd_n=5, length_pd_nsigma=3,
         theta_pd=10, theta_pd_n=50, theta_pd_nsigma=3,
@@ -97,7 +101,7 @@ elif name == "core_shell_cylinder":
     model = sas.BumpsModel(data, kernel,
     scale= .031, radius=19.5, thickness=30, length=22,
     core_sld=7.105, shell_sld=.291, solvent_sld=7.105,
-    background=0, theta=0, phi=0,
+    background=0, theta=0, phi=phi,
 
     radius_pd=0.26, radius_pd_n=10, radius_pd_nsigma=3,
     length_pd=0.26, length_pd_n=10, length_pd_nsigma=3,
@@ -124,7 +128,7 @@ elif name == "capped_cylinder":
     model = sas.BumpsModel(data, kernel,
     scale=.08, radius=20, cap_radius=40, length=400,
     sld_capcyl=1, sld_solv=6.3,
-    background=0, theta=0, phi=0,
+    background=0, theta=0, phi=phi,
     radius_pd=.1, radius_pd_n=5, radius_pd_nsigma=3,
     cap_radius_pd=.1, cap_radius_pd_n=5, cap_radius_pd_nsigma=3,
     length_pd=.1, length_pd_n=1, length_pd_nsigma=0,
@@ -139,7 +143,7 @@ elif name == "triaxial_ellipsoid":
     model = sas.BumpsModel(data, kernel,
     scale=0.08, req_minor=15, req_major=20, rpolar=500,
     sldEll=7.105, solvent_sld=.291,
-    background=5, theta=0, phi=0, psi=0,
+    background=5, theta=0, phi=phi, psi=0,
     theta_pd=20, theta_pd_n=40, theta_pd_nsigma=3,
     phi_pd=.1, phi_pd_n=1, phi_pd_nsigma=0,
     psi_pd=30, psi_pd_n=1, psi_pd_nsigma=0,
@@ -161,9 +165,10 @@ else:
     sys.exit(1)
 
 model.cutoff = cutoff
-if section is "both":
+if section == "both":
    tan_model = sas.BumpsModel(tan_data, model.model, model.parameters())
    tan_model.phi = model.phi - 90
+   tan_model.cutoff = cutoff
    problem = FitProblem([model, tan_model])
 else:
    problem = FitProblem(model)
