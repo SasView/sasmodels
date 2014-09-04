@@ -60,9 +60,6 @@ real Iqxy(real qx, real qy,
 
     // Compute angle alpha between q and the cylinder axis
     SINCOS(theta*M_PI_180, sn, cn);
-    // # The following correction factor exists in sasview, but it can't be
-    // # right, so we are leaving it out for now.
-    // const real correction = fabs(cn)*M_PI_2;
     const real q = sqrt(qx*qx+qy*qy);
     const real cos_val = cn*cos(phi*M_PI_180)*(qx/q) + sn*(qy/q);
     const real alpha = acos(cos_val);
@@ -70,5 +67,5 @@ real Iqxy(real qx, real qy,
     const real twovd = REAL(2.0)*(sld-solvent_sld)*form_volume(radius, length);
     SINCOS(alpha, sn, cn);
     const real fq = _cyl(twovd, q*radius*sn, q*REAL(0.5)*length*cn);
-    return REAL(1.0e-4) * fq * fq; // * correction;
+    return REAL(1.0e-4) * fq * fq;
 }
