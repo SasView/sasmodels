@@ -6,11 +6,11 @@ from bumps.names import *
 from sasmodels import bumps_model as sas
 
 """ IMPORT THE DATA USED """
-radial_data = sas.load_data('December/DEC07267.DAT')
+radial_data = sas.load_data('DEC07267.DAT')
 sas.set_beam_stop(radial_data, 0.00669, outer=0.025)
 sas.set_top(radial_data, -.0185)
 
-tan_data = sas.load_data('December/DEC07266.DAT')
+tan_data = sas.load_data('DEC07266.DAT')
 sas.set_beam_stop(tan_data, 0.00669, outer=0.025)
 sas.set_top(tan_data, -.0185)
 #sas.set_half(tan_data, 'right')
