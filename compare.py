@@ -218,15 +218,15 @@ Nsasview is the number of times to run the Sasview model (default=1)
 Options (* for default):
 
     -plot*/-noplot plots or suppress the plot of the model
-    -single/-double uses double precision for comparison
-    -lowq/-midq/-highq use q values up to 0.05, 0.2 or 1.0
-    -2d/-1d uses 1d or 2d random data
-    -preset/-random[=seed] preset or random parameters
-    -poly/-mono force monodisperse/polydisperse
-    -sasview/-ctypes whether cpu is tested using sasview or ctypes
-    -cutoff=1e-5/value cutoff for including a point in polydispersity
-    -nopars/-pars prints the parameter set or not
-    -rel/-abs plot relative or absolute error
+    -single*/-double uses double precision for comparison
+    -lowq*/-midq/-highq use q values up to 0.05, 0.2 or 1.0
+    -1d/-2d* uses 1d or 2d random data
+    -preset*/-random[=seed] preset or random parameters
+    -mono/-poly* force monodisperse/polydisperse
+    -ctypes/-sasview* whether cpu is tested using sasview or ctypes
+    -cutoff=1e-5*/value cutoff for including a point in polydispersity
+    -pars/-nopars* prints the parameter set or not
+    -abs/-rel* plot relative or absolute error
 
 Key=value pairs allow you to set specific values to any of the model
 parameters.
