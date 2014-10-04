@@ -9,6 +9,7 @@ import numpy as np
 try:
     from .gpu import load_model as _loader
 except ImportError,exc:
+    import warnings
     warnings.warn(str(exc))
     warnings.warn("OpenCL not available --- using ctypes instead")
     from .dll import load_model as _loader

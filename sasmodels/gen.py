@@ -481,7 +481,7 @@ def make_kernel(info, is_2D):
         spherical_correction = [indent(SPHERICAL_CORRECTION, depth)]
         weights = [p+"_w" for p in pd_pars]+['spherical_correction']
         sasview_spherical = ""
-    elif "theta" in pd_pars:
+    elif True and "theta" in pd_pars:
         spherical_correction = [indent(SASVIEW_SPHERICAL_CORRECTION,depth)]
         weights = [p+"_w" for p in pd_pars]
         sasview_spherical = "*spherical_correction"
