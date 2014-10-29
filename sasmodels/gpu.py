@@ -33,8 +33,11 @@ F32_DEFS = """\
 #define real float
 """
 
+
 F64_DEFS = """\
-#pragma OPENCL EXTENSION cl_khr_fp64: enable
+#ifdef cl_khr_fp64
+#  pragma OPENCL EXTENSION cl_khr_fp64: enable
+#endif
 #define REAL(x) (x)
 #define real double
 """
