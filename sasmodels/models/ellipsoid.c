@@ -1,61 +1,61 @@
-real form_volume(real rpolar, real requatorial);
-real Iq(real q, real sld, real solvent_sld, real rpolar, real requatorial);
-real Iqxy(real qx, real qy, real sld, real solvent_sld,
-    real rpolar, real requatorial, real theta, real phi);
+double form_volume(double rpolar, double requatorial);
+double Iq(double q, double sld, double solvent_sld, double rpolar, double requatorial);
+double Iqxy(double qx, double qy, double sld, double solvent_sld,
+    double rpolar, double requatorial, double theta, double phi);
 
-real _ellipsoid_kernel(real q, real rpolar, real requatorial, real cos_alpha);
-real _ellipsoid_kernel(real q, real rpolar, real requatorial, real cos_alpha)
+double _ellipsoid_kernel(double q, double rpolar, double requatorial, double cos_alpha);
+double _ellipsoid_kernel(double q, double rpolar, double requatorial, double cos_alpha)
 {
-    real sn, cn;
-    real ratio = rpolar/requatorial;
-    const real u = q*requatorial*sqrt(REAL(1.0)
-                   + cos_alpha*cos_alpha*(ratio*ratio - REAL(1.0)));
+    double sn, cn;
+    double ratio = rpolar/requatorial;
+    const double u = q*requatorial*sqrt(1.0
+                   + cos_alpha*cos_alpha*(ratio*ratio - 1.0));
     SINCOS(u, sn, cn);
-    const real f = ( u==REAL(0.0) ? REAL(1.0) : REAL(3.0)*(sn-u*cn)/(u*u*u) );
+    const double f = ( u==0.0 ? 1.0 : 3.0*(sn-u*cn)/(u*u*u) );
     return f*f;
 }
 
-real form_volume(real rpolar, real requatorial)
+double form_volume(double rpolar, double requatorial)
 {
-    return REAL(1.333333333333333)*M_PI*rpolar*requatorial*requatorial;
+    return 1.333333333333333*M_PI*rpolar*requatorial*requatorial;
 }
 
-real Iq(real q,
-    real sld,
-    real solvent_sld,
-    real rpolar,
-    real requatorial)
+double Iq(double q,
+    double sld,
+    double solvent_sld,
+    double rpolar,
+    double requatorial)
 {
-    //const real lower = REAL(0.0);
-    //const real upper = REAL(1.0);
-    real total = REAL(0.0);
+    //const double lower = 0.0;
+    //const double upper = 1.0;
+    double total = 0.0;
     for (int i=0;i<76;i++) {
-        //const real cos_alpha = (Gauss76Z[i]*(upper-lower) + upper + lower)/2;
-        const real cos_alpha = REAL(0.5)*(Gauss76Z[i] + REAL(1.0));
+        //const double cos_alpha = (Gauss76Z[i]*(upper-lower) + upper + lower)/2;
+        const double cos_alpha = 0.5*(Gauss76Z[i] + 1.0);
         total += Gauss76Wt[i] * _ellipsoid_kernel(q, rpolar, requatorial, cos_alpha);
     }
-    //const real form = (upper-lower)/2*total;
-    const real form = REAL(0.5)*total;
-    const real s = (sld - solvent_sld) * form_volume(rpolar, requatorial);
-    return REAL(1.0e-4) * form * s * s;
+    //const double form = (upper-lower)/2*total;
+    const double form = 0.5*total;
+    const double s = (sld - solvent_sld) * form_volume(rpolar, requatorial);
+    return 1.0e-4 * form * s * s;
 }
 
-real Iqxy(real qx, real qy,
-    real sld,
-    real solvent_sld,
-    real rpolar,
-    real requatorial,
-    real theta,
-    real phi)
+double Iqxy(double qx, double qy,
+    double sld,
+    double solvent_sld,
+    double rpolar,
+    double requatorial,
+    double theta,
+    double phi)
 {
-    real sn, cn;
+    double sn, cn;
 
-    const real q = sqrt(qx*qx + qy*qy);
+    const double q = sqrt(qx*qx + qy*qy);
     SINCOS(theta*M_PI_180, sn, cn);
-    const real cos_alpha = cn*cos(phi*M_PI_180)*(qx/q) + sn*(qy/q);
-    const real form = _ellipsoid_kernel(q, rpolar, requatorial, cos_alpha);
-    const real s = (sld - solvent_sld) * form_volume(rpolar, requatorial);
+    const double cos_alpha = cn*cos(phi*M_PI_180)*(qx/q) + sn*(qy/q);
+    const double form = _ellipsoid_kernel(q, rpolar, requatorial, cos_alpha);
+    const double s = (sld - solvent_sld) * form_volume(rpolar, requatorial);
 
-    return REAL(1.0e-4) * form * s * s;
+    return 1.0e-4 * form * s * s;
 }
 

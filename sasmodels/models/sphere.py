@@ -85,22 +85,23 @@ parameters = [
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
 form_volume = """
-    return REAL(1.333333333333333)*M_PI*radius*radius*radius;
+    return 1.333333333333333*M_PI*radius*radius*radius;
     """
 
 Iq = """
-    const real qr = q*radius;
-    real sn, cn;
+    const double qr = q*radius;
+    double sn, cn;
     SINCOS(qr, sn, cn);
-    const real bes = qr==REAL(0.0) ? REAL(1.0) : REAL(3.0)*(sn-qr*cn)/(qr*qr*qr);
-    const real fq = bes * (sld - solvent_sld) * form_volume(radius);
-    return REAL(1.0e-4)*fq*fq;
+    const double bes = qr==0.0 ? 1.0 : 3.0*(sn-qr*cn)/(qr*qr*qr);
+    const double fq = bes * (sld - solvent_sld) * form_volume(radius);
+    return 1.0e-4*fq*fq;
     """
 
 
 Iqxy = """
     // never called since no orientation or magnetic parameters.
-    return REAL(-1.0);
+    //return -1.0;
+    return Iq(sqrt(qx*qx + qy*qy), sld, solvent_sld, radius);
     """
 
 def ER(radius):

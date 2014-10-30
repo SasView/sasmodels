@@ -76,19 +76,19 @@ parameters = [
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
 form_volume = """
-    return REAL(1.0);
+    return 1.0;
     """
 
 Iq = """
-    const real sub = sld - solvent_sld;
-    const real qsq = q*q;
-    return REAL(4.0e-4)*M_PI*sub*sub/qsq * (REAL(1.0)-cos(q*thickness))
+    const double sub = sld - solvent_sld;
+    const double qsq = q*q;
+    return 4.0e-4*M_PI*sub*sub/qsq * (1.0-cos(q*thickness))
         / (thickness*qsq);
     """
 
 Iqxy = """
     // never called since no orientation or magnetic parameters.
-    return REAL(-1.0);
+    return -1.0;
     """
 
 # ER defaults to 0.0

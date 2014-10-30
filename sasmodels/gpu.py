@@ -28,18 +28,10 @@ from pyopencl import mem_flags as mf
 
 from . import gen
 
-F32_DEFS = """\
-#define REAL(x) (x##f)
-#define real float
-"""
-
-
 F64_DEFS = """\
 #ifdef cl_khr_fp64
 #  pragma OPENCL EXTENSION cl_khr_fp64: enable
 #endif
-#define REAL(x) (x)
-#define real double
 """
 
 # The max loops number is limited by the amount of local memory available
@@ -115,7 +107,9 @@ def compile_model(context, source, dtype):
     if dtype==gen.F64 and not all(has_double(d) for d in context.devices):
         raise RuntimeError("Double precision not supported for devices")
 
-    header = F64_DEFS if dtype == gen.F64 else F32_DEFS
+    header = F64_DEFS if dtype == gen.F64 else ""
+    if dtype == gen.F32:
+        source = gen.use_single(source)
     # Note: USE_SINCOS makes the intel cpu slower under opencl
     if context.devices[0].type == cl.device_type.GPU:
         header += "#define USE_SINCOS\n"

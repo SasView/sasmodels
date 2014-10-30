@@ -36,24 +36,21 @@ module, or if using "lib/file.c" if it is one of the standard includes
 provided with the sasmodels source.  The includes need to be listed in
 order so that functions are defined before they are used.
 
-Floating point values should be declared as *real*.  Depending on how the
-function is called, a macro will replace *real* with *float* or *double*.
-Unfortunately, MacOSX is picky about floating point constants, which
-should be defined with value + 'f' if they are of type *float* or just
-a bare value if they are of type *double*.  The solution is a macro
-*REAL(value)* which adds the 'f' if compiling for single precision
-floating point.  [Note: we could write a clever regular expression
-which automatically detects real-valued constants.  If we wanted to
-make our code more C-like, we could define variables with double but
-replace them with float before compiling for single precision.]
+Floating point values should be declared as *double*.  For single precision
+calculations, *double* will be replaced by *float*.  The single precision
+conversion will also tag floating point constants with "f" to make them
+single precision constants.  When using integral values in floating point
+expressions, they should be expressed as floating point values by including
+a decimal point.  This includes 0., 1. and 2.
 
 OpenCL has a *sincos* function which can improve performance when both
 the *sin* and *cos* values are needed for a particular argument.  Since
 this function does not exist in C99, all use of *sincos* should be
 replaced by the macro *SINCOS(value,sn,cn)* where *sn* and *cn* are
-previously declared *real* values.  *value* may be an expression.  When
-compiled for systems without OpenCL, *SINCOS* will be replaced by
-*sin* and *cos* calls.
+previously declared *double* variables.  When compiled for systems without
+OpenCL, *SINCOS* will be replaced by *sin* and *cos* calls.   If *value* is
+an expression, it will appear twice in this case; whether or not it will be
+evaluated twice depends on the quality of the compiler.
 
 If the input parameters are invalid, the scattering calculator should
 return a negative number. Particularly with polydispersity, there are
@@ -171,11 +168,12 @@ returns a list of files required by the model.
 
 # TODO: identify model files which have changed since loading and reload them.
 
-__all__ = ["make, doc", "sources"]
+__all__ = ["make, doc", "sources", "use_single"]
 
 import sys
 import os
 import os.path
+import re
 
 import numpy as np
 
@@ -228,10 +226,6 @@ KERNEL_HEADER = """\
 // Note: if using a C++ compiler, then define kernel as extern "C"
 #ifndef USE_OPENCL
 #  include <math.h>
-#  define REAL(x) (x)
-#  ifndef real
-#      define real double
-#  endif
 #  define global
 #  define local
 #  define constant const
@@ -252,18 +246,18 @@ KERNEL_HEADER = """\
 // OpenCL defines M_constant_F for float constants, and nothing if double
 // is not enabled on the card, which is why these constants may be missing
 #ifndef M_PI
-#  define M_PI REAL(3.141592653589793)
+#  define M_PI 3.141592653589793
 #endif
 #ifndef M_PI_2
-#  define M_PI_2 REAL(1.570796326794897)
+#  define M_PI_2 1.570796326794897
 #endif
 #ifndef M_PI_4
-#  define M_PI_4 REAL(0.7853981633974483)
+#  define M_PI_4 0.7853981633974483
 #endif
 
 // Non-standard pi/180, used for converting between degrees and radians
 #ifndef M_PI_180
-#  define M_PI_180 REAL(0.017453292519943295)
+#  define M_PI_180 0.017453292519943295
 #endif
 """
 
@@ -273,16 +267,16 @@ KERNEL_HEADER = """\
 # declare, initialize and pass the q parameters.
 KERNEL_1D = {
     'fn': "Iq",
-    'q_par_decl': "global const real *q,",
-    'qinit': "const real qi = q[i];",
+    'q_par_decl': "global const double *q,",
+    'qinit': "const double qi = q[i];",
     'qcall': "qi",
     'qwork': ["q"],
     }
 
 KERNEL_2D = {
     'fn': "Iqxy",
-    'q_par_decl': "global const real *qx,\n    global const real *qy,",
-    'qinit': "const real qxi = qx[i];\n    const real qyi = qy[i];",
+    'q_par_decl': "global const double *qx,\n    global const double *qy,",
+    'qinit': "const double qxi = qx[i];\n    const double qyi = qy[i];",
     'qcall': "qxi, qyi",
     'qwork': ["qx", "qy"],
     }
@@ -295,14 +289,14 @@ KERNEL_2D = {
 KERNEL_TEMPLATE = """\
 kernel void %(name)s(
     %(q_par_decl)s
-    global real *result,
+    global double *result,
 #ifdef USE_OPENCL
-    global real *loops_g,
+    global double *loops_g,
 #else
     const int Nq,
 #endif
-    local real *loops,
-    const real cutoff,
+    local double *loops,
+    const double cutoff,
     %(par_decl)s
     )
 {
@@ -323,10 +317,10 @@ kernel void %(name)s(
 #endif
   {
     %(qinit)s
-    real ret=REAL(0.0), norm=REAL(0.0);
-    real vol=REAL(0.0), norm_vol=REAL(0.0);
+    double ret=0.0, norm=0.0;
+    double vol=0.0, norm_vol=0.0;
 %(loops)s
-    if (vol*norm_vol != REAL(0.0)) {
+    if (vol*norm_vol != 0.0) {
       ret *= norm_vol/vol;
     }
     result[i] = scale*ret/norm+background;
@@ -339,8 +333,8 @@ kernel void %(name)s(
 # in preperation for a nested loop.
 LOOP_OPEN="""\
 for (int %(name)s_i=0; %(name)s_i < N%(name)s; %(name)s_i++) {
-  const real %(name)s = loops[2*(%(name)s_i%(offset)s)];
-  const real %(name)s_w = loops[2*(%(name)s_i%(offset)s)+1];\
+  const double %(name)s = loops[2*(%(name)s_i%(offset)s)];
+  const double %(name)s_w = loops[2*(%(name)s_i%(offset)s)+1];\
 """
 
 # Polydispersity loop body.
@@ -348,10 +342,10 @@ for (int %(name)s_i=0; %(name)s_i < N%(name)s; %(name)s_i++) {
 # function and adds it to the total.  If there is a volume normalization,
 # it will also be added here.
 LOOP_BODY="""\
-const real weight = %(weight_product)s;
+const double weight = %(weight_product)s;
 if (weight > cutoff) {
-  const real I = %(fn)s(%(qcall)s, %(pcall)s);
-  if (I>=REAL(0.0)) { // scattering cannot be negative
+  const double I = %(fn)s(%(qcall)s, %(pcall)s);
+  if (I>=0.0) { // scattering cannot be negative
     ret += weight*I%(sasview_spherical)s;
     norm += weight;
     %(volume_norm)s
@@ -364,27 +358,27 @@ if (weight > cutoff) {
 # Use this when integrating over orientation
 SPHERICAL_CORRECTION="""\
 // Correction factor for spherical integration p(theta) I(q) sin(theta) dtheta
-real spherical_correction = (Ntheta>1 ? fabs(sin(M_PI_180*theta)) : REAL(1.0));\
+double spherical_correction = (Ntheta>1 ? fabs(sin(M_PI_180*theta)) : 1.0);\
 """
 # Use this to reproduce sasview behaviour
 SASVIEW_SPHERICAL_CORRECTION="""\
 // Correction factor for spherical integration p(theta) I(q) sin(theta) dtheta
-real spherical_correction = (Ntheta>1 ? fabs(cos(M_PI_180*theta))*M_PI_2 : REAL(1.0));\
+double spherical_correction = (Ntheta>1 ? fabs(cos(M_PI_180*theta))*M_PI_2 : 1.0);\
 """
 
 # Volume normalization.
 # If there are "volume" polydispersity parameters, then these will be used
 # to call the form_volume function from the user supplied kernel, and accumulate
 # a normalized weight.
-VOLUME_NORM="""const real vol_weight = %(weight)s;
+VOLUME_NORM="""const double vol_weight = %(weight)s;
     vol += vol_weight*form_volume(%(pars)s);
     norm_vol += vol_weight;\
 """
 
 # functions defined as strings in the .py module
 WORK_FUNCTION="""\
-real %(name)s(%(pars)s);
-real %(name)s(%(pars)s)
+double %(name)s(%(pars)s);
+double %(name)s(%(pars)s)
 {
 %(body)s
 }\
@@ -421,6 +415,17 @@ def kernel_name(info, is_2D):
     Name of the exported kernel symbol.
     """
     return info['name'] + "_" + ("Iqxy" if is_2D else "Iq")
+
+
+def use_single(source):
+    """
+    Convert code from double precision to single precision.
+    """
+    source = re.sub(r'(^|[^a-zA-Z0-9_])double($|[^a-zA-Z0-9_])',
+                    r'\1float\2', source)
+    source = re.sub(r'[^a-zA-Z_](\d*[.]\d+|\d+[.]\d*)([eE][+-]?\d+)?',
+                    r'\g<0>f', source)
+    return source
 
 
 def make_kernel(info, is_2D):
@@ -502,9 +507,9 @@ def make_kernel(info, is_2D):
 
     # declarations for non-pd followed by pd pars
     # e.g.,
-    #     const real sld,
+    #     const double sld,
     #     const int Nradius
-    fixed_par_decl = ",\n    ".join("const real %s"%p for p in fixed_pars)
+    fixed_par_decl = ",\n    ".join("const double %s"%p for p in fixed_pars)
     pd_par_decl = ",\n    ".join("const int N%s"%p for p in pd_pars)
     if fixed_par_decl and pd_par_decl:
         par_decl = ",\n    ".join((fixed_par_decl, pd_par_decl))
@@ -517,13 +522,13 @@ def make_kernel(info, is_2D):
     subst = {
         # kernel name is, e.g., cylinder_Iq
         'name': kernel_name(info, is_2D),
-        # to declare, e.g., global real q[],
+        # to declare, e.g., global double q[],
         'q_par_decl': q_pars['q_par_decl'],
-        # to declare, e.g., real sld, int Nradius, int Nlength
+        # to declare, e.g., double sld, int Nradius, int Nlength
         'par_decl': par_decl,
         # to copy global to local pd pars we need, e.g., Nradius+Nlength
         'pd_length': "+".join('N'+p for p in pd_pars),
-        # the q initializers, e.g., real qi = q[i];
+        # the q initializers, e.g., double qi = q[i];
         'qinit': q_pars['qinit'],
         # the actual polydispersity loop
         'loops': loops,
@@ -536,7 +541,7 @@ def make_kernel(info, is_2D):
     if info[fn]:
         subst = {
             'name': fn,
-            'pars': ", ".join("real "+p for p in q_pars['qwork']+fq_pars),
+            'pars': ", ".join("double "+p for p in q_pars['qwork']+fq_pars),
             'body': info[fn],
             }
         kernel = "\n".join((WORK_FUNCTION%subst, kernel))
@@ -606,7 +611,7 @@ def make_model(info):
     if info['form_volume']:
         subst = {
             'name': "form_volume",
-            'pars': ", ".join("real "+p for p in info['partype']['volume']),
+            'pars': ", ".join("double "+p for p in info['partype']['volume']),
             'body': info['form_volume'],
             }
         source.append(WORK_FUNCTION%subst)
