@@ -88,7 +88,6 @@ def suppress_pd(pars):
         if p.endswith("_pd"): pars[p] = 0
 
 def compare(name, pars, Ncpu, Ngpu, opts, set_pars):
-
     # Sort out data
     qmax = 1.0 if '-highq' in opts else (0.2 if '-midq' in opts else 0.05)
     if "-1d" in opts:
@@ -179,8 +178,13 @@ def compare(name, pars, Ncpu, Ngpu, opts, set_pars):
         resid, relerr = np.zeros_like(gpu), np.zeros_like(gpu)
         resid[index] = (gpu - cpu)[index]
         relerr[index] = resid[index]/cpu[index]
+        #bad = (relerr>1e-4)
+        #print relerr[bad],cpu[bad],gpu[bad],data.qx_data[bad],data.qy_data[bad]
         print "max(|ocl-%s|)"%comp, max(abs(resid[index]))
-        print "max(|(ocl-%s)/ocl|)"%comp, max(abs(relerr[index]))
+        print "max(|(ocl-%s)/%s|)"%(comp,comp), max(abs(relerr[index]))
+        p98 = int(len(relerr[index])*0.98)
+        print "98%% (|(ocl-%s)/%s|) <"%(comp,comp), np.sort(abs(relerr[index]))[p98]
+
 
     # Plot if requested
     if '-noplot' in opts: return
@@ -200,7 +204,17 @@ def compare(name, pars, Ncpu, Ngpu, opts, set_pars):
         #err,errstr = gpu/cpu,"ratio"
         plot_data(data, err, scale='linear')
         plt.title("max %s = %.3g"%(errstr, max(abs(err[index]))))
-        if is2D: plt.colorbar()
+    if is2D: plt.colorbar()
+
+    if Ncpu > 0 and Ngpu > 0 and '-hist' in opts:
+        plt.figure()
+        v = relerr[index]
+        v[v==0] = 0.5*np.min(np.abs(v[v!=0]))
+        plt.hist(np.log10(np.abs(v)), normed=1, bins=50);
+        plt.xlabel('log10(err), err = | F(q) single - F(q) double| / | F(q) double |');
+        plt.ylabel('P(err)')
+        plt.title('Comparison of single and double precision models for %s'%name)
+
     plt.show()
 
 # ===========================================================================
@@ -227,6 +241,7 @@ Options (* for default):
     -cutoff=1e-5*/value cutoff for including a point in polydispersity
     -pars/-nopars* prints the parameter set or not
     -abs/-rel* plot relative or absolute error
+    -hist/-nohist* plot histogram of relative error
 
 Key=value pairs allow you to set specific values to any of the model
 parameters.
@@ -246,6 +261,7 @@ VALID_OPTIONS = [
     'sasview','ctypes',
     'nopars','pars',
     'rel','abs',
+    'hist','nohist',
     ]
 
 def main():
@@ -271,7 +287,7 @@ def main():
 
     name, pars = MODELS[args[0]]()
     Nopencl = int(args[1]) if len(args) > 1 else 5
-    Nsasview = int(args[2]) if len(args) > 3 else 1
+    Nsasview = int(args[2]) if len(args) > 2 else 1
 
     # Fill in default polydispersity parameters
     pds = set(p.split('_pd')[0] for p in pars if p.endswith('_pd'))
