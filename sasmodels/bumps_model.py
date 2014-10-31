@@ -4,6 +4,12 @@ Sasmodels core.
 import sys, os
 import datetime
 
+# CRUFT python 2.6
+if not hasattr(datetime.timedelta, 'total_seconds'):
+    def delay(dt): return dt.days*86400 + dt.seconds + 1e-6*dt.microseconds
+else:
+    def delay(dt): return dt.total_seconds()
+
 import numpy as np
 
 try:
@@ -32,7 +38,7 @@ def tic():
     a time interval.
     """
     then = datetime.datetime.now()
-    return lambda: (datetime.datetime.now()-then).total_seconds()
+    return lambda: delay(datetime.datetime.now()-then)
 
 
 def load_data(filename):
