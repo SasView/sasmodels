@@ -1,9 +1,11 @@
 #!/bin/sh
 
+SASVIEW=$(ls -d ../sasview/build/lib.*)
 PYOPENCL_CTX=1
-PYTHONPATH=../bumps:../periodictable:../sasview/build/lib.macosx-10.5-x86_64-2.7
+PYTHONPATH=../bumps:../periodictable:$SASVIEW
 export PYOPENCL_CTX PYTHONPATH
 
+echo PYTHONPATH=$PYTHONPATH
 set -x
 
 for dim in 1d100 2d32; do
