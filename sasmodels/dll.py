@@ -13,7 +13,8 @@ from . import gen
 from .gen import F32, F64
 # Compiler platform details
 if sys.platform == 'darwin':
-    COMPILE = "gcc-mp-4.7 -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm -lgomp"
+    #COMPILE = "gcc-mp-4.7 -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm -lgomp"
+    COMPILE = "gcc -shared -fPIC -std=c99 -O2 -Wall %s -o %s -lm"
 elif os.name == 'nt':
     COMPILE = "gcc -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm"
 else:

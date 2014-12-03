@@ -74,6 +74,17 @@ def randomize(p, v):
         # length, scale, background in [0,200]
         return 200*np.random.rand()
 
+def randomize_model(name, pars, seed=None):
+    if seed is None:
+        seed = np.random.randint(1e9)
+    np.random.seed(seed)
+    # Note: the sort guarantees order of calls to random number generator
+    pars = dict((p,randomize(p,v)) for p,v in sorted(pars.items()))
+    # The capped cylinder model has a constraint on its parameters
+    if name == 'capped_cylinder' and pars['cap_radius'] < pars['radius']:
+        pars['radius'],pars['cap_radius'] = pars['cap_radius'],pars['radius']
+    return pars, seed
+
 def parlist(pars):
     return "\n".join("%s: %s"%(p,v) for p,v in sorted(pars.items()))
 
@@ -87,40 +98,76 @@ def suppress_pd(pars):
     for p in pars:
         if p.endswith("_pd"): pars[p] = 0
 
-def compare(name, pars, Ncpu, Ngpu, opts, set_pars):
-    # Sort out data
-    qmax = 1.0 if '-highq' in opts else (0.2 if '-midq' in opts else 0.05)
-    if "-1d" in opts:
-        from sasmodels.bumps_model import empty_data1D
-        qmax = math.log10(qmax)
-        data = empty_data1D(np.logspace(qmax-3, qmax, 128))
-        index = slice(None, None)
-    else:
+def eval_sasview(name, pars, data, Nevals=1):
+    model = sasview_model(name, **pars)
+    toc = tic()
+    for _ in range(Nevals):
+        if hasattr(data, 'qx_data'):
+            value = model.evalDistribution([data.qx_data, data.qy_data])
+        else:
+            value = model.evalDistribution(data.x)
+    average_time = toc()*1000./Nevals
+    return value, average_time
+
+def eval_opencl(name, pars, data, dtype='single', Nevals=1, cutoff=0):
+    try:
+        model = load_opencl(name, dtype=dtype)
+    except Exception,exc:
+        print exc
+        print "... trying again with single precision"
+        model = load_opencl(name, dtype='single')
+    problem = BumpsModel(data, model, cutoff=cutoff, **pars)
+    toc = tic()
+    for _ in range(Nevals):
+        #pars['scale'] = np.random.rand()
+        problem.update()
+        value = problem.theory()
+    average_time = toc()*1000./Nevals
+    return value, average_time
+
+def eval_ctypes(name, pars, data, dtype='double', Nevals=1, cutoff=0):
+    model = load_ctypes(name, dtype=dtype)
+    problem = BumpsModel(data, model, cutoff=cutoff, **pars)
+    toc = tic()
+    for _ in range(Nevals):
+        problem.update()
+        value = problem.theory()
+    average_time = toc()*1000./Nevals
+    return value, average_time
+
+def make_data(qmax, is2D, Nq=128):
+    if is2D:
         from sasmodels.bumps_model import empty_data2D, set_beam_stop
-        data = empty_data2D(np.linspace(-qmax, qmax, 128))
+        data = empty_data2D(np.linspace(-qmax, qmax, Nq))
         set_beam_stop(data, 0.004)
         index = ~data.mask
-    is2D = hasattr(data, 'qx_data')
+    else:
+        from sasmodels.bumps_model import empty_data1D
+        qmax = math.log10(qmax)
+        data = empty_data1D(np.logspace(qmax-3, qmax, Nq))
+        index = slice(None, None)
+    return data, index
+
+def compare(name, pars, Ncpu, Ngpu, opts, set_pars):
+    opt_values = dict(split
+                      for s in opts for split in ((s.split('='),))
+                      if len(split) == 2)
+    # Sort out data
+    qmax = 1.0 if '-highq' in opts else (0.2 if '-midq' in opts else 0.05)
+    Nq = int(opt_values.get('-Nq', '128'))
+    is2D = not "-1d" in opts
+    data, index = make_data(qmax, is2D, Nq)
+
 
     # modelling accuracy is determined by dtype and cutoff
     dtype = 'double' if '-double' in opts else 'single'
-    cutoff_opts = [s for s in opts if s.startswith('-cutoff')]
-    cutoff = float(cutoff_opts[0].split('=')[1]) if cutoff_opts else 1e-5
+    cutoff = float(opt_values.get('-cutoff','1e-5'))
 
     # randomize parameters
-    random_opts = [s for s in opts if s.startswith('-random')]
-    if random_opts:
-        if '=' in random_opts[0]:
-            seed = int(random_opts[0].split('=')[1])
-        else:
-            seed = int(np.random.rand()*10000)
-        np.random.seed(seed)
+    if '-random' in opts or '-random' in opt_values:
+        seed = int(opt_values['-random']) if '-random' in opt_values else None
+        pars, seed = randomize_model(name, pars, seed=seed)
         print "Randomize using -random=%i"%seed
-        # Note: the sort guarantees order of calls to random number generator
-        pars = dict((p,randomize(p,v)) for p,v in sorted(pars.items()))
-        # The capped cylinder model has a constraint on its parameters
-        if name == 'capped_cylinder' and pars['cap_radius'] < pars['radius']:
-            pars['radius'],pars['cap_radius'] = pars['cap_radius'],pars['radius']
     pars.update(set_pars)
 
     # parameter selection
@@ -131,42 +178,17 @@ def compare(name, pars, Ncpu, Ngpu, opts, set_pars):
 
     # OpenCl calculation
     if Ngpu > 0:
-        try:
-            model = load_opencl(name, dtype=dtype)
-        except Exception,exc:
-            print exc
-            print "... trying again with single precision"
-            model = load_opencl(name, dtype='single')
-        problem = BumpsModel(data, model, cutoff=cutoff, **pars)
-        toc = tic()
-        for _ in range(Ngpu):
-            #pars['scale'] = np.random.rand()
-            problem.update()
-            gpu = problem.theory()
-        gpu_time = toc()*1000./Ngpu
+        gpu, gpu_time = eval_opencl(name, pars, data, dtype, Ngpu)
         print "opencl t=%.1f ms, intensity=%.0f"%(gpu_time, sum(gpu[index]))
         #print max(gpu), min(gpu)
 
     # ctypes/sasview calculation
     if Ncpu > 0 and "-ctypes" in opts:
-        model = load_ctypes(name, dtype=dtype)
-        problem = BumpsModel(data, model, cutoff=cutoff, **pars)
-        toc = tic()
-        for _ in range(Ncpu):
-            problem.update()
-            cpu = problem.theory()
-        cpu_time = toc()*1000./Ncpu
+        cpu, cpu_time = eval_ctypes(name, pars, data, dtype=dtype, cutoff=cutoff, Nevals=Ncpu)
         comp = "ctypes"
         print "ctypes t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu[index]))
     elif Ncpu > 0:
-        model = sasview_model(name, **pars)
-        toc = tic()
-        for _ in range(Ncpu):
-            if is2D:
-                cpu = model.evalDistribution([data.qx_data, data.qy_data])
-            else:
-                cpu = model.evalDistribution(data.x)
-        cpu_time = toc()*1000./Ncpu
+        cpu, cpu_time = eval_sasview(name, pars, data, Ncpu)
         comp = "sasview"
         print "sasview t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu[index]))
 
@@ -234,7 +256,8 @@ Options (* for default):
     -plot*/-noplot plots or suppress the plot of the model
     -single*/-double uses double precision for comparison
     -lowq*/-midq/-highq use q values up to 0.05, 0.2 or 1.0
-    -1d/-2d* uses 1d or 2d random data
+    -Nq=128 sets the number of Q points in the data set
+    -1d/-2d* computes 1d or 2d data
     -preset*/-random[=seed] preset or random parameters
     -mono/-poly* force monodisperse/polydisperse
     -ctypes/-sasview* whether cpu is tested using sasview or ctypes
@@ -251,7 +274,7 @@ Available models:
     %s
 """
 
-VALID_OPTIONS = [
+NAME_OPTIONS = set([
     'plot','noplot',
     'single','double',
     'lowq','midq','highq',
@@ -262,6 +285,10 @@ VALID_OPTIONS = [
     'nopars','pars',
     'rel','abs',
     'hist','nohist',
+    ])
+VALUE_OPTIONS = [
+    # Note: random is both a name option and a value option
+    'cutoff', 'random', 'Nq',
     ]
 
 def main():
@@ -276,11 +303,9 @@ def main():
         print "Model %r not available. Use one of:\n    %s"%(args[0],models)
         sys.exit(1)
 
-    valid_opts = set(VALID_OPTIONS)
     invalid = [o[1:] for o in opts
-               if o[1:] not in valid_opts
-                  and not o.startswith('-cutoff=')
-                  and not o.startswith('-random=')]
+               if o[1:] not in NAME_OPTIONS
+                  and not any(o.startswith('-%s='%t) for t in VALUE_OPTIONS)]
     if invalid:
         print "Invalid options: %s"%(", ".join(invalid))
         sys.exit(1)
@@ -327,8 +352,8 @@ def cylinder():
         #radius=5, length=20,
         radius=260, length=290,
         theta=30, phi=0,
-        radius_pd=.2, radius_pd_n=1,
-        length_pd=.2,length_pd_n=1,
+        radius_pd=.2, radius_pd_n=9,
+        length_pd=.2,length_pd_n=10,
         theta_pd=15, theta_pd_n=45,
         phi_pd=15, phi_pd_n=1,
         )
@@ -343,7 +368,7 @@ def capped_cylinder():
         theta=30, phi=15,
         radius_pd=.2, radius_pd_n=1,
         cap_radius_pd=.2, cap_radius_pd_n=1,
-        length_pd=.2, length_pd_n=1,
+        length_pd=.2, length_pd_n=10,
         theta_pd=15, theta_pd_n=45,
         phi_pd=15, phi_pd_n=1,
         )
@@ -358,8 +383,8 @@ def core_shell_cylinder():
         radius=45, thickness=25, length=340,
         theta=30, phi=15,
         radius_pd=.2, radius_pd_n=1,
-        length_pd=.2, length_pd_n=1,
-        thickness_pd=.2, thickness_pd_n=1,
+        length_pd=.2, length_pd_n=10,
+        thickness_pd=.2, thickness_pd_n=10,
         theta_pd=15, theta_pd_n=45,
         phi_pd=15, phi_pd_n=1,
         )
@@ -373,8 +398,8 @@ def ellipsoid():
         sld=6, solvent_sld=1,
         rpolar=50, requatorial=30,
         theta=30, phi=15,
-        rpolar_pd=.2, rpolar_pd_n=1,
-        requatorial_pd=.2, requatorial_pd_n=1,
+        rpolar_pd=.2, rpolar_pd_n=15,
+        requatorial_pd=.2, requatorial_pd_n=15,
         theta_pd=15, theta_pd_n=45,
         phi_pd=15, phi_pd_n=1,
         )
@@ -390,7 +415,7 @@ def triaxial_ellipsoid():
         req_minor=25, req_major=36, rpolar=50,
         req_minor_pd=0, req_minor_pd_n=1,
         req_major_pd=0, req_major_pd_n=1,
-        rpolar_pd=.2, rpolar_pd_n=1,
+        rpolar_pd=.2, rpolar_pd_n=30,
         theta_pd=15, theta_pd_n=45,
         phi_pd=15, phi_pd_n=1,
         psi_pd=15, psi_pd_n=1,
