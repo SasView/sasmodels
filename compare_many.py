@@ -8,8 +8,7 @@ from sasmodels.gpu import environment
 from compare import (MODELS, randomize_model, suppress_pd, eval_sasview,
                      eval_opencl, eval_ctypes, make_data)
 
-def get_stats(target, model_eval, name, pars, data, index, dtype, cutoff):
-    value, _ = model_eval(name, pars, data, dtype='single', cutoff=cutoff)
+def get_stats(target, value, index):
     resid = abs(value-target)[index]
     relerr = resid/target[index]
     srel = np.argsort(relerr)
@@ -44,17 +43,22 @@ def compare_instance(model, data, index, N=1, mono=True, cutoff=1e-5):
         target, _ = eval_sasview(name, pars, data)
 
         env = environment()
-        gpu_single = get_stats(target, eval_opencl, name, pars, data, index, 'single', cutoff)
+        gpu_single_value,_ = eval_opencl(name, pars, data, dtype='single', cutoff=cutoff)
+        gpu_single = get_stats(target, gpu_single_value, index)
         if env.has_double:
-            gpu_double = get_stats(target, eval_opencl, name, pars, data, index, 'double', cutoff)
+            gpu_double_value,_ = eval_opencl(name, pars, data, dtype='double', cutoff=cutoff)
+            gpu_double = get_stats(target, gpu_double_value, index)
         else:
             gpu_double = [0]*len(gpu_single)
-        cpu_double = get_stats(target, eval_ctypes, name, pars, data, index, 'double', cutoff)
+        cpu_double_value,_ =  eval_ctypes(name, pars, data, dtype='double', cutoff=cutoff)
+        cpu_double = get_stats(target, cpu_double_value, index)
+        single_double = get_stats(cpu_double_value, gpu_single_value, index)
 
-        values = list(gpu_single) + list(gpu_double) + list(cpu_double) + [v for _,v in sorted(pars.items())]
+        values = (list(gpu_single) + list(gpu_double) + list(cpu_double)
+                  + list(single_double) + [v for _,v in sorted(pars.items())])
         if gpu_single[0] > 5e-5:
             if first:
-                print_column_headers(pars,'GPU single|GPU double|CPU double'.split('|'))
+                print_column_headers(pars,'GPU single|GPU double|CPU double|single/double'.split('|'))
                 first = False
             print(("%d,"%seed)+','.join("%g"%v for v in values))
 

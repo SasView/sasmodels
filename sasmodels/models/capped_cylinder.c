@@ -51,14 +51,28 @@ double _cap_kernel(double q, double h, double cap_radius, double length,
 double form_volume(double radius, double cap_radius, double length)
 {
     // cap radius should never be less than radius when this is called
-    // Note: cap volume = pi hc/6 * (3 a^2 + hc^2), where a is the cylinder
-    // radius and hc is the height of the cap.  Multiply by two for both ends.
-    // So:
-    //      cap V = pi hc (r^2 + hc^2/3)
-    //      cylinder V = pi r^2 L
-    //      V = cylinder V + cap V
+
+    // Note: volume V = 2*V_cap + V_cyl
+    //
+    // V_cyl = pi r_cyl^2 L
+    // V_cap = 1/6 pi h_c (3 r_cyl^2 + h_c^2) = 1/3 pi h_c^2 (3 r_cap - h_c)
+    //
+    // The docs for capped cylinder give the volume as:
+    //    V = pi r^2 L + 2/3 pi (R-h)^2 (2R + h)
+    // where r_cap=R and h = R - h_c.
+    //
+    // The first part is clearly V_cyl.  The second part requires some work:
+    //    (R-h)^2 => h_c^2
+    //    (2R+h) => 2R+ h_c-h_c + h => 2R + (R-h)-hc + h => 3R-h_c
+    // And so:
+    //    2/3 pi (R-h)^2 (2R + h) => 2/3 pi h_c^2 (3 r_cap - h_c)
+    // which is 2 V_cap, using the second form above.
+    //
+    // In this function we are going to use the first form of V_cap
+    //
+    //      V = V_cyl + 2 V_cap
     //        = pi r^2 L + pi hc (r^2 + hc^2/3)
-    //        = pi * (r^2 (L+hc) + hc^3/3)
+    //        = pi (r^2 (L+hc) + hc^3/3)
     const double hc = cap_radius - sqrt(cap_radius*cap_radius - radius*radius);
     return M_PI*(radius*radius*(length+hc) + 0.333333333333333*hc*hc*hc);
 }
