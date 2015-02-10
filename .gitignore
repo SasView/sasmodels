@@ -3,3 +3,7 @@
 *.pyc
 *.cl
 *.so
+/doc/_build/
+/doc/api/
+/doc/model/
+.mplconfig
