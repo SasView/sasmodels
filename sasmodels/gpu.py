@@ -73,24 +73,31 @@ def has_double(device):
     """
     return "cl_khr_fp64" in device.extensions
 
+def get_warp(kernel, queue):
+    """
+    Return the size of an execution batch for *kernel* running on *queue*.
+    """
+    return kernel.get_work_group_info(cl.kernel_work_group_info.PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
+                                      queue.device)
 
-def _stretch_input(vector, dtype, extra=1e-3, boundary=128):
+def _stretch_input(vector, dtype, extra=1e-3, boundary=32):
     """
     Stretch an input vector to the correct boundary.
 
     Performance on the kernels can drop by a factor of two or more if the
     number of values to compute does not fall on a nice power of two
-    boundary.  A good choice for the boundary value is the
-    min_data_type_align_size property of the OpenCL device.  The usual
-    value of 128 gives a working size as a multiple of 32.  The trailing
-    additional vector elements are given a value of *extra*, and so
-    f(*extra*) will be computed for each of them.  The returned array
-    will thus be a subset of the computed array.
+    boundary.   The trailing additional vector elements are given a
+    value of *extra*, and so f(*extra*) will be computed for each of
+    them.  The returned array will thus be a subset of the computed array.
+
+    *boundary* should be a power of 2 which is at least 32 for good
+    performance on current platforms (as of Jan 2015).  It should
+    probably be the max of get_warp(kernel,queue) and
+    device.min_data_type_align_size//4.
     """
-    boundary // dtype.itemsize
     remainder = vector.size%boundary
-    size = vector.size + (boundary - remainder if remainder != 0 else 0)
-    if size != vector.size:
+    if remainder != 0:
+        size = vector.size + (boundary - remainder)
         vector = np.hstack((vector, [extra]*(size-vector.size)))
     return np.ascontiguousarray(vector, dtype=dtype)
 
@@ -133,8 +140,9 @@ class GpuEnvironment(object):
         self.context = cl.create_some_context()
         self.queues = [cl.CommandQueue(self.context, d)
                        for d in self.context.devices]
-        self.boundary = max(d.min_data_type_align_size
-                            for d in self.context.devices)
+        # Byte boundary for data alignment
+        #self.data_boundary = max(d.min_data_type_align_size
+        #                         for d in self.context.devices)
         self.has_double = all(has_double(d) for d in self.context.devices)
         self.compiled = {}
 
@@ -229,10 +237,11 @@ class GpuInput(object):
         self.nq = q_vectors[0].size
         self.dtype = np.dtype(dtype)
         self.is_2D = (len(q_vectors) == 2)
-        self.q_vectors = [
-            _stretch_input(q, self.dtype, boundary=env.boundary)
-            for q in q_vectors
-        ]
+        # TODO: stretch input based on get_warp()
+        # not doing it now since warp depends on kernel, which is not known
+        # at this point, so instead using 32, which is good on the set of
+        # architectures tested so far.
+        self.q_vectors = [_stretch_input(q, self.dtype, 32) for q in q_vectors]
         self.q_buffers = [
             cl.Buffer(env.context,  mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=q)
             for q in self.q_vectors
