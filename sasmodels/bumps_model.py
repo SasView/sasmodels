@@ -45,7 +45,7 @@ def load_data(filename):
     """
     Load data using a sasview loader.
     """
-    from sans.dataloader.loader import Loader
+    from sas.dataloader.loader import Loader
     loader = Loader()
     data = loader.load(filename)
     if data is None:
@@ -60,7 +60,7 @@ def empty_data1D(q):
     Resolutions dq/q is 5%.
     """
 
-    from sans.dataloader.data_info import Data1D
+    from sas.dataloader.data_info import Data1D
 
     Iq = 100*np.ones_like(q)
     dIq = np.sqrt(Iq)
@@ -78,7 +78,7 @@ def empty_data2D(qx, qy=None):
 
     Resolution dq/q is 5%.
     """
-    from sans.dataloader.data_info import Data2D, Detector
+    from sas.dataloader.data_info import Data2D, Detector
 
     if qy is None:
         qy = qx
@@ -122,7 +122,7 @@ def set_beam_stop(data, radius, outer=None):
     """
     Add a beam stop of the given *radius*.  If *outer*, make an annulus.
     """
-    from sans.dataloader.manipulations import Ringcut
+    from sas.dataloader.manipulations import Ringcut
     if hasattr(data, 'qx_data'):
         data.mask = Ringcut(0, radius)(data)
         if outer is not None:
@@ -137,7 +137,7 @@ def set_half(data, half):
     """
     Select half of the data, either "right" or "left".
     """
-    from sans.dataloader.manipulations import Boxcut
+    from sas.dataloader.manipulations import Boxcut
     if half == 'right':
         data.mask += Boxcut(x_min=-np.inf, x_max=0.0, y_min=-np.inf, y_max=np.inf)(data)
     if half == 'left':
@@ -148,7 +148,7 @@ def set_top(data, max):
     """
     Chop the top off the data, above *max*.
     """
-    from sans.dataloader.manipulations import Boxcut
+    from sas.dataloader.manipulations import Boxcut
     data.mask += Boxcut(x_min=-np.inf, x_max=np.inf, y_min=-np.inf, y_max=max)(data)
 
 

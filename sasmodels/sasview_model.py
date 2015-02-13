@@ -90,7 +90,7 @@ class SasviewModel(object):
         self.output_name = model.info.get("output_name","Intensity")
         self.output_unit = model.info.get("output_unit","cm^{-1}")
 
-        ## _persistency_dict is used by sans.perspectives.fitting.basepage
+        ## _persistency_dict is used by sas.perspectives.fitting.basepage
         ## to store dispersity reference.
         ## TODO: _persistency_dict to persistency_dict throughout sasview
         self._persistency_dict = {}

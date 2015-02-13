@@ -15,7 +15,7 @@ Example
 The example directory contains a radial+tangential data set for an oriented
 rod-like shape.
 
-The data is loaded by sans.dataloader from the sasview package, so sasview
+The data is loaded by sas.dataloader from the sasview package, so sasview
 is needed to run the example.
 
 To run the example, you need sasview, sasmodels and bumps.  Assuming these

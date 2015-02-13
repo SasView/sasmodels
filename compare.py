@@ -19,10 +19,10 @@ def sasview_model(modelname, **pars):
     #print "old",sorted(pars.items())
     modelname, pars = revert_model(modelname, pars)
     #print "new",sorted(pars.items())
-    sans = __import__('sans.models.'+modelname)
-    ModelClass = getattr(getattr(sans.models,modelname,None),modelname,None)
+    sas = __import__('sas.models.'+modelname)
+    ModelClass = getattr(getattr(sas.models,modelname,None),modelname,None)
     if ModelClass is None:
-        raise ValueError("could not find model %r in sans.models"%modelname)
+        raise ValueError("could not find model %r in sas.models"%modelname)
     model = ModelClass()
 
     for k,v in pars.items():
@@ -421,6 +421,16 @@ def triaxial_ellipsoid():
         psi_pd=15, psi_pd_n=1,
         )
     return 'triaxial_ellipsoid', pars
+
+@model('sphpy')
+def spherepy():
+    pars = dict(
+        scale=1, background=0,
+        sld=6, solvent_sld=1,
+        radius=120,
+        radius_pd=.2, radius_pd_n=45,
+        )
+    return 'spherepy', pars
 
 @model('sph')
 def sphere():
