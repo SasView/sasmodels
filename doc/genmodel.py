@@ -11,6 +11,6 @@ for part in module_name.split('.')[1:]:
 print module
 
 # Load the doc string from the module definition file and store it in rst
-from sasmodels import gen
-docstr = gen.doc(module)
+from sasmodels import generate
+docstr = generate.doc(module)
 open(sys.argv[2],'w').write(docstr)

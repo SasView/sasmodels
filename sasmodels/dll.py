@@ -9,9 +9,9 @@ from ctypes import c_void_p, c_int, c_double
 
 import numpy as np
 
-from . import gen
+from . import generate
 
-from .gen import F32, F64
+from .generate import F32, F64
 # Compiler platform details
 if sys.platform == 'darwin':
     #COMPILE = "gcc-mp-4.7 -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm -lgomp"
@@ -51,8 +51,8 @@ def load_model(kernel_module, dtype=None):
     """
     import tempfile
 
-    source, info = gen.make(kernel_module)
-    source_files = gen.sources(info) + [info['filename']]
+    source, info = generate.make(kernel_module)
+    source_files = generate.sources(info) + [info['filename']]
     newest = max(os.path.getmtime(f) for f in source_files)
     dllpath = dll_path(info)
     if not os.path.exists(dllpath) or os.path.getmtime(dllpath)<newest:
@@ -102,10 +102,10 @@ class DllModel(object):
         #print "dll",self.dllpath
         self.dll = ct.CDLL(self.dllpath)
 
-        self.Iq = self.dll[gen.kernel_name(self.info, False)]
+        self.Iq = self.dll[generate.kernel_name(self.info, False)]
         self.Iq.argtypes = IQ_ARGS + [c_double]*Nfixed1d + [c_int]*Npd1d
 
-        self.Iqxy = self.dll[gen.kernel_name(self.info, True)]
+        self.Iqxy = self.dll[generate.kernel_name(self.info, True)]
         self.Iqxy.argtypes = IQXY_ARGS + [c_double]*Nfixed2d + [c_int]*Npd2d
 
     def __getstate__(self):

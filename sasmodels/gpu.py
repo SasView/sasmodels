@@ -26,7 +26,7 @@ import numpy as np
 import pyopencl as cl
 from pyopencl import mem_flags as mf
 
-from . import gen
+from . import generate
 
 F64_DEFS = """\
 #ifdef cl_khr_fp64
@@ -49,7 +49,7 @@ def load_model(kernel_module, dtype="single"):
     Access to the OpenCL device is delayed until the kernel is called
     so models can be defined without using too many resources.
     """
-    source, info = gen.make(kernel_module)
+    source, info = generate.make(kernel_module)
     ## for debugging, save source to a .cl file, edit it, and reload as model
     #open(info['name']+'.cl','w').write(source)
     #source = open(info['name']+'.cl','r').read()
@@ -111,12 +111,12 @@ def compile_model(context, source, dtype):
     devices in the context do not support the cl_khr_fp64 extension.
     """
     dtype = np.dtype(dtype)
-    if dtype==gen.F64 and not all(has_double(d) for d in context.devices):
+    if dtype==generate.F64 and not all(has_double(d) for d in context.devices):
         raise RuntimeError("Double precision not supported for devices")
 
-    header = F64_DEFS if dtype == gen.F64 else ""
-    if dtype == gen.F32:
-        source = gen.use_single(source)
+    header = F64_DEFS if dtype == generate.F64 else ""
+    if dtype == generate.F32:
+        source = generate.use_single(source)
     # Note: USE_SINCOS makes the intel cpu slower under opencl
     if context.devices[0].type == cl.device_type.GPU:
         header += "#define USE_SINCOS\n"
@@ -169,7 +169,7 @@ class GpuModel(object):
     for single and 'd', 'float64' or 'double' for double.  Double precision
     is an optional extension which may not be available on all devices.
     """
-    def __init__(self, source, info, dtype=gen.F32):
+    def __init__(self, source, info, dtype=generate.F32):
         self.info = info
         self.source = source
         self.dtype = dtype
@@ -188,7 +188,7 @@ class GpuModel(object):
             raise TypeError("data and kernel have different types")
         if self.program is None:
             self.program = environment().compile_program(self.info['name'],self.source, self.dtype)
-        kernel_name = gen.kernel_name(self.info, input.is_2D)
+        kernel_name = generate.kernel_name(self.info, input.is_2D)
         kernel = getattr(self.program, kernel_name)
         return GpuKernel(kernel, self.info, input)
 
@@ -232,7 +232,7 @@ class GpuInput(object):
     Call :meth:`release` when complete.  Even if not called directly, the
     buffer will be released when the data object is freed.
     """
-    def __init__(self, q_vectors, dtype=gen.F32):
+    def __init__(self, q_vectors, dtype=generate.F32):
         env = environment()
         self.nq = q_vectors[0].size
         self.dtype = np.dtype(dtype)
@@ -293,7 +293,7 @@ class GpuKernel(object):
 
 
     def __call__(self, pars, pd_pars, cutoff=1e-5):
-        real = np.float32 if self.input.dtype == gen.F32 else np.float64
+        real = np.float32 if self.input.dtype == generate.F32 else np.float64
         fixed = [real(p) for p in pars]
         cutoff = real(cutoff)
         loops = np.hstack(pd_pars)
