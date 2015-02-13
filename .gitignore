@@ -4,3 +4,7 @@
 *.cl
 *.so
 *.obj
+/doc/_build/
+/doc/api/
+/doc/model/
+.mplconfig
