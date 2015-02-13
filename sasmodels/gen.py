@@ -225,12 +225,28 @@ KERNEL_HEADER = """\
 // If opencl is not available, then we are compiling a C function
 // Note: if using a C++ compiler, then define kernel as extern "C"
 #ifndef USE_OPENCL
-#  include <math.h>
+#  ifdef __cplusplus
+     #include <cmath>
+     #if defined(_MSC_VER)
+     #define kernel extern "C" __declspec( dllexport )
+     #else
+     #define kernel extern "C"
+     #endif
+     using namespace std;
+     inline void SINCOS(double angle, double &svar, double &cvar)
+       { svar=sin(angle); cvar=cos(angle); }
+#  else
+     #include <math.h>
+     #if defined(_MSC_VER)
+     #define kernel __declspec( dllexport )
+     #else
+     #define kernel
+     #endif
+     #define SINCOS(angle,svar,cvar) do {svar=sin(angle);cvar=cos(angle);} while (0)
+#  endif
 #  define global
 #  define local
 #  define constant const
-#  define kernel
-#  define SINCOS(angle,svar,cvar) do {svar=sin(angle);cvar=cos(angle);} while (0)
 #  define powr(a,b) pow(a,b)
 #else
 #  ifdef USE_SINCOS

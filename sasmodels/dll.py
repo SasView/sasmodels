@@ -3,6 +3,7 @@ C types wrapper for sasview models.
 """
 import sys
 import os
+import tempfile
 import ctypes as ct
 from ctypes import c_void_p, c_int, c_double
 
@@ -14,12 +15,19 @@ from .gen import F32, F64
 # Compiler platform details
 if sys.platform == 'darwin':
     #COMPILE = "gcc-mp-4.7 -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm -lgomp"
-    COMPILE = "gcc -shared -fPIC -std=c99 -O2 -Wall %s -o %s -lm"
+    COMPILE = "gcc -shared -fPIC -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
 elif os.name == 'nt':
-    COMPILE = "gcc -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm"
+    # make sure vcvarsall.bat is called first in order to set compiler, headers, lib paths, etc.
+    ##COMPILER = r'"C:\Program Files (x86)\Common Files\Microsoft\Visual C++ for Python\9.0\VC\Bin\cl.exe"'
+    # Can't find VCOMP90.DLL (don't know why), so remove openmp support from windows compiler build
+    #COMPILE = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG /Tp%(source)s /link /DLL /INCREMENTAL:NO /MANIFEST /OUT:%(output)s"
+    COMPILE = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG /Tp%(source)s /openmp /link /DLL /INCREMENTAL:NO /MANIFEST /OUT:%(output)s"
+    #/MANIFESTFILE:build\temp.win32-2.7\Release\src\sans\models\c_extension\libigor\c_models.pyd.manifest
+    #COMPILE = "gcc -shared -fPIC -std=c99 -fopenmp -O2 -Wall %(source)s -o %(output)s -lm"
 else:
-    COMPILE = "cc -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm"
-DLL_PATH = "/tmp"
+    COMPILE = "cc -shared -fPIC -std=c99 -fopenmp -O2 -Wall %(source)s -o %(output)s -lm"
+
+DLL_PATH = tempfile.gettempdir()
 
 
 def dll_path(info):
@@ -52,7 +60,9 @@ def load_model(kernel_module, dtype=None):
         # Replace with a proper temp file
         fid, filename = tempfile.mkstemp(suffix=".c",prefix="sas_"+info['name'])
         os.fdopen(fid,"w").write(source)
-        status = os.system(COMPILE%(filename, dllpath))
+        command = COMPILE%{"source":filename, "output":dllpath}
+        print "Compile command:",command
+        status = os.system(command)
         if status != 0:
             print "compile failed.  File is in %r"%filename
         else:
@@ -90,6 +100,7 @@ class DllModel(object):
         Npd1d = len(self.info['partype']['pd-1d'])
         Npd2d = len(self.info['partype']['pd-2d'])
 
+        #print "dll",self.dllpath
         self.dll = ct.CDLL(self.dllpath)
 
         self.Iq = self.dll[gen.kernel_name(self.info, False)]
