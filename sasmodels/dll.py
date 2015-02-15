@@ -10,6 +10,7 @@ from ctypes import c_void_p, c_int, c_double
 import numpy as np
 
 from . import generate
+from .pykernel import PyInput, PyKernel
 
 from .generate import F32, F64
 # Compiler platform details
@@ -115,8 +116,13 @@ class DllModel(object):
         self.__dict__ = state
 
     def __call__(self, input):
-        if self.dll is None: self._load_dll()
+        # Support pure python kernel call
+        if input.is_2D and callable(self.info['Iqxy']):
+            return PyKernel(self.info['Iqxy'], self.info, input)
+        elif not input.is_2D and callable(self.info['Iq']):
+            return PyKernel(self.info['Iq'], self.info, input)
 
+        if self.dll is None: self._load_dll()
         kernel = self.Iqxy if input.is_2D else self.Iq
         return DllKernel(kernel, self.info, input)
 
@@ -124,51 +130,21 @@ class DllModel(object):
         """
         Make q input vectors available to the model.
 
-        This only needs to be done once for all models that operate on the
-        same input.  So for example, if you are adding two different models
-        together to compare to a data set, then only one model needs to
-        needs to call make_input, so long as the models have the same dtype.
+        Note that each model needs its own q vector even if the case of
+        mixture models because some models may be OpenCL, some may be
+        ctypes and some may be pure python.
         """
-        return DllInput(q_vectors)
+        return PyInput(q_vectors, dtype=F64)
 
     def release(self):
         pass # TODO: should release the dll
 
 
-class DllInput(object):
-    """
-    Make q data available to the gpu.
-
-    *q_vectors* is a list of q vectors, which will be *[q]* for 1-D data,
-    and *[qx, qy]* for 2-D data.  Internally, the vectors will be reallocated
-    to get the best performance on OpenCL, which may involve shifting and
-    stretching the array to better match the memory architecture.  Additional
-    points will be evaluated with *q=1e-3*.
-
-    *dtype* is the data type for the q vectors. The data type should be
-    set to match that of the kernel, which is an attribute of
-    :class:`GpuProgram`.  Note that not all kernels support double
-    precision, so even if the program was created for double precision,
-    the *GpuProgram.dtype* may be single precision.
-
-    Call :meth:`release` when complete.  Even if not called directly, the
-    buffer will be released when the data object is freed.
-    """
-    def __init__(self, q_vectors):
-        self.nq = q_vectors[0].size
-        self.dtype = np.dtype('double')
-        self.is_2D = (len(q_vectors) == 2)
-        self.q_vectors = [np.ascontiguousarray(q,self.dtype) for q in q_vectors]
-        self.q_pointers = [q.ctypes.data for q in q_vectors]
-
-    def release(self):
-        self.q_vectors = []
-
 class DllKernel(object):
     """
     Callable SAS kernel.
 
-    *kernel* is the DllKernel object to call.
+    *kernel* is the c function to call.
 
     *info* is the module information
 

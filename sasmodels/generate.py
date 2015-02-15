@@ -353,6 +353,19 @@ for (int %(name)s_i=0; %(name)s_i < N%(name)s; %(name)s_i++) {
   const double %(name)s_w = loops[2*(%(name)s_i%(offset)s)+1];\
 """
 
+
+
+##########################################################
+#                                                        #
+#   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #
+#   !!                                              !!   #
+#   !!  KEEP THIS CODE CONSISTENT WITH PYKERNEL.PY  !!   #
+#   !!                                              !!   #
+#   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #
+#                                                        #
+##########################################################
+
+
 # Polydispersity loop body.
 # This computes the weight, and if it is sufficient, calls the scattering
 # function and adds it to the total.  If there is a volume normalization,
@@ -386,8 +399,8 @@ double spherical_correction = (Ntheta>1 ? fabs(cos(M_PI_180*theta))*M_PI_2 : 1.0
 # If there are "volume" polydispersity parameters, then these will be used
 # to call the form_volume function from the user supplied kernel, and accumulate
 # a normalized weight.
-VOLUME_NORM="""const double vol_weight = %(weight)s;
-    vol += vol_weight*form_volume(%(pars)s);
+VOLUME_NORM="""const double vol_weight = %(vol_weight)s;
+    vol += vol_weight*form_volume(%(vol_pars)s);
     norm_vol += vol_weight;\
 """
 
@@ -489,8 +502,8 @@ def make_kernel(info, is_2D):
     # then there will be no volume normalization.
     if vol_pars:
         subst = {
-            'weight': "*".join(p+"_w" for p in vol_pars),
-            'pars': ", ".join(vol_pars),
+            'vol_weight': "*".join(p+"_w" for p in vol_pars),
+            'vol_pars': ", ".join(vol_pars),
             }
         volume_norm = VOLUME_NORM%subst
     else:
@@ -636,8 +649,8 @@ def make_model(info):
             'body': info['form_volume'],
             }
         source.append(WORK_FUNCTION%subst)
-    kernel_Iq = make_kernel(info, is_2D=False)
-    kernel_Iqxy = make_kernel(info, is_2D=True)
+    kernel_Iq = make_kernel(info, is_2D=False) if not callable(info['Iq']) else ""
+    kernel_Iqxy = make_kernel(info, is_2D=True) if not callable(info['Iqxy']) else ""
     kernel = "\n\n".join([KERNEL_HEADER]+source+[kernel_Iq, kernel_Iqxy])
     return kernel
 
@@ -717,17 +730,17 @@ def doc(kernel_module):
 
 def demo_time():
     import datetime
-    tic = datetime.datetime.now()
+    from .models import cylinder
     toc = lambda: (datetime.datetime.now()-tic).total_seconds()
-    path = os.path.dirname("__file__")
-    doc, c = make_model(os.path.join(path, "models", "cylinder.c"))
+    tic = datetime.datetime.now()
+    source, info = make(cylinder)
     print "time:",toc()
 
 def demo():
-    from os.path import join as joinpath, dirname
-    c, info, doc = make_model(joinpath(dirname(__file__), "models", "cylinder.c"))
-    #print doc
-    #print c
+    from .models import cylinder
+    source, info = make(cylinder)
+    #print doc(cylinder)
+    print source
 
 if __name__ == "__main__":
     demo()

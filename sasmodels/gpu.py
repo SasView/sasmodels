@@ -23,10 +23,12 @@ devices, where it can be combined with other structure factors and form
 factors and have instrumental resolution effects applied.
 """
 import numpy as np
+
 import pyopencl as cl
 from pyopencl import mem_flags as mf
 
 from . import generate
+from .pykernel import PyInput, PyKernel
 
 F64_DEFS = """\
 #ifdef cl_khr_fp64
@@ -184,6 +186,12 @@ class GpuModel(object):
         self.__dict__ = state.copy()
 
     def __call__(self, input):
+        # Support pure python kernel call
+        if input.is_2D and callable(self.info['Iqxy']):
+            return PyKernel(self.info['Iqxy'], self.info, input)
+        elif not input.is_2D and callable(self.info['Iq']):
+            return PyKernel(self.info['Iq'], self.info, input)
+
         if self.dtype != input.dtype:
             raise TypeError("data and kernel have different types")
         if self.program is None:
@@ -201,16 +209,17 @@ class GpuModel(object):
         """
         Make q input vectors available to the model.
 
-        This only needs to be done once for all models that operate on the
-        same input.  So for example, if you are adding two different models
-        together to compare to a data set, then only one model needs to
-        needs to call make_input, so long as the models have the same dtype.
+        Note that each model needs its own q vector even if the case of
+        mixture models because some models may be OpenCL, some may be
+        ctypes and some may be pure python.
         """
-        # Note: the weird interface, where make_input doesn't care which
-        # model calls it, allows us to ask the model to define the data
-        # and the caller does not need to know if it is opencl or ctypes.
-        # The returned data object is opaque.
-        return GpuInput(q_vectors, dtype=self.dtype)
+        # Support pure python kernel call
+        if len(q_vectors) == 1 and callable(self.info['Iq']):
+            return PyInput(q_vectors, dtype=self.dtype)
+        elif callable(self.info['Iqxy']):
+            return PyInput(q_vectors, dtype=self.dtype)
+        else:
+            return GpuInput(q_vectors, dtype=self.dtype)
 
 # TODO: check that we don't need a destructor for buffers which go out of scope
 class GpuInput(object):
