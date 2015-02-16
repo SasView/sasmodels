@@ -10,7 +10,7 @@ from ctypes import c_void_p, c_int, c_double
 import numpy as np
 
 from . import generate
-from .pykernel import PyInput, PyKernel
+from .kernelpy import PyInput, PyKernel
 
 from .generate import F32, F64
 # Compiler platform details

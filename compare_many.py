@@ -4,7 +4,7 @@ import sys
 
 import numpy as np
 
-from sasmodels.gpu import environment
+from sasmodels.kernelcl import environment
 from compare import (MODELS, randomize_model, suppress_pd, eval_sasview,
                      eval_opencl, eval_ctypes, make_data)
 

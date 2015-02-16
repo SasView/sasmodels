@@ -24,11 +24,11 @@ import warnings
 import numpy as np
 
 try:
-    from .gpu import load_model
+    from .kernelcl import load_model
 except ImportError,exc:
     warnings.warn(str(exc))
     warnings.warn("OpenCL not available --- using ctypes instead")
-    from .dll import load_model
+    from .kerneldll import load_model
 
 
 def make_class(kernel_module, dtype='single'):

@@ -7,7 +7,7 @@ import math
 import numpy as np
 
 from sasmodels.bumps_model import BumpsModel, plot_data, tic
-from sasmodels import gpu, dll
+from sasmodels import kernelcl, kerneldll
 from sasmodels.convert import revert_model
 
 
@@ -41,13 +41,13 @@ def sasview_model(modelname, **pars):
 def load_opencl(modelname, dtype='single'):
     sasmodels = __import__('sasmodels.models.'+modelname)
     module = getattr(sasmodels.models, modelname, None)
-    kernel = gpu.load_model(module, dtype=dtype)
+    kernel = kernelcl.load_model(module, dtype=dtype)
     return kernel
 
 def load_ctypes(modelname, dtype='single'):
     sasmodels = __import__('sasmodels.models.'+modelname)
     module = getattr(sasmodels.models, modelname, None)
-    kernel = dll.load_model(module, dtype=dtype)
+    kernel = kerneldll.load_model(module, dtype=dtype)
     return kernel
 
 def randomize(p, v):

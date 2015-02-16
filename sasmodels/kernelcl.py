@@ -28,7 +28,7 @@ import pyopencl as cl
 from pyopencl import mem_flags as mf
 
 from . import generate
-from .pykernel import PyInput, PyKernel
+from .kernelpy import PyInput, PyKernel
 
 F64_DEFS = """\
 #ifdef cl_khr_fp64
