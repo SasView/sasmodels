@@ -27,7 +27,7 @@ try:
     from .kernelcl import load_model
 except ImportError,exc:
     warnings.warn(str(exc))
-    warnings.warn("OpenCL not available --- using ctypes instead")
+    warnings.warn("using ctypes instead")
     from .kerneldll import load_model
 
 

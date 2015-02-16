@@ -22,9 +22,17 @@ evaluating them.  The output value is stored in an output buffer on the
 devices, where it can be combined with other structure factors and form
 factors and have instrumental resolution effects applied.
 """
+import os
+import warnings
+
 import numpy as np
 
-import pyopencl as cl
+try:
+    import pyopencl as cl
+except ImportError,exc:
+    warnings.warn(str(exc))
+    raise RuntimeError("OpenCL not available")
+
 from pyopencl import mem_flags as mf
 
 from . import generate
@@ -139,14 +147,45 @@ class GpuEnvironment(object):
     GPU context, with possibly many devices, and one queue per device.
     """
     def __init__(self):
-        self.context = cl.create_some_context()
-        self.queues = [cl.CommandQueue(self.context, d)
-                       for d in self.context.devices]
+        # find gpu context
+        #self.context = cl.create_some_context()
+
+        self.context = None
+        if 'PYOPENCL_CTX' in os.environ:
+            self._create_some_context()
+
+        if not self.context:
+            self.context = self._find_context()
+
         # Byte boundary for data alignment
         #self.data_boundary = max(d.min_data_type_align_size
         #                         for d in self.context.devices)
+        self.queues = [cl.CommandQueue(self.context, d)
+                       for d in self.context.devices]
         self.has_double = all(has_double(d) for d in self.context.devices)
         self.compiled = {}
+
+    def _create_some_context(self):
+        try:
+            self.context = cl.create_some_context(interactive=False)
+        except Exception,exc:
+            warnings.warn(str(exc))
+            warnings.warn("pyopencl.create_some_context() failed")
+            warnings.warn("the environment variable 'PYOPENCL_CTX' might not be set correctly")
+
+    def _find_context(self):
+        default = None
+        for platform in cl.get_platforms():
+            for device in platform.get_devices():
+                if device.type == cl.device_type.GPU:
+                    return cl.Context([device])
+                if default is None:
+                    default = device
+
+        if not default:
+            raise RuntimeError("OpenCL device not found")
+
+        return cl.Context([default])
 
     def compile_program(self, name, source, dtype):
         if name not in self.compiled:
@@ -158,6 +197,7 @@ class GpuEnvironment(object):
         if name in self.compiled:
             self.compiled[name].release()
             del self.compiled[name]
+
 
 class GpuModel(object):
     """
