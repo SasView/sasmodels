@@ -57,7 +57,8 @@ John Wiley and Sons, New York, (1955)
 *2013/09/09 and 2014/01/06 - Description reviewed by S King and P Parker.*
 """
 
-from numpy import pi, inf, sin, cos, sqrt
+import numpy as np
+from numpy import pi, inf, sin, cos, sqrt, exp, log
 
 name = "sphere"
 title = "Spheres with uniform scattering length density"
@@ -103,6 +104,22 @@ Iq.vectorized = True
 def Iqxy(qx, qy, sld, solvent_sld, radius):
     return Iq(sqrt(qx**2 + qy**2), sld, solvent_sld, radius)
 Iqxy.vectorized = True
+
+def sesans(z, sld, solvent_sld, radius):
+    """
+    Calculate SESANS-correlation function for a solid sphere.
+
+    Wim Bouwman after formulae Timofei Kruglov J.Appl.Cryst. 2003 article
+    """
+    d = z/radius
+    g = np.zeros_like(z)
+    g[d==0] = 1.
+    low = ((d > 0) & (d < 2))
+    dlow = d[low]
+    dlow2 = dlow**2
+    g[low] = sqrt(1-dlow2/4.)*(1+dlow2/8.) + dlow2/2.*(1-dlow2/16.)*log(dlow/(2.+sqrt(4.-dlow2)))
+    return g
+sesans.vectorized = True
 
 def ER(radius):
     return radius
