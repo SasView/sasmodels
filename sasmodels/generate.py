@@ -127,9 +127,27 @@ The kernel module must set variables defining the kernel meta data:
     C source code for the body of the volume, Iq, and Iqxy functions
     respectively.  These can also be defined in the last source file.
 
-An *info* dictionary is constructed from the kernel meta data and
-returned to the caller.  It includes the additional fields
+    *Iq* and *Iqxy* also be instead be python functions defining the
+    kernel.  If they are marked as *Iq.vectorized = True* then the
+    kernel is passed the entire *q* vector at once, otherwise it is
+    passed values one *q* at a time.  The performance improvement of
+    this step is significant.
 
+An *info* dictionary is constructed from the kernel meta data and
+returned to the caller.
+
+Additional fields can be defined in the kernel definition file that
+are not needed for sas modelling.
+
+    *demo* is a dictionary of parameter=value defining a set of
+    parameters to use by default when *compare* is called.
+
+    *oldname* is the name of the model in sasview before sasmodels
+    was split into its own package, and *oldpars* is a dictionary
+    of *parameter: old_parameter* pairs defining the new names for
+    the parameters.  This is used by *compare* to check the values
+    of the new model against the values of the old model before
+    you are ready to add the new model to sasmodels.
 
 The model evaluator, function call sequence consists of q inputs and the return vector,
 followed by the loop value/weight vector, followed by the values for

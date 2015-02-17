@@ -132,3 +132,5 @@ demo = dict(
     radius=120,
     radius_pd=.2, radius_pd_n=45,
     )
+oldname = "SphereModel"
+oldpars = dict(sld='sldSph', solvent_sld='sldSolv', radius='radius')

@@ -100,3 +100,6 @@ demo = dict(
         thickness=40,
         thickness_pd= 0.2, thickness_pd_n=40,
         )
+oldname = 'LamellarModel'
+oldpars = dict(sld='sld_bi', solvent_sld='sld_sol', thickness='bi_thick')
+

@@ -188,3 +188,7 @@ demo = dict(
         theta_pd=15, theta_pd_n=45,
         phi_pd=15, phi_pd_n=1,
         )
+oldname = 'EllipsoidModel'
+oldpars = dict(theta='axis_theta', phi='axis_phi',
+               sld='sldEll', solvent_sld='sldSolv',
+               rpolar='radius_a', requatorial='radius_b')

@@ -178,3 +178,5 @@ demo = dict(
     theta_pd=15, theta_pd_n=45,
     phi_pd=15, phi_pd_n=1,
     )
+oldname = 'CoreShellCylinderModel'
+oldpars = dict(theta='axis_theta', phi='axis_phi')

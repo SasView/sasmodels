@@ -150,11 +150,6 @@ def ER(radius, length):
     ddd = 0.75*radius*(2*radius*length + (length+radius)*(length+pi*radius))
     return 0.5 * (ddd)**(1./3.)
 
-# For testing against the old sasview models, include the converted parameter
-# names and the target sasview model name.
-oldname='CylinderModel'
-oldpars=dict(theta='cyl_theta', phi='cyl_phi', sld='sldCyl', solvent_sld='sldSolv')
-
 # parameters for demo
 demo = dict(
     scale=1, background=0,
@@ -167,4 +162,9 @@ demo = dict(
     theta_pd=15, theta_pd_n=45,
     phi_pd=15, phi_pd_n=1,
     )
+
+# For testing against the old sasview models, include the converted parameter
+# names and the target sasview model name.
+oldname='CylinderModel'
+oldpars=dict(theta='cyl_theta', phi='cyl_phi', sld='sldCyl', solvent_sld='sldSolv')
 

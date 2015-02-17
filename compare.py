@@ -155,7 +155,7 @@ def make_data(qmax, is2D, Nq=128):
         index = slice(None, None)
     return data, index
 
-def compare(name, pars, Ncpu, Ngpu, opts, set_pars):
+def compare(name, pars, Ncpu, Nocl, opts, set_pars):
     opt_values = dict(split
                       for s in opts for split in ((s.split('='),))
                       if len(split) == 2)
@@ -184,10 +184,10 @@ def compare(name, pars, Ncpu, Ngpu, opts, set_pars):
         print "pars",parlist(pars)
 
     # OpenCl calculation
-    if Ngpu > 0:
-        gpu, gpu_time = eval_opencl(name, pars, data, dtype, Ngpu)
-        print "opencl t=%.1f ms, intensity=%.0f"%(gpu_time, sum(gpu[index]))
-        #print max(gpu), min(gpu)
+    if Nocl > 0:
+        ocl, ocl_time = eval_opencl(name, pars, data, dtype, Nocl)
+        print "opencl t=%.1f ms, intensity=%.0f"%(ocl_time, sum(ocl[index]))
+        #print max(ocl), min(ocl)
 
     # ctypes/sasview calculation
     if Ncpu > 0 and "-ctypes" in opts:
@@ -200,15 +200,15 @@ def compare(name, pars, Ncpu, Ngpu, opts, set_pars):
         print "sasview t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu[index]))
 
     # Compare, but only if computing both forms
-    if Ngpu > 0 and Ncpu > 0:
-        #print "speedup %.2g"%(cpu_time/gpu_time)
-        #print "max |gpu/cpu|", max(abs(gpu/cpu)), "%.15g"%max(abs(gpu)), "%.15g"%max(abs(cpu))
-        #cpu *= max(gpu/cpu)
-        resid, relerr = np.zeros_like(gpu), np.zeros_like(gpu)
-        resid[index] = (gpu - cpu)[index]
+    if Nocl > 0 and Ncpu > 0:
+        #print "speedup %.2g"%(cpu_time/ocl_time)
+        #print "max |ocl/cpu|", max(abs(ocl/cpu)), "%.15g"%max(abs(ocl)), "%.15g"%max(abs(cpu))
+        #cpu *= max(ocl/cpu)
+        resid, relerr = np.zeros_like(ocl), np.zeros_like(ocl)
+        resid[index] = (ocl - cpu)[index]
         relerr[index] = resid[index]/cpu[index]
         #bad = (relerr>1e-4)
-        #print relerr[bad],cpu[bad],gpu[bad],data.qx_data[bad],data.qy_data[bad]
+        #print relerr[bad],cpu[bad],ocl[bad],data.qx_data[bad],data.qy_data[bad]
         print "max(|ocl-%s|)"%comp, max(abs(resid[index]))
         print "max(|(ocl-%s)/%s|)"%(comp,comp), max(abs(relerr[index]))
         p98 = int(len(relerr[index])*0.98)
@@ -219,23 +219,23 @@ def compare(name, pars, Ncpu, Ngpu, opts, set_pars):
     if '-noplot' in opts: return
     import matplotlib.pyplot as plt
     if Ncpu > 0:
-        if Ngpu > 0: plt.subplot(131)
+        if Nocl > 0: plt.subplot(131)
         plot_data(data, cpu, scale='log')
         plt.title("%s t=%.1f ms"%(comp,cpu_time))
-    if Ngpu > 0:
+    if Nocl > 0:
         if Ncpu > 0: plt.subplot(132)
-        plot_data(data, gpu, scale='log')
-        plt.title("opencl t=%.1f ms"%gpu_time)
-    if Ncpu > 0 and Ngpu > 0:
+        plot_data(data, ocl, scale='log')
+        plt.title("opencl t=%.1f ms"%ocl_time)
+    if Ncpu > 0 and Nocl > 0:
         plt.subplot(133)
         err = resid if '-abs' in opts else relerr
         errstr = "abs err" if '-abs' in opts else "rel err"
-        #err,errstr = gpu/cpu,"ratio"
+        #err,errstr = ocl/cpu,"ratio"
         plot_data(data, err, scale='linear')
         plt.title("max %s = %.3g"%(errstr, max(abs(err[index]))))
     if is2D: plt.colorbar()
 
-    if Ncpu > 0 and Ngpu > 0 and '-hist' in opts:
+    if Ncpu > 0 and Nocl > 0 and '-hist' in opts:
         plt.figure()
         v = relerr[index]
         v[v==0] = 0.5*np.min(np.abs(v[v!=0]))

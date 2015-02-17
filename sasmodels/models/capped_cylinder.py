@@ -172,4 +172,6 @@ demo = dict(
     theta_pd=15, theta_pd_n=45,
     phi_pd=15, phi_pd_n=1,
     )
-
+oldname = 'CappedCylinderModel'
+oldpars = dict(sld='sld_capcyl', solvent_sld='sld_solv',
+               length='len_cyl', radius='rad_cyl', cap_radius='rad_cap')

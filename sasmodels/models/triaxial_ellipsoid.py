@@ -140,3 +140,8 @@ demo = dict(
         phi_pd=15, phi_pd_n=1,
         psi_pd=15, psi_pd_n=1,
         )
+oldname = 'TriaxialEllipsoidModel'
+oldpars = dict(theta='axis_theta', phi='axis_phi', psi='axis_psi',
+               sld='sldEll',  solvent_sld='sldSolv',
+               req_minor='semi_axisA', req_major='semi_axisB',
+               rpolar='semi_axisC')

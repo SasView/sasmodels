@@ -1,56 +1,6 @@
 """
 Convert models to and from sasview.
 """
-PARAMETER_MAP = {
-    'CylinderModel': dict(
-        name='cylinder',
-        cyl_theta='theta', cyl_phi='phi',
-        sldCyl='sld', sldSolv='solvent_sld',
-        ),
-    'EllipsoidModel': dict(
-        name='ellipsoid',
-        axis_theta='theta', axis_phi='phi',
-        sldEll='sld', sldSolv='solvent_sld',
-        radius_a='rpolar', radius_b='requatorial',
-        ),
-    'CoreShellCylinderModel': dict(
-        name='core_shell_cylinder',
-        axis_theta='theta', axis_phi='phi',
-        ),
-    'TriaxialEllipsoidModel': dict(
-        name='triaxial_ellipsoid',
-        axis_theta='theta', axis_phi='phi', axis_psi='psi',
-        sldEll='sld', sldSolv='solvent_sld',
-        semi_axisA='req_minor', semi_axisB='req_major', semi_axisC='rpolar',
-        ),
-    'LamellarModel': dict(
-        name='lamellar',
-        sld_bi='sld', sld_sol='solvent_sld',
-        bi_thick='thickness',
-        ),
-    'CappedCylinderModel': dict(
-        name='capped_cylinder',
-        sld_capcyl='sld', sld_solv='solvent_sld',
-        len_cyl='length', rad_cyl='radius', rad_cap='cap_radius',
-        ),
-    'SphereModel': dict(
-        name='sphere',
-        sldSph='sld', sldSolv='solvent_sld',
-        radius='radius',  # listing identical parameters is optional
-        ),
-    }
-
-def _reverse_map():
-    retval = {}
-    for old_name,old_map in PARAMETER_MAP.items():
-        new_name = old_map['name']
-        new_map = dict((v,k) for k,v in old_map.items() if k != 'name')
-        new_map['name'] = old_name
-        retval[new_name] = new_map
-    return retval
-REVERSE_MAP = _reverse_map()
-del _reverse_map
-
 
 def _rename_pars(pars, mapping):
     """
@@ -84,10 +34,9 @@ def convert_model(name, pars):
     """
     Convert model from old style parameter names to new style.
     """
-    mapping = PARAMETER_MAP[name]
-    newname = mapping['name']
-    newpars = _rescale_sld(_rename_pars(pars, mapping))
-    return newname, newpars
+    raise NotImplementedError
+    # need to load all new models in order to determine old=>new
+    # model name mapping
 
 def _unscale_sld(pars):
     """
@@ -102,8 +51,10 @@ def revert_model(name, pars):
     """
     Convert model from new style parameter names to old style.
     """
-    mapping = REVERSE_MAP[name]
-    oldname = mapping['name']
+    sasmodels = __import__('sasmodels.models.'+name)
+    newmodel = getattr(sasmodels.models, name, None)
+    mapping = newmodel.oldpars
+    oldname = newmodel.oldname
     oldpars = _rename_pars(_unscale_sld(pars), mapping)
     return oldname, oldpars
 
