@@ -125,3 +125,10 @@ def ER(radius):
     return radius
 
 # VR defaults to 1.0
+
+demo = dict(
+    scale=1, background=0,
+    sld=6, solvent_sld=1,
+    radius=120,
+    radius_pd=.2, radius_pd_n=45,
+    )

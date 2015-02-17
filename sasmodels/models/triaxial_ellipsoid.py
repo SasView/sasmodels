@@ -128,3 +128,15 @@ def ER(req_minor, req_major, rpolar):
     from .ellipsoid import ER as ellipsoid_ER
     return ellipsoid_ER(rpolar, np.sqrt(req_minor*req_major))
 
+demo = dict(
+        scale=1, background=0,
+        sld=6, solvent_sld=1,
+        theta=30, phi=15, psi=5,
+        req_minor=25, req_major=36, rpolar=50,
+        req_minor_pd=0, req_minor_pd_n=1,
+        req_major_pd=0, req_major_pd_n=1,
+        rpolar_pd=.2, rpolar_pd_n=30,
+        theta_pd=15, theta_pd_n=45,
+        phi_pd=15, phi_pd_n=1,
+        psi_pd=15, psi_pd_n=1,
+        )

@@ -167,3 +167,14 @@ def VR(radius, thickness, length):
     core = pi * radius**2 * length
     return whole, whole-core
 
+demo = dict(
+    scale=1, background=0,
+    core_sld=6, shell_sld=8, solvent_sld=1,
+    radius=45, thickness=25, length=340,
+    theta=30, phi=15,
+    radius_pd=.2, radius_pd_n=1,
+    length_pd=.2, length_pd_n=10,
+    thickness_pd=.2, thickness_pd_n=10,
+    theta_pd=15, theta_pd_n=45,
+    phi_pd=15, phi_pd_n=1,
+    )

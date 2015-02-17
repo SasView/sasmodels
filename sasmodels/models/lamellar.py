@@ -93,3 +93,10 @@ Iqxy = """
 
 # ER defaults to 0.0
 # VR defaults to 1.0
+
+demo = dict(
+        scale=1, background=0,
+        sld=6, solvent_sld=1,
+        thickness=40,
+        thickness_pd= 0.2, thickness_pd_n=40,
+        )

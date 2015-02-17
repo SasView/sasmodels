@@ -3,12 +3,19 @@
 
 import sys
 import math
+from os.path import basename, dirname, join as joinpath
+import glob
 
 import numpy as np
 
 from sasmodels.bumps_model import BumpsModel, plot_data, tic
 from sasmodels import kernelcl, kerneldll
 from sasmodels.convert import revert_model
+
+# List of available models
+ROOT = dirname(__file__)
+MODELS = [basename(f)[:-3]
+          for f in sorted(glob.glob(joinpath(ROOT,"sasmodels","models","[a-zA-Z]*.py")))]
 
 
 def sasview_model(modelname, **pars):
@@ -294,8 +301,7 @@ VALUE_OPTIONS = [
 def main():
     opts = [arg for arg in sys.argv[1:] if arg.startswith('-')]
     args = [arg for arg in sys.argv[1:] if not arg.startswith('-')]
-    models = "\n    ".join("%-7s: %s"%(k,v.__name__.replace('_',' '))
-                           for k,v in sorted(MODELS.items()))
+    models = "\n    ".join("%-15s"%v for v in MODELS)
     if len(args) == 0:
         print(USAGE%models)
         sys.exit(1)
@@ -310,7 +316,15 @@ def main():
         print "Invalid options: %s"%(", ".join(invalid))
         sys.exit(1)
 
-    name, pars = MODELS[args[0]]()
+    # Get demo parameters from model definition, or use default parameters
+    # if model does not define demo parameters
+    name = args[0]
+    import sasmodels.models
+    __import__('sasmodels.models.'+name)
+    model = getattr(sasmodels.models, name)
+    pars = getattr(model, 'demo', None)
+    if pars is None: pars = dict((p[0],p[2]) for p in model.parameters)
+
     Nopencl = int(args[1]) if len(args) > 1 else 5
     Nsasview = int(args[2]) if len(args) > 2 else 1
 
@@ -332,125 +346,6 @@ def main():
         set_pars[k] = float(v) if not v.endswith('type') else v
 
     compare(name, pars, Nsasview, Nopencl, opts, set_pars)
-
-# ===========================================================================
-#
-
-MODELS = {}
-def model(name):
-    def gather_function(fn):
-        MODELS[name] = fn
-        return fn
-    return gather_function
-
-
-@model('cyl')
-def cylinder():
-    pars = dict(
-        scale=1, background=0,
-        sld=6, solvent_sld=1,
-        #radius=5, length=20,
-        radius=260, length=290,
-        theta=30, phi=0,
-        radius_pd=.2, radius_pd_n=9,
-        length_pd=.2,length_pd_n=10,
-        theta_pd=15, theta_pd_n=45,
-        phi_pd=15, phi_pd_n=1,
-        )
-    return 'cylinder', pars
-
-@model('capcyl')
-def capped_cylinder():
-    pars = dict(
-        scale=1, background=0,
-        sld=6, solvent_sld=1,
-        radius=260, cap_radius=290, length=290,
-        theta=30, phi=15,
-        radius_pd=.2, radius_pd_n=1,
-        cap_radius_pd=.2, cap_radius_pd_n=1,
-        length_pd=.2, length_pd_n=10,
-        theta_pd=15, theta_pd_n=45,
-        phi_pd=15, phi_pd_n=1,
-        )
-    return 'capped_cylinder', pars
-
-
-@model('cscyl')
-def core_shell_cylinder():
-    pars = dict(
-        scale=1, background=0,
-        core_sld=6, shell_sld=8, solvent_sld=1,
-        radius=45, thickness=25, length=340,
-        theta=30, phi=15,
-        radius_pd=.2, radius_pd_n=1,
-        length_pd=.2, length_pd_n=10,
-        thickness_pd=.2, thickness_pd_n=10,
-        theta_pd=15, theta_pd_n=45,
-        phi_pd=15, phi_pd_n=1,
-        )
-    return 'core_shell_cylinder', pars
-
-
-@model('ell')
-def ellipsoid():
-    pars = dict(
-        scale=1, background=0,
-        sld=6, solvent_sld=1,
-        rpolar=50, requatorial=30,
-        theta=30, phi=15,
-        rpolar_pd=.2, rpolar_pd_n=15,
-        requatorial_pd=.2, requatorial_pd_n=15,
-        theta_pd=15, theta_pd_n=45,
-        phi_pd=15, phi_pd_n=1,
-        )
-    return 'ellipsoid', pars
-
-
-@model('ell3')
-def triaxial_ellipsoid():
-    pars = dict(
-        scale=1, background=0,
-        sld=6, solvent_sld=1,
-        theta=30, phi=15, psi=5,
-        req_minor=25, req_major=36, rpolar=50,
-        req_minor_pd=0, req_minor_pd_n=1,
-        req_major_pd=0, req_major_pd_n=1,
-        rpolar_pd=.2, rpolar_pd_n=30,
-        theta_pd=15, theta_pd_n=45,
-        phi_pd=15, phi_pd_n=1,
-        psi_pd=15, psi_pd_n=1,
-        )
-    return 'triaxial_ellipsoid', pars
-
-@model('sphpy')
-def spherepy():
-    pars = dict(
-        scale=1, background=0,
-        sld=6, solvent_sld=1,
-        radius=120,
-        radius_pd=.2, radius_pd_n=45,
-        )
-    return 'spherepy', pars
-
-@model('sph')
-def sphere():
-    pars = dict(
-        scale=1, background=0,
-        sld=6, solvent_sld=1,
-        radius=120,
-        radius_pd=.2, radius_pd_n=45,
-        )
-    return 'sphere', pars
-
-@model('lam')
-def lamellar():
-    pars = dict(
-        scale=1, background=0,
-        sld=6, solvent_sld=1,
-        thickness=40,
-        thickness_pd= 0.2, thickness_pd_n=40,
-        )
-    return 'lamellar', pars
 
 if __name__ == "__main__":
     main()

@@ -161,4 +161,15 @@ parameters = [
 source = [ "lib/J1.c", "lib/gauss76.c", "capped_cylinder.c" ]
 
 
+demo = dict(
+    scale=1, background=0,
+    sld=6, solvent_sld=1,
+    radius=260, cap_radius=290, length=290,
+    theta=30, phi=15,
+    radius_pd=.2, radius_pd_n=1,
+    cap_radius_pd=.2, cap_radius_pd_n=1,
+    length_pd=.2, length_pd_n=10,
+    theta_pd=15, theta_pd_n=45,
+    phi_pd=15, phi_pd_n=1,
+    )
 

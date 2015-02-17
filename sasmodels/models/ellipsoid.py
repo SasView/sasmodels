@@ -176,3 +176,15 @@ def ER(rpolar, requatorial):
     ddd = np.zeros_like(rpolar)
     ddd[valid] = 2.0*(delta+1.0)*rpolar*requatorial**2
     return 0.5*ddd**(1.0/3.0)
+
+
+demo = dict(
+        scale=1, background=0,
+        sld=6, solvent_sld=1,
+        rpolar=50, requatorial=30,
+        theta=30, phi=15,
+        rpolar_pd=.2, rpolar_pd_n=15,
+        requatorial_pd=.2, requatorial_pd_n=15,
+        theta_pd=15, theta_pd_n=45,
+        phi_pd=15, phi_pd_n=1,
+        )
