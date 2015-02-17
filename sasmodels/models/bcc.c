@@ -38,7 +38,7 @@ double _sphereform(double q, double radius, double sld, double solvent_sld){
     const double qr = q*radius;
     double sn, cn;
     SINCOS(qr, sn, cn);
-    const double bes = qr==0.0 ? 1.0 : 3.0*(sn-qr*cn)/(qr*qr*qr);
+    const double bes = (qr == 0.0 ? 1.0 : 3.0*(sn-qr*cn)/(qr*qr*qr));
     const double fq = bes * (sld - solvent_sld)*form_volume(radius);
     return 1.0e-4*fq*fq;
 }
@@ -66,11 +66,11 @@ double Iq(double q, double dnn,
 	for(int i=0; i<150; i++) {
 		//setup inner integral over the ellipsoidal cross-section
 		double summj=0.0;
-		const double zi = ( Gauss150Z[i]*(vb-va) + va + vb )/2.0;		//the outer dummy is phi
+		const double zphi = ( Gauss150Z[i]*(vb-va) + va + vb )/2.0;		//the outer dummy is phi
 		for(int j=0;j<150;j++) {
 			//20 gauss points for the inner integral
-			double zij = ( Gauss150Z[j]*(vbj-vaj) + vaj + vbj )/2.0;		//the inner dummy is theta
-			double yyy = Gauss150Wt[j] * _BCC_Integrand(q,dnn,d_factor,zi,zij);
+			double ztheta = ( Gauss150Z[j]*(vbj-vaj) + vaj + vbj )/2.0;		//the inner dummy is theta
+			double yyy = Gauss150Wt[j] * _BCC_Integrand(q,dnn,d_factor,ztheta,zphi);
 			summj += yyy;
 		}
 		//now calculate the value of the inner integral

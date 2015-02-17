@@ -1,5 +1,6 @@
 #bcc paracrystal model
 #note model title and parameter table are automatically inserted
+#note - calculation requires double precision
 """
 Calculates the scattering from a **body-centered cubic lattice** with paracrystalline distortion. Thermal vibrations
 are considered to be negligible, and the size of the paracrystal is infinitely large. Paracrystalline distortion is
@@ -106,10 +107,10 @@ def ER(radius, length):
 # parameters for demo
 demo = dict(
     scale=1, background=0,
-    dnn=200, d_factor=0.05, sld=6, solvent_sld=1,
-    radius=20,
+    dnn=220, d_factor=0.06, sld=4, solvent_sld=1,
+    radius=40,
     theta=60, phi=60, psi=60,
-    radius_pd=.2, radius_pd_n=8,
+    radius_pd=.2, radius_pd_n=0.2,
     theta_pd=15, theta_pd_n=0,
     phi_pd=15, phi_pd_n=0,
     psi_pd=15, psi_pd_n=0,
