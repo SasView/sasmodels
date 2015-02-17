@@ -136,8 +136,7 @@ parameters = [
 source = [ "lib/J1.c", "lib/gauss76.c", "barbell.c" ]
 
 def ER(radius, length):
-    ddd = 0.75*radius*(2*radius*length + (length+radius)*(length+pi*radius))
-    return 0.5 * (ddd)**(1./3.)
+    return 1.0
 
 # parameters for demo
 demo = dict(
