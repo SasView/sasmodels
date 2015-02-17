@@ -144,8 +144,8 @@ demo = dict(
     sld=6, solvent_sld=1,
     bell_radius = 40, radius=20, length=400,
     theta=60, phi=60,
-    radius_pd=.2, radius_pd_n=0,
-    length_pd=.2,length_pd_n=0,
+    radius_pd=.2, radius_pd_n=5,
+    length_pd=.2,length_pd_n=5,
     theta_pd=15, theta_pd_n=0,
     phi_pd=15, phi_pd_n=0,
     )

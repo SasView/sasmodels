@@ -20,7 +20,7 @@ double _bell_kernel(double q, double h, double bell_radius,
 
         const double be = (arg2 == 0.0 ? 0.5 :J1(arg2)/arg2);
 
-	    double Fq = cos(arg1)*(1.0-t*t)*be;
+	    const double Fq = cos(arg1)*(1.0-t*t)*be;
 
 	    total += Gauss76Wt[i] * Fq;
     }
@@ -35,11 +35,11 @@ double form_volume(double bell_radius,
 
     // bell radius should never be less than radius when this is called
     const double hdist = sqrt(bell_radius*bell_radius - radius*radius);
-    const double p1 = 2*bell_radius*bell_radius*bell_radius/3.0;
+    const double p1 = 2.0*bell_radius*bell_radius*bell_radius/3.0;
     const double p2 = bell_radius*bell_radius*hdist;
     const double p3 = hdist*hdist*hdist/3.0;
 
-    return M_PI*radius*radius*length + 2.0*M_PI*(p1+p2+p3);
+    return M_PI*radius*radius*length + 2.0*M_PI*(p1+p2-p3);
 }
 
 double Iq(double q, double sld,
@@ -54,7 +54,7 @@ double Iq(double q, double sld,
 
     const double lower = 0.0;
     const double upper = M_PI_2;
-    const double h = sqrt(fabs(bell_radius*bell_radius-radius*radius));
+    const double h = sqrt(bell_radius*bell_radius-radius*radius);
     double total = 0.0;
     for (int i = 0; i < 76; i++){
         const double alpha= 0.5*(Gauss76Z[i]*(upper-lower) + upper + lower);
@@ -77,7 +77,7 @@ double Iq(double q, double sld,
 
     //Contrast and volume normalization
     const double s = (sld - solvent_sld);
-    return form*1.0e-4*s*s;
+    return form*1.0e-4*s*s; //form_volume(bell_radius,radius,length);
 }
 
 
@@ -101,12 +101,12 @@ double Iqxy(double qx, double qy,
     // # The following correction factor exists in sasview, but it can't be
     // # right, so we are leaving it out for now.
     const double q = sqrt(qx*qx+qy*qy);
-    const double cos_val = cn*cos(phi*M_PI_180)*(qx/q) + sn*(qy/q);
+    const double cos_val = cn*cos(phi*M_PI_180)*qx + sn*qy;
     const double alpha = acos(cos_val); // rod angle relative to q
     SINCOS(alpha, sn, cn);
 
     const double h = sqrt(bell_radius*bell_radius - radius*radius); // negative h
-    const double bell_Fq = _bell_kernel(q, h, bell_radius, length, sn, cn);
+    const double bell_Fq = _bell_kernel(q, h, bell_radius, length, sn, cn)/sn;
 
     const double besarg = q*radius*sn;
     const double siarg = q*0.5*length*cn;
