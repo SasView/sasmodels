@@ -96,13 +96,13 @@ For 2D data: The 2D scattering intensity is calculated similar to the 2D cylinde
 
 *Figure. 2D plot (w/(256X265) data points).*
 
-.. image:: img/image061.jpg
-
-*Figure. Examples of the angles for oriented pp against the detector plane.*
-
-.. image:: img/image062.jpg
+.. image:: img/orientation.jpg
 
 Figure. Definition of the angles for oriented 2D barbells.
+
+.. image:: img/orientation2.jpg
+
+*Figure. Examples of the angles for oriented pp against the detector plane.*
 
 REFERENCE
 
