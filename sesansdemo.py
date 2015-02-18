@@ -9,6 +9,7 @@ from pylab import *
 from scipy.special import jv as besselj
 
 # q-range parameters
+
 q = arange(0.0003, 1.0, 0.0003);    # [nm^-1] range wide enough for  Hankel transform
 dq=(q[1]-q[0])*1e9;   # [m^-1] step size in q, needed for integration
 nq=len(q);
@@ -33,7 +34,7 @@ S=1.;
 I=phi*(1-phi)*V*(DeltaRho**2)*P*S;
 
 clf()
-subplot(1,2,1)  # plot the SANS calculation
+subplot(211)  # plot the SANS calculation
 plot(q,I,'k')
 loglog(q,I)
 xlim([0.01, 1])
@@ -54,14 +55,14 @@ G=G*dq*1e9*2*pi; # integr step, conver q into [m**-1] and 2 pi circle integr
 stt= th*Lambda**2/4/pi/pi*G[0]  # scattering power according to SANS formalism
 PP=exp(th*Lambda**2/4/pi/pi*(G-G[0]));
 
-subplot(1,2,2)
+subplot(212)
 plot(zz,PP,'k',label="Hankel transform") # Hankel transform 1D
 xlabel('spin-echo length [nm]')
 ylabel('polarisation normalised')
 hold(True)
 
 # Cosine transformation of 2D scattering patern
-if True:
+if False:
     qy,qz = meshgrid(q,q)
     qr=R*sqrt(qy**2 + qz**2); # reuse variable names Hankel transform, but now 2D
     P=(3.*(sin(qr)-qr*cos(qr)) / qr**3)**2;
