@@ -4,6 +4,8 @@ Sasmodels core.
 import sys, os
 import datetime
 
+from sasmodels import sesans
+
 # CRUFT python 2.6
 if not hasattr(datetime.timedelta, 'total_seconds'):
     def delay(dt): return dt.days*86400 + dt.seconds + 1e-6*dt.microseconds
@@ -212,6 +214,18 @@ def _plot_result1D(data, theory, view):
     #plt.axhline(0, color='black', lw=1, hold=True)
     #plt.axhline(-1, color='black', ls='--',lw=1, hold=True)
 
+def _plot_sesans(data, theory, view):
+    import matplotlib.pyplot as plt
+    resid = (theory - data.data)/data.err_data
+    plt.subplot(121)
+    plt.errorbar(data.SElength, data.data, yerr=data.err_data)
+    plt.plot(data.SElength, theory, '-', hold=True)
+    plt.xlabel('spin echo length (A)')
+    plt.ylabel('polarization')
+    plt.subplot(122)
+    plt.plot(data.SElength, resid, 'x')
+    plt.xlabel('spin echo length (A)')
+    plt.ylabel('residuals')
 
 def _plot_result2D(data, theory, view):
     """
@@ -228,16 +242,6 @@ def _plot_result2D(data, theory, view):
     plt.subplot(133)
     plot_data(data, resid, scale='linear')
     plt.colorbar()
-
-def plot_result(data, theory, view='log'):
-    """
-    Plot the data and residuals.
-    """
-    if hasattr(data, 'qx_data'):
-        _plot_result2D(data, theory, view)
-    else:
-        _plot_result1D(data, theory, view)
-
 
 class BumpsModel(object):
     """
@@ -262,11 +266,24 @@ class BumpsModel(object):
         self.data = data
         self.model = model
         self.cutoff = cutoff
+        if hasattr(data, 'SElength'):
+            self.data_type = 'sesans'
+        elif hasattr(data, 'qx_data'):
+            self.data_type = 'Iqxy'
+        else:
+            self.data_type = 'Iq'
 
         partype = model.info['partype']
 
         # interpret data
-        if hasattr(data, 'qx_data'):
+        if self.data_type == 'sesans':
+            q = sesans.make_q(data.q_zmax, data.Rmax)
+            self.index = slice(None,None)
+            self.iq = data.data
+            self.diq = data.err_data
+            self._theory = np.zeros_like(q)
+            q_vectors = [q]
+        elif self.data_type == 'Iqxy':
             self.index = (data.mask==0) & (~np.isnan(data.data))
             self.iq = data.data[self.index]
             self.diq = data.err_data[self.index]
@@ -275,12 +292,14 @@ class BumpsModel(object):
                 q_vectors = [np.sqrt(data.qx_data**2+data.qy_data**2)]
             else:
                 q_vectors = [data.qx_data, data.qy_data]
-        else:
+        elif self.data_type == 'Iq':
             self.index = (data.x>=data.qmin) & (data.x<=data.qmax) & ~np.isnan(data.y)
             self.iq = data.y[self.index]
             self.diq = data.dy[self.index]
             self._theory = np.zeros_like(data.y)
             q_vectors = [data.x]
+        else:
+            raise ValueError("Unknown data type") # never gets here
 
         # Remember function inputs so we can delay loading the function and
         # so we can save/restore state
@@ -332,7 +351,13 @@ class BumpsModel(object):
             #print pars
             self._theory[self.index] = self._fn(pars, pd_pars, self.cutoff)
             #self._theory[:] = self._fn.eval(pars, pd_pars)
-            self._cache['theory'] = self._theory
+            if self.data_type == 'sesans':
+                P = sesans.hankel(self.data.SElength, self.data.wavelength,
+                                  self.data.thickness, self._fn_inputs[0],
+                                  self._theory)
+                self._cache['theory'] = P
+            else:
+                self._cache['theory'] = self._theory
         return self._cache['theory']
 
     def residuals(self):
@@ -348,7 +373,36 @@ class BumpsModel(object):
         return 2*self.nllf()/self.dof
 
     def plot(self, view='log'):
-        plot_result(self.data, self.theory(), view=view)
+        """
+        Plot the data and residuals.
+        """
+        data, theory = self.data, self.theory()
+        if self.data_type == 'Iq':
+            _plot_result1D(data, theory, view)
+        elif self.data_type == 'Iqxy':
+            _plot_result2D(data, theory, view)
+        elif self.data_type == 'sesans':
+            _plot_sesans(data, theory, view)
+        else:
+            raise ValueError("Unknown data type")
+
+    def simulate_data(self, noise=None):
+        print "noise", noise
+        if noise is None:
+            noise = self.diq[self.index]
+        else:
+            noise = 0.01*noise
+            self.diq[self.index] = noise
+        y = self.theory()
+        y += y*np.random.randn(*y.shape)*noise
+        if self.data_type == 'Iq':
+            self.data.y[self.index] = y
+        elif self.data_type == 'Iqxy':
+            self.data.data[self.index] = y
+        elif self.data_type == 'sesans':
+            self.data.data[self.index] = y
+        else:
+            raise ValueError("Unknown model")
 
     def save(self, basename):
         pass
