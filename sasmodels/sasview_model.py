@@ -41,7 +41,7 @@ def make_class(kernel_module, dtype='single'):
     def __init__(self, multfactor=1):
         SasviewModel.__init__(self, model)
     attrs = dict(__init__=__init__)
-    ConstructedModel = type(model.info['name'],  (SasviewModel,), attrs)
+    ConstructedModel = type(model.info['oldname'],  (SasviewModel,), attrs)
     return ConstructedModel
 
 class SasviewModel(object):
@@ -53,6 +53,7 @@ class SasviewModel(object):
         self._model = model
 
         self.name = model.info['name']
+        self.oldname = model.info['oldname']
         self.description = model.info['description']
         self.category = None
         self.multiplicity_info = None
