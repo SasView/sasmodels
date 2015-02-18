@@ -216,14 +216,14 @@ def _plot_result1D(data, theory, view):
 
 def _plot_sesans(data, theory, view):
     import matplotlib.pyplot as plt
-    resid = (theory - data.data)/data.err_data
+    resid = (theory - data.y)/data.dy
     plt.subplot(121)
-    plt.errorbar(data.SElength, data.data, yerr=data.err_data)
-    plt.plot(data.SElength, theory, '-', hold=True)
+    plt.errorbar(data.x, data.y, yerr=data.dy)
+    plt.plot(data.x, theory, '-', hold=True)
     plt.xlabel('spin echo length (A)')
     plt.ylabel('polarization')
     plt.subplot(122)
-    plt.plot(data.SElength, resid, 'x')
+    plt.plot(data.x, resid, 'x')
     plt.xlabel('spin echo length (A)')
     plt.ylabel('residuals')
 
@@ -266,7 +266,8 @@ class BumpsModel(object):
         self.data = data
         self.model = model
         self.cutoff = cutoff
-        if hasattr(data, 'SElength'):
+# TODO       if  isinstance(data,SESANSData1D)        
+        if hasattr(data, 'lam'):
             self.data_type = 'sesans'
         elif hasattr(data, 'qx_data'):
             self.data_type = 'Iqxy'
@@ -277,10 +278,10 @@ class BumpsModel(object):
 
         # interpret data
         if self.data_type == 'sesans':
-            q = sesans.make_q(data.q_zmax, data.Rmax)
+            q = sesans.make_q(data.sample.zacceptance, data.Rmax)
             self.index = slice(None,None)
-            self.iq = data.data
-            self.diq = data.err_data
+            self.iq = data.y
+            self.diq = data.dy
             self._theory = np.zeros_like(q)
             q_vectors = [q]
         elif self.data_type == 'Iqxy':
@@ -352,8 +353,8 @@ class BumpsModel(object):
             self._theory[self.index] = self._fn(pars, pd_pars, self.cutoff)
             #self._theory[:] = self._fn.eval(pars, pd_pars)
             if self.data_type == 'sesans':
-                P = sesans.hankel(self.data.SElength, self.data.wavelength,
-                                  self.data.thickness, self._fn_inputs[0],
+                P = sesans.hankel(self.data.x, self.data.lam,
+                                  self.data.sample.thickness/10, self._fn_inputs[0],
                                   self._theory)
                 self._cache['theory'] = P
             else:
@@ -400,7 +401,7 @@ class BumpsModel(object):
         elif self.data_type == 'Iqxy':
             self.data.data[self.index] = y
         elif self.data_type == 'sesans':
-            self.data.data[self.index] = y
+            self.data.y[self.index] = y
         else:
             raise ValueError("Unknown model")
 
