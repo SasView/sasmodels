@@ -9,7 +9,9 @@ import glob
 import numpy as np
 
 from sasmodels.bumps_model import BumpsModel, plot_data, tic
-from sasmodels import kernelcl, kerneldll
+try: from sasmodels import kernelcl
+except: from sasmodels import kerneldll as kernelcl
+from sasmodels import kerneldll
 from sasmodels.convert import revert_model
 
 # List of available models

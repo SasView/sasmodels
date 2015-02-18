@@ -29,7 +29,7 @@ import numpy as np
 
 try:
     import pyopencl as cl
-except ImportError,exc:
+except RuntimeError,exc:
     warnings.warn(str(exc))
     raise RuntimeError("OpenCL not available")
 
