@@ -298,6 +298,14 @@ VALUE_OPTIONS = [
     'cutoff', 'random', 'Nq',
     ]
 
+def get_demo_pars(name):
+    import sasmodels.models
+    __import__('sasmodels.models.'+name)
+    model = getattr(sasmodels.models, name)
+    pars = getattr(model, 'demo', None)
+    if pars is None: pars = dict((p[0],p[2]) for p in model.parameters)
+    return pars
+
 def main():
     opts = [arg for arg in sys.argv[1:] if arg.startswith('-')]
     args = [arg for arg in sys.argv[1:] if not arg.startswith('-')]
@@ -319,11 +327,7 @@ def main():
     # Get demo parameters from model definition, or use default parameters
     # if model does not define demo parameters
     name = args[0]
-    import sasmodels.models
-    __import__('sasmodels.models.'+name)
-    model = getattr(sasmodels.models, name)
-    pars = getattr(model, 'demo', None)
-    if pars is None: pars = dict((p[0],p[2]) for p in model.parameters)
+    pars = get_demo_pars(name)
 
     Nopencl = int(args[1]) if len(args) > 1 else 5
     Nsasview = int(args[2]) if len(args) > 2 else 1
