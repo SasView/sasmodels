@@ -31,17 +31,20 @@ except ImportError,exc:
     from .kerneldll import load_model
 
 
-def make_class(kernel_module, dtype='single'):
+def make_class(kernel_module, dtype='single', namestyle='name'):
     """
     Load the sasview model defined in *kernel_module*.
 
     Returns a class that can be used directly as a sasview model.
+
+    Defaults to using the new name for a model. Setting namestyle='name'
+    will produce a class with a name compatible with SasView
     """
     model =  load_model(kernel_module, dtype=dtype)
     def __init__(self, multfactor=1):
         SasviewModel.__init__(self, model)
     attrs = dict(__init__=__init__)
-    ConstructedModel = type(model.info['oldname'],  (SasviewModel,), attrs)
+    ConstructedModel = type(model.info[namestyle],  (SasviewModel,), attrs)
     return ConstructedModel
 
 class SasviewModel(object):
