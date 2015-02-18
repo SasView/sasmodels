@@ -168,3 +168,23 @@ demo = dict(
 oldname='CylinderModel'
 oldpars=dict(theta='cyl_theta', phi='cyl_phi', sld='sldCyl', solvent_sld='sldSolv')
 
+
+# test values:
+# [
+#   [ {parameters}, q, I(q)],
+#   [ {parameters}, [q], [I(q)] ],
+#   [ {parameters}, [q1, q2, ...], [I(q1), I(q2), ...]],
+
+#   [ {parameters}, (qx, qy), I(qx, Iqy)],
+#   [ {parameters}, [(qx1, qy1), (qx2, qy2), ...], [I(qx1,qy1), I(qx2,qy2), ...],
+#   ...
+# ]
+# Precision defaults to 7 digits (relative) for single, 14 for double
+# May want a limited precision version that checks for 8-n or 15-n digits respectively
+tests = [
+    [{},  0.2, 0.041761386790780453],
+    [{'theta':10.0, 'phi':10.0}, [0.2], [0.041761386790780453]],
+    [{'theta':10.0, 'phi':10.0}, (0.2, 2.5), 0.038176446608393366],
+    [{'theta':10.0, 'phi':10.0}, [(0.2, 2.5)], [0.038176446608393366]],
+    ]
+
