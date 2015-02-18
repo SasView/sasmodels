@@ -42,7 +42,7 @@ are defined in :num:`figure #cylinder-orientation`.
 
 .. figure:: img/orientation2.jpg
 
-    Examples of the angles for oriented pp against the detector plane.
+    Examples of the angles for oriented cylinders against the detector plane.
 
 NB: The 2nd virial coefficient of the cylinder is calculated based on the
 radius and length values, and used as the effective radius for $S(Q)$
@@ -112,10 +112,10 @@ from numpy import pi, inf
 name = "cylinder"
 title = "Right circular cylinder with uniform scattering length density."
 description = """
-     P(q)= 2*(sld - solvent_sld)*V*sin(qLcos(alpha/2))
-            /[qLcos(alpha/2)]*J1(qRsin(alpha/2))/[qRsin(alpha)]
+     f(q,alpha) = 2*(sld - solvent_sld)*V*sin(qLcos(alpha/2))
+                /[qLcos(alpha/2)]*J1(qRsin(alpha/2))/[qRsin(alpha)]
 
-            P(q,alpha)= scale/V*f(q)^(2)+background
+            P(q,alpha)= scale/V*f(q,alpha)^(2)+background
             V: Volume of the cylinder
             R: Radius of the cylinder
             L: Length of the cylinder
@@ -124,7 +124,7 @@ description = """
             cylinder and the q-vector for 1D
             :the ouput is P(q)=scale/V*integral
             from pi/2 to zero of...
-            f(q)^(2)*sin(alpha)*dalpha + background
+            f(q,alpha)^(2)*sin(alpha)*dalpha + background
 """
 
 parameters = [
@@ -167,4 +167,24 @@ demo = dict(
 # names and the target sasview model name.
 oldname='CylinderModel'
 oldpars=dict(theta='cyl_theta', phi='cyl_phi', sld='sldCyl', solvent_sld='sldSolv')
+
+
+# test values:
+# [
+#   [ {parameters}, q, I(q)],
+#   [ {parameters}, [q], [I(q)] ],
+#   [ {parameters}, [q1, q2, ...], [I(q1), I(q2), ...]],
+
+#   [ {parameters}, (qx, qy), I(qx, Iqy)],
+#   [ {parameters}, [(qx1, qy1), (qx2, qy2), ...], [I(qx1,qy1), I(qx2,qy2), ...],
+#   ...
+# ]
+# Precision defaults to 7 digits (relative) for single, 14 for double
+# May want a limited precision version that checks for 8-n or 15-n digits respectively
+tests = [
+    [{},  0.2, 0.041761386790780453],
+    [{'theta':10.0, 'phi':10.0}, [0.2], [0.041761386790780453]],
+    [{'theta':10.0, 'phi':10.0}, (0.2, 2.5), 0.038176446608393366],
+    [{'theta':10.0, 'phi':10.0}, [(0.2, 2.5)], [0.038176446608393366]],
+    ]
 

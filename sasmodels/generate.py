@@ -721,6 +721,8 @@ def make(kernel_module):
         description = kernel_module.description,
         parameters = COMMON_PARAMETERS + kernel_module.parameters,
         source = getattr(kernel_module, 'source', []),
+        oldname = kernel_module.oldname,
+        oldpars = kernel_module.oldpars,
         )
     # Fill in attributes which default to None
     info.update((k,getattr(kernel_module, k, None))
