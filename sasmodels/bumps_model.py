@@ -353,7 +353,7 @@ class BumpsModel(object):
             self._theory[self.index] = self._fn(pars, pd_pars, self.cutoff)
             #self._theory[:] = self._fn.eval(pars, pd_pars)
             if self.data_type == 'sesans':
-                P = sesans.hankel(self.data.x, self.data.lam,
+                P = sesans.hankel(self.data.x, self.data.lam*1e-9,
                                   self.data.sample.thickness/10, self._fn_inputs[0],
                                   self._theory)
                 self._cache['theory'] = P
