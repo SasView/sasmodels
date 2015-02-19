@@ -1,8 +1,8 @@
-#bcc paracrystal model
+#fcc paracrystal model
 #note model title and parameter table are automatically inserted
 #note - calculation requires double precision
-"""
-Calculates the scattering from a **body-centered cubic lattice** with paracrystalline distortion. Thermal vibrations
+r"""
+Calculates the scattering from a **face-centered cubic lattice** with paracrystalline distortion. Thermal vibrations
 are considered to be negligible, and the size of the paracrystal is infinitely large. Paracrystalline distortion is
 assumed to be isotropic and characterized by a Gaussian distribution.
 
@@ -13,16 +13,16 @@ Definition
 
 The scattering intensity *I(q)* is calculated as
 
-.. image:: img/image167.jpg
+.. image:: img/image158.jpg
 
 where *scale* is the volume fraction of spheres, *Vp* is the volume of the primary particle, *V(lattice)* is a volume
 correction for the crystal structure, *P(q)* is the form factor of the sphere (normalized), and *Z(q)* is the
-paracrystalline structure factor for a body-centered cubic structure.
+paracrystalline structure factor for a face-centered cubic structure.
 
-Equation (1) of the 1990 reference is used to calculate *Z(q)*, using equations (29)-(31) from the 1987 paper for
+Equation (1) of the 1990 reference is used to calculate *Z(q)*, using equations (23)-(25) from the 1987 paper for
 *Z1*\ , *Z2*\ , and *Z3*\ .
 
-The lattice correction (the occupied volume of the lattice) for a body-centered cubic structure of particles of radius
+The lattice correction (the occupied volume of the lattice) for a face-centered cubic structure of particles of radius
 *R* and nearest neighbor separation *D* is
 
 .. image:: img/image159.jpg
@@ -33,28 +33,28 @@ The distortion factor (one standard deviation) of the paracrystal is included in
 
 where *g* is a fractional distortion based on the nearest neighbor distance.
 
-The body-centered cubic lattice is
+The face-centered cubic lattice is
 
-.. image:: img/image168.jpg
+.. image:: img/image161.jpg
 
 For a crystal, diffraction peaks appear at reduced q-values given by
 
 .. image:: img/image162.jpg
 
-where for a body-centered cubic lattice, only reflections where (\ *h* + *k* + *l*\ ) = even are allowed and
-reflections where (\ *h* + *k* + *l*\ ) = odd are forbidden. Thus the peak positions correspond to (just the first 5)
+where for a face-centered cubic lattice *h*\ , *k*\ , *l* all odd or all even are allowed and reflections where
+*h*\ , *k*\ , *l* are mixed odd/even are forbidden. Thus the peak positions correspond to (just the first 5)
 
-.. image:: img/image169.jpg
+.. image:: img/image163.jpg
 
 **NB: The calculation of** *Z(q)* **is a double numerical integral that must be carried out with a high density of**
 **points to properly capture the sharp peaks of the paracrystalline scattering.** So be warned that the calculation is
 SLOW. Go get some coffee. Fitting of any experimental data must be resolution smeared for any meaningful fit. This
 makes a triple integral. Very, very slow. Go get lunch!
 
-This example dataset is produced using 200 data points, *qmin* = 0.001 |Ang^-1|, *qmax* = 0.1 |Ang^-1| and the above
+This example dataset is produced using 200 data points, *qmin* = 0.01 |Ang^-1|, *qmax* = 0.1 |Ang^-1| and the above
 default values.
 
-.. image:: img/image170.jpg
+.. image:: img/image164.jpg
 
 *Figure. 1D plot in the linear scale using the default values (w/200 data point).*
 
@@ -64,7 +64,7 @@ computation.
 
 .. image:: img/image165.gif
 
-.. image:: img/image171.jpg
+.. image:: img/image166.jpg
 
 *Figure. 2D plot using the default values (w/200X200 pixels).*
 
@@ -79,10 +79,10 @@ Hideki Matsuoka et. al. *Physical Review B*, 41 (1990) 3854 -3856
 
 from numpy import pi, inf
 
-name = "BCCparacrystal"
-title = "Body-centred cubic lattic with paracrystalline distortion"
+name = "fcc_paracrystal"
+title = "Face-centred cubic lattic with paracrystalline distortion"
 description = """
-    Calculates the scattering from a **body-centered cubic lattice** with paracrystalline distortion. Thermal vibrations
+    Calculates the scattering from a **face-centered cubic lattice** with paracrystalline distortion. Thermal vibrations
     are considered to be negligible, and the size of the paracrystal is infinitely large. Paracrystalline distortion is
     assumed to be isotropic and characterized by a Gaussian distribution.
     """
@@ -99,7 +99,7 @@ parameters = [
     [ "psi", "degrees", 60, [-inf,inf], "orientation","Out of plane angle"]
     ]
 
-source = [ "lib/J1.c", "lib/gauss150.c", "bcc.c" ]
+source = [ "lib/J1.c", "lib/gauss150.c", "fcc.c" ]
 
 def ER(radius, length):
     return 0
@@ -118,6 +118,6 @@ demo = dict(
 
 # For testing against the old sasview models, include the converted parameter
 # names and the target sasview model name.
-oldname='BCCrystalModel'
+oldname='FCCrystalModel'
 oldpars=dict(sld='sldSph',
              solvent_sld='sldSolv')
