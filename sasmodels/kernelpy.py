@@ -86,7 +86,7 @@ class PyKernel(object):
         self.fixed_pars = fixed_pars
         self.pd_pars = pd_pars
 
-    def __call__(self, fixed, pd, cutoff):
+    def __call__(self, fixed, pd, cutoff=1e-5):
         #print "fixed",fixed
         #print "pd", pd
         args = self.args[:]  # grab a copy of the args
@@ -143,22 +143,26 @@ def _loops(form, form_volume, cutoff, scale, background,
     #                                                        #
     ##########################################################
 
-    # weight vector, to be populated by polydispersity loops
     weight = np.empty(len(pd), 'd')
+    if weight.size > 0:
+        # weight vector, to be populated by polydispersity loops
 
-    # identify which pd parameters are volume parameters
-    vol_weight_index = np.array([(index in vol_index) for index in pd_index])
+        # identify which pd parameters are volume parameters
+        vol_weight_index = np.array([(index in vol_index) for index in pd_index])
 
-    # Sort parameters in decreasing order of pd length
-    Npd = np.array([len(pdi[0]) for pdi in pd], 'i')
-    order = np.argsort(Npd)[::-1]
-    stride = np.cumprod(Npd[order])
-    pd = [pd[index] for index in order]
-    pd_index = pd_index[order]
-    vol_weight_index = vol_weight_index[order]
+        # Sort parameters in decreasing order of pd length
+        Npd = np.array([len(pdi[0]) for pdi in pd], 'i')
+        order = np.argsort(Npd)[::-1]
+        stride = np.cumprod(Npd[order])
+        pd = [pd[index] for index in order]
+        pd_index = pd_index[order]
+        vol_weight_index = vol_weight_index[order]
 
-    fast_value = pd[0][0]
-    fast_weight = pd[0][1]
+        fast_value = pd[0][0]
+        fast_weight = pd[0][1]
+    else:
+        stride = np.array([1])
+        vol_weight_index = slice(None, None)
 
     ret = np.zeros_like(args[0])
     norm = np.zeros_like(ret)
@@ -168,9 +172,10 @@ def _loops(form, form_volume, cutoff, scale, background,
         # update polydispersity parameter values
         fast_index = k%stride[0]
         if fast_index == 0:  # bottom loop complete ... check all other loops
-            for i,index, in enumerate(k%stride):
-                args[pd_index[i]] = pd[i][0][index]
-                weight[i] = pd[i][1][index]
+            if weight.size > 0:
+                for i,index, in enumerate(k%stride):
+                    args[pd_index[i]] = pd[i][0][index]
+                    weight[i] = pd[i][1][index]
         else:
             args[pd_index[0]] = fast_value[fast_index]
             weight[0] = fast_weight[fast_index]
