@@ -79,7 +79,7 @@ Hideki Matsuoka et. al. *Physical Review B*, 41 (1990) 3854 -3856
 
 from numpy import pi, inf
 
-name = "BCCparacrystal"
+name = "bcc_paracrystal"
 title = "Body-centred cubic lattic with paracrystalline distortion"
 description = """
     Calculates the scattering from a **body-centered cubic lattice** with paracrystalline distortion. Thermal vibrations

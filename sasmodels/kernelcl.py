@@ -29,9 +29,16 @@ import numpy as np
 
 try:
     import pyopencl as cl
-except RuntimeError,exc:
+except ImportError,exc:
     warnings.warn(str(exc))
     raise RuntimeError("OpenCL not available")
+
+try:
+    context = cl.create_some_context(interactive=False)
+    del context
+except cl.RuntimeError, exc:
+    warnings.warn(str(exc))
+    raise RuntimeError("OpenCl not available")
 
 from pyopencl import mem_flags as mf
 

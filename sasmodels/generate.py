@@ -730,6 +730,7 @@ def make(kernel_module):
     # Fill in the derived attributes
     info['limits'] = dict((p[0],p[3]) for p in info['parameters'])
     info['partype'] = categorize_parameters(info['parameters'])
+    info['defaults'] = dict((p[0],p[2]) for p in info['parameters'])
 
     source = make_model(info)
 
@@ -756,11 +757,16 @@ def demo_time():
     source, info = make(cylinder)
     print "time:",toc()
 
-def demo():
-    from .models import cylinder
-    source, info = make(cylinder)
-    #print doc(cylinder)
-    print source
+def main():
+    if len(sys.argv) <= 1:
+        print "usage: python -m sasmodels.generate modelname"
+    else:
+        name = sys.argv[1]
+        import sasmodels.models
+        __import__('sasmodels.models.'+name)
+        model = getattr(sasmodels.models, name)
+        source, info = make(model); print source
+        #print doc(model)
 
 if __name__ == "__main__":
-    demo()
+    main()
