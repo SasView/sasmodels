@@ -731,6 +731,7 @@ def make(kernel_module):
     # Fill in the derived attributes
     info['limits'] = dict((p[0],p[3]) for p in info['parameters'])
     info['partype'] = categorize_parameters(info['parameters'])
+    info['defaults'] = dict((p[0],p[2]) for p in info['parameters'])
 
     source = make_model(info)
 
