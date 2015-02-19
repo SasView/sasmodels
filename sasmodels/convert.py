@@ -12,12 +12,14 @@ def _rename_pars(pars, mapping):
         # Bumps style parameter names
         for variant in ("", "_pd", "_pd_n", "_pd_nsigma", "_pd_type"):
             if old+variant in newpars:
-                newpars[new+variant] = pars[old+variant]
+                if new is not None:
+                    newpars[new+variant] = pars[old+variant]
                 del newpars[old+variant]
         # Sasview style parameter names
         for variant in (".width", ".nsigmas", ".type", ".npts"):
             if old+variant in newpars:
-                newpars[new+variant] = pars[old+variant]
+                if new is not None:
+                    newpars[new+variant] = pars[old+variant]
                 del newpars[old+variant]
     return newpars
 

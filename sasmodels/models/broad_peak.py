@@ -50,7 +50,7 @@ None.
 """
 
 import numpy as np
-from numpy import pi, inf, sin, cos, sqrt, exp, log
+from numpy import pi, inf, sin, cos, sqrt, exp, log, fabs
 
 name = "broad_peak"
 title = "Broad Lorentzian type peak on top of a power law decay"
@@ -91,7 +91,7 @@ def form_volume():
 
 def Iq(q, porod_scale, porod_exp, lorentz_scale, lorentz_length, peak_pos, lorentz_exp):
     inten = porod_scale/pow(q,porod_exp) + lorentz_scale/(1.0 \
-        + pow((math.fabs(q-peak_pos)*lorentz_length),lorentz_exp))
+        + pow((fabs(q-peak_pos)*lorentz_length),lorentz_exp))
     return inten  
 
 # FOR VECTORIZED VERSION, UNCOMMENT THE NEXT LINE
@@ -112,4 +112,4 @@ demo = dict(
 oldname = "BroadPeakModel"
 oldpars = dict(porod_scale='scale_p', porod_exp='exponent_p', 
         lorentz_scale='scale_l', lorentz_length='length_l', peak_pos='q_peak', 
-        lorentz_exp='exponent_l')
+        lorentz_exp='exponent_l', scale=None)
