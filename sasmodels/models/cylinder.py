@@ -183,7 +183,7 @@ oldpars=dict(theta='cyl_theta', phi='cyl_phi', sld='sldCyl', solvent_sld='sldSol
 # May want a limited precision version that checks for 8-n or 15-n digits respectively
 tests = [
     [{},  0.2, 0.041761386790780453],
-    [{'theta':10.0, 'phi':10.0}, [0.2], [0.041761386790780453]],
+    [{}, [0.2], [0.041761386790780453]],
     [{'theta':10.0, 'phi':10.0}, (0.2, 2.5), 0.038176446608393366],
     [{'theta':10.0, 'phi':10.0}, [(0.2, 2.5)], [0.038176446608393366]],
     ]
