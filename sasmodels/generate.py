@@ -756,11 +756,16 @@ def demo_time():
     source, info = make(cylinder)
     print "time:",toc()
 
-def demo():
-    from .models import cylinder
-    source, info = make(cylinder)
-    #print doc(cylinder)
-    print source
+def main():
+    if len(sys.argv) <= 1:
+        print "usage: python -m sasmodels.generate modelname"
+    else:
+        name = sys.argv[1]
+        import sasmodels.models
+        __import__('sasmodels.models.'+name)
+        model = getattr(sasmodels.models, name)
+        source, info = make(model); print source
+        #print doc(model)
 
 if __name__ == "__main__":
-    demo()
+    main()
