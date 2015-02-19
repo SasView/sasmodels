@@ -4,32 +4,32 @@ double Iqxy(double qx, double qy, double dnn,
     double d_factor, double radius,double sld, double solvent_sld,
     double theta, double phi, double psi);
 
-double _BCC_Integrand(double q, double dnn, double d_factor, double theta, double phi);
-double _BCCeval(double Theta, double Phi, double temp1, double temp3);
+double _FCC_Integrand(double q, double dnn, double d_factor, double theta, double phi);
+double _FCCeval(double Theta, double Phi, double temp1, double temp3);
 double _sphereform(double q, double radius, double sld, double solvent_sld);
 
 
-double _BCC_Integrand(double q, double dnn, double d_factor, double theta, double phi) {
+double _FCC_Integrand(double q, double dnn, double d_factor, double theta, double phi) {
 
 	const double Da = d_factor*dnn;
 	const double temp1 = q*q*Da*Da;
 	const double temp3 = q*dnn;
 
-	double retVal = _BCCeval(theta,phi,temp1,temp3)/(4.0*M_PI);
+	double retVal = _FCCeval(theta,phi,temp1,temp3)/(4.0*M_PI);
 	return(retVal);
 }
 
-double _BCCeval(double Theta, double Phi, double temp1, double temp3) {
+double _FCCeval(double Theta, double Phi, double temp1, double temp3) {
 
 	double temp6,temp7,temp8,temp9,temp10;
 	double result;
 
 	temp6 = sin(Theta);
-	temp7 = sin(Theta)*cos(Phi)+sin(Theta)*sin(Phi)+cos(Theta);
-	temp8 = -1.0*sin(Theta)*cos(Phi)-sin(Theta)*sin(Phi)+cos(Theta);
-	temp9 = -1.0*sin(Theta)*cos(Phi)+sin(Theta)*sin(Phi)-cos(Theta);
+	temp7 = sin(Theta)*sin(Phi)+cos(Theta);
+	temp8 = -1.0*sin(Theta)*cos(Phi)+cos(Theta);
+	temp9 = -1.0*sin(Theta)*cos(Phi)+sin(Theta)*sin(Phi);
 	temp10 = exp((-1.0/8.0)*temp1*((temp7*temp7)+(temp8*temp8)+(temp9*temp9)));
-	result = pow(1.0-(temp10*temp10),3)*temp6/((1.0-2.0*temp10*cos(0.5*temp3*(temp7))+(temp10*temp10))*(1.0-2.0*temp10*cos(0.5*temp3*(temp8))+(temp10*temp10))*(1.0-2.0*temp10*cos(0.5*temp3*(temp9))+(temp10*temp10)));
+	result = pow((1.0-(temp10*temp10)),3)*temp6/((1.0-2.0*temp10*cos(0.5*temp3*(temp7))+(temp10*temp10))*(1.0-2.0*temp10*cos(0.5*temp3*(temp8))+(temp10*temp10))*(1.0-2.0*temp10*cos(0.5*temp3*(temp9))+(temp10*temp10)));
 
 	return (result);
 }
@@ -53,8 +53,8 @@ double Iq(double q, double dnn,
   double sld, double solvent_sld){
 
 	//Volume fraction calculated from lattice symmetry and sphere radius
-	const double s1 = dnn/sqrt(0.75);
-	const double latticescale = 2.0*(4.0/3.0)*M_PI*(radius*radius*radius)/(s1*s1*s1);
+	const double s1 = dnn*sqrt(2.0);
+	const double latticescale = 4.0*(4.0/3.0)*M_PI*(radius*radius*radius)/(s1*s1*s1);
 
     const double va = 0.0;
     const double vb = 2.0*M_PI;
@@ -70,7 +70,7 @@ double Iq(double q, double dnn,
 		for(int j=0;j<150;j++) {
 			//20 gauss points for the inner integral
 			double ztheta = ( Gauss150Z[j]*(vbj-vaj) + vaj + vbj )/2.0;		//the inner dummy is theta
-			double yyy = Gauss150Wt[j] * _BCC_Integrand(q,dnn,d_factor,ztheta,zphi);
+			double yyy = Gauss150Wt[j] * _FCC_Integrand(q,dnn,d_factor,ztheta,zphi);
 			summj += yyy;
 		}
 		//now calculate the value of the inner integral
@@ -139,15 +139,15 @@ double Iqxy(double qx, double qy, double dnn,
 
     // The following test should always pass
     if (fabs(cos_val_b3)>1.0) {
-      //printf("bcc_ana_2D: Unexpected error: cos()>1\n");
+      //printf("FCC_ana_2D: Unexpected error: cos()>1\n");
       cos_val_b3 = 1.0;
     }
     if (fabs(cos_val_b2)>1.0) {
-      //printf("bcc_ana_2D: Unexpected error: cos()>1\n");
+      //printf("FCC_ana_2D: Unexpected error: cos()>1\n");
       cos_val_b2 = 1.0;
     }
     if (fabs(cos_val_b1)>1.0) {
-      //printf("bcc_ana_2D: Unexpected error: cos()>1\n");
+      //printf("FCC_ana_2D: Unexpected error: cos()>1\n");
       cos_val_b1 = 1.0;
     }
     // Compute the angle btw vector q and the a3 axis
