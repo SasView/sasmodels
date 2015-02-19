@@ -45,7 +45,7 @@ def get_weights(kernel, pars, name):
     relative = name in kernel.info['partype']['pd-rel']
     limits = kernel.info['limits']
     disperser = pars.get(name+'_pd_type', 'gaussian')
-    value = pars.get(name)
+    value = pars.get(name, kernel.info['defaults'][name])
     npts = pars.get(name+'_pd_n', 0)
     width = pars.get(name+'_pd', 0.0)
     nsigma = pars.get(name+'_pd_nsigma', 3.0)
@@ -66,7 +66,7 @@ class DirectModel:
         self.model = load_model(self.model_definition, dtype=dtype)
         q_vectors = [np.ascontiguousarray(q,dtype=dtype) for q in q_vectors]
         self.kernel = make_kernel(self.model, q_vectors)
-    def __call__(self, pars):
+    def __call__(self, **pars):
         return call_kernel(self.kernel, pars)
 
 def demo():
@@ -89,7 +89,7 @@ def demo():
     pars = dict((k,float(v))
                 for pair in sys.argv[3:]
                 for k,v in [pair.split('=')])
-    Iq = model(pars)
+    Iq = model(**pars)
     print Iq[0]
 
 if __name__ == "__main__":
