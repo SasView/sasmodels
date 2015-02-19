@@ -112,4 +112,4 @@ demo = dict(
 oldname = "BroadPeakModel"
 oldpars = dict(porod_scale='scale_p', porod_exp='exponent_p', 
         lorentz_scale='scale_l', lorentz_length='length_l', peak_pos='q_peak', 
-        lorentz_exp='exponent_l')
+        lorentz_exp='exponent_l', scale=None)
