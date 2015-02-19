@@ -162,7 +162,7 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
                       for s in opts for split in ((s.split('='),))
                       if len(split) == 2)
     # Sort out data
-    qmax = 1.0 if '-highq' in opts else (0.2 if '-midq' in opts else 0.05)
+    qmax = 10.0 if '-exq' in opts else 1.0 if '-highq' in opts else 0.2 if '-midq' in opts else 0.05
     Nq = int(opt_values.get('-Nq', '128'))
     is2D = not "-1d" in opts
     data, index = make_data(qmax, is2D, Nq)
@@ -224,18 +224,25 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
         if Nocl > 0: plt.subplot(131)
         plot_data(data, cpu, scale='log')
         plt.title("%s t=%.1f ms"%(comp,cpu_time))
+        cbar_title = "log I"
     if Nocl > 0:
         if Ncpu > 0: plt.subplot(132)
         plot_data(data, ocl, scale='log')
         plt.title("opencl t=%.1f ms"%ocl_time)
+        cbar_title = "log I"
     if Ncpu > 0 and Nocl > 0:
         plt.subplot(133)
-        err = resid if '-abs' in opts else relerr
-        errstr = "abs err" if '-abs' in opts else "rel err"
+        if '-abs' in opts:
+            err,errstr = resid, "abs err"
+        else:
+            err,errstr = relerr, "rel err"
         #err,errstr = ocl/cpu,"ratio"
-        plot_data(data, err, scale='linear')
+        plot_data(data, err, scale='log') #'linear')
         plt.title("max %s = %.3g"%(errstr, max(abs(err[index]))))
-    if is2D: plt.colorbar()
+        cbar_title = "log "+errstr
+    if is2D:
+        h = plt.colorbar()
+        h.ax.set_title(cbar_title)
 
     if Ncpu > 0 and Nocl > 0 and '-hist' in opts:
         plt.figure()
@@ -264,7 +271,7 @@ Options (* for default):
 
     -plot*/-noplot plots or suppress the plot of the model
     -single*/-double uses double precision for comparison
-    -lowq*/-midq/-highq use q values up to 0.05, 0.2 or 1.0
+    -lowq*/-midq/-highq/-exq use q values up to 0.05, 0.2, 1.0, 10.0
     -Nq=128 sets the number of Q points in the data set
     -1d/-2d* computes 1d or 2d data
     -preset*/-random[=seed] preset or random parameters
@@ -286,7 +293,7 @@ Available models:
 NAME_OPTIONS = set([
     'plot','noplot',
     'single','double',
-    'lowq','midq','highq',
+    'lowq','midq','highq','exq',
     '2d','1d',
     'preset','random',
     'poly','mono',
