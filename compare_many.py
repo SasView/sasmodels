@@ -6,7 +6,7 @@ import numpy as np
 
 from sasmodels.kernelcl import environment
 from compare import (MODELS, randomize_model, suppress_pd, eval_sasview,
-                     eval_opencl, eval_ctypes, make_data)
+                     eval_opencl, eval_ctypes, make_data, get_demo_pars)
 
 def get_stats(target, value, index):
     resid = abs(value-target)[index]
@@ -30,8 +30,8 @@ def print_column_headers(pars, parts):
     print(','.join('"%s"'%c for c in groups))
     print(','.join('"%s"'%c for c in columns))
 
-def compare_instance(model, data, index, N=1, mono=True, cutoff=1e-5):
-    name, pars = MODELS[model]()
+def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5):
+    pars = get_demo_pars(name)
     header = '\n"Model","%s","Count","%d"'%(name, N)
     if not mono: header += ',"Cutoff",%g'%(cutoff,)
     print(header)
@@ -101,7 +101,7 @@ is set in compare.py defaults for each model.
         sys.exit(1)
 
     data, index = make_data(qmax=1.0, is2D=is2D, Nq=Nq)
-    model_list = [model] if model != "all" else list(sorted(MODELS.keys()))
+    model_list = [model] if model != "all" else MODELS
     for model in model_list:
         compare_instance(model, data, index, N=count, mono=mono, cutoff=cutoff)
 
