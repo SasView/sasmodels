@@ -16,7 +16,7 @@ import numpy as np
 
 try:
     from .kernelcl import load_model as _loader
-except ImportError,exc:
+except RuntimeError,exc:
     import warnings
     warnings.warn(str(exc))
     warnings.warn("OpenCL not available --- using ctypes instead")
