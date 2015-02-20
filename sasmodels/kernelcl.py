@@ -352,7 +352,7 @@ class GpuKernel(object):
         real = np.float32 if self.input.dtype == generate.F32 else np.float64
         fixed = [real(p) for p in pars]
         cutoff = real(cutoff)
-        loops = np.hstack(pd_pars)
+        loops = np.hstack(pd_pars) if pd_pars else np.empty(0,dtype=self.input.dtype)
         loops = np.ascontiguousarray(loops.T, self.input.dtype).flatten()
         Nloops = [np.uint32(len(p[0])) for p in pd_pars]
         #print "loops",Nloops, loops
