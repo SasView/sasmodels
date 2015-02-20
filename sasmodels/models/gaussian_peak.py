@@ -41,11 +41,11 @@ parameters = [
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
 form_volume = """
-    return 1;
+    return 1.0;
     """
 
 Iq = """
-    return exp(-0.5*pow((q - q0])/sigma,2.0));
+    return exp(-0.5*pow((q - q0)/sigma,2.0));
     """
 
 
