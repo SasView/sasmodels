@@ -65,10 +65,13 @@ def annotate_exception(exc, msg):
     """
     args = exc.args
     if not args:
-        arg0 = msg
+        exc.args = (msg,)
     else:
-        arg0 = " ".join((args[0],msg))
-    exc.args = tuple([arg0] + list(args[1:]))
+        try:
+            arg0 = " ".join((args[0],msg))
+            exc.args = tuple([arg0] + list(args[1:]))
+        except:
+            exc.args = (" ".join((str(exc),msg)),)
     
 def suite():
     root = dirname(__file__)
@@ -82,7 +85,8 @@ def suite():
         module = getattr(module, 'models', None)
 
         model = getattr(module, model_name, None)
-        tests = getattr(model, 'tests', [])
+        smoke_tests = [[{},0.1,None],[{},(0.1,0.1),None]]
+        tests = smoke_tests + getattr(model, 'tests', [])
         
         if tests:
             #print '------'
@@ -119,19 +123,20 @@ class ModelTestCase(unittest.TestCase):
                     I = [I]
                     
                 if isinstance(Q[0], tuple):
-                    npQ = [np.array([Qi[d] for Qi in Q]) for d in xrange(len(Q[0]))]
+                    Qx,Qy = zip(*Q)
+                    Q_vectors = [np.array(Qx), np.array(Qy)]
                 else:
-                    npQ = [np.array(Q)]
+                    Q_vectors = [np.array(Q)]
 
-                self.assertTrue(Q)
-                self.assertEqual(len(I), len(Q))    
+                self.assertEqual(len(I), len(Q))
             
-                Iq = eval_kernel(self.kernel, npQ, params)
+                Iq = eval_kernel(self.kernel, Q_vectors, params)
             
                 self.assertGreater(len(Iq), 0)    
                 self.assertEqual(len(I), len(Iq))              
                 
                 for q, i, iq in zip(Q, I, Iq):
+                    if i is None: continue # smoke test --- make sure it runs
                     err = np.abs(i - iq)
                     nrm = np.abs(i)
             
