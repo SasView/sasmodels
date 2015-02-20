@@ -265,13 +265,14 @@ KERNEL_HEADER = """\
 #  define global
 #  define local
 #  define constant const
+#  define powr(a,b) pow(a,b)
+#  define pown(a,b) pow(a,b)
 #else
 #  ifdef USE_SINCOS
 #    define SINCOS(angle,svar,cvar) svar=sincos(angle,&cvar)
 #  else
 #    define SINCOS(angle,svar,cvar) do {svar=sin(angle);cvar=cos(angle);} while (0)
 #  endif
-#  define pow(a,b) powr(a,b)
 #endif
 
 // Standard mathematical constants:
@@ -502,18 +503,18 @@ def make_kernel(info, is_2D):
     q_pars = KERNEL_2D if is_2D else KERNEL_1D
     fn = q_pars['fn']
 
-    if len(pd_pars) > 0:
-        # Build polydispersity loops
-        depth = 4
-        offset = ""
-        loop_head = []
-        loop_end = []
-        for name in pd_pars:
-            subst = { 'name': name, 'offset': offset }
-            loop_head.append(indent(LOOP_OPEN%subst, depth))
-            loop_end.insert(0, (" "*depth) + "}")
-            offset += '+N'+name
-            depth += 2
+
+    # Build polydispersity loops
+    depth = 4
+    offset = ""
+    loop_head = []
+    loop_end = []
+    for name in pd_pars:
+        subst = { 'name': name, 'offset': offset }
+        loop_head.append(indent(LOOP_OPEN%subst, depth))
+        loop_end.insert(0, (" "*depth) + "}")
+        offset += '+N'+name
+        depth += 2
 
     # The volume parameters in the inner loop are used to call the volume()
     # function in the kernel, with the parameters defined in vol_pars and the
