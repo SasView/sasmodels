@@ -35,6 +35,8 @@ double Iq(double qval,
   
   Pq = (head_sld-solvent_sld)*(sin(qval*(head_length+tail_length))-sin(qval*tail_length)) + 
               (tail_sld-solvent_sld)*sin(qval*tail_length);
+  Pq *= Pq;
+  Pq *= 4.0/(qval*qval);
 
   NNint = (int)NN;    //cast to an integer for the loop
   ii=0;

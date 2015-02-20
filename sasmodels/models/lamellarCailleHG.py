@@ -127,7 +127,7 @@ demo = dict(
         sld=-1, head_sld=4.0, solvent_sld=6.0,
 		tail_length_pd= 0.1, tail_length_pd_n=20,
 		head_length_pd= 0.05, head_length_pd_n=30,
-		spacing_pd= 0, spacing_pd_n=40
+		spacing_pd= 0.2, spacing_pd_n=40
          )
 
 oldname = 'LamellarPSHGModel'
