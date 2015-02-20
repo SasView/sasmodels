@@ -347,10 +347,10 @@ class BumpsModel(object):
                 input = self.model.make_input(self._fn_inputs)
                 self._fn = self.model(input)
 
-            pars = [getattr(self,p).value for p in self._fn.fixed_pars]
+            fixed_pars = [getattr(self,p).value for p in self._fn.fixed_pars]
             pd_pars = [self._get_weights(p) for p in self._fn.pd_pars]
-            #print pars
-            self._theory[self.index] = self._fn(pars, pd_pars, self.cutoff)
+            #print fixed_pars,pd_pars
+            self._theory[self.index] = self._fn(fixed_pars, pd_pars, self.cutoff)
             #self._theory[:] = self._fn.eval(pars, pd_pars)
             if self.data_type == 'sesans':
                 P = sesans.hankel(self.data.x, self.data.lam*1e-9,

@@ -548,8 +548,9 @@ def make_kernel(info, is_2D):
         spherical_correction = []
         weights = [p+"_w" for p in pd_pars]
         sasview_spherical = ""
+    weight_product = "*".join(weights) if len(weights) > 1 else "1.0"
     subst = {
-        'weight_product': "*".join(weights),
+        'weight_product': weight_product,
         'volume_norm': volume_norm,
         'fn': fn,
         'qcall': q_pars['qcall'],
@@ -573,6 +574,7 @@ def make_kernel(info, is_2D):
         par_decl = pd_par_decl
 
     # Finally, put the pieces together in the kernel.
+    pd_length = "+".join('N'+p for p in pd_pars) if len(pd_pars) > 0 else "0"
     subst = {
         # kernel name is, e.g., cylinder_Iq
         'name': kernel_name(info, is_2D),
@@ -581,7 +583,7 @@ def make_kernel(info, is_2D):
         # to declare, e.g., double sld, int Nradius, int Nlength
         'par_decl': par_decl,
         # to copy global to local pd pars we need, e.g., Nradius+Nlength
-        'pd_length': "+".join('N'+p for p in pd_pars),
+        'pd_length': pd_length,
         # the q initializers, e.g., double qi = q[i];
         'qinit': q_pars['qinit'],
         # the actual polydispersity loop
