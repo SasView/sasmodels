@@ -107,6 +107,7 @@ such a cross-check.
     *background* = 0.0 |cm^-1|.
 """
 
+import numpy as np
 from numpy import pi, inf
 
 name = "cylinder"
@@ -181,10 +182,11 @@ oldpars=dict(theta='cyl_theta', phi='cyl_phi', sld='sldCyl', solvent_sld='sldSol
 # ]
 # Precision defaults to 7 digits (relative) for single, 14 for double
 # May want a limited precision version that checks for 8-n or 15-n digits respectively
+qx,qy = 0.2*np.cos(2.5), 0.2*np.sin(2.5)
 tests = [
     [{},  0.2, 0.041761386790780453],
     [{}, [0.2], [0.041761386790780453]],
-    [{'theta':10.0, 'phi':10.0}, (0.2, 2.5), 0.038176446608393366],
-    [{'theta':10.0, 'phi':10.0}, [(0.2, 2.5)], [0.038176446608393366]],
+    [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.03414647218513852],
+    [{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.03414647218513852]],
     ]
-
+del qx,qy  # not necessary to delete, but cleaner
