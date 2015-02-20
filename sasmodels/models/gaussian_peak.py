@@ -1,119 +1,66 @@
 r"""
-For information about polarised and magnetic scattering, click here_.
+This model describes a Gaussian shaped peak on a flat background
 
-.. _here: polar_mag_help.html
+.. image:: img/image198.PNG
 
-Definition
-----------
+with the peak having height of *I0* centered at *q0* and having a standard deviation of *B*. The FWHM (full-width
+half-maximum) is 2.354 B.
 
-The 1D scattering intensity is calculated in the following way (Guinier, 1955)
+For 2D data: The 2D scattering intensity is calculated in the same way as 1D, where the *q* vector is defined as
 
-.. math::
+.. image:: img/image040.gif
 
-    I(Q) = \frac{\text{scale}}{V} \cdot \left[ \
-        3V(\Delta\rho) \cdot \frac{\sin(QR) - QR\cos(QR))}{(QR)^3} \
-        \right]^2 + \text{background}
+.. image:: img/image199.jpg
 
-where *scale* is a volume fraction, $V$ is the volume of the scatterer,
-$R$ is the radius of the sphere, *background* is the background level and
-*sld* and *solvent_sld* are the scattering length densities (SLDs) of the
-scatterer and the solvent respectively.
+*Figure. 1D plot using the default values (w/500 data points).*
 
-Note that if your data is in absolute scale, the *scale* should represent
-the volume fraction (which is unitless) if you have a good fit. If not,
-it should represent the volume fraction times a factor (by which your data
-might need to be rescaled).
+REFERENCE
 
-The 2D scattering intensity is the same as above, regardless of the
-orientation of $\vec q$.
-
-Our model uses the form factor calculations as defined in the IGOR
-package provided by the NIST Center for Neutron Research (Kline, 2006).
-
-Validation
-----------
-
-Validation of our code was done by comparing the output of the 1D model
-to the output of the software provided by the NIST (Kline, 2006).
-Figure :num:`figure #sphere-comparison` shows a comparison of the output
-of our model and the output of the NIST software.
-
-.. _sphere-comparison:
-
-.. figure:: img/sphere_comparison.jpg
-
-    Comparison of the DANSE scattering intensity for a sphere with the
-    output of the NIST SANS analysis software. The parameters were set to:
-    *scale* = 1.0, *radius* = 60 |Ang|, *contrast* = 1e-6 |Ang^-2|, and
-    *background* = 0.01 |cm^-1|.
-
-
-Reference
----------
-
-A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*,
-John Wiley and Sons, New York, (1955)
-
-*2013/09/09 and 2014/01/06 - Description reviewed by S King and P Parker.*
+None.
 """
 
 from numpy import pi, inf
 
-name = "sphere"
-title = "Spheres with uniform scattering length density"
-description = """\
-P(q)=(scale/V)*[3V(sld-solvent_sld)*(sin(qR)-qRcos(qR))
-                /(qR)^3]^2 + background
-    R: radius of sphere
-    V: The volume of the scatter
-    sld: the SLD of the sphere
-    solvent_sld: the SLD of the solvent
+name = "gaussian_peak"
+title = "Gaussian shaped peak"
+description = """
+    Model describes a Gaussian shaped peak including a flat background
+    Provide F(q) = scale*exp( -1/2 *[(q-q0)/B]^2 )+ background
 """
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type",
 #     "description" ],
-    [ "sld", "1e-6/Ang^2", 1, [-inf,inf], "",
-      "Layer scattering length density" ],
-    [ "solvent_sld", "1e-6/Ang^2", 6, [-inf,inf], "",
-      "Solvent scattering length density" ],
-    [ "radius", "Ang",  50, [0, inf], "volume",
-      "Sphere radius" ],
+    [ "q0", "Ang^-1", 0.05, [-inf,inf], "",
+      "Peak position" ],
+    [ "sigma", "Ang^-1", 0.005, [-inf,inf], "",
+      "Peak width (standard deviation)" ],
     ]
 
 
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
 form_volume = """
-    return 1.333333333333333*M_PI*radius*radius*radius;
+    return 1;
     """
 
 Iq = """
-    const double qr = q*radius;
-    double sn, cn;
-    SINCOS(qr, sn, cn);
-    const double bes = qr==0.0 ? 1.0 : 3.0*(sn-qr*cn)/(qr*qr*qr);
-    const double fq = bes * (sld - solvent_sld) * form_volume(radius);
-    return 1.0e-4*fq*fq;
+    return exp(-0.5*pow((q - q0])/sigma,2.0));
     """
 
 
 Iqxy = """
     // never called since no orientation or magnetic parameters.
     //return -1.0;
-    return Iq(sqrt(qx*qx + qy*qy), sld, solvent_sld, radius);
+    return Iq(sqrt(qx*qx + qy*qy), q0, sigma);
     """
 
-def ER(radius):
-    return radius
 
 # VR defaults to 1.0
 
 demo = dict(
         scale=1, background=0,
-        sld=6, solvent_sld=1,
-        radius=120,
-        radius_pd=.2, radius_pd_n=45,
+        q0 = 0.05, sigma = 0.005,
         )
-oldname = "SphereModel"
-oldpars = dict(sld='sldSph', solvent_sld='sldSolv', radius='radius')
+oldname = "PeakGaussModel"
+oldpars = dict(sigma='B')
