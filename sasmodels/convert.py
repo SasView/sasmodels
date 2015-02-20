@@ -53,10 +53,10 @@ def revert_model(name, pars):
     """
     Convert model from new style parameter names to old style.
     """
-    sasmodels = __import__('sasmodels.models.'+name)
-    newmodel = getattr(sasmodels.models, name, None)
-    mapping = newmodel.oldpars
-    oldname = newmodel.oldname
+    __import__('sasmodels.models.'+name)
+    model = getattr(sasmodels.models, name, None)
+    mapping = model.oldpars
+    oldname = model.oldname
     oldpars = _rename_pars(_unscale_sld(pars), mapping)
     return oldname, oldpars
 

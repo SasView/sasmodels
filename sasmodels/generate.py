@@ -186,7 +186,7 @@ returns a list of files required by the model.
 
 # TODO: identify model files which have changed since loading and reload them.
 
-__all__ = ["make, doc", "sources", "use_single"]
+__all__ = ["make", "doc", "sources", "use_single"]
 
 import sys
 import os
@@ -265,13 +265,13 @@ KERNEL_HEADER = """\
 #  define global
 #  define local
 #  define constant const
-#  define powr(a,b) pow(a,b)
 #else
 #  ifdef USE_SINCOS
 #    define SINCOS(angle,svar,cvar) svar=sincos(angle,&cvar)
 #  else
 #    define SINCOS(angle,svar,cvar) do {svar=sin(angle);cvar=cos(angle);} while (0)
 #  endif
+#  define pow(a,b) powr(a,b)
 #endif
 
 // Standard mathematical constants:
