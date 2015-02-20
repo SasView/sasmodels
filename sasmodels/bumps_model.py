@@ -164,7 +164,7 @@ def plot_data(data, iq, vmin=None, vmax=None, scale='log'):
     from numpy.ma import masked_array, masked
     import matplotlib.pyplot as plt
     if hasattr(data, 'qx_data'):
-        iq = iq[:]
+        iq = iq+0
         valid = np.isfinite(iq)
         if scale == 'log':
             valid[valid] = (iq[valid] > 0)

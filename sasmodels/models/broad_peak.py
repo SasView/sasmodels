@@ -16,14 +16,18 @@ Definition
 
 The scattering intensity *I(q)* is calculated as
 
-.. image:: img/image174.jpg
+.. math:
+
+    I(q) = \frac{A}{Q^n} + \frac{C}{1 + (Q\xi}^m} + B
 
 Here the peak position is related to the d-spacing as *Q0* = 2|pi| / *d0*.
 
 For 2D data: The 2D scattering intensity is calculated in the same way as 1D,
 where the *q* vector is defined as
 
-.. image:: img/image040.gif
+.. math:
+
+    q = \sqrt{q_x^2 + q_y^2}
 
 =====================  =========  =============
 Parameter name          Units     Default value

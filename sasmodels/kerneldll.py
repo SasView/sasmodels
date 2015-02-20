@@ -19,12 +19,14 @@ if sys.platform == 'darwin':
     COMPILE = "gcc -shared -fPIC -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
 elif os.name == 'nt':
     # make sure vcvarsall.bat is called first in order to set compiler, headers, lib paths, etc.
-    ##COMPILER = r'"C:\Program Files (x86)\Common Files\Microsoft\Visual C++ for Python\9.0\VC\Bin\cl.exe"'
-    # Can't find VCOMP90.DLL (don't know why), so remove openmp support from windows compiler build
-    #COMPILE = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG /Tp%(source)s /link /DLL /INCREMENTAL:NO /MANIFEST /OUT:%(output)s"
-    #COMPILE = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG /Tp%(source)s /openmp /link /DLL /INCREMENTAL:NO /MANIFEST /OUT:%(output)s"
-    #COMPILE = "gcc -shared -fPIC -std=c99 -fopenmp -O2 -Wall %(source)s -o %(output)s -lm"
-    COMPILE = "gcc -shared -fPIC -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
+    if "VCINSTALLDIR" in os.environ:
+        # MSVC compiler is available, so use it.
+        COMPILE = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG /Tp%(source)s /openmp /link /DLL /INCREMENTAL:NO /MANIFEST /OUT:%(output)s"
+        # Can't find VCOMP90.DLL (don't know why), so remove openmp support from windows compiler build
+        #COMPILE = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG /Tp%(source)s /link /DLL /INCREMENTAL:NO /MANIFEST /OUT:%(output)s"
+    else:
+        #COMPILE = "gcc -shared -fPIC -std=c99 -fopenmp -O2 -Wall %(source)s -o %(output)s -lm"
+        COMPILE = "gcc -shared -fPIC -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
 else:
     COMPILE = "cc -shared -fPIC -std=c99 -fopenmp -O2 -Wall %(source)s -o %(output)s -lm"
 
