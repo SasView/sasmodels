@@ -43,7 +43,7 @@ except cl.RuntimeError, exc:
 from pyopencl import mem_flags as mf
 
 from . import generate
-from .kernelpy import PyInput, PyKernel
+from .kernelpy import PyInput, PyModel
 
 F64_DEFS = """\
 #ifdef cl_khr_fp64
@@ -67,6 +67,8 @@ def load_model(kernel_module, dtype="single"):
     so models can be defined without using too many resources.
     """
     source, info = generate.make(kernel_module)
+    if callable(info.get('Iq',None)):
+        return PyModel(info)
     ## for debugging, save source to a .cl file, edit it, and reload as model
     #open(info['name']+'.cl','w').write(source)
     #source = open(info['name']+'.cl','r').read()
@@ -233,12 +235,6 @@ class GpuModel(object):
         self.__dict__ = state.copy()
 
     def __call__(self, input):
-        # Support pure python kernel call
-        if input.is_2D and callable(self.info['Iqxy']):
-            return PyKernel(self.info['Iqxy'], self.info, input)
-        elif not input.is_2D and callable(self.info['Iq']):
-            return PyKernel(self.info['Iq'], self.info, input)
-
         if self.dtype != input.dtype:
             raise TypeError("data and kernel have different types")
         if self.program is None:
@@ -260,13 +256,7 @@ class GpuModel(object):
         mixture models because some models may be OpenCL, some may be
         ctypes and some may be pure python.
         """
-        # Support pure python kernel call
-        if len(q_vectors) == 1 and callable(self.info['Iq']):
-            return PyInput(q_vectors, dtype=self.dtype)
-        elif callable(self.info['Iqxy']):
-            return PyInput(q_vectors, dtype=self.dtype)
-        else:
-            return GpuInput(q_vectors, dtype=self.dtype)
+        return GpuInput(q_vectors, dtype=self.dtype)
 
 # TODO: check that we don't need a destructor for buffers which go out of scope
 class GpuInput(object):
@@ -348,28 +338,35 @@ class GpuKernel(object):
                       for _ in env.queues]
 
 
-    def __call__(self, pars, pd_pars, cutoff=1e-5):
+    def __call__(self, fixed_pars, pd_pars, cutoff=1e-5):
         real = np.float32 if self.input.dtype == generate.F32 else np.float64
-        fixed = [real(p) for p in pars]
-        cutoff = real(cutoff)
-        loops = np.hstack(pd_pars) if pd_pars else np.empty(0,dtype=self.input.dtype)
-        loops = np.ascontiguousarray(loops.T, self.input.dtype).flatten()
-        Nloops = [np.uint32(len(p[0])) for p in pd_pars]
-        #print "loops",Nloops, loops
 
-        #import sys; print >>sys.stderr,"opencl eval",pars
-        #print "opencl eval",pars
-        if len(loops) > 2*MAX_LOOPS:
-            raise ValueError("too many polydispersity points")
         device_num = 0
-        res_bi = self.res_b[device_num]
         queuei = environment().queues[device_num]
-        loops_bi = self.loops_b[device_num]
-        loops_l = cl.LocalMemory(len(loops.data))
-        cl.enqueue_copy(queuei, loops_bi, loops)
-        #ctx = environment().context
-        #loops_bi = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=loops)
-        args = self.input.q_buffers + [res_bi,loops_bi,loops_l,cutoff] + fixed + Nloops
+        res_bi = self.res_b[device_num]
+        nq = np.uint32(self.input.nq)
+        if pd_pars:
+            cutoff = real(cutoff)
+            loops_N = [np.uint32(len(p[0])) for p in pd_pars]
+            loops = np.hstack(pd_pars) if pd_pars else np.empty(0,dtype=self.input.dtype)
+            loops = np.ascontiguousarray(loops.T, self.input.dtype).flatten()
+            #print "loops",Nloops, loops
+
+            #import sys; print >>sys.stderr,"opencl eval",pars
+            #print "opencl eval",pars
+            if len(loops) > 2*MAX_LOOPS:
+                raise ValueError("too many polydispersity points")
+
+            loops_bi = self.loops_b[device_num]
+            cl.enqueue_copy(queuei, loops_bi, loops)
+            loops_l = cl.LocalMemory(len(loops.data))
+            #ctx = environment().context
+            #loops_bi = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=loops)
+            dispersed = [loops_bi, loops_l, cutoff] + loops_N
+        else:
+            dispersed = []
+        fixed = [real(p) for p in fixed_pars]
+        args = self.input.q_buffers + [res_bi, nq] + dispersed + fixed
         self.kernel(queuei, self.input.global_size, None, *args)
         cl.enqueue_copy(queuei, self.res, res_bi)
 
