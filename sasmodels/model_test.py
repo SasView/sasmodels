@@ -71,7 +71,7 @@ def suite(loaders, models):
                 test_name = "Model: %s, Kernel: OpenCL"%model_name
                 test = ModelTestCase(test_name, model_definition,
                                      load_model_cl, tests)
-                print "defining", test_name
+                #print "defining", test_name
                 suite.addTest(test)
 
             # test using dll if desired
@@ -79,7 +79,7 @@ def suite(loaders, models):
                 test_name = "Model: %s, Kernel: dll"%model_name
                 test = ModelTestCase(test_name, model_definition,
                                      load_model_dll, tests)
-                print "defining", test_name
+                #print "defining", test_name
                 suite.addTest(test)
 
     return suite
@@ -95,7 +95,7 @@ class ModelTestCase(unittest.TestCase):
         self.tests = tests
 
     def runTest(self):
-        print "running", self.test_name
+        #print "running", self.test_name
         try:
             model = self.loader(self.definition)
             for test in self.tests:

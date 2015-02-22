@@ -432,8 +432,12 @@ def make_model(info):
 
     # Generate form_volume function from body only
     if info['form_volume'] is not None:
+        if volume_parameters:
+            vol_par_decl = ', '.join('double '+p for p in volume_parameters)
+        else:
+            vol_par_decl = 'void'
         defines.append(('VOLUME_PARAMETER_DECLARATIONS',
-                        ', '.join('double '+p for p in volume_parameters)))
+                        vol_par_decl))
         fn = """\
 double form_volume(VOLUME_PARAMETER_DECLARATIONS);
 double form_volume(VOLUME_PARAMETER_DECLARATIONS) {
