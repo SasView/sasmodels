@@ -233,13 +233,13 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
     if Ncpu > 0 and Nocl > 0:
         plt.subplot(133)
         if '-abs' in opts:
-            err,errstr = resid, "abs err"
+            err,errstr,scale = resid, "abs err", "linear"
         else:
-            err,errstr = relerr, "rel err"
+            err,errstr,scale = abs(relerr), "rel err", "log"
         #err,errstr = ocl/cpu,"ratio"
-        plot_data(data, err, scale='log') #'linear')
+        plot_data(data, err, scale=scale)
         plt.title("max %s = %.3g"%(errstr, max(abs(err[index]))))
-        cbar_title = "log "+errstr
+        cbar_title = errstr if scale=="linear" else "log "+errstr
     if is2D:
         h = plt.colorbar()
         h.ax.set_title(cbar_title)

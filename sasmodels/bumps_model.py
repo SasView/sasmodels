@@ -174,8 +174,11 @@ def plot_data(data, iq, vmin=None, vmax=None, scale='log'):
         plottable = masked_array(iq, ~valid|data.mask)
         xmin, xmax = min(data.qx_data), max(data.qx_data)
         ymin, ymax = min(data.qy_data), max(data.qy_data)
-        if vmin is None: vmin = iq[valid&~data.mask].min()
-        if vmax is None: vmax = iq[valid&~data.mask].max()
+        try:
+            if vmin is None: vmin = iq[valid&~data.mask].min()
+            if vmax is None: vmax = iq[valid&~data.mask].max()
+        except:
+            vmin, vmax = 0, 1
         plt.imshow(plottable.reshape(128,128),
                    interpolation='nearest', aspect=1, origin='upper',
                    extent=[xmin, xmax, ymin, ymax], vmin=vmin, vmax=vmax)
