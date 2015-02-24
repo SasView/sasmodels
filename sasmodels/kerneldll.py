@@ -10,7 +10,7 @@ from ctypes import c_void_p, c_int, c_double
 import numpy as np
 
 from . import generate
-from .kernelpy import PyInput, PyKernel
+from .kernelpy import PyInput, PyModel
 
 from .generate import F32, F64
 # Compiler platform details
@@ -21,6 +21,8 @@ elif os.name == 'nt':
     # make sure vcvarsall.bat is called first in order to set compiler, headers, lib paths, etc.
     if "VCINSTALLDIR" in os.environ:
         # MSVC compiler is available, so use it.
+        # TODO: remove intermediate OBJ file created in the directory
+        # TODO: maybe don't use randomized name for the c file
         COMPILE = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG /Tp%(source)s /openmp /link /DLL /INCREMENTAL:NO /MANIFEST /OUT:%(output)s"
         # Can't find VCOMP90.DLL (don't know why), so remove openmp support from windows compiler build
         #COMPILE = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG /Tp%(source)s /link /DLL /INCREMENTAL:NO /MANIFEST /OUT:%(output)s"
@@ -53,9 +55,9 @@ def load_model(kernel_module, dtype=None):
     The DLL is not loaded until the kernel is called so models an
     be defined without using too many resources.
     """
-    import tempfile
-
     source, info = generate.make(kernel_module)
+    if callable(info.get('Iq',None)):
+        return PyModel(info)
     source_files = generate.sources(info) + [info['filename']]
     newest = max(os.path.getmtime(f) for f in source_files)
     dllpath = dll_path(info)
@@ -67,7 +69,7 @@ def load_model(kernel_module, dtype=None):
         print "Compile command:",command
         status = os.system(command)
         if status != 0:
-            print "compile failed.  File is in %r"%filename
+            raise RuntimeError("compile failed.  File is in %r"%filename)
         else:
             ## uncomment the following to keep the generated c file
             #os.unlink(filename); print "saving compiled file in %r"%filename
@@ -75,8 +77,8 @@ def load_model(kernel_module, dtype=None):
     return DllModel(dllpath, info)
 
 
-IQ_ARGS = [c_void_p, c_void_p, c_int, c_void_p, c_double]
-IQXY_ARGS = [c_void_p, c_void_p, c_void_p, c_int, c_void_p, c_double]
+IQ_ARGS = [c_void_p, c_void_p, c_int]
+IQXY_ARGS = [c_void_p, c_void_p, c_void_p, c_int]
 
 class DllModel(object):
     """
@@ -106,11 +108,13 @@ class DllModel(object):
         #print "dll",self.dllpath
         self.dll = ct.CDLL(self.dllpath)
 
+        pd_args_1d = [c_void_p, c_double] + [c_int]*Npd1d if Npd1d else []
+        pd_args_2d= [c_void_p, c_double] + [c_int]*Npd2d if Npd2d else []
         self.Iq = self.dll[generate.kernel_name(self.info, False)]
-        self.Iq.argtypes = IQ_ARGS + [c_double]*Nfixed1d + [c_int]*Npd1d
+        self.Iq.argtypes = IQ_ARGS + pd_args_1d + [c_double]*Nfixed1d
 
         self.Iqxy = self.dll[generate.kernel_name(self.info, True)]
-        self.Iqxy.argtypes = IQXY_ARGS + [c_double]*Nfixed2d + [c_int]*Npd2d
+        self.Iqxy.argtypes = IQXY_ARGS + pd_args_2d + [c_double]*Nfixed2d
 
     def __getstate__(self):
         return {'info': self.info, 'dllpath': self.dllpath, 'dll': None}
@@ -119,12 +123,6 @@ class DllModel(object):
         self.__dict__ = state
 
     def __call__(self, input):
-        # Support pure python kernel call
-        if input.is_2D and callable(self.info['Iqxy']):
-            return PyKernel(self.info['Iqxy'], self.info, input)
-        elif not input.is_2D and callable(self.info['Iq']):
-            return PyKernel(self.info['Iq'], self.info, input)
-
         if self.dll is None: self._load_dll()
         kernel = self.Iqxy if input.is_2D else self.Iq
         return DllKernel(kernel, self.info, input)
@@ -174,17 +172,21 @@ class DllKernel(object):
         # In dll kernel, but not in opencl kernel
         self.p_res = self.res.ctypes.data
 
-    def __call__(self, pars, pd_pars, cutoff):
+    def __call__(self, fixed_pars, pd_pars, cutoff):
         real = np.float32 if self.input.dtype == F32 else np.float64
-        fixed = [real(p) for p in pars]
-        cutoff = real(cutoff)
-        loops = np.hstack(pd_pars)
-        loops = np.ascontiguousarray(loops.T, self.input.dtype).flatten()
-        loops_N = [np.uint32(len(p[0])) for p in pd_pars]
 
         nq = c_int(self.input.nq)
-        p_loops = loops.ctypes.data
-        args = self.input.q_pointers + [self.p_res, nq, p_loops, cutoff] + fixed + loops_N
+        if pd_pars:
+            cutoff = real(cutoff)
+            loops_N = [np.uint32(len(p[0])) for p in pd_pars]
+            loops = np.hstack(pd_pars)
+            loops = np.ascontiguousarray(loops.T, self.input.dtype).flatten()
+            p_loops = loops.ctypes.data
+            dispersed = [p_loops, cutoff] + loops_N
+        else:
+            dispersed = []
+        fixed = [real(p) for p in fixed_pars]
+        args = self.input.q_pointers + [self.p_res, nq] + dispersed + fixed
         #print pars
         self.kernel(*args)
 

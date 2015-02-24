@@ -27,7 +27,7 @@ double Iq(double qval,
 	contr = sld - solvent_sld;
 	//get the fractional part of Nlayers, to determine the "mixing" of N's
 	
-	n1 = trunc(Nlayers);		//rounds towards zero
+	n1 = (long)trunc(Nlayers);		//rounds towards zero
 	n2 = n1 + 1;
 	xn = (double)n2 - Nlayers;			//fractional contribution of n1
 	

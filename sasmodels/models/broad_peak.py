@@ -90,8 +90,8 @@ parameters = [
     ]
 
 
-def form_volume():
-    return 1
+#def form_volume():
+#    return 1
 
 def Iq(q, porod_scale, porod_exp, lorentz_scale, lorentz_length, peak_pos, lorentz_exp):
     inten = porod_scale/pow(q,porod_exp) + lorentz_scale/(1.0 \
@@ -101,8 +101,8 @@ def Iq(q, porod_scale, porod_exp, lorentz_scale, lorentz_length, peak_pos, loren
 # FOR VECTORIZED VERSION, UNCOMMENT THE NEXT LINE
 Iq.vectorized = True
 
-def Iqxy(qx, qy, porod_scale, porod_exp, lorentz_scale, lorentz_length, peak_pos, lorentz_exp):
-    return Iq(sqrt(qx**2 + qy**2), porod_scale, porod_exp, lorentz_scale, lorentz_length, peak_pos, lorentz_exp)
+def Iqxy(qx, qy, *args):
+    return Iq(sqrt(qx**2 + qy**2), *args)
 
 # FOR VECTORIZED VERSION, UNCOMMENT THE NEXT LINE
 Iqxy.vectorized = True

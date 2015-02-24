@@ -3,6 +3,17 @@ from numpy import pi, sin, cos, sqrt
 
 from .generate import F32, F64
 
+class PyModel(object):
+    def __init__(self, info):
+        self.info = info
+    def __call__(self, input):
+        kernel = self.info['Iqxy'] if input.is_2D else self.info['Iq']
+        return PyKernel(kernel, self.info, input)
+    def make_input(self, q_vectors):
+        return PyInput(q_vectors, dtype=F64)
+    def release(self):
+        pass
+
 class PyInput(object):
     """
     Make q data available to the gpu.
@@ -133,15 +144,15 @@ def _loops(form, form_volume, cutoff, scale, background,
     spherical correction, or -1 if there is no angular dispersion
     """
 
-    ##########################################################
-    #                                                        #
-    #   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #
-    #   !!                                              !!   #
-    #   !!  KEEP THIS CODE CONSISTENT WITH GENERATE.PY  !!   #
-    #   !!                                              !!   #
-    #   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #
-    #                                                        #
-    ##########################################################
+    ################################################################
+    #                                                              #
+    #   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #
+    #   !!                                                    !!   #
+    #   !!  KEEP THIS CODE CONSISTENT WITH KERNEL_TEMPLATE.C  !!   #
+    #   !!                                                    !!   #
+    #   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #
+    #                                                              #
+    ################################################################
 
     weight = np.empty(len(pd), 'd')
     if weight.size > 0:
@@ -163,6 +174,9 @@ def _loops(form, form_volume, cutoff, scale, background,
     else:
         stride = np.array([1])
         vol_weight_index = slice(None, None)
+        # keep lint happy
+        fast_value = [None]
+        fast_weight = [None]
 
     ret = np.zeros_like(args[0])
     norm = np.zeros_like(ret)
@@ -192,8 +206,8 @@ def _loops(form, form_volume, cutoff, scale, background,
             # Note: can precompute spherical correction if theta_index is not the fast index
             # Correction factor for spherical integration p(theta) I(q) sin(theta) dtheta
             #spherical_correction = abs(sin(pi*args[theta_index])) if theta_index>=0 else 1.0
-            #spherical_correction = abs(cos(pi*args[theta_index]))*pi/2 if theta_index>=0 else 1.0
-            spherical_correction = 1.0
+            spherical_correction = abs(cos(pi*args[theta_index]))*pi/2 if theta_index>=0 else 1.0
+            #spherical_correction = 1.0
             ret += w*I*spherical_correction*positive
             norm += w*positive
 

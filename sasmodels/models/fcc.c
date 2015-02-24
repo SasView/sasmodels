@@ -111,7 +111,6 @@ double Iqxy(double qx, double qy, double dnn,
   psi = psi * M_PI_180;
 
   const double Da = d_factor*dnn;
-  const double qDa_2 = q*q*Da*Da;
   const double s1 = dnn/sqrt(0.75);
 
 
