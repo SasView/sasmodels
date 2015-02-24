@@ -144,13 +144,19 @@ def main():
         # TODO: test if compiler is available?
         loaders = ['dll']
         models = models[1:]
+    elif models and models[0] == 'opencl_and_dll':
+        if load_model_cl is None:
+            print >>sys.stderr, "opencl is not available"
+            sys.exit(1)
+        loaders = ['opencl', 'dll']
+        models = models[1:]
     else:
         loaders = ['opencl', 'dll']
     if models:
         runner = unittest.TextTestRunner()
         runner.run(suite(loaders, models))
     else:
-        print >>sys.stderr, "usage: python -m sasmodels.model_test [opencl|dll] model1 model2 ..."
+        print >>sys.stderr, "usage: python -m sasmodels.model_test [opencl|dll|opencl_and_dll] model1 model2 ..."
         print >>sys.stderr, "if model1 is 'all', then all except the remaining models will be tested"
 
 if __name__ == "__main__":
