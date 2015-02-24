@@ -11,7 +11,7 @@ from . import weights
 
 try:
     from .kernelcl import load_model as load_model_cl
-except ImportError,exc:
+except Exception,exc:
     load_model_cl = None
 from .kerneldll import load_model as load_model_dll
 
