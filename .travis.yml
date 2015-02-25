@@ -11,7 +11,9 @@ branches:
 virtualenv:
   system_site_packages: true
 before_install:
-    - sudo apt-get install opencl-headers
+  - sudo apt-get update;
+  - sudo apt-get install python-numpy python-scipy
+  - sudo apt-get install opencl-headers
 
 install:
   - pip install pyopencl
