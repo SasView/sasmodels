@@ -10,8 +10,11 @@ branches:
 # command to install dependencies
 virtualenv:
   system_site_packages: true
+before_install:
+    - sudo apt-get install opencl-headers
+
 install:
-#  - pip install pyopencl
+  - pip install pyopencl
   - pip install bumps
 script:
   - export WORKSPACE=/home/travis/build/SasView/sasmodels/
