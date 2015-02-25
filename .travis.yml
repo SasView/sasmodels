@@ -11,7 +11,7 @@ branches:
 virtualenv:
   system_site_packages: true
 install:
-  - pip install pyopencl
+#  - pip install pyopencl
   - pip install bumps
 script:
   - export WORKSPACE=/home/travis/build/SasView/sasmodels/
