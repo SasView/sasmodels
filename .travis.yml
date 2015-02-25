@@ -1,0 +1,18 @@
+# Test Travis CL
+
+language: python
+python:
+  - "2.7"
+# whitelist
+branches:
+  only:
+    - master
+# command to install dependencies
+virtualenv:
+  system_site_packages: true
+install:
+  - pip install pyopencl
+  - pip install bumps
+script:
+  - export WORKSPACE=/home/travis/build/SasView/sasmodels/
+  - python -m sasmodels.model_test opencl_and_dll all
