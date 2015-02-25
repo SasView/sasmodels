@@ -20,4 +20,4 @@ install:
   - pip install bumps
 script:
   - export WORKSPACE=/home/travis/build/SasView/sasmodels/
-  - python -m sasmodels.model_test opencl_and_dll all
+  - python -m sasmodels.model_test dll all
