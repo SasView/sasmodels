@@ -129,6 +129,7 @@ description = """That is, a sphereocylinder
 	sld: SLD of the capped cylinder,
 	solvent_sld: SLD of the solvent.
 """
+category = "shape:cylinder"
 
 parameters = [
     #   [ "name", "units", default, [lower, upper], "type",

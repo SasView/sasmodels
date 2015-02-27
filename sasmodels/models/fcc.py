@@ -86,6 +86,7 @@ description = """
     are considered to be negligible, and the size of the paracrystal is infinitely large. Paracrystalline distortion is
     assumed to be isotropic and characterized by a Gaussian distribution.
     """
+category = "shape:paracrystal"
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type","description" ],

@@ -99,6 +99,7 @@ Note: During fitting ensure that the inequality ra<rb<rc is not
 	violated. Otherwise the calculation will
 	not be correct.
 """
+category = "shape:ellipsoid"
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type",

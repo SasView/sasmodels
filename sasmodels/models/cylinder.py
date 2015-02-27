@@ -127,6 +127,7 @@ description = """
             from pi/2 to zero of...
             f(q,alpha)^(2)*sin(alpha)*dalpha + background
 """
+category = "shape:cylinder"
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type",

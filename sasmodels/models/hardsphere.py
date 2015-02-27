@@ -45,6 +45,7 @@ description = """\
 	effect_radius is the hard sphere radius
 	volfraction is the volume fraction occupied by the spheres.
 """
+category = "structure-factor"
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type",

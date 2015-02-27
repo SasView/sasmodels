@@ -135,6 +135,7 @@ P(q.alpha)= scale*f(q)^2 + background, where f(q)= 3*(sld
 		Rp: polar radius of the ellipsoid
 		Re: equatorial radius of the ellipsoid
 """
+category = "shape:ellipsoid"
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type",
