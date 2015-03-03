@@ -10,3 +10,4 @@
 /doc/model/
 /doc/ref/models
 .mplconfig
+/pylint_violations.txt
