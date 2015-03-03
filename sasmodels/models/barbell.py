@@ -126,9 +126,6 @@ parameters = [
 
 source = [ "lib/J1.c", "lib/gauss76.c", "barbell.c" ]
 
-def ER(radius, length):
-    return 1.0
-
 # parameters for demo
 demo = dict(
     scale=1, background=0,

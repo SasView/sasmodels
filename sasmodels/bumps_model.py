@@ -441,7 +441,7 @@ class BumpsModel(object):
 def demo():
     data = load_data('DEC07086.DAT')
     set_beam_stop(data, 0.004)
-    plot_data(data)
+    plot_data(data, data.data)
     import matplotlib.pyplot as plt; plt.show()
 
 

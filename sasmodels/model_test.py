@@ -1,8 +1,45 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Feb 17 11:43:56 2015
+Run model unit tests.
 
-@author: David
+Usage::
+
+     python -m sasmodels.model_test [opencl|dll|opencl_and_dll] model1 model2 ...
+
+     if model1 is 'all', then all except the remaining models will be tested
+
+Each model is tested using the default parameters at q=0.1, (qx,qy)=(0.1,0.1),
+and the ER and VR are computed.  The return values at these points are not
+considered.  The test is only to verify that the models run to completion,
+and do not produce inf or NaN.
+
+Tests are defined with the *tests* attribute in the model.py file.  *tests*
+is a list of individual tests to run, where each test consists of the
+parameter values for the test, the q-values and the expected results.  For
+the effective radius test, the q-value should be 'ER'.  For the VR test,
+the q-value should be 'VR'.  For 1-D tests, either specify the q value or
+a list of q-values, and the corresponding I(q) value, or list of I(q) values.
+
+That is::
+
+    tests = [
+        [ {parameters}, q, I(q)],
+        [ {parameters}, [q], [I(q)] ],
+        [ {parameters}, [q1, q2, ...], [I(q1), I(q2), ...]],
+
+        [ {parameters}, (qx, qy), I(qx, Iqy)],
+        [ {parameters}, [(qx1, qy1), (qx2, qy2), ...], [I(qx1,qy1), I(qx2,qy2), ...],
+
+        [ {parameters}, 'ER', ER(pars) ],
+        [ {parameters}, 'VR', VR(pars) ],
+        ...
+    ]
+
+Parameters are *key:value* pairs, where key is one of the parameters of the
+model and value is the value to use for the test.  Any parameters not given
+in the parameter list will take on the default parameter value.
+
+Precision defaults to 5 digits (relative).
 """
 
 import sys
@@ -12,7 +49,7 @@ import numpy as np
 
 from .core import list_models, load_model_definition
 from .core import load_model_cl, load_model_dll
-from .core import make_kernel, call_kernel
+from .core import make_kernel, call_kernel, call_ER, call_VR
 
 def annotate_exception(exc, msg):
     """
@@ -53,7 +90,12 @@ def suite(loaders, models):
         if model_name in skip: continue
         model_definition = load_model_definition(model_name)
 
-        smoke_tests = [[{},0.1,None],[{},(0.1,0.1),None]]
+        smoke_tests = [
+            [{},0.1,None],
+            [{},(0.1,0.1),None],
+            [{},'ER',None],
+            [{},'VR',None],
+            ]
         tests = smoke_tests + getattr(model_definition, 'tests', [])
         
         if tests: # in case there are no smoke tests...
@@ -101,31 +143,38 @@ class ModelTestCase(unittest.TestCase):
             for test in self.tests:
                 pars, Q, I = test
 
-                if not isinstance(Q, list):
-                    Q = [Q]
                 if not isinstance(I, list):
                     I = [I]
-                    
-                if isinstance(Q[0], tuple):
-                    Qx,Qy = zip(*Q)
-                    Q_vectors = [np.array(Qx), np.array(Qy)]
-                else:
-                    Q_vectors = [np.array(Q)]
+                if not isinstance(Q, list):
+                    Q = [Q]
 
                 self.assertEqual(len(I), len(Q))
 
-                kernel = make_kernel(model, Q_vectors)
-                Iq = call_kernel(kernel, pars)
+                if Q[0] == 'ER':
+                    Iq = [call_ER(kernel, pars)]
+                elif Q[0] == 'VR':
+                    Iq = [call_VR(kernel, pars)]
+                elif isinstance(Q[0], tuple):
+                    Qx,Qy = zip(*Q)
+                    Q_vectors = [np.array(Qx), np.array(Qy)]
+                    kernel = make_kernel(model, Q_vectors)
+                    Iq = call_kernel(kernel, pars)
+                else:
+                    Q_vectors = [np.array(Q)]
+                    kernel = make_kernel(model, Q_vectors)
+                    Iq = call_kernel(kernel, pars)
             
                 self.assertGreater(len(Iq), 0)    
                 self.assertEqual(len(I), len(Iq))              
                 
                 for q, i, iq in zip(Q, I, Iq):
-                    if i is None: continue # smoke test --- make sure it runs
-                    err = abs(i - iq)
-                    nrm = abs(i)
-            
-                    self.assertLess(err * 10**5, nrm, 'q:%s; expected:%s; actual:%s' % (q, i, iq))
+                    if i is None:
+                        # smoke test --- make sure it runs and produces a value
+                        self.assertTrue(np.isfinite(iq), 'q:%s; not finite; actual:%s' % (q, iq))
+                    else:
+                        err = abs(i - iq)
+                        nrm = abs(i)
+                        self.assertLess(err * 10**5, nrm, 'q:%s; expected:%s; actual:%s' % (q, i, iq))
                     
         except Exception,exc: 
             annotate_exception(exc, self.test_name)

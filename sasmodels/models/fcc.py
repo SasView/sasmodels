@@ -102,9 +102,6 @@ parameters = [
 
 source = [ "lib/J1.c", "lib/gauss150.c", "fcc.c" ]
 
-def ER(radius, length):
-    return 0
-
 # parameters for demo
 demo = dict(
     scale=1, background=0,
