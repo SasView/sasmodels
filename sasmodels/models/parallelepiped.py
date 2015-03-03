@@ -100,7 +100,7 @@ provided by the NIST Center for Neutron Research (Kline, 2006).
 
 """
 
-from numpy import pi, inf
+from numpy import pi, inf, sqrt
 
 name = "parallelepiped"
 title = "Rectangular parallelepiped with uniform scattering length density."
