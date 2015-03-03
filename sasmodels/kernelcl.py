@@ -31,14 +31,14 @@ try:
     import pyopencl as cl
     context = cl.create_some_context(interactive=False)
     del context
-except Exception,exc:
+except Exception, exc:
     warnings.warn(str(exc))
     raise RuntimeError("OpenCL not available")
 
 from pyopencl import mem_flags as mf
 
 from . import generate
-from .kernelpy import PyInput, PyModel
+from .kernelpy import PyModel
 
 F64_DEFS = """\
 #ifdef cl_khr_fp64
@@ -62,7 +62,7 @@ def load_model(kernel_module, dtype="single"):
     so models can be defined without using too many resources.
     """
     source, info = generate.make(kernel_module)
-    if callable(info.get('Iq',None)):
+    if callable(info.get('Iq', None)):
         return PyModel(info)
     ## for debugging, save source to a .cl file, edit it, and reload as model
     #open(info['name']+'.cl','w').write(source)
@@ -109,10 +109,10 @@ def _stretch_input(vector, dtype, extra=1e-3, boundary=32):
     probably be the max of get_warp(kernel,queue) and
     device.min_data_type_align_size//4.
     """
-    remainder = vector.size%boundary
+    remainder = vector.size % boundary
     if remainder != 0:
         size = vector.size + (boundary - remainder)
-        vector = np.hstack((vector, [extra]*(size-vector.size)))
+        vector = np.hstack((vector, [extra] * (size - vector.size)))
     return np.ascontiguousarray(vector, dtype=dtype)
 
 
@@ -125,7 +125,7 @@ def compile_model(context, source, dtype):
     devices in the context do not support the cl_khr_fp64 extension.
     """
     dtype = np.dtype(dtype)
-    if dtype==generate.F64 and not all(has_double(d) for d in context.devices):
+    if dtype == generate.F64 and not all(has_double(d) for d in context.devices):
         raise RuntimeError("Double precision not supported for devices")
 
     header = F64_DEFS if dtype == generate.F64 else ""
@@ -134,7 +134,7 @@ def compile_model(context, source, dtype):
     # Note: USE_SINCOS makes the intel cpu slower under opencl
     if context.devices[0].type == cl.device_type.GPU:
         header += "#define USE_SINCOS\n"
-    program  = cl.Program(context, header+source).build()
+    program = cl.Program(context, header + source).build()
     return program
 
 
@@ -172,7 +172,7 @@ class GpuEnvironment(object):
     def _create_some_context(self):
         try:
             self.context = cl.create_some_context(interactive=False)
-        except Exception,exc:
+        except Exception, exc:
             warnings.warn(str(exc))
             warnings.warn("pyopencl.create_some_context() failed")
             warnings.warn("the environment variable 'PYOPENCL_CTX' might not be set correctly")
@@ -229,14 +229,14 @@ class GpuModel(object):
     def __setstate__(self, state):
         self.__dict__ = state.copy()
 
-    def __call__(self, input):
-        if self.dtype != input.dtype:
+    def __call__(self, input_value):
+        if self.dtype != input_value.dtype:
             raise TypeError("data and kernel have different types")
         if self.program is None:
-            self.program = environment().compile_program(self.info['name'],self.source, self.dtype)
-        kernel_name = generate.kernel_name(self.info, input.is_2D)
+            self.program = environment().compile_program(self.info['name'], self.source, self.dtype)
+        kernel_name = generate.kernel_name(self.info, input_value.is_2D)
         kernel = getattr(self.program, kernel_name)
-        return GpuKernel(kernel, self.info, input)
+        return GpuKernel(kernel, self.info, input_value)
 
     def release(self):
         if self.program is not None:
@@ -284,7 +284,7 @@ class GpuInput(object):
         # architectures tested so far.
         self.q_vectors = [_stretch_input(q, self.dtype, 32) for q in q_vectors]
         self.q_buffers = [
-            cl.Buffer(env.context,  mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=q)
+            cl.Buffer(env.context, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=q)
             for q in self.q_vectors
         ]
         self.global_size = [self.q_vectors[0].size]
@@ -319,17 +319,17 @@ class GpuKernel(object):
         self.info = info
         self.res = np.empty(input.nq, input.dtype)
         dim = '2d' if input.is_2D else '1d'
-        self.fixed_pars = info['partype']['fixed-'+dim]
-        self.pd_pars = info['partype']['pd-'+dim]
+        self.fixed_pars = info['partype']['fixed-' + dim]
+        self.pd_pars = info['partype']['pd-' + dim]
 
         # Inputs and outputs for each kernel call
         # Note: res may be shorter than res_b if global_size != nq
         env = environment()
         self.loops_b = [cl.Buffer(env.context, mf.READ_WRITE,
-                                  2*MAX_LOOPS*input.dtype.itemsize)
+                                  2 * MAX_LOOPS * input.dtype.itemsize)
                         for _ in env.queues]
         self.res_b = [cl.Buffer(env.context, mf.READ_WRITE,
-                                input.global_size[0]*input.dtype.itemsize)
+                                input.global_size[0] * input.dtype.itemsize)
                       for _ in env.queues]
 
 
@@ -343,13 +343,13 @@ class GpuKernel(object):
         if pd_pars:
             cutoff = real(cutoff)
             loops_N = [np.uint32(len(p[0])) for p in pd_pars]
-            loops = np.hstack(pd_pars) if pd_pars else np.empty(0,dtype=self.input.dtype)
+            loops = np.hstack(pd_pars) if pd_pars else np.empty(0, dtype=self.input.dtype)
             loops = np.ascontiguousarray(loops.T, self.input.dtype).flatten()
             #print "loops",Nloops, loops
 
             #import sys; print >>sys.stderr,"opencl eval",pars
             #print "opencl eval",pars
-            if len(loops) > 2*MAX_LOOPS:
+            if len(loops) > 2 * MAX_LOOPS:
                 raise ValueError("too many polydispersity points")
 
             loops_bi = self.loops_b[device_num]

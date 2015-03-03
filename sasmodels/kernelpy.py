@@ -1,14 +1,14 @@
 import numpy as np
-from numpy import pi, sin, cos, sqrt
+from numpy import pi, cos
 
-from .generate import F32, F64
+from .generate import F64
 
 class PyModel(object):
     def __init__(self, info):
         self.info = info
-    def __call__(self, input):
-        kernel = self.info['Iqxy'] if input.is_2D else self.info['Iq']
-        return PyKernel(kernel, self.info, input)
+    def __call__(self, input_value):
+        kernel = self.info['Iqxy'] if input_value.is_2D else self.info['Iq']
+        return PyKernel(kernel, self.info, input_value)
     def make_input(self, q_vectors):
         return PyInput(q_vectors, dtype=F64)
     def release(self):
@@ -37,7 +37,7 @@ class PyInput(object):
         self.nq = q_vectors[0].size
         self.dtype = dtype
         self.is_2D = (len(q_vectors) == 2)
-        self.q_vectors = [np.ascontiguousarray(q,self.dtype) for q in q_vectors]
+        self.q_vectors = [np.ascontiguousarray(q, self.dtype) for q in q_vectors]
         self.q_pointers = [q.ctypes.data for q in q_vectors]
 
     def release(self):
@@ -72,25 +72,25 @@ class PyKernel(object):
         if not getattr(kernel, 'vectorized', False):
             if dim == '2d':
                 def vector_kernel(qx, qy, *args):
-                    return np.array([kernel(qxi,qyi,*args) for qxi,qyi in zip(qx,qy)])
+                    return np.array([kernel(qxi, qyi, *args) for qxi, qyi in zip(qx, qy)])
             else:
                 def vector_kernel(q, *args):
-                    return np.array([kernel(qi,*args) for qi in q])
+                    return np.array([kernel(qi, *args) for qi in q])
             self.kernel = vector_kernel
         else:
             self.kernel = kernel
-        fixed_pars = info['partype']['fixed-'+dim]
-        pd_pars = info['partype']['pd-'+dim]
+        fixed_pars = info['partype']['fixed-' + dim]
+        pd_pars = info['partype']['pd-' + dim]
         vol_pars = info['partype']['volume']
 
         # First two fixed pars are scale and background
         pars = [p[0] for p in info['parameters'][2:]]
         offset = len(self.input.q_vectors)
-        self.args = self.input.q_vectors + [None]*len(pars)
-        self.fixed_index = np.array([pars.index(p)+offset for p in fixed_pars[2:] ])
-        self.pd_index = np.array([pars.index(p)+offset for p in pd_pars])
-        self.vol_index = np.array([pars.index(p)+offset for p in vol_pars])
-        try: self.theta_index = pars.index('theta')+offset
+        self.args = self.input.q_vectors + [None] * len(pars)
+        self.fixed_index = np.array([pars.index(p) + offset for p in fixed_pars[2:]])
+        self.pd_index = np.array([pars.index(p) + offset for p in pd_pars])
+        self.vol_index = np.array([pars.index(p) + offset for p in vol_pars])
+        try: self.theta_index = pars.index('theta') + offset
         except ValueError: self.theta_index = -1
 
         # Caller needs fixed_pars and pd_pars
@@ -104,9 +104,9 @@ class PyKernel(object):
         form, form_volume = self.kernel, self.info['form_volume']
         # First two fixed
         scale, background = fixed[:2]
-        for index,value in zip(self.fixed_index, fixed[2:]):
+        for index, value in zip(self.fixed_index, fixed[2:]):
             args[index] = float(value)
-        res = _loops(form, form_volume, cutoff, scale, background,  args,
+        res = _loops(form, form_volume, cutoff, scale, background, args,
                      pd, self.pd_index, self.vol_index, self.theta_index)
 
         return res
@@ -184,10 +184,10 @@ def _loops(form, form_volume, cutoff, scale, background,
     vol_norm = np.zeros_like(ret)
     for k in range(stride[-1]):
         # update polydispersity parameter values
-        fast_index = k%stride[0]
+        fast_index = k % stride[0]
         if fast_index == 0:  # bottom loop complete ... check all other loops
             if weight.size > 0:
-                for i,index, in enumerate(k%stride):
+                for i, index, in enumerate(k % stride):
                     args[pd_index[i]] = pd[i][0][index]
                     weight[i] = pd[i][1][index]
         else:
@@ -201,15 +201,15 @@ def _loops(form, form_volume, cutoff, scale, background,
         w = np.prod(weight)
         if w > cutoff:
             I = form(*args)
-            positive = (I>=0.0)
+            positive = (I >= 0.0)
 
             # Note: can precompute spherical correction if theta_index is not the fast index
             # Correction factor for spherical integration p(theta) I(q) sin(theta) dtheta
             #spherical_correction = abs(sin(pi*args[theta_index])) if theta_index>=0 else 1.0
-            spherical_correction = abs(cos(pi*args[theta_index]))*pi/2 if theta_index>=0 else 1.0
+            spherical_correction = abs(cos(pi * args[theta_index])) * pi / 2 if theta_index >= 0 else 1.0
             #spherical_correction = 1.0
-            ret += w*I*spherical_correction*positive
-            norm += w*positive
+            ret += w * I * spherical_correction * positive
+            norm += w * positive
 
             # Volume normalization.
             # If there are "volume" polydispersity parameters, then these will be used
@@ -219,10 +219,10 @@ def _loops(form, form_volume, cutoff, scale, background,
             if form_volume:
                 vol_args = [args[index] for index in vol_index]
                 vol_weight = np.prod(weight[vol_weight_index])
-                vol += vol_weight*form_volume(*vol_args)*positive
-                vol_norm += vol_weight*positive
+                vol += vol_weight * form_volume(*vol_args) * positive
+                vol_norm += vol_weight * positive
 
-    positive = (vol*vol_norm != 0.0)
+    positive = (vol * vol_norm != 0.0)
     ret[positive] *= vol_norm[positive] / vol[positive]
-    result = scale*ret/norm+background
+    result = scale * ret / norm + background
     return result
