@@ -200,8 +200,8 @@ F32 = np.dtype('float32')
 
 # Scale and background, which are parameters common to every form factor
 COMMON_PARAMETERS = [
-    [ "scale", "", 1, [0, np.inf], "", "Source intensity" ],
-    [ "background", "1/cm", 0, [0, np.inf], "", "Source background" ],
+    ["scale", "", 1, [0, np.inf], "", "Source intensity"],
+    ["background", "1/cm", 0, [0, np.inf], "", "Source background"],
     ]
 
 
@@ -232,7 +232,7 @@ PARTABLE_VALUE_WIDTH = 10
 # Documentation header for the module, giving the model name, its short
 # description and its parameter table.  The remainder of the doc comes
 # from the module docstring.
-DOC_HEADER=""".. _%(name)s:
+DOC_HEADER = """.. _%(name)s:
 
 %(label)s
 =======================================================
@@ -258,20 +258,20 @@ def make_partable(pars):
         PARTABLE_VALUE_WIDTH,
         ]
     column_widths = [max(w, len(h))
-                     for w,h in zip(column_widths, PARTABLE_HEADERS)]
+                     for w, h in zip(column_widths, PARTABLE_HEADERS)]
 
     sep = " ".join("="*w for w in column_widths)
     lines = [
         sep,
-        " ".join("%-*s"%(w,h) for w,h in zip(column_widths, PARTABLE_HEADERS)),
+        " ".join("%-*s" % (w, h) for w, h in zip(column_widths, PARTABLE_HEADERS)),
         sep,
         ]
     for p in pars:
         lines.append(" ".join([
-            "%-*s"%(column_widths[0],p[0]),
-            "%-*s"%(column_widths[1],p[-1]),
-            "%-*s"%(column_widths[2],RST_UNITS[p[1]]),
-            "%*g"%(column_widths[3],p[2]),
+            "%-*s" % (column_widths[0], p[0]),
+            "%-*s" % (column_widths[1], p[-1]),
+            "%-*s" % (column_widths[2], RST_UNITS[p[1]]),
+            "%*g" % (column_widths[3], p[2]),
             ]))
     lines.append(sep)
     return "\n".join(lines)
@@ -286,14 +286,14 @@ def _search(search_path, filename):
         target = joinpath(path, filename)
         if exists(target):
             return target
-    raise ValueError("%r not found in %s"%(filename, search_path))
+    raise ValueError("%r not found in %s" % (filename, search_path))
 
 def sources(info):
     """
     Return a list of the sources file paths for the module.
     """
-    search_path = [ dirname(info['filename']),
-                    abspath(joinpath(dirname(__file__),'models')) ]
+    search_path = [dirname(info['filename']),
+                   abspath(joinpath(dirname(__file__), 'models'))]
     return [_search(search_path, f) for f in info['source']]
 
 def use_single(source):
@@ -332,7 +332,7 @@ def categorize_parameters(pars):
     }
 
     for p in pars:
-        name,ptype = p[0],p[4]
+        name, ptype = p[0], p[4]
         if ptype == 'volume':
             partype['pd-1d'].append(name)
             partype['pd-2d'].append(name)
@@ -345,7 +345,7 @@ def categorize_parameters(pars):
             partype['fixed-1d'].append(name)
             partype['fixed-2d'].append(name)
         else:
-            raise ValueError("unknown parameter type %r"%ptype)
+            raise ValueError("unknown parameter type %r" % ptype)
         partype[ptype].append(name)
 
     return partype
@@ -355,7 +355,7 @@ def indent(s, depth):
     Indent a string of text with *depth* additional spaces on each line.
     """
     spaces = " "*depth
-    sep = "\n"+spaces
+    sep = "\n" + spaces
     return spaces + sep.join(s.split("\n"))
 
 
@@ -365,7 +365,7 @@ def build_polydispersity_loops(pd_pars):
 
     Returns loop opening and loop closing
     """
-    LOOP_OPEN="""\
+    LOOP_OPEN = """\
 for (int %(name)s_i=0; %(name)s_i < N%(name)s; %(name)s_i++) {
   const double %(name)s = loops[2*(%(name)s_i%(offset)s)];
   const double %(name)s_w = loops[2*(%(name)s_i%(offset)s)+1];\
@@ -375,14 +375,14 @@ for (int %(name)s_i=0; %(name)s_i < N%(name)s; %(name)s_i++) {
     loop_head = []
     loop_end = []
     for name in pd_pars:
-        subst = { 'name': name, 'offset': offset }
-        loop_head.append(indent(LOOP_OPEN%subst, depth))
+        subst = {'name': name, 'offset': offset}
+        loop_head.append(indent(LOOP_OPEN % subst, depth))
         loop_end.insert(0, (" "*depth) + "}")
-        offset += '+N'+name
+        offset += '+N' + name
         depth += 2
     return "\n".join(loop_head), "\n".join(loop_end)
 
-C_KERNEL_TEMPLATE=None
+C_KERNEL_TEMPLATE = None
 def make_model(info):
     """
     Generate the code for the kernel defined by info, using source files
@@ -415,26 +415,26 @@ def make_model(info):
     fixed_2d = partype['fixed-1d']
 
     iq_parameters = [p[0]
-        for p in info['parameters'][2:] # skip scale, background
-        if p[0] in set(fixed_1d+pd_1d)]
+                     for p in info['parameters'][2:] # skip scale, background
+                     if p[0] in set(fixed_1d + pd_1d)]
     iqxy_parameters = [p[0]
-        for p in info['parameters'][2:] # skip scale, background
-        if p[0] in set(fixed_2d+pd_2d)]
+                       for p in info['parameters'][2:] # skip scale, background
+                       if p[0] in set(fixed_2d + pd_2d)]
     volume_parameters = [p[0]
-        for p in info['parameters']
-        if p[4]=='volume']
+                         for p in info['parameters']
+                         if p[4] == 'volume']
 
     # Fill in defintions for volume parameters
     if volume_parameters:
         defines.append(('VOLUME_PARAMETERS',
                         ','.join(volume_parameters)))
         defines.append(('VOLUME_WEIGHT_PRODUCT',
-                        '*'.join(p+'_w' for p in volume_parameters)))
+                        '*'.join(p + '_w' for p in volume_parameters)))
 
     # Generate form_volume function from body only
     if info['form_volume'] is not None:
         if volume_parameters:
-            vol_par_decl = ', '.join('double '+p for p in volume_parameters)
+            vol_par_decl = ', '.join('double ' + p for p in volume_parameters)
         else:
             vol_par_decl = 'void'
         defines.append(('VOLUME_PARAMETER_DECLARATIONS',
@@ -444,65 +444,65 @@ double form_volume(VOLUME_PARAMETER_DECLARATIONS);
 double form_volume(VOLUME_PARAMETER_DECLARATIONS) {
     %(body)s
 }
-"""%{'body':info['form_volume']}
+""" % {'body':info['form_volume']}
         source.append(fn)
 
     # Fill in definitions for Iq parameters
-    defines.append(('IQ_KERNEL_NAME', info['name']+'_Iq'))
+    defines.append(('IQ_KERNEL_NAME', info['name'] + '_Iq'))
     defines.append(('IQ_PARAMETERS', ', '.join(iq_parameters)))
     if fixed_1d:
         defines.append(('IQ_FIXED_PARAMETER_DECLARATIONS',
-                        ', \\\n    '.join('const double %s'%p for p in fixed_1d)))
+                        ', \\\n    '.join('const double %s' % p for p in fixed_1d)))
     if pd_1d:
         defines.append(('IQ_WEIGHT_PRODUCT',
-                        '*'.join(p+'_w' for p in pd_1d)))
+                        '*'.join(p + '_w' for p in pd_1d)))
         defines.append(('IQ_DISPERSION_LENGTH_DECLARATIONS',
-                        ', \\\n    '.join('const int N%s'%p for p in pd_1d)))
+                        ', \\\n    '.join('const int N%s' % p for p in pd_1d)))
         defines.append(('IQ_DISPERSION_LENGTH_SUM',
-                        '+'.join('N'+p for p in pd_1d)))
+                        '+'.join('N' + p for p in pd_1d)))
         open_loops, close_loops = build_polydispersity_loops(pd_1d)
         defines.append(('IQ_OPEN_LOOPS',
-                        open_loops.replace('\n',' \\\n')))
+                        open_loops.replace('\n', ' \\\n')))
         defines.append(('IQ_CLOSE_LOOPS',
-                        close_loops.replace('\n',' \\\n')))
+                        close_loops.replace('\n', ' \\\n')))
     if info['Iq'] is not None:
         defines.append(('IQ_PARAMETER_DECLARATIONS',
-                       ', '.join('double '+p for p in iq_parameters)))
+                        ', '.join('double ' + p for p in iq_parameters)))
         fn = """\
 double Iq(double q, IQ_PARAMETER_DECLARATIONS);
 double Iq(double q, IQ_PARAMETER_DECLARATIONS) {
     %(body)s
 }
-"""%{'body':info['Iq']}
+""" % {'body':info['Iq']}
         source.append(fn)
 
     # Fill in definitions for Iqxy parameters
-    defines.append(('IQXY_KERNEL_NAME', info['name']+'_Iqxy'))
+    defines.append(('IQXY_KERNEL_NAME', info['name'] + '_Iqxy'))
     defines.append(('IQXY_PARAMETERS', ', '.join(iqxy_parameters)))
     if fixed_2d:
         defines.append(('IQXY_FIXED_PARAMETER_DECLARATIONS',
-                        ', \\\n    '.join('const double %s'%p for p in fixed_2d)))
+                        ', \\\n    '.join('const double %s' % p for p in fixed_2d)))
     if pd_2d:
         defines.append(('IQXY_WEIGHT_PRODUCT',
-                        '*'.join(p+'_w' for p in pd_2d)))
+                        '*'.join(p + '_w' for p in pd_2d)))
         defines.append(('IQXY_DISPERSION_LENGTH_DECLARATIONS',
-                        ', \\\n    '.join('const int N%s'%p for p in pd_2d)))
+                        ', \\\n    '.join('const int N%s' % p for p in pd_2d)))
         defines.append(('IQXY_DISPERSION_LENGTH_SUM',
-                        '+'.join('N'+p for p in pd_2d)))
+                        '+'.join('N' + p for p in pd_2d)))
         open_loops, close_loops = build_polydispersity_loops(pd_2d)
         defines.append(('IQXY_OPEN_LOOPS',
-                        open_loops.replace('\n',' \\\n')))
+                        open_loops.replace('\n', ' \\\n')))
         defines.append(('IQXY_CLOSE_LOOPS',
-                        close_loops.replace('\n',' \\\n')))
+                        close_loops.replace('\n', ' \\\n')))
     if info['Iqxy'] is not None:
         defines.append(('IQXY_PARAMETER_DECLARATIONS',
-                       ', '.join('double '+p for p in iqxy_parameters)))
+                        ', '.join('double ' + p for p in iqxy_parameters)))
         fn = """\
 double Iqxy(double qx, double qy, IQXY_PARAMETER_DECLARATIONS);
 double Iqxy(double qx, double qy, IQXY_PARAMETER_DECLARATIONS) {
     %(body)s
 }
-"""%{'body':info['Iqxy']}
+""" % {'body':info['Iqxy']}
         source.append(fn)
 
     # Need to know if we have a theta parameter for Iqxy; it is not there
@@ -512,9 +512,9 @@ double Iqxy(double qx, double qy, IQXY_PARAMETER_DECLARATIONS) {
         defines.append(('IQXY_HAS_THETA', '1'))
 
     #for d in defines: print d
-    DEFINES='\n'.join('#define %s %s'%(k,v) for k,v in defines)
-    SOURCES='\n\n'.join(source)
-    return C_KERNEL_TEMPLATE%{
+    DEFINES = '\n'.join('#define %s %s' % (k, v) for k, v in defines)
+    SOURCES = '\n\n'.join(source)
+    return C_KERNEL_TEMPLATE % {
         'DEFINES':DEFINES,
         'SOURCES':SOURCES,
         }
@@ -530,22 +530,22 @@ def make(kernel_module):
     # TODO: allow Iq and Iqxy to be defined in python
     #print kernelfile
     info = dict(
-        filename = abspath(kernel_module.__file__),
-        name = kernel_module.name,
-        title = kernel_module.title,
-        description = kernel_module.description,
-        parameters = COMMON_PARAMETERS + kernel_module.parameters,
-        source = getattr(kernel_module, 'source', []),
-        oldname = kernel_module.oldname,
-        oldpars = kernel_module.oldpars,
+        filename=abspath(kernel_module.__file__),
+        name=kernel_module.name,
+        title=kernel_module.title,
+        description=kernel_module.description,
+        parameters=COMMON_PARAMETERS + kernel_module.parameters,
+        source=getattr(kernel_module, 'source', []),
+        oldname=kernel_module.oldname,
+        oldpars=kernel_module.oldpars,
         )
     # Fill in attributes which default to None
-    info.update((k,getattr(kernel_module, k, None))
+    info.update((k, getattr(kernel_module, k, None))
                 for k in ('ER', 'VR', 'form_volume', 'Iq', 'Iqxy'))
     # Fill in the derived attributes
-    info['limits'] = dict((p[0],p[3]) for p in info['parameters'])
+    info['limits'] = dict((p[0], p[3]) for p in info['parameters'])
     info['partype'] = categorize_parameters(info['parameters'])
-    info['defaults'] = dict((p[0],p[2]) for p in info['parameters'])
+    info['defaults'] = dict((p[0], p[2]) for p in info['parameters'])
 
     # Assume if one part of the kernel is python then all parts are.
     source = make_model(info) if not callable(info['Iq']) else None
@@ -555,22 +555,22 @@ def doc(kernel_module):
     """
     Return the documentation for the model.
     """
-    subst = dict(name=kernel_module.name.replace('_','-'),
+    subst = dict(name=kernel_module.name.replace('_', '-'),
                  label=" ".join(kernel_module.name.split('_')).capitalize(),
                  title=kernel_module.title,
                  parameters=make_partable(kernel_module.parameters),
                  docs=kernel_module.__doc__)
-    return DOC_HEADER%subst
+    return DOC_HEADER % subst
 
 
 
 def demo_time():
     import datetime
     from .models import cylinder
-    toc = lambda: (datetime.datetime.now()-tic).total_seconds()
     tic = datetime.datetime.now()
-    source, info = make(cylinder)
-    print "time:",toc()
+    toc = lambda: (datetime.datetime.now() - tic).total_seconds()
+    make(cylinder)
+    print "time:", toc()
 
 def main():
     if len(sys.argv) <= 1:
@@ -578,10 +578,10 @@ def main():
     else:
         name = sys.argv[1]
         import sasmodels.models
-        __import__('sasmodels.models.'+name)
+        __import__('sasmodels.models.' + name)
         model = getattr(sasmodels.models, name)
-        source, info = make(model); print source
-        #print doc(model)
+        source, _ = make(model)
+        print source
 
 if __name__ == "__main__":
     main()
