@@ -9,6 +9,7 @@
 // Note: if using a C++ compiler, then define kernel as extern "C"
 #ifndef USE_OPENCL
 #  ifdef __cplusplus
+     #include <cstdio>
      #include <cmath>
      #if defined(_MSC_VER)
      #define kernel extern "C" __declspec( dllexport )
@@ -19,6 +20,7 @@
      inline void SINCOS(double angle, double &svar, double &cvar)
        { svar=sin(angle); cvar=cos(angle); }
 #  else
+     #include <stdio.h>
      #include <math.h>
      #if defined(_MSC_VER)
      #define kernel __declspec( dllexport )

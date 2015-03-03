@@ -54,6 +54,7 @@ double Iq(double qval,
     temp = 1.0-ii/NN;
     //temp *= cos(dd*qval*ii/(1.0+t1));
     temp *= cos(dd*qval*ii);
+    //if (temp < 0) printf("q=%g: ii=%d, cos(dd*q*ii)=cos(%g) < 0\n",qval,ii,dd*qval*ii);
     //temp *= exp(-1.0*(t2 + t3)/(2.0*(1.0+t1)) );
     temp *= exp(-t2/2.0 );
     //temp /= sqrt(1.0+t1);
@@ -67,7 +68,6 @@ double Iq(double qval,
   inten = 2.0*M_PI*Pq*Sq/(dd*qval*qval);
 
   inten *= 1.0e-04;   // 1/A to 1/cm
-
   return(inten);
 }
 
