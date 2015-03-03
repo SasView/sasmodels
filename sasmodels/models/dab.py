@@ -43,6 +43,7 @@ F(q)= L^3/(1 + (q*L)^2)^2
 L: the correlation length
 
 """
+category = "shape-independent"
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type", "description" ],

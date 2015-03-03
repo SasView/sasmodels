@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.insert(0,'..')
 
-# Convert ../sasmodels/models.name.py to sasmodels.models.name
+# Convert ../sasmodels/models/name.py to sasmodels.models.name
 module_name = sys.argv[1][3:-3].replace('/','.').replace('\\','.')
 print module_name
 module = __import__(module_name)

@@ -60,6 +60,7 @@ description = """\
 		background = incoherent background
 		scale = scale factor
 """
+category = "shape:lamellae"
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type",

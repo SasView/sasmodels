@@ -15,7 +15,7 @@ The returned value is scaled to units of |cm^-1|\ |sr^-1|, absolute scale.
 
 The barbell geometry is defined as
 
-.. image:: img/image105.jpg
+.. image:: img/barbell_geometry.jpg
 
 where *r* is the radius of the cylinder. All other parameters are as defined in the diagram.
 
@@ -70,29 +70,18 @@ and its radius-of-gyration is
 
 **The requirement that** *R* >= *r* **is not enforced in the model!** It is up to you to restrict this during analysis.
 
-This example dataset is produced by running the Macro PlotBarbell(), using 200 data points, *qmin* = 0.001 |Ang^-1|,
-*qmax* = 0.7 |Ang^-1| and the following default values
+This example dataset is produced by running the Macro PlotBarbell(),
+using 200 data points, *qmin* = 0.001 |Ang^-1|, *qmax* = 0.7 |Ang^-1|,
+*sld* = 4e-6 |Ang^-2| and the default model values.
 
-==============  ========  =============
-Parameter name  Units     Default value
-==============  ========  =============
-scale           None      1.0
-len_bar         |Ang|     400.0
-rad_bar         |Ang|     20.0
-rad_bell        |Ang|     40.0
-sld_barbell     |Ang^-2|  1.0e-006
-sld_solv        |Ang^-2|  6.3e-006
-background      |cm^-1|   0
-==============  ========  =============
-
-.. image:: img/image110.jpg
+.. image:: img/barbell_1d.jpg
 
 *Figure. 1D plot using the default values (w/256 data point).*
 
 For 2D data: The 2D scattering intensity is calculated similar to the 2D cylinder model. For example, for
 |theta| = 45 deg and |phi| = 0 deg with default values for other parameters
 
-.. image:: img/image111.jpg
+.. image:: img/barbell_2d.jpg
 
 *Figure. 2D plot (w/(256X265) data points).*
 
@@ -105,6 +94,7 @@ Figure. Definition of the angles for oriented 2D barbells.
 *Figure. Examples of the angles for oriented pp against the detector plane.*
 
 REFERENCE
+---------
 
 H Kaya, *J. Appl. Cryst.*, 37 (2004) 37 223-230
 
@@ -121,6 +111,7 @@ description = """
 		Note: As the length of cylinder(bar) -->0,it becomes a dumbbell. And when rad_bar = rad_bell, it is a spherocylinder.
 		It must be that rad_bar <(=) rad_bell.
 """
+category = "shape:cylinder"
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type","description" ],

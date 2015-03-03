@@ -132,6 +132,7 @@ P(q,alpha)= scale/Vs*f(q)^(2) + background,
  	theta: axis_theta of the cylinder
  	phi: the axis_phi of the cylinder
 """
+category = "shape:cylinder"
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type",

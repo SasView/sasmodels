@@ -29,23 +29,13 @@ where the *q* vector is defined as
 
     q = \sqrt{q_x^2 + q_y^2}
 
-=====================  =========  =============
-Parameter name          Units     Default value
-=====================  =========  =============
-lorentz_scale(=C)       None      10
-porod_scale  (=A)       None      1e-05
-lorentz_length (= |xi| )  |Ang|     50
-peak_pos  (=Q0)         |Ang^-1|  0.1
-porod_exp  (=n)         None      2
-lorentz_exp (=m)        None      3
-Background (=B)        |cm^-1|   0.1
-==================  ========  =============
 
 .. image:: img/image175.jpg
 
 *Figure. 1D plot using the default values (w/200 data point).*
 
 REFERENCE
+---------
 
 None.
 
@@ -70,6 +60,7 @@ description = """\
       peak_pos = peak location [1/A]
       lorentz_exp = Lorentzian exponent
       background = Incoherent background"""
+category="shape-independent"
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type",

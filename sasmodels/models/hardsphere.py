@@ -1,10 +1,17 @@
 # Note: model title and parameter table are inserted automatically
-r"""This calculates the interparticle structure factor for monodisperse spherical particles interacting through hard
-sphere (excluded volume) interactions.
+r"""Calculate the interparticle structure factor for monodisperse
+spherical particles interacting through hard sphere (excluded volume)
+interactions.
 
-The calculation uses the Percus-Yevick closure where the interparticle potential is
+The calculation uses the Percus-Yevick closure where the interparticle
+potential is
 
-.. image:: img/HardSphere_223.PNG
+.. math:
+
+    U(r) = \begin{cases}
+    \infty & r < 2R \\
+    0 & r \geq 2R
+    \end{cases}
 
 where *r* is the distance from the center of the sphere of a radius *R*.
 
@@ -12,17 +19,10 @@ For a 2D plot, the wave transfer is defined as
 
 .. math::
 
-    Q = \sqrt{Q_x^2 + Q_y^2}
+    q = \sqrt{q_x^2 + q_y^2}
 
 
-==============  ========  =============
-Parameter name  Units     Default value
-==============  ========  =============
-effect_radius   |Ang|     50.0
-volfraction     None      0.2
-==============  ========  =============
-
-.. image:: img/HardSphere_224.jpg
+.. image:: img/HardSphere_1d.jpg
 
 *Figure. 1D plot using the default values (in linear scale).*
 
@@ -38,13 +38,14 @@ title = "Hard sphere structure factor, with Percus-Yevick closure"
 description = """\
 	[Hard sphere structure factor, with Percus-Yevick closure]
         Interparticle S(Q) for random, non-interacting spheres.
-		May be a reasonable approximation for other shapes of
-		particles that freely rotate, and for moderately polydisperse
+	May be a reasonable approximation for other shapes of
+	particles that freely rotate, and for moderately polydisperse
         systems. Though strictly the maths needs to be modified - 
-		which sasview does not do yet.
-		effect_radius is the hard sphere radius
-		volfraction is the volume fraction occupied by the spheres.
+	which sasview does not do yet.
+	effect_radius is the hard sphere radius
+	volfraction is the volume fraction occupied by the spheres.
 """
+category = "structure-factor"
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type",
@@ -95,7 +96,7 @@ Iq = """
 
 Iqxy = """
     // never called since no orientation or magnetic parameters.
-    return -1.0;
+    return Iq(sqrt(qx*qx+qy*qy), IQ_PARAMETERS);
     """
 
 # ER defaults to 0.0

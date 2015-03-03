@@ -209,6 +209,7 @@ COMMON_PARAMETERS = [
 # to units displayed in the sphinx documentation.
 RST_UNITS = {
     "Ang": "|Ang|",
+    "1/Ang": "|Ang^-1|",
     "1/Ang^2": "|Ang^-2|",
     "1e-6/Ang^2": "|1e-6Ang^-2|",
     "degrees": "degree",

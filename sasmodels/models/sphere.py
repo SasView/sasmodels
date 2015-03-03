@@ -69,6 +69,7 @@ P(q)=(scale/V)*[3V(sld-solvent_sld)*(sin(qR)-qRcos(qR))
     sld: the SLD of the sphere
     solvent_sld: the SLD of the solvent
 """
+category = "shape:sphere"
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type",

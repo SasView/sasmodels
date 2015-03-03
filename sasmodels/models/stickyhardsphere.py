@@ -69,6 +69,7 @@ description = """\
 		In sasview the effective radius will be calculated from the 
 		parameters used in P(Q).
 """
+category = "structure-factor"
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type",

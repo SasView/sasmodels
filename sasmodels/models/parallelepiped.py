@@ -113,11 +113,12 @@ description = """
             S(x) = sin(x)/x
 	    mu = q*B
 """
+category = "shape:parallelpiped"
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type",
 #     "description" ],
-    [ "sld", "6e-6/Ang^2", 4, [-inf,inf], "",
+    [ "sld", "1e-6/Ang^2", 4, [-inf,inf], "",
       "Parallelepiped scattering length density" ],
     [ "solvent_sld", "1e-6/Ang^2", 1, [-inf,inf], "",
       "Solvent scattering length density" ],
