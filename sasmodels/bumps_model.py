@@ -1,14 +1,13 @@
 """
 Sasmodels core.
 """
-import sys, os
 import datetime
 
 from sasmodels import sesans
 
 # CRUFT python 2.6
 if not hasattr(datetime.timedelta, 'total_seconds'):
-    def delay(dt): return dt.days*86400 + dt.seconds + 1e-6*dt.microseconds
+    def delay(dt): return dt.days * 86400 + dt.seconds + 1e-6 * dt.microseconds
 else:
     def delay(dt): return dt.total_seconds()
 
@@ -16,7 +15,7 @@ import numpy as np
 
 try:
     from .kernelcl import load_model as _loader
-except RuntimeError,exc:
+except RuntimeError, exc:
     import warnings
     warnings.warn(str(exc))
     warnings.warn("OpenCL not available --- using ctypes instead")
@@ -26,7 +25,7 @@ def load_model(modelname, dtype='single'):
     """
     Load model by name.
     """
-    sasmodels = __import__('sasmodels.models.'+modelname)
+    sasmodels = __import__('sasmodels.models.' + modelname)
     module = getattr(sasmodels.models, modelname, None)
     model = _loader(module, dtype=dtype)
     return model
@@ -40,7 +39,7 @@ def tic():
     a time interval.
     """
     then = datetime.datetime.now()
-    return lambda: delay(datetime.datetime.now()-then)
+    return lambda: delay(datetime.datetime.now() - then)
 
 
 def load_data(filename):
@@ -51,7 +50,7 @@ def load_data(filename):
     loader = Loader()
     data = loader.load(filename)
     if data is None:
-        raise IOError("Data %r could not be loaded"%filename)
+        raise IOError("Data %r could not be loaded" % filename)
     return data
 
 
@@ -64,9 +63,9 @@ def empty_data1D(q):
 
     from sas.dataloader.data_info import Data1D
 
-    Iq = 100*np.ones_like(q)
+    Iq = 100 * np.ones_like(q)
     dIq = np.sqrt(Iq)
-    data = Data1D(q, Iq, dx=0.05*q, dy=dIq)
+    data = Data1D(q, Iq, dx=0.05 * q, dy=dIq)
     data.filename = "fake data"
     data.qmin, data.qmax = q.min(), q.max()
     return data
@@ -84,9 +83,9 @@ def empty_data2D(qx, qy=None):
 
     if qy is None:
         qy = qx
-    Qx,Qy = np.meshgrid(qx,qy)
-    Qx,Qy = Qx.flatten(), Qy.flatten()
-    Iq = 100*np.ones_like(Qx)
+    Qx, Qy = np.meshgrid(qx, qy)
+    Qx, Qy = Qx.flatten(), Qy.flatten()
+    Iq = 100 * np.ones_like(Qx)
     dIq = np.sqrt(Iq)
     mask = np.ones(len(Iq), dtype='bool')
 
@@ -99,8 +98,8 @@ def empty_data2D(qx, qy=None):
     data.mask = mask
 
     # 5% dQ/Q resolution
-    data.dqx_data = 0.05*Qx
-    data.dqy_data = 0.05*Qy
+    data.dqx_data = 0.05 * Qx
+    data.dqy_data = 0.05 * Qy
 
     detector = Detector()
     detector.pixel_size.x = 5 # mm
@@ -113,7 +112,7 @@ def empty_data2D(qx, qy=None):
     data.source.wavelength_unit = "A"
     data.Q_unit = "1/A"
     data.I_unit = "1/cm"
-    data.q_data = np.sqrt(Qx**2 + Qy**2)
+    data.q_data = np.sqrt(Qx ** 2 + Qy ** 2)
     data.xaxis("Q_x", "A^{-1}")
     data.yaxis("Q_y", "A^{-1}")
     data.zaxis("Intensity", r"\text{cm}^{-1}")
@@ -128,11 +127,11 @@ def set_beam_stop(data, radius, outer=None):
     if hasattr(data, 'qx_data'):
         data.mask = Ringcut(0, radius)(data)
         if outer is not None:
-            data.mask += Ringcut(outer,np.inf)(data)
+            data.mask += Ringcut(outer, np.inf)(data)
     else:
-        data.mask = (data.x>=radius)
+        data.mask = (data.x >= radius)
         if outer is not None:
-            data.mask &= (data.x<outer)
+            data.mask &= (data.x < outer)
 
 
 def set_half(data, half):
@@ -164,22 +163,22 @@ def plot_data(data, iq, vmin=None, vmax=None, scale='log'):
     from numpy.ma import masked_array, masked
     import matplotlib.pyplot as plt
     if hasattr(data, 'qx_data'):
-        iq = iq+0
+        iq = iq + 0
         valid = np.isfinite(iq)
         if scale == 'log':
             valid[valid] = (iq[valid] > 0)
             iq[valid] = np.log10(iq[valid])
-        iq[~valid|data.mask] = 0
+        iq[~valid | data.mask] = 0
         #plottable = iq
-        plottable = masked_array(iq, ~valid|data.mask)
+        plottable = masked_array(iq, ~valid | data.mask)
         xmin, xmax = min(data.qx_data), max(data.qx_data)
         ymin, ymax = min(data.qy_data), max(data.qy_data)
         try:
-            if vmin is None: vmin = iq[valid&~data.mask].min()
-            if vmax is None: vmax = iq[valid&~data.mask].max()
+            if vmin is None: vmin = iq[valid & ~data.mask].min()
+            if vmax is None: vmax = iq[valid & ~data.mask].max()
         except:
             vmin, vmax = 0, 1
-        plt.imshow(plottable.reshape(128,128),
+        plt.imshow(plottable.reshape(128, 128),
                    interpolation='nearest', aspect=1, origin='upper',
                    extent=[xmin, xmax, ymin, ymax], vmin=vmin, vmax=vmax)
     else: # 1D data
@@ -188,7 +187,7 @@ def plot_data(data, iq, vmin=None, vmax=None, scale='log'):
             plt.plot(data.x[idx], iq[idx])
         else:
             idx = np.isfinite(iq)
-            idx[idx] = (iq[idx]>0)
+            idx[idx] = (iq[idx] > 0)
             plt.loglog(data.x[idx], iq[idx])
 
 
@@ -205,7 +204,7 @@ def _plot_result1D(data, theory, view):
     if view is 'log':
         mdata[mdata <= 0] = masked
     mtheory = masked_array(theory, mdata.mask)
-    mresid = masked_array((theory-data.y)/data.dy, mdata.mask)
+    mresid = masked_array((theory - data.y) / data.dy, mdata.mask)
 
     plt.subplot(121)
     plt.errorbar(data.x, mdata, yerr=data.dy)
@@ -213,13 +212,10 @@ def _plot_result1D(data, theory, view):
     plt.yscale(view)
     plt.subplot(122)
     plt.plot(data.x, mresid, 'x')
-    #plt.axhline(1, color='black', ls='--',lw=1, hold=True)
-    #plt.axhline(0, color='black', lw=1, hold=True)
-    #plt.axhline(-1, color='black', ls='--',lw=1, hold=True)
 
 def _plot_sesans(data, theory, view):
     import matplotlib.pyplot as plt
-    resid = (theory - data.y)/data.dy
+    resid = (theory - data.y) / data.dy
     plt.subplot(121)
     plt.errorbar(data.x, data.y, yerr=data.dy)
     plt.plot(data.x, theory, '-', hold=True)
@@ -235,7 +231,7 @@ def _plot_result2D(data, theory, view):
     Plot the data and residuals for 2D data.
     """
     import matplotlib.pyplot as plt
-    resid = (theory-data.data)/data.err_data
+    resid = (theory - data.data) / data.err_data
     plt.subplot(131)
     plot_data(data, data.data, scale=view)
     plt.colorbar()
@@ -269,7 +265,7 @@ class BumpsModel(object):
         self.data = data
         self.model = model
         self.cutoff = cutoff
-# TODO       if  isinstance(data,SESANSData1D)        
+# TODO       if  isinstance(data,SESANSData1D)
         if hasattr(data, 'lam'):
             self.data_type = 'sesans'
         elif hasattr(data, 'qx_data'):
@@ -282,22 +278,22 @@ class BumpsModel(object):
         # interpret data
         if self.data_type == 'sesans':
             q = sesans.make_q(data.sample.zacceptance, data.Rmax)
-            self.index = slice(None,None)
+            self.index = slice(None, None)
             self.iq = data.y
             self.diq = data.dy
             self._theory = np.zeros_like(q)
             q_vectors = [q]
         elif self.data_type == 'Iqxy':
-            self.index = (data.mask==0) & (~np.isnan(data.data))
+            self.index = (data.mask == 0) & (~np.isnan(data.data))
             self.iq = data.data[self.index]
             self.diq = data.err_data[self.index]
             self._theory = np.zeros_like(data.data)
             if not partype['orientation'] and not partype['magnetic']:
-                q_vectors = [np.sqrt(data.qx_data**2+data.qy_data**2)]
+                q_vectors = [np.sqrt(data.qx_data ** 2 + data.qy_data ** 2)]
             else:
                 q_vectors = [data.qx_data, data.qy_data]
         elif self.data_type == 'Iq':
-            self.index = (data.x>=data.qmin) & (data.x<=data.qmax) & ~np.isnan(data.y)
+            self.index = (data.x >= data.qmin) & (data.x <= data.qmax) & ~np.isnan(data.y)
             self.iq = data.y[self.index]
             self.diq = data.dy[self.index]
             self._theory = np.zeros_like(data.y)
@@ -318,13 +314,13 @@ class BumpsModel(object):
             setattr(self, name, Parameter.default(value, name=name, limits=limits))
             pars.append(name)
         for name in partype['pd-2d']:
-            for xpart,xdefault,xlimits in [
+            for xpart, xdefault, xlimits in [
                     ('_pd', 0, limits),
-                    ('_pd_n', 35, (0,1000)),
+                    ('_pd_n', 35, (0, 1000)),
                     ('_pd_nsigma', 3, (0, 10)),
                     ('_pd_type', 'gaussian', None),
                 ]:
-                xname = name+xpart
+                xname = name + xpart
                 xvalue = kw.pop(xname, xdefault)
                 if xlimits is not None:
                     xvalue = Parameter.default(xvalue, name=xname, limits=xlimits)
@@ -332,32 +328,38 @@ class BumpsModel(object):
                 setattr(self, xname, xvalue)
         self._parameter_names = pars
         if kw:
-            raise TypeError("unexpected parameters: %s"%(", ".join(sorted(kw.keys()))))
+            raise TypeError("unexpected parameters: %s" % (", ".join(sorted(kw.keys()))))
         self.update()
 
     def update(self):
         self._cache = {}
 
     def numpoints(self):
+        """
+            Return the number of points
+        """
         return len(self.iq)
 
     def parameters(self):
-        return dict((k,getattr(self,k)) for k in self._parameter_names)
+        """
+            Return a dictionary of parameters
+        """
+        return dict((k, getattr(self, k)) for k in self._parameter_names)
 
     def theory(self):
         if 'theory' not in self._cache:
             if self._fn is None:
-                input = self.model.make_input(self._fn_inputs)
-                self._fn = self.model(input)
+                input_value = self.model.make_input(self._fn_inputs)
+                self._fn = self.model(input_value)
 
-            fixed_pars = [getattr(self,p).value for p in self._fn.fixed_pars]
+            fixed_pars = [getattr(self, p).value for p in self._fn.fixed_pars]
             pd_pars = [self._get_weights(p) for p in self._fn.pd_pars]
             #print fixed_pars,pd_pars
             self._theory[self.index] = self._fn(fixed_pars, pd_pars, self.cutoff)
             #self._theory[:] = self._fn.eval(pars, pd_pars)
             if self.data_type == 'sesans':
-                P = sesans.hankel(self.data.x, self.data.lam*1e-9,
-                                  self.data.sample.thickness/10, self._fn_inputs[0],
+                P = sesans.hankel(self.data.x, self.data.lam * 1e-9,
+                                  self.data.sample.thickness / 10, self._fn_inputs[0],
                                   self._theory)
                 self._cache['theory'] = P
             else:
@@ -366,15 +368,15 @@ class BumpsModel(object):
 
     def residuals(self):
         #if np.any(self.err ==0): print "zeros in err"
-        return (self.theory()[self.index]-self.iq)/self.diq
+        return (self.theory()[self.index] - self.iq) / self.diq
 
     def nllf(self):
         R = self.residuals()
         #if np.any(np.isnan(R)): print "NaN in residuals"
-        return 0.5*np.sum(R**2)
+        return 0.5 * np.sum(R ** 2)
 
     def __call__(self):
-        return 2*self.nllf()/self.dof
+        return 2 * self.nllf() / self.dof
 
     def plot(self, view='log'):
         """
@@ -395,10 +397,10 @@ class BumpsModel(object):
         if noise is None:
             noise = self.diq[self.index]
         else:
-            noise = 0.01*noise
+            noise = 0.01 * noise
             self.diq[self.index] = noise
         y = self.theory()
-        y += y*np.random.randn(*y.shape)*noise
+        y += y * np.random.randn(*y.shape) * noise
         if self.data_type == 'Iq':
             self.data.y[self.index] = y
         elif self.data_type == 'Iqxy':
@@ -412,16 +414,19 @@ class BumpsModel(object):
         pass
 
     def _get_weights(self, par):
+        """
+            Get parameter dispersion weights
+        """
         from . import weights
 
         relative = self.model.info['partype']['pd-rel']
         limits = self.model.info['limits']
-        disperser,value,npts,width,nsigma = [getattr(self, par+ext)
-                for ext in ('_pd_type','','_pd_n','_pd','_pd_nsigma')]
-        v,w = weights.get_weights(
+        disperser, value, npts, width, nsigma = \
+            [getattr(self, par + ext) for ext in ('_pd_type', '', '_pd_n', '_pd', '_pd_nsigma')]
+        v, w = weights.get_weights(
             disperser, int(npts.value), width.value, nsigma.value,
             value.value, limits[par], par in relative)
-        return v,w/w.max()
+        return v, w / w.max()
 
     def __getstate__(self):
         # Can't pickle gpu functions, so instead make them lazy
