@@ -1,7 +1,7 @@
 #bcc paracrystal model
 #note model title and parameter table are automatically inserted
 #note - calculation requires double precision
-"""
+r"""
 Calculates the scattering from a **body-centered cubic lattice** with
 paracrystalline distortion. Thermal vibrations are considered to be negligible,
 and the size of the paracrystal is infinitely large. Paracrystalline distortion
