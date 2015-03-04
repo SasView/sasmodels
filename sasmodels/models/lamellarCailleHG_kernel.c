@@ -7,7 +7,7 @@ double Iq(double qval,
       double head_length,
       double Nlayers, 
       double dd,
-	  double Cp, 
+      double Cp,
       double tail_sld,
       double head_sld,
       double solvent_sld);
@@ -17,7 +17,7 @@ double Iq(double qval,
       double head_length,
       double Nlayers, 
       double dd,
-	  double Cp, 
+      double Cp,
       double tail_sld,
       double head_sld,
       double solvent_sld)
@@ -33,7 +33,7 @@ double Iq(double qval,
 
   NN = trunc(Nlayers);    //be sure that NN is an integer
   
-  Pq = (head_sld-solvent_sld)*(sin(qval*(head_length+tail_length))-sin(qval*tail_length)) + 
+  Pq = (head_sld-solvent_sld)*(sin(qval*(head_length+tail_length))-sin(qval*tail_length)) +
               (tail_sld-solvent_sld)*sin(qval*tail_length);
   Pq *= Pq;
   Pq *= 4.0/(qval*qval);
@@ -41,7 +41,7 @@ double Iq(double qval,
   NNint = (int)NN;    //cast to an integer for the loop
   ii=0;
   Sq = 0.0;
-  for(ii=1;ii<(NNint-1);ii+=1) {
+  for(ii=1;ii<=(NNint-1);ii+=1) {
 
     //fii = (double)ii;   //do I really need to do this? - unused variable, removed 18Feb2015
 
@@ -64,6 +64,8 @@ double Iq(double qval,
 
   Sq *= 2.0;
   Sq += 1.0;
+
+  //if (Sq < 0) printf("q=%g: S(q) =%g\n", qval, Sq);
 
   inten = 2.0*M_PI*Pq*Sq/(dd*qval*qval);
 
