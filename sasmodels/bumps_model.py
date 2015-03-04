@@ -153,7 +153,7 @@ def set_top(data, max):
     data.mask += Boxcut(x_min=-np.inf, x_max=np.inf, y_min=-np.inf, y_max=max)(data)
 
 
-def plot_data(data, iq, vmin=None, vmax=None, scale='log'):
+def plot_data(data, iq, vmin=None, vmax=None, view='log'):
     """
     Plot the target value for the data.  This could be the data itself,
     the theory calculation, or the residuals.
@@ -165,9 +165,11 @@ def plot_data(data, iq, vmin=None, vmax=None, scale='log'):
     if hasattr(data, 'qx_data'):
         iq = iq + 0
         valid = np.isfinite(iq)
-        if scale == 'log':
+        if view == 'log':
             valid[valid] = (iq[valid] > 0)
             iq[valid] = np.log10(iq[valid])
+        elif view == 'q4':
+            iq[valid] = iq*(data.qx_data[valid]**2+data.qy_data[valid]**2)**2
         iq[~valid | data.mask] = 0
         #plottable = iq
         plottable = masked_array(iq, ~valid | data.mask)
@@ -182,13 +184,16 @@ def plot_data(data, iq, vmin=None, vmax=None, scale='log'):
                    interpolation='nearest', aspect=1, origin='upper',
                    extent=[xmin, xmax, ymin, ymax], vmin=vmin, vmax=vmax)
     else: # 1D data
-        if scale == 'linear':
-            idx = np.isfinite(iq)
-            plt.plot(data.x[idx], iq[idx])
+        if view == 'linear' or view == 'q4':
+            #idx = np.isfinite(iq)
+            scale = data.x**4 if view == 'q4' else 1.0
+            plt.plot(data.x, scale*iq) #, '.')
         else:
+            # Find the values that are finite and positive
             idx = np.isfinite(iq)
-            idx[idx] = (iq[idx] > 0)
-            plt.loglog(data.x[idx], iq[idx])
+            idx[idx] = iq[idx]>0
+            iq[~idx] = np.nan
+            plt.loglog(data.x, iq)
 
 
 def _plot_result1D(data, theory, view):
@@ -206,10 +211,11 @@ def _plot_result1D(data, theory, view):
     mtheory = masked_array(theory, mdata.mask)
     mresid = masked_array((theory - data.y) / data.dy, mdata.mask)
 
+    scale = data.x**4 if view == 'q4' else 1.0
     plt.subplot(121)
-    plt.errorbar(data.x, mdata, yerr=data.dy)
-    plt.plot(data.x, mtheory, '-', hold=True)
-    plt.yscale(view)
+    plt.errorbar(data.x, scale*mdata, yerr=data.dy)
+    plt.plot(data.x, scale*mtheory, '-', hold=True)
+    plt.yscale('linear' if view == 'q4' else view)
     plt.subplot(122)
     plt.plot(data.x, mresid, 'x')
 
@@ -233,13 +239,13 @@ def _plot_result2D(data, theory, view):
     import matplotlib.pyplot as plt
     resid = (theory - data.data) / data.err_data
     plt.subplot(131)
-    plot_data(data, data.data, scale=view)
+    plot_data(data, data.data, view=view)
     plt.colorbar()
     plt.subplot(132)
-    plot_data(data, theory, scale=view)
+    plot_data(data, theory, view=view)
     plt.colorbar()
     plt.subplot(133)
-    plot_data(data, resid, scale='linear')
+    plot_data(data, resid, view='linear')
     plt.colorbar()
 
 class BumpsModel(object):
