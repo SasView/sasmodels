@@ -28,7 +28,8 @@ That is::
         [ {parameters}, [q1, q2, ...], [I(q1), I(q2), ...]],
 
         [ {parameters}, (qx, qy), I(qx, Iqy)],
-        [ {parameters}, [(qx1, qy1), (qx2, qy2), ...], [I(qx1,qy1), I(qx2,qy2), ...],
+        [ {parameters}, [(qx1, qy1), (qx2, qy2), ...],
+                        [I(qx1,qy1), I(qx2,qy2), ...]],
 
         [ {parameters}, 'ER', ER(pars) ],
         [ {parameters}, 'VR', VR(pars) ],
@@ -79,6 +80,7 @@ def annotate_exception(exc, msg):
     
 def suite(loaders, models):
 
+    ModelTestCase = _hide_model_case_from_nosetests()
     suite = unittest.TestSuite()
 
     if models[0] == 'all':
@@ -126,67 +128,74 @@ def suite(loaders, models):
 
     return suite
 
-class ModelTestCase(unittest.TestCase):
-    
-    def __init__(self, test_name, definition, loader, tests):
-        unittest.TestCase.__init__(self)
-        
-        self.test_name = test_name
-        self.definition = definition
-        self.loader = loader
-        self.tests = tests
+def _hide_model_case_from_nosetests():
+    class ModelTestCase(unittest.TestCase):
+        def __init__(self, test_name, definition, loader, tests):
+            unittest.TestCase.__init__(self)
 
-    def runTest(self):
-        #print "running", self.test_name
-        try:
-            model = self.loader(self.definition)
-            for test in self.tests:
-                pars, Q, I = test
+            self.test_name = test_name
+            self.definition = definition
+            self.loader = loader
+            self.tests = tests
 
-                if not isinstance(I, list):
-                    I = [I]
-                if not isinstance(Q, list):
-                    Q = [Q]
+        def runTest(self):
+            try:
+                model = self.loader(self.definition)
+                for test in self.tests:
+                    pars, Q, I = test
 
-                self.assertEqual(len(I), len(Q))
+                    if not isinstance(I, list):
+                        I = [I]
+                    if not isinstance(Q, list):
+                        Q = [Q]
 
-                if Q[0] == 'ER':
-                    Iq = [call_ER(kernel, pars)]
-                elif Q[0] == 'VR':
-                    Iq = [call_VR(kernel, pars)]
-                elif isinstance(Q[0], tuple):
-                    Qx,Qy = zip(*Q)
-                    Q_vectors = [np.array(Qx), np.array(Qy)]
-                    kernel = make_kernel(model, Q_vectors)
-                    Iq = call_kernel(kernel, pars)
-                else:
-                    Q_vectors = [np.array(Q)]
-                    kernel = make_kernel(model, Q_vectors)
-                    Iq = call_kernel(kernel, pars)
-            
-                self.assertGreater(len(Iq), 0)    
-                self.assertEqual(len(I), len(Iq))              
-                
-                for q, i, iq in zip(Q, I, Iq):
-                    if i is None:
-                        # smoke test --- make sure it runs and produces a value
-                        self.assertTrue(np.isfinite(iq), 'q:%s; not finite; actual:%s' % (q, iq))
+                    self.assertEqual(len(I), len(Q))
+
+                    if Q[0] == 'ER':
+                        Iq = [call_ER(kernel, pars)]
+                    elif Q[0] == 'VR':
+                        Iq = [call_VR(kernel, pars)]
+                    elif isinstance(Q[0], tuple):
+                        Qx,Qy = zip(*Q)
+                        Q_vectors = [np.array(Qx), np.array(Qy)]
+                        kernel = make_kernel(model, Q_vectors)
+                        Iq = call_kernel(kernel, pars)
                     else:
-                        err = abs(i - iq)
-                        nrm = abs(i)
-                        self.assertLess(err * 10**5, nrm, 'q:%s; expected:%s; actual:%s' % (q, i, iq))
-                    
-        except Exception,exc: 
-            annotate_exception(exc, self.test_name)
-            raise
+                        Q_vectors = [np.array(Q)]
+                        kernel = make_kernel(model, Q_vectors)
+                        Iq = call_kernel(kernel, pars)
+
+                    self.assertGreater(len(Iq), 0)
+                    self.assertEqual(len(I), len(Iq))
+
+                    for q, i, iq in zip(Q, I, Iq):
+                        if i is None:
+                            # smoke test --- make sure it runs and produces a value
+                            self.assertTrue(np.isfinite(iq), 'q:%s; not finite; actual:%s' % (q, iq))
+                        else:
+                            err = abs(i - iq)
+                            nrm = abs(i)
+                            self.assertLess(err * 10**5, nrm, 'q:%s; expected:%s; actual:%s' % (q, i, iq))
+
+            except Exception,exc:
+                annotate_exception(exc, self.test_name)
+                raise
+
+    return ModelTestCase
+
+
+# let nosetests sniff out the tests
+def model_tests():
+    tests = suite(['opencl','dll'],['all'])
+    for test_i in tests:
+        yield test_i.runTest
 
 def main():
-
     models = sys.argv[1:]
     if models and models[0] == 'opencl':
         if load_model_cl is None:
             print >>sys.stderr, "opencl is not available"
-            sys.exit(1)
+            return 1
         loaders = ['opencl']
         models = models[1:]
     elif models and models[0] == 'dll':
@@ -196,17 +205,20 @@ def main():
     elif models and models[0] == 'opencl_and_dll':
         if load_model_cl is None:
             print >>sys.stderr, "opencl is not available"
-            sys.exit(1)
+            return 1
         loaders = ['opencl', 'dll']
         models = models[1:]
     else:
         loaders = ['opencl', 'dll']
-    if models:
-        runner = unittest.TextTestRunner()
-        runner.run(suite(loaders, models))
-    else:
+    if not models:
         print >>sys.stderr, "usage: python -m sasmodels.model_test [opencl|dll|opencl_and_dll] model1 model2 ..."
         print >>sys.stderr, "if model1 is 'all', then all except the remaining models will be tested"
+        return 1
+
+    #run_tests(loaders, models)
+    runner = unittest.TextTestRunner()
+    result = runner.run(suite(loaders, models))
+    return 1 if result.failures or result.errors else 0
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -11,3 +11,5 @@
 /doc/ref/models
 .mplconfig
 /pylint_violations.txt
+/coverage.xml
+/.coverage
