@@ -11,7 +11,8 @@ from . import weights
 
 try:
     from .kernelcl import load_model as load_model_cl
-except Exception,exc:
+except:
+    # pylint: disable=invalid-name
     load_model_cl = None
 from .kerneldll import load_model as load_model_dll
 
@@ -30,27 +31,27 @@ def make_kernel(model, q_vectors):
     """
     Return a computation kernel from the model definition and the q input.
     """
-    input = model.make_input(q_vectors)
-    return model(input)
+    model_input = model.make_input(q_vectors)
+    return model(model_input)
 
-def get_weights(kernel, pars, name):
+def get_weights(info, pars, name):
     """
     Generate the distribution for parameter *name* given the parameter values
     in *pars*.
 
     Searches for "name", "name_pd", "name_pd_type", "name_pd_n", "name_pd_sigma"
     """
-    relative = name in kernel.info['partype']['pd-rel']
-    limits = kernel.info['limits']
+    relative = name in info['partype']['pd-rel']
+    limits = info['limits']
     disperser = pars.get(name+'_pd_type', 'gaussian')
-    value = pars.get(name, kernel.info['defaults'][name])
+    value = pars.get(name, info['defaults'][name])
     npts = pars.get(name+'_pd_n', 0)
     width = pars.get(name+'_pd', 0.0)
     nsigma = pars.get(name+'_pd_nsigma', 3.0)
-    v,w = weights.get_weights(
+    value,weight = weights.get_weights(
         disperser, npts, width, nsigma,
         value, limits[name], relative)
-    return v,w/np.sum(w)
+    return value,weight/np.sum(weight)
 
 def dispersion_mesh(pars):
     """
@@ -60,39 +61,39 @@ def dispersion_mesh(pars):
     and w is a vector containing the products for weights for each
     parameter set in the vector.
     """
-    values, weights = zip(*pars)
-    if len(values) > 1:
-        values = [v.flatten() for v in np.meshgrid(*values)]
-        weights = np.vstack([v.flatten() for v in np.meshgrid(*weights)])
-        weights = np.prod(weights, axis=0)
-    return values, weights
+    value, weight = zip(*pars)
+    if len(value) > 1:
+        value = [v.flatten() for v in np.meshgrid(*value)]
+        weight = np.vstack([v.flatten() for v in np.meshgrid(*weight)])
+        weight = np.prod(weight, axis=0)
+    return value, weight
 
 def call_kernel(kernel, pars, cutoff=1e-5):
     fixed_pars = [pars.get(name, kernel.info['defaults'][name])
                   for name in kernel.fixed_pars]
-    pd_pars = [get_weights(kernel, pars, name) for name in kernel.pd_pars]
+    pd_pars = [get_weights(kernel.info, pars, name) for name in kernel.pd_pars]
     return kernel(fixed_pars, pd_pars, cutoff=cutoff)
 
-def call_ER(kernel, pars):
-    ER = kernel.info.get('ER', None)
+def call_ER(info, pars):
+    ER = info.get('ER', None)
     if ER is None:
         return 1.0
     else:
-        vol_pars = [get_weights(kernel, pars, name)
-                    for name in kernel.info['partype']['volume']]
-        values, weights = dispersion_mesh(vol_pars)
-        fv = ER(*values)
+        vol_pars = [get_weights(info, pars, name)
+                    for name in info['partype']['volume']]
+        value, weight = dispersion_mesh(vol_pars)
+        individual_radii = ER(*value)
         #print values[0].shape, weights.shape, fv.shape
-        return np.sum(weights*fv) / np.sum(weights)
+        return np.sum(weight*individual_radii) / np.sum(weight)
 
-def call_VR(kernel, pars):
-    VR = kernel.info.get('VR', None)
+def call_VR(info, pars):
+    VR = info.get('VR', None)
     if VR is None:
         return 1.0
     else:
-        vol_pars = [get_weights(kernel, pars, name)
-                    for name in kernel.info['partype']['volume']]
-        values, weights = dispersion_mesh(vol_pars)
-        whole,part = VR(*values)
-        return np.sum(weights*part)/np.sum(weights*whole)
+        vol_pars = [get_weights(info, pars, name)
+                    for name in info['partype']['volume']]
+        value, weight = dispersion_mesh(vol_pars)
+        whole,part = VR(*value)
+        return np.sum(weight*part)/np.sum(weight*whole)
 

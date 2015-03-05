@@ -565,12 +565,12 @@ def doc(kernel_module):
 
 
 def demo_time():
-    import datetime
     from .models import cylinder
+    import datetime
     tic = datetime.datetime.now()
-    toc = lambda: (datetime.datetime.now() - tic).total_seconds()
     make(cylinder)
-    print "time:", toc()
+    toc = (datetime.datetime.now() - tic).total_seconds()
+    print "time:", toc
 
 def main():
     if len(sys.argv) <= 1:

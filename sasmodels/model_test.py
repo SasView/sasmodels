@@ -4,9 +4,9 @@ Run model unit tests.
 
 Usage::
 
-     python -m sasmodels.model_test [opencl|dll|opencl_and_dll] model1 model2 ...
+    python -m sasmodels.model_test [opencl|dll|opencl_and_dll] model1 model2 ...
 
-     if model1 is 'all', then all except the remaining models will be tested
+    if model1 is 'all', then all except the remaining models will be tested
 
 Each model is tested using the default parameters at q=0.1, (qx,qy)=(0.1,0.1),
 and the ER and VR are computed.  The return values at these points are not
@@ -59,9 +59,9 @@ def annotate_exception(exc, msg):
     exception.
     Example::
         >>> D = {}
-        >>> try: 
+        >>> try:
         ...    print D['hello']
-        ... except Exception,exc: 
+        ... except Exception,exc:
         ...    annotate_exception(exc, "while accessing 'D'")
         ...    raise
         Traceback (most recent call last):
@@ -77,8 +77,8 @@ def annotate_exception(exc, msg):
             exc.args = tuple([arg0] + list(args[1:]))
         except:
             exc.args = (" ".join((str(exc),msg)),)
-    
-def suite(loaders, models):
+
+def make_suite(loaders, models):
 
     ModelTestCase = _hide_model_case_from_nosetests()
     suite = unittest.TestSuite()
@@ -99,7 +99,7 @@ def suite(loaders, models):
             [{},'VR',None],
             ]
         tests = smoke_tests + getattr(model_definition, 'tests', [])
-        
+
         if tests: # in case there are no smoke tests...
             #print '------'
             #print 'found tests in', model_name
@@ -142,51 +142,56 @@ def _hide_model_case_from_nosetests():
             try:
                 model = self.loader(self.definition)
                 for test in self.tests:
-                    pars, Q, I = test
-
-                    if not isinstance(I, list):
-                        I = [I]
-                    if not isinstance(Q, list):
-                        Q = [Q]
-
-                    self.assertEqual(len(I), len(Q))
-
-                    if Q[0] == 'ER':
-                        Iq = [call_ER(kernel, pars)]
-                    elif Q[0] == 'VR':
-                        Iq = [call_VR(kernel, pars)]
-                    elif isinstance(Q[0], tuple):
-                        Qx,Qy = zip(*Q)
-                        Q_vectors = [np.array(Qx), np.array(Qy)]
-                        kernel = make_kernel(model, Q_vectors)
-                        Iq = call_kernel(kernel, pars)
-                    else:
-                        Q_vectors = [np.array(Q)]
-                        kernel = make_kernel(model, Q_vectors)
-                        Iq = call_kernel(kernel, pars)
-
-                    self.assertGreater(len(Iq), 0)
-                    self.assertEqual(len(I), len(Iq))
-
-                    for q, i, iq in zip(Q, I, Iq):
-                        if i is None:
-                            # smoke test --- make sure it runs and produces a value
-                            self.assertTrue(np.isfinite(iq), 'q:%s; not finite; actual:%s' % (q, iq))
-                        else:
-                            err = abs(i - iq)
-                            nrm = abs(i)
-                            self.assertLess(err * 10**5, nrm, 'q:%s; expected:%s; actual:%s' % (q, i, iq))
+                    self._run_one_test(model, test)
 
             except Exception,exc:
                 annotate_exception(exc, self.test_name)
                 raise
+
+        def _run_one_test(self, model, test):
+            pars, x, y = test
+
+            if not isinstance(y, list):
+                y = [y]
+            if not isinstance(x, list):
+                x = [x]
+
+            self.assertEqual(len(y), len(x))
+
+            if x[0] == 'ER':
+                actual = [call_ER(model.info, pars)]
+            elif x[0] == 'VR':
+                actual = [call_VR(model.info, pars)]
+            elif isinstance(x[0], tuple):
+                Qx,Qy = zip(*x)
+                q_vectors = [np.array(Qx), np.array(Qy)]
+                kernel = make_kernel(model, q_vectors)
+                actual = call_kernel(kernel, pars)
+            else:
+                q_vectors = [np.array(x)]
+                kernel = make_kernel(model, q_vectors)
+                actual = call_kernel(kernel, pars)
+
+            self.assertGreater(len(actual), 0)
+            self.assertEqual(len(y), len(actual))
+
+            for xi, yi, actual_yi in zip(x, y, actual):
+                if yi is None:
+                    # smoke test --- make sure it runs and produces a value
+                    self.assertTrue(np.isfinite(actual_yi),
+                        'invalid f(%s): %s' % (xi, actual_yi))
+                else:
+                    err = abs(yi - actual_yi)
+                    nrm = abs(yi)
+                    self.assertLess(err * 10**5, nrm,
+                        'f(%s); expected:%s; actual:%s' % (xi, yi, actual_yi))
 
     return ModelTestCase
 
 
 # let nosetests sniff out the tests
 def model_tests():
-    tests = suite(['opencl','dll'],['all'])
+    tests = make_suite(['opencl','dll'],['all'])
     for test_i in tests:
         yield test_i.runTest
 
@@ -217,7 +222,7 @@ def main():
 
     #run_tests(loaders, models)
     runner = unittest.TextTestRunner()
-    result = runner.run(suite(loaders, models))
+    result = runner.run(make_suite(loaders, models))
     return 1 if result.failures or result.errors else 0
 
 if __name__ == "__main__":

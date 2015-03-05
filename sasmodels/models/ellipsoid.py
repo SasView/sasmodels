@@ -115,7 +115,7 @@ L A Feigin and D I Svergun. *Structure Analysis by Small-Angle X-Ray and Neutron
 New York, 1987.
 """
 
-from numpy import pi, inf
+from numpy import inf
 
 name = "ellipsoid"
 title = "Ellipsoid of revolution with uniform scattering length density."

@@ -31,7 +31,7 @@ REFERENCE
 J K Percus, J Yevick, *J. Phys. Rev.*, 110, (1958) 1
 """
 
-from numpy import pi, inf
+from numpy import inf
 
 name = "hardsphere"
 title = "Hard sphere structure factor, with Percus-Yevick closure"

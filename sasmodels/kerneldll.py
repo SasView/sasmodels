@@ -18,13 +18,14 @@ if sys.platform == 'darwin':
     #COMPILE = "gcc-mp-4.7 -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm -lgomp"
     COMPILE = "gcc -shared -fPIC -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
 elif os.name == 'nt':
-    # make sure vcvarsall.bat is called first in order to set compiler, headers, lib paths, etc.
+    # call vcvarsall.bat before compiling to set path, headers, libs, etc.
     if "VCINSTALLDIR" in os.environ:
         # MSVC compiler is available, so use it.
         # TODO: remove intermediate OBJ file created in the directory
         # TODO: maybe don't use randomized name for the c file
         COMPILE = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG /Tp%(source)s /openmp /link /DLL /INCREMENTAL:NO /MANIFEST /OUT:%(output)s"
-        # Can't find VCOMP90.DLL (don't know why), so remove openmp support from windows compiler build
+        # Can't find VCOMP90.DLL (don't know why), so remove openmp support
+        # from windows compiler build
         #COMPILE = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG /Tp%(source)s /link /DLL /INCREMENTAL:NO /MANIFEST /OUT:%(output)s"
     else:
         #COMPILE = "gcc -shared -fPIC -std=c99 -fopenmp -O2 -Wall %(source)s -o %(output)s -lm"
@@ -122,11 +123,12 @@ class DllModel(object):
     def __setstate__(self, state):
         self.__dict__ = state
 
-    def __call__(self, input):
+    def __call__(self, q_input):
         if self.dll is None: self._load_dll()
-        kernel = self.Iqxy if input.is_2D else self.Iq
-        return DllKernel(kernel, self.info, input)
+        kernel = self.Iqxy if q_input.is_2D else self.Iq
+        return DllKernel(kernel, self.info, q_input)
 
+    # pylint: disable=no-self-use
     def make_input(self, q_vectors):
         """
         Make q input vectors available to the model.
@@ -149,7 +151,7 @@ class DllKernel(object):
 
     *info* is the module information
 
-    *input* is the DllInput q vectors at which the kernel should be
+    *q_input* is the DllInput q vectors at which the kernel should be
     evaluated.
 
     The resulting call method takes the *pars*, a list of values for
@@ -160,12 +162,12 @@ class DllKernel(object):
 
     Call :meth:`release` when done with the kernel instance.
     """
-    def __init__(self, kernel, info, input):
+    def __init__(self, kernel, info, q_input):
         self.info = info
-        self.input = input
+        self.q_input = q_input
         self.kernel = kernel
-        self.res = np.empty(input.nq, input.dtype)
-        dim = '2d' if input.is_2D else '1d'
+        self.res = np.empty(q_input.nq, q_input.dtype)
+        dim = '2d' if q_input.is_2D else '1d'
         self.fixed_pars = info['partype']['fixed-'+dim]
         self.pd_pars = info['partype']['pd-'+dim]
 
@@ -173,20 +175,20 @@ class DllKernel(object):
         self.p_res = self.res.ctypes.data
 
     def __call__(self, fixed_pars, pd_pars, cutoff):
-        real = np.float32 if self.input.dtype == F32 else np.float64
+        real = np.float32 if self.q_input.dtype == F32 else np.float64
 
-        nq = c_int(self.input.nq)
+        nq = c_int(self.q_input.nq)
         if pd_pars:
             cutoff = real(cutoff)
             loops_N = [np.uint32(len(p[0])) for p in pd_pars]
             loops = np.hstack(pd_pars)
-            loops = np.ascontiguousarray(loops.T, self.input.dtype).flatten()
+            loops = np.ascontiguousarray(loops.T, self.q_input.dtype).flatten()
             p_loops = loops.ctypes.data
             dispersed = [p_loops, cutoff] + loops_N
         else:
             dispersed = []
         fixed = [real(p) for p in fixed_pars]
-        args = self.input.q_pointers + [self.p_res, nq] + dispersed + fixed
+        args = self.q_input.q_pointers + [self.p_res, nq] + dispersed + fixed
         #print pars
         self.kernel(*args)
 

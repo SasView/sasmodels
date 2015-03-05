@@ -79,7 +79,8 @@ This example dataset is produced using 200 data points,
 
 .. image:: img/bcc_1d.jpg
 
-*Figure. 1D plot in the linear scale using the default values (w/200 data point).*
+*Figure. 1D plot in the linear scale using the default values
+(w/200 data point).*
 
 The 2D (Anisotropic model) is based on the reference below where $I(q)$ is
 approximated for 1d scattering. Thus the scattering pattern for 2D may not
@@ -102,7 +103,7 @@ Hideki Matsuoka et. al. *Physical Review B*, 41 (1990) 3854 -3856
 (Corrections to FCC and BCC lattice structure calculation)
 """
 
-from numpy import pi, inf
+from numpy import inf
 
 name = "bcc_paracrystal"
 title = "Body-centred cubic lattic with paracrystalline distortion"
@@ -119,7 +120,7 @@ parameters = [
     [ "d_factor", "", 0.06,[-inf,inf],"","Paracrystal distortion factor" ],
     [ "radius", "Ang",  40, [0, inf], "volume","Particle radius" ],
     [ "sld", "1e-6/Ang^2", 4, [-inf,inf], "", "Particle scattering length density" ],
-    [ "solvent_sld", "1e-6/Ang^2", 1, [-inf,inf], "","Solvent scattering length density" ],
+    [ "solvent_sld", "1e-6/Ang^2", 1, [-inf,inf], "", "Solvent scattering length density" ],
     [ "theta", "degrees", 60, [-inf, inf], "orientation","In plane angle" ],
     [ "phi", "degrees", 60, [-inf, inf], "orientation","Out of plane angle" ],
     [ "psi", "degrees", 60, [-inf,inf], "orientation","Out of plane angle"]

@@ -7,9 +7,13 @@ from sasmodels import sesans
 
 # CRUFT python 2.6
 if not hasattr(datetime.timedelta, 'total_seconds'):
-    def delay(dt): return dt.days * 86400 + dt.seconds + 1e-6 * dt.microseconds
+    def delay(dt):
+        """Return number date-time delta as number seconds"""
+        return dt.days * 86400 + dt.seconds + 1e-6 * dt.microseconds
 else:
-    def delay(dt): return dt.total_seconds()
+    def delay(dt):
+        """Return number date-time delta as number seconds"""
+        return dt.total_seconds()
 
 import numpy as np
 
@@ -140,44 +144,47 @@ def set_half(data, half):
     """
     from sas.dataloader.manipulations import Boxcut
     if half == 'right':
-        data.mask += Boxcut(x_min=-np.inf, x_max=0.0, y_min=-np.inf, y_max=np.inf)(data)
+        data.mask += \
+            Boxcut(x_min=-np.inf, x_max=0.0, y_min=-np.inf, y_max=np.inf)(data)
     if half == 'left':
-        data.mask += Boxcut(x_min=0.0, x_max=np.inf, y_min=-np.inf, y_max=np.inf)(data)
+        data.mask += \
+            Boxcut(x_min=0.0, x_max=np.inf, y_min=-np.inf, y_max=np.inf)(data)
 
 
-def set_top(data, max):
+def set_top(data, cutoff):
     """
-    Chop the top off the data, above *max*.
+    Chop the top off the data, above *cutoff*.
     """
     from sas.dataloader.manipulations import Boxcut
-    data.mask += Boxcut(x_min=-np.inf, x_max=np.inf, y_min=-np.inf, y_max=max)(data)
+    data.mask += \
+        Boxcut(x_min=-np.inf, x_max=np.inf, y_min=-np.inf, y_max=cutoff)(data)
 
 
-def plot_data(data, iq, vmin=None, vmax=None, view='log'):
+def plot_data(data, Iq, vmin=None, vmax=None, view='log'):
     """
     Plot the target value for the data.  This could be the data itself,
     the theory calculation, or the residuals.
 
     *scale* can be 'log' for log scale data, or 'linear'.
     """
-    from numpy.ma import masked_array, masked
+    from numpy.ma import masked_array
     import matplotlib.pyplot as plt
     if hasattr(data, 'qx_data'):
-        iq = iq + 0
-        valid = np.isfinite(iq)
+        Iq = Iq + 0
+        valid = np.isfinite(Iq)
         if view == 'log':
-            valid[valid] = (iq[valid] > 0)
-            iq[valid] = np.log10(iq[valid])
+            valid[valid] = (Iq[valid] > 0)
+            Iq[valid] = np.log10(Iq[valid])
         elif view == 'q4':
-            iq[valid] = iq*(data.qx_data[valid]**2+data.qy_data[valid]**2)**2
-        iq[~valid | data.mask] = 0
-        #plottable = iq
-        plottable = masked_array(iq, ~valid | data.mask)
+            Iq[valid] = Iq*(data.qx_data[valid]**2+data.qy_data[valid]**2)**2
+        Iq[~valid | data.mask] = 0
+        #plottable = Iq
+        plottable = masked_array(Iq, ~valid | data.mask)
         xmin, xmax = min(data.qx_data), max(data.qx_data)
         ymin, ymax = min(data.qy_data), max(data.qy_data)
         try:
-            if vmin is None: vmin = iq[valid & ~data.mask].min()
-            if vmax is None: vmax = iq[valid & ~data.mask].max()
+            if vmin is None: vmin = Iq[valid & ~data.mask].min()
+            if vmax is None: vmax = Iq[valid & ~data.mask].max()
         except:
             vmin, vmax = 0, 1
         plt.imshow(plottable.reshape(128, 128),
@@ -185,15 +192,15 @@ def plot_data(data, iq, vmin=None, vmax=None, view='log'):
                    extent=[xmin, xmax, ymin, ymax], vmin=vmin, vmax=vmax)
     else: # 1D data
         if view == 'linear' or view == 'q4':
-            #idx = np.isfinite(iq)
+            #idx = np.isfinite(Iq)
             scale = data.x**4 if view == 'q4' else 1.0
-            plt.plot(data.x, scale*iq) #, '.')
+            plt.plot(data.x, scale*Iq) #, '.')
         else:
             # Find the values that are finite and positive
-            idx = np.isfinite(iq)
-            idx[idx] = iq[idx]>0
-            iq[~idx] = np.nan
-            plt.loglog(data.x, iq)
+            idx = np.isfinite(Iq)
+            idx[idx] = (Iq[idx] > 0)
+            Iq[~idx] = np.nan
+            plt.loglog(data.x, Iq)
 
 
 def _plot_result1D(data, theory, view):
@@ -219,6 +226,7 @@ def _plot_result1D(data, theory, view):
     plt.subplot(122)
     plt.plot(data.x, mresid, 'x')
 
+# pylint: disable=unused-argument
 def _plot_sesans(data, theory, view):
     import matplotlib.pyplot as plt
     resid = (theory - data.y) / data.dy
@@ -285,14 +293,14 @@ class BumpsModel(object):
         if self.data_type == 'sesans':
             q = sesans.make_q(data.sample.zacceptance, data.Rmax)
             self.index = slice(None, None)
-            self.iq = data.y
-            self.diq = data.dy
+            self.Iq = data.y
+            self.dIq = data.dy
             self._theory = np.zeros_like(q)
             q_vectors = [q]
         elif self.data_type == 'Iqxy':
             self.index = (data.mask == 0) & (~np.isnan(data.data))
-            self.iq = data.data[self.index]
-            self.diq = data.err_data[self.index]
+            self.Iq = data.data[self.index]
+            self.dIq = data.err_data[self.index]
             self._theory = np.zeros_like(data.data)
             if not partype['orientation'] and not partype['magnetic']:
                 q_vectors = [np.sqrt(data.qx_data ** 2 + data.qy_data ** 2)]
@@ -300,8 +308,8 @@ class BumpsModel(object):
                 q_vectors = [data.qx_data, data.qy_data]
         elif self.data_type == 'Iq':
             self.index = (data.x >= data.qmin) & (data.x <= data.qmax) & ~np.isnan(data.y)
-            self.iq = data.y[self.index]
-            self.diq = data.dy[self.index]
+            self.Iq = data.y[self.index]
+            self.dIq = data.dy[self.index]
             self._theory = np.zeros_like(data.y)
             q_vectors = [data.x]
         else:
@@ -315,7 +323,7 @@ class BumpsModel(object):
         # define bumps parameters
         pars = []
         for p in model.info['parameters']:
-            name, default, limits, ptype = p[0], p[2], p[3], p[4]
+            name, default, limits = p[0], p[2], p[3]
             value = kw.pop(name, default)
             setattr(self, name, Parameter.default(value, name=name, limits=limits))
             pars.append(name)
@@ -334,7 +342,8 @@ class BumpsModel(object):
                 setattr(self, xname, xvalue)
         self._parameter_names = pars
         if kw:
-            raise TypeError("unexpected parameters: %s" % (", ".join(sorted(kw.keys()))))
+            raise TypeError("unexpected parameters: %s"
+                            % (", ".join(sorted(kw.keys()))))
         self.update()
 
     def update(self):
@@ -344,7 +353,7 @@ class BumpsModel(object):
         """
             Return the number of points
         """
-        return len(self.iq)
+        return len(self.Iq)
 
     def parameters(self):
         """
@@ -364,25 +373,25 @@ class BumpsModel(object):
             self._theory[self.index] = self._fn(fixed_pars, pd_pars, self.cutoff)
             #self._theory[:] = self._fn.eval(pars, pd_pars)
             if self.data_type == 'sesans':
-                P = sesans.hankel(self.data.x, self.data.lam * 1e-9,
-                                  self.data.sample.thickness / 10, self._fn_inputs[0],
-                                  self._theory)
-                self._cache['theory'] = P
+                result = sesans.hankel(self.data.x, self.data.lam * 1e-9,
+                                       self.data.sample.thickness / 10,
+                                       self._fn_inputs[0], self._theory)
+                self._cache['theory'] = result
             else:
                 self._cache['theory'] = self._theory
         return self._cache['theory']
 
     def residuals(self):
         #if np.any(self.err ==0): print "zeros in err"
-        return (self.theory()[self.index] - self.iq) / self.diq
+        return (self.theory()[self.index] - self.Iq) / self.dIq
 
     def nllf(self):
-        R = self.residuals()
+        delta = self.residuals()
         #if np.any(np.isnan(R)): print "NaN in residuals"
-        return 0.5 * np.sum(R ** 2)
+        return 0.5 * np.sum(delta ** 2)
 
-    def __call__(self):
-        return 2 * self.nllf() / self.dof
+    #def __call__(self):
+    #    return 2 * self.nllf() / self.dof
 
     def plot(self, view='log'):
         """
@@ -401,10 +410,10 @@ class BumpsModel(object):
     def simulate_data(self, noise=None):
         print "noise", noise
         if noise is None:
-            noise = self.diq[self.index]
+            noise = self.dIq[self.index]
         else:
             noise = 0.01 * noise
-            self.diq[self.index] = noise
+            self.dIq[self.index] = noise
         y = self.theory()
         y += y * np.random.randn(*y.shape) * noise
         if self.data_type == 'Iq':
@@ -427,12 +436,13 @@ class BumpsModel(object):
 
         relative = self.model.info['partype']['pd-rel']
         limits = self.model.info['limits']
-        disperser, value, npts, width, nsigma = \
-            [getattr(self, par + ext) for ext in ('_pd_type', '', '_pd_n', '_pd', '_pd_nsigma')]
-        v, w = weights.get_weights(
+        disperser, value, npts, width, nsigma = [
+            getattr(self, par + ext)
+            for ext in ('_pd_type', '', '_pd_n', '_pd', '_pd_nsigma')]
+        value, weight = weights.get_weights(
             disperser, int(npts.value), width.value, nsigma.value,
             value.value, limits[par], par in relative)
-        return v, w / w.max()
+        return value, weight / np.sum(weight)
 
     def __getstate__(self):
         # Can't pickle gpu functions, so instead make them lazy
@@ -441,6 +451,7 @@ class BumpsModel(object):
         return state
 
     def __setstate__(self, state):
+        # pylint: disable=attribute-defined-outside-init
         self.__dict__ = state
 
 

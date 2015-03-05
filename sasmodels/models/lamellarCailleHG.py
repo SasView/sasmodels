@@ -73,7 +73,7 @@ F Nallet, R Laversanne, and D Roux, J. Phys. II France, 3, (1993) 487-502
 
 also in J. Phys. Chem. B, 105, (2001) 11081-11088
 """
-from numpy import pi, inf
+from numpy import inf
 
 name = "lamellarCailleHG"
 title = "Random lamellar sheet with Caille structure factor"

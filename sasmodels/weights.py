@@ -25,6 +25,7 @@ class Dispersion(object):
         pars.update(self.__dict__)
         return pars
 
+    # pylint: disable=no-self-use
     def set_weights(self, values, weights):
         raise RuntimeError("set_weights is only available for ArrayDispersion")
 

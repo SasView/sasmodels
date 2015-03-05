@@ -20,7 +20,7 @@ REFERENCE
 None.
 """
 
-from numpy import pi, inf
+from numpy import inf
 
 name = "gaussian_peak"
 title = "Gaussian shaped peak"

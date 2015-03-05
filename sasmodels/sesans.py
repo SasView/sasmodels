@@ -21,15 +21,15 @@ def make_q(q_zmax, Rmax):
 
 # TODO: dead code; for now the call to the hankel transform happens in BumpsModel
 class SesansCalculator:
-    def __init__(self, sans_kernel, q_zmax, Rmax, SElength, wavelength, thickness):
-        self._set_kernel(sans_kernel, q_zmax, Rmax)
+    def __init__(self, kernel, q_zmax, Rmax, SElength, wavelength, thickness):
+        self._set_kernel(kernel, q_zmax, Rmax)
         self.SElength = SElength
         self.wavelength = wavelength
         self.thickness = thickness
 
-    def _set_kernel(self, sans_kernel, q_zmax, Rmax):
-        input = sans_kernel.make_input([make_q(q_zmax, Rmax)])
-        self.sans_calculator = sans_kernel(input)
+    def _set_kernel(self, kernel, q_zmax, Rmax):
+        kernel_input = kernel.make_input([make_q(q_zmax, Rmax)])
+        self.sans_calculator = kernel(kernel_input)
 
     def __call__(self, pars, pd_pars, cutoff=1e-5):
         Iq = self.sans_calculator(pars, pd_pars, cutoff)

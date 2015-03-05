@@ -68,7 +68,7 @@ class SasviewModel(object):
         self.params = dict()
         self.dispersion = dict()
         partype = model.info['partype']
-        for name, units, default, limits, ptype, description in model.info['parameters']:
+        for name, units, default, limits, _, _ in model.info['parameters']:
             self.params[name] = default
             self.details[name] = [units] + limits
 
@@ -119,6 +119,7 @@ class SasviewModel(object):
         #return self.params[str(par_name)].is_fittable()
 
 
+    # pylint: disable=no-self-use
     def getProfile(self):
         """
         Get SLD profile
@@ -212,6 +213,7 @@ class SasviewModel(object):
         **DEPRECATED**: use calculate_Iq instead
         """
         if isinstance(x, (list, tuple)):
+            # pylint: disable=unpacking-non-sequence
             q, phi = x
             return self.calculate_Iq([q * math.cos(phi)],
                                      [q * math.sin(phi)])[0]
@@ -262,7 +264,8 @@ class SasviewModel(object):
             q = [q[0], q[1], q[2], ....]
 
 
-        :param qdist: ndarray of scalar q-values or list [qx,qy] where qx,qy are 1D ndarrays
+        :param qdist: ndarray of scalar q-values or list [qx,qy]
+        where qx,qy are 1D ndarrays
         """
         if isinstance(qdist, (list, tuple)):
             # Check whether we have a list of ndarrays [qx,qy]
@@ -278,7 +281,8 @@ class SasviewModel(object):
             return self.calculate_Iq(qdist)
 
         else:
-            raise TypeError("evalDistribution expects q or [qx, qy], not %r" % type(qdist))
+            raise TypeError("evalDistribution expects q or [qx, qy], not %r"
+                            % type(qdist))
 
     def calculate_Iq(self, *args):
         """
@@ -381,8 +385,8 @@ class SasviewModel(object):
         relative = self._model.info['partype']['pd-rel']
         limits = self._model.info['limits']
         dis = self.dispersion[par]
-        v, w = weights.get_weights(
+        value, weight = weights.get_weights(
             dis['type'], dis['npts'], dis['width'], dis['nsigmas'],
             self.params[par], limits[par], par in relative)
-        return v, w / w.max()
+        return value, weight / np.sum(weight)
 

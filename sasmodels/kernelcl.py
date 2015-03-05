@@ -29,8 +29,8 @@ import numpy as np
 
 try:
     import pyopencl as cl
-    context = cl.create_some_context(interactive=False)
-    del context
+    # Ask OpenCL for the default context so that we know that one exists
+    cl.create_some_context(interactive=False)
 except Exception, exc:
     warnings.warn(str(exc))
     raise RuntimeError("OpenCL not available")
@@ -159,7 +159,7 @@ class GpuEnvironment(object):
             self._create_some_context()
 
         if not self.context:
-            self.context = self._find_context()
+            self.context = _get_default_context()
 
         # Byte boundary for data alignment
         #self.data_boundary = max(d.min_data_type_align_size
@@ -177,20 +177,6 @@ class GpuEnvironment(object):
             warnings.warn("pyopencl.create_some_context() failed")
             warnings.warn("the environment variable 'PYOPENCL_CTX' might not be set correctly")
 
-    def _find_context(self):
-        default = None
-        for platform in cl.get_platforms():
-            for device in platform.get_devices():
-                if device.type == cl.device_type.GPU:
-                    return cl.Context([device])
-                if default is None:
-                    default = device
-
-        if not default:
-            raise RuntimeError("OpenCL device not found")
-
-        return cl.Context([default])
-
     def compile_program(self, name, source, dtype):
         if name not in self.compiled:
             #print "compiling",name
@@ -201,6 +187,20 @@ class GpuEnvironment(object):
         if name in self.compiled:
             self.compiled[name].release()
             del self.compiled[name]
+
+def _get_default_context():
+    default = None
+    for platform in cl.get_platforms():
+        for device in platform.get_devices():
+            if device.type == cl.device_type.GPU:
+                return cl.Context([device])
+            if default is None:
+                default = device
+
+    if not default:
+        raise RuntimeError("OpenCL device not found")
+
+    return cl.Context([default])
 
 
 class GpuModel(object):
@@ -233,7 +233,8 @@ class GpuModel(object):
         if self.dtype != input_value.dtype:
             raise TypeError("data and kernel have different types")
         if self.program is None:
-            self.program = environment().compile_program(self.info['name'], self.source, self.dtype)
+            compiler = environment().compile_program
+            self.program = compiler(self.info['name'], self.source, self.dtype)
         kernel_name = generate.kernel_name(self.info, input_value.is_2D)
         kernel = getattr(self.program, kernel_name)
         return GpuKernel(kernel, self.info, input_value)
@@ -302,7 +303,7 @@ class GpuKernel(object):
 
     *info* is the module information
 
-    *input* is the DllInput q vectors at which the kernel should be
+    *q_input* is the DllInput q vectors at which the kernel should be
     evaluated.
 
     The resulting call method takes the *pars*, a list of values for
@@ -313,12 +314,12 @@ class GpuKernel(object):
 
     Call :meth:`release` when done with the kernel instance.
     """
-    def __init__(self, kernel, info, input):
-        self.input = input
+    def __init__(self, kernel, info, q_input):
+        self.q_input = q_input
         self.kernel = kernel
         self.info = info
-        self.res = np.empty(input.nq, input.dtype)
-        dim = '2d' if input.is_2D else '1d'
+        self.res = np.empty(q_input.nq, q_input.dtype)
+        dim = '2d' if q_input.is_2D else '1d'
         self.fixed_pars = info['partype']['fixed-' + dim]
         self.pd_pars = info['partype']['pd-' + dim]
 
@@ -326,25 +327,26 @@ class GpuKernel(object):
         # Note: res may be shorter than res_b if global_size != nq
         env = environment()
         self.loops_b = [cl.Buffer(env.context, mf.READ_WRITE,
-                                  2 * MAX_LOOPS * input.dtype.itemsize)
+                                  2 * MAX_LOOPS * q_input.dtype.itemsize)
                         for _ in env.queues]
         self.res_b = [cl.Buffer(env.context, mf.READ_WRITE,
-                                input.global_size[0] * input.dtype.itemsize)
+                                q_input.global_size[0] * q_input.dtype.itemsize)
                       for _ in env.queues]
 
 
     def __call__(self, fixed_pars, pd_pars, cutoff=1e-5):
-        real = np.float32 if self.input.dtype == generate.F32 else np.float64
+        real = np.float32 if self.q_input.dtype == generate.F32 else np.float64
 
         device_num = 0
         queuei = environment().queues[device_num]
         res_bi = self.res_b[device_num]
-        nq = np.uint32(self.input.nq)
+        nq = np.uint32(self.q_input.nq)
         if pd_pars:
             cutoff = real(cutoff)
             loops_N = [np.uint32(len(p[0])) for p in pd_pars]
-            loops = np.hstack(pd_pars) if pd_pars else np.empty(0, dtype=self.input.dtype)
-            loops = np.ascontiguousarray(loops.T, self.input.dtype).flatten()
+            loops = np.hstack(pd_pars) \
+                if pd_pars else np.empty(0, dtype=self.q_input.dtype)
+            loops = np.ascontiguousarray(loops.T, self.q_input.dtype).flatten()
             #print "loops",Nloops, loops
 
             #import sys; print >>sys.stderr,"opencl eval",pars
@@ -356,13 +358,13 @@ class GpuKernel(object):
             cl.enqueue_copy(queuei, loops_bi, loops)
             loops_l = cl.LocalMemory(len(loops.data))
             #ctx = environment().context
-            #loops_bi = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=loops)
+            #loops_bi = cl.Buffer(ctx, mf.READ_ONLY|mf.COPY_HOST_PTR, hostbuf=loops)
             dispersed = [loops_bi, loops_l, cutoff] + loops_N
         else:
             dispersed = []
         fixed = [real(p) for p in fixed_pars]
-        args = self.input.q_buffers + [res_bi, nq] + dispersed + fixed
-        self.kernel(queuei, self.input.global_size, None, *args)
+        args = self.q_input.q_buffers + [res_bi, nq] + dispersed + fixed
+        self.kernel(queuei, self.q_input.global_size, None, *args)
         cl.enqueue_copy(queuei, self.res, res_bi)
 
         return self.res

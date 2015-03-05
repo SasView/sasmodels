@@ -36,6 +36,7 @@ def convert_model(name, pars):
     """
     Convert model from old style parameter names to new style.
     """
+    _,_ = name,pars # lint
     raise NotImplementedError
     # need to load all new models in order to determine old=>new
     # model name mapping

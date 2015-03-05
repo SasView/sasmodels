@@ -46,7 +46,7 @@ also in J. Phys. Chem. B, 105, (2001) 11081-11088
 
 """
 
-from numpy import pi, inf
+from numpy import inf
 
 name = "lamellar"
 title = "Lyotropic lamellar phase with uniform SLD and random distribution"
