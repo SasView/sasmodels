@@ -3,10 +3,13 @@
 # Note: model title and parameter table are inserted automatically
 r"""
 
-Calculates the scattering from a barbell-shaped cylinder (This model simply becomes the DumBellModel when the length of
-the cylinder, *L*, is set to zero). That is, a sphereocylinder with spherical end caps that have a radius larger than
-that of the cylinder and the center of the end cap radius lies outside of the cylinder. All dimensions of the BarBell
-are considered to be monodisperse. See the diagram for the details of the geometry and restrictions on parameter values.
+Calculates the scattering from a barbell-shaped cylinder (This model simply
+becomes the DumBellModel when the length of the cylinder, *L*, is set to zero).
+That is, a sphereocylinder with spherical end caps that have a radius larger
+than that of the cylinder and the center of the end cap radius lies outside
+of the cylinder. All dimensions of the BarBell are considered to be
+monodisperse. See the diagram for the details of the geometry and restrictions
+on parameter values.
 
 Definition
 ----------
@@ -15,12 +18,14 @@ The returned value is scaled to units of |cm^-1|\ |sr^-1|, absolute scale.
 
 The barbell geometry is defined as
 
-.. image:: img/image105.jpg
+.. image:: img/barbell_geometry.jpg
 
-where *r* is the radius of the cylinder. All other parameters are as defined in the diagram.
+where *r* is the radius of the cylinder. All other parameters are as defined
+in the diagram.
 
 Since the end cap radius
-*R* >= *r* and by definition for this geometry *h* < 0, *h* is then defined by *r* and *R* as
+*R* >= *r* and by definition for this geometry *h* < 0, *h* is then
+defined by *r* and *R* as
 
 *h* = -1 \* sqrt(*R*\ :sup:`2` - *r*\ :sup:`2`)
 
@@ -45,9 +50,11 @@ where the amplitude *A(q)* is given as
         {J_1\left[QR\sin\theta \left(1-t^2\right)^{1/2}\right]
              \over QR\sin\theta \left(1-t^2\right)^{1/2}}
 
-The < > brackets denote an average of the structure over all orientations. <*A* :sup:`2`\ *(q)*> is then the form
-factor, *P(q)*. The scale factor is equivalent to the volume fraction of cylinders, each of volume, *V*. Contrast is
-the difference of scattering length densities of the cylinder and the surrounding solvent.
+The < > brackets denote an average of the structure over all orientations.
+<*A* :sup:`2`\ *(q)*> is then the form factor, *P(q)*. The scale factor is
+equivalent to the volume fraction of cylinders, each of volume, *V*. Contrast
+is the difference of scattering length densities of the cylinder and the
+surrounding solvent.
 
 The volume of the barbell is
 
@@ -68,31 +75,22 @@ and its radius-of-gyration is
         + \tfrac14 L^3r^2 + \tfrac32 Lr^4 \right]
         \left( 4R^3 6R^2h - 2h^3 + 3r^2L \right)^{-1}
 
-**The requirement that** *R* >= *r* **is not enforced in the model!** It is up to you to restrict this during analysis.
+**The requirement that** *R* >= *r* **is not enforced in the model!** It is
+up to you to restrict this during analysis.
 
-This example dataset is produced by running the Macro PlotBarbell(), using 200 data points, *qmin* = 0.001 |Ang^-1|,
-*qmax* = 0.7 |Ang^-1| and the following default values
+This example dataset is produced by running the Macro PlotBarbell(),
+using 200 data points, *qmin* = 0.001 |Ang^-1|, *qmax* = 0.7 |Ang^-1|,
+*sld* = 4e-6 |Ang^-2| and the default model values.
 
-==============  ========  =============
-Parameter name  Units     Default value
-==============  ========  =============
-scale           None      1.0
-len_bar         |Ang|     400.0
-rad_bar         |Ang|     20.0
-rad_bell        |Ang|     40.0
-sld_barbell     |Ang^-2|  1.0e-006
-sld_solv        |Ang^-2|  6.3e-006
-background      |cm^-1|   0
-==============  ========  =============
-
-.. image:: img/image110.jpg
+.. image:: img/barbell_1d.jpg
 
 *Figure. 1D plot using the default values (w/256 data point).*
 
-For 2D data: The 2D scattering intensity is calculated similar to the 2D cylinder model. For example, for
-|theta| = 45 deg and |phi| = 0 deg with default values for other parameters
+For 2D data: The 2D scattering intensity is calculated similar to the 2D
+cylinder model. For example, for |theta| = 45 deg and |phi| = 0 deg with
+default values for other parameters
 
-.. image:: img/image111.jpg
+.. image:: img/barbell_2d.jpg
 
 *Figure. 2D plot (w/(256X265) data points).*
 
@@ -105,13 +103,14 @@ Figure. Definition of the angles for oriented 2D barbells.
 *Figure. Examples of the angles for oriented pp against the detector plane.*
 
 REFERENCE
+---------
 
 H Kaya, *J. Appl. Cryst.*, 37 (2004) 37 223-230
 
 H Kaya and N R deSouza, *J. Appl. Cryst.*, 37 (2004) 508-509 (addenda and errata)
 
 """
-from numpy import pi, inf
+from numpy import inf
 
 name = "barbell"
 title = "Cylinder with spherical end caps"
@@ -121,6 +120,7 @@ description = """
 		Note: As the length of cylinder(bar) -->0,it becomes a dumbbell. And when rad_bar = rad_bell, it is a spherocylinder.
 		It must be that rad_bar <(=) rad_bell.
 """
+category = "shape:cylinder"
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type","description" ],
@@ -134,9 +134,6 @@ parameters = [
     ]
 
 source = [ "lib/J1.c", "lib/gauss76.c", "barbell.c" ]
-
-def ER(radius, length):
-    return 1.0
 
 # parameters for demo
 demo = dict(

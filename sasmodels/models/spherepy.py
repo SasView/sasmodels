@@ -58,7 +58,7 @@ John Wiley and Sons, New York, (1955)
 """
 
 import numpy as np
-from numpy import pi, inf, sin, cos, sqrt, exp, log
+from numpy import pi, inf, sin, cos, sqrt, log
 
 name = "sphere"
 title = "Spheres with uniform scattering length density"
@@ -70,6 +70,7 @@ P(q)=(scale/V)*[3V(sld-solvent_sld)*(sin(qR)-qRcos(qR))
     sld: the SLD of the sphere
     solvent_sld: the SLD of the solvent
 """
+category = "shape:sphere"
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type",

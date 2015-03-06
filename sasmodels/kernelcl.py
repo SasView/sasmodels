@@ -29,21 +29,16 @@ import numpy as np
 
 try:
     import pyopencl as cl
-except ImportError,exc:
+    # Ask OpenCL for the default context so that we know that one exists
+    cl.create_some_context(interactive=False)
+except Exception, exc:
     warnings.warn(str(exc))
     raise RuntimeError("OpenCL not available")
-
-try:
-    context = cl.create_some_context(interactive=False)
-    del context
-except cl.RuntimeError, exc:
-    warnings.warn(str(exc))
-    raise RuntimeError("OpenCl not available")
 
 from pyopencl import mem_flags as mf
 
 from . import generate
-from .kernelpy import PyInput, PyKernel
+from .kernelpy import PyModel
 
 F64_DEFS = """\
 #ifdef cl_khr_fp64
@@ -67,6 +62,8 @@ def load_model(kernel_module, dtype="single"):
     so models can be defined without using too many resources.
     """
     source, info = generate.make(kernel_module)
+    if callable(info.get('Iq', None)):
+        return PyModel(info)
     ## for debugging, save source to a .cl file, edit it, and reload as model
     #open(info['name']+'.cl','w').write(source)
     #source = open(info['name']+'.cl','r').read()
@@ -112,10 +109,10 @@ def _stretch_input(vector, dtype, extra=1e-3, boundary=32):
     probably be the max of get_warp(kernel,queue) and
     device.min_data_type_align_size//4.
     """
-    remainder = vector.size%boundary
+    remainder = vector.size % boundary
     if remainder != 0:
         size = vector.size + (boundary - remainder)
-        vector = np.hstack((vector, [extra]*(size-vector.size)))
+        vector = np.hstack((vector, [extra] * (size - vector.size)))
     return np.ascontiguousarray(vector, dtype=dtype)
 
 
@@ -128,7 +125,7 @@ def compile_model(context, source, dtype):
     devices in the context do not support the cl_khr_fp64 extension.
     """
     dtype = np.dtype(dtype)
-    if dtype==generate.F64 and not all(has_double(d) for d in context.devices):
+    if dtype == generate.F64 and not all(has_double(d) for d in context.devices):
         raise RuntimeError("Double precision not supported for devices")
 
     header = F64_DEFS if dtype == generate.F64 else ""
@@ -137,7 +134,7 @@ def compile_model(context, source, dtype):
     # Note: USE_SINCOS makes the intel cpu slower under opencl
     if context.devices[0].type == cl.device_type.GPU:
         header += "#define USE_SINCOS\n"
-    program  = cl.Program(context, header+source).build()
+    program = cl.Program(context, header + source).build()
     return program
 
 
@@ -162,7 +159,7 @@ class GpuEnvironment(object):
             self._create_some_context()
 
         if not self.context:
-            self.context = self._find_context()
+            self.context = _get_default_context()
 
         # Byte boundary for data alignment
         #self.data_boundary = max(d.min_data_type_align_size
@@ -175,24 +172,10 @@ class GpuEnvironment(object):
     def _create_some_context(self):
         try:
             self.context = cl.create_some_context(interactive=False)
-        except Exception,exc:
+        except Exception, exc:
             warnings.warn(str(exc))
             warnings.warn("pyopencl.create_some_context() failed")
             warnings.warn("the environment variable 'PYOPENCL_CTX' might not be set correctly")
-
-    def _find_context(self):
-        default = None
-        for platform in cl.get_platforms():
-            for device in platform.get_devices():
-                if device.type == cl.device_type.GPU:
-                    return cl.Context([device])
-                if default is None:
-                    default = device
-
-        if not default:
-            raise RuntimeError("OpenCL device not found")
-
-        return cl.Context([default])
 
     def compile_program(self, name, source, dtype):
         if name not in self.compiled:
@@ -204,6 +187,20 @@ class GpuEnvironment(object):
         if name in self.compiled:
             self.compiled[name].release()
             del self.compiled[name]
+
+def _get_default_context():
+    default = None
+    for platform in cl.get_platforms():
+        for device in platform.get_devices():
+            if device.type == cl.device_type.GPU:
+                return cl.Context([device])
+            if default is None:
+                default = device
+
+    if not default:
+        raise RuntimeError("OpenCL device not found")
+
+    return cl.Context([default])
 
 
 class GpuModel(object):
@@ -232,20 +229,15 @@ class GpuModel(object):
     def __setstate__(self, state):
         self.__dict__ = state.copy()
 
-    def __call__(self, input):
-        # Support pure python kernel call
-        if input.is_2D and callable(self.info['Iqxy']):
-            return PyKernel(self.info['Iqxy'], self.info, input)
-        elif not input.is_2D and callable(self.info['Iq']):
-            return PyKernel(self.info['Iq'], self.info, input)
-
-        if self.dtype != input.dtype:
+    def __call__(self, input_value):
+        if self.dtype != input_value.dtype:
             raise TypeError("data and kernel have different types")
         if self.program is None:
-            self.program = environment().compile_program(self.info['name'],self.source, self.dtype)
-        kernel_name = generate.kernel_name(self.info, input.is_2D)
+            compiler = environment().compile_program
+            self.program = compiler(self.info['name'], self.source, self.dtype)
+        kernel_name = generate.kernel_name(self.info, input_value.is_2D)
         kernel = getattr(self.program, kernel_name)
-        return GpuKernel(kernel, self.info, input)
+        return GpuKernel(kernel, self.info, input_value)
 
     def release(self):
         if self.program is not None:
@@ -260,13 +252,7 @@ class GpuModel(object):
         mixture models because some models may be OpenCL, some may be
         ctypes and some may be pure python.
         """
-        # Support pure python kernel call
-        if len(q_vectors) == 1 and callable(self.info['Iq']):
-            return PyInput(q_vectors, dtype=self.dtype)
-        elif callable(self.info['Iqxy']):
-            return PyInput(q_vectors, dtype=self.dtype)
-        else:
-            return GpuInput(q_vectors, dtype=self.dtype)
+        return GpuInput(q_vectors, dtype=self.dtype)
 
 # TODO: check that we don't need a destructor for buffers which go out of scope
 class GpuInput(object):
@@ -299,7 +285,7 @@ class GpuInput(object):
         # architectures tested so far.
         self.q_vectors = [_stretch_input(q, self.dtype, 32) for q in q_vectors]
         self.q_buffers = [
-            cl.Buffer(env.context,  mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=q)
+            cl.Buffer(env.context, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=q)
             for q in self.q_vectors
         ]
         self.global_size = [self.q_vectors[0].size]
@@ -317,7 +303,7 @@ class GpuKernel(object):
 
     *info* is the module information
 
-    *input* is the DllInput q vectors at which the kernel should be
+    *q_input* is the DllInput q vectors at which the kernel should be
     evaluated.
 
     The resulting call method takes the *pars*, a list of values for
@@ -328,49 +314,57 @@ class GpuKernel(object):
 
     Call :meth:`release` when done with the kernel instance.
     """
-    def __init__(self, kernel, info, input):
-        self.input = input
+    def __init__(self, kernel, info, q_input):
+        self.q_input = q_input
         self.kernel = kernel
         self.info = info
-        self.res = np.empty(input.nq, input.dtype)
-        dim = '2d' if input.is_2D else '1d'
-        self.fixed_pars = info['partype']['fixed-'+dim]
-        self.pd_pars = info['partype']['pd-'+dim]
+        self.res = np.empty(q_input.nq, q_input.dtype)
+        dim = '2d' if q_input.is_2D else '1d'
+        self.fixed_pars = info['partype']['fixed-' + dim]
+        self.pd_pars = info['partype']['pd-' + dim]
 
         # Inputs and outputs for each kernel call
         # Note: res may be shorter than res_b if global_size != nq
         env = environment()
         self.loops_b = [cl.Buffer(env.context, mf.READ_WRITE,
-                                  2*MAX_LOOPS*input.dtype.itemsize)
+                                  2 * MAX_LOOPS * q_input.dtype.itemsize)
                         for _ in env.queues]
         self.res_b = [cl.Buffer(env.context, mf.READ_WRITE,
-                                input.global_size[0]*input.dtype.itemsize)
+                                q_input.global_size[0] * q_input.dtype.itemsize)
                       for _ in env.queues]
 
 
-    def __call__(self, pars, pd_pars, cutoff=1e-5):
-        real = np.float32 if self.input.dtype == generate.F32 else np.float64
-        fixed = [real(p) for p in pars]
-        cutoff = real(cutoff)
-        loops = np.hstack(pd_pars)
-        loops = np.ascontiguousarray(loops.T, self.input.dtype).flatten()
-        Nloops = [np.uint32(len(p[0])) for p in pd_pars]
-        #print "loops",Nloops, loops
+    def __call__(self, fixed_pars, pd_pars, cutoff=1e-5):
+        real = np.float32 if self.q_input.dtype == generate.F32 else np.float64
 
-        #import sys; print >>sys.stderr,"opencl eval",pars
-        #print "opencl eval",pars
-        if len(loops) > 2*MAX_LOOPS:
-            raise ValueError("too many polydispersity points")
         device_num = 0
-        res_bi = self.res_b[device_num]
         queuei = environment().queues[device_num]
-        loops_bi = self.loops_b[device_num]
-        loops_l = cl.LocalMemory(len(loops.data))
-        cl.enqueue_copy(queuei, loops_bi, loops)
-        #ctx = environment().context
-        #loops_bi = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=loops)
-        args = self.input.q_buffers + [res_bi,loops_bi,loops_l,cutoff] + fixed + Nloops
-        self.kernel(queuei, self.input.global_size, None, *args)
+        res_bi = self.res_b[device_num]
+        nq = np.uint32(self.q_input.nq)
+        if pd_pars:
+            cutoff = real(cutoff)
+            loops_N = [np.uint32(len(p[0])) for p in pd_pars]
+            loops = np.hstack(pd_pars) \
+                if pd_pars else np.empty(0, dtype=self.q_input.dtype)
+            loops = np.ascontiguousarray(loops.T, self.q_input.dtype).flatten()
+            #print "loops",Nloops, loops
+
+            #import sys; print >>sys.stderr,"opencl eval",pars
+            #print "opencl eval",pars
+            if len(loops) > 2 * MAX_LOOPS:
+                raise ValueError("too many polydispersity points")
+
+            loops_bi = self.loops_b[device_num]
+            cl.enqueue_copy(queuei, loops_bi, loops)
+            loops_l = cl.LocalMemory(len(loops.data))
+            #ctx = environment().context
+            #loops_bi = cl.Buffer(ctx, mf.READ_ONLY|mf.COPY_HOST_PTR, hostbuf=loops)
+            dispersed = [loops_bi, loops_l, cutoff] + loops_N
+        else:
+            dispersed = []
+        fixed = [real(p) for p in fixed_pars]
+        args = self.q_input.q_buffers + [res_bi, nq] + dispersed + fixed
+        self.kernel(queuei, self.q_input.global_size, None, *args)
         cl.enqueue_copy(queuei, self.res, res_bi)
 
         return self.res

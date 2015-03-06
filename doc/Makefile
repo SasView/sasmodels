@@ -31,14 +31,6 @@ IMG_DEST = $(patsubst ../sasmodels/models/img/%,model/img/%,$(IMG_SOURCE))
 MODELS_PY = $(wildcard ../sasmodels/models/[a-z]*.py)
 MODELS_RST = $(patsubst ../sasmodels/models/%.py,model/%.rst,$(MODELS_PY))
 
-model/img/%: ../sasmodels/models/img/%
-	$(COPY) $< $@
-
-model/%.rst: ../sasmodels/models/%.py
-	$(PYTHON) genmodel.py $< $@
-
-.PHONY: help clean html dirhtml pickle json htmlhelp qthelp latex changes linkcheck doctest build
-
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  html      to make standalone HTML files"
@@ -52,6 +44,17 @@ help:
 	@echo "  linkcheck to check all external links for integrity"
 	@echo "  doctest   to run all doctests embedded in the documentation (if enabled)"
 
+model/img/%: ../sasmodels/models/img/%
+	$(COPY) $< $@
+
+model/%.rst: ../sasmodels/models/%.py
+	$(PYTHON) genmodel.py $< $@
+
+ref/models/index.rst: gentoc.py $(MODELS_PY)
+	$(PYTHON) gentoc.py $(MODELS_PY)
+
+.PHONY: help clean html dirhtml pickle json htmlhelp qthelp latex changes linkcheck doctest build
+
 api: genapi.py
 	$(RMDIR) api
 	$(PYTHON) genapi.py
@@ -60,7 +63,7 @@ model:
 	$(MKDIR) model
 	$(MKDIR) model/img
 
-build: model $(MODELS_RST) $(IMG_DEST) api
+build: model $(MODELS_RST) $(IMG_DEST) api ref/models/index.rst
 	#cd ../.. && python setup.py build
 
 upload:

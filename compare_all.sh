@@ -1,9 +1,8 @@
 #!/bin/sh
 
 SASVIEW=$(ls -d ../sasview/build/lib.*)
-PYOPENCL_CTX=1
 PYTHONPATH=../bumps:../periodictable:$SASVIEW
-export PYOPENCL_CTX PYTHONPATH
+export PYTHONPATH
 
 echo PYTHONPATH=$PYTHONPATH
 set -x

@@ -33,12 +33,12 @@ def align_empty(shape, dtype, alignment=128):
     view = np.reshape(result[offset:offset+size], shape)
     return view
 
-def align_data(v, dtype, alignment=128):
+def align_data(x, dtype, alignment=128):
     """
     Return a copy of an array on the alignment boundary.
     """
-    # if v is contiguous, aligned, and of the correct type then just return v
-    view = align_empty(v.shape, dtype, alignment=alignment)
-    view[:] = v
+    # if x is contiguous, aligned, and of the correct type then just return x
+    view = align_empty(x.shape, dtype, alignment=alignment)
+    view[:] = x
     return view
 

@@ -186,22 +186,22 @@ returns a list of files required by the model.
 
 # TODO: identify model files which have changed since loading and reload them.
 
-__all__ = ["make, doc", "sources", "use_single"]
+__all__ = ["make", "doc", "sources", "use_single"]
 
 import sys
-import os
-import os.path
+from os.path import abspath, dirname, join as joinpath, exists
 import re
 
 import numpy as np
+C_KERNEL_TEMPLATE_PATH = joinpath(dirname(__file__), 'kernel_template.c')
 
 F64 = np.dtype('float64')
 F32 = np.dtype('float32')
 
 # Scale and background, which are parameters common to every form factor
 COMMON_PARAMETERS = [
-    [ "scale", "", 1, [0, np.inf], "", "Source intensity" ],
-    [ "background", "1/cm", 0, [0, np.inf], "", "Source background" ],
+    ["scale", "", 1, [0, np.inf], "", "Source intensity"],
+    ["background", "1/cm", 0, [0, np.inf], "", "Source background"],
     ]
 
 
@@ -209,6 +209,7 @@ COMMON_PARAMETERS = [
 # to units displayed in the sphinx documentation.
 RST_UNITS = {
     "Ang": "|Ang|",
+    "1/Ang": "|Ang^-1|",
     "1/Ang^2": "|Ang^-2|",
     "1e-6/Ang^2": "|1e-6Ang^-2|",
     "degrees": "degree",
@@ -228,213 +229,10 @@ PARTABLE_HEADERS = [
 # width, so will be ignored).
 PARTABLE_VALUE_WIDTH = 10
 
-# Header included before every kernel.
-# This makes sure that the appropriate math constants are defined, and does
-# whatever is required to make the kernel compile as pure C rather than
-# as an OpenCL kernel.
-KERNEL_HEADER = """\
-// GENERATED CODE --- DO NOT EDIT ---
-// Code is produced by sasmodels.gen from sasmodels/models/MODEL.c
-
-#ifdef __OPENCL_VERSION__
-# define USE_OPENCL
-#endif
-
-// If opencl is not available, then we are compiling a C function
-// Note: if using a C++ compiler, then define kernel as extern "C"
-#ifndef USE_OPENCL
-#  ifdef __cplusplus
-     #include <cmath>
-     #if defined(_MSC_VER)
-     #define kernel extern "C" __declspec( dllexport )
-     #else
-     #define kernel extern "C"
-     #endif
-     using namespace std;
-     inline void SINCOS(double angle, double &svar, double &cvar)
-       { svar=sin(angle); cvar=cos(angle); }
-#  else
-     #include <math.h>
-     #if defined(_MSC_VER)
-     #define kernel __declspec( dllexport )
-     #else
-     #define kernel
-     #endif
-     #define SINCOS(angle,svar,cvar) do {svar=sin(angle);cvar=cos(angle);} while (0)
-#  endif
-#  define global
-#  define local
-#  define constant const
-#  define powr(a,b) pow(a,b)
-#else
-#  ifdef USE_SINCOS
-#    define SINCOS(angle,svar,cvar) svar=sincos(angle,&cvar)
-#  else
-#    define SINCOS(angle,svar,cvar) do {svar=sin(angle);cvar=cos(angle);} while (0)
-#  endif
-#endif
-
-// Standard mathematical constants:
-//   M_E, M_LOG2E, M_LOG10E, M_LN2, M_LN10, M_PI, M_PI_2=pi/2, M_PI_4=pi/4,
-//   M_1_PI=1/pi, M_2_PI=2/pi, M_2_SQRTPI=2/sqrt(pi), SQRT2, SQRT1_2=sqrt(1/2)
-// OpenCL defines M_constant_F for float constants, and nothing if double
-// is not enabled on the card, which is why these constants may be missing
-#ifndef M_PI
-#  define M_PI 3.141592653589793
-#endif
-#ifndef M_PI_2
-#  define M_PI_2 1.570796326794897
-#endif
-#ifndef M_PI_4
-#  define M_PI_4 0.7853981633974483
-#endif
-
-// Non-standard pi/180, used for converting between degrees and radians
-#ifndef M_PI_180
-#  define M_PI_180 0.017453292519943295
-#endif
-"""
-
-
-# The I(q) kernel and the I(qx, qy) kernel have one and two q parameters
-# respectively, so the template builder will need to do extra work to
-# declare, initialize and pass the q parameters.
-KERNEL_1D = {
-    'fn': "Iq",
-    'q_par_decl': "global const double *q,",
-    'qinit': "const double qi = q[i];",
-    'qcall': "qi",
-    'qwork': ["q"],
-    }
-
-KERNEL_2D = {
-    'fn': "Iqxy",
-    'q_par_decl': "global const double *qx,\n    global const double *qy,",
-    'qinit': "const double qxi = qx[i];\n    const double qyi = qy[i];",
-    'qcall': "qxi, qyi",
-    'qwork': ["qx", "qy"],
-    }
-
-# Generic kernel template for the polydispersity loop.
-# This defines the opencl kernel that is available to the host.  The same
-# structure is used for Iq and Iqxy kernels, so extra flexibility is needed
-# for q parameters.  The polydispersity loop is built elsewhere and
-# substituted into this template.
-KERNEL_TEMPLATE = """\
-kernel void %(name)s(
-    %(q_par_decl)s
-    global double *result,
-#ifdef USE_OPENCL
-    global double *loops_g,
-#else
-    const int Nq,
-#endif
-    local double *loops,
-    const double cutoff,
-    %(par_decl)s
-    )
-{
-#ifdef USE_OPENCL
-  // copy loops info to local memory
-  event_t e = async_work_group_copy(loops, loops_g, (%(pd_length)s)*2, 0);
-  wait_group_events(1, &e);
-
-  int i = get_global_id(0);
-  int Nq = get_global_size(0);
-#endif
-
-#ifdef USE_OPENCL
-  if (i < Nq)
-#else
-  #pragma omp parallel for
-  for (int i=0; i < Nq; i++)
-#endif
-  {
-    %(qinit)s
-    double ret=0.0, norm=0.0;
-    double vol=0.0, norm_vol=0.0;
-%(loops)s
-    if (vol*norm_vol != 0.0) {
-      ret *= norm_vol/vol;
-    }
-    result[i] = scale*ret/norm+background;
-  }
-}
-"""
-
-# Polydispersity loop level.
-# This pulls the parameter value and weight from the looping vector in order
-# in preperation for a nested loop.
-LOOP_OPEN="""\
-for (int %(name)s_i=0; %(name)s_i < N%(name)s; %(name)s_i++) {
-  const double %(name)s = loops[2*(%(name)s_i%(offset)s)];
-  const double %(name)s_w = loops[2*(%(name)s_i%(offset)s)+1];\
-"""
-
-
-
-##########################################################
-#                                                        #
-#   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #
-#   !!                                              !!   #
-#   !!  KEEP THIS CODE CONSISTENT WITH PYKERNEL.PY  !!   #
-#   !!                                              !!   #
-#   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #
-#                                                        #
-##########################################################
-
-
-# Polydispersity loop body.
-# This computes the weight, and if it is sufficient, calls the scattering
-# function and adds it to the total.  If there is a volume normalization,
-# it will also be added here.
-LOOP_BODY="""\
-const double weight = %(weight_product)s;
-if (weight > cutoff) {
-  const double I = %(fn)s(%(qcall)s, %(pcall)s);
-  if (I>=0.0) { // scattering cannot be negative
-    ret += weight*I%(sasview_spherical)s;
-    norm += weight;
-    %(volume_norm)s
-  }
-  //else { printf("exclude qx,qy,I:%%g,%%g,%%g\\n",%(qcall)s,I); }
-}
-//else { printf("exclude weight:%%g\\n",weight); }\
-"""
-
-# Use this when integrating over orientation
-SPHERICAL_CORRECTION="""\
-// Correction factor for spherical integration p(theta) I(q) sin(theta) dtheta
-double spherical_correction = (Ntheta>1 ? fabs(sin(M_PI_180*theta)) : 1.0);\
-"""
-# Use this to reproduce sasview behaviour
-SASVIEW_SPHERICAL_CORRECTION="""\
-// Correction factor for spherical integration p(theta) I(q) sin(theta) dtheta
-double spherical_correction = (Ntheta>1 ? fabs(cos(M_PI_180*theta))*M_PI_2 : 1.0);\
-"""
-
-# Volume normalization.
-# If there are "volume" polydispersity parameters, then these will be used
-# to call the form_volume function from the user supplied kernel, and accumulate
-# a normalized weight.
-VOLUME_NORM="""const double vol_weight = %(vol_weight)s;
-    vol += vol_weight*form_volume(%(vol_pars)s);
-    norm_vol += vol_weight;\
-"""
-
-# functions defined as strings in the .py module
-WORK_FUNCTION="""\
-double %(name)s(%(pars)s);
-double %(name)s(%(pars)s)
-{
-%(body)s
-}\
-"""
-
 # Documentation header for the module, giving the model name, its short
 # description and its parameter table.  The remainder of the doc comes
 # from the module docstring.
-DOC_HEADER=""".. _%(name)s:
+DOC_HEADER = """.. _%(name)s:
 
 %(label)s
 =======================================================
@@ -448,21 +246,55 @@ The returned value is scaled to units of |cm^-1|.
 %(docs)s
 """
 
-def indent(s, depth):
+def make_partable(pars):
     """
-    Indent a string of text with *depth* additional spaces on each line.
+    Generate the parameter table to include in the sphinx documentation.
     """
-    spaces = " "*depth
-    sep = "\n"+spaces
-    return spaces + sep.join(s.split("\n"))
+    pars = COMMON_PARAMETERS + pars
+    column_widths = [
+        max(len(p[0]) for p in pars),
+        max(len(p[-1]) for p in pars),
+        max(len(RST_UNITS[p[1]]) for p in pars),
+        PARTABLE_VALUE_WIDTH,
+        ]
+    column_widths = [max(w, len(h))
+                     for w, h in zip(column_widths, PARTABLE_HEADERS)]
 
+    sep = " ".join("="*w for w in column_widths)
+    lines = [
+        sep,
+        " ".join("%-*s" % (w, h) for w, h in zip(column_widths, PARTABLE_HEADERS)),
+        sep,
+        ]
+    for p in pars:
+        lines.append(" ".join([
+            "%-*s" % (column_widths[0], p[0]),
+            "%-*s" % (column_widths[1], p[-1]),
+            "%-*s" % (column_widths[2], RST_UNITS[p[1]]),
+            "%*g" % (column_widths[3], p[2]),
+            ]))
+    lines.append(sep)
+    return "\n".join(lines)
 
-def kernel_name(info, is_2D):
+def _search(search_path, filename):
     """
-    Name of the exported kernel symbol.
-    """
-    return info['name'] + "_" + ("Iqxy" if is_2D else "Iq")
+    Find *filename* in *search_path*.
 
+    Raises ValueError if file does not exist.
+    """
+    for path in search_path:
+        target = joinpath(path, filename)
+        if exists(target):
+            return target
+    raise ValueError("%r not found in %s" % (filename, search_path))
+
+def sources(info):
+    """
+    Return a list of the sources file paths for the module.
+    """
+    search_path = [dirname(info['filename']),
+                   abspath(joinpath(dirname(__file__), 'models'))]
+    return [_search(search_path, f) for f in info['source']]
 
 def use_single(source):
     """
@@ -480,197 +312,12 @@ def use_single(source):
     return source
 
 
-def make_kernel(info, is_2D):
+def kernel_name(info, is_2D):
     """
-    Build a kernel call from metadata supplied by the user.
-
-    *info* is the json object defined in the kernel file.
-
-    *form* is either "Iq" or "Iqxy".
-
-    This does not create a complete OpenCL kernel source, only the top
-    level kernel call with polydispersity and a call to the appropriate
-    Iq or Iqxy function.
+    Name of the exported kernel symbol.
     """
+    return info['name'] + "_" + ("Iqxy" if is_2D else "Iq")
 
-    # If we are building the Iqxy kernel, we need to propagate qx,qy
-    # parameters, otherwise we can
-    dim = "2d" if is_2D else "1d"
-    fixed_pars = info['partype']['fixed-'+dim]
-    pd_pars = info['partype']['pd-'+dim]
-    vol_pars = info['partype']['volume']
-    q_pars = KERNEL_2D if is_2D else KERNEL_1D
-    fn = q_pars['fn']
-
-    # Build polydispersity loops
-    depth = 4
-    offset = ""
-    loop_head = []
-    loop_end = []
-    for name in pd_pars:
-        subst = { 'name': name, 'offset': offset }
-        loop_head.append(indent(LOOP_OPEN%subst, depth))
-        loop_end.insert(0, (" "*depth) + "}")
-        offset += '+N'+name
-        depth += 2
-
-    # The volume parameters in the inner loop are used to call the volume()
-    # function in the kernel, with the parameters defined in vol_pars and the
-    # weight product defined in weight.  If there are no volume parameters,
-    # then there will be no volume normalization.
-    if vol_pars:
-        subst = {
-            'vol_weight': "*".join(p+"_w" for p in vol_pars),
-            'vol_pars': ", ".join(vol_pars),
-            }
-        volume_norm = VOLUME_NORM%subst
-    else:
-        volume_norm = ""
-
-    # Define the inner loop function call
-    # The parameters to the f(q,p1,p2...) call should occur in the same
-    # order as given in the parameter info structure.  This may be different
-    # from the parameter order in the call to the kernel since the kernel
-    # call places all fixed parameters before all polydisperse parameters.
-    fq_pars = [p[0] for p in info['parameters'][len(COMMON_PARAMETERS):]
-               if p[0] in set(fixed_pars+pd_pars)]
-    if False and "theta" in pd_pars:
-        spherical_correction = [indent(SPHERICAL_CORRECTION, depth)]
-        weights = [p+"_w" for p in pd_pars]+['spherical_correction']
-        sasview_spherical = ""
-    elif True and "theta" in pd_pars:
-        spherical_correction = [indent(SASVIEW_SPHERICAL_CORRECTION,depth)]
-        weights = [p+"_w" for p in pd_pars]
-        sasview_spherical = "*spherical_correction"
-    else:
-        spherical_correction = []
-        weights = [p+"_w" for p in pd_pars]
-        sasview_spherical = ""
-    subst = {
-        'weight_product': "*".join(weights),
-        'volume_norm': volume_norm,
-        'fn': fn,
-        'qcall': q_pars['qcall'],
-        'pcall': ", ".join(fq_pars), # skip scale and background
-        'sasview_spherical': sasview_spherical,
-        }
-    loop_body = [indent(LOOP_BODY%subst, depth)]
-    loops = "\n".join(loop_head+spherical_correction+loop_body+loop_end)
-
-    # declarations for non-pd followed by pd pars
-    # e.g.,
-    #     const double sld,
-    #     const int Nradius
-    fixed_par_decl = ",\n    ".join("const double %s"%p for p in fixed_pars)
-    pd_par_decl = ",\n    ".join("const int N%s"%p for p in pd_pars)
-    if fixed_par_decl and pd_par_decl:
-        par_decl = ",\n    ".join((fixed_par_decl, pd_par_decl))
-    elif fixed_par_decl:
-        par_decl = fixed_par_decl
-    else:
-        par_decl = pd_par_decl
-
-    # Finally, put the pieces together in the kernel.
-    subst = {
-        # kernel name is, e.g., cylinder_Iq
-        'name': kernel_name(info, is_2D),
-        # to declare, e.g., global double q[],
-        'q_par_decl': q_pars['q_par_decl'],
-        # to declare, e.g., double sld, int Nradius, int Nlength
-        'par_decl': par_decl,
-        # to copy global to local pd pars we need, e.g., Nradius+Nlength
-        'pd_length': "+".join('N'+p for p in pd_pars),
-        # the q initializers, e.g., double qi = q[i];
-        'qinit': q_pars['qinit'],
-        # the actual polydispersity loop
-        'loops': loops,
-        }
-    kernel = KERNEL_TEMPLATE%subst
-
-    # If the working function is defined in the kernel metadata as a
-    # string, translate the string to an actual function definition
-    # and put it before the kernel.
-    if info[fn]:
-        subst = {
-            'name': fn,
-            'pars': ", ".join("double "+p for p in q_pars['qwork']+fq_pars),
-            'body': info[fn],
-            }
-        kernel = "\n".join((WORK_FUNCTION%subst, kernel))
-    return kernel
-
-def make_partable(pars):
-    """
-    Generate the parameter table to include in the sphinx documentation.
-    """
-    pars = COMMON_PARAMETERS + pars
-    column_widths = [
-        max(len(p[0]) for p in pars),
-        max(len(p[-1]) for p in pars),
-        max(len(RST_UNITS[p[1]]) for p in pars),
-        PARTABLE_VALUE_WIDTH,
-        ]
-    column_widths = [max(w, len(h))
-                     for w,h in zip(column_widths, PARTABLE_HEADERS)]
-
-    sep = " ".join("="*w for w in column_widths)
-    lines = [
-        sep,
-        " ".join("%-*s"%(w,h) for w,h in zip(column_widths, PARTABLE_HEADERS)),
-        sep,
-        ]
-    for p in pars:
-        lines.append(" ".join([
-            "%-*s"%(column_widths[0],p[0]),
-            "%-*s"%(column_widths[1],p[-1]),
-            "%-*s"%(column_widths[2],RST_UNITS[p[1]]),
-            "%*g"%(column_widths[3],p[2]),
-            ]))
-    lines.append(sep)
-    return "\n".join(lines)
-
-def _search(search_path, filename):
-    """
-    Find *filename* in *search_path*.
-
-    Raises ValueError if file does not exist.
-    """
-    for path in search_path:
-        target = os.path.join(path, filename)
-        if os.path.exists(target):
-            return target
-    raise ValueError("%r not found in %s"%(filename, search_path))
-
-def sources(info):
-    """
-    Return a list of the sources file paths for the module.
-    """
-    from os.path import abspath, dirname, join as joinpath
-    search_path = [ dirname(info['filename']),
-                    abspath(joinpath(dirname(__file__),'models')) ]
-    return [_search(search_path, f) for f in info['source']]
-
-def make_model(info):
-    """
-    Generate the code for the kernel defined by info, using source files
-    found in the given search path.
-    """
-    source = [open(f).read() for f in sources(info)]
-    # If the form volume is defined as a string, then wrap it in a
-    # function definition and place it after the external sources but
-    # before the kernel functions.  If the kernel functions are strings,
-    # they will be translated in the make_kernel call.
-    if info['form_volume']:
-        subst = {
-            'name': "form_volume",
-            'pars': ", ".join("double "+p for p in info['partype']['volume']),
-            'body': info['form_volume'],
-            }
-        source.append(WORK_FUNCTION%subst)
-    kernel_Iq = make_kernel(info, is_2D=False) if not callable(info['Iq']) else ""
-    kernel_Iqxy = make_kernel(info, is_2D=True) if not callable(info['Iqxy']) else ""
-    kernel = "\n\n".join([KERNEL_HEADER]+source+[kernel_Iq, kernel_Iqxy])
-    return kernel
 
 def categorize_parameters(pars):
     """
@@ -685,7 +332,7 @@ def categorize_parameters(pars):
     }
 
     for p in pars:
-        name,ptype = p[0],p[4]
+        name, ptype = p[0], p[4]
         if ptype == 'volume':
             partype['pd-1d'].append(name)
             partype['pd-2d'].append(name)
@@ -698,10 +345,179 @@ def categorize_parameters(pars):
             partype['fixed-1d'].append(name)
             partype['fixed-2d'].append(name)
         else:
-            raise ValueError("unknown parameter type %r"%ptype)
+            raise ValueError("unknown parameter type %r" % ptype)
         partype[ptype].append(name)
 
     return partype
+
+def indent(s, depth):
+    """
+    Indent a string of text with *depth* additional spaces on each line.
+    """
+    spaces = " "*depth
+    sep = "\n" + spaces
+    return spaces + sep.join(s.split("\n"))
+
+
+def build_polydispersity_loops(pd_pars):
+    """
+    Build polydispersity loops
+
+    Returns loop opening and loop closing
+    """
+    LOOP_OPEN = """\
+for (int %(name)s_i=0; %(name)s_i < N%(name)s; %(name)s_i++) {
+  const double %(name)s = loops[2*(%(name)s_i%(offset)s)];
+  const double %(name)s_w = loops[2*(%(name)s_i%(offset)s)+1];\
+"""
+    depth = 4
+    offset = ""
+    loop_head = []
+    loop_end = []
+    for name in pd_pars:
+        subst = {'name': name, 'offset': offset}
+        loop_head.append(indent(LOOP_OPEN % subst, depth))
+        loop_end.insert(0, (" "*depth) + "}")
+        offset += '+N' + name
+        depth += 2
+    return "\n".join(loop_head), "\n".join(loop_end)
+
+C_KERNEL_TEMPLATE = None
+def make_model(info):
+    """
+    Generate the code for the kernel defined by info, using source files
+    found in the given search path.
+    """
+    # TODO: need something other than volume to indicate dispersion parameters
+    # No volume normalization despite having a volume parameter.
+    # Thickness is labelled a volume in order to trigger polydispersity.
+    # May want a separate dispersion flag, or perhaps a separate category for
+    # disperse, but not volume.  Volume parameters also use relative values
+    # for the distribution rather than the absolute values used by angular
+    # dispersion.  Need to be careful that necessary parameters are available
+    # for computing volume even if we allow non-disperse volume parameters.
+
+    # Load template
+    global C_KERNEL_TEMPLATE
+    if C_KERNEL_TEMPLATE is None:
+        with open(C_KERNEL_TEMPLATE_PATH) as fid:
+            C_KERNEL_TEMPLATE = fid.read()
+
+    # Load additional sources
+    source = [open(f).read() for f in sources(info)]
+
+    # Prepare defines
+    defines = []
+    partype = info['partype']
+    pd_1d = partype['pd-1d']
+    pd_2d = partype['pd-2d']
+    fixed_1d = partype['fixed-1d']
+    fixed_2d = partype['fixed-1d']
+
+    iq_parameters = [p[0]
+                     for p in info['parameters'][2:] # skip scale, background
+                     if p[0] in set(fixed_1d + pd_1d)]
+    iqxy_parameters = [p[0]
+                       for p in info['parameters'][2:] # skip scale, background
+                       if p[0] in set(fixed_2d + pd_2d)]
+    volume_parameters = [p[0]
+                         for p in info['parameters']
+                         if p[4] == 'volume']
+
+    # Fill in defintions for volume parameters
+    if volume_parameters:
+        defines.append(('VOLUME_PARAMETERS',
+                        ','.join(volume_parameters)))
+        defines.append(('VOLUME_WEIGHT_PRODUCT',
+                        '*'.join(p + '_w' for p in volume_parameters)))
+
+    # Generate form_volume function from body only
+    if info['form_volume'] is not None:
+        if volume_parameters:
+            vol_par_decl = ', '.join('double ' + p for p in volume_parameters)
+        else:
+            vol_par_decl = 'void'
+        defines.append(('VOLUME_PARAMETER_DECLARATIONS',
+                        vol_par_decl))
+        fn = """\
+double form_volume(VOLUME_PARAMETER_DECLARATIONS);
+double form_volume(VOLUME_PARAMETER_DECLARATIONS) {
+    %(body)s
+}
+""" % {'body':info['form_volume']}
+        source.append(fn)
+
+    # Fill in definitions for Iq parameters
+    defines.append(('IQ_KERNEL_NAME', info['name'] + '_Iq'))
+    defines.append(('IQ_PARAMETERS', ', '.join(iq_parameters)))
+    if fixed_1d:
+        defines.append(('IQ_FIXED_PARAMETER_DECLARATIONS',
+                        ', \\\n    '.join('const double %s' % p for p in fixed_1d)))
+    if pd_1d:
+        defines.append(('IQ_WEIGHT_PRODUCT',
+                        '*'.join(p + '_w' for p in pd_1d)))
+        defines.append(('IQ_DISPERSION_LENGTH_DECLARATIONS',
+                        ', \\\n    '.join('const int N%s' % p for p in pd_1d)))
+        defines.append(('IQ_DISPERSION_LENGTH_SUM',
+                        '+'.join('N' + p for p in pd_1d)))
+        open_loops, close_loops = build_polydispersity_loops(pd_1d)
+        defines.append(('IQ_OPEN_LOOPS',
+                        open_loops.replace('\n', ' \\\n')))
+        defines.append(('IQ_CLOSE_LOOPS',
+                        close_loops.replace('\n', ' \\\n')))
+    if info['Iq'] is not None:
+        defines.append(('IQ_PARAMETER_DECLARATIONS',
+                        ', '.join('double ' + p for p in iq_parameters)))
+        fn = """\
+double Iq(double q, IQ_PARAMETER_DECLARATIONS);
+double Iq(double q, IQ_PARAMETER_DECLARATIONS) {
+    %(body)s
+}
+""" % {'body':info['Iq']}
+        source.append(fn)
+
+    # Fill in definitions for Iqxy parameters
+    defines.append(('IQXY_KERNEL_NAME', info['name'] + '_Iqxy'))
+    defines.append(('IQXY_PARAMETERS', ', '.join(iqxy_parameters)))
+    if fixed_2d:
+        defines.append(('IQXY_FIXED_PARAMETER_DECLARATIONS',
+                        ', \\\n    '.join('const double %s' % p for p in fixed_2d)))
+    if pd_2d:
+        defines.append(('IQXY_WEIGHT_PRODUCT',
+                        '*'.join(p + '_w' for p in pd_2d)))
+        defines.append(('IQXY_DISPERSION_LENGTH_DECLARATIONS',
+                        ', \\\n    '.join('const int N%s' % p for p in pd_2d)))
+        defines.append(('IQXY_DISPERSION_LENGTH_SUM',
+                        '+'.join('N' + p for p in pd_2d)))
+        open_loops, close_loops = build_polydispersity_loops(pd_2d)
+        defines.append(('IQXY_OPEN_LOOPS',
+                        open_loops.replace('\n', ' \\\n')))
+        defines.append(('IQXY_CLOSE_LOOPS',
+                        close_loops.replace('\n', ' \\\n')))
+    if info['Iqxy'] is not None:
+        defines.append(('IQXY_PARAMETER_DECLARATIONS',
+                        ', '.join('double ' + p for p in iqxy_parameters)))
+        fn = """\
+double Iqxy(double qx, double qy, IQXY_PARAMETER_DECLARATIONS);
+double Iqxy(double qx, double qy, IQXY_PARAMETER_DECLARATIONS) {
+    %(body)s
+}
+""" % {'body':info['Iqxy']}
+        source.append(fn)
+
+    # Need to know if we have a theta parameter for Iqxy; it is not there
+    # for the magnetic sphere model, for example, which has a magnetic
+    # orientation but no shape orientation.
+    if 'theta' in pd_2d:
+        defines.append(('IQXY_HAS_THETA', '1'))
+
+    #for d in defines: print d
+    DEFINES = '\n'.join('#define %s %s' % (k, v) for k, v in defines)
+    SOURCES = '\n\n'.join(source)
+    return C_KERNEL_TEMPLATE % {
+        'DEFINES':DEFINES,
+        'SOURCES':SOURCES,
+        }
 
 def make(kernel_module):
     """
@@ -712,50 +528,49 @@ def make(kernel_module):
     if the name is in a string.
     """
     # TODO: allow Iq and Iqxy to be defined in python
-    from os.path import abspath
     #print kernelfile
     info = dict(
-        filename = abspath(kernel_module.__file__),
-        name = kernel_module.name,
-        title = kernel_module.title,
-        description = kernel_module.description,
-        parameters = COMMON_PARAMETERS + kernel_module.parameters,
-        source = getattr(kernel_module, 'source', []),
-        oldname = kernel_module.oldname,
-        oldpars = kernel_module.oldpars,
+        filename=abspath(kernel_module.__file__),
+        name=kernel_module.name,
+        title=kernel_module.title,
+        description=kernel_module.description,
+        parameters=COMMON_PARAMETERS + kernel_module.parameters,
+        source=getattr(kernel_module, 'source', []),
+        oldname=kernel_module.oldname,
+        oldpars=kernel_module.oldpars,
         )
     # Fill in attributes which default to None
-    info.update((k,getattr(kernel_module, k, None))
+    info.update((k, getattr(kernel_module, k, None))
                 for k in ('ER', 'VR', 'form_volume', 'Iq', 'Iqxy'))
     # Fill in the derived attributes
-    info['limits'] = dict((p[0],p[3]) for p in info['parameters'])
+    info['limits'] = dict((p[0], p[3]) for p in info['parameters'])
     info['partype'] = categorize_parameters(info['parameters'])
-    info['defaults'] = dict((p[0],p[2]) for p in info['parameters'])
+    info['defaults'] = dict((p[0], p[2]) for p in info['parameters'])
 
-    source = make_model(info)
-
+    # Assume if one part of the kernel is python then all parts are.
+    source = make_model(info) if not callable(info['Iq']) else None
     return source, info
 
 def doc(kernel_module):
     """
     Return the documentation for the model.
     """
-    subst = dict(name=kernel_module.name.replace('_','-'),
+    subst = dict(name=kernel_module.name.replace('_', '-'),
                  label=" ".join(kernel_module.name.split('_')).capitalize(),
                  title=kernel_module.title,
                  parameters=make_partable(kernel_module.parameters),
                  docs=kernel_module.__doc__)
-    return DOC_HEADER%subst
+    return DOC_HEADER % subst
 
 
 
 def demo_time():
-    import datetime
     from .models import cylinder
-    toc = lambda: (datetime.datetime.now()-tic).total_seconds()
+    import datetime
     tic = datetime.datetime.now()
-    source, info = make(cylinder)
-    print "time:",toc()
+    make(cylinder)
+    toc = (datetime.datetime.now() - tic).total_seconds()
+    print "time:", toc
 
 def main():
     if len(sys.argv) <= 1:
@@ -763,10 +578,10 @@ def main():
     else:
         name = sys.argv[1]
         import sasmodels.models
-        __import__('sasmodels.models.'+name)
+        __import__('sasmodels.models.' + name)
         model = getattr(sasmodels.models, name)
-        source, info = make(model); print source
-        #print doc(model)
+        source, _ = make(model)
+        print source
 
 if __name__ == "__main__":
     main()

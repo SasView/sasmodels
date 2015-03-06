@@ -89,7 +89,7 @@ L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and Neutron
 New York, 1987.
 """
 
-from numpy import pi, inf
+from numpy import inf
 
 name = "triaxial_ellipsoid"
 title = "Ellipsoid of uniform scattering length density with three independent axes."
@@ -99,6 +99,7 @@ Note: During fitting ensure that the inequality ra<rb<rc is not
 	violated. Otherwise the calculation will
 	not be correct.
 """
+category = "shape:ellipsoid"
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type",

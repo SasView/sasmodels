@@ -115,7 +115,7 @@ L A Feigin and D I Svergun. *Structure Analysis by Small-Angle X-Ray and Neutron
 New York, 1987.
 """
 
-from numpy import pi, inf
+from numpy import inf
 
 name = "ellipsoid"
 title = "Ellipsoid of revolution with uniform scattering length density."
@@ -135,6 +135,7 @@ P(q.alpha)= scale*f(q)^2 + background, where f(q)= 3*(sld
 		Rp: polar radius of the ellipsoid
 		Re: equatorial radius of the ellipsoid
 """
+category = "shape:ellipsoid"
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type",

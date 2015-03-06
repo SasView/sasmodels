@@ -1,64 +1,71 @@
 # Note: model title and parameter table are inserted automatically
 r"""
-This model provides the scattering intensity, *I(q)* = *P(q)* \* *S(q)*, for a lamellar phase where a random
-distribution in solution are assumed. Here a Caille S(Q) is used for the lamellar stacks.
+This model provides the scattering intensity, $I(q) = P(q)S(q)$, for a lamellar
+phase where a random distribution in solution are assumed. Here a Caille $S(Q)$
+is used for the lamellar stacks.
 
-The scattering intensity *I(q)* is
-
-.. image:: img/lamellarCailleHG_139.PNG
-
-The form factor is
-
-.. image:: img/lamellarCailleHG_143.PNG
-
-and the structure factor is
-
-.. image:: img/lamellarCailleHG_140.PNG
-
-where
-
-.. image:: img/lamellarCailleHG_141.PNG
-
-where |delta|\ T = tail length (or *tail_length*), |delta|\ H = head thickness (or *h_thickness*),
-|drho|\ H = SLD(headgroup) - SLD(solvent), and |drho|\ T = SLD(tail) - SLD(headgroup).
-Here *d* = (repeat) spacing, *K* = smectic bending elasticity, *B* = compression modulus, and N = number of lamellar
-plates (*n_plates*).
-
-NB: **When the Caille parameter is greater than approximately 0.8 to 1.0, the assumptions of the model are incorrect.**
-And due to a complication of the model function, users are responsible for making sure that all the assumptions are
-handled accurately (see the original reference below for more details).
-
-Non-integer numbers of stacks are calculated as a linear combination of results for the next lower and higher values.
-
-The 2D scattering intensity is calculated in the same way as 1D, where the *q* vector is defined as
+The scattering intensity $I(q)$ is
 
 .. math::
 
-    Q = \sqrt{Q_x^2 + Q_y^2}
+    I(q) = 2 \pi \frac{P(q)S(q)}{\delta q^2}
+
+
+The form factor $P(q)$ is
+
+.. math::
+
+        P(q) = \frac{4}{q^2}\big\{
+        \Delta\rho_H \left[\sin[q(\delta_H + \delta_T)] - \sin(q\delta_T)\right]
+            + \Delta\rho_T\sin(q\delta_T)\big\}^2
+
+and the structure factor $S(q)$ is
+
+.. math::
+
+    S(q) = 1 + 2 \sum_1^{N-1}\left(1-\frac{n}{N}\right)
+        \cos(qdn)\exp\left(-\frac{2q^2d^2\alpha(n)}{2}\right)
+
+where
+
+.. math::
+
+    \begin{eqnarray}
+    \alpha(n) &=& \frac{\eta_{cp}}{4\pi^2} \left(\ln(\pi n)+\gamma_E\right)  \\
+    \gamma_E &=& 0.5772156649&&\text{Euler's constant} \\
+    \eta_{cp} &=& \frac{q_o^2k_B T}{8\pi\sqrt{K\overline{B}}} && \text{Caille constant}
+    \end{eqnarray}
+
+
+$\delta_T$ is the tail length (or *tail_length*), $\delta_H$ is the head
+thickness (or *head_length*), $\Delta\rho_H$ is SLD(headgroup) - SLD(solvent),
+and $\Delta\rho_T$ is SLD(tail) - SLD(headgroup). Here $d$ is (repeat) spacing,
+$K$ is smectic bending elasticity, $B$ is compression modulus, and $N$ is the
+number of lamellar plates (*Nlayers*).
+
+NB: **When the Caille parameter is greater than approximately 0.8 to 1.0, the
+assumptions of the model are incorrect.**  And due to a complication of the
+model function, users are responsible for making sure that all the assumptions
+are handled accurately (see the original reference below for more details).
+
+Non-integer numbers of stacks are calculated as a linear combination of
+results for the next lower and higher values.
+
+The 2D scattering intensity is calculated in the same way as 1D, where
+the $q$ vector is defined as
+
+.. math::
+
+    q = \sqrt{q_x^2 + q_y^2}
 
 The returned value is in units of |cm^-1|, on absolute scale.
 
-==============  ========  =============
-Parameter name  Units     Default value
-==============  ========  =============
-background      |cm^-1|   0.001
-sld_head        |Ang^-2|  2e-06
-scale           None      1
-sld_solvent     |Ang^-2|  6e-06
-deltaH          |Ang|     2
-deltaT          |Ang|     10
-sld_tail        |Ang^-2|  0
-n_plates        None      30
-spacing         |Ang|     40
-caille          |Ang^-2|  0.001
-==============  ========  =============
-
-.. image:: img/lamellarCailleHG_142.jpg
+.. image:: img/lamellarCailleHG_1d.jpg
 
 *Figure. 1D plot using the default values (w/6000 data point).*
 
-Our model uses the form factor calculations implemented in a c-library provided by the NIST Center for Neutron Research
-(Kline, 2006).
+Our model uses the form factor calculations implemented in a C library provided
+by the NIST Center for Neutron Research (Kline, 2006).
 
 REFERENCE
 
@@ -66,7 +73,7 @@ F Nallet, R Laversanne, and D Roux, J. Phys. II France, 3, (1993) 487-502
 
 also in J. Phys. Chem. B, 105, (2001) 11081-11088
 """
-from numpy import pi, inf
+from numpy import inf
 
 name = "lamellarCailleHG"
 title = "Random lamellar sheet with Caille structure factor"
@@ -81,6 +88,7 @@ description = """\
 		background = incoherent background
 		scale = scale factor
 """
+category = "shape:lamellae"
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type",
@@ -112,8 +120,7 @@ form_volume = """
     """
 
 Iqxy = """
-    // never called since no orientation or magnetic parameters.
-    return -1.0;
+    return Iq(sqrt(qx*qx+qy*qy), IQ_PARAMETERS);
     """
 
 # ER defaults to 0.0
@@ -121,14 +128,15 @@ Iqxy = """
 
 demo = dict(
         scale=1, background=0,
-		Nlayers=20,spacing=200.,
-        Caille_parameter=0.05,
-		tail_length=15,head_length=10,
-        sld=-1, head_sld=4.0, solvent_sld=6.0,
-		tail_length_pd= 0.1, tail_length_pd_n=20,
-		head_length_pd= 0.05, head_length_pd_n=30,
-		spacing_pd= 0.2, spacing_pd_n=40
-         )
+        Nlayers=20,
+        spacing=200., Caille_parameter=0.05,
+        tail_length=15,head_length=10,
+        #sld=-1, head_sld=4.0, solvent_sld=6.0,
+        sld=-1, head_sld=4.1, solvent_sld=6.0,
+        tail_length_pd= 0.1, tail_length_pd_n=20,
+        head_length_pd= 0.05, head_length_pd_n=30,
+        spacing_pd= 0.2, spacing_pd_n=40
+   )
 
 oldname = 'LamellarPSHGModel'
 oldpars = dict(tail_length='deltaT',head_length='deltaH',Nlayers='n_plates',Caille_parameter='caille', sld='sld_tail', head_sld='sld_head',solvent_sld='sld_solvent')

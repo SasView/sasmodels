@@ -46,7 +46,7 @@ also in J. Phys. Chem. B, 105, (2001) 11081-11088
 
 """
 
-from numpy import pi, inf
+from numpy import inf
 
 name = "lamellar"
 title = "Lyotropic lamellar phase with uniform SLD and random distribution"
@@ -60,6 +60,7 @@ description = """\
 		background = incoherent background
 		scale = scale factor
 """
+category = "shape:lamellae"
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type",
@@ -87,8 +88,7 @@ Iq = """
     """
 
 Iqxy = """
-    // never called since no orientation or magnetic parameters.
-    return -1.0;
+    return Iq(sqrt(qx*qx+qy*qy), IQ_PARAMETERS);
     """
 
 # ER defaults to 0.0

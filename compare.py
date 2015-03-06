@@ -80,8 +80,8 @@ def randomize(p, v):
         # length pd in [0,1]
         return np.random.rand()
     else:
-        # length, scale, background in [0,200]
-        return 200*np.random.rand()
+        # values from 0 to 2*x for all other parameters
+        return 2*np.random.rand()*(v if v != 0 else 1)
 
 def randomize_model(name, pars, seed=None):
     if seed is None:
@@ -144,7 +144,7 @@ def eval_ctypes(name, pars, data, dtype='double', Nevals=1, cutoff=0):
     average_time = toc()*1000./Nevals
     return value, average_time
 
-def make_data(qmax, is2D, Nq=128):
+def make_data(qmax, is2D, Nq=128, view='log'):
     if is2D:
         from sasmodels.bumps_model import empty_data2D, set_beam_stop
         data = empty_data2D(np.linspace(-qmax, qmax, Nq))
@@ -152,12 +152,18 @@ def make_data(qmax, is2D, Nq=128):
         index = ~data.mask
     else:
         from sasmodels.bumps_model import empty_data1D
-        qmax = math.log10(qmax)
-        data = empty_data1D(np.logspace(qmax-3, qmax, Nq))
+        if view == 'log':
+            qmax = math.log10(qmax)
+            q = np.logspace(qmax-3, qmax, Nq)
+        else:
+            q = np.linspace(0.001*qmax, qmax, Nq)
+        data = empty_data1D(q)
         index = slice(None, None)
     return data, index
 
 def compare(name, pars, Ncpu, Nocl, opts, set_pars):
+    view = 'linear' if '-linear' in opts else 'log' if '-log' in opts else 'q4' if '-q4' in opts else 'log'
+
     opt_values = dict(split
                       for s in opts for split in ((s.split('='),))
                       if len(split) == 2)
@@ -165,7 +171,7 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
     qmax = 10.0 if '-exq' in opts else 1.0 if '-highq' in opts else 0.2 if '-midq' in opts else 0.05
     Nq = int(opt_values.get('-Nq', '128'))
     is2D = not "-1d" in opts
-    data, index = make_data(qmax, is2D, Nq)
+    data, index = make_data(qmax, is2D, Nq, view=view)
 
 
     # modelling accuracy is determined by dtype and cutoff
@@ -173,11 +179,11 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
     cutoff = float(opt_values.get('-cutoff','1e-5'))
 
     # randomize parameters
+    pars.update(set_pars)
     if '-random' in opts or '-random' in opt_values:
         seed = int(opt_values['-random']) if '-random' in opt_values else None
         pars, seed = randomize_model(name, pars, seed=seed)
         print "Randomize using -random=%i"%seed
-    pars.update(set_pars)
 
     # parameter selection
     if '-mono' in opts:
@@ -222,24 +228,24 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
     import matplotlib.pyplot as plt
     if Ncpu > 0:
         if Nocl > 0: plt.subplot(131)
-        plot_data(data, cpu, scale='log')
+        plot_data(data, cpu, view=view)
         plt.title("%s t=%.1f ms"%(comp,cpu_time))
         cbar_title = "log I"
     if Nocl > 0:
         if Ncpu > 0: plt.subplot(132)
-        plot_data(data, ocl, scale='log')
+        plot_data(data, ocl, view=view)
         plt.title("opencl t=%.1f ms"%ocl_time)
         cbar_title = "log I"
     if Ncpu > 0 and Nocl > 0:
         plt.subplot(133)
         if '-abs' in opts:
-            err,errstr = resid, "abs err"
+            err,errstr,errview = resid, "abs err", "linear"
         else:
-            err,errstr = relerr, "rel err"
+            err,errstr,errview = abs(relerr), "rel err", "log"
         #err,errstr = ocl/cpu,"ratio"
-        plot_data(data, err, scale='log') #'linear')
+        plot_data(data, err, view=errview)
         plt.title("max %s = %.3g"%(errstr, max(abs(err[index]))))
-        cbar_title = "log "+errstr
+        cbar_title = errstr if errview=="linear" else "log "+errstr
     if is2D:
         h = plt.colorbar()
         h.ax.set_title(cbar_title)
@@ -280,6 +286,7 @@ Options (* for default):
     -cutoff=1e-5*/value cutoff for including a point in polydispersity
     -pars/-nopars* prints the parameter set or not
     -abs/-rel* plot relative or absolute error
+    -linear/-log/-q4 intensity scaling
     -hist/-nohist* plot histogram of relative error
 
 Key=value pairs allow you to set specific values to any of the model
@@ -300,6 +307,7 @@ NAME_OPTIONS = set([
     'sasview','ctypes',
     'nopars','pars',
     'rel','abs',
+    'linear', 'log', 'q4',
     'hist','nohist',
     ])
 VALUE_OPTIONS = [

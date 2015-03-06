@@ -127,6 +127,7 @@ description = """
             from pi/2 to zero of...
             f(q,alpha)^(2)*sin(alpha)*dalpha + background
 """
+category = "shape:cylinder"
 
 parameters = [
 #   [ "name", "units", default, [lower, upper], "type",
@@ -156,12 +157,12 @@ demo = dict(
     scale=1, background=0,
     sld=6, solvent_sld=1,
     #radius=5, length=20,
-    radius=260, length=290,
-    theta=30, phi=0,
+    radius=20, length=300,
+    theta=60, phi=60,
     radius_pd=.2, radius_pd_n=9,
     length_pd=.2,length_pd_n=10,
-    theta_pd=15, theta_pd_n=45,
-    phi_pd=15, phi_pd_n=1,
+    theta_pd=10, theta_pd_n=5,
+    phi_pd=10, phi_pd_n=5,
     )
 
 # For testing against the old sasview models, include the converted parameter
@@ -170,18 +171,6 @@ oldname='CylinderModel'
 oldpars=dict(theta='cyl_theta', phi='cyl_phi', sld='sldCyl', solvent_sld='sldSolv')
 
 
-# test values:
-# [
-#   [ {parameters}, q, I(q)],
-#   [ {parameters}, [q], [I(q)] ],
-#   [ {parameters}, [q1, q2, ...], [I(q1), I(q2), ...]],
-
-#   [ {parameters}, (qx, qy), I(qx, Iqy)],
-#   [ {parameters}, [(qx1, qy1), (qx2, qy2), ...], [I(qx1,qy1), I(qx2,qy2), ...],
-#   ...
-# ]
-# Precision defaults to 7 digits (relative) for single, 14 for double
-# May want a limited precision version that checks for 8-n or 15-n digits respectively
 qx,qy = 0.2*np.cos(2.5), 0.2*np.sin(2.5)
 tests = [
     [{},  0.2, 0.041761386790780453],
