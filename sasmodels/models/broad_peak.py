@@ -59,45 +59,33 @@ description = """\
       peak_pos = peak location [1/A]
       lorentz_exp = Lorentzian exponent
       background = Incoherent background"""
-category="shape-independent"
+category = "shape-independent"
 
-parameters = [
-#   [ "name", "units", default, [lower, upper], "type",
-#     "description" ],
-
-    [ "porod_scale", "", 1.0e-05, [-inf,inf], "",
-      "Power law scale factor" ],
-    [ "porod_exp", "", 3.0, [-inf,inf], "",
-      "Exponent of power law" ],
-    [ "lorentz_scale", "", 10.0, [-inf,inf], "",
-      "Scale factor for broad Lorentzian peak" ],
-    [ "lorentz_length", "Ang",  50.0, [-inf, inf], "",
-      "Lorentzian screening length" ],
-    [ "peak_pos", "1/Ang",  0.1, [-inf, inf], "",
-      "Peak postion in q" ],
-    [ "lorentz_exp", "",  2.0, [-inf, inf], "",
-      "exponent of Lorentz function" ],
-    ]
-
+#             ["name", "units", default, [lower, upper], "type", "description"],
+parameters = [["porod_scale", "", 1.0e-05, [-inf, inf], "", "Power law scale factor"],
+              ["porod_exp", "", 3.0, [-inf, inf], "", "Exponent of power law"],
+              ["lorentz_scale", "", 10.0, [-inf, inf], "", "Scale factor for broad Lorentzian peak"],
+              ["lorentz_length", "Ang", 50.0, [-inf, inf], "", "Lorentzian screening length"],
+              ["peak_pos", "1/Ang", 0.1, [-inf, inf], "", "Peak postion in q"],
+              ["lorentz_exp", "", 2.0, [-inf, inf], "", "exponent of Lorentz function"],
+             ]
 
 def Iq(q, porod_scale, porod_exp, lorentz_scale, lorentz_length, peak_pos, lorentz_exp):
-    inten = (porod_scale/q**porod_exp + lorentz_scale
-        / (1.0 + (abs(q-peak_pos)*lorentz_length)**lorentz_exp))
+    inten = (porod_scale / q ** porod_exp + lorentz_scale
+             / (1.0 + (abs(q - peak_pos) * lorentz_length) ** lorentz_exp))
     return inten
 Iq.vectorized = True  # Iq accepts an array of Q values
 
 def Iqxy(qx, qy, *args):
-    return Iq(sqrt(qx**2 + qy**2), *args)
+    return Iq(sqrt(qx ** 2 + qy ** 2), *args)
 Iqxy.vectorized = True # Iqxy accepts an array of Qx, Qy values
 
 
-demo = dict(
-    scale=1, background=0,
-    porod_scale=1.0e-05, porod_exp=3,
-    lorentz_scale=10,lorentz_length=50, peak_pos=0.1, lorentz_exp=2,
-    )
+demo = dict(scale=1, background=0,
+            porod_scale=1.0e-05, porod_exp=3,
+            lorentz_scale=10, lorentz_length=50, peak_pos=0.1, lorentz_exp=2)
 
 oldname = "BroadPeakModel"
 oldpars = dict(porod_scale='scale_p', porod_exp='exponent_p',
-        lorentz_scale='scale_l', lorentz_length='length_l', peak_pos='q_peak',
-        lorentz_exp='exponent_l', scale=None)
+               lorentz_scale='scale_l', lorentz_length='length_l', peak_pos='q_peak',
+               lorentz_exp='exponent_l', scale=None)

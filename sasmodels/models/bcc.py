@@ -112,21 +112,20 @@ description = """
     are considered to be negligible, and the size of the paracrystal is infinitely large. Paracrystalline distortion is
     assumed to be isotropic and characterized by a Gaussian distribution.
     """
-category="shape:paracrystal"
+category = "shape:paracrystal"
 
-parameters = [
-#   [ "name", "units", default, [lower, upper], "type","description" ],
-    [ "dnn", "Ang", 220, [-inf,inf],"","Nearest neighbour distance"],
-    [ "d_factor", "", 0.06,[-inf,inf],"","Paracrystal distortion factor" ],
-    [ "radius", "Ang",  40, [0, inf], "volume","Particle radius" ],
-    [ "sld", "1e-6/Ang^2", 4, [-inf,inf], "", "Particle scattering length density" ],
-    [ "solvent_sld", "1e-6/Ang^2", 1, [-inf,inf], "", "Solvent scattering length density" ],
-    [ "theta", "degrees", 60, [-inf, inf], "orientation","In plane angle" ],
-    [ "phi", "degrees", 60, [-inf, inf], "orientation","Out of plane angle" ],
-    [ "psi", "degrees", 60, [-inf,inf], "orientation","Out of plane angle"]
-    ]
+#             ["name", "units", default, [lower, upper], "type","description" ],
+parameters = [["dnn", "Ang", 220, [-inf, inf], "", "Nearest neighbour distance"],
+              ["d_factor", "", 0.06, [-inf, inf], "", "Paracrystal distortion factor"],
+              ["radius", "Ang", 40, [0, inf], "volume", "Particle radius"],
+              ["sld", "1e-6/Ang^2", 4, [-inf, inf], "", "Particle scattering length density"],
+              ["solvent_sld", "1e-6/Ang^2", 1, [-inf, inf], "", "Solvent scattering length density"],
+              ["theta", "degrees", 60, [-inf, inf], "orientation", "In plane angle"],
+              ["phi", "degrees", 60, [-inf, inf], "orientation", "Out of plane angle"],
+              ["psi", "degrees", 60, [-inf, inf], "orientation", "Out of plane angle"]
+             ]
 
-source = [ "lib/J1.c", "lib/gauss150.c", "bcc.c" ]
+source = ["lib/J1.c", "lib/gauss150.c", "bcc.c"]
 
 # parameters for demo
 demo = dict(
@@ -142,6 +141,5 @@ demo = dict(
 
 # For testing against the old sasview models, include the converted parameter
 # names and the target sasview model name.
-oldname='BCCrystalModel'
-oldpars=dict(sld='sldSph',
-             solvent_sld='sldSolv')
+oldname = 'BCCrystalModel'
+oldpars = dict(sld='sldSph', solvent_sld='sldSolv')
