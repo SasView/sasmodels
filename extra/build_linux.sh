@@ -1,5 +1,7 @@
 #!/bin/bash
 
+test -z $WORKSPACE && WORKSPACE=.
+
 EASY_INSTALL=${EASY_INSTALL:-`which easy_install`}
 cd $WORKSPACE
 if [ ! -d "utils" ]; then
