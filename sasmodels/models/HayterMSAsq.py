@@ -49,35 +49,32 @@ J P Hansen and J B Hayter, *Molecular Physics*, 46 (1982) 651-656
 
 from numpy import pi, inf
 
-source=["HayterMSAsq_kernel.c"]
+source = ["HayterMSAsq_kernel.c"]
 
 name = "HayterMSAsq"
 title = "Hayter-Penfold MSA charged sphere interparticle S(Q) structure factor"
 description = """\
-	[Hayter-Penfold MSA charged sphere interparticle S(Q) structure factor]
+    [Hayter-Penfold MSA charged sphere interparticle S(Q) structure factor]
         Interparticle structure factor S(Q)for a charged hard spheres.
-        Routine takes absolute value of charge, use HardSphere if charge goes to zero.		
-		In sasview the effective radius will be calculated from the 
-		parameters used in P(Q).
+        Routine takes absolute value of charge, use HardSphere if charge goes to zero.
+        In sasview the effective radius will be calculated from the
+        parameters used in P(Q).
 """
+#             [ "name", "units", default, [lower, upper], "type", "description" ],
+parameters = [["effect_radius", "Ang", 20.75, [0, inf], "volume",
+               "effective radius of hard sphere"],
+              ["charge", "e", 19.0, [0, inf], "",
+               "charge on sphere (in electrons)"],
+              ["volfraction", "", 0.0192, [0, 0.74], "",
+               "volume fraction of spheres"],
+              ["temperature", "K", 318.16, [0, inf], "",
+               "temperature, in Kelvin, for Debye length calculation"],
+              ["saltconc", "M", 0.0, [-inf, inf], "",
+               "conc of salt, 1:1 electolyte, for Debye length"],
+              ["dielectconst", "", 71.08, [-inf, inf], "",
+               "dielectric constant of solvent (default water), for Debye length"],
+             ]
 
-parameters = [
-#   [ "name", "units", default, [lower, upper], "type",
-#     "description" ],
-    [ "effect_radius", "Ang",  20.75, [0, inf], "volume",
-      "effective radius of hard sphere" ],
-    [ "charge", "e",  19.0, [0, inf], "",
-      "charge on sphere (in electrons)" ],
-    [ "volfraction", "",  0.0192, [0, 0.74], "",
-      "volume fraction of spheres" ],
-    [ "temperature", "K", 318.16, [0, inf], "",
-      "temperature, in Kelvin, for Debye length calculation" ],
-    [ "saltconc", "M",  0.0, [-inf,inf], "",
-      "conc of salt, 1:1 electolyte, for Debye length" ],
-    [ "dielectconst", "",  71.08, [-inf,inf], "",
-      "dielectric constant of solvent (default water), for Debye length" ],
-    ]
-	
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
 form_volume = """
@@ -85,7 +82,7 @@ form_volume = """
     """
 Iqxy = """
     // never called since no orientation or magnetic parameters.
-    return -1.0;
+    return Iq(sqrt(qx*qx+qy*qy), IQ_PARAMETERS);
     """
 # ER defaults to 0.0
 # VR defaults to 1.0

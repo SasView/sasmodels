@@ -59,20 +59,11 @@ confidence=
 # http://pylint-messages.wikidot.com/all-codes
 disable=
     multiple-statements,
-    global-statement,
     bare-except,
     broad-except,
-    bad-whitespace,
-    bad-continuation,
-    too-many-statements,
-    too-many-branches,
-    too-many-locals,
-    too-many-instance-attributes,
-    too-many-arguments,
     star-args,
     unbalanced-tuple-unpacking,
     locally-disabled,
-    old-style-class,
 
 [REPORTS]
 
@@ -204,8 +195,7 @@ docstring-min-length=-1
 [FORMAT]
 
 # Maximum number of characters on a single line.
-#max-line-length=100
-max-line-length=80
+max-line-length=100
 
 # Regexp for a line that is allowed to be longer than the limit.
 #ignore-long-lines=^\s*(# )?<?https?://\S+>?$
