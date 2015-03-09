@@ -114,32 +114,34 @@ def make_suite(loaders, models):
             # test using opencl if desired
             if not ispy and ('opencl' in loaders and load_model_cl):
                 test_name = "Model: %s, Kernel: OpenCL"%model_name
+                test_method = "test_%s_opencl" % model_name
                 test = ModelTestCase(test_name, model_definition,
-                                     load_model_cl, tests)
+                                     load_model_cl, tests, test_method)
                 #print "defining", test_name
                 suite.addTest(test)
 
             # test using dll if desired
             if ispy or ('dll' in loaders and load_model_dll):
                 test_name = "Model: %s, Kernel: dll"%model_name
+                test_method = "test_%s_dll" % model_name
                 test = ModelTestCase(test_name, model_definition,
-                                     load_model_dll, tests)
-                #print "defining", test_name
+                                     load_model_dll, tests, test_method)
                 suite.addTest(test)
 
     return suite
 
 def _hide_model_case_from_nosetests():
     class ModelTestCase(unittest.TestCase):
-        def __init__(self, test_name, definition, loader, tests):
-            unittest.TestCase.__init__(self)
-
+        def __init__(self, test_name, definition, loader, tests, test_method):
             self.test_name = test_name
             self.definition = definition
             self.loader = loader
             self.tests = tests
 
-        def runTest(self):
+            setattr(self, test_method, self._runTest)
+            unittest.TestCase.__init__(self, test_method)
+
+        def _runTest(self):
             try:
                 model = self.loader(self.definition)
                 for test in self.tests:
@@ -190,11 +192,6 @@ def _hide_model_case_from_nosetests():
     return ModelTestCase
 
 
-# let nosetests sniff out the tests
-def model_tests():
-    tests = make_suite(['opencl','dll'],['all'])
-    for test_i in tests:
-        yield test_i.runTest
 
 def main():
     models = sys.argv[1:]
