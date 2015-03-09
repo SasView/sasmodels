@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #SASVIEW=$(ls -d ../sasview/build/lib.*)
 SASVIEW=( ../sasview/build/lib.* )
