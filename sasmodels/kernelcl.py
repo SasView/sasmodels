@@ -67,7 +67,7 @@ def load_model(kernel_module, dtype="single"):
     ## for debugging, save source to a .cl file, edit it, and reload as model
     #open(info['name']+'.cl','w').write(source)
     #source = open(info['name']+'.cl','r').read()
-    return GpuModel(source, info, dtype)
+    return GpuModel(source, info, np.dtype(dtype))
 
 ENV = None
 def environment():
@@ -91,8 +91,9 @@ def get_warp(kernel, queue):
     """
     Return the size of an execution batch for *kernel* running on *queue*.
     """
-    return kernel.get_work_group_info(cl.kernel_work_group_info.PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
-                                      queue.device)
+    return kernel.get_work_group_info(
+            cl.kernel_work_group_info.PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
+            queue.device)
 
 def _stretch_input(vector, dtype, extra=1e-3, boundary=32):
     """
@@ -218,7 +219,7 @@ class GpuModel(object):
     def __init__(self, source, info, dtype=generate.F32):
         self.info = info
         self.source = source
-        self.dtype = dtype
+        self.dtype = np.dtype(dtype)
         self.program = None # delay program creation
 
     def __getstate__(self):
@@ -229,15 +230,15 @@ class GpuModel(object):
     def __setstate__(self, state):
         self.__dict__ = state.copy()
 
-    def __call__(self, input_value):
-        if self.dtype != input_value.dtype:
-            raise TypeError("data and kernel have different types")
+    def __call__(self, q_input):
+        if self.dtype != q_input.dtype:
+            raise TypeError("data is %s kernel is %s" % (q_input.dtype, self.dtype))
         if self.program is None:
             compiler = environment().compile_program
             self.program = compiler(self.info['name'], self.source, self.dtype)
-        kernel_name = generate.kernel_name(self.info, input_value.is_2D)
+        kernel_name = generate.kernel_name(self.info, q_input.is_2D)
         kernel = getattr(self.program, kernel_name)
-        return GpuKernel(kernel, self.info, input_value)
+        return GpuKernel(kernel, self.info, q_input)
 
     def release(self):
         if self.program is not None:

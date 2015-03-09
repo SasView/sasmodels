@@ -13,6 +13,7 @@ try: from sasmodels import kernelcl
 except: from sasmodels import kerneldll as kernelcl
 from sasmodels import kerneldll
 from sasmodels.convert import revert_model
+kerneldll.ALLOW_SINGLE_PRECISION_DLLS = True
 
 # List of available models
 ROOT = dirname(__file__)

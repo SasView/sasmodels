@@ -364,8 +364,8 @@ class BumpsModel(object):
     def theory(self):
         if 'theory' not in self._cache:
             if self._fn is None:
-                input_value = self.model.make_input(self._fn_inputs)
-                self._fn = self.model(input_value)
+                q_input= self.model.make_input(self._fn_inputs)
+                self._fn = self.model(q_input)
 
             fixed_pars = [getattr(self, p).value for p in self._fn.fixed_pars]
             pd_pars = [self._get_weights(p) for p in self._fn.pd_pars]
