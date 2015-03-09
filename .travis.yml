@@ -18,6 +18,7 @@ before_install:
 install:
 #  - pip install pyopencl
   - pip install bumps
+  - pip install unittest-xml-reporting
 script:
   - export WORKSPACE=/home/travis/build/SasView/sasmodels/
   - python -m sasmodels.model_test dll all
