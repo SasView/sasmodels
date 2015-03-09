@@ -11,8 +11,7 @@ sqfun(int ix, int ir, double gMSAWave[]);
 
 double
 sqhcal(double qq, double gMSAWave[]);
-
-	  
+  
 double Iq(double QQ,
       double effect_radius, double zz, double VolFrac, double Temp, double csalt, double dialec)  
 {
@@ -484,66 +483,6 @@ sqfun(int ix, int ir, double gMSAWave[])
    	g24 = e24*rgek*ex1;
 	gMSAWave[7] = (rak*ak2*ca-g24)/(ak2*g24);
 	return (ir);
-}
-
-// called as DiamCyl(hcyl,rcyl)
-double
-DiamCyl(double hcyl, double rcyl)
-{
-	
-	double diam,a,b,t1,t2,ddd;
-	double pi;
-	
-	pi = 4.0*atan(1.0);
-	if (rcyl == 0 || hcyl == 0) {
-		return 0.0;
-	}
-	a = rcyl;
-	b = hcyl/2.0;
-	t1 = a*a*2.0*b/2.0;
-	t2 = 1.0 + (b/a)*(1.0+a/b/2.0)*(1.0+pi*a/b/2.0);
-	ddd = 3.0*t1*t2;
-	diam = pow(ddd,(1.0/3.0));
-	
-	return(diam);
-}
-
-//prolate OR oblate ellipsoids                     THIS ROUTINE CURRENTLY UNUSED AS SASVIEW ONLY ALLOWS SPHERES
-//aa is the axis of rotation
-//if aa>bb, then PROLATE
-//if aa<bb, then OBLATE
-// A. Isihara, J. Chem. Phys. 18, 1446 (1950)
-//returns DIAMETER
-// called as DiamEllip(aa,bb)
-double
-DiamEllip(double aa, double bb)
-{
-	
-	double ee,e1,bd,b1,bL,b2,del,ddd,diam;
-
-	if (aa == 0 || bb == 0) {
-		return 0.0;
-	}
-	if (aa == bb) {
-		return 2.0*aa;
-	}
-	if(aa>bb) {
-		ee = (aa*aa - bb*bb)/(aa*aa);
-	}else{
-		ee = (bb*bb - aa*aa)/(bb*bb);
-	}
-	
-	bd = 1.0-ee;
-	e1 = sqrt(ee);
-	b1 = 1.0 + asin(e1)/(e1*sqrt(bd));
-	bL = (1.0+e1)/(1.0-e1);
-	b2 = 1.0 + bd/2/e1*log(bL);
-	del = 0.75*b1*b2;
-	
-	ddd = 2.0*(del+1.0)*aa*bb*bb;		//volume is always calculated correctly
-	diam = pow(ddd,(1.0/3.0));
-	
-	return(diam);
 }
 
 double

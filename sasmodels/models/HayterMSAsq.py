@@ -92,5 +92,8 @@ Iqxy = """
 
 oldname = 'HayterMSAStructure'
 oldpars = dict()
-demo = dict(effect_radius = 20.75,charge=19.0,volfraction = 0.0192,temperature=318.16,saltconc=0.0,dielectconst=71.08,effect_radius_pd = 0.1,effect_radius_pd_n = 40)
+# default parameter set,  use  compare.sh -midQ -linear
+# note the calculation varies in different limiting cases so a wide range of parameters will be required for a thorough test!
+# odd that the default st has saltconc zero
+demo = dict(effect_radius = 20.75,charge=19.0,volfraction = 0.0192,temperature=318.16,saltconc=0.05,dielectconst=71.08,effect_radius_pd = 0.1,effect_radius_pd_n = 40)
 
