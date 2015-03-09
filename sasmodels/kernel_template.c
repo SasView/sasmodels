@@ -11,37 +11,33 @@
 #  ifdef __cplusplus
      #include <cstdio>
      #include <cmath>
-     #if defined(_MSC_VER)
-     #define kernel extern "C" __declspec( dllexport )
-     #else
-     #define kernel extern "C"
-     #endif
      using namespace std;
-     inline void SINCOS(double angle, double &svar, double &cvar)
-       { svar=sin(angle); cvar=cos(angle); }
+     #if defined(_MSC_VER)
+     #   define kernel extern "C" __declspec( dllexport )
+         inline double trunc(double x) { return x>=0?floor(x):-floor(-x); }
+     #else
+     #   define kernel extern "C"
+     #endif
+     inline void SINCOS(double angle, double &svar, double &cvar) { svar=sin(angle); cvar=cos(angle); }
 #  else
      #include <stdio.h>
-     #include <math.h>
-     #if defined(_MSC_VER)
-     #define kernel __declspec( dllexport )
-     #else
+     #include <tgmath.h> // C99 type-generic math, so sin(float) => sinf
+     // MSVC doesn't support C99, so no need for dllexport on C99 branch
      #define kernel
-     #endif
-     #define SINCOS(angle,svar,cvar) do {svar=sin(angle);cvar=cos(angle);} while (0)
+     #define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
 #  endif
-     #if defined(_MSC_VER)
-     inline double trunc(double x) { return x>=0?floor(x):-floor(-x); }
-     #endif
 #  define global
 #  define local
 #  define constant const
+// OpenCL powr(a,b) = C99 pow(a,b), b >= 0
+// OpenCL pown(a,b) = C99 pow(a,b), b integer
 #  define powr(a,b) pow(a,b)
 #  define pown(a,b) pow(a,b)
 #else
 #  ifdef USE_SINCOS
 #    define SINCOS(angle,svar,cvar) svar=sincos(angle,&cvar)
 #  else
-#    define SINCOS(angle,svar,cvar) do {svar=sin(angle);cvar=cos(angle);} while (0)
+#    define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
 #  endif
 #endif
 
@@ -125,9 +121,9 @@ kernel void IQ_KERNEL_NAME(
 
     const double weight = IQ_WEIGHT_PRODUCT;
     if (weight > cutoff) {
-      const double I = Iq(qi, IQ_PARAMETERS);
-      if (I>=0.0) { // scattering cannot be negative
-        ret += weight*I;
+      const double scattering = Iq(qi, IQ_PARAMETERS);
+      if (scattering >= 0.0) { // scattering cannot be negative
+        ret += weight*scattering;
         norm += weight;
       #ifdef VOLUME_PARAMETERS
         const double vol_weight = VOLUME_WEIGHT_PRODUCT;
@@ -135,7 +131,7 @@ kernel void IQ_KERNEL_NAME(
         norm_vol += vol_weight;
       #endif
       }
-    //else { printf("exclude qx,qy,I:%%g,%%g,%%g\n",qi,I); }
+    //else { printf("exclude qx,qy,I:%%g,%%g,%%g\n",qi,scattering); }
     }
     IQ_CLOSE_LOOPS
   #ifdef VOLUME_PARAMETERS
@@ -198,8 +194,8 @@ kernel void IQXY_KERNEL_NAME(
     const double weight = IQXY_WEIGHT_PRODUCT;
     if (weight > cutoff) {
 
-      const double I = Iqxy(qxi, qyi, IQXY_PARAMETERS);
-      if (I>=0.0) { // scattering cannot be negative
+      const double scattering = Iqxy(qxi, qyi, IQXY_PARAMETERS);
+      if (scattering >= 0.0) { // scattering cannot be negative
         // TODO: use correct angle for spherical correction
         // Definition of theta and phi are probably reversed relative to the
         // equation which gave rise to this correction, leading to an
@@ -210,9 +206,9 @@ kernel void IQXY_KERNEL_NAME(
       #ifdef IQXY_HAS_THETA
         const double spherical_correction
           = (Ntheta>1 ? fabs(cos(M_PI_180*theta))*M_PI_2:1.0);
-        ret += spherical_correction * weight * I;
+        ret += spherical_correction * weight * scattering;
       #else
-        ret += weight * I;
+        ret += weight * scattering;
       #endif
         norm += weight;
       #ifdef VOLUME_PARAMETERS
@@ -221,7 +217,7 @@ kernel void IQXY_KERNEL_NAME(
       #endif
         norm_vol += vol_weight;
       }
-      //else { printf("exclude qx,qy,I:%%g,%%g,%%g\n",qi,I); }
+      //else { printf("exclude qx,qy,I:%%g,%%g,%%g\n",qi,scattering); }
     }
     IQXY_CLOSE_LOOPS
   #ifdef VOLUME_PARAMETERS

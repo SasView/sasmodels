@@ -36,9 +36,9 @@ double Iq(double QQ,
 	Beta=1.0/(kB*Temp);		// in Joules^-1
 	Perm=dialec*FrSpPerm;	//in C^2/(N  m^2)
 	charge=zz*Elcharge;		//in Coulomb (C)
-	SIdiam = diam*1E-10;		//in m
+	SIdiam = diam*1.0E-10;		//in m
 	Vp=4.0*pi/3.0*(SIdiam/2.0)*(SIdiam/2.0)*(SIdiam/2.0);	//in m^3
-	cs=csalt*6.022E23*1E3;	//# salt molecules/m^3
+	cs=csalt*6.022E23*1.0E3;	//# salt molecules/m^3
 	
 	//         Compute the derived values of :
 	//			 Ionic strength IonSt (in C^2/m^3)  

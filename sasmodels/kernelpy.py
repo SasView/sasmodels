@@ -42,7 +42,7 @@ class PyInput(object):
         self.dtype = dtype
         self.is_2D = (len(q_vectors) == 2)
         self.q_vectors = [np.ascontiguousarray(q, self.dtype) for q in q_vectors]
-        self.q_pointers = [q.ctypes.data for q in q_vectors]
+        self.q_pointers = [q.ctypes.data for q in self.q_vectors]
 
     def release(self):
         self.q_vectors = []
