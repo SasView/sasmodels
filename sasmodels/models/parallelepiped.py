@@ -115,26 +115,24 @@ description = """
 """
 category = "shape:parallelpiped"
 
-parameters = [
-    #   [ "name", "units", default, [lower, upper], "type",
-    #     "description" ],
-    ["sld", "1e-6/Ang^2", 4, [-inf, inf], "",
-     "Parallelepiped scattering length density"],
-    ["solvent_sld", "1e-6/Ang^2", 1, [-inf, inf], "",
-     "Solvent scattering length density"],
-    ["a_side", "Ang", 35, [0, inf], "volume",
-     "Shorter side of the parallelepiped"],
-    ["b_side", "Ang", 75, [0, inf], "volume",
-     "Second side of the parallelepiped"],
-    ["c_side", "Ang", 400, [0, inf], "volume",
-     "Larger side of the parallelepiped"],
-    ["theta", "degrees", 60, [-inf, inf], "orientation",
-     "In plane angle"],
-    ["phi", "degrees", 60, [-inf, inf], "orientation",
-     "Out of plane angle"],
-    ["psi", "degrees", 60, [-inf, inf], "orientation",
-     "Rotation angle around its own c axis against q plane"],
-    ]
+#             ["name", "units", default, [lower, upper], "type","description"],
+parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "",
+               "Parallelepiped scattering length density"],
+              ["solvent_sld", "1e-6/Ang^2", 1, [-inf, inf], "",
+               "Solvent scattering length density"],
+              ["a_side", "Ang", 35, [0, inf], "volume",
+               "Shorter side of the parallelepiped"],
+              ["b_side", "Ang", 75, [0, inf], "volume",
+               "Second side of the parallelepiped"],
+              ["c_side", "Ang", 400, [0, inf], "volume",
+               "Larger side of the parallelepiped"],
+              ["theta", "degrees", 60, [-inf, inf], "orientation",
+               "In plane angle"],
+              ["phi", "degrees", 60, [-inf, inf], "orientation",
+               "Out of plane angle"],
+              ["psi", "degrees", 60, [-inf, inf], "orientation",
+               "Rotation angle around its own c axis against q plane"],
+             ]
 
 source = ["lib/J1.c", "lib/gauss76.c", "parallelepiped.c"]
 
@@ -153,18 +151,16 @@ def ER(a_side, b_side, c_side):
     return 0.5 * (ddd) ** (1. / 3.)
 
 # parameters for demo
-demo = dict(
-    scale=1, background=0,
-    sld=6.3e-6, solvent_sld=1.0e-6,
-    a_side=35, b_side=75, c_side=400,
-    theta=45, phi=30, psi=15,
-    a_side_pd=0.1, a_side_pd_n=10,
-    b_side_pd=0.1, b_side_pd_n=1,
-    c_side_pd=0.1, c_side_pd_n=10,
-    theta_pd=10, theta_pd_n=1,
-    phi_pd=10, phi_pd_n=1,
-    psi_pd=10, psi_pd_n=10,
-    )
+demo = dict(scale=1, background=0,
+            sld=6.3e-6, solvent_sld=1.0e-6,
+            a_side=35, b_side=75, c_side=400,
+            theta=45, phi=30, psi=15,
+            a_side_pd=0.1, a_side_pd_n=10,
+            b_side_pd=0.1, b_side_pd_n=1,
+            c_side_pd=0.1, c_side_pd_n=10,
+            theta_pd=10, theta_pd_n=1,
+            phi_pd=10, phi_pd_n=1,
+            psi_pd=10, psi_pd_n=10)
 
 # For testing against the old sasview models, include the converted parameter
 # names and the target sasview model name.

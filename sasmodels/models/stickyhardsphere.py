@@ -75,15 +75,16 @@ from numpy import inf
 name = "stickyhardsphere"
 title = "Sticky hard sphere structure factor, with Percus-Yevick closure"
 description = """\
-	[Sticky hard sphere structure factor, with Percus-Yevick closure]
+    [Sticky hard sphere structure factor, with Percus-Yevick closure]
         Interparticle structure factor S(Q)for a hard sphere fluid with
-		a narrow attractive well. Fits are prone to deliver non-physical
-		parameters, use with care and read the references in the full manual.
-		In sasview the effective radius will be calculated from the
-		parameters used in P(Q).
+        a narrow attractive well. Fits are prone to deliver non-physical
+        parameters, use with care and read the references in the full manual.
+        In sasview the effective radius will be calculated from the
+        parameters used in P(Q).
 """
 category = "structure-factor"
 
+#             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [
     #   [ "name", "units", default, [lower, upper], "type",
     #     "description" ],
@@ -125,7 +126,7 @@ Iq = """
     radic = qb*qb - 4.0*qa*qc;
     if(radic<0) {
         //if(x>0.01 && x<0.015)
-        //	Print "Lambda unphysical - both roots imaginary"
+        //    Print "Lambda unphysical - both roots imaginary"
         //endif
         return(-1.0);
     }

@@ -97,33 +97,31 @@ description = """
     """
 category = "shape:paracrystal"
 
-parameters = [
-#   [ "name", "units", default, [lower, upper], "type","description" ],
-    [ "dnn", "Ang", 220, [-inf,inf],"","Nearest neighbour distance"],
-    [ "d_factor", "", 0.06,[-inf,inf],"","Paracrystal distortion factor" ],
-    [ "radius", "Ang",  40, [0, inf], "volume","Particle radius" ],
-    [ "sld", "1e-6/Ang^2", 4, [-inf,inf], "", "Particle scattering length density" ],
-    [ "solvent_sld", "1e-6/Ang^2", 1, [-inf,inf], "","Solvent scattering length density" ],
-    [ "theta", "degrees", 60, [-inf, inf], "orientation","In plane angle" ],
-    [ "phi", "degrees", 60, [-inf, inf], "orientation","Out of plane angle" ],
-    [ "psi", "degrees", 60, [-inf,inf], "orientation","Out of plane angle"]
-    ]
+#             ["name", "units", default, [lower, upper], "type","description"],
+parameters = [["dnn", "Ang", 220, [-inf, inf], "", "Nearest neighbour distance"],
+              ["d_factor", "", 0.06, [-inf, inf], "", "Paracrystal distortion factor"],
+              ["radius", "Ang", 40, [0, inf], "volume", "Particle radius"],
+              ["sld", "1e-6/Ang^2", 4, [-inf, inf], "", "Particle scattering length density"],
+              ["solvent_sld", "1e-6/Ang^2", 1, [-inf, inf], "", "Solvent scattering length density"],
+              ["theta", "degrees", 60, [-inf, inf], "orientation", "In plane angle"],
+              ["phi", "degrees", 60, [-inf, inf], "orientation", "Out of plane angle"],
+              ["psi", "degrees", 60, [-inf, inf], "orientation", "Out of plane angle"]
+             ]
 
-source = [ "lib/J1.c", "lib/gauss150.c", "fcc.c" ]
+source = ["lib/J1.c", "lib/gauss150.c", "fcc.c"]
 
 # parameters for demo
-demo = dict(
-    scale=1, background=0,
-    dnn=220, d_factor=0.06, sld=4, solvent_sld=1,
-    radius=40,
-    theta=60, phi=60, psi=60,
-    radius_pd=.2, radius_pd_n=0.2,
-    theta_pd=15, theta_pd_n=0,
-    phi_pd=15, phi_pd_n=0,
-    psi_pd=15, psi_pd_n=0,
-    )
+demo = dict(scale=1, background=0,
+            dnn=220, d_factor=0.06, sld=4, solvent_sld=1,
+            radius=40,
+            theta=60, phi=60, psi=60,
+            radius_pd=.2, radius_pd_n=0.2,
+            theta_pd=15, theta_pd_n=0,
+            phi_pd=15, phi_pd_n=0,
+            psi_pd=15, psi_pd_n=0,
+           )
 
 # For testing against the old sasview models, include the converted parameter
 # names and the target sasview model name.
-oldname='FCCrystalModel'
-oldpars=dict(sld='sldSph', solvent_sld='sldSolv')
+oldname = 'FCCrystalModel'
+oldpars = dict(sld='sldSph', solvent_sld='sldSolv')

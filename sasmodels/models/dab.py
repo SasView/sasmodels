@@ -45,10 +45,9 @@ L: the correlation length
 """
 category = "shape-independent"
 
-parameters = [
-#   [ "name", "units", default, [lower, upper], "type", "description" ],
-    [ "length", "Ang", 50.0, [0, inf], "", "correlation length" ],
-    ]
+#             ["name", "units", default, [lower, upper], "type", "description"],
+parameters = [["length", "Ang", 50.0, [0, inf], "", "correlation length"],
+             ]
 
 Iq = """
     double numerator   = pow(length, 3);
@@ -67,9 +66,6 @@ Iqxy = """
 
 # VR defaults to 1.0
 
-demo = dict(
-        scale=1, background=0,
-        length=50,
-        )
+demo = dict(scale=1, background=0, length=50)
 oldname = "DABModel"
 oldpars = dict(length='length')

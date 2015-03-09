@@ -71,35 +71,33 @@ from numpy import inf
 name = "lamellarPC"
 title = "Random lamellar sheet with paracrystal structure factor"
 description = """\
-	[Random lamellar phase with paracrystal structure factor]
+    [Random lamellar phase with paracrystal structure factor]
         randomly oriented stacks of infinite sheets
-		with paracrytal S(Q), having polydisperse spacing.
-    	sld = sheet scattering length density
-		sld_solvent = solvent scattering length density
-		background = incoherent background
-		scale = scale factor
+        with paracrytal S(Q), having polydisperse spacing.
+        sld = sheet scattering length density
+        sld_solvent = solvent scattering length density
+        background = incoherent background
+        scale = scale factor
 """
 category = "shape:lamellae"
 
-parameters = [
-#   [ "name", "units", default, [lower, upper], "type",
-#     "description" ],
-    [ "thickness", "Ang",  33.0, [0, inf], "volume",
-      "sheet thickness" ],
-    [ "Nlayers", "",  20, [0, inf], "",
-      "Number of layers" ],
-    [ "spacing", "Ang", 250., [0.0,inf], "",
-      "d-spacing of paracrystal stack" ],
-    [ "spacing_polydisp", "Ang", 0.0, [0.0,inf], "",
-      "d-spacing of paracrystal stack" ],
-    [ "sld", "1e-6/Ang^2", 1.0, [-inf,inf], "",
-      "layer scattering length density" ],
-    [ "solvent_sld", "1e-6/Ang^2", 6.34, [-inf,inf], "",
-      "Solvent scattering length density" ],
-    ]
+#             ["name", "units", default, [lower, upper], "type","description"],
+parameters = [["thickness", "Ang", 33.0, [0, inf], "volume",
+               "sheet thickness"],
+              ["Nlayers", "", 20, [0, inf], "",
+               "Number of layers"],
+              ["spacing", "Ang", 250., [0.0, inf], "",
+               "d-spacing of paracrystal stack"],
+              ["spacing_polydisp", "Ang", 0.0, [0.0, inf], "",
+               "d-spacing of paracrystal stack"],
+              ["sld", "1e-6/Ang^2", 1.0, [-inf, inf], "",
+               "layer scattering length density"],
+              ["solvent_sld", "1e-6/Ang^2", 6.34, [-inf, inf], "",
+               "Solvent scattering length density"],
+             ]
 
 
-source = [ "lamellarPC_kernel.c"]
+source = ["lamellarPC_kernel.c"]
 
 form_volume = """
     return 1.0;
@@ -112,17 +110,11 @@ Iqxy = """
 # ER defaults to 0.0
 # VR defaults to 1.0
 
-demo = dict(
-    scale=1, background=0,
-    thickness=33, Nlayers=20, spacing=250, spacing_polydisp=0.2,
-    sld=1.0, solvent_sld=6.34,
-    thickness_pd= 0.2, thickness_pd_n=40
-    )
+demo = dict(scale=1, background=0,
+            thickness=33, Nlayers=20, spacing=250, spacing_polydisp=0.2,
+            sld=1.0, solvent_sld=6.34,
+            thickness_pd=0.2, thickness_pd_n=40)
 
 oldname = 'LamellarPCrystalModel'
-oldpars = dict(
-    spacing_polydisp='pd_spacing', sld='sld_layer',
-    solvent_sld='sld_solvent'
-    )
-
-
+oldpars = dict(spacing_polydisp='pd_spacing', sld='sld_layer',
+               solvent_sld='sld_solvent')

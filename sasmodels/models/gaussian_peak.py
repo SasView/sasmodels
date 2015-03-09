@@ -30,15 +30,11 @@ description = """
 """
 category = "shape-independent"
 
-parameters = [
-#   [ "name", "units", default, [lower, upper], "type",
-#     "description" ],
-    [ "q0", "1/Ang", 0.05, [-inf,inf], "",
-      "Peak position" ],
-    [ "sigma", "1/Ang", 0.005, [-inf,inf], "",
-      "Peak width (standard deviation)" ],
-    ]
-
+#             ["name", "units", default, [lower, upper], "type","description"],
+parameters = [["q0", "1/Ang", 0.05, [-inf, inf], "", "Peak position"],
+              ["sigma", "1/Ang", 0.005, [-inf, inf], "",
+               "Peak width (standard deviation)"],
+             ]
 
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
@@ -60,9 +56,6 @@ Iqxy = """
 
 # VR defaults to 1.0
 
-demo = dict(
-        scale=1, background=0,
-        q0 = 0.05, sigma = 0.005,
-        )
+demo = dict(scale=1, background=0, q0=0.05, sigma=0.005)
 oldname = "PeakGaussModel"
 oldpars = dict(sigma='B')

@@ -101,48 +101,44 @@ Note: During fitting ensure that the inequality ra<rb<rc is not
 """
 category = "shape:ellipsoid"
 
-parameters = [
-#   [ "name", "units", default, [lower, upper], "type",
-#     "description" ],
-    [ "sld", "1e-6/Ang^2", 4, [-inf,inf], "",
-      "Ellipsoid scattering length density" ],
-    [ "solvent_sld", "1e-6/Ang^2", 1, [-inf,inf], "",
-      "Solvent scattering length density" ],
-    [ "req_minor", "Ang",  20, [0, inf], "volume",
-      "Minor equitorial radius" ],
-    [ "req_major", "Ang",  400, [0, inf], "volume",
-      "Major equatorial radius" ],
-    [ "rpolar", "Ang",  10, [0, inf], "volume",
-      "Polar radius" ],
-    [ "theta", "degrees", 60, [-inf, inf], "orientation",
-      "In plane angle" ],
-    [ "phi", "degrees", 60, [-inf, inf], "orientation",
-      "Out of plane angle" ],
-    [ "psi", "degrees", 60, [-inf, inf], "orientation",
-      "Out of plane angle" ],
-    ]
+#             ["name", "units", default, [lower, upper], "type","description"],
+parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "",
+               "Ellipsoid scattering length density"],
+              ["solvent_sld", "1e-6/Ang^2", 1, [-inf, inf], "",
+               "Solvent scattering length density"],
+              ["req_minor", "Ang", 20, [0, inf], "volume",
+               "Minor equitorial radius"],
+              ["req_major", "Ang", 400, [0, inf], "volume",
+               "Major equatorial radius"],
+              ["rpolar", "Ang", 10, [0, inf], "volume",
+               "Polar radius"],
+              ["theta", "degrees", 60, [-inf, inf], "orientation",
+               "In plane angle"],
+              ["phi", "degrees", 60, [-inf, inf], "orientation",
+               "Out of plane angle"],
+              ["psi", "degrees", 60, [-inf, inf], "orientation",
+               "Out of plane angle"],
+             ]
 
-source = [ "lib/J1.c", "lib/gauss76.c", "triaxial_ellipsoid.c"]
+source = ["lib/J1.c", "lib/gauss76.c", "triaxial_ellipsoid.c"]
 
 def ER(req_minor, req_major, rpolar):
     import numpy as np
     from .ellipsoid import ER as ellipsoid_ER
-    return ellipsoid_ER(rpolar, np.sqrt(req_minor*req_major))
+    return ellipsoid_ER(rpolar, np.sqrt(req_minor * req_major))
 
-demo = dict(
-        scale=1, background=0,
-        sld=6, solvent_sld=1,
-        theta=30, phi=15, psi=5,
-        req_minor=25, req_major=36, rpolar=50,
-        req_minor_pd=0, req_minor_pd_n=1,
-        req_major_pd=0, req_major_pd_n=1,
-        rpolar_pd=.2, rpolar_pd_n=30,
-        theta_pd=15, theta_pd_n=45,
-        phi_pd=15, phi_pd_n=1,
-        psi_pd=15, psi_pd_n=1,
-        )
+demo = dict(scale=1, background=0,
+            sld=6, solvent_sld=1,
+            theta=30, phi=15, psi=5,
+            req_minor=25, req_major=36, rpolar=50,
+            req_minor_pd=0, req_minor_pd_n=1,
+            req_major_pd=0, req_major_pd_n=1,
+            rpolar_pd=.2, rpolar_pd_n=30,
+            theta_pd=15, theta_pd_n=45,
+            phi_pd=15, phi_pd_n=1,
+            psi_pd=15, psi_pd_n=1)
 oldname = 'TriaxialEllipsoidModel'
 oldpars = dict(theta='axis_theta', phi='axis_phi', psi='axis_psi',
-               sld='sldEll',  solvent_sld='sldSolv',
+               sld='sldEll', solvent_sld='sldSolv',
                req_minor='semi_axisA', req_major='semi_axisB',
                rpolar='semi_axisC')

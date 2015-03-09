@@ -72,38 +72,36 @@ P(q)=(scale/V)*[3V(sld-solvent_sld)*(sin(qR)-qRcos(qR))
 """
 category = "shape:sphere"
 
-parameters = [
-#   [ "name", "units", default, [lower, upper], "type",
-#     "description" ],
-    [ "sld", "1e-6/Ang^2", 1, [-inf,inf], "",
-      "Layer scattering length density" ],
-    [ "solvent_sld", "1e-6/Ang^2", 6, [-inf,inf], "",
-      "Solvent scattering length density" ],
-    [ "radius", "Ang",  50, [0, inf], "volume",
-      "Sphere radius" ],
-    ]
+#             ["name", "units", default, [lower, upper], "type","description"],
+parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "",
+               "Layer scattering length density"],
+              ["solvent_sld", "1e-6/Ang^2", 6, [-inf, inf], "",
+               "Solvent scattering length density"],
+              ["radius", "Ang", 50, [0, inf], "volume",
+               "Sphere radius"],
+             ]
 
 
 def form_volume(radius):
-    return 1.333333333333333*pi*radius**3
+    return 1.333333333333333 * pi * radius ** 3
 
 def Iq(q, sld, solvent_sld, radius):
     #print "q",q
     #print "sld,r",sld,solvent_sld,radius
-    qr = q*radius
+    qr = q * radius
     sn, cn = sin(qr), cos(qr)
     # FOR VECTORIZED VERSION, UNCOMMENT THE NEXT TWO LINES
-    bes = 3 * (sn-qr*cn)/qr**3 # may be 0/0 but we fix that next line
-    bes[qr==0] = 1
+    bes = 3 * (sn - qr * cn) / qr ** 3 # may be 0/0 but we fix that next line
+    bes[qr == 0] = 1
     # FOR NON VECTORIZED VERSION, UNCOMMENT THE NEXT LINE
     #bes = 3 * (sn-qr*cn)/qr**3 if qr>0 else 1
     fq = bes * (sld - solvent_sld) * form_volume(radius)
-    return 1.0e-4*fq**2
+    return 1.0e-4 * fq ** 2
 # FOR VECTORIZED VERSION, UNCOMMENT THE NEXT LINE
 Iq.vectorized = True
 
 def Iqxy(qx, qy, sld, solvent_sld, radius):
-    return Iq(sqrt(qx**2 + qy**2), sld, solvent_sld, radius)
+    return Iq(sqrt(qx ** 2 + qy ** 2), sld, solvent_sld, radius)
 Iqxy.vectorized = True
 
 def sesans(z, sld, solvent_sld, radius):
@@ -112,13 +110,13 @@ def sesans(z, sld, solvent_sld, radius):
 
     Wim Bouwman after formulae Timofei Kruglov J.Appl.Cryst. 2003 article
     """
-    d = z/radius
+    d = z / radius
     g = np.zeros_like(z)
-    g[d==0] = 1.
+    g[d == 0] = 1.
     low = ((d > 0) & (d < 2))
     dlow = d[low]
-    dlow2 = dlow**2
-    g[low] = sqrt(1-dlow2/4.)*(1+dlow2/8.) + dlow2/2.*(1-dlow2/16.)*log(dlow/(2.+sqrt(4.-dlow2)))
+    dlow2 = dlow ** 2
+    g[low] = sqrt(1 - dlow2 / 4.) * (1 + dlow2 / 8.) + dlow2 / 2.*(1 - dlow2 / 16.) * log(dlow / (2. + sqrt(4. - dlow2)))
     return g
 sesans.vectorized = True
 
@@ -127,11 +125,9 @@ def ER(radius):
 
 # VR defaults to 1.0
 
-demo = dict(
-    scale=1, background=0,
-    sld=6, solvent_sld=1,
-    radius=120,
-    radius_pd=.2, radius_pd_n=45,
-    )
+demo = dict(scale=1, background=0,
+            sld=6, solvent_sld=1,
+            radius=120,
+            radius_pd=.2, radius_pd_n=45)
 oldname = "SphereModel"
 oldpars = dict(sld='sldSph', solvent_sld='sldSolv', radius='radius')

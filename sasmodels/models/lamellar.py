@@ -51,27 +51,24 @@ from numpy import inf
 name = "lamellar"
 title = "Lyotropic lamellar phase with uniform SLD and random distribution"
 description = """\
-	[Dilute Lamellar Form Factor](from a lyotropic lamellar phase)
-		I(q)= 2*pi*P(q)/(delta *q^(2)), where
-		P(q)=2*(contrast/q)^(2)*(1-cos(q*delta))^(2))
-		thickness = layer thickness
-		sld = layer scattering length density
-		sld_solvent = solvent scattering length density
-		background = incoherent background
-		scale = scale factor
+    [Dilute Lamellar Form Factor](from a lyotropic lamellar phase)
+        I(q)= 2*pi*P(q)/(delta *q^(2)), where
+        P(q)=2*(contrast/q)^(2)*(1-cos(q*delta))^(2))
+        thickness = layer thickness
+        sld = layer scattering length density
+        sld_solvent = solvent scattering length density
+        background = incoherent background
+        scale = scale factor
 """
 category = "shape:lamellae"
 
-parameters = [
-#   [ "name", "units", default, [lower, upper], "type",
-#     "description" ],
-    [ "sld", "1e-6/Ang^2", 1, [-inf,inf], "",
-      "Layer scattering length density" ],
-    [ "solvent_sld", "1e-6/Ang^2", 6, [-inf,inf], "",
-      "Solvent scattering length density" ],
-    [ "thickness", "Ang",  50, [0, inf], "volume",
-      "Bilayer thickness" ],
-    ]
+#             ["name", "units", default, [lower, upper], "type","description"],
+parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "",
+               "Layer scattering length density" ],
+              ["solvent_sld", "1e-6/Ang^2", 6, [-inf, inf], "",
+               "Solvent scattering length density" ],
+              ["thickness", "Ang", 50, [0, inf], "volume","Bilayer thickness" ],
+             ]
 
 
 # No volume normalization despite having a volume parameter
@@ -94,12 +91,10 @@ Iqxy = """
 # ER defaults to 0.0
 # VR defaults to 1.0
 
-demo = dict(
-        scale=1, background=0,
-        sld=6, solvent_sld=1,
-        thickness=40,
-        thickness_pd= 0.2, thickness_pd_n=40,
-        )
+demo = dict(scale=1, background=0,
+            sld=6, solvent_sld=1,
+            thickness=40,
+            thickness_pd=0.2, thickness_pd_n=40)
 oldname = 'LamellarModel'
 oldpars = dict(sld='sld_bi', solvent_sld='sld_sol', thickness='bi_thick')
 
