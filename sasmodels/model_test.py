@@ -44,6 +44,7 @@ Precision defaults to 5 digits (relative).
 """
 
 import sys
+import xmlrunner
 import unittest
 
 import numpy as np
@@ -220,8 +221,8 @@ def main():
         print >>sys.stderr, "if model1 is 'all', then all except the remaining models will be tested"
         return 1
 
-    #run_tests(loaders, models)
-    runner = unittest.TextTestRunner()
+    #runner = unittest.TextTestRunner()
+    runner = xmlrunner.XMLTestRunner(output='logs')
     result = runner.run(make_suite(loaders, models))
     return 1 if result.failures or result.errors else 0
 
