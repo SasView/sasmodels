@@ -36,7 +36,8 @@ double Iq(double qval,
   NNint = (int)NN;    //cast to an integer for the loop
   ii=0;
   Sq = 0.0;
-  for(ii=1;ii<(NNint-1);ii+=1) {
+  // the vital "=" in ii<=  added March 2015
+  for(ii=1;ii<=(NNint-1);ii+=1) {
 
     //fii = (double)ii;   //do I really need to do this? - unused variable, removed 18Feb2015
 
