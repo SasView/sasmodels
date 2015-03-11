@@ -223,5 +223,12 @@ def main():
     result = runner.run(make_suite(loaders, models))
     return 1 if result.failures or result.errors else 0
 
+
+# let nosetests sniff out the tests
+def model_tests():
+    tests = make_suite(['opencl','dll'],['all'])
+    for test_i in tests:
+        yield test_i._runTest
+
 if __name__ == "__main__":
     sys.exit(main())
