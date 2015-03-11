@@ -153,7 +153,7 @@ class SasviewModel(object):
                     self.params[item] = value
                     return
 
-        raise ValueError, "Model does not contain parameter %s" % name
+        raise ValueError("Model does not contain parameter %s" % name)
 
     def getParam(self, name):
         """
@@ -176,7 +176,7 @@ class SasviewModel(object):
                 if item.lower() == name.lower():
                     return self.params[item]
 
-        raise ValueError, "Model does not contain parameter %s" % name
+        raise ValueError("Model does not contain parameter %s" % name)
 
     def getParamList(self):
         """

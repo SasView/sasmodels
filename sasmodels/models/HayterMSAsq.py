@@ -47,7 +47,7 @@ J P Hansen and J B Hayter, *Molecular Physics*, 46 (1982) 651-656
 #  dp[4] = saltconc();
 #  dp[5] = dielectconst();
 
-from numpy import pi, inf
+from numpy import inf
 
 source = ["HayterMSAsq_kernel.c"]
 

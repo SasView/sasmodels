@@ -17,7 +17,6 @@ import numpy as np
 from . import generate
 from .kernelpy import PyInput, PyModel
 
-from .generate import F32, F64
 # Compiler platform details
 if sys.platform == 'darwin':
     #COMPILE = "gcc-mp-4.7 -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm -lgomp"
@@ -198,7 +197,7 @@ class DllKernel(object):
         self.p_res = self.res.ctypes.data
 
     def __call__(self, fixed_pars, pd_pars, cutoff):
-        real = np.float32 if self.q_input.dtype == F32 else np.float64
+        real = np.float32 if self.q_input.dtype == generate.F32 else np.float64
 
         nq = c_int(self.q_input.nq)
         if pd_pars:

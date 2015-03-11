@@ -92,8 +92,8 @@ def get_warp(kernel, queue):
     Return the size of an execution batch for *kernel* running on *queue*.
     """
     return kernel.get_work_group_info(
-            cl.kernel_work_group_info.PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
-            queue.device)
+        cl.kernel_work_group_info.PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
+        queue.device)
 
 def _stretch_input(vector, dtype, extra=1e-3, boundary=32):
     """
