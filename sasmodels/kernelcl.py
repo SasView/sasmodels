@@ -54,13 +54,14 @@ F64_DEFS = """\
 # of polydisperse parameters.
 MAX_LOOPS = 2048
 
-def load_model(kernel_module, dtype="single"):
+def _load_model(kernel_module, dtype="single"):
     """
     Load the OpenCL model defined by *kernel_module*.
 
     Access to the OpenCL device is delayed until the kernel is called
     so models can be defined without using too many resources.
     """
+    raise DeprecationWarning
     source, info = generate.make(kernel_module)
     if callable(info.get('Iq', None)):
         return PyModel(info)

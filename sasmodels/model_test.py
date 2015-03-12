@@ -49,9 +49,9 @@ import unittest
 
 import numpy as np
 
-from .core import list_models, load_model_definition
-from .core import load_model_cl, load_model_dll
+from .core import list_models, load_model_definition, load_model, HAVE_OPENCL
 from .core import make_kernel, call_kernel, call_ER, call_VR
+
 
 def annotate_exception(exc, msg):
     """
@@ -78,6 +78,7 @@ def annotate_exception(exc, msg):
             exc.args = tuple([arg0] + list(args[1:]))
         except:
             exc.args = (" ".join((str(exc),msg)),)
+
 
 def make_suite(loaders, models):
 
@@ -112,38 +113,44 @@ def make_suite(loaders, models):
             ispy = callable(getattr(model_definition,'Iq', None))
 
             # test using opencl if desired
-            if not ispy and ('opencl' in loaders and load_model_cl):
+            if not ispy and ('opencl' in loaders and HAVE_OPENCL):
                 test_name = "Model: %s, Kernel: OpenCL"%model_name
                 test_method = "test_%s_opencl" % model_name
                 test = ModelTestCase(test_name, model_definition,
-                                     load_model_cl, tests, test_method)
+                                     tests, test_method,
+                                     platform="ocl", dtype='single')
                 #print "defining", test_name
                 suite.addTest(test)
 
             # test using dll if desired
-            if ispy or ('dll' in loaders and load_model_dll):
+            if ispy or 'dll' in loaders:
                 test_name = "Model: %s, Kernel: dll"%model_name
                 test_method = "test_%s_dll" % model_name
                 test = ModelTestCase(test_name, model_definition,
-                                     load_model_dll, tests, test_method)
+                                     tests, test_method,
+                                     platform="dll", dtype="double")
                 suite.addTest(test)
 
     return suite
 
+
 def _hide_model_case_from_nosetests():
     class ModelTestCase(unittest.TestCase):
-        def __init__(self, test_name, definition, loader, tests, test_method):
+        def __init__(self, test_name, definition, tests, test_method,
+                     platform, dtype):
             self.test_name = test_name
             self.definition = definition
-            self.loader = loader
             self.tests = tests
+            self.platform = platform
+            self.dtype = dtype
 
             setattr(self, test_method, self._runTest)
             unittest.TestCase.__init__(self, test_method)
 
         def _runTest(self):
             try:
-                model = self.loader(self.definition)
+                model = load_model(self.definition, dtype=self.dtype,
+                                   platform=self.platform)
                 for test in self.tests:
                     self._run_one_test(model, test)
 
@@ -194,9 +201,14 @@ def _hide_model_case_from_nosetests():
 
 
 def main():
+    """
+    Run tests given is sys.argv.
+
+    Returns 0 if success or 1 if any tests fail.
+    """
     models = sys.argv[1:]
     if models and models[0] == 'opencl':
-        if load_model_cl is None:
+        if not HAVE_OPENCL:
             print >>sys.stderr, "opencl is not available"
             return 1
         loaders = ['opencl']
@@ -206,9 +218,6 @@ def main():
         loaders = ['dll']
         models = models[1:]
     elif models and models[0] == 'opencl_and_dll':
-        if load_model_cl is None:
-            print >>sys.stderr, "opencl is not available"
-            return 1
         loaders = ['opencl', 'dll']
         models = models[1:]
     else:
@@ -224,11 +233,16 @@ def main():
     return 1 if result.failures or result.errors else 0
 
 
-# let nosetests sniff out the tests
 def model_tests():
+    """
+    Test runner visible to nosetests.
+
+    Run "nosetests sasmodels" on the command line to invoke it.
+    """
     tests = make_suite(['opencl','dll'],['all'])
     for test_i in tests:
         yield test_i._runTest
+
 
 if __name__ == "__main__":
     sys.exit(main())

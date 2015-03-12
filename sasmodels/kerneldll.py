@@ -53,21 +53,28 @@ def dll_path(info, dtype="double"):
     return joinpath(DLL_PATH, basename+'.so')
 
 
-def load_model(kernel_module, dtype="double"):
+def make_dll(source, info, dtype="double"):
     """
     Load the compiled model defined by *kernel_module*.
 
     Recompile if any files are newer than the model file.
 
-    *dtype* is ignored.  Compiled files are always double.
+    *dtype* is a numpy floating point precision specifier indicating whether
+    the model should be single or double precision.  The default is double
+    precision.
 
-    The DLL is not loaded until the kernel is called so models an
+    The DLL is not loaded until the kernel is called so models can
     be defined without using too many resources.
+
+    Set *sasmodels.kerneldll.DLL_PATH* to the compiled dll output path.
+    The default is the system temporary directory.
+
+    Set *sasmodels.ALLOW_SINGLE_PRECISION_DLLS* to True if single precision
+    models are allowed as DLLs.
     """
     if not ALLOW_SINGLE_PRECISION_DLLS: dtype = "double"   # Force 64-bit dll
     dtype = np.dtype(dtype)
 
-    source, info = generate.make(kernel_module)
     if callable(info.get('Iq',None)):
         return PyModel(info)
 
@@ -78,22 +85,33 @@ def load_model(kernel_module, dtype="double"):
         tempfile_prefix = 'sas_'+info['name']+'_'
 
     source_files = generate.sources(info) + [info['filename']]
-    dllpath = dll_path(info, dtype)
+    dll= dll_path(info, dtype)
     newest = max(os.path.getmtime(f) for f in source_files)
-    if not os.path.exists(dllpath) or os.path.getmtime(dllpath)<newest:
+    if not os.path.exists(dll) or os.path.getmtime(dll)<newest:
         # Replace with a proper temp file
         fid, filename = tempfile.mkstemp(suffix=".c",prefix=tempfile_prefix)
         os.fdopen(fid,"w").write(source)
-        command = COMPILE%{"source":filename, "output":dllpath}
+        command = COMPILE%{"source":filename, "output":dll}
         print "Compile command:",command
         status = os.system(command)
-        if status != 0:
+        if status != 0 or not os.path.exists(dll):
             raise RuntimeError("compile failed.  File is in %r"%filename)
         else:
             ## uncomment the following to keep the generated c file
-            #os.unlink(filename); print "saving compiled file in %r"%filename
-            pass
-    return DllModel(dllpath, info, dtype=dtype)
+            os.unlink(filename); print "saving compiled file in %r"%filename
+    return dll
+
+
+def load_dll(source, info, dtype="double"):
+    """
+    Create and load a dll corresponding to the source,info pair returned
+    from :func:`sasmodels.generate.make` compiled for the target precision.
+
+    See :func:`make_dll` for details on controlling the dll path and the
+    allowed floating point precision.
+    """
+    filename = make_dll(source, info, dtype=dtype)
+    return DllModel(filename, info, dtype=dtype)
 
 
 IQ_ARGS = [c_void_p, c_void_p, c_int]

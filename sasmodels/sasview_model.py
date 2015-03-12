@@ -13,34 +13,25 @@ When reloading previously saved models, the parameters should be converted
 using :func:`sasmodels.convert.convert`.
 """
 
-# TODO: add a sasview=>sasmodels parameter translation layer
-# this will allow us to use the new sasmodels as drop in replacements, and
-# delay renaming parameters until all models have been converted.
-
 import math
 from copy import deepcopy
 import warnings
 
 import numpy as np
 
-try:
-    from .kernelcl import load_model
-except ImportError, exc:
-    warnings.warn(str(exc))
-    warnings.warn("using ctypes instead")
-    from .kerneldll import load_model
+from . import core
 
-
-def make_class(kernel_module, dtype='single', namestyle='name'):
+def make_class(model_definition, dtype='single', namestyle='name'):
     """
     Load the sasview model defined in *kernel_module*.
 
     Returns a class that can be used directly as a sasview model.
 
-    Defaults to using the new name for a model. Setting namestyle='name'
-    will produce a class with a name compatible with SasView
+    Defaults to using the new name for a model.  Setting
+    *namestyle='oldname'* will produce a class with a name
+    compatible with SasView.
     """
-    model = load_model(kernel_module, dtype=dtype)
+    model = core.load_model(model_definition, dtype=dtype)
     def __init__(self, multfactor=1):
         SasviewModel.__init__(self, model)
     attrs = dict(__init__=__init__)
@@ -312,8 +303,7 @@ class SasviewModel(object):
         if ER is None:
             return 1.0
         else:
-            vol_pars = self._model.info['partype']['volume']
-            values, weights = self._dispersion_mesh(vol_pars)
+            values, weights = self._dispersion_mesh()
             fv = ER(*values)
             #print values[0].shape, weights.shape, fv.shape
             return np.sum(weights * fv) / np.sum(weights)
@@ -328,8 +318,7 @@ class SasviewModel(object):
         if VR is None:
             return 1.0
         else:
-            vol_pars = self._model.info['partype']['volume']
-            values, weights = self._dispersion_mesh(vol_pars)
+            values, weights = self._dispersion_mesh()
             whole, part = VR(*values)
             return np.sum(weights * part) / np.sum(weights * whole)
 
@@ -361,7 +350,7 @@ class SasviewModel(object):
         else:
             raise ValueError("%r is not a dispersity or orientation parameter")
 
-    def _dispersion_mesh(self, pars):
+    def _dispersion_mesh(self):
         """
         Create a mesh grid of dispersion parameters and weights.
 
@@ -369,11 +358,8 @@ class SasviewModel(object):
         and w is a vector containing the products for weights for each
         parameter set in the vector.
         """
-        values, weights = zip(*[self._get_weights(p) for p in pars])
-        values = [v.flatten() for v in np.meshgrid(*values)]
-        weights = np.vstack([v.flatten() for v in np.meshgrid(*weights)])
-        weights = np.prod(weights, axis=0)
-        return values, weights
+        pars = self._model.info['partype']['volume']
+        return core.dispersion_mesh([self._get_weights(p) for p in pars])
 
     def _get_weights(self, par):
         """

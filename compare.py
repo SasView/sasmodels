@@ -9,8 +9,7 @@ import glob
 import numpy as np
 
 from sasmodels.bumps_model import BumpsModel, plot_data, tic
-try: from sasmodels import kernelcl
-except: from sasmodels import kerneldll as kernelcl
+from sasmodels import core
 from sasmodels import kerneldll
 from sasmodels.convert import revert_model
 kerneldll.ALLOW_SINGLE_PRECISION_DLLS = True
@@ -21,13 +20,13 @@ MODELS = [basename(f)[:-3]
           for f in sorted(glob.glob(joinpath(ROOT,"sasmodels","models","[a-zA-Z]*.py")))]
 
 
-def sasview_model(modelname, **pars):
+def sasview_model(model_definition, **pars):
     """
     Load a sasview model given the model name.
     """
     # convert model parameters from sasmodel form to sasview form
     #print "old",sorted(pars.items())
-    modelname, pars = revert_model(modelname, pars)
+    modelname, pars = revert_model(model_definition, pars)
     #print "new",sorted(pars.items())
     sas = __import__('sas.models.'+modelname)
     ModelClass = getattr(getattr(sas.models,modelname,None),modelname,None)
@@ -47,18 +46,6 @@ def sasview_model(modelname, **pars):
         else:
             model.setParam(k, v)
     return model
-
-def load_opencl(modelname, dtype='single'):
-    sasmodels = __import__('sasmodels.models.'+modelname)
-    module = getattr(sasmodels.models, modelname, None)
-    kernel = kernelcl.load_model(module, dtype=dtype)
-    return kernel
-
-def load_ctypes(modelname, dtype='single'):
-    sasmodels = __import__('sasmodels.models.'+modelname)
-    module = getattr(sasmodels.models, modelname, None)
-    kernel = kerneldll.load_model(module, dtype=dtype)
-    return kernel
 
 def randomize(p, v):
     """
@@ -119,13 +106,13 @@ def eval_sasview(name, pars, data, Nevals=1):
     average_time = toc()*1000./Nevals
     return value, average_time
 
-def eval_opencl(name, pars, data, dtype='single', Nevals=1, cutoff=0):
+def eval_opencl(model_definition, pars, data, dtype='single', Nevals=1, cutoff=0):
     try:
-        model = load_opencl(name, dtype=dtype)
+        model = core.load_model(model_definition, dtype=dtype, platform="ocl")
     except Exception,exc:
         print exc
         print "... trying again with single precision"
-        model = load_opencl(name, dtype='single')
+        model = core.load_model(model_definition, dtype='single', platform="ocl")
     problem = BumpsModel(data, model, cutoff=cutoff, **pars)
     toc = tic()
     for _ in range(Nevals):
@@ -135,8 +122,8 @@ def eval_opencl(name, pars, data, dtype='single', Nevals=1, cutoff=0):
     average_time = toc()*1000./Nevals
     return value, average_time
 
-def eval_ctypes(name, pars, data, dtype='double', Nevals=1, cutoff=0):
-    model = load_ctypes(name, dtype=dtype)
+def eval_ctypes(model_definition, pars, data, dtype='double', Nevals=1, cutoff=0):
+    model = core.load_model(model_definition, dtype=dtype, platform="dll")
     problem = BumpsModel(data, model, cutoff=cutoff, **pars)
     toc = tic()
     for _ in range(Nevals):
@@ -192,19 +179,22 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
     if '-pars' in opts:
         print "pars",parlist(pars)
 
+    model_definition = core.load_model_definition(name)
     # OpenCl calculation
     if Nocl > 0:
-        ocl, ocl_time = eval_opencl(name, pars, data, dtype, Nocl)
+        ocl, ocl_time = eval_opencl(model_definition, pars, data,
+                                    dtype=dtype, cutoff=cutoff, Nevals=Nocl)
         print "opencl t=%.1f ms, intensity=%.0f"%(ocl_time, sum(ocl[index]))
         #print max(ocl), min(ocl)
 
     # ctypes/sasview calculation
     if Ncpu > 0 and "-ctypes" in opts:
-        cpu, cpu_time = eval_ctypes(name, pars, data, dtype=dtype, cutoff=cutoff, Nevals=Ncpu)
+        cpu, cpu_time = eval_ctypes(model_definition, pars, data,
+                                    dtype=dtype, cutoff=cutoff, Nevals=Ncpu)
         comp = "ctypes"
         print "ctypes t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu[index]))
     elif Ncpu > 0:
-        cpu, cpu_time = eval_sasview(name, pars, data, Ncpu)
+        cpu, cpu_time = eval_sasview(model_definition, pars, data, Ncpu)
         comp = "sasview"
         print "sasview t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu[index]))
 
@@ -218,11 +208,20 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
         relerr[index] = resid[index]/cpu[index]
         #bad = (relerr>1e-4)
         #print relerr[bad],cpu[bad],ocl[bad],data.qx_data[bad],data.qy_data[bad]
-        print "max(|ocl-%s|)"%comp, max(abs(resid[index]))
-        print "max(|(ocl-%s)/%s|)"%(comp,comp), max(abs(relerr[index]))
-        p98 = int(len(relerr[index])*0.98)
-        print "98%% (|(ocl-%s)/%s|) <"%(comp,comp), np.sort(abs(relerr[index]))[p98]
-
+        def stats(label,err):
+            sorted_err = np.sort(abs(err))
+            p50 = int((len(err)-1)*0.50)
+            p98 = int((len(err)-1)*0.98)
+            data = [
+                "max:%.3e"%sorted_err[-1],
+                "median:%.3e"%sorted_err[p50],
+                "98%%:%.3e"%sorted_err[p98],
+                "rms:%.3e"%np.sqrt(np.mean(err**2)),
+                "zero-offset:%+.3e"%np.mean(err),
+                ]
+            print label,"  ".join(data)
+        stats("|ocl-%s|"%comp+(" "*(3+len(comp))), resid[index])
+        stats("|(ocl-%s)/%s|"%(comp,comp), relerr[index])
 
     # Plot if requested
     if '-noplot' in opts: return

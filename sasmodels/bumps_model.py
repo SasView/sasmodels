@@ -1,9 +1,12 @@
 """
-Sasmodels core.
+Wrap sasmodels for direct use by bumps.
 """
+
 import datetime
 
-from sasmodels import sesans
+import numpy as np
+
+from . import sesans
 
 # CRUFT python 2.6
 if not hasattr(datetime.timedelta, 'total_seconds'):
@@ -14,25 +17,6 @@ else:
     def delay(dt):
         """Return number date-time delta as number seconds"""
         return dt.total_seconds()
-
-import numpy as np
-
-try:
-    from .kernelcl import load_model as _loader
-except RuntimeError, exc:
-    import warnings
-    warnings.warn(str(exc))
-    warnings.warn("OpenCL not available --- using ctypes instead")
-    from .kerneldll import load_model as _loader
-
-def load_model(modelname, dtype='single'):
-    """
-    Load model by name.
-    """
-    sasmodels = __import__('sasmodels.models.' + modelname)
-    module = getattr(sasmodels.models, modelname, None)
-    model = _loader(module, dtype=dtype)
-    return model
 
 
 def tic():
@@ -262,7 +246,7 @@ class BumpsModel(object):
 
     *data* is the data to be fitted.
 
-    *model* is the SAS model, e.g., from :func:`gen.opencl_model`.
+    *model* is the SAS model from :func:`core.load_model`.
 
     *cutoff* is the integration cutoff, which avoids computing the
     the SAS model where the polydispersity weight is low.
@@ -279,7 +263,6 @@ class BumpsModel(object):
         self.data = data
         self.model = model
         self.cutoff = cutoff
-# TODO       if  isinstance(data,SESANSData1D)
         if hasattr(data, 'lam'):
             self.data_type = 'sesans'
         elif hasattr(data, 'qx_data'):
@@ -430,7 +413,7 @@ class BumpsModel(object):
 
     def _get_weights(self, par):
         """
-            Get parameter dispersion weights
+        Get parameter dispersion weights
         """
         from . import weights
 

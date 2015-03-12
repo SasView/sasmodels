@@ -50,15 +50,12 @@ def _unscale_sld(pars):
     return dict((p, (v*1e-6 if p.endswith('sld') else v))
                 for p,v in pars.items())
 
-def revert_model(name, pars):
+def revert_model(model_definition, pars):
     """
     Convert model from new style parameter names to old style.
     """
-    __import__('sasmodels.models.'+name)
-    from . import models
-    model = getattr(models, name, None)
-    mapping = model.oldpars
-    oldname = model.oldname
+    mapping = model_definition.oldpars
+    oldname = model_definition.oldname
     oldpars = _rename_pars(_unscale_sld(pars), mapping)
     return oldname, oldpars
 
