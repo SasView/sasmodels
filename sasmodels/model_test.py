@@ -44,7 +44,6 @@ Precision defaults to 5 digits (relative).
 """
 
 import sys
-import xmlrunner
 import unittest
 
 import numpy as np
@@ -206,6 +205,8 @@ def main():
 
     Returns 0 if success or 1 if any tests fail.
     """
+    import xmlrunner
+
     models = sys.argv[1:]
     if models and models[0] == 'opencl':
         if not HAVE_OPENCL:

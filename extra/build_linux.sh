@@ -11,9 +11,14 @@ export PYTHONPATH=$WORKSPACE/utils:$PYTHONPATH
 
 "$EASY_INSTALL" -d "$WORKSPACE/utils" unittest-xml-reporting pylint
 
-cd $WORKSPACE
-python -m sasmodels.model_test opencl_and_dll all || exit 1
+# Run tests
+STATUS=0
+python -m sasmodels.model_test opencl_and_dll all || STATUS=$?
+python -m sasmodels.resolution || STATUS=$?
 
-python extra/run-pylint.py > pylint_violations.txt || exit 0
+# Run lint
+python extra/run-pylint.py > pylint_violations.txt
+
+exit $STATUS
 
 

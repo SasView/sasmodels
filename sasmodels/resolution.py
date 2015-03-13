@@ -429,6 +429,23 @@ class Pinhole1DTest(unittest.TestCase):
         np.testing.assert_allclose(output, answer, rtol=0.006)
 
 
+def main():
+    """
+    Run tests given is sys.argv.
+
+    Returns 0 if success or 1 if any tests fail.
+    """
+    import sys
+    import xmlrunner
+
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.defaultTestLoader.loadTestsFromModule(sys.modules[__name__]))
+
+    runner = xmlrunner.XMLTestRunner(output='logs')
+    result = runner.run(suite)
+    return 1 if result.failures or result.errors else 0
+
+
 ############################################################################
 # usage demo
 ############################################################################
@@ -475,6 +492,7 @@ def demo():
 
 
 if __name__ == "__main__":
-    demo()
+    #demo()
+    main()
 
 
