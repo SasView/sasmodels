@@ -191,7 +191,7 @@ def slit_resolution(q_calc, q, qx_width, qy_width):
         in_x = (q_calc>=qx_low)*(q_calc<=qx_high)
         qy_sq = qy**2
         weights += (sqrt(E_sq[1:]-qy_sq) - sqrt(qy_sq - E_sq[:-1]))*in_x
-    w = np.sum(weights, axis=1); print "w",w.shape, w
+    #w = np.sum(weights, axis=1); print "w",w.shape, w
     weights /= np.sum(weights, axis=1)[:,None]
     return weights
 
