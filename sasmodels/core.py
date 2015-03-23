@@ -59,12 +59,21 @@ def precompile_dll(model_name, dtype="double"):
     return kerneldll.make_dll(source, info, dtype=dtype)
 
 
+def isstr(s):
+    try: s + ''
+    except: return False
+    return True
+
 def load_model(model_definition, dtype="single", platform="ocl"):
     """
     Prepare the model for the default execution platform.
 
     This will return an OpenCL model, a DLL model or a python model depending
     on the model and the computing platform.
+
+    *model_definition* is the python module which defines the model.  If the
+    model name is given instead, then :func:`load_model_definition` will be
+    called with the model name.
 
     *dtype* indicates whether the model should use single or double precision
     for the calculation. Any valid numpy single or double precision identifier
@@ -74,6 +83,8 @@ def load_model(model_definition, dtype="single", platform="ocl"):
     *platform* should be "dll" to force the dll to be used for C models,
     otherwise it uses the default "ocl".
     """
+    if isstr(model_definition):
+        model_definition = load_model_definition(model_definition)
     source, info = generate.make(model_definition)
     if callable(info.get('Iq', None)):
         return kernelpy.PyModel(info)
