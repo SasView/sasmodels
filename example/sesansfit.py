@@ -11,16 +11,9 @@ if True: # fix when data loader exists
 #    from sas.dataloader.readers\
     from sas.dataloader.loader import Loader
     loader=Loader()
-<<<<<<< HEAD
-    data=loader.load('se008724_01.ses')
-#    data=loader.load('testsasview1.ses')
- 
-=======
     filename = 'testsasview1.ses'
     data=loader.load(filename)
     if data is None: raise IOError("Could not load file %r"%(filename,))
-    print dir(data), type(data)
->>>>>>> 0a33675f5dfe63dcfc7345913a0bb44858641acc
     data.x /=10
 #    print data
 #    data = load_sesans('mydatfile.pz')
