@@ -356,6 +356,13 @@ def romberg_slit_1d(q, delta_qv, form, pars):
     that make it slow to evaluate but give it good accuracy.
     """
     from scipy.integrate import romberg
+
+    if any(k not in form.info['defaults'] for k in pars.keys()):
+        keys = set(form.info['defaults'].keys())
+        extra = set(pars.keys()) - keys
+        raise ValueError("bad parameters: [%s] not in [%s]"%
+                         (", ".join(sorted(extra)), ", ".join(sorted(keys))))
+
     _fn = lambda u, q0: eval_form(sqrt(q0**2 + u**2), form, pars)
     r = [romberg(_fn, 0, delta_qv[0], args=(qi,),
                  divmax=100, vec_func=True, tol=0, rtol=1e-8)
@@ -372,6 +379,12 @@ def romberg_pinhole_1d(q, q_width, form, pars):
     that make it slow to evaluate but give it good accuracy.
     """
     from scipy.integrate import romberg
+
+    if any(k not in form.info['defaults'] for k in pars.keys()):
+        keys = set(form.info['defaults'].keys())
+        extra = set(pars.keys()) - keys
+        raise ValueError("bad parameters: [%s] not in [%s]"%
+                         (", ".join(sorted(extra)), ", ".join(sorted(keys))))
 
     _fn = lambda q, q0, dq: eval_form(q, form, pars)*gaussian(q, q0, dq)
     r = [romberg(_fn, max(qi-5*dqi,0.01*q[0]), qi+5*dqi, args=(qi, dqi),
@@ -592,6 +605,25 @@ class IgorComparisonTest(unittest.TestCase):
         output = self.Iq_sphere(pars, resolution)
         # TODO: relative error should be lower
         self.compare(q, output, answer, 0.025)
+
+    def test_ellipsoid(self):
+        """
+        Compare romberg integration for ellipsoid model.
+        """
+        from .core import load_model
+        pars = {
+            'scale':0.05,
+            'rpolar':500, 'requatorial':15000,
+            'sld':6, 'solvent_sld': 1,
+            }
+        form = load_model('ellipsoid', dtype='double')
+        q = np.logspace(log10(4e-5),log10(2.5e-2), 68)
+        delta_qv = [0.117]
+        resolution = Slit1D(q, width=delta_qv, height=0)
+        answer = romberg_slit_1d(q, delta_qv, form, pars)
+        output = resolution.apply(eval_form(resolution.q_calc, form, pars))
+        # TODO: 10% is too much error; use better algorithm
+        self.compare(q, output, answer, 0.1)
 
     #TODO: can sas q spacing be too sparse for the resolution calculation?
     @unittest.skip("suppress sparse data test; not supported by current code")
