@@ -115,79 +115,76 @@ L A Feigin and D I Svergun. *Structure Analysis by Small-Angle X-Ray and Neutron
 New York, 1987.
 """
 
-from numpy import pi, inf
+from numpy import inf
 
 name = "ellipsoid"
 title = "Ellipsoid of revolution with uniform scattering length density."
 
 description = """\
 P(q.alpha)= scale*f(q)^2 + background, where f(q)= 3*(sld
-		- solvent_sld)*V*[sin(q*r(Rp,Re,alpha))
-		-q*r*cos(qr(Rp,Re,alpha))]
-		/[qr(Rp,Re,alpha)]^3"
+        - solvent_sld)*V*[sin(q*r(Rp,Re,alpha))
+        -q*r*cos(qr(Rp,Re,alpha))]
+        /[qr(Rp,Re,alpha)]^3"
 
      r(Rp,Re,alpha)= [Re^(2)*(sin(alpha))^2
-		+ Rp^(2)*(cos(alpha))^2]^(1/2)
+        + Rp^(2)*(cos(alpha))^2]^(1/2)
 
-		sld: SLD of the ellipsoid
-		solvent_sld: SLD of the solvent
-		V: volume of the ellipsoid
-		Rp: polar radius of the ellipsoid
-		Re: equatorial radius of the ellipsoid
+        sld: SLD of the ellipsoid
+        solvent_sld: SLD of the solvent
+        V: volume of the ellipsoid
+        Rp: polar radius of the ellipsoid
+        Re: equatorial radius of the ellipsoid
 """
+category = "shape:ellipsoid"
 
-parameters = [
-#   [ "name", "units", default, [lower, upper], "type",
-#     "description" ],
-    [ "sld", "1e-6/Ang^2", 4, [-inf,inf], "",
-      "Ellipsoid scattering length density" ],
-    [ "solvent_sld", "1e-6/Ang^2", 1, [-inf,inf], "",
-      "Solvent scattering length density" ],
-    [ "rpolar", "Ang",  20, [0, inf], "volume",
-      "Polar radius" ],
-    [ "requatorial", "Ang",  400, [0, inf], "volume",
-      "Equatorial radius" ],
-    [ "theta", "degrees", 60, [-inf, inf], "orientation",
-      "In plane angle" ],
-    [ "phi", "degrees", 60, [-inf, inf], "orientation",
-      "Out of plane angle" ],
-    ]
+#             ["name", "units", default, [lower, upper], "type","description"],
+parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "",
+               "Ellipsoid scattering length density"],
+              ["solvent_sld", "1e-6/Ang^2", 1, [-inf, inf], "",
+               "Solvent scattering length density"],
+              ["rpolar", "Ang", 20, [0, inf], "volume",
+               "Polar radius"],
+              ["requatorial", "Ang", 400, [0, inf], "volume",
+               "Equatorial radius"],
+              ["theta", "degrees", 60, [-inf, inf], "orientation",
+               "In plane angle"],
+              ["phi", "degrees", 60, [-inf, inf], "orientation",
+               "Out of plane angle"],
+             ]
 
-source = [ "lib/J1.c", "lib/gauss76.c", "ellipsoid.c"]
+source = ["lib/J1.c", "lib/gauss76.c", "ellipsoid.c"]
 
 def ER(rpolar, requatorial):
     import numpy as np
 
     ee = np.empty_like(rpolar)
     idx = rpolar > requatorial
-    ee[idx] = (rpolar[idx]**2 - requatorial[idx]**2)/rpolar[idx]**2
+    ee[idx] = (rpolar[idx] ** 2 - requatorial[idx] ** 2) / rpolar[idx] ** 2
     idx = rpolar < requatorial
-    ee[idx] = (requatorial[idx]**2 - rpolar[idx]**2)/requatorial[idx]**2
+    ee[idx] = (requatorial[idx] ** 2 - rpolar[idx] ** 2) / requatorial[idx] ** 2
     idx = rpolar == requatorial
-    ee[idx] = 2*rpolar[idx]
-    valid = (rpolar*requatorial != 0)
-    bd = 1.0-ee[valid]
+    ee[idx] = 2 * rpolar[idx]
+    valid = (rpolar * requatorial != 0)
+    bd = 1.0 - ee[valid]
     e1 = np.sqrt(ee[valid])
-    b1 = 1.0 + np.arcsin(e1)/(e1*np.sqrt(bd))
-    bL = (1.0+e1)/(1.0-e1)
-    b2 = 1.0 + bd/2/e1*np.log(bL)
-    delta = 0.75*b1*b2
+    b1 = 1.0 + np.arcsin(e1) / (e1 * np.sqrt(bd))
+    bL = (1.0 + e1) / (1.0 - e1)
+    b2 = 1.0 + bd / 2 / e1 * np.log(bL)
+    delta = 0.75 * b1 * b2
 
     ddd = np.zeros_like(rpolar)
-    ddd[valid] = 2.0*(delta+1.0)*rpolar*requatorial**2
-    return 0.5*ddd**(1.0/3.0)
+    ddd[valid] = 2.0 * (delta + 1.0) * rpolar * requatorial ** 2
+    return 0.5 * ddd ** (1.0 / 3.0)
 
 
-demo = dict(
-        scale=1, background=0,
-        sld=6, solvent_sld=1,
-        rpolar=50, requatorial=30,
-        theta=30, phi=15,
-        rpolar_pd=.2, rpolar_pd_n=15,
-        requatorial_pd=.2, requatorial_pd_n=15,
-        theta_pd=15, theta_pd_n=45,
-        phi_pd=15, phi_pd_n=1,
-        )
+demo = dict(scale=1, background=0,
+            sld=6, solvent_sld=1,
+            rpolar=50, requatorial=30,
+            theta=30, phi=15,
+            rpolar_pd=.2, rpolar_pd_n=15,
+            requatorial_pd=.2, requatorial_pd_n=15,
+            theta_pd=15, theta_pd_n=45,
+            phi_pd=15, phi_pd_n=1)
 oldname = 'EllipsoidModel'
 oldpars = dict(theta='axis_theta', phi='axis_phi',
                sld='sldEll', solvent_sld='sldSolv',

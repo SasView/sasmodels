@@ -8,4 +8,8 @@
 /doc/_build/
 /doc/api/
 /doc/model/
+/doc/ref/models
 .mplconfig
+/pylint_violations.txt
+/coverage.xml
+/.coverage

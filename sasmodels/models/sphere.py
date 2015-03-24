@@ -57,7 +57,7 @@ John Wiley and Sons, New York, (1955)
 *2013/09/09 and 2014/01/06 - Description reviewed by S King and P Parker.*
 """
 
-from numpy import pi, inf
+from numpy import inf
 
 name = "sphere"
 title = "Spheres with uniform scattering length density"
@@ -69,17 +69,16 @@ P(q)=(scale/V)*[3V(sld-solvent_sld)*(sin(qR)-qRcos(qR))
     sld: the SLD of the sphere
     solvent_sld: the SLD of the solvent
 """
+category = "shape:sphere"
 
-parameters = [
-#   [ "name", "units", default, [lower, upper], "type",
-#     "description" ],
-    [ "sld", "1e-6/Ang^2", 1, [-inf,inf], "",
-      "Layer scattering length density" ],
-    [ "solvent_sld", "1e-6/Ang^2", 6, [-inf,inf], "",
-      "Solvent scattering length density" ],
-    [ "radius", "Ang",  50, [0, inf], "volume",
-      "Sphere radius" ],
-    ]
+#             ["name", "units", default, [lower, upper], "type","description"],
+parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "",
+               "Layer scattering length density"],
+              ["solvent_sld", "1e-6/Ang^2", 6, [-inf, inf], "",
+               "Solvent scattering length density"],
+              ["radius", "Ang", 50, [0, inf], "volume",
+               "Sphere radius"],
+             ]
 
 
 # No volume normalization despite having a volume parameter
@@ -109,11 +108,9 @@ def ER(radius):
 
 # VR defaults to 1.0
 
-demo = dict(
-        scale=1, background=0,
-        sld=6, solvent_sld=1,
-        radius=120,
-        radius_pd=.2, radius_pd_n=45,
-        )
+demo = dict(scale=1, background=0,
+            sld=6, solvent_sld=1,
+            radius=120,
+            radius_pd=.2, radius_pd_n=45)
 oldname = "SphereModel"
 oldpars = dict(sld='sldSph', solvent_sld='sldSolv', radius='radius')

@@ -9,10 +9,10 @@ import glob
 import numpy as np
 
 from sasmodels.bumps_model import BumpsModel, plot_data, tic
-try: from sasmodels import kernelcl
-except: from sasmodels import kerneldll as kernelcl
+from sasmodels import core
 from sasmodels import kerneldll
 from sasmodels.convert import revert_model
+kerneldll.ALLOW_SINGLE_PRECISION_DLLS = True
 
 # List of available models
 ROOT = dirname(__file__)
@@ -20,13 +20,13 @@ MODELS = [basename(f)[:-3]
           for f in sorted(glob.glob(joinpath(ROOT,"sasmodels","models","[a-zA-Z]*.py")))]
 
 
-def sasview_model(modelname, **pars):
+def sasview_model(model_definition, **pars):
     """
     Load a sasview model given the model name.
     """
     # convert model parameters from sasmodel form to sasview form
     #print "old",sorted(pars.items())
-    modelname, pars = revert_model(modelname, pars)
+    modelname, pars = revert_model(model_definition, pars)
     #print "new",sorted(pars.items())
     sas = __import__('sas.models.'+modelname)
     ModelClass = getattr(getattr(sas.models,modelname,None),modelname,None)
@@ -46,18 +46,6 @@ def sasview_model(modelname, **pars):
         else:
             model.setParam(k, v)
     return model
-
-def load_opencl(modelname, dtype='single'):
-    sasmodels = __import__('sasmodels.models.'+modelname)
-    module = getattr(sasmodels.models, modelname, None)
-    kernel = kernelcl.load_model(module, dtype=dtype)
-    return kernel
-
-def load_ctypes(modelname, dtype='single'):
-    sasmodels = __import__('sasmodels.models.'+modelname)
-    module = getattr(sasmodels.models, modelname, None)
-    kernel = kerneldll.load_model(module, dtype=dtype)
-    return kernel
 
 def randomize(p, v):
     """
@@ -80,8 +68,8 @@ def randomize(p, v):
         # length pd in [0,1]
         return np.random.rand()
     else:
-        # length, scale, background in [0,200]
-        return 200*np.random.rand()
+        # values from 0 to 2*x for all other parameters
+        return 2*np.random.rand()*(v if v != 0 else 1)
 
 def randomize_model(name, pars, seed=None):
     if seed is None:
@@ -118,13 +106,13 @@ def eval_sasview(name, pars, data, Nevals=1):
     average_time = toc()*1000./Nevals
     return value, average_time
 
-def eval_opencl(name, pars, data, dtype='single', Nevals=1, cutoff=0):
+def eval_opencl(model_definition, pars, data, dtype='single', Nevals=1, cutoff=0):
     try:
-        model = load_opencl(name, dtype=dtype)
+        model = core.load_model(model_definition, dtype=dtype, platform="ocl")
     except Exception,exc:
         print exc
         print "... trying again with single precision"
-        model = load_opencl(name, dtype='single')
+        model = core.load_model(model_definition, dtype='single', platform="ocl")
     problem = BumpsModel(data, model, cutoff=cutoff, **pars)
     toc = tic()
     for _ in range(Nevals):
@@ -134,8 +122,8 @@ def eval_opencl(name, pars, data, dtype='single', Nevals=1, cutoff=0):
     average_time = toc()*1000./Nevals
     return value, average_time
 
-def eval_ctypes(name, pars, data, dtype='double', Nevals=1, cutoff=0):
-    model = load_ctypes(name, dtype=dtype)
+def eval_ctypes(model_definition, pars, data, dtype='double', Nevals=1, cutoff=0):
+    model = core.load_model(model_definition, dtype=dtype, platform="dll")
     problem = BumpsModel(data, model, cutoff=cutoff, **pars)
     toc = tic()
     for _ in range(Nevals):
@@ -144,7 +132,7 @@ def eval_ctypes(name, pars, data, dtype='double', Nevals=1, cutoff=0):
     average_time = toc()*1000./Nevals
     return value, average_time
 
-def make_data(qmax, is2D, Nq=128):
+def make_data(qmax, is2D, Nq=128, view='log'):
     if is2D:
         from sasmodels.bumps_model import empty_data2D, set_beam_stop
         data = empty_data2D(np.linspace(-qmax, qmax, Nq))
@@ -152,20 +140,26 @@ def make_data(qmax, is2D, Nq=128):
         index = ~data.mask
     else:
         from sasmodels.bumps_model import empty_data1D
-        qmax = math.log10(qmax)
-        data = empty_data1D(np.logspace(qmax-3, qmax, Nq))
+        if view == 'log':
+            qmax = math.log10(qmax)
+            q = np.logspace(qmax-3, qmax, Nq)
+        else:
+            q = np.linspace(0.001*qmax, qmax, Nq)
+        data = empty_data1D(q)
         index = slice(None, None)
     return data, index
 
 def compare(name, pars, Ncpu, Nocl, opts, set_pars):
+    view = 'linear' if '-linear' in opts else 'log' if '-log' in opts else 'q4' if '-q4' in opts else 'log'
+
     opt_values = dict(split
                       for s in opts for split in ((s.split('='),))
                       if len(split) == 2)
     # Sort out data
-    qmax = 1.0 if '-highq' in opts else (0.2 if '-midq' in opts else 0.05)
+    qmax = 10.0 if '-exq' in opts else 1.0 if '-highq' in opts else 0.2 if '-midq' in opts else 0.05
     Nq = int(opt_values.get('-Nq', '128'))
     is2D = not "-1d" in opts
-    data, index = make_data(qmax, is2D, Nq)
+    data, index = make_data(qmax, is2D, Nq, view=view)
 
 
     # modelling accuracy is determined by dtype and cutoff
@@ -173,11 +167,11 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
     cutoff = float(opt_values.get('-cutoff','1e-5'))
 
     # randomize parameters
+    pars.update(set_pars)
     if '-random' in opts or '-random' in opt_values:
         seed = int(opt_values['-random']) if '-random' in opt_values else None
         pars, seed = randomize_model(name, pars, seed=seed)
         print "Randomize using -random=%i"%seed
-    pars.update(set_pars)
 
     # parameter selection
     if '-mono' in opts:
@@ -185,19 +179,22 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
     if '-pars' in opts:
         print "pars",parlist(pars)
 
+    model_definition = core.load_model_definition(name)
     # OpenCl calculation
     if Nocl > 0:
-        ocl, ocl_time = eval_opencl(name, pars, data, dtype, Nocl)
+        ocl, ocl_time = eval_opencl(model_definition, pars, data,
+                                    dtype=dtype, cutoff=cutoff, Nevals=Nocl)
         print "opencl t=%.1f ms, intensity=%.0f"%(ocl_time, sum(ocl[index]))
         #print max(ocl), min(ocl)
 
     # ctypes/sasview calculation
     if Ncpu > 0 and "-ctypes" in opts:
-        cpu, cpu_time = eval_ctypes(name, pars, data, dtype=dtype, cutoff=cutoff, Nevals=Ncpu)
+        cpu, cpu_time = eval_ctypes(model_definition, pars, data,
+                                    dtype=dtype, cutoff=cutoff, Nevals=Ncpu)
         comp = "ctypes"
         print "ctypes t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu[index]))
     elif Ncpu > 0:
-        cpu, cpu_time = eval_sasview(name, pars, data, Ncpu)
+        cpu, cpu_time = eval_sasview(model_definition, pars, data, Ncpu)
         comp = "sasview"
         print "sasview t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu[index]))
 
@@ -211,31 +208,47 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
         relerr[index] = resid[index]/cpu[index]
         #bad = (relerr>1e-4)
         #print relerr[bad],cpu[bad],ocl[bad],data.qx_data[bad],data.qy_data[bad]
-        print "max(|ocl-%s|)"%comp, max(abs(resid[index]))
-        print "max(|(ocl-%s)/%s|)"%(comp,comp), max(abs(relerr[index]))
-        p98 = int(len(relerr[index])*0.98)
-        print "98%% (|(ocl-%s)/%s|) <"%(comp,comp), np.sort(abs(relerr[index]))[p98]
-
+        def stats(label,err):
+            sorted_err = np.sort(abs(err))
+            p50 = int((len(err)-1)*0.50)
+            p98 = int((len(err)-1)*0.98)
+            data = [
+                "max:%.3e"%sorted_err[-1],
+                "median:%.3e"%sorted_err[p50],
+                "98%%:%.3e"%sorted_err[p98],
+                "rms:%.3e"%np.sqrt(np.mean(err**2)),
+                "zero-offset:%+.3e"%np.mean(err),
+                ]
+            print label,"  ".join(data)
+        stats("|ocl-%s|"%comp+(" "*(3+len(comp))), resid[index])
+        stats("|(ocl-%s)/%s|"%(comp,comp), relerr[index])
 
     # Plot if requested
     if '-noplot' in opts: return
     import matplotlib.pyplot as plt
     if Ncpu > 0:
         if Nocl > 0: plt.subplot(131)
-        plot_data(data, cpu, scale='log')
+        plot_data(data, cpu, view=view)
         plt.title("%s t=%.1f ms"%(comp,cpu_time))
+        cbar_title = "log I"
     if Nocl > 0:
         if Ncpu > 0: plt.subplot(132)
-        plot_data(data, ocl, scale='log')
+        plot_data(data, ocl, view=view)
         plt.title("opencl t=%.1f ms"%ocl_time)
+        cbar_title = "log I"
     if Ncpu > 0 and Nocl > 0:
         plt.subplot(133)
-        err = resid if '-abs' in opts else relerr
-        errstr = "abs err" if '-abs' in opts else "rel err"
+        if '-abs' in opts:
+            err,errstr,errview = resid, "abs err", "linear"
+        else:
+            err,errstr,errview = abs(relerr), "rel err", "log"
         #err,errstr = ocl/cpu,"ratio"
-        plot_data(data, err, scale='linear')
+        plot_data(data, err, view=errview)
         plt.title("max %s = %.3g"%(errstr, max(abs(err[index]))))
-    if is2D: plt.colorbar()
+        cbar_title = errstr if errview=="linear" else "log "+errstr
+    if is2D:
+        h = plt.colorbar()
+        h.ax.set_title(cbar_title)
 
     if Ncpu > 0 and Nocl > 0 and '-hist' in opts:
         plt.figure()
@@ -264,7 +277,7 @@ Options (* for default):
 
     -plot*/-noplot plots or suppress the plot of the model
     -single*/-double uses double precision for comparison
-    -lowq*/-midq/-highq use q values up to 0.05, 0.2 or 1.0
+    -lowq*/-midq/-highq/-exq use q values up to 0.05, 0.2, 1.0, 10.0
     -Nq=128 sets the number of Q points in the data set
     -1d/-2d* computes 1d or 2d data
     -preset*/-random[=seed] preset or random parameters
@@ -273,6 +286,7 @@ Options (* for default):
     -cutoff=1e-5*/value cutoff for including a point in polydispersity
     -pars/-nopars* prints the parameter set or not
     -abs/-rel* plot relative or absolute error
+    -linear/-log/-q4 intensity scaling
     -hist/-nohist* plot histogram of relative error
 
 Key=value pairs allow you to set specific values to any of the model
@@ -286,13 +300,14 @@ Available models:
 NAME_OPTIONS = set([
     'plot','noplot',
     'single','double',
-    'lowq','midq','highq',
+    'lowq','midq','highq','exq',
     '2d','1d',
     'preset','random',
     'poly','mono',
     'sasview','ctypes',
     'nopars','pars',
     'rel','abs',
+    'linear', 'log', 'q4',
     'hist','nohist',
     ])
 VALUE_OPTIONS = [

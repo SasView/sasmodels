@@ -13,38 +13,29 @@ When reloading previously saved models, the parameters should be converted
 using :func:`sasmodels.convert.convert`.
 """
 
-# TODO: add a sasview=>sasmodels parameter translation layer
-# this will allow us to use the new sasmodels as drop in replacements, and
-# delay renaming parameters until all models have been converted.
-
 import math
 from copy import deepcopy
 import warnings
 
 import numpy as np
 
-try:
-    from .kernelcl import load_model
-except ImportError,exc:
-    warnings.warn(str(exc))
-    warnings.warn("using ctypes instead")
-    from .kerneldll import load_model
+from . import core
 
-
-def make_class(kernel_module, dtype='single', namestyle='name'):
+def make_class(model_definition, dtype='single', namestyle='name'):
     """
     Load the sasview model defined in *kernel_module*.
 
     Returns a class that can be used directly as a sasview model.
 
-    Defaults to using the new name for a model. Setting namestyle='name'
-    will produce a class with a name compatible with SasView
+    Defaults to using the new name for a model.  Setting
+    *namestyle='oldname'* will produce a class with a name
+    compatible with SasView.
     """
-    model =  load_model(kernel_module, dtype=dtype)
+    model = core.load_model(model_definition, dtype=dtype)
     def __init__(self, multfactor=1):
         SasviewModel.__init__(self, model)
     attrs = dict(__init__=__init__)
-    ConstructedModel = type(model.info[namestyle],  (SasviewModel,), attrs)
+    ConstructedModel = type(model.info[namestyle], (SasviewModel,), attrs)
     return ConstructedModel
 
 class SasviewModel(object):
@@ -68,9 +59,9 @@ class SasviewModel(object):
         self.params = dict()
         self.dispersion = dict()
         partype = model.info['partype']
-        for name,units,default,limits,ptype,description in model.info['parameters']:
+        for name, units, default, limits, _, _ in model.info['parameters']:
             self.params[name] = default
-            self.details[name] = [units]+limits
+            self.details[name] = [units] + limits
 
         for name in partype['pd-2d']:
             self.dispersion[name] = {
@@ -82,17 +73,17 @@ class SasviewModel(object):
 
         self.orientation_params = (
             partype['orientation']
-            + [n+'.width' for n in partype['orientation']]
+            + [n + '.width' for n in partype['orientation']]
             + partype['magnetic'])
         self.magnetic_params = partype['magnetic']
-        self.fixed = [n+'.width' for n in partype['pd-2d']]
+        self.fixed = [n + '.width' for n in partype['pd-2d']]
         self.non_fittable = []
 
         ## independent parameter name and unit [string]
-        self.input_name = model.info.get("input_name","Q")
-        self.input_unit = model.info.get("input_unit","A^{-1}")
-        self.output_name = model.info.get("output_name","Intensity")
-        self.output_unit = model.info.get("output_unit","cm^{-1}")
+        self.input_name = model.info.get("input_name", "Q")
+        self.input_unit = model.info.get("input_unit", "A^{-1}")
+        self.output_name = model.info.get("output_name", "Intensity")
+        self.output_unit = model.info.get("output_unit", "cm^{-1}")
 
         ## _persistency_dict is used by sas.perspectives.fitting.basepage
         ## to store dispersity reference.
@@ -119,6 +110,7 @@ class SasviewModel(object):
         #return self.params[str(par_name)].is_fittable()
 
 
+    # pylint: disable=no-self-use
     def getProfile(self):
         """
         Get SLD profile
@@ -138,9 +130,9 @@ class SasviewModel(object):
         """
         # Look for dispersion parameters
         toks = name.split('.')
-        if len(toks)==2:
+        if len(toks) == 2:
             for item in self.dispersion.keys():
-                if item.lower()==toks[0].lower():
+                if item.lower() == toks[0].lower():
                     for par in self.dispersion[item]:
                         if par.lower() == toks[1].lower():
                             self.dispersion[item][par] = value
@@ -148,11 +140,11 @@ class SasviewModel(object):
         else:
             # Look for standard parameter
             for item in self.params.keys():
-                if item.lower()==name.lower():
+                if item.lower() == name.lower():
                     self.params[item] = value
                     return
 
-        raise ValueError, "Model does not contain parameter %s" % name
+        raise ValueError("Model does not contain parameter %s" % name)
 
     def getParam(self, name):
         """
@@ -163,35 +155,35 @@ class SasviewModel(object):
         """
         # Look for dispersion parameters
         toks = name.split('.')
-        if len(toks)==2:
+        if len(toks) == 2:
             for item in self.dispersion.keys():
-                if item.lower()==toks[0].lower():
+                if item.lower() == toks[0].lower():
                     for par in self.dispersion[item]:
                         if par.lower() == toks[1].lower():
                             return self.dispersion[item][par]
         else:
             # Look for standard parameter
             for item in self.params.keys():
-                if item.lower()==name.lower():
+                if item.lower() == name.lower():
                     return self.params[item]
 
-        raise ValueError, "Model does not contain parameter %s" % name
+        raise ValueError("Model does not contain parameter %s" % name)
 
     def getParamList(self):
         """
         Return a list of all available parameters for the model
         """
-        list = self.params.keys()
+        param_list = self.params.keys()
         # WARNING: Extending the list with the dispersion parameters
-        list.extend(self.getDispParamList())
-        return list
+        param_list.extend(self.getDispParamList())
+        return param_list
 
     def getDispParamList(self):
         """
         Return a list of all available parameters for the model
         """
         # TODO: fix test so that parameter order doesn't matter
-        ret = ['%s.%s'%(d.lower(), p)
+        ret = ['%s.%s' % (d.lower(), p)
                for d in self._model.info['partype']['pd-2d']
                for p in ('npts', 'nsigmas', 'width')]
         #print ret
@@ -211,7 +203,8 @@ class SasviewModel(object):
 
         **DEPRECATED**: use calculate_Iq instead
         """
-        if isinstance(x, (list,tuple)):
+        if isinstance(x, (list, tuple)):
+            # pylint: disable=unpacking-non-sequence
             q, phi = x
             return self.calculate_Iq([q * math.cos(phi)],
                                      [q * math.sin(phi)])[0]
@@ -229,8 +222,8 @@ class SasviewModel(object):
 
         **DEPRECATED**: use calculate_Iq instead
         """
-        if isinstance(x, (list,tuple)):
-            return self.calculate_Iq([float(x[0])],[float(x[1])])[0]
+        if isinstance(x, (list, tuple)):
+            return self.calculate_Iq([float(x[0])], [float(x[1])])[0]
         else:
             return self.calculate_Iq([float(x)])[0]
 
@@ -262,14 +255,15 @@ class SasviewModel(object):
             q = [q[0], q[1], q[2], ....]
 
 
-        :param qdist: ndarray of scalar q-values or list [qx,qy] where qx,qy are 1D ndarrays
+        :param qdist: ndarray of scalar q-values or list [qx,qy]
+        where qx,qy are 1D ndarrays
         """
-        if isinstance(qdist, (list,tuple)):
+        if isinstance(qdist, (list, tuple)):
             # Check whether we have a list of ndarrays [qx,qy]
             qx, qy = qdist
             partype = self._model.info['partype']
             if not partype['orientation'] and not partype['magnetic']:
-                return self.calculate_Iq(np.sqrt(qx**2+qy**2))
+                return self.calculate_Iq(np.sqrt(qx ** 2 + qy ** 2))
             else:
                 return self.calculate_Iq(qx, qy)
 
@@ -278,7 +272,8 @@ class SasviewModel(object):
             return self.calculate_Iq(qdist)
 
         else:
-            raise TypeError("evalDistribution expects q or [qx, qy], not %r"%type(qdist))
+            raise TypeError("evalDistribution expects q or [qx, qy], not %r"
+                            % type(qdist))
 
     def calculate_Iq(self, *args):
         """
@@ -308,11 +303,10 @@ class SasviewModel(object):
         if ER is None:
             return 1.0
         else:
-            vol_pars = self._model.info['partype']['volume']
-            values, weights = self._dispersion_mesh(vol_pars)
+            values, weights = self._dispersion_mesh()
             fv = ER(*values)
             #print values[0].shape, weights.shape, fv.shape
-            return np.sum(weights*fv) / np.sum(weights)
+            return np.sum(weights * fv) / np.sum(weights)
 
     def calculate_VR(self):
         """
@@ -324,10 +318,9 @@ class SasviewModel(object):
         if VR is None:
             return 1.0
         else:
-            vol_pars = self._model.info['partype']['volume']
-            values, weights = self._dispersion_mesh(vol_pars)
-            whole,part = VR(*values)
-            return np.sum(weights*part)/np.sum(weights*whole)
+            values, weights = self._dispersion_mesh()
+            whole, part = VR(*values)
+            return np.sum(weights * part) / np.sum(weights * whole)
 
     def set_dispersion(self, parameter, dispersion):
         """
@@ -357,7 +350,7 @@ class SasviewModel(object):
         else:
             raise ValueError("%r is not a dispersity or orientation parameter")
 
-    def _dispersion_mesh(self, pars):
+    def _dispersion_mesh(self):
         """
         Create a mesh grid of dispersion parameters and weights.
 
@@ -365,20 +358,21 @@ class SasviewModel(object):
         and w is a vector containing the products for weights for each
         parameter set in the vector.
         """
-        values, weights = zip(*[self._get_weights(p) for p in pars])
-        values = [v.flatten() for v in np.meshgrid(*values)]
-        weights = np.vstack([v.flatten() for v in np.meshgrid(*weights)])
-        weights = np.prod(weights, axis=0)
-        return values, weights
+        pars = self._model.info['partype']['volume']
+        return core.dispersion_mesh([self._get_weights(p) for p in pars])
 
     def _get_weights(self, par):
+        """
+            Return dispersion weights
+            :param par parameter name
+        """
         from . import weights
 
         relative = self._model.info['partype']['pd-rel']
         limits = self._model.info['limits']
         dis = self.dispersion[par]
-        v,w = weights.get_weights(
+        value, weight = weights.get_weights(
             dis['type'], dis['npts'], dis['width'], dis['nsigmas'],
             self.params[par], limits[par], par in relative)
-        return v,w/w.max()
+        return value, weight / np.sum(weight)
 

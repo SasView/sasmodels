@@ -72,3 +72,4 @@ loops should be generated automatically as they are for the OpenCL models.
 The kernels should be vectorized across Q.  These will need vectorized
 versions of numerical quadrature if we want to get reasonable performance.
 
+[![Travis-CI Build Status](https://travis-ci.org/SasView/sasmodels.svg?branch=master)](https://travis-ci.org/SasView/sasmodels)

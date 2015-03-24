@@ -110,73 +110,70 @@ title = "Right circular cylinder with a core-shell scattering length density pro
 description = """
 P(q,alpha)= scale/Vs*f(q)^(2) + background,
       where: f(q)= 2(core_sld - solvant_sld)
-		* Vc*sin[qLcos(alpha/2)]
-		/[qLcos(alpha/2)]*J1(qRsin(alpha))
-		/[qRsin(alpha)]+2(shell_sld-solvent_sld)
-		*Vs*sin[q(L+T)cos(alpha/2)][[q(L+T)
-		*cos(alpha/2)]*J1(q(R+T)sin(alpha))
-		/q(R+T)sin(alpha)]
+        * Vc*sin[qLcos(alpha/2)]
+        /[qLcos(alpha/2)]*J1(qRsin(alpha))
+        /[qRsin(alpha)]+2(shell_sld-solvent_sld)
+        *Vs*sin[q(L+T)cos(alpha/2)][[q(L+T)
+        *cos(alpha/2)]*J1(q(R+T)sin(alpha))
+        /q(R+T)sin(alpha)]
 
-	alpha:is the angle between the axis of
-		the cylinder and the q-vector
-	Vs: the volume of the outer shell
-	Vc: the volume of the core
-	L: the length of the core
-    	shell_sld: the scattering length density of the shell
-	solvent_sld: the scattering length density of the solvent
-	background: the background
-	T: the thickness
-    	R+T: is the outer radius
- 	L+2T: The total length of the outershell
-	J1: the first order Bessel function
- 	theta: axis_theta of the cylinder
- 	phi: the axis_phi of the cylinder
+    alpha:is the angle between the axis of
+        the cylinder and the q-vector
+    Vs: the volume of the outer shell
+    Vc: the volume of the core
+    L: the length of the core
+        shell_sld: the scattering length density of the shell
+    solvent_sld: the scattering length density of the solvent
+    background: the background
+    T: the thickness
+        R+T: is the outer radius
+     L+2T: The total length of the outershell
+    J1: the first order Bessel function
+     theta: axis_theta of the cylinder
+     phi: the axis_phi of the cylinder
 """
+category = "shape:cylinder"
 
-parameters = [
-#   [ "name", "units", default, [lower, upper], "type",
-#     "description" ],
-    [ "core_sld", "1e-6/Ang^2", 4, [-inf,inf], "",
-      "Cylinder core scattering length density" ],
-    [ "shell_sld", "1e-6/Ang^2", 4, [-inf,inf], "",
-      "Cylinder shell scattering length density" ],
-    [ "solvent_sld", "1e-6/Ang^2", 1, [-inf,inf], "",
-      "Solvent scattering length density" ],
-    [ "radius", "Ang",  20, [0, inf], "volume",
-      "Cylinder core radius" ],
-    [ "thickness", "Ang",  20, [0, inf], "volume",
-      "Cylinder shell thickness" ],
-    [ "length", "Ang",  400, [0, inf], "volume",
-      "Cylinder length" ],
-    [ "theta", "degrees", 60, [-inf, inf], "orientation",
-      "In plane angle" ],
-    [ "phi", "degrees", 60, [-inf, inf], "orientation",
-      "Out of plane angle" ],
-    ]
+#             ["name", "units", default, [lower, upper], "type", "description"],
+parameters = [["core_sld", "1e-6/Ang^2", 4, [-inf, inf], "",
+               "Cylinder core scattering length density"],
+              ["shell_sld", "1e-6/Ang^2", 4, [-inf, inf], "",
+               "Cylinder shell scattering length density"],
+              ["solvent_sld", "1e-6/Ang^2", 1, [-inf, inf], "",
+               "Solvent scattering length density"],
+              ["radius", "Ang", 20, [0, inf], "volume",
+               "Cylinder core radius"],
+              ["thickness", "Ang", 20, [0, inf], "volume",
+               "Cylinder shell thickness"],
+              ["length", "Ang", 400, [0, inf], "volume",
+               "Cylinder length"],
+              ["theta", "degrees", 60, [-inf, inf], "orientation",
+               "In plane angle"],
+              ["phi", "degrees", 60, [-inf, inf], "orientation",
+               "Out of plane angle"],
+             ]
 
-source = [ "lib/J1.c", "lib/gauss76.c", "core_shell_cylinder.c"]
+source = ["lib/J1.c", "lib/gauss76.c", "core_shell_cylinder.c"]
 
 def ER(radius, thickness, length):
     radius = radius + thickness
-    length = length + 2*thickness
-    ddd = 0.75*radius*(2*radius*length + (length+radius)*(length+pi*radius))
-    return 0.5 * (ddd)**(1./3.)
+    length = length + 2 * thickness
+    ddd = 0.75 * radius * (2 * radius * length + (length + radius) * (length + pi * radius))
+    return 0.5 * (ddd) ** (1. / 3.)
 
 def VR(radius, thickness, length):
-    whole = pi * (radius+thickness)**2 * (length+2*thickness)
-    core = pi * radius**2 * length
-    return whole, whole-core
+    whole = pi * (radius + thickness) ** 2 * (length + 2 * thickness)
+    core = pi * radius ** 2 * length
+    return whole, whole - core
 
-demo = dict(
-    scale=1, background=0,
-    core_sld=6, shell_sld=8, solvent_sld=1,
-    radius=45, thickness=25, length=340,
-    theta=30, phi=15,
-    radius_pd=.2, radius_pd_n=1,
-    length_pd=.2, length_pd_n=10,
-    thickness_pd=.2, thickness_pd_n=10,
-    theta_pd=15, theta_pd_n=45,
-    phi_pd=15, phi_pd_n=1,
-    )
+demo = dict(scale=1, background=0,
+            core_sld=6, shell_sld=8, solvent_sld=1,
+            radius=45, thickness=25, length=340,
+            theta=30, phi=15,
+            radius_pd=.2, radius_pd_n=1,
+            length_pd=.2, length_pd_n=10,
+            thickness_pd=.2, thickness_pd_n=10,
+            theta_pd=15, theta_pd_n=45,
+            phi_pd=15, phi_pd_n=1)
 oldname = 'CoreShellCylinderModel'
 oldpars = dict(theta='axis_theta', phi='axis_phi')
