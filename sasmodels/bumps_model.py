@@ -220,12 +220,12 @@ def _plot_sesans(data, theory, view):
     plt.subplot(121)
     plt.errorbar(data.x, data.y, yerr=data.dy)
     plt.plot(data.x, theory, '-', hold=True)
-    plt.xlabel('spin echo length (A)')
-    plt.ylabel('polarization')
+    plt.xlabel('spin echo length (nm)')
+    plt.ylabel('polarization (P/P0)')
     plt.subplot(122)
     plt.plot(data.x, resid, 'x')
-    plt.xlabel('spin echo length (A)')
-    plt.ylabel('residuals')
+    plt.xlabel('spin echo length (nm)')
+    plt.ylabel('residuals (P/P0)')
 
 def _plot_result2D(data, theory, view):
     """

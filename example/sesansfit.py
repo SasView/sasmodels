@@ -10,9 +10,11 @@ if True: # fix when data loader exists
 #    from sas.dataloader.readers\
     from sas.dataloader.loader import Loader
     loader=Loader()
-    data=loader.load('testsasview1.ses')
+    data=loader.load('se008724_01.ses')
+#    data=loader.load('testsasview1.ses')
+ 
     data.x /=10
-    
+#    print data
 #    data = load_sesans('mydatfile.pz')
 #    sans_data = load_sans('mysansfile.xml')
 
@@ -42,10 +44,10 @@ data.Rmax = 3*radius # [A]
 phi = Parameter(0.1, name="phi")
 model = sas.BumpsModel(data, kernel,
     scale=phi*(1-phi), sld=7.0, solvent_sld=1.0, radius=radius)
-phi.range(0.001,0.90)
+phi.range(0.001,0.5)
 #model.radius.pmp(40)
-model.radius.range(100,10000)
-#model.sld.pmp(5)
+model.radius.range(1,10000)
+#model.sld.pm(5)
 #model.background
 #model.radius_pd=0
 #model.radius_pd_n=0
