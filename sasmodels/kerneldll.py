@@ -28,10 +28,10 @@ elif os.name == 'nt':
         # MSVC compiler is available, so use it.
         # TODO: remove intermediate OBJ file created in the directory
         # TODO: maybe don't use randomized name for the c file
-        COMPILE = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG /Tp%(source)s /openmp /link /DLL /INCREMENTAL:NO /MANIFEST /OUT:%(output)s"
+        #COMPILE = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG /Tp%(source)s /openmp /link /DLL /INCREMENTAL:NO /MANIFEST /OUT:%(output)s"
         # Can't find VCOMP90.DLL (don't know why), so remove openmp support
         # from windows compiler build
-        #COMPILE = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG /Tp%(source)s /link /DLL /INCREMENTAL:NO /MANIFEST /OUT:%(output)s"
+        COMPILE = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG /Tp%(source)s /link /DLL /INCREMENTAL:NO /MANIFEST /OUT:%(output)s"
     else:
         #COMPILE = "gcc -shared -fPIC -std=c99 -fopenmp -O2 -Wall %(source)s -o %(output)s -lm"
         COMPILE = "gcc -shared -fPIC -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
@@ -147,8 +147,11 @@ class DllModel(object):
         #print "dll",self.dllpath
         try:
             self.dll = ct.CDLL(self.dllpath)
+	except WindowsError, exc:
+	    # TODO: update annotate_exception so it can handle WindowsError
+	    raise RuntimeError(str(exc)+" while loading "+self.dllpath)
         except Exception, exc:
-            annotate_exception("while loading "+self.dllpath)
+            annotate_exception(exc, "while loading "+self.dllpath)
             raise
 
         fp = c_float if self.dtype == generate.F32 else c_double
