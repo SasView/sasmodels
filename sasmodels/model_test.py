@@ -50,33 +50,7 @@ import numpy as np
 
 from .core import list_models, load_model_definition, load_model, HAVE_OPENCL
 from .core import make_kernel, call_kernel, call_ER, call_VR
-
-
-def annotate_exception(exc, msg):
-    """
-    Add an annotation to the current exception, which can then be forwarded
-    to the caller using a bare "raise" statement to reraise the annotated
-    exception.
-    Example::
-        >>> D = {}
-        >>> try:
-        ...    print D['hello']
-        ... except Exception,exc:
-        ...    annotate_exception(exc, "while accessing 'D'")
-        ...    raise
-        Traceback (most recent call last):
-            ...
-        KeyError: "hello while accessing 'D'"
-    """
-    args = exc.args
-    if not args:
-        exc.args = (msg,)
-    else:
-        try:
-            arg0 = " ".join((args[0],msg))
-            exc.args = tuple([arg0] + list(args[1:]))
-        except:
-            exc.args = (" ".join((str(exc),msg)),)
+from .exception import annotate_exception
 
 
 def make_suite(loaders, models):
