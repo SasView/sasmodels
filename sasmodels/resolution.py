@@ -55,7 +55,7 @@ class Pinhole1D(Resolution1D):
     *q_calc* is the list of points to calculate, or None if this should
     be estimated from the *q* and *q_width*.
     """
-    def __init__(self, q, q_width, q_calc=None):
+    def __init__(self, q, q_width, q_calc=None, nsigma=3):
         #*min_step* is the minimum point spacing to use when computing the
         #underlying model.  It should be on the order of
         #$\tfrac{1}{10}\tfrac{2\pi}{d_\text{max}}$ to make sure that fringes
@@ -67,7 +67,7 @@ class Pinhole1D(Resolution1D):
         # In practice this should never be needed, since resolution should
         # default to Perfect1D if the pinhole geometry is not defined.
         self.q, self.q_width = q, q_width
-        self.q_calc = pinhole_extend_q(q, q_width) \
+        self.q_calc = pinhole_extend_q(q, q_width, nsigma=nsigma) \
             if q_calc is None else np.sort(q_calc)
         self.weight_matrix = pinhole_resolution(self.q_calc,
                 self.q, np.maximum(q_width, MINIMUM_RESOLUTION))
@@ -202,7 +202,7 @@ def pinhole_extend_q(q, q_width, nsigma=3):
     function.
     """
     q_min, q_max = np.min(q - nsigma*q_width), np.max(q + nsigma*q_width)
-    return geometric_extrapolation(q, q_min, q_max)
+    return linear_extrapolation(q, q_min, q_max)
 
 
 def slit_extend_q(q, width, height):
@@ -266,8 +266,8 @@ def interpolate(q, max_step):
 def linear_extrapolation(q, q_min, q_max):
     """
     Extrapolate *q* out to [*q_min*, *q_max*] using the step size in *q* as
-    a guide.  Extrapolation below uses steps the same size as the first
-    interval.  Extrapolation above uses steps the same size as the final
+    a guide.  Extrapolation below uses about the same size as the first
+    interval.  Extrapolation above uses about the same size as the final
     interval.
 
     if *q_min* is zero or less then *q[0]/10* is used instead.
@@ -275,27 +275,32 @@ def linear_extrapolation(q, q_min, q_max):
     q = np.sort(q)
     if q_min < q[0]:
         if q_min <= 0: q_min = q[0]/10
-        delta = q[1] - q[0]
-        q_low = np.arange(q_min, q[0], delta)
+        n_low = np.ceil((q[0]-q_min) / (q[1]-q[0])) if q[1]>q[0] else 15
+        q_low = np.linspace(q_min, q[0], n_low+1)[:-1]
     else:
         q_low = []
     if q_max > q[-1]:
-        delta = q[-1] - q[-2]
-        q_high = np.arange(q[-1]+delta, q_max, delta)
+        n_high = np.ceil((q_max-q[-1]) / (q[-1]-q[-2])) if q[-1]>q[-2] else 15
+        q_high = np.linspace(q[-1], q_max, n_high+1)[1:]
     else:
         q_high = []
     return np.concatenate([q_low, q, q_high])
 
 
-def geometric_extrapolation(q, q_min, q_max):
+def geometric_extrapolation(q, q_min, q_max, points_per_decade=None):
     r"""
     Extrapolate *q* to [*q_min*, *q_max*] using geometric steps, with the
     average geometric step size in *q* as the step size.
 
     if *q_min* is zero or less then *q[0]/10* is used instead.
 
-    Starting at $q_1$ and stepping geometrically by $\Delta q$
-    to $q_n$ in $n$ points gives a geometric average of:
+    *points_per_decade* sets the ratio between consecutive steps such
+    that there will be $n$ points used for every factor of 10 increase
+    in *q*.
+
+    If *points_per_decade* is not given, it will be estimated as follows.
+    Starting at $q_1$ and stepping geometrically by $\Delta q$ to $q_n$
+    in $n$ points gives a geometric average of:
 
     .. math::
 
@@ -314,15 +319,18 @@ def geometric_extrapolation(q, q_min, q_max):
             / (\log q_n - log q_1)
     """
     q = np.sort(q)
-    delta_q = (len(q)-1)/(log(q[-1]) - log(q[0]))
+    if points_per_decade is None:
+        log_delta_q = (len(q) - 1) / (log(q[-1]) - log(q[0]))
+    else:
+        log_delta_q = log(10.) / points_per_decade
     if q_min < q[0]:
         if q_min < 0: q_min = q[0]/10
-        n_low = delta_q * (log(q[0])-log(q_min))
+        n_low = log_delta_q * (log(q[0])-log(q_min))
         q_low  = np.logspace(log10(q_min), log10(q[0]), np.ceil(n_low)+1)[:-1]
     else:
         q_low = []
     if q_max > q[-1]:
-        n_high = delta_q * (log(q_max)-log(q[-1]))
+        n_high = log_delta_q * (log(q_max)-log(q[-1]))
         q_high = np.logspace(log10(q[-1]), log10(q_max), np.ceil(n_high)+1)[1:]
     else:
         q_high = []
@@ -371,7 +379,7 @@ def romberg_slit_1d(q, delta_qv, form, pars):
     return np.asarray(r).flatten()/delta_qv[0]
 
 
-def romberg_pinhole_1d(q, q_width, form, pars):
+def romberg_pinhole_1d(q, q_width, form, pars, nsigma=5):
     """
     Romberg integration for pinhole resolution.
 
@@ -387,7 +395,7 @@ def romberg_pinhole_1d(q, q_width, form, pars):
                          (", ".join(sorted(extra)), ", ".join(sorted(keys))))
 
     _fn = lambda q, q0, dq: eval_form(q, form, pars)*gaussian(q, q0, dq)
-    r = [romberg(_fn, max(qi-5*dqi,0.01*q[0]), qi+5*dqi, args=(qi, dqi),
+    r = [romberg(_fn, max(qi-nsigma*dqi,1e-10*q[0]), qi+nsigma*dqi, args=(qi, dqi),
                  divmax=100, vec_func=True, tol=0, rtol=1e-8)
          for qi,dqi in zip(q,q_width)]
     return np.asarray(r).flatten()
@@ -639,7 +647,6 @@ class IgorComparisonTest(unittest.TestCase):
         resolution = Pinhole1D(q, q_width)
         output = self.Iq_sphere(pars, resolution)
         self.compare(q, output, answer, 1e-6)
-
 
 
 # pinhole sphere parameters
