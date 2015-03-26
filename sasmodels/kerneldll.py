@@ -16,6 +16,7 @@ import numpy as np
 
 from . import generate
 from .kernelpy import PyInput, PyModel
+from .exception import annotate_exception
 
 # Compiler platform details
 if sys.platform == 'darwin':
@@ -144,7 +145,11 @@ class DllModel(object):
         Npd2d = len(self.info['partype']['pd-2d'])
 
         #print "dll",self.dllpath
-        self.dll = ct.CDLL(self.dllpath)
+        try:
+            self.dll = ct.CDLL(self.dllpath)
+        except Exception, exc:
+            annotate_exception("while loading "+self.dllpath)
+            raise
 
         fp = c_float if self.dtype == generate.F32 else c_double
         pd_args_1d = [c_void_p, fp] + [c_int]*Npd1d if Npd1d else []
