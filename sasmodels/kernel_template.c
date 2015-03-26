@@ -15,6 +15,8 @@
      #if defined(_MSC_VER)
      #   define kernel extern "C" __declspec( dllexport )
          inline double trunc(double x) { return x>=0?floor(x):-floor(-x); }
+	 inline double fmin(double x, double y) { return x>y ? y : x; }
+	 inline double fmax(double x, double y) { return x<y ? y : x; }
      #else
      #   define kernel extern "C"
      #endif
