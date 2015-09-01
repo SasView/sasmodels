@@ -17,8 +17,8 @@ SIGMA_ZERO = 1.0e-010
 # default: 2.5 to cover 98.7% of Gaussian
 NSIGMA = 3.0
 ## Defaults
-NR = {'Xhigh':10, 'High':5, 'Med':5, 'Low':3}
-NPHI ={'Xhigh':20, 'High':12, 'Med':6, 'Low':4}
+NR = {'xhigh':10, 'high':5, 'med':5, 'low':3}
+NPHI ={'xhigh':20, 'high':12, 'med':6, 'low':4}
 
 class Pinhole2D(Resolution):
     """
@@ -40,9 +40,9 @@ class Pinhole2D(Resolution):
         ## Accuracy: Higher stands for more sampling points in both directions
         ## of r and phi.
         ## number of bins in r axis for over-sampling
-        self.nr = NR[accuracy]
+        self.nr = NR[accuracy.lower()]
         ## number of bins in phi axis for over-sampling 
-        self.nphi = NPHI[accuracy]
+        self.nphi = NPHI[accuracy.lower()]
         ## maximum nsigmas
         self.nsigma= nsigma
         self.coords = coords

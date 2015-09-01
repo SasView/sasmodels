@@ -152,8 +152,14 @@ def empty_data2D(qx, qy=None, resolution=0.05):
 
     # 5% dQ/Q resolution
     if resolution != 0:
-        data.dqx_data = resolution * Qx
-        data.dqy_data = resolution * Qy
+        # https://www.ncnr.nist.gov/staff/hammouda/distance_learning/chapter_15.pdf
+        # Should have an additional constant which depends on distances and
+        # radii of the aperture, pixel dimensions and wavelength spread
+        # Instead, assume radial dQ/Q is constant, and perpendicular matches
+        # radial (which instead it should be inverse).
+        Q = np.sqrt(Qx**2 + Qy**2)
+        data.dqx_data = resolution * Q
+        data.dqy_data = resolution * Q
 
     detector = Detector()
     detector.pixel_size.x = 5 # mm
