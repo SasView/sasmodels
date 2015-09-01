@@ -8,7 +8,7 @@ import glob
 
 import numpy as np
 
-from sasmodels.bumps_model import BumpsModel, plot_data, tic
+from sasmodels.bumps_model import Model, Experiment, plot_theory, tic
 from sasmodels import core
 from sasmodels import kerneldll
 from sasmodels.convert import revert_model
@@ -96,13 +96,25 @@ def suppress_pd(pars):
         if p.endswith("_pd"): pars[p] = 0
 
 def eval_sasview(name, pars, data, Nevals=1):
+    from sas.models.qsmearing import smear_selection
     model = sasview_model(name, **pars)
+    smearer = smear_selection(data, model=model)
     toc = tic()
     for _ in range(Nevals):
         if hasattr(data, 'qx_data'):
-            value = model.evalDistribution([data.qx_data, data.qy_data])
+            q = np.sqrt(data.qx_data**2 + data.qy_data**2)
+            index = ((~data.mask) & (~np.isnan(data.data))
+                     & (q >= data.qmin) & (q <= data.qmax))
+            if smearer is not None:
+                smearer.model = model  # because smear_selection has a bug
+                smearer.set_index(index)
+                value = smearer.get_value()
+            else:
+                value = model.evalDistribution([data.qx_data[index], data.qy_data[index]])
         else:
             value = model.evalDistribution(data.x)
+            if smearer is not None:
+                value = smearer(value)
     average_time = toc()*1000./Nevals
     return value, average_time
 
@@ -113,7 +125,7 @@ def eval_opencl(model_definition, pars, data, dtype='single', Nevals=1, cutoff=0
         print exc
         print "... trying again with single precision"
         model = core.load_model(model_definition, dtype='single', platform="ocl")
-    problem = BumpsModel(data, model, cutoff=cutoff, **pars)
+    problem = Experiment(data, Model(model, **pars), cutoff=cutoff)
     toc = tic()
     for _ in range(Nevals):
         #pars['scale'] = np.random.rand()
@@ -124,7 +136,7 @@ def eval_opencl(model_definition, pars, data, dtype='single', Nevals=1, cutoff=0
 
 def eval_ctypes(model_definition, pars, data, dtype='double', Nevals=1, cutoff=0):
     model = core.load_model(model_definition, dtype=dtype, platform="dll")
-    problem = BumpsModel(data, model, cutoff=cutoff, **pars)
+    problem = Experiment(data, Model(model, **pars), cutoff=cutoff)
     toc = tic()
     for _ in range(Nevals):
         problem.update()
@@ -132,10 +144,10 @@ def eval_ctypes(model_definition, pars, data, dtype='double', Nevals=1, cutoff=0
     average_time = toc()*1000./Nevals
     return value, average_time
 
-def make_data(qmax, is2D, Nq=128, view='log'):
+def make_data(qmax, is2D, Nq=128, resolution=0.0, view='log'):
     if is2D:
         from sasmodels.bumps_model import empty_data2D, set_beam_stop
-        data = empty_data2D(np.linspace(-qmax, qmax, Nq))
+        data = empty_data2D(np.linspace(-qmax, qmax, Nq), resolution=resolution)
         set_beam_stop(data, 0.004)
         index = ~data.mask
     else:
@@ -145,7 +157,7 @@ def make_data(qmax, is2D, Nq=128, view='log'):
             q = np.logspace(qmax-3, qmax, Nq)
         else:
             q = np.linspace(0.001*qmax, qmax, Nq)
-        data = empty_data1D(q)
+        data = empty_data1D(q, resolution=resolution)
         index = slice(None, None)
     return data, index
 
@@ -158,8 +170,9 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
     # Sort out data
     qmax = 10.0 if '-exq' in opts else 1.0 if '-highq' in opts else 0.2 if '-midq' in opts else 0.05
     Nq = int(opt_values.get('-Nq', '128'))
+    res = float(opt_values.get('-res', '0'))
     is2D = not "-1d" in opts
-    data, index = make_data(qmax, is2D, Nq, view=view)
+    data, index = make_data(qmax, is2D, Nq, res, view=view)
 
 
     # modelling accuracy is determined by dtype and cutoff
@@ -184,7 +197,7 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
     if Nocl > 0:
         ocl, ocl_time = eval_opencl(model_definition, pars, data,
                                     dtype=dtype, cutoff=cutoff, Nevals=Nocl)
-        print "opencl t=%.1f ms, intensity=%.0f"%(ocl_time, sum(ocl[index]))
+        print "opencl t=%.1f ms, intensity=%.0f"%(ocl_time, sum(ocl))
         #print max(ocl), min(ocl)
 
     # ctypes/sasview calculation
@@ -192,20 +205,19 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
         cpu, cpu_time = eval_ctypes(model_definition, pars, data,
                                     dtype=dtype, cutoff=cutoff, Nevals=Ncpu)
         comp = "ctypes"
-        print "ctypes t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu[index]))
+        print "ctypes t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu))
     elif Ncpu > 0:
         cpu, cpu_time = eval_sasview(model_definition, pars, data, Ncpu)
         comp = "sasview"
-        print "sasview t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu[index]))
+        print "sasview t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu))
 
     # Compare, but only if computing both forms
     if Nocl > 0 and Ncpu > 0:
         #print "speedup %.2g"%(cpu_time/ocl_time)
         #print "max |ocl/cpu|", max(abs(ocl/cpu)), "%.15g"%max(abs(ocl)), "%.15g"%max(abs(cpu))
         #cpu *= max(ocl/cpu)
-        resid, relerr = np.zeros_like(ocl), np.zeros_like(ocl)
-        resid[index] = (ocl - cpu)[index]
-        relerr[index] = resid[index]/cpu[index]
+        resid = (ocl - cpu)
+        relerr = resid/cpu
         #bad = (relerr>1e-4)
         #print relerr[bad],cpu[bad],ocl[bad],data.qx_data[bad],data.qy_data[bad]
         def stats(label,err):
@@ -220,20 +232,20 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
                 "zero-offset:%+.3e"%np.mean(err),
                 ]
             print label,"  ".join(data)
-        stats("|ocl-%s|"%comp+(" "*(3+len(comp))), resid[index])
-        stats("|(ocl-%s)/%s|"%(comp,comp), relerr[index])
+        stats("|ocl-%s|"%comp+(" "*(3+len(comp))), resid)
+        stats("|(ocl-%s)/%s|"%(comp,comp), relerr)
 
     # Plot if requested
     if '-noplot' in opts: return
     import matplotlib.pyplot as plt
     if Ncpu > 0:
         if Nocl > 0: plt.subplot(131)
-        plot_data(data, cpu, view=view)
+        plot_theory(data, cpu, view=view)
         plt.title("%s t=%.1f ms"%(comp,cpu_time))
         cbar_title = "log I"
     if Nocl > 0:
         if Ncpu > 0: plt.subplot(132)
-        plot_data(data, ocl, view=view)
+        plot_theory(data, ocl, view=view)
         plt.title("opencl t=%.1f ms"%ocl_time)
         cbar_title = "log I"
     if Ncpu > 0 and Nocl > 0:
@@ -243,8 +255,8 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
         else:
             err,errstr,errview = abs(relerr), "rel err", "log"
         #err,errstr = ocl/cpu,"ratio"
-        plot_data(data, err, view=errview)
-        plt.title("max %s = %.3g"%(errstr, max(abs(err[index]))))
+        plot_theory(data, err, view=errview)
+        plt.title("max %s = %.3g"%(errstr, max(abs(err))))
         cbar_title = errstr if errview=="linear" else "log "+errstr
     if is2D:
         h = plt.colorbar()
@@ -252,7 +264,7 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
 
     if Ncpu > 0 and Nocl > 0 and '-hist' in opts:
         plt.figure()
-        v = relerr[index]
+        v = relerr
         v[v==0] = 0.5*np.min(np.abs(v[v!=0]))
         plt.hist(np.log10(np.abs(v)), normed=1, bins=50);
         plt.xlabel('log10(err), err = | F(q) single - F(q) double| / | F(q) double |');
@@ -288,6 +300,7 @@ Options (* for default):
     -abs/-rel* plot relative or absolute error
     -linear/-log/-q4 intensity scaling
     -hist/-nohist* plot histogram of relative error
+    -res=0 sets the resolution width dQ/Q if calculating with resolution
 
 Key=value pairs allow you to set specific values to any of the model
 parameters.
@@ -312,7 +325,7 @@ NAME_OPTIONS = set([
     ])
 VALUE_OPTIONS = [
     # Note: random is both a name option and a value option
-    'cutoff', 'random', 'Nq',
+    'cutoff', 'random', 'Nq', 'res',
     ]
 
 def get_demo_pars(name):

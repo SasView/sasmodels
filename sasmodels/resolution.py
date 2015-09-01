@@ -10,7 +10,7 @@ import numpy as np
 
 MINIMUM_RESOLUTION = 1e-8
 
-class Resolution1D(object):
+class Resolution(object):
     """
     Abstract base class defining a 1D resolution function.
 
@@ -31,7 +31,7 @@ class Resolution1D(object):
         raise NotImplementedError("Subclass does not define the apply function")
 
 
-class Perfect1D(Resolution1D):
+class Perfect1D(Resolution):
     """
     Resolution function to use when there is no actual resolution smearing
     to be applied.  It has the same interface as the other resolution
@@ -44,7 +44,7 @@ class Perfect1D(Resolution1D):
         return theory
 
 
-class Pinhole1D(Resolution1D):
+class Pinhole1D(Resolution):
     r"""
     Pinhole aperture with q-dependent gaussian resolution.
 
@@ -73,10 +73,12 @@ class Pinhole1D(Resolution1D):
                 self.q, np.maximum(q_width, MINIMUM_RESOLUTION))
 
     def apply(self, theory):
+        print "q calc", self.q_calc
+        print "weights", self.weight_matrix.shape
         return apply_resolution_matrix(self.weight_matrix, theory)
 
 
-class Slit1D(Resolution1D):
+class Slit1D(Resolution):
     """
     Slit aperture with a complicated resolution function.
 
