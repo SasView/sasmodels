@@ -107,6 +107,7 @@ def eval_sasview(name, pars, data, Nevals=1):
                      & (q >= data.qmin) & (q <= data.qmax))
             if smearer is not None:
                 smearer.model = model  # because smear_selection has a bug
+                smearer.accuracy = data.accuracy
                 smearer.set_index(index)
                 value = smearer.get_value()
             else:
@@ -144,10 +145,11 @@ def eval_ctypes(model_definition, pars, data, dtype='double', Nevals=1, cutoff=0
     average_time = toc()*1000./Nevals
     return value, average_time
 
-def make_data(qmax, is2D, Nq=128, resolution=0.0, view='log'):
+def make_data(qmax, is2D, Nq=128, resolution=0.0, accuracy='Low', view='log'):
     if is2D:
         from sasmodels.bumps_model import empty_data2D, set_beam_stop
         data = empty_data2D(np.linspace(-qmax, qmax, Nq), resolution=resolution)
+        data.accuracy = accuracy
         set_beam_stop(data, 0.004)
         index = ~data.mask
     else:
@@ -171,8 +173,9 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
     qmax = 10.0 if '-exq' in opts else 1.0 if '-highq' in opts else 0.2 if '-midq' in opts else 0.05
     Nq = int(opt_values.get('-Nq', '128'))
     res = float(opt_values.get('-res', '0'))
+    accuracy = opt_values.get('-accuracy', 'Low')
     is2D = not "-1d" in opts
-    data, index = make_data(qmax, is2D, Nq, res, view=view)
+    data, index = make_data(qmax, is2D, Nq, res, accuracy, view=view)
 
 
     # modelling accuracy is determined by dtype and cutoff
@@ -295,12 +298,13 @@ Options (* for default):
     -preset*/-random[=seed] preset or random parameters
     -mono/-poly* force monodisperse/polydisperse
     -ctypes/-sasview* whether cpu is tested using sasview or ctypes
-    -cutoff=1e-5*/value cutoff for including a point in polydispersity
+    -cutoff=1e-5* cutoff value for including a point in polydispersity
     -pars/-nopars* prints the parameter set or not
     -abs/-rel* plot relative or absolute error
     -linear/-log/-q4 intensity scaling
     -hist/-nohist* plot histogram of relative error
     -res=0 sets the resolution width dQ/Q if calculating with resolution
+    -accuracy=Low resolution accuracy Low, Mid, High, Xhigh
 
 Key=value pairs allow you to set specific values to any of the model
 parameters.
@@ -325,7 +329,7 @@ NAME_OPTIONS = set([
     ])
 VALUE_OPTIONS = [
     # Note: random is both a name option and a value option
-    'cutoff', 'random', 'Nq', 'res',
+    'cutoff', 'random', 'Nq', 'res', 'accuracy',
     ]
 
 def get_demo_pars(name):

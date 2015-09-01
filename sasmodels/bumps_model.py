@@ -398,12 +398,13 @@ class Experiment(object):
             q = np.sqrt(data.qx_data**2 + data.qy_data**2)
             qmin = getattr(data, 'qmin', 1e-16)
             qmax = getattr(data, 'qmax', np.inf)
+            accuracy = getattr(data, 'accuracy', 'Low')
             self.index = (~data.mask) & (~np.isnan(data.data)) \
                          & (q >= qmin) & (q <= qmax)
             self.Iq = data.data[self.index]
             self.dIq = data.err_data[self.index]
             self.resolution = Pinhole2D(data=data, index=self.index,
-                                        nsigma=3.0, accuracy='Low')
+                                        nsigma=3.0, accuracy=accuracy)
             #self._theory = np.zeros_like(self.Iq)
             if not partype['orientation'] and not partype['magnetic']:
                 raise ValueError("not 2D without orientation or magnetic parameters")

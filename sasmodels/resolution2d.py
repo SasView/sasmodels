@@ -91,7 +91,7 @@ class Pinhole2D(Resolution):
         # Total number of bins = # of bins
         nbins = nr * nphi
         # Number of bins in the dqr direction (polar coordinate of dqx and dqy)
-        bin_size = self.nsigma // nr
+        bin_size = self.nsigma / nr
         # in dq_r-direction times # of bins in dq_phi-direction
         # data length in the range of self.index
         nq = len(self.qx_data)
