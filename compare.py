@@ -99,8 +99,9 @@ def eval_sasview(name, pars, data, Nevals=1):
     from sas.models.qsmearing import smear_selection
     model = sasview_model(name, **pars)
     smearer = smear_selection(data, model=model)
+    value = None  # silence the linter
     toc = tic()
-    for _ in range(Nevals):
+    for _ in range(max(Nevals, 1)):  # make sure there is at least one eval
         if hasattr(data, 'qx_data'):
             q = np.sqrt(data.qx_data**2 + data.qy_data**2)
             index = ((~data.mask) & (~np.isnan(data.data))
@@ -119,7 +120,7 @@ def eval_sasview(name, pars, data, Nevals=1):
     average_time = toc()*1000./Nevals
     return value, average_time
 
-def eval_opencl(model_definition, pars, data, dtype='single', Nevals=1, cutoff=0):
+def eval_opencl(model_definition, pars, data, dtype='single', Nevals=1, cutoff=0.):
     try:
         model = core.load_model(model_definition, dtype=dtype, platform="ocl")
     except Exception,exc:
@@ -127,19 +128,21 @@ def eval_opencl(model_definition, pars, data, dtype='single', Nevals=1, cutoff=0
         print "... trying again with single precision"
         model = core.load_model(model_definition, dtype='single', platform="ocl")
     problem = Experiment(data, Model(model, **pars), cutoff=cutoff)
+    value = None  # silence the linter
     toc = tic()
-    for _ in range(Nevals):
+    for _ in range(max(Nevals, 1)):  # force at least one eval
         #pars['scale'] = np.random.rand()
         problem.update()
         value = problem.theory()
     average_time = toc()*1000./Nevals
     return value, average_time
 
-def eval_ctypes(model_definition, pars, data, dtype='double', Nevals=1, cutoff=0):
+def eval_ctypes(model_definition, pars, data, dtype='double', Nevals=1, cutoff=0.):
     model = core.load_model(model_definition, dtype=dtype, platform="dll")
     problem = Experiment(data, Model(model, **pars), cutoff=cutoff)
+    value = None  # silence the linter
     toc = tic()
-    for _ in range(Nevals):
+    for _ in range(max(Nevals, 1)):  # force at least one eval
         problem.update()
         value = problem.theory()
     average_time = toc()*1000./Nevals
@@ -223,20 +226,8 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
         relerr = resid/cpu
         #bad = (relerr>1e-4)
         #print relerr[bad],cpu[bad],ocl[bad],data.qx_data[bad],data.qy_data[bad]
-        def stats(label,err):
-            sorted_err = np.sort(abs(err))
-            p50 = int((len(err)-1)*0.50)
-            p98 = int((len(err)-1)*0.98)
-            data = [
-                "max:%.3e"%sorted_err[-1],
-                "median:%.3e"%sorted_err[p50],
-                "98%%:%.3e"%sorted_err[p98],
-                "rms:%.3e"%np.sqrt(np.mean(err**2)),
-                "zero-offset:%+.3e"%np.mean(err),
-                ]
-            print label,"  ".join(data)
-        stats("|ocl-%s|"%comp+(" "*(3+len(comp))), resid)
-        stats("|(ocl-%s)/%s|"%(comp,comp), relerr)
+        _print_stats("|ocl-%s|"%comp+(" "*(3+len(comp))), resid)
+        _print_stats("|(ocl-%s)/%s|"%(comp,comp), relerr)
 
     # Plot if requested
     if '-noplot' in opts: return
@@ -275,6 +266,21 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
         plt.title('Comparison of single and double precision models for %s'%name)
 
     plt.show()
+
+def _print_stats(label, err):
+    sorted_err = np.sort(abs(err))
+    p50 = int((len(err)-1)*0.50)
+    p98 = int((len(err)-1)*0.98)
+    data = [
+        "max:%.3e"%sorted_err[-1],
+        "median:%.3e"%sorted_err[p50],
+        "98%%:%.3e"%sorted_err[p98],
+        "rms:%.3e"%np.sqrt(np.mean(err**2)),
+        "zero-offset:%+.3e"%np.mean(err),
+        ]
+    print label,"  ".join(data)
+
+
 
 # ===========================================================================
 #

@@ -147,9 +147,6 @@ class DllModel(object):
         #print "dll",self.dllpath
         try:
             self.dll = ct.CDLL(self.dllpath)
-	except WindowsError, exc:
-	    # TODO: update annotate_exception so it can handle WindowsError
-	    raise RuntimeError(str(exc)+" while loading "+self.dllpath)
         except Exception, exc:
             annotate_exception(exc, "while loading "+self.dllpath)
             raise
