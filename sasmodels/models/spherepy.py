@@ -90,19 +90,21 @@ def Iq(q, sld, solvent_sld, radius):
     #print "sld,r",sld,solvent_sld,radius
     qr = q * radius
     sn, cn = sin(qr), cos(qr)
-    # FOR VECTORIZED VERSION, UNCOMMENT THE NEXT TWO LINES
+    ## The natural expression for the bessel function is the following:
+    ##     bes = 3 * (sn-qr*cn)/qr**3 if qr>0 else 1
+    ## however, to support vector q values we need to handle the conditional
+    ## as a vector, which we do by first evaluating the full expression
+    ## everywhere, then fixing it up where it is broken.   We should probably
+    ## set numpy to ignore the 0/0 error before we do though...
     bes = 3 * (sn - qr * cn) / qr ** 3 # may be 0/0 but we fix that next line
     bes[qr == 0] = 1
-    # FOR NON VECTORIZED VERSION, UNCOMMENT THE NEXT LINE
-    #bes = 3 * (sn-qr*cn)/qr**3 if qr>0 else 1
     fq = bes * (sld - solvent_sld) * form_volume(radius)
     return 1.0e-4 * fq ** 2
-# FOR VECTORIZED VERSION, UNCOMMENT THE NEXT LINE
-Iq.vectorized = True
+Iq.vectorized = True  # Iq accepts an array of Q values
 
 def Iqxy(qx, qy, sld, solvent_sld, radius):
     return Iq(sqrt(qx ** 2 + qy ** 2), sld, solvent_sld, radius)
-Iqxy.vectorized = True
+Iqxy.vectorized = True  # Iqxy accepts arrays of Qx, Qy values
 
 def sesans(z, sld, solvent_sld, radius):
     """
@@ -118,7 +120,7 @@ def sesans(z, sld, solvent_sld, radius):
     dlow2 = dlow ** 2
     g[low] = sqrt(1 - dlow2 / 4.) * (1 + dlow2 / 8.) + dlow2 / 2.*(1 - dlow2 / 16.) * log(dlow / (2. + sqrt(4. - dlow2)))
     return g
-sesans.vectorized = True
+sesans.vectorized = True  # sesans accepts and array of z values
 
 def ER(radius):
     return radius
