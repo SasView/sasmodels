@@ -56,13 +56,22 @@ def genfiles(package, package_name, modules, dir='api'):
 
 modules=[
     #('__init__', 'Top level namespace'),
+    #('alignment', 'GPU data alignment [unused]'),
     ('bumps_model', 'Bumps interface'),
+    ('convert', 'Sasview to sasmodel converter'),
+    ('core', 'Model access'),
+    ('direct_model', 'Simple interface'),
+    ('exception', 'Annotate exceptions'),
+    ('generate', 'Model parser'),
+    ('kernelcl', 'OpenCL model evaluator'),
+    ('kerneldll', 'Ctypes model evaluator'),
+    ('kernelpy', 'Python model evaluator'),
+    ('model_test', 'Unit test support'),
+    ('resolution', '1-D resolution functions'),
+    ('resolution2d', '2-D resolution functions'),
     ('sasview_model', 'Sasview interface'),
+    ('sesans', 'SESANS model evaluator'),
     ('weights', 'Distribution functions'),
-    ('gen', 'Model generator'),
-    ('convert', 'Model parameter converter'),
-    ('gpu', 'OpenCL model loader'),
-    ('dll', 'Ctypes model loader'),
     #('transition', 'Model stepper for automatic model selection'),
 ]
 package='sasmodels'

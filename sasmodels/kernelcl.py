@@ -38,7 +38,6 @@ except Exception, exc:
 from pyopencl import mem_flags as mf
 
 from . import generate
-from .kernelpy import PyModel
 
 F64_DEFS = """\
 #ifdef cl_khr_fp64

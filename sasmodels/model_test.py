@@ -67,41 +67,42 @@ def make_suite(loaders, models):
         if model_name in skip: continue
         model_definition = load_model_definition(model_name)
 
-        smoke_tests = [
-            [{},0.1,None],
-            [{},(0.1,0.1),None],
-            [{},'ER',None],
-            [{},'VR',None],
-            ]
-        tests = smoke_tests + getattr(model_definition, 'tests', [])
+        #print '------'
+        #print 'found tests in', model_name
+        #print '------'
 
-        if tests: # in case there are no smoke tests...
-            #print '------'
-            #print 'found tests in', model_name
-            #print '------'
+        # if ispy then use the dll loader to call pykernel
+        # don't try to call cl kernel since it will not be
+        # available in some environmentes.
+        is_py = callable(getattr(model_definition,'Iq', None))
 
-            # if ispy then use the dll loader to call pykernel
-            # don't try to call cl kernel since it will not be
-            # available in some environmentes.
-            ispy = callable(getattr(model_definition,'Iq', None))
-
-            # test using opencl if desired
-            if not ispy and ('opencl' in loaders and HAVE_OPENCL):
+        if is_py:  # kernel implemented in python
+            test_name = "Model: %s, Kernel: python"%model_name
+            test_method_name = "test_%s_python" % model_name
+            test = ModelTestCase(test_name, model_definition,
+                                 test_method_name,
+                                 platform="dll",  # so that
+                                 dtype="double")
+            suite.addTest(test)
+        else:   # kernel implemented in C
+            # test using opencl if desired and available
+            if 'opencl' in loaders and HAVE_OPENCL:
                 test_name = "Model: %s, Kernel: OpenCL"%model_name
-                test_method = "test_%s_opencl" % model_name
+                test_method_name = "test_%s_opencl" % model_name
                 test = ModelTestCase(test_name, model_definition,
-                                     tests, test_method,
+                                     test_method_name,
                                      platform="ocl", dtype='single')
                 #print "defining", test_name
                 suite.addTest(test)
 
             # test using dll if desired
-            if ispy or 'dll' in loaders:
+            if 'dll' in loaders:
                 test_name = "Model: %s, Kernel: dll"%model_name
-                test_method = "test_%s_dll" % model_name
+                test_method_name = "test_%s_dll" % model_name
                 test = ModelTestCase(test_name, model_definition,
-                                     tests, test_method,
-                                     platform="dll", dtype="double")
+                                     test_method_name,
+                                     platform="dll",
+                                     dtype="double")
                 suite.addTest(test)
 
     return suite
@@ -109,23 +110,38 @@ def make_suite(loaders, models):
 
 def _hide_model_case_from_nosetests():
     class ModelTestCase(unittest.TestCase):
-        def __init__(self, test_name, definition, tests, test_method,
+        def __init__(self, test_name, definition, test_method_name,
                      platform, dtype):
             self.test_name = test_name
             self.definition = definition
-            self.tests = tests
             self.platform = platform
             self.dtype = dtype
 
-            setattr(self, test_method, self._runTest)
-            unittest.TestCase.__init__(self, test_method)
+            setattr(self, test_method_name, self._runTest)
+            unittest.TestCase.__init__(self, test_method_name)
 
         def _runTest(self):
+            smoke_tests = [
+                [{},0.1,None],
+                [{},(0.1,0.1),None],
+                [{},'ER',None],
+                [{},'VR',None],
+                ]
+
+            tests = getattr(self.definition, 'tests', [])
             try:
                 model = load_model(self.definition, dtype=self.dtype,
                                    platform=self.platform)
-                for test in self.tests:
+                for test in smoke_tests + tests:
                     self._run_one_test(model, test)
+
+                if not tests and self.platform == "dll":
+                    ## Uncomment the following to make forgetting the test
+                    ## values an error.  Only do so for the "dll" tests
+                    ## to reduce noise from both opencl and dll, and because
+                    ## python kernels us
+                    #raise Exception("No test cases provided")
+                    pass
 
             except Exception,exc:
                 annotate_exception(exc, self.test_name)
@@ -198,8 +214,14 @@ def main():
     else:
         loaders = ['opencl', 'dll']
     if not models:
-        print >>sys.stderr, "usage: python -m sasmodels.model_test [opencl|dll|opencl_and_dll] model1 model2 ..."
-        print >>sys.stderr, "if model1 is 'all', then all except the remaining models will be tested"
+        print >>sys.stderr, """\
+usage:
+  python -m sasmodels.model_test [opencl|dll|opencl_and_dll] model1 model2 ...
+
+If model1 is 'all', then all except the remaining models will be tested.
+If no compute target is specified, then models will be tested with both opencl
+and dll; the compute target is ignored for pure python models."""
+
         return 1
 
     #runner = unittest.TextTestRunner()
