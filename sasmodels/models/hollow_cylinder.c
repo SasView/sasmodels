@@ -3,9 +3,9 @@ double _hollow_cylinder_kernel(double q, double core_radius, double radius,
 
 double form_volume(double radius, double core_radius, double length);
 double Iq(double q, double radius, double core_radius, double length, double sld,
-	double solvent_sld, double axis_theta, double axis_phi);
+	double solvent_sld);
 double Iqxy(double qx, double qy, double radius, double core_radius, double length, double sld,
-	double solvent_sld, double axis_theta, double axis_phi);
+	double solvent_sld, double theta, double phi);
 
 // From Igor library
 double _hollow_cylinder_kernel(double q, double core_radius, double radius, 
@@ -47,9 +47,8 @@ double form_volume(double radius, double core_radius, double length)
 	return(v_shell);
 }
 
-//FIXME: Returning values 10^12 times too high
 double Iq(double q, double radius, double core_radius, double length, double sld,
-	double solvent_sld, double axis_theta, double axis_phi)
+	double solvent_sld)
 {
     int i;
 	int nord=76;			//order of integration
@@ -73,16 +72,16 @@ double Iq(double q, double radius, double core_radius, double length, double sld
 	scale = delrho*delrho;
 	//normalize by volume
 	volume = form_volume(radius, core_radius, length);
-	//convert to [cm-1]
-	convert = 1.0e8;
-	answer = norm*scale*volume*convert;
+	//convert to [cm-1] given sld*1e6
+	convert = 1.0e-4;
+	answer = norm*scale*convert*volume*volume;
 	
 	return(answer);
 }
 
 //TODO: Add this in
 double Iqxy(double qx, double qy, double radius, double core_radius, double length, double sld,
-	double solvent_sld, double axis_theta, double axis_phi)
+	double solvent_sld, double theta, double phi)
 {
     return(0.0);
 }
