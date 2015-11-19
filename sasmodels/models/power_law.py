@@ -61,3 +61,7 @@ oldname = "PowerLawAbsModel"
 oldpars = dict(scale='scale',
                m='m',
                bkgd='background')
+
+tests = [
+        [ {'scale': 1.0, 'm': 4.0, 'bkgd' : 0.0}, [0.0106939, 0.469418], [7.64644e+07, 20.5949]]
+        ]
