@@ -25,7 +25,7 @@ name = "guinier"
 title = ""
 description = """
  I(q) = scale exp ( - rg^2 q^2 / 3.0 )
-        
+ 
     List of default parameters:
     scale = scale
     rg = Radius of gyration
@@ -33,11 +33,14 @@ description = """
 category = "shape-independent"
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["rg", "Ang", 60.0, [0, inf], "", "Radius of Gyration"],]
+parameters = [
+              ["rg", "Ang", 60.0, [0, inf], "", "Radius of Gyration"],
+              ]
 
 Iq = """
-    double value = rg*rg*q*q/3.0;
-    return exp(-value);
+    double exponent = rg*rg*q*q/3.0;
+    double value = exp(-exponent);
+    return value;
 """
 
 Iqxy = """
@@ -51,3 +54,8 @@ demo = dict(scale=1.0,rg=60.0)
 # names and the target sasview model name.
 oldname = 'GuinierModel'
 oldpars = dict(rg='rg')
+
+# parameters for unit tests
+tests = [
+         [{'rg' : 31.5}, 0.005, 0.991756]
+         ]

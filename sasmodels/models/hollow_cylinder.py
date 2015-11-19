@@ -48,7 +48,7 @@ by the NIST Center for Neutron Research (Kline, 2006).
 
 .. image:: img/image061.jpg
 
-*Figure. Definition of the angles for the oriented HollowCylinderModel.*
+*Figure. Definition of the angles for the oriented hollow_cylinder model.*
 
 .. image:: img/image062.jpg
 
@@ -102,3 +102,8 @@ oldname = 'HollowCylinderModel'
 oldpars = dict(scale='scale',background='background',radius='radius',
                core_radius='core_radius',sld='sldCyl',length='length',
                solvent_sld='sldSolv',phi='axis_phi',theta='axis_theta')
+
+# Parameters for unit tests
+tests = [
+         [{"radius" : 30.0},0.00005,1764.926]
+         ]

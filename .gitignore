@@ -13,3 +13,5 @@
 /pylint_violations.txt
 /coverage.xml
 /.coverage
+/.project
+/.pydevproject
