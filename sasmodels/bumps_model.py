@@ -34,6 +34,7 @@ A variety of helper functions are provided:
 
 import datetime
 import warnings
+import traceback
 
 import numpy as np
 
@@ -215,7 +216,15 @@ def set_top(data, cutoff):
     data.mask += \
         Boxcut(x_min=-np.inf, x_max=np.inf, y_min=-np.inf, y_max=cutoff)(data)
 
+def protect(fn):
+    def wrapper(*args, **kw):
+        try: 
+            return fn(*args, **kw)
+        except:
+            traceback.print_exc()
+    return wrapper
 
+@protect
 def _plot_result1D(data, theory, resid, view, include_data=True):
     """
     Plot the data and residuals for 1D data.
@@ -233,13 +242,16 @@ def _plot_result1D(data, theory, resid, view, include_data=True):
     if resid is not None:
         plt.subplot(121)
 
+    positive = False
     if include_data:
         plt.errorbar(data.x, scale*mdata, yerr=data.dy, fmt='.')
+        positive = positive or (mdata>0).any()
     if theory is not None:
         mtheory = masked_array(theory, mdata.mask)
         plt.plot(data.x, scale*mtheory, '-', hold=True)
+        positive = positive or (mtheory>0).any()
     plt.xscale(view)
-    plt.yscale('linear' if view == 'q4' else view)
+    plt.yscale('linear' if view == 'q4' or not positive else view)
     plt.xlabel('Q')
     plt.ylabel('I(Q)')
     if resid is not None:
@@ -251,6 +263,7 @@ def _plot_result1D(data, theory, resid, view, include_data=True):
         plt.xscale(view)
 
 # pylint: disable=unused-argument
+@protect
 def _plot_sesans(data, theory, resid, view):
     import matplotlib.pyplot as plt
     plt.subplot(121)
@@ -263,6 +276,7 @@ def _plot_sesans(data, theory, resid, view):
     plt.xlabel('spin echo length (nm)')
     plt.ylabel('residuals (P/P0)')
 
+@protect
 def _plot_result2D(data, theory, resid, view):
     """
     Plot the data and residuals for 2D data.
@@ -289,6 +303,7 @@ def _plot_result2D(data, theory, resid, view):
     plt.title('residuals')
     plt.colorbar()
 
+@protect
 def _plot_2d_signal(data, signal, vmin=None, vmax=None, view='log'):
     """
     Plot the target value for the data.  This could be the data itself,
