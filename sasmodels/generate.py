@@ -246,6 +246,9 @@ The returned value is scaled to units of |cm^-1|.
 %(docs)s
 """
 
+def format_units(par):
+    return RST_UNITS.get(par, par)
+
 def make_partable(pars):
     """
     Generate the parameter table to include in the sphinx documentation.
@@ -254,7 +257,7 @@ def make_partable(pars):
     column_widths = [
         max(len(p[0]) for p in pars),
         max(len(p[-1]) for p in pars),
-        max(len(RST_UNITS[p[1]]) for p in pars),
+        max(len(format_units(p[1])) for p in pars),
         PARTABLE_VALUE_WIDTH,
         ]
     column_widths = [max(w, len(h))
@@ -270,7 +273,7 @@ def make_partable(pars):
         lines.append(" ".join([
             "%-*s" % (column_widths[0], p[0]),
             "%-*s" % (column_widths[1], p[-1]),
-            "%-*s" % (column_widths[2], RST_UNITS[p[1]]),
+            "%-*s" % (column_widths[2], format_units(p[1])),
             "%*g" % (column_widths[3], p[2]),
             ]))
     lines.append(sep)
