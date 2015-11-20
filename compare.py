@@ -8,6 +8,10 @@ import glob
 
 import numpy as np
 
+ROOT = dirname(__file__)
+sys.path.insert(0, ROOT)  # Make sure sasmodels is first on the path
+
+
 from sasmodels.bumps_model import Model, Experiment, plot_theory, tic
 from sasmodels import core
 from sasmodels import kerneldll
@@ -15,7 +19,6 @@ from sasmodels.convert import revert_model
 kerneldll.ALLOW_SINGLE_PRECISION_DLLS = True
 
 # List of available models
-ROOT = dirname(__file__)
 MODELS = [basename(f)[:-3]
           for f in sorted(glob.glob(joinpath(ROOT,"sasmodels","models","[a-zA-Z]*.py")))]
 
