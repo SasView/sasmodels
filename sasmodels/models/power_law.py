@@ -9,10 +9,10 @@ Definition
 
 .. math::
 
-    I(q) = \text{scale} \cdot q^{-m} + \text{background}
+    I(q) = \text{scale} \cdot q^{-power} + \text{background}
 
-Note the minus sign in front of the exponent. The exponent *m* 
-should therefore be entered as a **positive** number.
+Note the minus sign in front of the exponent. The exponent *power* 
+should therefore be entered as a **positive** number for fitting.
 
 Also note that unlike many other models, *scale* in this model 
 is NOT explicitly related to a volume fraction. Be careful if 
@@ -34,18 +34,17 @@ title = "Simple power law with a flat background"
 
 description = """\
         Evaluates the function
-        I(q) = scale * q^(-m) + bkgd
-        NB: enter m as a positive number!
+        I(q) = scale * q^(-power) + background
+        NB: enter power as a positive number!
         """
 category = "shape-independent"
 
 #             ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["scale", "", 1.0, [-inf, inf], "", "Power law scale factor"],
-              ["m", "", 4.0, [-inf, inf], "", "Power law exponent"],
-              ["bkgd", "", 0.0, [-inf, inf], "", "Background level"]]
+parameters = [["power", "", 4.0, [-inf, inf], "", "Power law exponent"]]
 
-def Iq(scale,m,bkgd):
-    inten = (scale * q ** m + bkgd)
+# NB: Scale and Background are implicit parameters on every model
+def Iq(q,power):
+    inten = (q**-power)
     return inten
 Iq.vectorized = True  # Iq accepts an array of Q values
 
@@ -54,14 +53,14 @@ def Iqxy(qx, qy, *args):
 Iqxy.vectorized = True # Iqxy accepts an array of Qx, Qy values
 
 demo = dict(scale=1.0,
-            m=4.0,
-            bkgd=0.0)
+            power=4.0,
+            background=0.0)
 
 oldname = "PowerLawAbsModel"
 oldpars = dict(scale='scale',
-               m='m',
-               bkgd='background')
+               power='m',
+               background='background')
 
 tests = [
-        [ {'scale': 1.0, 'm': 4.0, 'bkgd' : 0.0}, [0.0106939, 0.469418], [7.64644e+07, 20.5949]]
+        [ {'scale': 1.0, 'power': 4.0, 'background' : 0.0}, [0.0106939, 0.469418], [7.64644e+07, 20.5949]]
         ]
