@@ -57,8 +57,8 @@ description = """\
         P(q)= see manual
         layer thickness =(H+T+T+H) = 2(Head+Tail)
         sld = Tail scattering length density
-        sld_head = Head scattering length density
-        sld_solvent = solvent scattering length density
+        head_sld = Head scattering length density
+        solvent_sld = solvent scattering length density
         background = incoherent background
         scale = scale factor
 """
@@ -115,6 +115,6 @@ demo = dict(scale=1, background=0,
             head_length_pd= 0.01, head_length_pd_n=40)
 
 oldname = 'LamellarFFHGModel'
-oldpars = dict(head_length='h_thickness', sld='sld_tail',
-               head_sld='sld_head', solvent_sld='sld_solvent')
+oldpars = dict(head_length='h_thickness', tail_length='t_length',
+               sld='sld_tail', head_sld='sld_head', solvent_sld='sld_solvent')
 
