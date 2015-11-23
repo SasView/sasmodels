@@ -22,9 +22,9 @@ The calculated form factor is:
 where the volume *V* = *A B C* and the averaging < > is applied over all
 orientations for 1D.
 
-.. image:: img/parallelepiped.jpg
+.. figure:: img/parallelepiped.jpg
 
-*Figure. Parallelepiped with the corresponding Definition of sides.
+   Parallelepiped with the corresponding definition of sides.
 
 The edge of the solid must satisfy the condition that** *A* < *B* < *C*.
 Then, assuming *a* = *A* / *B* < 1, *b* = *B* / *B* = 1, and
@@ -91,9 +91,9 @@ and |psi| respectively).
 
 .. _parallelepiped-compare:
 
-.. figure:: img/parallelepiped_compare.jpg
+.. figure:: img/parallelepiped_compare.gif
 
-*Figure. Comparison between 1D and averaged 2D.*
+   Comparison between 1D and averaged 2D.
 
 This model reimplements the form factor calculations implemented in a c-library
 provided by the NIST Center for Neutron Research (Kline, 2006).
