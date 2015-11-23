@@ -45,7 +45,11 @@ help:
 	@echo "  doctest   to run all doctests embedded in the documentation (if enabled)"
 
 model/img/%: ../sasmodels/models/img/%
+ifdef ComSpec
+	$(COPY) $(subst /,\\,$<) $(subst /,\\,$@)
+else
 	$(COPY) $< $@
+endif
 
 model/%.rst: ../sasmodels/models/%.py
 	$(PYTHON) genmodel.py $< $@
@@ -61,17 +65,26 @@ api: genapi.py
 
 model:
 	$(MKDIR) model
+ifdef ComSpec
+	$(MKDIR) model\img
+else
 	$(MKDIR) model/img
+endif
 
 build: model $(MODELS_RST) $(IMG_DEST) api ref/models/index.rst
+ifdef ComSpec
+	rem cd ..\..
+	rem python setup.py build
+else
 	#cd ../.. && python setup.py build
+endif
 
 upload:
 	scp -r _build/html/* reflectometry.org:web/danse/docs/sasmodels
 	scp _build/latex/SASModels.pdf reflectometry.org:web/danse/download
 
 clean:
-	-rm -rf _build model api
+	-$(RMDIR) _build model api
 
 html: build
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) _build/html
