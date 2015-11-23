@@ -198,6 +198,8 @@ def empty_data2D(qx, qy=None, resolution=0.05):
         Q = np.sqrt(Qx**2 + Qy**2)
         data.dqx_data = resolution * Q
         data.dqy_data = resolution * Q
+    else:
+        data.dqx_data = data.dqy_data = None
 
     detector = Detector()
     detector.pixel_size.x = 5 # mm
