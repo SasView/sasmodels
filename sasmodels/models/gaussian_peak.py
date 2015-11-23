@@ -21,7 +21,7 @@ where the $q$ vector is defined as
     q = \sqrt{q_x^2 + q_y^2}
 
 
-.. image:: img/gaussian_peak_1d.jpg
+.. figure:: img/gaussian_peak_1d.jpg
 
     1D plot using the default values (w/500 data points).
 

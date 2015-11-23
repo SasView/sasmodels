@@ -16,8 +16,6 @@ import warnings
 
 import numpy as np
 
-from bumps.names import Parameter
-
 from . import sesans
 from . import weights
 from .data import plot_theory
@@ -35,6 +33,10 @@ def BumpsModel(data, model, cutoff=1e-5, **kw):
 
 class Model(object):
     def __init__(self, model, **kw):
+        # lazy import; this allows the doc builder and nosetests to run even
+        # when bumps is not on the path.
+        from bumps.names import Parameter
+
         self._sasmodel = model
         partype = model.info['partype']
 
