@@ -5,6 +5,7 @@ import sys
 import math
 from os.path import basename, dirname, join as joinpath
 import glob
+import datetime
 
 import numpy as np
 
@@ -12,15 +13,54 @@ ROOT = dirname(__file__)
 sys.path.insert(0, ROOT)  # Make sure sasmodels is first on the path
 
 
-from sasmodels.bumps_model import Model, Experiment, plot_theory, tic
 from sasmodels import core
 from sasmodels import kerneldll
+from sasmodels.data import plot_theory, empty_data1D, empty_data2D
+from sasmodels.direct_model import DirectModel
 from sasmodels.convert import revert_model
 kerneldll.ALLOW_SINGLE_PRECISION_DLLS = True
 
 # List of available models
 MODELS = [basename(f)[:-3]
           for f in sorted(glob.glob(joinpath(ROOT,"sasmodels","models","[a-zA-Z]*.py")))]
+
+# CRUFT python 2.6
+if not hasattr(datetime.timedelta, 'total_seconds'):
+    def delay(dt):
+        """Return number date-time delta as number seconds"""
+        return dt.days * 86400 + dt.seconds + 1e-6 * dt.microseconds
+else:
+    def delay(dt):
+        """Return number date-time delta as number seconds"""
+        return dt.total_seconds()
+
+
+def tic():
+    """
+    Timer function.
+
+    Use "toc=tic()" to start the clock and "toc()" to measure
+    a time interval.
+    """
+    then = datetime.datetime.now()
+    return lambda: delay(datetime.datetime.now() - then)
+
+
+def set_beam_stop(data, radius, outer=None):
+    """
+    Add a beam stop of the given *radius*.  If *outer*, make an annulus.
+
+    Note: this function does not use the sasview package
+    """
+    if hasattr(data, 'qx_data'):
+        q = np.sqrt(data.qx_data**2 + data.qy_data**2)
+        data.mask = (q < radius)
+        if outer is not None:
+            data.mask |= (q >= outer)
+    else:
+        data.mask = (data.x < radius)
+        if outer is not None:
+            data.mask |= (data.x >= outer)
 
 
 def sasview_model(model_definition, **pars):
@@ -98,9 +138,9 @@ def suppress_pd(pars):
     for p in pars:
         if p.endswith("_pd"): pars[p] = 0
 
-def eval_sasview(name, pars, data, Nevals=1):
+def eval_sasview(model_definition, pars, data, Nevals=1):
     from sas.models.qsmearing import smear_selection
-    model = sasview_model(name, **pars)
+    model = sasview_model(model_definition, **pars)
     smearer = smear_selection(data, model=model)
     value = None  # silence the linter
     toc = tic()
@@ -130,36 +170,33 @@ def eval_opencl(model_definition, pars, data, dtype='single', Nevals=1, cutoff=0
         print exc
         print "... trying again with single precision"
         model = core.load_model(model_definition, dtype='single', platform="ocl")
-    problem = Experiment(data, Model(model, **pars), cutoff=cutoff)
+    calculator = DirectModel(data, model, cutoff=cutoff)
     value = None  # silence the linter
     toc = tic()
     for _ in range(max(Nevals, 1)):  # force at least one eval
-        #pars['scale'] = np.random.rand()
-        problem.update()
-        value = problem.theory()
+        value = calculator(**pars)
     average_time = toc()*1000./Nevals
     return value, average_time
+
 
 def eval_ctypes(model_definition, pars, data, dtype='double', Nevals=1, cutoff=0.):
     model = core.load_model(model_definition, dtype=dtype, platform="dll")
-    problem = Experiment(data, Model(model, **pars), cutoff=cutoff)
+    calculator = DirectModel(data, model, cutoff=cutoff)
     value = None  # silence the linter
     toc = tic()
     for _ in range(max(Nevals, 1)):  # force at least one eval
-        problem.update()
-        value = problem.theory()
+        value = calculator(**pars)
     average_time = toc()*1000./Nevals
     return value, average_time
 
+
 def make_data(qmax, is2D, Nq=128, resolution=0.0, accuracy='Low', view='log'):
     if is2D:
-        from sasmodels.bumps_model import empty_data2D, set_beam_stop
         data = empty_data2D(np.linspace(-qmax, qmax, Nq), resolution=resolution)
         data.accuracy = accuracy
         set_beam_stop(data, 0.004)
         index = ~data.mask
     else:
-        from sasmodels.bumps_model import empty_data1D
         if view == 'log':
             qmax = math.log10(qmax)
             q = np.logspace(qmax-3, qmax, Nq)
@@ -189,11 +226,12 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
     cutoff = float(opt_values.get('-cutoff','1e-5'))
 
     # randomize parameters
-    pars.update(set_pars)
+    #pars.update(set_pars)  # set value before random to control range
     if '-random' in opts or '-random' in opt_values:
         seed = int(opt_values['-random']) if '-random' in opt_values else None
         pars, seed = randomize_model(name, pars, seed=seed)
         print "Randomize using -random=%i"%seed
+    pars.update(set_pars)  # set value after random to control value
 
     # parameter selection
     if '-mono' in opts:
@@ -216,9 +254,13 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
         comp = "ctypes"
         print "ctypes t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu))
     elif Ncpu > 0:
-        cpu, cpu_time = eval_sasview(model_definition, pars, data, Ncpu)
-        comp = "sasview"
-        print "sasview t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu))
+        try:
+            cpu, cpu_time = eval_sasview(model_definition, pars, data, Ncpu)
+            comp = "sasview"
+            #print "ocl/sasview", (ocl-pars['background'])/(cpu-pars['background'])
+            print "sasview t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu))
+        except ImportError:
+            Ncpu = 0
 
     # Compare, but only if computing both forms
     if Nocl > 0 and Ncpu > 0:
@@ -237,14 +279,14 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
     import matplotlib.pyplot as plt
     if Ncpu > 0:
         if Nocl > 0: plt.subplot(131)
-        plot_theory(data, cpu, view=view)
+        plot_theory(data, cpu, view=view, plot_data=False)
         plt.title("%s t=%.1f ms"%(comp,cpu_time))
-        cbar_title = "log I"
+        #cbar_title = "log I"
     if Nocl > 0:
         if Ncpu > 0: plt.subplot(132)
-        plot_theory(data, ocl, view=view)
+        plot_theory(data, ocl, view=view, plot_data=False)
         plt.title("opencl t=%.1f ms"%ocl_time)
-        cbar_title = "log I"
+        #cbar_title = "log I"
     if Ncpu > 0 and Nocl > 0:
         plt.subplot(133)
         if '-abs' in opts:
@@ -252,12 +294,12 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
         else:
             err,errstr,errview = abs(relerr), "rel err", "log"
         #err,errstr = ocl/cpu,"ratio"
-        plot_theory(data, err, view=errview)
+        plot_theory(data, None, resid=err, view=errview, plot_data=False)
         plt.title("max %s = %.3g"%(errstr, max(abs(err))))
-        cbar_title = errstr if errview=="linear" else "log "+errstr
-    if is2D:
-        h = plt.colorbar()
-        h.ax.set_title(cbar_title)
+        #cbar_title = errstr if errview=="linear" else "log "+errstr
+    #if is2D:
+    #    h = plt.colorbar()
+    #    h.ax.set_title(cbar_title)
 
     if Ncpu > 0 and Nocl > 0 and '-hist' in opts:
         plt.figure()
@@ -319,9 +361,8 @@ Key=value pairs allow you to set specific values to any of the model
 parameters.
 
 Available models:
-
-    %s
 """
+
 
 NAME_OPTIONS = set([
     'plot','noplot',
@@ -341,6 +382,18 @@ VALUE_OPTIONS = [
     'cutoff', 'random', 'Nq', 'res', 'accuracy',
     ]
 
+def columnize(L, indent="", width=79):
+    column_width = max(len(w) for w in L) + 1
+    num_columns = (width - len(indent)) // column_width
+    num_rows = len(L) // num_columns
+    L = L + [""] * (num_rows*num_columns - len(L))
+    columns = [L[k*num_rows:(k+1)*num_rows] for k in range(num_columns)]
+    lines = [" ".join("%-*s"%(column_width, entry) for entry in row)
+             for row in zip(*columns)]
+    output = indent + ("\n"+indent).join(lines)
+    return output
+
+
 def get_demo_pars(name):
     import sasmodels.models
     __import__('sasmodels.models.'+name)
@@ -354,7 +407,8 @@ def main():
     args = [arg for arg in sys.argv[1:] if not arg.startswith('-')]
     models = "\n    ".join("%-15s"%v for v in MODELS)
     if len(args) == 0:
-        print(USAGE%models)
+        print(USAGE)
+        print(columnize(MODELS, indent="  "))
         sys.exit(1)
     if args[0] not in MODELS:
         print "Model %r not available. Use one of:\n    %s"%(args[0],models)

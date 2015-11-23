@@ -4,16 +4,17 @@
 import sys
 from bumps.names import *
 from sasmodels.core import load_model
-from sasmodels import bumps_model as sas
+from sasmodels.bumps_model import Model, Experiment
+from sasmodels.data import load_data, set_beam_stop, set_top
 
 """ IMPORT THE DATA USED """
-radial_data = sas.load_data('DEC07267.DAT')
-sas.set_beam_stop(radial_data, 0.00669, outer=0.025)
-sas.set_top(radial_data, -.0185)
+radial_data = load_data('DEC07267.DAT')
+set_beam_stop(radial_data, 0.00669, outer=0.025)
+set_top(radial_data, -.0185)
 
-tan_data = sas.load_data('DEC07266.DAT')
-sas.set_beam_stop(tan_data, 0.00669, outer=0.025)
-sas.set_top(tan_data, -.0185)
+tan_data = load_data('DEC07266.DAT')
+set_beam_stop(tan_data, 0.00669, outer=0.025)
+set_top(tan_data, -.0185)
 #sas.set_half(tan_data, 'right')
 
 name = "ellipsoid" if len(sys.argv) < 2 else sys.argv[1]
@@ -27,7 +28,7 @@ kernel = load_model(name, dtype="single")
 cutoff = 1e-3
 
 if name == "ellipsoid":
-    model = sas.Model(kernel,
+    model = Model(kernel,
         scale=0.08,
         rpolar=15, requatorial=800,
         sld=.291, solvent_sld=7.105,
@@ -50,7 +51,7 @@ if name == "ellipsoid":
 
 
 elif name == "lamellar":
-    model = sas.Model(kernel,
+    model = Model(kernel,
         scale=0.08,
         thickness=19.2946,
         sld=5.38,sld_sol=7.105,
@@ -86,7 +87,7 @@ elif name == "cylinder":
         length_pd=0.1,length_pd_n=5, length_pd_nsigma=3,
         theta_pd=10, theta_pd_n=50, theta_pd_nsigma=3,
         phi_pd=0, phi_pd_n=10, phi_pd_nsigma=3)
-    model = sas.Model(kernel, **pars)
+    model = Model(kernel, **pars)
 
     # SET THE FITTING PARAMETERS
     model.radius.range(1, 500)
@@ -101,7 +102,7 @@ elif name == "cylinder":
 
 
 elif name == "core_shell_cylinder":
-    model = sas.Model(kernel,
+    model = Model(kernel,
         scale= .031, radius=19.5, thickness=30, length=22,
         core_sld=7.105, shell_sld=.291, solvent_sld=7.105,
         background=0, theta=0, phi=phi,
@@ -128,7 +129,7 @@ elif name == "core_shell_cylinder":
 
 
 elif name == "capped_cylinder":
-    model = sas.Model(kernel,
+    model = Model(kernel,
         scale=.08, radius=20, cap_radius=40, length=400,
         sld_capcyl=1, sld_solv=6.3,
         background=0, theta=0, phi=phi,
@@ -143,7 +144,7 @@ elif name == "capped_cylinder":
 
 
 elif name == "triaxial_ellipsoid":
-    model = sas.Model(kernel,
+    model = Model(kernel,
         scale=0.08, req_minor=15, req_major=20, rpolar=500,
         sldEll=7.105, solvent_sld=.291,
         background=5, theta=0, phi=phi, psi=0,
@@ -169,12 +170,12 @@ else:
     sys.exit(1)
 
 model.cutoff = cutoff
-M = sas.Experiment(data=data, model=model)
+M = Experiment(data=data, model=model)
 if section == "both":
-   tan_model = sas.Model(model.kernel, **model.parameters())
+   tan_model = Model(model.kernel, **model.parameters())
    tan_model.phi = model.phi - 90
    tan_model.cutoff = cutoff
-   tan_M = sas.Experiment(data=tan_data, model=tan_model)
+   tan_M = Experiment(data=tan_data, model=tan_model)
    problem = FitProblem([M, tan_M])
 else:
    problem = FitProblem(M)

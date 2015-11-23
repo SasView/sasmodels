@@ -1,18 +1,20 @@
 #!/usr/bin/env python
-
 import sys
+import traceback
 
 import numpy as np
 
+from sasmodels import core
 from sasmodels.kernelcl import environment
 from compare import (MODELS, randomize_model, suppress_pd, eval_sasview,
-                     eval_opencl, eval_ctypes, make_data, get_demo_pars)
+                     eval_opencl, eval_ctypes, make_data, get_demo_pars,
+                     columnize)
 
 def get_stats(target, value, index):
     resid = abs(value-target)[index]
     relerr = resid/target[index]
     srel = np.argsort(relerr)
-    p90 = int(len(relerr)*0.90)
+    #p90 = int(len(relerr)*0.90)
     p95 = int(len(relerr)*0.95)
     maxrel = np.max(relerr)
     rel95 = relerr[srel[p95]]
@@ -26,62 +28,99 @@ def print_column_headers(pars, parts):
     for p in parts:
         groups.append(p)
         groups.extend(['']*(len(stats)-1))
+    groups.append("Parameters")
     columns = ['Seed'] + stats*len(parts) +  list(sorted(pars.keys()))
     print(','.join('"%s"'%c for c in groups))
     print(','.join('"%s"'%c for c in columns))
 
 def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5):
+    model_definition = core.load_model_definition(name)
     pars = get_demo_pars(name)
     header = '\n"Model","%s","Count","%d"'%(name, N)
     if not mono: header += ',"Cutoff",%g'%(cutoff,)
     print(header)
+
+    # Stuff the failure flag into a mutable object so we can update it from
+    # within the nested function.  Note that the nested function uses "pars"
+    # which is dynamically scoped, not lexically scoped in this context.  That
+    # is, pars is replaced each time in the loop, so don't assume that it is
+    # the default values defined above.
+    def trymodel(fn, *args, **kw):
+        try:
+            result, _ = fn(model_definition, pars, data, *args, **kw)
+        except:
+            result = np.NaN
+            traceback.print_exc()
+        return result
+
+    num_good = 0
     first = True
     for _ in range(N):
         pars, seed = randomize_model(name, pars)
         if mono: suppress_pd(pars)
 
-        target, _ = eval_sasview(name, pars, data)
+        # Force parameter constraints on a per-model basis.
+        if name in ('teubner_strey','broad_peak'):
+            pars['scale'] = 1.0
+        #if name == 'parallelepiped':
+        #    pars['a_side'],pars['b_side'],pars['c_side'] = \
+        #        sorted([pars['a_side'],pars['b_side'],pars['c_side']])
 
-        env = environment()
-        gpu_single_value,_ = eval_opencl(name, pars, data, dtype='single', cutoff=cutoff)
-        gpu_single = get_stats(target, gpu_single_value, index)
-        if env.has_double:
-            gpu_double_value,_ = eval_opencl(name, pars, data, dtype='double', cutoff=cutoff)
-            gpu_double = get_stats(target, gpu_double_value, index)
+
+        good = True
+        labels = []
+        columns = []
+        if 1:
+            sasview_value = trymodel(eval_sasview)
+        if 0:
+            gpu_single_value = trymodel(eval_opencl, dtype='single', cutoff=cutoff)
+            stats = get_stats(sasview_value, gpu_single_value, index)
+            columns.extend(stats)
+            labels.append('GPU single')
+            good = good and (stats[0] < 1e-14)
+        if 0 and environment().has_double:
+            gpu_double_value = trymodel(eval_opencl, dtype='double', cutoff=cutoff)
+            stats = get_stats(sasview_value, gpu_double_value, index)
+            columns.extend(stats)
+            labels.append('GPU double')
+            good = good and (stats[0] < 1e-14)
+        if 1:
+            cpu_double_value = trymodel(eval_ctypes, dtype='double', cutoff=cutoff)
+            stats = get_stats(sasview_value, cpu_double_value, index)
+            columns.extend(stats)
+            labels.append('CPU double')
+            good = good and (stats[0] < 1e-14)
+        if 0:
+            stats = get_stats(cpu_double_value, gpu_single_value, index)
+            columns.extend(stats)
+            labels.append('single/double')
+            good = good and (stats[0] < 1e-14)
+
+        columns += [v for _,v in sorted(pars.items())]
+        if first:
+            print_column_headers(pars, labels)
+            first = False
+        if good:
+            num_good += 1
         else:
-            gpu_double = [0]*len(gpu_single)
-        cpu_double_value,_ =  eval_ctypes(name, pars, data, dtype='double', cutoff=cutoff)
-        cpu_double = get_stats(target, cpu_double_value, index)
-        single_double = get_stats(cpu_double_value, gpu_single_value, index)
+            print(("%d,"%seed)+','.join("%g"%v for v in columns))
+    print '"%d/%d good"'%(num_good, N)
 
-        values = (list(gpu_single) + list(gpu_double) + list(cpu_double)
-                  + list(single_double) + [v for _,v in sorted(pars.items())])
-        if gpu_single[0] > 5e-5:
-            if first:
-                print_column_headers(pars,'GPU single|GPU double|CPU double|single/double'.split('|'))
-                first = False
-            print(("%d,"%seed)+','.join("%g"%v for v in values))
 
-def main():
-    try:
-        model = sys.argv[1]
-        assert (model in MODELS) or (model == "all")
-        count = int(sys.argv[2])
-        is2D = sys.argv[3].startswith('2d')
-        assert sys.argv[3][1] == 'd'
-        Nq = int(sys.argv[3][2:])
-        mono = sys.argv[4] == 'mono'
-        cutoff = float(sys.argv[4]) if not mono else 0
-    except:
-        import traceback; traceback.print_exc()
-        models = "\n    ".join("%-7s: %s"%(k,v.__name__.replace('_',' '))
-                               for k,v in sorted(MODELS.items()))
-        print("""\
-usage: compare_many.py MODEL COUNT (1dNQ|2dNQ) (CUTOFF|mono)
+def print_usage():
+    print "usage: compare_many.py MODEL COUNT (1dNQ|2dNQ) (CUTOFF|mono)"
 
-MODEL is the model name of the model, which is one of:
-    %s
-or "all" for all the models in alphabetical order.
+
+def print_models():
+    print(columnize(MODELS, indent="  "))
+
+
+def print_help():
+    print_usage()
+    print("""\
+
+MODEL is the model name of the model or "all" for all the models
+in alphabetical order.
 
 COUNT is the number of randomly generated parameter sets to try. A value
 of "10000" is a reasonable check for monodisperse models, or "100" for
@@ -97,7 +136,30 @@ CUTOFF is the cutoff value to use for the polydisperse distribution. Weights
 below the cutoff will be ignored.  Use "mono" for monodisperse models.  The
 choice of polydisperse parameters, and the number of points in the distribution
 is set in compare.py defaults for each model.
-"""%(models,))
+
+Available models:
+""")
+    print_models()
+
+def main():
+    if len(sys.argv) == 1:
+        print_help()
+        sys.exit(1)
+
+    model = sys.argv[1]
+    if not (model in MODELS) and (model != "all"):
+        print 'Bad model %s.  Use "all" or one of:'
+        print_models()
+        sys.exit(1)
+    try:
+        count = int(sys.argv[2])
+        is2D = sys.argv[3].startswith('2d')
+        assert sys.argv[3][1] == 'd'
+        Nq = int(sys.argv[3][2:])
+        mono = sys.argv[4] == 'mono'
+        cutoff = float(sys.argv[4]) if not mono else 0
+    except:
+        print_usage()
         sys.exit(1)
 
     data, index = make_data(qmax=1.0, is2D=is2D, Nq=Nq)

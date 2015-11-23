@@ -122,16 +122,15 @@ def get_weights(info, pars, name):
     from the *pars* dictionary for parameter value and parameter dispersion.
     """
     relative = name in info['partype']['pd-rel']
-    limits = info['limits']
+    limits = info['limits'][name]
     disperser = pars.get(name+'_pd_type', 'gaussian')
     value = pars.get(name, info['defaults'][name])
     npts = pars.get(name+'_pd_n', 0)
     width = pars.get(name+'_pd', 0.0)
     nsigma = pars.get(name+'_pd_nsigma', 3.0)
     value,weight = weights.get_weights(
-        disperser, npts, width, nsigma,
-        value, limits[name], relative)
-    return value,weight/np.sum(weight)
+        disperser, npts, width, nsigma, value, limits, relative)
+    return value, weight / np.sum(weight)
 
 def dispersion_mesh(pars):
     """
