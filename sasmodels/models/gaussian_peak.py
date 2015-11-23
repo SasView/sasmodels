@@ -54,7 +54,8 @@ form_volume = """
     """
 
 Iq = """
-    return exp(-0.5*pow((q - q0)/sigma,2.0));
+    double scaled_dq = (q - q0)/sigma;
+    return exp(-0.5*scaled_dq*scaled_dq); //sqrt(2*M_PI*sigma*sigma);
     """
 
 
