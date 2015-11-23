@@ -4,11 +4,11 @@ import traceback
 
 import numpy as np
 
-from sasmodels import core
-from sasmodels.kernelcl import environment
-from compare import (MODELS, randomize_model, suppress_pd, eval_sasview,
-                     eval_opencl, eval_ctypes, make_data, get_demo_pars,
-                     columnize)
+from . import core
+from .kernelcl import environment
+from .compare import (MODELS, randomize_model, suppress_pd, eval_sasview,
+                      eval_opencl, eval_ctypes, make_data, get_demo_pars,
+                      columnize)
 
 def get_stats(target, value, index):
     resid = abs(value-target)[index]

@@ -8,4 +8,4 @@ export PYTHONPATH
 
 set -x
 
-./compare.py $*
+python -m sasmodels.compare $*

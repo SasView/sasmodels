@@ -13,16 +13,17 @@ ROOT = dirname(__file__)
 sys.path.insert(0, ROOT)  # Make sure sasmodels is first on the path
 
 
-from sasmodels import core
-from sasmodels import kerneldll
-from sasmodels.data import plot_theory, empty_data1D, empty_data2D
-from sasmodels.direct_model import DirectModel
-from sasmodels.convert import revert_model
+from . import core
+from . import kerneldll
+from . import models
+from .data import plot_theory, empty_data1D, empty_data2D
+from .direct_model import DirectModel
+from .convert import revert_model
 kerneldll.ALLOW_SINGLE_PRECISION_DLLS = True
 
 # List of available models
 MODELS = [basename(f)[:-3]
-          for f in sorted(glob.glob(joinpath(ROOT,"sasmodels","models","[a-zA-Z]*.py")))]
+          for f in sorted(glob.glob(joinpath(ROOT,"models","[a-zA-Z]*.py")))]
 
 # CRUFT python 2.6
 if not hasattr(datetime.timedelta, 'total_seconds'):
@@ -395,9 +396,8 @@ def columnize(L, indent="", width=79):
 
 
 def get_demo_pars(name):
-    import sasmodels.models
     __import__('sasmodels.models.'+name)
-    model = getattr(sasmodels.models, name)
+    model = getattr(models, name)
     pars = getattr(model, 'demo', None)
     if pars is None: pars = dict((p[0],p[2]) for p in model.parameters)
     return pars
