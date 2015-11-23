@@ -218,7 +218,7 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
     Nq = int(opt_values.get('-Nq', '128'))
     res = float(opt_values.get('-res', '0'))
     accuracy = opt_values.get('-accuracy', 'Low')
-    is2D = not "-1d" in opts
+    is2D = "-2d" in opts
     data, index = make_data(qmax, is2D, Nq, res, accuracy, view=view)
 
 
@@ -346,7 +346,7 @@ Options (* for default):
     -single*/-double uses double precision for comparison
     -lowq*/-midq/-highq/-exq use q values up to 0.05, 0.2, 1.0, 10.0
     -Nq=128 sets the number of Q points in the data set
-    -1d/-2d* computes 1d or 2d data
+    -1d*/-2d computes 1d or 2d data
     -preset*/-random[=seed] preset or random parameters
     -mono/-poly* force monodisperse/polydisperse
     -ctypes/-sasview* whether cpu is tested using sasview or ctypes

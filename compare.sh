@@ -6,6 +6,6 @@ SASVIEW=( ../sasview/build/lib.* )
 PYTHONPATH=../bumps:../periodictable:$SASVIEW
 export PYTHONPATH
 
-set -x
+#set -x
 
 python -m sasmodels.compare $*
