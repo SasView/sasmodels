@@ -48,7 +48,7 @@ import sys
 import os
 import tempfile
 import ctypes as ct
-from ctypes import c_void_p, c_int, c_double, c_float
+from ctypes import c_void_p, c_int, c_longdouble, c_double, c_float
 
 import numpy as np
 
@@ -95,6 +95,10 @@ def dll_path(info, dtype="double"):
     basename = splitext(splitpath(info['filename'])[1])[0]
     if np.dtype(dtype) == generate.F32:
         basename += "32"
+    elif np.dtype(dtype) == generate.F64:
+        basename += "64"
+    else:
+        basename += "128"
     return joinpath(DLL_PATH, basename+'.so')
 
 
@@ -117,8 +121,9 @@ def make_dll(source, info, dtype="double"):
     Set *sasmodels.ALLOW_SINGLE_PRECISION_DLLS* to True if single precision
     models are allowed as DLLs.
     """
-    if not ALLOW_SINGLE_PRECISION_DLLS: dtype = "double"   # Force 64-bit dll
     dtype = np.dtype(dtype)
+    if dtype == generate.F32 and not ALLOW_SINGLE_PRECISION_DLLS:
+        dtype = generate.F64  # Force 64-bit dll
 
     if callable(info.get('Iq',None)):
         return PyModel(info)
@@ -126,8 +131,11 @@ def make_dll(source, info, dtype="double"):
     if dtype == generate.F32: # 32-bit dll
         source = generate.use_single(source)
         tempfile_prefix = 'sas_'+info['name']+'32_'
+    elif dtype == generate.F64:
+        tempfile_prefix = 'sas_'+info['name']+'64_'
     else:
-        tempfile_prefix = 'sas_'+info['name']+'_'
+        source = generate.use_long_double(source)
+        tempfile_prefix = 'sas_'+info['name']+'128_'
 
     source_files = generate.sources(info) + [info['filename']]
     dll= dll_path(info, dtype)
@@ -195,7 +203,9 @@ class DllModel(object):
             annotate_exception(exc, "while loading "+self.dllpath)
             raise
 
-        fp = c_float if self.dtype == generate.F32 else c_double
+        fp = (c_float if self.dtype == generate.F32
+              else c_double if self.dtype == generate.F64
+              else c_longdouble)
         pd_args_1d = [c_void_p, fp] + [c_int]*Npd1d if Npd1d else []
         pd_args_2d= [c_void_p, fp] + [c_int]*Npd2d if Npd2d else []
         self.Iq = self.dll[generate.kernel_name(self.info, False)]
@@ -264,7 +274,9 @@ class DllKernel(object):
         self.p_res = self.res.ctypes.data
 
     def __call__(self, fixed_pars, pd_pars, cutoff):
-        real = np.float32 if self.q_input.dtype == generate.F32 else np.float64
+        real = (np.float32 if self.q_input.dtype == generate.F32
+                else np.float64 if self.q_input.dtype == generate.F64
+                else np.float128)
 
         nq = c_int(self.q_input.nq)
         if pd_pars:
