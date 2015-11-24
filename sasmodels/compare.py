@@ -15,7 +15,7 @@ sys.path.insert(0, ROOT)  # Make sure sasmodels is first on the path
 
 from . import core
 from . import kerneldll
-from . import models
+from . import generate
 from .data import plot_theory, empty_data1D, empty_data2D
 from .direct_model import DirectModel
 from .convert import revert_model
@@ -115,16 +115,28 @@ def randomize(p, v):
         # values from 0 to 2*x for all other parameters
         return 2*np.random.rand()*(v if v != 0 else 1)
 
-def randomize_model(name, pars, seed=None):
+def randomize_model(pars, seed=None):
     if seed is None:
         seed = np.random.randint(1e9)
     np.random.seed(seed)
     # Note: the sort guarantees order of calls to random number generator
     pars = dict((p,randomize(p,v)) for p,v in sorted(pars.items()))
-    # The capped cylinder model has a constraint on its parameters
+
+    return pars, seed
+
+def constrain_pars(model_definition, pars):
+    name = model_definition.name
     if name == 'capped_cylinder' and pars['cap_radius'] < pars['radius']:
         pars['radius'],pars['cap_radius'] = pars['cap_radius'],pars['radius']
-    return pars, seed
+
+    # These constraints are only needed for comparison to sasview
+    if name in ('teubner_strey','broad_peak'):
+        del pars['scale']
+    if name in ('guinier',):
+        del pars['background']
+    if getattr(model_definition, 'category', None) == 'structure-factor':
+        del pars['scale'], pars['background']
+
 
 def parlist(pars):
     return "\n".join("%s: %s"%(p,v) for p,v in sorted(pars.items()))
@@ -208,6 +220,8 @@ def make_data(qmax, is2D, Nq=128, resolution=0.0, accuracy='Low', view='log'):
     return data, index
 
 def compare(name, pars, Ncpu, Nocl, opts, set_pars):
+    model_definition = core.load_model_definition(name)
+
     view = 'linear' if '-linear' in opts else 'log' if '-log' in opts else 'q4' if '-q4' in opts else 'log'
 
     opt_values = dict(split
@@ -230,7 +244,8 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
     #pars.update(set_pars)  # set value before random to control range
     if '-random' in opts or '-random' in opt_values:
         seed = int(opt_values['-random']) if '-random' in opt_values else None
-        pars, seed = randomize_model(name, pars, seed=seed)
+        pars, seed = randomize_model(pars, seed=seed)
+        constrain_pars(model_definition, pars)
         print "Randomize using -random=%i"%seed
     pars.update(set_pars)  # set value after random to control value
 
@@ -240,12 +255,12 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
     if '-pars' in opts:
         print "pars",parlist(pars)
 
-    model_definition = core.load_model_definition(name)
     # OpenCl calculation
     if Nocl > 0:
         ocl, ocl_time = eval_opencl(model_definition, pars, data,
                                     dtype=dtype, cutoff=cutoff, Nevals=Nocl)
         print "opencl t=%.1f ms, intensity=%.0f"%(ocl_time, sum(ocl))
+        #print "ocl", ocl
         #print max(ocl), min(ocl)
 
     # ctypes/sasview calculation
@@ -260,6 +275,7 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
             comp = "sasview"
             #print "ocl/sasview", (ocl-pars['background'])/(cpu-pars['background'])
             print "sasview t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu))
+            #print "sasview",cpu
         except ImportError:
             Ncpu = 0
 
@@ -395,11 +411,10 @@ def columnize(L, indent="", width=79):
     return output
 
 
-def get_demo_pars(name):
-    __import__('sasmodels.models.'+name)
-    model = getattr(models, name)
-    pars = getattr(model, 'demo', None)
-    if pars is None: pars = dict((p[0],p[2]) for p in model.parameters)
+def get_demo_pars(model_definition):
+    info = generate.make_info(model_definition)
+    pars = dict((p[0],p[2]) for p in info['parameters'])
+    pars.update(info['demo'])
     return pars
 
 def main():
@@ -424,7 +439,8 @@ def main():
     # Get demo parameters from model definition, or use default parameters
     # if model does not define demo parameters
     name = args[0]
-    pars = get_demo_pars(name)
+    model_definition = core.load_model_definition(name)
+    pars = get_demo_pars(model_definition)
 
     Nopencl = int(args[1]) if len(args) > 1 else 5
     Nsasview = int(args[2]) if len(args) > 2 else 1

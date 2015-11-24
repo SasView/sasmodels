@@ -8,7 +8,7 @@ from . import core
 from .kernelcl import environment
 from .compare import (MODELS, randomize_model, suppress_pd, eval_sasview,
                       eval_opencl, eval_ctypes, make_data, get_demo_pars,
-                      columnize)
+                      columnize, constrain_pars)
 
 def get_stats(target, value, index):
     resid = abs(value-target)[index]
@@ -35,37 +35,32 @@ def print_column_headers(pars, parts):
 
 def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5):
     model_definition = core.load_model_definition(name)
-    pars = get_demo_pars(name)
+    pars = get_demo_pars(model_definition)
     header = '\n"Model","%s","Count","%d"'%(name, N)
     if not mono: header += ',"Cutoff",%g'%(cutoff,)
     print(header)
 
-    # Stuff the failure flag into a mutable object so we can update it from
-    # within the nested function.  Note that the nested function uses "pars"
-    # which is dynamically scoped, not lexically scoped in this context.  That
-    # is, pars is replaced each time in the loop, so don't assume that it is
-    # the default values defined above.
     def trymodel(fn, *args, **kw):
         try:
-            result, _ = fn(model_definition, pars, data, *args, **kw)
+            result, _ = fn(model_definition, pars_i, data, *args, **kw)
+        except KeyboardInterrupt:
+            raise
         except:
-            result = np.NaN
-            traceback.print_exc()
+            print >>sys.stderr, traceback.format_exc()
+            print >>sys.stderr, "when comparing",name,"for seed",seed
+            if hasattr(data, 'qx_data'):
+                result = np.NaN*data.data
+            else:
+                result = np.NaN*data.x
         return result
 
     num_good = 0
     first = True
-    for _ in range(N):
-        pars, seed = randomize_model(name, pars)
-        if mono: suppress_pd(pars)
-
-        # Force parameter constraints on a per-model basis.
-        if name in ('teubner_strey','broad_peak'):
-            pars['scale'] = 1.0
-        #if name == 'parallelepiped':
-        #    pars['a_side'],pars['b_side'],pars['c_side'] = \
-        #        sorted([pars['a_side'],pars['b_side'],pars['c_side']])
-
+    for k in range(N):
+        print >>sys.stderr, name, k
+        pars_i, seed = randomize_model(pars)
+        constrain_pars(model_definition, pars_i)
+        if mono: suppress_pd(pars_i)
 
         good = True
         labels = []
@@ -96,9 +91,9 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5):
             labels.append('single/double')
             good = good and (stats[0] < 1e-14)
 
-        columns += [v for _,v in sorted(pars.items())]
+        columns += [v for _,v in sorted(pars_i.items())]
         if first:
-            print_column_headers(pars, labels)
+            print_column_headers(pars_i, labels)
             first = False
         if good:
             num_good += 1
