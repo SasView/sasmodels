@@ -129,6 +129,15 @@ def constrain_pars(model_definition, pars):
     name = model_definition.name
     if name == 'capped_cylinder' and pars['cap_radius'] < pars['radius']:
         pars['radius'],pars['cap_radius'] = pars['cap_radius'],pars['radius']
+    if name == 'barbell' and pars['bell_radius'] < pars['radius']:
+        pars['radius'],pars['bell_radius'] = pars['bell_radius'],pars['radius']
+
+    # Limit guinier to an Rg such that Iq > 1e-30 (single precision cutoff)
+    if name == 'guinier':
+        #q_max = 0.2  # mid q maximum
+        q_max = 1.0  # high q maximum
+        rg_max = np.sqrt(90*np.log(10) + 3*np.log(pars['scale']))/q_max
+        pars['rg'] = min(pars['rg'],rg_max)
 
     # These constraints are only needed for comparison to sasview
     if name in ('teubner_strey','broad_peak'):
@@ -246,9 +255,9 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
     if '-random' in opts or '-random' in opt_values:
         seed = int(opt_values['-random']) if '-random' in opt_values else None
         pars, seed = randomize_model(pars, seed=seed)
-        constrain_pars(model_definition, pars)
         print "Randomize using -random=%i"%seed
     pars.update(set_pars)  # set value after random to control value
+    constrain_pars(model_definition, pars)
 
     # parameter selection
     if '-mono' in opts:
