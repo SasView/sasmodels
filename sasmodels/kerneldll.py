@@ -1,9 +1,47 @@
-"""
+r"""
 C types wrapper for sasview models.
 
 The global attribute *ALLOW_SINGLE_PRECISION_DLLS* should be set to *True* if
 you wish to allow single precision floating point evaluation for the compiled
 models, otherwise it defaults to *False*.
+
+The compiler command line is stored in the attribute *COMPILE*, with string
+substitutions for %(source)s and %(output)s indicating what to compile and
+where to store it.  The actual command is system dependent.
+
+On windows systems, you have a choice of compilers.  *MinGW* is the GNU
+compiler toolchain, available in packages such as anaconda and PythonXY,
+or available stand alone. This toolchain has had difficulties on some
+systems, and may or may not work for you.  In order to build DLLs, *gcc*
+must be on your path.  If the environment variable *SAS_OPENMP* is given
+then -fopenmp is added to the compiler flags.  This requires a version
+of MinGW compiled with OpenMP support.
+
+An alternative toolchain uses the Microsoft Visual C++ compiler, available
+free from microsoft:
+
+    `http://www.microsoft.com/en-us/download/details.aspx?id=44266`_
+
+Again, this requires that the compiler is available on your path.  This is
+done by running vcvarsall.bat in a windows terminal.  Install locations are
+system dependent, such as:
+
+    C:\Program Files (x86)\Common Files\Microsoft\Visual C++ for Python\9.0\vcvarsall.bat
+
+or maybe
+
+    C:\Users\yourname\AppData\Local\Programs\Common\Microsoft\Visual C++ for Python\9.0\vcvarsall.bat
+
+And again, the environment variable *SAS_OPENMP* controls whether OpenMP is
+used to compile the C code.  This requires the Microsoft vcomp90.dll library,
+which doesn't seem to be included with the compiler, nor does there appear
+to be a public download location.  There may be one on your machine already
+in a location such as:
+
+    C:\Windows\winsxs\x86_microsoft.vc90.openmp*\vcomp90.dll
+
+If you copy this onto your path, such as the python directory or the install
+directory for this application, then OpenMP should be supported.
 """
 
 import sys

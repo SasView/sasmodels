@@ -21,6 +21,31 @@ This kernel is used during fitting, receiving new sets of parameters and
 evaluating them.  The output value is stored in an output buffer on the
 devices, where it can be combined with other structure factors and form
 factors and have instrumental resolution effects applied.
+
+In order to use OpenCL for your models, you will need OpenCL drivers for
+your machine.  These should be available from your graphics card vendor.
+Intel provides OpenCL drivers for CPUs as well as their integrated HD
+graphics chipsets.  AMD also provides drivers for Intel CPUs, but as of
+this writing the performance is lacking compared to the Intel drivers.
+NVidia combines drivers for CUDA and OpenCL in one package.  The result
+is a bit messy if you have multiple drivers installed.  You can see which
+drivers are available by starting python and running:
+
+    import pyopencl as cl
+    cl.create_some_context(interactive=True)
+
+Once you have done that, it will show the available drivers which you
+can select.  It will then tell you that you can use these drivers
+automatically by setting the PYOPENCL_CTX environment variable.
+
+Some graphics cards have multiple devices on the same card.  You cannot
+yet use both of them concurrently to evaluate models, but you can run
+the program twice using a different device for each session.
+
+OpenCL kernels are compiled when needed by the device driver.  Some
+drivers produce compiler output even when there is no error.  You
+can see the output by setting PYOPENCL_COMPILER_OUTPUT=1.  It should be
+harmless, albeit annoying.
 """
 import os
 import warnings
