@@ -25,18 +25,24 @@ if sys.platform == 'darwin':
 elif os.name == 'nt':
     # call vcvarsall.bat before compiling to set path, headers, libs, etc.
     if "VCINSTALLDIR" in os.environ:
-        # MSVC compiler is available, so use it.
+        # MSVC compiler is available, so use it.  OpenMP requires a copy of
+        # vcomp90.dll on the path.  One may be found here:
+        #       C:/Windows/winsxs/x86_microsoft.vc90.openmp*/vcomp90.dll
+        # Copy this to the python directory and uncomment the OpenMP COMPILE
         # TODO: remove intermediate OBJ file created in the directory
         # TODO: maybe don't use randomized name for the c file
-        #COMPILE = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG /Tp%(source)s /openmp /link /DLL /INCREMENTAL:NO /MANIFEST /OUT:%(output)s"
-        # Can't find VCOMP90.DLL (don't know why), so remove openmp support
-        # from windows compiler build
-        COMPILE = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG /Tp%(source)s /link /DLL /INCREMENTAL:NO /MANIFEST /OUT:%(output)s"
+        CC = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG /Tp%(source)s "
+        LN = "/link /DLL /INCREMENTAL:NO /MANIFEST /OUT:%(output)s"
+        if "SAS_OPENMP" in os.environ:
+            COMPILE = " ".join((CC, "/openmp", LN))
+        else:
+            COMPILE = " ".join((CC, LN))
     else:
-        #COMPILE = "gcc -shared -fPIC -std=c99 -fopenmp -O2 -Wall %(source)s -o %(output)s -lm"
         COMPILE = "gcc -shared -fPIC -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
+        if "SAS_OPENMP" in os.environ:
+            COMPILE = COMPILE + " -fopenmp"
 else:
-    COMPILE = "cc -shared -fPIC -std=c99 -fopenmp -O2 -Wall %(source)s -o %(output)s -lm"
+    COMPILE = "cc -shared -fPIC -fopenmp -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
 
 DLL_PATH = tempfile.gettempdir()
 
