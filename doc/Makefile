@@ -46,7 +46,7 @@ help:
 
 model/img/%: ../sasmodels/models/img/%
 ifdef ComSpec
-	$(COPY) $(subst /,\\,$<) $(subst /,\\,$@)
+	$(COPY) $(subst /,\,$<) $(subst /,\,$@)
 else
 	$(COPY) $< $@
 endif
