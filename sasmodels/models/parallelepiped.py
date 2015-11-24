@@ -157,7 +157,7 @@ demo = dict(scale=1, background=0,
             theta=45, phi=30, psi=15,
             a_side_pd=0.1, a_side_pd_n=10,
             b_side_pd=0.1, b_side_pd_n=1,
-            c_side_pd=0.1, c_side_pd_n=10,
+            c_side_pd=0.1, c_side_pd_n=1,
             theta_pd=10, theta_pd_n=1,
             phi_pd=10, phi_pd_n=1,
             psi_pd=10, psi_pd_n=10)

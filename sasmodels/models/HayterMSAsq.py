@@ -74,6 +74,7 @@ parameters = [["effect_radius", "Ang", 20.75, [0, inf], "volume",
               ["dielectconst", "", 71.08, [-inf, inf], "",
                "dielectric constant of solvent (default water), for Debye length"],
              ]
+category = "structure-factor"
 
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?

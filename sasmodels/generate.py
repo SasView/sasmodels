@@ -98,7 +98,12 @@ defined as a sublist with the following elements:
 
 The kernel module must set variables defining the kernel meta data:
 
-    *name* is the model name
+    *id* is an implicit variable formed from the filename.  It will be
+    a valid python identifier, and will be used as the reference into
+    the html documentation, with '_' replaced by '-'.
+
+    *name* is the model name as displayed to the user.  If it is missing,
+    it will be constructed from the id.
 
     *title* is a short description of the model, suitable for a tool tip,
     or a one line model summary in a table of models.
@@ -112,6 +117,10 @@ The kernel module must set variables defining the kernel meta data:
     are added to the beginning of the parameter list.  They will show up
     in the documentation as model parameters, but they are never sent to
     the kernel functions.
+
+    *category* is the default category for the model.  Models in the
+    *structure-factor* category do not have *scale* and *background*
+    added.
 
     *source* is the list of C-99 source files that must be joined to
     create the OpenCL kernel functions.  The files defining the functions
@@ -133,14 +142,11 @@ The kernel module must set variables defining the kernel meta data:
     passed values one *q* at a time.  The performance improvement of
     this step is significant.
 
-An *info* dictionary is constructed from the kernel meta data and
-returned to the caller.
-
-Additional fields can be defined in the kernel definition file that
-are not needed for sas modelling.
-
     *demo* is a dictionary of parameter=value defining a set of
-    parameters to use by default when *compare* is called.
+    parameters to use by default when *compare* is called.  Any
+    parameter not set in *demo* gets the initial value from the
+    parameter list.  *demo* is mostly needed to set the default
+    polydispersity values for tests.
 
     *oldname* is the name of the model in sasview before sasmodels
     was split into its own package, and *oldpars* is a dictionary
@@ -148,6 +154,10 @@ are not needed for sas modelling.
     the parameters.  This is used by *compare* to check the values
     of the new model against the values of the old model before
     you are ready to add the new model to sasmodels.
+
+
+An *info* dictionary is constructed from the kernel meta data and
+returned to the caller.
 
 The model evaluator, function call sequence consists of q inputs and the return vector,
 followed by the loop value/weight vector, followed by the values for
@@ -189,7 +199,7 @@ returns a list of files required by the model.
 __all__ = ["make", "doc", "sources", "use_single"]
 
 import sys
-from os.path import abspath, dirname, join as joinpath, exists
+from os.path import abspath, dirname, join as joinpath, exists, basename
 import re
 
 import numpy as np
@@ -232,9 +242,9 @@ PARTABLE_VALUE_WIDTH = 10
 # Documentation header for the module, giving the model name, its short
 # description and its parameter table.  The remainder of the doc comes
 # from the module docstring.
-DOC_HEADER = """.. _%(name)s:
+DOC_HEADER = """.. _%(id)s:
 
-%(label)s
+%(name)s
 =======================================================
 
 %(title)s
@@ -253,7 +263,6 @@ def make_partable(pars):
     """
     Generate the parameter table to include in the sphinx documentation.
     """
-    pars = COMMON_PARAMETERS + pars
     column_widths = [
         max(len(p[0]) for p in pars),
         max(len(p[-1]) for p in pars),
@@ -522,22 +531,32 @@ double Iqxy(double qx, double qy, IQXY_PARAMETER_DECLARATIONS) {
         'SOURCES':SOURCES,
         }
 
-def make(kernel_module):
+def make_info(kernel_module):
     """
-    Build an OpenCL/ctypes function from the definition in *kernel_module*.
-
-    The module can be loaded with a normal python import statement if you
-    know which module you need, or with __import__('sasmodels.model.'+name)
-    if the name is in a string.
+    Interpret the model definition file, categorizing the parameters.
     """
-    # TODO: allow Iq and Iqxy to be defined in python
     #print kernelfile
+    category = getattr(kernel_module, 'category', None)
+    parameters = COMMON_PARAMETERS + kernel_module.parameters
+    # Default the demo parameters to the starting values for the individual
+    # parameters if an explicit demo parameter set has not been specified.
+    demo_parameters = getattr(kernel_module, 'demo', None)
+    if demo_parameters is None:
+        demo_parameters = dict((p[0],p[2]) for p in parameters)
+    filename = abspath(kernel_module.__file__)
+    kernel_id = basename(filename)[:-3]
+    name = getattr(kernel_module, 'name', None)
+    if name is None:
+        name = " ".join(w.capitalize() for w in kernel_id.split('_'))
     info = dict(
+        id = kernel_id,  # string used to load the kernel
         filename=abspath(kernel_module.__file__),
-        name=kernel_module.name,
+        name=name,
         title=kernel_module.title,
         description=kernel_module.description,
-        parameters=COMMON_PARAMETERS + kernel_module.parameters,
+        category=category,
+        parameters=parameters,
+        demo=demo_parameters,
         source=getattr(kernel_module, 'source', []),
         oldname=kernel_module.oldname,
         oldpars=kernel_module.oldpars,
@@ -549,7 +568,17 @@ def make(kernel_module):
     info['limits'] = dict((p[0], p[3]) for p in info['parameters'])
     info['partype'] = categorize_parameters(info['parameters'])
     info['defaults'] = dict((p[0], p[2]) for p in info['parameters'])
+    return info
 
+def make(kernel_module):
+    """
+    Build an OpenCL/ctypes function from the definition in *kernel_module*.
+
+    The module can be loaded with a normal python import statement if you
+    know which module you need, or with __import__('sasmodels.model.'+name)
+    if the name is in a string.
+    """
+    info = make_info(kernel_module)
     # Assume if one part of the kernel is python then all parts are.
     source = make_model(info) if not callable(info['Iq']) else None
     return source, info
@@ -558,10 +587,11 @@ def doc(kernel_module):
     """
     Return the documentation for the model.
     """
-    subst = dict(name=kernel_module.name.replace('_', '-'),
-                 label=" ".join(kernel_module.name.split('_')).capitalize(),
-                 title=kernel_module.title,
-                 parameters=make_partable(kernel_module.parameters),
+    info = make_info(kernel_module)
+    subst = dict(id=info['id'].replace('_', '-'),
+                 name=info['name'],
+                 title=info['title'],
+                 parameters=make_partable(info['parameters']),
                  docs=kernel_module.__doc__)
     return DOC_HEADER % subst
 
