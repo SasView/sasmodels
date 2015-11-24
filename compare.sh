@@ -1,11 +1,14 @@
 #!/bin/bash
 
-#SASVIEW=$(ls -d ../sasview/build/lib.*)
-SASVIEW=( ../sasview/build/lib.* )
-#PYOPENCL_CTX=${CTX:-1}
-PYTHONPATH=../bumps:../periodictable:$SASVIEW
+sasview=( ../sasview/build/lib.* )
+sep=$(python -c "import os;print(os.pathsep)")
+PYTHONPATH=../bumps${sep}../periodictable${sep}$sasview
 export PYTHONPATH
+#echo PYTHONPATH=$PYTHONPATH
 
-#set -x
+#PYOPENCL_COMPILER_OUTPUT=1; export PYOPENCL_COMPILER_OUTPUT
+#PYOPENCL_CTX=${CTX:-1}; export PYOPENCL_CTX
+
+#SAS_OPENMP=1; export SAS_OPENMP
 
 python -m sasmodels.compare $*

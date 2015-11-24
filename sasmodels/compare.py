@@ -6,6 +6,7 @@ import math
 from os.path import basename, dirname, join as joinpath
 import glob
 import datetime
+import traceback
 
 import numpy as np
 
@@ -277,6 +278,7 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
             print "sasview t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu))
             #print "sasview",cpu
         except ImportError:
+            traceback.print_exc()
             Ncpu = 0
 
     # Compare, but only if computing both forms
