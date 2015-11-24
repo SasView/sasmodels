@@ -124,7 +124,7 @@ kernel void IQ_KERNEL_NAME(
     const double weight = IQ_WEIGHT_PRODUCT;
     if (weight > cutoff) {
       const double scattering = Iq(qi, IQ_PARAMETERS);
-      if (scattering >= 0.0) { // scattering cannot be negative
+      //if (scattering >= 0.0) { // scattering cannot be negative
         ret += weight*scattering;
         norm += weight;
       #ifdef VOLUME_PARAMETERS
@@ -132,7 +132,7 @@ kernel void IQ_KERNEL_NAME(
         vol += vol_weight*form_volume(VOLUME_PARAMETERS);
         norm_vol += vol_weight;
       #endif
-      }
+      //}
     //else { printf("exclude qx,qy,I:%%g,%%g,%%g\n",qi,scattering); }
     }
     IQ_CLOSE_LOOPS
@@ -197,7 +197,7 @@ kernel void IQXY_KERNEL_NAME(
     if (weight > cutoff) {
 
       const double scattering = Iqxy(qxi, qyi, IQXY_PARAMETERS);
-      if (scattering >= 0.0) { // scattering cannot be negative
+      //if (scattering >= 0.0) { // scattering cannot be negative
         // TODO: use correct angle for spherical correction
         // Definition of theta and phi are probably reversed relative to the
         // equation which gave rise to this correction, leading to an
@@ -218,7 +218,7 @@ kernel void IQXY_KERNEL_NAME(
         vol += vol_weight*form_volume(VOLUME_PARAMETERS);
       #endif
         norm_vol += vol_weight;
-      }
+      //}
       //else { printf("exclude qx,qy,I:%%g,%%g,%%g\n",qi,scattering); }
     }
     IQXY_CLOSE_LOOPS
