@@ -232,7 +232,7 @@ def make_data(qmax, is2D, Nq=128, resolution=0.0, accuracy='Low', view='log'):
         index = slice(None, None)
     return data, index
 
-def compare(name, pars, Ncpu, Nocl, opts, set_pars):
+def compare(name, pars, Ncomp, Nbase, opts, set_pars):
     model_definition = core.load_model_definition(name)
 
     view = ('linear' if '-linear' in opts
@@ -276,74 +276,79 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
     if '-pars' in opts:
         print "pars",parlist(pars)
 
-    # OpenCl calculation
-    if Nocl > 0 and "-ctypes" in opts and "-sasview" in opts:
+    # Base calculation
+    if 0:
+        from sasmodels.models import sphere as target
+        base_name = target.name
+        base, base_time = eval_ctypes(target, pars, data,
+                         dtype='longdouble', cutoff=0., Nevals=Ncomp)
+    elif Nbase > 0 and "-ctypes" in opts and "-sasview" in opts:
         try:
-            ocl, ocl_time = eval_sasview(model_definition, pars, data, Ncpu)
-            base = "sasview"
-            #print "ocl/sasview", (ocl-pars['background'])/(cpu-pars['background'])
-            print "sasview t=%.1f ms, intensity=%.0f"%(ocl_time, sum(ocl))
-            #print "sasview",cpu
+            base, base_time = eval_sasview(model_definition, pars, data, Ncomp)
+            base_name = "sasview"
+            #print "base/sasview", (base-pars['background'])/(comp-pars['background'])
+            print "sasview t=%.1f ms, intensity=%.0f"%(base_time, sum(base))
+            #print "sasview",comp
         except ImportError:
             traceback.print_exc()
-            Ncpu = 0
-    elif Nocl > 0:
-        ocl, ocl_time = eval_opencl(model_definition, pars, data,
-                                    dtype=dtype, cutoff=cutoff, Nevals=Nocl)
-        base = "ocl"
-        print "opencl t=%.1f ms, intensity=%.0f"%(ocl_time, sum(ocl))
-        #print "ocl", ocl
-        #print max(ocl), min(ocl)
+            Ncomp = 0
+    elif Nbase > 0:
+        base, base_time = eval_opencl(model_definition, pars, data,
+                                    dtype=dtype, cutoff=cutoff, Nevals=Nbase)
+        base_name = "ocl"
+        print "opencl t=%.1f ms, intensity=%.0f"%(base_time, sum(base))
+        #print "base", base
+        #print max(base), min(base)
 
-    # ctypes/sasview calculation
-    if Ncpu > 0 and "-ctypes" in opts:
-        cpu, cpu_time = eval_ctypes(model_definition, pars, data,
-                                    dtype=dtype, cutoff=cutoff, Nevals=Ncpu)
-        comp = "ctypes"
-        print "ctypes t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu))
-    elif Ncpu > 0:
+    # Comparison calculation
+    if Ncomp > 0 and "-ctypes" in opts:
+        comp, comp_time = eval_ctypes(model_definition, pars, data,
+                                    dtype=dtype, cutoff=cutoff, Nevals=Ncomp)
+        comp_name = "ctypes"
+        print "ctypes t=%.1f ms, intensity=%.0f"%(comp_time, sum(comp))
+    elif Ncomp > 0:
         try:
-            cpu, cpu_time = eval_sasview(model_definition, pars, data, Ncpu)
-            comp = "sasview"
-            #print "ocl/sasview", (ocl-pars['background'])/(cpu-pars['background'])
-            print "sasview t=%.1f ms, intensity=%.0f"%(cpu_time, sum(cpu))
-            #print "sasview",cpu
+            comp, comp_time = eval_sasview(model_definition, pars, data, Ncomp)
+            comp_name = "sasview"
+            #print "base/sasview", (base-pars['background'])/(comp-pars['background'])
+            print "sasview t=%.1f ms, intensity=%.0f"%(comp_time, sum(comp))
+            #print "sasview",comp
         except ImportError:
             traceback.print_exc()
-            Ncpu = 0
+            Ncomp = 0
 
     # Compare, but only if computing both forms
-    if Nocl > 0 and Ncpu > 0:
-        #print "speedup %.2g"%(cpu_time/ocl_time)
-        #print "max |ocl/cpu|", max(abs(ocl/cpu)), "%.15g"%max(abs(ocl)), "%.15g"%max(abs(cpu))
-        #cpu *= max(ocl/cpu)
-        resid = (ocl - cpu)
-        relerr = resid/cpu
+    if Nbase > 0 and Ncomp > 0:
+        #print "speedup %.2g"%(comp_time/base_time)
+        #print "max |base/comp|", max(abs(base/comp)), "%.15g"%max(abs(base)), "%.15g"%max(abs(comp))
+        #comp *= max(base/comp)
+        resid = (base - comp)
+        relerr = resid/comp
         #bad = (relerr>1e-4)
-        #print relerr[bad],cpu[bad],ocl[bad],data.qx_data[bad],data.qy_data[bad]
-        _print_stats("|%s-%s|"%(base,comp)+(" "*(3+len(comp))), resid)
-        _print_stats("|(%s-%s)/%s|"%(base,comp,comp), relerr)
+        #print relerr[bad],comp[bad],base[bad],data.qx_data[bad],data.qy_data[bad]
+        _print_stats("|%s-%s|"%(base_name,comp_name)+(" "*(3+len(comp_name))), resid)
+        _print_stats("|(%s-%s)/%s|"%(base_name,comp_name,comp_name), relerr)
 
     # Plot if requested
     if '-noplot' in opts: return
     import matplotlib.pyplot as plt
-    if Ncpu > 0:
-        if Nocl > 0: plt.subplot(131)
-        plot_theory(data, cpu, view=view, plot_data=False)
-        plt.title("%s t=%.1f ms"%(comp,cpu_time))
+    if Ncomp > 0:
+        if Nbase > 0: plt.subplot(131)
+        plot_theory(data, comp, view=view, plot_data=False)
+        plt.title("%s t=%.1f ms"%(comp_name,comp_time))
         #cbar_title = "log I"
-    if Nocl > 0:
-        if Ncpu > 0: plt.subplot(132)
-        plot_theory(data, ocl, view=view, plot_data=False)
-        plt.title("%s t=%.1f ms"%(base,ocl_time))
+    if Nbase > 0:
+        if Ncomp > 0: plt.subplot(132)
+        plot_theory(data, base, view=view, plot_data=False)
+        plt.title("%s t=%.1f ms"%(base_name,base_time))
         #cbar_title = "log I"
-    if Ncpu > 0 and Nocl > 0:
+    if Ncomp > 0 and Nbase > 0:
         plt.subplot(133)
         if '-abs' in opts:
             err,errstr,errview = resid, "abs err", "linear"
         else:
             err,errstr,errview = abs(relerr), "rel err", "log"
-        #err,errstr = ocl/cpu,"ratio"
+        #err,errstr = base/comp,"ratio"
         plot_theory(data, None, resid=err, view=errview, plot_data=False)
         plt.title("max %s = %.3g"%(errstr, max(abs(err))))
         #cbar_title = errstr if errview=="linear" else "log "+errstr
@@ -351,7 +356,7 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
     #    h = plt.colorbar()
     #    h.ax.set_title(cbar_title)
 
-    if Ncpu > 0 and Nocl > 0 and '-hist' in opts:
+    if Ncomp > 0 and Nbase > 0 and '-hist' in opts:
         plt.figure()
         v = relerr
         v[v==0] = 0.5*np.min(np.abs(v[v!=0]))
@@ -478,8 +483,8 @@ def main():
     model_definition = core.load_model_definition(name)
     pars = get_demo_pars(model_definition)
 
-    Nopencl = int(args[1]) if len(args) > 1 else 5
-    Nsasview = int(args[2]) if len(args) > 2 else 1
+    Ncomp = int(args[1]) if len(args) > 1 else 5
+    Nbase = int(args[2]) if len(args) > 2 else 1
 
     # Fill in default polydispersity parameters
     pds = set(p.split('_pd')[0] for p in pars if p.endswith('_pd'))
@@ -498,7 +503,7 @@ def main():
             sys.exit(1)
         set_pars[k] = float(v) if not v.endswith('type') else v
 
-    compare(name, pars, Nsasview, Nopencl, opts, set_pars)
+    compare(name, pars, Ncomp, Nbase, opts, set_pars)
 
 if __name__ == "__main__":
     main()

@@ -78,8 +78,9 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
         good = [True]
         labels = []
         columns = []
-        #target = try_model(eval_sasview)
-        target = try_model(eval_opencl, dtype='longdouble', cutoff=cutoff)
+        target = try_model(eval_sasview)
+        #target = try_model(eval_ctypes, dtype='double', cutoff=0.)
+        #target = try_model(eval_ctypes, dtype='longdouble', cutoff=0.)
         if precision == 'single':
             value = try_model(eval_opencl, dtype='single', cutoff=cutoff)
             check_model('GPU single', target, value, 5e-5)
