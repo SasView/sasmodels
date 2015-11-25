@@ -8,7 +8,7 @@ SPHINXBUILD   = $(PYTHON) -m  sphinx.__init__
 PAPER        ?= letter
 BUILDDIR      = _build
 ifdef ComSpec
-    RMDIR   = del /s/q/f
+    RMDIR   = rmdir /s/q
     CPDIR   = xcopy /q/e/i
     MKDIR   = mkdir
     PATHSEP = $(strip \)
@@ -60,7 +60,7 @@ ref/models/index.rst: gentoc.py $(MODELS_PY)
 .PHONY: help clean html dirhtml pickle json htmlhelp qthelp latex changes linkcheck doctest build
 
 api: genapi.py
-	$(RMDIR) api
+	-$(RMDIR) api
 	$(PYTHON) genapi.py
 
 model:
