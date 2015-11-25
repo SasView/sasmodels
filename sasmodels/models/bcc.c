@@ -21,15 +21,20 @@ double _BCC_Integrand(double q, double dnn, double d_factor, double theta, doubl
 
 double _BCCeval(double Theta, double Phi, double temp1, double temp3) {
 
-	double temp6,temp7,temp8,temp9,temp10;
 	double result;
+	double sin_theta,cos_theta,sin_phi,cos_phi;
+	SINCOS(Theta, sin_theta, cos_theta);
+	SINCOS(Phi, sin_phi, cos_phi);
 
-	temp6 = sin(Theta);
-	temp7 = sin(Theta)*cos(Phi)+sin(Theta)*sin(Phi)+cos(Theta);
-	temp8 = -1.0*sin(Theta)*cos(Phi)-sin(Theta)*sin(Phi)+cos(Theta);
-	temp9 = -1.0*sin(Theta)*cos(Phi)+sin(Theta)*sin(Phi)-cos(Theta);
-	temp10 = exp((-1.0/8.0)*temp1*((temp7*temp7)+(temp8*temp8)+(temp9*temp9)));
-	result = pow(1.0-(temp10*temp10),3)*temp6/((1.0-2.0*temp10*cos(0.5*temp3*(temp7))+(temp10*temp10))*(1.0-2.0*temp10*cos(0.5*temp3*(temp8))+(temp10*temp10))*(1.0-2.0*temp10*cos(0.5*temp3*(temp9))+(temp10*temp10)));
+	const double temp6 =  sin_theta;
+	const double temp7 =  sin_theta*cos_phi + sin_theta*sin_phi + cos_theta;
+	const double temp8 = -sin_theta*cos_phi - sin_theta*sin_phi + cos_theta;
+	const double temp9 = -sin_theta*cos_phi + sin_theta*sin_phi - cos_theta;
+	const double temp10 = exp((-1.0/8.0)*temp1*(temp7*temp7 + temp8*temp8 + temp9*temp9));
+	result = pow(1.0-(temp10*temp10),3)*temp6
+	    / ( (1.0 - 2.0*temp10*cos(0.5*temp3*temp7) + temp10*temp10)
+	      * (1.0 - 2.0*temp10*cos(0.5*temp3*temp8) + temp10*temp10)
+	      * (1.0 - 2.0*temp10*cos(0.5*temp3*temp9) + temp10*temp10));
 
 	return (result);
 }
