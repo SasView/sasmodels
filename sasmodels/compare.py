@@ -253,7 +253,7 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
 
 
     # modelling accuracy is determined by dtype and cutoff
-    dtype = ('longdouble' if '-longdouble' in opts
+    dtype = ('longdouble' if '-quad' in opts
              else 'double' if '-double' in opts
              else 'single')
     cutoff = float(opt_values.get('-cutoff','1e-5'))
@@ -378,7 +378,7 @@ Nsasview is the number of times to run the Sasview model (default=1)
 Options (* for default):
 
     -plot*/-noplot plots or suppress the plot of the model
-    -single*/-double/-longdouble uses double precision for comparison
+    -single*/-double/-quad use single/double/quad precision for comparison
     -lowq*/-midq/-highq/-exq use q values up to 0.05, 0.2, 1.0, 10.0
     -Nq=128 sets the number of Q points in the data set
     -1d*/-2d computes 1d or 2d data

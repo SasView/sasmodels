@@ -205,9 +205,13 @@ import re
 import numpy as np
 C_KERNEL_TEMPLATE_PATH = joinpath(dirname(__file__), 'kernel_template.c')
 
-F128 = np.dtype('float128')
-F64 = np.dtype('float64')
 F32 = np.dtype('float32')
+F64 = np.dtype('float64')
+try:  # CRUFT: older numpy does not support float128
+    F128 = np.dtype('float128')
+except TypeError:
+    F128 = None
+
 
 # Scale and background, which are parameters common to every form factor
 COMMON_PARAMETERS = [
