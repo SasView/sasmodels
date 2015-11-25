@@ -277,9 +277,20 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
         print "pars",parlist(pars)
 
     # OpenCl calculation
-    if Nocl > 0:
+    if Nocl > 0 and "-ctypes" in opts and "-sasview" in opts:
+        try:
+            ocl, ocl_time = eval_sasview(model_definition, pars, data, Ncpu)
+            base = "sasview"
+            #print "ocl/sasview", (ocl-pars['background'])/(cpu-pars['background'])
+            print "sasview t=%.1f ms, intensity=%.0f"%(ocl_time, sum(ocl))
+            #print "sasview",cpu
+        except ImportError:
+            traceback.print_exc()
+            Ncpu = 0
+    elif Nocl > 0:
         ocl, ocl_time = eval_opencl(model_definition, pars, data,
                                     dtype=dtype, cutoff=cutoff, Nevals=Nocl)
+        base = "ocl"
         print "opencl t=%.1f ms, intensity=%.0f"%(ocl_time, sum(ocl))
         #print "ocl", ocl
         #print max(ocl), min(ocl)
@@ -310,8 +321,8 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
         relerr = resid/cpu
         #bad = (relerr>1e-4)
         #print relerr[bad],cpu[bad],ocl[bad],data.qx_data[bad],data.qy_data[bad]
-        _print_stats("|ocl-%s|"%comp+(" "*(3+len(comp))), resid)
-        _print_stats("|(ocl-%s)/%s|"%(comp,comp), relerr)
+        _print_stats("|%s-%s|"%(base,comp)+(" "*(3+len(comp))), resid)
+        _print_stats("|(%s-%s)/%s|"%(base,comp,comp), relerr)
 
     # Plot if requested
     if '-noplot' in opts: return
@@ -324,7 +335,7 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
     if Nocl > 0:
         if Ncpu > 0: plt.subplot(132)
         plot_theory(data, ocl, view=view, plot_data=False)
-        plt.title("opencl t=%.1f ms"%ocl_time)
+        plt.title("%s t=%.1f ms"%(base,ocl_time))
         #cbar_title = "log I"
     if Ncpu > 0 and Nocl > 0:
         plt.subplot(133)
@@ -387,7 +398,7 @@ Options (* for default):
     -1d*/-2d computes 1d or 2d data
     -preset*/-random[=seed] preset or random parameters
     -mono/-poly* force monodisperse/polydisperse
-    -ctypes/-sasview* whether cpu is tested using sasview or ctypes
+    -ctypes/-sasview* selects gpu:cpu, gpu:sasview, or sasview:cpu if both
     -cutoff=1e-5* cutoff value for including a point in polydispersity
     -pars/-nopars* prints the parameter set or not
     -abs/-rel* plot relative or absolute error
@@ -405,7 +416,7 @@ Available models:
 
 NAME_OPTIONS = set([
     'plot','noplot',
-    'single','double','longdouble',
+    'single','double','quad',
     'lowq','midq','highq','exq',
     '2d','1d',
     'preset','random',
@@ -441,7 +452,8 @@ def get_demo_pars(model_definition):
 
 def main():
     opts = [arg for arg in sys.argv[1:] if arg.startswith('-')]
-    args = [arg for arg in sys.argv[1:] if not arg.startswith('-')]
+    popts = [arg for arg in sys.argv[1:] if not arg.startswith('-') and '=' in arg]
+    args = [arg for arg in sys.argv[1:] if not arg.startswith('-') and '=' not in arg]
     models = "\n    ".join("%-15s"%v for v in MODELS)
     if len(args) == 0:
         print(USAGE)
@@ -450,6 +462,8 @@ def main():
     if args[0] not in MODELS:
         print "Model %r not available. Use one of:\n    %s"%(args[0],models)
         sys.exit(1)
+    if len(args) > 3:
+        print("expected parameters: model Nopencl Nsasview")
 
     invalid = [o[1:] for o in opts
                if o[1:] not in NAME_OPTIONS
@@ -475,8 +489,8 @@ def main():
 
     # Fill in parameters given on the command line
     set_pars = {}
-    for arg in args[3:]:
-        k,v = arg.split('=')
+    for arg in popts:
+        k,v = arg.split('=',1)
         if k not in pars:
             # extract base name without distribution
             s = set(p.split('_pd')[0] for p in pars)

@@ -32,7 +32,7 @@ double Iq(double qval,
 	xn = (double)n2 - Nlayers;			//fractional contribution of n1
 	
 	ww = exp(-qval*qval*pd*pd*davg*davg/2.0);
-	
+
 	//calculate the n1 contribution
 	an = paraCryst_an(ww,qval,davg,n1);
 	Snq = paraCryst_sn(ww,qval,davg,n1,an);
@@ -42,7 +42,7 @@ double Iq(double qval,
 	//calculate the n2 contribution
 	an = paraCryst_an(ww,qval,davg,n2);
 	Snq = paraCryst_sn(ww,qval,davg,n2,an);
-	
+
 	Znq += (1.0-xn)*Snq;
 	
 	//and the independent contribution
@@ -56,7 +56,7 @@ double Iq(double qval,
 	
 	inten = 2.0*M_PI*contr*contr*Pbil*Znq/(qval*qval);
 	inten *= 1.0e-04;
-	
+//printf("q=%.7e wwm1=%g ww=%.5e an=% 12.5e Snq=% 12.5e Znq=% 12.5e Pbil=% 12.5e\n",qval,wwm1,ww,an,Snq,Znq,Pbil);
 	return(inten);
 }
 
@@ -65,7 +65,7 @@ double
 paraCryst_sn(double ww, double qval, double davg, long Nlayers, double an) {
 	
 	double Snq;
-	
+
 	Snq = an/( (double)Nlayers*pow((1.0+ww*ww-2.0*ww*cos(qval*davg)),2) );
 	
 	return(Snq);
