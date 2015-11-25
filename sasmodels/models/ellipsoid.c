@@ -11,7 +11,11 @@ double _ellipsoid_kernel(double q, double rpolar, double requatorial, double cos
     const double u = q*requatorial*sqrt(1.0
                    + cos_alpha*cos_alpha*(ratio*ratio - 1.0));
     SINCOS(u, sn, cn);
-    const double f = ( u==0.0 ? 1.0 : 3.0*(sn-u*cn)/(u*u*u) );
+    //const double f = ( u==0.0 ? 1.0 : 3.0*(sn-u*cn)/(u*u*u) );
+    const double usq = u*u;
+    const double f = (u < 1e-1)
+        ? 1.0 + usq*(-3./30. + usq*(3./840. + usq*(-3./45360.)))// + qrsq*(3./3991680.))))
+        : 3.0*(sn/u - cn)/usq;
     return f*f;
 }
 
