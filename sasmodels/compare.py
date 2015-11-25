@@ -162,6 +162,7 @@ def suppress_pd(pars):
         if p.endswith("_pd"): pars[p] = 0
 
 def eval_sasview(model_definition, pars, data, Nevals=1):
+    import sas
     from sas.models.qsmearing import smear_selection
     model = sasview_model(model_definition, **pars)
     smearer = smear_selection(data, model=model)
