@@ -36,7 +36,11 @@ double Iq(double q,
             const double y = 0.5*(Gauss76Z[j] + 1.0);
             const double t = q*sqrt(acosx2 + bsinx2*(1.0-y*y) + c2*y*y);
             SINCOS(t, st, ct);
-            const double fq = ( t==0.0 ? 1.0 : 3.0*(st-t*ct)/(t*t*t) );
+            //const double fq = ( t==0.0 ? 1.0 : 3.0*(st-t*ct)/(t*t*t) );
+            const double tsq = t*t;
+            const double fq = (t < 1e-1)
+                ? 1.0 + tsq*(-3./30. + tsq*(3./840. + tsq*(-3./45360.)))// + tsq*(3./3991680.))))
+                : 3.0*(st/t - ct)/tsq;
             inner += Gauss76Wt[j] * fq * fq ;
         }
         outer += Gauss76Wt[i] * 0.5 * inner;

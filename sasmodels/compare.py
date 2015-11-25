@@ -291,7 +291,7 @@ def compare(name, pars, Ncomp, Nbase, opts, set_pars):
             #print "sasview",comp
         except ImportError:
             traceback.print_exc()
-            Ncomp = 0
+            Nbase = 0
     elif Nbase > 0:
         base, base_time = eval_opencl(model_definition, pars, data,
                                     dtype=dtype, cutoff=cutoff, Nevals=Nbase)
