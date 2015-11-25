@@ -80,8 +80,12 @@ form_volume = """
 Iq = """
     const double sub = sld - solvent_sld;
     const double qsq = q*q;
-    return 4.0e-4*M_PI*sub*sub/qsq * (1.0-cos(q*thickness))
-        / (thickness*qsq);
+    // Original expression
+    //return 4.0e-4*M_PI*sub*sub/qsq * (1.0-cos(q*thickness)) / (thickness*qsq);
+    // const double alpha = fmod(q*thickness+0.1, 2.0*M_PI)-0.1;
+    // Use small angle fix 1-cos(theta) = 2 sin^2(theta/2)
+    const double sinq2 = sin(0.5*q*thickness);
+    return 4.0e-4*M_PI*sub*sub/qsq * 2.0*sinq2*sinq2 / (thickness*qsq);
     """
 
 Iqxy = """
