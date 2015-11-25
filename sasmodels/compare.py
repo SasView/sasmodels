@@ -162,6 +162,8 @@ def suppress_pd(pars):
         if p.endswith("_pd"): pars[p] = 0
 
 def eval_sasview(model_definition, pars, data, Nevals=1):
+    # importing sas here so that the error message will be that sas failed to
+    # import rather than the more obscure smear_selection not imported error
     import sas
     from sas.models.qsmearing import smear_selection
     model = sasview_model(model_definition, **pars)
