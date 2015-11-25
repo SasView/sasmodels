@@ -129,6 +129,15 @@ def constrain_pars(model_definition, pars):
     name = model_definition.name
     if name == 'capped_cylinder' and pars['cap_radius'] < pars['radius']:
         pars['radius'],pars['cap_radius'] = pars['cap_radius'],pars['radius']
+    if name == 'barbell' and pars['bell_radius'] < pars['radius']:
+        pars['radius'],pars['bell_radius'] = pars['bell_radius'],pars['radius']
+
+    # Limit guinier to an Rg such that Iq > 1e-30 (single precision cutoff)
+    if name == 'guinier':
+        #q_max = 0.2  # mid q maximum
+        q_max = 1.0  # high q maximum
+        rg_max = np.sqrt(90*np.log(10) + 3*np.log(pars['scale']))/q_max
+        pars['rg'] = min(pars['rg'],rg_max)
 
     # These constraints are only needed for comparison to sasview
     if name in ('teubner_strey','broad_peak'):
@@ -223,13 +232,19 @@ def make_data(qmax, is2D, Nq=128, resolution=0.0, accuracy='Low', view='log'):
 def compare(name, pars, Ncpu, Nocl, opts, set_pars):
     model_definition = core.load_model_definition(name)
 
-    view = 'linear' if '-linear' in opts else 'log' if '-log' in opts else 'q4' if '-q4' in opts else 'log'
+    view = ('linear' if '-linear' in opts
+            else 'log' if '-log' in opts
+            else 'q4' if '-q4' in opts
+            else 'log')
 
     opt_values = dict(split
                       for s in opts for split in ((s.split('='),))
                       if len(split) == 2)
     # Sort out data
-    qmax = 10.0 if '-exq' in opts else 1.0 if '-highq' in opts else 0.2 if '-midq' in opts else 0.05
+    qmax = (10.0 if '-exq' in opts
+            else 1.0 if '-highq' in opts
+            else 0.2 if '-midq' in opts
+            else 0.05)
     Nq = int(opt_values.get('-Nq', '128'))
     res = float(opt_values.get('-res', '0'))
     accuracy = opt_values.get('-accuracy', 'Low')
@@ -238,7 +253,9 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
 
 
     # modelling accuracy is determined by dtype and cutoff
-    dtype = 'double' if '-double' in opts else 'single'
+    dtype = ('longdouble' if '-quad' in opts
+             else 'double' if '-double' in opts
+             else 'single')
     cutoff = float(opt_values.get('-cutoff','1e-5'))
 
     # randomize parameters
@@ -246,9 +263,9 @@ def compare(name, pars, Ncpu, Nocl, opts, set_pars):
     if '-random' in opts or '-random' in opt_values:
         seed = int(opt_values['-random']) if '-random' in opt_values else None
         pars, seed = randomize_model(pars, seed=seed)
-        constrain_pars(model_definition, pars)
         print "Randomize using -random=%i"%seed
     pars.update(set_pars)  # set value after random to control value
+    constrain_pars(model_definition, pars)
 
     # parameter selection
     if '-mono' in opts:
@@ -361,7 +378,7 @@ Nsasview is the number of times to run the Sasview model (default=1)
 Options (* for default):
 
     -plot*/-noplot plots or suppress the plot of the model
-    -single*/-double uses double precision for comparison
+    -single*/-double/-quad use single/double/quad precision for comparison
     -lowq*/-midq/-highq/-exq use q values up to 0.05, 0.2, 1.0, 10.0
     -Nq=128 sets the number of Q points in the data set
     -1d*/-2d computes 1d or 2d data
@@ -385,7 +402,7 @@ Available models:
 
 NAME_OPTIONS = set([
     'plot','noplot',
-    'single','double',
+    'single','double','longdouble',
     'lowq','midq','highq','exq',
     '2d','1d',
     'preset','random',

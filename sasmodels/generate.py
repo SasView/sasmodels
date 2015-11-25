@@ -196,7 +196,7 @@ returns a list of files required by the model.
 
 # TODO: identify model files which have changed since loading and reload them.
 
-__all__ = ["make", "doc", "sources", "use_single"]
+__all__ = ["make", "doc", "sources", "use_single", "use_long_double"]
 
 import sys
 from os.path import abspath, dirname, join as joinpath, exists, basename
@@ -205,8 +205,13 @@ import re
 import numpy as np
 C_KERNEL_TEMPLATE_PATH = joinpath(dirname(__file__), 'kernel_template.c')
 
-F64 = np.dtype('float64')
 F32 = np.dtype('float32')
+F64 = np.dtype('float64')
+try:  # CRUFT: older numpy does not support float128
+    F128 = np.dtype('float128')
+except TypeError:
+    F128 = None
+
 
 # Scale and background, which are parameters common to every form factor
 COMMON_PARAMETERS = [
@@ -321,6 +326,21 @@ def use_single(source):
     # OS/X driver complains if you don't do this.
     source = re.sub(r'[^a-zA-Z_](\d*[.]\d+|\d+[.]\d*)([eE][+-]?\d+)?',
                     r'\g<0>f', source)
+    return source
+
+def use_long_double(source):
+    """
+    Convert code from double precision to long double precision.
+    """
+    # Convert double keyword to float.  Accept an 'n' parameter for vector
+    # values, where n is 2, 4, 8 or 16. Assume complex numbers are represented
+    # as cdouble which is typedef'd to double2.
+    source = re.sub(r'(^|[^a-zA-Z0-9_]c?)double(([248]|16)?($|[^a-zA-Z0-9_]))',
+                    r'\1long double\2', source)
+    # Convert floating point constants to single by adding 'f' to the end.
+    # OS/X driver complains if you don't do this.
+    source = re.sub(r'[^a-zA-Z_](\d*[.]\d+|\d+[.]\d*)([eE][+-]?\d+)?',
+                    r'\g<0>L', source)
     return source
 
 

@@ -56,6 +56,7 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5):
 
     num_good = 0
     first = True
+    max_diff = 0
     for k in range(N):
         print >>sys.stderr, name, k
         pars_i, seed = randomize_model(pars)
@@ -72,24 +73,28 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5):
             stats = get_stats(sasview_value, gpu_single_value, index)
             columns.extend(stats)
             labels.append('GPU single')
-            good = good and (stats[0] < 1e-14)
+            max_diff = max(max_diff, stats[0])
+            good = good and (stats[0] < 5e-5)
         if 0 and environment().has_double:
             gpu_double_value = trymodel(eval_opencl, dtype='double', cutoff=cutoff)
             stats = get_stats(sasview_value, gpu_double_value, index)
             columns.extend(stats)
             labels.append('GPU double')
-            good = good and (stats[0] < 1e-14)
+            max_diff = max(max_diff, stats[0])
+            good = good and (stats[0] < 1e-12)
         if 1:
             cpu_double_value = trymodel(eval_ctypes, dtype='double', cutoff=cutoff)
             stats = get_stats(sasview_value, cpu_double_value, index)
             columns.extend(stats)
             labels.append('CPU double')
-            good = good and (stats[0] < 1e-14)
+            max_diff = max(max_diff, stats[0])
+            good = good and (stats[0] < 1e-12)
         if 0:
             stats = get_stats(cpu_double_value, gpu_single_value, index)
             columns.extend(stats)
             labels.append('single/double')
-            good = good and (stats[0] < 1e-14)
+            max_diff = max(max_diff, stats[0])
+            good = good and (stats[0] < 5e-5)
 
         columns += [v for _,v in sorted(pars_i.items())]
         if first:
@@ -99,7 +104,7 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5):
             num_good += 1
         else:
             print(("%d,"%seed)+','.join("%g"%v for v in columns))
-    print '"%d/%d good"'%(num_good, N)
+    print '"good","%d/%d","max diff",%g'%(num_good, N, max_diff)
 
 
 def print_usage():

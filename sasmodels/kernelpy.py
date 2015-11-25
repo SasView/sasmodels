@@ -210,7 +210,7 @@ def _loops(form, form_volume, cutoff, scale, background,
         w = np.prod(weight)
         if w > cutoff:
             I = form(*args)
-            positive = (I >= 0.0)
+            #positive = (I >= 0.0)
 
             # Note: can precompute spherical correction if theta_index is not
             # the fast index. Correction factor for spherical integration
@@ -218,8 +218,8 @@ def _loops(form, form_volume, cutoff, scale, background,
             spherical_correction = (abs(cos(pi * args[theta_index])) * pi / 2
                                     if theta_index >= 0 else 1.0)
             #spherical_correction = 1.0
-            ret += w * I * spherical_correction * positive
-            norm += w * positive
+            ret += w * I * spherical_correction #* positive
+            norm += w #* positive
 
             # Volume normalization.
             # If there are "volume" polydispersity parameters, then these
@@ -229,8 +229,8 @@ def _loops(form, form_volume, cutoff, scale, background,
             if form_volume:
                 vol_args = [args[index] for index in vol_index]
                 vol_weight = np.prod(weight[vol_weight_index])
-                vol += vol_weight * form_volume(*vol_args) * positive
-                vol_norm += vol_weight * positive
+                vol += vol_weight * form_volume(*vol_args) #* positive
+                vol_norm += vol_weight #* positive
 
     positive = (vol * vol_norm != 0.0)
     ret[positive] *= vol_norm[positive] / vol[positive]
