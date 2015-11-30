@@ -30,9 +30,9 @@ where the *q* vector is defined as
     q = \sqrt{q_x^2 + q_y^2}
 
 
-.. image:: img/image175.jpg
+.. figure:: img/broad_peak_1d.jpg
 
-*Figure. 1D plot using the default values (w/200 data point).*
+    1D plot using the default values (w/200 data point).
 
 REFERENCE
 ---------

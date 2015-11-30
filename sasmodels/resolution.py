@@ -4,6 +4,13 @@ Define the resolution functions for the data.
 This defines classes for 1D and 2D resolution calculations.
 """
 from __future__ import division
+
+__all__ = ["Resolution", "Perfect1D", "Pinhole1D", "Slit1D",
+           "apply_resolution_matrix", "pinhole_resolution", "slit_resolution",
+           "pinhole_extend_q", "slit_extend_q", "bin_edges",
+           "interpolate", "linear_extrapolation", "geometric_extrapolation",
+           ]
+
 from scipy.special import erf
 from numpy import sqrt, log, log10
 import numpy as np
@@ -188,8 +195,7 @@ def slit_resolution(q_calc, q, width, height, n_height=30):
                 dq_\perp dq_\parallel
 
 
-    Algorithm
-    ---------
+    **Algorithm**
 
     We are using the mid-point integration rule to assign weights to each
     element of a weight matrix $W$ so that
@@ -428,6 +434,8 @@ def geometric_extrapolation(q, q_min, q_max, points_per_decade=None):
          n_\text{extend} = (\log q_\text{max} - \log q_n) / \log \Delta q
 
     Substituting:
+
+    .. math::
 
         n_\text{extend} = (n-1) (\log q_\text{max} - \log q_n)
             / (\log q_n - log q_1)

@@ -4,41 +4,44 @@ This model provides the scattering intensity, *I(q)*, for a lyotropic lamellar
 phase where a random distribution in solution are assumed. The SLD of the head
 region is taken to be different from the SLD of the tail region.
 
-*2.1.31.1. Definition*
+Definition
+----------
 
-The scattering intensity *I(q)* is
+The scattering intensity $I(q)$ is
 
 .. math::
 
-    I(Q) = 2\pi{P(Q) \over (2(|delta|\ H +|delta|\ T) Q^2)
+   I(q) = 2\pi\frac{\text{scale}}{2(\delta_H + \delta_T)}  P(q) \frac{1}{q^2}
 
-The form factor is
+The form factor $P(q)$ is
 
-.. image:: img/lamellarFFHG_.jpg
+.. math::
 
-where |delta|\ T = tail length (or *tail_length*), |delta|\ H = head thickness
-(or *h_thickness*), |drho|\ H = SLD(headgroup) - SLD(solvent),
-and |drho|\ T = SLD(tail) - SLD(solvent).
+    P(q) = \frac{4}{q^2}
+        \left\lbrace
+            \Delta \rho_H
+            \left[\sin[q(\delta_H + \delta_T)\ - \sin(q\delta_T)\right]
+            + \Delta\rho_T\sin(q\delta_T)
+        \right\rbrace^2
+
+where $\delta_T$ is *tail_length*, \delta_H is *head_length*,
+$\Delta\rho_H$ is the head contrast (*head_sld* $-$ *solvent_sld*),
+and $\Delta\rho_T$ is tail contrast (*sld* $-$ *solvent_sld*).
 
 The 2D scattering intensity is calculated in the same way as 1D, where
 the *q* vector is defined as
 
 .. math::
 
-    Q = \sqrt{Q_x^2 + Q_y^2}
+    q = \sqrt{q_x^2 + q_y^2}
 
-The returned value is in units of |cm^-1|, on absolute scale. In the
-parameters, *sld_tail* = SLD of the tail group, and *sld_head* = SLD
-of the head group.
 
-.. image:: img/lamellarFFHG_138.jpg
+.. figure:: img/lamellarFFHG_1d.jpg
 
-*Figure. 1D plot using the default values (w/1000 data point).*
+    1D plot using the default values (w/1000 data point).
 
-Our model uses the form factor calculations implemented in a C library
-provided by the NIST Center for Neutron Research (Kline, 2006).
-
-REFERENCE
+References
+----------
 
 F Nallet, R Laversanne, and D Roux, J. Phys. II France, 3, (1993) 487-502
 
@@ -50,7 +53,7 @@ also in J. Phys. Chem. B, 105, (2001) 11081-11088
 from numpy import inf
 
 name = "lamellar_FFHG"
-title = "Random lamellar phase with Head Groups "
+title = "Random lamellar phase with Head Groups"
 description = """\
     [Random lamellar phase with Head Groups]
         I(q)= 2*pi*P(q)/(2(H+T)*q^(2)), where

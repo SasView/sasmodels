@@ -3,8 +3,6 @@
 r"""
 The form factor is normalized by the particle volume.
 
-For information about polarised and magnetic scattering, click here_.
-
 Definition
 ----------
 

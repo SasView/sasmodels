@@ -3,15 +3,13 @@
 r"""
 The form factor is normalized by the particle volume.
 
-For information about polarised and magnetic scattering, click here_.
-
 Definition
 ----------
 
 This model provides the form factor, *P(q)*, for a rectangular parallelepiped
 (below) where the form factor is normalized by the volume of the
-parallelepiped. If you need to apply polydispersity, see also the
-RectangularPrismModel_.
+parallelepiped. If you need to apply polydispersity, see also
+rectangular_prism_.
 
 The calculated form factor is:
 

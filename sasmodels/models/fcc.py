@@ -8,53 +8,64 @@ negligible, and the size of the paracrystal is infinitely large.
 Paracrystalline distortion is assumed to be isotropic and characterized by
 a Gaussian distribution.
 
-The returned value is scaled to units of |cm^-1|\ |sr^-1|, absolute scale.
-
 Definition
 ----------
 
-The scattering intensity *I(q)* is calculated as
+The scattering intensity $I(q)$ is calculated as
 
-.. image:: img/image158.jpg
+.. math::
 
-where *scale* is the volume fraction of spheres, *Vp* is the volume of
+    I(q) = \frac{\text{scale}}{V_p} P(q) Z(q)
+
+where *scale* is the volume fraction of spheres, $V_p$ is the volume of
 the primary particle, *V(lattice)* is a volume correction for the crystal
-structure, *P(q)* is the form factor of the sphere (normalized), and *Z(q)*
+structure, $P(q)$ is the form factor of the sphere (normalized), and $Z(q)$
 is the paracrystalline structure factor for a face-centered cubic structure.
 
-Equation (1) of the 1990 reference is used to calculate *Z(q)*, using
-equations (23)-(25) from the 1987 paper for *Z1*\ , *Z2*\ , and *Z3*\ .
+Equation (1) of the 1990 reference is used to calculate $Z(q)$, using
+equations (23)-(25) from the 1987 paper for $Z1$, $Z2$, and $Z3$.
 
 The lattice correction (the occupied volume of the lattice) for a
 face-centered cubic structure of particles of radius *R* and nearest
-neighbor separation *D* is
+neighbor separation $D$ is
 
-.. image:: img/image159.jpg
+.. math::
+
+   V_\text{lattice} = \frac{16\pi}{3}\frac{R^3}{\left(D\sqrt{2}\right)^3}
 
 The distortion factor (one standard deviation) of the paracrystal is
-included in the calculation of *Z(q)*
+included in the calculation of $Z(q)$
 
-.. image:: img/image160.jpg
+.. math::
 
-where *g* is a fractional distortion based on the nearest neighbor distance.
+    \Delta a = gD
 
-The face-centered cubic lattice is
+where $g$ is a fractional distortion based on the nearest neighbor distance.
 
-.. image:: img/image161.jpg
+.. figure:: img/fcc_lattice.jpg
+
+    Face-centered cubic lattice.
 
 For a crystal, diffraction peaks appear at reduced q-values given by
 
-.. image:: img/image162.jpg
+.. math::
 
-where for a face-centered cubic lattice *h*\ , *k*\ , *l* all odd or all
-even are allowed and reflections where *h*\ , *k*\ , *l* are mixed odd/even
+    \frac{qD}{2\pi} = \sqrt{h^2 + k^2 + l^2}
+
+where for a face-centered cubic lattice $h, k , l$ all odd or all
+even are allowed and reflections where $h, k, l$ are mixed odd/even
 are forbidden. Thus the peak positions correspond to (just the first 5)
 
-.. image:: img/image163.jpg
+.. math::
 
-**NB: The calculation of** *Z(q)* **is a double numerical integral that
-must be carried out with a high density of** **points to properly capture
-the sharp peaks of the paracrystalline scattering.** So be warned that the
+    \begin{array}{cccccc}
+    q/q_0 & 1 & \sqrt{4/3} & \sqrt{8/3} & \sqrt{11/3} & \sqrt{4} \\
+    \text{Indices} & (111)  & (200) & (220) & (311) & (222)
+    \end{array}
+
+**NB**: The calculation of $Z(q)$ is a double numerical integral that
+must be carried out with a high density of points to properly capture
+the sharp peaks of the paracrystalline scattering. So be warned that the
 calculation is SLOW. Go get some coffee. Fitting of any experimental data
 must be resolution smeared for any meaningful fit. This makes a triple
 integral. Very, very slow. Go get lunch!
@@ -62,22 +73,25 @@ integral. Very, very slow. Go get lunch!
 This example dataset is produced using 200 data points, *qmin* = 0.01 |Ang^-1|,
 *qmax* = 0.1 |Ang^-1| and the above default values.
 
-.. image:: img/image164.jpg
+.. figure:: img/fcc_1d.jpg
 
-*Figure. 1D plot in the linear scale using the default values (w/200 data point).*
+    1D plot in the linear scale using the default values (w/200 data point).
 
 The 2D (Anisotropic model) is based on the reference below where *I(q)* is
 approximated for 1d scattering. Thus the scattering pattern for 2D may not
 be accurate. Note that we are not responsible for any incorrectness of the
 2D model computation.
 
-.. image:: img/image165.gif
+.. figure:: img/crystal_orientation.gif
 
-.. image:: img/image166.jpg
+    Orientation of the crystal with respect to the scattering plane.
 
-*Figure. 2D plot using the default values (w/200X200 pixels).*
+.. figure:: img/fcc_2d.jpg
 
-REFERENCE
+    2D plot using the default values (w/200X200 pixels).
+
+Reference
+---------
 
 Hideki Matsuoka et. al. *Physical Review B*, 36 (1987) 1754-1765
 (Original Paper)

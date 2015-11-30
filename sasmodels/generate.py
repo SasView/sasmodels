@@ -199,7 +199,8 @@ returns a list of files required by the model.
 __all__ = ["make", "doc", "sources", "use_single", "use_long_double"]
 
 import sys
-from os.path import abspath, dirname, join as joinpath, exists, basename
+from os.path import abspath, dirname, join as joinpath, exists, basename, \
+    splitext
 import re
 
 import numpy as np
@@ -564,7 +565,7 @@ def make_info(kernel_module):
     if demo_parameters is None:
         demo_parameters = dict((p[0],p[2]) for p in parameters)
     filename = abspath(kernel_module.__file__)
-    kernel_id = basename(filename)[:-3]
+    kernel_id = splitext(basename(filename))[0]
     name = getattr(kernel_module, 'name', None)
     if name is None:
         name = " ".join(w.capitalize() for w in kernel_id.split('_'))

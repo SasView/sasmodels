@@ -20,7 +20,7 @@ of MinGW compiled with OpenMP support.
 An alternative toolchain uses the Microsoft Visual C++ compiler, available
 free from microsoft:
 
-    `http://www.microsoft.com/en-us/download/details.aspx?id=44266`_
+    `<http://www.microsoft.com/en-us/download/details.aspx?id=44266>`_
 
 Again, this requires that the compiler is available on your path.  This is
 done by running vcvarsall.bat in a windows terminal.  Install locations are

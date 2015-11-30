@@ -14,6 +14,7 @@ calculations.
    :maxdepth: 5
 
    guide/index.rst
+   developer/index.rst
    ref/index.rst
    api/index.rst
 

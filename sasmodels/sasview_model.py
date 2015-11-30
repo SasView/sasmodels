@@ -228,35 +228,32 @@ class SasviewModel(object):
             return self.calculate_Iq([float(x)])[0]
 
     def evalDistribution(self, qdist):
-        """
+        r"""
         Evaluate a distribution of q-values.
 
-        * For 1D, a numpy array is expected as input: ::
+        :param qdist: array of q or a list of arrays [qx,qy]
+
+        * For 1D, a numpy array is expected as input
+
+        ::
 
             evalDistribution(q)
 
-          where q is a numpy array.
+          where *q* is a numpy array.
 
-        * For 2D, a list of numpy arrays are expected: [qx,qy],
-          with 1D arrays::
+        * For 2D, a list of *[qx,qy]* is expected with 1D arrays as input
+
+        ::
 
               qx = [ qx[0], qx[1], qx[2], ....]
-
-          and::
-
               qy = [ qy[0], qy[1], qy[2], ....]
 
-        Then get ::
+        If the model is 1D only, then
 
-            q = numpy.sqrt(qx^2+qy^2)
+        .. math::
 
-        that is a qr in 1D array::
+            q = \sqrt{q_x^2+q_y^2}
 
-            q = [q[0], q[1], q[2], ....]
-
-
-        :param qdist: ndarray of scalar q-values or list [qx,qy]
-        where qx,qy are 1D ndarrays
         """
         if isinstance(qdist, (list, tuple)):
             # Check whether we have a list of ndarrays [qx,qy]

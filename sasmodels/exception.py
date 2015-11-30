@@ -14,7 +14,9 @@ def annotate_exception(exc, msg):
     Add an annotation to the current exception, which can then be forwarded
     to the caller using a bare "raise" statement to reraise the annotated
     exception.
+
     Example::
+
         >>> D = {}
         >>> try:
         ...    print D['hello']

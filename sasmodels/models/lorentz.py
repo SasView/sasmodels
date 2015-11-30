@@ -11,14 +11,16 @@ The Ornstein-Zernicke model is defined by
 The parameter *L* is the screening length.
 
 For 2D data: The 2D scattering intensity is calculated in the same way as 1D, 
-where the *q* vector is defined as
+where the $q$ vector is defined as
 
 .. math:: q=\sqrt{q_x^2 + q_y^2}
 
-.. image:: img/image179.jpg
+.. figure:: img/lorentz_1d.jpg
 
-*Figure. 1D plot using the default values (w/200 data point).*
-REFERENCE
+    1D plot using the default values (w/200 data point).
+
+Reference
+---------
 
 L.S. Qrnstein and F. Zernike, *Proc. Acad. Sci. Amsterdam* 17, 793 (1914), and
 *Z. Phys.* 19, 134 (1918), and 27, 761 {1926); referred to as QZ.

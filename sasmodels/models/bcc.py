@@ -7,8 +7,6 @@ paracrystalline distortion. Thermal vibrations are considered to be negligible,
 and the size of the paracrystal is infinitely large. Paracrystalline distortion
 is assumed to be isotropic and characterized by a Gaussian distribution.
 
-The returned value is scaled to units of |cm^-1|\ |sr^-1|, absolute scale.
-
 Definition
 ----------
 
@@ -45,9 +43,10 @@ in the calculation of $Z(q)$
 
 where $g$ is a fractional distortion based on the nearest neighbor distance.
 
-The body-centered cubic lattice is
 
-.. image:: img/bcc_lattice.jpg
+.. figure:: img/bcc_lattice.jpg
+
+    Body-centered cubic lattice.
 
 For a crystal, diffraction peaks appear at reduced q-values given by
 
@@ -67,9 +66,9 @@ correspond to (just the first 5)
     &\text{Indices}&& (110) && (200) && (211) && (220) && (310)
     \end{eqnarray}
 
-**NB: The calculation of $Z(q)$ is a double numerical integral that must
+**NB**: The calculation of $Z(q)$ is a double numerical integral that must
 be carried out with a high density of points to properly capture the sharp
-peaks of the paracrystalline scattering.** So be warned that the calculation
+peaks of the paracrystalline scattering. So be warned that the calculation
 is SLOW. Go get some coffee. Fitting of any experimental data must be
 resolution smeared for any meaningful fit. This makes a triple integral.
 Very, very slow. Go get lunch!
@@ -77,23 +76,24 @@ Very, very slow. Go get lunch!
 This example dataset is produced using 200 data points,
 *qmin* = 0.001 |Ang^-1|, *qmax* = 0.1 |Ang^-1| and the above default values.
 
-.. image:: img/bcc_1d.jpg
+.. figure:: img/bcc_1d.jpg
 
-*Figure. 1D plot in the linear scale using the default values
-(w/200 data point).*
+    1D plot in the linear scale using the default values (w/200 data point).
 
 The 2D (Anisotropic model) is based on the reference below where $I(q)$ is
 approximated for 1d scattering. Thus the scattering pattern for 2D may not
 be accurate. Note that we are not responsible for any incorrectness of the 2D
 model computation.
 
-.. image:: img/bcc_orientation.gif
+.. figure:: img/crystal_orientation.gif
 
-.. image:: img/bcc_2d.jpg
+    Orientation of the crystal with respect to the scattering plane.
 
-*Figure. 2D plot using the default values (w/200X200 pixels).*
+.. figure:: img/bcc_2d.jpg
 
-REFERENCE
+    2D plot using the default values (w/200X200 pixels).*
+
+Reference
 ---------
 
 Hideki Matsuoka et. al. *Physical Review B*, 36 (1987) 1754-1765

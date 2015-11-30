@@ -1,11 +1,13 @@
 r"""
-This model provides the form factor, *P(q)*, for a monodisperse hollow right 
+This model provides the form factor, $P(q)$, for a monodisperse hollow right
 angle circular cylinder (tube) where the form factor is normalized by the
 volume of the tube
 
-*P(q)* = *scale* \* *<F*\ :sup:`2`\ *>* / *V*\ :sub:`shell` + *background*
+.. math::
 
-where the averaging < > is applied only for the 1D calculation.
+    P(q) = \text{scale} \langle F^2 \rangle/V_\text{shell} + \text{background}
+
+where the averaging $\langle \rangle$ is applied only for the 1D calculation.
 
 The inside and outside of the hollow cylinder are assumed have the same SLD.
 
@@ -17,44 +19,47 @@ The 1D scattering intensity is calculated in the following way (Guinier, 1955)
 .. math::
 
     \begin{eqnarray}
-    P(q)&=&(\text{scale})V_{shell}(\Delta\rho)^2\int_0^{1}\Psi^2[q_z,
-    R_{shell}(1-x^2)^{1/2},R_{core}(1-x^2)^{1/2}][\frac{sin(qHx)}{qHx}]^2dx\\
-    \Psi[q,y,z]&=&\frac{1}{1-\gamma^2}[\Lambda(qy)-\gamma^2\Lambda(qz)]\\
-    \Lambda(a)&=&2J_1(a)/a\\
-    \gamma&=&R_{core}/R_{shell}\\
-    V_{shell}&=&\pi(R_{shell}^2-R_{core}^2)L\\
-    J_1(x)&=&\frac{(sin(x)-x\cdot cos(x))}{x^2}\\
+    P(q)           &=& (\text{scale})V_\text{shell}\Delta\rho^2
+            \int_0^{1}\Psi^2
+            \left[q_z, R_\text{shell}(1-x^2)^{1/2},
+                       R_\text{core}(1-x^2)^{1/2}\right]
+            \left[\frac{\sin(qHx)}{qHx}\right]^2 dx \\
+    \Psi[q,y,z]    &=& \frac{1}{1-\gamma^2}
+            \left[ \Lambda(qy) - \gamma^2\Lambda(qz) \right] \\
+    \Lambda(a)     &=& 2 J_1(a) / a \\
+    \gamma         &=& R_\text{core} / R_\text{shell} \\
+    V_\text{shell} &=& \pi \left(R_\text{shell}^2 - R_\text{core}^2 \right)L \\
+    J_1(x)         &=& \frac{(\sin(x)-x\cdot \cos(x))}{x^2} \\
     \end{eqnarray}
 
-where *scale* is a scale factor and *J1* is the 1st order Bessel function.
+where *scale* is a scale factor and $J_1$ is the 1st order
+Bessel function.
 
 To provide easy access to the orientation of the core-shell cylinder, we define
-the axis of the cylinder using two angles |theta| and |phi|\ . As for the case 
+the axis of the cylinder using two angles $\theta$ and $\phi$. As for the case
 of the cylinder, those angles are defined in Figure 2 of the CylinderModel.
 
-NB: The 2nd virial coefficient of the cylinder is calculated based on the radius
-and 2 length values, and used as the effective radius for *S(Q)* when 
-*P(Q)* \* *S(Q)* is applied.
+**NB**: The 2nd virial coefficient of the cylinder is calculated
+based on the radius and 2 length values, and used as the effective radius
+for $S(Q)$ when $P(Q) * S(Q)$ is applied.
 
 In the parameters, the contrast represents SLD :sub:`shell` - SLD :sub:`solvent`
-and the *radius* = *R*\ :sub:`shell` while *core_radius* = *R*\ :sub:`core`.
+and the *radius* is $R_\text{shell}$ while *core_radius* is $R_\text{core}$.
 
-.. image:: img/image074.jpg
+.. figure:: img/hollow_cylinder_1d.jpg
 
-*Figure. 1D plot using the default values (w/1000 data point).*
+    1D plot using the default values (w/1000 data point).
 
-Our model uses the form factor calculations implemented in a c-library provided
-by the NIST Center for Neutron Research (Kline, 2006).
+.. figure:: img/orientation.jpg
 
-.. image:: img/image061.jpg
+    Definition of the angles for the oriented hollow_cylinder model.
 
-*Figure. Definition of the angles for the oriented hollow_cylinder model.*
+.. figure:: img/orientation2.jpg
 
-.. image:: img/image062.jpg
+    Examples of the angles for oriented pp against the detector plane.
 
-*Figure. Examples of the angles for oriented pp against the detector plane.*
-
-REFERENCE
+Reference
+---------
 
 L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and
 Neutron Scattering*, Plenum Press, New York, (1987)

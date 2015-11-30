@@ -6,60 +6,89 @@ treated as a paracrystal to account for the repeating spacing. The repeat
 distance is further characterized by a Gaussian polydispersity. **This model
 can be used for large multilamellar vesicles.**
 
-*2.1.33.1. Definition*
+Definition
+----------
 
-The scattering intensity *I(q)* is calculated as
+In the equations below,
 
-.. image:: img/image145.jpg
+- *scale* is used instead of the mass per area of the bilayer $\Gamma_m$
+  (this corresponds to the volume fraction of the material in the bilayer,
+  *not* the total excluded volume of the paracrystal),
+
+- *sld* $-$ *solvent_sld* is the contrast $\Delta \rho$,
+
+- *thickness* is the layer thickness $t$,
+
+- *Nlayers* is the number of layers $N$,
+
+- *spacing* is the average distance between adjacent layers
+  $\langle D \rangle$, and
+
+- *spacing_polydisp* is the relative standard deviation of the Gaussian
+  layer distance distribution $\sigma_D / \langle D \rangle$.
+
+
+The scattering intensity $I(q)$ is calculated as
+
+.. math::
+
+    I(q) = 2\pi\Delta\rho^2\Gamma_m\frac{P_\text{bil}(q)}{q^2} Z_N(q)
 
 The form factor of the bilayer is approximated as the cross section of an
-infinite, planar bilayer of thickness *t*
+infinite, planar bilayer of thickness $t$
 
-.. image:: img/image146.jpg
+.. math::
 
-Here, the scale factor is used instead of the mass per area of the
-bilayer (*G*). The scale factor is the volume fraction of the material in
-the bilayer, *not* the total excluded volume of the paracrystal.
-*Z*\ :sub:`N`\ *(q)* describes the interference effects for aggregates
+    P_\text{bil}(q) = \left(\frac{\sin(qt/2)}{qt/2}\right)^2
+
+$Z_N(q)$ describes the interference effects for aggregates
 consisting of more than one bilayer. The equations used are (3-5)
-from the Bergstrom reference below.
+from the Bergstrom reference:
+
+.. math::
+
+
+    Z_N(q) = \frac{1 - w^2}{1 + w^2 - 2w \cos(q \langle D \rangle)}
+        + x_N S_N + (1 - x_N) S_{N+1}
+
+where
+
+.. math::
+
+    S_N(q) = \frac{a_N}{N}[1 + w^2 - 2 w \cos(q \langle D \rangle)]^2
+
+and
+
+.. math::
+
+    a_N = 4w^2 - 2(w^3 + w) \cos(q \langle D \rangle)
+        - 4w^{N+2}\cos(Nq \langle D \rangle)
+        + 2 w^{N+3}\cos[(N-1)q \langle D \rangle]
+        + 2w^{N+1}\cos[(N+1)q \langle D \rangle]
+
+for the layer spacing distribution $w = \exp(-\sigma_D^2 q^2/2)$.
 
 Non-integer numbers of stacks are calculated as a linear combination of
 the lower and higher values
 
-.. image:: img/image147.jpg
+.. math::
+
+    N_L = x_N N + (1 - x_N)(N+1)
 
 The 2D scattering intensity is the same as 1D, regardless of the orientation
-of the *q* vector which is defined as
+of the $q$ vector which is defined as
 
 .. math::
 
-    Q = \sqrt{Q_x^2 + Q_y^2}
+    q = \sqrt{q_x^2 + q_y^2}
 
-The parameters of the model are *Nlayers* = no. of layers, and
-*pd_spacing* = polydispersity of spacing.
 
-==============  ========  =============
-Parameter name  Units     Default value
-==============  ========  =============
-background      |cm^-1|   0
-scale           None      1
-Nlayers         None      20
-pd_spacing      None      0.2
-sld_layer       |Ang^-2|  1e-6
-sld_solvent     |Ang^-2|  6.34e-6
-spacing         |Ang|     250
-thickness       |Ang|     33
-==============  ========  =============
+.. figure:: img/lamellarPC_1d.jpg
 
-.. image:: img/image148.jpg
+    1D plot using the default values above (w/20000 data point).
 
-*Figure. 1D plot using the default values above (w/20000 data point).*
-
-Our model uses the form factor calculations implemented in a C library
-provided by the NIST Center for Neutron Research (Kline, 2006).
-
-REFERENCE
+Reference
+---------
 
 M Bergstrom, J S Pedersen, P Schurtenberger, S U Egelhaaf,
 *J. Phys. Chem. B*, 103 (1999) 9888-9897
@@ -89,7 +118,7 @@ parameters = [["thickness", "Ang", 33.0, [0, inf], "volume",
               ["spacing", "Ang", 250., [0.0, inf], "",
                "d-spacing of paracrystal stack"],
               ["spacing_polydisp", "Ang", 0.0, [0.0, inf], "",
-               "d-spacing of paracrystal stack"],
+               "d-spacing polydispersity"],
               ["sld", "1e-6/Ang^2", 1.0, [-inf, inf], "",
                "layer scattering length density"],
               ["solvent_sld", "1e-6/Ang^2", 6.34, [-inf, inf], "",

@@ -35,10 +35,10 @@ Validation
 
 Validation of our code was done by comparing the output of the 1D model
 to the output of the software provided by the NIST (Kline, 2006).
-Figure :num:`figure #sphere-comparison` shows a comparison of the output
+Figure :num:`figure #spherepy-comparison` shows a comparison of the output
 of our model and the output of the NIST software.
 
-.. _sphere-comparison:
+.. _spherepy-comparison:
 
 .. figure:: img/sphere_comparison.jpg
 
