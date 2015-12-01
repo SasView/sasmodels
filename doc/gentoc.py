@@ -27,14 +27,20 @@ def _make_category(category_name, label, title, parent=None):
     file = open(joinpath(MODEL_TOC_PATH, category_name+".rst"), "w")
     file.write(TEMPLATE%{'label':label, 'title':title, 'bar':'*'*len(title)})
     if parent:
-        _add_subcategory(parent, category_name)
+        _add_subcategory(category_name, parent)
     return file
 
-def _add_subcategory(file, category_name):
-    file.write("    %s.rst\n"%category_name)
+def _add_subcategory(category_name, parent):
+    parent.write("    %s.rst\n"%category_name)
 
 def _add_model(file, model_name):
     file.write("    ../../model/%s.rst\n"%model_name)
+
+def _maybe_make_category(category, models, cat_files, model_toc):
+    if category not in cat_files:
+        print >>sys.stderr, "Unexpected category %s containing"%category, models
+        title = category.capitalize()+" Functions"
+        cat_files[category] = _make_category(category, category, title, model_toc)
 
 def generate_toc(model_files):
     if not model_files:
@@ -57,28 +63,32 @@ def generate_toc(model_files):
         if len(v) == 1:
             print >>sys.stderr, "Category %s contains only %s"%(k,v[0])
 
-    # Generate category files
-    # Assume that top-level groups are:
-    #    shape, shape-independent, structure-factor and custom
-    # Supports a two-level category structure.
+    # Generate category files for the table of contents.
+    # Initially we had "shape functions" as an additional TOC level, but we
+    # have revised it so that the individual shape categories now go at
+    # the top level.  Judicious rearrangement of comments will make the
+    # "shape functions" level reappear.
+    # We are forcing shape-independent, structure-factor and custom-models
+    # to come at the end of the TOC.  All other categories will come in
+    # alphabetical order before them.
 
     if not exists(MODEL_TOC_PATH): mkdir(MODEL_TOC_PATH)
     model_toc = _make_category(
         'index',  'Models', 'Model Functions')
-    shape_toc = _make_category(
-        'shape',  'Shapes', 'Shape Functions', model_toc)
+    #shape_toc = _make_category(
+    #    'shape',  'Shapes', 'Shape Functions', model_toc)
     free_toc = _make_category(
         'shape-independent',  'Shape-independent',
-        'Shape-Independent Functions', model_toc)
+        'Shape-Independent Functions')
     struct_toc = _make_category(
-        'structure-factor',  'Structure-factor', 'Structure Factors', model_toc)
+        'structure-factor',  'Structure-factor', 'Structure Factors')
     custom_toc = _make_category(
-        'custom-models',  'Custom-models', 'Custom Models', model_toc)
-    model_toc.close()
+        'custom-models',  'Custom-models', 'Custom Models')
 
     # remember to top level categories
     cat_files = {
-        'shape':shape_toc,
+        #'shape':shape_toc,
+        'shape':model_toc,
         'shape-independent':free_toc,
         'structure-factor': struct_toc,
         'custom': custom_toc,
@@ -88,6 +98,7 @@ def generate_toc(model_files):
     for k,v in sorted(category.items()):
         if ':' in k:
             cat,subcat = k.split(':')
+            _maybe_make_category(cat, v, cat_files, model_toc)
             cat_file = cat_files[cat]
             label = "-".join((cat,subcat))
             filename = label
@@ -97,14 +108,18 @@ def generate_toc(model_files):
                 _add_model(sub_toc, model)
             sub_toc.close()
         else:
-            if k not in cat_files:
-                print >>sys.stderr, "Unknown category %s containing"%cat, v
-            else:
-                cat_file = cat_files[k]
-                for model in sorted(v):
-                    _add_model(cat_file, model)
+            _maybe_make_category(k, v, cat_files, model_toc)
+            cat_file = cat_files[k]
+            for model in sorted(v):
+                _add_model(cat_file, model)
+
+    #_add_subcategory('shape', model_toc)
+    _add_subcategory('shape-independent', model_toc)
+    _add_subcategory('structure-factor', model_toc)
+    _add_subcategory('custom-models', model_toc)
 
     # Close the top-level category files
+    #model_toc.close()
     for f in cat_files.values(): f.close()
 
 

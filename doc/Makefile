@@ -84,7 +84,7 @@ upload:
 	scp _build/latex/SASModels.pdf reflectometry.org:web/danse/download
 
 clean:
-	-$(RMDIR) _build model api
+	-$(RMDIR) _build model api ref/models
 
 html: build
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) _build/html

@@ -11,11 +11,12 @@ calculations.
 
 .. toctree::
    :numbered:
-   :maxdepth: 5
+   :maxdepth: 4
 
    guide/index.rst
    developer/index.rst
    ref/index.rst
+   ref/models/index.rst
    api/index.rst
 
 Indices and Tables

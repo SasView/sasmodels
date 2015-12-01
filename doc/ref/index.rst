@@ -7,5 +7,4 @@ SAS Model Reference
    :maxdepth: 4
 
    intro.rst
-   models/index.rst
    refs.rst
