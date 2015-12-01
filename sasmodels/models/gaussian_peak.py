@@ -25,8 +25,8 @@ where the $q$ vector is defined as
 
     1D plot using the default values (w/500 data points).
 
-Reference
----------
+References
+----------
 
 None.
 """

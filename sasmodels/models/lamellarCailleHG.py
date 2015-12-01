@@ -1,7 +1,7 @@
 # Note: model title and parameter table are inserted automatically
 r"""
 This model provides the scattering intensity, $I(q) = P(q)S(q)$, for a lamellar
-phase where a random distribution in solution are assumed. Here a Caille $S(Q)$
+phase where a random distribution in solution are assumed. Here a Caille $S(q)$
 is used for the lamellar stacks.
 
 The scattering intensity $I(q)$ is
@@ -30,11 +30,16 @@ where
 
 .. math::
 
-    \begin{eqnarray}
-    \alpha(n) &=& \frac{\eta_{cp}}{4\pi^2} \left(\ln(\pi n)+\gamma_E\right)  \\
-    \gamma_E &=& 0.5772156649&&\text{Euler's constant} \\
-    \eta_{cp} &=& \frac{q_o^2k_B T}{8\pi\sqrt{K\overline{B}}} && \text{Caille constant}
-    \end{eqnarray}
+    %\begin{align*} % isn't working with pdflatex
+    \begin{array}{rll}
+    \alpha(n) &= \frac{\eta_{cp}}{4\pi^2} \left(\ln(\pi n)+\gamma_E\right)
+              &  \\
+    \gamma_E  &= 0.5772156649
+              & \text{Euler's constant} \\
+    \eta_{cp} &= \frac{q_o^2k_B T}{8\pi\sqrt{K\overline{B}}}
+              & \text{Caille constant} \\
+              &
+    \end{array}
 
 
 $\delta_T$ is the tail length (or *tail_length*), $\delta_H$ is the head
@@ -58,16 +63,12 @@ the $q$ vector is defined as
 
     q = \sqrt{q_x^2 + q_y^2}
 
-The returned value is in units of |cm^-1|, on absolute scale.
+.. figure:: img/lamellarCailleHG_1d.jpg
 
-.. image:: img/lamellarCailleHG_1d.jpg
+    1D plot using the default values (w/6000 data point).
 
-*Figure. 1D plot using the default values (w/6000 data point).*
-
-Our model uses the form factor calculations implemented in a C library provided
-by the NIST Center for Neutron Research (Kline, 2006).
-
-REFERENCE
+References
+----------
 
 F Nallet, R Laversanne, and D Roux, J. Phys. II France, 3, (1993) 487-502
 

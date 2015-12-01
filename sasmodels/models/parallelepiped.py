@@ -6,7 +6,7 @@ The form factor is normalized by the particle volume.
 Definition
 ----------
 
-This model provides the form factor, *P(q)*, for a rectangular parallelepiped
+This model provides the form factor, $P(q)$, for a rectangular parallelepiped
 (below) where the form factor is normalized by the volume of the
 parallelepiped. If you need to apply polydispersity, see also
 rectangular_prism_.
@@ -15,30 +15,33 @@ The calculated form factor is:
 
 .. math::
 
-    P(Q) = {\text{scale} \over V} F^2(Q) + \text{background}
+    P(q) = \frac{\text{scale}}{V} F^2(q) + \text{background}
 
-where the volume *V* = *A B C* and the averaging < > is applied over all
-orientations for 1D.
+where the volume $V = A B C$ and the averaging $\left<\ldots\right>$ is
+applied over all orientations for 1D.
 
 .. figure:: img/parallelepiped.jpg
 
    Parallelepiped with the corresponding definition of sides.
 
-The edge of the solid must satisfy the condition that** *A* < *B* < *C*.
-Then, assuming *a* = *A* / *B* < 1, *b* = *B* / *B* = 1, and
-*c* = *C* / *B* > 1, the form factor is
+The edge of the solid must satisfy the condition that $A < B < C$.
+Then, assuming $a = A/B < 1$, $b = B /B = 1$, and $c = C/B > 1$, the
+form factor is
 
 .. math::
 
-    P(q) = \frac{\textstyle{scale}}{V}\int_0^1 \phi(\mu \sqrt{1-\sigma^2},a)
-    [S(\mu c \sigma/2)]^2 d\sigma
+    P(q) = \frac{\text{scale}}{V}\int_0^1
+        \phi\left(\mu \sqrt{1-\sigma^2},a\right)
+        \left[S(\mu c \sigma/2)\right]^2 d\sigma
 
 with
 
 .. math::
 
-    \phi(\mu,a) = \int_0^1 \{S[\frac{\mu}{2}\cos(\frac{\pi}{2}u)]
-    S[\frac{\mu a}{2}\sin(\frac{\pi}{2}u)]\}^2 du
+    \phi(\mu,a) = \int_0^1
+        \left\{S\left[\frac{\mu}{2}\cos(\frac{\pi}{2}u)\right]
+               S\left[\frac{\mu a}{2}\sin(\frac{\pi}{2}u)\right]
+               \right\}^2 du
 
     S(x) = \frac{\sin x}{x}
 
@@ -51,19 +54,19 @@ and the contrast is defined as
     \Delta\rho = \rho_{\textstyle p} - \rho_{\textstyle solvent}
 
 The scattering intensity per unit volume is returned in units of |cm^-1|;
-ie, *I(q)* = |phi| *P(q)*\ .
+i.e., $I(q) = \phi P(q)$.
 
 NB: The 2nd virial coefficient of the parallelpiped is calculated based on
-the averaged effective radius (= sqrt(*short_a* \* *short_b* / |pi|)) and
-length(= *long_c*) values, and used as the effective radius for
-*S(Q)* when *P(Q)* \* *S(Q)* is applied.
+the averaged effective radius $(=\sqrt{A B / \pi})$ and
+length $(= C)$ values, and used as the effective radius for
+$S(q)$ when $P(q) \cdot S(q)$ is applied.
 
 To provide easy access to the orientation of the parallelepiped, we define
-three angles |theta|, |phi| and |bigpsi|. The definition of |theta| and |phi|
-is the same as for the cylinder model (see also figures below).
-The angle |bigpsi| is the rotational angle around the *long_c* axis against
-the *q* plane. For example, |bigpsi| = 0 when the *short_b* axis is parallel
-to the *x*-axis of the detector.
+three angles $\theta$, $\phi$ and $\Psi$. The definition of $\theta$ and
+$\phi$ is the same as for the cylinder model (see also figures below).
+The angle $\Psi$ is the rotational angle around the $C$ axis against
+the $q$ plane. For example, $\Psi = 0$ when the $B$ axis is parallel
+to the $x$-axis of the detector.
 
 
 .. _parallelepiped-orientation:
@@ -84,12 +87,12 @@ Validation of the code was done by comparing the output of the 1D calculation
 to the angular average of the output of a 2D calculation over all possible
 angles. The Figure below shows the comparison where the solid dot refers to
 averaged 2D while the line represents the result of the 1D calculation (for
-the averaging, 76, 180, 76 points are taken for the angles of |theta|, |phi|,
-and |psi| respectively).
+the averaging, 76, 180, 76 points are taken for the angles of $\theta$,
+$\phi$, and $\Psi$ respectively).
 
 .. _parallelepiped-compare:
 
-.. figure:: img/parallelepiped_compare.gif
+.. figure:: img/parallelepiped_compare.png
 
    Comparison between 1D and averaged 2D.
 

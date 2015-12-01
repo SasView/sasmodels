@@ -10,12 +10,12 @@ The 1D scattering intensity is calculated in the following way (Guinier, 1955)
 
 .. math::
 
-    I(Q) = \frac{\text{scale}}{V} \cdot \left[ \
-        3V(\Delta\rho) \cdot \frac{\sin(QR) - QR\cos(QR))}{(QR)^3} \
+    I(q) = \frac{\text{scale}}{V} \cdot \left[
+        3V(\Delta\rho) \cdot \frac{\sin(qr) - qr\cos(qr))}{(qr)^3}
         \right]^2 + \text{background}
 
 where *scale* is a volume fraction, $V$ is the volume of the scatterer,
-$R$ is the radius of the sphere, *background* is the background level and
+$r$ is the radius of the sphere, *background* is the background level and
 *sld* and *solvent_sld* are the scattering length densities (SLDs) of the
 scatterer and the solvent respectively.
 
@@ -26,9 +26,6 @@ might need to be rescaled).
 
 The 2D scattering intensity is the same as above, regardless of the
 orientation of $\vec q$.
-
-Our model uses the form factor calculations as defined in the IGOR
-package provided by the NIST Center for Neutron Research (Kline, 2006).
 
 Validation
 ----------
@@ -48,8 +45,8 @@ of our model and the output of the NIST software.
     *background* = 0.01 |cm^-1|.
 
 
-Reference
----------
+References
+----------
 
 A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*,
 John Wiley and Sons, New York, (1955)
@@ -63,9 +60,9 @@ from numpy import pi, inf, sin, cos, sqrt, log
 name = "sphere (python)"
 title = "Spheres with uniform scattering length density"
 description = """\
-P(q)=(scale/V)*[3V(sld-solvent_sld)*(sin(qR)-qRcos(qR))
-                /(qR)^3]^2 + background
-    R: radius of sphere
+P(q)=(scale/V)*[3V(sld-solvent_sld)*(sin(qr)-qr cos(qr))
+                /(qr)^3]^2 + background
+    r: radius of sphere
     V: The volume of the scatter
     sld: the SLD of the sphere
     solvent_sld: the SLD of the solvent
@@ -100,11 +97,11 @@ def Iq(q, sld, solvent_sld, radius):
     bes[qr == 0] = 1
     fq = bes * (sld - solvent_sld) * form_volume(radius)
     return 1.0e-4 * fq ** 2
-Iq.vectorized = True  # Iq accepts an array of Q values
+Iq.vectorized = True  # Iq accepts an array of q values
 
 def Iqxy(qx, qy, sld, solvent_sld, radius):
     return Iq(sqrt(qx ** 2 + qy ** 2), sld, solvent_sld, radius)
-Iqxy.vectorized = True  # Iqxy accepts arrays of Qx, Qy values
+Iqxy.vectorized = True  # Iqxy accepts arrays of qx, qy values
 
 def sesans(z, sld, solvent_sld, radius):
     """

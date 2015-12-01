@@ -39,8 +39,8 @@ where the $q$ vector is defined as
 
     1D plot using the default values (w/200 data point).
 
-Reference
----------
+References
+----------
 
 M Teubner, R Strey, *J. Chem. Phys.*, 87 (1987) 3195
 
@@ -76,11 +76,11 @@ def form_volume(radius):
 
 def Iq(q, a2, c1, c2):
     return 1. / np.polyval([c2, c1, a2], q**2)
-Iq.vectorized = True  # Iq accepts an array of Q values
+Iq.vectorized = True  # Iq accepts an array of q values
 
 def Iqxy(qx, qy, a2, c1, c2):
     return Iq(sqrt(qx**2 + qy**2), a2, c1, c2)
-Iqxy.vectorized = True  # Iqxy accepts arrays of Qx, Qy values
+Iqxy.vectorized = True  # Iqxy accepts arrays of qx, qy values
 
 # ER defaults to 0.0
 

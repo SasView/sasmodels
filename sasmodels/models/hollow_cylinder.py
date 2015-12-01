@@ -5,9 +5,9 @@ volume of the tube
 
 .. math::
 
-    P(q) = \text{scale} \langle F^2 \rangle/V_\text{shell} + \text{background}
+    P(q) = \text{scale} \left<F^2\right>/V_\text{shell} + \text{background}
 
-where the averaging $\langle \rangle$ is applied only for the 1D calculation.
+where the averaging $\left<\ldots\right>$ is applied only for the 1D calculation.
 
 The inside and outside of the hollow cylinder are assumed have the same SLD.
 
@@ -18,19 +18,20 @@ The 1D scattering intensity is calculated in the following way (Guinier, 1955)
 
 .. math::
 
-    \begin{eqnarray}
-    P(q)           &=& (\text{scale})V_\text{shell}\Delta\rho^2
+    %\begin{align*} % isn't working with pdflatex
+    \begin{array}{rl}
+    P(q)           &= (\text{scale})V_\text{shell}\Delta\rho^2
             \int_0^{1}\Psi^2
             \left[q_z, R_\text{shell}(1-x^2)^{1/2},
                        R_\text{core}(1-x^2)^{1/2}\right]
             \left[\frac{\sin(qHx)}{qHx}\right]^2 dx \\
-    \Psi[q,y,z]    &=& \frac{1}{1-\gamma^2}
+    \Psi[q,y,z]    &= \frac{1}{1-\gamma^2}
             \left[ \Lambda(qy) - \gamma^2\Lambda(qz) \right] \\
-    \Lambda(a)     &=& 2 J_1(a) / a \\
-    \gamma         &=& R_\text{core} / R_\text{shell} \\
-    V_\text{shell} &=& \pi \left(R_\text{shell}^2 - R_\text{core}^2 \right)L \\
-    J_1(x)         &=& \frac{(\sin(x)-x\cdot \cos(x))}{x^2} \\
-    \end{eqnarray}
+    \Lambda(a)     &= 2 J_1(a) / a \\
+    \gamma         &= R_\text{core} / R_\text{shell} \\
+    V_\text{shell} &= \pi \left(R_\text{shell}^2 - R_\text{core}^2 \right)L \\
+    J_1(x)         &= (\sin(x)-x\cdot \cos(x)) / x^2 \\
+    \end{array}
 
 where *scale* is a scale factor and $J_1$ is the 1st order
 Bessel function.
@@ -41,7 +42,7 @@ of the cylinder, those angles are defined in Figure 2 of the CylinderModel.
 
 **NB**: The 2nd virial coefficient of the cylinder is calculated
 based on the radius and 2 length values, and used as the effective radius
-for $S(Q)$ when $P(Q) * S(Q)$ is applied.
+for $S(q)$ when $P(q) \cdot S(q)$ is applied.
 
 In the parameters, the contrast represents SLD :sub:`shell` - SLD :sub:`solvent`
 and the *radius* is $R_\text{shell}$ while *core_radius* is $R_\text{core}$.
@@ -58,8 +59,8 @@ and the *radius* is $R_\text{shell}$ while *core_radius* is $R_\text{core}$.
 
     Examples of the angles for oriented pp against the detector plane.
 
-Reference
----------
+References
+----------
 
 L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and
 Neutron Scattering*, Plenum Press, New York, (1987)
@@ -87,8 +88,8 @@ parameters = [
               ["length", "Ang", 400.0, [0, inf], "volume", "Cylinder length"],
               ["sld", "1/Ang^2", 6.3, [-inf, inf], "", "Cylinder sld"],
               ["solvent_sld", "1/Ang^2", 1, [-inf, inf], "", "Solvent sld"],
-              ["theta", "[deg]", 90, [-360, 360], "orientation", "Theta angle"],
-              ["phi", "[deg]", 0, [-360, 360], "orientation", "Phi angle"],
+              ["theta", "degrees", 90, [-360, 360], "orientation", "Theta angle"],
+              ["phi", "degrees", 0, [-360, 360], "orientation", "Phi angle"],
               ]
 
 source = ["lib/J1.c", "lib/gauss76.c", "hollow_cylinder.c"]

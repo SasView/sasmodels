@@ -1,54 +1,47 @@
 r"""
 Calculates the scattering from a cylinder with spherical section end-caps.
-This model simply becomes the a convex lens when the length of the cylinder
-$L=0$, that is, a sphereocylinder with end caps that have a radius larger
-than that of the cylinder and the center of the end cap radius lies within
-the cylinder. See the diagram for the details of the geometry and
-restrictions on parameter values.
+Like :ref:`barbell`, this is a sphereocylinder with end caps that have a
+radius larger than that of the cylinder, but with the center of the end cap
+radius lying within the cylinder. This model simply becomes the a convex
+lens when the length of the cylinder $L=0$. See the diagram for the details
+of the geometry and restrictions on parameter values.
 
 Definitions
 -----------
 
-The returned value is scaled to units of |cm^-1|\ |sr^-1|, absolute scale.
+.. figure:: img/capped_cylinder_geometry.jpg
 
-The capped cylinder geometry is defined as
+    Capped cylinder geometry, where $r$ is *radius*, $R$ is *bell_radius* and
+    $L$ is *length*. Since the end cap radius $R \geq r$ and by definition
+    for this geometry $h < 0$, $h$ is then defined by $r$ and $R$ as
+    $h = - \sqrt{R^2 - r^2}$
 
-.. image:: img/capped_cylinder_geometry.jpg
-
-where $r$ is the radius of the cylinder. All other parameters are as defined
-in the diagram. Since the end cap radius $R \ge r$ and by definition for this
-geometry $h < 0$, $h$ is then defined by $r$ and $R$ as
-
-.. math::
-
-    h = - \sqrt{R^2 - r^2}
-
-The scattered intensity $I(Q)$ is calculated as
+The scattered intensity $I(q)$ is calculated as
 
 .. math::
 
-    I(Q) = \frac{(\Delta \rho)^2}{V} \left< A^2(Q)\right>
+    I(q) = \frac{\Delta \rho^2}{V} \left<A^2(q)\right>
 
-where the amplitude $A(Q)$ is given as
+where the amplitude $A(q)$ is given as
 
 .. math::
 
-    A(Q) =&\ \pi r^2L
-        {\sin\left(\tfrac12 QL\cos\theta\right)
-            \over \tfrac12 QL\cos\theta}
-        {2 J_1(Qr\sin\theta) \over Qr\sin\theta} \\
+    A(q) =&\ \pi r^2L
+        \frac{\sin\left(\tfrac12 qL\cos\theta\right)}
+            {\tfrac12 qL\cos\theta}
+        \frac{2 J_1(qr\sin\theta)}{qr\sin\theta} \\
         &\ + 4 \pi R^3 \int_{-h/R}^1 dt
-        \cos\left[ Q\cos\theta
+        \cos\left[ q\cos\theta
             \left(Rt + h + {\tfrac12} L\right)\right]
         \times (1-t^2)
-        {J_1\left[QR\sin\theta \left(1-t^2\right)^{1/2}\right]
-             \over QR\sin\theta \left(1-t^2\right)^{1/2}}
+        \frac{J_1\left[qR\sin\theta \left(1-t^2\right)^{1/2}\right]}
+             {qR\sin\theta \left(1-t^2\right)^{1/2}}
 
-The $\left< \ldots \right>$ brackets denote an average of the structure over
-all orientations. $\left< A^2(Q)\right>$ is then the form factor, $P(Q)$.
+The $\left<\ldots\right>$ brackets denote an average of the structure over
+all orientations. $\left< A^2(q)\right>$ is then the form factor, $P(q)$.
 The scale factor is equivalent to the volume fraction of cylinders, each of
-volume, $V$. Contrast is the difference of scattering length densities of
-the cylinder and the surrounding solvent.
+volume, $V$. Contrast $\Delta\rho$ is the difference of scattering length
+densities of the cylinder and the surrounding solvent.
 
 The volume of the capped cylinder is (with $h$ as a positive value here)
 
@@ -57,7 +50,7 @@ The volume of the capped cylinder is (with $h$ as a positive value here)
     V = \pi r_c^2 L + \tfrac{2\pi}{3}(R-h)^2(2R + h)
 
 
-and its radius-of-gyration is
+and its radius of gyration is
 
 .. math::
 
@@ -72,7 +65,7 @@ and its radius-of-gyration is
 
 .. note::
 
-    The requirement that $R \ge r$ is not enforced in the model!
+    The requirement that $R \geq r$ is not enforced in the model!
     It is up to you to restrict this during analysis.
 
 :num:`Figure #capped-cylinder-1d` shows the output produced by
@@ -103,7 +96,8 @@ and $\phi=0^\circ$ with default values for the other parameters.
 
     Examples of the angles for oriented pp against the detector plane.
 
-REFERENCE
+References
+----------
 
 H Kaya, *J. Appl. Cryst.*, 37 (2004) 223-230
 

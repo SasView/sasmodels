@@ -4,40 +4,37 @@ Polydispersity in the bilayer thickness can be applied from the GUI.
 Definition
 ----------
 
-The scattering intensity *I(Q)* is
+The scattering intensity $I(q)$ is
 
 .. math::
 
-    I(Q) = 2\pi{P(Q) \over \delta Q^2}
+    I(q) = \frac{2\pi P(q)}{\delta q^2}
 
 
 The form factor is
 
 .. math::
 
-    P(Q) = {2\Delta\rho^2 \over Q^2}(1-cos(Q\delta))
+    P(q) = \frac{2\Delta\rho^2}{q^2}(1-cos(q\delta))
 
 
-where |delta| = bilayer thickness.
+where $\delta$ is the bilayer thickness.
 
-The 2D scattering intensity is calculated in the same way as 1D, where the $Q$ vector is defined as
+The 2D scattering intensity is calculated in the same way as 1D, where
+the $q$ vector is defined as
 
 .. math::
 
-    Q = \sqrt{Q_x^2 + Q_y^2}
+    q = \sqrt{q_x^2 + q_y^2}
 
-
-
-Our model uses the form factor calculations implemented in a c-library provided by the NIST Center for Neutron Research
-(Kline, 2006).
 
 .. figure:: img/lamellar_1d.jpg
 
     1D plot using the default values (w/1000 data point).
 
 
-Reference
----------
+References
+----------
 
 F Nallet, R Laversanne, and D Roux, J. Phys. II France, 3, (1993) 487-502
 

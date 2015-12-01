@@ -11,16 +11,16 @@ given by (Guinier, 1955)
 
 .. math::
 
-    P(Q,\alpha) = {\text{scale} \over V} F^2(Q) + \text{background}
+    P(q,\alpha) = \frac{\text{scale}}{V} F^2(q) + \text{background}
 
 where
 
 .. math::
 
-    F(Q) = 2 (\Delta \rho) V
-           {\sin \left(Q\tfrac12 L\cos\alpha \right)
-               \over Q\tfrac12 L \cos \alpha}
-           {J_1 \left(Q R \sin \alpha\right) \over Q R \sin \alpha}
+    F(q) = 2 (\Delta \rho) V
+           \frac{\sin \left(q\tfrac12 L\cos\alpha \right)}
+                {q\tfrac12 L \cos \alpha}
+           \frac{J_1 \left(q R \sin \alpha\right)}{q R \sin \alpha}
 
 and $\alpha$ is the angle between the axis of the cylinder and $\vec q$, $V$
 is the volume of the cylinder, $L$ is the length of the cylinder, $R$ is the
@@ -43,20 +43,18 @@ are defined in :num:`figure #cylinder-orientation`.
     Examples of the angles for oriented cylinders against the detector plane.
 
 NB: The 2nd virial coefficient of the cylinder is calculated based on the
-radius and length values, and used as the effective radius for $S(Q)$
-when $P(Q) \cdot S(Q)$ is applied.
+radius and length values, and used as the effective radius for $S(q)$
+when $P(q) \cdot S(q)$ is applied.
 
 The output of the 1D scattering intensity function for randomly oriented
 cylinders is then given by
 
 .. math::
 
-    P(Q) = {\text{scale} \over V}
-        \int_0^{\pi/2} F^2(Q,\alpha) \sin \alpha\ d\alpha + \text{background}
+    P(q) = \frac{\text{scale}}{V}
+        \int_0^{\pi/2} F^2(q,\alpha) \sin \alpha\ d\alpha + \text{background}
 
-The *theta* and *phi* parameters are not used for the 1D output. Our
-implementation of the scattering kernel and the 1D scattering intensity
-use the c-library from NIST.
+The $\theta$ and $\phi$ parameters are not used for the 1D output.
 
 Validation
 ----------
@@ -81,12 +79,12 @@ evaluating the following
 
 .. math::
 
-    P(Q) = \int_0^{\pi/2} d\phi
-        \int_0^\pi p(\theta, \phi) P_0(Q,\alpha) \sin \theta\ d\theta
+    P(q) = \int_0^{\pi/2} d\phi
+        \int_0^\pi p(\theta, \phi) P_0(q,\alpha) \sin \theta\ d\theta
 
 
 where $p(\theta,\phi)$ is the probability distribution for the orientation
-and $P_0(Q,\alpha)$ is the scattering intensity for the fully oriented
+and $P_0(q,\alpha)$ is the scattering intensity for the fully oriented
 system. Since we have no other software to compare the implementation of
 the intensity for fully oriented cylinders, we can compare the result of
 averaging our 2D output using a uniform distribution $p(\theta, \phi) = 1.0$.
@@ -128,7 +126,7 @@ description = """
 category = "shape:cylinder"
 
 #             [ "name", "units", default, [lower, upper], "type", "description"],
-parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "",
+parameters = [["sld", "4e-6/Ang^2", 4, [-inf, inf], "",
                "Cylinder scattering length density"],
               ["solvent_sld", "1e-6/Ang^2", 1, [-inf, inf], "",
                "Solvent scattering length density"],

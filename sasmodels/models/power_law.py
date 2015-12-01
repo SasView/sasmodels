@@ -9,7 +9,7 @@ Definition
 
 .. math::
 
-    I(q) = \text{scale} \cdot q^{-power} + \text{background}
+    I(q) = \text{scale} \cdot q^{-\text{power}} + \text{background}
 
 Note the minus sign in front of the exponent. The exponent *power* 
 should therefore be entered as a **positive** number for fitting.
@@ -18,11 +18,12 @@ Also note that unlike many other models, *scale* in this model
 is NOT explicitly related to a volume fraction. Be careful if 
 combining this model with other models.
 
-.. image:: img/power_law_1d.jpg
+.. figure:: img/power_law_1d.jpg
 
-*Figure. 1D plot using the default values (w/200 data point).*
+    1D plot using the default values (w/200 data point).
 
-REFERENCE
+References
+----------
 
 None.
 """
@@ -46,11 +47,11 @@ parameters = [["power", "", 4.0, [-inf, inf], "", "Power law exponent"]]
 def Iq(q,power):
     inten = (q**-power)
     return inten
-Iq.vectorized = True  # Iq accepts an array of Q values
+Iq.vectorized = True  # Iq accepts an array of q values
 
 def Iqxy(qx, qy, *args):
     return Iq(sqrt(qx ** 2 + qy ** 2), *args)
-Iqxy.vectorized = True # Iqxy accepts an array of Qx, Qy values
+Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
 
 demo = dict(scale=1.0,
             power=4.0,

@@ -10,12 +10,12 @@ The 1D scattering intensity is calculated in the following way (Guinier, 1955)
 
 .. math::
 
-    I(Q) = \frac{\text{scale}}{V} \cdot \left[ \
-        3V(\Delta\rho) \cdot \frac{\sin(QR) - QR\cos(QR))}{(QR)^3} \
+    I(q) = \frac{\text{scale}}{V} \cdot \left[
+        3V(\Delta\rho) \cdot \frac{\sin(qr) - qr\cos(qr))}{(qr)^3}
         \right]^2 + \text{background}
 
 where *scale* is a volume fraction, $V$ is the volume of the scatterer,
-$R$ is the radius of the sphere, *background* is the background level and
+$r$ is the radius of the sphere, *background* is the background level and
 *sld* and *solvent_sld* are the scattering length densities (SLDs) of the
 scatterer and the solvent respectively.
 
@@ -26,9 +26,6 @@ might need to be rescaled).
 
 The 2D scattering intensity is the same as above, regardless of the
 orientation of $\vec q$.
-
-Our model uses the form factor calculations as defined in the IGOR
-package provided by the NIST Center for Neutron Research (Kline, 2006).
 
 Validation
 ----------
@@ -48,8 +45,8 @@ of our model and the output of the NIST software.
     *background* = 0.01 |cm^-1|.
 
 
-Reference
----------
+References
+----------
 
 A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*,
 John Wiley and Sons, New York, (1955)
@@ -62,9 +59,9 @@ from numpy import inf
 name = "sphere"
 title = "Spheres with uniform scattering length density"
 description = """\
-P(q)=(scale/V)*[3V(sld-solvent_sld)*(sin(qR)-qRcos(qR))
-                /(qR)^3]^2 + background
-    R: radius of sphere
+P(q)=(scale/V)*[3V(sld-solvent_sld)*(sin(qr)-qr cos(qr))
+                /(qr)^3]^2 + background
+    r: radius of sphere
     V: The volume of the scatter
     sld: the SLD of the sphere
     solvent_sld: the SLD of the solvent
@@ -92,7 +89,7 @@ Iq = """
     const double qrsq = qr*qr;
     double sn, cn;
     SINCOS(qr, sn, cn);
-    // Use taylor series for low Q to avoid cancellation error.  Tested against
+    // Use taylor series for low q to avoid cancellation error.  Tested against
     // the following expression in quad precision:
     //     3.0*(sn-qr*cn)/(qr*qr*qr);
     // Note that the values differ from sasview ~ 5e-12 rather than 5e-14, but

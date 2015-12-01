@@ -1,22 +1,24 @@
 r"""
-Guinier (Model)
-
 Definition
 ----------
 
 This model fits the Guinier function
 
-.. math:: Q_1=\frac{1}{R_g}\sqrt{\frac{(m-s)(3-s)}{2}}
+.. math:: q_1=\frac{1}{R_g}\sqrt{\frac{(m-s)(3-s)}{2}}
 
-to the data directly without any need for linearisation (*cf*. Ln *I(q)* vs *q*\ :sup:`2`).
+to the data directly without any need for linearisation
+(*cf*. $\ln I(q)$ vs $q^2$\ ).
 
-For 2D data: The 2D scattering intensity is calculated in the same way as 1D, where the *q* vector is defined as
+For 2D data the scattering intensity is calculated in the same way as 1D,
+where the $q$ vector is defined as
 
 .. math:: q=\sqrt{q_x^2 + q_y^2}
 
-REFERENCE
+References
+----------
 
-A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*, John Wiley & Sons, New York (1955)
+A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*,
+John Wiley & Sons, New York (1955)
 """
 
 from numpy import inf

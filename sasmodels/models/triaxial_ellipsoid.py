@@ -1,21 +1,19 @@
 # triaxial ellipsoid model
 # Note: model title and parameter table are inserted automatically
 r"""
-All three axes are of different lengths with $R_a \le R_b <= R_c$
+All three axes are of different lengths with $R_a \leq R_b \leq R_c$
 **Users should maintain this inequality for all calculations**.
 
 .. math::
 
-    P(Q) = \text{scale} V \left< F^2(Q) \right> + \text{background}
+    P(q) = \text{scale} V \left< F^2(q) \right> + \text{background}
 
 where the volume $V = 4/3 \pi R_a R_b R_c$, and the averaging
-$\left< \cdots \right>$ is applied over all orientations for 1D.
+$\left<\ldots\right>$ is applied over all orientations for 1D.
 
 .. figure:: img/triaxial_ellipsoid_geometry.jpg
 
     Ellipsoid schematic.
-
-The returned value is in units of |cm^-1|, on absolute scale.
 
 Definition
 ----------
@@ -24,8 +22,8 @@ The form factor calculated is
 
 .. math::
 
-    P(Q) = \frac{\text{scale}}{V}\int_0^1\int_0^1
-        \Phi^2(QR_a^2\cos^2( \pi x/2) + QR_b^2\sin^2(\pi y/2)(1-y^2) + c^2y^2)
+    P(q) = \frac{\text{scale}}{V}\int_0^1\int_0^1
+        \Phi^2(qR_a^2\cos^2( \pi x/2) + qR_b^2\sin^2(\pi y/2)(1-y^2) + R_c^2y^2)
         dx dy
 
 where
@@ -39,7 +37,7 @@ we define the axis of the cylinder using the angles $\theta$, $\phi$
 and $\psi$. These angles are defined on
 :num:`figure #triaxial-ellipsoid-angles`.
 The angle $\psi$ is the rotational angle around its own $c$ axis
-against the $Q$ plane. For example, $\psi = 0$ when the
+against the $q$ plane. For example, $\psi = 0$ when the
 $a$ axis is parallel to the $x$ axis of the detector.
 
 .. _triaxial-ellipsoid-angles:
@@ -51,13 +49,13 @@ $a$ axis is parallel to the $x$ axis of the detector.
 The radius-of-gyration for this system is  $R_g^2 = (R_a R_b R_c)^2/5$.
 
 The contrast is defined as SLD(ellipsoid) - SLD(solvent).  In the
-parameters, *a* is the minor equatorial radius, *b* is the major
-equatorial radius, and c is the polar radius of the ellipsoid.
+parameters, $R_a$ is the minor equatorial radius, $R_b$ is the major
+equatorial radius, and $R_c$ is the polar radius of the ellipsoid.
 
 NB: The 2nd virial coefficient of the triaxial solid ellipsoid is
 calculated based on the polar radius $R_p = R_c$ and equatorial
 radius $R_e = \sqrt{R_a R_b}$, and used as the effective radius for
-$S(Q)$ when $P(Q) \cdot S(Q)$ is applied.
+$S(q)$ when $P(q) \cdot S(q)$ is applied.
 
 .. figure:: img/triaxial_ellipsoid_1d.jpg
 
@@ -80,10 +78,8 @@ are taken for the angles of $\theta$, $\phi$, and $\psi$ respectively).
 
     Comparison between 1D and averaged 2D.
 
-Our model uses the form factor calculations implemented in a c-library provided by the NIST Center for Neutron Research
-(Kline, 2006)
-
-REFERENCE
+References
+----------
 
 L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*, Plenum,
 New York, 1987.

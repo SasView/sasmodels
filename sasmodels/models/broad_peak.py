@@ -9,23 +9,21 @@ The d-spacing corresponding to the broad peak is a characteristic distance
 between the scattering inhomogeneities (such as in lamellar, cylindrical, or
 spherical morphologies, or for bicontinuous structures).
 
-The returned value is scaled to units of |cm^-1|, absolute scale.
-
 Definition
 ----------
 
-The scattering intensity *I(q)* is calculated as
+The scattering intensity $I(q)$ is calculated as
 
-.. math:
+.. math::
 
-    I(q) = \frac{A}{Q^n} + \frac{C}{1 + (Q\xi}^m} + B
+    I(q) = \frac{A}{q^n} + \frac{C}{1 + (q\xi)^m} + B
 
-Here the peak position is related to the d-spacing as *Q0* = 2|pi| / *d0*.
+Here the peak position is related to the d-spacing as $q_o = 2\pi / d_o$.
 
-For 2D data: The 2D scattering intensity is calculated in the same way as 1D,
-where the *q* vector is defined as
+For 2D data the scattering intensity is calculated in the same way as 1D,
+where the $q$ vector is defined as
 
-.. math:
+.. math::
 
     q = \sqrt{q_x^2 + q_y^2}
 
@@ -34,8 +32,8 @@ where the *q* vector is defined as
 
     1D plot using the default values (w/200 data point).
 
-REFERENCE
----------
+References
+----------
 
 None.
 
@@ -74,11 +72,11 @@ def Iq(q, porod_scale, porod_exp, lorentz_scale, lorentz_length, peak_pos, loren
     inten = (porod_scale / q ** porod_exp + lorentz_scale
              / (1.0 + (abs(q - peak_pos) * lorentz_length) ** lorentz_exp))
     return inten
-Iq.vectorized = True  # Iq accepts an array of Q values
+Iq.vectorized = True  # Iq accepts an array of q values
 
 def Iqxy(qx, qy, *args):
     return Iq(sqrt(qx ** 2 + qy ** 2), *args)
-Iqxy.vectorized = True # Iqxy accepts an array of Qx, Qy values
+Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
 
 
 demo = dict(scale=1, background=0,

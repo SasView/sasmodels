@@ -1,60 +1,48 @@
 #barbell model
-# cylinder model
 # Note: model title and parameter table are inserted automatically
 r"""
-
-Calculates the scattering from a barbell-shaped cylinder (This model simply
-becomes the DumBellModel when the length of the cylinder, *L*, is set to zero).
-That is, a sphereocylinder with spherical end caps that have a radius larger
-than that of the cylinder and the center of the end cap radius lies outside
-of the cylinder. All dimensions of the BarBell are considered to be
-monodisperse. See the diagram for the details of the geometry and restrictions
-on parameter values.
+Calculates the scattering from a barbell-shaped cylinder.  Like
+:ref:`capped-cylinder`, this is a sphereocylinder with spherical end
+caps that have a radius larger than that of the cylinder, but with the center
+of the end cap radius lying outside of the cylinder. See the diagram for
+the details of the geometry and restrictions on parameter values.
 
 Definition
 ----------
 
-The returned value is scaled to units of |cm^-1|\ |sr^-1|, absolute scale.
+.. figure:: img/barbell_geometry.jpg
 
-The barbell geometry is defined as
+    Barbell geometry, where $r$ is *radius*, $R$ is *bell_radius* and
+    $L$ is *length*. Since the end cap radius $R \geq r$ and by definition
+    for this geometry $h < 0$, $h$ is then defined by $r$ and $R$ as
+    $h = - \sqrt{R^2 - r^2}$
 
-.. image:: img/barbell_geometry.jpg
-
-where *r* is the radius of the cylinder. All other parameters are as defined
-in the diagram.
-
-Since the end cap radius
-*R* >= *r* and by definition for this geometry *h* < 0, *h* is then
-defined by *r* and *R* as
-
-*h* = -1 \* sqrt(*R*\ :sup:`2` - *r*\ :sup:`2`)
-
-The scattered intensity *I(q)* is calculated as
+The scattered intensity $I(q)$ is calculated as
 
 .. math::
 
-    I(Q) = \frac{(\Delta \rho)^2}{V} \left< A^2(Q)\right>
+    I(q) = \frac{\Delta \rho^2}{V} \left<A^2(q)\right>
 
-where the amplitude *A(q)* is given as
+where the amplitude $A(q)$ is given as
 
 .. math::
 
-    A(Q) =&\ \pi r^2L
-        {\sin\left(\tfrac12 QL\cos\theta\right)
-            \over \tfrac12 QL\cos\theta}
-        {2 J_1(Qr\sin\theta) \over Qr\sin\theta} \\
+    A(q) =&\ \pi r^2L
+        \frac{\sin\left(\tfrac12 qL\cos\theta\right)}
+             {\tfrac12 qL\cos\theta}
+        \frac{2 J_1(qr\sin\theta)}{qr\sin\theta} \\
         &\ + 4 \pi R^3 \int_{-h/R}^1 dt
-        \cos\left[ Q\cos\theta
+        \cos\left[ q\cos\theta
             \left(Rt + h + {\tfrac12} L\right)\right]
         \times (1-t^2)
-        {J_1\left[QR\sin\theta \left(1-t^2\right)^{1/2}\right]
-             \over QR\sin\theta \left(1-t^2\right)^{1/2}}
+        \frac{J_1\left[qR\sin\theta \left(1-t^2\right)^{1/2}\right]}
+             {qR\sin\theta \left(1-t^2\right)^{1/2}}
 
-The < > brackets denote an average of the structure over all orientations.
-<*A* :sup:`2`\ *(q)*> is then the form factor, *P(q)*. The scale factor is
-equivalent to the volume fraction of cylinders, each of volume, *V*. Contrast
-is the difference of scattering length densities of the cylinder and the
-surrounding solvent.
+The $\left<\ldots\right>$ brackets denote an average of the structure over
+all orientations. $\left<A^2(q)\right>$ is then the form factor, $P(q)$.
+The scale factor is equivalent to the volume fraction of cylinders, each of
+volume, $V$. Contrast $\Delta\rho$ is the difference of scattering length
+densities of the cylinder and the surrounding solvent.
 
 The volume of the barbell is
 
@@ -63,7 +51,7 @@ The volume of the barbell is
     V = \pi r_c^2 L + 2\pi\left(\tfrac23R^3 + R^2h-\tfrac13h^3\right)
 
 
-and its radius-of-gyration is
+and its radius of gyration is
 
 .. math::
 
@@ -75,40 +63,36 @@ and its radius-of-gyration is
         + \tfrac14 L^3r^2 + \tfrac32 Lr^4 \right]
         \left( 4R^3 6R^2h - 2h^3 + 3r^2L \right)^{-1}
 
-**The requirement that** *R* >= *r* **is not enforced in the model!** It is
-up to you to restrict this during analysis.
+.. note::
+    The requirement that $R \geq r$ is not enforced in the model! It is
+    up to you to restrict this during analysis.
 
-This example dataset is produced by running the Macro PlotBarbell(),
-using 200 data points, *qmin* = 0.001 |Ang^-1|, *qmax* = 0.7 |Ang^-1|,
-*sld* = 4e-6 |Ang^-2| and the default model values.
+.. figure:: img/barbell_1d.jpg
 
-.. image:: img/barbell_1d.jpg
+    1D plot using the default values (w/256 data point).
 
-*Figure. 1D plot using the default values (w/256 data point).*
+For 2D data, the scattering intensity is calculated similar to the 2D
+cylinder model.
 
-For 2D data: The 2D scattering intensity is calculated similar to the 2D
-cylinder model. For example, for |theta| = 45 deg and |phi| = 0 deg with
-default values for other parameters
+.. figure:: img/barbell_2d.jpg
 
-.. image:: img/barbell_2d.jpg
+    2D plot (w/(256X265) data points) for $\theta = 45^\circ$ and
+    $\phi = 0^\circ$ with default values for the remaining parameters.
 
-*Figure. 2D plot (w/(256X265) data points).*
+.. figure:: img/orientation.jpg
 
-.. image:: img/orientation.jpg
+    Definition of the angles for oriented 2D barbells.
 
-Figure. Definition of the angles for oriented 2D barbells.
+.. figure:: img/orientation2.jpg
 
-.. image:: img/orientation2.jpg
+    Examples of the angles for oriented pp against the detector plane.
 
-*Figure. Examples of the angles for oriented pp against the detector plane.*
-
-REFERENCE
----------
+References
+----------
 
 H Kaya, *J. Appl. Cryst.*, 37 (2004) 37 223-230
 
 H Kaya and N R deSouza, *J. Appl. Cryst.*, 37 (2004) 508-509 (addenda and errata)
-
 """
 from numpy import inf
 
@@ -123,7 +107,7 @@ description = """
 category = "shape:cylinder"
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "", "Barbell scattering length density"],
+parameters = [["sld", "4e-6/Ang^2", 4, [-inf, inf], "", "Barbell scattering length density"],
               ["solvent_sld", "1e-6/Ang^2", 1, [-inf, inf], "", "Solvent scattering length density"],
               ["bell_radius", "Ang", 40, [0, inf], "volume", "Spherical bell radius"],
               ["radius", "Ang", 20, [0, inf], "volume", "Cylindrical bar radius"],

@@ -12,24 +12,24 @@ Definition
 
 The scattering intensity $I(q)$ is calculated as
 
-.. math:
+.. math::
 
-    I(q) = \frac{\text{scale}}{V_P} V_\text{lattice} P(q) Z(q)
+    I(q) = \frac{\text{scale}}{V_p} V_\text{lattice} P(q) Z(q)
 
 
-where *scale* is the volume fraction of spheres, *Vp* is the volume of the
-primary particle, *V(lattice)* is a volume correction for the crystal
+where *scale* is the volume fraction of spheres, $V_p$ is the volume of the
+primary particle, $V_\text{lattice}$ is a volume correction for the crystal
 structure, $P(q)$ is the form factor of the sphere (normalized), and $Z(q)$
 is the paracrystalline structure factor for a body-centered cubic structure.
 
 Equation (1) of the 1990 reference is used to calculate $Z(q)$, using
-equations (29)-(31) from the 1987 paper for *Z1*\ , *Z2*\ , and *Z3*\ .
+equations (29)-(31) from the 1987 paper for $Z1$, $Z2$, and $Z3$.
 
 The lattice correction (the occupied volume of the lattice) for a
 body-centered cubic structure of particles of radius $R$ and nearest neighbor
 separation $D$ is
 
-.. math:
+.. math::
 
     V_\text{lattice} = \frac{16\pi}{3} \frac{R^3}{\left(D\sqrt{2}\right)^3}
 
@@ -37,7 +37,7 @@ separation $D$ is
 The distortion factor (one standard deviation) of the paracrystal is included
 in the calculation of $Z(q)$
 
-.. math:
+.. math::
 
     \Delta a = g D
 
@@ -50,7 +50,7 @@ where $g$ is a fractional distortion based on the nearest neighbor distance.
 
 For a crystal, diffraction peaks appear at reduced q-values given by
 
-.. math:
+.. math::
 
     \frac{qD}{2\pi} = \sqrt{h^2 + k^2 + l^2}
 
@@ -59,12 +59,12 @@ $(h + k + l) = \text{even}$ are allowed and reflections where
 $(h + k + l) = \text{odd}$ are forbidden. Thus the peak positions
 correspond to (just the first 5)
 
-.. math:
+.. math::
 
-    \begin{eqnarray}
-    &q/q_o&&\quad 1&& \ \sqrt{2} && \ \sqrt{3} && \ \sqrt{4} && \ \sqrt{5} \\
-    &\text{Indices}&& (110) && (200) && (211) && (220) && (310)
-    \end{eqnarray}
+    \begin{array}{lccccc}
+    q/q_o          &   1   & \sqrt{2} & \sqrt{3} & \sqrt{4} & \sqrt{5} \\
+    \text{Indices} & (110) &    (200) & (211)    & (220)    & (310)    \\
+    \end{array}
 
 **NB**: The calculation of $Z(q)$ is a double numerical integral that must
 be carried out with a high density of points to properly capture the sharp
@@ -85,7 +85,7 @@ approximated for 1d scattering. Thus the scattering pattern for 2D may not
 be accurate. Note that we are not responsible for any incorrectness of the 2D
 model computation.
 
-.. figure:: img/crystal_orientation.gif
+.. figure:: img/crystal_orientation.png
 
     Orientation of the crystal with respect to the scattering plane.
 
@@ -93,8 +93,8 @@ model computation.
 
     2D plot using the default values (w/200X200 pixels).*
 
-Reference
----------
+References
+----------
 
 Hideki Matsuoka et. al. *Physical Review B*, 36 (1987) 1754-1765
 (Original Paper)

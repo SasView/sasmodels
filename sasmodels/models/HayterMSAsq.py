@@ -1,39 +1,34 @@
 # Note: model title and parameter table are inserted automatically
 r"""
-This calculates the structure factor (the Fourier transform of the pair correlation function *g(r)*) for a system of
-charged, spheroidal objects in a dielectric medium. When combined with an appropriate form factor (such as sphere,
-core+shell, ellipsoid, etc), this allows for inclusion of the interparticle interference effects due to screened coulomb
-repulsion between charged particles.
+This calculates the structure factor (the Fourier transform of the pair
+correlation function $g(r)$) for a system of charged, spheroidal objects
+in a dielectric medium. When combined with an appropriate form factor
+(such as sphere, core+shell, ellipsoid, etc), this allows for inclusion
+of the interparticle interference effects due to screened coulomb repulsion
+between charged particles.
 
-**This routine only works for charged particles**. If the charge is set to zero the routine will self-destruct!
-For non-charged particles use a hard sphere potential.
+**This routine only works for charged particles**. If the charge is set to
+zero the routine will self-destruct! For non-charged particles use a hard
+sphere potential.
 
-The salt concentration is used to compute the ionic strength of the solution which in turn is used to compute the Debye
-screening length. At present there is no provision for entering the ionic strength directly nor for use of any
-multivalent salts. The counterions are also assumed to be monovalent.
+The salt concentration is used to compute the ionic strength of the solution
+which in turn is used to compute the Debye screening length. At present
+there is no provision for entering the ionic strength directly nor for use
+of any multivalent salts. The counterions are also assumed to be monovalent.
 
-For 2D data: The 2D scattering intensity is calculated in the same way as 1D, where the *q* vector is defined as
+For 2D data, the scattering intensity is calculated in the same way as 1D,
+where the $q$ vector is defined as
 
 .. math::
 
-    Q = \sqrt{Q_x^2 + Q_y^2}
+    q = \sqrt{q_x^2 + q_y^2}
 
-==============  ========  =============
-Parameter name  Units     Default value
-==============  ========  =============
-effect_radius   |Ang|     20.8
-charge          *e*       19
-volfraction     None      0.2
-temperature     K         318
-salt conc       M         0
-dielectconst    None      71.1
-==============  ========  =============
+.. figure:: img/HayterMSAsq_227.jpg
 
-.. image:: img/HayterMSAsq_227.jpg
+    1D plot using the default values (in linear scale).
 
-*Figure. 1D plot using the default values (in linear scale).*
-
-REFERENCE
+References
+----------
 
 J B Hayter and J Penfold, *Molecular Physics*, 42 (1981) 109-118
 

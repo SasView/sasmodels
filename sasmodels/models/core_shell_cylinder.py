@@ -11,22 +11,22 @@ cylinders is given by (Kline, 2006)
 
 .. math::
 
-    P(Q,\alpha) = {\text{scale} \over V_s} F^2(Q) + \text{background}
+    P(q,\alpha) = \frac{\text{scale}}{V_s} F^2(q) + \text{background}
 
 where
 
 .. math::
 
-    F(Q) = &\ (\rho_c - \rho_s) V_c
-           {\sin \left( Q \tfrac12 L\cos\alpha \right)
-               \over Q \tfrac12 L\cos\alpha }
-           {2 J_1 \left( QR\sin\alpha \right)
-               \over QR\sin\alpha } \\
+    F(q) = &\ (\rho_c - \rho_s) V_c
+           \frac{\sin \left( q \tfrac12 L\cos\alpha \right)}
+                {q \tfrac12 L\cos\alpha}
+           \frac{2 J_1 \left( qR\sin\alpha \right)}
+                {qR\sin\alpha} \\
          &\ + (\rho_s - \rho_\text{solv}) V_s
-           {\sin \left( Q \left(\tfrac12 L+T\right) \cos\alpha \right)
-               \over Q \left(\tfrac12 L +T \right) \cos\alpha }
-           { 2 J_1 \left( Q(R+T)\sin\alpha \right)
-               \over Q(R+T)\sin\alpha }
+           \frac{\sin \left( q \left(\tfrac12 L+T\right) \cos\alpha \right)}
+                {q \left(\tfrac12 L +T \right) \cos\alpha}
+           \frac{ 2 J_1 \left( q(R+T)\sin\alpha \right)}
+                {q(R+T)\sin\alpha}
 
 and
 
@@ -57,11 +57,9 @@ for the case of the cylinder, those angles are defined in
 
 NB: The 2nd virial coefficient of the cylinder is calculated based on
 the radius and 2 length values, and used as the effective radius for
-$S(Q)$ when $P(Q) \cdot S(Q)$ is applied.
+$S(q)$ when $P(q) \cdot S(q)$ is applied.
 
-The $\theta$ and $\phi$ parameters are not used for the 1D output. Our
-implementation of the scattering kernel and the 1D scattering intensity
-use the c-library from NIST.
+The $\theta$ and $\phi$ parameters are not used for the 1D output.
 
 Validation
 ----------

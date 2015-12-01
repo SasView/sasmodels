@@ -1,6 +1,6 @@
 # Note: model title and parameter table are inserted automatically
 r"""
-This model provides the scattering intensity, *I(q)*, for a lyotropic lamellar
+This model provides the scattering intensity, $I(q)$, for a lyotropic lamellar
 phase where a random distribution in solution are assumed. The SLD of the head
 region is taken to be different from the SLD of the tail region.
 
@@ -24,12 +24,12 @@ The form factor $P(q)$ is
             + \Delta\rho_T\sin(q\delta_T)
         \right\rbrace^2
 
-where $\delta_T$ is *tail_length*, \delta_H is *head_length*,
+where $\delta_T$ is *tail_length*, $\delta_H$ is *head_length*,
 $\Delta\rho_H$ is the head contrast (*head_sld* $-$ *solvent_sld*),
 and $\Delta\rho_T$ is tail contrast (*sld* $-$ *solvent_sld*).
 
 The 2D scattering intensity is calculated in the same way as 1D, where
-the *q* vector is defined as
+the $q$ vector is defined as
 
 .. math::
 

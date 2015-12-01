@@ -257,7 +257,7 @@ DOC_HEADER = """.. _%(id)s:
 
 %(parameters)s
 
-The returned value is scaled to units of |cm^-1|.
+%(returns)s
 
 %(docs)s
 """
@@ -608,11 +608,15 @@ def doc(kernel_module):
     """
     Return the documentation for the model.
     """
+    Iq_units = "The returned value is scaled to units of |cm^-1| |sr^-1|, absolute scale."
+    Sq_units = "The returned value is a dimensionless structure factor, $S(q)$."
     info = make_info(kernel_module)
+    is_Sq = ("structure-factor" in info['category'])
     subst = dict(id=info['id'].replace('_', '-'),
                  name=info['name'],
                  title=info['title'],
                  parameters=make_partable(info['parameters']),
+                 returns=Sq_units if is_Sq else Iq_units,
                  docs=kernel_module.__doc__)
     return DOC_HEADER % subst
 

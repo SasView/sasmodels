@@ -11,15 +11,15 @@ is given by (Feigin, 1987)
 
 .. math::
 
-    P(Q,\alpha) = {\text{scale} \over V} F^2(Q) + \text{background}
+    P(q,\alpha) = \frac{\text{scale}}{V} F^2(q) + \text{background}
 
 where
 
 .. math::
 
-    F(Q) = {3 (\Delta rho)) V (\sin[Qr(R_p,R_e,\alpha)]
-                - \cos[Qr(R_p,R_e,\alpha)])
-            \over [Qr(R_p,R_e,\alpha)]^3 }
+    F(q) = \frac{3 \Delta \rho V (\sin[qr(R_p,R_e,\alpha)]
+                - \cos[qr(R_p,R_e,\alpha)])}
+                {[qr(R_p,R_e,\alpha)]^3}
 
 and
 
@@ -44,23 +44,21 @@ and the $z$-axis.
 
 NB: The 2nd virial coefficient of the solid ellipsoid is calculated based
 on the $R_p$ and $R_e$ values, and used as the effective radius for
-$S(Q)$ when $P(Q) \cdot S(Q)$ is applied.
+$S(q)$ when $P(q) \cdot S(q)$ is applied.
 
 .. _ellipsoid-1d:
 
-.. figure:: img/ellipsoid_1d.JPG
+.. figure:: img/ellipsoid_1d.jpg
 
     The output of the 1D scattering intensity function for randomly oriented
     ellipsoids given by the equation above.
 
 
-The $\theta$ and $\phi$ parameters are not used for the 1D output. Our
-implementation of the scattering kernel and the 1D scattering intensity
-use the c-library from NIST.
+The $\theta$ and $\phi$ parameters are not used for the 1D output.
 
 .. _ellipsoid-geometry:
 
-.. figure:: img/ellipsoid_geometry.JPG
+.. figure:: img/ellipsoid_geometry.jpg
 
     The angles for oriented ellipsoid.
 
@@ -99,17 +97,18 @@ shows the result of such a cross-check.
     *rpolar* = 20 |Ang|, *requatorial* = 400 |Ang|,
     *contrast* = 3e-6 |Ang^-2|, and *background* = 0.0 |cm^-1|.
 
-The discrepancy above *q* = 0.3 |cm^-1| is due to the way the form factors
+The discrepancy above $q$ = 0.3 |cm^-1| is due to the way the form factors
 are calculated in the c-library provided by NIST. A numerical integration
-has to be performed to obtain $P(Q)$ for randomly oriented particles.
+has to be performed to obtain $P(q)$ for randomly oriented particles.
 The NIST software performs that integration with a 76-point Gaussian
-quadrature rule, which will become imprecise at high $Q$ where the amplitude
-varies quickly as a function of $Q$. The SasView result shown has been
+quadrature rule, which will become imprecise at high $q$ where the amplitude
+varies quickly as a function of $q$. The SasView result shown has been
 obtained by summing over 501 equidistant points. Our result was found
-to be stable over the range of $Q$ shown for a number of points higher
+to be stable over the range of $q$ shown for a number of points higher
 than 500.
 
-REFERENCE
+References
+----------
 
 L A Feigin and D I Svergun. *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*, Plenum,
 New York, 1987.
