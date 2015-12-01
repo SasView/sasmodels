@@ -18,8 +18,6 @@ The 1D scattering intensity is calculated in the following way (Guinier, 1955)
 
 .. math::
 
-    %\begin{align*} % isn't working with pdflatex
-    \begin{array}{rl}
     P(q)           &= (\text{scale})V_\text{shell}\Delta\rho^2
             \int_0^{1}\Psi^2
             \left[q_z, R_\text{shell}(1-x^2)^{1/2},
@@ -30,8 +28,7 @@ The 1D scattering intensity is calculated in the following way (Guinier, 1955)
     \Lambda(a)     &= 2 J_1(a) / a \\
     \gamma         &= R_\text{core} / R_\text{shell} \\
     V_\text{shell} &= \pi \left(R_\text{shell}^2 - R_\text{core}^2 \right)L \\
-    J_1(x)         &= (\sin(x)-x\cdot \cos(x)) / x^2 \\
-    \end{array}
+    J_1(x)         &= (\sin(x)-x\cdot \cos(x)) / x^2
 
 where *scale* is a scale factor and $J_1$ is the 1st order
 Bessel function.

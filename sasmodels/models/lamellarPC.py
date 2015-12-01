@@ -22,10 +22,10 @@ In the equations below,
 - *Nlayers* is the number of layers $N$,
 
 - *spacing* is the average distance between adjacent layers
-  $\left<D\right>$, and
+  $\langle D \rangle$, and
 
 - *spacing_polydisp* is the relative standard deviation of the Gaussian
-  layer distance distribution $\sigma_D / \left<D\right>$.
+  layer distance distribution $\sigma_D / \langle D \rangle$.
 
 
 The scattering intensity $I(q)$ is calculated as
@@ -48,25 +48,23 @@ from the Bergstrom reference:
 .. math::
 
 
-    Z_N(q) = \frac{1 - w^2}{1 + w^2 - 2w \cos(q \left<D\right>)}
+    Z_N(q) = \frac{1 - w^2}{1 + w^2 - 2w \cos(q \langle D \rangle)}
         + x_N S_N + (1 - x_N) S_{N+1}
 
 where
 
 .. math::
 
-    S_N(q) = \frac{a_N}{N}[1 + w^2 - 2 w \cos(q \left<D\right>)]^2
+    S_N(q) = \frac{a_N}{N}[1 + w^2 - 2 w \cos(q \langle D \rangle)]^2
 
 and
 
 .. math::
 
-    \begin{array}{rcl}
-    a_N &=& 4w^2 - 2(w^3 + w) \cos(q \left<D\right>)
-        - 4w^{N+2}\cos(Nq \left<D\right>) \\
-        &&{} + 2 w^{N+3}\cos[(N-1)q \left<D\right>]
-        + 2w^{N+1}\cos[(N+1)q \left<D\right>]
-    \end{array}
+    a_N &= 4w^2 - 2(w^3 + w) \cos(q \langle D \rangle) \\
+        &\quad - 4w^{N+2}\cos(Nq \langle D \rangle)
+        + 2 w^{N+3}\cos[(N-1)q \langle D \rangle]
+        + 2w^{N+1}\cos[(N+1)q \langle D \rangle]
 
 for the layer spacing distribution $w = \exp(-\sigma_D^2 q^2/2)$.
 

@@ -17,11 +17,8 @@ smaller $\tau$ means stronger attraction.
 
 .. math::
 
-    %\begin{align*} % isn't working with pdflatex
-    \begin{array}{rl}
     \tau     &= \frac{1}{12\epsilon} \exp(u_o / kT) \\
-    \epsilon &= \Delta / (\sigma + \Delta) \\
-    \end{array}
+    \epsilon &= \Delta / (\sigma + \Delta)
 
 where the interaction potential is
 

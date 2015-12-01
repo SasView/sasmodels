@@ -29,17 +29,16 @@ and the structure factor is
 where
 
 .. math::
+    :nowrap:
 
-    %\begin{align*} % isn't working with pdflatex
-    \begin{array}{rll}
+    \begin{align*}
     \alpha(n) &= \frac{\eta_{cp}}{4\pi^2} \left(\ln(\pi n)+\gamma_E\right)
-              & \\
+              && \\
     \gamma_E  &= 0.5772156649
-              & \text{Euler's constant} \\
+              && \text{Euler's constant} \\
     \eta_{cp} &= \frac{q_o^2k_B T}{8\pi\sqrt{K\overline{B}}}
-              & \text{Caille constant} \\
-              &
-    \end{array}
+              && \text{Caille constant}
+    \end{align*}
 
 Here $d$ = (repeat) spacing, $\delta$ = bilayer thickness,
 the contrast $\Delta\rho$ = SLD(headgroup) - SLD(solvent),
