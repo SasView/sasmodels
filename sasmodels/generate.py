@@ -202,6 +202,7 @@ import sys
 from os.path import abspath, dirname, join as joinpath, exists, basename, \
     splitext
 import re
+import string
 
 import numpy as np
 C_KERNEL_TEMPLATE_PATH = joinpath(dirname(__file__), 'kernel_template.c')
@@ -604,6 +605,29 @@ def make(kernel_module):
     source = make_model(info) if not callable(info['Iq']) else None
     return source, info
 
+section_marker = re.compile(r'\A(?P<first>[%s])(?P=first)*\Z'
+                            %re.escape(string.punctuation))
+def _convert_section_titles_to_boldface(lines):
+    prior = None
+    for line in lines:
+        if prior is None:
+            prior = line
+        elif section_marker.match(line):
+            if len(line) >= len(prior):
+                yield "".join( ("**",prior,"**") )
+                prior = None
+            else:
+                yield prior
+                prior = line
+        else:
+            yield prior
+            prior = line
+    if prior is not None:
+        yield prior
+
+def convert_section_titles_to_boldface(string):
+    return "\n".join(_convert_section_titles_to_boldface(string.split('\n')))
+
 def doc(kernel_module):
     """
     Return the documentation for the model.
@@ -612,12 +636,14 @@ def doc(kernel_module):
     Sq_units = "The returned value is a dimensionless structure factor, $S(q)$."
     info = make_info(kernel_module)
     is_Sq = ("structure-factor" in info['category'])
+    #docs = kernel_module.__doc__
+    docs = convert_section_titles_to_boldface(kernel_module.__doc__)
     subst = dict(id=info['id'].replace('_', '-'),
                  name=info['name'],
                  title=info['title'],
                  parameters=make_partable(info['parameters']),
                  returns=Sq_units if is_Sq else Iq_units,
-                 docs=kernel_module.__doc__)
+                 docs=docs)
     return DOC_HEADER % subst
 
 
