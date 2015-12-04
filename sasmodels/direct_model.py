@@ -139,7 +139,7 @@ def demo():
     from .data import empty_data1D, empty_data2D
 
     if len(sys.argv) < 3:
-        print "usage: python -m sasmodels.direct_model modelname (q|qx,qy) par=val ..."
+        print("usage: python -m sasmodels.direct_model modelname (q|qx,qy) par=val ...")
         sys.exit(1)
     model_name = sys.argv[1]
     call = sys.argv[2].upper()
@@ -155,7 +155,7 @@ def demo():
             qx,qy = values
             data = empty_data2D([qx],[qy])
         else:
-            print "use q or qx,qy or ER or VR"
+            print("use q or qx,qy or ER or VR")
             sys.exit(1)
     else:
         data = empty_data1D([0.001])  # Data not used in ER/VR
@@ -167,12 +167,12 @@ def demo():
                 for pair in sys.argv[3:]
                 for k,v in [pair.split('=')])
     if call == "ER":
-        print calculator.ER(**pars)
+        print(calculator.ER(**pars))
     elif call == "VR":
-        print calculator.VR(**pars)
+        print(calculator.VR(**pars))
     else:
         Iq = calculator(**pars)
-        print Iq[0]
+        print(Iq[0])
 
 if __name__ == "__main__":
     demo()

@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import sys
 # make sure sasmodels is on the path
 sys.path.append('..')
@@ -38,13 +40,13 @@ def _add_model(file, model_name):
 
 def _maybe_make_category(category, models, cat_files, model_toc):
     if category not in cat_files:
-        print >>sys.stderr, "Unexpected category %s containing"%category, models
+        print("Unexpected category %s containing"%category, models, file=sys.stderr)
         title = category.capitalize()+" Functions"
         cat_files[category] = _make_category(category, category, title, model_toc)
 
 def generate_toc(model_files):
     if not model_files:
-        print >>sys.stderr, "gentoc needs a list of model files"
+        print("gentoc needs a list of model files", file=sys.stderr)
 
     # find all categories
     category = {}
@@ -54,14 +56,14 @@ def generate_toc(model_files):
         if model_name.startswith('_'): continue
         model_definition = load_model_definition(model_name)
         if not hasattr(model_definition, 'category'):
-            print >>sys.stderr, "Missing category for",item
+            print("Missing category for", item, file=sys.stderr)
         else:
             category.setdefault(model_definition.category,[]).append(model_name)
 
     # Check category names
     for k,v in category.items():
         if len(v) == 1:
-            print >>sys.stderr, "Category %s contains only %s"%(k,v[0])
+            print("Category %s contains only %s"%(k,v[0]), file=sys.stderr)
 
     # Generate category files for the table of contents.
     # Initially we had "shape functions" as an additional TOC level, but we

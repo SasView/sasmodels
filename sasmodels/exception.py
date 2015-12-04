@@ -19,8 +19,8 @@ def annotate_exception(exc, msg):
 
         >>> D = {}
         >>> try:
-        ...    print D['hello']
-        ... except Exception,exc:
+        ...    print(D['hello'])
+        ... except Exception as exc:
         ...    annotate_exception(exc, "while accessing 'D'")
         ...    raise
         Traceback (most recent call last):

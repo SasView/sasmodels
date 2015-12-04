@@ -133,9 +133,9 @@ def apply_resolution_matrix(weight_matrix, theory):
     """
     Apply the resolution weight matrix to the computed theory function.
     """
-    #print "apply shapes", theory.shape, weight_matrix.shape
+    #print("apply shapes", theory.shape, weight_matrix.shape)
     Iq = np.dot(theory[None,:], weight_matrix)
-    #print "result shape",Iq.shape
+    #print("result shape",Iq.shape)
     return Iq.flatten()
 
 
@@ -286,7 +286,7 @@ def slit_resolution(q_calc, q, width, height, n_height=30):
     q_edges[q_edges<0.0] = 0.0 # clip edges below zero
     weights = np.zeros((len(q), len(q_calc)), 'd')
 
-    #print q_calc
+    #print(q_calc)
     for i, (qi, w, h) in enumerate(zip(q, width, height)):
         if w == 0. and h == 0.:
             # Perfect resolution, so return the theory value directly.
@@ -300,8 +300,8 @@ def slit_resolution(q_calc, q, width, height, n_height=30):
         elif w == 0:
             in_x = 1.0 * ((q_calc >= qi-h) & (q_calc <= qi+h))
             abs_x = 1.0*(q_calc < abs(qi - h)) if qi < h else 0.
-            #print qi - h, qi + h
-            #print in_x + abs_x
+            #print(qi - h, qi + h)
+            #print(in_x + abs_x)
             weights[i,:] = (in_x + abs_x) * np.diff(q_edges) / (2*h)
         else:
             L = n_height
@@ -319,9 +319,9 @@ def _q_perp_weights(q_edges, qi, w):
     u_edges[q_edges < abs(qi)] = 0.
     u_edges[q_edges > u_limit] = u_limit**2 - qi**2
     weights = np.diff(np.sqrt(u_edges))/w
-    #print "i, qi",i,qi,qi+width
-    #print q_calc
-    #print weights
+    #print("i, qi",i,qi,qi+width)
+    #print(q_calc)
+    #print(weights)
     return weights
 
 
@@ -520,7 +520,7 @@ def romberg_slit_1d(q, width, height, form, pars):
             h_grid = np.linspace(-h, h, 23)[:,None]
             u = sqrt((qi+h_grid)**2 + w_grid**2)
             Iu = np.interp(u, q_calc, Iq)
-            #print np.trapz(Iu, w_grid, axis=1)
+            #print(np.trapz(Iu, w_grid, axis=1))
             Is = np.trapz(np.trapz(Iu, w_grid, axis=1), h_grid[:,0])
             result[i] = Is / (2*h*w)
             """
@@ -674,7 +674,7 @@ class IgorComparisonTest(unittest.TestCase):
         #err = (output - answer)/answer
         #idx = abs(err) >= tolerance
         #problem = zip(q[idx], output[idx], answer[idx], err[idx])
-        #print "\n".join(str(v) for v in problem)
+        #print("\n".join(str(v) for v in problem))
         np.testing.assert_allclose(output, answer, rtol=tolerance)
 
     def test_perfect(self):
@@ -785,7 +785,7 @@ class IgorComparisonTest(unittest.TestCase):
         answer = romberg_slit_1d(q, width, height, form, pars)
         output = resolution.apply(eval_form(resolution.q_calc, form, pars))
         # TODO: 10% is too much error; use better algorithm
-        #print np.max(abs(answer-output)/answer)
+        #print(np.max(abs(answer-output)/answer))
         self.compare(q, output, answer, 0.1)
 
     #TODO: can sas q spacing be too sparse for the resolution calculation?

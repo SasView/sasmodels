@@ -56,7 +56,7 @@ try:
     import pyopencl as cl
     # Ask OpenCL for the default context so that we know that one exists
     cl.create_some_context(interactive=False)
-except Exception, exc:
+except Exception as exc:
     warnings.warn(str(exc))
     raise RuntimeError("OpenCL not available")
 
@@ -183,14 +183,14 @@ class GpuEnvironment(object):
     def _create_some_context(self):
         try:
             self.context = cl.create_some_context(interactive=False)
-        except Exception, exc:
+        except Exception as exc:
             warnings.warn(str(exc))
             warnings.warn("pyopencl.create_some_context() failed")
             warnings.warn("the environment variable 'PYOPENCL_CTX' might not be set correctly")
 
     def compile_program(self, name, source, dtype):
         if name not in self.compiled:
-            #print "compiling",name
+            #print("compiling",name)
             self.compiled[name] = compile_model(self.context, source, dtype)
         return self.compiled[name]
 
@@ -358,10 +358,10 @@ class GpuKernel(object):
             loops = np.hstack(pd_pars) \
                 if pd_pars else np.empty(0, dtype=self.q_input.dtype)
             loops = np.ascontiguousarray(loops.T, self.q_input.dtype).flatten()
-            #print "loops",Nloops, loops
+            #print("loops",Nloops, loops)
 
-            #import sys; print >>sys.stderr,"opencl eval",pars
-            #print "opencl eval",pars
+            #import sys; print("opencl eval",pars)
+            #print("opencl eval",pars)
             if len(loops) > 2 * MAX_LOOPS:
                 raise ValueError("too many polydispersity points")
 

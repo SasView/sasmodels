@@ -178,8 +178,8 @@ if __name__ == '__main__':
     dz = sqrt(z)
 
     from sas.dataloader import Data2D
-    #for i in range(10): print i, 0.001 + i*0.008/9.0
-    #for i in range(100): print i, int(math.floor( (i/ (100/9.0)) ))
+    #for i in range(10): print(i, 0.001 + i*0.008/9.0)
+    #for i in range(100): print(i, int(math.floor( (i/ (100/9.0)) )))
     out = Data2D()
     out.data = z
     out.qx_data = x
@@ -197,14 +197,14 @@ if __name__ == '__main__':
     #smear.set_accuracy('Xhigh')
     value = smear.get_value()
     ## All data are ones, so the smeared should also be ones.
-    print "Data length =", len(value)
-    print " 2D linear function, I = 0 + 1*qy"
+    print("Data length =", len(value))
+    print(" 2D linear function, I = 0 + 1*qy")
     text = " Gaussian weighted averaging on a 2D linear function will "
     text += "provides the results same as without the averaging."
-    print text
-    print "qx_data", "qy_data", "I_nonsmear", "I_smeared"
+    print(text)
+    print("qx_data", "qy_data", "I_nonsmear", "I_smeared")
     for ind in range(len(value)):
-        print x[ind], y[ind], model.evalDistribution([x, y])[ind], value[ind]
+        print(x[ind], y[ind], model.evalDistribution([x, y])[ind], value[ind])
 
 
 if __name__ == '__main__':
@@ -217,8 +217,8 @@ if __name__ == '__main__':
     dz = sqrt(z)
 
     from DataLoader import Data2D
-    #for i in range(10): print i, 0.001 + i*0.008/9.0
-    #for i in range(100): print i, int(math.floor( (i/ (100/9.0)) ))
+    #for i in range(10): print(i, 0.001 + i*0.008/9.0)
+    #for i in range(100): print(i, int(math.floor( (i/ (100/9.0)) )))
     out = Data2D()
     out.data = z
     out.qx_data = x
@@ -232,5 +232,5 @@ if __name__ == '__main__':
 
     value = Smearer2D(out,model,index).get_value()
     ## All data are ones, so the smeared values should also be ones.
-    print "Data length =",len(value), ", Data=",value
+    print("Data length =",len(value), ", Data=",value)
 """

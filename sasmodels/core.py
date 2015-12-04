@@ -178,7 +178,7 @@ def call_ER(info, pars):
                     for name in info['partype']['volume']]
         value, weight = dispersion_mesh(vol_pars)
         individual_radii = ER(*value)
-        #print values[0].shape, weights.shape, fv.shape
+        #print(values[0].shape, weights.shape, fv.shape)
         return np.sum(weight*individual_radii) / np.sum(weight)
 
 def call_VR(info, pars):

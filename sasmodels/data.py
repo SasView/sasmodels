@@ -273,7 +273,7 @@ def _plot_result1D(data, theory, resid, view, plot_data):
         if plot_resid:
             plt.subplot(121)
 
-        #print vmin, vmax
+        #print(vmin, vmax)
         positive = False
         if plot_data:
             mdata = masked_array(data.y, data.mask)

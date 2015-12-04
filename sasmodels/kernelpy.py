@@ -107,8 +107,8 @@ class PyKernel(object):
         self.pd_pars = pd_pars
 
     def __call__(self, fixed, pd, cutoff=1e-5):
-        #print "fixed",fixed
-        #print "pd", pd
+        #print("fixed",fixed)
+        #print("pd", pd)
         args = self.args[:]  # grab a copy of the args
         form, form_volume = self.kernel, self.info['form_volume']
         # First two fixed

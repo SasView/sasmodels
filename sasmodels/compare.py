@@ -70,9 +70,9 @@ def sasview_model(model_definition, **pars):
     Load a sasview model given the model name.
     """
     # convert model parameters from sasmodel form to sasview form
-    #print "old",sorted(pars.items())
+    #print("old",sorted(pars.items()))
     modelname, pars = revert_model(model_definition, pars)
-    #print "new",sorted(pars.items())
+    #print("new",sorted(pars.items()))
     sas = __import__('sas.models.'+modelname)
     ModelClass = getattr(getattr(sas.models,modelname,None),modelname,None)
     if ModelClass is None:
@@ -192,9 +192,9 @@ def eval_sasview(model_definition, pars, data, Nevals=1):
 def eval_opencl(model_definition, pars, data, dtype='single', Nevals=1, cutoff=0.):
     try:
         model = core.load_model(model_definition, dtype=dtype, platform="ocl")
-    except Exception,exc:
-        print exc
-        print "... trying again with single precision"
+    except Exception as exc:
+        print(exc)
+        print("... trying again with single precision")
         model = core.load_model(model_definition, dtype='single', platform="ocl")
     calculator = DirectModel(data, model, cutoff=cutoff)
     value = None  # silence the linter
@@ -266,7 +266,7 @@ def compare(name, pars, Ncomp, Nbase, opts, set_pars):
     if '-random' in opts or '-random' in opt_values:
         seed = int(opt_values['-random']) if '-random' in opt_values else None
         pars, seed = randomize_model(pars, seed=seed)
-        print "Randomize using -random=%i"%seed
+        print("Randomize using -random=%i"%seed)
     pars.update(set_pars)  # set value after random to control value
     constrain_pars(model_definition, pars)
 
@@ -274,7 +274,7 @@ def compare(name, pars, Ncomp, Nbase, opts, set_pars):
     if '-mono' in opts:
         suppress_pd(pars)
     if '-pars' in opts:
-        print "pars",parlist(pars)
+        print("pars "+str(parlist(pars)))
 
     # Base calculation
     if 0:
@@ -286,9 +286,9 @@ def compare(name, pars, Ncomp, Nbase, opts, set_pars):
         try:
             base, base_time = eval_sasview(model_definition, pars, data, Ncomp)
             base_name = "sasview"
-            #print "base/sasview", (base-pars['background'])/(comp-pars['background'])
-            print "sasview t=%.1f ms, intensity=%.0f"%(base_time, sum(base))
-            #print "sasview",comp
+            #print("base/sasview", (base-pars['background'])/(comp-pars['background']))
+            print("sasview t=%.1f ms, intensity=%.0f"%(base_time, sum(base)))
+            #print("sasview",comp)
         except ImportError:
             traceback.print_exc()
             Nbase = 0
@@ -296,36 +296,36 @@ def compare(name, pars, Ncomp, Nbase, opts, set_pars):
         base, base_time = eval_opencl(model_definition, pars, data,
                                     dtype=dtype, cutoff=cutoff, Nevals=Nbase)
         base_name = "ocl"
-        print "opencl t=%.1f ms, intensity=%.0f"%(base_time, sum(base))
-        #print "base", base
-        #print max(base), min(base)
+        print("opencl t=%.1f ms, intensity=%.0f"%(base_time, sum(base)))
+        #print("base " + base)
+        #print(max(base), min(base))
 
     # Comparison calculation
     if Ncomp > 0 and "-ctypes" in opts:
         comp, comp_time = eval_ctypes(model_definition, pars, data,
                                     dtype=dtype, cutoff=cutoff, Nevals=Ncomp)
         comp_name = "ctypes"
-        print "ctypes t=%.1f ms, intensity=%.0f"%(comp_time, sum(comp))
+        print("ctypes t=%.1f ms, intensity=%.0f"%(comp_time, sum(comp)))
     elif Ncomp > 0:
         try:
             comp, comp_time = eval_sasview(model_definition, pars, data, Ncomp)
             comp_name = "sasview"
-            #print "base/sasview", (base-pars['background'])/(comp-pars['background'])
-            print "sasview t=%.1f ms, intensity=%.0f"%(comp_time, sum(comp))
-            #print "sasview",comp
+            #print("base/sasview", (base-pars['background'])/(comp-pars['background']))
+            print("sasview t=%.1f ms, intensity=%.0f"%(comp_time, sum(comp)))
+            #print("sasview",comp)
         except ImportError:
             traceback.print_exc()
             Ncomp = 0
 
     # Compare, but only if computing both forms
     if Nbase > 0 and Ncomp > 0:
-        #print "speedup %.2g"%(comp_time/base_time)
-        #print "max |base/comp|", max(abs(base/comp)), "%.15g"%max(abs(base)), "%.15g"%max(abs(comp))
+        #print("speedup %.2g"%(comp_time/base_time))
+        #print("max |base/comp|", max(abs(base/comp)), "%.15g"%max(abs(base)), "%.15g"%max(abs(comp)))
         #comp *= max(base/comp)
         resid = (base - comp)
         relerr = resid/comp
         #bad = (relerr>1e-4)
-        #print relerr[bad],comp[bad],base[bad],data.qx_data[bad],data.qy_data[bad]
+        #print(relerr[bad],comp[bad],base[bad],data.qx_data[bad],data.qy_data[bad])
         _print_stats("|%s-%s|"%(base_name,comp_name)+(" "*(3+len(comp_name))), resid)
         _print_stats("|(%s-%s)/%s|"%(base_name,comp_name,comp_name), relerr)
 
@@ -378,7 +378,7 @@ def _print_stats(label, err):
         "rms:%.3e"%np.sqrt(np.mean(err**2)),
         "zero-offset:%+.3e"%np.mean(err),
         ]
-    print label,"  ".join(data)
+    print(label+"  ".join(data))
 
 
 
@@ -465,7 +465,7 @@ def main():
         print(columnize(MODELS, indent="  "))
         sys.exit(1)
     if args[0] not in MODELS:
-        print "Model %r not available. Use one of:\n    %s"%(args[0],models)
+        print("Model %r not available. Use one of:\n    %s"%(args[0],models))
         sys.exit(1)
     if len(args) > 3:
         print("expected parameters: model Nopencl Nsasview")
@@ -474,7 +474,7 @@ def main():
                if o[1:] not in NAME_OPTIONS
                   and not any(o.startswith('-%s='%t) for t in VALUE_OPTIONS)]
     if invalid:
-        print "Invalid options: %s"%(", ".join(invalid))
+        print("Invalid options: %s"%(", ".join(invalid)))
         sys.exit(1)
 
     # Get demo parameters from model definition, or use default parameters
@@ -499,7 +499,7 @@ def main():
         if k not in pars:
             # extract base name without distribution
             s = set(p.split('_pd')[0] for p in pars)
-            print "%r invalid; parameters are: %s"%(k,", ".join(sorted(s)))
+            print("%r invalid; parameters are: %s"%(k,", ".join(sorted(s))))
             sys.exit(1)
         set_pars[k] = float(v) if not v.endswith('type') else v
 

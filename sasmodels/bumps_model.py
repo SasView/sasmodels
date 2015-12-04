@@ -121,7 +121,7 @@ class Experiment(DataMixin):
 
             fixed_pars = [getattr(self.model, p).value for p in self._fn.fixed_pars]
             pd_pars = [self._get_weights(p) for p in self._fn.pd_pars]
-            #print fixed_pars,pd_pars
+            #print(fixed_pars,pd_pars)
             Iq_calc = self._fn(fixed_pars, pd_pars, self.cutoff)
             #self._theory[:] = self._fn.eval(pars, pd_pars)
             if self.data_type == 'sesans':
@@ -136,12 +136,12 @@ class Experiment(DataMixin):
         return self._cache['theory']
 
     def residuals(self):
-        #if np.any(self.err ==0): print "zeros in err"
+        #if np.any(self.err ==0): print("zeros in err")
         return (self.theory() - self.Iq) / self.dIq
 
     def nllf(self):
         delta = self.residuals()
-        #if np.any(np.isnan(R)): print "NaN in residuals"
+        #if np.any(np.isnan(R)): print("NaN in residuals")
         return 0.5 * np.sum(delta ** 2)
 
     #def __call__(self):

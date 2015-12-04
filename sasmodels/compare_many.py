@@ -52,8 +52,8 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
         except KeyboardInterrupt:
             raise
         except:
-            print >>sys.stderr, traceback.format_exc()
-            print >>sys.stderr, "when comparing",name,"for seed",seed
+            traceback.print_exc()
+            print("when comparing %s for %d"%(name, seed))
             if hasattr(data, 'qx_data'):
                 result = np.NaN*data.data
             else:
@@ -70,7 +70,7 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
     first = True
     max_diff = [0]
     for k in range(N):
-        print >>sys.stderr, name, k
+        print("%s %d"%(name, k))
         pars_i, seed = randomize_model(pars)
         constrain_pars(model_definition, pars_i)
         if mono: suppress_pd(pars_i)
@@ -108,11 +108,11 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
             num_good += 1
         else:
             print(("%d,"%seed)+','.join("%g"%v for v in columns))
-    print '"good","%d/%d","max diff",%g'%(num_good, N, max_diff[0])
+    print('"good","%d/%d","max diff",%g'%(num_good, N, max_diff[0]))
 
 
 def print_usage():
-    print "usage: compare_many.py MODEL COUNT (1dNQ|2dNQ) (CUTOFF|mono) (single|double|quad)"
+    print("usage: compare_many.py MODEL COUNT (1dNQ|2dNQ) (CUTOFF|mono) (single|double|quad)")
 
 
 def print_models():
@@ -154,7 +154,7 @@ def main():
 
     model = sys.argv[1]
     if not (model in MODELS) and (model != "all"):
-        print 'Bad model %s.  Use "all" or one of:'
+        print('Bad model %s.  Use "all" or one of:')
         print_models()
         sys.exit(1)
     try:

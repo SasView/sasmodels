@@ -186,7 +186,7 @@ class SasviewModel(object):
         ret = ['%s.%s' % (d.lower(), p)
                for d in self._model.info['partype']['pd-2d']
                for p in ('npts', 'nsigmas', 'width')]
-        #print ret
+        #print(ret)
         return ret
 
     def clone(self):
@@ -302,7 +302,7 @@ class SasviewModel(object):
         else:
             values, weights = self._dispersion_mesh()
             fv = ER(*values)
-            #print values[0].shape, weights.shape, fv.shape
+            #print(values[0].shape, weights.shape, fv.shape)
             return np.sum(weights * fv) / np.sum(weights)
 
     def calculate_VR(self):

@@ -545,7 +545,7 @@ double Iqxy(double qx, double qy, IQXY_PARAMETER_DECLARATIONS) {
     if 'theta' in pd_2d:
         defines.append(('IQXY_HAS_THETA', '1'))
 
-    #for d in defines: print d
+    #for d in defines: print(d)
     DEFINES = '\n'.join('#define %s %s' % (k, v) for k, v in defines)
     SOURCES = '\n\n'.join(source)
     return C_KERNEL_TEMPLATE % {
@@ -557,7 +557,7 @@ def make_info(kernel_module):
     """
     Interpret the model definition file, categorizing the parameters.
     """
-    #print kernelfile
+    #print(kernelfile)
     category = getattr(kernel_module, 'category', None)
     parameters = COMMON_PARAMETERS + kernel_module.parameters
     # Default the demo parameters to the starting values for the individual
@@ -654,18 +654,18 @@ def demo_time():
     tic = datetime.datetime.now()
     make(cylinder)
     toc = (datetime.datetime.now() - tic).total_seconds()
-    print "time:", toc
+    print("time: %g"%toc)
 
 def main():
     if len(sys.argv) <= 1:
-        print "usage: python -m sasmodels.generate modelname"
+        print("usage: python -m sasmodels.generate modelname")
     else:
         name = sys.argv[1]
         import sasmodels.models
         __import__('sasmodels.models.' + name)
         model = getattr(sasmodels.models, name)
         source, _ = make(model)
-        print source
+        print(source)
 
 if __name__ == "__main__":
     main()

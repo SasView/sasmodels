@@ -145,13 +145,13 @@ def make_dll(source, info, dtype="double"):
         fid, filename = tempfile.mkstemp(suffix=".c",prefix=tempfile_prefix)
         os.fdopen(fid,"w").write(source)
         command = COMPILE%{"source":filename, "output":dll}
-        print "Compile command:",command
+        print("Compile command: "+command)
         status = os.system(command)
         if status != 0 or not os.path.exists(dll):
             raise RuntimeError("compile failed.  File is in %r"%filename)
         else:
             ## uncomment the following to keep the generated c file
-            os.unlink(filename); print "saving compiled file in %r"%filename
+            os.unlink(filename); print("saving compiled file in %r"%filename)
     return dll
 
 
@@ -196,10 +196,10 @@ class DllModel(object):
         Npd1d = len(self.info['partype']['pd-1d'])
         Npd2d = len(self.info['partype']['pd-2d'])
 
-        #print "dll",self.dllpath
+        #print("dll",self.dllpath)
         try:
             self.dll = ct.CDLL(self.dllpath)
-        except Exception, exc:
+        except Exception as exc:
             annotate_exception(exc, "while loading "+self.dllpath)
             raise
 
@@ -290,7 +290,7 @@ class DllKernel(object):
             dispersed = []
         fixed = [real(p) for p in fixed_pars]
         args = self.q_input.q_pointers + [self.p_res, nq] + dispersed + fixed
-        #print pars
+        #print(pars)
         self.kernel(*args)
 
         return self.res

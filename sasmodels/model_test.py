@@ -67,9 +67,9 @@ def make_suite(loaders, models):
         if model_name in skip: continue
         model_definition = load_model_definition(model_name)
 
-        #print '------'
-        #print 'found tests in', model_name
-        #print '------'
+        #print('------')
+        #print('found tests in', model_name)
+        #print('------')
 
         # if ispy then use the dll loader to call pykernel
         # don't try to call cl kernel since it will not be
@@ -92,7 +92,7 @@ def make_suite(loaders, models):
                 test = ModelTestCase(test_name, model_definition,
                                      test_method_name,
                                      platform="ocl", dtype='single')
-                #print "defining", test_name
+                #print("defining", test_name)
                 suite.addTest(test)
 
             # test using dll if desired
@@ -143,7 +143,7 @@ def _hide_model_case_from_nosetests():
                     #raise Exception("No test cases provided")
                     pass
 
-            except Exception,exc:
+            except Exception as exc:
                 annotate_exception(exc, self.test_name)
                 raise
 
@@ -200,7 +200,7 @@ def main():
     models = sys.argv[1:]
     if models and models[0] == 'opencl':
         if not HAVE_OPENCL:
-            print >>sys.stderr, "opencl is not available"
+            print("opencl is not available")
             return 1
         loaders = ['opencl']
         models = models[1:]
@@ -214,13 +214,13 @@ def main():
     else:
         loaders = ['opencl', 'dll']
     if not models:
-        print >>sys.stderr, """\
+        print("""\
 usage:
   python -m sasmodels.model_test [opencl|dll|opencl_and_dll] model1 model2 ...
 
 If model1 is 'all', then all except the remaining models will be tested.
 If no compute target is specified, then models will be tested with both opencl
-and dll; the compute target is ignored for pure python models."""
+and dll; the compute target is ignored for pure python models.""")
 
         return 1
 
