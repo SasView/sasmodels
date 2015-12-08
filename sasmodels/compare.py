@@ -80,6 +80,8 @@ def sasview_model(model_definition, **pars):
     model = ModelClass()
 
     for k,v in pars.items():
+        if k.startswith("num_pearls_") or k.startswith("thick_string_"):
+            continue
         if k.endswith("_pd"):
             model.dispersion[k[:-3]]['width'] = v
         elif k.endswith("_pd_n"):
