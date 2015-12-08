@@ -61,14 +61,9 @@ except Exception as exc:
     raise RuntimeError("OpenCL not available")
 
 from pyopencl import mem_flags as mf
+from pyopencl.characterize import get_fast_inaccurate_build_options
 
 from . import generate
-
-F64_DEFS = """\
-#ifdef cl_khr_fp64
-#  pragma OPENCL EXTENSION cl_khr_fp64: enable
-#endif
-"""
 
 # The max loops number is limited by the amount of local memory available
 # on the device.  You don't want to make this value too big because it will
@@ -91,11 +86,18 @@ def environment():
         ENV = GpuEnvironment()
     return ENV
 
-def has_double(device):
+def has_type(device, dtype):
     """
-    Return true if device supports double precision.
+    Return true if device supports the requested precision.
     """
-    return "cl_khr_fp64" in device.extensions
+    if dtype == generate.F32:
+        return True
+    elif dtype == generate.F64:
+        return "cl_khr_fp64" in device.extensions
+    elif dtype == generate.F16:
+        return "cl_khr_fp16" in device.extensions
+    else:
+        return False
 
 def get_warp(kernel, queue):
     """
@@ -127,7 +129,7 @@ def _stretch_input(vector, dtype, extra=1e-3, boundary=32):
     return np.ascontiguousarray(vector, dtype=dtype)
 
 
-def compile_model(context, source, dtype):
+def compile_model(context, source, dtype, fast=False):
     """
     Build a model to run on the gpu.
 
@@ -136,16 +138,16 @@ def compile_model(context, source, dtype):
     devices in the context do not support the cl_khr_fp64 extension.
     """
     dtype = np.dtype(dtype)
-    if dtype == generate.F64 and not all(has_double(d) for d in context.devices):
-        raise RuntimeError("Double precision not supported for devices")
+    if not all(has_type(d, dtype) for d in context.devices):
+        raise RuntimeError("%s not supported for devices"%dtype)
 
-    header = F64_DEFS if dtype == generate.F64 else ""
-    if dtype == generate.F32:
-        source = generate.use_single(source)
+    source = generate.convert_type(source, dtype)
     # Note: USE_SINCOS makes the intel cpu slower under opencl
     if context.devices[0].type == cl.device_type.GPU:
-        header += "#define USE_SINCOS\n"
-    program = cl.Program(context, header + source).build()
+        source = "#define USE_SINCOS\n" + source
+    options = (get_fast_inaccurate_build_options(context.devices[0])
+               if fast else [])
+    program = cl.Program(context, source).build(options=options)
     return program
 
 
@@ -177,8 +179,11 @@ class GpuEnvironment(object):
         #                         for d in self.context.devices)
         self.queues = [cl.CommandQueue(self.context, d)
                        for d in self.context.devices]
-        self.has_double = all(has_double(d) for d in self.context.devices)
         self.compiled = {}
+
+    def has_type(self, dtype):
+        dtype = np.dtype(dtype)
+        return all(has_type(d, dtype) for d in self.context.devices)
 
     def _create_some_context(self):
         try:
@@ -188,10 +193,11 @@ class GpuEnvironment(object):
             warnings.warn("pyopencl.create_some_context() failed")
             warnings.warn("the environment variable 'PYOPENCL_CTX' might not be set correctly")
 
-    def compile_program(self, name, source, dtype):
+    def compile_program(self, name, source, dtype, fast=False):
         if name not in self.compiled:
             #print("compiling",name)
-            self.compiled[name] = compile_model(self.context, source, dtype)
+            self.compiled[name] = compile_model(self.context, source, dtype,
+                                                fast)
         return self.compiled[name]
 
     def release_program(self, name):
@@ -225,11 +231,14 @@ class GpuModel(object):
     or double precision floats will do, such as 'f', 'float32' or 'single'
     for single and 'd', 'float64' or 'double' for double.  Double precision
     is an optional extension which may not be available on all devices.
+
+    *fast* is True if fast inaccurate math is acceptable (40% speed increase)
     """
-    def __init__(self, source, info, dtype=generate.F32):
+    def __init__(self, source, info, dtype=generate.F32, fast=False):
         self.info = info
         self.source = source
         self.dtype = np.dtype(dtype)
+        self.fast = fast
         self.program = None # delay program creation
 
     def __getstate__(self):
@@ -242,10 +251,12 @@ class GpuModel(object):
 
     def __call__(self, q_input):
         if self.dtype != q_input.dtype:
-            raise TypeError("data is %s kernel is %s" % (q_input.dtype, self.dtype))
+            raise TypeError("data is %s kernel is %s"
+                            % (q_input.dtype, self.dtype))
         if self.program is None:
             compiler = environment().compile_program
-            self.program = compiler(self.info['name'], self.source, self.dtype)
+            self.program = compiler(self.info['name'], self.source, self.dtype,
+                                    self.fast)
         kernel_name = generate.kernel_name(self.info, q_input.is_2D)
         kernel = getattr(self.program, kernel_name)
         return GpuKernel(kernel, self.info, q_input)
@@ -346,7 +357,10 @@ class GpuKernel(object):
 
 
     def __call__(self, fixed_pars, pd_pars, cutoff=1e-5):
-        real = np.float32 if self.q_input.dtype == generate.F32 else np.float64
+        real = (np.float32 if self.q_input.dtype == generate.F32
+                else np.float64 if self.q_input.dtype == generate.F64
+                else np.float16 if self.q_input.dtype == generate.F16
+                else np.float32)  # will never get here, so use np.float32
 
         device_num = 0
         queuei = environment().queues[device_num]

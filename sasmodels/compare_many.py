@@ -86,7 +86,7 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
             check_model('GPU single', target, value, 5e-5)
             single_value = value  # remember for single/double comparison
         elif precision == 'double':
-            if environment().has_double:
+            if environment().has_type('double'):
                 label = 'GPU double'
                 value = try_model(eval_opencl, dtype='double', cutoff=cutoff)
             else:

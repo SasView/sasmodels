@@ -189,13 +189,16 @@ def eval_sasview(model_definition, pars, data, Nevals=1):
     average_time = toc()*1000./Nevals
     return value, average_time
 
-def eval_opencl(model_definition, pars, data, dtype='single', Nevals=1, cutoff=0.):
+def eval_opencl(model_definition, pars, data, dtype='single', Nevals=1,
+                cutoff=0., fast=False):
     try:
-        model = core.load_model(model_definition, dtype=dtype, platform="ocl")
+        model = core.load_model(model_definition, dtype=dtype,
+                                platform="ocl", fast=fast)
     except Exception as exc:
         print(exc)
         print("... trying again with single precision")
-        model = core.load_model(model_definition, dtype='single', platform="ocl")
+        model = core.load_model(model_definition, dtype='single',
+                                platform="ocl", fast=fast)
     calculator = DirectModel(data, model, cutoff=cutoff)
     value = None  # silence the linter
     toc = tic()
@@ -258,8 +261,10 @@ def compare(name, pars, Ncomp, Nbase, opts, set_pars):
     # modelling accuracy is determined by dtype and cutoff
     dtype = ('longdouble' if '-quad' in opts
              else 'double' if '-double' in opts
+             else 'half' if '-half' in opts
              else 'single')
     cutoff = float(opt_values.get('-cutoff','1e-5'))
+    fast = "-fast" in opts and dtype is 'single'
 
     # randomize parameters
     #pars.update(set_pars)  # set value before random to control range
@@ -281,7 +286,7 @@ def compare(name, pars, Ncomp, Nbase, opts, set_pars):
         from sasmodels.models import sphere as target
         base_name = target.name
         base, base_time = eval_ctypes(target, pars, data,
-                         dtype='longdouble', cutoff=0., Nevals=Ncomp)
+                dtype='longdouble', cutoff=0., Nevals=Ncomp)
     elif Nbase > 0 and "-ctypes" in opts and "-sasview" in opts:
         try:
             base, base_time = eval_sasview(model_definition, pars, data, Ncomp)
@@ -294,7 +299,7 @@ def compare(name, pars, Ncomp, Nbase, opts, set_pars):
             Nbase = 0
     elif Nbase > 0:
         base, base_time = eval_opencl(model_definition, pars, data,
-                                    dtype=dtype, cutoff=cutoff, Nevals=Nbase)
+                dtype=dtype, cutoff=cutoff, Nevals=Nbase, fast=fast)
         base_name = "ocl"
         print("opencl t=%.1f ms, intensity=%.0f"%(base_time, sum(base)))
         #print("base " + base)
@@ -303,7 +308,7 @@ def compare(name, pars, Ncomp, Nbase, opts, set_pars):
     # Comparison calculation
     if Ncomp > 0 and "-ctypes" in opts:
         comp, comp_time = eval_ctypes(model_definition, pars, data,
-                                    dtype=dtype, cutoff=cutoff, Nevals=Ncomp)
+                dtype=dtype, cutoff=cutoff, Nevals=Ncomp)
         comp_name = "ctypes"
         print("ctypes t=%.1f ms, intensity=%.0f"%(comp_time, sum(comp)))
     elif Ncomp > 0:
@@ -397,7 +402,7 @@ Nsasview is the number of times to run the Sasview model (default=1)
 Options (* for default):
 
     -plot*/-noplot plots or suppress the plot of the model
-    -single*/-double/-quad use single/double/quad precision for comparison
+    -half/-single*/-double/-quad/-fast sets the calculation precision
     -lowq*/-midq/-highq/-exq use q values up to 0.05, 0.2, 1.0, 10.0
     -Nq=128 sets the number of Q points in the data set
     -1d*/-2d computes 1d or 2d data
@@ -410,7 +415,7 @@ Options (* for default):
     -linear/-log/-q4 intensity scaling
     -hist/-nohist* plot histogram of relative error
     -res=0 sets the resolution width dQ/Q if calculating with resolution
-    -accuracy=Low resolution accuracy Low, Mid, High, Xhigh
+    -accuracy=Low accuracy of the resolution calculation Low, Mid, High, Xhigh
 
 Key=value pairs allow you to set specific values to any of the model
 parameters.
@@ -420,17 +425,17 @@ Available models:
 
 
 NAME_OPTIONS = set([
-    'plot','noplot',
-    'single','double','quad',
-    'lowq','midq','highq','exq',
-    '2d','1d',
-    'preset','random',
-    'poly','mono',
-    'sasview','ctypes',
-    'nopars','pars',
-    'rel','abs',
+    'plot', 'noplot',
+    'half', 'single', 'double', 'quad', 'fast',
+    'lowq', 'midq', 'highq', 'exq',
+    '2d', '1d',
+    'preset', 'random',
+    'poly', 'mono',
+    'sasview', 'ctypes',
+    'nopars', 'pars',
+    'rel', 'abs',
     'linear', 'log', 'q4',
-    'hist','nohist',
+    'hist', 'nohist',
     ])
 VALUE_OPTIONS = [
     # Note: random is both a name option and a value option

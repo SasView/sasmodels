@@ -196,7 +196,7 @@ returns a list of files required by the model.
 
 # TODO: identify model files which have changed since loading and reload them.
 
-__all__ = ["make", "doc", "sources", "use_single", "use_long_double"]
+__all__ = ["make", "doc", "sources", "convert_type"]
 
 import sys
 from os.path import abspath, dirname, join as joinpath, exists, basename, \
@@ -207,6 +207,7 @@ import string
 import numpy as np
 C_KERNEL_TEMPLATE_PATH = joinpath(dirname(__file__), 'kernel_template.c')
 
+F16 = np.dtype('float16')
 F32 = np.dtype('float32')
 F64 = np.dtype('float64')
 try:  # CRUFT: older numpy does not support float128
@@ -315,34 +316,48 @@ def sources(info):
                    abspath(joinpath(dirname(__file__), 'models'))]
     return [_search(search_path, f) for f in info['source']]
 
-def use_single(source):
+# Pragmas for enable OpenCL features.  Be sure to protect them so that they
+# still compile even if OpenCL is not present.
+_F16_PRAGMA = """\
+#ifdef cl_khr_fp16
+#  pragma OPENCL EXTENSION cl_khr_fp16: enable
+#endif
+"""
+
+_F64_PRAGMA = """\
+#ifdef cl_khr_fp64
+#  pragma OPENCL EXTENSION cl_khr_fp64: enable
+#endif
+"""
+
+def convert_type(source, dtype):
     """
-    Convert code from double precision to single precision.
+    Convert code from double precision to the desired type.
     """
-    # Convert double keyword to float.  Accept an 'n' parameter for vector
-    # values, where n is 2, 4, 8 or 16. Assume complex numbers are represented
-    # as cdouble which is typedef'd to double2.
-    source = re.sub(r'(^|[^a-zA-Z0-9_]c?)double(([248]|16)?($|[^a-zA-Z0-9_]))',
-                    r'\1float\2', source)
-    # Convert floating point constants to single by adding 'f' to the end.
-    # OS/X driver complains if you don't do this.
-    source = re.sub(r'[^a-zA-Z_](\d*[.]\d+|\d+[.]\d*)([eE][+-]?\d+)?',
-                    r'\g<0>f', source)
+    if dtype == F16:
+        source = _F16_PRAGMA + _convert_type(source, "half", "f")
+    elif dtype == F32:
+        source = _convert_type(source, "float", "f")
+    elif dtype == F64:
+        source = _F64_PRAGMA + source  # Source is already double
+    elif dtype == F128:
+        source = _convert_type(source, "long double", "L")
+    else:
+        raise ValueError("Unexpected dtype in source conversion: %s"%dtype)
     return source
 
-def use_long_double(source):
-    """
-    Convert code from double precision to long double precision.
-    """
-    # Convert double keyword to float.  Accept an 'n' parameter for vector
-    # values, where n is 2, 4, 8 or 16. Assume complex numbers are represented
-    # as cdouble which is typedef'd to double2.
+
+def _convert_type(source, type_name, constant_flag):
+    # Convert double keyword to float/long double/half.
+    # Accept an 'n' # parameter for vector # values, where n is 2, 4, 8 or 16.
+    # Assume complex numbers are represented as cdouble which is typedef'd
+    # to double2.
     source = re.sub(r'(^|[^a-zA-Z0-9_]c?)double(([248]|16)?($|[^a-zA-Z0-9_]))',
-                    r'\1long double\2', source)
-    # Convert floating point constants to single by adding 'f' to the end.
-    # OS/X driver complains if you don't do this.
+                    r'\1%s\2'%type_name, source)
+    # Convert floating point constants to single by adding 'f' to the end,
+    # or long double with an 'L' suffix.  OS/X complains if you don't do this.
     source = re.sub(r'[^a-zA-Z_](\d*[.]\d+|\d+[.]\d*)([eE][+-]?\d+)?',
-                    r'\g<0>L', source)
+                    r'\g<0>%s'%constant_flag, source)
     return source
 
 

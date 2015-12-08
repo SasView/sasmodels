@@ -64,7 +64,7 @@ def isstr(s):
     except: return False
     return True
 
-def load_model(model_definition, dtype="single", platform="ocl"):
+def load_model(model_definition, dtype="single", platform="ocl", fast=False):
     """
     Prepare the model for the default execution platform.
 
@@ -82,6 +82,8 @@ def load_model(model_definition, dtype="single", platform="ocl"):
 
     *platform* should be "dll" to force the dll to be used for C models,
     otherwise it uses the default "ocl".
+
+    *fast* is True if fast inaccurate math is acceptable (40% speed increase).
     """
     if isstr(model_definition):
         model_definition = load_model_definition(model_definition)
@@ -101,10 +103,10 @@ def load_model(model_definition, dtype="single", platform="ocl"):
     dtype = np.dtype(dtype)
     if (platform=="dll"
             or not HAVE_OPENCL
-            or (dtype == np.float64 and not kernelcl.environment().has_double)):
+            or not kernelcl.environment().has_type(dtype)):
         return kerneldll.load_dll(source, info, dtype)
     else:
-        return kernelcl.GpuModel(source, info, dtype)
+        return kernelcl.GpuModel(source, info, dtype, fast)
 
 def make_kernel(model, q_vectors):
     """

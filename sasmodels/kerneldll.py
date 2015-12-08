@@ -84,7 +84,7 @@ else:
 
 DLL_PATH = tempfile.gettempdir()
 
-ALLOW_SINGLE_PRECISION_DLLS = False
+ALLOW_SINGLE_PRECISION_DLLS = True
 
 
 def dll_path(info, dtype="double"):
@@ -121,22 +121,23 @@ def make_dll(source, info, dtype="double"):
     Set *sasmodels.ALLOW_SINGLE_PRECISION_DLLS* to True if single precision
     models are allowed as DLLs.
     """
-    dtype = np.dtype(dtype)
-    if dtype == generate.F32 and not ALLOW_SINGLE_PRECISION_DLLS:
-        dtype = generate.F64  # Force 64-bit dll
-
     if callable(info.get('Iq',None)):
         return PyModel(info)
 
+    dtype = np.dtype(dtype)
+    if dtype == generate.F16:
+        raise ValueError("16 bit floats not supported")
+    if dtype == generate.F32 and not ALLOW_SINGLE_PRECISION_DLLS:
+        dtype = generate.F64  # Force 64-bit dll
+
     if dtype == generate.F32: # 32-bit dll
-        source = generate.use_single(source)
         tempfile_prefix = 'sas_'+info['name']+'32_'
     elif dtype == generate.F64:
         tempfile_prefix = 'sas_'+info['name']+'64_'
     else:
-        source = generate.use_long_double(source)
         tempfile_prefix = 'sas_'+info['name']+'128_'
 
+    source = generate.convert_type(source, dtype)
     source_files = generate.sources(info) + [info['filename']]
     dll= dll_path(info, dtype)
     newest = max(os.path.getmtime(f) for f in source_files)
