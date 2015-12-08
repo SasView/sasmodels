@@ -1,4 +1,6 @@
+int factorial(int f);
 double Si(double x);
+
 // integral of sin(x)/x: approximated to w/i 1%
 double Si(double x)
 {
@@ -32,7 +34,7 @@ double Si(double x)
 		}
 
 		power = pow(x,(2 * i + 1));
-		out += (double)pow(-1, i) * power / ((2.0 * (double)i + 1.0) * (double)factorial(2 * i + 1));
+		out += pow(-1.0, i) * power / ((2.0 * (double)i + 1.0) * (double)factorial(2 * i + 1));
 
 		//printf ("Si=%g %g %d\n", x, out, i);
 	}
@@ -40,7 +42,6 @@ double Si(double x)
 	return out;
 }
 
-int factorial(int f);
 int factorial(int f)
 {
     if ( f == 0 ) 
