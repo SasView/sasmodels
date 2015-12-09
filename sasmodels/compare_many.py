@@ -8,7 +8,7 @@ from . import core
 from .kernelcl import environment
 from .compare import (MODELS, randomize_model, suppress_pd, eval_sasview,
                       eval_opencl, eval_ctypes, make_data, get_demo_pars,
-                      columnize, constrain_pars)
+                      columnize, constrain_pars, constrain_new_to_old)
 
 def calc_stats(target, value, index):
     resid = abs(value-target)[index]
@@ -73,6 +73,7 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
         print("%s %d"%(name, k))
         pars_i, seed = randomize_model(pars)
         constrain_pars(model_definition, pars_i)
+        constrain_new_to_old(model_definition, pars_i)
         if mono: suppress_pd(pars_i)
 
         good = [True]

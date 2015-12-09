@@ -19,7 +19,7 @@ from . import kerneldll
 from . import generate
 from .data import plot_theory, empty_data1D, empty_data2D
 from .direct_model import DirectModel
-from .convert import revert_model
+from .convert import revert_model, constrain_new_to_old
 kerneldll.ALLOW_SINGLE_PRECISION_DLLS = True
 
 # List of available models
@@ -80,16 +80,9 @@ def sasview_model(model_definition, **pars):
     model = ModelClass()
 
     for k,v in pars.items():
-        if k.startswith("num_pearls_") or k.startswith("thick_string_"):
-            continue
-        if k.endswith("_pd"):
-            model.dispersion[k[:-3]]['width'] = v
-        elif k.endswith("_pd_n"):
-            model.dispersion[k[:-5]]['npts'] = v
-        elif k.endswith("_pd_nsigma"):
-            model.dispersion[k[:-10]]['nsigmas'] = v
-        elif k.endswith("_pd_type"):
-            model.dispersion[k[:-8]]['type'] = v
+        parts = k.split('.')  # polydispersity components
+        if len(parts) == 2:
+            model.dispersion[parts[0]][parts[1]] = v
         else:
             model.setParam(k, v)
     return model
@@ -128,6 +121,9 @@ def randomize_model(pars, seed=None):
     return pars, seed
 
 def constrain_pars(model_definition, pars):
+    """
+    Restrict parameters to valid values.
+    """
     name = model_definition.name
     if name == 'capped_cylinder' and pars['cap_radius'] < pars['radius']:
         pars['radius'],pars['cap_radius'] = pars['cap_radius'],pars['radius']
@@ -140,15 +136,6 @@ def constrain_pars(model_definition, pars):
         q_max = 1.0  # high q maximum
         rg_max = np.sqrt(90*np.log(10) + 3*np.log(pars['scale']))/q_max
         pars['rg'] = min(pars['rg'],rg_max)
-
-    # These constraints are only needed for comparison to sasview
-    if name in ('teubner_strey','broad_peak'):
-        del pars['scale']
-    if name in ('guinier',):
-        del pars['background']
-    if getattr(model_definition, 'category', None) == 'structure-factor':
-        del pars['scale'], pars['background']
-
 
 def parlist(pars):
     return "\n".join("%s: %s"%(p,v) for p,v in sorted(pars.items()))
@@ -276,6 +263,7 @@ def compare(name, pars, Ncomp, Nbase, opts, set_pars):
         print("Randomize using -random=%i"%seed)
     pars.update(set_pars)  # set value after random to control value
     constrain_pars(model_definition, pars)
+    constrain_new_to_old(model_definition, pars)
 
     # parameter selection
     if '-mono' in opts:
