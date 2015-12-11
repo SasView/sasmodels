@@ -71,6 +71,7 @@ def _revert_pars(pars, mapping):
     Rename the parameters and any associated polydispersity attributes.
     """
     newpars = pars.copy()
+
     for new, old in mapping.items():
         for pd, dot in PD_DOT:
             if old+pd == new+dot:
@@ -79,6 +80,11 @@ def _revert_pars(pars, mapping):
                 if old is not None:
                     newpars[old+dot] = pars[new+pd]
                 del newpars[new+pd]
+    for k in list(newpars.keys()):
+        for pd, dot in PD_DOT[1:]:  # skip "" => ""
+            if k.endswith(pd):
+                newpars[k[:-len(pd)]+dot] = newpars[k]
+                del newpars[k]
     return newpars
 
 def revert_model(model_definition, pars):
