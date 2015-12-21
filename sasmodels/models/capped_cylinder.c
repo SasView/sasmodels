@@ -87,7 +87,7 @@ double Iq(double q,
     double sn, cn; // slots to hold sincos function output
 
     // Exclude invalid inputs.
-    if (cap_radius < radius) return -1.0;
+    if (cap_radius < radius) return NAN;
 
     const double lower = 0.0;
     const double upper = M_PI_2;
@@ -137,7 +137,7 @@ double Iqxy(double qx, double qy,
     double sn, cn; // slots to hold sincos function output
 
     // Exclude invalid inputs.
-    if (cap_radius < radius) return -1.0;
+    if (cap_radius < radius) return NAN;
 
     // Compute angle alpha between q and the cylinder axis
     SINCOS(theta*M_PI_180, sn, cn);

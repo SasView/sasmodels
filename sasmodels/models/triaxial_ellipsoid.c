@@ -16,7 +16,7 @@ double Iq(double q,
     double req_major,
     double rpolar)
 {
-    // if (req_minor > req_major || req_major > rpolar) return -1.0;  // Exclude invalid region
+    // if (req_minor > req_major || req_major > rpolar) return NAN;  // Exclude invalid region
 
     double sn, cn;
     double st, ct;
@@ -61,7 +61,7 @@ double Iqxy(double qx, double qy,
     double phi,
     double psi)
 {
-    // if (req_minor > req_major || req_major > rpolar) return -1.0;  // Exclude invalid region
+    // if (req_minor > req_major || req_major > rpolar) return NAN;  // Exclude invalid region
 
     double stheta, ctheta;
     double sphi, cphi;

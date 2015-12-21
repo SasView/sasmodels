@@ -124,7 +124,8 @@ kernel void IQ_KERNEL_NAME(
     const double weight = IQ_WEIGHT_PRODUCT;
     if (weight > cutoff) {
       const double scattering = Iq(qi, IQ_PARAMETERS);
-      //if (scattering >= 0.0) { // scattering cannot be negative
+      // allow kernels to exclude invalid regions by returning NaN
+      if (!isnan(scattering)) {
         ret += weight*scattering;
         norm += weight;
       #ifdef VOLUME_PARAMETERS
@@ -132,7 +133,7 @@ kernel void IQ_KERNEL_NAME(
         vol += vol_weight*form_volume(VOLUME_PARAMETERS);
         norm_vol += vol_weight;
       #endif
-      //}
+      }
     //else { printf("exclude qx,qy,I:%%g,%%g,%%g\n",qi,scattering); }
     }
     IQ_CLOSE_LOOPS
