@@ -174,7 +174,8 @@ def slit_resolution(q_calc, q, width, height, n_height=30):
     .. math::
 
         I_s(q_i) = \frac{1}{\Delta q_\perp}
-            \int_0^{\Delta q_\perp} I(\sqrt{q_i^2 + q_\perp^2} dq_\perp
+            \int_0^{\Delta q_\perp}
+                I\left(\sqrt{q_i^2 + q_\perp^2}\right) \,dq_\perp
 
     If slit width is large relative to height, use:
 
@@ -182,17 +183,17 @@ def slit_resolution(q_calc, q, width, height, n_height=30):
 
         I_s(q_i) = \frac{1}{2 \Delta q_\parallel}
             \int_{-\Delta q_\parallel}^{\Delta q_\parallel}
-                I(|q_i + q_\parallel|) dq_\parallel
+                I\left(|q_i + q_\parallel|\right) \,dq_\parallel
 
     For a mixture of slit width and height use:
 
     .. math::
 
         I_s(q_i) = \frac{1}{2 \Delta q_\parallel \Delta q_\perp}
-            \int_{-\Delta q_\parallel)^{\Delta q_parallel}
-            \int_0^[\Delta q_\perp}
-                I(\sqrt{(q_i + q_\parallel)^2 + q_\perp^2})
-                dq_\perp dq_\parallel
+            \int_{-\Delta q_\parallel}^{\Delta q_\parallel}
+            \int_0^{\Delta q_\perp}
+                I\left(\sqrt{(q_i + q_\parallel)^2 + q_\perp^2}\right)
+                \,dq_\perp dq_\parallel
 
 
     **Algorithm**
@@ -202,7 +203,7 @@ def slit_resolution(q_calc, q, width, height, n_height=30):
 
     .. math::
 
-        I_s(q) = W I(q_\text{calc})
+        I_s(q) = W\,I(q_\text{calc})
 
     If *q_calc* is at the mid-point, we can infer the bin edges from the
     pairwise averages of *q_calc*, adding the missing edges before
@@ -224,14 +225,14 @@ def slit_resolution(q_calc, q, width, height, n_height=30):
     where $I(u_j)$ is the value at the mid-point, and $\Delta u_j$ is the
     difference between consecutive edges which have been first converted
     to $u$.  Only $u_j \in [0, \Delta q_\perp]$ are used, which corresponds
-    to $q_j \in [q, \sqrt{q^2 + \Delta q_\perp}]$, so
+    to $q_j \in \left[q, \sqrt{q^2 + \Delta q_\perp}\right]$, so
 
     .. math::
 
         W_{ij} = \frac{1}{\Delta q_\perp} \Delta u_j
-               = \frac{1}{\Delta q_\perp}
-                    \sqrt{q_{j+1}^2 - q_i^2} - \sqrt{q_j^2 - q_i^2}
-            \text{if} q_j \in [q_i, \sqrt{q_i^2 + q_\perp^2}]
+               = \frac{1}{\Delta q_\perp} \left(
+                    \sqrt{q_{j+1}^2 - q_i^2} - \sqrt{q_j^2 - q_i^2} \right)
+            \ \text{if}\  q_j \in \left[q_i, \sqrt{q_i^2 + q_\perp^2}\right]
 
     where $I_s(q_i)$ is the theory function being computed and $q_j$ are the
     mid-points between the calculated values in *q_calc*.  We tweak the
@@ -248,34 +249,36 @@ def slit_resolution(q_calc, q, width, height, n_height=30):
 
     .. math::
 
-        u_j = |q_j - q|
+        u_j = \left|q_j - q\right|
 
     so
 
     .. math::
 
-        W_ij = \frac{1}{2 \Delta q_\parallel} \Delta u_j
+        W_{ij} = \frac{1}{2 \Delta q_\parallel} \Delta u_j
             = \frac{1}{2 \Delta q_\parallel} (q_{j+1} - q_j)
-            \text{if} q_j \in [q-\Delta q_\parallel, q+\Delta q_\parallel]
+            \ \text{if}\ q_j \in
+                \left[q-\Delta q_\parallel, q+\Delta q_\parallel\right]
 
     However, we need to support cases were $u_j < 0$, which means using
-    $2 (q_{j+1} - q_j)$ when $q_j \in [0, q_\parallel-q_i]$.  This is not
-    an issue for $q_i > q_\parallel$.
+    $2 (q_{j+1} - q_j)$ when $q_j \in \left[0, q_\parallel-q_i\right]$.
+    This is not an issue for $q_i > q_\parallel$.
 
-    For bot $q_\perp > 0$ and $q_\parallel > 0$ we perform a 2 dimensional
+    For both $q_\perp > 0$ and $q_\parallel > 0$ we perform a 2 dimensional
     integration with
 
     .. math::
 
-        u_jk = \sqrt{q_j^2 - (q + (k\Delta q_\parallel/L))^2}
-            \text{for} k = -L \ldots L
+        u_{jk} = \sqrt{q_j^2 - (q + (k\Delta q_\parallel/L))^2}
+            \ \text{for}\ k = -L \ldots L
 
     for $L$ = *n_height*.  This gives
 
     .. math::
 
         W_{ij} = \frac{1}{2 \Delta q_\perp q_\parallel}
-            \sum_{k=-L}^L \Delta u_jk (\frac{\Delta q_\parallel}{2 L + 1}
+            \sum_{k=-L}^L \Delta u_{jk}
+                \left(\frac{\Delta q_\parallel}{2 L + 1}\right)
 
 
     """
@@ -328,7 +331,7 @@ def _q_perp_weights(q_edges, qi, w):
 def pinhole_extend_q(q, q_width, nsigma=3):
     """
     Given *q* and *q_width*, find a set of sampling points *q_calc* so
-    that each point I(q) has sufficient support from the underlying
+    that each point $I(q)$ has sufficient support from the underlying
     function.
     """
     q_min, q_max = np.min(q - nsigma*q_width), np.max(q + nsigma*q_width)
