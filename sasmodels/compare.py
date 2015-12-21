@@ -147,8 +147,10 @@ def suppress_pd(pars):
     May also suppress complete polydispersity of the model to test
     models more quickly.
     """
+    pars = pars.copy()
     for p in pars:
         if p.endswith("_pd"): pars[p] = 0
+    return pars
 
 def eval_sasview(model_definition, pars, data, Nevals=1):
     # importing sas here so that the error message will be that sas failed to
@@ -189,7 +191,9 @@ def eval_opencl(model_definition, pars, data, dtype='single', Nevals=1,
         model = core.load_model(model_definition, dtype='single',
                                 platform="ocl", fast=fast)
     calculator = DirectModel(data, model, cutoff=cutoff)
-    value = None  # silence the linter
+    # Run the calculator once before starting the timing loop
+    value = calculator(**suppress_pd(pars))
+    # Now run the timing loop
     toc = tic()
     for _ in range(max(Nevals, 1)):  # force at least one eval
         value = calculator(**pars)
@@ -200,7 +204,9 @@ def eval_opencl(model_definition, pars, data, dtype='single', Nevals=1,
 def eval_ctypes(model_definition, pars, data, dtype='double', Nevals=1, cutoff=0.):
     model = core.load_model(model_definition, dtype=dtype, platform="dll")
     calculator = DirectModel(data, model, cutoff=cutoff)
-    value = None  # silence the linter
+    # Run the calculator once before starting the timing loop
+    value = calculator(**suppress_pd(pars))
+    # Now run the timing loop
     toc = tic()
     for _ in range(max(Nevals, 1)):  # force at least one eval
         value = calculator(**pars)
@@ -267,7 +273,7 @@ def compare(name, pars, Ncomp, Nbase, opts, set_pars):
 
     # parameter selection
     if '-mono' in opts:
-        suppress_pd(pars)
+        pars = suppress_pd(pars)
     if '-pars' in opts:
         print("pars "+str(parlist(pars)))
 

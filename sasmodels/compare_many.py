@@ -74,7 +74,8 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
         pars_i, seed = randomize_model(pars)
         constrain_pars(model_definition, pars_i)
         constrain_new_to_old(model_definition, pars_i)
-        if mono: suppress_pd(pars_i)
+        if mono:
+            pars_i = suppress_pd(pars_i)
 
         good = [True]
         labels = []
