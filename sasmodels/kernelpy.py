@@ -202,24 +202,24 @@ def _loops(form, form_volume, cutoff, scale, background,
         else:
             args[pd_index[0]] = fast_value[fast_index]
             weight[0] = fast_weight[fast_index]
-        # This computes the weight, and if it is sufficient, calls the
-        # scattering function and adds it to the total.  If there is a volume
-        # normalization, it will also be added here.
-        # Note: make sure this is consistent with the code in PY_LOOP_BODY!!
-        # Note: can precompute w1*w2*...*wn
+
+        # Computes the weight, and if it is not sufficient then ignore this
+        # parameter set.
+        # Note: could precompute w1*...*wn so we only need to multiply by w0
         w = np.prod(weight)
         if w > cutoff:
-            I = form(*args)
-            #positive = (I >= 0.0)
-
             # Note: can precompute spherical correction if theta_index is not
             # the fast index. Correction factor for spherical integration
             #spherical_correction = abs(cos(pi*args[phi_index])) if phi_index>=0 else 1.0
             spherical_correction = (abs(cos(pi * args[theta_index])) * pi / 2
                                     if theta_index >= 0 else 1.0)
             #spherical_correction = 1.0
-            ret += w * I * spherical_correction #* positive
-            norm += w #* positive
+
+            # Call the scattering function and adds it to the total.
+            I = form(*args)
+            if np.isnan(I).any(): continue
+            ret += w * I * spherical_correction
+            norm += w
 
             # Volume normalization.
             # If there are "volume" polydispersity parameters, then these
@@ -229,8 +229,8 @@ def _loops(form, form_volume, cutoff, scale, background,
             if form_volume:
                 vol_args = [args[index] for index in vol_index]
                 vol_weight = np.prod(weight[vol_weight_index])
-                vol += vol_weight * form_volume(*vol_args) #* positive
-                vol_norm += vol_weight #* positive
+                vol += vol_weight * form_volume(*vol_args)
+                vol_norm += vol_weight
 
     positive = (vol * vol_norm != 0.0)
     ret[positive] *= vol_norm[positive] / vol[positive]
