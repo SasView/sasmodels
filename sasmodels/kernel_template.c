@@ -5,6 +5,8 @@
 # define USE_OPENCL
 #endif
 
+#define USE_KAHAN_SUMMATION 0
+
 // If opencl is not available, then we are compiling a C function
 // Note: if using a C++ compiler, then define kernel as extern "C"
 #ifndef USE_OPENCL
@@ -184,6 +186,9 @@ kernel void IQXY_KERNEL_NAME(
   {
     const double qxi = qx[i];
     const double qyi = qy[i];
+    #if USE_KAHAN_SUMMATION
+    double accumulated_error = 0.0;
+    #endif
 #ifdef IQXY_OPEN_LOOPS
     double ret=0.0, norm=0.0;
     #ifdef VOLUME_PARAMETERS
@@ -206,12 +211,20 @@ kernel void IQXY_KERNEL_NAME(
         // reverse the meanings of phi and theta in the forms, or use phi
         // rather than theta in this correction.  Current code uses cos(theta)
         // so that values match those of sasview.
-      #ifdef IQXY_HAS_THETA
+      #if defined(IQXY_HAS_THETA) // && 0
         const double spherical_correction
-          = (Ntheta>1 ? fabs(cos(M_PI_180*theta))*M_PI_2:1.0);
-        ret += spherical_correction * weight * scattering;
+          = (Ntheta>1 ? fabs(cos(M_PI_180*phi))*M_PI_2:1.0);
+        const double next = spherical_correction * weight * scattering;
       #else
-        ret += weight * scattering;
+        const double next = weight * scattering;
+      #endif
+      #if USE_KAHAN_SUMMATION
+        const double y = next - accumulated_error;
+        const double t = ret + y;
+        accumulated_error = (t - ret) - y;
+        ret = t;
+      #else
+        ret += next;
       #endif
         norm += weight;
       #ifdef VOLUME_PARAMETERS
