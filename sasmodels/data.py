@@ -206,8 +206,8 @@ def empty_data2D(qx, qy=None, resolution=0.05):
     detector.pixel_size.y = 5 # mm
     detector.distance = 4 # m
     data.detector.append(detector)
-    data.xbins = qx
-    data.ybins = qy
+    data.x_bins = qx
+    data.y_bins = qy
     data.source.wavelength = 5 # angstroms
     data.source.wavelength_unit = "A"
     data.Q_unit = "1/A"
@@ -434,7 +434,7 @@ def _plot_2d_signal(data, signal, vmin=None, vmax=None, view='log'):
         if vmax is None: vmax = image[valid & ~data.mask].max()
     except:
         vmin, vmax = 0, 1
-    plt.imshow(plottable.reshape(len(data.xbins), len(data.ybins)),
+    plt.imshow(plottable.reshape(len(data.x_bins), len(data.y_bins)),
                interpolation='nearest', aspect=1, origin='upper',
                extent=[xmin, xmax, ymin, ymax], vmin=vmin, vmax=vmax)
     plt.xlabel("$q_x$/nm$^{-1}$")
