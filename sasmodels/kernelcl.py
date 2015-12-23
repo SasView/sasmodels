@@ -182,7 +182,7 @@ class GpuEnvironment(object):
         self.compiled = {}
 
     def has_type(self, dtype):
-        dtype = np.dtype(dtype)
+        dtype = generate.F32 if dtype == 'fast' else np.dtype(dtype)
         return all(has_type(d, dtype) for d in self.context.devices)
 
     def _create_some_context(self):
@@ -194,11 +194,13 @@ class GpuEnvironment(object):
             warnings.warn("the environment variable 'PYOPENCL_CTX' might not be set correctly")
 
     def compile_program(self, name, source, dtype, fast=False):
-        if name not in self.compiled:
+        key = "%s-%s-%s"%(name, dtype, fast)
+        if key not in self.compiled:
             #print("compiling",name)
-            self.compiled[name] = compile_model(self.context, source, dtype,
-                                                fast)
-        return self.compiled[name]
+            dtype = np.dtype(dtype)
+            program = compile_model(self.context, source, dtype, fast)
+            self.compiled[key] = program
+        return self.compiled[key]
 
     def release_program(self, name):
         if name in self.compiled:
@@ -231,14 +233,15 @@ class GpuModel(object):
     or double precision floats will do, such as 'f', 'float32' or 'single'
     for single and 'd', 'float64' or 'double' for double.  Double precision
     is an optional extension which may not be available on all devices.
-
-    *fast* is True if fast inaccurate math is acceptable (40% speed increase)
+    Half precision ('float16','half') may be available on some devices.
+    Fast precision ('fast') is a loose version of single precision, indicating
+    that the compiler is allowed to take shortcuts.
     """
-    def __init__(self, source, info, dtype=generate.F32, fast=False):
+    def __init__(self, source, info, dtype=generate.F32):
         self.info = info
         self.source = source
-        self.dtype = np.dtype(dtype)
-        self.fast = fast
+        self.dtype = generate.F32 if dtype=='fast' else np.dtype(dtype)
+        self.fast = (dtype == 'fast')
         self.program = None # delay program creation
 
     def __getstate__(self):
