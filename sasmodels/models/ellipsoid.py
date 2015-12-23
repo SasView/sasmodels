@@ -11,13 +11,13 @@ is given by (Feigin, 1987)
 
 .. math::
 
-    P(q,\alpha) = \frac{\text{scale}}{V} F^2(q) + \text{background}
+    P(q,\alpha) = \frac{\text{scale}}{V} F^2(q,\alpha) + \text{background}
 
 where
 
 .. math::
 
-    F(q) = \frac{3 \Delta \rho V (\sin[qr(R_p,R_e,\alpha)]
+    F(q,\alpha) = \frac{3 \Delta \rho V (\sin[qr(R_p,R_e,\alpha)]
                 - \cos[qr(R_p,R_e,\alpha)])}
                 {[qr(R_p,R_e,\alpha)]^3}
 
