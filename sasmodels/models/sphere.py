@@ -97,7 +97,7 @@ Iq = """
     // using double precision that are the source.  Single precision only
     // requires the first 3 terms.  Double precision requires the 4th term.
     // The fifth term is not needed, and is commented out below.
-    const double bes = (qr < 1e-1)
+    const double bes = (qr < 1.e-1)
         ? 1.0 + qrsq*(-3./30. + qrsq*(3./840. + qrsq*(-3./45360.)))// + qrsq*(3./3991680.))))
         : 3.0*(sn/qr - cn)/qrsq;
     const double fq = bes * (sld - solvent_sld) * form_volume(radius);

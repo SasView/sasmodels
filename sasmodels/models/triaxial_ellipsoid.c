@@ -38,7 +38,7 @@ double Iq(double q,
             SINCOS(t, st, ct);
             //const double fq = ( t==0.0 ? 1.0 : 3.0*(st-t*ct)/(t*t*t) );
             const double tsq = t*t;
-            const double fq = (t < 1e-1)
+            const double fq = (t < 1.e-1)
                 ? 1.0 + tsq*(-3./30. + tsq*(3./840. + tsq*(-3./45360.)))// + tsq*(3./3991680.))))
                 : 3.0*(st/t - ct)/tsq;
             inner += Gauss76Wt[j] * fq * fq ;
