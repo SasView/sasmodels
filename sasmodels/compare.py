@@ -252,7 +252,7 @@ def make_engine(model_definition, data, dtype, cutoff):
         return eval_opencl(model_definition, data, dtype=dtype,
                            cutoff=cutoff)
 
-def compare(opts):
+def compare(opts, limits=None):
     Nbase, Ncomp = opts['N1'], opts['N2']
     pars = opts['pars']
     data = opts['data']
@@ -291,14 +291,24 @@ def compare(opts):
     if not opts['plot'] and not opts['explore']: return
     view = opts['view']
     import matplotlib.pyplot as plt
+    if limits is None:
+        vmin, vmax = np.Inf, -np.Inf
+        if Nbase > 0:
+            vmin = min(vmin, min(base_value))
+            vmax = max(vmax, max(base_value))
+        if Ncomp > 0:
+            vmin = min(vmin, min(comp_value))
+            vmax = max(vmax, max(comp_value))
+        limits = vmin, vmax
+
     if Nbase > 0:
         if Ncomp > 0: plt.subplot(131)
-        plot_theory(data, base_value, view=view, plot_data=False)
+        plot_theory(data, base_value, view=view, plot_data=False, limits=limits)
         plt.title("%s t=%.1f ms"%(base.engine, base_time))
         #cbar_title = "log I"
     if Ncomp > 0:
         if Nbase > 0: plt.subplot(132)
-        plot_theory(data, comp_value, view=view, plot_data=False)
+        plot_theory(data, comp_value, view=view, plot_data=False, limits=limits)
         plt.title("%s t=%.1f ms"%(comp.engine,comp_time))
         #cbar_title = "log I"
     if Ncomp > 0 and Nbase > 0:
@@ -326,6 +336,8 @@ def compare(opts):
 
     if not opts['explore']:
         plt.show()
+
+    return limits
 
 def _print_stats(label, err):
     sorted_err = np.sort(abs(err))
@@ -625,11 +637,12 @@ class Explore(object):
                 v = pars[k]
                 v.range(*parameter_range(k, v.value))
         else:
-            for k, v in self.pars.items():
+            for k, v in pars.items():
                 v.range(*parameter_range(k, v.value))
 
         self.pars = pars
         self.pd_types = pd_types
+        self.limits = None
 
     def numpoints(self):
         """
@@ -653,7 +666,12 @@ class Explore(object):
         pars = dict((k, v.value) for k,v in self.pars.items())
         pars.update(self.pd_types)
         self.opts['pars'] = pars
-        compare(self.opts)
+        limits = compare(self.opts, limits=self.limits)
+        if self.limits is None:
+            vmin, vmax = limits
+            vmax = 1.3*vmax
+            vmin = vmax*1e-7
+            self.limits = vmin, vmax
 
 
 if __name__ == "__main__":

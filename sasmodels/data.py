@@ -219,7 +219,7 @@ def empty_data2D(qx, qy=None, resolution=0.05):
     return data
 
 
-def plot_data(data, view='log'):
+def plot_data(data, view='log', limits=None):
     """
     Plot data loaded by the sasview loader.
     """
@@ -227,20 +227,21 @@ def plot_data(data, view='log'):
     # data, but they already handle the masking and graph markup already, so
     # do not repeat.
     if hasattr(data, 'lam'):
-        _plot_result_sesans(data, None, None, plot_data=True)
+        _plot_result_sesans(data, None, None, plot_data=True, limits=limits)
     elif hasattr(data, 'qx_data'):
-        _plot_result2D(data, None, None, view, plot_data=True)
+        _plot_result2D(data, None, None, view, plot_data=True, limits=limits)
     else:
-        _plot_result1D(data, None, None, view, plot_data=True)
+        _plot_result1D(data, None, None, view, plot_data=True, limits=limits)
 
 
-def plot_theory(data, theory, resid=None, view='log', plot_data=True):
+def plot_theory(data, theory, resid=None, view='log',
+                plot_data=True, limits=None):
     if hasattr(data, 'lam'):
-        _plot_result_sesans(data, theory, resid, plot_data=True)
+        _plot_result_sesans(data, theory, resid, plot_data=True, limits=limits)
     elif hasattr(data, 'qx_data'):
-        _plot_result2D(data, theory, resid, view, plot_data)
+        _plot_result2D(data, theory, resid, view, plot_data, limits=limits)
     else:
-        _plot_result1D(data, theory, resid, view, plot_data)
+        _plot_result1D(data, theory, resid, view, plot_data, limits=limits)
 
 
 def protect(fn):
@@ -255,7 +256,7 @@ def protect(fn):
 
 
 @protect
-def _plot_result1D(data, theory, resid, view, plot_data):
+def _plot_result1D(data, theory, resid, view, plot_data, limits=None):
     """
     Plot the data and residuals for 1D data.
     """
@@ -295,6 +296,8 @@ def _plot_result1D(data, theory, resid, view, plot_data):
             all_positive = all_positive and (mtheory>0).all()
             some_present = some_present or (mtheory.count() > 0)
 
+        if limits is not None:
+            plt.ylim(*limits)
         plt.xscale('linear' if not some_present else view)
         plt.yscale('linear'
                    if view == 'q4' or not some_present or not all_positive
@@ -316,7 +319,7 @@ def _plot_result1D(data, theory, resid, view, plot_data):
 
 
 @protect
-def _plot_result_sesans(data, theory, resid, plot_data):
+def _plot_result_sesans(data, theory, resid, plot_data, limits=None):
     import matplotlib.pyplot as plt
     if data.y is None:
         plot_data = False
@@ -330,6 +333,8 @@ def _plot_result_sesans(data, theory, resid, plot_data):
             plt.errorbar(data.x, data.y, yerr=data.dy)
         if theory is not None:
             plt.plot(data.x, theory, '-', hold=True)
+        if limits is not None:
+            plt.ylim(*limits)
         plt.xlabel('spin echo length (nm)')
         plt.ylabel('polarization (P/P0)')
 
@@ -343,7 +348,7 @@ def _plot_result_sesans(data, theory, resid, plot_data):
 
 
 @protect
-def _plot_result2D(data, theory, resid, view, plot_data):
+def _plot_result2D(data, theory, resid, view, plot_data, limits=None):
     """
     Plot the data and residuals for 2D data.
     """
@@ -354,18 +359,21 @@ def _plot_result2D(data, theory, resid, view, plot_data):
     plot_resid = resid is not None
 
     # Put theory and data on a common colormap scale
-    vmin, vmax = np.inf, -np.inf
-    if plot_data:
-        target = data.data[~data.mask]
-        datamin = target[target>0].min() if view == 'log' else target.min()
-        datamax = target.max()
-        vmin = min(vmin, datamin)
-        vmax = max(vmax, datamax)
-    if plot_theory:
-        theorymin = theory[theory>0].min() if view == 'log' else theory.min()
-        theorymax = theory.max()
-        vmin = min(vmin, theorymin)
-        vmax = max(vmax, theorymax)
+    if limits is None:
+        vmin, vmax = np.inf, -np.inf
+        if plot_data:
+            target = data.data[~data.mask]
+            datamin = target[target>0].min() if view == 'log' else target.min()
+            datamax = target.max()
+            vmin = min(vmin, datamin)
+            vmax = max(vmax, datamax)
+        if plot_theory:
+            theorymin = theory[theory>0].min() if view=='log' else theory.min()
+            theorymax = theory.max()
+            vmin = min(vmin, theorymin)
+            vmax = max(vmax, theorymax)
+    else:
+        vmin, vmax = limits
 
     if plot_data:
         if plot_theory and plot_resid:
@@ -387,7 +395,9 @@ def _plot_result2D(data, theory, resid, view, plot_data):
         _plot_2d_signal(data, theory, view=view, vmin=vmin, vmax=vmax)
         plt.title('theory')
         h = plt.colorbar()
-        h.set_label('$I(q)$')
+        h.set_label(r'$\log_{10}I(q)$' if view=='log'
+                    else r'$q^4 I(q)$' if view == 'q4'
+                    else '$I(q)$')
 
     #if plot_data or plot_theory:
     #    plt.colorbar()
@@ -419,27 +429,30 @@ def _plot_2d_signal(data, signal, vmin=None, vmax=None, view='log'):
     valid = np.isfinite(image)
     if view == 'log':
         valid[valid] = (image[valid] > 0)
+        if vmin is None: vmin = image[valid & ~data.mask].min()
+        if vmax is None: vmax = image[valid & ~data.mask].max()
         image[valid] = np.log10(image[valid])
     elif view == 'q4':
         image[valid] *= (data.qx_data[valid]**2+data.qy_data[valid]**2)**2
+        if vmin is None: vmin = image[valid & ~data.mask].min()
+        if vmax is None: vmax = image[valid & ~data.mask].max()
+    else:
+        if vmin is None: vmin = image[valid & ~data.mask].min()
+        if vmax is None: vmax = image[valid & ~data.mask].max()
+
     image[~valid | data.mask] = 0
     #plottable = Iq
     plottable = masked_array(image, ~valid | data.mask)
     xmin, xmax = min(data.qx_data)/10, max(data.qx_data)/10
     ymin, ymax = min(data.qy_data)/10, max(data.qy_data)/10
-    # TODO: fix vmin, vmax so it is shared for theory/resid
-    vmin = vmax = None
-    try:
-        if vmin is None: vmin = image[valid & ~data.mask].min()
-        if vmax is None: vmax = image[valid & ~data.mask].max()
-    except:
-        vmin, vmax = 0, 1
+    if view == 'log':
+        vmin, vmax = np.log10(vmin), np.log10(vmax)
     plt.imshow(plottable.reshape(len(data.x_bins), len(data.y_bins)),
                interpolation='nearest', aspect=1, origin='upper',
                extent=[xmin, xmax, ymin, ymax], vmin=vmin, vmax=vmax)
     plt.xlabel("$q_x$/nm$^{-1}$")
     plt.ylabel("$q_y$/nm$^{-1}$")
-
+    return vmin, vmax
 
 def demo():
     data = load_data('DEC07086.DAT')
