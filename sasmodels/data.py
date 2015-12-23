@@ -274,36 +274,45 @@ def _plot_result1D(data, theory, resid, view, plot_data):
             plt.subplot(121)
 
         #print(vmin, vmax)
-        positive = False
+        all_positive = True
+        some_present = False
         if plot_data:
-            mdata = masked_array(data.y, data.mask)
+            mdata = masked_array(data.y, data.mask.copy())
             mdata[~np.isfinite(mdata)] = masked
             if view is 'log':
                 mdata[mdata <= 0] = masked
-            plt.errorbar(data.x, scale*mdata, yerr=data.dy, fmt='.')
-            positive = positive or (mdata>0).any()
+            plt.errorbar(data.x/10, scale*mdata, yerr=data.dy, fmt='.')
+            all_positive = all_positive and (mdata>0).all()
+            some_present = some_present or (mdata.count() > 0)
+
 
         if plot_theory:
-            mtheory = masked_array(theory, data.mask)
+            mtheory = masked_array(theory, data.mask.copy())
+            mtheory[~np.isfinite(mtheory)] = masked
             if view is 'log':
-                mtheory[mtheory<= 0] = masked
-            plt.plot(data.x, scale*mtheory, '-', hold=True)
-            positive = positive or (mtheory>0).any()
+                mtheory[mtheory<=0] = masked
+            plt.plot(data.x/10, scale*mtheory, '-', hold=True)
+            all_positive = all_positive and (mtheory>0).all()
+            some_present = some_present or (mtheory.count() > 0)
 
-        plt.xscale(view)
-        plt.yscale('linear' if view == 'q4' or not positive else view)
-        plt.xlabel('Q')
-        plt.ylabel('I(Q)')
+        plt.xscale('linear' if not some_present else view)
+        plt.yscale('linear'
+                   if view == 'q4' or not some_present or not all_positive
+                   else view)
+        plt.xlabel("$q$/nm$^{-1}$")
+        plt.ylabel('$I(q)$')
 
     if plot_resid:
         if plot_data or plot_theory:
             plt.subplot(122)
 
-        mresid = masked_array(resid, data.mask)
-        plt.plot(data.x, mresid, '-')
+        mresid = masked_array(resid, data.mask.copy())
+        mresid[~np.isfinite(mresid)] = masked
+        some_present = (mresid.count() > 0)
+        plt.plot(data.x/10, mresid, '-')
+        plt.xlabel("$q$/nm$^{-1}$")
         plt.ylabel('residuals')
-        plt.xlabel('Q')
-        plt.xscale(view)
+        plt.xscale('linear' if not some_present else view)
 
 
 @protect
@@ -365,7 +374,8 @@ def _plot_result2D(data, theory, resid, view, plot_data):
             plt.subplot(121)
         _plot_2d_signal(data, target, view=view, vmin=vmin, vmax=vmax)
         plt.title('data')
-        plt.colorbar()
+        h = plt.colorbar()
+        h.set_label('$I(q)$')
 
     if plot_theory:
         if plot_data and plot_resid:
@@ -376,7 +386,8 @@ def _plot_result2D(data, theory, resid, view, plot_data):
             plt.subplot(121)
         _plot_2d_signal(data, theory, view=view, vmin=vmin, vmax=vmax)
         plt.title('theory')
-        plt.colorbar()
+        h = plt.colorbar()
+        h.set_label('$I(q)$')
 
     #if plot_data or plot_theory:
     #    plt.colorbar()
@@ -387,8 +398,9 @@ def _plot_result2D(data, theory, resid, view, plot_data):
         elif plot_data or plot_theory:
             plt.subplot(122)
         _plot_2d_signal(data, resid, view='linear')
-        plt.colorbar()
         plt.title('residuals')
+        h = plt.colorbar()
+        h.set_label('$\Delta I(q)$')
 
 
 @protect
@@ -413,8 +425,8 @@ def _plot_2d_signal(data, signal, vmin=None, vmax=None, view='log'):
     image[~valid | data.mask] = 0
     #plottable = Iq
     plottable = masked_array(image, ~valid | data.mask)
-    xmin, xmax = min(data.qx_data), max(data.qx_data)
-    ymin, ymax = min(data.qy_data), max(data.qy_data)
+    xmin, xmax = min(data.qx_data)/10, max(data.qx_data)/10
+    ymin, ymax = min(data.qy_data)/10, max(data.qy_data)/10
     # TODO: fix vmin, vmax so it is shared for theory/resid
     vmin = vmax = None
     try:
@@ -422,9 +434,11 @@ def _plot_2d_signal(data, signal, vmin=None, vmax=None, view='log'):
         if vmax is None: vmax = image[valid & ~data.mask].max()
     except:
         vmin, vmax = 0, 1
-    plt.imshow(plottable.reshape(128, 128),
+    plt.imshow(plottable.reshape(len(data.xbins), len(data.ybins)),
                interpolation='nearest', aspect=1, origin='upper',
                extent=[xmin, xmax, ymin, ymax], vmin=vmin, vmax=vmax)
+    plt.xlabel("$q_x$/nm$^{-1}$")
+    plt.ylabel("$q_y$/nm$^{-1}$")
 
 
 def demo():
