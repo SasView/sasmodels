@@ -377,7 +377,9 @@ Any two calculation engines can be selected for comparison:
     -single!/-double!/-quad! sets an OpenMP calculation engine
     -sasview sets the sasview calculation engine
 
-The default is -single -sasview
+The default is -single -sasview.  Note that the interpretation of quad
+precision depends on architecture, and may vary from 64-bit to 128-bit,
+with 80-bit floats being common (1e-19 precision).
 
 Key=value pairs allow you to set specific values for the model parameters.
 
