@@ -6,9 +6,10 @@ import numpy as np
 
 from . import core
 from .kernelcl import environment
-from .compare import (MODELS, randomize_model, suppress_pd, eval_sasview,
+from .compare import (MODELS, randomize_pars, suppress_pd, eval_sasview,
                       eval_opencl, eval_ctypes, make_data, get_demo_pars,
-                      columnize, constrain_pars, constrain_new_to_old)
+                      columnize, constrain_pars, constrain_new_to_old,
+                      make_engine)
 
 def calc_stats(target, value, index):
     resid = abs(value-target)[index]
@@ -33,8 +34,18 @@ def print_column_headers(pars, parts):
     print(','.join('"%s"'%c for c in groups))
     print(','.join('"%s"'%c for c in columns))
 
+PRECISION = {
+    'fast': 1e-3,
+    'half': 1e-3,
+    'single': 5e-5,
+    'double': 5e-14,
+    'single!': 5e-5,
+    'double!': 5e-14,
+    'quad!': 5e-18,
+    'sasview': 5e-14,
+}
 def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
-                     precision='double'):
+                     base='sasview', comp='double'):
     model_definition = core.load_model_definition(name)
     pars = get_demo_pars(model_definition)
     header = '\n"Model","%s","Count","%d"'%(name, N)
@@ -46,9 +57,9 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
     # which have not been defined yet, complete with abuse of mutable lists
     # to allow them to update values in the current scope since nonlocal
     # declarations are not available in python 2.7.
-    def try_model(fn, *args, **kw):
+    def try_model(fn, pars):
         try:
-            result, _ = fn(model_definition, pars_i, data, *args, **kw)
+            result = fn(**pars)
         except KeyboardInterrupt:
             raise
         except:
@@ -59,57 +70,42 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
             else:
                 result = np.NaN*data.x
         return result
-    def check_model(label, target, value, acceptable):
-        stats = calc_stats(target, value, index)
-        columns.extend(stats)
-        labels.append('GPU single')
+    def check_model(pars):
+        base_value = try_model(calc_base, pars)
+        comp_value = try_model(calc_comp, pars)
+        stats = calc_stats(base_value, comp_value, index)
         max_diff[0] = max(max_diff[0], stats[0])
-        good[0] = good[0] and (stats[0] < acceptable)
+        good[0] = good[0] and (stats[0] < expected)
+        return list(stats)
+
+
+    calc_base = make_engine(model_definition, data, base, cutoff)
+    calc_comp = make_engine(model_definition, data, comp, cutoff)
+    expected = max(PRECISION[base], PRECISION[comp])
 
     num_good = 0
     first = True
     max_diff = [0]
     for k in range(N):
         print("%s %d"%(name, k))
-        pars_i, seed = randomize_model(pars)
+        seed = np.random.randint(1e6)
+        pars_i = randomize_pars(pars, seed)
         constrain_pars(model_definition, pars_i)
         constrain_new_to_old(model_definition, pars_i)
         if mono:
             pars_i = suppress_pd(pars_i)
 
         good = [True]
-        labels = []
-        columns = []
-        target = try_model(eval_sasview)
-        #target = try_model(eval_ctypes, dtype='double', cutoff=0.)
-        #target = try_model(eval_ctypes, dtype='longdouble', cutoff=0.)
-        if precision == 'single':
-            value = try_model(eval_opencl, dtype='single', cutoff=cutoff)
-            check_model('GPU single', target, value, 5e-5)
-            single_value = value  # remember for single/double comparison
-        elif precision == 'double':
-            if environment().has_type('double'):
-                label = 'GPU double'
-                value = try_model(eval_opencl, dtype='double', cutoff=cutoff)
-            else:
-                label = 'CPU double'
-                value = try_model(eval_ctypes, dtype='double', cutoff=cutoff)
-            check_model(label, target, value, 5e-14)
-            double_value = value  # remember for single/double comparison
-        elif precision == 'quad':
-            value = try_model(eval_opencl, dtype='longdouble', cutoff=cutoff)
-            check_model('CPU quad', target, value, 5e-14)
-        if 0:
-            check_model('single/double', double_value, single_value, 5e-5)
-
+        columns = check_model(pars_i)
         columns += [v for _,v in sorted(pars_i.items())]
         if first:
+            labels = [" vs. ".join((calc_base.engine, calc_comp.engine))]
             print_column_headers(pars_i, labels)
             first = False
         if good[0]:
             num_good += 1
         else:
-            print(("%d,"%seed)+','.join("%g"%v for v in columns))
+            print(("%d,"%seed)+','.join("%s"%v for v in columns))
     print('"good","%d/%d","max diff",%g'%(num_good, N, max_diff[0]))
 
 
@@ -143,14 +139,15 @@ below the cutoff will be ignored.  Use "mono" for monodisperse models.  The
 choice of polydisperse parameters, and the number of points in the distribution
 is set in compare.py defaults for each model.
 
-PRECISION is the floating point precision to use for comparisons.
+PRECISION is the floating point precision to use for comparisons.  If two
+precisions are given, then compare one to the other, ignoring sasview.
 
 Available models:
 """)
     print_models()
 
 def main():
-    if len(sys.argv) != 6:
+    if len(sys.argv) not in (6,7):
         print_help()
         sys.exit(1)
 
@@ -166,17 +163,19 @@ def main():
         Nq = int(sys.argv[3][2:])
         mono = sys.argv[4] == 'mono'
         cutoff = float(sys.argv[4]) if not mono else 0
-        precision = sys.argv[5]
+        base = sys.argv[5]
+        comp = sys.argv[6] if len(sys.argv) > 6 else "sasview"
     except:
         traceback.print_exc()
         print_usage()
         sys.exit(1)
 
-    data, index = make_data(qmax=1.0, is2D=is2D, Nq=Nq)
+    data, index = make_data({'qmax':1.0, 'is2d':is2D, 'nq':Nq, 'res':0.,
+                              'accuracy': 'Low', 'view':'log'})
     model_list = [model] if model != "all" else MODELS
     for model in model_list:
         compare_instance(model, data, index, N=count, mono=mono,
-                         cutoff=cutoff, precision=precision)
+                         cutoff=cutoff, base=base, comp=comp)
 
 if __name__ == "__main__":
     main()

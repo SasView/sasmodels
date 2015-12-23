@@ -65,60 +65,46 @@ def set_beam_stop(data, radius, outer=None):
             data.mask |= (data.x >= outer)
 
 
-def sasview_model(model_definition, **pars):
+def parameter_range(p, v):
     """
-    Load a sasview model given the model name.
+    Choose a parameter range based on parameter name and initial value.
     """
-    # convert model parameters from sasmodel form to sasview form
-    #print("old",sorted(pars.items()))
-    modelname, pars = revert_model(model_definition, pars)
-    #print("new",sorted(pars.items()))
-    sas = __import__('sas.models.'+modelname)
-    ModelClass = getattr(getattr(sas.models,modelname,None),modelname,None)
-    if ModelClass is None:
-        raise ValueError("could not find model %r in sas.models"%modelname)
-    model = ModelClass()
-
-    for k,v in pars.items():
-        parts = k.split('.')  # polydispersity components
-        if len(parts) == 2:
-            model.dispersion[parts[0]][parts[1]] = v
-        else:
-            model.setParam(k, v)
-    return model
-
-def randomize(p, v):
-    """
-    Randomizing parameter.
-
-    Guess the parameter type from name.
-    """
-    if any(p.endswith(s) for s in ('_pd_n','_pd_nsigma','_pd_type')):
+    if p.endswith('_pd_n'):
+        return [0, 100]
+    elif p.endswith('_pd_nsigma'):
+        return [0, 5]
+    elif p.endswith('_pd_type'):
         return v
     elif any(s in p for s in ('theta','phi','psi')):
         # orientation in [-180,180], orientation pd in [0,45]
         if p.endswith('_pd'):
-            return 45*np.random.rand()
+            return [0,45]
         else:
-            return 360*np.random.rand() - 180
+            return [-180, 180]
     elif 'sld' in p:
-        # sld in in [-0.5,10]
-        return 10.5*np.random.rand() - 0.5
+        return [-0.5, 10]
     elif p.endswith('_pd'):
-        # length pd in [0,1]
-        return np.random.rand()
+        return [0, 1]
+    elif p in ['background', 'scale']:
+        return [0, 1e3]
     else:
-        # values from 0 to 2*x for all other parameters
-        return 2*np.random.rand()*(v if v != 0 else 1)
+        return [0, (2*v if v>0 else 1)]
 
-def randomize_model(pars, seed=None):
-    if seed is None:
-        seed = np.random.randint(1e9)
+def _randomize_one(p, v):
+    """
+    Randomizing parameter.
+    """
+    if any(p.endswith(s) for s in ('_pd_n','_pd_nsigma','_pd_type')):
+        return v
+    else:
+        return np.random.uniform(*parameter_range(p, v))
+
+def randomize_pars(pars, seed=None):
     np.random.seed(seed)
-    # Note: the sort guarantees order of calls to random number generator
-    pars = dict((p,randomize(p,v)) for p,v in sorted(pars.items()))
-
-    return pars, seed
+    # Note: the sort guarantees order `of calls to random number generator
+    pars = dict((p,_randomize_one(p,v))
+                for p,v in sorted(pars.items()))
+    return pars
 
 def constrain_pars(model_definition, pars):
     """
@@ -152,168 +138,141 @@ def suppress_pd(pars):
         if p.endswith("_pd"): pars[p] = 0
     return pars
 
-def eval_sasview(model_definition, pars, data, Nevals=1):
+def eval_sasview(model_definition, data):
     # importing sas here so that the error message will be that sas failed to
     # import rather than the more obscure smear_selection not imported error
     import sas
     from sas.models.qsmearing import smear_selection
-    model = sasview_model(model_definition, **pars)
-    smearer = smear_selection(data, model=model)
-    value = None  # silence the linter
-    toc = tic()
-    for _ in range(max(Nevals, 1)):  # make sure there is at least one eval
-        if hasattr(data, 'qx_data'):
-            q = np.sqrt(data.qx_data**2 + data.qy_data**2)
-            index = ((~data.mask) & (~np.isnan(data.data))
-                     & (q >= data.qmin) & (q <= data.qmax))
-            if smearer is not None:
-                smearer.model = model  # because smear_selection has a bug
-                smearer.accuracy = data.accuracy
-                smearer.set_index(index)
-                value = smearer.get_value()
-            else:
-                value = model.evalDistribution([data.qx_data[index], data.qy_data[index]])
-        else:
-            value = model.evalDistribution(data.x)
-            if smearer is not None:
-                value = smearer(value)
-    average_time = toc()*1000./Nevals
-    return value, average_time
 
-def eval_opencl(model_definition, pars, data, dtype='single', Nevals=1,
-                cutoff=0., fast=False):
+    # convert model parameters from sasmodel form to sasview form
+    #print("old",sorted(pars.items()))
+    modelname, pars = revert_model(model_definition, {})
+    #print("new",sorted(pars.items()))
+    sas = __import__('sas.models.'+modelname)
+    ModelClass = getattr(getattr(sas.models,modelname,None),modelname,None)
+    if ModelClass is None:
+        raise ValueError("could not find model %r in sas.models"%modelname)
+    model = ModelClass()
+    smearer = smear_selection(data, model=model)
+
+    if hasattr(data, 'qx_data'):
+        q = np.sqrt(data.qx_data**2 + data.qy_data**2)
+        index = ((~data.mask) & (~np.isnan(data.data))
+                 & (q >= data.qmin) & (q <= data.qmax))
+        if smearer is not None:
+            smearer.model = model  # because smear_selection has a bug
+            smearer.accuracy = data.accuracy
+            smearer.set_index(index)
+            theory = lambda: smearer.get_value()
+        else:
+            theory = lambda: model.evalDistribution([data.qx_data[index], data.qy_data[index]])
+    elif smearer is not None:
+        theory = lambda: smearer(model.evalDistribution(data.x))
+    else:
+        theory = lambda: model.evalDistribution(data.x)
+
+    def calculator(**pars):
+        # paying for parameter conversion each time to keep life simple, if not fast
+        _, pars = revert_model(model_definition, pars)
+        for k,v in pars.items():
+            parts = k.split('.')  # polydispersity components
+            if len(parts) == 2:
+                model.dispersion[parts[0]][parts[1]] = v
+            else:
+                model.setParam(k, v)
+        return theory()
+
+    calculator.engine = "sasview"
+    return calculator
+
+DTYPE_MAP = {
+    'half': '16',
+    'fast': 'fast',
+    'single': '32',
+    'double': '64',
+    'quad': '128',
+    'f16': '16',
+    'f32': '32',
+    'f64': '64',
+    'longdouble': '128',
+}
+def eval_opencl(model_definition, data, dtype='single', cutoff=0.):
     try:
-        model = core.load_model(model_definition, dtype=dtype,
-                                platform="ocl", fast=fast)
+        model = core.load_model(model_definition, dtype=dtype, platform="ocl")
     except Exception as exc:
         print(exc)
         print("... trying again with single precision")
-        model = core.load_model(model_definition, dtype='single',
-                                platform="ocl", fast=fast)
+        dtype = 'single'
+        model = core.load_model(model_definition, dtype=dtype, platform="ocl")
     calculator = DirectModel(data, model, cutoff=cutoff)
-    # Run the calculator once before starting the timing loop
-    value = calculator(**suppress_pd(pars))
-    # Now run the timing loop
-    toc = tic()
-    for _ in range(max(Nevals, 1)):  # force at least one eval
-        value = calculator(**pars)
-    average_time = toc()*1000./Nevals
-    return value, average_time
+    calculator.engine = "OCL%s"%DTYPE_MAP[dtype]
+    return calculator
 
-
-def eval_ctypes(model_definition, pars, data, dtype='double', Nevals=1, cutoff=0.):
+def eval_ctypes(model_definition, data, dtype='double', cutoff=0.):
+    if dtype=='quad':
+        dtype = 'longdouble'
     model = core.load_model(model_definition, dtype=dtype, platform="dll")
     calculator = DirectModel(data, model, cutoff=cutoff)
-    # Run the calculator once before starting the timing loop
+    calculator.engine = "OMP%s"%DTYPE_MAP[dtype]
+    return calculator
+
+def time_calculation(calculator, pars, Nevals=1):
+    # initialize the code so time is more accurate
     value = calculator(**suppress_pd(pars))
-    # Now run the timing loop
     toc = tic()
-    for _ in range(max(Nevals, 1)):  # force at least one eval
+    for _ in range(max(Nevals, 1)):  # make sure there is at least one eval
         value = calculator(**pars)
     average_time = toc()*1000./Nevals
     return value, average_time
 
-
-def make_data(qmax, is2D, Nq=128, resolution=0.0, accuracy='Low', view='log'):
-    if is2D:
-        data = empty_data2D(np.linspace(-qmax, qmax, Nq), resolution=resolution)
-        data.accuracy = accuracy
+def make_data(opts):
+    qmax, nq, res = opts['qmax'], opts['nq'], opts['res']
+    if opts['is2d']:
+        data = empty_data2D(np.linspace(-qmax, qmax, nq), resolution=res)
+        data.accuracy = opts['accuracy']
         set_beam_stop(data, 0.004)
         index = ~data.mask
     else:
-        if view == 'log':
+        if opts['view'] == 'log':
             qmax = math.log10(qmax)
-            q = np.logspace(qmax-3, qmax, Nq)
+            q = np.logspace(qmax-3, qmax, nq)
         else:
-            q = np.linspace(0.001*qmax, qmax, Nq)
-        data = empty_data1D(q, resolution=resolution)
+            q = np.linspace(0.001*qmax, qmax, nq)
+        data = empty_data1D(q, resolution=res)
         index = slice(None, None)
     return data, index
 
-def compare(name, pars, Ncomp, Nbase, opts, set_pars):
-    model_definition = core.load_model_definition(name)
+def make_engine(model_definition, data, dtype, cutoff):
+    if dtype == 'sasview':
+        return eval_sasview(model_definition, data)
+    elif dtype.endswith('!'):
+        return eval_ctypes(model_definition, data, dtype=dtype[:-1],
+                           cutoff=cutoff)
+    else:
+        return eval_opencl(model_definition, data, dtype=dtype,
+                           cutoff=cutoff)
 
-    view = ('linear' if '-linear' in opts
-            else 'log' if '-log' in opts
-            else 'q4' if '-q4' in opts
-            else 'log')
-
-    opt_values = dict(split
-                      for s in opts for split in ((s.split('='),))
-                      if len(split) == 2)
-    # Sort out data
-    qmax = (10.0 if '-exq' in opts
-            else 1.0 if '-highq' in opts
-            else 0.2 if '-midq' in opts
-            else 0.05)
-    Nq = int(opt_values.get('-Nq', '128'))
-    res = float(opt_values.get('-res', '0'))
-    accuracy = opt_values.get('-accuracy', 'Low')
-    is2D = "-2d" in opts
-    data, index = make_data(qmax, is2D, Nq, res, accuracy, view=view)
-
-
-    # modelling accuracy is determined by dtype and cutoff
-    dtype = ('longdouble' if '-quad' in opts
-             else 'double' if '-double' in opts
-             else 'half' if '-half' in opts
-             else 'single')
-    cutoff = float(opt_values.get('-cutoff','1e-5'))
-    fast = "-fast" in opts and dtype is 'single'
-
-    # randomize parameters
-    #pars.update(set_pars)  # set value before random to control range
-    if '-random' in opts or '-random' in opt_values:
-        seed = int(opt_values['-random']) if '-random' in opt_values else None
-        pars, seed = randomize_model(pars, seed=seed)
-        print("Randomize using -random=%i"%seed)
-    pars.update(set_pars)  # set value after random to control value
-    constrain_pars(model_definition, pars)
-    constrain_new_to_old(model_definition, pars)
-
-    # parameter selection
-    if '-mono' in opts:
-        pars = suppress_pd(pars)
-    if '-pars' in opts:
-        print("pars "+str(parlist(pars)))
+def compare(opts):
+    Nbase, Ncomp = opts['N1'], opts['N2']
+    pars = opts['pars']
+    data = opts['data']
 
     # Base calculation
-    if 0:
-        from sasmodels.models import sphere as target
-        base_name = target.name
-        base, base_time = eval_ctypes(target, pars, data,
-                dtype='longdouble', cutoff=0., Nevals=Ncomp)
-    elif Nbase > 0 and "-ctypes" in opts and "-sasview" in opts:
+    if Nbase > 0:
+        base = opts['engines'][0]
         try:
-            base, base_time = eval_sasview(model_definition, pars, data, Ncomp)
-            base_name = "sasview"
-            #print("base/sasview", (base-pars['background'])/(comp-pars['background']))
-            print("sasview t=%.1f ms, intensity=%.0f"%(base_time, sum(base)))
-            #print("sasview",comp)
+            base_value, base_time = time_calculation(base, pars, Nbase)
+            print("%s t=%.1f ms, intensity=%.0f"%(base.engine, base_time, sum(base_value)))
         except ImportError:
             traceback.print_exc()
             Nbase = 0
-    elif Nbase > 0:
-        base, base_time = eval_opencl(model_definition, pars, data,
-                dtype=dtype, cutoff=cutoff, Nevals=Nbase, fast=fast)
-        base_name = "ocl"
-        print("opencl t=%.1f ms, intensity=%.0f"%(base_time, sum(base)))
-        #print("base " + base)
-        #print(max(base), min(base))
 
     # Comparison calculation
-    if Ncomp > 0 and "-ctypes" in opts:
-        comp, comp_time = eval_ctypes(model_definition, pars, data,
-                dtype=dtype, cutoff=cutoff, Nevals=Ncomp)
-        comp_name = "ctypes"
-        print("ctypes t=%.1f ms, intensity=%.0f"%(comp_time, sum(comp)))
-    elif Ncomp > 0:
+    if Ncomp > 0:
+        comp = opts['engines'][1]
         try:
-            comp, comp_time = eval_sasview(model_definition, pars, data, Ncomp)
-            comp_name = "sasview"
-            #print("base/sasview", (base-pars['background'])/(comp-pars['background']))
-            print("sasview t=%.1f ms, intensity=%.0f"%(comp_time, sum(comp)))
-            #print("sasview",comp)
+            comp_value, comp_time = time_calculation(comp, pars, Ncomp)
+            print("%s t=%.1f ms, intensity=%.0f"%(comp.engine, comp_time, sum(comp_value)))
         except ImportError:
             traceback.print_exc()
             Ncomp = 0
@@ -321,27 +280,26 @@ def compare(name, pars, Ncomp, Nbase, opts, set_pars):
     # Compare, but only if computing both forms
     if Nbase > 0 and Ncomp > 0:
         #print("speedup %.2g"%(comp_time/base_time))
-        #print("max |base/comp|", max(abs(base/comp)), "%.15g"%max(abs(base)), "%.15g"%max(abs(comp)))
-        #comp *= max(base/comp)
-        resid = (base - comp)
-        relerr = resid/comp
-        #bad = (relerr>1e-4)
-        #print(relerr[bad],comp[bad],base[bad],data.qx_data[bad],data.qy_data[bad])
-        _print_stats("|%s-%s|"%(base_name,comp_name)+(" "*(3+len(comp_name))), resid)
-        _print_stats("|(%s-%s)/%s|"%(base_name,comp_name,comp_name), relerr)
+        #print("max |base/comp|", max(abs(base_value/comp_value)), "%.15g"%max(abs(base_value)), "%.15g"%max(abs(comp_value)))
+        #comp *= max(base_value/comp_value)
+        resid = (base_value - comp_value)
+        relerr = resid/comp_value
+        _print_stats("|%s - %s|"%(base.engine,comp.engine)+(" "*(3+len(comp.engine))), resid)
+        _print_stats("|(%s - %s) / %s|"%(base.engine,comp.engine,comp.engine), relerr)
 
     # Plot if requested
-    if '-noplot' in opts: return
+    if not opts['plot'] and not opts['explore']: return
+    view = opts['view']
     import matplotlib.pyplot as plt
-    if Ncomp > 0:
-        if Nbase > 0: plt.subplot(131)
-        plot_theory(data, comp, view=view, plot_data=False)
-        plt.title("%s t=%.1f ms"%(comp_name,comp_time))
-        #cbar_title = "log I"
     if Nbase > 0:
-        if Ncomp > 0: plt.subplot(132)
-        plot_theory(data, base, view=view, plot_data=False)
-        plt.title("%s t=%.1f ms"%(base_name,base_time))
+        if Ncomp > 0: plt.subplot(131)
+        plot_theory(data, base_value, view=view, plot_data=False)
+        plt.title("%s t=%.1f ms"%(base.engine, base_time))
+        #cbar_title = "log I"
+    if Ncomp > 0:
+        if Nbase > 0: plt.subplot(132)
+        plot_theory(data, comp_value, view=view, plot_data=False)
+        plt.title("%s t=%.1f ms"%(comp.engine,comp_time))
         #cbar_title = "log I"
     if Ncomp > 0 and Nbase > 0:
         plt.subplot(133)
@@ -362,11 +320,12 @@ def compare(name, pars, Ncomp, Nbase, opts, set_pars):
         v = relerr
         v[v==0] = 0.5*np.min(np.abs(v[v!=0]))
         plt.hist(np.log10(np.abs(v)), normed=1, bins=50);
-        plt.xlabel('log10(err), err = | F(q) single - F(q) double| / | F(q) double |');
+        plt.xlabel('log10(err), err = |(%s - %s) / %s|'%(base.engine, comp.engine, comp.engine));
         plt.ylabel('P(err)')
-        plt.title('Comparison of single and double precision models for %s'%name)
+        plt.title('Distribution of relative error between calculation engines')
 
-    plt.show()
+    if not opts['explore']:
+        plt.show()
 
 def _print_stats(label, err):
     sorted_err = np.sort(abs(err))
@@ -386,35 +345,41 @@ def _print_stats(label, err):
 # ===========================================================================
 #
 USAGE="""
-usage: compare.py model [Nopencl] [Nsasview] [options...] [key=val]
+usage: compare.py model N1 N2 [options...] [key=val]
 
 Compare the speed and value for a model between the SasView original and the
-OpenCL rewrite.
+sasmodels rewrite.
 
 model is the name of the model to compare (see below).
-Nopencl is the number of times to run the OpenCL model (default=5)
-Nsasview is the number of times to run the Sasview model (default=1)
+N1 is the number of times to run sasmodels (default=1).
+N2 is the number times to run sasview (default=1).
 
 Options (* for default):
 
     -plot*/-noplot plots or suppress the plot of the model
-    -half/-single*/-double/-quad/-fast sets the calculation precision
     -lowq*/-midq/-highq/-exq use q values up to 0.05, 0.2, 1.0, 10.0
-    -Nq=128 sets the number of Q points in the data set
+    -nq=128 sets the number of Q points in the data set
     -1d*/-2d computes 1d or 2d data
     -preset*/-random[=seed] preset or random parameters
     -mono/-poly* force monodisperse/polydisperse
-    -ctypes/-sasview* selects gpu:cpu, gpu:sasview, or sasview:cpu if both
     -cutoff=1e-5* cutoff value for including a point in polydispersity
     -pars/-nopars* prints the parameter set or not
     -abs/-rel* plot relative or absolute error
-    -linear/-log/-q4 intensity scaling
+    -linear/-log*/-q4 intensity scaling
     -hist/-nohist* plot histogram of relative error
     -res=0 sets the resolution width dQ/Q if calculating with resolution
     -accuracy=Low accuracy of the resolution calculation Low, Mid, High, Xhigh
+    -edit starts the parameter explorer
 
-Key=value pairs allow you to set specific values to any of the model
-parameters.
+Any two calculation engines can be selected for comparison:
+
+    -single/-double/-half/-fast sets an OpenCL calculation engine
+    -single!/-double!/-quad! sets an OpenMP calculation engine
+    -sasview sets the sasview calculation engine
+
+The default is -single -sasview
+
+Key=value pairs allow you to set specific values for the model parameters.
 
 Available models:
 """
@@ -422,20 +387,21 @@ Available models:
 
 NAME_OPTIONS = set([
     'plot', 'noplot',
-    'half', 'single', 'double', 'quad', 'fast',
+    'half', 'fast', 'single', 'double',
+    'single!', 'double!', 'quad!', 'sasview',
     'lowq', 'midq', 'highq', 'exq',
     '2d', '1d',
     'preset', 'random',
     'poly', 'mono',
-    'sasview', 'ctypes',
     'nopars', 'pars',
     'rel', 'abs',
     'linear', 'log', 'q4',
     'hist', 'nohist',
+    'edit',
     ])
 VALUE_OPTIONS = [
     # Note: random is both a name option and a value option
-    'cutoff', 'random', 'Nq', 'res', 'accuracy',
+    'cutoff', 'random', 'nq', 'res', 'accuracy',
     ]
 
 def columnize(L, indent="", width=79):
@@ -452,13 +418,24 @@ def columnize(L, indent="", width=79):
 
 def get_demo_pars(model_definition):
     info = generate.make_info(model_definition)
+    # Get the default values for the parameters
     pars = dict((p[0],p[2]) for p in info['parameters'])
+
+    # Fill in default values for the polydispersity parameters
+    for p in info['parameters']:
+        if p[4] in ('volume', 'orientation'):
+            pars[p[0]+'_pd'] = 0.0
+            pars[p[0]+'_pd_n'] = 0
+            pars[p[0]+'_pd_nsigma'] = 3.0
+            pars[p[0]+'_pd_type'] = "gaussian"
+
+    # Plug in values given in demo
     pars.update(info['demo'])
     return pars
 
-def main():
-    opts = [arg for arg in sys.argv[1:] if arg.startswith('-')]
-    popts = [arg for arg in sys.argv[1:] if not arg.startswith('-') and '=' in arg]
+def parse_opts():
+    flags = [arg for arg in sys.argv[1:] if arg.startswith('-')]
+    values = [arg for arg in sys.argv[1:] if not arg.startswith('-') and '=' in arg]
     args = [arg for arg in sys.argv[1:] if not arg.startswith('-') and '=' not in arg]
     models = "\n    ".join("%-15s"%v for v in MODELS)
     if len(args) == 0:
@@ -471,40 +448,211 @@ def main():
     if len(args) > 3:
         print("expected parameters: model Nopencl Nsasview")
 
-    invalid = [o[1:] for o in opts
+    invalid = [o[1:] for o in flags
                if o[1:] not in NAME_OPTIONS
                   and not any(o.startswith('-%s='%t) for t in VALUE_OPTIONS)]
     if invalid:
         print("Invalid options: %s"%(", ".join(invalid)))
         sys.exit(1)
 
-    # Get demo parameters from model definition, or use default parameters
-    # if model does not define demo parameters
+
+    # Interpret the flags
+    opts = {
+        'plot'      : True,
+        'view'      : 'log',
+        'is2d'      : False,
+        'qmax'      : 0.05,
+        'nq'        : 128,
+        'res'       : 0.0,
+        'accuracy'  : 'Low',
+        'cutoff'    : 1e-5,
+        'seed'      : -1,  # default to preset
+        'mono'      : False,
+        'show_pars' : False,
+        'show_hist' : False,
+        'rel_err'   : True,
+        'explore'   : False,
+    }
+    engines = []
+    for arg in flags:
+        if arg == '-noplot':    opts['plot'] = False
+        elif arg == '-plot':    opts['plot'] = True
+        elif arg == '-linear':  opts['view'] = 'linear'
+        elif arg == '-log':     opts['view'] = 'log'
+        elif arg == '-q4':      opts['view'] = 'q4'
+        elif arg == '-1d':      opts['is2d'] = False
+        elif arg == '-2d':      opts['is2d'] = True
+        elif arg == '-exq':     opts['qmax'] = 10.0
+        elif arg == '-highq':   opts['qmax'] = 1.0
+        elif arg == '-midq':    opts['qmax'] = 0.2
+        elif arg == '-loq':     opts['qmax'] = 0.05
+        elif arg.startswith('-nq='):       opts['nq'] = int(arg[4:])
+        elif arg.startswith('-res='):      opts['res'] = float(arg[5:])
+        elif arg.startswith('-accuracy='): opts['accuracy'] = arg[10:]
+        elif arg.startswith('-cutoff='):   opts['cutoff'] = float(arg[8:])
+        elif arg.startswith('-random='):   opts['seed'] = int(arg[8:])
+        elif arg == '-random':  opts['seed'] = np.random.randint(1e6)
+        elif arg == '-preset':  opts['seed'] = -1
+        elif arg == '-mono':    opts['mono'] = True
+        elif arg == '-poly':    opts['mono'] = False
+        elif arg == '-pars':    opts['show_pars'] = True
+        elif arg == '-nopars':  opts['show_pars'] = False
+        elif arg == '-hist':    opts['show_hist'] = True
+        elif arg == '-nohist':  opts['show_hist'] = False
+        elif arg == '-rel':     opts['rel_err'] = True
+        elif arg == '-abs':     opts['rel_err'] = False
+        elif arg == '-half':    engines.append(arg[1:])
+        elif arg == '-fast':    engines.append(arg[1:])
+        elif arg == '-single':  engines.append(arg[1:])
+        elif arg == '-double':  engines.append(arg[1:])
+        elif arg == '-single!': engines.append(arg[1:])
+        elif arg == '-double!': engines.append(arg[1:])
+        elif arg == '-quad!':   engines.append(arg[1:])
+        elif arg == '-sasview': engines.append(arg[1:])
+        elif arg == '-edit':    opts['explore'] = True
+
+    if len(engines) == 0:
+        engines.extend(['single','sasview'])
+    elif len(engines) == 1:
+        if engines[0][0] != 'sasview':
+            engines.append('sasview')
+        else:
+            engines.append('single')
+    elif len(engines) > 2:
+        del engines[2:]
+
     name = args[0]
     model_definition = core.load_model_definition(name)
+
+    N1 = int(args[1]) if len(args) > 1 else 1
+    N2 = int(args[2]) if len(args) > 2 else 1
+
+    # Get demo parameters from model definition, or use default parameters
+    # if model does not define demo parameters
     pars = get_demo_pars(model_definition)
 
-    Ncomp = int(args[1]) if len(args) > 1 else 5
-    Nbase = int(args[2]) if len(args) > 2 else 1
-
-    # Fill in default polydispersity parameters
-    pds = set(p.split('_pd')[0] for p in pars if p.endswith('_pd'))
-    for p in pds:
-        if p+"_pd_nsigma" not in pars: pars[p+"_pd_nsigma"] = 3
-        if p+"_pd_type" not in pars: pars[p+"_pd_type"] = "gaussian"
-
     # Fill in parameters given on the command line
-    set_pars = {}
-    for arg in popts:
+    presets = {}
+    for arg in values:
         k,v = arg.split('=',1)
         if k not in pars:
-            # extract base name without distribution
+            # extract base name without polydispersity info
             s = set(p.split('_pd')[0] for p in pars)
             print("%r invalid; parameters are: %s"%(k,", ".join(sorted(s))))
             sys.exit(1)
-        set_pars[k] = float(v) if not v.endswith('type') else v
+        presets[k] = float(v) if not k.endswith('type') else v
 
-    compare(name, pars, Ncomp, Nbase, opts, set_pars)
+    # randomize parameters
+    #pars.update(set_pars)  # set value before random to control range
+    if opts['seed'] > -1:
+        pars = randomize_pars(pars, seed=opts['seed'])
+        print("Randomize using -random=%i"%opts['seed'])
+    pars.update(presets)  # set value after random to control value
+    constrain_pars(model_definition, pars)
+    constrain_new_to_old(model_definition, pars)
+    if opts['mono']:
+        pars = suppress_pd(pars)
+    if opts['show_pars']:
+        print("pars " + str(parlist(pars)))
+
+    # Create the computational engines
+    data, _index = make_data(opts)
+    if N1:
+        base = make_engine(model_definition, data, engines[0], opts['cutoff'])
+    else:
+        base = None
+    if N2:
+        comp = make_engine(model_definition, data, engines[1], opts['cutoff'])
+    else:
+        comp = None
+
+    # Remember it all
+    opts.update({
+        'name'      : name,
+        'def'       : model_definition,
+        'N1'        : N1,
+        'N2'        : N2,
+        'presets'   : presets,
+        'pars'      : pars,
+        'data'      : data,
+        'engines'   : [base, comp],
+    })
+
+    return opts
+
+def main():
+    opts = parse_opts()
+    if opts['explore']:
+        explore(opts)
+    else:
+        compare(opts)
+
+def explore(opts):
+    import wx
+    from bumps.names import FitProblem
+    from bumps.gui.app_frame import AppFrame
+
+    problem = FitProblem(Explore(opts))
+    isMac = "cocoa" in wx.version()
+    app = wx.App()
+    frame = AppFrame(parent=None, title="explore")
+    if not isMac: frame.Show()
+    frame.panel.set_model(model=problem)
+    frame.panel.Layout()
+    frame.panel.aui.Split(0, wx.TOP)
+    if isMac: frame.Show()
+    app.MainLoop()
+
+class Explore(object):
+    """
+    Return a bumps wrapper for a SAS model comparison.
+    """
+    def __init__(self, opts):
+        from bumps.cli import config_matplotlib
+        import bumps_model
+        config_matplotlib()
+        self.opts = opts
+        info = generate.make_info(opts['def'])
+        pars, pd_types = bumps_model.create_parameters(info, **opts['pars'])
+        if not opts['is2d']:
+            active = [base + ext
+                      for base in info['partype']['pd-1d']
+                      for ext in ['','_pd','_pd_n','_pd_nsigma']]
+            active.extend(info['partype']['fixed-1d'])
+            for k in active:
+                v = pars[k]
+                v.range(*parameter_range(k, v.value))
+        else:
+            for k, v in self.pars.items():
+                v.range(*parameter_range(k, v.value))
+
+        self.pars = pars
+        self.pd_types = pd_types
+
+    def numpoints(self):
+        """
+        Return the number of points
+        """
+        return len(self.pars) + 1  # so dof is 1
+
+    def parameters(self):
+        """
+        Return a dictionary of parameters
+        """
+        return self.pars
+
+    def nllf(self):
+        return 0.  # No nllf
+
+    def plot(self, view='log'):
+        """
+        Plot the data and residuals.
+        """
+        pars = dict((k, v.value) for k,v in self.pars.items())
+        pars.update(self.pd_types)
+        self.opts['pars'] = pars
+        compare(self.opts)
+
 
 if __name__ == "__main__":
     main()

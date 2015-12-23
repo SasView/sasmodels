@@ -11,4 +11,4 @@ export PYTHONPATH
 
 #SAS_OPENMP=1; export SAS_OPENMP
 
-python -m sasmodels.compare $*
+${PYTHON:-python} -m sasmodels.compare $*

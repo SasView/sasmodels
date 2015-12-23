@@ -11,13 +11,10 @@ how far the polydispersity integral extends.
 
 """
 
-import datetime
 import warnings
 
 import numpy as np
 
-from . import sesans
-from . import weights
 from .data import plot_theory
 from .direct_model import DataMixin
 
@@ -30,39 +27,50 @@ def BumpsModel(data, model, cutoff=1e-5, **kw):
         setattr(experiment, k, getattr(model, k))
     return experiment
 
+def create_parameters(model_info, **kwargs):
+    # lazy import; this allows the doc builder and nosetests to run even
+    # when bumps is not on the path.
+    from bumps.names import Parameter
+
+    partype = model_info['partype']
+
+    pars = {}
+    for p in model_info['parameters']:
+        name, default, limits = p[0], p[2], p[3]
+        value = kwargs.pop(name, default)
+        pars[name] = Parameter.default(value, name=name, limits=limits)
+    for name in partype['pd-2d']:
+        for xpart, xdefault, xlimits in [
+            ('_pd', 0., limits),
+            ('_pd_n', 35., (0, 1000)),
+            ('_pd_nsigma', 3., (0, 10)),
+        ]:
+            xname = name + xpart
+            xvalue = kwargs.pop(xname, xdefault)
+            pars[xname] = Parameter.default(xvalue, name=xname, limits=xlimits)
+
+    pd_types = {}
+    for name in partype['pd-2d']:
+        xname = name + '_pd_type'
+        xvalue = kwargs.pop(xname, 'gaussian')
+        pd_types[xname] = xvalue
+
+    if kwargs:  # args not corresponding to parameters
+        raise TypeError("unexpected parameters: %s"
+                        % (", ".join(sorted(kwargs.keys()))))
+
+    return pars, pd_types
 
 class Model(object):
-    def __init__(self, model, **kw):
-        # lazy import; this allows the doc builder and nosetests to run even
-        # when bumps is not on the path.
-        from bumps.names import Parameter
-
+    def __init__(self, model, **kwargs):
         self._sasmodel = model
-        partype = model.info['partype']
-
-        pars = []
-        for p in model.info['parameters']:
-            name, default, limits = p[0], p[2], p[3]
-            value = kw.pop(name, default)
-            setattr(self, name, Parameter.default(value, name=name, limits=limits))
-            pars.append(name)
-        for name in partype['pd-2d']:
-            for xpart, xdefault, xlimits in [
-                ('_pd', 0, limits),
-                ('_pd_n', 35, (0, 1000)),
-                ('_pd_nsigma', 3, (0, 10)),
-                ('_pd_type', 'gaussian', None),
-                ]:
-                xname = name + xpart
-                xvalue = kw.pop(xname, xdefault)
-                if xlimits is not None:
-                    xvalue = Parameter.default(xvalue, name=xname, limits=xlimits)
-                    pars.append(xname)
-                setattr(self, xname, xvalue)
-        self._parameter_names = pars
-        if kw:
-            raise TypeError("unexpected parameters: %s"
-                            % (", ".join(sorted(kw.keys()))))
+        pars, pd_types = create_parameters(model.info, **kwargs)
+        for k,v in pars.items():
+            setattr(self, k, v)
+        for k,v in pd_types.items():
+            setattr(self, k, v)
+        self._parameter_names = list(pars.keys())
+        self._pd_type_names = list(pd_types.keys())
 
     def parameters(self):
         """
@@ -70,6 +78,10 @@ class Model(object):
         """
         return dict((k, getattr(self, k)) for k in self._parameter_names)
 
+    def state(self):
+        pars = dict((k, getattr(self, k).value) for k in self._parameter_names)
+        pars.update((k, getattr(self, k)) for k in self._pd_type_names)
+        return pars
 
 class Experiment(DataMixin):
     """
@@ -112,27 +124,8 @@ class Experiment(DataMixin):
 
     def theory(self):
         if 'theory' not in self._cache:
-            pars = dict((k, v.value) for k,v in self.model.parameters().items())
+            pars = self.model.state()
             self._cache['theory'] = self._calc_theory(pars, cutoff=self.cutoff)
-            """
-            if self._fn is None:
-                q_input = self.model.kernel.make_input(self._kernel_inputs)
-                self._fn = self.model.kernel(q_input)
-
-            fixed_pars = [getattr(self.model, p).value for p in self._fn.fixed_pars]
-            pd_pars = [self._get_weights(p) for p in self._fn.pd_pars]
-            #print(fixed_pars,pd_pars)
-            Iq_calc = self._fn(fixed_pars, pd_pars, self.cutoff)
-            #self._theory[:] = self._fn.eval(pars, pd_pars)
-            if self.data_type == 'sesans':
-                result = sesans.hankel(self.data.x, self.data.lam * 1e-9,
-                                       self.data.sample.thickness / 10,
-                                       self._kernel_inputs[0], Iq_calc)
-                self._cache['theory'] = result
-            else:
-                Iq = self.resolution.apply(Iq_calc)
-                self._cache['theory'] = Iq
-            """
         return self._cache['theory']
 
     def residuals(self):
@@ -160,21 +153,6 @@ class Experiment(DataMixin):
 
     def save(self, basename):
         pass
-
-    def remove_get_weights(self, name):
-        """
-        Get parameter dispersion weights
-        """
-        info = self.model.kernel.info
-        relative = name in info['partype']['pd-rel']
-        limits = info['limits'][name]
-        disperser, value, npts, width, nsigma = [
-            getattr(self.model, name + ext)
-            for ext in ('_pd_type', '', '_pd_n', '_pd', '_pd_nsigma')]
-        value, weight = weights.get_weights(
-            disperser, int(npts.value), width.value, nsigma.value,
-            value.value, limits, relative)
-        return value, weight / np.sum(weight)
 
     def __getstate__(self):
         # Can't pickle gpu functions, so instead make them lazy
