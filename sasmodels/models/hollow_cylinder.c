@@ -69,8 +69,8 @@ static double hollow_cylinder_analytical_2D_scaled(double q, double q_x, double 
 
 	// The following test should always pass
 	if (fabs(cos_val)>1.0) {
-		printf("core_shell_cylinder_analytical_2D: Unexpected error: cos(alpha)=%g\n", cos_val);
-		return 0;
+		//printf("core_shell_cylinder_analytical_2D: Unexpected error: cos(alpha)=%g\n", cos_val);
+		return NAN;
 	}
 
 	answer = _hollow_cylinder_kernel(q, core_radius, radius, length, cos_val);
