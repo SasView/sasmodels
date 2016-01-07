@@ -203,6 +203,7 @@ kernel void IQXY_KERNEL_NAME(
     if (weight > cutoff) {
 
       const double scattering = Iqxy(qxi, qyi, IQXY_PARAMETERS);
+      if (!isnan(scattering)) { // if scattering is bad, exclude it from sum
       //if (scattering >= 0.0) { // scattering cannot be negative
         // TODO: use correct angle for spherical correction
         // Definition of theta and phi are probably reversed relative to the
@@ -213,7 +214,7 @@ kernel void IQXY_KERNEL_NAME(
         // so that values match those of sasview.
       #if defined(IQXY_HAS_THETA) // && 0
         const double spherical_correction
-          = (Ntheta>1 ? fabs(cos(M_PI_180*phi))*M_PI_2:1.0);
+          = (Ntheta>1 ? fabs(cos(M_PI_180*theta))*M_PI_2:1.0);
         const double next = spherical_correction * weight * scattering;
       #else
         const double next = weight * scattering;
@@ -232,7 +233,7 @@ kernel void IQXY_KERNEL_NAME(
         vol += vol_weight*form_volume(VOLUME_PARAMETERS);
       #endif
         norm_vol += vol_weight;
-      //}
+      }
       //else { printf("exclude qx,qy,I:%%g,%%g,%%g\n",qi,scattering); }
     }
     IQXY_CLOSE_LOOPS
