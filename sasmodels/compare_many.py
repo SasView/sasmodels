@@ -1,15 +1,16 @@
 #!/usr/bin/env python
+from __future__ import print_function
+
 import sys
 import traceback
 
 import numpy as np
 
 from . import core
-from .kernelcl import environment
-from .compare import (MODELS, randomize_pars, suppress_pd, eval_sasview,
-                      eval_opencl, eval_ctypes, make_data, get_demo_pars,
-                      columnize, constrain_pars, constrain_new_to_old,
-                      make_engine)
+from . import generate
+from .compare import (MODELS, randomize_pars, suppress_pd, make_data,
+                      make_engine, get_demo_pars, columnize,
+                      constrain_pars, constrain_new_to_old)
 
 def calc_stats(target, value, index):
     resid = abs(value-target)[index]
@@ -46,11 +47,20 @@ PRECISION = {
 }
 def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
                      base='sasview', comp='double'):
+    is2D = hasattr(data, 'qx_data')
     model_definition = core.load_model_definition(name)
     pars = get_demo_pars(model_definition)
-    header = '\n"Model","%s","Count","%d"'%(name, N)
+    header = ('\n"Model","%s","Count","%d","Dimension","%s"'
+              % (name, N, "2D" if is2D else "1D"))
     if not mono: header += ',"Cutoff",%g'%(cutoff,)
     print(header)
+
+    if is2D:
+        info = generate.make_info(model_definition)
+        partype = info['partype']
+        if not partype['orientation'] and not partype['magnetic']:
+            print(',"1-D only"')
+            return
 
     # Some not very clean macros for evaluating the models and checking the
     # results.  They freely use variables from the current scope, even some
@@ -87,7 +97,7 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
     first = True
     max_diff = [0]
     for k in range(N):
-        print("%s %d"%(name, k))
+        print("%s %d"%(name, k), file=sys.stderr)
         seed = np.random.randint(1e6)
         pars_i = randomize_pars(pars, seed)
         constrain_pars(model_definition, pars_i)
