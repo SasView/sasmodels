@@ -32,18 +32,18 @@ double Iq(double q,
     for (int i=0; i<76 ;i++) {
         // translate a point in [-1,1] to a point in [lower,upper]
         //const double alpha = ( Gauss76Z[i]*(upper-lower) + upper + lower )/2.0;
-        const double alpha = 0.5*(Gauss76Z[i]*M_PI_2 + M_PI_2);
+        const double alpha = M_PI_4*(Gauss76Z[i] + 1.0);
         double sn, cn;
         SINCOS(alpha, sn, cn);
         // For a bit of efficiency, we are moving the 2 V delta rho constant
-        // factor, 2Vd, out of the loop, so this is fq/2Vd rather than fq.
+        // factor, 2Vdrho, out of the loop, so this is fq/2Vdrho rather than fq.
         const double fq = _cyl(qr*sn, qh*cn);
         total += Gauss76Wt[i] * fq * fq * sn;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     //const double form = (upper-lower)/2.0*total;
-    const double twovd = 2.0*(sld-solvent_sld)*form_volume(radius, length);
-    return 1.0e-4 * twovd * twovd * total * M_PI_4;
+    const double twoVdrho = 2.0*(sld-solvent_sld)*form_volume(radius, length);
+    return 1.0e-4 * twoVdrho * twoVdrho * total * M_PI_4;
 }
 
 

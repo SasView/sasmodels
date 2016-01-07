@@ -1,13 +1,15 @@
 double form_volume(double bell_radius, double radius, double length);
-double Iq(double q, double sld, double solvent_sld, double bell_radius, double radius, double length);
+double Iq(double q, double sld, double solvent_sld,
+        double bell_radius, double radius, double length);
 double Iqxy(double qx, double qy, double sld, double solvent_sld,
-    double bell_radius, double radius, double length, double theta, double phi);
+        double bell_radius, double radius, double length,
+        double theta, double phi);
 
 //barbell kernel - same as dumbell
 double _bell_kernel(double q, double h, double bell_radius,
-    double length, double sin_alpha, double cos_alpha);
+        double length, double sin_alpha, double cos_alpha);
 double _bell_kernel(double q, double h, double bell_radius,
-    double length, double sin_alpha, double cos_alpha)
+        double length, double sin_alpha, double cos_alpha)
 {
     const double upper = 1.0;
     const double lower = -1.0*h/bell_radius;
@@ -15,14 +17,11 @@ double _bell_kernel(double q, double h, double bell_radius,
     double total = 0.0;
     for (int i = 0; i < 76; i++){
         const double t = 0.5*(Gauss76Z[i]*(upper-lower)+upper+lower);
-	    const double arg1 = q*cos_alpha*(bell_radius*t+h+length*0.5);
-	    const double arg2 = q*bell_radius*sin_alpha*sqrt(1.0-t*t);
-
+        const double arg1 = q*cos_alpha*(bell_radius*t+h+length*0.5);
+        const double arg2 = q*bell_radius*sin_alpha*sqrt(1.0-t*t);
         const double be = (arg2 == 0.0 ? 0.5 :J1(arg2)/arg2);
-
-	    const double Fq = cos(arg1)*(1.0-t*t)*be;
-
-	    total += Gauss76Wt[i] * Fq;
+        const double Fq = cos(arg1)*(1.0-t*t)*be;
+        total += Gauss76Wt[i] * Fq;
     }
     const double integral = 0.5*(upper-lower)*total;
     return 4.0*M_PI*bell_radius*bell_radius*bell_radius*integral;
@@ -43,10 +42,10 @@ double form_volume(double bell_radius,
 }
 
 double Iq(double q, double sld,
-    double solvent_sld,
-    double bell_radius,
-    double radius,
-    double length)
+        double solvent_sld,
+        double bell_radius,
+        double radius,
+        double length)
 {
     double sn, cn; // slots to hold sincos function output
 
@@ -83,13 +82,13 @@ double Iq(double q, double sld,
 
 
 double Iqxy(double qx, double qy,
-    double sld,
-    double solvent_sld,
-    double bell_radius,
-    double radius,
-    double length,
-    double theta,
-    double phi)
+        double sld,
+        double solvent_sld,
+        double bell_radius,
+        double radius,
+        double length,
+        double theta,
+        double phi)
 {
      double sn, cn; // slots to hold sincos function output
 
