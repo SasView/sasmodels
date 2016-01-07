@@ -151,8 +151,9 @@ def make_dll(source, info, dtype="double"):
         if status != 0 or not os.path.exists(dll):
             raise RuntimeError("compile failed.  File is in %r"%filename)
         else:
-            ## uncomment the following to keep the generated c file
-            os.unlink(filename); print("saving compiled file in %r"%filename)
+            ## comment the following to keep the generated c file
+            os.unlink(filename)
+            #print("saving compiled file in %r"%filename)
     return dll
 
 
