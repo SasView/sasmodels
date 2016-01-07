@@ -135,7 +135,7 @@ def suppress_pd(pars):
     """
     pars = pars.copy()
     for p in pars:
-        if p.endswith("_pd"): pars[p] = 0
+        if p.endswith("_pd_n"): pars[p] = 0
     return pars
 
 def eval_sasview(model_definition, data):
@@ -561,11 +561,11 @@ def parse_opts():
     if opts['seed'] > -1:
         pars = randomize_pars(pars, seed=opts['seed'])
         print("Randomize using -random=%i"%opts['seed'])
+    if opts['mono']:
+        pars = suppress_pd(pars)
     pars.update(presets)  # set value after random to control value
     constrain_pars(model_definition, pars)
     constrain_new_to_old(model_definition, pars)
-    if opts['mono']:
-        pars = suppress_pd(pars)
     if opts['show_pars']:
         print("pars " + str(parlist(pars)))
 
