@@ -264,8 +264,8 @@ DOC_HEADER = """.. _%(id)s:
 %(docs)s
 """
 
-def format_units(par):
-    return RST_UNITS.get(par, par)
+def format_units(units):
+    return "string" if isinstance(units, list) else RST_UNITS.get(units, units)
 
 def make_partable(pars):
     """
@@ -283,7 +283,8 @@ def make_partable(pars):
     sep = " ".join("="*w for w in column_widths)
     lines = [
         sep,
-        " ".join("%-*s" % (w, h) for w, h in zip(column_widths, PARTABLE_HEADERS)),
+        " ".join("%-*s" % (w, h)
+                 for w, h in zip(column_widths, PARTABLE_HEADERS)),
         sep,
         ]
     for p in pars:
