@@ -123,6 +123,17 @@ def constrain_pars(model_definition, pars):
         rg_max = np.sqrt(90*np.log(10) + 3*np.log(pars['scale']))/q_max
         pars['rg'] = min(pars['rg'],rg_max)
 
+    if name == 'rpa':
+        # Make sure phi sums to 1.0
+        if pars['case_num'] < 2:
+            pars['Phia'] = 0.
+            pars['Phib'] = 0.
+        elif pars['case_num'] < 5:
+            pars['Phia'] = 0.
+        total = sum(pars['Phi'+c] for c in 'abcd')
+        for c in 'abcd':
+            pars['Phi'+c] /= total
+
 def parlist(pars):
     return "\n".join("%s: %s"%(p,v) for p,v in sorted(pars.items()))
 
