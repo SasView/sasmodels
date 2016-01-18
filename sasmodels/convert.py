@@ -111,6 +111,10 @@ def revert_model(model_definition, pars):
     elif name == 'pearl_necklace':
         _remove_pd(oldpars, 'num_pearls', name)
         _remove_pd(oldpars, 'thick_string', name)
+    elif name == 'rpa':
+        # convert scattering lengths from femtometers to centimeters
+        for p in "La", "Lb", "Lc", "Ld":
+            if p in oldpars: oldpars[p] *= 1e-13
 
     return oldname, oldpars
 
@@ -127,6 +131,8 @@ def constrain_new_to_old(model_definition, pars):
     elif name == 'pearl_necklace':
         pars['string_thickness_pd_n'] = 0
         pars['number_of_pearls_pd_n'] = 0
+    elif name == 'rpa':
+        pars['case_num'] = int(pars['case_num'])
     elif getattr(model_definition, 'category', None) == 'structure-factor':
         pars['scale'], pars['background'] = 1, 0
 
