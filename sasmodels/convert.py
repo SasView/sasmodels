@@ -97,7 +97,7 @@ def revert_model(model_definition, pars):
 
     # Note: update compare.constrain_pars to match
     name = model_definition.name
-    if name in ('teubner_strey', 'broad_peak', 'two_lorentzian'):
+    if name in ('teubner_strey', 'broad_peak', 'two_lorentzian', 'gel_fit'):
         if oldpars.pop('scale', 1.0) != 1.0:
             warnings.warn("parameter scale not used in sasview %s"%name)
     elif name in ('guinier',):
@@ -124,7 +124,7 @@ def constrain_new_to_old(model_definition, pars):
     """
     # Note: update convert.revert_model to match
     name = model_definition.name
-    if name in ('teubner_strey','broad_peak', 'two_lorentzian'):
+    if name in ('teubner_strey','broad_peak', 'two_lorentzian', 'gel_fit'):
         pars['scale'] = 1
     elif name in ('guinier',):
         pars['background'] = 0

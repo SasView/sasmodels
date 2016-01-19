@@ -37,9 +37,8 @@ $\zeta$ is the cut-off length, $\rho_{solvent}$ is the scattering length density
 and $\rho_{particle}$ is the scattering length density of particles.
 
 .. note::
-
-The surface fractal dimension $D_s$ is only valid if $1<surface\_dim<3$.
-It is also only valid over a limited $q$ range (see the reference for details)
+    The surface fractal dimension $D_s$ is only valid if $1<surface\_dim<3$.
+    It is also only valid over a limited $q$ range (see the reference for details)
 
 
 .. figure:: img/surface_fractal_1d.jpg
