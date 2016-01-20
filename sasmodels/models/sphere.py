@@ -77,6 +77,7 @@ parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "",
                "Sphere radius"],
              ]
 
+source = ["lib/J1c.c"]
 
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
@@ -86,20 +87,7 @@ form_volume = """
 
 Iq = """
     const double qr = q*radius;
-    const double qrsq = qr*qr;
-    double sn, cn;
-    SINCOS(qr, sn, cn);
-    // Use taylor series for low q to avoid cancellation error.  Tested against
-    // the following expression in quad precision:
-    //     3.0*(sn-qr*cn)/(qr*qr*qr);
-    // Note that the values differ from sasview ~ 5e-12 rather than 5e-14, but
-    // in this case it is likely cancellation errors in the original expression
-    // using double precision that are the source.  Single precision only
-    // requires the first 3 terms.  Double precision requires the 4th term.
-    // The fifth term is not needed, and is commented out below.
-    const double bes = (qr < 1.e-1)
-        ? 1.0 + qrsq*(-3./30. + qrsq*(3./840. + qrsq*(-3./45360.)))// + qrsq*(3./3991680.))))
-        : 3.0*(sn/qr - cn)/qrsq;
+    const double bes = J1c(qr);
     const double fq = bes * (sld - solvent_sld) * form_volume(radius);
     return 1.0e-4*fq*fq;
     """

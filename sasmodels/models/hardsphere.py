@@ -22,7 +22,7 @@ For a 2D plot, the wave transfer is defined as
     q = \sqrt{q_x^2 + q_y^2}
 
 
-.. figure:: img/HardSphere_1d.jpg
+.. figure:: img/hardSphere_1d.jpg
 
     1D plot using the default values (in linear scale).
 

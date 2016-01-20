@@ -17,7 +17,8 @@ The scattered intensity $I(q)$ is calculated as
 
 .. math::
 
-    I(Q) = I(0)_L \frac{1}{\left( 1+\left[ ((D+1/3)Q^2a_{1}^2 \right]\right)^{D/2}} + I(0)_G exp\left( -Q^2a_{2}^2\right) + B
+    I(Q) = I(0)_L \frac{1}{\left( 1+\left[ ((D+1/3)Q^2a_{1}^2
+    \right]\right)^{D/2}} + I(0)_G exp\left( -Q^2a_{2}^2\right) + B
 
 where
 
@@ -25,9 +26,10 @@ where
 
     a_{2}^2 \approx \frac{R_{g}^2}{3}
 
-Note that the first term reduces to the Ornstein-Zernicke equation when $D = 2$;
-ie, when the Flory exponent is 0.5 (theta conditions).
-In gels with significant hydrogen bonding $D$ has been reported to be ~2.6 to 2.8.
+Note that the first term reduces to the Ornstein-Zernicke equation
+when $D = 2$; ie, when the Flory exponent is 0.5 (theta conditions).
+In gels with significant hydrogen bonding $D$ has been reported to be
+~2.6 to 2.8.
 
 
 .. figure:: img/gel_fit_1d.gif
@@ -37,9 +39,11 @@ In gels with significant hydrogen bonding $D$ has been reported to be ~2.6 to 2.
 Reference
 ---------
 
-Mitsuhiro Shibayama, Toyoichi Tanaka, Charles C Han, J. Chem. Phys. 1992, 97 (9), 6829-6841
+Mitsuhiro Shibayama, Toyoichi Tanaka, Charles C Han, J. Chem. Phys. 1992, 97 (9),
+6829-6841
 
-Simon Mallam, Ferenc Horkay, Anne-Marie Hecht, Adrian R Rennie, Erik Geissler, Macromolecules 1991, 24, 543-548
+Simon Mallam, Ferenc Horkay, Anne-Marie Hecht, Adrian R Rennie, Erik Geissler,
+Macromolecules 1991, 24, 543-548
 
 """
 

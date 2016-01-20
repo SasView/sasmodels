@@ -1,5 +1,6 @@
 r"""
-This model calculates an empirical functional form for SAS data characterized by two Lorentzian-type functions.
+This model calculates an empirical functional form for SAS data characterized
+by two Lorentzian-type functions.
 
 Definition
 ----------
@@ -11,8 +12,9 @@ The scattering intensity $I(q)$ is calculated as
     I(q) = \frac{A}{1 +(Q\xi_1)^n} + \frac{C}{1 +(Q\xi_2)^m} + \text{B}
 
 where $A$ = Lorentzian scale factor #1, $C$ = Lorentzian scale #2,
-$\xi_1$ and $\xi_2$ are the corresponding correlation lengths, and $n$ and $m$ are the respective
-power law exponents (set $n = m = 2$ for Ornstein-Zernicke behaviour).
+$\xi_1$ and $\xi_2$ are the corresponding correlation lengths, and $n$ and
+$m$ are the respective power law exponents (set $n = m = 2$ for
+Ornstein-Zernicke behaviour).
 
 For 2D data the scattering intensity is calculated in the same way as 1D,
 where the $q$ vector is defined as
@@ -51,17 +53,29 @@ description = """I(q) = scale_1/(1.0 + pow((q*length_1),exponent_1))
         """
 category = "shape-independent"
 
-#             ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["lorentz_scale_1",  "",     10.0, [-inf, inf], "", "First power law scale factor"],
-              ["lorentz_length_1", "Ang", 100.0, [-inf, inf], "", "First Lorentzian screening length"],
-              ["lorentz_exp_1",    "",      3.0, [-inf, inf], "", "First exponent of power law"],
-              ["lorentz_scale_2",  "",      1.0, [-inf, inf], "", "Second scale factor for broad Lorentzian peak"],
-              ["lorentz_length_2", "Ang",  10.0, [-inf, inf], "", "Second Lorentzian screening length"],
-              ["lorentz_exp_2",    "",      2.0, [-inf, inf], "", "Second exponent of power law"],
+#            ["name", "units", default, [lower, upper], "type", "description"],
+parameters = [["lorentz_scale_1",  "",     10.0, [-inf, inf], "",
+               "First power law scale factor"],
+              ["lorentz_length_1", "Ang", 100.0, [-inf, inf], "",
+               "First Lorentzian screening length"],
+              ["lorentz_exp_1",    "",      3.0, [-inf, inf], "",
+               "First exponent of power law"],
+              ["lorentz_scale_2",  "",      1.0, [-inf, inf], "",
+               "Second scale factor for broad Lorentzian peak"],
+              ["lorentz_length_2", "Ang",  10.0, [-inf, inf], "",
+               "Second Lorentzian screening length"],
+              ["lorentz_exp_2",    "",      2.0, [-inf, inf], "",
+               "Second exponent of power law"],
               ]
 
 
-def Iq(q, lorentz_scale_1, lorentz_length_1, lorentz_exp_1, lorentz_scale_2, lorentz_length_2, lorentz_exp_2):
+def Iq(q,
+       lorentz_scale_1,
+       lorentz_length_1,
+       lorentz_exp_1,
+       lorentz_scale_2,
+       lorentz_length_2,
+       lorentz_exp_2):
 
     """
     :param q:                   Input q-value (float or [float, float])
@@ -74,8 +88,10 @@ def Iq(q, lorentz_scale_1, lorentz_length_1, lorentz_exp_1, lorentz_scale_2, lor
     :return:                    Calculated intensity
     """
 
-    intensity  = lorentz_scale_1/(1.0 + power(q*lorentz_length_1, lorentz_exp_1))
-    intensity += lorentz_scale_2/(1.0 + power(q*lorentz_length_2, lorentz_exp_2))
+    intensity  = lorentz_scale_1/(1.0 +
+                                  power(q*lorentz_length_1, lorentz_exp_1))
+    intensity += lorentz_scale_2/(1.0 +
+                                  power(q*lorentz_length_2, lorentz_exp_2))
 
     return intensity
 
@@ -100,16 +116,28 @@ oldpars = dict(background='background',
                lorentz_length_1='length_1', lorentz_length_2='length_2',
                lorentz_exp_1='exponent_1',  lorentz_exp_2='exponent_2')
 
-tests = [[{'lorentz_scale_1': 10, 'lorentz_length_1': 100.0, 'lorentz_exp_1' : 3.0,
-          'lorentz_scale_2': 1, 'lorentz_length_2': 10.0, 'lorentz_exp_2' : 2.0,
+tests = [[{'lorentz_scale_1':   10.0,
+           'lorentz_length_1': 100.0,
+           'lorentz_exp_1':      3.0,
+           'lorentz_scale_2':    1.0,
+           'lorentz_length_2':  10.0,
+           'lorentz_exp_2':      2.0,
            }, 0.000332070182643, 10.9996228107],
 
-         [{'lorentz_scale_1': 0, 'lorentz_length_1': 0.0, 'lorentz_exp_1' : 0.0,
-          'lorentz_scale_2': 0, 'lorentz_length_2': 0.0, 'lorentz_exp_2' : 0.0,
-           'background':100.
+         [{'lorentz_scale_1':  0.0,
+           'lorentz_length_1': 0.0,
+           'lorentz_exp_1':    0.0,
+           'lorentz_scale_2':  0.0,
+           'lorentz_length_2': 0.0,
+           'lorentz_exp_2':    0.0,
+           'background':     100.0
            }, 5.0, 100.0],
 
-         [{'lorentz_scale_1': 200, 'lorentz_length_1': 10.0, 'lorentz_exp_1' : 0.1,
-          'lorentz_scale_2': 0.1, 'lorentz_length_2': 5.0, 'lorentz_exp_2' : 2.0
+         [{'lorentz_scale_1': 200.0,
+           'lorentz_length_1': 10.0,
+           'lorentz_exp_1':     0.1,
+           'lorentz_scale_2':   0.1,
+           'lorentz_length_2':  5.0,
+           'lorentz_exp_2':     2.0
            }, 20000., 45.5659201896],
          ]
