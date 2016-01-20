@@ -69,4 +69,4 @@ demo = dict(scale=100, background=1.0,
 oldname = "PeakLorentzModel"
 oldpars = dict(peak_pos='q0', peak_hwhm='B')
 
-tests = [[{}, 0.001, 2.0305]]
+tests = [[{'scale':100.0, 'background':1.0}, 0.001, 2.0305]]
