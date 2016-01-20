@@ -19,7 +19,7 @@ double Iq(double q,
     // if (req_minor > req_major || req_major > rpolar) return NAN;  // Exclude invalid region
 
     double sn, cn;
-    double st, ct;
+    //double st, ct;
     //const double lower = 0.0;
     //const double upper = 1.0;
     double outer = 0.0;
