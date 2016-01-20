@@ -1,7 +1,14 @@
 double form_volume(double radius);
 
-double Iq(double q, double radius, double surface_dim, double cutoff_length);
-double Iqxy(double qx, double qy, double radius, double surface_dim, double cutoff_length);
+double Iq(double q,
+          double radius,
+          double surface_dim,
+          double cutoff_length);
+
+double Iqxy(double qx, double qy,
+            double radius,
+            double surface_dim,
+            double cutoff_length);
 
 static double _gamln(double q)
 {
@@ -25,15 +32,18 @@ static double _gamln(double q)
     return -tmp+log(2.5066282746310005*ser/x);
 }
 
-static double surface_fractal_kernel(double q,
+static double _surface_fractal_kernel(double q,
     double radius,
     double surface_dim,
     double cutoff_length)
 {
     double pq, sq, mmo, result;
 
-    //calculate P(q) for the spherical subunits; not normalized
-	pq = pow((3.0*(sin(q*radius) - q*radius*cos(q*radius))/pow((q*radius),3)),2);
+    //Replaced the original formula with Taylor expansion near zero.
+    //pq = pow((3.0*(sin(q*radius) - q*radius*cos(q*radius))/pow((q*radius),3)),2);
+
+    pq = J1c(q*radius);
+    pq = pq*pq;
 
     //calculate S(q)
     mmo = 5.0 - surface_dim;
@@ -58,7 +68,7 @@ double Iq(double q,
     double cutoff_length
     )
 {
-    return surface_fractal_kernel(q, radius, surface_dim, cutoff_length);
+    return _surface_fractal_kernel(q, radius, surface_dim, cutoff_length);
 }
 
 // Iqxy is never called since no orientation or magnetic parameters.
@@ -68,6 +78,6 @@ double Iqxy(double qx, double qy,
     double cutoff_length)
 {
     double q = sqrt(qx*qx + qy*qy);
-    return surface_fractal_kernel(q, radius, surface_dim, cutoff_length);
+    return _surface_fractal_kernel(q, radius, surface_dim, cutoff_length);
 }
 

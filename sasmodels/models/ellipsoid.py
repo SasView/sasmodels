@@ -151,7 +151,7 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "",
                "Out of plane angle"],
              ]
 
-source = ["lib/J1.c", "lib/gauss76.c", "ellipsoid.c"]
+source = ["lib/J1.c", "lib/J1c.c", "lib/gauss76.c", "ellipsoid.c"]
 
 def ER(rpolar, requatorial):
     import numpy as np

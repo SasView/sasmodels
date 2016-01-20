@@ -6,16 +6,11 @@ double Iqxy(double qx, double qy, double sld, double solvent_sld,
 double _ellipsoid_kernel(double q, double rpolar, double requatorial, double sin_alpha);
 double _ellipsoid_kernel(double q, double rpolar, double requatorial, double sin_alpha)
 {
-    double sn, cn;
     double ratio = rpolar/requatorial;
     const double u = q*requatorial*sqrt(1.0
                    + sin_alpha*sin_alpha*(ratio*ratio - 1.0));
-    SINCOS(u, sn, cn);
-    //const double f = ( u==0.0 ? 1.0 : 3.0*(sn-u*cn)/(u*u*u) );
-    const double usq = u*u;
-    const double f = (u < 1.e-1)
-        ? 1.0 + usq*(-3./30. + usq*(3./840. + usq*(-3./45360.)))// + qrsq*(3./3991680.))))
-        : 3.0*(sn/u - cn)/usq;
+    const double f = J1c(u);
+
     return f*f;
 }
 

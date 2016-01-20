@@ -1,11 +1,12 @@
 r"""
-This model describes the scattering from polymer chains subject to excluded volume effects
-and has been used as a template for describing mass fractals.
+This model describes the scattering from polymer chains subject to excluded
+volume effects and has been used as a template for describing mass fractals.
 
 Definition
 ----------
 
-The form factor was originally presented in the following integral form (Benoit, 1957)
+The form factor was originally presented in the following integral form
+(Benoit, 1957)
 
 .. math::
 
@@ -15,7 +16,8 @@ where $\nu$ is the excluded volume parameter
 (which is related to the Porod exponent $m$ as $\nu=1/m$ ),
 $a$ is the statistical segment length of the polymer chain,
 and $n$ is the degree of polymerization.
-This integral was later put into an almost analytical form as follows (Hammouda, 1993)
+This integral was later put into an almost analytical form as follows
+(Hammouda, 1993)
 
 .. math::
 
@@ -42,16 +44,18 @@ The square of the radius-of-gyration is defined as
 
 Note that this model applies only in the mass fractal range (ie, $5/3<=m<=3$ )
 and **does not apply** to surface fractals ( $3<m<=4$ ).
-It also does not reproduce the rigid rod limit (m=1) because it assumes chain flexibility
-from the outset. It may cover a portion of the semi-flexible chain range ( $1<m<5/3$ ).
+It also does not reproduce the rigid rod limit (m=1) because it assumes chain
+flexibility from the outset. It may cover a portion of the semi-flexible chain
+range ( $1<m<5/3$ ).
 
-A low-Q expansion yields the Guinier form and a high-Q expansion yields the Porod form
-which is given by
+A low-Q expansion yields the Guinier form and a high-Q expansion yields the
+Porod form which is given by
 
 .. math::
 
-    P(Q\rightarrow \infty) = \frac{1}{\nu U^{1/2\nu}}\Gamma\left(\frac{1}{2\nu}\right) -
-    \frac{1}{\nu U^{1/\nu}}\Gamma\left(\frac{1}{\nu}\right)
+    P(Q\rightarrow \infty) = \frac{1}{\nu U^{1/2\nu}}\Gamma\left(
+    \frac{1}{2\nu}\right) - \frac{1}{\nu U^{1/\nu}}\Gamma\left(
+    \frac{1}{\nu}\right)
 
 Here $\Gamma(x) = \gamma(x,\infty)$ is the gamma function.
 
@@ -101,7 +105,8 @@ from scipy.special import gammainc, gamma
 
 name = "polymer_excl_volume"
 title = "Polymer Excluded Volume model"
-description = """Compute the scattering intensity from polymers with excluded volume effects.
+description = """Compute the scattering intensity from polymers with excluded
+                volume effects.
                 rg:         radius of gyration
                 porod_exp:  Porod exponent
               """
@@ -126,8 +131,8 @@ def Iq(q, rg, porod_exp):
     o2nu = 1.0/(2.0*nu)
 
     intensity = ((1.0/(nu*power(u, o2nu))) * (gamma(o2nu)*gammainc(o2nu, u) -
-                 1.0/power(u, o2nu) * gamma(porod_exp)*gammainc(porod_exp, u)))*(q > 0) + \
-                 1.0*(q <= 0)
+                  1.0/power(u, o2nu) * gamma(porod_exp) *
+                  gammainc(porod_exp, u))) * (q > 0) + 1.0*(q <= 0)
 
     return intensity
 
@@ -155,5 +160,6 @@ tests = [[{'rg': 10, 'porod_exp': 4.0}, 0.1, 0.723436675809],
 
          [{'rg': 2.2, 'porod_exp': 22.0, 'background': 100.0}, 5.0, 100.0],
 
-         [{'rg': 1.1, 'porod_exp': 1, 'background': 10.0, 'scale': 1.25}, 20000., 10.0000712097]
+         [{'rg': 1.1, 'porod_exp': 1, 'background': 10.0, 'scale': 1.25},
+         20000., 10.0000712097]
          ]

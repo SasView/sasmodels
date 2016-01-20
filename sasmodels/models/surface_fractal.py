@@ -21,7 +21,8 @@ The scattering intensity $I(q)$ is calculated as
 
 .. math::
 
-    S(q) = \frac{\Gamma(5-D_S)\zeta^{5-D_S}}{\left[1+(q\zeta)^2\right]^{(5-D_S)/2}}
+    S(q) = \frac{\Gamma(5-D_S)\zeta^{5-D_S}}{\left[1+(q\zeta)^2
+    \right]^{(5-D_S)/2}}
     \frac{sin\left[(D_S - 5) tan^{-1}(q\zeta) \right]}{q}
 
 .. math::
@@ -32,13 +33,15 @@ The scattering intensity $I(q)$ is calculated as
 
     V = \frac{4}{3}\pi R^3
 
-where $R$ is the radius of the building block, $D_S$ is the **surface** fractal dimension,
-$\zeta$ is the cut-off length, $\rho_{solvent}$ is the scattering length density of the solvent,
+where $R$ is the radius of the building block, $D_S$ is the **surface** fractal
+dimension,$\zeta$ is the cut-off length, $\rho_{solvent}$ is the scattering
+length density of the solvent,
 and $\rho_{particle}$ is the scattering length density of particles.
 
 .. note::
     The surface fractal dimension $D_s$ is only valid if $1<surface\_dim<3$.
-    It is also only valid over a limited $q$ range (see the reference for details)
+    It is also only valid over a limited $q$ range (see the reference for
+    details)
 
 
 .. figure:: img/surface_fractal_1d.jpg
@@ -77,13 +80,16 @@ description = """\
 category = "shape-independent"
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["radius",        "Ang", 10.0, [0, inf],   "", "Particle radius"],
-              ["surface_dim",   "",    2.0,  [0, inf],   "", "Surface fractal dimension"],
-              ["cutoff_length", "Ang", 500., [0.0, inf], "",  "Cut-off Length"],
+parameters = [["radius",        "Ang", 10.0, [0, inf],   "",
+               "Particle radius"],
+              ["surface_dim",   "",    2.0,  [0, inf],   "",
+               "Surface fractal dimension"],
+              ["cutoff_length", "Ang", 500., [0.0, inf], "",
+               "Cut-off Length"],
               ]
 
 
-source = ["surface_fractal.c"]
+source = ["lib/J1c.c", "surface_fractal.c"]
 
 demo = dict(scale=1, background=0,
             radius=10, surface_dim=2.0, cutoff_length=500)
