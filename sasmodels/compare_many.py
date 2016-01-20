@@ -163,7 +163,7 @@ def main():
 
     model = sys.argv[1]
     if not (model in MODELS) and (model != "all"):
-        print('Bad model %s.  Use "all" or one of:')
+        print('Bad model %s.  Use "all" or one of:'%model)
         print_models()
         sys.exit(1)
     try:
