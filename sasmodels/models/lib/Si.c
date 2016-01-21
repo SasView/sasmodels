@@ -3,10 +3,7 @@ double Si(double x);
 // integral of sin(x)/x Taylor series approximated to w/i 0.1%
 double Si(double x)
 {
-	int i;
-	int nmax=10;
 	double out;
-	long power;
 	double pi = 4.0*atan(1.0);
 
 	if (x >= pi*6.2/4.0){
