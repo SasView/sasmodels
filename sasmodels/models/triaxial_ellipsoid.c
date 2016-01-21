@@ -35,7 +35,7 @@ double Iq(double q,
         for (int j=0;j<76;j++) {
             const double y = 0.5*(Gauss76Z[j] + 1.0);
             const double t = q*sqrt(acosx2 + bsinx2*(1.0-y*y) + c2*y*y);
-            const double fq = J1c(t);
+            const double fq = sph_j1c(t);
             inner += Gauss76Wt[j] * fq * fq ;
         }
         outer += Gauss76Wt[i] * 0.5 * inner;

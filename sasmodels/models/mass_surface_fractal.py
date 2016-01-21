@@ -90,7 +90,7 @@ parameters = [["mass_dim",      "",    1.8, [1e-16, 6.0], "",
               ]
 
 
-source = ["lib/J1c.c", "mass_surface_fractal.c"]
+source = ["mass_surface_fractal.c"]
 
 demo = dict(scale=1, background=0,
             mass_dim=1.8,
