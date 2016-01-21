@@ -8,13 +8,13 @@ of the code and between precision (half, fast, single, double, quad),
 where fast precision is single precision using native functions for
 trig, etc., and may not be completely IEEE 754 compliant.  This lets
 make sure that the model calculations are stable, or if you need to
-tag the model as double precision only.  
+tag the model as double precision only.
 
-Run using ./compare.sh (Linux, Mac) or compare.bat (Windows) in the 
+Run using ./compare.sh (Linux, Mac) or compare.bat (Windows) in the
 sasmodels root to see the command line options.
 
-Note that there is no way within sasmodels to select between an 
-OpenCL CPU device and a GPU device, but you can do so by setting the 
+Note that there is no way within sasmodels to select between an
+OpenCL CPU device and a GPU device, but you can do so by setting the
 PYOPENCL_CTX environment variable ahead of time.  Start a python
 interpreter and enter::
 
@@ -261,7 +261,7 @@ def eval_sasview(model_definition, data):
 
     # convert model parameters from sasmodel form to sasview form
     #print("old",sorted(pars.items()))
-    modelname, _pars = revert_model(model_definition, {})
+    modelname, _ = revert_model(model_definition, {})
     #print("new",sorted(_pars.items()))
     sas = __import__('sas.models.'+modelname)
     ModelClass = getattr(getattr(sas.models, modelname, None), modelname, None)
@@ -330,6 +330,9 @@ def eval_opencl(model_definition, data, dtype='single', cutoff=0.):
     return calculator
 
 def eval_ctypes(model_definition, data, dtype='double', cutoff=0.):
+    """
+    Return a model calculator using the DLL calculation engine.
+    """
     if dtype == 'quad':
         dtype = 'longdouble'
     model = core.load_model(model_definition, dtype=dtype, platform="dll")
@@ -403,7 +406,7 @@ def compare(opts, limits=None):
     as the values are adjusted, making it easier to see the effects of the
     parameters.
     """
-    Nbase, Ncomp = opts['N1'], opts['N2']
+    Nbase, Ncomp = opts['n1'], opts['n2']
     pars = opts['pars']
     data = opts['data']
 
@@ -549,7 +552,7 @@ def get_demo_pars(model_definition):
     """
     info = generate.make_info(model_definition)
     # Get the default values for the parameters
-    pars = dict((p[0],p[2]) for p in info['parameters'])
+    pars = dict((p[0], p[2]) for p in info['parameters'])
 
     # Fill in default values for the polydispersity parameters
     for p in info['parameters']:
@@ -583,7 +586,7 @@ def parse_opts():
         print("Model %r not available. Use one of:\n    %s"%(args[0], models))
         sys.exit(1)
     if len(args) > 3:
-        print("expected parameters: model Nopencl Nsasview")
+        print("expected parameters: model N1 N2")
 
     invalid = [o[1:] for o in flags
                if o[1:] not in NAME_OPTIONS
@@ -649,7 +652,7 @@ def parse_opts():
         elif arg == '-edit':    opts['explore'] = True
 
     if len(engines) == 0:
-        engines.extend(['single','sasview'])
+        engines.extend(['single', 'sasview'])
     elif len(engines) == 1:
         if engines[0][0] != 'sasview':
             engines.append('sasview')
@@ -661,8 +664,8 @@ def parse_opts():
     name = args[0]
     model_definition = core.load_model_definition(name)
 
-    N1 = int(args[1]) if len(args) > 1 else 1
-    N2 = int(args[2]) if len(args) > 2 else 1
+    n1 = int(args[1]) if len(args) > 1 else 1
+    n2 = int(args[2]) if len(args) > 2 else 1
 
     # Get demo parameters from model definition, or use default parameters
     # if model does not define demo parameters
@@ -694,11 +697,11 @@ def parse_opts():
 
     # Create the computational engines
     data, _index = make_data(opts)
-    if N1:
+    if n1:
         base = make_engine(model_definition, data, engines[0], opts['cutoff'])
     else:
         base = None
-    if N2:
+    if n2:
         comp = make_engine(model_definition, data, engines[1], opts['cutoff'])
     else:
         comp = None
@@ -707,8 +710,8 @@ def parse_opts():
     opts.update({
         'name'      : name,
         'def'       : model_definition,
-        'N1'        : N1,
-        'N2'        : N2,
+        'n1'        : n1,
+        'n2'        : n2,
         'presets'   : presets,
         'pars'      : pars,
         'data'      : data,
