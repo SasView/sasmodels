@@ -63,7 +63,7 @@ L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and
 Neutron Scattering*, Plenum Press, New York, (1987)
 """
 
-from numpy import inf
+from numpy import pi, inf
 
 name = "hollow_cylinder"
 title = ""
@@ -91,11 +91,29 @@ parameters = [
 
 source = ["lib/J1.c", "lib/gauss76.c", "hollow_cylinder.c"]
 
+def ER(radius, core_radius, length):
+    if radius == 0 or length == 0:
+        return 0.0
+    len1 = radius
+    len2 = length/2.0
+    term1 = len1*len1*2.0*len2/2.0
+    term2 = 1.0 + (len2/len1)*(1.0 + 1/len2/2.0)*(1.0 + pi*len1/len2/2.0)
+    ddd = 3.0*term1*term2
+    diam = pow(ddd, (1.0/3.0))
+    return diam
+
+def VR(radius, core_radius, length):
+    vol_core = pi*core_radius*core_radius*length
+    vol_total = pi*radius*radius*length
+    vol_shell = vol_total - vol_core
+    return vol_shell, vol_total
+
 # parameters for demo
 demo = dict(scale=1.0,background=0.0,length=400.0,radius=30.0,core_radius=20.0,
             sld=6.3,solvent_sld=1,theta=90,phi=0,
             radius_pd=.2, radius_pd_n=9,
             length_pd=.2, length_pd_n=10,
+            core_radius_pd=.2, core_radius_pd_n=9,
             theta_pd=10, theta_pd_n=5,
             )
 
@@ -108,5 +126,7 @@ oldpars = dict(scale='scale',background='background',radius='radius',
 
 # Parameters for unit tests
 tests = [
-         [{"radius" : 30.0},0.00005,1764.926]
+         [{"radius" : 30.0},0.00005,1764.926],
+         [{},'VR',1.8],
+         [{},0.001,1756.76]
          ]
