@@ -749,7 +749,7 @@ class Explore(object):
     """
     def __init__(self, opts):
         from bumps.cli import config_matplotlib
-        import bumps_model
+        from . import bumps_model
         config_matplotlib()
         self.opts = opts
         info = generate.make_info(opts['def'])
@@ -757,7 +757,7 @@ class Explore(object):
         if not opts['is2d']:
             active = [base + ext
                       for base in info['partype']['pd-1d']
-                      for ext in ['','_pd','_pd_n','_pd_nsigma']]
+                      for ext in ['', '_pd', '_pd_n', '_pd_nsigma']]
             active.extend(info['partype']['fixed-1d'])
             for k in active:
                 v = pars[k]
@@ -772,24 +772,27 @@ class Explore(object):
 
     def numpoints(self):
         """
-        Return the number of points
+        Return the number of points.
         """
         return len(self.pars) + 1  # so dof is 1
 
     def parameters(self):
         """
-        Return a dictionary of parameters
+        Return a dictionary of parameters.
         """
         return self.pars
 
     def nllf(self):
+        """
+        Return cost.
+        """
         return 0.  # No nllf
 
     def plot(self, view='log'):
         """
         Plot the data and residuals.
         """
-        pars = dict((k, v.value) for k,v in self.pars.items())
+        pars = dict((k, v.value) for k, v in self.pars.items())
         pars.update(self.pd_types)
         self.opts['pars'] = pars
         limits = compare(self.opts, limits=self.limits)
