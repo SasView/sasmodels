@@ -74,7 +74,7 @@ def _revert_pars(pars, mapping):
 
     for new, old in mapping.items():
         for pd, dot in PD_DOT:
-            if old+pd == new+dot:
+            if old and old+pd == new+dot:
                 continue
             if new+pd in newpars:
                 if old is not None:
