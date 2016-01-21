@@ -20,7 +20,7 @@ static double _surface_fractal_kernel(double q,
     //Replaced the original formula with Taylor expansion near zero.
     //pq = pow((3.0*(sin(q*radius) - q*radius*cos(q*radius))/pow((q*radius),3)),2);
 
-    pq = J1c(q*radius);
+    pq = sph_j1c(q*radius);
     pq = pq*pq;
 
     //calculate S(q)

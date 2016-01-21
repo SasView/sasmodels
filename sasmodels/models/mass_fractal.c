@@ -16,12 +16,9 @@ static double _mass_fractal_kernel(double q,
           double mass_dim,
           double cutoff_length)
 {
-
-    //calculate P(q) for the spherical subunits; not normalized
-    //double pq = pow((3.0*(sin(q*radius) - q*radius*cos(q*radius))/pow((q*radius),3)),2);
-    double pq = J1c(q*radius);
-
-    //pq = 1.0;
+    //calculate P(q)
+    double pq = sph_j1c(q*radius);
+    pq = pq*pq;
 
     //calculate S(q)
     double mmo = mass_dim-1.0;
@@ -29,8 +26,6 @@ static double _mass_fractal_kernel(double q,
     sq *= pow(cutoff_length, mmo);
     sq /= pow((1.0 + (q*cutoff_length)*(q*cutoff_length)),(mmo/2.0));
     sq /= q;
-
-    //sq = 1.0;
 
     //combine and return
     double result = pq * sq;

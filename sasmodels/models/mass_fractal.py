@@ -79,16 +79,13 @@ description = """
 category = "shape-independent"
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["radius",        "Ang",  10.0, [0.0, inf], "",
-               "Particle radius"],
-              ["mass_dim",      "",      1.9, [1.0, 6.0],   "",
-               "Mass fractal dimension"],
-              ["cutoff_length", "Ang", 100.0, [0.0, inf], "",
-               "Cut-off length"],
+parameters = [["radius",        "Ang",  10.0, [0.0, inf], "", "Particle radius"],
+              ["mass_dim",      "",      1.9, [1.0, 6.0], "", "Mass fractal dimension"],
+              ["cutoff_length", "Ang", 100.0, [0.0, inf], "", "Cut-off length"],
               ]
 
 
-source = ["lib/J1c.c", "lib/lanczos_gamma.c", "mass_fractal.c"]
+source = ["lib/sph_j1c.c", "lib/lanczos_gamma.c", "mass_fractal.c"]
 
 demo = dict(scale=1, background=0,
             radius=10.0,
@@ -103,7 +100,7 @@ oldpars = dict(radius='radius',
 tests = [[{'radius':        2.0,
            'mass_dim':      3.3,
            'cutoff_length': 1.0,
-           }, 0.001, 2.68342996226],
+           }, 0.5, 1.29016774904],
 
          [{'radius':        1.0,
            'mass_dim':      1.3,
@@ -115,5 +112,5 @@ tests = [[{'radius':        2.0,
            'mass_dim':      2.3,
            'cutoff_length': 1.0,
            'scale':        10.0,
-           }, 0.051, 11.6258202095],
+           }, 0.051, 11.6227966145],
          ]

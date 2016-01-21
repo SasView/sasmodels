@@ -9,7 +9,7 @@ double _ellipsoid_kernel(double q, double rpolar, double requatorial, double sin
     double ratio = rpolar/requatorial;
     const double u = q*requatorial*sqrt(1.0
                    + sin_alpha*sin_alpha*(ratio*ratio - 1.0));
-    const double f = J1c(u);
+    const double f = sph_j1c(u);
 
     return f*f;
 }

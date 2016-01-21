@@ -77,7 +77,7 @@ parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "",
                "Sphere radius"],
              ]
 
-source = ["lib/J1c.c"]
+source = ["lib/sph_j1c.c"]
 
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
@@ -87,7 +87,7 @@ form_volume = """
 
 Iq = """
     const double qr = q*radius;
-    const double bes = J1c(qr);
+    const double bes = sph_j1c(qr);
     const double fq = bes * (sld - solvent_sld) * form_volume(radius);
     return 1.0e-4*fq*fq;
     """
