@@ -85,8 +85,16 @@ def parameter_range(p, v):
         return [-0.5, 10]
     elif p.endswith('_pd'):
         return [0, 1]
-    elif p in ['background', 'scale']:
+    elif p == 'background':
+        return [0, 10]
+    elif p == 'scale':
         return [0, 1e3]
+    elif p == 'case_num':
+        # RPA hack
+        return [0, 10]
+    elif v < 0:
+        # Kxy parameters in rpa model can be negative
+        return [2*v, -2*v]
     else:
         return [0, (2*v if v>0 else 1)]
 
