@@ -16,6 +16,11 @@ static double _mass_fractal_kernel(double q,
           double mass_dim,
           double cutoff_length)
 {
+    // Actively check the argument.
+    if (mass_dim <= 1.0){
+       return 0.0;
+    }
+
     //calculate P(q)
     double pq = sph_j1c(q*radius);
     pq = pq*pq;
