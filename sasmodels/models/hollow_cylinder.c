@@ -113,6 +113,10 @@ double Iq(double q, double radius, double core_radius, double length, double sld
 	double summ,answer,delrho;			//running tally of integration
 	double norm,volume;	//final calculation variables
 	
+	if (core_radius >= radius || radius >= length) {
+		return NAN;
+	}
+	
 	delrho = solvent_sld - sld;
 	lower = 0.0;
 	upper = 1.0;		//limits of numerical integral
@@ -131,7 +135,6 @@ double Iq(double q, double radius, double core_radius, double length, double sld
 	return(answer);
 }
 
-//FIXME: Factor of two difference
 double Iqxy(double qx, double qy, double radius, double core_radius, double length, double sld,
 	double solvent_sld, double theta, double phi)
 {
