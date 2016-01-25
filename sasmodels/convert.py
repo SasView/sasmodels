@@ -10,6 +10,7 @@ MODELS_WITHOUT_SCALE = [
     'broad_peak',
     'two_lorentzian',
     'gel_fit',
+    'gauss_lorentz_gel',
     'be_polyelectrolyte',
 ]
 
