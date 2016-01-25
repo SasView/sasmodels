@@ -3,6 +3,22 @@ Convert models to and from sasview.
 """
 import warnings
 
+# List of models which SasView versions don't contain the explicit 'scale' argument.
+# When converting such a model, please update this list.
+MODELS_WITHOUT_SCALE = [
+    'teubner_strey',
+    'broad_peak',
+    'two_lorentzian',
+    'gel_fit',
+    'be_polyelectrolyte',
+]
+
+# List of models which SasView versions don't contain the explicit 'background' argument.
+# When converting such a model, please update this list.
+MODELS_WITHOUT_BACKGROUND = [
+    'guinier',
+]
+
 PD_DOT = [
     ("", ""),
     ("_pd", ".width"),
@@ -97,10 +113,10 @@ def revert_model(model_definition, pars):
 
     # Note: update compare.constrain_pars to match
     name = model_definition.name
-    if name in ('teubner_strey', 'broad_peak', 'two_lorentzian', 'gel_fit'):
+    if name in MODELS_WITHOUT_SCALE:
         if oldpars.pop('scale', 1.0) != 1.0:
             warnings.warn("parameter scale not used in sasview %s"%name)
-    elif name in ('guinier',):
+    elif name in MODELS_WITHOUT_BACKGROUND:
         if oldpars.pop('background', 0.0) != 0.0:
             warnings.warn("parameter background not used in sasview %s"%name)
     elif getattr(model_definition, 'category', None) == 'structure-factor':
@@ -124,9 +140,9 @@ def constrain_new_to_old(model_definition, pars):
     """
     # Note: update convert.revert_model to match
     name = model_definition.name
-    if name in ('teubner_strey','broad_peak', 'two_lorentzian', 'gel_fit'):
+    if name in MODELS_WITHOUT_SCALE:
         pars['scale'] = 1
-    elif name in ('guinier',):
+    elif name in MODELS_WITHOUT_BACKGROUND:
         pars['background'] = 0
     elif name == 'pearl_necklace':
         pars['string_thickness_pd_n'] = 0
