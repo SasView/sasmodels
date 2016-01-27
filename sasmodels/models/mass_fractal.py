@@ -97,7 +97,15 @@ oldpars = dict(radius='radius',
                mass_dim='mass_dim',
                cutoff_length='co_length')
 
-tests = [[{'radius':        2.0,
+tests = [
+         # Accuracy tests based on content in test/utest_other_models.py
+         [{'radius':       10.0,
+           'mass_dim':      1.9,
+           'cutoff_length': 2.3,
+           }, 0.05, 279.59322],
+
+         # Additional tests with larger range of parameters
+         [{'radius':        2.0,
            'mass_dim':      3.3,
            'cutoff_length': 1.0,
            }, 0.5, 1.29016774904],

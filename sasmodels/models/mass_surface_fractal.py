@@ -105,23 +105,29 @@ oldpars = dict(radius='radius',
                cluster_rg='cluster_rg',
                primary_rg='primary_rg')
 
-tests = [[{'radius':        2.0,
-           'mass_dim':      3.3,
+tests = [
+         # Accuracy tests based on content in test/utest_other_models.py
+         [{'mass_dim':      1.8,
+           'surface_dim':   2.3,
+           'cluster_rg':   86.7,
+           'primary_rg': 4000.0,
+           }, 0.05, 1.77537e-05],
+
+         # Additional tests with larger range of parameters
+         [{'mass_dim':      3.3,
            'surface_dim':   1.0,
            'cluster_rg':   90.0,
            'primary_rg': 4000.0,
            }, 0.001, 0.18462699016],
 
-         [{'radius':        1.0,
-           'mass_dim':      1.3,
+         [{'mass_dim':      1.3,
            'surface_dim':   1.0,
            'cluster_rg':   90.0,
            'primary_rg': 2000.0,
            'background':    0.8,
            }, 0.001, 1.16539753641],
 
-         [{'radius':        1.0,
-           'mass_dim':      2.3,
+         [{'mass_dim':      2.3,
            'surface_dim':   1.0,
            'cluster_rg':   90.0,
            'primary_rg': 1000.0,

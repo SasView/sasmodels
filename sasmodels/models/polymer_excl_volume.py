@@ -156,10 +156,15 @@ oldpars = dict(background='background', scale='scale',
                rg='rg',
                porod_exp='m')
 
-tests = [[{'rg': 10, 'porod_exp': 4.0}, 0.1, 0.723436675809],
+tests = [
+         # Accuracy tests based on content in test/polyexclvol_default_igor.txt
+         [{'rg': 60, 'porod_exp': 3.0}, 0.001, 0.998801],
+         [{'rg': 60, 'porod_exp': 3.0}, 0.105363, 0.0162751],
+         [{'rg': 60, 'porod_exp': 3.0}, 0.665075, 6.56261e-05],
 
+         # Additional tests with larger range of parameters
+         [{'rg': 10, 'porod_exp': 4.0}, 0.1, 0.723436675809],
          [{'rg': 2.2, 'porod_exp': 22.0, 'background': 100.0}, 5.0, 100.0],
-
          [{'rg': 1.1, 'porod_exp': 1, 'background': 10.0, 'scale': 1.25},
          20000., 10.0000712097]
          ]

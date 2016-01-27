@@ -132,7 +132,20 @@ oldpars = dict(background='background',
                ionization_degree='alpha',
                polymer_concentration='c')
 
-tests = [[{'contrast_factor':       10.0,
+tests = [
+         # Accuracy tests based on content in test/utest_other_models.py
+         [{'contrast_factor':       10.0,
+           'bjerrum_length':         7.1,
+           'virial_param':          12.0,
+           'monomer_length':        10.0,
+           'salt_concentration':     0.0,
+           'ionization_degree':      0.05,
+           'polymer_concentration':  0.7,
+           'background':             0.001,
+           }, 0.001, 0.0948379],
+
+         # Additional tests with larger range of parameters
+         [{'contrast_factor':       10.0,
            'bjerrum_length':       100.0,
            'virial_param':           3.0,
            'monomer_length':         1.0,

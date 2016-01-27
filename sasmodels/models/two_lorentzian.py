@@ -116,7 +116,37 @@ oldpars = dict(background='background',
                lorentz_length_1='length_1', lorentz_length_2='length_2',
                lorentz_exp_1='exponent_1',  lorentz_exp_2='exponent_2')
 
-tests = [[{'lorentz_scale_1':   10.0,
+tests = [
+         # Accuracy tests based on content in test/utest_extra_models.py
+         [{'lorentz_scale_1':   10.0,
+           'lorentz_length_1': 100.0,
+           'lorentz_exp_1':      3.0,
+           'lorentz_scale_2':    1.0,
+           'lorentz_length_2':  10.0,
+           'lorentz_exp_2':      2.0,
+           'background':         0.1,
+           }, 0.001, 11.08991],
+
+         [{'lorentz_scale_1':   10.0,
+           'lorentz_length_1': 100.0,
+           'lorentz_exp_1':      3.0,
+           'lorentz_scale_2':    1.0,
+           'lorentz_length_2':  10.0,
+           'lorentz_exp_2':      2.0,
+           'background':         0.1,
+           }, 0.150141, 0.410245],
+
+         [{'lorentz_scale_1':   10.0,
+           'lorentz_length_1': 100.0,
+           'lorentz_exp_1':      3.0,
+           'lorentz_scale_2':    1.0,
+           'lorentz_length_2':  10.0,
+           'lorentz_exp_2':      2.0,
+           'background':         0.1,
+           }, 0.442528, 0.148699],
+
+         # Additional tests with larger range of parameters
+         [{'lorentz_scale_1':   10.0,
            'lorentz_length_1': 100.0,
            'lorentz_exp_1':      3.0,
            'lorentz_scale_2':    1.0,

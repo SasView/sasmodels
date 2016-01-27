@@ -109,7 +109,28 @@ oldpars = dict(background='background',
                lorentz_scale_factor='scale_l',
                dynamic_cor_length='dyn_colength')
 
-tests = [[{'gauss_scale_factor':  10.0,
+tests = [
+         # Accuracy tests based on content in test/utest_extra_models.py
+         [{'gauss_scale_factor':  100.0,
+           'static_cor_length':   100.0,
+           'lorentz_scale_factor': 50.0,
+           'dynamic_cor_length':   20.0,
+           }, 0.001, 149.481],
+
+         [{'gauss_scale_factor':  100.0,
+           'static_cor_length':   100.0,
+           'lorentz_scale_factor': 50.0,
+           'dynamic_cor_length':   20.0,
+           }, 0.105363, 9.1903],
+
+         [{'gauss_scale_factor':  100.0,
+           'static_cor_length':   100.0,
+           'lorentz_scale_factor': 50.0,
+           'dynamic_cor_length':   20.0,
+           }, 0.441623, 0.632811],
+
+         # Additional tests with larger range of parameters
+         [{'gauss_scale_factor':  10.0,
            'static_cor_length':  100.0,
            'lorentz_scale_factor': 3.0,
            'dynamic_cor_length':   1.0,
