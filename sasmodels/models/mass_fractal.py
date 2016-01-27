@@ -90,7 +90,7 @@ source = ["lib/sph_j1c.c", "lib/lanczos_gamma.c", "mass_fractal.c"]
 demo = dict(scale=1, background=0,
             radius=10.0,
             mass_dim=1.9,
-            cutoff_length=2.3)
+            cutoff_length=100.0)
 
 oldname = 'MassFractalModel'
 oldpars = dict(radius='radius',
@@ -99,9 +99,9 @@ oldpars = dict(radius='radius',
 
 tests = [
          # Accuracy tests based on content in test/utest_other_models.py
-         [{'radius':       10.0,
-           'mass_dim':      1.9,
-           'cutoff_length': 2.3,
+         [{'radius':         10.0,
+           'mass_dim':        1.9,
+           'cutoff_length': 100.0,
            }, 0.05, 279.59322],
 
          # Additional tests with larger range of parameters
