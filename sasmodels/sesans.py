@@ -11,31 +11,15 @@ from __future__ import division
 
 import numpy as np
 from numpy import pi, exp
-
 from scipy.special import jv as besselj
 
-def make_q(q_zmax, Rmax):
+def make_q(q_max, Rmax):
+    """
+    Return a $q$ vector suitable for SESANS covering from $2\pi/ (10 R_{\max})$
+    to $q_max$.
+    """
     q_min = dq = 0.1 * 2*pi / Rmax
-    #q_min = 0.00003
-    return np.arange(q_min, q_zmax, dq)
-
-# TODO: dead code; for now the call to the hankel transform happens in BumpsModel
-class SesansCalculator:
-    def __init__(self, kernel, q_zmax, Rmax, SElength, wavelength, thickness):
-        self._set_kernel(kernel, q_zmax, Rmax)
-        self.SElength = SElength
-        self.wavelength = wavelength
-        self.thickness = thickness
-
-    def _set_kernel(self, kernel, q_zmax, Rmax):
-        kernel_input = kernel.make_input([make_q(q_zmax, Rmax)])
-        self.sans_calculator = kernel(kernel_input)
-
-    def __call__(self, pars, pd_pars, cutoff=1e-5):
-        Iq = self.sans_calculator(pars, pd_pars, cutoff)
-        P = hankel(self.SElength, self.wavelength, self.thickness, self.q, Iq)
-        self.Iq = Iq
-        return P
+    return np.arange(q_min, q_max, dq)
 
 def hankel(SElength, wavelength, thickness, q, Iq):
     """
@@ -59,7 +43,7 @@ def hankel(SElength, wavelength, thickness, q, Iq):
     """
     G = np.zeros(len(SElength), 'd')
     for i in range(len(SElength)):
-        integr = besselj(0,q*SElength[i])*Iq*q
+        integr = besselj(0, q*SElength[i])*Iq*q
         G[i] = np.sum(integr)
     dq=(q[1]-q[0])*1e10   # [m^-1] step size in q, needed for integration
     G *= dq*1e10*2*pi # integr step, conver q into [m**-1] and 2 pi circle integr
