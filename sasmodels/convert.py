@@ -48,13 +48,13 @@ def _rescale_sld(pars):
     new model definition end with sld.
     """
     return dict((p, (v*1e6 if p.endswith('sld') else v))
-                for p,v in pars.items())
+                for p, v in pars.items())
 
 def convert_model(name, pars):
     """
     Convert model from old style parameter names to new style.
     """
-    _,_ = name,pars # lint
+    _, _ = name, pars # lint
     raise NotImplementedError
     # need to load all new models in order to determine old=>new
     # model name mapping
@@ -66,7 +66,7 @@ def _unscale_sld(pars):
     new model definition end with sld.
     """
     return dict((p, (v*1e-6 if p.endswith('sld') else v))
-                for p,v in pars.items())
+                for p, v in pars.items())
 
 def _remove_pd(pars, key, name):
     """

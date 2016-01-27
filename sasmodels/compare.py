@@ -71,11 +71,13 @@ Key=value pairs allow you to set specific values for the model parameters.
 # Update docs with command line usage string.   This is separate from the usual
 # doc string so that we can display it at run time if there is an error.
 # lin
-__doc__ = __doc__ + """
+__doc__ = (__doc__  # pylint: disable=redefined-builtin
+           + """
 Program description
 -------------------
 
-""" + USAGE
+"""
+           + USAGE)
 
 
 
@@ -280,7 +282,8 @@ def eval_sasview(model_definition, data):
             smearer.set_index(index)
             theory = lambda: smearer.get_value()
         else:
-            theory = lambda: model.evalDistribution([data.qx_data[index], data.qy_data[index]])
+            theory = lambda: model.evalDistribution([data.qx_data[index],
+                                                     data.qy_data[index]])
     elif smearer is not None:
         theory = lambda: smearer(model.evalDistribution(data.x))
     else:
@@ -415,7 +418,8 @@ def compare(opts, limits=None):
         base = opts['engines'][0]
         try:
             base_value, base_time = time_calculation(base, pars, Nbase)
-            print("%s t=%.1f ms, intensity=%.0f"%(base.engine, base_time, sum(base_value)))
+            print("%s t=%.1f ms, intensity=%.0f"
+                  % (base.engine, base_time, sum(base_value)))
         except ImportError:
             traceback.print_exc()
             Nbase = 0
@@ -425,21 +429,21 @@ def compare(opts, limits=None):
         comp = opts['engines'][1]
         try:
             comp_value, comp_time = time_calculation(comp, pars, Ncomp)
-            print("%s t=%.1f ms, intensity=%.0f"%(comp.engine, comp_time, sum(comp_value)))
+            print("%s t=%.1f ms, intensity=%.0f"
+                  % (comp.engine, comp_time, sum(comp_value)))
         except ImportError:
             traceback.print_exc()
             Ncomp = 0
 
     # Compare, but only if computing both forms
     if Nbase > 0 and Ncomp > 0:
-        #print("speedup %.2g"%(comp_time/base_time))
-        #print("max |base/comp|", max(abs(base_value/comp_value)), "%.15g"%max(abs(base_value)), "%.15g"%max(abs(comp_value)))
-        #comp *= max(base_value/comp_value)
         resid = (base_value - comp_value)
         relerr = resid/comp_value
-        _print_stats("|%s-%s|"%(base.engine, comp.engine) + (" "*(3+len(comp.engine))),
+        _print_stats("|%s-%s|"
+                     % (base.engine, comp.engine) + (" "*(3+len(comp.engine))),
                      resid)
-        _print_stats("|(%s-%s)/%s|"%(base.engine, comp.engine, comp.engine),
+        _print_stats("|(%s-%s)/%s|"
+                     % (base.engine, comp.engine, comp.engine),
                      relerr)
 
     # Plot if requested
@@ -590,12 +594,13 @@ def parse_opts():
 
     invalid = [o[1:] for o in flags
                if o[1:] not in NAME_OPTIONS
-                   and not any(o.startswith('-%s='%t) for t in VALUE_OPTIONS)]
+               and not any(o.startswith('-%s='%t) for t in VALUE_OPTIONS)]
     if invalid:
         print("Invalid options: %s"%(", ".join(invalid)))
         sys.exit(1)
 
 
+    # pylint: disable=bad-whitespace
     # Interpret the flags
     opts = {
         'plot'      : True,
@@ -650,6 +655,7 @@ def parse_opts():
         elif arg == '-quad!':   engines.append(arg[1:])
         elif arg == '-sasview': engines.append(arg[1:])
         elif arg == '-edit':    opts['explore'] = True
+    # pylint: enable=bad-whitespace
 
     if len(engines) == 0:
         engines.extend(['single', 'sasview'])
@@ -674,11 +680,11 @@ def parse_opts():
     # Fill in parameters given on the command line
     presets = {}
     for arg in values:
-        k,v = arg.split('=',1)
+        k, v = arg.split('=', 1)
         if k not in pars:
             # extract base name without polydispersity info
             s = set(p.split('_pd')[0] for p in pars)
-            print("%r invalid; parameters are: %s"%(k,", ".join(sorted(s))))
+            print("%r invalid; parameters are: %s"%(k, ", ".join(sorted(s))))
             sys.exit(1)
         presets[k] = float(v) if not k.endswith('type') else v
 
@@ -696,7 +702,7 @@ def parse_opts():
         print("pars " + str(parlist(pars)))
 
     # Create the computational engines
-    data, _index = make_data(opts)
+    data, _ = make_data(opts)
     if n1:
         base = make_engine(model_definition, data, engines[0], opts['cutoff'])
     else:
@@ -706,6 +712,7 @@ def parse_opts():
     else:
         comp = None
 
+    # pylint: disable=bad-whitespace
     # Remember it all
     opts.update({
         'name'      : name,
@@ -717,35 +724,35 @@ def parse_opts():
         'data'      : data,
         'engines'   : [base, comp],
     })
+    # pylint: enable=bad-whitespace
 
     return opts
 
-def main():
-    opts = parse_opts()
-    if opts['explore']:
-        explore(opts)
-    else:
-        compare(opts)
-
 def explore(opts):
+    """
+    Explore the model using the Bumps GUI.
+    """
     import wx
     from bumps.names import FitProblem
     from bumps.gui.app_frame import AppFrame
 
     problem = FitProblem(Explore(opts))
-    isMac = "cocoa" in wx.version()
+    is_mac = "cocoa" in wx.version()
     app = wx.App()
     frame = AppFrame(parent=None, title="explore")
-    if not isMac: frame.Show()
+    if not is_mac: frame.Show()
     frame.panel.set_model(model=problem)
     frame.panel.Layout()
     frame.panel.aui.Split(0, wx.TOP)
-    if isMac: frame.Show()
+    if is_mac: frame.Show()
     app.MainLoop()
 
 class Explore(object):
     """
-    Return a bumps wrapper for a SAS model comparison.
+    Bumps wrapper for a SAS model comparison.
+
+    The resulting object can be used as a Bumps fit problem so that
+    parameters can be adjusted in the GUI, with plots updated on the fly.
     """
     def __init__(self, opts):
         from bumps.cli import config_matplotlib
@@ -786,6 +793,7 @@ class Explore(object):
         """
         Return cost.
         """
+        # pylint: disable=no-self-use
         return 0.  # No nllf
 
     def plot(self, view='log'):
@@ -802,6 +810,16 @@ class Explore(object):
             vmin = vmax*1e-7
             self.limits = vmin, vmax
 
+
+def main():
+    """
+    Main program.
+    """
+    opts = parse_opts()
+    if opts['explore']:
+        explore(opts)
+    else:
+        compare(opts)
 
 if __name__ == "__main__":
     main()
