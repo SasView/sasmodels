@@ -607,7 +607,9 @@ VALUE_OPTIONS = [
 
 def columnize(L, indent="", width=79):
     """
-    Format a list of strings into columns for printing.
+    Format a list of strings into columns.
+
+    Returns a string with carriage returns ready for printing.
     """
     column_width = max(len(w) for w in L) + 1
     num_columns = (width - len(indent)) // column_width
