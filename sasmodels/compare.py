@@ -117,6 +117,74 @@ else:
         return dt.total_seconds()
 
 
+class push_seed(object):
+    """
+    Set the seed value for the random number generator.
+
+    When used in a with statement, the random number generator state is
+    restored after the with statement is complete.
+
+    :Parameters:
+
+    *seed* : int or array_like, optional
+        Seed for RandomState
+
+    :Example:
+
+    Seed can be used directly to set the seed::
+
+        >>> from numpy.random import randint
+        >>> push_seed(24)
+        <...push_seed object at...>
+        >>> print(randint(0,1000000,3))
+        [242082    899 211136]
+
+    Seed can also be used in a with statement, which sets the random
+    number generator state for the enclosed computations and restores
+    it to the previous state on completion::
+
+        >>> with push_seed(24):
+        ...    print(randint(0,1000000,3))
+        [242082    899 211136]
+
+    Using nested contexts, we can demonstrate that state is indeed
+    restored after the block completes::
+
+        >>> with push_seed(24):
+        ...    print(randint(0,1000000))
+        ...    with push_seed(24):
+        ...        print(randint(0,1000000,3))
+        ...    print(randint(0,1000000))
+        242082
+        [242082    899 211136]
+        899
+
+    The restore step is protected against exceptions in the block::
+
+        >>> with push_seed(24):
+        ...    print(randint(0,1000000))
+        ...    try:
+        ...        with push_seed(24):
+        ...            print(randint(0,1000000,3))
+        ...            raise Exception()
+        ...    except:
+        ...        print("Exception raised")
+        ...    print(randint(0,1000000))
+        242082
+        [242082    899 211136]
+        Exception raised
+        899
+    """
+    def __init__(self, seed=None):
+        self._state = np.random.get_state()
+        np.random.seed(seed)
+
+    def __enter__(self):
+        return None
+
+    def __exit__(self, *args):
+        np.random.set_state(self._state)
+
 def tic():
     """
     Timer function.
@@ -178,6 +246,7 @@ def parameter_range(p, v):
     else:
         return [0, (2*v if v > 0 else 1)]
 
+
 def _randomize_one(p, v):
     """
     Randomize a single parameter.
@@ -186,6 +255,7 @@ def _randomize_one(p, v):
         return v
     else:
         return np.random.uniform(*parameter_range(p, v))
+
 
 def randomize_pars(pars, seed=None):
     """
@@ -196,10 +266,10 @@ def randomize_pars(pars, seed=None):
     greater than cylinder radius in the capped_cylinder model, so
     :func:`constrain_pars` needs to be called afterward..
     """
-    np.random.seed(seed)
-    # Note: the sort guarantees order `of calls to random number generator
-    pars = dict((p, _randomize_one(p, v))
-                for p, v in sorted(pars.items()))
+    with push_seed(seed):
+        # Note: the sort guarantees order `of calls to random number generator
+        pars = dict((p, _randomize_one(p, v))
+                    for p, v in sorted(pars.items()))
     return pars
 
 def constrain_pars(model_definition, pars):

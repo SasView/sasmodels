@@ -260,4 +260,6 @@ def main():
                          cutoff=cutoff, base=base, comp=comp)
 
 if __name__ == "__main__":
+    #from .compare import push_seed
+    #with push_seed(1): main()
     main()
