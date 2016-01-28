@@ -49,31 +49,34 @@ E Raphael, J F Joanny, *Europhysics Letters*, 11 (1990) 179
 
 """
 
-from numpy import inf, power, pi, sqrt
+from numpy import inf, pi, sqrt
 
 name = "be_polyelectrolyte"
 title = "Polyelectrolyte with the RPA expression derived by Borue and Erukhimovich"
 description = """
-            Evaluate
-            F(x) = K 1/(4 pi Lb (alpha)^(2)) (q^(2)+k2)/(1+(r02)^(2))
-                 (q^(2)+k2) (q^(2)-(12 h C/b^(2)))
+    Evaluate
+    F(x) = K 1/(4 pi Lb (alpha)^(2)) (q^(2)+k2)/(1+(r02)^(2))
+         (q^(2)+k2) (q^(2)-(12 h C/b^(2)))
 
-            has 3 internal parameters :
-                   The inverse Debye Length: K2 = 4 pi Lb (2 Cs+alpha C)
-                   r02 =1/alpha/Ca^(0.5) (B/(48 pi Lb)^(0.5))
-                   Ca = 6.022136e-4 C
-            """
+    has 3 internal parameters :
+           The inverse Debye Length: K2 = 4 pi Lb (2 Cs+alpha C)
+           r02 =1/alpha/Ca^(0.5) (B/(48 pi Lb)^(0.5))
+           Ca = 6.022136e-4 C
+    """
 category = "shape-independent"
 
-#            ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["contrast_factor",       "barns",   10.0,  [-inf, inf], "", "Contrast factor of the polymer"],
-              ["bjerrum_length",        "Ang",      7.1,  [0, inf],    "", "Bjerrum length"],
-              ["virial_param",          "1/Ang^2", 12.0,  [-inf, inf], "", "Virial parameter"],
-              ["monomer_length",        "Ang",     10.0,  [0, inf],    "", "Monomer length"],
-              ["salt_concentration",    "mol/L",    0.0,  [-inf, inf], "", "Concentration of monovalent salt"],
-              ["ionization_degree",     "",         0.05, [0, inf],    "", "Degree of ionization"],
-              ["polymer_concentration", "mol/L",    0.7,  [0, inf],    "", "Polymer molar concentration"],
-              ]
+# pylint: disable=bad-whitespace,line-too-long
+#   ["name",                  "units", default, [lower, upper], "type", "description"],
+parameters = [
+    ["contrast_factor",       "barns",    10.0,  [-inf, inf], "", "Contrast factor of the polymer"],
+    ["bjerrum_length",        "Ang",       7.1,  [0, inf],    "", "Bjerrum length"],
+    ["virial_param",          "1/Ang^2",  12.0,  [-inf, inf], "", "Virial parameter"],
+    ["monomer_length",        "Ang",      10.0,  [0, inf],    "", "Monomer length"],
+    ["salt_concentration",    "mol/L",     0.0,  [-inf, inf], "", "Concentration of monovalent salt"],
+    ["ionization_degree",     "",          0.05, [0, inf],    "", "Degree of ionization"],
+    ["polymer_concentration", "mol/L",     0.7,  [0, inf],    "", "Polymer molar concentration"],
+    ]
+# pylint: enable=bad-whitespace,line-too-long
 
 
 def Iq(q,
@@ -105,9 +108,7 @@ Iq.vectorized = True  # Iq accepts an array of q values
 
 
 def Iqxy(qx, qy, *args):
-        iq = Iq(sqrt(qx**2 + qy**2), *args)
-
-        return iq
+    return Iq(sqrt(qx**2 + qy**2), *args)
 
 Iqxy.vectorized = True  # Iqxy accepts an array of qx, qy values
 
@@ -132,44 +133,46 @@ oldpars = dict(background='background',
                ionization_degree='alpha',
                polymer_concentration='c')
 
+# pylint: disable=bad-whitespace
 tests = [
-         # Accuracy tests based on content in test/utest_other_models.py
-         [{'contrast_factor':       10.0,
-           'bjerrum_length':         7.1,
-           'virial_param':          12.0,
-           'monomer_length':        10.0,
-           'salt_concentration':     0.0,
-           'ionization_degree':      0.05,
-           'polymer_concentration':  0.7,
-           'background':             0.001,
-           }, 0.001, 0.0948379],
+    # Accuracy tests based on content in test/utest_other_models.py
+    [{'contrast_factor':       10.0,
+      'bjerrum_length':         7.1,
+      'virial_param':          12.0,
+      'monomer_length':        10.0,
+      'salt_concentration':     0.0,
+      'ionization_degree':      0.05,
+      'polymer_concentration':  0.7,
+      'background':             0.001,
+     }, 0.001, 0.0948379],
 
-         # Additional tests with larger range of parameters
-         [{'contrast_factor':       10.0,
-           'bjerrum_length':       100.0,
-           'virial_param':           3.0,
-           'monomer_length':         1.0,
-           'salt_concentration':    10.0,
-           'ionization_degree':      2.0,
-           'polymer_concentration': 10.0,
-           }, 0.1, -3.75693800588],
+    # Additional tests with larger range of parameters
+    [{'contrast_factor':       10.0,
+      'bjerrum_length':       100.0,
+      'virial_param':           3.0,
+      'monomer_length':         1.0,
+      'salt_concentration':    10.0,
+      'ionization_degree':      2.0,
+      'polymer_concentration': 10.0,
+     }, 0.1, -3.75693800588],
 
-         [{'contrast_factor':       10.0,
-           'bjerrum_length':       100.0,
-           'virial_param':           3.0,
-           'monomer_length':         1.0,
-           'salt_concentration':    10.0,
-           'ionization_degree':      2.0,
-           'polymer_concentration': 10.0,
-           'background':           100.0
-           }, 5.0, 100.029142149],
+    [{'contrast_factor':       10.0,
+      'bjerrum_length':       100.0,
+      'virial_param':           3.0,
+      'monomer_length':         1.0,
+      'salt_concentration':    10.0,
+      'ionization_degree':      2.0,
+      'polymer_concentration': 10.0,
+      'background':           100.0
+     }, 5.0, 100.029142149],
 
-         [{'contrast_factor':     100.0,
-           'bjerrum_length':       10.0,
-           'virial_param':        180.0,
-           'monomer_length':        1.0,
-           'salt_concentration':    0.1,
-           'ionization_degree':     0.5,
-           'polymer_concentration': 0.1,
-           }, 200., 1.80664667511e-06],
-         ]
+    [{'contrast_factor':     100.0,
+      'bjerrum_length':       10.0,
+      'virial_param':        180.0,
+      'monomer_length':        1.0,
+      'salt_concentration':    0.1,
+      'ionization_degree':     0.5,
+      'polymer_concentration': 0.1,
+     }, 200., 1.80664667511e-06],
+    ]
+# pylint: enable=bad-whitespace

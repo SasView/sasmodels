@@ -532,12 +532,12 @@ def compare(opts, limits=None):
 
     if Nbase > 0:
         if Ncomp > 0: plt.subplot(131)
-        plot_theory(data, base_value, view=view, plot_data=False, limits=limits)
+        plot_theory(data, base_value, view=view, use_data=False, limits=limits)
         plt.title("%s t=%.1f ms"%(base.engine, base_time))
         #cbar_title = "log I"
     if Ncomp > 0:
         if Nbase > 0: plt.subplot(132)
-        plot_theory(data, comp_value, view=view, plot_data=False, limits=limits)
+        plot_theory(data, comp_value, view=view, use_data=False, limits=limits)
         plt.title("%s t=%.1f ms"%(comp.engine, comp_time))
         #cbar_title = "log I"
     if Ncomp > 0 and Nbase > 0:
@@ -547,7 +547,7 @@ def compare(opts, limits=None):
         else:
             err, errstr, errview = abs(relerr), "rel err", "log"
         #err,errstr = base/comp,"ratio"
-        plot_theory(data, None, resid=err, view=errview, plot_data=False)
+        plot_theory(data, None, resid=err, view=errview, use_data=False)
         plt.title("max %s = %.3g"%(errstr, max(abs(err))))
         #cbar_title = errstr if errview=="linear" else "log "+errstr
     #if is2D:
