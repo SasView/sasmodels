@@ -283,7 +283,7 @@ def _plot_result1D(data, theory, resid, view, plot_data, limits=None):
             if view is 'log':
                 mdata[mdata <= 0] = masked
             plt.errorbar(data.x/10, scale*mdata, yerr=data.dy, fmt='.')
-            all_positive = all_positive and (mdata>0).all()
+            all_positive = all_positive and (mdata > 0).all()
             some_present = some_present or (mdata.count() > 0)
 
 
@@ -291,9 +291,9 @@ def _plot_result1D(data, theory, resid, view, plot_data, limits=None):
             mtheory = masked_array(theory, data.mask.copy())
             mtheory[~np.isfinite(mtheory)] = masked
             if view is 'log':
-                mtheory[mtheory<=0] = masked
+                mtheory[mtheory <= 0] = masked
             plt.plot(data.x/10, scale*mtheory, '-', hold=True)
-            all_positive = all_positive and (mtheory>0).all()
+            all_positive = all_positive and (mtheory > 0).all()
             some_present = some_present or (mtheory.count() > 0)
 
         if limits is not None:
@@ -395,7 +395,7 @@ def _plot_result2D(data, theory, resid, view, plot_data, limits=None):
         _plot_2d_signal(data, theory, view=view, vmin=vmin, vmax=vmax)
         plt.title('theory')
         h = plt.colorbar()
-        h.set_label(r'$\log_{10}I(q)$' if view=='log'
+        h.set_label(r'$\log_{10}I(q)$' if view == 'log'
                     else r'$q^4 I(q)$' if view == 'q4'
                     else '$I(q)$')
 
@@ -410,7 +410,7 @@ def _plot_result2D(data, theory, resid, view, plot_data, limits=None):
         _plot_2d_signal(data, resid, view='linear')
         plt.title('residuals')
         h = plt.colorbar()
-        h.set_label('$\Delta I(q)$')
+        h.set_label(r'$\Delta I(q)$')
 
 
 @protect

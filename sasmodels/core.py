@@ -1,8 +1,10 @@
 """
 Core model handling routines.
 """
-__all__ = ["list_models", "load_model_definition",  "precompile_dll",
-           "load_model", "make_kernel", "call_kernel", "call_ER", "call_VR" ]
+__all__ = [
+    "list_models", "load_model_definition", "precompile_dll",
+    "load_model", "make_kernel", "call_kernel", "call_ER", "call_VR",
+    ]
 
 from os.path import basename, dirname, join as joinpath
 from glob import glob
@@ -60,6 +62,9 @@ def precompile_dll(model_name, dtype="double"):
 
 
 def isstr(s):
+    """
+    Return True if *s* is a string-like object.
+    """
     try: s + ''
     except: return False
     return True
@@ -98,7 +103,7 @@ def load_model(model_definition, dtype="single", platform="ocl"):
     # open(info['name']+'.c','w').write(source)
     # source = open(info['name']+'.cl','r').read()
 
-    if (platform=="dll"
+    if (platform == "dll"
             or not HAVE_OPENCL
             or not kernelcl.environment().has_type(dtype)):
         return kerneldll.load_dll(source, info, dtype)
@@ -127,7 +132,7 @@ def get_weights(info, pars, name):
     npts = pars.get(name+'_pd_n', 0)
     width = pars.get(name+'_pd', 0.0)
     nsigma = pars.get(name+'_pd_nsigma', 3.0)
-    value,weight = weights.get_weights(
+    value, weight = weights.get_weights(
         disperser, npts, width, nsigma, value, limits, relative)
     return value, weight / np.sum(weight)
 
@@ -194,6 +199,6 @@ def call_VR(info, pars):
         vol_pars = [get_weights(info, pars, name)
                     for name in info['partype']['volume']]
         value, weight = dispersion_mesh(vol_pars)
-        whole,part = VR(*value)
+        whole, part = VR(*value)
         return np.sum(weight*part)/np.sum(weight*whole)
 

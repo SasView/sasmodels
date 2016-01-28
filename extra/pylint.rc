@@ -5,7 +5,7 @@
 
 # Python code to execute, usually for sys.path manipulation such as
 # pygtk.require().
-#init-hook=
+#init-hook='import os, sys; sys.path.extend([os.getcwd(),os.path.join(os.getcwd(),"extra")])'
 
 # Profiled execution.
 profile=no
