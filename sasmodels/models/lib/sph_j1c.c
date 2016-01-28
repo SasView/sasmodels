@@ -23,7 +23,7 @@ double sph_j1c(double q)
     SINCOS(q, sin_q, cos_q);
 
     const double bessel = (q < 0.384038453352533)
-        ? (1.0 + q2*(-3./30. + q2*(3./840.))
+        ? (1.0 + q2*(-3./30. + q2*(3./840.)))
         : 3.0*(sin_q/q - cos_q)/q2;
 
     return bessel;
