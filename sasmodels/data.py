@@ -92,7 +92,10 @@ class Data1D(object):
         self.filename = None
         self.qmin = x.min() if x is not None else np.NaN
         self.qmax = x.max() if x is not None else np.NaN
-        self.mask = np.isnan(y) if y is not None else None
+        # TODO: why is 1D mask False and 2D mask True?
+        self.mask = (np.isnan(y) if y is not None
+                     else np.zeros_like(x,'b') if x is not None
+                     else None)
         self._xaxis, self._xunit = "x", ""
         self._yaxis, self._yunit = "y", ""
 
@@ -117,7 +120,9 @@ class Data2D(object):
         self.qx_data, self.dqx_data = x, dx
         self.qy_data, self.dqy_data = y, dy
         self.data, self.err_data = z, dz
-        self.mask = ~np.isnan(z) if z is not None else None
+        self.mask = (~np.isnan(z) if z is not None
+                     else np.ones_like(x) if x is not None
+                     else None)
         self.q_data = np.sqrt(x**2 + y**2)
         self.qmin = 1e-16
         self.qmax = np.inf
