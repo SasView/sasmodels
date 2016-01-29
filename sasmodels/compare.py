@@ -28,6 +28,22 @@ On Windows you will need to remove the quotes.
 
 from __future__ import print_function
 
+import sys
+import math
+from os.path import basename, dirname, join as joinpath
+import glob
+import datetime
+import traceback
+
+import numpy as np
+
+from . import core
+from . import kerneldll
+from . import generate
+from .data import plot_theory, empty_data1D, empty_data2D
+from .direct_model import DirectModel
+from .convert import revert_model, constrain_new_to_old
+
 USAGE = """
 usage: compare.py model N1 N2 [options...] [key=val]
 
@@ -79,30 +95,10 @@ Program description
 """
            + USAGE)
 
-
-
-import sys
-import math
-from os.path import basename, dirname, join as joinpath
-import glob
-import datetime
-import traceback
-
-import numpy as np
-
-ROOT = dirname(__file__)
-sys.path.insert(0, ROOT)  # Make sure sasmodels is first on the path
-
-
-from . import core
-from . import kerneldll
-from . import generate
-from .data import plot_theory, empty_data1D, empty_data2D
-from .direct_model import DirectModel
-from .convert import revert_model, constrain_new_to_old
 kerneldll.ALLOW_SINGLE_PRECISION_DLLS = True
 
 # List of available models
+ROOT = dirname(__file__)
 MODELS = [basename(f)[:-3]
           for f in sorted(glob.glob(joinpath(ROOT, "models", "[a-zA-Z]*.py")))]
 
@@ -116,6 +112,74 @@ else:
         """Return number date-time delta as number seconds"""
         return dt.total_seconds()
 
+
+class push_seed(object):
+    """
+    Set the seed value for the random number generator.
+
+    When used in a with statement, the random number generator state is
+    restored after the with statement is complete.
+
+    :Parameters:
+
+    *seed* : int or array_like, optional
+        Seed for RandomState
+
+    :Example:
+
+    Seed can be used directly to set the seed::
+
+        >>> from numpy.random import randint
+        >>> push_seed(24)
+        <...push_seed object at...>
+        >>> print(randint(0,1000000,3))
+        [242082    899 211136]
+
+    Seed can also be used in a with statement, which sets the random
+    number generator state for the enclosed computations and restores
+    it to the previous state on completion::
+
+        >>> with push_seed(24):
+        ...    print(randint(0,1000000,3))
+        [242082    899 211136]
+
+    Using nested contexts, we can demonstrate that state is indeed
+    restored after the block completes::
+
+        >>> with push_seed(24):
+        ...    print(randint(0,1000000))
+        ...    with push_seed(24):
+        ...        print(randint(0,1000000,3))
+        ...    print(randint(0,1000000))
+        242082
+        [242082    899 211136]
+        899
+
+    The restore step is protected against exceptions in the block::
+
+        >>> with push_seed(24):
+        ...    print(randint(0,1000000))
+        ...    try:
+        ...        with push_seed(24):
+        ...            print(randint(0,1000000,3))
+        ...            raise Exception()
+        ...    except:
+        ...        print("Exception raised")
+        ...    print(randint(0,1000000))
+        242082
+        [242082    899 211136]
+        Exception raised
+        899
+    """
+    def __init__(self, seed=None):
+        self._state = np.random.get_state()
+        np.random.seed(seed)
+
+    def __enter__(self):
+        return None
+
+    def __exit__(self, *args):
+        np.random.set_state(self._state)
 
 def tic():
     """
@@ -178,6 +242,7 @@ def parameter_range(p, v):
     else:
         return [0, (2*v if v > 0 else 1)]
 
+
 def _randomize_one(p, v):
     """
     Randomize a single parameter.
@@ -186,6 +251,7 @@ def _randomize_one(p, v):
         return v
     else:
         return np.random.uniform(*parameter_range(p, v))
+
 
 def randomize_pars(pars, seed=None):
     """
@@ -196,10 +262,10 @@ def randomize_pars(pars, seed=None):
     greater than cylinder radius in the capped_cylinder model, so
     :func:`constrain_pars` needs to be called afterward..
     """
-    np.random.seed(seed)
-    # Note: the sort guarantees order `of calls to random number generator
-    pars = dict((p, _randomize_one(p, v))
-                for p, v in sorted(pars.items()))
+    with push_seed(seed):
+        # Note: the sort guarantees order `of calls to random number generator
+        pars = dict((p, _randomize_one(p, v))
+                    for p, v in sorted(pars.items()))
     return pars
 
 def constrain_pars(model_definition, pars):
@@ -462,12 +528,12 @@ def compare(opts, limits=None):
 
     if Nbase > 0:
         if Ncomp > 0: plt.subplot(131)
-        plot_theory(data, base_value, view=view, plot_data=False, limits=limits)
+        plot_theory(data, base_value, view=view, use_data=False, limits=limits)
         plt.title("%s t=%.1f ms"%(base.engine, base_time))
         #cbar_title = "log I"
     if Ncomp > 0:
         if Nbase > 0: plt.subplot(132)
-        plot_theory(data, comp_value, view=view, plot_data=False, limits=limits)
+        plot_theory(data, comp_value, view=view, use_data=False, limits=limits)
         plt.title("%s t=%.1f ms"%(comp.engine, comp_time))
         #cbar_title = "log I"
     if Ncomp > 0 and Nbase > 0:
@@ -477,7 +543,7 @@ def compare(opts, limits=None):
         else:
             err, errstr, errview = abs(relerr), "rel err", "log"
         #err,errstr = base/comp,"ratio"
-        plot_theory(data, None, resid=err, view=errview, plot_data=False)
+        plot_theory(data, None, resid=err, view=errview, use_data=False)
         plt.title("max %s = %.3g"%(errstr, max(abs(err))))
         #cbar_title = errstr if errview=="linear" else "log "+errstr
     #if is2D:

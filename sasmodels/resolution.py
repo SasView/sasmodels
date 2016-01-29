@@ -5,15 +5,15 @@ This defines classes for 1D and 2D resolution calculations.
 """
 from __future__ import division
 
+from scipy.special import erf
+from numpy import sqrt, log, log10
+import numpy as np
+
 __all__ = ["Resolution", "Perfect1D", "Pinhole1D", "Slit1D",
            "apply_resolution_matrix", "pinhole_resolution", "slit_resolution",
            "pinhole_extend_q", "slit_extend_q", "bin_edges",
            "interpolate", "linear_extrapolation", "geometric_extrapolation",
            ]
-
-from scipy.special import erf
-from numpy import sqrt, log, log10
-import numpy as np
 
 MINIMUM_RESOLUTION = 1e-8
 

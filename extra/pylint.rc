@@ -6,6 +6,7 @@
 # Python code to execute, usually for sys.path manipulation such as
 # pygtk.require().
 #init-hook='import os, sys; sys.path.extend([os.getcwd(),os.path.join(os.getcwd(),"extra")])'
+init-hook='import sys; sys.path.append('extra')
 
 # Profiled execution.
 profile=no
@@ -63,6 +64,7 @@ disable=
     broad-except,
     star-args,
     unbalanced-tuple-unpacking,
+    locally-enabled,
     locally-disabled,
 
 [REPORTS]
@@ -106,12 +108,13 @@ bad-functions=map,filter,input
 # Good variable names which should always be accepted, separated by a comma
 good-names=_,
     input,
-    i,j,k,n,x,y,z,
+    h,i,j,k,n,w,x,y,z,
     q,qx,qy,qz,
     dt,dx,dy,dz,id,
-    Iq,dIq,Qx,Qy,Qz,
+    Iq,dIq,Qx,Qy,Qz,Iqxy,
     p,
     ER, call_ER, VR, call_VR,
+    Rmax, SElength,
 
 # Bad variable names which should always be refused, separated by a comma
 bad-names=foo,bar,baz,toto,tutu,tata
@@ -334,14 +337,14 @@ exclude-protected=_asdict,_fields,_replace,_source,_make
 [DESIGN]
 
 # Maximum number of arguments for function / method
-max-args=5
+max-args=15
 
 # Argument names that match this expression will be ignored. Default to name
 # with leading underscore
 ignored-argument-names=_.*
 
 # Maximum number of locals for function / method body
-max-locals=15
+max-locals=25
 
 # Maximum number of return / yield for function / method body
 max-returns=6

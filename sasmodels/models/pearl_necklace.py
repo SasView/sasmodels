@@ -1,8 +1,8 @@
 r"""
-This model provides the form factor for a pearl necklace composed of two 
-elements: *N* pearls (homogeneous spheres of radius *R*) freely jointed by *M* 
+This model provides the form factor for a pearl necklace composed of two
+elements: *N* pearls (homogeneous spheres of radius *R*) freely jointed by *M*
 rods (like strings - with a total mass *Mw* = *M* \* *m*\ :sub:`r` + *N* \* *m*\
-:sub:`s`, and the string segment length (or edge separation) *l* 
+:sub:`s`, and the string segment length (or edge separation) *l*
 (= *A* - 2\ *R*)). *A* is the center-to-center pearl separation distance.
 
 .. figure:: img/pearl_fig.jpg
@@ -12,7 +12,7 @@ rods (like strings - with a total mass *Mw* = *M* \* *m*\ :sub:`r` + *N* \* *m*\
 Definition
 ----------
 
-The output of the scattering intensity function for the PearlNecklaceModel is 
+The output of the scattering intensity function for the PearlNecklaceModel is
 given by (Schweins, 2004)
 
 .. math::
@@ -36,10 +36,10 @@ where
     \Lambda(q) &= \frac{\int_0^{ql}\frac{sin(t)}{t}dt}{ql} \\
     \beta(q) &= \frac{\int_{qR}^{q(A-R)}\frac{sin(t)}{t}dt}{ql}
 
-where the mass *m*\ :sub:`i` is (SLD\ :sub:`i` - SLD\ :sub:`solvent`) \* 
+where the mass *m*\ :sub:`i` is (SLD\ :sub:`i` - SLD\ :sub:`solvent`) \*
 (volume of the *N* pearls/rods). *V* is the total volume of the necklace.
 
-The 2D scattering intensity is the same as $P(q)$ above, regardless of the 
+The 2D scattering intensity is the same as $P(q)$ above, regardless of the
 orientation of the *q* vector.
 
 The returned value is scaled to units of |cm^-1| and the parameters of the
@@ -53,7 +53,7 @@ NB: *number_of_pearls* must be an integer.
 
 REFERENCE
 
-R Schweins and K Huber, *Particle Scattering Factor of Pearl Necklace Chains*, 
+R Schweins and K Huber, *Particle Scattering Factor of Pearl Necklace Chains*,
 *Macromol. Symp.* 211 (2004) 25-42 2004
 """
 
@@ -78,21 +78,21 @@ string_thickness: thickness (ie, diameter) of the string
 category = "shape:cylinder"
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["radius", "Angstrom", 80.0, [0, inf], "volume", 
+parameters = [["radius", "Angstrom", 80.0, [0, inf], "volume",
                "Mean radius of the chained spheres"],
-              ["edge_separation", "Angstrom", 350.0, [0, inf], "volume", 
+              ["edge_separation", "Angstrom", 350.0, [0, inf], "volume",
                "Mean separation of chained particles"],
-              ["string_thickness", "Angstrom", 2.5, [0, inf], "volume", 
+              ["string_thickness", "Angstrom", 2.5, [0, inf], "volume",
                "Thickness of the chain linkage"],
-              ["number_of_pearls", "none", 3, [0, inf], "volume", 
+              ["number_of_pearls", "none", 3, [0, inf], "volume",
                "Mean number of pearls in each necklace"],
-              ["sld", "Angstrom^2", 1.0, [-inf, inf], "", 
+              ["sld", "Angstrom^2", 1.0, [-inf, inf], "",
                "Scattering length density of the chained spheres"],
-              ["string_sld", "Angstrom^2", 1.0, [-inf, inf], "", 
+              ["string_sld", "Angstrom^2", 1.0, [-inf, inf], "",
                "Scattering length density of the chain linkage"],
-              ["solvent_sld", "Angstrom^2", 6.3, [-inf, inf], "", 
+              ["solvent_sld", "Angstrom^2", 6.3, [-inf, inf], "",
                "Scattering length density of the solvent"],
-              ]
+             ]
 
 source = ["lib/Si.c", "pearl_necklace.c"]
 
@@ -109,7 +109,7 @@ demo = dict(scale=1, background=0, radius=80.0, edge_separation=350.0,
 # For testing against the old sasview models, include the converted parameter
 # names and the target sasview model name.
 oldname = 'PearlNecklaceModel'
-oldpars = dict(scale='scale',background='background',radius='radius',
+oldpars = dict(scale='scale', background='background', radius='radius',
                number_of_pearls='num_pearls', solvent_sld='sld_solv',
                string_thickness='thick_string', sld='sld_pearl',
                string_sld='sld_string', edge_separation='edge_separation')
