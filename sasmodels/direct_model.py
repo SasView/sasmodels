@@ -1,4 +1,26 @@
-import warnings
+"""
+Class interface to the model calculator.
+
+Calling a model is somewhat non-trivial since the functions called depend
+on the data type.  For 1D data the *Iq* kernel needs to be called, for
+2D data the *Iqxy* kernel needs to be called, and for SESANS data the
+*Iq* kernel needs to be called followed by a Hankel transform.  Before
+the kernel is called an appropriate *q* calculation vector needs to be
+constructed.  This is not the simple *q* vector where you have measured
+the data since the resolution calculation will require values beyond the
+range of the measured data.  After the calculation the resolution calculator
+must be called to return the predicted value for each measured data point.
+
+:class:`DirectModel` is a callable object that takes *parameter=value*
+keyword arguments and returns the appropriate theory values for the data.
+
+:class:`DataMixin` does the real work of interpreting the data and calling
+the model calculator.  This is used by :class:`DirectModel`, which uses
+direct parameter values and by :class:`bumps_model.Experiment` which wraps
+the parameter values in boxes so that the user can set fitting ranges, etc.
+on the individual parameters and send the model to the Bumps optimizers.
+"""
+from __future__ import print_function
 
 import numpy as np
 
@@ -18,8 +40,20 @@ class DataMixin(object):
     model and data for use with the Bumps fitting engine.  It is not
     currently used by :class:`sasview_model.SasviewModel` since this will
     require a number of changes to SasView before we can do it.
+
+    :meth:`_interpret_data` initializes the data structures necessary
+    to manage the calculations.  This sets attributes in the child class
+    such as *data_type* and *resolution*.
+
+    :meth:`_calc_theory` evaluates the model at the given control values.
+
+    :meth:`_set_data` sets the intensity data in the data object,
+    possibly with random noise added.  This is useful for simulating a
+    dataset with the results from :meth:`_calc_theory`.
     """
     def _interpret_data(self, data, model):
+        # pylint: disable=attribute-defined-outside-init
+
         self._data = data
         self._model = model
 
@@ -35,10 +69,12 @@ class DataMixin(object):
 
         if self.data_type == 'sesans':
             q = sesans.make_q(data.sample.zacceptance, data.Rmax)
-            self.index = slice(None, None)
+            index = slice(None, None)
+            res = None
             if data.y is not None:
-                self.Iq = data.y
-                self.dIq = data.dy
+                Iq, dIq = data.y, data.dy
+            else:
+                Iq, dIq = None, None
             #self._theory = np.zeros_like(q)
             q_vectors = [q]
         elif self.data_type == 'Iqxy':
@@ -48,37 +84,41 @@ class DataMixin(object):
             qmin = getattr(data, 'qmin', 1e-16)
             qmax = getattr(data, 'qmax', np.inf)
             accuracy = getattr(data, 'accuracy', 'Low')
-            self.index = ~data.mask & (q >= qmin) & (q <= qmax)
+            index = ~data.mask & (q >= qmin) & (q <= qmax)
             if data.data is not None:
-                self.index &= ~np.isnan(data.data)
-                self.Iq = data.data[self.index]
-                self.dIq = data.err_data[self.index]
-            self.resolution = resolution2d.Pinhole2D(data=data, index=self.index,
-                                                     nsigma=3.0, accuracy=accuracy)
-            #self._theory = np.zeros_like(self.Iq)
-            q_vectors = self.resolution.q_calc
-        elif self.data_type == 'Iq':
-            self.index = (data.x >= data.qmin) & (data.x <= data.qmax)
-            if data.y is not None:
-                self.index &= ~np.isnan(data.y)
-                self.Iq = data.y[self.index]
-                self.dIq = data.dy[self.index]
-            if getattr(data, 'dx', None) is not None:
-                q, dq = data.x[self.index], data.dx[self.index]
-                if (dq>0).any():
-                    self.resolution = resolution.Pinhole1D(q, dq)
-                else:
-                    self.resolution = resolution.Perfect1D(q)
-            elif (getattr(data, 'dxl', None) is not None and
-                          getattr(data, 'dxw', None) is not None):
-                self.resolution = resolution.Slit1D(data.x[self.index],
-                                                    width=data.dxh[self.index],
-                                                    height=data.dxw[self.index])
+                index &= ~np.isnan(data.data)
+                Iq = data.data[index]
+                dIq = data.err_data[index]
             else:
-                self.resolution = resolution.Perfect1D(data.x[self.index])
+                Iq, dIq = None, None
+            res = resolution2d.Pinhole2D(data=data, index=index,
+                                         nsigma=3.0, accuracy=accuracy)
+            #self._theory = np.zeros_like(self.Iq)
+            q_vectors = res.q_calc
+        elif self.data_type == 'Iq':
+            index = (data.x >= data.qmin) & (data.x <= data.qmax)
+            if data.y is not None:
+                index &= ~np.isnan(data.y)
+                Iq = data.y[index]
+                dIq = data.dy[index]
+            else:
+                Iq, dIq = None, None
+            if getattr(data, 'dx', None) is not None:
+                q, dq = data.x[index], data.dx[index]
+                if (dq > 0).any():
+                    res = resolution.Pinhole1D(q, dq)
+                else:
+                    res = resolution.Perfect1D(q)
+            elif (getattr(data, 'dxl', None) is not None
+                  and getattr(data, 'dxw', None) is not None):
+                res = resolution.Slit1D(data.x[index],
+                                        width=data.dxh[index],
+                                        height=data.dxw[index])
+            else:
+                res = resolution.Perfect1D(data.x[index])
 
             #self._theory = np.zeros_like(self.Iq)
-            q_vectors = [self.resolution.q_calc]
+            q_vectors = [res.q_calc]
         else:
             raise ValueError("Unknown data type") # never gets here
 
@@ -86,8 +126,11 @@ class DataMixin(object):
         # so we can save/restore state
         self._kernel_inputs = [v for v in q_vectors]
         self._kernel = None
+        self.Iq, self.dIq, self.index = Iq, dIq, index
+        self.resolution = res
 
     def _set_data(self, Iq, noise=None):
+        # pylint: disable=attribute-defined-outside-init
         if noise is not None:
             self.dIq = Iq*noise*0.01
         dy = self.dIq
@@ -106,7 +149,7 @@ class DataMixin(object):
     def _calc_theory(self, pars, cutoff=0.0):
         if self._kernel is None:
             q_input = self._model.make_input(self._kernel_inputs)
-            self._kernel = self._model(q_input)
+            self._kernel = self._model(q_input)  # pylint: disable=attribute-defined-outside-init
 
         Iq_calc = call_kernel(self._kernel, pars, cutoff=cutoff)
         if self.data_type == 'sesans':
@@ -119,22 +162,53 @@ class DataMixin(object):
 
 
 class DirectModel(DataMixin):
+    """
+    Create a calculator object for a model.
+
+    *data* is 1D SAS, 2D SAS or SESANS data
+
+    *model* is a model calculator return from :func:`generate.load_model`
+
+    *cutoff* is the polydispersity weight cutoff.
+    """
     def __init__(self, data, model, cutoff=1e-5):
         self.model = model
         self.cutoff = cutoff
+        # Note: _interpret_data defines the model attributes
         self._interpret_data(data, model)
         self.kernel = make_kernel(self.model, self._kernel_inputs)
+
     def __call__(self, **pars):
         return self._calc_theory(pars, cutoff=self.cutoff)
+
     def ER(self, **pars):
+        """
+        Compute the equivalent radius for the model.
+
+        Return 0. if not defined.
+        """
         return call_ER(self.model.info, pars)
+
     def VR(self, **pars):
+        """
+        Compute the equivalent volume for the model, including polydispersity
+        effects.
+
+        Return 1. if not defined.
+        """
         return call_VR(self.model.info, pars)
+
     def simulate_data(self, noise=None, **pars):
+        """
+        Generate simulated data for the model.
+        """
         Iq = self.__call__(**pars)
         self._set_data(Iq, noise=noise)
 
-def demo():
+def main():
+    """
+    Program to evaluate a particular model at a set of q values.
+    """
     import sys
     from .data import empty_data1D, empty_data2D
 
@@ -143,7 +217,7 @@ def demo():
         sys.exit(1)
     model_name = sys.argv[1]
     call = sys.argv[2].upper()
-    if call not in ("ER","VR"):
+    if call not in ("ER", "VR"):
         try:
             values = [float(v) for v in call.split(',')]
         except:
@@ -152,8 +226,8 @@ def demo():
             q, = values
             data = empty_data1D([q])
         elif len(values) == 2:
-            qx,qy = values
-            data = empty_data2D([qx],[qy])
+            qx, qy = values
+            data = empty_data2D([qx], [qy])
         else:
             print("use q or qx,qy or ER or VR")
             sys.exit(1)
@@ -163,9 +237,9 @@ def demo():
     model_definition = load_model_definition(model_name)
     model = load_model(model_definition, dtype='single')
     calculator = DirectModel(data, model)
-    pars = dict((k,float(v))
+    pars = dict((k, float(v))
                 for pair in sys.argv[3:]
-                for k,v in [pair.split('=')])
+                for k, v in [pair.split('=')])
     if call == "ER":
         print(calculator.ER(**pars))
     elif call == "VR":
@@ -175,4 +249,4 @@ def demo():
         print(Iq[0])
 
 if __name__ == "__main__":
-    demo()
+    main()

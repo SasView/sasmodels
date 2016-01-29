@@ -107,12 +107,11 @@ bad-functions=map,filter,input
 
 # Good variable names which should always be accepted, separated by a comma
 good-names=_,
-    input,
-    h,i,j,k,n,w,x,y,z,
-    q,qx,qy,qz,
-    dt,dx,dy,dz,id,
-    Iq,dIq,Qx,Qy,Qz,Iqxy,
-    p,
+    input, id,
+    h, i, j, k, n, p, v, w, x, y, z,
+    q, qx, qy, qz, Q, Qx, Qy, Qz,
+    dt, dx, dy, dz, dq,
+    Iq, dIq, Iqxy, Iq_calc,
     ER, call_ER, VR, call_VR,
     Rmax, SElength,
 
