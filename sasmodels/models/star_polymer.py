@@ -54,12 +54,12 @@ description = """
         - f is the number of arms on the star
         """
 category = "shape-independent"
-
+# pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["radius2", "Ang", 100.0, [0.0, inf], "", "Ensemble radius of gyration squared of an arm"],
               ["arms",    "",      3,   [1.0, 6.0], "", "Number of arms in the model"],
-              ]
-
+             ]
+# pylint: enable=bad-whitespace, line-too-long
 
 source = ["star_polymer.c"]
 
@@ -74,10 +74,10 @@ oldpars = dict(radius2='R2',
 
 tests = [[{'radius2': 2.0,
            'arms':    3.3,
-           }, 0.5, 0.850646091108],
+          }, 0.5, 0.850646091108],
 
          [{'radius2':    1.0,
            'arms':       2.0,
            'background': 1.8,
-           }, 1.0, 2.53575888234],
-         ]
+          }, 1.0, 2.53575888234],
+        ]

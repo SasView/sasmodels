@@ -53,7 +53,8 @@ Reference
 
 P Schmidt, *J Appl. Cryst.*, 24 (1991) 414-435 Equation(19)
 
-A J Hurd, D W Schaefer, J E Martin, *Phys. Rev. A*, 35 (1987) 2361-2364 Equation(2)
+A J Hurd, D W Schaefer, J E Martin, *Phys. Rev. A*,
+35 (1987) 2361-2364 Equation(2)
 
 """
 
@@ -78,6 +79,7 @@ description = """
         """
 category = "shape-independent"
 
+# pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["mass_dim",      "",    1.8, [1e-16, 6.0], "",
                "Mass fractal dimension"],
@@ -87,8 +89,8 @@ parameters = [["mass_dim",      "",    1.8, [1e-16, 6.0], "",
                "Cluster radius of gyration"],
               ["primary_rg", "Ang", 4000.,  [0.0, inf], "",
                "Primary particle radius of gyration"],
-              ]
-
+             ]
+# pylint: enable=bad-whitespace, line-too-long
 
 source = ["mass_surface_fractal.c"]
 
@@ -106,31 +108,32 @@ oldpars = dict(radius='radius',
                primary_rg='primary_rg')
 
 tests = [
-         # Accuracy tests based on content in test/utest_other_models.py
-         [{'mass_dim':      1.8,
-           'surface_dim':   2.3,
-           'cluster_rg':   86.7,
-           'primary_rg': 4000.0,
-           }, 0.05, 1.77537e-05],
 
-         # Additional tests with larger range of parameters
-         [{'mass_dim':      3.3,
-           'surface_dim':   1.0,
-           'cluster_rg':   90.0,
-           'primary_rg': 4000.0,
-           }, 0.001, 0.18462699016],
+    # Accuracy tests based on content in test/utest_other_models.py
+    [{'mass_dim':      1.8,
+      'surface_dim':   2.3,
+      'cluster_rg':   86.7,
+      'primary_rg': 4000.0,
+     }, 0.05, 1.77537e-05],
 
-         [{'mass_dim':      1.3,
-           'surface_dim':   1.0,
-           'cluster_rg':   90.0,
-           'primary_rg': 2000.0,
-           'background':    0.8,
-           }, 0.001, 1.16539753641],
+    # Additional tests with larger range of parameters
+    [{'mass_dim':      3.3,
+      'surface_dim':   1.0,
+      'cluster_rg':   90.0,
+      'primary_rg': 4000.0,
+     }, 0.001, 0.18462699016],
 
-         [{'mass_dim':      2.3,
-           'surface_dim':   1.0,
-           'cluster_rg':   90.0,
-           'primary_rg': 1000.0,
-           'scale':        10.0,
-           }, 0.051, 0.000169548800377],
-         ]
+    [{'mass_dim':      1.3,
+      'surface_dim':   1.0,
+      'cluster_rg':   90.0,
+      'primary_rg': 2000.0,
+      'background':    0.8,
+     }, 0.001, 1.16539753641],
+
+    [{'mass_dim':      2.3,
+      'surface_dim':   1.0,
+      'cluster_rg':   90.0,
+      'primary_rg': 1000.0,
+      'scale':        10.0,
+     }, 0.051, 0.000169548800377],
+    ]

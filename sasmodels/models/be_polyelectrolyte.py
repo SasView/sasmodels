@@ -43,7 +43,8 @@ V Y Borue, I Y Erukhimovich, *Macromolecules*, 21 (1988) 3240
 
 J F Joanny, L Leibler, *Journal de Physique*, 51 (1990) 545
 
-A Moussaid, F Schosseler, J P Munch, S Candau, *J. Journal de Physique II France*, 3 (1993) 573
+A Moussaid, F Schosseler, J P Munch, S Candau,
+*J. Journal de Physique II France*, 3 (1993) 573
 
 E Raphael, J F Joanny, *Europhysics Letters*, 11 (1990) 179
 
@@ -54,50 +55,61 @@ from numpy import inf, pi, sqrt
 name = "be_polyelectrolyte"
 title = "Polyelectrolyte with the RPA expression derived by Borue and Erukhimovich"
 description = """
-    Evaluate
-    F(x) = K 1/(4 pi Lb (alpha)^(2)) (q^(2)+k2)/(1+(r02)^(2))
-         (q^(2)+k2) (q^(2)-(12 h C/b^(2)))
+            Evaluate
+            F(x) = K 1/(4 pi Lb (alpha)^(2)) (q^(2)+k2)/(1+(r02)^(2))
+                 (q^(2)+k2) (q^(2)-(12 h C/b^(2)))
 
-    has 3 internal parameters :
-           The inverse Debye Length: K2 = 4 pi Lb (2 Cs+alpha C)
-           r02 =1/alpha/Ca^(0.5) (B/(48 pi Lb)^(0.5))
-           Ca = 6.022136e-4 C
-    """
+            has 3 internal parameters :
+                   The inverse Debye Length: K2 = 4 pi Lb (2 Cs+alpha C)
+                   r02 =1/alpha/Ca^(0.5) (B/(48 pi Lb)^(0.5))
+                   Ca = 6.022136e-4 C
+            """
 category = "shape-independent"
 
-# pylint: disable=bad-whitespace,line-too-long
-#   ["name",                  "units", default, [lower, upper], "type", "description"],
+# pylint: disable=bad-whitespace, line-too-long
+#   ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [
-    ["contrast_factor",       "barns",    10.0,  [-inf, inf], "", "Contrast factor of the polymer"],
-    ["bjerrum_length",        "Ang",       7.1,  [0, inf],    "", "Bjerrum length"],
-    ["virial_param",          "1/Ang^2",  12.0,  [-inf, inf], "", "Virial parameter"],
-    ["monomer_length",        "Ang",      10.0,  [0, inf],    "", "Monomer length"],
-    ["salt_concentration",    "mol/L",     0.0,  [-inf, inf], "", "Concentration of monovalent salt"],
-    ["ionization_degree",     "",          0.05, [0, inf],    "", "Degree of ionization"],
-    ["polymer_concentration", "mol/L",     0.7,  [0, inf],    "", "Polymer molar concentration"],
+    ["contrast_factor",       "barns",   10.0,  [-inf, inf], "", "Contrast factor of the polymer"],
+    ["bjerrum_length",        "Ang",      7.1,  [0, inf],    "", "Bjerrum length"],
+    ["virial_param",          "1/Ang^2", 12.0,  [-inf, inf], "", "Virial parameter"],
+    ["monomer_length",        "Ang",     10.0,  [0, inf],    "", "Monomer length"],
+    ["salt_concentration",    "mol/L",    0.0,  [-inf, inf], "", "Concentration of monovalent salt"],
+    ["ionization_degree",     "",         0.05, [0, inf],    "", "Degree of ionization"],
+    ["polymer_concentration", "mol/L",    0.7,  [0, inf],    "", "Polymer molar concentration"],
     ]
-# pylint: enable=bad-whitespace,line-too-long
+# pylint: enable=bad-whitespace, line-too-long
 
 
 def Iq(q,
-       contrast_factor,
-       bjerrum_length,
-       virial_param,
-       monomer_length,
-       salt_concentration,
-       ionization_degree,
-       polymer_concentration):
+       contrast_factor=10.0,
+       bjerrum_length=7.1,
+       virial_param=12.0,
+       monomer_length=10.0,
+       salt_concentration=0.0,
+       ionization_degree=0.05,
+       polymer_concentration=0.7):
+    """
+    :param q:                     Input q-value
+    :param contrast_factor:       Contrast factor of the polymer
+    :param bjerrum_length:        Bjerrum length
+    :param virial_param:          Virial parameter
+    :param monomer_length:        Monomer length
+    :param salt_concentration:    Concentration of monovalent salt
+    :param ionization_degree:     Degree of ionization
+    :param polymer_concentration: Polymer molar concentration
+    :return:                      1-D intensity
+    """
 
     concentration = polymer_concentration * 6.022136e-4
 
     k_square = 4.0 * pi * bjerrum_length * (2*salt_concentration +
-            ionization_degree * concentration)
+                                            ionization_degree * concentration)
 
     r0_square = 1.0/ionization_degree/sqrt(concentration) * \
-            (monomer_length/sqrt((48.0*pi*bjerrum_length)))
+                (monomer_length/sqrt((48.0*pi*bjerrum_length)))
 
     term1 = contrast_factor/(4.0 * pi * bjerrum_length *
-        ionization_degree**2) * (q**2 + k_square)
+                             ionization_degree**2) * (q**2 + k_square)
 
     term2 = 1.0 + r0_square**2 * (q**2 + k_square) * \
         (q**2 - (12.0 * virial_param * concentration/(monomer_length**2)))
@@ -108,7 +120,14 @@ Iq.vectorized = True  # Iq accepts an array of q values
 
 
 def Iqxy(qx, qy, *args):
-    return Iq(sqrt(qx**2 + qy**2), *args)
+    """
+    :param qx:   Input q_x-value
+    :param qy:   Input q_y-value
+    :param args: Remaining arguments
+    :return:     2D-Intensity
+    """
+    iq = Iq(sqrt(qx**2 + qy**2), *args)
+    return iq
 
 Iqxy.vectorized = True  # Iqxy accepts an array of qx, qy values
 
@@ -133,8 +152,8 @@ oldpars = dict(background='background',
                ionization_degree='alpha',
                polymer_concentration='c')
 
-# pylint: disable=bad-whitespace
 tests = [
+
     # Accuracy tests based on content in test/utest_other_models.py
     [{'contrast_factor':       10.0,
       'bjerrum_length':         7.1,
@@ -175,4 +194,3 @@ tests = [
       'polymer_concentration': 0.1,
      }, 200., 1.80664667511e-06],
     ]
-# pylint: enable=bad-whitespace

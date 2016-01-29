@@ -28,6 +28,22 @@ On Windows you will need to remove the quotes.
 
 from __future__ import print_function
 
+import sys
+import math
+from os.path import basename, dirname, join as joinpath
+import glob
+import datetime
+import traceback
+
+import numpy as np
+
+from . import core
+from . import kerneldll
+from . import generate
+from .data import plot_theory, empty_data1D, empty_data2D
+from .direct_model import DirectModel
+from .convert import revert_model, constrain_new_to_old
+
 USAGE = """
 usage: compare.py model N1 N2 [options...] [key=val]
 
@@ -79,30 +95,10 @@ Program description
 """
            + USAGE)
 
-
-
-import sys
-import math
-from os.path import basename, dirname, join as joinpath
-import glob
-import datetime
-import traceback
-
-import numpy as np
-
-ROOT = dirname(__file__)
-sys.path.insert(0, ROOT)  # Make sure sasmodels is first on the path
-
-
-from . import core
-from . import kerneldll
-from . import generate
-from .data import plot_theory, empty_data1D, empty_data2D
-from .direct_model import DirectModel
-from .convert import revert_model, constrain_new_to_old
 kerneldll.ALLOW_SINGLE_PRECISION_DLLS = True
 
 # List of available models
+ROOT = dirname(__file__)
 MODELS = [basename(f)[:-3]
           for f in sorted(glob.glob(joinpath(ROOT, "models", "[a-zA-Z]*.py")))]
 

@@ -196,8 +196,6 @@ returns a list of files required by the model.
 
 # TODO: identify model files which have changed since loading and reload them.
 
-__all__ = ["make", "doc", "sources", "convert_type"]
-
 import sys
 from os.path import abspath, dirname, join as joinpath, exists, basename, \
     splitext
@@ -205,6 +203,9 @@ import re
 import string
 
 import numpy as np
+
+__all__ = ["make", "doc", "sources", "convert_type"]
+
 C_KERNEL_TEMPLATE_PATH = joinpath(dirname(__file__), 'kernel_template.c')
 
 F16 = np.dtype('float16')
@@ -215,13 +216,11 @@ try:  # CRUFT: older numpy does not support float128
 except TypeError:
     F128 = None
 
-
 # Scale and background, which are parameters common to every form factor
 COMMON_PARAMETERS = [
     ["scale", "", 1, [0, np.inf], "", "Source intensity"],
     ["background", "1/cm", 0, [0, np.inf], "", "Source background"],
     ]
-
 
 # Conversion from units defined in the parameter table for each model
 # to units displayed in the sphinx documentation.
@@ -265,6 +264,9 @@ DOC_HEADER = """.. _%(id)s:
 """
 
 def format_units(units):
+    """
+    Convert units into ReStructured Text format.
+    """
     return "string" if isinstance(units, list) else RST_UNITS.get(units, units)
 
 def make_partable(pars):
@@ -334,6 +336,9 @@ _F64_PRAGMA = """\
 def convert_type(source, dtype):
     """
     Convert code from double precision to the desired type.
+
+    Floating point constants are tagged with 'f' for single precision or 'L'
+    for long double precision.
     """
     if dtype == F16:
         source = _F16_PRAGMA + _convert_type(source, "half", "f")
@@ -349,6 +354,10 @@ def convert_type(source, dtype):
 
 
 def _convert_type(source, type_name, constant_flag):
+    """
+    Replace 'double' with *type_name* in *source*, tagging floating point
+    constants with *constant_flag*.
+    """
     # Convert double keyword to float/long double/half.
     # Accept an 'n' # parameter for vector # values, where n is 2, 4, 8 or 16.
     # Assume complex numbers are represented as cdouble which is typedef'd
@@ -624,6 +633,9 @@ def make(kernel_module):
 section_marker = re.compile(r'\A(?P<first>[%s])(?P=first)*\Z'
                             %re.escape(string.punctuation))
 def _convert_section_titles_to_boldface(lines):
+    """
+    Do the actual work of identifying and converting section headings.
+    """
     prior = None
     for line in lines:
         if prior is None:
@@ -641,8 +653,15 @@ def _convert_section_titles_to_boldface(lines):
     if prior is not None:
         yield prior
 
-def convert_section_titles_to_boldface(string):
-    return "\n".join(_convert_section_titles_to_boldface(string.split('\n')))
+def convert_section_titles_to_boldface(s):
+    """
+    Use explicit bold-face rather than section headings so that the table of
+    contents is not polluted with section names from the model documentation.
+
+    Sections are identified as the title line followed by a line of punctuation
+    at least as long as the title line.
+    """
+    return "\n".join(_convert_section_titles_to_boldface(s.split('\n')))
 
 def doc(kernel_module):
     """
@@ -665,6 +684,9 @@ def doc(kernel_module):
 
 
 def demo_time():
+    """
+    Show how long it takes to process a model.
+    """
     from .models import cylinder
     import datetime
     tic = datetime.datetime.now()
@@ -673,6 +695,9 @@ def demo_time():
     print("time: %g"%toc)
 
 def main():
+    """
+    Program which prints the source produced by the model.
+    """
     if len(sys.argv) <= 1:
         print("usage: python -m sasmodels.generate modelname")
     else:

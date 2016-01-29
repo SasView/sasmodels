@@ -1,10 +1,6 @@
 """
 Core model handling routines.
 """
-__all__ = [
-    "list_models", "load_model_definition", "precompile_dll",
-    "load_model", "make_kernel", "call_kernel", "call_ER", "call_VR",
-    ]
 
 from os.path import basename, dirname, join as joinpath
 from glob import glob
@@ -23,6 +19,10 @@ try:
 except:
     HAVE_OPENCL = False
 
+__all__ = [
+    "list_models", "load_model_definition", "precompile_dll",
+    "load_model", "make_kernel", "call_kernel", "call_ER", "call_VR",
+]
 
 def list_models():
     """
