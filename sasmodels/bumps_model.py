@@ -11,16 +11,16 @@ how far the polydispersity integral extends.
 
 """
 
-__all__ = [
-    "Model", "Experiment",
-    ]
-
 import warnings
 
 import numpy as np
 
 from .data import plot_theory
 from .direct_model import DataMixin
+
+__all__ = [
+    "Model", "Experiment",
+    ]
 
 # CRUFT: old style bumps wrapper which doesn't separate data and model
 # pylint: disable=invalid-name
