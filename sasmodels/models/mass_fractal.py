@@ -51,7 +51,8 @@ and $\rho_{particle}$ is the scattering length density of particles.
 Reference
 ---------
 
-D Mildner and P Hall, *J. Phys. D: Appl. Phys.*,  19 (1986) 1535-1545 Equation(9)
+D Mildner and P Hall, *J. Phys. D: Appl. Phys.*,
+19 (1986) 1535-1545 Equation(9)
 
 
 """
@@ -78,12 +79,13 @@ description = """
         """
 category = "shape-independent"
 
+# pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["radius",        "Ang",  10.0, [0.0, inf], "", "Particle radius"],
               ["mass_dim",      "",      1.9, [1.0, 6.0], "", "Mass fractal dimension"],
               ["cutoff_length", "Ang", 100.0, [0.0, inf], "", "Cut-off length"],
-              ]
-
+             ]
+# pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sph_j1c.c", "lib/lanczos_gamma.c", "mass_fractal.c"]
 
@@ -98,27 +100,28 @@ oldpars = dict(radius='radius',
                cutoff_length='co_length')
 
 tests = [
-         # Accuracy tests based on content in test/utest_other_models.py
-         [{'radius':         10.0,
-           'mass_dim':        1.9,
-           'cutoff_length': 100.0,
-           }, 0.05, 279.59322],
 
-         # Additional tests with larger range of parameters
-         [{'radius':        2.0,
-           'mass_dim':      3.3,
-           'cutoff_length': 1.0,
-           }, 0.5, 1.29016774904],
+    # Accuracy tests based on content in test/utest_other_models.py
+    [{'radius':         10.0,
+      'mass_dim':        1.9,
+      'cutoff_length': 100.0,
+     }, 0.05, 279.59322],
 
-         [{'radius':        1.0,
-           'mass_dim':      1.3,
-           'cutoff_length': 1.0,
-           'background':    0.8,
-           }, 0.001, 1.69747015932],
+    # Additional tests with larger range of parameters
+    [{'radius':        2.0,
+      'mass_dim':      3.3,
+      'cutoff_length': 1.0,
+     }, 0.5, 1.29016774904],
 
-         [{'radius':        1.0,
-           'mass_dim':      2.3,
-           'cutoff_length': 1.0,
-           'scale':        10.0,
-           }, 0.051, 11.6227966145],
-         ]
+    [{'radius':        1.0,
+      'mass_dim':      1.3,
+      'cutoff_length': 1.0,
+      'background':    0.8,
+     }, 0.001, 1.69747015932],
+
+    [{'radius':        1.0,
+      'mass_dim':      2.3,
+      'cutoff_length': 1.0,
+      'scale':        10.0,
+     }, 0.051, 11.6227966145],
+    ]
