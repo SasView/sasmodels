@@ -121,7 +121,7 @@ def make_dll(source, info, dtype="double"):
     Set *sasmodels.ALLOW_SINGLE_PRECISION_DLLS* to True if single precision
     models are allowed as DLLs.
     """
-    if callable(info.get('Iq',None)):
+    if callable(info.get('Iq', None)):
         return PyModel(info)
 
     dtype = np.dtype(dtype)
@@ -139,12 +139,12 @@ def make_dll(source, info, dtype="double"):
 
     source = generate.convert_type(source, dtype)
     source_files = generate.sources(info) + [info['filename']]
-    dll= dll_path(info, dtype)
+    dll = dll_path(info, dtype)
     newest = max(os.path.getmtime(f) for f in source_files)
-    if not os.path.exists(dll) or os.path.getmtime(dll)<newest:
+    if not os.path.exists(dll) or os.path.getmtime(dll) < newest:
         # Replace with a proper temp file
-        fid, filename = tempfile.mkstemp(suffix=".c",prefix=tempfile_prefix)
-        os.fdopen(fid,"w").write(source)
+        fid, filename = tempfile.mkstemp(suffix=".c", prefix=tempfile_prefix)
+        os.fdopen(fid, "w").write(source)
         command = COMPILE%{"source":filename, "output":dll}
         print("Compile command: "+command)
         status = os.system(command)
@@ -159,7 +159,7 @@ def make_dll(source, info, dtype="double"):
 
 def load_dll(source, info, dtype="double"):
     """
-    Create and load a dll corresponding to the source,info pair returned
+    Create and load a dll corresponding to the source, info pair returned
     from :func:`sasmodels.generate.make` compiled for the target precision.
 
     See :func:`make_dll` for details on controlling the dll path and the
@@ -198,7 +198,7 @@ class DllModel(object):
         Npd1d = len(self.info['partype']['pd-1d'])
         Npd2d = len(self.info['partype']['pd-2d'])
 
-        #print("dll",self.dllpath)
+        #print("dll", self.dllpath)
         try:
             self.dll = ct.CDLL(self.dllpath)
         except Exception as exc:
@@ -209,7 +209,7 @@ class DllModel(object):
               else c_double if self.dtype == generate.F64
               else c_longdouble)
         pd_args_1d = [c_void_p, fp] + [c_int]*Npd1d if Npd1d else []
-        pd_args_2d= [c_void_p, fp] + [c_int]*Npd2d if Npd2d else []
+        pd_args_2d = [c_void_p, fp] + [c_int]*Npd2d if Npd2d else []
         self.Iq = self.dll[generate.kernel_name(self.info, False)]
         self.Iq.argtypes = IQ_ARGS + pd_args_1d + [fp]*Nfixed1d
 
@@ -256,7 +256,7 @@ class DllKernel(object):
     evaluated.
 
     The resulting call method takes the *pars*, a list of values for
-    the fixed parameters to the kernel, and *pd_pars*, a list of (value,weight)
+    the fixed parameters to the kernel, and *pd_pars*, a list of (value, weight)
     vectors for the polydisperse parameters.  *cutoff* determines the
     integration limits: any points with combined weight less than *cutoff*
     will not be calculated.

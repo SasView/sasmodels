@@ -30,7 +30,7 @@ def list_pars(names_only=True):
     if names_only:
         print(columnize(list(sorted(partable.keys()))))
     else:
-        for k,v in sorted(partable.items()):
+        for k, v in sorted(partable.items()):
             print("%s: %s"%(k, ", ".join(v)))
 
 def main():

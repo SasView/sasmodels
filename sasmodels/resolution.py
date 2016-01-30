@@ -13,7 +13,7 @@ __all__ = ["Resolution", "Perfect1D", "Pinhole1D", "Slit1D",
            "apply_resolution_matrix", "pinhole_resolution", "slit_resolution",
            "pinhole_extend_q", "slit_extend_q", "bin_edges",
            "interpolate", "linear_extrapolation", "geometric_extrapolation",
-           ]
+          ]
 
 MINIMUM_RESOLUTION = 1e-8
 
@@ -79,10 +79,10 @@ class Pinhole1D(Resolution):
         # In practice this should never be needed, since resolution should
         # default to Perfect1D if the pinhole geometry is not defined.
         self.q, self.q_width = q, q_width
-        self.q_calc = pinhole_extend_q(q, q_width, nsigma=nsigma) \
-            if q_calc is None else np.sort(q_calc)
-        self.weight_matrix = pinhole_resolution(self.q_calc,
-                self.q, np.maximum(q_width, MINIMUM_RESOLUTION))
+        self.q_calc = (pinhole_extend_q(q, q_width, nsigma=nsigma)
+                       if q_calc is None else np.sort(q_calc))
+        self.weight_matrix = pinhole_resolution(
+            self.q_calc, self.q, np.maximum(q_width, MINIMUM_RESOLUTION))
 
     def apply(self, theory):
         return apply_resolution_matrix(self.weight_matrix, theory)

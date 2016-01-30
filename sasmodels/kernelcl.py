@@ -240,7 +240,7 @@ class GpuModel(object):
     def __init__(self, source, info, dtype=generate.F32):
         self.info = info
         self.source = source
-        self.dtype = generate.F32 if dtype=='fast' else np.dtype(dtype)
+        self.dtype = generate.F32 if dtype == 'fast' else np.dtype(dtype)
         self.fast = (dtype == 'fast')
         self.program = None # delay program creation
 

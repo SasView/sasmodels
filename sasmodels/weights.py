@@ -35,7 +35,7 @@ class Dispersion(object):
 
         *center* is the center of the distribution
 
-        *lb*,*ub* are the min and max allowed values
+        *lb*, *ub* are the min and max allowed values
 
         *relative* is True if the distribution width is proportional to the
         center value instead of absolute.  For polydispersity use relative.
@@ -83,7 +83,7 @@ class LogNormalDispersion(Dispersion):
     type = "lognormal"
     default = dict(npts=80, width=0, nsigmas=8)
     def _weights(self, center, sigma, lb, ub):
-        x = self._linspace(center, sigma, max(lb,1e-8), max(ub,1e-8))
+        x = self._linspace(center, sigma, max(lb, 1e-8), max(ub, 1e-8))
         px = np.exp(-0.5*(np.log(x)-center)**2)/sigma**2/(x*sigma)
         return x, px
 
@@ -92,8 +92,8 @@ class SchulzDispersion(Dispersion):
     type = "schulz"
     default = dict(npts=80, width=0, nsigmas=8)
     def _weights(self, center, sigma, lb, ub):
-        x = self._linspace(center, sigma, max(lb,1e-8), max(ub,1e-8))
-        R= x/center
+        x = self._linspace(center, sigma, max(lb, 1e-8), max(ub, 1e-8))
+        R = x/center
         z = (center/sigma)**2
         arg = z*np.log(z) + (z-1)*np.log(R) - R*z - np.log(center) - gammaln(z)
         px = np.exp(arg)
@@ -116,14 +116,14 @@ class ArrayDispersion(Dispersion):
     def _weights(self, center, sigma, lb, ub):
         # TODO: interpolate into the array dispersion using npts
         x = center + self.values*sigma
-        idx = (x>=lb)&(x<=ub)
+        idx = (x >= lb) & (x <= ub)
         x = x[idx]
         px = self.weights[idx]
         return x, px
 
 
 # dispersion name -> disperser lookup table.
-models = dict((d.type,d) for d in (
+models = dict((d.type, d) for d in (
     GaussianDispersion, RectangleDispersion,
     ArrayDispersion, SchulzDispersion, LogNormalDispersion
 ))
@@ -148,14 +148,14 @@ def get_weights(disperser, n, width, nsigmas, value, limits, relative):
     *relative* is true if *width* is defined in proportion to the value
     of the parameter, and false if it is an absolute width.
 
-    Returns *(value,weight)*, where *value* and *weight* are vectors.
+    Returns *(value, weight)*, where *value* and *weight* are vectors.
     """
     cls = models[disperser]
     obj = cls(n, width, nsigmas)
-    v,w = obj.get_weights(value, limits[0], limits[1], relative)
-    return v,w
+    v, w = obj.get_weights(value, limits[0], limits[1], relative)
+    return v, w
 
 # Hack to allow sasview dispersion objects to interoperate with sasmodels
-dispersers = dict((v.__name__,k) for k,v in models.items())
+dispersers = dict((v.__name__, k) for k, v in models.items())
 dispersers['DispersionModel'] = RectangleDispersion.type
 

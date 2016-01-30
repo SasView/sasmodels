@@ -8,7 +8,7 @@ Usage::
 
     if model1 is 'all', then all except the remaining models will be tested
 
-Each model is tested using the default parameters at q=0.1, (qx,qy)=(0.1,0.1),
+Each model is tested using the default parameters at q=0.1, (qx, qy)=(0.1, 0.1),
 and the ER and VR are computed.  The return values at these points are not
 considered.  The test is only to verify that the models run to completion,
 and do not produce inf or NaN.
@@ -29,7 +29,7 @@ That is::
 
         [ {parameters}, (qx, qy), I(qx, Iqy)],
         [ {parameters}, [(qx1, qy1), (qx2, qy2), ...],
-                        [I(qx1,qy1), I(qx2,qy2), ...]],
+                        [I(qx1, qy1), I(qx2, qy2), ...]],
 
         [ {parameters}, 'ER', ER(pars) ],
         [ {parameters}, 'VR', VR(pars) ],
@@ -74,7 +74,7 @@ def make_suite(loaders, models):
         # if ispy then use the dll loader to call pykernel
         # don't try to call cl kernel since it will not be
         # available in some environmentes.
-        is_py = callable(getattr(model_definition,'Iq', None))
+        is_py = callable(getattr(model_definition, 'Iq', None))
 
         if is_py:  # kernel implemented in python
             test_name = "Model: %s, Kernel: python"%model_name
@@ -122,10 +122,10 @@ def _hide_model_case_from_nosetests():
 
         def _runTest(self):
             smoke_tests = [
-                [{},0.1,None],
-                [{},(0.1,0.1),None],
-                [{},'ER',None],
-                [{},'VR',None],
+                [{}, 0.1, None],
+                [{}, (0.1, 0.1), None],
+                [{}, 'ER', None],
+                [{}, 'VR', None],
                 ]
 
             tests = getattr(self.definition, 'tests', [])
@@ -162,7 +162,7 @@ def _hide_model_case_from_nosetests():
             elif x[0] == 'VR':
                 actual = [call_VR(model.info, pars)]
             elif isinstance(x[0], tuple):
-                Qx,Qy = zip(*x)
+                Qx, Qy = zip(*x)
                 q_vectors = [np.array(Qx), np.array(Qy)]
                 kernel = make_kernel(model, q_vectors)
                 actual = call_kernel(kernel, pars)
@@ -178,12 +178,13 @@ def _hide_model_case_from_nosetests():
                 if yi is None:
                     # smoke test --- make sure it runs and produces a value
                     self.assertTrue(np.isfinite(actual_yi),
-                        'invalid f(%s): %s' % (xi, actual_yi))
+                                    'invalid f(%s): %s' % (xi, actual_yi))
                 else:
                     err = abs(yi - actual_yi)
                     nrm = abs(yi)
                     self.assertLess(err * 10**5, nrm,
-                        'f(%s); expected:%s; actual:%s' % (xi, yi, actual_yi))
+                                    'f(%s); expected:%s; actual:%s'
+                                    % (xi, yi, actual_yi))
 
     return ModelTestCase
 
@@ -236,7 +237,7 @@ def model_tests():
 
     Run "nosetests sasmodels" on the command line to invoke it.
     """
-    tests = make_suite(['opencl','dll'],['all'])
+    tests = make_suite(['opencl', 'dll'], ['all'])
     for test_i in tests:
         yield test_i._runTest
 
