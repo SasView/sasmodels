@@ -42,6 +42,7 @@ in the parameter list will take on the default parameter value.
 
 Precision defaults to 5 digits (relative).
 """
+from __future__ import print_function
 
 import sys
 import unittest
@@ -54,6 +55,15 @@ from .exception import annotate_exception
 
 
 def make_suite(loaders, models):
+    """
+    Construct the pyunit test suite.
+
+    *loaders* is the list of kernel drivers to use, which is one of
+    *["dll", "opencl"]*, *["dll"]* or *["opencl"]*.  For python models,
+    the python driver is always used.
+
+    *models* is the list of models to test, or *["all"]* to test all models.
+    """
 
     ModelTestCase = _hide_model_case_from_nosetests()
     suite = unittest.TestSuite()
@@ -110,6 +120,13 @@ def make_suite(loaders, models):
 
 def _hide_model_case_from_nosetests():
     class ModelTestCase(unittest.TestCase):
+        """
+        Test suit for a particular model with a particular kernel driver.
+
+        The test suite runs a simple smoke test to make sure the model
+        functions, then runs the list of tests at the bottom of the model
+        description file.
+        """
         def __init__(self, test_name, definition, test_method_name,
                      platform, dtype):
             self.test_name = test_name

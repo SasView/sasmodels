@@ -21,12 +21,18 @@ class Dispersion(object):
         self.nsigmas = self.default['nsigmas'] if nsigmas is None else nsigmas
 
     def get_pars(self):
+        """
+        Return the parameters to the disperser as a dictionary.
+        """
         pars = {'type': self.type}
         pars.update(self.__dict__)
         return pars
 
     # pylint: disable=no-self-use
     def set_weights(self, values, weights):
+        """
+        Set the weights on the disperser if it is :class:`ArrayDispersion`.
+        """
         raise RuntimeError("set_weights is only available for ArrayDispersion")
 
     def get_weights(self, center, lb, ub, relative):
@@ -62,6 +68,13 @@ class Dispersion(object):
 
 
 class GaussianDispersion(Dispersion):
+    r"""
+    Gaussian dispersion, with 1-\ $\sigma$ width.
+
+    .. math::
+
+        w = \exp\left(-\tfrac12 (x - c)^2/\sigma^2\right)
+    """
     type = "gaussian"
     default = dict(npts=35, width=0, nsigmas=3)
     def _weights(self, center, sigma, lb, ub):
@@ -71,6 +84,13 @@ class GaussianDispersion(Dispersion):
 
 
 class RectangleDispersion(Dispersion):
+    r"""
+    Uniform dispersion, with width $\sqrt{3}\sigma$.
+
+    .. math::
+
+        w = 1
+    """
     type = "rectangle"
     default = dict(npts=35, width=0, nsigmas=1.70325)
     def _weights(self, center, sigma, lb, ub):
@@ -80,15 +100,37 @@ class RectangleDispersion(Dispersion):
 
 
 class LogNormalDispersion(Dispersion):
+    r"""
+    log Gaussian dispersion, with 1-\ $\sigma$ width.
+
+    .. math::
+
+        w = \frac{\exp\left(-\tfrac12 (\ln x - c)^2/\sigma^2\right)}{x\sigma}
+    """
     type = "lognormal"
     default = dict(npts=80, width=0, nsigmas=8)
     def _weights(self, center, sigma, lb, ub):
         x = self._linspace(center, sigma, max(lb, 1e-8), max(ub, 1e-8))
-        px = np.exp(-0.5*(np.log(x)-center)**2)/sigma**2/(x*sigma)
+        px = np.exp(-0.5*(np.log(x)-center)**2/sigma**2)/(x*sigma)
         return x, px
 
 
 class SchulzDispersion(Dispersion):
+    r"""
+    Schultz dispersion, with 1-\ $\sigma$ width.
+
+    .. math::
+
+        w = \frac{z^z\,R^{z-1}}{e^{Rz}\,c \Gamma(z)}
+
+    where $c$ is the center of the distribution, $R = x/c$ and $z=(c/\sigma)^2$.
+
+    This is evaluated using logarithms as
+
+    .. math::
+
+        w = \exp\left(z \ln z + (z-1)\ln R - Rz - \ln c - \ln \Gamma(z) \right)
+    """
     type = "schulz"
     default = dict(npts=80, width=0, nsigmas=8)
     def _weights(self, center, sigma, lb, ub):
@@ -101,6 +143,11 @@ class SchulzDispersion(Dispersion):
 
 
 class ArrayDispersion(Dispersion):
+    r"""
+    Empirical dispersion curve.
+
+    Use :meth:`set_weights` to set $w = f(x)$.
+    """
     type = "array"
     default = dict(npts=35, width=0, nsigmas=1)
     def __init__(self, npts=None, width=None, nsigmas=None):
@@ -109,6 +156,9 @@ class ArrayDispersion(Dispersion):
         self.weights = np.array([1.], 'd')
 
     def set_weights(self, values, weights):
+        """
+        Set the weights for the given x values.
+        """
         self.values = np.ascontiguousarray(values, 'd')
         self.weights = np.ascontiguousarray(weights, 'd')
         self.npts = len(values)

@@ -350,8 +350,8 @@ def protect(fn):
     """
     def wrapper(*args, **kw):
         """
-        Trap and print errors from function %s
-        """%fn.__name__
+        Trap and print errors from function.
+        """
         try:
             return fn(*args, **kw)
         except KeyboardInterrupt:

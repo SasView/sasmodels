@@ -8,6 +8,8 @@ Usage:
 If '-v' is given, then list the models containing the parameter in
 addition to just the parameter name.
 """
+from __future__ import print_function
+
 import sys
 
 from .core import load_model_definition
@@ -15,6 +17,11 @@ from .generate import make_info
 from .compare import MODELS, columnize
 
 def find_pars():
+    """
+    Find all parameters in all models.
+
+    Returns the reference table *{parameter: [model, model, ...]}*
+    """
     partable = {}
     for name in sorted(MODELS):
         definition = load_model_definition(name)
@@ -26,6 +33,12 @@ def find_pars():
     return partable
 
 def list_pars(names_only=True):
+    """
+    Print all parameters in all models.
+
+    If *names_only* then only print the parameter name, not the models it
+    occurs in.
+    """
     partable = find_pars()
     if names_only:
         print(columnize(list(sorted(partable.keys()))))
@@ -34,6 +47,9 @@ def list_pars(names_only=True):
             print("%s: %s"%(k, ", ".join(v)))
 
 def main():
+    """
+    Program to list the parameters used across all models.
+    """
     if len(sys.argv) == 2 and sys.argv[1] == '-v':
         verbose = True
     elif len(sys.argv) == 1:
