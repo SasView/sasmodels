@@ -312,7 +312,7 @@ def _search(search_path, filename):
             return target
     raise ValueError("%r not found in %s" % (filename, search_path))
 
-def sources(info):
+def model_sources(info):
     """
     Return a list of the sources file paths for the module.
     """
@@ -464,7 +464,7 @@ def make_model(info):
             C_KERNEL_TEMPLATE = fid.read()
 
     # Load additional sources
-    source = [open(f).read() for f in sources(info)]
+    source = [open(f).read() for f in model_sources(info)]
 
     # Prepare defines
     defines = []

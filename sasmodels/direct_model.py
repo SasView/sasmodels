@@ -148,8 +148,7 @@ class DataMixin(object):
 
     def _calc_theory(self, pars, cutoff=0.0):
         if self._kernel is None:
-            q_input = self._model.make_input(self._kernel_inputs)
-            self._kernel = self._model(q_input)  # pylint: disable=attribute-defined-outside-init
+            self._kernel = make_kernel(self._model, self._kernel_inputs)  # pylint: disable=attribute-defined-outside-init
 
         Iq_calc = call_kernel(self._kernel, pars, cutoff=cutoff)
         if self.data_type == 'sesans':
@@ -176,7 +175,6 @@ class DirectModel(DataMixin):
         self.cutoff = cutoff
         # Note: _interpret_data defines the model attributes
         self._interpret_data(data, model)
-        self.kernel = make_kernel(self.model, self._kernel_inputs)
 
     def __call__(self, **pars):
         return self._calc_theory(pars, cutoff=self.cutoff)

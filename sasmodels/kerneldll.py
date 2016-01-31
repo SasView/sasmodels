@@ -1,5 +1,5 @@
 r"""
-C types wrapper for sasview models.
+DLL driver for C kernels
 
 The global attribute *ALLOW_SINGLE_PRECISION_DLLS* should be set to *True* if
 you wish to allow single precision floating point evaluation for the compiled
@@ -43,6 +43,7 @@ in a location such as:
 If you copy this onto your path, such as the python directory or the install
 directory for this application, then OpenMP should be supported.
 """
+from __future__ import print_function
 
 import sys
 import os
@@ -138,7 +139,7 @@ def make_dll(source, info, dtype="double"):
         tempfile_prefix = 'sas_'+info['name']+'128_'
 
     source = generate.convert_type(source, dtype)
-    source_files = generate.sources(info) + [info['filename']]
+    source_files = generate.model_sources(info) + [info['filename']]
     dll = dll_path(info, dtype)
     newest = max(os.path.getmtime(f) for f in source_files)
     if not os.path.exists(dll) or os.path.getmtime(dll) < newest:
@@ -217,30 +218,22 @@ class DllModel(object):
         self.Iqxy.argtypes = IQXY_ARGS + pd_args_2d + [fp]*Nfixed2d
 
     def __getstate__(self):
-        return {'info': self.info, 'dllpath': self.dllpath, 'dll': None}
+        return self.info, self.dllpath
 
     def __setstate__(self, state):
-        self.__dict__ = state
+        self.info, self.dllpath = state
+        self.dll = None
 
-    def __call__(self, q_input):
-        if self.dtype != q_input.dtype:
-            raise TypeError("data is %s kernel is %s" % (q_input.dtype, self.dtype))
+    def __call__(self, q_vectors):
+        q_input = PyInput(q_vectors, self.dtype)
         if self.dll is None: self._load_dll()
-        kernel = self.Iqxy if q_input.is_2D else self.Iq
+        kernel = self.Iqxy if q_input.is_2d else self.Iq
         return DllKernel(kernel, self.info, q_input)
 
-    # pylint: disable=no-self-use
-    def make_input(self, q_vectors):
-        """
-        Make q input vectors available to the model.
-
-        Note that each model needs its own q vector even if the case of
-        mixture models because some models may be OpenCL, some may be
-        ctypes and some may be pure python.
-        """
-        return PyInput(q_vectors, dtype=self.dtype)
-
     def release(self):
+        """
+        Release any resources associated with the model.
+        """
         pass # TODO: should release the dll
 
 
@@ -268,7 +261,7 @@ class DllKernel(object):
         self.q_input = q_input
         self.kernel = kernel
         self.res = np.empty(q_input.nq, q_input.dtype)
-        dim = '2d' if q_input.is_2D else '1d'
+        dim = '2d' if q_input.is_2d else '1d'
         self.fixed_pars = info['partype']['fixed-'+dim]
         self.pd_pars = info['partype']['pd-'+dim]
 
@@ -298,4 +291,7 @@ class DllKernel(object):
         return self.res
 
     def release(self):
+        """
+        Release any resources associated with the kernel.
+        """
         pass

@@ -282,7 +282,7 @@ class SasviewModel(object):
         to the card for each evaluation.
         """
         q_vectors = [np.asarray(q) for q in args]
-        fn = self._model(self._model.make_input(q_vectors))
+        fn = self._model(q_vectors)
         pars = [self.params[v] for v in fn.fixed_pars]
         pd_pars = [self._get_weights(p) for p in fn.pd_pars]
         result = fn(pars, pd_pars, self.cutoff)

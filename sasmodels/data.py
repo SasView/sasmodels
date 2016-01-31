@@ -120,7 +120,7 @@ class Data1D(object):
         self.qmax = x.max() if x is not None else np.NaN
         # TODO: why is 1D mask False and 2D mask True?
         self.mask = (np.isnan(y) if y is not None
-                     else np.zeros_like(x,'b') if x is not None
+                     else np.zeros_like(x, 'b') if x is not None
                      else None)
         self._xaxis, self._xunit = "x", ""
         self._yaxis, self._yunit = "y", ""
@@ -349,6 +349,9 @@ def protect(fn):
     exception and continues.  Keyboard interrupts are ignored.
     """
     def wrapper(*args, **kw):
+        """
+        Trap and print errors from function %s
+        """%fn.__name__
         try:
             return fn(*args, **kw)
         except KeyboardInterrupt:

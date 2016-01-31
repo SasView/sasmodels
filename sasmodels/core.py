@@ -117,8 +117,7 @@ def make_kernel(model, q_vectors):
     """
     Return a computation kernel from the model definition and the q input.
     """
-    model_input = model.make_input(q_vectors)
-    return model(model_input)
+    return model(q_vectors)
 
 def get_weights(info, pars, name):
     """

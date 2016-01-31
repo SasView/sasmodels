@@ -1,21 +1,32 @@
+"""
+Python driver for python kernels
+
+Calls the kernel with a vector of $q$ values for a single parameter set.
+Polydispersity is supported by looping over different parameter sets and
+summing the results.  The interface to :class:`PyModel` matches those for
+:class:`kernelcl.GpuModel` and :class:`kerneldll.DllModel`.
+"""
 import numpy as np
 from numpy import pi, cos
 
 from .generate import F64
 
 class PyModel(object):
+    """
+    Wrapper for pure python models.
+    """
     def __init__(self, info):
         self.info = info
 
-    def __call__(self, q_input):
-        kernel = self.info['Iqxy'] if q_input.is_2D else self.info['Iq']
+    def __call__(self, q_vectors):
+        q_input = PyInput(q_vectors, dtype=F64)
+        kernel = self.info['Iqxy'] if q_input.is_2d else self.info['Iq']
         return PyKernel(kernel, self.info, q_input)
 
-    # pylint: disable=no-self-use
-    def make_input(self, q_vectors):
-        return PyInput(q_vectors, dtype=F64)
-
     def release(self):
+        """
+        Free resources associated with the model.
+        """
         pass
 
 class PyInput(object):
@@ -40,11 +51,14 @@ class PyInput(object):
     def __init__(self, q_vectors, dtype):
         self.nq = q_vectors[0].size
         self.dtype = dtype
-        self.is_2D = (len(q_vectors) == 2)
+        self.is_2d = (len(q_vectors) == 2)
         self.q_vectors = [np.ascontiguousarray(q, self.dtype) for q in q_vectors]
         self.q_pointers = [q.ctypes.data for q in self.q_vectors]
 
     def release(self):
+        """
+        Free resources associated with the model inputs.
+        """
         self.q_vectors = []
 
 class PyKernel(object):
@@ -70,16 +84,22 @@ class PyKernel(object):
         self.info = info
         self.q_input = q_input
         self.res = np.empty(q_input.nq, q_input.dtype)
-        dim = '2d' if q_input.is_2D else '1d'
+        dim = '2d' if q_input.is_2d else '1d'
         # Loop over q unless user promises that the kernel is vectorized by
         # taggining it with vectorized=True
         if not getattr(kernel, 'vectorized', False):
             if dim == '2d':
                 def vector_kernel(qx, qy, *args):
+                    """
+                    Vectorized 2D kernel.
+                    """
                     return np.array([kernel(qxi, qyi, *args)
                                      for qxi, qyi in zip(qx, qy)])
             else:
                 def vector_kernel(q, *args):
+                    """
+                    Vectorized 1D kernel.
+                    """
                     return np.array([kernel(qi, *args)
                                      for qi in q])
             self.kernel = vector_kernel
@@ -121,6 +141,9 @@ class PyKernel(object):
         return res
 
     def release(self):
+        """
+        Free resources associated with the kernel.
+        """
         self.q_input = None
 
 def _loops(form, form_volume, cutoff, scale, background,
