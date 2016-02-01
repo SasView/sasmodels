@@ -6,7 +6,7 @@ Small angle scattering models are defined by a set of kernel functions:
     *Iq(q, p1, p2, ...)* returns the scattering at q for a form with
     particular dimensions averaged over all orientations.
 
-    *Iqxy(qx, qy, p1, p2, ...)* returns the scattering at qx,qy for a form
+    *Iqxy(qx, qy, p1, p2, ...)* returns the scattering at qx, qy for a form
     with particular dimensions for a single orientation.
 
     *Imagnetic(qx, qy, result[], p1, p2, ...)* returns the scattering for the
@@ -46,7 +46,7 @@ a decimal point.  This includes 0., 1. and 2.
 OpenCL has a *sincos* function which can improve performance when both
 the *sin* and *cos* values are needed for a particular argument.  Since
 this function does not exist in C99, all use of *sincos* should be
-replaced by the macro *SINCOS(value,sn,cn)* where *sn* and *cn* are
+replaced by the macro *SINCOS(value, sn, cn)* where *sn* and *cn* are
 previously declared *double* variables.  When compiled for systems without
 OpenCL, *SINCOS* will be replaced by *sin* and *cos* calls.   If *value* is
 an expression, it will appear twice in this case; whether or not it will be
@@ -193,6 +193,7 @@ the kernel source.  The function :func:`doc` extracts the doc string
 and adds the parameter table to the top.  The function :func:`sources`
 returns a list of files required by the model.
 """
+from __future__ import print_function
 
 # TODO: identify model files which have changed since loading and reload them.
 
@@ -311,7 +312,7 @@ def _search(search_path, filename):
             return target
     raise ValueError("%r not found in %s" % (filename, search_path))
 
-def sources(info):
+def model_sources(info):
     """
     Return a list of the sources file paths for the module.
     """
@@ -371,11 +372,11 @@ def _convert_type(source, type_name, constant_flag):
     return source
 
 
-def kernel_name(info, is_2D):
+def kernel_name(info, is_2d):
     """
     Name of the exported kernel symbol.
     """
-    return info['name'] + "_" + ("Iqxy" if is_2D else "Iq")
+    return info['name'] + "_" + ("Iqxy" if is_2d else "Iq")
 
 
 def categorize_parameters(pars):
@@ -418,17 +419,17 @@ def indent(s, depth):
     return spaces + sep.join(s.split("\n"))
 
 
+LOOP_OPEN = """\
+for (int %(name)s_i=0; %(name)s_i < N%(name)s; %(name)s_i++) {
+  const double %(name)s = loops[2*(%(name)s_i%(offset)s)];
+  const double %(name)s_w = loops[2*(%(name)s_i%(offset)s)+1];\
+"""
 def build_polydispersity_loops(pd_pars):
     """
     Build polydispersity loops
 
     Returns loop opening and loop closing
     """
-    LOOP_OPEN = """\
-for (int %(name)s_i=0; %(name)s_i < N%(name)s; %(name)s_i++) {
-  const double %(name)s = loops[2*(%(name)s_i%(offset)s)];
-  const double %(name)s_w = loops[2*(%(name)s_i%(offset)s)+1];\
-"""
     depth = 4
     offset = ""
     loop_head = []
@@ -463,7 +464,7 @@ def make_model(info):
             C_KERNEL_TEMPLATE = fid.read()
 
     # Load additional sources
-    source = [open(f).read() for f in sources(info)]
+    source = [open(f).read() for f in model_sources(info)]
 
     # Prepare defines
     defines = []
@@ -571,11 +572,11 @@ double Iqxy(double qx, double qy, IQXY_PARAMETER_DECLARATIONS) {
         defines.append(('IQXY_HAS_THETA', '1'))
 
     #for d in defines: print(d)
-    DEFINES = '\n'.join('#define %s %s' % (k, v) for k, v in defines)
-    SOURCES = '\n\n'.join(source)
+    defines = '\n'.join('#define %s %s' % (k, v) for k, v in defines)
+    sources = '\n\n'.join(source)
     return C_KERNEL_TEMPLATE % {
-        'DEFINES':DEFINES,
-        'SOURCES':SOURCES,
+        'DEFINES': defines,
+        'SOURCES': sources,
         }
 
 def make_info(kernel_module):
@@ -589,14 +590,14 @@ def make_info(kernel_module):
     # parameters if an explicit demo parameter set has not been specified.
     demo_parameters = getattr(kernel_module, 'demo', None)
     if demo_parameters is None:
-        demo_parameters = dict((p[0],p[2]) for p in parameters)
+        demo_parameters = dict((p[0], p[2]) for p in parameters)
     filename = abspath(kernel_module.__file__)
     kernel_id = splitext(basename(filename))[0]
     name = getattr(kernel_module, 'name', None)
     if name is None:
         name = " ".join(w.capitalize() for w in kernel_id.split('_'))
     info = dict(
-        id = kernel_id,  # string used to load the kernel
+        id=kernel_id,  # string used to load the kernel
         filename=abspath(kernel_module.__file__),
         name=name,
         title=kernel_module.title,
@@ -642,7 +643,7 @@ def _convert_section_titles_to_boldface(lines):
             prior = line
         elif section_marker.match(line):
             if len(line) >= len(prior):
-                yield "".join( ("**",prior,"**") )
+                yield "".join(("**", prior, "**"))
                 prior = None
             else:
                 yield prior

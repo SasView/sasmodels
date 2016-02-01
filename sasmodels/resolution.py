@@ -13,7 +13,7 @@ __all__ = ["Resolution", "Perfect1D", "Pinhole1D", "Slit1D",
            "apply_resolution_matrix", "pinhole_resolution", "slit_resolution",
            "pinhole_extend_q", "slit_extend_q", "bin_edges",
            "interpolate", "linear_extrapolation", "geometric_extrapolation",
-           ]
+          ]
 
 MINIMUM_RESOLUTION = 1e-8
 
@@ -79,10 +79,10 @@ class Pinhole1D(Resolution):
         # In practice this should never be needed, since resolution should
         # default to Perfect1D if the pinhole geometry is not defined.
         self.q, self.q_width = q, q_width
-        self.q_calc = pinhole_extend_q(q, q_width, nsigma=nsigma) \
-            if q_calc is None else np.sort(q_calc)
-        self.weight_matrix = pinhole_resolution(self.q_calc,
-                self.q, np.maximum(q_width, MINIMUM_RESOLUTION))
+        self.q_calc = (pinhole_extend_q(q, q_width, nsigma=nsigma)
+                       if q_calc is None else np.sort(q_calc))
+        self.weight_matrix = pinhole_resolution(
+            self.q_calc, self.q, np.maximum(q_width, MINIMUM_RESOLUTION))
 
     def apply(self, theory):
         return apply_resolution_matrix(self.weight_matrix, theory)
@@ -469,6 +469,13 @@ import unittest
 
 
 def eval_form(q, form, pars):
+    """
+    Return the SAS model evaluated at *q*.
+
+    *form* is the SAS model returned from :fun:`core.load_model`.
+
+    *pars* are the parameter values to use when evaluating.
+    """
     from sasmodels import core
     kernel = core.make_kernel(form, [q])
     theory = core.call_kernel(kernel, pars)
@@ -477,6 +484,11 @@ def eval_form(q, form, pars):
 
 
 def gaussian(q, q0, dq):
+    """
+    Return the Gaussian resolution function.
+
+    *q0* is the center, *dq* is the width and *q* are the points to evaluate.
+    """
     from numpy import exp, pi
     return exp(-0.5*((q-q0)/dq)**2)/(sqrt(2*pi)*dq)
 
@@ -558,6 +570,9 @@ def romberg_pinhole_1d(q, q_width, form, pars, nsigma=5):
 
 
 class ResolutionTest(unittest.TestCase):
+    """
+    Test the resolution calculations.
+    """
 
     def setUp(self):
         self.x = 0.001*np.arange(1, 11)
@@ -667,6 +682,9 @@ class ResolutionTest(unittest.TestCase):
 
 
 class IgorComparisonTest(unittest.TestCase):
+    """
+    Test resolution calculations against those returned by Igor.
+    """
 
     def setUp(self):
         self.pars = TEST_PARS_PINHOLE_SPHERE
@@ -674,7 +692,7 @@ class IgorComparisonTest(unittest.TestCase):
         from sasmodels.models import sphere
         self.model = core.load_model(sphere, dtype='double')
 
-    def Iq_sphere(self, pars, resolution):
+    def _eval_sphere(self, pars, resolution):
         from sasmodels import core
         kernel = core.make_kernel(self.model, [resolution.q_calc])
         theory = core.call_kernel(kernel, pars)
@@ -682,7 +700,7 @@ class IgorComparisonTest(unittest.TestCase):
         kernel.release()
         return result
 
-    def compare(self, q, output, answer, tolerance):
+    def _compare(self, q, output, answer, tolerance):
         #err = (output - answer)/answer
         #idx = abs(err) >= tolerance
         #problem = zip(q[idx], output[idx], answer[idx], err[idx])
@@ -699,8 +717,8 @@ class IgorComparisonTest(unittest.TestCase):
         data = np.loadtxt(data_string.split('\n')).T
         q, width, answer, _ = data
         resolution = Perfect1D(q)
-        output = self.Iq_sphere(pars, resolution)
-        self.compare(q, output, answer, 1e-6)
+        output = self._eval_sphere(pars, resolution)
+        self._compare(q, output, answer, 1e-6)
 
     def test_pinhole(self):
         """
@@ -712,9 +730,9 @@ class IgorComparisonTest(unittest.TestCase):
         data = np.loadtxt(data_string.split('\n')).T
         q, q_width, answer = data
         resolution = Pinhole1D(q, q_width)
-        output = self.Iq_sphere(pars, resolution)
+        output = self._eval_sphere(pars, resolution)
         # TODO: relative error should be lower
-        self.compare(q, output, answer, 3e-4)
+        self._compare(q, output, answer, 3e-4)
 
     def test_pinhole_romberg(self):
         """
@@ -735,16 +753,16 @@ class IgorComparisonTest(unittest.TestCase):
         ## The default 3 sigma and no extra points gets 1%
         q_calc, tol = None, 0.01
         resolution = Pinhole1D(q, q_width, q_calc=q_calc)
-        output = self.Iq_sphere(pars, resolution)
+        output = self._eval_sphere(pars, resolution)
         if 0: # debug plot
             import matplotlib.pyplot as plt
             resolution = Perfect1D(q)
-            source = self.Iq_sphere(pars, resolution)
+            source = self._eval_sphere(pars, resolution)
             plt.loglog(q, source, '.')
             plt.loglog(q, answer, '-', hold=True)
             plt.loglog(q, output, '-', hold=True)
             plt.show()
-        self.compare(q, output, answer, tol)
+        self._compare(q, output, answer, tol)
 
     def test_slit(self):
         """
@@ -756,11 +774,11 @@ class IgorComparisonTest(unittest.TestCase):
         data = np.loadtxt(data_string.split('\n')).T
         q, delta_qv, _, answer = data
         resolution = Slit1D(q, width=delta_qv, height=0)
-        output = self.Iq_sphere(pars, resolution)
+        output = self._eval_sphere(pars, resolution)
         # TODO: eliminate Igor test since it is too inaccurate to be useful.
         # This means we can eliminate the test data as well, and instead
         # use a generated q vector.
-        self.compare(q, output, answer, 0.5)
+        self._compare(q, output, answer, 0.5)
 
     def test_slit_romberg(self):
         """
@@ -776,9 +794,9 @@ class IgorComparisonTest(unittest.TestCase):
         q_calc = slit_extend_q(interpolate(q, 2*np.pi/radius/20),
                                delta_qv[0], 0.)
         resolution = Slit1D(q, width=delta_qv, height=0, q_calc=q_calc)
-        output = self.Iq_sphere(pars, resolution)
+        output = self._eval_sphere(pars, resolution)
         # TODO: relative error should be lower
-        self.compare(q, output, answer, 0.025)
+        self._compare(q, output, answer, 0.025)
 
     def test_ellipsoid(self):
         """
@@ -798,7 +816,7 @@ class IgorComparisonTest(unittest.TestCase):
         output = resolution.apply(eval_form(resolution.q_calc, form, pars))
         # TODO: 10% is too much error; use better algorithm
         #print(np.max(abs(answer-output)/answer))
-        self.compare(q, output, answer, 0.1)
+        self._compare(q, output, answer, 0.1)
 
     #TODO: can sas q spacing be too sparse for the resolution calculation?
     @unittest.skip("suppress sparse data test; not supported by current code")
@@ -812,8 +830,8 @@ class IgorComparisonTest(unittest.TestCase):
         data = np.loadtxt(data_string.split('\n')).T
         q, q_width, answer = data[:, ::20] # Take every nth point
         resolution = Pinhole1D(q, q_width)
-        output = self.Iq_sphere(pars, resolution)
-        self.compare(q, output, answer, 1e-6)
+        output = self._eval_sphere(pars, resolution)
+        self._compare(q, output, answer, 1e-6)
 
 
 # pinhole sphere parameters
@@ -1066,12 +1084,18 @@ def _eval_demo_1d(resolution, title):
     plt.ylabel("I(Q) (1/cm)")
 
 def demo_pinhole_1d():
+    """
+    Show example of pinhole smearing.
+    """
     q = np.logspace(-4, np.log10(0.2), 400)
     q_width = 0.1*q
     resolution = Pinhole1D(q, q_width)
     _eval_demo_1d(resolution, title="10% dQ/Q Pinhole Resolution")
 
 def demo_slit_1d():
+    """
+    Show example of slit smearing.
+    """
     q = np.logspace(-4, np.log10(0.2), 100)
     w = h = 0.
     #w = 0.000000277790
@@ -1082,6 +1106,9 @@ def demo_slit_1d():
     _eval_demo_1d(resolution, title="(%g,%g) Slit Resolution"%(w, h))
 
 def demo():
+    """
+    Run the resolution demos.
+    """
     import matplotlib.pyplot as plt
     plt.subplot(121)
     demo_pinhole_1d()

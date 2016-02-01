@@ -86,13 +86,42 @@ def set_top(data, cutoff):
 
 
 class Data1D(object):
+    """
+    1D data object.
+
+    Note that this definition matches the attributes from sasview, with
+    some generic 1D data vectors and some SAS specific definitions.  Some
+    refactoring to allow consistent naming conventions between 1D, 2D and
+    SESANS data would be helpful.
+
+    **Attributes**
+
+    *x*, *dx*: $q$ vector and gaussian resolution
+
+    *y*, *dy*: $I(q)$ vector and measurement uncertainty
+
+    *mask*: values to include in plotting/analysis
+
+    *dxl*: slit widths for slit smeared data, with *dx* ignored
+
+    *qmin*, *qmax*: range of $q$ values in *x*
+
+    *filename*: label for the data line
+
+    *_xaxis*, *_xunit*: label and units for the *x* axis
+
+    *_yaxis*, *_yunit*: label and units for the *y* axis
+    """
     def __init__(self, x=None, y=None, dx=None, dy=None):
         self.x, self.y, self.dx, self.dy = x, y, dx, dy
         self.dxl = None
         self.filename = None
         self.qmin = x.min() if x is not None else np.NaN
         self.qmax = x.max() if x is not None else np.NaN
-        self.mask = np.isnan(y) if y is not None else None
+        # TODO: why is 1D mask False and 2D mask True?
+        self.mask = (np.isnan(y) if y is not None
+                     else np.zeros_like(x, 'b') if x is not None
+                     else None)
         self._xaxis, self._xunit = "x", ""
         self._yaxis, self._yunit = "y", ""
 
@@ -113,11 +142,44 @@ class Data1D(object):
 
 
 class Data2D(object):
+    """
+    2D data object.
+
+    Note that this definition matches the attributes from sasview. Some
+    refactoring to allow consistent naming conventions between 1D, 2D and
+    SESANS data would be helpful.
+
+    **Attributes**
+
+    *qx_data*, *dqx_data*: $q_x$ matrix and gaussian resolution
+
+    *qy_data*, *dqy_data*: $q_y$ matrix and gaussian resolution
+
+    *data*, *err_data*: $I(q)$ matrix and measurement uncertainty
+
+    *mask*: values to exclude from plotting/analysis
+
+    *qmin*, *qmax*: range of $q$ values in *x*
+
+    *filename*: label for the data line
+
+    *_xaxis*, *_xunit*: label and units for the *x* axis
+
+    *_yaxis*, *_yunit*: label and units for the *y* axis
+
+    *_zaxis*, *_zunit*: label and units for the *y* axis
+
+    *Q_unit*, *I_unit*: units for Q and intensity
+
+    *x_bins*, *y_bins*: grid steps in *x* and *y* directions
+    """
     def __init__(self, x=None, y=None, z=None, dx=None, dy=None, dz=None):
         self.qx_data, self.dqx_data = x, dx
         self.qy_data, self.dqy_data = y, dy
         self.data, self.err_data = z, dz
-        self.mask = ~np.isnan(z) if z is not None else None
+        self.mask = (~np.isnan(z) if z is not None
+                     else np.ones_like(x) if x is not None
+                     else None)
         self.q_data = np.sqrt(x**2 + y**2)
         self.qmin = 1e-16
         self.qmax = np.inf
@@ -125,9 +187,9 @@ class Data2D(object):
         self.source = Source()
         self.Q_unit = "1/A"
         self.I_unit = "1/cm"
-        self.xaxis("Q_x", "A^{-1}")
-        self.yaxis("Q_y", "A^{-1}")
-        self.zaxis("Intensity", r"\text{cm}^{-1}")
+        self.xaxis("Q_x", "1/A")
+        self.yaxis("Q_y", "1/A")
+        self.zaxis("Intensity", "1/cm")
         self._xaxis, self._xunit = "x", ""
         self._yaxis, self._yunit = "y", ""
         self._zaxis, self._zunit = "z", ""
@@ -156,6 +218,9 @@ class Data2D(object):
 
 
 class Vector(object):
+    """
+    3-space vector of *x*, *y*, *z*
+    """
     def __init__(self, x=None, y=None, z=None):
         self.x, self.y, self.z = x, y, z
 
@@ -234,6 +299,13 @@ def empty_data2D(qx, qy=None, resolution=0.05):
 def plot_data(data, view='log', limits=None):
     """
     Plot data loaded by the sasview loader.
+
+    *data* is a sasview data object, either 1D, 2D or SESANS.
+
+    *view* is log or linear.
+
+    *limits* sets the intensity limits on the plot; if None then the limits
+    are inferred from the data.
     """
     # Note: kind of weird using the plot result functions to plot just the
     # data, but they already handle the masking and graph markup already, so
@@ -248,6 +320,21 @@ def plot_data(data, view='log', limits=None):
 
 def plot_theory(data, theory, resid=None, view='log',
                 use_data=True, limits=None):
+    """
+    Plot theory calculation.
+
+    *data* is needed to define the graph properties such as labels and
+    units, and to define the data mask.
+
+    *theory* is a matrix of the same shape as the data.
+
+    *view* is log or linear
+
+    *use_data* is True if the data should be plotted as well as the theory.
+
+    *limits* sets the intensity limits on the plot; if None then the limits
+    are inferred from the data.
+    """
     if hasattr(data, 'lam'):
         _plot_result_sesans(data, theory, resid, use_data=True, limits=limits)
     elif hasattr(data, 'qx_data'):
@@ -257,9 +344,18 @@ def plot_theory(data, theory, resid=None, view='log',
 
 
 def protect(fn):
+    """
+    Decorator to wrap calls in an exception trapper which prints the
+    exception and continues.  Keyboard interrupts are ignored.
+    """
     def wrapper(*args, **kw):
+        """
+        Trap and print errors from function.
+        """
         try:
             return fn(*args, **kw)
+        except KeyboardInterrupt:
+            raise
         except:
             traceback.print_exc()
 
@@ -331,6 +427,9 @@ def _plot_result1D(data, theory, resid, view, use_data, limits=None):
 
 @protect
 def _plot_result_sesans(data, theory, resid, use_data, limits=None):
+    """
+    Plot SESANS results.
+    """
     import matplotlib.pyplot as plt
     use_data = use_data and data.y is not None
     use_theory = theory is not None
@@ -458,6 +557,9 @@ def _plot_2d_signal(data, signal, vmin=None, vmax=None, view='log'):
     return vmin, vmax
 
 def demo():
+    """
+    Load and plot a SAS dataset.
+    """
     data = load_data('DEC07086.DAT')
     set_beam_stop(data, 0.004)
     plot_data(data)

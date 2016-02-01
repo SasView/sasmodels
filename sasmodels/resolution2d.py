@@ -142,13 +142,13 @@ class Pinhole2D(Resolution):
         # The polar needs rotation by -q_phi
         if self.coords == 'polar':
             q_r = sqrt(qx**2 + qy**2)
-            qx_res = ((dqx*cos(dphi) + q_r) * cos(-q_phi) +
-                           dqy*sin(dphi) * sin(-q_phi))
-            qy_res = (-(dqx*cos(dphi) + q_r) * sin(-q_phi) +
-                           dqy*sin(dphi) * cos(-q_phi))
+            qx_res = ((dqx*cos(dphi) + q_r) * cos(-q_phi)
+                      + dqy*sin(dphi) * sin(-q_phi))
+            qy_res = (-(dqx*cos(dphi) + q_r) * sin(-q_phi)
+                      + dqy*sin(dphi) * cos(-q_phi))
         else:
-            qx_res = qx +  dqx*cos(dphi)
-            qy_res = qy +  dqy*sin(dphi)
+            qx_res = qx + dqx*cos(dphi)
+            qy_res = qy + dqy*sin(dphi)
 
 
         return qx_res, qy_res, weight_res
@@ -161,7 +161,7 @@ class Pinhole2D(Resolution):
             ## Reshape into 2d array to use np weighted averaging
             theory = np.reshape(theory, (nbins, nq))
             ## Averaging with Gaussian weighting: normalization included.
-            value =np.average(theory, axis=0, weights=self.q_calc_weights)
+            value = np.average(theory, axis=0, weights=self.q_calc_weights)
             ## Return the smeared values in the range of self.index
             return value
         else:

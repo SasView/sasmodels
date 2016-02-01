@@ -37,6 +37,9 @@ def list_models():
 def load_model_definition(model_name):
     """
     Load a model definition given the model name.
+
+    This returns a handle to the module defining the model.  This can be
+    used with functions in generate to build the docs or extract model info.
     """
     __import__('sasmodels.models.'+model_name)
     model_definition = getattr(models, model_name, None)
@@ -114,8 +117,7 @@ def make_kernel(model, q_vectors):
     """
     Return a computation kernel from the model definition and the q input.
     """
-    model_input = model.make_input(q_vectors)
-    return model(model_input)
+    return model(q_vectors)
 
 def get_weights(info, pars, name):
     """
