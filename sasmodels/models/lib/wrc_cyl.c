@@ -296,18 +296,36 @@ u_WR(double q, double L, double b)
     return Rgsquare(q,L,b)*q*q;
 }
 
+static double
+Sdebye_kernel(double arg)
+{
+    // ORIGINAL
+    double result = 2.0*(exp(-arg) + arg -1.0)/(pow((arg),2));
 
+    // CONVERSION 1 from http://herbie.uwplse.org/
+    //
+    // exhibits discontinuity - needs more investigation
+    //double a1 = 1.0/6.0;
+    //double a2 = 1.0/72.0;
+    //double a3 = 1.0/24.0;
+    //double result = pow((1.0 - a1*arg - (a2+a3)*arg*arg), 2);
+
+    return result;
+}
 static double
 Sdebye(double q, double L, double b)
 {
-    return 2.0*(exp(-u_WR(q,L,b)) + u_WR(q,L,b) -1.0)/(pow((u_WR(q,L,b)),2));
+    double arg = u_WR(q,L,b);
+    return Sdebye_kernel(arg);
 }
 
 //
 static double
 Sdebye1(double q, double L, double b)
 {
-    return 2.0*(exp(-u1(q,L,b)) + u1(q,L,b) -1.0)/( pow((u1(q,L,b)),2.0) );
+    double arg = u1(q,L,b);
+    return Sdebye_kernel(arg);
+
 }
 
 //
