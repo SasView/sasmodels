@@ -105,3 +105,8 @@ demo = dict(effect_radius=200, volfraction=0.2, effect_radius_pd=0.1, effect_rad
 oldname = 'HardsphereStructure'
 oldpars = dict()
 
+tests = [
+        [ {'scale': 1.0, 'background' : 0.0, 'effect_radius' : 50.0, 'volfraction' : 0.2,
+           'effect_radius_pd' : 0}, [0.001], [0.209128]]
+        ]
+

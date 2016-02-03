@@ -147,3 +147,9 @@ demo = dict(scale=1, background=0,
 oldname = 'LamellarPCrystalModel'
 oldpars = dict(spacing_polydisp='pd_spacing', sld='sld_layer',
                solvent_sld='sld_solvent')
+#
+tests = [
+        [ {'scale': 1.0, 'background' : 0.0, 'thickness' : 33.,'Nlayers' : 20.0, 'spacing' : 250., 'spacing_polydisp' : 0.2,
+            'sld' : 1.0, 'solvent_sld' : 6.34,
+            'thickness_pd' : 0.0, 'thickness_pd_n' : 40 }, [0.001, 0.215268], [21829.3, 0.00487686]]
+        ]
