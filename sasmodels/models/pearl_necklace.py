@@ -57,7 +57,7 @@ R Schweins and K Huber, *Particle Scattering Factor of Pearl Necklace Chains*,
 *Macromol. Symp.* 211 (2004) 25-42 2004
 """
 
-from numpy import inf
+from numpy import inf, pi
 
 name = "pearl_necklace"
 title = "Colloidal spheres chained together with o preferential orientation"
@@ -95,6 +95,28 @@ parameters = [["radius", "Angstrom", 80.0, [0, inf], "volume",
              ]
 
 source = ["lib/Si.c", "pearl_necklace.c"]
+# new flag to let the compiler know to never use single precision
+single = False
+
+def volume(radius, edge_separation, string_thickness, number_of_pearls):
+    """
+    Calculates the total particle volume of the necklace.
+    Redundant with form_volume.
+    """
+    number_of_strings = number_of_pearls - 1.0
+    string_vol = edge_separation * pi * pow((string_thickness / 2.0), 2.0)
+    pearl_vol = 4.0 /3.0 * pi * pow(radius, 3.0)
+    total_vol = number_of_strings * string_vol
+    total_vol += number_of_pearls * pearl_vol
+    return total_vol
+
+def ER(radius, edge_separation, string_thickness, number_of_pearls):
+    """
+    Calculation for effective radius.
+    """
+    tot_vol = volume(radius, edge_separation, string_thickness, number_of_pearls)
+    rad_out = pow((3.0*tot_vol/4.0/pi), 0.33333)
+    return rad_out
 
 # parameters for demo
 demo = dict(scale=1, background=0, radius=80.0, edge_separation=350.0,
@@ -113,3 +135,5 @@ oldpars = dict(scale='scale', background='background', radius='radius',
                number_of_pearls='num_pearls', solvent_sld='sld_solv',
                string_thickness='thick_string', sld='sld_pearl',
                string_sld='sld_string', edge_separation='edge_separation')
+
+tests = [[{}, 0.001, 17380.245], [{}, 'ER', 115.39502]]
