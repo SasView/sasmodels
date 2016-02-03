@@ -99,22 +99,26 @@ from numpy import inf
 name = "barbell"
 title = "Cylinder with spherical end caps"
 description = """
-        Calculates the scattering from a barbell-shaped cylinder. That is a sphereocylinder with spherical end caps that have a radius larger than that of the cylinder and the center of the end cap
-        radius lies outside of the cylinder.
-        Note: As the length of cylinder(bar) -->0,it becomes a dumbbell. And when rad_bar = rad_bell, it is a spherocylinder.
-        It must be that rad_bar <(=) rad_bell.
+    Calculates the scattering from a barbell-shaped cylinder.
+    That is a sphereocylinder with spherical end caps that have a radius larger
+    than that of the cylinder and the center of the end cap radius lies outside
+    of the cylinder.
+    Note: As the length of cylinder(bar) -->0,it becomes a dumbbell. And when
+    rad_bar = rad_bell, it is a spherocylinder.
+    It must be that rad_bar <(=) rad_bell.
 """
 category = "shape:cylinder"
-
+# pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["sld", "4e-6/Ang^2", 4, [-inf, inf], "", "Barbell scattering length density"],
-              ["solvent_sld", "1e-6/Ang^2", 1, [-inf, inf], "", "Solvent scattering length density"],
-              ["bell_radius", "Ang", 40, [0, inf], "volume", "Spherical bell radius"],
-              ["radius", "Ang", 20, [0, inf], "volume", "Cylindrical bar radius"],
-              ["length", "Ang", 400, [0, inf], "volume", "Cylinder bar length"],
-              ["theta", "degrees", 60, [-inf, inf], "orientation", "In plane angle"],
-              ["phi", "degrees", 60, [-inf, inf], "orientation", "Out of plane angle"],
+parameters = [["sld",         "4e-6/Ang^2",   4, [-inf, inf], "",            "Barbell scattering length density"],
+              ["solvent_sld", "1e-6/Ang^2",   1, [-inf, inf], "",            "Solvent scattering length density"],
+              ["bell_radius", "Ang",         40, [0, inf],    "volume",      "Spherical bell radius"],
+              ["radius",      "Ang",         20, [0, inf],    "volume",      "Cylindrical bar radius"],
+              ["length",      "Ang",        400, [0, inf],    "volume",      "Cylinder bar length"],
+              ["theta",       "degrees",     60, [-inf, inf], "orientation", "In plane angle"],
+              ["phi",         "degrees",     60, [-inf, inf], "orientation", "Out of plane angle"],
              ]
+# pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/J1.c", "lib/gauss76.c", "barbell.c"]
 

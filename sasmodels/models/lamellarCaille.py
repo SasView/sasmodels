@@ -121,3 +121,9 @@ demo = dict(scale=1, background=0,
 oldname = 'LamellarPSModel'
 oldpars = dict(thickness='delta', Nlayers='N_plates', Caille_parameter='caille',
                sld='sld_bi',solvent_sld='sld_sol')
+#
+tests = [
+        [ {'scale': 1.0, 'background' : 0.0, 'thickness' : 30.,'Nlayers' : 20.0, 'spacing' : 400.,
+            'Caille_parameter' : 0.1, 'sld' : 6.3, 'solvent_sld' : 1.0,
+            'thickness_pd' : 0.0, 'spacing_pd' : 0.0 }, [0.001], [28895.13397]]
+        ]
