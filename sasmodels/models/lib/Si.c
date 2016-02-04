@@ -12,8 +12,8 @@ double Si(double x)
 		out = pi/2.0;
 
 		// Explicitly writing factorial values triples the speed of the calculation
-		out_cos = 1/x - 2/pow(x,3) + 24/pow(x,5) - 720/pow(x,7) + 40320/pow(x,9);
-		out_sin = 1/x - 6/pow(x,4) + 120/pow(x,6) - 5040/pow(x,8) + 362880/pow(x,10);
+		out_cos = 1./x - 2./pow(x,3) + 24./pow(x,5) - 720./pow(x,7);
+		out_sin = 1./pow(x,2) - 6./pow(x,4) + 120./pow(x,6) - 5040./pow(x,8);
 
 		out -= cos(x) * out_cos;
 		out -= sin(x) * out_sin;
@@ -21,8 +21,7 @@ double Si(double x)
 	}
 
 	// Explicitly writing factorial values triples the speed of the calculation
-	out = x - pow(x, 3)/18 + pow(x,5)/600 - pow(x,7)/35280 + pow(x,9)/3265920;
+	out = x - pow(x, 3)/18. + pow(x,5)/600. - pow(x,7)/35280. + pow(x,9)/3265920. - pow(x,11)/439084800.;
 
-	//printf ("Si=%g %g\n", x, out);
 	return out;
 }
