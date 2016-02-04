@@ -241,7 +241,7 @@ class Source(object):
         self.wavelength_unit = "A"
 
 
-def empty_data1D(q, resolution=0.05):
+def empty_data1D(q, resolution=0.0):
     """
     Create empty 1D data using the given *q* as the x value.
 
@@ -251,12 +251,13 @@ def empty_data1D(q, resolution=0.05):
     #Iq = 100 * np.ones_like(q)
     #dIq = np.sqrt(Iq)
     Iq, dIq = None, None
+    q = np.asarray(q)
     data = Data1D(q, Iq, dx=resolution * q, dy=dIq)
     data.filename = "fake data"
     return data
 
 
-def empty_data2D(qx, qy=None, resolution=0.05):
+def empty_data2D(qx, qy=None, resolution=0.0):
     """
     Create empty 2D data using the given mesh.
 
@@ -266,6 +267,7 @@ def empty_data2D(qx, qy=None, resolution=0.05):
     """
     if qy is None:
         qy = qx
+    qx, qy = np.asarray(qx), np.asarray(qy)
     # 5% dQ/Q resolution
     Qx, Qy = np.meshgrid(qx, qy)
     Qx, Qy = Qx.flatten(), Qy.flatten()

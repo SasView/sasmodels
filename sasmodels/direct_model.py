@@ -233,7 +233,7 @@ def main():
         data = empty_data1D([0.001])  # Data not used in ER/VR
 
     model_definition = load_model_definition(model_name)
-    model = load_model(model_definition, dtype='single')
+    model = load_model(model_definition)
     calculator = DirectModel(data, model)
     pars = dict((k, float(v))
                 for pair in sys.argv[3:]
