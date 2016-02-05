@@ -24,6 +24,8 @@
 	     inline double isnan(double x) { return _isnan(x); }
 	     #define NAN (std::numeric_limits<double>::quiet_NaN()) // non-signalling NaN
 	     static double cephes_expm1(double x) {
+	         // Adapted from the cephes math library.
+	         // Copyright 1984 - 1992 by Stephen L. Moshier
 	         if (x != x || x == 0.0) {
 	             return x; // NaN and +/- 0
 	         } else if (x < -0.5 || x > 0.5) {
