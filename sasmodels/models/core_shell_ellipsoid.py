@@ -111,7 +111,7 @@ parameters = [
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/gfn.c", "lib/gauss76.c", "core_shell_ellipsoid.c"]
+source = ["lib/sph_j1c.c", "lib/gfn.c", "lib/gauss76.c", "core_shell_ellipsoid.c"]
 
 demo = dict(scale=1, background=0.001,
             equat_core=200.0,
