@@ -257,10 +257,12 @@ def _get_default_context():
             else:
                 cpu = device
     single = gpu if gpu is not None else cpu
-    double = gpu if has_type(gpu, np.dtype('double')) else cpu
-    single_context = cl.Context([single])
-    double_context = cl.Context([double]) if single != double else single_context
-    return single_context, double_context
+    double = gpu if gpu is not None and has_type(gpu, np.dtype('double')) else cpu
+
+    if single == double:
+        return [cl.Context([single])]
+    else:
+        return [cl.Context([single]), cl.Context([double])]
 
 
 class GpuModel(object):
