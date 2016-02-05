@@ -55,6 +55,7 @@ description = """\
         In sasview the effective radius will be calculated from the
         parameters used in P(Q).
 """
+single = False  # double precision only for now
 #             [ "name", "units", default, [lower, upper], "type", "description" ],
 parameters = [["effect_radius", "Ang", 20.75, [0, inf], "volume",
                "effective radius of hard sphere"],

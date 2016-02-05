@@ -95,6 +95,7 @@ description = """
     """
 category = "shape:ellipsoid"
 
+single = False  # TODO: maybe using sph_j1c inside gfn would help?
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [

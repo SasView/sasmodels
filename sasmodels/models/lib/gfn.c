@@ -5,7 +5,7 @@
 //
 //       <OBLATE ELLIPSOID>
 // function gfn4 for oblate ellipsoids
-double
+static double
 gfn4(double xx, double crmaj, double crmin, double trmaj, double trmin, double delpc, double delps, double qq)
 {
 	// local variables

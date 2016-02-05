@@ -97,6 +97,7 @@ description = """Note : scale and contrast=sldCyl-sldSolv are both multiplicativ
         both of these parameters must be held fixed
         during model fitting.
         """
+single = False
 
 category = "shape:cylinder"
 # pylint: disable=bad-whitespace, line-too-long

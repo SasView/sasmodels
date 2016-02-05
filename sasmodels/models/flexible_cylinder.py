@@ -77,6 +77,7 @@ description = """Note : scale and contrast=sld-solvent_sld are both
               """
 
 category = "shape:cylinder"
+single = False
 
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type", "description"],

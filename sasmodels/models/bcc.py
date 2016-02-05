@@ -115,6 +115,9 @@ description = """
     by a Gaussian distribution.
     """
 category = "shape:paracrystal"
+
+single = False
+
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description" ],
 parameters = [["dnn",         "Ang",       220,    [-inf, inf], "",            "Nearest neighbour distance"],

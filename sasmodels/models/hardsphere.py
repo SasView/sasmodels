@@ -54,6 +54,7 @@ parameters = [["effect_radius", "Ang", 50.0, [0, inf], "volume",
               ["volfraction", "", 0.2, [0, 0.74], "",
                "volume fraction of hard spheres"],
              ]
+single = False
 
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
