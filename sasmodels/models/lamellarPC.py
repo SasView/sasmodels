@@ -110,6 +110,8 @@ description = """\
 """
 category = "shape:lamellae"
 
+single = False
+
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["thickness", "Ang", 33.0, [0, inf], "volume",
                "sheet thickness"],

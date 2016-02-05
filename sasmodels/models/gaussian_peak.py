@@ -41,6 +41,7 @@ description = """
 """
 category = "shape-independent"
 
+single = False
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["q0", "1/Ang", 0.05, [-inf, inf], "", "Peak position"],
               ["sigma", "1/Ang", 0.005, [0, inf], "",

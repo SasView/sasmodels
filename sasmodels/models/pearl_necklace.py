@@ -95,8 +95,7 @@ parameters = [["radius", "Angstrom", 80.0, [0, inf], "volume",
              ]
 
 source = ["lib/Si.c", "pearl_necklace.c"]
-# new flag to let the compiler know to never use single precision
-single = False
+single = False  # use double precision unless told otherwise
 
 def volume(radius, edge_separation, string_thickness, number_of_pearls):
     """

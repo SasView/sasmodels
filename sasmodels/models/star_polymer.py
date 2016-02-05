@@ -54,6 +54,7 @@ description = """
         - f is the number of arms on the star
         """
 category = "shape-independent"
+single = False
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["radius2", "Ang", 100.0, [0.0, inf], "", "Ensemble radius of gyration squared of an arm"],

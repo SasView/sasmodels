@@ -6,35 +6,31 @@
 //       <OBLATE ELLIPSOID>
 // function gfn4 for oblate ellipsoids
 double
+gfn4(double xx, double crmaj, double crmin, double trmaj, double trmin, double delpc, double delps, double qq);
+double
 gfn4(double xx, double crmaj, double crmin, double trmaj, double trmin, double delpc, double delps, double qq)
 {
-	// local variables
-	double aa,bb,u2,ut2,uq,ut,vc,vt,siq,sit,gfnc,gfnt,tgfn,gfn4,pi43,Pi;
+    // local variables
+    const double pi43=4.0/3.0*M_PI;
+    const double aa = crmaj;
+    const double bb = crmin;
+    const double u2 = (bb*bb*xx*xx + aa*aa*(1.0-xx*xx));
+    const double uq = sqrt(u2)*qq;
+    // changing to more accurate sph_j1c since the following inexplicably fails on Radeon Nano.
+    //const double siq = (uq == 0.0 ? 1.0 : 3.0*(sin(uq)/uq/uq - cos(uq)/uq)/uq);
+    const double siq = sph_j1c(uq);
+    const double vc = pi43*aa*aa*bb;
+    const double gfnc = siq*vc*delpc;
 
-	Pi = 4.0*atan(1.0);
-	pi43=4.0/3.0*Pi;
-  	aa = crmaj;
- 	bb = crmin;
- 	u2 = (bb*bb*xx*xx + aa*aa*(1.0-xx*xx));
- 	ut2 = (trmin*trmin*xx*xx + trmaj*trmaj*(1.0-xx*xx));
-   	uq = sqrt(u2)*qq;
- 	ut= sqrt(ut2)*qq;
-	vc = pi43*aa*aa*bb;
-   	vt = pi43*trmaj*trmaj*trmin;
-   	if (uq == 0.0){
-   		siq = 1.0/3.0;
-   	}else{
-   		siq = (sin(uq)/uq/uq - cos(uq)/uq)/uq;
-   	}
-   	if (ut == 0.0){
-   		sit = 1.0/3.0;
-   	}else{
-   		sit = (sin(ut)/ut/ut - cos(ut)/ut)/ut;
-   	}
-   	gfnc = 3.0*siq*vc*delpc;
-  	gfnt = 3.0*sit*vt*delps;
-  	tgfn = gfnc+gfnt;
-  	gfn4 = tgfn*tgfn;
+    const double ut2 = (trmin*trmin*xx*xx + trmaj*trmaj*(1.0-xx*xx));
+    const double ut= sqrt(ut2)*qq;
+    const double vt = pi43*trmaj*trmaj*trmin;
+    //const double sit = (ut == 0.0 ? 1.0 : 3.0*(sin(ut)/ut/ut - cos(ut)/ut)/ut);
+    const double sit = sph_j1c(ut);
+    const double gfnt = sit*vt*delps;
 
-  	return (gfn4);
+    const double tgfn = gfnc + gfnt;
+    const double result = tgfn*tgfn;
+
+    return (result);
 }

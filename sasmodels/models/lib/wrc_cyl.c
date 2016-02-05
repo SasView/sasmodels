@@ -378,6 +378,7 @@ Sexvnew(double q, double L, double b)
     return (yy);
 }
 
+double Sk_WR(double q, double L, double b);
 double Sk_WR(double q, double L, double b)
 {
   //

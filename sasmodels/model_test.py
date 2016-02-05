@@ -99,9 +99,13 @@ def make_suite(loaders, models):
             if 'opencl' in loaders and HAVE_OPENCL:
                 test_name = "Model: %s, Kernel: OpenCL"%model_name
                 test_method_name = "test_%s_opencl" % model_name
+                # Using dtype=None so that the models that are only
+                # correct for double precision are not tested using
+                # single precision.  The choice is determined by the
+                # presence of *single=False* in the model file.
                 test = ModelTestCase(test_name, model_definition,
                                      test_method_name,
-                                     platform="ocl", dtype='single')
+                                     platform="ocl", dtype=None)
                 #print("defining", test_name)
                 suite.addTest(test)
 
@@ -156,7 +160,7 @@ def _hide_model_case_from_nosetests():
                     ## Uncomment the following to make forgetting the test
                     ## values an error.  Only do so for the "dll" tests
                     ## to reduce noise from both opencl and dll, and because
-                    ## python kernels us
+                    ## python kernels use platform="dll".
                     #raise Exception("No test cases provided")
                     pass
 
@@ -197,15 +201,19 @@ def _hide_model_case_from_nosetests():
                     self.assertTrue(np.isfinite(actual_yi),
                                     'invalid f(%s): %s' % (xi, actual_yi))
                 else:
-                    err = abs(yi - actual_yi)
-                    nrm = abs(yi)
-                    self.assertLess(err * 10**5, nrm,
+                    self.assertTrue(is_near(yi, actual_yi, 5),
                                     'f(%s); expected:%s; actual:%s'
                                     % (xi, yi, actual_yi))
 
     return ModelTestCase
 
-
+def is_near(target, actual, digits=5):
+    """
+    Returns true if *actual* is within *digits* significant digits of *target*.
+    """
+    import math
+    shift = 10**math.ceil(math.log10(abs(target)))
+    return abs(target-actual)/shift < 1.5*10**-digits
 
 def main():
     """
@@ -216,6 +224,11 @@ def main():
     import xmlrunner
 
     models = sys.argv[1:]
+    if models and models[0] == '-v':
+        verbosity = 2
+        models = models[1:]
+    else:
+        verbosity = 1
     if models and models[0] == 'opencl':
         if not HAVE_OPENCL:
             print("opencl is not available")
@@ -234,16 +247,20 @@ def main():
     if not models:
         print("""\
 usage:
-  python -m sasmodels.model_test [opencl|dll|opencl_and_dll] model1 model2 ...
+  python -m sasmodels.model_test [-v] [opencl|dll] model1 model2 ...
+
+If -v is included on the
+If neither opencl nor dll is specified, then models will be tested with
+both opencl and dll; the compute target is ignored for pure python models.
 
 If model1 is 'all', then all except the remaining models will be tested.
-If no compute target is specified, then models will be tested with both opencl
-and dll; the compute target is ignored for pure python models.""")
+
+""")
 
         return 1
 
     #runner = unittest.TextTestRunner()
-    runner = xmlrunner.XMLTestRunner(output='logs')
+    runner = xmlrunner.XMLTestRunner(output='logs', verbosity=verbosity)
     result = runner.run(make_suite(loaders, models))
     return 1 if result.failures or result.errors else 0
 

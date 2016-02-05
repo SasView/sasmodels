@@ -72,7 +72,7 @@ def isstr(s):
     except: return False
     return True
 
-def load_model(model_definition, dtype="single", platform="ocl"):
+def load_model(model_definition, dtype=None, platform="ocl"):
     """
     Prepare the model for the default execution platform.
 
@@ -86,13 +86,16 @@ def load_model(model_definition, dtype="single", platform="ocl"):
     *dtype* indicates whether the model should use single or double precision
     for the calculation. Any valid numpy single or double precision identifier
     is valid, such as 'single', 'f', 'f32', or np.float32 for single, or
-    'double', 'd', 'f64'  and np.float64 for double.
+    'double', 'd', 'f64'  and np.float64 for double.  If *None*, then use
+    'single' unless the model defines single=False.
 
     *platform* should be "dll" to force the dll to be used for C models,
     otherwise it uses the default "ocl".
     """
     if isstr(model_definition):
         model_definition = load_model_definition(model_definition)
+    if dtype is None:
+        dtype = 'single' if getattr(model_definition, 'single', True) else 'double'
     source, info = generate.make(model_definition)
     if callable(info.get('Iq', None)):
         return kernelpy.PyModel(info)

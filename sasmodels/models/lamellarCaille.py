@@ -86,6 +86,8 @@ description = """\
 """
 category = "shape:lamellae"
 
+single = False
+
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["thickness", "Ang",  30.0, [0, inf], "volume", "sheet thickness"],
               ["Nlayers", "",  20, [0, inf], "", "Number of layers"],

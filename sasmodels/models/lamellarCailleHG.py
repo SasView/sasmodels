@@ -90,6 +90,7 @@ description = """\
 """
 category = "shape:lamellae"
 
+single = False
 parameters = [
     #   [ "name", "units", default, [lower, upper], "type",
     #     "description" ],

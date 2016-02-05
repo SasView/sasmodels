@@ -204,7 +204,7 @@ switch(icase){
   const double Kaa = 0.0;
   const double Kbb = 0.0;
   const double Kcc = 0.0;
-  const double Kdd = 0.0;
+  //const double Kdd = 0.0;
   const double Zaa = Kaa - Kad - Kad;
   const double Zab = Kab - Kad - Kbd;
   const double Zac = Kac - Kad - Kcd;
@@ -277,11 +277,11 @@ switch(icase){
   const double Q11 = ( Mbb*Mcc - Mbc*Mcb)/DenQ;
   const double Q12 = (-Mab*Mcc + Mac*Mcb)/DenQ;
   const double Q13 = ( Mab*Mbc - Mac*Mbb)/DenQ;
-  const double Q21 = (-Mba*Mcc + Mbc*Mca)/DenQ;
+  //const double Q21 = (-Mba*Mcc + Mbc*Mca)/DenQ;
   const double Q22 = ( Maa*Mcc - Mac*Mca)/DenQ;
   const double Q23 = (-Maa*Mbc + Mac*Mba)/DenQ;
-  const double Q31 = ( Mba*Mcb - Mbb*Mca)/DenQ;
-  const double Q32 = (-Maa*Mcb + Mab*Mca)/DenQ;
+  //const double Q31 = ( Mba*Mcb - Mbb*Mca)/DenQ;
+  //const double Q32 = (-Maa*Mcb + Mab*Mca)/DenQ;
   const double Q33 = ( Maa*Mbb - Mab*Mba)/DenQ;
 
 //printf("Q1: %10.5g %10.5g %10.5g\n", Q11, Q12, Q13);
