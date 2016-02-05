@@ -100,7 +100,7 @@ double Iqxy(double qx, double qy, double dnn,
     double theta, double phi, double psi){
 
   double b3_x, b3_y, b1_x, b1_y, b2_x, b2_y; //b3_z,
-  double q_z;
+  // double q_z;
   double cos_val_b3, cos_val_b2, cos_val_b1;
   double a1_dot_q, a2_dot_q,a3_dot_q;
   double answer;
@@ -123,7 +123,7 @@ double Iqxy(double qx, double qy, double dnn,
   //the occupied volume of the lattice
   const double latticescale = 2.0*(4.0/3.0)*M_PI*(radius*radius*radius)/(s1*s1*s1);
   // q vector
-  q_z = 0.0; // for SANS; assuming qz is negligible
+  // q_z = 0.0; // for SANS; assuming qz is negligible
   /// Angles here are respect to detector coordinate
   ///  instead of against q coordinate(PRB 36(46), 3(6), 1754(3854))
     // b3 axis orientation
