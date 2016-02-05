@@ -15,12 +15,14 @@
      #include <cmath>
      using namespace std;
      #if defined(_MSC_VER)
-     #   define kernel extern "C" __declspec( dllexport )
+         #include <float.h>
+         #define kernel extern "C" __declspec( dllexport )
          inline double trunc(double x) { return x>=0?floor(x):-floor(-x); }
-	 inline double fmin(double x, double y) { return x>y ? y : x; }
-	 inline double fmax(double x, double y) { return x<y ? y : x; }
+	     inline double fmin(double x, double y) { return x>y ? y : x; }
+	     inline double fmax(double x, double y) { return x<y ? y : x; }
+	     inline double isnan(double x) { return _isnan(x); }
      #else
-     #   define kernel extern "C"
+         #define kernel extern "C"
      #endif
      inline void SINCOS(double angle, double &svar, double &cvar) { svar=sin(angle); cvar=cos(angle); }
 #  else
