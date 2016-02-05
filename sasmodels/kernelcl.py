@@ -251,18 +251,37 @@ def _get_default_context():
     #     {'Intel': [CPU], 'NVIDIA': [GPU, GPU, GPU, GPU]}
     gpu, cpu = None, None
     for platform in cl.get_platforms():
+        # AMD provides a much weaker CPU driver than Intel/Apple, so avoid it.
+        # If someone has bothered to install the AMD/NVIDIA drivers, prefer them over the integrated
+        # graphics driver that may have been supplied with the CPU chipset.
+        preferred_cpu = platform.vendor.startswith('Intel') or platform.vendor.startswith('Apple')
+        preferred_gpu = platform.vendor.startswith('Advanced') or platform.vendor.startswith('NVIDIA')
         for device in platform.get_devices():
             if device.type == cl.device_type.GPU:
-                gpu = device
+                # If the existing type is not GPU then it will be CUSTOM or ACCELERATOR,
+                # so don't override it.
+                if gpu is None or (preferred_gpu and gpu.type == cl.device_type.GPU):
+                    gpu = device
+            elif device.type == cl.device_type.CPU:
+                if cpu is None or preferred_cpu:
+                    cpu = device
             else:
-                cpu = device
-    single = gpu if gpu is not None else cpu
-    double = gpu if gpu is not None and has_type(gpu, np.dtype('double')) else cpu
+                # System has cl.device_type.ACCELERATOR or cl.device_type.CUSTOM
+                # Intel Phi for example registers as an accelerator
+                # Since the user installed a custom device on their system and went through the
+                # pain of sorting out OpenCL drivers for it, lets assume they really do want to
+                # use it as their primary compute device.
+                gpu = device
 
-    if single == double:
-        return [cl.Context([single])]
-    else:
-        return [cl.Context([single]), cl.Context([double])]
+    # order the devices by gpu then by cpu; when searching for an available device by data type they
+    # will be checked in this order, which means that if the gpu supports double then the cpu will never
+    # be used (though we may make it possible to explicitly request the cpu at some point).
+    devices = []
+    if gpu is not None:
+        devices.append(gpu)
+    if cpu is not None:
+        devices.append(cpu)
+    return [cl.Context([d]) for d in devices]
 
 
 class GpuModel(object):
