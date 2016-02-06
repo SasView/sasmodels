@@ -1,8 +1,6 @@
 """
 Core model handling routines.
 """
-__all__ = ["list_models", "load_model_definition",  "precompile_dll",
-           "load_model", "make_kernel", "call_kernel", "call_ER", "call_VR" ]
 
 from os.path import basename, dirname, join as joinpath
 from glob import glob
@@ -21,6 +19,10 @@ try:
 except:
     HAVE_OPENCL = False
 
+__all__ = [
+    "list_models", "load_model_definition", "precompile_dll",
+    "load_model", "make_kernel", "call_kernel", "call_ER", "call_VR",
+]
 
 def list_models():
     """
@@ -35,6 +37,9 @@ def list_models():
 def load_model_definition(model_name):
     """
     Load a model definition given the model name.
+
+    This returns a handle to the module defining the model.  This can be
+    used with functions in generate to build the docs or extract model info.
     """
     __import__('sasmodels.models.'+model_name)
     model_definition = getattr(models, model_name, None)
@@ -60,11 +65,14 @@ def precompile_dll(model_name, dtype="double"):
 
 
 def isstr(s):
+    """
+    Return True if *s* is a string-like object.
+    """
     try: s + ''
     except: return False
     return True
 
-def load_model(model_definition, dtype="single", platform="ocl"):
+def load_model(model_definition, dtype=None, platform="ocl"):
     """
     Prepare the model for the default execution platform.
 
@@ -78,13 +86,16 @@ def load_model(model_definition, dtype="single", platform="ocl"):
     *dtype* indicates whether the model should use single or double precision
     for the calculation. Any valid numpy single or double precision identifier
     is valid, such as 'single', 'f', 'f32', or np.float32 for single, or
-    'double', 'd', 'f64'  and np.float64 for double.
+    'double', 'd', 'f64'  and np.float64 for double.  If *None*, then use
+    'single' unless the model defines single=False.
 
     *platform* should be "dll" to force the dll to be used for C models,
     otherwise it uses the default "ocl".
     """
     if isstr(model_definition):
         model_definition = load_model_definition(model_definition)
+    if dtype is None:
+        dtype = 'single' if getattr(model_definition, 'single', True) else 'double'
     source, info = generate.make(model_definition)
     if callable(info.get('Iq', None)):
         return kernelpy.PyModel(info)
@@ -98,7 +109,7 @@ def load_model(model_definition, dtype="single", platform="ocl"):
     # open(info['name']+'.c','w').write(source)
     # source = open(info['name']+'.cl','r').read()
 
-    if (platform=="dll"
+    if (platform == "dll"
             or not HAVE_OPENCL
             or not kernelcl.environment().has_type(dtype)):
         return kerneldll.load_dll(source, info, dtype)
@@ -109,8 +120,7 @@ def make_kernel(model, q_vectors):
     """
     Return a computation kernel from the model definition and the q input.
     """
-    model_input = model.make_input(q_vectors)
-    return model(model_input)
+    return model(q_vectors)
 
 def get_weights(info, pars, name):
     """
@@ -127,7 +137,7 @@ def get_weights(info, pars, name):
     npts = pars.get(name+'_pd_n', 0)
     width = pars.get(name+'_pd', 0.0)
     nsigma = pars.get(name+'_pd_nsigma', 3.0)
-    value,weight = weights.get_weights(
+    value, weight = weights.get_weights(
         disperser, npts, width, nsigma, value, limits, relative)
     return value, weight / np.sum(weight)
 
@@ -194,6 +204,6 @@ def call_VR(info, pars):
         vol_pars = [get_weights(info, pars, name)
                     for name in info['partype']['volume']]
         value, weight = dispersion_mesh(vol_pars)
-        whole,part = VR(*value)
+        whole, part = VR(*value)
         return np.sum(weight*part)/np.sum(weight*whole)
 

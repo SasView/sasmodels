@@ -84,6 +84,7 @@ description = """\
 """
 category = "structure-factor"
 
+single = False
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [
     #   [ "name", "units", default, [lower, upper], "type",
@@ -181,4 +182,10 @@ oldname = 'StickyHSStructure'
 oldpars = dict()
 demo = dict(effect_radius=200, volfraction=0.2, perturb=0.05,
             stickiness=0.2, effect_radius_pd=0.1, effect_radius_pd_n=40)
+#
+tests = [
+        [ {'scale': 1.0, 'background' : 0.0, 'effect_radius' : 50.0, 'perturb' : 0.05, 'stickiness' : 0.2, 'volfraction' : 0.1,
+           'effect_radius_pd' : 0}, [0.001], [1.09718]]
+        ]
+
 

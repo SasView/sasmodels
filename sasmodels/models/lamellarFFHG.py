@@ -120,4 +120,10 @@ demo = dict(scale=1, background=0,
 oldname = 'LamellarFFHGModel'
 oldpars = dict(head_length='h_thickness', tail_length='t_length',
                sld='sld_tail', head_sld='sld_head', solvent_sld='sld_solvent')
+#
+tests = [
+        [ {'scale': 1.0, 'background' : 0.0, 'tail_length' : 15.0, 'head_length' : 10.0,'sld' : 0.4,
+         'head_sld' : 3.0, 'solvent_sld' : 6.0, }, [0.001], [653143.9209]]
+        ]
+
 

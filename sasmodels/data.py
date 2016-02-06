@@ -86,9 +86,44 @@ def set_top(data, cutoff):
 
 
 class Data1D(object):
+    """
+    1D data object.
+
+    Note that this definition matches the attributes from sasview, with
+    some generic 1D data vectors and some SAS specific definitions.  Some
+    refactoring to allow consistent naming conventions between 1D, 2D and
+    SESANS data would be helpful.
+
+    **Attributes**
+
+    *x*, *dx*: $q$ vector and gaussian resolution
+
+    *y*, *dy*: $I(q)$ vector and measurement uncertainty
+
+    *mask*: values to include in plotting/analysis
+
+    *dxl*: slit widths for slit smeared data, with *dx* ignored
+
+    *qmin*, *qmax*: range of $q$ values in *x*
+
+    *filename*: label for the data line
+
+    *_xaxis*, *_xunit*: label and units for the *x* axis
+
+    *_yaxis*, *_yunit*: label and units for the *y* axis
+    """
     def __init__(self, x=None, y=None, dx=None, dy=None):
         self.x, self.y, self.dx, self.dy = x, y, dx, dy
         self.dxl = None
+        self.filename = None
+        self.qmin = x.min() if x is not None else np.NaN
+        self.qmax = x.max() if x is not None else np.NaN
+        # TODO: why is 1D mask False and 2D mask True?
+        self.mask = (np.isnan(y) if y is not None
+                     else np.zeros_like(x, 'b') if x is not None
+                     else None)
+        self._xaxis, self._xunit = "x", ""
+        self._yaxis, self._yunit = "y", ""
 
     def xaxis(self, label, unit):
         """
@@ -107,9 +142,58 @@ class Data1D(object):
 
 
 class Data2D(object):
-    def __init__(self):
+    """
+    2D data object.
+
+    Note that this definition matches the attributes from sasview. Some
+    refactoring to allow consistent naming conventions between 1D, 2D and
+    SESANS data would be helpful.
+
+    **Attributes**
+
+    *qx_data*, *dqx_data*: $q_x$ matrix and gaussian resolution
+
+    *qy_data*, *dqy_data*: $q_y$ matrix and gaussian resolution
+
+    *data*, *err_data*: $I(q)$ matrix and measurement uncertainty
+
+    *mask*: values to exclude from plotting/analysis
+
+    *qmin*, *qmax*: range of $q$ values in *x*
+
+    *filename*: label for the data line
+
+    *_xaxis*, *_xunit*: label and units for the *x* axis
+
+    *_yaxis*, *_yunit*: label and units for the *y* axis
+
+    *_zaxis*, *_zunit*: label and units for the *y* axis
+
+    *Q_unit*, *I_unit*: units for Q and intensity
+
+    *x_bins*, *y_bins*: grid steps in *x* and *y* directions
+    """
+    def __init__(self, x=None, y=None, z=None, dx=None, dy=None, dz=None):
+        self.qx_data, self.dqx_data = x, dx
+        self.qy_data, self.dqy_data = y, dy
+        self.data, self.err_data = z, dz
+        self.mask = (~np.isnan(z) if z is not None
+                     else np.ones_like(x) if x is not None
+                     else None)
+        self.q_data = np.sqrt(x**2 + y**2)
+        self.qmin = 1e-16
+        self.qmax = np.inf
         self.detector = []
         self.source = Source()
+        self.Q_unit = "1/A"
+        self.I_unit = "1/cm"
+        self.xaxis("Q_x", "1/A")
+        self.yaxis("Q_y", "1/A")
+        self.zaxis("Intensity", "1/cm")
+        self._xaxis, self._xunit = "x", ""
+        self._yaxis, self._yunit = "y", ""
+        self._zaxis, self._zunit = "z", ""
+        self.x_bins, self.y_bins = None, None
 
     def xaxis(self, label, unit):
         """
@@ -134,18 +218,30 @@ class Data2D(object):
 
 
 class Vector(object):
+    """
+    3-space vector of *x*, *y*, *z*
+    """
     def __init__(self, x=None, y=None, z=None):
         self.x, self.y, self.z = x, y, z
 
 class Detector(object):
-    def __init__(self):
-        self.pixel_size = Vector()
+    """
+    Detector attributes.
+    """
+    def __init__(self, pixel_size=(None, None), distance=None):
+        self.pixel_size = Vector(*pixel_size)
+        self.distance = distance
 
 class Source(object):
-    pass
+    """
+    Beam attributes.
+    """
+    def __init__(self):
+        self.wavelength = np.NaN
+        self.wavelength_unit = "A"
 
 
-def empty_data1D(q, resolution=0.05):
+def empty_data1D(q, resolution=0.0):
     """
     Create empty 1D data using the given *q* as the x value.
 
@@ -155,14 +251,13 @@ def empty_data1D(q, resolution=0.05):
     #Iq = 100 * np.ones_like(q)
     #dIq = np.sqrt(Iq)
     Iq, dIq = None, None
+    q = np.asarray(q)
     data = Data1D(q, Iq, dx=resolution * q, dy=dIq)
     data.filename = "fake data"
-    data.qmin, data.qmax = q.min(), q.max()
-    data.mask = np.zeros(len(q), dtype='bool')
     return data
 
 
-def empty_data2D(qx, qy=None, resolution=0.05):
+def empty_data2D(qx, qy=None, resolution=0.0):
     """
     Create empty 2D data using the given mesh.
 
@@ -172,23 +267,12 @@ def empty_data2D(qx, qy=None, resolution=0.05):
     """
     if qy is None:
         qy = qx
+    qx, qy = np.asarray(qx), np.asarray(qy)
+    # 5% dQ/Q resolution
     Qx, Qy = np.meshgrid(qx, qy)
     Qx, Qy = Qx.flatten(), Qy.flatten()
     Iq = 100 * np.ones_like(Qx)
     dIq = np.sqrt(Iq)
-    mask = np.ones(len(Iq), dtype='bool')
-
-    data = Data2D()
-    data.filename = "fake data"
-    data.qx_data = Qx
-    data.qy_data = Qy
-    data.data = Iq
-    data.err_data = dIq
-    data.mask = mask
-    data.qmin = 1e-16
-    data.qmax = np.inf
-
-    # 5% dQ/Q resolution
     if resolution != 0:
         # https://www.ncnr.nist.gov/staff/hammouda/distance_learning/chapter_15.pdf
         # Should have an additional constant which depends on distances and
@@ -196,108 +280,133 @@ def empty_data2D(qx, qy=None, resolution=0.05):
         # Instead, assume radial dQ/Q is constant, and perpendicular matches
         # radial (which instead it should be inverse).
         Q = np.sqrt(Qx**2 + Qy**2)
-        data.dqx_data = resolution * Q
-        data.dqy_data = resolution * Q
+        dqx = resolution * Q
+        dqy = resolution * Q
     else:
-        data.dqx_data = data.dqy_data = None
+        dqx = dqy = None
 
-    detector = Detector()
-    detector.pixel_size.x = 5 # mm
-    detector.pixel_size.y = 5 # mm
-    detector.distance = 4 # m
-    data.detector.append(detector)
+    data = Data2D(x=Qx, y=Qy, z=Iq, dx=dqx, dy=dqy, dz=dIq)
     data.x_bins = qx
     data.y_bins = qy
+    data.filename = "fake data"
+
+    # pixel_size in mm, distance in m
+    detector = Detector(pixel_size=(5, 5), distance=4)
+    data.detector.append(detector)
     data.source.wavelength = 5 # angstroms
     data.source.wavelength_unit = "A"
-    data.Q_unit = "1/A"
-    data.I_unit = "1/cm"
-    data.q_data = np.sqrt(Qx ** 2 + Qy ** 2)
-    data.xaxis("Q_x", "A^{-1}")
-    data.yaxis("Q_y", "A^{-1}")
-    data.zaxis("Intensity", r"\text{cm}^{-1}")
     return data
 
 
 def plot_data(data, view='log', limits=None):
     """
     Plot data loaded by the sasview loader.
+
+    *data* is a sasview data object, either 1D, 2D or SESANS.
+
+    *view* is log or linear.
+
+    *limits* sets the intensity limits on the plot; if None then the limits
+    are inferred from the data.
     """
     # Note: kind of weird using the plot result functions to plot just the
     # data, but they already handle the masking and graph markup already, so
     # do not repeat.
     if hasattr(data, 'lam'):
-        _plot_result_sesans(data, None, None, plot_data=True, limits=limits)
+        _plot_result_sesans(data, None, None, use_data=True, limits=limits)
     elif hasattr(data, 'qx_data'):
-        _plot_result2D(data, None, None, view, plot_data=True, limits=limits)
+        _plot_result2D(data, None, None, view, use_data=True, limits=limits)
     else:
-        _plot_result1D(data, None, None, view, plot_data=True, limits=limits)
+        _plot_result1D(data, None, None, view, use_data=True, limits=limits)
 
 
 def plot_theory(data, theory, resid=None, view='log',
-                plot_data=True, limits=None):
+                use_data=True, limits=None):
+    """
+    Plot theory calculation.
+
+    *data* is needed to define the graph properties such as labels and
+    units, and to define the data mask.
+
+    *theory* is a matrix of the same shape as the data.
+
+    *view* is log or linear
+
+    *use_data* is True if the data should be plotted as well as the theory.
+
+    *limits* sets the intensity limits on the plot; if None then the limits
+    are inferred from the data.
+    """
     if hasattr(data, 'lam'):
-        _plot_result_sesans(data, theory, resid, plot_data=True, limits=limits)
+        _plot_result_sesans(data, theory, resid, use_data=True, limits=limits)
     elif hasattr(data, 'qx_data'):
-        _plot_result2D(data, theory, resid, view, plot_data, limits=limits)
+        _plot_result2D(data, theory, resid, view, use_data, limits=limits)
     else:
-        _plot_result1D(data, theory, resid, view, plot_data, limits=limits)
+        _plot_result1D(data, theory, resid, view, use_data, limits=limits)
 
 
 def protect(fn):
+    """
+    Decorator to wrap calls in an exception trapper which prints the
+    exception and continues.  Keyboard interrupts are ignored.
+    """
     def wrapper(*args, **kw):
+        """
+        Trap and print errors from function.
+        """
         try:
             return fn(*args, **kw)
+        except KeyboardInterrupt:
+            raise
         except:
             traceback.print_exc()
-            pass
 
     return wrapper
 
 
 @protect
-def _plot_result1D(data, theory, resid, view, plot_data, limits=None):
+def _plot_result1D(data, theory, resid, view, use_data, limits=None):
     """
     Plot the data and residuals for 1D data.
     """
     import matplotlib.pyplot as plt
     from numpy.ma import masked_array, masked
 
-    plot_theory = theory is not None
-    plot_resid = resid is not None
+    use_data = use_data and data.y is not None
+    use_theory = theory is not None
+    use_resid = resid is not None
+    num_plots = (use_data or use_theory) + use_resid
 
-    if data.y is None:
-        plot_data = False
     scale = data.x**4 if view == 'q4' else 1.0
 
-    if plot_data or plot_theory:
-        if plot_resid:
-            plt.subplot(121)
-
+    if use_data or use_theory:
         #print(vmin, vmax)
         all_positive = True
         some_present = False
-        if plot_data:
+        if use_data:
             mdata = masked_array(data.y, data.mask.copy())
             mdata[~np.isfinite(mdata)] = masked
             if view is 'log':
                 mdata[mdata <= 0] = masked
             plt.errorbar(data.x/10, scale*mdata, yerr=data.dy, fmt='.')
-            all_positive = all_positive and (mdata>0).all()
+            all_positive = all_positive and (mdata > 0).all()
             some_present = some_present or (mdata.count() > 0)
 
 
-        if plot_theory:
+        if use_theory:
             mtheory = masked_array(theory, data.mask.copy())
             mtheory[~np.isfinite(mtheory)] = masked
             if view is 'log':
-                mtheory[mtheory<=0] = masked
+                mtheory[mtheory <= 0] = masked
             plt.plot(data.x/10, scale*mtheory, '-', hold=True)
-            all_positive = all_positive and (mtheory>0).all()
+            all_positive = all_positive and (mtheory > 0).all()
             some_present = some_present or (mtheory.count() > 0)
 
         if limits is not None:
             plt.ylim(*limits)
+
+        if num_plots > 1:
+            plt.subplot(1, num_plots, 1)
         plt.xscale('linear' if not some_present else view)
         plt.yscale('linear'
                    if view == 'q4' or not some_present or not all_positive
@@ -305,13 +414,13 @@ def _plot_result1D(data, theory, resid, view, plot_data, limits=None):
         plt.xlabel("$q$/nm$^{-1}$")
         plt.ylabel('$I(q)$')
 
-    if plot_resid:
-        if plot_data or plot_theory:
-            plt.subplot(122)
-
+    if use_resid:
         mresid = masked_array(resid, data.mask.copy())
         mresid[~np.isfinite(mresid)] = masked
         some_present = (mresid.count() > 0)
+
+        if num_plots > 1:
+            plt.subplot(1, num_plots, (use_data or use_theory) + 1)
         plt.plot(data.x/10, mresid, '-')
         plt.xlabel("$q$/nm$^{-1}$")
         plt.ylabel('residuals')
@@ -319,17 +428,20 @@ def _plot_result1D(data, theory, resid, view, plot_data, limits=None):
 
 
 @protect
-def _plot_result_sesans(data, theory, resid, plot_data, limits=None):
+def _plot_result_sesans(data, theory, resid, use_data, limits=None):
+    """
+    Plot SESANS results.
+    """
     import matplotlib.pyplot as plt
-    if data.y is None:
-        plot_data = False
-    plot_theory = theory is not None
-    plot_resid = resid is not None
+    use_data = use_data and data.y is not None
+    use_theory = theory is not None
+    use_resid = resid is not None
+    num_plots = (use_data or use_theory) + use_resid
 
-    if plot_data or plot_theory:
-        if plot_resid:
-            plt.subplot(121)
-        if plot_data:
+    if use_data or use_theory:
+        if num_plots > 1:
+            plt.subplot(1, num_plots, 1)
+        if use_data:
             plt.errorbar(data.x, data.y, yerr=data.dy)
         if theory is not None:
             plt.plot(data.x, theory, '-', hold=True)
@@ -339,78 +451,70 @@ def _plot_result_sesans(data, theory, resid, plot_data, limits=None):
         plt.ylabel('polarization (P/P0)')
 
     if resid is not None:
-        if plot_data or plot_theory:
-            plt.subplot(122)
-
+        if num_plots > 1:
+            plt.subplot(1, num_plots, (use_data or use_theory) + 1)
         plt.plot(data.x, resid, 'x')
         plt.xlabel('spin echo length (nm)')
         plt.ylabel('residuals (P/P0)')
 
 
 @protect
-def _plot_result2D(data, theory, resid, view, plot_data, limits=None):
+def _plot_result2D(data, theory, resid, view, use_data, limits=None):
     """
     Plot the data and residuals for 2D data.
     """
     import matplotlib.pyplot as plt
-    if data.data is None:
-        plot_data = False
-    plot_theory = theory is not None
-    plot_resid = resid is not None
+    use_data = use_data and data.data is not None
+    use_theory = theory is not None
+    use_resid = resid is not None
+    num_plots = use_data + use_theory + use_resid
 
     # Put theory and data on a common colormap scale
-    if limits is None:
-        vmin, vmax = np.inf, -np.inf
-        if plot_data:
-            target = data.data[~data.mask]
-            datamin = target[target>0].min() if view == 'log' else target.min()
-            datamax = target.max()
-            vmin = min(vmin, datamin)
-            vmax = max(vmax, datamax)
-        if plot_theory:
-            theorymin = theory[theory>0].min() if view=='log' else theory.min()
-            theorymax = theory.max()
-            vmin = min(vmin, theorymin)
-            vmax = max(vmax, theorymax)
-    else:
+    vmin, vmax = np.inf, -np.inf
+    if use_data:
+        target = data.data[~data.mask]
+        datamin = target[target > 0].min() if view == 'log' else target.min()
+        datamax = target.max()
+        vmin = min(vmin, datamin)
+        vmax = max(vmax, datamax)
+    if use_theory:
+        theorymin = theory[theory > 0].min() if view == 'log' else theory.min()
+        theorymax = theory.max()
+        vmin = min(vmin, theorymin)
+        vmax = max(vmax, theorymax)
+
+    # Override data limits from the caller
+    if limits is not None:
         vmin, vmax = limits
 
-    if plot_data:
-        if plot_theory and plot_resid:
-            plt.subplot(131)
-        elif plot_theory or plot_resid:
-            plt.subplot(121)
+    # Plot data
+    if use_data:
+        if num_plots > 1:
+            plt.subplot(1, num_plots, 1)
         _plot_2d_signal(data, target, view=view, vmin=vmin, vmax=vmax)
         plt.title('data')
         h = plt.colorbar()
         h.set_label('$I(q)$')
 
-    if plot_theory:
-        if plot_data and plot_resid:
-            plt.subplot(132)
-        elif plot_data:
-            plt.subplot(122)
-        elif plot_resid:
-            plt.subplot(121)
+    # plot theory
+    if use_theory:
+        if num_plots > 1:
+            plt.subplot(1, num_plots, use_data+1)
         _plot_2d_signal(data, theory, view=view, vmin=vmin, vmax=vmax)
         plt.title('theory')
         h = plt.colorbar()
-        h.set_label(r'$\log_{10}I(q)$' if view=='log'
+        h.set_label(r'$\log_{10}I(q)$' if view == 'log'
                     else r'$q^4 I(q)$' if view == 'q4'
                     else '$I(q)$')
 
-    #if plot_data or plot_theory:
-    #    plt.colorbar()
-
-    if plot_resid:
-        if plot_data and plot_theory:
-            plt.subplot(133)
-        elif plot_data or plot_theory:
-            plt.subplot(122)
+    # plot resid
+    if use_resid:
+        if num_plots > 1:
+            plt.subplot(1, num_plots, use_data+use_theory+1)
         _plot_2d_signal(data, resid, view='linear')
         plt.title('residuals')
         h = plt.colorbar()
-        h.set_label('$\Delta I(q)$')
+        h.set_label(r'$\Delta I(q)$')
 
 
 @protect
@@ -455,6 +559,9 @@ def _plot_2d_signal(data, signal, vmin=None, vmax=None, view='log'):
     return vmin, vmax
 
 def demo():
+    """
+    Load and plot a SAS dataset.
+    """
     data = load_data('DEC07086.DAT')
     set_beam_stop(data, 0.004)
     plot_data(data)

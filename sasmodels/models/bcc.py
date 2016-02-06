@@ -108,22 +108,28 @@ from numpy import inf
 name = "bcc_paracrystal"
 title = "Body-centred cubic lattic with paracrystalline distortion"
 description = """
-    Calculates the scattering from a **body-centered cubic lattice** with paracrystalline distortion. Thermal vibrations
-    are considered to be negligible, and the size of the paracrystal is infinitely large. Paracrystalline distortion is
-    assumed to be isotropic and characterized by a Gaussian distribution.
+    Calculates the scattering from a **body-centered cubic lattice** with
+    paracrystalline distortion. Thermal vibrations are considered to be
+    negligible, and the size of the paracrystal is infinitely large.
+    Paracrystalline distortion is assumed to be isotropic and characterized
+    by a Gaussian distribution.
     """
 category = "shape:paracrystal"
 
+single = False
+
+# pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description" ],
-parameters = [["dnn", "Ang", 220, [-inf, inf], "", "Nearest neighbour distance"],
-              ["d_factor", "", 0.06, [-inf, inf], "", "Paracrystal distortion factor"],
-              ["radius", "Ang", 40, [0, inf], "volume", "Particle radius"],
-              ["sld", "1e-6/Ang^2", 4, [-inf, inf], "", "Particle scattering length density"],
-              ["solvent_sld", "1e-6/Ang^2", 1, [-inf, inf], "", "Solvent scattering length density"],
-              ["theta", "degrees", 60, [-inf, inf], "orientation", "In plane angle"],
-              ["phi", "degrees", 60, [-inf, inf], "orientation", "Out of plane angle"],
-              ["psi", "degrees", 60, [-inf, inf], "orientation", "Out of plane angle"]
+parameters = [["dnn",         "Ang",       220,    [-inf, inf], "",            "Nearest neighbour distance"],
+              ["d_factor",    "",            0.06, [-inf, inf], "",            "Paracrystal distortion factor"],
+              ["radius",      "Ang",        40,    [0, inf],    "volume",      "Particle radius"],
+              ["sld",         "1e-6/Ang^2",  4,    [-inf, inf], "",            "Particle scattering length density"],
+              ["solvent_sld", "1e-6/Ang^2",  1,    [-inf, inf], "",            "Solvent scattering length density"],
+              ["theta",       "degrees",    60,    [-inf, inf], "orientation", "In plane angle"],
+              ["phi",         "degrees",    60,    [-inf, inf], "orientation", "Out of plane angle"],
+              ["psi",         "degrees",    60,    [-inf, inf], "orientation", "Out of plane angle"]
              ]
+# pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/J1.c", "lib/gauss150.c", "bcc.c"]
 

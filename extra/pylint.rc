@@ -5,10 +5,11 @@
 
 # Python code to execute, usually for sys.path manipulation such as
 # pygtk.require().
-#init-hook=
+#init-hook='import os, sys; sys.path.extend([os.getcwd(),os.path.join(os.getcwd(),"extra")])'
+init-hook='import sys; sys.path.append('extra')
 
 # Profiled execution.
-profile=no
+#profile=no
 
 # Add files or directories to the blacklist. They should be base names, not
 # paths.
@@ -63,6 +64,7 @@ disable=
     broad-except,
     star-args,
     unbalanced-tuple-unpacking,
+    locally-enabled,
     locally-disabled,
 
 [REPORTS]
@@ -89,7 +91,7 @@ evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / stateme
 
 # Add a comment according to your evaluation note. This is used by the global
 # evaluation report (RP0004).
-comment=no
+#comment=no
 
 # Template used to display messages. This is a python new-style format string
 # used to format the message information. See doc for all details
@@ -98,20 +100,20 @@ comment=no
 [BASIC]
 
 # Required attributes for module, separated by a comma
-required-attributes=
+#required-attributes=
 
 # List of builtins function names that should not be used, separated by a comma
 bad-functions=map,filter,input
 
 # Good variable names which should always be accepted, separated by a comma
 good-names=_,
-    input,
-    i,j,k,n,x,y,z,
-    q,qx,qy,qz,
-    dt,dx,dy,dz,id,
-    Iq,dIq,Qx,Qy,Qz,
-    p,
+    input, id,
+    h, i, j, k, n, p, v, w, x, y, z,
+    q, qx, qy, qz, Q, Qx, Qy, Qz,
+    dt, dx, dy, dz, dq,
+    Iq, dIq, Iqxy, Iq_calc,
     ER, call_ER, VR, call_VR,
+    Rmax, SElength,
 
 # Bad variable names which should always be refused, separated by a comma
 bad-names=foo,bar,baz,toto,tutu,tata
@@ -277,7 +279,8 @@ ignore-mixin-members=yes
 # List of module names for which member attributes should not be checked
 # (useful for modules/projects where namespaces are manipulated during runtime
 # and thus existing member attributes cannot be deduced by static analysis
-ignored-modules=numpy,np
+ignored-modules=numpy,np,numpy.random,
+    bumps,sas,
 
 # List of classes names for which member attributes should not be checked
 # (useful for classes with attributes dynamically set).
@@ -285,7 +288,7 @@ ignored-classes=SQLObject
 
 # When zope mode is activated, add a predefined set of Zope acquired attributes
 # to generated-members.
-zope=no
+#zope=no
 
 # List of members which are set dynamically and missed by pylint inference
 # system, and so shouldn't trigger E0201 when accessed. Python regular
@@ -315,7 +318,7 @@ callbacks=cb_,_cb
 
 # List of interface methods to ignore, separated by a comma. This is used for
 # instance to not check methods defines in Zope's Interface base class.
-ignore-iface-methods=isImplementedBy,deferred,extends,names,namesAndDescriptions,queryDescriptionFor,getBases,getDescriptionFor,getDoc,getName,getTaggedValue,getTaggedValueTags,isEqualOrExtendedBy,setTaggedValue,isImplementedByInstancesOf,adaptWith,is_implemented_by
+#ignore-iface-methods=isImplementedBy,deferred,extends,names,namesAndDescriptions,queryDescriptionFor,getBases,getDescriptionFor,getDoc,getName,getTaggedValue,getTaggedValueTags,isEqualOrExtendedBy,setTaggedValue,isImplementedByInstancesOf,adaptWith,is_implemented_by
 
 # List of method names used to declare (i.e. assign) instance attributes.
 defining-attr-methods=__init__,__new__,setUp
@@ -334,14 +337,14 @@ exclude-protected=_asdict,_fields,_replace,_source,_make
 [DESIGN]
 
 # Maximum number of arguments for function / method
-max-args=5
+max-args=15
 
 # Argument names that match this expression will be ignored. Default to name
 # with leading underscore
 ignored-argument-names=_.*
 
 # Maximum number of locals for function / method body
-max-locals=15
+max-locals=25
 
 # Maximum number of return / yield for function / method body
 max-returns=6

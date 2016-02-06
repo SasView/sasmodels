@@ -6,8 +6,8 @@ in a gel involves at least two characteristic length scales,
 a shorter correlation length ( $a1$ ) to describe the rapid fluctuations
 in the position of the polymer chains that ensure thermodynamic equilibrium,
 and a longer distance (denoted here as $a2$ ) needed to account for the static
-accumulations of polymer pinned down by junction points or clusters of such points.
-The latter is derived from a simple Guinier function.
+accumulations of polymer pinned down by junction points or clusters of such
+points. The latter is derived from a simple Guinier function.
 
 
 Definition
@@ -39,11 +39,11 @@ In gels with significant hydrogen bonding $D$ has been reported to be
 Reference
 ---------
 
-Mitsuhiro Shibayama, Toyoichi Tanaka, Charles C Han, J. Chem. Phys. 1992, 97 (9),
-6829-6841
+Mitsuhiro Shibayama, Toyoichi Tanaka, Charles C Han,
+*J. Chem. Phys.* 1992, 97 (9), 6829-6841
 
 Simon Mallam, Ferenc Horkay, Anne-Marie Hecht, Adrian R Rennie, Erik Geissler,
-Macromolecules 1991, 24, 543-548
+*Macromolecules* 1991, 24, 543-548
 
 """
 
@@ -61,14 +61,15 @@ description = """\
 """
 category = "shape-independent"
 
+# pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["guinier_scale",    "cm^{-1}",   1.7, [-inf, inf], "", "Guinier length scale"],
               ["lorentzian_scale", "cm^{-1}",   3.5, [-inf, inf], "", "Lorentzian length scale"],
               ["gyration_radius",  "Ang",     104.0, [2, inf],    "", "Radius of gyration"],
               ["fractal_exp",      "",          2.0, [0, inf],    "", "Fractal exponent"],
               ["cor_length",       "Ang",      16.0, [0, inf],    "", "Correlation length"]
-              ]
-
+             ]
+# pylint: enable=bad-whitespace, line-too-long
 
 source = ["gel_fit.c"]
 
@@ -91,7 +92,7 @@ tests = [[{'guinier_scale': 1.0,
            'gyration_radius': 10.0,
            'fractal_exp': 10.0,
            'cor_length': 20.0
-           }, 0.1, 0.716532],
+          }, 0.1, 0.716532],
 
          [{'guinier_scale': 4.0,
            'lorentzian_scale': 10.0,
@@ -99,6 +100,5 @@ tests = [[{'guinier_scale': 1.0,
            'fractal_exp': 1.0,
            'cor_length': 20.0,
            'background': 20.0,
-           }, 5.0, 20.1224653026],
-
-         ]
+          }, 5.0, 20.1224653026],
+        ]

@@ -124,13 +124,12 @@ description = """That is, a sphereocylinder
     solvent_sld: SLD of the solvent.
 """
 category = "shape:cylinder"
-
+# pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "",
-               "Cylinder scattering length density"],
-              ["solvent_sld", "1e-6/Ang^2", 1, [-inf, inf], "",
-               "Solvent scattering length density"],
-              ["radius", "Ang", 20, [0, inf], "volume", "Cylinder radius"],
+parameters = [["sld",         "1e-6/Ang^2", 4, [-inf, inf], "",       "Cylinder scattering length density"],
+              ["solvent_sld", "1e-6/Ang^2", 1, [-inf, inf], "",       "Solvent scattering length density"],
+              ["radius",      "Ang",       20, [0, inf],    "volume", "Cylinder radius"],
+
               # TODO: use an expression for cap radius with fixed bounds.
               # The current form requires cap radius R bigger than cylinder radius r.
               # Could instead use R/r in [1,inf], r/R in [0,1], or the angle between
@@ -140,11 +139,12 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "",
               # barbell model.  This leads to the natural value of zero for no cap
               # in the capped cylinder, and zero for no bar in the barbell model.  In
               # both models, one would be a pill.
-              ["cap_radius", "Ang", 20, [0, inf], "volume", "Cap radius"],
-              ["length", "Ang", 400, [0, inf], "volume", "Cylinder length"],
-              ["theta", "degrees", 60, [-inf, inf], "orientation", "In plane angle"],
-              ["phi", "degrees", 60, [-inf, inf], "orientation", "Out of plane angle"],
+              ["cap_radius", "Ang",     20, [0, inf],    "volume", "Cap radius"],
+              ["length",     "Ang",    400, [0, inf],    "volume", "Cylinder length"],
+              ["theta",      "degrees", 60, [-inf, inf], "orientation", "In plane angle"],
+              ["phi",        "degrees", 60, [-inf, inf], "orientation", "Out of plane angle"],
              ]
+# pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/J1.c", "lib/gauss76.c", "capped_cylinder.c"]
 
@@ -158,5 +158,8 @@ demo = dict(scale=1, background=0,
             theta_pd=15, theta_pd_n=45,
             phi_pd=15, phi_pd_n=1)
 oldname = 'CappedCylinderModel'
-oldpars = dict(sld='sld_capcyl', solvent_sld='sld_solv',
-               length='len_cyl', radius='rad_cyl', cap_radius='rad_cap')
+oldpars = dict(sld='sld_capcyl',
+               solvent_sld='sld_solv',
+               length='len_cyl',
+               radius='rad_cyl',
+               cap_radius='rad_cap')

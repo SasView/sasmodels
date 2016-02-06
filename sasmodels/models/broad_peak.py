@@ -59,25 +59,50 @@ description = """\
       background = Incoherent background"""
 category = "shape-independent"
 
+# pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["porod_scale", "", 1.0e-05, [-inf, inf], "", "Power law scale factor"],
-              ["porod_exp", "", 3.0, [-inf, inf], "", "Exponent of power law"],
-              ["lorentz_scale", "", 10.0, [-inf, inf], "", "Scale factor for broad Lorentzian peak"],
-              ["lorentz_length", "Ang", 50.0, [-inf, inf], "", "Lorentzian screening length"],
-              ["peak_pos", "1/Ang", 0.1, [-inf, inf], "", "Peak postion in q"],
-              ["lorentz_exp", "", 2.0, [-inf, inf], "", "exponent of Lorentz function"],
+parameters = [["porod_scale",    "",  1.0e-05, [-inf, inf], "", "Power law scale factor"],
+              ["porod_exp",      "",      3.0, [-inf, inf], "", "Exponent of power law"],
+              ["lorentz_scale",  "",     10.0, [-inf, inf], "", "Scale factor for broad Lorentzian peak"],
+              ["lorentz_length", "Ang",  50.0, [-inf, inf], "", "Lorentzian screening length"],
+              ["peak_pos",       "1/Ang", 0.1, [-inf, inf], "", "Peak position in q"],
+              ["lorentz_exp",    "",      2.0, [-inf, inf], "", "Exponent of Lorentz function"],
              ]
+# pylint: enable=bad-whitespace, line-too-long
 
-def Iq(q, porod_scale, porod_exp, lorentz_scale, lorentz_length, peak_pos, lorentz_exp):
+def Iq(q,
+       porod_scale=1.0e-5,
+       porod_exp=3.0,
+       lorentz_scale=10.0,
+       lorentz_length=50.0,
+       peak_pos=0.1,
+       lorentz_exp=2.0):
+    """
+    :param q:              Input q-value
+    :param porod_scale:    Power law scale factor
+    :param porod_exp:      Exponent of power law
+    :param lorentz_scale:  Scale factor for broad Lorentzian peak
+    :param lorentz_length: Lorentzian screening length
+    :param peak_pos:       Peak position in q
+    :param lorentz_exp:    Exponent of Lorentz function
+    :return:               Calculated intensity
+    """
+
     inten = (porod_scale / q ** porod_exp + lorentz_scale
              / (1.0 + (abs(q - peak_pos) * lorentz_length) ** lorentz_exp))
     return inten
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def Iqxy(qx, qy, *args):
+    """
+    :param qx:   Input q_x-value
+    :param qy:   Input q_y-value
+    :param args: Remaining arguments
+    :return:     2D-Intensity
+    """
     return Iq(sqrt(qx ** 2 + qy ** 2), *args)
-Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
 
+Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
 
 demo = dict(scale=1, background=0,
             porod_scale=1.0e-05, porod_exp=3,

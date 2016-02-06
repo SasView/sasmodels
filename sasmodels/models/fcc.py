@@ -111,6 +111,8 @@ description = """
     """
 category = "shape:paracrystal"
 
+single = False
+
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["dnn", "Ang", 220, [-inf, inf], "", "Nearest neighbour distance"],
               ["d_factor", "", 0.06, [-inf, inf], "", "Paracrystal distortion factor"],

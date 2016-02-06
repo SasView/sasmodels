@@ -112,14 +112,17 @@ description = """Compute the scattering intensity from polymers with excluded
               """
 category = "shape-independent"
 
+# pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [["rg",        "Ang", 60.0, [0, inf],    "", "Radius of Gyration"],
               ["porod_exp", "",     3.0, [-inf, inf], "", "Porod exponent"],
-              ]
+             ]
+# pylint: enable=bad-whitespace, line-too-long
 
 
-def Iq(q, rg, porod_exp):
-
+def Iq(q,
+       rg=60.0,
+       porod_exp=3.0):
     """
     :param q:         Input q-value (float or [float, float])
     :param rg:        Radius of gyration
@@ -130,7 +133,8 @@ def Iq(q, rg, porod_exp):
     u = q*q*rg*rg*(2.0*nu+1.0) * (2.0*nu+2.0)/6.0
     o2nu = 1.0/(2.0*nu)
 
-    intensity = ((1.0/(nu*power(u, o2nu))) * (gamma(o2nu)*gammainc(o2nu, u) -
+    intensity = ((1.0/(nu*power(u, o2nu))) *
+                 (gamma(o2nu)*gammainc(o2nu, u) -
                   1.0/power(u, o2nu) * gamma(porod_exp) *
                   gammainc(porod_exp, u))) * (q > 0) + 1.0*(q <= 0)
 
@@ -140,9 +144,14 @@ Iq.vectorized = True  # Iq accepts an array of q values
 
 
 def Iqxy(qx, qy, *args):
-        iq = Iq(sqrt(qx**2 + qy**2), *args)
+    """
+    :param qx:   Input q_x-value
+    :param qy:   Input q_y-value
+    :param args: Remaining arguments
+    :return:     2D-Intensity
+    """
 
-        return iq
+    return Iq(sqrt(qx**2 + qy**2), *args)
 
 Iqxy.vectorized = True  # Iqxy accepts an array of qx, qy values
 
@@ -156,10 +165,15 @@ oldpars = dict(background='background', scale='scale',
                rg='rg',
                porod_exp='m')
 
-tests = [[{'rg': 10, 'porod_exp': 4.0}, 0.1, 0.723436675809],
+tests = [
+    # Accuracy tests based on content in test/polyexclvol_default_igor.txt
+    [{'rg': 60, 'porod_exp': 3.0}, 0.001, 0.998801],
+    [{'rg': 60, 'porod_exp': 3.0}, 0.105363, 0.0162751],
+    [{'rg': 60, 'porod_exp': 3.0}, 0.665075, 6.56261e-05],
 
-         [{'rg': 2.2, 'porod_exp': 22.0, 'background': 100.0}, 5.0, 100.0],
-
-         [{'rg': 1.1, 'porod_exp': 1, 'background': 10.0, 'scale': 1.25},
-         20000., 10.0000712097]
-         ]
+    # Additional tests with larger range of parameters
+    [{'rg': 10, 'porod_exp': 4.0}, 0.1, 0.723436675809],
+    [{'rg': 2.2, 'porod_exp': 22.0, 'background': 100.0}, 5.0, 100.0],
+    [{'rg': 1.1, 'porod_exp': 1, 'background': 10.0, 'scale': 1.25},
+     20000., 10.0000712097]
+    ]

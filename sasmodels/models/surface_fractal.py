@@ -79,6 +79,7 @@ description = """\
 """
 category = "shape-independent"
 
+# pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["radius",        "Ang", 10.0, [0, inf],   "",
                "Particle radius"],
@@ -86,8 +87,8 @@ parameters = [["radius",        "Ang", 10.0, [0, inf],   "",
                "Surface fractal dimension"],
               ["cutoff_length", "Ang", 500., [0.0, inf], "",
                "Cut-off Length"],
-              ]
-
+             ]
+# pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sph_j1c.c", "lib/lanczos_gamma.c", "surface_fractal.c"]
 
@@ -99,14 +100,28 @@ oldpars = dict(radius='radius',
                surface_dim='surface_dim',
                cutoff_length='co_length')
 
-tests = [[{'radius': 1.0, 'surface_dim': 1.0, 'cutoff_length': 10.0,
-           }, 0.332070182643, 1125.00321004],
+tests = [
+    # Accuracy tests based on content in test/utest_other_models.py
+    [{'radius': 10.0,
+      'surface_dim': 2.0,
+      'cutoff_length': 500.0,
+     }, 0.05, 301428.65916],
 
-         [{'radius': 3.5, 'surface_dim': 0.1, 'cutoff_length': 30.0,
-           'background': 0.01,
-           }, 5.0, 0.00999998891322],
+    # Additional tests with larger range of parameters
+    [{'radius': 1.0,
+      'surface_dim': 1.0,
+      'cutoff_length': 10.0,
+     }, 0.332070182643, 1125.00321004],
 
-         [{'radius': 3.0, 'surface_dim': 1.0, 'cutoff_length': 33.0,
-           'scale': 0.1,
-           }, 0.51, 2.50020147004],
-         ]
+    [{'radius': 3.5,
+      'surface_dim': 0.1,
+      'cutoff_length': 30.0,
+      'background': 0.01,
+     }, 5.0, 0.00999998891322],
+
+    [{'radius': 3.0,
+      'surface_dim': 1.0,
+      'cutoff_length': 33.0,
+      'scale': 0.1,
+     }, 0.51, 2.50020147004],
+    ]

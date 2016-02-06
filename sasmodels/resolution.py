@@ -5,15 +5,15 @@ This defines classes for 1D and 2D resolution calculations.
 """
 from __future__ import division
 
+from scipy.special import erf
+from numpy import sqrt, log, log10
+import numpy as np
+
 __all__ = ["Resolution", "Perfect1D", "Pinhole1D", "Slit1D",
            "apply_resolution_matrix", "pinhole_resolution", "slit_resolution",
            "pinhole_extend_q", "slit_extend_q", "bin_edges",
            "interpolate", "linear_extrapolation", "geometric_extrapolation",
-           ]
-
-from scipy.special import erf
-from numpy import sqrt, log, log10
-import numpy as np
+          ]
 
 MINIMUM_RESOLUTION = 1e-8
 
@@ -79,10 +79,10 @@ class Pinhole1D(Resolution):
         # In practice this should never be needed, since resolution should
         # default to Perfect1D if the pinhole geometry is not defined.
         self.q, self.q_width = q, q_width
-        self.q_calc = pinhole_extend_q(q, q_width, nsigma=nsigma) \
-            if q_calc is None else np.sort(q_calc)
-        self.weight_matrix = pinhole_resolution(self.q_calc,
-                self.q, np.maximum(q_width, MINIMUM_RESOLUTION))
+        self.q_calc = (pinhole_extend_q(q, q_width, nsigma=nsigma)
+                       if q_calc is None else np.sort(q_calc))
+        self.weight_matrix = pinhole_resolution(
+            self.q_calc, self.q, np.maximum(q_width, MINIMUM_RESOLUTION))
 
     def apply(self, theory):
         return apply_resolution_matrix(self.weight_matrix, theory)
@@ -134,7 +134,7 @@ def apply_resolution_matrix(weight_matrix, theory):
     Apply the resolution weight matrix to the computed theory function.
     """
     #print("apply shapes", theory.shape, weight_matrix.shape)
-    Iq = np.dot(theory[None,:], weight_matrix)
+    Iq = np.dot(theory[None, :], weight_matrix)
     #print("result shape",Iq.shape)
     return Iq.flatten()
 
@@ -152,10 +152,10 @@ def pinhole_resolution(q_calc, q, q_width):
     # The current algorithm is a midpoint rectangle rule.  In the test case,
     # neither trapezoid nor Simpson's rule improved the accuracy.
     edges = bin_edges(q_calc)
-    edges[edges<0.0] = 0.0 # clip edges below zero
-    G = erf( (edges[:,None] - q[None,:]) / (sqrt(2.0)*q_width)[None,:] )
+    edges[edges < 0.0] = 0.0 # clip edges below zero
+    G = erf((edges[:, None] - q[None, :]) / (sqrt(2.0)*q_width)[None, :])
     weights = G[1:] - G[:-1]
-    weights /= np.sum(weights, axis=0)[None,:]
+    weights /= np.sum(weights, axis=0)[None, :]
     return weights
 
 
@@ -286,7 +286,7 @@ def slit_resolution(q_calc, q, width, height, n_height=30):
 
     # The current algorithm is a midpoint rectangle rule.
     q_edges = bin_edges(q_calc) # Note: requires q > 0
-    q_edges[q_edges<0.0] = 0.0 # clip edges below zero
+    q_edges[q_edges < 0.0] = 0.0 # clip edges below zero
     weights = np.zeros((len(q), len(q_calc)), 'd')
 
     #print(q_calc)
@@ -305,12 +305,12 @@ def slit_resolution(q_calc, q, width, height, n_height=30):
             abs_x = 1.0*(q_calc < abs(qi - h)) if qi < h else 0.
             #print(qi - h, qi + h)
             #print(in_x + abs_x)
-            weights[i,:] = (in_x + abs_x) * np.diff(q_edges) / (2*h)
+            weights[i, :] = (in_x + abs_x) * np.diff(q_edges) / (2*h)
         else:
             L = n_height
             for k in range(-L, L+1):
-                weights[i,:] += _q_perp_weights(q_edges, qi+k*h/L, w)
-            weights[i,:] /= 2*L + 1
+                weights[i, :] += _q_perp_weights(q_edges, qi+k*h/L, w)
+            weights[i, :] /= 2*L + 1
 
     return weights.T
 
@@ -357,7 +357,7 @@ def bin_edges(x):
     Note: this uses the arithmetic mean, which may not be appropriate for
     log-scaled data.
     """
-    if len(x) < 2 or (np.diff(x)<0).any():
+    if len(x) < 2 or (np.diff(x) < 0).any():
         raise ValueError("Expected bins to be an increasing set")
     edges = np.hstack([
         x[0]  - 0.5*(x[1]  - x[0]),  # first point minus half first interval
@@ -372,15 +372,15 @@ def interpolate(q, max_step):
     Returns *q_calc* with points spaced at most max_step apart.
     """
     step = np.diff(q)
-    index = step>max_step
+    index = step > max_step
     if np.any(index):
         inserts = []
-        for q_i,step_i in zip(q[:-1][index],step[index]):
+        for q_i, step_i in zip(q[:-1][index], step[index]):
             n = np.ceil(step_i/max_step)
-            inserts.extend(q_i + np.arange(1,n)*(step_i/n))
+            inserts.extend(q_i + np.arange(1, n)*(step_i/n))
         # Extend a couple of fringes beyond the end of the data
-        inserts.extend(q[-1] + np.arange(1,8)*max_step)
-        q_calc = np.sort(np.hstack((q,inserts)))
+        inserts.extend(q[-1] + np.arange(1, 8)*max_step)
+        q_calc = np.sort(np.hstack((q, inserts)))
     else:
         q_calc = q
     return q_calc
@@ -398,12 +398,12 @@ def linear_extrapolation(q, q_min, q_max):
     q = np.sort(q)
     if q_min < q[0]:
         if q_min <= 0: q_min = q_min*MIN_Q_SCALE_FOR_NEGATIVE_Q_EXTRAPOLATION
-        n_low = np.ceil((q[0]-q_min) / (q[1]-q[0])) if q[1]>q[0] else 15
+        n_low = np.ceil((q[0]-q_min) / (q[1]-q[0])) if q[1] > q[0] else 15
         q_low = np.linspace(q_min, q[0], n_low+1)[:-1]
     else:
         q_low = []
     if q_max > q[-1]:
-        n_high = np.ceil((q_max-q[-1]) / (q[-1]-q[-2])) if q[-1]>q[-2] else 15
+        n_high = np.ceil((q_max-q[-1]) / (q[-1]-q[-2])) if q[-1] > q[-2] else 15
         q_high = np.linspace(q[-1], q_max, n_high+1)[1:]
     else:
         q_high = []
@@ -451,7 +451,7 @@ def geometric_extrapolation(q, q_min, q_max, points_per_decade=None):
     if q_min < q[0]:
         if q_min < 0: q_min = q[0]*MIN_Q_SCALE_FOR_NEGATIVE_Q_EXTRAPOLATION
         n_low = log_delta_q * (log(q[0])-log(q_min))
-        q_low  = np.logspace(log10(q_min), log10(q[0]), np.ceil(n_low)+1)[:-1]
+        q_low = np.logspace(log10(q_min), log10(q[0]), np.ceil(n_low)+1)[:-1]
     else:
         q_low = []
     if q_max > q[-1]:
@@ -469,6 +469,13 @@ import unittest
 
 
 def eval_form(q, form, pars):
+    """
+    Return the SAS model evaluated at *q*.
+
+    *form* is the SAS model returned from :fun:`core.load_model`.
+
+    *pars* are the parameter values to use when evaluating.
+    """
     from sasmodels import core
     kernel = core.make_kernel(form, [q])
     theory = core.call_kernel(kernel, pars)
@@ -477,6 +484,11 @@ def eval_form(q, form, pars):
 
 
 def gaussian(q, q0, dq):
+    """
+    Return the Gaussian resolution function.
+
+    *q0* is the center, *dq* is the width and *q* are the points to evaluate.
+    """
     from numpy import exp, pi
     return exp(-0.5*((q-q0)/dq)**2)/(sqrt(2*pi)*dq)
 
@@ -488,7 +500,7 @@ def romberg_slit_1d(q, width, height, form, pars):
     This is an adaptive integration technique.  It is called with settings
     that make it slow to evaluate but give it good accuracy.
     """
-    from scipy.integrate import romberg, dblquad
+    from scipy.integrate import romberg
 
     if any(k not in form.info['defaults'] for k in pars.keys()):
         keys = set(form.info['defaults'].keys())
@@ -519,18 +531,17 @@ def romberg_slit_1d(q, width, height, form, pars):
                         divmax=100, vec_func=True, tol=0, rtol=1e-8)
             result[i] = r/(2*h)
         else:
-            w_grid = np.linspace(0, w, 21)[None,:]
-            h_grid = np.linspace(-h, h, 23)[:,None]
+            w_grid = np.linspace(0, w, 21)[None, :]
+            h_grid = np.linspace(-h, h, 23)[:, None]
             u = sqrt((qi+h_grid)**2 + w_grid**2)
             Iu = np.interp(u, q_calc, Iq)
             #print(np.trapz(Iu, w_grid, axis=1))
-            Is = np.trapz(np.trapz(Iu, w_grid, axis=1), h_grid[:,0])
+            Is = np.trapz(np.trapz(Iu, w_grid, axis=1), h_grid[:, 0])
             result[i] = Is / (2*h*w)
-            """
-            r, err = dblquad(_int_wh, -h, h, lambda h: 0., lambda h: w,
-                             args=(qi,))
-            result[i] = r/(w*2*h)
-            """
+            # from scipy.integrate import dblquad
+            # r, err = dblquad(_int_wh, -h, h, lambda h: 0., lambda h: w,
+            #                  args=(qi,))
+            # result[i] = r/(w*2*h)
 
     # r should be [float, ...], but it is [array([float]), array([float]),...]
     return result
@@ -552,13 +563,16 @@ def romberg_pinhole_1d(q, q_width, form, pars, nsigma=5):
                          (", ".join(sorted(extra)), ", ".join(sorted(keys))))
 
     _fn = lambda q, q0, dq: eval_form(q, form, pars)*gaussian(q, q0, dq)
-    r = [romberg(_fn, max(qi-nsigma*dqi,1e-10*q[0]), qi+nsigma*dqi, args=(qi, dqi),
-                 divmax=100, vec_func=True, tol=0, rtol=1e-8)
-         for qi,dqi in zip(q,q_width)]
+    r = [romberg(_fn, max(qi-nsigma*dqi, 1e-10*q[0]), qi+nsigma*dqi,
+                 args=(qi, dqi), divmax=100, vec_func=True, tol=0, rtol=1e-8)
+         for qi, dqi in zip(q, q_width)]
     return np.asarray(r).flatten()
 
 
 class ResolutionTest(unittest.TestCase):
+    """
+    Test the resolution calculations.
+    """
 
     def setUp(self):
         self.x = 0.001*np.arange(1, 11)
@@ -594,8 +608,10 @@ class ResolutionTest(unittest.TestCase):
         resolution = Slit1D(self.x, width=0, height=0.005, q_calc=self.x)
         theory = self.Iq(resolution.q_calc)
         output = resolution.apply(theory)
-        answer = [ 9.0618, 8.6402, 8.1187, 7.1392, 6.1528,
-                   5.5555, 4.5584, 3.5606, 2.5623, 2.0000 ]
+        answer = [
+            9.0618, 8.6402, 8.1187, 7.1392, 6.1528,
+            5.5555, 4.5584, 3.5606, 2.5623, 2.0000,
+            ]
         np.testing.assert_allclose(output, answer, atol=1e-4)
 
     @unittest.skip("not yet supported")
@@ -607,8 +623,10 @@ class ResolutionTest(unittest.TestCase):
         resolution = Slit1D(q, width=0.2, height=np.inf)
         theory = 1000*self.Iq(resolution.q_calc**4)
         output = resolution.apply(theory)
-        answer = [ 8.85785, 8.43012, 7.92687, 6.94566, 6.03660,
-                   5.40363, 4.40655, 3.40880, 2.41058, 2.00000 ]
+        answer = [
+            8.85785, 8.43012, 7.92687, 6.94566, 6.03660,
+            5.40363, 4.40655, 3.40880, 2.41058, 2.00000,
+            ]
         np.testing.assert_allclose(output, answer, atol=1e-4)
 
     @unittest.skip("not yet supported")
@@ -619,7 +637,9 @@ class ResolutionTest(unittest.TestCase):
         resolution = Slit1D(self.x, width=0.0002, height=0, q_calc=self.x)
         theory = self.Iq(resolution.q_calc)
         output = resolution.apply(theory)
-        answer = [ 11.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0 ]
+        answer = [
+            11.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0,
+            ]
         np.testing.assert_allclose(output, answer, atol=1e-4)
 
     @unittest.skip("not yet supported")
@@ -631,7 +651,9 @@ class ResolutionTest(unittest.TestCase):
                             q_calc=self.x)
         theory = self.Iq(resolution.q_calc)
         output = resolution.apply(theory)
-        answer = [ 11.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0 ]
+        answer = [
+            11.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0,
+            ]
         np.testing.assert_allclose(output, answer, atol=1e-4)
 
     def test_pinhole_zero(self):
@@ -651,13 +673,18 @@ class ResolutionTest(unittest.TestCase):
                                q_calc=self.x)
         theory = 12.0-1000.0*resolution.q_calc
         output = resolution.apply(theory)
-        answer = [ 10.44785079, 9.84991299, 8.98101708,
-                  7.99906585, 6.99998311, 6.00001689,
-                  5.00093415, 4.01898292, 3.15008701, 2.55214921]
+        answer = [
+            10.44785079, 9.84991299, 8.98101708,
+            7.99906585, 6.99998311, 6.00001689,
+            5.00093415, 4.01898292, 3.15008701, 2.55214921,
+            ]
         np.testing.assert_allclose(output, answer, atol=1e-8)
 
 
 class IgorComparisonTest(unittest.TestCase):
+    """
+    Test resolution calculations against those returned by Igor.
+    """
 
     def setUp(self):
         self.pars = TEST_PARS_PINHOLE_SPHERE
@@ -665,7 +692,7 @@ class IgorComparisonTest(unittest.TestCase):
         from sasmodels.models import sphere
         self.model = core.load_model(sphere, dtype='double')
 
-    def Iq_sphere(self, pars, resolution):
+    def _eval_sphere(self, pars, resolution):
         from sasmodels import core
         kernel = core.make_kernel(self.model, [resolution.q_calc])
         theory = core.call_kernel(kernel, pars)
@@ -673,7 +700,7 @@ class IgorComparisonTest(unittest.TestCase):
         kernel.release()
         return result
 
-    def compare(self, q, output, answer, tolerance):
+    def _compare(self, q, output, answer, tolerance):
         #err = (output - answer)/answer
         #idx = abs(err) >= tolerance
         #problem = zip(q[idx], output[idx], answer[idx], err[idx])
@@ -690,8 +717,8 @@ class IgorComparisonTest(unittest.TestCase):
         data = np.loadtxt(data_string.split('\n')).T
         q, width, answer, _ = data
         resolution = Perfect1D(q)
-        output = self.Iq_sphere(pars, resolution)
-        self.compare(q, output, answer, 1e-6)
+        output = self._eval_sphere(pars, resolution)
+        self._compare(q, output, answer, 1e-6)
 
     def test_pinhole(self):
         """
@@ -703,9 +730,9 @@ class IgorComparisonTest(unittest.TestCase):
         data = np.loadtxt(data_string.split('\n')).T
         q, q_width, answer = data
         resolution = Pinhole1D(q, q_width)
-        output = self.Iq_sphere(pars, resolution)
+        output = self._eval_sphere(pars, resolution)
         # TODO: relative error should be lower
-        self.compare(q, output, answer, 3e-4)
+        self._compare(q, output, answer, 3e-4)
 
     def test_pinhole_romberg(self):
         """
@@ -726,16 +753,16 @@ class IgorComparisonTest(unittest.TestCase):
         ## The default 3 sigma and no extra points gets 1%
         q_calc, tol = None, 0.01
         resolution = Pinhole1D(q, q_width, q_calc=q_calc)
-        output = self.Iq_sphere(pars, resolution)
+        output = self._eval_sphere(pars, resolution)
         if 0: # debug plot
             import matplotlib.pyplot as plt
             resolution = Perfect1D(q)
-            source = self.Iq_sphere(pars, resolution)
+            source = self._eval_sphere(pars, resolution)
             plt.loglog(q, source, '.')
             plt.loglog(q, answer, '-', hold=True)
             plt.loglog(q, output, '-', hold=True)
             plt.show()
-        self.compare(q, output, answer, tol)
+        self._compare(q, output, answer, tol)
 
     def test_slit(self):
         """
@@ -747,11 +774,11 @@ class IgorComparisonTest(unittest.TestCase):
         data = np.loadtxt(data_string.split('\n')).T
         q, delta_qv, _, answer = data
         resolution = Slit1D(q, width=delta_qv, height=0)
-        output = self.Iq_sphere(pars, resolution)
+        output = self._eval_sphere(pars, resolution)
         # TODO: eliminate Igor test since it is too inaccurate to be useful.
         # This means we can eliminate the test data as well, and instead
         # use a generated q vector.
-        self.compare(q, output, answer, 0.5)
+        self._compare(q, output, answer, 0.5)
 
     def test_slit_romberg(self):
         """
@@ -767,9 +794,9 @@ class IgorComparisonTest(unittest.TestCase):
         q_calc = slit_extend_q(interpolate(q, 2*np.pi/radius/20),
                                delta_qv[0], 0.)
         resolution = Slit1D(q, width=delta_qv, height=0, q_calc=q_calc)
-        output = self.Iq_sphere(pars, resolution)
+        output = self._eval_sphere(pars, resolution)
         # TODO: relative error should be lower
-        self.compare(q, output, answer, 0.025)
+        self._compare(q, output, answer, 0.025)
 
     def test_ellipsoid(self):
         """
@@ -782,14 +809,14 @@ class IgorComparisonTest(unittest.TestCase):
             'sld':6, 'solvent_sld': 1,
             }
         form = load_model('ellipsoid', dtype='double')
-        q = np.logspace(log10(4e-5),log10(2.5e-2), 68)
+        q = np.logspace(log10(4e-5), log10(2.5e-2), 68)
         width, height = 0.117, 0.
         resolution = Slit1D(q, width=width, height=height)
         answer = romberg_slit_1d(q, width, height, form, pars)
         output = resolution.apply(eval_form(resolution.q_calc, form, pars))
         # TODO: 10% is too much error; use better algorithm
         #print(np.max(abs(answer-output)/answer))
-        self.compare(q, output, answer, 0.1)
+        self._compare(q, output, answer, 0.1)
 
     #TODO: can sas q spacing be too sparse for the resolution calculation?
     @unittest.skip("suppress sparse data test; not supported by current code")
@@ -803,8 +830,8 @@ class IgorComparisonTest(unittest.TestCase):
         data = np.loadtxt(data_string.split('\n')).T
         q, q_width, answer = data[:, ::20] # Take every nth point
         resolution = Pinhole1D(q, q_width)
-        output = self.Iq_sphere(pars, resolution)
-        self.compare(q, output, answer, 1e-6)
+        output = self._eval_sphere(pars, resolution)
+        self._compare(q, output, answer, 1e-6)
 
 
 # pinhole sphere parameters
@@ -1057,12 +1084,18 @@ def _eval_demo_1d(resolution, title):
     plt.ylabel("I(Q) (1/cm)")
 
 def demo_pinhole_1d():
+    """
+    Show example of pinhole smearing.
+    """
     q = np.logspace(-4, np.log10(0.2), 400)
     q_width = 0.1*q
     resolution = Pinhole1D(q, q_width)
     _eval_demo_1d(resolution, title="10% dQ/Q Pinhole Resolution")
 
 def demo_slit_1d():
+    """
+    Show example of slit smearing.
+    """
     q = np.logspace(-4, np.log10(0.2), 100)
     w = h = 0.
     #w = 0.000000277790
@@ -1070,9 +1103,12 @@ def demo_slit_1d():
     #h = 0.00277790
     #h = 0.0277790
     resolution = Slit1D(q, w, h)
-    _eval_demo_1d(resolution, title="(%g,%g) Slit Resolution"%(w,h))
+    _eval_demo_1d(resolution, title="(%g,%g) Slit Resolution"%(w, h))
 
 def demo():
+    """
+    Run the resolution demos.
+    """
     import matplotlib.pyplot as plt
     plt.subplot(121)
     demo_pinhole_1d()

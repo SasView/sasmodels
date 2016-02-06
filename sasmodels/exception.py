@@ -7,6 +7,9 @@ try:
     WindowsError
 except NameError:
     class WindowsError(Exception):
+        """
+        Fake WindowsException when not on Windows.
+        """
         pass
 
 def annotate_exception(exc, msg):
@@ -30,14 +33,14 @@ def annotate_exception(exc, msg):
     # Can't extend WindowsError exceptions; instead raise a new exception.
     # TODO: try to incorporate current stack trace in the raised exception
     if isinstance(exc, WindowsError):
-        raise OSError(str(exc)+" "+msg)
+        raise OSError(str(exc) + " " + msg)
 
     args = exc.args
     if not args:
         exc.args = (msg,)
     else:
         try:
-            arg0 = " ".join((args[0],msg))
+            arg0 = " ".join((args[0], msg))
             exc.args = tuple([arg0] + list(args[1:]))
         except:
-            exc.args = (" ".join((str(exc),msg)),)
+            exc.args = (" ".join((str(exc), msg)),)

@@ -1,7 +1,7 @@
 """
 #This software was developed by the University of Tennessee as part of the
 #Distributed Data Analysis of Neutron Scattering Experiments (DANSE)
-#project funded by the US National Science Foundation. 
+#project funded by the US National Science Foundation.
 #See the license text in license.txt
 """
 from __future__ import division
@@ -18,18 +18,18 @@ SIGMA_ZERO = 1.0e-010
 NSIGMA = 3.0
 ## Defaults
 NR = {'xhigh':10, 'high':5, 'med':5, 'low':3}
-NPHI ={'xhigh':20, 'high':12, 'med':6, 'low':4}
+NPHI = {'xhigh':20, 'high':12, 'med':6, 'low':4}
 
 class Pinhole2D(Resolution):
     """
     Gaussian Q smearing class for SAS 2d data
     """
-     
+
     def __init__(self, data=None, index=None,
                  nsigma=NSIGMA, accuracy='Low', coords='polar'):
         """
         Assumption: equally spaced bins in dq_r, dq_phi space.
-        
+
         :param data: 2d data used to set the smearing parameters
         :param index: 1d array with len(data) to define the range
          of the calculation: elements are given as True or False
@@ -41,10 +41,10 @@ class Pinhole2D(Resolution):
         ## of r and phi.
         ## number of bins in r axis for over-sampling
         self.nr = NR[accuracy.lower()]
-        ## number of bins in phi axis for over-sampling 
+        ## number of bins in phi axis for over-sampling
         self.nphi = NPHI[accuracy.lower()]
         ## maximum nsigmas
-        self.nsigma= nsigma
+        self.nsigma = nsigma
         self.coords = coords
         self._init_data(data, index)
 
@@ -84,9 +84,9 @@ class Pinhole2D(Resolution):
 
     def _calc_res(self):
         """
-        Over sampling of r_nbins times phi_nbins, calculate Gaussian weights, 
+        Over sampling of r_nbins times phi_nbins, calculate Gaussian weights,
         then find smeared intensity
-        """    
+        """
         nr, nphi = self.nr, self.nphi
         # Total number of bins = # of bins
         nbins = nr * nphi
@@ -142,13 +142,13 @@ class Pinhole2D(Resolution):
         # The polar needs rotation by -q_phi
         if self.coords == 'polar':
             q_r = sqrt(qx**2 + qy**2)
-            qx_res = ( (dqx*cos(dphi) + q_r) * cos(-q_phi) +
-                           dqy*sin(dphi) * sin(-q_phi))
-            qy_res = (-(dqx*cos(dphi) + q_r) * sin(-q_phi) +
-                           dqy*sin(dphi) * cos(-q_phi))
+            qx_res = ((dqx*cos(dphi) + q_r) * cos(-q_phi)
+                      + dqy*sin(dphi) * sin(-q_phi))
+            qy_res = (-(dqx*cos(dphi) + q_r) * sin(-q_phi)
+                      + dqy*sin(dphi) * cos(-q_phi))
         else:
-            qx_res = qx +  dqx*cos(dphi)
-            qy_res = qy +  dqy*sin(dphi)
+            qx_res = qx + dqx*cos(dphi)
+            qy_res = qy + dqy*sin(dphi)
 
 
         return qx_res, qy_res, weight_res
@@ -161,76 +161,8 @@ class Pinhole2D(Resolution):
             ## Reshape into 2d array to use np weighted averaging
             theory = np.reshape(theory, (nbins, nq))
             ## Averaging with Gaussian weighting: normalization included.
-            value =np.average(theory, axis=0, weights=self.q_calc_weights)
+            value = np.average(theory, axis=0, weights=self.q_calc_weights)
             ## Return the smeared values in the range of self.index
             return value
         else:
             return theory
-
-"""
-if __name__ == '__main__':
-    ## Test w/ 2D linear function
-    x = 0.001*np.arange(1, 11)
-    dx = np.ones(len(x))*0.0003
-    y = 0.001*np.arange(1, 11)
-    dy = np.ones(len(x))*0.001
-    z = np.ones(10)
-    dz = sqrt(z)
-
-    from sas.dataloader import Data2D
-    #for i in range(10): print(i, 0.001 + i*0.008/9.0)
-    #for i in range(100): print(i, int(math.floor( (i/ (100/9.0)) )))
-    out = Data2D()
-    out.data = z
-    out.qx_data = x
-    out.qy_data = y
-    out.dqx_data = dx
-    out.dqy_data = dy
-    out.q_data = sqrt(dx * dx + dy * dy)
-    index = np.ones(len(x), dtype = bool)
-    out.mask = index
-    from sas.models.LineModel import LineModel
-    model = LineModel()
-    model.setParam("A", 0)
-
-    smear = Smearer2D(out, model, index)
-    #smear.set_accuracy('Xhigh')
-    value = smear.get_value()
-    ## All data are ones, so the smeared should also be ones.
-    print("Data length =", len(value))
-    print(" 2D linear function, I = 0 + 1*qy")
-    text = " Gaussian weighted averaging on a 2D linear function will "
-    text += "provides the results same as without the averaging."
-    print(text)
-    print("qx_data", "qy_data", "I_nonsmear", "I_smeared")
-    for ind in range(len(value)):
-        print(x[ind], y[ind], model.evalDistribution([x, y])[ind], value[ind])
-
-
-if __name__ == '__main__':
-    ## Another Test w/ constant function
-    x = 0.001*np.arange(1,11)
-    dx = np.ones(len(x))*0.001
-    y = 0.001*np.arange(1,11)
-    dy = np.ones(len(x))*0.001
-    z = np.ones(10)
-    dz = sqrt(z)
-
-    from DataLoader import Data2D
-    #for i in range(10): print(i, 0.001 + i*0.008/9.0)
-    #for i in range(100): print(i, int(math.floor( (i/ (100/9.0)) )))
-    out = Data2D()
-    out.data = z
-    out.qx_data = x
-    out.qy_data = y
-    out.dqx_data = dx
-    out.dqy_data = dy
-    index = np.ones(len(x), dtype = bool)
-    out.mask = index
-    from sas.models.Constant import Constant
-    model = Constant()
-
-    value = Smearer2D(out,model,index).get_value()
-    ## All data are ones, so the smeared values should also be ones.
-    print("Data length =",len(value), ", Data=",value)
-"""
