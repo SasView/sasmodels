@@ -538,12 +538,14 @@ def compare(opts, limits=None):
         #cbar_title = "log I"
     if Ncomp > 0 and Nbase > 0:
         plt.subplot(133)
-        if '-abs' in opts:
+        if not opts['rel_err']:
             err, errstr, errview = resid, "abs err", "linear"
         else:
             err, errstr, errview = abs(relerr), "rel err", "log"
         #err,errstr = base/comp,"ratio"
         plot_theory(data, None, resid=err, view=errview, use_data=False)
+        if view == 'linear':
+            plt.xscale('linear')
         plt.title("max %s = %.3g"%(errstr, max(abs(err))))
         #cbar_title = errstr if errview=="linear" else "log "+errstr
     #if is2D:
