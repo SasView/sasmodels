@@ -9,9 +9,7 @@ The scattering intensity $I(q)$ is calculated as
 
     I(q) = A + B*q
 
-.. figure:: img/broad_peak_1d.jpg
-
-    1D plot using the default values (w/200 data point).
+.. figure:: None
 
 References
 ----------
@@ -73,17 +71,21 @@ tests = [
     # Accuracy tests based on content in test/utest_other_models.py
     [{'intercept':   1.0,
       'slope': 1.0,
-     }, 0.4, 0.4],
+     }, 0.4, 1.4],
 
     [{'intercept':   1.0,
       'slope': 1.0,
-     }, 1.3, 1.3],
+     }, 1.3, 2.3],
 
     [{'intercept':   1.0,
       'slope': 1.0,
-     },0.5, 0.5],
+     },0.5, 1.5],
 
     [{'intercept':   1.0,
       'slope': 1.0,
-     }, 1.57, 1.57],
+     }, [0.4,0.5], [1.4,1.5]],
+
+    [{'intercept':   1.0,
+      'slope': 1.0,
+     }, [1.3,1.57], [2.3,2.57]],
 ]
