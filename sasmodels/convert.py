@@ -13,6 +13,7 @@ MODELS_WITHOUT_SCALE = [
     'gauss_lorentz_gel',
     'be_polyelectrolyte',
     'correlation_length',
+    'binary_hard_sphere'
 ]
 
 # List of models which SasView versions don't contain the explicit 'background' argument.
