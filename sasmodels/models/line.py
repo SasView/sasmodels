@@ -19,8 +19,6 @@ References
 None.
 
 """
-
-from numpy import vectorize
 from numpy import inf
 
 name = "line"
@@ -39,6 +37,7 @@ category = "shape-independent"
 parameters = [["intercept",     "cm^-1",        1.0, [-inf, inf], "", "intercept in linear model"],
               ["slope",     "Ang*cm^-1",    1.0, [-inf, inf], "", "slope in linear model"],
               ]
+# pylint: enable=bad-whitespace, line-too-long
 
 def Iq(q, intercept, slope):
     """
@@ -47,7 +46,6 @@ def Iq(q, intercept, slope):
     :param slope:       Slope in linear model
     :return:            Calculated Intensity
     """
-
     inten = intercept + slope*q
     return inten
 
@@ -62,12 +60,30 @@ def Iqxy(qx, qy, *args):
     """
     #TODO: Instrcution tels 2D has different deffinition than oher models
     #return Iq(sqrt(qx ** 2 + qy ** 2), *args)
-    return  Iq(qx,*args)*Iq(qy,*args)
+    return  Iq(qx, *args)*Iq(qy, *args)
 
 Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
 
-demo = dict(scale=1, background=0.1,
-            intercept=1.0, slope=1.0)
+demo = dict(intercept=1.0, slope=1.0)
 
 oldname = "LineModel"
-oldpars = dict(intercept='A', slope='B', scale=None)
+oldpars = dict(intercept='A', slope='B', scale=None, background=None)
+
+tests = [
+    # Accuracy tests based on content in test/utest_other_models.py
+    [{'intercept':   1.0,
+      'slope': 1.0,
+     }, 0.4, 0.4],
+
+    [{'intercept':   1.0,
+      'slope': 1.0,
+     }, 1.3, 1.3],
+
+    [{'intercept':   1.0,
+      'slope': 1.0,
+     },0.5, 0.5],
+
+    [{'intercept':   1.0,
+      'slope': 1.0,
+     }, 1.57, 1.57],
+]
