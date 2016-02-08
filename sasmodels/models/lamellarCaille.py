@@ -1,4 +1,3 @@
-# Note: model title and parameter table are inserted automatically
 r"""
 This model provides the scattering intensity, $I(q) = P(q) S(q)$, for a
 lamellar phase where a random distribution in solution are assumed.
@@ -76,28 +75,28 @@ from numpy import inf
 name = "lamellarPS"
 title = "Random lamellar sheet with Caille structure factor"
 description = """\
-	[Random lamellar phase with Caille  structure factor]
-        randomly oriented stacks of infinite sheets
-		with Caille S(Q), having polydisperse spacing.
-    	sld = sheet scattering length density
-		sld_solvent = solvent scattering length density
-		background = incoherent background
-		scale = scale factor
+    [Random lamellar phase with Caille  structure factor]
+    randomly oriented stacks of infinite sheets
+    with Caille S(Q), having polydisperse spacing.
+    sld = sheet scattering length density
+    sld_solvent = solvent scattering length density
+    background = incoherent background
+    scale = scale factor
 """
 category = "shape:lamellae"
 
 single = False
-
+# pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["thickness", "Ang",  30.0, [0, inf], "volume", "sheet thickness"],
-              ["Nlayers", "",  20, [0, inf], "", "Number of layers"],
-              ["spacing", "Ang", 400., [0.0,inf], "volume", "d-spacing of Caille S(Q)"],
-              ["Caille_parameter", "1/Ang^2", 0.1, [0.0,0.8], "", "Caille parameter"],
-              ["sld", "1e-6/Ang^2", 6.3, [-inf,inf], "",
-               "layer scattering length density"],
-              ["solvent_sld", "1e-6/Ang^2", 1.0, [-inf,inf], "",
-               "Solvent scattering length density"],
-             ]
+parameters = [
+    ["thickness",        "Ang",      30.0,  [0, inf],   "volume", "sheet thickness"],
+    ["Nlayers",          "",          20,   [0, inf],   "",       "Number of layers"],
+    ["spacing",          "Ang",      400.,  [0.0,inf],  "volume", "d-spacing of Caille S(Q)"],
+    ["Caille_parameter", "1/Ang^2",    0.1, [0.0,0.8],  "",       "Caille parameter"],
+    ["sld",              "1e-6/Ang^2", 6.3, [-inf,inf], "",       "layer scattering length density"],
+    ["solvent_sld",      "1e-6/Ang^2", 1.0, [-inf,inf], "",       "Solvent scattering length density"],
+    ]
+# pylint: enable=bad-whitespace, line-too-long
 
 source = ["lamellarCaille_kernel.c"]
 
@@ -115,17 +114,19 @@ Iqxy = """
 # VR defaults to 1.0
 
 demo = dict(scale=1, background=0,
-            thickness=67.,Nlayers=3.75,spacing=200.,
-            Caille_parameter=0.268,sld=1.0, solvent_sld=6.34,
-            thickness_pd= 0.1, thickness_pd_n=100,
-            spacing_pd= 0.05, spacing_pd_n=40)
+            thickness=67., Nlayers=3.75, spacing=200.,
+            Caille_parameter=0.268, sld=1.0, solvent_sld=6.34,
+            thickness_pd=0.1, thickness_pd_n=100,
+            spacing_pd=0.05, spacing_pd_n=40)
 
 oldname = 'LamellarPSModel'
-oldpars = dict(thickness='delta', Nlayers='N_plates', Caille_parameter='caille',
-               sld='sld_bi',solvent_sld='sld_sol')
+oldpars = dict(thickness='delta', Nlayers='N_plates',
+               Caille_parameter='caille',
+               sld='sld_bi', solvent_sld='sld_sol')
 #
 tests = [
-        [ {'scale': 1.0, 'background' : 0.0, 'thickness' : 30.,'Nlayers' : 20.0, 'spacing' : 400.,
-            'Caille_parameter' : 0.1, 'sld' : 6.3, 'solvent_sld' : 1.0,
-            'thickness_pd' : 0.0, 'spacing_pd' : 0.0 }, [0.001], [28895.13397]]
-        ]
+    [{'scale': 1.0, 'background': 0.0, 'thickness': 30., 'Nlayers': 20.0,
+      'spacing': 400., 'Caille_parameter': 0.1, 'sld': 6.3,
+      'solvent_sld': 1.0, 'thickness_pd': 0.0, 'spacing_pd': 0.0},
+     [0.001], [28895.13397]]
+    ]
