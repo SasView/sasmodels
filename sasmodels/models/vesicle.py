@@ -65,7 +65,8 @@ from numpy import pi, inf
 name = "vesicle"
 title = "This model provides the form factor, *P(q)*, for an unilamellar \
     vesicle. This is model is effectively identical to the hollow sphere \
-    except that the form factor is normalized by the volume of the shell."
+    reparameterized to be more intuitive for a vesicle and normalizing the \
+    form factor by the volume of the shell."
 description = """
     Model parameters:
         radius : the core radius of the vesicle
