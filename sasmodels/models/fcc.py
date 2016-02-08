@@ -124,7 +124,7 @@ parameters = [["dnn", "Ang", 220, [-inf, inf], "", "Nearest neighbour distance"]
               ["psi", "degrees", 60, [-inf, inf], "orientation", "Out of plane angle"]
              ]
 
-source = ["lib/J1.c", "lib/gauss150.c", "fcc.c"]
+source = ["lib/J1.c", "lib/gauss150.c", "lib/sphere_form.c", "fcc.c"]
 
 # parameters for demo
 demo = dict(scale=1, background=0,

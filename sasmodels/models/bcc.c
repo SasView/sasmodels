@@ -39,14 +39,6 @@ double _BCCeval(double Theta, double Phi, double temp1, double temp3) {
 	return (result);
 }
 
-double _sphereform(double q, double radius, double sld, double solvent_sld){
-    const double qr = q*radius;
-    double sn, cn;
-    SINCOS(qr, sn, cn);
-    const double bes = (qr == 0.0 ? 1.0 : 3.0*(sn-qr*cn)/(qr*qr*qr));
-    const double fq = bes * (sld - solvent_sld)*form_volume(radius);
-    return 1.0e-4*fq*fq;
-}
 
 double form_volume(double radius){
     return 1.333333333333333*M_PI*radius*radius*radius;
@@ -86,7 +78,7 @@ double Iq(double q, double dnn,
 	}		//final scaling is done at the end of the function, after the NT_FP64 case
 
 	answer = (vb-va)/2.0*summ;
-	answer = answer*_sphereform(q,radius,sld,solvent_sld)*latticescale;
+	answer = answer*sphere_form(q,radius,sld,solvent_sld)*latticescale;
 
     return answer;
 
@@ -173,7 +165,7 @@ double Iqxy(double qx, double qy, double dnn,
     Zq *= (1.0-Fkq_2)/(1.0-2.0*Fkq*cos(a3_dot_q)+Fkq_2);
 
   // Use SphereForm directly from libigor
-  answer = _sphereform(q,radius,sld,solvent_sld)*Zq*latticescale;
+  answer = sphere_form(q,radius,sld,solvent_sld)*Zq*latticescale;
 
   return answer;
  }
