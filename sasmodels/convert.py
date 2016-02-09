@@ -150,6 +150,9 @@ def constrain_new_to_old(model_definition, pars):
     elif name == 'pearl_necklace':
         pars['string_thickness_pd_n'] = 0
         pars['number_of_pearls_pd_n'] = 0
+    elif name == 'line':
+        pars['scale'] = 1
+        pars['background'] = 0
     elif name == 'rpa':
         pars['case_num'] = int(pars['case_num'])
     elif getattr(model_definition, 'category', None) == 'structure-factor':

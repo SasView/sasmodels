@@ -18,6 +18,8 @@ None.
 
 """
 from numpy import inf
+from numpy import cos
+from numpy import sin
 
 name = "line"
 title = "Line model"
@@ -32,8 +34,8 @@ category = "shape-independent"
 
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["intercept",     "cm^-1",        1.0, [-inf, inf], "", "intercept in linear model"],
-              ["slope",     "Ang*cm^-1",    1.0, [-inf, inf], "", "slope in linear model"],
+parameters = [["intercept",     "1/cm",        1.0, [-inf, inf], "", "intercept in linear model"],
+              ["slope",     "Ang/cm",    1.0, [-inf, inf], "", "slope in linear model"],
               ]
 # pylint: enable=bad-whitespace, line-too-long
 
@@ -57,15 +59,15 @@ def Iqxy(qx, qy, *args):
     :return:     2D-Intensity
     """
     #TODO: Instrcution tels 2D has different deffinition than oher models
-    #return Iq(sqrt(qx ** 2 + qy ** 2), *args)
-    return  Iq(qx, *args)*Iq(qy, *args)
+    #Iq(qx*cos(qy), *args)*Iq(qy, *args
+    return  Iq(qx*cos(qy), *args)*Iq(qx*sin(qy), *args)
 
 Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
 
-demo = dict(intercept=1.0, slope=1.0)
+demo = dict(scale=1.0, background=0, intercept=1.0, slope=1.0)
 
 oldname = "LineModel"
-oldpars = dict(intercept='A', slope='B', scale=None, background=None)
+oldpars = dict(intercept='A', slope='B', background=None, scale=None)
 
 tests = [
     # Accuracy tests based on content in test/utest_other_models.py
@@ -79,13 +81,13 @@ tests = [
 
     [{'intercept':   1.0,
       'slope': 1.0,
-     },0.5, 1.5],
+     }, 0.5, 1.5],
 
     [{'intercept':   1.0,
       'slope': 1.0,
-     }, [0.4,0.5], [1.4,1.5]],
+     }, [0.4, 0.5], [1.4, 1.5]],
 
     [{'intercept':   1.0,
       'slope': 1.0,
-     }, [1.3,1.57], [2.3,2.57]],
+     }, [1.3, 1.57], [2.3, 2.57]],
 ]
