@@ -120,9 +120,9 @@ Iqxy = """
 demo = dict(effect_radius=200, volfraction=0.2, effect_radius_pd=0.1, effect_radius_pd_n=40)
 oldname = 'HardsphereStructure'
 oldpars = dict()
-
+# Q=0.001 is in the Taylor series, low Q part, so add Q=0.1, assuming double precision sasview is correct
 tests = [
         [ {'scale': 1.0, 'background' : 0.0, 'effect_radius' : 50.0, 'volfraction' : 0.2,
-           'effect_radius_pd' : 0}, [0.001], [0.209128]]
+           'effect_radius_pd' : 0}, [0.001,0.1], [0.209128,0.930587]]
         ]
 
