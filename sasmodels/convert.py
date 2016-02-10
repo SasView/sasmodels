@@ -9,6 +9,7 @@ MODELS_WITHOUT_SCALE = [
     'teubner_strey',
     'broad_peak',
     'two_lorentzian',
+    "two_power_law",
     'gel_fit',
     'gauss_lorentz_gel',
     'be_polyelectrolyte',
