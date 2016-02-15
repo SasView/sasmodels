@@ -64,7 +64,7 @@ def Iqxy(qx, qy, *args):
     :return:     2D-Intensity
     """
     #TODO: Instrcution tels 2D has different deffinition than oher models
-    #Iq(qx*cos(qy), *args)*Iq(qy, *args
+    #return  Iq(qy,*args)*Iq(qy,*args)
     return  Iq(qx*cos(qy), *args)*Iq(qx*sin(qy), *args)
 
 Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
@@ -94,5 +94,5 @@ tests = [
 
     [{'intercept':   1.0,
       'slope': 1.0,
-     }, [1.3, 1.57], [2.3, 2.57]],
+     }, (1.3, 1.57),2.30238060425],
 ]

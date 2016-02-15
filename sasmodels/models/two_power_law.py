@@ -50,6 +50,7 @@ None.
 from numpy import power
 from numpy import sqrt
 from numpy import inf
+from numpy import concatenate
 
 name = "two_power_law"
 title = "Two Power Law intensity calculation"
@@ -92,15 +93,17 @@ def Iq(q,
     """
 # pylint: disable=bad-whitespace
 
-    if q<=crossover:
-        intensity = coefficent_1*power(q,-1.0*power_1)
-    else:
-        coefficent_2 = coefficent_1*power(crossover,-1.0*power_1)/power(crossover,-1.0*power_2)
-        intensity = coefficent_2*power(q,-1.0*power_2)
+    #Two sub vectors are created to treat crossover values
+    q_lower = q[q<=crossover]
+    q_upper = q[q>crossover]
+    coefficent_2 = coefficent_1*power(crossover,-1.0*power_1)/power(crossover,-1.0*power_2)
+    intensity_lower = coefficent_1*power(q_lower,-1.0*power_1)
+    intensity_upper = coefficent_2*power(q_upper,-1.0*power_2)
+    intensity = concatenate( ( intensity_lower,intensity_upper ), axis=0)
 
     return intensity
 
-Iq.vectorized = False  # Iq accepts an array of q values
+Iq.vectorized = True  # Iq accepts an array of q values
 
 def Iqxy(qx, qy, *args):
     """
@@ -112,7 +115,7 @@ def Iqxy(qx, qy, *args):
 
     return Iq(sqrt(qx**2 + qy**2), *args)
 
-Iqxy.vectorized = False  # Iqxy accepts an array of qx, qy values
+Iqxy.vectorized = True  # Iqxy doesn't accept an array of qx, qy values
 
 demo = dict(scale=1, background=0.1,
             coefficent_1=1.0,
@@ -150,4 +153,12 @@ tests = [
       'power_2':    4.0,
       'background': 0.0,
     }, 0.442528, 0.00166884],
+
+    [{'coeffcent_1':    1.0,
+      'crossover':  0.04,
+      'power_1':    1.0,
+      'power_2':    4.0,
+      'background': 0.0,
+    }, (0.442528, 0.00166884), 0.00166884],
+
 ]
