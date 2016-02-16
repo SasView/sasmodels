@@ -16,8 +16,7 @@ where
 .. math::
     F^2(q)=\frac{3}{V_s}\left[V_c(\rho_c-\rho_s)\frac{\sin(qr_c)-qr_c\cos(qr_c)}{(qr_c)^3}+
     V_s(\rho_s-\rho_{solv})\frac{\sin(qr_s)-qr_s\cos(qr_s)}{(qr_s)^3}\right]
-        
-        
+
 where $V_s$ is the volume of the outer shell, $V_c$ is
 the volume of the core, $r_s$ is the radius of the shell, $r_c$ is the radius of the
 core, $\rho_c$ is the scattering length density of the core, $\rho_s$ is the scattering length
@@ -98,9 +97,8 @@ def VR(radius, thickness):
     core = 4.0 * pi / 3.0 * radius * radius * radius
     return whole, whole - core
 
-tests = [
-         [{'radius': 20.0, 'thickness': 10.0}, 'ER', 30.0 ],
-         [{'radius': 20.0, 'thickness': 10.0}, 'VR', 0.703703704 ],
+tests = [[{'radius': 20.0, 'thickness': 10.0}, 'ER', 30.0],
+         [{'radius': 20.0, 'thickness': 10.0}, 'VR', 0.703703704],
 
          # The SasView test result was 0.00169, with a background of 0.001
          [{'radius': 60.0,
@@ -109,5 +107,4 @@ tests = [
            'shell_sld':2.0,
            'solvent_sld':3.0,
            'background':0.0
-          }, 0.4, 0.000698838],
-        ]
+          }, 0.4, 0.000698838]]
