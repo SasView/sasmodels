@@ -115,7 +115,7 @@ def Iqxy(qx, qy, *args):
 
     return Iq(sqrt(qx**2 + qy**2), *args)
 
-Iqxy.vectorized = True  # Iqxy doesn't accept an array of qx, qy values
+Iqxy.vectorized = True  # Iqxy accepts an array of qx, qy values
 
 demo = dict(scale=1, background=0.1,
             coefficent_1=1.0,
