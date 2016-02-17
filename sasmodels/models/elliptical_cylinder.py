@@ -21,13 +21,14 @@ The function calculated is
 with the functions
 
 .. math::
-    F(\mathbf{q},\alpha,\psi)=2\frac{J_1(a)\sin(b)}{ab} 
+    F(\mathbf{q},\alpha,\psi)=2\frac{J_1(a)\sin(b)}{ab}
     \\
     a = \mathbf{q}\sin(\alpha)\left[ r^2_{major}\sin^2(\psi)+r^2_{minor}\cos(\psi) \right]^{1/2}
     \\
     b=\mathbf{q}\frac{L}{2}\cos(\alpha)
 
-and the angle |bigpsi| is defined as the orientation of the major axis of the ellipse with respect to the vector *q*\ .
+and the angle |bigpsi| is defined as the orientation of the major axis of the ellipse with respect to the vector $\vec q$ .
+The angle $\alpha$ is the angle between the axis of the cylinder and $\vec q$.
 
 
 Definition for 1D (no preferred orientation)
@@ -128,8 +129,8 @@ def ER(r_minor, r_ratio, length):
         @param r_ratio: Ratio of major radius over minor radius
         @param length: Length of the cylinder
     """
-    r = math.sqrt(r_minor * r_minor * r_ratio)
-    ddd = 0.75 * r * (2 * r * length + (length + r) * (length + pi * r))
+    radius = math.sqrt(r_minor * r_minor * r_ratio)
+    ddd = 0.75 * radius * (2 * radius * length + (length + radius) * (length + pi * radius))
     return 0.5 * (ddd) ** (1. / 3.)
 
 tests = [[{'r_minor': 20.0, 'r_ratio': 1.5, 'length':400.0}, 'ER', 79.89245454155024],
