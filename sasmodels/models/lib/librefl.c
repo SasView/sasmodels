@@ -1,10 +1,15 @@
-//complex cassign(real, imag);
-//complex cplx_add(x,y);
-//complex rcmult(x,y);
-//complex cplx_sub(x,y);
-//complex cplx_mult(x,y);
-//complex cplx_div(x,y);
-//complex cplx_exp(b);
+typedef struct {
+        double re;
+        double im;
+} complex;
+
+complex cassign(real, imag);
+complex cplx_add(x,y);
+complex rcmult(x,y);
+complex cplx_sub(x,y);
+complex cplx_mult(x,y);
+complex cplx_div(x,y);
+complex cplx_exp(b);
 
 double err_mod_func(double n_sub, double ind, double nu);
 double linearfunc(double n_sub, double ind, double nu);
