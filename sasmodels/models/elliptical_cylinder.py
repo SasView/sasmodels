@@ -1,3 +1,4 @@
+# pylint: disable=line-too-long
 r"""
 This function calculates the scattering from an elliptical cylinder.
 
@@ -94,24 +95,8 @@ from numpy import pi, inf
 name = "elliptical_cylinder"
 title = "Form factor for an elliptical cylinder."
 description = """
-    F^2(q) = The function calculated is
-
-.. math::
-    I(\mathbf{q})=\frac{1}{V_{cyl}}\int{d\psi}\int{d\phi}\int{p(\theta,\phi,\psi)F^2(\mathbf{q},\alpha,\psi)\sin(\theta)d\theta}
-
-with the functions
-
-.. math::
-    F(\mathbf{q},\alpha,\psi)=2\frac{J_1(a)\sin(b)}{ab} 
-    \\
-    a = \mathbf{q}\sin(\alpha)\left[ r^2_{major}\sin^2(\psi)+r^2_{minor}\cos(\psi) \right]^{1/2}
-    \\
-    b=\mathbf{q}\frac{L}{2}\cos(\alpha)
-    
-In 1D we have
-
-.. math::
-    P(q) = scale  <F^2> / V
+    Form factor for an elliptical cylinder.
+    See L A Feigin and D I Svergun, Structure Analysis by Small-Angle X-Ray and Neutron Scattering, Plenum, New York, (1987).
 """
 category = "shape:cylinder"
 
@@ -143,7 +128,7 @@ def ER(r_minor, r_ratio, length):
         @param r_ratio: Ratio of major radius over minor radius
         @param length: Length of the cylinder
     """
-    r = math.sqrt(r_minor * r_minor * r_ratio )
+    r = math.sqrt(r_minor * r_minor * r_ratio)
     ddd = 0.75 * r * (2 * r * length + (length + r) * (length + pi * r))
     return 0.5 * (ddd) ** (1. / 3.)
 
