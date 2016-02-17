@@ -75,7 +75,7 @@ oldname = "LineModel"
 oldpars = dict(intercept='A', slope='B', background=None, scale=None)
 
 tests = [
-    # Accuracy tests based on content in test/utest_other_models.py
+
     [{'intercept':   1.0,
       'slope': 1.0,
      }, 0.4, 1.4],
@@ -94,5 +94,5 @@ tests = [
 
     [{'intercept':   1.0,
       'slope': 1.0,
-     }, (1.3, 1.57),2.30238060425],
+     }, (1.3, 1.57), 2.30238060425],
 ]
