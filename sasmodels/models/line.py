@@ -65,7 +65,7 @@ def Iqxy(qx, qy, *args):
     """
     #TODO: Instrcution tels 2D has different deffinition than oher models
     #return  Iq(qy,*args)*Iq(qy,*args)
-    return  Iq(qx*cos(qy), *args)*Iq(qx*sin(qy), *args)
+    return  Iq(qx, *args)*Iq(qy, *args)
 
 Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
 
