@@ -9,10 +9,11 @@ This model fits the Porod function
 
 to the data directly without any need for linearisation (cf. Log I(q) vs Log q).
 
-Here $C$ is the scale factor and $S_v$ is the specific surface area (ie, surface area / volume) 
+Here $C$ is the scale factor and $S_v$ is the specific surface area (ie, surface area / volume)
 of the sample, and $\Delta\rho$ is the contrast factor.
 
-For 2D data: The 2D scattering intensity is calculated in the same way as 1D, where the q vector is defined as
+For 2D data: The 2D scattering intensity is calculated in the same way as 1D, 
+where the q vector is defined as
 
 .. math::
     q = \sqrt{q_x^2+q_y^2}
@@ -35,7 +36,7 @@ def Iq(q):
     """
     @param q: Input q-value
     """
-    return 1.0/power(q,4)
+    return 1.0/power(q, 4)
 
 Iq.vectorized = True  # Iq accepts an array of q values
 
