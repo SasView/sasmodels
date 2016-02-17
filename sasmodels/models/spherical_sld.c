@@ -1,32 +1,32 @@
 double form_volume(double radius);
 
 double Iq(double q,
-    int n_shells, double sld_solve, int npts_inter,
-    double sld_core_0, double rad_core_0, double thinck_inter_0, int func_inter_0, double nu_inter_0,
-    double sld_flat_1, double thick_inter_1, double thick_flat_1, int func_inter_1, double nu_inter_1,
-    double sld_flat_2, double thick_inter_2, double thick_flat_2, int func_inter_2, double nu_inter_2,
-    double sld_flat_3, double thick_inter_3, double thick_flat_3, int func_inter_3, double nu_inter_3,
-    double sld_flat_4, double thick_inter_4, double thick_flat_4, int func_inter_4, double nu_inter_4,
-    double sld_flat_5, double thick_inter_5, double thick_flat_5, int func_inter_5, double nu_inter_5,
-    double sld_flat_6, double thick_inter_6, double thick_flat_6, int func_inter_6, double nu_inter_6,
-    double sld_flat_7, double thick_inter_7, double thick_flat_7, int func_inter_7, double nu_inter_7,
-    double sld_flat_8, double thick_inter_8, double thick_flat_8, int func_inter_8, double nu_inter_8,
-    double sld_flat_9, double thick_inter_9, double thick_flat_9, int func_inter_9, double nu_inter_9,
-    double sld_flat_10, double thick_inter_10, double thick_flat_10, int func_inter_10, double nu_inter_10);
+    int n_shells, double thick_inter_0, int func_inter_0, double sld_core_0, double sld_solv,
+    double sld_flat_1, double sld_flat_2, double sld_flat_3, double sld_flat_4, double sld_flat_5,
+    double sld_flat_6, double sld_flat_7, double sld_flat_8, double sld_flat_9, double sld_flat_10,
+    double thick_inter_1, double thick_inter_2, double thick_inter_3, double thick_inter_4, double thick_inter_5,
+    double thick_inter_6, double thick_inter_7, double thick_inter_8, double thick_inter_9, double thick_inter_10,
+    double thick_flat_1, double thick_flat_2, double thick_flat_3, double thick_flat_4, double thick_flat_5,
+    double thick_flat_6, double thick_flat_7, double thick_flat_8, double thick_flat_9, double thick_flat_10,
+    int func_inter_1, int func_inter_2, int func_inter_3, int func_inter_4, int func_inter_5,
+    int func_inter_6, int func_inter_7, int func_inter_8, int func_inter_9, int func_inter_10,
+    double nu_inter_1, double nu_inter_2,double nu_inter_3, double nu_inter_4, double nu_inter_5,
+    double nu_inter_6, double nu_inter_7, double nu_inter_8, double nu_inter_9, double nu_inter_10,
+    int npts_inter, double nu_inter_0, double rad_core_0);
 
 double Iqxy(double qx, double qy,
-    int n_shells, double sld_solve, int npts_inter,
-    double sld_core_0, double rad_core_0, double thinck_inter_0, int func_inter_0, double nu_inter_0,
-    double sld_flat_1, double thick_inter_1, double thick_flat_1, int func_inter_1, double nu_inter_1,
-    double sld_flat_2, double thick_inter_2, double thick_flat_2, int func_inter_2, double nu_inter_2,
-    double sld_flat_3, double thick_inter_3, double thick_flat_3, int func_inter_3, double nu_inter_3,
-    double sld_flat_4, double thick_inter_4, double thick_flat_4, int func_inter_4, double nu_inter_4,
-    double sld_flat_5, double thick_inter_5, double thick_flat_5, int func_inter_5, double nu_inter_5,
-    double sld_flat_6, double thick_inter_6, double thick_flat_6, int func_inter_6, double nu_inter_6,
-    double sld_flat_7, double thick_inter_7, double thick_flat_7, int func_inter_7, double nu_inter_7,
-    double sld_flat_8, double thick_inter_8, double thick_flat_8, int func_inter_8, double nu_inter_8,
-    double sld_flat_9, double thick_inter_9, double thick_flat_9, int func_inter_9, double nu_inter_9,
-    double sld_flat_10, double thick_inter_10, double thick_flat_10, int func_inter_10, double nu_inter_10);
+    int n_shells, double thick_inter_0, int func_inter_0, double sld_core_0, double sld_solv,
+    double sld_flat_1, double sld_flat_2, double sld_flat_3, double sld_flat_4, double sld_flat_5,
+    double sld_flat_6, double sld_flat_7, double sld_flat_8, double sld_flat_9, double sld_flat_10,
+    double thick_inter_1, double thick_inter_2, double thick_inter_3, double thick_inter_4, double thick_inter_5,
+    double thick_inter_6, double thick_inter_7, double thick_inter_8, double thick_inter_9, double thick_inter_10,
+    double thick_flat_1, double thick_flat_2, double thick_flat_3, double thick_flat_4, double thick_flat_5,
+    double thick_flat_6, double thick_flat_7, double thick_flat_8, double thick_flat_9, double thick_flat_10,
+    int func_inter_1, int func_inter_2, int func_inter_3, int func_inter_4, int func_inter_5,
+    int func_inter_6, int func_inter_7, int func_inter_8, int func_inter_9, int func_inter_10,
+    double nu_inter_1, double nu_inter_2,double nu_inter_3, double nu_inter_4, double nu_inter_5,
+    double nu_inter_6, double nu_inter_7, double nu_inter_8, double nu_inter_9, double nu_inter_10,
+    int npts_inter, double nu_inter_0, double rad_core_0);
 
 //TODO: Check what is for volume for this model
 
@@ -188,7 +188,6 @@ static double sphere_sld_kernel(double dp[], double q) {
   f2 = f * f / vol * 1.0e8;
   f2 *= scale;
   f2 += background;
-
   //free(fun_type);
   //free(sld);
   //free(thick_inter);
@@ -205,19 +204,20 @@ static double sphere_sld_kernel(double dp[], double q) {
  * @return: function value
  */
 double Iq(double q,
-    int n_shells, double sld_solv, int npts_inter,
-    double sld_core_0, double rad_core_0, double thick_inter_0, int func_inter_0, double nu_inter_0,
-    double sld_flat_1, double thick_inter_1, double thick_flat_1, int func_inter_1, double nu_inter_1,
-    double sld_flat_2, double thick_inter_2, double thick_flat_2, int func_inter_2, double nu_inter_2,
-    double sld_flat_3, double thick_inter_3, double thick_flat_3, int func_inter_3, double nu_inter_3,
-    double sld_flat_4, double thick_inter_4, double thick_flat_4, int func_inter_4, double nu_inter_4,
-    double sld_flat_5, double thick_inter_5, double thick_flat_5, int func_inter_5, double nu_inter_5,
-    double sld_flat_6, double thick_inter_6, double thick_flat_6, int func_inter_6, double nu_inter_6,
-    double sld_flat_7, double thick_inter_7, double thick_flat_7, int func_inter_7, double nu_inter_7,
-    double sld_flat_8, double thick_inter_8, double thick_flat_8, int func_inter_8, double nu_inter_8,
-    double sld_flat_9, double thick_inter_9, double thick_flat_9, int func_inter_9, double nu_inter_9,
-    double sld_flat_10, double thick_inter_10, double thick_flat_10, int func_inter_10, double nu_inter_10) {
+    int n_shells, double thick_inter_0, int func_inter_0, double sld_core_0, double sld_solv,
+    double sld_flat_1, double sld_flat_2, double sld_flat_3, double sld_flat_4, double sld_flat_5,
+    double sld_flat_6, double sld_flat_7, double sld_flat_8, double sld_flat_9, double sld_flat_10,
+    double thick_inter_1, double thick_inter_2, double thick_inter_3, double thick_inter_4, double thick_inter_5,
+    double thick_inter_6, double thick_inter_7, double thick_inter_8, double thick_inter_9, double thick_inter_10,
+    double thick_flat_1, double thick_flat_2, double thick_flat_3, double thick_flat_4, double thick_flat_5,
+    double thick_flat_6, double thick_flat_7, double thick_flat_8, double thick_flat_9, double thick_flat_10,
+    int func_inter_1, int func_inter_2, int func_inter_3, int func_inter_4, int func_inter_5,
+    int func_inter_6, int func_inter_7, int func_inter_8, int func_inter_9, int func_inter_10,
+    double nu_inter_1, double nu_inter_2,double nu_inter_3, double nu_inter_4, double nu_inter_5,
+    double nu_inter_6, double nu_inter_7, double nu_inter_8, double nu_inter_9, double nu_inter_10,
+    int npts_inter, double nu_inter_0, double rad_core_0) {
 
+    //printf("Number of points %d\n",npts_inter);
     double intensity;
     //TODO: Remove this container at later stage. It is only kept to minimize stupid errors now
     double dp[60];
@@ -289,9 +289,8 @@ double Iq(double q,
     dp[58] = nu_inter_0;
     dp[59] = rad_core_0;
 
-
     intensity = sphere_sld_kernel(dp,q);
-
+    //printf("%10d\n",intensity);
     return intensity;
 }
 
@@ -302,32 +301,32 @@ double Iq(double q,
  * @return: function value
  */
 double Iqxy(double qx, double qy,
-    int n_shells, double sld_solve, int npts_inter,
-    double sld_core_0, double rad_core_0, double thinck_inter_0, int func_inter_0, double nu_inter_0,
-    double sld_flat_1, double thick_inter_1, double thick_flat_1, int func_inter_1, double nu_inter_1,
-    double sld_flat_2, double thick_inter_2, double thick_flat_2, int func_inter_2, double nu_inter_2,
-    double sld_flat_3, double thick_inter_3, double thick_flat_3, int func_inter_3, double nu_inter_3,
-    double sld_flat_4, double thick_inter_4, double thick_flat_4, int func_inter_4, double nu_inter_4,
-    double sld_flat_5, double thick_inter_5, double thick_flat_5, int func_inter_5, double nu_inter_5,
-    double sld_flat_6, double thick_inter_6, double thick_flat_6, int func_inter_6, double nu_inter_6,
-    double sld_flat_7, double thick_inter_7, double thick_flat_7, int func_inter_7, double nu_inter_7,
-    double sld_flat_8, double thick_inter_8, double thick_flat_8, int func_inter_8, double nu_inter_8,
-    double sld_flat_9, double thick_inter_9, double thick_flat_9, int func_inter_9, double nu_inter_9,
-    double sld_flat_10, double thick_inter_10, double thick_flat_10, int func_inter_10, double nu_inter_10) {
+    int n_shells, double thick_inter_0, int func_inter_0, double sld_core_0, double sld_solv,
+    double sld_flat_1, double sld_flat_2, double sld_flat_3, double sld_flat_4, double sld_flat_5,
+    double sld_flat_6, double sld_flat_7, double sld_flat_8, double sld_flat_9, double sld_flat_10,
+    double thick_inter_1, double thick_inter_2, double thick_inter_3, double thick_inter_4, double thick_inter_5,
+    double thick_inter_6, double thick_inter_7, double thick_inter_8, double thick_inter_9, double thick_inter_10,
+    double thick_flat_1, double thick_flat_2, double thick_flat_3, double thick_flat_4, double thick_flat_5,
+    double thick_flat_6, double thick_flat_7, double thick_flat_8, double thick_flat_9, double thick_flat_10,
+    int func_inter_1, int func_inter_2, int func_inter_3, int func_inter_4, int func_inter_5,
+    int func_inter_6, int func_inter_7, int func_inter_8, int func_inter_9, int func_inter_10,
+    double nu_inter_1, double nu_inter_2,double nu_inter_3, double nu_inter_4, double nu_inter_5,
+    double nu_inter_6, double nu_inter_7, double nu_inter_8, double nu_inter_9, double nu_inter_10,
+    int npts_inter, double nu_inter_0, double rad_core_0) {
 
     double q = sqrt(qx*qx + qy*qy);
-    return Iq(q,n_shells, sld_solve, npts_inter,
-    sld_core_0, rad_core_0, thinck_inter_0, func_inter_0, nu_inter_0,
-    sld_flat_1, thick_inter_1, thick_flat_1, func_inter_1, nu_inter_1,
-    sld_flat_2, thick_inter_2, thick_flat_2, func_inter_2, nu_inter_2,
-    sld_flat_3, thick_inter_3, thick_flat_3, func_inter_3, nu_inter_3,
-    sld_flat_4, thick_inter_4, thick_flat_4, func_inter_4, nu_inter_4,
-    sld_flat_5, thick_inter_5, thick_flat_5, func_inter_5, nu_inter_5,
-    sld_flat_6, thick_inter_6, thick_flat_6, func_inter_6, nu_inter_6,
-    sld_flat_7, thick_inter_7, thick_flat_7, func_inter_7, nu_inter_7,
-    sld_flat_8, thick_inter_8, thick_flat_8, func_inter_8, nu_inter_8,
-    sld_flat_9, thick_inter_9, thick_flat_9, func_inter_9, nu_inter_9,
-    sld_flat_10, thick_inter_10, thick_flat_10, func_inter_10, nu_inter_10);
+    return Iq(q, n_shells, thick_inter_0, func_inter_0, sld_core_0, sld_solv,
+    sld_flat_1, sld_flat_2, sld_flat_3, sld_flat_4, sld_flat_5,
+    sld_flat_6, sld_flat_7, sld_flat_8, sld_flat_9, sld_flat_10,
+    thick_inter_1, thick_inter_2, thick_inter_3, thick_inter_4, thick_inter_5,
+    thick_inter_6, thick_inter_7, thick_inter_8, thick_inter_9, thick_inter_10,
+    thick_flat_1, thick_flat_2, thick_flat_3, thick_flat_4, thick_flat_5,
+    thick_flat_6, thick_flat_7, thick_flat_8, thick_flat_9, thick_flat_10,
+    func_inter_1, func_inter_2, func_inter_3, func_inter_4, func_inter_5,
+    func_inter_6, func_inter_7, func_inter_8, func_inter_9, func_inter_10,
+    nu_inter_1, nu_inter_2, nu_inter_3, nu_inter_4, nu_inter_5,
+    nu_inter_6, nu_inter_7, nu_inter_8, nu_inter_9, nu_inter_10,
+    npts_inter, nu_inter_0, rad_core_0);
 
 }
 
