@@ -51,7 +51,7 @@ def Iq(q, intercept, slope):
     :return:            Calculated Intensity
     """
     inten = intercept + slope*q
-    # TODO: In SasView code additional formula for list has been specifded.
+    # TODO: In SasView code additional formula for list has been specified.
     # if inten(x) = intercept + slope*x:
     # then if q is a list, Iq=inten(x[0]*math.cos(x[1]))*inten(x[0]*math.sin(x[1]))
     return inten
@@ -65,7 +65,7 @@ def Iqxy(qx, qy, *args):
     :param args: Remaining arguments
     :return:     2D-Intensity
     """
-    # TODO: SasView documention lists 2D intensity as Iq(qx)*Iq(qy) but in code is:
+    # TODO: SasView documention lists 2D intensity as Iq(qx)*Iq(qy) but code says:
     # return self._line(x[1])
     return Iq(qx, *args)*Iq(qy, *args)
 
