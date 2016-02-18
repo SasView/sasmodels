@@ -113,6 +113,7 @@ category = "shape:paracrystal"
 
 single = False
 
+# pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["dnn", "Ang", 220, [-inf, inf], "", "Nearest neighbour distance"],
               ["d_factor", "", 0.06, [-inf, inf], "", "Paracrystal distortion factor"],
@@ -123,6 +124,7 @@ parameters = [["dnn", "Ang", 220, [-inf, inf], "", "Nearest neighbour distance"]
               ["phi", "degrees", 60, [-inf, inf], "orientation", "Out of plane angle"],
               ["psi", "degrees", 60, [-inf, inf], "orientation", "Out of plane angle"]
              ]
+# pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/J1.c", "lib/gauss150.c", "lib/sphere_form.c", "fcc.c"]
 
