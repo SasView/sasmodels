@@ -141,6 +141,11 @@ static double stacked_disks_kernel_2d(double q, double q_x, double q_y,
 {
 
     double ct, st, cp, sp;
+
+    //convert angle degree to radian
+    theta = theta * M_PI/180.0;
+    phi = phi * M_PI/180.0;
+
     SINCOS(theta, st, ct);
     SINCOS(phi, sp, cp);
 
