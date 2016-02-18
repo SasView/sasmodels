@@ -154,12 +154,18 @@ parameters = [["core_sld", "1e-6/Ang^2", 4, [-inf, inf], "",
 source = ["lib/J1.c", "lib/gauss76.c", "core_shell_cylinder.c"]
 
 def ER(radius, thickness, length):
+    """
+        Returns the effective radius used in the S*P calculation
+    """
     radius = radius + thickness
     length = length + 2 * thickness
     ddd = 0.75 * radius * (2 * radius * length + (length + radius) * (length + pi * radius))
     return 0.5 * (ddd) ** (1. / 3.)
 
 def VR(radius, thickness, length):
+    """
+        Returns volume ratio
+    """
     whole = pi * (radius + thickness) ** 2 * (length + 2 * thickness)
     core = pi * radius ** 2 * length
     return whole, whole - core
