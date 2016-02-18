@@ -51,25 +51,24 @@ title = "Hayter-Penfold MSA charged sphere interparticle S(Q) structure factor"
 description = """\
     [Hayter-Penfold MSA charged sphere interparticle S(Q) structure factor]
         Interparticle structure factor S(Q)for a charged hard spheres.
-        Routine takes absolute value of charge, use HardSphere if charge goes to zero.
+        Routine takes absolute value of charge, use HardSphere if charge
+        goes to zero.
         In sasview the effective radius will be calculated from the
         parameters used in P(Q).
 """
 single = False  # double precision only for now
+
+# pylint: disable=bad-whitespace, line-too-long
 #             [ "name", "units", default, [lower, upper], "type", "description" ],
-parameters = [["effect_radius", "Ang", 20.75, [0, inf], "volume",
-               "effective radius of hard sphere"],
-              ["charge", "e", 19.0, [0, inf], "",
-               "charge on sphere (in electrons)"],
-              ["volfraction", "", 0.0192, [0, 0.74], "",
-               "volume fraction of spheres"],
-              ["temperature", "K", 318.16, [0, inf], "",
-               "temperature, in Kelvin, for Debye length calculation"],
-              ["saltconc", "M", 0.0, [-inf, inf], "",
-               "conc of salt, 1:1 electolyte, for Debye length"],
-              ["dielectconst", "", 71.08, [-inf, inf], "",
-               "dielectric constant of solvent (default water), for Debye length"],
-             ]
+parameters = [
+    ["effect_radius", "Ang", 20.75,   [0, inf],    "volume", "effective radius of hard sphere"],
+    ["charge",        "e",   19.0,    [0, inf],    "", "charge on sphere (in electrons)"],
+    ["volfraction",   "",     0.0192, [0, 0.74],   "", "volume fraction of spheres"],
+    ["temperature",   "K",  318.16,   [0, inf],    "", "temperature, in Kelvin, for Debye length calculation"],
+    ["saltconc",      "M",    0.0,    [-inf, inf], "", "conc of salt, 1:1 electolyte, for Debye length"],
+    ["dielectconst",  "",    71.08,   [-inf, inf], "", "dielectric constant of solvent (default water), for Debye length"],
+    ]
+# pylint: enable=bad-whitespace, line-too-long
 category = "structure-factor"
 
 # No volume normalization despite having a volume parameter
@@ -87,13 +86,29 @@ Iqxy = """
 oldname = 'HayterMSAStructure'
 oldpars = dict()
 # default parameter set,  use  compare.sh -midQ -linear
-# note the calculation varies in different limiting cases so a wide range of parameters will be required for a thorough test!
+# note the calculation varies in different limiting cases so a wide range of
+# parameters will be required for a thorough test!
 # odd that the default st has saltconc zero
-demo = dict(effect_radius = 20.75,charge=19.0,volfraction = 0.0192,temperature=318.16,saltconc=0.05,dielectconst=71.08,effect_radius_pd = 0.1,effect_radius_pd_n = 40)
+demo = dict(effect_radius=20.75,
+            charge=19.0,
+            volfraction=0.0192,
+            temperature=318.16,
+            saltconc=0.05,
+            dielectconst=71.08,
+            effect_radius_pd=0.1,
+            effect_radius_pd_n=40)
 #
 # attempt to use same values as old sasview unit test
 tests = [
-        [ {'scale': 1.0, 'background' : 0.0, 'effect_radius' : 20.75, 'charge' : 19.0, 'volfraction' : 0.0192, 'temperature' : 298.0,
-          'saltconc' : 0,'dielectconst' : 78.0, 'effect_radius_pd' : 0}, [0.0010], [0.0712928]]
-        ]
+    [{'scale': 1.0,
+      'background': 0.0,
+      'effect_radius': 20.75,
+      'charge': 19.0,
+      'volfraction': 0.0192,
+      'temperature': 298.0,
+      'saltconc': 0,
+      'dielectconst': 78.0,
+      'effect_radius_pd': 0},
+     [0.0010], [0.0712928]]
+    ]
 

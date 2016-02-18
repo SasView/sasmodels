@@ -77,21 +77,28 @@ solvent_sld = SLD of the solvent
 background = incoherent background
 """
 category = "shape:cylinder"
-
-#             ["name", "units", default, [lower, upper], "type","description"],
+# pylint: disable=bad-whitespace, line-too-long
+#   ["name", "units", default, [lower, upper], "type","description"],
 parameters = [
-              ["radius", "Ang", 30.0, [0, inf], "volume", "Cylinder radius"],
-              ["core_radius", "Ang", 20.0, [0, inf], "volume", "Hollow core radius"],
-              ["length", "Ang", 400.0, [0, inf], "volume", "Cylinder length"],
-              ["sld", "1/Ang^2", 6.3, [-inf, inf], "", "Cylinder sld"],
-              ["solvent_sld", "1/Ang^2", 1, [-inf, inf], "", "Solvent sld"],
-              ["theta", "degrees", 90, [-360, 360], "orientation", "Theta angle"],
-              ["phi", "degrees", 0, [-360, 360], "orientation", "Phi angle"],
-              ]
+    ["radius",      "Ang",     30.0, [0, inf],    "volume",      "Cylinder radius"],
+    ["core_radius", "Ang",     20.0, [0, inf],    "volume",      "Hollow core radius"],
+    ["length",      "Ang",    400.0, [0, inf],    "volume",      "Cylinder length"],
+    ["sld",         "1/Ang^2",  6.3, [-inf, inf], "",            "Cylinder sld"],
+    ["solvent_sld", "1/Ang^2",  1,   [-inf, inf], "",            "Solvent sld"],
+    ["theta",       "degrees", 90,   [-360, 360], "orientation", "Theta angle"],
+    ["phi",         "degrees",  0,   [-360, 360], "orientation", "Phi angle"],
+    ]
+# pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/J1.c", "lib/gauss76.c", "hollow_cylinder.c"]
 
 def ER(radius, core_radius, length):
+    """
+    :param radius:      Cylinder radius
+    :param core_radius: Hollow core radius, UNUSED
+    :param length:      Cylinder length
+    :return:            Effective radius
+    """
     if radius == 0 or length == 0:
         return 0.0
     len1 = radius
@@ -103,30 +110,36 @@ def ER(radius, core_radius, length):
     return diam
 
 def VR(radius, core_radius, length):
+    """
+    :param radius:      Cylinder radius
+    :param core_radius: Hollow core radius
+    :param length:      Cylinder length
+    :return:            Volf ratio for P(q)*S(q)
+    """
     vol_core = pi*core_radius*core_radius*length
     vol_total = pi*radius*radius*length
     vol_shell = vol_total - vol_core
     return vol_shell, vol_total
 
 # parameters for demo
-demo = dict(scale=1.0,background=0.0,length=400.0,radius=30.0,core_radius=20.0,
-            sld=6.3,solvent_sld=1,theta=90,phi=0,
+demo = dict(scale=1.0, background=0.0, length=400.0, radius=30.0,
+            core_radius=20.0, sld=6.3, solvent_sld=1, theta=90, phi=0,
             radius_pd=.2, radius_pd_n=9,
             length_pd=.2, length_pd_n=10,
             core_radius_pd=.2, core_radius_pd_n=9,
             theta_pd=10, theta_pd_n=5,
-            )
+           )
 
 # For testing against the old sasview models, include the converted parameter
 # names and the target sasview model name.
 oldname = 'HollowCylinderModel'
-oldpars = dict(scale='scale',background='background',radius='radius',
-               core_radius='core_radius',sld='sldCyl',length='length',
-               solvent_sld='sldSolv',phi='axis_phi',theta='axis_theta')
+oldpars = dict(scale='scale', background='background', radius='radius',
+               core_radius='core_radius', sld='sldCyl', length='length',
+               solvent_sld='sldSolv', phi='axis_phi', theta='axis_theta')
 
 # Parameters for unit tests
 tests = [
-         [{"radius" : 30.0},0.00005,1764.926],
-         [{},'VR',1.8],
-         [{},0.001,1756.76]
-         ]
+    [{"radius": 30.0}, 0.00005, 1764.926],
+    [{}, 'VR', 1.8],
+    [{}, 0.001, 1756.76]
+    ]
