@@ -38,7 +38,7 @@ where the $q$ vector is defined as
 
 .. figure:: img/two_power_law_1d.jpg
 
-    1D plot using the default values (w/500 data point).
+    1D plot using the default values (with 500 data point).
 
 References
 ----------
@@ -70,36 +70,36 @@ category = "shape-independent"
 # pylint: disable=bad-whitespace, line-too-long
 #            ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [["coefficent_1",  "",         1.0, [-inf, inf], "", "coefficent A in low Q region"],
-              ["crossover",     "1/Ang",    0.04,[0, inf], "", "crossover location"],
-              ["power_1",       "",         1.0, [0, inf], "", "power law exponent at low Q"],
-              ["power_2",       "",         4.0, [0, inf], "", "power law exponent at high Q"],
-              ]
+              ["crossover",     "1/Ang",    0.04,[0, inf],    "", "crossover location"],
+              ["power_1",       "",         1.0, [0, inf],    "", "power law exponent at low Q"],
+              ["power_2",       "",         4.0, [0, inf],    "", "power law exponent at high Q"],
+             ]
 # pylint: enable=bad-whitespace, line-too-long
+
 
 def Iq(q,
        coefficent_1=1.0,
        crossover=0.04,
        power_1=1.0,
        power_2=4.0,
-       ):
+      ):
 
     """
     :param q:                   Input q-value (float or [float, float])
-    :param coefA:               Scaling coefficent at low Q
+    :param coefficent_1:        Scaling coefficent at low Q
     :param crossover:           Crossover location
     :param power_1:             Exponent of power law function at low Q
     :param power_2:             Exponent of power law function at high Q
     :return:                    Calculated intensity
     """
-# pylint: disable=bad-whitespace
 
     #Two sub vectors are created to treat crossover values
-    q_lower = q[q<=crossover]
-    q_upper = q[q>crossover]
-    coefficent_2 = coefficent_1*power(crossover,-1.0*power_1)/power(crossover,-1.0*power_2)
-    intensity_lower = coefficent_1*power(q_lower,-1.0*power_1)
-    intensity_upper = coefficent_2*power(q_upper,-1.0*power_2)
-    intensity = concatenate( ( intensity_lower,intensity_upper ), axis=0)
+    q_lower = q[q <= crossover]
+    q_upper = q[q > crossover]
+    coefficent_2 = coefficent_1*power(crossover, -1.0*power_1)/power(crossover, -1.0*power_2)
+    intensity_lower = coefficent_1*power(q_lower, -1.0*power_1)
+    intensity_upper = coefficent_2*power(q_upper, -1.0*power_2)
+    intensity = concatenate((intensity_lower, intensity_upper), axis=0)
 
     return intensity
 
@@ -117,7 +117,7 @@ def Iqxy(qx, qy, *args):
 
 Iqxy.vectorized = True  # Iqxy accepts an array of qx, qy values
 
-demo = dict(scale=1, background=0.1,
+demo = dict(scale=1, background=0.0,
             coefficent_1=1.0,
             crossover=0.04,
             power_1=1.0,
@@ -125,40 +125,39 @@ demo = dict(scale=1, background=0.1,
 
 oldname = "TwoPowerLawModel"
 oldpars = dict(coefficent_1='coef_A',
-                crossover='qc',
-                power_1='power1',
-                power_2='power2',
-                background='background')
+               crossover='qc',
+               power_1='power1',
+               power_2='power2',
+               background='background')
 
 tests = [
-
     # Accuracy tests based on content in test/utest_extra_models.py
     [{'coefficent_1':     1.0,
       'crossover':  0.04,
       'power_1':    1.0,
       'power_2':    4.0,
       'background': 0.0,
-    }, 0.001, 1000],
+     }, 0.001, 1000],
 
     [{'coefficent_1':     1.0,
       'crossover':  0.04,
       'power_1':    1.0,
       'power_2':    4.0,
       'background': 0.0,
-    }, 0.150141, 0.125945],
+     }, 0.150141, 0.125945],
 
     [{'coeffcent_1':    1.0,
       'crossover':  0.04,
       'power_1':    1.0,
       'power_2':    4.0,
       'background': 0.0,
-    }, 0.442528, 0.00166884],
+     }, 0.442528, 0.00166884],
 
     [{'coeffcent_1':    1.0,
       'crossover':  0.04,
       'power_1':    1.0,
       'power_2':    4.0,
       'background': 0.0,
-    }, (0.442528, 0.00166884), 0.00166884],
+     }, (0.442528, 0.00166884), 0.00166884],
 
 ]
