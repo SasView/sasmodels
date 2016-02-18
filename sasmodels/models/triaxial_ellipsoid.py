@@ -81,7 +81,7 @@ are taken for the angles of $\theta$, $\phi$, and $\psi$ respectively).
 References
 ----------
 
-L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray 
+L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray
 and Neutron Scattering*, Plenum, New York, 1987.
 """
 
