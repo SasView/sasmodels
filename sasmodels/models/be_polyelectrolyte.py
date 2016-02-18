@@ -126,8 +126,8 @@ def Iqxy(qx, qy, *args):
     :param args: Remaining arguments
     :return:     2D-Intensity
     """
-    iq = Iq(sqrt(qx**2 + qy**2), *args)
-    return iq
+    intensity = Iq(sqrt(qx**2 + qy**2), *args)
+    return intensity
 
 Iqxy.vectorized = True  # Iqxy accepts an array of qx, qy values
 
