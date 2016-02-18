@@ -148,4 +148,4 @@ oldpars = dict(
 tests = [[{'scale': 1.0, 'background': 0.0, 'tail_length': 10.0, 'head_length': 2.0,
            'Nlayers': 30.0, 'spacing': 40., 'Caille_parameter': 0.001, 'sld': 0.4,
            'head_sld': 2.0, 'solvent_sld': 6.0, 'tail_length_pd': 0.0,
-           'head_length_pd': 0.0, 'spacing_pd': 0.0 }, [0.001], [6838238.571488]]]
+           'head_length_pd': 0.0, 'spacing_pd': 0.0}, [0.001], [6838238.571488]]]
