@@ -104,7 +104,7 @@ def Iq(q, rg, s, m):
     # Do the calculation and return the function value
     q1 = sqrt((n-3.0+m)*n/2.0)/rg
     if q < q1:
-        iq = (1.0/power(q, (3.0-n)))*exp((-q*q*rg*rg)/n) 
+        iq = (1.0/power(q, (3.0-n)))*exp((-q*q*rg*rg)/n)
     else:
         iq = (1.0/power(q, m))*exp(-(n-3.0+m)/2.0)*power(((n-3.0+m)*n/2.0),
                                                          ((n-3.0+m)/2.0))/power(rg, (n-3.0+m))
