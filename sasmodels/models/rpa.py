@@ -88,7 +88,7 @@ CASES = [
 
 #   ["name", "units", default, [lower, upper], "type","description"],
 parameters = [
-    ["case_num", CASES, 0, [0, 10], "", "Component organization" ],
+    ["case_num", CASES, 0, [0, 10], "", "Component organization"],
 
     ["Na", "", 1000.0, [1, inf], "", "Degree of polymerization"],
     ["Phia", "", 0.25, [0, 1], "", "volume fraction"],
