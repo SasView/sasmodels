@@ -77,16 +77,11 @@ demo = dict(lorentz_scale=10.0, porod_scale=1.0e-06, cor_length=50.0,
 # For testing against the old sasview models, include the converted parameter
 # names and the target sasview model name.
 oldname = 'CorrLengthModel'
-# pylint: disable=bad-continuation
-oldpars = dict(
-               lorentz_scale='scale_l', porod_scale='scale_p',
-               cor_length='length_l', exponent_p='exponent_p',
-               exponent_l='exponent_l'
-               )
 
-tests = [
-         [{}, 0.001, 1009.98],
+oldpars = dict(lorentz_scale='scale_l', porod_scale='scale_p',
+               cor_length='length_l', exponent_p='exponent_p',
+               exponent_l='exponent_l')
+
+tests = [[{}, 0.001, 1009.98],
          [{}, 0.150141, 0.174645],
-         [{}, 0.442528, 0.0203957]
-         ]
-# pylint: enable=bad-continuation
+         [{}, 0.442528, 0.0203957]]
