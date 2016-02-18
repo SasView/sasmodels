@@ -88,7 +88,7 @@ parameters = [["rg", "Ang", 60.0, [0, inf], "", "Radius of gyration"],
               ["m",  "",    3.0,  [0, inf], "", "Porod exponent"]]
 # pylint: enable=bad-whitespace, line-too-long
 
-
+# pylint: disable=C0103
 def Iq(q, rg, s, m):
     """
     @param q: Input q-value
@@ -104,11 +104,11 @@ def Iq(q, rg, s, m):
     # Do the calculation and return the function value
     q1 = sqrt((n-3.0+m)*n/2.0)/rg
     if q < q1:
-        F = (1.0/power(q,(3.0-n)))*exp((-q*q*rg*rg)/n) 
+        iq = (1.0/power(q, (3.0-n)))*exp((-q*q*rg*rg)/n) 
     else:
-        F = (1.0/power(q, m))*exp(-(n-3.0+m)/2.0)*power(((n-3.0+m)*n/2.0),
-                                    ((n-3.0+m)/2.0))/power(rg,(n-3.0+m))
-    return F
+        iq = (1.0/power(q, m))*exp(-(n-3.0+m)/2.0)*power(((n-3.0+m)*n/2.0),
+                                                         ((n-3.0+m)/2.0))/power(rg, (n-3.0+m))
+    return iq
 
 Iq.vectorized = False  # Iq accepts an array of q values
 
