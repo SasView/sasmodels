@@ -1,5 +1,4 @@
 r"""
-
 Calculates the scattering from a randomly distributed, two-phase system based on
 the Debye-Anderson-Brumberger (DAB) model for such systems. The two-phase system
 is characterized by a single length scale, the correlation length, which is a
