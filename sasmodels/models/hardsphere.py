@@ -34,8 +34,8 @@ J K Percus, J Yevick, *J. Phys. Rev.*, 110, (1958) 1
 
 from numpy import inf
 
-name = "hardsphere"
-title = "Hard sphere structure factor, with Percus-Yevick closure"
+name = "hardsphere_fish"
+title = "Hard sphere structure factor from FISH, with Percus-Yevick closure"
 description = """\
     [Hard sphere structure factor, with Percus-Yevick closure]
         Interparticle S(Q) for random, non-interacting spheres.
@@ -54,7 +54,6 @@ parameters = [["effect_radius", "Ang", 50.0, [0, inf], "volume",
               ["volfraction", "", 0.2, [0, 0.74], "",
                "volume fraction of hard spheres"],
              ]
-single = False
 
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
@@ -63,35 +62,51 @@ form_volume = """
     """
 
 Iq = """
-    double denom,dnum,alpha,beta,gamm,a,asq,ath,afor,rca,rsa;
-    double calp,cbeta,cgam,prefac,c,vstruc;
-    double struc;
+      double D,A,B,G,X,X2,X4,S,C,FF,HARDSPH;
 
-    //  compute constants
-    denom = pow((1.0-volfraction),4);
-    dnum = pow((1.0 + 2.0*volfraction),2);
-    alpha = dnum/denom;
-    beta = -6.0*volfraction*pow((1.0 + volfraction/2.0),2)/denom;
-    gamm = 0.50*volfraction*dnum/denom;
-    //
-    //  calculate the structure factor
-    //
-    a = 2.0*q*effect_radius;
-    asq = a*a;
-    ath = asq*a;
-    afor = ath*a;
-    SINCOS(a,rsa,rca);
-    //rca = cos(a);
-    //rsa = sin(a);
-    calp = alpha*(rsa/asq - rca/a);
-    cbeta = beta*(2.0*rsa/asq - (asq - 2.0)*rca/ath - 2.0/ath);
-    cgam = gamm*(-rca/a + (4.0/a)*((3.0*asq - 6.0)*rca/afor + (asq - 6.0)*rsa/ath + 6.0/afor));
-    prefac = -24.0*volfraction/a;
-    c = prefac*(calp + cbeta + cgam);
-    vstruc = 1.0/(1.0-c);
-    struc = vstruc;
+      if(fabs(effect_radius) < 1.E-12) {
+               HARDSPH=1.0;
+               return(HARDSPH);
+      }
+      D=pow((1.-volfraction),2);
+      A=pow((1.+2.*volfraction)/D, 2);
+      X=fabs(q*effect_radius*2.0);
 
-    return(struc);
+      if(X < 5.E-06) {
+                 HARDSPH=1./A;
+                 return(HARDSPH);
+      }
+      X2=pow(X,2);
+      X4=pow(X2,2);
+      B=-6.*volfraction* pow((1.+0.5*volfraction)/D ,2);
+      G=0.5*volfraction*A;
+
+      if(X < 0.2) {
+      // use Taylor series expansion for small X, IT IS VERY PICKY ABOUT THE X CUT OFF VALUE, ought to be lower in double. 
+      // No obvious way to rearrange the equations to avoid needing a very high number of significant figures. 
+      // Series expansion found using Mathematica software. Numerical test in .xls showed terms to X^2 are sufficient 
+      // for 5 or 6 significant figures but I put the X^4 one in anyway 
+            FF = 8*A +6*B + 4*G - (0.8*A +2.0*B/3.0 +0.5*G)*X2 +(A/35. +B/40. +G/50.)*X4;
+            // combining the terms makes things worse at smallest Q in single precision
+            //FF = (8-0.8*X2)*A +(3.0-X2/3.)*2*B + (4+0.5*X2)*G +(A/35. +B/40. +G/50.)*X4;
+            // note that G = -volfraction*A/2, combining this makes no further difference at smallest Q
+            //FF = (8 +2.*volfraction + ( volfraction/4. -0.8 +(volfraction/100. -1./35.)*X2 )*X2 )*A  + (3.0 -X2/3. +X4/40)*2*B;
+            HARDSPH= 1./(1. + volfraction*FF );
+            return(HARDSPH);
+      }
+      SINCOS(X,S,C);
+
+// RKH Feb 2016, use version from FISH code as it is better than original sasview one at small Q in single precision
+      FF=A*(S-X*C)/X + B*(2.*X*S -(X2-2.)*C -2.)/X2 + G*( (4.*X2*X -24.*X)*S -(X4 -12.*X2 +24.)*C +24. )/X4;
+      HARDSPH= 1./(1. + 24.*volfraction*FF/X2 );
+
+// rearrange the terms, is now about same as sasmodels
+//     FF=A*(S/X-C) + B*(2.*S/X - C +2.0*(C-1.0)/X2) + G*( (4./X -24./X3)*S -(1.0 -12./X2 +24./X4)*C +24./X4 );
+//     HARDSPH= 1./(1. + 24.*volfraction*FF/X2 );
+// remove 1/X2 from final line, take more powers of X inside the brackets, stil bad
+//      FF=A*(S/X3-C/X2) + B*(2.*S/X3 - C/X2 +2.0*(C-1.0)/X4) + G*( (4./X -24./X3)*S -(1.0 -12./X2 +24./X4)*C +24./X4 )/X2;
+//      HARDSPH= 1./(1. + 24.*volfraction*FF );
+      return(HARDSPH);
    """
 
 Iqxy = """
@@ -105,9 +120,9 @@ Iqxy = """
 demo = dict(effect_radius=200, volfraction=0.2, effect_radius_pd=0.1, effect_radius_pd_n=40)
 oldname = 'HardsphereStructure'
 oldpars = dict()
-
+# Q=0.001 is in the Taylor series, low Q part, so add Q=0.1, assuming double precision sasview is correct
 tests = [
         [ {'scale': 1.0, 'background' : 0.0, 'effect_radius' : 50.0, 'volfraction' : 0.2,
-           'effect_radius_pd' : 0}, [0.001], [0.209128]]
+           'effect_radius_pd' : 0}, [0.001,0.1], [0.209128,0.930587]]
         ]
 

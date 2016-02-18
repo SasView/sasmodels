@@ -1,5 +1,6 @@
 /build/
 /dist/
+/logs/
 /*.csv
 *.pyc
 *.cl
@@ -15,3 +16,5 @@
 /.coverage
 /.project
 /.pydevproject
+/.idea
+/sasmodels.egg-info/

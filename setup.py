@@ -10,7 +10,7 @@ setup(
     name="sasmodels",
     version = "1.0.0a",
     description = "sasmodels package",
-    long_description=open('README.rst').read(),
+    long_description=open('README.md').read(),
     author = "SasView Collaboration",
     author_email = "management@sasview.org",
     url = "http://www.sasview.org",

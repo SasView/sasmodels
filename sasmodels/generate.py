@@ -232,6 +232,7 @@ RST_UNITS = {
     "1e-6/Ang^2": "|1e-6Ang^-2|",
     "degrees": "degree",
     "1/cm": "|cm^-1|",
+    "Ang/cm": "|Ang*cm^-1|",
     "": "None",
     }
 
