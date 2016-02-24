@@ -66,7 +66,9 @@ parameters = [
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["multi_shell.c"]
+source = ["lib/sph_j1c.c", "multi_shell.c"]
+
+polydispersity = ["core_radius", "n_pairs"]
 
 demo = dict(scale=1, background=0,
             core_radius=60.0,
