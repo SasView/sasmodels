@@ -92,6 +92,7 @@ parameters = [
 
 source = ["lib/J1.c", "lib/gauss76.c", "hollow_cylinder.c"]
 
+# pylint: disable=W0613
 def ER(radius, core_radius, length):
     """
     :param radius:      Cylinder radius

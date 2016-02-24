@@ -99,6 +99,9 @@ Iqxy = """
     """
 
 def ER(radius):
+    """
+        Return equivalent radius (ER)
+    """
     return radius
 
 # VR defaults to 1.0

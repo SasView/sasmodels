@@ -12,7 +12,7 @@ to the data directly without any need for linearisation (cf. Log I(q) vs Log q).
 Here $C$ is the scale factor and $S_v$ is the specific surface area (ie, surface area / volume)
 of the sample, and $\Delta\rho$ is the contrast factor.
 
-For 2D data: The 2D scattering intensity is calculated in the same way as 1D, 
+For 2D data: The 2D scattering intensity is calculated in the same way as 1D,
 where the q vector is defined as
 
 .. math::

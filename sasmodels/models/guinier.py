@@ -35,9 +35,7 @@ description = """
 category = "shape-independent"
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [
-              ["rg", "Ang", 60.0, [0, inf], "", "Radius of Gyration"],
-              ]
+parameters = [["rg", "Ang", 60.0, [0, inf], "", "Radius of Gyration"]]
 
 Iq = """
     double exponent = rg*rg*q*q/3.0;
@@ -50,7 +48,7 @@ Iqxy = """
     """
 
 # parameters for demo
-demo = dict(scale=1.0,rg=60.0)
+demo = dict(scale=1.0, rg=60.0)
 
 # For testing against the old sasview models, include the converted parameter
 # names and the target sasview model name.
@@ -58,6 +56,4 @@ oldname = 'GuinierModel'
 oldpars = dict(rg='rg')
 
 # parameters for unit tests
-tests = [
-         [{'rg' : 31.5}, 0.005, 0.991756]
-         ]
+tests = [[{'rg' : 31.5}, 0.005, 0.991756]]

@@ -67,18 +67,14 @@ description = """\
 """
 category = "shape:lamellae"
 
+# pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["tail_length", "Ang",  15, [0, inf], "volume",
-               "Tail thickness"],
-              ["head_length", "Ang",  10, [0, inf], "volume",
-               "head thickness"],
-              ["sld", "1e-6/Ang^2", 0.4, [-inf,inf], "",
-               "Tail scattering length density"],
-              ["head_sld", "1e-6/Ang^2", 3.0, [-inf,inf], "",
-               "Head scattering length density"],
-              ["solvent_sld", "1e-6/Ang^2", 6, [-inf,inf], "",
-               "Solvent scattering length density"],
-             ]
+parameters = [["tail_length", "Ang",       15,   [0, inf],  "volume",  "Tail thickness"],
+              ["head_length", "Ang",       10,   [0, inf],  "volume",  "head thickness"],
+              ["sld",         "1e-6/Ang^2", 0.4, [-inf,inf], "",       "Tail scattering length density"],
+              ["head_sld",    "1e-6/Ang^2", 3.0, [-inf,inf], "",       "Head scattering length density"],
+              ["solvent_sld", "1e-6/Ang^2", 6,   [-inf,inf], "",       "Solvent scattering length density"]]
+# pylint: enable=bad-whitespace, line-too-long
 
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
@@ -112,18 +108,14 @@ Iqxy = """
 # VR defaults to 1.0
 
 demo = dict(scale=1, background=0,
-            tail_length=15,head_length=10,
+            tail_length=15, head_length=10,
             sld=0.4, head_sld=3.0, solvent_sld=6.0,
-            tail_length_pd= 0.2, tail_length_pd_n=40,
-            head_length_pd= 0.01, head_length_pd_n=40)
+            tail_length_pd=0.2, tail_length_pd_n=40,
+            head_length_pd=0.01, head_length_pd_n=40)
 
 oldname = 'LamellarFFHGModel'
 oldpars = dict(head_length='h_thickness', tail_length='t_length',
                sld='sld_tail', head_sld='sld_head', solvent_sld='sld_solvent')
 #
-tests = [
-        [ {'scale': 1.0, 'background' : 0.0, 'tail_length' : 15.0, 'head_length' : 10.0,'sld' : 0.4,
-         'head_sld' : 3.0, 'solvent_sld' : 6.0, }, [0.001], [653143.9209]]
-        ]
-
-
+tests = [[{'scale': 1.0, 'background': 0.0, 'tail_length': 15.0, 'head_length': 10.0,
+           'sld': 0.4, 'head_sld': 3.0, 'solvent_sld': 6.0}, [0.001], [653143.9209]]]

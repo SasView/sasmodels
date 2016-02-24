@@ -59,7 +59,6 @@ A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*, John Wiley and
 Sons, New York, (1955)
 """
 
-import numpy as np
 from numpy import pi, inf
 
 name = "vesicle"
@@ -130,7 +129,7 @@ oldpars = dict(sld='shell_sld', solvent_sld='solv_sld')
 
 # NOTE: test results taken from values returned by SasView 3.1.2
 tests = [[{}, 0.0010005303255, 17139.8268799],
-         [{}, 0.200027832249, 0.130387268704 ],
+         [{}, 0.200027832249, 0.130387268704],
          [{}, 'ER', 130.],
          [{}, 'VR', 0.54483386436],
         ]

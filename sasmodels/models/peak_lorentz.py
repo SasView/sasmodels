@@ -10,7 +10,8 @@ The scattering intensity $I(q)$ is calculated as
 
     I(q) = \frac{scale}{\bigl(1+\bigl(\frac{q-q_0}{B}\bigr)^2\bigr)} + background
 
-with the peak having height of $I_0$ centered at $q_0$ and having a HWHM (half-width half-maximum) of B.
+with the peak having height of $I_0$ centered at $q_0$ and having
+a HWHM (half-width half-maximum) of B.
 
 For 2D data the scattering intensity is calculated in the same way as 1D,
 where the $q$ vector is defined as
@@ -54,11 +55,17 @@ parameters = [["peak_pos", "1/Ang", 0.05, [-inf, inf], "", "Peak postion in q"],
              ]
 
 def Iq(q, peak_pos, peak_hwhm):
+    """
+        Return I(q)
+    """
     inten = (1/(1+((q-peak_pos)/peak_hwhm)**2))
     return inten
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def Iqxy(qx, qy, *args):
+    """
+        Return I(qx, qy)
+    """
     return Iq(sqrt(qx ** 2 + qy ** 2), *args)
 Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
 
