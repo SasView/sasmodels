@@ -6,7 +6,7 @@ This model provides the form factor for a circular cylinder with a core-shell
 scattering length density profile.
 The form factor is normalized by the particle volume.
 
-.. _core-shell-cylinder-geometry:
+.. _core-shell-bicelle-geometry:
 
 .. figure:: img/core_shell_bicelle_geometry.png
 

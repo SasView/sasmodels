@@ -23,7 +23,7 @@ density of the solvent (which is the same as for the core in this case),
 $\rho_{\text{scale}}$ is the scattering length density of the shell, background
 is a flat background level (due for example to incoherent scattering in the
 case of neutrons), and $j_1$ is the spherical bessel function
-$j_1 = (sin(x) - x cos(x))/ x^2$.
+$j_1 = (\sin(x) - x \cos(x))/ x^2$.
 
 The functional form is identical to a "typical" core-shell structure, except
 that the scattering is normalized by the volume that is contributing to the
@@ -34,7 +34,9 @@ in the shell rather than the entire core+shell sphere, and the parameterization
 is done in terms of the core radius = $R_{\text{core}}$ and the shell
 thickness = $R_{\text{tot}} - R_{\text{core}}$.
 
-.. figure: img/vesicle_geometry.jpg
+.. figure:: img/vesicle_geometry.jpg
+
+    Vesicle geometry.
 
 The 2D scattering intensity is the same as *P(q)* above, regardless of the
 orientation of the *q* vector which is defined as
@@ -47,11 +49,11 @@ orientation of the *q* vector which is defined as
 NB: The outer most radius (= *radius* + *thickness*) is used as the effective
 radius for *S(Q)* when *P(Q)* \* *S(Q)* is applied.
 
-.. image:: img/vesicle_1d.jpg
+.. figure:: img/vesicle_1d.jpg
 
-*Figure. 1D plot using the default values given in the table
-(w/200 data point). Polydispersity and instrumental resolution normally
-will smear out most of the rapidly oscillating features.*
+    1D plot using the default values given in the table (w/200 data point).
+    Polydispersity and instrumental resolution normally will smear out most
+    of the rapidly oscillating features.
 
 REFERENCE
 

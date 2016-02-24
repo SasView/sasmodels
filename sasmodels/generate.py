@@ -190,7 +190,7 @@ file names and extensions.
 
 The function :func:`make` loads the metadata from the module and returns
 the kernel source.  The function :func:`doc` extracts the doc string
-and adds the parameter table to the top.  The function :func:`sources`
+and adds the parameter table to the top.  The function :func:`model_sources`
 returns a list of files required by the model.
 """
 from __future__ import print_function
@@ -205,7 +205,7 @@ import string
 
 import numpy as np
 
-__all__ = ["make", "doc", "sources", "convert_type"]
+#__all__ = ["make", "doc", "model_sources", "convert_type"]
 
 C_KERNEL_TEMPLATE_PATH = joinpath(dirname(__file__), 'kernel_template.c')
 
