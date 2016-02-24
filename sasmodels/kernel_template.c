@@ -259,8 +259,8 @@ kernel void IQXY_KERNEL_NAME(
       #ifdef VOLUME_PARAMETERS
         const double vol_weight = VOLUME_WEIGHT_PRODUCT;
         vol += vol_weight*form_volume(VOLUME_PARAMETERS);
-      #endif
         norm_vol += vol_weight;
+      #endif
       }
       //else { printf("exclude qx,qy,I:%%g,%%g,%%g\n",qi,scattering); }
     }
