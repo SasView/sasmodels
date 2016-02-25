@@ -3,8 +3,20 @@ This model provides the form factor, *P(q)*, for a multi-lamellar vesicle
 with *N* shells where the core is filled with solvent and the shells are
 interleaved with layers of solvent. For *N = 1*, this returns the VesicleModel.
 
+For information about polarised and magnetic scattering, click here_.
+
+.. _here: polar_mag_help.html
+
 Definition
 ----------
+
+This model is a trivial extension of the CoreShell function to a larger number
+of shells. See the core_shell_ function for a diagram and documentation.
+
+.. _core_shell: core_shell_sphere.html
+
+Be careful! The SLDs and scale can be highly correlated. Hold as many of these
+parameters fixed as possible.
 
 .. figure:: img/multi_shell_fig1.jpg
 

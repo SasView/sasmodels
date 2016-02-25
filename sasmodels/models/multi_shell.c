@@ -8,8 +8,8 @@ double multi_shell_kernel(double q,
           double n_pairs)
 {
     //calculate with a loop, two shells at a time
-    int ii=0;
-    double fval=0.0;
+    int ii = 0;
+    double fval = 0.0;
     double voli = 0.0;
     const double sldi = core_sld-shell_sld;
 
@@ -27,10 +27,10 @@ double multi_shell_kernel(double q,
         fval -= voli*sldi*sph_j1c(ri*q);
 
         //do 2 layers at a time
-        ii+=1;
+        ii += 1;
 
-    } while(ii<=n_pairs-1);  //change to make 0 < n_pairs < 2 correspond to
-                             //unilamellar vesicles (C. Glinka, 11/24/03)
+    } while(ii <= n_pairs-1);  //change to make 0 < n_pairs < 2 correspond to
+                               //unilamellar vesicles (C. Glinka, 11/24/03)
 
     fval *= 1.0e-4*fval/voli;
 
