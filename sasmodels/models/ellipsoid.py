@@ -110,8 +110,9 @@ than 500.
 References
 ----------
 
-L A Feigin and D I Svergun. *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*, Plenum,
-New York, 1987.
+L A Feigin and D I Svergun.
+*Structure Analysis by Small-Angle X-Ray and Neutron Scattering*,
+Plenum Press, New York, 1987.
 """
 
 from numpy import inf

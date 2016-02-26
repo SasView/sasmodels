@@ -42,7 +42,7 @@ The input parameters are the degrees of polymerization, the volume fractions,
 the specific volumes, and the neutron scattering length densities for each
 component.
 
-.. figure:: img/image215.jpg
+.. figure:: img/rpa_1d.jpg
 
     1D plot using the default values (w/500 data points).
 
@@ -88,7 +88,7 @@ CASES = [
 
 #   ["name", "units", default, [lower, upper], "type","description"],
 parameters = [
-    ["case_num", CASES, 0, [0, 10], "", "Component organization" ],
+    ["case_num", CASES, 0, [0, 10], "", "Component organization"],
 
     ["Na", "", 1000.0, [1, inf], "", "Degree of polymerization"],
     ["Phia", "", 0.25, [0, 1], "", "volume fraction"],

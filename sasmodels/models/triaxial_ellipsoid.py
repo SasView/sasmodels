@@ -81,8 +81,8 @@ are taken for the angles of $\theta$, $\phi$, and $\psi$ respectively).
 References
 ----------
 
-L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*, Plenum,
-New York, 1987.
+L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray
+and Neutron Scattering*, Plenum, New York, 1987.
 """
 
 from numpy import inf
@@ -119,6 +119,9 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "",
 source = ["lib/J1.c", "lib/sph_j1c.c", "lib/gauss76.c", "triaxial_ellipsoid.c"]
 
 def ER(req_minor, req_major, rpolar):
+    """
+        Returns the effective radius used in the S*P calculation
+    """
     import numpy as np
     from .ellipsoid import ER as ellipsoid_ER
     return ellipsoid_ER(rpolar, np.sqrt(req_minor * req_major))

@@ -143,6 +143,9 @@ parameters = [["sld", "4e-6/Ang^2", 4, [-inf, inf], "",
 source = ["lib/J1.c", "lib/gauss76.c", "cylinder.c"]
 
 def ER(radius, length):
+    """
+        Return equivalent radius (ER)
+    """
     ddd = 0.75 * radius * (2 * radius * length + (length + radius) * (length + pi * radius))
     return 0.5 * (ddd) ** (1. / 3.)
 

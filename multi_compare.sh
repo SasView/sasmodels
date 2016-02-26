@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 sasview=( ../sasview/build/lib.* )
 sep=$(python -c "import os;print(os.pathsep)")
