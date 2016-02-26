@@ -66,7 +66,7 @@
 #  define powr(a,b) pow(a,b)
 #  define pown(a,b) pow(a,b)
 #else
-#  ifdef USE_SINCOS
+#  if defined(USE_SINCOS)
 #    define SINCOS(angle,svar,cvar) svar=sincos(angle,&cvar)
 #  else
 #    define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
@@ -88,10 +88,20 @@
 #  define M_PI_4 0.7853981633974483
 #endif
 
-// Non-standard pi/180, used for converting between degrees and radians
+// Non-standard function library
+// pi/180, used for converting between degrees and radians
+// 4/3 pi for computing sphere volumes
+// square and cube for computing squares and cubes
 #ifndef M_PI_180
 #  define M_PI_180 0.017453292519943295
 #endif
+#ifndef M_4PI_3
+#  define M_4PI_3 4.18879020478639
+#endif
+inline double square(double x) { return pow(x,2.0); }
+//inline double square(double x) { return pown(x,2); }
+//inline double square(x) { return x*x; }
+inline double cube(double x) { return x*x*x; }
 
 
 %(DEFINES)s
