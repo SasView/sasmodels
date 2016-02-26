@@ -50,9 +50,9 @@ where the q vector is defined as
 .. math::
     q = \sqrt{q_x^2+q_y^2}
 
-.. image:: img/guinier_porod_model.jpg
+.. figure:: img/guinier_porod_model.jpg
 
-    Figure 1: Guinier-Porod model for $R_g=100$ |Ang|, $s=1$, $m=3$, and $background=0.1$.
+    Guinier-Porod model for $R_g=100$ |Ang|, $s=1$, $m=3$, and $background=0.1$.
 
 
 Reference

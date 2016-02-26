@@ -9,18 +9,20 @@ The angles |theta| and |phi| define the orientation of the axis of the cylinder.
 orientation of the major axis of the ellipse with respect to the vector *Q*\ . A gaussian polydispersity can be added
 to any of the orientation angles, and also for the minor radius and the ratio of the ellipse radii.
 
-.. image:: img/elliptical_cylinder_geometry.gif
+.. figure:: img/elliptical_cylinder_geometry.gif
 
-    *Figure.* *a* = *r_minor* and |nu|\ :sub:`n` = $r_ratio$ (i.e., $r_major / r_minor$).
+    *a* = *r_minor* and |nu|\ :sub:`n` = $r_ratio$ (i.e., $r_major / r_minor$).
 
 The function calculated is
 
 .. math::
+
     I(\mathbf{q})=\frac{1}{V_{cyl}}\int{d\psi}\int{d\phi}\int{p(\theta,\phi,\psi)F^2(\mathbf{q},\alpha,\psi)\sin(\theta)d\theta}
 
 with the functions
 
 .. math::
+
     F(\mathbf{q},\alpha,\psi)=2\frac{J_1(a)\sin(b)}{ab}
     \\
     a = \mathbf{q}\sin(\alpha)\left[ r^2_{major}\sin^2(\psi)+r^2_{minor}\cos(\psi) \right]^{1/2}
@@ -39,8 +41,6 @@ The form factor is averaged over all possible orientation before normalized by t
 .. math::
     P(q) = scale  <F^2> / V
 
-The returned value is scaled to units of |cm^-1|.
-
 To provide easy access to the orientation of the elliptical cylinder, we define the axis of the cylinder using two
 angles |theta|, |phi| and |bigpsi|. As for the case of the cylinder, the angles |theta| and |phi| are defined on
 Figure 2 of CylinderModel. The angle |bigpsi| is the rotational angle around its own long_c axis against the *q* plane.
@@ -48,21 +48,21 @@ For example, |bigpsi| = 0 when the *r_minor* axis is parallel to the *x*\ -axis 
 
 All angle parameters are valid and given only for 2D calculation; ie, an oriented system.
 
-.. image:: img/elliptical_cylinder_geometry_2d.jpg
+.. figure:: img/elliptical_cylinder_geometry_2d.jpg
 
-    *Figure. Definition of angles for 2D*
+    Definition of angles for 2D
 
-.. image:: img/core_shell_bicelle_fig2.jpg
+.. figure:: img/core_shell_bicelle_fig2.jpg
 
-    *Figure. Examples of the angles for oriented elliptical cylinders against the detector plane.*
+    Examples of the angles for oriented elliptical cylinders against the detector plane.
 
 NB: The 2nd virial coefficient of the cylinder is calculated based on the averaged radius (= sqrt(*r_minor*\ :sup:`2` \* *r_ratio*))
 and length values, and used as the effective radius for *S(Q)* when *P(Q)* \* *S(Q)* is applied.
 
 
-.. image:: img/elliptical_cylinder_comparison_1d.jpg
+.. figure:: img/elliptical_cylinder_comparison_1d.jpg
 
-    *Figure. 1D plot using the default values (w/1000 data point).*
+    1D plot using the default values (w/1000 data point).
 
 Validation
 ----------
@@ -72,16 +72,16 @@ the 2D calculation over all possible angles. The figure below shows the comparis
 averaged 2D values while the line represents the result of the 1D calculation (for the 2D averaging, values of 76, 180,
 and 76 degrees are taken for the angles of |theta|, |phi|, and |bigpsi| respectively).
 
-.. image:: img/elliptical_cylinder_validation_1d.gif
+.. figure:: img/elliptical_cylinder_validation_1d.gif
 
-    *Figure. Comparison between 1D and averaged 2D.*
+    Comparison between 1D and averaged 2D.
 
 In the 2D average, more binning in the angle |phi| is necessary to get the proper result. The following figure shows
 the results of the averaging by varying the number of angular bins.
 
-.. image:: img/elliptical_cylinder_averaging.gif
+.. figure:: img/elliptical_cylinder_averaging.gif
 
-    *Figure. The intensities averaged from 2D over different numbers of bins and angles.*
+    The intensities averaged from 2D over different numbers of bins and angles.
 
 Reference
 ---------

@@ -12,10 +12,9 @@ The scattering intensity $I(q)$ is calculated as
 
 .. note::
     For 2D plots intensity has different definition than other shape independent models
+
 .. math::
     I(q) = I(qx) \cdot I(qy)
-
-.. figure:: None
 
 References
 ----------

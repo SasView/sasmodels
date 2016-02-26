@@ -42,7 +42,7 @@ The input parameters are the degrees of polymerization, the volume fractions,
 the specific volumes, and the neutron scattering length densities for each
 component.
 
-.. figure:: img/image215.jpg
+.. figure:: img/rpa_1d.jpg
 
     1D plot using the default values (w/500 data points).
 
