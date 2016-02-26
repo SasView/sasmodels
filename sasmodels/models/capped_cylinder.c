@@ -21,6 +21,8 @@ double _cap_kernel(double q, double h, double cap_radius, double length,
     // kernel.
     const double upper = 1.0;
     const double lower = h/cap_radius; // integral lower bound
+    const double zm = 0.5*(upper-lower);
+    const double zb = 0.5*(upper+lower);
     // cos term in integral is:
     //    cos (q (R t - h + L/2) cos(alpha))
     // so turn it into:
@@ -35,7 +37,7 @@ double _cap_kernel(double q, double h, double cap_radius, double length,
     for (int i=0; i<76 ;i++) {
         // translate a point in [-1,1] to a point in [lower,upper]
         //const double t = ( Gauss76Z[i]*(upper-lower) + upper + lower )/2.0;
-        const double t = 0.5*(Gauss76Z[i]*(upper-lower)+upper+lower);
+        const double t = Gauss76Z[i]*zm + zb;
         const double radical = 1.0 - t*t;
         const double arg = qrst*sqrt(radical); // cap bessel function arg
         const double be = (arg == 0.0 ? 0.5 : J1(arg)/arg);
