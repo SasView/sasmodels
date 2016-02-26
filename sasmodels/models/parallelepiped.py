@@ -6,57 +6,67 @@ The form factor is normalized by the particle volume.
 Definition
 ----------
 
-This model provides the form factor, $P(q)$, for a rectangular parallelepiped
-(below) where the form factor is normalized by the volume of the
-parallelepiped. If you need to apply polydispersity, see also
-rectangular_prism_.
+| This model calculates the scattering from a rectangular parallelepiped (:num:`Figure #parallelepiped-image`).
+| If you need to apply polydispersity, see also :ref:`rectangular-prism`.
 
-The calculated form factor is:
-
-.. math::
-
-    P(q) = \frac{\text{scale}}{V} F^2(q) + \text{background}
-
-where the volume $V = A B C$ and the averaging $\left<\ldots\right>$ is
-applied over all orientations for 1D.
+.. _parallelepiped-image:
 
 .. figure:: img/parallelepiped.jpg
 
    Parallelepiped with the corresponding definition of sides.
 
-The edge of the solid must satisfy the condition that $A < B < C$.
-Then, assuming $a = A/B < 1$, $b = B /B = 1$, and $c = C/B > 1$, the
-form factor is
+.. note::
+
+   The edge of the solid must satisfy the condition that $A < B < C$.
+   This requirement is not enforced in the model, so it is up to the
+   user to check this during the analysis.
+
+The 1D scattering intensity $I(q)$ is calculated as:
+
+.. Comment by Miguel Gonzalez:
+   I am modifying the original text because I find the notation a little bit
+   confusing. I think that in most textbooks/papers, the notation P(Q) is
+   used for the form factor (adim, P(Q=0)=1), although F(q) seems also to
+   be used. But here (as for many other models), P(q) is used to represent
+   the scattering intensity (in cm-1 normally). It would be good to agree on
+   a common notation.
 
 .. math::
 
-    P(q) = \frac{\text{scale}}{V}\int_0^1
-        \phi\left(\mu \sqrt{1-\sigma^2},a\right)
+    I(q) = \frac{\text{scale}}{V} (\Delta\rho \cdot V)^2 \left< P(q, \alpha) \right>
+    + \text{background}
+
+where the volume $V = A B C$, the contrast is defined as
+:math:`\Delta\rho = \rho_{\textstyle p} - \rho_{\textstyle solvent}`,
+$P(q, \alpha)$ is the form factor corresponding to a parallelepiped oriented
+at an angle $\alpha$ (angle between the long axis C and :math:`\vec q`),
+and the averaging $\left<\ldots\right>$ is applied over all orientations.
+
+Assuming $a = A/B < 1$, $b = B /B = 1$, and $c = C/B > 1$, the
+form factor is given by (Mittelbach and Porod, 1961)
+
+.. math::
+
+    P(q, \alpha) = \int_0^1 \phi_Q\left(\mu \sqrt{1-\sigma^2},a\right)
         \left[S(\mu c \sigma/2)\right]^2 d\sigma
 
 with
 
 .. math::
 
-    \phi(\mu,a) = \int_0^1
-        \left\{S\left[\frac{\mu}{2}\cos(\frac{\pi}{2}u)\right]
-               S\left[\frac{\mu a}{2}\sin(\frac{\pi}{2}u)\right]
+    \phi_Q(\mu,a) = \int_0^1
+        \left\{S\left[\frac{\mu}{2}\cos\left(\frac{\pi}{2}u\right)\right]
+               S\left[\frac{\mu a}{2}\sin\left(\frac{\pi}{2}u\right)\right]
                \right\}^2 du
 
     S(x) = \frac{\sin x}{x}
 
     \mu = qB
 
-and the contrast is defined as
 
-.. math::
+The scattering intensity per unit volume is returned in units of |cm^-1|.
 
-    \Delta\rho = \rho_{\textstyle p} - \rho_{\textstyle solvent}
-
-The scattering intensity per unit volume is returned in units of |cm^-1|;
-i.e., $I(q) = \phi P(q)$.
-
-NB: The 2nd virial coefficient of the parallelpiped is calculated based on
+NB: The 2nd virial coefficient of the parallelepiped is calculated based on
 the averaged effective radius $(=\sqrt{A B / \pi})$ and
 length $(= C)$ values, and used as the effective radius for
 $S(q)$ when $P(q) \cdot S(q)$ is applied.
@@ -64,20 +74,67 @@ $S(q)$ when $P(q) \cdot S(q)$ is applied.
 To provide easy access to the orientation of the parallelepiped, we define
 three angles $\theta$, $\phi$ and $\Psi$. The definition of $\theta$ and
 $\phi$ is the same as for the cylinder model (see also figures below).
-The angle $\Psi$ is the rotational angle around the $C$ axis against
-the $q$ plane. For example, $\Psi = 0$ when the $B$ axis is parallel
-to the $x$-axis of the detector.
 
+.. Comment by Miguel Gonzalez:
+   The following text has been commented because I think there are two
+   mistakes. Psi is the rotational angle around C (but I cannot understand
+   what it means against the q plane) and psi=0 corresponds to a||x and b||y.
+
+   The angle $\Psi$ is the rotational angle around the $C$ axis against
+   the $q$ plane. For example, $\Psi = 0$ when the $B$ axis is parallel
+   to the $x$-axis of the detector.
+
+The angle $\Psi$ is the rotational angle around the $C$ axis.
+For $\theta = 0$ and $\phi = 0$, $\Psi = 0$ corresponds to the $B$ axis
+oriented parallel to the y-axis of the detector with $A$ along the z-axis.
+For other $\theta$, $\phi$ values, the parallelepiped has to be first rotated
+$\theta$ degrees around $z$ and $\phi$ degrees around $y$,
+before doing a final rotation of $\Psi$ degrees around the resulting $C$ to
+obtain the final orientation of the parallelepiped.
+For example, for $\theta = 0$ and $\phi = 90$, we have that $\Psi = 0$
+corresponds to $A$ along $x$ and $B$ along $y$,
+while for $\theta = 90$ and $\phi = 0$, $\Psi = 0$ corresponds to
+$A$ along $z$ and $B$ along $x$.
 
 .. _parallelepiped-orientation:
 
-.. figure:: img/orientation.jpg
+.. figure:: img/parallelepiped_angles_definition.jpg
 
     Definition of the angles for oriented parallelepipeds.
 
-.. figure:: img/orientation2.jpg
+.. figure:: img/parallelepiped_angles_examples.jpg
 
     Examples of the angles for oriented parallelepipeds against the detector plane.
+
+For a given orientation of the parallelepiped, the 2D form factor is calculated as
+
+.. math::
+
+    P(q_x, q_y) = \left[\frac{sin(qA\cos\alpha/2)}{(qA\cos\alpha/2)}\right]^2
+                  \left[\frac{sin(qB\cos\beta/2)}{(qB\cos\beta/2)}\right]^2
+                  \left[\frac{sin(qC\cos\gamma/2)}{(qC\cos\gamma/2)}\right]^2
+
+with
+
+.. math::
+
+    \cos\alpha = \hat A \cdot \hat q, \;
+    \cos\beta  = \hat B \cdot \hat q, \;
+    \cos\gamma = \hat C \cdot \hat q
+
+and the scattering intensity as:
+
+.. math::
+
+    I(q_x, q_y) = \frac{\text{scale}}{V} V^2 \Delta\rho^2 P(q_x, q_y) + \text{background}
+
+.. Comment by Miguel Gonzalez:
+   This reflects the logic of the code, as in parallelepiped.c the call
+   to _pkernel returns P(q_x, q_y) and then this is multiplied by V^2 * (delta rho)^2.
+   And finally outside parallelepiped.c it will be multiplied by scale, normalized by
+   V and the background added. But mathematically it makes more sense to write
+   I(q_x, q_y) = \text{scale} V \Delta\rho^2 P(q_x, q_y) + \text{background},
+   with scale being the volume fraction.
 
 
 Validation
@@ -96,25 +153,30 @@ $\phi$, and $\Psi$ respectively).
 
    Comparison between 1D and averaged 2D.
 
-This model reimplements the form factor calculations implemented in a c-library
+This model is based on form factor calculations implemented in a c-library
 provided by the NIST Center for Neutron Research (Kline, 2006).
 
 """
 
+import numpy as np
 from numpy import pi, inf, sqrt
 
 name = "parallelepiped"
 title = "Rectangular parallelepiped with uniform scattering length density."
 description = """
-     P(q)= scale/V*integral from 0 to 1 of ...
+    I(q)= scale*V*(sld - solvent_sld)^2*P(q,alpha)+background
+        P(q,alpha) = integral from 0 to 1 of ...
            phi(mu*sqrt(1-sigma^2),a) * S(mu*c*sigma/2)^2 * dsigma
-
+        with
             phi(mu,a) = integral from 0 to 1 of ..
-        (S((mu/2)*cos(pi*u/2))*S((mu*a/2)*sin(pi*u/2)))^2 * du
+            (S((mu/2)*cos(pi*u/2))*S((mu*a/2)*sin(pi*u/2)))^2 * du
             S(x) = sin(x)/x
-        mu = q*B
+            mu = q*B
+        V: Volume of the rectangular parallelepiped
+        alpha: angle between the long axis of the 
+            parallelepiped and the q-vector for 1D
 """
-category = "shape:parallelpiped"
+category = "shape:parallelepiped"
 
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "",
@@ -138,18 +200,17 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "",
 source = ["lib/J1.c", "lib/gauss76.c", "parallelepiped.c"]
 
 def ER(a_side, b_side, c_side):
+    """
+        Return effective radius (ER) for P(q)*S(q)
+    """
 
     # surface average radius (rough approximation)
     surf_rad = sqrt(a_side * b_side / pi)
 
-    # DiamCyl recoded here (to check and possibly put in a library?)
-    a = surf_rad
-    b = 0.5 * c_side
-    t1 = a * a * b
-    t2 = 1.0 + (b / a) * (1.0 + a / b / 2.0) * (1.0 + pi * a / b / 2.0)
-    ddd = 3.0 * t1 * t2
-
+    ddd = 0.75 * surf_rad * (2 * surf_rad * c_side + (c_side + surf_rad) * (c_side + pi * surf_rad))
     return 0.5 * (ddd) ** (1. / 3.)
+
+# VR defaults to 1.0
 
 # parameters for demo
 demo = dict(scale=1, background=0,
@@ -170,3 +231,11 @@ oldpars = dict(theta='parallel_theta', phi='parallel_phi', psi='parallel_psi',
                a_side='short_a', b_side='short_b', c_side='long_c',
                sld='sldPipe', solvent_sld='sldSolv')
 
+
+qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
+tests = [[{}, 0.2, 0.17658004974],
+         [{}, [0.2], [0.17658004974]],
+         [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.00460296014],
+         [{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.00460296014]],
+        ]
+del qx, qy  # not necessary to delete, but cleaner

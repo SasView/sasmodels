@@ -8,9 +8,9 @@ double _pkernel(double a, double b,double c, double ala, double alb, double alc)
 double _pkernel(double a, double b,double c, double ala, double alb, double alc){
     double argA,argB,argC,tmp1,tmp2,tmp3;
     //handle arg=0 separately, as sin(t)/t -> 1 as t->0
-    argA = a*ala/2.0;
-    argB = b*alb/2.0;
-    argC = c*alc/2.0;
+    argA = 0.5*a*ala;
+    argB = 0.5*b*alb;
+    argC = 0.5*c*alc;
     if(argA==0.0) {
         tmp1 = 1.0;
     } else {
@@ -30,10 +30,12 @@ double _pkernel(double a, double b,double c, double ala, double alb, double alc)
 
 }
 
+
 double form_volume(double a_side, double b_side, double c_side)
 {
     return a_side * b_side * c_side;
 }
+
 
 double Iq(double q,
     double sld,
@@ -42,30 +44,34 @@ double Iq(double q,
     double b_side,
     double c_side)
 {
-    double tmp1, tmp2, yyy;
+    double tmp1, tmp2;
     
     double mu = q * b_side;
     
     // Scale sides by B
     double a_scaled = a_side / b_side;
     double c_scaled = c_side / b_side;
-    
-    // outer integral (with 76 gauss points), integration limits = 0, 1
+        
+    //Order of integration
+    int nordi=76;			        
+    int nordj=76;
+
+    // outer integral (with nordi gauss points), integration limits = 0, 1
     double summ = 0; //initialize integral
 
-    for( int i=0; i<76; i++) {
+    for( int i=0; i<nordi; i++) {
 		
-        // inner integral (with 76 gauss points), integration limits = 0, 1
+        // inner integral (with nordj gauss points), integration limits = 0, 1
 	
         double summj = 0.0;
-	double sigma = 0.5 * ( Gauss76Z[i] + 1.0 );		
+	    double sigma = 0.5 * ( Gauss76Z[i] + 1.0 );		
 		
-	for(int j=0; j<76; j++) {
+	    for(int j=0; j<nordj; j++) {
 
             double uu = 0.5 * ( Gauss76Z[j] + 1.0 );
             double mudum = mu * sqrt(1.0-sigma*sigma);
-	    double arg1 = 0.5 * mudum * cos(0.5*M_PI*uu);
-	    double arg2 = 0.5 * mudum * a_scaled * sin(0.5*M_PI*uu);
+	        double arg1 = 0.5 * mudum * cos(0.5*M_PI*uu);
+	        double arg2 = 0.5 * mudum * a_scaled * sin(0.5*M_PI*uu);
             if(arg1==0.0) {
 	        tmp1 = 1.0;
             } else {
@@ -76,9 +82,8 @@ double Iq(double q,
             } else {
                 tmp2 = sin(arg2)*sin(arg2)/arg2/arg2;
             }
-            yyy = Gauss76Wt[j] * tmp1 * tmp2;
 
-            summj += yyy;
+            summj += Gauss76Wt[j] * tmp1 * tmp2;
         }
 		
         // value of the inner integral
@@ -91,13 +96,14 @@ double Iq(double q,
             answer *= sin(arg)*sin(arg)/arg/arg;
         }
 		
-	// sum of outer integral
-	yyy = Gauss76Wt[i] * answer;
-        summ += yyy;
+	    // sum of outer integral
+        summ += Gauss76Wt[i] * answer;
         
     }	
    
     const double vd = (sld-solvent_sld) * form_volume(a_side, b_side, c_side);
+    
+    // convert from [1e-12 A-1] to [cm-1] and 0.5 factor for outer integral
     return 1.0e-4 * 0.5 * vd * vd * summ;
     
 }
