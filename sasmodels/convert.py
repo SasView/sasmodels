@@ -131,6 +131,10 @@ def revert_model(model_definition, pars):
     elif name == 'pearl_necklace':
         _remove_pd(oldpars, 'num_pearls', name)
         _remove_pd(oldpars, 'thick_string', name)
+    elif name == 'core_shell_parallelepiped':
+        _remove_pd(oldpars, 'rimA', name)
+        _remove_pd(oldpars, 'rimB', name)
+        _remove_pd(oldpars, 'rimC', name)
     elif name == 'rpa':
         # convert scattering lengths from femtometers to centimeters
         for p in "La", "Lb", "Lc", "Ld":
