@@ -11,42 +11,42 @@
 // Note: if using a C++ compiler, then define kernel as extern "C"
 #ifndef USE_OPENCL
 #  ifdef __cplusplus
-     #include <cstdio>
-     #include <cmath>
-     using namespace std;
-     #if defined(_MSC_VER)
+      #include <cstdio>
+      #include <cmath>
+      using namespace std;
+      #if defined(_MSC_VER)
          #include <limits>
          #include <float.h>
          #define kernel extern "C" __declspec( dllexport )
          inline double trunc(double x) { return x>=0?floor(x):-floor(-x); }
-	     inline double fmin(double x, double y) { return x>y ? y : x; }
-	     inline double fmax(double x, double y) { return x<y ? y : x; }
-	     inline double isnan(double x) { return _isnan(x); }
-	     #define NAN (std::numeric_limits<double>::quiet_NaN()) // non-signalling NaN
-	     static double cephes_expm1(double x) {
-	         // Adapted from the cephes math library.
-	         // Copyright 1984 - 1992 by Stephen L. Moshier
-	         if (x != x || x == 0.0) {
-	             return x; // NaN and +/- 0
-	         } else if (x < -0.5 || x > 0.5) {
-	             return exp(x) - 1.0;
-	         } else {
-	             const double xsq = x*x;
-	             const double p = (((
-	                  +1.2617719307481059087798E-4)*xsq
-                      +3.0299440770744196129956E-2)*xsq
-                      +9.9999999999999999991025E-1);
-                 const double q = ((((
-                      +3.0019850513866445504159E-6)*xsq
-                      +2.5244834034968410419224E-3)*xsq
-                      +2.2726554820815502876593E-1)*xsq
-                      +2.0000000000000000000897E0);
-                 double r = x * p;
-	             r =  r / (q - r);
-	             return r+r;
-	         }
-	     }
-	     #define expm1 cephes_expm1
+         inline double fmin(double x, double y) { return x>y ? y : x; }
+         inline double fmax(double x, double y) { return x<y ? y : x; }
+         inline double isnan(double x) { return _isnan(x); }
+         #define NAN (std::numeric_limits<double>::quiet_NaN()) // non-signalling NaN
+         static double cephes_expm1(double x) {
+            // Adapted from the cephes math library.
+            // Copyright 1984 - 1992 by Stephen L. Moshier
+            if (x != x || x == 0.0) {
+               return x; // NaN and +/- 0
+            } else if (x < -0.5 || x > 0.5) {
+               return exp(x) - 1.0;
+            } else {
+               const double xsq = x*x;
+               const double p = (((
+                  +1.2617719307481059087798E-4)*xsq
+                  +3.0299440770744196129956E-2)*xsq
+                  +9.9999999999999999991025E-1);
+               const double q = ((((
+                  +3.0019850513866445504159E-6)*xsq
+                  +2.5244834034968410419224E-3)*xsq
+                  +2.2726554820815502876593E-1)*xsq
+                  +2.0000000000000000000897E0);
+               double r = x * p;
+               r =  r / (q - r);
+               return r+r;
+             }
+         }
+         #define expm1 cephes_expm1
      #else
          #define kernel extern "C"
      #endif
