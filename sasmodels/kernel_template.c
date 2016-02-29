@@ -101,9 +101,9 @@
 #ifndef M_4PI_3
 #  define M_4PI_3 4.18879020478639
 #endif
-inline double square(double x) { return pow(x,2.0); }
+//inline double square(double x) { return pow(x,2.0); }
 //inline double square(double x) { return pown(x,2); }
-//inline double square(x) { return x*x; }
+inline double square(x) { return x*x; }
 inline double cube(double x) { return x*x*x; }
 
 
