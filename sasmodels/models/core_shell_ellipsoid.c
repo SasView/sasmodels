@@ -43,37 +43,35 @@ core_shell_ellipsoid_kernel(double q,
           double shell_sld,
           double solvent_sld)
 {
-	double delpc,delps;
-	double uplim,lolim;		//upper and lower integration limits
-	double summ,zi,yyy,answer; //running tally of integration
 
-	lolim = 0.0;
-	uplim = 1.0;
+    //upper and lower integration limits
+    const double lolim = 0.0;
+    const double uplim = 1.0;
 
-	summ = 0.0;	 //initialize intergral
+    double summ = 0.0;	 //initialize intergral
 
-	delpc = core_sld - shell_sld; //core - shell
-	delps = shell_sld - solvent_sld; //shell - solvent
+    const double delpc = core_sld - shell_sld;    //core - shell
+    const double delps = shell_sld - solvent_sld; //shell - solvent
 
-	for(int i=0;i<76;i++) {
-		zi = ( Gauss76Z[i]*(uplim-lolim) + uplim + lolim )/2.0;
-		yyy = Gauss76Wt[i] * gfn4(zi,
-		                          equat_core,
-		                          polar_core,
-		                          equat_shell,
-		                          polar_shell,
-		                          delpc,
-		                          delps,
-		                          q);
-		summ += yyy;
-	}
+    for(int i=0;i<N_POINTS_76;i++) {
+        double zi = ( Gauss76Z[i]*(uplim-lolim) + uplim + lolim )/2.0;
+        double yyy = Gauss76Wt[i] * gfn4(zi,
+                                  equat_core,
+                                  polar_core,
+                                  equat_shell,
+                                  polar_shell,
+                                  delpc,
+                                  delps,
+                                  q);
+        summ += yyy;
+    }
 
-	answer = (uplim-lolim)/2.0*summ;
+    double answer = (uplim-lolim)/2.0*summ;
 
-	//convert to [cm-1]
-	answer *= 1.0e-4;
+    //convert to [cm-1]
+    answer *= 1.0e-4;
 
-	return answer;
+    return answer;
 }
 
 static double
@@ -88,29 +86,24 @@ core_shell_ellipsoid_kernel_2d(double q, double q_x, double q_y,
           double theta,
           double phi)
 {
-    double cyl_x, cyl_y;
-    double cos_val;
-    double answer;
-    double sldcs,sldss;
-
     //convert angle degree to radian
-    theta = theta * M_PI/180.0;
-    phi = phi * M_PI/180.0;
+    theta = theta * M_PI_180;
+    phi = phi * M_PI_180;
 
 
     // ellipsoid orientation, the axis of the rotation is consistent with the ploar axis.
-    cyl_x = cos(theta) * cos(phi);
-    cyl_y = sin(theta);
+    const double cyl_x = cos(theta) * cos(phi);
+    const double cyl_y = sin(theta);
 
-    sldcs = core_sld - shell_sld;
-    sldss = shell_sld- solvent_sld;
+    const double sldcs = core_sld - shell_sld;
+    const double sldss = shell_sld- solvent_sld;
 
     // Compute the angle btw vector q and the
     // axis of the cylinder
-    cos_val = cyl_x*q_x + cyl_y*q_y;
+    const double cos_val = cyl_x*q_x + cyl_y*q_y;
 
     // Call the IGOR library function to get the kernel: MUST use gfn4 not gf2 because of the def of params.
-    answer = gfn4(cos_val,
+    double answer = gfn4(cos_val,
                   equat_core,
                   polar_core,
                   equat_shell,

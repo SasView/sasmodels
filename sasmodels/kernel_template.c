@@ -87,6 +87,9 @@
 #ifndef M_PI_4
 #  define M_PI_4 0.7853981633974483
 #endif
+#ifndef M_E
+#  define M_E 2.718281828459045091
+#endif
 
 // Non-standard function library
 // pi/180, used for converting between degrees and radians

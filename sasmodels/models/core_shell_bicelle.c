@@ -28,6 +28,8 @@ double form_volume(double radius, double rim_thickness, double face_thickness, d
     return M_PI*(radius+rim_thickness)*(radius+rim_thickness)*(length+2*face_thickness);
 }
 
+inline double sinc(double x) {return x==0 ? 1.0 : sin(x)/x;}
+
 static double
 bicelle_kernel(double qq,
               double rad,
@@ -40,50 +42,33 @@ bicelle_kernel(double qq,
               double rhosolv,
               double dum)
 {
-	double dr1,dr2,dr3;
-	double besarg1,besarg2;
-	double vol1,vol2,vol3;
-	double sinarg1,sinarg2;
-	double t1,t2,t3;
-	double retval,si1,si2,be1,be2;
+    double si1,si2,be1,be2;
 
-	dr1 = rhoc-rhoh;
-	dr2 = rhor-rhosolv;
-	dr3=  rhoh-rhor;
-	vol1 = M_PI*rad*rad*(2.0*length);
-	vol2 = M_PI*(rad+radthick)*(rad+radthick)*(2.0*length+2.0*facthick);
-	vol3= M_PI*(rad)*(rad)*(2.0*length+2.0*facthick);
-	besarg1 = qq*rad*sin(dum);
-	besarg2 = qq*(rad+radthick)*sin(dum);
-	sinarg1 = qq*length*cos(dum);
-	sinarg2 = qq*(length+facthick)*cos(dum);
+    const double dr1 = rhoc-rhoh;
+    const double dr2 = rhor-rhosolv;
+    const double dr3 = rhoh-rhor;
+    const double vol1 = M_PI*rad*rad*(2.0*length);
+    const double vol2 = M_PI*(rad+radthick)*(rad+radthick)*2.0*(length+facthick);
+    const double vol3 = M_PI*rad*rad*2.0*(length+facthick);
+    double sn,cn;
+    SINCOS(dum, sn, cn);
+    double besarg1 = qq*rad*sn;
+    double besarg2 = qq*(rad+radthick)*sn;
+    double sinarg1 = qq*length*cn;
+    double sinarg2 = qq*(length+facthick)*cn;
 
-	if(besarg1 == 0) {
-		be1 = 0.5;
-	} else {
-		be1 = J1(besarg1)/besarg1;
-	}
-	if(besarg2 == 0) {
-		be2 = 0.5;
-	} else {
-		be2 = J1(besarg2)/besarg2;
-	}
-	if(sinarg1 == 0) {
-		si1 = 1.0;
-	} else {
-		si1 = sin(sinarg1)/sinarg1;
-	}
-	if(sinarg2 == 0) {
-		si2 = 1.0;
-	} else {
-		si2 = sin(sinarg2)/sinarg2;
-	}
-	t1 = 2.0*vol1*dr1*si1*be1;
-	t2 = 2.0*vol2*dr2*si2*be2;
-	t3 = 2.0*vol3*dr3*si2*be1;
+    be1 = J1c(besarg1);
+    be2 = J1c(besarg2);
+    si1 = sinc(sinarg1);
+    si2 = sinc(sinarg2);
 
-	retval = ((t1+t2+t3)*(t1+t2+t3))*sin(dum);
-	return(retval);
+    const double t = vol1*dr1*si1*be1 +
+                     vol2*dr2*si2*be2 +
+                     vol3*dr3*si2*be1;
+
+    const double retval = t*t*sn;
+
+    return(retval);
 
 }
 
@@ -98,30 +83,21 @@ bicelle_integration(double qq,
                    double rhor,
                    double rhosolv)
 {
+    // set up the integration end points
+    const double uplim = M_PI/4;
+    const double halfheight = length/2.0;
 
+    double summ = 0.0;
+    for(int i=0;i<N_POINTS_76;i++) {
+        double zi = (Gauss76Z[i] + 1.0)*uplim;
+        double yyy = Gauss76Wt[i] * bicelle_kernel(qq, rad, radthick, facthick,
+                             halfheight, rhoc, rhoh, rhor,rhosolv, zi);
+        summ += yyy;
+    }
 
-	double answer,halfheight;
-	double lolim,uplim,summ,yyy,zi;
-	int nord,i;
-
-	// set up the integration end points
-	nord = 76;
-	lolim = 0.0;
-	uplim = M_PI/2;
-	halfheight = length/2.0;
-
-	summ = 0.0;
-	i=0;
-	for(i=0;i<nord;i++) {
-		zi = ( Gauss76Z[i]*(uplim-lolim) + uplim + lolim )/2.0;
-		yyy = Gauss76Wt[i] * bicelle_kernel(qq, rad, radthick, facthick,
-		                     halfheight, rhoc, rhoh, rhor,rhosolv, zi);
-		summ += yyy;
-	}
-
-	// calculate value of integral to return
-	answer = (uplim-lolim)/2.0*summ;
-	return(answer);
+    // calculate value of integral to return
+    double answer = uplim*summ;
+    return(answer);
 }
 
 static double
@@ -137,24 +113,20 @@ bicelle_kernel_2d(double q, double q_x, double q_y,
           double theta,
           double phi)
 {
-    double cyl_x, cyl_y;
-    double alpha, cos_val;
-    double answer;
-
     //convert angle degree to radian
-    theta *= M_PI/180.0;
-    phi *= M_PI/180.0;
+    theta *= M_PI_180;
+    phi *= M_PI_180;
 
     // Cylinder orientation
-    cyl_x = cos(theta) * cos(phi);
-    cyl_y = sin(theta);
+    const double cyl_x = cos(theta) * cos(phi);
+    const double cyl_y = sin(theta);
 
     // Compute the angle btw vector q and the axis of the cylinder
-    cos_val = cyl_x*q_x + cyl_y*q_y;
-    alpha = acos( cos_val );
+    const double cos_val = cyl_x*q_x + cyl_y*q_y;
+    const double alpha = acos( cos_val );
 
     // Get the kernel
-    answer = bicelle_kernel(q, radius, rim_thickness, face_thickness,
+    double answer = bicelle_kernel(q, radius, rim_thickness, face_thickness,
                            length/2.0, core_sld, face_sld, rim_sld,
                            solvent_sld, alpha) / fabs(sin(alpha));
 

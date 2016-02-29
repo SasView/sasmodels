@@ -90,7 +90,7 @@ parameters = [
 
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/J1.c", "lib/gauss76.c", "core_shell_bicelle.c"]
+source = ["lib/Si.c", "lib/J1.c", "lib/J1c.c", "lib/gauss76.c", "core_shell_bicelle.c"]
 
 demo = dict(scale=1, background=0,
             radius=20.0,
