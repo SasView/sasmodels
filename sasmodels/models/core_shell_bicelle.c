@@ -28,8 +28,6 @@ double form_volume(double radius, double rim_thickness, double face_thickness, d
     return M_PI*(radius+rim_thickness)*(radius+rim_thickness)*(length+2*face_thickness);
 }
 
-inline double sinc(double x) {return x==0 ? 1.0 : sin(x)/x;}
-
 static double
 bicelle_kernel(double qq,
               double rad,

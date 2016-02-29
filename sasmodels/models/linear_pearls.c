@@ -30,16 +30,6 @@ double form_volume(double radius, double num_pearls)
     return num_pearls * pearl_vol;;
 }
 
-// If used elsewhere - factor out to lib/
-static
-double sinc(double x)
-{
-  if (x==0.0){
-    return 1.0;
-  }
-  return sin(x)/x;
-}
-
 double linear_pearls_kernel(double q,
             double radius,
             double edge_sep,

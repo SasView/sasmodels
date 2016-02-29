@@ -3,8 +3,7 @@ double _pearl_necklace_kernel(double q, double radius, double edge_separation,
 	double sld_string, double sld_solv);
 double form_volume(double radius, double edge_separation,
 	double string_thickness, double number_of_pearls);
-double sinc(double x);
-	
+
 double Iq(double q, double radius, double edge_separation,
 	double string_thickness, double number_of_pearls, double sld, 
 	double string_sld, double solvent_sld);
@@ -122,14 +121,6 @@ double form_volume(double radius, double edge_separation,
 
 	return(total_vol);
 }
-
-double sinc(double x)
-{
-	double num = sin(x);
-	double denom = x;
-	return num/denom;
-}
-
 
 double Iq(double q, double radius, double edge_separation,
 	double string_thickness, double number_of_pearls, double sld, 

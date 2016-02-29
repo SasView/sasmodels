@@ -103,8 +103,9 @@
 #endif
 //inline double square(double x) { return pow(x,2.0); }
 //inline double square(double x) { return pown(x,2); }
-inline double square(x) { return x*x; }
+inline double square(double x) { return x*x; }
 inline double cube(double x) { return x*x*x; }
+inline double sinc(double x) { return x==0 ? 1.0 : sin(x)/x; }
 
 
 %(DEFINES)s
