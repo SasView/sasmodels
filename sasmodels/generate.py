@@ -192,6 +192,17 @@ The function :func:`make` loads the metadata from the module and returns
 the kernel source.  The function :func:`doc` extracts the doc string
 and adds the parameter table to the top.  The function :func:`model_sources`
 returns a list of files required by the model.
+
+Code follows the C99 standard with the following extensions and conditions::
+
+    M_PI_180 = pi/180
+    M_4PI_3 = 4pi/3
+    square(x) = x*x
+    cube(x) = x*x*x
+    sinc(x) = sin(x)/x, with sin(0)/0 -> 1
+    all double precision constants must include the decimal point
+    all double declarations may be converted to half, float, or long double
+    FLOAT_SIZE is the number of bytes in the converted variables
 """
 from __future__ import print_function
 
@@ -343,16 +354,20 @@ def convert_type(source, dtype):
     for long double precision.
     """
     if dtype == F16:
+        fbytes = 2
         source = _F16_PRAGMA + _convert_type(source, "half", "f")
     elif dtype == F32:
+        fbytes = 4
         source = _convert_type(source, "float", "f")
     elif dtype == F64:
+        fbytes = 8
         source = _F64_PRAGMA + source  # Source is already double
     elif dtype == F128:
+        fbytes = 16
         source = _convert_type(source, "long double", "L")
     else:
         raise ValueError("Unexpected dtype in source conversion: %s"%dtype)
-    return source
+    return ("#define FLOAT_SIZE %d\n"%fbytes)+source
 
 
 def _convert_type(source, type_name, constant_flag):
