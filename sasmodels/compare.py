@@ -700,7 +700,7 @@ def parse_opts():
         elif arg == '-exq':     opts['qmax'] = 10.0
         elif arg == '-highq':   opts['qmax'] = 1.0
         elif arg == '-midq':    opts['qmax'] = 0.2
-        elif arg == '-loq':     opts['qmax'] = 0.05
+        elif arg == '-lowq':    opts['qmax'] = 0.05
         elif arg.startswith('-nq='):       opts['nq'] = int(arg[4:])
         elif arg.startswith('-res='):      opts['res'] = float(arg[5:])
         elif arg.startswith('-accuracy='): opts['accuracy'] = arg[10:]
