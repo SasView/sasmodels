@@ -19,7 +19,7 @@ double Iqxy(double qx, double qy,
 
 double form_volume(double radius)
 {
-    return 1.333333333333333*M_PI*radius*radius*radius;
+    return sphere_volume(radius);
 }
 
 static double
@@ -94,9 +94,9 @@ double sc_crystal_kernel(double q,
 	answer = (vb-va)/2.0*summ;
 
 	//Volume fraction calculated from lattice symmetry and sphere radius
-	const double latticeScale = (4.0/3.0)*M_PI*(radius*radius*radius)/pow(dnn,3);
+	// NB: 4/3 pi r^3 / dnn^3 = 4/3 pi(r/dnn)^3
+	const double latticeScale = sphere_volume(radius/dnn);
 
-	//answer *= sphere_form_paracrystal(q, radius,contrast)*latticeScale;
 	answer *= sphere_form(q, radius, sphere_sld, solvent_sld)*latticeScale;
 
 	return answer;
@@ -179,7 +179,7 @@ double sc_crystal_kernel_2d(double q, double q_x, double q_y,
     double answer = sphere_form(q, radius, sphere_sld, solvent_sld)*Zq;
 
     //consider scales
-    const double latticeScale = (4.0/3.0)*M_PI*(radius*radius*radius)/pow(dnn,3.0);
+    const double latticeScale = sphere_volume(radius/dnn);
     answer *= latticeScale;
 
     return answer;

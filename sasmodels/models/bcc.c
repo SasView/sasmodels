@@ -39,9 +39,8 @@ double _BCCeval(double Theta, double Phi, double temp1, double temp3) {
 	return (result);
 }
 
-
 double form_volume(double radius){
-    return 1.333333333333333*M_PI*radius*radius*radius;
+    return sphere_volume(radius);
 }
 
 
@@ -51,7 +50,7 @@ double Iq(double q, double dnn,
 
 	//Volume fraction calculated from lattice symmetry and sphere radius
 	const double s1 = dnn/sqrt(0.75);
-	const double latticescale = 2.0*(4.0/3.0)*M_PI*(radius*radius*radius)/(s1*s1*s1);
+	const double latticescale = 2.0*sphere_volume(radius/s1);
 
     const double va = 0.0;
     const double vb = 2.0*M_PI;
@@ -112,7 +111,7 @@ double Iqxy(double qx, double qy, double dnn,
 
 
   //the occupied volume of the lattice
-  const double latticescale = 2.0*(4.0/3.0)*M_PI*(radius*radius*radius)/(s1*s1*s1);
+  const double latticescale = 2.0*sphere_volume(radius/s1);
   // q vector
   //q_z = 0.0; // for SANS; assuming qz is negligible
   /// Angles here are respect to detector coordinate

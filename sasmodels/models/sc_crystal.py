@@ -141,7 +141,7 @@ parameters = [["dnn",         "Ang",       220.0,  [0.0, inf],  "",            "
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sphere_form.c", "lib/gauss150.c", "sc_crystal.c"]
+source = ["lib/sph_j1c.c", "lib/sphere_form.c", "lib/gauss150.c", "sc_crystal.c"]
 
 demo = dict(scale=1, background=0,
             dnn=220.0,
