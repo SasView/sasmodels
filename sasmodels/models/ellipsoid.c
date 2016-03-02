@@ -16,7 +16,7 @@ double _ellipsoid_kernel(double q, double rpolar, double requatorial, double sin
 
 double form_volume(double rpolar, double requatorial)
 {
-    return 1.333333333333333*M_PI*rpolar*requatorial*requatorial;
+    return M_4PI_3*rpolar*requatorial*requatorial;
 }
 
 double Iq(double q,
@@ -25,18 +25,19 @@ double Iq(double q,
     double rpolar,
     double requatorial)
 {
-    //const double lower = 0.0;
-    //const double upper = 1.0;
+    // translate a point in [-1,1] to a point in [0, 1]
+    const double zm = 0.5;
+    const double zb = 0.5;
     double total = 0.0;
     for (int i=0;i<76;i++) {
         //const double sin_alpha = (Gauss76Z[i]*(upper-lower) + upper + lower)/2;
-        const double sin_alpha = 0.5*(Gauss76Z[i] + 1.0);
+        const double sin_alpha = Gauss76Z[i]*zm + zb;
         total += Gauss76Wt[i] * _ellipsoid_kernel(q, rpolar, requatorial, sin_alpha);
     }
-    //const double form = (upper-lower)/2*total;
-    const double form = 0.5*total;
+    // translate dx in [-1,1] to dx in [lower,upper]
+    const double form = total*zm;
     const double s = (sld - solvent_sld) * form_volume(rpolar, requatorial);
-    return 1.0e-4 * form * s * s;
+    return 1.0e-4 * s * s * form;
 }
 
 double Iqxy(double qx, double qy,

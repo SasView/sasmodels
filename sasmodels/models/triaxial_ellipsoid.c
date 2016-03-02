@@ -19,9 +19,9 @@ double Iq(double q,
     // if (req_minor > req_major || req_major > rpolar) return NAN;  // Exclude invalid region
 
     double sn, cn;
-    //double st, ct;
-    //const double lower = 0.0;
-    //const double upper = 1.0;
+    // translate a point in [-1,1] to a point in [0, 1]
+    const double zm = 0.5;
+    const double zb = 0.5;
     double outer = 0.0;
     for (int i=0;i<76;i++) {
         //const double cos_alpha = (Gauss76Z[i]*(upper-lower) + upper + lower)/2;
@@ -33,17 +33,17 @@ double Iq(double q,
 
         double inner = 0.0;
         for (int j=0;j<76;j++) {
-            const double y = 0.5*(Gauss76Z[j] + 1.0);
-            const double t = q*sqrt(acosx2 + bsinx2*(1.0-y*y) + c2*y*y);
+            const double ysq = square(Gauss76Z[j]*zm + zb);
+            const double t = q*sqrt(acosx2 + bsinx2*(1.0-ysq) + c2*ysq);
             const double fq = sph_j1c(t);
             inner += Gauss76Wt[j] * fq * fq ;
         }
         outer += Gauss76Wt[i] * 0.5 * inner;
     }
-    //const double fq2 = (upper-lower)/2*outer;
-    const double fq2 = 0.5*outer;
+    // translate dx in [-1,1] to dx in [lower,upper]
+    const double fqsq = outer*zm;
     const double s = (sld - solvent_sld) * form_volume(req_minor, req_major, rpolar);
-    return 1.0e-4 * fq2 * s * s;
+    return 1.0e-4 * s * s * fqsq;
 }
 
 double Iqxy(double qx, double qy,
@@ -61,7 +61,6 @@ double Iqxy(double qx, double qy,
     double stheta, ctheta;
     double sphi, cphi;
     double spsi, cpsi;
-    double st, ct;
 
     const double q = sqrt(qx*qx + qy*qy);
     const double qxhat = qx/q;
@@ -75,10 +74,9 @@ double Iqxy(double qx, double qy,
     const double t = q*sqrt(req_minor*req_minor*cnu*cnu
                           + req_major*req_major*cmu*cmu
                           + rpolar*rpolar*calpha*calpha);
-    SINCOS(t, st, ct);
-    const double fq = ( t==0.0 ? 1.0 : 3.0*(st-t*ct)/(t*t*t) );
+    const double fq = sph_j1c(t);
     const double s = (sld - solvent_sld) * form_volume(req_minor, req_major, rpolar);
 
-    return 1.0e-4 * fq * fq * s * s;
+    return 1.0e-4 * square(s * fq);
 }
 
