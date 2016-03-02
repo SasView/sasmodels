@@ -304,7 +304,33 @@ def parlist(pars):
     """
     Format the parameter list for printing.
     """
-    return "\n".join("%s: %s"%(p, v) for p, v in sorted(pars.items()))
+    active = None
+    fields = {}
+    lines = []
+    for k, v in sorted(pars.items()):
+        parts = k.split('_pd')
+        #print(k, active, parts)
+        if len(parts) == 1:
+            if active: lines.append(_format_par(active, **fields))
+            active = k
+            fields = {'value': v}
+        else:
+            assert parts[0] == active
+            if parts[1]:
+                fields[parts[1][1:]] = v
+            else:
+                fields['pd'] = v
+    if active: lines.append(_format_par(active, **fields))
+    return "\n".join(lines)
+
+    #return "\n".join("%s: %s"%(p, v) for p, v in sorted(pars.items()))
+
+def _format_par(name, value=0., pd=0., n=0, nsigma=3., type='gaussian'):
+    line = "%s: %g"%(name, value)
+    if pd != 0.  and n != 0:
+        line += " +/- %g  (%d points in [-%g,%g] sigma %s)"\
+                % (pd, n, nsigma, nsigma, type)
+    return line
 
 def suppress_pd(pars):
     """
@@ -769,7 +795,7 @@ def parse_opts():
     constrain_pars(model_definition, pars)
     constrain_new_to_old(model_definition, pars)
     if opts['show_pars']:
-        print("pars " + str(parlist(pars)))
+        print(str(parlist(pars)))
 
     # Create the computational engines
     data, _ = make_data(opts)
