@@ -72,7 +72,7 @@ parameters = [["radius",      "Ang",        60.0, [0, inf],    "volume", "Sphere
               ["solvent_sld", "1e-6/Ang^2", 3.0,  [-inf, inf],  "",      "Solvent scattering length density"]]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sph_j1c.c", "core_shell_sphere.c"]
+source = ["lib/sph_j1c.c", "lib/core_shell.c", "core_shell_sphere.c"]
 
 demo = dict(scale=1, background=0, radius=60, thickness=10,
             core_sld=1.0, shell_sld=2.0, solvent_sld=0.0)
