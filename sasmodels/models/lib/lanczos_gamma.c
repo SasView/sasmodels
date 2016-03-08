@@ -1,7 +1,7 @@
 double lanczos_gamma(double q);
 double lanczos_gamma(double q)
 {
-    // Lanczos approximation to the Gamma function.
+    // Lanczos approximation to the Log Gamma function.
 
     double x,y,tmp,ser;
     double coeff[6]=
