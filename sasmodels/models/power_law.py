@@ -1,5 +1,6 @@
 #power_law model
 #conversion of PowerLawAbsModel.py
+#converted by Steve King, Dec 2015
 
 r"""
 This model calculates a simple power law with a flat background.
