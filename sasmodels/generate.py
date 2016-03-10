@@ -241,9 +241,12 @@ RST_UNITS = {
     "1/Ang": "|Ang^-1|",
     "1/Ang^2": "|Ang^-2|",
     "1e-6/Ang^2": "|1e-6Ang^-2|",
+    "1e15/cm^3": "|1e15cm^3|",
     "degrees": "degree",
     "1/cm": "|cm^-1|",
+    "1/cm^3": "|cm^-3|",
     "Ang/cm": "|Ang*cm^-1|",
+    "Ang^3": "|Ang^3|",
     "": "None",
     }
 

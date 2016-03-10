@@ -51,7 +51,7 @@ def _rescale_sld(pars):
     numbers are nicer.  Relies on the fact that all sld parameters in the
     new model definition end with sld.
     """
-    return dict((p, (v*1e6 if p.endswith('sld') else v))
+    return dict((p, (v*1e6 if p.endswith('sld') else v*1e-15 if 'ndensity' in p else v))
                 for p, v in pars.items())
 
 def convert_model(name, pars):
@@ -69,7 +69,7 @@ def _unscale_sld(pars):
     numbers are nicer.  Relies on the fact that all sld parameters in the
     new model definition end with sld.
     """
-    return dict((p, (v*1e-6 if p.endswith('sld') else v))
+    return dict((p, (v*1e-6 if p.endswith('sld') else v*1e15 if 'ndensity' in p else v))
                 for p, v in pars.items())
 
 def _remove_pd(pars, key, name):
