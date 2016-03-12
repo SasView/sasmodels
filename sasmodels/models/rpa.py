@@ -132,9 +132,9 @@ HIDE_AB = set("Nb Phib vb Lb Kbc Kbd".split()).union(HIDE_A)
 def hidden(pars):
     case_num = pars.get("case_num", parameters[0][2])
     if case_num < 2:
-        return HIDE_A
-    elif case_num < 5:
         return HIDE_AB
+    elif case_num < 5:
+        return HIDE_A
     else:
         return HIDE_NONE
 
