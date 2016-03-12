@@ -30,8 +30,6 @@ from __future__ import print_function
 
 import sys
 import math
-from os.path import basename, dirname, join as joinpath
-import glob
 import datetime
 import traceback
 
