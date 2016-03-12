@@ -97,10 +97,7 @@ Program description
 
 kerneldll.ALLOW_SINGLE_PRECISION_DLLS = True
 
-# List of available models
-ROOT = dirname(__file__)
-MODELS = [basename(f)[:-3]
-          for f in sorted(glob.glob(joinpath(ROOT, "models", "[a-zA-Z]*.py")))]
+MODELS = core.list_models()
 
 # CRUFT python 2.6
 if not hasattr(datetime.timedelta, 'total_seconds'):
@@ -670,6 +667,7 @@ def parse_opts():
     """
     Parse command line options.
     """
+    MODELS = core.list_models()
     flags = [arg for arg in sys.argv[1:]
              if arg.startswith('-')]
     values = [arg for arg in sys.argv[1:]
@@ -682,8 +680,13 @@ def parse_opts():
         print("\nAvailable models:")
         print(columnize(MODELS, indent="  "))
         sys.exit(1)
-    if args[0] not in MODELS:
-        print("Model %r not available. Use one of:\n    %s"%(args[0], models))
+
+    name = args[0]
+    try:
+        model_definition = core.load_model_definition(name)
+    except ImportError, exc:
+        print(str(exc))
+        print("Use one of:\n    " + models)
         sys.exit(1)
     if len(args) > 3:
         print("expected parameters: model N1 N2")
@@ -762,9 +765,6 @@ def parse_opts():
             engines.append('single')
     elif len(engines) > 2:
         del engines[2:]
-
-    name = args[0]
-    model_definition = core.load_model_definition(name)
 
     n1 = int(args[1]) if len(args) > 1 else 1
     n2 = int(args[2]) if len(args) > 2 else 1
