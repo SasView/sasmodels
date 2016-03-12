@@ -547,6 +547,7 @@ def _plot_2d_signal(data, signal, vmin=None, vmax=None, view='log'):
     image[~valid | data.mask] = 0
     #plottable = Iq
     plottable = masked_array(image, ~valid | data.mask)
+    # Divide range by 10 to convert from angstroms to nanometers
     xmin, xmax = min(data.qx_data)/10, max(data.qx_data)/10
     ymin, ymax = min(data.qy_data)/10, max(data.qy_data)/10
     if view == 'log':
