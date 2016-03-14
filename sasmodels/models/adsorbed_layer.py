@@ -3,6 +3,7 @@
 #converted by Steve King, Mar 2016
 
 
+
 r"""
 This model describes the scattering from a layer of surfactant or polymer adsorbed on spherical particles under the conditions that (i) the particles (cores) are contrast-matched to the dispersion medium, (ii) *S(Q)* ~ 1 (ie, the particle volume fraction is dilute), (iii) the particle radius is >> layer thickness (ie, the interface is locally flat), and (iv) scattering from excess unadsorbed adsorbate in the bulk medium is absent or has been corrected for.
 
