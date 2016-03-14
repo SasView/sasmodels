@@ -60,9 +60,9 @@ def Iq(q, second_moment, adsorbed_amount, density_poly, radius,
     numerator =  6.0 * pi * vol_frac * (adsorbed_amount * adsorbed_amount)
     denominator =  (q * q) * (density_poly * density_poly) * radius
     eterm =  exp(-1.0 * (q * q) * (second_moment * second_moment))
-    inten =  deltarhosqrd * ((numerator / denominator) * eterm)
     #scale by 10^10 for units conversion to cm^-1
-    return inten * 1.0e+10
+    inten =  1.0e+10 * deltarhosqrd * ((numerator / denominator) * eterm)
+    return inten * 9.4e-13
 Iq.vectorized =  True  # Iq accepts an array of q values
 
 def Iqxy(qx, qy, *args):
