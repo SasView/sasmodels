@@ -164,6 +164,9 @@ def constrain_new_to_old(model_info, pars):
         pars['scale'] = 1
     if name in MODELS_WITHOUT_BACKGROUND:
         pars['background'] = 0
+    # sasview multiplies background by structure factor
+    if '*' in name:
+        pars['background'] = 0
 
     # If it is a product model P*S, then check the individual forms for special
     # cases.  Note: despite the structure factor alone not having scale or
