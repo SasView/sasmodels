@@ -34,8 +34,8 @@ J K Percus, J Yevick, *J. Phys. Rev.*, 110, (1958) 1
 
 from numpy import inf
 
-name = "hardsphere_fish"
-title = "Hard sphere structure factor from FISH, with Percus-Yevick closure"
+name = "hardsphere"
+title = "Hard sphere structure factor, with Percus-Yevick closure"
 description = """\
     [Hard sphere structure factor, with Percus-Yevick closure]
         Interparticle S(Q) for random, non-interacting spheres.
