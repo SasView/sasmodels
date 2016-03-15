@@ -100,16 +100,15 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
     """
 
     is_2d = hasattr(data, 'qx_data')
-    model_definition = core.load_model_definition(name)
-    pars = get_demo_pars(model_definition)
+    model_info = core.load_model_info(name)
+    pars = get_demo_pars(model_info)
     header = ('\n"Model","%s","Count","%d","Dimension","%s"'
               % (name, N, "2D" if is_2d else "1D"))
     if not mono: header += ',"Cutoff",%g'%(cutoff,)
     print(header)
 
     if is_2d:
-        info = generate.make_info(model_definition)
-        partype = info['partype']
+        partype = model_info['partype']
         if not partype['orientation'] and not partype['magnetic']:
             print(',"1-D only"')
             return
@@ -149,8 +148,8 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
         return list(stats)
 
 
-    calc_base = make_engine(model_definition, data, base, cutoff)
-    calc_comp = make_engine(model_definition, data, comp, cutoff)
+    calc_base = make_engine(model_info, data, base, cutoff)
+    calc_comp = make_engine(model_info, data, comp, cutoff)
     expected = max(PRECISION[base], PRECISION[comp])
 
     num_good = 0
@@ -160,8 +159,8 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
         print("%s %d"%(name, k), file=sys.stderr)
         seed = np.random.randint(1e6)
         pars_i = randomize_pars(pars, seed)
-        constrain_pars(model_definition, pars_i)
-        constrain_new_to_old(model_definition, pars_i)
+        constrain_pars(model_info['id'], pars_i)
+        constrain_new_to_old(model_info['id'], pars_i)
         if mono:
             pars_i = suppress_pd(pars_i)
 

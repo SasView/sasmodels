@@ -20,8 +20,8 @@ except:
     HAVE_OPENCL = False
 
 __all__ = [
-    "list_models", "load_model_definition", "precompile_dll",
-    "load_model", "make_kernel", "call_kernel", "call_ER", "call_VR",
+    "list_models", "load_model_info", "precompile_dll",
+    "build_model", "make_kernel", "call_kernel", "call_ER_VR",
 ]
 
 def list_models():
@@ -34,7 +34,7 @@ def list_models():
     return available_models
 
 
-def load_model_definition(model_name):
+def load_model_info(model_name):
     """
     Load a model definition given the model name.
 
@@ -42,15 +42,16 @@ def load_model_definition(model_name):
     used with functions in generate to build the docs or extract model info.
     """
     __import__('sasmodels.models.'+model_name)
-    model_definition = getattr(models, model_name, None)
-    return model_definition
+    kernel_module = getattr(models, model_name, None)
+    return generate.make_model_info(kernel_module)
 
 
 def precompile_dll(model_name, dtype="double"):
     """
     Precompile the dll for a model.
 
-    Returns the path to the compiled model.
+    Returns the path to the compiled model, or None if the model is a pure
+    python model.
 
     This can be used when build the windows distribution of sasmodels
     (which may be missing the OpenCL driver and the dll compiler), or
@@ -59,9 +60,9 @@ def precompile_dll(model_name, dtype="double"):
     See :func:`sasmodels.kerneldll.make_dll` for details on controlling the
     dll path and the allowed floating point precision.
     """
-    model_definition = load_model_definition(model_name)
-    source, info = generate.make(model_definition)
-    return kerneldll.make_dll(source, info, dtype=dtype)
+    model_info = load_model_info(model_name)
+    source = generate.make_source(model_info)
+    return kerneldll.make_dll(source, model_info, dtype=dtype) if source else None
 
 
 def isstr(s):
@@ -72,16 +73,15 @@ def isstr(s):
     except: return False
     return True
 
-def load_model(model_definition, dtype=None, platform="ocl"):
+def build_model(model_info, dtype=None, platform="ocl"):
     """
     Prepare the model for the default execution platform.
 
     This will return an OpenCL model, a DLL model or a python model depending
     on the model and the computing platform.
 
-    *model_definition* is the python module which defines the model.  If the
-    model name is given instead, then :func:`load_model_definition` will be
-    called with the model name.
+    *model_info* is the model definition structure returned from
+    :func:`load_model_info`.
 
     *dtype* indicates whether the model should use single or double precision
     for the calculation. Any valid numpy single or double precision identifier
@@ -92,13 +92,11 @@ def load_model(model_definition, dtype=None, platform="ocl"):
     *platform* should be "dll" to force the dll to be used for C models,
     otherwise it uses the default "ocl".
     """
-    if isstr(model_definition):
-        model_definition = load_model_definition(model_definition)
+    source = generate.make_source(model_info)
     if dtype is None:
-        dtype = 'single' if getattr(model_definition, 'single', True) else 'double'
-    source, info = generate.make(model_definition)
-    if callable(info.get('Iq', None)):
-        return kernelpy.PyModel(info)
+        dtype = 'single' if model_info['single'] else 'double'
+    if callable(model_info.get('Iq', None)):
+        return kernelpy.PyModel(model_info)
 
     ## for debugging:
     ##  1. uncomment open().write so that the source will be saved next time
@@ -106,15 +104,15 @@ def load_model(model_definition, dtype=None, platform="ocl"):
     ##  3. recomment the open.write() and uncomment open().read()
     ##  4. rerun "python -m sasmodels.direct_model $MODELNAME"
     ##  5. uncomment open().read() so that source will be regenerated from model
-    # open(info['name']+'.c','w').write(source)
-    # source = open(info['name']+'.cl','r').read()
+    # open(model_info['name']+'.c','w').write(source)
+    # source = open(model_info['name']+'.cl','r').read()
 
     if (platform == "dll"
             or not HAVE_OPENCL
             or not kernelcl.environment().has_type(dtype)):
-        return kerneldll.load_dll(source, info, dtype)
+        return kerneldll.load_dll(source, model_info, dtype)
     else:
-        return kernelcl.GpuModel(source, info, dtype)
+        return kernelcl.GpuModel(source, model_info, dtype)
 
 def make_kernel(model, q_vectors):
     """
@@ -122,7 +120,7 @@ def make_kernel(model, q_vectors):
     """
     return model(q_vectors)
 
-def get_weights(info, pars, name):
+def get_weights(model_info, pars, name):
     """
     Generate the distribution for parameter *name* given the parameter values
     in *pars*.
@@ -130,10 +128,10 @@ def get_weights(info, pars, name):
     Uses "name", "name_pd", "name_pd_type", "name_pd_n", "name_pd_sigma"
     from the *pars* dictionary for parameter value and parameter dispersion.
     """
-    relative = name in info['partype']['pd-rel']
-    limits = info['limits'][name]
+    relative = name in model_info['partype']['pd-rel']
+    limits = model_info['limits'][name]
     disperser = pars.get(name+'_pd_type', 'gaussian')
-    value = pars.get(name, info['defaults'][name])
+    value = pars.get(name, model_info['defaults'][name])
     npts = pars.get(name+'_pd_n', 0)
     width = pars.get(name+'_pd', 0.0)
     nsigma = pars.get(name+'_pd_nsigma', 3.0)
@@ -172,10 +170,30 @@ def call_kernel(kernel, pars, cutoff=0):
     pd_pars = [get_weights(kernel.info, pars, name) for name in kernel.pd_pars]
     return kernel(fixed_pars, pd_pars, cutoff=cutoff)
 
+def call_ER_VR(model_info, vol_pars):
+    """
+    Return effect radius and volume ratio for the model.
+
+    *info* is either *kernel.info* for *kernel=make_kernel(model,q)*
+    or *model.info*.
+
+    *pars* are the parameters as expected by :func:`call_kernel`.
+    """
+    ER = model_info.get('ER', None)
+    VR = model_info.get('VR', None)
+    value, weight = dispersion_mesh(vol_pars)
+
+    individual_radii = ER(*value) if ER else 1.0
+    whole, part = VR(*value) if VR else (1.0, 1.0)
+
+    effect_radius = np.sum(weight*individual_radii) / np.sum(weight)
+    volume_ratio = np.sum(weight*part)/np.sum(weight*whole)
+    return effect_radius, volume_ratio
+
+
 def call_ER(info, pars):
     """
     Call the model ER function using *pars*.
-
     *info* is either *model.info* if you have a loaded model, or *kernel.info*
     if you have a model kernel prepared for evaluation.
     """
@@ -193,7 +211,6 @@ def call_ER(info, pars):
 def call_VR(info, pars):
     """
     Call the model VR function using *pars*.
-
     *info* is either *model.info* if you have a loaded model, or *kernel.info*
     if you have a model kernel prepared for evaluation.
     """
@@ -206,4 +223,6 @@ def call_VR(info, pars):
         value, weight = dispersion_mesh(vol_pars)
         whole, part = VR(*value)
         return np.sum(weight*part)/np.sum(weight*whole)
+
+# TODO: remove call_ER, call_VR
 

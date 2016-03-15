@@ -24,8 +24,8 @@ from __future__ import print_function
 
 import numpy as np
 
-from .core import load_model_definition, load_model, make_kernel
-from .core import call_kernel, call_ER, call_VR
+from .core import make_kernel
+from .core import call_kernel, call_ER_VR
 from . import sesans
 from . import resolution
 from . import resolution2d
@@ -179,22 +179,11 @@ class DirectModel(DataMixin):
     def __call__(self, **pars):
         return self._calc_theory(pars, cutoff=self.cutoff)
 
-    def ER(self, **pars):
+    def ER_VR(self, **pars):
         """
-        Compute the equivalent radius for the model.
-
-        Return 0. if not defined.
+        Compute the equivalent radius and volume ratio for the model.
         """
-        return call_ER(self.model.info, pars)
-
-    def VR(self, **pars):
-        """
-        Compute the equivalent volume for the model, including polydispersity
-        effects.
-
-        Return 1. if not defined.
-        """
-        return call_VR(self.model.info, pars)
+        return call_ER_VR(self.model.info, pars)
 
     def simulate_data(self, noise=None, **pars):
         """
@@ -209,13 +198,14 @@ def main():
     """
     import sys
     from .data import empty_data1D, empty_data2D
+    from .core import load_model_info, build_model
 
     if len(sys.argv) < 3:
         print("usage: python -m sasmodels.direct_model modelname (q|qx,qy) par=val ...")
         sys.exit(1)
     model_name = sys.argv[1]
     call = sys.argv[2].upper()
-    if call not in ("ER", "VR"):
+    if call != "ER_VR":
         try:
             values = [float(v) for v in call.split(',')]
         except:
@@ -232,16 +222,14 @@ def main():
     else:
         data = empty_data1D([0.001])  # Data not used in ER/VR
 
-    model_definition = load_model_definition(model_name)
-    model = load_model(model_definition)
+    model_info = load_model_info(model_name)
+    model = build_model(model_info)
     calculator = DirectModel(data, model)
     pars = dict((k, float(v))
                 for pair in sys.argv[3:]
                 for k, v in [pair.split('=')])
-    if call == "ER":
-        print(calculator.ER(**pars))
-    elif call == "VR":
-        print(calculator.VR(**pars))
+    if call == "ER_VR":
+        print(calculator.ER_VR(**pars))
     else:
         Iq = calculator(**pars)
         print(Iq[0])

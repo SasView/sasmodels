@@ -12,8 +12,7 @@ from __future__ import print_function
 
 import sys
 
-from .core import load_model_definition
-from .generate import make_info
+from .core import load_model_info
 from .compare import MODELS, columnize
 
 def find_pars():
@@ -24,9 +23,8 @@ def find_pars():
     """
     partable = {}
     for name in sorted(MODELS):
-        definition = load_model_definition(name)
-        info = make_info(definition)
-        for p in info['parameters']:
+        model_info = load_model_info(name)
+        for p in model_info['parameters']:
             pname = p[0]
             partable.setdefault(pname, [])
             partable[pname].append(name)

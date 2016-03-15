@@ -3,9 +3,15 @@ Convert models to and from sasview.
 """
 import warnings
 
+STRUCTURE_FACTORS = [
+    'hardsphere',
+    'stickyhardsphere',
+    'squarewell',
+    'HayterMSAsq'
+]
 # List of models which SasView versions don't contain the explicit 'scale' argument.
 # When converting such a model, please update this list.
-MODELS_WITHOUT_SCALE = [
+MODELS_WITHOUT_SCALE = STRUCTURE_FACTORS + [
     'teubner_strey',
     'broad_peak',
     'two_lorentzian',
@@ -14,13 +20,13 @@ MODELS_WITHOUT_SCALE = [
     'gauss_lorentz_gel',
     'be_polyelectrolyte',
     'correlation_length',
-    'binary_hard_sphere',
     'fractal_core_shell'
+    'binary_hard_sphere',
 ]
 
 # List of models which SasView versions don't contain the explicit 'background' argument.
 # When converting such a model, please update this list.
-MODELS_WITHOUT_BACKGROUND = [
+MODELS_WITHOUT_BACKGROUND = STRUCTURE_FACTORS + [
     'guinier',
 ]
 
@@ -51,7 +57,9 @@ def _rescale_sld(pars):
     numbers are nicer.  Relies on the fact that all sld parameters in the
     new model definition end with sld.
     """
-    return dict((p, (v*1e6 if p.endswith('sld') else v*1e-15 if 'ndensity' in p else v))
+    return dict((p, (v*1e6 if p.endswith('sld')
+                     else v*1e-15 if 'ndensity' in p
+                     else v))
                 for p, v in pars.items())
 
 def convert_model(name, pars):
@@ -69,7 +77,9 @@ def _unscale_sld(pars):
     numbers are nicer.  Relies on the fact that all sld parameters in the
     new model definition end with sld.
     """
-    return dict((p, (v*1e-6 if p.endswith('sld') else v*1e15 if 'ndensity' in p else v))
+    return dict((p, (v*1e-6 if p.endswith('sld')
+                     else v*1e15 if 'ndensity' in p
+                     else v))
                 for p, v in pars.items())
 
 def _remove_pd(pars, key, name):
@@ -108,59 +118,64 @@ def _revert_pars(pars, mapping):
                 del newpars[k]
     return newpars
 
-def revert_model(model_definition, pars):
+def revert_pars(model_info, pars):
     """
     Convert model from new style parameter names to old style.
     """
-    mapping = model_definition.oldpars
-    oldname = model_definition.oldname
+    mapping = model_info['oldpars']
     oldpars = _revert_pars(_unscale_sld(pars), mapping)
 
     # Note: update compare.constrain_pars to match
-    name = model_definition.name
+    name = model_info['id']
     if name in MODELS_WITHOUT_SCALE:
         if oldpars.pop('scale', 1.0) != 1.0:
             warnings.warn("parameter scale not used in sasview %s"%name)
-    elif name in MODELS_WITHOUT_BACKGROUND:
+    if name in MODELS_WITHOUT_BACKGROUND:
         if oldpars.pop('background', 0.0) != 0.0:
             warnings.warn("parameter background not used in sasview %s"%name)
-    elif getattr(model_definition, 'category', None) == 'structure-factor':
-        if oldpars.pop('scale', 1.0) != 1.0:
-            warnings.warn("parameter scale not used in sasview %s"%name)
-        if oldpars.pop('background', 0.0) != 0.0:
-            warnings.warn("parameter background not used in sasview %s"%name)
-    elif name == 'pearl_necklace':
-        _remove_pd(oldpars, 'num_pearls', name)
-        _remove_pd(oldpars, 'thick_string', name)
-    elif name == 'core_shell_parallelepiped':
-        _remove_pd(oldpars, 'rimA', name)
-        _remove_pd(oldpars, 'rimB', name)
-        _remove_pd(oldpars, 'rimC', name)
-    elif name == 'rpa':
-        # convert scattering lengths from femtometers to centimeters
-        for p in "La", "Lb", "Lc", "Ld":
-            if p in oldpars: oldpars[p] *= 1e-13
 
-    return oldname, oldpars
+    # If it is a product model P*S, then check the individual forms for special
+    # cases.  Note: despite the structure factor alone not having scale or
+    # background, the product model does, so this is below the test for
+    # models without scale or background.
+    namelist = name.split('*') if '*' in name else [name]
+    for name in namelist:
+        if name == 'pearl_necklace':
+            _remove_pd(oldpars, 'num_pearls', name)
+            _remove_pd(oldpars, 'thick_string', name)
+        elif name == 'core_shell_parallelepiped':
+            _remove_pd(oldpars, 'rimA', name)
+            _remove_pd(oldpars, 'rimB', name)
+            _remove_pd(oldpars, 'rimC', name)
+        elif name == 'rpa':
+            # convert scattering lengths from femtometers to centimeters
+            for p in "La", "Lb", "Lc", "Ld":
+                if p in oldpars: oldpars[p] *= 1e-13
 
-def constrain_new_to_old(model_definition, pars):
+    return oldpars
+
+def constrain_new_to_old(model_info, pars):
     """
     Restrict parameter values to those that will match sasview.
     """
+    name = model_info['id']
     # Note: update convert.revert_model to match
-    name = model_definition.name
     if name in MODELS_WITHOUT_SCALE:
         pars['scale'] = 1
-    elif name in MODELS_WITHOUT_BACKGROUND:
+    if name in MODELS_WITHOUT_BACKGROUND:
         pars['background'] = 0
-    elif name == 'pearl_necklace':
-        pars['string_thickness_pd_n'] = 0
-        pars['number_of_pearls_pd_n'] = 0
-    elif name == 'line':
-        pars['scale'] = 1
-        pars['background'] = 0
-    elif name == 'rpa':
-        pars['case_num'] = int(pars['case_num'])
-    elif getattr(model_definition, 'category', None) == 'structure-factor':
-        pars['scale'], pars['background'] = 1, 0
 
+    # If it is a product model P*S, then check the individual forms for special
+    # cases.  Note: despite the structure factor alone not having scale or
+    # background, the product model does, so this is below the test for
+    # models without scale or background.
+    namelist = name.split('*') if '*' in name else [name]
+    for name in namelist:
+        if name == 'pearl_necklace':
+            pars['string_thickness_pd_n'] = 0
+            pars['number_of_pearls_pd_n'] = 0
+        elif name == 'line':
+            pars['scale'] = 1
+            pars['background'] = 0
+        elif name == 'rpa':
+            pars['case_num'] = int(pars['case_num'])

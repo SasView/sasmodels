@@ -1060,8 +1060,8 @@ def _eval_demo_1d(resolution, title):
             }
     else:
         pars = {}
-    defn = core.load_model_definition(name)
-    model = core.load_model(defn)
+    model_info = core.load_model_info(name)
+    model = core.build_model(model_info)
 
     kernel = core.make_kernel(model, [resolution.q_calc])
     theory = core.call_kernel(kernel, pars)

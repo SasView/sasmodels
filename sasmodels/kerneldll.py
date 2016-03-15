@@ -88,12 +88,12 @@ DLL_PATH = tempfile.gettempdir()
 ALLOW_SINGLE_PRECISION_DLLS = True
 
 
-def dll_path(info, dtype="double"):
+def dll_path(model_info, dtype="double"):
     """
-    Path to the compiled model defined by *info*.
+    Path to the compiled model defined by *model_info*.
     """
     from os.path import join as joinpath, split as splitpath, splitext
-    basename = splitext(splitpath(info['filename'])[1])[0]
+    basename = splitext(splitpath(model_info['filename'])[1])[0]
     if np.dtype(dtype) == generate.F32:
         basename += "32"
     elif np.dtype(dtype) == generate.F64:
@@ -103,7 +103,7 @@ def dll_path(info, dtype="double"):
     return joinpath(DLL_PATH, basename+'.so')
 
 
-def make_dll(source, info, dtype="double"):
+def make_dll(source, model_info, dtype="double"):
     """
     Load the compiled model defined by *kernel_module*.
 
@@ -122,8 +122,8 @@ def make_dll(source, info, dtype="double"):
     Set *sasmodels.ALLOW_SINGLE_PRECISION_DLLS* to True if single precision
     models are allowed as DLLs.
     """
-    if callable(info.get('Iq', None)):
-        return PyModel(info)
+    if callable(model_info.get('Iq', None)):
+        return PyModel(model_info)
 
     dtype = np.dtype(dtype)
     if dtype == generate.F16:
@@ -132,15 +132,15 @@ def make_dll(source, info, dtype="double"):
         dtype = generate.F64  # Force 64-bit dll
 
     if dtype == generate.F32: # 32-bit dll
-        tempfile_prefix = 'sas_'+info['name']+'32_'
+        tempfile_prefix = 'sas_' + model_info['name'] + '32_'
     elif dtype == generate.F64:
-        tempfile_prefix = 'sas_'+info['name']+'64_'
+        tempfile_prefix = 'sas_' + model_info['name'] + '64_'
     else:
-        tempfile_prefix = 'sas_'+info['name']+'128_'
+        tempfile_prefix = 'sas_' + model_info['name'] + '128_'
 
     source = generate.convert_type(source, dtype)
-    source_files = generate.model_sources(info) + [info['filename']]
-    dll = dll_path(info, dtype)
+    source_files = generate.model_sources(model_info) + [model_info['filename']]
+    dll = dll_path(model_info, dtype)
     newest = max(os.path.getmtime(f) for f in source_files)
     if not os.path.exists(dll) or os.path.getmtime(dll) < newest:
         # Replace with a proper temp file
@@ -158,7 +158,7 @@ def make_dll(source, info, dtype="double"):
     return dll
 
 
-def load_dll(source, info, dtype="double"):
+def load_dll(source, model_info, dtype="double"):
     """
     Create and load a dll corresponding to the source, info pair returned
     from :func:`sasmodels.generate.make` compiled for the target precision.
@@ -166,8 +166,8 @@ def load_dll(source, info, dtype="double"):
     See :func:`make_dll` for details on controlling the dll path and the
     allowed floating point precision.
     """
-    filename = make_dll(source, info, dtype=dtype)
-    return DllModel(filename, info, dtype=dtype)
+    filename = make_dll(source, model_info, dtype=dtype)
+    return DllModel(filename, model_info, dtype=dtype)
 
 
 IQ_ARGS = [c_void_p, c_void_p, c_int]
@@ -177,7 +177,7 @@ class DllModel(object):
     """
     ctypes wrapper for a single model.
 
-    *source* and *info* are the model source and interface as returned
+    *source* and *model_info* are the model source and interface as returned
     from :func:`gen.make`.
 
     *dtype* is the desired model precision.  Any numpy dtype for single
@@ -187,8 +187,8 @@ class DllModel(object):
 
     Call :meth:`release` when done with the kernel.
     """
-    def __init__(self, dllpath, info, dtype=generate.F32):
-        self.info = info
+    def __init__(self, dllpath, model_info, dtype=generate.F32):
+        self.info = model_info
         self.dllpath = dllpath
         self.dll = None
         self.dtype = np.dtype(dtype)
@@ -243,7 +243,7 @@ class DllKernel(object):
 
     *kernel* is the c function to call.
 
-    *info* is the module information
+    *model_info* is the module information
 
     *q_input* is the DllInput q vectors at which the kernel should be
     evaluated.
@@ -256,14 +256,14 @@ class DllKernel(object):
 
     Call :meth:`release` when done with the kernel instance.
     """
-    def __init__(self, kernel, info, q_input):
-        self.info = info
+    def __init__(self, kernel, model_info, q_input):
+        self.info = model_info
         self.q_input = q_input
         self.kernel = kernel
         self.res = np.empty(q_input.nq, q_input.dtype)
         dim = '2d' if q_input.is_2d else '1d'
-        self.fixed_pars = info['partype']['fixed-'+dim]
-        self.pd_pars = info['partype']['pd-'+dim]
+        self.fixed_pars = model_info['partype']['fixed-' + dim]
+        self.pd_pars = model_info['partype']['pd-' + dim]
 
         # In dll kernel, but not in opencl kernel
         self.p_res = self.res.ctypes.data
