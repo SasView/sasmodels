@@ -99,7 +99,7 @@ class ProductKernel(object):
             num_p_fixed = len(p_info['fixed-2d'])
             num_p_pd = len(p_info['pd-2d'])
             num_s_fixed = len(s_info['fixed-2d'])
-            num_s_pd = len(s_info['pd-2d'])
+            num_s_pd = len(s_info['pd-2d']) - 1 # exclude effect_radius
             # volume parameters are amongst the pd pars for P, not S
             vol_par_idx = [k for k,v in enumerate(p_info['pd-2d'])
                            if v in vol_pars]
@@ -107,7 +107,7 @@ class ProductKernel(object):
             num_p_fixed = len(p_info['fixed-1d'])
             num_p_pd = len(p_info['pd-1d'])
             num_s_fixed = len(s_info['fixed-1d'])
-            num_s_pd = len(s_info['pd-1d'])
+            num_s_pd = len(s_info['pd-1d']) - 1  # exclude effect_radius
             # volume parameters are amongst the pd pars for P, not S
             vol_par_idx = [k for k,v in enumerate(p_info['pd-1d'])
                            if v in vol_pars]
@@ -117,7 +117,7 @@ class ProductKernel(object):
         # User doesn't set scale, background or effect_radius for S in P*S,
         # so borrow values from end of p_fixed.  This makes volfraction the
         # first S parameter.
-        start += num_p_fixed - 3
+        start += num_p_fixed - 2
         par_map['s_fixed'] = np.arange(start, start+num_s_fixed)
         par_map['volfraction'] = num_p_fixed
         start += num_s_fixed
@@ -125,8 +125,7 @@ class ProductKernel(object):
         par_map['vol_pars'] = [start+k for k in vol_par_idx]
         par_map['p_pd'] = np.arange(start, start+num_p_pd)
         start += num_p_pd
-        par_map['s_pd'] = np.arange(start, start+num_s_pd)  # should be empty...
-
+        par_map['s_pd'] = np.arange(start-1, start+num_s_pd)  # should be empty...
 
         self.fixed_pars = model_info['partype']['fixed-' + dim]
         self.pd_pars = model_info['partype']['pd-' + dim]
@@ -145,8 +144,6 @@ class ProductKernel(object):
         p_pd = [pars[k] for k in self.par_map['p_pd']]
         s_pd = [pars[k] for k in self.par_map['s_pd']]
         vol_pars = [pars[k] for k in self.par_map['vol_pars']]
-        p_pars = dict(list(zip(self.fixed_pars, p_fixed))
-                      +list(zip(self.pd_pars, p_pd)))
 
         effect_radius, vol_ratio = call_ER_VR(self.p_kernel.info, vol_pars)
 
@@ -154,11 +151,12 @@ class ProductKernel(object):
         p_fixed[BACKGROUND] = 0.0
         s_fixed[SCALE] = scale
         s_fixed[BACKGROUND] = 0.0
-        s_fixed[EFFECT_RADIUS] = effect_radius
-        s_fixed[VOLFRACTION] = s_volfraction/vol_ratio
+        s_fixed[2] = s_volfraction/vol_ratio
+        s_pd[0] = [effect_radius], [1.0]
 
         p_res = self.p_kernel(p_fixed, p_pd)
         s_res = self.s_kernel(s_fixed, s_pd)
+        #print s_fixed, s_pd, p_fixed, p_pd
 
         return p_res*s_res + background
 

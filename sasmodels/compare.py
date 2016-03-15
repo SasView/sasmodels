@@ -365,7 +365,7 @@ def eval_sasview(model_info, data):
     if model_info['composition']:
         composition_type, parts = model_info['composition']
         if composition_type == 'product':
-            from sas.models import MultiplicationModel
+            from sas.models.MultiplicationModel import MultiplicationModel
             P, S = [get_model(p) for p in model_info['oldname']]
             model = MultiplicationModel(P, S)
         else:
