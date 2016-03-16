@@ -286,7 +286,7 @@ class SasviewModel(object):
         pars = [self.params[v] for v in fn.fixed_pars]
         pd_pars = [self._get_weights(p) for p in fn.pd_pars]
         result = fn(pars, pd_pars, self.cutoff)
-        fn.input.release()
+        fn.q_input.release()
         fn.release()
         return result
 
@@ -372,4 +372,3 @@ class SasviewModel(object):
             dis['type'], dis['npts'], dis['width'], dis['nsigmas'],
             self.params[par], limits[par], par in relative)
         return value, weight / np.sum(weight)
-
