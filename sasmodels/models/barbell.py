@@ -67,23 +67,13 @@ and its radius of gyration is
     The requirement that $R \geq r$ is not enforced in the model! It is
     up to you to restrict this during analysis.
 
-.. figure:: img/barbell_1d.jpg
+The 2D scattering intensity is calculated similar to the 2D cylinder model.
 
-    1D plot using the default values (w/256 data point).
-
-For 2D data, the scattering intensity is calculated similar to the 2D
-cylinder model.
-
-.. figure:: img/barbell_2d.jpg
-
-    2D plot (w/(256X265) data points) for $\theta = 45^\circ$ and
-    $\phi = 0^\circ$ with default values for the remaining parameters.
-
-.. figure:: img/orientation.jpg
+.. figure:: img/cylinder_angle_definition.jpg
 
     Definition of the angles for oriented 2D barbells.
 
-.. figure:: img/orientation2.jpg
+.. figure:: img/cylinder_angle_projection.jpg
 
     Examples of the angles for oriented pp against the detector plane.
 

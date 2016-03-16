@@ -20,10 +20,6 @@ where *scale* is a scale factor, |rho|\ :sub:`poly` is the sld of the polymer (o
 
 Note that all parameters except the |sigma| are correlated so fitting more than one of these parameters will generally fail. Also note that unlike other shape models, no volume normalization is applied to this model (the calculation is exact).
 
-.. figure:: img/adsorbed_layer_1d.jpg
-
-    1D plot using the default values.
-
 References
 ----------
 

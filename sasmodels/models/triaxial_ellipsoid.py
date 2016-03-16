@@ -42,7 +42,7 @@ $a$ axis is parallel to the $x$ axis of the detector.
 
 .. _triaxial-ellipsoid-angles:
 
-.. figure:: img/triaxial_ellipsoid_angles.jpg
+.. figure:: img/triaxial_ellipsoid_angle_projection.jpg
 
     The angles for oriented ellipsoid.
 
@@ -56,10 +56,6 @@ NB: The 2nd virial coefficient of the triaxial solid ellipsoid is
 calculated based on the polar radius $R_p = R_c$ and equatorial
 radius $R_e = \sqrt{R_a R_b}$, and used as the effective radius for
 $S(q)$ when $P(q) \cdot S(q)$ is applied.
-
-.. figure:: img/triaxial_ellipsoid_1d.jpg
-
-    1D plot using the default values (w/1000 data point).
 
 Validation
 ----------

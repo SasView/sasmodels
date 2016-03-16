@@ -3,8 +3,8 @@ r"""
 Definition
 ----------
 This model provides the form factor for a circular cylinder with a core-shell
-scattering length density profile.
-The form factor is normalized by the particle volume.
+scattering length density profile. The form factor is normalized by the
+particle volume.
 
 .. _core-shell-bicelle-geometry:
 
@@ -20,15 +20,11 @@ The *theta* and *phi* parameters are not used for the 1D output.
 Our implementation of the scattering kernel and the 1D scattering intensity
 use the c-library from NIST.
 
-.. figure:: img/core_shell_bicelle_1d.jpg
+.. figure:: img/cylinder_angle_definition.jpg
 
-    1D plot using the default values (w/200 data point).
+    Definition of the angles for the oriented core shell bicelle tmodel.
 
-.. figure:: img/core_shell_bicelle_fig1.jpg
-
-    Definition of the angles for the oriented CoreShellBicelleModel.
-
-.. figure:: img/core_shell_bicelle_fig2.jpg
+.. figure:: img/cylinder_angle_projection.jpg
 
     Examples of the angles for oriented pp against the detector plane.
 
