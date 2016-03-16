@@ -234,7 +234,7 @@ except TypeError:
 # Scale and background, which are parameters common to every form factor
 COMMON_PARAMETERS = [
     ["scale", "", 1, [0, np.inf], "", "Source intensity"],
-    ["background", "1/cm", 0, [0, np.inf], "", "Source background"],
+    ["background", "1/cm", 1e-3, [0, np.inf], "", "Source background"],
     ]
 
 # Conversion from units defined in the parameter table for each model
@@ -628,11 +628,13 @@ def process_parameters(model_info):
     Process parameter block, precalculating parameter details.
     """
     # Fill in the derived attributes
+    partype = categorize_parameters(model_info['parameters'])
     model_info['limits'] = dict((p[0], p[3]) for p in model_info['parameters'])
-    model_info['partype'] = categorize_parameters(model_info['parameters'])
+    model_info['partype'] = partype
     model_info['defaults'] = dict((p[0], p[2]) for p in model_info['parameters'])
     if model_info.get('demo', None) is None:
         model_info['demo'] = model_info['defaults']
+    model_info['has_2d'] = partype['orientation'] or partype['magnetic']
 
 def make_model_info(kernel_module):
     """
@@ -654,6 +656,10 @@ def make_model_info(kernel_module):
     * *category* specifies the model location in the docs
     * *parameters* is the model parameter table
     * *single* is True if the model allows single precision
+    * *structure_factor* is True if the model is useable in a product
+    * *variant_info* contains the information required to select between
+      model variants (e.g., the list of cases) or is None if there are no
+      model variants
     * *defaults* is the *{parameter: value}* table built from the parameter
       description table.
     * *limits* is the *{parameter: [min, max]}* table built from the
@@ -677,16 +683,10 @@ def make_model_info(kernel_module):
       build complete product and mixture models from just the info.
     """
     # TODO: maybe turn model_info into a class ModelDefinition
-    #print(kernelfile)
-    category = getattr(kernel_module, 'category', None)
     parameters = COMMON_PARAMETERS + kernel_module.parameters
-    # Default the demo parameters to the starting values for the individual
-    # parameters if an explicit demo parameter set has not been specified.
-    demo_parameters = getattr(kernel_module, 'demo', None)
     filename = abspath(kernel_module.__file__)
     kernel_id = splitext(basename(filename))[0]
     name = getattr(kernel_module, 'name', None)
-    single = getattr(kernel_module, 'single', True)
     if name is None:
         name = " ".join(w.capitalize() for w in kernel_id.split('_'))
     model_info = dict(
@@ -695,19 +695,21 @@ def make_model_info(kernel_module):
         name=name,
         title=kernel_module.title,
         description=kernel_module.description,
-        docs=kernel_module.__doc__,
-        category=category,
         parameters=parameters,
         composition=None,
-        single=single,
-        demo=demo_parameters,
+        docs=kernel_module.__doc__,
+        category=getattr(kernel_module, 'category', None),
+        single=getattr(kernel_module, 'single', True),
+        structure_factor=getattr(kernel_module, 'structure_factor', False),
+        variant_info=getattr(kernel_module, 'invariant_info', None),
+        demo=getattr(kernel_module, 'demo', None),
         source=getattr(kernel_module, 'source', []),
         oldname=getattr(kernel_module, 'oldname', None),
         oldpars=getattr(kernel_module, 'oldpars', {}),
         tests=getattr(kernel_module, 'tests', []),
         )
     process_parameters(model_info)
-    # Fill in attributes which default to None
+    # Fill in available functions
     model_info.update((k, getattr(kernel_module, k, None))
                       for k in ('ER', 'VR', 'form_volume', 'Iq', 'Iqxy'))
     return model_info

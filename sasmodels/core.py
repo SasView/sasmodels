@@ -33,6 +33,19 @@ def list_models():
     available_models = [basename(f)[:-3] for f in files]
     return available_models
 
+def isstr(s):
+    """
+    Return True if *s* is a string-like object.
+    """
+    try: s + ''
+    except: return False
+    return True
+
+def load_model(model_name, **kw):
+    """
+    Load model info and build model.
+    """
+    return build_model(load_model_info(model_name), **kw)
 
 def load_model_info(model_name):
     """
@@ -45,33 +58,6 @@ def load_model_info(model_name):
     kernel_module = getattr(models, model_name, None)
     return generate.make_model_info(kernel_module)
 
-
-def precompile_dll(model_name, dtype="double"):
-    """
-    Precompile the dll for a model.
-
-    Returns the path to the compiled model, or None if the model is a pure
-    python model.
-
-    This can be used when build the windows distribution of sasmodels
-    (which may be missing the OpenCL driver and the dll compiler), or
-    otherwise sharing models with windows users who do not have a compiler.
-
-    See :func:`sasmodels.kerneldll.make_dll` for details on controlling the
-    dll path and the allowed floating point precision.
-    """
-    model_info = load_model_info(model_name)
-    source = generate.make_source(model_info)
-    return kerneldll.make_dll(source, model_info, dtype=dtype) if source else None
-
-
-def isstr(s):
-    """
-    Return True if *s* is a string-like object.
-    """
-    try: s + ''
-    except: return False
-    return True
 
 def build_model(model_info, dtype=None, platform="ocl"):
     """
@@ -113,6 +99,25 @@ def build_model(model_info, dtype=None, platform="ocl"):
         return kerneldll.load_dll(source, model_info, dtype)
     else:
         return kernelcl.GpuModel(source, model_info, dtype)
+
+def precompile_dll(model_name, dtype="double"):
+    """
+    Precompile the dll for a model.
+
+    Returns the path to the compiled model, or None if the model is a pure
+    python model.
+
+    This can be used when build the windows distribution of sasmodels
+    (which may be missing the OpenCL driver and the dll compiler), or
+    otherwise sharing models with windows users who do not have a compiler.
+
+    See :func:`sasmodels.kerneldll.make_dll` for details on controlling the
+    dll path and the allowed floating point precision.
+    """
+    model_info = load_model_info(model_name)
+    source = generate.make_source(model_info)
+    return kerneldll.make_dll(source, model_info, dtype=dtype) if source else None
+
 
 def make_kernel(model, q_vectors):
     """
