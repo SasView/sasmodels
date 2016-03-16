@@ -33,10 +33,6 @@ The 1D scattering intensity is calculated in the following way (Guinier, 1955)
 where *scale* is a scale factor and $J_1$ is the 1st order
 Bessel function.
 
-To provide easy access to the orientation of the core-shell cylinder, we define
-the axis of the cylinder using two angles $\theta$ and $\phi$. As for the case
-of the cylinder, those angles are defined in Figure 2 of the CylinderModel.
-
 **NB**: The 2nd virial coefficient of the cylinder is calculated
 based on the radius and 2 length values, and used as the effective radius
 for $S(q)$ when $P(q) \cdot S(q)$ is applied.
@@ -44,17 +40,9 @@ for $S(q)$ when $P(q) \cdot S(q)$ is applied.
 In the parameters, the contrast represents SLD :sub:`shell` - SLD :sub:`solvent`
 and the *radius* is $R_\text{shell}$ while *core_radius* is $R_\text{core}$.
 
-.. figure:: img/hollow_cylinder_1d.jpg
-
-    1D plot using the default values (w/1000 data point).
-
-.. figure:: img/orientation.jpg
-
-    Definition of the angles for the oriented hollow_cylinder model.
-
-.. figure:: img/orientation2.jpg
-
-    Examples of the angles for oriented pp against the detector plane.
+To provide easy access to the orientation of the core-shell cylinder, we define
+the axis of the cylinder using two angles $\theta$ and $\phi$
+(see :ref:`cylinder model <cylinder-angle-definition>`).
 
 References
 ----------

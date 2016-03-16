@@ -42,27 +42,23 @@ The form factor is averaged over all possible orientation before normalized by t
     P(q) = scale  <F^2> / V
 
 To provide easy access to the orientation of the elliptical cylinder, we define the axis of the cylinder using two
-angles |theta|, |phi| and |bigpsi|. As for the case of the cylinder, the angles |theta| and |phi| are defined on
-Figure 2 of CylinderModel. The angle |bigpsi| is the rotational angle around its own long_c axis against the *q* plane.
+angles |theta|, |phi| and |bigpsi| (see :ref:`cylinder orientation <cylinder-angle-definition>`).
+The angle |bigpsi| is the rotational angle around its own long_c axis against the *q* plane.
 For example, |bigpsi| = 0 when the *r_minor* axis is parallel to the *x*\ -axis of the detector.
 
 All angle parameters are valid and given only for 2D calculation; ie, an oriented system.
 
-.. figure:: img/elliptical_cylinder_geometry_2d.jpg
+.. figure:: img/elliptical_cylinder_angle_definition.jpg
 
     Definition of angles for 2D
 
-.. figure:: img/core_shell_bicelle_fig2.jpg
+.. figure:: img/cylinder_angle_projection.jpg
 
     Examples of the angles for oriented elliptical cylinders against the detector plane.
 
 NB: The 2nd virial coefficient of the cylinder is calculated based on the averaged radius (= sqrt(*r_minor*\ :sup:`2` \* *r_ratio*))
 and length values, and used as the effective radius for *S(Q)* when *P(Q)* \* *S(Q)* is applied.
 
-
-.. figure:: img/elliptical_cylinder_comparison_1d.jpg
-
-    1D plot using the default values (w/1000 data point).
 
 Validation
 ----------

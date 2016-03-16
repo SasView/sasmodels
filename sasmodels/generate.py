@@ -671,7 +671,7 @@ def make_model_info(kernel_module):
       If *demo* is not given in the file, then the default values will be used.
     * *tests* is a set of tests that must pass
     * *source* is the list of library files to include in the C model build
-    * *Iq*, *Iqxy*, *form_volume*, *ER*, and *VR* are python functions
+    * *Iq*, *Iqxy*, *form_volume*, *ER*, *VR* and *sesans* are python functions
       implementing the kernel for the module, or None if they are not
       defined in python
     * *oldname* is the model name in pre-4.0 Sasview
@@ -681,6 +681,7 @@ def make_model_info(kernel_module):
       tuple with composition type ('product' or 'mixture') and a list of
       *model_info* blocks for the composition objects.  This allows us to
       build complete product and mixture models from just the info.
+
     """
     # TODO: maybe turn model_info into a class ModelDefinition
     parameters = COMMON_PARAMETERS + kernel_module.parameters
@@ -709,9 +710,9 @@ def make_model_info(kernel_module):
         tests=getattr(kernel_module, 'tests', []),
         )
     process_parameters(model_info)
-    # Fill in available functions
-    model_info.update((k, getattr(kernel_module, k, None))
-                      for k in ('ER', 'VR', 'form_volume', 'Iq', 'Iqxy'))
+    # Check for optional functions
+    functions = "ER VR form_volume Iq Iqxy shape sesans".split()
+    model_info.update((k, getattr(kernel_module, k, None)) for k in functions)
     return model_info
 
 section_marker = re.compile(r'\A(?P<first>[%s])(?P=first)*\Z'

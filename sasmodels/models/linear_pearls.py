@@ -4,7 +4,7 @@ linearly joined by short strings (or segment length or edge separation)
 $l$ $(= A - 2R)$. $A$ is the center-to-center pearl separation distance.
 The thickness of each string is assumed to be negligible.
 
-.. figure:: img/linear_pearls_fig1.jpg
+.. figure:: img/linear_pearls_geometry.jpg
 
 
 Definition
@@ -24,10 +24,6 @@ V is the total volume.
 
 The 2D scattering intensity is the same as P(q) above,
 regardless of the orientation of the q vector.
-
-.. figure:: img/linear_pearls_1d.jpg
-
-    1D plot using the default values (w/500 data point).
 
 References
 ----------
