@@ -753,14 +753,12 @@ def make_doc(model_info):
     """
     Iq_units = "The returned value is scaled to units of |cm^-1| |sr^-1|, absolute scale."
     Sq_units = "The returned value is a dimensionless structure factor, $S(q)$."
-    is_Sq = ("structure-factor" in model_info['category'])
-    #docs = kernel_module.__doc__
     docs = convert_section_titles_to_boldface(model_info['docs'])
     subst = dict(id=model_info['id'].replace('_', '-'),
                  name=model_info['name'],
                  title=model_info['title'],
                  parameters=make_partable(model_info['parameters']),
-                 returns=Sq_units if is_Sq else Iq_units,
+                 returns=Sq_units if model_info['structure_factor'] else Iq_units,
                  docs=docs)
     return DOC_HEADER % subst
 

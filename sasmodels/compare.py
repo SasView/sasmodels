@@ -430,8 +430,7 @@ def eval_opencl(model_info, data, dtype='single', cutoff=0.):
         except Exception as exc:
             print(exc)
             print("... trying again with single precision")
-            dtype = 'single'
-            return core.build_model(model_info, dtype=dtype, platform="ocl")
+            return core.build_model(model_info, dtype='single', platform="ocl")
     if model_info['composition']:
         composition_type, parts = model_info['composition']
         if composition_type == 'product':
@@ -716,7 +715,7 @@ def parse_opts():
     if len(args) > 3:
         print("expected parameters: model N1 N2")
 
-    def load_model(name):
+    def _get_info(name):
         try:
             model_info = core.load_model_info(name)
         except ImportError, exc:
@@ -727,10 +726,10 @@ def parse_opts():
 
     name = args[0]
     if '*' in name:
-        parts = [load_model(k) for k in name.split('*')]
+        parts = [_get_info(k) for k in name.split('*')]
         model_info = product.make_product_info(*parts)
     else:
-        model_info = load_model(name)
+        model_info = _get_info(name)
 
     invalid = [o[1:] for o in flags
                if o[1:] not in NAME_OPTIONS
