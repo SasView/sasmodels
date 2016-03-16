@@ -1,75 +1,78 @@
-from bumps.names import *
+#TODO: Convert units properly (nm -> A)
+#TODO: Implement constraints
 
+from bumps.names import *
 from sasmodels import core, bumps_model
 
-if True: # fix when data loader exists
-#    from sas.dataloader.readers\
-    from sas.dataloader.loader import Loader
-    loader = Loader()
-    filename = 'testsasview1.ses'
-    data = loader.load(filename)
-    if data is None: raise IOError("Could not load file %r"%(filename,))
-    data.x /= 10
-#    print data
-#    data = load_sesans('mydatfile.pz')
-#    sans_data = load_sans('mysansfile.xml')
+HAS_CONVERTER = True
+try:
+    from sas.sascalc.data_util.nxsunit import Converter
+except ImportError:
+    HAS_CONVERTER = False
 
-else:
-    SElength = np.linspace(0, 2400, 61) # [A]
-    data = np.ones_like(SElength)
-    err_data = np.ones_like(SElength)*0.03
+def sesans_fit(file, model_name, initial_vals={}, custom_params={}, param_range=[]):
+    """
 
-    class Sample:
-        zacceptance = 0.1 # [A^-1]
-        thickness = 0.2 # [cm]
-        
-    class SESANSData1D:
-        #q_zmax = 0.23 # [A^-1]
-        lam = 0.2 # [nm]
-        x = SElength
-        y = data
-        dy = err_data
-        sample = Sample()
-    data = SESANSData1D()
+    @param file: SESANS file location
+    @param model_name: model name string - can be model, model_1 * model_2, and/or model_1 + model_2
+    @param initial_vals: dictionary of {param_name : initial_value}
+    @param custom_params: dictionary of {custom_parameter_name : Parameter() object}
+    @param param_range: dictionary of {parameter_name : [minimum, maximum]}
+    @return: FitProblem for Bumps usage
+    """
+    try:
+        from sas.sascalc.dataloader.loader import Loader
+        loader = Loader()
+        data = loader.load(file)
+        if data is None: raise IOError("Could not load file %r"%(file))
+        if HAS_CONVERTER == True:
+            default_unit = "A"
+            data_conv_q = Converter(data._xunit)
+            data.x = data_conv_q(data.x, units=default_unit)
+            data._xunit = default_unit
 
-radius = 1000
-data.Rmax = 3*radius # [A]
+    except:
+        # If no loadable data file, generate random data
+        SElength = np.linspace(0, 2400, 61) # [A]
+        data = np.ones_like(SElength)
+        err_data = np.ones_like(SElength)*0.03
 
-##  Sphere parameters
+        class Sample:
+            zacceptance = 0.1 # [A^-1]
+            thickness = 0.2 # [cm]
 
-kernel = core.load_model("sphere", dtype='single')
-phi = Parameter(0.1, name="phi")
-model = bumps_model.Model(kernel,
-    scale=phi*(1-phi), sld=7.0, solvent_sld=1.0, radius=radius,
-    )
-phi.range(0.001,0.5)
-#model.radius.pmp(40)
-model.radius.range(1,10000)
-#model.sld.pm(5)
-#model.background
-#model.radius_pd=0
-#model.radius_pd_n=0
+        class SESANSData1D:
+            #q_zmax = 0.23 # [A^-1]
+            lam = 0.2 # [nm]
+            x = SElength
+            y = data
+            dy = err_data
+            sample = Sample()
+        data = SESANSData1D()
 
-### Tri-Axial Ellipsoid
-#
-#kernel = core.load_model("triaxial_ellipsoid", dtype='single')
-#phi = Parameter(0.1, name='phi')
-#model = bumps_model.Model(kernel,
-#    scale=phi*(1-phi), sld=7.0, solvent_sld=1.0, radius=radius,
-#    )
-#phi.range(0.001,0.90)
-##model.radius.pmp(40)
-#model.radius.range(100,10000)
-##model.sld.pmp(5)
-##model.background
-##model.radius_pd = 0
-##model.radius_pd_n = 0
+    radius = 1000
+    data.Rmax = 3*radius # [A]
 
-if False: # have sans data
-    M_sesans = bumps_model.Experiment(data=data, model=model)
-    M_sans = bumps_model.Experiment(data=sans_data, model=model)
-    problem = FitProblem([M_sesans, M_sans])
-else:
-    M_sesans = bumps_model.Experiment(data=data, model=model)
-    problem = FitProblem(M_sesans)
+    kernel = core.load_model(model_name)
+    model = bumps_model.Model(kernel)
 
+    # Load custom parameters, initial values and parameter constraints
+    for k, v in custom_params.items():
+        setattr(model, k, v)
+        model._parameter_names.append(k)
+    for k, v in initial_vals.items():
+        param = model.parameters().get(k)
+        setattr(param, "value", v)
+    for k, v in param_range.items():
+        param = model.parameters().get(k)
+        if param is not None:
+            setattr(param.bounds, "limits", v)
+
+    if False: # have sans data
+        M_sesans = bumps_model.Experiment(data=data, model=model)
+        M_sans = bumps_model.Experiment(data=sans_data, model=model)
+        problem = FitProblem([M_sesans, M_sans])
+    else:
+        M_sesans = bumps_model.Experiment(data=data, model=model)
+        problem = FitProblem(M_sesans)
+    return problem
