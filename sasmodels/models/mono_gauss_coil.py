@@ -30,7 +30,9 @@ Here, |phi|\ :sub:`poly` is the volume fraction of polymer, *V* is the volume of
 
 The 2D scattering intensity is calculated in the same way as the 1D, but where the *q* vector is redefined as
 
-.. image:: img/2d_q_vector.gif
+.. math::
+
+    q = \sqrt{q_x^2 + q_y^2}
 
 References
 ----------
