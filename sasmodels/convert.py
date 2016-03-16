@@ -3,15 +3,9 @@ Convert models to and from sasview.
 """
 import warnings
 
-STRUCTURE_FACTORS = [
-    'hardsphere',
-    'stickyhardsphere',
-    'squarewell',
-    'HayterMSAsq'
-]
 # List of models which SasView versions don't contain the explicit 'scale' argument.
 # When converting such a model, please update this list.
-MODELS_WITHOUT_SCALE = STRUCTURE_FACTORS + [
+MODELS_WITHOUT_SCALE = [
     'teubner_strey',
     'broad_peak',
     'two_lorentzian',
@@ -26,7 +20,7 @@ MODELS_WITHOUT_SCALE = STRUCTURE_FACTORS + [
 
 # List of models which SasView versions don't contain the explicit 'background' argument.
 # When converting such a model, please update this list.
-MODELS_WITHOUT_BACKGROUND = STRUCTURE_FACTORS + [
+MODELS_WITHOUT_BACKGROUND = [
     'guinier',
 ]
 
@@ -127,10 +121,10 @@ def revert_pars(model_info, pars):
 
     # Note: update compare.constrain_pars to match
     name = model_info['id']
-    if name in MODELS_WITHOUT_SCALE:
+    if name in MODELS_WITHOUT_SCALE or model_info['structure_factor']:
         if oldpars.pop('scale', 1.0) != 1.0:
             warnings.warn("parameter scale not used in sasview %s"%name)
-    if name in MODELS_WITHOUT_BACKGROUND:
+    if name in MODELS_WITHOUT_BACKGROUND or model_info['structure_factor']:
         if oldpars.pop('background', 0.0) != 0.0:
             warnings.warn("parameter background not used in sasview %s"%name)
 
@@ -160,9 +154,9 @@ def constrain_new_to_old(model_info, pars):
     """
     name = model_info['id']
     # Note: update convert.revert_model to match
-    if name in MODELS_WITHOUT_SCALE:
+    if name in MODELS_WITHOUT_SCALE or model_info['structure_factor']:
         pars['scale'] = 1
-    if name in MODELS_WITHOUT_BACKGROUND:
+    if name in MODELS_WITHOUT_BACKGROUND or model_info['structure_factor']:
         pars['background'] = 0
     # sasview multiplies background by structure factor
     if '*' in name:
