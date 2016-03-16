@@ -45,6 +45,21 @@ def load_model(model_name, **kw):
     """
     Load model info and build model.
     """
+    parts = model_name.split('+')
+    if len(parts) > 1:
+        from .mixture import MixtureModel
+        models = [load_model(p, **kw) for p in parts]
+        return MixtureModel(models)
+
+    parts = model_name.split('*')
+    if len(parts) > 1:
+        # Note: currently have circular reference
+        from .product import ProductModel
+        if len(parts) > 2:
+            raise ValueError("use P*S to apply structure factor S to model P")
+        P, Q = [load_model(p, **kw) for p in parts]
+        return ProductModel(P, Q)
+
     return build_model(load_model_info(model_name), **kw)
 
 def load_model_info(model_name):
@@ -54,6 +69,7 @@ def load_model_info(model_name):
     This returns a handle to the module defining the model.  This can be
     used with functions in generate to build the docs or extract model info.
     """
+    #import sys; print "\n".join(sys.path)
     __import__('sasmodels.models.'+model_name)
     kernel_module = getattr(models, model_name, None)
     return generate.make_model_info(kernel_module)
