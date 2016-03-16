@@ -6,7 +6,7 @@ sys.path.append('..')
 
 from os import mkdir
 from os.path import basename, exists, join as joinpath
-from sasmodels.core import load_model_definition
+from sasmodels.core import load_model_info
 
 
 TEMPLATE="""\
@@ -54,11 +54,11 @@ def generate_toc(model_files):
         # assume model is in sasmodels/models/name.py, and ignore the full path
         model_name = basename(item)[:-3]
         if model_name.startswith('_'): continue
-        model_definition = load_model_definition(model_name)
-        if not hasattr(model_definition, 'category'):
+        model_info = load_model_info(model_name)
+        if model_info['category'] is None:
             print("Missing category for", item, file=sys.stderr)
         else:
-            category.setdefault(model_definition.category,[]).append(model_name)
+            category.setdefault(model_info['category'],[]).append(model_name)
 
     # Check category names
     for k,v in category.items():
