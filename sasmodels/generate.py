@@ -116,11 +116,13 @@ The kernel module must set variables defining the kernel meta data:
     parameters list.  Two additional parameters, *scale* and *background*
     are added to the beginning of the parameter list.  They will show up
     in the documentation as model parameters, but they are never sent to
-    the kernel functions.
+    the kernel functions.  Note that *effect_radius* and *volfraction*
+    must occur first in structure factor calculations.
 
-    *category* is the default category for the model.  Models in the
-    *structure-factor* category do not have *scale* and *background*
-    added.
+    *category* is the default category for the model.  The category is
+    two level structure, with the form "group:section", indicating where
+    in the manual the model will be located.  Models are alphabetical
+    within their section.
 
     *source* is the list of C-99 source files that must be joined to
     create the OpenCL kernel functions.  The files defining the functions
@@ -156,7 +158,7 @@ The kernel module must set variables defining the kernel meta data:
     you are ready to add the new model to sasmodels.
 
 
-An *info* dictionary is constructed from the kernel meta data and
+An *model_info* dictionary is constructed from the kernel meta data and
 returned to the caller.
 
 The model evaluator, function call sequence consists of q inputs and the return vector,
@@ -189,7 +191,7 @@ file names and extensions.
 
 
 The function :func:`make` loads the metadata from the module and returns
-the kernel source.  The function :func:`doc` extracts the doc string
+the kernel source.  The function :func:`make_doc` extracts the doc string
 and adds the parameter table to the top.  The function :func:`model_sources`
 returns a list of files required by the model.
 
@@ -216,7 +218,8 @@ import string
 
 import numpy as np
 
-#__all__ = ["make", "doc", "model_sources", "convert_type"]
+#TODO: determine which functions are useful outside of generate
+#__all__ = ["model_info", "make_doc", "make_source", "convert_type"]
 
 C_KERNEL_TEMPLATE_PATH = joinpath(dirname(__file__), 'kernel_template.c')
 
@@ -231,7 +234,7 @@ except TypeError:
 # Scale and background, which are parameters common to every form factor
 COMMON_PARAMETERS = [
     ["scale", "", 1, [0, np.inf], "", "Source intensity"],
-    ["background", "1/cm", 0, [0, np.inf], "", "Source background"],
+    ["background", "1/cm", 1e-3, [0, np.inf], "", "Source background"],
     ]
 
 # Conversion from units defined in the parameter table for each model
@@ -326,13 +329,13 @@ def _search(search_path, filename):
             return target
     raise ValueError("%r not found in %s" % (filename, search_path))
 
-def model_sources(info):
+def model_sources(model_info):
     """
     Return a list of the sources file paths for the module.
     """
-    search_path = [dirname(info['filename']),
+    search_path = [dirname(model_info['filename']),
                    abspath(joinpath(dirname(__file__), 'models'))]
-    return [_search(search_path, f) for f in info['source']]
+    return [_search(search_path, f) for f in model_info['source']]
 
 # Pragmas for enable OpenCL features.  Be sure to protect them so that they
 # still compile even if OpenCL is not present.
@@ -390,43 +393,12 @@ def _convert_type(source, type_name, constant_flag):
     return source
 
 
-def kernel_name(info, is_2d):
+def kernel_name(model_info, is_2d):
     """
     Name of the exported kernel symbol.
     """
-    return info['name'] + "_" + ("Iqxy" if is_2d else "Iq")
+    return model_info['name'] + "_" + ("Iqxy" if is_2d else "Iq")
 
-
-def categorize_parameters(pars):
-    """
-    Build parameter categories out of the the parameter definitions.
-
-    Returns a dictionary of categories.
-    """
-    partype = {
-        'volume': [], 'orientation': [], 'magnetic': [], '': [],
-        'fixed-1d': [], 'fixed-2d': [], 'pd-1d': [], 'pd-2d': [],
-        'pd-rel': set(),
-    }
-
-    for p in pars:
-        name, ptype = p[0], p[4]
-        if ptype == 'volume':
-            partype['pd-1d'].append(name)
-            partype['pd-2d'].append(name)
-            partype['pd-rel'].add(name)
-        elif ptype == 'magnetic':
-            partype['fixed-2d'].append(name)
-        elif ptype == 'orientation':
-            partype['pd-2d'].append(name)
-        elif ptype == '':
-            partype['fixed-1d'].append(name)
-            partype['fixed-2d'].append(name)
-        else:
-            raise ValueError("unknown parameter type %r" % ptype)
-        partype[ptype].append(name)
-
-    return partype
 
 def indent(s, depth):
     """
@@ -461,11 +433,15 @@ def build_polydispersity_loops(pd_pars):
     return "\n".join(loop_head), "\n".join(loop_end)
 
 C_KERNEL_TEMPLATE = None
-def make_model(info):
+def make_source(model_info):
     """
-    Generate the code for the kernel defined by info, using source files
-    found in the given search path.
+    Generate the OpenCL/ctypes kernel from the module info.
+
+    Uses source files found in the given search path.
     """
+    if callable(model_info['Iq']):
+        return None
+
     # TODO: need something other than volume to indicate dispersion parameters
     # No volume normalization despite having a volume parameter.
     # Thickness is labelled a volume in order to trigger polydispersity.
@@ -482,24 +458,24 @@ def make_model(info):
             C_KERNEL_TEMPLATE = fid.read()
 
     # Load additional sources
-    source = [open(f).read() for f in model_sources(info)]
+    source = [open(f).read() for f in model_sources(model_info)]
 
     # Prepare defines
     defines = []
-    partype = info['partype']
+    partype = model_info['partype']
     pd_1d = partype['pd-1d']
     pd_2d = partype['pd-2d']
     fixed_1d = partype['fixed-1d']
     fixed_2d = partype['fixed-1d']
 
     iq_parameters = [p[0]
-                     for p in info['parameters'][2:] # skip scale, background
+                     for p in model_info['parameters'][2:]  # skip scale, background
                      if p[0] in set(fixed_1d + pd_1d)]
     iqxy_parameters = [p[0]
-                       for p in info['parameters'][2:] # skip scale, background
+                       for p in model_info['parameters'][2:]  # skip scale, background
                        if p[0] in set(fixed_2d + pd_2d)]
     volume_parameters = [p[0]
-                         for p in info['parameters']
+                         for p in model_info['parameters']
                          if p[4] == 'volume']
 
     # Fill in defintions for volume parameters
@@ -510,7 +486,7 @@ def make_model(info):
                         '*'.join(p + '_w' for p in volume_parameters)))
 
     # Generate form_volume function from body only
-    if info['form_volume'] is not None:
+    if model_info['form_volume'] is not None:
         if volume_parameters:
             vol_par_decl = ', '.join('double ' + p for p in volume_parameters)
         else:
@@ -522,11 +498,11 @@ double form_volume(VOLUME_PARAMETER_DECLARATIONS);
 double form_volume(VOLUME_PARAMETER_DECLARATIONS) {
     %(body)s
 }
-""" % {'body':info['form_volume']}
+""" % {'body':model_info['form_volume']}
         source.append(fn)
 
     # Fill in definitions for Iq parameters
-    defines.append(('IQ_KERNEL_NAME', info['name'] + '_Iq'))
+    defines.append(('IQ_KERNEL_NAME', model_info['name'] + '_Iq'))
     defines.append(('IQ_PARAMETERS', ', '.join(iq_parameters)))
     if fixed_1d:
         defines.append(('IQ_FIXED_PARAMETER_DECLARATIONS',
@@ -543,7 +519,7 @@ double form_volume(VOLUME_PARAMETER_DECLARATIONS) {
                         open_loops.replace('\n', ' \\\n')))
         defines.append(('IQ_CLOSE_LOOPS',
                         close_loops.replace('\n', ' \\\n')))
-    if info['Iq'] is not None:
+    if model_info['Iq'] is not None:
         defines.append(('IQ_PARAMETER_DECLARATIONS',
                         ', '.join('double ' + p for p in iq_parameters)))
         fn = """\
@@ -551,11 +527,11 @@ double Iq(double q, IQ_PARAMETER_DECLARATIONS);
 double Iq(double q, IQ_PARAMETER_DECLARATIONS) {
     %(body)s
 }
-""" % {'body':info['Iq']}
+""" % {'body':model_info['Iq']}
         source.append(fn)
 
     # Fill in definitions for Iqxy parameters
-    defines.append(('IQXY_KERNEL_NAME', info['name'] + '_Iqxy'))
+    defines.append(('IQXY_KERNEL_NAME', model_info['name'] + '_Iqxy'))
     defines.append(('IQXY_PARAMETERS', ', '.join(iqxy_parameters)))
     if fixed_2d:
         defines.append(('IQXY_FIXED_PARAMETER_DECLARATIONS',
@@ -572,7 +548,7 @@ double Iq(double q, IQ_PARAMETER_DECLARATIONS) {
                         open_loops.replace('\n', ' \\\n')))
         defines.append(('IQXY_CLOSE_LOOPS',
                         close_loops.replace('\n', ' \\\n')))
-    if info['Iqxy'] is not None:
+    if model_info['Iqxy'] is not None:
         defines.append(('IQXY_PARAMETER_DECLARATIONS',
                         ', '.join('double ' + p for p in iqxy_parameters)))
         fn = """\
@@ -580,7 +556,7 @@ double Iqxy(double qx, double qy, IQXY_PARAMETER_DECLARATIONS);
 double Iqxy(double qx, double qy, IQXY_PARAMETER_DECLARATIONS) {
     %(body)s
 }
-""" % {'body':info['Iqxy']}
+""" % {'body':model_info['Iqxy']}
         source.append(fn)
 
     # Need to know if we have a theta parameter for Iqxy; it is not there
@@ -597,57 +573,147 @@ double Iqxy(double qx, double qy, IQXY_PARAMETER_DECLARATIONS) {
         'SOURCES': sources,
         }
 
-def make_info(kernel_module):
+def categorize_parameters(pars):
+    """
+    Build parameter categories out of the the parameter definitions.
+
+    Returns a dictionary of categories.
+
+    Note: these categories are subject to change, depending on the needs of
+    the UI and the needs of the kernel calling function.
+
+    The categories are as follows:
+
+    * *volume* list of volume parameter names
+    * *orientation* list of orientation parameters
+    * *magnetic* list of magnetic parameters
+    * *<empty string>* list of parameters that have no type info
+
+    Each parameter is in one and only one category.
+
+    The following derived categories are created:
+
+    * *fixed-1d* list of non-polydisperse parameters for 1D models
+    * *pd-1d* list of polydisperse parameters for 1D models
+    * *fixed-2d* list of non-polydisperse parameters for 2D models
+    * *pd-d2* list of polydisperse parameters for 2D models
+    """
+    partype = {
+        'volume': [], 'orientation': [], 'magnetic': [], '': [],
+        'fixed-1d': [], 'fixed-2d': [], 'pd-1d': [], 'pd-2d': [],
+        'pd-rel': set(),
+    }
+
+    for p in pars:
+        name, ptype = p[0], p[4]
+        if ptype == 'volume':
+            partype['pd-1d'].append(name)
+            partype['pd-2d'].append(name)
+            partype['pd-rel'].add(name)
+        elif ptype == 'magnetic':
+            partype['fixed-2d'].append(name)
+        elif ptype == 'orientation':
+            partype['pd-2d'].append(name)
+        elif ptype == '':
+            partype['fixed-1d'].append(name)
+            partype['fixed-2d'].append(name)
+        else:
+            raise ValueError("unknown parameter type %r" % ptype)
+        partype[ptype].append(name)
+
+    return partype
+
+def process_parameters(model_info):
+    """
+    Process parameter block, precalculating parameter details.
+    """
+    # Fill in the derived attributes
+    partype = categorize_parameters(model_info['parameters'])
+    model_info['limits'] = dict((p[0], p[3]) for p in model_info['parameters'])
+    model_info['partype'] = partype
+    model_info['defaults'] = dict((p[0], p[2]) for p in model_info['parameters'])
+    if model_info.get('demo', None) is None:
+        model_info['demo'] = model_info['defaults']
+    model_info['has_2d'] = partype['orientation'] or partype['magnetic']
+
+def make_model_info(kernel_module):
     """
     Interpret the model definition file, categorizing the parameters.
+
+    The module can be loaded with a normal python import statement if you
+    know which module you need, or with __import__('sasmodels.model.'+name)
+    if the name is in a string.
+
+    The *model_info* structure contains the following fields:
+
+    * *id* is the id of the kernel
+    * *name* is the display name of the kernel
+    * *title* is a short description of the kernel
+    * *description* is a long description of the kernel (this doesn't seem
+      very useful since the Help button on the model page brings you directly
+      to the documentation page)
+    * *docs* is the docstring from the module.  Use :func:`make_doc` to
+    * *category* specifies the model location in the docs
+    * *parameters* is the model parameter table
+    * *single* is True if the model allows single precision
+    * *structure_factor* is True if the model is useable in a product
+    * *variant_info* contains the information required to select between
+      model variants (e.g., the list of cases) or is None if there are no
+      model variants
+    * *defaults* is the *{parameter: value}* table built from the parameter
+      description table.
+    * *limits* is the *{parameter: [min, max]}* table built from the
+      parameter description table.
+    * *partypes* categorizes the model parameters. See
+      :func:`categorize_parameters` for details.
+    * *demo* contains the *{parameter: value}* map used in compare (and maybe
+      for the demo plot, if plots aren't set up to use the default values).
+      If *demo* is not given in the file, then the default values will be used.
+    * *tests* is a set of tests that must pass
+    * *source* is the list of library files to include in the C model build
+    * *Iq*, *Iqxy*, *form_volume*, *ER*, *VR* and *sesans* are python functions
+      implementing the kernel for the module, or None if they are not
+      defined in python
+    * *oldname* is the model name in pre-4.0 Sasview
+    * *oldpars* is the *{new: old}* parameter translation table
+      from pre-4.0 Sasview
+    * *composition* is None if the model is independent, otherwise it is a
+      tuple with composition type ('product' or 'mixture') and a list of
+      *model_info* blocks for the composition objects.  This allows us to
+      build complete product and mixture models from just the info.
+
     """
-    #print(kernelfile)
-    category = getattr(kernel_module, 'category', None)
+    # TODO: maybe turn model_info into a class ModelDefinition
     parameters = COMMON_PARAMETERS + kernel_module.parameters
-    # Default the demo parameters to the starting values for the individual
-    # parameters if an explicit demo parameter set has not been specified.
-    demo_parameters = getattr(kernel_module, 'demo', None)
-    if demo_parameters is None:
-        demo_parameters = dict((p[0], p[2]) for p in parameters)
     filename = abspath(kernel_module.__file__)
     kernel_id = splitext(basename(filename))[0]
     name = getattr(kernel_module, 'name', None)
     if name is None:
         name = " ".join(w.capitalize() for w in kernel_id.split('_'))
-    info = dict(
+    model_info = dict(
         id=kernel_id,  # string used to load the kernel
         filename=abspath(kernel_module.__file__),
         name=name,
         title=kernel_module.title,
         description=kernel_module.description,
-        category=category,
         parameters=parameters,
-        demo=demo_parameters,
+        composition=None,
+        docs=kernel_module.__doc__,
+        category=getattr(kernel_module, 'category', None),
+        single=getattr(kernel_module, 'single', True),
+        structure_factor=getattr(kernel_module, 'structure_factor', False),
+        variant_info=getattr(kernel_module, 'invariant_info', None),
+        demo=getattr(kernel_module, 'demo', None),
         source=getattr(kernel_module, 'source', []),
-        oldname=kernel_module.oldname,
-        oldpars=kernel_module.oldpars,
+        oldname=getattr(kernel_module, 'oldname', None),
+        oldpars=getattr(kernel_module, 'oldpars', {}),
+        tests=getattr(kernel_module, 'tests', []),
         )
-    # Fill in attributes which default to None
-    info.update((k, getattr(kernel_module, k, None))
-                for k in ('ER', 'VR', 'form_volume', 'Iq', 'Iqxy'))
-    # Fill in the derived attributes
-    info['limits'] = dict((p[0], p[3]) for p in info['parameters'])
-    info['partype'] = categorize_parameters(info['parameters'])
-    info['defaults'] = dict((p[0], p[2]) for p in info['parameters'])
-    return info
-
-def make(kernel_module):
-    """
-    Build an OpenCL/ctypes function from the definition in *kernel_module*.
-
-    The module can be loaded with a normal python import statement if you
-    know which module you need, or with __import__('sasmodels.model.'+name)
-    if the name is in a string.
-    """
-    info = make_info(kernel_module)
-    # Assume if one part of the kernel is python then all parts are.
-    source = make_model(info) if not callable(info['Iq']) else None
-    return source, info
+    process_parameters(model_info)
+    # Check for optional functions
+    functions = "ER VR form_volume Iq Iqxy shape sesans".split()
+    model_info.update((k, getattr(kernel_module, k, None)) for k in functions)
+    return model_info
 
 section_marker = re.compile(r'\A(?P<first>[%s])(?P=first)*\Z'
                             %re.escape(string.punctuation))
@@ -682,21 +748,18 @@ def convert_section_titles_to_boldface(s):
     """
     return "\n".join(_convert_section_titles_to_boldface(s.split('\n')))
 
-def doc(kernel_module):
+def make_doc(model_info):
     """
     Return the documentation for the model.
     """
     Iq_units = "The returned value is scaled to units of |cm^-1| |sr^-1|, absolute scale."
     Sq_units = "The returned value is a dimensionless structure factor, $S(q)$."
-    info = make_info(kernel_module)
-    is_Sq = ("structure-factor" in info['category'])
-    #docs = kernel_module.__doc__
-    docs = convert_section_titles_to_boldface(kernel_module.__doc__)
-    subst = dict(id=info['id'].replace('_', '-'),
-                 name=info['name'],
-                 title=info['title'],
-                 parameters=make_partable(info['parameters']),
-                 returns=Sq_units if is_Sq else Iq_units,
+    docs = convert_section_titles_to_boldface(model_info['docs'])
+    subst = dict(id=model_info['id'].replace('_', '-'),
+                 name=model_info['name'],
+                 title=model_info['title'],
+                 parameters=make_partable(model_info['parameters']),
+                 returns=Sq_units if model_info['structure_factor'] else Iq_units,
                  docs=docs)
     return DOC_HEADER % subst
 
@@ -709,7 +772,7 @@ def demo_time():
     from .models import cylinder
     import datetime
     tic = datetime.datetime.now()
-    make(cylinder)
+    make_source(make_model_info(cylinder))
     toc = (datetime.datetime.now() - tic).total_seconds()
     print("time: %g"%toc)
 
@@ -724,7 +787,8 @@ def main():
         import sasmodels.models
         __import__('sasmodels.models.' + name)
         model = getattr(sasmodels.models, name)
-        source, _ = make(model)
+        model_info = make_model_info(model)
+        source = make_source(model_info)
         print(source)
 
 if __name__ == "__main__":

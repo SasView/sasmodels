@@ -44,7 +44,7 @@ in the calculation of $Z(q)$
 where $g$ is a fractional distortion based on the nearest neighbor distance.
 
 
-.. figure:: img/bcc_lattice.jpg
+.. figure:: img/bcc_geometry.jpg
 
     Body-centered cubic lattice.
 
@@ -76,22 +76,14 @@ Very, very slow. Go get lunch!
 This example dataset is produced using 200 data points,
 *qmin* = 0.001 |Ang^-1|, *qmax* = 0.1 |Ang^-1| and the above default values.
 
-.. figure:: img/bcc_1d.jpg
-
-    1D plot in the linear scale using the default values (w/200 data point).
-
 The 2D (Anisotropic model) is based on the reference below where $I(q)$ is
 approximated for 1d scattering. Thus the scattering pattern for 2D may not
 be accurate. Note that we are not responsible for any incorrectness of the 2D
 model computation.
 
-.. figure:: img/crystal_orientation.png
+.. figure:: img/bcc_angle_definition.png
 
     Orientation of the crystal with respect to the scattering plane.
-
-.. figure:: img/bcc_2d.jpg
-
-    2D plot using the default values (w/200X200 pixels).*
 
 References
 ----------

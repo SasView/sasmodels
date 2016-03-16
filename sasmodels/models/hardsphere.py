@@ -34,8 +34,8 @@ J K Percus, J Yevick, *J. Phys. Rev.*, 110, (1958) 1
 
 from numpy import inf
 
-name = "hardsphere_fish"
-title = "Hard sphere structure factor from FISH, with Percus-Yevick closure"
+name = "hardsphere"
+title = "Hard sphere structure factor, with Percus-Yevick closure"
 description = """\
     [Hard sphere structure factor, with Percus-Yevick closure]
         Interparticle S(Q) for random, non-interacting spheres.
@@ -47,6 +47,7 @@ description = """\
     volfraction is the volume fraction occupied by the spheres.
 """
 category = "structure-factor"
+structure_factor = True
 
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["effect_radius", "Ang", 50.0, [0, inf], "volume",

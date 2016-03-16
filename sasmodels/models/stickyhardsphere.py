@@ -83,6 +83,7 @@ description = """\
         parameters used in P(Q).
 """
 category = "structure-factor"
+structure_factor = True
 
 single = False
 #             ["name", "units", default, [lower, upper], "type","description"],
@@ -121,10 +122,10 @@ Iq = """
     //C
     //C  SOLVE QUADRATIC FOR LAMBDA
     //C
-    qa = eta/12.0;
-    qb = -1.0*(stickiness + eta/etam1);
+    qa = eta/6.0;
+    qb = stickiness + eta/etam1;
     qc = (1.0 + eta/2.0)/etam1sq;
-    radic = qb*qb - 4.0*qa*qc;
+    radic = qb*qb - 2.0*qa*qc;
     if(radic<0) {
         //if(x>0.01 && x<0.015)
         //    Print "Lambda unphysical - both roots imaginary"
@@ -132,8 +133,9 @@ Iq = """
         return(-1.0);
     }
     //C   KEEP THE SMALLER ROOT, THE LARGER ONE IS UNPHYSICAL
-    lam = (-1.0*qb-sqrt(radic))/(2.0*qa);
-    lam2 = (-1.0*qb+sqrt(radic))/(2.0*qa);
+    radic = sqrt(radic);
+    lam = (qb-radic)/qa;
+    lam2 = (qb+radic)/qa;
     if(lam2<lam) {
         lam = lam2;
     }
@@ -185,7 +187,7 @@ demo = dict(effect_radius=200, volfraction=0.2, perturb=0.05,
 #
 tests = [
         [ {'scale': 1.0, 'background' : 0.0, 'effect_radius' : 50.0, 'perturb' : 0.05, 'stickiness' : 0.2, 'volfraction' : 0.1,
-           'effect_radius_pd' : 0}, [0.001], [1.09718]]
+           'effect_radius_pd' : 0}, [0.001, 0.003], [1.09718, 1.087830]]
         ]
 
 

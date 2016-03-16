@@ -5,28 +5,28 @@
 
 
 r"""
-This model strictly describes the scattering from *monodisperse* polymer chains in theta solvents or polymer melts, conditions under which the distances between segments follow a Gaussian distribution. Provided the number of segments is large (ie, high molecular weight polymers) the single-chain Form Factor P(Q) is that described by Debye (1947).
+This model strictly describes the scattering from *monodisperse* polymer chains in theta solvents or polymer melts, conditions under which the distances between segments follow a Gaussian distribution. Provided the number of segments is large (ie, high molecular weight polymers) the single-chain form factor P(Q) is that described by Debye (1947).
 
 To describe the scattering from *polydisperse* polymer chains, see the poly_gauss_coil model.
 
 Definition
 ----------
 
-     *I(q)* = *scale* x *P(q)* + *background*
+     *I(q)* = *scale* |cdot| *P(q)* + *background*
 	 
 where
 
-     *scale* = |phi|\ :sub:`poly` x *V* x (|rho|\ :sub:`poly` - |rho|\ :sub:`solv`)\ :sup:'2'
+     *scale* = |phi|\ :sub:`poly` |cdot| *V* |cdot| (|rho|\ :sub:`poly` - |rho|\ :sub:`solv`)\  :sup:`2`
 
-     *P(q)* = 2 [exp(-Z) + Z - 1] / Z\ :sup:'2'
+     *P(q)* = 2 [exp(-Z) + Z - 1] / Z \ :sup:`2`
 	 
-	 *Z* = (*q R*\ :sub:'g')\ :sup:'2'
+	 *Z* = (*q R* \ :sub:`g`)\ :sup:`2`
 
 and
 
-	 *V* = *M* / (*N*\ :sub:'A' |delta|)
+	 *V* = *M* / (*N*\ :sub:`A` |delta|)
 	 
-Here, |phi|\ :sub:`poly`, is the volume fraction of polymer, *V* is the volume of a polymer coil, *M* is the molecular weight of the polymer, *N*\ :sub:'A' is Avogadro's Number, |delta| is the bulk density of the polymer, |rho|\ :sub:`poly` is the sld of the polymer, |rho|\ :sub:`solv` is the sld of the solvent, and *R*\ :sub:'g' is the radius of gyration of the polymer coil.
+Here, |phi|\ :sub:`poly` is the volume fraction of polymer, *V* is the volume of a polymer coil, *M* is the molecular weight of the polymer, *N*\ :sub:`A` is Avogadro's Number, |delta| is the bulk density of the polymer, |rho|\ :sub:`poly` is the sld of the polymer, |rho|\ :sub:`solv` is the sld of the solvent, and *R*\ :sub:`g` is the radius of gyration of the polymer coil.
 
 .. figure:: img/mono_gauss_coil_1d.jpg
 

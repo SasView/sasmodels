@@ -30,10 +30,6 @@ where the $q$ vector is defined as
     q = \sqrt{q_x^2 + q_y^2}
 
 
-.. figure:: img/be_polyelectrolyte_1d.jpg
-
-    1D plot using the default values (w/500 data point).
-
 NB: $1 barn = 10^{-24} cm^2$
 
 References

@@ -68,33 +68,15 @@ and its radius of gyration is
     The requirement that $R \geq r$ is not enforced in the model!
     It is up to you to restrict this during analysis.
 
-:num:`Figure #capped-cylinder-1d` shows the output produced by
-a running the 1D capped cylinder model, using *qmin* = 0.001 |Ang^-1|,
-*qmax* = 0.7 |Ang^-1| and  the default values of the parameters.
-
-.. _capped-cylinder-1d:
-
-.. figure:: img/capped_cylinder_1d.jpg
-
-    1D plot using the default values (w/256 data point).
-
 The 2D scattering intensity is calculated similar to the 2D cylinder model.
-:num:`Figure #capped-cylinder-2d` shows the output for $\theta=45^\circ$
-and $\phi=0^\circ$ with default values for the other parameters.
 
-.. _capped-cylinder-2d:
-
-.. figure:: img/capped_cylinder_2d.jpg
-
-    2D plot (w/(256X265) data points).
-
-.. figure:: img/orientation.jpg
+.. figure:: img/cylinder_angle_definition.jpg
 
     Definition of the angles for oriented 2D cylinders.
 
-.. figure:: img/orientation2.jpg
+.. figure:: img/cylinder_angle_projection.jpg
 
-    Examples of the angles for oriented pp against the detector plane.
+    Examples of the angles for oriented 2D cylinders against the detector plane.
 
 References
 ----------

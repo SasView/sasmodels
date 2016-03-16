@@ -18,7 +18,7 @@ of shells. See the core_shell_ function for a diagram and documentation.
 Be careful! The SLDs and scale can be highly correlated. Hold as many of these
 parameters fixed as possible.
 
-.. figure:: img/multi_shell_fig1.jpg
+.. figure:: img/multi_shell_geometry.jpg
 
 The 2D scattering intensity is the same as 1D, regardless of the orientation
 of the q vector which is defined as:
@@ -32,10 +32,6 @@ of the q vector which is defined as:
     $core_radius + n_pairs * s_thickness + (n_pairs - 1) * w_thickness$
     is used as the effective radius for *S(Q)* when $P(Q) * S(Q)$ is applied.
 
-
-.. figure:: img/multi_shell_1d.jpg
-
-    1D plot using the default values (with 200 data point).
 
 Our model uses the form factor calculations implemented in a c-library provided
 by the NIST Center for Neutron Research (Kline, 2006).

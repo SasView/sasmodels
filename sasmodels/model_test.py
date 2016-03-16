@@ -49,10 +49,11 @@ import unittest
 
 import numpy as np
 
-from .core import list_models, load_model_definition, load_model, HAVE_OPENCL
+from .core import list_models, load_model_info, build_model, HAVE_OPENCL
 from .core import make_kernel, call_kernel, call_ER, call_VR
 from .exception import annotate_exception
 
+#TODO: rename to tests so that tab completion works better for models directory
 
 def make_suite(loaders, models):
     """
@@ -75,7 +76,7 @@ def make_suite(loaders, models):
         skip = []
     for model_name in models:
         if model_name in skip: continue
-        model_definition = load_model_definition(model_name)
+        model_info = load_model_info(model_name)
 
         #print('------')
         #print('found tests in', model_name)
@@ -84,12 +85,12 @@ def make_suite(loaders, models):
         # if ispy then use the dll loader to call pykernel
         # don't try to call cl kernel since it will not be
         # available in some environmentes.
-        is_py = callable(getattr(model_definition, 'Iq', None))
+        is_py = callable(model_info['Iq'])
 
         if is_py:  # kernel implemented in python
             test_name = "Model: %s, Kernel: python"%model_name
             test_method_name = "test_%s_python" % model_name
-            test = ModelTestCase(test_name, model_definition,
+            test = ModelTestCase(test_name, model_info,
                                  test_method_name,
                                  platform="dll",  # so that
                                  dtype="double")
@@ -103,7 +104,7 @@ def make_suite(loaders, models):
                 # correct for double precision are not tested using
                 # single precision.  The choice is determined by the
                 # presence of *single=False* in the model file.
-                test = ModelTestCase(test_name, model_definition,
+                test = ModelTestCase(test_name, model_info,
                                      test_method_name,
                                      platform="ocl", dtype=None)
                 #print("defining", test_name)
@@ -113,7 +114,7 @@ def make_suite(loaders, models):
             if 'dll' in loaders:
                 test_name = "Model: %s, Kernel: dll"%model_name
                 test_method_name = "test_%s_dll" % model_name
-                test = ModelTestCase(test_name, model_definition,
+                test = ModelTestCase(test_name, model_info,
                                      test_method_name,
                                      platform="dll",
                                      dtype="double")
@@ -131,10 +132,10 @@ def _hide_model_case_from_nosetests():
         functions, then runs the list of tests at the bottom of the model
         description file.
         """
-        def __init__(self, test_name, definition, test_method_name,
+        def __init__(self, test_name, model_info, test_method_name,
                      platform, dtype):
             self.test_name = test_name
-            self.definition = definition
+            self.info = model_info
             self.platform = platform
             self.dtype = dtype
 
@@ -149,10 +150,10 @@ def _hide_model_case_from_nosetests():
                 [{}, 'VR', None],
                 ]
 
-            tests = getattr(self.definition, 'tests', [])
+            tests = self.info['tests']
             try:
-                model = load_model(self.definition, dtype=self.dtype,
-                                   platform=self.platform)
+                model = build_model(self.info, dtype=self.dtype,
+                                    platform=self.platform)
                 for test in smoke_tests + tests:
                     self._run_one_test(model, test)
 

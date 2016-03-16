@@ -1,15 +1,10 @@
-import sys
-sys.path.insert(0,'..')
+import sys, os
+sys.path.insert(0, os.path.abspath('..'))
+from sasmodels import generate, core
 
-# Convert ../sasmodels/models/name.py to sasmodels.models.name
-module_name = sys.argv[1][3:-3].replace('/','.').replace('\\','.')
-#print module_name
-module = __import__(module_name)
-for part in module_name.split('.')[1:]:
-    module = getattr(module, part)
-#print module
+# Convert ../sasmodels/models/name.py to name
+model_name = os.path.basename(sys.argv[1])[:-3]
 
 # Load the doc string from the module definition file and store it in rst
-from sasmodels import generate
-docstr = generate.doc(module)
+docstr = generate.make_doc(core.load_model_info(model_name))
 open(sys.argv[2],'w').write(docstr)

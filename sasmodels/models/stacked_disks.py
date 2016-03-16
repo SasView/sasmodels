@@ -20,7 +20,7 @@ of the q vector which is defined as
 Definition
 ----------
 
-.. figure:: img/stacked_disks_fig1.gif
+.. figure:: img/stacked_disks_geometry.gif
 
 The scattered intensity $I(q)$ is calculated as
 
@@ -67,26 +67,21 @@ where *n* = the total number of the disc stacked (n_stacking),
 *D* = the next neighbor center-to-center distance (d-spacing),
 and $\sigma_D$ = the Gaussian standard deviation of the d-spacing (sigma_d).
 
-To provide easy access to the orientation of the stacked disks, we define
-the axis of the cylinder using two angles $\theta$ and $\varphi$.
-These angles are defined on Figure 2 of cylinder_model.
-
 .. note::
     The 2nd virial coefficient of the cylinder is calculated based on the
     *radius* and *length* = *n_stacking* * (*core_thick* + 2 * *layer_thick*)
     values, and used as the effective radius for $S(Q)$ when $P(Q) * S(Q)$
     is applied.
 
-.. figure:: img/stacked_disks_1d.jpg
+To provide easy access to the orientation of the stacked disks, we define
+the axis of the cylinder using two angles $\theta$ and $\varphi$.
 
-    1D plot using the default values (w/1000 data point).
-
-.. figure:: img/stacked_disks_fig2.jpg
+.. figure:: img/stacked_disks_angle_definition.jpg
 
     Examples of the angles for oriented stacked disks against
     the detector plane.
 
-.. figure:: img/stacked_disks_fig3.jpg
+.. figure:: img/stacked_disks_angle_projection.jpg
 
     Examples of the angles for oriented pp against the detector plane.
 

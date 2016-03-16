@@ -66,37 +66,12 @@ Validation
 
 Validation of our code was done by comparing the output of the 1D model to
 the output of the software provided by the NIST (Kline, 2006).
-:num:`Figure #core-shell-cylinder-1d` shows a comparison
-of the 1D output of our model and the output of the NIST software.
-
-.. _core-shell-cylinder-1d:
-
-.. figure:: img/core_shell_cylinder_1d.jpg
-
-    Comparison of the SasView scattering intensity for a core-shell cylinder
-    with the output of the NIST SANS analysis software. The parameters were
-    set to: *scale* = 1.0 |Ang|, *radius* = 20 |Ang|, *thickness* = 10 |Ang|,
-    *length* =400 |Ang|, *core_sld* =1e-6 |Ang^-2|, *shell_sld* = 4e-6 |Ang^-2|,
-    *solvent_sld* = 1e-6 |Ang^-2|, and *background* = 0.01 |cm^-1|.
 
 Averaging over a distribution of orientation is done by evaluating the
 equation above. Since we have no other software to compare the
-implementation of the intensity for fully oriented cylinders, we can
-compare the result of averaging our 2D output using a uniform
+implementation of the intensity for fully oriented cylinders, we
+compared the result of averaging our 2D output using a uniform
 distribution $p(\theta,\phi) = 1.0$.
-:num:`Figure #core-shell-cylinder-2d` shows the result
-of such a cross-check.
-
-.. _core-shell-cylinder-2d:
-
-.. figure:: img/core_shell_cylinder_2d.jpg
-
-    Comparison of the intensity for uniformly distributed core-shell
-    cylinders calculated from our 2D model and the intensity from the
-    NIST SANS analysis software. The parameters used were: *scale* = 1.0,
-    *radius* = 20 |Ang|, *thickness* = 10 |Ang|, *length* = 400 |Ang|,
-    *core_sld* = 1e-6 |Ang^-2|, *shell_sld* = 4e-6 |Ang^-2|,
-    *solvent_sld* = 1e-6 |Ang^-2|, and *background* = 0.0 |cm^-1|.
 
 2013/11/26 - Description reviewed by Heenan, R.
 """

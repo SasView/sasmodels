@@ -15,8 +15,8 @@ class PyModel(object):
     """
     Wrapper for pure python models.
     """
-    def __init__(self, info):
-        self.info = info
+    def __init__(self, model_info):
+        self.info = model_info
 
     def __call__(self, q_vectors):
         q_input = PyInput(q_vectors, dtype=F64)
@@ -67,7 +67,7 @@ class PyKernel(object):
 
     *kernel* is the DllKernel object to call.
 
-    *info* is the module information
+    *model_info* is the module information
 
     *q_input* is the DllInput q vectors at which the kernel should be
     evaluated.
@@ -80,8 +80,8 @@ class PyKernel(object):
 
     Call :meth:`release` when done with the kernel instance.
     """
-    def __init__(self, kernel, info, q_input):
-        self.info = info
+    def __init__(self, kernel, model_info, q_input):
+        self.info = model_info
         self.q_input = q_input
         self.res = np.empty(q_input.nq, q_input.dtype)
         dim = '2d' if q_input.is_2d else '1d'
@@ -105,12 +105,12 @@ class PyKernel(object):
             self.kernel = vector_kernel
         else:
             self.kernel = kernel
-        fixed_pars = info['partype']['fixed-' + dim]
-        pd_pars = info['partype']['pd-' + dim]
-        vol_pars = info['partype']['volume']
+        fixed_pars = model_info['partype']['fixed-' + dim]
+        pd_pars = model_info['partype']['pd-' + dim]
+        vol_pars = model_info['partype']['volume']
 
         # First two fixed pars are scale and background
-        pars = [p[0] for p in info['parameters'][2:]]
+        pars = [p[0] for p in model_info['parameters'][2:]]
         offset = len(self.q_input.q_vectors)
         self.args = self.q_input.q_vectors + [None] * len(pars)
         self.fixed_index = np.array([pars.index(p) + offset

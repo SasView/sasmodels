@@ -21,7 +21,7 @@ import numpy as np
 
 from . import core
 
-def make_class(model_definition, dtype='single', namestyle='name'):
+def make_class(model_info, dtype='single', namestyle='name'):
     """
     Load the sasview model defined in *kernel_module*.
 
@@ -31,7 +31,7 @@ def make_class(model_definition, dtype='single', namestyle='name'):
     *namestyle='oldname'* will produce a class with a name
     compatible with SasView.
     """
-    model = core.load_model(model_definition, dtype=dtype)
+    model = core.build_model(model_info, dtype=dtype)
     def __init__(self, multfactor=1):
         SasviewModel.__init__(self, model)
     attrs = dict(__init__=__init__)
@@ -286,7 +286,7 @@ class SasviewModel(object):
         pars = [self.params[v] for v in fn.fixed_pars]
         pd_pars = [self._get_weights(p) for p in fn.pd_pars]
         result = fn(pars, pd_pars, self.cutoff)
-        fn.input.release()
+        fn.q_input.release()
         fn.release()
         return result
 
@@ -372,4 +372,3 @@ class SasviewModel(object):
             dis['type'], dis['npts'], dis['width'], dis['nsigmas'],
             self.params[par], limits[par], par in relative)
         return value, weight / np.sum(weight)
-

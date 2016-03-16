@@ -98,11 +98,11 @@ $A$ along $z$ and $B$ along $x$.
 
 .. _parallelepiped-orientation:
 
-.. figure:: img/parallelepiped_angles_definition.jpg
+.. figure:: img/parallelepiped_angle_definition.jpg
 
     Definition of the angles for oriented parallelepipeds.
 
-.. figure:: img/parallelepiped_angles_examples.jpg
+.. figure:: img/parallelepiped_angle_projection.jpg
 
     Examples of the angles for oriented parallelepipeds against the detector plane.
 
@@ -155,7 +155,6 @@ $\phi$, and $\Psi$ respectively).
 
 This model is based on form factor calculations implemented in a c-library
 provided by the NIST Center for Neutron Research (Kline, 2006).
-
 """
 
 import numpy as np

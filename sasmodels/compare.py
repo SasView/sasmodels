@@ -37,10 +37,10 @@ import numpy as np
 
 from . import core
 from . import kerneldll
-from . import generate
+from . import product
 from .data import plot_theory, empty_data1D, empty_data2D
 from .direct_model import DirectModel
-from .convert import revert_model, constrain_new_to_old
+from .convert import revert_pars, constrain_new_to_old
 
 USAGE = """
 usage: compare.py model N1 N2 [options...] [key=val]
@@ -263,7 +263,7 @@ def randomize_pars(pars, seed=None):
                     for p, v in sorted(pars.items()))
     return pars
 
-def constrain_pars(model_definition, pars):
+def constrain_pars(model_info, pars):
     """
     Restrict parameters to valid values.
 
@@ -271,7 +271,12 @@ def constrain_pars(model_definition, pars):
     which need to support within model constraints (cap radius more than
     cylinder radius in this case).
     """
-    name = model_definition.name
+    name = model_info['id']
+    # if it is a product model, then just look at the form factor since
+    # none of the structure factors need any constraints.
+    if '*' in name:
+        name = name.split('*')[0]
+
     if name == 'capped_cylinder' and pars['cap_radius'] < pars['radius']:
         pars['radius'], pars['cap_radius'] = pars['cap_radius'], pars['radius']
     if name == 'barbell' and pars['bell_radius'] < pars['radius']:
@@ -339,7 +344,7 @@ def suppress_pd(pars):
         if p.endswith("_pd_n"): pars[p] = 0
     return pars
 
-def eval_sasview(model_definition, data):
+def eval_sasview(model_info, data):
     """
     Return a model calculator using the SasView fitting engine.
     """
@@ -348,17 +353,28 @@ def eval_sasview(model_definition, data):
     import sas
     from sas.models.qsmearing import smear_selection
 
-    # convert model parameters from sasmodel form to sasview form
-    #print("old",sorted(pars.items()))
-    modelname, _ = revert_model(model_definition, {})
-    #print("new",sorted(_pars.items()))
-    sas = __import__('sas.models.'+modelname)
-    ModelClass = getattr(getattr(sas.models, modelname, None), modelname, None)
-    if ModelClass is None:
-        raise ValueError("could not find model %r in sas.models"%modelname)
-    model = ModelClass()
-    smearer = smear_selection(data, model=model)
+    def get_model(name):
+        #print("new",sorted(_pars.items()))
+        sas = __import__('sas.models.' + name)
+        ModelClass = getattr(getattr(sas.models, name, None), name, None)
+        if ModelClass is None:
+            raise ValueError("could not find model %r in sas.models"%name)
+        return ModelClass()
 
+    # grab the sasview model, or create it if it is a product model
+    if model_info['composition']:
+        composition_type, parts = model_info['composition']
+        if composition_type == 'product':
+            from sas.models.MultiplicationModel import MultiplicationModel
+            P, S = [get_model(p) for p in model_info['oldname']]
+            model = MultiplicationModel(P, S)
+        else:
+            raise ValueError("mixture models not handled yet")
+    else:
+        model = get_model(model_info['oldname'])
+
+    # build a smearer with which to call the model, if necessary
+    smearer = smear_selection(data, model=model)
     if hasattr(data, 'qx_data'):
         q = np.sqrt(data.qx_data**2 + data.qy_data**2)
         index = ((~data.mask) & (~np.isnan(data.data))
@@ -381,7 +397,7 @@ def eval_sasview(model_definition, data):
         Sasview calculator for model.
         """
         # paying for parameter conversion each time to keep life simple, if not fast
-        _, pars = revert_model(model_definition, pars)
+        pars = revert_pars(model_info, pars)
         for k, v in pars.items():
             parts = k.split('.')  # polydispersity components
             if len(parts) == 2:
@@ -404,28 +420,48 @@ DTYPE_MAP = {
     'f64': '64',
     'longdouble': '128',
 }
-def eval_opencl(model_definition, data, dtype='single', cutoff=0.):
+def eval_opencl(model_info, data, dtype='single', cutoff=0.):
     """
     Return a model calculator using the OpenCL calculation engine.
     """
-    try:
-        model = core.load_model(model_definition, dtype=dtype, platform="ocl")
-    except Exception as exc:
-        print(exc)
-        print("... trying again with single precision")
-        dtype = 'single'
-        model = core.load_model(model_definition, dtype=dtype, platform="ocl")
+    def builder(model_info):
+        try:
+            return core.build_model(model_info, dtype=dtype, platform="ocl")
+        except Exception as exc:
+            print(exc)
+            print("... trying again with single precision")
+            return core.build_model(model_info, dtype='single', platform="ocl")
+    if model_info['composition']:
+        composition_type, parts = model_info['composition']
+        if composition_type == 'product':
+            P, S = [builder(p) for p in parts]
+            model = product.ProductModel(P, S)
+        else:
+            raise ValueError("mixture models not handled yet")
+    else:
+        model = builder(model_info)
     calculator = DirectModel(data, model, cutoff=cutoff)
     calculator.engine = "OCL%s"%DTYPE_MAP[dtype]
     return calculator
 
-def eval_ctypes(model_definition, data, dtype='double', cutoff=0.):
+def eval_ctypes(model_info, data, dtype='double', cutoff=0.):
     """
     Return a model calculator using the DLL calculation engine.
     """
     if dtype == 'quad':
         dtype = 'longdouble'
-    model = core.load_model(model_definition, dtype=dtype, platform="dll")
+    def builder(model_info):
+        return core.build_model(model_info, dtype=dtype, platform="dll")
+
+    if model_info['composition']:
+        composition_type, parts = model_info['composition']
+        if composition_type == 'product':
+            P, S = [builder(p) for p in parts]
+            model = product.ProductModel(P, S)
+        else:
+            raise ValueError("mixture models not handled yet")
+    else:
+        model = builder(model_info)
     calculator = DirectModel(data, model, cutoff=cutoff)
     calculator.engine = "OMP%s"%DTYPE_MAP[dtype]
     return calculator
@@ -469,7 +505,7 @@ def make_data(opts):
         index = slice(None, None)
     return data, index
 
-def make_engine(model_definition, data, dtype, cutoff):
+def make_engine(model_info, data, dtype, cutoff):
     """
     Generate the appropriate calculation engine for the given datatype.
 
@@ -477,13 +513,11 @@ def make_engine(model_definition, data, dtype, cutoff):
     than OpenCL.
     """
     if dtype == 'sasview':
-        return eval_sasview(model_definition, data)
+        return eval_sasview(model_info, data)
     elif dtype.endswith('!'):
-        return eval_ctypes(model_definition, data, dtype=dtype[:-1],
-                           cutoff=cutoff)
+        return eval_ctypes(model_info, data, dtype=dtype[:-1], cutoff=cutoff)
     else:
-        return eval_opencl(model_definition, data, dtype=dtype,
-                           cutoff=cutoff)
+        return eval_opencl(model_info, data, dtype=dtype, cutoff=cutoff)
 
 def compare(opts, limits=None):
     """
@@ -641,16 +675,15 @@ def columnize(L, indent="", width=79):
     return output
 
 
-def get_demo_pars(model_definition):
+def get_demo_pars(model_info):
     """
     Extract demo parameters from the model definition.
     """
-    info = generate.make_info(model_definition)
     # Get the default values for the parameters
-    pars = dict((p[0], p[2]) for p in info['parameters'])
+    pars = dict((p[0], p[2]) for p in model_info['parameters'])
 
     # Fill in default values for the polydispersity parameters
-    for p in info['parameters']:
+    for p in model_info['parameters']:
         if p[4] in ('volume', 'orientation'):
             pars[p[0]+'_pd'] = 0.0
             pars[p[0]+'_pd_n'] = 0
@@ -658,8 +691,9 @@ def get_demo_pars(model_definition):
             pars[p[0]+'_pd_type'] = "gaussian"
 
     # Plug in values given in demo
-    pars.update(info['demo'])
+    pars.update(model_info['demo'])
     return pars
+
 
 def parse_opts():
     """
@@ -678,16 +712,24 @@ def parse_opts():
         print("\nAvailable models:")
         print(columnize(MODELS, indent="  "))
         sys.exit(1)
-
-    name = args[0]
-    try:
-        model_definition = core.load_model_definition(name)
-    except ImportError, exc:
-        print(str(exc))
-        print("Use one of:\n    " + models)
-        sys.exit(1)
     if len(args) > 3:
         print("expected parameters: model N1 N2")
+
+    def _get_info(name):
+        try:
+            model_info = core.load_model_info(name)
+        except ImportError, exc:
+            print(str(exc))
+            print("Use one of:\n    " + models)
+            sys.exit(1)
+        return model_info
+
+    name = args[0]
+    if '*' in name:
+        parts = [_get_info(k) for k in name.split('*')]
+        model_info = product.make_product_info(*parts)
+    else:
+        model_info = _get_info(name)
 
     invalid = [o[1:] for o in flags
                if o[1:] not in NAME_OPTIONS
@@ -769,7 +811,7 @@ def parse_opts():
 
     # Get demo parameters from model definition, or use default parameters
     # if model does not define demo parameters
-    pars = get_demo_pars(model_definition)
+    pars = get_demo_pars(model_info)
 
     # Fill in parameters given on the command line
     presets = {}
@@ -790,19 +832,19 @@ def parse_opts():
     if opts['mono']:
         pars = suppress_pd(pars)
     pars.update(presets)  # set value after random to control value
-    constrain_pars(model_definition, pars)
-    constrain_new_to_old(model_definition, pars)
+    constrain_pars(model_info, pars)
+    constrain_new_to_old(model_info, pars)
     if opts['show_pars']:
         print(str(parlist(pars)))
 
     # Create the computational engines
     data, _ = make_data(opts)
     if n1:
-        base = make_engine(model_definition, data, engines[0], opts['cutoff'])
+        base = make_engine(model_info, data, engines[0], opts['cutoff'])
     else:
         base = None
     if n2:
-        comp = make_engine(model_definition, data, engines[1], opts['cutoff'])
+        comp = make_engine(model_info, data, engines[1], opts['cutoff'])
     else:
         comp = None
 
@@ -810,7 +852,7 @@ def parse_opts():
     # Remember it all
     opts.update({
         'name'      : name,
-        'def'       : model_definition,
+        'def'       : model_info,
         'n1'        : n1,
         'n2'        : n2,
         'presets'   : presets,
@@ -853,13 +895,13 @@ class Explore(object):
         from . import bumps_model
         config_matplotlib()
         self.opts = opts
-        info = generate.make_info(opts['def'])
-        pars, pd_types = bumps_model.create_parameters(info, **opts['pars'])
+        model_info = opts['def']
+        pars, pd_types = bumps_model.create_parameters(model_info, **opts['pars'])
         if not opts['is2d']:
             active = [base + ext
-                      for base in info['partype']['pd-1d']
+                      for base in model_info['partype']['pd-1d']
                       for ext in ['', '_pd', '_pd_n', '_pd_nsigma']]
-            active.extend(info['partype']['fixed-1d'])
+            active.extend(model_info['partype']['fixed-1d'])
             for k in active:
                 v = pars[k]
                 v.range(*parameter_range(k, v.value))

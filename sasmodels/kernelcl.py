@@ -288,8 +288,8 @@ class GpuModel(object):
     """
     GPU wrapper for a single model.
 
-    *source* and *info* are the model source and interface as returned
-    from :func:`gen.make`.
+    *source* and *model_info* are the model source and interface as returned
+    from :func:`generate.make_source` and :func:`generate.make_model_info`.
 
     *dtype* is the desired model precision.  Any numpy dtype for single
     or double precision floats will do, such as 'f', 'float32' or 'single'
@@ -299,8 +299,8 @@ class GpuModel(object):
     Fast precision ('fast') is a loose version of single precision, indicating
     that the compiler is allowed to take shortcuts.
     """
-    def __init__(self, source, info, dtype=generate.F32):
-        self.info = info
+    def __init__(self, source, model_info, dtype=generate.F32):
+        self.info = model_info
         self.source = source
         self.dtype = generate.F32 if dtype == 'fast' else np.dtype(dtype)
         self.fast = (dtype == 'fast')
@@ -355,6 +355,7 @@ class GpuInput(object):
     buffer will be released when the data object is freed.
     """
     def __init__(self, q_vectors, dtype=generate.F32):
+        # TODO: do we ever need double precision q?
         env = environment()
         self.nq = q_vectors[0].size
         self.dtype = np.dtype(dtype)
@@ -388,7 +389,7 @@ class GpuKernel(object):
 
     *kernel* is the GpuKernel object to call
 
-    *info* is the module information
+    *model_info* is the module information
 
     *q_vectors* is the q vectors at which the kernel should be evaluated
 
@@ -402,14 +403,14 @@ class GpuKernel(object):
 
     Call :meth:`release` when done with the kernel instance.
     """
-    def __init__(self, kernel, info, q_vectors, dtype):
+    def __init__(self, kernel, model_info, q_vectors, dtype):
         q_input = GpuInput(q_vectors, dtype)
         self.kernel = kernel
-        self.info = info
+        self.info = model_info
         self.res = np.empty(q_input.nq, q_input.dtype)
         dim = '2d' if q_input.is_2d else '1d'
-        self.fixed_pars = info['partype']['fixed-' + dim]
-        self.pd_pars = info['partype']['pd-' + dim]
+        self.fixed_pars = model_info['partype']['fixed-' + dim]
+        self.pd_pars = model_info['partype']['pd-' + dim]
 
         # Inputs and outputs for each kernel call
         # Note: res may be shorter than res_b if global_size != nq
@@ -429,6 +430,7 @@ class GpuKernel(object):
                 else np.float16 if self.q_input.dtype == generate.F16
                 else np.float32)  # will never get here, so use np.float32
 
+        #print "pars", fixed_pars, pd_pars
         res_bi = self.res_b
         nq = np.uint32(self.q_input.nq)
         if pd_pars:
