@@ -9,7 +9,7 @@ independent radii in CoreShellEllipsoidModel.
 Definition
 ----------
 
-.. figure:: img/core_shell_ellipsoid_geometry.gif
+.. figure:: img/core_shell_ellipsoid_geometry.png
 
 The geometric parameters of this model are
 

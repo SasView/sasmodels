@@ -9,7 +9,7 @@ where the form factor is normalized by the volume of the cylinder.
 where the volume $V = (4/3)\pi(r_{maj}r_{min}^2)$ and the averaging $< >$ is
 applied over all orientations for 1D.
 
-.. figure:: img/core_shell_ellipsoid_geometry.gif
+.. figure:: img/core_shell_ellipsoid_geometry.png
 
     The returned value is in units of $cm^{-1}$, on absolute scale.
 

@@ -52,6 +52,7 @@ where for a simple cubic lattice any h, k, l are allowed and none are
 forbidden. Thus the peak positions correspond to (just the first 5)
 
 .. math::
+    :nowrap:
 
     \begin{align*}
     q/q_0 \quad & \quad 1

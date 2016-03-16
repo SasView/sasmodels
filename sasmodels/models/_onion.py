@@ -145,7 +145,7 @@ the shells is
         - 3\rho_\text{in}V(r_{\text{shell}-1})
             \frac{j_1(qr_\text{in})}{qr_\text{in}}
 
-.. figure:: img/onion_geometry.gif
+.. figure:: img/onion_geometry.png
 
     Example of an onion model profile.
 

@@ -11,7 +11,7 @@ Definition
 
 .. _parallelepiped-image:
 
-.. figure:: img/parallelepiped.jpg
+.. figure:: img/parallelepiped_geometry.jpg
 
    Parallelepiped with the corresponding definition of sides.
 

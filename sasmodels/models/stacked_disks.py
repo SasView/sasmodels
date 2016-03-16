@@ -20,7 +20,7 @@ of the q vector which is defined as
 Definition
 ----------
 
-.. figure:: img/stacked_disks_geometry.gif
+.. figure:: img/stacked_disks_geometry.png
 
 The scattered intensity $I(q)$ is calculated as
 

@@ -13,7 +13,9 @@ The well width (*l*\ ) is defined as multiples of the particle diameter (2\*\ *R
 
 The interaction potential is:
 
-.. image:: img/image225.PNG
+.. comment::
+
+  .. image:: img/image225.PNG
 
 .. math::
 
@@ -32,7 +34,9 @@ For 2D data: The 2D scattering intensity is calculated in the same way as 1D, wh
 
     q = \sqrt{q_x^2 + q_y^2}
 
-.. figure:: img/squarewell_226.jpg
+.. comment::
+
+  .. figure:: img/squarewell_226.jpg
 
     1D plot using the default values (in linear scale).*
 

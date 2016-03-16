@@ -28,6 +28,8 @@ of the parallelepiped, |phi| is the angle between the scattering vector
 (lying in the *xy* plane) and the *y* axis, and
 
 .. math::
+  :nowrap:
+
   \begin{align}
   A_{P\Delta}(q) & =  A B C
     \left[\frac{\sin \bigl( q \frac{C}{2} \cos\theta \bigr)}

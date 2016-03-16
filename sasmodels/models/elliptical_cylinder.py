@@ -9,7 +9,7 @@ The angles |theta| and |phi| define the orientation of the axis of the cylinder.
 orientation of the major axis of the ellipse with respect to the vector *Q*\ . A gaussian polydispersity can be added
 to any of the orientation angles, and also for the minor radius and the ratio of the ellipse radii.
 
-.. figure:: img/elliptical_cylinder_geometry.gif
+.. figure:: img/elliptical_cylinder_geometry.png
 
     *a* = *r_minor* and |nu|\ :sub:`n` = $r_ratio$ (i.e., $r_major / r_minor$).
 
@@ -68,14 +68,14 @@ the 2D calculation over all possible angles. The figure below shows the comparis
 averaged 2D values while the line represents the result of the 1D calculation (for the 2D averaging, values of 76, 180,
 and 76 degrees are taken for the angles of |theta|, |phi|, and |bigpsi| respectively).
 
-.. figure:: img/elliptical_cylinder_validation_1d.gif
+.. figure:: img/elliptical_cylinder_validation_1d.png
 
     Comparison between 1D and averaged 2D.
 
 In the 2D average, more binning in the angle |phi| is necessary to get the proper result. The following figure shows
 the results of the averaging by varying the number of angular bins.
 
-.. figure:: img/elliptical_cylinder_averaging.gif
+.. figure:: img/elliptical_cylinder_averaging.png
 
     The intensities averaged from 2D over different numbers of bins and angles.
 
