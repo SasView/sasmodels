@@ -47,6 +47,7 @@ description = """\
     volfraction is the volume fraction occupied by the spheres.
 """
 category = "structure-factor"
+structure_factor = True
 
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["effect_radius", "Ang", 50.0, [0, inf], "volume",

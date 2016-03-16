@@ -83,6 +83,7 @@ description = """\
         parameters used in P(Q).
 """
 category = "structure-factor"
+structure_factor = True
 
 single = False
 #             ["name", "units", default, [lower, upper], "type","description"],
