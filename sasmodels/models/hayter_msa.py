@@ -44,9 +44,9 @@ J P Hansen and J B Hayter, *Molecular Physics*, 46 (1982) 651-656
 
 from numpy import inf
 
-source = ["HayterMSAsq_kernel.c"]
+source = ["hayter_msa_kernel.c"]
 
-name = "HayterMSAsq"
+name = "hayter_msa"
 title = "Hayter-Penfold MSA charged sphere interparticle S(Q) structure factor"
 description = """\
     [Hayter-Penfold MSA charged sphere interparticle S(Q) structure factor]
@@ -56,7 +56,7 @@ description = """\
         In sasview the effective radius will be calculated from the
         parameters used in P(Q).
 """
-single = False  # double precision only for now
+single = False  # double precision only!
 
 # pylint: disable=bad-whitespace, line-too-long
 #             [ "name", "units", default, [lower, upper], "type", "description" ],
@@ -98,7 +98,8 @@ demo = dict(effect_radius=20.75,
             effect_radius_pd=0.1,
             effect_radius_pd_n=40)
 #
-# attempt to use same values as old sasview unit test
+# attempt to use same values as old sasview unit test at Q=.001 was 0.0712928, 
+# then add lots new ones assuming values from new model are OK, need some low Q values to test the small Q Taylor expansion
 tests = [
     [{'scale': 1.0,
       'background': 0.0,
@@ -109,6 +110,17 @@ tests = [
       'saltconc': 0,
       'dielectconst': 78.0,
       'effect_radius_pd': 0},
-     [0.0010], [0.0712928]]
+     [0.00001,0.0010,0.01,0.075], [0.0711646,0.0712928,0.0847006,1.07150]],
+    [{'scale': 1.0,
+      'background': 0.0,
+      'effect_radius': 20.75,
+      'charge': 19.0,
+      'volfraction': 0.0192,
+      'temperature': 298.0,
+      'saltconc': 0.05,
+      'dielectconst': 78.0,
+      'effect_radius_pd': 0.1,
+      'effect_radius_pd_n': 40},
+     [0.00001,0.0010,0.01,0.075], [0.450272,0.450420,0.465116,1.039625]]
     ]
 
