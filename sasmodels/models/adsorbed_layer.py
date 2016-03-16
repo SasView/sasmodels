@@ -24,10 +24,14 @@ Note that all parameters except the |sigma| are correlated so fitting more than 
 
     1D plot using the default values.
 
+The 2D scattering intensity is calculated in the same way as the 1D, but where the *q* vector is redefined as
+
+.. image:: img/2d_q_vector.gif
+
 References
 ----------
 
-S King, P Griffiths, J. Hone, and T Cosgrove, *SANS from Adsorbed Polymer Layers*,
+S King, P Griffiths, J Hone, and T Cosgrove, *SANS from Adsorbed Polymer Layers*,
 *Macromol. Symp.*, 190 (2002) 33-42.
 """
 
