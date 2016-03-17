@@ -126,7 +126,7 @@ parameters = [["core_sld", "1e-6/Ang^2", 4, [-inf, inf], "",
                "Out of plane angle"],
              ]
 
-source = ["lib/polevl.c", "lib/j1d.c", "lib/gauss76.c", "core_shell_cylinder.c"]
+source = ["lib/J1.c", "lib/gauss76.c", "core_shell_cylinder.c"]
 
 def ER(radius, thickness, length):
     """
