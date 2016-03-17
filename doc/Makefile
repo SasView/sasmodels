@@ -130,6 +130,7 @@ latex: build
 
 pdf: latex
 	$(MAKE) -C _build/latex all-pdf
+	$(COPY) _build/latex/SASModels.pdf _build/html
 
 changes:
 	$(SPHINXBUILD) -b changes $(ALLSPHINXOPTS) _build/changes
