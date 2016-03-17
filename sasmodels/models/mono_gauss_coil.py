@@ -85,6 +85,7 @@ oldpars =  dict(scale = 'scale',
                radius_gyration = 'rg',
                background = 'background')
 
+# these unit test values taken from SasView 3.1.2
 tests =  [
     [{'scale': 1.0, 'i_zero': 70.0, 'radius_gyration': 75.0, 'background': 0.0},
      [0.0106939, 0.469418], [57.1241, 0.112859]],
