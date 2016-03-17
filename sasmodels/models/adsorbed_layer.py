@@ -88,6 +88,7 @@ oldpars =  dict(scale = 'scale',
                solvent_sld = 'sld_solv',
                background = 'background')
 
+# these unit test values taken from SasView 3.1.2
 tests =  [
     [{'scale': 1.0, 'second_moment': 23.0, 'adsorbed_amount': 1.9, 
      'density_poly': 0.7, 'radius': 500.0, 'volfraction': 0.14, 
