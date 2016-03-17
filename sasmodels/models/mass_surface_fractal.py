@@ -44,9 +44,6 @@ and $\rho_{particle}$ is the scattering length density of particles.
     valid if $0 < surface_dim < 6$ , $0 < mass_dim < 6$ , and
     $(surface_dim + mass_dim ) < 6$ .
 
-.. figure:: img/mass_surface_fractal_1d.jpg
-
-    1D plot using the default values.
 
 Reference
 ---------

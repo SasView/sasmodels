@@ -91,7 +91,8 @@ Validation
 The model uses the form factor calculations implemented in a c-library provided
 by the NIST Center for Neutron Research (Kline, 2006).
 
-REFERENCE
+References
+----------
 
 P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
 Equations (1), (13-14). (in German)

@@ -15,9 +15,6 @@ where the $q$ vector is defined as
 
 .. math:: q=\sqrt{q_x^2 + q_y^2}
 
-.. figure:: img/lorentz_1d.jpg
-
-    1D plot using the default values (w/200 data point).
 
 References
 ----------

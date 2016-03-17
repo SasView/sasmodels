@@ -19,9 +19,6 @@ Also note that unlike many other models, *scale* in this model
 is NOT explicitly related to a volume fraction. Be careful if
 combining this model with other models.
 
-.. figure:: img/power_law_1d.jpg
-
-    1D plot using the default values (w/200 data point).
 
 References
 ----------

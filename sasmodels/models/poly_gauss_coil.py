@@ -13,21 +13,21 @@ Definition
 ----------
 
      *I(q)* = *scale* |cdot| *I* \ :sub:`0` |cdot| *P(q)* + *background*
-
+	 
 where
 
      *I*\ :sub:`0` = |phi|\ :sub:`poly` |cdot| *V* |cdot| (|rho|\ :sub:`poly` - |rho|\ :sub:`solv`)\ :sup:`2`
 
      *P(q)* = 2 [(1 + UZ)\ :sup:`-1/U` + Z - 1] / [(1 + U) Z\ :sup:`2`]
-
-     *Z* = [(*q R*\ :sub:`g`)\ :sup:`2`] / (1 + 2U)
-
-     *U* = (Mw / Mn) - 1 = (*polydispersity ratio*) - 1
+	 
+	 *Z* = [(*q R*\ :sub:`g`)\ :sup:`2`] / (1 + 2U)
+	 
+	 *U* = (Mw / Mn) - 1 = (*polydispersity ratio*) - 1
 
 and
 
-     *V* = *M* / (*N*\ :sub:`A` |delta|)
-
+	 *V* = *M* / (*N*\ :sub:`A` |delta|)
+	 
 Here, |phi|\ :sub:`poly`, is the volume fraction of polymer, *V* is the volume of a polymer coil, *M* is the molecular weight of the polymer, *N*\ :sub:`A` is Avogadro's Number, |delta| is the bulk density of the polymer, |rho|\ :sub:`poly` is the sld of the polymer, |rho|\ :sub:`solv` is the sld of the solvent, and *R*\ :sub:`g` is the radius of gyration of the polymer coil.
 
 The 2D scattering intensity is calculated in the same way as the 1D, but where the *q* vector is redefined as
@@ -56,31 +56,29 @@ title =  "Scattering from polydisperse polymer coils"
 
 description =  """
     Evaluates the scattering from 
-    polydisperse polymer chains.
+	polydisperse polymer chains.
     """
 category =  "shape-independent"
 
 #             ["name", "units", default, [lower, upper], "type", "description"],
-parameters =  [["i_zero", "1/cm", 70.0, [0.0, inf], "", "Intensity at q=0"],
-               ["radius_gyration", "Ang", 75.0, [0.0, inf], "", "Radius of gyration"],
+parameters =  [["i_zero", "1/cm", 1.0, [-inf, inf], "", "Intensity at q=0"],
+               ["radius_gyration", "Ang", 50.0, [0.0, inf], "", "Radius of gyration"],
                ["polydispersity", "None", 2.0, [1.0, inf], "", "Polymer Mw/Mn"]]
 
 # NB: Scale and Background are implicit parameters on every model
 def Iq(q, i_zero, radius_gyration, polydispersity):
     # pylint: disable = missing-docstring
-    # need to trap the case of the polydispersity being 1 (ie, monodispersity)
     u = polydispersity - 1.0
-    if polydispersity == 1:
-       minusoneonu = -1.0 / u
+    # TO DO
+    # should trap the case of polydispersity = 1 by switching to a taylor expansion
+    minusoneonu = -1.0 / u
+    z = (q * radius_gyration) ** 2 / (1.0 + 2.0 * u)
+    if q == 0:
+        inten = i_zero * 1.0
     else:
-       minusoneonu = -1.0 / u
-    z = ((q * radius_gyration) * (q * radius_gyration)) / (1.0 + 2.0 * u)
-    if (q == 0).any():
-       inten = i_zero
-    else:
-       inten = i_zero * 2.0 * (power((1.0 + u * z),minusoneonu) + z - 1.0 ) / ((1.0 + u) * (z * z))
+        inten = i_zero * 2.0 * (power((1.0 + u * z),minusoneonu) + z - 1.0 ) / ((1.0 + u) * (z * z))
     return inten
-Iq.vectorized =  True  # Iq accepts an array of q values
+#Iq.vectorized = True # Iq accepts an array of q values
 
 def Iqxy(qx, qy, *args):
     # pylint: disable = missing-docstring
@@ -88,8 +86,8 @@ def Iqxy(qx, qy, *args):
 #Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
 
 demo =  dict(scale = 1.0,
-            i_zero = 70.0,
-            radius_gyration = 75.0,
+            i_zero = 1.0,
+            radius_gyration = 50.0,
             polydispersity = 2.0,
             background = 0.0)
 
@@ -100,6 +98,6 @@ oldpars =  dict(scale = 'scale',
                background = 'background')
 
 tests =  [
-    [{'scale': 70.0, 'radius_gyration': 75.0, 'polydispersity': 2.0, 'background': 0.0},
-     [0.0106939, 0.469418], [57.6405, 0.169016]],
+    [{'scale': 1.0, 'radius_gyration': 50.0, 'polydispersity': 2.0, 'background': 0.0},
+     [0.0106939, 0.469418], [0.912993, 0.0054163]],
     ]

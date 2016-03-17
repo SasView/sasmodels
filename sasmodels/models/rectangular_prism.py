@@ -70,7 +70,9 @@ Validation
 Validation of the code was conducted by comparing the output of the 1D model
 to the output of the existing :ref:`parallelepiped` model.
 
-REFERENCES
+
+References
+----------
 
 P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
 

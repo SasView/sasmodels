@@ -44,10 +44,6 @@ and $\rho_{particle}$ is the scattering length density of particles.
     details)
 
 
-.. figure:: img/surface_fractal_1d.jpg
-
-    1D plot using the default values.
-
 Reference
 ---------
 

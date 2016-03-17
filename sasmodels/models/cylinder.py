@@ -59,23 +59,10 @@ The $\theta$ and $\phi$ parameters are not used for the 1D output.
 Validation
 ----------
 
-Validation of our code was done by comparing the output of the 1D model
+Validation of the code was done by comparing the output of the 1D model
 to the output of the software provided by the NIST (Kline, 2006).
-:num:`Figure #cylinder-compare` shows a comparison of
-the 1D output of our model and the output of the NIST software.
-
-.. _cylinder-compare:
-
-.. figure:: img/cylinder_compare.jpg
-
-    Comparison of the SasView scattering intensity for a cylinder with the
-    output of the NIST SANS analysis software.
-    The parameters were set to: *scale* = 1.0, *radius* = 20 |Ang|,
-    *length* = 400 |Ang|, *contrast* = 3e-6 |Ang^-2|, and
-    *background* = 0.01 |cm^-1|.
-
-In general, averaging over a distribution of orientations is done by
-evaluating the following
+The implementation of the intensity for fully oriented cylinders was done
+by averaging over a uniform distribution of orientations using
 
 .. math::
 
@@ -85,28 +72,13 @@ evaluating the following
 
 where $p(\theta,\phi)$ is the probability distribution for the orientation
 and $P_0(q,\alpha)$ is the scattering intensity for the fully oriented
-system. Since we have no other software to compare the implementation of
-the intensity for fully oriented cylinders, we can compare the result of
-averaging our 2D output using a uniform distribution $p(\theta, \phi) = 1.0$.
-:num:`Figure #cylinder-crosscheck` shows the result of
-such a cross-check.
-
-.. _cylinder-crosscheck:
-
-.. figure:: img/cylinder_crosscheck.jpg
-
-    Comparison of the intensity for uniformly distributed cylinders
-    calculated from our 2D model and the intensity from the NIST SANS
-    analysis software.
-    The parameters used were: *scale* = 1.0, *radius* = 20 |Ang|,
-    *length* = 400 |Ang|, *contrast* = 3e-6 |Ang^-2|, and
-    *background* = 0.0 |cm^-1|.
-    
+system, and then comparing to the 1D result.
 
 References
 ----------
 
-None.    
+None
+
 """
 
 import numpy as np

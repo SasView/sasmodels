@@ -24,7 +24,7 @@ pars = dict((p[0], p[2]) for p in info['parameters'])
 opts = {
         'xscale'    : 'log',
         'yscale'    : 'log' if not info['structure_factor'] else 'linear',
-        'qmin'      : 0.005,
+        'qmin'      : 0.001,
         'qmax'      : 1.0,
         'nq'        : 1000,
         'nq2d'      : 100,
@@ -67,7 +67,7 @@ Iq1D = calculator()
 #    pass
 fig = plt.figure()
 ax = fig.add_subplot(1,1,1)
-ax.plot(q, Iq1D, color='blue', lw=2, label=model_name)
+ax.plot(q, Iq1D, color='blue', lw=2, label=info['name'])
 ax.set_xlabel(r'$Q \/(\AA^{-1})$')
 ax.set_xscale(opts['xscale'])   
 ax.set_ylabel(r'$I(Q) \/(\mathrm{cm}^{-1})$')
@@ -100,7 +100,9 @@ if m:
     docstr2 = docstr[m.start():]
     docstr = docstr1 + captionstr + docstr2
 else:
+    print '------------------------------------------------------------------'
     print 'References NOT FOUND for model: ', model_name
+    print '------------------------------------------------------------------'
     docstr = docstr + captionstr
 
 open(sys.argv[2],'w').write(docstr)

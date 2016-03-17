@@ -49,14 +49,6 @@ where the *q* vector is defined as
     q = \sqrt{{q_x}^2 + {q_y}^2}
 
 
-.. figure:: img/fuzzy_sphere.jpg
-
-     This example dataset is produced by running the FuzzySphereModel,
-     using 200 data points, *qmin* = 0.001 -1,
-     *qmax* = 0.7 |Ang^-1|, background = 0.001 |cm^-1| and the default values.
-
-
-
 References
 ----------
 

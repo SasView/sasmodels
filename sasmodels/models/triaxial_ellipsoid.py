@@ -63,16 +63,7 @@ Validation
 Validation of our code was done by comparing the output of the
 1D calculation to the angular average of the output of 2D calculation
 over all possible angles.
-:num:`Figure #triaxial-ellipsoid-comparison` shows the comparison where
-the solid dot refers to averaged 2D while the line represents the
-result of 1D calculation (for 2D averaging, 76, 180, and 76 points
-are taken for the angles of $\theta$, $\phi$, and $\psi$ respectively).
 
-.. _triaxial-ellipsoid-comparison:
-
-.. figure:: img/triaxial_ellipsoid_comparison.png
-
-    Comparison between 1D and averaged 2D.
 
 References
 ----------

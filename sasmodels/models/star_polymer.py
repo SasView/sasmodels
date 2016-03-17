@@ -26,10 +26,6 @@ and
 
 is the square of the ensemble average radius-of-gyration of an arm.
 
-.. figure:: img/star_polymer_1d.jpg
-
-    1D plot using the default values.
-
 
 Reference
 ---------

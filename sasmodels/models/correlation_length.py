@@ -24,11 +24,9 @@ where the q vector is defined as
 .. math::
     q = \sqrt{q_x^2 + q_y^2}
 
-.. figure:: img/correlation_length_1d.jpg
+References
+----------
 
-    1D plot using the default values (w/500 data points).
-
-REFERENCE
 B Hammouda, D L Ho and S R Kline, Insight into Clustering in
 Poly(ethylene oxide) Solutions, Macromolecules, 37 (2004) 6932-6937
 """

@@ -41,12 +41,6 @@ Validation of our code was done by comparing the output of the 1D model to the o
 the software provided by NIST (Kline, 2006). Figure 1 shows a comparison of the output of
 our model and the output of the NIST software.
 
-.. figure:: img/core_shell_sphere_1d.jpg
-
-    Comparison of the SasView scattering intensity for a core-shell sphere with
-    the output of the NIST SANS analysis software. The parameters were set to:
-    *scale* = 1.0, *radius* = 60 , *contrast* = 1e-6 |Ang^-2|, and
-    *background* = 0.001 |cm^-1|.
 """
 
 from numpy import pi, inf

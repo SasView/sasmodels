@@ -24,10 +24,6 @@ where the $q$ vector is defined as
     q = \sqrt{q_x^2 + q_y^2}
 
 
-.. figure:: img/two_lorentzian.jpg
-
-    1D plot using the default values (w/500 data point).
-
 References
 ----------
 
