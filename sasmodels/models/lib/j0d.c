@@ -96,7 +96,7 @@ double j0( double );
 double j0(double x) {
 
 //Cephes single precission
-if ( FLOAT_SIZE>4 ) {
+#if FLOAT_SIZE>4
     double w, z, p, q, xn;
 
     const double TWOOPI = 6.36619772367581343075535E-1;
@@ -219,9 +219,8 @@ if ( FLOAT_SIZE>4 ) {
     p = p * cn - w * q * sn;
 
     return( p * SQ2OPI / sqrt(x) );
-}
 //Cephes single precission
-else {
+#else
     double xx, w, z, p, q, xn;
 
     const double YZ1 =  0.43221455686510834878;
@@ -296,6 +295,7 @@ else {
     xn = q * polevl( w, PH, 7) - PIO4F;
     p = p * cosf(xn + xx);
     return(p);
-}
+#endif
+
 }
 

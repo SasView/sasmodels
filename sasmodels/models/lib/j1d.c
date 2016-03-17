@@ -80,7 +80,7 @@ double j1(double );
 double j1(double x) {
 
 //Cephes double pression function
-if (FLOAT_SIZE>4) {
+#if FLOAT_SIZE>4
 
     double w, z, p, q, xn;
 
@@ -182,9 +182,9 @@ if (FLOAT_SIZE>4) {
 
     return( p * SQ2OPI / sqrt(x) );
 
-}
+
 //Single precission version of cephes
-else {
+#else
     double xx, w, z, p, q, xn;
 
     const double Z1 = 1.46819706421238932572E1;
@@ -244,6 +244,6 @@ else {
     p = p * cos(xn + xx);
 
     return(p);
-}
+#endif
 }
 

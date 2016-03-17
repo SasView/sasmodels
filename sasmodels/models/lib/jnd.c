@@ -80,10 +80,11 @@ double jn( int n, double x ) {
     if( x < MACHEP )
 	    return( 0.0 );
 
-    if (FLOAT_SIZE > 4)
+    #if FLOAT_SIZE > 4
         k = 53;
-    else
+    #else
         k = 24;
+    #endif
 
     pk = 2 * (n + k);
     ans = pk;
@@ -98,7 +99,7 @@ double jn( int n, double x ) {
 
     pk = 1.0;
 
-    if (FLOAT_SIZE > 4) {
+    #if FLOAT_SIZE > 4
         ans = x/ans;
         pkm1 = 1.0/ans;
 
@@ -118,8 +119,8 @@ double jn( int n, double x ) {
 	        ans = j0(x)/pkm1;
 
 	    return( sign * ans );
-	}
-    else {
+
+    #else
         xinv = 1.0/x;
         pkm1 = ans * xinv;
         k = n-1;
@@ -145,6 +146,6 @@ double jn( int n, double x ) {
         else
 	        ans = sign * j0(x)/pkm1;
         return( ans );
-    }
+    #endif
 }
 
