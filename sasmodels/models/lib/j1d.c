@@ -79,6 +79,9 @@ double j1(double );
 
 double j1(double x) {
 
+//Cephes double pression function
+if (FLOAT_SIZE>4) {
+
     double w, z, p, q, xn;
 
     const double DR1 = 5.78318596294678452118E0;
@@ -155,9 +158,6 @@ double j1(double x) {
     0.0,
     };
 
-    //const double Z1 = 1.46819706421238932572E1;
-    //const double Z2 = 4.92184563216946036703E1;
-
     w = x;
     if( x < 0 )
 	    w = -x;
@@ -181,4 +181,69 @@ double j1(double x) {
     p = p * cn - w * q * sn;
 
     return( p * SQ2OPI / sqrt(x) );
+
 }
+//Single precission version of cephes
+else {
+    double xx, w, z, p, q, xn;
+
+    const double Z1 = 1.46819706421238932572E1;
+    const double THPIO4F =  2.35619449019234492885;    /* 3*pi/4 */
+
+
+    double JP[8] = {
+        -4.878788132172128E-009,
+        6.009061827883699E-007,
+        -4.541343896997497E-005,
+        1.937383947804541E-003,
+        -3.405537384615824E-002,
+        0.0,
+        0.0,
+        0.0
+    };
+
+    double MO1[8] = {
+        6.913942741265801E-002,
+        -2.284801500053359E-001,
+        3.138238455499697E-001,
+        -2.102302420403875E-001,
+        5.435364690523026E-003,
+        1.493389585089498E-001,
+        4.976029650847191E-006,
+        7.978845453073848E-001
+    };
+
+    double PH1[8] = {
+        -4.497014141919556E+001,
+        5.073465654089319E+001,
+        -2.485774108720340E+001,
+        7.222973196770240E+000,
+        -1.544842782180211E+000,
+        3.503787691653334E-001,
+        -1.637986776941202E-001,
+        3.749989509080821E-001
+    };
+
+    xx = x;
+    if( xx < 0 )
+	    xx = -x;
+
+    if( xx <= 2.0 )
+	{
+	    z = xx * xx;
+	    p = (z-Z1) * xx * polevl( z, JP, 4 );
+	    return( p );
+	}
+
+    q = 1.0/x;
+    w = sqrt(q);
+
+    p = w * polevl( q, MO1, 7);
+    w = q*q;
+    xn = q * polevl( w, PH1, 7) - THPIO4F;
+    p = p * cos(xn + xx);
+
+    return(p);
+}
+}
+
