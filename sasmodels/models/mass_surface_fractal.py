@@ -114,6 +114,7 @@ tests = [
       'surface_dim':   2.3,
       'cluster_rg':   86.7,
       'primary_rg': 4000.0,
+      'background':    0.0,
      }, 0.05, 1.77537e-05],
 
     # Additional tests with larger range of parameters
@@ -121,7 +122,7 @@ tests = [
       'surface_dim':   1.0,
       'cluster_rg':   90.0,
       'primary_rg': 4000.0,
-     }, 0.001, 0.18462699016],
+     }, 0.001, 0.18562699016],
 
     [{'mass_dim':      1.3,
       'surface_dim':   1.0,
@@ -135,5 +136,6 @@ tests = [
       'cluster_rg':   90.0,
       'primary_rg': 1000.0,
       'scale':        10.0,
+      'background':    0.0,
      }, 0.051, 0.000169548800377],
     ]

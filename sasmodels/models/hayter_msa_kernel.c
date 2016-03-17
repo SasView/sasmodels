@@ -2,7 +2,7 @@
 //
 // C99 needs declarations of routines here
 double Iq(double QQ,
-      double effect_radius, double zz, double VolFrac, double Temp, double csalt, double dialec);
+      double radius_effective, double zz, double VolFrac, double Temp, double csalt, double dialec);
 int
 sqcoef(int ir, double gMSAWave[]);
 
@@ -13,7 +13,7 @@ double
 sqhcal(double qq, double gMSAWave[]);
   
 double Iq(double QQ,
-      double effect_radius, double zz, double VolFrac, double Temp, double csalt, double dialec)  
+      double radius_effective, double zz, double VolFrac, double Temp, double csalt, double dialec)  
 {
     double gMSAWave[17]={1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17};
 	double Elcharge=1.602189e-19;		// electron charge in Coulombs (C)
@@ -27,7 +27,7 @@ double Iq(double QQ,
 	
 	pi = M_PI;
 
-	diam=2*effect_radius;		//in A
+	diam=2*radius_effective;		//in A
 
 						////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 						//////////////////////////// convert to USEFUL inputs in SI units                                                //

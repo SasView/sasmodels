@@ -131,37 +131,38 @@ tests = [
       'static_cor_length':   100.0,
       'lorentz_scale_factor': 50.0,
       'dynamic_cor_length':   20.0,
-     }, 0.001, 149.481],
+     }, 0.001, 149.482],
 
     [{'gauss_scale_factor':  100.0,
       'static_cor_length':   100.0,
       'lorentz_scale_factor': 50.0,
       'dynamic_cor_length':   20.0,
-     }, 0.105363, 9.1903],
+     }, 0.105363, 9.1913],
 
     [{'gauss_scale_factor':  100.0,
       'static_cor_length':   100.0,
       'lorentz_scale_factor': 50.0,
       'dynamic_cor_length':   20.0,
-     }, 0.441623, 0.632811],
+     }, 0.441623, 0.633811],
 
     # Additional tests with larger range of parameters
     [{'gauss_scale_factor':  10.0,
       'static_cor_length':  100.0,
       'lorentz_scale_factor': 3.0,
       'dynamic_cor_length':   1.0,
-     }, 0.1, 2.9702970297],
+     }, 0.1, 2.9712970297],
 
     [{'gauss_scale_factor':  10.0,
       'static_cor_length':  100.0,
       'lorentz_scale_factor': 3.0,
       'dynamic_cor_length':   1.0,
       'background':         100.0
-     }, 5.0, 100.115384615],
+     }, 5.0, 100.116384615],
 
     [{'gauss_scale_factor':  10.0,
       'static_cor_length':  100.0,
       'lorentz_scale_factor': 3.0,
       'dynamic_cor_length':   1.0,
+      'background':           0.0,
      }, 200., 7.49981250469e-05],
     ]

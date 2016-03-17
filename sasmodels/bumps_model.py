@@ -82,12 +82,11 @@ def create_parameters(model_info, **kwargs):
 
     pars = {}
     for p in model_info['parameters']:
-        name, default, limits = p[0], p[2], p[3]
-        value = kwargs.pop(name, default)
-        pars[name] = Parameter.default(value, name=name, limits=limits)
+        value = kwargs.pop(p.name, p.default)
+        pars[p.name] = Parameter.default(value, name=p.name, limits=p.limits)
     for name in model_info['partype']['pd-2d']:
         for xpart, xdefault, xlimits in [
-                ('_pd', 0., limits),
+                ('_pd', 0., pars[name].limits),
                 ('_pd_n', 35., (0, 1000)),
                 ('_pd_nsigma', 3., (0, 10)),
             ]:

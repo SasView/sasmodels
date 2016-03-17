@@ -48,7 +48,7 @@ disappear on a log-log plot). Use tight bounds to keep the parameters to
 values that you know are physical (test them) and keep nudging them until
 the optimization does not hit the constraints.
 
-In sasview the effective radius will be calculated from the parameters
+In sasview the effective radius may be calculated from the parameters
 used in the form factor $P(q)$ that this $S(q)$ is combined with.
 
 For 2D data the scattering intensity is calculated in the same way

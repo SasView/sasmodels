@@ -232,9 +232,9 @@ oldpars = dict(theta='parallel_theta', phi='parallel_phi', psi='parallel_psi',
 
 
 qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
-tests = [[{}, 0.2, 0.17658004974],
-         [{}, [0.2], [0.17658004974]],
-         [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.00460296014],
-         [{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.00460296014]],
+tests = [[{}, 0.2, 0.17758004974],
+         [{}, [0.2], [0.17758004974]],
+         [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.00560296014],
+         [{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.00560296014]],
         ]
 del qx, qy  # not necessary to delete, but cleaner

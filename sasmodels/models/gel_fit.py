@@ -91,7 +91,8 @@ tests = [[{'guinier_scale': 1.0,
            'lorentzian_scale': 1.0,
            'gyration_radius': 10.0,
            'fractal_exp': 10.0,
-           'cor_length': 20.0
+           'cor_length': 20.0,
+           'background': 0.0,
           }, 0.1, 0.716532],
 
          [{'guinier_scale': 4.0,

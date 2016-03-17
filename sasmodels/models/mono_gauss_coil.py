@@ -60,20 +60,20 @@ parameters =  [["i_zero", "1/cm", 1.0, [-inf, inf], "", "Intensity at q=0"],
                ["radius_gyration", "Ang", 50.0, [0.0, inf], "", "Radius of gyration"]]
 
 # NB: Scale and Background are implicit parameters on every model
-def Iq(q, radius_gyration):
+def Iq(q, i_zero, radius_gyration):
     # pylint: disable = missing-docstring
-    z = (x * radius_gyration) * (x * radius_gyration)
-    if x == 0:
+    z = (q * radius_gyration) ** 2
+    if q == 0:
        inten = 1.0
     else:
        inten = i_zero * 2.0 * (exp(-z) + z - 1.0 ) / (z * z)
     return inten
-Iq.vectorized =  True  # Iq accepts an array of q values
+#Iq.vectorized = True # Iq accepts an array of q values
 
 def Iqxy(qx, qy, *args):
     # pylint: disable = missing-docstring
     return Iq(sqrt(qx ** 2 + qy ** 2), *args)
-Iqxy.vectorized =  True # Iqxy accepts an array of qx, qy values
+#Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
 
 demo =  dict(scale = 1.0,
             i_zero = 1.0,

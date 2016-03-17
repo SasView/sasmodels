@@ -136,8 +136,8 @@ oldname = 'RectangularHollowPrismInfThinWallsModel'
 oldpars = dict(a_side='short_side', b2a_ratio='b2a_ratio', c_side='c2a_ratio',
                sld='sldPipe', solvent_sld='sldSolv')
 
-tests = [[{}, 0.2, 0.836719188592],
-         [{}, [0.2], [0.836719188592]],
+tests = [[{}, 0.2, 0.837719188592],
+         [{}, [0.2], [0.837719188592]],
         ]
 
 

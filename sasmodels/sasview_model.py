@@ -59,9 +59,9 @@ class SasviewModel(object):
         self.params = dict()
         self.dispersion = dict()
         partype = model.info['partype']
-        for name, units, default, limits, _, _ in model.info['parameters']:
-            self.params[name] = default
-            self.details[name] = [units] + limits
+        for p in model.info['parameters']:
+            self.params[p.name] = p.default
+            self.details[p.name] = [p.units] + p.limits
 
         for name in partype['pd-2d']:
             self.dispersion[name] = {
