@@ -21,7 +21,7 @@ The function calculated is the form factor of the rectangular solid below.
 The core of the solid is defined by the dimensions *A*, *B*, *C* such that
 *A* < *B* < *C*.
 
-.. image:: img/core_shell_parallelepiped.jpg
+.. image:: img/core_shell_parallelepiped_geometry.jpg
 
 There are rectangular "slabs" of thickness $t_A$ that add to the *A* dimension
 (on the *BC* faces). There are similar slabs on the *AC* $(=t_B)$ and *AB*
@@ -71,16 +71,16 @@ for *S(Q)* when *P(Q)* \* *S(Q)* is applied.
 
 To provide easy access to the orientation of the parallelepiped, we define the
 axis of the cylinder using three angles |theta|, |phi| and |bigpsi|.
-These angles are defined on Figure 2 of the :ref:`cylinder` model.
+(see :ref:`cylinder orientation <cylinder-angle-definition>`).
 The angle |bigpsi| is the rotational angle around the *long_c* axis against the
 *q* plane. For example, |bigpsi| = 0 when the *short_b* axis is parallel to the
 *x*-axis of the detector.
 
-.. figure:: img/parallelepiped_angles_definition.jpg
+.. figure:: img/parallelepiped_angle_definition.jpg
 
     Definition of the angles for oriented core-shell parallelepipeds.
 
-.. figure:: img/parallelepiped_angles_examples.jpg
+.. figure:: img/parallelepiped_angle_projection.jpg
 
     Examples of the angles for oriented core-shell parallelepipeds against the
     detector plane.
@@ -185,9 +185,9 @@ oldpars = dict(theta='parallel_theta', phi='parallel_phi', psi='parallel_psi',
                arim_thickness='rimA', brim_thickness='rimB', crim_thickness='rimC')
 
 qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
-tests = [[{}, 0.2, 0.532149288477],
-         [{}, [0.2], [0.532149288477]],
-         [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.031102135569],
-         [{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.031102135569]],
+tests = [[{}, 0.2, 0.533149288477],
+         [{}, [0.2], [0.533149288477]],
+         [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.032102135569],
+         [{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.032102135569]],
         ]
 del qx, qy  # not necessary to delete, but cleaner

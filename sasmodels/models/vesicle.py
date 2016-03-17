@@ -129,9 +129,10 @@ oldname = 'VesicleModel'
 oldpars = dict(sld='shell_sld', solvent_sld='solv_sld')
 
 
-# NOTE: test results taken from values returned by SasView 3.1.2
-tests = [[{}, 0.0010005303255, 17139.8268799],
-         [{}, 0.200027832249, 0.130387268704],
+# NOTE: test results taken from values returned by SasView 3.1.2, with
+# 0.001 added for a non-zero default background.
+tests = [[{}, 0.0010005303255, 17139.8278799],
+         [{}, 0.200027832249, 0.131387268704],
          [{}, 'ER', 130.],
          [{}, 'VR', 0.54483386436],
         ]

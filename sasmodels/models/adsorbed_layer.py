@@ -20,14 +20,10 @@ where *scale* is a scale factor, |rho|\ :sub:`poly` is the sld of the polymer (o
 
 Note that all parameters except the |sigma| are correlated so fitting more than one of these parameters will generally fail. Also note that unlike other shape models, no volume normalization is applied to this model (the calculation is exact).
 
-.. figure:: img/adsorbed_layer_1d.jpg
-
-    1D plot using the default values.
-
 References
 ----------
 
-S King, P Griffiths, J. Hone, and T Cosgrove, *SANS from Adsorbed Polymer Layers*,
+S King, P Griffiths, J Hone, and T Cosgrove, *SANS from Adsorbed Polymer Layers*,
 *Macromol. Symp.*, 190 (2002) 33-42.
 """
 
@@ -49,7 +45,7 @@ parameters =  [["second_moment", "Ang", 23.0, [0.0, inf], "", "Second moment"],
               ["adsorbed_amount", "mg/m2", 1.9, [0.0, inf], "", "Adsorbed amount"],
               ["density_poly", "g/cm3", 0.7, [0.0, inf], "", "Polymer density"],
               ["radius", "Ang", 500.0, [0.0, inf], "", "Particle radius"],
-              ["vol_frac", "none", 0.14, [0.0, inf], "", "Particle vol fraction"],
+              ["vol_frac", "None", 0.14, [0.0, inf], "", "Particle vol fraction"],
               ["polymer_sld", "1/Ang^2", 1.5e-06, [-inf, inf], "", "Polymer SLD"],
               ["solvent_sld", "1/Ang^2", 6.3e-06, [-inf, inf], "", "Solvent SLD"]]
 
@@ -63,7 +59,7 @@ def Iq(q, second_moment, adsorbed_amount, density_poly, radius,
     eterm =  exp(-1.0 * (q * q) * (second_moment * second_moment))
     #scale by 10^10 for units conversion to cm^-1
     inten =  1.0e+10 * deltarhosqrd * ((numerator / denominator) * eterm)
-    return inten * 9.4e-13
+    return inten
 Iq.vectorized =  True  # Iq accepts an array of q values
 
 def Iqxy(qx, qy, *args):

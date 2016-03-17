@@ -83,5 +83,5 @@ oldpars = dict(lorentz_scale='scale_l', porod_scale='scale_p',
                exponent_l='exponent_l')
 
 tests = [[{}, 0.001, 1009.98],
-         [{}, 0.150141, 0.174645],
-         [{}, 0.442528, 0.0203957]]
+         [{}, 0.150141, 0.175645],
+         [{}, 0.442528, 0.0213957]]

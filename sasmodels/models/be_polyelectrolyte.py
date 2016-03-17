@@ -30,10 +30,6 @@ where the $q$ vector is defined as
     q = \sqrt{q_x^2 + q_y^2}
 
 
-.. figure:: img/be_polyelectrolyte_1d.jpg
-
-    1D plot using the default values (w/500 data point).
-
 NB: $1 barn = 10^{-24} cm^2$
 
 References
@@ -173,6 +169,7 @@ tests = [
       'salt_concentration':    10.0,
       'ionization_degree':      2.0,
       'polymer_concentration': 10.0,
+      'background':             0.0,
      }, 0.1, -3.75693800588],
 
     [{'contrast_factor':       10.0,
@@ -192,5 +189,6 @@ tests = [
       'salt_concentration':    0.1,
       'ionization_degree':     0.5,
       'polymer_concentration': 0.1,
+      'background':             0.0,
      }, 200., 1.80664667511e-06],
     ]

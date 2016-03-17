@@ -2,7 +2,7 @@
 //
 // C99 needs declarations of routines here
 double Iq(double QQ,
-      double effect_radius, double zz, double VolFrac, double Temp, double csalt, double dialec);
+      double radius_effective, double zz, double VolFrac, double Temp, double csalt, double dialec);
 int
 sqcoef(int ir, double gMSAWave[]);
 
@@ -13,7 +13,7 @@ double
 sqhcal(double qq, double gMSAWave[]);
   
 double Iq(double QQ,
-      double effect_radius, double zz, double VolFrac, double Temp, double csalt, double dialec)  
+      double radius_effective, double zz, double VolFrac, double Temp, double csalt, double dialec)  
 {
     double gMSAWave[17]={1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17};
 	double Elcharge=1.602189e-19;		// electron charge in Coulombs (C)
@@ -27,7 +27,7 @@ double Iq(double QQ,
 	
 	pi = M_PI;
 
-	diam=2*effect_radius;		//in A
+	diam=2*radius_effective;		//in A
 
 						////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 						//////////////////////////// convert to USEFUL inputs in SI units                                                //
@@ -44,6 +44,8 @@ double Iq(double QQ,
 	//			 Ionic strength IonSt (in C^2/m^3)  
 	// 			Kappa (Debye-Huckel screening length in m)
 	//	and		gamma Exp(-k)
+	
+	// the zz*VolFrac/Vp is for the counterions from the micelle, assumed monovalent, the 2.0*cs if for added salt, assumed 1:1 electolyte 
 	IonSt=0.5 * Elcharge*Elcharge*(zz*VolFrac/Vp+2.0*cs);
 	Kappa=sqrt(2*Beta*IonSt/Perm);     //Kappa calc from Ionic strength
 									   //	Kappa=2/SIdiam					// Use to compare with HP paper
@@ -504,16 +506,28 @@ sqhcal(double qq, double gMSAWave[])
 	sk = 0.5*(x1-x2);
 	ak2 = akz*akz;
 	
-	if (qq<=0.0) {
+	qk = qq/gMSAWave[13];
+	q2k = qk*qk;
+	if (qk<=1.0e-08) {
 		SofQ = -1.0/gMSAWave[0];
 	} else {
-		qk = qq/gMSAWave[13];
-		q2k = qk*qk;
+	// this rescales Q.sigma = 2.Q.Radius, so is hard to predict the value to test the function
+	if (qk<=0.01) {
+		// try Taylor series expansion at small qk (RKH Feb 2016, with help from Mathematica), 
+		// transition point may need to depend on precision of cpu used and ALAS on the values of some of the parameters !
+		// note have adsorbed a factor 24 from SofQ=
+		// needs thorough test over wide range of parameter space!
+		// there seem to be some rounding issues here in single precision, must use double
+		aqk = gMSAWave[0]*(8.0+2.0*etaz) + 6*gMSAWave[1] -12.0*gMSAWave[3] 
+			-24*(gekz*(1.0+akz) -ck*akz*gMSAWave[2] +gMSAWave[3]*(ck-1.0) +(gMSAWave[2]-gMSAWave[3]*akz)*sk )/ak2
+			+q2k*( -(gMSAWave[0]*(48.0+15.0*etaz) +40.0*gMSAWave[1])/60.0 +gMSAWave[3] 
+			+(4.0/ak2)*(gekz*(9.0+7.0*akz) +ck*(9.0*gMSAWave[3] -7.0*gMSAWave[2]*akz) +sk*(9.0*gMSAWave[2] -7.0*gMSAWave[3]*akz)) );
+		SofQ = 1.0/(1.0-gMSAWave[10]*aqk);
+	} else {
 		qk2 = 1.0/q2k;
 		qk3 = qk2/qk;
 		qqk = 1.0/(qk*(q2k+ak2));
-		sink = sin(qk);
-		cosk = cos(qk);
+		SINCOS(qk,sink,cosk);
 		asink = akz*sink;
 		qcosk = qk*cosk;
 		aqk = gMSAWave[0]*(sink-qcosk);
@@ -524,7 +538,7 @@ sqhcal(double qq, double gMSAWave[])
 		aqk=aqk +gMSAWave[3]*(sk*asink-qk*(ck*cosk-1.0))*qqk;
 		aqk=aqk +gMSAWave[3]*(cosk-1.0)*qk2;
 		aqk=aqk -gekz*(asink+qcosk)*qqk;
-		SofQ = 1.0/(1.0-e24*aqk);
-	}
+		SofQ = 1.0/(1.0  -e24*aqk);
+	} }
 	return (SofQ);
 }

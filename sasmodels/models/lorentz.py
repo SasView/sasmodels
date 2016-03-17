@@ -63,4 +63,4 @@ oldname = 'LorentzModel'
 oldpars = dict(cor_length='length')
 
 # parameters for unit tests
-tests = [[{'cor_length': 250}, 0.01, 0.137931]]
+tests = [[{'cor_length': 250}, 0.01, 0.138931]]

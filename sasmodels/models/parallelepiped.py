@@ -11,7 +11,7 @@ Definition
 
 .. _parallelepiped-image:
 
-.. figure:: img/parallelepiped.jpg
+.. figure:: img/parallelepiped_geometry.jpg
 
    Parallelepiped with the corresponding definition of sides.
 
@@ -98,11 +98,11 @@ $A$ along $z$ and $B$ along $x$.
 
 .. _parallelepiped-orientation:
 
-.. figure:: img/parallelepiped_angles_definition.jpg
+.. figure:: img/parallelepiped_angle_definition.jpg
 
     Definition of the angles for oriented parallelepipeds.
 
-.. figure:: img/parallelepiped_angles_examples.jpg
+.. figure:: img/parallelepiped_angle_projection.jpg
 
     Examples of the angles for oriented parallelepipeds against the detector plane.
 
@@ -155,7 +155,6 @@ $\phi$, and $\Psi$ respectively).
 
 This model is based on form factor calculations implemented in a c-library
 provided by the NIST Center for Neutron Research (Kline, 2006).
-
 """
 
 import numpy as np
@@ -233,9 +232,9 @@ oldpars = dict(theta='parallel_theta', phi='parallel_phi', psi='parallel_psi',
 
 
 qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
-tests = [[{}, 0.2, 0.17658004974],
-         [{}, [0.2], [0.17658004974]],
-         [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.00460296014],
-         [{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.00460296014]],
+tests = [[{}, 0.2, 0.17758004974],
+         [{}, [0.2], [0.17758004974]],
+         [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.00560296014],
+         [{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.00560296014]],
         ]
 del qx, qy  # not necessary to delete, but cleaner

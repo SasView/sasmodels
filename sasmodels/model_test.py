@@ -250,7 +250,8 @@ def main():
 usage:
   python -m sasmodels.model_test [-v] [opencl|dll] model1 model2 ...
 
-If -v is included on the
+If -v is included on the command line, then use verboe output.
+
 If neither opencl nor dll is specified, then models will be tested with
 both opencl and dll; the compute target is ignored for pure python models.
 

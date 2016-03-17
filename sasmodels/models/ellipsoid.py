@@ -46,19 +46,12 @@ NB: The 2nd virial coefficient of the solid ellipsoid is calculated based
 on the $R_p$ and $R_e$ values, and used as the effective radius for
 $S(q)$ when $P(q) \cdot S(q)$ is applied.
 
-.. _ellipsoid-1d:
-
-.. figure:: img/ellipsoid_1d.jpg
-
-    The output of the 1D scattering intensity function for randomly oriented
-    ellipsoids given by the equation above.
-
 
 The $\theta$ and $\phi$ parameters are not used for the 1D output.
 
 .. _ellipsoid-geometry:
 
-.. figure:: img/ellipsoid_geometry.jpg
+.. figure:: img/ellipsoid_angle_projection.jpg
 
     The angles for oriented ellipsoid.
 

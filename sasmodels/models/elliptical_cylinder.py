@@ -9,7 +9,7 @@ The angles |theta| and |phi| define the orientation of the axis of the cylinder.
 orientation of the major axis of the ellipse with respect to the vector *Q*\ . A gaussian polydispersity can be added
 to any of the orientation angles, and also for the minor radius and the ratio of the ellipse radii.
 
-.. figure:: img/elliptical_cylinder_geometry.gif
+.. figure:: img/elliptical_cylinder_geometry.png
 
     *a* = *r_minor* and |nu|\ :sub:`n` = $r_ratio$ (i.e., $r_major / r_minor$).
 
@@ -42,27 +42,23 @@ The form factor is averaged over all possible orientation before normalized by t
     P(q) = scale  <F^2> / V
 
 To provide easy access to the orientation of the elliptical cylinder, we define the axis of the cylinder using two
-angles |theta|, |phi| and |bigpsi|. As for the case of the cylinder, the angles |theta| and |phi| are defined on
-Figure 2 of CylinderModel. The angle |bigpsi| is the rotational angle around its own long_c axis against the *q* plane.
+angles |theta|, |phi| and |bigpsi| (see :ref:`cylinder orientation <cylinder-angle-definition>`).
+The angle |bigpsi| is the rotational angle around its own long_c axis against the *q* plane.
 For example, |bigpsi| = 0 when the *r_minor* axis is parallel to the *x*\ -axis of the detector.
 
 All angle parameters are valid and given only for 2D calculation; ie, an oriented system.
 
-.. figure:: img/elliptical_cylinder_geometry_2d.jpg
+.. figure:: img/elliptical_cylinder_angle_definition.jpg
 
     Definition of angles for 2D
 
-.. figure:: img/core_shell_bicelle_fig2.jpg
+.. figure:: img/cylinder_angle_projection.jpg
 
     Examples of the angles for oriented elliptical cylinders against the detector plane.
 
 NB: The 2nd virial coefficient of the cylinder is calculated based on the averaged radius (= sqrt(*r_minor*\ :sup:`2` \* *r_ratio*))
 and length values, and used as the effective radius for *S(Q)* when *P(Q)* \* *S(Q)* is applied.
 
-
-.. figure:: img/elliptical_cylinder_comparison_1d.jpg
-
-    1D plot using the default values (w/1000 data point).
 
 Validation
 ----------
@@ -72,14 +68,14 @@ the 2D calculation over all possible angles. The figure below shows the comparis
 averaged 2D values while the line represents the result of the 1D calculation (for the 2D averaging, values of 76, 180,
 and 76 degrees are taken for the angles of |theta|, |phi|, and |bigpsi| respectively).
 
-.. figure:: img/elliptical_cylinder_validation_1d.gif
+.. figure:: img/elliptical_cylinder_validation_1d.png
 
     Comparison between 1D and averaged 2D.
 
 In the 2D average, more binning in the angle |phi| is necessary to get the proper result. The following figure shows
 the results of the averaging by varying the number of angular bins.
 
-.. figure:: img/elliptical_cylinder_averaging.gif
+.. figure:: img/elliptical_cylinder_averaging.png
 
     The intensities averaged from 2D over different numbers of bins and angles.
 

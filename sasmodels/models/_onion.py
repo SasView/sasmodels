@@ -145,7 +145,7 @@ the shells is
         - 3\rho_\text{in}V(r_{\text{shell}-1})
             \frac{j_1(qr_\text{in})}{qr_\text{in}}
 
-.. figure:: img/onion_annotated_profile.gif
+.. figure:: img/onion_geometry.png
 
     Example of an onion model profile.
 
@@ -158,14 +158,6 @@ orientation of the $q$ vector which is defined as
 
 NB: The outer most radius is used as the effective radius for $S(q)$
 when $P(q) S(q)$ is applied.
-
-.. figure:: img/onion_1d.jpg
-
-    1D plot using the default values (w/400 point)
-
-.. figure:: img/onion_profile.jpg
-
-    SLD profile from the default values.
 
 References
 ----------
@@ -320,12 +312,9 @@ parameters = [["core_sld", "1e-6/Ang^2", 1.0, [-inf, inf], "",
 source = ["lib/sph_j1c.c", "onion.c"]
 
 
-def profile(core_sld, core_radius, solvent_sld, n, in_sld, out_sld, thickness, A):
+def shape(core_sld, core_radius, solvent_sld, n, in_sld, out_sld, thickness, A):
     """
-    Get SLD profile
-
-    Returns *(r, rho(r))* where *r* is the radius (Ang) and *rho(r)* is the
-    SLD (1/Ang^2).
+    SLD profile
     """
 
     total_radius = 1.25*(sum(thickness[:n]) + core_radius + 1)

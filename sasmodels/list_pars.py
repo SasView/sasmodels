@@ -25,9 +25,8 @@ def find_pars():
     for name in sorted(MODELS):
         model_info = load_model_info(name)
         for p in model_info['parameters']:
-            pname = p[0]
-            partable.setdefault(pname, [])
-            partable[pname].append(name)
+            partable.setdefault(p.name, [])
+            partable[p.name].append(name)
     return partable
 
 def list_pars(names_only=True):

@@ -27,17 +27,17 @@ def make_product_info(p_info, s_info):
     p_id, p_name, p_pars = p_info['id'], p_info['name'], p_info['parameters']
     s_id, s_name, s_pars = s_info['id'], s_info['name'], s_info['parameters']
     # We require models to start with scale and background
-    assert s_pars[SCALE][0] == 'scale'
-    assert s_pars[BACKGROUND][0] == 'background'
+    assert s_pars[SCALE].name == 'scale'
+    assert s_pars[BACKGROUND].name == 'background'
     # We require structure factors to start with effect radius and volfraction
-    assert s_pars[EFFECT_RADIUS][0] == 'effect_radius'
-    assert s_pars[VOLFRACTION][0] == 'volfraction'
+    assert s_pars[EFFECT_RADIUS].name == 'effect_radius'
+    assert s_pars[VOLFRACTION].name == 'volfraction'
     # Combine the parameter sets.  We are skipping the first three
     # parameters of S since scale, background are defined in P and
     # effect_radius is set from P.ER().
     pars = p_pars + s_pars[3:]
     # check for duplicates; can't use assertion since they may never be checked
-    if len(set(p[0] for p in pars)) != len(pars):
+    if len(set(p.name for p in pars)) != len(pars):
         raise ValueError("Duplicate parameters in %s and %s"%(p_id))
     # For comparison with sasview, determine the old parameters.
     oldname = [p_info['oldname'], s_info['oldname']]
@@ -51,12 +51,18 @@ def make_product_info(p_info, s_info):
     model_info['filename'] = None
     model_info['title'] = 'Product of %s and structure factor %s'%(p_name, s_name)
     model_info['description'] = model_info['title']
+    model_info['docs'] = model_info['title']
     model_info['category'] = "custom"
     model_info['parameters'] = pars
-    # Remember the component info blocks so we can build the product model
-    model_info['composition'] = ('product', [p_info, s_info])
+    #model_info['single'] = p_info['single'] and s_info['single']
+    model_info['structure_factor'] = False
+    model_info['variant_info'] = None
+    #model_info['tests'] = []
+    #model_info['source'] = []
+    # Iq, Iqxy, form_volume, ER, VR and sesans
     model_info['oldname'] = oldname
     model_info['oldpars'] = oldpars
+    model_info['composition'] = ('product', [p_info, s_info])
     process_parameters(model_info)
     return model_info
 

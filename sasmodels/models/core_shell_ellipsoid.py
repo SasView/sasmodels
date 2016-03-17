@@ -9,7 +9,7 @@ where the form factor is normalized by the volume of the cylinder.
 where the volume $V = (4/3)\pi(r_{maj}r_{min}^2)$ and the averaging $< >$ is
 applied over all orientations for 1D.
 
-.. figure:: img/core_shell_ellipsoid_fig1.gif
+.. figure:: img/core_shell_ellipsoid_geometry.png
 
     The returned value is in units of $cm^{-1}$, on absolute scale.
 
@@ -35,7 +35,8 @@ where
 
 To provide easy access to the orientation of the core-shell ellipsoid,
 we define the axis of the solid ellipsoid using two angles $\theta$ and $\phi$.
-These angles are defined on Figure 2 of the CylinderModel.
+These angles are defined as for
+:ref:`cylinder orientation <cylinder-angle-definition>`.
 The contrast is defined as SLD(core) - SLD(shell) and SLD(shell) - SLD(solvent).
 
 In the parameters, *equat_core* = equatorial core radius, *polar_core* =
@@ -47,11 +48,7 @@ and *polar_shell* = $r_{maj}$ (or polar outer radius).
     the *radius_a* (= *polar_shell)* and *radius_b (= equat_shell)* values,
     and used as the effective radius for *S(Q)* when $P(Q) * S(Q)$ is applied.
 
-.. figure:: img/core_shell_ellipsoid_1d.jpg
-
-    1D plot using the default values (w/200 data point).
-
-.. figure:: img/core_shell_ellipsoid_fig2.jpg
+.. figure:: img/core_shell_ellipsoid_angle_projection.jpg
 
     The angles for oriented core_shell_ellipsoid.
 

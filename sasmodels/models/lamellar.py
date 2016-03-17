@@ -98,4 +98,9 @@ demo = dict(scale=1, background=0,
             thickness_pd=0.2, thickness_pd_n=40)
 oldname = 'LamellarModel'
 oldpars = dict(sld='sld_bi', solvent_sld='sld_sol', thickness='bi_thick')
-
+tests = [
+        [ {'scale': 1.0, 'background' : 0.0, 'thickness' : 50.0, 'sld' : 1.0,'solvent_sld' : 6.3, 'thickness_pd' : 0.0, 
+           }, [0.001], [882289.54309]]
+        ]
+# ADDED by: converted by PAK? (or RKH?)     ON: 16Mar2016 - RKH adding unit tests from sasview to early 2015 conversion
+#  [(qx1, qy1), (qx2, qy2), ...], [I(qx1,qy1), I(qx2,qy2), ...]],

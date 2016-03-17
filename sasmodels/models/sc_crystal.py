@@ -40,7 +40,7 @@ where *g* is a fractional distortion based on the nearest neighbor distance.
 
 The simple cubic lattice is
 
-.. figure:: img/sc_crystal_fig1.jpg
+.. figure:: img/sc_crystal_geometry.jpg
 
 For a crystal, diffraction peaks appear at reduced q-values given by
 
@@ -52,6 +52,7 @@ where for a simple cubic lattice any h, k, l are allowed and none are
 forbidden. Thus the peak positions correspond to (just the first 5)
 
 .. math::
+    :nowrap:
 
     \begin{align*}
     q/q_0 \quad & \quad 1
@@ -76,22 +77,12 @@ forbidden. Thus the peak positions correspond to (just the first 5)
     meaningful fit. This makes a triple integral. Very, very slow.
     Go get lunch!
 
-This example dataset is produced using 200 data points,
-$q_{min} = 0.01A^{-1}, q_{max} = 0.1A^{-1}$ and the above default values.
-
-.. figure:: img/sc_crystal_1d.jpg
-
-    1D plot in the linear scale using the default values (w/200 data point).
-
 The 2D (Anisotropic model) is based on the reference below where *I(q)* is
 approximated for 1d scattering. Thus the scattering pattern for 2D may not
 be accurate. Note that we are not responsible for any incorrectness of the 2D
 model computation.
 
-.. figure:: img/sc_crystal_fig2.jpg
-.. figure:: img/sc_crystal_fig3.jpg
-
-    2D plot using the default values (w/200X200 pixels).
+.. figure:: img/sc_crystal_angle_definition.jpg
 
 Reference
 ---------
@@ -160,9 +151,9 @@ oldpars = dict(sphere_sld='sldSph',
 
 tests = [
     # Accuracy tests based on content in test/utest_extra_models.py
-    [{}, 0.001, 10.3038],
-    [{}, 0.215268, 0.00714889],
-    [{}, (0.414467), 0.000313289]
+    [{}, 0.001, 10.3048],
+    [{}, 0.215268, 0.00814889],
+    [{}, (0.414467), 0.001313289]
     ]
 
 

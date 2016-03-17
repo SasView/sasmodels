@@ -28,6 +28,8 @@ of the parallelepiped, |phi| is the angle between the scattering vector
 (lying in the *xy* plane) and the *y* axis, and
 
 .. math::
+  :nowrap:
+
   \begin{align}
   A_{P\Delta}(q) & =  A B C
     \left[\frac{\sin \bigl( q \frac{C}{2} \cos\theta \bigr)}
@@ -155,7 +157,7 @@ oldname = 'RectangularHollowPrismModel'
 oldpars = dict(a_side='short_side', b2a_ratio='b2a_ratio', c_side='c2a_ratio',
                thickness='thickness', sld='sldPipe', solvent_sld='sldSolv')
 
-tests = [[{}, 0.2, 0.76587283098],
-         [{}, [0.2], [0.76587283098]],
+tests = [[{}, 0.2, 0.76687283098],
+         [{}, [0.2], [0.76687283098]],
         ]
 

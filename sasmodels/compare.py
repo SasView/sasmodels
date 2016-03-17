@@ -680,15 +680,15 @@ def get_demo_pars(model_info):
     Extract demo parameters from the model definition.
     """
     # Get the default values for the parameters
-    pars = dict((p[0], p[2]) for p in model_info['parameters'])
+    pars = dict((p.name, p.default) for p in model_info['parameters'])
 
     # Fill in default values for the polydispersity parameters
     for p in model_info['parameters']:
-        if p[4] in ('volume', 'orientation'):
-            pars[p[0]+'_pd'] = 0.0
-            pars[p[0]+'_pd_n'] = 0
-            pars[p[0]+'_pd_nsigma'] = 3.0
-            pars[p[0]+'_pd_type'] = "gaussian"
+        if p.type in ('volume', 'orientation'):
+            pars[p.name+'_pd'] = 0.0
+            pars[p.name+'_pd_n'] = 0
+            pars[p.name+'_pd_nsigma'] = 3.0
+            pars[p.name+'_pd_type'] = "gaussian"
 
     # Plug in values given in demo
     pars.update(model_info['demo'])
@@ -832,6 +832,7 @@ def parse_opts():
     if opts['mono']:
         pars = suppress_pd(pars)
     pars.update(presets)  # set value after random to control value
+    #import pprint; pprint.pprint(model_info)
     constrain_pars(model_info, pars)
     constrain_new_to_old(model_info, pars)
     if opts['show_pars']:

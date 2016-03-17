@@ -5,7 +5,7 @@ rods (like strings - with a total mass *Mw* = *M* \* *m*\ :sub:`r` + *N* \* *m*\
 :sub:`s`, and the string segment length (or edge separation) *l*
 (= *A* - 2\ *R*)). *A* is the center-to-center pearl separation distance.
 
-.. figure:: img/pearl_fig.jpg
+.. figure:: img/pearl_necklace_geometry.jpg
 
     Pearl Necklace schematic
 
@@ -47,11 +47,8 @@ pearl_necklace model are the following
 
 NB: *number_of_pearls* must be an integer.
 
-.. figure:: img/pearl_plot.jpg
-
-    1D plot using the default values (w/1000 data point).
-
-REFERENCE
+References
+----------
 
 R Schweins and K Huber, *Particle Scattering Factor of Pearl Necklace Chains*,
 *Macromol. Symp.* 211 (2004) 25-42 2004

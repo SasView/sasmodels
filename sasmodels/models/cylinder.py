@@ -30,15 +30,15 @@ first order Bessel function.
 
 To provide easy access to the orientation of the cylinder, we define the
 axis of the cylinder using two angles $\theta$ and $\phi$. Those angles
-are defined in :num:`figure #cylinder-orientation`.
+are defined in :num:`figure #cylinder-angle-definition`.
 
-.. _cylinder-orientation:
+.. _cylinder-angle-definition:
 
-.. figure:: img/orientation.jpg
+.. figure:: img/cylinder_angle_definition.jpg
 
     Definition of the angles for oriented cylinders.
 
-.. figure:: img/orientation2.jpg
+.. figure:: img/cylinder_angle_projection.jpg
 
     Examples of the angles for oriented cylinders against the detector plane.
 
@@ -166,9 +166,9 @@ oldpars = dict(theta='cyl_theta', phi='cyl_phi', sld='sldCyl', solvent_sld='sldS
 
 
 qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
-tests = [[{}, 0.2, 0.041761386790780453],
-         [{}, [0.2], [0.041761386790780453]],
-         [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.03414647218513852],
-         [{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.03414647218513852]],
+tests = [[{}, 0.2, 0.042761386790780453],
+         [{}, [0.2], [0.042761386790780453]],
+         [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.03514647218513852],
+         [{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.03514647218513852]],
         ]
 del qx, qy  # not necessary to delete, but cleaner

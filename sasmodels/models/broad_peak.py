@@ -28,10 +28,6 @@ where the $q$ vector is defined as
     q = \sqrt{q_x^2 + q_y^2}
 
 
-.. figure:: img/broad_peak_1d.jpg
-
-    1D plot using the default values (w/200 data point).
-
 References
 ----------
 
