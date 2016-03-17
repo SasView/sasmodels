@@ -1,0 +1,35 @@
+REM CHECK IF SASMODELS AND SASVIEW GIVE THE SAME ANSWER
+
+compare-local poly_gauss_coil -1d
+
+
+multi_compare-local.sh poly_gauss_coil 200 1d100 0 double > poly_gauss_coil-1d.csv
+
+
+
+
+REM CHECK IF THE UNIT TEST PASSES
+
+python -m sasmodels.model_test poly_gauss_coil
+
+
+
+
+REM IF YOU ARE REALLY FEELING KEEN...
+
+python -m pylint --rcfile=extra/pylint.rc sasmodels/models/poly_gauss_coil.py
+
+
+
+REM CHECK THE DOCUMENTATION RENDERED
+
+cd to \sasmodels\doc
+
+make html
+
+cd to \sasmodels\doc\_build\html
+
+open index.html and navigate to poly_gauss_coil
+
+
+
