@@ -87,8 +87,8 @@ parameters = [["radius",        "Ang",  10.0, [0.0, inf], "", "Particle radius"]
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sph_j1c.c", "lib/lanczos_gamma.c", "mass_fractal.c"]
-
+#source = ["lib/sph_j1c.c", "lib/lanczos_gamma.c", "mass_fractal.c"]
+source = ["lib/sph_j1c.c", "lib/polevl.c", "lib/gamma.c", "mass_fractal.c"]
 demo = dict(scale=1, background=0,
             radius=10.0,
             mass_dim=1.9,
