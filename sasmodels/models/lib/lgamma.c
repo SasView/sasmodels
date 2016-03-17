@@ -1,47 +1,9 @@
-/*							gamma.c
+/*							lgamma.c
  *
- *	Gamma function
- *
- *
- *
- * SYNOPSIS:
- *
- * double x, y, gamma();
- * extern int sgngam;
- *
- * y = gamma( x );
- *
- *
- *
- * DESCRIPTION:
- *
- * Returns gamma function of the argument.  The result is
- * correctly signed, and the sign (+1 or -1) is also
- * returned in a global (extern) variable named sgngam.
- * This variable is also filled in by the logarithmic gamma
- * function lgam().
- *
- * Arguments |x| <= 34 are reduced by recurrence and the function
- * approximated by a rational function of degree 6/7 in the
- * interval (2,3).  Large arguments are handled by Stirling's
- * formula. Large negative arguments are made positive using
- * a reflection formula.  
- *
- *
- * ACCURACY:
- *
- *                      Relative error:
- * arithmetic   domain     # trials      peak         rms
- *    DEC      -34, 34      10000       1.3e-16     2.5e-17
- *    IEEE    -170,-33      20000       2.3e-15     3.3e-16
- *    IEEE     -33,  33     20000       9.4e-16     2.2e-16
- *    IEEE      33, 171.6   20000       2.3e-15     3.2e-16
- *
- * Error for arguments outside the test range will be larger
- * owing to error amplification by the exponential function.
+ *	Log Gamma function
  *
  */
-/*							lgam()
+/*							lgamma()
  *
  *	Natural logarithm of gamma function
  *
@@ -49,10 +11,10 @@
  *
  * SYNOPSIS:
  *
- * double x, y, lgam();
+ * double x, y, lgamma();
  * extern int sgngam;
  *
- * y = lgam( x );
+ * y = lgamma( x );
  *
  *
  *
@@ -95,18 +57,15 @@
  *
  */
 
-/*							gamma.c	*/
-/*	gamma function	*/
-
 /*
 Cephes Math Library Release 2.8:  June, 2000
 Copyright 1984, 1987, 1989, 1992, 2000 by Stephen L. Moshier
 */
 
 
-double lanczos_gamma( double );
+double lgamma( double );
 
-double lanczos_gamma( double x) {
+double lgamma( double x) {
 
 #if FLOAT_SIZE > 4
     double p, q, u, w, z;
