@@ -90,7 +90,10 @@ defined as a sublist with the following elements:
     will be used in all functions.  "orientation" parameters will be used
     in *Iqxy* and *Imagnetic*.  "magnetic* parameters will be used in
     *Imagnetic* only.  If *type* is the empty string, the parameter will
-    be used in all of *Iq*, *Iqxy* and *Imagnetic*.
+    be used in all of *Iq*, *Iqxy* and *Imagnetic*.  "sld" parameters
+    can automatically be promoted to magnetic parameters, each of which
+    will have a magnitude and a direction, which may be different from
+    other sld parameters.
 
     *description* is a short description of the parameter.  This will
     be displayed in the parameter table and used as a tool tip for the
@@ -215,6 +218,7 @@ from os.path import abspath, dirname, join as joinpath, exists, basename, \
     splitext
 import re
 import string
+import warnings
 from collections import namedtuple
 
 import numpy as np
@@ -603,7 +607,7 @@ def categorize_parameters(pars):
     * *pd-d2* list of polydisperse parameters for 2D models
     """
     partype = {
-        'volume': [], 'orientation': [], 'magnetic': [], '': [],
+        'volume': [], 'orientation': [], 'magnetic': [], 'sld': [], '': [],
         'fixed-1d': [], 'fixed-2d': [], 'pd-1d': [], 'pd-2d': [],
         'pd-rel': set(),
     }
@@ -617,7 +621,7 @@ def categorize_parameters(pars):
             partype['fixed-2d'].append(p.name)
         elif p.type == 'orientation':
             partype['pd-2d'].append(p.name)
-        elif p.type == '':
+        elif p.type in ('', 'sld'):
             partype['fixed-1d'].append(p.name)
             partype['fixed-2d'].append(p.name)
         else:
@@ -631,6 +635,12 @@ def process_parameters(model_info):
     Process parameter block, precalculating parameter details.
     """
     # convert parameters into named tuples
+    for p in model_info['parameters']:
+        if p[4] == '' and (p[0].startswith('sld') or p[0].endswith('sld')):
+            p[4] = 'sld'
+            # TODO: make sure all models explicitly label their sld parameters
+            #raise ValueError("%s.%s needs to be explicitly set to type 'sld'" %(model_info['id'], p[0]))
+
     pars = [Parameter(*p) for p in model_info['parameters']]
     # Fill in the derived attributes
     model_info['parameters'] = pars

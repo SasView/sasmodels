@@ -49,13 +49,9 @@ orientation of the *q* vector which is defined as
 NB: The outer most radius (= *radius* + *thickness*) is used as the effective
 radius for *S(Q)* when *P(Q)* \* *S(Q)* is applied.
 
-.. figure:: img/vesicle_1d.jpg
 
-    1D plot using the default values given in the table (w/200 data point).
-    Polydispersity and instrumental resolution normally will smear out most
-    of the rapidly oscillating features.
-
-REFERENCE
+References
+----------
 
 A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*, John Wiley and
 Sons, New York, (1955)

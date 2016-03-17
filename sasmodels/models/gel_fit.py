@@ -32,10 +32,6 @@ In gels with significant hydrogen bonding $D$ has been reported to be
 ~2.6 to 2.8.
 
 
-.. figure:: img/gel_fit_1d.png
-
-    1D plot using the default values (with 300 data points).
-
 Reference
 ---------
 

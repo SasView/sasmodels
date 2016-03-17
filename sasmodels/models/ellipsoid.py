@@ -58,27 +58,13 @@ The $\theta$ and $\phi$ parameters are not used for the 1D output.
 Validation
 ----------
 
-Validation of our code was done by comparing the output of the 1D model
+Validation of the code was done by comparing the output of the 1D model
 to the output of the software provided by the NIST (Kline, 2006).
-:num:`Figure ellipsoid-comparison-1d` below shows a comparison of
-the 1D output of our model and the output of the NIST software.
 
-.. _ellipsoid-comparison-1d:
+The implementation of the intensity for fully oriented ellipsoids was
+validated by averaging the 2D output using a uniform distribution
+$p(\theta,\phi) = 1.0$ and comparing with the output of the 1D calculation.
 
-.. figure:: img/ellipsoid_comparison_1d.jpg
-
-    Comparison of the SasView scattering intensity for an ellipsoid
-    with the output of the NIST SANS analysis software.  The parameters
-    were set to: *scale* = 1.0, *rpolar* = 20 |Ang|,
-    *requatorial* =400 |Ang|, *contrast* = 3e-6 |Ang^-2|,
-    and *background* = 0.01 |cm^-1|.
-
-Averaging over a distribution of orientation is done by evaluating the
-equation above. Since we have no other software to compare the
-implementation of the intensity for fully oriented ellipsoids, we can
-compare the result of averaging our 2D output using a uniform distribution
-$p(\theta,\phi) = 1.0$.  :num:`Figure #ellipsoid-comparison-2d`
-shows the result of such a cross-check.
 
 .. _ellipsoid-comparison-2d:
 

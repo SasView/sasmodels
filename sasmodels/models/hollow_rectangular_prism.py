@@ -74,7 +74,9 @@ Validation
 Validation of the code was conducted by qualitatively comparing the output
 of the 1D model to the curves shown in (Nayuk, 2012).
 
-REFERENCES
+
+References
+----------
 
 R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
 

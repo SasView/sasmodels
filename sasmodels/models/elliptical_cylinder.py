@@ -63,17 +63,11 @@ and length values, and used as the effective radius for *S(Q)* when *P(Q)* \* *S
 Validation
 ----------
 
-Validation of our code was done by comparing the output of the 1D calculation to the angular average of the output of
-the 2D calculation over all possible angles. The figure below shows the comparison where the solid dot refers to
-averaged 2D values while the line represents the result of the 1D calculation (for the 2D averaging, values of 76, 180,
-and 76 degrees are taken for the angles of |theta|, |phi|, and |bigpsi| respectively).
+Validation of our code was done by comparing the output of the 1D calculation to the 
+angular average of the output of the 2D calculation over all possible angles. 
 
-.. figure:: img/elliptical_cylinder_validation_1d.png
-
-    Comparison between 1D and averaged 2D.
-
-In the 2D average, more binning in the angle |phi| is necessary to get the proper result. The following figure shows
-the results of the averaging by varying the number of angular bins.
+In the 2D average, more binning in the angle |phi| is necessary to get the proper result. 
+The following figure shows the results of the averaging by varying the number of angular bins.
 
 .. figure:: img/elliptical_cylinder_averaging.png
 

@@ -81,13 +81,6 @@ where the $q$ vector is defined as
 
     q = \sqrt{q_x^2 + q_y^2}
 
-This example dataset is produced using 200 data points, $qmin=0.001Ang^{-1}$,
-$qmax=0.2Ang^{-1}$ and the default values
-
-.. figure:: img/polymer_excl_volume_1d.jpg
-
-    1D plot using the default values (w/500 data point).
-
 
 References
 ----------

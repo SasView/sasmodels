@@ -58,9 +58,6 @@ as 1D, where the $q$ vector is defined as
 
     q = \sqrt{q_x^2 + q_y^2}
 
-.. figure:: img/stickyhardsphere_1d.jpg
-
-    1D plot using the default values (in linear scale).
 
 References
 ----------
@@ -90,7 +87,7 @@ single = False
 parameters = [
     #   [ "name", "units", default, [lower, upper], "type",
     #     "description" ],
-    ["effect_radius", "Ang", 50.0, [0, inf], "volume",
+    ["radius_effective", "Ang", 50.0, [0, inf], "volume",
      "effective radius of hard sphere"],
     ["volfraction", "", 0.2, [0, 0.74], "",
      "volume fraction of hard spheres"],
@@ -115,7 +112,7 @@ Iq = """
     onemineps = 1.0-perturb;
     eta = volfraction/onemineps/onemineps/onemineps;
 
-    sig = 2.0 * effect_radius;
+    sig = 2.0 * radius_effective;
     aa = sig/onemineps;
     etam1 = 1.0 - eta;
     etam1sq=etam1*etam1;
@@ -181,13 +178,13 @@ Iqxy = """
 # VR defaults to 1.0
 
 oldname = 'StickyHSStructure'
-oldpars = dict()
-demo = dict(effect_radius=200, volfraction=0.2, perturb=0.05,
-            stickiness=0.2, effect_radius_pd=0.1, effect_radius_pd_n=40)
+oldpars = dict(radius_effective="effect_radius",radius_effective_pd="effect_radius_pd",radius_effective_pd_n="effect_radius_pd_n")
+demo = dict(radius_effective=200, volfraction=0.2, perturb=0.05,
+            stickiness=0.2, radius_effective_pd=0.1, radius_effective_pd_n=40)
 #
 tests = [
-        [ {'scale': 1.0, 'background' : 0.0, 'effect_radius' : 50.0, 'perturb' : 0.05, 'stickiness' : 0.2, 'volfraction' : 0.1,
-           'effect_radius_pd' : 0}, [0.001, 0.003], [1.09718, 1.087830]]
+        [ {'scale': 1.0, 'background' : 0.0, 'radius_effective' : 50.0, 'perturb' : 0.05, 'stickiness' : 0.2, 'volfraction' : 0.1,
+           'radius_effective_pd' : 0}, [0.001, 0.003], [1.09718, 1.087830]]
         ]
 
 

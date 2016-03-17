@@ -439,22 +439,34 @@ def _plot_result_sesans(data, theory, resid, use_data, limits=None):
     num_plots = (use_data or use_theory) + use_resid
 
     if use_data or use_theory:
+        is_tof = np.any(data.lam!=data.lam[0])
         if num_plots > 1:
             plt.subplot(1, num_plots, 1)
         if use_data:
-            plt.errorbar(data.x, data.y, yerr=data.dy)
+            if is_tof:
+                plt.errorbar(data.x, np.log(data.y)/(data.lam*data.lam), yerr=data.dy/data.y/(data.lam*data.lam))
+            else:
+                plt.errorbar(data.x, data.y, yerr=data.dy)
         if theory is not None:
-            plt.plot(data.x, theory, '-', hold=True)
+            if is_tof:
+                plt.plot(data.x, np.log(theory)/(data.lam*data.lam), '-', hold=True)
+            else:
+                plt.plot(data.x, theory, '-', hold=True)
         if limits is not None:
             plt.ylim(*limits)
-        plt.xlabel('spin echo length (nm)')
-        plt.ylabel('polarization (P/P0)')
+
+        plt.xlabel('spin echo length ({})'.format(data._xunit))
+        if is_tof:
+            plt.ylabel('(Log (P/P$_0$))/$\lambda^2$')
+        else:
+            plt.ylabel('polarization (P/P0)')
+
 
     if resid is not None:
         if num_plots > 1:
             plt.subplot(1, num_plots, (use_data or use_theory) + 1)
         plt.plot(data.x, resid, 'x')
-        plt.xlabel('spin echo length (nm)')
+        plt.xlabel('spin echo length ({})'.format(data._xunit))
         plt.ylabel('residuals (P/P0)')
 
 

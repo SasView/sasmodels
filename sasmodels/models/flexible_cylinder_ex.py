@@ -70,10 +70,6 @@ these parameters must be held fixed during model fitting.
 
 **No inter-cylinder interference effects are included in this calculation.**
 
-.. figure:: img/flexible_cylinder_ex_1d.jpg
-
-    1D plot using the default values (w/1000 data point).
-
 References
 ----------
 

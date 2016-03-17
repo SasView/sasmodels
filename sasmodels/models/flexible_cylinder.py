@@ -34,12 +34,6 @@ The returned value is in units of $cm^-1$, on absolute scale.
 In the parameters, the sldCyl and sldSolv represent the SLD of the chain/cylinder
 and solvent respectively.
 
-
-.. figure:: img/flexible_cylinder_1d.jpg
-
-    1D plot using the default values (w/1000 data point).
-
-
 Our model uses the form factor calculations implemented in a c-library provided
 by the NIST Center for Neutron Research (Kline, 2006).
 

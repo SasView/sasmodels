@@ -44,9 +44,6 @@ and $\rho_{particle}$ is the scattering length density of particles.
     valid if $0 < mass_dim < 6$. It is also only valid over a limited
     $q$ range (see the reference for details).
 
-.. figure:: img/mass_fractal_1d.jpg
-
-    1D plot using the default values.
 
 Reference
 ---------

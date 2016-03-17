@@ -43,10 +43,6 @@ where the $q$ vector is defined as
 
     q = \sqrt{q_x^2 + q_y^2}
 
-.. figure:: img/fractal_core_shell_1d.jpg
-
-    1D plot using the default values (w/500 data point).
-
 Reference
 ---------
 

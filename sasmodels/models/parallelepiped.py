@@ -142,19 +142,15 @@ Validation
 
 Validation of the code was done by comparing the output of the 1D calculation
 to the angular average of the output of a 2D calculation over all possible
-angles. The Figure below shows the comparison where the solid dot refers to
-averaged 2D while the line represents the result of the 1D calculation (for
-the averaging, 76, 180, 76 points are taken for the angles of $\theta$,
-$\phi$, and $\Psi$ respectively).
-
-.. _parallelepiped-compare:
-
-.. figure:: img/parallelepiped_compare.png
-
-   Comparison between 1D and averaged 2D.
+angles. 
 
 This model is based on form factor calculations implemented in a c-library
 provided by the NIST Center for Neutron Research (Kline, 2006).
+
+References
+----------
+
+None.
 """
 
 import numpy as np
