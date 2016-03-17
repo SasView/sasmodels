@@ -79,8 +79,8 @@ defined as a sublist with the following elements:
     *default value* will be the initial value for  the model when it
     is selected, or when an initial value is not otherwise specified.
 
-    [*lb*, *ub*] are the hard limits on the parameter value, used to limit
-    the polydispersity density function.  In the fit, the parameter limits
+    *limits = [lb, ub]* are the hard limits on the parameter value, used to
+    limit the polydispersity density function.  In the fit, the parameter limits
     given to the fit are the limits  on the central value of the parameter.
     If there is polydispersity, it will evaluate parameter values outside
     the fit limits, but not outside the hard limits specified in the model.
@@ -215,8 +215,12 @@ from os.path import abspath, dirname, join as joinpath, exists, basename, \
     splitext
 import re
 import string
+from collections import namedtuple
 
 import numpy as np
+
+PARAMETER_FIELDS = ['name', 'units', 'default', 'limits', 'type', 'description']
+Parameter = namedtuple('Parameter', PARAMETER_FIELDS)
 
 #TODO: determine which functions are useful outside of generate
 #__all__ = ["model_info", "make_doc", "make_source", "convert_type"]
@@ -292,9 +296,9 @@ def make_partable(pars):
     Generate the parameter table to include in the sphinx documentation.
     """
     column_widths = [
-        max(len(p[0]) for p in pars),
-        max(len(p[-1]) for p in pars),
-        max(len(format_units(p[1])) for p in pars),
+        max(len(p.name) for p in pars),
+        max(len(p.description) for p in pars),
+        max(len(format_units(p.units)) for p in pars),
         PARTABLE_VALUE_WIDTH,
         ]
     column_widths = [max(w, len(h))
@@ -309,10 +313,10 @@ def make_partable(pars):
         ]
     for p in pars:
         lines.append(" ".join([
-            "%-*s" % (column_widths[0], p[0]),
-            "%-*s" % (column_widths[1], p[-1]),
-            "%-*s" % (column_widths[2], format_units(p[1])),
-            "%*g" % (column_widths[3], p[2]),
+            "%-*s" % (column_widths[0], p.name),
+            "%-*s" % (column_widths[1], p.description),
+            "%-*s" % (column_widths[2], format_units(p.units)),
+            "%*g" % (column_widths[3], p.default),
             ]))
     lines.append(sep)
     return "\n".join(lines)
@@ -468,15 +472,15 @@ def make_source(model_info):
     fixed_1d = partype['fixed-1d']
     fixed_2d = partype['fixed-1d']
 
-    iq_parameters = [p[0]
+    iq_parameters = [p.name
                      for p in model_info['parameters'][2:]  # skip scale, background
-                     if p[0] in set(fixed_1d + pd_1d)]
-    iqxy_parameters = [p[0]
+                     if p.name in set(fixed_1d + pd_1d)]
+    iqxy_parameters = [p.name
                        for p in model_info['parameters'][2:]  # skip scale, background
-                       if p[0] in set(fixed_2d + pd_2d)]
-    volume_parameters = [p[0]
+                       if p.name in set(fixed_2d + pd_2d)]
+    volume_parameters = [p.name
                          for p in model_info['parameters']
-                         if p[4] == 'volume']
+                         if p.type == 'volume']
 
     # Fill in defintions for volume parameters
     if volume_parameters:
@@ -605,21 +609,20 @@ def categorize_parameters(pars):
     }
 
     for p in pars:
-        name, ptype = p[0], p[4]
-        if ptype == 'volume':
-            partype['pd-1d'].append(name)
-            partype['pd-2d'].append(name)
-            partype['pd-rel'].add(name)
-        elif ptype == 'magnetic':
-            partype['fixed-2d'].append(name)
-        elif ptype == 'orientation':
-            partype['pd-2d'].append(name)
-        elif ptype == '':
-            partype['fixed-1d'].append(name)
-            partype['fixed-2d'].append(name)
+        if p.type == 'volume':
+            partype['pd-1d'].append(p.name)
+            partype['pd-2d'].append(p.name)
+            partype['pd-rel'].add(p.name)
+        elif p.type == 'magnetic':
+            partype['fixed-2d'].append(p.name)
+        elif p.type == 'orientation':
+            partype['pd-2d'].append(p.name)
+        elif p.type == '':
+            partype['fixed-1d'].append(p.name)
+            partype['fixed-2d'].append(p.name)
         else:
-            raise ValueError("unknown parameter type %r" % ptype)
-        partype[ptype].append(name)
+            raise ValueError("unknown parameter type %r" % p.type)
+        partype[p.type].append(p.name)
 
     return partype
 
@@ -627,11 +630,14 @@ def process_parameters(model_info):
     """
     Process parameter block, precalculating parameter details.
     """
+    # convert parameters into named tuples
+    pars = [Parameter(*p) for p in model_info['parameters']]
     # Fill in the derived attributes
-    partype = categorize_parameters(model_info['parameters'])
-    model_info['limits'] = dict((p[0], p[3]) for p in model_info['parameters'])
+    model_info['parameters'] = pars
+    partype = categorize_parameters(pars)
+    model_info['limits'] = dict((p.name, p.limits) for p in pars)
     model_info['partype'] = partype
-    model_info['defaults'] = dict((p[0], p[2]) for p in model_info['parameters'])
+    model_info['defaults'] = dict((p.name, p.default) for p in pars)
     if model_info.get('demo', None) is None:
         model_info['demo'] = model_info['defaults']
     model_info['has_2d'] = partype['orientation'] or partype['magnetic']
@@ -648,6 +654,7 @@ def make_model_info(kernel_module):
 
     * *id* is the id of the kernel
     * *name* is the display name of the kernel
+    * *filename* is the full path to the module defining the file (if any)
     * *title* is a short description of the kernel
     * *description* is a long description of the kernel (this doesn't seem
       very useful since the Help button on the model page brings you directly

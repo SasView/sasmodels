@@ -110,7 +110,7 @@ class PyKernel(object):
         vol_pars = model_info['partype']['volume']
 
         # First two fixed pars are scale and background
-        pars = [p[0] for p in model_info['parameters'][2:]]
+        pars = [p.name for p in model_info['parameters'][2:]]
         offset = len(self.q_input.q_vectors)
         self.args = self.q_input.q_vectors + [None] * len(pars)
         self.fixed_index = np.array([pars.index(p) + offset
