@@ -7,4 +7,4 @@ export PYOPENCL_CTX PYTHONPATH
 echo PYTHONPATH=$PYTHONPATH
 set -x
 
-python -m bumps.cli $*
+pythonw -m bumps.cli $*
