@@ -10,7 +10,7 @@ double Iqxy(double qx, double qy, double core_sld, double shell_sld, double solv
 double _cyl(double twovd, double besarg, double siarg);
 double _cyl(double twovd, double besarg, double siarg)
 {
-    const double bj = (besarg == 0.0 ? 0.5 : J1(besarg)/besarg);
+    const double bj = (besarg == 0.0 ? 0.5 : j1(besarg)/besarg);
     const double si = (siarg == 0.0 ? 1.0 : sin(siarg)/siarg);
     return twovd*si*bj;
 }
