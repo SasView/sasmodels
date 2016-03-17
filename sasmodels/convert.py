@@ -128,6 +128,7 @@ def revert_pars(model_info, pars):
         if oldpars.pop('background', 0.0) != 0.0:
             warnings.warn("parameter background not used in sasview %s"%name)
 
+
     # If it is a product model P*S, then check the individual forms for special
     # cases.  Note: despite the structure factor alone not having scale or
     # background, the product model does, so this is below the test for
@@ -145,6 +146,10 @@ def revert_pars(model_info, pars):
             # convert scattering lengths from femtometers to centimeters
             for p in "La", "Lb", "Lc", "Ld":
                 if p in oldpars: oldpars[p] *= 1e-13
+        elif name == 'core_shell_parallelepiped':
+            _remove_pd(oldpars, 'rimA', name)
+        elif name in ['mono_gauss_coil','poly_gauss_coil']:
+            del oldpars['i_zero']
 
     return oldpars
 
@@ -176,3 +181,8 @@ def constrain_new_to_old(model_info, pars):
             pars['background'] = 0
         elif name == 'rpa':
             pars['case_num'] = int(pars['case_num'])
+        elif name == 'mono_gauss_coil':
+            pars['i_zero'] = 1
+        elif name == 'poly_gauss_coil':
+            pars['i_zero'] = 1
+            
