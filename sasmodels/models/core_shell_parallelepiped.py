@@ -185,9 +185,9 @@ oldpars = dict(theta='parallel_theta', phi='parallel_phi', psi='parallel_psi',
                arim_thickness='rimA', brim_thickness='rimB', crim_thickness='rimC')
 
 qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
-tests = [[{}, 0.2, 0.532149288477],
-         [{}, [0.2], [0.532149288477]],
-         [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.031102135569],
-         [{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.031102135569]],
+tests = [[{}, 0.2, 0.533149288477],
+         [{}, [0.2], [0.533149288477]],
+         [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.032102135569],
+         [{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.032102135569]],
         ]
 del qx, qy  # not necessary to delete, but cleaner

@@ -134,6 +134,6 @@ oldname = 'RectangularPrismModel'
 oldpars = dict(a_side='short_side', b2a_ratio='b2a_ratio', c_side='c2a_ratio',
                sld='sldPipe', solvent_sld='sldSolv')
 
-tests = [[{}, 0.2, 0.374248406825],
-         [{}, [0.2], [0.374248406825]],
+tests = [[{}, 0.2, 0.375248406825],
+         [{}, [0.2], [0.375248406825]],
         ]

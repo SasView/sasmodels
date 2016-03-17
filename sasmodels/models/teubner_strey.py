@@ -90,4 +90,4 @@ demo = dict(scale=1, background=0, a2=0.1, c1=-30.0, c2=5000.0)
 oldname = "TeubnerStreyModel"
 oldpars = dict(a2='scale')
 
-tests = [[{}, 0.2, 0.144927536232]]
+tests = [[{}, 0.2, 0.145927536232]]

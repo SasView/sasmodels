@@ -169,6 +169,7 @@ tests = [
       'salt_concentration':    10.0,
       'ionization_degree':      2.0,
       'polymer_concentration': 10.0,
+      'background':             0.0,
      }, 0.1, -3.75693800588],
 
     [{'contrast_factor':       10.0,
@@ -188,5 +189,6 @@ tests = [
       'salt_concentration':    0.1,
       'ionization_degree':     0.5,
       'polymer_concentration': 0.1,
+      'background':             0.0,
      }, 200., 1.80664667511e-06],
     ]

@@ -157,7 +157,7 @@ oldname = 'RectangularHollowPrismModel'
 oldpars = dict(a_side='short_side', b2a_ratio='b2a_ratio', c_side='c2a_ratio',
                thickness='thickness', sld='sldPipe', solvent_sld='sldSolv')
 
-tests = [[{}, 0.2, 0.76587283098],
-         [{}, [0.2], [0.76587283098]],
+tests = [[{}, 0.2, 0.76687283098],
+         [{}, [0.2], [0.76687283098]],
         ]
 

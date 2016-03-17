@@ -56,4 +56,4 @@ oldname = 'GuinierModel'
 oldpars = dict(rg='rg')
 
 # parameters for unit tests
-tests = [[{'rg' : 31.5}, 0.005, 0.991756]]
+tests = [[{'rg' : 31.5}, 0.005, 0.992756]]

@@ -105,13 +105,13 @@ tests = [
     [{'radius': 10.0,
       'surface_dim': 2.0,
       'cutoff_length': 500.0,
-     }, 0.05, 301428.65916],
+     }, 0.05, 301428.66016],
 
     # Additional tests with larger range of parameters
     [{'radius': 1.0,
       'surface_dim': 1.0,
       'cutoff_length': 10.0,
-     }, 0.332070182643, 1125.00321004],
+     }, 0.332070182643, 1125.00421004],
 
     [{'radius': 3.5,
       'surface_dim': 0.1,
@@ -123,5 +123,5 @@ tests = [
       'surface_dim': 1.0,
       'cutoff_length': 33.0,
       'scale': 0.1,
-     }, 0.51, 2.50020147004],
+     }, 0.51, 2.50120147004],
     ]

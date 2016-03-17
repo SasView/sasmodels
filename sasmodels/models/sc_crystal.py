@@ -151,9 +151,9 @@ oldpars = dict(sphere_sld='sldSph',
 
 tests = [
     # Accuracy tests based on content in test/utest_extra_models.py
-    [{}, 0.001, 10.3038],
-    [{}, 0.215268, 0.00714889],
-    [{}, (0.414467), 0.000313289]
+    [{}, 0.001, 10.3048],
+    [{}, 0.215268, 0.00814889],
+    [{}, (0.414467), 0.001313289]
     ]
 
 

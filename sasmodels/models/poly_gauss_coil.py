@@ -66,24 +66,24 @@ parameters =  [["i_zero", "1/cm", 1.0, [-inf, inf], "", "Intensity at q=0"],
                ["polydispersity", "None", 2.0, [1.0, inf], "", "Polymer Mw/Mn"]]
 
 # NB: Scale and Background are implicit parameters on every model
-def Iq(q, radius_gyration, polydispersity):
+def Iq(q, i_zero, radius_gyration, polydispersity):
     # pylint: disable = missing-docstring
-	u = polydispersity - 1.0
+    u = polydispersity - 1.0
     # TO DO
-	# should trap the case of polydispersity = 1 by switching to a taylor expansion
-	minusoneonu = -1.0 / u
-	z = ((x * radius_gyration) * (x * radius_gyration)) / (1.0 + 2.0 * u)
-	if x == 0:
-	   inten = i_zero * 1.0
-	else:
-	   inten = i_zero * 2.0 * (power((1.0 + u * z),minusoneonu) + z - 1.0 ) / ((1.0 + u) * (z * z))
-	return inten
-Iq.vectorized =  True  # Iq accepts an array of q values
+    # should trap the case of polydispersity = 1 by switching to a taylor expansion
+    minusoneonu = -1.0 / u
+    z = (q * radius_gyration) ** 2 / (1.0 + 2.0 * u)
+    if q == 0:
+        inten = i_zero * 1.0
+    else:
+        inten = i_zero * 2.0 * (power((1.0 + u * z),minusoneonu) + z - 1.0 ) / ((1.0 + u) * (z * z))
+    return inten
+#Iq.vectorized = True # Iq accepts an array of q values
 
 def Iqxy(qx, qy, *args):
     # pylint: disable = missing-docstring
     return Iq(sqrt(qx ** 2 + qy ** 2), *args)
-Iqxy.vectorized =  True # Iqxy accepts an array of qx, qy values
+#Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
 
 demo =  dict(scale = 1.0,
             i_zero = 1.0,
