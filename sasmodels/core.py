@@ -175,7 +175,7 @@ def dispersion_mesh(pars):
         weight = np.prod(weight, axis=0)
     return value, weight
 
-def call_kernel(kernel, pars, cutoff=0):
+def call_kernel(kernel, pars, cutoff=0, mono=False):
     """
     Call *kernel* returned from :func:`make_kernel` with parameters *pars*.
 
@@ -188,7 +188,11 @@ def call_kernel(kernel, pars, cutoff=0):
     """
     fixed_pars = [pars.get(name, kernel.info['defaults'][name])
                   for name in kernel.fixed_pars]
-    pd_pars = [get_weights(kernel.info, pars, name) for name in kernel.pd_pars]
+    if mono:
+        pd_pars = [( np.array([pars[name]]), np.array([1.0]) )
+                   for name in kernel.pd_pars]
+    else:
+        pd_pars = [get_weights(kernel.info, pars, name) for name in kernel.pd_pars]
     return kernel(fixed_pars, pd_pars, cutoff=cutoff)
 
 def call_ER_VR(model_info, vol_pars):

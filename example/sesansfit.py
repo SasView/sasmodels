@@ -7,10 +7,14 @@ try:
 except ImportError:
     HAS_CONVERTER = False
 
+
 def get_bumps_model(model_name):
     kernel = core.load_model(model_name)
     model = bumps_model.Model(kernel)
     return model
+
+def sesans_fit(file, model_name, initial_vals={}, custom_params={}, param_range=[], acceptance_angle=None):
+    """
 
 def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[]):
     """
@@ -54,6 +58,8 @@ def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[]):
             y = data
             dy = err_data
             sample = Sample()
+            acceptance_angle = acceptance_angle
+            needs_all_q = acceptance_angle is not None
         data = SESANSData1D()
 
     if "radius" in initial_vals:
