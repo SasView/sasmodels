@@ -247,12 +247,12 @@ double j0(double x) {
 	}
 
     q = 1.0/x;
-    w = sqrtf(q);
+    w = sqrt(q);
 
     p = w * polevl( q, MO, 7);
     w = q*q;
     xn = q * polevl( w, PH, 7) - PIO4F;
-    p = p * cosf(xn + xx);
+    p = p * cos(xn + xx);
     return(p);
 #endif
 
