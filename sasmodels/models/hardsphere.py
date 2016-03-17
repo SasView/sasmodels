@@ -2,8 +2,21 @@
 r"""Calculate the interparticle structure factor for monodisperse
 spherical particles interacting through hard sphere (excluded volume)
 interactions.
+May be a reasonable approximation for other shapes of particles that 
+freely rotate, and for moderately polydisperse systems. Though strictly 
+the maths needs to be modified (no \Beta(Q) correction yet in sasview).
 
-The calculation uses the Percus-Yevick closure where the interparticle
+radius_effective is the effective hard sphere radius.
+volfraction is the volume fraction occupied by the spheres.
+
+In sasview the effective radius may be calculated from the parameters
+used in the form factor $P(q)$ that this $S(q)$ is combined with.
+
+For numerical stability the computation uses a Taylor series expansion 
+at very small $qR$, there may be a very minor glitch at the transition point
+in some circumstances.
+
+The S(Q) uses the Percus-Yevick closure where the interparticle
 potential is
 
 .. math::
@@ -43,14 +56,14 @@ description = """\
     particles that freely rotate, and for moderately polydisperse
         systems. Though strictly the maths needs to be modified -
     which sasview does not do yet.
-    effect_radius is the hard sphere radius
+    radius_effective is the hard sphere radius
     volfraction is the volume fraction occupied by the spheres.
 """
 category = "structure-factor"
 structure_factor = True
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["effect_radius", "Ang", 50.0, [0, inf], "volume",
+parameters = [["radius_effective", "Ang", 50.0, [0, inf], "volume",
                "effective radius of hard sphere"],
               ["volfraction", "", 0.2, [0, 0.74], "",
                "volume fraction of hard spheres"],
@@ -65,7 +78,7 @@ form_volume = """
 Iq = """
       double D,A,B,G,X,X2,X4,S,C,FF,HARDSPH;
 
-      if(fabs(effect_radius) < 1.E-12) {
+      if(fabs(radius_effective) < 1.E-12) {
                HARDSPH=1.0;
                return(HARDSPH);
       }
@@ -74,7 +87,7 @@ Iq = """
       D= X*X;
       A= (1.+2.*volfraction)*D;
       A *=A;
-      X=fabs(q*effect_radius*2.0);
+      X=fabs(q*radius_effective*2.0);
 
       if(X < 5.E-06) {
                  HARDSPH=1./A;
@@ -137,12 +150,12 @@ Iqxy = """
 # ER defaults to 0.0
 # VR defaults to 1.0
 
-demo = dict(effect_radius=200, volfraction=0.2, effect_radius_pd=0.1, effect_radius_pd_n=40)
+demo = dict(radius_effective=200, volfraction=0.2, radius_effective_pd=0.1, radius_effective_pd_n=40)
 oldname = 'HardsphereStructure'
-oldpars = dict()
+oldpars = dict(radius_effective="effect_radius",radius_effective_pd="effect_radius_pd",radius_effective_pd_n="effect_radius_pd_n")
 # Q=0.001 is in the Taylor series, low Q part, so add Q=0.1, assuming double precision sasview is correct
 tests = [
-        [ {'scale': 1.0, 'background' : 0.0, 'effect_radius' : 50.0, 'volfraction' : 0.2,
-           'effect_radius_pd' : 0}, [0.001,0.1], [0.209128,0.930587]]
+        [ {'scale': 1.0, 'background' : 0.0, 'radius_effective' : 50.0, 'volfraction' : 0.2,
+           'radius_effective_pd' : 0}, [0.001,0.1], [0.209128,0.930587]]
         ]
-
+# ADDED by: RKH  ON: 16Mar2016  using equations from FISH as better than orig sasview, see notes above. Added Taylor expansions at small Q, 

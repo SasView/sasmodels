@@ -7,9 +7,9 @@ this calculation to be limited in applicability to well depths |epsilon| < 1.5 k
 
 Positive well depths correspond to an attractive potential well. Negative well depths correspond to a potential
 "shoulder", which may or may not be physically reasonable. The stickyhardsphere model may be a better choice in
-some circumstances. Computed values may behave badly at extremely small Q.
+some circumstances. Computed values may behave badly at extremely small $qR$.
 
-The well width (*l*\ ) is defined as multiples of the particle diameter (2\*\ *R*\ )
+The well width (|lambda| ) is defined as multiples of the particle diameter (2\*\ *R*\ )
 
 The interaction potential is:
 
@@ -21,12 +21,14 @@ The interaction potential is:
 
     U(r) = \begin{cases}
     \infty & r < 2R \\
-    -\epsilon , 2R \leq < 2R\lambda
-    0 & r \geq 2R
+    -\epsilon & 2R \leq r < 2R\lambda \\
+    0 & r \geq 2R\lambda
     \end{cases}
 
 where $r$ is the distance from the center of the sphere of a radius $R$.
 
+In sasview the effective radius may be calculated from the parameters
+used in the form factor $P(q)$ that this $S(q)$ is combined with.
 
 For 2D data: The 2D scattering intensity is calculated in the same way as 1D, where the *q* vector is defined as
 
@@ -34,11 +36,6 @@ For 2D data: The 2D scattering intensity is calculated in the same way as 1D, wh
 
     q = \sqrt{q_x^2 + q_y^2}
 
-.. comment::
-
-  .. figure:: img/squarewell_226.jpg
-
-    1D plot using the default values (in linear scale).*
 
 REFERENCE
 
@@ -58,20 +55,21 @@ description = """\
         parameters used in P(Q).
 """
 category = "structure-factor"
+structure_factor = True
 
 #single = False
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [
     #   [ "name", "units", default, [lower, upper], "type",
     #     "description" ],
-    ["effect_radius", "Ang", 50.0, [0, inf], "volume",
+    ["radius_effective", "Ang", 50.0, [0, inf], "volume",
      "effective radius of hard sphere"],
     ["volfraction", "", 0.04, [0, 0.08], "",
      "volume fraction of spheres"],
     ["welldepth", "kT", 1.5, [0.0, 1.5], "",
      "depth of well, epsilon"],
-    ["wellwidth", "diameters", 1.2, [0, inf], "",
-     "width of well in diameters (=2R) units"],
+    ["wellwidth", "diameters", 1.2, [1.0, inf], "",
+     "width of well in diameters (=2R) units, must be > 1"],
     ]
 
 # No volume normalization despite having a volume parameter
@@ -88,7 +86,7 @@ Iq = """
 	double S,C,SL,CL;
 	x= q;
 	
-	req = effect_radius;
+	req = radius_effective;
 	phis = volfraction;
 	edibkb = welldepth;
 	lambda = wellwidth;
@@ -133,13 +131,13 @@ Iqxy = """
 # VR defaults to 1.0
 
 oldname = 'SquareWellStructure'
-oldpars = dict()
-demo = dict(effect_radius=50, volfraction=0.04, welldepth=1.5,
-            wellwidth=1.2, effect_radius_pd=0, effect_radius_pd_n=0)
+oldpars = dict(radius_effective="effect_radius",radius_effective_pd="effect_radius_pd",radius_effective_pd_n="effect_radius_pd_n")
+demo = dict(radius_effective=50, volfraction=0.04, welldepth=1.5,
+            wellwidth=1.2, radius_effective_pd=0, radius_effective_pd_n=0)
 #
 tests = [
-        [ {'scale': 1.0, 'background' : 0.0, 'effect_radius' : 50.0, 'volfraction' : 0.04,'welldepth' : 1.5, 'wellwidth' : 1.2, 
-           'effect_radius_pd' : 0}, [0.001], [0.97665742]]
+        [ {'scale': 1.0, 'background' : 0.0, 'radius_effective' : 50.0, 'volfraction' : 0.04,'welldepth' : 1.5, 'wellwidth' : 1.2, 
+           'radius_effective_pd' : 0}, [0.001], [0.97665742]]
         ]
-# ADDED by: converting from sasview RKH  ON: 16Mar2016 - in progress
+# ADDED by: converting from sasview RKH  ON: 16Mar2016
 
