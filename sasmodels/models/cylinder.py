@@ -101,6 +101,12 @@ such a cross-check.
     The parameters used were: *scale* = 1.0, *radius* = 20 |Ang|,
     *length* = 400 |Ang|, *contrast* = 3e-6 |Ang^-2|, and
     *background* = 0.0 |cm^-1|.
+    
+
+References
+----------
+
+None.    
 """
 
 import numpy as np

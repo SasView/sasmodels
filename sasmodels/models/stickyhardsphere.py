@@ -58,9 +58,6 @@ as 1D, where the $q$ vector is defined as
 
     q = \sqrt{q_x^2 + q_y^2}
 
-.. figure:: img/stickyhardsphere_1d.jpg
-
-    1D plot using the default values (in linear scale).
 
 References
 ----------
