@@ -300,27 +300,26 @@ def constrain_pars(model_info, pars):
         for c in 'abcd':
             pars['Phi'+c] /= total
 
-def parlist(pars):
+def parlist(model_info, pars, is2d):
     """
     Format the parameter list for printing.
     """
-    active = None
-    fields = {}
+    if is2d:
+        exclude = lambda n: False
+    else:
+        partype = model_info['partype']
+        par1d = set(partype['fixed-1d']+partype['pd-1d'])
+        exclude = lambda n: n not in par1d
     lines = []
-    for k, v in sorted(pars.items()):
-        parts = k.split('_pd')
-        #print(k, active, parts)
-        if len(parts) == 1:
-            if active: lines.append(_format_par(active, **fields))
-            active = k
-            fields = {'value': v}
-        else:
-            assert parts[0] == active
-            if parts[1]:
-                fields[parts[1][1:]] = v
-            else:
-                fields['pd'] = v
-    if active: lines.append(_format_par(active, **fields))
+    for p in model_info['parameters']:
+        if exclude(p.name): continue
+        fields = dict(
+            value=pars.get(p.name, p.default),
+            pd=pars.get(p.name+"_pd", 0.),
+            n=int(pars.get(p.name+"_pd_n", 0)),
+            nsigma=pars.get(p.name+"_pd_nsgima", 3.),
+            type=pars.get(p.name+"_pd_type", 'gaussian'))
+        lines.append(_format_par(p.name, **fields))
     return "\n".join(lines)
 
     #return "\n".join("%s: %s"%(p, v) for p, v in sorted(pars.items()))
@@ -836,7 +835,7 @@ def parse_opts():
     constrain_pars(model_info, pars)
     constrain_new_to_old(model_info, pars)
     if opts['show_pars']:
-        print(str(parlist(pars)))
+        print(str(parlist(model_info, pars, opts['is2d'])))
 
     # Create the computational engines
     data, _ = make_data(opts)
