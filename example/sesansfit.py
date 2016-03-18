@@ -17,7 +17,7 @@ def sesans_fit(file, model_name, initial_vals={}, custom_params={}, param_range=
     """
 
 def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[]):
-    """
+
     @param file: SESANS file location
     @param model: Bumps model object or model name - can be model, model_1 * model_2, and/or model_1 + model_2
     @param initial_vals: dictionary of {param_name : initial_value}
