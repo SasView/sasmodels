@@ -25,8 +25,8 @@ The form factor $P(q)$ is
         \right\rbrace^2
 
 where $\delta_T$ is *tail_length*, $\delta_H$ is *head_length*,
-$\Delta\rho_H$ is the head contrast (*head_sld* $-$ *solvent_sld*),
-and $\Delta\rho_T$ is tail contrast (*sld* $-$ *solvent_sld*).
+$\Delta\rho_H$ is the head contrast (*sld_head* $-$ *sld_solvent*),
+and $\Delta\rho_T$ is tail contrast (*sld* $-$ *sld_solvent*).
 
 The 2D scattering intensity is calculated in the same way as 1D, where
 the $q$ vector is defined as
@@ -48,16 +48,16 @@ also in J. Phys. Chem. B, 105, (2001) 11081-11088
 
 from numpy import inf
 
-name = "lamellar_FFHG"
-title = "Random lamellar phase with Head Groups"
+name = "lamellar_hg"
+title = "Random lamellar phase with Head and Tail Groups"
 description = """\
-    [Random lamellar phase with Head Groups]
+    [Random lamellar phase with Head and Tail Groups]
         I(q)= 2*pi*P(q)/(2(H+T)*q^(2)), where
         P(q)= see manual
         layer thickness =(H+T+T+H) = 2(Head+Tail)
         sld = Tail scattering length density
-        head_sld = Head scattering length density
-        solvent_sld = solvent scattering length density
+        sld_head = Head scattering length density
+        sld_solvent = solvent scattering length density
         background = incoherent background
         scale = scale factor
 """
@@ -65,11 +65,11 @@ category = "shape:lamellae"
 
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["tail_length", "Ang",       15,   [0, inf],  "volume",  "Tail thickness"],
-              ["head_length", "Ang",       10,   [0, inf],  "volume",  "head thickness"],
+parameters = [["tail_length", "Ang",       15,   [0, inf],  "volume",  "Tail thickness ( total = H+T+T+H)"],
+              ["head_length", "Ang",       10,   [0, inf],  "volume",  "Head thickness"],
               ["sld",         "1e-6/Ang^2", 0.4, [-inf,inf], "",       "Tail scattering length density"],
-              ["head_sld",    "1e-6/Ang^2", 3.0, [-inf,inf], "",       "Head scattering length density"],
-              ["solvent_sld", "1e-6/Ang^2", 6,   [-inf,inf], "",       "Solvent scattering length density"]]
+              ["sld_head",    "1e-6/Ang^2", 3.0, [-inf,inf], "",       "Head scattering length density"],
+              ["sld_solvent", "1e-6/Ang^2", 6,   [-inf,inf], "",       "Solvent scattering length density"]]
 # pylint: enable=bad-whitespace, line-too-long
 
 # No volume normalization despite having a volume parameter
@@ -80,8 +80,8 @@ form_volume = """
 
 Iq = """
     const double qsq = q*q;
-    const double drh = head_sld - solvent_sld;
-    const double drt = sld - solvent_sld;    //correction 13FEB06 by L.Porcar
+    const double drh = sld_head - sld_solvent;
+    const double drt = sld - sld_solvent;    //correction 13FEB06 by L.Porcar
     const double qT = q*tail_length;
     double Pq, inten;
     Pq = drh*(sin(q*(head_length+tail_length))-sin(qT)) + drt*sin(qT);
@@ -105,13 +105,14 @@ Iqxy = """
 
 demo = dict(scale=1, background=0,
             tail_length=15, head_length=10,
-            sld=0.4, head_sld=3.0, solvent_sld=6.0,
+            sld=0.4, sld_head=3.0, sld_solvent=6.0,
             tail_length_pd=0.2, tail_length_pd_n=40,
             head_length_pd=0.01, head_length_pd_n=40)
 
 oldname = 'LamellarFFHGModel'
 oldpars = dict(head_length='h_thickness', tail_length='t_length',
-               sld='sld_tail', head_sld='sld_head', solvent_sld='sld_solvent')
+               sld='sld_tail', sld_head='sld_head', sld_solvent='sld_solvent')
 #
 tests = [[{'scale': 1.0, 'background': 0.0, 'tail_length': 15.0, 'head_length': 10.0,
-           'sld': 0.4, 'head_sld': 3.0, 'solvent_sld': 6.0}, [0.001], [653143.9209]]]
+           'sld': 0.4, 'sld_head': 3.0, 'sld_solvent': 6.0}, [0.001], [653143.9209]]]
+# ADDED by: RKH  ON: 18Mar2016  converted from sasview previously, now renaming everything & sorting the docs
