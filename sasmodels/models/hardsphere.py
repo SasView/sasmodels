@@ -57,6 +57,7 @@ description = """\
 """
 category = "structure-factor"
 structure_factor = True
+single = False
 
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["radius_effective", "Ang", 50.0, [0, inf], "volume",
