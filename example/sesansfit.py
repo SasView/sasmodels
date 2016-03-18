@@ -25,6 +25,7 @@ def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[], a
     @param constraints: dictionary of {parameter_name : constraint}
     @return: FitProblem for Bumps usage
     """
+    initial_vals['background'] = 0.0
     try:
         loader = Loader()
         data = loader.load(file)
@@ -65,7 +66,7 @@ def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[], a
         radius = initial_vals.get("radius")
     else:
         radius = 1000
-    data.Rmax = 3*radius # [A]
+    data.Rmax = 30*radius # [A]
 
     if isinstance(model, basestring):
         model = get_bumps_model(model)
