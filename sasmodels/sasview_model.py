@@ -37,8 +37,8 @@ def make_class(model_name, namestyle='name'):
     """
     model_info = core.load_model_info(model_name)
     def __init__(self, multfactor=1):
-        SasviewModel.__init__(self, model_info)
-    attrs = dict(__init__=__init__)
+        SasviewModel.__init__(self)
+    attrs = dict(__init__=__init__, _model_info=model_info)
     ConstructedModel = type(model_info[namestyle], (SasviewModel,), attrs)
     return ConstructedModel
 
@@ -46,9 +46,9 @@ class SasviewModel(object):
     """
     Sasview wrapper for opencl/ctypes model.
     """
-    def __init__(self, model_info):
-        self._model_info = model_info
+    def __init__(self):
         self._kernel = None
+        model_info = self._model_info
 
         self.name = model_info['name']
         self.oldname = model_info['oldname']
