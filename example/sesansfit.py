@@ -1,5 +1,6 @@
 from bumps.names import *
 from sasmodels import core, bumps_model, sesans
+from sas.sascalc.dataloader.loader import Loader
 
 HAS_CONVERTER = True
 try:
@@ -25,11 +26,9 @@ def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[], a
     @return: FitProblem for Bumps usage
     """
     try:
-        from sas.sascalc.dataloader.loader import Loader
         loader = Loader()
         data = loader.load(file)
         if data is None: raise IOError("Could not load file %r"%(file))
-        data.needs_all_q = acceptance_angle is not None
         if HAS_CONVERTER == True:
             default_unit = "A"
             data_conv_q = Converter(data._xunit)
@@ -57,10 +56,11 @@ def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[], a
             y = data
             dy = err_data
             sample = Sample()
-            acceptance_angle = acceptance_angle
             needs_all_q = acceptance_angle is not None
         data = SESANSData1D()
+        data.acceptance_angle = acceptance_angle
 
+    data.needs_all_q = acceptance_angle is not None
     if "radius" in initial_vals:
         radius = initial_vals.get("radius")
     else:
