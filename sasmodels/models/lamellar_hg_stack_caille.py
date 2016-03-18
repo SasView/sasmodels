@@ -8,7 +8,7 @@ The scattering intensity $I(q)$ is
 
 .. math::
 
-    I(q) = 2 \pi \frac{P(q)S(q)}{\delta q^2}
+    I(q) = 2 \pi \frac{P(q)S(q)}{q^2\delta }
 
 
 The form factor $P(q)$ is
@@ -55,6 +55,8 @@ are handled accurately (see the original reference below for more details).
 Non-integer numbers of stacks are calculated as a linear combination of
 results for the next lower and higher values.
 
+Be aware that the computations may be very slow.
+
 The 2D scattering intensity is calculated in the same way as 1D, where
 the $q$ vector is defined as
 
@@ -72,8 +74,8 @@ also in J. Phys. Chem. B, 105, (2001) 11081-11088
 """
 from numpy import inf
 
-name = "lamellarCailleHG"
-title = "Random lamellar sheet with Caille structure factor"
+name = "lamellar_hg_stack_caille"
+title = "Random lamellar head/tail/tail/head sheet with Caille structure factor"
 description = """\
     [Random lamellar phase with Caille  structure factor]
         randomly oriented stacks of infinite sheets
@@ -103,13 +105,13 @@ parameters = [
      "Caille parameter"],
     ["sld", "1e-6/Ang^2", 0.4, [-inf, inf], "",
      "Tail scattering length density"],
-    ["head_sld", "1e-6/Ang^2", 2.0, [-inf, inf], "",
+    ["sld_head", "1e-6/Ang^2", 2.0, [-inf, inf], "",
      "Head scattering length density"],
-    ["solvent_sld", "1e-6/Ang^2", 6, [-inf, inf], "",
+    ["sld_solvent", "1e-6/Ang^2", 6, [-inf, inf], "",
      "Solvent scattering length density"],
     ]
 
-source = ["lamellarCailleHG_kernel.c"]
+source = ["lamellar_hg_stack_caille_kernel.c"]
 
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
@@ -128,8 +130,8 @@ demo = dict(
     scale=1, background=0,
     Nlayers=20, spacing=200., Caille_parameter=0.05,
     tail_length=15, head_length=10,
-    #sld=-1, head_sld=4.0, solvent_sld=6.0,
-    sld=-1, head_sld=4.1, solvent_sld=6.0,
+    #sld=-1, sld_head=4.0, sld_solvent=6.0,
+    sld=-1, sld_head=4.1, sld_solvent=6.0,
     tail_length_pd=0.1, tail_length_pd_n=20,
     head_length_pd=0.05, head_length_pd_n=30,
     spacing_pd=0.2, spacing_pd_n=40,
@@ -139,10 +141,11 @@ oldname = 'LamellarPSHGModel'
 
 oldpars = dict(
     tail_length='deltaT', head_length='deltaH', Nlayers='n_plates',
-    Caille_parameter='caille', sld='sld_tail', head_sld='sld_head',
-    solvent_sld='sld_solvent')
+    Caille_parameter='caille', sld='sld_tail', sld_head='sld_head',
+    sld_solvent='sld_solvent')
 #
 tests = [[{'scale': 1.0, 'background': 0.0, 'tail_length': 10.0, 'head_length': 2.0,
            'Nlayers': 30.0, 'spacing': 40., 'Caille_parameter': 0.001, 'sld': 0.4,
-           'head_sld': 2.0, 'solvent_sld': 6.0, 'tail_length_pd': 0.0,
+           'sld_head': 2.0, 'sld_solvent': 6.0, 'tail_length_pd': 0.0,
            'head_length_pd': 0.0, 'spacing_pd': 0.0}, [0.001], [6838238.571488]]]
+# ADDED by: RKH  ON: 18Mar2016  converted from sasview previously, now renaming everything & sorting the docs
