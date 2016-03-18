@@ -1,5 +1,6 @@
 from bumps.names import *
 from sasmodels import core, bumps_model, sesans
+from sas.sascalc.dataloader.loader import Loader
 
 HAS_CONVERTER = True
 try:
@@ -7,13 +8,15 @@ try:
 except ImportError:
     HAS_CONVERTER = False
 
+
 def get_bumps_model(model_name):
     kernel = core.load_model(model_name)
     model = bumps_model.Model(kernel)
     return model
 
-def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[]):
+def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[], acceptance_angle=None):
     """
+
     @param file: SESANS file location
     @param model: Bumps model object or model name - can be model, model_1 * model_2, and/or model_1 + model_2
     @param initial_vals: dictionary of {param_name : initial_value}
@@ -23,7 +26,6 @@ def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[]):
     @return: FitProblem for Bumps usage
     """
     try:
-        from sas.sascalc.dataloader.loader import Loader
         loader = Loader()
         data = loader.load(file)
         if data is None: raise IOError("Could not load file %r"%(file))
@@ -54,8 +56,11 @@ def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[]):
             y = data
             dy = err_data
             sample = Sample()
+            needs_all_q = acceptance_angle is not None
         data = SESANSData1D()
+        data.acceptance_angle = acceptance_angle
 
+    data.needs_all_q = acceptance_angle is not None
     if "radius" in initial_vals:
         radius = initial_vals.get("radius")
     else:

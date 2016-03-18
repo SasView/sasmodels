@@ -10,7 +10,7 @@ The scattering intensity $I(q)$ is
 
 .. math::
 
-    I(q) = 2\pi \frac{P(q)S(q)}{\delta q^2}
+    I(q) = 2\pi \frac{P(q)S(q)}{q^2\delta }
 
 The form factor is
 
@@ -69,7 +69,7 @@ also in J. Phys. Chem. B, 105, (2001) 11081-11088
 """
 from numpy import inf
 
-name = "lamellarPS"
+name = "lamellar_stack_caille"
 title = "Random lamellar sheet with Caille structure factor"
 description = """\
     [Random lamellar phase with Caille  structure factor]
@@ -91,11 +91,11 @@ parameters = [
     ["spacing",          "Ang",      400.,  [0.0,inf],  "volume", "d-spacing of Caille S(Q)"],
     ["Caille_parameter", "1/Ang^2",    0.1, [0.0,0.8],  "",       "Caille parameter"],
     ["sld",              "1e-6/Ang^2", 6.3, [-inf,inf], "",       "layer scattering length density"],
-    ["solvent_sld",      "1e-6/Ang^2", 1.0, [-inf,inf], "",       "Solvent scattering length density"],
+    ["sld_solvent",      "1e-6/Ang^2", 1.0, [-inf,inf], "",       "Solvent scattering length density"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lamellarCaille_kernel.c"]
+source = ["lamellar_stack_caille_kernel.c"]
 
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
@@ -112,18 +112,19 @@ Iqxy = """
 
 demo = dict(scale=1, background=0,
             thickness=67., Nlayers=3.75, spacing=200.,
-            Caille_parameter=0.268, sld=1.0, solvent_sld=6.34,
+            Caille_parameter=0.268, sld=1.0, sld_solvent=6.34,
             thickness_pd=0.1, thickness_pd_n=100,
             spacing_pd=0.05, spacing_pd_n=40)
 
 oldname = 'LamellarPSModel'
 oldpars = dict(thickness='delta', Nlayers='N_plates',
                Caille_parameter='caille',
-               sld='sld_bi', solvent_sld='sld_sol')
+               sld='sld_bi', sld_solvent='sld_sol')
 #
 tests = [
     [{'scale': 1.0, 'background': 0.0, 'thickness': 30., 'Nlayers': 20.0,
       'spacing': 400., 'Caille_parameter': 0.1, 'sld': 6.3,
-      'solvent_sld': 1.0, 'thickness_pd': 0.0, 'spacing_pd': 0.0},
+      'sld_solvent': 1.0, 'thickness_pd': 0.0, 'spacing_pd': 0.0},
      [0.001], [28895.13397]]
     ]
+# ADDED by: RKH  ON: 18Mar2016  converted from sasview previously, now renaming everything & sorting the docs

@@ -14,7 +14,7 @@ MODELS_WITHOUT_SCALE = [
     'gauss_lorentz_gel',
     'be_polyelectrolyte',
     'correlation_length',
-    'fractal_core_shell'
+    'fractal_core_shell',
     'binary_hard_sphere',
 ]
 

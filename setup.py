@@ -2,7 +2,8 @@ from setuptools import setup,find_packages
 
 packages = find_packages(exclude=['contrib', 'docs', 'tests*'])
 package_data = {
-    'sasmodels.models': ['*.c'],
+    'sasmodels.models': ['*.c','lib/*.c'],
+    'sasmodels': ['*.c'],
 }
 required = []
 
