@@ -123,15 +123,17 @@ class ProductKernel(object):
         # User doesn't set scale, background or effect_radius for S in P*S,
         # so borrow values from end of p_fixed.  This makes volfraction the
         # first S parameter.
-        start += num_p_fixed - 2
-        par_map['s_fixed'] = np.arange(start, start+num_s_fixed)
+        start += num_p_fixed
+        par_map['s_fixed'] = np.hstack(([start,start],
+                                        np.arange(start, start+num_s_fixed-2)))
         par_map['volfraction'] = num_p_fixed
-        start += num_s_fixed
+        start += num_s_fixed-2
         # vol pars offset from the start of pd pars
         par_map['vol_pars'] = [start+k for k in vol_par_idx]
         par_map['p_pd'] = np.arange(start, start+num_p_pd)
-        start += num_p_pd
-        par_map['s_pd'] = np.arange(start-1, start+num_s_pd)  # should be empty...
+        start += num_p_pd-1
+        par_map['s_pd'] = np.hstack((start,
+                                     np.arange(start, start+num_s_pd-1)))
 
         self.fixed_pars = model_info['partype']['fixed-' + dim]
         self.pd_pars = model_info['partype']['pd-' + dim]

@@ -169,10 +169,9 @@ def dispersion_mesh(pars):
     parameter set in the vector.
     """
     value, weight = zip(*pars)
-    if len(value) > 1:
-        value = [v.flatten() for v in np.meshgrid(*value)]
-        weight = np.vstack([v.flatten() for v in np.meshgrid(*weight)])
-        weight = np.prod(weight, axis=0)
+    value = [v.flatten() for v in np.meshgrid(*value)]
+    weight = np.vstack([v.flatten() for v in np.meshgrid(*weight)])
+    weight = np.prod(weight, axis=0)
     return value, weight
 
 def call_kernel(kernel, pars, cutoff=0, mono=False):
