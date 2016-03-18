@@ -28,9 +28,11 @@ opts = {
     'q_min'     : 0.001,
     'q_max'     : 1.0,
     'nq'        : 1000,
-    'nq2d'      : 100,
+    'nq2d'      : 1000,
     'vmin'      : 1e-3,  # floor for the 2D data results
     'qx_max'    : 0.5,
+    #'colormap'  : 'gist_ncar',
+    'colormap'  : 'jet',
 }
 
 
@@ -60,28 +62,9 @@ def plot_2d(model, opts, ax):
     if opts['zscale'] == 'log':
         Iq2D = np.log(np.clip(Iq2D, opts['vmin'], np.inf))
     ax.imshow(Iq2D, interpolation='nearest', aspect=1, origin='lower',
-        extent=[-qx_max, qx_max, -qx_max, qx_max], cmap=pylab.cm.jet)   
+        extent=[-qx_max, qx_max, -qx_max, qx_max], cmap=opts['colormap'])
     ax.set_xlabel(r'$Q_x \/(\AA^{-1})$')
     ax.set_ylabel(r'$Q_y \/(\AA^{-1})$')
-
-#            im = self.subplot.imshow(output, interpolation='nearest',
-#                                     origin='lower',
-#                                     vmin=zmin_temp, vmax=self.zmax_2D,
-#                                     cmap=self.cmap,
-#                                     extent=(self.xmin_2D, self.xmax_2D,
-#                                             self.ymin_2D, self.ymax_2D))
-
-def ice_cm():
-    from matplotlib._cm import _Blues_data
-    from matplotlib import colors
-    from matplotlib import rcParams
-    def from_white(segments):
-        scale = 1.0/segments[0][1]
-        return [(k, v*scale, w*scale) for k, v, w in segments]
-    ice_data = dict((k,from_white(v)) for k,v in _Blues_data.items())
-    ice = colors.LinearSegmentedColormap("ice", ice_data, rcParams['image.lut'])
-    return ice
-
 
 # Generate image 
 fig_height = 3.0 # in
