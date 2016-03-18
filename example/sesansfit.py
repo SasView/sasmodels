@@ -1,5 +1,5 @@
 from bumps.names import *
-from sas import core, bumps_model, sesans
+from sasmodels import core, bumps_model, sesans
 
 HAS_CONVERTER = True
 try:
@@ -29,6 +29,7 @@ def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[], a
         loader = Loader()
         data = loader.load(file)
         if data is None: raise IOError("Could not load file %r"%(file))
+        data.needs_all_q = acceptance_angle is not None
         if HAS_CONVERTER == True:
             default_unit = "A"
             data_conv_q = Converter(data._xunit)
