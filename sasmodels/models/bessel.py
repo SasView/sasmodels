@@ -77,7 +77,7 @@ form_volume = """
     """
 
 Iq = """
-    return J1(q);
+    return J1c(q);
     """
 
 Iqxy = """
