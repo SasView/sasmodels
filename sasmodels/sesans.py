@@ -22,7 +22,7 @@ def make_q(q_max, Rmax):
     q_min = dq = 0.1 * 2*pi / Rmax
     return np.arange(q_min, q_max, dq)
     
-def make_allq(data):
+def make_all_q(data):
     if not data.needs_all_q:
         return []
     elif needs_Iqxy(data):
