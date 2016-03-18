@@ -22,34 +22,37 @@ import numpy as np
 
 from . import core
 
-def make_class(model_info, dtype='single', namestyle='name'):
+def standard_models():
+    return [make_class(model_name) for model_name in core.list_models()]
+
+def make_class(model_name, namestyle='name'):
     """
     Load the sasview model defined in *kernel_module*.
 
-    Returns a class that can be used directly as a sasview model.
+    Returns a class that can be used directly as a sasview model.t
 
     Defaults to using the new name for a model.  Setting
     *namestyle='oldname'* will produce a class with a name
     compatible with SasView.
     """
-    model = core.build_model(model_info, dtype=dtype)
+    model_info = core.load_model_info(model_name)
     def __init__(self, multfactor=1):
-        SasviewModel.__init__(self, model)
-    attrs = dict(__init__=__init__)
-    ConstructedModel = type(model.info[namestyle], (SasviewModel,), attrs)
+        SasviewModel.__init__(self)
+    attrs = dict(__init__=__init__, _model_info=model_info)
+    ConstructedModel = type(model_info[namestyle], (SasviewModel,), attrs)
     return ConstructedModel
 
 class SasviewModel(object):
     """
     Sasview wrapper for opencl/ctypes model.
     """
-    def __init__(self, model):
-        """Initialization"""
-        self._model = model
+    def __init__(self):
+        self._kernel = None
+        model_info = self._model_info
 
-        self.name = model.info['name']
-        self.oldname = model.info['oldname']
-        self.description = model.info['description']
+        self.name = model_info['name']
+        self.oldname = model_info['oldname']
+        self.description = model_info['description']
         self.category = None
         self.multiplicity_info = None
         self.is_multifunc = False
@@ -59,9 +62,9 @@ class SasviewModel(object):
         self.details = dict()
         self.params = collections.OrderedDict()
         self.dispersion = dict()
-        partype = model.info['partype']
+        partype = model_info['partype']
 
-        for p in model.info['parameters']:
+        for p in model_info['parameters']:
             self.params[p.name] = p.default
             self.details[p.name] = [p.units] + p.limits
 
@@ -82,10 +85,10 @@ class SasviewModel(object):
         self.non_fittable = []
 
         ## independent parameter name and unit [string]
-        self.input_name = model.info.get("input_name", "Q")
-        self.input_unit = model.info.get("input_unit", "A^{-1}")
-        self.output_name = model.info.get("output_name", "Intensity")
-        self.output_unit = model.info.get("output_unit", "cm^{-1}")
+        self.input_name = model_info.get("input_name", "Q")
+        self.input_unit = model_info.get("input_unit", "A^{-1}")
+        self.output_name = model_info.get("output_name", "Intensity")
+        self.output_unit = model_info.get("output_unit", "cm^{-1}")
 
         ## _persistency_dict is used by sas.perspectives.fitting.basepage
         ## to store dispersity reference.
@@ -94,6 +97,19 @@ class SasviewModel(object):
 
         ## New fields introduced for opencl rewrite
         self.cutoff = 1e-5
+
+    def __get_state__(self):
+        state = self.__dict__.copy()
+        model_id = self._model_info['id']
+        state.pop('_kernel')
+        # May need to reload model info on set state since it has pointers
+        # to python implementations of Iq, etc.
+        #state.pop('_model_info')
+        return state
+
+    def __set_state__(self, state):
+        self.__dict__ = state
+        self._kernel = None
 
     def __str__(self):
         """
@@ -186,7 +202,7 @@ class SasviewModel(object):
         """
         # TODO: fix test so that parameter order doesn't matter
         ret = ['%s.%s' % (d.lower(), p)
-               for d in self._model.info['partype']['pd-2d']
+               for d in self._model_info['partype']['pd-2d']
                for p in ('npts', 'nsigmas', 'width')]
         #print(ret)
         return ret
@@ -260,7 +276,7 @@ class SasviewModel(object):
         if isinstance(qdist, (list, tuple)):
             # Check whether we have a list of ndarrays [qx,qy]
             qx, qy = qdist
-            partype = self._model.info['partype']
+            partype = self._model_info['partype']
             if not partype['orientation'] and not partype['magnetic']:
                 return self.calculate_Iq(np.sqrt(qx ** 2 + qy ** 2))
             else:
@@ -283,8 +299,10 @@ class SasviewModel(object):
         This should NOT be used for fitting since it copies the *q* vectors
         to the card for each evaluation.
         """
+        if self._kernel is None:
+            self._kernel = core.build_model(self._model_info)
         q_vectors = [np.asarray(q) for q in args]
-        fn = self._model(q_vectors)
+        fn = self._kernel(q_vectors)
         pars = [self.params[v] for v in fn.fixed_pars]
         pd_pars = [self._get_weights(p) for p in fn.pd_pars]
         result = fn(pars, pd_pars, self.cutoff)
@@ -298,7 +316,7 @@ class SasviewModel(object):
 
         :return: the value of the effective radius
         """
-        ER = self._model.info.get('ER', None)
+        ER = self._model_info.get('ER', None)
         if ER is None:
             return 1.0
         else:
@@ -313,7 +331,7 @@ class SasviewModel(object):
 
         :return: the value of the volf ratio
         """
-        VR = self._model.info.get('VR', None)
+        VR = self._model_info.get('VR', None)
         if VR is None:
             return 1.0
         else:
@@ -357,7 +375,7 @@ class SasviewModel(object):
         and w is a vector containing the products for weights for each
         parameter set in the vector.
         """
-        pars = self._model.info['partype']['volume']
+        pars = self._model_info['partype']['volume']
         return core.dispersion_mesh([self._get_weights(p) for p in pars])
 
     def _get_weights(self, par):
@@ -367,10 +385,11 @@ class SasviewModel(object):
         """
         from . import weights
 
-        relative = self._model.info['partype']['pd-rel']
-        limits = self._model.info['limits']
+        relative = self._model_info['partype']['pd-rel']
+        limits = self._model_info['limits']
         dis = self.dispersion[par]
         value, weight = weights.get_weights(
             dis['type'], dis['npts'], dis['width'], dis['nsigmas'],
             self.params[par], limits[par], par in relative)
         return value, weight / np.sum(weight)
+
