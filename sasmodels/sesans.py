@@ -62,14 +62,14 @@ def call_HankelAccept(data, q_calc, Iq_calc, q_mono, Iq_mono):
                   q_calc, Iq_calc)
                   
 def Cosine2D(data, q_calc, Iq_calc, qx, qy, Iq_mono):
-    return hankel(data.x, data.y data.lam * 1e-9,
+    return hankel(data.x, data.y, data.lam * 1e-9,
                   data.sample.thickness / 10,
                   q_calc, Iq_calc)
                         
 def TotalScatter(model, parameters):  #Work in progress!!
 #    Calls a model with existing model parameters already in place, then integrate the product of q and I(q) from 0 to (4*pi/lambda)
     allq = np.linspace(0,4*pi/wavelength,1000)
-    allIq = 
+    allIq = 1
     integral = allq*allIq
     
 
@@ -85,27 +85,27 @@ def Cosine2D(wavelength, magfield, thickness, qy, qz, Iqy, Iqz, modelname): #Wor
     sd = np.zeros_like(wavelength, 'd')
     Gprime = np.zeros_like(wavelength, 'd')
     f = np.zeros_like(wavelength, 'd')
-       for i, wavelength_i in enumerate(wavelength):
-            z = magfield*wavelength_i
-            allq=np.linspace() #for calculating the Q-range of the  scattering power integral
-            allIq=np.linspace()  # This is the model applied to the allq q-space. Needs to refference the model somehow
-            alldq = (allq[1]-allq[0])*1e10
-            sigma[i]=wavelength[i]^2*thickness/2/pi*np.sum(allIq*allq*alldq)
-            s[i]=1-exp(-sigma)
-            for j, Iqy_j, qy_j in enumerate(qy):
-                for k, Iqz_k, qz_k in enumerate(qz):
-                    Iq = np.sqrt(Iqy_j^2+Iqz_k^2)
-                    q = np.sqrt(qy_j^2 + qz_k^2)
-                    Gintegral = Iq*cos(z*Qz_k)
-                    Gprime[i] += Gintegral
-    #                sigma = wavelength^2*thickness/2/pi* allq[i]*allIq[i]
-    #                s[i] += 1-exp(Totalscatter(modelname)*thickness)
-    #                For now, work with standard 2-phase scatter
-                   
-                    
-                    sd[i] += Iq
-            f[i] = 1-s[i]+sd[i]
-            P[i] = (1-sd[i]/f[i])+1/f[i]*Gprime[i]        
+    for i, wavelength_i in enumerate(wavelength):
+        z = magfield*wavelength_i
+        allq=np.linspace() #for calculating the Q-range of the  scattering power integral
+        allIq=np.linspace()  # This is the model applied to the allq q-space. Needs to refference the model somehow
+        alldq = (allq[1]-allq[0])*1e10
+        sigma[i]=wavelength[i]^2*thickness/2/pi*np.sum(allIq*allq*alldq)
+        s[i]=1-exp(-sigma)
+        for j, Iqy_j, qy_j in enumerate(qy):
+            for k, Iqz_k, qz_k in enumerate(qz):
+                Iq = np.sqrt(Iqy_j^2+Iqz_k^2)
+                q = np.sqrt(qy_j^2 + qz_k^2)
+                Gintegral = Iq*cos(z*Qz_k)
+                Gprime[i] += Gintegral
+#                sigma = wavelength^2*thickness/2/pi* allq[i]*allIq[i]
+#                s[i] += 1-exp(Totalscatter(modelname)*thickness)
+#                For now, work with standard 2-phase scatter
+
+
+                sd[i] += Iq
+        f[i] = 1-s[i]+sd[i]
+        P[i] = (1-sd[i]/f[i])+1/f[i]*Gprime[i]
 
 
 
@@ -118,25 +118,25 @@ def HankelAccept(wavelength, magfield, thickness, q, Iq, theta, modelname):
     SElength= wavelength*magfield
     G = np.zeros_like(SElength, 'd')
     threshold=2*pi*theta/wavelength
-        for i, SElength_i in enumerate(SElength):
-            allq=np.linspace() #for calculating the Q-range of the  scattering power integral
-            allIq=np.linspace()  # This is the model applied to the allq q-space. Needs to refference the model somehow
-            alldq = (allq[1]-allq[0])*1e10
-            sigma[i]=wavelength[i]^2*thickness/2/pi*np.sum(allIq*allq*alldq)
-            s[i]=1-exp(-sigma)
-            
-            dq = (q[1]-q[0])*1e10
-            a = (x<threshold)
-            acceptq = a*q
-            acceptIq = a*Iq
-       
-            G[i] = np.sum(besselj(0, acceptq*SElength_i)*acceptIq*acceptq*dq)
-                
-    #        G[i]=np.sum(integral)
-        
-        G *= dq*1e10*2*pi
-    
-        P = exp(thickness*wavelength**2/(4*pi**2)*(G-G[0]))
+    for i, SElength_i in enumerate(SElength):
+        allq=np.linspace() #for calculating the Q-range of the  scattering power integral
+        allIq=np.linspace()  # This is the model applied to the allq q-space. Needs to refference the model somehow
+        alldq = (allq[1]-allq[0])*1e10
+        sigma[i]=wavelength[i]^2*thickness/2/pi*np.sum(allIq*allq*alldq)
+        s[i]=1-exp(-sigma)
+
+        dq = (q[1]-q[0])*1e10
+        a = (x<threshold)
+        acceptq = a*q
+        acceptIq = a*Iq
+
+        G[i] = np.sum(besselj(0, acceptq*SElength_i)*acceptIq*acceptq*dq)
+
+#        G[i]=np.sum(integral)
+
+    G *= dq*1e10*2*pi
+
+    P = exp(thickness*wavelength**2/(4*pi**2)*(G-G[0]))
     
 def hankel(SElength, wavelength, thickness, q, Iq):
     r"""
