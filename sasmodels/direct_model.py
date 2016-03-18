@@ -68,6 +68,7 @@ class DataMixin(object):
         partype = model.info['partype']
 
         if self.data_type == 'sesans':
+            
             q = sesans.make_q(data.sample.zacceptance, data.Rmax)
             index = slice(None, None)
             res = None
@@ -76,7 +77,8 @@ class DataMixin(object):
             else:
                 Iq, dIq = None, None
             #self._theory = np.zeros_like(q)
-            q_vectors = [q]
+            q_vectors = [q]            
+            q_mono = sesans.make_all_q(data)
         elif self.data_type == 'Iqxy':
             if not partype['orientation'] and not partype['magnetic']:
                 raise ValueError("not 2D without orientation or magnetic parameters")
@@ -95,6 +97,7 @@ class DataMixin(object):
                                          nsigma=3.0, accuracy=accuracy)
             #self._theory = np.zeros_like(self.Iq)
             q_vectors = res.q_calc
+            q_mono = []
         elif self.data_type == 'Iq':
             index = (data.x >= data.qmin) & (data.x <= data.qmax)
             if data.y is not None:
@@ -119,12 +122,14 @@ class DataMixin(object):
 
             #self._theory = np.zeros_like(self.Iq)
             q_vectors = [res.q_calc]
+            q_mono = []
         else:
             raise ValueError("Unknown data type") # never gets here
 
         # Remember function inputs so we can delay loading the function and
         # so we can save/restore state
-        self._kernel_inputs = [v for v in q_vectors]
+        self._kernel_inputs = q_vectors
+        self._kernel_mono_inputs = q_mono
         self._kernel = None
         self.Iq, self.dIq, self.index = Iq, dIq, index
         self.resolution = res
@@ -148,16 +153,18 @@ class DataMixin(object):
 
     def _calc_theory(self, pars, cutoff=0.0):
         if self._kernel is None:
-            self._kernel = make_kernel(self._model, self._kernel_inputs)  # pylint: disable=attribute-defined-outside-init
+            self._kernel = make_kernel(self._model, self._kernel_inputs)  # pylint: disable=attribute-dedata_type
+            self._kernel_mono = make_kernel(self._model, self._kernel_mono_inputs) if self._kernel_mono_inputs else None
 
         Iq_calc = call_kernel(self._kernel, pars, cutoff=cutoff)
+        Iq_mono = call_kernel(self._kernel_mono, pars, mono=True) if self._kernel_mono_inputs else None
         if self.data_type == 'sesans':
-            result = sesans.hankel(self._data.x, self._data.lam * 1e-9,
-                                   self._data.sample.thickness / 10,
-                                   self._kernel_inputs[0], Iq_calc)
+            result = sesans.transform(self._data,
+                                   self._kernel_inputs[0], Iq_calc, 
+                                   self._kernel_mono_inputs, Iq_mono)
         else:
             result = self.resolution.apply(Iq_calc)
-        return result
+        return result        
 
 
 class DirectModel(DataMixin):
