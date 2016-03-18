@@ -117,7 +117,7 @@ double polevlPP(double x, int N ) {
 }
 
 double polevlPQ(double x, int N ) {
-//4: PQ
+
     double coef[8] = {
     5.71323128072548699714E-4,
     6.88455908754495404082E-2,
@@ -139,6 +139,7 @@ double polevlPQ(double x, int N ) {
 }
 
 double polevlQP(double x, int N ) {
+
     double coef[8] = {
     5.10862594750176621635E-2,
     4.98213872951233449420E0,
@@ -161,6 +162,7 @@ double polevlQP(double x, int N ) {
 }
 
 double polevlQQ(double x, int N ) {
+
     double coef[8] = {
     7.42373277035675149943E1,
     1.05644886038262816351E3,
