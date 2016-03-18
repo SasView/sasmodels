@@ -49,8 +49,7 @@ def sasmodels_fn(x, dtype, platform='ocl'):
     from sasmodels import core, data, direct_model
     model = core.load_model('bessel', dtype=dtype)
     calculator = direct_model.DirectModel(data.empty_data1D(x), model)
-    #ret = calculator(background=0)
-    #print ret
+
     return calculator(background=0)
 
 def plotdiff(x, target, actual, label):
