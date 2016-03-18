@@ -42,46 +42,6 @@
  *    IEEE      0, 30       60000       4.2e-16     1.1e-16
  *
  */
-/*							y0.c
- *
- *	Bessel function of the second kind, order zero
- *
- *
- *
- * SYNOPSIS:
- *
- * double x, y, y0();
- *
- * y = y0( x );
- *
- *
- *
- * DESCRIPTION:
- *
- * Returns Bessel function of the second kind, of order
- * zero, of the argument.
- *
- * The domain is divided into the intervals [0, 5] and
- * (5, infinity). In the first interval a rational approximation
- * R(x) is employed to compute
- *   y0(x)  = R(x)  +   2 * log(x) * j0(x) / PI.
- * Thus a call to j0() is required.
- *
- * In the second interval, the Hankel asymptotic expansion
- * is employed with two rational functions of degree 6/6
- * and 7/7.
- *
- *
- *
- * ACCURACY:
- *
- *  Absolute error, when y0(x) < 1; else relative error:
- *
- * arithmetic   domain     # trials      peak         rms
- *    DEC       0, 30        9400       7.0e-17     7.9e-18
- *    IEEE      0, 30       30000       1.3e-15     1.6e-16
- *
- */
 
 /*
 Cephes Math Library Release 2.8:  June, 2000
@@ -92,7 +52,6 @@ Copyright 1984, 1987, 1989, 2000 by Stephen L. Moshier
  * except YP, YQ which are designed for absolute error. */
 
 double j0( double );
-
 double j0(double x) {
 
 //Cephes single precission
@@ -288,12 +247,12 @@ double j0(double x) {
 	}
 
     q = 1.0/x;
-    w = sqrtf(q);
+    w = sqrt(q);
 
     p = w * polevl( q, MO, 7);
     w = q*q;
     xn = q * polevl( w, PH, 7) - PIO4F;
-    p = p * cosf(xn + xx);
+    p = p * cos(xn + xx);
     return(p);
 #endif
 
