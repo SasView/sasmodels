@@ -74,6 +74,15 @@ form_volume = """
 
 Iq = """
       double D,A,B,G,X,X2,X4,S,C,FF,HARDSPH;
+      // these are c compiler instructions, can also put normal code inside the "if else" structure 
+      #if FLOAT_SIZE > 4
+      // double precision    orig had 0.2, don't call the variable cutoff as PAK already has one called that! Must use UPPERCASE name please.
+      //  0.05 better, 0.1 OK
+      #define CUTOFFHS 0.05
+      #else
+      // 0.1 bad, 0.2 OK, 0.3 good, 0.4 better, 0.8 no good
+      #define CUTOFFHS 0.4  
+      #endif
 
       if(fabs(radius_effective) < 1.E-12) {
                HARDSPH=1.0;
@@ -96,8 +105,8 @@ Iq = """
       B *= -6.*volfraction;
       G=0.5*volfraction*A;
 
-      if(X < 0.2) {
-      // RKH Feb 2016, use Taylor series expansion for small X, IT IS VERY PICKY ABOUT THE X CUT OFF VALUE, ought to be lower in double. 
+      if(X < CUTOFFHS) {
+      // RKH Feb 2016, use Taylor series expansion for small X
       // else no obvious way to rearrange the equations to avoid needing a very high number of significant figures. 
       // Series expansion found using Mathematica software. Numerical test in .xls showed terms to X^2 are sufficient 
       // for 5 or 6 significant figures, but I put the X^4 one in anyway 
