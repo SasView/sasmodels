@@ -538,7 +538,7 @@ def compare(opts, limits=None):
         base = opts['engines'][0]
         try:
             base_value, base_time = time_calculation(base, pars, Nbase)
-            print("%s t=%.1f ms, intensity=%.0f"
+            print("%s t=%.2f ms, intensity=%.0f"
                   % (base.engine, base_time, sum(base_value)))
         except ImportError:
             traceback.print_exc()
@@ -549,7 +549,7 @@ def compare(opts, limits=None):
         comp = opts['engines'][1]
         try:
             comp_value, comp_time = time_calculation(comp, pars, Ncomp)
-            print("%s t=%.1f ms, intensity=%.0f"
+            print("%s t=%.2f ms, intensity=%.0f"
                   % (comp.engine, comp_time, sum(comp_value)))
         except ImportError:
             traceback.print_exc()
@@ -583,12 +583,12 @@ def compare(opts, limits=None):
     if Nbase > 0:
         if Ncomp > 0: plt.subplot(131)
         plot_theory(data, base_value, view=view, use_data=False, limits=limits)
-        plt.title("%s t=%.1f ms"%(base.engine, base_time))
+        plt.title("%s t=%.2f ms"%(base.engine, base_time))
         #cbar_title = "log I"
     if Ncomp > 0:
         if Nbase > 0: plt.subplot(132)
         plot_theory(data, comp_value, view=view, use_data=False, limits=limits)
-        plt.title("%s t=%.1f ms"%(comp.engine, comp_time))
+        plt.title("%s t=%.2f ms"%(comp.engine, comp_time))
         #cbar_title = "log I"
     if Ncomp > 0 and Nbase > 0:
         plt.subplot(133)

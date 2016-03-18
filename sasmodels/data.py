@@ -388,7 +388,7 @@ def _plot_result1D(data, theory, resid, view, use_data, limits=None):
             mdata[~np.isfinite(mdata)] = masked
             if view is 'log':
                 mdata[mdata <= 0] = masked
-            plt.errorbar(data.x/10, scale*mdata, yerr=data.dy, fmt='.')
+            plt.errorbar(data.x, scale*mdata, yerr=data.dy, fmt='.')
             all_positive = all_positive and (mdata > 0).all()
             some_present = some_present or (mdata.count() > 0)
 
@@ -411,7 +411,7 @@ def _plot_result1D(data, theory, resid, view, use_data, limits=None):
         plt.yscale('linear'
                    if view == 'q4' or not some_present or not all_positive
                    else view)
-        plt.xlabel("$q$/nm$^{-1}$")
+        plt.xlabel("$q$/A$^{-1}$")
         plt.ylabel('$I(q)$')
 
     if use_resid:
@@ -421,8 +421,8 @@ def _plot_result1D(data, theory, resid, view, use_data, limits=None):
 
         if num_plots > 1:
             plt.subplot(1, num_plots, (use_data or use_theory) + 1)
-        plt.plot(data.x/10, mresid, '-')
-        plt.xlabel("$q$/nm$^{-1}$")
+        plt.plot(data.x, mresid, '-')
+        plt.xlabel("$q$/A$^{-1}$")
         plt.ylabel('residuals')
         plt.xscale('linear' if not some_present else view)
 
