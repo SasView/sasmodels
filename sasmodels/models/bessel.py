@@ -66,9 +66,10 @@ category = "special_fucntions:bessel"
 #             ["name", "units", default, [lower, upper], "type","description"],
 #Bessel
 parameters = [
+    ["ignored", "", 0.0, [-inf, inf], "", "no parameterless functions"],
              ]
 
-source = ["lib/polevl.c", "lib/j1d.c"]
+source = ["lib/polevl.c", "lib/j1_cephes.c"]
 
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
@@ -76,7 +77,7 @@ form_volume = """
     """
 
 Iq = """
-    return j1(q);
+    return 2.0*j1(q)/q;
     """
 
 Iqxy = """
