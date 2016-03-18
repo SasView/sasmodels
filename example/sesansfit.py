@@ -1,5 +1,5 @@
 from bumps.names import *
-from sasmodels import core, bumps_model, sesans
+from sas import core, bumps_model, sesans
 
 HAS_CONVERTER = True
 try:
@@ -15,8 +15,6 @@ def get_bumps_model(model_name):
 
 def sesans_fit(file, model_name, initial_vals={}, custom_params={}, param_range=[], acceptance_angle=None):
     """
-
-def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[]):
 
     @param file: SESANS file location
     @param model: Bumps model object or model name - can be model, model_1 * model_2, and/or model_1 + model_2
