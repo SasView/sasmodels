@@ -5,7 +5,7 @@
 
 
 r"""
-This model describes the scattering from a layer of surfactant or polymer adsorbed on spherical particles under the conditions that (i) the particles (cores) are contrast-matched to the dispersion medium, (ii) *S(Q)* ~ 1 (ie, the particle volume fraction is dilute), (iii) the particle radius is >> layer thickness (ie, the interface is locally flat), and (iv) scattering from excess unadsorbed adsorbate in the bulk medium is absent or has been corrected for.
+This model describes the scattering from a layer of surfactant or polymer adsorbed on large, smooth, notionally spherical particles under the conditions that (i) the particles (cores) are contrast-matched to the dispersion medium, (ii) *S(Q)* ~ 1 (ie, the particle volume fraction is dilute), (iii) the particle radius is >> layer thickness (ie, the interface is locally flat), and (iv) scattering from excess unadsorbed adsorbate in the bulk medium is absent or has been corrected for.
 
 Unlike many other core-shell models, this model does not assume any form for the density distribution of the adsorbed species normal to the interface (cf, a core-shell model normally assumes the density distribution to be a homogeneous step-function). For comparison, if the thickness of a (traditional core-shell like) step function distribution is *t*, the second moment about the mean of the density distribution (ie, the distance of the centre-of-mass of the distribution from the interface), |sigma| =  sqrt((*t* :sup:`2` )/12).
 
@@ -33,7 +33,7 @@ name =  "adsorbed_layer"
 title =  "Scattering from an adsorbed layer on particles"
 
 description =  """
-    Evaluates the scattering from particles
+    Evaluates the scattering from large particles
     with an adsorbed layer of surfactant or
     polymer, independent of the form of the
     density distribution.
@@ -41,24 +41,28 @@ description =  """
 category =  "shape:sphere"
 
 #             ["name", "units", default, [lower, upper], "type", "description"],
-parameters =  [["second_moment", "Ang", 23.0, [0.0, inf], "", "Second moment"],
-              ["adsorbed_amount", "mg/m2", 1.9, [0.0, inf], "", "Adsorbed amount"],
-              ["density_poly", "g/cm3", 0.7, [0.0, inf], "", "Polymer density"],
-              ["radius", "Ang", 500.0, [0.0, inf], "", "Particle radius"],
-              ["volfraction", "None", 0.14, [0.0, inf], "", "Particle vol fraction"],
-              ["polymer_sld", "1/Ang^2", 1.5e-06, [-inf, inf], "", "Polymer SLD"],
-              ["solvent_sld", "1/Ang^2", 6.3e-06, [-inf, inf], "", "Solvent SLD"]]
+parameters =  [["second_moment", "Ang", 23.0, [0.0, inf], "", "Second moment of polymer distribution"],
+              ["adsorbed_amount", "mg/m2", 1.9, [0.0, inf], "", "Adsorbed amount of polymer"],
+              ["density_shell", "g/cm3", 0.7, [0.0, inf], "", "Bulk density of polymer in the shell"],
+              ["radius", "Ang", 500.0, [0.0, inf], "", "Core particle radius"],
+              ["volfraction", "None", 0.14, [0.0, inf], "", "Core particle volume fraction"],
+              ["sld_shell", "1e-6/Ang^2", 1.5, [-inf, inf], "sld", "Polymer shell SLD"],
+              ["sld_solvent", "1e-6/Ang^2", 6.3, [-inf, inf], "sld", "Solvent SLD"]]
 
 # NB: Scale and Background are implicit parameters on every model
-def Iq(q, second_moment, adsorbed_amount, density_poly, radius, 
-        volfraction, polymer_sld, solvent_sld):
+def Iq(q, second_moment, adsorbed_amount, density_shell, radius, 
+        volfraction, sld_shell, sld_solvent):
     # pylint: disable = missing-docstring
-    deltarhosqrd =  (polymer_sld - solvent_sld) * (polymer_sld - solvent_sld)
-    numerator =  6.0 * pi * volfraction * (adsorbed_amount * adsorbed_amount)
-    denominator =  (q * q) * (density_poly * density_poly) * radius
-    eterm =  exp(-1.0 * (q * q) * (second_moment * second_moment))
-    #scale by 10^10 for units conversion to cm^-1
-    inten =  1.0e+10 * deltarhosqrd * ((numerator / denominator) * eterm)
+#    deltarhosqrd =  (sld_shell - sld_solvent) * (sld_shell - sld_solvent)
+#    numerator =  6.0 * pi * volfraction * (adsorbed_amount * adsorbed_amount)
+#    denominator =  (q * q) * (density_shell * density_shell) * radius
+#    eterm =  exp(-1.0 * (q * q) * (second_moment * second_moment))
+#    #scale by 10^-2 for units conversion to cm^-1
+#    inten =  1.0e-02 * deltarhosqrd * ((numerator / denominator) * eterm)
+    aa =  (sld_shell - sld_solvent) * adsorbed_amount / q / density_shell 
+    bb = q * second_moment
+    #scale by 10^-2 for units conversion to cm^-1
+    inten =  6.0e-02 * pi * volfraction * aa * aa * exp(-bb * bb) / radius
     return inten
 Iq.vectorized =  True  # Iq accepts an array of q values
 
@@ -70,28 +74,29 @@ Iqxy.vectorized =  True # Iqxy accepts an array of qx, qy values
 demo =  dict(scale = 1.0,
             second_moment = 23.0,
             adsorbed_amount = 1.9,
-            density_poly = 0.7,
+            density_shell = 0.7,
             radius = 500.0,
             volfraction = 0.14,
-            polymer_sld = 1.5e-06,
-            solvent_sld = 6.3e-06,
+            sld_shell = 1.5,
+            sld_solvent = 6.3,
             background = 0.0)
 
 oldname =  "Core2ndMomentModel"
 oldpars =  dict(scale = 'scale',
                second_moment = 'second_moment',
                adsorbed_amount = 'ads_amount',
-               density_poly = 'density_poly',
+               density_shell = 'density_poly',
                radius = 'radius_core',
                volfraction = 'volf_cores',
-               polymer_sld = 'sld_poly',
-               solvent_sld = 'sld_solv',
+               sld_shell = 'sld_poly',
+               sld_solvent = 'sld_solv',
                background = 'background')
 
 # these unit test values taken from SasView 3.1.2
 tests =  [
     [{'scale': 1.0, 'second_moment': 23.0, 'adsorbed_amount': 1.9, 
-     'density_poly': 0.7, 'radius': 500.0, 'volfraction': 0.14, 
-     'polymer_sld': 1.5e-06, 'solvent_sld': 6.3e-06, 'background': 0.0},
+     'density_shell': 0.7, 'radius': 500.0, 'volfraction': 0.14, 
+     'sld_shell': 1.5, 'sld_solvent': 6.3, 'background': 0.0},
      [0.0106939, 0.469418], [73.741, 9.65391e-53]],
     ]
+# ADDED by: SMK  ON: 16Mar2016  convert from sasview, check vs SANDRA, 18Mar2016 RKH some edits & renaming
