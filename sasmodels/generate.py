@@ -348,13 +348,13 @@ def model_sources(model_info):
 # Pragmas for enable OpenCL features.  Be sure to protect them so that they
 # still compile even if OpenCL is not present.
 _F16_PRAGMA = """\
-#if defined(__OPENCL_VERSION__) && !defined(cl_khr_fp16)
+#if defined(__OPENCL_VERSION__) // && !defined(cl_khr_fp16)
 #  pragma OPENCL EXTENSION cl_khr_fp16: enable
 #endif
 """
 
 _F64_PRAGMA = """\
-#if defined(__OPENCL_VERSION__) && !defined(cl_khr_fp64)
+#if defined(__OPENCL_VERSION__) // && !defined(cl_khr_fp64)
 #  pragma OPENCL EXTENSION cl_khr_fp64: enable
 #endif
 """
