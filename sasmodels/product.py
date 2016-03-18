@@ -17,7 +17,7 @@ from .generate import process_parameters
 
 SCALE=0
 BACKGROUND=1
-EFFECT_RADIUS=2
+RADIUS_EFFECTIVE=2
 VOLFRACTION=3
 
 def make_product_info(p_info, s_info):
@@ -30,7 +30,7 @@ def make_product_info(p_info, s_info):
     assert s_pars[SCALE].name == 'scale'
     assert s_pars[BACKGROUND].name == 'background'
     # We require structure factors to start with effect radius and volfraction
-    assert s_pars[EFFECT_RADIUS].name == 'effect_radius'
+    assert s_pars[RADIUS_EFFECTIVE].name == 'radius_effective'
     assert s_pars[VOLFRACTION].name == 'volfraction'
     # Combine the parameter sets.  We are skipping the first three
     # parameters of S since scale, background are defined in P and

@@ -366,11 +366,12 @@ class GpuInput(object):
         # architectures tested so far.
         self.q_vectors = [_stretch_input(q, self.dtype, 32) for q in q_vectors]
         context = env.get_context(self.dtype)
+        self.global_size = [self.q_vectors[0].size]
+        #print("creating inputs of size", self.global_size)
         self.q_buffers = [
             cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=q)
             for q in self.q_vectors
         ]
-        self.global_size = [self.q_vectors[0].size]
 
     def release(self):
         """
