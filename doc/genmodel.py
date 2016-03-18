@@ -1,6 +1,7 @@
 import sys, os, math, re
 import numpy as np
 import matplotlib.pyplot as plt
+import pylab
 sys.path.insert(0, os.path.abspath('..'))
 from sasmodels import generate, core
 from sasmodels.direct_model import DirectModel
@@ -27,7 +28,7 @@ opts = {
     'q_min'     : 0.001,
     'q_max'     : 1.0,
     'nq'        : 1000,
-    'nq2d'      : 400,
+    'nq2d'      : 100,
     'vmin'      : 1e-3,  # floor for the 2D data results
     'qx_max'    : 0.5,
 }
@@ -58,11 +59,17 @@ def plot_2d(model, opts, ax):
     Iq2D = Iq2D.reshape(nq2d, nq2d)
     if opts['zscale'] == 'log':
         Iq2D = np.log(np.clip(Iq2D, opts['vmin'], np.inf))
-    h = ax.imshow(Iq2D, interpolation='nearest', aspect=1, origin='upper',
-           extent=[-qx_max, qx_max, -qx_max, qx_max], cmap=ice_cm())
-    # , vmin=vmin, vmax=vmax)
+    ax.imshow(Iq2D, interpolation='nearest', aspect=1, origin='lower',
+        extent=[-qx_max, qx_max, -qx_max, qx_max], cmap=pylab.cm.jet)   
     ax.set_xlabel(r'$Q_x \/(\AA^{-1})$')
     ax.set_ylabel(r'$Q_y \/(\AA^{-1})$')
+
+#            im = self.subplot.imshow(output, interpolation='nearest',
+#                                     origin='lower',
+#                                     vmin=zmin_temp, vmax=self.zmax_2D,
+#                                     cmap=self.cmap,
+#                                     extent=(self.xmin_2D, self.xmax_2D,
+#                                             self.ymin_2D, self.ymax_2D))
 
 def ice_cm():
     from matplotlib._cm import _Blues_data
@@ -96,6 +103,7 @@ if model_info['has_2d']:
     ax2d = fig.add_axes([0.5+ax_left, ax_bottom, ax_width, ax_height])
     plot_2d(model, opts, ax2d)
     ax1d = fig.add_axes([ax_left, ax_bottom, ax_width, ax_height])
+    plot_1d(model, opts, ax1d)
     #ax.set_aspect('square')
 else:
     plot_height = fig_height - (fig_top+fig_bottom)
@@ -120,7 +128,10 @@ plt.savefig(filename, bbox_inches='tight')
 captionstr = '\n'
 captionstr += '.. figure:: img/' + model_info['id'] + '_autogenfig.png\n'
 captionstr += '\n'
-captionstr += '    1D plot corresponding to the default parameters of the model.\n'
+if model_info['has_2d']:
+    captionstr += '    1D and 2D plots corresponding to the default parameters of the model.\n'
+else:
+    captionstr += '    1D plot corresponding to the default parameters of the model.\n'
 captionstr += '\n'
 
 # Add figure reference and caption to documentation (at end, before References)
