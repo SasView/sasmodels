@@ -2,13 +2,6 @@ from bumps.names import *
 from sasmodels import core, bumps_model, sesans
 from sas.sascalc.dataloader.loader import Loader
 
-HAS_CONVERTER = True
-try:
-    from sas.sascalc.data_util.nxsunit import Converter
-except ImportError:
-    HAS_CONVERTER = False
-
-
 def get_bumps_model(model_name):
     kernel = core.load_model(model_name)
     model = bumps_model.Model(kernel)
@@ -29,15 +22,6 @@ def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[], a
         loader = Loader()
         data = loader.load(file)
         if data is None: raise IOError("Could not load file %r"%(file))
-        if HAS_CONVERTER == True:
-            default_unit = "A"
-            data_conv_q = Converter(data._xunit)
-            for x in data.x:
-                print x
-            data.x = data_conv_q(data.x, units=default_unit)
-            for x in data.x:
-                print x
-            data._xunit = default_unit
 
     except:
         # If no loadable data file, generate random data
