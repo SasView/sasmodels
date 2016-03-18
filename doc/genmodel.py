@@ -76,7 +76,7 @@ def ice_cm():
     return ice
 
 
-# Generate image (comment IF for 1D/2D for the moment) and generate only 1D
+# Generate image 
 fig_height = 3.0 # in
 fig_left = 0.6 # in
 fig_right = 0.5 # in
@@ -108,7 +108,7 @@ else:
     aspect = (fig_width, fig_height)
     fig = plt.figure(figsize=aspect)
     ax1d = fig.add_axes([ax_left, ax_bottom, ax_width, ax_height])
-plot_1d(model, opts, ax1d)
+    plot_1d(model, opts, ax1d)
 
 # Save image in model/img
 figname = model_name + '_autogenfig.png'

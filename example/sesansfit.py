@@ -13,7 +13,7 @@ def get_bumps_model(model_name):
     model = bumps_model.Model(kernel)
     return model
 
-def sesans_fit(file, model_name, initial_vals={}, custom_params={}, param_range=[], acceptance_angle=None):
+def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[], acceptance_angle=None):
     """
 
     @param file: SESANS file location

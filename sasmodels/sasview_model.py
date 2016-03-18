@@ -16,6 +16,7 @@ using :func:`sasmodels.convert.convert`.
 import math
 from copy import deepcopy
 import warnings
+import collections
 
 import numpy as np
 
@@ -56,9 +57,10 @@ class SasviewModel(object):
         ## interpret the parameters
         ## TODO: reorganize parameter handling
         self.details = dict()
-        self.params = dict()
+        self.params = collections.OrderedDict()
         self.dispersion = dict()
         partype = model.info['partype']
+
         for p in model.info['parameters']:
             self.params[p.name] = p.default
             self.details[p.name] = [p.units] + p.limits
