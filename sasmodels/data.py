@@ -177,8 +177,8 @@ class Data2D(object):
         self.qx_data, self.dqx_data = x, dx
         self.qy_data, self.dqy_data = y, dy
         self.data, self.err_data = z, dz
-        self.mask = (~np.isnan(z) if z is not None
-                     else np.ones_like(x) if x is not None
+        self.mask = (np.isnan(z) if z is not None
+                     else np.zeros_like(x, dtype='bool') if x is not None
                      else None)
         self.q_data = np.sqrt(x**2 + y**2)
         self.qmin = 1e-16

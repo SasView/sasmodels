@@ -33,43 +33,6 @@
  *
  *
  */
-/*							y1.c
- *
- *	Bessel function of second kind of order one
- *
- *
- *
- * SYNOPSIS:
- *
- * double x, y, y1();
- *
- * y = y1( x );
- *
- *
- *
- * DESCRIPTION:
- *
- * Returns Bessel function of the second kind of order one
- * of the argument.
- *
- * The domain is divided into the intervals [0, 8] and
- * (8, infinity). In the first interval a 25 term Chebyshev
- * expansion is used, and a call to j1() is required.
- * In the second, the asymptotic trigonometric representation
- * is employed using two rational functions of degree 5/5.
- *
- *
- *
- * ACCURACY:
- *
- *                      Absolute error:
- * arithmetic   domain      # trials      peak         rms
- *    DEC       0, 30       10000       8.6e-17     1.3e-17
- *    IEEE      0, 30       30000       1.0e-15     1.3e-16
- *
- * (error criterion relative when |y1| > 1).
- *
- */
 
 /*
 Cephes Math Library Release 2.8:  June, 2000
