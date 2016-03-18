@@ -1,10 +1,14 @@
 r"""
 Show numerical precision of $2 J_1(x)/x$.
 """
+import sys; sys.path.insert(0, '..')
 
 import numpy as np
-#from sympy.mpmath import mp
-from mpmath import mp
+try:
+    from mpmath import mp
+except:
+    # CRUFT: mpmath split out into its own package
+    from sympy.mpmath import mp
 #import matplotlib; matplotlib.use('TkAgg')
 import pylab
 
