@@ -15,7 +15,7 @@ In the equations below,
   (this corresponds to the volume fraction of the material in the bilayer,
   *not* the total excluded volume of the paracrystal),
 
-- *sld* $-$ *solvent_sld* is the contrast $\Delta \rho$,
+- *sld* $-$ *sld_solvent* is the contrast $\Delta \rho$,
 
 - *thickness* is the layer thickness $t$,
 
@@ -35,7 +35,8 @@ The scattering intensity $I(q)$ is calculated as
     I(q) = 2\pi\Delta\rho^2\Gamma_m\frac{P_\text{bil}(q)}{q^2} Z_N(q)
 
 The form factor of the bilayer is approximated as the cross section of an
-infinite, planar bilayer of thickness $t$
+infinite, planar bilayer of thickness $t$ (compare the equations for the
+lamellar model).
 
 .. math::
 
@@ -93,7 +94,7 @@ M Bergstrom, J S Pedersen, P Schurtenberger, S U Egelhaaf,
 
 from numpy import inf
 
-name = "lamellarPC"
+name = "lamellar_stack_paracrystal"
 title = "Random lamellar sheet with paracrystal structure factor"
 description = """\
     [Random lamellar phase with paracrystal structure factor]
@@ -119,12 +120,12 @@ parameters = [["thickness", "Ang", 33.0, [0, inf], "volume",
                "d-spacing polydispersity"],
               ["sld", "1e-6/Ang^2", 1.0, [-inf, inf], "",
                "layer scattering length density"],
-              ["solvent_sld", "1e-6/Ang^2", 6.34, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 6.34, [-inf, inf], "",
                "Solvent scattering length density"],
              ]
 
 
-source = ["lamellarPC_kernel.c"]
+source = ["lamellar_stack_paracrystal_kernel.c"]
 
 form_volume = """
     return 1.0;
@@ -139,15 +140,16 @@ Iqxy = """
 
 demo = dict(scale=1, background=0,
             thickness=33, Nlayers=20, spacing=250, spacing_polydisp=0.2,
-            sld=1.0, solvent_sld=6.34,
+            sld=1.0, sld_solvent=6.34,
             thickness_pd=0.2, thickness_pd_n=40)
 
 oldname = 'LamellarPCrystalModel'
 oldpars = dict(spacing_polydisp='pd_spacing', sld='sld_layer',
-               solvent_sld='sld_solvent')
+               sld_solvent='sld_solvent')
 #
 tests = [
         [ {'scale': 1.0, 'background' : 0.0, 'thickness' : 33.,'Nlayers' : 20.0, 'spacing' : 250., 'spacing_polydisp' : 0.2,
-            'sld' : 1.0, 'solvent_sld' : 6.34,
+            'sld' : 1.0, 'sld_solvent' : 6.34,
             'thickness_pd' : 0.0, 'thickness_pd_n' : 40 }, [0.001, 0.215268], [21829.3, 0.00487686]]
         ]
+# ADDED by: RKH  ON: 18Mar2016  converted from sasview previously, now renaming everything & sorting the docs
