@@ -7,9 +7,9 @@ double Iq(double q,
           double polar_core,
           double equat_shell,
           double polar_shell,
-          double core_sld,
-          double shell_sld,
-          double solvent_sld);
+          double sld_core,
+          double sld_shell,
+          double sld_solvent);
 
 
 double Iqxy(double qx, double qy,
@@ -17,9 +17,9 @@ double Iqxy(double qx, double qy,
           double polar_core,
           double equat_shell,
           double polar_shell,
-          double core_sld,
-          double shell_sld,
-          double solvent_sld,
+          double sld_core,
+          double sld_shell,
+          double sld_solvent,
           double theta,
           double phi);
 
@@ -39,9 +39,9 @@ core_shell_ellipsoid_kernel(double q,
           double polar_core,
           double equat_shell,
           double polar_shell,
-          double core_sld,
-          double shell_sld,
-          double solvent_sld)
+          double sld_core,
+          double sld_shell,
+          double sld_solvent)
 {
 
     //upper and lower integration limits
@@ -50,8 +50,8 @@ core_shell_ellipsoid_kernel(double q,
 
     double summ = 0.0;	 //initialize intergral
 
-    const double delpc = core_sld - shell_sld;    //core - shell
-    const double delps = shell_sld - solvent_sld; //shell - solvent
+    const double delpc = sld_core - sld_shell;    //core - shell
+    const double delps = sld_shell - sld_solvent; //shell - solvent
 
     for(int i=0;i<N_POINTS_76;i++) {
         double zi = ( Gauss76Z[i]*(uplim-lolim) + uplim + lolim )/2.0;
@@ -80,9 +80,9 @@ core_shell_ellipsoid_kernel_2d(double q, double q_x, double q_y,
           double polar_core,
           double equat_shell,
           double polar_shell,
-          double core_sld,
-          double shell_sld,
-          double solvent_sld,
+          double sld_core,
+          double sld_shell,
+          double sld_solvent,
           double theta,
           double phi)
 {
@@ -95,8 +95,8 @@ core_shell_ellipsoid_kernel_2d(double q, double q_x, double q_y,
     const double cyl_x = cos(theta) * cos(phi);
     const double cyl_y = sin(theta);
 
-    const double sldcs = core_sld - shell_sld;
-    const double sldss = shell_sld- solvent_sld;
+    const double sldcs = sld_core - sld_shell;
+    const double sldss = sld_shell- sld_solvent;
 
     // Compute the angle btw vector q and the
     // axis of the cylinder
@@ -123,18 +123,18 @@ double Iq(double q,
           double polar_core,
           double equat_shell,
           double polar_shell,
-          double core_sld,
-          double shell_sld,
-          double solvent_sld)
+          double sld_core,
+          double sld_shell,
+          double sld_solvent)
 {
     double intensity = core_shell_ellipsoid_kernel(q,
            equat_core,
            polar_core,
            equat_shell,
            polar_shell,
-           core_sld,
-           shell_sld,
-           solvent_sld);
+           sld_core,
+           sld_shell,
+           sld_solvent);
 
     return intensity;
 }
@@ -145,9 +145,9 @@ double Iqxy(double qx, double qy,
           double polar_core,
           double equat_shell,
           double polar_shell,
-          double core_sld,
-          double shell_sld,
-          double solvent_sld,
+          double sld_core,
+          double sld_shell,
+          double sld_solvent,
           double theta,
           double phi)
 {
@@ -158,9 +158,9 @@ double Iqxy(double qx, double qy,
                        polar_core,
                        equat_shell,
                        polar_shell,
-                       core_sld,
-                       shell_sld,
-                       solvent_sld,
+                       sld_core,
+                       sld_shell,
+                       sld_solvent,
                        theta,
                        phi);
 
