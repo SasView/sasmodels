@@ -122,7 +122,7 @@ def build_model(model_info, dtype=None, platform="ocl"):
             return mixture.MixtureModel(model_info, models)
         elif composition_type == 'product':
             from . import product
-            P, S = parts
+            P, S = models
             return product.ProductModel(model_info, P, S)
         else:
             raise ValueError('unknown mixture type %s'%composition_type)
