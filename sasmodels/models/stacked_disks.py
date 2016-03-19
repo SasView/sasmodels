@@ -132,7 +132,7 @@ parameters = [
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/gauss76.c", "lib/J1.c", "stacked_disks.c"]
+source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "stacked_disks.c"]
 
 demo = dict(background=0.001,
             scale=0.01,
