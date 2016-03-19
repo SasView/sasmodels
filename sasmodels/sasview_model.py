@@ -21,7 +21,6 @@ import numpy as np
 
 from . import core
 from . import generate
-from . import custom
 
 def standard_models():
     return [make_class(model_name) for model_name in core.list_models()]
