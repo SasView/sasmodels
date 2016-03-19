@@ -41,11 +41,11 @@ def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[], a
             y = data
             dy = err_data
             sample = Sample()
-            needs_all_q = acceptance_angle is not None
+            has_no_finite_acceptance = acceptance_angle is not None
         data = SESANSData1D()
         data.acceptance_angle = acceptance_angle
 
-    data.needs_all_q = acceptance_angle is not None
+    data.has_no_finite_acceptance = acceptance_angle is not None
     if "radius" in initial_vals:
         radius = initial_vals.get("radius")
     else:
