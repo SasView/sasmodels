@@ -15,17 +15,19 @@ using :func:`sasmodels.convert.convert`.
 
 import math
 from copy import deepcopy
-import warnings
 import collections
 
 import numpy as np
 
 from . import core
+from . import generate
+from . import custom
 
 def standard_models():
     return [make_class(model_name) for model_name in core.list_models()]
 
-def make_class(model_name, namestyle='name'):
+# TODO: rename to make_class_from_name and update sasview
+def make_class(model_name):
     """
     Load the sasview model defined in *kernel_module*.
 
@@ -36,10 +38,17 @@ def make_class(model_name, namestyle='name'):
     compatible with SasView.
     """
     model_info = core.load_model_info(model_name)
+    return make_class_from_info(model_info)
+
+def make_class_from_file(path):
+    model_info = core.load_model_info_from_path(path)
+    return make_class_from_info(model_info)
+
+def make_class_from_info(model_info):
     def __init__(self, multfactor=1):
         SasviewModel.__init__(self)
     attrs = dict(__init__=__init__, _model_info=model_info)
-    ConstructedModel = type(model_info[namestyle], (SasviewModel,), attrs)
+    ConstructedModel = type(model_info['name'], (SasviewModel,), attrs)
     return ConstructedModel
 
 class SasviewModel(object):

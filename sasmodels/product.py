@@ -67,10 +67,10 @@ def make_product_info(p_info, s_info):
     return model_info
 
 class ProductModel(object):
-    def __init__(self, P, S):
+    def __init__(self, model_info, P, S):
+        self.info = model_info
         self.P = P
         self.S = S
-        self.info = make_product_info(P.info, S.info)
 
     def __call__(self, q_vectors):
         # Note: may be sending the q_vectors to the GPU twice even though they

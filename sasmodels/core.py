@@ -2,15 +2,19 @@
 Core model handling routines.
 """
 
-from os.path import basename, dirname, join as joinpath
+from os.path import basename, dirname, join as joinpath, splitext
 from glob import glob
+import imp
 
 import numpy as np
 
 from . import models
 from . import weights
 from . import generate
-
+# TODO: remove circular references between product and core
+# product uses call_ER/call_VR, core uses make_product_info/ProductModel
+#from . import product
+from . import mixture
 from . import kernelpy
 from . import kerneldll
 try:
@@ -45,22 +49,24 @@ def load_model(model_name, **kw):
     """
     Load model info and build model.
     """
-    parts = model_name.split('+')
-    if len(parts) > 1:
-        from .mixture import MixtureModel
-        models = [load_model(p, **kw) for p in parts]
-        return MixtureModel(models)
-
-    parts = model_name.split('*')
-    if len(parts) > 1:
-        # Note: currently have circular reference
-        from .product import ProductModel
-        if len(parts) > 2:
-            raise ValueError("use P*S to apply structure factor S to model P")
-        P, Q = [load_model(p, **kw) for p in parts]
-        return ProductModel(P, Q)
-
     return build_model(load_model_info(model_name), **kw)
+
+def load_model_info_from_path(path):
+    # Pull off the last .ext if it exists; there may be others
+    name = basename(splitext(path)[0])
+
+    # Not cleaning name since don't need to be able to reload this
+    # model later
+    # Should probably turf the model from sys.modules after we are done...
+
+    # Placing the model in the 'sasmodels.custom' name space, even
+    # though it doesn't actually exist.  imp.load_source doesn't seem
+    # to care.
+    kernel_module = imp.load_source('sasmodels.custom.'+name, path)
+
+    # Now that we have the module, we can load it as usual
+    model_info = generate.make_model_info(kernel_module)
+    return model_info
 
 def load_model_info(model_name):
     """
@@ -69,6 +75,20 @@ def load_model_info(model_name):
     This returns a handle to the module defining the model.  This can be
     used with functions in generate to build the docs or extract model info.
     """
+    parts = model_name.split('+')
+    if len(parts) > 1:
+        model_info_list = [load_model_info(p) for p in parts]
+        return mixture.make_mixture_info(model_info_list)
+
+    parts = model_name.split('*')
+    if len(parts) > 1:
+        from . import product
+        # Note: currently have circular reference
+        if len(parts) > 2:
+            raise ValueError("use P*S to apply structure factor S to model P")
+        P_info, Q_info = [load_model_info(p) for p in parts]
+        return product.make_product_info(P_info, Q_info)
+
     #import sys; print "\n".join(sys.path)
     __import__('sasmodels.models.'+model_name)
     kernel_module = getattr(models, model_name, None)
@@ -94,11 +114,18 @@ def build_model(model_info, dtype=None, platform="ocl"):
     *platform* should be "dll" to force the dll to be used for C models,
     otherwise it uses the default "ocl".
     """
-    source = generate.make_source(model_info)
-    if dtype is None:
-        dtype = 'single' if model_info['single'] else 'double'
-    if callable(model_info.get('Iq', None)):
-        return kernelpy.PyModel(model_info)
+    composition = model_info.get('composition', None)
+    if composition is not None:
+        composition_type, parts = composition
+        models = [build_model(p, dtype=dtype, platform=platform) for p in parts]
+        if composition_type == 'mixture':
+            return mixture.MixtureModel(model_info, models)
+        elif composition_type == 'product':
+            from . import product
+            P, S = parts
+            return product.ProductModel(model_info, P, S)
+        else:
+            raise ValueError('unknown mixture type %s'%composition_type)
 
     ## for debugging:
     ##  1. uncomment open().write so that the source will be saved next time
@@ -108,7 +135,11 @@ def build_model(model_info, dtype=None, platform="ocl"):
     ##  5. uncomment open().read() so that source will be regenerated from model
     # open(model_info['name']+'.c','w').write(source)
     # source = open(model_info['name']+'.cl','r').read()
-
+    source = generate.make_source(model_info)
+    if dtype is None:
+        dtype = 'single' if model_info['single'] else 'double'
+    if callable(model_info.get('Iq', None)):
+        return kernelpy.PyModel(model_info)
     if (platform == "dll"
             or not HAVE_OPENCL
             or not kernelcl.environment().has_type(dtype)):
