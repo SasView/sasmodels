@@ -78,7 +78,7 @@ parameters = [
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/J1.c", "lib/gauss76.c", "hollow_cylinder.c"]
+source = ["lib/polevl.c","lib/sas_J1.c", "lib/gauss76.c", "hollow_cylinder.c"]
 
 # pylint: disable=W0613
 def ER(radius, core_radius, length):

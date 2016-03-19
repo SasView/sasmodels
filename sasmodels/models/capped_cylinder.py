@@ -128,7 +128,7 @@ parameters = [["sld",         "1e-6/Ang^2", 4, [-inf, inf], "",       "Cylinder 
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/J1c.c", "lib/gauss76.c", "capped_cylinder.c"]
+source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "capped_cylinder.c"]
 
 demo = dict(scale=1, background=0,
             sld=6, sld_solvent=1,

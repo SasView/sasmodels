@@ -30,7 +30,7 @@ _bell_kernel(double q, double h, double bell_radius,
     for (int i = 0; i < 76; i++){
         const double t = Gauss76Z[i]*zm + zb;
         const double radical = 1.0 - t*t;
-        const double bj = J1c(qrst*sqrt(radical));
+        const double bj = sas_J1c(qrst*sqrt(radical));
         const double Fq = cos(m*t + b) * radical * bj;
         total += Gauss76Wt[i] * Fq;
     }
@@ -72,7 +72,7 @@ double Iq(double q, double sld, double solvent_sld,
         SINCOS(alpha, sin_alpha, cos_alpha);
 
         const double bell_Fq = _bell_kernel(q, h, bell_radius, half_length, sin_alpha, cos_alpha);
-        const double bj = J1c(q*radius*sin_alpha);
+        const double bj = sas_J1c(q*radius*sin_alpha);
         const double si = sinc(q*half_length*cos_alpha);
         const double cyl_Fq = M_PI*radius*radius*length*bj*si;
         const double Aq = bell_Fq + cyl_Fq;
@@ -107,7 +107,7 @@ double Iqxy(double qx, double qy,
     double sin_alpha, cos_alpha; // slots to hold sincos function output
     SINCOS(alpha, sin_alpha, cos_alpha);
     const double bell_Fq = _bell_kernel(q, h, bell_radius, half_length, sin_alpha, cos_alpha);
-    const double bj = J1c(q*radius*sin_alpha);
+    const double bj = sas_J1c(q*radius*sin_alpha);
     const double si = sinc(q*half_length*cos_alpha);
     const double cyl_Fq = M_PI*radius*radius*length*bj*si;
     const double Aq = cyl_Fq + bell_Fq;

@@ -104,7 +104,7 @@ parameters = [["r_minor",     "Ang",        20.0,  [0, inf],    "volume",      "
 
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/nr_bess_j1.c", "lib/gauss76.c", "lib/gauss20.c", "elliptical_cylinder.c"]
+source = ["lib/polevl.c","lib/sas_J1.c", "lib/gauss76.c", "lib/gauss20.c", "elliptical_cylinder.c"]
 
 demo = dict(scale=1, background=0, r_minor=100, r_ratio=1.5, length=400.0,
             sld=4.0, sld_solvent=1.0, theta=10.0, phi=20, psi=30, theta_pd=10, phi_pd=2, psi_pd=3)

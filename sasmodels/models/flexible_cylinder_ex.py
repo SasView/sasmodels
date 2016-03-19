@@ -108,7 +108,7 @@ parameters = [
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/J1.c", "lib/J1c.c", "lib/gauss76.c", "lib/wrc_cyl.c", "flexible_cylinder_ex.c"]
+source = ["lib/polevl.c","lib/sas_J1.c", "lib/gauss76.c", "lib/wrc_cyl.c", "flexible_cylinder_ex.c"]
 
 demo = dict(scale=1.0, background=0.0001,
             length=1000.0,

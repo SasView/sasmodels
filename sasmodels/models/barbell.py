@@ -110,7 +110,7 @@ parameters = [["sld",         "4e-6/Ang^2",   4, [-inf, inf], "",            "Ba
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/J1c.c", "lib/gauss76.c", "barbell.c"]
+source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "barbell.c"]
 
 # parameters for demo
 demo = dict(scale=1, background=0,
