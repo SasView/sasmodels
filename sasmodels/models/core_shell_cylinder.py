@@ -11,7 +11,7 @@ cylinders is given by (Kline, 2006)
 
 .. math::
 
-    P(q,\alpha) = \frac{\text{scale}}{V_s} F^2(q) + \text{background}
+    I(q,\alpha) = \frac{\text{scale}}{V_s} F^2(q) + \text{background}
 
 where
 
@@ -51,9 +51,8 @@ shell is given by $L+2T$. $J1$ is the first order Bessel function.
     Core shell cylinder schematic.
 
 To provide easy access to the orientation of the core-shell cylinder, we
-define the axis of the cylinder using two angles $\theta$ and $\phi$. As
-for the case of the cylinder, those angles are defined in
-:num:`figure #cylinder-orientation`.
+define the axis of the cylinder using two angles $\theta$ and $\phi$. 
+(see :ref:`cylinder model <cylinder-angle-definition>`)
 
 NB: The 2nd virial coefficient of the cylinder is calculated based on
 the radius and 2 length values, and used as the effective radius for
@@ -73,7 +72,11 @@ implementation of the intensity for fully oriented cylinders, we
 compared the result of averaging our 2D output using a uniform
 distribution $p(\theta,\phi) = 1.0$.
 
-2013/11/26 - Description reviewed by Heenan, R.
+Reference
+---------
+see, for example, Ian Livsey  J. Chem. Soc., Faraday Trans. 2, 1987,83, 1445-1452
+
+2016/03/18 - Description reviewed by RKH
 """
 
 from numpy import pi, inf
@@ -82,10 +85,10 @@ name = "core_shell_cylinder"
 title = "Right circular cylinder with a core-shell scattering length density profile."
 description = """
 P(q,alpha)= scale/Vs*f(q)^(2) + background,
-      where: f(q)= 2(core_sld - solvant_sld)
+      where: f(q)= 2(sld_core - solvant_sld)
         * Vc*sin[qLcos(alpha/2)]
         /[qLcos(alpha/2)]*J1(qRsin(alpha))
-        /[qRsin(alpha)]+2(shell_sld-solvent_sld)
+        /[qRsin(alpha)]+2(sld_shell-sld_solvent)
         *Vs*sin[q(L+T)cos(alpha/2)][[q(L+T)
         *cos(alpha/2)]*J1(q(R+T)sin(alpha))
         /q(R+T)sin(alpha)]
@@ -95,8 +98,8 @@ P(q,alpha)= scale/Vs*f(q)^(2) + background,
     Vs: the volume of the outer shell
     Vc: the volume of the core
     L: the length of the core
-        shell_sld: the scattering length density of the shell
-    solvent_sld: the scattering length density of the solvent
+        sld_shell: the scattering length density of the shell
+    sld_solvent: the scattering length density of the solvent
     background: the background
     T: the thickness
         R+T: is the outer radius
@@ -108,11 +111,11 @@ P(q,alpha)= scale/Vs*f(q)^(2) + background,
 category = "shape:cylinder"
 
 #             ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["core_sld", "1e-6/Ang^2", 4, [-inf, inf], "",
+parameters = [["sld_core", "1e-6/Ang^2", 4, [-inf, inf], "",
                "Cylinder core scattering length density"],
-              ["shell_sld", "1e-6/Ang^2", 4, [-inf, inf], "",
+              ["sld_shell", "1e-6/Ang^2", 4, [-inf, inf], "",
                "Cylinder shell scattering length density"],
-              ["solvent_sld", "1e-6/Ang^2", 1, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "",
                "Solvent scattering length density"],
               ["radius", "Ang", 20, [0, inf], "volume",
                "Cylinder core radius"],
@@ -146,7 +149,7 @@ def VR(radius, thickness, length):
     return whole, whole - core
 
 demo = dict(scale=1, background=0,
-            core_sld=6, shell_sld=8, solvent_sld=1,
+            sld_core=6, sld_shell=8, sld_solvent=1,
             radius=45, thickness=25, length=340,
             theta=30, phi=15,
             radius_pd=.2, radius_pd_n=1,
@@ -155,4 +158,8 @@ demo = dict(scale=1, background=0,
             theta_pd=15, theta_pd_n=45,
             phi_pd=15, phi_pd_n=1)
 oldname = 'CoreShellCylinderModel'
-oldpars = dict(theta='axis_theta', phi='axis_phi')
+oldpars = dict( sld_core='core_sld',
+               sld_shell='shell_sld',
+               sld_solvent='solvent_sld',
+               theta='axis_theta', phi='axis_phi')
+# ADDED by:  RKH  ON: 18Mar2016 renamed sld's etc
