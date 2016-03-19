@@ -13,5 +13,8 @@ sys.path.insert(0, BUMPS)
 sys.path.insert(0, SASVIEW)
 sys.path.insert(0, SASMODELS)
 
-from bumps.gui.gui_app import main as gui
-gui()
+if sys.argv[-1].startswith('-'):
+    from bumps.cli import main as run_bumps
+else:
+    from bumps.gui.gui_app import main as run_bumps
+run_bumps()
