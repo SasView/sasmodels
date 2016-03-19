@@ -69,7 +69,7 @@ parameters = [
     ["ignored", "", 0.0, [-inf, inf], "", "no parameterless functions"],
              ]
 
-source = ["lib/polevl.c", "lib/j1_cephes.c"]
+source = ["lib/sas_gamma.c"]
 
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
@@ -77,7 +77,7 @@ form_volume = """
     """
 
 Iq = """
-    return J1c(q);
+    return sas_gamma(q);
     """
 
 Iqxy = """
