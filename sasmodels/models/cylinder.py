@@ -118,7 +118,7 @@ parameters = [["sld", "4e-6/Ang^2", 4, [-inf, inf], "",
                "Out of plane angle"],
              ]
 
-source = ["lib/J1c.c", "lib/gauss76.c", "cylinder.c"]
+source = ["lib/polevl.c","lib/sas_J1.c", "lib/gauss76.c", "cylinder.c"]
 
 def ER(radius, length):
     """

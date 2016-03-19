@@ -114,7 +114,7 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "",
                "Thickness of parallelepiped"],
              ]
 
-source = ["lib/J1.c", "lib/gauss76.c", "hollow_rectangular_prism.c"]
+source = [ "lib/gauss76.c", "hollow_rectangular_prism.c"]
 
 def ER(a_side, b2a_ratio, c2a_ratio, thickness):
     """
