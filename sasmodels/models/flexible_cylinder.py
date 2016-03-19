@@ -31,7 +31,7 @@ The Kuhn length $(b = 2*l_p)$ is also used to describe the stiffness of a chain.
 
 The returned value is in units of $cm^{-1}$, on absolute scale.
 
-In the parameters, the sldCyl and sldSolv represent the SLD of the chain/cylinder
+In the parameters, the sld and sld\_solvent represent the SLD of the cylinder
 and solvent respectively.
 
 Our model uses the form factor calculations implemented in a c-library provided
