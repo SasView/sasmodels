@@ -83,7 +83,7 @@ parameters = [
     ["solvent_sld", "1e-6/Ang^2",   6.3, [-inf, inf], "",       "Solvent scattering length density"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
-source = ["lib/polevl.c","lib/sas_J1c.c", "lib/wrc_cyl.c", "flexible_cylinder.c"]
+source = ["lib/polevl.c", "lib/sas_J1.c", "lib/wrc_cyl.c", "flexible_cylinder.c"]
 
 demo = dict(scale=1.0, background=0.0001,
             length=1000.0,
