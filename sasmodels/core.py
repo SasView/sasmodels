@@ -216,6 +216,7 @@ def call_kernel(kernel, pars, cutoff=0, mono=False):
     with an error of about 1%, which is usually less than the measurement
     uncertainty.
     """
+    print pars
     fixed_pars = [pars.get(name, kernel.info['defaults'][name])
                   for name in kernel.fixed_pars]
     if mono:

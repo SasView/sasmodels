@@ -127,8 +127,8 @@ class PyKernel(object):
         self.pd_pars = pd_pars
 
     def __call__(self, fixed, pd, cutoff=1e-5):
-        #print("fixed",fixed)
-        #print("pd", pd)
+        print("fixed",fixed)
+        print("pd", pd)
         args = self.args[:]  # grab a copy of the args
         form, form_volume = self.kernel, self.info['form_volume']
         # First two fixed
@@ -186,6 +186,10 @@ def _loops(form, form_volume, cutoff, scale, background,
     #                                                              #
     ################################################################
 
+    #TODO: Wojtek's notes
+    #TODO: The goal is to restructure polydispersity loop
+    #so it allows fitting arbitrary polydispersity parameters
+    #and it accepts cases like coupled parameters
     weight = np.empty(len(pd), 'd')
     if weight.size > 0:
         # weight vector, to be populated by polydispersity loops
