@@ -7,10 +7,11 @@ import glob
 def main():
     sasmodels = os.path.dirname(os.path.realpath(__file__))
     root = os.path.dirname(sasmodels)
-    sasview=glob.glob(os.path.join(root, 'sasview', 'build', 'lib.*' ))[0]
+    sasview=glob.glob(os.path.join(root, 'sasview', 'build', 'lib.*' ))
     sys.path.insert(0, os.path.join(root, 'bumps'))
     sys.path.insert(0, os.path.join(root, 'periodictable'))
-    sys.path.insert(0, sasview)
+    if sasview:  # glob returns a list
+        sys.path.insert(0, sasview[0])
     sys.path.insert(0, sasmodels)
 
     import sasmodels.compare
