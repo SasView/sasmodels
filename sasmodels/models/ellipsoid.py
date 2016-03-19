@@ -38,7 +38,7 @@ scattering length density difference between the scatterer and the solvent.
 To provide easy access to the orientation of the ellipsoid, we define
 the rotation axis of the ellipsoid using two angles $\theta$ and $\phi$.
 These angles are defined in the
-:ref:`cylinder orientation figure <cylinder-orientation>`.
+:ref:`cylinder orientation figure <cylinder-angle-definition>`.
 For the ellipsoid, $\theta$ is the angle between the rotational axis
 and the $z$-axis.
 
