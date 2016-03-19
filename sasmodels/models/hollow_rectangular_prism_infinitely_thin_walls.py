@@ -98,7 +98,7 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "",
                "Ratio sides c/a"],
              ]
 
-source = ["lib/J1.c", "lib/gauss76.c", "hollow_rectangular_prism_infinitely_thin_walls.c"]
+source = ["lib/gauss76.c", "hollow_rectangular_prism_infinitely_thin_walls.c"]
 
 def ER(a_side, b2a_ratio, c2a_ratio):
     """

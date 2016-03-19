@@ -23,12 +23,12 @@ static double _hollow_cylinder_kernel(double q, double core_radius, double radiu
     if (arg1 == 0.0){
     	lam1 = 1.0;
     }else{
-    	lam1 = 2.0*J1(arg1)/arg1;
+    	lam1 = sas_J1c(arg1);
     }
     if (arg2 == 0.0){
     	lam2 = 1.0;
     }else{
-    	lam2 = 2.0*J1(arg2)/arg2;
+    	lam2 = sas_J1c(arg2);
     }
     //Todo: Need to check psi behavior as gamma goes to 1.
     psi = (lam1 -  gamma*gamma*lam2)/(1.0-gamma*gamma);		//SRK 10/19/00

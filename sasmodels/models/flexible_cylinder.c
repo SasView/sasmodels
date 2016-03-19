@@ -24,7 +24,7 @@ double flexible_cylinder_kernel(double q,
     const double cont = sld-solvent_sld;
     const double qr = q*radius;
     //const double crossSect = (2.0*J1(qr)/qr)*(2.0*J1(qr)/qr);
-    const double crossSect = J1c(qr);
+    const double crossSect = sas_J1c(qr);
     double flex = Sk_WR(q,length,kuhn_length);
     flex *= crossSect*crossSect;
     flex *= M_PI*radius*radius*length;
