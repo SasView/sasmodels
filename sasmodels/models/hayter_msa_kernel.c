@@ -13,7 +13,7 @@ double
 sqhcal(double qq, double gMSAWave[]);
   
 double Iq(double QQ,
-      double radius_effective, double zz, double VolFrac, double Temp, double csalt, double dialec)  
+      double radius_effective, double VolFrac, double zz, double Temp, double csalt, double dialec)
 {
     double gMSAWave[17]={1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17};
 	double Elcharge=1.602189e-19;		// electron charge in Coulombs (C)
