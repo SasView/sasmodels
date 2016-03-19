@@ -368,7 +368,7 @@ def eval_sasview(model_info, data):
             P, S = [get_model(p) for p in model_info['oldname']]
             model = MultiplicationModel(P, S)
         else:
-            raise ValueError("mixture models not handled yet")
+            raise ValueError("sasview mixture models not supported by compare")
     else:
         model = get_model(model_info['oldname'])
 
@@ -423,22 +423,12 @@ def eval_opencl(model_info, data, dtype='single', cutoff=0.):
     """
     Return a model calculator using the OpenCL calculation engine.
     """
-    def builder(model_info):
-        try:
-            return core.build_model(model_info, dtype=dtype, platform="ocl")
-        except Exception as exc:
-            print(exc)
-            print("... trying again with single precision")
-            return core.build_model(model_info, dtype='single', platform="ocl")
-    if model_info['composition']:
-        composition_type, parts = model_info['composition']
-        if composition_type == 'product':
-            P, S = [builder(p) for p in parts]
-            model = product.ProductModel(P, S)
-        else:
-            raise ValueError("mixture models not handled yet")
-    else:
-        model = builder(model_info)
+    try:
+        model = core.build_model(model_info, dtype=dtype, platform="ocl")
+    except Exception as exc:
+        print(exc)
+        print("... trying again with single precision")
+        model = core.build_model(model_info, dtype='single', platform="ocl")
     calculator = DirectModel(data, model, cutoff=cutoff)
     calculator.engine = "OCL%s"%DTYPE_MAP[dtype]
     return calculator
@@ -449,18 +439,7 @@ def eval_ctypes(model_info, data, dtype='double', cutoff=0.):
     """
     if dtype == 'quad':
         dtype = 'longdouble'
-    def builder(model_info):
-        return core.build_model(model_info, dtype=dtype, platform="dll")
-
-    if model_info['composition']:
-        composition_type, parts = model_info['composition']
-        if composition_type == 'product':
-            P, S = [builder(p) for p in parts]
-            model = product.ProductModel(P, S)
-        else:
-            raise ValueError("mixture models not handled yet")
-    else:
-        model = builder(model_info)
+    model = core.build_model(model_info, dtype=dtype, platform="dll")
     calculator = DirectModel(data, model, cutoff=cutoff)
     calculator.engine = "OMP%s"%DTYPE_MAP[dtype]
     return calculator
@@ -714,21 +693,13 @@ def parse_opts():
     if len(args) > 3:
         print("expected parameters: model N1 N2")
 
-    def _get_info(name):
-        try:
-            model_info = core.load_model_info(name)
-        except ImportError, exc:
-            print(str(exc))
-            print("Use one of:\n    " + models)
-            sys.exit(1)
-        return model_info
-
     name = args[0]
-    if '*' in name:
-        parts = [_get_info(k) for k in name.split('*')]
-        model_info = product.make_product_info(*parts)
-    else:
-        model_info = _get_info(name)
+    try:
+        model_info = core.load_model_info(name)
+    except ImportError, exc:
+        print(str(exc))
+        print("Could not find model; use one of:\n    " + models)
+        sys.exit(1)
 
     invalid = [o[1:] for o in flags
                if o[1:] not in NAME_OPTIONS
@@ -748,7 +719,7 @@ def parse_opts():
         'nq'        : 128,
         'res'       : 0.0,
         'accuracy'  : 'Low',
-        'cutoff'    : 1e-5,
+        'cutoff'    : 0.0,
         'seed'      : -1,  # default to preset
         'mono'      : False,
         'show_pars' : False,

@@ -30,7 +30,7 @@ The 1D scattering intensity is calculated in the following way (Guinier, 1955)
     V_\text{shell} &= \pi \left(R_\text{shell}^2 - R_\text{core}^2 \right)L \\
     J_1(x)         &= (\sin(x)-x\cdot \cos(x)) / x^2
 
-where *scale* is a scale factor and $J_1$ is the 1st order
+where *scale* is a scale factor, $H = L/2$ and $J_1$ is the 1st order
 Bessel function.
 
 **NB**: The 2nd virial coefficient of the cylinder is calculated
@@ -61,7 +61,7 @@ core_radius = the radius of core
 radius = the radius of shell
 length = the total length of the cylinder
 sld = SLD of the shell
-solvent_sld = SLD of the solvent
+sld_solvent = SLD of the solvent
 background = incoherent background
 """
 category = "shape:cylinder"
@@ -72,7 +72,7 @@ parameters = [
     ["core_radius", "Ang",     20.0, [0, inf],    "volume",      "Hollow core radius"],
     ["length",      "Ang",    400.0, [0, inf],    "volume",      "Cylinder length"],
     ["sld",         "1/Ang^2",  6.3, [-inf, inf], "",            "Cylinder sld"],
-    ["solvent_sld", "1/Ang^2",  1,   [-inf, inf], "",            "Solvent sld"],
+    ["sld_solvent", "1/Ang^2",  1,   [-inf, inf], "",            "Solvent sld"],
     ["theta",       "degrees", 90,   [-360, 360], "orientation", "Theta angle"],
     ["phi",         "degrees",  0,   [-360, 360], "orientation", "Phi angle"],
     ]
@@ -112,7 +112,7 @@ def VR(radius, core_radius, length):
 
 # parameters for demo
 demo = dict(scale=1.0, background=0.0, length=400.0, radius=30.0,
-            core_radius=20.0, sld=6.3, solvent_sld=1, theta=90, phi=0,
+            core_radius=20.0, sld=6.3, sld_solvent=1, theta=90, phi=0,
             radius_pd=.2, radius_pd_n=9,
             length_pd=.2, length_pd_n=10,
             core_radius_pd=.2, core_radius_pd_n=9,
@@ -124,7 +124,7 @@ demo = dict(scale=1.0, background=0.0, length=400.0, radius=30.0,
 oldname = 'HollowCylinderModel'
 oldpars = dict(scale='scale', background='background', radius='radius',
                core_radius='core_radius', sld='sldCyl', length='length',
-               solvent_sld='sldSolv', phi='axis_phi', theta='axis_theta')
+               sld_solvent='sldSolv', phi='axis_phi', theta='axis_theta')
 
 # Parameters for unit tests
 tests = [

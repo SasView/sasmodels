@@ -1,7 +1,7 @@
 # cylinder model
 # Note: model title and parameter table are inserted automatically
 r"""
-The form factor is normalized by the particle volume.
+The form factor is normalized by the particle volume V = \piR^2L.
 
 Definition
 ----------
@@ -18,8 +18,8 @@ where
 .. math::
 
     F(q) = 2 (\Delta \rho) V
-           \frac{\sin \left(q\tfrac12 L\cos\alpha \right)}
-                {q\tfrac12 L \cos \alpha}
+           \frac{\sin \left(\tfrac12 qL\cos\alpha \right)}
+                {\tfrac12 qL \cos \alpha}
            \frac{J_1 \left(q R \sin \alpha\right)}{q R \sin \alpha}
 
 and $\alpha$ is the angle between the axis of the cylinder and $\vec q$, $V$
@@ -87,8 +87,8 @@ from numpy import pi, inf
 name = "cylinder"
 title = "Right circular cylinder with uniform scattering length density."
 description = """
-     f(q,alpha) = 2*(sld - solvent_sld)*V*sin(qLcos(alpha/2))
-                /[qLcos(alpha/2)]*J1(qRsin(alpha/2))/[qRsin(alpha)]
+     f(q,alpha) = 2*(sld - sld_solvent)*V*sin(qLcos(alpha)/2))
+                /[qLcos(alpha)/2]*J1(qRsin(alpha))/[qRsin(alpha)]
 
             P(q,alpha)= scale/V*f(q,alpha)^(2)+background
             V: Volume of the cylinder
@@ -106,7 +106,7 @@ category = "shape:cylinder"
 #             [ "name", "units", default, [lower, upper], "type", "description"],
 parameters = [["sld", "4e-6/Ang^2", 4, [-inf, inf], "",
                "Cylinder scattering length density"],
-              ["solvent_sld", "1e-6/Ang^2", 1, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "",
                "Solvent scattering length density"],
               ["radius", "Ang", 20, [0, inf], "volume",
                "Cylinder radius"],
@@ -129,7 +129,7 @@ def ER(radius, length):
 
 # parameters for demo
 demo = dict(scale=1, background=0,
-            sld=6, solvent_sld=1,
+            sld=6, sld_solvent=1,
             radius=20, length=300,
             theta=60, phi=60,
             radius_pd=.2, radius_pd_n=9,
@@ -140,7 +140,7 @@ demo = dict(scale=1, background=0,
 # For testing against the old sasview models, include the converted parameter
 # names and the target sasview model name.
 oldname = 'CylinderModel'
-oldpars = dict(theta='cyl_theta', phi='cyl_phi', sld='sldCyl', solvent_sld='sldSolv')
+oldpars = dict(theta='cyl_theta', phi='cyl_phi', sld='sldCyl', sld_solvent='sldSolv')
 
 
 qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
@@ -150,3 +150,4 @@ tests = [[{}, 0.2, 0.042761386790780453],
          [{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.03514647218513852]],
         ]
 del qx, qy  # not necessary to delete, but cleaner
+# ADDED by:  RKH  ON: 18Mar2016 renamed sld's etc

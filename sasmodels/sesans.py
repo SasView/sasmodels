@@ -1,8 +1,10 @@
 """
-Conversion of scattering cross section from SANS in absolute
-units into SESANS using a Hankel transformation
+Conversion of scattering cross section from SANS (I(q), or rather, ds/dO) in absolute
+units (cm-1)into SESANS correlation function G using a Hankel transformation, then converting
+the SESANS correlation function into polarisation from the SESANS experiment
 
-Everything is in units of metres except specified otherwise
+Everything is in units of metres except specified otherwise (NOT TRUE!!!)
+Everything is in conventional units (nm for spin echo length)
 
 Wim Bouwman (w.g.bouwman@tudelft.nl), June 2013
 """
@@ -17,23 +19,41 @@ from scipy.special import jv as besselj
 def make_q(q_max, Rmax):
     r"""
     Return a $q$ vector suitable for SESANS covering from $2\pi/ (10 R_{\max})$
-    to $q_max$.
+    to $q_max$. This is the integration range of the Hankel transform; bigger range and 
+    more points makes a better numerical integration.
+    Smaller q_min will increase reliable spin echo length range. 
+    Rmax is the "radius" of the largest expected object and can be set elsewhere.
+    q_max is determined by the acceptance angle of the SESANS instrument.
     """
     q_min = dq = 0.1 * 2*pi / Rmax
     return np.arange(q_min, q_max, dq)
     
 def make_all_q(data):
-    if not data.needs_all_q:
+    """
+    Return a $q$ vector suitable for calculating the total scattering cross section for
+    calculating the effect of finite acceptance angles on Time of Flight SESANS instruments.
+    If no acceptance is given, or unwanted (set "unwanted" flag in paramfile), no all_q vector is needed.
+    If the instrument has a rectangular acceptance, 2 all_q vectors are needed.
+    If the instrument has a circular acceptance, 1 all_q vector is needed
+    
+    """
+    if not data.has_no_finite_acceptance:
         return []
-    elif needs_Iqxy(data):
+    elif data.has_yz_acceptance(data):
         # compute qx, qy
         Qx, Qy = np.meshgrid(qx, qy)
         return [Qx, Qy]
     else:
         # else only need q
+        # data.has_z_acceptance
         return [q]
 
 def transform(data, q_calc, Iq_calc, qmono, Iq_mono):
+    """
+    Decides which transform type is to be used, based on the experiment data file contents (header)
+    (2016-03-19: currently controlled from parameters script)
+    nqmono is the number of q vectors to be used for the detector integration
+    """
     nqmono = len(qmono)
     if nqmono == 0:
         result = call_hankel(data, q_calc, Iq_calc)
@@ -61,7 +81,7 @@ def call_HankelAccept(data, q_calc, Iq_calc, q_mono, Iq_mono):
                   data.sample.thickness / 10,
                   q_calc, Iq_calc)
                   
-def Cosine2D(data, q_calc, Iq_calc, qx, qy, Iq_mono):
+def call_Cosine2D(data, q_calc, Iq_calc, qx, qy, Iq_mono):
     return hankel(data.x, data.y, data.lam * 1e-9,
                   data.sample.thickness / 10,
                   q_calc, Iq_calc)
