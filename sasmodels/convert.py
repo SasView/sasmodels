@@ -150,6 +150,8 @@ def revert_pars(model_info, pars):
             _remove_pd(oldpars, 'rimA', name)
         elif name in ['mono_gauss_coil','poly_gauss_coil']:
             del oldpars['i_zero']
+        elif name == 'fractal':
+            del oldpars['volfraction']
 
     return oldpars
 
@@ -185,4 +187,6 @@ def constrain_new_to_old(model_info, pars):
             pars['i_zero'] = 1
         elif name == 'poly_gauss_coil':
             pars['i_zero'] = 1
+        elif name == 'fractal':
+            pars['volfraction'] = 1
             
