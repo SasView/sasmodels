@@ -46,9 +46,9 @@ Cephes Math Library Release 2.8:  June, 2000
 Copyright 1984, 1987, 2000 by Stephen L. Moshier
 */
 
-double jn( int n, double x );
+double sas_JN( int n, double x );
 
-double jn( int n, double x ) {
+double sas_JN( int n, double x ) {
 
     const double MACHEP = 1.11022302462515654042E-16;
     double pkm2, pkm1, pk, xk, r, ans, xinv;
@@ -71,11 +71,11 @@ double jn( int n, double x ) {
 	}
 
     if( n == 0 )
-	    return( sign * j0(x) );
+	    return( sign * sas_J0(x) );
     if( n == 1 )
-	    return( sign * j1(x) );
+	    return( sign * sas_J1(x) );
     if( n == 2 )
-	    return( sign * (2.0 * j1(x) / x  -  j0(x)) );
+	    return( sign * (2.0 * sas_J1(x) / x  -  sas_J0(x)) );
 
     if( x < MACHEP )
 	    return( 0.0 );
@@ -114,9 +114,9 @@ double jn( int n, double x ) {
 	    } while( --k > 0 );
 
         if( fabs(pk) > fabs(pkm1) )
-	        ans = j1(x)/pk;
+	        ans = sas_J1(x)/pk;
         else
-	        ans = j0(x)/pkm1;
+	        ans = sas_J0(x)/pkm1;
 
 	    return( sign * ans );
 
@@ -142,9 +142,9 @@ double jn( int n, double x ) {
 	        ans = -ans;
 
         if( r > ans )  /* if( fabs(pk) > fabs(pkm1) ) */
-	        ans = sign * j1(x)/pk;
+	        ans = sign * sas_J1(x)/pk;
         else
-	        ans = sign * j0(x)/pkm1;
+	        ans = sign * sas_J0(x)/pkm1;
         return( ans );
     #endif
 }

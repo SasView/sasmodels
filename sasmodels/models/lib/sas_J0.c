@@ -175,7 +175,7 @@ Copyright 1984, 1987, 1989, 2000 by Stephen L. Moshier
         0.0
  };
 
-double J0(double x) {
+double sas_J0(double x) {
 
 //Cephes single precission
 #if FLOAT_SIZE>4

@@ -134,7 +134,7 @@ constant double PH1J1[8] = {
     3.749989509080821E-001
     };
 
-double J1(double x) {
+double sas_J1(double x) {
 
 //Cephes double pression function
 #if FLOAT_SIZE>4
