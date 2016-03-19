@@ -158,8 +158,8 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
         print("%s %d"%(name, k), file=sys.stderr)
         seed = np.random.randint(1e6)
         pars_i = randomize_pars(pars, seed)
-        constrain_pars(model_info['id'], pars_i)
-        constrain_new_to_old(model_info['id'], pars_i)
+        constrain_pars(model_info, pars_i)
+        constrain_new_to_old(model_info, pars_i)
         if mono:
             pars_i = suppress_pd(pars_i)
 
