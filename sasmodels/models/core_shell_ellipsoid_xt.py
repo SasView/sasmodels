@@ -88,9 +88,9 @@ category = "shape:ellipsoid"
 #             ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [
     ["equat_core",    "Ang",       20,   [0, inf],    "volume",      "Equatorial radius of core"],
-    ["x_core",        "None",       3,   [0, inf],    "volume",      "Polar radius of core"],
-    ["t_shell",       "Ang",       30,   [0, inf],    "volume",      "Equatorial radius of shell"],
-    ["x_polar_shell", "",           1,   [0, inf],    "volume",      "Polar radius of shell"],
+    ["x_core",        "None",       3,   [0, inf],    "volume",      "axial ratio of core, X = r_polar/r_equatorial"],
+    ["t_shell",       "Ang",       30,   [0, inf],    "volume",      "thickness of shell at equator"],
+    ["x_polar_shell", "",           1,   [0, inf],    "volume",      "ratio of thickness of shell at pole to that at equator"],
     ["sld_core",      "1e-6/Ang^2", 2,   [-inf, inf], "",            "Core scattering length density"],
     ["sld_shell",     "1e-6/Ang^2", 1,   [-inf, inf], "",            "Shell scattering length density"],
     ["sld_solvent",   "1e-6/Ang^2", 6.3, [-inf, inf], "",            "Solvent scattering length density"],

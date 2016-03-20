@@ -232,3 +232,4 @@ if os.path.exists('rst_prolog'):
         rst_prolog = fid.read()
 
 numfig = True
+#numfig_format = {"figure": "Fig. %s", "table": "Table %s", "code-block": "Program %s"}
