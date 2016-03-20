@@ -60,10 +60,10 @@ category = "shape:cylinder"
 parameters = [
     ["radius",      "Ang",         60.0,   [0, inf],    "volume", "Pringle radius"],
     ["thickness",   "Ang",         10.0,   [0, inf],    "volume", "Thickness of pringle"],
-    ["alpha",       "",            0.001,  [-inf, inf], "", "Curvature parameter"],
-    ["beta",        "",            0.02,   [-inf, inf], "", "Curvature paramter"],
-    ["sld_pringle", "1e-6/Ang^2",  1.0,    [-inf, inf], "", "Fractal exponent"],
-    ["sld_solvent", "1e-6/Ang^2",  6.3,    [-inf, inf], "", "Correlation length"]
+    ["alpha",       "",            0.001,  [-inf, inf], "", "Curvature parameter alpha"],
+    ["beta",        "",            0.02,   [-inf, inf], "", "Curvature paramter beta"],
+    ["sld_pringle", "1e-6/Ang^2",  1.0,    [-inf, inf], "", "Pringle sld"],
+    ["sld_solvent", "1e-6/Ang^2",  6.3,    [-inf, inf], "", "Solvent sld"]
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
