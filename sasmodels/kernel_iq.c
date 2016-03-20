@@ -39,23 +39,27 @@ The environment needs to provide the following #defines:
            double sld[10]; \
            double sld_solvent
 
-   PARAMETER_CALL(var) is the declaration of a call to the kernel.
+   CALL_IQ(q, nq, i, pars) is the declaration of a call to the kernel.
 
        Cylinder:
 
-           #define PARAMETER_CALL(var) \
+           #define CALL_IQ(q, nq, i, var) \
+           Iq(q[i], \
            var.length, \
            var.radius, \
            var.sld, \
-           var.sld_solvent
+           var.sld_solvent)
 
        Multi-shell cylinder:
-           #define PARAMETER_CALL(var) \
+           #define CALL_IQ(q, nq, i, var) \
+           Iq(q[i], \
            var.num_shells, \
            var.length, \
            var.radius, \
            var.sld, \
-           var.sld_solvent
+           var.sld_solvent)
+
+   CALL_VOLUME(var) is similar, but for calling the form volume.
 
    INVALID is a test for model parameters in the correct range
 
@@ -103,8 +107,10 @@ arbitrary value that is not used by the kernel evaluator):
         pd_isvol = {1, 1, x, x}       // true if weight is a volume weight
         par_offset = {2, 3, 303, 313}  // parameter offsets
         par_coord = {0, 3, 2, 1} // bitmap of parameter dependencies
+        fast_coord_index = {5, 3, x, x}
         fast_coord_count = 2  // two parameters vary with *length* distribution
-        fast_coord_index = {5, 3, x, x, x, x}
+        theta_var = -1   // no spherical correction
+        fast_theta = 0   // spherical correction angle is not pd 1
     }
 
     weight = { l0, .., l29, r0, .., r9}
@@ -196,6 +202,9 @@ for the GPU, but it makes the calling sequence much more manageable.
 
 Scale and background cannot be coordinated with other polydisperse parameters
 
+Oriented objects in 2-D need a spherical correction on the angular variation
+in order to preserve the 'surface area' of the weight distribution.
+
 TODO: cutoff
 */
 
@@ -210,8 +219,10 @@ typedef struct {
     int pd_isvol[MAX_PD];   // True if parameter is a volume weighting parameter
     int par_offset[NPARS];  // offset of par values in the par & weight vector
     int par_coord[NPARS];   // polydispersity coordination bitvector
-    int fast_coord_count;   // number of parameters coordinated with pd 1
     int fast_coord_index[NPARS]; // index of the fast coordination parameters
+    int fast_coord_count;   // number of parameters coordinated with pd 1
+    int theta_var;          // id of spherical correction variable
+    int fast_theta;         // true if spherical correction depends on pd 1
 } ProblemDetails;
 
 typedef struct {
@@ -299,11 +310,14 @@ void FULL_KERNEL_NAME(
   double partial_volweight = NAN;
   double weight = 1.0;        // set to 1 in case there are no weights
   double vol_weight = 1.0;    // set to 1 in case there are no vol weights
+  double spherical_correction = 1.0;  // correction for latitude variation
 
   // Loop over the weights then loop over q, accumulating values
   for (int loop_index=pd_start; loop_index < pd_stop; loop_index++) {
     // check if indices need to be updated
     if (pd_index[0] >= pd_length[0]) {
+
+      // RESET INDICES
       pd_index[0] = loop_index%pd_length[0];
       partial_weight = 1.0;
       partial_volweight = 1.0;
@@ -313,7 +327,6 @@ void FULL_KERNEL_NAME(
         partial_weight *= wi;
         if (pd_isvol[k]) partial_volweight *= wi;
       }
-      weight = partial_weight * weights[pd_offset[0]+pd_index[0]]
       for (int k=0; k < NPARS; k++) {
         int coord = par_coord[k];
         int this_offset = par_offset[k];
@@ -328,7 +341,15 @@ void FULL_KERNEL_NAME(
         offset[k] = this_offset;
         parvec[k] = pars[this_offset];
       }
+      weight = partial_weight * weights[pd_offset[0]+pd_index[0]]
+      if (theta_var >= 0) {
+        spherical_correction = fabs(cos(M_PI_180*parvec[theta_var]));
+      }
+      if (!fast_theta) weight *= spherical_correction;
+
     } else {
+
+      // INCREMENT INDICES
       pd_index[0] += 1;
       const double wi = weights[pd_offset[0]+pd_index[0]];
       weight = partial_weight*wi;
@@ -337,13 +358,17 @@ void FULL_KERNEL_NAME(
         parvec[ fast_coord_index[k]]
             = pars[offset[fast_coord_index[k]] + pd_index[0]];
       }
+      if (fast_theta) weight *= fabs(cos(M_PI_180*parvec[theta_var]));
+
     }
+
     #ifdef INVALID
     if (INVALID(local_pars)) continue;
     #endif
+
     if (weight > cutoff) {
       norm += weight;
-      vol += vol_weight * form_volume(VOLUME_PARAMETERS);
+      vol += vol_weight * CALL_VOLUME(local_pars);
       norm_vol += vol_weight;
 
       #ifdef USE_OPENMP
@@ -351,7 +376,7 @@ void FULL_KERNEL_NAME(
       #endif
       for (int i=0; i < nq; i++) {
       {
-        const double scattering = IQ_FUNC(IQ_PARS, IQ_PARAMETERS);
+        const double scattering = CALL_IQ(q, nq, i, local_pars);
         //const double scattering = Iq(q[i], IQ_PARAMETERS);
         result[i] += weight*scattering;
       }
