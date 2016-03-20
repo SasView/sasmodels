@@ -15,7 +15,7 @@ second term is a Lorentzian function describing scattering from polymer chains
 and therefore the thermodynamics. The two multiplicative factors A and C, the
 incoherent background B and the two exponents n and m are used as fitting
 parameters. (Respectively $porod\_scale$, $lorentz\_scale$, $background$, $exponent\_p$ and 
-$exponent\_l$ in the parameter list.) The remaining parameter \xi is a correlation 
+$exponent\_l$ in the parameter list.) The remaining parameter \ |xi|\  is a correlation 
 length for the polymer chains. Note that when m=2 this functional form becomes the 
 familiar Lorentzian function. Some interpretation of the values of A and C may be 
 possible depending on the values of m and n.

@@ -21,8 +21,8 @@ sesans_file = "core_shell.ses"
 
 # Initial parameter values (if other than defaults)
 initial_vals = {
-    "core_sld" : 1.0592,
-    "solvent_sld" : 2.88,
+    "sld_core" : 1.0592,
+    "sld_solvent" : 2.88,
     "radius" : 890,
     "thickness" : 130
 }

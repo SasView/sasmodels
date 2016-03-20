@@ -38,10 +38,12 @@ and
 
 Note that the radius-of-gyration for a sphere of radius R is given by $R_g = R \sqrt(3/5)$.
 
-The cross-sectional radius-of-gyration for a randomly oriented cylinder
-of radius R is given by $R_g = R / \sqrt(2)$.
+For a cylinder of radius $R$ and length $L$,    $R_g^2 = \frac{L^2}{12} + \frac{R^2}{2}$
 
-The cross-sectional radius-of-gyration of a randomly oriented lamella
+from which the cross-sectional radius-of-gyration for a randomly oriented thin 
+cylinder is $R_g = R / \sqrt(2)$.
+
+and the cross-sectional radius-of-gyration of a randomly oriented lamella
 of thickness $T$ is given by $R_g = T / \sqrt(12)$.
 
 For 2D data: The 2D scattering intensity is calculated in the same way as 1D,

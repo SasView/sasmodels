@@ -11,7 +11,7 @@ to any of the orientation angles, and also for the minor radius and the ratio of
 
 .. figure:: img/elliptical_cylinder_geometry.png
 
-   Elliptical cylinder geometry $a$ = $r_{minor}$ and \nu = $axis\_ratio$ = $r_{major} / r_{minor}$
+   Elliptical cylinder geometry $a$ = $r_{minor}$ and \ |nu|\  = $axis\_ratio$ = $r_{major} / r_{minor}$
 
 The function calculated is
 
