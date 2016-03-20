@@ -27,7 +27,7 @@ static double _mass_fractal_kernel(double q,
 
     //calculate S(q)
     double mmo = mass_dim-1.0;
-    double sq = exp(lanczos_gamma(mmo))*sin((mmo)*atan(q*cutoff_length));
+    double sq = sas_gamma(mmo)*sin((mmo)*atan(q*cutoff_length));
     sq *= pow(cutoff_length, mmo);
     sq /= pow((1.0 + (q*cutoff_length)*(q*cutoff_length)),(mmo/2.0));
     sq /= q;
