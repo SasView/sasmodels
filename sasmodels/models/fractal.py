@@ -47,9 +47,9 @@ J Teixeira, *J. Appl. Cryst.*, 21 (1988) 781-785
 
 **Author:** N/A **on:**
 
-**Modified by:** Paul Butler **on:** March 18, 2016
+**Last Modified by:** Paul Butler **on:** March 20, 2016
 
-**Reviewed by:** Paul Butler **on:** March 18, 2016
+**Last Reviewed by:** Paul Butler **on:** March 20, 2016
 
 """
 
@@ -95,8 +95,7 @@ parameters = [["volfraction", "", 0.05, [0.0, 1], "",
 
 source = ["lib/sph_j1c.c", "lib/sas_gamma.c", "fractal.c"]
 
-demo = dict(scale=1, background=0,
-            volfraction=0.05,
+demo = dict(volfraction=0.05,
             radius=5.0,
             fractal_dim=2.0,
             cor_length=100.0,
@@ -114,6 +113,7 @@ oldpars = dict(radius='radius',
 
 # NOTE: test results taken from values returned by SasView 3.1.2
 tests = [
-    [{}, 0.234959183673, 0.0910228716283],
-    [{}, 0.5, 0.016235799134],
+    [{}, 0.0005, 40.4980069872],
+    [{}, 0.234734468938, 0.0947143166058],
+    [{}, 0.5, 0.0176878183458],
     ]
