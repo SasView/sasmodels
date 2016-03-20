@@ -205,7 +205,8 @@ Scale and background cannot be coordinated with other polydisperse parameters
 Oriented objects in 2-D need a spherical correction on the angular variation
 in order to preserve the 'surface area' of the weight distribution.
 
-TODO: cutoff
+Cutoff specifies the integration area by discarding regions in polydisperisty
+hypercubue that has no parameters defined
 */
 
 #define MAX_PD 4  // MAX_PD is the max number of polydisperse parameters
@@ -232,18 +233,6 @@ typedef struct {
 #define KERNEL_NAME test_Iq
 #define FULL_KERNEL_NAME test_Iq
 #define IQ_FUNC Iq
-
-#define IQ_PARAMETERS ignored
-#define IQ_FIXED_PARAMETER_DECLARATIONS const double scale, \
-    const double background, \
-    const double ignored
-#define IQ_PARAMETER_DECLARATIONS double ignored
-#define IQXY_KERNEL_NAME bessel_Iqxy
-#define IQXY_PARAMETERS ignored
-#define IQXY_FIXED_PARAMETER_DECLARATIONS const double scale, \
-    const double background, \
-    const double ignored
-#define IQXY_PARAMETER_DECLARATIONS double ignored
 
 
 void FULL_KERNEL_NAME(
