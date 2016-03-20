@@ -74,6 +74,21 @@ from . import generate
 MAX_LOOPS = 2048
 
 
+# Pragmas for enable OpenCL features.  Be sure to protect them so that they
+# still compile even if OpenCL is not present.
+_F16_PRAGMA = """\
+#if defined(__OPENCL_VERSION__) // && !defined(cl_khr_fp16)
+#  pragma OPENCL EXTENSION cl_khr_fp16: enable
+#endif
+"""
+
+_F64_PRAGMA = """\
+#if defined(__OPENCL_VERSION__) // && !defined(cl_khr_fp64)
+#  pragma OPENCL EXTENSION cl_khr_fp64: enable
+#endif
+"""
+
+
 ENV = None
 def environment():
     """
@@ -141,12 +156,19 @@ def compile_model(context, source, dtype, fast=False):
     if not all(has_type(d, dtype) for d in context.devices):
         raise RuntimeError("%s not supported for devices"%dtype)
 
-    source = generate.convert_type(source, dtype)
+    source_list = [generate.convert_type(source, dtype)]
+
+    if dtype == generate.F16:
+        source_list.insert(0, _F16_PRAGMA)
+    elif dtype == generate.F64:
+        source_list.insert(0, _F64_PRAGMA)
+
     # Note: USE_SINCOS makes the intel cpu slower under opencl
     if context.devices[0].type == cl.device_type.GPU:
-        source = "#define USE_SINCOS\n" + source
+        source_list.insert(0, "#define USE_SINCOS\n")
     options = (get_fast_inaccurate_build_options(context.devices[0])
                if fast else [])
+    source = "\n".join(source)
     program = cl.Program(context, source).build(options=options)
     return program
 
