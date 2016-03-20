@@ -11,7 +11,7 @@ to any of the orientation angles, and also for the minor radius and the ratio of
 
 .. figure:: img/elliptical_cylinder_geometry.png
 
-   Elliptical cylinder geometry $a$ = $r_{minor}$ and \nu = $r_{ratio}$ = $r_{major} / r_{minor}$
+   Elliptical cylinder geometry $a$ = $r_{minor}$ and \nu = $axis\_ratio$ = $r_{major} / r_{minor}$
 
 The function calculated is
 
@@ -56,7 +56,7 @@ All angle parameters are valid and given only for 2D calculation; ie, an oriente
 
     Examples of the angles for oriented elliptical cylinders against the detector plane.
 
-NB: The 2nd virial coefficient of the cylinder is calculated based on the averaged radius (= sqrt(*r_minor*\ :sup:`2` \* *r_ratio*))
+NB: The 2nd virial coefficient of the cylinder is calculated based on the averaged radius (= sqrt(*r_minor*\ :sup:`2` \* *axis_ratio*))
 and length values, and used as the effective radius for *S(Q)* when *P(Q)* \* *S(Q)* is applied.
 
 
@@ -94,7 +94,7 @@ category = "shape:cylinder"
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["r_minor",     "Ang",        20.0,  [0, inf],    "volume",      "Ellipse minor radius"],
-              ["r_ratio",     "",           1.5,   [1, inf],    "volume",      "Ratio of major radius over minor radius"],
+              ["axis_ratio",     "",           1.5,   [1, inf],    "volume",      "Ratio of major radius over minor radius"],
               ["length",      "Ang",        400.0, [1, inf],    "volume",      "Length of the cylinder"],
               ["sld",         "1e-6/Ang^2", 4.0,   [-inf, inf], "",            "Cylinder scattering length density"],
               ["sld_solvent", "1e-6/Ang^2", 1.0,   [-inf, inf], "",            "Solvent scattering length density"],
@@ -106,29 +106,29 @@ parameters = [["r_minor",     "Ang",        20.0,  [0, inf],    "volume",      "
 
 source = ["lib/polevl.c","lib/sas_J1.c", "lib/gauss76.c", "lib/gauss20.c", "elliptical_cylinder.c"]
 
-demo = dict(scale=1, background=0, r_minor=100, r_ratio=1.5, length=400.0,
+demo = dict(scale=1, background=0, r_minor=100, axis_ratio=1.5, length=400.0,
             sld=4.0, sld_solvent=1.0, theta=10.0, phi=20, psi=30, theta_pd=10, phi_pd=2, psi_pd=3)
 
 oldname = 'EllipticalCylinderModel'
-oldpars = dict(theta='cyl_theta', phi='cyl_phi', psi='cyl_psi', sld='sldCyl', sld_solvent='sldSolv')
+oldpars = dict(axis_ratio="r_ratio",theta='cyl_theta', phi='cyl_phi', psi='cyl_psi', sld='sldCyl', sld_solvent='sldSolv')
 
-def ER(r_minor, r_ratio, length):
+def ER(r_minor, axis_ratio, length):
     """
         Equivalent radius
         @param r_minor: Ellipse minor radius
-        @param r_ratio: Ratio of major radius over minor radius
+        @param axis_ratio: Ratio of major radius over minor radius
         @param length: Length of the cylinder
     """
-    radius = math.sqrt(r_minor * r_minor * r_ratio)
+    radius = math.sqrt(r_minor * r_minor * axis_ratio)
     ddd = 0.75 * radius * (2 * radius * length + (length + radius) * (length + pi * radius))
     return 0.5 * (ddd) ** (1. / 3.)
 
-tests = [[{'r_minor': 20.0, 'r_ratio': 1.5, 'length':400.0}, 'ER', 79.89245454155024],
-         [{'r_minor': 20.0, 'r_ratio': 1.2, 'length':300.0}, 'VR', 1],
+tests = [[{'r_minor': 20.0, 'axis_ratio': 1.5, 'length':400.0}, 'ER', 79.89245454155024],
+         [{'r_minor': 20.0, 'axis_ratio': 1.2, 'length':300.0}, 'VR', 1],
 
          # The SasView test result was 0.00169, with a background of 0.001
          [{'r_minor': 20.0,
-           'r_ratio': 1.5,
+           'axis_ratio': 1.5,
            'sld': 4.0,
            'length':400.0,
            'sld_solvent':1.0,

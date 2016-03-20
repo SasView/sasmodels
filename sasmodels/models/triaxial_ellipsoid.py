@@ -35,7 +35,7 @@ where
 To provide easy access to the orientation of the triaxial ellipsoid,
 we define the axis of the cylinder using the angles $\theta$, $\phi$
 and $\psi$. These angles are defined on
-:numref:`figure #triaxial-ellipsoid-angles`.
+:numref:`figure #<triaxial-ellipsoid-angles>`.
 The angle $\psi$ is the rotational angle around its own $c$ axis
 against the $q$ plane. For example, $\psi = 0$ when the
 $a$ axis is parallel to the $x$ axis of the detector.

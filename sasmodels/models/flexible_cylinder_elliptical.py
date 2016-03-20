@@ -101,14 +101,14 @@ category = "shape:cylinder"
 parameters = [
     ["length",      "Ang",       1000.0, [0, inf],    "volume", "Length of the flexible cylinder"],
     ["kuhn_length", "Ang",        100.0, [0, inf],    "volume", "Kuhn length of the flexible cylinder"],
-    ["radius",      "Ang",         20.0, [0, inf],    "volume", "Radius of the flexible cylinder"],
+    ["radius",      "Ang",         20.0, [1, inf],    "volume", "Radius of the flexible cylinder"],
     ["axis_ratio",  "",             1.5, [0, inf],    "",       "Axis_ratio (major_radius/minor_radius"],
     ["sld",         "1e-6/Ang^2",   1.0, [-inf, inf], "",       "Cylinder scattering length density"],
     ["sld_solvent", "1e-6/Ang^2",   6.3, [-inf, inf], "",       "Solvent scattering length density"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/polevl.c","lib/sas_J1.c", "lib/gauss76.c", "lib/wrc_cyl.c", "flexible_cylinder_ex.c"]
+source = ["lib/polevl.c","lib/sas_J1.c", "lib/gauss76.c", "lib/wrc_cyl.c", "flexible_cylinder_elliptical.c"]
 
 demo = dict(scale=1.0, background=0.0001,
             length=1000.0,

@@ -6,7 +6,7 @@ The form factor is normalized by the particle volume.
 Definition
 ----------
 
-| This model calculates the scattering from a rectangular parallelepiped (:numref:`Figure #parallelepiped-image`).
+| This model calculates the scattering from a rectangular parallelepiped (:numref:`Figure #<parallelepiped-image>`).
 | If you need to apply polydispersity, see also :ref:`rectangular-prism`.
 
 .. _parallelepiped-image:

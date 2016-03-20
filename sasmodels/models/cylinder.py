@@ -30,7 +30,7 @@ first order Bessel function.
 
 To provide easy access to the orientation of the cylinder, we define the
 axis of the cylinder using two angles $\theta$ and $\phi$. Those angles
-are defined in :numref:`figure #cylinder-angle-definition`.
+are defined in :numref:`figure #<cylinder-angle-definition>`.
 
 .. _cylinder-angle-definition:
 
