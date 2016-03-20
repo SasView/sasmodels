@@ -88,7 +88,7 @@ value of the polydisperse parameters v1, v2, etc.   The tables for each
 parameter are arranged contiguously in a vector, with offset[k] giving the
 starting location of parameter k in the vector.  Each parameter defines
 coord[k] as a bit mask indicating which polydispersity parameters the
-parameter depends upon.  Usually this is zero, indicating that the parameter
+parameter depends upon. Usually this is zero, indicating that the parameter
 is independent, but for the cylinder example given, the bits for the
 radius and length polydispersity parameters would both be set, the result
 being a (#radius x #length) table, or maybe a (#length x #radius) table
@@ -196,10 +196,11 @@ void KERNEL_NAME(
   }
 
   // Location in the polydispersity cube, one index per dimension.
+  local int pd_index[PD_MAX];
+
   // Set the initial index greater than its vector length in order to
   // trigger the reset behaviour that happens at the end the fast loop.
-  local int pd_index[PD_MAX];
-  pd_index[0] = pd_length[0]
+  pd_index[0] = pd_length[0];
 
   // Loop over the weights then loop over q, accumulating values
   // par
@@ -223,6 +224,7 @@ void KERNEL_NAME(
               this_offset += block_size * pd_index[bit];
               block_size *= pd_length[bit];
           }
+          coord /= 2;
         }
         offset[k] = this_offset;
       }
@@ -263,8 +265,9 @@ void KERNEL_NAME(
       if (vol[i]*norm_vol[i] != 0.0) {
         result[i] *= norm_vol[i]/vol[i];
       }
+      //TODO: Ask Richard if scale and background may be corridanted parameters
       result[i] = scale*result[i]/norm[i]+background;
     }
   }
 }
-
+}
