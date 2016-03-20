@@ -67,7 +67,8 @@ parameters = [
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/polevl.c", "lib/sas_J0.c", "lib/sas_J1.c", "lib/sas_JN.c", "lib/gauss76.c", "pringles.c"]
+source = ["lib/polevl.c", "lib/sas_J0.c", "lib/sas_J1.c", \
+          "lib/sas_JN.c", "lib/gauss76.c", "pringles.c"]
 
 def ER(radius, thickness):
     """
@@ -88,13 +89,13 @@ demo = dict(background=0.0,
 
 oldname = 'PringlesModel'
 oldpars = dict(background='background',
-                scale='scale',
-                radius = 'radius',
-                thickness = 'thickness',
-                alpha = 'alpha',
-                beta='beta',
-                pringle_sld='sld_pringle',
-                solvent_sld='sld_solvent')
+               scale='scale',
+               radius='radius',
+               thickness='thickness',
+               alpha='alpha',
+               beta='beta',
+               pringle_sld='sld_pringle',
+               solvent_sld='sld_solvent')
 
 tests = [
     [{'scale' : 1.0,
