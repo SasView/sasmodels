@@ -1,8 +1,9 @@
 r"""
 This model calculates the scattering from a gel structure,
 but typically a physical rather than chemical network.
-It is modeled as a sum of a low-q exponential decay plus
-a lorentzian at higher-q values.
+It is modeled as a sum of a low-q exponential decay (which happens to
+give a functional form similar to Guinier scattering, so interpret with 
+care) plus a Lorentzian at higher-q values. See also the gel_fit model.
 
 Definition
 ----------
@@ -15,9 +16,9 @@ The scattering intensity I(q) is calculated as (Eqn. 5 from the reference)
 
 $\Xi$ is the length scale of the static correlations in the gel,
 which can be attributed to the "frozen-in" crosslinks.
-$\xi is the dynamic correlation length, which can be attributed to the
+\ |xi|\  is the dynamic correlation length, which can be attributed to the
 fluctuating polymer chains between crosslinks.
-$IG(0)$ and $IL(0)$ are the scaling factors for each of these structures.
+$I_G(0)$ and $I_L(0)$ are the scaling factors for each of these structures.
 Think carefully about how these map to your particular system!
 
 .. note::

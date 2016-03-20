@@ -7,7 +7,8 @@ a shorter correlation length ( $a1$ ) to describe the rapid fluctuations
 in the position of the polymer chains that ensure thermodynamic equilibrium,
 and a longer distance (denoted here as $a2$ ) needed to account for the static
 accumulations of polymer pinned down by junction points or clusters of such
-points. The latter is derived from a simple Guinier function.
+points. The latter is derived from a simple Guinier function. Compare also the 
+gauss_lorentz_gel model.
 
 
 Definition
@@ -32,8 +33,8 @@ In gels with significant hydrogen bonding $D$ has been reported to be
 ~2.6 to 2.8.
 
 
-Reference
----------
+References
+----------
 
 Mitsuhiro Shibayama, Toyoichi Tanaka, Charles C Han,
 *J. Chem. Phys.* 1992, 97 (9), 6829-6841
@@ -59,8 +60,8 @@ category = "shape-independent"
 
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["guinier_scale",    "cm^{-1}",   1.7, [-inf, inf], "", "Guinier length scale"],
-              ["lorentzian_scale", "cm^{-1}",   3.5, [-inf, inf], "", "Lorentzian length scale"],
+parameters = [["guinier_scale",    "cm^-1",   1.7, [-inf, inf], "", "Guinier length scale"],
+              ["lorentzian_scale", "cm^-1",   3.5, [-inf, inf], "", "Lorentzian length scale"],
               ["gyration_radius",  "Ang",     104.0, [2, inf],    "", "Radius of gyration"],
               ["fractal_exp",      "",          2.0, [0, inf],    "", "Fractal exponent"],
               ["cor_length",       "Ang",      16.0, [0, inf],    "", "Correlation length"]

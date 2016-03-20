@@ -4,10 +4,12 @@ Definition
 
 This model fits the Guinier function
 
-.. math:: q_1=\frac{1}{R_g}\sqrt{\frac{(m-s)(3-s)}{2}}
+.. math:: I(q) = scale \exp{\left[ \frac{-Q^2R_g^2}{3} \right]}
 
 to the data directly without any need for linearisation
-(*cf*. $\ln I(q)$ vs $q^2$\ ).
+(*cf*. the usual plot of $\ln I(q)$ vs $q^2$\ ). Note that you may have to 
+restrict the data range to include small q only, where the Guinier approximation
+actually applies. See also the guinier_porod model.
 
 For 2D data the scattering intensity is calculated in the same way as 1D,
 where the $q$ vector is defined as
@@ -26,7 +28,7 @@ from numpy import inf
 name = "guinier"
 title = ""
 description = """
- I(q) = scale exp ( - rg^2 q^2 / 3.0 )
+ I(q) = scale.exp ( - rg^2 q^2 / 3.0 )
  
     List of default parameters:
     scale = scale
