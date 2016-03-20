@@ -163,7 +163,6 @@ def compile_model(context, source, dtype, fast=False):
     elif dtype == generate.F64:
         source_list.insert(0, _F64_PRAGMA)
 
-
     # Note: USE_SINCOS makes the intel cpu slower under opencl
     if context.devices[0].type == cl.device_type.GPU:
         source_list.insert(0, "#define USE_SINCOS\n")
