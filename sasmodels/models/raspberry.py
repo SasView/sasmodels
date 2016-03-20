@@ -2,36 +2,41 @@ r"""
 Definition
 ----------
 
-The figure below shows a schematic of a large droplet surrounded by several smaller particles
-forming a structure similar to that of Pickering emulsions.
+The figure below shows a schematic of a large droplet surrounded by several
+smaller particles forming a structure similar to that of Pickering emulsions.
 
 .. figure:: img/raspberry_geometry.jpg
 
     Schematic of the raspberry model
 
-In order to calculate the form factor of the entire complex, the self-correlation of the large droplet,
-the self-correlation of the particles, the correlation terms between different particles
-and the cross terms between large droplet and small particles all need to be calculated.
+In order to calculate the form factor of the entire complex, the self-
+correlation of the large droplet, the self-correlation of the particles, the
+correlation terms between different particles and the cross terms between large
+droplet and small particles all need to be calculated.
 
-Consider two infinitely thin shells of radii R2 and R2 separated by distance r. The general
-structure of the equation is then the form factor of the two shells multiplied by the phase
-factor that accounts for the separation of their centers.
+Consider two infinitely thin shells of radii R1 and R2 separated by distance r.
+The general structure of the equation is then the form factor of the two shells
+multiplied by the phase factor that accounts for the separation of their
+centers.
 
 .. math::
 
     S(q) = \frac{sin(qR_1)}{qR_1}\frac{sin(qR_2)}{qR_2}\frac{sin(qr)}{qr}
 
-In this case, the large droplet and small particles are solid spheres rather than thin shells. Thus
-the two terms must be integrated over $R_L$ and $R_S$ respectively using the weighting function of
-a sphere. We then obtain the functions for the form of the two spheres:
+In this case, the large droplet and small particles are solid spheres rather
+than thin shells. Thus the two terms must be integrated over $R_L$ and $R_S$
+respectively using the weighting function of a sphere. We then obtain the
+functions for the form of the two spheres:
 
 .. math::
 
-    \Psi_L = \int_0^{R_L}(4\pi R^2_L)\frac{sin(qR_L)}{qR_L}dR_L = \frac{3[sin(qR_L)-qR_Lcos(qR_L)]}{(qR_L)^2}
+    \Psi_L = \int_0^{R_L}(4\pi R^2_L)\frac{sin(qR_L)}{qR_L}dR_L = 
+    \frac{3[sin(qR_L)-qR_Lcos(qR_L)]}{(qR_L)^2}
 
 .. math::
 
-    \Psi_S = \int_0^{R_S}(4\pi R^2_S)\frac{sin(qR_S)}{qR_S}dR_S = \frac{3[sin(qR_S)-qR_Lcos(qR_S)]}{(qR_S)^2}
+    \Psi_S = \int_0^{R_S}(4\pi R^2_S)\frac{sin(qR_S)}{qR_S}dR_S =
+    \frac{3[sin(qR_S)-qR_Lcos(qR_S)]}{(qR_S)^2}
 
 The cross term between the large droplet and small particles is given by:
 
@@ -41,7 +46,8 @@ The cross term between the large droplet and small particles is given by:
 and the self term between small particles is given by:
 
 .. math::
-    S_{SS} = \Psi_S^2\bigl[\frac{sin(q(R_L+\delta R_S))}{q(R_L+\delta\ R_S)}\bigr]^2
+    S_{SS} = \Psi_S^2\biggl[\frac{sin(q(R_L+\delta R_S))}{q(R_L+\delta\ R_S)}
+    \biggr]^2
 
 The number of small particles per large droplet, $N_p$, is given by:
 
@@ -49,33 +55,40 @@ The number of small particles per large droplet, $N_p$, is given by:
 
     N_p = \frac{\phi_S\phi_{surface}V_L}{\phi_L V_S}
 
-where $\phi_S$ is the volume fraction of small particles in the sample, $\phi_{surface}$ is the
-fraction of the small particles that are adsorbed to the large droplets, $\phi_L$ is the volume fraction
-of large droplets in the sample, and $V_S$ and $V_L$ are the volumes of individual small particles and
+where $\phi_S$ is the volume fraction of small particles in the sample,
+$\phi_{surface}$ is the fraction of the small particles that are adsorbed to
+the large droplets, $\phi_L$ is the volume fraction of large droplets in the
+sample, and $V_S$ and $V_L$ are the volumes of individual small particles and
 large droplets respectively.
 
-The form factor of the entire complex can now be calculated including the excess scattering length
-densities of the components $\Delta\rho_L$ and $\Delta\rho_S$, where $\Delta\rho_x = |\rho_x-\rho_{solvent}|$ :
+The form factor of the entire complex can now be calculated including the excess
+scattering length densities of the components $\Delta\rho_L$ and $\Delta\rho_S$,
+where $\Delta\rho_x = |\rho_x-\rho_{solvent}|$ :
 
 .. math::
 
-    P_{LS} = \frac{1}{M^2}\bigl[(\Delta\rho_L)^2V_L^2\Psi_L^2+N_p(\Delta\rho_S)^2V_S^2\Psi_S^2
-                + N_p(1-N_p)(\Delta\rho_S)^2V_S^2S_{SS} + 2N_p\Delta\rho_L\Delta\rho_SV_LV_SS_{LS}
+    P_{LS} = \frac{1}{M^2}\bigl[(\Delta\rho_L)^2V_L^2\Psi_L^2
+                +N_p(\Delta\rho_S)^2V_S^2\Psi_S^2
+                + N_p(1-N_p)(\Delta\rho_S)^2V_S^2S_{SS}
+                + 2N_p\Delta\rho_L\Delta\rho_SV_LV_SS_{LS}\bigr]
 
 where M is the total scattering length of the whole complex :
 
 .. math::
     M = \Delta\rho_LV_L + N_p\Delta\rho_SV_S
 
-In a real system, there will ususally be an excess of small particles such that some fraction remain unbound.
-Therefore the overall scattering intensity is given by:
+In a real system, there will ususally be an excess of small particles such that
+some fraction remain unbound. Therefore the overall scattering intensity is
+given by:
 
 .. math::
-    I(Q) = I_{LS}(Q) + I_S(Q) = (\phi_L(\Delta\rho_L)^2V_L + \phi_S\phi_{surface}N_p(\Delta\rho_S)^2V_S)P_{LS}
+    I(Q) = I_{LS}(Q) + I_S(Q) = (\phi_L(\Delta\rho_L)^2V_L + 
+            \phi_S\phi_{surface}N_p(\Delta\rho_S)^2V_S)P_{LS}
             + \phi_S(1-\phi_{surface})(\Delta\rho_S)^2V_S\Psi_S^2
 
-A useful parameter to extract is the fraction of the surface area of the large droplets that is covered by small
-particles. This can be calculated from the model parameters as:
+A useful parameter to extract is the fraction of the surface area of the large
+droplets that is covered by small particles. This can be calculated from the
+model parameters as:
 
 .. math::
     \chi = \frac{4\phi_L\phi_{surface}(R_L+\delta R_S)}{\phi_LR_S}
@@ -84,8 +97,9 @@ particles. This can be calculated from the model parameters as:
 References
 ----------
 
-K Larson-Smith, A Jackson, and D C Pozzo, *Small angle scattering model for Pickering emulsions and raspberry*
-*particles*, *Journal of Colloid and Interface Science*, 343(1) (2010) 36-41
+K Larson-Smith, A Jackson, and D C Pozzo, *Small angle scattering model for
+Pickering emulsions and raspberry particles*, *Journal of Colloid and Interface
+Science*, 343(1) (2010) 36-41
 
 **Author:** Andrew Jackson **on:** 2008
 
