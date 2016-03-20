@@ -160,6 +160,8 @@ scale will be applied when the loop reaches the end.  This does require
 that the results array be allocated read-write, which is less efficient
 for the GPU, but it makes the calling sequence much more manageable.
 
+Scale and background cannot be coordinated with other polydisperse parameters
+
 TODO: cutoff
 */
 
