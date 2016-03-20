@@ -27,27 +27,27 @@ a sphere. We then obtain the functions for the form of the two spheres:
 
 .. math::
 
-    \Psi_L = \Int_0^{R_L}(4\piR^2_L)\frac{sin(qR_L)}{qR_L}dR_L = \frac{3[sin(qR_L)-qR_Lcos(qR_L)]}{(qR_L)^2}
+    \Psi_L = \int_0^{R_L}(4\pi R^2_L)\frac{sin(qR_L)}{qR_L}dR_L = \frac{3[sin(qR_L)-qR_Lcos(qR_L)]}{(qR_L)^2}
 
 .. math::
 
-    \Psi_S = \Int_0^{R_S}(4\piR^2_S)\frac{sin(qR_S)}{qR_S}dR_S = \frac{3[sin(qR_S)-qR_Lcos(qR_S)]}{(qR_S)^2}
+    \Psi_S = \int_0^{R_S}(4\pi R^2_S)\frac{sin(qR_S)}{qR_S}dR_S = \frac{3[sin(qR_S)-qR_Lcos(qR_S)]}{(qR_S)^2}
 
 The cross term between the large droplet and small particles is given by:
 
 .. math::
-    S_{LS} = \Psi_L\Psi_S\frac{sin(q(R_L+\deltaR_S))}{q(R_L+\deltaR_S)}
+    S_{LS} = \Psi_L\Psi_S\frac{sin(q(R_L+\delta R_S))}{q(R_L+\delta\ R_S)}
 
 and the self term between small particles is given by:
 
 .. math::
-    S_{SS} = \Psi_S^2\bigl[\frac{sin(q(R_L+\deltaR_S))}{q(R_L+\deltaR_S)}\bigr]^2
+    S_{SS} = \Psi_S^2\bigl[\frac{sin(q(R_L+\delta R_S))}{q(R_L+\delta\ R_S)}\bigr]^2
 
 The number of small particles per large droplet, $N_p$, is given by:
 
 .. math::
 
-    N_p = \frac{\phi_S\phi_{surface}V_L}{\phi_L\V_S}
+    N_p = \frac{\phi_S\phi_{surface}V_L}{\phi_L V_S}
 
 where $\phi_S$ is the volume fraction of small particles in the sample, $\phi_{surface}$ is the
 fraction of the small particles that are adsorbed to the large droplets, $\phi_L$ is the volume fraction
@@ -78,7 +78,7 @@ A useful parameter to extract is the fraction of the surface area of the large d
 particles. This can be calculated from the model parameters as:
 
 .. math::
-    \Chi = \frac{4\phi_L\phi_{surface}(R_L+\delta\R_S)}{\phi_LR_S}
+    \chi = \frac{4\phi_L\phi_{surface}(R_L+\delta R_S)}{\phi_LR_S}
 
 
 References
@@ -96,7 +96,7 @@ K Larson-Smith, A Jackson, and D C Pozzo, *Small angle scattering model for Pick
 
 from numpy import pi, inf
 
-name = "raspberry_surface_fraction"
+name = "raspberry"
 title = "Calculates the form factor, *P(q)*, for a 'Raspberry-like' structure \
 where there are smaller spheres at the surface of a larger sphere, such as the \
 structure of a Pickering emulsion."
