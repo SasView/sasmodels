@@ -55,7 +55,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'SAS Models'
-copyright = '2014, sasview team'
+copyright = '2016, sasview team'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
