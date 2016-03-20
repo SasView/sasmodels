@@ -188,13 +188,15 @@ def hankel(SElength, wavelength, thickness, q, Iq):
     for i, SElength_i in enumerate(SElength):
         integral = besselj(0, q*SElength_i)*Iq*q
         G[i] = np.sum(integral)
+    G0 = np.sum(Iq*q)
 
     # [m^-1] step size in q, needed for integration
     dq = (q[1]-q[0])*1e10
 
     # integration step, convert q into [m**-1] and 2 pi circle integration
     G *= dq*1e10*2*pi
+    G0 *= dq*1e10*2*pi
 
-    P = exp(thickness*wavelength**2/(4*pi**2)*(G-G[0]))
+    P = exp(thickness*wavelength**2/(4*pi**2)*(G-G0))
 
     return P
