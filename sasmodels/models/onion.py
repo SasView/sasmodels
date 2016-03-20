@@ -309,7 +309,13 @@ parameters = [["core_sld", "1e-6/Ang^2", 1.0, [-inf, inf], "",
                "Decay rate of shell k"],
               ]
 
-source = ["lib/sph_j1c.c", "onion.c"]
+#source = ["lib/sph_j1c.c", "onion.c"]
+
+def Iq(q, *args, **kw):
+    return q
+
+def Iqxy(qx, *args, **kw):
+    return qx
 
 
 def shape(core_sld, core_radius, solvent_sld, n, in_sld, out_sld, thickness, A):
