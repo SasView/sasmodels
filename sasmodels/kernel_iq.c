@@ -96,10 +96,11 @@ arbitrary value that is not used by the kernel evaluator):
 
     NPARS = 4  // scale and background are in all models
     problem {
-        pd_par = {5, 4, x, x}     // parameters *radius* and *length* vary
-        pd_length = {30,10,0,0}   // *length* has more, so it is first
-        pd_offset = {10,0,x,x}    // *length* starts at index 10 in weights
-        pd_stride = {1,30,300,300} // cumulative product of pd length
+        pd_par = {5, 4, x, x}         // parameters *radius* and *length* vary
+        pd_length = {30, 10, 0, 0}    // *length* has more, so it is first
+        pd_offset = {10, 0, x, x}     // *length* starts at index 10 in weights
+        pd_stride = {1, 30, 300, 300} // cumulative product of pd length
+        pd_isvol = {1, 1, x, x}       // true if weight is a volume weight
         par_offset = {2, 3, 303, 313}  // parameter offsets
         par_coord = {0, 3, 2, 1} // bitmap of parameter dependencies
         fast_coord_count = 2  // two parameters vary with *length* distribution
@@ -206,6 +207,7 @@ typedef struct {
     int pd_length[MAX_PD];  // length of the nth polydispersity weight vector
     int pd_offset[MAX_PD];  // offset of pd weights in the par & weight vector
     int pd_stride[MAX_PD];  // stride to move to the next index at this level
+    int pd_isvol[MAX_PD];   // True if parameter is a volume weighting parameter
     int par_offset[NPARS];  // offset of par values in the par & weight vector
     int par_coord[NPARS];   // polydispersity coordination bitvector
     int fast_coord_count;   // number of parameters coordinated with pd 1
@@ -294,6 +296,9 @@ void FULL_KERNEL_NAME(
   // need product of weights at every Iq calc, so keep product of
   // weights from the outer loops so that weight = partial_weight * fast_weight
   double partial_weight = NAN; // product of weight w4*w3*w2 but not w1
+  double partial_volweight = NAN;
+  double weight = 1.0;        // set to 1 in case there are no weights
+  double vol_weight = 1.0;    // set to 1 in case there are no vol weights
 
   // Loop over the weights then loop over q, accumulating values
   for (int loop_index=pd_start; loop_index < pd_stop; loop_index++) {
@@ -301,9 +306,12 @@ void FULL_KERNEL_NAME(
     if (pd_index[0] >= pd_length[0]) {
       pd_index[0] = loop_index%pd_length[0];
       partial_weight = 1.0;
+      partial_volweight = 1.0;
       for (int k=1; k < MAX_PD; k++) {
         pd_index[k] = (loop_index%pd_length[k])/pd_stride[k];
-        partial_weight *= weights[pd_offset[k]+pd_index[k]];
+        const double wi = weights[pd_offset[0]+pd_index[0]];
+        partial_weight *= wi;
+        if (pd_isvol[k]) partial_volweight *= wi;
       }
       weight = partial_weight * weights[pd_offset[0]+pd_index[0]]
       for (int k=0; k < NPARS; k++) {
@@ -322,7 +330,9 @@ void FULL_KERNEL_NAME(
       }
     } else {
       pd_index[0] += 1;
-      weight = partial_weight*weights[pd_offset[0]+pd_index[0]];
+      const double wi = weights[pd_offset[0]+pd_index[0]];
+      weight = partial_weight*wi;
+      if (pd_isvol[0]) vol_weight *= wi;
       for (int k=0; k < problem->fast_coord_count; k++) {
         parvec[ fast_coord_index[k]]
             = pars[offset[fast_coord_index[k]] + pd_index[0]];
@@ -332,10 +342,8 @@ void FULL_KERNEL_NAME(
     if (INVALID(local_pars)) continue;
     #endif
     if (weight > cutoff) {
-      const double vol_weight = VOLUME_WEIGHT_PRODUCT;
-      const double weighted_vol = vol_weight*form_volume(VOLUME_PARAMETERS);
       norm += weight;
-      vol += weighted_vol;
+      vol += vol_weight * form_volume(VOLUME_PARAMETERS);
       norm_vol += vol_weight;
 
       #ifdef USE_OPENMP
