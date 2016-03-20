@@ -195,9 +195,7 @@ def slit_resolution(q_calc, q, width, height, n_height=30):
                 I\left(\sqrt{(q_i + q_\parallel)^2 + q_\perp^2}\right)
                 \,dq_\perp dq_\parallel
 
-
-    Definition
-    ----------
+    **Definition**
 
     We are using the mid-point integration rule to assign weights to each
     element of a weight matrix $W$ so that

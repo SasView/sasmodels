@@ -18,6 +18,11 @@ where the q vector is defined as
 .. math::
     q = \sqrt{q_x^2+q_y^2}
 
+References
+----------
+
+G Porod. *Kolloid Zeit*. 124 (1951) 83.
+L A Feigin, D I Svergun, G W Taylor. *Structure Analysis by Small-Angle X-ray and Neutron Scattering*. Springer. (1987)
 """
 
 from numpy import sqrt, power
