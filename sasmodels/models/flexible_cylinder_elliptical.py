@@ -84,7 +84,7 @@ the Fitting of SANS Data from Cationic Wormlike Micelles.* Langmuir,
 """
 from numpy import inf
 
-name = "flexible_cylinder_ex"
+name = "flexible_cylinder_elliptical"
 title = "Flexible cylinder wth an elliptical cross section and a uniform " \
         "scattering length density."
 description = """Note : scale and contrast=sldCyl-sldSolv are both multiplicative
