@@ -25,8 +25,10 @@ def make_q(q_max, Rmax):
     Rmax is the "radius" of the largest expected object and can be set elsewhere.
     q_max is determined by the acceptance angle of the SESANS instrument.
     """
+    from sas.sascalc.data_util.nxsunit import Converter
+
     q_min = dq = 0.1 * 2*pi / Rmax
-    return np.arange(q_min, q_max, dq)
+    return np.arange(q_min, Converter("1/A")(q_max[0], units=q_max[1]), dq)
     
 def make_all_q(data):
     """
