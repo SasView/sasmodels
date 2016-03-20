@@ -43,10 +43,11 @@ K Larson-Smith, A Jackson, and D C Pozzo, *Small angle scattering model for Pick
 
 from numpy import pi, inf
 
-name = "raspberry_surface_fraction"
+name = "raspberry_surface_coverage"
 title = "Calculates the form factor, *P(q)*, for a 'Raspberry-like' structure \
 where there are smaller spheres at the surface of a larger sphere, such as the \
-structure of a Pickering emulsion."
+structure of a Pickering emulsion. This version takes the suface coverage \
+of small spheres as a parameter."
 description = """
                 RaspBerryModel:
                 volfraction_lg = volume fraction large spheres
@@ -54,7 +55,7 @@ description = """
                 sld_lg = sld large sphere (A-2)
                 volfraction_sm = volume fraction small spheres
                 radius_sm = radius small sphere (A)
-                surface_fraction = fraction of small spheres at surface
+                surface_coverage = fraction of small spheres at surface
                 sld_sm = sld small sphere
                 penetration = small sphere penetration (A)
                 sld_solvent   = sld solvent
@@ -73,8 +74,8 @@ parameters = [["sld_lg", "1e-6/Ang^2", -0.4, [-inf, inf], "",
                "volume fraction of large spheres"],
               ["volfraction_sm", "", 0.005, [-inf, inf], "",
                "volume fraction of small spheres"],
-              ["surface_fraction", "", 0.4, [-inf, inf], "",
-               "fraction of small spheres at surface"],
+              ["surface_coverage", "", 0.4, [-inf, inf], "",
+               "surface coverage fraction of small spheres"],
               ["radius_lg", "Ang", 5000, [0, inf], "volume",
                "radius of large spheres"],
               ["radius_sm", "Ang", 100, [0, inf], "",
@@ -83,17 +84,24 @@ parameters = [["sld_lg", "1e-6/Ang^2", -0.4, [-inf, inf], "",
                "penetration depth of small spheres into large sphere"],
              ]
 
-source = ["lib/sph_j1c.c", "raspberry.c"]
+source = ["lib/sph_j1c.c", "raspberry_surface_coverage.c"]
 
 # parameters for demo
 demo = dict(scale=1, background=0.001,
             sld_lg=-0.4, sld_sm=3.5, sld_solvent=6.36,
-            volfraction_lg=0.05, volfraction_sm=0.005, surface_fraction=0.4,
+            volfraction_lg=0.05, volfraction_sm=0.005, surf_fraction=0.4,
             radius_lg=5000, radius_sm=100, penetration=0.0,
             radius_lg_pd=.2, radius_lg_pd_n=10)
 
 # For testing against the old sasview models, include the converted parameter
 # names and the target sasview model name.
+oldname = 'RaspBerryModel'
+oldpars = dict(sld_lg='sld_Lsph', sld_sm='sld_Ssph', sld_solvent='sld_solv',
+               volfraction_lg='volf_Lsph', volfraction_sm='volf_Ssph',
+               surf_fraction='surfrac_Ssph',
+               radius_lg='radius_Lsph', radius_sm='radius_Ssph',
+               penetration='delta_Ssph')
+
 
 # NOTE: test results taken from values returned by SasView 3.1.2, with
 # 0.001 added for a non-zero default background.
