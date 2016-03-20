@@ -1,19 +1,18 @@
 r"""
 
+Definition
+----------
 The binary hard sphere model provides the scattering intensity, for binary
 mixture of hard spheres including hard sphere interaction between those
 particles, using rhw Percus-Yevick closure. The calculation is an exact
 multi-component solution that properly accounts for the 3 partial structure
-factors.
-
-Definition
-----------
+factors as follows:
 
 .. math::
 
     \begin{eqnarray}
-    I(q) = (1-x)f_1^2(q) S_{11}(q) + 2[x(1-x)]^{1/2} f_1(q)f_2(q)S_{12}(q) + \\
-    x\,f_2^2(q)S_{22}(q) \\
+    I(q) = (1-x)f_1^2(q) S_{11}(q) + 2[x(1-x)]^{1/2} f_1(q)f_2(q)S_{12}(q) +
+    x\,f_2^2(q)S_{22}(q)
     \end{eqnarray}
 
 where $S_{ij}$ are the partial structure factors and $f_i$ are the scattering
@@ -25,8 +24,9 @@ based on the diameter ratio and the volume fractions.
 .. math::
 
     \begin{eqnarray}
-    x &=& \frac{(\phi_2 / \phi)\alpha^3}{(1-(\phi_2/\phi) + (\phi_2/\phi) \\
-    \alpha^3)} \phi &=& \phi_1 + \phi_2 = \text{total volume fraction} \\
+    x &=& \frac{(\phi_2 / \phi)\alpha^3}{(1-(\phi_2/\phi) + (\phi_2/\phi)
+    \alpha^3)} \\
+    \phi &=& \phi_1 + \phi_2 = \text{total volume fraction} \\
     \alpha &=& R_1/R_2 = \text{size ratio}
     \end{eqnarray}
 
@@ -68,13 +68,15 @@ S R Kline, *J Appl. Cryst.*, 39 (2006) 895
 
 **Author:** N/A **on:**
 
-**Modified by:** Paul Butler **on:** March 18, 2016
+**Last Modified by:** Paul Butler **on:** March 20, 2016
 
-**Reviewed by:** Paul Butler **on:** March 18, 2016
+**Last Reviewed by:** Paul Butler **on:** March 20, 2016
 """
 
-import numpy as np
-from numpy import pi, inf
+from numpy import inf
+
+category = "shape:sphere"
+single = False  # double precision only!
 
 name = "binary_hard_sphere"
 title = "binary mixture of hard spheres with hard sphere interactions."
@@ -89,8 +91,6 @@ monodisperse, hard sphere particles.
         sld_sm: small sphere scattering length density,
         sld_solvent: solvent scattering length density.
 """
-category = "shape:sphere"
-
 #             ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [["radius_lg", "Ang", 100, [0, inf], "",
                "radius of large particle"],
@@ -111,8 +111,7 @@ parameters = [["radius_lg", "Ang", 100, [0, inf], "",
 source = ["lib/sph_j1c.c", "binary_hard_sphere.c"]
 
 # parameters for demo and documentation
-demo = dict(scale=1, background=0,
-            sld_lg=3.5, sld_sm=0.5, sld_solvent=6.36,
+demo = dict(sld_lg=3.5, sld_sm=0.5, sld_solvent=6.36,
             radius_lg=100, radius_sm=20,
             volfraction_lg=0.1, volfraction_sm=0.2)
 
@@ -124,5 +123,5 @@ oldpars = dict(volfraction_lg='vol_frac_ls', volfraction_sm='vol_frac_ss',
                radius_lg='l_radius', radius_sm='s_radius')
 
 # NOTE: test results taken from values returned by SasView 3.1.2
-tests = [[{'scale':1.0}, 0.001, 25.8927262013]]
+tests = [[{}, 0.001, 25.8927262013]]
 
