@@ -12,20 +12,23 @@
 */
 
 /*
-The environment needs to provide the following #defines
+The environment needs to provide the following #defines:
+
    USE_OPENCL is defined if running in opencl
    KERNEL declares a function to be available externally
    KERNEL_NAME is the name of the function being declared
    NPARS is the number of parameters in the kernel
-   PARAMETER_TABLE is the declaration of the parameters to the kernel.
+   PARAMETER_DECL is the declaration of the parameters to the kernel.
 
        Cylinder:
 
-           #define PARAMETER_TABLE \
+           #define PARAMETER_DECL \
            double length; \
            double radius; \
            double sld; \
            double sld_solvent
+
+       Note: scale and background are not included
 
        Multi-shell cylinder (10 shell max):
 
@@ -64,6 +67,14 @@ The environment needs to provide the following #defines
 
            #define INVALID(var) (var.bell_radius > var.radius)
 
+       Model with complicated constraints:
+
+           inline bool constrained(p1, p2, p3) { return expression; }
+           #define INVALID(var) constrained(var.p1, var.p2, var.p3)
+
+   IQ_FUNC could be Iq or Iqxy
+   IQ_PARS could be q[i] or q[2*i],q[2*i+1]
+
 Our design supports a limited number of polydispersity loops, wherein
 we need to cycle through the values of the polydispersity, calculate
 the I(q, p) for each combination of parameters, and perform a normalized
@@ -71,28 +82,49 @@ weighted sum across all the weights.  Parameters may be passed to the
 underlying calculation engine as scalars or vectors, but the polydispersity
 calculator treats the parameter set as one long vector.
 
-Let's assume we have 6 polydisperse parameters
-0 : sld_solvent {s1 = constant}
-1: sld_material {s2 = constant}
-2: radius   {r = vector of 10pts}
-3: lenghth {l = vector of 30pts}
-4: background {b = constant}
-5: scale {s = constant}
+Let's assume we have 6 parameters in the model, with two polydisperse::
+
+    0: scale        {scl = constant}
+    1: background   {bkg = constant}
+    5: length       {l = vector of 30pts}
+    4: radius       {r = vector of 10pts}
+    3: sld          {s = constant/(radius**2*length)}
+    2: sld_solvent  {s2 = constant}
+
+This generates the following call to the kernel (where x stands for an
+arbitrary value that is not used by the kernel evaluator):
+
+    NPARS = 4  // scale and background are in all models
+    problem {
+        pd_par = {5, 4, x, x}     // parameters *radius* and *length* vary
+        pd_length = {30,10,0,0}   // *length* has more, so it is first
+        pd_offset = {10,0,x,x}    // *length* starts at index 10 in weights
+        pd_stride = {1,30,300,300} // cumulative product of pd length
+        par_offset = {2, 3, 303, 313}  // parameter offsets
+        par_coord = {0, 3, 2, 1} // bitmap of parameter dependencies
+        fast_coord_count = 2  // two parameters vary with *length* distribution
+        fast_coord_index = {5, 3, x, x, x, x}
+    }
+
+    weight = { l0, .., l29, r0, .., r9}
+    pars = { scl, bkg, l0, ..., l29, r0, r1, ..., r9,
+             s[l0,r0], ... s[l0,r9], s[l1,r0], ... s[l29,r9] , s2}
+
+    nq = 130
+    q = { q0, q1, ..., q130, x, x }  # pad to 8 element boundary
+    result = {r1, ..., r130, norm, vol, vol_norm, x, x, x, x, x, x, x}
+
 
 The polydisperse parameters are stored in as an array of parameter
 indices, one for each polydisperse parameter, stored in pd_par[n].
-For the above mentioned expample that will give pd_par = {3, 2, x, x},
-where x stands for abitrary number and 3 corresponds to longest parameter (lenght).
 Non-polydisperse parameters do not appear in this array. Each polydisperse
 parameter has a weight vector whose length is stored in pd_length[n],
-In our case pd_length = {30,10,0,0}. The weights are stored in
-a contiguous vector of weights for all parameters, with the starting position
-for the each parameter stored in pd_offset[n] (pd_offset = {10,0,x,x}.
-The values corresponding to the weights are stored together in a
-separate weights[] vector, with offset stored in par_offset[pd_par[n]].
-In the above mentioned example weight = {r0, .., r9, l0, .., l29}.
-Polydisperse parameters should be stored in decreasing order of length
-for highest efficiency.
+The weights are stored in a contiguous vector of weights for all
+parameters, with the starting position for the each parameter stored
+in pd_offset[n].  The values corresponding to the weights are stored
+together in a separate weights[] vector, with offset stored in
+par_offset[pd_par[n]]. Polydisperse parameters should be stored in
+decreasing order of length for highest efficiency.
 
 We limit the number of polydisperse dimensions to MAX_PD (currently 4).
 This cuts the size of the structure in half compared to allowing a
@@ -135,7 +167,8 @@ incremented, and all of its coordinated parameters updated.  Because this
 operation is not in the inner loop, a slower algorithm can be used.
 
 If there is no polydispersity we pretend that it is polydisperisty with one
-parameter.
+parameter, pd_start=0 and pd_stop=1.  We may or may not short circuit the
+calculation in this case, depending on how much time it saves.
 
 The problem details structure can be allocated and sent in as an integer
 array using the read-only flag.  This allows us to copy it once per fit
@@ -183,16 +216,15 @@ typedef struct {
     PARAMETER_DECL;
 } ParameterBlock;
 
-
+#define FULL_KERNEL_NAME KERNEL_NAME ## _ ## IQ_FUNC
 KERNEL
-void KERNEL_NAME(
+void FULL_KERNEL_NAME(
     int nq,                 // number of q values
     global const ProblemDetails *problem,
     global const double *weights,
     global const double *pars,
     global const double *q, // nq q values, with padding to boundary
     global double *result,  // nq return values, again with padding
-    global int *offset,     // nq+padding space for current parameter index
     const double cutoff,    // cutoff in the polydispersity weight product
     const int pd_start,     // where we are in the polydispersity loop
     const int pd_stop,      // where we are stopping in the polydispersity loop
@@ -201,14 +233,16 @@ void KERNEL_NAME(
 
   // Storage for the current parameter values.  These will be updated as we
   // walk the polydispersity cube.
-  local ParameterBlock local_pars;
+  local ParameterBlock local_pars;  // current parameter values
   const double *parvec = &local_pars;  // Alias named parameters with a vector
+
+  local int offset[NPARS-2];
 
 #if defined(USE_SHORTCUT_OPTIMIZATION)
   if (pd_length[0] == 1) {
     // Shouldn't need to copy!!
     for (int k=0; k < NPARS; k++) {
-      parvec[k] = pars[k];
+      parvec[k] = pars[k+2];  // skip scale and background
     }
 
     #ifdef USE_OPENMP
@@ -217,7 +251,7 @@ void KERNEL_NAME(
     for (int i=0; i < nq; i++) {
     {
       const double scattering = IQ_FUNC(IQ_PARS, IQ_PARAMETERS);
-      result[i] += local_pars.scale*scattering + local_pars.background;
+      result[i] += pars[0]*scattering + pars[1];
     }
     return;
   }
@@ -253,8 +287,8 @@ void KERNEL_NAME(
   // Location in the polydispersity hypercube, one index per dimension.
   local int pd_index[PD_MAX];
 
-  // Set the initial index greater than its vector length in order to
-  // trigger the reset behaviour that happens at the end the fast loop.
+  // Trigger the reset behaviour that happens at the end the fast loop
+  // by setting the initial index >= weight vector length.
   pd_index[0] = pd_length[0];
 
   // need product of weights at every Iq calc, so keep product of
@@ -328,7 +362,7 @@ void KERNEL_NAME(
       if (vol*norm_vol != 0.0) {
         result[i] *= norm_vol/vol;
       }
-        result[i] = local_pars.scale*result[i]/norm+local_pars.background;
+        result[i] = pars[0]*result[i]/norm + pars[1];
     }
   }
 }
