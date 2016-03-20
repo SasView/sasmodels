@@ -196,7 +196,9 @@ for the GPU, but it makes the calling sequence much more manageable.
 
 Scale and background cannot be coordinated with other polydisperse parameters
 
-TODO: cutoff
+Cutoff paramater is basically used to restrict the region where integration
+is peformed i.e. polydispersity hypercude is limitted spheres.
+
 */
 
 #define MAX_PD 4  // MAX_PD is the max number of polydisperse parameters
@@ -218,8 +220,23 @@ typedef struct {
     PARAMETER_DECL;
 } ParameterBlock;
 
-#define FULL_KERNEL_NAME KERNEL_NAME ## _ ## IQ_FUNC
-KERNEL
+#define KERNEL_NAME test_Iq
+#define FULL_KERNEL_NAME test_Iq
+#define IQ_FUNC Iq
+
+#define IQ_PARAMETERS ignored
+#define IQ_FIXED_PARAMETER_DECLARATIONS const double scale, \
+    const double background, \
+    const double ignored
+#define IQ_PARAMETER_DECLARATIONS double ignored
+#define IQXY_KERNEL_NAME bessel_Iqxy
+#define IQXY_PARAMETERS ignored
+#define IQXY_FIXED_PARAMETER_DECLARATIONS const double scale, \
+    const double background, \
+    const double ignored
+#define IQXY_PARAMETER_DECLARATIONS double ignored
+
+
 void FULL_KERNEL_NAME(
     int nq,                 // number of q values
     global const ProblemDetails *problem,
@@ -373,5 +390,6 @@ void FULL_KERNEL_NAME(
         result[i] = pars[0]*result[i]/norm + pars[1];
     }
   }
+}
 }
 }
