@@ -68,7 +68,7 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/polevl.c", "lib/sas_J0.c", "lib/sas_J1.c", \
-          "lib/sas_JN.c", "lib/gauss76.c", "pringles.c"]
+          "lib/sas_JN.c", "lib/gauss76.c", "pringle.c"]
 
 def ER(radius, thickness):
     """
