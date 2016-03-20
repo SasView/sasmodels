@@ -61,16 +61,28 @@ weighted sum across all the weights.  Parameters may be passed to the
 underlying calculation engine as scalars or vectors, but the polydispersity
 calculator treats the parameter set as one long vector.
 
+Let's assume we have 6 polydisperse parameters
+0 : sld_solvent {s1 = constant}
+1: sld_material {s2 = constant}
+2: radius   {r = vector of 10pts}
+3: lenghth {l = vector of 30pts}
+4: background {b = constant}
+5: scale {s = constant}
+
 The polydisperse parameters are stored in as an array of parameter
 indices, one for each polydisperse parameter, stored in pd_par[n].
+For the above mentioned expample that will give pd_par = {3, 2, x, x},
+where x stands for abitrary number and 3 corresponds to longest parameter (lenght).
 Non-polydisperse parameters do not appear in this array. Each polydisperse
-parameter has a weight vector whose length is stored in pd_length[n].
-The weights are stored in a contiguous vector of weights for all
-parameters, with the starting position for the each parameter stored
-in pd_offset[n].  The values corresponding to the weights are stored
-together in a separate weights[] vector, with offset stored in
-par_offset[pd_par[n]]. Polydisperse parameters should be stored in
-decreasing order of length for highest efficiency.
+parameter has a weight vector whose length is stored in pd_length[n],
+In our case pd_length = {30,10,0,0}. The weights are stored in
+a contiguous vector of weights for all parameters, with the starting position
+for the each parameter stored in pd_offset[n] (pd_offset = {10,0,x,x}.
+The values corresponding to the weights are stored together in a
+separate weights[] vector, with offset stored in par_offset[pd_par[n]].
+In the above mentioned example weight = {r0, .., r9, l0, .., l29}.
+Polydisperse parameters should be stored in decreasing order of length
+for highest efficiency.
 
 We limit the number of polydisperse dimensions to MAX_PD (currently 4).
 This cuts the size of the structure in half compared to allowing a
@@ -84,7 +96,7 @@ volume of a cylinder, and the length and radius are independently
 polydisperse, then for each combination of length and radius we need a
 separate value for the sld.  The caller must provide a coordination table
 for each parameter containing the value for each parameter given the
-value of the polydisperse parameters v1, v2, etc.   The tables for each
+value of the polydisperse parameters v1, v2, etc.  The tables for each
 parameter are arranged contiguously in a vector, with offset[k] giving the
 starting location of parameter k in the vector.  Each parameter defines
 coord[k] as a bit mask indicating which polydispersity parameters the
@@ -265,8 +277,7 @@ void KERNEL_NAME(
       if (vol[i]*norm_vol[i] != 0.0) {
         result[i] *= norm_vol[i]/vol[i];
       }
-      //TODO: Ask Richard if scale and background may be corridanted parameters
-      result[i] = scale*result[i]/norm[i]+background;
+        result[i] = scale*result[i]/norm[i]+background;
     }
   }
 }
