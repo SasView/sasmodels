@@ -72,7 +72,7 @@ parameters = [
     ["cor_length",  "Ang",      100.0,  [0, inf],    "",       "Correlation length of fractal-like aggregates"]]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sph_j1c.c", "lib/lanczos_gamma.c", "lib/core_shell.c", "fractal_core_shell.c"]
+source = ["lib/sph_j1c.c", "lib/sas_gamma.c", "lib/core_shell.c", "fractal_core_shell.c"]
 
 demo = dict(scale=0.05,
             background=0,

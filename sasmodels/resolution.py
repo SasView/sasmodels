@@ -688,8 +688,7 @@ class IgorComparisonTest(unittest.TestCase):
     def setUp(self):
         self.pars = TEST_PARS_PINHOLE_SPHERE
         from sasmodels import core
-        from sasmodels.models import sphere
-        self.model = core.load_model(sphere, dtype='double')
+        self.model = core.load_model("sphere", dtype='double')
 
     def _eval_sphere(self, pars, resolution):
         from sasmodels import core
