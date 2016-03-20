@@ -6,7 +6,7 @@ object (a hyperbolic paraboloid).
 
     (Graphic from Matt Henderson, matt@matthen.com)
 
-The returned value is in units of cm-1, on absolute scale.
+The returned value is in units of cm^-1, on absolute scale.
 
 Definition
 ----------
