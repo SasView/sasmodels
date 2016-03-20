@@ -48,24 +48,38 @@ double Iq(double q,
     VL = M_4PI_3*rL*rL*rL;
     VS = M_4PI_3*rS*rS*rS;
 
+    //Number of small particles per large particle
     Np = vfS*fSs*VL/vfL/VS;
 
+    //Total scattering length difference
     slT = delrhoL*VL + Np*delrhoS*VS;
 
-    sfLS = sph_j1c(q*rL)*sph_j1c(q*rS)*sinc(q*(rL+deltaS*rS));
-    sfSS = sph_j1c(q*rS)*sph_j1c(q*rS)*sinc(q*(rL+deltaS*rS))*sinc(q*(rL+deltaS*rS));
-        
-    f2 = delrhoL*delrhoL*VL*VL*sph_j1c(q*rL)*sph_j1c(q*rL); 
-    f2 += Np*delrhoS*delrhoS*VS*VS*sph_j1c(q*rS)*sph_j1c(q*rS);
+    //Form factors for each particle
+    psiL = sph_j1c(q*rL);
+    psiS = sph_j1c(q*rS);
+
+    //Cross term between large and small particles
+    sfLS = psiL*psiS*sinc(q*(rL+deltaS*rS));
+    //Cross term between small particles at the surface
+    sfSS = psiS*psiS*sinc(q*(rL+deltaS*rS))*sinc(q*(rL+deltaS*rS));
+
+    //Large sphere form factor term
+    f2 = delrhoL*delrhoL*VL*VL*psiL*psiL;
+    //Small sphere form factor term
+    f2 += Np*delrhoS*delrhoS*VS*VS*psiS*psiS;
+    //Small particle - small particle cross term
     f2 += Np*(Np-1)*delrhoS*delrhoS*VS*VS*sfSS;
+    //Large-small particle cross term
     f2 += 2*Np*delrhoL*delrhoS*VL*VS*sfLS;
+    //Normalise by total scattering length difference
     if (f2 != 0.0){
         f2 = f2/slT/slT;
         }
 
+    //I(q) for large-small composite particles
     f2 = f2*(vfL*delrhoL*delrhoL*VL + vfS*fSs*Np*delrhoS*delrhoS*VS);
-
-    f2+= vfS*(1.0-fSs)*pow(delrhoS, 2)*VS*sph_j1c(q*rS)*sph_j1c(q*rS);
+    //I(q) for free small particles
+    f2+= vfS*(1.0-fSs)*delrhoS*delrhoS*VS*psiS*psiS;
     
     // normalize to single particle volume and convert to 1/cm
     f2 *= 1.0e8;        // [=] 1/cm
