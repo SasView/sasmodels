@@ -170,9 +170,17 @@ void KERNEL_NAME(
     const int pd_stop,      // where we are stopping in the polydispersity loop
     )
 {
-  // the location in the polydispersity calculation
+  // Storage for the current parameter values.  These will be updated as we
+  // walk the polydispersity cube.
   local ParameterBlock local_pars;
   const double *parvec = &local_pars;  // Alias named parameters with a vector
+
+  // Since we are no longer looping over the entire polydispersity hypercube
+  // for each q, we need to track the normalization values for each q in a
+  // separate work vector.
+  double *norm = work;   // contains sum over weights
+  double *vol = norm + (nq + padding); // contains sum over volume
+  double *norm_vol = vol + (nq + padding);
 
   // Initialize the results to zero
   if (pd_start == 0) {
@@ -187,11 +195,14 @@ void KERNEL_NAME(
     }
   }
 
-  // Force the index into a new state
-  local int pd_index[4];
+  // Location in the polydispersity cube, one index per dimension.
+  // Set the initial index greater than its vector length in order to
+  // trigger the reset behaviour that happens at the end the fast loop.
+  local int pd_index[PD_MAX];
   pd_index[0] = pd_length[0]
 
   // Loop over the weights then loop over q, accumulating values
+  // par
   double partial_weight = NaN;
   for (int loop_index=pd_start; loop_index < pd_stop; loop_index++) {
     // check if indices need to be updated
@@ -223,21 +234,24 @@ void KERNEL_NAME(
             = pars[offset[fast_coord_index[k]] + pd_index[0]];
       }
     }
-    #ifdef USE_OPENMP
-    #pragma omp parallel for
-    #endif
-    for (int i=0; i < Nq; i++) {
-    {
-      if (weight > cutoff) {
-          const double scattering = Iq(qi, IQ_PARAMETERS);
-          // allow kernels to exclude invalid regions by returning NaN
-          if (!isnan(scattering)) {
-            result[i] += weight*scattering;
-            norm[i] += weight;
-            const double vol_weight = VOLUME_WEIGHT_PRODUCT;
-            vol[i] += vol_weight*form_volume(VOLUME_PARAMETERS);
-            norm_vol[i] += vol_weight;
-      }
+    if (weight > cutoff) {
+      const double vol_weight = VOLUME_WEIGHT_PRODUCT;
+      const double weighted_vol = vol_weight*form_volume(VOLUME_PARAMTERS);
+      #ifdef USE_OPENMP
+      #pragma omp parallel for
+      #endif
+      for (int i=0; i < Nq; i++) {
+      {
+        const double scattering = Iq(qi, IQ_PARAMETERS);
+        // allow kernels to exclude invalid regions by returning NaN
+        if (!isnan(scattering)) {
+          result[i] += weight*scattering;
+          // can almost get away with only having one constant rather than
+          // one constant per q.  Maybe want a "is_valid" test?
+          norm[i] += weight;
+          vol[i] += weighted_vol;
+          norm_vol[i] += vol_weight;
+        }
     }
   }
 
