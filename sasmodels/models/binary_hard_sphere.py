@@ -66,7 +66,7 @@ N W Ashcroft and D C Langreth, *Physical Review*, 156 (1967) 685-692
 
 S R Kline, *J Appl. Cryst.*, 39 (2006) 895
 
-**Author:** N/A **on:**
+**Author:** NIST IGOR/DANSE **on:** pre 2010
 
 **Last Modified by:** Paul Butler **on:** March 20, 2016
 
