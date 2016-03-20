@@ -46,10 +46,7 @@ def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[], a
         data.acceptance_angle = acceptance_angle
 
     data.has_no_finite_acceptance = acceptance_angle is not None
-    if "radius" in initial_vals:
-        radius = initial_vals.get("radius")
-    else:
-        radius = 1000
+    radius = initial_vals.get("radius", 1000)
     data.Rmax = 30*radius # [A]
 
     if isinstance(model, basestring):
@@ -61,11 +58,11 @@ def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[], a
         model._parameter_names.append(k)
     for k, v in initial_vals.items():
         param = model.parameters().get(k)
-        setattr(param, "value", v)
+        param.value = v
     for k, v in param_range.items():
         param = model.parameters().get(k)
         if param is not None:
-            setattr(param.bounds, "limits", v)
+            param.range(*v)
 
     if False: # for future implementation
         M_sesans = bumps_model.Experiment(data=data, model=model)

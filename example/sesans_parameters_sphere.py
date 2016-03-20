@@ -10,6 +10,7 @@ model_name = "sphere"
 
 # DO NOT MODIFY THIS LINE
 model = sesansfit.get_bumps_model(model_name)
+model.radius.range(1,10000)
 
 # Enter any custom parameters
 # name = Parameter(initial_value, name='name')
