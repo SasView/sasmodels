@@ -23,8 +23,8 @@ of the q vector which is defined as
 Definitions
 -----------
 
-The function calculated is from the reference given below. From that paper,
-"Method 3 With Excluded Volume" is used.
+The function calculated in a similar way to that for the flexible_cylinder model
+from the reference given below using the author's "Method 3 With Excluded Volume".
 The model is a parameterization of simulations of a discrete representation of
 the worm-like chain model of Kratky and Porod applied in the pseudo-continuous
 limit. See equations (13, 26-27) in the original reference for the details.
@@ -61,9 +61,9 @@ The major radius is larger, so of course, **the axis ratio (parameter 5) must be
 greater than one.** Simple constraints should be applied during curve fitting to
 maintain this inequality.
 
-The returned value is in units of $cm^-1$, on absolute scale.
+The returned value is in units of $cm^{-1}$, on absolute scale.
 
-In the parameters, the $sldCyl$ and $sldSolv$ represent the SLD of the
+In the parameters, the $sld$ and $sld\_solvent$ represent the SLD of the
 chain/cylinder and solvent respectively. The *scale*, and the contrast are both
 multiplicative factors in the model and are perfectly correlated. One or both of
 these parameters must be held fixed during model fitting.
@@ -102,13 +102,13 @@ parameters = [
     ["length",      "Ang",       1000.0, [0, inf],    "volume", "Length of the flexible cylinder"],
     ["kuhn_length", "Ang",        100.0, [0, inf],    "volume", "Kuhn length of the flexible cylinder"],
     ["radius",      "Ang",         20.0, [0, inf],    "volume", "Radius of the flexible cylinder"],
-    ["axis_ratio",  "",             1.5, [0, inf],    "",       "Axis_ratio (major_radius/radius"],
+    ["axis_ratio",  "",             1.5, [0, inf],    "",       "Axis_ratio (major_radius/minor_radius"],
     ["sld",         "1e-6/Ang^2",   1.0, [-inf, inf], "",       "Cylinder scattering length density"],
-    ["solvent_sld", "1e-6/Ang^2",   6.3, [-inf, inf], "",       "Solvent scattering length density"],
+    ["sld_solvent", "1e-6/Ang^2",   6.3, [-inf, inf], "",       "Solvent scattering length density"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/J1.c", "lib/J1c.c", "lib/gauss76.c", "lib/wrc_cyl.c", "flexible_cylinder_ex.c"]
+source = ["lib/polevl.c","lib/sas_J1.c", "lib/gauss76.c", "lib/wrc_cyl.c", "flexible_cylinder_ex.c"]
 
 demo = dict(scale=1.0, background=0.0001,
             length=1000.0,
@@ -116,10 +116,10 @@ demo = dict(scale=1.0, background=0.0001,
             radius=20.0,
             axis_ratio=1.5,
             sld=1.0,
-            solvent_sld=6.3)
+            sld_solvent=6.3)
 
 oldname = 'FlexCylEllipXModel'
-oldpars = dict(sld='sldCyl', solvent_sld='sldSolv')
+oldpars = dict(sld='sldCyl', sld_solvent='sldSolv')
 
 
 tests = [
@@ -130,7 +130,7 @@ tests = [
     #  'radius':       20.0,
     #  'axis_ratio':    1.5,
     #  'sld':           1.0,
-    #  'solvent_sld':   6.3,
+    #  'sld_solvent':   6.3,
     #  'background':    0.0001,
     # }, 0.001, 3509.2187],
 
@@ -140,7 +140,7 @@ tests = [
       'radius':       20.0,
       'axis_ratio':    1.5,
       'sld':           1.0,
-      'solvent_sld':   6.3,
+      'sld_solvent':   6.3,
       'background':    0.0001,
      }, 1.0, 0.00223819],
     [{'length':        10.0,
@@ -148,7 +148,7 @@ tests = [
       'radius':        2.0,
       'axis_ratio':    0.5,
       'sld':           6.0,
-      'solvent_sld':  12.3,
+      'sld_solvent':  12.3,
       'background':    0.001,
      }, 0.1, 0.390281],
     [{'length':        100.0,
@@ -156,7 +156,7 @@ tests = [
       'radius':       50.0,
       'axis_ratio':    4.5,
       'sld':           0.1,
-      'solvent_sld':   5.1,
+      'sld_solvent':   5.1,
       'background':    0.0,
      }, 1.0, 0.0016338264790]
     ]

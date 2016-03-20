@@ -192,7 +192,7 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "",
                "Rotation angle around its own c axis against q plane"],
              ]
 
-source = ["lib/J1.c", "lib/gauss76.c", "parallelepiped.c"]
+source = ["lib/gauss76.c", "parallelepiped.c"]
 
 def ER(a_side, b_side, c_side):
     """

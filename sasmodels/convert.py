@@ -16,6 +16,7 @@ MODELS_WITHOUT_SCALE = [
     'correlation_length',
     'fractal_core_shell',
     'binary_hard_sphere',
+    'raspberry'
 ]
 
 # List of models which SasView versions don't contain the explicit 'background' argument.

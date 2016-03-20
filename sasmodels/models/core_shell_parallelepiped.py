@@ -140,7 +140,7 @@ parameters = [["core_sld", "1e-6/Ang^2", 1, [-inf, inf], "",
                "Rotation angle around its own c axis against q plane"],
              ]
 
-source = ["lib/J1.c", "lib/gauss76.c", "core_shell_parallelepiped.c"]
+source = ["lib/gauss76.c", "core_shell_parallelepiped.c"]
 
 
 def ER(a_side, b_side, c_side, arim_thickness, brim_thickness, crim_thickness):

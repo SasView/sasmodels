@@ -11,7 +11,7 @@ to any of the orientation angles, and also for the minor radius and the ratio of
 
 .. figure:: img/elliptical_cylinder_geometry.png
 
-    *a* = *r_minor* and |nu|\ :sub:`n` = $r_ratio$ (i.e., $r_major / r_minor$).
+   Elliptical cylinder geometry $a$ = $r_{minor}$ and \nu = $r_{ratio}$ = $r_{major} / r_{minor}$
 
 The function calculated is
 
@@ -25,7 +25,7 @@ with the functions
 
     F(\mathbf{q},\alpha,\psi)=2\frac{J_1(a)\sin(b)}{ab}
     \\
-    a = \mathbf{q}\sin(\alpha)\left[ r^2_{major}\sin^2(\psi)+r^2_{minor}\cos(\psi) \right]^{1/2}
+    where  a = \mathbf{q}\sin(\alpha)\left[ r^2_{major}\sin^2(\psi)+r^2_{minor}\cos(\psi) \right]^{1/2}
     \\
     b=\mathbf{q}\frac{L}{2}\cos(\alpha)
 
@@ -73,8 +73,8 @@ The following figure shows the results of the averaging by varying the number of
 
     The intensities averaged from 2D over different numbers of bins and angles.
 
-Reference
----------
+References
+----------
 
 L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*, Plenum,
 New York, (1987)
@@ -97,20 +97,20 @@ parameters = [["r_minor",     "Ang",        20.0,  [0, inf],    "volume",      "
               ["r_ratio",     "",           1.5,   [1, inf],    "volume",      "Ratio of major radius over minor radius"],
               ["length",      "Ang",        400.0, [1, inf],    "volume",      "Length of the cylinder"],
               ["sld",         "1e-6/Ang^2", 4.0,   [-inf, inf], "",            "Cylinder scattering length density"],
-              ["solvent_sld", "1e-6/Ang^2", 1.0,   [-inf, inf], "",            "Solvent scattering length density"],
+              ["sld_solvent", "1e-6/Ang^2", 1.0,   [-inf, inf], "",            "Solvent scattering length density"],
               ["theta",       "degrees",    90.0,  [-360, 360], "orientation", "In plane angle"],
               ["phi",         "degrees",    0,     [-360, 360], "orientation", "Out of plane angle"],
               ["psi",         "degrees",    0,     [-360, 360], "orientation", "Major axis angle relative to Q"]]
 
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/nr_bess_j1.c", "lib/gauss76.c", "lib/gauss20.c", "elliptical_cylinder.c"]
+source = ["lib/polevl.c","lib/sas_J1.c", "lib/gauss76.c", "lib/gauss20.c", "elliptical_cylinder.c"]
 
 demo = dict(scale=1, background=0, r_minor=100, r_ratio=1.5, length=400.0,
-            sld=4.0, solvent_sld=1.0, theta=10.0, phi=20, psi=30, theta_pd=10, phi_pd=2, psi_pd=3)
+            sld=4.0, sld_solvent=1.0, theta=10.0, phi=20, psi=30, theta_pd=10, phi_pd=2, psi_pd=3)
 
 oldname = 'EllipticalCylinderModel'
-oldpars = dict(theta='cyl_theta', phi='cyl_phi', psi='cyl_psi', sld='sldCyl', solvent_sld='sldSolv')
+oldpars = dict(theta='cyl_theta', phi='cyl_phi', psi='cyl_psi', sld='sldCyl', sld_solvent='sldSolv')
 
 def ER(r_minor, r_ratio, length):
     """
@@ -131,6 +131,6 @@ tests = [[{'r_minor': 20.0, 'r_ratio': 1.5, 'length':400.0}, 'ER', 79.8924545415
            'r_ratio': 1.5,
            'sld': 4.0,
            'length':400.0,
-           'solvent_sld':1.0,
+           'sld_solvent':1.0,
            'background':0.0
           }, 0.001, 675.504402]]

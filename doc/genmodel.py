@@ -32,7 +32,8 @@ opts = {
     'vmin'      : 1e-3,  # floor for the 2D data results
     'qx_max'    : 0.5,
     #'colormap'  : 'gist_ncar',
-    'colormap'  : 'jet',
+    'colormap'  : 'nipy_spectral',
+    #'colormap'  : 'jet',
 }
 
 

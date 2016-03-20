@@ -55,8 +55,8 @@ bicelle_kernel(double qq,
     double sinarg1 = qq*length*cn;
     double sinarg2 = qq*(length+facthick)*cn;
 
-    be1 = J1c(besarg1);
-    be2 = J1c(besarg2);
+    be1 = sas_J1c(besarg1);
+    be2 = sas_J1c(besarg2);
     si1 = sinc(sinarg1);
     si2 = sinc(sinarg2);
 
