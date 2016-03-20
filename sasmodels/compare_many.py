@@ -21,7 +21,7 @@ import numpy as np
 from . import core
 from . import generate
 from .compare import (MODELS, randomize_pars, suppress_pd, make_data,
-                      make_engine, get_demo_pars, columnize,
+                      make_engine, get_pars, columnize,
                       constrain_pars, constrain_new_to_old)
 
 def calc_stats(target, value, index):
@@ -101,7 +101,7 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
 
     is_2d = hasattr(data, 'qx_data')
     model_info = core.load_model_info(name)
-    pars = get_demo_pars(model_info)
+    pars = get_pars(model_info, use_demo=True)
     header = ('\n"Model","%s","Count","%d","Dimension","%s"'
               % (name, N, "2D" if is_2d else "1D"))
     if not mono: header += ',"Cutoff",%g'%(cutoff,)
