@@ -25,7 +25,7 @@ static double _surface_fractal_kernel(double q,
 
     //calculate S(q)
     mmo = 5.0 - surface_dim;
-    sq  = exp(lanczos_gamma(mmo))*sin(-(mmo)*atan(q*cutoff_length));
+    sq  = sas_gamma(mmo)*sin(-(mmo)*atan(q*cutoff_length));
     sq *= pow(cutoff_length, mmo);
     sq /= pow((1.0 + (q*cutoff_length)*(q*cutoff_length)),(mmo/2.0));
     sq /= q;

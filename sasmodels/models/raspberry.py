@@ -2,30 +2,83 @@ r"""
 Definition
 ----------
 
-The large and small spheres have their own SLD, as well as the solvent. The
-surface coverage term is a fractional coverage (maximum of approximately 0.9
-for hexagonally-packed spheres on a surface). Since not all of the small
-spheres are necessarily attached to the surface, the excess free (small)
-spheres scattering is also included in the calculation. The function calculate
-follows equations (8)-(12) of the reference below, and the equations are not
-reproduced here.
-
-No inter-particle scattering is included in this model.
-
+The figure below shows a schematic of a large droplet surrounded by several smaller particles
+forming a structure similar to that of Pickering emulsions.
 
 .. figure:: img/raspberry_geometry.jpg
 
     Schematic of the raspberry model
-    
-where *Ro* is the radius of the large sphere, *Rp* the radius of the smaller 
-spheres on the surface and |delta| = the fractional penetration depth.
 
-For 2D data: The 2D scattering intensity is calculated in the same way as 1D,
-where the *q* vector is defined as
+In order to calculate the form factor of the entire complex, the self-correlation of the large droplet,
+the self-correlation of the particles, the correlation terms between different particles
+and the cross terms between large droplet and small particles all need to be calculated.
+
+Consider two infinitely thin shells of radii R2 and R2 separated by distance r. The general
+structure of the equation is then the form factor of the two shells multiplied by the phase
+factor that accounts for the separation of their centers.
 
 .. math::
 
-    q = \sqrt{q_x^2 + q_y^2}
+    S(q) = \frac{sin(qR_1)}{qR_1}\frac{sin(qR_2)}{qR_2}\frac{sin(qr)}{qr}
+
+In this case, the large droplet and small particles are solid spheres rather than thin shells. Thus
+the two terms must be integrated over $R_L$ and $R_S$ respectively using the weighting function of
+a sphere. We then obtain the functions for the form of the two spheres:
+
+.. math::
+
+    \Psi_L = \int_0^{R_L}(4\pi R^2_L)\frac{sin(qR_L)}{qR_L}dR_L = \frac{3[sin(qR_L)-qR_Lcos(qR_L)]}{(qR_L)^2}
+
+.. math::
+
+    \Psi_S = \int_0^{R_S}(4\pi R^2_S)\frac{sin(qR_S)}{qR_S}dR_S = \frac{3[sin(qR_S)-qR_Lcos(qR_S)]}{(qR_S)^2}
+
+The cross term between the large droplet and small particles is given by:
+
+.. math::
+    S_{LS} = \Psi_L\Psi_S\frac{sin(q(R_L+\delta R_S))}{q(R_L+\delta\ R_S)}
+
+and the self term between small particles is given by:
+
+.. math::
+    S_{SS} = \Psi_S^2\bigl[\frac{sin(q(R_L+\delta R_S))}{q(R_L+\delta\ R_S)}\bigr]^2
+
+The number of small particles per large droplet, $N_p$, is given by:
+
+.. math::
+
+    N_p = \frac{\phi_S\phi_{surface}V_L}{\phi_L V_S}
+
+where $\phi_S$ is the volume fraction of small particles in the sample, $\phi_{surface}$ is the
+fraction of the small particles that are adsorbed to the large droplets, $\phi_L$ is the volume fraction
+of large droplets in the sample, and $V_S$ and $V_L$ are the volumes of individual small particles and
+large droplets respectively.
+
+The form factor of the entire complex can now be calculated including the excess scattering length
+densities of the components $\Delta\rho_L$ and $\Delta\rho_S$, where $\Delta\rho_x = |\rho_x-\rho_{solvent}|$ :
+
+.. math::
+
+    P_{LS} = \frac{1}{M^2}\bigl[(\Delta\rho_L)^2V_L^2\Psi_L^2+N_p(\Delta\rho_S)^2V_S^2\Psi_S^2
+                + N_p(1-N_p)(\Delta\rho_S)^2V_S^2S_{SS} + 2N_p\Delta\rho_L\Delta\rho_SV_LV_SS_{LS}
+
+where M is the total scattering length of the whole complex :
+
+.. math::
+    M = \Delta\rho_LV_L + N_p\Delta\rho_SV_S
+
+In a real system, there will ususally be an excess of small particles such that some fraction remain unbound.
+Therefore the overall scattering intensity is given by:
+
+.. math::
+    I(Q) = I_{LS}(Q) + I_S(Q) = (\phi_L(\Delta\rho_L)^2V_L + \phi_S\phi_{surface}N_p(\Delta\rho_S)^2V_S)P_{LS}
+            + \phi_S(1-\phi_{surface})(\Delta\rho_S)^2V_S\Psi_S^2
+
+A useful parameter to extract is the fraction of the surface area of the large droplets that is covered by small
+particles. This can be calculated from the model parameters as:
+
+.. math::
+    \chi = \frac{4\phi_L\phi_{surface}(R_L+\delta R_S)}{\phi_LR_S}
 
 
 References
@@ -34,11 +87,11 @@ References
 K Larson-Smith, A Jackson, and D C Pozzo, *Small angle scattering model for Pickering emulsions and raspberry*
 *particles*, *Journal of Colloid and Interface Science*, 343(1) (2010) 36-41
 
-**Author:** Andrew jackson **on:** 2008
+**Author:** Andrew Jackson **on:** 2008
 
-**Modified by:** Paul Butler **on:** March 18, 2016
+**Modified by:** Andrew Jackson **on:** March 20, 2016
 
-**Reviewed by:** Paul Butler **on:** March 18, 2016
+**Reviewed by:** Andrew Jackson **on:** March 20, 2016
 """
 
 from numpy import pi, inf
@@ -49,15 +102,15 @@ where there are smaller spheres at the surface of a larger sphere, such as the \
 structure of a Pickering emulsion."
 description = """
                 RaspBerryModel:
-                volf_Lsph = volume fraction large spheres
-                radius_Lsph = radius large sphere (A)
-                sld_Lsph = sld large sphere (A-2)
-                volf_Ssph = volume fraction small spheres
-                radius_Ssph = radius small sphere (A)
-                surfrac_Ssph = fraction of small spheres at surface
-                sld_Ssph = sld small sphere
-                delta_Ssph = small sphere penetration (A) 
-                sld_solv   = sld solvent
+                volfraction_lg = volume fraction large spheres
+                radius_lg = radius large sphere (A)
+                sld_lg = sld large sphere (A-2)
+                volfraction_sm = volume fraction small spheres
+                radius_sm = radius small sphere (A)
+                surface_fraction = fraction of small spheres at surface
+                sld_sm = sld small sphere
+                penetration = small sphere penetration (A)
+                sld_solvent   = sld solvent
                 background = background (cm-1)
             Ref: J. coll. inter. sci. (2010) vol. 343 (1) pp. 36-41."""
 category = "shape:sphere"
@@ -73,14 +126,14 @@ parameters = [["sld_lg", "1e-6/Ang^2", -0.4, [-inf, inf], "",
                "volume fraction of large spheres"],
               ["volfraction_sm", "", 0.005, [-inf, inf], "",
                "volume fraction of small spheres"],
-              ["surf_fraction", "", 0.4, [-inf, inf], "",
+              ["surface_fraction", "", 0.4, [-inf, inf], "",
                "fraction of small spheres at surface"],
               ["radius_lg", "Ang", 5000, [0, inf], "volume",
                "radius of large spheres"],
               ["radius_sm", "Ang", 100, [0, inf], "",
                "radius of small spheres"],
-              ["penetration", "Ang", 0.0, [0, inf], "",
-               "penetration depth of small spheres into large sphere"],
+              ["penetration", "Ang", 0, [-1, 1], "",
+               "fractional penetration depth of small spheres into large sphere"],
              ]
 
 source = ["lib/sph_j1c.c", "raspberry.c"]
@@ -88,19 +141,12 @@ source = ["lib/sph_j1c.c", "raspberry.c"]
 # parameters for demo
 demo = dict(scale=1, background=0.001,
             sld_lg=-0.4, sld_sm=3.5, sld_solvent=6.36,
-            volfraction_lg=0.05, volfraction_sm=0.005, surf_fraction=0.4,
+            volfraction_lg=0.05, volfraction_sm=0.005, surface_fraction=0.4,
             radius_lg=5000, radius_sm=100, penetration=0.0,
             radius_lg_pd=.2, radius_lg_pd_n=10)
 
 # For testing against the old sasview models, include the converted parameter
 # names and the target sasview model name.
-oldname = 'RaspBerryModel'
-oldpars = dict(sld_lg='sld_Lsph', sld_sm='sld_Ssph', sld_solvent='sld_solv',
-               volfraction_lg='volf_Lsph', volfraction_sm='volf_Ssph',
-               surf_fraction='surfrac_Ssph',
-               radius_lg='radius_Lsph', radius_sm='radius_Ssph',
-               penetration='delta_Ssph')
-
 
 # NOTE: test results taken from values returned by SasView 3.1.2, with
 # 0.001 added for a non-zero default background.

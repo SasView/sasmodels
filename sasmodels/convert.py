@@ -153,6 +153,8 @@ def revert_pars(model_info, pars):
             del oldpars['i_zero']
         elif name == 'fractal':
             del oldpars['volfraction']
+        elif name == 'vesicle':
+            del oldpars['volfraction']
 
     return oldpars
 
@@ -189,5 +191,7 @@ def constrain_new_to_old(model_info, pars):
         elif name == 'poly_gauss_coil':
             pars['i_zero'] = 1
         elif name == 'fractal':
+            pars['volfraction'] = 1
+        elif name == 'vesicle':
             pars['volfraction'] = 1
             

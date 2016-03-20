@@ -6,7 +6,7 @@ The 1D scattering intensity is calculated in the following way (Guinier, 1955)
 
 .. math::
 
-    P(q) = \frac{\text{scale}}{V_\text{shell}} \left[
+    P(q) = \frac{\phi}{V_\text{shell}} \left[
            \frac{3V_{\text{core}}({\rho_{\text{solvent}}
            - \rho_{\text{shell}})j_1(qR_{\text{core}})}}{qR_{\text{core}}}
            + \frac{3V_{\text{tot}}(\rho_{\text{shell}}
@@ -14,12 +14,11 @@ The 1D scattering intensity is calculated in the following way (Guinier, 1955)
            \right]^2 + \text{background}
 
 
-where scale is a scale factor equivalent to the volume fraction of shell
-material if the data is on an absolute scale, $V_{shell}$ is the volume of the
-shell, $V_{\text{cor}}$ is the volume of the core, $V_{\text{tot}}$ is the
-total volume, $R_{\text{core}}$ is the radius of the core, $R_{\text{tot}}$ is
-the outer radius of the shell, $\rho_{\text{solvent}}$ is the scattering length
-density of the solvent (which is the same as for the core in this case),
+where $\phi$ is the volume fraction of shell material, $V_{shell}$ is the volume
+of the shell, $V_{\text{cor}}$ is the volume of the core, $V_{\text{tot}}$ is
+the total volume, $R_{\text{core}}$ is the radius of the core, $R_{\text{tot}}$
+is the outer radius of the shell, $\rho_{\text{solvent}}$ is the scattering
+length density of the solvent (which is the same as for the core in this case),
 $\rho_{\text{scale}}$ is the scattering length density of the shell, background
 is a flat background level (due for example to incoherent scattering in the
 case of neutrons), and $j_1$ is the spherical bessel function
@@ -55,6 +54,12 @@ References
 
 A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*, John Wiley and
 Sons, New York, (1955)
+
+**Author:** NIST IGOR/DANSE **on:** pre 2010
+
+**Last Modified by:** Paul Butler **on:** March 20, 2016
+
+**Last Reviewed by:** Paul Butler **on:** March 20, 2016
 """
 
 from numpy import pi, inf
@@ -69,16 +74,19 @@ description = """
         radius : the core radius of the vesicle
         thickness: the shell thickness
         sld: the shell SLD
-        solvent_sld: the solvent (and core) SLD
+        sld_slovent: the solvent (and core) SLD
         background: incoherent background
-        scale : scale factor = shell volume fraction if on absolute scale"""
+        volfraction: shell volume fraction
+        scale : scale factor = 1 if on absolute scale"""
 category = "shape:sphere"
 
 #             [ "name", "units", default, [lower, upper], "type", "description"],
 parameters = [["sld", "1e-6/Ang^2", 0.5, [-inf, inf], "",
                "vesicle shell scattering length density"],
-              ["solvent_sld", "1e-6/Ang^2", 6.36, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 6.36, [-inf, inf], "",
                "solvent scattering length density"],
+              ["volfraction", "", 0.05, [0, 1.0], "",
+               "volume fraction of shell"],
               ["radius", "Ang", 100, [0, inf], "volume",
                "vesicle core radius"],
               ["thickness", "Ang", 30, [0, inf], "volume",
@@ -113,8 +121,8 @@ def VR(radius, thickness):
 
 
 # parameters for demo
-demo = dict(scale=1, background=0,
-            sld=0.5, solvent_sld=6.36,
+demo = dict(sld=0.5, sld_solvent=6.36,
+            volfraction=0.05,
             radius=100, thickness=30,
             radius_pd=.2, radius_pd_n=10,
             thickness_pd=.2, thickness_pd_n=10)
@@ -122,13 +130,14 @@ demo = dict(scale=1, background=0,
 # For testing against the old sasview models, include the converted parameter
 # names and the target sasview model name.
 oldname = 'VesicleModel'
-oldpars = dict(sld='shell_sld', solvent_sld='solv_sld')
+oldpars = dict(sld='shell_sld', sld_solvent='solv_sld')
 
 
 # NOTE: test results taken from values returned by SasView 3.1.2, with
 # 0.001 added for a non-zero default background.
-tests = [[{}, 0.0010005303255, 17139.8278799],
-         [{}, 0.200027832249, 0.131387268704],
+tests = [[{}, 0.0005, 859.916526646],
+         [{}, 0.100600200401, 1.77063682331],
+         [{}, 0.5, 0.00355351388906],
          [{}, 'ER', 130.],
          [{}, 'VR', 0.54483386436],
         ]

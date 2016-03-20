@@ -12,7 +12,7 @@ double Iqxy(double qx, double qy,
     double lg_sld, double sm_sld, double solvent_sld
     );
 
-int calculate_psfs(double qval,
+void calculate_psfs(double qval,
     double r2, double nf2,
     double aa, double phi,
     double *s11, double *s22, double *s12
@@ -33,7 +33,6 @@ double Iq(double q,
     double psf11,psf12,psf22;
     double phi1,phi2,phr,a3;
     double v1,v2,n1,n2,qr1,qr2,b1,b2,sc1,sc2;
-    int err;
     
     r2 = lg_radius;
     r1 = sm_radius;
@@ -51,7 +50,7 @@ double Iq(double q,
     phr=phi2/phi;
     nf2 = phr*a3/(1.0-phr+phr*a3);
     // calculate the PSF's here
-    err = calculate_psfs(q,r2,nf2,aa,phi,&psf11,&psf22,&psf12);
+    calculate_psfs(q,r2,nf2,aa,phi,&psf11,&psf22,&psf12);
     
     // /* do form factor calculations  */
     
@@ -102,7 +101,7 @@ double Iqxy(double qx, double qy,
         lg_sld, sm_sld, solvent_sld);
 }
 
-int calculate_psfs(double qval,
+void calculate_psfs(double qval,
     double r2, double nf2,
     double aa, double phi,
     double *s11, double *s22, double *s12)
@@ -111,14 +110,14 @@ int calculate_psfs(double qval,
     //  variable qval,r2,nf2,aa,phi,&s11,&s22,&s12
     
     //   calculate constant terms
-    double s1,s2,v,a3,v1,v2,g11,g12,g22,wmv,wmv3,wmv4;
+    double s2,v,a3,v1,v2,g11,g12,g22,wmv,wmv3,wmv4;
     double a1,a2i,a2,b1,b2,b12,gm1,gm12;
-    double err=0.0,yy,ay,ay2,ay3,t1,t2,t3,f11,y2,y3,tt1,tt2,tt3;
+    double yy,ay,ay2,ay3,t1,t2,t3,f11,y2,y3,tt1,tt2,tt3;
     double c11,c22,c12,f12,f22,ttt1,ttt2,ttt3,ttt4,yl,y13;
     double t21,t22,t23,t31,t32,t33,t41,t42,yl3,wma3,y1;
     
     s2 = 2.0*r2;
-    s1 = aa*s2;
+//    s1 = aa*s2;  why is this never used?  check original paper?
     v = phi;
     a3 = aa*aa*aa;
     v1=((1.-nf2)*a3/(nf2+(1.-nf2)*a3))*v;
@@ -188,6 +187,6 @@ int calculate_psfs(double qval,
     *s22=1./(1.+c22-(c12)*c12/(1.+c11)); 
     *s12=-c12/((1.+c11)*(1.+c22)-(c12)*(c12));   
     
-    return(err);
+    return;
 }
 
