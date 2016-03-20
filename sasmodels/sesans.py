@@ -26,7 +26,7 @@ def make_q(q_max, Rmax):
     q_max is determined by the acceptance angle of the SESANS instrument.
     """
     q_min = dq = 0.1 * 2*pi / Rmax
-    return np.arange(q_min, q_max, dq)
+    return np.arange(q_min, q_max[0], dq)
     
 def make_all_q(data):
     """
