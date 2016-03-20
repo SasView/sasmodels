@@ -359,7 +359,7 @@ void FULL_KERNEL_NAME(
   //Makes a normalization avialable for the next round
   result[nq] = norm;
   result[nq+1] = vol;
-  results[nq+2] = norm_vol;
+  result[nq+2] = norm_vol;
 
   //End of the PD loop we can normalize
   if (pd_stop == pd_stride[MAX_PD-1]) {}
