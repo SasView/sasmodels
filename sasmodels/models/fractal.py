@@ -45,7 +45,7 @@ References
 
 J Teixeira, *J. Appl. Cryst.*, 21 (1988) 781-785
 
-**Author:** N/A **on:**
+**Author:** NIST IGOR/DANSE **on:** pre 2010
 
 **Last Modified by:** Paul Butler **on:** March 20, 2016
 
