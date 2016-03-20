@@ -215,8 +215,9 @@ def call_kernel(kernel, pars, cutoff=0, mono=False):
     the entire dispersion cube.  Using *cutoff=1e-5* can be 50% faster, but
     with an error of about 1%, which is usually less than the measurement
     uncertainty.
+
+    *mono* is True if polydispersity should be set to none on all parameters.
     """
-    print pars
     fixed_pars = [pars.get(name, kernel.info['defaults'][name])
                   for name in kernel.fixed_pars]
     if mono:
