@@ -263,7 +263,7 @@ def _loops(form, form_volume, cutoff, scale, background,
     ret[positive] *= vol_norm[positive] / vol[positive]
     result = scale * ret / norm + background
     return result
-=======
+
 """
 Python driver for python kernels
 

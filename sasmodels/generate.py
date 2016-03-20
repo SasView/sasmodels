@@ -21,6 +21,10 @@ Small angle scattering models are defined by a set of kernel functions:
 
     *VR(p1, p2, ...)* returns the volume ratio for core-shell style forms.
 
+    #define INVALID(v) (expr)  returns False if v.parameter is invalid
+    for some parameter or other (e.g., v.bell_radius < v.radius).  If
+    necessary, the expression can call a function.
+
 These functions are defined in a kernel module .py script and an associated
 set of .c files.  The model constructor will use them to create models with
 polydispersity across volume and orientation parameters, and provide
@@ -215,7 +219,7 @@ from __future__ import print_function
 
 import sys
 from os.path import abspath, dirname, join as joinpath, exists, basename, \
-    splitext
+    splitext, getmtime
 import re
 import string
 import warnings
@@ -223,13 +227,14 @@ from collections import namedtuple
 
 import numpy as np
 
+# TODO: promote Parameter and model_info to classes
 PARAMETER_FIELDS = ['name', 'units', 'default', 'limits', 'type', 'description']
 Parameter = namedtuple('Parameter', PARAMETER_FIELDS)
 
 #TODO: determine which functions are useful outside of generate
 #__all__ = ["model_info", "make_doc", "make_source", "convert_type"]
 
-C_KERNEL_TEMPLATE_PATH = joinpath(dirname(__file__), 'kernel_template.c')
+TEMPLATE_ROOT = dirname(__file__)
 
 F16 = np.dtype('float16')
 F32 = np.dtype('float32')
@@ -337,6 +342,7 @@ def _search(search_path, filename):
             return target
     raise ValueError("%r not found in %s" % (filename, search_path))
 
+
 def model_sources(model_info):
     """
     Return a list of the sources file paths for the module.
@@ -345,19 +351,6 @@ def model_sources(model_info):
                    abspath(joinpath(dirname(__file__), 'models'))]
     return [_search(search_path, f) for f in model_info['source']]
 
-# Pragmas for enable OpenCL features.  Be sure to protect them so that they
-# still compile even if OpenCL is not present.
-_F16_PRAGMA = """\
-#if defined(__OPENCL_VERSION__) // && !defined(cl_khr_fp16)
-#  pragma OPENCL EXTENSION cl_khr_fp16: enable
-#endif
-"""
-
-_F64_PRAGMA = """\
-#if defined(__OPENCL_VERSION__) // && !defined(cl_khr_fp64)
-#  pragma OPENCL EXTENSION cl_khr_fp64: enable
-#endif
-"""
 
 def convert_type(source, dtype):
     """
@@ -368,13 +361,13 @@ def convert_type(source, dtype):
     """
     if dtype == F16:
         fbytes = 2
-        source = _F16_PRAGMA + _convert_type(source, "half", "f")
+        source = _convert_type(source, "float", "f")
     elif dtype == F32:
         fbytes = 4
         source = _convert_type(source, "float", "f")
     elif dtype == F64:
         fbytes = 8
-        source = _F64_PRAGMA + source  # Source is already double
+        # no need to convert if it is already double
     elif dtype == F128:
         fbytes = 16
         source = _convert_type(source, "long double", "L")
@@ -417,30 +410,41 @@ def indent(s, depth):
     return spaces + sep.join(s.split("\n"))
 
 
-LOOP_OPEN = """\
-for (int %(name)s_i=0; %(name)s_i < N%(name)s; %(name)s_i++) {
-  const double %(name)s = loops[2*(%(name)s_i%(offset)s)];
-  const double %(name)s_w = loops[2*(%(name)s_i%(offset)s)+1];\
+_template_cache = {}
+def load_template(filename):
+    path = joinpath(TEMPLATE_ROOT, filename)
+    mtime = getmtime(path)
+    if filename not in _template_cache or mtime > _template_cache[filename][0]:
+        with open(path) as fid:
+            _template_cache[filename] = (mtime, fid.read())
+    return _template_cache[filename][1]
+
+def _gen_fn(name, pars, body):
+    """
+    Generate a function given pars and body.
+
+    Returns the following string::
+
+         double fn(double a, double b, ...);
+         double fn(double a, double b, ...) {
+             ....
+         }
+    """
+    template = """\
+double %(name)s(%(pars)s);
+double %(name)s(%(pars)s) {
+    %(body)s
+}
+
+
 """
-def build_polydispersity_loops(pd_pars):
-    """
-    Build polydispersity loops
+    par_decl = ', '.join('double ' + p for p in pars) if pars else 'void'
+    return template % {'name': name, 'body': body, 'pars': par_decl}
 
-    Returns loop opening and loop closing
-    """
-    depth = 4
-    offset = ""
-    loop_head = []
-    loop_end = []
-    for name in pd_pars:
-        subst = {'name': name, 'offset': offset}
-        loop_head.append(indent(LOOP_OPEN % subst, depth))
-        loop_end.insert(0, (" "*depth) + "}")
-        offset += '+N' + name
-        depth += 2
-    return "\n".join(loop_head), "\n".join(loop_end)
+def _gen_call_pars(name, pars):
+    name += "."
+    return ",".join(name+p for p in pars)
 
-C_KERNEL_TEMPLATE = None
 def make_source(model_info):
     """
     Generate the OpenCL/ctypes kernel from the module info.
@@ -460,84 +464,49 @@ def make_source(model_info):
     # for computing volume even if we allow non-disperse volume parameters.
 
     # Load template
-    global C_KERNEL_TEMPLATE
-    if C_KERNEL_TEMPLATE is None:
-        with open(C_KERNEL_TEMPLATE_PATH) as fid:
-            C_KERNEL_TEMPLATE = fid.read()
+    source = [load_template('kernel_header.c')]
 
     # Load additional sources
-    source = [open(f).read() for f in model_sources(model_info)]
+    source += [open(f).read() for f in model_sources(model_info)]
 
     # Prepare defines
     defines = []
-    partype = model_info['partype']
-    pd_1d = partype['pd-1d']
-    pd_2d = partype['pd-2d']
-    fixed_1d = partype['fixed-1d']
-    fixed_2d = partype['fixed-1d']
 
     iq_parameters = [p.name
                      for p in model_info['parameters'][2:]  # skip scale, background
-                     if p.name in set(fixed_1d + pd_1d)]
+                     if p.name in model_info['par_set']['1d']]
     iqxy_parameters = [p.name
                        for p in model_info['parameters'][2:]  # skip scale, background
-                       if p.name in set(fixed_2d + pd_2d)]
-    volume_parameters = [p.name
-                         for p in model_info['parameters']
-                         if p.type == 'volume']
+                       if p.name in model_info['par_set']['2d']]
+    volume_parameters = model_info['par_type']['volume']
 
-    # Fill in defintions for volume parameters
-    if volume_parameters:
-        defines.append(('VOLUME_PARAMETERS',
-                        ','.join(volume_parameters)))
-        defines.append(('VOLUME_WEIGHT_PRODUCT',
-                        '*'.join(p + '_w' for p in volume_parameters)))
-
-    # Generate form_volume function from body only
+    # Generate form_volume function, etc. from body only
     if model_info['form_volume'] is not None:
-        if volume_parameters:
-            vol_par_decl = ', '.join('double ' + p for p in volume_parameters)
-        else:
-            vol_par_decl = 'void'
-        defines.append(('VOLUME_PARAMETER_DECLARATIONS',
-                        vol_par_decl))
-        fn = """\
-double form_volume(VOLUME_PARAMETER_DECLARATIONS);
-double form_volume(VOLUME_PARAMETER_DECLARATIONS) {
-    %(body)s
-}
-""" % {'body':model_info['form_volume']}
-        source.append(fn)
+        pnames = [p.name for p in volume_parameters]
+        source.append(_gen_fn('form_volume', pnames, model_info['form_volume']))
+    if model_info['Iq'] is not None:
+        pnames = ['q'] + [p.name for p in iq_parameters]
+        source.append(_gen_fn('Iq', pnames, model_info['Iq']))
+    if model_info['Iqxy'] is not None:
+        pnames = ['qx', 'qy'] + [p.name for p in iqxy_parameters]
+        source.append(_gen_fn('Iqxy', pnames, model_info['Iqxy']))
+
+    # Fill in definitions for volume parameters
+    if volume_parameters:
+        deref_vol = ",".join("v."+p.name for p in volume_parameters)
+        defines.append(('CALL_VOLUME(v)', 'form_volume(%s)\n'%deref_vol))
+    else:
+        # Model doesn't have volume.  We could make the kernel run a little
+        # faster by not using/transferring the volume normalizations, but
+        # the ifdef's reduce readability more than is worthwhile.
+        defines.append(('CALL_VOLUME(v)', '0.0'))
 
     # Fill in definitions for Iq parameters
-    defines.append(('IQ_KERNEL_NAME', model_info['name'] + '_Iq'))
+    defines.append(('KERNEL_NAME', model_info['name']))
     defines.append(('IQ_PARAMETERS', ', '.join(iq_parameters)))
     if fixed_1d:
         defines.append(('IQ_FIXED_PARAMETER_DECLARATIONS',
                         ', \\\n    '.join('const double %s' % p for p in fixed_1d)))
-    if pd_1d:
-        defines.append(('IQ_WEIGHT_PRODUCT',
-                        '*'.join(p + '_w' for p in pd_1d)))
-        defines.append(('IQ_DISPERSION_LENGTH_DECLARATIONS',
-                        ', \\\n    '.join('const int N%s' % p for p in pd_1d)))
-        defines.append(('IQ_DISPERSION_LENGTH_SUM',
-                        '+'.join('N' + p for p in pd_1d)))
-        open_loops, close_loops = build_polydispersity_loops(pd_1d)
-        defines.append(('IQ_OPEN_LOOPS',
-                        open_loops.replace('\n', ' \\\n')))
-        defines.append(('IQ_CLOSE_LOOPS',
-                        close_loops.replace('\n', ' \\\n')))
-    if model_info['Iq'] is not None:
-        defines.append(('IQ_PARAMETER_DECLARATIONS',
-                        ', '.join('double ' + p for p in iq_parameters)))
-        fn = """\
-double Iq(double q, IQ_PARAMETER_DECLARATIONS);
-double Iq(double q, IQ_PARAMETER_DECLARATIONS) {
-    %(body)s
-}
-""" % {'body':model_info['Iq']}
-        source.append(fn)
-
     # Fill in definitions for Iqxy parameters
     defines.append(('IQXY_KERNEL_NAME', model_info['name'] + '_Iqxy'))
     defines.append(('IQXY_PARAMETERS', ', '.join(iqxy_parameters)))
@@ -556,17 +525,6 @@ double Iq(double q, IQ_PARAMETER_DECLARATIONS) {
                         open_loops.replace('\n', ' \\\n')))
         defines.append(('IQXY_CLOSE_LOOPS',
                         close_loops.replace('\n', ' \\\n')))
-    if model_info['Iqxy'] is not None:
-        defines.append(('IQXY_PARAMETER_DECLARATIONS',
-                        ', '.join('double ' + p for p in iqxy_parameters)))
-        fn = """\
-double Iqxy(double qx, double qy, IQXY_PARAMETER_DECLARATIONS);
-double Iqxy(double qx, double qy, IQXY_PARAMETER_DECLARATIONS) {
-    %(body)s
-}
-""" % {'body':model_info['Iqxy']}
-        source.append(fn)
-
     # Need to know if we have a theta parameter for Iqxy; it is not there
     # for the magnetic sphere model, for example, which has a magnetic
     # orientation but no shape orientation.
@@ -583,6 +541,31 @@ double Iqxy(double qx, double qy, IQXY_PARAMETER_DECLARATIONS) {
 
 def categorize_parameters(pars):
     """
+    Categorize the parameters by use:
+
+    * *pd* list of polydisperse parameters in order; gui should test whether
+      they are in *2d* or *magnetic* as appropriate for the data
+    * *1d* set of parameters that are used to compute 1D patterns
+    * *2d* set of parameters that are used to compute 2D patterns (which
+      includes all 1D parameters)
+    * *magnetic* set of parameters that are used to compute magnetic
+      patterns (which includes all 1D and 2D parameters)
+    * *sesans* set of parameters that are used to compute sesans patterns
+     (which is just 1D without background)
+    * *pd-relative* is the set of parameters with relative distribution
+      width (e.g., radius +/- 10%) rather than absolute distribution
+      width (e.g., theta +/- 6 degrees).
+    """
+    par_set = {}
+    par_set['1d'] = [p for p in pars if p.type not in ('orientation', 'magnetic')]
+    par_set['2d'] = [p for p in pars if p.type != 'magnetic']
+    par_set['magnetic'] = [p for p in pars]
+    par_set['pd'] = [p for p in pars if p.type in ('volume', 'orientation')]
+    par_set['pd_relative'] = [p for p in pars if p.type == 'volume']
+    return par_set
+
+def collect_types(pars):
+    """
     Build parameter categories out of the the parameter definitions.
 
     Returns a dictionary of categories.
@@ -595,40 +578,18 @@ def categorize_parameters(pars):
     * *volume* list of volume parameter names
     * *orientation* list of orientation parameters
     * *magnetic* list of magnetic parameters
-    * *<empty string>* list of parameters that have no type info
+    * *sld* list of parameters that have no type info
+    * *other* list of parameters that have no type info
 
     Each parameter is in one and only one category.
-
-    The following derived categories are created:
-
-    * *fixed-1d* list of non-polydisperse parameters for 1D models
-    * *pd-1d* list of polydisperse parameters for 1D models
-    * *fixed-2d* list of non-polydisperse parameters for 2D models
-    * *pd-d2* list of polydisperse parameters for 2D models
     """
-    partype = {
-        'volume': [], 'orientation': [], 'magnetic': [], 'sld': [], '': [],
-        'fixed-1d': [], 'fixed-2d': [], 'pd-1d': [], 'pd-2d': [],
-        'pd-rel': set(),
+    par_type = {
+        'volume': [], 'orientation': [], 'magnetic': [], 'sld': [], 'other': [],
     }
-
     for p in pars:
-        if p.type == 'volume':
-            partype['pd-1d'].append(p.name)
-            partype['pd-2d'].append(p.name)
-            partype['pd-rel'].add(p.name)
-        elif p.type == 'magnetic':
-            partype['fixed-2d'].append(p.name)
-        elif p.type == 'orientation':
-            partype['pd-2d'].append(p.name)
-        elif p.type in ('', 'sld'):
-            partype['fixed-1d'].append(p.name)
-            partype['fixed-2d'].append(p.name)
-        else:
-            raise ValueError("unknown parameter type %r" % p.type)
-        partype[p.type].append(p.name)
+        par_type[p.type if p.type else 'other'].append(p.name)
+    return  par_type
 
-    return partype
 
 def process_parameters(model_info):
     """
@@ -646,7 +607,8 @@ def process_parameters(model_info):
     model_info['parameters'] = pars
     partype = categorize_parameters(pars)
     model_info['limits'] = dict((p.name, p.limits) for p in pars)
-    model_info['partype'] = partype
+    model_info['par_type'] = collect_types(pars)
+    model_info['par_set'] = categorize_parameters(pars)
     model_info['defaults'] = dict((p.name, p.default) for p in pars)
     if model_info.get('demo', None) is None:
         model_info['demo'] = model_info['defaults']

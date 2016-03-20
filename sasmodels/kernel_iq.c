@@ -181,7 +181,6 @@ void FULL_KERNEL_NAME(
       for (int i=0; i < nq; i++) {
       {
         const double scattering = CALL_IQ(q, nq, i, local_pars);
-        //const double scattering = Iq(q[i], IQ_PARAMETERS);
         result[i] += weight*scattering;
       }
   }
@@ -199,7 +198,7 @@ void FULL_KERNEL_NAME(
       if (vol*norm_vol != 0.0) {
         result[i] *= norm_vol/vol;
       }
-        result[i] = pars[0]*result[i]/norm + pars[1];
+      result[i] = pars[0]*result[i]/norm + pars[1];
     }
   }
 }
