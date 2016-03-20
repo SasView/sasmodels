@@ -54,6 +54,16 @@ The environment needs to provide the following #defines
            var.sld, \
            var.sld_solvent
 
+   INVALID is a test for model parameters in the correct range
+
+       Cylinder:
+
+           #define INVALID(var) 0
+
+       BarBell:
+
+           #define INVALID(var) (var.bell_radius > var.radius)
+
 Our design supports a limited number of polydispersity loops, wherein
 we need to cycle through the values of the polydispersity, calculate
 the I(q, p) for each combination of parameters, and perform a normalized
@@ -124,6 +134,9 @@ vector, then the index of the second polydisperse parameter must be
 incremented, and all of its coordinated parameters updated.  Because this
 operation is not in the inner loop, a slower algorithm can be used.
 
+If there is no polydispersity we pretend that it is polydisperisty with one
+parameter.
+
 The problem details structure can be allocated and sent in as an integer
 array using the read-only flag.  This allows us to copy it once per fit
 along with the weights vector, since features such as the number of
@@ -146,6 +159,8 @@ results accumulate by the time the loop has completed.  Background and
 scale will be applied when the loop reaches the end.  This does require
 that the results array be allocated read-write, which is less efficient
 for the GPU, but it makes the calling sequence much more manageable.
+
+TODO: cutoff
 */
 
 #define MAX_PD 4  // MAX_PD is the max number of polydisperse parameters
@@ -175,61 +190,89 @@ void KERNEL_NAME(
     global const double *pars,
     global const double *q, // nq q values, with padding to boundary
     global double *result,  // nq return values, again with padding
-    global double *work,    // 3*(nq+padding) space for normalization
-    global int *int_work,   // nq+padding space for current position
+    global int *offset,     // nq+padding space for current parameter index
     const double cutoff,    // cutoff in the polydispersity weight product
     const int pd_start,     // where we are in the polydispersity loop
     const int pd_stop,      // where we are stopping in the polydispersity loop
     )
 {
+
   // Storage for the current parameter values.  These will be updated as we
   // walk the polydispersity cube.
   local ParameterBlock local_pars;
   const double *parvec = &local_pars;  // Alias named parameters with a vector
 
-  // Since we are no longer looping over the entire polydispersity hypercube
-  // for each q, we need to track the normalization values for each q in a
-  // separate work vector.
-  double *norm = work;   // contains sum over weights
-  double *vol = norm + (nq + padding); // contains sum over volume
-  double *norm_vol = vol + (nq + padding);
+#if defined(USE_SHORTCUT_OPTIMIZATION)
+  if (pd_length[0] == 1) {
+    // Shouldn't need to copy!!
+    for (int k=0; k < NPARS; k++) {
+      parvec[k] = pars[k];
+    }
 
-  // Initialize the results to zero
-  if (pd_start == 0) {
     #ifdef USE_OPENMP
     #pragma omp parallel for
     #endif
-    for (int i=0; i < Nq; i++) {
-      norm_vol[i] = 0.0;
-      norm[i] = 0.0;
-      vol[i] = 0.0;
+    for (int i=0; i < nq; i++) {
+    {
+      const double scattering = IQ_FUNC(IQ_PARS, IQ_PARAMETERS);
+      result[i] += local_pars.scale*scattering + local_pars.background;
+    }
+    return;
+  }
+#endif
+
+
+  // Since we are no longer looping over the entire polydispersity hypercube
+  // for each q, we need to track the normalization values for each q in a
+  // separate work vector.
+  double norm;   // contains sum over weights
+  double vol; // contains sum over volume
+  double norm_vol; // contains weights over volume
+
+  // Initialize the results to zero
+  if (pd_start == 0) {
+    norm_vol = 0.0;
+    norm = 0.0;
+    vol = 0.0;
+
+    #ifdef USE_OPENMP
+    #pragma omp parallel for
+    #endif
+    for (int i=0; i < nq; i++) {
       result[i] = 0.0;
     }
+  } else {
+    //Pulling values from previous segment
+    norm = result[nq];
+    vol = result[nq+1];
+    norm_vol = results[nq+2];
   }
 
-  // Location in the polydispersity cube, one index per dimension.
+  // Location in the polydispersity hypercube, one index per dimension.
   local int pd_index[PD_MAX];
 
   // Set the initial index greater than its vector length in order to
   // trigger the reset behaviour that happens at the end the fast loop.
   pd_index[0] = pd_length[0];
 
+  // need product of weights at every Iq calc, so keep product of
+  // weights from the outer loops so that weight = partial_weight * fast_weight
+  double partial_weight = NAN; // product of weight w4*w3*w2 but not w1
+
   // Loop over the weights then loop over q, accumulating values
-  // par
-  double partial_weight = NaN;
   for (int loop_index=pd_start; loop_index < pd_stop; loop_index++) {
     // check if indices need to be updated
     if (pd_index[0] >= pd_length[0]) {
       pd_index[0] = loop_index%pd_length[0];
       partial_weight = 1.0;
-      for (int k=0; k < MAX_PD; k++) {
+      for (int k=1; k < MAX_PD; k++) {
         pd_index[k] = (loop_index%pd_length[k])/pd_stride[k];
         partial_weight *= weights[pd_offset[k]+pd_index[k]];
       }
       weight = partial_weight * weights[pd_offset[0]+pd_index[0]]
       for (int k=0; k < NPARS; k++) {
         int coord = par_coord[k];
-        int this_offset = 0;
+        int this_offset = par_offset[k];
         int block_size = 1;
         for (int bit=0; bit < MAX_PD && coord != 0; bit++) {
           if (coord&1) {
@@ -239,6 +282,7 @@ void KERNEL_NAME(
           coord /= 2;
         }
         offset[k] = this_offset;
+        parvec[k] = pars[this_offset];
       }
     } else {
       pd_index[0] += 1;
@@ -248,36 +292,41 @@ void KERNEL_NAME(
             = pars[offset[fast_coord_index[k]] + pd_index[0]];
       }
     }
+    #ifdef INVALID
+    if (INVALID(local_pars)) continue;
+    #endif
     if (weight > cutoff) {
       const double vol_weight = VOLUME_WEIGHT_PRODUCT;
-      const double weighted_vol = vol_weight*form_volume(VOLUME_PARAMTERS);
+      const double weighted_vol = vol_weight*form_volume(VOLUME_PARAMETERS);
+      norm += weight;
+      vol += weighted_vol;
+      norm_vol += vol_weight;
+
       #ifdef USE_OPENMP
       #pragma omp parallel for
       #endif
-      for (int i=0; i < Nq; i++) {
+      for (int i=0; i < nq; i++) {
       {
-        const double scattering = Iq(qi, IQ_PARAMETERS);
-        // allow kernels to exclude invalid regions by returning NaN
-        if (!isnan(scattering)) {
-          result[i] += weight*scattering;
-          // can almost get away with only having one constant rather than
-          // one constant per q.  Maybe want a "is_valid" test?
-          norm[i] += weight;
-          vol[i] += weighted_vol;
-          norm_vol[i] += vol_weight;
-        }
-    }
+        const double scattering = IQ_FUNC(IQ_PARS, IQ_PARAMETERS);
+        //const double scattering = Iq(q[i], IQ_PARAMETERS);
+        result[i] += weight*scattering;
+      }
   }
+  //Makes a normalization avialable for the next round
+  result[nq] = norm;
+  result[nq+1] = vol;
+  results[nq+2] = norm_vol;
 
+  //End of the PD loop we can normalize
   if (pd_stop == pd_stride[MAX_PD-1]) {}
     #ifdef USE_OPENMP
     #pragma omp parallel for
     #endif
-    for (int i=0; i < Nq; i++) {
-      if (vol[i]*norm_vol[i] != 0.0) {
-        result[i] *= norm_vol[i]/vol[i];
+    for (int i=0; i < nq; i++) {
+      if (vol*norm_vol != 0.0) {
+        result[i] *= norm_vol/vol;
       }
-        result[i] = scale*result[i]/norm[i]+background;
+        result[i] = local_pars.scale*result[i]/norm+local_pars.background;
     }
   }
 }
