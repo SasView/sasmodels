@@ -276,7 +276,7 @@ class DllKernel(object):
             self.q_input.nq, # nq
             #TODO: pd_start will need to be changed
             0, # pd_start
-            details[3*max_pd:4*max_pd], # pd_stop pd_stride[MAX_PD]
+            details[4*max_pd-1], # pd_stop pd_stride[MAX_PD]
             details.ctypes.data, # problem
             weights.ctypes.data,  # weights
             values.ctypes.data,  #pars

@@ -55,7 +55,7 @@ void KERNEL_NAME(
 
   local int offset[NPARS];  // NPARS excludes scale/background
 
-#if 1 // defined(USE_SHORTCUT_OPTIMIZATION)
+#if 0 // defined(USE_SHORTCUT_OPTIMIZATION)
   if (problem->pd_length[0] == 1) {
     // Shouldn't need to copy!!
 
@@ -76,7 +76,7 @@ void KERNEL_NAME(
   printf("falling through\n");
 #endif
 
-
+  printf("Entering polydispersity\n");
   // Since we are no longer looping over the entire polydispersity hypercube
   // for each q, we need to track the normalization values for each q in a
   // separate work vector.

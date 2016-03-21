@@ -684,6 +684,7 @@ def mono_details(model_info):
 
 def poly_details(model_info, weights):
     pars = model_info['parameters'][2:]  # skip scale and background
+    weights = weights[2:]
     max_pd = model_info['max_pd']
     npars = len(pars) # scale and background already removed
     par_offset = 5*max_pd
@@ -693,6 +694,7 @@ def poly_details(model_info, weights):
     # Note: the reversing view, x[::-1], does not require a copy
     pd_length = np.array([len(w) for w in weights])
     print (pd_length)
+    print (weights)
     pd_offset = np.cumsum(np.hstack((0, pd_length)))
     pd_isvol = np.array([p.type=='volume' for p in pars])
     idx = np.argsort(pd_length)[::-1][:max_pd]
@@ -715,7 +717,7 @@ def poly_details(model_info, weights):
     details[par_offset+0*npars:par_offset+1*npars] = par_offsets
     details[par_offset+1*npars:par_offset+2*npars] = 0  # no coordination for most
     details[par_offset+2*npars:par_offset+3*npars] = 0  # no fast coord with 0
-    coord_offset = par_offset+1*pars
+    coord_offset = par_offset+1*npars
     for k,parameter_num in enumerate(idx):
         details[coord_offset+parameter_num] = 2**k
     details[constants_offset] = 1   # fast_coord_count: one fast index
