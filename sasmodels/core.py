@@ -236,7 +236,7 @@ def call_kernel(kernel, pars, cutoff=0, mono=False):
 
     weights = weights.astype(dtype=kernel.dtype)
     values = values.astype(dtype=kernel.dtype)
-
+    print("kernel poly",values)
     return kernel(details, weights, values, cutoff)
 
 def call_ER_VR(model_info, vol_pars):

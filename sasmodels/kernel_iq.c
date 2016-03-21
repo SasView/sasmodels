@@ -171,7 +171,7 @@ void KERNEL_NAME(
         weight *= fabs(cos(M_PI_180*pvec[problem->theta_par]));
       }
     }
-
+    printf("rad len %f %f\n",local_values.radius, local_values.length);
     #ifdef INVALID
     if (INVALID(local_values)) continue;
     #endif
@@ -192,7 +192,7 @@ void KERNEL_NAME(
       }
     }
   }
-  
+
   //Makes a normalization avialable for the next round
   result[nq] = norm;
   result[nq+1] = vol;
