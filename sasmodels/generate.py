@@ -683,11 +683,12 @@ def mono_details(model_info):
     return details
 
 def poly_details(model_info, weights):
+    print("entering poly",weights)
     pars = model_info['parameters'][2:]  # skip scale and background
     max_pd = model_info['max_pd']
     npars = len(pars) # scale and background already removed
-    p = 5*max_pd
-    constants_offset = p + 3*npars
+    par_offset = 5*max_pd
+    constants_offset = par_offset + 3*npars
 
     # Decreasing list of polydispersity lengths
     # Note: the reversing view, x[::-1], does not require a copy
@@ -706,20 +707,28 @@ def poly_details(model_info, weights):
         if theta_par >= 0 and pd_length[theta_par] <= 1:
             theta_par = -1
 
+    print("p","max_pd","constants_offset",par_offset,max_pd,constants_offset,npars)
+    print(idx)
+    print(pd_length[idx])
+    print(pd_offset[idx])
+    print(pd_stride)
+    print(pd_isvol[idx])
+
     details = np.empty(constants_offset + 2, 'int32')
     details[0*max_pd:1*max_pd] = idx             # pd_par
     details[1*max_pd:2*max_pd] = pd_length[idx]
     details[2*max_pd:3*max_pd] = pd_offset[idx]
     details[3*max_pd:4*max_pd] = pd_stride
     details[4*max_pd:5*max_pd] = pd_isvol[idx]
-    details[p+0*npars:p+1*npars] = par_offsets
-    details[p+1*npars:p+2*npars] = 0  # no coordination for most
-    details[p+2*npars:p+3*npars] = 0  # no fast coord with 0
-    coord_offset = p+1*pars
+    details[par_offset+0*npars:par_offset+1*npars] = par_offsets
+    details[par_offset+1*npars:par_offset+2*npars] = 0  # no coordination for most
+    details[par_offset+2*npars:par_offset+3*npars] = 0  # no fast coord with 0
+    coord_offset = par_offset+1*pars
     for k,parameter_num in enumerate(idx):
         details[coord_offset+parameter_num] = 2**k
     details[constants_offset]   = 1   # fast_coord_count: one fast index
     details[constants_offset+1] = theta_par
+    print ("details",details)
     return details
 
 def constrained_poly_details(model_info, weights, constraints):

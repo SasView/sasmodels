@@ -224,11 +224,14 @@ def call_kernel(kernel, pars, cutoff=0, mono=False):
         values = [pars.get(p.name, p.default) for p in kernel.info['parameters']]
         weights = [1.0]*len(values)
     else:
-        wv_pairs = [get_weights(p, pars) for p in kernel.info['parameters']]
-        weights, values = [v for v in zip(*wv_pairs)]
+        vw_pairs = [get_weights(p, pars) for p in kernel.info['parameters']]
+        values, weights = zip(*vw_pairs)
 
     #TODO: This is what we thought to do if max([len(w) for w in weights]) > 1:
-    if max([w for w in weights]) > 1:
+    print("from")
+    import pprint; pprint.pprint(weights)
+    print("to")
+    if max([len(w) for w in weights]) > 1:
         details = generate.poly_details(kernel.info, weights)
     else:
         details = kernel.info['mono_details']
