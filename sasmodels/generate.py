@@ -668,7 +668,7 @@ def mono_details(model_info):
     p = 5*max_pd
     c = p + 3*npars
 
-    details = np.zeros(c + 3, 'int32')
+    details = np.zeros(c + 2, 'int32')
     details[0*max_pd:1*max_pd] = range(max_pd)       # pd_par: arbitrary order; use first
     details[1*max_pd:2*max_pd] = [1]*max_pd          # pd_length: only one element
     details[2*max_pd:3*max_pd] = range(max_pd)       # pd_offset: consecutive 1.0 weights
@@ -706,7 +706,7 @@ def poly_details(model_info, weights):
         if theta_par >= 0 and pd_length[theta_par] <= 1:
             theta_par = -1
 
-    details = np.empty(constants_offset + 3, 'int32')
+    details = np.empty(constants_offset + 2, 'int32')
     details[0*max_pd:1*max_pd] = idx             # pd_par
     details[1*max_pd:2*max_pd] = pd_length[idx]
     details[2*max_pd:3*max_pd] = pd_offset[idx]

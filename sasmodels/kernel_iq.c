@@ -19,14 +19,14 @@
 typedef struct {
     int32_t pd_par[MAX_PD];     // id of the nth polydispersity variable
     int32_t pd_length[MAX_PD];  // length of the nth polydispersity weight vector
-    int32_t pd_offset[MAX_PD];  // offset of pd weights in the par & weight vector
+    int32_t pd_offset[MAX_PD];  // offset of pd weights in the value & weight vector
     int32_t pd_stride[MAX_PD];  // stride to move to the next index at this level
     int32_t pd_isvol[MAX_PD];   // True if parameter is a volume weighting parameter
-    int32_t par_offset[NPARS];  // offset of par values in the par & weight vector
+    int32_t par_offset[NPARS];  // offset of par values in the value & weight vector
     int32_t par_coord[NPARS];   // polydispersity coordination bitvector
     int32_t fast_coord_pars[NPARS]; // ids of the fast coordination parameters
     int32_t fast_coord_count;   // number of parameters coordinated with pd 1
-    int32_t theta_var;          // id of spherical correction variable
+    int32_t theta_par;          // id of spherical correction variable
 } ProblemDetails;
 
 typedef struct {
@@ -42,7 +42,7 @@ void KERNEL_NAME(
     const int32_t pd_stop,      // where we are stopping in the polydispersity loop
     global const ProblemDetails *problem,
     global const double *weights,
-    global const double *pars,
+    global const double *values,
     global const double *q, // nq q values, with padding to boundary
     global double *result,  // nq+3 return values, again with padding
     const double cutoff     // cutoff in the polydispersity weight product
@@ -50,8 +50,8 @@ void KERNEL_NAME(
 {
   // Storage for the current parameter values.  These will be updated as we
   // walk the polydispersity cube.
-  local ParameterBlock local_pars;  // current parameter values
-  double *pvec = (double *)(&local_pars);  // Alias named parameters with a vector
+  local ParameterBlock local_values;  // current parameter values
+  double *pvec = (double *)(&local_values);  // Alias named parameters with a vector
 
   local int offset[NPARS];  // NPARS excludes scale/background
 
@@ -60,16 +60,16 @@ void KERNEL_NAME(
     // Shouldn't need to copy!!
 
     for (int k=0; k < NPARS; k++) {
-      pvec[k] = pars[k+2];  // skip scale and background
+      pvec[k] = values[k+2];  // skip scale and background
     }
 
-    const double volume = CALL_VOLUME(local_pars);
+    const double volume = CALL_VOLUME(local_values);
     #ifdef USE_OPENMP
     #pragma omp parallel for
     #endif
     for (int i=0; i < nq; i++) {
-      const double scattering = CALL_IQ(q, i, local_pars);
-      result[i] = pars[0]*scattering/volume + pars[1];
+      const double scattering = CALL_IQ(q, i, local_values);
+      result[i] = values[0]*scattering/volume + values[1];
     }
     return;
   }
@@ -146,13 +146,13 @@ void KERNEL_NAME(
           coord /= 2;
         }
         offset[k] = this_offset;
-        pvec[k] = pars[this_offset];
+        pvec[k] = values[this_offset];
       }
       weight = partial_weight * weights[problem->pd_offset[0]+pd_index[0]];
-      if (problem->theta_var >= 0) {
-        spherical_correction = fabs(cos(M_PI_180*pvec[problem->theta_var]));
+      if (problem->theta_par >= 0) {
+        spherical_correction = fabs(cos(M_PI_180*pvec[problem->theta_par]));
       }
-      if (problem->theta_var == problem->pd_par[0]) {
+      if (problem->theta_par == problem->pd_par[0]) {
         weight *= spherical_correction;
       }
 
@@ -165,29 +165,29 @@ void KERNEL_NAME(
       if (problem->pd_isvol[0]) vol_weight *= wi;
       for (int k=0; k < problem->fast_coord_count; k++) {
         pvec[problem->fast_coord_pars[k]]
-            = pars[offset[problem->fast_coord_pars[k]]++];
+            = values[offset[problem->fast_coord_pars[k]]++];
       }
-      if (problem->theta_var ==problem->pd_par[0]) {
-        weight *= fabs(cos(M_PI_180*pvec[problem->theta_var]));
+      if (problem->theta_par ==problem->pd_par[0]) {
+        weight *= fabs(cos(M_PI_180*pvec[problem->theta_par]));
       }
     }
 
     #ifdef INVALID
-    if (INVALID(local_pars)) continue;
+    if (INVALID(local_values)) continue;
     #endif
 
     // Accumulate I(q)
     // Note: weight==0 must always be excluded
     if (weight > cutoff) {
       norm += weight;
-      vol += vol_weight * CALL_VOLUME(local_pars);
+      vol += vol_weight * CALL_VOLUME(local_values);
       norm_vol += vol_weight;
 
       #ifdef USE_OPENMP
       #pragma omp parallel for
       #endif
       for (int i=0; i < nq; i++) {
-        const double scattering = CALL_IQ(q, i, local_pars);
+        const double scattering = CALL_IQ(q, i, local_values);
         result[i] += weight*scattering;
       }
     }
@@ -206,7 +206,7 @@ void KERNEL_NAME(
       if (vol*norm_vol != 0.0) {
         result[i] *= norm_vol/vol;
       }
-      result[i] = pars[0]*result[i]/norm + pars[1];
+      result[i] = values[0]*result[i]/norm + values[1];
     }
   }
 }
