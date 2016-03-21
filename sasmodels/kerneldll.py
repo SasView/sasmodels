@@ -60,7 +60,7 @@ from .exception import annotate_exception
 # Compiler platform details
 if sys.platform == 'darwin':
     #COMPILE = "gcc-mp-4.7 -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm -lgomp"
-    COMPILE = "gcc -shared -fPIC -std=c99 -O2 -Wall %(source)s -o %(output)s -lm -fno-unknown-pragmas"
+    COMPILE = "gcc -shared -fPIC -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
 elif os.name == 'nt':
     # call vcvarsall.bat before compiling to set path, headers, libs, etc.
     if "VCINSTALLDIR" in os.environ:
@@ -80,8 +80,6 @@ elif os.name == 'nt':
         COMPILE = "gcc -shared -fPIC -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
         if "SAS_OPENMP" in os.environ:
             COMPILE += " -fopenmp"
-        else:
-            COMPILE += " -fWno-unknown-pragmas"
 else:
     COMPILE = "cc -shared -fPIC -fopenmp -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
 

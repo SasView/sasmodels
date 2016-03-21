@@ -650,26 +650,22 @@ def process_parameters(model_info):
     model_info['has_2d'] = par_type['orientation'] or par_type['magnetic']
 
 def mono_details(max_pd, npars):
-    par_offset = 5*max_pd
-    const_offset = par_offset + 3*npars
+    p = 5*max_pd
+    c = p + 3*npars
 
-    mono = np.zeros(const_offset + 3, 'i')
-    mono[0] = 0                # pd_par: arbitrary order; use first
-    mono[1*max_pd] = 1         # pd_length: only one element
-    mono[2*max_pd] = 2         # pd_offset: skip scale and background
-    mono[3*max_pd] = 1         # pd_stride: vectors of length 1
-    mono[4*max_pd-1] = 1       # pd_stride[-1]: only one element in set
-    mono[4*max_pd] = 0         # pd_isvol: doens't matter if no norm
-    mono[par_offset:par_offset+npars] = np.arange(2, npars+2, dtype='i')
-    # par_offset: copied in order
-    mono[par_offset+npars:par_offset+2*npars] = 0
-    # par_coord: no coordinated parameters
-    mono[par_offset+npars] = 1 # par_coord[0]: except par 0
-    mono[par_offset+2*npars:par_offset+3*npars] = 0
-    # fast coord with 0
-    mono[const_offset] = 1     # fast_coord_count: one fast index
-    mono[const_offset+1] = -1  # theta_var: None
-    mono[const_offset+2] = 0   # fast_theta: False
+    mono = np.zeros(c + 3, 'i')
+    mono[0*max_pd:1*max_pd] = range(max_pd)       # pd_par: arbitrary order; use first
+    mono[1*max_pd:2*max_pd] = [1]*max_pd          # pd_length: only one element
+    mono[2*max_pd:3*max_pd] = range(2, max_pd+2)  # pd_offset: skip scale and background
+    mono[3*max_pd:4*max_pd] = [1]*max_pd          # pd_stride: vectors of length 1
+    mono[4*max_pd:5*max_pd] = [0]*max_pd          # pd_isvol: doens't matter if no norm
+    mono[p+0*npars:p+1*npars] = range(2, npars+2) # par_offset
+    mono[p+1*npars:p+2*npars] = [0]*npars         # no coordination
+    #mono[p+npars] = 1 # par_coord[0] is coordinated with the first par?
+    mono[p+2*npars:p+3*npars] = 0 # fast coord with 0
+    mono[c]   = 1     # fast_coord_count: one fast index
+    mono[c+1] = -1  # theta_var: None
+    mono[c+2] = 0   # fast_theta: False
     return mono
 
 def poly_details(model_info, weights, pars, constraints=None):
