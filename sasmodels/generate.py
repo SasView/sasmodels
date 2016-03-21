@@ -692,14 +692,19 @@ def poly_details(model_info, weights):
     # Decreasing list of polydispersity lengths
     # Note: the reversing view, x[::-1], does not require a copy
     pd_length = np.array([len(w) for w in weights])
+    print (pd_length)
     pd_offset = np.cumsum(np.hstack((0, pd_length)))
     pd_isvol = np.array([p.type=='volume' for p in pars])
     idx = np.argsort(pd_length)[::-1][:max_pd]
-    pd_stride = np.cumprod(np.hstack((1, np.maximum(pd_length[idx][:-1],1))))
-    par_offsets = np.cumsum(np.hstack((2, np.maximum(pd_length, 1))))[:-1]
-    theta_par = model_info['theta_par']
-    if theta_par >= 0 and pd_length[theta_par] <= 1:
-        theta_par = -1
+    print (idx)
+    pd_stride = np.cumprod(np.hstack((1, pd_length[idx][:-1])))
+    par_offsets = np.cumsum(np.hstack((2, pd_length)))[:-1]
+
+    theta_par = -1
+    if 'theta_par' in model_info:
+        theta_par = model_info['theta_par']
+        if theta_par >= 0 and pd_length[theta_par] <= 1:
+            theta_par = -1
 
     details = np.empty(constants_offset + 3, 'int32')
     details[0*max_pd:1*max_pd] = idx             # pd_par

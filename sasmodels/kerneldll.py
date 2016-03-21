@@ -270,10 +270,14 @@ class DllKernel(object):
         #details = np.asarray(details, dtype='int32')
         #weights = np.asarray(weights, dtype=real)
         #values = np.asarray(values, dtype=real)
+        #TODO: How can I access max_pd and is this the way to do it?
+        #max_pd = model_info['max_pd']
+        max_pd = 1
         args = [
             self.q_input.nq, # nq
+            #TODO: pd_start will need to be changed
             0, # pd_start
-            1, # pd_stop
+            details[3*max_pd:4*max_pd], # pd_stop pd_stride[MAX_PD]
             details.ctypes.data, # problem
             weights.ctypes.data,  # weights
             values.ctypes.data,  #pars

@@ -182,7 +182,7 @@ def get_weights(parameter, values):
     """
     value = values.get(parameter.name, parameter.default)
     if parameter.type not in ('volume', 'orientation'):
-        return [value], []
+        return np.array([value]), np.array([1.0])
     relative = parameter.type == 'volume'
     limits = parameter.limits
     disperser = values.get(parameter.name+'_pd_type', 'gaussian')
@@ -207,7 +207,7 @@ def dispersion_mesh(pars):
     weight = np.prod(weight, axis=0)
     return value, weight
 
-def call_kernel(kernel, values, cutoff=0, mono=False):
+def call_kernel(kernel, pars, cutoff=0, mono=False):
     """
     Call *kernel* returned from :func:`make_kernel` with parameters *pars*.
 
@@ -220,19 +220,25 @@ def call_kernel(kernel, values, cutoff=0, mono=False):
 
     *mono* is True if polydispersity should be set to none on all parameters.
     """
-    if mono or True:
-        pars = np.array([values.get(p.name, p.default)
-                         for p in kernel.info['parameters']],
-                        dtype=kernel.dtype)
-        weights = np.array([1.0], dtype=kernel.dtype)
-        details = kernel.info['mono_details']
-        return kernel(details,  weights, pars, cutoff)
+    if mono:
+        values = [pars.get(p.name, p.default) for p in kernel.info['parameters']]
+        weights = [1.0]*len(values)
     else:
-        pairs = [get_weights(p, values) for p in kernel.info['parameters']]
-        weights, pars = [v for v in zip(*pairs)]
-        details = generate.poly_details(kernel.info, weights, pars)
-        weights, pars = [np.hstack(v) for v in (weights, pars)]
-        return kernel(details, weights, pars, cutoff)
+        wv_pairs = [get_weights(p, pars) for p in kernel.info['parameters']]
+        weights, values = [v for v in zip(*wv_pairs)]
+
+    #TODO: This is what we thought to do if max([len(w) for w in weights]) > 1:
+    if max([w for w in weights]) > 1:
+        details = generate.poly_details(kernel.info, weights)
+    else:
+        details = kernel.info['mono_details']
+
+    weights, values = [np.hstack(v) for v in (weights, values)]
+
+    weights = weights.astype(dtype=kernel.dtype)
+    values = values.astype(dtype=kernel.dtype)
+
+    return kernel(details, weights, values, cutoff)
 
 def call_ER_VR(model_info, vol_pars):
     """
