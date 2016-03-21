@@ -221,15 +221,15 @@ def call_kernel(kernel, pars, cutoff=0, mono=False):
     *mono* is True if polydispersity should be set to none on all parameters.
     """
     if mono:
-        active = set()
+        active = lambda name: False
     elif kernel.dim == '1d':
-        active = set(kernel.info['par_type']['1d'])
+        active = lambda name: name in set(kernel.info['par_type']['1d'])
     elif kernel.dim == '2d':
-        active = set(kernel.info['par_type']['2d'])
+        active = lambda name: name in set(kernel.info['par_type']['2d'])
     else:
-        vw_pairs = [get_weights(p, pars) for p in kernel.info['parameters']]
+        active = lambda name: True
 
-    vw_pairs = [(get_weights(p, pars) if p.name in active else ([p.default], [1]))
+    vw_pairs = [(get_weights(p, pars) if active(p.name) else ([p.default], [1]))
                 for p in kernel.info['parameters']]
     values, weights = zip(*vw_pairs)
 
