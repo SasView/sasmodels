@@ -49,31 +49,36 @@ void KERNEL_NAME(
     const double cutoff     // cutoff in the polydispersity weight product
     )
 {
-printf("hello\n");
+printf("aliasing\n");
   // Storage for the current parameter values.  These will be updated as we
   // walk the polydispersity cube.
   local ParameterBlock local_pars;  // current parameter values
   double *pvec = (double *)(&local_pars);  // Alias named parameters with a vector
 
+printf("allocating\n");
   local int offset[NPARS-2];
 
-#if defined(USE_SHORTCUT_OPTIMIZATION)
-  if (pd_length[0] == 1) {
+#if 1 // defined(USE_SHORTCUT_OPTIMIZATION)
+printf("dereferencing %p as %d\n", problem, problem->pd_length[0]);
+  if (problem->pd_length[0] == 1) {
     // Shouldn't need to copy!!
+    printf("copying\n");
     for (int k=0; k < NPARS; k++) {
       pvec[k] = pars[k+2];  // skip scale and background
     }
+    printf("calculating\n");
 
     #ifdef USE_OPENMP
     #pragma omp parallel for
     #endif
     for (int i=0; i < nq; i++) {
-    {
       const double scattering = CALL_IQ(q, i, local_pars);
       result[i] += pars[0]*scattering + pars[1];
     }
+    printf("returning\n");
     return;
   }
+  printf("falling through\n");
 #endif
 
 
