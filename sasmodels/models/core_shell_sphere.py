@@ -90,6 +90,7 @@ def VR(radius, thickness):
         @param radius: core radius
         @param thickness: shell thickness
     """
+    return (1,1)
     whole = 4.0 * pi / 3.0 * pow((radius + thickness), 3)
     core = 4.0 * pi / 3.0 * radius * radius * radius
     return whole, whole - core
