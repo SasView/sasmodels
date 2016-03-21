@@ -445,13 +445,13 @@ class GpuKernel(object):
         npars = len(model_info['parameters'])-2
         q_input = GpuInput(q_vectors, dtype)
         self.dtype = dtype
+        self.dim = '2d' if q_input.is_2d else '1d'
         self.kernel = kernel
         self.info = model_info
         self.details = details
         self.pd_stop_index = 4*max_pd-1
         # plus three for the normalization values
         self.result = np.empty(q_input.nq+3, q_input.dtype)
-        #self.dim = '2d' if q_input.is_2d else '1d'
 
         # Inputs and outputs for each kernel call
         # Note: res may be shorter than res_b if global_size != nq
