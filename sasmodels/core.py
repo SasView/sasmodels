@@ -25,7 +25,7 @@ except:
 
 __all__ = [
     "list_models", "load_model_info", "precompile_dll",
-    "build_model", "make_kernel", "call_kernel", "call_ER_VR",
+    "build_model", "call_kernel", "call_ER_VR",
 ]
 
 def list_models():
@@ -166,12 +166,6 @@ def precompile_dll(model_name, dtype="double"):
     return kerneldll.make_dll(source, model_info, dtype=dtype) if source else None
 
 
-def make_kernel(model, q_vectors):
-    """
-    Return a computation kernel from the model definition and the q input.
-    """
-    return model(q_vectors)
-
 def get_weights(parameter, values):
     """
     Generate the distribution for parameter *name* given the parameter values
@@ -209,7 +203,7 @@ def dispersion_mesh(pars):
 
 def call_kernel(kernel, pars, cutoff=0, mono=False):
     """
-    Call *kernel* returned from :func:`make_kernel` with parameters *pars*.
+    Call *kernel* returned from *model.make_kernel* with parameters *pars*.
 
     *cutoff* is the limiting value for the product of dispersion weights used
     to perform the multidimensional dispersion calculation more quickly at a

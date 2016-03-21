@@ -335,7 +335,7 @@ class GpuModel(object):
         self.info, self.source, self.dtype, self.fast = state
         self.program = None
 
-    def make_calculator(self, q_vectors, details):
+    def make_kernel(self, q_vectors):
         if self.program is None:
             compiler = environment().compile_program
             self.program = compiler(self.info['name'], self.source,
@@ -343,7 +343,7 @@ class GpuModel(object):
         is_2d = len(q_vectors) == 2
         kernel_name = generate.kernel_name(self.info, is_2d)
         kernel = getattr(self.program, kernel_name)
-        return GpuKernel(kernel, self.info, q_vectors, details, self.dtype)
+        return GpuKernel(kernel, self.info, q_vectors, self.dtype)
 
     def release(self):
         """
@@ -402,7 +402,6 @@ class GpuInput(object):
         self.global_size = [self.q.shape[0]]
         context = env.get_context(self.dtype)
         #print("creating inputs of size", self.global_size)
-        # COPY_HOST_PTR initiates transfer as necessary?
         self.q_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
                              hostbuf=self.q)
 
@@ -437,10 +436,7 @@ class GpuKernel(object):
 
     Call :meth:`release` when done with the kernel instance.
     """
-    def __init__(self, kernel, model_info, q_vectors, details, dtype):
-        if details.dtype != np.int32:
-            raise TypeError("numeric type does not match the kernel type")
-
+    def __init__(self, kernel, model_info, q_vectors, dtype):
         max_pd = self.info['max_pd']
         npars = len(model_info['parameters'])-2
         q_input = GpuInput(q_vectors, dtype)
@@ -448,7 +444,6 @@ class GpuKernel(object):
         self.dim = '2d' if q_input.is_2d else '1d'
         self.kernel = kernel
         self.info = model_info
-        self.details = details
         self.pd_stop_index = 4*max_pd-1
         # plus three for the normalization values
         self.result = np.empty(q_input.nq+3, q_input.dtype)
@@ -458,49 +453,39 @@ class GpuKernel(object):
         env = environment()
         self.queue = env.get_queue(dtype)
 
-        # details is int32 data, padded to a 32 integer boundary
-        size = 4*((self.info['mono'].size+7)//8)*8 # padded to 32 byte boundary
-        self.details_b = cl.Buffer(self.queue.context,
-                                   mf.READ_ONLY | mf.COPY_HOST_PTR,
-                                   hostbuf=details)
-        size = np.sum(details[max_pd:2*max_pd])
-        self.weights_b = cl.Buffer(self.queue.context, mf.READ_ONLY, size)
-        size = np.sum(details[max_pd:2*max_pd])+npars
-        self.values_b = cl.Buffer(self.queue.context, mf.READ_ONLY, size)
+        # details is int32 data, padded to an 8 integer boundary
+        size = ((max_pd*5 + npars*3 + 2 + 7)//8)*8
         self.result_b = cl.Buffer(self.queue.context, mf.READ_WRITE,
                                q_input.global_size[0] * q_input.dtype.itemsize)
         self.q_input = q_input # allocated by GpuInput above
 
-        self._need_release = [
-            self.details_b, self.weights_b, self.values_b, self.result_b,
-            self.q_input,
-        ]
+        self._need_release = [ self.result_b, self.q_input ]
 
-    def __call__(self, weights, values, cutoff):
+    def __call__(self, details, weights, values, cutoff):
         real = (np.float32 if self.q_input.dtype == generate.F32
                 else np.float64 if self.q_input.dtype == generate.F64
                 else np.float16 if self.q_input.dtype == generate.F16
                 else np.float32)  # will never get here, so use np.float32
+        assert details.dtype == np.int32
+        assert weights.dtype == real and values.dtype == real
 
-        if weights.dtype != real or values.dtype != real:
-            raise TypeError("numeric type does not match the kernel type")
+        context = self.queue.context
+        details_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
+                              hostbuf=details)
+        weights_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
+                              hostbuf=weights)
+        values_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
+                             hostbuf=values)
 
-        cl.enqueue_copy(self.queue, self.weights_b, weights)
-        cl.enqueue_copy(self.queue, self.values_b, values)
-
+        start, stop = 0, self.details[self.pd_stop_index]
         args = [
-            np.uint32(self.q_input.nq),
-            np.uint32(0),
-            np.uint32(self.details[self.pd_stop_index]),
-            self.details_b,
-            self.weights_b,
-            self.values_b,
-            self.q_input.q_b,
-            self.result_b,
-            real(cutoff),
+            np.uint32(self.q_input.nq), np.uint32(start), np.uint32(stop),
+            self.details_b, self.weights_b, self.values_b,
+            self.q_input.q_b, self.result_b, real(cutoff),
         ]
         self.kernel(self.queue, self.q_input.global_size, None, *args)
         cl.enqueue_copy(self.queue, self.result, self.result_b)
+        [v.release() for v in details_b, weights_b, values_b]
 
         return self.result[:self.nq]
 

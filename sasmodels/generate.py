@@ -683,6 +683,8 @@ def mono_details(model_info):
     return details
 
 def poly_details(model_info, weights):
+    print("entering poly",weights)
+    print([p.name for p in model_info['parameters']])
     pars = model_info['parameters'][2:]  # skip scale and background
     weights = weights[2:]
     max_pd = model_info['max_pd']

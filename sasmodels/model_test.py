@@ -50,7 +50,7 @@ import unittest
 import numpy as np
 
 from .core import list_models, load_model_info, build_model, HAVE_OPENCL
-from .core import make_kernel, call_kernel, call_ER, call_VR
+from .core import call_kernel, call_ER, call_VR
 from .exception import annotate_exception
 
 #TODO: rename to tests so that tab completion works better for models directory
@@ -186,11 +186,11 @@ def _hide_model_case_from_nosetests():
             elif isinstance(x[0], tuple):
                 Qx, Qy = zip(*x)
                 q_vectors = [np.array(Qx), np.array(Qy)]
-                kernel = make_kernel(model, q_vectors)
+                kernel = model.make_kernel(q_vectors)
                 actual = call_kernel(kernel, pars)
             else:
                 q_vectors = [np.array(x)]
-                kernel = make_kernel(model, q_vectors)
+                kernel = model.make_kernel(q_vectors)
                 actual = call_kernel(kernel, pars)
 
             self.assertGreater(len(actual), 0)
