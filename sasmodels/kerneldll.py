@@ -49,7 +49,7 @@ import sys
 import os
 import tempfile
 import ctypes as ct
-from ctypes import c_void_p, c_int, c_longdouble, c_double, c_float
+from ctypes import c_void_p, c_int32, c_longdouble, c_double, c_float
 
 import numpy as np
 
@@ -204,7 +204,7 @@ class DllModel(object):
               else c_longdouble)
 
         # int, int, int, int*, double*, double*, double*, double*, double*, double
-        argtypes = [c_int]*3 + [c_void_p]*5 + [fp]
+        argtypes = [c_int32]*3 + [c_void_p]*5 + [fp]
         self.Iq = self.dll[generate.kernel_name(self.info, False)]
         self.Iqxy = self.dll[generate.kernel_name(self.info, True)]
         self.Iq.argtypes = argtypes

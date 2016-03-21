@@ -49,17 +49,14 @@ void KERNEL_NAME(
     const double cutoff     // cutoff in the polydispersity weight product
     )
 {
-printf("aliasing\n");
   // Storage for the current parameter values.  These will be updated as we
   // walk the polydispersity cube.
   local ParameterBlock local_pars;  // current parameter values
   double *pvec = (double *)(&local_pars);  // Alias named parameters with a vector
 
-printf("allocating\n");
   local int offset[NPARS-2];
 
 #if 1 // defined(USE_SHORTCUT_OPTIMIZATION)
-printf("dereferencing %p as %d\n", problem, problem->pd_length[0]);
   if (problem->pd_length[0] == 1) {
     // Shouldn't need to copy!!
     printf("copying\n");
