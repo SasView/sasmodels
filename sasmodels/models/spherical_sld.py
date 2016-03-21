@@ -184,14 +184,12 @@ parameters = [["n_shells",         "",               1,      [0, 9],         "",
 # pylint: enable=bad-whitespace, line-too-long
 #source = ["lib/librefl.c",  "lib/sph_j1c.c", "spherical_sld.c"]
 
-Iq = """
-    return q;
-    """
+def Iq(q, *args, **kw):
+    return q
 
-Iqxy = """
-    // never called since no orientation or magnetic parameters.
-    //return -1.0;
-    """
+def Iqxy(qx, *args, **kw):
+    return qx
+
 
 demo = dict(
         n_shells=4,
