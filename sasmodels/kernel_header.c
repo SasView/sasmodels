@@ -44,11 +44,14 @@
              }
          }
          #define expm1 cephes_expm1
+         typedef __int32 int32_t
      #else
          #define kernel extern "C"
+         #include <cstdint>
      #endif
      static void SINCOS(double angle, double &svar, double &cvar) { svar=sin(angle); cvar=cos(angle); }
 #  else
+     #include <inttypes.h>  // C99 guarantees that int32_t types is here
      #include <stdio.h>
      #include <tgmath.h> // C99 type-generic math, so sin(float) => sinf
      // MSVC doesn't support C99, so no need for dllexport on C99 branch
@@ -63,6 +66,7 @@
 #  define powr(a,b) pow(a,b)
 #  define pown(a,b) pow(a,b)
 #else
+   typedef int int32_t;
 #  if defined(USE_SINCOS)
 #    define SINCOS(angle,svar,cvar) svar=sincos(angle,&cvar)
 #  else
