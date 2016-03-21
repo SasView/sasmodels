@@ -1,56 +1,60 @@
 r"""
-This model provides the form factor, $P(q)$, for a 'pringle' or 'saddle-shaped'
-object (a hyperbolic paraboloid).
-
-.. figure:: img/pringles_fig1.png
-
-    (Graphic from Matt Henderson, matt@matthen.com)
-
-The returned value is in units of cm^-1, on absolute scale.
-
 Definition
 ----------
 
-The form factor calculated is
+The form factor for this bent disc is essentially that of a hyperbolic
+paraboloid and calculated as
 
 .. math::
 
-    I(q) = (\Delta \rho )^2 V \int^{\pi/2}_0 d\psi \sin{\psi} sinc^2
+    P(q) = (\Delta \rho )^2 V \int^{\pi/2}_0 d\psi \sin{\psi} sinc^2
     \left( \frac{qd\cos{\psi}}{2} \right)
     \left[ \left( S^2_0+C^2_0\right) + 2\sum_{n=1}^{\infty}
-     \left( S^2_0+C^2_0\right) \right]
+     \left( S^2_n+C^2_n\right) \right]
 
 where
 
 .. math::
 
-    C_n = \int^{R}_{0} r dr\cos{qr^2\alpha \cos{\psi}}
+    C_n = \int^{R}_{0} r dr\cos(qr^2\alpha \cos{\psi})
     J_n\left( qr^2\beta \cos{\psi}\right)
     J_{2n}\left( qr \sin{\psi}\right)
 
 .. math::
 
-    S_n = \int^{R}_{0} r dr\sin{qr^2\alpha \cos{\psi}}
+    S_n = \int^{R}_{0} r dr\sin(qr^2\alpha \cos{\psi})
     J_n\left( qr^2\beta \cos{\psi}\right)
     J_{2n}\left( qr \sin{\psi}\right)
 
+and $\Delta \rho \text{ is } \rho_{pringle}-\rho_{solvent}$, $V$ is the volume of
+the disc, $\psi$ is the angle between the normal to the disc and the q vector,
+$d$ and $R$ are the "pringle" thickness and radius respectively, $\alpha$ and
+$\beta$ are the two curvature parameters, and $J_n$ is the n\ :sup:`th` order
+Bessel function of the first kind. 
 
-.. figure:: img/pringle-vs-cylinder.png
+.. figure:: img/pringles_fig1.png
 
-    1D plot using the default values (with 150 data points).
+    Schematic of model shape (Graphic from Matt Henderson, matt@matthen.com)
 
 Reference
 ---------
 
-Stefan Alexandru Rautu, Private Communication. 2012.
-As of 2016: stefanar@ncbs.res.in
+Karen Edler, Universtiy of Bath, Private Communication. 2012.
+Derivation by Stefan Alexandru Rautu.
+
+**Author:** Andrew Jackson **on:** 2008
+
+**Last Modified by:** Wojciech Wpotrzebowski **on:** March 20, 2016
+
+**Last Reviewed by:** Paul Butler **on:** March 21, 2016
 
 """
 
 from numpy import inf, pi
 
-name = "pringles"
-title = "Pringles model for K Edler. Represents a disc that is bent in two directions."
+name = "pringle"
+title = "The Pringle model provides the form factor, $P(q)$, for a 'pringle' \
+or 'saddle-shaped' disc that is bent in two directions."
 description = """\
 
 """
