@@ -41,8 +41,8 @@ and $\rho_{particle}$ is the scattering length density of particles.
 .. note::
 
     The surface ( $D_s$ ) and mass ( $D_m$ ) fractal dimensions are only
-    valid if $0 < surface_dim < 6$ , $0 < mass_dim < 6$ , and
-    $(surface_dim + mass_dim ) < 6$ .
+    valid if $0 < surface\_dim < 6$ , $0 < mass\_dim < 6$ , and
+    $(surface\_dim + mass\_dim ) < 6$ .
 
 
 Reference
