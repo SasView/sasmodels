@@ -16,7 +16,7 @@ The 1D scattering intensity is calculated in the following way (Guinier, 1955)
 
 where *scale* is a volume fraction, $V$ is the volume of the scatterer,
 $r$ is the radius of the sphere, *background* is the background level and
-*sld* and *solvent_sld* are the scattering length densities (SLDs) of the
+*sld* and *sld_solvent* are the scattering length densities (SLDs) of the
 scatterer and the solvent respectively.
 
 Note that if your data is in absolute scale, the *scale* should represent
@@ -46,22 +46,22 @@ John Wiley and Sons, New York, (1955)
 import numpy as np
 from numpy import pi, inf, sin, cos, sqrt, log
 
-name = "sphere (python)"
-title = "Spheres with uniform scattering length density"
+name = " _sphere (python)"
+title = "PAK testing ideas for Spheres with uniform scattering length density"
 description = """\
-P(q)=(scale/V)*[3V(sld-solvent_sld)*(sin(qr)-qr cos(qr))
+P(q)=(scale/V)*[3V(sld-sld_solvent)*(sin(qr)-qr cos(qr))
                 /(qr)^3]^2 + background
     r: radius of sphere
     V: The volume of the scatter
     sld: the SLD of the sphere
-    solvent_sld: the SLD of the solvent
+    sld_solvent: the SLD of the solvent
 """
 category = "shape:sphere"
 
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "",
                "Layer scattering length density"],
-              ["solvent_sld", "1e-6/Ang^2", 6, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 6, [-inf, inf], "",
                "Solvent scattering length density"],
               ["radius", "Ang", 50, [0, inf], "volume",
                "Sphere radius"],
@@ -71,9 +71,9 @@ parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "",
 def form_volume(radius):
     return 1.333333333333333 * pi * radius ** 3
 
-def Iq(q, sld, solvent_sld, radius):
+def Iq(q, sld, sld_solvent, radius):
     #print "q",q
-    #print "sld,r",sld,solvent_sld,radius
+    #print "sld,r",sld,sld_solvent,radius
     qr = q * radius
     sn, cn = sin(qr), cos(qr)
     ## The natural expression for the bessel function is the following:
@@ -84,15 +84,15 @@ def Iq(q, sld, solvent_sld, radius):
     ## set numpy to ignore the 0/0 error before we do though...
     bes = 3 * (sn - qr * cn) / qr ** 3 # may be 0/0 but we fix that next line
     bes[qr == 0] = 1
-    fq = bes * (sld - solvent_sld) * form_volume(radius)
+    fq = bes * (sld - sld_solvent) * form_volume(radius)
     return 1.0e-4 * fq ** 2
 Iq.vectorized = True  # Iq accepts an array of q values
 
-def Iqxy(qx, qy, sld, solvent_sld, radius):
-    return Iq(sqrt(qx ** 2 + qy ** 2), sld, solvent_sld, radius)
+def Iqxy(qx, qy, sld, sld_solvent, radius):
+    return Iq(sqrt(qx ** 2 + qy ** 2), sld, sld_solvent, radius)
 Iqxy.vectorized = True  # Iqxy accepts arrays of qx, qy values
 
-def sesans(z, sld, solvent_sld, radius):
+def sesans(z, sld, sld_solvent, radius):
     """
     Calculate SESANS-correlation function for a solid sphere.
 
@@ -114,8 +114,8 @@ def ER(radius):
 # VR defaults to 1.0
 
 demo = dict(scale=1, background=0,
-            sld=6, solvent_sld=1,
+            sld=6, sld_solvent=1,
             radius=120,
             radius_pd=.2, radius_pd_n=45)
 oldname = "SphereModel"
-oldpars = dict(sld='sldSph', solvent_sld='sldSolv', radius='radius')
+oldpars = dict(sld='sldSph', sld_solvent='sldSolv', radius='radius')
