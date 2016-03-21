@@ -26,7 +26,7 @@ sesans_file = "sphere.ses"
 initial_vals = {
     "sld" : 7.0,
     "radius" : 1000,
-    "solvent_sld" : 1.0,
+    "sld_solvent" : 1.0,
 }
 
 # Ranges for parameters if other than default
