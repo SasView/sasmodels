@@ -26,13 +26,13 @@ J Pedersen, *J. Appl. Cryst.*, 33 (2000) 637-640
 
 from numpy import inf
 
-name = "micelle_spherical_core"
-title = "Micelle Spherical Core model"
+name = "polymer_micelle"
+title = "Polymer micelle model"
 description = """
-    This model provides the form factor, $P(q)$, for a micelle with
-    a spherical core and Gaussian polymer chains attached to the surface.
+    This model provides an approximate form factor, P(q), for a micelle with
+    a spherical core with Gaussian polymer chains attached to the surface.
     """
-category = "shape-independent"
+category = "shape:sphere"
 
 # pylint: disable=bad-whitespace, line-too-long
 #   ["name", "units", default, [lower, upper], "type","description"],
@@ -50,7 +50,7 @@ parameters = [
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sph_j1c.c", "micelle_spherical_core.c"]
+source = ["lib/sph_j1c.c", "polymer_micelle_kernel.c"]
 
 demo = dict(scale=1, background=0,
             ndensity=8.94,
@@ -74,3 +74,5 @@ tests = [
     [{}, 0.01, 15.3532],
     ]
 # RKH 20Mar2016 - need to check whether the core & corona volumes are per monomer ??? and how aggregation number works!
+# renamed from micelle_spherical_core to polymer_micelle, moved from shape-independent to spheres section.
+# Ought to be able to add polydisp to core? And add ability to x by S(Q) ?
