@@ -17,17 +17,17 @@
 #define MAX_PD 4  // MAX_PD is the max number of polydisperse parameters
 
 typedef struct {
-    int pd_par[MAX_PD];     // index of the nth polydispersity variable
-    int pd_length[MAX_PD];  // length of the nth polydispersity weight vector
-    int pd_offset[MAX_PD];  // offset of pd weights in the par & weight vector
-    int pd_stride[MAX_PD];  // stride to move to the next index at this level
-    int pd_isvol[MAX_PD];   // True if parameter is a volume weighting parameter
-    int par_offset[NPARS];  // offset of par values in the par & weight vector
-    int par_coord[NPARS];   // polydispersity coordination bitvector
-    int fast_coord_index[NPARS]; // index of the fast coordination parameters
-    int fast_coord_count;   // number of parameters coordinated with pd 1
-    int theta_var;          // id of spherical correction variable
-    int fast_theta;         // true if spherical correction depends on pd 1
+    int32_t pd_par[MAX_PD];     // index of the nth polydispersity variable
+    int32_t pd_length[MAX_PD];  // length of the nth polydispersity weight vector
+    int32_t pd_offset[MAX_PD];  // offset of pd weights in the par & weight vector
+    int32_t pd_stride[MAX_PD];  // stride to move to the next index at this level
+    int32_t pd_isvol[MAX_PD];   // True if parameter is a volume weighting parameter
+    int32_t par_offset[NPARS];  // offset of par values in the par & weight vector
+    int32_t par_coord[NPARS];   // polydispersity coordination bitvector
+    int32_t fast_coord_index[NPARS]; // index of the fast coordination parameters
+    int32_t fast_coord_count;   // number of parameters coordinated with pd 1
+    int32_t theta_var;          // id of spherical correction variable
+    int32_t fast_theta;         // true if spherical correction depends on pd 1
 } ProblemDetails;
 
 typedef struct {
@@ -38,9 +38,9 @@ typedef struct {
 
 kernel
 void KERNEL_NAME(
-    int nq,                 // number of q values
-    const int pd_start,     // where we are in the polydispersity loop
-    const int pd_stop,      // where we are stopping in the polydispersity loop
+    int32_t nq,                 // number of q values
+    const int32_t pd_start,     // where we are in the polydispersity loop
+    const int32_t pd_stop,      // where we are stopping in the polydispersity loop
     global const ProblemDetails *problem,
     global const double *weights,
     global const double *pars,
