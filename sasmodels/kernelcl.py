@@ -425,7 +425,7 @@ class GpuKernel(object):
 
         self._need_release = [self.loops_b, self.res_b, self.q_input]
 
-    def __call__(self, fixed_pars, pd_pars, cutoff=1e-5):
+    def __call__(self, fixed_pars, pd_pars, cutoff):
         real = (np.float32 if self.q_input.dtype == generate.F32
                 else np.float64 if self.q_input.dtype == generate.F64
                 else np.float16 if self.q_input.dtype == generate.F16
