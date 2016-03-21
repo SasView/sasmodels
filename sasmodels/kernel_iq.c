@@ -164,8 +164,15 @@ void KERNEL_NAME(
       weight = partial_weight*wi;
       if (problem->pd_isvol[0]) vol_weight *= wi;
       for (int k=0; k < problem->fast_coord_count; k++) {
+         printf("fast loop %d coord %d idx %d ?%d offset %d %g\n",
+         k,problem->fast_coord_pars[k],pd_index[0],
+        problem->fast_coord_pars[k],
+            offset[problem->fast_coord_pars[k]],
+            values[offset[problem->fast_coord_pars[k]]]
+          );
         pvec[problem->fast_coord_pars[k]]
             = values[offset[problem->fast_coord_pars[k]]++];
+
       }
       if (problem->theta_par ==problem->pd_par[0]) {
         weight *= fabs(cos(M_PI_180*pvec[problem->theta_par]));
