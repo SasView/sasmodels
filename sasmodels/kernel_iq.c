@@ -192,6 +192,7 @@ void KERNEL_NAME(
       }
     }
   }
+  
   //Makes a normalization avialable for the next round
   result[nq] = norm;
   result[nq+1] = vol;
