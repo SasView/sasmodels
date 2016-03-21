@@ -12,7 +12,7 @@ the adjacent flat shells (or core, and solvent) (see below).
 
     Exemplary SLD profile
 
-Unlike the OnionExpShellModel (using an analytical integration),
+Unlike the <onion> model (using an analytical integration),
 the interfacial layers here are sub-divided and numerically integrated assuming each of the sub-layers are described
 by a line function. The number of the sub-layer can be given by users by setting the integer values of npts_inter.
 The form factor is normalized by the total volume of the sphere.
@@ -169,76 +169,27 @@ category = "sphere-based"
 
 # pylint: disable=bad-whitespace, line-too-long
 #            ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["n_shells",        "",               1,      [0, 9],         "", "number of shells"],
-              ["thick_inter_0",   "Ang",            50,     [-inf, inf],    "", "intern layer thickness"],
-              ["func_inter_0",    "",               0,      [0, 4],         "", "'Erf(|nu|*z)':0, 'RPower(z^|nu|)':1, 'LPower(z^|nu|)':2, 'RExp(-|nu|*z)':3, 'LExp(-|nu|*z)':4"],
-              ["core0_sld",       "1e-6/Ang^2",     2.07,   [-inf, inf],    "", "sld function flat"],
-              ["solvent_sld",     "1e-6/Ang^2",     1.0,    [-inf, inf],    "", "sld function solvent"],
-              ["flat1_sld",       "1e-6/Ang^2",     4.06,   [-inf, inf],    "", "sld function flat"],
-              ["flat2_sld",       "1e-6/Ang^2",     3.5,    [-inf, inf],    "", "sld function flat"],
-              ["flat3_sld",       "1e-6/Ang^2",     4.06,   [-inf, inf],    "", "sld function flat"],
-              ["flat4_sld",       "1e-6/Ang^2",     3.5,    [-inf, inf],    "", "sld function flat"],
-              ["flat5_sld",       "1e-6/Ang^2",     4.06,   [-inf, inf],    "", "sld function flat"],
-              ["flat6_sld",       "1e-6/Ang^2",     3.5,    [-inf, inf],    "", "sld function flat"],
-              ["flat7_sld",       "1e-6/Ang^2",     4.06,   [-inf, inf],    "", "sld function flat"],
-              ["flat8_sld",       "1e-6/Ang^2",     3.5,    [-inf, inf],    "", "sld function flat"],
-              ["flat9_sld",       "1e-6/Ang^2",     4.06,   [-inf, inf],    "", "sld function flat"],
-              ["flat10_sld",      "1e-6/Ang^2",     3.5,    [-inf, inf],    "", "sld function flat"],
-              ["thick_inter_1",    "Ang",           50.0,   [0, inf],    "", "intern layer thickness"],
-              ["thick_inter_2",    "Ang",           50.0,   [0, inf],    "", "intern layer thickness"],
-              ["thick_inter_3",    "Ang",           50.0,   [0, inf],    "", "intern layer thickness"],
-              ["thick_inter_4",    "Ang",           50.0,   [0, inf],    "", "intern layer thickness"],
-              ["thick_inter_5",    "Ang",           50.0,   [0, inf],    "", "intern layer thickness"],
-              ["thick_inter_6",    "Ang",           50.0,   [0, inf],    "", "intern layer thickness"],
-              ["thick_inter_7",    "Ang",           50.0,   [0, inf],    "", "intern layer thickness"],
-              ["thick_inter_8",    "Ang",           50.0,   [0, inf],    "", "intern layer thickness"],
-              ["thick_inter_9",    "Ang",           50.0,   [0, inf],    "", "intern layer thickness"],
-              ["thick_inter_10",   "Ang",           50.0,   [0, inf],    "", "intern layer thickness"],
-              ["thick_flat_1",     "Ang",           100.0,  [0, inf],    "", "flat layer_thickness"],
-              ["thick_flat_2",     "Ang",           100.0,  [0, inf],    "", "flat layer_thickness"],
-              ["thick_flat_3",     "Ang",           100.0,  [0, inf],    "", "flat layer_thickness"],
-              ["thick_flat_4",     "Ang",           100.0,  [0, inf],    "", "flat layer_thickness"],
-              ["thick_flat_5",     "Ang",           100.0,  [0, inf],    "", "flat layer_thickness"],
-              ["thick_flat_6",     "Ang",           100.0,  [0, inf],    "", "flat layer_thickness"],
-              ["thick_flat_7",     "Ang",           100.0,  [0, inf],    "", "flat layer_thickness"],
-              ["thick_flat_8",     "Ang",           100.0,  [0, inf],    "", "flat layer_thickness"],
-              ["thick_flat_9",     "Ang",           100.0,  [0, inf],    "", "flat layer_thickness"],
-              ["thick_flat_10",    "Ang",           100.0,  [0, inf],    "", "flat layer_thickness"],
-              ["func_inter_1",      "",             0,      [0, 4],         "", "'Erf(|nu|*z)':0, 'RPower(z^|nu|)':1, 'LPower(z^|nu|)':2, 'RExp(-|nu|*z)':3, 'LExp(-|nu|*z)':4"],
-              ["func_inter_2",      "",             0,      [0, 4],         "", "'Erf(|nu|*z)':0, 'RPower(z^|nu|)':1, 'LPower(z^|nu|)':2, 'RExp(-|nu|*z)':3, 'LExp(-|nu|*z)':4"],
-              ["func_inter_3",      "",             0,      [0, 4],         "", "'Erf(|nu|*z)':0, 'RPower(z^|nu|)':1, 'LPower(z^|nu|)':2, 'RExp(-|nu|*z)':3, 'LExp(-|nu|*z)':4"],
-              ["func_inter_4",      "",             0,      [0, 4],         "", "'Erf(|nu|*z)':0, 'RPower(z^|nu|)':1, 'LPower(z^|nu|)':2, 'RExp(-|nu|*z)':3, 'LExp(-|nu|*z)':4"],
-              ["func_inter_5",      "",             0,      [0, 4],         "", "'Erf(|nu|*z)':0, 'RPower(z^|nu|)':1, 'LPower(z^|nu|)':2, 'RExp(-|nu|*z)':3, 'LExp(-|nu|*z)':4"],
-              ["func_inter_6",      "",             0,      [0, 4],         "", "'Erf(|nu|*z)':0, 'RPower(z^|nu|)':1, 'LPower(z^|nu|)':2, 'RExp(-|nu|*z)':3, 'LExp(-|nu|*z)':4"],
-              ["func_inter_7",      "",             0,      [0, 4],         "", "'Erf(|nu|*z)':0, 'RPower(z^|nu|)':1, 'LPower(z^|nu|)':2, 'RExp(-|nu|*z)':3, 'LExp(-|nu|*z)':4"],
-              ["func_inter_8",      "",             0,      [0, 4],         "", "'Erf(|nu|*z)':0, 'RPower(z^|nu|)':1, 'LPower(z^|nu|)':2, 'RExp(-|nu|*z)':3, 'LExp(-|nu|*z)':4"],
-              ["func_inter_9",      "",             0,      [0, 4],         "", "'Erf(|nu|*z)':0, 'RPower(z^|nu|)':1, 'LPower(z^|nu|)':2, 'RExp(-|nu|*z)':3, 'LExp(-|nu|*z)':4"],
-              ["func_inter_10",     "",             0,      [0, 4],         "", "'Erf(|nu|*z)':0, 'RPower(z^|nu|)':1, 'LPower(z^|nu|)':2, 'RExp(-|nu|*z)':3, 'LExp(-|nu|*z)':4"],
-              ["nu_inter_1",        "",             2.5,    [-inf, inf],    "", "steepness parameter"],
-              ["nu_inter_2",        "",             2.5,    [-inf, inf],    "", "steepness parameter"],
-              ["nu_inter_3",        "",             2.5,    [-inf, inf],    "", "steepness parameter"],
-              ["nu_inter_4",        "",             2.5,    [-inf, inf],    "", "steepness parameter"],
-              ["nu_inter_5",        "",             2.5,    [-inf, inf],    "", "steepness parameter"],
-              ["nu_inter_6",        "",             2.5,    [-inf, inf],   "", "steepness parameter"],
-              ["nu_inter_7",        "",             2.5,    [-inf, inf],    "", "steepness parameter"],
-              ["nu_inter_8",        "",             2.5,    [-inf, inf],    "", "steepness parameter"],
-              ["nu_inter_9",        "",             2.5,    [-inf, inf],    "", "steepness parameter"],
-              ["nu_inter_10",       "",             2.5,    [-inf, inf],    "", "steepness parameter"],
-              ["npts_inter",        "",             35,     [0, 35],        "", "number of points in each sublayer Must be odd number"],
-              ["nu_inter_0",        "",             2.5,    [-inf, inf],    "", "steepness parameter"],
-              ["rad_core_0",        "Ang",          50.0,   [0, inf],    "", "intern layer thickness"],
+parameters = [["n_shells",         "",               1,      [0, 9],         "", "number of shells"],
+              ["thick_inter[n]",   "Ang",            50,     [-inf, inf],    "", "intern layer thickness"],
+              ["func_inter[n]",    "",               0,      [0, 4],         "", "Erf:0, RPower:1, LPower:2, RExp:3, LExp:4"],
+              ["sld_core",         "1e-6/Ang^2",     2.07,   [-inf, inf],    "", "sld function flat"],
+              ["sld_solvent",      "1e-6/Ang^2",     1.0,    [-inf, inf],    "", "sld function solvent"],
+              ["sld_flat[n]",      "1e-6/Ang^2",     4.06,   [-inf, inf],    "", "sld function flat"],
+              ["thick_inter[n]",   "Ang",            50.0,   [0, inf],    "", "intern layer thickness"],
+              ["thick_flat[n]",    "Ang",            100.0,  [0, inf],    "", "flat layer_thickness"],
+              ["inter_nu[n]",      "",               2.5,    [-inf, inf],    "", "steepness parameter"],
+              ["npts_inter",       "",               35,     [0, 35],        "", "number of points in each sublayer Must be odd number"],
+              ["core_rad",         "Ang",            50.0,   [0, inf],    "", "intern layer thickness"],
               ]
 # pylint: enable=bad-whitespace, line-too-long
 #source = ["lib/librefl.c",  "lib/sph_j1c.c", "spherical_sld.c"]
 
-Iq = """
-    return q;
-    """
+def Iq(q, *args, **kw):
+    return q
 
-Iqxy = """
-    // never called since no orientation or magnetic parameters.
-    //return -1.0;
-    """
+def Iqxy(qx, *args, **kw):
+    return qx
+
 
 demo = dict(
         n_shells=4,
