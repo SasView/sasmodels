@@ -252,6 +252,7 @@ class DllKernel(object):
     def __init__(self, kernel, model_info, q_input):
         self.info = model_info
         self.q_input = q_input
+        self.dtype = q_input.dtype
         self.kernel = kernel
         self.res = np.empty(q_input.nq+3, q_input.dtype)
         dim = '2d' if q_input.is_2d else '1d'
@@ -260,10 +261,15 @@ class DllKernel(object):
         # In dll kernel, but not in opencl kernel
         self.p_res = self.res.ctypes.data
 
-    def __call__(self, details, values, weights, cutoff):
+    def __call__(self, details, weights, values, cutoff):
         real = (np.float32 if self.q_input.dtype == generate.F32
                 else np.float64 if self.q_input.dtype == generate.F64
                 else np.float128)
+        if details.dtype != np.int32 or weights.dtype != real or values.dtype != real:
+            raise TypeError("numeric type does not match the kernel type")
+        #details = np.asarray(details, dtype='int32')
+        #weights = np.asarray(weights, dtype=real)
+        #values = np.asarray(values, dtype=real)
         args = [
             self.q_input.nq, # nq
             0, # pd_start
@@ -276,7 +282,6 @@ class DllKernel(object):
             real(cutoff), # cutoff
             ]
         self.kernel(*args)
-
         return self.res[:-3]
 
     def release(self):

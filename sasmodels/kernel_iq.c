@@ -59,7 +59,7 @@ void KERNEL_NAME(
 #if 1 // defined(USE_SHORTCUT_OPTIMIZATION)
   if (problem->pd_length[0] == 1) {
     // Shouldn't need to copy!!
-    printf("copying\n");
+
     for (int k=0; k < NPARS; k++) {
       pvec[k] = pars[k+2];  // skip scale and background
     }
