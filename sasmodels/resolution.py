@@ -503,9 +503,9 @@ def romberg_slit_1d(q, width, height, form, pars):
     """
     from scipy.integrate import romberg
 
-    if any(k not in form.info['defaults'] for k in pars.keys()):
-        keys = set(form.info['defaults'].keys())
-        extra = set(pars.keys()) - keys
+    par_set = set([p.name for p in form.info['parameters']])
+    if any(k not in par_set for k in pars.keys()):
+        extra = set(pars.keys()) - par_set
         raise ValueError("bad parameters: [%s] not in [%s]"%
                          (", ".join(sorted(extra)), ", ".join(sorted(keys))))
 
@@ -557,9 +557,9 @@ def romberg_pinhole_1d(q, q_width, form, pars, nsigma=5):
     """
     from scipy.integrate import romberg
 
-    if any(k not in form.info['defaults'] for k in pars.keys()):
-        keys = set(form.info['defaults'].keys())
-        extra = set(pars.keys()) - keys
+    par_set = set([p.name for p in form.info['parameters']])
+    if any(k not in par_set for k in pars.keys()):
+        extra = set(pars.keys()) - par_set
         raise ValueError("bad parameters: [%s] not in [%s]"%
                          (", ".join(sorted(extra)), ", ".join(sorted(keys))))
 

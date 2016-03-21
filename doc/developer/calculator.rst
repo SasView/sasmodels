@@ -6,6 +6,7 @@ The environment needs to provide the following #defines:
 - USE_OPENCL is defined if running in opencl
 - KERNEL declares a function to be available externally
 - KERNEL_NAME is the name of the function being declared
+- MAX_PD is the maximum depth of the polydispersity loop
 - NPARS is the number of parameters in the kernel
 - PARAMETER_TABLE is the declaration of the parameters to the kernel::
 
@@ -28,12 +29,11 @@ The environment needs to provide the following #defines:
         double sld[10]; \
         double sld_solvent
 
-- CALL_IQ(q, nq, i, pars) is the declaration of a call to the kernel::
+- CALL_IQ(q, i, pars) is the declaration of a call to the kernel::
 
     Cylinder:
 
-        #define CALL_IQ(q, nq, i, var) \
-        Iq(q[i], \
+        #define CALL_IQ(q, i, var) Iq(q[i], \
         var.length, \
         var.radius, \
         var.sld, \
@@ -41,13 +41,22 @@ The environment needs to provide the following #defines:
 
     Multi-shell cylinder:
 
-        #define CALL_IQ(q, nq, i, var) \
-        Iq(q[i], \
+        #define CALL_IQ(q, i, var) Iq(q[i], \
         var.num_shells, \
         var.length, \
         var.radius, \
         var.sld, \
         var.sld_solvent)
+
+    Cylinder2D:
+
+        #define CALL_IQ(q, i, var) Iqxy(q[2*i], q[2*i+1], \
+        var.length, \
+        var.radius, \
+        var.sld, \
+        var.sld_solvent, \
+        var.theta, \
+        var.phi)
 
 - CALL_VOLUME(var) is similar, but for calling the form volume::
 
@@ -68,9 +77,6 @@ The environment needs to provide the following #defines:
 
         inline bool constrained(p1, p2, p3) { return expression; }
         #define INVALID(var) constrained(var.p1, var.p2, var.p3)
-
-- IQ_FUNC could be Iq or Iqxy
-- IQ_PARS could be q[i] or q[2*i],q[2*i+1]
 
 Our design supports a limited number of polydispersity loops, wherein
 we need to cycle through the values of the polydispersity, calculate
@@ -199,3 +205,17 @@ Oriented objects in 2-D need a spherical correction on the angular variation
 in order to preserve the 'surface area' of the weight distribution.
 
 TODO: cutoff
+
+For accuracy we may want to introduce Kahan summation into the integration::
+
+
+    double accumulated_error = 0.0;
+    ...
+    #if USE_KAHAN_SUMMATION
+        const double y = next - accumulated_error;
+        const double t = ret + y;
+        accumulated_error = (t - ret) - y;
+        ret = t;
+    #else
+        ret += next;
+    #endif

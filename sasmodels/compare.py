@@ -307,8 +307,7 @@ def parlist(model_info, pars, is2d):
     if is2d:
         exclude = lambda n: False
     else:
-        partype = model_info['partype']
-        par1d = set(partype['fixed-1d']+partype['pd-1d'])
+        par1d = model_info['par_type']['1d']
         exclude = lambda n: n not in par1d
     lines = []
     for p in model_info['parameters']:
@@ -869,13 +868,12 @@ class Explore(object):
         model_info = opts['def']
         pars, pd_types = bumps_model.create_parameters(model_info, **opts['pars'])
         if not opts['is2d']:
-            active = [base + ext
-                      for base in model_info['partype']['pd-1d']
-                      for ext in ['', '_pd', '_pd_n', '_pd_nsigma']]
-            active.extend(model_info['partype']['fixed-1d'])
-            for k in active:
-                v = pars[k]
-                v.range(*parameter_range(k, v.value))
+            for name in model_info['par_type']['1d']:
+                for ext in ['', '_pd', '_pd_n', '_pd_nsigma']:
+                    k = name+ext
+                    v = pars.get(k, None)
+                    if v is not None:
+                        v.range(*parameter_range(k, v.value))
         else:
             for k, v in pars.items():
                 v.range(*parameter_range(k, v.value))

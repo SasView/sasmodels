@@ -172,7 +172,7 @@ def make_kernel(model, q_vectors):
     """
     return model(q_vectors)
 
-def get_weights(model_info, pars, name):
+def get_weights(parameter, values):
     """
     Generate the distribution for parameter *name* given the parameter values
     in *pars*.
@@ -180,13 +180,15 @@ def get_weights(model_info, pars, name):
     Uses "name", "name_pd", "name_pd_type", "name_pd_n", "name_pd_sigma"
     from the *pars* dictionary for parameter value and parameter dispersion.
     """
-    relative = name in model_info['partype']['pd-rel']
-    limits = model_info['limits'][name]
-    disperser = pars.get(name+'_pd_type', 'gaussian')
-    value = pars.get(name, model_info['defaults'][name])
-    npts = pars.get(name+'_pd_n', 0)
-    width = pars.get(name+'_pd', 0.0)
-    nsigma = pars.get(name+'_pd_nsigma', 3.0)
+    value = values.get(parameter.name, parameter.default)
+    if parameter.type not in ('volume', 'orientation'):
+        return [value], []
+    relative = parameter.type == 'volume'
+    limits = parameter.limits
+    disperser = values.get(parameter.name+'_pd_type', 'gaussian')
+    npts = values.get(parameter.name+'_pd_n', 0)
+    width = values.get(parameter.name+'_pd', 0.0)
+    nsigma = values.get(parameter.name+'_pd_nsigma', 3.0)
     value, weight = weights.get_weights(
         disperser, npts, width, nsigma, value, limits, relative)
     return value, weight / np.sum(weight)
@@ -205,7 +207,7 @@ def dispersion_mesh(pars):
     weight = np.prod(weight, axis=0)
     return value, weight
 
-def call_kernel(kernel, pars, cutoff=0, mono=False):
+def call_kernel(kernel, values, cutoff=0, mono=False):
     """
     Call *kernel* returned from :func:`make_kernel` with parameters *pars*.
 
@@ -218,14 +220,18 @@ def call_kernel(kernel, pars, cutoff=0, mono=False):
 
     *mono* is True if polydispersity should be set to none on all parameters.
     """
-    fixed_pars = [pars.get(name, kernel.info['defaults'][name])
-                  for name in kernel.fixed_pars]
-    if mono:
-        pd_pars = [( np.array([pars[name]]), np.array([1.0]) )
-                   for name in kernel.pd_pars]
+    if mono or True:
+        pars = np.array([values.get(p.name, p.default)
+                         for p in kernel.info['parameters']])
+        weights = np.array([1.0])
+        details = kernel.info['mono_details']
+        return kernel(pars, weights, details, cutoff)
     else:
-        pd_pars = [get_weights(kernel.info, pars, name) for name in kernel.pd_pars]
-    return kernel(fixed_pars, pd_pars, cutoff=cutoff)
+        pairs = [get_weights(p, values) for p in kernel.info['parameters']]
+        weights, pars = [v for v in zip(*pairs)]
+        details = generate.poly_details(kernel.info, weights, pars)
+        weights, pars = [np.hstack(v) for v in (weights, pars)]
+        return kernel(pars, weights, details, cutoff)
 
 def call_ER_VR(model_info, vol_pars):
     """
@@ -248,35 +254,37 @@ def call_ER_VR(model_info, vol_pars):
     return effect_radius, volume_ratio
 
 
-def call_ER(info, pars):
+def call_ER(model_info, values):
     """
-    Call the model ER function using *pars*.
-    *info* is either *model.info* if you have a loaded model, or *kernel.info*
-    if you have a model kernel prepared for evaluation.
+    Call the model ER function using *values*. *model_info* is either
+    *model.info* if you have a loaded model, or *kernel.info* if you
+    have a model kernel prepared for evaluation.
     """
-    ER = info.get('ER', None)
+    ER = model_info.get('ER', None)
     if ER is None:
         return 1.0
     else:
-        vol_pars = [get_weights(info, pars, name)
-                    for name in info['partype']['volume']]
+        vol_pars = [get_weights(parameter, values)
+                    for parameter in model_info['parameters']
+                    if parameter.type == 'volume']
         value, weight = dispersion_mesh(vol_pars)
         individual_radii = ER(*value)
         #print(values[0].shape, weights.shape, fv.shape)
         return np.sum(weight*individual_radii) / np.sum(weight)
 
-def call_VR(info, pars):
+def call_VR(model_info, values):
     """
     Call the model VR function using *pars*.
     *info* is either *model.info* if you have a loaded model, or *kernel.info*
     if you have a model kernel prepared for evaluation.
     """
-    VR = info.get('VR', None)
+    VR = model_info.get('VR', None)
     if VR is None:
         return 1.0
     else:
-        vol_pars = [get_weights(info, pars, name)
-                    for name in info['partype']['volume']]
+        vol_pars = [get_weights(parameter, values)
+                    for parameter in model_info['parameters']
+                    if parameter.type == 'volume']
         value, weight = dispersion_mesh(vol_pars)
         whole, part = VR(*value)
         return np.sum(weight*part)/np.sum(weight*whole)
