@@ -45,8 +45,8 @@ and $\rho_{particle}$ is the scattering length density of particles.
     $(surface\_dim + mass\_dim ) < 6$ .
 
 
-Reference
----------
+References
+----------
 
 P Schmidt, *J Appl. Cryst.*, 24 (1991) 414-435 Equation(19)
 

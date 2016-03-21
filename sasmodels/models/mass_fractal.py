@@ -45,8 +45,8 @@ and $\rho_{particle}$ is the scattering length density of particles.
     $q$ range (see the reference for details).
 
 
-Reference
----------
+References
+----------
 
 D Mildner and P Hall, *J. Phys. D: Appl. Phys.*,
 19 (1986) 1535-1545 Equation(9)

@@ -44,8 +44,8 @@ and $\rho_{particle}$ is the scattering length density of particles.
     details)
 
 
-Reference
----------
+References
+----------
 
 D Mildner and P Hall, *J. Phys. D: Appl. Phys.*, 19 (1986) 1535-1545
 
