@@ -17,17 +17,16 @@
 #define MAX_PD 4  // MAX_PD is the max number of polydisperse parameters
 
 typedef struct {
-    int32_t pd_par[MAX_PD];     // index of the nth polydispersity variable
+    int32_t pd_par[MAX_PD];     // id of the nth polydispersity variable
     int32_t pd_length[MAX_PD];  // length of the nth polydispersity weight vector
     int32_t pd_offset[MAX_PD];  // offset of pd weights in the par & weight vector
     int32_t pd_stride[MAX_PD];  // stride to move to the next index at this level
     int32_t pd_isvol[MAX_PD];   // True if parameter is a volume weighting parameter
     int32_t par_offset[NPARS];  // offset of par values in the par & weight vector
     int32_t par_coord[NPARS];   // polydispersity coordination bitvector
-    int32_t fast_coord_index[NPARS]; // index of the fast coordination parameters
+    int32_t fast_coord_pars[NPARS]; // ids of the fast coordination parameters
     int32_t fast_coord_count;   // number of parameters coordinated with pd 1
     int32_t theta_var;          // id of spherical correction variable
-    int32_t fast_theta;         // true if spherical correction depends on pd 1
 } ProblemDetails;
 
 typedef struct {
@@ -54,7 +53,7 @@ void KERNEL_NAME(
   local ParameterBlock local_pars;  // current parameter values
   double *pvec = (double *)(&local_pars);  // Alias named parameters with a vector
 
-  local int offset[NPARS-2];
+  local int offset[NPARS];  // NPARS excludes scale/background
 
 #if 1 // defined(USE_SHORTCUT_OPTIMIZATION)
   if (problem->pd_length[0] == 1) {
@@ -154,7 +153,7 @@ void KERNEL_NAME(
       if (problem->theta_var >= 0) {
         spherical_correction = fabs(cos(M_PI_180*pvec[problem->theta_var]));
       }
-      if (!problem->fast_theta) {
+      if (problem->theta_var == problem->pd_par[0]) {
         weight *= spherical_correction;
       }
 
@@ -166,10 +165,10 @@ void KERNEL_NAME(
       weight = partial_weight*wi;
       if (problem->pd_isvol[0]) vol_weight *= wi;
       for (int k=0; k < problem->fast_coord_count; k++) {
-        pvec[problem->fast_coord_index[k]]
-            = pars[offset[problem->fast_coord_index[k]]++];
+        pvec[problem->fast_coord_pars[k]]
+            = pars[offset[problem->fast_coord_pars[k]]++];
       }
-      if (problem->fast_theta) {
+      if (problem->theta_var ==problem->pd_par[0]) {
         weight *= fabs(cos(M_PI_180*pvec[problem->theta_var]));
       }
     }

@@ -592,6 +592,8 @@ def categorize_parameters(pars):
     * *pd_relative* is the set of parameters with relative distribution
       width (e.g., radius +/- 10%) rather than absolute distribution
       width (e.g., theta +/- 6 degrees).
+    * *theta_par* is the index of the polar angle polydispersion parameter
+      or -1 if no such parameter exists
     """
     par_set = {}
     par_set['1d'] = [p.name for p in pars if p.type not in ('orientation', 'magnetic')]
@@ -599,6 +601,12 @@ def categorize_parameters(pars):
     par_set['magnetic'] = [p.name for p in pars]
     par_set['pd'] = [p.name for p in pars if p.type in ('volume', 'orientation')]
     par_set['pd_relative'] = [p.name for p in pars if p.type == 'volume']
+    if 'theta' in par_set['2d']:
+        # find id of theta in parameter set (or whatever variable is
+        # used for spherical normalization during polydispersity...
+        par_set['theta_par'] = [k for k,p in enumerate(pars) if p.name=='theta'][0]
+    else:
+        par_set['theta_par'] = -1
     return par_set
 
 def collect_types(pars):
@@ -648,6 +656,11 @@ def process_parameters(model_info):
     if model_info.get('demo', None) is None:
         model_info['demo'] = dict((p.name, p.default) for p in pars)
     model_info['has_2d'] = par_type['orientation'] or par_type['magnetic']
+    # Don't use more polydisperse parameters than are available in the model
+    # Note: we can do polydispersity on arbitrary parameters, so it is not
+    # clear that this is a good idea; it does however make the poly_details
+    # code easier to write, so we will leave it in for now.
+    model_info['max_pd'] = min(len(par_type['pd']), MAX_PD)
 
 def mono_details(model_info):
     max_pd = model_info['max_pd']
@@ -658,52 +671,58 @@ def mono_details(model_info):
     details = np.zeros(c + 3, 'int32')
     details[0*max_pd:1*max_pd] = range(max_pd)       # pd_par: arbitrary order; use first
     details[1*max_pd:2*max_pd] = [1]*max_pd          # pd_length: only one element
-    details[2*max_pd:3*max_pd] = range(2, max_pd+2)  # pd_offset: skip scale and background
+    details[2*max_pd:3*max_pd] = range(max_pd)       # pd_offset: consecutive 1.0 weights
     details[3*max_pd:4*max_pd] = [1]*max_pd          # pd_stride: vectors of length 1
     details[4*max_pd:5*max_pd] = [0]*max_pd          # pd_isvol: doens't matter if no norm
-    details[p+0*npars:p+1*npars] = range(2, npars+2) # par_offset
+    details[p+0*npars:p+1*npars] = range(2, npars+2) # par_offset: skip scale and background
     details[p+1*npars:p+2*npars] = [0]*npars         # no coordination
     #details[p+npars] = 1 # par_coord[0] is coordinated with the first par?
     details[p+2*npars:p+3*npars] = 0 # fast coord with 0
     details[c]   = 1     # fast_coord_count: one fast index
-    details[c+1] = -1  # theta_var: None
-    details[c+2] = 0   # fast_theta: False
+    details[c+1] = -1    # theta_par: None
     return details
 
-def poly_details(model_info, weights, constraints=None):
-    if constraints is not None:
-        # Need to find the independently varying pars and sort them
-        # Need to build a coordination list for the dependent variables
-        # Need to generate a constraints function which takes values
-        # and weights, returning par blocks
-        raise ValueError("Can't handle constraints yet")
-
+def poly_details(model_info, weights):
+    pars = model_info['parameters'][2:]  # skip scale and background
     max_pd = model_info['max_pd']
-    npars = len(model_info['parameters']) - 2
+    npars = len(pars) # scale and background already removed
     p = 5*max_pd
-    c = p + 3*npars
+    constants_offset = p + 3*npars
 
     # Decreasing list of polydispersity lengths
     # Note: the reversing view, x[::-1], does not require a copy
-    idx = np.argsort([len(w) for w in weights])[::-1]
-    details = np.zeros(c + 3, 'int32')
-    details[0*max_pd:1*max_pd] = idx[:max_pd]        # pd_par: arbitrary order; use first
-    details[1*max_pd:2*max_pd] = [1]*max_pd          # pd_length: only one element
-    details[2*max_pd:3*max_pd] = range(2, max_pd+2)  # pd_offset: skip scale and background
-    details[3*max_pd:4*max_pd] = [1]*max_pd          # pd_stride: vectors of length 1
-    details[4*max_pd:5*max_pd] = [0]*max_pd          # pd_isvol: doens't matter if no norm
-    details[p+0*npars:p+1*npars] = range(2, npars+2) # par_offset
-    details[p+1*npars:p+2*npars] = [0]*npars         # no coordination
-    #details[p+npars] = 1 # par_coord[0] is coordinated with the first par?
-    details[p+2*npars:p+3*npars] = 0 # fast coord with 0
-    details[c]   = 1     # fast_coord_count: one fast index
-    details[c+1] = -1  # theta_var: None
-    details[c+2] = 0   # fast_theta: False
+    pd_length = np.array([len(w) for w in weights])
+    pd_offset = np.cumsum(np.hstack((0, pd_length)))
+    pd_isvol = np.array([p.type=='volume' for p in pars])
+    idx = np.argsort(pd_length)[::-1][:max_pd]
+    pd_stride = np.cumprod(np.hstack((1, np.maximum(pd_length[idx][:-1],1))))
+    par_offsets = np.cumsum(np.hstack((2, np.maximum(pd_length, 1))))[:-1]
+    theta_par = model_info['theta_par']
+    if theta_par >= 0 and pd_length[theta_par] <= 1:
+        theta_par = -1
+
+    details = np.empty(constants_offset + 3, 'int32')
+    details[0*max_pd:1*max_pd] = idx             # pd_par
+    details[1*max_pd:2*max_pd] = pd_length[idx]
+    details[2*max_pd:3*max_pd] = pd_offset[idx]
+    details[3*max_pd:4*max_pd] = pd_stride
+    details[4*max_pd:5*max_pd] = pd_isvol[idx]
+    details[p+0*npars:p+1*npars] = par_offsets
+    details[p+1*npars:p+2*npars] = 0  # no coordination for most
+    details[p+2*npars:p+3*npars] = 0  # no fast coord with 0
+    coord_offset = p+1*pars
+    for k,parameter_num in enumerate(idx):
+        details[coord_offset+parameter_num] = 2**k
+    details[constants_offset]   = 1   # fast_coord_count: one fast index
+    details[constants_offset+1] = theta_par
     return details
 
-
-
-    raise ValueError("polydispersity not supported")
+def constrained_poly_details(model_info, weights, constraints):
+    # Need to find the independently varying pars and sort them
+    # Need to build a coordination list for the dependent variables
+    # Need to generate a constraints function which takes values
+    # and weights, returning par blocks
+    raise NotImplementedError("Can't handle constraints yet")
 
 
 def create_default_functions(model_info):
@@ -776,7 +795,6 @@ def make_model_info(kernel_module):
     if name is None:
         name = " ".join(w.capitalize() for w in kernel_id.split('_'))
     model_info = dict(
-        max_pd=MAX_PD,
         id=kernel_id,  # string used to load the kernel
         filename=abspath(kernel_module.__file__),
         name=name,
