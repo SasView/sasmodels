@@ -155,6 +155,8 @@ def revert_pars(model_info, pars):
             del oldpars['volfraction']
         elif name == 'vesicle':
             del oldpars['volfraction']
+        elif name == 'multilayer_vesicle':
+            del oldpars['volfraction']
 
     return oldpars
 
@@ -193,5 +195,7 @@ def constrain_new_to_old(model_info, pars):
         elif name == 'fractal':
             pars['volfraction'] = 1
         elif name == 'vesicle':
+            pars['volfraction'] = 1
+        elif name == 'multilayer_vesicle':
             pars['volfraction'] = 1
             
