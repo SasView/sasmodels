@@ -1,7 +1,4 @@
 r"""
-This model calculates an empirical functional form for SAS data characterized
-by two power laws.
-
 Definition
 ----------
 
@@ -10,20 +7,18 @@ The scattering intensity $I(q)$ is calculated as
 .. math::
 
     I(q) = \begin{cases}
-    A q^{-m1} + \text{background} & q <= qc \\
-    C q^{-m2} + \text{background} & q > qc
+    A q^{-m1} + \text{background} & q <= q_c \\
+    C q^{-m2} + \text{background} & q > q_c
     \end{cases}
 
-where $qc$ = the location of the crossover from one slope to the other,
-$A$ = the scaling coefficent that sets the overall intensity of the lower Q power law region,
-$m1$ = power law exponent at low Q,
-$m2$ = power law exponent at high Q
-
-The scaling of the second power law region (coefficent C) is then automatically scaled to
-match the first by following formula
+where $q_c$ = the location of the crossover from one slope to the other,
+$A$ = the scaling coefficent that sets the overall intensity of the lower Q
+power law region, $m1$ = power law exponent at low Q, and $m2$ = power law 
+exponent at high Q.  The scaling of the second power law region (coefficent C)
+is then automatically scaled to match the first by following formula:
 
 .. math::
-    C = \frac{A}{qc^{-m1} qc^{-m2}}
+    C = \frac{A q_c^{m2}}{q_c^{m1}}
 
 .. note::
     Be sure to enter the power law exponents as positive values!
@@ -41,6 +36,11 @@ References
 
 None.
 
+**Author:** NIST IGOR/DANSE **on:** pre 2010
+
+**Last Modified by:** Wojciech Wpotrzebowski **on:** February 18, 2016
+
+**Last Reviewed by:** Paul Butler **on:** March 21, 2016
 """
 
 from numpy import power
@@ -49,28 +49,31 @@ from numpy import inf
 from numpy import concatenate
 
 name = "two_power_law"
-title = "Two Power Law intensity calculation"
+title = "This model calculates an empirical functional form for SAS data \
+characterized by two power laws."
 description = """
-            I(q) = coef_A*pow(qval,-1.0*power1) + background for q<=qc
-            =C*pow(qval,-1.0*power2) + background for q>qc
-            where C=coef_A*pow(qc,-1.0*power1)/pow(qc,-1.0*power2).
+            I(q) = coef_A*pow(qval,-1.0*power1) + background for q<=q_c
+            =C*pow(qval,-1.0*power2) + background for q>q_c
+            where C=coef_A*pow(q_c,-1.0*power1)/pow(q_c,-1.0*power2).
 
             coef_A = scaling coefficent
-            qc = crossover location [1/A]
+            q_c = crossover location [1/A]
             power_1 (=m1) = power law exponent at low Q
             power_2 (=m2) = power law exponent at high Q
             background = Incoherent background [1/cm]
         """
 category = "shape-independent"
 
-# pylint: disable=bad-whitespace, line-too-long
 #            ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["coefficent_1",  "",         1.0, [-inf, inf], "", "coefficent A in low Q region"],
-              ["crossover",     "1/Ang",    0.04,[0, inf],    "", "crossover location"],
-              ["power_1",       "",         1.0, [0, inf],    "", "power law exponent at low Q"],
-              ["power_2",       "",         4.0, [0, inf],    "", "power law exponent at high Q"],
+parameters = [["coefficent_1",  "",         1.0, [-inf, inf], "",
+               "coefficent A in low Q region"],
+              ["crossover",     "1/Ang",    0.04,[0, inf],    "",
+               "crossover location"],
+              ["power_1",       "",         1.0, [0, inf],    "",
+               "power law exponent at low Q"],
+              ["power_2",       "",         4.0, [0, inf],    "",
+               "power law exponent at high Q"],
              ]
-# pylint: enable=bad-whitespace, line-too-long
 
 
 def Iq(q,
