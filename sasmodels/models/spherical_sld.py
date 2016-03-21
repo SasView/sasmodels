@@ -12,7 +12,7 @@ the adjacent flat shells (or core, and solvent) (see below).
 
     Exemplary SLD profile
 
-Unlike the OnionExpShellModel (using an analytical integration),
+Unlike the <onion> model (using an analytical integration),
 the interfacial layers here are sub-divided and numerically integrated assuming each of the sub-layers are described
 by a line function. The number of the sub-layer can be given by users by setting the integer values of npts_inter.
 The form factor is normalized by the total volume of the sphere.
