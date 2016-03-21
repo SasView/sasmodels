@@ -42,7 +42,8 @@ where
 Reference
 ---------
 
-S Alexandru Rautu, Private Communication.
+Stefan Alexandru Rautu, Private Communication. 2012.
+As of 2016: stefanar@ncbs.res.in
 
 """
 

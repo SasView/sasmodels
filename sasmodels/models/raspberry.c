@@ -26,10 +26,10 @@ double Iq(double q,
     // Ref: J. coll. inter. sci. (2010) vol. 343 (1) pp. 36-41.
 
 
-    double vfL, rL, sldL, vfS, rS, sldS, deltaS, delrhoL, delrhoS, sldSolv, aSs;
+    double vfL, rL, sldL, vfS, rS, sldS, deltaS, delrhoL, delrhoS, sldSolv;
     double VL, VS, Np, f2, fSs;
     double psiL,psiS;
-    double sfLS,sfSS,Np2,fSs2;
+    double sfLS,sfSS;
     double slT;
  
     vfL = volfraction_lg;
