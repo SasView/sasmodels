@@ -451,7 +451,8 @@ def time_calculation(calculator, pars, Nevals=1):
     initialize the calculation engine, and make the average more stable.
     """
     # initialize the code so time is more accurate
-    #value = calculator(**suppress_pd(pars))
+    if Nevals > 1:
+        value = calculator(**suppress_pd(pars))
     toc = tic()
     for _ in range(max(Nevals, 1)):  # make sure there is at least one eval
         value = calculator(**pars)

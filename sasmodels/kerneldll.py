@@ -255,8 +255,7 @@ class DllKernel(object):
         self.dtype = q_input.dtype
         self.kernel = kernel
         self.res = np.empty(q_input.nq+3, q_input.dtype)
-        dim = '2d' if q_input.is_2d else '1d'
-        self.parameters = model_info['par_type'][dim]
+        self.dim = '2d' if q_input.is_2d else '1d'
 
         # In dll kernel, but not in opencl kernel
         self.p_res = self.res.ctypes.data
