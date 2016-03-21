@@ -98,8 +98,8 @@ class ProductKernel(object):
         # Need to know if we want 2D and magnetic parameters when constructing
         # a parameter map.
         par_map = {}
-        p_info = p_kernel.info['partype']
-        s_info = s_kernel.info['partype']
+        p_info = p_kernel.info['par_type']
+        s_info = s_kernel.info['par_type']
         vol_pars = set(p_info['volume'])
         if dim == '2d':
             num_p_fixed = len(p_info['fixed-2d'])

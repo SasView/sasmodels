@@ -39,17 +39,17 @@ typedef struct {
 kernel
 void KERNEL_NAME(
     int nq,                 // number of q values
+    const int pd_start,     // where we are in the polydispersity loop
+    const int pd_stop,      // where we are stopping in the polydispersity loop
     global const ProblemDetails *problem,
     global const double *weights,
     global const double *pars,
     global const double *q, // nq q values, with padding to boundary
     global double *result,  // nq+3 return values, again with padding
-    const double cutoff,    // cutoff in the polydispersity weight product
-    const int pd_start,     // where we are in the polydispersity loop
-    const int pd_stop       // where we are stopping in the polydispersity loop
+    const double cutoff     // cutoff in the polydispersity weight product
     )
 {
-
+printf("hello\n");
   // Storage for the current parameter values.  These will be updated as we
   // walk the polydispersity cube.
   local ParameterBlock local_pars;  // current parameter values
@@ -176,6 +176,8 @@ void KERNEL_NAME(
     if (INVALID(local_pars)) continue;
     #endif
 
+    // Accumulate I(q)
+    // Note: weight==0 must always be excluded
     if (weight > cutoff) {
       norm += weight;
       vol += vol_weight * CALL_VOLUME(local_pars);

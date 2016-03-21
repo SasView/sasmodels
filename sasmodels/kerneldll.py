@@ -141,7 +141,9 @@ def make_dll(source, model_info, dtype="double"):
         tempfile_prefix = 'sas_' + model_info['name'] + '128_'
 
     source = generate.convert_type(source, dtype)
-    source_files = generate.model_sources(model_info) + [model_info['filename']]
+    source_files = (generate.model_sources(model_info)
+                    + [model_info['filename']]
+                    + generate.model_templates())
     dll = dll_path(model_info, dtype)
     newest = max(os.path.getmtime(f) for f in source_files)
     if not os.path.exists(dll) or os.path.getmtime(dll) < newest:
@@ -171,10 +173,6 @@ def load_dll(source, model_info, dtype="double"):
     filename = make_dll(source, model_info, dtype=dtype)
     return DllModel(filename, model_info, dtype=dtype)
 
-
-IQ_ARGS = [c_void_p, c_void_p, c_int]
-IQXY_ARGS = [c_void_p, c_void_p, c_void_p, c_int]
-
 class DllModel(object):
     """
     ctypes wrapper for a single model.
@@ -196,11 +194,6 @@ class DllModel(object):
         self.dtype = np.dtype(dtype)
 
     def _load_dll(self):
-        Nfixed1d = len(self.info['partype']['fixed-1d'])
-        Nfixed2d = len(self.info['partype']['fixed-2d'])
-        Npd1d = len(self.info['partype']['pd-1d'])
-        Npd2d = len(self.info['partype']['pd-2d'])
-
         #print("dll", self.dllpath)
         try:
             self.dll = ct.CDLL(self.dllpath)
@@ -211,13 +204,13 @@ class DllModel(object):
         fp = (c_float if self.dtype == generate.F32
               else c_double if self.dtype == generate.F64
               else c_longdouble)
-        pd_args_1d = [c_void_p, fp] + [c_int]*Npd1d if Npd1d else []
-        pd_args_2d = [c_void_p, fp] + [c_int]*Npd2d if Npd2d else []
-        self.Iq = self.dll[generate.kernel_name(self.info, False)]
-        self.Iq.argtypes = IQ_ARGS + pd_args_1d + [fp]*Nfixed1d
 
+        # int, int, int, int*, double*, double*, double*, double*, double*, double
+        argtypes = [c_int]*3 + [c_void_p]*5 + [fp]
+        self.Iq = self.dll[generate.kernel_name(self.info, False)]
         self.Iqxy = self.dll[generate.kernel_name(self.info, True)]
-        self.Iqxy.argtypes = IQXY_ARGS + pd_args_2d + [fp]*Nfixed2d
+        self.Iq.argtypes = argtypes
+        self.Iqxy.argtypes = argtypes
 
     def __getstate__(self):
         return self.info, self.dllpath
@@ -262,35 +255,31 @@ class DllKernel(object):
         self.info = model_info
         self.q_input = q_input
         self.kernel = kernel
-        self.res = np.empty(q_input.nq, q_input.dtype)
+        self.res = np.empty(q_input.nq+3, q_input.dtype)
         dim = '2d' if q_input.is_2d else '1d'
-        self.fixed_pars = model_info['partype']['fixed-' + dim]
-        self.pd_pars = model_info['partype']['pd-' + dim]
+        self.parameters = model_info['par_type'][dim]
 
         # In dll kernel, but not in opencl kernel
         self.p_res = self.res.ctypes.data
 
-    def __call__(self, fixed_pars, pd_pars, cutoff):
+    def __call__(self, details, values, weights, cutoff):
         real = (np.float32 if self.q_input.dtype == generate.F32
                 else np.float64 if self.q_input.dtype == generate.F64
                 else np.float128)
-
-        nq = c_int(self.q_input.nq)
-        if pd_pars:
-            cutoff = real(cutoff)
-            loops_N = [np.uint32(len(p[0])) for p in pd_pars]
-            loops = np.hstack(pd_pars)
-            loops = np.ascontiguousarray(loops.T, self.q_input.dtype).flatten()
-            p_loops = loops.ctypes.data
-            dispersed = [p_loops, cutoff] + loops_N
-        else:
-            dispersed = []
-        fixed = [real(p) for p in fixed_pars]
-        args = self.q_input.q_pointers + [self.p_res, nq] + dispersed + fixed
-        #print(pars)
+        args = [
+            self.q_input.nq, # nq
+            0, # pd_start
+            1, # pd_stop
+            details.ctypes.data, # problem
+            weights.ctypes.data,  # weights
+            values.ctypes.data,  #pars
+            self.q_input.q_pointers[0], #q
+            self.p_res,   # results
+            real(cutoff), # cutoff
+            ]
         self.kernel(*args)
 
-        return self.res
+        return self.res[:-3]
 
     def release(self):
         """

@@ -353,7 +353,6 @@ def model_sources(model_info):
                    abspath(joinpath(dirname(__file__), 'models'))]
     return [_search(search_path, f) for f in model_info['source']]
 
-
 def convert_type(source, dtype):
     """
     Convert code from double precision to the desired type.
@@ -418,8 +417,15 @@ def load_template(filename):
     mtime = getmtime(path)
     if filename not in _template_cache or mtime > _template_cache[filename][0]:
         with open(path) as fid:
-            _template_cache[filename] = (mtime, fid.read())
+            _template_cache[filename] = (mtime, fid.read(), path)
     return _template_cache[filename][1]
+
+def model_templates():
+    # TODO: fails DRY; templates are listed in two places.
+    # should instead have model_info contain a list of paths
+    return [joinpath(TEMPLATE_ROOT, filename)
+            for filename in ('kernel_header.c', 'kernel_iq.c')]
+
 
 _FN_TEMPLATE = """\
 double %(name)s(%(pars)s);
@@ -449,7 +455,7 @@ def _call_pars(prefix, pars):
     Return a list of *prefix.parameter* from parameter items.
     """
     prefix += "."
-    return [prefix+p.name for p in pars]
+    return [prefix+p for p in pars]
 
 _IQXY_PATTERN = re.compile("^((inline|static) )? *(double )? *Iqxy *([(]|$)",
                            flags=re.MULTILINE)
@@ -512,13 +518,13 @@ def make_source(model_info):
 
     # Generate form_volume function, etc. from body only
     if model_info['form_volume'] is not None:
-        pnames = [p.name for p in vol_parameters]
+        pnames = [p for p in vol_parameters]
         source.append(_gen_fn('form_volume', pnames, model_info['form_volume']))
     if model_info['Iq'] is not None:
-        pnames = ['q'] + [p.name for p in iq_parameters]
+        pnames = ['q'] + [p for p in iq_parameters]
         source.append(_gen_fn('Iq', pnames, model_info['Iq']))
     if model_info['Iqxy'] is not None:
-        pnames = ['qx', 'qy'] + [p.name for p in iqxy_parameters]
+        pnames = ['qx', 'qy'] + [p for p in iqxy_parameters]
         source.append(_gen_fn('Iqxy', pnames, model_info['Iqxy']))
 
     # Define the parameter table
@@ -551,7 +557,7 @@ def make_source(model_info):
         call_iqxy = "#define CALL_IQ(q,i,v) Iq(%s)" % (",".join(pars_sqrt))
 
     # Fill in definitions for numbers of parameters
-    source.append("#define MAX_PD %s"%MAX_PD)
+    source.append("#define MAX_PD %s"%model_info['max_pd'])
     source.append("#define NPARS %d"%(len(model_info['parameters'])-2))
 
     # TODO: allow mixed python/opencl kernels?
@@ -583,18 +589,16 @@ def categorize_parameters(pars):
       includes all 1D parameters)
     * *magnetic* set of parameters that are used to compute magnetic
       patterns (which includes all 1D and 2D parameters)
-    * *sesans* set of parameters that are used to compute sesans patterns
-     (which is just 1D without background)
-    * *pd-relative* is the set of parameters with relative distribution
+    * *pd_relative* is the set of parameters with relative distribution
       width (e.g., radius +/- 10%) rather than absolute distribution
       width (e.g., theta +/- 6 degrees).
     """
     par_set = {}
-    par_set['1d'] = [p for p in pars if p.type not in ('orientation', 'magnetic')]
-    par_set['2d'] = [p for p in pars if p.type != 'magnetic']
-    par_set['magnetic'] = [p for p in pars]
-    par_set['pd'] = [p for p in pars if p.type in ('volume', 'orientation')]
-    par_set['pd_relative'] = [p for p in pars if p.type == 'volume']
+    par_set['1d'] = [p.name for p in pars if p.type not in ('orientation', 'magnetic')]
+    par_set['2d'] = [p.name for p in pars if p.type != 'magnetic']
+    par_set['magnetic'] = [p.name for p in pars]
+    par_set['pd'] = [p.name for p in pars if p.type in ('volume', 'orientation')]
+    par_set['pd_relative'] = [p.name for p in pars if p.type == 'volume']
     return par_set
 
 def collect_types(pars):
@@ -620,7 +624,7 @@ def collect_types(pars):
         'volume': [], 'orientation': [], 'magnetic': [], 'sld': [], 'other': [],
     }
     for p in pars:
-        par_type[p.type if p.type else 'other'].append(p)
+        par_type[p.type if p.type else 'other'].append(p.name)
     return  par_type
 
 
@@ -640,12 +644,44 @@ def process_parameters(model_info):
     par_type = collect_types(pars)
     par_type.update(categorize_parameters(pars))
     model_info['parameters'] = pars
-    model_info['limits'] = dict((p.name, p.limits) for p in pars)
     model_info['par_type'] = par_type
-    model_info['defaults'] = dict((p.name, p.default) for p in pars)
     if model_info.get('demo', None) is None:
-        model_info['demo'] = model_info['defaults']
+        model_info['demo'] = dict((p.name, p.default) for p in pars)
     model_info['has_2d'] = par_type['orientation'] or par_type['magnetic']
+
+def mono_details(max_pd, npars):
+    par_offset = 5*max_pd
+    const_offset = par_offset + 3*npars
+
+    mono = np.zeros(const_offset + 3, 'i')
+    mono[0] = 0                # pd_par: arbitrary order; use first
+    mono[1*max_pd] = 1         # pd_length: only one element
+    mono[2*max_pd] = 2         # pd_offset: skip scale and background
+    mono[3*max_pd] = 1         # pd_stride: vectors of length 1
+    mono[4*max_pd-1] = 1       # pd_stride[-1]: only one element in set
+    mono[4*max_pd] = 0         # pd_isvol: doens't matter if no norm
+    mono[par_offset:par_offset+npars] = np.arange(2, npars+2, dtype='i')
+    # par_offset: copied in order
+    mono[par_offset+npars:par_offset+2*npars] = 0
+    # par_coord: no coordinated parameters
+    mono[par_offset+npars] = 1 # par_coord[0]: except par 0
+    mono[par_offset+2*npars:par_offset+3*npars] = 0
+    # fast coord with 0
+    mono[const_offset] = 1     # fast_coord_count: one fast index
+    mono[const_offset+1] = -1  # theta_var: None
+    mono[const_offset+2] = 0   # fast_theta: False
+    return mono
+
+def poly_details(model_info, weights, pars, constraints=None):
+    if constraints is not None:
+        # Need to find the independently varying pars and sort them
+        # Need to build a coordination list for the dependent variables
+        # Need to generate a constraints function which takes values
+        # and weights, returning par blocks
+        raise ValueError("Can't handle constraints yet")
+
+    raise ValueError("polydispersity not supported")
+
 
 def create_default_functions(model_info):
     """
@@ -687,11 +723,7 @@ def make_model_info(kernel_module):
     * *variant_info* contains the information required to select between
       model variants (e.g., the list of cases) or is None if there are no
       model variants
-    * *defaults* is the *{parameter: value}* table built from the parameter
-      description table.
-    * *limits* is the *{parameter: [min, max]}* table built from the
-      parameter description table.
-    * *partypes* categorizes the model parameters. See
+    * *par_type* categorizes the model parameters. See
       :func:`categorize_parameters` for details.
     * *demo* contains the *{parameter: value}* map used in compare (and maybe
       for the demo plot, if plots aren't set up to use the default values).
@@ -708,6 +740,9 @@ def make_model_info(kernel_module):
       tuple with composition type ('product' or 'mixture') and a list of
       *model_info* blocks for the composition objects.  This allows us to
       build complete product and mixture models from just the info.
+    * *max_pd* is the max polydispersity dimension.  This is constant and
+      should not be reset.  You may be able to change it when the program
+      starts by setting *sasmodels.generate.MAX_PD*.
 
     """
     # TODO: maybe turn model_info into a class ModelDefinition
@@ -718,6 +753,7 @@ def make_model_info(kernel_module):
     if name is None:
         name = " ".join(w.capitalize() for w in kernel_id.split('_'))
     model_info = dict(
+        max_pd=MAX_PD,
         id=kernel_id,  # string used to load the kernel
         filename=abspath(kernel_module.__file__),
         name=name,
@@ -735,6 +771,7 @@ def make_model_info(kernel_module):
         oldname=getattr(kernel_module, 'oldname', None),
         oldpars=getattr(kernel_module, 'oldpars', {}),
         tests=getattr(kernel_module, 'tests', []),
+        mono_details = mono_details(MAX_PD, len(kernel_module.parameters))
         )
     process_parameters(model_info)
     # Check for optional functions

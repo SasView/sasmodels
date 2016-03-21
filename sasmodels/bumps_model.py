@@ -80,11 +80,11 @@ def create_parameters(model_info, **kwargs):
     # when bumps is not on the path.
     from bumps.names import Parameter
 
-    pars = {}
+    pars = {} # => floating point parameters
     for p in model_info['parameters']:
         value = kwargs.pop(p.name, p.default)
         pars[p.name] = Parameter.default(value, name=p.name, limits=p.limits)
-    for name in model_info['partype']['pd-2d']:
+    for name in model_info['par_type']['pd']:
         for xpart, xdefault, xlimits in [
                 ('_pd', 0., pars[name].limits),
                 ('_pd_n', 35., (0, 1000)),
@@ -94,8 +94,8 @@ def create_parameters(model_info, **kwargs):
             xvalue = kwargs.pop(xname, xdefault)
             pars[xname] = Parameter.default(xvalue, name=xname, limits=xlimits)
 
-    pd_types = {}
-    for name in model_info['partype']['pd-2d']:
+    pd_types = {}  # => distribution names
+    for name in model_info['par_type']['pd']:
         xname = name + '_pd_type'
         xvalue = kwargs.pop(xname, 'gaussian')
         pd_types[xname] = xvalue
