@@ -243,7 +243,7 @@ class GpuEnvironment(object):
         if key not in self.compiled:
             #print("compiling",name)
             dtype = np.dtype(dtype)
-            program = compile_model(self.get_context(dtype), source, dtype, fast)
+            program = compile_model(self.get_context(dtype), str(source), dtype, fast)
             self.compiled[key] = program
         return self.compiled[key]
 
