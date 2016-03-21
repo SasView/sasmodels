@@ -217,7 +217,7 @@ class DllModel(object):
         self.info, self.dllpath = state
         self.dll = None
 
-    def __call__(self, q_vectors):
+    def make_kernel(self, q_vectors):
         q_input = PyInput(q_vectors, self.dtype)
         if self.dll is None: self._load_dll()
         kernel = self.Iqxy if q_input.is_2d else self.Iq
@@ -250,42 +250,35 @@ class DllKernel(object):
     Call :meth:`release` when done with the kernel instance.
     """
     def __init__(self, kernel, model_info, q_input):
+        self.kernel = kernel
         self.info = model_info
         self.q_input = q_input
         self.dtype = q_input.dtype
-        self.kernel = kernel
-        self.res = np.empty(q_input.nq+3, q_input.dtype)
         self.dim = '2d' if q_input.is_2d else '1d'
-
-        # In dll kernel, but not in opencl kernel
-        self.p_res = self.res.ctypes.data
+        self.result = np.empty(q_input.nq+3, q_input.dtype)
 
     def __call__(self, details, weights, values, cutoff):
         real = (np.float32 if self.q_input.dtype == generate.F32
                 else np.float64 if self.q_input.dtype == generate.F64
                 else np.float128)
-        if details.dtype != np.int32 or weights.dtype != real or values.dtype != real:
-            raise TypeError("numeric type does not match the kernel type")
-        #details = np.asarray(details, dtype='int32')
-        #weights = np.asarray(weights, dtype=real)
-        #values = np.asarray(values, dtype=real)
-        #TODO: How can I access max_pd and is this the way to do it?
-        #max_pd = model_info['max_pd']
-        max_pd = 1
+        assert details.dtype == np.int32
+        assert weights.dtype == real and values.dtype == real
+
+        max_pd = self.info['max_pd']
+        start, stop = 0, details[4*max_pd-1]
         args = [
             self.q_input.nq, # nq
-            #TODO: pd_start will need to be changed
-            0, # pd_start
-            details[3*max_pd:4*max_pd], # pd_stop pd_stride[MAX_PD]
+            start, # pd_start
+            stop, # pd_stop pd_stride[MAX_PD]
             details.ctypes.data, # problem
             weights.ctypes.data,  # weights
             values.ctypes.data,  #pars
-            self.q_input.q_pointers[0], #q
-            self.p_res,   # results
+            self.q_input.q.ctypes.data, #q
+            self.result.ctypes.data,   # results
             real(cutoff), # cutoff
             ]
         self.kernel(*args)
-        return self.res[:-3]
+        return self.result[:-3]
 
     def release(self):
         """

@@ -132,10 +132,12 @@ together in a separate weights[] vector, with offset stored in
 par_offset[pd_par[n]]. Polydisperse parameters should be stored in
 decreasing order of length for highest efficiency.
 
-We limit the number of polydisperse dimensions to MAX_PD (currently 4).
-This cuts the size of the structure in half compared to allowing a
-separate polydispersity for each parameter.  This will help a little
-bit for models with large numbers of parameters, such as the onion model.
+We limit the number of polydisperse dimensions to MAX_PD (currently 4),
+though some models may have fewer if they have fewer polydisperse
+parameters. This cuts the size of the structure in half compared to
+allowing a separate polydispersity for each parameter.  This will
+help a little bit for models with large numbers of parameters, such
+as the onion model.
 
 Parameters may be coordinated.  That is, we may have the value of one
 parameter depend on a set of other parameters, some of which may be

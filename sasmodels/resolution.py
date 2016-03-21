@@ -478,7 +478,7 @@ def eval_form(q, form, pars):
     *pars* are the parameter values to use when evaluating.
     """
     from sasmodels import core
-    kernel = core.make_kernel(form, [q])
+    kernel = form.make_kernel([q])
     theory = core.call_kernel(kernel, pars)
     kernel.release()
     return theory
@@ -561,7 +561,8 @@ def romberg_pinhole_1d(q, q_width, form, pars, nsigma=5):
     if any(k not in par_set for k in pars.keys()):
         extra = set(pars.keys()) - par_set
         raise ValueError("bad parameters: [%s] not in [%s]"%
-                         (", ".join(sorted(extra)), ", ".join(sorted(keys))))
+                         (", ".join(sorted(extra)),
+                          ", ".join(sorted(pars.keys()))))
 
     _fn = lambda q, q0, dq: eval_form(q, form, pars)*gaussian(q, q0, dq)
     r = [romberg(_fn, max(qi-nsigma*dqi, 1e-10*q[0]), qi+nsigma*dqi,
@@ -695,7 +696,7 @@ class IgorComparisonTest(unittest.TestCase):
 
     def _eval_sphere(self, pars, resolution):
         from sasmodels import core
-        kernel = core.make_kernel(self.model, [resolution.q_calc])
+        kernel = self.model.make_kernel([resolution.q_calc])
         theory = core.call_kernel(kernel, pars)
         result = resolution.apply(theory)
         kernel.release()
@@ -1064,7 +1065,7 @@ def _eval_demo_1d(resolution, title):
     model_info = core.load_model_info(name)
     model = core.build_model(model_info)
 
-    kernel = core.make_kernel(model, [resolution.q_calc])
+    kernel = model.make_kernel([resolution.q_calc])
     theory = core.call_kernel(kernel, pars)
     Iq = resolution.apply(theory)
 

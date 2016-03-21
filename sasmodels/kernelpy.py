@@ -52,14 +52,19 @@ class PyInput(object):
         self.nq = q_vectors[0].size
         self.dtype = dtype
         self.is_2d = (len(q_vectors) == 2)
-        self.q_vectors = [np.ascontiguousarray(q, self.dtype) for q in q_vectors]
-        self.q_pointers = [q.ctypes.data for q in self.q_vectors]
+        if self.is_2d:
+            self.q = np.empty((self.nq, 2), dtype=dtype)
+            self.q[:, 0] = q_vectors[0]
+            self.q[:, 1] = q_vectors[1]
+        else:
+            self.q = np.empty(self.nq, dtype=dtype)
+            self.q[:self.nq] = q_vectors[0]
 
     def release(self):
         """
         Free resources associated with the model inputs.
         """
-        self.q_vectors = []
+        self.q = None
 
 class PyKernel(object):
     """

@@ -24,7 +24,6 @@ from __future__ import print_function
 
 import numpy as np
 
-from .core import make_kernel
 from .core import call_kernel, call_ER_VR
 from . import sesans
 from . import resolution
@@ -152,11 +151,15 @@ class DataMixin(object):
 
     def _calc_theory(self, pars, cutoff=0.0):
         if self._kernel is None:
-            self._kernel = make_kernel(self._model, self._kernel_inputs)  # pylint: disable=attribute-dedata_type
-            self._kernel_mono = make_kernel(self._model, self._kernel_mono_inputs) if self._kernel_mono_inputs else None
+            self._kernel = self._model.make_kernel(self._kernel_inputs)
+            self._kernel_mono = (
+                self._model.make_kernel(self._kernel_mono_inputs)
+                if self._kernel_mono_inputs else None
+            )
 
         Iq_calc = call_kernel(self._kernel, pars, cutoff=cutoff)
-        Iq_mono = call_kernel(self._kernel_mono, pars, mono=True) if self._kernel_mono_inputs else None
+        Iq_mono = (call_kernel(self._kernel_mono, pars, mono=True)
+                   if self._kernel_mono_inputs else None)
         if self.data_type == 'sesans':
             result = sesans.transform(self._data,
                                    self._kernel_inputs[0], Iq_calc, 
