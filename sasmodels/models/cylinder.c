@@ -3,6 +3,8 @@ double Iq(double q, double sld, double solvent_sld, double radius, double length
 double Iqxy(double qx, double qy, double sld, double solvent_sld,
     double radius, double length, double theta, double phi);
 
+#define INVALID(v) (v.radius<0 || v.length<0)
+
 double form_volume(double radius, double length)
 {
     return M_PI*radius*radius*length;
@@ -14,7 +16,6 @@ double Iq(double q,
     double radius,
     double length)
 {
-    // TODO: return NaN if radius<0 or length<0?
     // precompute qr and qh to save time in the loop
     const double qr = q*radius;
     const double qh = q*0.5*length;
@@ -46,7 +47,6 @@ double Iqxy(double qx, double qy,
     double theta,
     double phi)
 {
-    // TODO: return NaN if radius<0 or length<0?
     double sn, cn; // slots to hold sincos function output
 
     // Compute angle alpha between q and the cylinder axis

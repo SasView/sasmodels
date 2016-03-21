@@ -11,9 +11,10 @@
     ##########################################################
 */
 
+#ifndef _PAR_BLOCK_ // protected block so we can include this code twice.
+#define _PAR_BLOCK_
 
 #define MAX_PD 4  // MAX_PD is the max number of polydisperse parameters
-#define PD_2N 16  // PD_2N is the size of the coordination step table
 
 typedef struct {
     int pd_par[MAX_PD];     // index of the nth polydispersity variable
@@ -30,28 +31,29 @@ typedef struct {
 } ProblemDetails;
 
 typedef struct {
-    PARAMETER_DECL;
+    PARAMETER_TABLE;
 } ParameterBlock;
+#endif
 
-#define FULL_KERNEL_NAME KERNEL_NAME ## _ ## IQ_FUNC
-KERNEL
-void FULL_KERNEL_NAME(
+
+kernel
+void KERNEL_NAME(
     int nq,                 // number of q values
     global const ProblemDetails *problem,
     global const double *weights,
     global const double *pars,
     global const double *q, // nq q values, with padding to boundary
-    global double *result,  // nq return values, again with padding
+    global double *result,  // nq+3 return values, again with padding
     const double cutoff,    // cutoff in the polydispersity weight product
     const int pd_start,     // where we are in the polydispersity loop
-    const int pd_stop,      // where we are stopping in the polydispersity loop
+    const int pd_stop       // where we are stopping in the polydispersity loop
     )
 {
 
   // Storage for the current parameter values.  These will be updated as we
   // walk the polydispersity cube.
   local ParameterBlock local_pars;  // current parameter values
-  const double *parvec = &local_pars;  // Alias named parameters with a vector
+  double *pvec = (double *)(&local_pars);  // Alias named parameters with a vector
 
   local int offset[NPARS-2];
 
@@ -59,7 +61,7 @@ void FULL_KERNEL_NAME(
   if (pd_length[0] == 1) {
     // Shouldn't need to copy!!
     for (int k=0; k < NPARS; k++) {
-      parvec[k] = pars[k+2];  // skip scale and background
+      pvec[k] = pars[k+2];  // skip scale and background
     }
 
     #ifdef USE_OPENMP
@@ -67,7 +69,7 @@ void FULL_KERNEL_NAME(
     #endif
     for (int i=0; i < nq; i++) {
     {
-      const double scattering = IQ_FUNC(IQ_PARS, IQ_PARAMETERS);
+      const double scattering = CALL_IQ(q, i, local_pars);
       result[i] += pars[0]*scattering + pars[1];
     }
     return;
@@ -98,15 +100,16 @@ void FULL_KERNEL_NAME(
     //Pulling values from previous segment
     norm = result[nq];
     vol = result[nq+1];
-    norm_vol = results[nq+2];
+    norm_vol = result[nq+2];
   }
 
   // Location in the polydispersity hypercube, one index per dimension.
-  local int pd_index[PD_MAX];
+  local int pd_index[MAX_PD];
 
   // Trigger the reset behaviour that happens at the end the fast loop
   // by setting the initial index >= weight vector length.
-  pd_index[0] = pd_length[0];
+  pd_index[0] = problem->pd_length[0];
+
 
   // need product of weights at every Iq calc, so keep product of
   // weights from the outer loops so that weight = partial_weight * fast_weight
@@ -119,51 +122,54 @@ void FULL_KERNEL_NAME(
   // Loop over the weights then loop over q, accumulating values
   for (int loop_index=pd_start; loop_index < pd_stop; loop_index++) {
     // check if indices need to be updated
-    if (pd_index[0] >= pd_length[0]) {
+    if (pd_index[0] >= problem->pd_length[0]) {
 
       // RESET INDICES
-      pd_index[0] = loop_index%pd_length[0];
+      pd_index[0] = loop_index%problem->pd_length[0];
       partial_weight = 1.0;
       partial_volweight = 1.0;
       for (int k=1; k < MAX_PD; k++) {
-        pd_index[k] = (loop_index%pd_length[k])/pd_stride[k];
-        const double wi = weights[pd_offset[0]+pd_index[0]];
+        pd_index[k] = (loop_index%problem->pd_length[k])/problem->pd_stride[k];
+        const double wi = weights[problem->pd_offset[0]+pd_index[0]];
         partial_weight *= wi;
-        if (pd_isvol[k]) partial_volweight *= wi;
+        if (problem->pd_isvol[k]) partial_volweight *= wi;
       }
       for (int k=0; k < NPARS; k++) {
-        int coord = par_coord[k];
-        int this_offset = par_offset[k];
+        int coord = problem->par_coord[k];
+        int this_offset = problem->par_offset[k];
         int block_size = 1;
         for (int bit=0; bit < MAX_PD && coord != 0; bit++) {
           if (coord&1) {
               this_offset += block_size * pd_index[bit];
-              block_size *= pd_length[bit];
+              block_size *= problem->pd_length[bit];
           }
           coord /= 2;
         }
         offset[k] = this_offset;
-        parvec[k] = pars[this_offset];
+        pvec[k] = pars[this_offset];
       }
-      weight = partial_weight * weights[pd_offset[0]+pd_index[0]]
-      if (theta_var >= 0) {
-        spherical_correction = fabs(cos(M_PI_180*parvec[theta_var]));
+      weight = partial_weight * weights[problem->pd_offset[0]+pd_index[0]];
+      if (problem->theta_var >= 0) {
+        spherical_correction = fabs(cos(M_PI_180*pvec[problem->theta_var]));
       }
-      if (!fast_theta) weight *= spherical_correction;
+      if (!problem->fast_theta) {
+        weight *= spherical_correction;
+      }
 
     } else {
 
       // INCREMENT INDICES
       pd_index[0] += 1;
-      const double wi = weights[pd_offset[0]+pd_index[0]];
+      const double wi = weights[problem->pd_offset[0]+pd_index[0]];
       weight = partial_weight*wi;
-      if (pd_isvol[0]) vol_weight *= wi;
+      if (problem->pd_isvol[0]) vol_weight *= wi;
       for (int k=0; k < problem->fast_coord_count; k++) {
-        parvec[ fast_coord_index[k]]
-            = pars[offset[fast_coord_index[k]] + pd_index[0]];
+        pvec[problem->fast_coord_index[k]]
+            = pars[offset[problem->fast_coord_index[k]]++];
       }
-      if (fast_theta) weight *= fabs(cos(M_PI_180*parvec[theta_var]));
-
+      if (problem->fast_theta) {
+        weight *= fabs(cos(M_PI_180*pvec[problem->theta_var]));
+      }
     }
 
     #ifdef INVALID
@@ -179,10 +185,10 @@ void FULL_KERNEL_NAME(
       #pragma omp parallel for
       #endif
       for (int i=0; i < nq; i++) {
-      {
-        const double scattering = CALL_IQ(q, nq, i, local_pars);
+        const double scattering = CALL_IQ(q, i, local_pars);
         result[i] += weight*scattering;
       }
+    }
   }
   //Makes a normalization avialable for the next round
   result[nq] = norm;
@@ -190,7 +196,7 @@ void FULL_KERNEL_NAME(
   result[nq+2] = norm_vol;
 
   //End of the PD loop we can normalize
-  if (pd_stop == pd_stride[MAX_PD-1]) {}
+  if (pd_stop >= problem->pd_stride[MAX_PD-1]) {
     #ifdef USE_OPENMP
     #pragma omp parallel for
     #endif

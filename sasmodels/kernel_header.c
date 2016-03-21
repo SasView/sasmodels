@@ -1,8 +1,8 @@
 #ifdef __OPENCL_VERSION__
 # define USE_OPENCL
+#elif defined(_OPENMP)
+# define USE_OPENMP
 #endif
-
-#define USE_KAHAN_SUMMATION 0
 
 // If opencl is not available, then we are compiling a C function
 // Note: if using a C++ compiler, then define kernel as extern "C"
@@ -15,10 +15,10 @@
          #include <limits>
          #include <float.h>
          #define kernel extern "C" __declspec( dllexport )
-         inline double trunc(double x) { return x>=0?floor(x):-floor(-x); }
-         inline double fmin(double x, double y) { return x>y ? y : x; }
-         inline double fmax(double x, double y) { return x<y ? y : x; }
-         inline double isnan(double x) { return _isnan(x); }
+         static double trunc(double x) { return x>=0?floor(x):-floor(-x); }
+         static double fmin(double x, double y) { return x>y ? y : x; }
+         static double fmax(double x, double y) { return x<y ? y : x; }
+         static double isnan(double x) { return _isnan(x); }
          #define NAN (std::numeric_limits<double>::quiet_NaN()) // non-signalling NaN
          static double cephes_expm1(double x) {
             // Adapted from the cephes math library.
@@ -47,7 +47,7 @@
      #else
          #define kernel extern "C"
      #endif
-     inline void SINCOS(double angle, double &svar, double &cvar) { svar=sin(angle); cvar=cos(angle); }
+     static void SINCOS(double angle, double &svar, double &cvar) { svar=sin(angle); cvar=cos(angle); }
 #  else
      #include <stdio.h>
      #include <tgmath.h> // C99 type-generic math, so sin(float) => sinf
@@ -98,9 +98,7 @@
 #ifndef M_4PI_3
 #  define M_4PI_3 4.18879020478639
 #endif
-//inline double square(double x) { return pow(x,2.0); }
-//inline double square(double x) { return pown(x,2); }
-inline double square(double x) { return x*x; }
-inline double cube(double x) { return x*x*x; }
-inline double sinc(double x) { return x==0 ? 1.0 : sin(x)/x; }
+static double square(double x) { return x*x; }
+static double cube(double x) { return x*x*x; }
+static double sinc(double x) { return x==0 ? 1.0 : sin(x)/x; }
 

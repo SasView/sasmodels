@@ -236,6 +236,8 @@ Parameter = namedtuple('Parameter', PARAMETER_FIELDS)
 
 TEMPLATE_ROOT = dirname(__file__)
 
+MAX_PD = 4
+
 F16 = np.dtype('float16')
 F32 = np.dtype('float32')
 F64 = np.dtype('float64')
@@ -419,6 +421,15 @@ def load_template(filename):
             _template_cache[filename] = (mtime, fid.read())
     return _template_cache[filename][1]
 
+_FN_TEMPLATE = """\
+double %(name)s(%(pars)s);
+double %(name)s(%(pars)s) {
+    %(body)s
+}
+
+
+"""
+
 def _gen_fn(name, pars, body):
     """
     Generate a function given pars and body.
@@ -430,20 +441,38 @@ def _gen_fn(name, pars, body):
              ....
          }
     """
-    template = """\
-double %(name)s(%(pars)s);
-double %(name)s(%(pars)s) {
-    %(body)s
-}
-
-
-"""
     par_decl = ', '.join('double ' + p for p in pars) if pars else 'void'
-    return template % {'name': name, 'body': body, 'pars': par_decl}
+    return _FN_TEMPLATE % {'name': name, 'body': body, 'pars': par_decl}
 
-def _gen_call_pars(name, pars):
-    name += "."
-    return ",".join(name+p for p in pars)
+def _call_pars(prefix, pars):
+    """
+    Return a list of *prefix.parameter* from parameter items.
+    """
+    prefix += "."
+    return [prefix+p.name for p in pars]
+
+_IQXY_PATTERN = re.compile("^((inline|static) )? *(double )? *Iqxy *([(]|$)",
+                           flags=re.MULTILINE)
+def _have_Iqxy(sources):
+    """
+    Return true if any file defines Iqxy.
+
+    Note this is not a C parser, and so can be easily confused by
+    non-standard syntax.  Also, it will incorrectly identify the following
+    as having Iqxy::
+
+        /*
+        double Iqxy(qx, qy, ...) { ... fill this in later ... }
+        */
+
+    If you want to comment out an Iqxy function, use // on the front of the
+    line instead.
+    """
+    for code in sources:
+        if _IQXY_PATTERN.search(code):
+            return True
+    else:
+        return False
 
 def make_source(model_info):
     """
@@ -463,26 +492,27 @@ def make_source(model_info):
     # dispersion.  Need to be careful that necessary parameters are available
     # for computing volume even if we allow non-disperse volume parameters.
 
-    # Load template
-    source = [load_template('kernel_header.c')]
+    # kernel_iq assumes scale and background are the first parameters;
+    # they should be first for 1d and 2d parameter lists as well.
+    assert model_info['parameters'][0].name == 'scale'
+    assert model_info['parameters'][1].name == 'background'
 
-    # Load additional sources
-    source += [open(f).read() for f in model_sources(model_info)]
+    # Identify parameter types
+    iq_parameters = model_info['par_type']['1d'][2:]
+    iqxy_parameters = model_info['par_type']['2d'][2:]
+    vol_parameters = model_info['par_type']['volume']
 
-    # Prepare defines
-    defines = []
+    # Load templates and user code
+    kernel_header = load_template('kernel_header.c')
+    kernel_code = load_template('kernel_iq.c')
+    user_code = [open(f).read() for f in model_sources(model_info)]
 
-    iq_parameters = [p.name
-                     for p in model_info['parameters'][2:]  # skip scale, background
-                     if p.name in model_info['par_set']['1d']]
-    iqxy_parameters = [p.name
-                       for p in model_info['parameters'][2:]  # skip scale, background
-                       if p.name in model_info['par_set']['2d']]
-    volume_parameters = model_info['par_type']['volume']
+    # Build initial sources
+    source = [kernel_header] + user_code
 
     # Generate form_volume function, etc. from body only
     if model_info['form_volume'] is not None:
-        pnames = [p.name for p in volume_parameters]
+        pnames = [p.name for p in vol_parameters]
         source.append(_gen_fn('form_volume', pnames, model_info['form_volume']))
     if model_info['Iq'] is not None:
         pnames = ['q'] + [p.name for p in iq_parameters]
@@ -491,53 +521,56 @@ def make_source(model_info):
         pnames = ['qx', 'qy'] + [p.name for p in iqxy_parameters]
         source.append(_gen_fn('Iqxy', pnames, model_info['Iqxy']))
 
-    # Fill in definitions for volume parameters
-    if volume_parameters:
-        deref_vol = ",".join("v."+p.name for p in volume_parameters)
-        defines.append(('CALL_VOLUME(v)', 'form_volume(%s)\n'%deref_vol))
+    # Define the parameter table
+    source.append("#define PARAMETER_TABLE \\")
+    source.append("\\\n    ".join("double %s;"%p.name
+                                   for p in model_info['parameters'][2:]))
+
+    # Define the function calls
+    if vol_parameters:
+        refs = ",".join(_call_pars("v", vol_parameters))
+        call_volume = "#define CALL_VOLUME(v) form_volume(%s)"%refs
     else:
         # Model doesn't have volume.  We could make the kernel run a little
         # faster by not using/transferring the volume normalizations, but
         # the ifdef's reduce readability more than is worthwhile.
-        defines.append(('CALL_VOLUME(v)', '0.0'))
+        call_volume = "#define CALL_VOLUME(v) 0.0"
+    source.append(call_volume)
 
-    # Fill in definitions for Iq parameters
-    defines.append(('KERNEL_NAME', model_info['name']))
-    defines.append(('IQ_PARAMETERS', ', '.join(iq_parameters)))
-    if fixed_1d:
-        defines.append(('IQ_FIXED_PARAMETER_DECLARATIONS',
-                        ', \\\n    '.join('const double %s' % p for p in fixed_1d)))
-    # Fill in definitions for Iqxy parameters
-    defines.append(('IQXY_KERNEL_NAME', model_info['name'] + '_Iqxy'))
-    defines.append(('IQXY_PARAMETERS', ', '.join(iqxy_parameters)))
-    if fixed_2d:
-        defines.append(('IQXY_FIXED_PARAMETER_DECLARATIONS',
-                        ', \\\n    '.join('const double %s' % p for p in fixed_2d)))
-    if pd_2d:
-        defines.append(('IQXY_WEIGHT_PRODUCT',
-                        '*'.join(p + '_w' for p in pd_2d)))
-        defines.append(('IQXY_DISPERSION_LENGTH_DECLARATIONS',
-                        ', \\\n    '.join('const int N%s' % p for p in pd_2d)))
-        defines.append(('IQXY_DISPERSION_LENGTH_SUM',
-                        '+'.join('N' + p for p in pd_2d)))
-        open_loops, close_loops = build_polydispersity_loops(pd_2d)
-        defines.append(('IQXY_OPEN_LOOPS',
-                        open_loops.replace('\n', ' \\\n')))
-        defines.append(('IQXY_CLOSE_LOOPS',
-                        close_loops.replace('\n', ' \\\n')))
-    # Need to know if we have a theta parameter for Iqxy; it is not there
-    # for the magnetic sphere model, for example, which has a magnetic
-    # orientation but no shape orientation.
-    if 'theta' in pd_2d:
-        defines.append(('IQXY_HAS_THETA', '1'))
+    refs = ["q[i]"] + _call_pars("v", iq_parameters)
+    call_iq = "#define CALL_IQ(q,i,v) Iq(%s)" % (",".join(refs))
+    if _have_Iqxy(user_code):
+        # Call 2D model
+        refs = ["q[2*i]", "q[2*i+1]"] + _call_pars("v", iqxy_parameters)
+        call_iqxy = "#define CALL_IQ(q,i,v) Iqxy(%s)" % (",".join(refs))
+    else:
+        # Call 1D model with sqrt(qx^2 + qy^2)
+        warnings.warn("Creating Iqxy = Iq(sqrt(qx^2 + qy^2))")
+        # still defined:: refs = ["q[i]"] + _call_pars("v", iq_parameters)
+        pars_sqrt = ["sqrt(q[2*i]*q[2*i]+q[2*i+1]*q[2*i+1])"] + refs[1:]
+        call_iqxy = "#define CALL_IQ(q,i,v) Iq(%s)" % (",".join(pars_sqrt))
 
-    #for d in defines: print(d)
-    defines = '\n'.join('#define %s %s' % (k, v) for k, v in defines)
-    sources = '\n\n'.join(source)
-    return C_KERNEL_TEMPLATE % {
-        'DEFINES': defines,
-        'SOURCES': sources,
-        }
+    # Fill in definitions for numbers of parameters
+    source.append("#define MAX_PD %s"%MAX_PD)
+    source.append("#define NPARS %d"%(len(model_info['parameters'])-2))
+
+    # TODO: allow mixed python/opencl kernels?
+
+    # define the Iq kernel
+    source.append("#define KERNEL_NAME %s_Iq"%model_info['name'])
+    source.append(call_iq)
+    source.append(kernel_code)
+    source.append("#undef CALL_IQ")
+    source.append("#undef KERNEL_NAME")
+
+    # define the Iqxy kernel from the same source with different #defines
+    source.append("#define KERNEL_NAME %s_Iqxy"%model_info['name'])
+    source.append(call_iqxy)
+    source.append(kernel_code)
+    source.append("#undef CALL_IQ")
+    source.append("#undef KERNEL_NAME")
+
+    return '\n'.join(source)
 
 def categorize_parameters(pars):
     """
@@ -587,7 +620,7 @@ def collect_types(pars):
         'volume': [], 'orientation': [], 'magnetic': [], 'sld': [], 'other': [],
     }
     for p in pars:
-        par_type[p.type if p.type else 'other'].append(p.name)
+        par_type[p.type if p.type else 'other'].append(p)
     return  par_type
 
 
@@ -604,15 +637,30 @@ def process_parameters(model_info):
 
     pars = [Parameter(*p) for p in model_info['parameters']]
     # Fill in the derived attributes
+    par_type = collect_types(pars)
+    par_type.update(categorize_parameters(pars))
     model_info['parameters'] = pars
-    partype = categorize_parameters(pars)
     model_info['limits'] = dict((p.name, p.limits) for p in pars)
-    model_info['par_type'] = collect_types(pars)
-    model_info['par_set'] = categorize_parameters(pars)
+    model_info['par_type'] = par_type
     model_info['defaults'] = dict((p.name, p.default) for p in pars)
     if model_info.get('demo', None) is None:
         model_info['demo'] = model_info['defaults']
-    model_info['has_2d'] = partype['orientation'] or partype['magnetic']
+    model_info['has_2d'] = par_type['orientation'] or par_type['magnetic']
+
+def create_default_functions(model_info):
+    """
+    Autogenerate missing functions, such as Iqxy from Iq.
+
+    This only works for Iqxy when Iq is written in python. :func:`make_source`
+    performs a similar role for Iq written in C.
+    """
+    if model_info['Iq'] is not None and model_info['Iqxy'] is None:
+        if model_info['par_type']['1d'] != model_info['par_type']['2d']:
+            raise ValueError("Iqxy model is missing")
+        Iq = model_info['Iq']
+        def Iqxy(qx, qy, **kw):
+            return Iq(np.sqrt(qx**2 + qy**2), **kw)
+        model_info['Iqxy'] = Iqxy
 
 def make_model_info(kernel_module):
     """
@@ -692,6 +740,7 @@ def make_model_info(kernel_module):
     # Check for optional functions
     functions = "ER VR form_volume Iq Iqxy shape sesans".split()
     model_info.update((k, getattr(kernel_module, k, None)) for k in functions)
+    create_default_functions(model_info)
     return model_info
 
 section_marker = re.compile(r'\A(?P<first>[%s])(?P=first)*\Z'
