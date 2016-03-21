@@ -649,32 +649,59 @@ def process_parameters(model_info):
         model_info['demo'] = dict((p.name, p.default) for p in pars)
     model_info['has_2d'] = par_type['orientation'] or par_type['magnetic']
 
-def mono_details(max_pd, npars):
+def mono_details(model_info):
+    max_pd = model_info['max_pd']
+    npars = len(model_info['parameters']) - 2
     p = 5*max_pd
     c = p + 3*npars
 
-    mono = np.zeros(c + 3, 'i')
-    mono[0*max_pd:1*max_pd] = range(max_pd)       # pd_par: arbitrary order; use first
-    mono[1*max_pd:2*max_pd] = [1]*max_pd          # pd_length: only one element
-    mono[2*max_pd:3*max_pd] = range(2, max_pd+2)  # pd_offset: skip scale and background
-    mono[3*max_pd:4*max_pd] = [1]*max_pd          # pd_stride: vectors of length 1
-    mono[4*max_pd:5*max_pd] = [0]*max_pd          # pd_isvol: doens't matter if no norm
-    mono[p+0*npars:p+1*npars] = range(2, npars+2) # par_offset
-    mono[p+1*npars:p+2*npars] = [0]*npars         # no coordination
-    #mono[p+npars] = 1 # par_coord[0] is coordinated with the first par?
-    mono[p+2*npars:p+3*npars] = 0 # fast coord with 0
-    mono[c]   = 1     # fast_coord_count: one fast index
-    mono[c+1] = -1  # theta_var: None
-    mono[c+2] = 0   # fast_theta: False
-    return mono
+    details = np.zeros(c + 3, 'int32')
+    details[0*max_pd:1*max_pd] = range(max_pd)       # pd_par: arbitrary order; use first
+    details[1*max_pd:2*max_pd] = [1]*max_pd          # pd_length: only one element
+    details[2*max_pd:3*max_pd] = range(2, max_pd+2)  # pd_offset: skip scale and background
+    details[3*max_pd:4*max_pd] = [1]*max_pd          # pd_stride: vectors of length 1
+    details[4*max_pd:5*max_pd] = [0]*max_pd          # pd_isvol: doens't matter if no norm
+    details[p+0*npars:p+1*npars] = range(2, npars+2) # par_offset
+    details[p+1*npars:p+2*npars] = [0]*npars         # no coordination
+    #details[p+npars] = 1 # par_coord[0] is coordinated with the first par?
+    details[p+2*npars:p+3*npars] = 0 # fast coord with 0
+    details[c]   = 1     # fast_coord_count: one fast index
+    details[c+1] = -1  # theta_var: None
+    details[c+2] = 0   # fast_theta: False
+    return details
 
-def poly_details(model_info, weights, pars, constraints=None):
+def poly_details(model_info, weights, constraints=None):
     if constraints is not None:
         # Need to find the independently varying pars and sort them
         # Need to build a coordination list for the dependent variables
         # Need to generate a constraints function which takes values
         # and weights, returning par blocks
         raise ValueError("Can't handle constraints yet")
+
+    max_pd = model_info['max_pd']
+    npars = len(model_info['parameters']) - 2
+    p = 5*max_pd
+    c = p + 3*npars
+
+    # Decreasing list of polydispersity lengths
+    # Note: the reversing view, x[::-1], does not require a copy
+    idx = np.argsort([len(w) for w in weights])[::-1]
+    details = np.zeros(c + 3, 'int32')
+    details[0*max_pd:1*max_pd] = idx[:max_pd]        # pd_par: arbitrary order; use first
+    details[1*max_pd:2*max_pd] = [1]*max_pd          # pd_length: only one element
+    details[2*max_pd:3*max_pd] = range(2, max_pd+2)  # pd_offset: skip scale and background
+    details[3*max_pd:4*max_pd] = [1]*max_pd          # pd_stride: vectors of length 1
+    details[4*max_pd:5*max_pd] = [0]*max_pd          # pd_isvol: doens't matter if no norm
+    details[p+0*npars:p+1*npars] = range(2, npars+2) # par_offset
+    details[p+1*npars:p+2*npars] = [0]*npars         # no coordination
+    #details[p+npars] = 1 # par_coord[0] is coordinated with the first par?
+    details[p+2*npars:p+3*npars] = 0 # fast coord with 0
+    details[c]   = 1     # fast_coord_count: one fast index
+    details[c+1] = -1  # theta_var: None
+    details[c+2] = 0   # fast_theta: False
+    return details
+
+
 
     raise ValueError("polydispersity not supported")
 
@@ -767,13 +794,16 @@ def make_model_info(kernel_module):
         oldname=getattr(kernel_module, 'oldname', None),
         oldpars=getattr(kernel_module, 'oldpars', {}),
         tests=getattr(kernel_module, 'tests', []),
-        mono_details = mono_details(MAX_PD, len(kernel_module.parameters))
         )
     process_parameters(model_info)
     # Check for optional functions
     functions = "ER VR form_volume Iq Iqxy shape sesans".split()
     model_info.update((k, getattr(kernel_module, k, None)) for k in functions)
     create_default_functions(model_info)
+    # Precalculate the monodisperse parameters
+    # TODO: make this a lazy evaluator
+    # make_model_info is called for every model on sasview startup
+    model_info['mono_details'] = mono_details(model_info)
     return model_info
 
 section_marker = re.compile(r'\A(?P<first>[%s])(?P=first)*\Z'

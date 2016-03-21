@@ -225,13 +225,13 @@ def call_kernel(kernel, values, cutoff=0, mono=False):
                          for p in kernel.info['parameters']])
         weights = np.array([1.0])
         details = kernel.info['mono_details']
-        return kernel(pars, weights, details, cutoff)
+        return kernel(details, pars, weights, cutoff)
     else:
         pairs = [get_weights(p, values) for p in kernel.info['parameters']]
         weights, pars = [v for v in zip(*pairs)]
         details = generate.poly_details(kernel.info, weights, pars)
         weights, pars = [np.hstack(v) for v in (weights, pars)]
-        return kernel(pars, weights, details, cutoff)
+        return kernel(details, pars, weights, cutoff)
 
 def call_ER_VR(model_info, vol_pars):
     """
