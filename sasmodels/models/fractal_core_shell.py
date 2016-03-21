@@ -43,8 +43,8 @@ where the $q$ vector is defined as
 
     q = \sqrt{q_x^2 + q_y^2}
 
-Reference
----------
+References
+----------
 
 See the core_shell and fractal model descriptions
 
@@ -64,9 +64,9 @@ category = "shape-independent"
 parameters = [
     ["radius",      "Ang",        60.0, [0, inf],    "volume", "Sphere core radius"],
     ["thickness",   "Ang",        10.0, [0, inf],    "volume", "Sphere shell thickness"],
-    ["core_sld",    "1e-6/Ang^2", 1.0,  [-inf, inf], "",       "Sphere core scattering length density"],
-    ["shell_sld",   "1e-6/Ang^2", 2.0,  [-inf, inf], "",       "Sphere shell scattering length density"],
-    ["solvent_sld", "1e-6/Ang^2", 3.0,  [-inf, inf], "",       "Solvent scattering length density"],
+    ["sld_core",    "1e-6/Ang^2", 1.0,  [-inf, inf], "",       "Sphere core scattering length density"],
+    ["sld_shell",   "1e-6/Ang^2", 2.0,  [-inf, inf], "",       "Sphere shell scattering length density"],
+    ["sld_solvent", "1e-6/Ang^2", 3.0,  [-inf, inf], "",       "Solvent scattering length density"],
     ["volfraction", "",           1.0,  [0, inf],    "",       "Volume fraction of building block spheres"],
     ["frac_dim",    "",           2.0,  [-inf, inf], "",       "Fractal dimension"],
     ["cor_length",  "Ang",      100.0,  [0, inf],    "",       "Correlation length of fractal-like aggregates"]]
@@ -78,15 +78,17 @@ demo = dict(scale=0.05,
             background=0,
             radius=20,
             thickness=5,
-            core_sld=3.5,
-            shell_sld=1.0,
-            solvent_sld=6.35,
+            sld_core=3.5,
+            sld_shell=1.0,
+            sld_solvent=6.35,
             volfraction=0.05,
             frac_dim=2.0,
             cor_length=100.0)
 
 oldname = 'FractalCoreShellModel'
-oldpars = {}
+oldpars = dict( sld_core='core_sld',
+               sld_shell='shell_sld',
+               sld_solvent='solvent_sld')
 
 def ER(radius, thickness):
     """
@@ -112,8 +114,8 @@ tests = [[{'radius': 20.0, 'thickness': 10.0}, 'ER', 30.0],
          # The SasView test result was 0.00169, with a background of 0.001
          [{'radius': 60.0,
            'thickness': 10.0,
-           'core_sld': 1.0,
-           'shell_sld': 2.0,
-           'solvent_sld': 3.0,
+           'sld_core': 1.0,
+           'sld_shell': 2.0,
+           'sld_solvent': 3.0,
            'background': 0.0
           }, 0.4, 0.00070126]]

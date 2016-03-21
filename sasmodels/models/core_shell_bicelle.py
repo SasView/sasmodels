@@ -3,14 +3,15 @@ r"""
 Definition
 ----------
 This model provides the form factor for a circular cylinder with a core-shell
-scattering length density profile. The form factor is normalized by the
-particle volume.
+scattering length density profile. Thus this is a variation of a core-shell cylinder 
+or disc where the shell on the walls and ends may be of different thicknesses and scattering
+length densities. The form factor is normalized by the particle volume.
 
 .. _core-shell-bicelle-geometry:
 
 .. figure:: img/core_shell_bicelle_geometry.png
 
-    (Graphic from DOI: 10.1039/C0NP00002G)
+    (Graphic from DOI: 10.1039/C0NP00002G, note however that the model here calculates for rectangular, not curved, rims.)
 
 
 The output of the 1D scattering intensity function for randomly oriented
@@ -42,10 +43,10 @@ from numpy import inf, sin, cos
 name = "core_shell_bicelle"
 title = "Circular cylinder with a core-shell scattering length density profile.."
 description = """
-    P(q,alpha)= scale/Vs*f(q)^(2) + bkg,  where: f(q)= 2(core_sld
+    P(q,alpha)= scale/Vs*f(q)^(2) + bkg,  where: f(q)= 2(sld_core
     - solvant_sld)* Vc*sin[qLcos(alpha/2)]
     /[qLcos(alpha/2)]*J1(qRsin(alpha))
-    /[qRsin(alpha)]+2(shell_sld-solvent_sld)
+    /[qRsin(alpha)]+2(shell_sld-sld_solvent)
     *Vs*sin[q(L+T)cos(alpha/2)][[q(L+T)
     *cos(alpha/2)]*J1(q(R+T)sin(alpha))
     /q(R+T)sin(alpha)]
@@ -57,7 +58,7 @@ description = """
     L: the length of the core
     shell_sld: the scattering length density
     of the shell
-    solvent_sld: the scattering length density
+    sld_solvent: the scattering length density
     of the solvent
     bkg: the background
     T: the thickness
@@ -76,10 +77,10 @@ parameters = [
     ["rim_thickness",  "Ang",       10, [0, inf],    "volume",      "Rim shell thickness"],
     ["face_thickness", "Ang",       10, [0, inf],    "volume",      "Cylinder face thickness"],
     ["length",         "Ang",      400, [0, inf],    "volume",      "Cylinder length"],
-    ["core_sld",       "1e-6/Ang^2", 1, [-inf, inf], "",            "Cylinder core scattering length density"],
-    ["face_sld",       "1e-6/Ang^2", 4, [-inf, inf], "",            "Cylinder face scattering length density"],
-    ["rim_sld",        "1e-6/Ang^2", 4, [-inf, inf], "",            "Cylinder rim scattering length density"],
-    ["solvent_sld",    "1e-6/Ang^2", 1, [-inf, inf], "",            "Solvent scattering length density"],
+    ["sld_core",       "1e-6/Ang^2", 1, [-inf, inf], "",            "Cylinder core scattering length density"],
+    ["sld_face",       "1e-6/Ang^2", 4, [-inf, inf], "",            "Cylinder face scattering length density"],
+    ["sld_rim",        "1e-6/Ang^2", 4, [-inf, inf], "",            "Cylinder rim scattering length density"],
+    ["sld_solvent",    "1e-6/Ang^2", 1, [-inf, inf], "",            "Solvent scattering length density"],
     ["theta",          "degrees",   90, [-inf, inf], "orientation", "In plane angle"],
     ["phi",            "degrees",    0, [-inf, inf], "orientation", "Out of plane angle"],
     ]
@@ -93,16 +94,17 @@ demo = dict(scale=1, background=0,
             rim_thickness=10.0,
             face_thickness=10.0,
             length=400.0,
-            core_sld=1.0,
-            face_sld=4.0,
-            rim_sld=4.0,
-            solvent_sld=1.0,
+            sld_core=1.0,
+            sld_face=4.0,
+            sld_rim=4.0,
+            sld_solvent=1.0,
             theta=90,
             phi=0)
 
 oldname = 'CoreShellBicelleModel'
 
-oldpars = dict(rim_thickness='rim_thick',
+oldpars = dict(sld_core='core_sld', sld_face='face_sld', sld_rim='rim_sld',
+               sld_solvent='solvent_sld', rim_thickness='rim_thick',
                face_thickness='face_thick',
                theta='axis_theta',
                phi='axis_phi')
@@ -114,10 +116,10 @@ tests = [
       'rim_thickness': 10.0,
       'face_thickness': 10.0,
       'length': 400.0,
-      'core_sld': 1.0,
-      'face_sld': 4.0,
-      'rim_sld': 4.0,
-      'solvent_sld': 1.0,
+      'sld_core': 1.0,
+      'sld_face': 4.0,
+      'sld_rim': 4.0,
+      'sld_solvent': 1.0,
       'background': 0.0,
      }, 0.001, 353.550],
 
@@ -125,10 +127,10 @@ tests = [
       'rim_thickness': 10.0,
       'face_thickness': 10.0,
       'length': 400.0,
-      'core_sld': 1.0,
-      'face_sld': 4.0,
-      'rim_sld': 4.0,
-      'solvent_sld': 1.0,
+      'sld_core': 1.0,
+      'sld_face': 4.0,
+      'sld_rim': 4.0,
+      'sld_solvent': 1.0,
       'theta': 90.0,
       'phi': 0.0,
       'background': 0.00,
@@ -139,9 +141,9 @@ tests = [
       'rim_thickness': 100.0,
       'face_thickness': 100.0,
       'length': 1200.0,
-      'core_sld': 5.0,
-      'face_sld': 41.0,
-      'rim_sld': 42.0,
-      'solvent_sld': 21.0,
+      'sld_core': 5.0,
+      'sld_face': 41.0,
+      'sld_rim': 42.0,
+      'sld_solvent': 21.0,
      }, 0.05, 1670.1828],
     ]
