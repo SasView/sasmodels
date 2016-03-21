@@ -62,16 +62,15 @@ void KERNEL_NAME(
     for (int k=0; k < NPARS; k++) {
       pvec[k] = pars[k+2];  // skip scale and background
     }
-    printf("calculating\n");
 
+    const double volume = CALL_VOLUME(local_pars);
     #ifdef USE_OPENMP
     #pragma omp parallel for
     #endif
     for (int i=0; i < nq; i++) {
       const double scattering = CALL_IQ(q, i, local_pars);
-      result[i] += pars[0]*scattering + pars[1];
+      result[i] = pars[0]*scattering/volume + pars[1];
     }
-    printf("returning\n");
     return;
   }
   printf("falling through\n");
