@@ -24,14 +24,15 @@ orientation of the *q* vector which is defined as
 .. note:: The outer most radius (= *radius* + *thickness*) is used as the
           effective radius for *S(Q)* when *P(Q)* \* *S(Q)* is applied.
 
-For information about polarised and magnetic scattering, click here_.
+For information about polarised and magnetic scattering, see 
+the :ref:`mag_help` documentation.
 
 Our model uses the form factor calculations implemented in a c-library provided
 by the NIST Center for Neutron Research (Kline, 2006).
 
 References
 ----------
-See the CoreShellModel_ documentation.
+See the :ref:`core_shell_sphere <core_shell_sphere>` model documentation.
 
 L A Feigin and D I Svergun,
 *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*,
