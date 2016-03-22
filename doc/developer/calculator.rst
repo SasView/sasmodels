@@ -6,7 +6,7 @@ The environment needs to provide the following #defines:
 - USE_OPENCL is defined if running in opencl
 - KERNEL declares a function to be available externally
 - KERNEL_NAME is the name of the function being declared
-- MAX_PD is the maximum depth of the polydispersity loop
+- MAX_PD is the maximum depth of the polydispersity loop [model specific]
 - NPARS is the number of parameters in the kernel
 - PARAMETER_TABLE is the declaration of the parameters to the kernel::
 
@@ -29,7 +29,7 @@ The environment needs to provide the following #defines:
         double sld[10]; \
         double sld_solvent
 
-- CALL_IQ(q, i, pars) is the declaration of a call to the kernel::
+- CALL_IQ(q, i, var) is the declaration of a call to the kernel::
 
     Cylinder:
 
@@ -71,7 +71,7 @@ The environment needs to provide the following #defines:
 
     BarBell:
 
-        #define INVALID(var) (var.bell_radius > var.radius)
+        #define INVALID(var) (var.bell_radius < var.radius)
 
     Model with complicated constraints:
 
@@ -89,32 +89,33 @@ Let's assume we have 6 parameters in the model, with two polydisperse::
 
     0: scale        {scl = constant}
     1: background   {bkg = constant}
-    5: length       {l = vector of 30pts}
-    4: radius       {r = vector of 10pts}
-    3: sld          {s = constant/(radius**2*length)}
-    2: sld_solvent  {s2 = constant}
+    2: length       {l = vector of 30pts}
+    3: radius       {r = vector of 10pts}
+    4: sld          {s = constant/(radius**2*length)}
+    5: sld_solvent  {s2 = constant}
 
 This generates the following call to the kernel (where x stands for an
 arbitrary value that is not used by the kernel evaluator)::
 
     NPARS = 4  // scale and background are in all models
     problem {
-        pd_par = {5, 4, x, x}         // parameters *radius* and *length* vary
+        pd_par = {3, 2, x, x}         // parameters *radius* and *length* vary
         pd_length = {30, 10, 0, 0}    // *length* has more, so it is first
         pd_offset = {10, 0, x, x}     // *length* starts at index 10 in weights
         pd_stride = {1, 30, 300, 300} // cumulative product of pd length
-        pd_isvol = {1, 1, x, x}       // true if weight is a volume weight
+        pd_isvol = {True, True, x, x}       // true if weight is a volume weight
         par_offset = {2, 3, 303, 313}  // parameter offsets
         par_coord = {0, 3, 2, 1} // bitmap of parameter dependencies
-        fast_coord_index = {5, 3, x, x}
+        fast_coord_index = {3, 5, x, x} // radius and sld have fast index
         fast_coord_count = 2  // two parameters vary with *length* distribution
         theta_var = -1   // no spherical correction
         fast_theta = 0   // spherical correction angle is not pd 1
     }
 
-    weight = { l0, .., l29, r0, .., r9}
+    weight = { l0, .., l29, r0, .., r9} //length comes first as the longest vec
     pars = { scl, bkg, l0, ..., l29, r0, r1, ..., r9,
              s[l0,r0], ... s[l0,r9], s[l1,r0], ... s[l29,r9] , s2}
+             //where s[x,y] stands for material sld, s2 = solvent sld
 
     nq = 130
     q = { q0, q1, ..., q130, x, x }  # pad to 8 element boundary
@@ -124,7 +125,7 @@ arbitrary value that is not used by the kernel evaluator)::
 The polydisperse parameters are stored in as an array of parameter
 indices, one for each polydisperse parameter, stored in pd_par[n].
 Non-polydisperse parameters do not appear in this array. Each polydisperse
-parameter has a weight vector whose length is stored in pd_length[n],
+parameter has a weight vector whose length is stored in pd_length[n].
 The weights are stored in a contiguous vector of weights for all
 parameters, with the starting position for the each parameter stored
 in pd_offset[n].  The values corresponding to the weights are stored
@@ -149,7 +150,7 @@ for each parameter containing the value for each parameter given the
 value of the polydisperse parameters v1, v2, etc.  The tables for each
 parameter are arranged contiguously in a vector, with offset[k] giving the
 starting location of parameter k in the vector.  Each parameter defines
-coord[k] as a bit mask indicating which polydispersity parameters the
+par_coord[k] as a bit mask indicating which polydispersity parameters the
 parameter depends upon. Usually this is zero, indicating that the parameter
 is independent, but for the cylinder example given, the bits for the
 radius and length polydispersity parameters would both be set, the result
@@ -206,7 +207,8 @@ Scale and background cannot be coordinated with other polydisperse parameters
 Oriented objects in 2-D need a spherical correction on the angular variation
 in order to preserve the 'surface area' of the weight distribution.
 
-TODO: cutoff
+cutoff parameter limits integration area within polydispersity hypercude,
+which speeds calculations
 
 For accuracy we may want to introduce Kahan summation into the integration::
 
