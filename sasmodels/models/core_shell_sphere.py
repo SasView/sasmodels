@@ -1,4 +1,6 @@
 r"""
+.. _core_shell_sphere:
+
 This model provides the form factor, $P(q)$, for a spherical particle with a core-shell structure.
 The form factor is normalized by the particle volume.
 
