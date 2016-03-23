@@ -110,15 +110,15 @@ description = """
 category = "shape:parallelepiped"
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["core_sld", "1e-6/Ang^2", 1, [-inf, inf], "",
+parameters = [["sld_core", "1e-6/Ang^2", 1, [-inf, inf], "",
                "Parallelepiped core scattering length density"],
-              ["arim_sld", "1e-6/Ang^2", 2, [-inf, inf], "",
+              ["sld_a", "1e-6/Ang^2", 2, [-inf, inf], "",
                "Parallelepiped A rim scattering length density"],
-              ["brim_sld", "1e-6/Ang^2", 4, [-inf, inf], "",
+              ["sld_b", "1e-6/Ang^2", 4, [-inf, inf], "",
                "Parallelepiped B rim scattering length density"],
-              ["crim_sld", "1e-6/Ang^2", 2, [-inf, inf], "",
+              ["sld_c", "1e-6/Ang^2", 2, [-inf, inf], "",
                "Parallelepiped C rim scattering length density"],
-              ["solvent_sld", "1e-6/Ang^2", 6, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 6, [-inf, inf], "",
                "Solvent scattering length density"],
               ["a_side", "Ang", 35, [0, inf], "volume",
                "Shorter side of the parallelepiped"],
@@ -140,7 +140,7 @@ parameters = [["core_sld", "1e-6/Ang^2", 1, [-inf, inf], "",
                "Rotation angle around its own c axis against q plane"],
              ]
 
-source = ["lib/J1.c", "lib/gauss76.c", "core_shell_parallelepiped.c"]
+source = ["lib/gauss76.c", "core_shell_parallelepiped.c"]
 
 
 def ER(a_side, b_side, c_side, arim_thickness, brim_thickness, crim_thickness):
@@ -160,8 +160,8 @@ def ER(a_side, b_side, c_side, arim_thickness, brim_thickness, crim_thickness):
 
 # parameters for demo
 demo = dict(scale=1, background=0.0,
-            core_sld=1e-6, arim_sld=2e-6, brim_sld=4e-6,
-            crim_sld=2e-6, solvent_sld=6e-6,
+            sld_core=1e-6, sld_a=2e-6, sld_b=4e-6,
+            sld_c=2e-6, sld_solvent=6e-6,
             a_side=35, b_side=75, c_side=400,
             arim_thickness=10, brim_thickness=10, crim_thickness=10,
             theta=0, phi=0, psi=0,
@@ -180,8 +180,8 @@ demo = dict(scale=1, background=0.0,
 # names and the target sasview model name.
 oldname = 'CSParallelepipedModel'
 oldpars = dict(theta='parallel_theta', phi='parallel_phi', psi='parallel_psi',
-               core_sld='sld_pcore', arim_sld='sld_rimA', brim_sld='sld_rimB',
-               crim_sld='sld_rimC', solvent_sld='sld_solv',
+               sld_core='sld_pcore', sld_a='sld_rimA', sld_b='sld_rimB',
+               sld_c='sld_rimC', sld_solvent='sld_solv',
                a_side='shortA', b_side='midB', c_side='longC',
                arim_thickness='rimA', brim_thickness='rimB', crim_thickness='rimC')
 

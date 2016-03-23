@@ -23,7 +23,7 @@ elliptical_crosssection(double q, double a, double b)
         double sn, cn;
         SINCOS(zi, sn, cn);
         double arg = q*sqrt(a*a*sn*sn+b*b*cn*cn);
-        double yyy = pow((double)J1c(arg),2);
+        double yyy = pow((double)sas_J1c(arg),2);
         yyy *= Gauss76Wt[i];
         summ += yyy;
     }

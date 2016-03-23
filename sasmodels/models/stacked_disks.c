@@ -51,8 +51,8 @@ double _kernel(double qq,
 	const double sinarg1 = qq*halfheight*cos(zi);
 	const double sinarg2 = qq*(halfheight+layer_thick)*cos(zi);
 
-    const double be1 = J1(besarg1)/besarg1;
-	const double be2 = J1(besarg2)/besarg2;
+    const double be1 = sas_J1c(besarg1);
+	const double be2 = sas_J1c(besarg2);
 	const double si1 = sin(sinarg1)/sinarg1;
 	const double si2 = sin(sinarg2)/sinarg2;
 
@@ -61,8 +61,8 @@ double _kernel(double qq,
 	const double area = M_PI*radius*radius;
 	const double totald=2.0*(layer_thick+halfheight);
 
-	const double t1 = 2.0*area*(2.0*halfheight)*dr1*(si1)*(be1);
-	const double t2 = 2.0*area*dr2*(totald*si2-2.0*halfheight*si1)*(be2);
+	const double t1 = area*(2.0*halfheight)*dr1*(si1)*(be1);
+	const double t2 = area*dr2*(totald*si2-2.0*halfheight*si1)*(be2);
 
 
 	double retval =((t1+t2)*(t1+t2))*sin(zi);

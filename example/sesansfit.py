@@ -46,26 +46,30 @@ def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[], a
         data.acceptance_angle = acceptance_angle
 
     data.has_no_finite_acceptance = acceptance_angle is not None
-    if "radius" in initial_vals:
-        radius = initial_vals.get("radius")
-    else:
-        radius = 1000
+    radius = initial_vals.get("radius", 1000)
     data.Rmax = 30*radius # [A]
 
     if isinstance(model, basestring):
         model = get_bumps_model(model)
 
     # Load custom parameters, initial values and parameter ranges
+    pars = model.parameters().copy()
+    pars.update(custom_params)
     for k, v in custom_params.items():
+        if k not in pars:
+            par_error("Can't set parameter %r in model"%k, pars)
         setattr(model, k, v)
         model._parameter_names.append(k)
     for k, v in initial_vals.items():
-        param = model.parameters().get(k)
-        setattr(param, "value", v)
+        if k not in pars:
+            par_error("Can't get parameter %r from model"%k, pars)
+        param = pars[k]
+        param.value = v
     for k, v in param_range.items():
-        param = model.parameters().get(k)
-        if param is not None:
-            setattr(param.bounds, "limits", v)
+        if k not in pars:
+            par_error("Can't set range on parameter %r in model"%k, pars)
+        param = pars[k]
+        param.range(*v)
 
     if False: # for future implementation
         M_sesans = bumps_model.Experiment(data=data, model=model)
@@ -75,3 +79,7 @@ def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[], a
         M_sesans = bumps_model.Experiment(data=data, model=model)
         problem = FitProblem(M_sesans)
     return problem
+
+
+def par_error(msg, pars):
+    raise ValueError(msg+"\nAvailable parameters: %s"%", ".join(sorted(pars.keys())))

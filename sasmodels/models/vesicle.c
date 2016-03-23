@@ -1,11 +1,11 @@
 double form_volume(double radius, double thickness);
 
 double Iq(double q, 
-          double sld, double solvent_sld,
+          double sld, double sld_solvent, double volfraction,
           double radius, double thickness);
 
 double Iqxy(double qx, double qy,
-          double sld, double solvent_sld,
+          double sld, double sld_solvent, double volfraction,
           double radius, double thickness);
 
 double form_volume(double radius, double thickness)
@@ -19,7 +19,8 @@ double form_volume(double radius, double thickness)
 
 double Iq(double q,
     double sld,
-    double solvent_sld,
+    double sld_solvent,
+    double volfraction,
     double radius,
     double thickness)
 
@@ -29,44 +30,34 @@ double Iq(double q,
    a vesicle
 */
 
-/*
-   note that the sph_j1c we are using has been optimized for precision over
-   SasView's original implementation. HOWEVER at q==0 that implementation
-   set bes=1.0 rather than 0.0 (correct value) on the grounds I believe that 
-   bes=0.00 causes Iq to have a divide by 0 error (mostly encountered when
-   doing a theory curve in 2D?  We should verify this and if necessary fix
-     -PDB Feb 7, 2016 
-*/
 {
-    double bes,vol,contrast,f,f2;
+    double vol,contrast,f,f2;
 
     // core first, then add in shell
-    contrast = solvent_sld-sld;
-    bes = sph_j1c(q*radius);
+    contrast = sld_solvent-sld;
     vol = 4.0*M_PI/3.0*radius*radius*radius;
-    f = vol*bes*contrast;
+    f = vol*sph_j1c(q*radius)*contrast;
  
-    //now the shell
-    contrast = sld-solvent_sld;
-    bes = sph_j1c(q*(radius+thickness));
+    //now the shell. No volume normalization as this is done by the caller
+    contrast = sld-sld_solvent;
     vol = 4.0*M_PI/3.0*(radius+thickness)*(radius+thickness)*(radius+thickness);
-    f += vol*bes*contrast;
+    f += vol*sph_j1c(q*(radius+thickness))*contrast;
 
-    //rescale to [cm-1]. No volume normalization as this is done by the caller
-    f2 = f*f*1.0e-4;
+    //rescale to [cm-1]. 
+    f2 = volfraction*f*f*1.0e-4;
     
     return(f2);
 }
 
 
 double Iqxy(double qx, double qy,
-          double sld, double solvent_sld,
+          double sld, double sld_solvent, double volfraction,
           double radius, double thickness)
           
 {
     double q = sqrt(qx*qx + qy*qy);
     return Iq(q,
-        sld, solvent_sld,
+        sld, sld_solvent, volfraction,
         radius,thickness);
 
 }

@@ -56,8 +56,8 @@ parameters = [
     ["radius",      "Ang",       80.0, [0, inf],     "", "Radius of the pearls"],
     ["edge_sep",    "Ang",      350.0, [0, inf],     "", "Length of the string segment - surface to surface"],
     ["num_pearls",  "",           3.0, [0, inf],     "", "Number of the pearls"],
-    ["pearl_sld",   "1e-6/Ang^2", 1.0, [-inf, inf],  "", "SLD of the pearl spheres"],
-    ["solvent_sld", "1e-6/Ang^2", 6.3, [-inf, inf],  "", "SLD of the solvent"],
+    ["sld",   "1e-6/Ang^2", 1.0, [-inf, inf],  "", "SLD of the pearl spheres"],
+    ["sld_solvent", "1e-6/Ang^2", 6.3, [-inf, inf],  "", "SLD of the solvent"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
@@ -67,14 +67,14 @@ demo = dict(scale=1.0, background=0.0,
             radius=80.0,
             edge_sep=350.0,
             num_pearls=3,
-            pearl_sld=1.0,
-            solvent_sld=6.3)
+            sld=1.0,
+            sld_solvent=6.3)
 
 oldname = "LinearPearlsModel"
 
 oldpars = dict(edge_sep='edge_separation',
-               pearl_sld='sld_pearl',
-               solvent_sld='sld_solv')
+               sld='sld_pearl',
+               sld_solvent='sld_solv')
 
 """
 Tests temporarily disabled, until single-double precision accuracy issue solved.
@@ -83,23 +83,23 @@ tests = [
     # Accuracy tests based on content in test/utest_model_pearlnecklace.py
     [{'radius':      20.0,
       'num_pearls':   2.0,
-      'pearl_sld':    1.0,
-      'solvent_sld':  6.3,
+      'sld':    1.0,
+      'sld_solvent':  6.3,
       'edge_sep':   400.0,
      }, 0.001, 185.135],
 
     # Additional tests with larger range of parameters
     [{'radius':     120.0,
       'num_pearls':   5.0,
-      'pearl_sld':    2.0,
-      'solvent_sld':  2.3,
+      'sld':    2.0,
+      'sld_solvent':  2.3,
       'edge_sep':   100.0,
      }, 0.01, 45.4984],
 
     [{'radius':       7.0,
       'num_pearls':   2.0,
-      'pearl_sld':   10.0,
-      'solvent_sld': 99.3,
+      'sld':   10.0,
+      'sld_solvent': 99.3,
       'edge_sep':    20.0,
      }, 1.0, 0.632811],
     ]

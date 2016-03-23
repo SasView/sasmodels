@@ -34,7 +34,7 @@ The scattering intensity $I(q)$ is calculated as
     V = \frac{4}{3}\pi R^3
 
 where $R$ is the radius of the building block, $D_S$ is the **surface** fractal
-dimension,$\zeta$ is the cut-off length, $\rho_{solvent}$ is the scattering
+dimension,| \zeta\|  is the cut-off length, $\rho_{solvent}$ is the scattering
 length density of the solvent,
 and $\rho_{particle}$ is the scattering length density of particles.
 
@@ -44,8 +44,8 @@ and $\rho_{particle}$ is the scattering length density of particles.
     details)
 
 
-Reference
----------
+References
+----------
 
 D Mildner and P Hall, *J. Phys. D: Appl. Phys.*, 19 (1986) 1535-1545
 
@@ -86,7 +86,7 @@ parameters = [["radius",        "Ang", 10.0, [0, inf],   "",
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sph_j1c.c", "lib/lanczos_gamma.c", "surface_fractal.c"]
+source = ["lib/sph_j1c.c", "lib/sas_gamma.c", "surface_fractal.c"]
 
 demo = dict(scale=1, background=0,
             radius=10, surface_dim=2.0, cutoff_length=500)

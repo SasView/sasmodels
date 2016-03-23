@@ -5,9 +5,9 @@
 
 
 r"""
-This model strictly describes the scattering from *monodisperse* polymer chains in theta solvents or polymer melts, conditions under which the distances between segments follow a Gaussian distribution. Provided the number of segments is large (ie, high molecular weight polymers) the single-chain form factor P(Q) is that described by Debye (1947).
+This Debye Gaussian coil model strictly describes the scattering from *monodisperse* polymer chains in theta solvents or polymer melts, conditions under which the distances between segments follow a Gaussian distribution. Provided the number of segments is large (ie, high molecular weight polymers) the single-chain form factor P(Q) is that described by Debye (1947).
 
-To describe the scattering from *polydisperse* polymer chains, see the To describe the scattering from *monodisperse* polymer chains, see the :ref:`poly_gauss_coil <poly-gauss-coil>` model.
+To describe the scattering from *polydisperse* polymer chains see the :ref:`poly_gauss_coil <poly-gauss-coil>` model.
 
 Definition
 ----------

@@ -162,8 +162,8 @@ class ProductKernel(object):
         s_fixed[2] = s_volfraction/vol_ratio
         s_pd[0] = [effect_radius], [1.0]
 
-        p_res = self.p_kernel(p_fixed, p_pd)
-        s_res = self.s_kernel(s_fixed, s_pd)
+        p_res = self.p_kernel(p_fixed, p_pd, cutoff)
+        s_res = self.s_kernel(s_fixed, s_pd, cutoff)
         #print s_fixed, s_pd, p_fixed, p_pd
 
         return p_res*s_res + background

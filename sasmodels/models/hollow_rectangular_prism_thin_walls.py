@@ -76,10 +76,10 @@ R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
 
 from numpy import pi, inf, sqrt
 
-name = "hollow_rectangular_prism_infinitely_thin_walls"
-title = "Hollow rectangular parallelepiped with infinitely thin walls."
+name = "hollow_rectangular_prism_thin_walls"
+title = "Hollow rectangular parallelepiped with thin walls."
 description = """
-    I(q)= scale*V*(sld - solvent_sld)^2*P(q)+background
+    I(q)= scale*V*(sld - sld_solvent)^2*P(q)+background
         with P(q) being the form factor corresponding to a hollow rectangular
         parallelepiped with infinitely thin walls.
 """
@@ -88,7 +88,7 @@ category = "shape:parallelepiped"
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "",
                "Parallelepiped scattering length density"],
-              ["solvent_sld", "1e-6/Ang^2", 1, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "",
                "Solvent scattering length density"],
               ["a_side", "Ang", 35, [0, inf], "volume",
                "Shorter side of the parallelepiped"],
@@ -98,7 +98,7 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "",
                "Ratio sides c/a"],
              ]
 
-source = ["lib/J1.c", "lib/gauss76.c", "hollow_rectangular_prism_infinitely_thin_walls.c"]
+source = ["lib/gauss76.c", "hollow_rectangular_prism_thin_walls.c"]
 
 def ER(a_side, b2a_ratio, c2a_ratio):
     """
@@ -126,7 +126,7 @@ def VR(a_side, b2a_ratio, c2a_ratio):
 
 # parameters for demo
 demo = dict(scale=1, background=0,
-            sld=6.3e-6, solvent_sld=1.0e-6,
+            sld=6.3e-6, sld_solvent=1.0e-6,
             a_side=35, b2a_ratio=1, c2a_ratio=1,
             a_side_pd=0.1, a_side_pd_n=10,
             b2a_ratio_pd=0.1, b2a_ratio_pd_n=1,
@@ -136,7 +136,7 @@ demo = dict(scale=1, background=0,
 # names and the target sasview model name.
 oldname = 'RectangularHollowPrismInfThinWallsModel'
 oldpars = dict(a_side='short_side', b2a_ratio='b2a_ratio', c_side='c2a_ratio',
-               sld='sldPipe', solvent_sld='sldSolv')
+               sld='sldPipe', sld_solvent='sldSolv')
 
 tests = [[{}, 0.2, 0.837719188592],
          [{}, [0.2], [0.837719188592]],

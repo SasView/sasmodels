@@ -34,19 +34,19 @@ The scattering intensity $I(q)$ is calculated as
     V = \frac{4}{3}\pi R^3
 
 where $R$ is the radius of the building block, $D_m$ is the **mass** fractal
-dimension,$\zeta$ is the cut-off length, $\rho_{solvent}$ is the scattering
+dimension, | \zeta\|  is the cut-off length, $\rho_{solvent}$ is the scattering
 length density of the solvent,
 and $\rho_{particle}$ is the scattering length density of particles.
 
 .. note::
 
     The mass fractal dimension ( $D_m$ ) is only
-    valid if $0 < mass_dim < 6$. It is also only valid over a limited
+    valid if $0 < mass\_dim < 6$. It is also only valid over a limited
     $q$ range (see the reference for details).
 
 
-Reference
----------
+References
+----------
 
 D Mildner and P Hall, *J. Phys. D: Appl. Phys.*,
 19 (1986) 1535-1545 Equation(9)
@@ -84,7 +84,7 @@ parameters = [["radius",        "Ang",  10.0, [0.0, inf], "", "Particle radius"]
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sph_j1c.c", "lib/lanczos_gamma.c", "mass_fractal.c"]
+source = ["lib/sph_j1c.c", "lib/sas_gamma.c", "mass_fractal.c"]
 
 demo = dict(scale=1, background=0,
             radius=10.0,

@@ -13,9 +13,7 @@ The well width (|lambda| ) is defined as multiples of the particle diameter (2\*
 
 The interaction potential is:
 
-.. comment::
-
-  .. image:: img/image225.PNG
+  .. image:: img\squarewell.png
 
 .. math::
 
@@ -36,10 +34,10 @@ For 2D data: The 2D scattering intensity is calculated in the same way as 1D, wh
 
     q = \sqrt{q_x^2 + q_y^2}
 
+References
+----------
 
-REFERENCE
-
-R V Sharma, K C Sharma, *Physica*, 89A (1977) 213
+R V Sharma, K C Sharma, *Physica*, 89A (1977) 213.
 
 """
 from numpy import inf

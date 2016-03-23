@@ -1,7 +1,4 @@
 r"""
-This model calculates an empirical functional form for SAS data characterized
-by two Lorentzian-type functions.
-
 Definition
 ----------
 
@@ -29,13 +26,19 @@ References
 
 None.
 
+**Author:** NIST IGOR/DANSE **on:** pre 2010
+
+**Last Modified by:** Piotr rozyczko **on:** January 29, 2016
+
+**Last Reviewed by:** Paul Butler **on:** March 21, 2016
 """
 
 from math import sqrt
 from numpy import inf, power
 
 name = "two_lorentzian"
-title = "Two Lorentzian type peak"
+title = "This model calculates an empirical functional form for SAS data \
+characterized by two Lorentzian-type functions."
 description = """I(q) = scale_1/(1.0 + pow((q*length_1),exponent_1))
              + scale_2/(1.0 + pow((q*length_2),exponent_2) )+ background
 

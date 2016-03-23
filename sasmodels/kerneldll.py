@@ -124,7 +124,7 @@ def make_dll(source, model_info, dtype="double"):
     """
     if callable(model_info.get('Iq', None)):
         return PyModel(model_info)
-
+    
     dtype = np.dtype(dtype)
     if dtype == generate.F16:
         raise ValueError("16 bit floats not supported")
@@ -137,7 +137,7 @@ def make_dll(source, model_info, dtype="double"):
         tempfile_prefix = 'sas_' + model_info['name'] + '64_'
     else:
         tempfile_prefix = 'sas_' + model_info['name'] + '128_'
-
+ 
     source = generate.convert_type(source, dtype)
     newest = generate.timestamp(model_info)
     dll = dll_path(model_info, dtype)
@@ -182,6 +182,7 @@ class DllModel(object):
 
     Call :meth:`release` when done with the kernel.
     """
+    
     def __init__(self, dllpath, model_info, dtype=generate.F32):
         self.info = model_info
         self.dllpath = dllpath
@@ -219,12 +220,22 @@ class DllModel(object):
         if self.dll is None: self._load_dll()
         kernel = self.Iqxy if q_input.is_2d else self.Iq
         return DllKernel(kernel, self.info, q_input)
-
+    
     def release(self):
         """
         Release any resources associated with the model.
         """
-        pass # TODO: should release the dll
+        if os.name == 'nt':
+            #dll = ct.cdll.LoadLibrary(self.dllpath)
+            dll = ct.CDLL(self.dllpath)
+            libHandle = dll._handle
+            #libHandle = ct.c_void_p(dll._handle)
+            del dll, self.dll
+            self.dll = None
+            #_ctypes.FreeLibrary(libHandle)
+            ct.windll.kernel32.FreeLibrary(libHandle)
+        else:    
+            pass 
 
 
 class DllKernel(object):

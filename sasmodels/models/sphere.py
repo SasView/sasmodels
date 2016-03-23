@@ -16,7 +16,7 @@ The 1D scattering intensity is calculated in the following way (Guinier, 1955)
 
 where *scale* is a volume fraction, $V$ is the volume of the scatterer,
 $r$ is the radius of the sphere, *background* is the background level and
-*sld* and *solvent_sld* are the scattering length densities (SLDs) of the
+*sld* and *sld_solvent* are the scattering length densities (SLDs) of the
 scatterer and the solvent respectively.
 
 Note that if your data is in absolute scale, the *scale* should represent
@@ -48,19 +48,19 @@ from numpy import inf
 name = "sphere"
 title = "Spheres with uniform scattering length density"
 description = """\
-P(q)=(scale/V)*[3V(sld-solvent_sld)*(sin(qr)-qr cos(qr))
+P(q)=(scale/V)*[3V(sld-sld_solvent)*(sin(qr)-qr cos(qr))
                 /(qr)^3]^2 + background
     r: radius of sphere
     V: The volume of the scatter
     sld: the SLD of the sphere
-    solvent_sld: the SLD of the solvent
+    sld_solvent: the SLD of the solvent
 """
 category = "shape:sphere"
 
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "",
                "Layer scattering length density"],
-              ["solvent_sld", "1e-6/Ang^2", 6, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 6, [-inf, inf], "",
                "Solvent scattering length density"],
               ["radius", "Ang", 50, [0, inf], "volume",
                "Sphere radius"],
@@ -75,13 +75,13 @@ form_volume = """
     """
 
 Iq = """
-    return sphere_form(q, radius, sld, solvent_sld);
+    return sphere_form(q, radius, sld, sld_solvent);
     """
 
 Iqxy = """
     // never called since no orientation or magnetic parameters.
     //return -1.0;
-    return Iq(sqrt(qx*qx + qy*qy), sld, solvent_sld, radius);
+    return Iq(sqrt(qx*qx + qy*qy), sld, sld_solvent, radius);
     """
 
 def ER(radius):
@@ -93,8 +93,8 @@ def ER(radius):
 # VR defaults to 1.0
 
 demo = dict(scale=1, background=0,
-            sld=6, solvent_sld=1,
+            sld=6, sld_solvent=1,
             radius=120,
             radius_pd=.2, radius_pd_n=45)
 oldname = "SphereModel"
-oldpars = dict(sld='sldSph', solvent_sld='sldSolv', radius='radius')
+oldpars = dict(sld='sldSph', sld_solvent='sldSolv', radius='radius')

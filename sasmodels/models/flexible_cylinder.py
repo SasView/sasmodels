@@ -29,9 +29,9 @@ length (the length along the cylinder over which the flexible cylinder can be
 considered a rigid rod).
 The Kuhn length $(b = 2*l_p)$ is also used to describe the stiffness of a chain.
 
-The returned value is in units of $cm^-1$, on absolute scale.
+The returned value is in units of $cm^{-1}$, on absolute scale.
 
-In the parameters, the sldCyl and sldSolv represent the SLD of the chain/cylinder
+In the parameters, the sld and sld\_solvent represent the SLD of the cylinder
 and solvent respectively.
 
 Our model uses the form factor calculations implemented in a c-library provided
@@ -64,14 +64,14 @@ from numpy import inf
 name = "flexible_cylinder"
 title = "Flexible cylinder where the form factor is normalized by the volume" \
         "of the cylinder."
-description = """Note : scale and contrast=sld-solvent_sld are both
+description = """Note : scale and contrast = (sld - sld_solvent) are both
                 multiplicative factors in the model and are perfectly
                 correlated. One or both of these parameters must be held fixed
                 during model fitting.
               """
 
 category = "shape:cylinder"
-single = False
+single = False  # double precision only!
 
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type", "description"],
@@ -80,20 +80,20 @@ parameters = [
     ["kuhn_length", "Ang",        100.0, [0, inf],    "volume", "Kuhn length of the flexible cylinder"],
     ["radius",      "Ang",         20.0, [0, inf],    "volume", "Radius of the flexible cylinder"],
     ["sld",         "1e-6/Ang^2",   1.0, [-inf, inf], "",       "Cylinder scattering length density"],
-    ["solvent_sld", "1e-6/Ang^2",   6.3, [-inf, inf], "",       "Solvent scattering length density"],
+    ["sld_solvent", "1e-6/Ang^2",   6.3, [-inf, inf], "",       "Solvent scattering length density"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
-source = ["lib/J1.c", "lib/J1c.c", "lib/wrc_cyl.c", "flexible_cylinder.c"]
+source = ["lib/polevl.c", "lib/sas_J1.c", "lib/wrc_cyl.c", "flexible_cylinder.c"]
 
 demo = dict(scale=1.0, background=0.0001,
             length=1000.0,
             kuhn_length=100.0,
             radius=20.0,
             sld=1.0,
-            solvent_sld=6.3)
+            sld_solvent=6.3)
 
 oldname = 'FlexibleCylinderModel'
-oldpars = dict(sld='sldCyl', solvent_sld='sldSolv')
+oldpars = dict(sld='sldCyl', sld_solvent='sldSolv')
 
 
 tests = [
@@ -103,7 +103,7 @@ tests = [
     #  'kuhn_length': 100.0,
     #  'radius':       20.0,
     #  'sld':           1.0,
-    #  'solvent_sld':   6.3,
+    #  'sld_solvent':   6.3,
     #  'background':    0.0001,
     #  }, 0.001, 3509.2187],
 
@@ -112,21 +112,21 @@ tests = [
       'kuhn_length': 100.0,
       'radius':       20.0,
       'sld':           1.0,
-      'solvent_sld':   6.3,
+      'sld_solvent':   6.3,
       'background':    0.0001,
      }, 1.0, 0.000595345],
     [{'length':        10.0,
       'kuhn_length': 800.0,
       'radius':        2.0,
       'sld':           6.0,
-      'solvent_sld':  12.3,
+      'sld_solvent':  12.3,
       'background':    0.001,
      }, 0.1, 1.55228],
     [{'length':        100.0,
       'kuhn_length': 800.0,
       'radius':       50.0,
       'sld':           0.1,
-      'solvent_sld':   5.1,
+      'sld_solvent':   5.1,
       'background':    0.0,
      }, 1.0, 0.000938456]
     ]

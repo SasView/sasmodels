@@ -29,7 +29,7 @@ double Iq(double q,
         const double alpha = Gauss76Z[i]*zm + zb;
         double sn, cn;
         SINCOS(alpha, sn, cn);
-        const double fq = sinc(qh*cn) * J1c(qr*sn);
+        const double fq = sinc(qh*cn) * sas_J1c(qr*sn);
         total += Gauss76Wt[i] * fq*fq * sn;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
@@ -56,7 +56,7 @@ double Iqxy(double qx, double qy,
     const double alpha = acos(cos_val);
 
     SINCOS(alpha, sn, cn);
-    const double fq = sinc(q*0.5*length*cn) * J1c(q*radius*sn);
+    const double fq = sinc(q*0.5*length*cn) * sas_J1c(q*radius*sn);
     const double s = (sld-solvent_sld) * form_volume(radius, length);
     return 1.0e-4 * square(s * fq);
 }

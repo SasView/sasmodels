@@ -6,7 +6,7 @@ The form factor is normalized by the particle volume.
 Definition
 ----------
 
-| This model calculates the scattering from a rectangular parallelepiped (:num:`Figure #parallelepiped-image`).
+| This model calculates the scattering from a rectangular parallelepiped (:numref:`parallelepiped-image`).
 | If you need to apply polydispersity, see also :ref:`rectangular-prism`.
 
 .. _parallelepiped-image:
@@ -150,7 +150,9 @@ provided by the NIST Center for Neutron Research (Kline, 2006).
 References
 ----------
 
-None.
+P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
+
+R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
 """
 
 import numpy as np
@@ -159,7 +161,7 @@ from numpy import pi, inf, sqrt
 name = "parallelepiped"
 title = "Rectangular parallelepiped with uniform scattering length density."
 description = """
-    I(q)= scale*V*(sld - solvent_sld)^2*P(q,alpha)+background
+    I(q)= scale*V*(sld - sld_solvent)^2*P(q,alpha)+background
         P(q,alpha) = integral from 0 to 1 of ...
            phi(mu*sqrt(1-sigma^2),a) * S(mu*c*sigma/2)^2 * dsigma
         with
@@ -176,7 +178,7 @@ category = "shape:parallelepiped"
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "",
                "Parallelepiped scattering length density"],
-              ["solvent_sld", "1e-6/Ang^2", 1, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "",
                "Solvent scattering length density"],
               ["a_side", "Ang", 35, [0, inf], "volume",
                "Shorter side of the parallelepiped"],
@@ -192,7 +194,7 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "",
                "Rotation angle around its own c axis against q plane"],
              ]
 
-source = ["lib/J1.c", "lib/gauss76.c", "parallelepiped.c"]
+source = ["lib/gauss76.c", "parallelepiped.c"]
 
 def ER(a_side, b_side, c_side):
     """
@@ -209,7 +211,7 @@ def ER(a_side, b_side, c_side):
 
 # parameters for demo
 demo = dict(scale=1, background=0,
-            sld=6.3e-6, solvent_sld=1.0e-6,
+            sld=6.3e-6, sld_solvent=1.0e-6,
             a_side=35, b_side=75, c_side=400,
             theta=45, phi=30, psi=15,
             a_side_pd=0.1, a_side_pd_n=10,
@@ -224,7 +226,7 @@ demo = dict(scale=1, background=0,
 oldname = 'ParallelepipedModel'
 oldpars = dict(theta='parallel_theta', phi='parallel_phi', psi='parallel_psi',
                a_side='short_a', b_side='short_b', c_side='long_c',
-               sld='sldPipe', solvent_sld='sldSolv')
+               sld='sldPipe', sld_solvent='sldSolv')
 
 
 qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)

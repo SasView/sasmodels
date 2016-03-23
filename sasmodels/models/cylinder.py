@@ -30,7 +30,7 @@ first order Bessel function.
 
 To provide easy access to the orientation of the cylinder, we define the
 axis of the cylinder using two angles $\theta$ and $\phi$. Those angles
-are defined in :num:`figure #cylinder-angle-definition`.
+are defined in :numref:`cylinder-angle-definition`.
 
 .. _cylinder-angle-definition:
 
@@ -118,7 +118,7 @@ parameters = [["sld", "4e-6/Ang^2", 4, [-inf, inf], "",
                "Out of plane angle"],
              ]
 
-source = ["lib/J1c.c", "lib/gauss76.c", "cylinder.c"]
+source = ["lib/polevl.c","lib/sas_J1.c", "lib/gauss76.c", "cylinder.c"]
 
 def ER(radius, length):
     """

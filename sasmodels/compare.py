@@ -68,6 +68,7 @@ Options (* for default):
     -res=0 sets the resolution width dQ/Q if calculating with resolution
     -accuracy=Low accuracy of the resolution calculation Low, Mid, High, Xhigh
     -edit starts the parameter explorer
+    -default/-demo* use demo vs default parameters
 
 Any two calculation engines can be selected for comparison:
 
@@ -363,7 +364,7 @@ def eval_sasview(model_info, data):
     if model_info['composition']:
         composition_type, parts = model_info['composition']
         if composition_type == 'product':
-            from sas.models.MultiplicationModel import MultiplicationModel
+            from sas.sascalc.fit.MultiplicationModel import MultiplicationModel
             P, S = [get_model(p) for p in model_info['oldname']]
             model = MultiplicationModel(P, S)
         else:
@@ -630,6 +631,7 @@ NAME_OPTIONS = set([
     'linear', 'log', 'q4',
     'hist', 'nohist',
     'edit',
+    'demo', 'default',
     ])
 VALUE_OPTIONS = [
     # Note: random is both a name option and a value option
@@ -653,7 +655,7 @@ def columnize(L, indent="", width=79):
     return output
 
 
-def get_demo_pars(model_info):
+def get_pars(model_info, use_demo=False):
     """
     Extract demo parameters from the model definition.
     """
@@ -669,7 +671,8 @@ def get_demo_pars(model_info):
             pars[p.name+'_pd_type'] = "gaussian"
 
     # Plug in values given in demo
-    pars.update(model_info['demo'])
+    if use_demo:
+        pars.update(model_info['demo'])
     return pars
 
 
@@ -726,6 +729,7 @@ def parse_opts():
         'show_hist' : False,
         'rel_err'   : True,
         'explore'   : False,
+        'use_demo'  : True,
     }
     engines = []
     for arg in flags:
@@ -764,6 +768,8 @@ def parse_opts():
         elif arg == '-quad!':   engines.append(arg[1:])
         elif arg == '-sasview': engines.append(arg[1:])
         elif arg == '-edit':    opts['explore'] = True
+        elif arg == '-demo':    opts['use_demo'] = True
+        elif arg == '-default':    opts['use_demo'] = False
     # pylint: enable=bad-whitespace
 
     if len(engines) == 0:
@@ -781,7 +787,8 @@ def parse_opts():
 
     # Get demo parameters from model definition, or use default parameters
     # if model does not define demo parameters
-    pars = get_demo_pars(model_info)
+    pars = get_pars(model_info, opts['use_demo'])
+
 
     # Fill in parameters given on the command line
     presets = {}

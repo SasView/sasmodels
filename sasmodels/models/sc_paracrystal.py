@@ -96,7 +96,7 @@ Hideki Matsuoka et. al. *Physical Review B,* 41 (1990) 3854 -3856
 
 from numpy import inf
 
-name = "sc_crystal"
+name = "sc_paracrystal"
 title = "Simple cubic lattice with paracrystalline distortion"
 description = """
         P(q)=(scale/Vp)*V_lattice*P(q)*Z(q)+bkg where scale is the volume
@@ -124,30 +124,30 @@ single = False
 parameters = [["dnn",         "Ang",       220.0,  [0.0, inf],  "",            "Nearest neighbor distance"],
               ["d_factor",    "",            0.06, [-inf, inf], "",            "Paracrystal distortion factor"],
               ["radius",      "Ang",        40.0,  [0.0, inf],  "volume",      "Radius of sphere"],
-              ["sphere_sld",  "1e-6/Ang^2",  3.0,  [0.0, inf],  "",            "Sphere scattering length density"],
-              ["solvent_sld", "1e-6/Ang^2",  6.3,  [0.0, inf],  "",            "Solvent scattering length density"],
+              ["sld",  "1e-6/Ang^2",  3.0,  [0.0, inf],  "",            "Sphere scattering length density"],
+              ["sld_solvent", "1e-6/Ang^2",  6.3,  [0.0, inf],  "",            "Solvent scattering length density"],
               ["theta",       "degrees",     0.0,  [-inf, inf], "orientation", "Orientation of the a1 axis w/respect incoming beam"],
               ["phi",         "degrees",     0.0,  [-inf, inf], "orientation", "Orientation of the a2 in the plane of the detector"],
               ["psi",         "degrees",     0.0,  [-inf, inf], "orientation", "Orientation of the a3 in the plane of the detector"],
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sph_j1c.c", "lib/sphere_form.c", "lib/gauss150.c", "sc_crystal.c"]
+source = ["lib/sph_j1c.c", "lib/sphere_form.c", "lib/gauss150.c", "sc_paracrystal_kernel.c"]
 
 demo = dict(scale=1, background=0,
             dnn=220.0,
             d_factor=0.06,
             radius=40.0,
-            sphere_sld=3.0,
-            solvent_sld=6.3,
+            sld=3.0,
+            sld_solvent=6.3,
             theta=0.0,
             phi=0.0,
             psi=0.0)
 
 oldname = 'SCCrystalModel'
 
-oldpars = dict(sphere_sld='sldSph',
-               solvent_sld='sldSolv')
+oldpars = dict(sld='sldSph',
+               sld_solvent='sldSolv')
 
 tests = [
     # Accuracy tests based on content in test/utest_extra_models.py

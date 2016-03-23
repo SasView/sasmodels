@@ -67,7 +67,7 @@ The asymptotic limit is dominated by the first term
     \frac{m}{\left(QR_{g}\right)^m}\left[\frac{6}{(2\nu +1)(2\nu +2)} \right]^{m/2}
     \Gamma (m/2)
 
-The special case when $\nu=0.5$ (or $m=2/\nu=2$ ) corresponds to Gaussian chains for
+The special case when $\nu=0.5$ (or $m=1/\nu=2$ ) corresponds to Gaussian chains for
 which the form factor is given by the familiar Debye function.
 
 .. math::

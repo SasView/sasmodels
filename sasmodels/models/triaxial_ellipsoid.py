@@ -35,7 +35,7 @@ where
 To provide easy access to the orientation of the triaxial ellipsoid,
 we define the axis of the cylinder using the angles $\theta$, $\phi$
 and $\psi$. These angles are defined on
-:num:`figure #triaxial-ellipsoid-angles`.
+:numref:`triaxial-ellipsoid-angles`.
 The angle $\psi$ is the rotational angle around its own $c$ axis
 against the $q$ plane. For example, $\psi = 0$ when the
 $a$ axis is parallel to the $x$ axis of the detector.
@@ -90,7 +90,7 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "",
               ["solvent_sld", "1e-6/Ang^2", 1, [-inf, inf], "",
                "Solvent scattering length density"],
               ["req_minor", "Ang", 20, [0, inf], "volume",
-               "Minor equitorial radius"],
+               "Minor equatorial radius"],
               ["req_major", "Ang", 400, [0, inf], "volume",
                "Major equatorial radius"],
               ["rpolar", "Ang", 10, [0, inf], "volume",
@@ -103,7 +103,7 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "",
                "Out of plane angle"],
              ]
 
-source = ["lib/J1.c", "lib/sph_j1c.c", "lib/gauss76.c", "triaxial_ellipsoid.c"]
+source = ["lib/sph_j1c.c", "lib/gauss76.c", "triaxial_ellipsoid.c"]
 
 def ER(req_minor, req_major, rpolar):
     """

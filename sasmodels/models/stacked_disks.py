@@ -64,11 +64,13 @@ where *d* = thickness of the layer (layer_thick),
     exp\left[ -k(q\cos{\alpha})^2\sigma_D/2\right]
 
 where *n* = the total number of the disc stacked (n_stacking),
-*D* = the next neighbor center-to-center distance (d-spacing),
+*D* = 2*(*d*+*h*)the next neighbor center-to-center distance (d-spacing),
 and $\sigma_D$ = the Gaussian standard deviation of the d-spacing (sigma_d).
 
 .. note::
-    The 2nd virial coefficient of the cylinder is calculated based on the
+    Each assmebly in the stack is layer/core/layer, so the spacing of the cores
+    is core plus two layers. The 2nd virial coefficient of the cylinder is 
+    calculated based on the 
     *radius* and *length* = *n_stacking* * (*core_thick* + 2 * *layer_thick*)
     values, and used as the effective radius for $S(Q)$ when $P(Q) * S(Q)$
     is applied.
@@ -88,8 +90,8 @@ the axis of the cylinder using two angles $\theta$ and $\varphi$.
 Our model uses the form factor calculations implemented in a c-library provided
 by the NIST Center for Neutron Research (Kline, 2006)
 
-Reference
----------
+References
+----------
 
 A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*, John Wiley and Sons, New York, 1955
 
@@ -108,11 +110,11 @@ description = """\
     radius =  the radius of the disk
     core_thick = thickness of the core
     layer_thick = thickness of a layer
-    core_sld = the SLD of the core
-    layer_sld = the SLD of the layers
+    sld_core = the SLD of the core
+    sld_layer = the SLD of the layers
     n_stacking = the number of the disks
     sigma_d =  Gaussian STD of d-spacing
-    solvent_sld = the SLD of the solvent
+    sld_solvent = the SLD of the solvent
     """
 category = "shape:cylinder"
 
@@ -120,19 +122,19 @@ category = "shape:cylinder"
 #   ["name", "units", default, [lower, upper], "type","description"],
 parameters = [
     ["core_thick",  "Ang",        10.0, [0, inf],    "volume",      "Thickness of the core disk"],
-    ["layer_thick", "Ang",        10.0, [0, inf],    "volume",      "Thickness of the stacked disk"],
+    ["layer_thick", "Ang",        10.0, [0, inf],    "volume",      "Thickness of layer each side of core"],
     ["radius",      "Ang",        15.0, [0, inf],    "volume",      "Radius of the stacked disk"],
-    ["n_stacking",  "",            1.0, [0, inf],    "volume",      "Number of stacking"],
+    ["n_stacking",  "",            1.0, [0, inf],    "volume",      "Number of stacked layer/core/layer disks"],
     ["sigma_d",     "Ang",         0,   [0, inf],    "",            "GSD of disks sigma_d"],
-    ["core_sld",    "1e-6/Ang^2",  4,   [-inf, inf], "",            "Core scattering length density"],
-    ["layer_sld",   "1e-6/Ang^2",  0.0, [-inf, inf], "",            "Layer scattering length density"],
-    ["solvent_sld", "1e-6/Ang^2",  5.0, [-inf, inf], "",            "Solvent scattering length density"],
+    ["sld_core",    "1e-6/Ang^2",  4,   [-inf, inf], "",            "Core scattering length density"],
+    ["sld_layer",   "1e-6/Ang^2",  0.0, [-inf, inf], "",            "Layer scattering length density"],
+    ["sld_solvent", "1e-6/Ang^2",  5.0, [-inf, inf], "",            "Solvent scattering length density"],
     ["theta",       "degrees",     0,   [-inf, inf], "orientation", "Orientation of the stacked disk axis w/respect incoming beam"],
     ["phi",         "degrees",     0,   [-inf, inf], "orientation", "Orientation of the stacked disk in the plane of the detector"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/gauss76.c", "lib/J1.c", "stacked_disks.c"]
+source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "stacked_disks.c"]
 
 demo = dict(background=0.001,
             scale=0.01,
@@ -141,16 +143,16 @@ demo = dict(background=0.001,
             radius=15.0,
             n_stacking=1,
             sigma_d=0,
-            core_sld=4,
-            layer_sld=0.0,
-            solvent_sld=5.0,
+            sld_core=4,
+            sld_layer=0.0,
+            sld_solvent=5.0,
             theta=0,
             phi=0)
 
 
 oldname = 'StackedDisksModel'
 
-oldpars = dict(theta='axis_theta',
+oldpars = dict(sld_core='core_sld',sld_layer='layer_sld',sld_solvent='solvent_sld',n_stacking='n_stacking',theta='axis_theta',
                phi='axis_phi')
 
 tests = [
@@ -160,8 +162,8 @@ tests = [
       'radius': 3000.0,
       'n_stacking': 1.0,
       'sigma_d': 0.0,
-      'core_sld': 4.0,
-      'layer_sld': -0.4,
+      'sld_core': 4.0,
+      'sld_layer': -0.4,
       'solvent_sd': 5.0,
       'theta': 0.0,
       'phi': 0.0,
@@ -174,8 +176,8 @@ tests = [
       'radius': 3000.0,
       'n_stacking': 1.0,
       'sigma_d': 0.0,
-      'core_sld': 4.0,
-      'layer_sld': -0.4,
+      'sld_core': 4.0,
+      'sld_layer': -0.4,
       'solvent_sd': 5.0,
       'theta': 0.0,
       'phi': 0.0,
@@ -188,8 +190,8 @@ tests = [
       'radius': 3000.0,
       'n_stacking': 1.0,
       'sigma_d': 0.0,
-      'core_sld': 4.0,
-      'layer_sld': -0.4,
+      'sld_core': 4.0,
+      'sld_layer': -0.4,
       'solvent_sd': 5.0,
       'theta': 0.0,
       'phi': 0.0,
@@ -202,8 +204,8 @@ tests = [
       'radius': 3000.0,
       'n_stacking': 1.0,
       'sigma_d': 0.0,
-      'core_sld': 4.0,
-      'layer_sld': -0.4,
+      'sld_core': 4.0,
+      'sld_layer': -0.4,
       'solvent_sd': 5.0,
       'theta': 0.0,
       'phi': 0.0,
@@ -211,5 +213,5 @@ tests = [
       'background': 0.001,
      }, ([1.3, 1.57]), [0.0010039, 0.0010038]],
     ]
-
+# 21Mar2016   RKH notes that unit tests all have n_stacking=1, ought to test other values
 

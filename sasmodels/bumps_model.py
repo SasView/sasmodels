@@ -237,6 +237,8 @@ class Experiment(DataMixin):
 
         Not Implemented.
         """
+        if self.data_type == "sesans":
+            np.savetxt(basename+".dat", np.array([self._data.x, self.theory()]).T)
         pass
 
     def __getstate__(self):

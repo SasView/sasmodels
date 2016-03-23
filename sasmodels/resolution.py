@@ -195,9 +195,7 @@ def slit_resolution(q_calc, q, width, height, n_height=30):
                 I\left(\sqrt{(q_i + q_\parallel)^2 + q_\perp^2}\right)
                 \,dq_\perp dq_\parallel
 
-
-    Definition
-    ----------
+    **Definition**
 
     We are using the mid-point integration rule to assign weights to each
     element of a weight matrix $W$ so that
@@ -691,8 +689,7 @@ class IgorComparisonTest(unittest.TestCase):
     def setUp(self):
         self.pars = TEST_PARS_PINHOLE_SPHERE
         from sasmodels import core
-        from sasmodels.models import sphere
-        self.model = core.load_model(sphere, dtype='double')
+        self.model = core.load_model("sphere", dtype='double')
 
     def _eval_sphere(self, pars, resolution):
         from sasmodels import core

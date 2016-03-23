@@ -25,8 +25,13 @@ def make_q(q_max, Rmax):
     Rmax is the "radius" of the largest expected object and can be set elsewhere.
     q_max is determined by the acceptance angle of the SESANS instrument.
     """
+    from sas.sascalc.data_util.nxsunit import Converter
+
     q_min = dq = 0.1 * 2*pi / Rmax
-    return np.arange(q_min, q_max, dq)
+    return np.arange(q_min,
+                     Converter(q_max[1])(q_max[0],
+                                         units="1/A"),
+                     dq)
     
 def make_all_q(data):
     """
@@ -72,8 +77,10 @@ def transform(data, q_calc, Iq_calc, qmono, Iq_mono):
     return result
 
 def call_hankel(data, q_calc, Iq_calc):
-    return hankel(data.x, data.lam * 1e-9,
-                  data.sample.thickness / 10,
+    return hankel((data.x, data.x_unit),
+                  (data.lam, data.lam_unit),
+                  (data.sample.thickness,
+                   data.sample.thickness_unit),
                   q_calc, Iq_calc)
   
 def call_HankelAccept(data, q_calc, Iq_calc, q_mono, Iq_mono):
@@ -179,6 +186,13 @@ def hankel(SElength, wavelength, thickness, q, Iq):
 
     *I* [cm$^{-1}$] is the value of the SANS model at *q*
     """
+
+    from sas.sascalc.data_util.nxsunit import Converter
+    wavelength = Converter(wavelength[1])(wavelength[0],"A")
+    thickness = Converter(thickness[1])(thickness[0],"A")
+    Iq = Converter("1/cm")(Iq,"1/A") # All models default to inverse centimeters
+    SElength = Converter(SElength[1])(SElength[0],"A")
+
     G = np.zeros_like(SElength, 'd')
 #==============================================================================
 #     Hankel Transform method if "wavelength" is a scalar; mono-chromatic SESANS
@@ -186,13 +200,15 @@ def hankel(SElength, wavelength, thickness, q, Iq):
     for i, SElength_i in enumerate(SElength):
         integral = besselj(0, q*SElength_i)*Iq*q
         G[i] = np.sum(integral)
+    G0 = np.sum(Iq*q)
 
     # [m^-1] step size in q, needed for integration
-    dq = (q[1]-q[0])*1e10
+    dq = (q[1]-q[0])
 
     # integration step, convert q into [m**-1] and 2 pi circle integration
-    G *= dq*1e10*2*pi
+    G *= dq*2*pi
+    G0 = np.sum(Iq*q)*dq*2*np.pi
 
-    P = exp(thickness*wavelength**2/(4*pi**2)*(G-G[0]))
+    P = exp(thickness*wavelength**2/(4*pi**2)*(G-G0))
 
     return P

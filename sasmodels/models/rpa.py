@@ -52,7 +52,7 @@ A Z Akcasu, R Klein and B Hammouda, *Macromolecules*, 26 (1993) 4136
 from numpy import inf
 
 name = "rpa"
-title = "Random Phase Approximation"
+title = "Random Phase Approximation - unfinished work in progress"
 description = """
 This formalism applies to multicomponent polymer mixtures in the
 homogeneous (mixed) phase region only.
