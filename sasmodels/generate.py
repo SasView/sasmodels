@@ -605,7 +605,7 @@ def poly_details(model_info, weights):
 
     # TODO: move max_pd into ParameterTable?
     max_pd = model_info['max_pd']
-    pars = model_info['parameters'].kernel_pars
+    pars = model_info['parameters'].kernel_pars()
     npars = len(pars)
     par_offset = 5*max_pd
     constants_offset = par_offset + 3*npars
