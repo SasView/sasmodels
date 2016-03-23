@@ -14,8 +14,6 @@
 #ifndef _PAR_BLOCK_ // protected block so we can include this code twice.
 #define _PAR_BLOCK_
 
-#define MAX_PD 4  // MAX_PD is the max number of polydisperse parameters
-
 typedef struct {
     int32_t pd_par[MAX_PD];     // id of the nth polydispersity variable
     int32_t pd_length[MAX_PD];  // length of the nth polydispersity weight vector

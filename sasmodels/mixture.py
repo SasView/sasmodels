@@ -13,7 +13,7 @@ To use it, first load form factor P and structure factor S, then create
 from copy import copy
 import numpy as np
 
-from .generate import process_parameters, COMMON_PARAMETERS, Parameter
+from .modelinfo import Parameter, ParameterTable
 
 SCALE=0
 BACKGROUND=1
@@ -33,21 +33,21 @@ def make_mixture_info(parts):
     parts = flatten
 
     # Build new parameter list
-    pars = COMMON_PARAMETERS + []
+    pars = []
     for k, part in enumerate(parts):
         # Parameter prefix per model, A_, B_, ...
+        # Note that prefix must also be applied to id and length_control
+        # to support vector parameters
         prefix = chr(ord('A')+k) + '_'
-        for p in part['parameters']:
-            # No background on the individual mixture elements
-            if p.name == 'background':
-                continue
-            # TODO: promote Parameter to a full class
-            # this code knows too much about the implementation!
-            p = list(p)
-            if p[0] == 'scale':  # allow model subtraction
-                p[3] = [-np.inf, np.inf]  # limits
-            p[0] = prefix+p[0]   # relabel parameters with A_, ...
+        pars.append(Parameter(prefix+'scale'))
+        for p in part['parameters'].kernel_pars:
+            p = copy(p)
+            p.name = prefix+p.name
+            p.id = prefix+p.id
+            if p.length_control is not None:
+                p.length_control = prefix+p.length_control
             pars.append(p)
+    partable = ParameterTable(pars)
 
     model_info = {}
     model_info['id'] = '+'.join(part['id'])
@@ -57,7 +57,7 @@ def make_mixture_info(parts):
     model_info['description'] = model_info['title']
     model_info['docs'] = model_info['title']
     model_info['category'] = "custom"
-    model_info['parameters'] = pars
+    model_info['parameters'] = partable
     #model_info['single'] = any(part['single'] for part in parts)
     model_info['structure_factor'] = False
     model_info['variant_info'] = None
@@ -66,8 +66,6 @@ def make_mixture_info(parts):
     # Iq, Iqxy, form_volume, ER, VR and sesans
     # Remember the component info blocks so we can build the model
     model_info['composition'] = ('mixture', parts)
-    process_parameters(model_info)
-    return model_info
 
 
 class MixtureModel(object):

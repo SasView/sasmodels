@@ -68,41 +68,6 @@ background.  This will work correctly even when polydispersity is off.
 *ER* and *VR* are python functions which operate on parameter vectors.
 The constructor code will generate the necessary vectors for computing
 them with the desired polydispersity.
-
-The available kernel parameters are defined as a list, with each parameter
-defined as a sublist with the following elements:
-
-    *name* is the name that will be used in the call to the kernel
-    function and the name that will be displayed to the user.  Names
-    should be lower case, with words separated by underscore.  If
-    acronyms are used, the whole acronym should be upper case.
-
-    *units* should be one of *degrees* for angles, *Ang* for lengths,
-    *1e-6/Ang^2* for SLDs.
-
-    *default value* will be the initial value for  the model when it
-    is selected, or when an initial value is not otherwise specified.
-
-    *limits = [lb, ub]* are the hard limits on the parameter value, used to
-    limit the polydispersity density function.  In the fit, the parameter limits
-    given to the fit are the limits  on the central value of the parameter.
-    If there is polydispersity, it will evaluate parameter values outside
-    the fit limits, but not outside the hard limits specified in the model.
-    If there are no limits, use +/-inf imported from numpy.
-
-    *type* indicates how the parameter will be used.  "volume" parameters
-    will be used in all functions.  "orientation" parameters will be used
-    in *Iqxy* and *Imagnetic*.  "magnetic* parameters will be used in
-    *Imagnetic* only.  If *type* is the empty string, the parameter will
-    be used in all of *Iq*, *Iqxy* and *Imagnetic*.  "sld" parameters
-    can automatically be promoted to magnetic parameters, each of which
-    will have a magnitude and a direction, which may be different from
-    other sld parameters.
-
-    *description* is a short description of the parameter.  This will
-    be displayed in the parameter table and used as a tool tip for the
-    parameter value in the user interface.
-
 The kernel module must set variables defining the kernel meta data:
 
     *id* is an implicit variable formed from the filename.  It will be
@@ -215,7 +180,8 @@ Code follows the C99 standard with the following extensions and conditions::
 """
 from __future__ import print_function
 
-# TODO: identify model files which have changed since loading and reload them.
+#TODO: determine which functions are useful outside of generate
+#__all__ = ["model_info", "make_doc", "make_source", "convert_type"]
 
 import sys
 from os.path import abspath, dirname, join as joinpath, exists, basename, \
@@ -223,16 +189,12 @@ from os.path import abspath, dirname, join as joinpath, exists, basename, \
 import re
 import string
 import warnings
-from collections import namedtuple
 
 import numpy as np
 
-# TODO: promote Parameter and model_info to classes
-PARAMETER_FIELDS = ['name', 'units', 'default', 'limits', 'type', 'description']
-Parameter = namedtuple('Parameter', PARAMETER_FIELDS)
+from .modelinfo import ModelInfo, Parameter, make_parameter_table
 
-#TODO: determine which functions are useful outside of generate
-#__all__ = ["model_info", "make_doc", "make_source", "convert_type"]
+# TODO: identify model files which have changed since loading and reload them.
 
 TEMPLATE_ROOT = dirname(__file__)
 
@@ -245,12 +207,6 @@ try:  # CRUFT: older numpy does not support float128
     F128 = np.dtype('float128')
 except TypeError:
     F128 = None
-
-# Scale and background, which are parameters common to every form factor
-COMMON_PARAMETERS = [
-    ["scale", "", 1, [0, np.inf], "", "Source intensity"],
-    ["background", "1/cm", 1e-3, [0, np.inf], "", "Source background"],
-    ]
 
 # Conversion from units defined in the parameter table for each model
 # to units displayed in the sphinx documentation.
@@ -353,6 +309,17 @@ def model_sources(model_info):
                    abspath(joinpath(dirname(__file__), 'models'))]
     return [_search(search_path, f) for f in model_info['source']]
 
+def timestamp(model_info):
+    """
+    Return a timestamp for the model corresponding to the most recently
+    changed file or dependency.
+    """
+    source_files = (model_sources(model_info)
+                    + model_templates()
+                    + [model_info['filename']])
+    newest = max(getmtime(f) for f in source_files)
+    return newest
+
 def convert_type(source, dtype):
     """
     Convert code from double precision to the desired type.
@@ -447,15 +414,14 @@ def _gen_fn(name, pars, body):
              ....
          }
     """
-    par_decl = ', '.join('double ' + p for p in pars) if pars else 'void'
+    par_decl = ', '.join(p.as_argument() for p in pars) if pars else 'void'
     return _FN_TEMPLATE % {'name': name, 'body': body, 'pars': par_decl}
 
 def _call_pars(prefix, pars):
     """
     Return a list of *prefix.parameter* from parameter items.
     """
-    prefix += "."
-    return [prefix+p for p in pars]
+    return [p.as_call_reference(prefix) for p in pars]
 
 _IQXY_PATTERN = re.compile("^((inline|static) )? *(double )? *Iqxy *([(]|$)",
                            flags=re.MULTILINE)
@@ -498,15 +464,10 @@ def make_source(model_info):
     # dispersion.  Need to be careful that necessary parameters are available
     # for computing volume even if we allow non-disperse volume parameters.
 
-    # kernel_iq assumes scale and background are the first parameters;
-    # they should be first for 1d and 2d parameter lists as well.
-    assert model_info['parameters'][0].name == 'scale'
-    assert model_info['parameters'][1].name == 'background'
+    partable = model_info['parameters']
 
-    # Identify parameter types
-    iq_parameters = model_info['par_type']['1d'][2:]
-    iqxy_parameters = model_info['par_type']['2d'][2:]
-    vol_parameters = model_info['par_type']['volume']
+    # Identify parameters for Iq, Iqxy, Iq_magnetic and form_volume.
+    # Note that scale and volume are not possible types.
 
     # Load templates and user code
     kernel_header = load_template('kernel_header.c')
@@ -516,26 +477,32 @@ def make_source(model_info):
     # Build initial sources
     source = [kernel_header] + user_code
 
+    vol_parameters = partable.kernel_pars('volume')
+    iq_parameters = partable.kernel_pars('1d')
+    iqxy_parameters = partable.kernel_pars('2d')
+
+    # Make parameters for q, qx, qy so that we can use them in declarations
+    q, qx, qy = [Parameter(name=v) for v in ('q', 'qx', 'qy')]
     # Generate form_volume function, etc. from body only
     if model_info['form_volume'] is not None:
-        pnames = [p for p in vol_parameters]
-        source.append(_gen_fn('form_volume', pnames, model_info['form_volume']))
+        pars = vol_parameters
+        source.append(_gen_fn('form_volume', pars, model_info['form_volume']))
     if model_info['Iq'] is not None:
-        pnames = ['q'] + [p for p in iq_parameters]
-        source.append(_gen_fn('Iq', pnames, model_info['Iq']))
+        pars = [q] + iq_parameters
+        source.append(_gen_fn('Iq', pars, model_info['Iq']))
     if model_info['Iqxy'] is not None:
-        pnames = ['qx', 'qy'] + [p for p in iqxy_parameters]
-        source.append(_gen_fn('Iqxy', pnames, model_info['Iqxy']))
+        pars = [qx, qy] + iqxy_parameters
+        source.append(_gen_fn('Iqxy', pars, model_info['Iqxy']))
 
     # Define the parameter table
     source.append("#define PARAMETER_TABLE \\")
-    source.append("\\\n    ".join("double %s;"%p.name
-                                   for p in model_info['parameters'][2:]))
+    source.append("\\\n".join(p.as_definition()
+                                  for p in model_info['parameters'][2:]))
 
     # Define the function calls
     if vol_parameters:
-        refs = ",".join(_call_pars("v", vol_parameters))
-        call_volume = "#define CALL_VOLUME(v) form_volume(%s)"%refs
+        refs = _call_pars("v.", vol_parameters)
+        call_volume = "#define CALL_VOLUME(v) form_volume(%s)" % (",".join(refs))
     else:
         # Model doesn't have volume.  We could make the kernel run a little
         # faster by not using/transferring the volume normalizations, but
@@ -543,11 +510,11 @@ def make_source(model_info):
         call_volume = "#define CALL_VOLUME(v) 0.0"
     source.append(call_volume)
 
-    refs = ["q[i]"] + _call_pars("v", iq_parameters)
+    refs = ["q[i]"] + _call_pars("v.", iq_parameters)
     call_iq = "#define CALL_IQ(q,i,v) Iq(%s)" % (",".join(refs))
     if _have_Iqxy(user_code):
         # Call 2D model
-        refs = ["q[2*i]", "q[2*i+1]"] + _call_pars("v", iqxy_parameters)
+        refs = ["q[2*i]", "q[2*i+1]"] + _call_pars("v.", iqxy_parameters)
         call_iqxy = "#define CALL_IQ(q,i,v) Iqxy(%s)" % (",".join(refs))
     else:
         # Call 1D model with sqrt(qx^2 + qy^2)
@@ -558,7 +525,7 @@ def make_source(model_info):
 
     # Fill in definitions for numbers of parameters
     source.append("#define MAX_PD %s"%model_info['max_pd'])
-    source.append("#define NPARS %d"%(len(model_info['parameters'])-2))
+    source.append("#define NPARS %d"%(len(partable.kernel_pars())))
 
     # TODO: allow mixed python/opencl kernels?
 
@@ -596,100 +563,50 @@ def categorize_parameters(pars):
       or -1 if no such parameter exists
     """
     par_set = {}
-    par_set['1d'] = [p.name for p in pars if p.type not in ('orientation', 'magnetic')]
-    par_set['2d'] = [p.name for p in pars if p.type != 'magnetic']
-    par_set['magnetic'] = [p.name for p in pars]
-    par_set['pd'] = [p.name for p in pars if p.type in ('volume', 'orientation')]
-    par_set['pd_relative'] = [p.name for p in pars if p.type == 'volume']
-    if 'theta' in par_set['2d']:
-        # find id of theta in parameter set (or whatever variable is
-        # used for spherical normalization during polydispersity...
-        par_set['theta_par'] = [k for k,p in enumerate(pars) if p.name=='theta'][0]
-    else:
-        par_set['theta_par'] = -1
-    return par_set
-
-def collect_types(pars):
-    """
-    Build parameter categories out of the the parameter definitions.
-
-    Returns a dictionary of categories.
-
-    Note: these categories are subject to change, depending on the needs of
-    the UI and the needs of the kernel calling function.
-
-    The categories are as follows:
-
-    * *volume* list of volume parameter names
-    * *orientation* list of orientation parameters
-    * *magnetic* list of magnetic parameters
-    * *sld* list of parameters that have no type info
-    * *other* list of parameters that have no type info
-
-    Each parameter is in one and only one category.
-    """
-    par_type = {
-        'volume': [], 'orientation': [], 'magnetic': [], 'sld': [], 'other': [],
-    }
-    for p in pars:
-        par_type[p.type if p.type else 'other'].append(p.name)
-    return  par_type
-
 
 def process_parameters(model_info):
     """
     Process parameter block, precalculating parameter details.
     """
-    # convert parameters into named tuples
-    for p in model_info['parameters']:
-        if p[4] == '' and (p[0].startswith('sld') or p[0].endswith('sld')):
-            p[4] = 'sld'
-            # TODO: make sure all models explicitly label their sld parameters
-            #raise ValueError("%s.%s needs to be explicitly set to type 'sld'" %(model_info['id'], p[0]))
-
-    pars = [Parameter(*p) for p in model_info['parameters']]
-    # Fill in the derived attributes
-    par_type = collect_types(pars)
-    par_type.update(categorize_parameters(pars))
-    model_info['parameters'] = pars
-    model_info['par_type'] = par_type
+    partable = model_info['parameters']
     if model_info.get('demo', None) is None:
-        model_info['demo'] = dict((p.name, p.default) for p in pars)
-    model_info['has_2d'] = par_type['orientation'] or par_type['magnetic']
+        model_info['demo'] = partable.defaults
+
     # Don't use more polydisperse parameters than are available in the model
     # Note: we can do polydispersity on arbitrary parameters, so it is not
     # clear that this is a good idea; it does however make the poly_details
     # code easier to write, so we will leave it in for now.
-    model_info['max_pd'] = min(len(par_type['pd']), MAX_PD)
+    model_info['max_pd'] = min(partable.num_pd, MAX_PD)
 
 def mono_details(model_info):
+    # TODO: move max_pd into ParameterTable?
     max_pd = model_info['max_pd']
-    npars = len(model_info['parameters']) - 2
-    p = 5*max_pd
-    c = p + 3*npars
+    pars = model_info['parameters'].kernel_pars()
+    npars = len(pars)
+    par_offset = 5*max_pd
+    constants_offset = par_offset + 3*npars
 
-    details = np.zeros(c + 2, 'int32')
+    details = np.zeros(constants_offset + 2, 'int32')
     details[0*max_pd:1*max_pd] = range(max_pd)       # pd_par: arbitrary order; use first
     details[1*max_pd:2*max_pd] = [1]*max_pd          # pd_length: only one element
     details[2*max_pd:3*max_pd] = range(max_pd)       # pd_offset: consecutive 1.0 weights
     details[3*max_pd:4*max_pd] = [1]*max_pd          # pd_stride: vectors of length 1
     details[4*max_pd:5*max_pd] = [0]*max_pd          # pd_isvol: doens't matter if no norm
-    details[p+0*npars:p+1*npars] = range(2, npars+2) # par_offset: skip scale and background
-    details[p+1*npars:p+2*npars] = [0]*npars         # no coordination
+    details[par_offset+0*npars:par_offset+1*npars] = range(2, npars+2) # par_offset: skip scale and background
+    details[par_offset+1*npars:par_offset+2*npars] = [0]*npars         # no coordination
     #details[p+npars] = 1 # par_coord[0] is coordinated with the first par?
-    details[p+2*npars:p+3*npars] = 0 # fast coord with 0
-    details[c]   = 1     # fast_coord_count: one fast index
-    details[c+1] = -1    # theta_par: None
+    details[par_offset+2*npars:par_offset+3*npars] = 0 # fast coord with 0
+    details[constants_offset]   = 1     # fast_coord_count: one fast index
+    details[constants_offset+1] = -1    # theta_par: None
     return details
 
 def poly_details(model_info, weights):
-    print("entering poly",weights)
-
-    print([p.name for p in model_info['parameters']])
-    pars = model_info['parameters'][2:]  # skip scale and background
     weights = weights[2:]
+
+    # TODO: move max_pd into ParameterTable?
     max_pd = model_info['max_pd']
-    npars = len(pars) # scale and background already removed
+    pars = model_info['parameters'].kernel_pars
+    npars = len(pars)
     par_offset = 5*max_pd
     constants_offset = par_offset + 3*npars
 
@@ -744,12 +661,14 @@ def create_default_functions(model_info):
     performs a similar role for Iq written in C.
     """
     if model_info['Iq'] is not None and model_info['Iqxy'] is None:
-        if model_info['par_type']['1d'] != model_info['par_type']['2d']:
+        partable = model_info['parameters']
+        if partable.type['1d'] != partable.type['2d']:
             raise ValueError("Iqxy model is missing")
         Iq = model_info['Iq']
         def Iqxy(qx, qy, **kw):
             return Iq(np.sqrt(qx**2 + qy**2), **kw)
         model_info['Iqxy'] = Iqxy
+
 
 def make_model_info(kernel_module):
     """
@@ -799,7 +718,8 @@ def make_model_info(kernel_module):
 
     """
     # TODO: maybe turn model_info into a class ModelDefinition
-    parameters = COMMON_PARAMETERS + kernel_module.parameters
+    #print("make parameter table", kernel_module.parameters)
+    parameters = make_parameter_table(kernel_module.parameters)
     filename = abspath(kernel_module.__file__)
     kernel_id = splitext(basename(filename))[0]
     name = getattr(kernel_module, 'name', None)

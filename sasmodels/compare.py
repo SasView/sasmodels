@@ -869,9 +869,9 @@ class Explore(object):
         model_info = opts['def']
         pars, pd_types = bumps_model.create_parameters(model_info, **opts['pars'])
         if not opts['is2d']:
-            for name in model_info['par_type']['1d']:
+            for p in model_info['parameters'].type['1d']:
                 for ext in ['', '_pd', '_pd_n', '_pd_nsigma']:
-                    k = name+ext
+                    k = p.name+ext
                     v = pars.get(k, None)
                     if v is not None:
                         v.range(*parameter_range(k, v.value))

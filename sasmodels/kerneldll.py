@@ -139,11 +139,8 @@ def make_dll(source, model_info, dtype="double"):
         tempfile_prefix = 'sas_' + model_info['name'] + '128_'
 
     source = generate.convert_type(source, dtype)
-    source_files = (generate.model_sources(model_info)
-                    + [model_info['filename']]
-                    + generate.model_templates())
+    newest = generate.timestamp(model_info)
     dll = dll_path(model_info, dtype)
-    newest = max(os.path.getmtime(f) for f in source_files)
     if not os.path.exists(dll) or os.path.getmtime(dll) < newest:
         # Replace with a proper temp file
         fid, filename = tempfile.mkstemp(suffix=".c", prefix=tempfile_prefix)

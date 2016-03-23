@@ -85,31 +85,13 @@ CASES = [
 
 #   ["name", "units", default, [lower, upper], "type","description"],
 parameters = [
-    ["case_num", CASES, 0, [0, 10], "", "Component organization"],
+    ["case_num", "", 1, CASES, "", "Component organization"],
 
-    ["Na", "", 1000.0, [1, inf], "", "Degree of polymerization"],
-    ["Phia", "", 0.25, [0, 1], "", "volume fraction"],
-    ["va", "mL/mol", 100.0, [0, inf], "", "specific volume"],
-    ["La", "fm", 10.0, [-inf, inf], "", "scattering length"],
-    ["ba", "Ang", 5.0, [0, inf], "", "segment length"],
-
-    ["Nb", "", 1000.0, [1, inf], "", "Degree of polymerization"],
-    ["Phib", "", 0.25, [0, 1], "", "volume fraction"],
-    ["vb", "mL/mol", 100.0, [0, inf], "", "specific volume"],
-    ["Lb", "fm", 10.0, [-inf, inf], "", "scattering length"],
-    ["bb", "Ang", 5.0, [0, inf], "", "segment length"],
-
-    ["Nc", "", 1000.0, [1, inf], "", "Degree of polymerization"],
-    ["Phic", "", 0.25, [0, 1], "", "volume fraction"],
-    ["vc", "mL/mol", 100.0, [0, inf], "", "specific volume"],
-    ["Lc", "fm", 10.0, [-inf, inf], "", "scattering length"],
-    ["bc", "Ang", 5.0, [0, inf], "", "segment length"],
-
-    ["Nd", "", 1000.0, [1, inf], "", "Degree of polymerization"],
-    ["Phid", "", 0.25, [0, 1], "", "volume fraction"],
-    ["vd", "mL/mol", 100.0, [0, inf], "", "specific volume"],
-    ["Ld", "fm", 10.0, [-inf, inf], "", "scattering length"],
-    ["bd", "Ang", 5.0, [0, inf], "", "segment length"],
+    ["N[4]", "", 1000.0, [1, inf], "", "Degree of polymerization"],
+    ["Phi[4]", "", 0.25, [0, 1], "", "volume fraction"],
+    ["v[4]", "mL/mol", 100.0, [0, inf], "", "specific volume"],
+    ["L[4]", "fm", 10.0, [-inf, inf], "", "scattering length"],
+    ["b[4]", "Ang", 5.0, [0, inf], "", "segment length"],
 
     ["Kab", "", -0.0004, [-inf, inf], "", "Interaction parameter"],
     ["Kac", "", -0.0004, [-inf, inf], "", "Interaction parameter"],

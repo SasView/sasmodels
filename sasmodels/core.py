@@ -217,9 +217,11 @@ def call_kernel(kernel, pars, cutoff=0, mono=False):
     if mono:
         active = lambda name: False
     elif kernel.dim == '1d':
-        active = lambda name: name in set(kernel.info['par_type']['1d'])
+        pars_1d = set(p.name for p in kernel.info['parameters'].type['1d'])
+        active = lambda name: name in pars_1d
     elif kernel.dim == '2d':
-        active = lambda name: name in set(kernel.info['par_type']['2d'])
+        pars_2d = set(p.name for p in kernel.info['parameters'].type['2d'])
+        active = lambda name: name in pars_1d
     else:
         active = lambda name: True
 
