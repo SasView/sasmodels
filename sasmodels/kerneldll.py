@@ -269,7 +269,10 @@ class DllKernel(object):
 
         max_pd = self.info['max_pd']
         start, stop = 0, details[4*max_pd-1]
-        print(details)
+        print("in kerneldll")
+        print("details", details)
+        print("weights", weights)
+        print("values", values)
         args = [
             self.q_input.nq, # nq
             start, # pd_start

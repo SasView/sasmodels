@@ -613,14 +613,13 @@ def poly_details(model_info, weights):
     # Decreasing list of polydispersity lengths
     # Note: the reversing view, x[::-1], does not require a copy
     pd_length = np.array([len(w) for w in weights])
-    print (pd_length)
-    print (weights)
     pd_offset = np.cumsum(np.hstack((0, pd_length)))
     pd_isvol = np.array([p.type=='volume' for p in pars])
     idx = np.argsort(pd_length)[::-1][:max_pd]
-    print (idx)
     pd_stride = np.cumprod(np.hstack((1, pd_length[idx][:-1])))
     par_offsets = np.cumsum(np.hstack((2, pd_length)))[:-1]
+    coord_offset = par_offset+npars
+    fast_coord_offset = par_offset+2*npars
 
     theta_par = -1
     if 'theta_par' in model_info:
@@ -636,14 +635,33 @@ def poly_details(model_info, weights):
     details[4*max_pd:5*max_pd] = pd_isvol[idx]
     details[par_offset+0*npars:par_offset+1*npars] = par_offsets
     details[par_offset+1*npars:par_offset+2*npars] = 0  # no coordination for most
-    details[par_offset+2*npars:par_offset+3*npars] = 0  # no fast coord with 0
-    coord_offset = par_offset+1*npars
     for k,parameter_num in enumerate(idx):
         details[coord_offset+parameter_num] = 2**k
+    details[fast_coord_offset] = idx[0]
+    details[fast_coord_offset+1:fast_coord_offset+npars] = 0  # no fast coord with 0
     details[constants_offset] = 1   # fast_coord_count: one fast index
     details[constants_offset+1] = theta_par
-    print ("details",details)
+    print("polydispersity details")
+    print_details(model_info, details)
     return details
+
+def print_details(model_info, details):
+    max_pd = model_info['max_pd']
+    pars = model_info['parameters'].kernel_pars()
+    npars = len(pars)
+    par_offset = 5*max_pd
+    constants_offset = par_offset + 3*npars
+
+    print("pd_par", details[0*max_pd:1*max_pd])
+    print("pd_length", details[1*max_pd:2*max_pd])
+    print("pd_offset", details[2*max_pd:3*max_pd])
+    print("pd_stride", details[3*max_pd:4*max_pd])
+    print("pd_isvol", details[4*max_pd:5*max_pd])
+    print("par_offsets", details[par_offset+0*npars:par_offset+1*npars])
+    print("par_coord", details[par_offset+1*npars:par_offset+2*npars])
+    print("fast_coord_pars", details[par_offset+2*npars:par_offset+3*npars])
+    print("fast_coord_count", details[constants_offset])
+    print("theta par", details[constants_offset+1])
 
 def constrained_poly_details(model_info, weights, constraints):
     # Need to find the independently varying pars and sort them

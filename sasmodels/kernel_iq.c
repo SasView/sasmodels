@@ -53,9 +53,8 @@ void KERNEL_NAME(
   local ParameterBlock local_values;  // current parameter values
   double *pvec = (double *)(&local_values);  // Alias named parameters with a vector
 
-#if MAX_PD > 0
-  if (problem->pd_length[0] == 1) {
-#endif // MAX_PD > 0
+  // Monodisperse computation
+  if (pd_stop == 1) {
     // Shouldn't need to copy!!
     for (int k=0; k < NPARS; k++) {
       pvec[k] = values[k+2];  // skip scale and background
@@ -71,13 +70,11 @@ void KERNEL_NAME(
       result[i] = values[0]*scattering + values[1];
     }
     return;
-#if MAX_PD > 0
   }
 
-  // polydispersity loop index positions
-  local int offset[NPARS];  // NPARS excludes scale/background
+#if MAX_PD > 0
 
-  printf("Entering polydispersity\n");
+printf("Entering polydispersity\n");
   // Since we are no longer looping over the entire polydispersity hypercube
   // for each q, we need to track the normalization values for each q in a
   // separate work vector.
@@ -107,6 +104,9 @@ void KERNEL_NAME(
   // Location in the polydispersity hypercube, one index per dimension.
   local int pd_index[MAX_PD];
 
+  // polydispersity loop index positions
+  local int offset[NPARS];  // NPARS excludes scale/background
+
   // Trigger the reset behaviour that happens at the end the fast loop
   // by setting the initial index >= weight vector length.
   pd_index[0] = problem->pd_length[0];
@@ -131,10 +131,11 @@ void KERNEL_NAME(
       partial_volweight = 1.0;
       for (int k=1; k < MAX_PD; k++) {
         pd_index[k] = (loop_index%problem->pd_length[k])/problem->pd_stride[k];
-        const double wi = weights[problem->pd_offset[0]+pd_index[0]];
+        const double wi = weights[problem->pd_offset[k]+pd_index[k]];
         partial_weight *= wi;
         if (problem->pd_isvol[k]) partial_volweight *= wi;
       }
+      printf("slow %d: ", loop_index);
       for (int k=0; k < NPARS; k++) {
         int coord = problem->par_coord[k];
         int this_offset = problem->par_offset[k];
@@ -148,7 +149,9 @@ void KERNEL_NAME(
         }
         offset[k] = this_offset;
         pvec[k] = values[this_offset];
+        printf("p[%d]=v[%d]=%g ", k, offset[k], pvec[k]);
       }
+      printf("\n");
       weight = partial_weight * weights[problem->pd_offset[0]+pd_index[0]];
       if (problem->theta_par >= 0) {
         spherical_correction = fabs(cos(M_PI_180*pvec[problem->theta_par]));
@@ -156,28 +159,25 @@ void KERNEL_NAME(
       if (problem->theta_par == problem->pd_par[0]) {
         weight *= spherical_correction;
       }
+      pd_index[0] += 1;
 
     } else {
 
       // INCREMENT INDICES
-      pd_index[0] += 1;
       const double wi = weights[problem->pd_offset[0]+pd_index[0]];
       weight = partial_weight*wi;
       if (problem->pd_isvol[0]) vol_weight *= wi;
+      printf("fast %d: ", loop_index);
       for (int k=0; k < problem->fast_coord_count; k++) {
-         printf("fast loop %d coord %d idx %d ?%d offset %d %g\n",
-         k,problem->fast_coord_pars[k],pd_index[0],
-        problem->fast_coord_pars[k],
-            offset[problem->fast_coord_pars[k]],
-            values[offset[problem->fast_coord_pars[k]]]
-          );
-        pvec[problem->fast_coord_pars[k]]
-            = values[offset[problem->fast_coord_pars[k]]++];
-
+        const int pindex = problem->fast_coord_pars[k];
+        pvec[pindex] = values[++offset[pindex]];
+        printf("p[%d]=v[%d]=%g ", pindex, offset[pindex], pvec[pindex]);
       }
-      if (problem->theta_par ==problem->pd_par[0]) {
+      printf("\n");
+      if (problem->theta_par == problem->pd_par[0]) {
         weight *= fabs(cos(M_PI_180*pvec[problem->theta_par]));
       }
+      pd_index[0] += 1;
     }
     #ifdef INVALID
     if (INVALID(local_values)) continue;
@@ -200,12 +200,12 @@ void KERNEL_NAME(
     }
   }
 
-  //Makes a normalization available for the next round
+  // Make normalization available for the next round
   result[nq] = norm;
   result[nq+1] = vol;
   result[nq+2] = norm_vol;
 
-  //End of the PD loop we can normalize
+  // End of the PD loop we can normalize
   if (pd_stop >= problem->pd_stride[MAX_PD-1]) {
     #ifdef USE_OPENMP
     #pragma omp parallel for

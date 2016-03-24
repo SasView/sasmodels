@@ -305,14 +305,8 @@ def parlist(model_info, pars, is2d):
     """
     Format the parameter list for printing.
     """
-    if is2d:
-        exclude = lambda n: False
-    else:
-        par1d = model_info['par_type']['1d']
-        exclude = lambda n: n not in par1d
     lines = []
-    for p in model_info['parameters']:
-        if exclude(p.name): continue
+    for p in model_info['parameters'].type['2d' if is2d else '1d']:
         fields = dict(
             value=pars.get(p.name, p.default),
             pd=pars.get(p.name+"_pd", 0.),
