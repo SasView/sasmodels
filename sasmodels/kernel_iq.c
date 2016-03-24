@@ -15,11 +15,13 @@
 #define _PAR_BLOCK_
 
 typedef struct {
+#if MAX_PD > 0
     int32_t pd_par[MAX_PD];     // id of the nth polydispersity variable
     int32_t pd_length[MAX_PD];  // length of the nth polydispersity weight vector
     int32_t pd_offset[MAX_PD];  // offset of pd weights in the value & weight vector
     int32_t pd_stride[MAX_PD];  // stride to move to the next index at this level
     int32_t pd_isvol[MAX_PD];   // True if parameter is a volume weighting parameter
+#endif // MAX_PD > 0
     int32_t par_offset[NPARS];  // offset of par values in the value & weight vector
     int32_t par_coord[NPARS];   // polydispersity coordination bitvector
     int32_t fast_coord_pars[NPARS]; // ids of the fast coordination parameters
@@ -51,12 +53,10 @@ void KERNEL_NAME(
   local ParameterBlock local_values;  // current parameter values
   double *pvec = (double *)(&local_values);  // Alias named parameters with a vector
 
-  local int offset[NPARS];  // NPARS excludes scale/background
-
-#if 0 // defined(USE_SHORTCUT_OPTIMIZATION)
+#if MAX_PD > 0
   if (problem->pd_length[0] == 1) {
+#endif // MAX_PD > 0
     // Shouldn't need to copy!!
-
     for (int k=0; k < NPARS; k++) {
       pvec[k] = values[k+2];  // skip scale and background
     }
@@ -66,13 +66,16 @@ void KERNEL_NAME(
     #pragma omp parallel for
     #endif
     for (int i=0; i < nq; i++) {
-      const double scattering = CALL_IQ(q, i, local_values);
-      result[i] = values[0]*scattering/volume + values[1];
+      double scattering = CALL_IQ(q, i, local_values);
+      if (volume != 0.0) scattering /= volume;
+      result[i] = values[0]*scattering + values[1];
     }
     return;
+#if MAX_PD > 0
   }
-  printf("falling through\n");
-#endif
+
+  // polydispersity loop index positions
+  local int offset[NPARS];  // NPARS excludes scale/background
 
   printf("Entering polydispersity\n");
   // Since we are no longer looping over the entire polydispersity hypercube
@@ -176,7 +179,6 @@ void KERNEL_NAME(
         weight *= fabs(cos(M_PI_180*pvec[problem->theta_par]));
       }
     }
-    printf("rad len %f %f\n",local_values.radius, local_values.length);
     #ifdef INVALID
     if (INVALID(local_values)) continue;
     #endif
@@ -198,7 +200,7 @@ void KERNEL_NAME(
     }
   }
 
-  //Makes a normalization avialable for the next round
+  //Makes a normalization available for the next round
   result[nq] = norm;
   result[nq+1] = vol;
   result[nq+2] = norm_vol;
@@ -215,4 +217,5 @@ void KERNEL_NAME(
       result[i] = values[0]*result[i]/norm + values[1];
     }
   }
+#endif // MAX_PD > 0
 }

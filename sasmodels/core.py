@@ -221,7 +221,7 @@ def call_kernel(kernel, pars, cutoff=0, mono=False):
         active = lambda name: name in pars_1d
     elif kernel.dim == '2d':
         pars_2d = set(p.name for p in kernel.info['parameters'].type['2d'])
-        active = lambda name: name in pars_1d
+        active = lambda name: name in pars_2d
     else:
         active = lambda name: True
 

@@ -29,18 +29,7 @@ def make_parameter_table(pars):
                              %str(p))
         processed.append(parse_parameter(*p))
     partable = ParameterTable(processed)
-    set_vector_length_from_reference(partable)
     return partable
-
-def set_vector_length_from_reference(partable):
-    # Sort out the length of the vector parameters such as thickness[n]
-    for p in partable:
-        if p.length_control:
-           ref = partable[p.length_control]
-           low, high = ref.limits
-           if int(low) != low or int(high) != high or low<0 or high>20:
-               raise ValueError("expected limits on %s to be within [0, 20]"%ref.name)
-           p.length = low
 
 def parse_parameter(name, units='', default=None,
                     limits=(-np.inf, np.inf), type='', description=''):
@@ -171,7 +160,7 @@ class Parameter(object):
     """
     def __init__(self, name, units='', default=None, limits=(-np.inf, np.inf),
                  type='', description=''):
-        self.id = name
+        self.id = name.split('[')[0].strip()
         self.name = name
         self.default = default
         self.limits = limits
@@ -235,6 +224,30 @@ class ParameterTable(object):
         self._name_table= dict((p.name, p) for p in parameters)
         self._categorize_parameters()
 
+        self._set_vector_lengths()
+        self._set_defaults()
+
+    def _set_vector_lengths(self):
+        # Sort out the length of the vector parameters such as thickness[n]
+        for p in self.parameters:
+            if p.length_control:
+                ref = self._name_table[p.length_control]
+                low, high = ref.limits
+                if int(low) != low or int(high) != high or low<0 or high>20:
+                    raise ValueError("expected limits on %s to be within [0, 20]"%ref.name)
+                p.length = low
+
+    def _set_defaults(self):
+        # Construct default values, including vector defaults
+        defaults = {}
+        for p in self.parameters:
+            if p.length == 1:
+                defaults[p.id] = p.default
+            else:
+                for k in range(p.length):
+                    defaults["%s[%d]"%(p.id, k)] = p.default
+        self.defaults = defaults
+
     def __getitem__(self, k):
         if isinstance(k, (int, slice)):
             return self.parameters[k]
@@ -288,7 +301,6 @@ class ParameterTable(object):
             par_type[p.type if p.type else 'other'].append(p)
         par_type['1d'] = [p for p in pars if p.type not in ('orientation', 'magnetic')]
         par_type['2d'] = [p for p in pars if p.type != 'magnetic']
-        par_type['magnetic'] = [p for p in pars]
         par_type['pd'] = [p for p in pars if p.polydisperse]
         par_type['pd_relative'] = [p for p in pars if p.relative_pd]
         self.type = par_type
@@ -303,16 +315,12 @@ class ParameterTable(object):
             self.theta_par = -1
 
     @property
-    def defaults(self):
-        return dict((p.name, p.default) for p in self.parameters)
-
-    @property
     def num_pd(self):
         """
         Number of distributional parameters in the model (polydispersity in
         shape dimensions and orientational distributions).
         """
-        return len(self.type['pd'])
+        return sum(p.length for p in self.type['pd'])
 
     @property
     def has_2d(self):

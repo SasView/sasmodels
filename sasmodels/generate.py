@@ -414,7 +414,7 @@ def _gen_fn(name, pars, body):
              ....
          }
     """
-    par_decl = ', '.join(p.as_argument() for p in pars) if pars else 'void'
+    par_decl = ', '.join(p.as_function_argument() for p in pars) if pars else 'void'
     return _FN_TEMPLATE % {'name': name, 'body': body, 'pars': par_decl}
 
 def _call_pars(prefix, pars):
@@ -660,7 +660,7 @@ def create_default_functions(model_info):
     This only works for Iqxy when Iq is written in python. :func:`make_source`
     performs a similar role for Iq written in C.
     """
-    if model_info['Iq'] is not None and model_info['Iqxy'] is None:
+    if callable(model_info['Iq']) and model_info['Iqxy'] is None:
         partable = model_info['parameters']
         if partable.type['1d'] != partable.type['2d']:
             raise ValueError("Iqxy model is missing")
@@ -729,8 +729,8 @@ def make_model_info(kernel_module):
         id=kernel_id,  # string used to load the kernel
         filename=abspath(kernel_module.__file__),
         name=name,
-        title=kernel_module.title,
-        description=kernel_module.description,
+        title=getattr(kernel_module, 'title', name+" model"),
+        description=getattr(kernel_module, 'description', 'no description'),
         parameters=parameters,
         composition=None,
         docs=kernel_module.__doc__,

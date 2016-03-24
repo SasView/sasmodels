@@ -77,9 +77,8 @@ class DataMixin(object):
             q_vectors = [q]            
             q_mono = sesans.make_all_q(data)
         elif self.data_type == 'Iqxy':
-            partype = model.info['par_type']
-            if not partype['orientation'] and not partype['magnetic']:
-                raise ValueError("not 2D without orientation or magnetic parameters")
+            #if not model.info['parameters'].has_2d:
+            #    raise ValueError("not 2D without orientation or magnetic parameters")
             q = np.sqrt(data.qx_data**2 + data.qy_data**2)
             qmin = getattr(data, 'qmin', 1e-16)
             qmax = getattr(data, 'qmax', np.inf)
