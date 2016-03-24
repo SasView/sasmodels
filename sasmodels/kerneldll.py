@@ -88,15 +88,20 @@ DLL_PATH = tempfile.gettempdir()
 ALLOW_SINGLE_PRECISION_DLLS = True
 
 
-def dll_path(model_info, dtype="double"):
+def dll_name(model_info, dtype):
     """
-    Path to the compiled model defined by *model_info*.
+    Name of the dll containing the model.  This is the base file name without
+    any path or extension, with a form such as 'sas_sphere32'.
     """
-    from os.path import join as joinpath, split as splitpath, splitext
-    basename = splitext(splitpath(model_info['filename'])[1])[0]
-    bits = 8*np.dtype(dtype).itemsize
-    return joinpath(DLL_PATH, "sas_%s%d.so"%(basename, bits))
+    bits = 8*dtype.itemsize
+    return "sas_%s%d"%(model_info['id'], bits)
 
+def dll_path(model_info, dtype):
+    """
+    Complete path to the dll for the model.  Note that the dll may not
+    exist yet if it hasn't been compiled.
+    """
+    return os.path.join(DLL_PATH, dll_name(model_info, dtype)+".so")
 
 def make_dll(source, model_info, dtype="double"):
     """
@@ -126,19 +131,12 @@ def make_dll(source, model_info, dtype="double"):
     if dtype == generate.F32 and not ALLOW_SINGLE_PRECISION_DLLS:
         dtype = generate.F64  # Force 64-bit dll
 
-    if dtype == generate.F32: # 32-bit dll
-        tempfile_prefix = 'sas_' + model_info['name'] + '32_'
-    elif dtype == generate.F64:
-        tempfile_prefix = 'sas_' + model_info['name'] + '64_'
-    else:
-        tempfile_prefix = 'sas_' + model_info['name'] + '128_'
- 
     source = generate.convert_type(source, dtype)
     newest = generate.timestamp(model_info)
     dll = dll_path(model_info, dtype)
     if not os.path.exists(dll) or os.path.getmtime(dll) < newest:
-        # Replace with a proper temp file
-        fid, filename = tempfile.mkstemp(suffix=".c", prefix=tempfile_prefix)
+        basename = dll_name(model_info, dtype) + "_"
+        fid, filename = tempfile.mkstemp(suffix=".c", prefix=basename)
         os.fdopen(fid, "w").write(source)
         command = COMPILE%{"source":filename, "output":dll}
         print("Compile command: "+command)
