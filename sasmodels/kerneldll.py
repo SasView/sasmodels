@@ -94,13 +94,8 @@ def dll_path(model_info, dtype="double"):
     """
     from os.path import join as joinpath, split as splitpath, splitext
     basename = splitext(splitpath(model_info['filename'])[1])[0]
-    if np.dtype(dtype) == generate.F32:
-        basename += "32"
-    elif np.dtype(dtype) == generate.F64:
-        basename += "64"
-    else:
-        basename += "128"
-    return joinpath(DLL_PATH, basename+'.so')
+    bits = 8*np.dtype(dtype).itemsize
+    return joinpath(DLL_PATH, "sas_%s%d.so"%(basename, bits))
 
 
 def make_dll(source, model_info, dtype="double"):
