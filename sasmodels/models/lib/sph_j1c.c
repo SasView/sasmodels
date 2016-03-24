@@ -6,6 +6,7 @@
 * in this case it is likely cancellation errors in the original expression
 * using double precision that are the source.
 */
+double sph_j1c(double q);
 
 // The choice of the number of terms in the series and the cutoff value for
 // switching between series and direct calculation depends on the numeric
@@ -42,7 +43,6 @@
 #define SPH_J1C_CUTOFF 0.7
 #endif
 
-double sph_j1c(double q);
 double sph_j1c(double q)
 {
     if (q < SPH_J1C_CUTOFF) {

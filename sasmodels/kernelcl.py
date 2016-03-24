@@ -47,6 +47,7 @@ drivers produce compiler output even when there is no error.  You
 can see the output by setting PYOPENCL_COMPILER_OUTPUT=1.  It should be
 harmless, albeit annoying.
 """
+from __future__ import print_function
 import os
 import warnings
 
@@ -168,7 +169,7 @@ def compile_model(context, source, dtype, fast=False):
         source_list.insert(0, "#define USE_SINCOS\n")
     options = (get_fast_inaccurate_build_options(context.devices[0])
                if fast else [])
-    source = "\n".join(source)
+    source = "\n".join(source_list)
     program = cl.Program(context, source).build(options=options)
     return program
 
@@ -438,7 +439,7 @@ class GpuKernel(object):
     Call :meth:`release` when done with the kernel instance.
     """
     def __init__(self, kernel, model_info, q_vectors, dtype):
-        max_pd = self.info['max_pd']
+        max_pd = model_info['max_pd']
         npars = len(model_info['parameters'])-2
         q_input = GpuInput(q_vectors, dtype)
         self.dtype = dtype

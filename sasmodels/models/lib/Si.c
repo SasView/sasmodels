@@ -1,6 +1,6 @@
+// integral of sin(x)/x Taylor series approximated to w/i 0.1%
 double Si(double x);
 
-// integral of sin(x)/x Taylor series approximated to w/i 0.1%
 double Si(double x)
 {
     double out;

@@ -102,7 +102,7 @@
 #ifndef M_4PI_3
 #  define M_4PI_3 4.18879020478639
 #endif
-static inline double square(double x) { return x*x; }
-static inline double cube(double x) { return x*x*x; }
-static inline double sinc(double x) { return x==0 ? 1.0 : sin(x)/x; }
+static double square(double x) { return x*x; }
+static double cube(double x) { return x*x*x; }
+static double sinc(double x) { return x==0 ? 1.0 : sin(x)/x; }
 

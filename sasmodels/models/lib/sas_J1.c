@@ -38,6 +38,8 @@
 Cephes Math Library Release 2.8:  June, 2000
 Copyright 1984, 1987, 1989, 2000 by Stephen L. Moshier
 */
+double sas_J1(double x);
+double sas_J1c(double x);
 
 constant double RPJ1[8] = {
     -8.99971225705559398224E8,
@@ -134,7 +136,8 @@ constant double PH1J1[8] = {
     3.749989509080821E-001
     };
 
-double sas_J1(double x) {
+double sas_J1(double x)
+{
 
 //Cephes double pression function
 #if FLOAT_SIZE>4

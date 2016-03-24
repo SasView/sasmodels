@@ -73,8 +73,8 @@ void KERNEL_NAME(
   }
 
 #if MAX_PD > 0
+  //printf("Entering polydispersity\n");
 
-printf("Entering polydispersity\n");
   // Since we are no longer looping over the entire polydispersity hypercube
   // for each q, we need to track the normalization values for each q in a
   // separate work vector.
@@ -135,7 +135,7 @@ printf("Entering polydispersity\n");
         partial_weight *= wi;
         if (problem->pd_isvol[k]) partial_volweight *= wi;
       }
-      printf("slow %d: ", loop_index);
+      //printf("slow %d: ", loop_index);
       for (int k=0; k < NPARS; k++) {
         int coord = problem->par_coord[k];
         int this_offset = problem->par_offset[k];
@@ -149,9 +149,9 @@ printf("Entering polydispersity\n");
         }
         offset[k] = this_offset;
         pvec[k] = values[this_offset];
-        printf("p[%d]=v[%d]=%g ", k, offset[k], pvec[k]);
+        //printf("p[%d]=v[%d]=%g ", k, offset[k], pvec[k]);
       }
-      printf("\n");
+      //printf("\n");
       weight = partial_weight * weights[problem->pd_offset[0]+pd_index[0]];
       if (problem->theta_par >= 0) {
         spherical_correction = fabs(cos(M_PI_180*pvec[problem->theta_par]));
@@ -167,13 +167,13 @@ printf("Entering polydispersity\n");
       const double wi = weights[problem->pd_offset[0]+pd_index[0]];
       weight = partial_weight*wi;
       if (problem->pd_isvol[0]) vol_weight *= wi;
-      printf("fast %d: ", loop_index);
+      //printf("fast %d: ", loop_index);
       for (int k=0; k < problem->fast_coord_count; k++) {
         const int pindex = problem->fast_coord_pars[k];
         pvec[pindex] = values[++offset[pindex]];
-        printf("p[%d]=v[%d]=%g ", pindex, offset[pindex], pvec[pindex]);
+        //printf("p[%d]=v[%d]=%g ", pindex, offset[pindex], pvec[pindex]);
       }
-      printf("\n");
+      //printf("\n");
       if (problem->theta_par == problem->pd_par[0]) {
         weight *= fabs(cos(M_PI_180*pvec[problem->theta_par]));
       }

@@ -1,6 +1,9 @@
 /*
     Functions for WRC implementation of flexible cylinders
 */
+double Sk_WR(double q, double L, double b);
+
+
 static double
 AlphaSquare(double x)
 {
@@ -362,7 +365,6 @@ Sexvnew(double q, double L, double b)
     return (yy);
 }
 
-double Sk_WR(double q, double L, double b);
 double Sk_WR(double q, double L, double b)
 {
     //
