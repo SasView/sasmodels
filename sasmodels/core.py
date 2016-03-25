@@ -28,6 +28,21 @@ __all__ = [
     "build_model", "call_kernel", "call_ER_VR",
 ]
 
+try:
+    # Python 3.5 and up
+    from importlib.util import spec_from_file_location, module_from_spec
+    def load_module(fullname, path):
+        spec = spec_from_file_location(fullname, path)
+        module = module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+except ImportError:
+    # CRUFT: python 2
+    import imp
+    def load_module(fullname, path):
+        module = imp.load_source(fullname, path)
+        return module
+
 def list_models():
     """
     Return the list of available models on the model path.
@@ -49,7 +64,11 @@ def load_model(model_name, **kw):
     """
     Load model info and build model.
     """
-    return build_model(load_model_info(model_name), **kw)
+    if model_name.endswith('.py'):
+        model_info = load_model_info_from_path(model_name)
+    else:
+        model_info = load_model_info(model_name)
+    return build_model(model_info, **kw)
 
 def load_model_info_from_path(path):
     # Pull off the last .ext if it exists; there may be others
@@ -62,7 +81,8 @@ def load_model_info_from_path(path):
     # Placing the model in the 'sasmodels.custom' name space, even
     # though it doesn't actually exist.  imp.load_source doesn't seem
     # to care.
-    kernel_module = imp.load_source('sasmodels.custom.'+name, path)
+    import sasmodels.custom
+    kernel_module = load_module('sasmodels.custom.'+name, path)
 
     # Now that we have the module, we can load it as usual
     model_info = generate.make_model_info(kernel_module)

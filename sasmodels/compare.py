@@ -306,14 +306,26 @@ def parlist(model_info, pars, is2d):
     Format the parameter list for printing.
     """
     lines = []
-    for p in model_info['parameters'].type['2d' if is2d else '1d']:
-        fields = dict(
-            value=pars.get(p.name, p.default),
-            pd=pars.get(p.name+"_pd", 0.),
-            n=int(pars.get(p.name+"_pd_n", 0)),
-            nsigma=pars.get(p.name+"_pd_nsgima", 3.),
-            type=pars.get(p.name+"_pd_type", 'gaussian'))
-        lines.append(_format_par(p.name, **fields))
+    parameters = model_info['parameters']
+    for p in parameters.type['2d' if is2d else '1d']:
+        if p.length > 1:
+            for k in range(p.length):
+                ext = "[%d]"%k
+                fields = dict(
+                    value=pars.get(p.id+ext, p.default),
+                    pd=pars.get(p.id+"_pd"+ext, 0.),
+                    n=int(pars.get(p.id+"_pd_n"+ext, 0)),
+                    nsigma=pars.get(p.id+"_pd_nsgima"+ext, 3.),
+                    type=pars.get(p.id+"_pd_type"+ext, 'gaussian'))
+                lines.append(_format_par(p.id+ext, **fields))
+        else:
+            fields = dict(
+                value=pars.get(p.id, p.default),
+                pd=pars.get(p.id+"_pd", 0.),
+                n=int(pars.get(p.id+"_pd_n", 0)),
+                nsigma=pars.get(p.id+"_pd_nsgima", 3.),
+                type=pars.get(p.id+"_pd_type", 'gaussian'))
+            lines.append(_format_par(p.name, **fields))
     return "\n".join(lines)
 
     #return "\n".join("%s: %s"%(p, v) for p, v in sorted(pars.items()))
@@ -654,15 +666,19 @@ def get_pars(model_info, use_demo=False):
     Extract demo parameters from the model definition.
     """
     # Get the default values for the parameters
-    pars = dict((p.name, p.default) for p in model_info['parameters'])
-
-    # Fill in default values for the polydispersity parameters
+    pars = {}
     for p in model_info['parameters']:
-        if p.type in ('volume', 'orientation'):
-            pars[p.name+'_pd'] = 0.0
-            pars[p.name+'_pd_n'] = 0
-            pars[p.name+'_pd_nsigma'] = 3.0
-            pars[p.name+'_pd_type'] = "gaussian"
+        parts = [('', p.default)]
+        if p.polydisperse:
+            parts.append(('_pd', 0.0))
+            parts.append(('_pd_n', 0))
+            parts.append(('_pd_nsigma', 3.0))
+            parts.append(('_pd_type', "gaussian"))
+        for ext, val in parts:
+            if p.length > 1:
+                dict(("%s%s[%d]"%(p.id,ext,k), val) for k in range(p.length))
+            else:
+                pars[p.id+ext] = val
 
     # Plug in values given in demo
     if use_demo:
@@ -692,7 +708,10 @@ def parse_opts():
 
     name = args[0]
     try:
-        model_info = core.load_model_info(name)
+        if name.endswith('.py'):
+            model_info = core.load_model_info_from_path(name)
+        else:
+            model_info = core.load_model_info(name)
     except ImportError, exc:
         print(str(exc))
         print("Could not find model; use one of:\n    " + models)
@@ -767,10 +786,10 @@ def parse_opts():
     # pylint: enable=bad-whitespace
 
     if len(engines) == 0:
-        engines.extend(['single', 'sasview'])
+        engines.extend(['single', 'double'])
     elif len(engines) == 1:
-        if engines[0][0] != 'sasview':
-            engines.append('sasview')
+        if engines[0][0] != 'double':
+            engines.append('double')
         else:
             engines.append('single')
     elif len(engines) > 2:

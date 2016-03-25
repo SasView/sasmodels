@@ -235,7 +235,7 @@ class ParameterTable(object):
                 low, high = ref.limits
                 if int(low) != low or int(high) != high or low<0 or high>20:
                     raise ValueError("expected limits on %s to be within [0, 20]"%ref.name)
-                p.length = low
+                p.length = high
 
     def _set_defaults(self):
         # Construct default values, including vector defaults
