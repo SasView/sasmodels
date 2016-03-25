@@ -176,7 +176,7 @@ def get_weights(parameter, values):
     """
     value = values.get(parameter.name, parameter.default)
     if parameter.type not in ('volume', 'orientation'):
-        return [value], [1.0]
+        return [value], []
     relative = parameter.type == 'volume'
     limits = parameter.limits
     disperser = values.get(parameter.name+'_pd_type', 'gaussian')
@@ -225,7 +225,7 @@ def call_kernel(kernel, pars, cutoff=0, mono=False):
     else:
         active = lambda name: True
 
-    vw_pairs = [(get_weights(p, pars) if active(p.name) else ([p.default], [1.0]))
+    vw_pairs = [(get_weights(p, pars) if active(p.name) else ([p.default], []))
                 for p in kernel.info['parameters']]
     values, weights = zip(*vw_pairs)
 

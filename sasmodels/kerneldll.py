@@ -262,15 +262,14 @@ class DllKernel(object):
         real = (np.float32 if self.q_input.dtype == generate.F32
                 else np.float64 if self.q_input.dtype == generate.F64
                 else np.float128)
-        assert details.dtype == np.int32
+        assert isinstance(details, generate.CoordinationDetails)
         assert weights.dtype == real and values.dtype == real
 
         max_pd = self.info['max_pd']
-        start, stop = 0, details[4*max_pd-1]
-        print("in kerneldll")
-        print("details", details)
-        print("weights", weights)
-        print("values", values)
+        start, stop = 0, details.total_pd
+        #print("in kerneldll")
+        #print("weights", weights)
+        #print("values", values)
         args = [
             self.q_input.nq, # nq
             start, # pd_start

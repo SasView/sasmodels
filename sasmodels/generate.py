@@ -507,7 +507,7 @@ def make_source(model_info):
         # Model doesn't have volume.  We could make the kernel run a little
         # faster by not using/transferring the volume normalizations, but
         # the ifdef's reduce readability more than is worthwhile.
-        call_volume = "#define CALL_VOLUME(v) 0.0"
+        call_volume = "#define CALL_VOLUME(v) 1.0"
     source.append(call_volume)
 
     refs = ["q[i]"] + _call_pars("v.", iq_parameters)
@@ -578,90 +578,104 @@ def process_parameters(model_info):
     # code easier to write, so we will leave it in for now.
     model_info['max_pd'] = min(partable.num_pd, MAX_PD)
 
-def mono_details(model_info):
-    # TODO: move max_pd into ParameterTable?
-    max_pd = model_info['max_pd']
-    pars = model_info['parameters'].kernel_pars()
-    npars = len(pars)
-    par_offset = 5*max_pd
-    constants_offset = par_offset + 3*npars
+class CoordinationDetails(object):
+    def __init__(self, model_info):
+        max_pd = model_info['max_pd']
+        npars = len(model_info['parameters'].kernel_pars())
+        par_offset = 4*max_pd
+        self.details = np.zeros(par_offset + 3*npars + 4, 'i4')
 
-    details = np.zeros(constants_offset + 2, 'int32')
-    details[0*max_pd:1*max_pd] = range(max_pd)       # pd_par: arbitrary order; use first
-    details[1*max_pd:2*max_pd] = [1]*max_pd          # pd_length: only one element
-    details[2*max_pd:3*max_pd] = range(max_pd)       # pd_offset: consecutive 1.0 weights
-    details[3*max_pd:4*max_pd] = [1]*max_pd          # pd_stride: vectors of length 1
-    details[4*max_pd:5*max_pd] = [0]*max_pd          # pd_isvol: doens't matter if no norm
-    details[par_offset+0*npars:par_offset+1*npars] = range(2, npars+2) # par_offset: skip scale and background
-    details[par_offset+1*npars:par_offset+2*npars] = [0]*npars         # no coordination
-    #details[p+npars] = 1 # par_coord[0] is coordinated with the first par?
-    details[par_offset+2*npars:par_offset+3*npars] = 0 # fast coord with 0
-    details[constants_offset]   = 1     # fast_coord_count: one fast index
-    details[constants_offset+1] = -1    # theta_par: None
+        # generate views on different parts of the array
+        self._pd_par     = self.details[0*max_pd:1*max_pd]
+        self._pd_length  = self.details[1*max_pd:2*max_pd]
+        self._pd_offset  = self.details[2*max_pd:3*max_pd]
+        self._pd_stride  = self.details[3*max_pd:4*max_pd]
+        self._par_offset = self.details[par_offset+0*npars:par_offset+1*npars]
+        self._par_coord  = self.details[par_offset+1*npars:par_offset+2*npars]
+        self._pd_coord   = self.details[par_offset+2*npars:par_offset+3*npars]
+
+        # theta_par is fixed
+        self.details[-1] = model_info['parameters'].theta_par
+
+    @property
+    def ctypes(self): return self.details.ctypes
+    @property
+    def pd_par(self): return self._pd_par
+    @property
+    def pd_length(self): return self._pd_length
+    @property
+    def pd_offset(self): return self._pd_offset
+    @property
+    def pd_stride(self): return self._pd_stride
+    @property
+    def pd_coord(self): return self._pd_coord
+    @property
+    def par_coord(self): return self._par_coord
+    @property
+    def par_offset(self): return self._par_offset
+    @property
+    def num_coord(self): return self.details[-2]
+    @num_coord.setter
+    def num_coord(self, v): self.details[-2] = v
+    @property
+    def total_pd(self): return self.details[-3]
+    @total_pd.setter
+    def total_pd(self, v): self.details[-3] = v
+    @property
+    def num_active(self): return self.details[-4]
+    @num_active.setter
+    def num_active(self, v): self.details[-4] = v
+
+    def show(self):
+        print("total_pd", self.total_pd)
+        print("num_active", self.num_active)
+        print("pd_par", self.pd_par)
+        print("pd_length", self.pd_length)
+        print("pd_offset", self.pd_offset)
+        print("pd_stride", self.pd_stride)
+        print("par_offsets", self.par_offset)
+        print("num_coord", self.num_coord)
+        print("par_coord", self.par_coord)
+        print("pd_coord", self.pd_coord)
+        print("theta par", self.details[-1])
+
+def mono_details(model_info):
+    details = CoordinationDetails(model_info)
+    # The zero defaults for monodisperse systems are mostly fine
+    details.par_offset[:] = np.arange(2, len(details.par_offset)+2)
     return details
 
 def poly_details(model_info, weights):
     weights = weights[2:]
-
-    # TODO: move max_pd into ParameterTable?
     max_pd = model_info['max_pd']
-    pars = model_info['parameters'].kernel_pars()
-    npars = len(pars)
-    par_offset = 5*max_pd
-    constants_offset = par_offset + 3*npars
 
     # Decreasing list of polydispersity lengths
     # Note: the reversing view, x[::-1], does not require a copy
     pd_length = np.array([len(w) for w in weights])
+    num_active = np.sum(pd_length>1)
+    if num_active > max_pd:
+        raise ValueError("Too many polydisperse parameters")
+
     pd_offset = np.cumsum(np.hstack((0, pd_length)))
-    pd_isvol = np.array([p.type=='volume' for p in pars])
-    idx = np.argsort(pd_length)[::-1][:max_pd]
-    pd_stride = np.cumprod(np.hstack((1, pd_length[idx][:-1])))
-    par_offsets = np.cumsum(np.hstack((2, pd_length)))[:-1]
-    coord_offset = par_offset+npars
-    fast_coord_offset = par_offset+2*npars
+    idx = np.argsort(pd_length)[::-1][:num_active]
+    par_length = np.array([max(len(w),1) for w in weights])
+    pd_stride = np.cumprod(np.hstack((1, par_length[idx])))
+    par_offsets = np.cumsum(np.hstack((2, par_length)))
 
-    theta_par = -1
-    if 'theta_par' in model_info:
-        theta_par = model_info['theta_par']
-        if theta_par >= 0 and pd_length[theta_par] <= 1:
-            theta_par = -1
-
-    details = np.empty(constants_offset + 2, 'int32')
-    details[0*max_pd:1*max_pd] = idx             # pd_par
-    details[1*max_pd:2*max_pd] = pd_length[idx]
-    details[2*max_pd:3*max_pd] = pd_offset[idx]
-    details[3*max_pd:4*max_pd] = pd_stride
-    details[4*max_pd:5*max_pd] = pd_isvol[idx]
-    details[par_offset+0*npars:par_offset+1*npars] = par_offsets
-    details[par_offset+1*npars:par_offset+2*npars] = 0  # no coordination for most
-    for k,parameter_num in enumerate(idx):
-        details[coord_offset+parameter_num] = 2**k
-    details[fast_coord_offset] = idx[0]
-    details[fast_coord_offset+1:fast_coord_offset+npars] = 0  # no fast coord with 0
-    details[constants_offset] = 1   # fast_coord_count: one fast index
-    details[constants_offset+1] = theta_par
-    print("polydispersity details")
-    print_details(model_info, details)
+    details = CoordinationDetails(model_info)
+    details.pd_par[:num_active] = idx
+    details.pd_length[:num_active] = pd_length[idx]
+    details.pd_offset[:num_active] = pd_offset[idx]
+    details.pd_stride[:num_active] = pd_stride[:-1]
+    details.par_offset[:] = par_offsets[:-1]
+    details.total_pd = pd_stride[-1]
+    details.num_active = num_active
+    # Without constraints coordinated parameters are just the pd parameters
+    details.par_coord[:num_active] = idx
+    details.pd_coord[:num_active] = 2**np.arange(num_active)
+    details.num_coord = num_active
+    #details.show()
     return details
-
-def print_details(model_info, details):
-    max_pd = model_info['max_pd']
-    pars = model_info['parameters'].kernel_pars()
-    npars = len(pars)
-    par_offset = 5*max_pd
-    constants_offset = par_offset + 3*npars
-
-    print("pd_par", details[0*max_pd:1*max_pd])
-    print("pd_length", details[1*max_pd:2*max_pd])
-    print("pd_offset", details[2*max_pd:3*max_pd])
-    print("pd_stride", details[3*max_pd:4*max_pd])
-    print("pd_isvol", details[4*max_pd:5*max_pd])
-    print("par_offsets", details[par_offset+0*npars:par_offset+1*npars])
-    print("par_coord", details[par_offset+1*npars:par_offset+2*npars])
-    print("fast_coord_pars", details[par_offset+2*npars:par_offset+3*npars])
-    print("fast_coord_count", details[constants_offset])
-    print("theta par", details[constants_offset+1])
 
 def constrained_poly_details(model_info, weights, constraints):
     # Need to find the independently varying pars and sort them
