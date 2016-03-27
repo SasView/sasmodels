@@ -265,7 +265,6 @@ class DllKernel(object):
         assert isinstance(details, generate.CoordinationDetails)
         assert weights.dtype == real and values.dtype == real
 
-        max_pd = self.info['max_pd']
         start, stop = 0, details.total_pd
         #print("in kerneldll")
         #print("weights", weights)

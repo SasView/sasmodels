@@ -307,25 +307,14 @@ def parlist(model_info, pars, is2d):
     """
     lines = []
     parameters = model_info['parameters']
-    for p in parameters.type['2d' if is2d else '1d']:
-        if p.length > 1:
-            for k in range(p.length):
-                ext = "[%d]"%k
-                fields = dict(
-                    value=pars.get(p.id+ext, p.default),
-                    pd=pars.get(p.id+"_pd"+ext, 0.),
-                    n=int(pars.get(p.id+"_pd_n"+ext, 0)),
-                    nsigma=pars.get(p.id+"_pd_nsgima"+ext, 3.),
-                    type=pars.get(p.id+"_pd_type"+ext, 'gaussian'))
-                lines.append(_format_par(p.id+ext, **fields))
-        else:
-            fields = dict(
-                value=pars.get(p.id, p.default),
-                pd=pars.get(p.id+"_pd", 0.),
-                n=int(pars.get(p.id+"_pd_n", 0)),
-                nsigma=pars.get(p.id+"_pd_nsgima", 3.),
-                type=pars.get(p.id+"_pd_type", 'gaussian'))
-            lines.append(_format_par(p.name, **fields))
+    for p in parameters.user_parameters(pars, is2d):
+        fields = dict(
+            value=pars.get(p.id, p.default),
+            pd=pars.get(p.id+"_pd", 0.),
+            n=int(pars.get(p.id+"_pd_n", 0)),
+            nsigma=pars.get(p.id+"_pd_nsgima", 3.),
+            type=pars.get(p.id+"_pd_type", 'gaussian'))
+        lines.append(_format_par(p.name, **fields))
     return "\n".join(lines)
 
     #return "\n".join("%s: %s"%(p, v) for p, v in sorted(pars.items()))
@@ -667,7 +656,7 @@ def get_pars(model_info, use_demo=False):
     """
     # Get the default values for the parameters
     pars = {}
-    for p in model_info['parameters']:
+    for p in model_info['parameters'].call_parameters:
         parts = [('', p.default)]
         if p.polydisperse:
             parts.append(('_pd', 0.0))
@@ -676,7 +665,7 @@ def get_pars(model_info, use_demo=False):
             parts.append(('_pd_type', "gaussian"))
         for ext, val in parts:
             if p.length > 1:
-                dict(("%s%s[%d]"%(p.id,ext,k), val) for k in range(p.length))
+                dict(("%s%d%s"%(p.id,k,ext), val) for k in range(p.length))
             else:
                 pars[p.id+ext] = val
 
@@ -708,10 +697,7 @@ def parse_opts():
 
     name = args[0]
     try:
-        if name.endswith('.py'):
-            model_info = core.load_model_info_from_path(name)
-        else:
-            model_info = core.load_model_info(name)
+        model_info = core.load_model_info(name)
     except ImportError, exc:
         print(str(exc))
         print("Could not find model; use one of:\n    " + models)

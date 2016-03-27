@@ -183,7 +183,6 @@ from __future__ import print_function
 #TODO: determine which functions are useful outside of generate
 #__all__ = ["model_info", "make_doc", "make_source", "convert_type"]
 
-import sys
 from os.path import abspath, dirname, join as joinpath, exists, basename, \
     splitext, getmtime
 import re
@@ -197,8 +196,6 @@ from .modelinfo import ModelInfo, Parameter, make_parameter_table
 # TODO: identify model files which have changed since loading and reload them.
 
 TEMPLATE_ROOT = dirname(__file__)
-
-MAX_PD = 4
 
 F16 = np.dtype('float16')
 F32 = np.dtype('float32')
@@ -477,31 +474,27 @@ def make_source(model_info):
     # Build initial sources
     source = [kernel_header] + user_code
 
-    vol_parameters = partable.kernel_pars('volume')
-    iq_parameters = partable.kernel_pars('1d')
-    iqxy_parameters = partable.kernel_pars('2d')
-
     # Make parameters for q, qx, qy so that we can use them in declarations
     q, qx, qy = [Parameter(name=v) for v in ('q', 'qx', 'qy')]
     # Generate form_volume function, etc. from body only
     if model_info['form_volume'] is not None:
-        pars = vol_parameters
+        pars = partable.form_volume_parameters
         source.append(_gen_fn('form_volume', pars, model_info['form_volume']))
     if model_info['Iq'] is not None:
-        pars = [q] + iq_parameters
+        pars = [q] + partable.iq_parameters
         source.append(_gen_fn('Iq', pars, model_info['Iq']))
     if model_info['Iqxy'] is not None:
-        pars = [qx, qy] + iqxy_parameters
+        pars = [qx, qy] + partable.iqxy_parameters
         source.append(_gen_fn('Iqxy', pars, model_info['Iqxy']))
 
     # Define the parameter table
     source.append("#define PARAMETER_TABLE \\")
     source.append("\\\n".join(p.as_definition()
-                                  for p in model_info['parameters'][2:]))
+                              for p in partable.kernel_parameters))
 
     # Define the function calls
-    if vol_parameters:
-        refs = _call_pars("v.", vol_parameters)
+    if partable.form_volume_parameters:
+        refs = _call_pars("v.", partable.form_volume_parameters)
         call_volume = "#define CALL_VOLUME(v) form_volume(%s)" % (",".join(refs))
     else:
         # Model doesn't have volume.  We could make the kernel run a little
@@ -510,11 +503,11 @@ def make_source(model_info):
         call_volume = "#define CALL_VOLUME(v) 1.0"
     source.append(call_volume)
 
-    refs = ["q[i]"] + _call_pars("v.", iq_parameters)
+    refs = ["q[i]"] + _call_pars("v.", partable.iq_parameters)
     call_iq = "#define CALL_IQ(q,i,v) Iq(%s)" % (",".join(refs))
     if _have_Iqxy(user_code):
         # Call 2D model
-        refs = ["q[2*i]", "q[2*i+1]"] + _call_pars("v.", iqxy_parameters)
+        refs = ["q[2*i]", "q[2*i+1]"] + _call_pars("v.", partable.iqxy_parameters)
         call_iqxy = "#define CALL_IQ(q,i,v) Iqxy(%s)" % (",".join(refs))
     else:
         # Call 1D model with sqrt(qx^2 + qy^2)
@@ -524,8 +517,8 @@ def make_source(model_info):
         call_iqxy = "#define CALL_IQ(q,i,v) Iq(%s)" % (",".join(pars_sqrt))
 
     # Fill in definitions for numbers of parameters
-    source.append("#define MAX_PD %s"%model_info['max_pd'])
-    source.append("#define NPARS %d"%(len(partable.kernel_pars())))
+    source.append("#define MAX_PD %s"%partable.max_pd)
+    source.append("#define NPARS %d"%partable.npars)
 
     # TODO: allow mixed python/opencl kernels?
 
@@ -545,25 +538,6 @@ def make_source(model_info):
 
     return '\n'.join(source)
 
-def categorize_parameters(pars):
-    """
-    Categorize the parameters by use:
-
-    * *pd* list of polydisperse parameters in order; gui should test whether
-      they are in *2d* or *magnetic* as appropriate for the data
-    * *1d* set of parameters that are used to compute 1D patterns
-    * *2d* set of parameters that are used to compute 2D patterns (which
-      includes all 1D parameters)
-    * *magnetic* set of parameters that are used to compute magnetic
-      patterns (which includes all 1D and 2D parameters)
-    * *pd_relative* is the set of parameters with relative distribution
-      width (e.g., radius +/- 10%) rather than absolute distribution
-      width (e.g., theta +/- 6 degrees).
-    * *theta_par* is the index of the polar angle polydispersion parameter
-      or -1 if no such parameter exists
-    """
-    par_set = {}
-
 def process_parameters(model_info):
     """
     Process parameter block, precalculating parameter details.
@@ -572,16 +546,11 @@ def process_parameters(model_info):
     if model_info.get('demo', None) is None:
         model_info['demo'] = partable.defaults
 
-    # Don't use more polydisperse parameters than are available in the model
-    # Note: we can do polydispersity on arbitrary parameters, so it is not
-    # clear that this is a good idea; it does however make the poly_details
-    # code easier to write, so we will leave it in for now.
-    model_info['max_pd'] = min(partable.num_pd, MAX_PD)
-
 class CoordinationDetails(object):
     def __init__(self, model_info):
-        max_pd = model_info['max_pd']
-        npars = len(model_info['parameters'].kernel_pars())
+        parameters = model_info['parameters']
+        max_pd = parameters.max_pd
+        npars = parameters.npars
         par_offset = 4*max_pd
         self.details = np.zeros(par_offset + 3*npars + 4, 'i4')
 
@@ -595,7 +564,7 @@ class CoordinationDetails(object):
         self._pd_coord   = self.details[par_offset+2*npars:par_offset+3*npars]
 
         # theta_par is fixed
-        self.details[-1] = model_info['parameters'].theta_par
+        self.details[-1] = parameters.theta_offset
 
     @property
     def ctypes(self): return self.details.ctypes
@@ -646,14 +615,14 @@ def mono_details(model_info):
     return details
 
 def poly_details(model_info, weights):
-    weights = weights[2:]
-    max_pd = model_info['max_pd']
+    #print("weights",weights)
+    weights = weights[2:] # Skip scale and background
 
     # Decreasing list of polydispersity lengths
     # Note: the reversing view, x[::-1], does not require a copy
     pd_length = np.array([len(w) for w in weights])
     num_active = np.sum(pd_length>1)
-    if num_active > max_pd:
+    if num_active > model_info['parameters'].max_pd:
         raise ValueError("Too many polydisperse parameters")
 
     pd_offset = np.cumsum(np.hstack((0, pd_length)))
@@ -744,10 +713,6 @@ def make_model_info(kernel_module):
       tuple with composition type ('product' or 'mixture') and a list of
       *model_info* blocks for the composition objects.  This allows us to
       build complete product and mixture models from just the info.
-    * *max_pd* is the max polydispersity dimension.  This is constant and
-      should not be reset.  You may be able to change it when the program
-      starts by setting *sasmodels.generate.MAX_PD*.
-
     """
     # TODO: maybe turn model_info into a class ModelDefinition
     #print("make parameter table", kernel_module.parameters)
@@ -836,7 +801,6 @@ def make_doc(model_info):
     return DOC_HEADER % subst
 
 
-
 def demo_time():
     """
     Show how long it takes to process a model.
@@ -852,14 +816,13 @@ def main():
     """
     Program which prints the source produced by the model.
     """
+    import sys
+    from sasmodels.core import make_model_by_name
     if len(sys.argv) <= 1:
         print("usage: python -m sasmodels.generate modelname")
     else:
         name = sys.argv[1]
-        import sasmodels.models
-        __import__('sasmodels.models.' + name)
-        model = getattr(sasmodels.models, name)
-        model_info = make_model_info(model)
+        model_info = make_model_by_name(name)
         source = make_source(model_info)
         print(source)
 

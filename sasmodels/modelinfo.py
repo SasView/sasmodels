@@ -4,6 +4,8 @@ import numpy as np
 # TODO: turn ModelInfo into a proper class
 ModelInfo = dict
 
+MAX_PD = 4
+
 COMMON_PARAMETERS = [
     ["scale", "", 1, [0, np.inf], "", "Source intensity"],
     ["background", "1/cm", 1e-3, [0, np.inf], "", "Source background"],
@@ -152,6 +154,7 @@ class Parameter(object):
 
     *length* is the length of the field if it is a vector field
     *length_control* is the parameter which sets the vector length
+    *is_control* is True if the parameter is a control parameter for a vector
     *polydisperse* is true if the parameter accepts a polydispersity
     *relative_pd* is true if that polydispersity is relative
 
@@ -162,17 +165,18 @@ class Parameter(object):
                  type='', description=''):
         self.id = name.split('[')[0].strip()
         self.name = name
+        self.units = units
         self.default = default
         self.limits = limits
         self.type = type
         self.description = description
         self.choices = None
 
-        # Length and length_control will be filled in by
-        # set_vector_length_from_reference(partable) once the complete
+        # Length and length_control will be filled in once the complete
         # parameter table is available.
         self.length = 1
         self.length_control = None
+        self.is_control = False
 
         # TODO: need better control over whether a parameter is polydisperse
         self.polydisperse = False
@@ -215,39 +219,119 @@ class Parameter(object):
     def __repr__(self):
         return "P<%s>"%self.name
 
+
 class ParameterTable(object):
+    """
+    ParameterTable manages the list of available parameters.
+
+    There are a couple of complications which mean that the list of parameters
+    for the kernel differs from the list of parameters that the user sees.
+
+    (1) Common parameters.  Scale and background are implicit to every model,
+    but are not passed to the kernel.
+
+    (2) Vector parameters.  Vector parameters are passed to the kernel as a
+    pointer to an array, e.g., thick[], but they are seen by the user as n
+    separate parameters thick1, thick2, ...
+
+    Therefore, the parameter table is organized by how it is expected to be
+    used. The following information is needed to set up the kernel functions:
+
+    * *kernel_parameters* is the list of parameters in the kernel parameter
+    table, with vector parameter p declared as p[].
+
+    * *iq_parameters* is the list of parameters to the Iq(q, ...) function,
+    with vector parameter p sent as p[].
+
+    * *iqxy_parameters* is the list of parameters to the Iqxy(qx, qy, ...)
+    function, with vector parameter p sent as p[].
+
+    * *form_volume_parameters* is the list of parameters to the form_volume(...)
+    function, with vector parameter p sent as p[].
+
+    Problem details, which sets up the polydispersity loops, requires the
+    following:
+
+    * *theta_offset* is the offset of the theta parameter in the kernel parameter
+    table, with vector parameters counted as n individual parameters
+    p1, p2, ..., or offset is -1 if there is no theta parameter.
+
+    * *max_pd* is the maximum number of polydisperse parameters, with vector
+    parameters counted as n individual parameters p1, p2, ...  Note that
+    this number is limited to sasmodels.modelinfo.MAX_PD.
+
+    * *npars* is the total number of parameters to the kernel, with vector
+    parameters counted as n individual parameters p1, p2, ...
+
+    * *call_parameters* is the complete list of parameters to the kernel,
+    including scale and background, with vector parameters recorded as
+    individual parameters p1, p2, ...
+
+    * *active_1d* is the set of names that may be polydisperse for 1d data
+
+    * *active_2d* is the set of names that may be polydisperse for 2d data
+
+    User parameters are the set of parameters visible to the user, including
+    the scale and background parameters that the kernel does not see.  User
+    parameters don't use vector notation, and instead use p1, p2, ...
+
+    * *control_parameters* is the
+
+    """
     # scale and background are implicit parameters
     COMMON = [Parameter(*p) for p in COMMON_PARAMETERS]
 
     def __init__(self, parameters):
-        self.parameters = self.COMMON + parameters
-        self._name_table= dict((p.name, p) for p in parameters)
-        self._categorize_parameters()
-
+        self.kernel_parameters = parameters
         self._set_vector_lengths()
+        self._make_call_parameter_list()
+        self._categorize_parameters()
         self._set_defaults()
+        #self._name_table= dict((p.id, p) for p in parameters)
 
     def _set_vector_lengths(self):
         # Sort out the length of the vector parameters such as thickness[n]
-        for p in self.parameters:
+        for p in self.kernel_parameters:
             if p.length_control:
-                ref = self._name_table[p.length_control]
+                for ref in self.kernel_parameters:
+                    if ref.id == p.length_control:
+                        break
+                else:
+                    raise ValueError("no reference variable %r for %s"
+                                     % (p.length_control, p.name))
+                ref.is_control = True
                 low, high = ref.limits
                 if int(low) != low or int(high) != high or low<0 or high>20:
-                    raise ValueError("expected limits on %s to be within [0, 20]"%ref.name)
+                    raise ValueError("expected limits on %s to be within [0, 20]"
+                                     % ref.name)
                 p.length = high
 
     def _set_defaults(self):
         # Construct default values, including vector defaults
         defaults = {}
-        for p in self.parameters:
+        for p in self.call_parameters:
             if p.length == 1:
                 defaults[p.id] = p.default
             else:
-                for k in range(p.length):
-                    defaults["%s[%d]"%(p.id, k)] = p.default
+                for k in range(1, p.length+1):
+                    defaults["%s%d"%(p.id, k)] = p.default
         self.defaults = defaults
 
+    def _make_call_parameter_list(self):
+        full_list = self.COMMON[:]
+        for p in self.kernel_parameters:
+            if p.length == 1:
+                full_list.append(p)
+            else:
+                for k in range(1, p.length+1):
+                    pk = Parameter(p.id+str(k), p.units, p.default,
+                                   p.limits, p.type, p.description)
+                    pk.polydisperse = p.polydisperse
+                    pk.relative_pd = p.relative_pd
+                    full_list.append(pk)
+        self.call_parameters = full_list
+
+    """ # Suppress these for now until we see how they are used
     def __getitem__(self, k):
         if isinstance(k, (int, slice)):
             return self.parameters[k]
@@ -258,73 +342,132 @@ class ParameterTable(object):
         return key in self._name_table
 
     def __iter__(self):
-        return iter(self.parameters)
-
-    def kernel_pars(self, ptype=None):
-        """
-        Return the parameters to the user kernel which match the given type.
-
-        Types include '1d' for Iq kernels, '2d' for Iqxy kernels and
-        'volume' for form_volume kernels.
-        """
-        # Assumes background and scale are the first two parameters
-        if ptype is None:
-            return self.parameters[2:]
-        else:
-            return [p for p in self.parameters[2:] if p in self.type[ptype]]
+        return iter(self.expanded_parameters)
+    """
 
     def _categorize_parameters(self):
-        """
-        Build parameter categories out of the the parameter definitions.
+        # Set the kernel parameters.  Assumes background and scale are the
+        # first two parameters in the parameter list, but these are not sent
+        # to the underlying kernel functions.
+        self.iq_parameters = [p for p in self.kernel_parameters
+                              if p.type not in ('orientation', 'magnetic')]
+        self.iqxy_parameters = [p for p in self.kernel_parameters
+                                if p.type != 'magnetic']
+        self.form_volume_parameters = [p for p in self.kernel_parameters
+                                       if p.type == 'volume']
 
-        Returns a dictionary of categories.
-
-        Note: these categories are subject to change, depending on the needs of
-        the UI and the needs of the kernel calling function.
-
-        The categories are as follows:
-
-        * *volume* list of volume parameter names
-        * *orientation* list of orientation parameters
-        * *magnetic* list of magnetic parameters
-        * *sld* list of parameters that have no type info
-        * *other* list of parameters that have no type info
-
-        Each parameter is in one and only one category.
-        """
-        pars = self.parameters
-
-        par_type = {
-            'volume': [], 'orientation': [], 'magnetic': [], 'sld': [], 'other': [],
-        }
-        for p in self.parameters:
-            par_type[p.type if p.type else 'other'].append(p)
-        par_type['1d'] = [p for p in pars if p.type not in ('orientation', 'magnetic')]
-        par_type['2d'] = [p for p in pars if p.type != 'magnetic']
-        par_type['pd'] = [p for p in pars if p.polydisperse]
-        par_type['pd_relative'] = [p for p in pars if p.relative_pd]
-        self.type = par_type
-
-        # find index of theta (or whatever variable is used for spherical
-        # normalization during polydispersity...
-        if 'theta' in par_type['2d']:
-            # TODO: may be an off-by 2 bug due to background and scale
-            # TODO: is theta always the polar coordinate?
-            self.theta_par = [k for k,p in enumerate(pars) if p.name=='theta'][0]
+        # Theta offset
+        offset = 0
+        for p in self.kernel_parameters:
+            if p.name == 'theta':
+                self.theta_offset = offset
+                break
+            offset += p.length
         else:
-            self.theta_par = -1
+            self.theta_offset = -1
 
-    @property
-    def num_pd(self):
-        """
-        Number of distributional parameters in the model (polydispersity in
-        shape dimensions and orientational distributions).
-        """
-        return sum(p.length for p in self.type['pd'])
+        # number of polydisperse parameters
+        num_pd = sum(p.length for p in self.kernel_parameters if p.polydisperse)
+        # Don't use more polydisperse parameters than are available in the model
+        # Note: we can do polydispersity on arbitrary parameters, so it is not
+        # clear that this is a good idea; it does however make the poly_details
+        # code easier to write, so we will leave it in for now.
+        self.max_pd = min(num_pd, MAX_PD)
 
-    @property
-    def has_2d(self):
-        return self.type['orientation'] or self.type['magnetic']
+        self.npars = sum(p.length for p in self.kernel_parameters)
+
+        # true if has 2D parameters
+        self.has_2d = any(p.type in ('orientation', 'magnetic')
+                          for p in self.kernel_parameters)
+
+        self.pd_1d = set(p.name for p in self.call_parameters
+                if p.polydisperse and p.type not in ('orientation', 'magnetic'))
+        self.pd_2d = set(p.name for p in self.call_parameters
+                         if p.polydisperse and p.type != 'magnetic')
+
+    def user_parameters(self, pars, is2d):
+        """
+        Return the list of parameters for the given data type.
+
+        Vector parameters are expanded as in place.  If multiple parameters
+        share the same vector length, then the parameters will be interleaved
+        in the result.  The control parameters come first.  For example,
+        if the parameter table is ordered as::
+
+            sld_core
+            sld_shell[num_shells]
+            sld_solvent
+            thickness[num_shells]
+            num_shells
+
+        and *pars[num_shells]=2* then the returned list will be::
+
+            num_shells
+            scale
+            background
+            sld_core
+            sld_shell1
+            thickness1
+            sld_shell2
+            thickness2
+            sld_solvent
+
+        Note that shell/thickness pairs are grouped together in the result
+        even though they were not grouped in the incoming table.  The control
+        parameter is always returned first since the GUI will want to set it
+        early, and rerender the table when it is changed.
+        """
+        control = [p for p in self.kernel_parameters if p.is_control]
+
+        # Gather entries such as name[n] into groups of the same n
+        dependent = dict((p.id, []) for p in control)
+        for p in self.kernel_parameters:
+            if p.length_control is not None:
+                dependent[p.length_control].append(p)
+
+        # Gather entries such as name[4] into groups of the same length
+        fixed = {}
+        for p in self.kernel_parameters:
+            if p.length > 1 and p.length_control is None:
+                fixed.setdefault(p.length, []).append(p)
+
+        # Using the call_parameters table, we already have expanded forms
+        # for each of the vector parameters; put them in a lookup table
+        expanded_pars = dict((p.name, p) for p in self.call_parameters)
+
+        # Gather the user parameters in order
+        result = control + self.COMMON
+        for p in self.kernel_parameters:
+            if not is2d and p.type in ('orientation', 'magnetic'):
+                pass
+            elif p.is_control:
+                pass # already added
+            elif p.length_control is not None:
+                table = dependent.get(p.length_control, [])
+                if table:
+                    # look up length from incoming parameters
+                    table_length = int(pars[p.length_control])
+                    del dependent[p.length_control] # first entry seen
+                    for k in range(1, table_length+1):
+                        for entry in table:
+                            result.append(expanded_pars[entry.id+str(k)])
+                else:
+                    pass # already processed all entries
+            elif p.length > 1:
+                table = fixed.get(p.length, [])
+                if table:
+                    table_length = p.length
+                    del fixed[p.length]
+                    for k in range(1, table_length+1):
+                        for entry in table:
+                            result.append(expanded_pars[entry.id+str(k)])
+                else:
+                    pass # already processed all entries
+            else:
+                result.append(p)
+
+        return result
+
 
 
 def isstr(x):

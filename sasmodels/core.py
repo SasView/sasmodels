@@ -23,11 +23,6 @@ try:
 except:
     HAVE_OPENCL = False
 
-__all__ = [
-    "list_models", "load_model_info", "precompile_dll",
-    "build_model", "call_kernel", "call_ER_VR",
-]
-
 try:
     # Python 3.5 and up
     from importlib.util import spec_from_file_location, module_from_spec
@@ -42,6 +37,13 @@ except ImportError:
     def load_module(fullname, path):
         module = imp.load_source(fullname, path)
         return module
+
+
+
+__all__ = [
+    "list_models", "load_model_info", "precompile_dll",
+    "build_model", "call_kernel", "call_ER_VR",
+]
 
 def list_models():
     """
@@ -64,29 +66,7 @@ def load_model(model_name, **kw):
     """
     Load model info and build model.
     """
-    if model_name.endswith('.py'):
-        model_info = load_model_info_from_path(model_name)
-    else:
-        model_info = load_model_info(model_name)
-    return build_model(model_info, **kw)
-
-def load_model_info_from_path(path):
-    # Pull off the last .ext if it exists; there may be others
-    name = basename(splitext(path)[0])
-
-    # Not cleaning name since don't need to be able to reload this
-    # model later
-    # Should probably turf the model from sys.modules after we are done...
-
-    # Placing the model in the 'sasmodels.custom' name space, even
-    # though it doesn't actually exist.  imp.load_source doesn't seem
-    # to care.
-    import sasmodels.custom
-    kernel_module = load_module('sasmodels.custom.'+name, path)
-
-    # Now that we have the module, we can load it as usual
-    model_info = generate.make_model_info(kernel_module)
-    return model_info
+    return build_model(load_model_info(model_name), **kw)
 
 def load_model_info(model_name):
     """
@@ -109,9 +89,22 @@ def load_model_info(model_name):
         P_info, Q_info = [load_model_info(p) for p in parts]
         return product.make_product_info(P_info, Q_info)
 
+    return make_model_by_name(model_name)
+
+
+def make_model_by_name(model_name):
+    if model_name.endswith('.py'):
+        path = model_name
+        # Pull off the last .ext if it exists; there may be others
+        name = basename(splitext(path)[0])
+        # Placing the model in the 'sasmodels.custom' name space.
+        from sasmodels import custom
+        kernel_module = load_module('sasmodels.custom.'+name, path)
+    else:
+        from sasmodels import models
+        __import__('sasmodels.models.'+model_name)
+        kernel_module = getattr(models, model_name, None)
     #import sys; print "\n".join(sys.path)
-    __import__('sasmodels.models.'+model_name)
-    kernel_module = getattr(models, model_name, None)
     return generate.make_model_info(kernel_module)
 
 
@@ -195,14 +188,14 @@ def get_weights(parameter, values):
     from the *pars* dictionary for parameter value and parameter dispersion.
     """
     value = values.get(parameter.name, parameter.default)
-    if parameter.type not in ('volume', 'orientation'):
-        return [value], []
-    relative = parameter.type == 'volume'
+    relative = parameter.relative_pd
     limits = parameter.limits
     disperser = values.get(parameter.name+'_pd_type', 'gaussian')
     npts = values.get(parameter.name+'_pd_n', 0)
     width = values.get(parameter.name+'_pd', 0.0)
     nsigma = values.get(parameter.name+'_pd_nsigma', 3.0)
+    if npts == 0 or width == 0:
+        return [value], []
     value, weight = weights.get_weights(
         disperser, npts, width, nsigma, value, limits, relative)
     return value, weight / np.sum(weight)
@@ -234,19 +227,19 @@ def call_kernel(kernel, pars, cutoff=0, mono=False):
 
     *mono* is True if polydispersity should be set to none on all parameters.
     """
+    parameters = kernel.info['parameters']
     if mono:
         active = lambda name: False
     elif kernel.dim == '1d':
-        pars_1d = set(p.name for p in kernel.info['parameters'].type['1d'])
-        active = lambda name: name in pars_1d
+        active = lambda name: name in parameters.pd_1d
     elif kernel.dim == '2d':
-        pars_2d = set(p.name for p in kernel.info['parameters'].type['2d'])
-        active = lambda name: name in pars_2d
+        active = lambda name: name in parameters.pd_2d
     else:
         active = lambda name: True
 
-    vw_pairs = [(get_weights(p, pars) if active(p.name) else ([p.default], []))
-                for p in kernel.info['parameters']]
+    vw_pairs = [(get_weights(p, pars) if active(p.name)
+                 else ([pars.get(p.name, p.default)], []))
+                for p in parameters.call_parameters]
     values, weights = zip(*vw_pairs)
 
     if max([len(w) for w in weights]) > 1:

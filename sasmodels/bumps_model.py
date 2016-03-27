@@ -80,25 +80,21 @@ def create_parameters(model_info, **kwargs):
     # when bumps is not on the path.
     from bumps.names import Parameter
 
-    pars = {} # => floating point parameters
+    pars = {}     # floating point parameters
+    pd_types = {} # distribution names
     for p in model_info['parameters']:
         value = kwargs.pop(p.name, p.default)
         pars[p.name] = Parameter.default(value, name=p.name, limits=p.limits)
-    for name in model_info['par_type']['pd']:
-        for xpart, xdefault, xlimits in [
-                ('_pd', 0., pars[name].limits),
-                ('_pd_n', 35., (0, 1000)),
-                ('_pd_nsigma', 3., (0, 10)),
-            ]:
-            xname = name + xpart
-            xvalue = kwargs.pop(xname, xdefault)
-            pars[xname] = Parameter.default(xvalue, name=xname, limits=xlimits)
-
-    pd_types = {}  # => distribution names
-    for name in model_info['par_type']['pd']:
-        xname = name + '_pd_type'
-        xvalue = kwargs.pop(xname, 'gaussian')
-        pd_types[xname] = xvalue
+        if p.polydisperse:
+            for part, default, limits in [
+                    ('_pd', 0., pars[p.name].limits),
+                    ('_pd_n', 35., (0, 1000)),
+                    ('_pd_nsigma', 3., (0, 10)),
+                ]:
+                name = p.name + part
+                value = kwargs.pop(name, default)
+                pars[name] = Parameter.default(value, name=name, limits=limits)
+            pd_types[p.name+'_pd_type'] = kwargs.pop(name, 'gaussian')
 
     if kwargs:  # args not corresponding to parameters
         raise TypeError("unexpected parameters: %s"
