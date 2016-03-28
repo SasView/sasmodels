@@ -3,7 +3,7 @@ static double
 f_exp(double q, double r, double sld_in, double sld_out,
     double thickness, double A)
 {
-  const double vol = 4.0/3.0 * M_PI * r * r * r;
+  const double vol = M_4PI_3 * cube(r);
   const double qr = q * r;
   const double alpha = A * r/thickness;
   const double bes = sph_j1c(qr);
@@ -18,7 +18,7 @@ f_exp(double q, double r, double sld_in, double sld_out,
     const double sumsq = alphasq + qrsq;
     double sinqr, cosqr;
     SINCOS(qr, sinqr, cosqr);
-    fun = -3.0(
+    fun = -3.0*(
             ((alphasq - qrsq)*sinqr/qr - 2.0*alpha*cosqr) / sumsq
                 - (alpha*sinqr/qr - cosqr)
         ) / sumsq;
@@ -31,7 +31,7 @@ f_exp(double q, double r, double sld_in, double sld_out,
 static double
 f_linear(double q, double r, double sld, double slope)
 {
-  const double vol = 4.0/3.0 * M_PI * r * r * r;
+  const double vol = M_4PI_3 * cube(r);
   const double qr = q * r;
   const double bes = sph_j1c(qr);
   double fun = 0.0;
@@ -51,7 +51,7 @@ static double
 f_constant(double q, double r, double sld)
 {
   const double bes = sph_j1c(q * r);
-  const double vol = 4.0/3.0 * M_PI * r * r * r;
+  const double vol = M_4PI_3 * cube(r);
   return sld * vol * bes;
 }
 
@@ -63,17 +63,17 @@ form_volume(double core_radius, double n, double thickness[])
   for (i=0; i < n; i++) {
     r += thickness[i];
   }
-  return 4.0/3.0 * M_PI * r * r * r;
+  return M_4PI_3*cube(r);
 }
 
 static double
-Iq(double q, double core_sld, double core_radius, double solvent_sld,
-    double n, double in_sld[], double out_sld[], double thickness[],
+Iq(double q, double sld_core, double core_radius, double sld_solvent,
+    double n, double sld_in[], double sld_out[], double thickness[],
     double A[])
 {
   int i;
-  r = core_radius;
-  f = f_constant(q, r, core_sld);
+  double r = core_radius;
+  double f = f_constant(q, r, sld_core);
   for (i=0; i<n; i++){
     const double r0 = r;
     r += thickness[i];
@@ -91,8 +91,8 @@ Iq(double q, double core_sld, double core_radius, double solvent_sld,
       f += f_exp(q, r, sld_in[i], sld_out[i], thickness[i], A[i]);
     }
   }
-  f -= f_constant(q, r, solvent_sld);
-  f2 = f * f * 1.0e-4;
+  f -= f_constant(q, r, sld_solvent);
+  const double f2 = f * f * 1.0e-4;
 
   return f2;
 }

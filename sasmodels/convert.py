@@ -72,6 +72,7 @@ def _unscale_sld(pars):
     numbers are nicer.  Relies on the fact that all sld parameters in the
     new model definition end with sld.
     """
+    print "pars",pars
     return dict((p, (v*1e-6 if p.startswith('sld') or p.endswith('sld')
                      else v*1e15 if 'ndensity' in p
                      else v))

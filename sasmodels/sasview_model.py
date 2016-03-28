@@ -31,10 +31,6 @@ def make_class(model_name):
     Load the sasview model defined in *kernel_module*.
 
     Returns a class that can be used directly as a sasview model.t
-
-    Defaults to using the new name for a model.  Setting
-    *namestyle='oldname'* will produce a class with a name
-    compatible with SasView.
     """
     model_info = core.load_model_info(model_name)
     return make_class_from_info(model_info)
@@ -57,13 +53,21 @@ class SasviewModel(object):
     def __init__(self):
         self._kernel = None
         model_info = self._model_info
+        parameters = model_info['parameters']
 
         self.name = model_info['name']
-        self.oldname = model_info['oldname']
         self.description = model_info['description']
         self.category = None
-        self.multiplicity_info = None
-        self.is_multifunc = False
+        #self.is_multifunc = False
+        for p in parameters.kernel_parameters:
+            if p.is_control:
+                profile_axes = model_info['profile_axes']
+                self.multiplicity_info = [
+                    p.limits[1], p.name, p.choices, profile_axes[0]
+                    ]
+                break
+        else:
+            self.multiplicity_info = []
 
         ## interpret the parameters
         ## TODO: reorganize parameter handling

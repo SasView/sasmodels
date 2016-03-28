@@ -191,7 +191,7 @@ import warnings
 
 import numpy as np
 
-from .modelinfo import ModelInfo, Parameter, make_parameter_table
+from .modelinfo import ModelInfo, Parameter, make_parameter_table, set_demo
 
 # TODO: identify model files which have changed since loading and reload them.
 
@@ -538,14 +538,6 @@ def make_source(model_info):
 
     return '\n'.join(source)
 
-def process_parameters(model_info):
-    """
-    Process parameter block, precalculating parameter details.
-    """
-    partable = model_info['parameters']
-    if model_info.get('demo', None) is None:
-        model_info['demo'] = partable.defaults
-
 class CoordinationDetails(object):
     def __init__(self, model_info):
         parameters = model_info['parameters']
@@ -663,7 +655,7 @@ def create_default_functions(model_info):
     """
     if callable(model_info['Iq']) and model_info['Iqxy'] is None:
         partable = model_info['parameters']
-        if partable.type['1d'] != partable.type['2d']:
+        if partable.has_2d:
             raise ValueError("Iqxy model is missing")
         Iq = model_info['Iq']
         def Iqxy(qx, qy, **kw):
@@ -734,6 +726,7 @@ def make_model_info(kernel_module):
         category=getattr(kernel_module, 'category', None),
         single=getattr(kernel_module, 'single', True),
         structure_factor=getattr(kernel_module, 'structure_factor', False),
+        profile_axes=getattr(kernel_module, 'profile_axes', ['x','y']),
         variant_info=getattr(kernel_module, 'invariant_info', None),
         demo=getattr(kernel_module, 'demo', None),
         source=getattr(kernel_module, 'source', []),
@@ -741,9 +734,9 @@ def make_model_info(kernel_module):
         oldpars=getattr(kernel_module, 'oldpars', {}),
         tests=getattr(kernel_module, 'tests', []),
         )
-    process_parameters(model_info)
+    set_demo(model_info, getattr(kernel_module, 'demo', None))
     # Check for optional functions
-    functions = "ER VR form_volume Iq Iqxy shape sesans".split()
+    functions = "ER VR form_volume Iq Iqxy profile sesans".split()
     model_info.update((k, getattr(kernel_module, k, None)) for k in functions)
     create_default_functions(model_info)
     # Precalculate the monodisperse parameters

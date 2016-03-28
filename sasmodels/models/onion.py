@@ -291,17 +291,17 @@ category = "shape:sphere"
 
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["core_sld", "1e-6/Ang^2", 1.0, [-inf, inf], "",
+parameters = [["sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "",
                "Core scattering length density"],
-              ["core_radius", "Ang", 200., [0, inf], "",
+              ["core_radius", "Ang", 200., [0, inf], "volume",
                "Radius of the core"],
-              ["solvent_sld", "1e-6/Ang^2", 6.4, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 6.4, [-inf, inf], "",
                "Solvent scattering length density"],
               ["n", "", 1, [0, 10], "volume",
                "number of shells"],
-              ["in_sld[n]", "1e-6/Ang^2", 1.7, [-inf, inf], "",
+              ["sld_in[n]", "1e-6/Ang^2", 1.7, [-inf, inf], "",
                "scattering length density at the inner radius of shell k"],
-              ["out_sld[n]", "1e-6/Ang^2", 2.0, [-inf, inf], "",
+              ["sld_out[n]", "1e-6/Ang^2", 2.0, [-inf, inf], "",
                "scattering length density at the outer radius of shell k"],
               ["thickness[n]", "Ang", 40., [0, inf], "volume",
                "Thickness of shell k"],
@@ -309,16 +309,13 @@ parameters = [["core_sld", "1e-6/Ang^2", 1.0, [-inf, inf], "",
                "Decay rate of shell k"],
               ]
 
-#source = ["lib/sph_j1c.c", "onion.c"]
+source = ["lib/sph_j1c.c", "onion.c"]
 
-def Iq(q, *args, **kw):
-    return q
+#def Iq(q, *args, **kw):
+#    return q
 
-def Iqxy(qx, *args, **kw):
-    return qx
-
-
-def shape(core_sld, core_radius, solvent_sld, n, in_sld, out_sld, thickness, A):
+profile_axes = ['Radius (A)', 'SLD (1e-6/A^2)']
+def profile(core_sld, core_radius, solvent_sld, n, in_sld, out_sld, thickness, A):
     """
     SLD profile
     """
@@ -372,12 +369,12 @@ def VR(core_radius, n, thickness):
     return 1.0
 
 demo = {
-    "solvent_sld": 2.2,
-    "core_sld": 1.0,
+    "sld_solvent": 2.2,
+    "sld_core": 1.0,
     "core_radius": 100,
     "n": 4,
-    "in_sld": [0.5, 1.5, 0.9, 2.0],
-    "out_sld": [nan, 0.9, 1.2, 1.6],
+    "sld_in": [0.5, 1.5, 0.9, 2.0],
+    "sld_out": [nan, 0.9, 1.2, 1.6],
     "thickness": [50, 75, 150, 75],
     "A": [0, -1, 1e-4, 1],
     # Could also specify them individually as

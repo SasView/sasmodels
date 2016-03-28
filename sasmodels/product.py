@@ -13,7 +13,6 @@ To use it, first load form factor P and structure factor S, then create
 import numpy as np
 
 from .core import call_ER_VR
-from .generate import process_parameters
 
 SCALE=0
 BACKGROUND=1
@@ -63,7 +62,6 @@ def make_product_info(p_info, s_info):
     model_info['oldname'] = oldname
     model_info['oldpars'] = oldpars
     model_info['composition'] = ('product', [p_info, s_info])
-    process_parameters(model_info)
     return model_info
 
 class ProductModel(object):

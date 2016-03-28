@@ -44,9 +44,9 @@ def parse_parameter(name, units='', default=None,
     # field, and limits are 1 to length of string list
     if isinstance(limits, list) and all(isstr(k) for k in limits):
         choices = limits
-        limits = [1, len(choices)]
+        limits = [0, len(choices)-1]
     else:
-        choices = None
+        choices = []
     # TODO: maybe allow limits of None for (-inf, inf)
     try:
         low, high = limits
@@ -114,6 +114,50 @@ def parse_parameter(name, units='', default=None,
 
     return parameter
 
+
+def set_demo(model_info, demo):
+    """
+    Assign demo parameters to model_info['demo']
+
+    If demo is not defined, then use defaults.
+
+    If demo is defined, override defaults with value from demo.
+
+    If demo references vector fields, such as thickness[n], then support
+    different ways of assigning the demo values, including assigning a
+    specific value (e.g., thickness3=50.0), assigning a new value to all
+    (e.g., thickness=50.0) or assigning values using list notation.
+    """
+    partable = model_info['parameters']
+    if demo is None:
+        result = partable.defaults
+    else:
+        pars = dict((p.id, p) for p in partable.kernel_parameters)
+        result = partable.defaults.copy()
+        vectors = dict((name,value) for name,value in demo.items()
+                       if name in pars and pars[name].length > 1)
+        if vectors:
+            scalars = dict((name, value) for name, value in demo.items()
+                           if name not in pars or pars[name].length == 1)
+            for name, value in vectors.items():
+                if np.isscalar(value):
+                    # support for the form
+                    #    demo(thickness=0, thickness2=50)
+                    for k in pars[name].length:
+                        key = name+str(k)
+                        if key not in scalars:
+                            scalars[key] = vectors
+                else:
+                    # supoprt for the form
+                    #    demo(thickness=[20,10,3])
+                    for (k,v) in enumerate(value):
+                        scalars[name+str(k)] = v
+            result.update(scalars)
+        else:
+            result.update(demo)
+
+    model_info['demo'] = result
+
 class Parameter(object):
     """
     The available kernel parameters are defined as a list, with each parameter
@@ -170,7 +214,6 @@ class Parameter(object):
         self.limits = limits
         self.type = type
         self.description = description
-        self.choices = None
 
         # Length and length_control will be filled in once the complete
         # parameter table is available.
@@ -181,6 +224,9 @@ class Parameter(object):
         # TODO: need better control over whether a parameter is polydisperse
         self.polydisperse = False
         self.relative_pd = False
+
+        # choices are also set externally.
+        self.choices = []
 
     def as_definition(self):
         """
