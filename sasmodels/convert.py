@@ -182,8 +182,6 @@ def constrain_new_to_old(model_info, pars):
     # models without scale or background.
     namelist = name.split('*') if '*' in name else [name]
     for name in namelist:
-        #if name == 'stacked_disks':
-        #    pars['n_stacking'] = 1
         if name == 'pearl_necklace':
             pars['string_thickness_pd_n'] = 0
             pars['number_of_pearls_pd_n'] = 0
