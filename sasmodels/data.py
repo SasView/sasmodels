@@ -380,6 +380,9 @@ def _plot_result1D(data, theory, resid, view, use_data, limits=None):
     scale = data.x**4 if view == 'q4' else 1.0
 
     if use_data or use_theory:
+        if num_plots > 1:
+            plt.subplot(1, num_plots, 1)
+
         #print(vmin, vmax)
         all_positive = True
         some_present = False
@@ -398,15 +401,13 @@ def _plot_result1D(data, theory, resid, view, use_data, limits=None):
             mtheory[~np.isfinite(mtheory)] = masked
             if view is 'log':
                 mtheory[mtheory <= 0] = masked
-            plt.plot(data.x/10, scale*mtheory, '-', hold=True)
+            plt.plot(data.x, scale*mtheory, '-', hold=True)
             all_positive = all_positive and (mtheory > 0).all()
             some_present = some_present or (mtheory.count() > 0)
 
         if limits is not None:
             plt.ylim(*limits)
 
-        if num_plots > 1:
-            plt.subplot(1, num_plots, 1)
         plt.xscale('linear' if not some_present else view)
         plt.yscale('linear'
                    if view == 'q4' or not some_present or not all_positive
