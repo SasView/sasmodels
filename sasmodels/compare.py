@@ -783,6 +783,8 @@ def parse_opts():
 
     n1 = int(args[1]) if len(args) > 1 else 1
     n2 = int(args[2]) if len(args) > 2 else 1
+    use_sasview = any(engine=='sasview' and count>0
+                      for engine, count in zip(engines, [n1, n2]))
 
     # Get demo parameters from model definition, or use default parameters
     # if model does not define demo parameters
@@ -810,7 +812,8 @@ def parse_opts():
     pars.update(presets)  # set value after random to control value
     #import pprint; pprint.pprint(model_info)
     constrain_pars(model_info, pars)
-    constrain_new_to_old(model_info, pars)
+    if use_sasview:
+        constrain_new_to_old(model_info, pars)
     if opts['show_pars']:
         print(str(parlist(model_info, pars, opts['is2d'])))
 
