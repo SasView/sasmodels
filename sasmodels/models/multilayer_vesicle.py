@@ -28,11 +28,8 @@ of the q vector which is defined as:
     $radius + n_pairs * thicn_shell + (n_pairs - 1) * thick_solvent$
     is used as the effective radius for *S(Q)* when $P(Q) * S(Q)$ is applied.
 
-
-
-For information about polarised and magnetic scattering, click here_.
-
-.. _here: polar_mag_help.html
+For information about polarised and magnetic scattering, see 
+the :doc:`magnetic help <../sasgui/perspectives/fitting/mag_help>` documentation.
 
 This code is based on the form factor calculations implemented in the NIST
 Center for Neutron Research provided c-library (Kline, 2006).
