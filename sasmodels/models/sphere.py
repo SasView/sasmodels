@@ -85,7 +85,7 @@ Iqxy = """
 
 def ER(radius):
     """
-        Return equivalent radius (ER)
+    Return equivalent radius (ER)
     """
     return radius
 
