@@ -240,18 +240,21 @@ def call_kernel(kernel, pars, cutoff=0, mono=False):
     vw_pairs = [(get_weights(p, pars) if active(p.name)
                  else ([pars.get(p.name, p.default)], []))
                 for p in parameters.call_parameters]
-    values, weights = zip(*vw_pairs)
 
+    details, weights, values = build_details(kernel, vw_pairs)
+    return kernel(details, weights, values, cutoff)
+
+def build_details(kernel, pairs):
+    values, weights = zip(*pairs)
     if max([len(w) for w in weights]) > 1:
         details = generate.poly_details(kernel.info, weights)
     else:
         details = kernel.info['mono_details']
-
     weights, values = [np.hstack(v) for v in (weights, values)]
-
     weights = weights.astype(dtype=kernel.dtype)
     values = values.astype(dtype=kernel.dtype)
-    return kernel(details, weights, values, cutoff)
+    return details, weights, values
+
 
 def call_ER_VR(model_info, vol_pars):
     """

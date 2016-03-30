@@ -20,7 +20,7 @@ import collections
 import numpy as np
 
 from . import core
-from . import generate
+from . import weights
 
 def standard_models():
     return [make_class(model_name) for model_name in core.list_models()]
@@ -51,7 +51,7 @@ class SasviewModel(object):
     Sasview wrapper for opencl/ctypes model.
     """
     def __init__(self):
-        self._kernel = None
+        self._model = None
         model_info = self._model_info
         parameters = model_info['parameters']
 
@@ -74,26 +74,29 @@ class SasviewModel(object):
         self.details = dict()
         self.params = collections.OrderedDict()
         self.dispersion = dict()
-        partype = model_info['partype']
 
-        for p in model_info['parameters']:
+        self.orientation_params = []
+        self.magnetic_params = []
+        self.fixed = []
+        for p in parameters.user_parameters():
             self.params[p.name] = p.default
             self.details[p.name] = [p.units] + p.limits
+            if p.polydisperse:
+                self.dispersion[p.name] = {
+                    'width': 0,
+                    'npts': 35,
+                    'nsigmas': 3,
+                    'type': 'gaussian',
+                }
+            if p.type == 'orientation':
+                self.orientation_params.append(p.name)
+                self.orientation_params.append(p.name+".width")
+                self.fixed.append(p.name+".width")
+            if p.type == 'magnetic':
+                self.orientation_params.append(p.name)
+                self.magnetic_params.append(p.name)
+                self.fixed.append(p.name+".width")
 
-        for name in partype['pd-2d']:
-            self.dispersion[name] = {
-                'width': 0,
-                'npts': 35,
-                'nsigmas': 3,
-                'type': 'gaussian',
-            }
-
-        self.orientation_params = (
-            partype['orientation']
-            + [n + '.width' for n in partype['orientation']]
-            + partype['magnetic'])
-        self.magnetic_params = partype['magnetic']
-        self.fixed = [n + '.width' for n in partype['pd-2d']]
         self.non_fittable = []
 
         ## independent parameter name and unit [string]
@@ -112,7 +115,6 @@ class SasviewModel(object):
 
     def __get_state__(self):
         state = self.__dict__.copy()
-        model_id = self._model_info['id']
         state.pop('_kernel')
         # May need to reload model info on set state since it has pointers
         # to python implementations of Iq, etc.
@@ -121,7 +123,7 @@ class SasviewModel(object):
 
     def __set_state__(self, state):
         self.__dict__ = state
-        self._kernel = None
+        self._model = None
 
     def __str__(self):
         """
@@ -210,12 +212,13 @@ class SasviewModel(object):
 
     def getDispParamList(self):
         """
-        Return a list of all available parameters for the model
+        Return a list of polydispersity parameters for the model
         """
         # TODO: fix test so that parameter order doesn't matter
-        ret = ['%s.%s' % (d.lower(), p)
-               for d in self._model_info['partype']['pd-2d']
-               for p in ('npts', 'nsigmas', 'width')]
+        ret = ['%s.%s' % (p.name.lower(), ext)
+               for p in self._model_info['parameters'].user_parameters()
+               for ext in ('npts', 'nsigmas', 'width')
+               if p.polydisperse]
         #print(ret)
         return ret
 
@@ -288,8 +291,7 @@ class SasviewModel(object):
         if isinstance(qdist, (list, tuple)):
             # Check whether we have a list of ndarrays [qx,qy]
             qx, qy = qdist
-            partype = self._model_info['partype']
-            if not partype['orientation'] and not partype['magnetic']:
+            if not self._model_info['parameters'].has_2d:
                 return self.calculate_Iq(np.sqrt(qx ** 2 + qy ** 2))
             else:
                 return self.calculate_Iq(qx, qy)
@@ -311,15 +313,16 @@ class SasviewModel(object):
         This should NOT be used for fitting since it copies the *q* vectors
         to the card for each evaluation.
         """
-        if self._kernel is None:
-            self._kernel = core.build_model(self._model_info)
+        if self._model is None:
+            self._model = core.build_model(self._model_info, platform='dll')
         q_vectors = [np.asarray(q) for q in args]
-        fn = self._kernel(q_vectors)
-        pars = [self.params[v] for v in fn.fixed_pars]
-        pd_pars = [self._get_weights(p) for p in fn.pd_pars]
-        result = fn(pars, pd_pars, self.cutoff)
-        fn.q_input.release()
-        fn.release()
+        kernel = self._model.make_kernel(q_vectors)
+        pairs = [self._get_weights(p)
+                 for p in self._model_info['parameters'].call_parameters]
+        details, weights, values = core.build_details(kernel, pairs)
+        return kernel(details, weights, values, cutoff=self.cutoff)
+        kernel.q_input.release()
+        kernel.release()
         return result
 
     def calculate_ER(self):
@@ -392,16 +395,21 @@ class SasviewModel(object):
 
     def _get_weights(self, par):
         """
-            Return dispersion weights
-            :param par parameter name
+        Return dispersion weights for parameter
         """
-        from . import weights
+        if par.polydisperse:
+            dis = self.dispersion[par.name]
+            value, weight = weights.get_weights(
+                dis['type'], dis['npts'], dis['width'], dis['nsigmas'],
+                self.params[par.name], par.limits, par.relative_pd)
+            return value, weight / np.sum(weight)
+        else:
+            return [self.params[par.name]], []
 
-        relative = self._model_info['partype']['pd-rel']
-        limits = self._model_info['limits']
-        dis = self.dispersion[par]
-        value, weight = weights.get_weights(
-            dis['type'], dis['npts'], dis['width'], dis['nsigmas'],
-            self.params[par], limits[par], par in relative)
-        return value, weight / np.sum(weight)
+def test_model():
+    Cylinder = make_class('cylinder')
+    cylinder = Cylinder()
+    return cylinder.evalDistribution([0.1,0.1])
 
+if __name__ == "__main__":
+    print("cylinder(0.1,0.1)=%g"%test_model())

@@ -431,7 +431,7 @@ class ParameterTable(object):
         self.pd_2d = set(p.name for p in self.call_parameters
                          if p.polydisperse and p.type != 'magnetic')
 
-    def user_parameters(self, pars, is2d):
+    def user_parameters(self, pars={}, is2d=True):
         """
         Return the list of parameters for the given data type.
 
@@ -492,7 +492,7 @@ class ParameterTable(object):
                 table = dependent.get(p.length_control, [])
                 if table:
                     # look up length from incoming parameters
-                    table_length = int(pars[p.length_control])
+                    table_length = int(pars.get(p.length_control, p.length))
                     del dependent[p.length_control] # first entry seen
                     for k in range(1, table_length+1):
                         for entry in table:
