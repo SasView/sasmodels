@@ -9,6 +9,7 @@ from __future__ import division
 import numpy as np
 from numpy import pi, cos, sin, sqrt
 
+from . import resolution
 from .resolution import Resolution
 
 ## Singular point
@@ -19,6 +20,11 @@ NSIGMA = 3.0
 ## Defaults
 NR = {'xhigh':10, 'high':5, 'med':5, 'low':3}
 NPHI = {'xhigh':20, 'high':12, 'med':6, 'low':4}
+
+## Defaults
+N_SLIT_PERP = {'xhigh':2000, 'high':1000, 'med':500, 'low':250}
+N_SLIT_PERP_DOC = ", ".join("%s=%d"%(name,value) for value,name in
+                            sorted((v,k) for k,v in N_SLIT_PERP.items()))
 
 class Pinhole2D(Resolution):
     """
@@ -166,3 +172,64 @@ class Pinhole2D(Resolution):
             return value
         else:
             return theory
+
+
+class Slit2D(Resolution):
+    """
+    Slit aperture with resolution function on an oriented sample.
+
+    *q* points at which the data is measured.
+
+    *qx_width* slit width in qx
+
+    *qy_width* slit height in qy; current implementation requires a fixed
+    qy_width for all q points.
+
+    *q_calc* is the list of q points to calculate, or None if this
+    should be estimated from the *q* and *qx_width*.
+
+    *accuracy* determines the number of *qy* points to compute for each *q*.
+    The values are stored in sasmodels.resolution2d.N_SLIT_PERP.  The default
+    values are: %s
+    """
+    __doc__ = __doc__%N_SLIT_PERP_DOC
+    def __init__(self, q, qx_width, qy_width=0., q_calc=None, accuracy='low'):
+        # Remember what q and width was used even though we won't need them
+        # after the weight matrix is constructed
+        self.q, self.qx_width, self.qy_width = q, qx_width, qy_width
+
+        # Allow independent resolution on each qx point even though it is not
+        # needed in practice.  Set qy_width to the maximum qy width.
+        if np.isscalar(qx_width):
+            qx_width = np.ones(len(q))*qx_width
+        else:
+            qx_width = np.asarray(qx_width)
+        if not np.isscalar(qy_width):
+            qy_width = np.max(qy_width)
+
+        # Build grid of qx, qy points
+        if q_calc is not None:
+            qx_calc = np.sort(q_calc)
+        else:
+            qx_calc = resolution.pinhole_extend_q(q, qx_width, nsigma=3)
+        qy_calc = np.linspace(-qy_width, qy_width, N_SLIT_PERP[accuracy]*10)
+        self.q_calc = [v.flatten() for v in np.meshgrid(qx_calc, qy_calc)]
+        self.qx_calc, self.qy_calc = qx_calc, qy_calc
+        self.nx, self.ny = len(qx_calc), len(qy_calc)
+        self.dy = 2*qy_width/self.ny
+
+        # Build weight matrix for resolution integration
+        if np.any(qx_width > 0):
+            self.weights = resolution.pinhole_resolution(qx_calc, q,
+                    np.maximum(qx_width, resolution.MINIMUM_RESOLUTION))
+        elif len(qx_calc)==len(q) and np.all(qx_calc == q):
+            self.weights = None
+        else:
+            raise ValueError("Slit2D fails with q_calc != q")
+
+    def apply(self, theory):
+        Iq = np.sum(theory.reshape(self.ny, self.nx), axis=0)*self.dy
+        if self.weights is not None:
+            Iq = resolution.apply_resolution_matrix(self.weights, Iq)
+        return Iq
+

@@ -472,7 +472,7 @@ def make_data(opts):
     if opts['is2d']:
         data = empty_data2D(np.linspace(-qmax, qmax, nq), resolution=res)
         data.accuracy = opts['accuracy']
-        set_beam_stop(data, 0.004)
+        set_beam_stop(data, 0.0004)
         index = ~data.mask
     else:
         if opts['view'] == 'log':

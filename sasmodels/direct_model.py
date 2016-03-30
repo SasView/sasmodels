@@ -62,6 +62,8 @@ class DataMixin(object):
             self.data_type = 'sesans'
         elif hasattr(data, 'qx_data'):
             self.data_type = 'Iqxy'
+        elif getattr(data, 'oriented', False):
+            self.data_type = 'Iq-oriented'
         else:
             self.data_type = 'Iq'
 
@@ -115,13 +117,30 @@ class DataMixin(object):
             elif (getattr(data, 'dxl', None) is not None
                   and getattr(data, 'dxw', None) is not None):
                 res = resolution.Slit1D(data.x[index],
-                                        width=data.dxh[index],
-                                        height=data.dxw[index])
+                                        qx_width=data.dxw[index],
+                                        qy_width=data.dxl[index])
             else:
                 res = resolution.Perfect1D(data.x[index])
 
             #self._theory = np.zeros_like(self.Iq)
             q_vectors = [res.q_calc]
+            q_mono = []
+        elif self.data_type == 'Iq-oriented':
+            index = (data.x >= data.qmin) & (data.x <= data.qmax)
+            if data.y is not None:
+                index &= ~np.isnan(data.y)
+                Iq = data.y[index]
+                dIq = data.dy[index]
+            else:
+                Iq, dIq = None, None
+            if (getattr(data, 'dxl', None) is None
+                or getattr(data, 'dxw', None) is None):
+                raise ValueError("oriented sample with 1D data needs slit resolution")
+
+            res = resolution2d.Slit2D(data.x[index],
+                                      qx_width=data.dxw[index],
+                                      qy_width=data.dxl[index])
+            q_vectors = res.q_calc
             q_mono = []
         else:
             raise ValueError("Unknown data type") # never gets here
@@ -141,7 +160,7 @@ class DataMixin(object):
         dy = self.dIq
         y = Iq + np.random.randn(*dy.shape) * dy
         self.Iq = y
-        if self.data_type == 'Iq':
+        if self.data_type in ('Iq', 'Iq-oriented'):
             self._data.dy[self.index] = dy
             self._data.y[self.index] = y
         elif self.data_type == 'Iqxy':
@@ -154,16 +173,25 @@ class DataMixin(object):
     def _calc_theory(self, pars, cutoff=0.0):
         if self._kernel is None:
             self._kernel = make_kernel(self._model, self._kernel_inputs)  # pylint: disable=attribute-dedata_type
-            self._kernel_mono = make_kernel(self._model, self._kernel_mono_inputs) if self._kernel_mono_inputs else None
+            self._kernel_mono = (make_kernel(self._model, self._kernel_mono_inputs)
+                                 if self._kernel_mono_inputs else None)
 
         Iq_calc = call_kernel(self._kernel, pars, cutoff=cutoff)
-        Iq_mono = call_kernel(self._kernel_mono, pars, mono=True) if self._kernel_mono_inputs else None
+        # TODO: may want to plot the raw Iq for other than oriented usans
+        self.Iq_calc = None
         if self.data_type == 'sesans':
+            Iq_mono = (call_kernel(self._kernel_mono, pars, mono=True)
+                       if self._kernel_mono_inputs else None)
             result = sesans.transform(self._data,
                                    self._kernel_inputs[0], Iq_calc, 
                                    self._kernel_mono_inputs, Iq_mono)
         else:
             result = self.resolution.apply(Iq_calc)
+            if hasattr(self.resolution, 'nx'):
+                self.Iq_calc = (
+                    self.resolution.qx_calc, self.resolution.qy_calc,
+                    np.reshape(Iq_calc, (self.resolution.ny, self.resolution.nx))
+                )
         return result        
 
 
