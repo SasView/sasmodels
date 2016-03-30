@@ -289,11 +289,12 @@ described by an exponential function;
 
 category = "shape:sphere"
 
+# TODO: n is a volume parameter that is not polydisperse
 
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["core_sld", "1e-6/Ang^2", 1.0, [-inf, inf], "",
                "Core scattering length density"],
-              ["core_radius", "Ang", 200., [0, inf], "",
+              ["core_radius", "Ang", 200., [0, inf], "volume",
                "Radius of the core"],
               ["solvent_sld", "1e-6/Ang^2", 6.4, [-inf, inf], "",
                "Solvent scattering length density"],
@@ -366,10 +367,10 @@ def shape(core_sld, core_radius, solvent_sld, n, in_sld, out_sld, thickness, A):
     return np.asarray(r), np.asarray(beta)
 
 def ER(core_radius, n, thickness):
-    return np.sum(thickness[:n], axis=0) + core_radius
+    return np.sum(thickness[:n[0]], axis=0) + core_radius
 
 def VR(core_radius, n, thickness):
-    return 1.0
+    return 1.0, 1.0
 
 demo = {
     "solvent_sld": 2.2,
