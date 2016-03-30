@@ -1,6 +1,11 @@
 """
 Core model handling routines.
 """
+__all__ = [
+    "list_models", "load_model_info", "precompile_dll",
+    "build_model", "make_kernel", "call_kernel", "call_ER_VR",
+    ]
+
 
 from os.path import basename, dirname, join as joinpath, splitext
 from glob import glob
@@ -23,10 +28,17 @@ try:
 except:
     HAVE_OPENCL = False
 
-__all__ = [
-    "list_models", "load_model_info", "precompile_dll",
-    "build_model", "make_kernel", "call_kernel", "call_ER_VR",
-]
+try:
+    np.meshgrid([])
+    meshgrid = np.meshgrid
+except ValueError:
+    # CRUFT: np.meshgrid requires multiple vectors
+    def meshgrid(*args):
+        if len(args) > 1:
+            return np.meshgrid(*args)
+        else:
+            return [np.asarray(v) for v in args]
+
 
 def list_models():
     """
