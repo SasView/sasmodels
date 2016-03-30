@@ -97,6 +97,6 @@ tests =  [
     [{'scale': 1.0, 'second_moment': 23.0, 'adsorbed_amount': 1.9, 
      'density_shell': 0.7, 'radius': 500.0, 'volfraction': 0.14, 
      'sld_shell': 1.5, 'sld_solvent': 6.3, 'background': 0.0},
-     [0.0106939, 0.469418], [73.741, 9.65391e-53]],
+     [0.0106939, 0.1], [73.741, 4.51684e-3]],
     ]
 # ADDED by: SMK  ON: 16Mar2016  convert from sasview, check vs SANDRA, 18Mar2016 RKH some edits & renaming
