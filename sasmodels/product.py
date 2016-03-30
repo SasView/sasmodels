@@ -19,6 +19,8 @@ BACKGROUND=1
 RADIUS_EFFECTIVE=2
 VOLFRACTION=3
 
+# TODO: core_shell_sphere model has suppressed the volume ratio calculation
+# revert it after making VR and ER available at run time as constraints.
 def make_product_info(p_info, s_info):
     """
     Create info block for product model.

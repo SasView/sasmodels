@@ -54,6 +54,7 @@ description = """\
 """
 category = "structure-factor"
 structure_factor = True
+single = False
 
 #single = False
 #             ["name", "units", default, [lower, upper], "type","description"],

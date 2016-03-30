@@ -116,13 +116,13 @@ parameters = [
 
 source = ["lib/sph_j1c.c", "lib/gfn.c", "lib/gauss76.c", "core_shell_ellipsoid.c"]
 
-def ER(equat_shell, polar_shell):
+def ER(equat_core, polar_core, equat_shell, polar_shell):
     """
         Returns the effective radius used in the S*P calculation
     """
     import numpy as np
     from .ellipsoid import ER as ellipsoid_ER
-    return ellipsoid_ER(rpolar, equat_shell)
+    return ellipsoid_ER(polar_shell, equat_shell)
 
 
 demo = dict(scale=1, background=0.001,

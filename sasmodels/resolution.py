@@ -81,8 +81,8 @@ class Pinhole1D(Resolution):
         self.q, self.q_width = q, q_width
         self.q_calc = (pinhole_extend_q(q, q_width, nsigma=nsigma)
                        if q_calc is None else np.sort(q_calc))
-        self.weight_matrix = pinhole_resolution(
-            self.q_calc, self.q, np.maximum(q_width, MINIMUM_RESOLUTION))
+        self.weight_matrix = pinhole_resolution(self.q_calc, self.q,
+                                np.maximum(q_width, MINIMUM_RESOLUTION))
 
     def apply(self, theory):
         return apply_resolution_matrix(self.weight_matrix, theory)
@@ -90,40 +90,40 @@ class Pinhole1D(Resolution):
 
 class Slit1D(Resolution):
     """
-    Slit aperture with a complicated resolution function.
+    Slit aperture with resolution function.
 
     *q* points at which the data is measured.
 
-    *qx_width* slit width
+    *dqx* slit width in qx
 
-    *qy_height* slit height
+    *dqy* slit height in qy
 
     *q_calc* is the list of points to calculate, or None if this should
     be estimated from the *q* and *q_width*.
 
     The *weight_matrix* is computed by :func:`slit1d_resolution`
     """
-    def __init__(self, q, width, height=0., q_calc=None):
-        # Remember what width/height was used even though we won't need them
+    def __init__(self, q, qx_width, qy_width=0., q_calc=None):
+        # Remember what width/dqy was used even though we won't need them
         # after the weight matrix is constructed
-        self.width, self.height = width, height
+        self.qx_width, self.qy_width = qx_width, qy_width
 
         # Allow independent resolution on each point even though it is not
         # needed in practice.
-        if np.isscalar(width):
-            width = np.ones(len(q))*width
+        if np.isscalar(qx_width):
+            qx_width = np.ones(len(q))*qx_width
         else:
-            width = np.asarray(width)
-        if np.isscalar(height):
-            height = np.ones(len(q))*height
+            qx_width = np.asarray(qx_width)
+        if np.isscalar(qy_width):
+            qy_width = np.ones(len(q))*qy_width
         else:
-            height = np.asarray(height)
+            qy_width = np.asarray(qy_width)
 
         self.q = q.flatten()
-        self.q_calc = slit_extend_q(q, width, height) \
+        self.q_calc = slit_extend_q(q, qx_width, qy_width) \
             if q_calc is None else np.sort(q_calc)
         self.weight_matrix = \
-            slit_resolution(self.q_calc, self.q, width, height)
+            slit_resolution(self.q_calc, self.q, qx_width, qy_width)
 
     def apply(self, theory):
         return apply_resolution_matrix(self.weight_matrix, theory)
@@ -395,13 +395,13 @@ def linear_extrapolation(q, q_min, q_max):
     if *q_min* is zero or less then *q[0]/10* is used instead.
     """
     q = np.sort(q)
-    if q_min < q[0]:
+    if q_min + 2*MINIMUM_RESOLUTION < q[0]:
         if q_min <= 0: q_min = q_min*MIN_Q_SCALE_FOR_NEGATIVE_Q_EXTRAPOLATION
         n_low = np.ceil((q[0]-q_min) / (q[1]-q[0])) if q[1] > q[0] else 15
         q_low = np.linspace(q_min, q[0], n_low+1)[:-1]
     else:
         q_low = []
-    if q_max > q[-1]:
+    if q_max - 2*MINIMUM_RESOLUTION > q[-1]:
         n_high = np.ceil((q_max-q[-1]) / (q[-1]-q[-2])) if q[-1] > q[-2] else 15
         q_high = np.linspace(q[-1], q_max, n_high+1)[1:]
     else:
@@ -595,7 +595,7 @@ class ResolutionTest(unittest.TestCase):
         """
         Slit smearing with perfect resolution.
         """
-        resolution = Slit1D(self.x, width=0, height=0, q_calc=self.x)
+        resolution = Slit1D(self.x, qx_width=0, qy_width=0, q_calc=self.x)
         theory = self.Iq(resolution.q_calc)
         output = resolution.apply(theory)
         np.testing.assert_equal(output, self.y)
@@ -605,7 +605,7 @@ class ResolutionTest(unittest.TestCase):
         """
         Slit smearing with height 0.005
         """
-        resolution = Slit1D(self.x, width=0, height=0.005, q_calc=self.x)
+        resolution = Slit1D(self.x, qx_width=0, qy_width=0.005, q_calc=self.x)
         theory = self.Iq(resolution.q_calc)
         output = resolution.apply(theory)
         answer = [
@@ -620,7 +620,7 @@ class ResolutionTest(unittest.TestCase):
         Slit smearing with width < 100*height.
         """
         q = np.logspace(-4, -1, 10)
-        resolution = Slit1D(q, width=0.2, height=np.inf)
+        resolution = Slit1D(q, qx_width=0.2, qy_width=np.inf)
         theory = 1000*self.Iq(resolution.q_calc**4)
         output = resolution.apply(theory)
         answer = [
@@ -634,7 +634,7 @@ class ResolutionTest(unittest.TestCase):
         """
         Slit smearing with width 0.0002
         """
-        resolution = Slit1D(self.x, width=0.0002, height=0, q_calc=self.x)
+        resolution = Slit1D(self.x, qx_width=0.0002, qy_width=0, q_calc=self.x)
         theory = self.Iq(resolution.q_calc)
         output = resolution.apply(theory)
         answer = [
@@ -647,7 +647,7 @@ class ResolutionTest(unittest.TestCase):
         """
         Slit smearing with width > 100*height.
         """
-        resolution = Slit1D(self.x, width=0.0002, height=0.000001,
+        resolution = Slit1D(self.x, qx_width=0.0002, qy_width=0.000001,
                             q_calc=self.x)
         theory = self.Iq(resolution.q_calc)
         output = resolution.apply(theory)
@@ -772,7 +772,7 @@ class IgorComparisonTest(unittest.TestCase):
 
         data = np.loadtxt(data_string.split('\n')).T
         q, delta_qv, _, answer = data
-        resolution = Slit1D(q, width=delta_qv, height=0)
+        resolution = Slit1D(q, qx_width=delta_qv, qy_width=0)
         output = self._eval_sphere(pars, resolution)
         # TODO: eliminate Igor test since it is too inaccurate to be useful.
         # This means we can eliminate the test data as well, and instead
@@ -792,7 +792,7 @@ class IgorComparisonTest(unittest.TestCase):
         answer = romberg_slit_1d(q, delta_qv, 0., self.model, pars)
         q_calc = slit_extend_q(interpolate(q, 2*np.pi/radius/20),
                                delta_qv[0], 0.)
-        resolution = Slit1D(q, width=delta_qv, height=0, q_calc=q_calc)
+        resolution = Slit1D(q, qx_width=delta_qv, qy_width=0, q_calc=q_calc)
         output = self._eval_sphere(pars, resolution)
         # TODO: relative error should be lower
         self._compare(q, output, answer, 0.025)
@@ -804,13 +804,13 @@ class IgorComparisonTest(unittest.TestCase):
         from .core import load_model
         pars = {
             'scale':0.05,
-            'rpolar':500, 'requatorial':15000,
-            'sld':6, 'solvent_sld': 1,
+            'r_polar':500, 'r_equatorial':15000,
+            'sld':6, 'sld_solvent': 1,
             }
         form = load_model('ellipsoid', dtype='double')
         q = np.logspace(log10(4e-5), log10(2.5e-2), 68)
         width, height = 0.117, 0.
-        resolution = Slit1D(q, width=width, height=height)
+        resolution = Slit1D(q, qx_width=width, qy_width=height)
         answer = romberg_slit_1d(q, width, height, form, pars)
         output = resolution.apply(eval_form(resolution.q_calc, form, pars))
         # TODO: 10% is too much error; use better algorithm
@@ -836,7 +836,7 @@ class IgorComparisonTest(unittest.TestCase):
 # pinhole sphere parameters
 TEST_PARS_PINHOLE_SPHERE = {
     'scale': 1.0, 'background': 0.01,
-    'radius': 60.0, 'sld': 1, 'solvent_sld': 6.3,
+    'radius': 60.0, 'sld': 1, 'sld_solvent': 6.3,
     }
 # Q, dQ, I(Q) calculated by NIST Igor SANS package
 TEST_DATA_PINHOLE_SPHERE = """\
@@ -945,7 +945,7 @@ TEST_DATA_PINHOLE_SPHERE = """\
 # Slit sphere parameters
 TEST_PARS_SLIT_SPHERE = {
     'scale': 0.01, 'background': 0.01,
-    'radius': 60000, 'sld': 1, 'solvent_sld': 4,
+    'radius': 60000, 'sld': 1, 'sld_solvent': 4,
     }
 # Q dQ I(Q) I_smeared(Q)
 TEST_DATA_SLIT_SPHERE = """\
@@ -1046,16 +1046,16 @@ def _eval_demo_1d(resolution, title):
     name = sys.argv[1] if len(sys.argv) > 1 else 'cylinder'
 
     if name == 'cylinder':
-        pars = {'length':210, 'radius':500}
+        pars = {'length':210, 'radius':500, 'background': 0}
     elif name == 'teubner_strey':
         pars = {'a2':0.003, 'c1':-1e4, 'c2':1e10, 'background':0.312643}
     elif name == 'sphere' or name == 'spherepy':
         pars = TEST_PARS_SLIT_SPHERE
     elif name == 'ellipsoid':
         pars = {
-            'scale':0.05,
-            'rpolar':500, 'requatorial':15000,
-            'sld':6, 'solvent_sld': 1,
+            'scale':0.05, 'background': 0,
+            'r_polar':500, 'r_equatorial':15000,
+            'sld':6, 'sld_solvent': 1,
             }
     else:
         pars = {}
@@ -1067,7 +1067,7 @@ def _eval_demo_1d(resolution, title):
     Iq = resolution.apply(theory)
 
     if isinstance(resolution, Slit1D):
-        width, height = resolution.width, resolution.height
+        width, height = resolution.dqx, resolution.dqy
         Iq_romb = romberg_slit_1d(resolution.q, width, height, model, pars)
     else:
         dq = resolution.q_width
