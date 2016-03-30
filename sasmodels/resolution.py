@@ -803,8 +803,8 @@ class IgorComparisonTest(unittest.TestCase):
         from .core import load_model
         pars = {
             'scale':0.05,
-            'rpolar':500, 'requatorial':15000,
-            'sld':6, 'solvent_sld': 1,
+            'r_polar':500, 'r_equatorial':15000,
+            'sld':6, 'sld_solvent': 1,
             }
         form = load_model('ellipsoid', dtype='double')
         q = np.logspace(log10(4e-5), log10(2.5e-2), 68)
@@ -835,7 +835,7 @@ class IgorComparisonTest(unittest.TestCase):
 # pinhole sphere parameters
 TEST_PARS_PINHOLE_SPHERE = {
     'scale': 1.0, 'background': 0.01,
-    'radius': 60.0, 'sld': 1, 'solvent_sld': 6.3,
+    'radius': 60.0, 'sld': 1, 'sld_solvent': 6.3,
     }
 # Q, dQ, I(Q) calculated by NIST Igor SANS package
 TEST_DATA_PINHOLE_SPHERE = """\
@@ -944,7 +944,7 @@ TEST_DATA_PINHOLE_SPHERE = """\
 # Slit sphere parameters
 TEST_PARS_SLIT_SPHERE = {
     'scale': 0.01, 'background': 0.01,
-    'radius': 60000, 'sld': 1, 'solvent_sld': 4,
+    'radius': 60000, 'sld': 1, 'sld_solvent': 4,
     }
 # Q dQ I(Q) I_smeared(Q)
 TEST_DATA_SLIT_SPHERE = """\
@@ -1045,16 +1045,16 @@ def _eval_demo_1d(resolution, title):
     name = sys.argv[1] if len(sys.argv) > 1 else 'cylinder'
 
     if name == 'cylinder':
-        pars = {'length':210, 'radius':500}
+        pars = {'length':210, 'radius':500, 'background': 0}
     elif name == 'teubner_strey':
         pars = {'a2':0.003, 'c1':-1e4, 'c2':1e10, 'background':0.312643}
     elif name == 'sphere' or name == 'spherepy':
         pars = TEST_PARS_SLIT_SPHERE
     elif name == 'ellipsoid':
         pars = {
-            'scale':0.05,
-            'rpolar':500, 'requatorial':15000,
-            'sld':6, 'solvent_sld': 1,
+            'scale':0.05, 'background': 0,
+            'r_polar':500, 'r_equatorial':15000,
+            'sld':6, 'sld_solvent': 1,
             }
     else:
         pars = {}
