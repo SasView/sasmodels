@@ -40,7 +40,7 @@ def load_data(filename):
     """
     Load data using a sasview loader.
     """
-    from sas.dataloader.loader import Loader
+    from sas.sascalc.dataloader.loader import Loader
     loader = Loader()
     data = loader.load(filename)
     if data is None:
@@ -423,9 +423,11 @@ def _plot_result1D(data, theory, resid, view, use_data,
         # Only have use_calc if have use_theory
         plt.subplot(1, num_plots, 2)
         qx, qy, Iqxy = Iq_calc
-        plt.pcolormesh(qx, qy, np.log10(Iqxy))
+        plt.pcolormesh(qx, qy[qy>0], np.log10(Iqxy[qy>0,:]))
         plt.xlabel("$q_x$/A$^{-1}$")
         plt.xlabel("$q_y$/A$^{-1}$")
+        plt.xscale('log')
+        plt.yscale('log')
         #plt.axis('equal')
 
     if use_resid:

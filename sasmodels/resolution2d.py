@@ -22,9 +22,9 @@ NR = {'xhigh':10, 'high':5, 'med':5, 'low':3}
 NPHI = {'xhigh':20, 'high':12, 'med':6, 'low':4}
 
 ## Defaults
-N_SLIT_PERP = {'xhigh':2000, 'high':1000, 'med':500, 'low':250}
+N_SLIT_PERP = {'xhigh':1000, 'high':500, 'med':200, 'low':50}
 N_SLIT_PERP_DOC = ", ".join("%s=%d"%(name,value) for value,name in
-                            sorted((v,k) for k,v in N_SLIT_PERP.items()))
+                            sorted((2*v+1,k) for k,v in N_SLIT_PERP.items()))
 
 class Pinhole2D(Resolution):
     """
@@ -212,7 +212,9 @@ class Slit2D(Resolution):
             qx_calc = np.sort(q_calc)
         else:
             qx_calc = resolution.pinhole_extend_q(q, qx_width, nsigma=3)
-        qy_calc = np.linspace(-qy_width, qy_width, N_SLIT_PERP[accuracy]*10)
+        qy_min, qy_max = np.log10(np.min(q)), np.log10(qy_width)
+        qy_calc = np.logspace(qy_min, qy_max, N_SLIT_PERP[accuracy])
+        qy_calc = np.hstack((-qy_calc[::-1], 0, qy_calc))
         self.q_calc = [v.flatten() for v in np.meshgrid(qx_calc, qy_calc)]
         self.qx_calc, self.qy_calc = qx_calc, qy_calc
         self.nx, self.ny = len(qx_calc), len(qy_calc)
@@ -228,7 +230,7 @@ class Slit2D(Resolution):
             raise ValueError("Slit2D fails with q_calc != q")
 
     def apply(self, theory):
-        Iq = np.sum(theory.reshape(self.ny, self.nx), axis=0)*self.dy
+        Iq = np.trapz(theory.reshape(self.ny, self.nx), axis=0, x=self.qy_calc)
         if self.weights is not None:
             Iq = resolution.apply_resolution_matrix(self.weights, Iq)
         return Iq
