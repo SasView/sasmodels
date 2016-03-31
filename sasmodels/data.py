@@ -40,7 +40,7 @@ def load_data(filename):
     """
     Load data using a sasview loader.
     """
-    from sas.dataloader.loader import Loader
+    from sas.sascalc.dataloader.loader import Loader
     loader = Loader()
     data = loader.load(filename)
     if data is None:
@@ -321,7 +321,7 @@ def plot_data(data, view='log', limits=None):
 
 
 def plot_theory(data, theory, resid=None, view='log',
-                use_data=True, limits=None):
+                use_data=True, limits=None, Iq_calc=None):
     """
     Plot theory calculation.
 
@@ -342,7 +342,8 @@ def plot_theory(data, theory, resid=None, view='log',
     elif hasattr(data, 'qx_data'):
         _plot_result2D(data, theory, resid, view, use_data, limits=limits)
     else:
-        _plot_result1D(data, theory, resid, view, use_data, limits=limits)
+        _plot_result1D(data, theory, resid, view, use_data,
+                       limits=limits, Iq_calc=Iq_calc)
 
 
 def protect(fn):
@@ -365,7 +366,8 @@ def protect(fn):
 
 
 @protect
-def _plot_result1D(data, theory, resid, view, use_data, limits=None):
+def _plot_result1D(data, theory, resid, view, use_data,
+                   limits=None, Iq_calc=None):
     """
     Plot the data and residuals for 1D data.
     """
@@ -375,11 +377,16 @@ def _plot_result1D(data, theory, resid, view, use_data, limits=None):
     use_data = use_data and data.y is not None
     use_theory = theory is not None
     use_resid = resid is not None
-    num_plots = (use_data or use_theory) + use_resid
+    use_calc = use_theory and Iq_calc is not None
+    num_plots = (use_data or use_theory) + use_calc + use_resid
+
 
     scale = data.x**4 if view == 'q4' else 1.0
 
     if use_data or use_theory:
+        if num_plots > 1:
+            plt.subplot(1, num_plots, 1)
+
         #print(vmin, vmax)
         all_positive = True
         some_present = False
@@ -398,15 +405,13 @@ def _plot_result1D(data, theory, resid, view, use_data, limits=None):
             mtheory[~np.isfinite(mtheory)] = masked
             if view is 'log':
                 mtheory[mtheory <= 0] = masked
-            plt.plot(data.x/10, scale*mtheory, '-', hold=True)
+            plt.plot(data.x, scale*mtheory, '-', hold=True)
             all_positive = all_positive and (mtheory > 0).all()
             some_present = some_present or (mtheory.count() > 0)
 
         if limits is not None:
             plt.ylim(*limits)
 
-        if num_plots > 1:
-            plt.subplot(1, num_plots, 1)
         plt.xscale('linear' if not some_present else view)
         plt.yscale('linear'
                    if view == 'q4' or not some_present or not all_positive
@@ -414,13 +419,24 @@ def _plot_result1D(data, theory, resid, view, use_data, limits=None):
         plt.xlabel("$q$/A$^{-1}$")
         plt.ylabel('$I(q)$')
 
+    if use_calc:
+        # Only have use_calc if have use_theory
+        plt.subplot(1, num_plots, 2)
+        qx, qy, Iqxy = Iq_calc
+        plt.pcolormesh(qx, qy[qy>0], np.log10(Iqxy[qy>0,:]))
+        plt.xlabel("$q_x$/A$^{-1}$")
+        plt.xlabel("$q_y$/A$^{-1}$")
+        plt.xscale('log')
+        plt.yscale('log')
+        #plt.axis('equal')
+
     if use_resid:
         mresid = masked_array(resid, data.mask.copy())
         mresid[~np.isfinite(mresid)] = masked
         some_present = (mresid.count() > 0)
 
         if num_plots > 1:
-            plt.subplot(1, num_plots, (use_data or use_theory) + 1)
+            plt.subplot(1, num_plots, use_calc + 2)
         plt.plot(data.x, mresid, '-')
         plt.xlabel("$q$/A$^{-1}$")
         plt.ylabel('residuals')
@@ -560,15 +576,15 @@ def _plot_2d_signal(data, signal, vmin=None, vmax=None, view='log'):
     #plottable = Iq
     plottable = masked_array(image, ~valid | data.mask)
     # Divide range by 10 to convert from angstroms to nanometers
-    xmin, xmax = min(data.qx_data)/10, max(data.qx_data)/10
-    ymin, ymax = min(data.qy_data)/10, max(data.qy_data)/10
+    xmin, xmax = min(data.qx_data), max(data.qx_data)
+    ymin, ymax = min(data.qy_data), max(data.qy_data)
     if view == 'log':
         vmin, vmax = np.log10(vmin), np.log10(vmax)
     plt.imshow(plottable.reshape(len(data.x_bins), len(data.y_bins)),
-               interpolation='nearest', aspect=1, origin='upper',
+               interpolation='nearest', aspect=1, origin='lower',
                extent=[xmin, xmax, ymin, ymax], vmin=vmin, vmax=vmax)
-    plt.xlabel("$q_x$/nm$^{-1}$")
-    plt.ylabel("$q_y$/nm$^{-1}$")
+    plt.xlabel("$q_x$/A$^{-1}$")
+    plt.ylabel("$q_y$/A$^{-1}$")
     return vmin, vmax
 
 def demo():

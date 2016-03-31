@@ -137,7 +137,9 @@ def revert_pars(model_info, pars):
     # models without scale or background.
     namelist = name.split('*') if '*' in name else [name]
     for name in namelist:
-        if name == 'pearl_necklace':
+        if name == 'stacked_disks':
+            _remove_pd(oldpars, 'n_stacking', name)
+        elif name == 'pearl_necklace':
             _remove_pd(oldpars, 'num_pearls', name)
             _remove_pd(oldpars, 'thick_string', name)
         elif name == 'core_shell_parallelepiped':

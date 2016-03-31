@@ -99,6 +99,11 @@ O Kratky and G Porod, *J. Colloid Science*, 4, (1949) 35
 
 J S Higgins and H C Benoit, *Polymers and Neutron Scattering*, Clarendon, Oxford, 1994
 
+**Author:** NIST IGOR/DANSE **on:** pre 2010
+
+**Last Modified by:** Piotr Rozyczko **on:** February 18, 2016
+
+**Last Reviewed by:** Richard Heenan **on:** March 22, 2016
 """
 
 from numpy import inf
@@ -156,7 +161,8 @@ oldpars = dict(sld_core='core_sld',sld_layer='layer_sld',sld_solvent='solvent_sl
                phi='axis_phi')
 
 tests = [
-    # Accuracy tests based on content in test/utest_extra_models.py
+    # Accuracy tests based on content in test/utest_extra_models.py.
+    # Added 2 tests with n_stacked = 5 using SasView 3.1.2 - PDB
     [{'core_thick': 10.0,
       'layer_thick': 15.0,
       'radius': 3000.0,
@@ -170,6 +176,34 @@ tests = [
       'scale': 0.01,
       'background': 0.001,
      }, 0.001, 5075.12],
+
+    [{'core_thick': 10.0,
+      'layer_thick': 15.0,
+      'radius': 3000.0,
+      'n_stacking': 5.0,
+      'sigma_d': 0.0,
+      'sld_core': 4.0,
+      'sld_layer': -0.4,
+      'solvent_sd': 5.0,
+      'theta': 0.0,
+      'phi': 0.0,
+      'scale': 0.01,
+      'background': 0.001,
+     }, 0.001, 5065.12793824],
+
+    [{'core_thick': 10.0,
+      'layer_thick': 15.0,
+      'radius': 3000.0,
+      'n_stacking': 5.0,
+      'sigma_d': 0.0,
+      'sld_core': 4.0,
+      'sld_layer': -0.4,
+      'solvent_sd': 5.0,
+      'theta': 0.0,
+      'phi': 0.0,
+      'scale': 0.01,
+      'background': 0.001,
+     }, 0.164, 0.0127673597265],
 
     [{'core_thick': 10.0,
       'layer_thick': 15.0,

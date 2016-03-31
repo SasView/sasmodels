@@ -218,7 +218,7 @@ class Experiment(DataMixin):
         Plot the data and residuals.
         """
         data, theory, resid = self._data, self.theory(), self.residuals()
-        plot_theory(data, theory, resid, view)
+        plot_theory(data, theory, resid, view, Iq_calc = self.Iq_calc)
 
     def simulate_data(self, noise=None):
         """
