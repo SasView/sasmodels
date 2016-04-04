@@ -1,6 +1,10 @@
 """
 Core model handling routines.
 """
+__all__ = [
+    "list_models", "load_model_info", "precompile_dll",
+    "build_model", "make_kernel", "call_kernel", "call_ER_VR",
+    ]
 
 from os.path import basename, dirname, join as joinpath, splitext
 from glob import glob
@@ -38,12 +42,16 @@ except ImportError:
         module = imp.load_source(fullname, path)
         return module
 
-
-
-__all__ = [
-    "list_models", "load_model_info", "precompile_dll",
-    "build_model", "call_kernel", "call_ER_VR",
-]
+try:
+    np.meshgrid([])
+    meshgrid = np.meshgrid
+except ValueError:
+    # CRUFT: np.meshgrid requires multiple vectors
+    def meshgrid(*args):
+        if len(args) > 1:
+            return np.meshgrid(*args)
+        else:
+            return [np.asarray(v) for v in args]
 
 def list_models():
     """
@@ -89,10 +97,11 @@ def load_model_info(model_name):
         P_info, Q_info = [load_model_info(p) for p in parts]
         return product.make_product_info(P_info, Q_info)
 
-    return make_model_by_name(model_name)
+    kernel_module = load_kernel_module(model_name)
+    return generate.make_model_info(kernel_module)
 
 
-def make_model_by_name(model_name):
+def load_kernel_module(model_name):
     if model_name.endswith('.py'):
         path = model_name
         # Pull off the last .ext if it exists; there may be others
@@ -105,7 +114,9 @@ def make_model_by_name(model_name):
         __import__('sasmodels.models.'+model_name)
         kernel_module = getattr(models, model_name, None)
     #import sys; print "\n".join(sys.path)
-    return generate.make_model_info(kernel_module)
+    __import__('sasmodels.models.'+model_name)
+    kernel_module = getattr(models, model_name, None)
+    return kernel_module
 
 
 def build_model(model_info, dtype=None, platform="ocl"):
@@ -209,8 +220,8 @@ def dispersion_mesh(pars):
     parameter set in the vector.
     """
     value, weight = zip(*pars)
-    value = [v.flatten() for v in np.meshgrid(*value)]
-    weight = np.vstack([v.flatten() for v in np.meshgrid(*weight)])
+    value = [v.flatten() for v in meshgrid(*value)]
+    weight = np.vstack([v.flatten() for v in meshgrid(*weight)])
     weight = np.prod(weight, axis=0)
     return value, weight
 

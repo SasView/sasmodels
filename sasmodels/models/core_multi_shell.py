@@ -88,17 +88,17 @@ category = "shape:sphere"
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["volfraction", "", 0.05, [0,1],"",
                "volume fraction of spheres"],
-              ["sld", "1e-6/Ang^2", 1.0, [-inf, inf], "",
+              ["sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "",
                "Core scattering length density"],
-              ["radius", "Ang", 200., [0, inf], "",
+              ["radius", "Ang", 200., [0, inf], "volume",
                "Radius of the core"],
               ["sld_solvent", "1e-6/Ang^2", 6.4, [-inf, inf], "",
                "Solvent scattering length density"],
               ["n", "", 1, [0, 10], "volume",
                "number of shells"],
-              ["sld_shell[n]", "1e-6/Ang^2", 1.7, [-inf, inf], "",
+              ["sld[n]", "1e-6/Ang^2", 1.7, [-inf, inf], "",
                "scattering length density of shell k"],
-              ["thick_shell[n]", "Ang", 40., [0, inf], "volume",
+              ["thickness[n]", "Ang", 40., [0, inf], "volume",
                "Thickness of shell k"],
               ]
 
@@ -111,7 +111,7 @@ def Iqxy(qx, *args, **kw):
     return qx
 
 
-def shape(core_sld, core_radius, solvent_sld, n, in_sld, out_sld, thickness, A):
+def profile(volfraction, sld_core, radius, sld_solvent, n, sld, thickness):
     """
     SLD profile
     
@@ -152,8 +152,7 @@ def shape(core_sld, core_radius, solvent_sld, n, in_sld, out_sld, thickness, A):
 # above is directly from old code -- below is alotered from Woitek's first
 # cut an the onion.  Seems like we should be consistant?
 
-    total_radius = 1.25*(sum(thickness[:n]) + core_radius + 1)
-    dr = total_radius/400  # 400 points for a smooth plot
+    total_radius = 1.25*(sum(thickness[:n]) + radius + 1)
 
     r = []
     beta = []
@@ -169,38 +168,23 @@ def shape(core_sld, core_radius, solvent_sld, n, in_sld, out_sld, thickness, A):
         # Left side of each shells
         r0 = r[-1]
         r.append(r0)
-        beta.append(sld_shell[k])
+        beta.append(sld[k])
         r.append(r0 + thickness[k])
-        beta.append(sld_shell[k])
+        beta.append(sld[k])
    # add in the solvent
     r.append(r[-1])
-    beta.append(solvent_sld)
+    beta.append(sld_solvent)
     r.append(total_radius)
-    beta.append(solvent_sld)
+    beta.append(sld_solvent)
 
     return np.asarray(r), np.asarray(beta)
 
-def ER(radius, n, thick_shell):
-    return np.sum(thick_shell[:n], axis=0) + core_radius
+def ER(radius, n, thickness):
+    n = n[0]  # n cannot be polydisperse
+    return np.sum(thickness[:n], axis=0) + radius
 
 def VR(radius, n, thick_shell):
-    return 1.0
-
-parameters = [["volfraction", "", 0.05, [0,1],"",
-               "volume fraction of spheres"],
-              ["sld", "1e-6/Ang^2", 1.0, [-inf, inf], "",
-               "Core scattering length density"],
-              ["radius", "Ang", 200., [0, inf], "",
-               "Radius of the core"],
-              ["sld_solvent", "1e-6/Ang^2", 6.4, [-inf, inf], "",
-               "Solvent scattering length density"],
-              ["n", "", 1, [0, 10], "volume",
-               "number of shells"],
-              ["sld_shell[n]", "1e-6/Ang^2", 1.7, [-inf, inf], "",
-               "scattering length density of shell k"],
-              ["thick_shell[n]", "Ang", 40., [0, inf], "volume",
-               "Thickness of shell k"],
-               ]
+    return 1.0, 1.0
 
 demo = dict(volfraction = 1.0,
             sld = 6.4,
