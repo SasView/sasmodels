@@ -8,7 +8,6 @@ __all__ = [
 
 from os.path import basename, dirname, join as joinpath, splitext
 from glob import glob
-import imp
 
 import numpy as np
 
@@ -26,21 +25,6 @@ try:
     HAVE_OPENCL = True
 except:
     HAVE_OPENCL = False
-
-try:
-    # Python 3.5 and up
-    from importlib.util import spec_from_file_location, module_from_spec
-    def load_module(fullname, path):
-        spec = spec_from_file_location(fullname, path)
-        module = module_from_spec(spec)
-        spec.loader.exec_module(module)
-        return module
-except ImportError:
-    # CRUFT: python 2
-    import imp
-    def load_module(fullname, path):
-        module = imp.load_source(fullname, path)
-        return module
 
 try:
     np.meshgrid([])
@@ -97,26 +81,8 @@ def load_model_info(model_name):
         P_info, Q_info = [load_model_info(p) for p in parts]
         return product.make_product_info(P_info, Q_info)
 
-    kernel_module = load_kernel_module(model_name)
+    kernel_module = generate.load_kernel_module(model_name)
     return generate.make_model_info(kernel_module)
-
-
-def load_kernel_module(model_name):
-    if model_name.endswith('.py'):
-        path = model_name
-        # Pull off the last .ext if it exists; there may be others
-        name = basename(splitext(path)[0])
-        # Placing the model in the 'sasmodels.custom' name space.
-        from sasmodels import custom
-        kernel_module = load_module('sasmodels.custom.'+name, path)
-    else:
-        from sasmodels import models
-        __import__('sasmodels.models.'+model_name)
-        kernel_module = getattr(models, model_name, None)
-    #import sys; print "\n".join(sys.path)
-    __import__('sasmodels.models.'+model_name)
-    kernel_module = getattr(models, model_name, None)
-    return kernel_module
 
 
 def build_model(model_info, dtype=None, platform="ocl"):

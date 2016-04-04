@@ -192,6 +192,7 @@ import warnings
 import numpy as np
 
 from .modelinfo import ModelInfo, Parameter, make_parameter_table, set_demo
+from .custom import load_custom_kernel_module
 
 # TODO: identify model files which have changed since loading and reload them.
 
@@ -663,6 +664,16 @@ def create_default_functions(model_info):
         model_info['Iqxy'] = Iqxy
 
 
+def load_kernel_module(model_name):
+    if model_name.endswith('.py'):
+        kernel_module = load_custom_kernel_module(model_name)
+    else:
+        from sasmodels import models
+        __import__('sasmodels.models.'+model_name)
+        kernel_module = getattr(models, model_name, None)
+    return kernel_module
+
+
 def make_model_info(kernel_module):
     """
     Interpret the model definition file, categorizing the parameters.
@@ -810,12 +821,12 @@ def main():
     Program which prints the source produced by the model.
     """
     import sys
-    from sasmodels.core import make_model_by_name
     if len(sys.argv) <= 1:
         print("usage: python -m sasmodels.generate modelname")
     else:
         name = sys.argv[1]
-        model_info = make_model_by_name(name)
+        kernel_module = load_kernel_module(name)
+        model_info = make_model_info(kernel_module)
         source = make_source(model_info)
         print(source)
 
