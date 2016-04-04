@@ -164,7 +164,3 @@ demo = dict(scale=1, background=0,
             r_equatorial_pd=.2, r_equatorial_pd_n=15,
             theta_pd=15, theta_pd_n=45,
             phi_pd=15, phi_pd_n=1)
-oldname = 'EllipsoidModel'
-oldpars = dict(theta='axis_theta', phi='axis_phi',
-               sld='sldEll', sld_solvent='sldSolv',
-               r_polar='radius_a', r_equatorial='radius_b')

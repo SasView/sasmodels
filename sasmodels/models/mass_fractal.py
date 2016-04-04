@@ -91,11 +91,6 @@ demo = dict(scale=1, background=0,
             mass_dim=1.9,
             cutoff_length=100.0)
 
-oldname = 'MassFractalModel'
-oldpars = dict(radius='radius',
-               mass_dim='mass_dim',
-               cutoff_length='co_length')
-
 tests = [
 
     # Accuracy tests based on content in test/utest_other_models.py

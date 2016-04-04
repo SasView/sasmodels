@@ -72,9 +72,6 @@ Iqxy.vectorized = True  # Iqxy accepts an array of qx, qy values
 
 demo = dict(scale=1.0, background=0, intercept=1.0, slope=1.0)
 
-oldname = "LineModel"
-oldpars = dict(intercept='A', slope='B', background=None, scale=None)
-
 tests = [
 
     [{'intercept':   1.0,

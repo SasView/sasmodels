@@ -144,11 +144,6 @@ demo = dict(scale=1, background=0,
             phi=0.0,
             psi=0.0)
 
-oldname = 'SCCrystalModel'
-
-oldpars = dict(sld='sldSph',
-               sld_solvent='sldSolv')
-
 tests = [
     # Accuracy tests based on content in test/utest_extra_models.py
     [{}, 0.001, 10.3048],

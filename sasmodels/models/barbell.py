@@ -122,10 +122,3 @@ demo = dict(scale=1, background=0,
             theta_pd=15, theta_pd_n=0,
             phi_pd=15, phi_pd_n=0,
            )
-
-# For testing against the old sasview models, include the converted parameter
-# names and the target sasview model name.
-oldname = 'BarBellModel'
-oldpars = dict(sld='sld_barbell',
-               sld_solvent='sld_solv', bell_radius='rad_bell',
-               radius='rad_bar', length='len_bar')

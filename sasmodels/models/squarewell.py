@@ -129,8 +129,6 @@ Iqxy = """
 # ER defaults to 0.0
 # VR defaults to 1.0
 
-oldname = 'SquareWellStructure'
-oldpars = dict(radius_effective="effect_radius",radius_effective_pd="effect_radius_pd",radius_effective_pd_n="effect_radius_pd_n")
 demo = dict(radius_effective=50, volfraction=0.04, welldepth=1.5,
             wellwidth=1.2, radius_effective_pd=0, radius_effective_pd_n=0)
 #

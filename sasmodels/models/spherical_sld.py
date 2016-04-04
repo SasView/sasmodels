@@ -162,71 +162,57 @@ from numpy import inf
 name = "spherical_sld"
 title = "Sperical SLD intensity calculation"
 description = """
-    I(q) =
-    background = Incoherent background [1/cm]
-    """
+            I(q) =
+               background = Incoherent background [1/cm]
+        """
 category = "sphere-based"
-
-INTERFACE_CASES = ["Erf", "RPower", "LPower", "RExp", "LExp"]
 
 # pylint: disable=bad-whitespace, line-too-long
 #            ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["n_shells",                "",               1,      [0, 9],      "", "number of shells"],
-              ["radius_core",             "Ang",            50.0,   [0, inf],    "", "intern layer thickness"],
-              ["sld_core",                "1e-6/Ang^2",     2.07,   [-inf, inf], "", "sld function flat"],
-              ["sld_solvent",             "1e-6/Ang^2",     1.0,    [-inf, inf], "", "sld function solvent"],
-              ["sld_flat[n_shells]",      "1e-6/Ang^2",     4.06,   [-inf, inf], "", "sld function flat"],
-              ["thick_flat[n_shells]",    "Ang",            100.0,  [0, inf],    "", "flat layer_thickness"],
-              ["func_inter[n_shells]",    "",               0,      INTERFACE_CASES,  "", "shape of the interface between shells"],
-              ["nu_inter[n_shells]",      "",               2.5,    [-inf, inf], "", "steepness parameter"],
-              ["thick_inter[n_shells]",   "Ang",            50.0,   [0, inf],    "", "intern layer thickness"],
-              ["n_points_inter",          "",               35,     [0, 35],     "", "number of points in each sublayer Must be odd number"],
+parameters = [["n_shells",         "",               1,      [0, 9],         "", "number of shells"],
+              ["radius_core",      "Ang",            50.0,   [0, inf],       "", "intern layer thickness"],
+              ["sld_core",         "1e-6/Ang^2",     2.07,   [-inf, inf],    "", "sld function flat"],
+              ["sld_flat[n]",      "1e-6/Ang^2",     4.06,   [-inf, inf],    "", "sld function flat"],
+              ["thick_flat[n]",    "Ang",            100.0,  [0, inf],       "", "flat layer_thickness"],
+              ["func_inter[n]",    "",               0,      [0, 4],         "", "Erf:0, RPower:1, LPower:2, RExp:3, LExp:4"],
+              ["thick_inter[n]",   "Ang",            50.0,   [0, inf],       "", "intern layer thickness"],
+              ["inter_nu[n]",      "",               2.5,    [-inf, inf],    "", "steepness parameter"],
+              ["npts_inter",       "",               35,     [0, 35],        "", "number of points in each sublayer Must be odd number"],
+              ["sld_solvent",      "1e-6/Ang^2",     1.0,    [-inf, inf],    "", "sld function solvent"],
               ]
 # pylint: enable=bad-whitespace, line-too-long
-
 #source = ["lib/librefl.c",  "lib/sph_j1c.c", "spherical_sld.c"]
+
 def Iq(q, *args, **kw):
     return q
+
+def Iqxy(qx, *args, **kw):
+    return qx
+
 
 demo = dict(
     n_shells=4,
     scale=1.0,
     solvent_sld=1.0,
     background=0.0,
-    n_points_inter=35.0,
-    )
-
-oldname = "SphereSLDModel"
-oldpars = dict(
-    #scale="scale",
-    #background='background',
-    #n_shells="n_shells",
-    radius_core='rad_core',
-    #sld_core='sld_core',
-    #sld_flat='sld_flat',
-    #thick_flat='thick_flat',
-    #func_inter='func_inter',
-    #thick_inter='thick_inter',
-    #nu_inter='nu_inter',
-    #points_inter='npts_inter',
-    sld_solvent='sld_solv',
+    npts_inter=35.0,
     )
 
 #TODO: Not working yet
 tests = [
     # Accuracy tests based on content in test/utest_extra_models.py
-    [{'n_points_inter':35,
-      'sld_solv':1,
-      'radius_core':50.0,
-      'sld_core':2.07,
-      'func_inter2':0.0,
-      'thick_inter2':50,
-      'nu_inter2':2.5,
-      'sld_flat2':4,
-      'thick_flat2':100,
-      'func_inter1':0.0,
-      'thick_inter1':50,
-      'nu_inter1':2.5,
-      'background': 0.0,
-     }, 0.001, 0.001],
+    [{'npts_iter':35,
+        'sld_solv':1,
+        'radius_core':50.0,
+        'sld_core':2.07,
+        'func_inter2':0.0,
+        'thick_inter2':50,
+        'nu_inter2':2.5,
+        'sld_flat2':4,
+        'thick_flat2':100,
+        'func_inter1':0.0,
+        'thick_inter1':50,
+        'nu_inter1':2.5,
+        'background': 0.0,
+    }, 0.001, 0.001],
 ]

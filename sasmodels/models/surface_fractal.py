@@ -91,11 +91,6 @@ source = ["lib/sph_j1c.c", "lib/sas_gamma.c", "surface_fractal.c"]
 demo = dict(scale=1, background=0,
             radius=10, surface_dim=2.0, cutoff_length=500)
 
-oldname = 'SurfaceFractalModel'
-oldpars = dict(radius='radius',
-               surface_dim='surface_dim',
-               cutoff_length='co_length')
-
 tests = [
     # Accuracy tests based on content in test/utest_other_models.py
     [{'radius': 10.0,

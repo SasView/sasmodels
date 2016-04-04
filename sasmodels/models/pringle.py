@@ -92,16 +92,6 @@ demo = dict(background=0.0,
             sld_pringle=1.0,
             sld_solvent=6.35)
 
-oldname = 'PringlesModel'
-oldpars = dict(background='background',
-               scale='scale',
-               radius='radius',
-               thickness='thickness',
-               alpha='alpha',
-               beta='beta',
-               pringle_sld='sld_pringle',
-               solvent_sld='sld_solvent')
-
 tests = [
     [{'scale' : 1.0,
       'radius': 60.0,

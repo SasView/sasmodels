@@ -97,13 +97,6 @@ demo = dict(scale=1, background=0,
             cluster_rg=86.7,
             primary_rg=4000.0)
 
-oldname = 'MassSurfaceFractal'
-oldpars = dict(radius='radius',
-               mass_dim='mass_dim',
-               surface_dim='surface_dim',
-               cluster_rg='cluster_rg',
-               primary_rg='primary_rg')
-
 tests = [
 
     # Accuracy tests based on content in test/utest_other_models.py

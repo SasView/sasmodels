@@ -127,12 +127,6 @@ demo = dict(sld=0.5, sld_solvent=6.36,
             radius_pd=.2, radius_pd_n=10,
             thickness_pd=.2, thickness_pd_n=10)
 
-# For testing against the old sasview models, include the converted parameter
-# names and the target sasview model name.
-oldname = 'VesicleModel'
-oldpars = dict(sld='shell_sld', sld_solvent='solv_sld')
-
-
 # NOTE: test results taken from values returned by SasView 3.1.2, with
 # 0.001 added for a non-zero default background.
 tests = [[{}, 0.0005, 859.916526646],

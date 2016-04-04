@@ -117,7 +117,3 @@ def hidden(pars):
     else:
         return HIDE_NONE
 
-oldname = 'RPAModel'
-oldpars = dict(
-    case_num="lcase_n",
-)

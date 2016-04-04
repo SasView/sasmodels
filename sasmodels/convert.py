@@ -1,7 +1,9 @@
 """
 Convert models to and from sasview.
 """
+from os.path import join as joinpath, abspath, dirname
 import warnings
+import json
 
 # List of models which SasView versions don't contain the explicit 'scale' argument.
 # When converting such a model, please update this list.
@@ -25,6 +27,7 @@ MODELS_WITHOUT_BACKGROUND = [
     'guinier',
 ]
 
+# Convert new style names for polydispersity info to old style names
 PD_DOT = [
     ("", ""),
     ("_pd", ".width"),
@@ -32,6 +35,40 @@ PD_DOT = [
     ("_pd_nsigma", ".nsigmas"),
     ("_pd_type", ".type"),
     ]
+
+CONVERSION_TABLE = None
+
+def _read_conversion_table():
+    global CONVERSION_TABLE
+    if CONVERSION_TABLE is None:
+        path = joinpath(dirname(abspath(__file__)), "convert.json")
+        with open(path) as fid:
+            CONVERSION_TABLE = json_load_byteified(fid)
+
+def json_load_byteified(file_handle):
+    return _byteify(
+        json.load(file_handle, object_hook=_byteify),
+        ignore_dicts=True
+    )
+
+def _byteify(data, ignore_dicts = False):
+    # if this is a unicode string, return its string representation
+    if isinstance(data, unicode):
+        return data.encode('utf-8')
+    # if this is a list of values, return list of byteified values
+    if isinstance(data, list):
+        return [ _byteify(item, ignore_dicts=True) for item in data ]
+    # if this is a dictionary, return dictionary of byteified keys and values
+    # but only if we haven't already byteified it
+    if isinstance(data, dict) and not ignore_dicts:
+        return {
+            _byteify(key, ignore_dicts=True): _byteify(value, ignore_dicts=True)
+            for key, value in data.iteritems()
+        }
+    # if it's anything else, return it in its original form
+    return data
+
+
 def _convert_pars(pars, mapping):
     """
     Rename the parameters and any associated polydispersity attributes.
@@ -113,12 +150,33 @@ def _revert_pars(pars, mapping):
                 del newpars[k]
     return newpars
 
+def revert_name(model_info):
+    _read_conversion_table()
+    oldname, oldpars = CONVERSION_TABLE.get(model_info['id'], [None, {}])
+    return oldname
+
+def _get_old_pars(model_info):
+    _read_conversion_table()
+    oldname, oldpars = CONVERSION_TABLE.get(model_info['id'], [None, {}])
+    return oldpars
+
 def revert_pars(model_info, pars):
     """
     Convert model from new style parameter names to old style.
     """
-    mapping = model_info['oldpars']
-    oldpars = _revert_pars(_unscale_sld(pars), mapping)
+    if model_info['composition'] is not None:
+        composition_type, parts = model_info['composition']
+        if composition_type == 'product':
+            P, S = parts
+            oldpars = {'scale':'scale_factor'}
+            oldpars.update(_get_old_pars(P))
+            oldpars.update(_get_old_pars(S))
+        else:
+            raise NotImplementedError("cannot convert to sasview sum")
+    else:
+        oldpars = _get_old_pars(model_info)
+    oldpars = _revert_pars(_unscale_sld(pars), oldpars)
+
 
     # Note: update compare.constrain_pars to match
     name = model_info['id']

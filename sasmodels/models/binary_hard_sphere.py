@@ -115,13 +115,6 @@ demo = dict(sld_lg=3.5, sld_sm=0.5, sld_solvent=6.36,
             radius_lg=100, radius_sm=20,
             volfraction_lg=0.1, volfraction_sm=0.2)
 
-# For testing against the old sasview models, include the converted parameter
-# names and the target sasview model name.
-oldname = 'BinaryHSModel'
-oldpars = dict(volfraction_lg='vol_frac_ls', volfraction_sm='vol_frac_ss',
-               sld_lg='ls_sld', sld_sm='ss_sld', sld_solvent='solvent_sld',
-               radius_lg='l_radius', radius_sm='s_radius')
-
 # NOTE: test results taken from values returned by SasView 3.1.2
 tests = [[{}, 0.001, 25.8927262013]]
 

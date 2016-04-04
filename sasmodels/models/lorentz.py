@@ -54,10 +54,5 @@ Iqxy = """
 # parameters for demo
 demo = dict(scale=1.0, background=0.0, cor_length=50.0)
 
-# For testing against the old sasview models, include the converted parameter
-# names and the target sasview model name.
-oldname = 'LorentzModel'
-oldpars = dict(cor_length='length')
-
 # parameters for unit tests
 tests = [[{'cor_length': 250}, 0.01, 0.138931]]

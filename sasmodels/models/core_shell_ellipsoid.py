@@ -136,15 +136,6 @@ demo = dict(scale=1, background=0.001,
             theta=0,
             phi=0)
 
-oldname = 'CoreShellEllipsoidModel'
-
-oldpars = dict(equat_core='equat_core',polar_core='polar_core',equat_shell='equat_shell',polar_shell='polar_shell',
-               sld_core='sld_core',
-               sld_shell='sld_shell',
-               sld_solvent='sld_solvent',
-               theta='axis_theta',
-               phi='axis_phi')
-
 q = 0.1
 phi = pi/6
 qx = q*cos(phi)

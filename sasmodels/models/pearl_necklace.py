@@ -124,12 +124,4 @@ demo = dict(scale=1, background=0, radius=80.0, edge_separation=350.0,
             string_thickness_pd=0.2, string_thickness_pd_n=5,
            )
 
-# For testing against the old sasview models, include the converted parameter
-# names and the target sasview model name.
-oldname = 'PearlNecklaceModel'
-oldpars = dict(scale='scale', background='background', radius='radius',
-               number_of_pearls='num_pearls', sld_solvent='sld_solv',
-               string_thickness='thick_string', sld='sld_pearl',
-               sld_string='sld_string', edge_separation='edge_separation')
-
 tests = [[{}, 0.001, 17380.245], [{}, 'ER', 115.39502]]

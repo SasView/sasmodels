@@ -127,8 +127,3 @@ demo = dict(scale=1, background=0,
             phi_pd=15, phi_pd_n=0,
             psi_pd=15, psi_pd_n=0,
            )
-
-# For testing against the old sasview models, include the converted parameter
-# names and the target sasview model name.
-oldname = 'FCCrystalModel'
-oldpars = dict(sld='sldSph', sld_solvent='sldSolv')

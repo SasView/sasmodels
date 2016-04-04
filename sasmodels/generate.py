@@ -122,14 +122,6 @@ The kernel module must set variables defining the kernel meta data:
     parameter list.  *demo* is mostly needed to set the default
     polydispersity values for tests.
 
-    *oldname* is the name of the model in sasview before sasmodels
-    was split into its own package, and *oldpars* is a dictionary
-    of *parameter: old_parameter* pairs defining the new names for
-    the parameters.  This is used by *compare* to check the values
-    of the new model against the values of the old model before
-    you are ready to add the new model to sasmodels.
-
-
 An *model_info* dictionary is constructed from the kernel meta data and
 returned to the caller.
 
@@ -709,9 +701,6 @@ def make_model_info(kernel_module):
     * *Iq*, *Iqxy*, *form_volume*, *ER*, *VR* and *sesans* are python functions
       implementing the kernel for the module, or None if they are not
       defined in python
-    * *oldname* is the model name in pre-4.0 Sasview
-    * *oldpars* is the *{new: old}* parameter translation table
-      from pre-4.0 Sasview
     * *composition* is None if the model is independent, otherwise it is a
       tuple with composition type ('product' or 'mixture') and a list of
       *model_info* blocks for the composition objects.  This allows us to
@@ -741,8 +730,6 @@ def make_model_info(kernel_module):
         variant_info=getattr(kernel_module, 'invariant_info', None),
         demo=getattr(kernel_module, 'demo', None),
         source=getattr(kernel_module, 'source', []),
-        oldname=getattr(kernel_module, 'oldname', None),
-        oldpars=getattr(kernel_module, 'oldpars', {}),
         tests=getattr(kernel_module, 'tests', []),
         )
     set_demo(model_info, getattr(kernel_module, 'demo', None))
