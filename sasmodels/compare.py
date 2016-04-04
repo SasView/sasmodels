@@ -40,7 +40,7 @@ from . import kerneldll
 from . import product
 from .data import plot_theory, empty_data1D, empty_data2D
 from .direct_model import DirectModel
-from .convert import revert_pars, constrain_new_to_old
+from .convert import revert_name, revert_pars, constrain_new_to_old
 
 USAGE = """
 usage: compare.py model N1 N2 [options...] [key=val]
@@ -346,7 +346,7 @@ def suppress_pd(pars):
 
 def eval_sasview(model_info, data):
     """
-    Return a model calculator using the SasView fitting engine.
+    Return a model calculator using the pre-4.0 SasView models.
     """
     # importing sas here so that the error message will be that sas failed to
     # import rather than the more obscure smear_selection not imported error
@@ -365,13 +365,13 @@ def eval_sasview(model_info, data):
     if model_info['composition']:
         composition_type, parts = model_info['composition']
         if composition_type == 'product':
-            from sas.sascalc.fit.MultiplicationModel import MultiplicationModel
-            P, S = [get_model(p) for p in model_info['oldname']]
+            from sas.models.MultiplicationModel import MultiplicationModel
+            P, S = [get_model(revert_name(p)) for p in parts]
             model = MultiplicationModel(P, S)
         else:
             raise ValueError("sasview mixture models not supported by compare")
     else:
-        model = get_model(model_info['oldname'])
+        model = get_model(revert_name(model_info))
 
     # build a smearer with which to call the model, if necessary
     smearer = smear_selection(data, model=model)

@@ -31,10 +31,6 @@ def make_class(model_name):
     Load the sasview model defined in *kernel_module*.
 
     Returns a class that can be used directly as a sasview model.t
-
-    Defaults to using the new name for a model.  Setting
-    *namestyle='oldname'* will produce a class with a name
-    compatible with SasView.
     """
     model_info = core.load_model_info(model_name)
     return make_class_from_info(model_info)
@@ -59,7 +55,6 @@ class SasviewModel(object):
         model_info = self._model_info
 
         self.name = model_info['name']
-        self.oldname = model_info['oldname']
         self.description = model_info['description']
         self.category = None
         self.multiplicity_info = None

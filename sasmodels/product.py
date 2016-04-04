@@ -41,12 +41,6 @@ def make_product_info(p_info, s_info):
     # check for duplicates; can't use assertion since they may never be checked
     if len(set(p.name for p in pars)) != len(pars):
         raise ValueError("Duplicate parameters in %s and %s"%(p_id))
-    # For comparison with sasview, determine the old parameters.
-    oldname = [p_info['oldname'], s_info['oldname']]
-    oldpars = {'scale':'scale_factor'}
-    oldpars.update(p_info['oldpars'])
-    oldpars.update(s_info['oldpars'])
-
     model_info = {}
     model_info['id'] = '*'.join((p_id, s_id))
     model_info['name'] = ' X '.join((p_name, s_name))
@@ -62,8 +56,6 @@ def make_product_info(p_info, s_info):
     #model_info['tests'] = []
     #model_info['source'] = []
     # Iq, Iqxy, form_volume, ER, VR and sesans
-    model_info['oldname'] = oldname
-    model_info['oldpars'] = oldpars
     model_info['composition'] = ('product', [p_info, s_info])
     process_parameters(model_info)
     return model_info
