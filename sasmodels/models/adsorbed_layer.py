@@ -81,17 +81,6 @@ demo =  dict(scale = 1.0,
             sld_solvent = 6.3,
             background = 0.0)
 
-oldname =  "Core2ndMomentModel"
-oldpars =  dict(scale = 'scale',
-               second_moment = 'second_moment',
-               adsorbed_amount = 'ads_amount',
-               density_shell = 'density_poly',
-               radius = 'radius_core',
-               volfraction = 'volf_cores',
-               sld_shell = 'sld_poly',
-               sld_solvent = 'sld_solv',
-               background = 'background')
-
 # these unit test values taken from SasView 3.1.2
 tests =  [
     [{'scale': 1.0, 'second_moment': 23.0, 'adsorbed_amount': 1.9, 

@@ -175,16 +175,6 @@ demo = dict(scale=1, background=0.0,
             phi_pd=10, phi_pd_n=1,
             psi_pd=10, psi_pd_n=10)
 
-
-# For testing against the old sasview models, include the converted parameter
-# names and the target sasview model name.
-oldname = 'CSParallelepipedModel'
-oldpars = dict(theta='parallel_theta', phi='parallel_phi', psi='parallel_psi',
-               sld_core='sld_pcore', sld_a='sld_rimA', sld_b='sld_rimB',
-               sld_c='sld_rimC', sld_solvent='sld_solv',
-               a_side='shortA', b_side='midB', c_side='longC',
-               arim_thickness='rimA', brim_thickness='rimB', crim_thickness='rimC')
-
 qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
 tests = [[{}, 0.2, 0.533149288477],
          [{}, [0.2], [0.533149288477]],

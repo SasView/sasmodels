@@ -113,9 +113,6 @@ demo = dict(scale=1, background=0,
             tail_length_pd=0.2, tail_length_pd_n=40,
             head_length_pd=0.01, head_length_pd_n=40)
 
-oldname = 'LamellarFFHGModel'
-oldpars = dict(head_length='h_thickness', tail_length='t_length',
-               sld='sld_tail', sld_head='sld_head', sld_solvent='sld_solvent')
 #
 tests = [[{'scale': 1.0, 'background': 0.0, 'tail_length': 15.0, 'head_length': 10.0,
            'sld': 0.4, 'sld_head': 3.0, 'sld_solvent': 6.0}, [0.001], [653143.9209]]]

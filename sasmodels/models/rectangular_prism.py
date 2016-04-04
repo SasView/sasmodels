@@ -130,12 +130,6 @@ demo = dict(scale=1, background=0,
             b2a_ratio_pd=0.1, b2a_ratio_pd_n=1,
             c2a_ratio_pd=0.1, c2a_ratio_pd_n=1)
 
-# For testing against the old sasview models, include the converted parameter
-# names and the target sasview model name.
-oldname = 'RectangularPrismModel'
-oldpars = dict(a_side='short_side', b2a_ratio='b2a_ratio', c_side='c2a_ratio',
-               sld='sldPipe', sld_solvent='sldSolv')
-
 tests = [[{}, 0.2, 0.375248406825],
          [{}, [0.2], [0.375248406825]],
         ]

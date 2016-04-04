@@ -112,14 +112,6 @@ demo = dict(scale=1, background=0.1,
             lorentz_scale_factor=50.0,
             dynamic_cor_length=20.0)
 
-oldname = "GaussLorentzGelModel"
-
-oldpars = dict(background='background',
-               gauss_scale_factor='scale_g',
-               static_cor_length='stat_colength',
-               lorentz_scale_factor='scale_l',
-               dynamic_cor_length='dyn_colength')
-
 tests = [
 
     # Accuracy tests based on content in test/utest_extra_models.py

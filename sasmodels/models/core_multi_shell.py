@@ -193,14 +193,3 @@ demo = dict(volfraction = 1.0,
             n = 1,
             sld_shell = [2.0],
             thick_shell = [10])
-
-oldname = "CoreMultiShellModel"
-oldpars = dict(
-    sld="sld_core0",
-    radius="rad_core0",
-    sld_solvent="sld_solv",
-    n="n_shells",
-    sld_shell="sld_in_shell",
-    thick_shell="thick_shell",
-    # func_shell is always 2 in the user interface, so isn't included
-    )

@@ -573,7 +573,21 @@
       "alpha": "alpha", 
       "pringle_sld": "sld_pringle"
     }
-  ], 
+  ],
+  "raspberry": [
+    "RaspBerryModel",
+    {
+    "volfraction_lg": "volf_Lsph",
+    "volfraction_sm": "volf_Ssph",
+    "radius_sm": "radius_Ssph",
+    "radius_lg": "radius_Lsph",
+    "sld_lg": "sld_Lsph",
+    "sld_sm": "sld_Ssph",
+    "sld_solvent": "sld_solv",
+    "surface_fraction": "surfrac_Ssph",
+    "penetration": "delta_Ssph"
+    }
+  ],
   "rectangular_prism": [
     "RectangularPrismModel", 
     {

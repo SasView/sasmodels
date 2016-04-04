@@ -122,13 +122,6 @@ demo = dict(scale=1, background=0.0,
             power_1=1.0,
             power_2=4.0)
 
-oldname = "TwoPowerLawModel"
-oldpars = dict(coefficent_1='coef_A',
-               crossover='qc',
-               power_1='power1',
-               power_2='power2',
-               background='background')
-
 tests = [
     # Accuracy tests based on content in test/utest_extra_models.py
     [{'coefficent_1':     1.0,

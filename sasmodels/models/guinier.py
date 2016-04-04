@@ -52,10 +52,5 @@ Iqxy = """
 # parameters for demo
 demo = dict(scale=1.0, rg=60.0)
 
-# For testing against the old sasview models, include the converted parameter
-# names and the target sasview model name.
-oldname = 'GuinierModel'
-oldpars = dict(rg='rg')
-
 # parameters for unit tests
 tests = [[{'rg' : 31.5}, 0.005, 0.992756]]

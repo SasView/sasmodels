@@ -75,5 +75,3 @@ Iqxy = """
 # VR defaults to 1.0
 
 demo = dict(scale=1, background=0, length=50)
-oldname = "DABModel"
-oldpars = dict(length='length')

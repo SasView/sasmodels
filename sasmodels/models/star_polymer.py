@@ -68,11 +68,6 @@ demo = dict(scale=1, background=0,
             rg_squared=100.0,
             arms=3.0)
 
-oldname = 'StarPolymer'
-
-oldpars = dict(rg_squared='R2',
-               arms='arms')
-
 tests = [[{'rg_squared': 2.0,
            'arms':    3.3,
           }, 0.5, 0.851646091108],

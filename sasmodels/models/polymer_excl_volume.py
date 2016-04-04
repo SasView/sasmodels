@@ -153,11 +153,6 @@ demo = dict(scale=1, background=0.0,
             rg=60.0,
             porod_exp=3.0)
 
-oldname = "PolymerExclVolume"
-oldpars = dict(background='background', scale='scale',
-               rg='rg',
-               porod_exp='m')
-
 tests = [
     # Accuracy tests based on content in test/polyexclvol_default_igor.txt
     [{'rg': 60, 'porod_exp': 3.0}, 0.001, 0.999801],

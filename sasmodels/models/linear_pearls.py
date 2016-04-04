@@ -70,12 +70,6 @@ demo = dict(scale=1.0, background=0.0,
             sld=1.0,
             sld_solvent=6.3)
 
-oldname = "LinearPearlsModel"
-
-oldpars = dict(edge_sep='edge_separation',
-               sld='sld_pearl',
-               sld_solvent='sld_solv')
-
 """
 Tests temporarily disabled, until single-double precision accuracy issue solved.
 

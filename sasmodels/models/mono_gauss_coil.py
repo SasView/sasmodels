@@ -80,11 +80,6 @@ demo =  dict(scale = 1.0,
             radius_gyration = 75.0,
             background = 0.0)
 
-oldname =  "DebyeModel"
-oldpars =  dict(scale = 'scale',
-               radius_gyration = 'rg',
-               background = 'background')
-
 # these unit test values taken from SasView 3.1.2
 tests =  [
     [{'scale': 1.0, 'i_zero': 70.0, 'radius_gyration': 75.0, 'background': 0.0},

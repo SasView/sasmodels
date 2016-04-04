@@ -69,7 +69,4 @@ Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
 demo = dict(scale=100, background=1.0,
             peak_pos=0.05, peak_hwhm=0.005)
 
-oldname = "PeakLorentzModel"
-oldpars = dict(peak_pos='q0', peak_hwhm='B')
-
 tests = [[{'scale':100.0, 'background':1.0}, 0.001, 2.0305]]

@@ -198,22 +198,6 @@ demo = dict(
     npts_inter=35.0,
     )
 
-oldname = "SphereSLDModel"
-oldpars = dict(
-    #scale="scale",
-    #background='background',
-    #n_shells="n_shells",
-    radius_core='rad_core',
-    #sld_core='sld_core',
-    #sld_flat='sld_flat',
-    #thick_flat='thick_flat',
-    #func_inter='func_inter',
-    #thick_inter='thick_inter',
-    #inter_nu='nu_inter',
-    #npts_inter='npts_inter',
-    sld_solvent='sld_solv',
-    )
-
 #TODO: Not working yet
 tests = [
     # Accuracy tests based on content in test/utest_extra_models.py

@@ -160,9 +160,6 @@ demo = dict(scale=1, background=0.001,
             radius_lg=5000, radius_sm=100, penetration=0.0,
             radius_lg_pd=.2, radius_lg_pd_n=10)
 
-# For testing against the old sasview models, include the converted parameter
-# names and the target sasview model name.
-
 # TODO: update tests so the parameters correspond to SasView parameters
 # The model was re-parameterized so the results have changed.
 # NOTE: test results taken from values returned by SasView 3.1.2, with

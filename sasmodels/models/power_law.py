@@ -57,11 +57,6 @@ demo = dict(scale=1.0,
             power=4.0,
             background=0.0)
 
-oldname = "PowerLawAbsModel"
-oldpars = dict(scale='scale',
-               power='m',
-               background='background')
-
 tests = [
     [{'scale': 1.0, 'power': 4.0, 'background' : 0.0},
      [0.0106939, 0.469418], [7.64644e+07, 20.5949]],

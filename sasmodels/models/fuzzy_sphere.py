@@ -119,10 +119,6 @@ demo = dict(scale=1, background=0.001,
             radius_pd=.2, radius_pd_n=45,
             fuzziness_pd=.2, fuzziness_pd_n=0)
 
-oldname = "FuzzySphereModel"
-oldpars = dict(sld='sldSph', sld_solvent='sldSolv', radius='radius', fuzziness='fuzziness')
-
-
 tests = [
     # Accuracy tests based on content in test/utest_models_new1_3.py
     #[{'background': 0.001}, 1.0, 0.001],

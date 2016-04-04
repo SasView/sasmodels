@@ -57,7 +57,4 @@ Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
 
 demo = dict(scale=1.5, background=0.5)
 
-oldname = "PorodModel"
-oldpars = dict(scale='scale', background='background')
-
 tests = [[{'scale': 0.00001, 'background':0.01}, 0.04, 3.916250]]

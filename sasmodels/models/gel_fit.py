@@ -77,13 +77,6 @@ demo = dict(background=0.01,
             fractal_exp=2.0,
             cor_length=16.0)
 
-oldname = 'GelFitModel'
-oldpars = dict(guinier_scale='gScale',
-               lorentzian_scale='lScale',
-               gyration_radius='radius',
-               fractal_exp='FractalExp',
-               cor_length='zeta')
-
 tests = [[{'guinier_scale': 1.0,
            'lorentzian_scale': 1.0,
            'gyration_radius': 10.0,

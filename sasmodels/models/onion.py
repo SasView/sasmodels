@@ -384,16 +384,3 @@ demo = {
     # Could also specify them individually as
     # "A[1]": 0, "A[2]": -1, "A[3]": 1e-4, "A[4]": 1,
     }
-
-oldname = "OnionExpShellModel"
-oldpars = dict(
-    core_sld="sld_core0",
-    core_radius="rad_core0",
-    solvent_sld="sld_solv",
-    n="n_shells",
-    in_sld="sld_in_shell",
-    out_sld="sld_out_shell",
-    A="A_shell",
-    thickness="thick_shell",
-    # func_shell is always 2 in the user interface, so isn't included
-    )

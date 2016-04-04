@@ -93,10 +93,6 @@ Iqxy = """
 # ER defaults to 0.0
 # VR defaults to 1.0
 
-oldname = 'HayterMSAStructure'
-#oldpars = dict(effect_radius="radius_effective",effect_radius_pd="radius_effective_pd",effect_radius_pd_n="radius_effective_pd_n")
-oldpars = dict(radius_effective="effect_radius",radius_effective_pd="effect_radius_pd",radius_effective_pd_n="effect_radius_pd_n",salt_concentration="saltconc")
-#oldpars = dict( )
 # default parameter set,  use  compare.sh -midQ -linear
 # note the calculation varies in different limiting cases so a wide range of
 # parameters will be required for a thorough test!

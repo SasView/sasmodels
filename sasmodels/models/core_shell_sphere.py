@@ -73,11 +73,6 @@ source = ["lib/sph_j1c.c", "lib/core_shell.c", "core_shell_sphere.c"]
 demo = dict(scale=1, background=0, radius=60, thickness=10,
             sld_core=1.0, sld_shell=2.0, sld_solvent=0.0)
 
-oldname = 'CoreShellModel'
-oldpars = dict( sld_core='core_sld',
-               sld_shell='shell_sld',
-               sld_solvent='solvent_sld')
-
 def ER(radius, thickness):
     """
         Equivalent radius

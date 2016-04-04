@@ -94,11 +94,6 @@ demo = dict(scale=1, background=0,
             sld=0.4,
             n_pairs=2.0)
 
-oldname = 'MultiShellModel'
-oldpars = dict(radius='core_radius',
-               thick_shell='s_thickness', thick_solvent='w_thickness',
-               sld_solvent='core_sld', sld='shell_sld')
-
 tests = [
     # Accuracy tests based on content in test/utest_other_models.py
     [{'radius': 60.0,
