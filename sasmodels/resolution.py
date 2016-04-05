@@ -476,7 +476,7 @@ def eval_form(q, form, pars):
     *pars* are the parameter values to use when evaluating.
     """
     from sasmodels import core
-    kernel = core.make_kernel(form, [q])
+    kernel = form.make_kernel([q])
     theory = core.call_kernel(kernel, pars)
     kernel.release()
     return theory
@@ -692,7 +692,7 @@ class IgorComparisonTest(unittest.TestCase):
 
     def _eval_sphere(self, pars, resolution):
         from sasmodels import core
-        kernel = core.make_kernel(self.model, [resolution.q_calc])
+        kernel = self.model.make_kernel([resolution.q_calc])
         theory = core.call_kernel(kernel, pars)
         result = resolution.apply(theory)
         kernel.release()
@@ -1061,7 +1061,7 @@ def _eval_demo_1d(resolution, title):
     model_info = core.load_model_info(name)
     model = core.build_model(model_info)
 
-    kernel = core.make_kernel(model, [resolution.q_calc])
+    kernel = model.make_kernel([resolution.q_calc])
     theory = core.call_kernel(kernel, pars)
     Iq = resolution.apply(theory)
 

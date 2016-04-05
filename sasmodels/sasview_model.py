@@ -12,46 +12,76 @@ The model parameters for sasmodels are different from those in sasview.
 When reloading previously saved models, the parameters should be converted
 using :func:`sasmodels.convert.convert`.
 """
+from __future__ import print_function
 
 import math
 from copy import deepcopy
 import collections
+import traceback
+import logging
 
 import numpy as np
 
 from . import core
+from . import custom
 from . import generate
 
-def standard_models():
-    return [make_class(model_name) for model_name in core.list_models()]
-
-# TODO: rename to make_class_from_name and update sasview
-def make_class(model_name):
+def load_standard_models():
     """
-    Load the sasview model defined in *kernel_module*.
+    Load and return the list of predefined models.
 
-    Returns a class that can be used directly as a sasview model.t
+    If there is an error loading a model, then a traceback is logged and the
+    model is not returned.
     """
-    model_info = core.load_model_info(model_name)
-    return make_class_from_info(model_info)
+    models = []
+    for name in core.list_models():
+        try:
+            models.append(_make_standard_model(name))
+        except:
+            logging.error(traceback.format_exc())
+    return models
 
-def make_class_from_file(path):
-    model_info = core.load_model_info_from_path(path)
-    return make_class_from_info(model_info)
 
-def make_class_from_info(model_info):
+def load_custom_model(path):
+    """
+    Load a custom model given the model path.
+    """
+    kernel_module = custom.load_custom_kernel_module(path)
+    model_info = generate.make_model_info(kernel_module)
+    return _make_model_from_info(model_info)
+
+
+def _make_standard_model(name):
+    """
+    Load the sasview model defined by *name*.
+
+    *name* can be a standard model name or a path to a custom model.
+
+    Returns a class that can be used directly as a sasview model.
+    """
+    kernel_module = generate.load_kernel_module(name)
+    model_info = generate.make_model_info(kernel_module)
+    return _make_model_from_info(model_info)
+
+
+def _make_model_from_info(model_info):
+    """
+    Convert *model_info* into a SasView model wrapper.
+    """
     def __init__(self, multfactor=1):
         SasviewModel.__init__(self)
     attrs = dict(__init__=__init__, _model_info=model_info)
     ConstructedModel = type(model_info['name'], (SasviewModel,), attrs)
     return ConstructedModel
 
+
 class SasviewModel(object):
     """
     Sasview wrapper for opencl/ctypes model.
     """
+    _model_info = {}
     def __init__(self):
-        self._kernel = None
+        self._model = None
         model_info = self._model_info
 
         self.name = model_info['name']
@@ -103,8 +133,7 @@ class SasviewModel(object):
 
     def __get_state__(self):
         state = self.__dict__.copy()
-        model_id = self._model_info['id']
-        state.pop('_kernel')
+        state.pop('_model')
         # May need to reload model info on set state since it has pointers
         # to python implementations of Iq, etc.
         #state.pop('_model_info')
@@ -112,7 +141,7 @@ class SasviewModel(object):
 
     def __set_state__(self, state):
         self.__dict__ = state
-        self._kernel = None
+        self._model = None
 
     def __str__(self):
         """
@@ -201,7 +230,7 @@ class SasviewModel(object):
 
     def getDispParamList(self):
         """
-        Return a list of all available parameters for the model
+        Return a list of polydispersity parameters for the model
         """
         # TODO: fix test so that parameter order doesn't matter
         ret = ['%s.%s' % (d.lower(), p)
@@ -302,10 +331,10 @@ class SasviewModel(object):
         This should NOT be used for fitting since it copies the *q* vectors
         to the card for each evaluation.
         """
-        if self._kernel is None:
-            self._kernel = core.build_model(self._model_info)
+        if self._model is None:
+            self._model = core.build_model(self._model_info)
         q_vectors = [np.asarray(q) for q in args]
-        fn = self._kernel(q_vectors)
+        fn = self._model.make_kernel(q_vectors)
         pars = [self.params[v] for v in fn.fixed_pars]
         pd_pars = [self._get_weights(p) for p in fn.pd_pars]
         result = fn(pars, pd_pars, self.cutoff)
@@ -383,11 +412,9 @@ class SasviewModel(object):
 
     def _get_weights(self, par):
         """
-            Return dispersion weights
-            :param par parameter name
+        Return dispersion weights for parameter
         """
         from . import weights
-
         relative = self._model_info['partype']['pd-rel']
         limits = self._model_info['limits']
         dis = self.dispersion[par]
@@ -396,3 +423,27 @@ class SasviewModel(object):
             self.params[par], limits[par], par in relative)
         return value, weight / np.sum(weight)
 
+
+def test_model():
+    """
+    Test that a sasview model (cylinder) can be run.
+    """
+    Cylinder = _make_standard_model('cylinder')
+    cylinder = Cylinder()
+    return cylinder.evalDistribution([0.1,0.1])
+
+
+def test_model_list():
+    """
+    Make sure that all models build as sasview models.
+    """
+    from .exception import annotate_exception
+    for name in core.list_models():
+        try:
+            _make_standard_model(name)
+        except:
+            annotate_exception("when loading "+name)
+            raise
+
+if __name__ == "__main__":
+    print("cylinder(0.1,0.1)=%g"%test_model())

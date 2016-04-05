@@ -18,7 +18,7 @@ class PyModel(object):
     def __init__(self, model_info):
         self.info = model_info
 
-    def __call__(self, q_vectors):
+    def make_kernel(self, q_vectors):
         q_input = PyInput(q_vectors, dtype=F64)
         kernel = self.info['Iqxy'] if q_input.is_2d else self.info['Iq']
         return PyKernel(kernel, self.info, q_input)

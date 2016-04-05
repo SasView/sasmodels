@@ -313,7 +313,7 @@ class GpuModel(object):
         self.info, self.source, self.dtype, self.fast = state
         self.program = None
 
-    def __call__(self, q_vectors):
+    def make_kernel(self, q_vectors):
         if self.program is None:
             compiler = environment().compile_program
             self.program = compiler(self.info['name'], self.source, self.dtype,

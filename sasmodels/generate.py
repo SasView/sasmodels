@@ -203,7 +203,9 @@ Code follows the C99 standard with the following extensions and conditions::
 """
 from __future__ import print_function
 
-# TODO: identify model files which have changed since loading and reload them.
+#TODO: identify model files which have changed since loading and reload them.
+#TODO: determine which functions are useful outside of generate
+#__all__ = ["model_info", "make_doc", "make_source", "convert_type"]
 
 import sys
 from os.path import abspath, dirname, join as joinpath, exists, basename, \
@@ -215,11 +217,10 @@ from collections import namedtuple
 
 import numpy as np
 
+from .custom import load_custom_kernel_module
+
 PARAMETER_FIELDS = ['name', 'units', 'default', 'limits', 'type', 'description']
 Parameter = namedtuple('Parameter', PARAMETER_FIELDS)
-
-#TODO: determine which functions are useful outside of generate
-#__all__ = ["model_info", "make_doc", "make_source", "convert_type"]
 
 C_KERNEL_TEMPLATE_PATH = joinpath(dirname(__file__), 'kernel_template.c')
 
@@ -644,6 +645,17 @@ def process_parameters(model_info):
         model_info['demo'] = model_info['defaults']
     model_info['has_2d'] = partype['orientation'] or partype['magnetic']
 
+
+def load_kernel_module(model_name):
+    if model_name.endswith('.py'):
+        kernel_module = load_custom_kernel_module(model_name)
+    else:
+        from sasmodels import models
+        __import__('sasmodels.models.'+model_name)
+        kernel_module = getattr(models, model_name, None)
+    return kernel_module
+
+
 def make_model_info(kernel_module):
     """
     Interpret the model definition file, categorizing the parameters.
@@ -768,7 +780,6 @@ def make_doc(model_info):
     return DOC_HEADER % subst
 
 
-
 def demo_time():
     """
     Show how long it takes to process a model.
@@ -788,10 +799,8 @@ def main():
         print("usage: python -m sasmodels.generate modelname")
     else:
         name = sys.argv[1]
-        import sasmodels.models
-        __import__('sasmodels.models.' + name)
-        model = getattr(sasmodels.models, name)
-        model_info = make_model_info(model)
+        kernel_module = load_kernel_module(name)
+        model_info = make_model_info(kernel_module)
         source = make_source(model_info)
         print(source)
 
