@@ -177,7 +177,7 @@ def get_weights(parameter, values):
     Uses "name", "name_pd", "name_pd_type", "name_pd_n", "name_pd_sigma"
     from the *pars* dictionary for parameter value and parameter dispersion.
     """
-    value = values.get(parameter.name, parameter.default)
+    value = float(values.get(parameter.name, parameter.default))
     relative = parameter.relative_pd
     limits = parameter.limits
     disperser = values.get(parameter.name+'_pd_type', 'gaussian')
@@ -199,6 +199,7 @@ def dispersion_mesh(pars):
     parameter set in the vector.
     """
     value, weight = zip(*pars)
+    weight = [w if w else [1.] for w in weight]
     value = [v.flatten() for v in meshgrid(*value)]
     weight = np.vstack([v.flatten() for v in meshgrid(*weight)])
     weight = np.prod(weight, axis=0)
@@ -278,11 +279,10 @@ def call_ER(model_info, values):
         return 1.0
     else:
         vol_pars = [get_weights(parameter, values)
-                    for parameter in model_info['parameters']
+                    for parameter in model_info['parameters'].call_parameters
                     if parameter.type == 'volume']
         value, weight = dispersion_mesh(vol_pars)
         individual_radii = ER(*value)
-        #print(values[0].shape, weights.shape, fv.shape)
         return np.sum(weight*individual_radii) / np.sum(weight)
 
 def call_VR(model_info, values):
@@ -296,7 +296,7 @@ def call_VR(model_info, values):
         return 1.0
     else:
         vol_pars = [get_weights(parameter, values)
-                    for parameter in model_info['parameters']
+                    for parameter in model_info['parameters'].call_parameters
                     if parameter.type == 'volume']
         value, weight = dispersion_mesh(vol_pars)
         whole, part = VR(*value)

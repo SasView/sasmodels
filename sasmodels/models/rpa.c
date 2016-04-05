@@ -1,33 +1,11 @@
 double Iq(double q, double case_num,
-    double Na, double Phia, double va, double a_sld, double ba,
-    double Nb, double Phib, double vb, double b_sld, double bb,
-    double Nc, double Phic, double vc, double c_sld, double bc,
-    double Nd, double Phid, double vd, double d_sld, double bd,
+    double N[], double Phi[], double v[], double L[], double b[],
     double Kab, double Kac, double Kad,
     double Kbc, double Kbd, double Kcd
     );
-
-double Iqxy(double qx, double qy, double case_num,
-    double Na, double Phia, double va, double a_sld, double ba,
-    double Nb, double Phib, double vb, double b_sld, double bb,
-    double Nc, double Phic, double vc, double c_sld, double bc,
-    double Nd, double Phid, double vd, double d_sld, double bd,
-    double Kab, double Kac, double Kad,
-    double Kbc, double Kbd, double Kcd
-    );
-
-double form_volume(void);
-
-double form_volume(void)
-{
-    return 1.0;
-}
 
 double Iq(double q, double case_num,
-    double Na, double Phia, double va, double La, double ba,
-    double Nb, double Phib, double vb, double Lb, double bb,
-    double Nc, double Phic, double vc, double Lc, double bc,
-    double Nd, double Phid, double vd, double Ld, double bd,
+    double N[], double Phi[], double v[], double L[], double b[],
     double Kab, double Kac, double Kad,
     double Kbc, double Kbd, double Kcd
     ) {
@@ -35,41 +13,41 @@ double Iq(double q, double case_num,
 
 #if 0  // Sasview defaults
   if (icase <= 1) {
-    Na=Nb=1000.0;
-    Phia=Phib=0.0000001;
+    N[0]=N[1]=1000.0;
+    Phi[0]=Phi[1]=0.0000001;
     Kab=Kac=Kad=Kbc=Kbd=-0.0004;
-    La=Lb=1e-12;
-    va=vb=100.0;
-    ba=bb=5.0;
+    L[0]=L[1]=1e-12;
+    v[0]=v[1]=100.0;
+    b[0]=b[1]=5.0;
   } else if (icase <= 4) {
-    Phia=0.0000001;
+    Phi[0]=0.0000001;
     Kab=Kac=Kad=-0.0004;
-    La=1e-12;
-    va=100.0;
-    ba=5.0;
+    L[0]=1e-12;
+    v[0]=100.0;
+    b[0]=5.0;
   }
 #else
   if (icase <= 1) {
-    Na=Nb=0.0;
-    Phia=Phib=0.0;
+    N[0]=N[1]=0.0;
+    Phi[0]=Phi[1]=0.0;
     Kab=Kac=Kad=Kbc=Kbd=0.0;
-    La=Lb=Ld;
-    va=vb=vd;
-    ba=bb=0.0;
+    L[0]=L[1]=L[3];
+    v[0]=v[1]=v[3];
+    b[0]=b[1]=0.0;
   } else if (icase <= 4) {
-    Na = 0.0;
-    Phia=0.0;
+    N[0] = 0.0;
+    Phi[0]=0.0;
     Kab=Kac=Kad=0.0;
-    La=Ld;
-    va=vd;
-    ba=0.0;
+    L[0]=L[3];
+    v[0]=v[3];
+    b[0]=0.0;
   }
 #endif
 
-  const double Xa = q*q*ba*ba*Na/6.0;
-  const double Xb = q*q*bb*bb*Nb/6.0;
-  const double Xc = q*q*bc*bc*Nc/6.0;
-  const double Xd = q*q*bd*bd*Nd/6.0;
+  const double Xa = q*q*b[0]*b[0]*N[0]/6.0;
+  const double Xb = q*q*b[1]*b[1]*N[1]/6.0;
+  const double Xc = q*q*b[2]*b[2]*N[2]/6.0;
+  const double Xd = q*q*b[3]*b[3]*N[3]/6.0;
 
   // limit as Xa goes to 0 is 1
   const double Pa = Xa==0 ? 1.0 : -expm1(-Xa)/Xa;
@@ -97,35 +75,35 @@ double Iq(double q, double case_num,
   // 9: A-B-C-D tetra-block copolymer
 #if 0
   const double S0aa = icase<5
-                      ? 1.0 : Na*Phia*va*Paa;
+                      ? 1.0 : N[0]*Phi[0]*v[0]*Paa;
   const double S0bb = icase<2
-                      ? 1.0 : Nb*Phib*vb*Pbb;
-  const double S0cc = Nc*Phic*vc*Pcc;
-  const double S0dd = Nd*Phid*vd*Pdd;
+                      ? 1.0 : N[1]*Phi[1]*v[1]*Pbb;
+  const double S0cc = N[2]*Phi[2]*v[2]*Pcc;
+  const double S0dd = N[3]*Phi[3]*v[3]*Pdd;
   const double S0ab = icase<8
-                      ? 0.0 : sqrt(Na*va*Phia*Nb*vb*Phib)*Pa*Pb;
+                      ? 0.0 : sqrt(N[0]*v[0]*Phi[0]*N[1]*v[1]*Phi[1])*Pa*Pb;
   const double S0ac = icase<9
-                      ? 0.0 : sqrt(Na*va*Phia*Nc*vc*Phic)*Pa*Pc*exp(-Xb);
+                      ? 0.0 : sqrt(N[0]*v[0]*Phi[0]*N[2]*v[2]*Phi[2])*Pa*Pc*exp(-Xb);
   const double S0ad = icase<9
-                      ? 0.0 : sqrt(Na*va*Phia*Nd*vd*Phid)*Pa*Pd*exp(-Xb-Xc);
+                      ? 0.0 : sqrt(N[0]*v[0]*Phi[0]*N[3]*v[3]*Phi[3])*Pa*Pd*exp(-Xb-Xc);
   const double S0bc = (icase!=4 && icase!=7 && icase!= 9)
-                      ? 0.0 : sqrt(Nb*vb*Phib*Nc*vc*Phic)*Pb*Pc;
+                      ? 0.0 : sqrt(N[1]*v[1]*Phi[1]*N[2]*v[2]*Phi[2])*Pb*Pc;
   const double S0bd = (icase!=4 && icase!=7 && icase!= 9)
-                      ? 0.0 : sqrt(Nb*vb*Phib*Nd*vd*Phid)*Pb*Pd*exp(-Xc);
+                      ? 0.0 : sqrt(N[1]*v[1]*Phi[1]*N[3]*v[3]*Phi[3])*Pb*Pd*exp(-Xc);
   const double S0cd = (icase==0 || icase==2 || icase==5)
-                      ? 0.0 : sqrt(Nc*vc*Phic*Nd*vd*Phid)*Pc*Pd;
+                      ? 0.0 : sqrt(N[2]*v[2]*Phi[2]*N[3]*v[3]*Phi[3])*Pc*Pd;
 #else  // sasview equivalent
-//printf("Xc=%g, S0cc=%g*%g*%g*%g\n",Xc,Nc,Phic,vc,Pcc);
-  double S0aa = Na*Phia*va*Paa;
-  double S0bb = Nb*Phib*vb*Pbb;
-  double S0cc = Nc*Phic*vc*Pcc;
-  double S0dd = Nd*Phid*vd*Pdd;
-  double S0ab = sqrt(Na*va*Phia*Nb*vb*Phib)*Pa*Pb;
-  double S0ac = sqrt(Na*va*Phia*Nc*vc*Phic)*Pa*Pc*exp(-Xb);
-  double S0ad = sqrt(Na*va*Phia*Nd*vd*Phid)*Pa*Pd*exp(-Xb-Xc);
-  double S0bc = sqrt(Nb*vb*Phib*Nc*vc*Phic)*Pb*Pc;
-  double S0bd = sqrt(Nb*vb*Phib*Nd*vd*Phid)*Pb*Pd*exp(-Xc);
-  double S0cd = sqrt(Nc*vc*Phic*Nd*vd*Phid)*Pc*Pd;
+//printf("Xc=%g, S0cc=%g*%g*%g*%g\n",Xc,N[2],Phi[2],v[2],Pcc);
+  double S0aa = N[0]*Phi[0]*v[0]*Paa;
+  double S0bb = N[1]*Phi[1]*v[1]*Pbb;
+  double S0cc = N[2]*Phi[2]*v[2]*Pcc;
+  double S0dd = N[3]*Phi[3]*v[3]*Pdd;
+  double S0ab = sqrt(N[0]*v[0]*Phi[0]*N[1]*v[1]*Phi[1])*Pa*Pb;
+  double S0ac = sqrt(N[0]*v[0]*Phi[0]*N[2]*v[2]*Phi[2])*Pa*Pc*exp(-Xb);
+  double S0ad = sqrt(N[0]*v[0]*Phi[0]*N[3]*v[3]*Phi[3])*Pa*Pd*exp(-Xb-Xc);
+  double S0bc = sqrt(N[1]*v[1]*Phi[1]*N[2]*v[2]*Phi[2])*Pb*Pc;
+  double S0bd = sqrt(N[1]*v[1]*Phi[1]*N[3]*v[3]*Phi[3])*Pb*Pd*exp(-Xc);
+  double S0cd = sqrt(N[2]*v[2]*Phi[2]*N[3]*v[3]*Phi[3])*Pc*Pd;
 switch(icase){
   case 0:
     S0aa=0.000001;
@@ -310,34 +288,13 @@ switch(icase){
   // Note: eliminate cases without A and B polymers by setting Lij to 0
   // Note: 1e-13 to convert from fm to cm for scattering length
   const double sqrt_Nav=sqrt(6.022045e+23) * 1.0e-13;
-  const double Lad = icase<5 ? 0.0 : (La/va - Ld/vd)*sqrt_Nav;
-  const double Lbd = icase<2 ? 0.0 : (Lb/vb - Ld/vd)*sqrt_Nav;
-  const double Lcd = (Lc/vc - Ld/vd)*sqrt_Nav;
+  const double Lad = icase<5 ? 0.0 : (L[0]/v[0] - L[3]/v[3])*sqrt_Nav;
+  const double Lbd = icase<2 ? 0.0 : (L[1]/v[1] - L[3]/v[3])*sqrt_Nav;
+  const double Lcd = (L[2]/v[2] - L[3]/v[3])*sqrt_Nav;
 
   const double result=Lad*Lad*S11 + Lbd*Lbd*S22 + Lcd*Lcd*S33
                     + 2.0*(Lad*Lbd*S12 + Lbd*Lcd*S23 + Lad*Lcd*S13);
 
   return result;
 
-}
-
-double Iqxy(double qx, double qy,
-    double case_num,
-    double Na, double Phia, double va, double a_sld, double ba,
-    double Nb, double Phib, double vb, double b_sld, double bb,
-    double Nc, double Phic, double vc, double c_sld, double bc,
-    double Nd, double Phid, double vd, double d_sld, double bd,
-    double Kab, double Kac, double Kad,
-    double Kbc, double Kbd, double Kcd
-    )
-{
-    double q = sqrt(qx*qx + qy*qy);
-    return Iq(q,
-        case_num,
-        Na, Phia, va, a_sld, ba,
-        Nb, Phib, vb, b_sld, bb,
-        Nc, Phic, vc, c_sld, bc,
-        Nd, Phid, vd, d_sld, bd,
-        Kab, Kac, Kad,
-        Kbc, Kbd, Kcd);
 }

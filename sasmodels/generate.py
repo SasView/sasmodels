@@ -485,8 +485,8 @@ def make_source(model_info):
 
     # Define the function calls
     if partable.form_volume_parameters:
-        refs = _call_pars("v.", partable.form_volume_parameters)
-        call_volume = "#define CALL_VOLUME(v) form_volume(%s)" % (",".join(refs))
+        refs = _call_pars("_v.", partable.form_volume_parameters)
+        call_volume = "#define CALL_VOLUME(_v) form_volume(%s)" % (",".join(refs))
     else:
         # Model doesn't have volume.  We could make the kernel run a little
         # faster by not using/transferring the volume normalizations, but
@@ -494,18 +494,18 @@ def make_source(model_info):
         call_volume = "#define CALL_VOLUME(v) 1.0"
     source.append(call_volume)
 
-    refs = ["q[i]"] + _call_pars("v.", partable.iq_parameters)
-    call_iq = "#define CALL_IQ(q,i,v) Iq(%s)" % (",".join(refs))
+    refs = ["_q[_i]"] + _call_pars("_v.", partable.iq_parameters)
+    call_iq = "#define CALL_IQ(_q,_i,_v) Iq(%s)" % (",".join(refs))
     if _have_Iqxy(user_code):
         # Call 2D model
-        refs = ["q[2*i]", "q[2*i+1]"] + _call_pars("v.", partable.iqxy_parameters)
-        call_iqxy = "#define CALL_IQ(q,i,v) Iqxy(%s)" % (",".join(refs))
+        refs = ["q[2*i]", "q[2*i+1]"] + _call_pars("_v.", partable.iqxy_parameters)
+        call_iqxy = "#define CALL_IQ(_q,_i,_v) Iqxy(%s)" % (",".join(refs))
     else:
         # Call 1D model with sqrt(qx^2 + qy^2)
         warnings.warn("Creating Iqxy = Iq(sqrt(qx^2 + qy^2))")
         # still defined:: refs = ["q[i]"] + _call_pars("v", iq_parameters)
-        pars_sqrt = ["sqrt(q[2*i]*q[2*i]+q[2*i+1]*q[2*i+1])"] + refs[1:]
-        call_iqxy = "#define CALL_IQ(q,i,v) Iq(%s)" % (",".join(pars_sqrt))
+        pars_sqrt = ["sqrt(_q[2*_i]*_q[2*_i]+_q[2*_i+1]*_q[2*_i+1])"] + refs[1:]
+        call_iqxy = "#define CALL_IQ(_q,_i,_v) Iq(%s)" % (",".join(pars_sqrt))
 
     # Fill in definitions for numbers of parameters
     source.append("#define MAX_PD %s"%partable.max_pd)

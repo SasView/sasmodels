@@ -622,6 +622,7 @@
   "spherical_sld": [
     "SphereSLDModel", 
     {
+      "n": "n_shells",
       "radius_core": "rad_core", 
       "sld_solvent": "sld_solv"
     }

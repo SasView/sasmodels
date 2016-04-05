@@ -345,13 +345,13 @@ class SasviewModel(object):
         to the card for each evaluation.
         """
         if self._model is None:
-            self._model = core.build_model(self._model_info, platform='dll')
+            self._model = core.build_model(self._model_info)
         q_vectors = [np.asarray(q) for q in args]
         kernel = self._model.make_kernel(q_vectors)
         pairs = [self._get_weights(p)
                  for p in self._model_info['parameters'].call_parameters]
         details, weights, values = core.build_details(kernel, pairs)
-        return kernel(details, weights, values, cutoff=self.cutoff)
+        result = kernel(details, weights, values, cutoff=self.cutoff)
         kernel.q_input.release()
         kernel.release()
         return result

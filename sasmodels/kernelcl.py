@@ -54,6 +54,7 @@ import warnings
 import numpy as np
 
 try:
+    raise NotImplementedError("OpenCL not yet implemented for new kernel template")
     import pyopencl as cl
     # Ask OpenCL for the default context so that we know that one exists
     cl.create_some_context(interactive=False)

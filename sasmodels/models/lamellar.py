@@ -81,10 +81,6 @@ Iq = """
     return 4.0e-4*M_PI*sub*sub/qsq * 2.0*sinq2*sinq2 / (thickness*qsq);
     """
 
-Iqxy = """
-    return Iq(sqrt(qx*qx+qy*qy), IQ_PARAMETERS);
-    """
-
 # ER defaults to 0.0
 # VR defaults to 1.0
 

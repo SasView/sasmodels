@@ -169,7 +169,7 @@ category = "sphere-based"
 
 # pylint: disable=bad-whitespace, line-too-long
 #            ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["n_shells",         "",               1,      [0, 9],         "", "number of shells"],
+parameters = [["n",                "",               1,      [0, 9],         "", "number of shells"],
               ["radius_core",      "Ang",            50.0,   [0, inf],       "", "intern layer thickness"],
               ["sld_core",         "1e-6/Ang^2",     2.07,   [-inf, inf],    "", "sld function flat"],
               ["sld_flat[n]",      "1e-6/Ang^2",     4.06,   [-inf, inf],    "", "sld function flat"],
@@ -191,7 +191,7 @@ def Iqxy(qx, *args, **kw):
 
 
 demo = dict(
-    n_shells=4,
+    n=4,
     scale=1.0,
     solvent_sld=1.0,
     background=0.0,

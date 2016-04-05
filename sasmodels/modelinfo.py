@@ -143,7 +143,7 @@ def set_demo(model_info, demo):
                 if np.isscalar(value):
                     # support for the form
                     #    demo(thickness=0, thickness2=50)
-                    for k in pars[name].length:
+                    for k in range(1, pars[name].length+1):
                         key = name+str(k)
                         if key not in scalars:
                             scalars[key] = vectors

@@ -100,10 +100,6 @@ Iq = """
     return inten;
     """
 
-Iqxy = """
-    return Iq(sqrt(qx*qx+qy*qy), IQ_PARAMETERS);
-    """
-
 # ER defaults to 0.0
 # VR defaults to 1.0
 

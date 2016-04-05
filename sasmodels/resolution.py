@@ -501,11 +501,12 @@ def romberg_slit_1d(q, width, height, form, pars):
     """
     from scipy.integrate import romberg
 
-    par_set = set([p.name for p in form.info['parameters']])
+    par_set = set([p.name for p in form.info['parameters'].call_parameters])
     if any(k not in par_set for k in pars.keys()):
         extra = set(pars.keys()) - par_set
-        raise ValueError("bad parameters: [%s] not in [%s]"%
-                         (", ".join(sorted(extra)), ", ".join(sorted(keys))))
+        raise ValueError("bad parameters: [%s] not in [%s]"
+                         % (", ".join(sorted(extra)),
+                            ", ".join(sorted(pars.keys()))))
 
     if np.isscalar(width):
         width = [width]*len(q)
@@ -555,12 +556,12 @@ def romberg_pinhole_1d(q, q_width, form, pars, nsigma=5):
     """
     from scipy.integrate import romberg
 
-    par_set = set([p.name for p in form.info['parameters']])
+    par_set = set([p.name for p in form.info['parameters'].call_parameters])
     if any(k not in par_set for k in pars.keys()):
         extra = set(pars.keys()) - par_set
-        raise ValueError("bad parameters: [%s] not in [%s]"%
-                         (", ".join(sorted(extra)),
-                          ", ".join(sorted(pars.keys()))))
+        raise ValueError("bad parameters: [%s] not in [%s]"
+                         % (", ".join(sorted(extra)),
+                            ", ".join(sorted(pars.keys()))))
 
     _fn = lambda q, q0, dq: eval_form(q, form, pars)*gaussian(q, q0, dq)
     r = [romberg(_fn, max(qi-nsigma*dqi, 1e-10*q[0]), qi+nsigma*dqi,

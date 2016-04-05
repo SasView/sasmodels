@@ -37,7 +37,6 @@ import numpy as np
 
 from . import core
 from . import kerneldll
-from . import product
 from .data import plot_theory, empty_data1D, empty_data2D
 from .direct_model import DirectModel
 from .convert import revert_name, revert_pars, constrain_new_to_old
