@@ -31,6 +31,5 @@ def load_custom_kernel_module(path):
     # Pull off the last .ext if it exists; there may be others
     name = basename(splitext(path)[0])
     # Placing the model in the 'sasmodels.custom' name space.
-    from sasmodels import custom
     kernel_module = load_module_from_path('sasmodels.custom.'+name, path)
     return kernel_module

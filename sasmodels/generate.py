@@ -186,8 +186,6 @@ import numpy as np
 from .modelinfo import ModelInfo, Parameter, make_parameter_table, set_demo
 from .custom import load_custom_kernel_module
 
-# TODO: identify model files which have changed since loading and reload them.
-
 TEMPLATE_ROOT = dirname(__file__)
 
 F16 = np.dtype('float16')
@@ -319,7 +317,7 @@ def convert_type(source, dtype):
     """
     if dtype == F16:
         fbytes = 2
-        source = _convert_type(source, "float", "f")
+        source = _convert_type(source, "half", "f")
     elif dtype == F32:
         fbytes = 4
         source = _convert_type(source, "float", "f")

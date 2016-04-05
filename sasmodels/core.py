@@ -37,6 +37,18 @@ except ValueError:
         else:
             return [np.asarray(v) for v in args]
 
+# TODO: refactor composite model support
+# The current load_model_info/build_model does not reuse existing model
+# definitions when loading a composite model, instead reloading and
+# rebuilding the kernel for each component model in the expression.  This
+# is fine in a scripting environment where the model is built when the script
+# starts and is thrown away when the script ends, but may not be the best
+# solution in a long-lived application.  This affects the following functions:
+#
+#    load_model
+#    load_model_info
+#    build_model
+
 def list_models():
     """
     Return the list of available models on the model path.
@@ -59,6 +71,7 @@ def load_model(model_name, **kw):
     Load model info and build model.
     """
     return build_model(load_model_info(model_name), **kw)
+
 
 def load_model_info(model_name):
     """

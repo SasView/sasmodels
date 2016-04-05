@@ -165,8 +165,8 @@ def _hide_model_case_from_nosetests():
                     #raise Exception("No test cases provided")
                     pass
 
-            except Exception as exc:
-                annotate_exception(exc, self.test_name)
+            except:
+                annotate_exception(self.test_name)
                 raise
 
         def _run_one_test(self, model, test):
