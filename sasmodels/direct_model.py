@@ -240,7 +240,7 @@ def main():
     if call != "ER_VR":
         try:
             values = [float(v) for v in call.split(',')]
-        except:
+        except Exception:
             values = []
         if len(values) == 1:
             q, = values

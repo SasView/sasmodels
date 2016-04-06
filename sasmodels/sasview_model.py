@@ -38,7 +38,7 @@ def load_standard_models():
     for name in core.list_models():
         try:
             models.append(_make_standard_model(name))
-        except:
+        except Exception:
             logging.error(traceback.format_exc())
     return models
 

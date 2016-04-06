@@ -23,7 +23,7 @@ from . import kerneldll
 try:
     from . import kernelcl
     HAVE_OPENCL = True
-except:
+except Exception:
     HAVE_OPENCL = False
 
 try:
@@ -63,7 +63,7 @@ def isstr(s):
     Return True if *s* is a string-like object.
     """
     try: s + ''
-    except: return False
+    except Exception: return False
     return True
 
 def load_model(model_name, **kw):

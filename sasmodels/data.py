@@ -357,9 +357,7 @@ def protect(fn):
         """
         try:
             return fn(*args, **kw)
-        except KeyboardInterrupt:
-            raise
-        except:
+        except Exception:
             traceback.print_exc()
 
     return wrapper

@@ -19,7 +19,6 @@ import traceback
 import numpy as np
 
 from . import core
-from . import generate
 from .compare import (MODELS, randomize_pars, suppress_pd, make_data,
                       make_engine, get_pars, columnize,
                       constrain_pars, constrain_new_to_old)
@@ -124,9 +123,7 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
         """
         try:
             result = fn(**pars)
-        except KeyboardInterrupt:
-            raise
-        except:
+        except Exception:
             traceback.print_exc()
             print("when comparing %s for %d"%(name, seed))
             if hasattr(data, 'qx_data'):
@@ -245,7 +242,7 @@ def main():
         cutoff = float(sys.argv[4]) if not mono else 0
         base = sys.argv[5]
         comp = sys.argv[6] if len(sys.argv) > 6 else "sasview"
-    except:
+    except Exception:
         traceback.print_exc()
         print_usage()
         sys.exit(1)

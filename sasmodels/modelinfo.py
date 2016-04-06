@@ -56,7 +56,7 @@ def parse_parameter(name, units='', default=None,
             raise TypeError("high is not numeric")
         if low >= high:
             raise ValueError("require low < high")
-    except:
+    except Exception:
         raise ValueError("invalid limits %s for %s"%(limits, name))
 
     if not isinstance(default, (int, float)):
@@ -94,7 +94,7 @@ def parse_parameter(name, units='', default=None,
         try:
             length = int(ref)
             control = None
-        except:
+        except Exception:
             length = None
             control = ref
     else:
