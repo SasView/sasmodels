@@ -157,9 +157,6 @@ kernel void IQ_KERNEL_NAME(
     const double qi = q[i];
 #ifdef IQ_OPEN_LOOPS
     double ret=0.0, norm=0.0;
-  #ifdef VOLUME_PARAMETERS
-    double vol=0.0, norm_vol=0.0;
-  #endif
     IQ_OPEN_LOOPS
     //for (int radius_i=0; radius_i < Nradius; radius_i++) {
     //  const double radius = loops[2*(radius_i)];
@@ -171,22 +168,17 @@ kernel void IQ_KERNEL_NAME(
       // allow kernels to exclude invalid regions by returning NaN
       if (!isnan(scattering)) {
         ret += weight*scattering;
-        norm += weight;
       #ifdef VOLUME_PARAMETERS
-        const double vol_weight = VOLUME_WEIGHT_PRODUCT;
-        vol += vol_weight*form_volume(VOLUME_PARAMETERS);
-        norm_vol += vol_weight;
+        norm += weight * form_volume(VOLUME_PARAMETERS);
+      #else
+        norm += weight;
       #endif
       }
     //else { printf("exclude qx,qy,I:%%g,%%g,%%g\n",qi,scattering); }
     }
     IQ_CLOSE_LOOPS
-  #ifdef VOLUME_PARAMETERS
-    if (vol*norm_vol != 0.0) {
-      ret *= norm_vol/vol;
-    }
-  #endif
-    result[i] = scale*ret/norm+background;
+    // norm can only be zero if volume is zero, so no scattering
+    result[i] = (norm > 0. ? scale*ret/norm + background : background);
 #else
     result[i] = scale*Iq(qi, IQ_PARAMETERS) + background;
 #endif
@@ -240,27 +232,20 @@ kernel void IQXY_KERNEL_NAME(
     //for (int radius_i=0; radius_i < Nradius; radius_i++) {
     //  const double radius = loops[2*(radius_i)];
     //  const double radius_w = loops[2*(radius_i)+1];
-
-    const double weight = IQXY_WEIGHT_PRODUCT;
+    double weight = IQXY_WEIGHT_PRODUCT;
     if (weight > cutoff) {
 
       const double scattering = Iqxy(qxi, qyi, IQXY_PARAMETERS);
       if (!isnan(scattering)) { // if scattering is bad, exclude it from sum
-      //if (scattering >= 0.0) { // scattering cannot be negative
-        // TODO: use correct angle for spherical correction
-        // Definition of theta and phi are probably reversed relative to the
-        // equation which gave rise to this correction, leading to an
-        // attenuation of the pattern as theta moves through pi/2.  Either
-        // reverse the meanings of phi and theta in the forms, or use phi
-        // rather than theta in this correction.  Current code uses cos(theta)
-        // so that values match those of sasview.
-      #if defined(IQXY_HAS_THETA) // && 0
-        const double spherical_correction
-          = (Ntheta>1 ? fabs(cos(M_PI_180*theta))*M_PI_2:1.0);
-        const double next = spherical_correction * weight * scattering;
-      #else
-        const double next = weight * scattering;
+      #if defined(IQXY_HAS_THETA)
+        // Force a nominal value for the spherical correction even when
+        // theta is +90/-90 so that there are no divide by zero problems.
+        // For cos(theta) fixed at 90, we effectively multiply top and bottom
+        // by 1e-6, so the effect cancels.
+        const double spherical_correction = fmax(fabs(cos(M_PI_180*theta)), 1e-6);
+        weight *= spherical_correction;
       #endif
+      const double next = weight * scattering;
       #if USE_KAHAN_SUMMATION
         const double y = next - accumulated_error;
         const double t = ret + y;
@@ -269,22 +254,17 @@ kernel void IQXY_KERNEL_NAME(
       #else
         ret += next;
       #endif
-        norm += weight;
       #ifdef VOLUME_PARAMETERS
-        const double vol_weight = VOLUME_WEIGHT_PRODUCT;
-        vol += vol_weight*form_volume(VOLUME_PARAMETERS);
-        norm_vol += vol_weight;
+        norm += weight*form_volume(VOLUME_PARAMETERS);
+      #else
+        norm += weight;
       #endif
       }
       //else { printf("exclude qx,qy,I:%%g,%%g,%%g\n",qi,scattering); }
     }
     IQXY_CLOSE_LOOPS
-  #ifdef VOLUME_PARAMETERS
-    if (vol*norm_vol != 0.0) {
-      ret *= norm_vol/vol;
-    }
-  #endif
-    result[i] = scale*ret/norm+background;
+    // norm can only be zero if volume is zero, so no scattering
+    result[i] = (norm>0. ? scale*ret/norm + background : background);
 #else
     result[i] = scale*Iqxy(qxi, qyi, IQXY_PARAMETERS) + background;
 #endif
