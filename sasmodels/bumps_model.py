@@ -82,7 +82,7 @@ def create_parameters(model_info, **kwargs):
 
     pars = {}     # floating point parameters
     pd_types = {} # distribution names
-    for p in model_info['parameters']:
+    for p in model_info['parameters'].call_parameters:
         value = kwargs.pop(p.name, p.default)
         pars[p.name] = Parameter.default(value, name=p.name, limits=p.limits)
         if p.polydisperse:
@@ -94,7 +94,8 @@ def create_parameters(model_info, **kwargs):
                 name = p.name + part
                 value = kwargs.pop(name, default)
                 pars[name] = Parameter.default(value, name=name, limits=limits)
-            pd_types[p.name+'_pd_type'] = kwargs.pop(name, 'gaussian')
+            name = p.name + '_pd_type'
+            pd_types[name] = kwargs.pop(name, 'gaussian')
 
     if kwargs:  # args not corresponding to parameters
         raise TypeError("unexpected parameters: %s"

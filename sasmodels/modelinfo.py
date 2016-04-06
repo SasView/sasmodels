@@ -377,20 +377,6 @@ class ParameterTable(object):
                     full_list.append(pk)
         self.call_parameters = full_list
 
-    """ # Suppress these for now until we see how they are used
-    def __getitem__(self, k):
-        if isinstance(k, (int, slice)):
-            return self.parameters[k]
-        else:
-            return self._name_table[k]
-
-    def __contains__(self, key):
-        return key in self._name_table
-
-    def __iter__(self):
-        return iter(self.expanded_parameters)
-    """
-
     def _categorize_parameters(self):
         # Set the kernel parameters.  Assumes background and scale are the
         # first two parameters in the parameter list, but these are not sent
