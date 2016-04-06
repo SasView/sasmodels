@@ -225,9 +225,6 @@ kernel void IQXY_KERNEL_NAME(
     #endif
 #ifdef IQXY_OPEN_LOOPS
     double ret=0.0, norm=0.0;
-    #ifdef VOLUME_PARAMETERS
-    double vol=0.0, norm_vol=0.0;
-    #endif
     IQXY_OPEN_LOOPS
     //for (int radius_i=0; radius_i < Nradius; radius_i++) {
     //  const double radius = loops[2*(radius_i)];
@@ -242,7 +239,7 @@ kernel void IQXY_KERNEL_NAME(
         // theta is +90/-90 so that there are no divide by zero problems.
         // For cos(theta) fixed at 90, we effectively multiply top and bottom
         // by 1e-6, so the effect cancels.
-        const double spherical_correction = fmax(fabs(cos(M_PI_180*theta)), 1e-6);
+        const double spherical_correction = fmax(fabs(cos(M_PI_180*theta)), 1.e-6);
         weight *= spherical_correction;
       #endif
       const double next = weight * scattering;

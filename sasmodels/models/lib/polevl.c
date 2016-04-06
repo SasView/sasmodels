@@ -50,9 +50,6 @@ Direct inquiries to 30 Frost Street, Cambridge, MA 02140
 */
 
 double polevl( double x, constant double *coef, int N );
-double p1evl( double x, constant double *coef, int N );
-
-
 double polevl( double x, constant double *coef, int N )
 {
 
@@ -64,7 +61,7 @@ double polevl( double x, constant double *coef, int N )
         ans = ans * x + coef[i];
     }
 
-    return ans ;
+    return ans;
 }
 
 /*							p1evl()	*/
@@ -73,6 +70,7 @@ double polevl( double x, constant double *coef, int N )
  * Otherwise same as polevl.
  */
 
+double p1evl( double x, constant double *coef, int N );
 double p1evl( double x, constant double *coef, int N )
 {
     int i=0;
@@ -83,5 +81,5 @@ double p1evl( double x, constant double *coef, int N )
         ans = ans*x + coef[i];
     }
 
-    return( ans );
+    return ans;
 }

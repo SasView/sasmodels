@@ -48,8 +48,6 @@ Cephes Math Library Release 2.8:  June, 2000
 Copyright 1984, 1987, 1989, 2000 by Stephen L. Moshier
 */
 
-double sas_J0(double x);
-
 /* Note: all coefficients satisfy the relative error criterion
  * except YP, YQ which are designed for absolute error. */
 
@@ -177,6 +175,7 @@ double sas_J0(double x);
         0.0
  };
 
+double sas_J0(double x);
 double sas_J0(double x)
 {
 
