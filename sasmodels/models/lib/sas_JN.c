@@ -46,9 +46,8 @@ Cephes Math Library Release 2.8:  June, 2000
 Copyright 1984, 1987, 2000 by Stephen L. Moshier
 */
 
-double sas_JN( int n, double x );
-
-double sas_JN( int n, double x ) {
+static double
+sas_JN( int n, double x ) {
 
     const double MACHEP = 1.11022302462515654042E-16;
     double pkm2, pkm1, pk, xk, r, ans, xinv;
