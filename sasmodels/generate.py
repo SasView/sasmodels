@@ -14,7 +14,7 @@ Small angle scattering models are defined by a set of kernel functions:
     a form with particular dimensions for a single orientation.
 
     *form_volume(p1, p2, ...)* returns the volume of the form with particular
-    dimension.
+    dimension, or 1.0 if no volume normalization is required.
 
     *ER(p1, p2, ...)* returns the effective radius of the form with
     particular dimensions.

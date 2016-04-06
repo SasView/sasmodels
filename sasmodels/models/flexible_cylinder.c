@@ -1,7 +1,7 @@
 static double
 form_volume(length, kuhn_length, radius)
 {
-    return 1.;
+    return 1.0;
 }
 
 static double
