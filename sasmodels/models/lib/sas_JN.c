@@ -50,7 +50,7 @@ static double
 sas_JN( int n, double x ) {
 
     const double MACHEP = 1.11022302462515654042E-16;
-    double pkm2, pkm1, pk, xk, r, ans, xinv;
+    double pkm2, pkm1, pk, xk, r, ans;
     int k, sign;
 
     if( n < 0 ) {
@@ -120,7 +120,7 @@ sas_JN( int n, double x ) {
 	    return( sign * ans );
 
     #else
-        xinv = 1.0/x;
+        const double xinv = 1.0/x;
         pkm1 = ans * xinv;
         k = n-1;
         r = (float )(2 * k);

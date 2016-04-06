@@ -9,8 +9,7 @@ double flexible_cylinder_kernel(double q, double length, double kuhn_length,
 
 double form_volume(double length, double kuhn_length, double radius)
 {
-
-      return 0.0;
+    return 1.0;
 }
 
 double flexible_cylinder_kernel(double q,
