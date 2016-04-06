@@ -83,13 +83,15 @@ void KERNEL_NAME(
     #endif
 
     const double norm = CALL_VOLUME(local_values);
+    const double scale = values[0];
+    const double background = values[1];
     #ifdef USE_OPENMP
     #pragma omp parallel for
     #endif
     result[nq] = norm; // Total volume normalization
     for (int i=0; i < nq; i++) {
       double scattering = CALL_IQ(q, i, local_values);
-      result[i] = values[0]*scattering/norm + values[1];
+      result[i] = (norm>0. ? scale*scattering/norm + background : background);
     }
     return;
   }
@@ -202,16 +204,18 @@ void KERNEL_NAME(
     }
   }
 
-  // Make normalization available for the next round
+  // Accumulate norm.
   result[nq] += norm;
 
   // End of the PD loop we can normalize
   if (pd_stop >= problem->total_pd) {
+    const double scale = values[0];
+    const double background = values[1];
     #ifdef USE_OPENMP
     #pragma omp parallel for
     #endif
     for (int i=0; i < nq; i++) {
-      result[i] = values[0]*result[i]/norm + values[1];
+      result[i] = (norm>0. ? scale*scattering/norm + background : background);
     }
   }
 #endif // MAX_PD > 0
