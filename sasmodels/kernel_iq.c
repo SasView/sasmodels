@@ -215,7 +215,7 @@ void KERNEL_NAME(
     #pragma omp parallel for
     #endif
     for (int i=0; i < nq; i++) {
-      result[i] = (norm>0. ? scale*scattering/norm + background : background);
+      result[i] = (norm>0. ? scale*result[i]/norm + background : background);
     }
   }
 #endif // MAX_PD > 0
