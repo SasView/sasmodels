@@ -103,10 +103,10 @@ class PyKernel(object):
         # through the loop.  Arguments to the kernel and volume functions
         # will use views into this vector, relying on the fact that a
         # an array of no dimensions acts like a scalar.
-        parameter_vector = np.empty(len(partable.call_parameters), 'd')
+        parameter_vector = np.empty(len(partable.call_parameters)-2, 'd')
 
         # Create views into the array to hold the arguments
-        offset = 2
+        offset = 0
         kernel_args, volume_args = [], []
         for p in partable.kernel_parameters:
             if p.length == 1:
@@ -119,7 +119,7 @@ class PyKernel(object):
             if p in kernel_parameters:
                 kernel_args.append(v)
             if p in volume_parameters:
-                volume_args.append(p)
+                volume_args.append(v)
 
         # Hold on to the parameter vector so we can use it to call kernel later.
         # This may also be required to preserve the views into the vector.
@@ -171,7 +171,7 @@ def _loops(parameters,  # type: np.ndarray
     #   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #
     #                                                              #
     ################################################################
-    parameters[2:] = values[details.par_offset]
+    parameters[:] = values[details.par_offset]
     scale, background = values[0], values[1]
     if details.num_active == 0:
         norm = float(form_volume())
@@ -214,8 +214,9 @@ def _loops(parameters,  # type: np.ndarray
                     spherical_correction = max(abs(cos(pi/180 * parameters[theta])), 1e-6)
         for k in range(details.num_coord):
             if details.pd_coord[k]&1:
-                par = details.par_coord[k]
+                #par = details.par_coord[k]
                 parameters[par] = values[offset[par]]
+                #print "par",par,offset[par],parameters[par+2]
                 offset[par] += 1
                 if par == theta:
                     spherical_correction = max(abs(cos(pi/180 * parameters[theta])), 1e-6)
