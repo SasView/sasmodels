@@ -13,12 +13,7 @@ To use it, first load form factor P and structure factor S, then create
 from copy import copy
 import numpy as np
 
-from .modelinfo import Parameter, ParameterTable
-
-SCALE=0
-BACKGROUND=1
-EFFECT_RADIUS=2
-VOLFRACTION=3
+from .modelinfo import Parameter, ParameterTable, ModelInfo
 
 def make_mixture_info(parts):
     """
@@ -49,23 +44,23 @@ def make_mixture_info(parts):
             pars.append(p)
     partable = ParameterTable(pars)
 
-    model_info = {}
-    model_info['id'] = '+'.join(part['id'])
-    model_info['name'] = ' + '.join(part['name'])
-    model_info['filename'] = None
-    model_info['title'] = 'Mixture model with ' + model_info['name']
-    model_info['description'] = model_info['title']
-    model_info['docs'] = model_info['title']
-    model_info['category'] = "custom"
-    model_info['parameters'] = partable
-    #model_info['single'] = any(part['single'] for part in parts)
-    model_info['structure_factor'] = False
-    model_info['variant_info'] = None
-    #model_info['tests'] = []
-    #model_info['source'] = []
+    model_info = ModelInfo()
+    model_info.id = '+'.join(part['id'])
+    model_info.name = ' + '.join(part['name'])
+    model_info.filename = None
+    model_info.title = 'Mixture model with ' + model_info.name
+    model_info.description = model_info.title
+    model_info.docs = model_info.title
+    model_info.category = "custom"
+    model_info.parameters = partable
+    #model_info.single = any(part['single'] for part in parts)
+    model_info.structure_factor = False
+    model_info.variant_info = None
+    #model_info.tests = []
+    #model_info.source = []
     # Iq, Iqxy, form_volume, ER, VR and sesans
     # Remember the component info blocks so we can build the model
-    model_info['composition'] = ('mixture', parts)
+    model_info.composition = ('mixture', parts)
 
 
 class MixtureModel(object):
@@ -107,11 +102,11 @@ class MixtureKernel(object):
             pd_pars.append(pd)
         if dim == '2d':
             for p in kernels:
-                partype = p.info['partype']
+                partype = p.info.partype
                 accumulate(partype['fixed-2d'], partype['pd-2d'], partype['volume'])
         else:
             for p in kernels:
-                partype = p.info['partype']
+                partype = p.info.partype
                 accumulate(partype['fixed-1d'], partype['pd-1d'], partype['volume'])
 
         #self.vol_index = vol_index

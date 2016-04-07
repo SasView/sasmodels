@@ -341,7 +341,7 @@ class GpuModel(object):
     def make_kernel(self, q_vectors):
         if self.program is None:
             compiler = environment().compile_program
-            self.program = compiler(self.info['name'], self.source,
+            self.program = compiler(self.info.name, self.source,
                                     self.dtype, self.fast)
         is_2d = len(q_vectors) == 2
         kernel_name = generate.kernel_name(self.info, is_2d)
@@ -353,7 +353,7 @@ class GpuModel(object):
         Free the resources associated with the model.
         """
         if self.program is not None:
-            environment().release_program(self.info['name'])
+            environment().release_program(self.info.name)
             self.program = None
 
     def __del__(self):
@@ -440,8 +440,8 @@ class GpuKernel(object):
     Call :meth:`release` when done with the kernel instance.
     """
     def __init__(self, kernel, model_info, q_vectors, dtype):
-        max_pd = model_info['max_pd']
-        npars = len(model_info['parameters'])-2
+        max_pd = model_info.max_pd
+        npars = len(model_info.parameters)-2
         q_input = GpuInput(q_vectors, dtype)
         self.dtype = dtype
         self.dim = '2d' if q_input.is_2d else '1d'
@@ -464,17 +464,17 @@ class GpuKernel(object):
 
         self._need_release = [ self.result_b, self.q_input ]
 
-    def __call__(self, details, weights, values, cutoff):
+    def __call__(self, call_details, weights, values, cutoff):
         real = (np.float32 if self.q_input.dtype == generate.F32
                 else np.float64 if self.q_input.dtype == generate.F64
                 else np.float16 if self.q_input.dtype == generate.F16
                 else np.float32)  # will never get here, so use np.float32
-        assert details.dtype == np.int32
+        assert call_details.dtype == np.int32
         assert weights.dtype == real and values.dtype == real
 
         context = self.queue.context
         details_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
-                              hostbuf=details)
+                              hostbuf=call_details)
         weights_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
                               hostbuf=weights)
         values_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,

@@ -16,11 +16,13 @@ class PyModel(object):
     Wrapper for pure python models.
     """
     def __init__(self, model_info):
+        # Make sure Iq and Iqxy are available and vectorized
+        _create_default_functions(model_info)
         self.info = model_info
 
     def make_kernel(self, q_vectors):
         q_input = PyInput(q_vectors, dtype=F64)
-        kernel = self.info['Iqxy'] if q_input.is_2d else self.info['Iq']
+        kernel = self.info.Iqxy if q_input.is_2d else self.info.Iq
         return PyKernel(kernel, self.info, q_input)
 
     def release(self):
@@ -93,7 +95,7 @@ class PyKernel(object):
         self.kernel = kernel
         self.dim = '2d' if q_input.is_2d else '1d'
 
-        partable = model_info['parameters']
+        partable = model_info.parameters
         kernel_parameters = (partable.iqxy_parameters if q_input.is_2d
                              else partable.iq_parameters)
         volume_parameters = partable.form_volume_parameters
@@ -128,23 +130,23 @@ class PyKernel(object):
         # Generate a closure which calls the kernel with the views into the
         # parameter array.
         if q_input.is_2d:
-            form = model_info['Iqxy']
+            form = model_info.Iqxy
             qx, qy = q_input.q[:,0], q_input.q[:,1]
             self._form = lambda: form(qx, qy, *kernel_args)
         else:
-            form = model_info['Iq']
+            form = model_info.Iq
             q = q_input.q
             self._form = lambda: form(q, *kernel_args)
 
         # Generate a closure which calls the form_volume if it exists.
-        form_volume = model_info['form_volume']
+        form_volume = model_info.form_volume
         self._volume = ((lambda: form_volume(*volume_args)) if form_volume
                         else (lambda: 1.0))
 
-    def __call__(self, details, weights, values, cutoff):
-        # type: (.generate.CoordinationDetails, np.ndarray, np.ndarray, float) -> np.ndarray
+    def __call__(self, call_details, weights, values, cutoff):
+        # type: (.generate.CallDetails, np.ndarray, np.ndarray, float) -> np.ndarray
         res = _loops(self._parameter_vector, self._form, self._volume,
-                     self.q_input.nq, details, weights, values, cutoff)
+                     self.q_input.nq, call_details, weights, values, cutoff)
         return res
 
     def release(self):
@@ -157,7 +159,7 @@ def _loops(parameters,  # type: np.ndarray
            form,        # type: Callable[[], np.ndarray]
            form_volume, # type: Callable[[], float]
            nq,          # type: int
-           details,     # type: .generate.CoordinationDetails
+           call_details,# type: .generate.CallDetails
            weights,     # type: np.ndarray
            values,      # type: np.ndarray
            cutoff,      # type: float
@@ -171,9 +173,9 @@ def _loops(parameters,  # type: np.ndarray
     #   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #
     #                                                              #
     ################################################################
-    parameters[:] = values[details.par_offset]
+    parameters[:] = values[call_details.par_offset]
     scale, background = values[0], values[1]
-    if details.num_active == 0:
+    if call_details.num_active == 0:
         norm = float(form_volume())
         if norm > 0.0:
             return (scale/norm)*form() + background
@@ -182,25 +184,25 @@ def _loops(parameters,  # type: np.ndarray
 
     partial_weight = np.NaN
     spherical_correction = 1.0
-    pd_stride = details.pd_stride[:details.num_active]
-    pd_length = details.pd_length[:details.num_active]
-    pd_offset = details.pd_offset[:details.num_active]
+    pd_stride = call_details.pd_stride[:call_details.num_active]
+    pd_length = call_details.pd_length[:call_details.num_active]
+    pd_offset = call_details.pd_offset[:call_details.num_active]
     pd_index = np.empty_like(pd_offset)
-    offset = np.empty_like(details.par_offset)
-    theta = details.theta_par
+    offset = np.empty_like(call_details.par_offset)
+    theta = call_details.theta_par
     fast_length = pd_length[0]
     pd_index[0] = fast_length
     total = np.zeros(nq, 'd')
     norm = 0.0
-    for loop_index in range(details.total_pd):
+    for loop_index in range(call_details.total_pd):
         # update polydispersity parameter values
         if pd_index[0] == fast_length:
             pd_index[:] = (loop_index/pd_stride)%pd_length
             partial_weight = np.prod(weights[pd_offset+pd_index][1:])
-            for k in range(details.num_coord):
-                par = details.par_coord[k]
-                coord = details.pd_coord[k]
-                this_offset = details.par_offset[par]
+            for k in range(call_details.num_coord):
+                par = call_details.par_coord[k]
+                coord = call_details.pd_coord[k]
+                this_offset = call_details.par_offset[par]
                 block_size = 1
                 for bit in xrange(32):
                     if coord&1:
@@ -210,11 +212,11 @@ def _loops(parameters,  # type: np.ndarray
                     if coord == 0: break
                 offset[par] = this_offset
                 parameters[par] = values[this_offset]
-                if par == theta and not (details.par_coord[k]&1):
+                if par == theta and not (call_details.par_coord[k]&1):
                     spherical_correction = max(abs(cos(pi/180 * parameters[theta])), 1e-6)
-        for k in range(details.num_coord):
-            if details.pd_coord[k]&1:
-                #par = details.par_coord[k]
+        for k in range(call_details.num_coord):
+            if call_details.pd_coord[k]&1:
+                #par = call_details.par_coord[k]
                 parameters[par] = values[offset[par]]
                 #print "par",par,offset[par],parameters[par+2]
                 offset[par] += 1
@@ -240,3 +242,54 @@ def _loops(parameters,  # type: np.ndarray
         return (scale/norm)*total + background
     else:
         return np.ones(nq, 'd')*background
+
+
+
+def _create_vector_Iq(model_info):
+    """
+    Define Iq as a vector function if it exists.
+    """
+    Iq = model_info.Iq
+    if callable(Iq) and not getattr(Iq, 'vectorized', False):
+        def vector_Iq(q, *args):
+            """
+            Vectorized 1D kernel.
+            """
+            return np.array([Iq(qi, *args) for qi in q])
+        vector_Iq.vectorized = True
+        model_info.Iq = vector_Iq
+
+def _create_vector_Iqxy(model_info):
+    """
+    Define Iqxy as a vector function if it exists, or default it from Iq().
+    """
+    Iq, Iqxy = model_info.Iq, model_info.Iqxy
+    if callable(Iqxy) and not getattr(Iqxy, 'vectorized', False):
+        def vector_Iqxy(qx, qy, *args):
+            """
+            Vectorized 2D kernel.
+            """
+            return np.array([Iqxy(qxi, qyi, *args) for qxi, qyi in zip(qx, qy)])
+        vector_Iqxy.vectorized = True
+        model_info.Iqxy = vector_Iqxy
+    elif callable(Iq):
+        # Iq is vectorized because create_vector_Iq was already called.
+        def default_Iqxy(qx, qy, *args):
+            """
+            Default 2D kernel.
+            """
+            return Iq(np.sqrt(qx**2 + qy**2), *args)
+        default_Iqxy.vectorized = True
+        model_info.Iqxy = default_Iqxy
+
+def _create_default_functions(model_info):
+    """
+    Autogenerate missing functions, such as Iqxy from Iq.
+
+    This only works for Iqxy when Iq is written in python. :func:`make_source`
+    performs a similar role for Iq written in C.  This also vectorizes
+    any functions that are not already marked as vectorized.
+    """
+    _create_vector_Iq(model_info)
+    _create_vector_Iqxy(model_info)  # call create_vector_Iq() first
+

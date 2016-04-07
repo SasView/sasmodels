@@ -24,10 +24,63 @@ from __future__ import print_function
 
 import numpy as np
 
-from .core import call_kernel, call_ER_VR
 from . import sesans
+from . import weights
 from . import resolution
 from . import resolution2d
+from . import details
+
+
+def call_kernel(kernel, pars, cutoff=0, mono=False):
+    """
+    Call *kernel* returned from *model.make_kernel* with parameters *pars*.
+
+    *cutoff* is the limiting value for the product of dispersion weights used
+    to perform the multidimensional dispersion calculation more quickly at a
+    slight cost to accuracy. The default value of *cutoff=0* integrates over
+    the entire dispersion cube.  Using *cutoff=1e-5* can be 50% faster, but
+    with an error of about 1%, which is usually less than the measurement
+    uncertainty.
+
+    *mono* is True if polydispersity should be set to none on all parameters.
+    """
+    parameters = kernel.info.parameters
+    if mono:
+        active = lambda name: False
+    elif kernel.dim == '1d':
+        active = lambda name: name in parameters.pd_1d
+    elif kernel.dim == '2d':
+        active = lambda name: name in parameters.pd_2d
+    else:
+        active = lambda name: True
+
+    vw_pairs = [(get_weights(p, pars) if active(p.name)
+                 else ([pars.get(p.name, p.default)], []))
+                for p in parameters.call_parameters]
+
+    call_details, weights, values = details.build_details(kernel, vw_pairs)
+    return kernel(call_details, weights, values, cutoff)
+
+def get_weights(parameter, values):
+    """
+    Generate the distribution for parameter *name* given the parameter values
+    in *pars*.
+
+    Uses "name", "name_pd", "name_pd_type", "name_pd_n", "name_pd_sigma"
+    from the *pars* dictionary for parameter value and parameter dispersion.
+    """
+    value = float(values.get(parameter.name, parameter.default))
+    relative = parameter.relative_pd
+    limits = parameter.limits
+    disperser = values.get(parameter.name+'_pd_type', 'gaussian')
+    npts = values.get(parameter.name+'_pd_n', 0)
+    width = values.get(parameter.name+'_pd', 0.0)
+    nsigma = values.get(parameter.name+'_pd_nsigma', 3.0)
+    if npts == 0 or width == 0:
+        return [value], []
+    value, weight = weights.get_weights(
+        disperser, npts, width, nsigma, value, limits, relative)
+    return value, weight / np.sum(weight)
 
 class DataMixin(object):
     """
@@ -79,7 +132,7 @@ class DataMixin(object):
             q_vectors = [q]            
             q_mono = sesans.make_all_q(data)
         elif self.data_type == 'Iqxy':
-            #if not model.info['parameters'].has_2d:
+            #if not model.info.parameters.has_2d:
             #    raise ValueError("not 2D without orientation or magnetic parameters")
             q = np.sqrt(data.qx_data**2 + data.qy_data**2)
             qmin = getattr(data, 'qmin', 1e-16)
@@ -210,12 +263,6 @@ class DirectModel(DataMixin):
 
     def __call__(self, **pars):
         return self._calc_theory(pars, cutoff=self.cutoff)
-
-    def ER_VR(self, **pars):
-        """
-        Compute the equivalent radius and volume ratio for the model.
-        """
-        return call_ER_VR(self.model.info, pars)
 
     def simulate_data(self, noise=None, **pars):
         """

@@ -475,9 +475,9 @@ def eval_form(q, form, pars):
 
     *pars* are the parameter values to use when evaluating.
     """
-    from sasmodels import core
+    from sasmodels import direct_model
     kernel = form.make_kernel([q])
-    theory = core.call_kernel(kernel, pars)
+    theory = direct_model.call_kernel(kernel, pars)
     kernel.release()
     return theory
 
@@ -501,7 +501,7 @@ def romberg_slit_1d(q, width, height, form, pars):
     """
     from scipy.integrate import romberg
 
-    par_set = set([p.name for p in form.info['parameters'].call_parameters])
+    par_set = set([p.name for p in form.info.parameters.call_parameters])
     if any(k not in par_set for k in pars.keys()):
         extra = set(pars.keys()) - par_set
         raise ValueError("bad parameters: [%s] not in [%s]"
@@ -556,7 +556,7 @@ def romberg_pinhole_1d(q, q_width, form, pars, nsigma=5):
     """
     from scipy.integrate import romberg
 
-    par_set = set([p.name for p in form.info['parameters'].call_parameters])
+    par_set = set([p.name for p in form.info.parameters.call_parameters])
     if any(k not in par_set for k in pars.keys()):
         extra = set(pars.keys()) - par_set
         raise ValueError("bad parameters: [%s] not in [%s]"
@@ -693,9 +693,9 @@ class IgorComparisonTest(unittest.TestCase):
         self.model = core.load_model("sphere", dtype='double')
 
     def _eval_sphere(self, pars, resolution):
-        from sasmodels import core
+        from sasmodels import direct_model
         kernel = self.model.make_kernel([resolution.q_calc])
-        theory = core.call_kernel(kernel, pars)
+        theory = direct_model.call_kernel(kernel, pars)
         result = resolution.apply(theory)
         kernel.release()
         return result
@@ -1044,6 +1044,7 @@ def main():
 def _eval_demo_1d(resolution, title):
     import sys
     from sasmodels import core
+    from sasmodels import direct_model
     name = sys.argv[1] if len(sys.argv) > 1 else 'cylinder'
 
     if name == 'cylinder':
@@ -1064,7 +1065,7 @@ def _eval_demo_1d(resolution, title):
     model = core.build_model(model_info)
 
     kernel = model.make_kernel([resolution.q_calc])
-    theory = core.call_kernel(kernel, pars)
+    theory = direct_model.call_kernel(kernel, pars)
     Iq = resolution.apply(theory)
 
     if isinstance(resolution, Slit1D):

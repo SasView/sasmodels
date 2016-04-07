@@ -42,6 +42,8 @@ in the parameter list will take on the default parameter value.
 
 Precision defaults to 5 digits (relative).
 """
+#TODO: rename to tests so that tab completion works better for models directory
+
 from __future__ import print_function
 
 import sys
@@ -50,10 +52,43 @@ import unittest
 import numpy as np
 
 from .core import list_models, load_model_info, build_model, HAVE_OPENCL
-from .core import call_kernel, call_ER, call_VR
+from .details import dispersion_mesh
+from .direct_model import call_kernel, get_weights
 from .exception import annotate_exception
 
-#TODO: rename to tests so that tab completion works better for models directory
+
+def call_ER(model_info, values):
+    """
+    Call the model ER function using *values*. *model_info* is either
+    *model.info* if you have a loaded model, or *kernel.info* if you
+    have a model kernel prepared for evaluation.
+    """
+    if model_info.ER is None:
+        return 1.0
+    else:
+        vol_pars = [get_weights(parameter, values)
+                    for parameter in model_info.parameters.call_parameters
+                    if parameter.type == 'volume']
+        value, weight = dispersion_mesh(vol_pars)
+        individual_radii = model_info.ER(*value)
+        return np.sum(weight*individual_radii) / np.sum(weight)
+
+def call_VR(model_info, values):
+    """
+    Call the model VR function using *pars*.
+    *info* is either *model.info* if you have a loaded model, or *kernel.info*
+    if you have a model kernel prepared for evaluation.
+    """
+    if model_info.VR is None:
+        return 1.0
+    else:
+        vol_pars = [get_weights(parameter, values)
+                    for parameter in model_info.parameters.call_parameters
+                    if parameter.type == 'volume']
+        value, weight = dispersion_mesh(vol_pars)
+        whole, part = model_info.VR(*value)
+        return np.sum(weight*part)/np.sum(weight*whole)
+
 
 def make_suite(loaders, models):
     """
@@ -85,7 +120,7 @@ def make_suite(loaders, models):
         # if ispy then use the dll loader to call pykernel
         # don't try to call cl kernel since it will not be
         # available in some environmentes.
-        is_py = callable(model_info['Iq'])
+        is_py = callable(model_info.Iq)
 
         if is_py:  # kernel implemented in python
             test_name = "Model: %s, Kernel: python"%model_name
@@ -150,7 +185,7 @@ def _hide_model_case_from_nosetests():
                 [{}, 'VR', None],
                 ]
 
-            tests = self.info['tests']
+            tests = self.info.tests
             try:
                 model = build_model(self.info, dtype=self.dtype,
                                     platform=self.platform)

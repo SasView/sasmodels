@@ -1,8 +1,9 @@
+from copy import copy
+from os.path import abspath, basename, splitext
 
 import numpy as np
 
-# TODO: turn ModelInfo into a proper class
-ModelInfo = dict
+from .details import mono_details
 
 MAX_PD = 4
 
@@ -115,20 +116,18 @@ def parse_parameter(name, units='', default=None,
     return parameter
 
 
-def set_demo(model_info, demo):
+def make_demo_pars(partable, demo):
     """
-    Assign demo parameters to model_info['demo']
+    Create demo parameter set from key-value pairs.
 
-    If demo is not defined, then use defaults.
+    *demo* are the key-value pairs to use for the demo parameters.  Any
+    parameters not specified in *demo* are set from the *partable* defaults.
 
-    If demo is defined, override defaults with value from demo.
-
-    If demo references vector fields, such as thickness[n], then support
+    If *demo* references vector fields, such as thickness[n], then support
     different ways of assigning the demo values, including assigning a
     specific value (e.g., thickness3=50.0), assigning a new value to all
     (e.g., thickness=50.0) or assigning values using list notation.
     """
-    partable = model_info['parameters']
     if demo is None:
         result = partable.defaults
     else:
@@ -156,7 +155,24 @@ def set_demo(model_info, demo):
         else:
             result.update(demo)
 
-    model_info['demo'] = result
+    return result
+
+def prefix_parameter(par, prefix):
+    """
+    Return a copy of the parameter with its name prefixed.
+    """
+    new_par = copy(par)
+    new_par.name = prefix + par.name
+    new_par.id = prefix + par.id
+
+def suffix_parameter(par, suffix):
+    """
+    Return a copy of the parameter with its name prefixed.
+    """
+    new_par = copy(par)
+    # If name has the form x[n], replace with x_suffix[n]
+    new_par.name = par.id + suffix + par.name[len(par.id):]
+    new_par.id = par.id + suffix
 
 class Parameter(object):
     """
@@ -515,4 +531,114 @@ class ParameterTable(object):
 def isstr(x):
     # TODO: 2-3 compatible tests for str, including unicode strings
     return isinstance(x, str)
+
+def make_model_info(kernel_module):
+    info = ModelInfo()
+    #print("make parameter table", kernel_module.parameters)
+    parameters = make_parameter_table(kernel_module.parameters)
+    demo = make_demo_pars(parameters, getattr(kernel_module, 'demo', None))
+    filename = abspath(kernel_module.__file__)
+    kernel_id = splitext(basename(filename))[0]
+    name = getattr(kernel_module, 'name', None)
+    if name is None:
+        name = " ".join(w.capitalize() for w in kernel_id.split('_'))
+
+    info.id = kernel_id  # string used to load the kernel
+    info.filename = abspath(kernel_module.__file__)
+    info.name = name
+    info.title = getattr(kernel_module, 'title', name+" model")
+    info.description = getattr(kernel_module, 'description', 'no description')
+    info.parameters = parameters
+    info.demo = demo
+    info.composition = None
+    info.docs = kernel_module.__doc__
+    info.category = getattr(kernel_module, 'category', None)
+    info.single = getattr(kernel_module, 'single', True)
+    info.structure_factor = getattr(kernel_module, 'structure_factor', False)
+    info.profile_axes = getattr(kernel_module, 'profile_axes', ['x','y'])
+    info.variant_info = getattr(kernel_module, 'invariant_info', None)
+    info.demo = getattr(kernel_module, 'demo', None)
+    info.source = getattr(kernel_module, 'source', [])
+    info.tests = getattr(kernel_module, 'tests', [])
+    info.ER = getattr(kernel_module, 'ER', None)
+    info.VR = getattr(kernel_module, 'VR', None)
+    info.form_volume = getattr(kernel_module, 'form_volume', None)
+    info.Iq = getattr(kernel_module, 'Iq', None)
+    info.Iqxy = getattr(kernel_module, 'Iqxy', None)
+    info.profile = getattr(kernel_module, 'profile', None)
+    info.sesans = getattr(kernel_module, 'sesans', None)
+
+    # Precalculate the monodisperse parameter details
+    info.mono_details = mono_details(info)
+    return info
+
+class ModelInfo(object):
+    """
+    Interpret the model definition file, categorizing the parameters.
+
+    The module can be loaded with a normal python import statement if you
+    know which module you need, or with __import__('sasmodels.model.'+name)
+    if the name is in a string.
+
+    The *model_info* structure contains the following fields:
+
+    * *id* is the id of the kernel
+    * *name* is the display name of the kernel
+    * *filename* is the full path to the module defining the file (if any)
+    * *title* is a short description of the kernel
+    * *description* is a long description of the kernel (this doesn't seem
+      very useful since the Help button on the model page brings you directly
+      to the documentation page)
+    * *docs* is the docstring from the module.  Use :func:`make_doc` to
+    * *category* specifies the model location in the docs
+    * *parameters* is the model parameter table
+    * *single* is True if the model allows single precision
+    * *structure_factor* is True if the model is useable in a product
+    * *variant_info* contains the information required to select between
+      model variants (e.g., the list of cases) or is None if there are no
+      model variants
+    * *par_type* categorizes the model parameters. See
+      :func:`categorize_parameters` for details.
+    * *demo* contains the *{parameter: value}* map used in compare (and maybe
+      for the demo plot, if plots aren't set up to use the default values).
+      If *demo* is not given in the file, then the default values will be used.
+    * *tests* is a set of tests that must pass
+    * *source* is the list of library files to include in the C model build
+    * *Iq*, *Iqxy*, *form_volume*, *ER*, *VR* and *sesans* are python functions
+      implementing the kernel for the module, or None if they are not
+      defined in python
+    * *composition* is None if the model is independent, otherwise it is a
+      tuple with composition type ('product' or 'mixture') and a list of
+      *model_info* blocks for the composition objects.  This allows us to
+      build complete product and mixture models from just the info.
+    """
+    id = None
+    filename = None
+    name = None
+    title = None
+    description = None
+    parameters = None
+    demo = None
+    composition = None
+    docs = None
+    category = None
+    single = None
+    structure_factor = None
+    profile_axes = None
+    variant_info = None
+    demo = None
+    source = None
+    tests = None
+    ER = None
+    VR = None
+    form_volume = None
+    Iq = None
+    Iqxy = None
+    profile = None
+    sesans = None
+    mono_details = None
+
+    def __init__(self):
+        pass
+
 

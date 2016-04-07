@@ -82,7 +82,7 @@ def create_parameters(model_info, **kwargs):
 
     pars = {}     # floating point parameters
     pd_types = {} # distribution names
-    for p in model_info['parameters'].call_parameters:
+    for p in model_info.parameters.call_parameters:
         value = kwargs.pop(p.name, p.default)
         pars[p.name] = Parameter.default(value, name=p.name, limits=p.limits)
         if p.polydisperse:

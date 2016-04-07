@@ -12,12 +12,14 @@ To use it, first load form factor P and structure factor S, then create
 """
 import numpy as np
 
-from .core import call_ER_VR
+from .details import dispersion_mesh
+from .modelinfo import suffix_parameter, ParameterTable, Parameter, ModelInfo
 
-SCALE=0
-BACKGROUND=1
-RADIUS_EFFECTIVE=2
-VOLFRACTION=3
+# TODO: make estimates available to constraints
+#ESTIMATED_PARAMETERS = [
+#    ["est_effect_radius", "A", 0.0, [0, np.inf], "", "Estimated effective radius"],
+#    ["est_volume_ratio", "", 1.0, [0, np.inf], "", "Estimated volume ratio"],
+#]
 
 # TODO: core_shell_sphere model has suppressed the volume ratio calculation
 # revert it after making VR and ER available at run time as constraints.
@@ -25,37 +27,36 @@ def make_product_info(p_info, s_info):
     """
     Create info block for product model.
     """
-    p_id, p_name, p_pars = p_info['id'], p_info['name'], p_info['parameters']
-    s_id, s_name, s_pars = s_info['id'], s_info['name'], s_info['parameters']
-    # We require models to start with scale and background
-    assert s_pars[SCALE].name == 'scale'
-    assert s_pars[BACKGROUND].name == 'background'
-    # We require structure factors to start with effect radius and volfraction
-    assert s_pars[RADIUS_EFFECTIVE].name == 'radius_effective'
-    assert s_pars[VOLFRACTION].name == 'volfraction'
-    # Combine the parameter sets.  We are skipping the first three
-    # parameters of S since scale, background are defined in P and
-    # effect_radius is set from P.ER().
-    pars = p_pars + s_pars[3:]
-    # check for duplicates; can't use assertion since they may never be checked
-    if len(set(p.name for p in pars)) != len(pars):
-        raise ValueError("Duplicate parameters in %s and %s"%(p_id))
-    model_info = {}
-    model_info['id'] = '*'.join((p_id, s_id))
-    model_info['name'] = ' X '.join((p_name, s_name))
-    model_info['filename'] = None
-    model_info['title'] = 'Product of %s and structure factor %s'%(p_name, s_name)
-    model_info['description'] = model_info['title']
-    model_info['docs'] = model_info['title']
-    model_info['category'] = "custom"
-    model_info['parameters'] = pars
-    #model_info['single'] = p_info['single'] and s_info['single']
-    model_info['structure_factor'] = False
-    model_info['variant_info'] = None
-    #model_info['tests'] = []
-    #model_info['source'] = []
+    p_id, p_name, p_partable = p_info.id, p_info.name, p_info.parameters
+    s_id, s_name, s_partable = s_info.id, s_info.name, s_info.parameters
+    p_set = set(p.id for p in p_partable)
+    s_set = set(p.id for p in s_partable)
+
+    if p_set & s_set:
+        # there is some overlap between the parameter names; tag the
+        # overlapping S parameters with name_S
+        s_pars = [(suffix_parameter(par, "_S") if par.id in p_set else par)
+                  for par in s_partable.kernel_parameters]
+        pars = p_partable.kernel_parameters + s_pars
+    else:
+        pars= p_partable.kernel_parameters + s_partable.kernel_parameters
+
+    model_info = ModelInfo()
+    model_info.id = '*'.join((p_id, s_id))
+    model_info.name = ' X '.join((p_name, s_name))
+    model_info.filename = None
+    model_info.title = 'Product of %s and %s'%(p_name, s_name)
+    model_info.description = model_info.title
+    model_info.docs = model_info.title
+    model_info.category = "custom"
+    model_info.parameters = ParameterTable(pars)
+    #model_info.single = p_info.single and s_info.single
+    model_info.structure_factor = False
+    model_info.variant_info = None
+    #model_info.tests = []
+    #model_info.source = []
     # Iq, Iqxy, form_volume, ER, VR and sesans
-    model_info['composition'] = ('product', [p_info, s_info])
+    model_info.composition = ('product', [p_info, s_info])
     return model_info
 
 class ProductModel(object):
@@ -85,66 +86,11 @@ class ProductModel(object):
 
 class ProductKernel(object):
     def __init__(self, model_info, p_kernel, s_kernel):
-        dim = '2d' if p_kernel.q_input.is_2d else '1d'
-
-        # Need to know if we want 2D and magnetic parameters when constructing
-        # a parameter map.
-        par_map = {}
-        p_info = p_kernel.info['par_type']
-        s_info = s_kernel.info['par_type']
-        vol_pars = set(p_info['volume'])
-        if dim == '2d':
-            num_p_fixed = len(p_info['fixed-2d'])
-            num_p_pd = len(p_info['pd-2d'])
-            num_s_fixed = len(s_info['fixed-2d'])
-            num_s_pd = len(s_info['pd-2d']) - 1 # exclude effect_radius
-            # volume parameters are amongst the pd pars for P, not S
-            vol_par_idx = [k for k,v in enumerate(p_info['pd-2d'])
-                           if v in vol_pars]
-        else:
-            num_p_fixed = len(p_info['fixed-1d'])
-            num_p_pd = len(p_info['pd-1d'])
-            num_s_fixed = len(s_info['fixed-1d'])
-            num_s_pd = len(s_info['pd-1d']) - 1  # exclude effect_radius
-            # volume parameters are amongst the pd pars for P, not S
-            vol_par_idx = [k for k,v in enumerate(p_info['pd-1d'])
-                           if v in vol_pars]
-
-        start = 0
-        par_map['p_fixed'] = np.arange(start, start+num_p_fixed)
-        # User doesn't set scale, background or effect_radius for S in P*S,
-        # so borrow values from end of p_fixed.  This makes volfraction the
-        # first S parameter.
-        start += num_p_fixed
-        par_map['s_fixed'] = np.hstack(([start,start],
-                                        np.arange(start, start+num_s_fixed-2)))
-        par_map['volfraction'] = num_p_fixed
-        start += num_s_fixed-2
-        # vol pars offset from the start of pd pars
-        par_map['vol_pars'] = [start+k for k in vol_par_idx]
-        par_map['p_pd'] = np.arange(start, start+num_p_pd)
-        start += num_p_pd-1
-        par_map['s_pd'] = np.hstack((start,
-                                     np.arange(start, start+num_s_pd-1)))
-
-        self.fixed_pars = model_info['partype']['fixed-' + dim]
-        self.pd_pars = model_info['partype']['pd-' + dim]
         self.info = model_info
         self.p_kernel = p_kernel
         self.s_kernel = s_kernel
-        self.par_map = par_map
 
-    def __call__(self, fixed_pars, pd_pars, cutoff=1e-5):
-        pars = fixed_pars + pd_pars
-        scale = pars[SCALE]
-        background = pars[BACKGROUND]
-        s_volfraction = pars[self.par_map['volfraction']]
-        p_fixed = [pars[k] for k in self.par_map['p_fixed']]
-        s_fixed = [pars[k] for k in self.par_map['s_fixed']]
-        p_pd = [pars[k] for k in self.par_map['p_pd']]
-        s_pd = [pars[k] for k in self.par_map['s_pd']]
-        vol_pars = [pars[k] for k in self.par_map['vol_pars']]
-
+    def __call__(self, details, weights, values, cutoff):
         effect_radius, vol_ratio = call_ER_VR(self.p_kernel.info, vol_pars)
 
         p_fixed[SCALE] = s_volfraction
@@ -154,8 +100,8 @@ class ProductKernel(object):
         s_fixed[2] = s_volfraction/vol_ratio
         s_pd[0] = [effect_radius], [1.0]
 
-        p_res = self.p_kernel(p_fixed, p_pd, cutoff)
-        s_res = self.s_kernel(s_fixed, s_pd, cutoff)
+        p_res = self.p_kernel(p_details, p_weights, p_values, cutoff)
+        s_res = self.s_kernel(s_details, s_weights, s_values, cutoff)
         #print s_fixed, s_pd, p_fixed, p_pd
 
         return p_res*s_res + background
@@ -164,3 +110,15 @@ class ProductKernel(object):
         self.p_kernel.release()
         self.q_kernel.release()
 
+def call_ER_VR(model_info, vol_pars):
+    """
+    Return effect radius and volume ratio for the model.
+    """
+    value, weight = dispersion_mesh(vol_pars)
+
+    individual_radii = model_info.ER(*value) if model_info.ER else 1.0
+    whole, part = model_info.VR(*value) if model_info.VR else (1.0, 1.0)
+
+    effect_radius = np.sum(weight*individual_radii) / np.sum(weight)
+    volume_ratio = np.sum(weight*part)/np.sum(weight*whole)
+    return effect_radius, volume_ratio

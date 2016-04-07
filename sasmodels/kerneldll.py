@@ -54,6 +54,7 @@ from ctypes import c_void_p, c_int32, c_longdouble, c_double, c_float
 import numpy as np
 
 from . import generate
+from . import details
 from .kernelpy import PyInput, PyModel
 from .exception import annotate_exception
 
@@ -94,7 +95,7 @@ def dll_name(model_info, dtype):
     any path or extension, with a form such as 'sas_sphere32'.
     """
     bits = 8*dtype.itemsize
-    return "sas_%s%d"%(model_info['id'], bits)
+    return "sas_%s%d"%(model_info.id, bits)
 
 def dll_path(model_info, dtype):
     """
@@ -122,7 +123,7 @@ def make_dll(source, model_info, dtype="double"):
     Set *sasmodels.ALLOW_SINGLE_PRECISION_DLLS* to True if single precision
     models are allowed as DLLs.
     """
-    if callable(model_info.get('Iq', None)):
+    if callable(model_info.Iq):
         return PyModel(model_info)
     
     dtype = np.dtype(dtype)
@@ -258,14 +259,14 @@ class DllKernel(object):
         self.dim = '2d' if q_input.is_2d else '1d'
         self.result = np.empty(q_input.nq+3, q_input.dtype)
 
-    def __call__(self, details, weights, values, cutoff):
+    def __call__(self, call_details, weights, values, cutoff):
         real = (np.float32 if self.q_input.dtype == generate.F32
                 else np.float64 if self.q_input.dtype == generate.F64
                 else np.float128)
-        assert isinstance(details, generate.CoordinationDetails)
+        assert isinstance(call_details, details.CallDetails)
         assert weights.dtype == real and values.dtype == real
 
-        start, stop = 0, details.total_pd
+        start, stop = 0, call_details.total_pd
         #print("in kerneldll")
         #print("weights", weights)
         #print("values", values)
@@ -273,7 +274,7 @@ class DllKernel(object):
             self.q_input.nq, # nq
             start, # pd_start
             stop, # pd_stop pd_stride[MAX_PD]
-            details.ctypes.data, # problem
+            call_details.ctypes.data, # problem
             weights.ctypes.data,  # weights
             values.ctypes.data,  #pars
             self.q_input.q.ctypes.data, #q

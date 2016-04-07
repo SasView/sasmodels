@@ -152,20 +152,20 @@ def _revert_pars(pars, mapping):
 
 def revert_name(model_info):
     _read_conversion_table()
-    oldname, oldpars = CONVERSION_TABLE.get(model_info['id'], [None, {}])
+    oldname, oldpars = CONVERSION_TABLE.get(model_info.id, [None, {}])
     return oldname
 
 def _get_old_pars(model_info):
     _read_conversion_table()
-    oldname, oldpars = CONVERSION_TABLE.get(model_info['id'], [None, {}])
+    oldname, oldpars = CONVERSION_TABLE.get(model_info.id, [None, {}])
     return oldpars
 
 def revert_pars(model_info, pars):
     """
     Convert model from new style parameter names to old style.
     """
-    if model_info['composition'] is not None:
-        composition_type, parts = model_info['composition']
+    if model_info.composition is not None:
+        composition_type, parts = model_info.composition
         if composition_type == 'product':
             P, S = parts
             oldpars = {'scale':'scale_factor'}
@@ -179,11 +179,11 @@ def revert_pars(model_info, pars):
 
 
     # Note: update compare.constrain_pars to match
-    name = model_info['id']
-    if name in MODELS_WITHOUT_SCALE or model_info['structure_factor']:
+    name = model_info.id
+    if name in MODELS_WITHOUT_SCALE or model_info.structure_factor:
         if oldpars.pop('scale', 1.0) != 1.0:
             warnings.warn("parameter scale not used in sasview %s"%name)
-    if name in MODELS_WITHOUT_BACKGROUND or model_info['structure_factor']:
+    if name in MODELS_WITHOUT_BACKGROUND or model_info.structure_factor:
         if oldpars.pop('background', 0.0) != 0.0:
             warnings.warn("parameter background not used in sasview %s"%name)
 
@@ -224,11 +224,11 @@ def constrain_new_to_old(model_info, pars):
     """
     Restrict parameter values to those that will match sasview.
     """
-    name = model_info['id']
+    name = model_info.id
     # Note: update convert.revert_model to match
-    if name in MODELS_WITHOUT_SCALE or model_info['structure_factor']:
+    if name in MODELS_WITHOUT_SCALE or model_info.structure_factor:
         pars['scale'] = 1
-    if name in MODELS_WITHOUT_BACKGROUND or model_info['structure_factor']:
+    if name in MODELS_WITHOUT_BACKGROUND or model_info.structure_factor:
         pars['background'] = 0
     # sasview multiplies background by structure factor
     if '*' in name:

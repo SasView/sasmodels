@@ -26,6 +26,8 @@ from . import core
 from . import custom
 from . import generate
 from . import weights
+from . import details
+from . import modelinfo
 
 def load_standard_models():
     """
@@ -48,7 +50,7 @@ def load_custom_model(path):
     Load a custom model given the model path.
     """
     kernel_module = custom.load_custom_kernel_module(path)
-    model_info = generate.make_model_info(kernel_module)
+    model_info = modelinfo.make_model_info(kernel_module)
     return _make_model_from_info(model_info)
 
 
@@ -61,7 +63,7 @@ def _make_standard_model(name):
     Returns a class that can be used directly as a sasview model.
     """
     kernel_module = generate.load_kernel_module(name)
-    model_info = generate.make_model_info(kernel_module)
+    model_info = modelinfo.make_model_info(kernel_module)
     return _make_model_from_info(model_info)
 
 
@@ -72,7 +74,7 @@ def _make_model_from_info(model_info):
     def __init__(self, multfactor=1):
         SasviewModel.__init__(self)
     attrs = dict(__init__=__init__, _model_info=model_info)
-    ConstructedModel = type(model_info['name'], (SasviewModel,), attrs)
+    ConstructedModel = type(model_info.name, (SasviewModel,), attrs)
     return ConstructedModel
 
 
@@ -84,15 +86,15 @@ class SasviewModel(object):
     def __init__(self):
         self._model = None
         model_info = self._model_info
-        parameters = model_info['parameters']
+        parameters = model_info.parameters
 
-        self.name = model_info['name']
-        self.description = model_info['description']
+        self.name = model_info.name
+        self.description = model_info.description
         self.category = None
         #self.is_multifunc = False
         for p in parameters.kernel_parameters:
             if p.is_control:
-                profile_axes = model_info['profile_axes']
+                profile_axes = model_info.profile_axes
                 self.multiplicity_info = [
                     p.limits[1], p.name, p.choices, profile_axes[0]
                     ]
@@ -131,10 +133,10 @@ class SasviewModel(object):
         self.non_fittable = []
 
         ## independent parameter name and unit [string]
-        self.input_name = model_info.get("input_name", "Q")
-        self.input_unit = model_info.get("input_unit", "A^{-1}")
-        self.output_name = model_info.get("output_name", "Intensity")
-        self.output_unit = model_info.get("output_unit", "cm^{-1}")
+        self.input_name = "Q", #model_info.get("input_name", "Q")
+        self.input_unit = "A^{-1}" #model_info.get("input_unit", "A^{-1}")
+        self.output_name = "Intensity" #model_info.get("output_name", "Intensity")
+        self.output_unit = "cm^{-1}" #model_info.get("output_unit", "cm^{-1}")
 
         ## _persistency_dict is used by sas.perspectives.fitting.basepage
         ## to store dispersity reference.
@@ -247,7 +249,7 @@ class SasviewModel(object):
         """
         # TODO: fix test so that parameter order doesn't matter
         ret = ['%s.%s' % (p.name.lower(), ext)
-               for p in self._model_info['parameters'].user_parameters()
+               for p in self._model_info.parameters.user_parameters()
                for ext in ('npts', 'nsigmas', 'width')
                if p.polydisperse]
         #print(ret)
@@ -322,7 +324,7 @@ class SasviewModel(object):
         if isinstance(qdist, (list, tuple)):
             # Check whether we have a list of ndarrays [qx,qy]
             qx, qy = qdist
-            if not self._model_info['parameters'].has_2d:
+            if not self._model_info.parameters.has_2d:
                 return self.calculate_Iq(np.sqrt(qx ** 2 + qy ** 2))
             else:
                 return self.calculate_Iq(qx, qy)
@@ -349,9 +351,9 @@ class SasviewModel(object):
         q_vectors = [np.asarray(q) for q in args]
         kernel = self._model.make_kernel(q_vectors)
         pairs = [self._get_weights(p)
-                 for p in self._model_info['parameters'].call_parameters]
-        details, weights, values = core.build_details(kernel, pairs)
-        result = kernel(details, weights, values, cutoff=self.cutoff)
+                 for p in self._model_info.parameters.call_parameters]
+        call_details, weights, values = details.build_details(kernel, pairs)
+        result = kernel(call_details, weights, values, cutoff=self.cutoff)
         kernel.q_input.release()
         kernel.release()
         return result
@@ -362,12 +364,11 @@ class SasviewModel(object):
 
         :return: the value of the effective radius
         """
-        ER = self._model_info.get('ER', None)
-        if ER is None:
+        if model_info.ER is None:
             return 1.0
         else:
             values, weights = self._dispersion_mesh()
-            fv = ER(*values)
+            fv = model_info.ER(*values)
             #print(values[0].shape, weights.shape, fv.shape)
             return np.sum(weights * fv) / np.sum(weights)
 
@@ -377,12 +378,11 @@ class SasviewModel(object):
 
         :return: the value of the volf ratio
         """
-        VR = self._model_info.get('VR', None)
-        if VR is None:
+        if model_info.VR is None:
             return 1.0
         else:
             values, weights = self._dispersion_mesh()
-            whole, part = VR(*values)
+            whole, part = model_info.VR(*values)
             return np.sum(weights * part) / np.sum(weights * whole)
 
     def set_dispersion(self, parameter, dispersion):
@@ -421,8 +421,8 @@ class SasviewModel(object):
         and w is a vector containing the products for weights for each
         parameter set in the vector.
         """
-        pars = self._model_info['partype']['volume']
-        return core.dispersion_mesh([self._get_weights(p) for p in pars])
+        pars = self._model_info.partype['volume']
+        return details.dispersion_mesh([self._get_weights(p) for p in pars])
 
     def _get_weights(self, par):
         """

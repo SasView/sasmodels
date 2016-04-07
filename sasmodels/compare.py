@@ -243,7 +243,7 @@ def _randomize_one(model_info, p, v):
         return v
 
     # Find the parameter definition
-    for par in model_info['parameters'].call_parameters:
+    for par in model_info.parameters.call_parameters:
         if par.name == p:
             break
     else:
@@ -283,7 +283,7 @@ def constrain_pars(model_info, pars):
     which need to support within model constraints (cap radius more than
     cylinder radius in this case).
     """
-    name = model_info['id']
+    name = model_info.id
     # if it is a product model, then just look at the form factor since
     # none of the structure factors need any constraints.
     if '*' in name:
@@ -317,7 +317,7 @@ def parlist(model_info, pars, is2d):
     Format the parameter list for printing.
     """
     lines = []
-    parameters = model_info['parameters']
+    parameters = model_info.parameters
     for p in parameters.user_parameters(pars, is2d):
         fields = dict(
             value=pars.get(p.id, p.default),
@@ -367,8 +367,8 @@ def eval_sasview(model_info, data):
         return ModelClass()
 
     # grab the sasview model, or create it if it is a product model
-    if model_info['composition']:
-        composition_type, parts = model_info['composition']
+    if model_info.composition:
+        composition_type, parts = model_info.composition
         if composition_type == 'product':
             from sas.models.MultiplicationModel import MultiplicationModel
             P, S = [get_model(revert_name(p)) for p in parts]
@@ -667,7 +667,7 @@ def get_pars(model_info, use_demo=False):
     """
     # Get the default values for the parameters
     pars = {}
-    for p in model_info['parameters'].call_parameters:
+    for p in model_info.parameters.call_parameters:
         parts = [('', p.default)]
         if p.polydisperse:
             parts.append(('_pd', 0.0))
@@ -682,7 +682,7 @@ def get_pars(model_info, use_demo=False):
 
     # Plug in values given in demo
     if use_demo:
-        pars.update(model_info['demo'])
+        pars.update(model_info.demo)
     return pars
 
 
@@ -890,7 +890,7 @@ class Explore(object):
         pars, pd_types = bumps_model.create_parameters(model_info, **opts['pars'])
         # Initialize parameter ranges, fixing the 2D parameters for 1D data.
         if not opts['is2d']:
-            for p in model_info['parameters'].user_parameters(is2d=False):
+            for p in model_info.parameters.user_parameters(is2d=False):
                 for ext in ['', '_pd', '_pd_n', '_pd_nsigma']:
                     k = p.name+ext
                     v = pars.get(k, None)

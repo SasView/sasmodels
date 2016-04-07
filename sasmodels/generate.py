@@ -154,15 +154,14 @@ from __future__ import print_function
 #TODO: determine which functions are useful outside of generate
 #__all__ = ["model_info", "make_doc", "make_source", "convert_type"]
 
-from os.path import abspath, dirname, join as joinpath, exists, basename, \
-    splitext, getmtime
+from os.path import abspath, dirname, join as joinpath, exists, getmtime
 import re
 import string
 import warnings
 
 import numpy as np
 
-from .modelinfo import ModelInfo, Parameter, make_parameter_table, set_demo
+from .modelinfo import Parameter
 from .custom import load_custom_kernel_module
 
 TEMPLATE_ROOT = dirname(__file__)
@@ -272,9 +271,9 @@ def model_sources(model_info):
     """
     Return a list of the sources file paths for the module.
     """
-    search_path = [dirname(model_info['filename']),
+    search_path = [dirname(model_info.filename),
                    abspath(joinpath(dirname(__file__), 'models'))]
-    return [_search(search_path, f) for f in model_info['source']]
+    return [_search(search_path, f) for f in model_info.source]
 
 def timestamp(model_info):
     """
@@ -283,7 +282,7 @@ def timestamp(model_info):
     """
     source_files = (model_sources(model_info)
                     + model_templates()
-                    + [model_info['filename']])
+                    + [model_info.filename])
     newest = max(getmtime(f) for f in source_files)
     return newest
 
@@ -333,7 +332,7 @@ def kernel_name(model_info, is_2d):
     """
     Name of the exported kernel symbol.
     """
-    return model_info['name'] + "_" + ("Iqxy" if is_2d else "Iq")
+    return model_info.name + "_" + ("Iqxy" if is_2d else "Iq")
 
 
 def indent(s, depth):
@@ -419,7 +418,7 @@ def make_source(model_info):
 
     Uses source files found in the given search path.
     """
-    if callable(model_info['Iq']):
+    if callable(model_info.Iq):
         return None
 
     # TODO: need something other than volume to indicate dispersion parameters
@@ -431,7 +430,7 @@ def make_source(model_info):
     # dispersion.  Need to be careful that necessary parameters are available
     # for computing volume even if we allow non-disperse volume parameters.
 
-    partable = model_info['parameters']
+    partable = model_info.parameters
 
     # Identify parameters for Iq, Iqxy, Iq_magnetic and form_volume.
     # Note that scale and volume are not possible types.
@@ -447,15 +446,15 @@ def make_source(model_info):
     # Make parameters for q, qx, qy so that we can use them in declarations
     q, qx, qy = [Parameter(name=v) for v in ('q', 'qx', 'qy')]
     # Generate form_volume function, etc. from body only
-    if model_info['form_volume'] is not None:
+    if model_info.form_volume is not None:
         pars = partable.form_volume_parameters
-        source.append(_gen_fn('form_volume', pars, model_info['form_volume']))
-    if model_info['Iq'] is not None:
+        source.append(_gen_fn('form_volume', pars, model_info.form_volume))
+    if model_info.Iq is not None:
         pars = [q] + partable.iq_parameters
-        source.append(_gen_fn('Iq', pars, model_info['Iq']))
-    if model_info['Iqxy'] is not None:
+        source.append(_gen_fn('Iq', pars, model_info.Iq))
+    if model_info.Iqxy is not None:
         pars = [qx, qy] + partable.iqxy_parameters
-        source.append(_gen_fn('Iqxy', pars, model_info['Iqxy']))
+        source.append(_gen_fn('Iqxy', pars, model_info.Iqxy))
 
     # Define the parameter table
     source.append("#define PARAMETER_TABLE \\")
@@ -493,186 +492,20 @@ def make_source(model_info):
     # TODO: allow mixed python/opencl kernels?
 
     # define the Iq kernel
-    source.append("#define KERNEL_NAME %s_Iq"%model_info['name'])
+    source.append("#define KERNEL_NAME %s_Iq"%model_info.name)
     source.append(call_iq)
     source.append(kernel_code)
     source.append("#undef CALL_IQ")
     source.append("#undef KERNEL_NAME")
 
     # define the Iqxy kernel from the same source with different #defines
-    source.append("#define KERNEL_NAME %s_Iqxy"%model_info['name'])
+    source.append("#define KERNEL_NAME %s_Iqxy"%model_info.name)
     source.append(call_iqxy)
     source.append(kernel_code)
     source.append("#undef CALL_IQ")
     source.append("#undef KERNEL_NAME")
 
     return '\n'.join(source)
-
-class CoordinationDetails(object):
-    def __init__(self, model_info):
-        parameters = model_info['parameters']
-        max_pd = parameters.max_pd
-        npars = parameters.npars
-        par_offset = 4*max_pd
-        self.details = np.zeros(par_offset + 3*npars + 4, 'i4')
-
-        # generate views on different parts of the array
-        self._pd_par     = self.details[0*max_pd:1*max_pd]
-        self._pd_length  = self.details[1*max_pd:2*max_pd]
-        self._pd_offset  = self.details[2*max_pd:3*max_pd]
-        self._pd_stride  = self.details[3*max_pd:4*max_pd]
-        self._par_offset = self.details[par_offset+0*npars:par_offset+1*npars]
-        self._par_coord  = self.details[par_offset+1*npars:par_offset+2*npars]
-        self._pd_coord   = self.details[par_offset+2*npars:par_offset+3*npars]
-
-        # theta_par is fixed
-        self.details[-1] = parameters.theta_offset
-
-    @property
-    def ctypes(self): return self.details.ctypes
-
-    @property
-    def pd_par(self): return self._pd_par
-
-    @property
-    def pd_length(self): return self._pd_length
-
-    @property
-    def pd_offset(self): return self._pd_offset
-
-    @property
-    def pd_stride(self): return self._pd_stride
-
-    @property
-    def pd_coord(self): return self._pd_coord
-
-    @property
-    def par_coord(self): return self._par_coord
-
-    @property
-    def par_offset(self): return self._par_offset
-
-    @property
-    def num_active(self): return self.details[-4]
-    @num_active.setter
-    def num_active(self, v): self.details[-4] = v
-
-    @property
-    def total_pd(self): return self.details[-3]
-    @total_pd.setter
-    def total_pd(self, v): self.details[-3] = v
-
-    @property
-    def num_coord(self): return self.details[-2]
-    @num_coord.setter
-    def num_coord(self, v): self.details[-2] = v
-
-    @property
-    def theta_par(self): return self.details[-1]
-
-    def show(self):
-        print("total_pd", self.total_pd)
-        print("num_active", self.num_active)
-        print("pd_par", self.pd_par)
-        print("pd_length", self.pd_length)
-        print("pd_offset", self.pd_offset)
-        print("pd_stride", self.pd_stride)
-        print("par_offsets", self.par_offset)
-        print("num_coord", self.num_coord)
-        print("par_coord", self.par_coord)
-        print("pd_coord", self.pd_coord)
-        print("theta par", self.details[-1])
-
-def mono_details(model_info):
-    details = CoordinationDetails(model_info)
-    # The zero defaults for monodisperse systems are mostly fine
-    details.par_offset[:] = np.arange(2, len(details.par_offset)+2)
-    return details
-
-def poly_details(model_info, weights):
-    #print("weights",weights)
-    weights = weights[2:] # Skip scale and background
-
-    # Decreasing list of polydispersity lengths
-    # Note: the reversing view, x[::-1], does not require a copy
-    pd_length = np.array([len(w) for w in weights])
-    num_active = np.sum(pd_length>1)
-    if num_active > model_info['parameters'].max_pd:
-        raise ValueError("Too many polydisperse parameters")
-
-    pd_offset = np.cumsum(np.hstack((0, pd_length)))
-    idx = np.argsort(pd_length)[::-1][:num_active]
-    par_length = np.array([max(len(w),1) for w in weights])
-    pd_stride = np.cumprod(np.hstack((1, par_length[idx])))
-    par_offsets = np.cumsum(np.hstack((2, par_length)))
-
-    details = CoordinationDetails(model_info)
-    details.pd_par[:num_active] = idx
-    details.pd_length[:num_active] = pd_length[idx]
-    details.pd_offset[:num_active] = pd_offset[idx]
-    details.pd_stride[:num_active] = pd_stride[:-1]
-    details.par_offset[:] = par_offsets[:-1]
-    details.total_pd = pd_stride[-1]
-    details.num_active = num_active
-    # Without constraints coordinated parameters are just the pd parameters
-    details.par_coord[:num_active] = idx
-    details.pd_coord[:num_active] = 2**np.arange(num_active)
-    details.num_coord = num_active
-    #details.show()
-    return details
-
-def constrained_poly_details(model_info, weights, constraints):
-    # Need to find the independently varying pars and sort them
-    # Need to build a coordination list for the dependent variables
-    # Need to generate a constraints function which takes values
-    # and weights, returning par blocks
-    raise NotImplementedError("Can't handle constraints yet")
-
-
-def create_vector_Iq(model_info):
-    """
-    Define Iq as a vector function if it exists.
-    """
-    Iq = model_info['Iq']
-    if callable(Iq) and not getattr(Iq, 'vectorized', False):
-        def vector_Iq(q, *args):
-            """
-            Vectorized 1D kernel.
-            """
-            return np.array([Iq(qi, *args) for qi in q])
-        model_info['Iq'] = vector_Iq
-
-def create_vector_Iqxy(model_info):
-    """
-    Define Iqxy as a vector function if it exists, or default it from Iq().
-    """
-    Iq, Iqxy = model_info['Iq'], model_info['Iqxy']
-    if callable(Iqxy) and not getattr(Iqxy, 'vectorized', False):
-        def vector_Iqxy(qx, qy, *args):
-            """
-            Vectorized 2D kernel.
-            """
-            return np.array([Iqxy(qxi, qyi, *args) for qxi, qyi in zip(qx, qy)])
-        model_info['Iqxy'] = vector_Iqxy
-    elif callable(Iq):
-        # Iq is vectorized because create_vector_Iq was already called.
-        def default_Iqxy(qx, qy, *args):
-            """
-            Default 2D kernel.
-            """
-            return Iq(np.sqrt(qx**2 + qy**2), *args)
-        model_info['Iqxy'] = default_Iqxy
-
-def create_default_functions(model_info):
-    """
-    Autogenerate missing functions, such as Iqxy from Iq.
-
-    This only works for Iqxy when Iq is written in python. :func:`make_source`
-    performs a similar role for Iq written in C.  This also vectorizes
-    any functions that are not already marked as vectorized.
-    """
-    create_vector_Iq(model_info)
-    create_vector_Iqxy(model_info)  # call create_vector_Iq() first
 
 def load_kernel_module(model_name):
     if model_name.endswith('.py'):
@@ -684,82 +517,6 @@ def load_kernel_module(model_name):
     return kernel_module
 
 
-def make_model_info(kernel_module):
-    """
-    Interpret the model definition file, categorizing the parameters.
-
-    The module can be loaded with a normal python import statement if you
-    know which module you need, or with __import__('sasmodels.model.'+name)
-    if the name is in a string.
-
-    The *model_info* structure contains the following fields:
-
-    * *id* is the id of the kernel
-    * *name* is the display name of the kernel
-    * *filename* is the full path to the module defining the file (if any)
-    * *title* is a short description of the kernel
-    * *description* is a long description of the kernel (this doesn't seem
-      very useful since the Help button on the model page brings you directly
-      to the documentation page)
-    * *docs* is the docstring from the module.  Use :func:`make_doc` to
-    * *category* specifies the model location in the docs
-    * *parameters* is the model parameter table
-    * *single* is True if the model allows single precision
-    * *structure_factor* is True if the model is useable in a product
-    * *variant_info* contains the information required to select between
-      model variants (e.g., the list of cases) or is None if there are no
-      model variants
-    * *par_type* categorizes the model parameters. See
-      :func:`categorize_parameters` for details.
-    * *demo* contains the *{parameter: value}* map used in compare (and maybe
-      for the demo plot, if plots aren't set up to use the default values).
-      If *demo* is not given in the file, then the default values will be used.
-    * *tests* is a set of tests that must pass
-    * *source* is the list of library files to include in the C model build
-    * *Iq*, *Iqxy*, *form_volume*, *ER*, *VR* and *sesans* are python functions
-      implementing the kernel for the module, or None if they are not
-      defined in python
-    * *composition* is None if the model is independent, otherwise it is a
-      tuple with composition type ('product' or 'mixture') and a list of
-      *model_info* blocks for the composition objects.  This allows us to
-      build complete product and mixture models from just the info.
-    """
-    # TODO: maybe turn model_info into a class ModelDefinition
-    #print("make parameter table", kernel_module.parameters)
-    parameters = make_parameter_table(kernel_module.parameters)
-    filename = abspath(kernel_module.__file__)
-    kernel_id = splitext(basename(filename))[0]
-    name = getattr(kernel_module, 'name', None)
-    if name is None:
-        name = " ".join(w.capitalize() for w in kernel_id.split('_'))
-    model_info = dict(
-        id=kernel_id,  # string used to load the kernel
-        filename=abspath(kernel_module.__file__),
-        name=name,
-        title=getattr(kernel_module, 'title', name+" model"),
-        description=getattr(kernel_module, 'description', 'no description'),
-        parameters=parameters,
-        composition=None,
-        docs=kernel_module.__doc__,
-        category=getattr(kernel_module, 'category', None),
-        single=getattr(kernel_module, 'single', True),
-        structure_factor=getattr(kernel_module, 'structure_factor', False),
-        profile_axes=getattr(kernel_module, 'profile_axes', ['x','y']),
-        variant_info=getattr(kernel_module, 'invariant_info', None),
-        demo=getattr(kernel_module, 'demo', None),
-        source=getattr(kernel_module, 'source', []),
-        tests=getattr(kernel_module, 'tests', []),
-        )
-    set_demo(model_info, getattr(kernel_module, 'demo', None))
-    # Check for optional functions
-    functions = "ER VR form_volume Iq Iqxy profile sesans".split()
-    model_info.update((k, getattr(kernel_module, k, None)) for k in functions)
-    create_default_functions(model_info)
-    # Precalculate the monodisperse parameters
-    # TODO: make this a lazy evaluator
-    # make_model_info is called for every model on sasview startup
-    model_info['mono_details'] = mono_details(model_info)
-    return model_info
 
 section_marker = re.compile(r'\A(?P<first>[%s])(?P=first)*\Z'
                             %re.escape(string.punctuation))
@@ -800,12 +557,12 @@ def make_doc(model_info):
     """
     Iq_units = "The returned value is scaled to units of |cm^-1| |sr^-1|, absolute scale."
     Sq_units = "The returned value is a dimensionless structure factor, $S(q)$."
-    docs = convert_section_titles_to_boldface(model_info['docs'])
-    subst = dict(id=model_info['id'].replace('_', '-'),
-                 name=model_info['name'],
-                 title=model_info['title'],
-                 parameters=make_partable(model_info['parameters']),
-                 returns=Sq_units if model_info['structure_factor'] else Iq_units,
+    docs = convert_section_titles_to_boldface(model_info.docs)
+    subst = dict(id=model_info.id.replace('_', '-'),
+                 name=model_info.name,
+                 title=model_info.title,
+                 parameters=make_partable(model_info.parameters),
+                 returns=Sq_units if model_info.structure_factor else Iq_units,
                  docs=docs)
     return DOC_HEADER % subst
 
@@ -814,8 +571,10 @@ def demo_time():
     """
     Show how long it takes to process a model.
     """
-    from .models import cylinder
     import datetime
+    from .modelinfo import make_model_info
+    from .models import cylinder
+
     tic = datetime.datetime.now()
     make_source(make_model_info(cylinder))
     toc = (datetime.datetime.now() - tic).total_seconds()
@@ -826,6 +585,8 @@ def main():
     Program which prints the source produced by the model.
     """
     import sys
+    from .modelinfo import make_model_info
+
     if len(sys.argv) <= 1:
         print("usage: python -m sasmodels.generate modelname")
     else:
