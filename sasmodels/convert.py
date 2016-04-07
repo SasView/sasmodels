@@ -205,7 +205,7 @@ def revert_pars(model_info, pars):
             _remove_pd(oldpars, 'rimC', name)
         elif name == 'rpa':
             # convert scattering lengths from femtometers to centimeters
-            for p in "La", "Lb", "Lc", "Ld":
+            for p in "L1", "L2", "L3", "L4":
                 if p in oldpars: oldpars[p] *= 1e-13
         elif name == 'core_shell_parallelepiped':
             _remove_pd(oldpars, 'rimA', name)

@@ -208,6 +208,7 @@ def parameter_range(p, v):
     """
     Choose a parameter range based on parameter name and initial value.
     """
+    # process the polydispersity options
     if p.endswith('_pd_n'):
         return [0, 100]
     elif p.endswith('_pd_nsigma'):
@@ -220,35 +221,46 @@ def parameter_range(p, v):
             return [0, 45]
         else:
             return [-180, 180]
-    elif 'sld' in p:
-        return [-0.5, 10]
     elif p.endswith('_pd'):
         return [0, 1]
+    elif 'sld' in p:
+        return [-0.5, 10]
     elif p == 'background':
         return [0, 10]
     elif p == 'scale':
         return [0, 1e3]
-    elif p == 'case_num':
-        # RPA hack
-        return [0, 10]
     elif v < 0:
-        # Kxy parameters in rpa model can be negative
         return [2*v, -2*v]
     else:
         return [0, (2*v if v > 0 else 1)]
 
 
-def _randomize_one(p, v):
+def _randomize_one(model_info, p, v):
     """
     Randomize a single parameter.
     """
     if any(p.endswith(s) for s in ('_pd_n', '_pd_nsigma', '_pd_type')):
         return v
+
+    # Find the parameter definition
+    for par in model_info['parameters'].call_parameters:
+        if par.name == p:
+            break
     else:
-        return np.random.uniform(*parameter_range(p, v))
+        raise ValueError("unknown parameter %r"%p)
+
+    if len(par.limits) > 2:  # choice list
+        return np.random.randint(len(par.limits))
+
+    limits = par.limits
+    if not np.isfinite(limits).all():
+        low, high = parameter_range(p, v)
+        limits = (max(limits[0], low), min(limits[1], high))
+
+    return np.random.uniform(*limits)
 
 
-def randomize_pars(pars, seed=None):
+def randomize_pars(model_info, pars, seed=None):
     """
     Generate random values for all of the parameters.
 
@@ -259,7 +271,7 @@ def randomize_pars(pars, seed=None):
     """
     with push_seed(seed):
         # Note: the sort guarantees order `of calls to random number generator
-        pars = dict((p, _randomize_one(p, v))
+        pars = dict((p, _randomize_one(model_info, p, v))
                     for p, v in sorted(pars.items()))
     return pars
 
@@ -292,12 +304,12 @@ def constrain_pars(model_info, pars):
     if name == 'rpa':
         # Make sure phi sums to 1.0
         if pars['case_num'] < 2:
-            pars['Phia'] = 0.
-            pars['Phib'] = 0.
+            pars['Phi1'] = 0.
+            pars['Phi2'] = 0.
         elif pars['case_num'] < 5:
-            pars['Phia'] = 0.
-        total = sum(pars['Phi'+c] for c in 'abcd')
-        for c in 'abcd':
+            pars['Phi1'] = 0.
+        total = sum(pars['Phi'+c] for c in '1234')
+        for c in '1234':
             pars['Phi'+c] /= total
 
 def parlist(model_info, pars, is2d):
@@ -804,7 +816,7 @@ def parse_opts():
     # randomize parameters
     #pars.update(set_pars)  # set value before random to control range
     if opts['seed'] > -1:
-        pars = randomize_pars(pars, seed=opts['seed'])
+        pars = randomize_pars(model_info, pars, seed=opts['seed'])
         print("Randomize using -random=%i"%opts['seed'])
     if opts['mono']:
         pars = suppress_pd(pars)

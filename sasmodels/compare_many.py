@@ -107,7 +107,7 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
     print(header)
 
     if is_2d:
-        if not model_info['has_2d']:
+        if not model_info['parameters'].has_2d:
             print(',"1-D only"')
             return
 
