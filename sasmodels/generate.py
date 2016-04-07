@@ -125,27 +125,6 @@ The kernel module must set variables defining the kernel meta data:
 An *model_info* dictionary is constructed from the kernel meta data and
 returned to the caller.
 
-The model evaluator, function call sequence consists of q inputs and the return vector,
-followed by the loop value/weight vector, followed by the values for
-the non-polydisperse parameters, followed by the lengths of the
-polydispersity loops.  To construct the call for 1D models, the
-categories *fixed-1d* and *pd-1d* list the names of the parameters
-of the non-polydisperse and the polydisperse parameters respectively.
-Similarly, *fixed-2d* and *pd-2d* provide parameter names for 2D models.
-The *pd-rel* category is a set of those parameters which give
-polydispersitiy as a portion of the value (so a 10% length dispersity
-would use a polydispersity value of 0.1) rather than absolute
-dispersity such as an angle plus or minus 15 degrees.
-
-The *volume* category lists the volume parameters in order for calls
-to volume within the kernel (used for volume normalization) and for
-calls to ER and VR for effective radius and volume ratio respectively.
-
-The *orientation* and *magnetic* categories list the orientation and
-magnetic parameters.  These are used by the sasview interface.  The
-blank category is for parameters such as scale which don't have any
-other marking.
-
 The doc string at the start of the kernel module will be used to
 construct the model documentation web pages.  Embedded figures should
 appear in the subdirectory "img" beside the model definition, and tagged
@@ -551,32 +530,45 @@ class CoordinationDetails(object):
 
     @property
     def ctypes(self): return self.details.ctypes
+
     @property
     def pd_par(self): return self._pd_par
+
     @property
     def pd_length(self): return self._pd_length
+
     @property
     def pd_offset(self): return self._pd_offset
+
     @property
     def pd_stride(self): return self._pd_stride
+
     @property
     def pd_coord(self): return self._pd_coord
+
     @property
     def par_coord(self): return self._par_coord
+
     @property
     def par_offset(self): return self._par_offset
-    @property
-    def num_coord(self): return self.details[-2]
-    @num_coord.setter
-    def num_coord(self, v): self.details[-2] = v
-    @property
-    def total_pd(self): return self.details[-3]
-    @total_pd.setter
-    def total_pd(self, v): self.details[-3] = v
+
     @property
     def num_active(self): return self.details[-4]
     @num_active.setter
     def num_active(self, v): self.details[-4] = v
+
+    @property
+    def total_pd(self): return self.details[-3]
+    @total_pd.setter
+    def total_pd(self, v): self.details[-3] = v
+
+    @property
+    def num_coord(self): return self.details[-2]
+    @num_coord.setter
+    def num_coord(self, v): self.details[-2] = v
+
+    @property
+    def theta_par(self): return self.details[-1]
 
     def show(self):
         print("total_pd", self.total_pd)
@@ -637,22 +629,50 @@ def constrained_poly_details(model_info, weights, constraints):
     raise NotImplementedError("Can't handle constraints yet")
 
 
+def create_vector_Iq(model_info):
+    """
+    Define Iq as a vector function if it exists.
+    """
+    Iq = model_info['Iq']
+    if callable(Iq) and not getattr(Iq, 'vectorized', False):
+        def vector_Iq(q, *args):
+            """
+            Vectorized 1D kernel.
+            """
+            return np.array([Iq(qi, *args) for qi in q])
+        model_info['Iq'] = vector_Iq
+
+def create_vector_Iqxy(model_info):
+    """
+    Define Iqxy as a vector function if it exists, or default it from Iq().
+    """
+    Iq, Iqxy = model_info['Iq'], model_info['Iqxy']
+    if callable(Iqxy) and not getattr(Iqxy, 'vectorized', False):
+        def vector_Iqxy(qx, qy, *args):
+            """
+            Vectorized 2D kernel.
+            """
+            return np.array([Iqxy(qxi, qyi, *args) for qxi, qyi in zip(qx, qy)])
+        model_info['Iqxy'] = vector_Iqxy
+    elif callable(Iq):
+        # Iq is vectorized because create_vector_Iq was already called.
+        def default_Iqxy(qx, qy, *args):
+            """
+            Default 2D kernel.
+            """
+            return Iq(np.sqrt(qx**2 + qy**2), *args)
+        model_info['Iqxy'] = default_Iqxy
+
 def create_default_functions(model_info):
     """
     Autogenerate missing functions, such as Iqxy from Iq.
 
     This only works for Iqxy when Iq is written in python. :func:`make_source`
-    performs a similar role for Iq written in C.
+    performs a similar role for Iq written in C.  This also vectorizes
+    any functions that are not already marked as vectorized.
     """
-    if callable(model_info['Iq']) and model_info['Iqxy'] is None:
-        partable = model_info['parameters']
-        if partable.has_2d:
-            raise ValueError("Iqxy model is missing")
-        Iq = model_info['Iq']
-        def Iqxy(qx, qy, **kw):
-            return Iq(np.sqrt(qx**2 + qy**2), **kw)
-        model_info['Iqxy'] = Iqxy
-
+    create_vector_Iq(model_info)
+    create_vector_Iqxy(model_info)  # call create_vector_Iq() first
 
 def load_kernel_module(model_name):
     if model_name.endswith('.py'):

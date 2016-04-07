@@ -188,7 +188,10 @@ class Parameter(object):
     be used in all of *Iq*, *Iqxy* and *Imagnetic*.  "sld" parameters
     can automatically be promoted to magnetic parameters, each of which
     will have a magnitude and a direction, which may be different from
-    other sld parameters.
+    other sld parameters. The volume parameters are used for calls
+    to form_volume within the kernel (required for volume normalization)
+    and for calls to ER and VR for effective radius and volume ratio
+    respectively.
 
     *description* is a short description of the parameter.  This will
     be displayed in the parameter table and used as a tool tip for the
@@ -196,11 +199,18 @@ class Parameter(object):
 
     Additional values can be set after the parameter is created:
 
-    *length* is the length of the field if it is a vector field
-    *length_control* is the parameter which sets the vector length
-    *is_control* is True if the parameter is a control parameter for a vector
-    *polydisperse* is true if the parameter accepts a polydispersity
-    *relative_pd* is true if that polydispersity is relative
+    * *length* is the length of the field if it is a vector field
+
+    * *length_control* is the parameter which sets the vector length
+
+    * *is_control* is True if the parameter is a control parameter for a vector
+
+    * *polydisperse* is true if the parameter accepts a polydispersity
+
+    * *relative_pd* is true if that polydispersity is a portion of the
+    value (so a 10% length dipsersity would use a polydispersity value of 0.1)
+    rather than absolute dispersisity (such as an angle plus or minus
+    15 degrees).
 
     In the usual process these values are set by :func:`make_parameter_table`
     and :func:`parse_parameter` therein.

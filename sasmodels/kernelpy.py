@@ -86,63 +86,65 @@ class PyKernel(object):
     Call :meth:`release` when done with the kernel instance.
     """
     def __init__(self, kernel, model_info, q_input):
+        self.dtype = np.dtype('d')
         self.info = model_info
         self.q_input = q_input
         self.res = np.empty(q_input.nq, q_input.dtype)
-        dim = '2d' if q_input.is_2d else '1d'
-        # Loop over q unless user promises that the kernel is vectorized by
-        # taggining it with vectorized=True
-        if not getattr(kernel, 'vectorized', False):
-            if dim == '2d':
-                def vector_kernel(qx, qy, *args):
-                    """
-                    Vectorized 2D kernel.
-                    """
-                    return np.array([kernel(qxi, qyi, *args)
-                                     for qxi, qyi in zip(qx, qy)])
+        self.kernel = kernel
+        self.dim = '2d' if q_input.is_2d else '1d'
+
+        partable = model_info['parameters']
+        kernel_parameters = (partable.iqxy_parameters if q_input.is_2d
+                             else partable.iq_parameters)
+        volume_parameters = partable.form_volume_parameters
+
+        # Create an array to hold the parameter values.  There will be a
+        # single array whose values are updated as the calculator goes
+        # through the loop.  Arguments to the kernel and volume functions
+        # will use views into this vector, relying on the fact that a
+        # an array of no dimensions acts like a scalar.
+        parameter_vector = np.empty(len(partable.call_parameters), 'd')
+
+        # Create views into the array to hold the arguments
+        offset = 2
+        kernel_args, volume_args = [], []
+        for p in partable.kernel_parameters:
+            if p.length == 1:
+                # Scalar values are length 1 vectors with no dimensions.
+                v = parameter_vector[offset:offset+1].reshape(())
             else:
-                def vector_kernel(q, *args):
-                    """
-                    Vectorized 1D kernel.
-                    """
-                    return np.array([kernel(qi, *args)
-                                     for qi in q])
-            self.kernel = vector_kernel
+                # Vector values are simple views.
+                v = parameter_vector[offset:offset+p.length]
+            offset += p.length
+            if p in kernel_parameters:
+                kernel_args.append(v)
+            if p in volume_parameters:
+                volume_args.append(p)
+
+        # Hold on to the parameter vector so we can use it to call kernel later.
+        # This may also be required to preserve the views into the vector.
+        self._parameter_vector = parameter_vector
+
+        # Generate a closure which calls the kernel with the views into the
+        # parameter array.
+        if q_input.is_2d:
+            form = model_info['Iqxy']
+            qx, qy = q_input.q[:,0], q_input.q[:,1]
+            self._form = lambda: form(qx, qy, *kernel_args)
         else:
-            self.kernel = kernel
-        fixed_pars = model_info['partype']['fixed-' + dim]
-        pd_pars = model_info['partype']['pd-' + dim]
-        vol_pars = model_info['partype']['volume']
+            form = model_info['Iq']
+            q = q_input.q
+            self._form = lambda: form(q, *kernel_args)
 
-        # First two fixed pars are scale and background
-        pars = [p.name for p in model_info['parameters'][2:]]
-        offset = len(self.q_input.q_vectors)
-        self.args = self.q_input.q_vectors + [None] * len(pars)
-        self.fixed_index = np.array([pars.index(p) + offset
-                                     for p in fixed_pars[2:]])
-        self.pd_index = np.array([pars.index(p) + offset
-                                  for p in pd_pars])
-        self.vol_index = np.array([pars.index(p) + offset
-                                   for p in vol_pars])
-        try: self.theta_index = pars.index('theta') + offset
-        except ValueError: self.theta_index = -1
+        # Generate a closure which calls the form_volume if it exists.
+        form_volume = model_info['form_volume']
+        self._volume = ((lambda: form_volume(*volume_args)) if form_volume
+                        else (lambda: 1.0))
 
-        # Caller needs fixed_pars and pd_pars
-        self.fixed_pars = fixed_pars
-        self.pd_pars = pd_pars
-
-    def __call__(self, fixed, pd, cutoff=1e-5):
-        #print("fixed",fixed)
-        #print("pd", pd)
-        args = self.args[:]  # grab a copy of the args
-        form, form_volume = self.kernel, self.info['form_volume']
-        # First two fixed
-        scale, background = fixed[:2]
-        for index, value in zip(self.fixed_index, fixed[2:]):
-            args[index] = float(value)
-        res = _loops(form, form_volume, cutoff, scale, background, args,
-                     pd, self.pd_index, self.vol_index, self.theta_index)
-
+    def __call__(self, details, weights, values, cutoff):
+        # type: (.generate.CoordinationDetails, np.ndarray, np.ndarray, float) -> np.ndarray
+        res = _loops(self._parameter_vector, self._form, self._volume,
+                     self.q_input.nq, details, weights, values, cutoff)
         return res
 
     def release(self):
@@ -151,36 +153,15 @@ class PyKernel(object):
         """
         self.q_input = None
 
-def _loops(form, form_volume, cutoff, scale, background,
-           args, pd, pd_index, vol_index, theta_index):
-    """
-    *form* is the name of the form function, which should be vectorized over
-    q, but otherwise have an interface like the opencl kernels, with the
-    q parameters first followed by the individual parameters in the order
-    given in model.parameters (see :mod:`sasmodels.generate`).
-
-    *form_volume* calculates the volume of the shape.  *vol_index* gives
-    the list of volume parameters
-
-    *cutoff* ignores the corners of the dispersion hypercube
-
-    *scale*, *background* multiplies the resulting form and adds an offset
-
-    *args* is the prepopulated set of arguments to the form function, starting
-    with the q vectors, and including slots for all the parameters.  The
-    values for the parameters will be substituted with values from the
-    dispersion functions.
-
-    *pd* is the list of dispersion parameters
-
-    *pd_index* are the indices of the dispersion parameters in *args*
-
-    *vol_index* are the indices of the volume parameters in *args*
-
-    *theta_index* is the index of the theta parameter for the sasview
-    spherical correction, or -1 if there is no angular dispersion
-    """
-
+def _loops(parameters,  # type: np.ndarray
+           form,        # type: Callable[[], np.ndarray]
+           form_volume, # type: Callable[[], float]
+           nq,          # type: int
+           details,     # type: .generate.CoordinationDetails
+           weights,     # type: np.ndarray
+           values,      # type: np.ndarray
+           cutoff,      # type: float
+           ):           # type: (...) -> None
     ################################################################
     #                                                              #
     #   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #
@@ -190,77 +171,71 @@ def _loops(form, form_volume, cutoff, scale, background,
     #   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #
     #                                                              #
     ################################################################
-
-    weight = np.empty(len(pd), 'd')
-    if weight.size > 0:
-        # weight vector, to be populated by polydispersity loops
-
-        # identify which pd parameters are volume parameters
-        vol_weight_index = np.array([(index in vol_index) for index in pd_index])
-
-        # Sort parameters in decreasing order of pd length
-        Npd = np.array([len(pdi[0]) for pdi in pd], 'i')
-        order = np.argsort(Npd)[::-1]
-        stride = np.cumprod(Npd[order])
-        pd = [pd[index] for index in order]
-        pd_index = pd_index[order]
-        vol_weight_index = vol_weight_index[order]
-
-        fast_value = pd[0][0]
-        fast_weight = pd[0][1]
-    else:
-        stride = np.array([1])
-        vol_weight_index = slice(None, None)
-        # keep lint happy
-        fast_value = [None]
-        fast_weight = [None]
-
-    ret = np.zeros_like(args[0])
-    norm = np.zeros_like(ret)
-    vol = np.zeros_like(ret)
-    vol_norm = np.zeros_like(ret)
-    for k in range(stride[-1]):
-        # update polydispersity parameter values
-        fast_index = k % stride[0]
-        if fast_index == 0:  # bottom loop complete ... check all other loops
-            if weight.size > 0:
-                for i, index, in enumerate(k % stride):
-                    args[pd_index[i]] = pd[i][0][index]
-                    weight[i] = pd[i][1][index]
+    parameters[2:] = values[details.par_offset]
+    scale, background = values[0], values[1]
+    if details.num_active == 0:
+        norm = float(form_volume())
+        if norm > 0.0:
+            return (scale/norm)*form() + background
         else:
-            args[pd_index[0]] = fast_value[fast_index]
-            weight[0] = fast_weight[fast_index]
+            return np.ones(nq, 'd')*background
 
-        # Computes the weight, and if it is not sufficient then ignore this
-        # parameter set.
-        # Note: could precompute w1*...*wn so we only need to multiply by w0
-        w = np.prod(weight)
-        if w > cutoff:
-            # Note: can precompute spherical correction if theta_index is not
-            # the fast index. Correction factor for spherical integration
-            #spherical_correction = abs(cos(pi*args[phi_index])) if phi_index>=0 else 1.0
-            spherical_correction = (abs(cos(pi * args[theta_index])) * pi / 2
-                                    if theta_index >= 0 else 1.0)
-            #spherical_correction = 1.0
+    partial_weight = np.NaN
+    spherical_correction = 1.0
+    pd_stride = details.pd_stride[:details.num_active]
+    pd_length = details.pd_length[:details.num_active]
+    pd_offset = details.pd_offset[:details.num_active]
+    pd_index = np.empty_like(pd_offset)
+    offset = np.empty_like(details.par_offset)
+    theta = details.theta_par
+    fast_length = pd_length[0]
+    pd_index[0] = fast_length
+    total = np.zeros(nq, 'd')
+    norm = 0.0
+    for loop_index in range(details.total_pd):
+        # update polydispersity parameter values
+        if pd_index[0] == fast_length:
+            pd_index[:] = (loop_index/pd_stride)%pd_length
+            partial_weight = np.prod(weights[pd_offset+pd_index][1:])
+            for k in range(details.num_coord):
+                par = details.par_coord[k]
+                coord = details.pd_coord[k]
+                this_offset = details.par_offset[par]
+                block_size = 1
+                for bit in xrange(32):
+                    if coord&1:
+                        this_offset += block_size * pd_index[bit]
+                        block_size *= pd_length[bit]
+                    coord >>= 1
+                    if coord == 0: break
+                offset[par] = this_offset
+                parameters[par] = values[this_offset]
+                if par == theta and not (details.par_coord[k]&1):
+                    spherical_correction = max(abs(cos(pi/180 * parameters[theta])), 1e-6)
+        for k in range(details.num_coord):
+            if details.pd_coord[k]&1:
+                par = details.par_coord[k]
+                parameters[par] = values[offset[par]]
+                offset[par] += 1
+                if par == theta:
+                    spherical_correction = max(abs(cos(pi/180 * parameters[theta])), 1e-6)
 
-            # Call the scattering function and adds it to the total.
-            I = form(*args)
+        weight = partial_weight * weights[pd_offset[0] + pd_index[0]]
+        pd_index[0] += 1
+        if weight > cutoff:
+            # Call the scattering function
+            # Assume that NaNs are only generated if the parameters are bad;
+            # exclude all q for that NaN.  Even better would be to have an
+            # INVALID expression like the C models, but that is too expensive.
+            I = form()
             if np.isnan(I).any(): continue
-            ret += w * I * spherical_correction
-            norm += w
 
-            # Volume normalization.
-            # If there are "volume" polydispersity parameters, then these
-            # will be used to call the form_volume function from the user
-            # supplied kernel, and accumulate a normalized weight.
-            # Note: can precompute volume norm if fast index is not a volume
-            if form_volume:
-                vol_args = [args[index] for index in vol_index]
-                vol_weight = np.prod(weight[vol_weight_index])
-                vol += vol_weight * form_volume(*vol_args)
-                vol_norm += vol_weight
+            # update value and norm
+            weight *= spherical_correction
+            total += weight * I
+            norm += weight * form_volume()
 
-    positive = (vol * vol_norm != 0.0)
-    ret[positive] *= vol_norm[positive] / vol[positive]
-    result = scale * ret / norm + background
-    return result
+    if norm > 0.0:
+        return (scale/norm)*total + background
+    else:
+        return np.ones(nq, 'd')*background
