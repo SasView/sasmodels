@@ -5,6 +5,22 @@ import numpy as np
 
 from .details import mono_details
 
+# Optional typing
+try:
+    from typing import Tuple, List, Union, Dict, Optional, Any, Callable
+except ImportError:
+    pass
+else:
+    from .details import CallDetails
+    Limits = Tuple[float, float]
+    LimitsOrChoice = Union[Limits, Tuple[str]]
+    ParameterDef = Tuple[str, str, float, LimitsOrChoice, str, str]
+    ParameterSetUser = Dict[str, Union[float, List[float]]]
+    ParameterSet = Dict[str, float]
+    TestInput = Union[str, float, List[float], Tuple[float, float], List[Tuple[float, float]]]
+    TestValue = Union[float, List[float]]
+    TestCondition = Tuple[ParameterSetUser, TestInput, TestValue]
+
 MAX_PD = 4
 
 COMMON_PARAMETERS = [
@@ -24,18 +40,21 @@ assert (len(COMMON_PARAMETERS) == 2
 # Note that scale and background cannot be coordinated parameters whose value
 # depends on the some polydisperse parameter with the current implementation
 
+
 def make_parameter_table(pars):
+    # type: (List[ParameterDefinition) -> ParameterTable
     processed = []
     for p in pars:
-        if not isinstance(p, list) or len(p) != 6:
+        if not isinstance(p, (list, tuple)) or len(p) != 6:
             raise ValueError("Parameter should be [name, units, default, limits, type, desc], but got %r"
                              %str(p))
         processed.append(parse_parameter(*p))
     partable = ParameterTable(processed)
     return partable
 
-def parse_parameter(name, units='', default=None,
-                    limits=(-np.inf, np.inf), type='', description=''):
+def parse_parameter(name, units='', default=np.NaN,
+                    limits=(-np.inf, np.inf), ptype='', description=''):
+    # type: (str, str, float, LimitsOrChoice, str, str) -> Parameter
     # Parameter is a user facing class.  Do robust type checking.
     if not isstr(name):
         raise ValueError("expected string for parameter name %r"%name)
@@ -67,8 +86,8 @@ def parse_parameter(name, units='', default=None,
         raise ValueError("default value %r not in range for %s"
                          % (default, name))
 
-    if type not in ("volume", "orientation", "sld", "magnetic", ""):
-        raise ValueError("unexpected type %r for %s" % (type, name))
+    if ptype not in ("volume", "orientation", "sld", "magnetic", ""):
+        raise ValueError("unexpected type %r for %s" % (ptype, name))
 
     if not isstr(description):
         raise ValueError("expected description to be a string")
@@ -85,8 +104,8 @@ def parse_parameter(name, units='', default=None,
 
 
     # automatically identify sld types
-    if type=='' and (pid.startswith('sld') or pid.endswith('sld')):
-        type = 'sld'
+    if ptype== '' and (pid.startswith('sld') or pid.endswith('sld')):
+        ptype = 'sld'
 
     # Check if using a vector definition, name[k], as the parameter name
     if ref:
@@ -95,7 +114,7 @@ def parse_parameter(name, units='', default=None,
         try:
             length = int(ref)
             control = None
-        except Exception:
+        except ValueError:
             length = None
             control = ref
     else:
@@ -104,11 +123,11 @@ def parse_parameter(name, units='', default=None,
 
     # Build the parameter
     parameter = Parameter(name=name, units=units, default=default,
-                          limits=limits, type=type, description=description)
+                          limits=limits, ptype=ptype, description=description)
 
     # TODO: need better control over whether a parameter is polydisperse
-    parameter.polydisperse = type in ('orientation', 'volume')
-    parameter.relative_pd = type in ('volume')
+    parameter.polydisperse = ptype in ('orientation', 'volume')
+    parameter.relative_pd = ptype == 'volume'
     parameter.choices = choices
     parameter.length = length
     parameter.length_control = control
@@ -117,6 +136,7 @@ def parse_parameter(name, units='', default=None,
 
 
 def expand_pars(partable, pars):
+    # type: (ParameterTable, ParameterSetUser) ->  ParameterSet
     """
     Create demo parameter set from key-value pairs.
 
@@ -158,6 +178,7 @@ def expand_pars(partable, pars):
     return result
 
 def prefix_parameter(par, prefix):
+    # type: (Parameter, str) -> Parameter
     """
     Return a copy of the parameter with its name prefixed.
     """
@@ -166,6 +187,7 @@ def prefix_parameter(par, prefix):
     new_par.id = prefix + par.id
 
 def suffix_parameter(par, suffix):
+    # type: (Parameter, str) -> Parameter
     """
     Return a copy of the parameter with its name prefixed.
     """
@@ -232,29 +254,31 @@ class Parameter(object):
     and :func:`parse_parameter` therein.
     """
     def __init__(self, name, units='', default=None, limits=(-np.inf, np.inf),
-                 type='', description=''):
-        self.id = name.split('[')[0].strip()
-        self.name = name
-        self.units = units
-        self.default = default
-        self.limits = limits
-        self.type = type
-        self.description = description
+                 ptype='', description=''):
+        # type: (str, str, float, Limits, str, str)
+        self.id = name.split('[')[0].strip() # type: str
+        self.name = name                     # type: str
+        self.units = units                   # type: str
+        self.default = default               # type: float
+        self.limits = limits                 # type: Limits
+        self.type = ptype                    # type: str
+        self.description = description       # type: str
 
         # Length and length_control will be filled in once the complete
         # parameter table is available.
-        self.length = 1
-        self.length_control = None
-        self.is_control = False
+        self.length = 1                      # type: int
+        self.length_control = None           # type: Optional[str]
+        self.is_control = False              # type: bool
 
         # TODO: need better control over whether a parameter is polydisperse
-        self.polydisperse = False
-        self.relative_pd = False
+        self.polydisperse = False            # type: bool
+        self.relative_pd = False             # type: bool
 
         # choices are also set externally.
-        self.choices = []
+        self.choices = []                    # type: List[str]
 
     def as_definition(self):
+        # type: () -> str
         """
         Declare space for the variable in a parameter structure.
 
@@ -268,6 +292,7 @@ class Parameter(object):
             return "double %s[%d];"%(self.id, self.length)
 
     def as_function_argument(self):
+        # type: () -> str
         """
         Declare the variable as a function argument.
 
@@ -281,14 +306,17 @@ class Parameter(object):
             return "double *%s"%self.id
 
     def as_call_reference(self, prefix=""):
+        # type: () -> str
         # Note: if the parameter is a struct type, then we will need to use
         # &prefix+id.  For scalars and vectors we can just use prefix+id.
         return prefix + self.id
 
     def __str__(self):
+        # type: () -> str
         return "<%s>"%self.name
 
     def __repr__(self):
+        # type: () -> str
         return "P<%s>"%self.name
 
 
@@ -354,56 +382,13 @@ class ParameterTable(object):
     COMMON = [Parameter(*p) for p in COMMON_PARAMETERS]
 
     def __init__(self, parameters):
+        # type: (List[Parameter]) -> None
         self.kernel_parameters = parameters
         self._set_vector_lengths()
-        self._make_call_parameter_list()
-        self._categorize_parameters()
-        self._set_defaults()
+        self.call_parameters = self._get_call_parameters()
+        self.defaults = self._get_defaults()
         #self._name_table= dict((p.id, p) for p in parameters)
 
-    def _set_vector_lengths(self):
-        # Sort out the length of the vector parameters such as thickness[n]
-        for p in self.kernel_parameters:
-            if p.length_control:
-                for ref in self.kernel_parameters:
-                    if ref.id == p.length_control:
-                        break
-                else:
-                    raise ValueError("no reference variable %r for %s"
-                                     % (p.length_control, p.name))
-                ref.is_control = True
-                low, high = ref.limits
-                if int(low) != low or int(high) != high or low<0 or high>20:
-                    raise ValueError("expected limits on %s to be within [0, 20]"
-                                     % ref.name)
-                p.length = high
-
-    def _set_defaults(self):
-        # Construct default values, including vector defaults
-        defaults = {}
-        for p in self.call_parameters:
-            if p.length == 1:
-                defaults[p.id] = p.default
-            else:
-                for k in range(1, p.length+1):
-                    defaults["%s%d"%(p.id, k)] = p.default
-        self.defaults = defaults
-
-    def _make_call_parameter_list(self):
-        full_list = self.COMMON[:]
-        for p in self.kernel_parameters:
-            if p.length == 1:
-                full_list.append(p)
-            else:
-                for k in range(1, p.length+1):
-                    pk = Parameter(p.id+str(k), p.units, p.default,
-                                   p.limits, p.type, p.description)
-                    pk.polydisperse = p.polydisperse
-                    pk.relative_pd = p.relative_pd
-                    full_list.append(pk)
-        self.call_parameters = full_list
-
-    def _categorize_parameters(self):
         # Set the kernel parameters.  Assumes background and scale are the
         # first two parameters in the parameter list, but these are not sent
         # to the underlying kernel functions.
@@ -439,11 +424,76 @@ class ParameterTable(object):
                           for p in self.kernel_parameters)
 
         self.pd_1d = set(p.name for p in self.call_parameters
-                if p.polydisperse and p.type not in ('orientation', 'magnetic'))
+                         if p.polydisperse and p.type not in ('orientation', 'magnetic'))
         self.pd_2d = set(p.name for p in self.call_parameters
                          if p.polydisperse and p.type != 'magnetic')
 
+
+    def _set_vector_lengths(self):
+        # type: () -> None
+        """
+        Walk the list of kernel parameters, setting the length field of the
+        vector parameters from the upper limit of the reference parameter.
+
+        This needs to be done once the entire parameter table is available
+        since the reference may still be undefined when the parameter is
+        initially created.
+
+        Note: This modifies the underlying parameter object.
+        """
+        # Sort out the length of the vector parameters such as thickness[n]
+        for p in self.kernel_parameters:
+            if p.length_control:
+                for ref in self.kernel_parameters:
+                    if ref.id == p.length_control:
+                        break
+                else:
+                    raise ValueError("no reference variable %r for %s"
+                                     % (p.length_control, p.name))
+                ref.is_control = True
+                low, high = ref.limits
+                if int(low) != low or int(high) != high or low < 0 or high > 20:
+                    raise ValueError("expected limits on %s to be within [0, 20]"
+                                     % ref.name)
+                # TODO: may want to make a copy of the parameter before updating
+                # this introduces other potential problems, since the same
+                # parameter may be referenced elsewhere
+                p.length = high
+
+    def _get_defaults(self):
+        # type: () -> ParameterSet
+        """
+        Get a list of parameter defaults from the parameters.
+
+        Expands vector parameters into parameter id+number.
+        """
+        # Construct default values, including vector defaults
+        defaults = {}
+        for p in self.call_parameters:
+            if p.length == 1:
+                defaults[p.id] = p.default
+            else:
+                for k in range(1, p.length+1):
+                    defaults["%s%d"%(p.id, k)] = p.default
+        return defaults
+
+    def _get_call_parameters(self):
+        # type: () -> List[Parameter]
+        full_list = self.COMMON[:]
+        for p in self.kernel_parameters:
+            if p.length == 1:
+                full_list.append(p)
+            else:
+                for k in range(1, p.length+1):
+                    pk = Parameter(p.id+str(k), p.units, p.default,
+                                   p.limits, p.type, p.description)
+                    pk.polydisperse = p.polydisperse
+                    pk.relative_pd = p.relative_pd
+                    full_list.append(pk)
+        return full_list
+
     def user_parameters(self, pars={}, is2d=True):
+        # type: (Dict[str, float], bool) -> List[str]
         """
         Return the list of parameters for the given data type.
 
@@ -529,6 +579,7 @@ class ParameterTable(object):
 
 
 def isstr(x):
+    # type: (Any) -> bool
     # TODO: 2-3 compatible tests for str, including unicode strings
     return isinstance(x, str)
 
@@ -556,8 +607,7 @@ def make_model_info(kernel_module):
     info.single = getattr(kernel_module, 'single', True)
     info.structure_factor = getattr(kernel_module, 'structure_factor', False)
     info.profile_axes = getattr(kernel_module, 'profile_axes', ['x','y'])
-    info.variant_info = getattr(kernel_module, 'invariant_info', None)
-    info.demo = getattr(kernel_module, 'demo', None)
+    info.variant_info = getattr(kernel_module, 'variant_info', None)
     info.source = getattr(kernel_module, 'source', [])
     info.tests = getattr(kernel_module, 'tests', [])
     info.ER = getattr(kernel_module, 'ER', None)
@@ -612,33 +662,33 @@ class ModelInfo(object):
       *model_info* blocks for the composition objects.  This allows us to
       build complete product and mixture models from just the info.
     """
-    id = None
-    filename = None
-    name = None
-    title = None
-    description = None
-    parameters = None
-    demo = None
-    composition = None
-    docs = None
-    category = None
-    single = None
-    structure_factor = None
-    profile_axes = None
-    variant_info = None
-    demo = None
-    source = None
-    tests = None
-    ER = None
-    VR = None
-    form_volume = None
-    Iq = None
-    Iqxy = None
+    id = None               # type: str
+    filename = None         # type: str
+    name = None             # type: str
+    title = None            # type: str
+    description = None      # type: str
+    parameters = None       # type: ParameterTable
+    demo = None             # type: Dict[str, float]
+    composition = None      # type: Optional[Tuple[str, List[ModelInfo]]]
+    docs = None             # type: str
+    category = None         # type: Optional[str]
+    single = None           # type: bool
+    structure_factor = None # type: bool
+    profile_axes = None     # type: Tuple[str, str]
+    variant_info = None     # type: Optional[List[str]]
+    source = None           # type: List[str]
+    tests = None            # type: List[TestCondition]
+    ER = None               # type: Optional[Callable[[np.ndarray, ...], float]]
+    VR = None               # type: Optional[Callable[[np.ndarray, ...], float]]
+    form_volume = None      # type: Optional[Callable[[np.ndarray, ...], float]]
+    Iq = None               # type: Optional[Callable[[np.ndarray, ...], np.ndarray]]
+    Iqxy = None             # type: Optional[Callable[[np.ndarray, ...], np.ndarray]]
     profile = None
     sesans = None
-    mono_details = None
+    mono_details = None     # type: CallDetails
 
     def __init__(self):
+        # type: () -> None
         pass
 
 
