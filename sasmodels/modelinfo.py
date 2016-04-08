@@ -68,13 +68,13 @@ def make_parameter_table(pars):
 
 def parse_parameter(name, units='', default=np.NaN,
                     limits=(-np.inf, np.inf), ptype='', description=''):
+    # type: (str, str, float, LimitsOrChoice, str, str) -> Parameter
     """
     Parse an individual parameter from the parameter definition block.
 
     This does type and value checking on the definition, leading
     to early failure in the model loading process and easier debugging.
     """
-    # type: (str, str, float, LimitsOrChoice, str, str) -> Parameter
     # Parameter is a user facing class.  Do robust type checking.
     if not isstr(name):
         raise ValueError("expected string for parameter name %r"%name)
