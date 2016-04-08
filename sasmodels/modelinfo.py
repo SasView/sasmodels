@@ -21,15 +21,8 @@ else:
     TestValue = Union[float, List[float]]
     TestCondition = Tuple[ParameterSetUser, TestInput, TestValue]
 
-MAX_PD = 4
+MAX_PD = 4 #: Maximum number of simultaneously polydisperse parameters
 
-COMMON_PARAMETERS = [
-    ["scale", "", 1, [0, np.inf], "", "Source intensity"],
-    ["background", "1/cm", 1e-3, [0, np.inf], "", "Source background"],
-]
-assert (len(COMMON_PARAMETERS) == 2
-        and COMMON_PARAMETERS[0][0]=="scale"
-        and COMMON_PARAMETERS[1][0]=="background"), "don't change common parameters"
 # assumptions about common parameters exist throughout the code, such as:
 # (1) kernel functions Iq, Iqxy, form_volume, ... don't see them
 # (2) kernel drivers assume scale is par[0] and background is par[1]
@@ -39,10 +32,23 @@ assert (len(COMMON_PARAMETERS) == 2
 # and maybe other places.
 # Note that scale and background cannot be coordinated parameters whose value
 # depends on the some polydisperse parameter with the current implementation
+COMMON_PARAMETERS = [
+    ["scale", "", 1, [0, np.inf], "", "Source intensity"],
+    ["background", "1/cm", 1e-3, [0, np.inf], "", "Source background"],
+]
+assert (len(COMMON_PARAMETERS) == 2
+        and COMMON_PARAMETERS[0][0]=="scale"
+        and COMMON_PARAMETERS[1][0]=="background"), "don't change common parameters"
 
 
 def make_parameter_table(pars):
     # type: (List[ParameterDefinition) -> ParameterTable
+    """
+    Construct a parameter table from a list of parameter definitions.
+
+    This is used by the module processor to convert the parameter block into
+    the parameter table seen in the :class:`ModelInfo` for the module.
+    """
     processed = []
     for p in pars:
         if not isinstance(p, (list, tuple)) or len(p) != 6:
@@ -54,6 +60,12 @@ def make_parameter_table(pars):
 
 def parse_parameter(name, units='', default=np.NaN,
                     limits=(-np.inf, np.inf), ptype='', description=''):
+    """
+    Parse an individual parameter from the parameter definition block.
+
+    This does type and value checking on the definition, leading
+    to early failure in the model loading process and easier debugging.
+    """
     # type: (str, str, float, LimitsOrChoice, str, str) -> Parameter
     # Parameter is a user facing class.  Do robust type checking.
     if not isstr(name):
@@ -576,14 +588,24 @@ class ParameterTable(object):
 
         return result
 
-
-
 def isstr(x):
     # type: (Any) -> bool
+    """
+    Return True if the object is a string.
+    """
     # TODO: 2-3 compatible tests for str, including unicode strings
     return isinstance(x, str)
 
 def make_model_info(kernel_module):
+    # type: (module) -> ModelInfo
+    """
+    Extract the model definition from the loaded kernel module.
+
+    Fill in default values for parts of the module that are not provided.
+
+    Note: vectorized Iq and Iqxy functions will be created for python
+    models when the model is first called, not when the model is loaded.
+    """
     info = ModelInfo()
     #print("make parameter table", kernel_module.parameters)
     parameters = make_parameter_table(kernel_module.parameters)
@@ -661,6 +683,9 @@ class ModelInfo(object):
       tuple with composition type ('product' or 'mixture') and a list of
       *model_info* blocks for the composition objects.  This allows us to
       build complete product and mixture models from just the info.
+
+    The structure should be mostly static, other than the delayed definition
+    of *Iq* and *Iqxy* if they need to be defined.
     """
     id = None               # type: str
     filename = None         # type: str
