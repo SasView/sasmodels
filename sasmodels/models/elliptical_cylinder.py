@@ -80,8 +80,7 @@ L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and Neutron
 New York, (1987)
 """
 
-import math
-from numpy import pi, inf
+from numpy import pi, inf, sqrt
 
 name = "elliptical_cylinder"
 title = "Form factor for an elliptical cylinder."
@@ -116,7 +115,7 @@ def ER(r_minor, axis_ratio, length):
         @param axis_ratio: Ratio of major radius over minor radius
         @param length: Length of the cylinder
     """
-    radius = math.sqrt(r_minor * r_minor * axis_ratio)
+    radius = sqrt(r_minor * r_minor * axis_ratio)
     ddd = 0.75 * radius * (2 * radius * length + (length + radius) * (length + pi * radius))
     return 0.5 * (ddd) ** (1. / 3.)
 

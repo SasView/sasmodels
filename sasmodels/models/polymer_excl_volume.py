@@ -92,8 +92,7 @@ Advances in Polym. Sci.* 106(1993) 87-133
 
 """
 
-from math import sqrt
-from numpy import inf, power
+from numpy import inf, power, sqrt
 from scipy.special import gammainc, gamma
 
 name = "polymer_excl_volume"
@@ -113,9 +112,7 @@ parameters = [["rg",        "Ang", 60.0, [0, inf],    "", "Radius of Gyration"],
 # pylint: enable=bad-whitespace, line-too-long
 
 
-def Iq(q,
-       rg=60.0,
-       porod_exp=3.0):
+def Iq(q, rg=60.0, porod_exp=3.0):
     """
     :param q:         Input q-value (float or [float, float])
     :param rg:        Radius of gyration
@@ -143,15 +140,10 @@ def Iqxy(qx, qy, *args):
     :param args: Remaining arguments
     :return:     2D-Intensity
     """
-
     return Iq(sqrt(qx**2 + qy**2), *args)
 
 Iqxy.vectorized = True  # Iqxy accepts an array of qx, qy values
 
-
-demo = dict(scale=1, background=0.0,
-            rg=60.0,
-            porod_exp=3.0)
 
 tests = [
     # Accuracy tests based on content in test/polyexclvol_default_igor.txt
