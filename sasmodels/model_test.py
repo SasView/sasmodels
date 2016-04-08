@@ -322,7 +322,7 @@ If model1 is 'all', then all except the remaining models will be tested.
 
 
 def model_tests():
-    # type: () -> Iterator[Callable[[], None]
+    # type: () -> Iterator[Callable[[], None]]
     """
     Test runner visible to nosetests.
 

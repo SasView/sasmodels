@@ -82,11 +82,11 @@ def parse_parameter(name, units='', default=np.NaN,
         raise ValueError("expected units to be a string for %s"%name)
     # if limits is a list of strings, then this is a choice list
     # field, and limits are 1 to length of string list
+    choices = []  # type: List[str]
     if isinstance(limits, list) and all(isstr(k) for k in limits):
         choices = limits
-        limits = [0, len(choices)-1]
-    else:
-        choices = []
+        limits = (0., len(choices)-1.)
+
     # TODO: maybe allow limits of None for (-inf, inf)
     try:
         low, high = limits
@@ -275,7 +275,7 @@ class Parameter(object):
     """
     def __init__(self, name, units='', default=None, limits=(-np.inf, np.inf),
                  ptype='', description=''):
-        # type: (str, str, float, Limits, str, str)
+        # type: (str, str, float, Limits, str, str) -> None
         self.id = name.split('[')[0].strip() # type: str
         self.name = name                     # type: str
         self.units = units                   # type: str
@@ -326,7 +326,7 @@ class Parameter(object):
             return "double *%s"%self.id
 
     def as_call_reference(self, prefix=""):
-        # type: () -> str
+        # type: (str) -> str
         # Note: if the parameter is a struct type, then we will need to use
         # &prefix+id.  For scalars and vectors we can just use prefix+id.
         return prefix + self.id
@@ -548,13 +548,13 @@ class ParameterTable(object):
         control = [p for p in self.kernel_parameters if p.is_control]
 
         # Gather entries such as name[n] into groups of the same n
-        dependent = dict((p.id, []) for p in control)
+        dependent = dict((p.id, []) for p in control)  # type: Dict[str, List[Parameter]]
         for p in self.kernel_parameters:
             if p.length_control is not None:
                 dependent[p.length_control].append(p)
 
         # Gather entries such as name[4] into groups of the same length
-        fixed = {}
+        fixed = {}  # type: Dict[int, List[Parameter]]
         for p in self.kernel_parameters:
             if p.length > 1 and p.length_control is None:
                 fixed.setdefault(p.length, []).append(p)
@@ -616,7 +616,7 @@ def make_model_info(kernel_module):
     """
     info = ModelInfo()
     #print("make parameter table", kernel_module.parameters)
-    parameters = make_parameter_table(kernel_module.parameters)
+    parameters = make_parameter_table(getattr(kernel_module, 'parameters', []))
     demo = expand_pars(parameters, getattr(kernel_module, 'demo', None))
     filename = abspath(kernel_module.__file__)
     kernel_id = splitext(basename(filename))[0]
@@ -712,13 +712,13 @@ class ModelInfo(object):
     variant_info = None     # type: Optional[List[str]]
     source = None           # type: List[str]
     tests = None            # type: List[TestCondition]
-    ER = None               # type: Optional[Callable[[np.ndarray, ...], np.ndarray]]
-    VR = None               # type: Optional[Callable[[np.ndarray, ...], Tuple[np.ndarray, np.ndarray]]]
-    form_volume = None      # type: Optional[Callable[[np.ndarray, ...], float]]
-    Iq = None               # type: Optional[Callable[[np.ndarray, ...], np.ndarray]]
-    Iqxy = None             # type: Optional[Callable[[np.ndarray, ...], np.ndarray]]
-    profile = None
-    sesans = None
+    ER = None               # type: Optional[Callable[[np.ndarray], np.ndarray]]
+    VR = None               # type: Optional[Callable[[np.ndarray], Tuple[np.ndarray, np.ndarray]]]
+    form_volume = None      # type: Optional[Callable[[np.ndarray], float]]
+    Iq = None               # type: Optional[Callable[[np.ndarray], np.ndarray]]
+    Iqxy = None             # type: Optional[Callable[[np.ndarray], np.ndarray]]
+    profile = None          # type: Optional[Callable[[np.ndarray], None]]
+    sesans = None           # type: Optional[Callable[[np.ndarray], np.ndarray]]
     mono_details = None     # type: CallDetails
 
     def __init__(self):

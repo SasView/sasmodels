@@ -13,7 +13,7 @@ from . import details
 from .generate import F64
 
 try:
-    from typing import Union
+    from typing import Union, Callable
 except:
     pass
 else:
