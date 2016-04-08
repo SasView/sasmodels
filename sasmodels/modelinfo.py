@@ -639,6 +639,7 @@ def make_model_info(kernel_module):
     info.profile_axes = getattr(kernel_module, 'profile_axes', ['x','y'])
     info.variant_info = getattr(kernel_module, 'variant_info', None)
     info.source = getattr(kernel_module, 'source', [])
+    # TODO: check the structure of the tests
     info.tests = getattr(kernel_module, 'tests', [])
     info.ER = getattr(kernel_module, 'ER', None)
     info.VR = getattr(kernel_module, 'VR', None)
@@ -711,8 +712,8 @@ class ModelInfo(object):
     variant_info = None     # type: Optional[List[str]]
     source = None           # type: List[str]
     tests = None            # type: List[TestCondition]
-    ER = None               # type: Optional[Callable[[np.ndarray, ...], float]]
-    VR = None               # type: Optional[Callable[[np.ndarray, ...], float]]
+    ER = None               # type: Optional[Callable[[np.ndarray, ...], np.ndarray]]
+    VR = None               # type: Optional[Callable[[np.ndarray, ...], Tuple[np.ndarray, np.ndarray]]]
     form_volume = None      # type: Optional[Callable[[np.ndarray, ...], float]]
     Iq = None               # type: Optional[Callable[[np.ndarray, ...], np.ndarray]]
     Iqxy = None             # type: Optional[Callable[[np.ndarray, ...], np.ndarray]]

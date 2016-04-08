@@ -12,6 +12,13 @@ from numpy import pi, cos
 from . import details
 from .generate import F64
 
+try:
+    from typing import Union
+except:
+    pass
+else:
+    DType = Union[None, str, np.dtype]
+
 class PyModel(object):
     """
     Wrapper for pure python models.

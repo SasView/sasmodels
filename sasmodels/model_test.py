@@ -57,7 +57,16 @@ from .direct_model import call_kernel, get_weights
 from .exception import annotate_exception
 from .modelinfo import expand_pars
 
+try:
+    from typing import List, Iterator, Callable
+except ImportError:
+    pass
+else:
+    from .modelinfo import ParameterTable, ParameterSet, TestCondition, ModelInfo
+    from .kernelpy import PyModel, PyInput, PyKernel, DType
+
 def call_ER(model_info, pars):
+    # type: (ModelInfo, ParameterSet) -> float
     """
     Call the model ER function using *values*. *model_info* is either
     *model.info* if you have a loaded model, or *kernel.info* if you
@@ -71,6 +80,7 @@ def call_ER(model_info, pars):
         return np.sum(weight*individual_radii) / np.sum(weight)
 
 def call_VR(model_info, pars):
+    # type: (ModelInfo, ParameterSet) -> float
     """
     Call the model VR function using *pars*.
     *info* is either *model.info* if you have a loaded model, or *kernel.info*
@@ -84,6 +94,7 @@ def call_VR(model_info, pars):
         return np.sum(weight*part)/np.sum(weight*whole)
 
 def _vol_pars(model_info, pars):
+    # type: (ModelInfo, ParameterSet) -> Tuple[np.ndarray, np.ndarray]
     vol_pars = [get_weights(p, pars)
                 for p in model_info.parameters.call_parameters
                 if p.type == 'volume']
@@ -92,6 +103,7 @@ def _vol_pars(model_info, pars):
 
 
 def make_suite(loaders, models):
+    # type: (List[str], List[str]) -> unittest.TestSuite
     """
     Construct the pyunit test suite.
 
@@ -101,8 +113,7 @@ def make_suite(loaders, models):
 
     *models* is the list of models to test, or *["all"]* to test all models.
     """
-
-    ModelTestCase = _hide_model_case_from_nosetests()
+    ModelTestCase = _hide_model_case_from_nose()
     suite = unittest.TestSuite()
 
     if models[0] == 'all':
@@ -159,7 +170,8 @@ def make_suite(loaders, models):
     return suite
 
 
-def _hide_model_case_from_nosetests():
+def _hide_model_case_from_nose():
+    # type: () -> type
     class ModelTestCase(unittest.TestCase):
         """
         Test suit for a particular model with a particular kernel driver.
@@ -170,6 +182,7 @@ def _hide_model_case_from_nosetests():
         """
         def __init__(self, test_name, model_info, test_method_name,
                      platform, dtype):
+            # type: (str, ModelInfo, str, str, DType) -> None
             self.test_name = test_name
             self.info = model_info
             self.platform = platform
@@ -179,11 +192,12 @@ def _hide_model_case_from_nosetests():
             unittest.TestCase.__init__(self, test_method_name)
 
         def run_all(self):
+            # type: () -> None
             smoke_tests = [
-                [{}, 0.1, None],
-                [{}, (0.1, 0.1), None],
-                [{}, 'ER', None],
-                [{}, 'VR', None],
+                ({}, 0.1, None),
+                ({}, (0.1, 0.1), None),
+                ({}, 'ER', None),
+                ({}, 'VR', None),
                 ]
 
             tests = self.info.tests
@@ -206,8 +220,9 @@ def _hide_model_case_from_nosetests():
                 raise
 
         def run_one(self, model, test):
-            pars, x, y = test
-            pars = expand_pars(self.info.parameters, pars)
+            # type: (PyModel, TestCondition) -> None
+            user_pars, x, y = test
+            pars = expand_pars(self.info.parameters, user_pars)
 
             if not isinstance(y, list):
                 y = [y]
@@ -221,8 +236,8 @@ def _hide_model_case_from_nosetests():
             elif x[0] == 'VR':
                 actual = [call_VR(model.info, pars)]
             elif isinstance(x[0], tuple):
-                Qx, Qy = zip(*x)
-                q_vectors = [np.array(Qx), np.array(Qy)]
+                qx, qy = zip(*x)
+                q_vectors = [np.array(qx), np.array(qy)]
                 kernel = model.make_kernel(q_vectors)
                 actual = call_kernel(kernel, pars)
             else:
@@ -246,6 +261,7 @@ def _hide_model_case_from_nosetests():
     return ModelTestCase
 
 def is_near(target, actual, digits=5):
+    # type: (float, float, int) -> bool
     """
     Returns true if *actual* is within *digits* significant digits of *target*.
     """
@@ -254,6 +270,7 @@ def is_near(target, actual, digits=5):
     return abs(target-actual)/shift < 1.5*10**-digits
 
 def main():
+    # type: () -> int
     """
     Run tests given is sys.argv.
 
@@ -287,10 +304,10 @@ def main():
 usage:
   python -m sasmodels.model_test [-v] [opencl|dll] model1 model2 ...
 
-If -v is included on the command line, then use verboe output.
+If -v is included on the command line, then use verbose output.
 
 If neither opencl nor dll is specified, then models will be tested with
-both opencl and dll; the compute target is ignored for pure python models.
+both OpenCL and dll; the compute target is ignored for pure python models.
 
 If model1 is 'all', then all except the remaining models will be tested.
 
@@ -305,6 +322,7 @@ If model1 is 'all', then all except the remaining models will be tested.
 
 
 def model_tests():
+    # type: () -> Iterator[Callable[[], None]
     """
     Test runner visible to nosetests.
 
