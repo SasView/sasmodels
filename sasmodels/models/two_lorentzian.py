@@ -33,8 +33,7 @@ None.
 **Last Reviewed by:** Paul Butler **on:** March 21, 2016
 """
 
-from math import sqrt
-from numpy import inf, power
+from numpy import inf, power, sqrt
 
 name = "two_lorentzian"
 title = "This model calculates an empirical functional form for SAS data \
