@@ -50,7 +50,7 @@ assert (len(COMMON_PARAMETERS) == 2
 
 
 def make_parameter_table(pars):
-    # type: (List[ParameterDefinition) -> ParameterTable
+    # type: (List[ParameterDef]) -> ParameterTable
     """
     Construct a parameter table from a list of parameter definitions.
 
