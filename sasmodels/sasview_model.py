@@ -82,7 +82,7 @@ class SasviewModel(object):
     """
     Sasview wrapper for opencl/ctypes model.
     """
-    _model_info = {}
+    _model_info = None # type: modelinfo.ModelInfo
     def __init__(self):
         self._model = None
         model_info = self._model_info
@@ -352,8 +352,8 @@ class SasviewModel(object):
         kernel = self._model.make_kernel(q_vectors)
         pairs = [self._get_weights(p)
                  for p in self._model_info.parameters.call_parameters]
-        call_details, weights, values = details.build_details(kernel, pairs)
-        result = kernel(call_details, weights, values, cutoff=self.cutoff)
+        call_details, weight, value = details.build_details(kernel, pairs)
+        result = kernel(call_details, weight, value, cutoff=self.cutoff)
         kernel.q_input.release()
         kernel.release()
         return result
@@ -364,13 +364,13 @@ class SasviewModel(object):
 
         :return: the value of the effective radius
         """
-        if model_info.ER is None:
+        if self._model_info.ER is None:
             return 1.0
         else:
-            values, weights = self._dispersion_mesh()
-            fv = model_info.ER(*values)
+            value, weight = self._dispersion_mesh()
+            fv = self._model_info.ER(*value)
             #print(values[0].shape, weights.shape, fv.shape)
-            return np.sum(weights * fv) / np.sum(weights)
+            return np.sum(weight * fv) / np.sum(weight)
 
     def calculate_VR(self):
         """
@@ -378,12 +378,12 @@ class SasviewModel(object):
 
         :return: the value of the volf ratio
         """
-        if model_info.VR is None:
+        if self._model_info.VR is None:
             return 1.0
         else:
-            values, weights = self._dispersion_mesh()
-            whole, part = model_info.VR(*values)
-            return np.sum(weights * part) / np.sum(weights * whole)
+            value, weight = self._dispersion_mesh()
+            whole, part = self._model_info.VR(*value)
+            return np.sum(weight * part) / np.sum(weight * whole)
 
     def set_dispersion(self, parameter, dispersion):
         """
@@ -421,8 +421,10 @@ class SasviewModel(object):
         and w is a vector containing the products for weights for each
         parameter set in the vector.
         """
-        pars = self._model_info.partype['volume']
-        return details.dispersion_mesh([self._get_weights(p) for p in pars])
+        pars = [self._get_weights(p)
+                for p in self._model_info.parameters.call_parameters
+                if p.type == 'volume']
+        return details.dispersion_mesh(self._model_info, pars)
 
     def _get_weights(self, par):
         """

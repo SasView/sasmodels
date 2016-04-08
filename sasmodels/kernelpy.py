@@ -9,6 +9,7 @@ summing the results.  The interface to :class:`PyModel` matches those for
 import numpy as np
 from numpy import pi, cos
 
+from . import details
 from .generate import F64
 
 class PyModel(object):
@@ -144,7 +145,7 @@ class PyKernel(object):
                         else (lambda: 1.0))
 
     def __call__(self, call_details, weights, values, cutoff):
-        # type: (.generate.CallDetails, np.ndarray, np.ndarray, float) -> np.ndarray
+        assert isinstance(call_details, details.CallDetails)
         res = _loops(self._parameter_vector, self._form, self._volume,
                      self.q_input.nq, call_details, weights, values, cutoff)
         return res
@@ -159,7 +160,7 @@ def _loops(parameters,  # type: np.ndarray
            form,        # type: Callable[[], np.ndarray]
            form_volume, # type: Callable[[], float]
            nq,          # type: int
-           call_details,# type: .generate.CallDetails
+           call_details,# type: details.CallDetails
            weights,     # type: np.ndarray
            values,      # type: np.ndarray
            cutoff,      # type: float
@@ -204,7 +205,7 @@ def _loops(parameters,  # type: np.ndarray
                 coord = call_details.pd_coord[k]
                 this_offset = call_details.par_offset[par]
                 block_size = 1
-                for bit in xrange(32):
+                for bit in range(len(pd_offset)):
                     if coord&1:
                         this_offset += block_size * pd_index[bit]
                         block_size *= pd_length[bit]
@@ -244,6 +245,17 @@ def _loops(parameters,  # type: np.ndarray
         return np.ones(nq, 'd')*background
 
 
+def _create_default_functions(model_info):
+    """
+    Autogenerate missing functions, such as Iqxy from Iq.
+
+    This only works for Iqxy when Iq is written in python. :func:`make_source`
+    performs a similar role for Iq written in C.  This also vectorizes
+    any functions that are not already marked as vectorized.
+    """
+    _create_vector_Iq(model_info)
+    _create_vector_Iqxy(model_info)  # call create_vector_Iq() first
+
 
 def _create_vector_Iq(model_info):
     """
@@ -251,6 +263,7 @@ def _create_vector_Iq(model_info):
     """
     Iq = model_info.Iq
     if callable(Iq) and not getattr(Iq, 'vectorized', False):
+        #print("vectorizing Iq")
         def vector_Iq(q, *args):
             """
             Vectorized 1D kernel.
@@ -264,15 +277,18 @@ def _create_vector_Iqxy(model_info):
     Define Iqxy as a vector function if it exists, or default it from Iq().
     """
     Iq, Iqxy = model_info.Iq, model_info.Iqxy
-    if callable(Iqxy) and not getattr(Iqxy, 'vectorized', False):
-        def vector_Iqxy(qx, qy, *args):
-            """
-            Vectorized 2D kernel.
-            """
-            return np.array([Iqxy(qxi, qyi, *args) for qxi, qyi in zip(qx, qy)])
-        vector_Iqxy.vectorized = True
-        model_info.Iqxy = vector_Iqxy
+    if callable(Iqxy):
+        if not getattr(Iqxy, 'vectorized', False):
+            #print("vectorizing Iqxy")
+            def vector_Iqxy(qx, qy, *args):
+                """
+                Vectorized 2D kernel.
+                """
+                return np.array([Iqxy(qxi, qyi, *args) for qxi, qyi in zip(qx, qy)])
+            vector_Iqxy.vectorized = True
+            model_info.Iqxy = vector_Iqxy
     elif callable(Iq):
+        #print("defaulting Iqxy")
         # Iq is vectorized because create_vector_Iq was already called.
         def default_Iqxy(qx, qy, *args):
             """
@@ -281,15 +297,4 @@ def _create_vector_Iqxy(model_info):
             return Iq(np.sqrt(qx**2 + qy**2), *args)
         default_Iqxy.vectorized = True
         model_info.Iqxy = default_Iqxy
-
-def _create_default_functions(model_info):
-    """
-    Autogenerate missing functions, such as Iqxy from Iq.
-
-    This only works for Iqxy when Iq is written in python. :func:`make_source`
-    performs a similar role for Iq written in C.  This also vectorizes
-    any functions that are not already marked as vectorized.
-    """
-    _create_vector_Iq(model_info)
-    _create_vector_Iqxy(model_info)  # call create_vector_Iq() first
 

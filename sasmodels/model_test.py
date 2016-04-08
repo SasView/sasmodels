@@ -55,9 +55,9 @@ from .core import list_models, load_model_info, build_model, HAVE_OPENCL
 from .details import dispersion_mesh
 from .direct_model import call_kernel, get_weights
 from .exception import annotate_exception
+from .modelinfo import expand_pars
 
-
-def call_ER(model_info, values):
+def call_ER(model_info, pars):
     """
     Call the model ER function using *values*. *model_info* is either
     *model.info* if you have a loaded model, or *kernel.info* if you
@@ -66,14 +66,11 @@ def call_ER(model_info, values):
     if model_info.ER is None:
         return 1.0
     else:
-        vol_pars = [get_weights(parameter, values)
-                    for parameter in model_info.parameters.call_parameters
-                    if parameter.type == 'volume']
-        value, weight = dispersion_mesh(vol_pars)
+        value, weight = _vol_pars(model_info, pars)
         individual_radii = model_info.ER(*value)
         return np.sum(weight*individual_radii) / np.sum(weight)
 
-def call_VR(model_info, values):
+def call_VR(model_info, pars):
     """
     Call the model VR function using *pars*.
     *info* is either *model.info* if you have a loaded model, or *kernel.info*
@@ -82,12 +79,16 @@ def call_VR(model_info, values):
     if model_info.VR is None:
         return 1.0
     else:
-        vol_pars = [get_weights(parameter, values)
-                    for parameter in model_info.parameters.call_parameters
-                    if parameter.type == 'volume']
-        value, weight = dispersion_mesh(vol_pars)
+        value, weight = _vol_pars(model_info, pars)
         whole, part = model_info.VR(*value)
         return np.sum(weight*part)/np.sum(weight*whole)
+
+def _vol_pars(model_info, pars):
+    vol_pars = [get_weights(p, pars)
+                for p in model_info.parameters.call_parameters
+                if p.type == 'volume']
+    value, weight = dispersion_mesh(model_info, vol_pars)
+    return value, weight
 
 
 def make_suite(loaders, models):
@@ -174,10 +175,10 @@ def _hide_model_case_from_nosetests():
             self.platform = platform
             self.dtype = dtype
 
-            setattr(self, test_method_name, self._runTest)
+            setattr(self, test_method_name, self.run_all)
             unittest.TestCase.__init__(self, test_method_name)
 
-        def _runTest(self):
+        def run_all(self):
             smoke_tests = [
                 [{}, 0.1, None],
                 [{}, (0.1, 0.1), None],
@@ -190,7 +191,7 @@ def _hide_model_case_from_nosetests():
                 model = build_model(self.info, dtype=self.dtype,
                                     platform=self.platform)
                 for test in smoke_tests + tests:
-                    self._run_one_test(model, test)
+                    self.run_one(model, test)
 
                 if not tests and self.platform == "dll":
                     ## Uncomment the following to make forgetting the test
@@ -204,8 +205,9 @@ def _hide_model_case_from_nosetests():
                 annotate_exception(self.test_name)
                 raise
 
-        def _run_one_test(self, model, test):
+        def run_one(self, model, test):
             pars, x, y = test
+            pars = expand_pars(self.info.parameters, pars)
 
             if not isinstance(y, list):
                 y = [y]
@@ -228,7 +230,7 @@ def _hide_model_case_from_nosetests():
                 kernel = model.make_kernel(q_vectors)
                 actual = call_kernel(kernel, pars)
 
-            self.assertGreater(len(actual), 0)
+            self.assertTrue(len(actual) > 0)
             self.assertEqual(len(y), len(actual))
 
             for xi, yi, actual_yi in zip(x, y, actual):
@@ -310,7 +312,7 @@ def model_tests():
     """
     tests = make_suite(['opencl', 'dll'], ['all'])
     for test_i in tests:
-        yield test_i._runTest
+        yield test_i.run_all
 
 
 if __name__ == "__main__":

@@ -143,7 +143,7 @@ except ValueError:
         else:
             return [np.asarray(v) for v in args]
 
-def dispersion_mesh(pars):
+def dispersion_mesh(model_info, pars):
     """
     Create a mesh grid of dispersion parameters and weights.
 
@@ -153,9 +153,18 @@ def dispersion_mesh(pars):
     """
     value, weight = zip(*pars)
     weight = [w if w else [1.] for w in weight]
-    value = [v.flatten() for v in meshgrid(*value)]
     weight = np.vstack([v.flatten() for v in meshgrid(*weight)])
     weight = np.prod(weight, axis=0)
+    value = [v.flatten() for v in meshgrid(*value)]
+    lengths = [par.length for par in model_info.parameters.kernel_parameters
+               if par.type == 'volume']
+    if any(n > 1 for n in lengths):
+        pars = []
+        offset = 0
+        for n in lengths:
+            pars.append(np.vstack(value[offset:offset+n]) if n > 1 else value[offset])
+            offset += n
+        value = pars
     return value, weight
 
 

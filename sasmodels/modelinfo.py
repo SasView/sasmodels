@@ -116,44 +116,44 @@ def parse_parameter(name, units='', default=None,
     return parameter
 
 
-def make_demo_pars(partable, demo):
+def expand_pars(partable, pars):
     """
     Create demo parameter set from key-value pairs.
 
-    *demo* are the key-value pairs to use for the demo parameters.  Any
-    parameters not specified in *demo* are set from the *partable* defaults.
+    *pars* are the key-value pairs to use for the parameters.  Any
+    parameters not specified in *pars* are set from the *partable* defaults.
 
-    If *demo* references vector fields, such as thickness[n], then support
+    If *pars* references vector fields, such as thickness[n], then support
     different ways of assigning the demo values, including assigning a
     specific value (e.g., thickness3=50.0), assigning a new value to all
     (e.g., thickness=50.0) or assigning values using list notation.
     """
-    if demo is None:
+    if pars is None:
         result = partable.defaults
     else:
-        pars = dict((p.id, p) for p in partable.kernel_parameters)
+        lookup = dict((p.id, p) for p in partable.kernel_parameters)
         result = partable.defaults.copy()
-        vectors = dict((name,value) for name,value in demo.items()
-                       if name in pars and pars[name].length > 1)
+        vectors = dict((name,value) for name,value in pars.items()
+                       if name in lookup and lookup[name].length > 1)
         if vectors:
-            scalars = dict((name, value) for name, value in demo.items()
-                           if name not in pars or pars[name].length == 1)
+            scalars = dict((name, value) for name, value in pars.items()
+                           if name not in lookup or lookup[name].length == 1)
             for name, value in vectors.items():
                 if np.isscalar(value):
                     # support for the form
-                    #    demo(thickness=0, thickness2=50)
-                    for k in range(1, pars[name].length+1):
+                    #    dict(thickness=0, thickness2=50)
+                    for k in range(1, lookup[name].length+1):
                         key = name+str(k)
                         if key not in scalars:
                             scalars[key] = vectors
                 else:
                     # supoprt for the form
-                    #    demo(thickness=[20,10,3])
+                    #    dict(thickness=[20,10,3])
                     for (k,v) in enumerate(value):
                         scalars[name+str(k)] = v
             result.update(scalars)
         else:
-            result.update(demo)
+            result.update(pars)
 
     return result
 
@@ -536,7 +536,7 @@ def make_model_info(kernel_module):
     info = ModelInfo()
     #print("make parameter table", kernel_module.parameters)
     parameters = make_parameter_table(kernel_module.parameters)
-    demo = make_demo_pars(parameters, getattr(kernel_module, 'demo', None))
+    demo = expand_pars(parameters, getattr(kernel_module, 'demo', None))
     filename = abspath(kernel_module.__file__)
     kernel_id = splitext(basename(filename))[0]
     name = getattr(kernel_module, 'name', None)
