@@ -63,7 +63,8 @@ def _make_standard_model(name):
     Returns a class that can be used directly as a sasview model.
     """
     kernel_module = generate.load_kernel_module(name)
-    model_info = modelinfo.make_model_info(kernel_module)
+    #model_info = modelinfo.make_model_info(kernel_module)
+    model_info = modelinfo.make_model_info("hello")
     return _make_model_from_info(model_info)
 
 

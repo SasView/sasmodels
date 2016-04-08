@@ -1,3 +1,11 @@
+"""
+Model Info and Parameter Tables
+===============================
+
+Defines :class:`ModelInfo` and :class:`ParameterTable` and the routines for
+manipulating them.  In particular, :func:`make_model_info` converts a kernel
+module into the model info block as seen by the rest of the sasmodels library.
+"""
 from copy import copy
 from os.path import abspath, basename, splitext
 
@@ -505,7 +513,7 @@ class ParameterTable(object):
         return full_list
 
     def user_parameters(self, pars={}, is2d=True):
-        # type: (Dict[str, float], bool) -> List[str]
+        # type: (Dict[str, float], bool) -> List[Parameter]
         """
         Return the list of parameters for the given data type.
 
