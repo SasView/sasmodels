@@ -21,8 +21,8 @@ except ImportError:
 else:
     from .details import CallDetails
     Limits = Tuple[float, float]
-    LimitsOrChoice = Union[Limits, Tuple[str]]
-    ParameterDef = Tuple[str, str, float, LimitsOrChoice, str, str]
+    #LimitsOrChoice = Union[Limits, Tuple[str]]
+    ParameterDef = Tuple[str, str, float, Limits, str, str]
     ParameterSetUser = Dict[str, Union[float, List[float]]]
     ParameterSet = Dict[str, float]
     TestInput = Union[str, float, List[float], Tuple[float, float], List[Tuple[float, float]]]
@@ -41,8 +41,8 @@ MAX_PD = 4 #: Maximum number of simultaneously polydisperse parameters
 # Note that scale and background cannot be coordinated parameters whose value
 # depends on the some polydisperse parameter with the current implementation
 COMMON_PARAMETERS = [
-    ["scale", "", 1, [0, np.inf], "", "Source intensity"],
-    ["background", "1/cm", 1e-3, [0, np.inf], "", "Source background"],
+    ("scale", "", 1, (0.0, np.inf), "", "Source intensity"),
+    ("background", "1/cm", 1e-3, (0.0, np.inf), "", "Source background"),
 ]
 assert (len(COMMON_PARAMETERS) == 2
         and COMMON_PARAMETERS[0][0]=="scale"
@@ -68,7 +68,7 @@ def make_parameter_table(pars):
 
 def parse_parameter(name, units='', default=np.NaN,
                     limits=(-np.inf, np.inf), ptype='', description=''):
-    # type: (str, str, float, LimitsOrChoice, str, str) -> Parameter
+    # type: (str, str, float, Limits, str, str) -> Parameter
     """
     Parse an individual parameter from the parameter definition block.
 
@@ -173,11 +173,11 @@ def expand_pars(partable, pars):
     else:
         lookup = dict((p.id, p) for p in partable.kernel_parameters)
         result = partable.defaults.copy()
+        scalars = dict((name, value) for name, value in pars.items()
+                       if name not in lookup or lookup[name].length == 1)
         vectors = dict((name,value) for name,value in pars.items()
                        if name in lookup and lookup[name].length > 1)
         if vectors:
-            scalars = dict((name, value) for name, value in pars.items()
-                           if name not in lookup or lookup[name].length == 1)
             for name, value in vectors.items():
                 if np.isscalar(value):
                     # support for the form
@@ -191,9 +191,7 @@ def expand_pars(partable, pars):
                     #    dict(thickness=[20,10,3])
                     for (k,v) in enumerate(value):
                         scalars[name+str(k)] = v
-            result.update(scalars)
-        else:
-            result.update(pars)
+        result.update(scalars)
 
     return result
 
@@ -641,13 +639,13 @@ def make_model_info(kernel_module):
     info.source = getattr(kernel_module, 'source', [])
     # TODO: check the structure of the tests
     info.tests = getattr(kernel_module, 'tests', [])
-    info.ER = getattr(kernel_module, 'ER', None)
-    info.VR = getattr(kernel_module, 'VR', None)
-    info.form_volume = getattr(kernel_module, 'form_volume', None)
-    info.Iq = getattr(kernel_module, 'Iq', None)
-    info.Iqxy = getattr(kernel_module, 'Iqxy', None)
-    info.profile = getattr(kernel_module, 'profile', None)
-    info.sesans = getattr(kernel_module, 'sesans', None)
+    info.ER = getattr(kernel_module, 'ER', None) # type: ignore
+    info.VR = getattr(kernel_module, 'VR', None) # type: ignore
+    info.form_volume = getattr(kernel_module, 'form_volume', None) # type: ignore
+    info.Iq = getattr(kernel_module, 'Iq', None) # type: ignore
+    info.Iqxy = getattr(kernel_module, 'Iqxy', None) # type: ignore
+    info.profile = getattr(kernel_module, 'profile', None) # type: ignore
+    info.sesans = getattr(kernel_module, 'sesans', None) # type: ignore
 
     # Precalculate the monodisperse parameter details
     info.mono_details = mono_details(info)

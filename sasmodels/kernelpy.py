@@ -163,15 +163,9 @@ class PyKernel(object):
         """
         self.q_input = None
 
-def _loops(parameters,  # type: np.ndarray
-           form,        # type: Callable[[], np.ndarray]
-           form_volume, # type: Callable[[], float]
-           nq,          # type: int
-           call_details,# type: details.CallDetails
-           weights,     # type: np.ndarray
-           values,      # type: np.ndarray
-           cutoff,      # type: float
-           ):           # type: (...) -> None
+def _loops(parameters, form, form_volume, nq, call_details,
+           weights, values, cutoff):
+    # type: (np.ndarray, Callable[[], np.ndarray], Callable[[], float], int, details.CallDetails, np.ndarray, np.ndarray, float) -> None
     ################################################################
     #                                                              #
     #   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #
