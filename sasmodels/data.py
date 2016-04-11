@@ -34,13 +34,13 @@ also use these for your own data loader.
 """
 import traceback
 
-import numpy as np
+import numpy as np  # type: ignore
 
 def load_data(filename):
     """
     Load data using a sasview loader.
     """
-    from sas.sascalc.dataloader.loader import Loader
+    from sas.sascalc.dataloader.loader import Loader  # type: ignore
     loader = Loader()
     data = loader.load(filename)
     if data is None:
@@ -52,7 +52,7 @@ def set_beam_stop(data, radius, outer=None):
     """
     Add a beam stop of the given *radius*.  If *outer*, make an annulus.
     """
-    from sas.dataloader.manipulations import Ringcut
+    from sas.dataloader.manipulations import Ringcut  # type: ignore
     if hasattr(data, 'qx_data'):
         data.mask = Ringcut(0, radius)(data)
         if outer is not None:
@@ -67,7 +67,7 @@ def set_half(data, half):
     """
     Select half of the data, either "right" or "left".
     """
-    from sas.dataloader.manipulations import Boxcut
+    from sas.dataloader.manipulations import Boxcut  # type: ignore
     if half == 'right':
         data.mask += \
             Boxcut(x_min=-np.inf, x_max=0.0, y_min=-np.inf, y_max=np.inf)(data)
@@ -80,7 +80,7 @@ def set_top(data, cutoff):
     """
     Chop the top off the data, above *cutoff*.
     """
-    from sas.dataloader.manipulations import Boxcut
+    from sas.dataloader.manipulations import Boxcut  # type: ignore
     data.mask += \
         Boxcut(x_min=-np.inf, x_max=np.inf, y_min=-np.inf, y_max=cutoff)(data)
 
@@ -369,8 +369,8 @@ def _plot_result1D(data, theory, resid, view, use_data,
     """
     Plot the data and residuals for 1D data.
     """
-    import matplotlib.pyplot as plt
-    from numpy.ma import masked_array, masked
+    import matplotlib.pyplot as plt  # type: ignore
+    from numpy.ma import masked_array, masked  # type: ignore
 
     use_data = use_data and data.y is not None
     use_theory = theory is not None
@@ -446,7 +446,7 @@ def _plot_result_sesans(data, theory, resid, use_data, limits=None):
     """
     Plot SESANS results.
     """
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # type: ignore
     use_data = use_data and data.y is not None
     use_theory = theory is not None
     use_resid = resid is not None
@@ -489,7 +489,7 @@ def _plot_result2D(data, theory, resid, view, use_data, limits=None):
     """
     Plot the data and residuals for 2D data.
     """
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # type: ignore
     use_data = use_data and data.data is not None
     use_theory = theory is not None
     use_resid = resid is not None
@@ -551,8 +551,8 @@ def _plot_2d_signal(data, signal, vmin=None, vmax=None, view='log'):
 
     *scale* can be 'log' for log scale data, or 'linear'.
     """
-    import matplotlib.pyplot as plt
-    from numpy.ma import masked_array
+    import matplotlib.pyplot as plt  # type: ignore
+    from numpy.ma import masked_array  # type: ignore
 
     image = np.zeros_like(data.qx_data)
     image[~data.mask] = signal
@@ -592,7 +592,8 @@ def demo():
     data = load_data('DEC07086.DAT')
     set_beam_stop(data, 0.004)
     plot_data(data)
-    import matplotlib.pyplot as plt; plt.show()
+    import matplotlib.pyplot as plt  # type: ignore
+    plt.show()
 
 
 if __name__ == "__main__":

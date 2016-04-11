@@ -6,8 +6,8 @@ Polydispersity is supported by looping over different parameter sets and
 summing the results.  The interface to :class:`PyModel` matches those for
 :class:`kernelcl.GpuModel` and :class:`kerneldll.DllModel`.
 """
-import numpy as np
-from numpy import pi, cos
+import numpy as np  # type: ignore
+from numpy import pi, cos  #type: ignore
 
 from . import details
 from .generate import F64

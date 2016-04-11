@@ -16,7 +16,7 @@ from __future__ import print_function
 import sys
 import traceback
 
-import numpy as np
+import numpy as np  # type: ignore
 
 from . import core
 from .compare import (MODELS, randomize_pars, suppress_pd, make_data,

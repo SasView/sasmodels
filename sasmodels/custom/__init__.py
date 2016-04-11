@@ -13,7 +13,7 @@ from os.path import basename, splitext
 
 try:
     # Python 3.5 and up
-    from importlib.util import spec_from_file_location, module_from_spec
+    from importlib.util import spec_from_file_location, module_from_spec  # type: ignore
     def load_module_from_path(fullname, path):
         spec = spec_from_file_location(fullname, path)
         module = module_from_spec(spec)

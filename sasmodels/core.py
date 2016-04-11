@@ -11,7 +11,7 @@ __all__ = [
 from os.path import basename, dirname, join as joinpath
 from glob import glob
 
-import numpy as np
+import numpy as np # type: ignore
 
 from . import generate
 from . import modelinfo

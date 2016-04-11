@@ -159,7 +159,7 @@ import re
 import string
 import warnings
 
-import numpy as np
+import numpy as np  # type: ignore
 
 from .modelinfo import Parameter
 from .custom import load_custom_kernel_module

@@ -48,10 +48,10 @@ from __future__ import print_function
 import sys
 import os
 import tempfile
-import ctypes as ct
-from ctypes import c_void_p, c_int32, c_longdouble, c_double, c_float
+import ctypes as ct  # type: ignore
+from ctypes import c_void_p, c_int32, c_longdouble, c_double, c_float  # type: ignore
 
-import numpy as np
+import numpy as np  # type: ignore
 
 from . import generate
 from . import details

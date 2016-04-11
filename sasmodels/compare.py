@@ -33,7 +33,7 @@ import math
 import datetime
 import traceback
 
-import numpy as np
+import numpy as np  # type: ignore
 
 from . import core
 from . import kerneldll
@@ -709,7 +709,7 @@ def parse_opts():
     name = args[0]
     try:
         model_info = core.load_model_info(name)
-    except ImportError, exc:
+    except ImportError as exc:
         print(str(exc))
         print("Could not find model; use one of:\n    " + models)
         sys.exit(1)
@@ -859,9 +859,9 @@ def explore(opts):
     """
     Explore the model using the Bumps GUI.
     """
-    import wx
-    from bumps.names import FitProblem
-    from bumps.gui.app_frame import AppFrame
+    import wx  # type: ignore
+    from bumps.names import FitProblem  # type: ignore
+    from bumps.gui.app_frame import AppFrame  # type: ignore
 
     problem = FitProblem(Explore(opts))
     is_mac = "cocoa" in wx.version()
@@ -882,7 +882,7 @@ class Explore(object):
     parameters can be adjusted in the GUI, with plots updated on the fly.
     """
     def __init__(self, opts):
-        from bumps.cli import config_matplotlib
+        from bumps.cli import config_matplotlib  # type: ignore
         from . import bumps_model
         config_matplotlib()
         self.opts = opts

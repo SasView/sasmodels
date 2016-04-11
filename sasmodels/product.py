@@ -10,7 +10,7 @@ and the module evaluator (with call, release, etc.).
 To use it, first load form factor P and structure factor S, then create
 *ProductModel(P, S)*.
 """
-import numpy as np
+import numpy as np  # type: ignore
 
 from .details import dispersion_mesh
 from .modelinfo import suffix_parameter, ParameterTable, ModelInfo
@@ -108,18 +108,12 @@ class ProductKernel(Kernel):
         # type: (CallDetails, np.ndarray, np.ndarray, float) -> np.ndarray
         effect_radius, vol_ratio = call_ER_VR(self.p_kernel.info, vol_pars)
 
-        p_fixed[SCALE] = s_volfraction
-        p_fixed[BACKGROUND] = 0.0
-        s_fixed[SCALE] = scale
-        s_fixed[BACKGROUND] = 0.0
-        s_fixed[2] = s_volfraction/vol_ratio
-        s_pd[0] = [effect_radius], [1.0]
-
-        p_res = self.p_kernel(p_details, p_weights, p_values, cutoff)
-        s_res = self.s_kernel(s_details, s_weights, s_values, cutoff)
+        p_details, s_details = details.parts
+        p_res = self.p_kernel(p_details, weights, values, cutoff)
+        s_res = self.s_kernel(s_details, weights, values, cutoff)
         #print s_fixed, s_pd, p_fixed, p_pd
 
-        return p_res*s_res + background
+        return values[0]*(p_res*s_res) + values[1]
 
     def release(self):
         # type: () -> None

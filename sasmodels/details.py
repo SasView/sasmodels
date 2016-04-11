@@ -1,6 +1,13 @@
-import numpy as np
+import numpy as np  # type: ignore
+
+try:
+    from typing import List
+except ImportError:
+    pass
+
 
 class CallDetails(object):
+    parts = None  # type: List["CallDetails"]
     def __init__(self, model_info):
         parameters = model_info.parameters
         max_pd = parameters.max_pd

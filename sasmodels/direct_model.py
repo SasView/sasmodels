@@ -22,9 +22,10 @@ on the individual parameters and send the model to the Bumps optimizers.
 """
 from __future__ import print_function
 
-import numpy as np
+import numpy as np  # type: ignore
 
-from . import sesans
+# TODO: fix sesans module
+from . import sesans  # type: ignore
 from . import weights
 from . import resolution
 from . import resolution2d

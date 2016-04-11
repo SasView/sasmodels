@@ -49,7 +49,7 @@ from __future__ import print_function
 import sys
 import unittest
 
-import numpy as np
+import numpy as np  # type: ignore
 
 from .core import list_models, load_model_info, build_model, HAVE_OPENCL
 from .details import dispersion_mesh

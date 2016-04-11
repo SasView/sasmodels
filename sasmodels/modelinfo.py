@@ -9,7 +9,7 @@ module into the model info block as seen by the rest of the sasmodels library.
 from copy import copy
 from os.path import abspath, basename, splitext
 
-import numpy as np
+import numpy as np  # type: ignore
 
 from .details import mono_details
 

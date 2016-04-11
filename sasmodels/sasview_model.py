@@ -20,7 +20,7 @@ import collections
 import traceback
 import logging
 
-import numpy as np
+import numpy as np  # type: ignore
 
 from . import core
 from . import custom

@@ -6,8 +6,8 @@
 """
 from __future__ import division
 
-import numpy as np
-from numpy import pi, cos, sin, sqrt
+import numpy as np  # type: ignore
+from numpy import pi, cos, sin, sqrt  # type: ignore
 
 from . import resolution
 from .resolution import Resolution

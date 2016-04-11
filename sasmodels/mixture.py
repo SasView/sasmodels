@@ -11,7 +11,7 @@ To use it, first load form factor P and structure factor S, then create
 *ProductModel(P, S)*.
 """
 from copy import copy
-import numpy as np
+import numpy as np  # type: ignore
 
 from .modelinfo import Parameter, ParameterTable, ModelInfo
 from .kernel import KernelModel, Kernel

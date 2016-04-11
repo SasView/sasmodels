@@ -51,19 +51,19 @@ from __future__ import print_function
 import os
 import warnings
 
-import numpy as np
+import numpy as np  # type: ignore
 
 try:
     raise NotImplementedError("OpenCL not yet implemented for new kernel template")
-    import pyopencl as cl
+    import pyopencl as cl  # type: ignore
     # Ask OpenCL for the default context so that we know that one exists
     cl.create_some_context(interactive=False)
 except Exception as exc:
     warnings.warn(str(exc))
     raise RuntimeError("OpenCL not available")
 
-from pyopencl import mem_flags as mf
-from pyopencl.characterize import get_fast_inaccurate_build_options
+from pyopencl import mem_flags as mf  # type: ignore
+from pyopencl.characterize import get_fast_inaccurate_build_options  # type: ignore
 
 from . import generate
 from .kernel import KernelModel, Kernel

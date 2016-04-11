@@ -2,9 +2,9 @@
 SAS distributions for polydispersity.
 """
 # TODO: include dispersion docs with the disperser models
-from math import sqrt
-import numpy as np
-from scipy.special import gammaln
+from math import sqrt  # type: ignore
+import numpy as np  # type: ignore
+from scipy.special import gammaln  # type: ignore
 
 class Dispersion(object):
     """

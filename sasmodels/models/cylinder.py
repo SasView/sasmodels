@@ -81,8 +81,8 @@ None
 
 """
 
-import numpy as np
-from numpy import pi, inf
+import numpy as np  # type: ignore
+from numpy import pi, inf  # type: ignore
 
 name = "cylinder"
 title = "Right circular cylinder with uniform scattering length density."

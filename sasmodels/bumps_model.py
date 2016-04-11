@@ -13,7 +13,7 @@ how far the polydispersity integral extends.
 
 import warnings
 
-import numpy as np
+import numpy as np  # type: ignore
 
 from .data import plot_theory
 from .direct_model import DataMixin
@@ -78,7 +78,7 @@ def create_parameters(model_info, **kwargs):
     """
     # lazy import; this allows the doc builder and nosetests to run even
     # when bumps is not on the path.
-    from bumps.names import Parameter
+    from bumps.names import Parameter  # type: ignore
 
     pars = {}     # floating point parameters
     pd_types = {} # distribution names

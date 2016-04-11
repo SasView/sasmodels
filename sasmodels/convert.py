@@ -61,10 +61,9 @@ def _byteify(data, ignore_dicts = False):
     # if this is a dictionary, return dictionary of byteified keys and values
     # but only if we haven't already byteified it
     if isinstance(data, dict) and not ignore_dicts:
-        return {
-            _byteify(key, ignore_dicts=True): _byteify(value, ignore_dicts=True)
-            for key, value in data.iteritems()
-        }
+        return dict((_byteify(key, ignore_dicts=True),
+                     _byteify(value, ignore_dicts=True))
+                    for key, value in data.items())
     # if it's anything else, return it in its original form
     return data
 

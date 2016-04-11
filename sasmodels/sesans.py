@@ -11,8 +11,8 @@ Wim Bouwman (w.g.bouwman@tudelft.nl), June 2013
 
 from __future__ import division
 
-import numpy as np
-from numpy import pi, exp
+import numpy as np  # type: ignore
+from numpy import pi, exp  # type: ignore
 from scipy.special import jv as besselj
 #import direct_model.DataMixin as model
         
