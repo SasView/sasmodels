@@ -11,6 +11,7 @@ from numpy import pi, cos
 
 from . import details
 from .generate import F64
+from .kernel import KernelModel, Kernel
 
 try:
     from typing import Union, Callable
@@ -19,7 +20,7 @@ except:
 else:
     DType = Union[None, str, np.dtype]
 
-class PyModel(object):
+class PyModel(KernelModel):
     """
     Wrapper for pure python models.
     """
@@ -76,7 +77,7 @@ class PyInput(object):
         """
         self.q = None
 
-class PyKernel(object):
+class PyKernel(Kernel):
     """
     Callable SAS kernel.
 
@@ -161,6 +162,7 @@ class PyKernel(object):
         """
         Free resources associated with the kernel.
         """
+        self.q_input.release()
         self.q_input = None
 
 def _loops(parameters, form, form_volume, nq, call_details,

@@ -712,9 +712,9 @@ class ModelInfo(object):
     tests = None            # type: List[TestCondition]
     ER = None               # type: Optional[Callable[[np.ndarray], np.ndarray]]
     VR = None               # type: Optional[Callable[[np.ndarray], Tuple[np.ndarray, np.ndarray]]]
-    form_volume = None      # type: Optional[Callable[[np.ndarray], float]]
-    Iq = None               # type: Optional[Callable[[np.ndarray], np.ndarray]]
-    Iqxy = None             # type: Optional[Callable[[np.ndarray], np.ndarray]]
+    form_volume = None      # type: Union[None, str, Callable[[np.ndarray], float]]
+    Iq = None               # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
+    Iqxy = None             # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
     profile = None          # type: Optional[Callable[[np.ndarray], None]]
     sesans = None           # type: Optional[Callable[[np.ndarray], np.ndarray]]
     mono_details = None     # type: CallDetails

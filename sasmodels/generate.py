@@ -164,6 +164,12 @@ import numpy as np
 from .modelinfo import Parameter
 from .custom import load_custom_kernel_module
 
+try:
+    from typing import Tuple, Sequence, Iterator
+    from .modelinfo import ModelInfo
+except ImportError:
+    pass
+
 TEMPLATE_ROOT = dirname(__file__)
 
 F16 = np.dtype('float16')
@@ -219,12 +225,14 @@ DOC_HEADER = """.. _%(id)s:
 """
 
 def format_units(units):
+    # type: (str) -> str
     """
     Convert units into ReStructured Text format.
     """
     return "string" if isinstance(units, list) else RST_UNITS.get(units, units)
 
 def make_partable(pars):
+    # type: (List[Parameter]) -> str
     """
     Generate the parameter table to include in the sphinx documentation.
     """
@@ -255,6 +263,7 @@ def make_partable(pars):
     return "\n".join(lines)
 
 def _search(search_path, filename):
+    # type: (List[str], str) -> str
     """
     Find *filename* in *search_path*.
 
@@ -268,6 +277,7 @@ def _search(search_path, filename):
 
 
 def model_sources(model_info):
+    # type: (ModelInfo) -> List[str]
     """
     Return a list of the sources file paths for the module.
     """
@@ -276,6 +286,7 @@ def model_sources(model_info):
     return [_search(search_path, f) for f in model_info.source]
 
 def timestamp(model_info):
+    # type: (ModelInfo) -> int
     """
     Return a timestamp for the model corresponding to the most recently
     changed file or dependency.
@@ -287,6 +298,7 @@ def timestamp(model_info):
     return newest
 
 def convert_type(source, dtype):
+    # type: (str, np.dtype) -> str
     """
     Convert code from double precision to the desired type.
 
@@ -311,6 +323,7 @@ def convert_type(source, dtype):
 
 
 def _convert_type(source, type_name, constant_flag):
+    # type: (str, str, str) -> str
     """
     Replace 'double' with *type_name* in *source*, tagging floating point
     constants with *constant_flag*.
@@ -329,6 +342,7 @@ def _convert_type(source, type_name, constant_flag):
 
 
 def kernel_name(model_info, is_2d):
+    # type: (ModelInfo, bool) -> str
     """
     Name of the exported kernel symbol.
     """
@@ -336,6 +350,7 @@ def kernel_name(model_info, is_2d):
 
 
 def indent(s, depth):
+    # type: (str, int) -> str
     """
     Indent a string of text with *depth* additional spaces on each line.
     """
@@ -344,8 +359,9 @@ def indent(s, depth):
     return spaces + sep.join(s.split("\n"))
 
 
-_template_cache = {}
+_template_cache = {}  # type: Dict[str, Tuple[int, str, str]]
 def load_template(filename):
+    # type: (str) -> str
     path = joinpath(TEMPLATE_ROOT, filename)
     mtime = getmtime(path)
     if filename not in _template_cache or mtime > _template_cache[filename][0]:
@@ -354,6 +370,7 @@ def load_template(filename):
     return _template_cache[filename][1]
 
 def model_templates():
+    # type: () -> List[str]
     # TODO: fails DRY; templates are listed in two places.
     # should instead have model_info contain a list of paths
     return [joinpath(TEMPLATE_ROOT, filename)
@@ -370,6 +387,7 @@ double %(name)s(%(pars)s) {
 """
 
 def _gen_fn(name, pars, body):
+    # type: (str, List[Parameter], str) -> str
     """
     Generate a function given pars and body.
 
@@ -384,6 +402,7 @@ def _gen_fn(name, pars, body):
     return _FN_TEMPLATE % {'name': name, 'body': body, 'pars': par_decl}
 
 def _call_pars(prefix, pars):
+    # type: (str, List[Parameter]) -> List[str]
     """
     Return a list of *prefix.parameter* from parameter items.
     """
@@ -392,6 +411,7 @@ def _call_pars(prefix, pars):
 _IQXY_PATTERN = re.compile("^((inline|static) )? *(double )? *Iqxy *([(]|$)",
                            flags=re.MULTILINE)
 def _have_Iqxy(sources):
+    # type: (List[str]) -> bool
     """
     Return true if any file defines Iqxy.
 
@@ -413,13 +433,15 @@ def _have_Iqxy(sources):
         return False
 
 def make_source(model_info):
+    # type: (ModelInfo) -> str
     """
     Generate the OpenCL/ctypes kernel from the module info.
 
-    Uses source files found in the given search path.
+    Uses source files found in the given search path.  Returns None if this
+    is a pure python model, with no C source components.
     """
     if callable(model_info.Iq):
-        return None
+        raise ValueError("can't compile python model")
 
     # TODO: need something other than volume to indicate dispersion parameters
     # No volume normalization despite having a volume parameter.
@@ -446,13 +468,13 @@ def make_source(model_info):
     # Make parameters for q, qx, qy so that we can use them in declarations
     q, qx, qy = [Parameter(name=v) for v in ('q', 'qx', 'qy')]
     # Generate form_volume function, etc. from body only
-    if model_info.form_volume is not None:
+    if isinstance(model_info.form_volume, str):
         pars = partable.form_volume_parameters
         source.append(_gen_fn('form_volume', pars, model_info.form_volume))
-    if model_info.Iq is not None:
+    if isinstance(model_info.Iq, str):
         pars = [q] + partable.iq_parameters
         source.append(_gen_fn('Iq', pars, model_info.Iq))
-    if model_info.Iqxy is not None:
+    if isinstance(model_info.Iqxy, str):
         pars = [qx, qy] + partable.iqxy_parameters
         source.append(_gen_fn('Iqxy', pars, model_info.Iqxy))
 
@@ -508,6 +530,7 @@ def make_source(model_info):
     return '\n'.join(source)
 
 def load_kernel_module(model_name):
+    # type: (str) -> module
     if model_name.endswith('.py'):
         kernel_module = load_custom_kernel_module(model_name)
     else:
@@ -521,6 +544,7 @@ def load_kernel_module(model_name):
 section_marker = re.compile(r'\A(?P<first>[%s])(?P=first)*\Z'
                             %re.escape(string.punctuation))
 def _convert_section_titles_to_boldface(lines):
+    # type: (Sequence[str]) -> Iterator[str]
     """
     Do the actual work of identifying and converting section headings.
     """
@@ -542,6 +566,7 @@ def _convert_section_titles_to_boldface(lines):
         yield prior
 
 def convert_section_titles_to_boldface(s):
+    # type: (str) -> str
     """
     Use explicit bold-face rather than section headings so that the table of
     contents is not polluted with section names from the model documentation.
@@ -552,6 +577,7 @@ def convert_section_titles_to_boldface(s):
     return "\n".join(_convert_section_titles_to_boldface(s.split('\n')))
 
 def make_doc(model_info):
+    # type: (ModelInfo) -> str
     """
     Return the documentation for the model.
     """
@@ -561,13 +587,14 @@ def make_doc(model_info):
     subst = dict(id=model_info.id.replace('_', '-'),
                  name=model_info.name,
                  title=model_info.title,
-                 parameters=make_partable(model_info.parameters),
+                 parameters=make_partable(model_info.parameters.kernel_parameters),
                  returns=Sq_units if model_info.structure_factor else Iq_units,
                  docs=docs)
     return DOC_HEADER % subst
 
 
 def demo_time():
+    # type: () -> None
     """
     Show how long it takes to process a model.
     """
@@ -581,6 +608,7 @@ def demo_time():
     print("time: %g"%toc)
 
 def main():
+    # type: () -> None
     """
     Program which prints the source produced by the model.
     """

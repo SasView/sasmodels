@@ -55,8 +55,17 @@ import numpy as np
 
 from . import generate
 from . import details
-from .kernelpy import PyInput, PyModel
+from .kernel import KernelModel, Kernel
+from .kernelpy import PyInput
 from .exception import annotate_exception
+from .generate import F16, F32, F64
+
+try:
+    from typing import Tuple, Callable, Any
+    from .modelinfo import ModelInfo
+    from .details import CallDetails
+except ImportError:
+    pass
 
 # Compiler platform details
 if sys.platform == 'darwin':
@@ -90,6 +99,7 @@ ALLOW_SINGLE_PRECISION_DLLS = True
 
 
 def dll_name(model_info, dtype):
+    # type: (ModelInfo, np.dtype) ->  str
     """
     Name of the dll containing the model.  This is the base file name without
     any path or extension, with a form such as 'sas_sphere32'.
@@ -97,47 +107,47 @@ def dll_name(model_info, dtype):
     bits = 8*dtype.itemsize
     return "sas_%s%d"%(model_info.id, bits)
 
+
 def dll_path(model_info, dtype):
+    # type: (ModelInfo, np.dtype) -> str
     """
     Complete path to the dll for the model.  Note that the dll may not
     exist yet if it hasn't been compiled.
     """
     return os.path.join(DLL_PATH, dll_name(model_info, dtype)+".so")
 
-def make_dll(source, model_info, dtype="double"):
-    """
-    Load the compiled model defined by *kernel_module*.
 
-    Recompile if any files are newer than the model file.
+def make_dll(source, model_info, dtype=F64):
+    # type: (str, ModelInfo, np.dtype) -> str
+    """
+    Returns the path to the compiled model defined by *kernel_module*.
+
+    If the model has not been compiled, or if the source file(s) are newer
+    than the dll, then *make_dll* will compile the model before returning.
+    This routine does not load the resulting dll.
 
     *dtype* is a numpy floating point precision specifier indicating whether
-    the model should be single or double precision.  The default is double
-    precision.
+    the model should be single, double or long double precision.  The default
+    is double precision, *np.dtype('d')*.
 
-    The DLL is not loaded until the kernel is called so models can
-    be defined without using too many resources.
+    Set *sasmodels.ALLOW_SINGLE_PRECISION_DLLS* to False if single precision
+    models are not allowed as DLLs.
 
     Set *sasmodels.kerneldll.DLL_PATH* to the compiled dll output path.
     The default is the system temporary directory.
-
-    Set *sasmodels.ALLOW_SINGLE_PRECISION_DLLS* to True if single precision
-    models are allowed as DLLs.
     """
-    if callable(model_info.Iq):
-        return PyModel(model_info)
-    
-    dtype = np.dtype(dtype)
-    if dtype == generate.F16:
+    if dtype == F16:
         raise ValueError("16 bit floats not supported")
-    if dtype == generate.F32 and not ALLOW_SINGLE_PRECISION_DLLS:
-        dtype = generate.F64  # Force 64-bit dll
+    if dtype == F32 and not ALLOW_SINGLE_PRECISION_DLLS:
+        dtype = F64  # Force 64-bit dll
+    # Note: dtype may be F128 for long double precision
 
-    source = generate.convert_type(source, dtype)
     newest = generate.timestamp(model_info)
     dll = dll_path(model_info, dtype)
     if not os.path.exists(dll) or os.path.getmtime(dll) < newest:
         basename = dll_name(model_info, dtype) + "_"
         fid, filename = tempfile.mkstemp(suffix=".c", prefix=basename)
+        source = generate.convert_type(source, dtype)
         os.fdopen(fid, "w").write(source)
         command = COMPILE%{"source":filename, "output":dll}
         print("Compile command: "+command)
@@ -151,7 +161,8 @@ def make_dll(source, model_info, dtype="double"):
     return dll
 
 
-def load_dll(source, model_info, dtype="double"):
+def load_dll(source, model_info, dtype=F64):
+    # type: (str, ModelInfo, np.dtype) -> "DllModel"
     """
     Create and load a dll corresponding to the source, info pair returned
     from :func:`sasmodels.generate.make` compiled for the target precision.
@@ -162,7 +173,8 @@ def load_dll(source, model_info, dtype="double"):
     filename = make_dll(source, model_info, dtype=dtype)
     return DllModel(filename, model_info, dtype=dtype)
 
-class DllModel(object):
+
+class DllModel(KernelModel):
     """
     ctypes wrapper for a single model.
 
@@ -178,15 +190,17 @@ class DllModel(object):
     """
     
     def __init__(self, dllpath, model_info, dtype=generate.F32):
+        # type: (str, ModelInfo, np.dtype) -> None
         self.info = model_info
         self.dllpath = dllpath
-        self.dll = None
+        self._dll = None  # type: ct.CDLL
         self.dtype = np.dtype(dtype)
 
     def _load_dll(self):
+        # type: () -> None
         #print("dll", self.dllpath)
         try:
-            self.dll = ct.CDLL(self.dllpath)
+            self._dll = ct.CDLL(self.dllpath)
         except:
             annotate_exception("while loading "+self.dllpath)
             raise
@@ -197,25 +211,31 @@ class DllModel(object):
 
         # int, int, int, int*, double*, double*, double*, double*, double*, double
         argtypes = [c_int32]*3 + [c_void_p]*5 + [fp]
-        self.Iq = self.dll[generate.kernel_name(self.info, False)]
-        self.Iqxy = self.dll[generate.kernel_name(self.info, True)]
-        self.Iq.argtypes = argtypes
-        self.Iqxy.argtypes = argtypes
+        self._Iq = self._dll[generate.kernel_name(self.info, is_2d=False)]
+        self._Iqxy = self._dll[generate.kernel_name(self.info, is_2d=True)]
+        self._Iq.argtypes = argtypes
+        self._Iqxy.argtypes = argtypes
 
     def __getstate__(self):
+        # type: () -> Tuple[ModelInfo, str]
         return self.info, self.dllpath
 
     def __setstate__(self, state):
+        # type: (Tuple[ModelInfo, str]) -> None
         self.info, self.dllpath = state
-        self.dll = None
+        self._dll = None
 
     def make_kernel(self, q_vectors):
+        # type: (List[np.ndarray]) -> DllKernel
         q_input = PyInput(q_vectors, self.dtype)
-        if self.dll is None: self._load_dll()
-        kernel = self.Iqxy if q_input.is_2d else self.Iq
+        # Note: pickle not supported for DllKernel
+        if self._dll is None:
+            self._load_dll()
+        kernel = self._Iqxy if q_input.is_2d else self._Iq
         return DllKernel(kernel, self.info, q_input)
 
     def release(self):
+        # type: () -> None
         """
         Release any resources associated with the model.
         """
@@ -224,15 +244,15 @@ class DllModel(object):
             dll = ct.CDLL(self.dllpath)
             libHandle = dll._handle
             #libHandle = ct.c_void_p(dll._handle)
-            del dll, self.dll
-            self.dll = None
+            del dll, self._dll
+            self._dll = None
             #_ctypes.FreeLibrary(libHandle)
             ct.windll.kernel32.FreeLibrary(libHandle)
         else:    
             pass 
 
 
-class DllKernel(object):
+class DllKernel(Kernel):
     """
     Callable SAS kernel.
 
@@ -252,6 +272,7 @@ class DllKernel(object):
     Call :meth:`release` when done with the kernel instance.
     """
     def __init__(self, kernel, model_info, q_input):
+        # type: (Callable[[], np.ndarray], ModelInfo, PyInput) -> None
         self.kernel = kernel
         self.info = model_info
         self.q_input = q_input
@@ -260,6 +281,7 @@ class DllKernel(object):
         self.result = np.empty(q_input.nq+3, q_input.dtype)
 
     def __call__(self, call_details, weights, values, cutoff):
+        # type: (CallDetails, np.ndarray, np.ndarray, float) -> np.ndarray
         real = (np.float32 if self.q_input.dtype == generate.F32
                 else np.float64 if self.q_input.dtype == generate.F64
                 else np.float128)
@@ -281,11 +303,12 @@ class DllKernel(object):
             self.result.ctypes.data,   # results
             real(cutoff), # cutoff
             ]
-        self.kernel(*args)
+        self.kernel(*args) # type: ignore
         return self.result[:-3]
 
     def release(self):
+        # type: () -> None
         """
         Release any resources associated with the kernel.
         """
-        pass
+        self.q_input.release()

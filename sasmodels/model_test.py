@@ -68,9 +68,10 @@ else:
 def call_ER(model_info, pars):
     # type: (ModelInfo, ParameterSet) -> float
     """
-    Call the model ER function using *values*. *model_info* is either
-    *model.info* if you have a loaded model, or *kernel.info* if you
-    have a model kernel prepared for evaluation.
+    Call the model ER function using *values*.
+
+    *model_info* is either *model.info* if you have a loaded model,
+    or *kernel.info* if you have a model kernel prepared for evaluation.
     """
     if model_info.ER is None:
         return 1.0
@@ -83,8 +84,9 @@ def call_VR(model_info, pars):
     # type: (ModelInfo, ParameterSet) -> float
     """
     Call the model VR function using *pars*.
-    *info* is either *model.info* if you have a loaded model, or *kernel.info*
-    if you have a model kernel prepared for evaluation.
+
+    *model_info* is either *model.info* if you have a loaded model,
+    or *kernel.info* if you have a model kernel prepared for evaluation.
     """
     if model_info.VR is None:
         return 1.0

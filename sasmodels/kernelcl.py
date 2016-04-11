@@ -66,6 +66,7 @@ from pyopencl import mem_flags as mf
 from pyopencl.characterize import get_fast_inaccurate_build_options
 
 from . import generate
+from .kernel import KernelModel, Kernel
 
 # The max loops number is limited by the amount of local memory available
 # on the device.  You don't want to make this value too big because it will
@@ -309,7 +310,7 @@ def _get_default_context():
     return [cl.Context([d]) for d in devices]
 
 
-class GpuModel(object):
+class GpuModel(KernelModel):
     """
     GPU wrapper for a single model.
 
@@ -419,7 +420,7 @@ class GpuInput(object):
     def __del__(self):
         self.release()
 
-class GpuKernel(object):
+class GpuKernel(Kernel):
     """
     Callable SAS kernel.
 
@@ -488,7 +489,7 @@ class GpuKernel(object):
         ]
         self.kernel(self.queue, self.q_input.global_size, None, *args)
         cl.enqueue_copy(self.queue, self.result, self.result_b)
-        [v.release() for v in details_b, weights_b, values_b]
+        [v.release() for v in (details_b, weights_b, values_b)]
 
         return self.result[:self.nq]
 

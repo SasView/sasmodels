@@ -25,6 +25,14 @@ try:
 except Exception:
     HAVE_OPENCL = False
 
+try:
+    from typing import List, Union, Optional, Any
+    DType = Union[None, str, np.dtype]
+    from .kernel import KernelModel
+except ImportError:
+    pass
+
+
 # TODO: refactor composite model support
 # The current load_model_info/build_model does not reuse existing model
 # definitions when loading a composite model, instead reloading and
@@ -38,6 +46,7 @@ except Exception:
 #    build_model
 
 def list_models():
+    # type: () -> List[str]
     """
     Return the list of available models on the model path.
     """
@@ -47,6 +56,7 @@ def list_models():
     return available_models
 
 def isstr(s):
+    # type: (Any) -> bool
     """
     Return True if *s* is a string-like object.
     """
@@ -54,14 +64,20 @@ def isstr(s):
     except Exception: return False
     return True
 
-def load_model(model_name, **kw):
+def load_model(model_name, dtype=None, platform='ocl'):
+    # type: (str, DType, str) -> KernelModel
     """
     Load model info and build model.
+
+    *model_name* is the name of the model as used by :func:`load_model_info`.
+    Additional keyword arguments are passed directly to :func:`build_model`.
     """
-    return build_model(load_model_info(model_name), **kw)
+    return build_model(load_model_info(model_name),
+                       dtype=dtype, platform=platform)
 
 
 def load_model_info(model_name):
+    # type: (str) -> modelinfo.ModelInfo
     """
     Load a model definition given the model name.
 
@@ -85,6 +101,7 @@ def load_model_info(model_name):
 
 
 def build_model(model_info, dtype=None, platform="ocl"):
+    # type: (modelinfo.ModelInfo, DType, str) -> KernelModel
     """
     Prepare the model for the default execution platform.
 
@@ -137,6 +154,7 @@ def build_model(model_info, dtype=None, platform="ocl"):
         return kernelcl.GpuModel(source, model_info, dtype)
 
 def precompile_dll(model_name, dtype="double"):
+    # type: (str, DType) -> Optional[str]
     """
     Precompile the dll for a model.
 
