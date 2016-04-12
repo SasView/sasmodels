@@ -173,7 +173,7 @@ class ArrayDispersion(Dispersion):
 
 
 # dispersion name -> disperser lookup table.
-models = dict((d.type, d) for d in (
+MODELS = dict((d.type, d) for d in (
     GaussianDispersion, RectangleDispersion,
     ArrayDispersion, SchulzDispersion, LogNormalDispersion
 ))
@@ -200,12 +200,12 @@ def get_weights(disperser, n, width, nsigmas, value, limits, relative):
 
     Returns *(value, weight)*, where *value* and *weight* are vectors.
     """
-    cls = models[disperser]
+    cls = MODELS[disperser]
     obj = cls(n, width, nsigmas)
     v, w = obj.get_weights(value, limits[0], limits[1], relative)
     return v, w
 
 # Hack to allow sasview dispersion objects to interoperate with sasmodels
-dispersers = dict((v.__name__, k) for k, v in models.items())
+dispersers = dict((v.__name__, k) for k, v in MODELS.items())
 dispersers['DispersionModel'] = RectangleDispersion.type
 

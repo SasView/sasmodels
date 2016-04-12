@@ -298,15 +298,15 @@ parameters = [["sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "",
                "Radius of the core"],
               ["sld_solvent", "1e-6/Ang^2", 6.4, [-inf, inf], "",
                "Solvent scattering length density"],
-              ["n", "", 1, [0, 10], "volume",
+              ["n_shells", "", 1, [0, 10], "volume",
                "number of shells"],
-              ["sld_in[n]", "1e-6/Ang^2", 1.7, [-inf, inf], "",
+              ["sld_in[n_shells]", "1e-6/Ang^2", 1.7, [-inf, inf], "",
                "scattering length density at the inner radius of shell k"],
-              ["sld_out[n]", "1e-6/Ang^2", 2.0, [-inf, inf], "",
+              ["sld_out[n_shells]", "1e-6/Ang^2", 2.0, [-inf, inf], "",
                "scattering length density at the outer radius of shell k"],
-              ["thickness[n]", "Ang", 40., [0, inf], "volume",
+              ["thickness[n_shells]", "Ang", 40., [0, inf], "volume",
                "Thickness of shell k"],
-              ["A[n]", "", 1.0, [-inf, inf], "",
+              ["A[n_shells]", "", 1.0, [-inf, inf], "",
                "Decay rate of shell k"],
               ]
 
@@ -316,12 +316,13 @@ source = ["lib/sph_j1c.c", "onion.c"]
 #    return q
 
 profile_axes = ['Radius (A)', 'SLD (1e-6/A^2)']
-def profile(core_sld, core_radius, solvent_sld, n, in_sld, out_sld, thickness, A):
+def profile(core_sld, core_radius, solvent_sld, n_shells,
+            in_sld, out_sld, thickness, A):
     """
-    SLD profile
+    Returns shape profile with x=radius, y=SLD.
     """
 
-    total_radius = 1.25*(sum(thickness[:n]) + core_radius + 1)
+    total_radius = 1.25*(sum(thickness[:n_shells]) + core_radius + 1)
     dr = total_radius/400  # 400 points for a smooth plot
 
     r = []
@@ -334,7 +335,7 @@ def profile(core_sld, core_radius, solvent_sld, n, in_sld, out_sld, thickness, A
     beta.append(core_sld)
 
     # add in the shells
-    for k in range(n):
+    for k in range(n_shells):
         # Left side of each shells
         r0 = r[-1]
         r.append(r0)
@@ -361,7 +362,7 @@ def profile(core_sld, core_radius, solvent_sld, n, in_sld, out_sld, thickness, A
     r.append(total_radius)
     beta.append(solvent_sld)
 
-    return np.asarray(r), np.asarray(beta)
+    return np.asarray(r), np.asarray(beta)*1e-6
 
 def ER(core_radius, n, thickness):
     return np.sum(thickness[:n[0]], axis=0) + core_radius

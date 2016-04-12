@@ -101,7 +101,7 @@ def load_model_info(model_name):
 
 
 def build_model(model_info, dtype=None, platform="ocl"):
-    # type: (modelinfo.ModelInfo, DType, str) -> KernelModel
+    # type: (modelinfo.ModelInfo, np.dtype, str) -> KernelModel
     """
     Prepare the model for the default execution platform.
 
@@ -133,6 +133,10 @@ def build_model(model_info, dtype=None, platform="ocl"):
         else:
             raise ValueError('unknown mixture type %s'%composition_type)
 
+    # If it is a python model, return it immediately
+    if callable(model_info.Iq):
+        return kernelpy.PyModel(model_info)
+
     ## for debugging:
     ##  1. uncomment open().write so that the source will be saved next time
     ##  2. run "python -m sasmodels.direct_model $MODELNAME" to save the source
@@ -143,9 +147,7 @@ def build_model(model_info, dtype=None, platform="ocl"):
     # source = open(model_info.name+'.cl','r').read()
     source = generate.make_source(model_info)
     if dtype is None:
-        dtype = 'single' if model_info.single else 'double'
-    if callable(model_info.Iq):
-        return kernelpy.PyModel(model_info)
+        dtype = generate.F32 if model_info.single else generate.F64
     if (platform == "dll"
             or not HAVE_OPENCL
             or not kernelcl.environment().has_type(dtype)):

@@ -29,7 +29,27 @@ from . import weights
 from . import details
 from . import modelinfo
 
+try:
+    from typing import Dict, Mapping, Any, Sequence, Tuple, NamedTuple, List, Optional
+    from .modelinfo import ModelInfo, Parameter
+    from .kernel import KernelModel
+    MultiplicityInfoType = NamedTuple(
+        'MuliplicityInfo',
+        [("number", int), ("control", str), ("choices", List[str]),
+         ("x_axis_label", str)])
+except ImportError:
+    pass
+
+# TODO: separate x_axis_label from multiplicity info
+# The x-axis label belongs with the profile generating function
+MultiplicityInfo = collections.namedtuple(
+    'MultiplicityInfo',
+    ["number", "control", "choices", "x_axis_label"],
+)
+
+# TODO: figure out how to say that the return type is a subclass
 def load_standard_models():
+    # type: () -> List[type]
     """
     Load and return the list of predefined models.
 
@@ -46,6 +66,7 @@ def load_standard_models():
 
 
 def load_custom_model(path):
+    # type: (str) -> type
     """
     Load a custom model given the model path.
     """
@@ -55,6 +76,7 @@ def load_custom_model(path):
 
 
 def _make_standard_model(name):
+    # type: (str) -> type
     """
     Load the sasview model defined by *name*.
 
@@ -63,91 +85,187 @@ def _make_standard_model(name):
     Returns a class that can be used directly as a sasview model.
     """
     kernel_module = generate.load_kernel_module(name)
-    #model_info = modelinfo.make_model_info(kernel_module)
-    model_info = modelinfo.make_model_info("hello")
+    model_info = modelinfo.make_model_info(kernel_module)
     return _make_model_from_info(model_info)
 
 
 def _make_model_from_info(model_info):
+    # type: (ModelInfo) -> type
     """
     Convert *model_info* into a SasView model wrapper.
     """
-    def __init__(self, multfactor=1):
-        SasviewModel.__init__(self)
-    attrs = dict(__init__=__init__, _model_info=model_info)
+    def __init__(self, multiplicity=None):
+        SasviewModel.__init__(self, multiplicity=multiplicity)
+    attrs = _generate_model_attributes(model_info)
+    attrs['__init__'] = __init__
     ConstructedModel = type(model_info.name, (SasviewModel,), attrs)
     return ConstructedModel
 
+def _generate_model_attributes(model_info):
+    # type: (ModelInfo) -> Dict[str, Any]
+    """
+    Generate the class attributes for the model.
+
+    This should include all the information necessary to query the model
+    details so that you do not need to instantiate a model to query it.
+
+    All the attributes should be immutable to avoid accidents.
+    """
+    attrs = {}  # type: Dict[str, Any]
+    attrs['_model_info'] = model_info
+    attrs['name'] = model_info.name
+    attrs['description'] = model_info.description
+    attrs['category'] = None
+
+    # TODO: allow model to override axis labels input/output name/unit
+
+    parameters = model_info.parameters
+
+    #self.is_multifunc = False
+    non_fittable = []  # type: List[str]
+    for p in parameters.kernel_parameters:
+        if p.is_control:
+            non_fittable.append(p.name)
+            profile_axes = model_info.profile_axes
+            multiplicity_info = MultiplicityInfo(
+                p.limits[1], p.name, p.choices, profile_axes[0]
+            )
+            break
+    else:
+        multiplicity_info = MultiplicityInfo(0, "", [], "")
+
+    attrs['is_structure_factor'] = model_info.structure_factor
+    attrs['is_form_factor'] = model_info.ER is not None
+    attrs['is_multiplicity_model'] = multiplicity_info[0] > 1
+    attrs['multiplicity_info'] = multiplicity_info
+
+
+    orientation_params = []
+    magnetic_params = []
+    fixed = []
+    for p in parameters.user_parameters():
+        if p.type == 'orientation':
+            orientation_params.append(p.name)
+            orientation_params.append(p.name+".width")
+            fixed.append(p.name+".width")
+        if p.type == 'magnetic':
+            orientation_params.append(p.name)
+            magnetic_params.append(p.name)
+            fixed.append(p.name+".width")
+    attrs['orientation_params'] = tuple(orientation_params)
+    attrs['magnetic_params'] = tuple(magnetic_params)
+    attrs['fixed'] = tuple(fixed)
+
+    attrs['non_fittable'] = tuple(non_fittable)
+
+    return attrs
 
 class SasviewModel(object):
     """
     Sasview wrapper for opencl/ctypes model.
     """
-    _model_info = None # type: modelinfo.ModelInfo
-    def __init__(self):
+    # Model parameters for the specific model are set in the class constructor
+    # via the _generate_model_attributes function, which subclasses
+    # SasviewModel.  They are included here for typing and documentation
+    # purposes.
+    _model = None       # type: KernelModel
+    _model_info = None  # type: ModelInfo
+    #: load/save name for the model
+    id = None           # type: str
+    #: display name for the model
+    name = None         # type: str
+    #: short model description
+    description = None  # type: str
+    #: default model category
+    category = None     # type: str
+
+    #: names of the orientation parameters in the order they appear
+    orientation_params = None # type: Sequence[str]
+    #: names of the magnetic parameters in the order they appear
+    magnetic_params = None    # type: Sequence[str]
+    #: names of the fittable parameters
+    fixed = None              # type: Sequence[str]
+    # TODO: the attribute fixed is ill-named
+
+    # Axis labels
+    input_name = "Q"
+    input_unit = "A^{-1}"
+    output_name = "Intensity"
+    output_unit = "cm^{-1}"
+
+    #: default cutoff for polydispersity
+    cutoff = 1e-5
+
+    # Note: Use non-mutable values for class attributes to avoid errors
+    #: parameters that are not fitted
+    non_fittable = ()        # type: Sequence[str]
+
+    #: True if model should appear as a structure factor
+    is_structure_factor = False
+    #: True if model should appear as a form factor
+    is_form_factor = False
+    #: True if model has multiplicity
+    is_multiplicity_model = False
+    #: Mulitplicity information
+    multiplicity_info = None # type: MultiplicityInfoType
+
+    # Per-instance variables
+    #: parameter {name: value} mapping
+    params = None      # type: Dict[str, float]
+    #: values for dispersion width, npts, nsigmas and type
+    dispersion = None  # type: Dict[str, Any]
+    #: units and limits for each parameter
+    details = None     # type: Mapping[str, Tuple(str, float, float)]
+    #: multiplicity used, or None if no multiplicity controls
+    multiplicity = None     # type: Optional[int]
+
+    def __init__(self, multiplicity=None):
+        # type: () -> None
+        print("initializing", self.name)
+        #raise Exception("first initialization")
         self._model = None
-        model_info = self._model_info
-        parameters = model_info.parameters
-
-        self.name = model_info.name
-        self.description = model_info.description
-        self.category = None
-        #self.is_multifunc = False
-        for p in parameters.kernel_parameters:
-            if p.is_control:
-                profile_axes = model_info.profile_axes
-                self.multiplicity_info = [
-                    p.limits[1], p.name, p.choices, profile_axes[0]
-                    ]
-                break
-        else:
-            self.multiplicity_info = []
-
-        ## interpret the parameters
-        ## TODO: reorganize parameter handling
-        self.details = dict()
-        self.params = collections.OrderedDict()
-        self.dispersion = dict()
-
-        self.orientation_params = []
-        self.magnetic_params = []
-        self.fixed = []
-        for p in parameters.user_parameters():
-            self.params[p.name] = p.default
-            self.details[p.name] = [p.units] + p.limits
-            if p.polydisperse:
-                self.dispersion[p.name] = {
-                    'width': 0,
-                    'npts': 35,
-                    'nsigmas': 3,
-                    'type': 'gaussian',
-                }
-            if p.type == 'orientation':
-                self.orientation_params.append(p.name)
-                self.orientation_params.append(p.name+".width")
-                self.fixed.append(p.name+".width")
-            if p.type == 'magnetic':
-                self.orientation_params.append(p.name)
-                self.magnetic_params.append(p.name)
-                self.fixed.append(p.name+".width")
-
-        self.non_fittable = []
-
-        ## independent parameter name and unit [string]
-        self.input_name = "Q", #model_info.get("input_name", "Q")
-        self.input_unit = "A^{-1}" #model_info.get("input_unit", "A^{-1}")
-        self.output_name = "Intensity" #model_info.get("output_name", "Intensity")
-        self.output_unit = "cm^{-1}" #model_info.get("output_unit", "cm^{-1}")
 
         ## _persistency_dict is used by sas.perspectives.fitting.basepage
         ## to store dispersity reference.
         ## TODO: _persistency_dict to persistency_dict throughout sasview
         self._persistency_dict = {}
 
-        ## New fields introduced for opencl rewrite
-        self.cutoff = 1e-5
+        # TODO: refactor multiplicity info
+        # TODO: separate profile view from multiplicity
+        # The button label, x and y axis labels and scale need to be under
+        # the control of the model, not the fit page.  Maximum flexibility,
+        # the fit page would supply the canvas and the profile could plot
+        # how it wants, but this assumes matplotlib.  Next level is that
+        # we provide some sort of data description including title, labels
+        # and lines to plot.
+
+        # TODO: refactor multiplicity to encompass variants
+        # TODO: dispersion should be a class
+        self.multiplicity = multiplicity
+        self.params = collections.OrderedDict()
+        self.dispersion = {}
+        self.details = {}
+        config = ({self.multiplicity_info.control: multiplicity}
+                  if multiplicity is not None else {})
+        for p in self._model_info.parameters.user_parameters(config):
+            # Don't include multiplicity in the list of parameters
+            if p.name == self.multiplicity_info.control:
+                continue
+            self.params[p.name] = p.default
+            self.details[p.id] = [p.units, p.limits[0], p.limits[1]]
+            if p.polydisperse:
+                self.details[p.id+".width"] = [
+                    "", 0.0, 1.0 if p.relative_pd else np.inf
+                ]
+                self.dispersion[p.name] = {
+                    'width': 0,
+                    'npts': 35,
+                    'nsigmas': 3,
+                    'type': 'gaussian',
+                }
 
     def __get_state__(self):
+        # type: () -> Dict[str, Any]
         state = self.__dict__.copy()
         state.pop('_model')
         # May need to reload model info on set state since it has pointers
@@ -156,16 +274,19 @@ class SasviewModel(object):
         return state
 
     def __set_state__(self, state):
+        # type: (Dict[str, Any]) -> None
         self.__dict__ = state
         self._model = None
 
     def __str__(self):
+        # type: () -> str
         """
         :return: string representation
         """
         return self.name
 
     def is_fittable(self, par_name):
+        # type: (str) -> bool
         """
         Check if a given parameter is fittable or not
 
@@ -176,17 +297,27 @@ class SasviewModel(object):
         #return self.params[str(par_name)].is_fittable()
 
 
-    # pylint: disable=no-self-use
     def getProfile(self):
+        # type: () -> (np.ndarray, np.ndarray)
         """
         Get SLD profile
 
         : return: (z, beta) where z is a list of depth of the transition points
                 beta is a list of the corresponding SLD values
         """
-        return None, None
+        args = []
+        for p in self._model_info.parameters.kernel_parameters:
+            if p.id == self.multiplicity_info.control:
+                args.append(self.multiplicity)
+            elif p.length == 1:
+                args.append(self.params.get(p.id, np.NaN))
+            else:
+                args.append([self.params.get(p.id+str(k), np.NaN)
+                             for k in range(1,p.length+1)])
+        return self._model_info.profile(*args)
 
     def setParam(self, name, value):
+        # type: (str, float) -> None
         """
         Set the value of a model parameter
 
@@ -213,6 +344,7 @@ class SasviewModel(object):
         raise ValueError("Model does not contain parameter %s" % name)
 
     def getParam(self, name):
+        # type: (str) -> float
         """
         Set the value of a model parameter
 
@@ -236,6 +368,7 @@ class SasviewModel(object):
         raise ValueError("Model does not contain parameter %s" % name)
 
     def getParamList(self):
+        # type: () - > Sequence[str]
         """
         Return a list of all available parameters for the model
         """
@@ -245,6 +378,7 @@ class SasviewModel(object):
         return param_list
 
     def getDispParamList(self):
+        # type: () - > Sequence[str]
         """
         Return a list of polydispersity parameters for the model
         """
@@ -257,10 +391,12 @@ class SasviewModel(object):
         return ret
 
     def clone(self):
+        # type: () - > "SasviewModel"
         """ Return a identical copy of self """
         return deepcopy(self)
 
     def run(self, x=0.0):
+        # type: (Union[float, (float, float), List[float]]) -> float
         """
         Evaluate the model
 
@@ -280,6 +416,7 @@ class SasviewModel(object):
 
 
     def runXY(self, x=0.0):
+        # type: (Union[float, (float, float), List[float]]) -> float
         """
         Evaluate the model in cartesian coordinates
 
@@ -295,6 +432,7 @@ class SasviewModel(object):
             return self.calculate_Iq([float(x)])[0]
 
     def evalDistribution(self, qdist):
+        # type: (Union[np.ndarray, Tuple[np.ndarray, np.ndarray], List[np.ndarray]) -> np.ndarray
         r"""
         Evaluate a distribution of q-values.
 
@@ -338,7 +476,8 @@ class SasviewModel(object):
             raise TypeError("evalDistribution expects q or [qx, qy], not %r"
                             % type(qdist))
 
-    def calculate_Iq(self, *args):
+    def calculate_Iq(self, qx, qy=None):
+        # type: (Sequence[float], Optional[Sequence[float]]) -> np.ndarray
         """
         Calculate Iq for one set of q with the current parameters.
 
@@ -349,17 +488,20 @@ class SasviewModel(object):
         """
         if self._model is None:
             self._model = core.build_model(self._model_info)
-        q_vectors = [np.asarray(q) for q in args]
+        if qy is not None:
+            q_vectors = [np.asarray(qx), np.asarray(qy)]
+        else:
+            q_vectors = [np.asarray(qx)]
         kernel = self._model.make_kernel(q_vectors)
         pairs = [self._get_weights(p)
                  for p in self._model_info.parameters.call_parameters]
         call_details, weight, value = details.build_details(kernel, pairs)
         result = kernel(call_details, weight, value, cutoff=self.cutoff)
-        kernel.q_input.release()
         kernel.release()
         return result
 
     def calculate_ER(self):
+        # type: () -> float
         """
         Calculate the effective radius for P(q)*S(q)
 
@@ -374,6 +516,7 @@ class SasviewModel(object):
             return np.sum(weight * fv) / np.sum(weight)
 
     def calculate_VR(self):
+        # type: () -> float
         """
         Calculate the volf ratio for P(q)*S(q)
 
@@ -387,6 +530,7 @@ class SasviewModel(object):
             return np.sum(weight * part) / np.sum(weight * whole)
 
     def set_dispersion(self, parameter, dispersion):
+        # type: (str, weights.Dispersion) -> Dict[str, Any]
         """
         Set the dispersion object for a model parameter
 
@@ -415,6 +559,7 @@ class SasviewModel(object):
             raise ValueError("%r is not a dispersity or orientation parameter")
 
     def _dispersion_mesh(self):
+        # type: () -> List[Tuple[np.ndarray, np.ndarray]]
         """
         Create a mesh grid of dispersion parameters and weights.
 
@@ -428,10 +573,16 @@ class SasviewModel(object):
         return details.dispersion_mesh(self._model_info, pars)
 
     def _get_weights(self, par):
+        # type: (Parameter) -> Tuple[np.ndarray, np.ndarray]
         """
         Return dispersion weights for parameter
         """
-        if par.polydisperse:
+        if par.name not in self.params:
+            if par.name == self.multiplicity_info.control:
+                return [self.multiplicity], []
+            else:
+                return [np.NaN], []
+        elif par.polydisperse:
             dis = self.dispersion[par.name]
             value, weight = weights.get_weights(
                 dis['type'], dis['npts'], dis['width'], dis['nsigmas'],
@@ -441,6 +592,7 @@ class SasviewModel(object):
             return [self.params[par.name]], []
 
 def test_model():
+    # type: () -> float
     """
     Test that a sasview model (cylinder) can be run.
     """
@@ -450,6 +602,7 @@ def test_model():
 
 
 def test_model_list():
+    # type: () -> None
     """
     Make sure that all models build as sasview models.
     """
