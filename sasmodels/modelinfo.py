@@ -6,6 +6,8 @@ Defines :class:`ModelInfo` and :class:`ParameterTable` and the routines for
 manipulating them.  In particular, :func:`make_model_info` converts a kernel
 module into the model info block as seen by the rest of the sasmodels library.
 """
+from __future__ import print_function
+
 from copy import copy
 from os.path import abspath, basename, splitext
 
@@ -15,13 +17,13 @@ from .details import mono_details
 
 # Optional typing
 try:
-    from typing import Tuple, List, Union, Dict, Optional, Any, Callable
+    from typing import Tuple, List, Union, Dict, Optional, Any, Callable, Sequence, Set
 except ImportError:
     pass
 else:
     from .details import CallDetails
     Limits = Tuple[float, float]
-    #LimitsOrChoice = Union[Limits, Tuple[str]]
+    LimitsOrChoice = Union[Limits, Tuple[Sequence[str]]]
     ParameterDef = Tuple[str, str, float, Limits, str, str]
     ParameterSetUser = Dict[str, Union[float, List[float]]]
     ParameterSet = Dict[str, float]
@@ -67,8 +69,8 @@ def make_parameter_table(pars):
     return partable
 
 def parse_parameter(name, units='', default=np.NaN,
-                    limits=(-np.inf, np.inf), ptype='', description=''):
-    # type: (str, str, float, Limits, str, str) -> Parameter
+                    user_limits=None, ptype='', description=''):
+    # type: (str, str, float, LimitsOrChoice, str, str) -> Parameter
     """
     Parse an individual parameter from the parameter definition block.
 
@@ -80,38 +82,46 @@ def parse_parameter(name, units='', default=np.NaN,
         raise ValueError("expected string for parameter name %r"%name)
     if not isstr(units):
         raise ValueError("expected units to be a string for %s"%name)
-    # if limits is a list of strings, then this is a choice list
-    # field, and limits are 1 to length of string list
+
+    # Process limits as [float, float] or [[str, str, ...]]
     choices = []  # type: List[str]
-    if isinstance(limits, list) and all(isstr(k) for k in limits):
-        choices = limits
-        limits = (0., len(choices)-1.)
+    if user_limits is None:
+        limits = (-np.inf, np.inf)
+    elif not isinstance(user_limits, (tuple, list)):
+        raise ValueError("invalid limits for %s"%name)
+    else:
+        # if limits is [[str,...]], then this is a choice list field,
+        # and limits are 1 to length of string list
+        if isinstance(user_limits[0], (tuple, list)):
+            choices = user_limits[0]
+            limits = (0., len(choices)-1.)
+            if not all(isstr(k) for k in choices):
+                raise ValueError("choices must be strings for %s"%name)
+        else:
+            try:
+                low, high = user_limits
+                limits = (float(low), float(high))
+            except Exception:
+                raise ValueError("invalid limits for %s"%name)
+            else:
+                if low >= high:
+                    raise ValueError("require lower limit < upper limit")
 
-    # TODO: maybe allow limits of None for (-inf, inf)
-    try:
-        low, high = limits
-        if not isinstance(low, (int, float)):
-            raise TypeError("low is not numeric")
-        if not isinstance(high, (int, float)):
-            raise TypeError("high is not numeric")
-        if low >= high:
-            raise ValueError("require low < high")
-    except Exception:
-        raise ValueError("invalid limits %s for %s"%(limits, name))
-
+    # Process default value as float, making sure it is in range
     if not isinstance(default, (int, float)):
         raise ValueError("expected default %r to be a number for %s"
                          % (default, name))
-    if default < low or default > high:
+    if default < limits[0] or default > limits[1]:
         raise ValueError("default value %r not in range for %s"
                          % (default, name))
 
+    # Check for valid parameter type
     if ptype not in ("volume", "orientation", "sld", "magnetic", ""):
         raise ValueError("unexpected type %r for %s" % (ptype, name))
 
+    # Check for valid parameter description
     if not isstr(description):
         raise ValueError("expected description to be a string")
-
 
     # Parameter id for name[n] does not include [n]
     if "[" in name:
@@ -121,7 +131,6 @@ def parse_parameter(name, units='', default=np.NaN,
         ref = ref.strip()
     else:
         pid, ref = name, None
-
 
     # automatically identify sld types
     if ptype== '' and (pid.startswith('sld') or pid.endswith('sld')):
@@ -473,10 +482,7 @@ class ParameterTable(object):
                 if int(low) != low or int(high) != high or low < 0 or high > 20:
                     raise ValueError("expected limits on %s to be within [0, 20]"
                                      % ref.name)
-                # TODO: may want to make a copy of the parameter before updating
-                # this introduces other potential problems, since the same
-                # parameter may be referenced elsewhere
-                p.length = high
+                p.length = int(high)
 
     def _get_defaults(self):
         # type: () -> ParameterSet
@@ -543,10 +549,12 @@ class ParameterTable(object):
         parameter is always returned first since the GUI will want to set it
         early, and rerender the table when it is changed.
         """
+        # control parameters go first
         control = [p for p in self.kernel_parameters if p.is_control]
 
         # Gather entries such as name[n] into groups of the same n
-        dependent = dict((p.id, []) for p in control)  # type: Dict[str, List[Parameter]]
+        dependent = {} # type: Dict[str, List[Parameter]]
+        dependent.update((p.id, []) for p in control)
         for p in self.kernel_parameters:
             if p.length_control is not None:
                 dependent[p.length_control].append(p)
@@ -634,7 +642,7 @@ def make_model_info(kernel_module):
     info.category = getattr(kernel_module, 'category', None)
     info.single = getattr(kernel_module, 'single', True)
     info.structure_factor = getattr(kernel_module, 'structure_factor', False)
-    info.profile_axes = getattr(kernel_module, 'profile_axes', ['x','y'])
+    info.profile_axes = getattr(kernel_module, 'profile_axes', ['x', 'y'])
     info.variant_info = getattr(kernel_module, 'variant_info', None)
     info.source = getattr(kernel_module, 'source', [])
     # TODO: check the structure of the tests
@@ -646,6 +654,8 @@ def make_model_info(kernel_module):
     info.Iqxy = getattr(kernel_module, 'Iqxy', None) # type: ignore
     info.profile = getattr(kernel_module, 'profile', None) # type: ignore
     info.sesans = getattr(kernel_module, 'sesans', None) # type: ignore
+    info.control = getattr(kernel_module, 'control', None)
+    info.hidden = getattr(kernel_module, 'hidden', None) # type: ignore
 
     # Precalculate the monodisperse parameter details
     info.mono_details = mono_details(info)
@@ -690,6 +700,9 @@ class ModelInfo(object):
       tuple with composition type ('product' or 'mixture') and a list of
       *model_info* blocks for the composition objects.  This allows us to
       build complete product and mixture models from just the info.
+    * *control* is the name of the control parameter if there is one.
+    * *hidden* returns the list of hidden parameters given the value of the
+      control parameter
 
     The structure should be mostly static, other than the delayed definition
     of *Iq* and *Iqxy* if they need to be defined.
@@ -702,6 +715,7 @@ class ModelInfo(object):
     parameters = None       # type: ParameterTable
     demo = None             # type: Dict[str, float]
     composition = None      # type: Optional[Tuple[str, List[ModelInfo]]]
+    control = None          # type: str
     docs = None             # type: str
     category = None         # type: Optional[str]
     single = None           # type: bool
@@ -717,10 +731,22 @@ class ModelInfo(object):
     Iqxy = None             # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
     profile = None          # type: Optional[Callable[[np.ndarray], None]]
     sesans = None           # type: Optional[Callable[[np.ndarray], np.ndarray]]
+    hidden = None           # type: Optional[Callable[int], Set[str]]
     mono_details = None     # type: CallDetails
 
     def __init__(self):
         # type: () -> None
         pass
 
-
+    def get_hidden_parameters(self, control):
+        if self.hidden is not None:
+            hidden = self.hidden(control)
+        else:
+            controls = [p for p in self.parameters.kernel_parameters]
+            if len(controls) != 1:
+                raise ValueError("more than one control parameter")
+            hidden = set(p.id+str(k)
+                         for p in self.parameters.kernel_parameters
+                         for k in range(control+1, p.length+1)
+                         if p.length > 1)
+        return hidden

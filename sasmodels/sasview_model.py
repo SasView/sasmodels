@@ -123,22 +123,26 @@ def _generate_model_attributes(model_info):
 
     #self.is_multifunc = False
     non_fittable = []  # type: List[str]
+    xlabel = model_info.profile_axes[0] if model_info.profile is not None else ""
+    variants = MultiplicityInfo(0, "", [], xlabel)
     for p in parameters.kernel_parameters:
-        if p.is_control:
+        if p.name == model_info.control:
             non_fittable.append(p.name)
-            profile_axes = model_info.profile_axes
-            multiplicity_info = MultiplicityInfo(
-                p.limits[1], p.name, p.choices, profile_axes[0]
+            variants = MultiplicityInfo(
+                len(p.choices), p.name, p.choices, xlabel
             )
             break
-    else:
-        multiplicity_info = MultiplicityInfo(0, "", [], "")
+        elif p.is_control:
+            non_fittable.append(p.name)
+            variants = MultiplicityInfo(
+                int(p.limits[1]), p.name, p.choices, xlabel
+            )
+            break
 
     attrs['is_structure_factor'] = model_info.structure_factor
     attrs['is_form_factor'] = model_info.ER is not None
-    attrs['is_multiplicity_model'] = multiplicity_info[0] > 1
-    attrs['multiplicity_info'] = multiplicity_info
-
+    attrs['is_multiplicity_model'] = variants[0] > 1
+    attrs['multiplicity_info'] = variants
 
     orientation_params = []
     magnetic_params = []
@@ -227,9 +231,11 @@ class SasviewModel(object):
 
         ## _persistency_dict is used by sas.perspectives.fitting.basepage
         ## to store dispersity reference.
-        ## TODO: _persistency_dict to persistency_dict throughout sasview
         self._persistency_dict = {}
 
+        # TODO: _persistency_dict to persistency_dict throughout sasview
+        # TODO: refactor multiplicity to encompass variants
+        # TODO: dispersion should be a class
         # TODO: refactor multiplicity info
         # TODO: separate profile view from multiplicity
         # The button label, x and y axis labels and scale need to be under
@@ -239,17 +245,20 @@ class SasviewModel(object):
         # we provide some sort of data description including title, labels
         # and lines to plot.
 
-        # TODO: refactor multiplicity to encompass variants
-        # TODO: dispersion should be a class
+        # Get the list of hidden parameters given the mulitplicity
+        # Don't include multiplicity in the list of parameters
         self.multiplicity = multiplicity
+        if multiplicity is not None:
+            hidden = self._model_info.get_hidden_parameters(multiplicity)
+            hidden |= set([self.multiplicity_info.control])
+        else:
+            hidden = set()
+
         self.params = collections.OrderedDict()
         self.dispersion = {}
         self.details = {}
-        config = ({self.multiplicity_info.control: multiplicity}
-                  if multiplicity is not None else {})
-        for p in self._model_info.parameters.user_parameters(config):
-            # Don't include multiplicity in the list of parameters
-            if p.name == self.multiplicity_info.control:
+        for p in self._model_info.parameters.user_parameters():
+            if p.name in hidden:
                 continue
             self.params[p.name] = p.default
             self.details[p.id] = [p.units, p.limits[0], p.limits[1]]
@@ -599,6 +608,15 @@ def test_model():
     Cylinder = _make_standard_model('cylinder')
     cylinder = Cylinder()
     return cylinder.evalDistribution([0.1,0.1])
+
+def test_rpa():
+    # type: () -> float
+    """
+    Test that a sasview model (cylinder) can be run.
+    """
+    RPA = _make_standard_model('rpa')
+    rpa = RPA(3)
+    return rpa.evalDistribution([0.1,0.1])
 
 
 def test_model_list():
