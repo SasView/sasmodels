@@ -678,9 +678,6 @@ def make_model_info(kernel_module):
     * *parameters* is the model parameter table
     * *single* is True if the model allows single precision
     * *structure_factor* is True if the model is useable in a product
-    * *variant_info* contains the information required to select between
-      model variants (e.g., the list of cases) or is None if there are no
-      model variants
     * *defaults* is the *{parameter: value}* table built from the parameter
       description table.
     * *limits* is the *{parameter: [min, max]}* table built from the
@@ -720,7 +717,7 @@ def make_model_info(kernel_module):
         category=getattr(kernel_module, 'category', None),
         single=getattr(kernel_module, 'single', True),
         structure_factor=getattr(kernel_module, 'structure_factor', False),
-        variant_info=getattr(kernel_module, 'invariant_info', None),
+        control=getattr(kernel_module, 'control', None),
         demo=getattr(kernel_module, 'demo', None),
         source=getattr(kernel_module, 'source', []),
         tests=getattr(kernel_module, 'tests', []),
