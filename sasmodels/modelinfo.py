@@ -23,7 +23,7 @@ except ImportError:
 else:
     from .details import CallDetails
     Limits = Tuple[float, float]
-    LimitsOrChoice = Union[Limits, Tuple[Sequence[str]]]
+    #LimitsOrChoice = Union[Limits, Tuple[Sequence[str]]]
     ParameterDef = Tuple[str, str, float, Limits, str, str]
     ParameterSetUser = Dict[str, Union[float, List[float]]]
     ParameterSet = Dict[str, float]
@@ -70,7 +70,7 @@ def make_parameter_table(pars):
 
 def parse_parameter(name, units='', default=np.NaN,
                     user_limits=None, ptype='', description=''):
-    # type: (str, str, float, LimitsOrChoice, str, str) -> Parameter
+    # type: (str, str, float, Limits, str, str) -> Parameter
     """
     Parse an individual parameter from the parameter definition block.
 
@@ -731,7 +731,7 @@ class ModelInfo(object):
     Iqxy = None             # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
     profile = None          # type: Optional[Callable[[np.ndarray], None]]
     sesans = None           # type: Optional[Callable[[np.ndarray], np.ndarray]]
-    hidden = None           # type: Optional[Callable[int], Set[str]]
+    hidden = None           # type: Optional[Callable[[int], Set[str]]]
     mono_details = None     # type: CallDetails
 
     def __init__(self):

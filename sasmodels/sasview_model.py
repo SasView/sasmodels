@@ -30,7 +30,7 @@ from . import details
 from . import modelinfo
 
 try:
-    from typing import Dict, Mapping, Any, Sequence, Tuple, NamedTuple, List, Optional
+    from typing import Dict, Mapping, Any, Sequence, Tuple, NamedTuple, List, Optional, Union
     from .modelinfo import ModelInfo, Parameter
     from .kernel import KernelModel
     MultiplicityInfoType = NamedTuple(
@@ -41,7 +41,7 @@ except ImportError:
     pass
 
 # TODO: separate x_axis_label from multiplicity info
-# The x-axis label belongs with the profile generating function
+# The profile x-axis label belongs with the profile generating function
 MultiplicityInfo = collections.namedtuple(
     'MultiplicityInfo',
     ["number", "control", "choices", "x_axis_label"],
@@ -219,16 +219,14 @@ class SasviewModel(object):
     #: values for dispersion width, npts, nsigmas and type
     dispersion = None  # type: Dict[str, Any]
     #: units and limits for each parameter
-    details = None     # type: Mapping[str, Tuple(str, float, float)]
-    #: multiplicity used, or None if no multiplicity controls
+    details = None     # type: Mapping[str, Tuple[str, float, float]]
+    #: multiplicity value, or None if no multiplicity on the model
     multiplicity = None     # type: Optional[int]
+    #: memory for polydispersity array if using ArrayDispersion (used by sasview).
+    _persistency_dict = None # type: Dict[str, Tuple[np.ndarray, np.ndarray]]
 
     def __init__(self, multiplicity=None):
-        # type: () -> None
-
-        ## _persistency_dict is used by sas.perspectives.fitting.basepage
-        ## to store dispersity reference.
-        self._persistency_dict = {}
+        # type: (Optional[int]) -> None
 
         # TODO: _persistency_dict to persistency_dict throughout sasview
         # TODO: refactor multiplicity to encompass variants
@@ -251,6 +249,7 @@ class SasviewModel(object):
         else:
             hidden = set()
 
+        self._persistency_dict = {}
         self.params = collections.OrderedDict()
         self.dispersion = {}
         self.details = {}
@@ -374,17 +373,17 @@ class SasviewModel(object):
         raise ValueError("Model does not contain parameter %s" % name)
 
     def getParamList(self):
-        # type: () - > Sequence[str]
+        # type: () -> Sequence[str]
         """
         Return a list of all available parameters for the model
         """
-        param_list = self.params.keys()
+        param_list = list(self.params.keys())
         # WARNING: Extending the list with the dispersion parameters
         param_list.extend(self.getDispParamList())
         return param_list
 
     def getDispParamList(self):
-        # type: () - > Sequence[str]
+        # type: () -> Sequence[str]
         """
         Return a list of polydispersity parameters for the model
         """
@@ -397,7 +396,7 @@ class SasviewModel(object):
         return ret
 
     def clone(self):
-        # type: () - > "SasviewModel"
+        # type: () -> "SasviewModel"
         """ Return a identical copy of self """
         return deepcopy(self)
 
@@ -438,7 +437,7 @@ class SasviewModel(object):
             return self.calculate_Iq([float(x)])[0]
 
     def evalDistribution(self, qdist):
-        # type: (Union[np.ndarray, Tuple[np.ndarray, np.ndarray], List[np.ndarray]) -> np.ndarray
+        # type: (Union[np.ndarray, Tuple[np.ndarray, np.ndarray], List[np.ndarray]]) -> np.ndarray
         r"""
         Evaluate a distribution of q-values.
 

@@ -10,58 +10,34 @@ the sasview data loader.  *Experiment* takes a *cutoff* parameter controlling
 how far the polydispersity integral extends.
 
 """
+from __future__ import print_function
 
-import warnings
+__all__ = [ "Model", "Experiment" ]
 
 import numpy as np  # type: ignore
 
 from .data import plot_theory
 from .direct_model import DataMixin
 
-__all__ = [
-    "Model", "Experiment",
-    ]
+try:
+    from typing import Dict, Union, Tuple, Any
+    from .data import Data1D, Data2D
+    from .kernel import KernelModel
+    from .modelinfo import ModelInfo
+    Data = Union[Data1D, Data2D]
+except ImportError:
+    pass
 
-# CRUFT: old style bumps wrapper which doesn't separate data and model
-# pylint: disable=invalid-name
-def BumpsModel(data, model, cutoff=1e-5, **kw):
-    r"""
-    Bind a model to data, along with a polydispersity cutoff.
-
-    *data* is a :class:`data.Data1D`, :class:`data.Data2D` or
-    :class:`data.Sesans` object.  Use :func:`data.empty_data1D` or
-    :func:`data.empty_data2D` to define $q, \Delta q$ calculation
-    points for displaying the SANS curve when there is no measured data.
-
-    *model* is a runnable module as returned from :func:`core.load_model`.
-
-    *cutoff* is the polydispersity weight cutoff.
-
-    Any additional *key=value* pairs are model dependent parameters.
-
-    Returns an :class:`Experiment` object.
-
-    Note that the usual Bumps semantics is not fully supported, since
-    assigning *M.name = parameter* on the returned experiment object
-    does not set that parameter in the model.  Range setting will still
-    work as expected though.
-
-    .. deprecated:: 0.1
-        Use :class:`Experiment` instead.
-    """
-    warnings.warn("Use of BumpsModel is deprecated.  Use bumps_model.Experiment instead.")
-
-    # Create the model and experiment
-    model = Model(model, **kw)
-    experiment = Experiment(data=data, model=model, cutoff=cutoff)
-
-    # Copy the model parameters up to the experiment object.
-    for k, v in model.parameters().items():
-        setattr(experiment, k, v)
-    return experiment
+try:
+    # Optional import. This allows the doc builder and nosetests to run even
+    # when bumps is not on the path.
+    from bumps.names import Parameter # type: ignore
+except ImportError:
+    pass
 
 
 def create_parameters(model_info, **kwargs):
+    # type: (ModelInfo, **Union[float, str, Parameter]) -> Tuple[Dict[str, Parameter], Dict[str, str]]
     """
     Generate Bumps parameters from the model info.
 
@@ -70,18 +46,15 @@ def create_parameters(model_info, **kwargs):
 
     Any additional *key=value* pairs are initial values for the parameters
     to the models.  Uninitialized parameters will use the model default
-    value.
+    value.  The value can be a float, a bumps parameter, or in the case
+    of the distribution type parameter, a string.
 
     Returns a dictionary of *{name: Parameter}* containing the bumps
     parameters for each model parameter, and a dictionary of
     *{name: str}* containing the polydispersity distribution types.
     """
-    # lazy import; this allows the doc builder and nosetests to run even
-    # when bumps is not on the path.
-    from bumps.names import Parameter  # type: ignore
-
-    pars = {}     # floating point parameters
-    pd_types = {} # distribution names
+    pars = {}     # type: Dict[str, Parameter]
+    pd_types = {} # type: Dict[str, str]
     for p in model_info.parameters.call_parameters:
         value = kwargs.pop(p.name, p.default)
         pars[p.name] = Parameter.default(value, name=p.name, limits=p.limits)
@@ -95,7 +68,7 @@ def create_parameters(model_info, **kwargs):
                 value = kwargs.pop(name, default)
                 pars[name] = Parameter.default(value, name=name, limits=limits)
             name = p.name + '_pd_type'
-            pd_types[name] = kwargs.pop(name, 'gaussian')
+            pd_types[name] = str(kwargs.pop(name, 'gaussian'))
 
     if kwargs:  # args not corresponding to parameters
         raise TypeError("unexpected parameters: %s"
@@ -114,7 +87,8 @@ class Model(object):
     Any additional *key=value* pairs are model dependent parameters.
     """
     def __init__(self, model, **kwargs):
-        self._sasmodel = model
+        # type: (KernelModel, **Dict[str, Union[float, Parameter]]) -> None
+        self.sasmodel = model
         pars, pd_types = create_parameters(model.info, **kwargs)
         for k, v in pars.items():
             setattr(self, k, v)
@@ -124,6 +98,7 @@ class Model(object):
         self._pd_type_names = list(pd_types.keys())
 
     def parameters(self):
+        # type: () -> Dict[str, Parameter]
         """
         Return a dictionary of parameters objects for the parameters,
         excluding polydispersity distribution type.
@@ -131,6 +106,7 @@ class Model(object):
         return dict((k, getattr(self, k)) for k in self._parameter_names)
 
     def state(self):
+        # type: () -> Dict[str, Union[Parameter, str]]
         """
         Return a dictionary of current values for all the parameters,
         including polydispersity distribution type.
@@ -155,34 +131,39 @@ class Experiment(DataMixin):
 
     The resulting model can be used directly in a Bumps FitProblem call.
     """
+    _cache = None # type: Dict[str, np.ndarray]
     def __init__(self, data, model, cutoff=1e-5):
-
+        # type: (Data, Model, float) -> None
         # remember inputs so we can inspect from outside
         self.model = model
         self.cutoff = cutoff
-        self._interpret_data(data, model._sasmodel)
-        self.update()
+        self._interpret_data(data, model.sasmodel)
+        self._cache = {}
 
     def update(self):
+        # type: () -> None
         """
         Call when model parameters have changed and theory needs to be
         recalculated.
         """
-        self._cache = {}
+        self._cache.clear()
 
     def numpoints(self):
+        # type: () -> float
         """
         Return the number of data points
         """
         return len(self.Iq)
 
     def parameters(self):
+        # type: () -> Dict[str, Parameter]
         """
         Return a dictionary of parameters
         """
         return self.model.parameters()
 
     def theory(self):
+        # type: () -> np.ndarray
         """
         Return the theory corresponding to the model parameters.
 
@@ -195,6 +176,7 @@ class Experiment(DataMixin):
         return self._cache['theory']
 
     def residuals(self):
+        # type: () -> np.ndarray
         """
         Return theory minus data normalized by uncertainty.
         """
@@ -202,6 +184,7 @@ class Experiment(DataMixin):
         return (self.theory() - self.Iq) / self.dIq
 
     def nllf(self):
+        # type: () -> float
         """
         Return the negative log likelihood of seeing data given the model
         parameters, up to a normalizing constant which depends on the data
@@ -209,12 +192,13 @@ class Experiment(DataMixin):
         """
         delta = self.residuals()
         #if np.any(np.isnan(R)): print("NaN in residuals")
-        return 0.5 * np.sum(delta ** 2)
+        return 0.5 * np.sum(delta**2)
 
     #def __call__(self):
     #    return 2 * self.nllf() / self.dof
 
     def plot(self, view='log'):
+        # type: (str) -> None
         """
         Plot the data and residuals.
         """
@@ -222,6 +206,7 @@ class Experiment(DataMixin):
         plot_theory(data, theory, resid, view, Iq_calc = self.Iq_calc)
 
     def simulate_data(self, noise=None):
+        # type: (float) -> None
         """
         Generate simulated data.
         """
@@ -229,6 +214,7 @@ class Experiment(DataMixin):
         self._set_data(Iq, noise)
 
     def save(self, basename):
+        # type: (str) -> None
         """
         Save the model parameters and data into a file.
 
@@ -239,11 +225,14 @@ class Experiment(DataMixin):
         pass
 
     def __getstate__(self):
+        # type: () -> Dict[str, Any]
         # Can't pickle gpu functions, so instead make them lazy
         state = self.__dict__.copy()
         state['_kernel'] = None
         return state
 
     def __setstate__(self, state):
+        # type: (Dict[str, Any]) -> None
         # pylint: disable=attribute-defined-outside-init
         self.__dict__ = state
+

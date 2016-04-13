@@ -18,6 +18,7 @@ except ImportError:
     pass
 
 class KernelModel(object):
+    info = None  # type: ModelInfo
     def make_kernel(self, q_vectors):
         # type: (List[np.ndarray]) -> "Kernel"
         raise NotImplementedError("need to implement make_kernel")
