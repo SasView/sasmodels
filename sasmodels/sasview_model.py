@@ -111,22 +111,14 @@ def _generate_model_attributes(model_info):
 
     All the attributes should be immutable to avoid accidents.
     """
-    attrs = {}  # type: Dict[str, Any]
-    attrs['_model_info'] = model_info
-    attrs['name'] = model_info.name
-    attrs['id'] = model_info.id
-    attrs['description'] = model_info.description
-    attrs['category'] = None
 
     # TODO: allow model to override axis labels input/output name/unit
 
-    parameters = model_info.parameters
-
-    #self.is_multifunc = False
+    # Process multiplicity
     non_fittable = []  # type: List[str]
     xlabel = model_info.profile_axes[0] if model_info.profile is not None else ""
     variants = MultiplicityInfo(0, "", [], xlabel)
-    for p in parameters.kernel_parameters:
+    for p in model_info.parameters.kernel_parameters:
         if p.name == model_info.control:
             non_fittable.append(p.name)
             variants = MultiplicityInfo(
@@ -140,15 +132,11 @@ def _generate_model_attributes(model_info):
             )
             break
 
-    attrs['is_structure_factor'] = model_info.structure_factor
-    attrs['is_form_factor'] = model_info.ER is not None
-    attrs['is_multiplicity_model'] = variants[0] > 1
-    attrs['multiplicity_info'] = variants
-
+    # Organize parameter sets
     orientation_params = []
     magnetic_params = []
     fixed = []
-    for p in parameters.user_parameters():
+    for p in model_info.parameters.user_parameters():
         if p.type == 'orientation':
             orientation_params.append(p.name)
             orientation_params.append(p.name+".width")
@@ -157,10 +145,21 @@ def _generate_model_attributes(model_info):
             orientation_params.append(p.name)
             magnetic_params.append(p.name)
             fixed.append(p.name+".width")
+
+    # Build class dictionary
+    attrs = {}  # type: Dict[str, Any]
+    attrs['_model_info'] = model_info
+    attrs['name'] = model_info.name
+    attrs['id'] = model_info.id
+    attrs['description'] = model_info.description
+    attrs['category'] = model_info.category
+    attrs['is_structure_factor'] = model_info.structure_factor
+    attrs['is_form_factor'] = model_info.ER is not None
+    attrs['is_multiplicity_model'] = variants[0] > 1
+    attrs['multiplicity_info'] = variants
     attrs['orientation_params'] = tuple(orientation_params)
     attrs['magnetic_params'] = tuple(magnetic_params)
     attrs['fixed'] = tuple(fixed)
-
     attrs['non_fittable'] = tuple(non_fittable)
 
     return attrs
@@ -226,9 +225,6 @@ class SasviewModel(object):
 
     def __init__(self, multiplicity=None):
         # type: () -> None
-        print("initializing", self.name)
-        #raise Exception("first initialization")
-        self._model = None
 
         ## _persistency_dict is used by sas.perspectives.fitting.basepage
         ## to store dispersity reference.
@@ -563,7 +559,7 @@ class SasviewModel(object):
             # one instead of trying to assign parameters.
             from . import weights
             disperser = weights.dispersers[dispersion.__class__.__name__]
-            dispersion = weights.models[disperser]()
+            dispersion = weights.MODELS[disperser]()
             self.dispersion[parameter] = dispersion.get_pars()
         else:
             raise ValueError("%r is not a dispersity or orientation parameter")
