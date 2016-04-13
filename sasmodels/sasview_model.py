@@ -114,6 +114,7 @@ def _generate_model_attributes(model_info):
     attrs = {}  # type: Dict[str, Any]
     attrs['_model_info'] = model_info
     attrs['name'] = model_info.name
+    attrs['id'] = model_info.id
     attrs['description'] = model_info.description
     attrs['category'] = None
 
