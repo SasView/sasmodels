@@ -698,7 +698,6 @@ def make_model_info(kernel_module):
       build complete product and mixture models from just the info.
 
     """
-    # TODO: maybe turn model_info into a class ModelDefinition
     parameters = COMMON_PARAMETERS + kernel_module.parameters
     filename = abspath(kernel_module.__file__)
     kernel_id = splitext(basename(filename))[0]

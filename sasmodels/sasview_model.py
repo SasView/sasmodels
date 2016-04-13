@@ -90,7 +90,7 @@ def _make_model_from_info(model_info):
         SasviewModel.__init__(self, multiplicity=multiplicity)
     attrs = _generate_model_attributes(model_info)
     attrs['__init__'] = __init__
-    ConstructedModel = type(model_info['name'], (SasviewModel,), attrs)
+    ConstructedModel = type(model_info['id'], (SasviewModel,), attrs)
     return ConstructedModel
 
 def _generate_model_attributes(model_info):
@@ -106,6 +106,7 @@ def _generate_model_attributes(model_info):
     attrs = {}  # type: Dict[str, Any]
     attrs['_model_info'] = model_info
     attrs['name'] = model_info['name']
+    attrs['id'] = model_info['id']
     attrs['description'] = model_info['description']
     attrs['category'] = model_info['category']
 
