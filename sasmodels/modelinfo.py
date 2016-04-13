@@ -70,7 +70,7 @@ def make_parameter_table(pars):
 
 def parse_parameter(name, units='', default=np.NaN,
                     user_limits=None, ptype='', description=''):
-    # type: (str, str, float, Limits, str, str) -> Parameter
+    # type: (str, str, float, Sequence[Any], str, str) -> Parameter
     """
     Parse an individual parameter from the parameter definition block.
 

@@ -30,13 +30,14 @@ from . import details
 from . import modelinfo
 
 try:
-    from typing import Dict, Mapping, Any, Sequence, Tuple, NamedTuple, List, Optional, Union
+    from typing import Dict, Mapping, Any, Sequence, Tuple, NamedTuple, List, Optional, Union, Callable
     from .modelinfo import ModelInfo, Parameter
     from .kernel import KernelModel
     MultiplicityInfoType = NamedTuple(
         'MuliplicityInfo',
         [("number", int), ("control", str), ("choices", List[str]),
          ("x_axis_label", str)])
+    SasviewModelType = Callable[[int], "SasviewModel"]
 except ImportError:
     pass
 
@@ -49,7 +50,7 @@ MultiplicityInfo = collections.namedtuple(
 
 # TODO: figure out how to say that the return type is a subclass
 def load_standard_models():
-    # type: () -> List[type]
+    # type: () -> List[SasviewModelType]
     """
     Load and return the list of predefined models.
 
@@ -66,7 +67,7 @@ def load_standard_models():
 
 
 def load_custom_model(path):
-    # type: (str) -> type
+    # type: (str) -> SasviewModelType
     """
     Load a custom model given the model path.
     """
@@ -76,7 +77,7 @@ def load_custom_model(path):
 
 
 def _make_standard_model(name):
-    # type: (str) -> type
+    # type: (str) -> SasviewModelType
     """
     Load the sasview model defined by *name*.
 
@@ -90,7 +91,7 @@ def _make_standard_model(name):
 
 
 def _make_model_from_info(model_info):
-    # type: (ModelInfo) -> type
+    # type: (ModelInfo) -> SasviewModelType
     """
     Convert *model_info* into a SasView model wrapper.
     """
@@ -98,7 +99,7 @@ def _make_model_from_info(model_info):
         SasviewModel.__init__(self, multiplicity=multiplicity)
     attrs = _generate_model_attributes(model_info)
     attrs['__init__'] = __init__
-    ConstructedModel = type(model_info.name, (SasviewModel,), attrs)
+    ConstructedModel = type(model_info.name, (SasviewModel,), attrs) # type: SasviewModelType
     return ConstructedModel
 
 def _generate_model_attributes(model_info):
@@ -219,7 +220,8 @@ class SasviewModel(object):
     #: values for dispersion width, npts, nsigmas and type
     dispersion = None  # type: Dict[str, Any]
     #: units and limits for each parameter
-    details = None     # type: Mapping[str, Tuple[str, float, float]]
+    details = None     # type: Dict[str, Sequence[Any]]
+    #                  # actual type is Dict[str, List[str, float, float]]
     #: multiplicity value, or None if no multiplicity on the model
     multiplicity = None     # type: Optional[int]
     #: memory for polydispersity array if using ArrayDispersion (used by sasview).
@@ -310,10 +312,10 @@ class SasviewModel(object):
         : return: (z, beta) where z is a list of depth of the transition points
                 beta is a list of the corresponding SLD values
         """
-        args = []
+        args = [] # type: List[Union[float, np.ndarray]]
         for p in self._model_info.parameters.kernel_parameters:
             if p.id == self.multiplicity_info.control:
-                args.append(self.multiplicity)
+                args.append(float(self.multiplicity))
             elif p.length == 1:
                 args.append(self.params.get(p.id, np.NaN))
             else:
@@ -414,10 +416,9 @@ class SasviewModel(object):
         if isinstance(x, (list, tuple)):
             # pylint: disable=unpacking-non-sequence
             q, phi = x
-            return self.calculate_Iq([q * math.cos(phi)],
-                                     [q * math.sin(phi)])[0]
+            return self.calculate_Iq([q*math.cos(phi)], [q*math.sin(phi)])[0]
         else:
-            return self.calculate_Iq([float(x)])[0]
+            return self.calculate_Iq([x])[0]
 
 
     def runXY(self, x=0.0):
@@ -432,9 +433,9 @@ class SasviewModel(object):
         **DEPRECATED**: use calculate_Iq instead
         """
         if isinstance(x, (list, tuple)):
-            return self.calculate_Iq([float(x[0])], [float(x[1])])[0]
+            return self.calculate_Iq([x[0]], [x[1]])[0]
         else:
-            return self.calculate_Iq([float(x)])[0]
+            return self.calculate_Iq([x])[0]
 
     def evalDistribution(self, qdist):
         # type: (Union[np.ndarray, Tuple[np.ndarray, np.ndarray], List[np.ndarray]]) -> np.ndarray
