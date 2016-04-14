@@ -31,8 +31,17 @@ from . import resolution
 from . import resolution2d
 from . import details
 
+try:
+    from typing import Optional, Dict, Tuple
+except ImportError:
+    pass
+else:
+    from .data import Data
+    from .kernel import Kernel, KernelModel
+    from .modelinfo import Parameter, ParameterSet
 
-def call_kernel(kernel, pars, cutoff=0, mono=False):
+def call_kernel(kernel, pars, cutoff=0., mono=False):
+    # type: (Kernel, ParameterSet, float, bool) -> np.ndarray
     """
     Call *kernel* returned from *model.make_kernel* with parameters *pars*.
 
@@ -63,6 +72,7 @@ def call_kernel(kernel, pars, cutoff=0, mono=False):
     return kernel(call_details, weights, values, cutoff)
 
 def get_weights(parameter, values):
+    # type: (Parameter, Dict[str, float]) -> Tuple[np.ndarray, np.ndarray]
     """
     Generate the distribution for parameter *name* given the parameter values
     in *pars*.
@@ -105,6 +115,7 @@ class DataMixin(object):
     dataset with the results from :meth:`_calc_theory`.
     """
     def _interpret_data(self, data, model):
+        # type: (Data, KernelModel) -> None
         # pylint: disable=attribute-defined-outside-init
 
         self._data = data
@@ -205,6 +216,7 @@ class DataMixin(object):
         self.resolution = res
 
     def _set_data(self, Iq, noise=None):
+        # type: (np.ndarray, Optional[float]) -> None
         # pylint: disable=attribute-defined-outside-init
         if noise is not None:
             self.dIq = Iq*noise*0.01
@@ -222,6 +234,7 @@ class DataMixin(object):
             raise ValueError("Unknown model")
 
     def _calc_theory(self, pars, cutoff=0.0):
+        # type: (ParameterSet, float) -> np.ndarray
         if self._kernel is None:
             self._kernel = self._model.make_kernel(self._kernel_inputs)
             self._kernel_mono = (self._model.make_kernel(self._kernel_mono_inputs)
@@ -257,15 +270,18 @@ class DirectModel(DataMixin):
     *cutoff* is the polydispersity weight cutoff.
     """
     def __init__(self, data, model, cutoff=1e-5):
+        # type: (Data, KernelModel, float) -> None
         self.model = model
         self.cutoff = cutoff
         # Note: _interpret_data defines the model attributes
         self._interpret_data(data, model)
 
     def __call__(self, **pars):
+        # type: (**float) -> np.ndarray
         return self._calc_theory(pars, cutoff=self.cutoff)
 
     def simulate_data(self, noise=None, **pars):
+        # type: (Optional[float], **float) -> None
         """
         Generate simulated data for the model.
         """
@@ -273,6 +289,7 @@ class DirectModel(DataMixin):
         self._set_data(Iq, noise=noise)
 
 def main():
+    # type: () -> None
     """
     Program to evaluate a particular model at a set of q values.
     """

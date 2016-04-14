@@ -19,6 +19,7 @@ except ImportError:
 
 class KernelModel(object):
     info = None  # type: ModelInfo
+    dtype = None # type: np.dtype
     def make_kernel(self, q_vectors):
         # type: (List[np.ndarray]) -> "Kernel"
         raise NotImplementedError("need to implement make_kernel")

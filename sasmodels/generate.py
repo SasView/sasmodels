@@ -122,8 +122,8 @@ The kernel module must set variables defining the kernel meta data:
     parameter list.  *demo* is mostly needed to set the default
     polydispersity values for tests.
 
-An *model_info* dictionary is constructed from the kernel meta data and
-returned to the caller.
+A :class:`modelinfo.ModelInfo` structure is constructed from the kernel meta
+data and returned to the caller.
 
 The doc string at the start of the kernel module will be used to
 construct the model documentation web pages.  Embedded figures should
@@ -131,12 +131,6 @@ appear in the subdirectory "img" beside the model definition, and tagged
 with the kernel module name to avoid collision with other models.  Some
 file systems are case-sensitive, so only use lower case characters for
 file names and extensions.
-
-
-The function :func:`make` loads the metadata from the module and returns
-the kernel source.  The function :func:`make_doc` extracts the doc string
-and adds the parameter table to the top.  The function :func:`model_sources`
-returns a list of files required by the model.
 
 Code follows the C99 standard with the following extensions and conditions::
 
@@ -148,6 +142,19 @@ Code follows the C99 standard with the following extensions and conditions::
     all double precision constants must include the decimal point
     all double declarations may be converted to half, float, or long double
     FLOAT_SIZE is the number of bytes in the converted variables
+
+:func:`load_kernel_module` loads the model definition file and
+:modelinfo:`make_model_info` parses it. :func:`make_source`
+converts C-based model definitions to C source code, including the
+polydispersity integral.  :func:`model_sources` returns the list of
+source files the model depends on, and :func:`timestamp` returns
+the latest time stamp amongst the source files (so you can check if
+the model needs to be rebuilt).
+
+The function :func:`make_doc` extracts the doc string and adds the
+parameter table to the top.  *make_figure* in *sasmodels/doc/genmodel*
+creates the default figure for the model.  [These two sets of code
+should mignrate into docs.py so docs can be updated in one place].
 """
 from __future__ import print_function
 
@@ -584,10 +591,12 @@ def make_doc(model_info):
     Iq_units = "The returned value is scaled to units of |cm^-1| |sr^-1|, absolute scale."
     Sq_units = "The returned value is a dimensionless structure factor, $S(q)$."
     docs = convert_section_titles_to_boldface(model_info.docs)
+    pars = make_partable(model_info.parameters.COMMON
+                         + model_info.parameters.kernel_parameters)
     subst = dict(id=model_info.id.replace('_', '-'),
                  name=model_info.name,
                  title=model_info.title,
-                 parameters=make_partable(model_info.parameters.kernel_parameters),
+                 parameters=pars,
                  returns=Sq_units if model_info.structure_factor else Iq_units,
                  docs=docs)
     return DOC_HEADER % subst

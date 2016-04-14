@@ -48,6 +48,7 @@ can see the output by setting PYOPENCL_COMPILER_OUTPUT=1.  It should be
 harmless, albeit annoying.
 """
 from __future__ import print_function
+
 import os
 import warnings
 
@@ -67,6 +68,13 @@ from pyopencl.characterize import get_fast_inaccurate_build_options  # type: ign
 
 from . import generate
 from .kernel import KernelModel, Kernel
+
+try:
+    from typing import Tuple, Callable, Any
+    from .modelinfo import ModelInfo
+    from .details import CallDetails
+except ImportError:
+    pass
 
 # The max loops number is limited by the amount of local memory available
 # on the device.  You don't want to make this value too big because it will
@@ -440,14 +448,15 @@ class GpuKernel(Kernel):
 
     Call :meth:`release` when done with the kernel instance.
     """
-    def __init__(self, kernel, model_info, q_vectors, dtype):
-        max_pd = model_info.max_pd
-        npars = len(model_info.parameters)-2
-        q_input = GpuInput(q_vectors, dtype)
-        self.dtype = dtype
-        self.dim = '2d' if q_input.is_2d else '1d'
+    def __init__(self, kernel, model_info, q_vectors):
+        # type: (KernelModel, ModelInfo, List[np.ndarray]) -> None
+        max_pd = model_info.parameters.max_pd
+        npars = len(model_info.parameters.kernel_parameters)-2
+        q_input = GpuInput(q_vectors, kernel.dtype)
         self.kernel = kernel
         self.info = model_info
+        self.dtype = kernel.dtype
+        self.dim = '2d' if q_input.is_2d else '1d'
         self.pd_stop_index = 4*max_pd-1
         # plus three for the normalization values
         self.result = np.empty(q_input.nq+3, q_input.dtype)
@@ -455,17 +464,18 @@ class GpuKernel(Kernel):
         # Inputs and outputs for each kernel call
         # Note: res may be shorter than res_b if global_size != nq
         env = environment()
-        self.queue = env.get_queue(dtype)
+        self.queue = env.get_queue(kernel.dtype)
 
         # details is int32 data, padded to an 8 integer boundary
         size = ((max_pd*5 + npars*3 + 2 + 7)//8)*8
         self.result_b = cl.Buffer(self.queue.context, mf.READ_WRITE,
-                               q_input.global_size[0] * q_input.dtype.itemsize)
+                               q_input.global_size[0] * kernel.dtype.itemsize)
         self.q_input = q_input # allocated by GpuInput above
 
         self._need_release = [ self.result_b, self.q_input ]
 
     def __call__(self, call_details, weights, values, cutoff):
+        # type: (CallDetails, np.ndarray, np.ndarray, float) -> np.ndarray
         real = (np.float32 if self.q_input.dtype == generate.F32
                 else np.float64 if self.q_input.dtype == generate.F64
                 else np.float16 if self.q_input.dtype == generate.F16

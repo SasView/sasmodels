@@ -54,7 +54,6 @@ from ctypes import c_void_p, c_int32, c_longdouble, c_double, c_float  # type: i
 import numpy as np  # type: ignore
 
 from . import generate
-from . import details
 from .kernel import KernelModel, Kernel
 from .kernelpy import PyInput
 from .exception import annotate_exception
@@ -278,20 +277,18 @@ class DllKernel(Kernel):
         self.q_input = q_input
         self.dtype = q_input.dtype
         self.dim = '2d' if q_input.is_2d else '1d'
-        self.result = np.empty(q_input.nq+3, q_input.dtype)
+        self.result = np.empty(q_input.nq+1, q_input.dtype)
+        self.real = (np.float32 if self.q_input.dtype == generate.F32
+                     else np.float64 if self.q_input.dtype == generate.F64
+                     else np.float128)
 
     def __call__(self, call_details, weights, values, cutoff):
         # type: (CallDetails, np.ndarray, np.ndarray, float) -> np.ndarray
-        real = (np.float32 if self.q_input.dtype == generate.F32
-                else np.float64 if self.q_input.dtype == generate.F64
-                else np.float128)
-        assert isinstance(call_details, details.CallDetails)
-        assert weights.dtype == real and values.dtype == real
 
-        start, stop = 0, call_details.total_pd
         #print("in kerneldll")
         #print("weights", weights)
         #print("values", values)
+        start, stop = 0, call_details.total_pd
         args = [
             self.q_input.nq, # nq
             start, # pd_start
@@ -301,10 +298,10 @@ class DllKernel(Kernel):
             values.ctypes.data,  #pars
             self.q_input.q.ctypes.data, #q
             self.result.ctypes.data,   # results
-            real(cutoff), # cutoff
+            self.real(cutoff), # cutoff
             ]
         self.kernel(*args) # type: ignore
-        return self.result[:-3]
+        return self.result[:-1]
 
     def release(self):
         # type: () -> None

@@ -36,7 +36,15 @@ import traceback
 
 import numpy as np  # type: ignore
 
+try:
+    from typing import Union, Dict, List, Optional
+except ImportError:
+    pass
+else:
+    Data = Union["Data1D", "Data2D", "SesansData"]
+
 def load_data(filename):
+    # type: (str) -> Data
     """
     Load data using a sasview loader.
     """
@@ -49,6 +57,7 @@ def load_data(filename):
 
 
 def set_beam_stop(data, radius, outer=None):
+    # type: (Data, float, Optional[float]) -> None
     """
     Add a beam stop of the given *radius*.  If *outer*, make an annulus.
     """
@@ -64,6 +73,7 @@ def set_beam_stop(data, radius, outer=None):
 
 
 def set_half(data, half):
+    # type: (Data, str) -> None
     """
     Select half of the data, either "right" or "left".
     """
@@ -77,6 +87,7 @@ def set_half(data, half):
 
 
 def set_top(data, cutoff):
+    # type: (Data, float) -> None
     """
     Chop the top off the data, above *cutoff*.
     """
@@ -113,6 +124,7 @@ class Data1D(object):
     *_yaxis*, *_yunit*: label and units for the *y* axis
     """
     def __init__(self, x=None, y=None, dx=None, dy=None):
+        # type: (Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray]) -> None
         self.x, self.y, self.dx, self.dy = x, y, dx, dy
         self.dxl = None
         self.filename = None
@@ -126,6 +138,7 @@ class Data1D(object):
         self._yaxis, self._yunit = "y", ""
 
     def xaxis(self, label, unit):
+        # type: (str, str) -> None
         """
         set the x axis label and unit
         """
@@ -133,13 +146,17 @@ class Data1D(object):
         self._xunit = unit
 
     def yaxis(self, label, unit):
+        # type: (str, str) -> None
         """
         set the y axis label and unit
         """
         self._yaxis = label
         self._yunit = unit
 
-
+class SesansData(Data1D):
+    def __init__(self, **kw):
+        Data1D.__init__(self, **kw)
+        self.lam = None # type: Optional[np.ndarray]
 
 class Data2D(object):
     """
@@ -174,6 +191,7 @@ class Data2D(object):
     *x_bins*, *y_bins*: grid steps in *x* and *y* directions
     """
     def __init__(self, x=None, y=None, z=None, dx=None, dy=None, dz=None):
+        # type: (Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray]) -> None
         self.qx_data, self.dqx_data = x, dx
         self.qy_data, self.dqy_data = y, dy
         self.data, self.err_data = z, dz
@@ -196,6 +214,7 @@ class Data2D(object):
         self.x_bins, self.y_bins = None, None
 
     def xaxis(self, label, unit):
+        # type: (str, str) -> None
         """
         set the x axis label and unit
         """
@@ -203,6 +222,7 @@ class Data2D(object):
         self._xunit = unit
 
     def yaxis(self, label, unit):
+        # type: (str, str) -> None
         """
         set the y axis label and unit
         """
@@ -210,6 +230,7 @@ class Data2D(object):
         self._yunit = unit
 
     def zaxis(self, label, unit):
+        # type: (str, str) -> None
         """
         set the y axis label and unit
         """
@@ -222,6 +243,7 @@ class Vector(object):
     3-space vector of *x*, *y*, *z*
     """
     def __init__(self, x=None, y=None, z=None):
+        # type: (float, float, Optional[float]) -> None
         self.x, self.y, self.z = x, y, z
 
 class Detector(object):
@@ -229,6 +251,7 @@ class Detector(object):
     Detector attributes.
     """
     def __init__(self, pixel_size=(None, None), distance=None):
+        # type: (Tuple[float, float], float) -> None
         self.pixel_size = Vector(*pixel_size)
         self.distance = distance
 
@@ -237,11 +260,13 @@ class Source(object):
     Beam attributes.
     """
     def __init__(self):
+        # type: () -> None
         self.wavelength = np.NaN
         self.wavelength_unit = "A"
 
 
 def empty_data1D(q, resolution=0.0):
+    # type: (np.ndarray, float) -> Data1D
     """
     Create empty 1D data using the given *q* as the x value.
 
@@ -258,6 +283,7 @@ def empty_data1D(q, resolution=0.0):
 
 
 def empty_data2D(qx, qy=None, resolution=0.0):
+    # type: (np.ndarray, Optional[np.ndarray], float) -> Data2D
     """
     Create empty 2D data using the given mesh.
 
@@ -271,7 +297,7 @@ def empty_data2D(qx, qy=None, resolution=0.0):
     # 5% dQ/Q resolution
     Qx, Qy = np.meshgrid(qx, qy)
     Qx, Qy = Qx.flatten(), Qy.flatten()
-    Iq = 100 * np.ones_like(Qx)
+    Iq = 100 * np.ones_like(Qx)  # type: np.ndarray
     dIq = np.sqrt(Iq)
     if resolution != 0:
         # https://www.ncnr.nist.gov/staff/hammouda/distance_learning/chapter_15.pdf
@@ -299,6 +325,7 @@ def empty_data2D(qx, qy=None, resolution=0.0):
 
 
 def plot_data(data, view='log', limits=None):
+    # type: (Data, str, Optional[Tuple[float, float]]) -> None
     """
     Plot data loaded by the sasview loader.
 
@@ -322,6 +349,7 @@ def plot_data(data, view='log', limits=None):
 
 def plot_theory(data, theory, resid=None, view='log',
                 use_data=True, limits=None, Iq_calc=None):
+    # type: (Data, Optional[np.ndarray], Optional[np.ndarray], str, bool, Optional[Tuple[float,float]], Optional[np.ndarray]) -> None
     """
     Plot theory calculation.
 
@@ -336,6 +364,8 @@ def plot_theory(data, theory, resid=None, view='log',
 
     *limits* sets the intensity limits on the plot; if None then the limits
     are inferred from the data.
+
+    *Iq_calc* is the raw theory values without resolution smearing
     """
     if hasattr(data, 'lam'):
         _plot_result_sesans(data, theory, resid, use_data=True, limits=limits)
@@ -347,6 +377,7 @@ def plot_theory(data, theory, resid=None, view='log',
 
 
 def protect(fn):
+    # type: (Callable) -> Callable
     """
     Decorator to wrap calls in an exception trapper which prints the
     exception and continues.  Keyboard interrupts are ignored.
@@ -366,6 +397,7 @@ def protect(fn):
 @protect
 def _plot_result1D(data, theory, resid, view, use_data,
                    limits=None, Iq_calc=None):
+    # type: (Data1D, Optional[np.ndarray], Optional[np.ndarray], str, bool, Optional[Tuple[float, float]], Optional[np.ndarray]) -> None
     """
     Plot the data and residuals for 1D data.
     """
@@ -443,6 +475,7 @@ def _plot_result1D(data, theory, resid, view, use_data,
 
 @protect
 def _plot_result_sesans(data, theory, resid, use_data, limits=None):
+    # type: (SesansData, Optional[np.ndarray], Optional[np.ndarray], bool, Optional[Tuple[float, float]]) -> None
     """
     Plot SESANS results.
     """
@@ -453,12 +486,13 @@ def _plot_result_sesans(data, theory, resid, use_data, limits=None):
     num_plots = (use_data or use_theory) + use_resid
 
     if use_data or use_theory:
-        is_tof = np.any(data.lam!=data.lam[0])
+        is_tof = (data.lam != data.lam[0]).any()
         if num_plots > 1:
             plt.subplot(1, num_plots, 1)
         if use_data:
             if is_tof:
-                plt.errorbar(data.x, np.log(data.y)/(data.lam*data.lam), yerr=data.dy/data.y/(data.lam*data.lam))
+                plt.errorbar(data.x, np.log(data.y)/(data.lam*data.lam),
+                             yerr=data.dy/data.y/(data.lam*data.lam))
             else:
                 plt.errorbar(data.x, data.y, yerr=data.dy)
         if theory is not None:
@@ -486,6 +520,7 @@ def _plot_result_sesans(data, theory, resid, use_data, limits=None):
 
 @protect
 def _plot_result2D(data, theory, resid, view, use_data, limits=None):
+    # type: (Data2D, Optional[np.ndarray], Optional[np.ndarray], str, bool, Optional[Tuple[float,float]]) -> None
     """
     Plot the data and residuals for 2D data.
     """
@@ -497,6 +532,7 @@ def _plot_result2D(data, theory, resid, view, use_data, limits=None):
 
     # Put theory and data on a common colormap scale
     vmin, vmax = np.inf, -np.inf
+    target = None # type: Optional[np.ndarray]
     if use_data:
         target = data.data[~data.mask]
         datamin = target[target > 0].min() if view == 'log' else target.min()
@@ -545,6 +581,7 @@ def _plot_result2D(data, theory, resid, view, use_data, limits=None):
 
 @protect
 def _plot_2d_signal(data, signal, vmin=None, vmax=None, view='log'):
+    # type: (Data2D, np.ndarray, Optional[float], Optional[float], str) -> Tuple[float, float]
     """
     Plot the target value for the data.  This could be the data itself,
     the theory calculation, or the residuals.
@@ -586,6 +623,7 @@ def _plot_2d_signal(data, signal, vmin=None, vmax=None, view='log'):
     return vmin, vmax
 
 def demo():
+    # type: () -> None
     """
     Load and plot a SAS dataset.
     """

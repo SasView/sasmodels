@@ -8,6 +8,12 @@ from os import mkdir
 from os.path import basename, exists, join as joinpath
 from sasmodels.core import load_model_info
 
+try:
+    from typing import Optional, BinaryIO, List, Dict
+except ImportError:
+    pass
+else:
+    from sasmodels.modelinfo import ModelInfo
 
 TEMPLATE="""\
 ..
@@ -26,6 +32,7 @@ TEMPLATE="""\
 MODEL_TOC_PATH = "ref/models"
 
 def _make_category(category_name, label, title, parent=None):
+    # type: (str, str, str, Optional[BinaryIO]) -> BinaryIO
     file = open(joinpath(MODEL_TOC_PATH, category_name+".rst"), "w")
     file.write(TEMPLATE%{'label':label, 'title':title, 'bar':'*'*len(title)})
     if parent:
@@ -33,32 +40,36 @@ def _make_category(category_name, label, title, parent=None):
     return file
 
 def _add_subcategory(category_name, parent):
+    # type: (str, BinaryIO) -> None
     parent.write("    %s.rst\n"%category_name)
 
 def _add_model(file, model_name):
+    # type: (IO[str], str) -> None
     file.write("    ../../model/%s.rst\n"%model_name)
 
 def _maybe_make_category(category, models, cat_files, model_toc):
+    # type: (str, List[str], Dict[str, BinaryIO], BinaryIO) -> None
     if category not in cat_files:
         print("Unexpected category %s containing"%category, models, file=sys.stderr)
         title = category.capitalize()+" Functions"
         cat_files[category] = _make_category(category, category, title, model_toc)
 
 def generate_toc(model_files):
+    # type: (List[str]) -> None
     if not model_files:
         print("gentoc needs a list of model files", file=sys.stderr)
 
     # find all categories
-    category = {}
+    category = {} # type: Dict[str, List[str]]
     for item in model_files:
         # assume model is in sasmodels/models/name.py, and ignore the full path
         model_name = basename(item)[:-3]
         if model_name.startswith('_'): continue
         model_info = load_model_info(model_name)
-        if model_info['category'] is None:
+        if model_info.category is None:
             print("Missing category for", item, file=sys.stderr)
         else:
-            category.setdefault(model_info['category'],[]).append(model_name)
+            category.setdefault(model_info.category,[]).append(model_name)
 
     # Check category names
     for k,v in category.items():

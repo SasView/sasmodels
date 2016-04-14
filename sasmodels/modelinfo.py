@@ -102,6 +102,7 @@ def parse_parameter(name, units='', default=np.NaN,
                 low, high = user_limits
                 limits = (float(low), float(high))
             except Exception:
+                print("user_limits",user_limits)
                 raise ValueError("invalid limits for %s"%name)
             else:
                 if low >= high:
@@ -277,8 +278,8 @@ class Parameter(object):
     rather than absolute dispersisity (such as an angle plus or minus
     15 degrees).
 
-    In the usual process these values are set by :func:`make_parameter_table`
-    and :func:`parse_parameter` therein.
+    These values are set by :func:`make_parameter_table` and
+    :func:`parse_parameter` therein.
     """
     def __init__(self, name, units='', default=None, limits=(-np.inf, np.inf),
                  ptype='', description=''):
@@ -643,7 +644,6 @@ def make_model_info(kernel_module):
     info.single = getattr(kernel_module, 'single', True)
     info.structure_factor = getattr(kernel_module, 'structure_factor', False)
     info.profile_axes = getattr(kernel_module, 'profile_axes', ['x', 'y'])
-    info.variant_info = getattr(kernel_module, 'variant_info', None)
     info.source = getattr(kernel_module, 'source', [])
     # TODO: check the structure of the tests
     info.tests = getattr(kernel_module, 'tests', [])
@@ -669,69 +669,150 @@ class ModelInfo(object):
     know which module you need, or with __import__('sasmodels.model.'+name)
     if the name is in a string.
 
-    The *model_info* structure contains the following fields:
-
-    * *id* is the id of the kernel
-    * *name* is the display name of the kernel
-    * *filename* is the full path to the module defining the file (if any)
-    * *title* is a short description of the kernel
-    * *description* is a long description of the kernel (this doesn't seem
-      very useful since the Help button on the model page brings you directly
-      to the documentation page)
-    * *docs* is the docstring from the module.  Use :func:`make_doc` to
-    * *category* specifies the model location in the docs
-    * *parameters* is the model parameter table
-    * *single* is True if the model allows single precision
-    * *structure_factor* is True if the model is useable in a product
-    * *variant_info* contains the information required to select between
-      model variants (e.g., the list of cases) or is None if there are no
-      model variants
-    * *par_type* categorizes the model parameters. See
-      :func:`categorize_parameters` for details.
-    * *demo* contains the *{parameter: value}* map used in compare (and maybe
-      for the demo plot, if plots aren't set up to use the default values).
-      If *demo* is not given in the file, then the default values will be used.
-    * *tests* is a set of tests that must pass
-    * *source* is the list of library files to include in the C model build
-    * *Iq*, *Iqxy*, *form_volume*, *ER*, *VR* and *sesans* are python functions
-      implementing the kernel for the module, or None if they are not
-      defined in python
-    * *composition* is None if the model is independent, otherwise it is a
-      tuple with composition type ('product' or 'mixture') and a list of
-      *model_info* blocks for the composition objects.  This allows us to
-      build complete product and mixture models from just the info.
-    * *control* is the name of the control parameter if there is one.
-    * *hidden* returns the list of hidden parameters given the value of the
-      control parameter
-
     The structure should be mostly static, other than the delayed definition
     of *Iq* and *Iqxy* if they need to be defined.
     """
+    #: Full path to the file defining the kernel, if any.
+    filename = None         # type: Optiona[str]
+    #: Id of the kernel used to load it from the filesystem.
     id = None               # type: str
-    filename = None         # type: str
+    #: Display name of the model, which defaults to the model id but with
+    #: capitalization of the parts so for example core_shell defaults to
+    #: "Core Shell".
     name = None             # type: str
+    #: Short description of the model.
     title = None            # type: str
+    #: Long description of the model.
     description = None      # type: str
+    #: Model parameter table. Parameters are defined using a list of parameter
+    #: definitions, each of which is contains parameter name, units,
+    #: default value, limits, type and description.  See :class:`Parameter`
+    #: for details on the individual parameters.  The parameters are gathered
+    #: into a :class:`ParameterTable`, which provides various views into the
+    #: parameter list.
     parameters = None       # type: ParameterTable
+    #: Demo parameters as a *parameter:value* map used as the default values
+    #: for :mod:`compare`.  Any parameters not set in *demo* will use the
+    #: defaults from the parameter table.  That means no polydispersity, and
+    #: in the case of multiplicity models, a minimal model with no interesting
+    #: scattering.
     demo = None             # type: Dict[str, float]
+    #: Composition is None if this is an independent model, or it is a
+    #: tuple with comoposition type ('product' or 'misture') and a list of
+    #: :class:`ModelInfo` blocks for the composed objects.  This allows us
+    #: to rebuild a complete mixture or product model from the info block.
+    #: *composition* is not given in the model definition file, but instead
+    #: arises when the model is constructed using names such as
+    #: *sphere*hardsphere* or *cylinder+sphere*.
     composition = None      # type: Optional[Tuple[str, List[ModelInfo]]]
+    #: Name of the control parameter for a variant model such as :ref:`rpa`.
+    #: The *control* parameter should appear in the parameter table, with
+    #: limits defined as *[CASES]*, for case names such as
+    #: *CASES = ["diblock copolymer", "triblock copolymer", ...]*.
+    #: This should give *limits=[[case1, case2, ...]]*, but the
+    #: model loader translates this to *limits=[0, len(CASES)-1]*, and adds
+    #: *choices=CASES* to the :class:`Parameter` definition. Note that
+    #: models can use a list of cases as a parameter without it being a
+    #: control parameter.  Either way, the parameter is sent to the model
+    #: evaluator as *float(choice_num)*, where choices are numbered from 0.
+    #: See also :attr:`hidden`.
     control = None          # type: str
-    docs = None             # type: str
-    category = None         # type: Optional[str]
-    single = None           # type: bool
-    structure_factor = None # type: bool
-    profile_axes = None     # type: Tuple[str, str]
-    variant_info = None     # type: Optional[List[str]]
-    source = None           # type: List[str]
-    tests = None            # type: List[TestCondition]
-    ER = None               # type: Optional[Callable[[np.ndarray], np.ndarray]]
-    VR = None               # type: Optional[Callable[[np.ndarray], Tuple[np.ndarray, np.ndarray]]]
-    form_volume = None      # type: Union[None, str, Callable[[np.ndarray], float]]
-    Iq = None               # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
-    Iqxy = None             # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
-    profile = None          # type: Optional[Callable[[np.ndarray], None]]
-    sesans = None           # type: Optional[Callable[[np.ndarray], np.ndarray]]
+    #: Different variants require different parameters.  In order to show
+    #: just the parameters needed for the variant selected by :attr:`control`,
+    #: you should provide a function *hidden(control) -> set(['a', 'b', ...])*
+    #: indicating which parameters need to be hidden.  For multiplicity
+    #: models, you need to use the complete name of the parameter, including
+    #: its number.  So for example, if variant "a" uses only *sld1* and *sld2*,
+    #: then *sld3*, *sld4* and *sld5* of multiplicity parameter *sld[5]*
+    #: should be in the hidden set.
     hidden = None           # type: Optional[Callable[[int], Set[str]]]
+    #: Doc string from the top of the model file.  This should be formatted
+    #: using ReStructuredText format, with latex markup in ".. math"
+    #: environments, or in dollar signs.  This will be automatically
+    #: extracted to a .rst file by :func:`generate.make_docs`, then
+    #: converted to HTML or PDF by Sphinx.
+    docs = None             # type: str
+    #: Location of the model description in the documentation.  This takes the
+    #: form of "section" or "section:subsection".  So for example,
+    #: :ref:`porod` uses *category="shape-independent"* so it is in the
+    #: :ref:`Shape-independent` section whereas
+    #: :ref:`capped_cylinder` uses: *category="shape:cylinder"*, which puts
+    #: it in the :ref:`shape-cylinder` section.
+    category = None         # type: Optional[str]
+    #: True if the model can be computed accurately with single precision.
+    #: This is True by default, but models such as :ref:`bcc_paracrystal` set
+    #: it to False because they require double precision calculations.
+    single = None           # type: bool
+    #: True if the model is a structure factor used to model the interaction
+    #: between form factor models.  This will default to False if it is not
+    #: provided in the file.
+    structure_factor = None # type: bool
+    #: List of C source files used to define the model.  The source files
+    #: should define the *Iq* function, and possibly *Iqxy*, though a default
+    #: *Iqxy = Iq(sqrt(qx**2+qy**2)* will be created if no *Iqxy* is provided.
+    #: Files containing the most basic functions must appear first in the list,
+    #: followed by the files that use those functions.  Form factors are
+    #: indicated by providing a :attr:`ER` function.
+    source = None           # type: List[str]
+    #: The set of tests that must pass.  The format of the tests is described
+    #: in :mod:`model_test`.
+    tests = None            # type: List[TestCondition]
+    #: Returns the effective radius of the model given its volume parameters.
+    #: The presence of *ER* indicates that the model is a form factor model
+    #: that may be used together with a structure factor to form an implicit
+    #: multiplication model.
+    #:
+    #: The parameters to the *ER* function must be marked with type *volume*.
+    #: in the parameter table.  They will appear in the same order as they
+    #: do in the table.  The values passed to *ER* will be vectors, with one
+    #: value for each polydispersity condition.  For example, if the model
+    #: is polydisperse over both length and radius, then both length and
+    #: radius will have the same number of values in the vector, with one
+    #: value for each *length X radius*.  If only *radius* is polydisperse,
+    #: then the value for *length* will be repeated once for each value of
+    #: *radius*.  The *ER* function should return one effective radius for
+    #: each parameter set.  Multiplicity parameters will be received as
+    #: arrays, with one row per polydispersity condition.
+    ER = None               # type: Optional[Callable[[np.ndarray], np.ndarray]]
+    #: Returns the occupied volume and the total volume for each parameter set.
+    #: See :attr:`ER` for details on the parameters.
+    VR = None               # type: Optional[Callable[[np.ndarray], Tuple[np.ndarray, np.ndarray]]]
+    #: Returns the form volume for python-based models.  Form volume is needed
+    #: for volume normalization in the polydispersity integral.  If no
+    #: parameters are *volume* parameters, then form volume is not needed.
+    #: For C-based models, (with :attr:`sources` defined, or with :attr:`Iq`
+    #: defined using a string containing C code), form_volume must also be
+    #: C code, either defined as a string, or in the sources.
+    form_volume = None      # type: Union[None, str, Callable[[np.ndarray], float]]
+    #: Returns *I(q, a, b, ...)* for parameters *a*, *b*, etc. defined
+    #: by the parameter table.  *Iq* can be defined as a python function, or
+    #: as a C function.  If it is defined in C, then set *Iq* to the body of
+    #: the C function, including the return statement.  This function takes
+    #: values for *q* and each of the parameters as separate *double* values
+    #: (which may be converted to float or long double by sasmodels).  All
+    #: source code files listed in :attr:`sources` will be loaded before the
+    #: *Iq* function is defined.  If *Iq* is not present, then sources should
+    #: define *static double Iq(double q, double a, double b, ...)* which
+    #: will return *I(q, a, b, ...)*.  Multiplicity parameters are sent as
+    #: pointers to doubles.  Constants in floating point expressions should
+    #: include the decimal point. See :mod:`generate` for more details.
+    Iq = None               # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
+    #: Returns *I(qx, qy, a, b, ...)*.  The interface follows :attr:`Iq`.
+    Iqxy = None             # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
+    #: Returns a model profile curve *x, y*.  If *profile* is defined, this
+    #: curve will appear in response to the *Show* button in SasView.  Use
+    #: :attr:`profile_axes` to set the axis labels.  Note that *y* values
+    #: will be scaled by 1e6 before plotting.
+    profile = None          # type: Optional[Callable[[np.ndarray], None]]
+    #: Axis labels for the :attr:`profile` plot.  The default is *['x', 'y']*.
+    #: Only the *x* component is used for now.
+    profile_axes = None     # type: Tuple[str, str]
+    #: Returns *sesans(z, a, b, ...)* for models which can directly compute
+    #: the SESANS correlation function.  Note: not currently implemented.
+    sesans = None           # type: Optional[Callable[[np.ndarray], np.ndarray]]
+    #: :class:details.CallDetails data for mono-disperse function evaluation.
+    #: This field is created automatically by the model loader, and should
+    #: not be defined as part of the model definition file.
     mono_details = None     # type: CallDetails
 
     def __init__(self):
@@ -739,6 +820,12 @@ class ModelInfo(object):
         pass
 
     def get_hidden_parameters(self, control):
+        """
+        Returns the set of hidden parameters for the model.  *control* is the
+        value of the control parameter.  Note that multiplicity models have
+        an implicit control parameter, which is the parameter that controls
+        the multiplicity.
+        """
         if self.hidden is not None:
             hidden = self.hidden(control)
         else:
