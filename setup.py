@@ -1,9 +1,14 @@
+import os
 from setuptools import setup,find_packages
+
+# Create the model .so's
+os.system("python gen_so.py")
 
 packages = find_packages(exclude=['contrib', 'docs', 'tests*'])
 package_data = {
     'sasmodels.models': ['*.c','lib/*.c'],
     'sasmodels': ['*.c'],
+    'sasmodels.models.dll': ['*.so'],
 }
 required = []
 
