@@ -26,6 +26,23 @@ from . import core
 from . import custom
 from . import generate
 
+try:
+    from typing import Dict, Mapping, Any, Sequence, Tuple, NamedTuple, List, Optional
+    from .kernel import KernelModel
+    MultiplicityInfoType = NamedTuple(
+        'MuliplicityInfo',
+        [("number", int), ("control", str), ("choices", List[str]),
+         ("x_axis_label", str)])
+except ImportError:
+    pass
+
+# TODO: separate x_axis_label from multiplicity info
+# The x-axis label belongs with the profile generating function
+MultiplicityInfo = collections.namedtuple(
+    'MultiplicityInfo',
+    ["number", "control", "choices", "x_axis_label"],
+)
+
 def load_standard_models():
     """
     Load and return the list of predefined models.
@@ -68,68 +85,143 @@ def _make_model_from_info(model_info):
     """
     Convert *model_info* into a SasView model wrapper.
     """
-    def __init__(self, multfactor=1):
-        SasviewModel.__init__(self)
-    attrs = dict(__init__=__init__, _model_info=model_info)
-    ConstructedModel = type(model_info['name'], (SasviewModel,), attrs)
+    model_info['variant_info'] = None  # temporary hack for older sasview
+    def __init__(self, multiplicity=1):
+        SasviewModel.__init__(self, multiplicity=multiplicity)
+    attrs = _generate_model_attributes(model_info)
+    attrs['__init__'] = __init__
+    ConstructedModel = type(model_info['id'], (SasviewModel,), attrs)
     return ConstructedModel
 
+def _generate_model_attributes(model_info):
+    # type: (ModelInfo) -> Dict[str, Any]
+    """
+    Generate the class attributes for the model.
+
+    This should include all the information necessary to query the model
+    details so that you do not need to instantiate a model to query it.
+
+    All the attributes should be immutable to avoid accidents.
+    """
+    attrs = {}  # type: Dict[str, Any]
+    attrs['_model_info'] = model_info
+    attrs['name'] = model_info['name']
+    attrs['id'] = model_info['id']
+    attrs['description'] = model_info['description']
+    attrs['category'] = model_info['category']
+
+    # TODO: allow model to override axis labels input/output name/unit
+
+    #self.is_multifunc = False
+    non_fittable = []  # type: List[str]
+    variants = MultiplicityInfo(0, "", [], "")
+    attrs['is_structure_factor'] = model_info['structure_factor']
+    attrs['is_form_factor'] = model_info['ER'] is not None
+    attrs['is_multiplicity_model'] = variants[0] > 1
+    attrs['multiplicity_info'] = variants
+
+    partype = model_info['partype']
+    orientation_params = (
+            partype['orientation']
+            + [n + '.width' for n in partype['orientation']]
+            + partype['magnetic'])
+    magnetic_params = partype['magnetic']
+    fixed = [n + '.width' for n in partype['pd-2d']]
+
+    attrs['orientation_params'] = tuple(orientation_params)
+    attrs['magnetic_params'] = tuple(magnetic_params)
+    attrs['fixed'] = tuple(fixed)
+
+    attrs['non_fittable'] = tuple(non_fittable)
+
+    return attrs
 
 class SasviewModel(object):
     """
     Sasview wrapper for opencl/ctypes model.
     """
-    _model_info = {}
-    def __init__(self):
+    # Model parameters for the specific model are set in the class constructor
+    # via the _generate_model_attributes function, which subclasses
+    # SasviewModel.  They are included here for typing and documentation
+    # purposes.
+    _model = None       # type: KernelModel
+    _model_info = None  # type: ModelInfo
+    #: load/save name for the model
+    id = None           # type: str
+    #: display name for the model
+    name = None         # type: str
+    #: short model description
+    description = None  # type: str
+    #: default model category
+    category = None     # type: str
+
+    #: names of the orientation parameters in the order they appear
+    orientation_params = None # type: Sequence[str]
+    #: names of the magnetic parameters in the order they appear
+    magnetic_params = None    # type: Sequence[str]
+    #: names of the fittable parameters
+    fixed = None              # type: Sequence[str]
+    # TODO: the attribute fixed is ill-named
+
+    # Axis labels
+    input_name = "Q"
+    input_unit = "A^{-1}"
+    output_name = "Intensity"
+    output_unit = "cm^{-1}"
+
+    #: default cutoff for polydispersity
+    cutoff = 1e-5
+
+    # Note: Use non-mutable values for class attributes to avoid errors
+    #: parameters that are not fitted
+    non_fittable = ()        # type: Sequence[str]
+
+    #: True if model should appear as a structure factor
+    is_structure_factor = False
+    #: True if model should appear as a form factor
+    is_form_factor = False
+    #: True if model has multiplicity
+    is_multiplicity_model = False
+    #: Mulitplicity information
+    multiplicity_info = None # type: MultiplicityInfoType
+
+    # Per-instance variables
+    #: parameter {name: value} mapping
+    params = None      # type: Dict[str, float]
+    #: values for dispersion width, npts, nsigmas and type
+    dispersion = None  # type: Dict[str, Any]
+    #: units and limits for each parameter
+    details = None     # type: Mapping[str, Tuple(str, float, float)]
+    #: multiplicity used, or None if no multiplicity controls
+    multiplicity = None     # type: Optional[int]
+
+    def __init__(self, multiplicity):
+        # type: () -> None
+        print("initializing", self.name)
+        #raise Exception("first initialization")
         self._model = None
-        model_info = self._model_info
 
-        self.name = model_info['name']
-        self.description = model_info['description']
-        self.category = None
-        self.multiplicity_info = None
-        self.is_multifunc = False
+        ## _persistency_dict is used by sas.perspectives.fitting.basepage
+        ## to store dispersity reference.
+        self._persistency_dict = {}
 
-        ## interpret the parameters
-        ## TODO: reorganize parameter handling
-        self.details = dict()
+        self.multiplicity = multiplicity
+
         self.params = collections.OrderedDict()
-        self.dispersion = dict()
-        partype = model_info['partype']
+        self.dispersion = {}
+        self.details = {}
 
-        for p in model_info['parameters']:
+        for p in self._model_info['parameters']:
             self.params[p.name] = p.default
             self.details[p.name] = [p.units] + p.limits
 
-        for name in partype['pd-2d']:
+        for name in self._model_info['partype']['pd-2d']:
             self.dispersion[name] = {
                 'width': 0,
                 'npts': 35,
                 'nsigmas': 3,
                 'type': 'gaussian',
             }
-
-        self.orientation_params = (
-            partype['orientation']
-            + [n + '.width' for n in partype['orientation']]
-            + partype['magnetic'])
-        self.magnetic_params = partype['magnetic']
-        self.fixed = [n + '.width' for n in partype['pd-2d']]
-        self.non_fittable = []
-
-        ## independent parameter name and unit [string]
-        self.input_name = model_info.get("input_name", "Q")
-        self.input_unit = model_info.get("input_unit", "A^{-1}")
-        self.output_name = model_info.get("output_name", "Intensity")
-        self.output_unit = model_info.get("output_unit", "cm^{-1}")
-
-        ## _persistency_dict is used by sas.perspectives.fitting.basepage
-        ## to store dispersity reference.
-        ## TODO: _persistency_dict to persistency_dict throughout sasview
-        self._persistency_dict = {}
-
-        ## New fields introduced for opencl rewrite
-        self.cutoff = 1e-5
 
     def __get_state__(self):
         state = self.__dict__.copy()
