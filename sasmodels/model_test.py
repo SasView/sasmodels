@@ -42,8 +42,6 @@ in the parameter list will take on the default parameter value.
 
 Precision defaults to 5 digits (relative).
 """
-#TODO: rename to tests so that tab completion works better for models directory
-
 from __future__ import print_function
 
 import sys
@@ -196,8 +194,13 @@ def _hide_model_case_from_nose():
         def run_all(self):
             # type: () -> None
             smoke_tests = [
+                # test validity at reasonable values
                 ({}, 0.1, None),
                 ({}, (0.1, 0.1), None),
+                # test validity at q = 0
+                #({}, 0.0, None),
+                #({}, (0.0, 0.0), None),
+                # test that ER/VR will run if they exist
                 ({}, 'ER', None),
                 ({}, 'VR', None),
                 ]

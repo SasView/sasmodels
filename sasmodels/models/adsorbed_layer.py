@@ -64,7 +64,7 @@ description = """
 category = "shape:sphere"
 
 # pylint: disable=bad-whitespace, line-too-long
-#             ["name", "units", default, [lower, upper], "type", "description"],
+#   ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [
     ["second_moment", "Ang", 23.0, [0.0, inf], "", "Second moment of polymer distribution"],
     ["adsorbed_amount", "mg/m2", 1.9, [0.0, inf], "", "Adsorbed amount of polymer"],
@@ -74,7 +74,7 @@ parameters = [
     ["sld_shell", "1e-6/Ang^2", 1.5, [-inf, inf], "sld", "Polymer shell SLD"],
     ["sld_solvent", "1e-6/Ang^2", 6.3, [-inf, inf], "sld", "Solvent SLD"],
 ]
-# pylint: disable=bad-whitespace, line-too-long
+# pylint: enable=bad-whitespace, line-too-long
 
 # NB: Scale and Background are implicit parameters on every model
 def Iq(q, second_moment, adsorbed_amount, density_shell, radius,

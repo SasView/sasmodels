@@ -56,6 +56,7 @@ Options (* for default):
     -plot*/-noplot plots or suppress the plot of the model
     -lowq*/-midq/-highq/-exq use q values up to 0.05, 0.2, 1.0, 10.0
     -nq=128 sets the number of Q points in the data set
+    -zero indicates that q=0 should be included
     -1d*/-2d computes 1d or 2d data
     -preset*/-random[=seed] preset or random parameters
     -mono/-poly* force monodisperse/polydisperse
@@ -481,11 +482,13 @@ def make_data(opts):
         set_beam_stop(data, 0.0004)
         index = ~data.mask
     else:
-        if opts['view'] == 'log':
+        if opts['view'] == 'log' and not opts['zero']:
             qmax = math.log10(qmax)
             q = np.logspace(qmax-3, qmax, nq)
         else:
             q = np.linspace(0.001*qmax, qmax, nq)
+        if opts['zero']:
+            q = np.hstack((0, q))
         data = empty_data1D(q, resolution=res)
         index = slice(None, None)
     return data, index
@@ -503,6 +506,15 @@ def make_engine(model_info, data, dtype, cutoff):
         return eval_ctypes(model_info, data, dtype=dtype[:-1], cutoff=cutoff)
     else:
         return eval_opencl(model_info, data, dtype=dtype, cutoff=cutoff)
+
+def _show_invalid(data, theory):
+    if not theory.mask.any():
+        return
+
+    if hasattr(data, 'x'):
+        bad = zip(data.x[theory.mask], theory[theory.mask])
+        print("   *** ", ", ".join("I(%g)=%g"%(x, y) for x,y in bad))
+
 
 def compare(opts, limits=None):
     """
@@ -524,8 +536,10 @@ def compare(opts, limits=None):
         base = opts['engines'][0]
         try:
             base_value, base_time = time_calculation(base, pars, Nbase)
+            base_value = np.ma.masked_invalid(base_value)
             print("%s t=%.2f ms, intensity=%.0f"
-                  % (base.engine, base_time, sum(base_value)))
+                  % (base.engine, base_time, base_value.sum()))
+            _show_invalid(data, base_value)
         except ImportError:
             traceback.print_exc()
             Nbase = 0
@@ -535,8 +549,10 @@ def compare(opts, limits=None):
         comp = opts['engines'][1]
         try:
             comp_value, comp_time = time_calculation(comp, pars, Ncomp)
+            comp_value = np.ma.masked_invalid(comp_value)
             print("%s t=%.2f ms, intensity=%.0f"
-                  % (comp.engine, comp_time, sum(comp_value)))
+                  % (comp.engine, comp_time, comp_value.sum()))
+            _show_invalid(data, comp_value)
         except ImportError:
             traceback.print_exc()
             Ncomp = 0
@@ -559,11 +575,11 @@ def compare(opts, limits=None):
     if limits is None:
         vmin, vmax = np.Inf, -np.Inf
         if Nbase > 0:
-            vmin = min(vmin, min(base_value))
-            vmax = max(vmax, max(base_value))
+            vmin = min(vmin, base_value.min())
+            vmax = max(vmax, base_value.max())
         if Ncomp > 0:
-            vmin = min(vmin, min(comp_value))
-            vmax = max(vmax, max(comp_value))
+            vmin = min(vmin, comp_value.min())
+            vmax = max(vmax, comp_value.max())
         limits = vmin, vmax
 
     if Nbase > 0:
@@ -586,7 +602,7 @@ def compare(opts, limits=None):
         plot_theory(data, None, resid=err, view=errview, use_data=False)
         if view == 'linear':
             plt.xscale('linear')
-        plt.title("max %s = %.3g"%(errstr, max(abs(err))))
+        plt.title("max %s = %.3g"%(errstr, abs(err).max()))
         #cbar_title = errstr if errview=="linear" else "log "+errstr
     #if is2D:
     #    h = plt.colorbar()
@@ -608,7 +624,7 @@ def compare(opts, limits=None):
     return limits
 
 def _print_stats(label, err):
-    sorted_err = np.sort(abs(err))
+    sorted_err = np.sort(abs(err.compressed()))
     p50 = int((len(err)-1)*0.50)
     p98 = int((len(err)-1)*0.98)
     data = [
@@ -628,7 +644,7 @@ NAME_OPTIONS = set([
     'plot', 'noplot',
     'half', 'fast', 'single', 'double',
     'single!', 'double!', 'quad!', 'sasview',
-    'lowq', 'midq', 'highq', 'exq',
+    'lowq', 'midq', 'highq', 'exq', 'zero',
     '2d', '1d',
     'preset', 'random',
     'poly', 'mono',
@@ -754,6 +770,7 @@ def parse_opts():
         elif arg == '-highq':   opts['qmax'] = 1.0
         elif arg == '-midq':    opts['qmax'] = 0.2
         elif arg == '-lowq':    opts['qmax'] = 0.05
+        elif arg == '-zero':    opts['zero'] = True
         elif arg.startswith('-nq='):       opts['nq'] = int(arg[4:])
         elif arg.startswith('-res='):      opts['res'] = float(arg[5:])
         elif arg.startswith('-accuracy='): opts['accuracy'] = arg[10:]
