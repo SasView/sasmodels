@@ -144,8 +144,13 @@ def _hide_model_case_from_nosetests():
 
         def _runTest(self):
             smoke_tests = [
+                # test validity at reasonable values
                 [{}, 0.1, None],
                 [{}, (0.1, 0.1), None],
+                # test validity at q = 0
+                #[{}, 0.0, None],
+                #[{}, (0.0, 0.0), None],
+                # test that ER/VR will run if they exist
                 [{}, 'ER', None],
                 [{}, 'VR', None],
                 ]
@@ -193,7 +198,7 @@ def _hide_model_case_from_nosetests():
                 kernel = model.make_kernel(q_vectors)
                 actual = call_kernel(kernel, pars)
 
-            self.assertGreater(len(actual), 0)
+            self.assertTrue(len(actual) > 0)
             self.assertEqual(len(y), len(actual))
 
             for xi, yi, actual_yi in zip(x, y, actual):

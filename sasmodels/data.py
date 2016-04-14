@@ -379,7 +379,7 @@ def _plot_result1D(data, theory, resid, view, use_data,
     use_resid = resid is not None
     use_calc = use_theory and Iq_calc is not None
     num_plots = (use_data or use_theory) + use_calc + use_resid
-
+    non_positive_x = (data.x<=0.0).any()
 
     scale = data.x**4 if view == 'q4' else 1.0
 
@@ -401,6 +401,8 @@ def _plot_result1D(data, theory, resid, view, use_data,
 
 
         if use_theory:
+            # Note: masks merge, so any masked theory points will stay masked,
+            # and the data mask will be added to it.
             mtheory = masked_array(theory, data.mask.copy())
             mtheory[~np.isfinite(mtheory)] = masked
             if view is 'log':
@@ -412,7 +414,7 @@ def _plot_result1D(data, theory, resid, view, use_data,
         if limits is not None:
             plt.ylim(*limits)
 
-        plt.xscale('linear' if not some_present else view)
+        plt.xscale('linear' if not some_present or non_positive_x  else view)
         plt.yscale('linear'
                    if view == 'q4' or not some_present or not all_positive
                    else view)
@@ -440,7 +442,7 @@ def _plot_result1D(data, theory, resid, view, use_data,
         plt.plot(data.x, mresid, '-')
         plt.xlabel("$q$/A$^{-1}$")
         plt.ylabel('residuals')
-        plt.xscale('linear' if not some_present else view)
+        plt.xscale('linear' if not some_present or non_positive_x else view)
 
 
 @protect
