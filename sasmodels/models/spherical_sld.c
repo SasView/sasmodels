@@ -222,18 +222,17 @@ static double sphere_sld_kernel(double dp[], double q) {
  * @return: function value
  */
 double Iq(double q,
-    int n_shells, double thick_inter_0, int func_inter_0, double core0_sld, double solvent_sld,
-    double flat1_sld, double flat2_sld, double flat3_sld, double flat4_sld, double flat5_sld,
-    double flat6_sld, double flat7_sld, double flat8_sld, double flat9_sld, double flat10_sld,
-    double thick_inter_1, double thick_inter_2, double thick_inter_3, double thick_inter_4, double thick_inter_5,
-    double thick_inter_6, double thick_inter_7, double thick_inter_8, double thick_inter_9, double thick_inter_10,
-    double thick_flat_1, double thick_flat_2, double thick_flat_3, double thick_flat_4, double thick_flat_5,
-    double thick_flat_6, double thick_flat_7, double thick_flat_8, double thick_flat_9, double thick_flat_10,
-    int func_inter_1, int func_inter_2, int func_inter_3, int func_inter_4, int func_inter_5,
-    int func_inter_6, int func_inter_7, int func_inter_8, int func_inter_9, int func_inter_10,
-    double nu_inter_1, double nu_inter_2,double nu_inter_3, double nu_inter_4, double nu_inter_5,
-    double nu_inter_6, double nu_inter_7, double nu_inter_8, double nu_inter_9, double nu_inter_10,
-    int npts_inter, double nu_inter_0, double rad_core_0) {
+    int n_shells,
+    double thick_inter[],
+    double func_inter[],
+    double sld_core,
+    double sld_solvent,
+    double sld_flat[],
+    double thick_flat[],
+    double nu_inter[],
+    int npts_inter,
+    double core_radius
+    ) {
 
     //printf("Number of points %d\n",npts_inter);
     double intensity;
@@ -244,64 +243,17 @@ double Iq(double q,
     dp[1] = 1.0;
     dp[2] = thick_inter_0;
     dp[3] = func_inter_0;
-    dp[4] = core0_sld;
-    dp[5] = solvent_sld;
+    dp[4] = sld_core;
+    dp[5] = sld_solvent;
     dp[6] = 0.0;
 
-    dp[7] = flat1_sld;
-    dp[8] = flat2_sld;
-    dp[9] = flat3_sld;
-    dp[10] = flat4_sld;
-    dp[11] = flat5_sld;
-    dp[12] = flat6_sld;
-    dp[13] = flat7_sld;
-    dp[14] = flat8_sld;
-    dp[15] = flat9_sld;
-    dp[16] = flat10_sld;
-
-    dp[17] = thick_inter_1;
-    dp[18] = thick_inter_2;
-    dp[19] = thick_inter_3;
-    dp[20] = thick_inter_4;
-    dp[21] = thick_inter_5;
-    dp[22] = thick_inter_6;
-    dp[23] = thick_inter_7;
-    dp[24] = thick_inter_8;
-    dp[25] = thick_inter_9;
-    dp[26] = thick_inter_10;
-
-    dp[27] = thick_flat_1;
-    dp[28] = thick_flat_2;
-    dp[29] = thick_flat_3;
-    dp[30] = thick_flat_4;
-    dp[31] = thick_flat_5;
-    dp[32] = thick_flat_6;
-    dp[33] = thick_flat_7;
-    dp[34] = thick_flat_8;
-    dp[35] = thick_flat_9;
-    dp[36] = thick_flat_10;
-
-    dp[37] = func_inter_1;
-    dp[38] = func_inter_2;
-    dp[39] = func_inter_3;
-    dp[40] = func_inter_4;
-    dp[41] = func_inter_5;
-    dp[42] = func_inter_6;
-    dp[43] = func_inter_7;
-    dp[44] = func_inter_8;
-    dp[45] = func_inter_9;
-    dp[46] = func_inter_10;
-
-    dp[47] = nu_inter_1;
-    dp[48] = nu_inter_2;
-    dp[49] = nu_inter_3;
-    dp[50] = nu_inter_4;
-    dp[51] = nu_inter_5;
-    dp[52] = nu_inter_6;
-    dp[53] = nu_inter_7;
-    dp[54] = nu_inter_8;
-    dp[55] = nu_inter_9;
-    dp[56] = nu_inter_10;
+    for (i=0; i<n; i++){
+        dp[i+7] = sld_flat[i];
+        dp[i+17] = thick_inter[i];
+        dp[i+27] = thick_flat[i];
+        dp[i+37] = func_inter[i];
+        dp[i+47] = nu_inter[i];
+    }
 
     dp[57] = npts_inter;
     dp[58] = nu_inter_0;
@@ -319,18 +271,17 @@ double Iq(double q,
  * @return: function value
  */
 double Iqxy(double qx, double qy,
-    int n_shells, double thick_inter_0, int func_inter_0, double core0_sld, double solvent_sld,
-    double flat1_sld, double flat2_sld, double flat3_sld, double flat4_sld, double flat5_sld,
-    double flat6_sld, double flat7_sld, double flat8_sld, double flat9_sld, double flat10_sld,
-    double thick_inter_1, double thick_inter_2, double thick_inter_3, double thick_inter_4, double thick_inter_5,
-    double thick_inter_6, double thick_inter_7, double thick_inter_8, double thick_inter_9, double thick_inter_10,
-    double thick_flat_1, double thick_flat_2, double thick_flat_3, double thick_flat_4, double thick_flat_5,
-    double thick_flat_6, double thick_flat_7, double thick_flat_8, double thick_flat_9, double thick_flat_10,
-    int func_inter_1, int func_inter_2, int func_inter_3, int func_inter_4, int func_inter_5,
-    int func_inter_6, int func_inter_7, int func_inter_8, int func_inter_9, int func_inter_10,
-    double nu_inter_1, double nu_inter_2,double nu_inter_3, double nu_inter_4, double nu_inter_5,
-    double nu_inter_6, double nu_inter_7, double nu_inter_8, double nu_inter_9, double nu_inter_10,
-    int npts_inter, double nu_inter_0, double rad_core_0) {
+    int n_shells,
+    double thick_inter[],
+    double func_inter[],
+    double sld_core,
+    double sld_solvent,
+    double sld_flat[],
+    double thick_flat[],
+    double nu_inter[],
+    int npts_inter,
+    double core_radius
+    ) {
 
     double q = sqrt(qx*qx + qy*qy);
     return Iq(q, n_shells, thick_inter_0, func_inter_0, core0_sld, solvent_sld,
