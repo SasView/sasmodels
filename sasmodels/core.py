@@ -27,8 +27,8 @@ except Exception:
 
 try:
     from typing import List, Union, Optional, Any
-    DType = Union[None, str, np.dtype]
     from .kernel import KernelModel
+    from .modelinfo import ModelInfo
 except ImportError:
     pass
 
@@ -55,17 +55,8 @@ def list_models():
     available_models = [basename(f)[:-3] for f in files]
     return available_models
 
-def isstr(s):
-    # type: (Any) -> bool
-    """
-    Return True if *s* is a string-like object.
-    """
-    try: s + ''
-    except Exception: return False
-    return True
-
 def load_model(model_name, dtype=None, platform='ocl'):
-    # type: (str, DType, str) -> KernelModel
+    # type: (str, str, str) -> KernelModel
     """
     Load model info and build model.
 
@@ -101,7 +92,7 @@ def load_model_info(model_name):
 
 
 def build_model(model_info, dtype=None, platform="ocl"):
-    # type: (modelinfo.ModelInfo, np.dtype, str) -> KernelModel
+    # type: (modelinfo.ModelInfo, str, str) -> KernelModel
     """
     Prepare the model for the default execution platform.
 
@@ -112,10 +103,9 @@ def build_model(model_info, dtype=None, platform="ocl"):
     :func:`load_model_info`.
 
     *dtype* indicates whether the model should use single or double precision
-    for the calculation. Any valid numpy single or double precision identifier
-    is valid, such as 'single', 'f', 'f32', or np.float32 for single, or
-    'double', 'd', 'f64'  and np.float64 for double.  If *None*, then use
-    'single' unless the model defines single=False.
+    for the calculation.  Choices are 'single', 'double', 'quad', 'half',
+    or 'fast'.  If *dtype* ends with '!', then force the use of the DLL rather
+    than OpenCL for the calculation.
 
     *platform* should be "dll" to force the dll to be used for C models,
     otherwise it uses the default "ocl".
@@ -146,17 +136,17 @@ def build_model(model_info, dtype=None, platform="ocl"):
     # open(model_info.name+'.c','w').write(source)
     # source = open(model_info.name+'.cl','r').read()
     source = generate.make_source(model_info)
-    if dtype is None:
-        dtype = generate.F32 if model_info.single else generate.F64
+    numpy_dtype, fast = parse_dtype(model_info, dtype)
     if (platform == "dll"
+            or dtype.endswith('!')
             or not HAVE_OPENCL
-            or not kernelcl.environment().has_type(dtype)):
-        return kerneldll.load_dll(source, model_info, dtype)
+            or not kernelcl.environment().has_type(numpy_dtype)):
+        return kerneldll.load_dll(source, model_info, numpy_dtype)
     else:
-        return kernelcl.GpuModel(source, model_info, dtype)
+        return kernelcl.GpuModel(source, model_info, numpy_dtype, fast=fast)
 
 def precompile_dll(model_name, dtype="double"):
-    # type: (str, DType) -> Optional[str]
+    # type: (str, str) -> Optional[str]
     """
     Precompile the dll for a model.
 
@@ -171,5 +161,34 @@ def precompile_dll(model_name, dtype="double"):
     dll path and the allowed floating point precision.
     """
     model_info = load_model_info(model_name)
+    numpy_dtype, fast = parse_dtype(model_info, dtype)
     source = generate.make_source(model_info)
-    return kerneldll.make_dll(source, model_info, dtype=dtype) if source else None
+    return kerneldll.make_dll(source, model_info, dtype=numpy_dtype) if source else None
+
+def parse_dtype(model_info, dtype):
+    # type: (ModelInfo, str) -> Tuple[np.dtype, bool]
+    """
+    Interpret dtype string, returning np.dtype and fast flag.
+
+    Possible types include 'half', 'single', 'double' and 'quad'.  If the
+    type is 'fast', then this is equivalent to dtype 'single' with the
+    fast flag set to True.
+    """
+    # Fill in default type based on required precision in the model
+    if dtype is None:
+        dtype = 'single' if model_info.single else 'double'
+
+    # Ignore platform indicator
+    if dtype.endswith('!'):
+        dtype = dtype[:-1]
+
+    # Convert type string to type
+    if dtype == 'quad':
+        return generate.F128, False
+    elif dtype == 'half':
+        return generate.F16, False
+    elif dtype == 'fast':
+        return generate.F32, True
+    else:
+        return np.dtype(dtype), False
+
