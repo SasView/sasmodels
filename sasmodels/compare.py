@@ -746,6 +746,7 @@ def parse_opts():
         'rel_err'   : True,
         'explore'   : False,
         'use_demo'  : True,
+        'zero'      : False,
     }
     engines = []
     for arg in flags:
