@@ -157,9 +157,4 @@ demo = dict(scale=1, background=0,
             thickness_pd=.2, thickness_pd_n=10,
             theta_pd=15, theta_pd_n=45,
             phi_pd=15, phi_pd_n=1)
-oldname = 'CoreShellCylinderModel'
-oldpars = dict( sld_core='core_sld',
-               sld_shell='shell_sld',
-               sld_solvent='solvent_sld',
-               theta='axis_theta', phi='axis_phi')
 # ADDED by:  RKH  ON: 18Mar2016 renamed sld's etc

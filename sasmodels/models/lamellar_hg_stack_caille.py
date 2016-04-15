@@ -137,12 +137,6 @@ demo = dict(
     spacing_pd=0.2, spacing_pd_n=40,
     )
 
-oldname = 'LamellarPSHGModel'
-
-oldpars = dict(
-    tail_length='deltaT', head_length='deltaH', Nlayers='n_plates',
-    Caille_parameter='caille', sld='sld_tail', sld_head='sld_head',
-    sld_solvent='sld_solvent')
 #
 tests = [[{'scale': 1.0, 'background': 0.0, 'tail_length': 10.0, 'head_length': 2.0,
            'Nlayers': 30.0, 'spacing': 40., 'Caille_parameter': 0.001, 'sld': 0.4,

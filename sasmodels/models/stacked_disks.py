@@ -154,12 +154,6 @@ demo = dict(background=0.001,
             theta=0,
             phi=0)
 
-
-oldname = 'StackedDisksModel'
-
-oldpars = dict(sld_core='core_sld',sld_layer='layer_sld',sld_solvent='solvent_sld',n_stacking='n_stacking',theta='axis_theta',
-               phi='axis_phi')
-
 tests = [
     # Accuracy tests based on content in test/utest_extra_models.py.
     # Added 2 tests with n_stacked = 5 using SasView 3.1.2 - PDB

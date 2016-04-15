@@ -100,14 +100,8 @@ def Iqxy(qx, qy, *args):
     :return:     2D-Intensity
     """
     return Iq(sqrt(qx ** 2 + qy ** 2), *args)
-
 Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
 
 demo = dict(scale=1, background=0,
             porod_scale=1.0e-05, porod_exp=3,
             lorentz_scale=10, lorentz_length=50, peak_pos=0.1, lorentz_exp=2)
-
-oldname = "BroadPeakModel"
-oldpars = dict(porod_scale='scale_p', porod_exp='exponent_p',
-               lorentz_scale='scale_l', lorentz_length='length_l', peak_pos='q_peak',
-               lorentz_exp='exponent_l', scale=None)

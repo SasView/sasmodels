@@ -221,14 +221,6 @@ demo = dict(scale=1, background=0,
             phi_pd=10, phi_pd_n=1,
             psi_pd=10, psi_pd_n=10)
 
-# For testing against the old sasview models, include the converted parameter
-# names and the target sasview model name.
-oldname = 'ParallelepipedModel'
-oldpars = dict(theta='parallel_theta', phi='parallel_phi', psi='parallel_psi',
-               a_side='short_a', b_side='short_b', c_side='long_c',
-               sld='sldPipe', sld_solvent='sldSolv')
-
-
 qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
 tests = [[{}, 0.2, 0.17758004974],
          [{}, [0.2], [0.17758004974]],

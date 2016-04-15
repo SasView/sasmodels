@@ -157,8 +157,6 @@ Iqxy = """
 # VR defaults to 1.0
 
 demo = dict(radius_effective=200, volfraction=0.2, radius_effective_pd=0.1, radius_effective_pd_n=40)
-oldname = 'HardsphereStructure'
-oldpars = dict(radius_effective="effect_radius",radius_effective_pd="effect_radius_pd",radius_effective_pd_n="effect_radius_pd_n")
 # Q=0.001 is in the Taylor series, low Q part, so add Q=0.1, assuming double precision sasview is correct
 tests = [
         [ {'scale': 1.0, 'background' : 0.0, 'radius_effective' : 50.0, 'volfraction' : 0.2,

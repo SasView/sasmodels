@@ -101,14 +101,6 @@ demo = dict(scale=1, background=0,
             theta=90,
             phi=0)
 
-oldname = 'CoreShellBicelleModel'
-
-oldpars = dict(sld_core='core_sld', sld_face='face_sld', sld_rim='rim_sld',
-               sld_solvent='solvent_sld', rim_thickness='rim_thick',
-               face_thickness='face_thick',
-               theta='axis_theta',
-               phi='axis_phi')
-
 qx, qy = 0.4 * cos(90), 0.5 * sin(0)
 tests = [
     # Accuracy tests based on content in test/utest_other_models.py

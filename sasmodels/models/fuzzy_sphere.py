@@ -1,7 +1,6 @@
 r"""
-For information about polarised and magnetic scattering, click here_.
-
-.. _here: polar_mag_help.html
+For information about polarised and magnetic scattering, see 
+the :doc:`magnetic help <../sasgui/perspectives/fitting/mag_help>` documentation.
 
 Definition
 ----------
@@ -119,10 +118,6 @@ demo = dict(scale=1, background=0.001,
             fuzziness=10,
             radius_pd=.2, radius_pd_n=45,
             fuzziness_pd=.2, fuzziness_pd_n=0)
-
-oldname = "FuzzySphereModel"
-oldpars = dict(sld='sldSph', sld_solvent='sldSolv', radius='radius', fuzziness='fuzziness')
-
 
 tests = [
     # Accuracy tests based on content in test/utest_models_new1_3.py

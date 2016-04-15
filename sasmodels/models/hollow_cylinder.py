@@ -119,13 +119,6 @@ demo = dict(scale=1.0, background=0.0, length=400.0, radius=30.0,
             theta_pd=10, theta_pd_n=5,
            )
 
-# For testing against the old sasview models, include the converted parameter
-# names and the target sasview model name.
-oldname = 'HollowCylinderModel'
-oldpars = dict(scale='scale', background='background', radius='radius',
-               core_radius='core_radius', sld='sldCyl', length='length',
-               sld_solvent='sldSolv', phi='axis_phi', theta='axis_theta')
-
 # Parameters for unit tests
 tests = [
     [{"radius": 30.0}, 0.00005, 1764.926],

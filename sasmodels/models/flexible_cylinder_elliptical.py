@@ -118,10 +118,6 @@ demo = dict(scale=1.0, background=0.0001,
             sld=1.0,
             sld_solvent=6.3)
 
-oldname = 'FlexCylEllipXModel'
-oldpars = dict(sld='sldCyl', sld_solvent='sldSolv')
-
-
 tests = [
     # Accuracy tests based on content in test/utest_other_models.py
     # Currently fails in OCL

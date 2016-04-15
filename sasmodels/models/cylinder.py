@@ -137,12 +137,6 @@ demo = dict(scale=1, background=0,
             theta_pd=10, theta_pd_n=5,
             phi_pd=10, phi_pd_n=5)
 
-# For testing against the old sasview models, include the converted parameter
-# names and the target sasview model name.
-oldname = 'CylinderModel'
-oldpars = dict(theta='cyl_theta', phi='cyl_phi', sld='sldCyl', sld_solvent='sldSolv')
-
-
 qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
 tests = [[{}, 0.2, 0.042761386790780453],
          [{}, [0.2], [0.042761386790780453]],

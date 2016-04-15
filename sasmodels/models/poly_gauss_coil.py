@@ -49,7 +49,8 @@ S M King, *Small Angle Neutron Scattering* in *Modern Techniques for Polymer Cha
 http://www.ncnr.nist.gov/staff/hammouda/distance_learning/chapter_28.pdf
 """
 
-from numpy import inf, sqrt, exp, power
+import numpy as np
+from numpy import inf, exp, power, sqrt
 
 name =  "poly_gauss_coil"
 title =  "Scattering from polydisperse polymer coils"
@@ -69,35 +70,28 @@ parameters =  [["i_zero", "1/cm", 70.0, [0.0, inf], "", "Intensity at q=0"],
 def Iq(q, i_zero, radius_gyration, polydispersity):
     # pylint: disable = missing-docstring
     u = polydispersity - 1.0
-    z = ((q * radius_gyration) * (q * radius_gyration)) / (1.0 + 2.0 * u)
-    if (q == 0).any():
-        inten = i_zero
-    else:
+    z = (q*radius_gyration)**2 / (1.0 + 2.0*u)
     # need to trap the case of the polydispersity being 1 (ie, monodispersity!)
-        if polydispersity == 1:
-            inten = i_zero * 2.0 * (exp(-z) + z - 1.0 ) / (z * z)
-        else:
-            minusoneonu = -1.0 / u
-            inten = i_zero * 2.0 * (power((1.0 + u * z),minusoneonu) + z - 1.0 ) / ((1.0 + u) * (z * z))
+    if polydispersity == 1.0:
+        inten = i_zero * 2.0 * (exp(-z) + z - 1.0)
+    else:
+        inten = i_zero * 2.0 * (power(1.0 + u*z, -1.0/u) + z - 1.0) / (1.0 + u)
+    index = q != 0.
+    inten[~index] = i_zero
+    inten[index] /= z[index]**2
     return inten
-#Iq.vectorized =  True  # Iq accepts an array of q values
+Iq.vectorized =  True  # Iq accepts an array of q values
 
 def Iqxy(qx, qy, *args):
     # pylint: disable = missing-docstring
     return Iq(sqrt(qx ** 2 + qy ** 2), *args)
-#Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
+Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
 
 demo =  dict(scale = 1.0,
             i_zero = 70.0,
             radius_gyration = 75.0,
             polydispersity = 2.0,
             background = 0.0)
-
-oldname =  "Poly_GaussCoil"
-oldpars =  dict(scale = 'scale',
-               radius_gyration = 'rg',
-               polydispersity = 'poly_m',
-               background = 'background')
 
 # these unit test values taken from SasView 3.1.2
 tests =  [

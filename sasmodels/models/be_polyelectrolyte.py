@@ -137,17 +137,6 @@ demo = dict(scale=1, background=0.1,
             ionization_degree=0.05,
             polymer_concentration=0.7)
 
-oldname = "BEPolyelectrolyte"
-
-oldpars = dict(background='background',
-               contrast_factor='k',
-               bjerrum_length='lb',
-               virial_param='h',
-               monomer_length='b',
-               salt_concentration='cs',
-               ionization_degree='alpha',
-               polymer_concentration='c')
-
 tests = [
 
     # Accuracy tests based on content in test/utest_other_models.py

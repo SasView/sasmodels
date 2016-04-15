@@ -208,8 +208,8 @@ class DllModel(object):
         #print("dll", self.dllpath)
         try:
             self.dll = ct.CDLL(self.dllpath)
-        except Exception as exc:
-            annotate_exception(exc, "while loading "+self.dllpath)
+        except:
+            annotate_exception("while loading "+self.dllpath)
             raise
 
         fp = (c_float if self.dtype == generate.F32
@@ -232,12 +232,12 @@ class DllModel(object):
         self.info, self.dllpath = state
         self.dll = None
 
-    def __call__(self, q_vectors):
+    def make_kernel(self, q_vectors):
         q_input = PyInput(q_vectors, self.dtype)
         if self.dll is None: self._load_dll()
         kernel = self.Iqxy if q_input.is_2d else self.Iq
         return DllKernel(kernel, self.info, q_input)
-    
+
     def release(self):
         """
         Release any resources associated with the model.

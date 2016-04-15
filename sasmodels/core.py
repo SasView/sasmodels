@@ -1,10 +1,13 @@
 """
 Core model handling routines.
 """
+__all__ = [
+    "list_models", "load_model_info", "precompile_dll",
+    "build_model", "make_kernel", "call_kernel", "call_ER_VR",
+    ]
 
 from os.path import basename, dirname, join as joinpath, splitext
 from glob import glob
-import imp
 
 import numpy as np
 
@@ -23,10 +26,28 @@ try:
 except:
     HAVE_OPENCL = False
 
-__all__ = [
-    "list_models", "load_model_info", "precompile_dll",
-    "build_model", "make_kernel", "call_kernel", "call_ER_VR",
-]
+try:
+    np.meshgrid([])
+    meshgrid = np.meshgrid
+except ValueError:
+    # CRUFT: np.meshgrid requires multiple vectors
+    def meshgrid(*args):
+        if len(args) > 1:
+            return np.meshgrid(*args)
+        else:
+            return [np.asarray(v) for v in args]
+
+# TODO: refactor composite model support
+# The current load_model_info/build_model does not reuse existing model
+# definitions when loading a composite model, instead reloading and
+# rebuilding the kernel for each component model in the expression.  This
+# is fine in a scripting environment where the model is built when the script
+# starts and is thrown away when the script ends, but may not be the best
+# solution in a long-lived application.  This affects the following functions:
+#
+#    load_model
+#    load_model_info
+#    build_model
 
 def list_models():
     """
@@ -51,22 +72,6 @@ def load_model(model_name, **kw):
     """
     return build_model(load_model_info(model_name), **kw)
 
-def load_model_info_from_path(path):
-    # Pull off the last .ext if it exists; there may be others
-    name = basename(splitext(path)[0])
-
-    # Not cleaning name since don't need to be able to reload this
-    # model later
-    # Should probably turf the model from sys.modules after we are done...
-
-    # Placing the model in the 'sasmodels.custom' name space, even
-    # though it doesn't actually exist.  imp.load_source doesn't seem
-    # to care.
-    kernel_module = imp.load_source('sasmodels.custom.'+name, path)
-
-    # Now that we have the module, we can load it as usual
-    model_info = generate.make_model_info(kernel_module)
-    return model_info
 
 def load_model_info(model_name):
     """
@@ -89,9 +94,7 @@ def load_model_info(model_name):
         P_info, Q_info = [load_model_info(p) for p in parts]
         return product.make_product_info(P_info, Q_info)
 
-    #import sys; print "\n".join(sys.path)
-    __import__('sasmodels.models.'+model_name)
-    kernel_module = getattr(models, model_name, None)
+    kernel_module = generate.load_kernel_module(model_name)
     return generate.make_model_info(kernel_module)
 
 
@@ -166,12 +169,6 @@ def precompile_dll(model_name, dtype="double"):
     return kerneldll.make_dll(source, model_info, dtype=dtype) if source else None
 
 
-def make_kernel(model, q_vectors):
-    """
-    Return a computation kernel from the model definition and the q input.
-    """
-    return model(q_vectors)
-
 def get_weights(model_info, pars, name):
     """
     Generate the distribution for parameter *name* given the parameter values
@@ -200,14 +197,14 @@ def dispersion_mesh(pars):
     parameter set in the vector.
     """
     value, weight = zip(*pars)
-    value = [v.flatten() for v in np.meshgrid(*value)]
-    weight = np.vstack([v.flatten() for v in np.meshgrid(*weight)])
+    value = [v.flatten() for v in meshgrid(*value)]
+    weight = np.vstack([v.flatten() for v in meshgrid(*weight)])
     weight = np.prod(weight, axis=0)
     return value, weight
 
 def call_kernel(kernel, pars, cutoff=0, mono=False):
     """
-    Call *kernel* returned from :func:`make_kernel` with parameters *pars*.
+    Call *kernel* returned from *model.make_kernel* with parameters *pars*.
 
     *cutoff* is the limiting value for the product of dispersion weights used
     to perform the multidimensional dispersion calculation more quickly at a
@@ -215,6 +212,8 @@ def call_kernel(kernel, pars, cutoff=0, mono=False):
     the entire dispersion cube.  Using *cutoff=1e-5* can be 50% faster, but
     with an error of about 1%, which is usually less than the measurement
     uncertainty.
+
+    *mono* is True if polydispersity should be set to none on all parameters.
     """
     fixed_pars = [pars.get(name, kernel.info['defaults'][name])
                   for name in kernel.fixed_pars]
@@ -246,35 +245,35 @@ def call_ER_VR(model_info, vol_pars):
     return effect_radius, volume_ratio
 
 
-def call_ER(info, pars):
+def call_ER(model_info, values):
     """
-    Call the model ER function using *pars*.
-    *info* is either *model.info* if you have a loaded model, or *kernel.info*
-    if you have a model kernel prepared for evaluation.
+    Call the model ER function using *values*. *model_info* is either
+    *model.info* if you have a loaded model, or *kernel.info* if you
+    have a model kernel prepared for evaluation.
     """
-    ER = info.get('ER', None)
+    ER = model_info.get('ER', None)
     if ER is None:
         return 1.0
     else:
-        vol_pars = [get_weights(info, pars, name)
-                    for name in info['partype']['volume']]
+        vol_pars = [get_weights(model_info, values, name)
+                    for name in model_info['partype']['volume']]
         value, weight = dispersion_mesh(vol_pars)
         individual_radii = ER(*value)
         #print(values[0].shape, weights.shape, fv.shape)
         return np.sum(weight*individual_radii) / np.sum(weight)
 
-def call_VR(info, pars):
+def call_VR(model_info, values):
     """
     Call the model VR function using *pars*.
     *info* is either *model.info* if you have a loaded model, or *kernel.info*
     if you have a model kernel prepared for evaluation.
     """
-    VR = info.get('VR', None)
+    VR = model_info.get('VR', None)
     if VR is None:
         return 1.0
     else:
-        vol_pars = [get_weights(info, pars, name)
-                    for name in info['partype']['volume']]
+        vol_pars = [get_weights(model_info, values, name)
+                    for name in model_info['partype']['volume']]
         value, weight = dispersion_mesh(vol_pars)
         whole, part = VR(*value)
         return np.sum(weight*part)/np.sum(weight*whole)

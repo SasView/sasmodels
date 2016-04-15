@@ -177,8 +177,6 @@ Iqxy = """
 # ER defaults to 0.0
 # VR defaults to 1.0
 
-oldname = 'StickyHSStructure'
-oldpars = dict(radius_effective="effect_radius",radius_effective_pd="effect_radius_pd",radius_effective_pd_n="effect_radius_pd_n")
 demo = dict(radius_effective=200, volfraction=0.2, perturb=0.05,
             stickiness=0.2, radius_effective_pd=0.1, radius_effective_pd_n=40)
 #

@@ -80,8 +80,7 @@ L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and Neutron
 New York, (1987)
 """
 
-import math
-from numpy import pi, inf
+from numpy import pi, inf, sqrt
 
 name = "elliptical_cylinder"
 title = "Form factor for an elliptical cylinder."
@@ -109,9 +108,6 @@ source = ["lib/polevl.c","lib/sas_J1.c", "lib/gauss76.c", "lib/gauss20.c", "elli
 demo = dict(scale=1, background=0, r_minor=100, axis_ratio=1.5, length=400.0,
             sld=4.0, sld_solvent=1.0, theta=10.0, phi=20, psi=30, theta_pd=10, phi_pd=2, psi_pd=3)
 
-oldname = 'EllipticalCylinderModel'
-oldpars = dict(axis_ratio="r_ratio",theta='cyl_theta', phi='cyl_phi', psi='cyl_psi', sld='sldCyl', sld_solvent='sldSolv')
-
 def ER(r_minor, axis_ratio, length):
     """
         Equivalent radius
@@ -119,7 +115,7 @@ def ER(r_minor, axis_ratio, length):
         @param axis_ratio: Ratio of major radius over minor radius
         @param length: Length of the cylinder
     """
-    radius = math.sqrt(r_minor * r_minor * axis_ratio)
+    radius = sqrt(r_minor * r_minor * axis_ratio)
     ddd = 0.75 * radius * (2 * radius * length + (length + radius) * (length + pi * radius))
     return 0.5 * (ddd) ** (1. / 3.)
 

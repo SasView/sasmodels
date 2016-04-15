@@ -14,7 +14,7 @@ Small angle scattering models are defined by a set of kernel functions:
     a form with particular dimensions for a single orientation.
 
     *form_volume(p1, p2, ...)* returns the volume of the form with particular
-    dimension.
+    dimension, or 1.0 if no volume normalization is required.
 
     *ER(p1, p2, ...)* returns the effective radius of the form with
     particular dimensions.
@@ -153,14 +153,6 @@ The kernel module must set variables defining the kernel meta data:
     parameter list.  *demo* is mostly needed to set the default
     polydispersity values for tests.
 
-    *oldname* is the name of the model in sasview before sasmodels
-    was split into its own package, and *oldpars* is a dictionary
-    of *parameter: old_parameter* pairs defining the new names for
-    the parameters.  This is used by *compare* to check the values
-    of the new model against the values of the old model before
-    you are ready to add the new model to sasmodels.
-
-
 An *model_info* dictionary is constructed from the kernel meta data and
 returned to the caller.
 
@@ -211,7 +203,9 @@ Code follows the C99 standard with the following extensions and conditions::
 """
 from __future__ import print_function
 
-# TODO: identify model files which have changed since loading and reload them.
+#TODO: identify model files which have changed since loading and reload them.
+#TODO: determine which functions are useful outside of generate
+#__all__ = ["model_info", "make_doc", "make_source", "convert_type"]
 
 import sys
 from os.path import abspath, dirname, join as joinpath, exists, basename, \
@@ -223,11 +217,10 @@ from collections import namedtuple
 
 import numpy as np
 
+from .custom import load_custom_kernel_module
+
 PARAMETER_FIELDS = ['name', 'units', 'default', 'limits', 'type', 'description']
 Parameter = namedtuple('Parameter', PARAMETER_FIELDS)
-
-#TODO: determine which functions are useful outside of generate
-#__all__ = ["model_info", "make_doc", "make_source", "convert_type"]
 
 C_KERNEL_TEMPLATE_PATH = joinpath(dirname(__file__), 'kernel_template.c')
 
@@ -652,6 +645,17 @@ def process_parameters(model_info):
         model_info['demo'] = model_info['defaults']
     model_info['has_2d'] = partype['orientation'] or partype['magnetic']
 
+
+def load_kernel_module(model_name):
+    if model_name.endswith('.py'):
+        kernel_module = load_custom_kernel_module(model_name)
+    else:
+        from sasmodels import models
+        __import__('sasmodels.models.'+model_name)
+        kernel_module = getattr(models, model_name, None)
+    return kernel_module
+
+
 def make_model_info(kernel_module):
     """
     Interpret the model definition file, categorizing the parameters.
@@ -674,9 +678,6 @@ def make_model_info(kernel_module):
     * *parameters* is the model parameter table
     * *single* is True if the model allows single precision
     * *structure_factor* is True if the model is useable in a product
-    * *variant_info* contains the information required to select between
-      model variants (e.g., the list of cases) or is None if there are no
-      model variants
     * *defaults* is the *{parameter: value}* table built from the parameter
       description table.
     * *limits* is the *{parameter: [min, max]}* table built from the
@@ -691,16 +692,12 @@ def make_model_info(kernel_module):
     * *Iq*, *Iqxy*, *form_volume*, *ER*, *VR* and *sesans* are python functions
       implementing the kernel for the module, or None if they are not
       defined in python
-    * *oldname* is the model name in pre-4.0 Sasview
-    * *oldpars* is the *{new: old}* parameter translation table
-      from pre-4.0 Sasview
     * *composition* is None if the model is independent, otherwise it is a
       tuple with composition type ('product' or 'mixture') and a list of
       *model_info* blocks for the composition objects.  This allows us to
       build complete product and mixture models from just the info.
 
     """
-    # TODO: maybe turn model_info into a class ModelDefinition
     parameters = COMMON_PARAMETERS + kernel_module.parameters
     filename = abspath(kernel_module.__file__)
     kernel_id = splitext(basename(filename))[0]
@@ -719,11 +716,9 @@ def make_model_info(kernel_module):
         category=getattr(kernel_module, 'category', None),
         single=getattr(kernel_module, 'single', True),
         structure_factor=getattr(kernel_module, 'structure_factor', False),
-        variant_info=getattr(kernel_module, 'invariant_info', None),
+        control=getattr(kernel_module, 'control', None),
         demo=getattr(kernel_module, 'demo', None),
         source=getattr(kernel_module, 'source', []),
-        oldname=getattr(kernel_module, 'oldname', None),
-        oldpars=getattr(kernel_module, 'oldpars', {}),
         tests=getattr(kernel_module, 'tests', []),
         )
     process_parameters(model_info)
@@ -781,7 +776,6 @@ def make_doc(model_info):
     return DOC_HEADER % subst
 
 
-
 def demo_time():
     """
     Show how long it takes to process a model.
@@ -801,10 +795,8 @@ def main():
         print("usage: python -m sasmodels.generate modelname")
     else:
         name = sys.argv[1]
-        import sasmodels.models
-        __import__('sasmodels.models.' + name)
-        model = getattr(sasmodels.models, name)
-        model_info = make_model_info(model)
+        kernel_module = load_kernel_module(name)
+        model_info = make_model_info(kernel_module)
         source = make_source(model_info)
         print(source)
 

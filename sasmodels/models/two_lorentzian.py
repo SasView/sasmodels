@@ -33,8 +33,7 @@ None.
 **Last Reviewed by:** Paul Butler **on:** March 21, 2016
 """
 
-from math import sqrt
-from numpy import inf, power
+from numpy import inf, power, sqrt
 
 name = "two_lorentzian"
 title = "This model calculates an empirical functional form for SAS data \
@@ -114,15 +113,6 @@ demo = dict(scale=1, background=0.1,
             lorentz_scale_2=1,
             lorentz_length_2=10,
             lorentz_exp_2=2.0)
-
-oldname = "TwoLorentzianModel"
-oldpars = dict(background='background',
-               lorentz_scale_1='scale_1',
-               lorentz_scale_2='scale_2',
-               lorentz_length_1='length_1',
-               lorentz_length_2='length_2',
-               lorentz_exp_1='exponent_1',
-               lorentz_exp_2='exponent_2')
 
 tests = [
 

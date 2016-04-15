@@ -102,15 +102,6 @@ demo = dict(volfraction=0.05,
             sld_block=2.0,
             sld_solvent=6.4)
 
-# For testing against the old sasview models, include the converted parameter
-# names and the target sasview model name.
-oldname = 'FractalModel'
-oldpars = dict(radius='radius',
-               fractal_dim='fractal_dim',
-               cor_length='cor_length',
-               sld_block='sldBlock',
-               sld_solvent='sldSolv')
-
 # NOTE: test results taken from values returned by SasView 3.1.2
 tests = [
     [{}, 0.0005, 40.4980069872],

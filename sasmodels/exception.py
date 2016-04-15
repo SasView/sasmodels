@@ -1,6 +1,7 @@
 """
 Utility to add annotations to python exceptions.
 """
+import sys
 
 # Platform cruft: WindowsError is only defined on Windows.
 try:
@@ -12,24 +13,28 @@ except NameError:
         """
         pass
 
-def annotate_exception(exc, msg):
+def annotate_exception(msg, exc=None):
     """
     Add an annotation to the current exception, which can then be forwarded
-    to the caller using a bare "raise" statement to reraise the annotated
-    exception.
+    to the caller using a bare "raise" statement to raise the annotated
+    exception.  If the exception *exc* is provided, then that exception is the
+    one that is annotated, otherwise *sys.exc_info* is used.
 
     Example::
 
         >>> D = {}
         >>> try:
         ...    print(D['hello'])
-        ... except Exception as exc:
-        ...    annotate_exception(exc, "while accessing 'D'")
+        ... except:
+        ...    annotate_exception("while accessing 'D'")
         ...    raise
         Traceback (most recent call last):
             ...
         KeyError: "hello while accessing 'D'"
     """
+    if not exc:
+        exc = sys.exc_info()[1]
+
     # Can't extend WindowsError exceptions; instead raise a new exception.
     # TODO: try to incorporate current stack trace in the raised exception
     if isinstance(exc, WindowsError):

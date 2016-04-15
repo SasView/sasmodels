@@ -85,11 +85,6 @@ demo = dict(scale=0.05,
             frac_dim=2.0,
             cor_length=100.0)
 
-oldname = 'FractalCoreShellModel'
-oldpars = dict( sld_core='core_sld',
-               sld_shell='shell_sld',
-               sld_solvent='solvent_sld')
-
 def ER(radius, thickness):
     """
         Equivalent radius

@@ -12,71 +12,210 @@ The model parameters for sasmodels are different from those in sasview.
 When reloading previously saved models, the parameters should be converted
 using :func:`sasmodels.convert.convert`.
 """
+from __future__ import print_function
 
 import math
 from copy import deepcopy
 import collections
+import traceback
+import logging
 
 import numpy as np
 
 from . import core
+from . import custom
 from . import generate
 
-def standard_models():
-    return [make_class(model_name) for model_name in core.list_models()]
+try:
+    from typing import Dict, Mapping, Any, Sequence, Tuple, NamedTuple, List, Optional
+    from .kernel import KernelModel
+    MultiplicityInfoType = NamedTuple(
+        'MuliplicityInfo',
+        [("number", int), ("control", str), ("choices", List[str]),
+         ("x_axis_label", str)])
+except ImportError:
+    pass
 
-# TODO: rename to make_class_from_name and update sasview
-def make_class(model_name):
+# TODO: separate x_axis_label from multiplicity info
+# The x-axis label belongs with the profile generating function
+MultiplicityInfo = collections.namedtuple(
+    'MultiplicityInfo',
+    ["number", "control", "choices", "x_axis_label"],
+)
+
+def load_standard_models():
     """
-    Load the sasview model defined in *kernel_module*.
+    Load and return the list of predefined models.
 
-    Returns a class that can be used directly as a sasview model.t
-
-    Defaults to using the new name for a model.  Setting
-    *namestyle='oldname'* will produce a class with a name
-    compatible with SasView.
+    If there is an error loading a model, then a traceback is logged and the
+    model is not returned.
     """
-    model_info = core.load_model_info(model_name)
-    return make_class_from_info(model_info)
+    models = []
+    for name in core.list_models():
+        try:
+            models.append(_make_standard_model(name))
+        except:
+            logging.error(traceback.format_exc())
+    return models
 
-def make_class_from_file(path):
-    model_info = core.load_model_info_from_path(path)
-    return make_class_from_info(model_info)
 
-def make_class_from_info(model_info):
-    def __init__(self, multfactor=1):
-        SasviewModel.__init__(self)
-    attrs = dict(__init__=__init__, _model_info=model_info)
-    ConstructedModel = type(model_info['name'], (SasviewModel,), attrs)
+def load_custom_model(path):
+    """
+    Load a custom model given the model path.
+    """
+    kernel_module = custom.load_custom_kernel_module(path)
+    model_info = generate.make_model_info(kernel_module)
+    return _make_model_from_info(model_info)
+
+
+def _make_standard_model(name):
+    """
+    Load the sasview model defined by *name*.
+
+    *name* can be a standard model name or a path to a custom model.
+
+    Returns a class that can be used directly as a sasview model.
+    """
+    kernel_module = generate.load_kernel_module(name)
+    model_info = generate.make_model_info(kernel_module)
+    return _make_model_from_info(model_info)
+
+
+def _make_model_from_info(model_info):
+    """
+    Convert *model_info* into a SasView model wrapper.
+    """
+    model_info['variant_info'] = None  # temporary hack for older sasview
+    def __init__(self, multiplicity=1):
+        SasviewModel.__init__(self, multiplicity=multiplicity)
+    attrs = _generate_model_attributes(model_info)
+    attrs['__init__'] = __init__
+    ConstructedModel = type(model_info['id'], (SasviewModel,), attrs)
     return ConstructedModel
+
+def _generate_model_attributes(model_info):
+    # type: (ModelInfo) -> Dict[str, Any]
+    """
+    Generate the class attributes for the model.
+
+    This should include all the information necessary to query the model
+    details so that you do not need to instantiate a model to query it.
+
+    All the attributes should be immutable to avoid accidents.
+    """
+    attrs = {}  # type: Dict[str, Any]
+    attrs['_model_info'] = model_info
+    attrs['name'] = model_info['name']
+    attrs['id'] = model_info['id']
+    attrs['description'] = model_info['description']
+    attrs['category'] = model_info['category']
+
+    # TODO: allow model to override axis labels input/output name/unit
+
+    #self.is_multifunc = False
+    non_fittable = []  # type: List[str]
+    variants = MultiplicityInfo(0, "", [], "")
+    attrs['is_structure_factor'] = model_info['structure_factor']
+    attrs['is_form_factor'] = model_info['ER'] is not None
+    attrs['is_multiplicity_model'] = variants[0] > 1
+    attrs['multiplicity_info'] = variants
+
+    partype = model_info['partype']
+    orientation_params = (
+            partype['orientation']
+            + [n + '.width' for n in partype['orientation']]
+            + partype['magnetic'])
+    magnetic_params = partype['magnetic']
+    fixed = [n + '.width' for n in partype['pd-2d']]
+
+    attrs['orientation_params'] = tuple(orientation_params)
+    attrs['magnetic_params'] = tuple(magnetic_params)
+    attrs['fixed'] = tuple(fixed)
+
+    attrs['non_fittable'] = tuple(non_fittable)
+
+    return attrs
 
 class SasviewModel(object):
     """
     Sasview wrapper for opencl/ctypes model.
     """
-    def __init__(self):
-        self._kernel = None
-        model_info = self._model_info
+    # Model parameters for the specific model are set in the class constructor
+    # via the _generate_model_attributes function, which subclasses
+    # SasviewModel.  They are included here for typing and documentation
+    # purposes.
+    _model = None       # type: KernelModel
+    _model_info = None  # type: ModelInfo
+    #: load/save name for the model
+    id = None           # type: str
+    #: display name for the model
+    name = None         # type: str
+    #: short model description
+    description = None  # type: str
+    #: default model category
+    category = None     # type: str
 
-        self.name = model_info['name']
-        self.oldname = model_info['oldname']
-        self.description = model_info['description']
-        self.category = None
-        self.multiplicity_info = None
-        self.is_multifunc = False
+    #: names of the orientation parameters in the order they appear
+    orientation_params = None # type: Sequence[str]
+    #: names of the magnetic parameters in the order they appear
+    magnetic_params = None    # type: Sequence[str]
+    #: names of the fittable parameters
+    fixed = None              # type: Sequence[str]
+    # TODO: the attribute fixed is ill-named
 
-        ## interpret the parameters
-        ## TODO: reorganize parameter handling
-        self.details = dict()
+    # Axis labels
+    input_name = "Q"
+    input_unit = "A^{-1}"
+    output_name = "Intensity"
+    output_unit = "cm^{-1}"
+
+    #: default cutoff for polydispersity
+    cutoff = 1e-5
+
+    # Note: Use non-mutable values for class attributes to avoid errors
+    #: parameters that are not fitted
+    non_fittable = ()        # type: Sequence[str]
+
+    #: True if model should appear as a structure factor
+    is_structure_factor = False
+    #: True if model should appear as a form factor
+    is_form_factor = False
+    #: True if model has multiplicity
+    is_multiplicity_model = False
+    #: Mulitplicity information
+    multiplicity_info = None # type: MultiplicityInfoType
+
+    # Per-instance variables
+    #: parameter {name: value} mapping
+    params = None      # type: Dict[str, float]
+    #: values for dispersion width, npts, nsigmas and type
+    dispersion = None  # type: Dict[str, Any]
+    #: units and limits for each parameter
+    details = None     # type: Mapping[str, Tuple(str, float, float)]
+    #: multiplicity used, or None if no multiplicity controls
+    multiplicity = None     # type: Optional[int]
+
+    def __init__(self, multiplicity):
+        # type: () -> None
+        print("initializing", self.name)
+        #raise Exception("first initialization")
+        self._model = None
+
+        ## _persistency_dict is used by sas.perspectives.fitting.basepage
+        ## to store dispersity reference.
+        self._persistency_dict = {}
+
+        self.multiplicity = multiplicity
+
         self.params = collections.OrderedDict()
-        self.dispersion = dict()
-        partype = model_info['partype']
+        self.dispersion = {}
+        self.details = {}
 
-        for p in model_info['parameters']:
+        for p in self._model_info['parameters']:
             self.params[p.name] = p.default
             self.details[p.name] = [p.units] + p.limits
 
-        for name in partype['pd-2d']:
+        for name in self._model_info['partype']['pd-2d']:
             self.dispersion[name] = {
                 'width': 0,
                 'npts': 35,
@@ -84,32 +223,9 @@ class SasviewModel(object):
                 'type': 'gaussian',
             }
 
-        self.orientation_params = (
-            partype['orientation']
-            + [n + '.width' for n in partype['orientation']]
-            + partype['magnetic'])
-        self.magnetic_params = partype['magnetic']
-        self.fixed = [n + '.width' for n in partype['pd-2d']]
-        self.non_fittable = []
-
-        ## independent parameter name and unit [string]
-        self.input_name = model_info.get("input_name", "Q")
-        self.input_unit = model_info.get("input_unit", "A^{-1}")
-        self.output_name = model_info.get("output_name", "Intensity")
-        self.output_unit = model_info.get("output_unit", "cm^{-1}")
-
-        ## _persistency_dict is used by sas.perspectives.fitting.basepage
-        ## to store dispersity reference.
-        ## TODO: _persistency_dict to persistency_dict throughout sasview
-        self._persistency_dict = {}
-
-        ## New fields introduced for opencl rewrite
-        self.cutoff = 1e-5
-
     def __get_state__(self):
         state = self.__dict__.copy()
-        model_id = self._model_info['id']
-        state.pop('_kernel')
+        state.pop('_model')
         # May need to reload model info on set state since it has pointers
         # to python implementations of Iq, etc.
         #state.pop('_model_info')
@@ -117,7 +233,7 @@ class SasviewModel(object):
 
     def __set_state__(self, state):
         self.__dict__ = state
-        self._kernel = None
+        self._model = None
 
     def __str__(self):
         """
@@ -206,7 +322,7 @@ class SasviewModel(object):
 
     def getDispParamList(self):
         """
-        Return a list of all available parameters for the model
+        Return a list of polydispersity parameters for the model
         """
         # TODO: fix test so that parameter order doesn't matter
         ret = ['%s.%s' % (d.lower(), p)
@@ -307,10 +423,10 @@ class SasviewModel(object):
         This should NOT be used for fitting since it copies the *q* vectors
         to the card for each evaluation.
         """
-        if self._kernel is None:
-            self._kernel = core.build_model(self._model_info)
+        if self._model is None:
+            self._model = core.build_model(self._model_info)
         q_vectors = [np.asarray(q) for q in args]
-        fn = self._kernel(q_vectors)
+        fn = self._model.make_kernel(q_vectors)
         pars = [self.params[v] for v in fn.fixed_pars]
         pd_pars = [self._get_weights(p) for p in fn.pd_pars]
         result = fn(pars, pd_pars, self.cutoff)
@@ -388,11 +504,9 @@ class SasviewModel(object):
 
     def _get_weights(self, par):
         """
-            Return dispersion weights
-            :param par parameter name
+        Return dispersion weights for parameter
         """
         from . import weights
-
         relative = self._model_info['partype']['pd-rel']
         limits = self._model_info['limits']
         dis = self.dispersion[par]
@@ -401,3 +515,27 @@ class SasviewModel(object):
             self.params[par], limits[par], par in relative)
         return value, weight / np.sum(weight)
 
+
+def test_model():
+    """
+    Test that a sasview model (cylinder) can be run.
+    """
+    Cylinder = _make_standard_model('cylinder')
+    cylinder = Cylinder()
+    return cylinder.evalDistribution([0.1,0.1])
+
+
+def test_model_list():
+    """
+    Make sure that all models build as sasview models.
+    """
+    from .exception import annotate_exception
+    for name in core.list_models():
+        try:
+            _make_standard_model(name)
+        except:
+            annotate_exception("when loading "+name)
+            raise
+
+if __name__ == "__main__":
+    print("cylinder(0.1,0.1)=%g"%test_model())

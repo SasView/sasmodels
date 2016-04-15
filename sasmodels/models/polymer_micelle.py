@@ -65,11 +65,6 @@ demo = dict(scale=1, background=0,
             n_aggreg=6.0)
 
 
-oldname = 'MicelleSphCoreModel'
-oldpars = dict(sld_solvent='rho_solv',
-               sld_core='rho_core',
-               sld_corona='rho_corona')
-
 tests = [
     [{}, 0.01, 15.3532],
     ]

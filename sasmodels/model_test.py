@@ -50,7 +50,7 @@ import unittest
 import numpy as np
 
 from .core import list_models, load_model_info, build_model, HAVE_OPENCL
-from .core import make_kernel, call_kernel, call_ER, call_VR
+from .core import call_kernel, call_ER, call_VR
 from .exception import annotate_exception
 
 #TODO: rename to tests so that tab completion works better for models directory
@@ -144,8 +144,13 @@ def _hide_model_case_from_nosetests():
 
         def _runTest(self):
             smoke_tests = [
+                # test validity at reasonable values
                 [{}, 0.1, None],
                 [{}, (0.1, 0.1), None],
+                # test validity at q = 0
+                #[{}, 0.0, None],
+                #[{}, (0.0, 0.0), None],
+                # test that ER/VR will run if they exist
                 [{}, 'ER', None],
                 [{}, 'VR', None],
                 ]
@@ -165,8 +170,8 @@ def _hide_model_case_from_nosetests():
                     #raise Exception("No test cases provided")
                     pass
 
-            except Exception as exc:
-                annotate_exception(exc, self.test_name)
+            except:
+                annotate_exception(self.test_name)
                 raise
 
         def _run_one_test(self, model, test):
@@ -186,14 +191,14 @@ def _hide_model_case_from_nosetests():
             elif isinstance(x[0], tuple):
                 Qx, Qy = zip(*x)
                 q_vectors = [np.array(Qx), np.array(Qy)]
-                kernel = make_kernel(model, q_vectors)
+                kernel = model.make_kernel(q_vectors)
                 actual = call_kernel(kernel, pars)
             else:
                 q_vectors = [np.array(x)]
-                kernel = make_kernel(model, q_vectors)
+                kernel = model.make_kernel(q_vectors)
                 actual = call_kernel(kernel, pars)
 
-            self.assertGreater(len(actual), 0)
+            self.assertTrue(len(actual) > 0)
             self.assertEqual(len(y), len(actual))
 
             for xi, yi, actual_yi in zip(x, y, actual):

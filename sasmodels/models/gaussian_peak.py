@@ -66,5 +66,3 @@ Iqxy = """
 # VR defaults to 1.0
 
 demo = dict(scale=1, background=0, q0=0.05, sigma=0.005)
-oldname = "PeakGaussModel"
-oldpars = dict(sigma='B')

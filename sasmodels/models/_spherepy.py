@@ -1,7 +1,6 @@
 r"""
-For information about polarised and magnetic scattering, click here_.
-
-.. _here: polar_mag_help.html
+For information about polarised and magnetic scattering, see 
+the :doc:`magnetic help <../sasgui/perspectives/fitting/mag_help>` documentation.
 
 Definition
 ----------
@@ -117,5 +116,3 @@ demo = dict(scale=1, background=0,
             sld=6, sld_solvent=1,
             radius=120,
             radius_pd=.2, radius_pd_n=45)
-oldname = "SphereModel"
-oldpars = dict(sld='sldSph', sld_solvent='sldSolv', radius='radius')
