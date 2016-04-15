@@ -102,6 +102,7 @@ _F64_PRAGMA = """\
 
 ENV = None
 def environment():
+    # type: () -> "GpuEnvironment"
     """
     Returns a singleton :class:`GpuEnvironment`.
 
@@ -113,6 +114,7 @@ def environment():
     return ENV
 
 def has_type(device, dtype):
+    # type: (cl.Device, np.dtype) -> bool
     """
     Return true if device supports the requested precision.
     """
@@ -126,6 +128,7 @@ def has_type(device, dtype):
         return False
 
 def get_warp(kernel, queue):
+    # type: (cl.Kernel, cl.CommandQueue) -> int
     """
     Return the size of an execution batch for *kernel* running on *queue*.
     """
@@ -134,6 +137,7 @@ def get_warp(kernel, queue):
         queue.device)
 
 def _stretch_input(vector, dtype, extra=1e-3, boundary=32):
+    # type: (np.ndarray, np.dtype, float, int) -> np.ndarray
     """
     Stretch an input vector to the correct boundary.
 
@@ -156,6 +160,7 @@ def _stretch_input(vector, dtype, extra=1e-3, boundary=32):
 
 
 def compile_model(context, source, dtype, fast=False):
+    # type: (cl.Context, str, np.dtype, bool) -> cl.Program
     """
     Build a model to run on the gpu.
 
@@ -191,6 +196,7 @@ class GpuEnvironment(object):
     GPU context, with possibly many devices, and one queue per device.
     """
     def __init__(self):
+        # type: () -> None
         # find gpu context
         #self.context = cl.create_some_context()
 
@@ -209,15 +215,16 @@ class GpuEnvironment(object):
         self.compiled = {}
 
     def has_type(self, dtype):
+        # type: (np.dtype) -> bool
         """
         Return True if all devices support a given type.
         """
-        dtype = generate.F32 if dtype == 'fast' else np.dtype(dtype)
         return any(has_type(d, dtype)
                    for context in self.context
                    for d in context.devices)
 
     def get_queue(self, dtype):
+        # type: (np.dtype) -> cl.CommandQueue
         """
         Return a command queue for the kernels of type dtype.
         """
@@ -226,6 +233,7 @@ class GpuEnvironment(object):
                 return queue
 
     def get_context(self, dtype):
+        # type: (np.dtype) -> cl.Context
         """
         Return a OpenCL context for the kernels of type dtype.
         """
@@ -234,6 +242,7 @@ class GpuEnvironment(object):
                 return context
 
     def _create_some_context(self):
+        # type: () -> cl.Context
         """
         Protected call to cl.create_some_context without interactivity.  Use
         this if PYOPENCL_CTX is set in the environment.  Sets the *context*
@@ -247,6 +256,7 @@ class GpuEnvironment(object):
             warnings.warn("the environment variable 'PYOPENCL_CTX' might not be set correctly")
 
     def compile_program(self, name, source, dtype, fast=False):
+        # type: (str, str, np.dtype, bool) -> cl.Program
         """
         Compile the program for the device in the given context.
         """
@@ -260,6 +270,7 @@ class GpuEnvironment(object):
         return self.compiled[key]
 
     def release_program(self, name):
+        # type: (str) -> None
         """
         Free memory associated with the program on the device.
         """
@@ -268,6 +279,7 @@ class GpuEnvironment(object):
             del self.compiled[name]
 
 def _get_default_context():
+    # type: () -> cl.Context
     """
     Get an OpenCL context, preferring GPU over CPU, and preferring Intel
     drivers over AMD drivers.
@@ -333,21 +345,25 @@ class GpuModel(KernelModel):
     Fast precision ('fast') is a loose version of single precision, indicating
     that the compiler is allowed to take shortcuts.
     """
-    def __init__(self, source, model_info, dtype=generate.F32):
+    def __init__(self, source, model_info, dtype=generate.F32, fast=False):
+        # type: (str, ModelInfo, np.dtype, bool) -> None
         self.info = model_info
         self.source = source
-        self.dtype = generate.F32 if dtype == 'fast' else np.dtype(dtype)
-        self.fast = (dtype == 'fast')
+        self.dtype = dtype
+        self.fast = fast
         self.program = None # delay program creation
 
     def __getstate__(self):
+        # type: () -> Tuple[ModelInfo, str, np.dtype, bool]
         return self.info, self.source, self.dtype, self.fast
 
     def __setstate__(self, state):
+        # type: (Tuple[ModelInfo, str, np.dtype, bool]) -> None
         self.info, self.source, self.dtype, self.fast = state
         self.program = None
 
     def make_kernel(self, q_vectors):
+        # type: (List[np.ndarray]) -> "GpuKernel"
         if self.program is None:
             compiler = environment().compile_program
             self.program = compiler(self.info.name, self.source,
@@ -355,9 +371,10 @@ class GpuModel(KernelModel):
         is_2d = len(q_vectors) == 2
         kernel_name = generate.kernel_name(self.info, is_2d)
         kernel = getattr(self.program, kernel_name)
-        return GpuKernel(kernel, self.info, q_vectors, self.dtype)
+        return GpuKernel(kernel, self.info, q_vectors)
 
     def release(self):
+        # type: () -> None
         """
         Free the resources associated with the model.
         """
@@ -366,6 +383,7 @@ class GpuModel(KernelModel):
             self.program = None
 
     def __del__(self):
+        # type: () -> None
         self.release()
 
 # TODO: check that we don't need a destructor for buffers which go out of scope
@@ -389,6 +407,7 @@ class GpuInput(object):
     buffer will be released when the data object is freed.
     """
     def __init__(self, q_vectors, dtype=generate.F32):
+        # type: (List[np.ndarray], np.dtype) -> None
         # TODO: do we ever need double precision q?
         env = environment()
         self.nq = q_vectors[0].size
@@ -418,6 +437,7 @@ class GpuInput(object):
                              hostbuf=self.q)
 
     def release(self):
+        # type: () -> None
         """
         Free the memory.
         """
@@ -426,6 +446,7 @@ class GpuInput(object):
             self.q = None
 
     def __del__(self):
+        # type: () -> None
         self.release()
 
 class GpuKernel(Kernel):
@@ -449,7 +470,7 @@ class GpuKernel(Kernel):
     Call :meth:`release` when done with the kernel instance.
     """
     def __init__(self, kernel, model_info, q_vectors):
-        # type: (KernelModel, ModelInfo, List[np.ndarray]) -> None
+        # type: (cl.Kernel, ModelInfo, List[np.ndarray]) -> None
         max_pd = model_info.parameters.max_pd
         npars = len(model_info.parameters.kernel_parameters)-2
         q_input = GpuInput(q_vectors, kernel.dtype)
@@ -504,6 +525,7 @@ class GpuKernel(Kernel):
         return self.result[:self.nq]
 
     def release(self):
+        # type: () -> None
         """
         Release resources associated with the kernel.
         """
@@ -512,4 +534,5 @@ class GpuKernel(Kernel):
         self._need_release = []
 
     def __del__(self):
+        # type: () -> None
         self.release()
