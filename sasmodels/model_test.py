@@ -50,7 +50,7 @@ import unittest
 import numpy as np  # type: ignore
 
 from .core import list_models, load_model_info, build_model, HAVE_OPENCL
-from .details import dispersion_mesh
+from .kernel import dispersion_mesh
 from .direct_model import call_kernel, get_weights
 from .exception import annotate_exception
 from .modelinfo import expand_pars
@@ -61,7 +61,7 @@ except ImportError:
     pass
 else:
     from .modelinfo import ParameterTable, ParameterSet, TestCondition, ModelInfo
-    from .kernelpy import PyModel, PyInput, PyKernel, DType
+    from .kernel import KernelModel
 
 def call_ER(model_info, pars):
     # type: (ModelInfo, ParameterSet) -> float
@@ -225,7 +225,7 @@ def _hide_model_case_from_nose():
                 raise
 
         def run_one(self, model, test):
-            # type: (PyModel, TestCondition) -> None
+            # type: (KernelModel, TestCondition) -> None
             user_pars, x, y = test
             pars = expand_pars(self.info.parameters, user_pars)
 

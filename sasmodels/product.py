@@ -12,9 +12,8 @@ To use it, first load form factor P and structure factor S, then create
 """
 import numpy as np  # type: ignore
 
-from .details import dispersion_mesh
 from .modelinfo import suffix_parameter, ParameterTable, ModelInfo
-from .kernel import KernelModel, Kernel
+from .kernel import KernelModel, Kernel, dispersion_mesh
 
 try:
     from typing import Tuple

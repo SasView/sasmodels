@@ -26,8 +26,8 @@ from . import core
 from . import custom
 from . import generate
 from . import weights
-from . import details
 from . import modelinfo
+from . import kernel
 
 try:
     from typing import Dict, Mapping, Any, Sequence, Tuple, NamedTuple, List, Optional, Union, Callable
@@ -501,7 +501,7 @@ class SasviewModel(object):
         kernel = self._model.make_kernel(q_vectors)
         pairs = [self._get_weights(p)
                  for p in self._model_info.parameters.call_parameters]
-        call_details, weight, value = details.build_details(kernel, pairs)
+        call_details, weight, value = kernel.build_details(kernel, pairs)
         result = kernel(call_details, weight, value, cutoff=self.cutoff)
         kernel.release()
         return result
@@ -576,7 +576,7 @@ class SasviewModel(object):
         pars = [self._get_weights(p)
                 for p in self._model_info.parameters.call_parameters
                 if p.type == 'volume']
-        return details.dispersion_mesh(self._model_info, pars)
+        return kernel.dispersion_mesh(self._model_info, pars)
 
     def _get_weights(self, par):
         # type: (Parameter) -> Tuple[np.ndarray, np.ndarray]

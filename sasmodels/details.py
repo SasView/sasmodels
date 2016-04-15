@@ -82,17 +82,6 @@ class CallDetails(object):
         print("pd_coord", self.pd_coord)
         print("theta par", self.buffer[-1])
 
-def build_details(kernel, pairs):
-    values, weights = zip(*pairs)
-    if max([len(w) for w in weights]) > 1:
-        call_details = poly_details(kernel.info, weights)
-    else:
-        call_details = mono_details(kernel.info)
-    weights, values = [np.hstack(v) for v in (weights, values)]
-    weights = weights.astype(dtype=kernel.dtype)
-    values = values.astype(dtype=kernel.dtype)
-    return call_details, weights, values
-
 def mono_details(model_info):
     call_details = CallDetails(model_info)
     # The zero defaults for monodisperse systems are mostly fine
@@ -137,41 +126,4 @@ def constrained_poly_details(model_info, weights, constraints):
     # Need to generate a constraints function which takes values
     # and weights, returning par blocks
     raise NotImplementedError("Can't handle constraints yet")
-
-
-try:
-    np.meshgrid([])
-    meshgrid = np.meshgrid
-except ValueError:
-    # CRUFT: np.meshgrid requires multiple vectors
-    def meshgrid(*args):
-        if len(args) > 1:
-            return np.meshgrid(*args)
-        else:
-            return [np.asarray(v) for v in args]
-
-def dispersion_mesh(model_info, pars):
-    """
-    Create a mesh grid of dispersion parameters and weights.
-
-    Returns [p1,p2,...],w where pj is a vector of values for parameter j
-    and w is a vector containing the products for weights for each
-    parameter set in the vector.
-    """
-    value, weight = zip(*pars)
-    weight = [w if w else [1.] for w in weight]
-    weight = np.vstack([v.flatten() for v in meshgrid(*weight)])
-    weight = np.prod(weight, axis=0)
-    value = [v.flatten() for v in meshgrid(*value)]
-    lengths = [par.length for par in model_info.parameters.kernel_parameters
-               if par.type == 'volume']
-    if any(n > 1 for n in lengths):
-        pars = []
-        offset = 0
-        for n in lengths:
-            pars.append(np.vstack(value[offset:offset+n]) if n > 1 else value[offset])
-            offset += n
-        value = pars
-    return value, weight
-
 

@@ -29,7 +29,7 @@ from . import sesans  # type: ignore
 from . import weights
 from . import resolution
 from . import resolution2d
-from . import details
+from . import kernel
 
 try:
     from typing import Optional, Dict, Tuple
@@ -40,7 +40,7 @@ else:
     from .kernel import Kernel, KernelModel
     from .modelinfo import Parameter, ParameterSet
 
-def call_kernel(kernel, pars, cutoff=0., mono=False):
+def call_kernel(calculator, pars, cutoff=0., mono=False):
     # type: (Kernel, ParameterSet, float, bool) -> np.ndarray
     """
     Call *kernel* returned from *model.make_kernel* with parameters *pars*.
@@ -54,12 +54,12 @@ def call_kernel(kernel, pars, cutoff=0., mono=False):
 
     *mono* is True if polydispersity should be set to none on all parameters.
     """
-    parameters = kernel.info.parameters
+    parameters = calculator.info.parameters
     if mono:
         active = lambda name: False
-    elif kernel.dim == '1d':
+    elif calculator.dim == '1d':
         active = lambda name: name in parameters.pd_1d
-    elif kernel.dim == '2d':
+    elif calculator.dim == '2d':
         active = lambda name: name in parameters.pd_2d
     else:
         active = lambda name: True
@@ -68,8 +68,8 @@ def call_kernel(kernel, pars, cutoff=0., mono=False):
                  else ([pars.get(p.name, p.default)], []))
                 for p in parameters.call_parameters]
 
-    call_details, weights, values = details.build_details(kernel, vw_pairs)
-    return kernel(call_details, weights, values, cutoff)
+    call_details, weights, values = kernel.build_details(calculator, vw_pairs)
+    return calculator(call_details, weights, values, cutoff)
 
 def get_weights(parameter, values):
     # type: (Parameter, Dict[str, float]) -> Tuple[np.ndarray, np.ndarray]
