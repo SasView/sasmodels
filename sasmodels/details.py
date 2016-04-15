@@ -4,31 +4,31 @@ try:
     from typing import List
 except ImportError:
     pass
+else:
+    from .modelinfo import ModelInfo
 
 
 class CallDetails(object):
     parts = None  # type: List["CallDetails"]
     def __init__(self, model_info):
+        # type: (ModelInfo) -> None
         parameters = model_info.parameters
         max_pd = parameters.max_pd
         npars = parameters.npars
         par_offset = 4*max_pd
-        self._details = np.zeros(par_offset + 3*npars + 4, 'i4')
+        self.buffer = np.zeros(par_offset + 3 * npars + 4, 'i4')
 
         # generate views on different parts of the array
-        self._pd_par     = self._details[0*max_pd:1*max_pd]
-        self._pd_length  = self._details[1*max_pd:2*max_pd]
-        self._pd_offset  = self._details[2*max_pd:3*max_pd]
-        self._pd_stride  = self._details[3*max_pd:4*max_pd]
-        self._par_offset = self._details[par_offset+0*npars:par_offset+1*npars]
-        self._par_coord  = self._details[par_offset+1*npars:par_offset+2*npars]
-        self._pd_coord   = self._details[par_offset+2*npars:par_offset+3*npars]
+        self._pd_par     = self.buffer[0 * max_pd:1 * max_pd]
+        self._pd_length  = self.buffer[1 * max_pd:2 * max_pd]
+        self._pd_offset  = self.buffer[2 * max_pd:3 * max_pd]
+        self._pd_stride  = self.buffer[3 * max_pd:4 * max_pd]
+        self._par_offset = self.buffer[par_offset + 0 * npars:par_offset + 1 * npars]
+        self._par_coord  = self.buffer[par_offset + 1 * npars:par_offset + 2 * npars]
+        self._pd_coord   = self.buffer[par_offset + 2 * npars:par_offset + 3 * npars]
 
         # theta_par is fixed
-        self._details[-1] = parameters.theta_offset
-
-    @property
-    def ctypes(self): return self._details.ctypes
+        self.buffer[-1] = parameters.theta_offset
 
     @property
     def pd_par(self): return self._pd_par
@@ -52,22 +52,22 @@ class CallDetails(object):
     def par_offset(self): return self._par_offset
 
     @property
-    def num_active(self): return self._details[-4]
+    def num_active(self): return self.buffer[-4]
     @num_active.setter
-    def num_active(self, v): self._details[-4] = v
+    def num_active(self, v): self.buffer[-4] = v
 
     @property
-    def total_pd(self): return self._details[-3]
+    def total_pd(self): return self.buffer[-3]
     @total_pd.setter
-    def total_pd(self, v): self._details[-3] = v
+    def total_pd(self, v): self.buffer[-3] = v
 
     @property
-    def num_coord(self): return self._details[-2]
+    def num_coord(self): return self.buffer[-2]
     @num_coord.setter
-    def num_coord(self, v): self._details[-2] = v
+    def num_coord(self, v): self.buffer[-2] = v
 
     @property
-    def theta_par(self): return self._details[-1]
+    def theta_par(self): return self.buffer[-1]
 
     def show(self):
         print("total_pd", self.total_pd)
@@ -80,14 +80,14 @@ class CallDetails(object):
         print("num_coord", self.num_coord)
         print("par_coord", self.par_coord)
         print("pd_coord", self.pd_coord)
-        print("theta par", self._details[-1])
+        print("theta par", self.buffer[-1])
 
 def build_details(kernel, pairs):
     values, weights = zip(*pairs)
     if max([len(w) for w in weights]) > 1:
         call_details = poly_details(kernel.info, weights)
     else:
-        call_details = kernel.info.mono_details
+        call_details = mono_details(kernel.info)
     weights, values = [np.hstack(v) for v in (weights, values)]
     weights = weights.astype(dtype=kernel.dtype)
     values = values.astype(dtype=kernel.dtype)

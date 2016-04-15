@@ -48,7 +48,7 @@ except:
 else:
     from .modelinfo import ModelInfo, Parameter, ParameterSet
     from .data import Data
-    Calculator = Callable[[float, ...], np.ndarray]
+    Calculator = Callable[[float], np.ndarray]
 
 USAGE = """
 usage: compare.py model N1 N2 [options...] [key=val]
@@ -382,8 +382,9 @@ def eval_sasview(model_info, data):
     # importing sas here so that the error message will be that sas failed to
     # import rather than the more obscure smear_selection not imported error
     import sas
-    from sas.models.qsmearing import smear_selection
     import sas.models
+    from sas.models.qsmearing import smear_selection
+    from sas.models.MultiplicationModel import MultiplicationModel
 
     def get_model(name):
         # type: (str) -> "sas.models.BaseComponent"
@@ -398,7 +399,6 @@ def eval_sasview(model_info, data):
     if model_info.composition:
         composition_type, parts = model_info.composition
         if composition_type == 'product':
-            from sas.models.MultiplicationModel import MultiplicationModel
             P, S = [get_model(revert_name(p)) for p in parts]
             model = MultiplicationModel(P, S)
         else:

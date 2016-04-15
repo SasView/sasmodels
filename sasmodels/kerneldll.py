@@ -293,7 +293,7 @@ class DllKernel(Kernel):
             self.q_input.nq, # nq
             start, # pd_start
             stop, # pd_stop pd_stride[MAX_PD]
-            call_details.ctypes.data, # problem
+            call_details.buffer.ctypes.data, # problem
             weights.ctypes.data,  # weights
             values.ctypes.data,  #pars
             self.q_input.q.ctypes.data, #q

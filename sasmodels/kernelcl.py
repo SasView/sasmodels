@@ -59,8 +59,9 @@ try:
     import pyopencl as cl  # type: ignore
     # Ask OpenCL for the default context so that we know that one exists
     cl.create_some_context(interactive=False)
-except Exception as exc:
-    warnings.warn(str(exc))
+except Exception as ocl_exc:
+    warnings.warn(str(ocl_exc))
+    del ocl_exc
     raise RuntimeError("OpenCL not available")
 
 from pyopencl import mem_flags as mf  # type: ignore
@@ -478,7 +479,6 @@ class GpuKernel(Kernel):
         self.info = model_info
         self.dtype = kernel.dtype
         self.dim = '2d' if q_input.is_2d else '1d'
-        self.pd_stop_index = 4*max_pd-1
         # plus three for the normalization values
         self.result = np.empty(q_input.nq+3, q_input.dtype)
 
@@ -494,35 +494,35 @@ class GpuKernel(Kernel):
         self.q_input = q_input # allocated by GpuInput above
 
         self._need_release = [ self.result_b, self.q_input ]
+        self.real = (np.float32 if self.q_input.dtype == generate.F32
+                     else np.float64 if self.q_input.dtype == generate.F64
+                     else np.float16 if self.q_input.dtype == generate.F16
+                     else np.float32)  # will never get here, so use np.float32
 
     def __call__(self, call_details, weights, values, cutoff):
         # type: (CallDetails, np.ndarray, np.ndarray, float) -> np.ndarray
-        real = (np.float32 if self.q_input.dtype == generate.F32
-                else np.float64 if self.q_input.dtype == generate.F64
-                else np.float16 if self.q_input.dtype == generate.F16
-                else np.float32)  # will never get here, so use np.float32
-        assert call_details.dtype == np.int32
-        assert weights.dtype == real and values.dtype == real
 
         context = self.queue.context
+        # Arrange data transfer to card
         details_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
-                              hostbuf=call_details)
+                              hostbuf=call_details.buffer)
         weights_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
                               hostbuf=weights)
         values_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
                              hostbuf=values)
 
-        start, stop = 0, self.details[self.pd_stop_index]
+        start, stop = 0, call_details.total_pd
         args = [
-            np.uint32(self.q_input.nq), np.uint32(start), np.uint32(stop),
-            self.details_b, self.weights_b, self.values_b,
-            self.q_input.q_b, self.result_b, real(cutoff),
+            np.uint32(self.q_input.nq), np.int32(start), np.int32(stop),
+            details_b, weights_b, values_b, self.q_input.q_b, self.result_b,
+            self.real(cutoff),
         ]
         self.kernel(self.queue, self.q_input.global_size, None, *args)
         cl.enqueue_copy(self.queue, self.result, self.result_b)
-        [v.release() for v in (details_b, weights_b, values_b)]
+        for v in (details_b, weights_b, values_b):
+            v.release()
 
-        return self.result[:self.nq]
+        return self.result[:self.q_input.nq]
 
     def release(self):
         # type: () -> None

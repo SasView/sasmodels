@@ -13,15 +13,12 @@ from os.path import abspath, basename, splitext
 
 import numpy as np  # type: ignore
 
-from .details import mono_details
-
 # Optional typing
 try:
     from typing import Tuple, List, Union, Dict, Optional, Any, Callable, Sequence, Set
 except ImportError:
     pass
 else:
-    from .details import CallDetails
     Limits = Tuple[float, float]
     #LimitsOrChoice = Union[Limits, Tuple[Sequence[str]]]
     ParameterDef = Tuple[str, str, float, Limits, str, str]
@@ -657,8 +654,6 @@ def make_model_info(kernel_module):
     info.control = getattr(kernel_module, 'control', None)
     info.hidden = getattr(kernel_module, 'hidden', None) # type: ignore
 
-    # Precalculate the monodisperse parameter details
-    info.mono_details = mono_details(info)
     return info
 
 class ModelInfo(object):
@@ -810,10 +805,6 @@ class ModelInfo(object):
     #: Returns *sesans(z, a, b, ...)* for models which can directly compute
     #: the SESANS correlation function.  Note: not currently implemented.
     sesans = None           # type: Optional[Callable[[np.ndarray], np.ndarray]]
-    #: :class:details.CallDetails data for mono-disperse function evaluation.
-    #: This field is created automatically by the model loader, and should
-    #: not be defined as part of the model definition file.
-    mono_details = None     # type: CallDetails
 
     def __init__(self):
         # type: () -> None
