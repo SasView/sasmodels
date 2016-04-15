@@ -141,8 +141,10 @@ def build_model(model_info, dtype=None, platform="ocl"):
             or dtype.endswith('!')
             or not HAVE_OPENCL
             or not kernelcl.environment().has_type(numpy_dtype)):
+        #print("building dll", numpy_dtype)
         return kerneldll.load_dll(source, model_info, numpy_dtype)
     else:
+        #print("building ocl", numpy_dtype)
         return kernelcl.GpuModel(source, model_info, numpy_dtype, fast=fast)
 
 def precompile_dll(model_name, dtype="double"):

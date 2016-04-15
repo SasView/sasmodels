@@ -172,7 +172,7 @@ from .modelinfo import Parameter
 from .custom import load_custom_kernel_module
 
 try:
-    from typing import Tuple, Sequence, Iterator
+    from typing import Tuple, Sequence, Iterator, Dict
     from .modelinfo import ModelInfo
 except ImportError:
     pass
@@ -297,12 +297,24 @@ def timestamp(model_info):
     """
     Return a timestamp for the model corresponding to the most recently
     changed file or dependency.
+
+    Note that this does not look at the time stamps for the OpenCL header
+    information since that need not trigger a recompile of the DLL.
     """
     source_files = (model_sources(model_info)
                     + model_templates()
                     + [model_info.filename])
     newest = max(getmtime(f) for f in source_files)
     return newest
+
+def model_templates():
+    # type: () -> List[str]
+    # TODO: fails DRY; templates appear two places.
+    # should instead have model_info contain a list of paths
+    # Note: kernel_iq.cl is not on this list because changing it need not
+    # trigger a recompile of the dll.
+    return [joinpath(TEMPLATE_ROOT, filename)
+            for filename in ('kernel_header.c', 'kernel_iq.c')]
 
 def convert_type(source, dtype):
     # type: (str, np.dtype) -> str
@@ -376,20 +388,12 @@ def load_template(filename):
             _template_cache[filename] = (mtime, fid.read(), path)
     return _template_cache[filename][1]
 
-def model_templates():
-    # type: () -> List[str]
-    # TODO: fails DRY; templates are listed in two places.
-    # should instead have model_info contain a list of paths
-    return [joinpath(TEMPLATE_ROOT, filename)
-            for filename in ('kernel_header.c', 'kernel_iq.c')]
-
 
 _FN_TEMPLATE = """\
 double %(name)s(%(pars)s);
 double %(name)s(%(pars)s) {
     %(body)s
 }
-
 
 """
 
@@ -466,7 +470,8 @@ def make_source(model_info):
 
     # Load templates and user code
     kernel_header = load_template('kernel_header.c')
-    kernel_code = load_template('kernel_iq.c')
+    dll_code = load_template('kernel_iq.c')
+    ocl_code = load_template('kernel_iq.cl')
     user_code = [open(f).read() for f in model_sources(model_info)]
 
     # Build initial sources
@@ -505,7 +510,7 @@ def make_source(model_info):
     call_iq = "#define CALL_IQ(_q,_i,_v) Iq(%s)" % (",".join(refs))
     if _have_Iqxy(user_code):
         # Call 2D model
-        refs = ["q[2*i]", "q[2*i+1]"] + _call_pars("_v.", partable.iqxy_parameters)
+        refs = ["q[2*_i]", "q[2*_i+1]"] + _call_pars("_v.", partable.iqxy_parameters)
         call_iqxy = "#define CALL_IQ(_q,_i,_v) Iqxy(%s)" % (",".join(refs))
     else:
         # Call 1D model with sqrt(qx^2 + qy^2)
@@ -520,24 +525,41 @@ def make_source(model_info):
 
     # TODO: allow mixed python/opencl kernels?
 
-    # define the Iq kernel
-    source.append("#define KERNEL_NAME %s_Iq"%model_info.name)
-    source.append(call_iq)
-    source.append(kernel_code)
-    source.append("#undef CALL_IQ")
-    source.append("#undef KERNEL_NAME")
-
-    # define the Iqxy kernel from the same source with different #defines
-    source.append("#define KERNEL_NAME %s_Iqxy"%model_info.name)
-    source.append(call_iqxy)
-    source.append(kernel_code)
-    source.append("#undef CALL_IQ")
-    source.append("#undef KERNEL_NAME")
-
+    source.append("#if defined(USE_OPENCL)")
+    source.extend(_add_kernels(ocl_code, call_iq, call_iqxy, model_info.name))
+    source.append("#else /* !USE_OPENCL */")
+    source.extend(_add_kernels(dll_code, call_iq, call_iqxy, model_info.name))
+    source.append("#endif /* !USE_OPENCL */")
     return '\n'.join(source)
+
+def _add_kernels(kernel_code, call_iq, call_iqxy, name):
+    # type: (str, str, str, str) -> List[str]
+    source = [
+        # define the Iq kernel
+        "#define KERNEL_NAME %s_Iq"%name,
+        call_iq,
+        kernel_code,
+        "#undef CALL_IQ",
+        "#undef KERNEL_NAME",
+
+        # define the Iqxy kernel from the same source with different #defines
+        "#define KERNEL_NAME %s_Iqxy"%name,
+        call_iqxy,
+        kernel_code,
+        "#undef CALL_IQ",
+        "#undef KERNEL_NAME",
+    ]
+    return source
 
 def load_kernel_module(model_name):
     # type: (str) -> module
+    """
+    Return the kernel module named in *model_name*.
+
+    If the name ends in *.py* then load it as a custom model using
+    :func:`sasmodels.custom.load_custom_kernel_module`, otherwise
+    load it from :mod:`sasmodels.models`.
+    """
     if model_name.endswith('.py'):
         kernel_module = load_custom_kernel_module(model_name)
     else:

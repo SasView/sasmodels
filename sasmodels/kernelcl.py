@@ -55,7 +55,7 @@ import warnings
 import numpy as np  # type: ignore
 
 try:
-    raise NotImplementedError("OpenCL not yet implemented for new kernel template")
+    #raise NotImplementedError("OpenCL not yet implemented for new kernel template")
     import pyopencl as cl  # type: ignore
     # Ask OpenCL for the default context so that we know that one exists
     cl.create_some_context(interactive=False)
@@ -263,7 +263,7 @@ class GpuEnvironment(object):
         """
         key = "%s-%s-%s"%(name, dtype, fast)
         if key not in self.compiled:
-            print("compiling",name)
+            #print("OpenCL compile",name)
             dtype = np.dtype(dtype)
             program = compile_model(self.get_context(dtype),
                                     str(source), dtype, fast)
@@ -372,7 +372,7 @@ class GpuModel(KernelModel):
         is_2d = len(q_vectors) == 2
         kernel_name = generate.kernel_name(self.info, is_2d)
         kernel = getattr(self.program, kernel_name)
-        return GpuKernel(kernel, self.info, q_vectors)
+        return GpuKernel(kernel, self.dtype, self.info, q_vectors)
 
     def release(self):
         # type: () -> None
@@ -442,9 +442,9 @@ class GpuInput(object):
         """
         Free the memory.
         """
-        if self.q is not None:
-            self.q.release()
-            self.q = None
+        if self.q_b is not None:
+            self.q_b.release()
+            self.q_b = None
 
     def __del__(self):
         # type: () -> None
@@ -470,44 +470,43 @@ class GpuKernel(Kernel):
 
     Call :meth:`release` when done with the kernel instance.
     """
-    def __init__(self, kernel, model_info, q_vectors):
-        # type: (cl.Kernel, ModelInfo, List[np.ndarray]) -> None
+    def __init__(self, kernel, dtype, model_info, q_vectors):
+        # type: (cl.Kernel, np.dtype, ModelInfo, List[np.ndarray]) -> None
         max_pd = model_info.parameters.max_pd
         npars = len(model_info.parameters.kernel_parameters)-2
-        q_input = GpuInput(q_vectors, kernel.dtype)
+        q_input = GpuInput(q_vectors, dtype)
         self.kernel = kernel
         self.info = model_info
-        self.dtype = kernel.dtype
+        self.dtype = dtype
         self.dim = '2d' if q_input.is_2d else '1d'
         # plus three for the normalization values
-        self.result = np.empty(q_input.nq+3, q_input.dtype)
+        self.result = np.empty(q_input.nq+3, dtype)
 
         # Inputs and outputs for each kernel call
         # Note: res may be shorter than res_b if global_size != nq
         env = environment()
-        self.queue = env.get_queue(kernel.dtype)
+        self.queue = env.get_queue(dtype)
 
         # details is int32 data, padded to an 8 integer boundary
         size = ((max_pd*5 + npars*3 + 2 + 7)//8)*8
         self.result_b = cl.Buffer(self.queue.context, mf.READ_WRITE,
-                               q_input.global_size[0] * kernel.dtype.itemsize)
+                               q_input.global_size[0] * dtype.itemsize)
         self.q_input = q_input # allocated by GpuInput above
 
         self._need_release = [ self.result_b, self.q_input ]
-        self.real = (np.float32 if self.q_input.dtype == generate.F32
-                     else np.float64 if self.q_input.dtype == generate.F64
-                     else np.float16 if self.q_input.dtype == generate.F16
+        self.real = (np.float32 if dtype == generate.F32
+                     else np.float64 if dtype == generate.F64
+                     else np.float16 if dtype == generate.F16
                      else np.float32)  # will never get here, so use np.float32
 
     def __call__(self, call_details, weights, values, cutoff):
         # type: (CallDetails, np.ndarray, np.ndarray, float) -> np.ndarray
-
         context = self.queue.context
         # Arrange data transfer to card
         details_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
                               hostbuf=call_details.buffer)
         weights_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
-                              hostbuf=weights)
+                              hostbuf=weights) if len(weights) else None
         values_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
                              hostbuf=values)
 
@@ -520,7 +519,7 @@ class GpuKernel(Kernel):
         self.kernel(self.queue, self.q_input.global_size, None, *args)
         cl.enqueue_copy(self.queue, self.result, self.result_b)
         for v in (details_b, weights_b, values_b):
-            v.release()
+            if v is not None: v.release()
 
         return self.result[:self.q_input.nq]
 

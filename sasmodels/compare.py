@@ -496,6 +496,7 @@ def time_calculation(calculator, pars, Nevals=1):
     for _ in range(Nevals-1):
         value = calculator(**pars)
     average_time = toc()*1000./Nevals
+    #print("I(q)",value)
     return value, average_time
 
 def make_data(opts):
@@ -603,7 +604,7 @@ def compare(opts, limits=None):
     # Compare, but only if computing both forms
     if Nbase > 0 and Ncomp > 0:
         resid = (base_value - comp_value)
-        relerr = resid/comp_value
+        relerr = resid/np.where(comp_value!=0., abs(comp_value), 1.0)
         _print_stats("|%s-%s|"
                      % (base.engine, comp.engine) + (" "*(3+len(comp.engine))),
                      resid)

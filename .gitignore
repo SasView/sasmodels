@@ -3,7 +3,6 @@
 /logs/
 /*.csv
 *.pyc
-*.cl
 *.so
 *.obj
 /doc/_build/
