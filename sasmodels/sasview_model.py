@@ -197,7 +197,7 @@ class SasviewModel(object):
 
     def __init__(self, multiplicity):
         # type: () -> None
-        print("initializing", self.name)
+        #print("initializing", self.name)
         #raise Exception("first initialization")
         self._model = None
 
