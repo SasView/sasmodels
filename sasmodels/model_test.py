@@ -206,8 +206,14 @@ def _hide_model_case_from_nosetests():
                     # smoke test --- make sure it runs and produces a value
                     self.assertTrue(np.isfinite(actual_yi),
                                     'invalid f(%s): %s' % (xi, actual_yi))
+                elif np.isnan(yi):
+                    self.assertTrue(np.isnan(actual_yi),
+                                    'f(%s): expected:%s; actual:%s'
+                                    % (xi, yi, actual_yi))
                 else:
-                    self.assertTrue(is_near(yi, actual_yi, 5),
+                    # is_near does not work for infinite values, so also test
+                    # for exact values.  Note that this will not
+                    self.assertTrue(yi==actual_yi or is_near(yi, actual_yi, 5),
                                     'f(%s); expected:%s; actual:%s'
                                     % (xi, yi, actual_yi))
 
