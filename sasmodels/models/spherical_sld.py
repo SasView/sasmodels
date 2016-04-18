@@ -259,13 +259,18 @@ def VR(core_radius, n, thickness):
     return 1.0, 1.0
 
 
-demo = dict(
-    n=4,
-    scale=1.0,
-    sld_solvent=1.0,
-    background=0.0,
-    npts_inter=35.0,
-    )
+demo = {
+    "n_shells":4,
+    "npts_inter":35.0,
+    "radius_core":50.0,
+    "sld_core":2.07,
+    "sld_solvent": 1.0,
+    "sld_flat":[4.0,3.5,4.0,3.5,4.0],
+    "thick_flat":[100.0,100.0,100.0,100.0,100.0],
+    "func_inter":[0,0,0,0,0],
+    "thick_inter":[50.0,50.0,50.0,50.0,50.0],
+    "nu_inter":[2.5,2.5,2.5,2.5,2.5]
+    }
 
 #TODO: Not working yet
 tests = [

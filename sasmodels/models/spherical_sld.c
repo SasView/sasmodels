@@ -4,7 +4,6 @@ static double form_volume(
     double thick_flat[],
     double thick_inter[])
 {
-    double radius = 0.0;
     int i;
     double r = radius_core;
     for (i=0; i < n_shells; i++) {
@@ -195,8 +194,14 @@ static double Iq(double q,
     dp[4] = sld_core;
     dp[5] = sld_solvent;
     dp[6] = 0.0;
+    dp[7] = sld_flat[0];
+    //TODO: Something is messed up with this data strcucture!
+    dp[17] = thick_inter[0];
+    dp[27] = thick_flat[0];
+    dp[37] = func_inter[0];
+    dp[47] = nu_inter[0];
 
-    for (int i=1; i<n_shells; i++){
+    for (int i=1; i<=n_shells; i++){
         dp[i+7] = sld_flat[i];
         dp[i+17] = thick_inter[i];
         dp[i+27] = thick_flat[i];
