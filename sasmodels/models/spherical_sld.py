@@ -170,15 +170,15 @@ category = "sphere-based"
 # pylint: disable=bad-whitespace, line-too-long
 #            ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [["n_shells",                "",               1,      [0, 9],         "", "number of shells"],
+              ["npts_inter",       "",               35,     [0, 35],        "", "number of points in each sublayer Must be odd number"],
               ["radius_core",      "Ang",            50.0,   [0, inf],       "", "intern layer thickness"],
               ["sld_core",         "1e-6/Ang^2",     2.07,   [-inf, inf],    "", "sld function flat"],
               ["sld_solvent",      "1e-6/Ang^2",     1.0,    [-inf, inf],    "", "sld function solvent"],
-              ["sld_flat[n]",      "1e-6/Ang^2",     4.06,   [-inf, inf],    "", "sld function flat"],
-              ["thick_flat[n]",    "Ang",            100.0,  [0, inf],       "", "flat layer_thickness"],
-              ["func_inter[n]",    "",               0,      [0, 4],         "", "Erf:0, RPower:1, LPower:2, RExp:3, LExp:4"],
-              ["thick_inter[n]",   "Ang",            50.0,   [0, inf],       "", "intern layer thickness"],
-              ["nu_inter[n]",      "",               2.5,    [-inf, inf],    "", "steepness parameter"],
-              ["npts_inter",       "",               35,     [0, 35],        "", "number of points in each sublayer Must be odd number"],
+              ["sld_flat[n_shells]",      "1e-6/Ang^2",     4.06,   [-inf, inf],    "", "sld function flat"],
+              ["thick_flat[n_shells]",    "Ang",            100.0,  [0, inf],       "", "flat layer_thickness"],
+              ["func_inter[n_shells]",    "",               0,      [0, 4],         "", "Erf:0, RPower:1, LPower:2, RExp:3, LExp:4"],
+              ["thick_inter[n_shells]",   "Ang",            50.0,   [0, inf],       "", "intern layer thickness"],
+              ["nu_inter[n_shells]",      "",               2.5,    [-inf, inf],    "", "steepness parameter"],
               ]
 # pylint: enable=bad-whitespace, line-too-long
 source = ["lib/librefl.c",  "lib/sph_j1c.c", "spherical_sld.c"]
@@ -194,9 +194,6 @@ def profile(n_shells, radius_core,  sld_core,  sld_solvent, sld_flat,
     """
     Returns shape profile with x=radius, y=SLD.
     """
-
-    #total_radius = 1.25*(sum(thickness[:n_shells]) + core_radius + 1)
-    #dr = total_radius/400  # 400 points for a smooth plot
 
     z = []
     beta = []
@@ -219,42 +216,40 @@ def profile(n_shells, radius_core,  sld_core,  sld_solvent, sld_flat,
                         break
                     # shift half sub thickness for the first point
                     z0 -= dz#/2.0
-                        z.append(z0)
-                        #z0 -= dz/2.0
-                        z0 += thick_flat[i]
-                        sld_i = sld_flat[i]
-                        beta.append(sld_flat[i])
-                        dz = 0
-                    else:
-                        nu = nu_inter[i-1]
-                        # decide which sld is which, sld_r or sld_l
-                        if i == 1:
-                            sld_l = sld_core
-                        else:
-                            sld_l = sld_flat[i-1]
-                        if i == n_shells+1:
-                            sld_r = sld_solvent
-                        else:
-                            sld_r = sld_flat[i]
-                        # get function type
-                        func_idx = func_inter[i-1]
-                        # calculate the sld
-                        sld_i = intersldfunc(func_idx, npts_inter, n_s, nu,
-                                            sld_l, sld_r)
-                    # append to the list
                     z.append(z0)
-                    beta.append(sld_i)
-                    z0 += dz
-                    if j == 1:
-                        break
-    # put sld of solvent
+                    #z0 -= dz/2.0
+                    z0 += thick_flat[i]
+                    sld_i = sld_flat[i]
+                    beta.append(sld_flat[i])
+                    dz = 0
+                else:
+                    nu = nu_inter[i-1]
+                    # decide which sld is which, sld_r or sld_l
+                    if i == 1:
+                        sld_l = sld_core
+                    else:
+                        sld_l = sld_flat[i-1]
+                    if i == n_shells+1:
+                        sld_r = sld_solvent
+                    else:
+                        sld_r = sld_flat[i]
+                    # get function type
+                    func_idx = func_inter[i-1]
+                    # calculate the sld
+                    sld_i = intersldfunc(func_idx, npts_inter, n_s, nu,
+                                            sld_l, sld_r)
+                # append to the list
+                z.append(z0)
+                beta.append(sld_i)
+                z0 += dz
+                if j == 1:
+                    break
     z.append(z0)
     beta.append(sld_solvent)
     z_ext = z0/5.0
     z.append(z0+z_ext)
     beta.append(sld_solvent)
     # return sld profile (r, beta)
-    
     return np.asarray(z), np.asarray(beta)*1e-6
 
 def ER(core_radius, n, thickness):
@@ -267,7 +262,7 @@ def VR(core_radius, n, thickness):
 demo = dict(
     n=4,
     scale=1.0,
-    solvent_sld=1.0,
+    sld_solvent=1.0,
     background=0.0,
     npts_inter=35.0,
     )
