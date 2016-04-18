@@ -1,43 +1,12 @@
-//Headers
-static double form_volume(double thick_inter[],
-    double thick_flat_[],
-    double core_radius,
-    int n_shells);
-
-double Iq(double q,
+static double form_volume(
     int n_shells,
-    double thick_inter[],
-    double func_inter[],
-    double sld_core,
-    double sld_solvent,
-    double sld_flat[],
+    double radius_core,
     double thick_flat[],
-    double nu_inter[],
-    int npts_inter,
-    double core_radius);
-
-double Iqxy(double qx, double qy,
-    int n_shells,
-    double thick_inter[],
-    double func_inter[],
-    double sld_core,
-    double sld_solvent,
-    double sld_flat[],
-    double thick_flat[],
-    double nu_inter[],
-    int npts_inter,
-    double core_radius);
-
-//Main code
-static double form_volume(double thick_inter[],
-    double thick_flat_[],
-    double core_radius,
-    int n)
+    double thick_inter[])
 {
-    double radius = 0.0;
     int i;
-    double r = core_radius;
-    for (i=0; i < n; i++) {
+    double r = radius_core;
+    for (i=0; i < n_shells; i++) {
         r += thick_inter[i];
         r += thick_flat[i];
     }
@@ -55,28 +24,15 @@ static double sphere_sld_kernel(double dp[], double q) {
   double sld_solv = dp[5];
   double background = dp[6];
   double npts = dp[57]; //number of sub_layers in each interface
-  double nsl=npts;//21.0; //nsl = Num_sub_layer:  MUST ODD number in double //no other number works now
+  double nsl=npts;//21.0; //nsl = Num_sub_layer:  must be ODD double number
   int n_s;
 
   double sld_i,sld_f,dz,bes,fun,f,vol,qr,r,contr,f2;
   double sign,slope=0.0;
   double pi;
 
-  //int* fun_type;
-  //double* sld;
-  //double* thick_inter;
-  //double* thick;
-  //double* fun_coef;
-
   double total_thick=0.0;
 
-  //fun_type = (int*)malloc((n+2)*sizeof(int));
-  //sld = (double*)malloc((n+2)*sizeof(double));
-  //thick_inter = (double*)malloc((n+2)*sizeof(double));
-  //thick = (double*)malloc((n+2)*sizeof(double));
-  //fun_coef = (double*)malloc((n+2)*sizeof(double));
-
-  //TODO: Solution to avoid mallocs but probablyu can be done better
   int fun_type[12];
   double sld[12];
   double thick_inter[12];
@@ -174,7 +130,8 @@ static double sphere_sld_kernel(double dp[], double q) {
             bes = sign *  sph_j1c(qr);
             if (fabs(slope) > 0.0 ){
               //fun = sign * 3.0 * r * (2.0*qr*sin(qr)-((qr*qr)-2.0)*cos(qr))/(qr * qr * qr * qr);
-              fun = sign * r * sph_j1c(qr)  +  sign * 3.0 * sin(qr)/(qr * qr * q ) + sign * 6.0 * cos(qr)/(qr * qr * qr * q);
+              fun = sign * r * sph_j1c(qr) + sign * 3.0 * sin(qr)/(qr * qr * q )
+                + sign * 6.0 * cos(qr)/(qr * qr * qr * q);
             }
           }
 
@@ -202,15 +159,7 @@ static double sphere_sld_kernel(double dp[], double q) {
       }
     }
   }
-  //vol += vol_sub;
   f2 = f * f / vol;
-  //f2 *= scale;
-  //f2 += background;
-  //free(fun_type);
-  //free(sld);
-  //free(thick_inter);
-  //free(thick);
-  //free(fun_coef);
 
   return (f2);
 }
@@ -221,33 +170,38 @@ static double sphere_sld_kernel(double dp[], double q) {
  * @param q: q-value
  * @return: function value
  */
-double Iq(double q,
+static double Iq(double q,
     int n_shells,
-    double thick_inter[],
-    double func_inter[],
+    int npts_inter,
+    double radius_core,
     double sld_core,
     double sld_solvent,
     double sld_flat[],
     double thick_flat[],
-    double nu_inter[],
-    int npts_inter,
-    double core_radius
-    ) {
+    double func_inter[],
+    double thick_inter[],
+    double nu_inter[] ) {
 
     //printf("Number of points %d\n",npts_inter);
     double intensity;
-    //TODO: Remove this container at later stage. It is only kept to minimize stupid errors now
+    //TODO: Remove this container at later stage.
     double dp[60];
     dp[0] = n_shells;
     //This is scale will also have to be removed at some stage
     dp[1] = 1.0;
-    dp[2] = thick_inter_0;
-    dp[3] = func_inter_0;
+    dp[2] = thick_inter[0];
+    dp[3] = func_inter[0];
     dp[4] = sld_core;
     dp[5] = sld_solvent;
     dp[6] = 0.0;
+    dp[7] = sld_flat[0];
+    //TODO: Something is messed up with this data strcucture!
+    dp[17] = thick_inter[0];
+    dp[27] = thick_flat[0];
+    dp[37] = func_inter[0];
+    dp[47] = nu_inter[0];
 
-    for (i=0; i<n; i++){
+    for (int i=1; i<=n_shells; i++){
         dp[i+7] = sld_flat[i];
         dp[i+17] = thick_inter[i];
         dp[i+27] = thick_flat[i];
@@ -256,8 +210,8 @@ double Iq(double q,
     }
 
     dp[57] = npts_inter;
-    dp[58] = nu_inter_0;
-    dp[59] = rad_core_0;
+    dp[58] = nu_inter[0];
+    dp[59] = radius_core;
 
     intensity = 1.0e-4*sphere_sld_kernel(dp,q);
     //printf("%10d\n",intensity);
@@ -270,34 +224,22 @@ double Iq(double q,
  * @param q_y: value of Q along y
  * @return: function value
  */
-double Iqxy(double qx, double qy,
+
+/*static double Iqxy(double qx, double qy,
     int n_shells,
-    double thick_inter[],
-    double func_inter[],
+    int npts_inter,
+    double radius_core
     double sld_core,
     double sld_solvent,
     double sld_flat[],
     double thick_flat[],
+    double func_inter[],
+    double thick_inter[],
     double nu_inter[],
-    int npts_inter,
-    double core_radius
     ) {
 
     double q = sqrt(qx*qx + qy*qy);
-    return Iq(q, n_shells, thick_inter_0, func_inter_0, core0_sld, solvent_sld,
-    flat1_sld, flat2_sld, flat3_sld, flat4_sld, flat5_sld,
-    flat6_sld, flat7_sld, flat8_sld, flat9_sld, flat10_sld,
-    thick_inter_1, thick_inter_2, thick_inter_3, thick_inter_4, thick_inter_5,
-    thick_inter_6, thick_inter_7, thick_inter_8, thick_inter_9, thick_inter_10,
-    thick_flat_1, thick_flat_2, thick_flat_3, thick_flat_4, thick_flat_5,
-    thick_flat_6, thick_flat_7, thick_flat_8, thick_flat_9, thick_flat_10,
-    func_inter_1, func_inter_2, func_inter_3, func_inter_4, func_inter_5,
-    func_inter_6, func_inter_7, func_inter_8, func_inter_9, func_inter_10,
-    nu_inter_1, nu_inter_2, nu_inter_3, nu_inter_4, nu_inter_5,
-    nu_inter_6, nu_inter_7, nu_inter_8, nu_inter_9, nu_inter_10,
-    npts_inter, nu_inter_0, rad_core_0);
-
-    //TODO: Check if evalute rphi is not needed?
-
-}
+    return Iq(q, n_shells, npts_inter, radius_core, sld_core, sld_solvent,
+    sld_flat[], thick_flat[], func_inter[], thick_inter[], nu_inter[])
+}*/
 
