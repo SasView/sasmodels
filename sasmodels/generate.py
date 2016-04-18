@@ -472,6 +472,7 @@ def make_source(model_info):
     kernel_header = load_template('kernel_header.c')
     dll_code = load_template('kernel_iq.c')
     ocl_code = load_template('kernel_iq.cl')
+    #ocl_code = load_template('kernel_iq_local.cl')
     user_code = [open(f).read() for f in model_sources(model_info)]
 
     # Build initial sources
