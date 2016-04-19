@@ -158,7 +158,8 @@ static double sphere_sld_kernel(
             }
         }
     }
-    f2 = f * f / vol;
+
+    f2 = f * f * 1.0e-4;
     return (f2);
 }
 
@@ -211,7 +212,7 @@ static double Iq(double q,
     intensity = sphere_sld_kernel(q, n_shells, npts_inter, radius_core,
                 sld_core, sld_solvent, func_inter0, thick_inter0, nu_inter0,
                 sld_flat, thick_flat, func_inter, thick_inter, nu_inter);
-    intensity *=1.0e-4;
+    //intensity *=1.0e-4;
     //printf("%10d\n",intensity);
     return intensity;
 }
