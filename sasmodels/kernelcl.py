@@ -510,14 +510,19 @@ class GpuKernel(Kernel):
         values_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
                              hostbuf=values)
 
-        start, stop = 0, call_details.total_pd
-        args = [
-            np.uint32(self.q_input.nq), np.int32(start), np.int32(stop),
-            details_b, weights_b, values_b, self.q_input.q_b, self.result_b,
-            self.real(cutoff),
-        ]
-        self.kernel(self.queue, self.q_input.global_size, None, *args)
+        # Call kernel and retrieve results
+        step = 100
+        for start in range(0, call_details.total_pd, step):
+            stop = min(start+step, call_details.total_pd)
+            args = [
+                np.uint32(self.q_input.nq), np.int32(start), np.int32(stop),
+                details_b, weights_b, values_b, self.q_input.q_b, self.result_b,
+                self.real(cutoff),
+            ]
+            self.kernel(self.queue, self.q_input.global_size, None, *args)
         cl.enqueue_copy(self.queue, self.result, self.result_b)
+
+        # Free buffers
         for v in (details_b, weights_b, values_b):
             if v is not None: v.release()
 

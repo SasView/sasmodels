@@ -51,7 +51,7 @@ void KERNEL_NAME(
 {
   // Storage for the current parameter values.  These will be updated as we
   // walk the polydispersity cube.
-  local ParameterBlock local_values;  // current parameter values
+  ParameterBlock local_values;  // current parameter values
   double *pvec = (double *)(&local_values);  // Alias named parameters with a vector
   double norm;
 
@@ -73,56 +73,60 @@ void KERNEL_NAME(
     #endif
     norm = CALL_VOLUME(local_values);
 
-    const double scale = values[0];
-    const double background = values[1];
-    // result[nq] = norm; // Total volume normalization
+    double scale, background;
+    scale = values[0];
+    background = values[1];
 
     #ifdef USE_OPENMP
     #pragma omp parallel for
     #endif
-    for (int i=0; i < nq; i++) {
-      double scattering = CALL_IQ(q, i, local_values);
-      result[i] = (norm>0. ? scale*scattering/norm + background : background);
+    for (int q_index=0; q_index < nq; q_index++) {
+      double scattering = CALL_IQ(q, q_index, local_values);
+      result[q_index] = (norm>0. ? scale*scattering/norm + background : background);
     }
     return;
   }
 
 #if MAX_PD > 0
-  // If it is the first round initialize the result to zero, otherwise
-  // assume that the previous result has been passed back.
-  // Note: doing this even in the monodisperse case in order to handle the
-  // rare case where the model parameters are invalid and zero is returned.
-  // So slightly increased cost for slightly smaller code size.
+
+  // need product of weights at every Iq calc, so keep product of
+  // weights from the outer loops so that weight = partial_weight * fast_weight
+  double partial_weight; // product of weight w4*w3*w2 but not w1
+  double spherical_correction; // cosine correction for latitude variation
+  double weight; // product of partial_weight*w1*spherical_correction
+
+  // Location in the polydispersity hypercube, one index per dimension.
+  int pd_index[MAX_PD];
+
+  // Location of the coordinated parameters in their own sub-cubes.
+  int offset[NPARS];
+
+  // Number of coordinated indices
+  const int num_coord = details->num_coord;
+
+  // Number of elements in the longest polydispersity loop
+  const int fast_length = details->pd_length[0];
+
+  // Trigger the reset behaviour that happens at the end the fast loop
+  // by setting the initial index >= weight vector length.
+  pd_index[0] = fast_length;
+
+  // Default the spherical correction to 1.0 in case it is not otherwise set
+  spherical_correction = 1.0;
+
+  // Since we are no longer looping over the entire polydispersity hypercube
+  // for each q, we need to track the result and normalization values between
+  // calls.  This means initializing them to 0 at the start and accumulating
+  // them between calls.
+  norm = pd_start == 0 ? 0.0 : result[nq];
   if (pd_start == 0) {
     #ifdef USE_OPENMP
     #pragma omp parallel for
     #endif
-    for (int i=0; i < nq+1; i++) {
-      result[i] = 0.0;
+    for (int q_index=0; q_index < nq; q_index++) {
+      result[q_index] = 0.0;
     }
-    norm = 0.0;
-  } else {
-    norm = result[nq];
   }
-
-  // need product of weights at every Iq calc, so keep product of
-  // weights from the outer loops so that weight = partial_weight * fast_weight
-  double partial_weight = NAN; // product of weight w4*w3*w2 but not w1
-  double spherical_correction = 1.0;  // cosine correction for latitude variation
-
-  // Location in the polydispersity hypercube, one index per dimension.
-  local int pd_index[MAX_PD];
-
-  // Location of the coordinated parameters in their own sub-cubes.
-  local int offset[NPARS];
-
-  // Trigger the reset behaviour that happens at the end the fast loop
-  // by setting the initial index >= weight vector length.
-  const int fast_length = details->pd_length[0];
-  pd_index[0] = fast_length;
-
-  // Number of coordinated indices
-  const int num_coord = details->num_coord;
 
   // Loop over the weights then loop over q, accumulating values
   for (int loop_index=pd_start; loop_index < pd_stop; loop_index++) {
@@ -171,9 +175,7 @@ void KERNEL_NAME(
       //printf("\n");
     }
 
-    // Increment fast index
-    const double wi = weights[details->pd_offset[0] + pd_index[0]++];
-    double weight = partial_weight*wi;
+    // Update fast parameters
     //printf("fast %d: ", loop_index);
     for (int k=0; k < num_coord; k++) {
       if (details->pd_coord[k]&1) {
@@ -187,6 +189,11 @@ void KERNEL_NAME(
       }
     }
     //printf("\n");
+
+    // Increment fast index
+    const double wi = weights[details->pd_offset[0] + pd_index[0]];
+    weight = partial_weight*wi;
+    pd_index[0]++;
 
     #ifdef INVALID
     if (INVALID(local_values)) continue;
@@ -203,22 +210,23 @@ void KERNEL_NAME(
       #ifdef USE_OPENMP
       #pragma omp parallel for
       #endif
-      for (int i=0; i < nq; i++) {
-        const double scattering = CALL_IQ(q, i, local_values);
-        result[i] += weight*scattering;
+      for (int q_index=0; q_index < nq; q_index++) {
+        const double scattering = CALL_IQ(q, q_index, local_values);
+        result[q_index] += weight*scattering;
       }
     }
   }
 
-  // End of the PD loop we can normalize
   if (pd_stop >= details->total_pd) {
-    const double scale = values[0];
-    const double background = values[1];
+    // End of the PD loop we can normalize
+    double scale, background;
+    scale = values[0];
+    background = values[1];
     #ifdef USE_OPENMP
     #pragma omp parallel for
     #endif
-    for (int i=0; i < nq; i++) {
-      result[i] = (norm>0. ? scale*result[i]/norm + background : background);
+    for (int q_index=0; q_index < nq; q_index++) {
+      result[q_index] = (norm>0. ? scale*result[q_index]/norm + background : background);
     }
   }
 
