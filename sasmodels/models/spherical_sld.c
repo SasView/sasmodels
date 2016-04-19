@@ -139,7 +139,7 @@ static double sphere_sld_kernel(
                             SINCOS(qr, sinqr, cosqr);
                             fun = sign * 3.0 * r *
                             (2.0*qr*sinqr - (qrsq-2.0)*cosqr)/(qrsq * qrsq);
-                            // In the onioon model Jae-He's formula is rederived
+                            // In the onion model Jae-He's formula is rederived
                             // and gives following:
                             //fun = 3.0 * sign * r *
                             //(2.0*cosqr + qr*sinqr)/(qrsq*qrsq);
@@ -184,36 +184,10 @@ static double Iq(double q,
     double thick_inter[],
     double nu_inter[] ) {
 
-    //printf("Number of points %d\n",npts_inter);
-    double intensity;
-    //TODO: Remove this container at later stage.
-    /*double dp[60];
-    dp[0] = n_shells;
-    //This is scale will also have to be removed at some stage
-    dp[1] = 1.0;
-    dp[2] = thick_inter0;
-    dp[3] = func_inter0;
-    dp[4] = sld_core;
-    dp[5] = sld_solvent;
-    dp[6] = 0.0;
-
-    for (int i=0; i<n_shells; i++){
-        dp[i+7] = sld_flat[i];
-        dp[i+17] = thick_inter[i];
-        dp[i+27] = thick_flat[i];
-        dp[i+37] = func_inter[i];
-        dp[i+47] = nu_inter[i];
-    }
-
-    dp[57] = npts_inter;
-    dp[58] = nu_inter0;
-    dp[59] = radius_core;
-    */
-    intensity = sphere_sld_kernel(q, n_shells, npts_inter, radius_core,
+    double intensity = sphere_sld_kernel(q, n_shells, npts_inter, radius_core,
                 sld_core, sld_solvent, func_inter0, thick_inter0, nu_inter0,
                 sld_flat, thick_flat, func_inter, thick_inter, nu_inter);
-    //intensity *=1.0e-4;
-    //printf("%10d\n",intensity);
+
     return intensity;
 }
 

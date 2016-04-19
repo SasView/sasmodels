@@ -281,12 +281,11 @@ def profile(n_shells, radius_core,  sld_core,  sld_solvent, sld_flat,
     # return sld profile (r, beta)
     return np.asarray(z), np.asarray(beta)*1e-6
 
-#TODO: Not quite right I suppose
-def ER(n_shells, radius_core, thick_inter):
-    return np.sum(thick_inter[:n_shells], axis=0) + radius_core
-
-def VR(core_radius, n, thickness):
-    return 1.0, 1.0
+def ER(n_shells, radius_core, thick_inter0, thick_inter, thick_flat):
+    total_thickness = thick_inter0
+    total_thickness += np.sum(thick_inter[:n_shells], axis=0)
+    total_thickness += np.sum(thick_flat[:n_shells], axis=0)
+    return total_thickness + radius_core
 
 
 demo = {
