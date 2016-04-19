@@ -183,12 +183,6 @@ parameters = [["n_shells",                "",               1,      [0, 9],     
 # pylint: enable=bad-whitespace, line-too-long
 source = ["lib/librefl.c",  "lib/sph_j1c.c", "spherical_sld.c"]
 
-#def Iq(q, *args, **kw):
-#    return q
-
-#def Iqxy(qx, *args, **kw):
-#    return qx
-
 def profile(n_shells, radius_core,  sld_core,  sld_solvent, sld_flat,
             thick_flat, func_inter, thick_inter, nu_inter, npts_inter):
     """
@@ -252,8 +246,9 @@ def profile(n_shells, radius_core,  sld_core,  sld_solvent, sld_flat,
     # return sld profile (r, beta)
     return np.asarray(z), np.asarray(beta)*1e-6
 
-def ER(core_radius, n, thickness):
-    return np.sum(thickness[:n[0]], axis=0) + core_radius
+#TODO: Not quite right I suppose
+def ER(n_shells, radius_core, thick_inter):
+    return np.sum(thick_inter[:n_shells], axis=0) + radius_core
 
 def VR(core_radius, n, thickness):
     return 1.0, 1.0
