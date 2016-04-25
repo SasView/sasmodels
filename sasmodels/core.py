@@ -138,7 +138,7 @@ def build_model(model_info, dtype=None, platform="ocl"):
     source = generate.make_source(model_info)
     numpy_dtype, fast = parse_dtype(model_info, dtype)
     if (platform == "dll"
-            or dtype.endswith('!')
+            or (dtype is not None and dtype.endswith('!'))
             or not HAVE_OPENCL
             or not kernelcl.environment().has_type(numpy_dtype)):
         #print("building dll", numpy_dtype)
