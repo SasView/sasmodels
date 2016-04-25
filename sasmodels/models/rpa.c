@@ -38,13 +38,13 @@ double Iq(double q, double case_num,
     Na=Nb=1000.0;
     Phia=Phib=0.0000001;
     Kab=Kac=Kad=Kbc=Kbd=-0.0004;
-    La=Lb=1e-12;
+    La=Lb=1.0e-12;
     va=vb=100.0;
     ba=bb=5.0;
   } else if (icase <= 4) {
     Phia=0.0000001;
     Kab=Kac=Kad=-0.0004;
-    La=1e-12;
+    La=1.0e-12;
     va=100.0;
     ba=5.0;
   }

@@ -181,10 +181,10 @@ Iq(double q, double core_sld, double core_radius, double solvent_sld,
     r += thickness[i];
     if (r == r0) {
       // no thickness, so nothing to add
-    } else if (fabs(A[i]) < 1e-16 || sld_out[i] == sld_in[i]) {
+    } else if (fabs(A[i]) < 1.0e-16 || sld_out[i] == sld_in[i]) {
       f -= f_constant(q, r0, sld_in[i]);
       f += f_constant(q, r, sld_in[i]);
-    } else if (fabs(A[i]) < 1e-4) {
+    } else if (fabs(A[i]) < 1.0e-4) {
       const double slope = (sld_out[i] - sld_in[i])/thickness[i];
       f -= f_linear(q, r0, sld_in[i], slope);
       f += f_linear(q, r, sld_out[i], slope);
