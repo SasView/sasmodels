@@ -78,13 +78,16 @@ elif os.name == 'nt':
         else:
             COMPILE = " ".join((CC, LN))
     else:
-        COMPILE = "gcc -shared -fPIC -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
+        # fPIC is unused on windows
+        # COMPILE = "gcc -shared -fPIC -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
+        COMPILE = "gcc -shared -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
         if "SAS_OPENMP" in os.environ:
             COMPILE = COMPILE + " -fopenmp"
 else:
     COMPILE = "cc -shared -fPIC -fopenmp -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
 
-DLL_PATH = tempfile.gettempdir()
+# Assume the default location of module DLLs is within the sasmodel directory.
+DLL_PATH = os.path.join(os.path.split(os.path.realpath(__file__))[0], "models", "dll")
 
 ALLOW_SINGLE_PRECISION_DLLS = True
 
@@ -102,7 +105,6 @@ def dll_path(model_info, dtype="double"):
     else:
         basename += "128"
     return joinpath(DLL_PATH, basename+'.so')
-
 
 def make_dll(source, model_info, dtype="double"):
     """
@@ -142,8 +144,10 @@ def make_dll(source, model_info, dtype="double"):
     source = generate.convert_type(source, dtype)
     source_files = generate.model_sources(model_info) + [model_info['filename']]
     dll = dll_path(model_info, dtype)
-    newest = max(os.path.getmtime(f) for f in source_files)
-    if not os.path.exists(dll) or os.path.getmtime(dll) < newest:
+
+    #newest = max(os.path.getmtime(f) for f in source_files)
+    #if not os.path.exists(dll) or os.path.getmtime(dll) < newest:
+    if not os.path.exists(dll):
         # Replace with a proper temp file
         fid, filename = tempfile.mkstemp(suffix=".c", prefix=tempfile_prefix)
         os.fdopen(fid, "w").write(source)
