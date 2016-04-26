@@ -9,14 +9,10 @@ to function for values lower than 1.0. Namely Gamma(t) = 1/t * Gamma(t + 1)
 #ifdef tgamma
 inline double sas_gamma( double x) { return tgamma(x+1)/x; }
 #else
-double _isnan(double x, double y) { return x != y; }
-#undef isnan
-#define isnan(x) _isnan(x, x)
-
 static double cephes_stirf(double x)
 {
 #define MAXSTIR 143.01608
-	static double SQTPI = 2.50662827463100050242E0;
+#define SQTPI 2.50662827463100050242E0
 	double y, w, v;
 
 	w = 1.0 / x;
@@ -43,8 +39,8 @@ static double cephes_stirf(double x)
 }
 
 double sas_gamma(double x) {
-	#define MAXGAM 171.624376956302725
-	static double LOGPI = 1.14472988584940017414;
+#define MAXGAM 171.624376956302725
+#define LOGPI 1.14472988584940017414
 	double p, q, z;
 	int sgngam;
 	int i;
