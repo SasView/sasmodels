@@ -47,9 +47,7 @@ double Iq(double q,
     // Scale sides by B
     double a_scaled = a_side / b_side;
     double c_scaled = c_side / b_side;
-    double arim_scaled = arim_thickness / b_side;
-    double brim_scaled = brim_thickness / b_side;
-       
+
     // DelRho values (note that drC is not used later)       
 	double dr0 = core_sld-solvent_sld;
 	double drA = arim_sld-solvent_sld;

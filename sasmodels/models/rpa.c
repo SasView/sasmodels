@@ -16,15 +16,15 @@ double Iq(double q, double case_num,
     N[0]=N[1]=1000.0;
     Phi[0]=Phi[1]=0.0000001;
     Kab=Kac=Kad=Kbc=Kbd=-0.0004;
-    L[0]=L[1]=1e-12;
-    v[0]=v[1]=100.0;
-    b[0]=b[1]=5.0;
+    La=Lb=1.0e-12;
+    va=vb=100.0;
+    ba=bb=5.0;
   } else if (icase <= 4) {
     Phi[0]=0.0000001;
     Kab=Kac=Kad=-0.0004;
-    L[0]=1e-12;
-    v[0]=100.0;
-    b[0]=5.0;
+    La=1.0e-12;
+    va=100.0;
+    ba=5.0;
   }
 #else
   if (icase <= 1) {

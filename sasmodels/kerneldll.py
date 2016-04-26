@@ -86,13 +86,16 @@ elif os.name == 'nt':
         else:
             COMPILE = " ".join((CC, LN))
     else:
-        COMPILE = "gcc -shared -fPIC -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
+        # fPIC is unused on windows
+        # COMPILE = "gcc -shared -fPIC -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
+        COMPILE = "gcc -shared -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
         if "SAS_OPENMP" in os.environ:
             COMPILE += " -fopenmp"
 else:
     COMPILE = "cc -shared -fPIC -fopenmp -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
 
-DLL_PATH = tempfile.gettempdir()
+# Assume the default location of module DLLs is within the sasmodel directory.
+DLL_PATH = os.path.join(os.path.split(os.path.realpath(__file__))[0], "models", "dll")
 
 ALLOW_SINGLE_PRECISION_DLLS = True
 

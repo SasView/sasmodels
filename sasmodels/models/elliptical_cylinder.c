@@ -86,7 +86,7 @@ double Iq(double q, double r_minor, double r_ratio, double length,
     answer *= delrho*delrho;
 
     const double vol = form_volume(r_minor, r_ratio, length);
-    return answer*vol*vol*1e-4;
+    return answer*vol*vol*1.0e-4;
 }
 
 

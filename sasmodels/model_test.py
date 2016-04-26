@@ -287,7 +287,12 @@ def main():
 
     Returns 0 if success or 1 if any tests fail.
     """
-    import xmlrunner
+    try:
+        from xmlrunner import XMLTestRunner as TestRunner
+        test_args = { 'output': 'logs' }
+    except ImportError:
+        from unittest import TextTestRunner as TestRunner
+        test_args = { }
 
     models = sys.argv[1:]
     if models and models[0] == '-v':
@@ -326,8 +331,7 @@ If model1 is 'all', then all except the remaining models will be tested.
 
         return 1
 
-    #runner = unittest.TextTestRunner()
-    runner = xmlrunner.XMLTestRunner(output='logs', verbosity=verbosity)
+    runner = TestRunner(verbosity=verbosity, **test_args)
     result = runner.run(make_suite(loaders, models))
     return 1 if result.failures or result.errors else 0
 
