@@ -39,8 +39,6 @@ static double cephes_stirf(double x)
 }
 
 double sas_gamma(double x) {
-	const double MAXGAM=171.624376956302725;
-	const double LOGPI=1.14472988584940017414;
 	double p, q, z;
 	int sgngam;
 	int i;
