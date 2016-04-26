@@ -83,6 +83,7 @@ elif os.name == 'nt':
         COMPILE = "gcc -shared -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
         if "SAS_OPENMP" in os.environ:
             COMPILE = COMPILE + " -fopenmp"
+        #COMPILE = "z:/tcc/tcc -shared -rdynamic -Wall %(source)s -o %(output)s"
 else:
     COMPILE = "cc -shared -fPIC -fopenmp -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
 

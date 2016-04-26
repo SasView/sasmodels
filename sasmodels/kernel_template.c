@@ -21,8 +21,11 @@
          inline double trunc(double x) { return x>=0?floor(x):-floor(-x); }
          inline double fmin(double x, double y) { return x>y ? y : x; }
          inline double fmax(double x, double y) { return x<y ? y : x; }
-         inline double isnan(double x) { return _isnan(x); }
+         #define isnan(x) _isnan(x)
+         #define isinf(x) (!_finite(x))
+         #define isfinite(x) _finite(x)
          #define NAN (std::numeric_limits<double>::quiet_NaN()) // non-signalling NaN
+         #define INFINITY (std::numeric_limits<double>::infinity())
          #define NEED_EXPM1
          #define NEED_TGAMMA
      #else
@@ -31,7 +34,20 @@
      inline void SINCOS(double angle, double &svar, double &cvar) { svar=sin(angle); cvar=cos(angle); }
 #  else
      #include <stdio.h>
-     #include <tgmath.h> // C99 type-generic math, so sin(float) => sinf
+     #if defined(__TINYC__)
+         #include <math.h>
+         inline double trunc(double x) { return x>=0?floor(x):-floor(-x); }
+         inline double fmin(double x, double y) { return x>y ? y : x; }
+         inline double fmax(double x, double y) { return x<y ? y : x; }
+         // TODO: test isnan
+         inline double _isnan(double x) { return x != x; } // hope this doesn't optimize away!
+         #undef isnan
+         #define isnan(x) _isnan(x)
+         #define NEED_EXPM1
+         #define NEED_TGAMMA
+     #else
+         #include <tgmath.h> // C99 type-generic math, so sin(float) => sinf
+     #endif
      // MSVC doesn't support C99, so no need for dllexport on C99 branch
      #define kernel
      #define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
