@@ -1,14 +1,12 @@
 /*
 The wrapper for gamma function from OpenCL and standard libraries
-The OpenCL gamma function fails misserably on values lower than 1.0
+The OpenCL gamma function fails miserably on values lower than 1.0
 while works fine on larger values.
 We use gamma definition Gamma(t + 1) = t * Gamma(t) to compute
 to function for values lower than 1.0. Namely Gamma(t) = 1/t * Gamma(t + 1)
 */
 
-#ifdef tgamma
-inline double sas_gamma( double x) { return tgamma(x+1)/x; }
-#else
+#if defined(NEED_TGAMMA)
 static double cephes_stirf(double x)
 {
 	const double MAXSTIR=143.01608;
@@ -38,7 +36,7 @@ static double cephes_stirf(double x)
 	return(y);
 }
 
-double sas_gamma(double x) {
+static double tgamma(double x) {
 	double p, q, z;
 	int sgngam;
 	int i;
@@ -136,3 +134,6 @@ small:
 		return(z / ((1.0 + 0.5772156649015329 * x) * x));
 }
 #endif
+
+
+inline double sas_gamma( double x) { return tgamma(x+1)/x; }
