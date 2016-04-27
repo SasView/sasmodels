@@ -8,7 +8,7 @@ packages = find_packages(exclude=['contrib', 'docs', 'tests*'])
 package_data = {
     'sasmodels.models': ['*.c','lib/*.c'],
     'sasmodels': ['*.c'],
-    'sasmodels.models.dll': ['*.so'],
+    'models': ['*.so'],
 }
 required = []
 
