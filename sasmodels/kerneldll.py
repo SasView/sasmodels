@@ -47,6 +47,7 @@ from __future__ import print_function
 
 import sys
 import os
+from os.path import join as joinpath, split as splitpath, realpath, splitext
 import tempfile
 import ctypes as ct
 from ctypes import c_void_p, c_int, c_longdouble, c_double, c_float
@@ -77,18 +78,19 @@ elif os.name == 'nt':
             COMPILE = " ".join((CC, "/openmp", LN))
         else:
             COMPILE = " ".join((CC, LN))
-    else:
-        # fPIC is unused on windows
-        # COMPILE = "gcc -shared -fPIC -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
+    elif True:  # Don't use mingw
+        # fPIC is not needed on windows
         COMPILE = "gcc -shared -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
         if "SAS_OPENMP" in os.environ:
             COMPILE = COMPILE + " -fopenmp"
-        #COMPILE = "z:/tcc/tcc -shared -rdynamic -Wall %(source)s -o %(output)s"
+    else:
+        from tinycc import TCC
+        COMPILE = TCC + " -shared -rdynamic -Wall %(source)s -o %(output)s"
 else:
     COMPILE = "cc -shared -fPIC -fopenmp -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
 
 # Assume the default location of module DLLs is in top level /models dir.
-DLL_PATH = os.path.join(os.path.split(os.path.realpath(sys.argv[0]))[0], "models")
+DLL_PATH = joinpath(splitpath(realpath(sys.argv[0]))[0], "models")
 
 ALLOW_SINGLE_PRECISION_DLLS = True
 
@@ -97,7 +99,6 @@ def dll_path(model_info, dtype="double"):
     """
     Path to the compiled model defined by *model_info*.
     """
-    from os.path import join as joinpath, split as splitpath, splitext
     basename = splitext(splitpath(model_info['filename'])[1])[0]
     if np.dtype(dtype) == generate.F32:
         basename += "32"
