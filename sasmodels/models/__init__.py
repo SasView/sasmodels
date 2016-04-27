@@ -52,5 +52,13 @@ def data_files():
     
     for f in im_list:
         data_files.append(('media/models_media/img', [f]))
+
+    # Add precompiled models dlls to the top level directory "models"
+    path_img = get_data_path(media=os.path.join("sasmodels","sasmodels","models","dll"))
+    is_list = findall(path_img)
+    for f in is_list:
+        if os.path.splitext(f)[1] == ".so":
+            data_files.append(('models', [f]))
+
     return data_files
 

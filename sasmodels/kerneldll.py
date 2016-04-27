@@ -87,8 +87,8 @@ elif os.name == 'nt':
 else:
     COMPILE = "cc -shared -fPIC -fopenmp -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
 
-# Assume the default location of module DLLs is within the sasmodel directory.
-DLL_PATH = os.path.join(os.path.split(os.path.realpath(__file__))[0], "models", "dll")
+# Assume the default location of module DLLs is in top level /models dir.
+DLL_PATH = os.path.join(os.path.split(os.path.realpath(sys.argv[0]))[0], "models")
 
 ALLOW_SINGLE_PRECISION_DLLS = True
 
@@ -153,7 +153,6 @@ def make_dll(source, model_info, dtype="double"):
         fid, filename = tempfile.mkstemp(suffix=".c", prefix=tempfile_prefix)
         os.fdopen(fid, "w").write(source)
         command = COMPILE%{"source":filename, "output":dll}
-        print("Compile command: "+command)
         status = os.system(command)
         if status != 0 or not os.path.exists(dll):
             raise RuntimeError("compile failed.  File is in %r"%filename)
