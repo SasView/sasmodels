@@ -47,6 +47,7 @@ from __future__ import print_function
 
 import sys
 import os
+from os.path import join as joinpath, split as splitpath, realpath, splitext
 import tempfile
 import ctypes as ct  # type: ignore
 from ctypes import c_void_p, c_int32, c_longdouble, c_double, c_float  # type: ignore
@@ -85,17 +86,19 @@ elif os.name == 'nt':
             COMPILE = " ".join((CC, "/openmp", LN))
         else:
             COMPILE = " ".join((CC, LN))
-    else:
-        # fPIC is unused on windows
-        # COMPILE = "gcc -shared -fPIC -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
+    elif True:  # Don't use mingw
+        # fPIC is not needed on windows
         COMPILE = "gcc -shared -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
         if "SAS_OPENMP" in os.environ:
             COMPILE += " -fopenmp"
+    else:
+        from tinycc import TCC
+        COMPILE = TCC + " -shared -rdynamic -Wall %(source)s -o %(output)s"
 else:
     COMPILE = "cc -shared -fPIC -fopenmp -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
 
-# Assume the default location of module DLLs is within the sasmodel directory.
-DLL_PATH = os.path.join(os.path.split(os.path.realpath(__file__))[0], "models", "dll")
+# Assume the default location of module DLLs is in top level /models dir.
+DLL_PATH = joinpath(splitpath(realpath(sys.argv[0]))[0], "models")
 
 ALLOW_SINGLE_PRECISION_DLLS = True
 
@@ -152,7 +155,6 @@ def make_dll(source, model_info, dtype=F64):
         source = generate.convert_type(source, dtype)
         os.fdopen(fid, "w").write(source)
         command = COMPILE%{"source":filename, "output":dll}
-        print("Compile command: "+command)
         status = os.system(command)
         if status != 0 or not os.path.exists(dll):
             raise RuntimeError("compile failed.  File is in %r"%filename)
