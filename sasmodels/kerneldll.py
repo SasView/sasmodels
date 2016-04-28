@@ -89,8 +89,14 @@ elif os.name == 'nt':
 else:
     COMPILE = "cc -shared -fPIC -fopenmp -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
 
-# Assume the default location of module DLLs is in top level /models dir.
-DLL_PATH = joinpath(splitpath(realpath(sys.argv[0]))[0], "models")
+# Windows-specific solution
+if os.name == 'nt':
+    # Assume the default location of module DLLs is in top level /models dir.
+    # Relying on the Windows installer placing target items in the right place
+    DLL_PATH = os.path.join(os.path.split(os.path.realpath(sys.argv[0]))[0], "models")
+else:
+    # Set up the default path for compiled modules.
+    DLL_PATH = tempfile.gettempdir()
 
 ALLOW_SINGLE_PRECISION_DLLS = True
 
