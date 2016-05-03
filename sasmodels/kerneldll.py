@@ -91,9 +91,10 @@ else:
 
 # Windows-specific solution
 if os.name == 'nt':
-    # Assume the default location of module DLLs is in top level /models dir.
-    # Relying on the Windows installer placing target items in the right place
-    DLL_PATH = os.path.join(os.path.split(os.path.realpath(sys.argv[0]))[0], "models")
+    # Assume the default location of module DLLs is in .sasmodels/compiled_models.
+    DLL_PATH = os.path.join(os.path.expanduser("~"), ".sasmodels", "compiled_models")
+    if not os.path.exists(DLL_PATH):
+        os.makedirs(DLL_PATH)
 else:
     # Set up the default path for compiled modules.
     DLL_PATH = tempfile.gettempdir()
