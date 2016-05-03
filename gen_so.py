@@ -7,6 +7,10 @@ def main():
     sys.path.insert(0, sasmodels)
     from sasmodels import generate, core
 
+    # Put precompiled models in the topmost directory
+    import sasmodels.kerneldll
+    sasmodels.kerneldll.DLL_PATH="models"
+
     # Convert ../sasmodels/models/name.py to name
     for model_name in core.list_models():
         # Choose only relevant python files
