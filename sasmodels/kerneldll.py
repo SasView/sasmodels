@@ -47,11 +47,10 @@ from __future__ import print_function
 
 import sys
 import os
-from os.path import join as joinpath, split as splitpath, realpath, splitext
+from os.path import join as joinpath, split as splitpath, splitext
 import tempfile
 import ctypes as ct
 from ctypes import c_void_p, c_int, c_longdouble, c_double, c_float
-import _ctypes
 
 import numpy as np
 
@@ -78,12 +77,14 @@ elif os.name == 'nt':
             COMPILE = " ".join((CC, "/openmp", LN))
         else:
             COMPILE = " ".join((CC, LN))
-    elif True:  # Don't use mingw
+    elif True:
+        # If MSVC compiler is not available, try using mingw
         # fPIC is not needed on windows
         COMPILE = "gcc -shared -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
         if "SAS_OPENMP" in os.environ:
             COMPILE = COMPILE + " -fopenmp"
     else:
+        # If MSVC compiler is not available, try using tinycc
         from tinycc import TCC
         COMPILE = TCC + " -shared -rdynamic -Wall %(source)s -o %(output)s"
 else:
@@ -150,15 +151,22 @@ def make_dll(source, model_info, dtype="double"):
     else:
         tempfile_prefix = 'sas_' + model_info['name'] + '128_'
  
-    source = generate.convert_type(source, dtype)
-    source_files = generate.model_sources(model_info) + [model_info['filename']]
     dll = dll_path(model_info, dtype)
 
-    #newest = max(os.path.getmtime(f) for f in source_files)
-    #if not os.path.exists(dll) or os.path.getmtime(dll) < newest:
     if not os.path.exists(dll):
-        # Replace with a proper temp file
+        need_recompile = True
+    elif getattr(sys, 'frozen', False):
+        # TODO: don't suppress time stamp
+        # Currently suppressing recompile when running in a frozen environment
+        need_recompile = False
+    else:
+        dll_time = os.path.getmtime(dll)
+        source_files = generate.model_sources(model_info) + [model_info['filename']]
+        newest_source = max(os.path.getmtime(f) for f in source_files)
+        need_recompile = dll_time < newest_source
+    if need_recompile:
         fid, filename = tempfile.mkstemp(suffix=".c", prefix=tempfile_prefix)
+        source = generate.convert_type(source, dtype)
         os.fdopen(fid, "w").write(source)
         command = COMPILE%{"source":filename, "output":dll}
         status = os.system(command)
@@ -257,7 +265,6 @@ class DllModel(object):
             #libHandle = ct.c_void_p(dll._handle)
             del dll, self.dll
             self.dll = None
-            #_ctypes.FreeLibrary(libHandle)
             ct.windll.kernel32.FreeLibrary(libHandle)
         else:    
             pass 
