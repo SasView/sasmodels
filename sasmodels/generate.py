@@ -463,9 +463,9 @@ def make_source(model_info):
     source = [p
               for f in model_sources(model_info)
               # Add #line directives at the start of each file
-              for p in ('#line 0 "%s"'%f, open(f).read())
+              for p in ('#line 0 "%s"'%f.replace('\\', '\\\\'), open(f).read())
               ]
-    source.append('#line 133 "%s"'%C_KERNEL_TEMPLATE_PATH)
+    source.append('#line 133 "%s"'%C_KERNEL_TEMPLATE_PATH.replace('\\', '\\\\'))
 
     # Prepare defines
     defines = []
@@ -507,7 +507,7 @@ double form_volume(VOLUME_PARAMETER_DECLARATIONS) {
     %(body)s
 }
 """ % {'body':model_info['form_volume'],
-       'file':model_info['filename'],
+       'file':model_info['filename'].replace('\\', '\\\\'),
        'line':model_info['form_volume_line'],
        }
         source.append(fn)
@@ -540,7 +540,7 @@ double Iq(double q, IQ_PARAMETER_DECLARATIONS) {
     %(body)s
 }
 """ % {'body':model_info['Iq'],
-       'file':model_info['filename'],
+       'file':model_info['filename'].replace('\\', '\\\\'),
        'line':model_info['Iq_line'],
        }
         source.append(fn)
@@ -573,7 +573,7 @@ double Iqxy(double qx, double qy, IQXY_PARAMETER_DECLARATIONS) {
     %(body)s
 }
 """ % {'body':model_info['Iqxy'],
-       'file':model_info['filename'],
+       'file':model_info['filename'].replace('\\', '\\\\'),
        'line':model_info['Iqxy_line'],
        }
         source.append(fn)
