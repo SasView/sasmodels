@@ -463,7 +463,7 @@ def make_source(model_info):
     source = [p
               for f in model_sources(model_info)
               # Add #line directives at the start of each file
-              for p in ('#line 0 "%s"'%f.replace('\\', '\\\\'), open(f).read())
+              for p in ('#line 1 "%s"'%f.replace('\\', '\\\\'), open(f).read())
               ]
     source.append('#line 133 "%s"'%C_KERNEL_TEMPLATE_PATH.replace('\\', '\\\\'))
 
