@@ -1,8 +1,9 @@
 import os
 from setuptools import setup,find_packages
 
-# Create the model .so's
-os.system("python gen_so.py")
+if os.name == 'nt':
+    # Create the model .so's on windows
+    os.system("python gen_so.py")
 
 packages = find_packages(exclude=['contrib', 'docs', 'tests*'])
 package_data = {

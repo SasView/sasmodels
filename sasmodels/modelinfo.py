@@ -10,6 +10,7 @@ from __future__ import print_function
 
 from copy import copy
 from os.path import abspath, basename, splitext
+import inspect
 
 import numpy as np  # type: ignore
 
@@ -608,6 +609,39 @@ def isstr(x):
     # TODO: 2-3 compatible tests for str, including unicode strings
     return isinstance(x, str)
 
+
+def _find_source_lines(model_info, kernel_module):
+    """
+    Identify the location of the C source inside the model definition file.
+
+    This code runs through the source of the kernel module looking for
+    lines that start with 'Iq', 'Iqxy' or 'form_volume'.  Clearly there are
+    all sorts of reasons why this might not work (e.g., code commented out
+    in a triple-quoted line block, code built using string concatenation,
+    or code defined in the branch of an 'if' block), but it should work
+    properly in the 95% case, and getting the incorrect line number will
+    be harmless.
+    """
+    # Check if we need line numbers at all
+    if callable(model_info.Iq):
+        return None
+
+    if (model_info.Iq is None
+        and model_info.Iqxy is None
+        and model_info.form_volume is None):
+        return
+
+    # find the defintion lines for the different code blocks
+    source = inspect.getsource(kernel_module)
+    for k, v in enumerate(source.split('\n')):
+        if v.startswith('Iqxy'):
+            model_info._Iqxy_line = k+1
+        elif v.startswith('Iq'):
+            model_info._Iq_line = k+1
+        elif v.startswith('form_volume'):
+            model_info._form_volume_line = k+1
+
+
 def make_model_info(kernel_module):
     # type: (module) -> ModelInfo
     """
@@ -653,6 +687,8 @@ def make_model_info(kernel_module):
     info.sesans = getattr(kernel_module, 'sesans', None) # type: ignore
     info.control = getattr(kernel_module, 'control', None)
     info.hidden = getattr(kernel_module, 'hidden', None) # type: ignore
+
+    _find_source_lines(info, kernel_module)
 
     return info
 
@@ -805,6 +841,12 @@ class ModelInfo(object):
     #: Returns *sesans(z, a, b, ...)* for models which can directly compute
     #: the SESANS correlation function.  Note: not currently implemented.
     sesans = None           # type: Optional[Callable[[np.ndarray], np.ndarray]]
+
+    # line numbers within the python file for bits of C source, if defined
+    _Iqxy_line = 0
+    _Iq_line = 0
+    _form_volume_line = 0
+
 
     def __init__(self):
         # type: () -> None

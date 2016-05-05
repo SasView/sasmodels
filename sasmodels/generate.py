@@ -386,19 +386,20 @@ def load_template(filename):
     if filename not in _template_cache or mtime > _template_cache[filename][0]:
         with open(path) as fid:
             _template_cache[filename] = (mtime, fid.read(), path)
-    return _template_cache[filename][1]
+    return _template_cache[filename][1], path
 
 
 _FN_TEMPLATE = """\
 double %(name)s(%(pars)s);
 double %(name)s(%(pars)s) {
+#line %(line)d "%(filename)s"
     %(body)s
 }
 
 """
 
-def _gen_fn(name, pars, body):
-    # type: (str, List[Parameter], str) -> str
+def _gen_fn(name, pars, body, filename, line):
+    # type: (str, List[Parameter], str, str, int) -> str
     """
     Generate a function given pars and body.
 
@@ -410,7 +411,10 @@ def _gen_fn(name, pars, body):
          }
     """
     par_decl = ', '.join(p.as_function_argument() for p in pars) if pars else 'void'
-    return _FN_TEMPLATE % {'name': name, 'body': body, 'pars': par_decl}
+    return _FN_TEMPLATE % {
+        'name': name, 'pars': par_decl, 'body': body,
+        'filename': filename.replace('\\', '\\\\'), 'line': line,
+    }
 
 def _call_pars(prefix, pars):
     # type: (str, List[Parameter]) -> List[str]
@@ -437,11 +441,19 @@ def _have_Iqxy(sources):
     If you want to comment out an Iqxy function, use // on the front of the
     line instead.
     """
-    for code in sources:
+    for code, path in sources:
         if _IQXY_PATTERN.search(code):
             return True
     else:
         return False
+
+def _add_source(source, code, path):
+    """
+    Add a file to the list of source code chunks, tagged with path and line.
+    """
+    path = path.replace('\\','\\\\')
+    source.append('#line 1 "%s"'%path)
+    source.append(code)
 
 def make_source(model_info):
     # type: (ModelInfo) -> str
@@ -473,23 +485,29 @@ def make_source(model_info):
     dll_code = load_template('kernel_iq.c')
     ocl_code = load_template('kernel_iq.cl')
     #ocl_code = load_template('kernel_iq_local.cl')
-    user_code = [open(f).read() for f in model_sources(model_info)]
+    user_code = [(f, open(f).read()) for f in model_sources(model_info)]
 
     # Build initial sources
-    source = [kernel_header] + user_code
+    source = []
+    _add_source(source, *kernel_header)
+    for path, code in user_code:
+        _add_source(source, code, path)
 
     # Make parameters for q, qx, qy so that we can use them in declarations
     q, qx, qy = [Parameter(name=v) for v in ('q', 'qx', 'qy')]
     # Generate form_volume function, etc. from body only
     if isinstance(model_info.form_volume, str):
         pars = partable.form_volume_parameters
-        source.append(_gen_fn('form_volume', pars, model_info.form_volume))
+        source.append(_gen_fn('form_volume', pars, model_info.form_volume,
+                              model_info.filename, model_info._form_volume_line))
     if isinstance(model_info.Iq, str):
         pars = [q] + partable.iq_parameters
-        source.append(_gen_fn('Iq', pars, model_info.Iq))
+        source.append(_gen_fn('Iq', pars, model_info.Iq,
+                              model_info.filename, model_info._Iq_line))
     if isinstance(model_info.Iqxy, str):
         pars = [qx, qy] + partable.iqxy_parameters
-        source.append(_gen_fn('Iqxy', pars, model_info.Iqxy))
+        source.append(_gen_fn('Iqxy', pars, model_info.Iqxy,
+                              model_info.filename, model_info._Iqxy_line))
 
     # Define the parameter table
     source.append("#define PARAMETER_TABLE \\")
@@ -527,9 +545,9 @@ def make_source(model_info):
     # TODO: allow mixed python/opencl kernels?
 
     source.append("#if defined(USE_OPENCL)")
-    source.extend(_add_kernels(ocl_code, call_iq, call_iqxy, model_info.name))
+    source.extend(_add_kernels(ocl_code[0], call_iq, call_iqxy, model_info.name))
     source.append("#else /* !USE_OPENCL */")
-    source.extend(_add_kernels(dll_code, call_iq, call_iqxy, model_info.name))
+    source.extend(_add_kernels(dll_code[0], call_iq, call_iqxy, model_info.name))
     source.append("#endif /* !USE_OPENCL */")
     return '\n'.join(source)
 
@@ -568,8 +586,6 @@ def load_kernel_module(model_name):
         __import__('sasmodels.models.'+model_name)
         kernel_module = getattr(models, model_name, None)
     return kernel_module
-
-
 
 section_marker = re.compile(r'\A(?P<first>[%s])(?P=first)*\Z'
                             %re.escape(string.punctuation))

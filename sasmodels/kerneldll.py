@@ -47,7 +47,7 @@ from __future__ import print_function
 
 import sys
 import os
-from os.path import join as joinpath, split as splitpath, realpath, splitext
+from os.path import join as joinpath, split as splitpath, splitext
 import tempfile
 import ctypes as ct  # type: ignore
 from ctypes import c_void_p, c_int32, c_longdouble, c_double, c_float  # type: ignore
@@ -86,19 +86,28 @@ elif os.name == 'nt':
             COMPILE = " ".join((CC, "/openmp", LN))
         else:
             COMPILE = " ".join((CC, LN))
-    elif True:  # Don't use mingw
+    elif True:
+        # If MSVC compiler is not available, try using mingw
         # fPIC is not needed on windows
         COMPILE = "gcc -shared -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
         if "SAS_OPENMP" in os.environ:
             COMPILE += " -fopenmp"
     else:
+        # If MSVC compiler is not available, try using tinycc
         from tinycc import TCC
         COMPILE = TCC + " -shared -rdynamic -Wall %(source)s -o %(output)s"
 else:
     COMPILE = "cc -shared -fPIC -fopenmp -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
 
-# Assume the default location of module DLLs is in top level /models dir.
-DLL_PATH = joinpath(splitpath(realpath(sys.argv[0]))[0], "models")
+# Windows-specific solution
+if os.name == 'nt':
+    # Assume the default location of module DLLs is in .sasmodels/compiled_models.
+    DLL_PATH = os.path.join(os.path.expanduser("~"), ".sasmodels", "compiled_models")
+    if not os.path.exists(DLL_PATH):
+        os.makedirs(DLL_PATH)
+else:
+    # Set up the default path for compiled modules.
+    DLL_PATH = tempfile.gettempdir()
 
 ALLOW_SINGLE_PRECISION_DLLS = True
 
@@ -110,7 +119,7 @@ def dll_name(model_info, dtype):
     any path or extension, with a form such as 'sas_sphere32'.
     """
     bits = 8*dtype.itemsize
-    return "sas_%s%d"%(model_info.id, bits)
+    return "sas%d_%s"%(bits, model_info.id)
 
 
 def dll_path(model_info, dtype):
@@ -147,9 +156,19 @@ def make_dll(source, model_info, dtype=F64):
         dtype = F64  # Force 64-bit dll
     # Note: dtype may be F128 for long double precision
 
-    newest = generate.timestamp(model_info)
     dll = dll_path(model_info, dtype)
-    if not os.path.exists(dll) or os.path.getmtime(dll) < newest:
+
+    if not os.path.exists(dll):
+        need_recompile = True
+    elif getattr(sys, 'frozen', False):
+        # TODO: don't suppress time stamp
+        # Currently suppressing recompile when running in a frozen environment
+        need_recompile = False
+    else:
+        dll_time = os.path.getmtime(dll)
+        newest_source = generate.timestamp(model_info)
+        need_recompile = dll_time < newest_source
+    if need_recompile:
         basename = dll_name(model_info, dtype) + "_"
         fid, filename = tempfile.mkstemp(suffix=".c", prefix=basename)
         source = generate.convert_type(source, dtype)
@@ -250,7 +269,6 @@ class DllModel(KernelModel):
             #libHandle = ct.c_void_p(dll._handle)
             del dll, self._dll
             self._dll = None
-            #_ctypes.FreeLibrary(libHandle)
             ct.windll.kernel32.FreeLibrary(libHandle)
         else:    
             pass 
