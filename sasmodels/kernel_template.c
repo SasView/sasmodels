@@ -1,3 +1,4 @@
+#line 1 "kernel_template.c"
 // GENERATED CODE --- DO NOT EDIT ---
 // Code is produced by sasmodels.gen from sasmodels/models/MODEL.c
 
