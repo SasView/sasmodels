@@ -188,6 +188,7 @@ and Neutron Scattering, Plenum Press, New York, (1987)
 
 """
 
+import numpy as np
 from numpy import inf
 
 name = "spherical_sld"
