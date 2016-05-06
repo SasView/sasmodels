@@ -6,6 +6,7 @@ __all__ = [
     "build_model", "make_kernel", "call_kernel", "call_ER_VR",
     ]
 
+import os
 from os.path import basename, dirname, join as joinpath, splitext
 from glob import glob
 
@@ -138,36 +139,44 @@ def build_model(model_info, dtype=None, platform="ocl"):
     ##  5. uncomment open().read() so that source will be regenerated from model
     # open(model_info['name']+'.c','w').write(source)
     # source = open(model_info['name']+'.cl','r').read()
-    source = generate.make_source(model_info)
-    if dtype is None:
-        dtype = 'single' if model_info['single'] else 'double'
     if callable(model_info.get('Iq', None)):
         return kernelpy.PyModel(model_info)
+    source = generate.make_source(model_info)
+    default_dtype = 'single' if model_info['single'] else 'double'
+    ocl_dtype = default_dtype if dtype is None else dtype
+    dll_dtype = 'double' if dtype is None else dtype
     if (platform == "dll"
             or not HAVE_OPENCL
-            or not kernelcl.environment().has_type(dtype)):
-        return kerneldll.load_dll(source, model_info, dtype)
+            or not kernelcl.environment().has_type(ocl_dtype)):
+        return kerneldll.load_dll(source, model_info, dll_dtype)
     else:
-        return kernelcl.GpuModel(source, model_info, dtype)
+        return kernelcl.GpuModel(source, model_info, ocl_dtype)
 
-def precompile_dll(model_name, dtype="double"):
+def precompile_dlls(path, dtype="double"):
     """
-    Precompile the dll for a model.
+    Precompile the dlls for all builtin models, returning a list of dll paths.
 
-    Returns the path to the compiled model, or None if the model is a pure
-    python model.
+    *path* is the directory in which to save the dlls.  It will be created if
+    it does not already exist.
 
     This can be used when build the windows distribution of sasmodels
-    (which may be missing the OpenCL driver and the dll compiler), or
-    otherwise sharing models with windows users who do not have a compiler.
-
-    See :func:`sasmodels.kerneldll.make_dll` for details on controlling the
-    dll path and the allowed floating point precision.
+    which may be missing the OpenCL driver and the dll compiler.
     """
-    model_info = load_model_info(model_name)
-    source = generate.make_source(model_info)
-    return kerneldll.make_dll(source, model_info, dtype=dtype) if source else None
-
+    if not os.path.exists(path):
+        os.makedirs(path)
+    compiled_dlls = []
+    for model_name in list_models():
+        model_info = load_model_info(model_name)
+        source = generate.make_source(model_info)
+        if source:
+            old_path = kerneldll.DLL_PATH
+            try:
+                kerneldll.DLL_PATH = path
+                dll = kerneldll.make_dll(source, model_info, dtype=dtype)
+            finally:
+                kerneldll.DLL_PATH = old_path
+            compiled_dlls.append(dll)
+    return compiled_dlls
 
 def get_weights(model_info, pars, name):
     """
