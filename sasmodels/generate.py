@@ -209,7 +209,7 @@ from __future__ import print_function
 
 import sys
 from os.path import abspath, dirname, join as joinpath, exists, basename, \
-    splitext
+    splitext, isdir
 import re
 import string
 import warnings
@@ -223,7 +223,13 @@ from .custom import load_custom_kernel_module
 PARAMETER_FIELDS = ['name', 'units', 'default', 'limits', 'type', 'description']
 Parameter = namedtuple('Parameter', PARAMETER_FIELDS)
 
-C_KERNEL_TEMPLATE_PATH = joinpath(dirname(__file__), 'kernel_template.c')
+SIBLING_DIR = 'sasmodels-data'
+PACKAGE_PATH = abspath(dirname(__file__))
+SIBLING_PATH = abspath(joinpath(PACKAGE_PATH, '..', 'sasmodels-data'))
+DATA_PATH = SIBLING_PATH if isdir(SIBLING_PATH) else PACKAGE_PATH
+MODEL_PATH = joinpath(DATA_PATH, 'models')
+C_KERNEL_TEMPLATE_FILE = joinpath(DATA_PATH, 'kernel_template.c')
+
 
 F16 = np.dtype('float16')
 F32 = np.dtype('float32')
@@ -335,8 +341,7 @@ def model_sources(model_info):
     """
     Return a list of the sources file paths for the module.
     """
-    search_path = [dirname(model_info['filename']),
-                   abspath(joinpath(dirname(__file__), 'models'))]
+    search_path = [dirname(model_info['filename']), MODEL_PATH]
     return [_search(search_path, f) for f in model_info['source']]
 
 # Pragmas for enable OpenCL features.  Be sure to protect them so that they
@@ -456,7 +461,7 @@ def make_source(model_info):
     # Load template
     global C_KERNEL_TEMPLATE
     if C_KERNEL_TEMPLATE is None:
-        with open(C_KERNEL_TEMPLATE_PATH) as fid:
+        with open(C_KERNEL_TEMPLATE_FILE) as fid:
             C_KERNEL_TEMPLATE = fid.read()
 
     # Load additional sources
@@ -465,7 +470,7 @@ def make_source(model_info):
               # Add #line directives at the start of each file
               for p in ('#line 1 "%s"'%f.replace('\\', '\\\\'), open(f).read())
               ]
-    source.append('#line 133 "%s"'%C_KERNEL_TEMPLATE_PATH.replace('\\', '\\\\'))
+    source.append('#line 133 "%s"'%C_KERNEL_TEMPLATE_FILE.replace('\\', '\\\\'))
 
     # Prepare defines
     defines = []
