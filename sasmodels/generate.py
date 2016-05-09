@@ -158,10 +158,11 @@ should mignrate into docs.py so docs can be updated in one place].
 """
 from __future__ import print_function
 
-#TODO: determine which functions are useful outside of generate
+# TODO: determine which functions are useful outside of generate
 #__all__ = ["model_info", "make_doc", "make_source", "convert_type"]
 
-from os.path import abspath, dirname, join as joinpath, exists, getmtime
+import sys
+from os.path import abspath, dirname, join as joinpath, exists, isdir, getmtime
 import re
 import string
 import warnings
@@ -177,7 +178,11 @@ try:
 except ImportError:
     pass
 
-TEMPLATE_ROOT = dirname(__file__)
+SIBLING_DIR = 'sasmodels-data'
+PACKAGE_PATH = abspath(dirname(__file__))
+SIBLING_PATH = abspath(joinpath(PACKAGE_PATH, '..', 'sasmodels-data'))
+DATA_PATH = SIBLING_PATH if isdir(SIBLING_PATH) else PACKAGE_PATH
+MODEL_PATH = joinpath(DATA_PATH, 'models')
 
 F16 = np.dtype('float16')
 F32 = np.dtype('float32')
@@ -231,12 +236,14 @@ DOC_HEADER = """.. _%(id)s:
 %(docs)s
 """
 
+
 def format_units(units):
     # type: (str) -> str
     """
     Convert units into ReStructured Text format.
     """
     return "string" if isinstance(units, list) else RST_UNITS.get(units, units)
+
 
 def make_partable(pars):
     # type: (List[Parameter]) -> str
@@ -269,6 +276,7 @@ def make_partable(pars):
     lines.append(sep)
     return "\n".join(lines)
 
+
 def _search(search_path, filename):
     # type: (List[str], str) -> str
     """
@@ -288,9 +296,9 @@ def model_sources(model_info):
     """
     Return a list of the sources file paths for the module.
     """
-    search_path = [dirname(model_info.filename),
-                   abspath(joinpath(dirname(__file__), 'models'))]
+    search_path = [dirname(model_info.filename), MODEL_PATH]
     return [_search(search_path, f) for f in model_info.source]
+
 
 def timestamp(model_info):
     # type: (ModelInfo) -> int
@@ -307,14 +315,16 @@ def timestamp(model_info):
     newest = max(getmtime(f) for f in source_files)
     return newest
 
+
 def model_templates():
     # type: () -> List[str]
     # TODO: fails DRY; templates appear two places.
     # should instead have model_info contain a list of paths
     # Note: kernel_iq.cl is not on this list because changing it need not
     # trigger a recompile of the dll.
-    return [joinpath(TEMPLATE_ROOT, filename)
+    return [joinpath(DATA_PATH, filename)
             for filename in ('kernel_header.c', 'kernel_iq.c')]
+
 
 def convert_type(source, dtype):
     # type: (str, np.dtype) -> str
@@ -337,8 +347,8 @@ def convert_type(source, dtype):
         fbytes = 16
         source = _convert_type(source, "long double", "L")
     else:
-        raise ValueError("Unexpected dtype in source conversion: %s"%dtype)
-    return ("#define FLOAT_SIZE %d\n"%fbytes)+source
+        raise ValueError("Unexpected dtype in source conversion: %s" % dtype)
+    return ("#define FLOAT_SIZE %d\n" % fbytes)+source
 
 
 def _convert_type(source, type_name, constant_flag):
@@ -381,7 +391,7 @@ def indent(s, depth):
 _template_cache = {}  # type: Dict[str, Tuple[int, str, str]]
 def load_template(filename):
     # type: (str) -> str
-    path = joinpath(TEMPLATE_ROOT, filename)
+    path = joinpath(DATA_PATH, filename)
     mtime = getmtime(path)
     if filename not in _template_cache or mtime > _template_cache[filename][0]:
         with open(path) as fid:
@@ -397,7 +407,6 @@ double %(name)s(%(pars)s) {
 }
 
 """
-
 def _gen_fn(name, pars, body, filename, line):
     # type: (str, List[Parameter], str, str, int) -> str
     """
@@ -416,12 +425,14 @@ def _gen_fn(name, pars, body, filename, line):
         'filename': filename.replace('\\', '\\\\'), 'line': line,
     }
 
+
 def _call_pars(prefix, pars):
     # type: (str, List[Parameter]) -> List[str]
     """
     Return a list of *prefix.parameter* from parameter items.
     """
     return [p.as_call_reference(prefix) for p in pars]
+
 
 _IQXY_PATTERN = re.compile("^((inline|static) )? *(double )? *Iqxy *([(]|$)",
                            flags=re.MULTILINE)
@@ -447,13 +458,15 @@ def _have_Iqxy(sources):
     else:
         return False
 
+
 def _add_source(source, code, path):
     """
     Add a file to the list of source code chunks, tagged with path and line.
     """
-    path = path.replace('\\','\\\\')
-    source.append('#line 1 "%s"'%path)
+    path = path.replace('\\', '\\\\')
+    source.append('#line 1 "%s"' % path)
     source.append(code)
+
 
 def make_source(model_info):
     # type: (ModelInfo) -> str
@@ -476,9 +489,6 @@ def make_source(model_info):
     # for computing volume even if we allow non-disperse volume parameters.
 
     partable = model_info.parameters
-
-    # Identify parameters for Iq, Iqxy, Iq_magnetic and form_volume.
-    # Note that scale and volume are not possible types.
 
     # Load templates and user code
     kernel_header = load_template('kernel_header.c')
@@ -517,7 +527,7 @@ def make_source(model_info):
     # Define the function calls
     if partable.form_volume_parameters:
         refs = _call_pars("_v.", partable.form_volume_parameters)
-        call_volume = "#define CALL_VOLUME(_v) form_volume(%s)" % (",".join(refs))
+        call_volume = "#define CALL_VOLUME(_v) form_volume(%s)"%(",".join(refs))
     else:
         # Model doesn't have volume.  We could make the kernel run a little
         # faster by not using/transferring the volume normalizations, but
@@ -551,6 +561,7 @@ def make_source(model_info):
     source.append("#endif /* !USE_OPENCL */")
     return '\n'.join(source)
 
+
 def _add_kernels(kernel_code, call_iq, call_iqxy, name):
     # type: (str, str, str, str) -> List[str]
     source = [
@@ -570,6 +581,7 @@ def _add_kernels(kernel_code, call_iq, call_iqxy, name):
     ]
     return source
 
+
 def load_kernel_module(model_name):
     # type: (str) -> module
     """
@@ -587,8 +599,9 @@ def load_kernel_module(model_name):
         kernel_module = getattr(models, model_name, None)
     return kernel_module
 
+
 section_marker = re.compile(r'\A(?P<first>[%s])(?P=first)*\Z'
-                            %re.escape(string.punctuation))
+                            % re.escape(string.punctuation))
 def _convert_section_titles_to_boldface(lines):
     # type: (Sequence[str]) -> Iterator[str]
     """
@@ -611,6 +624,7 @@ def _convert_section_titles_to_boldface(lines):
     if prior is not None:
         yield prior
 
+
 def convert_section_titles_to_boldface(s):
     # type: (str) -> str
     """
@@ -621,6 +635,7 @@ def convert_section_titles_to_boldface(s):
     at least as long as the title line.
     """
     return "\n".join(_convert_section_titles_to_boldface(s.split('\n')))
+
 
 def make_doc(model_info):
     # type: (ModelInfo) -> str
@@ -655,6 +670,7 @@ def demo_time():
     toc = (datetime.datetime.now() - tic).total_seconds()
     print("time: %g"%toc)
 
+
 def main():
     # type: () -> None
     """
@@ -671,6 +687,7 @@ def main():
         model_info = make_model_info(kernel_module)
         source = make_source(model_info)
         print(source)
+
 
 if __name__ == "__main__":
     main()

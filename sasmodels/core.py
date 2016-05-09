@@ -8,7 +8,8 @@ __all__ = [
     "build_model", "precompile_dll",
     ]
 
-from os.path import basename, dirname, join as joinpath
+import os
+from os.path import basename, dirname, join as joinpath, splitext
 from glob import glob
 
 import numpy as np # type: ignore
@@ -127,48 +128,46 @@ def build_model(model_info, dtype=None, platform="ocl"):
     if callable(model_info.Iq):
         return kernelpy.PyModel(model_info)
 
-    ## for debugging:
-    ##  1. uncomment open().write so that the source will be saved next time
-    ##  2. run "python -m sasmodels.direct_model $MODELNAME" to save the source
-    ##  3. recomment the open.write() and uncomment open().read()
-    ##  4. rerun "python -m sasmodels.direct_model $MODELNAME"
-    ##  5. uncomment open().read() so that source will be regenerated from model
-    # open(model_info.name+'.c','w').write(source)
-    # source = open(model_info.name+'.cl','r').read()
+    numpy_dtype, fast, platform = parse_dtype(model_info, dtype)
+
     source = generate.make_source(model_info)
-    numpy_dtype, fast = parse_dtype(model_info, dtype)
-    if (platform == "dll"
-            or (dtype is not None and dtype.endswith('!'))
-            or not HAVE_OPENCL
-            or not kernelcl.environment().has_type(numpy_dtype)):
+    if platform == "dll":
         #print("building dll", numpy_dtype)
         return kerneldll.load_dll(source, model_info, numpy_dtype)
     else:
         #print("building ocl", numpy_dtype)
         return kernelcl.GpuModel(source, model_info, numpy_dtype, fast=fast)
 
-def precompile_dll(model_name, dtype="double"):
-    # type: (str, str) -> Optional[str]
+def precompile_dlls(path, dtype="double"):
+    # type: (str, str) -> List[str]
     """
-    Precompile the dll for a model.
+    Precompile the dlls for all builtin models, returning a list of dll paths.
 
-    Returns the path to the compiled model, or None if the model is a pure
-    python model.
+    *path* is the directory in which to save the dlls.  It will be created if
+    it does not already exist.
 
     This can be used when build the windows distribution of sasmodels
-    (which may be missing the OpenCL driver and the dll compiler), or
-    otherwise sharing models with windows users who do not have a compiler.
-
-    See :func:`sasmodels.kerneldll.make_dll` for details on controlling the
-    dll path and the allowed floating point precision.
+    which may be missing the OpenCL driver and the dll compiler.
     """
-    model_info = load_model_info(model_name)
-    numpy_dtype, fast = parse_dtype(model_info, dtype)
-    source = generate.make_source(model_info)
-    return kerneldll.make_dll(source, model_info, dtype=numpy_dtype) if source else None
+    numpy_dtype = np.dtype(dtype)
+    if not os.path.exists(path):
+        os.makedirs(path)
+    compiled_dlls = []
+    for model_name in list_models():
+        model_info = load_model_info(model_name)
+        source = generate.make_source(model_info)
+        if source:
+            old_path = kerneldll.DLL_PATH
+            try:
+                kerneldll.DLL_PATH = path
+                dll = kerneldll.make_dll(source, model_info, dtype=dtype)
+            finally:
+                kerneldll.DLL_PATH = old_path
+            compiled_dlls.append(dll)
+    return compiled_dlls
 
-def parse_dtype(model_info, dtype):
-    # type: (ModelInfo, str) -> Tuple[np.dtype, bool]
+def parse_dtype(model_info, dtype=None, platform=None):
+    # type: (ModelInfo, str, str) -> (np.dtype, bool, str)
     """
     Interpret dtype string, returning np.dtype and fast flag.
 
@@ -176,21 +175,38 @@ def parse_dtype(model_info, dtype):
     type is 'fast', then this is equivalent to dtype 'single' with the
     fast flag set to True.
     """
-    # Fill in default type based on required precision in the model
-    if dtype is None:
-        dtype = 'single' if model_info.single else 'double'
+    # Assign default platform, overriding ocl with dll if OpenCL is unavailable
+    if platform is None:
+        platform = "ocl"
+    if platform=="ocl" and not HAVE_OPENCL:
+        platform = "dll"
 
-    # Ignore platform indicator
-    if dtype.endswith('!'):
+    # Check if type indicates dll regardless of which platform is given
+    if dtype is not None and dtype.endswith('!'):
+        platform = "dll"
         dtype = dtype[:-1]
 
-    # Convert type string to type
-    if dtype == 'quad':
-        return generate.F128, False
-    elif dtype == 'half':
-        return generate.F16, False
-    elif dtype == 'fast':
-        return generate.F32, True
-    else:
-        return np.dtype(dtype), False
+    # Convert special type names "half", "fast", and "quad"
+    fast = (dtype=="fast")
+    if fast:
+        dtype = "single"
+    elif dtype=="quad":
+        dtype = "longdouble"
+    elif dtype=="half":
+        dtype = "f16"
 
+    # Convert dtype string to numpy dtype.
+    if dtype is None:
+        numpy_dtype = generate.F32 if platform=="ocl" and model_info.single else generate.F64
+    else:
+        numpy_dtype = np.dtype(dtype)
+
+    # Make sure that the type is supported by opencl, otherwise use dll
+    if platform=="ocl":
+        env = kernelcl.environment()
+        if not env.has_type(numpy_dtype):
+            platform = "dll"
+            if dtype is None:
+                numpy_dtype = generate.F64
+
+    return numpy_dtype, fast, platform
