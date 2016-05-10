@@ -52,7 +52,7 @@ def set_beam_stop(data, radius, outer=None):
     """
     Add a beam stop of the given *radius*.  If *outer*, make an annulus.
     """
-    from sas.dataloader.manipulations import Ringcut
+    from sas.sascalc.dataloader.manipulations import Ringcut
     if hasattr(data, 'qx_data'):
         data.mask = Ringcut(0, radius)(data)
         if outer is not None:
@@ -67,7 +67,7 @@ def set_half(data, half):
     """
     Select half of the data, either "right" or "left".
     """
-    from sas.dataloader.manipulations import Boxcut
+    from sas.sascalc.dataloader.manipulations import Boxcut
     if half == 'right':
         data.mask += \
             Boxcut(x_min=-np.inf, x_max=0.0, y_min=-np.inf, y_max=np.inf)(data)
@@ -80,7 +80,7 @@ def set_top(data, cutoff):
     """
     Chop the top off the data, above *cutoff*.
     """
-    from sas.dataloader.manipulations import Boxcut
+    from sas.sascalc.dataloader.manipulations import Boxcut
     data.mask += \
         Boxcut(x_min=-np.inf, x_max=np.inf, y_min=-np.inf, y_max=cutoff)(data)
 
