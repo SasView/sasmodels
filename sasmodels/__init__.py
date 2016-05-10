@@ -32,5 +32,14 @@ def data_files():
     add_patterns(['models'], ['*.c'])
     add_patterns(['models', 'lib'], ['*.c'])
 
-    return data_files
+    # Fish out full paths for all files.
+    import glob
+    return_list=[]
+    for key, values in data_files.iteritems():
+        files_data=[]
+        for value in values:
+            files_data += [file for file in glob.glob(value)]
+        return_list.append([key, files_data])
+    return return_list
+
 
