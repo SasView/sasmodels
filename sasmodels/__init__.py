@@ -27,21 +27,19 @@ def data_files():
 
     from .generate import EXTERNAL_DIR, DATA_PATH
 
-    data_files = {}
-    def add_patterns(path, patterns):
-        data_files[joinpath(EXTERNAL_DIR, *path)] \
-            = [joinpath(DATA_PATH, *(path+[p])) for p in patterns]
-    add_patterns([], ['*.c', '*.cl', 'convert.json'])
-    add_patterns(['models'], ['*.c'])
-    add_patterns(['models', 'lib'], ['*.c'])
+    def expand_patterns(path, patterns):
+        target_path = joinpath(EXTERNAL_DIR, *path)
+        source_path = joinpath(DATA_PATH, *path)
+        files = []
+        for p in patterns:
+            files.extend(glob.glob(joinpath(source_path, p)))
+        return target_path, files
 
-    # Fish out full paths for all files.
-    return_list=[]
-    for path, patterns in data_files.items():
-        files_data=[]
-        for pattern in patterns:
-            files_data.extend(glob.glob(pattern))
-        return_list.append([path, files_data])
+    return_list = [
+        expand_patterns([], ['*.c', '*.cl', 'convert.json']),
+        expand_patterns(['models'], ['*.c']),
+        expand_patterns(['models', 'lib'], ['*.c']),
+        ]
     return return_list
 
 
