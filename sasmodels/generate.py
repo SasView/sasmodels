@@ -223,10 +223,26 @@ from .custom import load_custom_kernel_module
 PARAMETER_FIELDS = ['name', 'units', 'default', 'limits', 'type', 'description']
 Parameter = namedtuple('Parameter', PARAMETER_FIELDS)
 
-SIBLING_DIR = 'sasmodels-data'
-PACKAGE_PATH = abspath(dirname(__file__))
-SIBLING_PATH = abspath(joinpath(PACKAGE_PATH, '..', 'sasmodels-data'))
-DATA_PATH = SIBLING_PATH if isdir(SIBLING_PATH) else PACKAGE_PATH
+def get_data_path(external_dir, target_file):
+    path = abspath(dirname(__file__))
+    if exists(joinpath(path, target_file)):
+        return path
+
+    # check next to exe/zip file
+    exepath = dirname(sys.executable)
+    path = joinpath(exepath, external_dir)
+    if exists(joinpath(path, target_file)):
+        return path
+
+    # check in py2app Contents/Resources
+    path = joinpath(exepath, '..', 'Resources', external_dir)
+    if exists(joinpath(path, target_file)):
+        return abspath(path)
+
+    raise RuntimeError('Could not find '+joinpath(external_dir, target_file))
+
+EXTERNAL_DIR = 'sasmodels-data'
+DATA_PATH = get_data_path(EXTERNAL_DIR, 'kernel_template.c')
 MODEL_PATH = joinpath(DATA_PATH, 'models')
 C_KERNEL_TEMPLATE_FILE = joinpath(DATA_PATH, 'kernel_template.c')
 

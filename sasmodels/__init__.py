@@ -23,23 +23,25 @@ def data_files():
     used directly in setup(...,data_files=...) for setup.py.
     """
     from os.path import join as joinpath
-    from .generate import SIBLING_DIR, DATA_PATH
+    import glob
+
+    from .generate import EXTERNAL_DIR, DATA_PATH
+
     data_files = {}
     def add_patterns(path, patterns):
-        data_files[joinpath(SIBLING_DIR, *path)] \
+        data_files[joinpath(EXTERNAL_DIR, *path)] \
             = [joinpath(DATA_PATH, *(path+[p])) for p in patterns]
     add_patterns([], ['*.c', '*.cl', 'convert.json'])
     add_patterns(['models'], ['*.c'])
     add_patterns(['models', 'lib'], ['*.c'])
 
     # Fish out full paths for all files.
-    import glob
     return_list=[]
-    for key, values in data_files.iteritems():
+    for path, patterns in data_files.items():
         files_data=[]
-        for value in values:
-            files_data += [file for file in glob.glob(value)]
-        return_list.append([key, files_data])
+        for pattern in patterns:
+            files_data.extend(glob.glob(pattern))
+        return_list.append([path, files_data])
     return return_list
 
 
