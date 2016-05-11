@@ -721,7 +721,10 @@ def find_source_lines(model_info, kernel_module):
     model_info['form_volume_line'] = 0
 
     # find the defintion lines for the different code blocks
-    source = inspect.getsource(kernel_module)
+    try:
+        source = inspect.getsource(kernel_module)
+    except IOError:
+        return
     for k, v in enumerate(source.split('\n')):
         if v.startswith('Iqxy'):
             model_info['Iqxy_line'] = k+1
