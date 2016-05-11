@@ -114,6 +114,12 @@ def dll_path(model_info, dtype="double"):
         basename += "64"
     else:
         basename += "128"
+
+    # Hack to find precompiled dlls
+    path = joinpath(generate.DATA_PATH, '..', 'compiled_models', basename+'.so')
+    if os.path.exists(path):
+        return path
+
     return joinpath(DLL_PATH, basename+'.so')
 
 def make_dll(source, model_info, dtype="double"):
@@ -150,12 +156,12 @@ def make_dll(source, model_info, dtype="double"):
         tempfile_prefix = 'sas_' + model_info['name'] + '64_'
     else:
         tempfile_prefix = 'sas_' + model_info['name'] + '128_'
- 
+
     dll = dll_path(model_info, dtype)
 
     if not os.path.exists(dll):
         need_recompile = True
-    elif getattr(sys, 'frozen', False):
+    elif is_frozen:
         # TODO: don't suppress time stamp
         # Currently suppressing recompile when running in a frozen environment
         need_recompile = False
