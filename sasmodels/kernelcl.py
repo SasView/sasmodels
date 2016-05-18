@@ -49,6 +49,7 @@ harmless, albeit annoying.
 """
 import os
 import warnings
+import logging
 
 import numpy as np
 
@@ -148,6 +149,7 @@ def compile_model(context, source, dtype, fast=False):
     options = (get_fast_inaccurate_build_options(context.devices[0])
                if fast else [])
     program = cl.Program(context, source).build(options=options)
+    #print("done with "+program)
     return program
 
 
@@ -217,11 +219,12 @@ class GpuEnvironment(object):
         """
         Compile the program for the device in the given context.
         """
-        key = "%s-%s-%s"%(name, dtype, fast)
+        key = "%s-%s%s"%(name, dtype, ("-fast" if fast else ""))
         if key not in self.compiled:
-            #print("compiling",name)
-            dtype = np.dtype(dtype)
-            program = compile_model(self.get_context(dtype), source, dtype, fast)
+            context = self.get_context(dtype)
+            logging.info("building %s for OpenCL %s"
+                         % (key, context.devices[0].name))
+            program = compile_model(context, source, np.dtype(dtype), fast)
             self.compiled[key] = program
         return self.compiled[key]
 

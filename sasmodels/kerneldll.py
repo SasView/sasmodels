@@ -51,6 +51,7 @@ from os.path import join as joinpath, split as splitpath, splitext
 import tempfile
 import ctypes as ct
 from ctypes import c_void_p, c_int, c_longdouble, c_double, c_float
+import logging
 
 import numpy as np
 
@@ -175,6 +176,7 @@ def make_dll(source, model_info, dtype="double"):
         source = generate.convert_type(source, dtype)
         os.fdopen(fid, "w").write(source)
         command = COMPILE%{"source":filename, "output":dll}
+        logging.info(command)
         status = os.system(command)
         if status != 0 or not os.path.exists(dll):
             raise RuntimeError("compile failed.  File is in %r"%filename)
