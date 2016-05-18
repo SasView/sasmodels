@@ -13,7 +13,7 @@ The well width (|lambda| ) is defined as multiples of the particle diameter (2\*
 
 The interaction potential is:
 
-  .. image:: img\squarewell.png
+  .. image:: img/squarewell.png
 
 .. math::
 

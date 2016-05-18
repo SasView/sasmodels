@@ -1,10 +1,10 @@
 """
 Core model handling routines.
 """
-__all__ = [
-    "list_models", "load_model_info", "precompile_dll",
-    "build_model", "make_kernel", "call_kernel", "call_ER_VR",
-    ]
+#__all__ = [
+#    "list_models", "load_model_info", "precompile_dll",
+#    "build_model", "make_kernel", "call_kernel", "call_ER_VR",
+#    ]
 
 import os
 from os.path import basename, dirname, join as joinpath, splitext
@@ -58,17 +58,17 @@ def list_models():
     available_models = []
     files = sorted(glob(joinpath(root, 'models', "[a-zA-Z]*.py")))
     if not files and os.name=='nt':
-	# Look inside library.zip on windows,
-	# being careful as the library stores only .pyc.
+        # Look inside library.zip on windows,
+        # being careful as the library stores only .pyc.
         import zipfile
         location = root[:root.find('.zip')+4]
         zf = zipfile.ZipFile(location,'r')
         for filepath in zf.namelist():
-	    # directory structure in library.zip uses "/"
+            # directory structure in library.zip uses "/"
             models_loc = "sasmodels/models"
             if models_loc in filepath:
                 base = basename(filepath)[:-4]
-		# Careful with non-models.
+                # Careful with non-models.
                 if base[0] != "_":
                     available_models.append(base)
     else:
