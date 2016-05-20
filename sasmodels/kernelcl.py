@@ -61,9 +61,16 @@ except Exception as exc:
     warnings.warn(str(exc))
     raise RuntimeError("OpenCL not available")
 
-# CRUFT: pyopencl as of June 2016 needs quotes around include path
+# CRUFT: pyopencl < 2017.1  (as of June 2016 needs quotes around include path)
 def _quote_path(v):
-    return '"'+v+'"' if ' ' in v and not v.startswith('-') else v
+    """
+    Quote the path if it is not already quoted.
+
+    If v starts with '-', then assume that it is a -I option or similar
+    and do not quote it.  This is fragile:  -Ipath with space needs to
+    be quoted.
+    """
+    return '"'+v+'"' if v and ' ' in v and not v[0] in "\"'-" else v
 
 if hasattr(cl, '_DEFAULT_INCLUDE_OPTIONS'):
     cl._DEFAULT_INCLUDE_OPTIONS = [_quote_path(v) for v in cl._DEFAULT_INCLUDE_OPTIONS]
