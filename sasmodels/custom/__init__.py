@@ -24,7 +24,7 @@ except ImportError:
     import imp
     def load_module_from_path(fullname, path):
         module = imp.load_source(fullname, path)
-        os.unlink(path+"c")  # remove the automatic pyc file
+        #os.unlink(path+"c")  # remove the automatic pyc file
         return module
 
 def load_custom_kernel_module(path):
