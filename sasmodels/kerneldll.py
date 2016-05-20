@@ -59,11 +59,12 @@ from . import generate
 from .kernelpy import PyInput, PyModel
 from .exception import annotate_exception
 
-# Compiler platform details
-if sys.platform == 'darwin':
-    #COMPILE = "gcc-mp-4.7 -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm -lgomp"
-    COMPILE = "gcc -shared -fPIC -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
-elif os.name == 'nt':
+if os.name == 'nt':
+    # Windows compiler; check if TinyCC is available
+    try:
+        from tinycc import TCC
+    except ImportError:
+        TCC = None
     # call vcvarsall.bat before compiling to set path, headers, libs, etc.
     if "VCINSTALLDIR" in os.environ:
         # MSVC compiler is available, so use it.  OpenMP requires a copy of
@@ -72,24 +73,30 @@ elif os.name == 'nt':
         # Copy this to the python directory and uncomment the OpenMP COMPILE
         # TODO: remove intermediate OBJ file created in the directory
         # TODO: maybe don't use randomized name for the c file
+        # TODO: maybe ask distutils to find MSVC
         CC = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG /Tp%(source)s "
         LN = "/link /DLL /INCREMENTAL:NO /MANIFEST /OUT:%(output)s"
         if "SAS_OPENMP" in os.environ:
             COMPILE = " ".join((CC, "/openmp", LN))
         else:
             COMPILE = " ".join((CC, LN))
-    elif True:
-        # If MSVC compiler is not available, try using mingw
-        # fPIC is not needed on windows
+    elif TCC:
+        # TinyCC compiler.
+        COMPILE = TCC + " -shared -rdynamic -Wall %(source)s -o %(output)s"
+    else:
+        # MinGW compiler.
         COMPILE = "gcc -shared -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
         if "SAS_OPENMP" in os.environ:
-            COMPILE = COMPILE + " -fopenmp"
-    else:
-        # If MSVC compiler is not available, try using tinycc
-        from tinycc import TCC
-        COMPILE = TCC + " -shared -rdynamic -Wall %(source)s -o %(output)s"
+            COMPILE += " -fopenmp"
 else:
-    COMPILE = "cc -shared -fPIC -fopenmp -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
+    # Generic unix compile
+    # On mac users will need the X code command line tools installed
+    COMPILE = "cc -shared -fPIC -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
+
+    # add openmp support if not running on a mac
+    if sys.platform != 'darwin':
+        #COMPILE = "gcc-mp-4.7 -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm -lgomp"
+        COMPILE += " -fopenmp"
 
 # Windows-specific solution
 if os.name == 'nt':
