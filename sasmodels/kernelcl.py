@@ -61,6 +61,13 @@ except Exception as exc:
     warnings.warn(str(exc))
     raise RuntimeError("OpenCL not available")
 
+# CRUFT: pyopencl as of June 2016 needs quotes around include path
+def _quote_path(v):
+    return '"'+v+'"' if ' ' in v and not v.startswith('-') else v
+
+if hasattr(cl, '_DEFAULT_INCLUDE_OPTIONS'):
+    cl._DEFAULT_INCLUDE_OPTIONS = [_quote_path(v) for v in cl._DEFAULT_INCLUDE_OPTIONS]
+
 from pyopencl import mem_flags as mf
 from pyopencl.characterize import get_fast_inaccurate_build_options
 
@@ -223,7 +230,7 @@ class GpuEnvironment(object):
         if key not in self.compiled:
             context = self.get_context(dtype)
             logging.info("building %s for OpenCL %s"
-                         % (key, context.devices[0].name))
+                         % (key, context.devices[0].name.strip()))
             program = compile_model(context, source, np.dtype(dtype), fast)
             self.compiled[key] = program
         return self.compiled[key]
