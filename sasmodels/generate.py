@@ -784,7 +784,7 @@ def make_model_info(kernel_module):
         name = " ".join(w.capitalize() for w in kernel_id.split('_'))
     model_info = dict(
         id=kernel_id,  # string used to load the kernel
-        filename=abspath(kernel_module.__file__),
+        filename=abspath(kernel_module.__file__.rstrip("cd")),
         name=name,
         title=kernel_module.title,
         description=kernel_module.description,
