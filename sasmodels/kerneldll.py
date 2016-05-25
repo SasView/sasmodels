@@ -197,8 +197,9 @@ def make_dll(source, model_info, dtype="double"):
     if need_recompile:
         source = generate.convert_type(source, dtype)
         fd, filename = tempfile.mkstemp(suffix=".c", prefix=tempfile_prefix)
-        with os.fdopen(fd, "w") as file:
+        with open(filename, "w") as file:
             file.write(source)
+        os.close(fd)
         compile(source=filename, output=dll)
         # comment the following to keep the generated c file
         # Note: if there is a syntax error then compile raises an error
