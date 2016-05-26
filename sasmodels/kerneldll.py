@@ -121,7 +121,7 @@ def compile(source, output):
     command_str = " ".join('"%s"'%p if ' ' in p else p for p in command)
     logging.info(command_str)
     try:
-        subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)
+        subprocess.check_output(command, shell=False, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as exc:
         raise RuntimeError("compile failed.\n%s\n%s"%(command_str, exc.output))
     if not os.path.exists(output):
