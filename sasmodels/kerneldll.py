@@ -97,7 +97,7 @@ else:
     # Generic unix compile
     # On mac users will need the X code command line tools installed
     #COMPILE = "gcc-mp-4.7 -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm -lgomp"
-    CC = "gcc -shared -fPIC -std=c99 -O2 -Wall".split()
+    CC = "cc -shared -fPIC -std=c99 -O2 -Wall".split()
     # add openmp support if not running on a mac
     if sys.platform != "darwin":
         CC.append("-fopenmp")
@@ -120,8 +120,9 @@ def compile(source, output):
     command = compile_command(source=source, output=output)
     command_str = " ".join('"%s"'%p if ' ' in p else p for p in command)
     logging.info(command_str)
+    shell = (os.name == 'nt')
     try:
-        subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)
+        subprocess.check_output(command, shell=shell, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as exc:
         raise RuntimeError("compile failed.\n%s\n%s"%(command_str, exc.output))
     if not os.path.exists(output):
