@@ -121,7 +121,7 @@ def compile(source, output):
     command_str = " ".join('"%s"'%p if ' ' in p else p for p in command)
     logging.info(command_str)
     try:
-        subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)
+        subprocess.check_output(command, shell=False, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as exc:
         raise RuntimeError("compile failed.\n%s\n%s"%(command_str, exc.output))
     if not os.path.exists(output):
@@ -197,9 +197,8 @@ def make_dll(source, model_info, dtype="double"):
     if need_recompile:
         source = generate.convert_type(source, dtype)
         fd, filename = tempfile.mkstemp(suffix=".c", prefix=tempfile_prefix)
-        with open(filename, "w") as file:
+        with os.fdopen(fd, "w") as file:
             file.write(source)
-        os.close(fd)
         compile(source=filename, output=dll)
         # comment the following to keep the generated c file
         # Note: if there is a syntax error then compile raises an error
