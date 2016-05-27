@@ -58,7 +58,7 @@ try:
     # Ask OpenCL for the default context so that we know that one exists
     cl.create_some_context(interactive=False)
 except Exception as exc:
-    warnings.warn(str(exc))
+    warnings.warn("OpenCL startup failed with ***"+str(exc)+"***; using C compiler instead")
     raise RuntimeError("OpenCL not available")
 
 # CRUFT: pyopencl < 2017.1  (as of June 2016 needs quotes around include path)
