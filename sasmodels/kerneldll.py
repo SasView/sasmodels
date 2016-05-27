@@ -61,7 +61,7 @@ from .kernelpy import PyInput, PyModel
 from .exception import annotate_exception
 
 if os.name == 'nt':
-    ARCH = "amd64" if sys.maxint > 2**32 else "x86"  # maxint=2**31-1 on 32 bit
+    ARCH = "" if sys.maxint > 2**32 else "x86"  # maxint=2**31-1 on 32 bit
     # Windows compiler; check if TinyCC is available
     try:
         import tinycc
