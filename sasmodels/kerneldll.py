@@ -141,14 +141,14 @@ def dll_path(model_info, dtype="double"):
         basename += "64"
     else:
         basename += "128"
+    basename += ARCH + ".so"
 
     # Hack to find precompiled dlls
-    path = joinpath(generate.DATA_PATH, '..', 'compiled_models',
-                    basename + ARCH + '.so')
+    path = joinpath(generate.DATA_PATH, '..', 'compiled_models', basename)
     if os.path.exists(path):
         return path
 
-    return joinpath(DLL_PATH, basename+'.so')
+    return joinpath(DLL_PATH, basename)
 
 def make_dll(source, model_info, dtype="double"):
     """
