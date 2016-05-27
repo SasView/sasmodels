@@ -61,6 +61,7 @@ from .kernelpy import PyInput, PyModel
 from .exception import annotate_exception
 
 if os.name == 'nt':
+    ARCH = "amd64" if sys.maxint > 2**32 else "x86"  # maxint=2**31-1 on 32 bit
     # Windows compiler; check if TinyCC is available
     try:
         import tinycc
@@ -94,6 +95,7 @@ if os.name == 'nt':
         def compile_command(source, output):
             return CC + ["%s"%source, "-o", "%s"%output, "-lm"]
 else:
+    ARCH = ""
     # Generic unix compile
     # On mac users will need the X code command line tools installed
     #COMPILE = "gcc-mp-4.7 -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm -lgomp"
@@ -141,7 +143,8 @@ def dll_path(model_info, dtype="double"):
         basename += "128"
 
     # Hack to find precompiled dlls
-    path = joinpath(generate.DATA_PATH, '..', 'compiled_models', basename+'.so')
+    path = joinpath(generate.DATA_PATH, '..', 'compiled_models',
+                    basename + ARCH + '.so')
     if os.path.exists(path):
         return path
 
@@ -175,6 +178,7 @@ def make_dll(source, model_info, dtype="double"):
     if dtype == generate.F32 and not ALLOW_SINGLE_PRECISION_DLLS:
         dtype = generate.F64  # Force 64-bit dll
 
+    # File name for generated C code
     if dtype == generate.F32: # 32-bit dll
         tempfile_prefix = 'sas_' + model_info['name'] + '32_'
     elif dtype == generate.F64:
