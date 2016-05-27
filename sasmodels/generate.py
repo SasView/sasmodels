@@ -716,9 +716,10 @@ def find_source_lines(model_info, kernel_module):
         return
 
     # Make sure we have harmless default values
-    model_info['Iqxy_line'] = 0
-    model_info['Iq_line'] = 0
-    model_info['form_volume_line'] = 0
+    # NB: 0 is not harmless---some compilers break with a "#line 0" directive
+    model_info['Iqxy_line'] = 1
+    model_info['Iq_line'] = 1
+    model_info['form_volume_line'] = 1
 
     # find the defintion lines for the different code blocks
     try:
@@ -854,6 +855,13 @@ def make_doc(model_info):
                  docs=docs)
     return DOC_HEADER % subst
 
+
+def make_html(model_info):
+    """
+    Convert model docs directly to html.
+    """
+    from . import rst2html
+    return rst2html.convert(make_doc(model_info), title=model_info['name'])
 
 def demo_time():
     """
