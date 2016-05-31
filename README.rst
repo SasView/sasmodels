@@ -52,4 +52,7 @@ computing the form factors for the different magnetic contrasts.  This
 will mean extending the data handler to support multiple cross sections
 in the same data set.
 
-`Travis-CI Build Status <https://travis-ci.org/SasView/sasmodels.svg?branch=master)](https://travis-ci.org/SasView/sasmodels>`_
+|TravisStatus|_
+
+.. |TravisStatus| image:: https://travis-ci.org/SasView/sasmodels.svg?branch=master
+.. _TravisStatus: https://travis-ci.org/SasView/sasmodels
