@@ -43,22 +43,7 @@ Notes
 cylinder.c + cylinder.py is the cylinder model with renamed variables and
 sld scaled by 1e6 so the numbers are nicer.  The model name is "cylinder"
 
-cylinder_clone.c + cylinder_clone.py is the cylinder model using the
-same interface as the sasview, including calling the model CylinderModel,
-so that it can be used as a drop-in replacement for the sasview cylinder
-model.
-
 lamellar.py is an example of a single file model with embedded C code.
-
-Note: may want to rename form_volume to calc_volume and Iq/Iqxy to
-calc_Iq/calc_Iqxy in model interface. Similarly ER/VR go to calc_ER/calc_VR.
-
-Note: It is possible to translate python code automatically to opencl, using
-something like numba, clyther, shedskin or pypy, so maybe the kernel functions
-could be implemented without any C syntax.
-
-Note: angular dispersion in theta is probably not calculated correctly, but
-is left this way for compatibility with sasview.
 
 Magnetism hasn't been implemented yet.  We may want a separate Imagnetic
 calculator with the extra parameters and calculations.   We should
@@ -67,9 +52,4 @@ computing the form factors for the different magnetic contrasts.  This
 will mean extending the data handler to support multiple cross sections
 in the same data set.
 
-Need to implement an example kernel directly in python.  Polydispersity
-loops should be generated automatically as they are for the OpenCL models.
-The kernels should be vectorized across Q.  These will need vectorized
-versions of numerical quadrature if we want to get reasonable performance.
-
-[![Travis-CI Build Status](https://travis-ci.org/SasView/sasmodels.svg?branch=master)](https://travis-ci.org/SasView/sasmodels)
+`Travis-CI Build Status <https://travis-ci.org/SasView/sasmodels.svg?branch=master)](https://travis-ci.org/SasView/sasmodels>`_
