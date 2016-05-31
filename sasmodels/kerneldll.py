@@ -84,16 +84,16 @@ if os.name == 'nt':
             return CC + ["/Tp%s"%source] + LN + ["/OUT:%s"%output]
     elif tinycc:
         # TinyCC compiler.
-        CC = [tinycc.find_tcc_path()] + "-shared -rdynamic -Wall".split()
+        CC = [tinycc.TCC] + "-shared -rdynamic -Wall".split()
         def compile_command(source, output):
-            return CC + ["%s"%source, "-o", "%s"%output]
+            return CC + [source, "-o", output]
     else:
         # MinGW compiler.
         CC = "gcc -shared -std=c99 -O2 -Wall".split()
         if "SAS_OPENMP" in os.environ:
             CC.append("-fopenmp")
         def compile_command(source, output):
-            return CC + ["%s"%source, "-o", "%s"%output, "-lm"]
+            return CC + [source, "-o", output, "-lm"]
 else:
     ARCH = ""
     # Generic unix compile
@@ -104,7 +104,7 @@ else:
     if sys.platform != "darwin":
         CC.append("-fopenmp")
     def compile_command(source, output):
-        return CC + ["%s"%source, "-o", "%s"%output, "-lm"]
+        return CC + [source, "-o", output, "-lm"]
 
 # Windows-specific solution
 if os.name == 'nt':
@@ -122,8 +122,9 @@ def compile(source, output):
     command = compile_command(source=source, output=output)
     command_str = " ".join('"%s"'%p if ' ' in p else p for p in command)
     logging.info(command_str)
-    shell = (os.name == 'nt')
     try:
+        # need shell=True on windows to keep console box from popping up
+        shell = (os.name == 'nt')
         subprocess.check_output(command, shell=shell, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as exc:
         raise RuntimeError("compile failed.\n%s\n%s"%(command_str, exc.output))
