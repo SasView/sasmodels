@@ -1,0 +1,4 @@
+include LICENSE.txt
+include README.rst
+include setup.py
+recursive-include sasmodels *.py *.c *.cl *.json *.gif *.jpg *.png
