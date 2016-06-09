@@ -30,7 +30,7 @@ except:
 try:
     np.meshgrid([])
     meshgrid = np.meshgrid
-except ValueError:
+except Exception:
     # CRUFT: np.meshgrid requires multiple vectors
     def meshgrid(*args):
         if len(args) > 1:
