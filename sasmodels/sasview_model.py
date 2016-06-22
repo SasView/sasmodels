@@ -4,13 +4,8 @@ Sasview model constructor.
 Given a module defining an OpenCL kernel such as sasmodels.models.cylinder,
 create a sasview model class to run that kernel as follows::
 
-    from sasmodels.sasview_model import make_class
-    from sasmodels.models import cylinder
-    CylinderModel = make_class(cylinder, dtype='single')
-
-The model parameters for sasmodels are different from those in sasview.
-When reloading previously saved models, the parameters should be converted
-using :func:`sasmodels.convert.convert`.
+    from sasmodels.sasview_model import load_custom_model
+    CylinderModel = load_custom_model('sasmodels/models/cylinder.py')
 """
 from __future__ import print_function
 
@@ -43,6 +38,17 @@ MultiplicityInfo = collections.namedtuple(
     ["number", "control", "choices", "x_axis_label"],
 )
 
+MODELS = {}
+def find_model(modelname):
+    # TODO: used by sum/product model to load an existing model
+    # TODO: doesn't handle custom models properly
+    if modelname.endswith('.py'):
+        return load_custom_model(modelname)
+    elif modelname in MODELS:
+        return MODELS[modelname]
+    else:
+        raise ValueError("unknown model %r"%modelname)
+
 def load_standard_models():
     """
     Load and return the list of predefined models.
@@ -53,8 +59,9 @@ def load_standard_models():
     models = []
     for name in core.list_models():
         try:
-            models.append(_make_standard_model(name))
-        except:
+            MODELS[name] = _make_standard_model(name)
+            models.append(MODELS[name])
+        except Exception:
             logging.error(traceback.format_exc())
     return models
 
@@ -63,9 +70,15 @@ def load_custom_model(path):
     """
     Load a custom model given the model path.
     """
+    #print("load custom model", path)
     kernel_module = custom.load_custom_kernel_module(path)
-    model_info = generate.make_model_info(kernel_module)
-    return _make_model_from_info(model_info)
+    try:
+        model = kernel_module.Model
+    except AttributeError:
+        model_info = generate.make_model_info(kernel_module)
+        model = _make_model_from_info(model_info)
+    MODELS[model.name] = model
+    return model
 
 
 def _make_standard_model(name):
