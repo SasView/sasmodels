@@ -5,11 +5,14 @@ Calculates the form factor for a rectangular solid with a core-shell structure.
 **The thickness and the scattering length density of the shell or "rim"
 can be different on all three (pairs) of faces.**
 
-The form factor is normalized by the particle volume *V* such that
+The form factor is normalized by the particle volume $V$ such that
 
-*I(q)* = *scale* \* <*f*\ :sup:`2`> / *V* + *background*
+.. math::
 
-where < > is an average over all possible orientations of the rectangular solid.
+    I(q) = \text{scale}\frac{\langle f^2 \rangle}{V} + \text{background}
+
+where $\langle \ldots \rangle$ is an average over all possible orientations
+of the rectangular solid.
 
 An instrument resolution smeared version of the model is also provided.
 
@@ -18,14 +21,14 @@ Definition
 ----------
 
 The function calculated is the form factor of the rectangular solid below.
-The core of the solid is defined by the dimensions *A*, *B*, *C* such that
-*A* < *B* < *C*.
+The core of the solid is defined by the dimensions $A$, $B$, $C$ such that
+$A < B < C$.
 
 .. image:: img/core_shell_parallelepiped_geometry.jpg
 
-There are rectangular "slabs" of thickness $t_A$ that add to the *A* dimension
-(on the *BC* faces). There are similar slabs on the *AC* $(=t_B)$ and *AB*
-$(=t_C)$ faces. The projection in the *AB* plane is then
+There are rectangular "slabs" of thickness $t_A$ that add to the $A$ dimension
+(on the $BC$ faces). There are similar slabs on the $AC$ $(=t_B)$ and $AB$
+$(=t_C)$ faces. The projection in the $AB$ plane is then
 
 .. image:: img/core_shell_parallelepiped_projection.jpg
 
@@ -42,20 +45,20 @@ intensity being calculated as the square of the sum of the amplitudes of the
 core and shell, in the same manner as a core-shell model.
 
 **For the calculation of the form factor to be valid, the sides of the solid
-MUST be chosen such that** *A* < *B* < *C*.
+MUST be chosen such that** $A < B < C$.
 **If this inequality is not satisfied, the model will not report an error,
 and the calculation will not be correct.**
 
 FITTING NOTES
 If the scale is set equal to the particle volume fraction, |phi|, the returned
-value is the scattered intensity per unit volume; ie, *I(q)* = |phi| *P(q)*.
+value is the scattered intensity per unit volume, $I(q) = \phi P(q)$.
 However, **no interparticle interference effects are included in this calculation.**
 
 There are many parameters in this model. Hold as many fixed as possible with
 known values, or you will certainly end up at a solution that is unphysical.
 
 Constraints must be applied during fitting to ensure that the inequality
-*A* < *B* < *C* is not violated. The calculation will not report an error,
+$A < B < C$ is not violated. The calculation will not report an error,
 but the results will not be correct.
 
 The returned value is in units of |cm^-1|, on absolute scale.
@@ -63,17 +66,17 @@ The returned value is in units of |cm^-1|, on absolute scale.
 NB: The 2nd virial coefficient of the core_shell_parallelepiped is calculated
 based on the the averaged effective radius $(=\sqrt{(A+2t_A)(B+2t_B)/\pi})$
 and length $(C+2t_C)$ values, and used as the effective radius
-for *S(Q)* when *P(Q)* \* *S(Q)* is applied.
+for $S(Q)$ when $P(Q) * S(Q)$ is applied.
 
 .. Comment by Miguel Gonzalez:
    The later seems to contradict the previous statement that interparticle interference
    effects are not included.
 
 To provide easy access to the orientation of the parallelepiped, we define the
-axis of the cylinder using three angles |theta|, |phi| and |bigpsi|.
+axis of the cylinder using three angles $\theta$, $\phi$ and $\Psi$.
 (see :ref:`cylinder orientation <cylinder-angle-definition>`).
-The angle |bigpsi| is the rotational angle around the *long_c* axis against the
-*q* plane. For example, |bigpsi| = 0 when the *short_b* axis is parallel to the
+The angle $\Psi$ is the rotational angle around the *long_c* axis against the
+$q$ plane. For example, $\Psi = 0$ when the *short_b* axis is parallel to the
 *x*-axis of the detector.
 
 .. figure:: img/parallelepiped_angle_definition.jpg

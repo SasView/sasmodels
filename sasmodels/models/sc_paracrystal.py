@@ -12,10 +12,10 @@ The scattering intensity $I(q)$ is calculated as
 
 .. math::
 
-    I(q) = \frac{scale}{V_p}V_{lattice}P(q)Z(q)
+    I(q) = \text{scale}\frac{V_\text{lattice}P(q)Z(q)}{V_p} + \text{background}
 
 where scale is the volume fraction of spheres, $V_p$ is the volume of
-the primary particle, $V_{lattice}$ is a volume correction for the crystal
+the primary particle, $V_\text{lattice}$ is a volume correction for the crystal
 structure, $P(q)$ is the form factor of the sphere (normalized), and
 $Z(q)$ is the paracrystalline structure factor for a simple cubic structure.
 
@@ -27,7 +27,7 @@ cubic structure of particles of radius *R* and nearest neighbor separation *D* i
 
 .. math::
 
-    V_{lattice}=\frac{4\pi}{3}\frac{R^3}{D^3}
+    V_\text{lattice}=\frac{4\pi}{3}\frac{R^3}{D^3}
 
 The distortion factor (one standard deviation) of the paracrystal is included
 in the calculation of $Z(q)$

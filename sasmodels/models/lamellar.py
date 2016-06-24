@@ -8,14 +8,15 @@ The scattering intensity $I(q)$ for dilute, randomly oriented, "infinitely large
 
 .. math::
 
-    I(q) = scale*\frac{2\pi P(q)}{q^2\delta }
+    I(q) = \text{scale}\frac{2\pi P(q)}{q^2\delta} + \text{background}
 
 
 The form factor is
 
 .. math::
 
-   P(q) = \frac{2\Delta\rho^2}{q^2}(1-cos(q\delta)) = \frac{4\Delta\rho^2}{q^2}sin^2(\frac{q\delta}{2})
+   P(q) = \frac{2\Delta\rho^2}{q^2}(1-\cos(q\delta))
+        = \frac{4\Delta\rho^2}{q^2}\sin^2\left(\frac{q\delta}{2}\right)
 
 where $\delta$ is the total layer thickness and $\Delta\rho$ is the scattering length density difference.
 
