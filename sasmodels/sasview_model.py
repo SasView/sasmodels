@@ -221,7 +221,7 @@ class SasviewModel(object):
         self.multiplicity = multiplicity
 
         self.params = collections.OrderedDict()
-        self.dispersion = {}
+        self.dispersion = collections.OrderedDict()
         self.details = {}
 
         for p in self._model_info['parameters']:
