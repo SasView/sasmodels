@@ -204,8 +204,3 @@ def get_weights(disperser, n, width, nsigmas, value, limits, relative):
     obj = cls(n, width, nsigmas)
     v, w = obj.get_weights(value, limits[0], limits[1], relative)
     return v, w
-
-# Hack to allow sasview dispersion objects to interoperate with sasmodels
-dispersers = dict((v.__name__, k) for k, v in MODELS.items())
-dispersers['DispersionModel'] = RectangleDispersion.type
-

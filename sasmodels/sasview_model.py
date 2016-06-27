@@ -483,23 +483,10 @@ class SasviewModel(object):
         :param parameter: name of the parameter [string]
         :param dispersion: dispersion object of type Dispersion
         """
-        if parameter in (s for s in self.params.keys()):
+        if parameter in self.params:
             # TODO: Store the disperser object directly in the model.
-            # The current method of creating one on the fly whenever it is
-            # needed is kind of funky.
-            # Note: can't seem to get disperser parameters from sasview
-            # (1) Could create a sasview model that has not yet # been
-            # converted, assign the disperser to one of its polydisperse
-            # parameters, then retrieve the disperser parameters from the
-            # sasview model.  (2) Could write a disperser parameter retriever
-            # in sasview.  (3) Could modify sasview to use sasmodels.weights
-            # dispersers.
-            # For now, rely on the fact that the sasview only ever uses
-            # new dispersers in the set_dispersion call and create a new
-            # one instead of trying to assign parameters.
-            from . import weights
-            disperser = weights.dispersers[dispersion.__class__.__name__]
-            dispersion = weights.models[disperser]()
+            # The current method of relying on the sasview gui to
+            # remember them is kind of funky.
             self.dispersion[parameter] = dispersion.get_pars()
         else:
             raise ValueError("%r is not a dispersity or orientation parameter")
