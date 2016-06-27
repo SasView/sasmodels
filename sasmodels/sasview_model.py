@@ -260,7 +260,7 @@ class SasviewModel(object):
 
         :param par_name: the parameter name to check
         """
-        return par_name.lower() in self.fixed
+        return par_name in self.fixed
         #For the future
         #return self.params[str(par_name)].is_fittable()
 
@@ -287,15 +287,15 @@ class SasviewModel(object):
         toks = name.split('.')
         if len(toks) == 2:
             for item in self.dispersion.keys():
-                if item.lower() == toks[0].lower():
+                if item == toks[0]:
                     for par in self.dispersion[item]:
-                        if par.lower() == toks[1].lower():
+                        if par == toks[1]:
                             self.dispersion[item][par] = value
                             return
         else:
             # Look for standard parameter
             for item in self.params.keys():
-                if item.lower() == name.lower():
+                if item == name:
                     self.params[item] = value
                     return
 
@@ -312,14 +312,14 @@ class SasviewModel(object):
         toks = name.split('.')
         if len(toks) == 2:
             for item in self.dispersion.keys():
-                if item.lower() == toks[0].lower():
+                if item == toks[0]:
                     for par in self.dispersion[item]:
-                        if par.lower() == toks[1].lower():
+                        if par == toks[1]:
                             return self.dispersion[item][par]
         else:
             # Look for standard parameter
             for item in self.params.keys():
-                if item.lower() == name.lower():
+                if item == name:
                     return self.params[item]
 
         raise ValueError("Model does not contain parameter %s" % name)
@@ -338,7 +338,7 @@ class SasviewModel(object):
         Return a list of polydispersity parameters for the model
         """
         # TODO: fix test so that parameter order doesn't matter
-        ret = ['%s.%s' % (d.lower(), p)
+        ret = ['%s.%s' % (d, p)
                for d in self._model_info['partype']['pd-2d']
                for p in ('npts', 'nsigmas', 'width')]
         #print(ret)
@@ -483,7 +483,7 @@ class SasviewModel(object):
         :param parameter: name of the parameter [string]
         :param dispersion: dispersion object of type Dispersion
         """
-        if parameter.lower() in (s.lower() for s in self.params.keys()):
+        if parameter in (s for s in self.params.keys()):
             # TODO: Store the disperser object directly in the model.
             # The current method of creating one on the fly whenever it is
             # needed is kind of funky.
