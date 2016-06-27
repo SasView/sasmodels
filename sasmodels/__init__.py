@@ -35,10 +35,15 @@ def data_files():
             files.extend(glob.glob(joinpath(source_path, p)))
         return target_path, files
 
+    # Place the source for the model tree in the distribution.  Minimally we
+    # need the c and cl files for running on OpenCL.  Need the py files so
+    # users can easily copy existing models.  Need the img files so that we
+    # can build model docs on the fly, including images.
     return_list = [
         expand_patterns([], ['*.c', '*.cl', 'convert.json']),
-        expand_patterns(['models'], ['*.c']),
+        expand_patterns(['models'], ['*.py', '*.c']),
         expand_patterns(['models', 'lib'], ['*.c']),
+        expand_patterns(['models', 'img'], ['*.*']),
         ]
     return return_list
 
