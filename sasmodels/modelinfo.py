@@ -632,7 +632,10 @@ def _find_source_lines(model_info, kernel_module):
         return
 
     # find the defintion lines for the different code blocks
-    source = inspect.getsource(kernel_module)
+    try:
+        source = inspect.getsource(kernel_module)
+    except IOError:
+        return
     for k, v in enumerate(source.split('\n')):
         if v.startswith('Iqxy'):
             model_info._Iqxy_line = k+1
@@ -843,9 +846,10 @@ class ModelInfo(object):
     sesans = None           # type: Optional[Callable[[np.ndarray], np.ndarray]]
 
     # line numbers within the python file for bits of C source, if defined
-    _Iqxy_line = 0
-    _Iq_line = 0
-    _form_volume_line = 0
+    # NB: some compilers fail with a "#line 0" directive, so default to 1.
+    _Iqxy_line = 1
+    _Iq_line = 1
+    _form_volume_line = 1
 
 
     def __init__(self):
