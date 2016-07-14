@@ -11,6 +11,8 @@
 // If opencl is not available, then we are compiling a C function
 // Note: if using a C++ compiler, then define kernel as extern "C"
 #ifndef USE_OPENCL
+// Use SAS_DOUBLE to force the use of double even for float kernels
+#  define SAS_DOUBLE dou ## ble
 #  ifdef __cplusplus
       #include <cstdio>
       #include <cmath>
@@ -37,13 +39,14 @@
      #include <stdio.h>
      #if defined(__TINYC__)
          #include <math.h>
-         inline double trunc(double x) { return x>=0?floor(x):-floor(-x); }
-         inline double fmin(double x, double y) { return x>y ? y : x; }
-         inline double fmax(double x, double y) { return x<y ? y : x; }
          // TODO: test isnan
          inline double _isnan(double x) { return x != x; } // hope this doesn't optimize away!
          #undef isnan
          #define isnan(x) _isnan(x)
+         // Defeat the double->float conversion since we don't have tgmath
+         inline SAS_DOUBLE trunc(SAS_DOUBLE x) { return x>=0?floor(x):-floor(-x); }
+         inline SAS_DOUBLE fmin(SAS_DOUBLE x, SAS_DOUBLE y) { return x>y ? y : x; }
+         inline SAS_DOUBLE fmax(SAS_DOUBLE x, SAS_DOUBLE y) { return x<y ? y : x; }
          #define NEED_EXPM1
          #define NEED_TGAMMA
      #else
@@ -69,7 +72,8 @@
 #endif
 
 #if defined(NEED_EXPM1)
-   static double expm1(double x) {
+   static SAS_DOUBLE expm1(SAS_DOUBLE x_in) {
+      double x = (double)x_in;  // go back to float for single precision kernels
       // Adapted from the cephes math library.
       // Copyright 1984 - 1992 by Stephen L. Moshier
       if (x != x || x == 0.0) {

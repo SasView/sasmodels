@@ -2,8 +2,8 @@
 # Note: model title and parameter table are inserted automatically
 r"""
 
-This model provides the form factor, *P(q)*, for a hollow rectangular
-parallelepiped with a wall of thickness |bigdelta|.
+This model provides the form factor, $P(q)$, for a hollow rectangular
+parallelepiped with a wall of thickness $\Delta$.
 It computes only the 1D scattering, not the 2D.
 
 Definition
@@ -23,9 +23,9 @@ possible orientations, giving
   P(q) =  \frac{1}{V^2} \frac{2}{\pi} \times \, \int_0^{\frac{\pi}{2}} \,
   \int_0^{\frac{\pi}{2}} A_{P\Delta}^2(q) \, \sin\theta \, d\theta \, d\phi
 
-where |theta| is the angle between the *z* axis and the longest axis
-of the parallelepiped, |phi| is the angle between the scattering vector
-(lying in the *xy* plane) and the *y* axis, and
+where $\theta$ is the angle between the $z$ axis and the longest axis
+of the parallelepiped, $\phi$ is the angle between the scattering vector
+(lying in the $xy$ plane) and the $y$ axis, and
 
 .. math::
   :nowrap:
@@ -48,8 +48,8 @@ of the parallelepiped, |phi| is the angle between the scattering vector
     {q \bigl(\frac{B}{2}-\Delta\bigr) \sin\theta \cos\phi} \right]
   \end{align}
 
-where *A*, *B* and *C* are the external sides of the parallelepiped fulfilling
-:math:`A \le B \le C`, and the volume *V* of the parallelepiped is
+where $A$, $B$ and $C$ are the external sides of the parallelepiped fulfilling
+$A \le B \le C$, and the volume $V$ of the parallelepiped is
 
 .. math::
   V = A B C \, - \, (A - 2\Delta) (B - 2\Delta) (C - 2\Delta)
@@ -57,11 +57,11 @@ where *A*, *B* and *C* are the external sides of the parallelepiped fulfilling
 The 1D scattering intensity is then calculated as
 
 .. math::
-  I(q) = \mbox{scale} \times V \times (\rho_{\mbox{p}} -
-  \rho_{\mbox{solvent}})^2 \times P(q)
+  I(q) = \text{scale} \times V \times (\rho_{\text{p}} -
+  \rho_{\text{solvent}})^2 \times P(q) + \text{background}
 
-where :math:`\rho_{\mbox{p}}` is the scattering length of the parallelepiped,
-:math:`\rho_{\mbox{solvent}}` is the scattering length of the solvent,
+where $\rho_{\text{p}}$ is the scattering length of the parallelepiped,
+$\rho_{\text{solvent}}$ is the scattering length of the solvent,
 and (if the data are in absolute units) *scale* represents the volume fraction
 (which is unitless).
 

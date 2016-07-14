@@ -23,14 +23,28 @@ def data_files():
     used directly in setup(...,data_files=...) for setup.py.
     """
     from os.path import join as joinpath
-    from .generate import SIBLING_DIR, DATA_PATH
-    data_files = {}
-    def add_patterns(path, patterns):
-        data_files[joinpath(SIBLING_DIR, *path)] \
-            = [joinpath(DATA_PATH, *(path+[p])) for p in patterns]
-    add_patterns([], ['*.c', '*.cl', 'convert.json'])
-    add_patterns(['models'], ['*.c'])
-    add_patterns(['models', 'lib'], ['*.c'])
+    import glob
 
-    return data_files
+    from .generate import EXTERNAL_DIR, DATA_PATH
+
+    def expand_patterns(path, patterns):
+        target_path = joinpath(EXTERNAL_DIR, *path)
+        source_path = joinpath(DATA_PATH, *path)
+        files = []
+        for p in patterns:
+            files.extend(glob.glob(joinpath(source_path, p)))
+        return target_path, files
+
+    # Place the source for the model tree in the distribution.  Minimally we
+    # need the c and cl files for running on OpenCL.  Need the py files so
+    # users can easily copy existing models.  Need the img files so that we
+    # can build model docs on the fly, including images.
+    return_list = [
+        expand_patterns([], ['*.c', '*.cl', 'convert.json']),
+        expand_patterns(['models'], ['*.py', '*.c']),
+        expand_patterns(['models', 'lib'], ['*.c']),
+        expand_patterns(['models', 'img'], ['*.*']),
+        ]
+    return return_list
+
 

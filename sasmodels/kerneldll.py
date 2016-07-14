@@ -48,9 +48,11 @@ from __future__ import print_function
 import sys
 import os
 from os.path import join as joinpath, split as splitpath, splitext
+import subprocess
 import tempfile
 import ctypes as ct  # type: ignore
 from ctypes import c_void_p, c_int32, c_longdouble, c_double, c_float  # type: ignore
+import logging
 
 import numpy as np  # type: ignore
 
@@ -67,11 +69,13 @@ try:
 except ImportError:
     pass
 
-# Compiler platform details
-if sys.platform == 'darwin':
-    #COMPILE = "gcc-mp-4.7 -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm -lgomp"
-    COMPILE = "gcc -shared -fPIC -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
-elif os.name == 'nt':
+if os.name == 'nt':
+    ARCH = "" if sys.maxint > 2**32 else "x86"  # maxint=2**31-1 on 32 bit
+    # Windows compiler; check if TinyCC is available
+    try:
+        import tinycc
+    except ImportError:
+        tinycc = None
     # call vcvarsall.bat before compiling to set path, headers, libs, etc.
     if "VCINSTALLDIR" in os.environ:
         # MSVC compiler is available, so use it.  OpenMP requires a copy of
@@ -80,24 +84,36 @@ elif os.name == 'nt':
         # Copy this to the python directory and uncomment the OpenMP COMPILE
         # TODO: remove intermediate OBJ file created in the directory
         # TODO: maybe don't use randomized name for the c file
-        CC = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG /Tp%(source)s "
-        LN = "/link /DLL /INCREMENTAL:NO /MANIFEST /OUT:%(output)s"
+        # TODO: maybe ask distutils to find MSVC
+        CC = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG".split()
         if "SAS_OPENMP" in os.environ:
-            COMPILE = " ".join((CC, "/openmp", LN))
-        else:
-            COMPILE = " ".join((CC, LN))
-    elif True:
-        # If MSVC compiler is not available, try using mingw
-        # fPIC is not needed on windows
-        COMPILE = "gcc -shared -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
-        if "SAS_OPENMP" in os.environ:
-            COMPILE += " -fopenmp"
+            CC.append("/openmp")
+        LN = "/link /DLL /INCREMENTAL:NO /MANIFEST".split()
+        def compile_command(source, output):
+            return CC + ["/Tp%s"%source] + LN + ["/OUT:%s"%output]
+    elif tinycc:
+        # TinyCC compiler.
+        CC = [tinycc.TCC] + "-shared -rdynamic -Wall".split()
+        def compile_command(source, output):
+            return CC + [source, "-o", output]
     else:
-        # If MSVC compiler is not available, try using tinycc
-        from tinycc import TCC
-        COMPILE = TCC + " -shared -rdynamic -Wall %(source)s -o %(output)s"
+        # MinGW compiler.
+        CC = "gcc -shared -std=c99 -O2 -Wall".split()
+        if "SAS_OPENMP" in os.environ:
+            CC.append("-fopenmp")
+        def compile_command(source, output):
+            return CC + [source, "-o", output, "-lm"]
 else:
-    COMPILE = "cc -shared -fPIC -fopenmp -std=c99 -O2 -Wall %(source)s -o %(output)s -lm"
+    ARCH = ""
+    # Generic unix compile
+    # On mac users will need the X code command line tools installed
+    #COMPILE = "gcc-mp-4.7 -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm -lgomp"
+    CC = "cc -shared -fPIC -std=c99 -O2 -Wall".split()
+    # add openmp support if not running on a mac
+    if sys.platform != "darwin":
+        CC.append("-fopenmp")
+    def compile_command(source, output):
+        return CC + [source, "-o", output, "-lm"]
 
 # Windows-specific solution
 if os.name == 'nt':
@@ -111,6 +127,18 @@ else:
 
 ALLOW_SINGLE_PRECISION_DLLS = True
 
+def compile(source, output):
+    command = compile_command(source=source, output=output)
+    command_str = " ".join('"%s"'%p if ' ' in p else p for p in command)
+    logging.info(command_str)
+    try:
+        # need shell=True on windows to keep console box from popping up
+        shell = (os.name == 'nt')
+        subprocess.check_output(command, shell=shell, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError("compile failed.\n%s\n%s"%(command_str, exc.output))
+    if not os.path.exists(output):
+        raise RuntimeError("compile failed.  File is in %r"%source)
 
 def dll_name(model_info, dtype):
     # type: (ModelInfo, np.dtype) ->  str
@@ -119,7 +147,15 @@ def dll_name(model_info, dtype):
     any path or extension, with a form such as 'sas_sphere32'.
     """
     bits = 8*dtype.itemsize
-    return "sas%d_%s"%(bits, model_info.id)
+    basename = "sas%d_%s"%(bits, model_info.id)
+    basename += ARCH + ".so"
+
+    # Hack to find precompiled dlls
+    path = joinpath(generate.DATA_PATH, '..', 'compiled_models', basename)
+    if os.path.exists(path):
+        return path
+
+    return joinpath(DLL_PATH, basename)
 
 
 def dll_path(model_info, dtype):
@@ -160,7 +196,7 @@ def make_dll(source, model_info, dtype=F64):
 
     if not os.path.exists(dll):
         need_recompile = True
-    elif getattr(sys, 'frozen', False):
+    elif getattr(sys, 'frozen', None) is not None:
         # TODO: don't suppress time stamp
         # Currently suppressing recompile when running in a frozen environment
         need_recompile = False
@@ -172,15 +208,15 @@ def make_dll(source, model_info, dtype=F64):
         basename = dll_name(model_info, dtype) + "_"
         fid, filename = tempfile.mkstemp(suffix=".c", prefix=basename)
         source = generate.convert_type(source, dtype)
-        os.fdopen(fid, "w").write(source)
-        command = COMPILE%{"source":filename, "output":dll}
-        status = os.system(command)
-        if status != 0 or not os.path.exists(dll):
-            raise RuntimeError("compile failed.  File is in %r"%filename)
-        else:
-            ## comment the following to keep the generated c file
-            os.unlink(filename)
-            #print("saving compiled file in %r"%filename)
+        fd, filename = tempfile.mkstemp(suffix=".c", prefix=tempfile_prefix)
+        with os.fdopen(fd, "w") as file:
+            file.write(source)
+        compile(source=filename, output=dll)
+        # comment the following to keep the generated c file
+        # Note: if there is a syntax error then compile raises an error
+        # and the source file will not be deleted.
+        os.unlink(filename)
+        #print("saving compiled file in %r"%filename)
     return dll
 
 

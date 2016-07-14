@@ -132,7 +132,6 @@ class DataMixin(object):
             self.data_type = 'Iq'
 
         if self.data_type == 'sesans':
-            
             q = sesans.make_q(data.sample.zacceptance, data.Rmax)
             index = slice(None, None)
             res = None
@@ -179,8 +178,8 @@ class DataMixin(object):
             elif (getattr(data, 'dxl', None) is not None
                   and getattr(data, 'dxw', None) is not None):
                 res = resolution.Slit1D(data.x[index],
-                                        qx_width=data.dxw[index],
-                                        qy_width=data.dxl[index])
+                                        qx_width=data.dxl[index],
+                                        qy_width=data.dxw[index])
             else:
                 res = resolution.Perfect1D(data.x[index])
 

@@ -178,10 +178,26 @@ try:
 except ImportError:
     pass
 
-SIBLING_DIR = 'sasmodels-data'
-PACKAGE_PATH = abspath(dirname(__file__))
-SIBLING_PATH = abspath(joinpath(PACKAGE_PATH, '..', 'sasmodels-data'))
-DATA_PATH = SIBLING_PATH if isdir(SIBLING_PATH) else PACKAGE_PATH
+def get_data_path(external_dir, target_file):
+    path = abspath(dirname(__file__))
+    if exists(joinpath(path, target_file)):
+        return path
+
+    # check next to exe/zip file
+    exepath = dirname(sys.executable)
+    path = joinpath(exepath, external_dir)
+    if exists(joinpath(path, target_file)):
+        return path
+
+    # check in py2app Contents/Resources
+    path = joinpath(exepath, '..', 'Resources', external_dir)
+    if exists(joinpath(path, target_file)):
+        return abspath(path)
+
+    raise RuntimeError('Could not find '+joinpath(external_dir, target_file))
+
+EXTERNAL_DIR = 'sasmodels-data'
+DATA_PATH = get_data_path(EXTERNAL_DIR, 'kernel_template.c')
 MODEL_PATH = joinpath(DATA_PATH, 'models')
 
 F16 = np.dtype('float16')
@@ -655,6 +671,13 @@ def make_doc(model_info):
                  docs=docs)
     return DOC_HEADER % subst
 
+
+def make_html(model_info):
+    """
+    Convert model docs directly to html.
+    """
+    from . import rst2html
+    return rst2html.convert(make_doc(model_info), title=model_info['name'])
 
 def demo_time():
     # type: () -> None

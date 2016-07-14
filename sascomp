@@ -3,13 +3,16 @@
 import sys
 import os
 import glob
+import logging
+logging.basicConfig(level=logging.INFO)
 
 def main():
     sasmodels = os.path.dirname(os.path.realpath(__file__))
     root = os.path.dirname(sasmodels)
-    sasview=glob.glob(os.path.join(root, 'sasview', 'build', 'lib.*' ))
+    sasview=glob.glob(os.path.join(root, 'sasview', 'build', 'lib*' ))
     sys.path.insert(0, os.path.join(root, 'bumps'))
     sys.path.insert(0, os.path.join(root, 'periodictable'))
+    sys.path.insert(0, os.path.join(root, 'tinycc', 'build', 'lib'))
     if sasview:  # glob returns a list
         sys.path.insert(0, sasview[0])
     sys.path.insert(0, sasmodels)

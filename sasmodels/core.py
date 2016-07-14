@@ -33,6 +33,16 @@ try:
 except ImportError:
     pass
 
+try:
+    np.meshgrid([])
+    meshgrid = np.meshgrid
+except Exception:
+    # CRUFT: np.meshgrid requires multiple vectors
+    def meshgrid(*args):
+        if len(args) > 1:
+            return np.meshgrid(*args)
+        else:
+            return [np.asarray(v) for v in args]
 
 # TODO: refactor composite model support
 # The current load_model_info/build_model does not reuse existing model
