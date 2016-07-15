@@ -508,8 +508,6 @@ class GpuKernel(Kernel):
         env = environment()
         self.queue = env.get_queue(dtype)
 
-        # details is int32 data, padded to an 8 integer boundary
-        size = ((max_pd*5 + npars*3 + 2 + 7)//8)*8
         self.result_b = cl.Buffer(self.queue.context, mf.READ_WRITE,
                                q_input.global_size[0] * dtype.itemsize)
         self.q_input = q_input # allocated by GpuInput above
@@ -531,6 +529,7 @@ class GpuKernel(Kernel):
 
         # Call kernel and retrieve results
         step = 100
+        #print("calling OpenCL")
         for start in range(0, call_details.pd_prod, step):
             stop = min(start+step, call_details.pd_prod)
             args = [

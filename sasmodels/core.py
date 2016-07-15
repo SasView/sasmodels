@@ -138,7 +138,7 @@ def build_model(model_info, dtype=None, platform="ocl"):
     if callable(model_info.Iq):
         return kernelpy.PyModel(model_info)
 
-    numpy_dtype, fast, platform = parse_dtype(model_info, dtype)
+    numpy_dtype, fast, platform = parse_dtype(model_info, dtype, platform)
 
     source = generate.make_source(model_info)
     if platform == "dll":
@@ -170,7 +170,7 @@ def precompile_dlls(path, dtype="double"):
             old_path = kerneldll.DLL_PATH
             try:
                 kerneldll.DLL_PATH = path
-                dll = kerneldll.make_dll(source, model_info, dtype=dtype)
+                dll = kerneldll.make_dll(source, model_info, dtype=numpy_dtype)
             finally:
                 kerneldll.DLL_PATH = old_path
             compiled_dlls.append(dll)

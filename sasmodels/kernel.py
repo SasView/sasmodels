@@ -40,7 +40,7 @@ class Kernel(object):
     info = None  # type: ModelInfo
     results = None # type: List[np.ndarray]
 
-    def __call__(self, call_details, weights, values, cutoff):
+    def __call__(self, call_details, values, cutoff):
         # type: (CallDetails, np.ndarray, np.ndarray, float) -> np.ndarray
         raise NotImplementedError("need to implement __call__")
 

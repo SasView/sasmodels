@@ -356,6 +356,7 @@ class DllKernel(Kernel):
             self.result.ctypes.data,   # results
             self.real(cutoff), # cutoff
             ]
+        #print("calling DLL")
         self.kernel(*args) # type: ignore
         return self.result[:-1]
 

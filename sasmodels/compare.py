@@ -849,10 +849,10 @@ def parse_opts():
     if len(engines) == 0:
         engines.extend(['single', 'double'])
     elif len(engines) == 1:
-        if engines[0][0] != 'double':
-            engines.append('double')
-        else:
+        if engines[0][0] == 'double':
             engines.append('single')
+        else:
+            engines.append('double')
     elif len(engines) > 2:
         del engines[2:]
 
