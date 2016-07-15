@@ -9,6 +9,8 @@ on the given set of *q_vector* inputs.  On completion of the computation,
 the kernel should be released, which also releases the inputs.
 """
 
+from __future__ import division, print_function
+
 import numpy as np
 from .details import mono_details, poly_details
 
@@ -89,12 +91,11 @@ def build_details(kernel, pairs):
     Construct the kernel call details object for calling the particular kernel.
     """
     values, weights = zip(*pairs)
-    if max([len(w) for w in weights]) > 1:
-        call_details = poly_details(kernel.info, weights)
-    else:
+    scalars = [v[0] for v in values]
+    if all(len(w)==1 for w in weights):
         call_details = mono_details(kernel.info)
-    weights, values = [np.hstack(v) for v in (weights, values)]
-    weights = weights.astype(dtype=kernel.dtype)
-    values = values.astype(dtype=kernel.dtype)
-    return call_details, weights, values
-
+        data = np.array(scalars, dtype=kernel.dtype)
+    else:
+        call_details = poly_details(kernel.info, weights)
+        data = np.hstack(scalars+list(values)+list(weights)).astype(kernel.dtype)
+    return call_details, data

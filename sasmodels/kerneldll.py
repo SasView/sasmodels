@@ -164,7 +164,7 @@ def dll_path(model_info, dtype):
     Complete path to the dll for the model.  Note that the dll may not
     exist yet if it hasn't been compiled.
     """
-    return os.path.join(DLL_PATH, dll_name(model_info, dtype)+".so")
+    return os.path.join(DLL_PATH, dll_name(model_info, dtype))
 
 
 def make_dll(source, model_info, dtype=F64):
@@ -205,10 +205,9 @@ def make_dll(source, model_info, dtype=F64):
         newest_source = generate.timestamp(model_info)
         need_recompile = dll_time < newest_source
     if need_recompile:
-        basename = dll_name(model_info, dtype) + "_"
-        fid, filename = tempfile.mkstemp(suffix=".c", prefix=basename)
+        basename = os.path.splitext(os.path.basename(dll))[0] + "_"
+        fd, filename = tempfile.mkstemp(suffix=".c", prefix=basename)
         source = generate.convert_type(source, dtype)
-        fd, filename = tempfile.mkstemp(suffix=".c", prefix=tempfile_prefix)
         with os.fdopen(fd, "w") as file:
             file.write(source)
         compile(source=filename, output=dll)
@@ -268,8 +267,8 @@ class DllModel(KernelModel):
               else c_double if self.dtype == generate.F64
               else c_longdouble)
 
-        # int, int, int, int*, double*, double*, double*, double*, double*, double
-        argtypes = [c_int32]*3 + [c_void_p]*5 + [fp]
+        # int, int, int, int*, double*, double*, double*, double*, double
+        argtypes = [c_int32]*3 + [c_void_p]*4 + [fp]
         self._Iq = self._dll[generate.kernel_name(self.info, is_2d=False)]
         self._Iqxy = self._dll[generate.kernel_name(self.info, is_2d=True)]
         self._Iq.argtypes = argtypes
@@ -341,19 +340,17 @@ class DllKernel(Kernel):
                      else np.float64 if self.q_input.dtype == generate.F64
                      else np.float128)
 
-    def __call__(self, call_details, weights, values, cutoff):
+    def __call__(self, call_details, values, cutoff):
         # type: (CallDetails, np.ndarray, np.ndarray, float) -> np.ndarray
 
         #print("in kerneldll")
-        #print("weights", weights)
         #print("values", values)
-        start, stop = 0, call_details.total_pd
+        start, stop = 0, call_details.pd_prod
         args = [
             self.q_input.nq, # nq
             start, # pd_start
             stop, # pd_stop pd_stride[MAX_PD]
             call_details.buffer.ctypes.data, # problem
-            weights.ctypes.data,  # weights
             values.ctypes.data,  #pars
             self.q_input.q.ctypes.data, #q
             self.result.ctypes.data,   # results

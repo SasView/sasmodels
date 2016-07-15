@@ -450,7 +450,8 @@ def _call_pars(prefix, pars):
     return [p.as_call_reference(prefix) for p in pars]
 
 
-_IQXY_PATTERN = re.compile("^((inline|static) )? *(double )? *Iqxy *([(]|$)",
+# type in IQXY pattern could be single, float, double, long double, ...
+_IQXY_PATTERN = re.compile("^((inline|static) )? *([a-z ]+ )? *Iqxy *([(]|$)",
                            flags=re.MULTILINE)
 def _have_Iqxy(sources):
     # type: (List[str]) -> bool
@@ -468,7 +469,7 @@ def _have_Iqxy(sources):
     If you want to comment out an Iqxy function, use // on the front of the
     line instead.
     """
-    for code, path in sources:
+    for path, code in sources:
         if _IQXY_PATTERN.search(code):
             return True
     else:

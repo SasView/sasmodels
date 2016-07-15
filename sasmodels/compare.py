@@ -459,12 +459,9 @@ def eval_opencl(model_info, data, dtype='single', cutoff=0.):
     """
     Return a model calculator using the OpenCL calculation engine.
     """
-    try:
-        model = core.build_model(model_info, dtype=dtype, platform="ocl")
-    except Exception as exc:
-        print(exc)
-        print("... trying again with single precision")
-        model = core.build_model(model_info, dtype='single', platform="ocl")
+    if not core.HAVE_OPENCL:
+        raise RuntimeError("OpenCL not available")
+    model = core.build_model(model_info, dtype=dtype, platform="ocl")
     calculator = DirectModel(data, model, cutoff=cutoff)
     calculator.engine = "OCL%s"%DTYPE_MAP[dtype]
     return calculator

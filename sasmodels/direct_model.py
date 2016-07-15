@@ -65,11 +65,11 @@ def call_kernel(calculator, pars, cutoff=0., mono=False):
         active = lambda name: True
 
     vw_pairs = [(get_weights(p, pars) if active(p.name)
-                 else ([pars.get(p.name, p.default)], []))
+                 else ([pars.get(p.name, p.default)], [1.0]))
                 for p in parameters.call_parameters]
 
-    call_details, weights, values = kernel.build_details(calculator, vw_pairs)
-    return calculator(call_details, weights, values, cutoff)
+    call_details, values = kernel.build_details(calculator, vw_pairs)
+    return calculator(call_details, values, cutoff)
 
 def get_weights(parameter, values):
     # type: (Parameter, Dict[str, float]) -> Tuple[np.ndarray, np.ndarray]
@@ -88,7 +88,7 @@ def get_weights(parameter, values):
     width = values.get(parameter.name+'_pd', 0.0)
     nsigma = values.get(parameter.name+'_pd_nsigma', 3.0)
     if npts == 0 or width == 0:
-        return [value], []
+        return [value], [1.0]
     value, weight = weights.get_weights(
         disperser, npts, width, nsigma, value, limits, relative)
     return value, weight / np.sum(weight)

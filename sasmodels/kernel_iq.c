@@ -21,12 +21,9 @@ typedef struct {
     int32_t pd_offset[MAX_PD];  // offset of pd weights in the value & weight vector
     int32_t pd_stride[MAX_PD];  // stride to move to the next index at this level
 #endif // MAX_PD > 0
-    int32_t par_offset[NPARS];  // offset of par value blocks in the value & weight vector
-    int32_t par_coord[NPARS];   // ids of the coordination parameters
-    int32_t pd_coord[NPARS];    // polydispersity coordination bitvector
+    int32_t pd_prod;            // total number of voxels in hypercube
+    int32_t pd_sum;             // total length of the weights vector
     int32_t num_active;         // number of non-trivial pd loops
-    int32_t total_pd;           // total number of voxels in hypercube
-    int32_t num_coord;          // number of coordinated parameters
     int32_t theta_par;          // id of spherical correction variable
 } ProblemDetails;
 
@@ -42,7 +39,6 @@ void KERNEL_NAME(
     const int32_t pd_start,     // where we are in the polydispersity loop
     const int32_t pd_stop,      // where we are stopping in the polydispersity loop
     global const ProblemDetails *details,
-    global const double *weights,
     global const double *values,
     global const double *q, // nq q values, with padding to boundary
     global double *result,  // nq+3 return values, again with padding
@@ -53,27 +49,23 @@ void KERNEL_NAME(
   // walk the polydispersity cube.
   ParameterBlock local_values;  // current parameter values
   double *pvec = (double *)(&local_values);  // Alias named parameters with a vector
-  double norm;
-
-  // number of active loops
-  const int num_active = details->num_active;
 
   // Fill in the initial variables
   #ifdef USE_OPENMP
   #pragma omp parallel for
   #endif
   for (int k=0; k < NPARS; k++) {
-    pvec[k] = values[details->par_offset[k]];
+    pvec[k] = values[k+2];
   }
 
   // Monodisperse computation
-  if (num_active == 0) {
+  if (details->num_active == 0) {
+    double norm, scale, background;
     #ifdef INVALID
     if (INVALID(local_values)) { return; }
     #endif
-    norm = CALL_VOLUME(local_values);
 
-    double scale, background;
+    norm = CALL_VOLUME(local_values);
     scale = values[0];
     background = values[1];
 
@@ -89,27 +81,26 @@ void KERNEL_NAME(
 
 #if MAX_PD > 0
 
+  const double *pd_value = values+2+NPARS;
+  const double *pd_weight = pd_value+details->pd_sum;
+
   // need product of weights at every Iq calc, so keep product of
   // weights from the outer loops so that weight = partial_weight * fast_weight
+  double pd_norm;
   double partial_weight; // product of weight w4*w3*w2 but not w1
   double spherical_correction; // cosine correction for latitude variation
   double weight; // product of partial_weight*w1*spherical_correction
 
-  // Location in the polydispersity hypercube, one index per dimension.
-  int pd_index[MAX_PD];
-
-  // Location of the coordinated parameters in their own sub-cubes.
-  int offset[NPARS];
-
-  // Number of coordinated indices
-  const int num_coord = details->num_coord;
-
   // Number of elements in the longest polydispersity loop
-  const int fast_length = details->pd_length[0];
+  const int p0_par = details->pd_par[0];
+  const int p0_length = details->pd_length[0];
+  const int p0_offset = details->pd_offset[0];
+  const int p0_is_theta = (p0_par == details->theta_par);
+  int p0_index;
 
   // Trigger the reset behaviour that happens at the end the fast loop
   // by setting the initial index >= weight vector length.
-  pd_index[0] = fast_length;
+  p0_index = p0_length;
 
   // Default the spherical correction to 1.0 in case it is not otherwise set
   spherical_correction = 1.0;
@@ -118,7 +109,8 @@ void KERNEL_NAME(
   // for each q, we need to track the result and normalization values between
   // calls.  This means initializing them to 0 at the start and accumulating
   // them between calls.
-  norm = pd_start == 0 ? 0.0 : result[nq];
+  pd_norm = (pd_start == 0 ? 0.0 : result[nq]);
+
   if (pd_start == 0) {
     #ifdef USE_OPENMP
     #pragma omp parallel for
@@ -131,69 +123,29 @@ void KERNEL_NAME(
   // Loop over the weights then loop over q, accumulating values
   for (int loop_index=pd_start; loop_index < pd_stop; loop_index++) {
     // check if fast loop needs to be reset
-    if (pd_index[0] == fast_length) {
-      //printf("should be here with %d active\n", num_active);
+    if (p0_index == p0_length) {
 
-      // Compute position in polydispersity hypercube
-      for (int k=0; k < num_active; k++) {
-        pd_index[k] = (loop_index/details->pd_stride[k])%details->pd_length[k];
-        //printf("pd_index[%d] = %d\n",k,pd_index[k]);
-      }
-
-      // Compute partial weights
+      // Compute position in polydispersity hypercube and partial weight
       partial_weight = 1.0;
-      //printf("partial weight %d: ", loop_index);
-      for (int k=1; k < num_active; k++) {
-        double wi = weights[details->pd_offset[k] + pd_index[k]];
-        //printf("pd[%d]=par[%d]=%g ", k, details->pd_par[k], wi);
-        partial_weight *= wi;
-      }
-      //printf("\n");
-
-      // Update parameter offsets in weight vector
-      //printf("slow %d: ", loop_index);
-      for (int k=0; k < num_coord; k++) {
-        int par = details->par_coord[k];
-        int coord = details->pd_coord[k];
-        int this_offset = details->par_offset[par];
-        int block_size = 1;
-        for (int bit=0; coord != 0; bit++) {
-          if (coord&1) {
-              this_offset += block_size * pd_index[bit];
-              block_size *= details->pd_length[bit];
-          }
-          coord >>= 1;
-        }
-        offset[par] = this_offset;
-        pvec[par] = values[this_offset];
-        //printf("par[%d]=v[%d]=%g \n", k, offset[k], pvec[k]);
-        // if theta is not coordinated with fast index, precompute spherical correction
-        if (par == details->theta_par && !(details->par_coord[k]&1)) {
-          spherical_correction = fmax(fabs(cos(M_PI_180*pvec[details->theta_par])), 1.e-6);
+      for (int k=1; k < details->num_active; k++) {
+        int pk = details->pd_par[k];
+        int index = details->pd_offset[k] + (loop_index/details->pd_stride[k])%details->pd_length[k];
+        pvec[pk] = pd_value[index];
+        partial_weight *= pd_weight[index];
+        if (pk == details->theta_par) {
+          spherical_correction = fmax(fabs(cos(M_PI_180*pvec[pk])), 1.e-6);
         }
       }
-      //printf("\n");
+      p0_index = loop_index%p0_length;
     }
 
-    // Update fast parameters
-    //printf("fast %d: ", loop_index);
-    for (int k=0; k < num_coord; k++) {
-      if (details->pd_coord[k]&1) {
-        const int par = details->par_coord[k];
-        pvec[par] = values[offset[par]++];
-        //printf("p[%d]=v[%d]=%g ", par, offset[par]-1, pvec[par]);
-        // if theta is coordinated with fast index, compute spherical correction each time
-        if (par == details->theta_par) {
-          spherical_correction = fmax(fabs(cos(M_PI_180*pvec[details->theta_par])), 1.e-6);
-        }
-      }
+    // Update parameter p0
+    weight = partial_weight*pd_weight[p0_offset + p0_index];
+    pvec[p0_par] = pd_value[p0_offset + p0_index];
+    if (p0_is_theta) {
+      spherical_correction = fmax(fabs(cos(M_PI_180*pvec[p0_par])), 1.e-6);
     }
-    //printf("\n");
-
-    // Increment fast index
-    const double wi = weights[details->pd_offset[0] + pd_index[0]];
-    weight = partial_weight*wi;
-    pd_index[0]++;
+    p0_index++;
 
     #ifdef INVALID
     if (INVALID(local_values)) continue;
@@ -205,7 +157,7 @@ void KERNEL_NAME(
       // spherical correction has some nasty effects when theta is +90 or -90
       // where it becomes zero.  If the entirety of the correction
       weight *= spherical_correction;
-      norm += weight * CALL_VOLUME(local_values);
+      pd_norm += weight * CALL_VOLUME(local_values);
 
       #ifdef USE_OPENMP
       #pragma omp parallel for
@@ -217,7 +169,7 @@ void KERNEL_NAME(
     }
   }
 
-  if (pd_stop >= details->total_pd) {
+  if (pd_stop >= details->pd_prod) {
     // End of the PD loop we can normalize
     double scale, background;
     scale = values[0];
@@ -226,11 +178,11 @@ void KERNEL_NAME(
     #pragma omp parallel for
     #endif
     for (int q_index=0; q_index < nq; q_index++) {
-      result[q_index] = (norm>0. ? scale*result[q_index]/norm + background : background);
+      result[q_index] = (pd_norm>0. ? scale*result[q_index]/pd_norm + background : background);
     }
   }
 
   // Remember the updated norm.
-  result[nq] = norm;
+  result[nq] = pd_norm;
 #endif // MAX_PD > 0
 }

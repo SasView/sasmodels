@@ -512,12 +512,12 @@ class SasviewModel(object):
             q_vectors = [np.asarray(qx), np.asarray(qy)]
         else:
             q_vectors = [np.asarray(qx)]
-        kernel = self._model.make_kernel(q_vectors)
+        calculator = self._model.make_kernel(q_vectors)
         pairs = [self._get_weights(p)
                  for p in self._model_info.parameters.call_parameters]
-        call_details, weight, value = kernel.build_details(kernel, pairs)
-        result = kernel(call_details, weight, value, cutoff=self.cutoff)
-        kernel.release()
+        call_details, value = kernel.build_details(calculator, pairs)
+        result = calculator(call_details, value, cutoff=self.cutoff)
+        calculator.release()
         return result
 
     def calculate_ER(self):

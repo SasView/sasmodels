@@ -6,6 +6,8 @@ Polydispersity is supported by looping over different parameter sets and
 summing the results.  The interface to :class:`PyModel` matches those for
 :class:`kernelcl.GpuModel` and :class:`kerneldll.DllModel`.
 """
+from __future__ import division, print_function
+
 import numpy as np  # type: ignore
 from numpy import pi, cos  #type: ignore
 
@@ -152,10 +154,10 @@ class PyKernel(Kernel):
         self._volume = ((lambda: form_volume(*volume_args)) if form_volume
                         else (lambda: 1.0))
 
-    def __call__(self, call_details, weights, values, cutoff):
+    def __call__(self, call_details, values, cutoff):
         assert isinstance(call_details, details.CallDetails)
         res = _loops(self._parameter_vector, self._form, self._volume,
-                     self.q_input.nq, call_details, weights, values, cutoff)
+                     self.q_input.nq, call_details, values, cutoff)
         return res
 
     def release(self):
@@ -165,8 +167,8 @@ class PyKernel(Kernel):
         self.q_input.release()
         self.q_input = None
 
-def _loops(parameters, form, form_volume, nq, call_details,
-           weights, values, cutoff):
+def _loops(parameters, form, form_volume, nq, details,
+           values, cutoff):
     # type: (np.ndarray, Callable[[], np.ndarray], Callable[[], float], int, details.CallDetails, np.ndarray, np.ndarray, float) -> None
     ################################################################
     #                                                              #
@@ -177,58 +179,51 @@ def _loops(parameters, form, form_volume, nq, call_details,
     #   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #
     #                                                              #
     ################################################################
-    parameters[:] = values[call_details.par_offset]
+    NPARS = len(parameters)
+    parameters[:] = values[2:NPARS+2]
     scale, background = values[0], values[1]
-    if call_details.num_active == 0:
+    if details.num_active == 0:
         norm = float(form_volume())
         if norm > 0.0:
             return (scale/norm)*form() + background
         else:
             return np.ones(nq, 'd')*background
 
-    partial_weight = np.NaN
-    spherical_correction = 1.0
-    pd_stride = call_details.pd_stride[:call_details.num_active]
-    pd_length = call_details.pd_length[:call_details.num_active]
-    pd_offset = call_details.pd_offset[:call_details.num_active]
-    pd_index = np.empty_like(pd_offset)
-    offset = np.empty_like(call_details.par_offset)
-    theta = call_details.theta_par
-    fast_length = pd_length[0]
-    pd_index[0] = fast_length
-    total = np.zeros(nq, 'd')
-    norm = 0.0
-    for loop_index in range(call_details.total_pd):
-        # update polydispersity parameter values
-        if pd_index[0] == fast_length:
-            pd_index[:] = (loop_index/pd_stride)%pd_length
-            partial_weight = np.prod(weights[pd_offset+pd_index][1:])
-            for k in range(call_details.num_coord):
-                par = call_details.par_coord[k]
-                coord = call_details.pd_coord[k]
-                this_offset = call_details.par_offset[par]
-                block_size = 1
-                for bit in range(len(pd_offset)):
-                    if coord&1:
-                        this_offset += block_size * pd_index[bit]
-                        block_size *= pd_length[bit]
-                    coord >>= 1
-                    if coord == 0: break
-                offset[par] = this_offset
-                parameters[par] = values[this_offset]
-                if par == theta and not (call_details.par_coord[k]&1):
-                    spherical_correction = max(abs(cos(pi/180 * parameters[theta])), 1e-6)
-        for k in range(call_details.num_coord):
-            if call_details.pd_coord[k]&1:
-                #par = call_details.par_coord[k]
-                parameters[par] = values[offset[par]]
-                #print "par",par,offset[par],parameters[par+2]
-                offset[par] += 1
-                if par == theta:
-                    spherical_correction = max(abs(cos(pi/180 * parameters[theta])), 1e-6)
+    pd_value = values[2+NPARS:2+NPARS+details.pd_sum]
+    pd_weight = values[2+NPARS+details.pd_sum:]
 
-        weight = partial_weight * weights[pd_offset[0] + pd_index[0]]
-        pd_index[0] += 1
+    pd_norm = 0.0
+    spherical_correction = 1.0
+    partial_weight = np.NaN
+    weight =np.NaN
+
+    p0_par = details.pd_par[0]
+    p0_is_theta = (p0_par == details.theta_par)
+    p0_length = details.pd_length[0]
+    p0_index = p0_length
+    p0_offset = details.pd_offset[0]
+
+    pd_par = details.pd_par[:details.num_active]
+    pd_offset = details.pd_offset[:details.num_active]
+    pd_stride = details.pd_stride[:details.num_active]
+    pd_length = details.pd_length[:details.num_active]
+
+    total = np.zeros(nq, 'd')
+    for loop_index in range(details.pd_prod):
+        # update polydispersity parameter values
+        if p0_index == p0_length:
+            pd_index = (loop_index//pd_stride)%pd_length
+            parameters[pd_par] = pd_value[pd_offset+pd_index]
+            partial_weight = np.prod(pd_weight[pd_offset+pd_index][1:])
+            if details.theta_par >= 0:
+                spherical_correction = max(abs(cos(pi/180 * parameters[details.theta_par])), 1e-6)
+            p0_index = loop_index%p0_length
+
+        weight = partial_weight * pd_weight[p0_offset + p0_index]
+        parameters[p0_par] = pd_value[p0_offset + p0_index]
+        if p0_is_theta:
+            spherical_correction = max(abs(cos(pi/180 * parameters[p0_par])), 1e-6)
+        p0_index += 1
         if weight > cutoff:
             # Call the scattering function
             # Assume that NaNs are only generated if the parameters are bad;
@@ -240,10 +235,10 @@ def _loops(parameters, form, form_volume, nq, call_details,
             # update value and norm
             weight *= spherical_correction
             total += weight * I
-            norm += weight * form_volume()
+            pd_norm += weight * form_volume()
 
-    if norm > 0.0:
-        return (scale/norm)*total + background
+    if pd_norm > 0.0:
+        return (scale/pd_norm)*total + background
     else:
         return np.ones(nq, 'd')*background
 

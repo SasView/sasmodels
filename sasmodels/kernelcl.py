@@ -520,31 +520,29 @@ class GpuKernel(Kernel):
                      else np.float16 if dtype == generate.F16
                      else np.float32)  # will never get here, so use np.float32
 
-    def __call__(self, call_details, weights, values, cutoff):
+    def __call__(self, call_details, values, cutoff):
         # type: (CallDetails, np.ndarray, np.ndarray, float) -> np.ndarray
         context = self.queue.context
         # Arrange data transfer to card
         details_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
                               hostbuf=call_details.buffer)
-        weights_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
-                              hostbuf=weights) if len(weights) else None
         values_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
                              hostbuf=values)
 
         # Call kernel and retrieve results
         step = 100
-        for start in range(0, call_details.total_pd, step):
-            stop = min(start+step, call_details.total_pd)
+        for start in range(0, call_details.pd_prod, step):
+            stop = min(start+step, call_details.pd_prod)
             args = [
                 np.uint32(self.q_input.nq), np.int32(start), np.int32(stop),
-                details_b, weights_b, values_b, self.q_input.q_b, self.result_b,
+                details_b, values_b, self.q_input.q_b, self.result_b,
                 self.real(cutoff),
             ]
             self.kernel(self.queue, self.q_input.global_size, None, *args)
         cl.enqueue_copy(self.queue, self.result, self.result_b)
 
         # Free buffers
-        for v in (details_b, weights_b, values_b):
+        for v in (details_b, values_b):
             if v is not None: v.release()
 
         return self.result[:self.q_input.nq]
