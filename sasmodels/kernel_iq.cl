@@ -47,15 +47,16 @@ void KERNEL_NAME(
 {
   // Storage for the current parameter values.  These will be updated as we
   // walk the polydispersity cube.  local_values will be aliased to pvec.
-  local ParameterBlock local_values;
+  ParameterBlock local_values;
+  double *pvec = (double *)&local_values;
 
   // who we are and what element we are working with
   const int q_index = get_global_id(0);
-  const int thread = get_local_id(0);
 
   // Fill in the initial variables
-  event_t e = async_work_group_copy((local double *)&local_values, values+2, NPARS, 0);
-  wait_group_events(1, &e);
+  for (int i=0; i < NPARS; i++) {
+    pvec[i] = values[2+i];
+  }
 
   // Monodisperse computation
   if (details->num_active == 0) {
@@ -81,51 +82,41 @@ void KERNEL_NAME(
   double this_result;
 
   //printf("Entering polydispersity from %d to %d\n", pd_start, pd_stop);
-  // norm will be shared across all threads.
 
-  // "values" is global and can't be assigned to a local, so even though only
-  // the alias is only needed for thread 0 it is allocated in all threads.
   global const double *pd_value = values+2+NPARS;
   global const double *pd_weight = pd_value+details->pd_sum;
 
   // need product of weights at every Iq calc, so keep product of
   // weights from the outer loops so that weight = partial_weight * fast_weight
-  local double pd_norm;
-  local double partial_weight; // product of weight w4*w3*w2 but not w1
-  local double spherical_correction; // cosine correction for latitude variation
-  local double weight; // product of partial_weight*w1*spherical_correction
-  local double *pvec;
-  local int p0_par;
-  local int p0_length;
-  local int p0_offset;
-  local int p0_is_theta;
-  local int p0_index;
+  double pd_norm;
+  double partial_weight; // product of weight w4*w3*w2 but not w1
+  double spherical_correction; // cosine correction for latitude variation
+  double weight; // product of partial_weight*w1*spherical_correction
+  int p0_par;
+  int p0_length;
+  int p0_offset;
+  int p0_is_theta;
+  int p0_index;
 
   // Number of elements in the longest polydispersity loop
-  barrier(CLK_LOCAL_MEM_FENCE);
-  if (thread == 0) {
-    pvec = (local double *)(&local_values);
+  p0_par = details->pd_par[0];
+  p0_length = details->pd_length[0];
+  p0_offset = details->pd_offset[0];
+  p0_is_theta = (p0_par == details->theta_par);
 
-    // Number of elements in the longest polydispersity loop
-    p0_par = details->pd_par[0];
-    p0_length = details->pd_length[0];
-    p0_offset = details->pd_offset[0];
-    p0_is_theta = (p0_par == details->theta_par);
+  // Trigger the reset behaviour that happens at the end the fast loop
+  // by setting the initial index >= weight vector length.
+  p0_index = p0_length;
 
-    // Trigger the reset behaviour that happens at the end the fast loop
-    // by setting the initial index >= weight vector length.
-    p0_index = p0_length;
+  // Default the spherical correction to 1.0 in case it is not otherwise set
+  spherical_correction = 1.0;
+  weight=1.0;
 
-    // Default the spherical correction to 1.0 in case it is not otherwise set
-    spherical_correction = 1.0;
-
-    // Since we are no longer looping over the entire polydispersity hypercube
-    // for each q, we need to track the result and normalization values between
-    // calls.  This means initializing them to 0 at the start and accumulating
-    // them between calls.
-    pd_norm = pd_start == 0 ? 0.0 : result[nq];
-  }
-  barrier(CLK_LOCAL_MEM_FENCE);
+  // Since we are no longer looping over the entire polydispersity hypercube
+  // for each q, we need to track the result and normalization values between
+  // calls.  This means initializing them to 0 at the start and accumulating
+  // them between calls.
+  pd_norm = pd_start == 0 ? 0.0 : result[nq];
 
   if (q_index < nq) {
     this_result = pd_start == 0 ? 0.0 : result[q_index];
@@ -133,37 +124,33 @@ void KERNEL_NAME(
 
   // Loop over the weights then loop over q, accumulating values
   for (int loop_index=pd_start; loop_index < pd_stop; loop_index++) {
-    barrier(CLK_LOCAL_MEM_FENCE);
-    if (thread == 0) {
-      // check if fast loop needs to be reset
-      if (p0_index == p0_length) {
-        //printf("should be here with %d active\n", num_active);
+    // check if fast loop needs to be reset
+    if (p0_index == p0_length) {
+      //printf("should be here with %d active\n", num_active);
 
-        // Compute position in polydispersity hypercube and partial weight
-        partial_weight = 1.0;
-        for (int k=1; k < details->num_active; k++) {
-          int pk = details->pd_par[k];
-          int index = details->pd_offset[k] + (loop_index/details->pd_stride[k])%details->pd_length[k];
-          pvec[pk] = pd_value[index];
-          partial_weight *= pd_weight[index];
-          //printf("index[%d] = %d\n",k,index);
-          if (pk == details->theta_par) {
-            spherical_correction = fmax(fabs(cos(M_PI_180*pvec[pk])), 1.e-6);
-          }
+      // Compute position in polydispersity hypercube and partial weight
+      partial_weight = 1.0;
+      for (int k=1; k < details->num_active; k++) {
+        int pk = details->pd_par[k];
+        int index = details->pd_offset[k] + (loop_index/details->pd_stride[k])%details->pd_length[k];
+        pvec[pk] = pd_value[index];
+        partial_weight *= pd_weight[index];
+        //printf("index[%d] = %d\n",k,index);
+        if (pk == details->theta_par) {
+          spherical_correction = fmax(fabs(cos(M_PI_180*pvec[pk])), 1.e-6);
         }
-        p0_index = loop_index%p0_length;
-        //printf("\n");
       }
-
-      // Update parameter p0
-      weight = partial_weight*pd_weight[p0_offset + p0_index];
-      pvec[p0_par] = pd_value[p0_offset + p0_index];
-      if (p0_is_theta) {
-        spherical_correction = fmax(fabs(cos(M_PI_180*pvec[p0_par])), 1.e-6);
-      }
-      p0_index++;
+      p0_index = loop_index%p0_length;
+      //printf("\n");
     }
-    barrier(CLK_LOCAL_MEM_FENCE);
+
+    // Update parameter p0
+    weight = partial_weight*pd_weight[p0_offset + p0_index];
+    pvec[p0_par] = pd_value[p0_offset + p0_index];
+    if (p0_is_theta) {
+      spherical_correction = fmax(fabs(cos(M_PI_180*pvec[p0_par])), 1.e-6);
+    }
+    p0_index++;
     //printf("\n");
 
     // Increment fast index
