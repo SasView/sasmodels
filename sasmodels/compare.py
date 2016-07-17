@@ -256,7 +256,7 @@ def _randomize_one(model_info, p, v):
     """
     Randomize a single parameter.
     """
-    if any(p.endswith(s) for s in ('_pd_n', '_pd_nsigma', '_pd_type')):
+    if any(p.endswith(s) for s in ('_pd', '_pd_n', '_pd_nsigma', '_pd_type')):
         return v
 
     # Find the parameter definition
@@ -404,7 +404,11 @@ def eval_sasview(model_info, data):
         else:
             raise ValueError("sasview mixture models not supported by compare")
     else:
-        model = get_model(revert_name(model_info))
+        old_name = revert_name(model_info)
+        if old_name is None:
+            raise ValueError("model %r does not exist in old sasview"
+                            % model_info.id)
+        model = get_model(old_name)
 
     # build a smearer with which to call the model, if necessary
     smearer = smear_selection(data, model=model)

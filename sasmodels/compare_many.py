@@ -19,9 +19,11 @@ import traceback
 import numpy as np  # type: ignore
 
 from . import core
-from .compare import (MODELS, randomize_pars, suppress_pd, make_data,
+from .compare import (randomize_pars, suppress_pd, make_data,
                       make_engine, get_pars, columnize,
                       constrain_pars, constrain_new_to_old)
+
+MODELS = core.list_models()
 
 def calc_stats(target, value, index):
     """
@@ -107,7 +109,7 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
     print(header)
 
     if is_2d:
-        if not model_info['parameters'].has_2d:
+        if not model_info.parameters.has_2d:
             print(',"1-D only"')
             return
 
@@ -144,8 +146,14 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
         return list(stats)
 
 
-    calc_base = make_engine(model_info, data, base, cutoff)
-    calc_comp = make_engine(model_info, data, comp, cutoff)
+    try:
+        calc_base = make_engine(model_info, data, base, cutoff)
+        calc_comp = make_engine(model_info, data, comp, cutoff)
+    except Exception as exc:
+        #raise
+        print('"Error: %s"'%str(exc).replace('"',"'"))
+        print('"good","%d of %d","max diff",%g'%(0, N, np.NaN))
+        return
     expected = max(PRECISION[base], PRECISION[comp])
 
     num_good = 0
@@ -154,7 +162,7 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
     for k in range(N):
         print("%s %d"%(name, k), file=sys.stderr)
         seed = np.random.randint(1e6)
-        pars_i = randomize_pars(pars, seed)
+        pars_i = randomize_pars(model_info, pars, seed)
         constrain_pars(model_info, pars_i)
         constrain_new_to_old(model_info, pars_i)
         if mono:
@@ -171,7 +179,7 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
             num_good += 1
         else:
             print(("%d,"%seed)+','.join("%s"%v for v in columns))
-    print('"good","%d/%d","max diff",%g'%(num_good, N, max_diff[0]))
+    print('"good","%d of %d","max diff",%g'%(num_good, N, max_diff[0]))
 
 
 def print_usage():
@@ -248,7 +256,7 @@ def main():
         sys.exit(1)
 
     data, index = make_data({'qmax':1.0, 'is2d':is2D, 'nq':Nq, 'res':0.,
-                             'accuracy': 'Low', 'view':'log'})
+                             'accuracy': 'Low', 'view':'log', 'zero': False})
     model_list = [model] if model != "all" else MODELS
     for model in model_list:
         compare_instance(model, data, index, N=count, mono=mono,
