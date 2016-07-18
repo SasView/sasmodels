@@ -875,7 +875,8 @@ class ModelInfo(object):
         if self.hidden is not None:
             hidden = self.hidden(control)
         else:
-            controls = [p for p in self.parameters.kernel_parameters]
+            controls = [p for p in self.parameters.kernel_parameters
+                        if p.is_control]
             if len(controls) != 1:
                 raise ValueError("more than one control parameter")
             hidden = set(p.id+str(k)

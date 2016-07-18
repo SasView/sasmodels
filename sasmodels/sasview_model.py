@@ -137,13 +137,8 @@ def _generate_model_attributes(model_info):
         if p.name == model_info.control:
             non_fittable.append(p.name)
             variants = MultiplicityInfo(
-                len(p.choices), p.name, p.choices, xlabel
-            )
-            break
-        elif p.is_control:
-            non_fittable.append(p.name)
-            variants = MultiplicityInfo(
-                int(p.limits[1]), p.name, p.choices, xlabel
+                len(p.choices) if p.choices else int(p.limits[1]),
+                p.name, p.choices, xlabel
             )
             break
 

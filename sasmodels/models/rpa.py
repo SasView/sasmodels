@@ -93,12 +93,12 @@ parameters = [
     ["L[4]", "fm", 10.0, [-inf, inf], "", "scattering length"],
     ["b[4]", "Ang", 5.0, [0, inf], "", "segment length"],
 
-    ["Kab", "", -0.0004, [-inf, inf], "", "Interaction parameter"],
-    ["Kac", "", -0.0004, [-inf, inf], "", "Interaction parameter"],
-    ["Kad", "", -0.0004, [-inf, inf], "", "Interaction parameter"],
-    ["Kbc", "", -0.0004, [-inf, inf], "", "Interaction parameter"],
-    ["Kbd", "", -0.0004, [-inf, inf], "", "Interaction parameter"],
-    ["Kcd", "", -0.0004, [-inf, inf], "", "Interaction parameter"],
+    ["K12", "", -0.0004, [-inf, inf], "", "A:B interaction parameter"],
+    ["K13", "", -0.0004, [-inf, inf], "", "A:C interaction parameter"],
+    ["K14", "", -0.0004, [-inf, inf], "", "A:D interaction parameter"],
+    ["K23", "", -0.0004, [-inf, inf], "", "B:C interaction parameter"],
+    ["K24", "", -0.0004, [-inf, inf], "", "B:D interaction parameter"],
+    ["K34", "", -0.0004, [-inf, inf], "", "C:D interaction parameter"],
 ]
 
 category = "shape-independent"
@@ -107,10 +107,9 @@ source = ["rpa.c"]
 
 control = "case_num"
 HIDE_NONE = set()
-HIDE_A = set("Na Phia va La Kab Kac Kad".split())
-HIDE_AB = set("Nb Phib vb Lb Kbc Kbd".split()).union(HIDE_A)
-def hidden(pars):
-    case_num = pars.get("case_num", parameters[0][2])
+HIDE_A = set("N1 Phi1 v1 L1 b1 K12 K13 K14".split())
+HIDE_AB = set("N2 Phi2 v2 L2 b2 K23 K24".split()).union(HIDE_A)
+def hidden(case_num):
     if case_num < 2:
         return HIDE_AB
     elif case_num < 5:
