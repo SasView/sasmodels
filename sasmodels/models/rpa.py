@@ -105,6 +105,7 @@ category = "shape-independent"
 
 source = ["rpa.c"]
 
+control = "case_num"
 HIDE_NONE = set()
 HIDE_A = set("Na Phia va La Kab Kac Kad".split())
 HIDE_AB = set("Nb Phib vb Lb Kbc Kbd".split()).union(HIDE_A)

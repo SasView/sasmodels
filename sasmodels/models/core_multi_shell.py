@@ -94,7 +94,7 @@ parameters = [["volfraction", "", 0.05, [0,1],"",
                "Radius of the core"],
               ["sld_solvent", "1e-6/Ang^2", 6.4, [-inf, inf], "",
                "Solvent scattering length density"],
-              ["n", "", 1, [0, 10], "volume",
+              ["n", "", 1, [0, 4], "volume",
                "number of shells"],
               ["sld[n]", "1e-6/Ang^2", 1.7, [-inf, inf], "",
                "scattering length density of shell k"],
@@ -183,13 +183,13 @@ def ER(radius, n, thickness):
     n = n[0]  # n cannot be polydisperse
     return np.sum(thickness[:n], axis=0) + radius
 
-def VR(radius, n, thick_shell):
+def VR(radius, n, thickness):
     return 1.0, 1.0
 
 demo = dict(volfraction = 1.0,
-            sld = 6.4,
+            sld_core = 6.4,
             radius = 60,
             sld_solvent = 6.4,
             n = 1,
-            sld_shell = [2.0],
-            thick_shell = [10])
+            sld = [2.0],
+            thickness = [10])
