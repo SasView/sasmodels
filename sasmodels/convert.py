@@ -1,6 +1,8 @@
 """
 Convert models to and from sasview.
 """
+from __future__ import print_function
+
 from os.path import join as joinpath, abspath, dirname
 import warnings
 import json
@@ -26,6 +28,14 @@ MODELS_WITHOUT_SCALE = [
 MODELS_WITHOUT_BACKGROUND = [
     'guinier',
 ]
+
+MODELS_WITHOUT_VOLFRACTION = [
+    'fractal',
+    'vesicle',
+    'multilayer_vesicle',
+    'core_multi_shell',
+]
+
 
 # Convert new style names for polydispersity info to old style names
 PD_DOT = [
@@ -102,14 +112,17 @@ def convert_model(name, pars):
     # need to load all new models in order to determine old=>new
     # model name mapping
 
+def _unscale(par, scale):
+    return [pk*scale for pk in par] if isinstance(par, list) else par*scale
+
 def _unscale_sld(pars):
     """
     rescale all sld parameters in the new model definition by 1e6 so the
     numbers are nicer.  Relies on the fact that all sld parameters in the
     new model definition end with sld.
     """
-    return dict((p, (v*1e-6 if p.startswith('sld') or p.endswith('sld')
-                     else v*1e15 if 'ndensity' in p
+    return dict((p, (_unscale(v,1e-6) if p.startswith('sld') or p.endswith('sld')
+                     else _unscale(v,1e15) if 'ndensity' in p
                      else v))
                 for p, v in pars.items())
 
@@ -154,9 +167,32 @@ def revert_name(model_info):
     oldname, oldpars = CONVERSION_TABLE.get(model_info.id, [None, {}])
     return oldname
 
-def _get_old_pars(model_info):
+def _get_translation_table(model_info):
     _read_conversion_table()
-    oldname, oldpars = CONVERSION_TABLE.get(model_info.id, [None, {}])
+    _, translation = CONVERSION_TABLE.get(model_info.id, [None, {}])
+    translation = translation.copy()
+    for p in model_info.parameters.kernel_parameters:
+        if p.length > 1:
+            newid = p.id
+            oldid = translation.get(p.id, p.id)
+            del translation[newid]
+            for k in range(1, p.length+1):
+                translation[newid+str(k)] = oldid+str(k)
+    # Remove control parameter from the result
+    if model_info.control:
+        translation[model_info.control] = None
+    return translation
+
+def _trim_vectors(model_info, pars, oldpars):
+    _read_conversion_table()
+    _, translation = CONVERSION_TABLE.get(model_info.id, [None, {}])
+    for p in model_info.parameters.kernel_parameters:
+        if p.length_control is not None:
+            n = int(pars[p.length_control])
+            oldname = translation.get(p.id, p.id)
+            for k in range(n+1, p.length+1):
+                for _, old in PD_DOT:
+                    oldpars.pop(oldname+str(k)+old, None)
     return oldpars
 
 def revert_pars(model_info, pars):
@@ -173,8 +209,9 @@ def revert_pars(model_info, pars):
         else:
             raise NotImplementedError("cannot convert to sasview sum")
     else:
-        oldpars = _get_old_pars(model_info)
-    oldpars = _revert_pars(_unscale_sld(pars), oldpars)
+        translation = _get_translation_table(model_info)
+    oldpars = _revert_pars(_unscale_sld(pars), translation)
+    oldpars = _trim_vectors(model_info, pars, oldpars)
 
 
     # Note: update compare.constrain_pars to match
@@ -193,6 +230,8 @@ def revert_pars(model_info, pars):
     # models without scale or background.
     namelist = name.split('*') if '*' in name else [name]
     for name in namelist:
+        if name in MODELS_WITHOUT_VOLFRACTION:
+            del oldpars['volfraction']
         if name == 'stacked_disks':
             _remove_pd(oldpars, 'n_stacking', name)
         elif name == 'pearl_necklace':
@@ -210,12 +249,6 @@ def revert_pars(model_info, pars):
             _remove_pd(oldpars, 'rimA', name)
         elif name in ['mono_gauss_coil','poly_gauss_coil']:
             del oldpars['i_zero']
-        elif name == 'fractal':
-            del oldpars['volfraction']
-        elif name == 'vesicle':
-            del oldpars['volfraction']
-        elif name == 'multilayer_vesicle':
-            del oldpars['volfraction']
 
     return oldpars
 
@@ -239,6 +272,8 @@ def constrain_new_to_old(model_info, pars):
     # models without scale or background.
     namelist = name.split('*') if '*' in name else [name]
     for name in namelist:
+        if name in MODELS_WITHOUT_VOLFRACTION:
+            pars['volfraction'] = 1
         if name == 'pearl_necklace':
             pars['string_thickness_pd_n'] = 0
             pars['number_of_pearls_pd_n'] = 0
@@ -251,10 +286,4 @@ def constrain_new_to_old(model_info, pars):
             pars['i_zero'] = 1
         elif name == 'poly_gauss_coil':
             pars['i_zero'] = 1
-        elif name == 'fractal':
-            pars['volfraction'] = 1
-        elif name == 'vesicle':
-            pars['volfraction'] = 1
-        elif name == 'multilayer_vesicle':
-            pars['volfraction'] = 1
-            
+

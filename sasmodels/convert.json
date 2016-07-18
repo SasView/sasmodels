@@ -78,13 +78,13 @@
     }
   ], 
   "core_multi_shell": [
-    "CoreMultiShellModel", 
+    "CoreMultiShellModel",
     {
-      "thick_shell": "thick_shell", 
-      "radius": "rad_core0", 
-      "sld": "sld_core0", 
-      "sld_shell": "sld_in_shell", 
-      "sld_solvent": "sld_solv", 
+      "thickness": "thick_shell",
+      "sld": "sld_shell",
+      "radius": "rad_core0",
+      "sld_core": "sld_core0",
+      "sld_solvent": "sld_solv",
       "n": "n_shells"
     }
   ], 
@@ -474,16 +474,16 @@
     }
   ], 
   "onion": [
-    "OnionExpShellModel", 
+    "OnionModel",
     {
       "A": "A_shell", 
-      "core_sld": "sld_core0", 
+      "sld_core": "sld_core0",
       "core_radius": "rad_core0", 
-      "out_sld": "sld_out_shell", 
-      "n": "n_shells", 
-      "solvent_sld": "sld_solv", 
+      "n": "n_shells",
+      "sld_solvent": "sld_solv",
       "thickness": "thick_shell", 
-      "in_sld": "sld_in_shell"
+      "sld_in": "sld_in_shell",
+      "sld_out": "sld_out_shell"
     }
   ], 
   "parallelepiped": [

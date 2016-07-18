@@ -185,6 +185,9 @@ def expand_pars(partable, pars):
                        if name not in lookup or lookup[name].length == 1)
         vectors = dict((name,value) for name,value in pars.items()
                        if name in lookup and lookup[name].length > 1)
+        #print("lookup", lookup)
+        #print("scalars", scalars)
+        #print("vectors", vectors)
         if vectors:
             for name, value in vectors.items():
                 if np.isscalar(value):
@@ -193,13 +196,14 @@ def expand_pars(partable, pars):
                     for k in range(1, lookup[name].length+1):
                         key = name+str(k)
                         if key not in scalars:
-                            scalars[key] = vectors
+                            scalars[key] = value
                 else:
                     # supoprt for the form
                     #    dict(thickness=[20,10,3])
                     for (k,v) in enumerate(value):
-                        scalars[name+str(k)] = v
+                        scalars[name+str(k+1)] = v
         result.update(scalars)
+        #print("expanded", result)
 
     return result
 
@@ -401,8 +405,6 @@ class ParameterTable(object):
     the scale and background parameters that the kernel does not see.  User
     parameters don't use vector notation, and instead use p1, p2, ...
 
-    * *control_parameters* is the
-
     """
     # scale and background are implicit parameters
     COMMON = [Parameter(*p) for p in COMMON_PARAMETERS]
@@ -454,9 +456,8 @@ class ParameterTable(object):
         self.pd_2d = set(p.name for p in self.call_parameters
                          if p.polydisperse and p.type != 'magnetic')
 
-
     def _set_vector_lengths(self):
-        # type: () -> None
+        # type: () -> List[str]
         """
         Walk the list of kernel parameters, setting the length field of the
         vector parameters from the upper limit of the reference parameter.
@@ -465,9 +466,12 @@ class ParameterTable(object):
         since the reference may still be undefined when the parameter is
         initially created.
 
+        Returns the list of control parameter names.
+
         Note: This modifies the underlying parameter object.
         """
         # Sort out the length of the vector parameters such as thickness[n]
+
         for p in self.kernel_parameters:
             if p.length_control:
                 for ref in self.kernel_parameters:
@@ -477,6 +481,7 @@ class ParameterTable(object):
                     raise ValueError("no reference variable %r for %s"
                                      % (p.length_control, p.name))
                 ref.is_control = True
+                ref.polydisperse = False
                 low, high = ref.limits
                 if int(low) != low or int(high) != high or low < 0 or high > 20:
                     raise ValueError("expected limits on %s to be within [0, 20]"
@@ -688,7 +693,11 @@ def make_model_info(kernel_module):
     info.Iqxy = getattr(kernel_module, 'Iqxy', None) # type: ignore
     info.profile = getattr(kernel_module, 'profile', None) # type: ignore
     info.sesans = getattr(kernel_module, 'sesans', None) # type: ignore
-    info.control = getattr(kernel_module, 'control', None)
+
+    # multiplicity info
+    control_pars = [p.id for p in parameters.kernel_parameters if p.is_control]
+    default_control = control_pars[0] if control_pars else None
+    info.control = getattr(kernel_module, 'control', default_control)
     info.hidden = getattr(kernel_module, 'hidden', None) # type: ignore
 
     _find_source_lines(info, kernel_module)

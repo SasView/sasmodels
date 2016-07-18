@@ -386,21 +386,28 @@ def eval_sasview(model_info, data):
     from sas.models.qsmearing import smear_selection
     from sas.models.MultiplicationModel import MultiplicationModel
 
-    def get_model(name):
+    def get_model_class(name):
         # type: (str) -> "sas.models.BaseComponent"
         #print("new",sorted(_pars.items()))
         __import__('sas.models.' + name)
         ModelClass = getattr(getattr(sas.models, name, None), name, None)
         if ModelClass is None:
             raise ValueError("could not find model %r in sas.models"%name)
-        return ModelClass()
+        return ModelClass
+
+    # WARNING: ugly hack when handling model!
+    # Sasview models with multiplicity need to be created with the target
+    # multiplicity, so we cannot create the target model ahead of time for
+    # for multiplicity models.  Instead we store the model in a list and
+    # update the first element of that list with the new multiplicity model
+    # every time we evaluate.
 
     # grab the sasview model, or create it if it is a product model
     if model_info.composition:
         composition_type, parts = model_info.composition
         if composition_type == 'product':
             P, S = [get_model(revert_name(p)) for p in parts]
-            model = MultiplicationModel(P, S)
+            model = [MultiplicationModel(P, S)]
         else:
             raise ValueError("sasview mixture models not supported by compare")
     else:
@@ -408,7 +415,8 @@ def eval_sasview(model_info, data):
         if old_name is None:
             raise ValueError("model %r does not exist in old sasview"
                             % model_info.id)
-        model = get_model(old_name)
+        ModelClass = get_model_class(old_name)
+        model = [ModelClass()]
 
     # build a smearer with which to call the model, if necessary
     smearer = smear_selection(data, model=model)
@@ -420,28 +428,34 @@ def eval_sasview(model_info, data):
             smearer.model = model  # because smear_selection has a bug
             smearer.accuracy = data.accuracy
             smearer.set_index(index)
-            theory = lambda: smearer.get_value()
+            def _call_smearer():
+                smearer.model = model[0]
+                return smearer.get_value()
+            theory = lambda: _call_smearer()
         else:
-            theory = lambda: model.evalDistribution([data.qx_data[index],
-                                                     data.qy_data[index]])
+            theory = lambda: model[0].evalDistribution([data.qx_data[index],
+                                                        data.qy_data[index]])
     elif smearer is not None:
-        theory = lambda: smearer(model.evalDistribution(data.x))
+        theory = lambda: smearer(model[0].evalDistribution(data.x))
     else:
-        theory = lambda: model.evalDistribution(data.x)
+        theory = lambda: model[0].evalDistribution(data.x)
 
     def calculator(**pars):
         # type: (float, ...) -> np.ndarray
         """
         Sasview calculator for model.
         """
+        # For multiplicity models, recreate the model the first time the
+        if model_info.control:
+            model[0] = ModelClass(int(pars[model_info.control]))
         # paying for parameter conversion each time to keep life simple, if not fast
-        pars = revert_pars(model_info, pars)
-        for k, v in pars.items():
+        oldpars = revert_pars(model_info, pars)
+        for k, v in oldpars.items():
             name_attr = k.split('.')  # polydispersity components
             if len(name_attr) == 2:
-                model.dispersion[name_attr[0]][name_attr[1]] = v
+                model[0].dispersion[name_attr[0]][name_attr[1]] = v
             else:
-                model.setParam(k, v)
+                model[0].setParam(k, v)
         return theory()
 
     calculator.engine = "sasview"
@@ -741,7 +755,7 @@ def get_pars(model_info, use_demo=False):
             parts.append(('_pd_type', "gaussian"))
         for ext, val in parts:
             if p.length > 1:
-                dict(("%s%d%s"%(p.id,k,ext), val) for k in range(p.length))
+                dict(("%s%d%s"%(p.id,k,ext), val) for k in range(1, p.length+1))
             else:
                 pars[p.id+ext] = val
 
