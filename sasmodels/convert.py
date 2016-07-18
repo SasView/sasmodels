@@ -4,6 +4,7 @@ Convert models to and from sasview.
 from __future__ import print_function
 
 from os.path import join as joinpath, abspath, dirname
+import math
 import warnings
 import json
 
@@ -33,7 +34,6 @@ MODELS_WITHOUT_VOLFRACTION = [
     'fractal',
     'vesicle',
     'multilayer_vesicle',
-    'core_multi_shell',
 ]
 
 
@@ -286,4 +286,6 @@ def constrain_new_to_old(model_info, pars):
             pars['i_zero'] = 1
         elif name == 'poly_gauss_coil':
             pars['i_zero'] = 1
+        elif name == 'core_multi_shell':
+            pars['n'] = max(math.ceil(pars['n']), 4)
 

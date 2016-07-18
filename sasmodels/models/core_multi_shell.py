@@ -86,15 +86,13 @@ category = "shape:sphere"
 
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["volfraction", "", 0.05, [0,1],"",
-               "volume fraction of spheres"],
-              ["sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "",
+parameters = [["sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "",
                "Core scattering length density"],
               ["radius", "Ang", 200., [0, inf], "volume",
                "Radius of the core"],
               ["sld_solvent", "1e-6/Ang^2", 6.4, [-inf, inf], "",
                "Solvent scattering length density"],
-              ["n", "", 1, [0, 4], "volume",
+              ["n", "", 1, [0, 10], "volume",
                "number of shells"],
               ["sld[n]", "1e-6/Ang^2", 1.7, [-inf, inf], "",
                "scattering length density of shell k"],
@@ -102,16 +100,9 @@ parameters = [["volfraction", "", 0.05, [0,1],"",
                "Thickness of shell k"],
               ]
 
-#source = ["lib/sph_j1c.c", "onion.c"]
+source = ["lib/sph_j1c.c", "core_multi_shell.c"]
 
-def Iq(q, *args, **kw):
-    return q
-
-def Iqxy(qx, *args, **kw):
-    return qx
-
-
-def profile(volfraction, sld_core, radius, sld_solvent, n, sld, thickness):
+def profile(sld_core, radius, sld_solvent, n, sld, thickness):
     """
     SLD profile
     
@@ -119,39 +110,6 @@ def profile(volfraction, sld_core, radius, sld_solvent, n, sld, thickness):
       and beta is a list of the corresponding SLD values.
 
     """
-#        r = []
-#        beta = []
-#        # for core at r=0
-#        r.append(0)
-#        beta.append(self.params['sld_core0'])
-#        # for core at r=rad_core
-#        r.append(self.params['rad_core0'])
-#        beta.append(self.params['sld_core0'])
-#
-#        # for shells
-#        for n in range(1, self.n_shells+1):
-#            # Left side of each shells
-#            r0 = r[len(r)-1]
-#            r.append(r0)
-#            exec "beta.append(self.params['sld_shell%s'% str(n)])"
-#
-#            # Right side of each shells
-#            exec "r0 += self.params['thick_shell%s'% str(n)]"
-#            r.append(r0)
-#            exec "beta.append(self.params['sld_shell%s'% str(n)])"
-#
-#        # for solvent
-#        r0 = r[len(r)-1]            
-#        r.append(r0)
-#        beta.append(self.params['sld_solv'])
-#        r_solv = 5*r0/4
-#        r.append(r_solv)
-#        beta.append(self.params['sld_solv'])
-#
-#        return r, beta
-# above is directly from old code -- below is alotered from Woitek's first
-# cut an the onion.  Seems like we should be consistant?
-
     total_radius = 1.25*(sum(thickness[:n]) + radius + 1)
 
     r = []
@@ -171,7 +129,7 @@ def profile(volfraction, sld_core, radius, sld_solvent, n, sld, thickness):
         beta.append(sld[k])
         r.append(r0 + thickness[k])
         beta.append(sld[k])
-   # add in the solvent
+    # add in the solvent
     r.append(r[-1])
     beta.append(sld_solvent)
     r.append(total_radius)
@@ -186,10 +144,14 @@ def ER(radius, n, thickness):
 def VR(radius, n, thickness):
     return 1.0, 1.0
 
-demo = dict(volfraction = 1.0,
-            sld_core = 6.4,
+demo = dict(sld_core = 6.4,
             radius = 60,
             sld_solvent = 6.4,
-            n = 1,
-            sld = [2.0],
-            thickness = [10])
+            n = 2,
+            sld = [2.0, 3.0],
+            thickness = 20,
+            thickness1_pd = 0.3,
+            thickness2_pd = 0.3,
+            thickness1_pd_n = 10,
+            thickness2_pd_n = 10,
+            )

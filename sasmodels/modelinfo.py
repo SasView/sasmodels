@@ -525,7 +525,7 @@ class ParameterTable(object):
         """
         Return the list of parameters for the given data type.
 
-        Vector parameters are expanded as in place.  If multiple parameters
+        Vector parameters are expanded in place.  If multiple parameters
         share the same vector length, then the parameters will be interleaved
         in the result.  The control parameters come first.  For example,
         if the parameter table is ordered as::
