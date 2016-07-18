@@ -5,26 +5,320 @@ double Iq(double q, double case_num,
     );
 
 double Iq(double q, double case_num,
-    double N[], double Phi[], double v[], double L[], double b[],
-    double Kab, double Kac, double Kad,
+    double N[],    // DEGREE OF POLYMERIZATION
+    double Phi[],  // VOL FRACTION
+    double v[],    // SPECIFIC VOLUME
+    double L[],    // SCATT. LENGTH
+    double b[],    // SEGMENT LENGTH
+    double Kab, double Kac, double Kad,  // CHI PARAM
     double Kbc, double Kbd, double Kcd
-    ) {
+    )
+{
   int icase = (int)case_num;
 
-#if 0  // Sasview defaults
+  double Nab,Nac,Nad,Nbc,Nbd,Ncd;
+  double Phiab,Phiac,Phiad,Phibc,Phibd,Phicd;
+  double vab,vac,vad,vbc,vbd,vcd;
+  double m;
+  double Xa,Xb,Xc,Xd;
+  double Paa,S0aa,Pab,S0ab,Pac,S0ac,Pad,S0ad;
+  double S0ba,Pbb,S0bb,Pbc,S0bc,Pbd,S0bd;
+  double S0ca,S0cb,Pcc,S0cc,Pcd,S0cd;
+  double S0da,S0db,S0dc,Pdd,S0dd;
+  double Kaa,Kbb,Kcc,Kdd;
+  double Kba,Kca,Kda,Kcb,Kdb,Kdc;
+  double Zaa,Zab,Zac,Zba,Zbb,Zbc,Zca,Zcb,Zcc;
+  double DenT,T11,T12,T13,T21,T22,T23,T31,T32,T33;
+  double Y1,Y2,Y3,X11,X12,X13,X21,X22,X23,X31,X32,X33;
+  double ZZ,DenQ1,DenQ2,DenQ3,DenQ,Q11,Q12,Q13,Q21,Q22,Q23,Q31,Q32,Q33;
+  double N11,N12,N13,N21,N22,N23,N31,N32,N33;
+  double M11,M12,M13,M21,M22,M23,M31,M32,M33;
+  double S11,S12,S13,S14,S21,S22,S23,S24;
+  double S31,S32,S33,S34,S41,S42,S43,S44;
+  double Lad,Lbd,Lcd,Nav,Intg;
+
+  //icase was shifted to N-1 from the original code
+  if (icase <= 1){
+    Phi[0] = Phi[1] = 0.0000001;
+    N[0] = N[1] = 1000.0;
+    L[0] = L[1] = 1.e-12;
+    v[0] = v[1] = 100.0;
+    b[0] = b[1] = 5.0;
+    Kab = Kac = Kad = Kbc = Kbd = -0.0004;
+  }
+  else if ((icase > 1) && (icase <= 4)){
+    Phi[0] = 0.0000001;
+    N[0] = 1000.0;
+    L[0] = 1.e-12;
+    v[0] = 100.0;
+    b[0] = 5.0;
+    Kab = Kac = Kad = -0.0004;
+  }
+
+  Nab=sqrt(N[0]*N[1]);
+  Nac=sqrt(N[0]*N[2]);
+  Nad=sqrt(N[0]*N[3]);
+  Nbc=sqrt(N[1]*N[2]);
+  Nbd=sqrt(N[1]*N[3]);
+  Ncd=sqrt(N[2]*N[3]);
+
+  vab=sqrt(v[0]*v[1]);
+  vac=sqrt(v[0]*v[2]);
+  vad=sqrt(v[0]*v[3]);
+  vbc=sqrt(v[1]*v[2]);
+  vbd=sqrt(v[1]*v[3]);
+  vcd=sqrt(v[2]*v[3]);
+
+  Phiab=sqrt(Phi[0]*Phi[1]);
+  Phiac=sqrt(Phi[0]*Phi[2]);
+  Phiad=sqrt(Phi[0]*Phi[3]);
+  Phibc=sqrt(Phi[1]*Phi[2]);
+  Phibd=sqrt(Phi[1]*Phi[3]);
+  Phicd=sqrt(Phi[2]*Phi[3]);
+
+  Xa=q*q*b[0]*b[0]*N[0]/6.0;
+  Xb=q*q*b[1]*b[1]*N[1]/6.0;
+  Xc=q*q*b[2]*b[1]*N[2]/6.0;  // PAK: not b2*b2?
+  Xd=q*q*b[3]*b[1]*N[3]/6.0;  // PAK: not b3*b3?
+
+  Paa=2.0*(exp(-Xa)-1.0+Xa)/(Xa*Xa);
+  S0aa=N[0]*Phi[0]*v[0]*Paa;
+  Pab=((1.0-exp(-Xa))/Xa)*((1.0-exp(-Xb))/Xb);
+  S0ab=(Phiab*vab*Nab)*Pab;
+  Pac=((1.0-exp(-Xa))/Xa)*exp(-Xb)*((1.0-exp(-Xc))/Xc);
+  S0ac=(Phiac*vac*Nac)*Pac;
+  Pad=((1.0-exp(-Xa))/Xa)*exp(-Xb-Xc)*((1.0-exp(-Xd))/Xd);
+  S0ad=(Phiad*vad*Nad)*Pad;
+
+  S0ba=S0ab;
+  Pbb=2.0*(exp(-Xb)-1.0+Xb)/(Xb*Xb);
+  S0bb=N[1]*Phi[1]*v[1]*Pbb;
+  Pbc=((1.0-exp(-Xb))/Xb)*((1.0-exp(-Xc))/Xc);
+  S0bc=(Phibc*vbc*Nbc)*Pbc;
+  Pbd=((1.0-exp(-Xb))/Xb)*exp(-Xc)*((1.0-exp(-Xd))/Xd);
+  S0bd=(Phibd*vbd*Nbd)*Pbd;
+
+  S0ca=S0ac;
+  S0cb=S0bc;
+  Pcc=2.0*(exp(-Xc)-1.0+Xc)/(Xc*Xc);
+  S0cc=N[2]*Phi[2]*v[2]*Pcc;
+  Pcd=((1.0-exp(-Xc))/Xc)*((1.0-exp(-Xd))/Xd);
+  S0cd=(Phicd*vcd*Ncd)*Pcd;
+
+  S0da=S0ad;
+  S0db=S0bd;
+  S0dc=S0cd;
+  Pdd=2.0*(exp(-Xd)-1.0+Xd)/(Xd*Xd);
+  S0dd=N[3]*Phi[3]*v[3]*Pdd;
+  //icase was shifted to N-1 from the original code
+  switch(icase){
+  case 0:
+    S0aa=0.000001;
+    S0ab=0.000002;
+    S0ac=0.000003;
+    S0ad=0.000004;
+    S0bb=0.000005;
+    S0bc=0.000006;
+    S0bd=0.000007;
+    S0cd=0.000008;
+    break;
+  case 1:
+    S0aa=0.000001;
+    S0ab=0.000002;
+    S0ac=0.000003;
+    S0ad=0.000004;
+    S0bb=0.000005;
+    S0bc=0.000006;
+    S0bd=0.000007;
+    break;
+  case 2:
+    S0aa=0.000001;
+    S0ab=0.000002;
+    S0ac=0.000003;
+    S0ad=0.000004;
+    S0bc=0.000005;
+    S0bd=0.000006;
+    S0cd=0.000007;
+    break;
+  case 3:
+    S0aa=0.000001;
+    S0ab=0.000002;
+    S0ac=0.000003;
+    S0ad=0.000004;
+    S0bc=0.000005;
+    S0bd=0.000006;
+    break;
+  case 4:
+    S0aa=0.000001;
+    S0ab=0.000002;
+    S0ac=0.000003;
+    S0ad=0.000004;
+    break;
+  case 5:
+    S0ab=0.000001;
+    S0ac=0.000002;
+    S0ad=0.000003;
+    S0bc=0.000004;
+    S0bd=0.000005;
+    S0cd=0.000006;
+    break;
+  case 6:
+    S0ab=0.000001;
+    S0ac=0.000002;
+    S0ad=0.000003;
+    S0bc=0.000004;
+    S0bd=0.000005;
+    break;
+  case 7:
+    S0ab=0.000001;
+    S0ac=0.000002;
+    S0ad=0.000003;
+    break;
+  case 8:
+    S0ac=0.000001;
+    S0ad=0.000002;
+    S0bc=0.000003;
+    S0bd=0.000004;
+    break;
+  default : //case 9:
+    break;
+  }
+  S0ba=S0ab;
+  S0ca=S0ac;
+  S0cb=S0bc;
+  S0da=S0ad;
+  S0db=S0bd;
+  S0dc=S0cd;
+
+  Kaa=0.0;
+  Kbb=0.0;
+  Kcc=0.0;
+  Kdd=0.0;
+
+  Kba=Kab;
+  Kca=Kac;
+  Kcb=Kbc;
+  Kda=Kad;
+  Kdb=Kbd;
+  Kdc=Kcd;
+
+  Zaa=Kaa-Kad-Kad;
+  Zab=Kab-Kad-Kbd;
+  Zac=Kac-Kad-Kcd;
+  Zba=Kba-Kbd-Kad;
+  Zbb=Kbb-Kbd-Kbd;
+  Zbc=Kbc-Kbd-Kcd;
+  Zca=Kca-Kcd-Kad;
+  Zcb=Kcb-Kcd-Kbd;
+  Zcc=Kcc-Kcd-Kcd;
+
+  DenT=(-(S0ac*S0bb*S0ca) + S0ab*S0bc*S0ca + S0ac*S0ba*S0cb - S0aa*S0bc*S0cb - S0ab*S0ba*S0cc + S0aa*S0bb*S0cc);
+
+  T11= (-(S0bc*S0cb) + S0bb*S0cc)/DenT;
+  T12= (S0ac*S0cb - S0ab*S0cc)/DenT;
+  T13= (-(S0ac*S0bb) + S0ab*S0bc)/DenT;
+  T21= (S0bc*S0ca - S0ba*S0cc)/DenT;
+  T22= (-(S0ac*S0ca) + S0aa*S0cc)/DenT;
+  T23= (S0ac*S0ba - S0aa*S0bc)/DenT;
+  T31= (-(S0bb*S0ca) + S0ba*S0cb)/DenT;
+  T32= (S0ab*S0ca - S0aa*S0cb)/DenT;
+  T33= (-(S0ab*S0ba) + S0aa*S0bb)/DenT;
+
+  Y1=T11*S0ad+T12*S0bd+T13*S0cd+1.0;
+  Y2=T21*S0ad+T22*S0bd+T23*S0cd+1.0;
+  Y3=T31*S0ad+T32*S0bd+T33*S0cd+1.0;
+
+  X11=Y1*Y1;
+  X12=Y1*Y2;
+  X13=Y1*Y3;
+  X21=Y2*Y1;
+  X22=Y2*Y2;
+  X23=Y2*Y3;
+  X31=Y3*Y1;
+  X32=Y3*Y2;
+  X33=Y3*Y3;
+
+  ZZ=S0ad*(T11*S0ad+T12*S0bd+T13*S0cd)+S0bd*(T21*S0ad+T22*S0bd+T23*S0cd)+S0cd*(T31*S0ad+T32*S0bd+T33*S0cd);
+
+  m=1.0/(S0dd-ZZ);
+
+  N11=m*X11+Zaa;
+  N12=m*X12+Zab;
+  N13=m*X13+Zac;
+  N21=m*X21+Zba;
+  N22=m*X22+Zbb;
+  N23=m*X23+Zbc;
+  N31=m*X31+Zca;
+  N32=m*X32+Zcb;
+  N33=m*X33+Zcc;
+
+  M11= N11*S0aa + N12*S0ab + N13*S0ac;
+  M12= N11*S0ab + N12*S0bb + N13*S0bc;
+  M13= N11*S0ac + N12*S0bc + N13*S0cc;
+  M21= N21*S0aa + N22*S0ab + N23*S0ac;
+  M22= N21*S0ab + N22*S0bb + N23*S0bc;
+  M23= N21*S0ac + N22*S0bc + N23*S0cc;
+  M31= N31*S0aa + N32*S0ab + N33*S0ac;
+  M32= N31*S0ab + N32*S0bb + N33*S0bc;
+  M33= N31*S0ac + N32*S0bc + N33*S0cc;
+
+  DenQ1=1.0+M11-M12*M21+M22+M11*M22-M13*M31-M13*M22*M31;
+  DenQ2=  M12*M23*M31+M13*M21*M32-M23*M32-M11*M23*M32+M33+M11*M33;
+  DenQ3=  -M12*M21*M33+M22*M33+M11*M22*M33;
+  DenQ=DenQ1+DenQ2+DenQ3;
+
+  Q11= (1.0 + M22-M23*M32 + M33 + M22*M33)/DenQ;
+  Q12= (-M12 + M13*M32 - M12*M33)/DenQ;
+  Q13= (-M13 - M13*M22 + M12*M23)/DenQ;
+  Q21= (-M21 + M23*M31 - M21*M33)/DenQ;
+  Q22= (1.0 + M11 - M13*M31 + M33 + M11*M33)/DenQ;
+  Q23= (M13*M21 - M23 - M11*M23)/DenQ;
+  Q31= (-M31 - M22*M31 + M21*M32)/DenQ;
+  Q32= (M12*M31 - M32 - M11*M32)/DenQ;
+  Q33= (1.0 + M11 - M12*M21 + M22 + M11*M22)/DenQ;
+
+  S11= Q11*S0aa + Q21*S0ab + Q31*S0ac;
+  S12= Q12*S0aa + Q22*S0ab + Q32*S0ac;
+  S13= Q13*S0aa + Q23*S0ab + Q33*S0ac;
+  S14=-S11-S12-S13;
+  S21= Q11*S0ba + Q21*S0bb + Q31*S0bc;
+  S22= Q12*S0ba + Q22*S0bb + Q32*S0bc;
+  S23= Q13*S0ba + Q23*S0bb + Q33*S0bc;
+  S24=-S21-S22-S23;
+  S31= Q11*S0ca + Q21*S0cb + Q31*S0cc;
+  S32= Q12*S0ca + Q22*S0cb + Q32*S0cc;
+  S33= Q13*S0ca + Q23*S0cb + Q33*S0cc;
+  S34=-S31-S32-S33;
+  S41=S14;
+  S42=S24;
+  S43=S34;
+  S44=S11+S22+S33+2.0*S12+2.0*S13+2.0*S23;
+
+  Nav=6.022045e+23;
+  Lad=(L[0]/v[0]-L[3]/v[3])*sqrt(Nav);
+  Lbd=(L[1]/v[1]-L[3]/v[3])*sqrt(Nav);
+  Lcd=(L[2]/v[2]-L[3]/v[3])*sqrt(Nav);
+
+  Intg=Lad*Lad*S11+Lbd*Lbd*S22+Lcd*Lcd*S33+2.0*Lad*Lbd*S12+2.0*Lbd*Lcd*S23+2.0*Lad*Lcd*S13;
+
+  return Intg;
+
+
+/*  Attempts at a new implementation --- supressed for now
+#if 1  // Sasview defaults
   if (icase <= 1) {
     N[0]=N[1]=1000.0;
     Phi[0]=Phi[1]=0.0000001;
     Kab=Kac=Kad=Kbc=Kbd=-0.0004;
-    La=Lb=1.0e-12;
-    va=vb=100.0;
-    ba=bb=5.0;
+    L[0]=L[1]=1.0e-12;
+    v[0]=v[1]=100.0;
+    b[0]=b[1]=5.0;
   } else if (icase <= 4) {
     Phi[0]=0.0000001;
     Kab=Kac=Kad=-0.0004;
-    La=1.0e-12;
-    va=100.0;
-    ba=5.0;
+    L[0]=1.0e-12;
+    v[0]=100.0;
+    b[0]=5.0;
   }
 #else
   if (icase <= 1) {
@@ -296,5 +590,5 @@ switch(icase){
                     + 2.0*(Lad*Lbd*S12 + Lbd*Lcd*S23 + Lad*Lcd*S13);
 
   return result;
-
+*/
 }

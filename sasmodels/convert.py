@@ -175,9 +175,10 @@ def _get_translation_table(model_info):
         if p.length > 1:
             newid = p.id
             oldid = translation.get(p.id, p.id)
-            del translation[newid]
+            translation.pop(newid, None)
             for k in range(1, p.length+1):
-                translation[newid+str(k)] = oldid+str(k)
+                if newid+str(k) not in translation:
+                    translation[newid+str(k)] = oldid+str(k)
     # Remove control parameter from the result
     if model_info.control:
         translation[model_info.control] = None
@@ -210,8 +211,8 @@ def revert_pars(model_info, pars):
             raise NotImplementedError("cannot convert to sasview sum")
     else:
         translation = _get_translation_table(model_info)
-    oldpars = _revert_pars(_unscale_sld(pars), translation)
-    oldpars = _trim_vectors(model_info, pars, oldpars)
+        oldpars = _revert_pars(_unscale_sld(pars), translation)
+        oldpars = _trim_vectors(model_info, pars, oldpars)
 
 
     # Note: update compare.constrain_pars to match
@@ -245,6 +246,18 @@ def revert_pars(model_info, pars):
             # convert scattering lengths from femtometers to centimeters
             for p in "L1", "L2", "L3", "L4":
                 if p in oldpars: oldpars[p] *= 1e-13
+            if pars['case_num'] < 2:
+                for k in ("a", "b"):
+                    for p in ("L", "N", "Phi", "b", "v"):
+                        oldpars.pop(p+k, None)
+                for k in "Kab,Kac,Kad,Kbc,Kbd".split(','):
+                    oldpars.pop(k, None)
+            elif pars['case_num'] < 5:
+                for k in ("a",):
+                    for p in ("L", "N", "Phi", "b", "v"):
+                        oldpars.pop(p+k, None)
+                for k in "Kab,Kac,Kad".split(','):
+                    oldpars.pop(k, None)
         elif name == 'core_shell_parallelepiped':
             _remove_pd(oldpars, 'rimA', name)
         elif name in ['mono_gauss_coil','poly_gauss_coil']:

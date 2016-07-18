@@ -406,7 +406,7 @@ def eval_sasview(model_info, data):
     if model_info.composition:
         composition_type, parts = model_info.composition
         if composition_type == 'product':
-            P, S = [get_model(revert_name(p)) for p in parts]
+            P, S = [get_model_class(revert_name(p))() for p in parts]
             model = [MultiplicationModel(P, S)]
         else:
             raise ValueError("sasview mixture models not supported by compare")

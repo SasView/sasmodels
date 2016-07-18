@@ -68,7 +68,7 @@ Case 8: A-B/C-D mixture of two diblock copolymers A-B and C-D
 Case 9: A-B-C-D four-block copolymer
 See details in the model function help
 """
-category = ""
+category = "shape-independent"
 
 CASES = [
     "C+D binary mixture",
@@ -101,9 +101,9 @@ parameters = [
     ["K34", "", -0.0004, [-inf, inf], "", "C:D interaction parameter"],
 ]
 
-category = "shape-independent"
 
 source = ["rpa.c"]
+single = False
 
 control = "case_num"
 HIDE_NONE = set()

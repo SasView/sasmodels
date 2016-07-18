@@ -599,8 +599,10 @@
     }
   ], 
   "rpa": [
-    "RPAModel", 
+    "RPA10Model",
     {
+      "K12": "Kab", "K13": "Kac", "K14": "Kad",
+      "K23": "Kbc", "K24": "Kbd", "K34": "Kcd",
       "N1": "Na", "N2": "Nb", "N3": "Nc", "N4": "Nd",
       "L1": "La", "L2": "Lb", "L3": "Lc", "L4": "Ld",
       "v1": "va", "v2": "vb", "v3": "vc", "v4": "vd",
