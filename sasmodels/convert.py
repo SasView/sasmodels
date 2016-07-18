@@ -287,5 +287,5 @@ def constrain_new_to_old(model_info, pars):
         elif name == 'poly_gauss_coil':
             pars['i_zero'] = 1
         elif name == 'core_multi_shell':
-            pars['n'] = max(math.ceil(pars['n']), 4)
+            pars['n'] = min(math.ceil(pars['n']), 4)
 
