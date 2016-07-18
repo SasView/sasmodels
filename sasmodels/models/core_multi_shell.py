@@ -11,8 +11,8 @@ of shells. The scattering length density profile for the default sld values
     SLD profile of the core_multi_shell object from the center of sphere out
     for the default SLDs.*
 
-The 2D scattering intensity is the same as *P(q)* above, regardless of the
-orientation of the *q* vector which is defined as
+The 2D scattering intensity is the same as $P(q)$ above, regardless of the
+orientation of the $q$ vector which is defined as
 
 .. math::
 
@@ -22,7 +22,7 @@ orientation of the *q* vector which is defined as
          many of these parameters fixed as possible.
 
 .. note:: The outer most radius (= *radius* + *thickness*) is used as the
-          effective radius for *S(Q)* when *P(Q)* \* *S(Q)* is applied.
+          effective radius for $S(Q)$ when $P(Q)*S(Q)$ is applied.
 
 For information about polarised and magnetic scattering, see 
 the :doc:`magnetic help <../sasgui/perspectives/fitting/mag_help>` documentation.

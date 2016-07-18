@@ -724,7 +724,12 @@
       "background": "background", 
       "crossover": "qc"
     }
-  ], 
+  ],
+  "unified_power_Rg": [
+    "UnifiedPowerRgModel",
+    {
+    }
+  ],
   "vesicle": [
     "VesicleModel", 
     {
