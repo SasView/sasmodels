@@ -78,8 +78,8 @@ double Iq(double q, double case_num,
 
   Xa=q*q*b[0]*b[0]*N[0]/6.0;
   Xb=q*q*b[1]*b[1]*N[1]/6.0;
-  Xc=q*q*b[2]*b[1]*N[2]/6.0;  // PAK: not b2*b2?
-  Xd=q*q*b[3]*b[1]*N[3]/6.0;  // PAK: not b3*b3?
+  Xc=q*q*b[2]*b[2]*N[2]/6.0;
+  Xd=q*q*b[3]*b[3]*N[3]/6.0;
 
   Paa=2.0*(exp(-Xa)-1.0+Xa)/(Xa*Xa);
   S0aa=N[0]*Phi[0]*v[0]*Paa;
