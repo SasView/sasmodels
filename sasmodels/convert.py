@@ -242,6 +242,10 @@ def revert_pars(model_info, pars):
             _remove_pd(oldpars, 'rimA', name)
             _remove_pd(oldpars, 'rimB', name)
             _remove_pd(oldpars, 'rimC', name)
+        elif name == 'spherical_sld':
+            for k in range(1, int(pars['n_shells'])+1):
+                _remove_pd(oldpars, 'thick_flat'+str(k), 'thick_flat')
+                _remove_pd(oldpars, 'thick_inter'+str(k), 'thick_inter')
         elif name == 'rpa':
             # convert scattering lengths from femtometers to centimeters
             for p in "L1", "L2", "L3", "L4":
@@ -262,6 +266,8 @@ def revert_pars(model_info, pars):
             _remove_pd(oldpars, 'rimA', name)
         elif name in ['mono_gauss_coil','poly_gauss_coil']:
             del oldpars['i_zero']
+        elif name == 'onion':
+            oldpars.pop('n_shells', None)
 
     return oldpars
 
@@ -301,4 +307,8 @@ def constrain_new_to_old(model_info, pars):
             pars['i_zero'] = 1
         elif name == 'core_multi_shell':
             pars['n'] = min(math.ceil(pars['n']), 4)
+        elif name == 'spherical_sld':
+            for k in range(1, 11):
+                pars['thick_flat%d_pd_n'%k] = 0
+                pars['thick_inter%d_pd_n'%k] = 0
 

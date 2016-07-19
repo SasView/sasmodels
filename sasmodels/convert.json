@@ -474,12 +474,12 @@
     }
   ], 
   "onion": [
-    "OnionModel",
+    "OnionExpShellModel",
     {
+      "n_shells": "n_shells",
       "A": "A_shell", 
       "sld_core": "sld_core0",
-      "core_radius": "rad_core0", 
-      "n": "n_shells",
+      "core_radius": "rad_core0",
       "sld_solvent": "sld_solv",
       "thickness": "thick_shell", 
       "sld_in": "sld_in_shell",
@@ -635,10 +635,10 @@
     }
   ],
   "spherical_sld": [
-    "SphereSLDModel", 
+    "SphericalSLDModel",
     {
-      "n": "n_shells",
-      "radius_core": "rad_core", 
+      "radius_core": "rad_core0",
+      "sld_core": "sld_core0",
       "sld_solvent": "sld_solv"
     }
   ], 

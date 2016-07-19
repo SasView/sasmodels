@@ -311,6 +311,7 @@ parameters = [["sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "",
               ]
 
 source = ["lib/sph_j1c.c", "onion.c"]
+single = False
 
 #def Iq(q, *args, **kw):
 #    return q
@@ -374,12 +375,12 @@ demo = {
     "sld_solvent": 2.2,
     "sld_core": 1.0,
     "core_radius": 100,
-    "n": 4,
+    "n_shells": 4,
     "sld_in": [0.5, 1.5, 0.9, 2.0],
     "sld_out": [nan, 0.9, 1.2, 1.6],
     "thickness": [50, 75, 150, 75],
     "A": [0, -1, 1e-4, 1],
     # Could also specify them individually as
-    # "A[1]": 0, "A[2]": -1, "A[3]": 1e-4, "A[4]": 1,
+    # "A1": 0, "A2": -1, "A3": 1e-4, "A4": 1,
     }
 

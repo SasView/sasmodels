@@ -201,8 +201,8 @@ category = "sphere-based"
 
 # pylint: disable=bad-whitespace, line-too-long
 #            ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["n_shells",          "",               1,      [0, 9],         "volume", "number of shells"],
-              ["npts_inter",        "",               35,     [0, inf],        "", "number of points in each sublayer Must be odd number"],
+parameters = [["n_shells",          "",               1,      [0, 10],        "volume", "number of shells"],
+              ["npts_inter",        "",               35,     [0, inf],       "", "number of points in each sublayer Must be odd number"],
               ["radius_core",       "Ang",            50.0,   [0, inf],       "volume", "intern layer thickness"],
               ["sld_core",          "1e-6/Ang^2",     2.07,   [-inf, inf],    "", "sld function flat"],
               ["sld_solvent",       "1e-6/Ang^2",     1.0,    [-inf, inf],    "", "sld function solvent"],
@@ -217,6 +217,7 @@ parameters = [["n_shells",          "",               1,      [0, 9],         "v
               ]
 # pylint: enable=bad-whitespace, line-too-long
 source = ["lib/librefl.c",  "lib/sph_j1c.c", "spherical_sld.c"]
+single = False
 
 profile_axes = ['Radius (A)', 'SLD (1e-6/A^2)']
 def profile(n_shells, radius_core,  sld_core,  sld_solvent, sld_flat,
