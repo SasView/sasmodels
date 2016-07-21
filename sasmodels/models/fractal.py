@@ -86,9 +86,9 @@ parameters = [["volfraction", "", 0.05, [0.0, 1], "",
                "fractal dimension"],
               ["cor_length", "Ang", 100.0, [0.0, inf], "",
                "cluster correlation length"],
-              ["sld_block", "1e-6/Ang^2", 2.0, [-inf, inf], "",
+              ["sld_block", "1e-6/Ang^2", 2.0, [-inf, inf], "sld",
                "scattering length density of particles"],
-              ["sld_solvent", "1e-6/Ang^2", 6.4, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 6.4, [-inf, inf], "sld",
                "scattering length density of solvent"],
              ]
 # pylint: enable=bad-whitespace, line-too-long

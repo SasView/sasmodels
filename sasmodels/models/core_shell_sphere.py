@@ -63,9 +63,9 @@ category = "shape:sphere"
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["radius",      "Ang",        60.0, [0, inf],    "volume", "Sphere core radius"],
               ["thickness",   "Ang",        10.0, [0, inf],    "volume", "Sphere shell thickness"],
-              ["sld_core",    "1e-6/Ang^2", 1.0,  [-inf, inf], "",       "core scattering length density"],
-              ["sld_shell",   "1e-6/Ang^2", 2.0,  [-inf, inf], "",       "shell scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2", 3.0,  [-inf, inf],  "",      "Solvent scattering length density"]]
+              ["sld_core",    "1e-6/Ang^2", 1.0,  [-inf, inf], "sld",    "core scattering length density"],
+              ["sld_shell",   "1e-6/Ang^2", 2.0,  [-inf, inf], "sld",    "shell scattering length density"],
+              ["sld_solvent", "1e-6/Ang^2", 3.0,  [-inf, inf], "sld",    "Solvent scattering length density"]]
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sph_j1c.c", "lib/core_shell.c", "core_shell_sphere.c"]

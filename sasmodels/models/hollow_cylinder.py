@@ -71,8 +71,8 @@ parameters = [
     ["radius",      "Ang",     30.0, [0, inf],    "volume",      "Cylinder radius"],
     ["core_radius", "Ang",     20.0, [0, inf],    "volume",      "Hollow core radius"],
     ["length",      "Ang",    400.0, [0, inf],    "volume",      "Cylinder length"],
-    ["sld",         "1/Ang^2",  6.3, [-inf, inf], "",            "Cylinder sld"],
-    ["sld_solvent", "1/Ang^2",  1,   [-inf, inf], "",            "Solvent sld"],
+    ["sld",         "1/Ang^2",  6.3, [-inf, inf], "sld",         "Cylinder sld"],
+    ["sld_solvent", "1/Ang^2",  1,   [-inf, inf], "sld",         "Solvent sld"],
     ["theta",       "degrees", 90,   [-360, 360], "orientation", "Theta angle"],
     ["phi",         "degrees",  0,   [-360, 360], "orientation", "Phi angle"],
     ]

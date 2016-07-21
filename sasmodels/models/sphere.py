@@ -57,9 +57,9 @@ P(q)=(scale/V)*[3V(sld-sld_solvent)*(sin(qr)-qr cos(qr))
 category = "shape:sphere"
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "",
+parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Layer scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2", 6, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 6, [-inf, inf], "sld",
                "Solvent scattering length density"],
               ["radius", "Ang", 50, [0, inf], "volume",
                "Sphere radius"],

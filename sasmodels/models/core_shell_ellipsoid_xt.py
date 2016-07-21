@@ -91,9 +91,9 @@ parameters = [
     ["x_core",        "None",       3,   [0, inf],    "volume",      "axial ratio of core, X = r_polar/r_equatorial"],
     ["t_shell",       "Ang",       30,   [0, inf],    "volume",      "thickness of shell at equator"],
     ["x_polar_shell", "",           1,   [0, inf],    "volume",      "ratio of thickness of shell at pole to that at equator"],
-    ["sld_core",      "1e-6/Ang^2", 2,   [-inf, inf], "",            "Core scattering length density"],
-    ["sld_shell",     "1e-6/Ang^2", 1,   [-inf, inf], "",            "Shell scattering length density"],
-    ["sld_solvent",   "1e-6/Ang^2", 6.3, [-inf, inf], "",            "Solvent scattering length density"],
+    ["sld_core",      "1e-6/Ang^2", 2,   [-inf, inf], "sld",         "Core scattering length density"],
+    ["sld_shell",     "1e-6/Ang^2", 1,   [-inf, inf], "sld",         "Shell scattering length density"],
+    ["sld_solvent",   "1e-6/Ang^2", 6.3, [-inf, inf], "sld",         "Solvent scattering length density"],
     ["theta",         "degrees",    0,   [-inf, inf], "orientation", "Oblate orientation wrt incoming beam"],
     ["phi",           "degrees",    0,   [-inf, inf], "orientation", "Oblate orientation in the plane of the detector"],
     ]

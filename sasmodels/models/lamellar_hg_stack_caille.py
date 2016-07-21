@@ -103,11 +103,11 @@ parameters = [
      "d-spacing of Caille S(Q)"],
     ["Caille_parameter", "", 0.001, [0.0, 0.8], "",
      "Caille parameter"],
-    ["sld", "1e-6/Ang^2", 0.4, [-inf, inf], "",
+    ["sld", "1e-6/Ang^2", 0.4, [-inf, inf], "sld",
      "Tail scattering length density"],
-    ["sld_head", "1e-6/Ang^2", 2.0, [-inf, inf], "",
+    ["sld_head", "1e-6/Ang^2", 2.0, [-inf, inf], "sld",
      "Head scattering length density"],
-    ["sld_solvent", "1e-6/Ang^2", 6, [-inf, inf], "",
+    ["sld_solvent", "1e-6/Ang^2", 6, [-inf, inf], "sld",
      "Solvent scattering length density"],
     ]
 

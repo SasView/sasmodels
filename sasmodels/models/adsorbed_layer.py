@@ -93,11 +93,6 @@ def Iq(q, second_moment, adsorbed_amount, density_shell, radius,
     return inten
 Iq.vectorized =  True  # Iq accepts an array of q values
 
-def Iqxy(qx, qy, *args):
-    # pylint: disable = missing-docstring
-    return Iq(sqrt(qx ** 2 + qy ** 2), *args)
-Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
-
 # unit test values taken from SasView 3.1.2
 tests =  [
     [{'scale': 1.0, 'second_moment': 23.0, 'adsorbed_amount': 1.9,

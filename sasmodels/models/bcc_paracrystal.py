@@ -115,8 +115,8 @@ single = False
 parameters = [["dnn",         "Ang",       220,    [-inf, inf], "",            "Nearest neighbour distance"],
               ["d_factor",    "",            0.06, [-inf, inf], "",            "Paracrystal distortion factor"],
               ["radius",      "Ang",        40,    [0, inf],    "volume",      "Particle radius"],
-              ["sld",         "1e-6/Ang^2",  4,    [-inf, inf], "",            "Particle scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2",  1,    [-inf, inf], "",            "Solvent scattering length density"],
+              ["sld",         "1e-6/Ang^2",  4,    [-inf, inf], "sld",         "Particle scattering length density"],
+              ["sld_solvent", "1e-6/Ang^2",  1,    [-inf, inf], "sld",         "Solvent scattering length density"],
               ["theta",       "degrees",    60,    [-inf, inf], "orientation", "In plane angle"],
               ["phi",         "degrees",    60,    [-inf, inf], "orientation", "Out of plane angle"],
               ["psi",         "degrees",    60,    [-inf, inf], "orientation", "Out of plane angle"]

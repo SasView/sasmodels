@@ -64,9 +64,9 @@ category = "shape-independent"
 parameters = [
     ["radius",      "Ang",        60.0, [0, inf],    "volume", "Sphere core radius"],
     ["thickness",   "Ang",        10.0, [0, inf],    "volume", "Sphere shell thickness"],
-    ["sld_core",    "1e-6/Ang^2", 1.0,  [-inf, inf], "",       "Sphere core scattering length density"],
-    ["sld_shell",   "1e-6/Ang^2", 2.0,  [-inf, inf], "",       "Sphere shell scattering length density"],
-    ["sld_solvent", "1e-6/Ang^2", 3.0,  [-inf, inf], "",       "Solvent scattering length density"],
+    ["sld_core",    "1e-6/Ang^2", 1.0,  [-inf, inf], "sld",    "Sphere core scattering length density"],
+    ["sld_shell",   "1e-6/Ang^2", 2.0,  [-inf, inf], "sld",    "Sphere shell scattering length density"],
+    ["sld_solvent", "1e-6/Ang^2", 3.0,  [-inf, inf], "sld",    "Solvent scattering length density"],
     ["volfraction", "",           1.0,  [0, inf],    "",       "Volume fraction of building block spheres"],
     ["frac_dim",    "",           2.0,  [-inf, inf], "",       "Fractal dimension"],
     ["cor_length",  "Ang",      100.0,  [0, inf],    "",       "Correlation length of fractal-like aggregates"]]

@@ -71,9 +71,9 @@ category = "shape:lamellae"
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["tail_length", "Ang",       15,   [0, inf],  "volume",  "Tail thickness ( total = H+T+T+H)"],
               ["head_length", "Ang",       10,   [0, inf],  "volume",  "Head thickness"],
-              ["sld",         "1e-6/Ang^2", 0.4, [-inf,inf], "",       "Tail scattering length density"],
-              ["sld_head",    "1e-6/Ang^2", 3.0, [-inf,inf], "",       "Head scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2", 6,   [-inf,inf], "",       "Solvent scattering length density"]]
+              ["sld",         "1e-6/Ang^2", 0.4, [-inf,inf], "sld",    "Tail scattering length density"],
+              ["sld_head",    "1e-6/Ang^2", 3.0, [-inf,inf], "sld",    "Head scattering length density"],
+              ["sld_solvent", "1e-6/Ang^2", 6,   [-inf,inf], "sld",    "Solvent scattering length density"]]
 # pylint: enable=bad-whitespace, line-too-long
 
 # No volume normalization despite having a volume parameter

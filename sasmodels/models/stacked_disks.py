@@ -131,9 +131,9 @@ parameters = [
     ["radius",      "Ang",        15.0, [0, inf],    "volume",      "Radius of the stacked disk"],
     ["n_stacking",  "",            1.0, [0, inf],    "volume",      "Number of stacked layer/core/layer disks"],
     ["sigma_d",     "Ang",         0,   [0, inf],    "",            "GSD of disks sigma_d"],
-    ["sld_core",    "1e-6/Ang^2",  4,   [-inf, inf], "",            "Core scattering length density"],
-    ["sld_layer",   "1e-6/Ang^2",  0.0, [-inf, inf], "",            "Layer scattering length density"],
-    ["sld_solvent", "1e-6/Ang^2",  5.0, [-inf, inf], "",            "Solvent scattering length density"],
+    ["sld_core",    "1e-6/Ang^2",  4,   [-inf, inf], "sld",         "Core scattering length density"],
+    ["sld_layer",   "1e-6/Ang^2",  0.0, [-inf, inf], "sld",         "Layer scattering length density"],
+    ["sld_solvent", "1e-6/Ang^2",  5.0, [-inf, inf], "sld",         "Solvent scattering length density"],
     ["theta",       "degrees",     0,   [-inf, inf], "orientation", "Orientation of the stacked disk axis w/respect incoming beam"],
     ["phi",         "degrees",     0,   [-inf, inf], "orientation", "Orientation of the stacked disk in the plane of the detector"],
     ]

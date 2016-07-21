@@ -108,8 +108,8 @@ description = """That is, a sphereocylinder
 category = "shape:cylinder"
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["sld",         "1e-6/Ang^2", 4, [-inf, inf], "",       "Cylinder scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "",       "Solvent scattering length density"],
+parameters = [["sld",         "1e-6/Ang^2", 4, [-inf, inf], "sld",    "Cylinder scattering length density"],
+              ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "sld",    "Solvent scattering length density"],
               ["radius",      "Ang",       20, [0, inf],    "volume", "Cylinder radius"],
 
               # TODO: use an expression for cap radius with fixed bounds.

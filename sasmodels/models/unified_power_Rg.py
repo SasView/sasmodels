@@ -66,22 +66,22 @@ from scipy.special import erf
 
 parameters = [
     ["level",     "",     1,      [0, 6], "", "Level number"],
-    ["Rg[level]", "Ang",  15.8,   [0, inf], "", "Radius of gyration"],
+    ["rg[level]", "Ang",  15.8,   [0, inf], "", "Radius of gyration"],
     ["power[level]", "",  4,      [-inf, inf], "", "Power"],
     ["B[level]",  "1/cm", 4.5e-6, [-inf, inf], "", ""],
     ["G[level]",  "1/cm", 400,    [0, inf], "", ""],
     ]
 
-def Iq(q, level, Rg, power, B, G):
+def Iq(q, level, rg, power, B, G):
     ilevel = int(level)
     if ilevel == 0:
         return 1./q
 
     result = np.zeros_like(q)
     for i in range(ilevel):
-        exp_now = exp(-(q*Rg[i])**2/3.)
-        pow_now = (erf(q*Rg[i]/sqrt(6.))**3/q)**power[i]
-        exp_next = exp(-(q*Rg[i+1])**2/3.) if i < ilevel-1 else 1.
+        exp_now = exp(-(q*rg[i])**2/3.)
+        pow_now = (erf(q*rg[i]/sqrt(6.))**3/q)**power[i]
+        exp_next = exp(-(q*rg[i+1])**2/3.) if i < ilevel-1 else 1.
         result += G[i]*exp_now + B[i]*exp_next*pow_now
     result[q==0] = np.sum(G[:ilevel])
     return result
@@ -89,7 +89,7 @@ Iq.vectorized = True
 
 demo = dict(
     level=2,
-    Rg=[15.8, 21],
+    rg=[15.8, 21],
     power=[4, 2],
     B=[4.5e-6, 0.0006],
     G=[400, 3],
