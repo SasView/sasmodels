@@ -32,6 +32,46 @@ typedef struct {
 } ParameterBlock;
 #endif
 
+#ifdef MAGNETIC
+const int32_t magnetic[] = { MAGNETIC_PARS };
+#endif
+
+#ifdef MAGNETIC
+// Return value restricted between low and high
+static double clip(double value, double low, double high)
+{
+    return (value < low ? low : (value > high ? high : value));
+}
+
+// Compute spin cross sections given in_spin and out_spin
+// To convert spin cross sections to sld b:
+//     uu * (sld - m_sigma_x);
+//     dd * (sld + m_sigma_x);
+//     ud * (m_sigma_y + 1j*m_sigma_z);
+//     du * (m_sigma_y - 1j*m_sigma_z);
+static void spins(double in_spin, double out_spin,
+    double *uu, double *dd, double *ud, double *du)
+{
+    in_spin = clip(in_spin, 0.0, 1.0);
+    out_spin = clip(out_spin, 0.0, 1.0);
+	*uu = sqrt(sqrt(in_spin * out_spin));
+	*dd = sqrt(sqrt((1.0-in_spin) * (1.0-out_spin)));
+	*ud = sqrt(sqrt(in_spin * (1.0-out_spin)));
+	*du = sqrt(sqrt((1.0-in_spin) * out_spin));
+}
+
+// Convert polar to rectangular coordinates.
+static void polrec(double r, double theta, double phi,
+    double *x, double *y, double *z)
+{
+    double cos_theta, sin_theta, cos_phi, sin_phi;
+    SINCOS(theta*M_PI_180, sin_theta, cos_theta);
+    SINCOS(phi*M_PI_180, sin_phi, cos_phi);
+    *x = r * cos_theta * cos_phi;
+    *y = r * sin_theta;
+    *z = -r * cos_theta * sin_phi;
+}
+#endif
 
 kernel
 void KERNEL_NAME(
@@ -39,7 +79,8 @@ void KERNEL_NAME(
     const int32_t pd_start,     // where we are in the polydispersity loop
     const int32_t pd_stop,      // where we are stopping in the polydispersity loop
     global const ProblemDetails *details,
-    global const double *values,
+   // global const  // TODO: make it const again!
+    double *values,
     global const double *q, // nq q values, with padding to boundary
     global double *result,  // nq+3 return values, again with padding
     const double cutoff     // cutoff in the polydispersity weight product
@@ -51,12 +92,38 @@ void KERNEL_NAME(
   double *pvec = (double *)(&local_values);  // Alias named parameters with a vector
 
   // Fill in the initial variables
+  //   values[0] is scale
+  //   values[1] is background
   #ifdef USE_OPENMP
   #pragma omp parallel for
   #endif
   for (int k=0; k < NPARS; k++) {
     pvec[k] = values[k+2];
   }
+#ifdef MAGNETIC
+  const double up_frac_i = values[NPARS+2];
+  const double up_frac_f = values[NPARS+3];
+  const double up_angle = values[NPARS+4];
+  #define MX(_k) (values[NPARS+5+3*_k])
+  #define MY(_k) (values[NPARS+6+3*_k])
+  #define MZ(_k) (values[NPARS+7+3*_k])
+
+  // TODO: precompute this on the python side
+  // Convert polar to rectangular coordinates in place.
+  if (pd_start == 0) {  // Update in place; only do this for the first hunk!
+//printf("spin: %g %g %g\n", up_frac_i, up_frac_f, up_angle);
+    for (int mag=0; mag < NUM_MAGNETIC; mag++) {
+//printf("mag %d: %g %g %g\n", mag, MX(mag), MY(mag), MZ(mag));
+        polrec(MX(mag), MY(mag), MZ(mag), &MX(mag), &MY(mag), &MZ(mag));
+//printf("   ==>: %g %g %g\n", MX(mag), MY(mag), MZ(mag));
+    }
+  }
+  // Interpret polarization cross section.
+  double uu, dd, ud, du;
+  double cos_mspin, sin_mspin;
+  spins(up_frac_i, up_frac_f, &uu, &dd, &ud, &du);
+  SINCOS(-up_angle*M_PI_180, sin_mspin, cos_mspin);
+#endif
 
   // Monodisperse computation
   if (details->num_active == 0) {
@@ -73,7 +140,61 @@ void KERNEL_NAME(
     #pragma omp parallel for
     #endif
     for (int q_index=0; q_index < nq; q_index++) {
+#ifdef MAGNETIC
+      const double qx = q[2*q_index];
+      const double qy = q[2*q_index+1];
+      const double qsq = qx*qx + qy*qy;
+
+      // Constant across orientation, polydispersity for given qx, qy
+      double px, py, pz;
+      if (qsq > 1e-16) {
+        px = (qy*cos_mspin + qx*sin_mspin)/qsq;
+        py = (qy*sin_mspin - qx*cos_mspin)/qsq;
+        pz = 1.0;
+      } else {
+        px = py = pz = 0.0;
+      }
+
+      double scattering = 0.0;
+      if (uu > 1e-8) {
+        for (int mag=0; mag<NUM_MAGNETIC; mag++) {
+            const double perp = (qy*MX(mag) - qx*MY(mag));
+            pvec[magnetic[mag]] = (values[magnetic[mag]+2] - perp*px)*uu;
+        }
+        scattering += CALL_IQ(q, q_index, local_values);
+      }
+      if (dd > 1e-8){
+        for (int mag=0; mag<NUM_MAGNETIC; mag++) {
+            const double perp = (qy*MX(mag) - qx*MY(mag));
+            pvec[magnetic[mag]] = (values[magnetic[mag]+2] + perp*px)*dd;
+        }
+        scattering += CALL_IQ(q, q_index, local_values);
+      }
+      if (ud > 1e-8){
+        for (int mag=0; mag<NUM_MAGNETIC; mag++) {
+            const double perp = (qy*MX(mag) - qx*MY(mag));
+            pvec[magnetic[mag]] = perp*py*ud;
+        }
+        scattering += CALL_IQ(q, q_index, local_values);
+        for (int mag=0; mag<NUM_MAGNETIC; mag++) {
+            pvec[magnetic[mag]] = MZ(mag)*pz*ud;
+        }
+        scattering += CALL_IQ(q, q_index, local_values);
+      }
+      if (du > 1e-8) {
+        for (int mag=0; mag<NUM_MAGNETIC; mag++) {
+            const double perp = (qy*MX(mag) - qx*MY(mag));
+            pvec[magnetic[mag]] = perp*py*du;
+        }
+        scattering += CALL_IQ(q, q_index, local_values);
+        for (int mag=0; mag<NUM_MAGNETIC; mag++) {
+            pvec[magnetic[mag]] = -MZ(mag)*pz*du;
+        }
+        scattering += CALL_IQ(q, q_index, local_values);
+      }
+#else
       double scattering = CALL_IQ(q, q_index, local_values);
+#endif
       result[q_index] = (norm>0. ? scale*scattering/norm + background : background);
     }
     return;
@@ -81,7 +202,11 @@ void KERNEL_NAME(
 
 #if MAX_PD > 0
 
+#if MAGNETIC
+  const double *pd_value = values+2+NPARS+3+3*NUM_MAGNETIC;
+#else
   const double *pd_value = values+2+NPARS;
+#endif
   const double *pd_weight = pd_value+details->pd_sum;
 
   // need product of weights at every Iq calc, so keep product of
@@ -163,7 +288,61 @@ void KERNEL_NAME(
       #pragma omp parallel for
       #endif
       for (int q_index=0; q_index < nq; q_index++) {
-        const double scattering = CALL_IQ(q, q_index, local_values);
+#ifdef MAGNETIC
+        const double qx = q[2*q_index];
+        const double qy = q[2*q_index+1];
+        const double qsq = qx*qx + qy*qy;
+
+        // Constant across orientation, polydispersity for given qx, qy
+        double px, py, pz;
+        if (qsq > 1e-16) {
+          px = (qy*cos_mspin + qx*sin_mspin)/qsq;
+          py = (qy*sin_mspin - qx*cos_mspin)/qsq;
+          pz = 1.0;
+        } else {
+          px = py = pz = 0.0;
+        }
+
+        double scattering = 0.0;
+        if (uu > 1e-8) {
+          for (int mag=0; mag<NUM_MAGNETIC; mag++) {
+              const double perp = (qy*MX(mag) - qx*MY(mag));
+              pvec[magnetic[mag]] = (values[magnetic[mag]+2] - perp*px)*uu;
+          }
+          scattering += CALL_IQ(q, q_index, local_values);
+        }
+        if (dd > 1e-8){
+          for (int mag=0; mag<NUM_MAGNETIC; mag++) {
+              const double perp = (qy*MX(mag) - qx*MY(mag));
+              pvec[magnetic[mag]] = (values[magnetic[mag]+2] + perp*px)*dd;
+          }
+          scattering += CALL_IQ(q, q_index, local_values);
+        }
+        if (ud > 1e-8){
+          for (int mag=0; mag<NUM_MAGNETIC; mag++) {
+              const double perp = (qy*MX(mag) - qx*MY(mag));
+              pvec[magnetic[mag]] = perp*py*ud;
+          }
+          scattering += CALL_IQ(q, q_index, local_values);
+          for (int mag=0; mag<NUM_MAGNETIC; mag++) {
+              pvec[magnetic[mag]] = MZ(mag)*pz*ud;
+          }
+          scattering += CALL_IQ(q, q_index, local_values);
+        }
+        if (du > 1e-8) {
+          for (int mag=0; mag<NUM_MAGNETIC; mag++) {
+              const double perp = (qy*MX(mag) - qx*MY(mag));
+              pvec[magnetic[mag]] = perp*py*du;
+          }
+          scattering += CALL_IQ(q, q_index, local_values);
+          for (int mag=0; mag<NUM_MAGNETIC; mag++) {
+              pvec[magnetic[mag]] = -MZ(mag)*pz*du;
+          }
+          scattering += CALL_IQ(q, q_index, local_values);
+        }
+#else
+        double scattering = CALL_IQ(q, q_index, local_values);
+#endif
         result[q_index] += weight*scattering;
       }
     }

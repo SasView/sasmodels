@@ -6,7 +6,8 @@ from __future__ import print_function
 from os.path import join as joinpath, abspath, dirname
 import math
 import warnings
-import json
+
+from .conversion_table import CONVERSION_TABLE
 
 # List of models which SasView versions don't contain the explicit 'scale' argument.
 # When converting such a model, please update this list.
@@ -46,38 +47,6 @@ PD_DOT = [
     ("_pd_type", ".type"),
     ]
 
-CONVERSION_TABLE = None
-
-def _read_conversion_table():
-    global CONVERSION_TABLE
-    if CONVERSION_TABLE is None:
-        path = joinpath(dirname(abspath(__file__)), "convert.json")
-        with open(path) as fid:
-            CONVERSION_TABLE = json_load_byteified(fid)
-
-def json_load_byteified(file_handle):
-    return _byteify(
-        json.load(file_handle, object_hook=_byteify),
-        ignore_dicts=True
-    )
-
-def _byteify(data, ignore_dicts = False):
-    # if this is a unicode string, return its string representation
-    if isinstance(data, unicode):
-        return data.encode('utf-8')
-    # if this is a list of values, return list of byteified values
-    if isinstance(data, list):
-        return [ _byteify(item, ignore_dicts=True) for item in data ]
-    # if this is a dictionary, return dictionary of byteified keys and values
-    # but only if we haven't already byteified it
-    if isinstance(data, dict) and not ignore_dicts:
-        return dict((_byteify(key, ignore_dicts=True),
-                     _byteify(value, ignore_dicts=True))
-                    for key, value in data.items())
-    # if it's anything else, return it in its original form
-    return data
-
-
 def _convert_pars(pars, mapping):
     """
     Rename the parameters and any associated polydispersity attributes.
@@ -92,17 +61,6 @@ def _convert_pars(pars, mapping):
                 del newpars[old+dot]
     return newpars
 
-def _rescale_sld(pars):
-    """
-    rescale all sld parameters in the new model definition by 1e6 so the
-    numbers are nicer.  Relies on the fact that all sld parameters in the
-    new model definition end with sld.
-    """
-    return dict((p, (v*1e6 if p.endswith('sld')
-                     else v*1e-15 if 'ndensity' in p
-                     else v))
-                for p, v in pars.items())
-
 def convert_model(name, pars):
     """
     Convert model from old style parameter names to new style.
@@ -115,16 +73,29 @@ def convert_model(name, pars):
 def _unscale(par, scale):
     return [pk*scale for pk in par] if isinstance(par, list) else par*scale
 
-def _unscale_sld(pars):
+def _is_sld(modelinfo, id):
+    if id.startswith('M0:'):
+        return True
+    if (id.endswith('_pd') or id.endswith('_pd_n') or id.endswith('_pd_nsigma')
+            or id.endswith('_pd_width') or id.endswith('_pd_type')):
+        return False
+    for p in modelinfo.parameters.call_parameters:
+        if p.id == id:
+            return p.type == 'sld'
+    # check through kernel parameters in case it is a named as a vector
+    for p in modelinfo.parameters.kernel_parameters:
+        if p.id == id:
+            return p.type == 'sld'
+    raise ValueError("unknown parameter %r in conversion"%id)
+
+def _unscale_sld(modelinfo, pars):
     """
     rescale all sld parameters in the new model definition by 1e6 so the
     numbers are nicer.  Relies on the fact that all sld parameters in the
     new model definition end with sld.
     """
-    return dict((p, (_unscale(v,1e-6) if p.startswith('sld') or p.endswith('sld')
-                     else _unscale(v,1e15) if 'ndensity' in p
-                     else v))
-                for p, v in pars.items())
+    return dict((id, (_unscale(v,1e-6) if _is_sld(modelinfo, id) else v))
+                for id, v in pars.items())
 
 def _remove_pd(pars, key, name):
     """
@@ -163,12 +134,10 @@ def _revert_pars(pars, mapping):
     return newpars
 
 def revert_name(model_info):
-    _read_conversion_table()
     oldname, oldpars = CONVERSION_TABLE.get(model_info.id, [None, {}])
     return oldname
 
 def _get_translation_table(model_info):
-    _read_conversion_table()
     _, translation = CONVERSION_TABLE.get(model_info.id, [None, {}])
     translation = translation.copy()
     for p in model_info.parameters.kernel_parameters:
@@ -185,7 +154,6 @@ def _get_translation_table(model_info):
     return translation
 
 def _trim_vectors(model_info, pars, oldpars):
-    _read_conversion_table()
     _, translation = CONVERSION_TABLE.get(model_info.id, [None, {}])
     for p in model_info.parameters.kernel_parameters:
         if p.length_control is not None:
@@ -211,7 +179,7 @@ def revert_pars(model_info, pars):
             raise NotImplementedError("cannot convert to sasview sum")
     else:
         translation = _get_translation_table(model_info)
-        oldpars = _revert_pars(_unscale_sld(pars), translation)
+        oldpars = _revert_pars(_unscale_sld(model_info, pars), translation)
         oldpars = _trim_vectors(model_info, pars, oldpars)
 
 
@@ -242,6 +210,9 @@ def revert_pars(model_info, pars):
             _remove_pd(oldpars, 'rimA', name)
             _remove_pd(oldpars, 'rimB', name)
             _remove_pd(oldpars, 'rimC', name)
+        elif name == 'polymer_micelle':
+            if 'ndensity' in oldpars:
+                oldpars['ndensity'] *= 1e15
         elif name == 'spherical_sld':
             for k in range(1, int(pars['n_shells'])+1):
                 _remove_pd(oldpars, 'thick_flat'+str(k), 'thick_flat')

@@ -69,7 +69,9 @@ def call_kernel(calculator, pars, cutoff=0., mono=False):
                 for p in parameters.call_parameters]
 
     call_details, values = kernel.build_details(calculator, vw_pairs)
-    return calculator(call_details, values, cutoff)
+    magnetic = any(values[k]!=0 for k in parameters.magnetism_index)
+    #print("values:", values)
+    return calculator(call_details, values, cutoff, magnetic)
 
 def get_weights(parameter, values):
     # type: (Parameter, Dict[str, float]) -> Tuple[np.ndarray, np.ndarray]

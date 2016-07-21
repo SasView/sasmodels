@@ -413,6 +413,11 @@ class ParameterTable(object):
         # type: (List[Parameter]) -> None
         self.kernel_parameters = parameters
         self._set_vector_lengths()
+
+        self.npars = sum(p.length for p in self.kernel_parameters)
+        self.num_magnetic = sum(p.length for p in self.kernel_parameters
+                                if p.type=='sld')
+
         self.call_parameters = self._get_call_parameters()
         self.defaults = self._get_defaults()
         #self._name_table= dict((p.id, p) for p in parameters)
@@ -440,21 +445,17 @@ class ParameterTable(object):
         # number of polydisperse parameters
         num_pd = sum(p.length for p in self.kernel_parameters if p.polydisperse)
         # Don't use more polydisperse parameters than are available in the model
-        # Note: we can do polydispersity on arbitrary parameters, so it is not
-        # clear that this is a good idea; it does however make the poly_details
-        # code easier to write, so we will leave it in for now.
         self.max_pd = min(num_pd, MAX_PD)
-
-        self.npars = sum(p.length for p in self.kernel_parameters)
 
         # true if has 2D parameters
         self.has_2d = any(p.type in ('orientation', 'magnetic')
                           for p in self.kernel_parameters)
+        self.magnetism_index = [k for k,p in enumerate(self.call_parameters)
+                                if p.id.startswith('M0:')]
 
         self.pd_1d = set(p.name for p in self.call_parameters
                          if p.polydisperse and p.type not in ('orientation', 'magnetic'))
-        self.pd_2d = set(p.name for p in self.call_parameters
-                         if p.polydisperse and p.type != 'magnetic')
+        self.pd_2d = set(p.name for p in self.call_parameters if p.polydisperse)
 
     def _set_vector_lengths(self):
         # type: () -> List[str]
@@ -518,6 +519,28 @@ class ParameterTable(object):
                     pk.polydisperse = p.polydisperse
                     pk.relative_pd = p.relative_pd
                     full_list.append(pk)
+
+        # Add the magnetic parameters to the end of the call parameter list.
+        if self.num_magnetic > 0:
+            full_list.extend([
+                Parameter('up:frac_i', '', 0., [0., 1.],
+                          'magnetic', 'fraction of spin up incident'),
+                Parameter('up:frac_f', '', 0., [0., 1.],
+                          'magnetic', 'fraction of spin up final'),
+                Parameter('up:angle', 'degress', 0., [0., 360.],
+                          'magnetic', 'spin up angle'),
+            ])
+            slds = [p for p in full_list if p.type == 'sld']
+            for p in slds:
+                full_list.extend([
+                    Parameter('M0:'+p.id, '1e-6/Ang^2', 0., [-np.inf, np.inf],
+                              'magnetic', 'magnetic amplitude for '+p.description),
+                    Parameter('mtheta:'+p.id, 'degrees', 0., [-90., 90.],
+                               'magnetic', 'magnetic latitude for '+p.description),
+                    Parameter('mphi:'+p.id, 'degrees', 0., [-180., 180.],
+                               'magnetic', 'magnetic longitude for '+p.description),
+                ])
+        #print("call parameters", full_list)
         return full_list
 
     def user_parameters(self, pars={}, is2d=True):
@@ -552,6 +575,10 @@ class ParameterTable(object):
         even though they were not grouped in the incoming table.  The control
         parameter is always returned first since the GUI will want to set it
         early, and rerender the table when it is changed.
+
+        Parameters marked as sld will automatically have a set of associated
+        magnetic parameters (m0:p, mtheta:p, mphi:p), as well as polarization
+        information (up:theta, up:frac_i, up:frac_f).
         """
         # control parameters go first
         control = [p for p in self.kernel_parameters if p.is_control]
@@ -564,14 +591,22 @@ class ParameterTable(object):
                 dependent[p.length_control].append(p)
 
         # Gather entries such as name[4] into groups of the same length
-        fixed = {}  # type: Dict[int, List[Parameter]]
+        fixed_length = {}  # type: Dict[int, List[Parameter]]
         for p in self.kernel_parameters:
             if p.length > 1 and p.length_control is None:
-                fixed.setdefault(p.length, []).append(p)
+                fixed_length.setdefault(p.length, []).append(p)
 
         # Using the call_parameters table, we already have expanded forms
         # for each of the vector parameters; put them in a lookup table
         expanded_pars = dict((p.name, p) for p in self.call_parameters)
+
+        def append_group(name):
+            """add the named parameter, and related magnetic parameters if any"""
+            result.append(expanded_pars[name])
+            if is2d:
+                for tag in 'M0:', 'mtheta:', 'mphi:':
+                    if tag+name in expanded_pars:
+                        result.append(expanded_pars[tag+name])
 
         # Gather the user parameters in order
         result = control + self.COMMON
@@ -588,21 +623,28 @@ class ParameterTable(object):
                     del dependent[p.length_control] # first entry seen
                     for k in range(1, table_length+1):
                         for entry in table:
-                            result.append(expanded_pars[entry.id+str(k)])
+                            append_group(entry.id+str(k))
                 else:
                     pass # already processed all entries
             elif p.length > 1:
-                table = fixed.get(p.length, [])
+                table = fixed_length.get(p.length, [])
                 if table:
                     table_length = p.length
-                    del fixed[p.length]
+                    del fixed_length[p.length]
                     for k in range(1, table_length+1):
                         for entry in table:
-                            result.append(expanded_pars[entry.id+str(k)])
+                            append_group(entry.id+str(k))
                 else:
                     pass # already processed all entries
             else:
-                result.append(p)
+                append_group(p.id)
+
+        if is2d and 'up:angle' in expanded_pars:
+            result.extend([
+                expanded_pars['up:frac_i'],
+                expanded_pars['up:frac_f'],
+                expanded_pars['up:angle'],
+            ])
 
         return result
 
@@ -633,6 +675,7 @@ def _find_source_lines(model_info, kernel_module):
 
     if (model_info.Iq is None
         and model_info.Iqxy is None
+        and model_info.Imagnetic is None
         and model_info.form_volume is None):
         return
 
@@ -642,7 +685,9 @@ def _find_source_lines(model_info, kernel_module):
     except IOError:
         return
     for k, v in enumerate(source.split('\n')):
-        if v.startswith('Iqxy'):
+        if v.startswith('Imagnetic'):
+            model_info._Imagnetic_line = k+1
+        elif v.startswith('Iqxy'):
             model_info._Iqxy_line = k+1
         elif v.startswith('Iq'):
             model_info._Iq_line = k+1
@@ -691,6 +736,7 @@ def make_model_info(kernel_module):
     info.form_volume = getattr(kernel_module, 'form_volume', None) # type: ignore
     info.Iq = getattr(kernel_module, 'Iq', None) # type: ignore
     info.Iqxy = getattr(kernel_module, 'Iqxy', None) # type: ignore
+    info.Imagnetic = getattr(kernel_module, 'Imagnetic', None) # type: ignore
     info.profile = getattr(kernel_module, 'profile', None) # type: ignore
     info.sesans = getattr(kernel_module, 'sesans', None) # type: ignore
 
@@ -842,6 +888,8 @@ class ModelInfo(object):
     Iq = None               # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
     #: Returns *I(qx, qy, a, b, ...)*.  The interface follows :attr:`Iq`.
     Iqxy = None             # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
+    #: Returns *I(qx, qy, a, b, ...)*.  The interface follows :attr:`Iq`.
+    Imagnetic = None        # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
     #: Returns a model profile curve *x, y*.  If *profile* is defined, this
     #: curve will appear in response to the *Show* button in SasView.  Use
     #: :attr:`profile_axes` to set the axis labels.  Note that *y* values
@@ -856,6 +904,7 @@ class ModelInfo(object):
 
     # line numbers within the python file for bits of C source, if defined
     # NB: some compilers fail with a "#line 0" directive, so default to 1.
+    _Imagnetic_line = 1
     _Iqxy_line = 1
     _Iq_line = 1
     _form_volume_line = 1

@@ -151,10 +151,11 @@ def _generate_model_attributes(model_info):
             orientation_params.append(p.name)
             orientation_params.append(p.name+".width")
             fixed.append(p.name+".width")
-        if p.type == 'magnetic':
+        elif p.type == 'magnetic':
             orientation_params.append(p.name)
             magnetic_params.append(p.name)
             fixed.append(p.name+".width")
+
 
     # Build class dictionary
     attrs = {}  # type: Dict[str, Any]
@@ -511,7 +512,7 @@ class SasviewModel(object):
         pairs = [self._get_weights(p)
                  for p in self._model_info.parameters.call_parameters]
         call_details, value = kernel.build_details(calculator, pairs)
-        result = calculator(call_details, value, cutoff=self.cutoff)
+        result = calculator(call_details, value, cutoff=self.cutoff, magnetic=False)
         calculator.release()
         return result
 

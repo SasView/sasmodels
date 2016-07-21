@@ -269,10 +269,12 @@ class DllModel(KernelModel):
 
         # int, int, int, int*, double*, double*, double*, double*, double
         argtypes = [c_int32]*3 + [c_void_p]*4 + [fp]
-        self._Iq = self._dll[generate.kernel_name(self.info, is_2d=False)]
-        self._Iqxy = self._dll[generate.kernel_name(self.info, is_2d=True)]
+        self._Iq = self._dll[generate.kernel_name(self.info, "Iq")]
+        self._Iqxy = self._dll[generate.kernel_name(self.info, "Iqxy")]
+        self._Imagnetic = self._dll[generate.kernel_name(self.info, "Imagnetic")]
         self._Iq.argtypes = argtypes
         self._Iqxy.argtypes = argtypes
+        self._Imagnetic.argtypes = argtypes
 
     def __getstate__(self):
         # type: () -> Tuple[ModelInfo, str]
@@ -283,13 +285,13 @@ class DllModel(KernelModel):
         self.info, self.dllpath = state
         self._dll = None
 
-    def make_kernel(self, q_vectors):
+    def make_kernel(self, q_vectors, magnetic=False):
         # type: (List[np.ndarray]) -> DllKernel
         q_input = PyInput(q_vectors, self.dtype)
         # Note: pickle not supported for DllKernel
         if self._dll is None:
             self._load_dll()
-        kernel = self._Iqxy if q_input.is_2d else self._Iq
+        kernel = [self._Iqxy, self._Imagnetic] if q_input.is_2d else self._Iq
         return DllKernel(kernel, self.info, q_input)
 
     def release(self):
@@ -340,8 +342,8 @@ class DllKernel(Kernel):
                      else np.float64 if self.q_input.dtype == generate.F64
                      else np.float128)
 
-    def __call__(self, call_details, values, cutoff):
-        # type: (CallDetails, np.ndarray, np.ndarray, float) -> np.ndarray
+    def __call__(self, call_details, values, cutoff, magnetic):
+        # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
 
         #print("in kerneldll")
         #print("values", values)
@@ -357,7 +359,7 @@ class DllKernel(Kernel):
             self.real(cutoff), # cutoff
             ]
         #print("calling DLL")
-        self.kernel(*args) # type: ignore
+        self.kernel[1 if magnetic else 0](*args) # type: ignore
         return self.result[:-1]
 
     def release(self):

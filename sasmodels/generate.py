@@ -386,12 +386,14 @@ def _convert_type(source, type_name, constant_flag):
     return source
 
 
-def kernel_name(model_info, is_2d):
-    # type: (ModelInfo, bool) -> str
+def kernel_name(model_info, variant):
+    # type: (ModelInfo, str) -> str
     """
     Name of the exported kernel symbol.
+
+    *variant* is "Iq", "Iqxy" or "Imagnetic".
     """
-    return model_info.name + "_" + ("Iqxy" if is_2d else "Iq")
+    return model_info.name + "_" + variant
 
 
 def indent(s, depth):
@@ -554,9 +556,9 @@ def make_source(model_info):
 
     refs = ["_q[_i]"] + _call_pars("_v.", partable.iq_parameters)
     call_iq = "#define CALL_IQ(_q,_i,_v) Iq(%s)" % (",".join(refs))
-    if _have_Iqxy(user_code):
+    if _have_Iqxy(user_code) or isinstance(model_info.Iqxy, str):
         # Call 2D model
-        refs = ["q[2*_i]", "q[2*_i+1]"] + _call_pars("_v.", partable.iqxy_parameters)
+        refs = ["_q[2*_i]", "_q[2*_i+1]"] + _call_pars("_v.", partable.iqxy_parameters)
         call_iqxy = "#define CALL_IQ(_q,_i,_v) Iqxy(%s)" % (",".join(refs))
     else:
         # Call 1D model with sqrt(qx^2 + qy^2)
@@ -565,9 +567,14 @@ def make_source(model_info):
         pars_sqrt = ["sqrt(_q[2*_i]*_q[2*_i]+_q[2*_i+1]*_q[2*_i+1])"] + refs[1:]
         call_iqxy = "#define CALL_IQ(_q,_i,_v) Iq(%s)" % (",".join(pars_sqrt))
 
+    magpars = [k-2 for k,p in enumerate(partable.call_parameters)
+               if p.type == 'sld']
+
     # Fill in definitions for numbers of parameters
     source.append("#define MAX_PD %s"%partable.max_pd)
     source.append("#define NPARS %d"%partable.npars)
+    source.append("#define NUM_MAGNETIC %d" % len(magpars))
+    source.append("#define MAGNETIC_PARS %s"%",".join(str(k) for k in magpars))
 
     # TODO: allow mixed python/opencl kernels?
 
@@ -583,16 +590,25 @@ def _add_kernels(kernel_code, call_iq, call_iqxy, name):
     # type: (str, str, str, str) -> List[str]
     source = [
         # define the Iq kernel
-        "#define KERNEL_NAME %s_Iq"%name,
+        "#define KERNEL_NAME %s_Iq" % name,
         call_iq,
         kernel_code,
         "#undef CALL_IQ",
         "#undef KERNEL_NAME",
 
         # define the Iqxy kernel from the same source with different #defines
-        "#define KERNEL_NAME %s_Iqxy"%name,
+        "#define KERNEL_NAME %s_Iqxy" % name,
         call_iqxy,
         kernel_code,
+        "#undef CALL_IQ",
+        "#undef KERNEL_NAME",
+
+        # define the Imagnetic kernel
+        "#define KERNEL_NAME %s_Imagnetic" % name,
+        "#define MAGNETIC 1",
+        call_iqxy,
+        kernel_code,
+        "#undef MAGNETIC",
         "#undef CALL_IQ",
         "#undef KERNEL_NAME",
     ]

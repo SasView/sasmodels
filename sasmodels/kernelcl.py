@@ -384,14 +384,15 @@ class GpuModel(KernelModel):
         self.info, self.source, self.dtype, self.fast = state
         self.program = None
 
-    def make_kernel(self, q_vectors):
+    def make_kernel(self, q_vectors, magnetic=False):
         # type: (List[np.ndarray]) -> "GpuKernel"
         if self.program is None:
             compiler = environment().compile_program
             self.program = compiler(self.info.name, self.source,
                                     self.dtype, self.fast)
         is_2d = len(q_vectors) == 2
-        kernel_name = generate.kernel_name(self.info, is_2d)
+        variant = "Imagnetic" if magnetic else "Iqxy" if is_2d else "Iq"
+        kernel_name = generate.kernel_name(self.info, variant)
         kernel = getattr(self.program, kernel_name)
         return GpuKernel(kernel, self.dtype, self.info, q_vectors)
 
@@ -518,8 +519,8 @@ class GpuKernel(Kernel):
                      else np.float16 if dtype == generate.F16
                      else np.float32)  # will never get here, so use np.float32
 
-    def __call__(self, call_details, values, cutoff):
-        # type: (CallDetails, np.ndarray, np.ndarray, float) -> np.ndarray
+    def __call__(self, call_details, values, cutoff, magnetic):
+        # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
         context = self.queue.context
         # Arrange data transfer to card
         details_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,

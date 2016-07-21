@@ -95,6 +95,9 @@ def poly_details(model_info, weights):
         raise ValueError("Too many polydisperse parameters")
 
     pd_offset = np.cumsum(np.hstack((0, pd_length)))
+    #print(", ".join(str(i)+"-"+p.id for i,p in enumerate(model_info.parameters.call_parameters)))
+    #print("len:",pd_length)
+    #print("off:",pd_offset)
     # Note: the reversing view, x[::-1], does not require a copy
     idx = np.argsort(pd_length)[::-1][:num_active]
     par_length = np.array([len(w) for w in weights])
