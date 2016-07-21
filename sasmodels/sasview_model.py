@@ -502,6 +502,7 @@ class SasviewModel(object):
         This should NOT be used for fitting since it copies the *q* vectors
         to the card for each evaluation.
         """
+        #core.HAVE_OPENCL = False
         if self._model is None:
             self._model = core.build_model(self._model_info)
         if qy is not None:
@@ -509,10 +510,13 @@ class SasviewModel(object):
         else:
             q_vectors = [np.asarray(qx)]
         calculator = self._model.make_kernel(q_vectors)
-        pairs = [self._get_weights(p)
-                 for p in self._model_info.parameters.call_parameters]
-        call_details, value = kernel.build_details(calculator, pairs)
-        result = calculator(call_details, value, cutoff=self.cutoff, magnetic=False)
+        parameters = self._model_info.parameters
+        pairs = [self._get_weights(p) for p in parameters.call_parameters]
+        call_details, values = kernel.build_details(calculator, pairs)
+        # TODO: should test for 2d?
+        magnetic = any(values[k]!=0 for k in parameters.magnetism_index)
+        result = calculator(call_details, values, cutoff=self.cutoff,
+                            magnetic=magnetic)
         calculator.release()
         return result
 

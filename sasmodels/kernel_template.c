@@ -31,6 +31,7 @@
          #define INFINITY (std::numeric_limits<double>::infinity())
          #define NEED_EXPM1
          #define NEED_TGAMMA
+         #define NEED_ERF
      #else
          #define kernel extern "C"
      #endif
@@ -49,6 +50,7 @@
          inline SAS_DOUBLE fmax(SAS_DOUBLE x, SAS_DOUBLE y) { return x<y ? y : x; }
          #define NEED_EXPM1
          #define NEED_TGAMMA
+         #define NEED_ERF
      #else
          #include <tgmath.h> // C99 type-generic math, so sin(float) => sinf
      #endif
