@@ -291,7 +291,7 @@ class DllModel(KernelModel):
         # Note: pickle not supported for DllKernel
         if self._dll is None:
             self._load_dll()
-        kernel = [self._Iqxy, self._Imagnetic] if q_input.is_2d else self._Iq
+        kernel = [self._Iqxy, self._Imagnetic] if q_input.is_2d else [self._Iq]*2
         return DllKernel(kernel, self.info, q_input)
 
     def release(self):

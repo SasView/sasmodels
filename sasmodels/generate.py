@@ -539,6 +539,8 @@ def make_source(model_info):
                               model_info.filename, model_info._Iqxy_line))
 
     # Define the parameter table
+    # TODO: plug in current line number
+    source.append('#line 542 "sasmodels/generate.py"')
     source.append("#define PARAMETER_TABLE \\")
     source.append("\\\n".join(p.as_definition()
                               for p in partable.kernel_parameters))
@@ -579,27 +581,31 @@ def make_source(model_info):
     # TODO: allow mixed python/opencl kernels?
 
     source.append("#if defined(USE_OPENCL)")
-    source.extend(_add_kernels(ocl_code[0], call_iq, call_iqxy, model_info.name))
+    source.extend(_add_kernels(ocl_code, call_iq, call_iqxy, model_info.name))
     source.append("#else /* !USE_OPENCL */")
-    source.extend(_add_kernels(dll_code[0], call_iq, call_iqxy, model_info.name))
+    source.extend(_add_kernels(dll_code, call_iq, call_iqxy, model_info.name))
     source.append("#endif /* !USE_OPENCL */")
     return '\n'.join(source)
 
 
-def _add_kernels(kernel_code, call_iq, call_iqxy, name):
-    # type: (str, str, str, str) -> List[str]
+def _add_kernels(kernel, call_iq, call_iqxy, name):
+    # type: ([str,str], str, str, str) -> List[str]
+    code = kernel[0]
+    path = kernel[1].replace('\\', '\\\\')
     source = [
         # define the Iq kernel
         "#define KERNEL_NAME %s_Iq" % name,
         call_iq,
-        kernel_code,
+        '#line 1 "%s-Iq"' % path,
+        code,
         "#undef CALL_IQ",
         "#undef KERNEL_NAME",
 
         # define the Iqxy kernel from the same source with different #defines
         "#define KERNEL_NAME %s_Iqxy" % name,
         call_iqxy,
-        kernel_code,
+        '#line 1 "%s-Iqxy"' % path,
+        code,
         "#undef CALL_IQ",
         "#undef KERNEL_NAME",
 
@@ -607,7 +613,8 @@ def _add_kernels(kernel_code, call_iq, call_iqxy, name):
         "#define KERNEL_NAME %s_Imagnetic" % name,
         "#define MAGNETIC 1",
         call_iqxy,
-        kernel_code,
+        '#line 1 "%s-Imagnetic"' % path,
+        code,
         "#undef MAGNETIC",
         "#undef CALL_IQ",
         "#undef KERNEL_NAME",

@@ -28,7 +28,7 @@ typedef struct {
 } ProblemDetails;
 
 typedef struct {
-    PARAMETER_TABLE;
+    PARAMETER_TABLE
 } ParameterBlock;
 #endif
 
@@ -40,7 +40,7 @@ const int32_t magnetic[] = { MAGNETIC_PARS };
 // Return value restricted between low and high
 static double clip(double value, double low, double high)
 {
-    return (value < low ? low : (value > high ? high : value));
+  return (value < low ? low : (value > high ? high : value));
 }
 
 // Compute spin cross sections given in_spin and out_spin
@@ -52,24 +52,24 @@ static double clip(double value, double low, double high)
 static void spins(double in_spin, double out_spin,
     double *uu, double *dd, double *ud, double *du)
 {
-    in_spin = clip(in_spin, 0.0, 1.0);
-    out_spin = clip(out_spin, 0.0, 1.0);
-	*uu = sqrt(sqrt(in_spin * out_spin));
-	*dd = sqrt(sqrt((1.0-in_spin) * (1.0-out_spin)));
-	*ud = sqrt(sqrt(in_spin * (1.0-out_spin)));
-	*du = sqrt(sqrt((1.0-in_spin) * out_spin));
+  in_spin = clip(in_spin, 0.0, 1.0);
+  out_spin = clip(out_spin, 0.0, 1.0);
+  *uu = sqrt(sqrt(in_spin * out_spin));
+  *dd = sqrt(sqrt((1.0-in_spin) * (1.0-out_spin)));
+  *ud = sqrt(sqrt(in_spin * (1.0-out_spin)));
+  *du = sqrt(sqrt((1.0-in_spin) * out_spin));
 }
 
 // Convert polar to rectangular coordinates.
 static void polrec(double r, double theta, double phi,
-    double *x, double *y, double *z)
+  double *x, double *y, double *z)
 {
-    double cos_theta, sin_theta, cos_phi, sin_phi;
-    SINCOS(theta*M_PI_180, sin_theta, cos_theta);
-    SINCOS(phi*M_PI_180, sin_phi, cos_phi);
-    *x = r * cos_theta * cos_phi;
-    *y = r * sin_theta;
-    *z = -r * cos_theta * sin_phi;
+  double cos_theta, sin_theta, cos_phi, sin_phi;
+  SINCOS(theta*M_PI_180, sin_theta, cos_theta);
+  SINCOS(phi*M_PI_180, sin_phi, cos_phi);
+  *x = r * cos_theta * cos_phi;
+  *y = r * sin_theta;
+  *z = -r * cos_theta * sin_phi;
 }
 #endif
 
