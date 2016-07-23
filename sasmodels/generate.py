@@ -575,7 +575,8 @@ def make_source(model_info):
     # Fill in definitions for numbers of parameters
     source.append("#define MAX_PD %s"%partable.max_pd)
     source.append("#define NPARS %d"%partable.npars)
-    source.append("#define NUM_MAGNETIC %d" % len(magpars))
+    source.append("#define NUM_MAGNETIC %d" % partable.nmagnetic)
+    source.append("#define NUM_VALUES %d" % partable.nvalues)
     source.append("#define MAGNETIC_PARS %s"%",".join(str(k) for k in magpars))
 
     # TODO: allow mixed python/opencl kernels?
@@ -592,7 +593,7 @@ def _add_kernels(kernel, call_iq, call_iqxy, name):
     # type: ([str,str], str, str, str) -> List[str]
     code = kernel[0]
     path = kernel[1].replace('\\', '\\\\')
-    source = [
+    iq = [
         # define the Iq kernel
         "#define KERNEL_NAME %s_Iq" % name,
         call_iq,
@@ -600,7 +601,9 @@ def _add_kernels(kernel, call_iq, call_iqxy, name):
         code,
         "#undef CALL_IQ",
         "#undef KERNEL_NAME",
+        ]
 
+    iqxy = [
         # define the Iqxy kernel from the same source with different #defines
         "#define KERNEL_NAME %s_Iqxy" % name,
         call_iqxy,
@@ -608,7 +611,9 @@ def _add_kernels(kernel, call_iq, call_iqxy, name):
         code,
         "#undef CALL_IQ",
         "#undef KERNEL_NAME",
+         ]
 
+    imagnetic = [
         # define the Imagnetic kernel
         "#define KERNEL_NAME %s_Imagnetic" % name,
         "#define MAGNETIC 1",
@@ -619,7 +624,7 @@ def _add_kernels(kernel, call_iq, call_iqxy, name):
         "#undef CALL_IQ",
         "#undef KERNEL_NAME",
     ]
-    return source
+    return iq+iqxy+imagnetic
 
 
 def load_kernel_module(model_name):

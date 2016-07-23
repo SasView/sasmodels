@@ -1,6 +1,18 @@
 from __future__ import print_function
 
 import numpy as np  # type: ignore
+from numpy import pi, cos, sin
+
+try:
+    np.meshgrid([])
+    meshgrid = np.meshgrid
+except ValueError:
+    # CRUFT: np.meshgrid requires multiple vectors
+    def meshgrid(*args):
+        if len(args) > 1:
+            return np.meshgrid(*args)
+        else:
+            return [np.asarray(v) for v in args]
 
 try:
     from typing import List
@@ -79,19 +91,28 @@ class CallDetails(object):
         print("pd_offset", self.pd_offset)
         print("pd_stride", self.pd_stride)
 
+
 def mono_details(model_info):
     call_details = CallDetails(model_info)
     call_details.pd_prod = 1
+    call_details.pd_sum = model_info.parameters.nvalues
+    call_details.pd_par[:] = np.arange(0, model_info.parameters.max_pd)
+    call_details.pd_length[:] = 1
+    call_details.pd_offset[:] = np.arange(0, model_info.parameters.max_pd)
+    call_details.pd_stride[:] = 1
     return call_details
+
 
 def poly_details(model_info, weights):
     #print("weights",weights)
     #weights = weights[2:] # Skip scale and background
 
     # Decreasing list of polydispersity lengths
-    pd_length = np.array([len(w) for w in weights])
+    #print([p.id for p in model_info.parameters.call_parameters])
+    pd_length = np.array([len(w) for w in weights[2:2+model_info.parameters.npars]])
     num_active = np.sum(pd_length>1)
-    if num_active > model_info.parameters.max_pd:
+    max_pd = model_info.parameters.max_pd
+    if num_active > max_pd:
         raise ValueError("Too many polydisperse parameters")
 
     pd_offset = np.cumsum(np.hstack((0, pd_length)))
@@ -99,17 +120,85 @@ def poly_details(model_info, weights):
     #print("len:",pd_length)
     #print("off:",pd_offset)
     # Note: the reversing view, x[::-1], does not require a copy
-    idx = np.argsort(pd_length)[::-1][:num_active]
-    par_length = np.array([len(w) for w in weights])
-    pd_stride = np.cumprod(np.hstack((1, par_length[idx])))
+    idx = np.argsort(pd_length)[::-1][:max_pd]
+    pd_stride = np.cumprod(np.hstack((1, pd_length[idx])))
 
     call_details = CallDetails(model_info)
-    call_details.pd_par[:num_active] = idx - 2  # skip background & scale
-    call_details.pd_length[:num_active] = pd_length[idx]
-    call_details.pd_offset[:num_active] = pd_offset[idx]
-    call_details.pd_stride[:num_active] = pd_stride[:-1]
+    call_details.pd_par[:max_pd] = idx
+    call_details.pd_length[:max_pd] = pd_length[idx]
+    call_details.pd_offset[:max_pd] = pd_offset[idx]
+    call_details.pd_stride[:max_pd] = pd_stride[:-1]
     call_details.pd_prod = pd_stride[-1]
-    call_details.pd_sum = np.sum(par_length)
+    call_details.pd_sum = sum(len(w) for w in weights)
     call_details.num_active = num_active
     #call_details.show()
     return call_details
+
+
+def dispersion_mesh(model_info, pars):
+    """
+    Create a mesh grid of dispersion parameters and weights.
+
+    Returns [p1,p2,...],w where pj is a vector of values for parameter j
+    and w is a vector containing the products for weights for each
+    parameter set in the vector.
+    """
+    value, weight = zip(*pars)
+    weight = [w if w else [1.] for w in weight]
+    weight = np.vstack([v.flatten() for v in meshgrid(*weight)])
+    weight = np.prod(weight, axis=0)
+    value = [v.flatten() for v in meshgrid(*value)]
+    lengths = [par.length for par in model_info.parameters.kernel_parameters
+               if par.type == 'volume']
+    if any(n > 1 for n in lengths):
+        pars = []
+        offset = 0
+        for n in lengths:
+            pars.append(np.vstack(value[offset:offset+n]) if n > 1 else value[offset])
+            offset += n
+        value = pars
+    return value, weight
+
+
+
+def build_details(kernel, pairs):
+    # type: (Kernel, Tuple[List[np.ndarray], List[np.ndarray]]) -> Tuple[CallDetails, np.ndarray, bool]
+    """
+    Converts (value, weight) pairs into parameters for the kernel call.
+
+    Returns a CallDetails object indicating the polydispersity, a data object
+    containing the different values, and the magnetic flag indicating whether
+    any magnetic magnitudes are non-zero. Magnetic vectors (M0, phi, theta) are
+    converted to rectangular coordinates (mx, my, mz).
+    """
+    values, weights = zip(*pairs)
+    scalars = [v[0] for v in values]
+    if all(len(w)==1 for w in weights):
+        call_details = mono_details(kernel.info)
+        data = np.array(scalars+scalars+[1]*len(scalars), dtype=kernel.dtype)
+    else:
+        call_details = poly_details(kernel.info, weights)
+        data = np.hstack(scalars+list(values)+list(weights)).astype(kernel.dtype)
+    is_magnetic = convert_magnetism(kernel.info.parameters, data)
+    #call_details.show()
+    return call_details, data, is_magnetic
+
+def convert_magnetism(parameters, values):
+    """
+    Convert magnetism in value table from polar to rectangular coordinates.
+
+    Returns True if any magnetism is present.
+    """
+    mag = values[parameters.nvalues-3*parameters.nmagnetic:parameters.nvalues]
+    mag = mag.reshape(-1, 3)
+    M0 = mag[:,0]
+    if np.any(M0):
+        theta, phi = mag[:,1]*pi/180., mag[:,2]*pi/180.
+        cos_theta = cos(theta)
+        mx = M0*cos_theta*cos(phi)
+        my = M0*sin(theta)
+        mz = -M0*cos_theta*sin(phi)
+        mag[:,0], mag[:,1], mag[:,2] = mx, my, mz
+        return True
+    else:
+        return False

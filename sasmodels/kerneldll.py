@@ -269,12 +269,11 @@ class DllModel(KernelModel):
 
         # int, int, int, int*, double*, double*, double*, double*, double
         argtypes = [c_int32]*3 + [c_void_p]*4 + [fp]
-        self._Iq = self._dll[generate.kernel_name(self.info, "Iq")]
-        self._Iqxy = self._dll[generate.kernel_name(self.info, "Iqxy")]
-        self._Imagnetic = self._dll[generate.kernel_name(self.info, "Imagnetic")]
-        self._Iq.argtypes = argtypes
-        self._Iqxy.argtypes = argtypes
-        self._Imagnetic.argtypes = argtypes
+        names = [generate.kernel_name(self.info, variant)
+                 for variant in ("Iq", "Iqxy", "Imagnetic")]
+        self._kernels = [self._dll[name] for name in names]
+        for k in self._kernels:
+            k.argtypes = argtypes
 
     def __getstate__(self):
         # type: () -> Tuple[ModelInfo, str]
@@ -285,13 +284,14 @@ class DllModel(KernelModel):
         self.info, self.dllpath = state
         self._dll = None
 
-    def make_kernel(self, q_vectors, magnetic=False):
+    def make_kernel(self, q_vectors):
         # type: (List[np.ndarray]) -> DllKernel
         q_input = PyInput(q_vectors, self.dtype)
         # Note: pickle not supported for DllKernel
         if self._dll is None:
             self._load_dll()
-        kernel = [self._Iqxy, self._Imagnetic] if q_input.is_2d else [self._Iq]*2
+        is_2d = len(q_vectors) == 2
+        kernel = self._kernels[1:3] if is_2d else [self._kernels[0]]*2
         return DllKernel(kernel, self.info, q_input)
 
     def release(self):
@@ -345,22 +345,30 @@ class DllKernel(Kernel):
     def __call__(self, call_details, values, cutoff, magnetic):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
 
-        #print("in kerneldll")
-        #print("values", values)
-        start, stop = 0, call_details.pd_prod
+        kernel = self.kernel[1 if magnetic else 0]
         args = [
             self.q_input.nq, # nq
-            start, # pd_start
-            stop, # pd_stop pd_stride[MAX_PD]
+            None, # pd_start
+            None, # pd_stop pd_stride[MAX_PD]
             call_details.buffer.ctypes.data, # problem
             values.ctypes.data,  #pars
             self.q_input.q.ctypes.data, #q
             self.result.ctypes.data,   # results
             self.real(cutoff), # cutoff
-            ]
-        #print("calling DLL")
-        self.kernel[1 if magnetic else 0](*args) # type: ignore
-        return self.result[:-1]
+        ]
+        #print("kerneldll values", values)
+        step = 100
+        for start in range(0, call_details.pd_prod, step):
+            stop = min(start+step, call_details.pd_prod)
+            args[1:3] = [start, stop]
+            #print("calling DLL")
+            kernel(*args) # type: ignore
+
+        #print("returned",self.q_input.q, self.result)
+        scale = values[0]/self.result[self.q_input.nq]
+        background = values[1]
+        #print("scale",scale,background)
+        return scale*self.result[:self.q_input.nq] + background
 
     def release(self):
         # type: () -> None

@@ -50,7 +50,7 @@ import unittest
 import numpy as np  # type: ignore
 
 from .core import list_models, load_model_info, build_model, HAVE_OPENCL
-from .kernel import dispersion_mesh
+from .details import dispersion_mesh
 from .direct_model import call_kernel, get_weights
 from .exception import annotate_exception
 from .modelinfo import expand_pars

@@ -22,7 +22,7 @@ from . import custom
 from . import generate
 from . import weights
 from . import modelinfo
-from . import kernel
+from .details import build_details, dispersion_mesh
 
 try:
     from typing import Dict, Mapping, Any, Sequence, Tuple, NamedTuple, List, Optional, Union, Callable
@@ -512,11 +512,9 @@ class SasviewModel(object):
         calculator = self._model.make_kernel(q_vectors)
         parameters = self._model_info.parameters
         pairs = [self._get_weights(p) for p in parameters.call_parameters]
-        call_details, values = kernel.build_details(calculator, pairs)
-        # TODO: should test for 2d?
-        magnetic = any(values[k]!=0 for k in parameters.magnetism_index)
+        call_details, values, is_magnetic = build_details(calculator, pairs)
         result = calculator(call_details, values, cutoff=self.cutoff,
-                            magnetic=magnetic)
+                            magnetic=is_magnetic)
         calculator.release()
         return result
 
@@ -590,7 +588,7 @@ class SasviewModel(object):
         pars = [self._get_weights(p)
                 for p in self._model_info.parameters.call_parameters
                 if p.type == 'volume']
-        return kernel.dispersion_mesh(self._model_info, pars)
+        return dispersion_mesh(self._model_info, pars)
 
     def _get_weights(self, par):
         # type: (Parameter) -> Tuple[np.ndarray, np.ndarray]

@@ -415,8 +415,11 @@ class ParameterTable(object):
         self._set_vector_lengths()
 
         self.npars = sum(p.length for p in self.kernel_parameters)
-        self.num_magnetic = sum(p.length for p in self.kernel_parameters
-                                if p.type=='sld')
+        self.nmagnetic = sum(p.length for p in self.kernel_parameters
+                             if p.type=='sld')
+        self.nvalues = 2 + self.npars
+        if self.nmagnetic:
+            self.nvalues += 3 + 3*self.nmagnetic
 
         self.call_parameters = self._get_call_parameters()
         self.defaults = self._get_defaults()
@@ -521,7 +524,7 @@ class ParameterTable(object):
                     full_list.append(pk)
 
         # Add the magnetic parameters to the end of the call parameter list.
-        if self.num_magnetic > 0:
+        if self.nmagnetic > 0:
             full_list.extend([
                 Parameter('up:frac_i', '', 0., [0., 1.],
                           'magnetic', 'fraction of spin up incident'),

@@ -72,7 +72,7 @@ form_volume = """
     return 1.0;
     """
 
-Iq = """
+Iq = r"""
       double D,A,B,G,X,X2,X4,S,C,FF,HARDSPH;
       // these are c compiler instructions, can also put normal code inside the "if else" structure 
       #if FLOAT_SIZE > 4
@@ -86,6 +86,7 @@ Iq = """
 
       if(fabs(radius_effective) < 1.E-12) {
                HARDSPH=1.0;
+//printf("HS1 %g: %g\n",q,HARDSPH);
                return(HARDSPH);
       }
       // removing use of pow(xxx,2) and rearranging the calcs of A, B & G cut ~40% off execution time ( 0.5 to 0.3 msec)
@@ -97,6 +98,7 @@ Iq = """
 
       if(X < 5.E-06) {
                  HARDSPH=1./A;
+//printf("HS2 %g: %g\n",q,HARDSPH);
                  return(HARDSPH);
       }
       X2 =X*X;
@@ -121,6 +123,7 @@ Iq = """
             // note that G = -volfraction*A/2, combining this makes no further difference at smallest Q
             //FF = (8 +2.*volfraction + ( volfraction/4. -0.8 +(volfraction/100. -1./35.)*X2 )*X2 )*A  + (3.0 -X2/3. +X4/40.)*2.*B;
             HARDSPH= 1./(1. + volfraction*FF );
+//printf("HS3 %g: %g\n",q,HARDSPH);
             return(HARDSPH);
       }
       X4=X2*X2;
@@ -145,6 +148,7 @@ Iq = """
 // remove 1/X2 from final line, take more powers of X inside the brackets, stil bad
 //      FF=A*(S/X3-C/X2) + B*(2.*S/X3 - C/X2 +2.0*(C-1.0)/X4) + G*( (4./X -24./X3)*S -(1.0 -12./X2 +24./X4)*C +24./X4 )/X2;
 //      HARDSPH= 1./(1. + 24.*volfraction*FF );
+//printf("HS4 %g: %g\n",q,HARDSPH);
       return(HARDSPH);
    """
 

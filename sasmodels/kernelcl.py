@@ -384,16 +384,17 @@ class GpuModel(KernelModel):
         self.info, self.source, self.dtype, self.fast = state
         self.program = None
 
-    def make_kernel(self, q_vectors, magnetic=False):
+    def make_kernel(self, q_vectors):
         # type: (List[np.ndarray]) -> "GpuKernel"
         if self.program is None:
             compiler = environment().compile_program
             self.program = compiler(self.info.name, self.source,
                                     self.dtype, self.fast)
+            names = [generate.kernel_name(self.info, variant)
+                     for variant in ("Iq", "Iqxy", "Imagnetic")]
+            self._kernels = [getattr(self.program, name) for name in names]
         is_2d = len(q_vectors) == 2
-        variant = "Imagnetic" if magnetic else "Iqxy" if is_2d else "Iq"
-        kernel_name = generate.kernel_name(self.info, variant)
-        kernel = getattr(self.program, kernel_name)
+        kernel = self._kernels[1:3] if is_2d else [self._kernels[0]]*2
         return GpuKernel(kernel, self.dtype, self.info, q_vectors)
 
     def release(self):
@@ -528,24 +529,34 @@ class GpuKernel(Kernel):
         values_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
                              hostbuf=values)
 
+        kernel = self.kernel[1 if magnetic else 0]
+        args = [
+            np.uint32(self.q_input.nq), None, None,
+            details_b, values_b, self.q_input.q_b, self.result_b,
+            self.real(cutoff),
+        ]
+        #print("Calling OpenCL")
+        #print("values",values)
         # Call kernel and retrieve results
+        last_call = None
         step = 100
-        #print("calling OpenCL")
         for start in range(0, call_details.pd_prod, step):
             stop = min(start+step, call_details.pd_prod)
-            args = [
-                np.uint32(self.q_input.nq), np.int32(start), np.int32(stop),
-                details_b, values_b, self.q_input.q_b, self.result_b,
-                self.real(cutoff),
-            ]
-            self.kernel(self.queue, self.q_input.global_size, None, *args)
+            #print("queuing",start,stop)
+            args[1:3] = [np.int32(start), np.int32(stop)]
+            last_call = [kernel(self.queue, self.q_input.global_size,
+                                None, *args, wait_for=last_call)]
         cl.enqueue_copy(self.queue, self.result, self.result_b)
 
         # Free buffers
         for v in (details_b, values_b):
             if v is not None: v.release()
 
-        return self.result[:self.q_input.nq]
+        scale = values[0]/self.result[self.q_input.nq]
+        background = values[1]
+        #print("scale",scale,background)
+        return scale*self.result[:self.q_input.nq] + background
+        # return self.result[:self.q_input.nq]
 
     def release(self):
         # type: () -> None

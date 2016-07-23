@@ -29,7 +29,7 @@ from . import sesans  # type: ignore
 from . import weights
 from . import resolution
 from . import resolution2d
-from . import kernel
+from .details import build_details
 
 try:
     from typing import Optional, Dict, Tuple
@@ -64,14 +64,14 @@ def call_kernel(calculator, pars, cutoff=0., mono=False):
     else:
         active = lambda name: True
 
+    #print("pars",[p.id for p in parameters.call_parameters])
     vw_pairs = [(get_weights(p, pars) if active(p.name)
                  else ([pars.get(p.name, p.default)], [1.0]))
                 for p in parameters.call_parameters]
 
-    call_details, values = kernel.build_details(calculator, vw_pairs)
-    magnetic = any(values[k]!=0 for k in parameters.magnetism_index)
+    call_details, values, is_magnetic = build_details(calculator, vw_pairs)
     #print("values:", values)
-    return calculator(call_details, values, cutoff, magnetic)
+    return calculator(call_details, values, cutoff, is_magnetic)
 
 def get_weights(parameter, values):
     # type: (Parameter, Dict[str, float]) -> Tuple[np.ndarray, np.ndarray]
