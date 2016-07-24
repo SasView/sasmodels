@@ -37,6 +37,14 @@ MODELS_WITHOUT_VOLFRACTION = [
     'multilayer_vesicle',
 ]
 
+MAGNETIC_SASVIEW_MODELS = [
+    'core_shell',
+    'core_multi_shell',
+    'cylinder',
+    'parallelepiped',
+    'sphere',
+]
+
 
 # Convert new style names for polydispersity info to old style names
 PD_DOT = [
@@ -192,6 +200,9 @@ def revert_pars(model_info, pars):
         if oldpars.pop('background', 0.0) != 0.0:
             warnings.warn("parameter background not used in sasview %s"%name)
 
+    # Remove magnetic parameters from non-magnetic sasview models
+    if name not in MAGNETIC_SASVIEW_MODELS:
+        oldpars = dict((k,v) for k,v in oldpars.items() if ':' not in k)
 
     # If it is a product model P*S, then check the individual forms for special
     # cases.  Note: despite the structure factor alone not having scale or
@@ -217,6 +228,22 @@ def revert_pars(model_info, pars):
             for k in range(1, int(pars['n_shells'])+1):
                 _remove_pd(oldpars, 'thick_flat'+str(k), 'thick_flat')
                 _remove_pd(oldpars, 'thick_inter'+str(k), 'thick_inter')
+        elif name == 'core_multi_shell':
+            # kill extra shells
+            for k in range(5, 11):
+                oldpars.pop('sld_shell'+str(k), 0)
+                oldpars.pop('thick_shell'+str(k), 0)
+                oldpars.pop('mtheta:sld'+str(k), 0)
+                oldpars.pop('mphi:sld'+str(k), 0)
+                oldpars.pop('M0:sld'+str(k), 0)
+                _remove_pd(oldpars, 'sld_shell'+str(k), 'sld')
+                _remove_pd(oldpars, 'thick_shell'+str(k), 'thickness')
+        elif name == 'core_shell_parallelepiped':
+            _remove_pd(oldpars, 'rimA', name)
+        elif name in ['mono_gauss_coil','poly_gauss_coil']:
+            del oldpars['i_zero']
+        elif name == 'onion':
+            oldpars.pop('n_shells', None)
         elif name == 'rpa':
             # convert scattering lengths from femtometers to centimeters
             for p in "L1", "L2", "L3", "L4":
@@ -233,12 +260,6 @@ def revert_pars(model_info, pars):
                         oldpars.pop(p+k, None)
                 for k in "Kab,Kac,Kad".split(','):
                     oldpars.pop(k, None)
-        elif name == 'core_shell_parallelepiped':
-            _remove_pd(oldpars, 'rimA', name)
-        elif name in ['mono_gauss_coil','poly_gauss_coil']:
-            del oldpars['i_zero']
-        elif name == 'onion':
-            oldpars.pop('n_shells', None)
 
     return oldpars
 
@@ -255,6 +276,22 @@ def constrain_new_to_old(model_info, pars):
     # sasview multiplies background by structure factor
     if '*' in name:
         pars['background'] = 0
+
+    # Shut off magnetism when comparing non-magnetic sasview models
+    if name not in MAGNETIC_SASVIEW_MODELS:
+        suppress_magnetism = False
+        for key in pars.keys():
+            suppress_magnetism = suppress_magnetism or (pars[key] != 0)
+            if key.startswith("M0:"):
+                pars[key] = 0
+        if suppress_magnetism:
+            warnings.warn("suppressing magnetism for comparison with sasview")
+
+    # Shut off theta polydispersity since algorithm has changed
+    if 'theta_pd_n' in pars:
+        if pars['theta_pd_n'] != 0:
+            warnings.warn("suppressing theta polydispersity for comparison with sasview")
+        pars['theta_pd_n'] = 0
 
     # If it is a product model P*S, then check the individual forms for special
     # cases.  Note: despite the structure factor alone not having scale or

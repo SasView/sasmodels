@@ -85,7 +85,28 @@ CONVERSION_TABLE = {
             "radius": "rad_core0",
             "sld_core": "sld_core0",
             "sld_solvent": "sld_solv",
-            "n": "n_shells"
+            "n": "n_shells",
+            "M0:sld_core": "M0_sld_core0",
+            "mtheta:sld_core": "M_theta_core0",
+            "mphi:sld_core": "M_phi_core0",
+            "M0:sld1": "M0_sld_shell1",
+            "mtheta:sld1": "M_theta_shell1",
+            "mphi:sld1": "M_phi_shell1",
+            "M0:sld2": "M0_sld_shell2",
+            "mtheta:sld2": "M_theta_shell2",
+            "mphi:sld2": "M_phi_shell2",
+            "M0:sld3": "M0_sld_shell3",
+            "mtheta:sld3": "M_theta_shell3",
+            "mphi:sld3": "M_phi_shell3",
+            "M0:sld4": "M0_sld_shell4",
+            "mtheta:sld4": "M_theta_shell4",
+            "mphi:sld4": "M_phi_shell4",
+            "M0:sld_solvent": "M0_sld_solv",
+            "mtheta:sld_solvent": "M_theta_solv",
+            "mphi:sld_solvent": "M_phi_solv",
+            "up:frac_i": "Up_frac_i",
+            "up:frac_f": "Up_frac_f",
+            "up:angle": "Up_theta",
         }
     ],
     "core_shell_bicelle": [
@@ -160,9 +181,21 @@ CONVERSION_TABLE = {
     "core_shell_sphere": [
         "CoreShellModel",
         {
+            "sld_core": "core_sld",
             "sld_shell": "shell_sld",
             "sld_solvent": "solvent_sld",
-            "sld_core": "core_sld"
+            "M0:sld_core": "M0_sld_core",
+            "mtheta:sld_core": "M_theta_core",
+            "mphi:sld_core": "M_phi_core",
+            "M0:sld_shell": "M0_sld_shell",
+            "mtheta:sld_shell": "M_theta_shell",
+            "mphi:sld_shell": "M_phi_shell",
+            "M0:sld_solvent": "M0_sld_solv",
+            "mtheta:sld_solvent": "M_theta_solv",
+            "mphi:sld_solvent": "M_phi_solv",
+            "up:frac_i": "Up_frac_i",
+            "up:frac_f": "Up_frac_f",
+            "up:angle": "Up_theta"
         }
     ],
     "correlation_length": [
@@ -505,7 +538,16 @@ CONVERSION_TABLE = {
             "b_side": "short_b",
             "sld": "sldPipe",
             "theta": "parallel_theta",
-            "c_side": "long_c"
+            "c_side": "long_c",
+            "M0:sld": "M0_sld_pipe",
+            "mtheta:sld": "M_theta_pipe",
+            "mphi:sld": "M_phi_pipe",
+            "M0:sld_solvent": "M0_sld_solv",
+            "mtheta:sld_solvent": "M_theta_solv",
+            "mphi:sld_solvent": "M_phi_solv",
+            "up:frac_i": "Up_frac_i",
+            "up:frac_f": "Up_frac_f",
+            "up:angle": "Up_theta",
         }
     ],
     "peak_lorentz": [
