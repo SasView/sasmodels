@@ -122,8 +122,10 @@ void KERNEL_NAME(
   }
 //printf("start %d %g %g\n", pd_start, pd_norm, result[0]);
 
+#if MAX_PD>0
   global const double *pd_value = values + NUM_VALUES + 2;
   global const double *pd_weight = pd_value + details->pd_sum;
+#endif
 
   // Jump into the middle of the polydispersity loop
 #if MAX_PD>4
