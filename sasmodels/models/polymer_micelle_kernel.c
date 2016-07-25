@@ -10,20 +10,6 @@ double Iq(double q,
         double d_penetration,
         double n_aggreg);
 
-
-double Iqxy(double qx, double qy,
-            double ndensity,
-            double v_core,
-            double v_corona,
-            double solvent_sld,
-            double core_sld,
-            double corona_sld,
-            double radius_core,
-            double radius_gyr,
-            double d_penetration,
-            double n_aggreg);
-
-
 static double micelle_spherical_kernel(double q,
         double ndensity,
         double v_core,
@@ -99,31 +85,3 @@ double Iq(double q,
             d_penetration,
             n_aggreg);
 }
-
-double Iqxy(double qx, double qy,
-            double ndensity,
-            double v_core,
-            double v_corona,
-            double solvent_sld,
-            double core_sld,
-            double corona_sld,
-            double radius_core,
-            double radius_gyr,
-            double d_penetration,
-            double n_aggreg)
-{
-    double q = sqrt(qx*qx + qy*qy);
-    return micelle_spherical_kernel(q,
-            ndensity,
-            v_core,
-            v_corona,
-            solvent_sld,
-            core_sld,
-            corona_sld,
-            radius_core,
-            radius_gyr,
-            d_penetration,
-            n_aggreg);
-
-}
-

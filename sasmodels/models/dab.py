@@ -64,12 +64,6 @@ Iq = """
     return numerator / denominator ;
     """
 
-Iqxy = """
-    // never called since no orientation or magnetic parameters.
-    //return -1.0;
-    return Iq(sqrt(qx*qx + qy*qy), length);
-    """
-
 # ER defaults to 1.0
 
 # VR defaults to 1.0

@@ -58,24 +58,3 @@ double Iq(double q,
            n_pairs);
 }
 
-static
-double Iqxy(double qx, double qy,
-          double volfraction,
-          double radius,
-          double thick_shell,
-          double thick_solvent,
-          double sld_solvent,
-          double sld,
-          double n_pairs)
-{
-    double q = sqrt(qx*qx + qy*qy);
-
-    return multilayer_vesicle_kernel(q,
-           volfraction,
-           radius,
-           thick_shell,
-           thick_solvent,
-           sld_solvent,
-           sld,
-           n_pairs);
-}

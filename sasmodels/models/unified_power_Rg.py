@@ -61,7 +61,7 @@ G Beaucage, *J. Appl. Cryst.*, 29 (1996) 134-146
 from __future__ import division
 
 import numpy as np
-from numpy import inf, exp, sqrt
+from numpy import inf, exp, sqrt, errstate
 from scipy.special import erf
 
 parameters = [
@@ -75,16 +75,19 @@ parameters = [
 def Iq(q, level, rg, power, B, G):
     ilevel = int(level)
     if ilevel == 0:
-        return 1./q
+        with errstate(divide='ignore'):
+            return 1./q
 
-    result = np.zeros_like(q)
-    for i in range(ilevel):
-        exp_now = exp(-(q*rg[i])**2/3.)
-        pow_now = (erf(q*rg[i]/sqrt(6.))**3/q)**power[i]
-        exp_next = exp(-(q*rg[i+1])**2/3.) if i < ilevel-1 else 1.
-        result += G[i]*exp_now + B[i]*exp_next*pow_now
+    with errstate(divide='ignore', invalid='ignore'):
+        result = np.empty(q.shape, 'd')
+        for i in range(ilevel):
+            exp_now = exp(-(q*rg[i])**2/3.)
+            pow_now = (erf(q*rg[i]/sqrt(6.))**3/q)**power[i]
+            exp_next = exp(-(q*rg[i+1])**2/3.) if i < ilevel-1 else 1.
+            result += G[i]*exp_now + B[i]*exp_next*pow_now
     result[q==0] = np.sum(G[:ilevel])
     return result
+
 Iq.vectorized = True
 
 demo = dict(

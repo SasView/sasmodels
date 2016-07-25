@@ -44,7 +44,7 @@ R J Roe, *Methods of X-Ray and Neutron Scattering in Polymer Science*, Oxford Un
 http://www.ncnr.nist.gov/staff/hammouda/distance_learning/chapter_28.pdf
 """
 
-from numpy import inf, sqrt, exp
+from numpy import inf, exp, errstate
 
 name =  "mono_gauss_coil"
 title =  "Scattering from monodisperse polymer coils"
@@ -62,18 +62,13 @@ parameters =  [["i_zero", "1/cm", 70.0, [0.0, inf], "", "Intensity at q=0"],
 # NB: Scale and Background are implicit parameters on every model
 def Iq(q, i_zero, radius_gyration):
     # pylint: disable = missing-docstring
-    z = (q * radius_gyration) * (q * radius_gyration)
-    if (q == 0).any():
-       inten = i_zero
-    else:
-       inten = i_zero * 2.0 * (exp(-z) + z - 1.0 ) / (z * z)
-    return inten
-#Iq.vectorized = True # Iq accepts an array of q values
+    z = (q * radius_gyration)**2
 
-def Iqxy(qx, qy, *args):
-    # pylint: disable = missing-docstring
-    return Iq(sqrt(qx ** 2 + qy ** 2), *args)
-#Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
+    with errstate(invalid='ignore'):
+        inten = (i_zero * 2.0) * (exp(-z) + z - 1.0)/z**2
+        inten[q == 0] = i_zero
+    return inten
+Iq.vectorized = True # Iq accepts an array of q values
 
 demo =  dict(scale = 1.0,
             i_zero = 70.0,

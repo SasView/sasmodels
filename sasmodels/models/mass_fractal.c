@@ -5,12 +5,6 @@ double Iq(double q,
           double mass_dim,
           double cutoff_length);
 
-double Iqxy(double qx, double qy,
-          double radius,
-          double mass_dim,
-          double cutoff_length);
-
-
 static double _mass_fractal_kernel(double q,
           double radius,
           double mass_dim,
@@ -52,17 +46,3 @@ double Iq(double q,
            mass_dim,
            cutoff_length);
 }
-
-// Iqxy is never called since no orientation or magnetic parameters.
-double Iqxy(double qx, double qy,
-          double radius,
-          double mass_dim,
-          double cutoff_length)
-{
-    double q = sqrt(qx*qx + qy*qy);
-    return _mass_fractal_kernel(q,
-           radius,
-           mass_dim,
-           cutoff_length);
-}
-

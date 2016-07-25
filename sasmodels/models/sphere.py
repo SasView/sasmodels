@@ -77,12 +77,6 @@ Iq = """
     return sphere_form(q, radius, sld, sld_solvent);
     """
 
-Iqxy = """
-    // never called since no orientation or magnetic parameters.
-    //return -1.0;
-    return Iq(sqrt(qx*qx + qy*qy), sld, sld_solvent, radius);
-    """
-
 def ER(radius):
     """
     Return equivalent radius (ER)

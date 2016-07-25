@@ -1,5 +1,3 @@
-double form_volume(double radius);
-
 double Iq(double q,
           double volfraction,
           double radius,
@@ -7,15 +5,6 @@ double Iq(double q,
           double cor_length,
           double sld_block,
           double sld_solvent);
-
-double Iqxy(double qx, double qy,
-          double volfraction,
-          double radius,
-          double fractal_dim,
-          double cor_length,
-          double sld_block,
-          double sld_solvent);
-
 
 double Iq(double q,
           double volfraction,
@@ -61,23 +50,5 @@ double Iq(double q,
     
     
     return(inten);
-}
-
-
-// Iqxy is never called since no orientation or magnetic parameters.
-double Iqxy(double qx, double qy,
-          double volfraction,
-          double radius,
-          double fractal_dim,
-          double cor_length,
-          double sld_block,
-          double sld_solvent)
-{
-    double q = sqrt(qx*qx + qy*qy);
-    return Iq(q,
-        volfraction, radius,
-        fractal_dim, cor_length,
-        sld_block, sld_solvent);
-
 }
 

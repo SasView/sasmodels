@@ -44,24 +44,10 @@ parameters = [["q0", "1/Ang", 0.05, [-inf, inf], "", "Peak position"],
                "Peak width (standard deviation)"],
              ]
 
-# No volume normalization despite having a volume parameter
-# This should perhaps be volume normalized?
-form_volume = """
-    return 1.0;
-    """
-
 Iq = """
     double scaled_dq = (q - q0)/sigma;
     return exp(-0.5*scaled_dq*scaled_dq); //sqrt(2*M_PI*sigma*sigma);
     """
-
-
-Iqxy = """
-    // never called since no orientation or magnetic parameters.
-    //return -1.0;
-    return Iq(sqrt(qx*qx + qy*qy), q0, sigma);
-    """
-
 
 # VR defaults to 1.0
 

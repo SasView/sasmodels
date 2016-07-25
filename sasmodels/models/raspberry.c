@@ -5,11 +5,6 @@ double Iq(double q,
           double volfraction_lg, double volfraction_sm, double surf_fraction,
           double radius_lg, double radius_sm, double penetration);
 
-double Iqxy(double qx, double qy,
-          double sld_lg, double sld_sm, double sld_solvent,
-          double volfraction_lg, double volfraction_sm, double surf_fraction,
-          double radius_lg, double radius_sm, double penetration);
-
 double form_volume(double radius_lg)
 {
     //Because of the complex structure, volume normalization must
@@ -86,20 +81,4 @@ double Iq(double q,
     f2 *= 1.0e-12;      // convert for (1/A^-6)^2 to (1/A)^2
     
     return f2;
-}
-
-
-
-double Iqxy(double qx, double qy,
-          double sld_lg, double sld_sm, double sld_solvent,
-          double volfraction_lg, double volfraction_sm, double surf_fraction,
-          double radius_lg, double radius_sm, double penetration)
-          
-{
-    double q = sqrt(qx*qx + qy*qy);
-    return Iq(q,
-          sld_lg, sld_sm, sld_solvent,
-          volfraction_lg, volfraction_sm, surf_fraction,
-          radius_lg, radius_sm, penetration);
-
 }

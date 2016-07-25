@@ -564,7 +564,7 @@ def make_source(model_info):
         call_iqxy = "#define CALL_IQ(_q,_i,_v) Iqxy(%s)" % (",".join(refs))
     else:
         # Call 1D model with sqrt(qx^2 + qy^2)
-        warnings.warn("Creating Iqxy = Iq(sqrt(qx^2 + qy^2))")
+        #warnings.warn("Creating Iqxy = Iq(sqrt(qx^2 + qy^2))")
         # still defined:: refs = ["q[i]"] + _call_pars("v", iq_parameters)
         pars_sqrt = ["sqrt(_q[2*_i]*_q[2*_i]+_q[2*_i+1]*_q[2*_i+1])"] + refs[1:]
         call_iqxy = "#define CALL_IQ(_q,_i,_v) Iq(%s)" % (",".join(pars_sqrt))

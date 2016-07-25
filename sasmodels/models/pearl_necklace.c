@@ -7,9 +7,6 @@ double form_volume(double radius, double edge_separation,
 double Iq(double q, double radius, double edge_separation,
 	double string_thickness, double number_of_pearls, double sld, 
 	double string_sld, double solvent_sld);
-double Iqxy(double qx, double qy, double radius, double edge_separation,
-	double string_thickness, double number_of_pearls, double sld, 
-	double string_sld, double solvent_sld);
 
 // From Igor library
 double _pearl_necklace_kernel(double q, double radius, double edge_separation, double thick_string,
@@ -137,13 +134,4 @@ double Iq(double q, double radius, double edge_separation,
 	tot_vol = form_volume(radius, edge_separation, string_thickness, number_of_pearls);
 
 	return value*tot_vol;
-}
-
-double Iqxy(double qx, double qy, double radius, double edge_separation,
-	double string_thickness, double number_of_pearls, double sld, 
-	double string_sld, double solvent_sld)
-{
-    double q = sqrt(qx*qx + qy*qy);
-    return(Iq(q, radius, edge_separation, string_thickness, number_of_pearls, 
-		sld, string_sld, solvent_sld));
 }

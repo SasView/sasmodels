@@ -50,7 +50,7 @@ S King, P Griffiths, J Hone, and T Cosgrove,
 *SANS from Adsorbed Polymer Layers*, *Macromol. Symp.*, 190 (2002) 33-42.
 """
 
-from numpy import inf, sqrt, pi, exp
+from numpy import inf, pi, exp, errstate
 
 name = "adsorbed_layer"
 title = "Scattering from an adsorbed layer on particles"
@@ -86,10 +86,11 @@ def Iq(q, second_moment, adsorbed_amount, density_shell, radius,
     #eterm =  exp(-1.0 * (q * q) * (second_moment * second_moment))
     ##scale by 10^-2 for units conversion to cm^-1
     #inten =  1.0e-02 * deltarhosqrd * ((numerator / denominator) * eterm)
-    aa = (sld_shell - sld_solvent) * adsorbed_amount / q / density_shell
+    with errstate(divide='ignore'):
+        aa = ((sld_shell - sld_solvent)/density_shell * adsorbed_amount) / q
     bb = q * second_moment
     #scale by 10^-2 for units conversion to cm^-1
-    inten = 6.0e-02 * pi * volfraction * aa * aa * exp(-bb * bb) / radius
+    inten = 6.0e-02 * pi * volfraction * aa**2 * exp(-bb**2) / radius
     return inten
 Iq.vectorized =  True  # Iq accepts an array of q values
 

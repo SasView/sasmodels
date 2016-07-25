@@ -98,12 +98,6 @@ Iq = """
     return 1.0e-4*fq*fq;
     """
 
-Iqxy = """
-    // never called since no orientation or magnetic parameters.
-    //return -1.0;
-    return Iq(sqrt(qx*qx + qy*qy), sld, sld_solvent, radius, fuzziness);
-    """
-
 def ER(radius):
     """
     Return radius

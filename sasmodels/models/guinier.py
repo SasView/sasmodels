@@ -45,10 +45,6 @@ Iq = """
     return value;
 """
 
-Iqxy = """
-    return Iq(sqrt(qx*qx + qy*qy), rg);
-    """
-
 # parameters for demo
 demo = dict(scale=1.0, rg=60.0)
 

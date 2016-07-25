@@ -67,20 +67,9 @@ parameters = [["a2", "", 0.1, [0, inf], "",
              ]
 
 
-def form_volume(radius):
-    return 1.0
-
 def Iq(q, a2, c1, c2):
     return 1. / np.polyval([c2, c1, a2], q**2)
 Iq.vectorized = True  # Iq accepts an array of q values
-
-def Iqxy(qx, qy, a2, c1, c2):
-    return Iq(sqrt(qx**2 + qy**2), a2, c1, c2)
-Iqxy.vectorized = True  # Iqxy accepts arrays of qx, qy values
-
-# ER defaults to 0.0
-
-# VR defaults to 1.0
 
 demo = dict(scale=1, background=0, a2=0.1, c1=-30.0, c2=5000.0)
 tests = [[{}, 0.2, 0.145927536232]]

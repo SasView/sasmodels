@@ -115,19 +115,6 @@ def Iq(q,
 Iq.vectorized = True  # Iq accepts an array of q values
 
 
-def Iqxy(qx, qy, *args):
-    """
-    :param qx:   Input q_x-value
-    :param qy:   Input q_y-value
-    :param args: Remaining arguments
-    :return:     2D-Intensity
-    """
-    intensity = Iq(sqrt(qx**2 + qy**2), *args)
-    return intensity
-
-Iqxy.vectorized = True  # Iqxy accepts an array of qx, qy values
-
-
 demo = dict(scale=1, background=0.1,
             contrast_factor=10.0,
             bjerrum_length=7.1,

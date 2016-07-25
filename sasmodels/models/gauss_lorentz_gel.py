@@ -42,7 +42,7 @@ G Evmenenko, E Theunissen, K Mortensen, H Reynaers, *Polymer*,
 
 """
 
-from numpy import inf, sqrt, exp
+from numpy import inf, exp
 
 name = "gauss_lorentz_gel"
 title = "Gauss Lorentz Gel model of scattering from a gel structure"
@@ -91,19 +91,6 @@ def Iq(q,
     return term1 + term2
 
 Iq.vectorized = True  # Iq accepts an array of q values
-
-
-def Iqxy(qx, qy, *args):
-    """
-    :param qx:   Input q_x-value
-    :param qy:   Input q_y-value
-    :param args: Remaining aruments
-    :return:     2-D intensity
-    """
-
-    return Iq(sqrt(qx**2 + qy**2), *args)
-
-Iqxy.vectorized = True  # Iqxy accepts an array of qx, qy values
 
 
 demo = dict(scale=1, background=0.1,

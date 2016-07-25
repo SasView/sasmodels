@@ -281,8 +281,8 @@ def constrain_new_to_old(model_info, pars):
     if name not in MAGNETIC_SASVIEW_MODELS:
         suppress_magnetism = False
         for key in pars.keys():
-            suppress_magnetism = suppress_magnetism or (pars[key] != 0)
             if key.startswith("M0:"):
+                suppress_magnetism = suppress_magnetism or (pars[key] != 0)
                 pars[key] = 0
         if suppress_magnetism:
             warnings.warn("suppressing magnetism for comparison with sasview")

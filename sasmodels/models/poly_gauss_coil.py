@@ -49,8 +49,7 @@ S M King, *Small Angle Neutron Scattering* in *Modern Techniques for Polymer Cha
 http://www.ncnr.nist.gov/staff/hammouda/distance_learning/chapter_28.pdf
 """
 
-import numpy as np
-from numpy import inf, exp, power, sqrt
+from numpy import inf, exp, power
 
 name =  "poly_gauss_coil"
 title =  "Scattering from polydisperse polymer coils"
@@ -81,11 +80,6 @@ def Iq(q, i_zero, radius_gyration, polydispersity):
     inten[index] /= z[index]**2
     return inten
 Iq.vectorized =  True  # Iq accepts an array of q values
-
-def Iqxy(qx, qy, *args):
-    # pylint: disable = missing-docstring
-    return Iq(sqrt(qx ** 2 + qy ** 2), *args)
-Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
 
 demo =  dict(scale = 1.0,
             i_zero = 70.0,

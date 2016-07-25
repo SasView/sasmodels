@@ -9,14 +9,6 @@ double Iq(double q,
           double sld_pringle,
           double sld_solvent);
 
-double Iqxy(double qx, double qy,
-          double radius,
-          double thickness,
-          double alpha,
-          double beta,
-          double sld_pringle,
-          double sld_solvent);
-
 static
 double pringleC(double radius,
                 double alpha,
@@ -186,22 +178,3 @@ double Iq(double q,
 
     return 1.0e-4*form*M_PI*radius*radius*thickness;
 }
-
-double Iqxy(double qx, double qy,
-            double radius,
-            double thickness,
-            double alpha,
-            double beta,
-            double sld_pringle,
-            double sld_solvent)
-{
-    double q = sqrt(qx*qx + qy*qy);
-    return Iq(q,
-            radius,
-            thickness,
-            alpha,
-            beta,
-            sld_pringle,
-            sld_solvent);
-}
-
