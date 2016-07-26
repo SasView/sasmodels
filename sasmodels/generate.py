@@ -486,9 +486,8 @@ def _add_source(source, code, path):
     source.append('#line 1 "%s"' % path)
     source.append(code)
 
-
 def make_source(model_info):
-    # type: (ModelInfo) -> str
+    # type: (ModelInfo) -> Dict[str, str]
     """
     Generate the OpenCL/ctypes kernel from the module info.
 
@@ -574,22 +573,26 @@ def make_source(model_info):
 
     # Fill in definitions for numbers of parameters
     source.append("#define MAX_PD %s"%partable.max_pd)
-    source.append("#define NPARS %d"%partable.npars)
-    source.append("#define NUM_MAGNETIC %d" % partable.nmagnetic)
+    source.append("#define NUM_PARS %d"%partable.npars)
     source.append("#define NUM_VALUES %d" % partable.nvalues)
+    source.append("#define NUM_MAGNETIC %d" % partable.nmagnetic)
     source.append("#define MAGNETIC_PARS %s"%",".join(str(k) for k in magpars))
+    for k,v in enumerate(magpars[:3]):
+        source.append("#define MAGNETIC_PAR%d %d"%(k+1, v))
 
     # TODO: allow mixed python/opencl kernels?
 
-    source.append("#if defined(USE_OPENCL)")
-    source.extend(_add_kernels(ocl_code, call_iq, call_iqxy, model_info.name))
-    source.append("#else /* !USE_OPENCL */")
-    source.extend(_add_kernels(dll_code, call_iq, call_iqxy, model_info.name))
-    source.append("#endif /* !USE_OPENCL */")
-    return '\n'.join(source)
+    ocl = kernels(ocl_code, call_iq, call_iqxy, model_info.name)
+    dll = kernels(dll_code, call_iq, call_iqxy, model_info.name)
+    result = {
+        'dll': '\n'.join(source+dll[0]+dll[1]+dll[2]),
+        'opencl': '\n'.join(source+ocl[0]+ocl[1]+ocl[2]),
+    }
+
+    return result
 
 
-def _add_kernels(kernel, call_iq, call_iqxy, name):
+def kernels(kernel, call_iq, call_iqxy, name):
     # type: ([str,str], str, str, str) -> List[str]
     code = kernel[0]
     path = kernel[1].replace('\\', '\\\\')
@@ -597,7 +600,7 @@ def _add_kernels(kernel, call_iq, call_iqxy, name):
         # define the Iq kernel
         "#define KERNEL_NAME %s_Iq" % name,
         call_iq,
-        '#line 1 "%s-Iq"' % path,
+        '#line 1 "%s Iq"' % path,
         code,
         "#undef CALL_IQ",
         "#undef KERNEL_NAME",
@@ -607,7 +610,7 @@ def _add_kernels(kernel, call_iq, call_iqxy, name):
         # define the Iqxy kernel from the same source with different #defines
         "#define KERNEL_NAME %s_Iqxy" % name,
         call_iqxy,
-        '#line 1 "%s-Iqxy"' % path,
+        '#line 1 "%s Iqxy"' % path,
         code,
         "#undef CALL_IQ",
         "#undef KERNEL_NAME",
@@ -618,13 +621,14 @@ def _add_kernels(kernel, call_iq, call_iqxy, name):
         "#define KERNEL_NAME %s_Imagnetic" % name,
         "#define MAGNETIC 1",
         call_iqxy,
-        '#line 1 "%s-Imagnetic"' % path,
+        '#line 1 "%s Imagnetic"' % path,
         code,
         "#undef MAGNETIC",
         "#undef CALL_IQ",
         "#undef KERNEL_NAME",
     ]
-    return iq+iqxy+imagnetic
+
+    return iq, iqxy, imagnetic
 
 
 def load_kernel_module(model_name):
@@ -738,7 +742,7 @@ def main():
         kernel_module = load_kernel_module(name)
         model_info = make_model_info(kernel_module)
         source = make_source(model_info)
-        print(source)
+        print(source['dll'])
 
 
 if __name__ == "__main__":

@@ -33,7 +33,8 @@ typedef struct {
 #endif // _PAR_BLOCK_
 
 
-#ifdef MAGNETIC
+#if defined(MAGNETIC) && NUM_MAGNETIC>0
+
 // Return value restricted between low and high
 static double clip(double value, double low, double high)
 {
@@ -46,15 +47,21 @@ static double clip(double value, double low, double high)
 //     dd * (sld + m_sigma_x);
 //     ud * (m_sigma_y + 1j*m_sigma_z);
 //     du * (m_sigma_y - 1j*m_sigma_z);
-static void spins(double in_spin, double out_spin,
-    double *uu, double *dd, double *ud, double *du)
+static void set_spins(double in_spin, double out_spin, double spins[4])
 {
   in_spin = clip(in_spin, 0.0, 1.0);
   out_spin = clip(out_spin, 0.0, 1.0);
-  *uu = sqrt(sqrt(in_spin * out_spin));
-  *dd = sqrt(sqrt((1.0-in_spin) * (1.0-out_spin)));
-  *ud = sqrt(sqrt(in_spin * (1.0-out_spin)));
-  *du = sqrt(sqrt((1.0-in_spin) * out_spin));
+  spins[0] = sqrt(sqrt((1.0-in_spin) * (1.0-out_spin))); // dd
+  spins[1] = sqrt(sqrt((1.0-in_spin) * out_spin));       // du
+  spins[2] = sqrt(sqrt(in_spin * (1.0-out_spin)));       // ud
+  spins[3] = sqrt(sqrt(in_spin * out_spin));             // uu
+}
+
+static double mag_sld(double qx, double qy, double p,
+                       double mx, double my, double sld)
+{
+    const double perp = qy*mx - qx*my;
+    return sld + perp*p;
 }
 
 #endif // MAGNETIC
@@ -77,24 +84,22 @@ void KERNEL_NAME(
   ParameterBlock local_values;
   double *pvec = (double *)&local_values;
 
-#ifdef MAGNETIC
+#if defined(MAGNETIC) && NUM_MAGNETIC>0
   // Location of the sld parameters in the parameter pvec.
   // These parameters are updated with the effective sld due to magnetism.
+  #if NUM_MAGNETIC > 3
   const int32_t slds[] = { MAGNETIC_PARS };
-
-  const double up_frac_i = values[NPARS+2];
-  const double up_frac_f = values[NPARS+3];
-  const double up_angle = values[NPARS+4];
-  #define MX(_k) (values[NPARS+5+3*_k])
-  #define MY(_k) (values[NPARS+6+3*_k])
-  #define MZ(_k) (values[NPARS+7+3*_k])
+  #endif
 
   // TODO: could precompute these outside of the kernel.
   // Interpret polarization cross section.
-  double uu, dd, ud, du;
+  //     up_frac_i = values[NUM_PARS+2];
+  //     up_frac_f = values[NUM_PARS+3];
+  //     up_angle = values[NUM_PARS+4];
+  double spins[4];
   double cos_mspin, sin_mspin;
-  spins(up_frac_i, up_frac_f, &uu, &dd, &ud, &du);
-  SINCOS(-up_angle*M_PI_180, sin_mspin, cos_mspin);
+  set_spins(values[NUM_PARS+2], values[NUM_PARS+3], spins);
+  SINCOS(-values[NUM_PARS+4]*M_PI_180, sin_mspin, cos_mspin);
 #endif // MAGNETIC
 
   // Fill in the initial variables
@@ -103,7 +108,7 @@ void KERNEL_NAME(
   #ifdef USE_OPENMP
   #pragma omp parallel for
   #endif
-  for (int i=0; i < NPARS; i++) {
+  for (int i=0; i < NUM_PARS; i++) {
     pvec[i] = values[2+i];
 //printf("p%d = %g\n",i, pvec[i]);
   }
@@ -227,7 +232,7 @@ void KERNEL_NAME(
     const double weight0 = 1.0;
 #endif
 
-//printf("step:%d of %d, pars:",step,pd_stop); for (int i=0; i < NPARS; i++) printf("p%d=%g ",i, pvec[i]); printf("\n");
+//printf("step:%d of %d, pars:",step,pd_stop); for (int i=0; i < NUM_PARS; i++) printf("p%d=%g ",i, pvec[i]); printf("\n");
 //printf("sphcor: %g\n", spherical_correction);
 
     #ifdef INVALID
@@ -246,57 +251,52 @@ void KERNEL_NAME(
         #pragma omp parallel for
         #endif
         for (int q_index=0; q_index<nq; q_index++) {
-#ifdef MAGNETIC
+#if defined(MAGNETIC) && NUM_MAGNETIC > 0
           const double qx = q[2*q_index];
           const double qy = q[2*q_index+1];
           const double qsq = qx*qx + qy*qy;
 
           // Constant across orientation, polydispersity for given qx, qy
-          double px, py, pz;
-          if (qsq > 1.e-16) {
-            px = (qy*cos_mspin + qx*sin_mspin)/qsq;
-            py = (qy*sin_mspin - qx*cos_mspin)/qsq;
-            pz = 1.0;
-          } else {
-            px = py = pz = 0.0;
-          }
-
           double scattering = 0.0;
-          if (uu > 1.e-8) {
-            for (int sk=0; sk<NUM_MAGNETIC; sk++) {
-                const double perp = (qy*MX(sk) - qx*MY(sk));
-                pvec[slds[sk]] = (values[slds[sk]+2] - perp*px)*uu;
+          // TODO: what is the magnetic scattering at q=0
+          if (qsq > 1.e-16) {
+            double p[4];
+            p[0] = (qy*cos_mspin + qx*sin_mspin)/qsq;
+            p[3] = -p[0];
+            p[1] = p[2] = (qy*sin_mspin - qx*cos_mspin)/qsq;
+
+            for (int index=0; index<4; index++) {
+              const double xs = spins[index];
+              if (xs > 1.e-8) {
+                const int spin_flip = (index==1) || (index==2);
+                const double pk = p[index];
+                for (int axis=0; axis<=spin_flip; axis++) {
+                  #define M1 NUM_PARS+5
+                  #define M2 NUM_PARS+8
+                  #define M3 NUM_PARS+13
+                  #define SLD(_M_offset, _sld_offset) \
+                      pvec[_sld_offset] = xs * (axis \
+                      ? (index==1 ? -values[_M_offset+2] : values[_M_offset+2]) \
+                      : mag_sld(qx, qy, pk, values[_M_offset], values[_M_offset+1], \
+                                (spin_flip ? 0.0 : values[_sld_offset+2])))
+                  #if NUM_MAGNETIC==1
+                      SLD(M1, MAGNETIC_PAR1);
+                  #elif NUM_MAGNETIC==2
+                      SLD(M1, MAGNETIC_PAR1);
+                      SLD(M2, MAGNETIC_PAR2);
+                  #elif NUM_MAGNETIC==3
+                      SLD(M1, MAGNETIC_PAR1);
+                      SLD(M2, MAGNETIC_PAR2);
+                      SLD(M3, MAGNETIC_PAR3);
+                  #else
+                  for (int sk=0; sk<NUM_MAGNETIC; sk++) {
+                      SLD(M1+3*sk, slds[sk]);
+                  }
+                  #endif
+                  scattering += CALL_IQ(q, q_index, local_values);
+                }
+              }
             }
-            scattering += CALL_IQ(q, q_index, local_values);
-          }
-          if (dd > 1.e-8){
-            for (int sk=0; sk<NUM_MAGNETIC; sk++) {
-                const double perp = (qy*MX(sk) - qx*MY(sk));
-                pvec[slds[sk]] = (values[slds[sk]+2] + perp*px)*dd;
-            }
-            scattering += CALL_IQ(q, q_index, local_values);
-          }
-          if (ud > 1.e-8){
-            for (int sk=0; sk<NUM_MAGNETIC; sk++) {
-                const double perp = (qy*MX(sk) - qx*MY(sk));
-                pvec[slds[sk]] = perp*py*ud;
-            }
-            scattering += CALL_IQ(q, q_index, local_values);
-            for (int sk=0; sk<NUM_MAGNETIC; sk++) {
-                pvec[slds[sk]] = MZ(sk)*pz*ud;
-            }
-            scattering += CALL_IQ(q, q_index, local_values);
-          }
-          if (du > 1.e-8) {
-            for (int sk=0; sk<NUM_MAGNETIC; sk++) {
-                const double perp = (qy*MX(sk) - qx*MY(sk));
-                pvec[slds[sk]] = perp*py*du;
-            }
-            scattering += CALL_IQ(q, q_index, local_values);
-            for (int sk=0; sk<NUM_MAGNETIC; sk++) {
-                pvec[slds[sk]] = -MZ(sk)*pz*du;
-            }
-            scattering += CALL_IQ(q, q_index, local_values);
           }
 #else  // !MAGNETIC
           const double scattering = CALL_IQ(q, q_index, local_values);

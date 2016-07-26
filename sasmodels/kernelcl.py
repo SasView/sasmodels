@@ -283,9 +283,6 @@ class GpuEnvironment(object):
             context = self.get_context(dtype)
             logging.info("building %s for OpenCL %s"
                          % (key, context.devices[0].name.strip()))
-            program = compile_model(context, source, np.dtype(dtype), fast)
-            #print("OpenCL compile",name)
-            dtype = np.dtype(dtype)
             program = compile_model(self.get_context(dtype),
                                     str(source), dtype, fast)
             self.compiled[key] = program
@@ -368,7 +365,7 @@ class GpuModel(KernelModel):
     that the compiler is allowed to take shortcuts.
     """
     def __init__(self, source, model_info, dtype=generate.F32, fast=False):
-        # type: (str, ModelInfo, np.dtype, bool) -> None
+        # type: (Dict[str,str], ModelInfo, np.dtype, bool) -> None
         self.info = model_info
         self.source = source
         self.dtype = dtype
@@ -387,14 +384,21 @@ class GpuModel(KernelModel):
     def make_kernel(self, q_vectors):
         # type: (List[np.ndarray]) -> "GpuKernel"
         if self.program is None:
-            compiler = environment().compile_program
-            self.program = compiler(self.info.name, self.source,
-                                    self.dtype, self.fast)
-            names = [generate.kernel_name(self.info, variant)
-                     for variant in ("Iq", "Iqxy", "Imagnetic")]
-            self._kernels = [getattr(self.program, name) for name in names]
+            compile_program = environment().compile_program
+            self.program = compile_program(
+                self.info.name,
+                self.source['opencl'],
+                self.dtype,
+                self.fast)
+            variants = ['Iq', 'Iqxy', 'Imagnetic']
+            names = [generate.kernel_name(self.info, k) for k in variants]
+            kernels = [getattr(self.program, k) for k in names]
+            self._kernels = dict((k,v) for k,v in zip(variants, kernels))
         is_2d = len(q_vectors) == 2
-        kernel = self._kernels[1:3] if is_2d else [self._kernels[0]]*2
+        if is_2d:
+            kernel = [self._kernels['Iqxy'], self._kernels['Imagnetic']]
+        else:
+            kernel = [self._kernels['Iq']]*2
         return GpuKernel(kernel, self.dtype, self.info, q_vectors)
 
     def release(self):
