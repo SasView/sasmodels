@@ -4,6 +4,8 @@ double Iq(double q, double sld, double solvent_sld,
 double Iqxy(double qx, double qy, double sld, double solvent_sld,
     double radius, double cap_radius, double length, double theta, double phi);
 
+#define INVALID(v) (v.cap_radius < v.radius)
+
 // Integral over a convex lens kernel for t in [h/R,1].  See the docs for
 // the definition of the function being integrated.
 //   q is the magnitude of the q vector.
@@ -78,8 +80,6 @@ double form_volume(double radius, double cap_radius, double length)
 double Iq(double q, double sld, double solvent_sld,
           double radius, double cap_radius, double length)
 {
-    // Exclude invalid inputs.
-    if (cap_radius < radius) return NAN;
     const double h = sqrt(cap_radius*cap_radius - radius*radius);
     const double half_length = 0.5*length;
 
@@ -120,8 +120,6 @@ double Iqxy(double qx, double qy,
     const double cos_val = cn*cos(phi*M_PI_180)*(qx/q) + sn*(qy/q);
     const double alpha = acos(cos_val); // rod angle relative to q
 
-    // Exclude invalid inputs.
-    if (cap_radius < radius) return NAN;
     const double h = sqrt(cap_radius*cap_radius - radius*radius);
     const double half_length = 0.5*length;
 
