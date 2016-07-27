@@ -74,6 +74,8 @@ if os.name == 'nt':
     # Windows compiler; check if TinyCC is available
     try:
         import tinycc
+        if "DONT_USE_TINYCC" in os.environ:
+            tinycc = None
     except ImportError:
         tinycc = None
     # call vcvarsall.bat before compiling to set path, headers, libs, etc.
