@@ -495,8 +495,8 @@ def make_source(model_info):
     is a pure python model, with no C source components.
     """
     if callable(model_info.Iq):
-        #raise ValueError("can't compile python model")
-        return None
+        raise ValueError("can't compile python model")
+        #return None
 
     # TODO: need something other than volume to indicate dispersion parameters
     # No volume normalization despite having a volume parameter.
