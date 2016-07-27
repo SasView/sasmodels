@@ -85,9 +85,9 @@ Note: During fitting ensure that the inequality ra<rb<rc is not
 category = "shape:ellipsoid"
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "",
+parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Ellipsoid scattering length density"],
-              ["solvent_sld", "1e-6/Ang^2", 1, [-inf, inf], "",
+              ["solvent_sld", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Solvent scattering length density"],
               ["req_minor", "Ang", 20, [0, inf], "volume",
                "Minor equatorial radius"],

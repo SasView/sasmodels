@@ -75,8 +75,8 @@ category = "shape:sphere"
 
 # pylint: disable=bad-whitespace,line-too-long
 # ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["sld",         "1e-6/Ang^2",  1, [-inf, inf], "",       "Particle scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2",  3, [-inf, inf], "",       "Solvent scattering length density"],
+parameters = [["sld",         "1e-6/Ang^2",  1, [-inf, inf], "sld",    "Particle scattering length density"],
+              ["sld_solvent", "1e-6/Ang^2",  3, [-inf, inf], "sld",    "Solvent scattering length density"],
               ["radius",      "Ang",        60, [0, inf],    "volume", "Sphere radius"],
               ["fuzziness",   "Ang",        10, [0, inf],    "",       "std deviation of Gaussian convolution for interface (must be << radius)"],
              ]
@@ -96,12 +96,6 @@ Iq = """
     const double qf = q*fuzziness;
     const double fq = bes * (sld - sld_solvent) * form_volume(radius) * exp(-0.5*qf*qf);
     return 1.0e-4*fq*fq;
-    """
-
-Iqxy = """
-    // never called since no orientation or magnetic parameters.
-    //return -1.0;
-    return Iq(sqrt(qx*qx + qy*qy), sld, sld_solvent, radius, fuzziness);
     """
 
 def ER(radius):

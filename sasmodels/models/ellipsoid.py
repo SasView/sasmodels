@@ -117,9 +117,9 @@ P(q.alpha)= scale*f(q)^2 + background, where f(q)= 3*(sld
 category = "shape:ellipsoid"
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "",
+parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Ellipsoid scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Solvent scattering length density"],
               ["r_polar", "Ang", 20, [0, inf], "volume",
                "Polar radius"],

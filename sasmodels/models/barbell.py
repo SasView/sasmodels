@@ -100,8 +100,8 @@ description = """
 category = "shape:cylinder"
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["sld",         "1e-6/Ang^2",   4, [-inf, inf], "",            "Barbell scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2",   1, [-inf, inf], "",            "Solvent scattering length density"],
+parameters = [["sld",         "1e-6/Ang^2",   4, [-inf, inf], "sld",         "Barbell scattering length density"],
+              ["sld_solvent", "1e-6/Ang^2",   1, [-inf, inf], "sld",         "Solvent scattering length density"],
               ["bell_radius", "Ang",         40, [0, inf],    "volume",      "Spherical bell radius"],
               ["radius",      "Ang",         20, [0, inf],    "volume",      "Cylindrical bar radius"],
               ["length",      "Ang",        400, [0, inf],    "volume",      "Cylinder bar length"],

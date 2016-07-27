@@ -62,7 +62,7 @@ O Glatter, O Kratky, Small-Angle X-Ray Scattering, Academic Press (1982)
 Check out Chapter 4 on Data Treatment, pages 155-156.
 """
 
-from numpy import inf, sqrt, power, exp
+from numpy import inf, sqrt, exp, errstate
 
 name = "guinier_porod"
 title = "Guinier-Porod function"
@@ -92,33 +92,23 @@ def Iq(q, rg, s, m):
     @param q: Input q-value
     """
     n = 3.0 - s
+    ms = 0.5*(m-s) # =(n-3+m)/2
+
+    # preallocate return value
+    iq = 0.0*q
 
     # Take care of the singular points
-    if rg <= 0.0:
-        return 0.0
-    if (n-3.0+m) <= 0.0:
-        return 0.0
+    if rg <= 0.0 or ms <= 0.0:
+        return iq
 
     # Do the calculation and return the function value
-    q1 = sqrt((n-3.0+m)*n/2.0)/rg
-    if q < q1:
-        iq = (1.0/power(q, (3.0-n)))*exp((-q*q*rg*rg)/n)
-    else:
-        iq = (1.0/power(q, m))*exp(-(n-3.0+m)/2.0)*power(((n-3.0+m)*n/2.0),
-                                                         ((n-3.0+m)/2.0))/power(rg, (n-3.0+m))
+    idx = q < sqrt(n*ms)/rg
+    with errstate(divide='ignore'):
+        iq[idx] = q[idx]**-s * exp(-(q[idx]*rg)**2/n)
+        iq[~idx] = q[~idx]**-m * (exp(-ms) * (n*ms/rg**2)**ms)
     return iq
 
-Iq.vectorized = False  # Iq accepts an array of q values
-
-def Iqxy(qx, qy, *args):
-    """
-    @param qx:   Input q_x-value
-    @param qy:   Input q_y-value
-    @param args: Remaining arguments
-    """
-    return Iq(sqrt(qx ** 2 + qy ** 2), *args)
-
-Iqxy.vectorized = False # Iqxy accepts an array of qx, qy values
+Iq.vectorized = True # Iq accepts an array of q values
 
 demo = dict(scale=1.5, background=0.5, rg=60, s=1.0, m=3.0)
 

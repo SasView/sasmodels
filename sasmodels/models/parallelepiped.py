@@ -176,9 +176,9 @@ description = """
 category = "shape:parallelepiped"
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "",
+parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Parallelepiped scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Solvent scattering length density"],
               ["a_side", "Ang", 35, [0, inf], "volume",
                "Shorter side of the parallelepiped"],

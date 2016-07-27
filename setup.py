@@ -45,7 +45,7 @@ setup(
     ],
     package_data={
         'sasmodels.models': ['*.c', 'lib/*.c'],
-        'sasmodels': ['*.c', '*.cl', 'convert.json'],
+        'sasmodels': ['*.c', '*.cl'],
     },
     install_requires = [
     ],

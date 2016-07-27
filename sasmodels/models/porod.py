@@ -25,7 +25,7 @@ G Porod. *Kolloid Zeit*. 124 (1951) 83.
 L A Feigin, D I Svergun, G W Taylor. *Structure Analysis by Small-Angle X-ray and Neutron Scattering*. Springer. (1987)
 """
 
-from numpy import sqrt, power, inf, errstate
+from numpy import power, inf, errstate
 
 name = "porod"
 title = "Porod function"
@@ -45,16 +45,6 @@ def Iq(q):
         return power(q, -4)
 
 Iq.vectorized = True  # Iq accepts an array of q values
-
-def Iqxy(qx, qy, *args):
-    """
-    @param qx:   Input q_x-value
-    @param qy:   Input q_y-value
-    @param args: Remaining arguments
-    """
-    return Iq(sqrt(qx ** 2 + qy ** 2), *args)
-
-Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
 
 demo = dict(scale=1.5, background=0.5)
 

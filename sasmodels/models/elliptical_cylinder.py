@@ -93,10 +93,10 @@ category = "shape:cylinder"
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["r_minor",     "Ang",        20.0,  [0, inf],    "volume",      "Ellipse minor radius"],
-              ["axis_ratio",     "",           1.5,   [1, inf],    "volume",      "Ratio of major radius over minor radius"],
+              ["axis_ratio",   "",          1.5,   [1, inf],    "volume",      "Ratio of major radius over minor radius"],
               ["length",      "Ang",        400.0, [1, inf],    "volume",      "Length of the cylinder"],
-              ["sld",         "1e-6/Ang^2", 4.0,   [-inf, inf], "",            "Cylinder scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2", 1.0,   [-inf, inf], "",            "Solvent scattering length density"],
+              ["sld",         "1e-6/Ang^2", 4.0,   [-inf, inf], "sld",         "Cylinder scattering length density"],
+              ["sld_solvent", "1e-6/Ang^2", 1.0,   [-inf, inf], "sld",         "Solvent scattering length density"],
               ["theta",       "degrees",    90.0,  [-360, 360], "orientation", "In plane angle"],
               ["phi",         "degrees",    0,     [-360, 360], "orientation", "Out of plane angle"],
               ["psi",         "degrees",    0,     [-360, 360], "orientation", "Major axis angle relative to Q"]]

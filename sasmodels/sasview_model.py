@@ -22,7 +22,7 @@ from . import custom
 from . import generate
 from . import weights
 from . import modelinfo
-from . import kernel
+from .details import build_details, dispersion_mesh
 
 try:
     from typing import Dict, Mapping, Any, Sequence, Tuple, NamedTuple, List, Optional, Union, Callable
@@ -151,10 +151,11 @@ def _generate_model_attributes(model_info):
             orientation_params.append(p.name)
             orientation_params.append(p.name+".width")
             fixed.append(p.name+".width")
-        if p.type == 'magnetic':
+        elif p.type == 'magnetic':
             orientation_params.append(p.name)
             magnetic_params.append(p.name)
             fixed.append(p.name+".width")
+
 
     # Build class dictionary
     attrs = {}  # type: Dict[str, Any]
@@ -501,6 +502,7 @@ class SasviewModel(object):
         This should NOT be used for fitting since it copies the *q* vectors
         to the card for each evaluation.
         """
+        #core.HAVE_OPENCL = False
         if self._model is None:
             self._model = core.build_model(self._model_info)
         if qy is not None:
@@ -508,10 +510,11 @@ class SasviewModel(object):
         else:
             q_vectors = [np.asarray(qx)]
         calculator = self._model.make_kernel(q_vectors)
-        pairs = [self._get_weights(p)
-                 for p in self._model_info.parameters.call_parameters]
-        call_details, value = kernel.build_details(calculator, pairs)
-        result = calculator(call_details, value, cutoff=self.cutoff)
+        parameters = self._model_info.parameters
+        pairs = [self._get_weights(p) for p in parameters.call_parameters]
+        call_details, values, is_magnetic = build_details(calculator, pairs)
+        result = calculator(call_details, values, cutoff=self.cutoff,
+                            magnetic=is_magnetic)
         calculator.release()
         return result
 
@@ -585,7 +588,7 @@ class SasviewModel(object):
         pars = [self._get_weights(p)
                 for p in self._model_info.parameters.call_parameters
                 if p.type == 'volume']
-        return kernel.dispersion_mesh(self._model_info, pars)
+        return dispersion_mesh(self._model_info, pars)
 
     def _get_weights(self, par):
         # type: (Parameter) -> Tuple[np.ndarray, np.ndarray]

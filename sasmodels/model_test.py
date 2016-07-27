@@ -50,7 +50,7 @@ import unittest
 import numpy as np  # type: ignore
 
 from .core import list_models, load_model_info, build_model, HAVE_OPENCL
-from .kernel import dispersion_mesh
+from .details import dispersion_mesh
 from .direct_model import call_kernel, get_weights
 from .exception import annotate_exception
 from .modelinfo import expand_pars
@@ -200,6 +200,9 @@ def _hide_model_case_from_nose():
                 # test validity at q = 0
                 #({}, 0.0, None),
                 #({}, (0.0, 0.0), None),
+                # test vector form
+                ({}, [0.1]*2, [None]*2),
+                ({}, [(0.1, 0.1)]*2, [None]*2),
                 # test that ER/VR will run if they exist
                 ({}, 'ER', None),
                 ({}, 'VR', None),
@@ -256,7 +259,7 @@ def _hide_model_case_from_nose():
             for xi, yi, actual_yi in zip(x, y, actual):
                 if yi is None:
                     # smoke test --- make sure it runs and produces a value
-                    self.assertTrue(np.isfinite(actual_yi),
+                    self.assertTrue(not np.isnan(actual_yi),
                                     'invalid f(%s): %s' % (xi, actual_yi))
                 elif np.isnan(yi):
                     self.assertTrue(np.isnan(actual_yi),

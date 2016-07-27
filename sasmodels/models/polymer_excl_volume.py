@@ -92,7 +92,7 @@ Advances in Polym. Sci.* 106(1993) 87-133
 
 """
 
-from numpy import inf, power, sqrt
+from numpy import inf, power, errstate
 from scipy.special import gammainc, gamma
 
 name = "polymer_excl_volume"
@@ -119,30 +119,17 @@ def Iq(q, rg=60.0, porod_exp=3.0):
     :param porod_exp: Porod exponent
     :return:          Calculated intensity
     """
-    nu = 1.0/porod_exp
-    u = q*q*rg*rg*(2.0*nu+1.0) * (2.0*nu+2.0)/6.0
-    o2nu = 1.0/(2.0*nu)
+    u = (q*rg)**2 * (2.0/porod_exp + 1.0) * (2.0/porod_exp + 2.0)/6.0
+    with errstate(divide='ignore', invalid='ignore'):
+        upow = power(u, -0.5*porod_exp)
+        iq = (porod_exp*upow *
+              (gamma(0.5*porod_exp)*gammainc(0.5*porod_exp, u) -
+               upow*gamma(porod_exp)*gammainc(porod_exp, u)))
+    iq[q <= 0] = 1.0
 
-    intensity = ((1.0/(nu*power(u, o2nu))) *
-                 (gamma(o2nu)*gammainc(o2nu, u) -
-                  1.0/power(u, o2nu) * gamma(porod_exp) *
-                  gammainc(porod_exp, u))) * (q > 0) + 1.0*(q <= 0)
-
-    return intensity
+    return iq
 
 Iq.vectorized = True  # Iq accepts an array of q values
-
-
-def Iqxy(qx, qy, *args):
-    """
-    :param qx:   Input q_x-value
-    :param qy:   Input q_y-value
-    :param args: Remaining arguments
-    :return:     2D-Intensity
-    """
-    return Iq(sqrt(qx**2 + qy**2), *args)
-
-Iqxy.vectorized = True  # Iqxy accepts an array of qx, qy values
 
 
 tests = [

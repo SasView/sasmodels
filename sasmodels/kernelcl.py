@@ -283,9 +283,6 @@ class GpuEnvironment(object):
             context = self.get_context(dtype)
             logging.info("building %s for OpenCL %s"
                          % (key, context.devices[0].name.strip()))
-            program = compile_model(context, source, np.dtype(dtype), fast)
-            #print("OpenCL compile",name)
-            dtype = np.dtype(dtype)
             program = compile_model(self.get_context(dtype),
                                     str(source), dtype, fast)
             self.compiled[key] = program
@@ -368,7 +365,7 @@ class GpuModel(KernelModel):
     that the compiler is allowed to take shortcuts.
     """
     def __init__(self, source, model_info, dtype=generate.F32, fast=False):
-        # type: (str, ModelInfo, np.dtype, bool) -> None
+        # type: (Dict[str,str], ModelInfo, np.dtype, bool) -> None
         self.info = model_info
         self.source = source
         self.dtype = dtype
@@ -387,12 +384,21 @@ class GpuModel(KernelModel):
     def make_kernel(self, q_vectors):
         # type: (List[np.ndarray]) -> "GpuKernel"
         if self.program is None:
-            compiler = environment().compile_program
-            self.program = compiler(self.info.name, self.source,
-                                    self.dtype, self.fast)
+            compile_program = environment().compile_program
+            self.program = compile_program(
+                self.info.name,
+                self.source['opencl'],
+                self.dtype,
+                self.fast)
+            variants = ['Iq', 'Iqxy', 'Imagnetic']
+            names = [generate.kernel_name(self.info, k) for k in variants]
+            kernels = [getattr(self.program, k) for k in names]
+            self._kernels = dict((k,v) for k,v in zip(variants, kernels))
         is_2d = len(q_vectors) == 2
-        kernel_name = generate.kernel_name(self.info, is_2d)
-        kernel = getattr(self.program, kernel_name)
+        if is_2d:
+            kernel = [self._kernels['Iqxy'], self._kernels['Imagnetic']]
+        else:
+            kernel = [self._kernels['Iq']]*2
         return GpuKernel(kernel, self.dtype, self.info, q_vectors)
 
     def release(self):
@@ -518,8 +524,8 @@ class GpuKernel(Kernel):
                      else np.float16 if dtype == generate.F16
                      else np.float32)  # will never get here, so use np.float32
 
-    def __call__(self, call_details, values, cutoff):
-        # type: (CallDetails, np.ndarray, np.ndarray, float) -> np.ndarray
+    def __call__(self, call_details, values, cutoff, magnetic):
+        # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
         context = self.queue.context
         # Arrange data transfer to card
         details_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
@@ -527,24 +533,34 @@ class GpuKernel(Kernel):
         values_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
                              hostbuf=values)
 
+        kernel = self.kernel[1 if magnetic else 0]
+        args = [
+            np.uint32(self.q_input.nq), None, None,
+            details_b, values_b, self.q_input.q_b, self.result_b,
+            self.real(cutoff),
+        ]
+        #print("Calling OpenCL")
+        #print("values",values)
         # Call kernel and retrieve results
+        last_call = None
         step = 100
-        #print("calling OpenCL")
         for start in range(0, call_details.pd_prod, step):
             stop = min(start+step, call_details.pd_prod)
-            args = [
-                np.uint32(self.q_input.nq), np.int32(start), np.int32(stop),
-                details_b, values_b, self.q_input.q_b, self.result_b,
-                self.real(cutoff),
-            ]
-            self.kernel(self.queue, self.q_input.global_size, None, *args)
+            #print("queuing",start,stop)
+            args[1:3] = [np.int32(start), np.int32(stop)]
+            last_call = [kernel(self.queue, self.q_input.global_size,
+                                None, *args, wait_for=last_call)]
         cl.enqueue_copy(self.queue, self.result, self.result_b)
 
         # Free buffers
         for v in (details_b, values_b):
             if v is not None: v.release()
 
-        return self.result[:self.q_input.nq]
+        scale = values[0]/self.result[self.q_input.nq]
+        background = values[1]
+        #print("scale",scale,background)
+        return scale*self.result[:self.q_input.nq] + background
+        # return self.result[:self.q_input.nq]
 
     def release(self):
         # type: () -> None

@@ -86,15 +86,15 @@ category = "shape:sphere"
 
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "",
+parameters = [["sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "sld",
                "Core scattering length density"],
               ["radius", "Ang", 200., [0, inf], "volume",
                "Radius of the core"],
-              ["sld_solvent", "1e-6/Ang^2", 6.4, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 6.4, [-inf, inf], "sld",
                "Solvent scattering length density"],
               ["n", "", 1, [0, 10], "volume",
                "number of shells"],
-              ["sld[n]", "1e-6/Ang^2", 1.7, [-inf, inf], "",
+              ["sld[n]", "1e-6/Ang^2", 1.7, [-inf, inf], "sld",
                "scattering length density of shell k"],
               ["thickness[n]", "Ang", 40., [0, inf], "volume",
                "Thickness of shell k"],

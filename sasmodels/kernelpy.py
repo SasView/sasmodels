@@ -154,7 +154,7 @@ class PyKernel(Kernel):
         self._volume = ((lambda: form_volume(*volume_args)) if form_volume
                         else (lambda: 1.0))
 
-    def __call__(self, call_details, values, cutoff):
+    def __call__(self, call_details, values, cutoff, magnetic):
         assert isinstance(call_details, details.CallDetails)
         res = _loops(self._parameter_vector, self._form, self._volume,
                      self.q_input.nq, call_details, values, cutoff)

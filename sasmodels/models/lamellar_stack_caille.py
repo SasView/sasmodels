@@ -90,8 +90,8 @@ parameters = [
     ["Nlayers",          "",          20,   [0, inf],   "",       "Number of layers"],
     ["spacing",          "Ang",      400.,  [0.0,inf],  "volume", "d-spacing of Caille S(Q)"],
     ["Caille_parameter", "1/Ang^2",    0.1, [0.0,0.8],  "",       "Caille parameter"],
-    ["sld",              "1e-6/Ang^2", 6.3, [-inf,inf], "",       "layer scattering length density"],
-    ["sld_solvent",      "1e-6/Ang^2", 1.0, [-inf,inf], "",       "Solvent scattering length density"],
+    ["sld",              "1e-6/Ang^2", 6.3, [-inf,inf], "sld",    "layer scattering length density"],
+    ["sld_solvent",      "1e-6/Ang^2", 1.0, [-inf,inf], "sld",    "Solvent scattering length density"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 

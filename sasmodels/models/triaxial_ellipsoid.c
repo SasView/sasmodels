@@ -4,6 +4,9 @@ double Iq(double q, double sld, double solvent_sld,
 double Iqxy(double qx, double qy, double sld, double solvent_sld,
     double req_minor, double req_major, double rpolar, double theta, double phi, double psi);
 
+//#define INVALID(v) (v.req_minor > v.req_major || v.req_major > v.rpolar)
+
+
 double form_volume(double req_minor, double req_major, double rpolar)
 {
     return 1.333333333333333*M_PI*req_minor*req_major*rpolar;
@@ -16,8 +19,6 @@ double Iq(double q,
     double req_major,
     double rpolar)
 {
-    // if (req_minor > req_major || req_major > rpolar) return NAN;  // Exclude invalid region
-
     double sn, cn;
     // translate a point in [-1,1] to a point in [0, 1]
     const double zm = 0.5;
@@ -56,8 +57,6 @@ double Iqxy(double qx, double qy,
     double phi,
     double psi)
 {
-    // if (req_minor > req_major || req_major > rpolar) return NAN;  // Exclude invalid region
-
     double stheta, ctheta;
     double sphi, cphi;
     double spsi, cpsi;

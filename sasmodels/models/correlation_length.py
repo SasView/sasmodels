@@ -33,7 +33,7 @@ B Hammouda, D L Ho and S R Kline, Insight into Clustering in
 Poly(ethylene oxide) Solutions, Macromolecules, 37 (2004) 6932-6937
 """
 
-from numpy import inf, sqrt
+from numpy import inf, errstate
 
 name = "correlation_length"
 title = """Calculates an empirical functional form for SAS data characterized
@@ -56,18 +56,12 @@ def Iq(q, lorentz_scale, porod_scale, cor_length, exponent_p, exponent_l):
     """
     1D calculation of the Correlation length model
     """
-    porod = porod_scale / pow(q, exponent_p)
-    lorentz = lorentz_scale / (1.0 + pow(q * cor_length, exponent_l))
+    with errstate(divide='ignore'):
+        porod = porod_scale / q**exponent_p
+        lorentz = lorentz_scale / (1.0 + (q * cor_length)**exponent_l)
     inten = porod + lorentz
     return inten
-
-def Iqxy(qx, qy, lorentz_scale, porod_scale, cor_length, exponent_p, exponent_l):
-    """
-    2D calculation of the Correlation length model
-    There is no orientation contribution.
-    """
-    q = sqrt(qx ** 2 + qy ** 2)
-    return Iq(q, lorentz_scale, porod_scale, cor_length, exponent_p, exponent_l)
+Iq.vectorized = True
 
 # parameters for demo
 demo = dict(lorentz_scale=10.0, porod_scale=1.0e-06, cor_length=50.0,

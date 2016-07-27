@@ -197,27 +197,27 @@ description = """
             I(q) =
                background = Incoherent background [1/cm]
         """
-category = "sphere-based"
+category = "shape:sphere"
 
 # pylint: disable=bad-whitespace, line-too-long
 #            ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [["n_shells",          "",               1,      [0, 10],        "volume", "number of shells"],
               ["npts_inter",        "",               35,     [0, inf],       "", "number of points in each sublayer Must be odd number"],
               ["radius_core",       "Ang",            50.0,   [0, inf],       "volume", "intern layer thickness"],
-              ["sld_core",          "1e-6/Ang^2",     2.07,   [-inf, inf],    "", "sld function flat"],
-              ["sld_solvent",       "1e-6/Ang^2",     1.0,    [-inf, inf],    "", "sld function solvent"],
+              ["sld_core",          "1e-6/Ang^2",     2.07,   [-inf, inf],    "sld", "sld function flat"],
+              ["sld_solvent",       "1e-6/Ang^2",     1.0,    [-inf, inf],    "sld", "sld function solvent"],
               ["func_inter0",       "",               0,      [0, 4],         "", "Erf:0, RPower:1, LPower:2, RExp:3, LExp:4"],
               ["thick_inter0",      "Ang",            50.0,   [0, inf],       "volume", "intern layer thickness for core layer"],
               ["nu_inter0",         "",               2.5,    [-inf, inf],    "", "steepness parameter for core layer"],
-              ["sld_flat[n_shells]",      "1e-6/Ang^2",     4.06,   [-inf, inf],    "", "sld function flat"],
+              ["sld_flat[n_shells]",      "1e-6/Ang^2",     4.06,   [-inf, inf],    "sld", "sld function flat"],
               ["thick_flat[n_shells]",    "Ang",            100.0,  [0, inf],       "volume", "flat layer_thickness"],
               ["func_inter[n_shells]",    "",               0,      [0, 4],         "", "Erf:0, RPower:1, LPower:2, RExp:3, LExp:4"],
               ["thick_inter[n_shells]",   "Ang",            50.0,   [0, inf],       "volume", "intern layer thickness"],
               ["nu_inter[n_shells]",      "",               2.5,    [-inf, inf],    "", "steepness parameter"],
               ]
 # pylint: enable=bad-whitespace, line-too-long
-source = ["lib/librefl.c",  "lib/sph_j1c.c", "spherical_sld.c"]
-single = False
+source = ["lib/sas_erf.c", "lib/librefl.c",  "lib/sph_j1c.c", "spherical_sld.c"]
+single = False  # TODO: fix low q behaviour
 
 profile_axes = ['Radius (A)', 'SLD (1e-6/A^2)']
 def profile(n_shells, radius_core,  sld_core,  sld_solvent, sld_flat,

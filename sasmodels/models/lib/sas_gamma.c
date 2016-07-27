@@ -133,7 +133,7 @@ small:
 	else
 		return(z / ((1.0 + 0.5772156649015329 * x) * x));
 }
-#endif
+#endif // NEED_TGAMMA
 
 
 inline double sas_gamma( double x) { return tgamma(x+1)/x; }

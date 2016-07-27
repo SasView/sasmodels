@@ -6,13 +6,6 @@ double Iq(double q,
           double cluster_rg,
           double primary_rg);
 
-double Iqxy(double qx, double qy,
-          double mass_dim,
-          double surface_dim,
-          double cluster_rg,
-          double primary_rg);
-
-
 static double _mass_surface_fractal_kernel(double q,
           double mass_dim,
           double surface_dim,
@@ -58,19 +51,3 @@ double Iq(double q,
             cluster_rg,
             primary_rg);
 }
-
-// Iqxy is never called since no orientation or magnetic parameters.
-double Iqxy(double qx, double qy,
-          double mass_dim,
-          double surface_dim,
-          double cluster_rg,
-          double primary_rg)
-{
-    double q = sqrt(qx*qx + qy*qy);
-    return _mass_surface_fractal_kernel(q,
-           mass_dim,
-           surface_dim,
-           cluster_rg,
-           primary_rg);
-}
-

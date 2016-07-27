@@ -81,9 +81,9 @@ description = """
 category = "shape:sphere"
 
 #             [ "name", "units", default, [lower, upper], "type", "description"],
-parameters = [["sld", "1e-6/Ang^2", 0.5, [-inf, inf], "",
+parameters = [["sld", "1e-6/Ang^2", 0.5, [-inf, inf], "sld",
                "vesicle shell scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2", 6.36, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 6.36, [-inf, inf], "sld",
                "solvent scattering length density"],
               ["volfraction", "", 0.05, [0, 1.0], "",
                "volume fraction of shell"],

@@ -131,11 +131,11 @@ category = "shape:sphere"
 #single = False
 
 #             [ "name", "units", default, [lower, upper], "type", "description"],
-parameters = [["sld_lg", "1e-6/Ang^2", -0.4, [-inf, inf], "",
+parameters = [["sld_lg", "1e-6/Ang^2", -0.4, [-inf, inf], "sld",
                "large particle scattering length density"],
-              ["sld_sm", "1e-6/Ang^2", 3.5, [-inf, inf], "",
+              ["sld_sm", "1e-6/Ang^2", 3.5, [-inf, inf], "sld",
                "small particle scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2", 6.36, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 6.36, [-inf, inf], "sld",
                "solvent scattering length density"],
               ["volfraction_lg", "", 0.05, [-inf, inf], "",
                "volume fraction of large spheres"],

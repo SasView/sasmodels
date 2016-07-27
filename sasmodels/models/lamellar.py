@@ -61,8 +61,8 @@ category = "shape:lamellae"
 
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [ ["thickness", "Ang", 50, [0, inf], "volume","total layer thickness" ],
-               ["sld", "1e-6/Ang^2", 1, [-inf, inf], "","Layer scattering length density" ],
-               ["sld_solvent", "1e-6/Ang^2", 6, [-inf, inf], "","Solvent scattering length density" ],
+               ["sld", "1e-6/Ang^2", 1, [-inf, inf], "sld","Layer scattering length density" ],
+               ["sld_solvent", "1e-6/Ang^2", 6, [-inf, inf], "sld","Solvent scattering length density" ],
              ]
 
 # No volume normalization despite having a volume parameter

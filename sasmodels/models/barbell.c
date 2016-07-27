@@ -5,6 +5,8 @@ double Iqxy(double qx, double qy, double sld, double solvent_sld,
         double bell_radius, double radius, double length,
         double theta, double phi);
 
+#define INVALID(v) (v.bell_radius < v.radius)
+
 //barbell kernel - same as dumbell
 static double
 _bell_kernel(double q, double h, double bell_radius,
@@ -57,8 +59,6 @@ double form_volume(double bell_radius,
 double Iq(double q, double sld, double solvent_sld,
           double bell_radius, double radius, double length)
 {
-    // Exclude invalid inputs.
-    if (bell_radius < radius) return NAN;
     const double h = -sqrt(bell_radius*bell_radius - radius*radius);
     const double half_length = 0.5*length;
 
@@ -99,8 +99,6 @@ double Iqxy(double qx, double qy,
     const double cos_val = cn*cos(phi*M_PI_180)*(qx/q) + sn*(qy/q);
     const double alpha = acos(cos_val); // rod angle relative to q
 
-    // Exclude invalid inputs.
-    if (bell_radius < radius) return NAN;
     const double h = -sqrt(square(bell_radius) - square(radius));
     const double half_length = 0.5*length;
 

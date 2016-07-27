@@ -40,7 +40,7 @@ None.
 
 """
 
-from numpy import inf, sqrt
+from numpy import inf, errstate
 
 name = "broad_peak"
 title = "Broad Lorentzian type peak on top of a power law decay"
@@ -86,21 +86,12 @@ def Iq(q,
     :param lorentz_exp:    Exponent of Lorentz function
     :return:               Calculated intensity
     """
-
-    inten = (porod_scale / q ** porod_exp + lorentz_scale
-             / (1.0 + (abs(q - peak_pos) * lorentz_length) ** lorentz_exp))
+    z = abs(q - peak_pos) * lorentz_length
+    with errstate(divide='ignore'):
+        inten = (porod_scale / q ** porod_exp
+                 + lorentz_scale / (1 + z ** lorentz_exp))
     return inten
 Iq.vectorized = True  # Iq accepts an array of q values
-
-def Iqxy(qx, qy, *args):
-    """
-    :param qx:   Input q_x-value
-    :param qy:   Input q_y-value
-    :param args: Remaining arguments
-    :return:     2D-Intensity
-    """
-    return Iq(sqrt(qx ** 2 + qy ** 2), *args)
-Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
 
 demo = dict(scale=1, background=0,
             porod_scale=1.0e-05, porod_exp=3,

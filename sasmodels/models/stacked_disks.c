@@ -13,18 +13,6 @@ double Iq(double q,
           double layer_sld,
           double solvent_sld);
 
-double Iqxy(double qx, double qy,
-            double core_thick,
-            double layer_thick,
-            double radius,
-            double n_stacking,
-            double sigma_d,
-            double core_sld,
-            double layer_sld,
-            double solvent_sld,
-            double theta,
-            double phi);
-
 static
 double _kernel(double qq,
                double radius,
@@ -51,7 +39,7 @@ double _kernel(double qq,
 	const double sinarg1 = qq*halfheight*cos(zi);
 	const double sinarg2 = qq*(halfheight+layer_thick)*cos(zi);
 
-    const double be1 = sas_J1c(besarg1);
+	const double be1 = sas_J1c(besarg1);
 	const double be2 = sas_J1c(besarg2);
 	const double si1 = sin(sinarg1)/sinarg1;
 	const double si2 = sin(sinarg2)/sinarg2;
@@ -214,31 +202,3 @@ double Iq(double q,
                     layer_sld,
                     solvent_sld);
 }
-
-// Iqxy is never called since no orientation or magnetic parameters.
-double Iqxy(double qx, double qy,
-            double core_thick,
-            double layer_thick,
-            double radius,
-            double n_stacking,
-            double sigma_d,
-            double core_sld,
-            double layer_sld,
-            double solvent_sld,
-            double theta,
-            double phi)
-{
-    double q = sqrt(qx*qx + qy*qy);
-    return stacked_disks_kernel_2d(q, qx/q, qy/q,
-                    core_thick,
-                    layer_thick,
-                    radius,
-                    n_stacking,
-                    sigma_d,
-                    core_sld,
-                    layer_sld,
-                    solvent_sld,
-                    theta,
-                    phi);
-}
-

@@ -7,13 +7,6 @@ double Iq(double q,
             double pearl_sld,
             double solvent_sld);
 
-double Iqxy(double qx, double qy,
-            double radius,
-            double edge_sep,
-            double num_pearls,
-            double pearl_sld,
-            double solvent_sld);
-
 double linear_pearls_kernel(double q,
             double radius,
             double edge_sep,
@@ -81,26 +74,6 @@ double Iq(double q,
             double pearl_sld,
             double solvent_sld)
 {
-
-	double result = linear_pearls_kernel(q,
-                    radius,
-                    edge_sep,
-                    num_pearls,
-                    pearl_sld,
-                    solvent_sld);
-
-	return result;
-}
-
-double Iqxy(double qx, double qy,
-            double radius,
-            double edge_sep,
-            double num_pearls,
-            double pearl_sld,
-            double solvent_sld)
-{
-	double q;
-	q = sqrt(qx*qx+qy*qy);
 
 	double result = linear_pearls_kernel(q,
                     radius,

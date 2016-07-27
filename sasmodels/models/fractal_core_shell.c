@@ -10,16 +10,6 @@ double Iq(double q,
           double frac_dim,
           double cor_length);
 
-double Iqxy(double qx, double qy,
-            double radius,
-            double thickness,
-            double core_sld,
-            double shell_sld,
-            double solvent_sld,
-            double volfraction,
-            double frac_dim,
-            double cor_length);
-
 double form_volume(double radius, double thickness)
 {
     return 4.0 * M_PI / 3.0 * pow((radius + thickness), 3);
@@ -54,28 +44,4 @@ double Iq(double q,
 
     return sq*intensity*volfraction;
 }
-
-double Iqxy(double qx, double qy,
-            double radius,
-            double thickness,
-            double core_sld,
-            double shell_sld,
-            double solvent_sld,
-            double volfraction,
-            double frac_dim,
-            double cor_length) {
-
-    const double q = sqrt(qx*qx+qy*qy);
-    return Iq(q,
-              radius,
-              thickness,
-              core_sld,
-              shell_sld,
-              solvent_sld,
-              volfraction,
-              frac_dim,
-              cor_length);
-
-}
-
 

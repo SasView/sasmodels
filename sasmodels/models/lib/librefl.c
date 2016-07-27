@@ -40,7 +40,7 @@ double err_mod_func(double n_sub, double ind, double nu)
 	nu /= sqrt(2.0);
 	ind *= nu;
 	// re-scale and normalize it so that max(erf)=1, min(erf)=0
-	func = erf(ind)/erf(nu)/2.0;
+	func = sas_erf(ind)/sas_erf(nu)/2.0;
 	// shift it by +0.5 in y-direction so that min(erf) = 0
 	func += 0.5;
 

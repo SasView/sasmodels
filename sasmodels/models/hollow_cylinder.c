@@ -1,9 +1,3 @@
-static double _hollow_cylinder_kernel(double q, double core_radius, double radius, 
-	double length, double dum);
-static double hollow_cylinder_analytical_2D_scaled(double q, double q_x, double q_y, double radius, double core_radius, double length, double sld,
-	double solvent_sld, double theta, double phi);
-static double hollow_cylinder_scaling(double integrand, double delrho, double volume);
-	
 double form_volume(double radius, double core_radius, double length);
 
 double Iq(double q, double radius, double core_radius, double length, double sld,
@@ -11,8 +5,25 @@ double Iq(double q, double radius, double core_radius, double length, double sld
 double Iqxy(double qx, double qy, double radius, double core_radius, double length, double sld,
 	double solvent_sld, double theta, double phi);
 
+#define INVALID(v) (v.core_radius >= v.radius || v.radius >= v.length)
+
 // From Igor library
-static double _hollow_cylinder_kernel(double q, double core_radius, double radius, 
+static double hollow_cylinder_scaling(double integrand, double delrho, double volume)
+{
+	double answer;
+	// Multiply by contrast^2
+	answer = integrand*delrho*delrho;
+
+	//normalize by cylinder volume
+	answer *= volume*volume;
+
+	//convert to [cm-1]
+	answer *= 1.0e-4;
+
+	return answer;
+}
+
+static double _hollow_cylinder_kernel(double q, double core_radius, double radius,
 	double length, double dum)
 {
     double gamma,arg1,arg2,lam1,lam2,psi,sinarg,t2,retval;		//local variables
@@ -67,31 +78,11 @@ static double hollow_cylinder_analytical_2D_scaled(double q, double q_x, double 
 	// axis of the cylinder
 	cos_val = cyl_x*q_x + cyl_y*q_y;// + cyl_z*q_z;
 
-	// The following test should always pass
-	if (fabs(cos_val)>1.0) {
-		//printf("core_shell_cylinder_analytical_2D: Unexpected error: cos(alpha)=%g\n", cos_val);
-		return NAN;
-	}
-
 	answer = _hollow_cylinder_kernel(q, core_radius, radius, length, cos_val);
 
 	vol = form_volume(radius, core_radius, length);
 	answer = hollow_cylinder_scaling(answer, delrho, vol);
 
-	return answer;
-}
-static double hollow_cylinder_scaling(double integrand, double delrho, double volume)
-{
-	double answer;
-	// Multiply by contrast^2
-	answer = integrand*delrho*delrho;
-
-	//normalize by cylinder volume
-	answer *= volume*volume;
-
-	//convert to [cm-1]
-	answer *= 1.0e-4;
-	
 	return answer;
 }
 
@@ -112,10 +103,6 @@ double Iq(double q, double radius, double core_radius, double length, double sld
 	double lower,upper,zi, inter;		//upper and lower integration limits
 	double summ,answer,delrho;			//running tally of integration
 	double norm,volume;	//final calculation variables
-	
-	if (core_radius >= radius || radius >= length) {
-		return NAN;
-	}
 	
 	delrho = solvent_sld - sld;
 	lower = 0.0;

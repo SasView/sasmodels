@@ -33,7 +33,7 @@ None.
 **Last Reviewed by:** Paul Butler **on:** March 21, 2016
 """
 
-from numpy import inf, power, sqrt
+from numpy import inf, power
 
 name = "two_lorentzian"
 title = "This model calculates an empirical functional form for SAS data \
@@ -91,19 +91,6 @@ def Iq(q,
     return intensity
 
 Iq.vectorized = True  # Iq accepts an array of q values
-
-
-def Iqxy(qx, qy, *args):
-    """
-    :param qx:   Input q_x-value
-    :param qy:   Input q_y-value
-    :param args: Remaining arguments
-    :return:     2D-Intensity
-    """
-
-    return Iq(sqrt(qx**2 + qy**2), *args)
-
-Iqxy.vectorized = True  # Iqxy accepts an array of qx, qy values
 
 
 demo = dict(scale=1, background=0.1,

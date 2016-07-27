@@ -47,10 +47,6 @@ Iq = """
     return 1/denominator;
 """
 
-Iqxy = """
-    return Iq(sqrt(qx*qx + qy*qy), cor_length);
-    """
-
 # parameters for demo
 demo = dict(scale=1.0, background=0.0, cor_length=50.0)
 

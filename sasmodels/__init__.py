@@ -40,7 +40,7 @@ def data_files():
     # users can easily copy existing models.  Need the img files so that we
     # can build model docs on the fly, including images.
     return_list = [
-        expand_patterns([], ['*.c', '*.cl', 'convert.json']),
+        expand_patterns([], ['*.c', '*.cl']),
         expand_patterns(['models'], ['*.py', '*.c']),
         expand_patterns(['models', 'lib'], ['*.c']),
         expand_patterns(['models', 'img'], ['*.*']),

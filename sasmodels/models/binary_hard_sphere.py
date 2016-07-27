@@ -10,10 +10,8 @@ factors as follows:
 
 .. math::
 
-    \begin{eqnarray}
     I(q) = (1-x)f_1^2(q) S_{11}(q) + 2[x(1-x)]^{1/2} f_1(q)f_2(q)S_{12}(q) +
     x\,f_2^2(q)S_{22}(q)
-    \end{eqnarray}
 
 where $S_{ij}$ are the partial structure factors and $f_i$ are the scattering
 amplitudes of the particles. The subscript 1 is for the smaller particle and 2
@@ -22,13 +20,14 @@ is for the larger. The number fraction of the larger particle,
 based on the diameter ratio and the volume fractions.
 
 .. math::
+    :nowrap:
 
-    \begin{eqnarray}
-    x &=& \frac{(\phi_2 / \phi)\alpha^3}{(1-(\phi_2/\phi) + (\phi_2/\phi)
+    \begin{align}
+    x &= \frac{(\phi_2 / \phi)\alpha^3}{(1-(\phi_2/\phi) + (\phi_2/\phi)
     \alpha^3)} \\
-    \phi &=& \phi_1 + \phi_2 = \text{total volume fraction} \\
-    \alpha &=& R_1/R_2 = \text{size ratio}
-    \end{eqnarray}
+    \phi &= \phi_1 + \phi_2 = \text{total volume fraction} \\
+    \alpha &= R_1/R_2 = \text{size ratio}
+    \end{align}
 
 The 2D scattering intensity is the same as 1D, regardless of the orientation of
 the *q* vector which is defined as
@@ -100,11 +99,11 @@ parameters = [["radius_lg", "Ang", 100, [0, inf], "",
                "volume fraction of large particle"],
               ["volfraction_sm", "", 0.2, [0, 1], "",
                "volume fraction of small particle"],
-              ["sld_lg", "1e-6/Ang^2", 3.5, [-inf, inf], "",
+              ["sld_lg", "1e-6/Ang^2", 3.5, [-inf, inf], "sld",
                "scattering length density of large particle"],
-              ["sld_sm", "1e-6/Ang^2", 0.5, [-inf, inf], "",
+              ["sld_sm", "1e-6/Ang^2", 0.5, [-inf, inf], "sld",
                "scattering length density of small particle"],
-              ["sld_solvent", "1e-6/Ang^2", 6.36, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 6.36, [-inf, inf], "sld",
                "Solvent scattering length density"],
              ]
 

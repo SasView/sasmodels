@@ -56,8 +56,8 @@ parameters = [
     ["radius",      "Ang",       80.0, [0, inf],     "", "Radius of the pearls"],
     ["edge_sep",    "Ang",      350.0, [0, inf],     "", "Length of the string segment - surface to surface"],
     ["num_pearls",  "",           3.0, [0, inf],     "", "Number of the pearls"],
-    ["sld",   "1e-6/Ang^2", 1.0, [-inf, inf],  "", "SLD of the pearl spheres"],
-    ["sld_solvent", "1e-6/Ang^2", 6.3, [-inf, inf],  "", "SLD of the solvent"],
+    ["sld",   "1e-6/Ang^2", 1.0, [-inf, inf],  "sld", "SLD of the pearl spheres"],
+    ["sld_solvent", "1e-6/Ang^2", 6.3, [-inf, inf],  "sld", "SLD of the solvent"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 

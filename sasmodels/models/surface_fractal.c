@@ -5,11 +5,6 @@ double Iq(double q,
           double surface_dim,
           double cutoff_length);
 
-double Iqxy(double qx, double qy,
-            double radius,
-            double surface_dim,
-            double cutoff_length);
-
 static double _surface_fractal_kernel(double q,
     double radius,
     double surface_dim,
@@ -48,14 +43,3 @@ double Iq(double q,
 {
     return _surface_fractal_kernel(q, radius, surface_dim, cutoff_length);
 }
-
-// Iqxy is never called since no orientation or magnetic parameters.
-double Iqxy(double qx, double qy,
-    double radius,
-    double surface_dim,
-    double cutoff_length)
-{
-    double q = sqrt(qx*qx + qy*qy);
-    return _surface_fractal_kernel(q, radius, surface_dim, cutoff_length);
-}
-

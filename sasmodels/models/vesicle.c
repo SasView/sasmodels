@@ -4,10 +4,6 @@ double Iq(double q,
           double sld, double sld_solvent, double volfraction,
           double radius, double thickness);
 
-double Iqxy(double qx, double qy,
-          double sld, double sld_solvent, double volfraction,
-          double radius, double thickness);
-
 double form_volume(double radius, double thickness)
 {
     //note that for the vesicle model, the volume is ONLY the shell volume
@@ -47,17 +43,4 @@ double Iq(double q,
     f2 = volfraction*f*f*1.0e-4;
     
     return(f2);
-}
-
-
-double Iqxy(double qx, double qy,
-          double sld, double sld_solvent, double volfraction,
-          double radius, double thickness)
-          
-{
-    double q = sqrt(qx*qx + qy*qy);
-    return Iq(q,
-        sld, sld_solvent, volfraction,
-        radius,thickness);
-
 }

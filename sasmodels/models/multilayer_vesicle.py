@@ -73,10 +73,10 @@ category = "shape:sphere"
 parameters = [
     ["volfraction", "",  0.05, [0.0, 1],  "", "volume fraction of vesicles"],
     ["radius", "Ang", 60.0, [0.0, inf],  "", "Core radius of the multishell"],
-    ["thick_shell", "Ang",        10.0, [0.0, inf],  "", "Shell thickness"],
+    ["thick_shell", "Ang",        10.0, [0.0, inf],  "sld", "Shell thickness"],
     ["thick_solvent", "Ang",        10.0, [0.0, inf],  "", "Water thickness"],
-    ["sld_solvent",    "1e-6/Ang^2",  6.4, [-inf, inf], "", "Core scattering length density"],
-    ["sld",   "1e-6/Ang^2",  0.4, [-inf, inf], "", "Shell scattering length density"],
+    ["sld_solvent",    "1e-6/Ang^2",  6.4, [-inf, inf], "sld", "Core scattering length density"],
+    ["sld",   "1e-6/Ang^2",  0.4, [-inf, inf], "sld", "Shell scattering length density"],
     ["n_pairs",     "",            2.0, [1.0, inf],  "", "Number of pairs of water and shell"],
     ]
 # pylint: enable=bad-whitespace, line-too-long

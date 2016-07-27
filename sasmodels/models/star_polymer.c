@@ -2,9 +2,6 @@ double form_volume(void);
 
 double Iq(double q, double radius2, double arms);
 
-double Iqxy(double qx, double qy, double radius2, double arms);
-
-
 static double _mass_fractal_kernel(double q, double radius2, double arms)
 {
 
@@ -27,11 +24,3 @@ double Iq(double q, double radius2, double arms)
 {
     return _mass_fractal_kernel(q, radius2, arms);
 }
-
-// Iqxy is never called since no orientation or magnetic parameters.
-double Iqxy(double qx, double qy, double radius2, double arms)
-{
-    double q = sqrt(qx*qx + qy*qy);
-    return _mass_fractal_kernel(q, radius2, arms);
-}
-

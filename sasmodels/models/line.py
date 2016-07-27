@@ -65,7 +65,8 @@ def Iqxy(qx, qy, *args):
     # Note: SasView.run([r, theta]) does return Iq(qx)*Iq(qy)
     return Iq(qx, *args)*Iq(qy, *args)
 
-Iqxy.vectorized = True  # Iqxy accepts an array of qx, qy values
+Iqxy.vectorized = True  # Iqxy accepts an array of qx qy values
+
 
 tests = [
     [{'intercept': 1.0, 'slope': 1.0, }, 1.0, 2.001],

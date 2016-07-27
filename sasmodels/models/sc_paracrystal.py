@@ -121,14 +121,14 @@ category = "shape:paracrystal"
 single = False
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["dnn",         "Ang",       220.0,  [0.0, inf],  "",            "Nearest neighbor distance"],
-              ["d_factor",    "",            0.06, [-inf, inf], "",            "Paracrystal distortion factor"],
-              ["radius",      "Ang",        40.0,  [0.0, inf],  "volume",      "Radius of sphere"],
-              ["sld",  "1e-6/Ang^2",  3.0,  [0.0, inf],  "",            "Sphere scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2",  6.3,  [0.0, inf],  "",            "Solvent scattering length density"],
-              ["theta",       "degrees",     0.0,  [-inf, inf], "orientation", "Orientation of the a1 axis w/respect incoming beam"],
-              ["phi",         "degrees",     0.0,  [-inf, inf], "orientation", "Orientation of the a2 in the plane of the detector"],
-              ["psi",         "degrees",     0.0,  [-inf, inf], "orientation", "Orientation of the a3 in the plane of the detector"],
+parameters = [["dnn",         "Ang",       220.0, [0.0, inf],  "",            "Nearest neighbor distance"],
+              ["d_factor",    "",           0.06, [-inf, inf], "",            "Paracrystal distortion factor"],
+              ["radius",      "Ang",        40.0, [0.0, inf],  "volume",      "Radius of sphere"],
+              ["sld",  "1e-6/Ang^2",         3.0, [0.0, inf],  "sld",         "Sphere scattering length density"],
+              ["sld_solvent", "1e-6/Ang^2",  6.3, [0.0, inf],  "sld",         "Solvent scattering length density"],
+              ["theta",       "degrees",     0.0, [-inf, inf], "orientation", "Orientation of the a1 axis w/respect incoming beam"],
+              ["phi",         "degrees",     0.0, [-inf, inf], "orientation", "Orientation of the a2 in the plane of the detector"],
+              ["psi",         "degrees",     0.0, [-inf, inf], "orientation", "Orientation of the a3 in the plane of the detector"],
              ]
 # pylint: enable=bad-whitespace, line-too-long
 

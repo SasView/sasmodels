@@ -143,7 +143,7 @@ def build_model(model_info, dtype=None, platform="ocl"):
     source = generate.make_source(model_info)
     if platform == "dll":
         #print("building dll", numpy_dtype)
-        return kerneldll.load_dll(source, model_info, numpy_dtype)
+        return kerneldll.load_dll(source['dll'], model_info, numpy_dtype)
     else:
         #print("building ocl", numpy_dtype)
         return kernelcl.GpuModel(source, model_info, numpy_dtype, fast=fast)
@@ -165,8 +165,8 @@ def precompile_dlls(path, dtype="double"):
     compiled_dlls = []
     for model_name in list_models():
         model_info = load_model_info(model_name)
-        source = generate.make_source(model_info)
-        if source:
+        if not callable(model_info.Iq):
+            source = generate.make_source(model_info)['dll']
             old_path = kerneldll.DLL_PATH
             try:
                 kerneldll.DLL_PATH = path

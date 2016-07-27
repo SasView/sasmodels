@@ -28,7 +28,7 @@ None.
 
 """
 
-from numpy import inf, sqrt
+from numpy import inf
 
 name = "peak_lorentz"
 title = "A Lorentzian peak on a flat background"
@@ -57,14 +57,6 @@ def Iq(q, peak_pos, peak_hwhm):
     inten = (1/(1+((q-peak_pos)/peak_hwhm)**2))
     return inten
 Iq.vectorized = True  # Iq accepts an array of q values
-
-def Iqxy(qx, qy, *args):
-    """
-        Return I(qx, qy)
-    """
-    return Iq(sqrt(qx ** 2 + qy ** 2), *args)
-Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
-
 
 demo = dict(scale=100, background=1.0,
             peak_pos=0.05, peak_hwhm=0.005)
