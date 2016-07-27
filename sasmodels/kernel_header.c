@@ -6,7 +6,17 @@
 
 // If opencl is not available, then we are compiling a C function
 // Note: if using a C++ compiler, then define kernel as extern "C"
-#ifndef USE_OPENCL
+#ifdef USE_OPENCL
+   typedef int int32_t;
+#  if defined(USE_SINCOS)
+#    define SINCOS(angle,svar,cvar) svar=sincos(angle,&cvar)
+#  else
+#    define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
+#  endif
+   // OpenCL only has type generic math
+   #define erff erf
+   #define erfcf erfc
+#else // !USE_OPENCL
 // Use SAS_DOUBLE to force the use of double even for float kernels
 #  define SAS_DOUBLE dou ## ble
 #  ifdef __cplusplus
@@ -25,6 +35,7 @@
          #define isfinite(x) _finite(x)
          #define NAN (std::numeric_limits<double>::quiet_NaN()) // non-signalling NaN
          #define INFINITY (std::numeric_limits<double>::infinity())
+         #define NEED_ERF
          #define NEED_EXPM1
          #define NEED_TGAMMA
      #else
@@ -32,7 +43,7 @@
          #include <cstdint>
      #endif
      inline void SINCOS(double angle, double &svar, double &cvar) { svar=sin(angle); cvar=cos(angle); }
-#  else
+#  else // !__cplusplus
      #include <inttypes.h>  // C99 guarantees that int32_t types is here
      #include <stdio.h>
      #if defined(__TINYC__)
@@ -46,6 +57,7 @@
          inline SAS_DOUBLE trunc(SAS_DOUBLE x) { return x>=0?floor(x):-floor(-x); }
          inline SAS_DOUBLE fmin(SAS_DOUBLE x, SAS_DOUBLE y) { return x>y ? y : x; }
          inline SAS_DOUBLE fmax(SAS_DOUBLE x, SAS_DOUBLE y) { return x<y ? y : x; }
+         #define NEED_ERF
          #define NEED_EXPM1
          #define NEED_TGAMMA
      #else
@@ -54,7 +66,7 @@
      // MSVC doesn't support C99, so no need for dllexport on C99 branch
      #define kernel
      #define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
-#  endif
+#  endif  // !__cplusplus
 #  define global
 #  define local
 #  define constant const
@@ -62,14 +74,7 @@
 // OpenCL pown(a,b) = C99 pow(a,b), b integer
 #  define powr(a,b) pow(a,b)
 #  define pown(a,b) pow(a,b)
-#else
-   typedef int int32_t;
-#  if defined(USE_SINCOS)
-#    define SINCOS(angle,svar,cvar) svar=sincos(angle,&cvar)
-#  else
-#    define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
-#  endif
-#endif
+#endif // !USE_OPENCL
 
 #if defined(NEED_EXPM1)
    static SAS_DOUBLE expm1(SAS_DOUBLE x_in) {
