@@ -119,6 +119,7 @@ double jn( int n, double x ) {
 
 #else
 
+float jnf(int n, float x);
 float jnf(int n, float x)
 {
     // PAK: seems to be machine epsilon/2

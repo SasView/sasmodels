@@ -53,6 +53,7 @@ Copyright 1984, 1987, 1989, 2000 by Stephen L. Moshier
 
 #if FLOAT_SIZE>4
 //Cephes double precission
+double j0(double x);
 
  constant double PPJ0[8] = {
         7.96936729297347051624E-4,
@@ -144,7 +145,6 @@ Copyright 1984, 1987, 1989, 2000 by Stephen L. Moshier
         1.71086294081043136091E18,
   };
 
-double j0(double x);
 double j0(double x)
 {
     double w, z, p, q, xn;
@@ -183,6 +183,8 @@ double j0(double x)
     return( p * SQ2OPI / sqrt(x) );
 }
 #else
+//Cephes single precission
+float j0f(float x);
 
  constant float MOJ0[8] = {
         -6.838999669318810E-002,
@@ -217,8 +219,6 @@ double j0(double x)
         0.0
  };
 
-//Cephes single precission
-float j0f(float x);
 float j0f(float x)
 {
     float xx, w, z, p, q, xn;

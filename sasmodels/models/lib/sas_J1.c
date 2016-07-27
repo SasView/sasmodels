@@ -40,8 +40,9 @@ Copyright 1984, 1987, 1989, 2000 by Stephen L. Moshier
 */
 
 #if FLOAT_SIZE>4
-
 //Cephes double pression function
+double j1(double x);
+
 constant double RPJ1[8] = {
     -8.99971225705559398224E8,
     4.52228297998194034323E11,
@@ -104,7 +105,6 @@ constant double QQJ1[8] = {
     3.36093607810698293419E2,
     0.0 };
 
-double j1(double x);
 double j1(double x)
 {
 
@@ -143,6 +143,8 @@ double j1(double x)
 
 #else
 //Single precission version of cephes
+float j1f(float x);
+
 constant float JPJ1[8] = {
     -4.878788132172128E-009,
     6.009061827883699E-007,
@@ -176,7 +178,6 @@ constant float PH1J1[8] = {
     3.749989509080821E-001
     };
 
-float j1f(float x);
 float j1f(float x)
 {
 
