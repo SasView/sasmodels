@@ -666,6 +666,8 @@ def compare(opts, limits=None):
     #if is2D:
     #    h = plt.colorbar()
     #    h.ax.set_title(cbar_title)
+    fig = plt.gcf()
+    fig.suptitle(opts['name'])
 
     if Ncomp > 0 and Nbase > 0 and '-hist' in opts:
         plt.figure()

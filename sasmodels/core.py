@@ -220,3 +220,6 @@ def parse_dtype(model_info, dtype=None, platform=None):
                 numpy_dtype = generate.F64
 
     return numpy_dtype, fast, platform
+
+if __name__ == "__main__":
+    print("\n".join(list_models()))
