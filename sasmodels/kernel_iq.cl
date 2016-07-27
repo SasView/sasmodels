@@ -235,8 +235,8 @@ void KERNEL_NAME(
       // Accumulate I(q)
       // Note: weight==0 must always be excluded
       if (weight0 > cutoff) {
-        // spherical correction has some nasty effects when theta is +90 or -90
-        // where it becomes zero.
+        // spherical correction is set at a minimum of 1e-6, otherwise there
+        // would be problems looking at models with theta=90.
         const double weight = weight0 * spherical_correction;
         pd_norm += weight * CALL_VOLUME(local_values);
 
