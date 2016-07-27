@@ -39,6 +39,9 @@ Cephes Math Library Release 2.8:  June, 2000
 Copyright 1984, 1987, 1989, 2000 by Stephen L. Moshier
 */
 
+#if FLOAT_SIZE>4
+
+//Cephes double pression function
 constant double RPJ1[8] = {
     -8.99971225705559398224E8,
     4.52228297998194034323E11,
@@ -101,45 +104,9 @@ constant double QQJ1[8] = {
     3.36093607810698293419E2,
     0.0 };
 
-constant double JPJ1[8] = {
-    -4.878788132172128E-009,
-    6.009061827883699E-007,
-    -4.541343896997497E-005,
-    1.937383947804541E-003,
-    -3.405537384615824E-002,
-    0.0,
-    0.0,
-    0.0
-    };
-
-constant double MO1J1[8] = {
-    6.913942741265801E-002,
-    -2.284801500053359E-001,
-    3.138238455499697E-001,
-    -2.102302420403875E-001,
-    5.435364690523026E-003,
-    1.493389585089498E-001,
-    4.976029650847191E-006,
-    7.978845453073848E-001
-    };
-
-constant double PH1J1[8] = {
-    -4.497014141919556E+001,
-    5.073465654089319E+001,
-    -2.485774108720340E+001,
-    7.222973196770240E+000,
-    -1.544842782180211E+000,
-    3.503787691653334E-001,
-    -1.637986776941202E-001,
-    3.749989509080821E-001
-    };
-
-double sas_J1(double x);
-double sas_J1(double x)
+double j1(double x);
+double j1(double x)
 {
-
-//Cephes double pression function
-#if FLOAT_SIZE>4
 
     double w, z, p, q, xn;
 
@@ -150,15 +117,14 @@ double sas_J1(double x)
 
     w = x;
     if( x < 0 )
-	    w = -x;
+        w = -x;
 
-    if( w <= 5.0 )
-	{
-	    z = x * x;
-	    w = polevl( z, RPJ1, 3 ) / p1evl( z, RQJ1, 8 );
-	    w = w * x * (z - Z1) * (z - Z2);
-	    return( w );
-	}
+    if( w <= 5.0 ) {
+        z = x * x;
+        w = polevl( z, RPJ1, 3 ) / p1evl( z, RQJ1, 8 );
+        w = w * x * (z - Z1) * (z - Z2);
+        return( w );
+    }
 
     w = 5.0/x;
     z = w * w;
@@ -173,26 +139,62 @@ double sas_J1(double x)
     p = p * cn - w * q * sn;
 
     return( p * SQ2OPI / sqrt(x) );
+}
 
-
-//Single precission version of cephes
 #else
-    double xx, w, z, p, q, xn;
+//Single precission version of cephes
+constant float JPJ1[8] = {
+    -4.878788132172128E-009,
+    6.009061827883699E-007,
+    -4.541343896997497E-005,
+    1.937383947804541E-003,
+    -3.405537384615824E-002,
+    0.0,
+    0.0,
+    0.0
+    };
 
-    const double Z1 = 1.46819706421238932572E1;
-    const double THPIO4F =  2.35619449019234492885;    /* 3*pi/4 */
+constant float MO1J1[8] = {
+    6.913942741265801E-002,
+    -2.284801500053359E-001,
+    3.138238455499697E-001,
+    -2.102302420403875E-001,
+    5.435364690523026E-003,
+    1.493389585089498E-001,
+    4.976029650847191E-006,
+    7.978845453073848E-001
+    };
+
+constant float PH1J1[8] = {
+    -4.497014141919556E+001,
+    5.073465654089319E+001,
+    -2.485774108720340E+001,
+    7.222973196770240E+000,
+    -1.544842782180211E+000,
+    3.503787691653334E-001,
+    -1.637986776941202E-001,
+    3.749989509080821E-001
+    };
+
+float j1f(float x);
+float j1f(float x)
+{
+
+    float xx, w, z, p, q, xn;
+
+    const float Z1 = 1.46819706421238932572E1;
+    const float THPIO4F =  2.35619449019234492885;    /* 3*pi/4 */
 
 
     xx = x;
     if( xx < 0 )
-	    xx = -x;
+        xx = -x;
 
-    if( xx <= 2.0 )
-	{
-	    z = xx * xx;
-	    p = (z-Z1) * xx * polevl( z, JPJ1, 4 );
-	    return( p );
-	}
+    if( xx <= 2.0 ) {
+        z = xx * xx;
+        p = (z-Z1) * xx * polevl( z, JPJ1, 4 );
+        return( p );
+    }
 
     q = 1.0/x;
     w = sqrt(q);
@@ -203,8 +205,14 @@ double sas_J1(double x)
     p = p * cos(xn + xx);
 
     return(p);
-#endif
 }
+#endif
+
+#if FLOAT_SIZE>4
+#define sas_J1 j1
+#else
+#define sas_J1 j1f
+#endif
 
 //Finally J1c function that equals 2*J1(x)/x
 double sas_J1c(double x);

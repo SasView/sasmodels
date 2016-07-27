@@ -51,6 +51,8 @@ Copyright 1984, 1987, 1989, 2000 by Stephen L. Moshier
 /* Note: all coefficients satisfy the relative error criterion
  * except YP, YQ which are designed for absolute error. */
 
+#if FLOAT_SIZE>4
+//Cephes double precission
 
  constant double PPJ0[8] = {
         7.96936729297347051624E-4,
@@ -142,45 +144,9 @@ Copyright 1984, 1987, 1989, 2000 by Stephen L. Moshier
         1.71086294081043136091E18,
   };
 
- constant double MOJ0[8] = {
-        -6.838999669318810E-002,
-        1.864949361379502E-001,
-        -2.145007480346739E-001,
-        1.197549369473540E-001,
-        -3.560281861530129E-003,
-        -4.969382655296620E-002,
-        -3.355424622293709E-006,
-        7.978845717621440E-001
-  };
-
- constant double PHJ0[8] = {
-        3.242077816988247E+001,
-        -3.630592630518434E+001,
-        1.756221482109099E+001,
-        -4.974978466280903E+000,
-        1.001973420681837E+000,
-        -1.939906941791308E-001,
-        6.490598792654666E-002,
-        -1.249992184872738E-001
-  };
-
- constant double JPJ0[8] = {
-        -6.068350350393235E-008,
-        6.388945720783375E-006,
-        -3.969646342510940E-004,
-        1.332913422519003E-002,
-        -1.729150680240724E-001,
-        0.0,
-        0.0,
-        0.0
- };
-
-double sas_J0(double x);
-double sas_J0(double x)
+double j0(double x);
+double j0(double x)
 {
-
-//Cephes single precission
-#if FLOAT_SIZE>4
     double w, z, p, q, xn;
 
     //const double TWOOPI = 6.36619772367581343075535E-1;
@@ -192,17 +158,17 @@ double sas_J0(double x)
 
 
     if( x < 0 )
-	    x = -x;
+        x = -x;
 
     if( x <= 5.0 ) {
-	    z = x * x;
-	    if( x < 1.0e-5 )
-		    return( 1.0 - z/4.0 );
+        z = x * x;
+        if( x < 1.0e-5 )
+            return( 1.0 - z/4.0 );
 
-	    p = (z - DR1) * (z - DR2);
-	    p = p * polevl( z, RPJ0, 3)/p1evl( z, RQJ0, 8 );
-	    return( p );
-	}
+        p = (z - DR1) * (z - DR2);
+        p = p * polevl( z, RPJ0, 3)/p1evl( z, RQJ0, 8 );
+        return( p );
+    }
 
     w = 5.0/x;
     q = 25.0/(x*x);
@@ -215,29 +181,67 @@ double sas_J0(double x)
     p = p * cn - w * q * sn;
 
     return( p * SQ2OPI / sqrt(x) );
-//Cephes single precission
+}
 #else
-    double xx, w, z, p, q, xn;
+
+ constant float MOJ0[8] = {
+        -6.838999669318810E-002,
+        1.864949361379502E-001,
+        -2.145007480346739E-001,
+        1.197549369473540E-001,
+        -3.560281861530129E-003,
+        -4.969382655296620E-002,
+        -3.355424622293709E-006,
+        7.978845717621440E-001
+  };
+
+ constant float PHJ0[8] = {
+        3.242077816988247E+001,
+        -3.630592630518434E+001,
+        1.756221482109099E+001,
+        -4.974978466280903E+000,
+        1.001973420681837E+000,
+        -1.939906941791308E-001,
+        6.490598792654666E-002,
+        -1.249992184872738E-001
+  };
+
+ constant float JPJ0[8] = {
+        -6.068350350393235E-008,
+        6.388945720783375E-006,
+        -3.969646342510940E-004,
+        1.332913422519003E-002,
+        -1.729150680240724E-001,
+        0.0,
+        0.0,
+        0.0
+ };
+
+//Cephes single precission
+float j0f(float x);
+float j0f(float x)
+{
+    float xx, w, z, p, q, xn;
 
     //const double YZ1 =  0.43221455686510834878;
     //const double YZ2 = 22.401876406482861405;
     //const double YZ3 = 64.130620282338755553;
-    const double DR1 =  5.78318596294678452118;
-    const double PIO4F = 0.7853981633974483096;
+    const float DR1 =  5.78318596294678452118;
+    const float PIO4F = 0.7853981633974483096;
 
     if( x < 0 )
-	    xx = -x;
+        xx = -x;
     else
-	    xx = x;
+        xx = x;
 
     if( x <= 2.0 ) {
-	    z = xx * xx;
-	    if( x < 1.0e-3 )
-		    return( 1.0 - 0.25*z );
+        z = xx * xx;
+        if( x < 1.0e-3 )
+            return( 1.0 - 0.25*z );
 
-	    p = (z-DR1) * polevl( z, JPJ0, 4);
-	    return( p );
-	}
+        p = (z-DR1) * polevl( z, JPJ0, 4);
+        return( p );
+    }
 
     q = 1.0/x;
     w = sqrt(q);
@@ -247,7 +251,11 @@ double sas_J0(double x)
     xn = q * polevl( w, PHJ0, 7) - PIO4F;
     p = p * cos(xn + xx);
     return(p);
+}
 #endif
 
-}
-
+#if FLOAT_SIZE>4
+#define sas_J0 j0
+#else
+#define sas_J0 j0f
+#endif
