@@ -28,7 +28,7 @@ typedef struct {
 } ProblemDetails;
 
 typedef struct {
-    PARAMETER_TABLE;
+    PARAMETER_TABLE
 } ParameterBlock;
 #endif // _PAR_BLOCK_
 
