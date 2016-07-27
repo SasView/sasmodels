@@ -197,7 +197,7 @@ description = """
             I(q) =
                background = Incoherent background [1/cm]
         """
-category = "sphere-based"
+category = "shape:sphere"
 
 # pylint: disable=bad-whitespace, line-too-long
 #            ["name", "units", default, [lower, upper], "type", "description"],

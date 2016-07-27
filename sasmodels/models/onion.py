@@ -15,21 +15,26 @@ The 1D scattering intensity is calculated in the following way
 
 .. math::
 
-    P(q) &= [f]^2 / V_\text{particle}
+    P(q) = [f]^2 / V_\text{particle}
 
 where
 
 .. math::
+    :nowrap:
 
-    f    &= f_\text{core}
+    \begin{align*}
+    f &= f_\text{core}
             + \left(\sum_{\text{shell}=1}^N f_\text{shell}\right)
             + f_\text{solvent}
-
+    \end{align*}
 
 The shells are spherically symmetric with particle density $\rho(r)$ and
 constant SLD within the core and solvent, so
 
 .. math::
+    :nowrap:
+
+    \begin{align*}
 
     f_\text{core}
         &= 4\pi\int_0^{r_\text{core}} \rho_\text{core}
@@ -43,6 +48,7 @@ constant SLD within the core and solvent, so
         &= 4\pi\int_{r_N}^\infty
             \rho_\text{solvent}\frac{\sin(qr)}{qr}\,r^2\,\mathrm{d}r
         &= -3\rho_\text{solvent}V(r_N)\frac{j_1(q r_N)}{q r_N}
+    \end{align*}
 
 where the spherical bessel function $j_1$ is
 
@@ -71,7 +77,9 @@ thickness of the $k^\text{th}$ shell in the equation above, respectively.
 For $A \gt 0$,
 
 .. math::
+    :nowrap:
 
+    \begin{align*}
     f_\text{shell} &= 4 \pi \int_{r_{\text{shell}-1}}^{r_\text{shell}}
         \left[ B\exp
             \left(A (r - r_{\text{shell}-1}) / \Delta t_\text{shell} \right) + C
@@ -80,6 +88,7 @@ For $A \gt 0$,
         - 3BV(r_{\text{shell}-1}) h(\alpha_\text{in},\beta_\text{in})
         + 3CV(r_{\text{shell}}) \frac{j_1(\beta_\text{out})}{\beta_\text{out}}
         - 3CV(r_{\text{shell}-1}) \frac{j_1(\beta_\text{in})}{\beta_\text{in}}
+    \end{align*}
 
 for
 
@@ -109,8 +118,9 @@ $\rho_\text{shell}(r) \approx A(r-r_{\text{shell}-1})/\Delta t_\text{shell})+B$,
 so this case is equivalent to
 
 .. math::
+    :nowrap:
 
-
+    \begin{align*}
     f_\text{shell}
     &=
       3 V(r_\text{shell}) \frac{\Delta\rho_\text{shell}}{\Delta t_\text{shell}}
@@ -131,6 +141,7 @@ so this case is equivalent to
     &{}
       +3\rho_\text{out}V(r_\text{shell}) \frac{j_1(qr_\text{out})}{qr_\text{out}}
       -3\rho_\text{in}V(r_{\text{shell}-1}) \frac{j_1(qr_\text{in})}{qr_\text{in}}
+    \end{align*}
 
 For $A = 0$, the exponential function has no dependence on the radius (so that
 $\rho_\text{out}$ is ignored this case) and becomes flat. We set the constant
