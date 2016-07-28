@@ -27,8 +27,13 @@ typedef struct {
     int32_t theta_par;          // id of spherical correction variable
 } ProblemDetails;
 
+// Intel HD 4000 needs private arrays to be a multiple of 4 long
 typedef struct {
     PARAMETER_TABLE
+} ParameterTable;
+typedef union {
+    ParameterTable table;
+    double vector[4*((NUM_PARS+3)/4)];
 } ParameterBlock;
 #endif // _PAR_BLOCK_
 
@@ -86,16 +91,15 @@ void KERNEL_NAME(
   // Storage for the current parameter values.  These will be updated as we
   // walk the polydispersity cube.  local_values will be aliased to pvec.
   ParameterBlock local_values;
-  double *pvec = (double *)&local_values;
 
   // Fill in the initial variables
   for (int i=0; i < NUM_PARS; i++) {
-    pvec[i] = values[2+i];
-//if (q_index==0) printf("p%d = %g\n",i, pvec[i]);
+    local_values.vector[i] = values[2+i];
+//if (q_index==0) printf("p%d = %g\n",i, local_values.vector[i]);
   }
 
 #if defined(MAGNETIC) && NUM_MAGNETIC>0
-  // Location of the sld parameters in the parameter pvec.
+  // Location of the sld parameters in the parameter vector.
   // These parameters are updated with the effective sld due to magnetism.
   #if NUM_MAGNETIC > 3
   const int32_t slds[] = { MAGNETIC_PARS };
@@ -182,56 +186,56 @@ void KERNEL_NAME(
 #if MAX_PD>4
   const double weight5 = 1.0;
   while (i4 < n4) {
-    pvec[p4] = v4[i4];
+    local_values.vector[p4] = v4[i4];
     double weight4 = w4[i4] * weight5;
-//if (q_index == 0) printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 4, p4, i4, n4, pvec[p4], weight4);
+//if (q_index == 0) printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 4, p4, i4, n4, local_values.vector[p4], weight4);
 #elif MAX_PD>3
     const double weight4 = 1.0;
 #endif
 #if MAX_PD>3
   while (i3 < n3) {
-    pvec[p3] = v3[i3];
+    local_values.vector[p3] = v3[i3];
     double weight3 = w3[i3] * weight4;
-//if (q_index == 0) printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 3, p3, i3, n3, pvec[p3], weight3);
+//if (q_index == 0) printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 3, p3, i3, n3, local_values.vector[p3], weight3);
 #elif MAX_PD>2
     const double weight3 = 1.0;
 #endif
 #if MAX_PD>2
   while (i2 < n2) {
-    pvec[p2] = v2[i2];
+    local_values.vector[p2] = v2[i2];
     double weight2 = w2[i2] * weight3;
-//if (q_index == 0) printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 2, p2, i2, n2, pvec[p2], weight2);
+//if (q_index == 0) printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 2, p2, i2, n2, local_values.vector[p2], weight2);
 #elif MAX_PD>1
     const double weight2 = 1.0;
 #endif
 #if MAX_PD>1
   while (i1 < n1) {
-    pvec[p1] = v1[i1];
+    local_values.vector[p1] = v1[i1];
     double weight1 = w1[i1] * weight2;
-//if (q_index == 0) printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 1, p1, i1, n1, pvec[p1], weight1);
+//if (q_index == 0) printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 1, p1, i1, n1, local_values.vector[p1], weight1);
 #elif MAX_PD>0
     const double weight1 = 1.0;
 #endif
 #if MAX_PD>0
   if (slow_theta) { // Theta is not in inner loop
-    spherical_correction = fmax(fabs(cos(M_PI_180*pvec[theta_par])), 1.e-6);
+    spherical_correction = fmax(fabs(cos(M_PI_180*local_values.vector[theta_par])), 1.e-6);
   }
   while(i0 < n0) {
-    pvec[p0] = v0[i0];
+    local_values.vector[p0] = v0[i0];
     double weight0 = w0[i0] * weight1;
-//if (q_index == 0) printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 0, p0, i0, n0, pvec[p0], weight0);
+//if (q_index == 0) printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 0, p0, i0, n0, local_values.vector[p0], weight0);
     if (fast_theta) { // Theta is in inner loop
-      spherical_correction = fmax(fabs(cos(M_PI_180*pvec[p0])), 1.e-6);
+      spherical_correction = fmax(fabs(cos(M_PI_180*local_values.vector[p0])), 1.e-6);
     }
 #else
     const double weight0 = 1.0;
 #endif
 
-//if (q_index == 0) {printf("step:%d of %d, pars:",step,pd_stop); for (int i=0; i < NUM_PARS; i++) printf("p%d=%g ",i, pvec[i]); printf("\n"); }
+//if (q_index == 0) {printf("step:%d of %d, pars:",step,pd_stop); for (int i=0; i < NUM_PARS; i++) printf("p%d=%g ",i, local_values.vector[i]); printf("\n"); }
 //if (q_index == 0) printf("sphcor: %g\n", spherical_correction);
 
     #ifdef INVALID
-    if (!INVALID(local_values))
+    if (!INVALID(local_values.table))
     #endif
     {
       // Accumulate I(q)
@@ -240,7 +244,7 @@ void KERNEL_NAME(
         // spherical correction is set at a minimum of 1e-6, otherwise there
         // would be problems looking at models with theta=90.
         const double weight = weight0 * spherical_correction;
-        pd_norm += weight * CALL_VOLUME(local_values);
+        pd_norm += weight * CALL_VOLUME(local_values.table);
 
 #if defined(MAGNETIC) && NUM_MAGNETIC > 0
         const double qx = q[2*q_index];
@@ -266,7 +270,7 @@ void KERNEL_NAME(
                 #define M2 NUM_PARS+8
                 #define M3 NUM_PARS+13
                 #define SLD(_M_offset, _sld_offset) \
-                    pvec[_sld_offset] = xs * (axis \
+                    local_values.vector[_sld_offset] = xs * (axis \
                     ? (index==1 ? -values[_M_offset+2] : values[_M_offset+2]) \
                     : mag_sld(qx, qy, pk, values[_M_offset], values[_M_offset+1], \
                               (spin_flip ? 0.0 : values[_sld_offset+2])))
@@ -284,13 +288,13 @@ void KERNEL_NAME(
                     SLD(M1+3*sk, slds[sk]);
                 }
                 #endif
-                scattering += CALL_IQ(q, q_index, local_values);
+                scattering += CALL_IQ(q, q_index, local_values.table);
               }
             }
           }
         }
 #else  // !MAGNETIC
-        const double scattering = CALL_IQ(q, q_index, local_values);
+        const double scattering = CALL_IQ(q, q_index, local_values.table);
 #endif // !MAGNETIC
         this_result += weight * scattering;
       }

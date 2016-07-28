@@ -175,10 +175,16 @@ def build_details(kernel, pairs):
     scalars = [v[0] for v in values]
     if all(len(w)==1 for w in weights):
         call_details = mono_details(kernel.info)
-        data = np.array(scalars+scalars+[1]*len(scalars), dtype=kernel.dtype)
+        # Pad value array to a 32 value boundary
+        data_len = 3*len(scalars)
+        extra = ((data_len+31)//32)*32 - data_len
+        data = np.array(scalars+scalars+[1.]*len(scalars)+[0.]*extra, dtype=kernel.dtype)
     else:
         call_details = poly_details(kernel.info, weights)
-        data = np.hstack(scalars+list(values)+list(weights)).astype(kernel.dtype)
+        # Pad value array to a 32 value boundary
+        data_len = len(scalars) + 2*sum(len(v) for v in values)
+        extra = ((data_len+31)//32)*32 - data_len
+        data = np.hstack(scalars+list(values)+list(weights)+[0.]*extra).astype(kernel.dtype)
     is_magnetic = convert_magnetism(kernel.info.parameters, data)
     #call_details.show()
     return call_details, data, is_magnetic
