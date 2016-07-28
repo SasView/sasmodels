@@ -24,9 +24,11 @@ double Iq(double q, double case_num,
   double Paa,S0aa,Pab,S0ab,Pac,S0ac,Pad,S0ad;
   double S0ba,Pbb,S0bb,Pbc,S0bc,Pbd,S0bd;
   double S0ca,S0cb,Pcc,S0cc,Pcd,S0cd;
-  double S0da,S0db,S0dc,Pdd,S0dd;
-  double Kaa,Kbb,Kcc,Kdd;
-  double Kba,Kca,Kda,Kcb,Kdb,Kdc;
+  double S0da,S0db,S0dc;
+  double Pdd,S0dd;
+  double Kaa,Kbb,Kcc;
+  double Kba,Kca,Kcb;
+  double Kda,Kdb,Kdc,Kdd;
   double Zaa,Zab,Zac,Zba,Zbb,Zbc,Zca,Zcb,Zcc;
   double DenT,T11,T12,T13,T21,T22,T23,T31,T32,T33;
   double Y1,Y2,Y3,X11,X12,X13,X21,X22,X23,X31,X32,X33;
