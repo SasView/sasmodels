@@ -56,15 +56,37 @@ except Exception:
 #    load_model_info
 #    build_model
 
-def list_models():
+def list_models(kind=None):
     # type: () -> List[str]
     """
     Return the list of available models on the model path.
     """
+    KINDS = ("all", "py", "c", "double", "oriented", "magnetic")
+    if kind and kind not in KINDS:
+        raise ValueError("kind not in "+", ".join(KINDS))
     root = dirname(__file__)
     files = sorted(glob(joinpath(root, 'models', "[a-zA-Z]*.py")))
     available_models = [basename(f)[:-3] for f in files]
-    return available_models
+    selected = [name for name in available_models if _matches(name, kind)]
+
+    return selected
+
+def _matches(name, kind):
+    if kind is None or kind=="all":
+        return True
+    info = load_model_info(name)
+    pars = info.parameters.kernel_parameters
+    if kind == "py" and callable(info.Iq):
+        return True
+    elif kind == "c" and not callable(info.Iq):
+        return True
+    elif kind == "double" and not info.single:
+        return True
+    elif kind == "oriented" and any(p.type=='orientation' for p in pars):
+        return True
+    elif kind == "magnetic" and any(p.type=='sld' for p in pars):
+        return True
+    return False
 
 def load_model(model_name, dtype=None, platform='ocl'):
     # type: (str, str, str) -> KernelModel
@@ -222,4 +244,6 @@ def parse_dtype(model_info, dtype=None, platform=None):
     return numpy_dtype, fast, platform
 
 if __name__ == "__main__":
-    print("\n".join(list_models()))
+    import sys
+    kind = sys.argv[1] if len(sys.argv) > 1 else "all"
+    print("\n".join(list_models(kind)))
