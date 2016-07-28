@@ -165,7 +165,6 @@ import sys
 from os.path import abspath, dirname, join as joinpath, exists, isdir, getmtime
 import re
 import string
-import warnings
 
 import numpy as np  # type: ignore
 
