@@ -61,7 +61,7 @@ def list_models(kind=None):
     """
     Return the list of available models on the model path.
     """
-    KINDS = ("all", "py", "c", "double", "oriented", "magnetic")
+    KINDS = ("all", "py", "c", "double", "single", "1d", "2d", "nonmagnetic", "magnetic")
     if kind and kind not in KINDS:
         raise ValueError("kind not in "+", ".join(KINDS))
     root = dirname(__file__)
@@ -82,9 +82,15 @@ def _matches(name, kind):
         return True
     elif kind == "double" and not info.single:
         return True
-    elif kind == "oriented" and any(p.type=='orientation' for p in pars):
+    elif kind == "single" and info.single:
+        return True
+    elif kind == "2d" and any(p.type=='orientation' for p in pars):
+        return True
+    elif kind == "1d" and any(p.type!='orientation' for p in pars):
         return True
     elif kind == "magnetic" and any(p.type=='sld' for p in pars):
+        return True
+    elif kind == "nonmagnetic" and any(p.type!='sld' for p in pars):
         return True
     return False
 
