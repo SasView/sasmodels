@@ -450,6 +450,7 @@ def eval_sasview(model_info, data):
             model[0] = ModelClass(int(pars[model_info.control]))
         # paying for parameter conversion each time to keep life simple, if not fast
         oldpars = revert_pars(model_info, pars)
+        #print("sasview pars",oldpars)
         for k, v in oldpars.items():
             name_attr = k.split('.')  # polydispersity components
             if len(name_attr) == 2:

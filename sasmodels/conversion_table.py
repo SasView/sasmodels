@@ -508,11 +508,12 @@ CONVERSION_TABLE = {
     "multilayer_vesicle": [
         "MultiShellModel",
         {
+            "radius": "core_radius",
+            "sld_solvent": "core_sld",
+            "n_pairs": "n_pairs",
+            "thick_shell": "s_thickness",
             "sld": "shell_sld",
             "thick_solvent": "w_thickness",
-            "thick_shell": "s_thickness",
-            "radius": "core_radius",
-            "sld_solvent": "core_sld"
         }
     ],
     "onion": [
