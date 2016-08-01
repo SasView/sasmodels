@@ -79,7 +79,7 @@ def Iq(q, level, rg, power, B, G):
             return 1./q
 
     with errstate(divide='ignore', invalid='ignore'):
-        result = np.empty(q.shape, 'd')
+        result = np.zeros(q.shape, 'd')
         for i in range(ilevel):
             exp_now = exp(-(q*rg[i])**2/3.)
             pow_now = (erf(q*rg[i]/sqrt(6.))**3/q)**power[i]
