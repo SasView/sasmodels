@@ -5,7 +5,7 @@ double Iq(double q, double radius, double core_radius, double length, double sld
 double Iqxy(double qx, double qy, double radius, double core_radius, double length, double sld,
 	double solvent_sld, double theta, double phi);
 
-#define INVALID(v) (v.core_radius >= v.radius || v.radius >= v.length)
+#define INVALID(v) (v.core_radius >= v.radius)
 
 // From Igor library
 static double hollow_cylinder_scaling(
@@ -28,14 +28,13 @@ static double hollow_cylinder_scaling(
 static double _hollow_cylinder_kernel(
     double q, double core_radius, double radius, double length, double dum)
 {
-    //Note: lim_{r -> r_c} psi = J0(core_radius*qs)
     const double qs = q*sqrt(1.0-dum*dum);
     const double lam1 = sas_J1c(radius*qs);
     const double lam2 = sas_J1c(core_radius*qs);
     const double gamma_sq = square(core_radius/radius);
+    //Note: lim_{r -> r_c} psi = J0(core_radius*qs)
     const double psi = (lam1 - gamma_sq*lam2)/(1.0 - gamma_sq);	//SRK 10/19/00
     const double t2 = sinc(q*length*dum/2.0);
-
     return square(psi*t2);
 }
 
