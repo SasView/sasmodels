@@ -393,5 +393,9 @@ demo = {
     "A": [0, -1, 1e-4, 1],
     # Could also specify them individually as
     # "A1": 0, "A2": -1, "A3": 1e-4, "A4": 1,
+    #"core_radius_pd_n": 10,
+    #"core_radius_pd": 0.4,
+    #"thickness4_pd_n": 10,
+    #"thickness4_pd": 0.4,
     }
 

@@ -315,6 +315,8 @@ def constrain_new_to_old(model_info, pars):
             pars['i_zero'] = 1
         elif name == 'core_multi_shell':
             pars['n'] = min(math.ceil(pars['n']), 4)
+        elif name == 'onion':
+            pars['n_shells'] = math.ceil(pars['n_shells'])
         elif name == 'spherical_sld':
             for k in range(1, 11):
                 pars['thick_flat%d_pd_n'%k] = 0

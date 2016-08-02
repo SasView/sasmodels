@@ -1,58 +1,31 @@
 
 static double
 f_exp(double q, double r, double sld_in, double sld_out,
-    double thickness, double A)
+    double thickness, double A, double side)
 {
   const double vol = M_4PI_3 * cube(r);
   const double qr = q * r;
-  const double alpha = A * r/thickness;
   const double bes = sph_j1c(qr);
-  const double B = (sld_out - sld_in)/expm1(A);
-  const double C = sld_in - B;
-  double fun;
+  const double alpha = A * r/thickness;
+  double result;
   if (qr == 0.0) {
-    fun = 1.0;
+    result = 1.0;
   } else if (fabs(A) > 0.0) {
-    const double qrsq = qr*qr;
-    const double alphasq = alpha*alpha;
+    const double qrsq = qr * qr;
+    const double alphasq = alpha * alpha;
     const double sumsq = alphasq + qrsq;
     double sinqr, cosqr;
     SINCOS(qr, sinqr, cosqr);
-    fun = -3.0*(
-            ((alphasq - qrsq)*sinqr/qr - 2.0*alpha*cosqr) / sumsq
-                - (alpha*sinqr/qr - cosqr)
-        ) / sumsq;
+    const double t1 = (alphasq - qrsq)*sinqr/qr - 2.0*alpha*cosqr;
+    const double t2 = alpha*sinqr/qr - cosqr;
+    const double fun = -3.0*(t1/sumsq - t2)/sumsq;
+    const double slope = (sld_out - sld_in)/expm1(A);
+    const double contrast = slope*exp(A*side);
+    result = contrast*fun + (sld_in-slope)*bes;
   } else {
-    fun = bes;
+    result = sld_in*bes;
   }
-  return vol * (B*fun + C*bes);
-}
-
-static double
-f_linear(double q, double r, double sld, double slope)
-{
-  const double vol = M_4PI_3 * cube(r);
-  const double qr = q * r;
-  const double bes = sph_j1c(qr);
-  double fun = 0.0;
-  if (qr > 0.0) {
-    const double qrsq = qr*qr;
-    double sinqr, cosqr;
-    SINCOS(qr, sinqr, cosqr);
-    // Jae-He's code seems to simplify to this
-    //     fun = 3.0 * slope * r * (2.0*qr*sinqr - (qrsq-2.0)*cosqr)/(qrsq*qrsq);
-    // Rederiving the math, we get the following instead:
-    fun = 3.0 * slope * r * (2.0*cosqr + qr*sinqr)/(qrsq*qrsq);
-  }
-  return vol * (sld*bes + fun);
-}
-
-static double
-f_constant(double q, double r, double sld)
-{
-  const double bes = sph_j1c(q * r);
-  const double vol = M_4PI_3 * cube(r);
-  return sld * vol * bes;
+  return vol * result;
 }
 
 static double
@@ -68,30 +41,19 @@ form_volume(double core_radius, double n, double thickness[])
 
 static double
 Iq(double q, double sld_core, double core_radius, double sld_solvent,
-    double n, double sld_in[], double sld_out[], double thickness[],
+    double n_shells, double sld_in[], double sld_out[], double thickness[],
     double A[])
 {
-  int i;
-  double r = core_radius;
-  double f = f_constant(q, r, sld_core);
-  for (i=0; i<n; i++){
-    const double r0 = r;
-    r += thickness[i];
-    if (r == r0) {
-      // no thickness, so nothing to add
-    } else if (fabs(A[i]) < 1.0e-16 || sld_out[i] == sld_in[i]) {
-      f -= f_constant(q, r0, sld_in[i]);
-      f += f_constant(q, r, sld_in[i]);
-    } else if (fabs(A[i]) < 1.0e-4) {
-      const double slope = (sld_out[i] - sld_in[i])/thickness[i];
-      f -= f_linear(q, r0, sld_in[i], slope);
-      f += f_linear(q, r, sld_out[i], slope);
-    } else {
-      f -= f_exp(q, r0, sld_in[i], sld_out[i], thickness[i], A[i]);
-      f += f_exp(q, r, sld_in[i], sld_out[i], thickness[i], A[i]);
-    }
+  int n = (int)(n_shells+0.5);
+  double r_out = core_radius;
+  double f = f_exp(q, r_out, sld_core, 0.0, 0.0, 0.0, 0.0);
+  for (int i=0; i < n; i++){
+    const double r_in = r_out;
+    r_out += thickness[i];
+    f -= f_exp(q, r_in, sld_in[i], sld_out[i], thickness[i], A[i], 0.0);
+    f += f_exp(q, r_out, sld_in[i], sld_out[i], thickness[i], A[i], 1.0);
   }
-  f -= f_constant(q, r, sld_solvent);
+  f -= f_exp(q, r_out, sld_solvent, 0.0, 0.0, 0.0, 0.0);
   const double f2 = f * f * 1.0e-4;
 
   return f2;
