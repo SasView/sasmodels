@@ -276,8 +276,8 @@ float erfcf(float a)
         x = -a;
     else
         x = a;*/
-
-    x = fabsf(a);
+    // TODO: tinycc does not support fabsf
+    x = fabs(a);
 
 
     if (x < 1.0) {
@@ -298,7 +298,6 @@ float erfcf(float a)
         else
             return (0.0);
     }
-
     z = expf(z);
 
 
@@ -328,7 +327,8 @@ float erff(float x)
 {
     float y, z;
 
-    if (fabsf(x) > 1.0)
+    // TODO: tinycc does not support fabsf
+    if (fabs(x) > 1.0)
         return (1.0 - erfcf(x));
 
     z = x * x;

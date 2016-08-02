@@ -216,7 +216,7 @@ parameters = [["n_shells",          "",               1,      [0, 10],        "v
               ["nu_inter[n_shells]",      "",               2.5,    [-inf, inf],    "", "steepness parameter"],
               ]
 # pylint: enable=bad-whitespace, line-too-long
-source = ["lib/sas_erf.c", "lib/librefl.c",  "lib/sph_j1c.c", "spherical_sld.c"]
+source = ["lib/polevl.c", "lib/sas_erf.c", "lib/librefl.c",  "lib/sph_j1c.c", "spherical_sld.c"]
 single = False  # TODO: fix low q behaviour
 
 profile_axes = ['Radius (A)', 'SLD (1e-6/A^2)']
