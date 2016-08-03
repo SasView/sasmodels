@@ -60,6 +60,8 @@
          #define NEED_ERF
          #define NEED_EXPM1
          #define NEED_TGAMMA
+         // expf missing from windows?
+         #define expf exp
      #else
          #include <tgmath.h> // C99 type-generic math, so sin(float) => sinf
      #endif
