@@ -5,11 +5,11 @@ from __future__ import print_function
 
 __all__ = [
     "list_models", "load_model", "load_model_info",
-    "build_model", "precompile_dll",
+    "build_model", "precompile_dlls",
     ]
 
 import os
-from os.path import basename, dirname, join as joinpath, splitext
+from os.path import basename, dirname, join as joinpath
 from glob import glob
 
 import numpy as np # type: ignore
@@ -56,15 +56,44 @@ except Exception:
 #    load_model_info
 #    build_model
 
-def list_models():
+KINDS = ("all", "py", "c", "double", "single", "1d", "2d",
+         "nonmagnetic", "magnetic")
+def list_models(kind=None):
     # type: () -> List[str]
     """
     Return the list of available models on the model path.
     """
+    if kind and kind not in KINDS:
+        raise ValueError("kind not in " + ", ".join(KINDS))
     root = dirname(__file__)
     files = sorted(glob(joinpath(root, 'models', "[a-zA-Z]*.py")))
     available_models = [basename(f)[:-3] for f in files]
-    return available_models
+    selected = [name for name in available_models if _matches(name, kind)]
+
+    return selected
+
+def _matches(name, kind):
+    if kind is None or kind == "all":
+        return True
+    info = load_model_info(name)
+    pars = info.parameters.kernel_parameters
+    if kind == "py" and callable(info.Iq):
+        return True
+    elif kind == "c" and not callable(info.Iq):
+        return True
+    elif kind == "double" and not info.single:
+        return True
+    elif kind == "single" and info.single:
+        return True
+    elif kind == "2d" and any(p.type == 'orientation' for p in pars):
+        return True
+    elif kind == "1d" and any(p.type != 'orientation' for p in pars):
+        return True
+    elif kind == "magnetic" and any(p.type == 'sld' for p in pars):
+        return True
+    elif kind == "nonmagnetic" and any(p.type != 'sld' for p in pars):
+        return True
+    return False
 
 def load_model(model_name, dtype=None, platform='ocl'):
     # type: (str, str, str) -> KernelModel
@@ -128,7 +157,6 @@ def build_model(model_info, dtype=None, platform="ocl"):
         if composition_type == 'mixture':
             return mixture.MixtureModel(model_info, models)
         elif composition_type == 'product':
-            from . import product
             P, S = models
             return product.ProductModel(model_info, P, S)
         else:
@@ -188,7 +216,7 @@ def parse_dtype(model_info, dtype=None, platform=None):
     # Assign default platform, overriding ocl with dll if OpenCL is unavailable
     if platform is None:
         platform = "ocl"
-    if platform=="ocl" and not HAVE_OPENCL:
+    if platform == "ocl" and not HAVE_OPENCL:
         platform = "dll"
 
     # Check if type indicates dll regardless of which platform is given
@@ -197,22 +225,23 @@ def parse_dtype(model_info, dtype=None, platform=None):
         dtype = dtype[:-1]
 
     # Convert special type names "half", "fast", and "quad"
-    fast = (dtype=="fast")
+    fast = (dtype == "fast")
     if fast:
         dtype = "single"
-    elif dtype=="quad":
+    elif dtype == "quad":
         dtype = "longdouble"
-    elif dtype=="half":
+    elif dtype == "half":
         dtype = "f16"
 
     # Convert dtype string to numpy dtype.
     if dtype is None:
-        numpy_dtype = generate.F32 if platform=="ocl" and model_info.single else generate.F64
+        numpy_dtype = (generate.F32 if platform == "ocl" and model_info.single
+                       else generate.F64)
     else:
         numpy_dtype = np.dtype(dtype)
 
     # Make sure that the type is supported by opencl, otherwise use dll
-    if platform=="ocl":
+    if platform == "ocl":
         env = kernelcl.environment()
         if not env.has_type(numpy_dtype):
             platform = "dll"
@@ -220,3 +249,11 @@ def parse_dtype(model_info, dtype=None, platform=None):
                 numpy_dtype = generate.F64
 
     return numpy_dtype, fast, platform
+
+def list_models_main():
+    import sys
+    kind = sys.argv[1] if len(sys.argv) > 1 else "all"
+    print("\n".join(list_models(kind)))
+
+if __name__ == "__main__":
+    list_models_main()

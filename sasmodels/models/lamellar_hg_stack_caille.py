@@ -89,7 +89,7 @@ description = """\
 """
 category = "shape:lamellae"
 
-single = False
+single = False  # TODO: check
 parameters = [
     #   [ "name", "units", default, [lower, upper], "type",
     #     "description" ],

@@ -165,7 +165,6 @@ import sys
 from os.path import abspath, dirname, join as joinpath, exists, isdir, getmtime
 import re
 import string
-import warnings
 
 import numpy as np  # type: ignore
 
@@ -496,6 +495,7 @@ def make_source(model_info):
     """
     if callable(model_info.Iq):
         raise ValueError("can't compile python model")
+        #return None
 
     # TODO: need something other than volume to indicate dispersion parameters
     # No volume normalization despite having a volume parameter.

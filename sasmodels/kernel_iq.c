@@ -172,13 +172,15 @@ void KERNEL_NAME(
 #endif
 
 
-  double spherical_correction=1.0;
-  const int theta_par = details->theta_par;
 #if MAX_PD>0
+  const int theta_par = details->theta_par;
   const int fast_theta = (theta_par == p0);
   const int slow_theta = (theta_par >= 0 && !fast_theta);
+  double spherical_correction = 1.0;
 #else
-  const int slow_theta = (theta_par >= 0);
+  // Note: if not polydisperse the weights cancel and we don't need the
+  // spherical correction.
+  const double spherical_correction = 1.0;
 #endif
 
   int step = pd_start;
@@ -217,10 +219,10 @@ void KERNEL_NAME(
 #elif MAX_PD>0
     const double weight1 = 1.0;
 #endif
-    if (slow_theta) { // Theta is not in inner loop
-      spherical_correction = fmax(fabs(cos(M_PI_180*pvec[theta_par])), 1.e-6);
-    }
 #if MAX_PD>0
+  if (slow_theta) { // Theta is not in inner loop
+    spherical_correction = fmax(fabs(cos(M_PI_180*pvec[theta_par])), 1.e-6);
+  }
   while(i0 < n0) {
     pvec[p0] = v0[i0];
     double weight0 = w0[i0] * weight1;

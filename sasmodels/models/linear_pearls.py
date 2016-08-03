@@ -60,6 +60,7 @@ parameters = [
     ["sld_solvent", "1e-6/Ang^2", 6.3, [-inf, inf],  "sld", "SLD of the solvent"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
+single=False
 
 source = ["linear_pearls.c"]
 

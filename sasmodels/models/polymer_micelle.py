@@ -50,6 +50,8 @@ parameters = [
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
+single = False
+
 source = ["lib/sph_j1c.c", "polymer_micelle_kernel.c"]
 
 demo = dict(scale=1, background=0,

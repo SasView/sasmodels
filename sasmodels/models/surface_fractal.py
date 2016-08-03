@@ -79,7 +79,7 @@ category = "shape-independent"
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["radius",        "Ang", 10.0, [0, inf],   "",
                "Particle radius"],
-              ["surface_dim",   "",    2.0,  [0, inf],   "",
+              ["surface_dim",   "",    2.0,  [1, 3],   "",
                "Surface fractal dimension"],
               ["cutoff_length", "Ang", 500., [0.0, inf], "",
                "Cut-off Length"],

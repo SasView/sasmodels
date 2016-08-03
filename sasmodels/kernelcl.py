@@ -64,22 +64,6 @@ except Exception as exc:
     warnings.warn("OpenCL startup failed with ***"+str(exc)+"***; using C compiler instead")
     raise RuntimeError("OpenCL not available")
 
-from pyopencl import mem_flags as mf  # type: ignore
-from pyopencl.characterize import get_fast_inaccurate_build_options  # type: ignore
-# CRUFT: pyopencl < 2017.1  (as of June 2016 needs quotes around include path)
-def _quote_path(v):
-    """
-    Quote the path if it is not already quoted.
-
-    If v starts with '-', then assume that it is a -I option or similar
-    and do not quote it.  This is fragile:  -Ipath with space needs to
-    be quoted.
-    """
-    return '"'+v+'"' if v and ' ' in v and not v[0] in "\"'-" else v
-
-if hasattr(cl, '_DEFAULT_INCLUDE_OPTIONS'):
-    cl._DEFAULT_INCLUDE_OPTIONS = [_quote_path(v) for v in cl._DEFAULT_INCLUDE_OPTIONS]
-
 from pyopencl import mem_flags as mf
 from pyopencl.characterize import get_fast_inaccurate_build_options
 
@@ -92,6 +76,25 @@ try:
     from .details import CallDetails
 except ImportError:
     pass
+
+# CRUFT: pyopencl < 2017.1  (as of June 2016 needs quotes around include path)
+def quote_path(v):
+    """
+    Quote the path if it is not already quoted.
+
+    If v starts with '-', then assume that it is a -I option or similar
+    and do not quote it.  This is fragile:  -Ipath with space needs to
+    be quoted.
+    """
+    return '"'+v+'"' if v and ' ' in v and not v[0] in "\"'-" else v
+
+def fix_pyopencl_include():
+    import pyopencl as cl
+    if hasattr(cl, '_DEFAULT_INCLUDE_OPTIONS'):
+        cl._DEFAULT_INCLUDE_OPTIONS = [quote_path(v) for v in cl._DEFAULT_INCLUDE_OPTIONS]
+
+fix_pyopencl_include()
+
 
 # The max loops number is limited by the amount of local memory available
 # on the device.  You don't want to make this value too big because it will
@@ -255,7 +258,7 @@ class GpuEnvironment(object):
         """
         Return a OpenCL context for the kernels of type dtype.
         """
-        for context, queue in zip(self.context, self.queues):
+        for context in self.context:
             if all(has_type(d, dtype) for d in context.devices):
                 return context
 
@@ -281,8 +284,8 @@ class GpuEnvironment(object):
         key = "%s-%s%s"%(name, dtype, ("-fast" if fast else ""))
         if key not in self.compiled:
             context = self.get_context(dtype)
-            logging.info("building %s for OpenCL %s"
-                         % (key, context.devices[0].name.strip()))
+            logging.info("building %s for OpenCL %s", key,
+                         context.devices[0].name.strip())
             program = compile_model(self.get_context(dtype),
                                     str(source), dtype, fast)
             self.compiled[key] = program
@@ -298,7 +301,7 @@ class GpuEnvironment(object):
             del self.compiled[name]
 
 def _get_default_context():
-    # type: () -> cl.Context
+    # type: () -> List[cl.Context]
     """
     Get an OpenCL context, preferring GPU over CPU, and preferring Intel
     drivers over AMD drivers.
@@ -317,14 +320,17 @@ def _get_default_context():
     gpu, cpu = None, None
     for platform in cl.get_platforms():
         # AMD provides a much weaker CPU driver than Intel/Apple, so avoid it.
-        # If someone has bothered to install the AMD/NVIDIA drivers, prefer them over the integrated
-        # graphics driver that may have been supplied with the CPU chipset.
-        preferred_cpu = platform.vendor.startswith('Intel') or platform.vendor.startswith('Apple')
-        preferred_gpu = platform.vendor.startswith('Advanced') or platform.vendor.startswith('NVIDIA')
+        # If someone has bothered to install the AMD/NVIDIA drivers, prefer
+        # them over the integrated graphics driver that may have been supplied
+        # with the CPU chipset.
+        preferred_cpu = (platform.vendor.startswith('Intel')
+                         or platform.vendor.startswith('Apple'))
+        preferred_gpu = (platform.vendor.startswith('Advanced')
+                         or platform.vendor.startswith('NVIDIA'))
         for device in platform.get_devices():
             if device.type == cl.device_type.GPU:
-                # If the existing type is not GPU then it will be CUSTOM or ACCELERATOR,
-                # so don't override it.
+                # If the existing type is not GPU then it will be CUSTOM
+                # or ACCELERATOR so don't override it.
                 if gpu is None or (preferred_gpu and gpu.type == cl.device_type.GPU):
                     gpu = device
             elif device.type == cl.device_type.CPU:
@@ -333,14 +339,16 @@ def _get_default_context():
             else:
                 # System has cl.device_type.ACCELERATOR or cl.device_type.CUSTOM
                 # Intel Phi for example registers as an accelerator
-                # Since the user installed a custom device on their system and went through the
-                # pain of sorting out OpenCL drivers for it, lets assume they really do want to
-                # use it as their primary compute device.
+                # Since the user installed a custom device on their system
+                # and went through the pain of sorting out OpenCL drivers for
+                # it, lets assume they really do want to use it as their
+                # primary compute device.
                 gpu = device
 
-    # order the devices by gpu then by cpu; when searching for an available device by data type they
-    # will be checked in this order, which means that if the gpu supports double then the cpu will never
-    # be used (though we may make it possible to explicitly request the cpu at some point).
+    # order the devices by gpu then by cpu; when searching for an available
+    # device by data type they will be checked in this order, which means
+    # that if the gpu supports double then the cpu will never be used (though
+    # we may make it possible to explicitly request the cpu at some point).
     devices = []
     if gpu is not None:
         devices.append(gpu)
@@ -371,6 +379,7 @@ class GpuModel(KernelModel):
         self.dtype = dtype
         self.fast = fast
         self.program = None # delay program creation
+        self._kernels = None
 
     def __getstate__(self):
         # type: () -> Tuple[ModelInfo, str, np.dtype, bool]
@@ -393,7 +402,7 @@ class GpuModel(KernelModel):
             variants = ['Iq', 'Iqxy', 'Imagnetic']
             names = [generate.kernel_name(self.info, k) for k in variants]
             kernels = [getattr(self.program, k) for k in names]
-            self._kernels = dict((k,v) for k,v in zip(variants, kernels))
+            self._kernels = dict((k, v) for k, v in zip(variants, kernels))
         is_2d = len(q_vectors) == 2
         if is_2d:
             kernel = [self._kernels['Iqxy'], self._kernels['Imagnetic']]
@@ -499,8 +508,6 @@ class GpuKernel(Kernel):
     """
     def __init__(self, kernel, dtype, model_info, q_vectors):
         # type: (cl.Kernel, np.dtype, ModelInfo, List[np.ndarray]) -> None
-        max_pd = model_info.parameters.max_pd
-        npars = len(model_info.parameters.kernel_parameters)-2
         q_input = GpuInput(q_vectors, dtype)
         self.kernel = kernel
         self.info = model_info
@@ -515,10 +522,10 @@ class GpuKernel(Kernel):
         self.queue = env.get_queue(dtype)
 
         self.result_b = cl.Buffer(self.queue.context, mf.READ_WRITE,
-                               q_input.global_size[0] * dtype.itemsize)
+                                  q_input.global_size[0] * dtype.itemsize)
         self.q_input = q_input # allocated by GpuInput above
 
-        self._need_release = [ self.result_b, self.q_input ]
+        self._need_release = [self.result_b, self.q_input]
         self.real = (np.float32 if dtype == generate.F32
                      else np.float64 if dtype == generate.F64
                      else np.float16 if dtype == generate.F16

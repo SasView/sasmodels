@@ -450,6 +450,7 @@ def eval_sasview(model_info, data):
             model[0] = ModelClass(int(pars[model_info.control]))
         # paying for parameter conversion each time to keep life simple, if not fast
         oldpars = revert_pars(model_info, pars)
+        #print("sasview pars",oldpars)
         for k, v in oldpars.items():
             name_attr = k.split('.')  # polydispersity components
             if len(name_attr) == 2:
@@ -666,6 +667,8 @@ def compare(opts, limits=None):
     #if is2D:
     #    h = plt.colorbar()
     #    h.ax.set_title(cbar_title)
+    fig = plt.gcf()
+    fig.suptitle(opts['name'])
 
     if Ncomp > 0 and Nbase > 0 and '-hist' in opts:
         plt.figure()

@@ -56,6 +56,11 @@ import logging
 
 import numpy as np  # type: ignore
 
+try:
+    import tinycc
+except ImportError:
+    tinycc = None
+
 from . import generate
 from .kernel import KernelModel, Kernel
 from .kernelpy import PyInput
@@ -69,48 +74,56 @@ try:
 except ImportError:
     pass
 
-if os.name == 'nt':
-    ARCH = "" if sys.maxint > 2**32 else "x86"  # maxint=2**31-1 on 32 bit
-    # Windows compiler; check if TinyCC is available
-    try:
-        import tinycc
-    except ImportError:
-        tinycc = None
-    # call vcvarsall.bat before compiling to set path, headers, libs, etc.
+if "SAS_COMPILER" in os.environ:
+    compiler = os.environ["SAS_COMPILER"]
+elif os.name == 'nt':
+    # If vcvarsall.bat has been called, then VCINSTALLDIR is in the environment
+    # and we can use the MSVC compiler.  Otherwise, if tinycc is available
+    # the use it.  Otherwise, hope that mingw is available.
     if "VCINSTALLDIR" in os.environ:
-        # MSVC compiler is available, so use it.  OpenMP requires a copy of
-        # vcomp90.dll on the path.  One may be found here:
-        #       C:/Windows/winsxs/x86_microsoft.vc90.openmp*/vcomp90.dll
-        # Copy this to the python directory and uncomment the OpenMP COMPILE
-        # TODO: remove intermediate OBJ file created in the directory
-        # TODO: maybe don't use randomized name for the c file
-        # TODO: maybe ask distutils to find MSVC
-        CC = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG".split()
-        if "SAS_OPENMP" in os.environ:
-            CC.append("/openmp")
-        LN = "/link /DLL /INCREMENTAL:NO /MANIFEST".split()
-        def compile_command(source, output):
-            return CC + ["/Tp%s"%source] + LN + ["/OUT:%s"%output]
+        compiler = "msvc"
     elif tinycc:
-        # TinyCC compiler.
-        CC = [tinycc.TCC] + "-shared -rdynamic -Wall".split()
-        def compile_command(source, output):
-            return CC + [source, "-o", output]
+        compiler = "tinycc"
     else:
-        # MinGW compiler.
-        CC = "gcc -shared -std=c99 -O2 -Wall".split()
-        if "SAS_OPENMP" in os.environ:
-            CC.append("-fopenmp")
-        def compile_command(source, output):
-            return CC + [source, "-o", output, "-lm"]
+        compiler = "mingw"
 else:
-    ARCH = ""
+    compiler = "unix"
+
+ARCH = "" if sys.maxint > 2**32 else "x86"  # maxint=2**31-1 on 32 bit
+if compiler == "unix":
     # Generic unix compile
     # On mac users will need the X code command line tools installed
     #COMPILE = "gcc-mp-4.7 -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm -lgomp"
     CC = "cc -shared -fPIC -std=c99 -O2 -Wall".split()
     # add openmp support if not running on a mac
     if sys.platform != "darwin":
+        CC.append("-fopenmp")
+    def compile_command(source, output):
+        return CC + [source, "-o", output, "-lm"]
+elif compiler == "msvc":
+    # Call vcvarsall.bat before compiling to set path, headers, libs, etc.
+    # MSVC compiler is available, so use it.  OpenMP requires a copy of
+    # vcomp90.dll on the path.  One may be found here:
+    #       C:/Windows/winsxs/x86_microsoft.vc90.openmp*/vcomp90.dll
+    # Copy this to the python directory and uncomment the OpenMP COMPILE
+    # TODO: remove intermediate OBJ file created in the directory
+    # TODO: maybe don't use randomized name for the c file
+    # TODO: maybe ask distutils to find MSVC
+    CC = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG".split()
+    if "SAS_OPENMP" in os.environ:
+        CC.append("/openmp")
+    LN = "/link /DLL /INCREMENTAL:NO /MANIFEST".split()
+    def compile_command(source, output):
+        return CC + ["/Tp%s"%source] + LN + ["/OUT:%s"%output]
+elif compiler == "tinycc":
+    # TinyCC compiler.
+    CC = [tinycc.TCC] + "-shared -rdynamic -Wall".split()
+    def compile_command(source, output):
+        return CC + [source, "-o", output]
+elif compiler == "mingw":
+    # MinGW compiler.
+    CC = "gcc -shared -std=c99 -O2 -Wall".split()
+    if "SAS_OPENMP" in os.environ:
         CC.append("-fopenmp")
     def compile_command(source, output):
         return CC + [source, "-o", output, "-lm"]

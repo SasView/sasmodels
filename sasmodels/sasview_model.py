@@ -513,6 +513,11 @@ class SasviewModel(object):
         parameters = self._model_info.parameters
         pairs = [self._get_weights(p) for p in parameters.call_parameters]
         call_details, values, is_magnetic = build_details(calculator, pairs)
+        #call_details.show()
+        #print("pairs", pairs)
+        #print("params", self.params)
+        #print("values", values)
+        #print("is_mag", is_magnetic)
         result = calculator(call_details, values, cutoff=self.cutoff,
                             magnetic=is_magnetic)
         calculator.release()
@@ -597,9 +602,9 @@ class SasviewModel(object):
         """
         if par.name not in self.params:
             if par.name == self.multiplicity_info.control:
-                return [self.multiplicity], []
+                return [self.multiplicity], [1.0]
             else:
-                return [np.NaN], []
+                return [np.NaN], [1.0]
         elif par.polydisperse:
             dis = self.dispersion[par.name]
             value, weight = weights.get_weights(
@@ -607,7 +612,7 @@ class SasviewModel(object):
                 self.params[par.name], par.limits, par.relative_pd)
             return value, weight / np.sum(weight)
         else:
-            return [self.params[par.name]], []
+            return [self.params[par.name]], [1.0]
 
 def test_model():
     # type: () -> float

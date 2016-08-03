@@ -35,11 +35,11 @@ static double micelle_spherical_kernel(double q,
 
     // Self-correlation term of the chains
     const double qrg2 = q*radius_gyr*q*radius_gyr;
-    const double debye_chain = (qrg2 == 0.0) ? 1.0 : 2.0*(exp(-qrg2)-1+qrg2)/(qrg2*qrg2);
+    const double debye_chain = (qrg2 == 0.0) ? 1.0 : 2.0*(expm1(-qrg2)+qrg2)/(qrg2*qrg2);
     const double term2 = n_aggreg * beta_corona * beta_corona * debye_chain;
 
     // Interference cross-term between core and chains
-    const double chain_ampl = (qrg2 == 0.0) ? 1.0 : (1-exp(-qrg2))/qrg2;
+    const double chain_ampl = (qrg2 == 0.0) ? 1.0 : -expm1(-qrg2)/qrg2;
     const double bes_corona = sinc(q*(radius_core + d_penetration * radius_gyr));
     const double term3 = 2 * n_aggreg * n_aggreg * beta_core * beta_corona *
                  bes_core * chain_ampl * bes_corona;
