@@ -318,7 +318,11 @@ def constrain_new_to_old(model_info, pars):
         elif name == 'onion':
             pars['n_shells'] = math.ceil(pars['n_shells'])
         elif name == 'spherical_sld':
+            pars['n_shells'] = math.ceil(pars['n_shells'])
+            pars['npts_inter'] = math.ceil(pars['npts_inter'])
+            pars['func_inter0'] = math.trunc(pars['func_inter0']+0.5)
             for k in range(1, 11):
+                pars['func_inter%d'%k] = math.trunc(pars['func_inter%d'%k]+0.5)
                 pars['thick_flat%d_pd_n'%k] = 0
                 pars['thick_inter%d_pd_n'%k] = 0
 
