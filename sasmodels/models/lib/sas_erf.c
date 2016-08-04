@@ -85,8 +85,9 @@
 #ifdef NEED_ERF
 
 #if FLOAT_SIZE>4  // DOUBLE_PRECISION
-double erf(double x);
-double erfc(double a);
+
+double cephes_erf(double x);
+double cephes_erfc(double a);
 
 constant double PD[] = {
     2.46196981473530512524E-10,
@@ -148,24 +149,18 @@ constant double UD[] = {
     4.92673942608635921086E4
 };
 
-double erfc(double a)
+double cephes_erfc(double a)
 {
     double MAXLOG = 88.72283905206835;
     double p, q, x, y, z;
 
 
-    /*if (a < 0.0)
-        x = -a;
-    else
-        x = a;*/
-
     x = fabs(a);
 
-
     if (x < 1.0) {
-        //The line bellow is a troublemaker for GPU, so sas_erf function
-        //is explicit here for the case < 1.0
-        //return (1.0 - sas_erf(a));
+        // The line below causes problems on the GPU, so inline
+        // the erf function instead and z < 1.0.
+        //return (1.0 - cephes_erf(a));
         z = x * x;
         y = x * polevl(z, TD, 4) / p1evl(z, UD, 5);
 
@@ -207,30 +202,26 @@ double erfc(double a)
 }
 
 
-double erf(double x)
+double cephes_erf(double x)
 {
     double y, z;
 
     if (fabs(x) > 1.0)
-        return (1.0 - erfc(x));
+        return (1.0 - cephes_erfc(x));
 
     z = x * x;
-    #if FLOAT_SIZE>4
-        y = x * polevl(z, TD, 4) / p1evl(z, UD, 5);
-    #else
-        y = x * polevl( z, TF, 6 );
-    #endif
+    y = x * polevl(z, TD, 4) / p1evl(z, UD, 5);
 
     return y;
 }
 
 #else // SINGLE PRECISION
 
-double erff(double x);
-double erfcf(double a);
+float cephes_erff(float x);
+float cephes_erfcf(float a);
 
 /* erfc(x) = exp(-x^2) P(1/x), 1 < x < 2 */
-constant double PF[] = {
+constant float PF[] = {
     2.326819970068386E-002,
     -1.387039388740657E-001,
     3.687424674597105E-001,
@@ -243,7 +234,7 @@ constant double PF[] = {
 };
 
 /* erfc(x) = exp(-x^2) 1/x P(1/x^2), 2 < x < 14 */
-constant double RF[] = {
+constant float RF[] = {
     -1.047766399936249E+001,
     1.297719955372516E+001,
     -7.495518717768503E+000,
@@ -255,7 +246,7 @@ constant double RF[] = {
 };
 
 /* erf(x) = x P(x^2), 0 < x < 1 */
- constant double TF[] = {
+ constant float TF[] = {
     7.853861353153693E-005,
     -8.010193625184903E-004,
     5.188327685732524E-003,
@@ -266,7 +257,7 @@ constant double RF[] = {
 };
 
 
-float erfcf(float a)
+float cephes_erfcf(float a)
 {
     float MAXLOG = 88.72283905206835;
     float p, q, x, y, z;
@@ -323,13 +314,13 @@ float erfcf(float a)
 }
 
 
-float erff(float x)
+float cephes_erff(float x)
 {
     float y, z;
 
     // TODO: tinycc does not support fabsf
     if (fabs(x) > 1.0)
-        return (1.0 - erfcf(x));
+        return (1.0 - cephes_erfcf(x));
 
     z = x * x;
     y = x * polevl( z, TF, 6 );
@@ -338,12 +329,26 @@ float erff(float x)
 }
 
 #endif // SINGLE_PRECISION
-#endif // NEED_ERF
 
 #if FLOAT_SIZE>4
+//static double sas_erf(double x) { return erf(x); }
+//static double sas_erfc(double x) { return erfc(x); }
+#define sas_erf cephes_erf
+#define sas_erfc cephes_erfc
+#else
+#define sas_erf cephes_erff
+#define sas_erfc cephes_erfcf
+#endif
+
+#else // !NEED_ERF
+
+#if FLOAT_SIZE>4
+//static double sas_erf(double x) { return erf(x); }
+//static double sas_erfc(double x) { return erfc(x); }
 #define sas_erf erf
 #define sas_erfc erfc
 #else
 #define sas_erf erff
 #define sas_erfc erfcf
 #endif
+#endif // !NEED_ERF
