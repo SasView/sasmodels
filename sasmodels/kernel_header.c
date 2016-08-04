@@ -13,12 +13,14 @@
 #  else
 #    define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
 #  endif
+   // Intel CPU on Mac gives strange values for erf(), so maybe don't use it
+   #define NEED_ERF
    // OpenCL only has type generic math
    #define expf exp
-   #define erff erf
-   #define erfcf erfc
-   // Intel CPU on Mac gives strange values for erf(), so maybe don't use it
-   //#define NEED_ERF
+   #ifndef NEED_ERF
+   #  define erff erf
+   #  define erfcf erfc
+   #endif
 #else // !USE_OPENCL
 // Use SAS_DOUBLE to force the use of double even for float kernels
 #  define SAS_DOUBLE dou ## ble
