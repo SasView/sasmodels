@@ -189,7 +189,8 @@ and Neutron Scattering, Plenum Press, New York, (1987)
 """
 
 import numpy as np
-from numpy import inf
+from numpy import inf, expm1, sqrt
+from scipy.special import erf
 
 name = "spherical_sld"
 title = "Sperical SLD intensity calculation"
@@ -199,128 +200,96 @@ description = """
         """
 category = "shape:sphere"
 
+SHAPES = ["erf(|nu|*z)", "Rpow(z^|nu|)", "Lpow(z^|nu|)",
+          "Rexp(-|nu|z)", "Lexp(-|nu|z)"],
+
 # pylint: disable=bad-whitespace, line-too-long
 #            ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["n_shells",          "",               1,      [0, 10],        "volume", "number of shells"],
-              ["npts_inter",        "",               35,     [0, inf],       "", "number of points in each sublayer Must be odd number"],
-              ["radius_core",       "Ang",            50.0,   [0, inf],       "volume", "intern layer thickness"],
-              ["sld_core",          "1e-6/Ang^2",     2.07,   [-inf, inf],    "sld", "sld function flat"],
-              ["sld_solvent",       "1e-6/Ang^2",     1.0,    [-inf, inf],    "sld", "sld function solvent"],
-              ["func_inter0",       "",               0,      [0, 5],         "", "Erf:0, RPower:1, LPower:2, RExp:3, LExp:4, Linear:5"],
-              ["thick_inter0",      "Ang",            50.0,   [0, inf],       "volume", "intern layer thickness for core layer"],
-              ["nu_inter0",         "",               2.5,    [-inf, inf],    "", "steepness parameter for core layer"],
-              ["sld_flat[n_shells]",      "1e-6/Ang^2",     4.06,   [-inf, inf],    "sld", "sld function flat"],
-              ["thick_flat[n_shells]",    "Ang",            100.0,  [0, inf],       "volume", "flat layer_thickness"],
-              ["func_inter[n_shells]",    "",               0,      [0, 5],         "", "Erf:0, RPower:1, LPower:2, RExp:3, LExp:4, Linear:5"],
-              ["thick_inter[n_shells]",   "Ang",            50.0,   [0, inf],       "volume", "intern layer thickness"],
-              ["nu_inter[n_shells]",      "",               2.5,    [-inf, inf],    "", "steepness parameter"],
+parameters = [["n_shells",             "",           1,      [1, 11],        "volume", "number of shells"],
+              ["sld_solvent",          "1e-6/Ang^2", 1.0,    [-inf, inf],    "sld", "solvent sld"],
+              ["sld[n_shells]",        "1e-6/Ang^2", 4.06,   [-inf, inf],    "sld", "sld of the shell"],
+              ["thickness[n_shells]",  "Ang",        100.0,  [0, inf],       "volume", "thickness shell"],
+              ["interface[n_shells]",  "Ang",        50.0,   [0, inf],       "volume", "thickness of the interface"],
+              ["shape[n_shells]",      "",           0,      SHAPES,         "", "interface shape"],
+              ["nu[n_shells]",         "",           2.5,    [0, inf],       "", "interface shape exponent"],
+              ["n_steps",              "",           35,     [0, inf],       "", "number of steps in each interface (must be an odd integer)"],
               ]
 # pylint: enable=bad-whitespace, line-too-long
-source = ["lib/polevl.c", "lib/sas_erf.c", "lib/librefl.c",  "lib/sph_j1c.c", "spherical_sld.c"]
+source = ["lib/polevl.c", "lib/sas_erf.c", "lib/sph_j1c.c", "spherical_sld.c"]
 single = False  # TODO: fix low q behaviour
 
 profile_axes = ['Radius (A)', 'SLD (1e-6/A^2)']
-def profile(n_shells, radius_core,  sld_core,  sld_solvent, sld_flat,
-            thick_flat, func_inter, thick_inter, nu_inter, npts_inter):
+
+SHAPE_FUNCTIONS = [
+    lambda z, nu: erf(nu/sqrt(2)*(2*z-1))/(2*erf(nu/sqrt(2))) + 0.5,  # erf
+    lambda z, nu: z**nu,                    # Rpow
+    lambda z, nu: 1 - (1-z)**nu,            # Lpow
+    lambda z, nu: expm1(-nu*z)/expm1(-nu),  # Rexp
+    lambda z, nu: expm1(nu*z)/expm1(nu),    # Lexp
+]
+
+def profile(n_shells, sld_solvent, sld, thickness,
+            interface, shape, nu, n_steps):
     """
     Returns shape profile with x=radius, y=SLD.
     """
 
     z = []
-    beta = []
+    rho = []
     z0 = 0
     # two sld points for core
     z.append(0)
-    beta.append(sld_core)
-    z.append(radius_core)
-    beta.append(sld_core)
-    z0 += radius_core
+    rho.append(sld[0])
 
-    for i in range(1, n_shells+2):
-        dz = thick_inter[i-1]/npts_inter
-        # j=0 for interface, j=1 for flat layer
-        for j in range(0, 2):
-            # interation for sub-layers
-            for n_s in range(0, npts_inter+1):
-                if j == 1:
-                    if i == n_shells+1:
-                        break
-                    # shift half sub thickness for the first point
-                    z0 -= dz#/2.0
-                    z.append(z0)
-                    #z0 -= dz/2.0
-                    z0 += thick_flat[i]
-                    sld_i = sld_flat[i]
-                    beta.append(sld_flat[i])
-                    dz = 0
-                else:
-                    nu = nu_inter[i-1]
-                    # decide which sld is which, sld_r or sld_l
-                    if i == 1:
-                        sld_l = sld_core
-                    else:
-                        sld_l = sld_flat[i-1]
-                    if i == n_shells+1:
-                        sld_r = sld_solvent
-                    else:
-                        sld_r = sld_flat[i]
-                    # get function type
-                    func_idx = func_inter[i-1]
-                    # calculate the sld
-                    sld_i = intersldfunc(func_idx, npts_inter, n_s, nu,
-                                            sld_l, sld_r)
-                # append to the list
-                z.append(z0)
-                beta.append(sld_i)
-                z0 += dz
-                if j == 1:
-                    break
-    z.append(z0)
-    beta.append(sld_solvent)
-    z_ext = z0/5.0
-    z.append(z0+z_ext)
-    beta.append(sld_solvent)
+    for i in range(0, n_shells):
+        z0 += thickness[i]
+        z.append(z0)
+        rho.append(sld[i])
+        dz = interface[i]/n_steps
+        sld_l = sld[i]
+        sld_r = sld[i+1] if i < n_shells-1 else sld_solvent
+        interface = SHAPE_FUNCTIONS[int(np.clip(shape[i], 0, len(SHAPES)-1))]
+        for step in range(1, n_steps+1):
+            portion = interface(float(step)/n_steps, max(abs(nu[i]), 1e-14))
+            z0 += dz
+            z.append(z0)
+            rho.append((sld_r - sld_l)*portion + sld_l)
+    z.append(z0*1.2)
+    rho.append(sld_solvent)
     # return sld profile (r, beta)
-    return np.asarray(z), np.asarray(beta)*1e-6
+    return np.asarray(z), np.asarray(rho)*1e-6
 
-def ER(n_shells, radius_core, thick_inter0, thick_inter, thick_flat):
+
+def ER(n_shells, thickness, interface):
     n_shells = int(n_shells)
-    total_thickness = thick_inter0
-    total_thickness += np.sum(thick_inter[:n_shells], axis=0)
-    total_thickness += np.sum(thick_flat[:n_shells], axis=0)
-    return total_thickness + radius_core
+    total = (np.sum(thickness[:n_shells], axis=1)
+             + np.sum(interface[:n_shells], axis=1))
+    return total
 
 
 demo = {
-    "n_shells": 4,
-    "npts_inter": 35.0,
-    "radius_core": 50.0,
-    "sld_core": 2.07,
+    "n_shells": 5,
+    "n_steps": 35.0,
     "sld_solvent": 1.0,
-    "thick_inter0": 50.0,
-    "func_inter0": 0,
-    "nu_inter0": 2.5,
-    "sld_flat":[4.0,3.5,4.0,3.5],
-    "thick_flat":[100.0,100.0,100.0,100.0],
-    "func_inter":[0,0,0,0],
-    "thick_inter":[50.0,50.0,50.0,50.0],
-    "nu_inter":[2.5,2.5,2.5,2.5],
+    "sld":[2.07,4.0,3.5,4.0,3.5],
+    "thickness":[50.0,100.0,100.0,100.0,100.0],
+    "interface":[50.0,50.0,50.0,50.0],
+    "shape": [0,0,0,0,0],
+    "nu":[2.5,2.5,2.5,2.5,2.5],
     }
 
 #TODO: Not working yet
 """
 tests = [
     # Accuracy tests based on content in test/utest_extra_models.py
-    [{"n_shells":4,
-        'npts_inter':35,
-        "radius_core":50.0,
-        "sld_core":2.07,
+    [{"n_shells": 5,
+        "n_steps": 35,
         "sld_solvent": 1.0,
-        "sld_flat":[4.0,3.5,4.0,3.5],
-        "thick_flat":[100.0,100.0,100.0,100.0],
-        "func_inter":[0,0,0,0],
-        "thick_inter":[50.0,50.0,50.0,50.0],
-        "nu_inter":[2.5,2.5,2.5,2.5]
+        "sld": [2.07, 4.0, 3.5, 4.0, 3.5],
+        "thickness": [50.0, 100.0, 100.0, 100.0, 100.0],
+        "interface": [50]*5,
+        "shape": [0]*5,
+        "nu": [2.5]*5,
     }, 0.001, 0.001],
 ]
 """

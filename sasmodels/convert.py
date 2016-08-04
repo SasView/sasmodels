@@ -228,9 +228,18 @@ def revert_pars(model_info, pars):
             if 'ndensity' in oldpars:
                 oldpars['ndensity'] *= 1e15
         elif name == 'spherical_sld':
-            for k in range(1, int(pars['n_shells'])+1):
-                _remove_pd(oldpars, 'thick_flat'+str(k), 'thick_flat')
-                _remove_pd(oldpars, 'thick_inter'+str(k), 'thick_inter')
+            oldpars["CONTROL"] -= 1
+            # remove polydispersity from shells
+            for k in range(1, 11):
+                _remove_pd(oldpars, 'thick_flat'+str(k), 'thickness')
+                _remove_pd(oldpars, 'thick_inter'+str(k), 'interface')
+            # remove extra shells
+            for k in range(int(pars['n_shells']), 11):
+                oldpars.pop('sld_flat'+str(k), 0)
+                oldpars.pop('thick_flat'+str(k), 0)
+                oldpars.pop('thick_inter'+str(k), 0)
+                oldpars.pop('func_inter'+str(k), 0)
+                oldpars.pop('nu_inter'+str(k), 0)
         elif name == 'core_multi_shell':
             # kill extra shells
             for k in range(5, 11):
@@ -264,6 +273,8 @@ def revert_pars(model_info, pars):
                 for k in "Kab,Kac,Kad".split(','):
                     oldpars.pop(k, None)
 
+    #print("convert from",list(sorted(pars)))
+    #print("convert to",list(sorted(oldpars.items())))
     return oldpars
 
 def constrain_new_to_old(model_info, pars):
@@ -322,10 +333,10 @@ def constrain_new_to_old(model_info, pars):
             pars['n_shells'] = math.ceil(pars['n_shells'])
         elif name == 'spherical_sld':
             pars['n_shells'] = math.ceil(pars['n_shells'])
-            pars['npts_inter'] = math.ceil(pars['npts_inter'])
-            pars['func_inter0'] = math.trunc(pars['func_inter0']+0.5)
-            for k in range(1, 11):
-                pars['func_inter%d'%k] = math.trunc(pars['func_inter%d'%k]+0.5)
-                pars['thick_flat%d_pd_n'%k] = 0
-                pars['thick_inter%d_pd_n'%k] = 0
+            pars['n_steps'] = math.ceil(pars['n_steps'])
+            for k in range(1, 12):
+                pars['shape%d'%k] = math.trunc(pars['shape%d'%k]+0.5)
+            for k in range(2, 12):
+                pars['thickness%d_pd_n'%k] = 0
+                pars['interface%d_pd_n'%k] = 0
 

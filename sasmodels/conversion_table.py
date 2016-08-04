@@ -687,38 +687,32 @@ CONVERSION_TABLE = {
             "up:angle": "Up_theta"
         }
     ],
-    "magsphere": [
-        "SphereModel",
-        {
-            "sld": "sldSph",
-            "radius": "radius",
-            "sld_solvent": "sldSolv",
-            "sld_M0": "M0_sld_sph",
-            "sphere_theta": "M_theta_sph",
-            "sphere_phi": "M_phi_sph",
-            "sld_solvent_M0": "M0_sld_solv",
-            "solvent_theta": "M_theta_solv",
-            "solvent_phi": "M_phi_solv",
-            "in_spin": "Up_frac_i",
-            "out_spin": "Up_frac_f",
-            "spin_theta": "Up_theta"
-        }
-    ],
-    "_spherepy": [
-        "SphereModel",
-        {
-            "sld": "sldSph",
-            "radius": "radius",
-            "sld_solvent": "sldSolv"
-        }
-    ],
     "spherical_sld": [
         "SphericalSLDModel",
-        {
-            "radius_core": "rad_core0",
-            "sld_core": "sld_core0",
-            "sld_solvent": "sld_solv"
-        }
+        # Be lazy and use a generator expression to define
+        #    sld1: sld_flat0, ...
+        #    thickness1: thick_flat0, ...
+        #    interface1: thick_inter0, ...
+        #    shape1: func_inter0, ...
+        #    nu1: nu_inter0, ...
+        # but override thickness1 => rad_cor0 and sld1 => sld_core0.
+        # Note: explicit key,value pairs given by **{...} override the
+        # keys from the gnerator expression ((k,v) for k,v in seq) when
+        # used as dict((generator), **{...})
+        dict(((field_new+str(index+1),field_old+str(index))
+             for field_new, field_old in [("sld","sld_flat"),
+                                          ("thickness","thick_flat"),
+                                          ("interface","thick_inter"),
+                                          ("shape","func_inter"),
+                                          ("nu","nu_inter"),]
+             for index in range(11)),
+             **{
+            "n_shells": "n_shells",
+            "n_steps": "npts_inter",
+            "sld_solvent": "sld_solv",
+            "thickness1": "rad_core0",
+            "sld1": "sld_core0",
+        })
     ],
     "squarewell": [
         "SquareWellStructure",
