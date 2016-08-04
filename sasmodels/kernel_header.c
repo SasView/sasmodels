@@ -13,7 +13,9 @@
 #  else
 #    define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
 #  endif
-   // Intel CPU on Mac gives strange values for erf(), so maybe don't use it
+   // Intel CPU on Mac gives strange values for erf(); also on the tested
+   // platforms (intel, nvidia, amd), the cephes erf() is significantly
+   // faster than that available in the native OpenCL.
    #define NEED_ERF
    // OpenCL only has type generic math
    #define expf exp
