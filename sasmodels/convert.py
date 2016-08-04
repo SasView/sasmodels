@@ -158,7 +158,7 @@ def _get_translation_table(model_info):
                     translation[newid+str(k)] = oldid+str(k)
     # Remove control parameter from the result
     if model_info.control:
-        translation[model_info.control] = None
+        translation[model_info.control] = "CONTROL"
     return translation
 
 def _trim_vectors(model_info, pars, oldpars):
@@ -190,6 +190,9 @@ def revert_pars(model_info, pars):
         oldpars = _revert_pars(_unscale_sld(model_info, pars), translation)
         oldpars = _trim_vectors(model_info, pars, oldpars)
 
+    # Make sure the control parameter is an integer
+    if "CONTROL" in oldpars:
+        oldpars["CONTROL"] = int(oldpars["CONTROL"])
 
     # Note: update compare.constrain_pars to match
     name = model_info.id

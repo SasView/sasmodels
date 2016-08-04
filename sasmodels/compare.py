@@ -347,16 +347,20 @@ def parlist(model_info, pars, is2d):
             n=int(pars.get(p.id+"_pd_n", 0)),
             nsigma=pars.get(p.id+"_pd_nsgima", 3.),
             pdtype=pars.get(p.id+"_pd_type", 'gaussian'),
+            relative_pd=p.relative_pd,
         )
         lines.append(_format_par(p.name, **fields))
     return "\n".join(lines)
 
     #return "\n".join("%s: %s"%(p, v) for p, v in sorted(pars.items()))
 
-def _format_par(name, value=0., pd=0., n=0, nsigma=3., pdtype='gaussian'):
+def _format_par(name, value=0., pd=0., n=0, nsigma=3., pdtype='gaussian',
+                relative_pd=False):
     # type: (str, float, float, int, float, str) -> str
     line = "%s: %g"%(name, value)
     if pd != 0.  and n != 0:
+        if relative_pd:
+            pd *= value
         line += " +/- %g  (%d points in [-%g,%g] sigma %s)"\
                 % (pd, n, nsigma, nsigma, pdtype)
     return line
@@ -445,11 +449,14 @@ def eval_sasview(model_info, data):
         """
         Sasview calculator for model.
         """
-        # For multiplicity models, recreate the model the first time the
-        if model_info.control:
-            model[0] = ModelClass(int(pars[model_info.control]))
-        # paying for parameter conversion each time to keep life simple, if not fast
         oldpars = revert_pars(model_info, pars)
+        # For multiplicity models, create a model with the correct multiplicity
+        control = oldpars.pop("CONTROL", None)
+        if control is not None:
+            # sphericalSLD has one fewer multiplicity.  This update should
+            # happen in revert_pars, but it hasn't been called yet.
+            model[0] = ModelClass(control)
+        # paying for parameter conversion each time to keep life simple, if not fast
         #print("sasview pars",oldpars)
         for k, v in oldpars.items():
             name_attr = k.split('.')  # polydispersity components
