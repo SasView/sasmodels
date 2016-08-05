@@ -591,8 +591,7 @@ class SasviewModel(object):
             # For now, rely on the fact that the sasview only ever uses
             # new dispersers in the set_dispersion call and create a new
             # one instead of trying to assign parameters.
-            disperser = weights.dispersers[dispersion.__class__.__name__]
-            dispersion = weights.MODELS[disperser]()
+            dispersion = weights.MODELS[dispersion.type]()
             self.dispersion[parameter] = dispersion.get_pars()
         else:
             raise ValueError("%r is not a dispersity or orientation parameter")
