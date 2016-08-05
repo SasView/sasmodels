@@ -226,7 +226,7 @@ def profile(n_shells, sld_solvent, sld, thickness,
     z.append(0)
     rho.append(sld[0])
 
-    for i in range(0, n_shells):
+    for i in range(0, int(n_shells)):
         z0 += thickness[i]
         z.append(z0)
         rho.append(sld[i])

@@ -330,7 +330,7 @@ class SasviewModel(object):
                 value = self.params.get(p.id, np.NaN)
             else:
                 value = np.array([self.params.get(p.id+str(k), np.NaN)
-                                  for k in range(1,p.length+1)]
+                                  for k in range(1,p.length+1)])
             args[p.id] = value
 
         return self._model_info.profile(**args)
