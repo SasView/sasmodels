@@ -104,38 +104,31 @@ source = ["lib/sph_j1c.c", "core_multi_shell.c"]
 
 def profile(sld_core, radius, sld_solvent, n, sld, thickness):
     """
-    SLD profile
-    
-    :return: (r, beta) where r is a list of radius of the transition points\
-      and beta is a list of the corresponding SLD values.
-
+    Returns the SLD profile *r* (Ang), and *rho* (1e-6/Ang^2).
     """
-    total_radius = 1.25*(sum(thickness[:n]) + radius + 1)
-
     r = []
-    beta = []
+    rho = []
 
     # add in the core
     r.append(0)
-    beta.append(sld)
+    rho.append(sld_core)
     r.append(radius)
-    beta.append(sld)
+    rho.append(sld_core)
 
     # add in the shells
     for k in range(n):
         # Left side of each shells
-        r0 = r[-1]
-        r.append(r0)
-        beta.append(sld[k])
-        r.append(r0 + thickness[k])
-        beta.append(sld[k])
+        r.append(r[-1])
+        rho.append(sld[k])
+        r.append(r[-1] + thickness[k])
+        rho.append(sld[k])
     # add in the solvent
     r.append(r[-1])
-    beta.append(sld_solvent)
-    r.append(total_radius)
-    beta.append(sld_solvent)
+    rho.append(sld_solvent)
+    r.append(r[-1]*1.25)
+    rho.append(sld_solvent)
 
-    return np.asarray(r), np.asarray(beta)
+    return np.asarray(r), np.asarray(rho)
 
 def ER(radius, n, thickness):
     n = n[0]  # n cannot be polydisperse

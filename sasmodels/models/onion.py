@@ -305,7 +305,7 @@ category = "shape:sphere"
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "sld",
                "Core scattering length density"],
-              ["core_radius", "Ang", 200., [0, inf], "volume",
+              ["radius_core", "Ang", 200., [0, inf], "volume",
                "Radius of the core"],
               ["sld_solvent", "1e-6/Ang^2", 6.4, [-inf, inf], "sld",
                "Solvent scattering length density"],
@@ -324,57 +324,54 @@ parameters = [["sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "sld",
 source = ["lib/sph_j1c.c", "onion.c"]
 single = False
 
-#def Iq(q, *args, **kw):
-#    return q
-
 profile_axes = ['Radius (A)', 'SLD (1e-6/A^2)']
-def profile(core_sld, core_radius, solvent_sld, n_shells,
-            in_sld, out_sld, thickness, A):
+def profile(sld_core, radius_core, sld_solvent, n_shells,
+            sld_in, sld_out, thickness, A):
     """
     Returns shape profile with x=radius, y=SLD.
     """
 
-    total_radius = 1.25*(sum(thickness[:n_shells]) + core_radius + 1)
+    total_radius = 1.25*(sum(thickness[:n_shells]) + radius_core + 1)
     dr = total_radius/400  # 400 points for a smooth plot
 
     r = []
-    beta = []
+    rho = []
 
     # add in the core
     r.append(0)
-    beta.append(core_sld)
-    r.append(core_radius)
-    beta.append(core_sld)
+    rho.append(sld_core)
+    r.append(radius_core)
+    rho.append(sld_core)
 
     # add in the shells
     for k in range(n_shells):
         # Left side of each shells
         r0 = r[-1]
         r.append(r0)
-        beta.append(in_sld[k])
+        rho.append(sld_in[k])
 
         if fabs(A[k]) < 1.0e-16:
             # flat shell
             r.append(r0 + thickness[k])
-            beta.append(out_sld[k])
+            rho.append(sld_out[k])
         else:
             # exponential shell
             # num_steps must be at least 1, so use floor()+1 rather than ceil
             # to protect against a thickness0.
             num_steps = np.floor(thickness[k]/dr) + 1
-            slope = (out_sld[k] - in_sld[k])/expm1(A[k])
-            const = (in_sld[k] - slope)
+            slope = (sld_out[k] - sld_in[k]) / expm1(A[k])
+            const = (sld_in[k] - slope)
             for rk in np.linspace(0, thickness[k], num_steps+1):
                 r.append(r0+rk)
-                beta.append(slope*exp(A[k]*rk/thickness[k]) + const)
+                rho.append(slope*exp(A[k]*rk/thickness[k]) + const)
 
     # add in the solvent
     r.append(r[-1])
-    beta.append(solvent_sld)
+    rho.append(sld_solvent)
     r.append(total_radius)
-    beta.append(solvent_sld)
+    rho.append(sld_solvent)
 
-    return np.asarray(r), np.asarray(beta)*1e-6
+    return np.asarray(r), np.asarray(rho)
 
 def ER(core_radius, n, thickness):
     return np.sum(thickness[:n[0]], axis=0) + core_radius
