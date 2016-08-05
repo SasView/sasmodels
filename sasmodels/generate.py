@@ -710,7 +710,7 @@ def make_html(model_info):
     Convert model docs directly to html.
     """
     from . import rst2html
-    return rst2html.convert(make_doc(model_info), title=model_info['name'])
+    return rst2html.convert(make_doc(model_info))
 
 def demo_time():
     # type: () -> None
