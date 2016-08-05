@@ -100,11 +100,9 @@ def parse_parameter(name, units='', default=np.NaN,
                 low, high = user_limits
                 limits = (float(low), float(high))
             except Exception:
-                print("user_limits",user_limits)
-                raise ValueError("invalid limits for %s"%name)
-            else:
-                if low >= high:
-                    raise ValueError("require lower limit < upper limit")
+                raise ValueError("invalid limits for %s: %r"%(name,user_limits))
+            if low >= high:
+                raise ValueError("require lower limit < upper limit")
 
     # Process default value as float, making sure it is in range
     if not isinstance(default, (int, float)):
@@ -279,6 +277,9 @@ class Parameter(object):
     value (so a 10% length dipsersity would use a polydispersity value of 0.1)
     rather than absolute dispersisity (such as an angle plus or minus
     15 degrees).
+
+    *choices* is the option names for a drop down list of options, as for
+    example, might be used to set the value of a shape parameter.
 
     These values are set by :func:`make_parameter_table` and
     :func:`parse_parameter` therein.
@@ -521,6 +522,7 @@ class ParameterTable(object):
                                    p.limits, p.type, p.description)
                     pk.polydisperse = p.polydisperse
                     pk.relative_pd = p.relative_pd
+                    pk.choices = p.choices
                     full_list.append(pk)
 
         # Add the magnetic parameters to the end of the call parameter list.

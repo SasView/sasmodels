@@ -15,6 +15,14 @@ shells here are sub-divided and numerically integrated assuming each
 sub-shell is described by a line function, with *n_steps* sub-shells per
 interface. The form factor is normalized by the total volume of the sphere.
 
+Interface shapes are as follows::
+
+    0: erf(|nu|*z)
+    1: Rpow(z^|nu|)
+    2: Lpow(z^|nu|)
+    3: Rexp(-|nu|z)
+    4: Lexp(-|nu|z)
+
 Definition
 ----------
 
@@ -185,8 +193,8 @@ description = """
         """
 category = "shape:sphere"
 
-SHAPES = ["erf(|nu|*z)", "Rpow(z^|nu|)", "Lpow(z^|nu|)",
-          "Rexp(-|nu|z)", "Lexp(-|nu|z)"],
+SHAPES = [["erf(|nu|*z)", "Rpow(z^|nu|)", "Lpow(z^|nu|)",
+           "Rexp(-|nu|z)", "Lexp(-|nu|z)"]]
 
 # pylint: disable=bad-whitespace, line-too-long
 #            ["name", "units", default, [lower, upper], "type", "description"],
@@ -233,9 +241,9 @@ def profile(n_shells, sld_solvent, sld, thickness,
         dz = interface[i]/n_steps
         sld_l = sld[i]
         sld_r = sld[i+1] if i < n_shells-1 else sld_solvent
-        interface = SHAPE_FUNCTIONS[int(np.clip(shape[i], 0, len(SHAPES)-1))]
+        fn = SHAPE_FUNCTIONS[int(np.clip(shape[i], 0, len(SHAPE_FUNCTIONS)-1))]
         for step in range(1, n_steps+1):
-            portion = interface(float(step)/n_steps, max(abs(nu[i]), 1e-14))
+            portion = fn(float(step)/n_steps, max(abs(nu[i]), 1e-14))
             z0 += dz
             z.append(z0)
             rho.append((sld_r - sld_l)*portion + sld_l)

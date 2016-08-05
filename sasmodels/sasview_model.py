@@ -37,7 +37,6 @@ except ImportError:
     pass
 
 # TODO: separate x_axis_label from multiplicity info
-# The profile x-axis label belongs with the profile generating function
 MultiplicityInfo = collections.namedtuple(
     'MultiplicityInfo',
     ["number", "control", "choices", "x_axis_label"],
@@ -142,6 +141,15 @@ def _generate_model_attributes(model_info):
             )
             break
 
+    # Only a single drop-down list parameter available
+    fun_list = []
+    for p in model_info.parameters.kernel_parameters:
+        if p.choices:
+            fun_list = p.choices
+            if p.length > 1:
+                non_fittable.extend(p.id+str(k) for k in range(1, p.length+1))
+            break
+
     # Organize parameter sets
     orientation_params = []
     magnetic_params = []
@@ -172,6 +180,7 @@ def _generate_model_attributes(model_info):
     attrs['magnetic_params'] = tuple(magnetic_params)
     attrs['fixed'] = tuple(fixed)
     attrs['non_fittable'] = tuple(non_fittable)
+    attrs['fun_list'] = tuple(fun_list)
 
     return attrs
 
