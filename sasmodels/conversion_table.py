@@ -1,3 +1,13 @@
+"""
+Parameter conversion table
+
+*CONVERSION_TABLE* gives the old model name and a dictionary of old parameter
+names for each parameter in sasmodels.  This is used by :mod:`convert` to
+determine the equivalent parameter set when comparing a sasmodels model to
+the models defined in SasView 3.1.
+"""
+
+
 CONVERSION_TABLE = {
     "adsorbed_layer": [
         "Core2ndMomentModel",
@@ -699,20 +709,20 @@ CONVERSION_TABLE = {
         # Note: explicit key,value pairs given by **{...} override the
         # keys from the gnerator expression ((k,v) for k,v in seq) when
         # used as dict((generator), **{...})
-        dict(((field_new+str(index+1),field_old+str(index))
-             for field_new, field_old in [("sld","sld_flat"),
-                                          ("thickness","thick_flat"),
-                                          ("interface","thick_inter"),
-                                          ("shape","func_inter"),
-                                          ("nu","nu_inter"),]
-             for index in range(11)),
+        dict(((field_new+str(index+1), field_old+str(index))
+              for field_new, field_old in [("sld", "sld_flat"),
+                                           ("thickness", "thick_flat"),
+                                           ("interface", "thick_inter"),
+                                           ("shape", "func_inter"),
+                                           ("nu", "nu_inter"),]
+              for index in range(11)),
              **{
-            "n_shells": "n_shells",
-            "n_steps": "npts_inter",
-            "sld_solvent": "sld_solv",
-            "thickness1": "rad_core0",
-            "sld1": "sld_core0",
-        })
+                   "n_shells": "n_shells",
+                   "n_steps": "npts_inter",
+                   "sld_solvent": "sld_solv",
+                   "thickness1": "rad_core0",
+                   "sld1": "sld_core0",
+               })
     ],
     "squarewell": [
         "SquareWellStructure",
