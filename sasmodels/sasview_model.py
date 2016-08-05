@@ -322,16 +322,18 @@ class SasviewModel(object):
         : return: (z, beta) where z is a list of depth of the transition points
                 beta is a list of the corresponding SLD values
         """
-        args = [] # type: List[Union[float, np.ndarray]]
+        args = {} # type: Dict[str, Any]
         for p in self._model_info.parameters.kernel_parameters:
             if p.id == self.multiplicity_info.control:
-                args.append(float(self.multiplicity))
+                value = float(self.multiplicity)
             elif p.length == 1:
-                args.append(self.params.get(p.id, np.NaN))
+                value = self.params.get(p.id, np.NaN)
             else:
-                args.append([self.params.get(p.id+str(k), np.NaN)
-                             for k in range(1,p.length+1)])
-        return self._model_info.profile(*args)
+                value = np.array([self.params.get(p.id+str(k), np.NaN)
+                                  for k in range(1,p.length+1)]
+            args[p.id] = value
+
+        return self._model_info.profile(**args)
 
     def setParam(self, name, value):
         # type: (str, float) -> None

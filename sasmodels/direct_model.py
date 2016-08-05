@@ -73,6 +73,7 @@ def call_kernel(calculator, pars, cutoff=0., mono=False):
     #print("values:", values)
     return calculator(call_details, values, cutoff, is_magnetic)
 
+
 def get_weights(parameter, values):
     # type: (Parameter, Dict[str, float]) -> Tuple[np.ndarray, np.ndarray]
     """
@@ -94,6 +95,20 @@ def get_weights(parameter, values):
     value, weight = weights.get_weights(
         disperser, npts, width, nsigma, value, limits, relative)
     return value, weight / np.sum(weight)
+
+
+def call_profile(model_info, **pars):
+    args = {}
+    for p in model_info.parameters.kernel_parameters:
+        if p.length > 1:
+            value = np.array([pars.get(p.id+str(j), p.default)
+                              for j in range(1, p.length+1)])
+        else:
+            value = pars.get(p.id, p.default)
+        args[p.id] = value
+    x, y = model_info.profile(**args)
+    return x, y, model_info.profile_axes
+
 
 class DataMixin(object):
     """
@@ -288,6 +303,13 @@ class DirectModel(DataMixin):
         """
         Iq = self.__call__(**pars)
         self._set_data(Iq, noise=noise)
+
+    def profile(self, **pars):
+        # type: (**float) -> None
+        """
+        Generate a plottable profile.
+        """
+        return call_profile(self.model.info, **pars)
 
 def main():
     # type: () -> None

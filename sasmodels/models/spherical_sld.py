@@ -1,26 +1,19 @@
 r"""
-This model calculates an empirical functional form for SAS data using
-SpericalSLD profile
+Similarly to the onion, this model provides the form factor, $P(q)$, for
+a multi-shell sphere, where the interface between the each neighboring
+shells can be described by the error function, power-law, or exponential
+functions.  The scattering intensity is computed by building a continuous
+custom SLD profile along the radius of the particle. The SLD profile is
+composed of a number of uniform shells with interfacial shells between them.
 
-Similarly to the OnionExpShellModel, this model provides the form factor,
-P(q), for a multi-shell sphere, where the interface between the each neighboring
-shells can be described by one of a number of functions including error,
-power-law, and exponential functions.
-This model is to calculate the scattering intensity by building a continuous
-custom SLD profile against the radius of the particle.
-The SLD profile is composed of a flat core, a flat solvent, a number (up to 9 )
-flat shells, and the interfacial layers between the adjacent flat shells
-(or core, and solvent) (see below).
+.. figure:: img/spherical_sld_profile.png
 
-.. figure:: img/spherical_sld_profile.gif
-
-    Exemplary SLD profile
+    Example SLD profile
 
 Unlike the <onion> model (using an analytical integration), the interfacial
-layers here are sub-divided and numerically integrated assuming each of the
-sub-layers are described by a line function.
-The number of the sub-layer can be given by users by setting the integer values
-of npts_inter. The form factor is normalized by the total volume of the sphere.
+shells here are sub-divided and numerically integrated assuming each
+sub-shell is described by a line function, with *n_steps* sub-shells per
+interface. The form factor is normalized by the total volume of the sphere.
 
 Definition
 ----------
@@ -41,7 +34,7 @@ the sld function can be defined as:
     f_x = 4 \pi \int_{0}^{\infty} \rho_x(r)  \frac{\sin(qr)} {qr^2} r^2 dr
 
 
-so that individual terms can be calcualted as follows:
+so that individual terms can be calculated as follows:
 
 .. math::
     f_\text{core} = 4 \pi \int_{0}^{r_\text{core}} \rho_\text{core}
@@ -71,7 +64,7 @@ so that individual terms can be calcualted as follows:
     \Big[ \frac{\sin(qr_N) - qr_N \cos(qr_N)} {qr_N^3} \Big]
 
 
-Here we assumed that the SLDs of the core and solvent are constant against $r$.
+Here we assumed that the SLDs of the core and solvent are constant in $r$.
 The SLD at the interface between shells, $\rho_{\text {inter}_i}$
 is calculated with a function chosen by an user, where the functions are
 
@@ -106,9 +99,9 @@ Erf:
 
 The functions are normalized so that they vary between 0 and 1, and they are
 constrained such that the SLD is continuous at the boundaries of the interface
-as well as each sub-layers. Thus B and C are determined.
+as well as each sub-shell. Thus B and C are determined.
 
-Once $\rho_{\text{inter}_i}$ is found at the boundary of the sub-layer of the
+Once $\rho_{\text{inter}_i}$ is found at the boundary of the sub-shell of the
 interface, we can find its contribution to the form factor $P(q)$
 
 .. math::
@@ -120,13 +113,13 @@ interface, we can find its contribution to the form factor $P(q)$
 
     4 \pi \sum_{j=0}^{npts_{\text{inter}_i} -1 } \Big[
     3 ( \rho_{ \text{inter}_i } ( r_{j+1} ) - \rho_{ \text{inter}_i }
-    ( r_{j} ) V ( r_{ \text{sublayer}_j } )
+    ( r_{j} ) V ( r_{ \text{subshell}_j } )
     \Big[ \frac {r_j^2 \beta_\text{out}^2 \sin(\beta_\text{out})
     - (\beta_\text{out}^2-2) \cos(\beta_\text{out}) }
     {\beta_\text{out}^4 } \Big]
 
     - 3 ( \rho_{ \text{inter}_i } ( r_{j+1} ) - \rho_{ \text{inter}_i }
-    ( r_{j} ) V ( r_{ \text{sublayer}_j-1 } )
+    ( r_{j} ) V ( r_{ \text{subshell}_j-1 } )
     \Big[ \frac {r_{j-1}^2 \sin(\beta_\text{in})
     - (\beta_\text{in}^2-2) \cos(\beta_\text{in}) }
     {\beta_\text{in}^4 } \Big]
@@ -151,10 +144,10 @@ where
     \beta_\text{in} = qr_j \text{, } \beta_\text{out} = qr_{j+1}
 
 
-We assume the $\rho_{\text{inter}_i} (r)$ can be approximately linear
-within a sub-layer $j$
+We assume $\rho_{\text{inter}_j} (r)$ is approximately linear
+within the sub-shell $j$.
 
-Finally form factor can be calculated by
+Finally the form factor can be calculated by
 
 .. math::
 
@@ -168,16 +161,8 @@ where the $q$ vector is defined as
 
     q = \sqrt{q_x^2 + q_y^2}
 
-
-.. figure:: img/spherical_sld_1d.jpg
-
-    1D plot using the default values (w/400 data point).
-
-.. figure:: img/spherical_sld_default_profile.jpg
-
-    SLD profile from the default values.
-
 .. note::
+
     The outer most radius is used as the effective radius for S(Q)
     when $P(Q) * S(Q)$ is applied.
 
@@ -205,7 +190,7 @@ SHAPES = ["erf(|nu|*z)", "Rpow(z^|nu|)", "Lpow(z^|nu|)",
 
 # pylint: disable=bad-whitespace, line-too-long
 #            ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["n_shells",             "",           1,      [1, 11],        "volume", "number of shells"],
+parameters = [["n_shells",             "",           1,      [1, 10],        "volume", "number of shells"],
               ["sld_solvent",          "1e-6/Ang^2", 1.0,    [-inf, inf],    "sld", "solvent sld"],
               ["sld[n_shells]",        "1e-6/Ang^2", 4.06,   [-inf, inf],    "sld", "sld of the shell"],
               ["thickness[n_shells]",  "Ang",        100.0,  [0, inf],       "volume", "thickness shell"],
@@ -257,7 +242,7 @@ def profile(n_shells, sld_solvent, sld, thickness,
     z.append(z0*1.2)
     rho.append(sld_solvent)
     # return sld profile (r, beta)
-    return np.asarray(z), np.asarray(rho)*1e-6
+    return np.asarray(z), np.asarray(rho)
 
 
 def ER(n_shells, thickness, interface):
