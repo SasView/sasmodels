@@ -1,3 +1,16 @@
+"""
+Kernel Call Details
+===================
+
+When calling sas computational kernels with polydispersity there are a
+number of details that need to be sent to the caller.  This includes the
+list of polydisperse parameters, the number of points in the polydispersity
+weight distribution, and which parameter is the "theta" parameter for
+polar coordinate integration.  The :class:`CallDetails` object maintains
+this data.  Use :func:`build_details` to build a *details* object which
+can be passed to one of the computational kernels.
+"""
+
 from __future__ import print_function
 
 import numpy as np  # type: ignore
@@ -23,6 +36,29 @@ else:
 
 
 class CallDetails(object):
+    """
+    Manage the polydispersity information for the kernel call.
+
+    Conceptually, a polydispersity calculation is an integral over a mesh
+    in n-D space where n is the number of polydisperse parameters.  In order
+    to keep the program responsive, and not crash the GPU, only a portion
+    of the mesh is computed at a time.  Meshes with a large number of points
+    will therefore require many calls to the polydispersity loop.  Restarting
+    a nested loop in the middle requires that the indices of the individual
+    mesh dimensions can be computed for the current loop location.  This
+    is handled by the *pd_stride* vector, with n//stride giving the loop
+    index and n%stride giving the position in the sub loops.
+
+    One of the parameters may be the latitude.  When integrating in polar
+    coordinates, the total circumference decreases as latitude varies from
+    pi r^2 at the equator to 0 at the pole, and the weight associated
+    with a range of phi values needs to be scaled by this circumference.
+    This scale factor needs to be updated each time the theta value
+    changes.  *theta_par* indicates which of the values in the parameter
+    vector is the latitude parameter, or -1 if there is no latitude
+    parameter in the model.  In practice, the normalization term cancels
+    if the latitude is not a polydisperse parameter.
+    """
     parts = None  # type: List["CallDetails"]
     def __init__(self, model_info):
         # type: (ModelInfo) -> None
@@ -41,47 +77,72 @@ class CallDetails(object):
         self.buffer = np.zeros(4*max_pd + 4, 'i4')
 
         # generate views on different parts of the array
-        self._pd_par     = self.buffer[0 * max_pd:1 * max_pd]
-        self._pd_length  = self.buffer[1 * max_pd:2 * max_pd]
-        self._pd_offset  = self.buffer[2 * max_pd:3 * max_pd]
-        self._pd_stride  = self.buffer[3 * max_pd:4 * max_pd]
+        self._pd_par = self.buffer[0 * max_pd:1 * max_pd]
+        self._pd_length = self.buffer[1 * max_pd:2 * max_pd]
+        self._pd_offset = self.buffer[2 * max_pd:3 * max_pd]
+        self._pd_stride = self.buffer[3 * max_pd:4 * max_pd]
 
         # theta_par is fixed
         self.theta_par = parameters.theta_offset
 
     @property
-    def pd_par(self): return self._pd_par
+    def pd_par(self):
+        """List of polydisperse parameters"""
+        return self._pd_par
 
     @property
-    def pd_length(self): return self._pd_length
+    def pd_length(self):
+        """Number of weights for each polydisperse parameter"""
+        return self._pd_length
 
     @property
-    def pd_offset(self): return self._pd_offset
+    def pd_offset(self):
+        """Offsets for the individual weight vectors in the set of weights"""
+        return self._pd_offset
 
     @property
-    def pd_stride(self): return self._pd_stride
+    def pd_stride(self):
+        """Stride in the pd mesh for each pd dimension"""
+        return self._pd_stride
 
     @property
-    def pd_prod(self): return self.buffer[-4]
+    def pd_prod(self):
+        """Total size of the pd mesh"""
+        return self.buffer[-4]
+
     @pd_prod.setter
-    def pd_prod(self, v): self.buffer[-4] = v
+    def pd_prod(self, v):
+        self.buffer[-4] = v
 
     @property
-    def pd_sum(self): return self.buffer[-3]
+    def pd_sum(self):
+        """Total length of all the weight vectors"""
+        return self.buffer[-3]
+
     @pd_sum.setter
-    def pd_sum(self, v): self.buffer[-3] = v
+    def pd_sum(self, v):
+        self.buffer[-3] = v
 
     @property
-    def num_active(self): return self.buffer[-2]
+    def num_active(self):
+        """Number of active polydispersity loops"""
+        return self.buffer[-2]
+
     @num_active.setter
-    def num_active(self, v): self.buffer[-2] = v
+    def num_active(self, v):
+        self.buffer[-2] = v
 
     @property
-    def theta_par(self): return self.buffer[-1]
+    def theta_par(self):
+        """Location of the theta parameter in the parameter vector"""
+        return self.buffer[-1]
+
     @theta_par.setter
-    def theta_par(self, v): self.buffer[-1] = v
+    def theta_par(self, v):
+        self.buffer[-1] = v
 
     def show(self):
+        """Print the polydispersity call details to the console"""
         print("num_active", self.num_active)
         print("pd_prod", self.pd_prod)
         print("pd_sum", self.pd_sum)
@@ -93,6 +154,11 @@ class CallDetails(object):
 
 
 def mono_details(model_info):
+    # type: (ModelInfo) -> CallDetails
+    """
+    Return a :class:`CallDetails` object for a monodisperse calculation
+    of the model defined by *model_info*.
+    """
     call_details = CallDetails(model_info)
     call_details.pd_prod = 1
     call_details.pd_sum = model_info.parameters.nvalues
@@ -104,12 +170,20 @@ def mono_details(model_info):
 
 
 def poly_details(model_info, weights):
+    """
+    Return a :class:`CallDetails` object for a polydisperse calculation
+    of the model defined by *model_info* for the given set of *weights*.
+    *weights* is a list of vectors, one for each parameter.  Monodisperse
+    parameters should provide a weight vector containing [1.0].
+    """
+    # type: (ModelInfo) -> CallDetails
     #print("weights",weights)
     #weights = weights[2:] # Skip scale and background
 
     # Decreasing list of polydispersity lengths
     #print([p.id for p in model_info.parameters.call_parameters])
-    pd_length = np.array([len(w) for w in weights[2:2+model_info.parameters.npars]])
+    pd_length = np.array([len(w)
+                          for w in weights[2:2+model_info.parameters.npars]])
     num_active = np.sum(pd_length>1)
     max_pd = model_info.parameters.max_pd
     if num_active > max_pd:
@@ -136,6 +210,7 @@ def poly_details(model_info, weights):
 
 
 def dispersion_mesh(model_info, pars):
+    # type: (ModelInfo) -> Tuple[List[np.ndarray], List[np.ndarray]]
     """
     Create a mesh grid of dispersion parameters and weights.
 
@@ -154,7 +229,8 @@ def dispersion_mesh(model_info, pars):
         pars = []
         offset = 0
         for n in lengths:
-            pars.append(np.vstack(value[offset:offset+n]) if n > 1 else value[offset])
+            pars.append(np.vstack(value[offset:offset+n])
+                        if n > 1 else value[offset])
             offset += n
         value = pars
     return value, weight
@@ -178,20 +254,22 @@ def build_details(kernel, pairs):
         # Pad value array to a 32 value boundary
         data_len = 3*len(scalars)
         extra = ((data_len+31)//32)*32 - data_len
-        data = np.array(scalars+scalars+[1.]*len(scalars)+[0.]*extra, dtype=kernel.dtype)
+        data = np.array(scalars+scalars+[1.]*len(scalars)+[0.]*extra,
+                        dtype=kernel.dtype)
     else:
         call_details = poly_details(kernel.info, weights)
         # Pad value array to a 32 value boundary
         data_len = len(scalars) + 2*sum(len(v) for v in values)
         extra = ((data_len+31)//32)*32 - data_len
-        data = np.hstack(scalars+list(values)+list(weights)+[0.]*extra).astype(kernel.dtype)
+        data = np.hstack(scalars+list(values)+list(weights)+[0.]*extra)
+        data = data.astype(kernel.dtype)
     is_magnetic = convert_magnetism(kernel.info.parameters, data)
     #call_details.show()
     return call_details, data, is_magnetic
 
 def convert_magnetism(parameters, values):
     """
-    Convert magnetism in value table from polar to rectangular coordinates.
+    Convert magnetism values from polar to rectangular coordinates.
 
     Returns True if any magnetism is present.
     """
