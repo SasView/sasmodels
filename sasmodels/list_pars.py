@@ -12,8 +12,8 @@ from __future__ import print_function
 
 import sys
 
-from .core import load_model_info
-from .compare import MODELS, columnize
+from .core import load_model_info, list_models
+from .compare import columnize
 
 def find_pars():
     """
@@ -22,7 +22,7 @@ def find_pars():
     Returns the reference table *{parameter: [model, model, ...]}*
     """
     partable = {}
-    for name in sorted(MODELS):
+    for name in list_models():
         model_info = load_model_info(name)
         for p in model_info.parameters.kernel_parameters:
             partable.setdefault(p.name, [])

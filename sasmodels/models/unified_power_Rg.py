@@ -71,6 +71,7 @@ parameters = [
     ["B[level]",  "1/cm", 4.5e-6, [-inf, inf], "", ""],
     ["G[level]",  "1/cm", 400,    [0, inf], "", ""],
     ]
+category = "shape-independent"
 
 def Iq(q, level, rg, power, B, G):
     ilevel = int(level)

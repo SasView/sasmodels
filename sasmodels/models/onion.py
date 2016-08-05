@@ -35,7 +35,6 @@ constant SLD within the core and solvent, so
     :nowrap:
 
     \begin{align*}
-
     f_\text{core}
         &= 4\pi\int_0^{r_\text{core}} \rho_\text{core}
             \frac{\sin(qr)}{qr}\, r^2\,\mathrm{d}r
@@ -74,21 +73,19 @@ $\rho_\text{in}$ and $\Delta t_\text{shell}$ stand for the
 SLD of the inner side of the $k^\text{th}$ shell and the
 thickness of the $k^\text{th}$ shell in the equation above, respectively.
 
-For $A \gt 0$,
+For $A > 0$,
 
 .. math::
-    :nowrap:
 
-    \begin{align*}
     f_\text{shell} &= 4 \pi \int_{r_{\text{shell}-1}}^{r_\text{shell}}
         \left[ B\exp
             \left(A (r - r_{\text{shell}-1}) / \Delta t_\text{shell} \right) + C
-        \right] \frac{\sin(qr)}{qr}\,r^2\,\mathrm{d}r \\
+        \right] \frac{\sin(qr)}{qr}\,r^2\,\mathrm{d}r
+
     &= 3BV(r_\text{shell}) e^A h(\alpha_\text{out},\beta_\text{out})
         - 3BV(r_{\text{shell}-1}) h(\alpha_\text{in},\beta_\text{in})
         + 3CV(r_{\text{shell}}) \frac{j_1(\beta_\text{out})}{\beta_\text{out}}
         - 3CV(r_{\text{shell}-1}) \frac{j_1(\beta_\text{in})}{\beta_\text{in}}
-    \end{align*}
 
 for
 
@@ -101,7 +98,7 @@ for
     \alpha_\text{in} &= A\frac{r_{\text{shell}-1}}{\Delta t_\text{shell}}
          &\alpha_\text{out} &= A\frac{r_\text{shell}}{\Delta t_\text{shell}} \\
     \beta_\text{in} &= qr_{\text{shell}-1}
-        &\beta_\text{out} &= qr_\text{shell}
+        &\beta_\text{out} &= qr_\text{shell} \\
     \end{align*}
 
 where $h$ is

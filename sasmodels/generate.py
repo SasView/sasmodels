@@ -144,7 +144,7 @@ Code follows the C99 standard with the following extensions and conditions::
     FLOAT_SIZE is the number of bytes in the converted variables
 
 :func:`load_kernel_module` loads the model definition file and
-:modelinfo:`make_model_info` parses it. :func:`make_source`
+:func:`modelinfo.make_model_info` parses it. :func:`make_source`
 converts C-based model definitions to C source code, including the
 polydispersity integral.  :func:`model_sources` returns the list of
 source files the model depends on, and :func:`timestamp` returns

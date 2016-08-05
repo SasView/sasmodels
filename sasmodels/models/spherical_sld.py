@@ -45,16 +45,17 @@ the sld function can be defined as:
 so that individual terms can be calculated as follows:
 
 .. math::
-    f_\text{core} = 4 \pi \int_{0}^{r_\text{core}} \rho_\text{core}
+
+    f_\text{core} &= 4 \pi \int_{0}^{r_\text{core}} \rho_\text{core}
     \frac{\sin(qr)} {qr} r^2 dr =
     3 \rho_\text{core} V(r_\text{core})
     \Big[ \frac{\sin(qr_\text{core}) - qr_\text{core} \cos(qr_\text{core})}
     {qr_\text{core}^3} \Big]
 
-    f_{\text{inter}_i} = 4 \pi \int_{\Delta t_{ \text{inter}_i } }
+    f_{\text{inter}_i} &= 4 \pi \int_{\Delta t_{ \text{inter}_i } }
     \rho_{ \text{inter}_i } \frac{\sin(qr)} {qr} r^2 dr
 
-    f_{\text{shell}_i} = 4 \pi \int_{\Delta t_{ \text{inter}_i } }
+    f_{\text{shell}_i} &= 4 \pi \int_{\Delta t_{ \text{inter}_i } }
     \rho_{ \text{flat}_i } \frac{\sin(qr)} {qr} r^2 dr =
     3 \rho_{ \text{flat}_i } V ( r_{ \text{inter}_i } +
     \Delta t_{ \text{inter}_i } )
@@ -66,7 +67,7 @@ so that individual terms can be calculated as follows:
     \Big[ \frac{\sin(qr_{\text{inter}_i}) - qr_{\text{flat}_i}
     \cos(qr_{\text{inter}_i}) } {qr_{\text{inter}_i}^3} \Big]
 
-    f_\text{solvent} = 4 \pi \int_{r_N}^{\infty} \rho_\text{solvent}
+    f_\text{solvent} &= 4 \pi \int_{r_N}^{\infty} \rho_\text{solvent}
     \frac{\sin(qr)} {qr} r^2 dr =
     3 \rho_\text{solvent} V(r_N)
     \Big[ \frac{\sin(qr_N) - qr_N \cos(qr_N)} {qr_N^3} \Big]
@@ -79,20 +80,22 @@ is calculated with a function chosen by an user, where the functions are
 Exp:
 
 .. math::
-    \rho_{{inter}_i} (r) = \begin{cases}
+
+    \rho_{{inter}_i} (r) &= \begin{cases}
     B \exp\Big( \frac {\pm A(r - r_{\text{flat}_i})}
-    {\Delta t_{ \text{inter}_i }} \Big) +C  & \text{for} A \neq 0 \\
+    {\Delta t_{ \text{inter}_i }} \Big) +C  & \mbox{for } A \neq 0 \\
     B \Big( \frac {(r - r_{\text{flat}_i})}
-    {\Delta t_{ \text{inter}_i }} \Big) +C  & \text{for} A = 0 \\
+    {\Delta t_{ \text{inter}_i }} \Big) +C  & \mbox{for } A = 0 \\
     \end{cases}
 
 Power-Law
 
 .. math::
-    \rho_{{inter}_i} (r) = \begin{cases}
+
+    \rho_{{inter}_i} (r) &= \begin{cases}
     \pm B \Big( \frac {(r - r_{\text{flat}_i} )} {\Delta t_{ \text{inter}_i }}
-    \Big) ^A  +C  & \text{for} A \neq 0 \\
-    \rho_{\text{flat}_{i+1}}  & \text{for} A = 0 \\
+    \Big) ^A  +C  & \mbox{for } A \neq 0 \\
+    \rho_{\text{flat}_{i+1}}  & \mbox{for } A = 0 \\
     \end{cases}
 
 Erf:
@@ -100,9 +103,9 @@ Erf:
 .. math::
     \rho_{{inter}_i} (r) = \begin{cases}
     B \text{erf} \Big( \frac { A(r - r_{\text{flat}_i})}
-    {\sqrt{2} \Delta t_{ \text{inter}_i }} \Big) +C  & \text{for} A \neq 0 \\
+    {\sqrt{2} \Delta t_{ \text{inter}_i }} \Big) +C  & \mbox{for } A \neq 0 \\
     B \Big( \frac {(r - r_{\text{flat}_i} )} {\Delta t_{ \text{inter}_i }}
-    \Big)  +C  & \text{for} A = 0 \\
+    \Big)  +C  & \mbox{for } A = 0 \\
     \end{cases}
 
 The functions are normalized so that they vary between 0 and 1, and they are
@@ -113,29 +116,29 @@ Once $\rho_{\text{inter}_i}$ is found at the boundary of the sub-shell of the
 interface, we can find its contribution to the form factor $P(q)$
 
 .. math::
-    f_{\text{inter}_i} = 4 \pi \int_{\Delta t_{ \text{inter}_i } }
-    \rho_{ \text{inter}_i } \frac{\sin(qr)} {qr} r^2 dr =
-    4 \pi \sum_{j=0}^{npts_{\text{inter}_i} -1 }
-    \int_{r_j}^{r_{j+1}} \rho_{ \text{inter}_i } (r_j)
-    \frac{\sin(qr)} {qr} r^2 dr \approx
 
-    4 \pi \sum_{j=0}^{npts_{\text{inter}_i} -1 } \Big[
+    f_{\text{inter}_i} &= 4 \pi \int_{\Delta t_{ \text{inter}_i } }
+    \rho_{ \text{inter}_i } \frac{\sin(qr)} {qr} r^2 dr =
+    4 \pi \sum_{j=1}^{n_\text{steps}}
+    \int_{r_j}^{r_{j+1}} \rho_{ \text{inter}_i } (r_j)
+    \frac{\sin(qr)} {qr} r^2 dr
+
+    &\approx 4 \pi \sum_{j=1}^{n_\text{steps}} \Big[
     3 ( \rho_{ \text{inter}_i } ( r_{j+1} ) - \rho_{ \text{inter}_i }
-    ( r_{j} ) V ( r_{ \text{subshell}_j } )
+    ( r_{j} ) V (r_j)
     \Big[ \frac {r_j^2 \beta_\text{out}^2 \sin(\beta_\text{out})
     - (\beta_\text{out}^2-2) \cos(\beta_\text{out}) }
     {\beta_\text{out}^4 } \Big]
 
-    - 3 ( \rho_{ \text{inter}_i } ( r_{j+1} ) - \rho_{ \text{inter}_i }
-    ( r_{j} ) V ( r_{ \text{subshell}_j-1 } )
+    &{} - 3 ( \rho_{ \text{inter}_i } ( r_{j+1} ) - \rho_{ \text{inter}_i }
+    ( r_{j} ) V ( r_{j-1} )
     \Big[ \frac {r_{j-1}^2 \sin(\beta_\text{in})
     - (\beta_\text{in}^2-2) \cos(\beta_\text{in}) }
     {\beta_\text{in}^4 } \Big]
 
-    + 3 \rho_{ \text{inter}_i } ( r_{j+1} )  V ( r_j )
+    &{} + 3 \rho_{ \text{inter}_i } ( r_{j+1} )  V ( r_j )
     \Big[ \frac {\sin(\beta_\text{out}) - \cos(\beta_\text{out}) }
     {\beta_\text{out}^4 } \Big]
-
     - 3 \rho_{ \text{inter}_i } ( r_{j} )  V ( r_j )
     \Big[ \frac {\sin(\beta_\text{in}) - \cos(\beta_\text{in}) }
     {\beta_\text{in}^4 } \Big]
@@ -144,12 +147,14 @@ interface, we can find its contribution to the form factor $P(q)$
 where
 
 .. math::
-    V(a) = \frac {4\pi}{3}a^3
+    :nowrap:
 
-    a_\text{in} ~ \frac{r_j}{r_{j+1} -r_j} \text{, } a_\text{out}
-    ~ \frac{r_{j+1}}{r_{j+1} -r_j}
-
-    \beta_\text{in} = qr_j \text{, } \beta_\text{out} = qr_{j+1}
+    \begin{align*}
+    V(a) &= \frac {4\pi}{3}a^3 && \\
+    a_\text{in} &\sim \frac{r_j}{r_{j+1} -r_j} \text{, } &a_\text{out}
+    &\sim \frac{r_{j+1}}{r_{j+1} -r_j} \\
+    \beta_\text{in} &= qr_j \text{, } &\beta_\text{out} &= qr_{j+1}
+    \end{align*}
 
 
 We assume $\rho_{\text{inter}_j} (r)$ is approximately linear
@@ -159,7 +164,7 @@ Finally the form factor can be calculated by
 
 .. math::
 
-    P(q) = \frac{[f]^2} {V_\text{particle}} \text{where} V_\text{particle}
+    P(q) = \frac{[f]^2} {V_\text{particle}} \mbox{ where } V_\text{particle}
     = V(r_{\text{shell}_N})
 
 For 2D data the scattering intensity is calculated in the same way as 1D,
@@ -171,7 +176,7 @@ where the $q$ vector is defined as
 
 .. note::
 
-    The outer most radius is used as the effective radius for S(Q)
+    The outer most radius is used as the effective radius for $S(Q)$
     when $P(Q) * S(Q)$ is applied.
 
 References
