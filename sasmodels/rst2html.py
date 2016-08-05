@@ -1,8 +1,8 @@
-"""
+r"""
 Convert a restructured text document to html.
 
 Inline math markup can uses the *math* directive, or it can use latex
-style *\$expression\$*.  Math can be rendered using simple html and 
+style *\$expression\$*.  Math can be rendered using simple html and
 unicode, or with mathjax.
 """
 
@@ -40,9 +40,9 @@ def rst2html(rst, part="whole", math_output="html"):
     # Ick! mathjax doesn't work properly with math-output, and the
     # others don't work properly with math_output!
     if math_output == "mathjax":
-        settings = { "math_output": math_output }
+        settings = {"math_output": math_output}
     else:
-        settings = { "math-output": math_output }
+        settings = {"math-output": math_output}
 
     # math2html and mathml do not support \frac12
     rst = replace_compact_fraction(rst)
@@ -88,31 +88,34 @@ def replace_dollar(content):
     r"""
     Convert dollar signs to inline math markup in rst.
     """
-    content = _dollar.sub(r":math:`\1`",content)
+    content = _dollar.sub(r":math:`\1`", content)
     content = _notdollar.sub("$", content)
     return content
 
 
 def test_dollar():
-    assert replace_dollar(u"no dollar")==u"no dollar"
-    assert replace_dollar(u"$only$")==u":math:`only`"
-    assert replace_dollar(u"$first$ is good")==u":math:`first` is good"
-    assert replace_dollar(u"so is $last$")==u"so is :math:`last`"
-    assert replace_dollar(u"and $mid$ too")==u"and :math:`mid` too"
-    assert replace_dollar(u"$first$, $mid$, $last$")==u":math:`first`, :math:`mid`, :math:`last`"
-    assert replace_dollar(u"dollar\$ escape")==u"dollar$ escape"
-    assert replace_dollar(u"dollar \$escape\$ too")==u"dollar $escape$ too"
-    assert replace_dollar(u"spaces $in the$ math")==u"spaces :math:`in the` math"
-    assert replace_dollar(u"emb\ $ed$\ ed")==u"emb\ :math:`ed`\ ed"
-    assert replace_dollar(u"$first$a")==u"$first$a"
-    assert replace_dollar(u"a$last$")==u"a$last$"
-    assert replace_dollar(u"$37")==u"$37"
-    assert replace_dollar(u"($37)")==u"($37)"
-    assert replace_dollar(u"$37 - $43")==u"$37 - $43"
-    assert replace_dollar(u"($37, $38)")==u"($37, $38)"
-    assert replace_dollar(u"a $mid$dle a")==u"a $mid$dle a"
-    assert replace_dollar(u"a ($in parens$) a")==u"a (:math:`in parens`) a"
-    assert replace_dollar(u"a (again $in parens$) a")==u"a (again :math:`in parens`) a"
+    """
+    Test substitution of dollar signs with equivalent RST math markup
+    """
+    assert replace_dollar(u"no dollar") == u"no dollar"
+    assert replace_dollar(u"$only$") == u":math:`only`"
+    assert replace_dollar(u"$first$ is good") == u":math:`first` is good"
+    assert replace_dollar(u"so is $last$") == u"so is :math:`last`"
+    assert replace_dollar(u"and $mid$ too") == u"and :math:`mid` too"
+    assert replace_dollar(u"$first$, $mid$, $last$") == u":math:`first`, :math:`mid`, :math:`last`"
+    assert replace_dollar(ur"dollar\$ escape") == u"dollar$ escape"
+    assert replace_dollar(ur"dollar \$escape\$ too") == u"dollar $escape$ too"
+    assert replace_dollar(u"spaces $in the$ math") == u"spaces :math:`in the` math"
+    assert replace_dollar(u"emb\ $ed$\ ed") == ur"emb\ :math:`ed`\ ed"
+    assert replace_dollar(u"$first$a") == u"$first$a"
+    assert replace_dollar(u"a$last$") == u"a$last$"
+    assert replace_dollar(u"$37") == u"$37"
+    assert replace_dollar(u"($37)") == u"($37)"
+    assert replace_dollar(u"$37 - $43") == u"$37 - $43"
+    assert replace_dollar(u"($37, $38)") == u"($37, $38)"
+    assert replace_dollar(u"a $mid$dle a") == u"a $mid$dle a"
+    assert replace_dollar(u"a ($in parens$) a") == u"a (:math:`in parens`) a"
+    assert replace_dollar(u"a (again $in parens$) a") == u"a (again :math:`in parens`) a"
 
 if __name__ == "__main__":
     test_dollar()

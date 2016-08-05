@@ -183,7 +183,7 @@ class push_seed(object):
         # type: () -> None
         pass
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback):
         # type: (Any, BaseException, Any) -> None
         # TODO: better typing for __exit__ method
         np.random.set_state(self._state)
@@ -435,7 +435,7 @@ def eval_sasview(model_info, data):
             def _call_smearer():
                 smearer.model = model[0]
                 return smearer.get_value()
-            theory = lambda: _call_smearer()
+            theory = _call_smearer
         else:
             theory = lambda: model[0].evalDistribution([data.qx_data[index],
                                                         data.qy_data[index]])
@@ -502,7 +502,7 @@ def eval_ctypes(model_info, data, dtype='double', cutoff=0.):
     calculator.engine = "OMP%s"%DTYPE_MAP[dtype]
     return calculator
 
-def time_calculation(calculator, pars, Nevals=1):
+def time_calculation(calculator, pars, evals=1):
     # type: (Calculator, ParameterSet, int) -> Tuple[np.ndarray, float]
     """
     Compute the average calculation time over N evaluations.
@@ -511,14 +511,14 @@ def time_calculation(calculator, pars, Nevals=1):
     initialize the calculation engine, and make the average more stable.
     """
     # initialize the code so time is more accurate
-    if Nevals > 1:
+    if evals > 1:
         calculator(**suppress_pd(pars))
     toc = tic()
     # make sure there is at least one eval
     value = calculator(**pars)
-    for _ in range(Nevals-1):
+    for _ in range(evals-1):
         value = calculator(**pars)
-    average_time = toc()*1000./Nevals
+    average_time = toc()*1000. / evals
     #print("I(q)",value)
     return value, average_time
 
@@ -590,44 +590,44 @@ def compare(opts, limits=None):
     as the values are adjusted, making it easier to see the effects of the
     parameters.
     """
-    Nbase, Ncomp = opts['n1'], opts['n2']
+    n_base, n_comp = opts['n1'], opts['n2']
     pars = opts['pars']
     data = opts['data']
 
     # silence the linter
-    base = opts['engines'][0] if Nbase else None
-    comp = opts['engines'][1] if Ncomp else None
+    base = opts['engines'][0] if n_base else None
+    comp = opts['engines'][1] if n_comp else None
     base_time = comp_time = None
     base_value = comp_value = resid = relerr = None
 
     # Base calculation
-    if Nbase > 0:
+    if n_base > 0:
         try:
-            base_raw, base_time = time_calculation(base, pars, Nbase)
+            base_raw, base_time = time_calculation(base, pars, n_base)
             base_value = np.ma.masked_invalid(base_raw)
             print("%s t=%.2f ms, intensity=%.0f"
                   % (base.engine, base_time, base_value.sum()))
             _show_invalid(data, base_value)
         except ImportError:
             traceback.print_exc()
-            Nbase = 0
+            n_base = 0
 
     # Comparison calculation
-    if Ncomp > 0:
+    if n_comp > 0:
         try:
-            comp_raw, comp_time = time_calculation(comp, pars, Ncomp)
+            comp_raw, comp_time = time_calculation(comp, pars, n_comp)
             comp_value = np.ma.masked_invalid(comp_raw)
             print("%s t=%.2f ms, intensity=%.0f"
                   % (comp.engine, comp_time, comp_value.sum()))
             _show_invalid(data, comp_value)
         except ImportError:
             traceback.print_exc()
-            Ncomp = 0
+            n_comp = 0
 
     # Compare, but only if computing both forms
-    if Nbase > 0 and Ncomp > 0:
+    if n_base > 0 and n_comp > 0:
         resid = (base_value - comp_value)
-        relerr = resid/np.where(comp_value!=0., abs(comp_value), 1.0)
+        relerr = resid/np.where(comp_value != 0., abs(comp_value), 1.0)
         _print_stats("|%s-%s|"
                      % (base.engine, comp.engine) + (" "*(3+len(comp.engine))),
                      resid)
@@ -641,25 +641,25 @@ def compare(opts, limits=None):
     import matplotlib.pyplot as plt
     if limits is None:
         vmin, vmax = np.Inf, -np.Inf
-        if Nbase > 0:
+        if n_base > 0:
             vmin = min(vmin, base_value.min())
             vmax = max(vmax, base_value.max())
-        if Ncomp > 0:
+        if n_comp > 0:
             vmin = min(vmin, comp_value.min())
             vmax = max(vmax, comp_value.max())
         limits = vmin, vmax
 
-    if Nbase > 0:
-        if Ncomp > 0: plt.subplot(131)
+    if n_base > 0:
+        if n_comp > 0: plt.subplot(131)
         plot_theory(data, base_value, view=view, use_data=False, limits=limits)
         plt.title("%s t=%.2f ms"%(base.engine, base_time))
         #cbar_title = "log I"
-    if Ncomp > 0:
-        if Nbase > 0: plt.subplot(132)
+    if n_comp > 0:
+        if n_base > 0: plt.subplot(132)
         plot_theory(data, comp_value, view=view, use_data=False, limits=limits)
         plt.title("%s t=%.2f ms"%(comp.engine, comp_time))
         #cbar_title = "log I"
-    if Ncomp > 0 and Nbase > 0:
+    if n_comp > 0 and n_base > 0:
         plt.subplot(133)
         if not opts['rel_err']:
             err, errstr, errview = resid, "abs err", "linear"
@@ -677,7 +677,7 @@ def compare(opts, limits=None):
     fig = plt.gcf()
     fig.suptitle(opts['name'])
 
-    if Ncomp > 0 and Nbase > 0 and '-hist' in opts:
+    if n_comp > 0 and n_base > 0 and '-hist' in opts:
         plt.figure()
         v = relerr
         v[v == 0] = 0.5*np.min(np.abs(v[v != 0]))
@@ -731,18 +731,18 @@ VALUE_OPTIONS = [
     'cutoff', 'random', 'nq', 'res', 'accuracy',
     ]
 
-def columnize(L, indent="", width=79):
+def columnize(items, indent="", width=79):
     # type: (List[str], str, int) -> str
     """
     Format a list of strings into columns.
 
     Returns a string with carriage returns ready for printing.
     """
-    column_width = max(len(w) for w in L) + 1
+    column_width = max(len(w) for w in items) + 1
     num_columns = (width - len(indent)) // column_width
-    num_rows = len(L) // num_columns
-    L = L + [""] * (num_rows*num_columns - len(L))
-    columns = [L[k*num_rows:(k+1)*num_rows] for k in range(num_columns)]
+    num_rows = len(items) // num_columns
+    items = items + [""] * (num_rows * num_columns - len(items))
+    columns = [items[k*num_rows:(k+1)*num_rows] for k in range(num_columns)]
     lines = [" ".join("%-*s"%(column_width, entry) for entry in row)
              for row in zip(*columns)]
     output = indent + ("\n"+indent).join(lines)
@@ -765,9 +765,10 @@ def get_pars(model_info, use_demo=False):
             parts.append(('_pd_type', "gaussian"))
         for ext, val in parts:
             if p.length > 1:
-                dict(("%s%d%s"%(p.id,k,ext), val) for k in range(1, p.length+1))
+                dict(("%s%d%s" % (p.id, k, ext), val)
+                     for k in range(1, p.length+1))
             else:
-                pars[p.id+ext] = val
+                pars[p.id + ext] = val
 
     # Plug in values given in demo
     if use_demo:
@@ -886,7 +887,7 @@ def parse_opts():
 
     n1 = int(args[1]) if len(args) > 1 else 1
     n2 = int(args[2]) if len(args) > 2 else 1
-    use_sasview = any(engine=='sasview' and count>0
+    use_sasview = any(engine == 'sasview' and count > 0
                       for engine, count in zip(engines, [n1, n2]))
 
     # Get demo parameters from model definition, or use default parameters

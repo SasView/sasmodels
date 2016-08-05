@@ -44,6 +44,11 @@ MultiplicityInfo = collections.namedtuple(
 
 MODELS = {}
 def find_model(modelname):
+    # type: (str) -> SasviewModelType
+    """
+    Find a model by name.  If the model name ends in py, try loading it from
+    custom models, otherwise look for it in the list of builtin models.
+    """
     # TODO: used by sum/product model to load an existing model
     # TODO: doesn't handle custom models properly
     if modelname.endswith('.py'):
@@ -339,7 +344,7 @@ class SasviewModel(object):
                 value = self.params.get(p.id, np.NaN)
             else:
                 value = np.array([self.params.get(p.id+str(k), np.NaN)
-                                  for k in range(1,p.length+1)])
+                                  for k in range(1, p.length+1)])
             args[p.id] = value
 
         x, y = self._model_info.profile(**args)
@@ -586,7 +591,6 @@ class SasviewModel(object):
             # For now, rely on the fact that the sasview only ever uses
             # new dispersers in the set_dispersion call and create a new
             # one instead of trying to assign parameters.
-            from . import weights
             disperser = weights.dispersers[dispersion.__class__.__name__]
             dispersion = weights.MODELS[disperser]()
             self.dispersion[parameter] = dispersion.get_pars()
@@ -633,7 +637,7 @@ def test_model():
     """
     Cylinder = _make_standard_model('cylinder')
     cylinder = Cylinder()
-    return cylinder.evalDistribution([0.1,0.1])
+    return cylinder.evalDistribution([0.1, 0.1])
 
 def test_rpa():
     # type: () -> float
@@ -642,7 +646,7 @@ def test_rpa():
     """
     RPA = _make_standard_model('rpa')
     rpa = RPA(3)
-    return rpa.evalDistribution([0.1,0.1])
+    return rpa.evalDistribution([0.1, 0.1])
 
 
 def test_model_list():
