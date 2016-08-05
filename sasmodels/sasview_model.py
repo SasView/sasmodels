@@ -333,7 +333,8 @@ class SasviewModel(object):
                                   for k in range(1,p.length+1)])
             args[p.id] = value
 
-        return self._model_info.profile(**args)
+        x, y = self._model_info.profile(**args)
+        return x, 1e-6*y
 
     def setParam(self, name, value):
         # type: (str, float) -> None
