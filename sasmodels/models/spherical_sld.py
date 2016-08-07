@@ -211,7 +211,7 @@ parameters = [["n_shells",             "",           1,      [1, 10],        "vo
               ["shape[n_shells]",      "",           0,      SHAPES,         "", "interface shape"],
               ["nu[n_shells]",         "",           2.5,    [0, inf],       "", "interface shape exponent"],
               ["n_steps",              "",           35,     [0, inf],       "", "number of steps in each interface (must be an odd integer)"],
-              ]
+             ]
 # pylint: enable=bad-whitespace, line-too-long
 source = ["lib/polevl.c", "lib/sas_erf.c", "lib/sph_j1c.c", "spherical_sld.c"]
 single = False  # TODO: fix low q behaviour
@@ -234,31 +234,32 @@ def profile(n_shells, sld_solvent, sld, thickness,
 
     z = []
     rho = []
-    z0 = 0
+    z_next = 0
     # two sld points for core
-    z.append(0)
+    z.append(z_next)
     rho.append(sld[0])
 
     for i in range(0, int(n_shells)):
-        z0 += thickness[i]
-        z.append(z0)
+        z_next += thickness[i]
+        z.append(z_next)
         rho.append(sld[i])
         dz = interface[i]/n_steps
         sld_l = sld[i]
         sld_r = sld[i+1] if i < n_shells-1 else sld_solvent
-        fn = SHAPE_FUNCTIONS[int(np.clip(shape[i], 0, len(SHAPE_FUNCTIONS)-1))]
+        fun = SHAPE_FUNCTIONS[int(np.clip(shape[i], 0, len(SHAPE_FUNCTIONS)-1))]
         for step in range(1, n_steps+1):
-            portion = fn(float(step)/n_steps, max(abs(nu[i]), 1e-14))
-            z0 += dz
-            z.append(z0)
+            portion = fun(float(step)/n_steps, max(abs(nu[i]), 1e-14))
+            z_next += dz
+            z.append(z_next)
             rho.append((sld_r - sld_l)*portion + sld_l)
-    z.append(z0*1.2)
+    z.append(z_next*1.2)
     rho.append(sld_solvent)
     # return sld profile (r, beta)
     return np.asarray(z), np.asarray(rho)
 
 
 def ER(n_shells, thickness, interface):
+    """Effective radius"""
     n_shells = int(n_shells)
     total = (np.sum(thickness[:n_shells], axis=1)
              + np.sum(interface[:n_shells], axis=1))
@@ -269,25 +270,22 @@ demo = {
     "n_shells": 5,
     "n_steps": 35.0,
     "sld_solvent": 1.0,
-    "sld":[2.07,4.0,3.5,4.0,3.5],
-    "thickness":[50.0,100.0,100.0,100.0,100.0],
-    "interface":[50.0,50.0,50.0,50.0],
-    "shape": [0,0,0,0,0],
-    "nu":[2.5,2.5,2.5,2.5,2.5],
+    "sld": [2.07, 4.0, 3.5, 4.0, 3.5],
+    "thickness": [50.0, 100.0, 100.0, 100.0, 100.0],
+    "interface": [50.0]*5,
+    "shape": [0]*5,
+    "nu": [2.5]*5,
     }
 
-#TODO: Not working yet
-"""
 tests = [
-    # Accuracy tests based on content in test/utest_extra_models.py
+    # Results checked against sasview 3.1
     [{"n_shells": 5,
-        "n_steps": 35,
-        "sld_solvent": 1.0,
-        "sld": [2.07, 4.0, 3.5, 4.0, 3.5],
-        "thickness": [50.0, 100.0, 100.0, 100.0, 100.0],
-        "interface": [50]*5,
-        "shape": [0]*5,
-        "nu": [2.5]*5,
-    }, 0.001, 0.001],
+      "n_steps": 35,
+      "sld_solvent": 1.0,
+      "sld": [2.07, 4.0, 3.5, 4.0, 3.5],
+      "thickness": [50.0, 100.0, 100.0, 100.0, 100.0],
+      "interface": [50]*5,
+      "shape": [0]*5,
+      "nu": [2.5]*5,
+     }, 0.001, 750697.238],
 ]
-"""
