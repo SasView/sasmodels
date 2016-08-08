@@ -561,12 +561,12 @@ def romberg_pinhole_1d(q, q_width, form, pars, nsigma=5):
                          % (", ".join(sorted(extra)),
                             ", ".join(sorted(pars.keys()))))
 
-    _fn = lambda q, q0, dq: eval_form(q, form, pars)*gaussian(q, q0, dq)
-    total = [romberg(_fn, max(qi-nsigma*dqi, 1e-10*q[0]), qi+nsigma*dqi,
+    func = lambda q, q0, dq: eval_form(q, form, pars)*gaussian(q, q0, dq)
+    total = [romberg(func, max(qi-nsigma*dqi, 1e-10*q[0]), qi+nsigma*dqi,
                      args=(qi, dqi), divmax=100, vec_func=True,
                      tol=0, rtol=1e-8)
              for qi, dqi in zip(q, q_width)]
-    return np.asarray(r).flatten()
+    return np.asarray(total).flatten()
 
 
 class ResolutionTest(unittest.TestCase):
