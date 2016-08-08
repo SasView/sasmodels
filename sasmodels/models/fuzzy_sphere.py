@@ -1,53 +1,52 @@
 r"""
-For information about polarised and magnetic scattering, see 
-the :doc:`magnetic help <../sasgui/perspectives/fitting/mag_help>` documentation.
+For information about polarised and magnetic scattering, see
+the :doc:`magnetic help <../sasgui/perspectives/fitting/mag_help>`
+documentation.
 
 Definition
 ----------
 
-The scattering intensity *I(q)* is calculated as:
+The scattering intensity $I(q)$ is calculated as:
 
 .. math::
-    I(q) = \frac{scale}{V}(\Delta \rho)^2 A^2(q) S(q) +\text{background}
+
+    I(q) = \frac{\text{scale}}{V}(\Delta \rho)^2 A^2(q) S(q)
+           + \text{background}
 
 
-where the amplitude *A(q)* is given as the typical sphere scattering convoluted
+where the amplitude $A(q)$ is given as the typical sphere scattering convoluted
 with a Gaussian to get a gradual drop-off in the scattering length density:
 
 .. math::
 
     A(q) = \frac{3\left[\sin(qR) - qR \cos(qR)\right]}{(qR)^3}
-           \exp\left(\frac{-(\sigma_{fuzzy}q)^2}{2}\right)
+           \exp\left(\frac{-(\sigma_\text{fuzzy}q)^2}{2}\right)
 
-Here *|A(q)|*:sup:`2`\  is the form factor, *P(q)*. The scale is equivalent to the
-volume fraction of spheres, each of volume, *V*\. Contrast (|drho|) is the
-difference of scattering length densities of the sphere and the surrounding
-solvent.
+Here $A(q)^2$ is the form factor, $P(q)$. The scale is equivalent to the
+volume fraction of spheres, each of volume, $V$. Contrast $(\Delta \rho)$
+is the difference of scattering length densities of the sphere and the
+surrounding solvent.
 
-Poly-dispersion in radius and in fuzziness is provided for, though the fuzziness
-must be kept much smaller than the sphere radius for meaningful results.
-
-
+Poly-dispersion in radius and in fuzziness is provided for, though the
+fuzziness must be kept much smaller than the sphere radius for meaningful
+results.
 
 From the reference:
 
   The "fuzziness" of the interface is defined by the parameter
-  |sigma| :sub:`fuzzy`\ . The particle radius *R* represents the radius of the
+  $\sigma_\text{fuzzy}$. The particle radius $R$ represents the radius of the
   particle where the scattering length density profile decreased to 1/2 of the
-  core density. The |sigma| :sub:`fuzzy`\ is the width of the smeared particle
+  core density. $\sigma_\text{fuzzy}$ is the width of the smeared particle
   surface; i.e., the standard deviation from the average height of the fuzzy
   interface. The inner regions of the microgel that display a higher density
   are described by the radial box profile extending to a radius of
-  approximately *Rbox* ~ *R* - 2\ |sigma|\ . The profile approaches zero as
-  *Rsans* ~ *R* + 2\ |sigma|\ .
+  approximately $R_\text{box} \sim R - 2 \sigma$. The profile approaches
+  zero as $R_\text{sans} \sim R + 2\sigma$.
 
 For 2D data: The 2D scattering intensity is calculated in the same way as 1D,
-where the *q* vector is defined as
+where the $q$ vector is defined as
 
-.. math::
-
-    q = \sqrt{{q_x}^2 + {q_y}^2}
-
+.. math:: q = \sqrt{{q_x}^2 + {q_y}^2}
 
 References
 ----------

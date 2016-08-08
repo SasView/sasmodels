@@ -1,15 +1,20 @@
 # Note: model title and parameter table are inserted automatically
 r"""
-This calculates the interparticle structure factor for a square well fluid spherical particles. The mean spherical
-approximation (MSA) closure was used for this calculation, and is not the most appropriate closure for an attractive
-interparticle potential. This solution has been compared to Monte Carlo simulations for a square well fluid, showing
-this calculation to be limited in applicability to well depths |epsilon| < 1.5 kT and volume fractions |phi| < 0.08.
+This calculates the interparticle structure factor for a square well fluid
+spherical particles. The mean spherical approximation (MSA) closure was
+used for this calculation, and is not the most appropriate closure for
+an attractive interparticle potential. This solution has been compared
+to Monte Carlo simulations for a square well fluid, showing this calculation
+to be limited in applicability to well depths $\epsilon < 1.5$ kT and
+volume fractions $\phi < 0.08$.
 
-Positive well depths correspond to an attractive potential well. Negative well depths correspond to a potential
-"shoulder", which may or may not be physically reasonable. The stickyhardsphere model may be a better choice in
+Positive well depths correspond to an attractive potential well. Negative
+well depths correspond to a potential "shoulder", which may or may not be
+physically reasonable. The stickyhardsphere model may be a better choice in
 some circumstances. Computed values may behave badly at extremely small $qR$.
 
-The well width (|lambda| ) is defined as multiples of the particle diameter (2\*\ *R*\ )
+The well width $(\lambda)$ is defined as multiples of the particle diameter
+$(2 R)$.
 
 The interaction potential is:
 
@@ -28,7 +33,8 @@ where $r$ is the distance from the center of the sphere of a radius $R$.
 In sasview the effective radius may be calculated from the parameters
 used in the form factor $P(q)$ that this $S(q)$ is combined with.
 
-For 2D data: The 2D scattering intensity is calculated in the same way as 1D, where the *q* vector is defined as
+For 2D data: The 2D scattering intensity is calculated in the same way as 1D,
+where the $q$ vector is defined as
 
 .. math::
 
@@ -129,8 +135,10 @@ demo = dict(radius_effective=50, volfraction=0.04, welldepth=1.5,
             wellwidth=1.2, radius_effective_pd=0, radius_effective_pd_n=0)
 #
 tests = [
-        [ {'scale': 1.0, 'background' : 0.0, 'radius_effective' : 50.0, 'volfraction' : 0.04,'welldepth' : 1.5, 'wellwidth' : 1.2, 
-           'radius_effective_pd' : 0}, [0.001], [0.97665742]]
-        ]
+    [{'scale': 1.0, 'background' : 0.0, 'radius_effective' : 50.0,
+      'volfraction' : 0.04,'welldepth' : 1.5, 'wellwidth' : 1.2,
+      'radius_effective_pd' : 0},
+     [0.001], [0.97665742]],
+    ]
 # ADDED by: converting from sasview RKH  ON: 16Mar2016
 

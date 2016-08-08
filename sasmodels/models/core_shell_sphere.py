@@ -1,8 +1,8 @@
 r"""
 .. _core_shell_sphere:
 
-This model provides the form factor, $P(q)$, for a spherical particle with a core-shell structure.
-The form factor is normalized by the particle volume.
+This model provides the form factor, $P(q)$, for a spherical particle with
+a core-shell structure. The form factor is normalized by the particle volume.
 
 Definition
 ----------
@@ -17,13 +17,16 @@ where
 
 .. math::
 
-    F^2(q)=\frac{3}{V_s}\left[V_c(\rho_c-\rho_s)\frac{\sin(qr_c)-qr_c\cos(qr_c)}{(qr_c)^3}+
-    V_s(\rho_s-\rho_{solv})\frac{\sin(qr_s)-qr_s\cos(qr_s)}{(qr_s)^3}\right]
+    F^2(q) = \frac{3}{V_s}\left[
+       V_c(\rho_c-\rho_s)\frac{\sin(qr_c)-qr_c\cos(qr_c)}{(qr_c)^3} +
+       V_s(\rho_s-\rho_\text{solv})\frac{\sin(qr_s)-qr_s\cos(qr_s)}{(qr_s)^3}
+       \right]
 
-where $V_s$ is the volume of the whole particle, $V_c$ is
-the volume of the core, $r_s$ = $radius$ + $thickness$ is the radius of the particle, $r_c$ is the radius of the
-core, $\rho_c$ is the scattering length density of the core, $\rho_s$ is the scattering length
-density of the shell, $\rho_{solv}$ is the scattering length density of the solvent.
+where $V_s$ is the volume of the whole particle, $V_c$ is the volume of the
+core, $r_s$ = $radius$ + $thickness$ is the radius of the particle, $r_c$
+is the radius of the core, $\rho_c$ is the scattering length density of the
+core, $\rho_s$ is the scattering length density of the shell,
+$\rho_\text{solv}$, is the scattering length density of the solvent.
 
 The 2D scattering intensity is the same as $P(q)$ above, regardless of the
 orientation of the $q$ vector.
@@ -34,15 +37,15 @@ effective radius for $S(Q)$ when $P(Q) \cdot S(Q)$ is applied.
 References
 ----------
 
-A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*, John Wiley and Sons, New York, (1955)
+A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*,
+John Wiley and Sons, New York, (1955)
 
 Validation
 ----------
 
-Validation of our code was done by comparing the output of the 1D model to the output of
-the software provided by NIST (Kline, 2006). Figure 1 shows a comparison of the output of
-our model and the output of the NIST software.
-
+Validation of our code was done by comparing the output of the 1D model to
+the output of the software provided by NIST (Kline, 2006). Figure 1 shows a
+comparison of the output of our model and the output of the NIST software.
 """
 
 from numpy import pi, inf
@@ -87,21 +90,19 @@ def VR(radius, thickness):
         @param radius: core radius
         @param thickness: shell thickness
     """
-    return (1,1)
+    return (1, 1)
     whole = 4.0 * pi / 3.0 * pow((radius + thickness), 3)
     core = 4.0 * pi / 3.0 * radius * radius * radius
     return whole, whole - core
 
-tests = [[{'radius': 20.0, 'thickness': 10.0}, 'ER', 30.0],
-         # TODO: VR test suppressed until we sort out new product model
-         # and determine what to do with volume ratio.
-         #[{'radius': 20.0, 'thickness': 10.0}, 'VR', 0.703703704],
+tests = [
+    [{'radius': 20.0, 'thickness': 10.0}, 'ER', 30.0],
+     # TODO: VR test suppressed until we sort out new product model
+     # and determine what to do with volume ratio.
+     #[{'radius': 20.0, 'thickness': 10.0}, 'VR', 0.703703704],
 
-         # The SasView test result was 0.00169, with a background of 0.001
-         [{'radius': 60.0,
-           'thickness': 10.0,
-           'sld_core': 1.0,
-           'sld_shell':2.0,
-           'sld_solvent':3.0,
-           'background':0.0
-          }, 0.4, 0.000698838]]
+     # The SasView test result was 0.00169, with a background of 0.001
+     [{'radius': 60.0, 'thickness': 10.0, 'sld_core': 1.0, 'sld_shell':2.0,
+       'sld_solvent':3.0, 'background':0.0},
+      0.4, 0.000698838],
+]

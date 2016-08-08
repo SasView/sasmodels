@@ -3,7 +3,7 @@ Definition
 ----------
 
 This model is a trivial extension of the CoreShell function to a larger number
-of shells. The scattering length density profile for the default sld values 
+of shells. The scattering length density profile for the default sld values
 (w/ 4 shells).
 
 .. figure:: img/core_multi_shell_sld_default_profile.jpg
@@ -24,7 +24,7 @@ orientation of the $q$ vector which is defined as
 .. note:: The outer most radius (= *radius* + *thickness*) is used as the
           effective radius for $S(Q)$ when $P(Q)*S(Q)$ is applied.
 
-For information about polarised and magnetic scattering, see 
+For information about polarised and magnetic scattering, see
 the :doc:`magnetic help <../sasgui/perspectives/fitting/mag_help>` documentation.
 
 Our model uses the form factor calculations implemented in a c-library provided
@@ -32,7 +32,7 @@ by the NIST Center for Neutron Research (Kline, 2006).
 
 References
 ----------
-See the :ref:`core_shell_sphere <core_shell_sphere>` model documentation.
+See the :ref:`core-shell-sphere` model documentation.
 
 L A Feigin and D I Svergun,
 *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*,
@@ -50,8 +50,7 @@ Plenum Press, New York, 1987.
 from __future__ import division
 
 import numpy as np
-from numpy import inf, nan
-from math import fabs, exp, expm1
+from numpy import inf
 
 name = "core_multi_shell"
 title = "This model provides the scattering from a spherical core with 1 to 4 \
@@ -98,7 +97,7 @@ parameters = [["sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "sld",
                "scattering length density of shell k"],
               ["thickness[n]", "Ang", 40., [0, inf], "volume",
                "Thickness of shell k"],
-              ]
+             ]
 
 source = ["lib/sph_j1c.c", "core_multi_shell.c"]
 
@@ -106,45 +105,43 @@ def profile(sld_core, radius, sld_solvent, n, sld, thickness):
     """
     Returns the SLD profile *r* (Ang), and *rho* (1e-6/Ang^2).
     """
-    r = []
+    z = []
     rho = []
 
     # add in the core
-    r.append(0)
+    z.append(0)
     rho.append(sld_core)
-    r.append(radius)
+    z.append(radius)
     rho.append(sld_core)
 
     # add in the shells
     for k in range(n):
         # Left side of each shells
-        r.append(r[-1])
+        z.append(z[-1])
         rho.append(sld[k])
-        r.append(r[-1] + thickness[k])
+        z.append(z[-1] + thickness[k])
         rho.append(sld[k])
     # add in the solvent
-    r.append(r[-1])
+    z.append(z[-1])
     rho.append(sld_solvent)
-    r.append(r[-1]*1.25)
+    z.append(z[-1]*1.25)
     rho.append(sld_solvent)
 
-    return np.asarray(r), np.asarray(rho)
+    return np.asarray(z), np.asarray(rho)
 
 def ER(radius, n, thickness):
+    """Effective radius"""
     n = n[0]  # n cannot be polydisperse
     return np.sum(thickness[:n], axis=0) + radius
 
-def VR(radius, n, thickness):
-    return 1.0, 1.0
-
-demo = dict(sld_core = 6.4,
-            radius = 60,
-            sld_solvent = 6.4,
-            n = 2,
-            sld = [2.0, 3.0],
-            thickness = 20,
-            thickness1_pd = 0.3,
-            thickness2_pd = 0.3,
-            thickness1_pd_n = 10,
-            thickness2_pd_n = 10,
+demo = dict(sld_core=6.4,
+            radius=60,
+            sld_solvent=6.4,
+            n=2,
+            sld=[2.0, 3.0],
+            thickness=20,
+            thickness1_pd=0.3,
+            thickness2_pd=0.3,
+            thickness1_pd_n=10,
+            thickness2_pd_n=10,
             )

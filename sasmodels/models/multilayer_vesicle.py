@@ -12,9 +12,7 @@ a multilayer vesicle.
 
     Geometry of the multilayer_vesicle model.
 
-See the core_shell_ function for more documentation.
-
-.. _core_shell: core_shell_sphere.html
+See the :ref:`core-shell` model for more documentation.
 
 The 2D scattering intensity is the same as 1D, regardless of the orientation
 of the q vector which is defined as:
@@ -28,7 +26,7 @@ of the q vector which is defined as:
     $radius + n_pairs * thicn_shell + (n_pairs - 1) * thick_solvent$
     is used as the effective radius for *S(Q)* when $P(Q) * S(Q)$ is applied.
 
-For information about polarised and magnetic scattering, see 
+For information about polarised and magnetic scattering, see
 the :doc:`magnetic help <../sasgui/perspectives/fitting/mag_help>` documentation.
 
 This code is based on the form factor calculations implemented in the NIST

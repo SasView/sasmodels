@@ -151,8 +151,8 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
         calc_comp = make_engine(model_info, data, comp, cutoff)
     except Exception as exc:
         #raise
-        print('"Error: %s"'%str(exc).replace('"',"'"))
-        print('"good","%d of %d","max diff",%g'%(0, N, np.NaN))
+        print('"Error: %s"'%str(exc).replace('"', "'"))
+        print('"good","%d of %d","max diff",%g' % (0, N, np.NaN))
         return
     expected = max(PRECISION[base], PRECISION[comp])
 

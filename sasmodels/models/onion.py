@@ -299,24 +299,19 @@ category = "shape:sphere"
 
 # TODO: n is a volume parameter that is not polydisperse
 
-#             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "sld",
-               "Core scattering length density"],
-              ["radius_core", "Ang", 200., [0, inf], "volume",
-               "Radius of the core"],
-              ["sld_solvent", "1e-6/Ang^2", 6.4, [-inf, inf], "sld",
-               "Solvent scattering length density"],
-              ["n_shells", "", 1, [0, 10], "volume",
-               "number of shells"],
-              ["sld_in[n_shells]", "1e-6/Ang^2", 1.7, [-inf, inf], "sld",
-               "scattering length density at the inner radius of shell k"],
-              ["sld_out[n_shells]", "1e-6/Ang^2", 2.0, [-inf, inf], "sld",
-               "scattering length density at the outer radius of shell k"],
-              ["thickness[n_shells]", "Ang", 40., [0, inf], "volume",
-               "Thickness of shell k"],
-              ["A[n_shells]", "", 1.0, [-inf, inf], "",
-               "Decay rate of shell k"],
-              ]
+# pylint: disable=bad-whitespace, line-too-long
+#   ["name", "units", default, [lower, upper], "type","description"],
+parameters = [
+    ["sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "sld", "Core scattering length density"],
+    ["radius_core", "Ang", 200., [0, inf], "volume", "Radius of the core"],
+    ["sld_solvent", "1e-6/Ang^2", 6.4, [-inf, inf], "sld", "Solvent scattering length density"],
+    ["n_shells", "", 1, [0, 10], "volume", "number of shells"],
+    ["sld_in[n_shells]", "1e-6/Ang^2", 1.7, [-inf, inf], "sld", "scattering length density at the inner radius of shell k"],
+    ["sld_out[n_shells]", "1e-6/Ang^2", 2.0, [-inf, inf], "sld", "scattering length density at the outer radius of shell k"],
+    ["thickness[n_shells]", "Ang", 40., [0, inf], "volume", "Thickness of shell k"],
+    ["A[n_shells]", "", 1.0, [-inf, inf], "", "Decay rate of shell k"],
+    ]
+# pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sph_j1c.c", "onion.c"]
 single = False
@@ -329,52 +324,50 @@ def profile(sld_core, radius_core, sld_solvent, n_shells,
     """
 
     total_radius = 1.25*(sum(thickness[:n_shells]) + radius_core + 1)
-    dr = total_radius/400  # 400 points for a smooth plot
+    dz = total_radius/400  # 400 points for a smooth plot
 
-    r = []
+    z = []
     rho = []
 
     # add in the core
-    r.append(0)
+    z.append(0)
     rho.append(sld_core)
-    r.append(radius_core)
+    z.append(radius_core)
     rho.append(sld_core)
 
     # add in the shells
     for k in range(n_shells):
         # Left side of each shells
-        r0 = r[-1]
-        r.append(r0)
+        z_current = z[-1]
+        z.append(z_current)
         rho.append(sld_in[k])
 
         if fabs(A[k]) < 1.0e-16:
             # flat shell
-            r.append(r0 + thickness[k])
+            z.append(z_current + thickness[k])
             rho.append(sld_out[k])
         else:
             # exponential shell
             # num_steps must be at least 1, so use floor()+1 rather than ceil
             # to protect against a thickness0.
-            num_steps = np.floor(thickness[k]/dr) + 1
+            num_steps = np.floor(thickness[k]/dz) + 1
             slope = (sld_out[k] - sld_in[k]) / expm1(A[k])
             const = (sld_in[k] - slope)
-            for rk in np.linspace(0, thickness[k], num_steps+1):
-                r.append(r0+rk)
-                rho.append(slope*exp(A[k]*rk/thickness[k]) + const)
+            for z_shell in np.linspace(0, thickness[k], num_steps+1):
+                z.append(z_current+z_shell)
+                rho.append(slope*exp(A[k]*z_shell/thickness[k]) + const)
 
     # add in the solvent
-    r.append(r[-1])
+    z.append(z[-1])
     rho.append(sld_solvent)
-    r.append(total_radius)
+    z.append(total_radius)
     rho.append(sld_solvent)
 
-    return np.asarray(r), np.asarray(rho)
+    return np.asarray(z), np.asarray(rho)
 
 def ER(core_radius, n, thickness):
+    """Effective radius"""
     return np.sum(thickness[:n[0]], axis=0) + core_radius
-
-def VR(core_radius, n, thickness):
-    return 1.0, 1.0
 
 demo = {
     "sld_solvent": 2.2,

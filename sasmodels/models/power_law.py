@@ -45,13 +45,11 @@ parameters = [["power", "", 4.0, [-inf, inf], "", "Power law exponent"]]
 def Iq(q, power):
     # pylint: disable=missing-docstring
     with errstate(divide='ignore'):
-        iq = q**-power
-    return iq
+        result = q**-power
+    return result
 Iq.vectorized = True  # Iq accepts an array of q values
 
-demo = dict(scale=1.0,
-            power=4.0,
-            background=0.0)
+demo = dict(scale=1.0, power=4.0, background=0.0)
 
 tests = [
     [{'scale': 1.0, 'power': 4.0, 'background' : 0.0},

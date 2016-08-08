@@ -21,7 +21,7 @@ centers.
 
 .. math::
 
-    S(q) = \frac{sin(qR_1)}{qR_1}\frac{sin(qR_2)}{qR_2}\frac{sin(qr)}{qr}
+    S(q) = \frac{\sin(qR_1)}{qR_1}\frac{\sin(qR_2)}{qR_2}\frac{\sin(qr)}{qr}
 
 In this case, the large droplet and small particles are solid spheres rather
 than thin shells. Thus the two terms must be integrated over $R_L$ and $R_S$
@@ -30,40 +30,40 @@ functions for the form of the two spheres:
 
 .. math::
 
-    \Psi_L = \int_0^{R_L}(4\pi R^2_L)\frac{sin(qR_L)}{qR_L}dR_L = 
-    \frac{3[sin(qR_L)-qR_Lcos(qR_L)]}{(qR_L)^2}
+    \Psi_L = \int_0^{R_L}(4\pi R^2_L)\frac{\sin(qR_L)}{qR_L}dR_L =
+    \frac{3[\sin(qR_L)-qR_L\cos(qR_L)]}{(qR_L)^2}
 
 .. math::
 
-    \Psi_S = \int_0^{R_S}(4\pi R^2_S)\frac{sin(qR_S)}{qR_S}dR_S =
-    \frac{3[sin(qR_S)-qR_Lcos(qR_S)]}{(qR_S)^2}
+    \Psi_S = \int_0^{R_S}(4\pi R^2_S)\frac{\sin(qR_S)}{qR_S}dR_S =
+    \frac{3[\sin(qR_S)-qR_L\cos(qR_S)]}{(qR_S)^2}
 
 The cross term between the large droplet and small particles is given by:
 
 .. math::
-    S_{LS} = \Psi_L\Psi_S\frac{sin(q(R_L+\delta R_S))}{q(R_L+\delta\ R_S)}
+    S_{LS} = \Psi_L\Psi_S\frac{\sin(q(R_L+\delta R_S))}{q(R_L+\delta\ R_S)}
 
 and the self term between small particles is given by:
 
 .. math::
-    S_{SS} = \Psi_S^2\biggl[\frac{sin(q(R_L+\delta R_S))}{q(R_L+\delta\ R_S)}
+    S_{SS} = \Psi_S^2\biggl[\frac{\sin(q(R_L+\delta R_S))}{q(R_L+\delta\ R_S)}
     \biggr]^2
 
 The number of small particles per large droplet, $N_p$, is given by:
 
 .. math::
 
-    N_p = \frac{\phi_S\phi_{surface}V_L}{\phi_L V_S}
+    N_p = \frac{\phi_S\phi_\text{surface}V_L}{\phi_L V_S}
 
 where $\phi_S$ is the volume fraction of small particles in the sample,
-$\phi_{surface}$ is the fraction of the small particles that are adsorbed to
-the large droplets, $\phi_L$ is the volume fraction of large droplets in the
+$\phi_\text{surface}$ is the fraction of the small particles that are adsorbed
+to the large droplets, $\phi_L$ is the volume fraction of large droplets in the
 sample, and $V_S$ and $V_L$ are the volumes of individual small particles and
 large droplets respectively.
 
 The form factor of the entire complex can now be calculated including the excess
 scattering length densities of the components $\Delta\rho_L$ and $\Delta\rho_S$,
-where $\Delta\rho_x = |\rho_x-\rho_{solvent}|$ :
+where $\Delta\rho_x = \left|\rho_x-\rho_\text{solvent}\right|$ :
 
 .. math::
 
@@ -82,16 +82,16 @@ some fraction remain unbound. Therefore the overall scattering intensity is
 given by:
 
 .. math::
-    I(Q) = I_{LS}(Q) + I_S(Q) = (\phi_L(\Delta\rho_L)^2V_L + 
-            \phi_S\phi_{surface}N_p(\Delta\rho_S)^2V_S)P_{LS}
-            + \phi_S(1-\phi_{surface})(\Delta\rho_S)^2V_S\Psi_S^2
+    I(Q) = I_{LS}(Q) + I_S(Q) = (\phi_L(\Delta\rho_L)^2V_L +
+            \phi_S\phi_\text{surface}N_p(\Delta\rho_S)^2V_S)P_{LS}
+            + \phi_S(1-\phi_\text{surface})(\Delta\rho_S)^2V_S\Psi_S^2
 
 A useful parameter to extract is the fraction of the surface area of the large
 droplets that is covered by small particles. This can be calculated from the
 model parameters as:
 
 .. math::
-    \chi = \frac{4\phi_L\phi_{surface}(R_L+\delta R_S)}{\phi_LR_S}
+    \chi = \frac{4\phi_L\phi_\text{surface}(R_L+\delta R_S)}{\phi_LR_S}
 
 
 References
@@ -108,7 +108,7 @@ Science*, 343(1) (2010) 36-41
 **Reviewed by:** Andrew Jackson **on:** March 20, 2016
 """
 
-from numpy import pi, inf
+from numpy import inf
 
 name = "raspberry"
 title = "Calculates the form factor, *P(q)*, for a 'Raspberry-like' structure \

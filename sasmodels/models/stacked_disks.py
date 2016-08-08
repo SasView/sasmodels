@@ -13,9 +13,7 @@ the layers.
 The 2D scattering intensity is the same as 1D, regardless of the orientation
 of the q vector which is defined as
 
-.. math::
-
-    q = \sqrt{q_x^2 + q_y^2}
+.. math:: q = \sqrt{q_x^2 + q_y^2}
 
 Definition
 ----------
@@ -27,17 +25,17 @@ The scattered intensity $I(q)$ is calculated as
 .. math::
 
     I(q) = N\int_{0}^{\pi /2}\left[ \Delta \rho_t
-    \left( V_tf_t(q) - V_cf_c(q)\right) + \Delta \rho_cV_cf_c(q)
-    \right]^2S(q)\sin{\alpha d\alpha} + background
+    \left( V_t f_t(q) - V_c f_c(q)\right) + \Delta \rho_c V_c f_c(q)
+    \right]^2 S(q)\sin{\alpha}\ d\alpha + \text{background}
 
 where the contrast
 
 .. math::
 
-    \Delta \rho_i = \rho_i - \rho_{solvent}
+    \Delta \rho_i = \rho_i - \rho_\text{solvent}
 
-and *N* is the number of discs per unit volume,
-$\alpha$ is the angle between the axis of the disc and *q*,
+and $N$ is the number of discs per unit volume,
+$\alpha$ is the angle between the axis of the disc and $q$,
 and $V_t$ and $V_c$ are the total volume and the core volume of
 a single disc, respectively.
 
@@ -45,33 +43,33 @@ a single disc, respectively.
 
     \left\langle f_{t}^2(q)\right\rangle_{\alpha} =
     \int_{0}^{\pi/2}\left[
-    \left(\frac{sin(q(d+h)\cos{\alpha})}{q(d+h)\cos{\alpha}}\right)
+    \left(\frac{\sin(q(d+h)\cos{\alpha})}{q(d+h)\cos{\alpha}}\right)
     \left(\frac{2J_1(qR\sin{\alpha})}{qR\sin{\alpha}} \right)
-    \right]^2 \sin{\alpha d\alpha}
+    \right]^2 \sin{\alpha}\ d\alpha
 
     \left\langle f_{c}^2(q)\right\rangle_{\alpha} =
     \int_{0}^{\pi/2}\left[
-    \left(\frac{sin(qh)\cos{\alpha})}{qh\cos{\alpha}}\right)
-    \left(\frac{2J_1(qR\sin{\alpha})}{qR\sin{\alpha}} \right)
-    \right]^2 \sin{\alpha d\alpha}
+    \left(\frac{\sin(qh)\cos{\alpha})}{qh\cos{\alpha}}\right)
+    \left(\frac{2J_1(qR\sin{\alpha})}{qR\sin{\alpha}}\right)
+    \right]^2 \sin{\alpha}\ d\alpha
 
-where *d* = thickness of the layer (layer_thick),
-*2h* = core thickness (core_thick), and *R* = radius of the disc (radius).
+where $d$ = thickness of the layer (*layer_thick*),
+$2h$ = core thickness (*core_thick*), and $R$ = radius of the disc (*radius*).
 
 .. math::
 
     S(q) = 1 + \frac{1}{2}\sum_{k=1}^n(n-k)\cos{(kDq\cos{\alpha})}
-    exp\left[ -k(q\cos{\alpha})^2\sigma_D/2\right]
+    \exp\left[ -k(q\cos{\alpha})^2\sigma_D/2\right]
 
-where *n* = the total number of the disc stacked (n_stacking),
-*D* = 2*(*d*+*h*)the next neighbor center-to-center distance (d-spacing),
-and $\sigma_D$ = the Gaussian standard deviation of the d-spacing (sigma_d).
+where $n$ is the total number of the disc stacked (*n_stacking*),
+$D = 2(d+h)$ is the next neighbor center-to-center distance (d-spacing),
+and $\sigma_D$ = the Gaussian standard deviation of the d-spacing (*sigma_d*).
 
 .. note::
-    Each assmebly in the stack is layer/core/layer, so the spacing of the cores
-    is core plus two layers. The 2nd virial coefficient of the cylinder is 
-    calculated based on the 
-    *radius* and *length* = *n_stacking* * (*core_thick* + 2 * *layer_thick*)
+    Each assmebly in the stack is layer/core/layer, so the spacing of the
+    cores is core plus two layers. The 2nd virial coefficient of the cylinder
+    is calculated based on the *radius* and *length*
+    = *n_stacking* * (*core_thick* + 2 * *layer_thick*)
     values, and used as the effective radius for $S(Q)$ when $P(Q) * S(Q)$
     is applied.
 
@@ -93,11 +91,13 @@ by the NIST Center for Neutron Research (Kline, 2006)
 References
 ----------
 
-A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*, John Wiley and Sons, New York, 1955
+A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*,
+John Wiley and Sons, New York, 1955
 
 O Kratky and G Porod, *J. Colloid Science*, 4, (1949) 35
 
-J S Higgins and H C Benoit, *Polymers and Neutron Scattering*, Clarendon, Oxford, 1994
+J S Higgins and H C Benoit, *Polymers and Neutron Scattering*,
+Clarendon, Oxford, 1994
 
 **Author:** NIST IGOR/DANSE **on:** pre 2010
 

@@ -62,10 +62,10 @@ def _convert_pars(pars, mapping):
     newpars = pars.copy()
     for new, old in mapping.items():
         if old == new: continue
-        for pd, dot in PD_DOT:
+        for underscore, dot in PD_DOT:
             if old+dot in newpars:
                 if new is not None:
-                    newpars[new+pd] = pars[old+dot]
+                    newpars[new+underscore] = pars[old+dot]
                 del newpars[old+dot]
     return newpars
 
@@ -102,7 +102,7 @@ def _unscale_sld(modelinfo, pars):
     numbers are nicer.  Relies on the fact that all sld parameters in the
     new model definition end with sld.
     """
-    return dict((id, (_unscale(v,1e-6) if _is_sld(modelinfo, id) else v))
+    return dict((id, (_unscale(v, 1e-6) if _is_sld(modelinfo, id) else v))
                 for id, v in pars.items())
 
 def _remove_pd(pars, key, name):
@@ -112,9 +112,9 @@ def _remove_pd(pars, key, name):
     Note: operates in place
     """
     # Bumps style parameter names
-    pd = pars.pop(key+".width", 0.0)
-    pd_n = pars.pop(key+".npts", 0)
-    if pd != 0.0 and pd_n != 0:
+    width = pars.pop(key+".width", 0.0)
+    n_points = pars.pop(key+".npts", 0)
+    if width != 0.0 and n_points != 0:
         warnings.warn("parameter %s not polydisperse in sasview %s"%(key, name))
     pars.pop(key+".nsigmas", None)
     pars.pop(key+".type", None)
@@ -127,22 +127,22 @@ def _revert_pars(pars, mapping):
     newpars = pars.copy()
 
     for new, old in mapping.items():
-        for pd, dot in PD_DOT:
-            if old and old+pd == new+dot:
+        for underscore, dot in PD_DOT:
+            if old and old+underscore == new+dot:
                 continue
-            if new+pd in newpars:
+            if new+underscore in newpars:
                 if old is not None:
-                    newpars[old+dot] = pars[new+pd]
-                del newpars[new+pd]
+                    newpars[old+dot] = pars[new+underscore]
+                del newpars[new+underscore]
     for k in list(newpars.keys()):
-        for pd, dot in PD_DOT[1:]:  # skip "" => ""
-            if k.endswith(pd):
-                newpars[k[:-len(pd)]+dot] = newpars[k]
+        for underscore, dot in PD_DOT[1:]:  # skip "" => ""
+            if k.endswith(underscore):
+                newpars[k[:-len(underscore)]+dot] = newpars[k]
                 del newpars[k]
     return newpars
 
 def revert_name(model_info):
-    oldname, oldpars = CONVERSION_TABLE.get(model_info.id, [None, {}])
+    oldname, _ = CONVERSION_TABLE.get(model_info.id, [None, {}])
     return oldname
 
 def _get_translation_table(model_info):
@@ -179,10 +179,9 @@ def revert_pars(model_info, pars):
     if model_info.composition is not None:
         composition_type, parts = model_info.composition
         if composition_type == 'product':
-            P, S = parts
             oldpars = {'scale':'scale_factor'}
-            oldpars.update(_get_old_pars(P))
-            oldpars.update(_get_old_pars(S))
+            oldpars.update(_get_old_pars(parts[0]))
+            oldpars.update(_get_old_pars(parts[1]))
         else:
             raise NotImplementedError("cannot convert to sasview sum")
     else:
@@ -205,7 +204,7 @@ def revert_pars(model_info, pars):
 
     # Remove magnetic parameters from non-magnetic sasview models
     if name not in MAGNETIC_SASVIEW_MODELS:
-        oldpars = dict((k,v) for k,v in oldpars.items() if ':' not in k)
+        oldpars = dict((k, v) for k, v in oldpars.items() if ':' not in k)
 
     # If it is a product model P*S, then check the individual forms for special
     # cases.  Note: despite the structure factor alone not having scale or
@@ -252,7 +251,7 @@ def revert_pars(model_info, pars):
                 _remove_pd(oldpars, 'thick_shell'+str(k), 'thickness')
         elif name == 'core_shell_parallelepiped':
             _remove_pd(oldpars, 'rimA', name)
-        elif name in ['mono_gauss_coil','poly_gauss_coil']:
+        elif name in ['mono_gauss_coil', 'poly_gauss_coil']:
             del oldpars['i_zero']
         elif name == 'onion':
             oldpars.pop('n_shells', None)

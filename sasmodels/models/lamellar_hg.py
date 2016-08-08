@@ -28,17 +28,14 @@ where $\delta_T$ is *tail_length*, $\delta_H$ is *head_length*,
 $\Delta\rho_H$ is the head contrast (*sld_head* $-$ *sld_solvent*),
 and $\Delta\rho_T$ is tail contrast (*sld* $-$ *sld_solvent*).
 
-The total thickness of the lamellar sheet is $\delta_H$ + $\delta_T$ + $\delta_T$ + $\delta_H$.
-Note that in a non aqueous solvent the chemical "head" group may be the 
+The total thickness of the lamellar sheet is $\delta_H + \delta_T + \delta_T + \delta_H$.
+Note that in a non aqueous solvent the chemical "head" group may be the
 "Tail region" and vice-versa.
 
 The 2D scattering intensity is calculated in the same way as 1D, where
 the $q$ vector is defined as
 
-.. math::
-
-    q = \sqrt{q_x^2 + q_y^2}
-
+.. math:: q = \sqrt{q_x^2 + q_y^2}
 
 References
 ----------
@@ -110,6 +107,9 @@ demo = dict(scale=1, background=0,
             head_length_pd=0.01, head_length_pd_n=40)
 
 #
-tests = [[{'scale': 1.0, 'background': 0.0, 'tail_length': 15.0, 'head_length': 10.0,
-           'sld': 0.4, 'sld_head': 3.0, 'sld_solvent': 6.0}, [0.001], [653143.9209]]]
+tests = [
+    [{'scale': 1.0, 'background': 0.0, 'tail_length': 15.0, 'head_length': 10.0,
+      'sld': 0.4, 'sld_head': 3.0, 'sld_solvent': 6.0},
+     [0.001], [653143.9209]],
+]
 # ADDED by: RKH  ON: 18Mar2016  converted from sasview previously, now renaming everything & sorting the docs

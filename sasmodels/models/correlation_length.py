@@ -7,24 +7,24 @@ Definition
 The scattering intensity I(q) is calculated as
 
 .. math::
-    I(Q) = \frac{A}{Q^n} + \frac{C}{1 + (Q\xi)^m} + B
+    I(Q) = \frac{A}{Q^n} + \frac{C}{1 + (Q\xi)^m} + \text{background}
 
-The first term describes Porod scattering from clusters (exponent = n) and the
-second term is a Lorentzian function describing scattering from polymer chains
-(exponent = m). This second term characterizes the polymer/solvent interactions
-and therefore the thermodynamics. The two multiplicative factors A and C, the
-incoherent background B and the two exponents n and m are used as fitting
-parameters. (Respectively $porod\_scale$, $lorentz\_scale$, $background$, $exponent\_p$ and 
-$exponent\_l$ in the parameter list.) The remaining parameter \ |xi|\  is a correlation 
-length for the polymer chains. Note that when m=2 this functional form becomes the 
-familiar Lorentzian function. Some interpretation of the values of A and C may be 
-possible depending on the values of m and n.
+The first term describes Porod scattering from clusters (exponent = $n$) and
+the second term is a Lorentzian function describing scattering from
+polymer chains (exponent = $m$). This second term characterizes the
+polymer/solvent interactions and therefore the thermodynamics. The two
+multiplicative factors $A$ and $C$, and the two exponents $n$ and $m$ are
+used as fitting parameters. (Respectively *porod_scale*, *lorentz_scale*,
+*exponent_p* and *exponent_l* in the parameter list.) The remaining
+parameter $\xi$ (*cor_length* in the parameter list) is a correlation
+length for the polymer chains. Note that when $m=2$ this functional form
+becomes the familiar Lorentzian function. Some interpretation of the
+values of $A$ and $C$ may be possible depending on the values of $m$ and $n$.
 
 For 2D data: The 2D scattering intensity is calculated in the same way as 1D,
 where the q vector is defined as
 
-.. math::
-    q = \sqrt{q_x^2 + q_y^2}
+.. math::  q = \sqrt{q_x^2 + q_y^2}
 
 References
 ----------

@@ -47,7 +47,7 @@ from __future__ import print_function
 
 import sys
 import os
-from os.path import join as joinpath, split as splitpath, splitext
+from os.path import join as joinpath, splitext
 import subprocess
 import tempfile
 import ctypes as ct  # type: ignore
@@ -99,6 +99,7 @@ if compiler == "unix":
     if sys.platform != "darwin":
         CC.append("-fopenmp")
     def compile_command(source, output):
+        """unix compiler command"""
         return CC + [source, "-o", output, "-lm"]
 elif compiler == "msvc":
     # Call vcvarsall.bat before compiling to set path, headers, libs, etc.
@@ -114,11 +115,13 @@ elif compiler == "msvc":
         CC.append("/openmp")
     LN = "/link /DLL /INCREMENTAL:NO /MANIFEST".split()
     def compile_command(source, output):
+        """MSVC compiler command"""
         return CC + ["/Tp%s"%source] + LN + ["/OUT:%s"%output]
 elif compiler == "tinycc":
     # TinyCC compiler.
     CC = [tinycc.TCC] + "-shared -rdynamic -Wall".split()
     def compile_command(source, output):
+        """tinycc compiler command"""
         return CC + [source, "-o", output]
 elif compiler == "mingw":
     # MinGW compiler.
@@ -126,6 +129,7 @@ elif compiler == "mingw":
     if "SAS_OPENMP" in os.environ:
         CC.append("-fopenmp")
     def compile_command(source, output):
+        """mingw compiler command"""
         return CC + [source, "-o", output, "-lm"]
 
 # Windows-specific solution
@@ -141,6 +145,12 @@ else:
 ALLOW_SINGLE_PRECISION_DLLS = True
 
 def compile(source, output):
+    # type: (str, str) -> None
+    """
+    Compile *source* producing *output*.
+
+    Raises RuntimeError if the compile failed or the output wasn't produced.
+    """
     command = compile_command(source=source, output=output)
     command_str = " ".join('"%s"'%p if ' ' in p else p for p in command)
     logging.info(command_str)
@@ -218,11 +228,11 @@ def make_dll(source, model_info, dtype=F64):
         newest_source = generate.timestamp(model_info)
         need_recompile = dll_time < newest_source
     if need_recompile:
-        basename = os.path.splitext(os.path.basename(dll))[0] + "_"
-        fd, filename = tempfile.mkstemp(suffix=".c", prefix=basename)
+        basename = splitext(os.path.basename(dll))[0] + "_"
+        system_fd, filename = tempfile.mkstemp(suffix=".c", prefix=basename)
         source = generate.convert_type(source, dtype)
-        with os.fdopen(fd, "w") as file:
-            file.write(source)
+        with os.fdopen(system_fd, "w") as file_handle:
+            file_handle.write(source)
         compile(source=filename, output=dll)
         # comment the following to keep the generated c file
         # Note: if there is a syntax error then compile raises an error
@@ -259,12 +269,12 @@ class DllModel(KernelModel):
 
     Call :meth:`release` when done with the kernel.
     """
-    
     def __init__(self, dllpath, model_info, dtype=generate.F32):
         # type: (str, ModelInfo, np.dtype) -> None
         self.info = model_info
         self.dllpath = dllpath
         self._dll = None  # type: ct.CDLL
+        self._kernels = None # type: List[Callable, Callable]
         self.dtype = np.dtype(dtype)
 
     def _load_dll(self):
@@ -276,12 +286,12 @@ class DllModel(KernelModel):
             annotate_exception("while loading "+self.dllpath)
             raise
 
-        fp = (c_float if self.dtype == generate.F32
-              else c_double if self.dtype == generate.F64
-              else c_longdouble)
+        float_type = (c_float if self.dtype == generate.F32
+                      else c_double if self.dtype == generate.F64
+                      else c_longdouble)
 
         # int, int, int, int*, double*, double*, double*, double*, double
-        argtypes = [c_int32]*3 + [c_void_p]*4 + [fp]
+        argtypes = [c_int32]*3 + [c_void_p]*4 + [float_type]
         names = [generate.kernel_name(self.info, variant)
                  for variant in ("Iq", "Iqxy", "Imagnetic")]
         self._kernels = [self._dll[name] for name in names]
@@ -315,13 +325,13 @@ class DllModel(KernelModel):
         if os.name == 'nt':
             #dll = ct.cdll.LoadLibrary(self.dllpath)
             dll = ct.CDLL(self.dllpath)
-            libHandle = dll._handle
-            #libHandle = ct.c_void_p(dll._handle)
+            dll_handle = dll._handle
+            #dll_handle = ct.c_void_p(dll._handle)
             del dll, self._dll
             self._dll = None
-            ct.windll.kernel32.FreeLibrary(libHandle)
-        else:    
-            pass 
+            ct.windll.kernel32.FreeLibrary(dll_handle)
+        else:
+            pass
 
 
 class DllKernel(Kernel):

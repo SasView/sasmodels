@@ -13,7 +13,7 @@ The scattering intensity $I(q)$ is calculated as
 
 where $q_c$ = the location of the crossover from one slope to the other,
 $A$ = the scaling coefficent that sets the overall intensity of the lower Q
-power law region, $m1$ = power law exponent at low Q, and $m2$ = power law 
+power law region, $m1$ = power law exponent at low Q, and $m2$ = power law
 exponent at high Q.  The scaling of the second power law region (coefficent C)
 is then automatically scaled to match the first by following formula:
 
@@ -61,16 +61,15 @@ description = """
         """
 category = "shape-independent"
 
-#            ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["coefficent_1",  "",         1.0, [-inf, inf], "",
-               "coefficent A in low Q region"],
-              ["crossover",     "1/Ang",    0.04,[0, inf],    "",
-               "crossover location"],
-              ["power_1",       "",         1.0, [0, inf],    "",
-               "power law exponent at low Q"],
-              ["power_2",       "",         4.0, [0, inf],    "",
-               "power law exponent at high Q"],
-             ]
+# pylint: disable=bad-whitespace, line-too-long
+#   ["name", "units", default, [lower, upper], "type", "description"],
+parameters = [
+    ["coefficent_1", "",       1.0, [-inf, inf], "", "coefficent A in low Q region"],
+    ["crossover",    "1/Ang",  0.04,[0, inf],    "", "crossover location"],
+    ["power_1",      "",       1.0, [0, inf],    "", "power law exponent at low Q"],
+    ["power_2",      "",       4.0, [0, inf],    "", "power law exponent at high Q"],
+    ]
+# pylint: enable=bad-whitespace, line-too-long
 
 
 def Iq(q,
@@ -88,13 +87,13 @@ def Iq(q,
     :param power_2:             Exponent of power law function at high Q
     :return:                    Calculated intensity
     """
-    iq = empty(q.shape, 'd')
-    idx = (q <= crossover)
+    result= empty(q.shape, 'd')
+    index = (q <= crossover)
     with errstate(divide='ignore'):
         coefficent_2 = coefficent_1 * power(crossover, power_2 - power_1)
-        iq[idx] = coefficent_1 * power(q[idx], -power_1)
-        iq[~idx] = coefficent_2 * power(q[~idx], -power_2)
-    return iq
+        result[index] = coefficent_1 * power(q[index], -power_1)
+        result[~index] = coefficent_2 * power(q[~index], -power_2)
+    return result
 
 Iq.vectorized = True  # Iq accepts an array of q values
 

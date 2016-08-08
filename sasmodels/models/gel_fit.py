@@ -7,7 +7,7 @@ a shorter correlation length ( $a1$ ) to describe the rapid fluctuations
 in the position of the polymer chains that ensure thermodynamic equilibrium,
 and a longer distance (denoted here as $a2$ ) needed to account for the static
 accumulations of polymer pinned down by junction points or clusters of such
-points. The latter is derived from a simple Guinier function. Compare also the 
+points. The latter is derived from a simple Guinier function. Compare also the
 gauss_lorentz_gel model.
 
 

@@ -30,7 +30,7 @@ and $\Delta \rho \text{ is } \rho_{pringle}-\rho_{solvent}$, $V$ is the volume o
 the disc, $\psi$ is the angle between the normal to the disc and the q vector,
 $d$ and $R$ are the "pringle" thickness and radius respectively, $\alpha$ and
 $\beta$ are the two curvature parameters, and $J_n$ is the n\ :sup:`th` order
-Bessel function of the first kind. 
+Bessel function of the first kind.
 
 .. figure:: img/pringles_fig1.png
 
@@ -78,7 +78,7 @@ source = ["lib/polevl.c", "lib/sas_J0.c", "lib/sas_J1.c", \
 
 def ER(radius, thickness, alpha, beta):
     """
-        Return equivalent radius (ER)
+    Return equivalent radius (ER)
     """
     ddd = 0.75 * radius * (2 * radius * thickness + (thickness + radius) \
                            * (thickness + pi * radius))

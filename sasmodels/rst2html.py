@@ -106,7 +106,7 @@ def test_dollar():
     assert replace_dollar(ur"dollar\$ escape") == u"dollar$ escape"
     assert replace_dollar(ur"dollar \$escape\$ too") == u"dollar $escape$ too"
     assert replace_dollar(u"spaces $in the$ math") == u"spaces :math:`in the` math"
-    assert replace_dollar(u"emb\ $ed$\ ed") == ur"emb\ :math:`ed`\ ed"
+    assert replace_dollar(ur"emb\ $ed$\ ed") == ur"emb\ :math:`ed`\ ed"
     assert replace_dollar(u"$first$a") == u"$first$a"
     assert replace_dollar(u"a$last$") == u"a$last$"
     assert replace_dollar(u"$37") == u"$37"

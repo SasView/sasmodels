@@ -153,8 +153,8 @@ def pinhole_resolution(q_calc, q, q_width):
     # neither trapezoid nor Simpson's rule improved the accuracy.
     edges = bin_edges(q_calc)
     edges[edges < 0.0] = 0.0 # clip edges below zero
-    G = erf((edges[:, None] - q[None, :]) / (sqrt(2.0)*q_width)[None, :])
-    weights = G[1:] - G[:-1]
+    cdf = erf((edges[:, None] - q[None, :]) / (sqrt(2.0)*q_width)[None, :])
+    weights = cdf[1:] - cdf[:-1]
     weights /= np.sum(weights, axis=0)[None, :]
     return weights
 
@@ -306,10 +306,9 @@ def slit_resolution(q_calc, q, width, height, n_height=30):
             #print(in_x + abs_x)
             weights[i, :] = (in_x + abs_x) * np.diff(q_edges) / (2*h)
         else:
-            L = n_height
-            for k in range(-L, L+1):
-                weights[i, :] += _q_perp_weights(q_edges, qi+k*h/L, w)
-            weights[i, :] /= 2*L + 1
+            for k in range(-n_height, h_height+1):
+                weights[i, :] += _q_perp_weights(q_edges, qi+k*h/n_height, w)
+            weights[i, :] /= 2*n_height + 1
 
     return weights.T
 
@@ -522,21 +521,21 @@ def romberg_slit_1d(q, width, height, form, pars):
     result = np.empty(len(q))
     for i, (qi, w, h) in enumerate(zip(q, width, height)):
         if h == 0.:
-            r = romberg(_int_w, 0, w, args=(qi,),
-                        divmax=100, vec_func=True, tol=0, rtol=1e-8)
-            result[i] = r/w
+            total = romberg(_int_w, 0, w, args=(qi,),
+                            divmax=100, vec_func=True, tol=0, rtol=1e-8)
+            result[i] = total/w
         elif w == 0.:
-            r = romberg(_int_h, -h, h, args=(qi,),
-                        divmax=100, vec_func=True, tol=0, rtol=1e-8)
-            result[i] = r/(2*h)
+            total = romberg(_int_h, -h, h, args=(qi,),
+                            divmax=100, vec_func=True, tol=0, rtol=1e-8)
+            result[i] = total/(2*h)
         else:
             w_grid = np.linspace(0, w, 21)[None, :]
             h_grid = np.linspace(-h, h, 23)[:, None]
-            u = sqrt((qi+h_grid)**2 + w_grid**2)
-            Iu = np.interp(u, q_calc, Iq)
+            u_sub = sqrt((qi+h_grid)**2 + w_grid**2)
+            f_at_u = np.interp(u_sub, q_calc, Iq)
             #print(np.trapz(Iu, w_grid, axis=1))
-            Is = np.trapz(np.trapz(Iu, w_grid, axis=1), h_grid[:, 0])
-            result[i] = Is / (2*h*w)
+            total  = np.trapz(np.trapz(f_at_u, w_grid, axis=1), h_grid[:, 0])
+            result[i] = total / (2*h*w)
             # from scipy.integrate import dblquad
             # r, err = dblquad(_int_wh, -h, h, lambda h: 0., lambda h: w,
             #                  args=(qi,))
@@ -563,9 +562,10 @@ def romberg_pinhole_1d(q, q_width, form, pars, nsigma=5):
                             ", ".join(sorted(pars.keys()))))
 
     _fn = lambda q, q0, dq: eval_form(q, form, pars)*gaussian(q, q0, dq)
-    r = [romberg(_fn, max(qi-nsigma*dqi, 1e-10*q[0]), qi+nsigma*dqi,
-                 args=(qi, dqi), divmax=100, vec_func=True, tol=0, rtol=1e-8)
-         for qi, dqi in zip(q, q_width)]
+    total = [romberg(_fn, max(qi-nsigma*dqi, 1e-10*q[0]), qi+nsigma*dqi,
+                     args=(qi, dqi), divmax=100, vec_func=True,
+                     tol=0, rtol=1e-8)
+             for qi, dqi in zip(q, q_width)]
     return np.asarray(r).flatten()
 
 
@@ -714,7 +714,7 @@ class IgorComparisonTest(unittest.TestCase):
         data_string = TEST_DATA_SLIT_SPHERE
 
         data = np.loadtxt(data_string.split('\n')).T
-        q, width, answer, _ = data
+        q, _, answer, _ = data
         resolution = Perfect1D(q)
         output = self._eval_sphere(pars, resolution)
         self._compare(q, output, answer, 1e-6)
@@ -740,14 +740,13 @@ class IgorComparisonTest(unittest.TestCase):
         pars = TEST_PARS_PINHOLE_SPHERE
         data_string = TEST_DATA_PINHOLE_SPHERE
         pars['radius'] *= 5
-        radius = pars['radius']
 
         data = np.loadtxt(data_string.split('\n')).T
         q, q_width, answer = data
         answer = romberg_pinhole_1d(q, q_width, self.model, pars)
         ## Getting 0.1% requires 5 sigma and 200 points per fringe
         #q_calc = interpolate(pinhole_extend_q(q, q_width, nsigma=5),
-        #                     2*np.pi/radius/200)
+        #                     2*np.pi/pars['radius']/200)
         #tol = 0.001
         ## The default 3 sigma and no extra points gets 1%
         q_calc = None  # type: np.ndarray
@@ -786,12 +785,11 @@ class IgorComparisonTest(unittest.TestCase):
         """
         pars = TEST_PARS_SLIT_SPHERE
         data_string = TEST_DATA_SLIT_SPHERE
-        radius = pars['radius']
 
         data = np.loadtxt(data_string.split('\n')).T
         q, delta_qv, _, answer = data
         answer = romberg_slit_1d(q, delta_qv, 0., self.model, pars)
-        q_calc = slit_extend_q(interpolate(q, 2*np.pi/radius/20),
+        q_calc = slit_extend_q(interpolate(q, 2*np.pi/pars['radius']/20),
                                delta_qv[0], 0.)
         resolution = Slit1D(q, qx_width=delta_qv, qy_width=0, q_calc=q_calc)
         output = self._eval_sphere(pars, resolution)

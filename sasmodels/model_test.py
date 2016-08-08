@@ -50,8 +50,7 @@ import unittest
 import numpy as np  # type: ignore
 
 from .core import list_models, load_model_info, build_model, HAVE_OPENCL
-from .details import dispersion_mesh
-from .direct_model import call_kernel, get_weights
+from .direct_model import call_kernel, call_ER, call_VR
 from .exception import annotate_exception
 from .modelinfo import expand_pars
 
@@ -62,44 +61,6 @@ except ImportError:
 else:
     from .modelinfo import ParameterTable, ParameterSet, TestCondition, ModelInfo
     from .kernel import KernelModel
-
-def call_ER(model_info, pars):
-    # type: (ModelInfo, ParameterSet) -> float
-    """
-    Call the model ER function using *values*.
-
-    *model_info* is either *model.info* if you have a loaded model,
-    or *kernel.info* if you have a model kernel prepared for evaluation.
-    """
-    if model_info.ER is None:
-        return 1.0
-    else:
-        value, weight = _vol_pars(model_info, pars)
-        individual_radii = model_info.ER(*value)
-        return np.sum(weight*individual_radii) / np.sum(weight)
-
-def call_VR(model_info, pars):
-    # type: (ModelInfo, ParameterSet) -> float
-    """
-    Call the model VR function using *pars*.
-
-    *model_info* is either *model.info* if you have a loaded model,
-    or *kernel.info* if you have a model kernel prepared for evaluation.
-    """
-    if model_info.VR is None:
-        return 1.0
-    else:
-        value, weight = _vol_pars(model_info, pars)
-        whole, part = model_info.VR(*value)
-        return np.sum(weight*part)/np.sum(weight*whole)
-
-def _vol_pars(model_info, pars):
-    # type: (ModelInfo, ParameterSet) -> Tuple[np.ndarray, np.ndarray]
-    vol_pars = [get_weights(p, pars)
-                for p in model_info.parameters.call_parameters
-                if p.type == 'volume']
-    value, weight = dispersion_mesh(model_info, vol_pars)
-    return value, weight
 
 
 def make_suite(loaders, models):
@@ -193,6 +154,9 @@ def _hide_model_case_from_nose():
 
         def run_all(self):
             # type: () -> None
+            """
+            Run all the tests in the test suite, including smoke tests.
+            """
             smoke_tests = [
                 # test validity at reasonable values
                 ({}, 0.1, None),
@@ -229,6 +193,7 @@ def _hide_model_case_from_nose():
 
         def run_one(self, model, test):
             # type: (KernelModel, TestCondition) -> None
+            """Run a single test case."""
             user_pars, x, y = test
             pars = expand_pars(self.info.parameters, user_pars)
 
@@ -268,7 +233,7 @@ def _hide_model_case_from_nose():
                 else:
                     # is_near does not work for infinite values, so also test
                     # for exact values.  Note that this will not
-                    self.assertTrue(yi==actual_yi or is_near(yi, actual_yi, 5),
+                    self.assertTrue(yi == actual_yi or is_near(yi, actual_yi, 5),
                                     'f(%s); expected:%s; actual:%s'
                                     % (xi, yi, actual_yi))
 
@@ -292,10 +257,10 @@ def main():
     """
     try:
         from xmlrunner import XMLTestRunner as TestRunner
-        test_args = { 'output': 'logs' }
+        test_args = {'output': 'logs'}
     except ImportError:
         from unittest import TextTestRunner as TestRunner
-        test_args = { }
+        test_args = {}
 
     models = sys.argv[1:]
     if models and models[0] == '-v':

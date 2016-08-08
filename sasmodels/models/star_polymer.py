@@ -1,5 +1,5 @@
 r"""
-The Benoit model for a simple star polymer, with Gaussian coils arms from 
+The Benoit model for a simple star polymer, with Gaussian coils arms from
 a common point.
 
 Definition
@@ -9,34 +9,28 @@ For a star with $f$ arms the scattering intensity $I(q)$ is calculated as
 
 .. math::
 
-    I(q) = \frac{2}{fv^2}\left[ v-1+exp(-v)+\frac{f-1}{2}
-           \left[ 1-exp(-v)\right]^2\right]
+    I(q) = \frac{2}{fv^2}\left[ v-1+\exp(-v)+\frac{f-1}{2}
+           \left[ 1-\exp(-v)\right]^2\right]
 
 where
 
-.. math::
-
-    v=\frac{u^2f}{(3f-2)}
+.. math:: v=\frac{u^2f}{(3f-2)}
 
 and
 
-.. math::
+.. math:: u = \left\langle R_{g}^2\right\rangle q^2
 
-    u = \left\langle R_{g}^2\right\rangle q^2
-
-contains the square of the ensemble average radius-of-gyration of an arm.  Note that 
-when there is only one arm, $f$ = 1, the Debye Gaussian coil equation is recovered.
-Star polymers in solutions tend to have strong interparticle and osmotic effects, so 
-the Benoit equation may not work well. At small q the Guinier term and hence I(q=0)
-is the same as for $f$ arms of radius of gyration $R_g$, as described for the :ref:`mono_gauss_coil <mono-gauss-coil>`.
-
+contains the square of the ensemble average radius-of-gyration of an arm.
+Note that when there is only one arm, $f = 1$, the Debye Gaussian coil
+equation is recovered. Star polymers in solutions tend to have strong
+interparticle and osmotic effects, so the Benoit equation may not work well.
+At small $q$ the Guinier term and hence $I(q=0)$ is the same as for $f$ arms
+of radius of gyration $R_g$, as described for the :ref:`mono-gauss-coil` model.
 
 References
 ----------
 
 H Benoit *J. Polymer Science*, 11, 596-599 (1953)
-
-
 """
 
 from numpy import inf

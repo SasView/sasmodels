@@ -14,22 +14,18 @@ Definition
 
 The scattering intensity $I(q)$ is calculated as
 
-.. math::
-
-    I(q) = \frac{A}{q^n} + \frac{C}{1 + (|q - q_0|\xi)^m} + B
+.. math:: I(q) = \frac{A}{q^n} + \frac{C}{1 + (|q - q_0|\xi)^m} + B
 
 Here the peak position is related to the d-spacing as $q_o = 2\pi / d_o$.
 
-$A$ is the Porod law scale factor, $n$ the Porod exponent, $C$ is the Lorentzian 
-scale factor, $m$ the exponent of q, \ |xi|\  the screening length, and $B$ the flat background.
+$A$ is the Porod law scale factor, $n$ the Porod exponent, $C$ is the
+Lorentzian scale factor, $m$ the exponent of $q$, $\xi$ the screening length,
+and $B$ the flat background.
 
 For 2D data the scattering intensity is calculated in the same way as 1D,
 where the $q$ vector is defined as
 
-.. math::
-
-    q = \sqrt{q_x^2 + q_y^2}
-
+.. math:: q = \sqrt{q_x^2 + q_y^2}
 
 References
 ----------
@@ -37,7 +33,6 @@ References
 None.
 
 *2013/09/09 - Description reviewed by King, S and Parker, P.*
-
 """
 
 from numpy import inf, errstate

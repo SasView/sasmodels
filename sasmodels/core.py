@@ -39,6 +39,7 @@ try:
 except Exception:
     # CRUFT: np.meshgrid requires multiple vectors
     def meshgrid(*args):
+        """Allow meshgrid with a single argument"""
         if len(args) > 1:
             return np.meshgrid(*args)
         else:
@@ -62,6 +63,18 @@ def list_models(kind=None):
     # type: () -> List[str]
     """
     Return the list of available models on the model path.
+
+    *kind* can be one of the following:
+
+        * all: all models
+        * py: python models only
+        * c: compiled models only
+        * single: models which support single precision
+        * double: models which require double precision
+        * 1d: models which are 1D only, or 2D using abs(q)
+        * 2d: models which can be 2D
+        * magnetic: models with an sld
+        * nommagnetic: models without an sld
     """
     if kind and kind not in KINDS:
         raise ValueError("kind not in " + ", ".join(KINDS))
@@ -87,7 +100,7 @@ def _matches(name, kind):
         return True
     elif kind == "2d" and any(p.type == 'orientation' for p in pars):
         return True
-    elif kind == "1d" and any(p.type != 'orientation' for p in pars):
+    elif kind == "1d" and all(p.type != 'orientation' for p in pars):
         return True
     elif kind == "magnetic" and any(p.type == 'sld' for p in pars):
         return True
@@ -251,6 +264,11 @@ def parse_dtype(model_info, dtype=None, platform=None):
     return numpy_dtype, fast, platform
 
 def list_models_main():
+    # type: () -> None
+    """
+    Run list_models as a main program.  See :func:`list_models` for the
+    kinds of models that can be requested on the command line.
+    """
     import sys
     kind = sys.argv[1] if len(sys.argv) > 1 else "all"
     print("\n".join(list_models(kind)))

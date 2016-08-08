@@ -4,14 +4,14 @@ where the form factor is normalized by the volume of the outer [CHECK].
 
 .. math::
 
-    P(q) = scale * \left<f^2\right>/V + background
+    P(q) = \text{scale} * \left<f^2\right>/V + \text{background}
 
-where the volume $V = (4/3)\pi(R_{major\_outer}R_{minor\_outer}^2)$ and the averaging $< >$ is
-applied over all orientations for 1D.
+where the volume $V = (4/3)\pi(r_\text{major outer} r_\text{minor outer}^2)$
+and the averaging $< >$ is applied over all orientations for 1D.
 
 .. figure:: img/core_shell_ellipsoid_geometry.png
 
-    The returned value is in units of $cm^{-1}$, on absolute scale.
+    The returned value is in units of |cm^-1|, on absolute scale.
 
 Definition
 ----------
@@ -20,12 +20,17 @@ The form factor calculated is
 
 .. math::
 
-    P(q) = \frac{scale}{V}\int_0^1
-        \left|F(q,r_{minor\_core},r_{major\_core},\alpha) + F(q,r_{major\_outer},r_{major\_outer},\alpha)\right|^2d\alpha + background
+    P(q) &= \frac{\text{scale}}{V}\int_0^1
+        \left|F(q,r_\text{minor core},r_\text{major core},\alpha)
+        + F(q,r_\text{minor outer},r_\text{major outer},\alpha)\right|^2
+        d\alpha
+        + \text{background}
 
-    \left|F(q,r_{minor},r_{major},\alpha)\right|=(4\pi/3)r_{major}r_{minor}^2 \Delta \rho \cdot (3j_1(u)/u)
+    \left|F(q,r_\text{minor},r_\text{major},\alpha)\right|
+        &=(4\pi/3)r_\text{major}r_\text{minor}^2 \Delta \rho \cdot (3j_1(u)/u)
 
-    u = q\left[ r_{major}^2\alpha ^2 + r_{minor}^2(1-\alpha ^2)\right]^{1/2}
+    u &= q\left[ r_\text{major}^2\alpha ^2
+                  + r_\text{minor}^2(1-\alpha ^2)\right]^{1/2}
 
 where
 
@@ -39,11 +44,7 @@ These angles are defined as for
 :ref:`cylinder orientation <cylinder-angle-definition>`.
 The contrast is defined as SLD(core) - SLD(shell) and SLD(shell) - SLD(solvent).
 
-In the parameters, *equat_core* = equatorial core radius, *polar_core* =
-polar core radius, *equat_shell* = $r_{min}$ (or equatorial outer radius),
-and *polar_shell* = $r_{maj}$ (or polar outer radius).
-
-Note:It is the users' responsibility to ensure that shell radii are larger than 
+Note: It is the users' responsibility to ensure that shell radii are larger than
 the core radii, especially if both are polydisperse, in which case the
 core_shell_ellipsoid_xt model may be much better.
 
@@ -66,7 +67,6 @@ References
 M Kotlarchyk, S H Chen, *J. Chem. Phys.*, 79 (1983) 2461
 
 S J Berr, *Phys. Chem.*, 91 (1987) 4760
-
 """
 
 from numpy import inf, sin, cos, pi
@@ -99,15 +99,15 @@ description = """
 category = "shape:ellipsoid"
 
 # pylint: disable=bad-whitespace, line-too-long
-#             ["name", "units", default, [lower, upper], "type", "description"],
+#   ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [
-    ["equat_core",  "Ang",      200,   [0, inf],    "volume",      "Equatorial radius of core, Rminor_core "],
-    ["polar_core",  "Ang",       10,   [0, inf],    "volume",      "Polar radius of core, Rmajor_core"],
-    ["equat_shell", "Ang",      250,   [0, inf],    "volume",      "Equatorial radius of shell, Rminor_outer "],
-    ["polar_shell", "Ang",       30,   [0, inf],    "volume",      "Polar radius of shell, Rmajor_outer"],
-    ["sld_core",    "1e-6/Ang^2", 2,   [-inf, inf], "sld",            "Core scattering length density"],
-    ["sld_shell",   "1e-6/Ang^2", 1,   [-inf, inf], "sld",            "Shell scattering length density"],
-    ["sld_solvent", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",            "Solvent scattering length density"],
+    ["equat_core",  "Ang",      200,   [0, inf],    "volume",      "Equatorial radius of core, r minor core"],
+    ["polar_core",  "Ang",       10,   [0, inf],    "volume",      "Polar radius of core, r major core"],
+    ["equat_shell", "Ang",      250,   [0, inf],    "volume",      "Equatorial radius of shell, r minor outer"],
+    ["polar_shell", "Ang",       30,   [0, inf],    "volume",      "Polar radius of shell, r major outer"],
+    ["sld_core",    "1e-6/Ang^2", 2,   [-inf, inf], "sld",         "Core scattering length density"],
+    ["sld_shell",   "1e-6/Ang^2", 1,   [-inf, inf], "sld",         "Shell scattering length density"],
+    ["sld_solvent", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",         "Solvent scattering length density"],
     ["theta",       "degrees",    0,   [-inf, inf], "orientation", "Oblate orientation wrt incoming beam"],
     ["phi",         "degrees",    0,   [-inf, inf], "orientation", "Oblate orientation in the plane of the detector"],
     ]
@@ -119,7 +119,6 @@ def ER(equat_core, polar_core, equat_shell, polar_shell):
     """
         Returns the effective radius used in the S*P calculation
     """
-    import numpy as np
     from .ellipsoid import ER as ellipsoid_ER
     return ellipsoid_ER(polar_shell, equat_shell)
 

@@ -154,6 +154,13 @@ class Data1D(object):
         self._yunit = unit
 
 class SesansData(Data1D):
+    """
+    SESANS data object.
+
+    This is just :class:`Data1D` with a wavelength parameter.
+
+    *x* is spin echo length and *y* is polarization (P/P0).
+    """
     def __init__(self, **kw):
         Data1D.__init__(self, **kw)
         self.lam = None # type: Optional[np.ndarray]
@@ -212,6 +219,7 @@ class Data2D(object):
         self._yaxis, self._yunit = "y", ""
         self._zaxis, self._zunit = "z", ""
         self.x_bins, self.y_bins = None, None
+        self.filename = None
 
     def xaxis(self, label, unit):
         # type: (str, str) -> None
@@ -376,7 +384,7 @@ def plot_theory(data, theory, resid=None, view='log',
                        limits=limits, Iq_calc=Iq_calc)
 
 
-def protect(fn):
+def protect(func):
     # type: (Callable) -> Callable
     """
     Decorator to wrap calls in an exception trapper which prints the
@@ -387,7 +395,7 @@ def protect(fn):
         Trap and print errors from function.
         """
         try:
-            return fn(*args, **kw)
+            return func(*args, **kw)
         except Exception:
             traceback.print_exc()
 
@@ -409,7 +417,7 @@ def _plot_result1D(data, theory, resid, view, use_data,
     use_resid = resid is not None
     use_calc = use_theory and Iq_calc is not None
     num_plots = (use_data or use_theory) + use_calc + use_resid
-    non_positive_x = (data.x<=0.0).any()
+    non_positive_x = (data.x <= 0.0).any()
 
     scale = data.x**4 if view == 'q4' else 1.0
 
@@ -455,7 +463,7 @@ def _plot_result1D(data, theory, resid, view, use_data,
         # Only have use_calc if have use_theory
         plt.subplot(1, num_plots, 2)
         qx, qy, Iqxy = Iq_calc
-        plt.pcolormesh(qx, qy[qy>0], np.log10(Iqxy[qy>0,:]))
+        plt.pcolormesh(qx, qy[qy > 0], np.log10(Iqxy[qy > 0, :]))
         plt.xlabel("$q_x$/A$^{-1}$")
         plt.xlabel("$q_y$/A$^{-1}$")
         plt.xscale('log')
@@ -507,7 +515,7 @@ def _plot_result_sesans(data, theory, resid, use_data, limits=None):
 
         plt.xlabel('spin echo length ({})'.format(data._xunit))
         if is_tof:
-            plt.ylabel('(Log (P/P$_0$))/$\lambda^2$')
+            plt.ylabel(r'(Log (P/P$_0$))/$\lambda^2$')
         else:
             plt.ylabel('polarization (P/P0)')
 

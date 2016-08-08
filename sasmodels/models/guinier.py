@@ -4,17 +4,20 @@ Definition
 
 This model fits the Guinier function
 
-.. math:: I(q) = scale \exp{\left[ \frac{-Q^2R_g^2}{3} \right]}
+.. math::
 
-to the data directly without any need for linearisation
-(*cf*. the usual plot of $\ln I(q)$ vs $q^2$\ ). Note that you may have to 
-restrict the data range to include small q only, where the Guinier approximation
-actually applies. See also the guinier_porod model.
+    I(q) = \text{scale} \cdot \exp{\left[ \frac{-Q^2R_g^2}{3} \right]}
+            + \text{background}
+
+to the data directly without any need for linearisation (*cf*. the usual
+plot of $\ln I(q)$ vs $q^2$\ ). Note that you may have to restrict the data
+range to include small q only, where the Guinier approximation actually
+applies. See also the guinier_porod model.
 
 For 2D data the scattering intensity is calculated in the same way as 1D,
 where the $q$ vector is defined as
 
-.. math:: q=\sqrt{q_x^2 + q_y^2}
+.. math:: q = \sqrt{q_x^2 + q_y^2}
 
 References
 ----------

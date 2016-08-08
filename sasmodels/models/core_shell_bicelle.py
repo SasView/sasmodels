@@ -2,17 +2,18 @@ r"""
 
 Definition
 ----------
-This model provides the form factor for a circular cylinder with a core-shell
-scattering length density profile. Thus this is a variation of a core-shell cylinder 
-or disc where the shell on the walls and ends may be of different thicknesses and scattering
-length densities. The form factor is normalized by the particle volume.
+This model provides the form factor for a circular cylinder with a
+core-shell scattering length density profile. Thus this is a variation
+of a core-shell cylinder or disc where the shell on the walls and ends
+may be of different thicknesses and scattering length densities. The form
+factor is normalized by the particle volume.
 
 .. _core-shell-bicelle-geometry:
 
 .. figure:: img/core_shell_bicelle_geometry.png
 
-    (Graphic from DOI: 10.1039/C0NP00002G, note however that the model here calculates for rectangular, not curved, rims.)
-
+    (Graphic from DOI: 10.1039/C0NP00002G, note however that the model here
+    calculates for rectangular, not curved, rims.)
 
 The output of the 1D scattering intensity function for randomly oriented
 cylinders is then given by the equation above.
@@ -87,7 +88,8 @@ parameters = [
 
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/Si.c","lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "core_shell_bicelle.c"]
+source = ["lib/Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
+          "core_shell_bicelle.c"]
 
 demo = dict(scale=1, background=0,
             radius=20.0,

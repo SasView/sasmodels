@@ -36,7 +36,7 @@ For each level, the four parameters $G_i$, $R_{gi}$, $B_i$ and $P_i$ must
 be chosen.  Beaucage has an additional factor $k$ in the definition of
 $q_i^*$ which is ignored here.
 
-For example, to approximate the scattering from random coils (Debye_ equation),
+For example, to approximate the scattering from random coils (Debye equation),
 set $R_{gi}$ as the Guinier radius, $P_i = 2$, and $B_i = 2 G_i / R_{gi}$
 
 See the references for further information on choosing the parameters.
@@ -64,6 +64,9 @@ import numpy as np
 from numpy import inf, exp, sqrt, errstate
 from scipy.special import erf
 
+category = "shape-independent"
+
+# pylint: disable=bad-whitespace, line-too-long
 parameters = [
     ["level",     "",     1,      [0, 6], "", "Level number"],
     ["rg[level]", "Ang",  15.8,   [0, inf], "", "Radius of gyration"],
@@ -71,7 +74,7 @@ parameters = [
     ["B[level]",  "1/cm", 4.5e-6, [-inf, inf], "", ""],
     ["G[level]",  "1/cm", 400,    [0, inf], "", ""],
     ]
-category = "shape-independent"
+# pylint: enable=bad-whitespace, line-too-long
 
 def Iq(q, level, rg, power, B, G):
     ilevel = int(level)
@@ -86,7 +89,7 @@ def Iq(q, level, rg, power, B, G):
             pow_now = (erf(q*rg[i]/sqrt(6.))**3/q)**power[i]
             exp_next = exp(-(q*rg[i+1])**2/3.) if i < ilevel-1 else 1.
             result += G[i]*exp_now + B[i]*exp_next*pow_now
-    result[q==0] = np.sum(G[:ilevel])
+    result[q == 0] = np.sum(G[:ilevel])
     return result
 
 Iq.vectorized = True

@@ -105,10 +105,11 @@ description = """Compute the scattering intensity from polymers with excluded
 category = "shape-independent"
 
 # pylint: disable=bad-whitespace, line-too-long
-#             ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["rg",        "Ang", 60.0, [0, inf],    "", "Radius of Gyration"],
-              ["porod_exp", "",     3.0, [-inf, inf], "", "Porod exponent"],
-             ]
+#   ["name", "units", default, [lower, upper], "type", "description"],
+parameters = [
+    ["rg",        "Ang", 60.0, [0, inf],    "", "Radius of Gyration"],
+    ["porod_exp", "",     3.0, [-inf, inf], "", "Porod exponent"],
+]
 # pylint: enable=bad-whitespace, line-too-long
 
 
@@ -119,18 +120,17 @@ def Iq(q, rg=60.0, porod_exp=3.0):
     :param porod_exp: Porod exponent
     :return:          Calculated intensity
     """
-    u = (q*rg)**2 * (2.0/porod_exp + 1.0) * (2.0/porod_exp + 2.0)/6.0
+    usub = (q*rg)**2 * (2.0/porod_exp + 1.0) * (2.0/porod_exp + 2.0)/6.0
     with errstate(divide='ignore', invalid='ignore'):
-        upow = power(u, -0.5*porod_exp)
-        iq = (porod_exp*upow *
-              (gamma(0.5*porod_exp)*gammainc(0.5*porod_exp, u) -
-               upow*gamma(porod_exp)*gammainc(porod_exp, u)))
-    iq[q <= 0] = 1.0
+        upow = power(usub, -0.5*porod_exp)
+        result= (porod_exp*upow *
+                 (gamma(0.5*porod_exp)*gammainc(0.5*porod_exp, usub) -
+                  upow*gamma(porod_exp)*gammainc(porod_exp, usub)))
+    result[q <= 0] = 1.0
 
-    return iq
+    return result
 
 Iq.vectorized = True  # Iq accepts an array of q values
-
 
 tests = [
     # Accuracy tests based on content in test/polyexclvol_default_igor.txt

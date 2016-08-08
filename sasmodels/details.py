@@ -112,6 +112,7 @@ class CallDetails(object):
 
     @pd_prod.setter
     def pd_prod(self, v):
+        """Total size of the pd mesh"""
         self.buffer[-4] = v
 
     @property
@@ -121,6 +122,7 @@ class CallDetails(object):
 
     @pd_sum.setter
     def pd_sum(self, v):
+        """Total length of all the weight vectors"""
         self.buffer[-3] = v
 
     @property
@@ -130,6 +132,7 @@ class CallDetails(object):
 
     @num_active.setter
     def num_active(self, v):
+        """Number of active polydispersity loops"""
         self.buffer[-2] = v
 
     @property
@@ -139,6 +142,7 @@ class CallDetails(object):
 
     @theta_par.setter
     def theta_par(self, v):
+        """Location of the theta parameter in the parameter vector"""
         self.buffer[-1] = v
 
     def show(self):
@@ -184,7 +188,7 @@ def poly_details(model_info, weights):
     #print([p.id for p in model_info.parameters.call_parameters])
     pd_length = np.array([len(w)
                           for w in weights[2:2+model_info.parameters.npars]])
-    num_active = np.sum(pd_length>1)
+    num_active = np.sum(pd_length > 1)
     max_pd = model_info.parameters.max_pd
     if num_active > max_pd:
         raise ValueError("Too many polydisperse parameters")
@@ -249,7 +253,7 @@ def build_details(kernel, pairs):
     """
     values, weights = zip(*pairs)
     scalars = [v[0] for v in values]
-    if all(len(w)==1 for w in weights):
+    if all(len(w) == 1 for w in weights):
         call_details = mono_details(kernel.info)
         # Pad value array to a 32 value boundary
         data_len = 3*len(scalars)
@@ -275,14 +279,13 @@ def convert_magnetism(parameters, values):
     """
     mag = values[parameters.nvalues-3*parameters.nmagnetic:parameters.nvalues]
     mag = mag.reshape(-1, 3)
-    M0 = mag[:,0]
-    if np.any(M0):
-        theta, phi = mag[:,1]*pi/180., mag[:,2]*pi/180.
+    scale = mag[:,0]
+    if np.any(scale):
+        theta, phi = mag[:, 1]*pi/180., mag[:, 2]*pi/180.
         cos_theta = cos(theta)
-        mx = M0*cos_theta*cos(phi)
-        my = M0*sin(theta)
-        mz = -M0*cos_theta*sin(phi)
-        mag[:,0], mag[:,1], mag[:,2] = mx, my, mz
+        mag[:, 0] = scale*cos_theta*cos(phi)  # mx
+        mag[:, 1] = scale*sin(theta)  # my
+        mag[:, 2] = -scale*cos_theta*sin(phi)  # mz
         return True
     else:
         return False

@@ -12,7 +12,7 @@ how far the polydispersity integral extends.
 """
 from __future__ import print_function
 
-__all__ = [ "Model", "Experiment" ]
+__all__ = ["Model", "Experiment"]
 
 import numpy as np  # type: ignore
 
@@ -203,7 +203,7 @@ class Experiment(DataMixin):
         Plot the data and residuals.
         """
         data, theory, resid = self._data, self.theory(), self.residuals()
-        plot_theory(data, theory, resid, view, Iq_calc = self.Iq_calc)
+        plot_theory(data, theory, resid, view, Iq_calc=self.Iq_calc)
 
     def simulate_data(self, noise=None):
         # type: (float) -> None
@@ -222,7 +222,6 @@ class Experiment(DataMixin):
         """
         if self.data_type == "sesans":
             np.savetxt(basename+".dat", np.array([self._data.x, self.theory()]).T)
-        pass
 
     def __getstate__(self):
         # type: () -> Dict[str, Any]

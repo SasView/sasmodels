@@ -46,7 +46,7 @@ K V Schubert, R Strey, S R Kline and E W Kaler,
 """
 
 import numpy as np
-from numpy import inf, sqrt
+from numpy import inf
 
 name = "teubner_strey"
 title = "Teubner-Strey model of microemulsions"
@@ -57,17 +57,15 @@ description = """\
 """
 category = "shape-independent"
 
-#             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["a2", "", 0.1, [0, inf], "",
-               "a2"],
-              ["c1", "1e-6/Ang^2", -30., [-inf, 0], "",
-               "c1"],
-              ["c2", "Ang", 5000., [0, inf], "volume",
-               "c2"],
-             ]
-
+#   ["name", "units", default, [lower, upper], "type","description"],
+parameters = [
+    ["a2", "", 0.1, [0, inf], "", "a2"],
+    ["c1", "1e-6/Ang^2", -30., [-inf, 0], "", "c1"],
+    ["c2", "Ang", 5000., [0, inf], "volume", "c2"],
+    ]
 
 def Iq(q, a2, c1, c2):
+    """SAS form"""
     return 1. / np.polyval([c2, c1, a2], q**2)
 Iq.vectorized = True  # Iq accepts an array of q values
 
