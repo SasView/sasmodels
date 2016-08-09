@@ -14,8 +14,17 @@ from copy import deepcopy
 import collections
 import traceback
 import logging
+from os.path import basename, splitext
 
 import numpy as np  # type: ignore
+
+# Monkey patch sas.sascalc.fit as sas.models so that sas.models.pluginmodel
+# is available to the plugin modules.
+import sys
+import sas
+import sas.sascalc.fit
+sys.modules['sas.models'] = sas.sascalc.fit
+sas.models = sas.sascalc.fit
 
 from . import core
 from . import custom
@@ -35,6 +44,7 @@ try:
     SasviewModelType = Callable[[int], "SasviewModel"]
 except ImportError:
     pass
+
 
 # TODO: separate x_axis_label from multiplicity info
 MultiplicityInfo = collections.namedtuple(
@@ -83,10 +93,14 @@ def load_custom_model(path):
     """
     Load a custom model given the model path.
     """
-    #print("load custom model", path)
     kernel_module = custom.load_custom_kernel_module(path)
     try:
         model = kernel_module.Model
+        # Old style models do not set the name in the class attributes, so
+        # set it here; this name will be overridden when the object is created
+        # with an instance variable that has the same value.
+        if model.name == "":
+            model.name = splitext(basename(path))[0]
     except AttributeError:
         model_info = modelinfo.make_model_info(kernel_module)
         model = _make_model_from_info(model_info)
