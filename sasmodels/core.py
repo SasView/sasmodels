@@ -65,8 +65,7 @@ def list_models(kind=None):
     """
     if kind and kind not in KINDS:
         raise ValueError("kind not in " + ", ".join(KINDS))
-    root = dirname(__file__)
-    files = sorted(glob(joinpath(root, 'models', "[a-zA-Z]*.py")))
+    files = sorted(glob(joinpath(generate.MODEL_PATH, "[a-zA-Z]*.py")))
     available_models = [basename(f)[:-3] for f in files]
     selected = [name for name in available_models if _matches(name, kind)]
 
