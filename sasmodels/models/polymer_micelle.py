@@ -2,8 +2,9 @@ r"""
 
 This model provides the form factor, $P(q)$, for a micelle with a spherical
 core and Gaussian polymer chains attached to the surface, thus may be applied
-to block copolymer micelles. To work well the Gaussian chains must be much smaller
-than the core, which is often not the case.  Please study the reference carefully.
+to block copolymer micelles. To work well the Gaussian chains must be much
+smaller than the core, which is often not the case.  Please study the
+reference carefully.
 
 Definition
 ----------
@@ -70,6 +71,8 @@ demo = dict(scale=1, background=0,
 tests = [
     [{}, 0.01, 15.3532],
     ]
-# RKH 20Mar2016 - need to check whether the core & corona volumes are per monomer ??? and how aggregation number works!
-# renamed from micelle_spherical_core to polymer_micelle, moved from shape-independent to spheres section.
+# RKH 20Mar2016 - need to check whether the core & corona volumes are per
+#                 monomer ??? and how aggregation number works!
+# renamed from micelle_spherical_core to polymer_micelle,
+# moved from shape-independent to spheres section.
 # Ought to be able to add polydisp to core? And add ability to x by S(Q) ?

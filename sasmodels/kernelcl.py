@@ -61,7 +61,8 @@ try:
     # Ask OpenCL for the default context so that we know that one exists
     cl.create_some_context(interactive=False)
 except Exception as exc:
-    warnings.warn("OpenCL startup failed with ***"+str(exc)+"***; using C compiler instead")
+    warnings.warn("OpenCL startup failed with ***"
+                  + str(exc) + "***; using C compiler instead")
     raise RuntimeError("OpenCL not available")
 
 from pyopencl import mem_flags as mf
@@ -89,6 +90,9 @@ def quote_path(v):
     return '"'+v+'"' if v and ' ' in v and not v[0] in "\"'-" else v
 
 def fix_pyopencl_include():
+    """
+    Monkey patch pyopencl to allow spaces in include file path.
+    """
     import pyopencl as cl
     if hasattr(cl, '_DEFAULT_INCLUDE_OPTIONS'):
         cl._DEFAULT_INCLUDE_OPTIONS = [quote_path(v) for v in cl._DEFAULT_INCLUDE_OPTIONS]

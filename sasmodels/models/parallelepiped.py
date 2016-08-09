@@ -6,7 +6,8 @@ The form factor is normalized by the particle volume.
 Definition
 ----------
 
-| This model calculates the scattering from a rectangular parallelepiped (:numref:`parallelepiped-image`).
+| This model calculates the scattering from a rectangular parallelepiped
+| (:numref:`parallelepiped-image`).
 | If you need to apply polydispersity, see also :ref:`rectangular-prism`.
 
 .. _parallelepiped-image:
@@ -33,13 +34,13 @@ The 1D scattering intensity $I(q)$ is calculated as:
 
 .. math::
 
-    I(q) = \frac{\text{scale}}{V} (\Delta\rho \cdot V)^2 \left< P(q, \alpha) \right>
-    + \text{background}
+    I(q) = \frac{\text{scale}}{V} (\Delta\rho \cdot V)^2
+           \left< P(q, \alpha) \right> + \text{background}
 
 where the volume $V = A B C$, the contrast is defined as
-:math:`\Delta\rho = \rho_{\textstyle p} - \rho_{\textstyle solvent}`,
+$\Delta\rho = \rho_\text{p} - \rho_\text{solvent}$,
 $P(q, \alpha)$ is the form factor corresponding to a parallelepiped oriented
-at an angle $\alpha$ (angle between the long axis C and :math:`\vec q`),
+at an angle $\alpha$ (angle between the long axis C and $\vec q$),
 and the averaging $\left<\ldots\right>$ is applied over all orientations.
 
 Assuming $a = A/B < 1$, $b = B /B = 1$, and $c = C/B > 1$, the
@@ -54,14 +55,14 @@ with
 
 .. math::
 
-    \phi_Q(\mu,a) = \int_0^1
+    \phi_Q(\mu,a) &= \int_0^1
         \left\{S\left[\frac{\mu}{2}\cos\left(\frac{\pi}{2}u\right)\right]
                S\left[\frac{\mu a}{2}\sin\left(\frac{\pi}{2}u\right)\right]
                \right\}^2 du
 
-    S(x) = \frac{\sin x}{x}
+    S(x) &= \frac{\sin x}{x}
 
-    \mu = qB
+    \mu &= qB
 
 
 The scattering intensity per unit volume is returned in units of |cm^-1|.
@@ -104,36 +105,42 @@ $A$ along $z$ and $B$ along $x$.
 
 .. figure:: img/parallelepiped_angle_projection.jpg
 
-    Examples of the angles for oriented parallelepipeds against the detector plane.
+    Examples of the angles for oriented parallelepipeds against the
+    detector plane.
 
-For a given orientation of the parallelepiped, the 2D form factor is calculated as
+For a given orientation of the parallelepiped, the 2D form factor is
+calculated as
 
 .. math::
 
-    P(q_x, q_y) = \left[\frac{sin(qA\cos\alpha/2)}{(qA\cos\alpha/2)}\right]^2
-                  \left[\frac{sin(qB\cos\beta/2)}{(qB\cos\beta/2)}\right]^2
-                  \left[\frac{sin(qC\cos\gamma/2)}{(qC\cos\gamma/2)}\right]^2
+    P(q_x, q_y) = \left[\frac{\sin(qA\cos\alpha/2)}{(qA\cos\alpha/2)}\right]^2
+                  \left[\frac{\sin(qB\cos\beta/2)}{(qB\cos\beta/2)}\right]^2
+                  \left[\frac{\sin(qC\cos\gamma/2)}{(qC\cos\gamma/2)}\right]^2
 
 with
 
 .. math::
 
-    \cos\alpha = \hat A \cdot \hat q, \;
-    \cos\beta  = \hat B \cdot \hat q, \;
-    \cos\gamma = \hat C \cdot \hat q
+    \cos\alpha &= \hat A \cdot \hat q,
+
+    \cos\beta  &= \hat B \cdot \hat q,
+
+    \cos\gamma &= \hat C \cdot \hat q
 
 and the scattering intensity as:
 
 .. math::
 
-    I(q_x, q_y) = \frac{\text{scale}}{V} V^2 \Delta\rho^2 P(q_x, q_y) + \text{background}
+    I(q_x, q_y) = \frac{\text{scale}}{V} V^2 \Delta\rho^2 P(q_x, q_y)
+            + \text{background}
 
 .. Comment by Miguel Gonzalez:
    This reflects the logic of the code, as in parallelepiped.c the call
-   to _pkernel returns P(q_x, q_y) and then this is multiplied by V^2 * (delta rho)^2.
-   And finally outside parallelepiped.c it will be multiplied by scale, normalized by
-   V and the background added. But mathematically it makes more sense to write
-   I(q_x, q_y) = \text{scale} V \Delta\rho^2 P(q_x, q_y) + \text{background},
+   to _pkernel returns $P(q_x, q_y)$ and then this is multiplied by
+   $V^2 * (\Delta \rho)^2$. And finally outside parallelepiped.c it will be
+   multiplied by scale, normalized by $V$ and the background added. But
+   mathematically it makes more sense to write
+   $I(q_x, q_y) = \text{scale} V \Delta\rho^2 P(q_x, q_y) + \text{background}$,
    with scale being the volume fraction.
 
 
@@ -142,7 +149,7 @@ Validation
 
 Validation of the code was done by comparing the output of the 1D calculation
 to the angular average of the output of a 2D calculation over all possible
-angles. 
+angles.
 
 This model is based on form factor calculations implemented in a c-library
 provided by the NIST Center for Neutron Research (Kline, 2006).

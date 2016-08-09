@@ -1,6 +1,6 @@
 r"""
 An alternative version of $P(q)$ for the core_shell_ellipsoid
-having as parameters the core axial ratio X and a shell thickness, 
+having as parameters the core axial ratio X and a shell thickness,
 which are more often what we would like to determine.
 
 This model is also better behaved when polydispersity is applied than the four

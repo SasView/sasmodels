@@ -114,12 +114,12 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
                "Thickness of parallelepiped"],
              ]
 
-source = [ "lib/gauss76.c", "hollow_rectangular_prism.c"]
+source = ["lib/gauss76.c", "hollow_rectangular_prism.c"]
 
 def ER(a_side, b2a_ratio, c2a_ratio, thickness):
     """
-        Return equivalent radius (ER)
-        thickness parameter not used
+    Return equivalent radius (ER)
+    thickness parameter not used
     """
     b_side = a_side * b2a_ratio
     c_side = a_side * c2a_ratio
@@ -132,7 +132,7 @@ def ER(a_side, b2a_ratio, c2a_ratio, thickness):
 
 def VR(a_side, b2a_ratio, c2a_ratio, thickness):
     """
-        Return shell volume and total volume
+    Return shell volume and total volume
     """
     b_side = a_side * b2a_ratio
     c_side = a_side * c2a_ratio

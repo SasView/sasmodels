@@ -23,8 +23,9 @@ NPHI = {'xhigh':20, 'high':12, 'med':6, 'low':4}
 
 ## Defaults
 N_SLIT_PERP = {'xhigh':1000, 'high':500, 'med':200, 'low':50}
-N_SLIT_PERP_DOC = ", ".join("%s=%d"%(name,value) for value,name in
-                            sorted((2*v+1,k) for k,v in N_SLIT_PERP.items()))
+N_SLIT_PERP_DOC = ", ".join("%s=%d"%(name, value)
+                            for value, name in
+                            sorted((2*v+1, k) for k, v in N_SLIT_PERP.items()))
 
 class Pinhole2D(Resolution):
     """
@@ -224,7 +225,7 @@ class Slit2D(Resolution):
         if np.any(qx_width > 0):
             self.weights = resolution.pinhole_resolution(qx_calc, q,
                     np.maximum(qx_width, resolution.MINIMUM_RESOLUTION))
-        elif len(qx_calc)==len(q) and np.all(qx_calc == q):
+        elif len(qx_calc) == len(q) and np.all(qx_calc == q):
             self.weights = None
         else:
             raise ValueError("Slit2D fails with q_calc != q")

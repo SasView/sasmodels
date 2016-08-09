@@ -27,7 +27,7 @@ def data_files():
 
     from .generate import EXTERNAL_DIR, DATA_PATH
 
-    def expand_patterns(path, patterns):
+    def _expand_patterns(path, patterns):
         target_path = joinpath(EXTERNAL_DIR, *path)
         source_path = joinpath(DATA_PATH, *path)
         files = []
@@ -40,10 +40,10 @@ def data_files():
     # users can easily copy existing models.  Need the img files so that we
     # can build model docs on the fly, including images.
     return_list = [
-        expand_patterns([], ['*.c', '*.cl']),
-        expand_patterns(['models'], ['*.py', '*.c']),
-        expand_patterns(['models', 'lib'], ['*.c']),
-        expand_patterns(['models', 'img'], ['*.*']),
+        _expand_patterns([], ['*.c', '*.cl']),
+        _expand_patterns(['models'], ['*.py', '*.c']),
+        _expand_patterns(['models', 'lib'], ['*.c']),
+        _expand_patterns(['models', 'img'], ['*.*']),
         ]
     return return_list
 

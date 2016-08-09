@@ -18,12 +18,8 @@ double _elliptical_cylinder_kernel(double q, double r_minor, double r_ratio, dou
     double retval,arg;
 
     arg = q*r_minor*sqrt((1.0+r_ratio*r_ratio)/2+(1.0-r_ratio*r_ratio)*cos(theta)/2);
-    if (arg == 0.0){
-        retval = 1.0;
-    }else{
-        //retval = 2.0*NR_BessJ1(arg)/arg;
-        retval = sas_J1c(arg);
-    }
+    //retval = 2.0*J1(arg)/arg;
+    retval = sas_J1c(arg);
     return retval*retval ;
 }
 
@@ -67,21 +63,16 @@ double Iq(double q, double r_minor, double r_ratio, double length,
         }
         //now calculate the value of the inner integral
         answer = (vbj-vaj)/2.0*summj;
-        //divide integral by Pi
-        answer /= M_PI;
 
         //now calculate outer integral
         arg = q*length*zi/2.0;
-        if (arg == 0.0){
-            si = 1.0;
-        }else{
-            si = sin(arg) * sin(arg) / arg / arg;
-        }
+        si = square(sinc(arg));
         yyy = Gauss76Wt[i] * answer * si;
         summ += yyy;
     }
 
-    answer = (vb-va)/2.0*summ;
+    //divide integral by Pi
+    answer = (vb-va)/2.0*summ/M_PI;
     // Multiply by contrast^2
     answer *= delrho*delrho;
 

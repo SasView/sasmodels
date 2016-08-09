@@ -19,7 +19,7 @@ TEMPLATE="""\
 ..
     Generated from doc/gentoc.py -- DO NOT EDIT --
 
-.. %(label)s:
+.. _%(label)s:
 
 %(bar)s
 %(title)s

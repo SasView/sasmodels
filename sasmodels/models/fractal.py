@@ -6,8 +6,8 @@ building blocks according the following equation:
 
 .. math::
 
-    I(q) &=& \phi\ V_{block} (\rho_{block} - \rho_{solvent})^2 P(q)S(q)
-    + background
+    I(q) = \phi\ V_\text{block} (\rho_\text{block}
+          - \rho_\text{solvent})^2 P(q)S(q) + \text{background}
 
 where $\phi$ is The volume fraction of the spherical "building block" particles
 of radius $R_0$, $V_{block}$ is the volume of a single building block,
@@ -19,13 +19,14 @@ in a fractal-like clusters.  P(q) and S(q) are calculated as:
 
 .. math::
 
-    \begin{eqnarray}
-    P(q)&=& F(qR_0)^2 \\
-    F(q)&=& \frac{3 (sinx - x cosx)}{x^3} \\
-    V_{particle} &=& \frac{4}{3}\ \pi R_0 \\
-    S(q) &=& 1 + \frac{D_f\  \Gamma\!(D_f-1)}{[1+1/(q \xi)^2\  ]^{(D_f -1)/2}}
-    \frac{sin[(D_f-1) \tan^{-1}(q \xi) ]}{(q R_0)^{D_f}}
-    \end{eqnarray}
+    P(q)&= F(qR_0)^2
+
+    F(q)&= \frac{3 (\sin x - x \cos x)}{x^3}
+
+    V_\text{particle} &= \frac{4}{3}\ \pi R_0
+
+    S(q) &= 1 + \frac{D_f\  \Gamma\!(D_f-1)}{[1+1/(q \xi)^2\  ]^{(D_f -1)/2}}
+    \frac{\sin[(D_f-1) \tan^{-1}(q \xi) ]}{(q R_0)^{D_f}}
 
 where $\xi$ is the correlation length representing the cluster size and $D_f$
 is the fractal dimension, representing the self similarity of the structure.

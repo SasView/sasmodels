@@ -14,8 +14,17 @@ from copy import deepcopy
 import collections
 import traceback
 import logging
+from os.path import basename, splitext
 
 import numpy as np  # type: ignore
+
+# Monkey patch sas.sascalc.fit as sas.models so that sas.models.pluginmodel
+# is available to the plugin modules.
+import sys
+import sas
+import sas.sascalc.fit
+sys.modules['sas.models'] = sas.sascalc.fit
+sas.models = sas.sascalc.fit
 
 from . import core
 from . import custom
@@ -36,8 +45,8 @@ try:
 except ImportError:
     pass
 
+
 # TODO: separate x_axis_label from multiplicity info
-# The profile x-axis label belongs with the profile generating function
 MultiplicityInfo = collections.namedtuple(
     'MultiplicityInfo',
     ["number", "control", "choices", "x_axis_label"],
@@ -45,6 +54,11 @@ MultiplicityInfo = collections.namedtuple(
 
 MODELS = {}
 def find_model(modelname):
+    # type: (str) -> SasviewModelType
+    """
+    Find a model by name.  If the model name ends in py, try loading it from
+    custom models, otherwise look for it in the list of builtin models.
+    """
     # TODO: used by sum/product model to load an existing model
     # TODO: doesn't handle custom models properly
     if modelname.endswith('.py'):
@@ -79,10 +93,14 @@ def load_custom_model(path):
     """
     Load a custom model given the model path.
     """
-    #print("load custom model", path)
     kernel_module = custom.load_custom_kernel_module(path)
     try:
         model = kernel_module.Model
+        # Old style models do not set the name in the class attributes, so
+        # set it here; this name will be overridden when the object is created
+        # with an instance variable that has the same value.
+        if model.name == "":
+            model.name = splitext(basename(path))[0]
     except AttributeError:
         model_info = modelinfo.make_model_info(kernel_module)
         model = _make_model_from_info(model_info)
@@ -142,6 +160,15 @@ def _generate_model_attributes(model_info):
             )
             break
 
+    # Only a single drop-down list parameter available
+    fun_list = []
+    for p in model_info.parameters.kernel_parameters:
+        if p.choices:
+            fun_list = p.choices
+            if p.length > 1:
+                non_fittable.extend(p.id+str(k) for k in range(1, p.length+1))
+            break
+
     # Organize parameter sets
     orientation_params = []
     magnetic_params = []
@@ -172,6 +199,7 @@ def _generate_model_attributes(model_info):
     attrs['magnetic_params'] = tuple(magnetic_params)
     attrs['fixed'] = tuple(fixed)
     attrs['non_fittable'] = tuple(non_fittable)
+    attrs['fun_list'] = tuple(fun_list)
 
     return attrs
 
@@ -322,16 +350,19 @@ class SasviewModel(object):
         : return: (z, beta) where z is a list of depth of the transition points
                 beta is a list of the corresponding SLD values
         """
-        args = [] # type: List[Union[float, np.ndarray]]
+        args = {} # type: Dict[str, Any]
         for p in self._model_info.parameters.kernel_parameters:
             if p.id == self.multiplicity_info.control:
-                args.append(float(self.multiplicity))
+                value = float(self.multiplicity)
             elif p.length == 1:
-                args.append(self.params.get(p.id, np.NaN))
+                value = self.params.get(p.id, np.NaN)
             else:
-                args.append([self.params.get(p.id+str(k), np.NaN)
-                             for k in range(1,p.length+1)])
-        return self._model_info.profile(*args)
+                value = np.array([self.params.get(p.id+str(k), np.NaN)
+                                  for k in range(1, p.length+1)])
+            args[p.id] = value
+
+        x, y = self._model_info.profile(**args)
+        return x, 1e-6*y
 
     def setParam(self, name, value):
         # type: (str, float) -> None
@@ -574,9 +605,7 @@ class SasviewModel(object):
             # For now, rely on the fact that the sasview only ever uses
             # new dispersers in the set_dispersion call and create a new
             # one instead of trying to assign parameters.
-            from . import weights
-            disperser = weights.dispersers[dispersion.__class__.__name__]
-            dispersion = weights.MODELS[disperser]()
+            dispersion = weights.MODELS[dispersion.type]()
             self.dispersion[parameter] = dispersion.get_pars()
         else:
             raise ValueError("%r is not a dispersity or orientation parameter")
@@ -621,7 +650,7 @@ def test_model():
     """
     Cylinder = _make_standard_model('cylinder')
     cylinder = Cylinder()
-    return cylinder.evalDistribution([0.1,0.1])
+    return cylinder.evalDistribution([0.1, 0.1])
 
 def test_rpa():
     # type: () -> float
@@ -630,7 +659,7 @@ def test_rpa():
     """
     RPA = _make_standard_model('rpa')
     rpa = RPA(3)
-    return rpa.evalDistribution([0.1,0.1])
+    return rpa.evalDistribution([0.1, 0.1])
 
 
 def test_model_list():

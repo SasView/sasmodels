@@ -1,28 +1,26 @@
 r"""
 This model fits the Porod function
 
-.. math::
-
-    I(q) = C/q^4
-    \\
-    C = 2\pi (\Delta\rho)^2 S_v
+.. math:: I(q) = C/q^4
 
 to the data directly without any need for linearisation (cf. Log I(q) vs Log q).
 
-Here $C$ is the scale factor and $S_v$ is the specific surface area (ie, surface area / volume)
-of the sample, and $\Delta\rho$ is the contrast factor.
+Here $C = 2\pi (\Delta\rho)^2 S_v$ is the scale factor where $S_v$ is
+the specific surface area (ie, surface area / volume) of the sample, and
+$\Delta\rho$ is the contrast factor.
 
 For 2D data: The 2D scattering intensity is calculated in the same way as 1D,
 where the q vector is defined as
 
-.. math::
-    q = \sqrt{q_x^2+q_y^2}
+.. math:: q = \sqrt{q_x^2+q_y^2}
 
 References
 ----------
 
 G Porod. *Kolloid Zeit*. 124 (1951) 83.
-L A Feigin, D I Svergun, G W Taylor. *Structure Analysis by Small-Angle X-ray and Neutron Scattering*. Springer. (1987)
+
+L A Feigin, D I Svergun, G W Taylor. *Structure Analysis by Small-Angle
+X-ray and Neutron Scattering*. Springer. (1987)
 """
 
 from numpy import power, inf, errstate

@@ -144,7 +144,7 @@ Code follows the C99 standard with the following extensions and conditions::
     FLOAT_SIZE is the number of bytes in the converted variables
 
 :func:`load_kernel_module` loads the model definition file and
-:modelinfo:`make_model_info` parses it. :func:`make_source`
+:func:`modelinfo.make_model_info` parses it. :func:`make_source`
 converts C-based model definitions to C source code, including the
 polydispersity integral.  :func:`model_sources` returns the list of
 source files the model depends on, and :func:`timestamp` returns
@@ -710,7 +710,7 @@ def make_html(model_info):
     Convert model docs directly to html.
     """
     from . import rst2html
-    return rst2html.convert(make_doc(model_info), title=model_info['name'])
+    return rst2html.convert(make_doc(model_info))
 
 def demo_time():
     # type: () -> None

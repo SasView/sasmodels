@@ -142,7 +142,7 @@ class PyKernel(Kernel):
         # parameter array.
         if q_input.is_2d:
             form = model_info.Iqxy
-            qx, qy = q_input.q[:,0], q_input.q[:,1]
+            qx, qy = q_input.q[:, 0], q_input.q[:, 1]
             self._form = lambda: form(qx, qy, *kernel_args)
         else:
             form = model_info.Iq
@@ -167,8 +167,7 @@ class PyKernel(Kernel):
         self.q_input.release()
         self.q_input = None
 
-def _loops(parameters, form, form_volume, nq, details,
-           values, cutoff):
+def _loops(parameters, form, form_volume, nq, call_details, values, cutoff):
     # type: (np.ndarray, Callable[[], np.ndarray], Callable[[], float], int, details.CallDetails, np.ndarray, np.ndarray, float) -> None
     ################################################################
     #                                                              #
@@ -179,62 +178,64 @@ def _loops(parameters, form, form_volume, nq, details,
     #   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #
     #                                                              #
     ################################################################
-    NPARS = len(parameters)
-    parameters[:] = values[2:NPARS+2]
+    n_pars = len(parameters)
+    parameters[:] = values[2:n_pars+2]
     scale, background = values[0], values[1]
-    if details.num_active == 0:
+    if call_details.num_active == 0:
         norm = float(form_volume())
         if norm > 0.0:
             return (scale/norm)*form() + background
         else:
             return np.ones(nq, 'd')*background
 
-    pd_value = values[2+NPARS:2+NPARS+details.pd_sum]
-    pd_weight = values[2+NPARS+details.pd_sum:]
+    pd_value = values[2+n_pars:2+n_pars + call_details.pd_sum]
+    pd_weight = values[2+n_pars + call_details.pd_sum:]
 
     pd_norm = 0.0
     spherical_correction = 1.0
     partial_weight = np.NaN
-    weight =np.NaN
+    weight = np.NaN
 
-    p0_par = details.pd_par[0]
-    p0_is_theta = (p0_par == details.theta_par)
-    p0_length = details.pd_length[0]
+    p0_par = call_details.pd_par[0]
+    p0_is_theta = (p0_par == call_details.theta_par)
+    p0_length = call_details.pd_length[0]
     p0_index = p0_length
-    p0_offset = details.pd_offset[0]
+    p0_offset = call_details.pd_offset[0]
 
-    pd_par = details.pd_par[:details.num_active]
-    pd_offset = details.pd_offset[:details.num_active]
-    pd_stride = details.pd_stride[:details.num_active]
-    pd_length = details.pd_length[:details.num_active]
+    pd_par = call_details.pd_par[:call_details.num_active]
+    pd_offset = call_details.pd_offset[:call_details.num_active]
+    pd_stride = call_details.pd_stride[:call_details.num_active]
+    pd_length = call_details.pd_length[:call_details.num_active]
 
     total = np.zeros(nq, 'd')
-    for loop_index in range(details.pd_prod):
+    for loop_index in range(call_details.pd_prod):
         # update polydispersity parameter values
         if p0_index == p0_length:
             pd_index = (loop_index//pd_stride)%pd_length
             parameters[pd_par] = pd_value[pd_offset+pd_index]
             partial_weight = np.prod(pd_weight[pd_offset+pd_index][1:])
-            if details.theta_par >= 0:
-                spherical_correction = max(abs(cos(pi/180 * parameters[details.theta_par])), 1e-6)
+            if call_details.theta_par >= 0:
+                cor = cos(pi / 180 * parameters[call_details.theta_par])
+                spherical_correction = max(abs(cor), 1e-6)
             p0_index = loop_index%p0_length
 
         weight = partial_weight * pd_weight[p0_offset + p0_index]
         parameters[p0_par] = pd_value[p0_offset + p0_index]
         if p0_is_theta:
-            spherical_correction = max(abs(cos(pi/180 * parameters[p0_par])), 1e-6)
+            cor = cos(pi/180 * parameters[p0_par])
+            spherical_correction = max(abs(cor), 1e-6)
         p0_index += 1
         if weight > cutoff:
             # Call the scattering function
             # Assume that NaNs are only generated if the parameters are bad;
             # exclude all q for that NaN.  Even better would be to have an
             # INVALID expression like the C models, but that is too expensive.
-            I = form()
-            if np.isnan(I).any(): continue
+            Iq = form()
+            if np.isnan(Iq).any(): continue
 
             # update value and norm
             weight *= spherical_correction
-            total += weight * I
+            total += weight * Iq
             pd_norm += weight * form_volume()
 
     if pd_norm > 0.0:

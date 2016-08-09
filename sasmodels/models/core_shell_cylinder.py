@@ -51,7 +51,7 @@ shell is given by $L+2T$. $J1$ is the first order Bessel function.
     Core shell cylinder schematic.
 
 To provide easy access to the orientation of the core-shell cylinder, we
-define the axis of the cylinder using two angles $\theta$ and $\phi$. 
+define the axis of the cylinder using two angles $\theta$ and $\phi$.
 (see :ref:`cylinder model <cylinder-angle-definition>`)
 
 NB: The 2nd virial coefficient of the cylinder is calculated based on
@@ -129,11 +129,11 @@ parameters = [["sld_core", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Out of plane angle"],
              ]
 
-source = ["lib/polevl.c","lib/sas_J1.c", "lib/gauss76.c", "core_shell_cylinder.c"]
+source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "core_shell_cylinder.c"]
 
 def ER(radius, thickness, length):
     """
-        Returns the effective radius used in the S*P calculation
+    Returns the effective radius used in the S*P calculation
     """
     radius = radius + thickness
     length = length + 2 * thickness
@@ -142,7 +142,7 @@ def ER(radius, thickness, length):
 
 def VR(radius, thickness, length):
     """
-        Returns volume ratio
+    Returns volume ratio
     """
     whole = pi * (radius + thickness) ** 2 * (length + 2 * thickness)
     core = pi * radius ** 2 * length

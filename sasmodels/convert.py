@@ -62,10 +62,10 @@ def _convert_pars(pars, mapping):
     newpars = pars.copy()
     for new, old in mapping.items():
         if old == new: continue
-        for pd, dot in PD_DOT:
+        for underscore, dot in PD_DOT:
             if old+dot in newpars:
                 if new is not None:
-                    newpars[new+pd] = pars[old+dot]
+                    newpars[new+underscore] = pars[old+dot]
                 del newpars[old+dot]
     return newpars
 
@@ -102,7 +102,7 @@ def _unscale_sld(modelinfo, pars):
     numbers are nicer.  Relies on the fact that all sld parameters in the
     new model definition end with sld.
     """
-    return dict((id, (_unscale(v,1e-6) if _is_sld(modelinfo, id) else v))
+    return dict((id, (_unscale(v, 1e-6) if _is_sld(modelinfo, id) else v))
                 for id, v in pars.items())
 
 def _remove_pd(pars, key, name):
@@ -112,9 +112,9 @@ def _remove_pd(pars, key, name):
     Note: operates in place
     """
     # Bumps style parameter names
-    pd = pars.pop(key+".width", 0.0)
-    pd_n = pars.pop(key+".npts", 0)
-    if pd != 0.0 and pd_n != 0:
+    width = pars.pop(key+".width", 0.0)
+    n_points = pars.pop(key+".npts", 0)
+    if width != 0.0 and n_points != 0:
         warnings.warn("parameter %s not polydisperse in sasview %s"%(key, name))
     pars.pop(key+".nsigmas", None)
     pars.pop(key+".type", None)
@@ -127,22 +127,22 @@ def _revert_pars(pars, mapping):
     newpars = pars.copy()
 
     for new, old in mapping.items():
-        for pd, dot in PD_DOT:
-            if old and old+pd == new+dot:
+        for underscore, dot in PD_DOT:
+            if old and old+underscore == new+dot:
                 continue
-            if new+pd in newpars:
+            if new+underscore in newpars:
                 if old is not None:
-                    newpars[old+dot] = pars[new+pd]
-                del newpars[new+pd]
+                    newpars[old+dot] = pars[new+underscore]
+                del newpars[new+underscore]
     for k in list(newpars.keys()):
-        for pd, dot in PD_DOT[1:]:  # skip "" => ""
-            if k.endswith(pd):
-                newpars[k[:-len(pd)]+dot] = newpars[k]
+        for underscore, dot in PD_DOT[1:]:  # skip "" => ""
+            if k.endswith(underscore):
+                newpars[k[:-len(underscore)]+dot] = newpars[k]
                 del newpars[k]
     return newpars
 
 def revert_name(model_info):
-    oldname, oldpars = CONVERSION_TABLE.get(model_info.id, [None, {}])
+    oldname, _ = CONVERSION_TABLE.get(model_info.id, [None, {}])
     return oldname
 
 def _get_translation_table(model_info):
@@ -158,7 +158,7 @@ def _get_translation_table(model_info):
                     translation[newid+str(k)] = oldid+str(k)
     # Remove control parameter from the result
     if model_info.control:
-        translation[model_info.control] = None
+        translation[model_info.control] = "CONTROL"
     return translation
 
 def _trim_vectors(model_info, pars, oldpars):
@@ -179,10 +179,9 @@ def revert_pars(model_info, pars):
     if model_info.composition is not None:
         composition_type, parts = model_info.composition
         if composition_type == 'product':
-            P, S = parts
             oldpars = {'scale':'scale_factor'}
-            oldpars.update(_get_old_pars(P))
-            oldpars.update(_get_old_pars(S))
+            oldpars.update(_get_old_pars(parts[0]))
+            oldpars.update(_get_old_pars(parts[1]))
         else:
             raise NotImplementedError("cannot convert to sasview sum")
     else:
@@ -190,6 +189,9 @@ def revert_pars(model_info, pars):
         oldpars = _revert_pars(_unscale_sld(model_info, pars), translation)
         oldpars = _trim_vectors(model_info, pars, oldpars)
 
+    # Make sure the control parameter is an integer
+    if "CONTROL" in oldpars:
+        oldpars["CONTROL"] = int(oldpars["CONTROL"])
 
     # Note: update compare.constrain_pars to match
     name = model_info.id
@@ -202,7 +204,7 @@ def revert_pars(model_info, pars):
 
     # Remove magnetic parameters from non-magnetic sasview models
     if name not in MAGNETIC_SASVIEW_MODELS:
-        oldpars = dict((k,v) for k,v in oldpars.items() if ':' not in k)
+        oldpars = dict((k, v) for k, v in oldpars.items() if ':' not in k)
 
     # If it is a product model P*S, then check the individual forms for special
     # cases.  Note: despite the structure factor alone not having scale or
@@ -225,9 +227,18 @@ def revert_pars(model_info, pars):
             if 'ndensity' in oldpars:
                 oldpars['ndensity'] *= 1e15
         elif name == 'spherical_sld':
-            for k in range(1, int(pars['n_shells'])+1):
-                _remove_pd(oldpars, 'thick_flat'+str(k), 'thick_flat')
-                _remove_pd(oldpars, 'thick_inter'+str(k), 'thick_inter')
+            oldpars["CONTROL"] -= 1
+            # remove polydispersity from shells
+            for k in range(1, 11):
+                _remove_pd(oldpars, 'thick_flat'+str(k), 'thickness')
+                _remove_pd(oldpars, 'thick_inter'+str(k), 'interface')
+            # remove extra shells
+            for k in range(int(pars['n_shells']), 11):
+                oldpars.pop('sld_flat'+str(k), 0)
+                oldpars.pop('thick_flat'+str(k), 0)
+                oldpars.pop('thick_inter'+str(k), 0)
+                oldpars.pop('func_inter'+str(k), 0)
+                oldpars.pop('nu_inter'+str(k), 0)
         elif name == 'core_multi_shell':
             # kill extra shells
             for k in range(5, 11):
@@ -240,7 +251,7 @@ def revert_pars(model_info, pars):
                 _remove_pd(oldpars, 'thick_shell'+str(k), 'thickness')
         elif name == 'core_shell_parallelepiped':
             _remove_pd(oldpars, 'rimA', name)
-        elif name in ['mono_gauss_coil','poly_gauss_coil']:
+        elif name in ['mono_gauss_coil', 'poly_gauss_coil']:
             del oldpars['i_zero']
         elif name == 'onion':
             oldpars.pop('n_shells', None)
@@ -261,6 +272,8 @@ def revert_pars(model_info, pars):
                 for k in "Kab,Kac,Kad".split(','):
                     oldpars.pop(k, None)
 
+    #print("convert from",list(sorted(pars)))
+    #print("convert to",list(sorted(oldpars.items())))
     return oldpars
 
 def constrain_new_to_old(model_info, pars):
@@ -318,7 +331,11 @@ def constrain_new_to_old(model_info, pars):
         elif name == 'onion':
             pars['n_shells'] = math.ceil(pars['n_shells'])
         elif name == 'spherical_sld':
-            for k in range(1, 11):
-                pars['thick_flat%d_pd_n'%k] = 0
-                pars['thick_inter%d_pd_n'%k] = 0
+            pars['n_shells'] = math.ceil(pars['n_shells'])
+            pars['n_steps'] = math.ceil(pars['n_steps'])
+            for k in range(1, 12):
+                pars['shape%d'%k] = math.trunc(pars['shape%d'%k]+0.5)
+            for k in range(2, 12):
+                pars['thickness%d_pd_n'%k] = 0
+                pars['interface%d_pd_n'%k] = 0
 

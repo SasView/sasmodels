@@ -29,7 +29,7 @@ from . import sesans  # type: ignore
 from . import weights
 from . import resolution
 from . import resolution2d
-from .details import build_details
+from .details import build_details, dispersion_mesh
 
 try:
     from typing import Optional, Dict, Tuple
@@ -73,6 +73,56 @@ def call_kernel(calculator, pars, cutoff=0., mono=False):
     #print("values:", values)
     return calculator(call_details, values, cutoff, is_magnetic)
 
+
+def call_ER(model_info, pars):
+    # type: (ModelInfo, ParameterSet) -> float
+    """
+    Call the model ER function using *values*.
+
+    *model_info* is either *model.info* if you have a loaded model,
+    or *kernel.info* if you have a model kernel prepared for evaluation.
+    """
+    if model_info.ER is None:
+        return 1.0
+    else:
+        value, weight = _vol_pars(model_info, pars)
+        individual_radii = model_info.ER(*value)
+        return np.sum(weight*individual_radii) / np.sum(weight)
+
+
+def call_VR(model_info, pars):
+    # type: (ModelInfo, ParameterSet) -> float
+    """
+    Call the model VR function using *pars*.
+
+    *model_info* is either *model.info* if you have a loaded model,
+    or *kernel.info* if you have a model kernel prepared for evaluation.
+    """
+    if model_info.VR is None:
+        return 1.0
+    else:
+        value, weight = _vol_pars(model_info, pars)
+        whole, part = model_info.VR(*value)
+        return np.sum(weight*part)/np.sum(weight*whole)
+
+
+def call_profile(model_info, **pars):
+    # type: (ModelInfo, ...) -> Tuple[np.ndarray, np.ndarray, Tuple[str, str]]
+    """
+    Returns the profile *x, y, (xlabel, ylabel)* representing the model.
+    """
+    args = {}
+    for p in model_info.parameters.kernel_parameters:
+        if p.length > 1:
+            value = np.array([pars.get(p.id+str(j), p.default)
+                              for j in range(1, p.length+1)])
+        else:
+            value = pars.get(p.id, p.default)
+        args[p.id] = value
+    x, y = model_info.profile(**args)
+    return x, y, model_info.profile_axes
+
+
 def get_weights(parameter, values):
     # type: (Parameter, Dict[str, float]) -> Tuple[np.ndarray, np.ndarray]
     """
@@ -94,6 +144,16 @@ def get_weights(parameter, values):
     value, weight = weights.get_weights(
         disperser, npts, width, nsigma, value, limits, relative)
     return value, weight / np.sum(weight)
+
+
+def _vol_pars(model_info, pars):
+    # type: (ModelInfo, ParameterSet) -> Tuple[np.ndarray, np.ndarray]
+    vol_pars = [get_weights(p, pars)
+                for p in model_info.parameters.call_parameters
+                if p.type == 'volume']
+    value, weight = dispersion_mesh(model_info, vol_pars)
+    return value, weight
+
 
 class DataMixin(object):
     """
@@ -142,7 +202,7 @@ class DataMixin(object):
             else:
                 Iq, dIq = None, None
             #self._theory = np.zeros_like(q)
-            q_vectors = [q]            
+            q_vectors = [q]
             q_mono = sesans.make_all_q(data)
         elif self.data_type == 'Iqxy':
             #if not model.info.parameters.has_2d:
@@ -197,7 +257,7 @@ class DataMixin(object):
             else:
                 Iq, dIq = None, None
             if (getattr(data, 'dxl', None) is None
-                or getattr(data, 'dxw', None) is None):
+                    or getattr(data, 'dxw', None) is None):
                 raise ValueError("oriented sample with 1D data needs slit resolution")
 
             res = resolution2d.Slit2D(data.x[index],
@@ -238,18 +298,22 @@ class DataMixin(object):
         # type: (ParameterSet, float) -> np.ndarray
         if self._kernel is None:
             self._kernel = self._model.make_kernel(self._kernel_inputs)
-            self._kernel_mono = (self._model.make_kernel(self._kernel_mono_inputs)
-                                 if self._kernel_mono_inputs else None)
+            self._kernel_mono = (
+                self._model.make_kernel(self._kernel_mono_inputs)
+                if self._kernel_mono_inputs else None)
 
         Iq_calc = call_kernel(self._kernel, pars, cutoff=cutoff)
-        # TODO: may want to plot the raw Iq for other than oriented usans
+        # Storing the calculated Iq values so that they can be plotted.
+        # Only applies to oriented USANS data for now.
+        # TODO: extend plotting of calculate Iq to other measurement types
+        # TODO: refactor so we don't store the result in the model
         self.Iq_calc = None
         if self.data_type == 'sesans':
             Iq_mono = (call_kernel(self._kernel_mono, pars, mono=True)
                        if self._kernel_mono_inputs else None)
             result = sesans.transform(self._data,
-                                   self._kernel_inputs[0], Iq_calc, 
-                                   self._kernel_mono_inputs, Iq_mono)
+                                      self._kernel_inputs[0], Iq_calc,
+                                      self._kernel_mono_inputs, Iq_mono)
         else:
             result = self.resolution.apply(Iq_calc)
             if hasattr(self.resolution, 'nx'):
@@ -257,7 +321,7 @@ class DataMixin(object):
                     self.resolution.qx_calc, self.resolution.qy_calc,
                     np.reshape(Iq_calc, (self.resolution.ny, self.resolution.nx))
                 )
-        return result        
+        return result
 
 
 class DirectModel(DataMixin):
@@ -288,6 +352,13 @@ class DirectModel(DataMixin):
         """
         Iq = self.__call__(**pars)
         self._set_data(Iq, noise=noise)
+
+    def profile(self, **pars):
+        # type: (**float) -> None
+        """
+        Generate a plottable profile.
+        """
+        return call_profile(self.model.info, **pars)
 
 def main():
     # type: () -> None
@@ -327,7 +398,9 @@ def main():
                 for pair in sys.argv[3:]
                 for k, v in [pair.split('=')])
     if call == "ER_VR":
-        print(calculator.ER_VR(**pars))
+        ER = call_ER(model_info, pars)
+        VR = call_VR(model_info, pars)
+        print(ER, VR)
     else:
         Iq = calculator(**pars)
         print(Iq[0])

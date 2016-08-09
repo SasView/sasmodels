@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 sys.path.insert(0, os.path.abspath('..'))
 from sasmodels import generate, core
-from sasmodels.direct_model import DirectModel
+from sasmodels.direct_model import DirectModel, call_profile
 from sasmodels.data import empty_data1D, empty_data2D
 
 try:
@@ -16,6 +16,7 @@ else:
     from matplotlib.axes import Axes
     from sasmodels.kernel import KernelModel
     from sasmodels.modelinfo import ModelInfo
+
 
 def plot_1d(model, opts, ax):
     # type: (KernelModel, Dict[str, Any], Axes) -> None
@@ -54,6 +55,21 @@ def plot_2d(model, opts, ax):
               extent=[-qx_max, qx_max, -qx_max, qx_max], cmap=opts['colormap'])
     ax.set_xlabel(r'$Q_x \/(\AA^{-1})$')
     ax.set_ylabel(r'$Q_y \/(\AA^{-1})$')
+
+def plot_profile_inset(model_info, ax):
+    p = ax.get_position()
+    width, height = 0.4*(p.x1-p.x0), 0.4*(p.y1-p.y0)
+    left, bottom = p.x1-width, p.y1-height
+    inset = plt.gcf().add_axes([left, bottom, width, height])
+    x, y, labels = call_profile(model_info)
+    inset.plot(x, y, '-')
+    inset.locator_params(nbins=4)
+    #inset.set_xlabel(labels[0])
+    #inset.set_ylabel(labels[1])
+    inset.text(0.99, 0.99, "profile",
+               horizontalalignment="right",
+               verticalalignment="top",
+               transform=inset.transAxes)
 
 def figfile(model_info):
     # type: (ModelInfo) -> str
@@ -99,6 +115,9 @@ def make_figure(model_info, opts):
         fig = plt.figure(figsize=aspect)
         ax1d = fig.add_axes([ax_left, ax_bottom, ax_width, ax_height])
         plot_1d(model, opts, ax1d)
+
+    if model_info.profile:
+        plot_profile_inset(model_info, ax1d)
 
     # Save image in model/img
     path = os.path.join('model', 'img', figfile(model_info))

@@ -110,6 +110,9 @@ HIDE_NONE = set()
 HIDE_A = set("N1 Phi1 v1 L1 b1 K12 K13 K14".split())
 HIDE_AB = set("N2 Phi2 v2 L2 b2 K23 K24".split()).union(HIDE_A)
 def hidden(case_num):
+    """
+    Return a list of parameters to hide depending on the multiplicity parameter.
+    """
     if case_num < 2:
         return HIDE_AB
     elif case_num < 5:

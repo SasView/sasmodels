@@ -92,10 +92,10 @@ def Iq(q, second_moment, adsorbed_amount, density_shell, radius,
     #scale by 10^-2 for units conversion to cm^-1
     inten = 6.0e-02 * pi * volfraction * aa**2 * exp(-bb**2) / radius
     return inten
-Iq.vectorized =  True  # Iq accepts an array of q values
+Iq.vectorized = True  # Iq accepts an array of q values
 
 # unit test values taken from SasView 3.1.2
-tests =  [
+tests = [
     [{'scale': 1.0, 'second_moment': 23.0, 'adsorbed_amount': 1.9,
       'density_shell': 0.7, 'radius': 500.0, 'volfraction': 0.14,
       'sld_shell': 1.5, 'sld_solvent': 6.3, 'background': 0.0},

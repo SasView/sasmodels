@@ -1,6 +1,7 @@
 r"""
-For information about polarised and magnetic scattering, see 
-the :doc:`magnetic help <../sasgui/perspectives/fitting/mag_help>` documentation.
+For information about polarised and magnetic scattering, see
+the :doc:`magnetic help <../sasgui/perspectives/fitting/mag_help>`
+documentation.
 
 Definition
 ----------

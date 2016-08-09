@@ -1,218 +1,99 @@
 static double form_volume(
     int n_shells,
-    double radius_core,
-    double thick_inter0,
-    double thick_flat[],
-    double thick_inter[])
+    double thickness[],
+    double interface[])
 {
-    int i;
-    double r = radius_core;
-    r += thick_inter0;
-    for (i=0; i < n_shells; i++) {
-        r += thick_inter[i];
-        r += thick_flat[i];
+    double r = 0.0;
+    for (int i=0; i < n_shells; i++) {
+        r += thickness[i] + interface[i];
     }
     return M_4PI_3*cube(r);
 }
 
+static double blend(int shape, double nu, double z)
+{
+    if (shape==0) {
+        const double num = sas_erf(nu * M_SQRT1_2 * (2.0*z - 1.0));
+        const double denom = 2.0 * sas_erf(nu * M_SQRT1_2);
+        return num/denom + 0.5;
+    } else if (shape==1) {
+        return pow(z, nu);
+    } else if (shape==2) {
+        return 1.0 - pow(1. - z, nu);
+    } else if (shape==3) {
+        return expm1(-nu*z)/expm1(-nu);
+    } else if (shape==4) {
+        return expm1(nu*z)/expm1(nu);
+    } else {
+        return NAN;
+    }
+}
 
-static double sphere_sld_kernel(
+static double f_linear(double q, double r, double contrast, double slope)
+{
+    const double qr = q * r;
+    const double qrsq = qr * qr;
+    const double bes = sph_j1c(qr);
+    double sinqr, cosqr;
+    SINCOS(qr, sinqr, cosqr);
+    const double fun = 3.0*r*(2.0*qr*sinqr - (qrsq-2.0)*cosqr)/(qrsq*qrsq);
+    const double vol = M_4PI_3 * cube(r);
+    return vol*(bes*contrast + fun*slope);
+}
+
+static double Iq(
     double q,
     int n_shells,
-    int npts_inter,
-    double radius_core,
-    double sld_core,
     double sld_solvent,
-    double func_inter_core,
-    double thick_inter_core,
-    double nu_inter_core,
-    double sld_flat[],
-    double thick_flat[],
-    double func_inter[],
-    double thick_inter[],
-    double nu_inter[] ) {
-
-    int i,j,k;
-    int n_s;
-
-    double sld_i,sld_f,dz,bes,fun,f,vol,qr,r,contr,f2;
-    double sign,slope=0.0;
-    double pi;
-
-    double total_thick=0.0;
-
-    //TODO: This part can be further simplified
-    int fun_type[12];
-    double sld[12];
-    double thick_internal[12];
-    double thick[12];
-    double fun_coef[12];
-
-    fun_type[0] = func_inter_core;
-    fun_coef[0] = fabs(nu_inter_core);
-    sld[0] = sld_core;
-    thick[0] = radius_core;
-    thick_internal[0] = thick_inter_core;
-
-    for (i =1; i<=n_shells; i++){
-        sld[i] = sld_flat[i-1];
-        thick_internal[i]= thick_inter[i-1];
-        thick[i] = thick_flat[i-1];
-        fun_type[i] = func_inter[i-1];
-        fun_coef[i] = fabs(nu_inter[i-1]);
-        total_thick += thick[i];
-        total_thick += thick_internal[i]; //doesn't account for core layer
-    }
-
-    sld[n_shells+1] = sld_solvent;
-    thick[n_shells+1] = total_thick/5.0;
-    thick_internal[n_shells+1] = 0.0;
-    fun_coef[n_shells+1] = 0.0;
-    fun_type[n_shells+1] = 0;
-
-    pi = 4.0*atan(1.0);
-    f = 0.0;
-    r = 0.0;
-    vol = 0.0;
-    sld_f = sld_core;
-
-    dz = 0.0;
+    double sld[],
+    double thickness[],
+    double interface[],
+    double shape[],
+    double nu[],
+    int n_steps)
+{
     // iteration for # of shells + core + solvent
-    for (i=0;i<=n_shells+1; i++){
-        // iteration for flat and interface
-        for (j=0;j<2;j++){
-            // iteration for sub_shells in the interface
-            // starts from #1 sub-layer
-            for (n_s=1;n_s<=npts_inter; n_s++){
-                // for solvent, it doesn't have an interface
-                if (i==n_shells+1 && j==1)
-                    break;
-                // for flat layers
-                if (j==0){
-                    dz = thick[i];
-                    sld_i = sld[i];
-                    slope = 0.0;
-                }
-                // for interfacial sub_shells
-                else{
-                    dz = thick_internal[i]/npts_inter;
-                    // find sld_i at the outer boundary of sub-layer #n_s
-                    sld_i = intersldfunc(fun_type[i], npts_inter, n_s,
-                            fun_coef[i], sld[i], sld[i+1]);
-                    // calculate slope
-                    slope= (sld_i -sld_f)/dz;
-                }
-                contr = sld_f-slope*r;
-                // iteration for the left and right boundary of the shells
-                for (k=0; k<2; k++){
-                    // At r=0, the contribution to I is zero, so skip it.
-                    if ( i == 0 && j == 0 && k == 0){
-                        continue;
-                    }
-                    // On the top of slovent there is no interface; skip it.
-                    if (i == n_shells+1 && k == 1){
-                        continue;
-                    }
-                    // At the right side (outer) boundary
-                    if ( k == 1){
-                        sign = 1.0;
-                        r += dz;
-                    }
-                    // At the left side (inner) boundary
-                    else{
-                        sign = -1.0;
-                    }
+    double f=0.0;
+    double r=0.0;
+    for (int shell=0; shell<n_shells; shell++){
+        const double sld_l = sld[shell];
 
-                    qr = q * r;
-                    fun = 0.0;
+        // uniform shell; r=0 => r^3=0 => f=0, so works for core as well.
+        f -= M_4PI_3 * cube(r) * sld_l * sph_j1c(q*r);
+        r += thickness[shell];
+        f += M_4PI_3 * cube(r) * sld_l * sph_j1c(q*r);
 
-                    if(qr == 0.0){
-                        bes = sign * 1.0;
-                    }
-                    else{
-                        // for flat sub-layer
-                        //TODO: Single precision calculation fails here
-                        bes = sign *  sph_j1c(qr);
-                        if (fabs(slope) > 0.0 ){
-                            const double qrsq = qr*qr;
-                            double sinqr, cosqr;
-                            SINCOS(qr, sinqr, cosqr);
-                            fun = sign * 3.0 * r *
-                            (2.0*qr*sinqr - (qrsq-2.0)*cosqr)/(qrsq * qrsq);
-                            // In the onion model Jae-He's formula is rederived
-                            // and gives following:
-                            //fun = 3.0 * sign * r *
-                            //(2.0*cosqr + qr*sinqr)/(qrsq*qrsq);
-                            //But this seems not to be working in this case...
-                        }
-                    }
+        // iterate over sub_shells in the interface
+        const double dr = interface[shell]/n_steps;
+        const double delta = (shell==n_shells-1 ? sld_solvent : sld[shell+1]) - sld_l;
+        const double nu_shell = fmax(fabs(nu[shell]), 1.e-14);
+        const int shape_shell = (int)(shape[shell]);
 
-                    // update total volume
-                    vol = M_4PI_3 * cube(r);
-                    f += vol * (bes * contr + fun * slope);
-                }
-                sld_f = sld_i;
-                // no sub-layer iteration (n_s loop) for the flat layer
-                if (j==0)
-                    break;
-            }
+        // if there is no interface the equations don't work
+        if (dr == 0.) continue;
+
+        double sld_in = sld_l;
+        for (int step=1; step <= n_steps; step++) {
+            // find sld_i at the outer boundary of sub-shell step
+            //const double z = (double)step/(double)n_steps;
+            const double z = (double)step/(double)n_steps;
+            const double fraction = blend(shape_shell, nu_shell, z);
+            const double sld_out = fraction*delta + sld_l;
+            // calculate slope
+            const double slope = (sld_out - sld_in)/dr;
+            const double contrast = sld_in - slope*r;
+
+            // iteration for the left and right boundary of the shells
+            f -= f_linear(q, r, contrast, slope);
+            r += dr;
+            f += f_linear(q, r, contrast, slope);
+            sld_in = sld_out;
         }
     }
+    // add in solvent effect
+    f -= M_4PI_3 * cube(r) * sld_solvent * sph_j1c(q*r);
 
-    f2 = f * f * 1.0e-4;
-    return (f2);
+    const double f2 = f * f * 1.0e-4;
+    return f2;
 }
-
-
-/**
- * Function to evaluate 1D SphereSLD function
- * @param q: q-value
- * @return: function value
- */
-static double Iq(double q,
-    int n_shells,
-    int npts_inter,
-    double radius_core,
-    double sld_core,
-    double sld_solvent,
-    double func_inter0,
-    double thick_inter0,
-    double nu_inter0,
-    double sld_flat[],
-    double thick_flat[],
-    double func_inter[],
-    double thick_inter[],
-    double nu_inter[] ) {
-
-    double intensity = sphere_sld_kernel(q, n_shells, npts_inter, radius_core,
-                sld_core, sld_solvent, func_inter0, thick_inter0, nu_inter0,
-                sld_flat, thick_flat, func_inter, thick_inter, nu_inter);
-
-    return intensity;
-}
-
-/**
- * Function to evaluate 2D SphereSLD function
- * @param q_x: value of Q along x
- * @param q_y: value of Q along y
- * @return: function value
- */
-
-/*static double Iqxy(double qx, double qy,
-    int n_shells,
-    int npts_inter,
-    double radius_core
-    double sld_core,
-    double sld_solvent,
-    double sld_flat[],
-    double thick_flat[],
-    double func_inter[],
-    double thick_inter[],
-    double nu_inter[],
-    ) {
-
-    double q = sqrt(qx*qx + qy*qy);
-    return Iq(q, n_shells, npts_inter, radius_core, sld_core, sld_solvent,
-    sld_flat[], thick_flat[], func_inter[], thick_inter[], nu_inter[])
-}*/
 

@@ -1,34 +1,44 @@
 #mono_gauss_coil model
 #conversion of DebyeModel.py
 #converted by Steve King, Mar 2016
-
-
-
 r"""
-This Debye Gaussian coil model strictly describes the scattering from *monodisperse* polymer chains in theta solvents or polymer melts, conditions under which the distances between segments follow a Gaussian distribution. Provided the number of segments is large (ie, high molecular weight polymers) the single-chain form factor P(Q) is that described by Debye (1947).
+This Debye Gaussian coil model strictly describes the scattering from
+*monodisperse* polymer chains in theta solvents or polymer melts, conditions
+under which the distances between segments follow a Gaussian distribution.
+Provided the number of segments is large (ie, high molecular weight polymers)
+the single-chain form factor P(Q) is that described by Debye (1947).
 
-To describe the scattering from *polydisperse* polymer chains see the :ref:`poly_gauss_coil <poly-gauss-coil>` model.
+To describe the scattering from *polydisperse* polymer chains see the
+:ref:`poly-gauss-coil` model.
 
 Definition
 ----------
 
-     *I(q)* = *scale* |cdot| *I* \ :sub:`0` |cdot| *P(q)* + *background*
+.. math::
+
+     I(q) = \text{scale} \cdot I_0 \cdot P(q) + \text{background}
 
 where
 
-     *I*\ :sub:`0` = |phi|\ :sub:`poly` |cdot| *V* |cdot| (|rho|\ :sub:`poly` - |rho|\ :sub:`solv`)\  :sup:`2`
+.. math::
 
-     *P(q)* = 2 [exp(-Z) + Z - 1] / Z \ :sup:`2`
+     I_0 &= \phi_\text{poly} \cdot V
+            \cdot (\rho_\text{poly} - \rho_\text{solv})^2
 
-     *Z* = (*q R* \ :sub:`g`)\ :sup:`2`
+     P(q) &= 2 [\exp(-Z) + Z - 1] / Z^2
 
-and
+     Z &= (q R_g)^2
 
-     *V* = *M* / (*N*\ :sub:`A` |delta|)
+     V &= M / (N_A \delta)
 
-Here, |phi|\ :sub:`poly` is the volume fraction of polymer, *V* is the volume of a polymer coil, *M* is the molecular weight of the polymer, *N*\ :sub:`A` is Avogadro's Number, |delta| is the bulk density of the polymer, |rho|\ :sub:`poly` is the sld of the polymer, |rho|\ :sub:`solv` is the sld of the solvent, and *R*\ :sub:`g` is the radius of gyration of the polymer coil.
+Here, $\phi_\text{poly}$ is the volume fraction of polymer, $V$ is the
+volume of a polymer coil, *M* is the molecular weight of the polymer,
+$N_A$ is Avogadro's Number, $\delta$ is the bulk density of the polymer,
+$\rho_\text{poly}$ is the sld of the polymer, $\rho\text{solv}$ is the
+sld of the solvent, and $R_g$ is the radius of gyration of the polymer coil.
 
-The 2D scattering intensity is calculated in the same way as the 1D, but where the *q* vector is redefined as
+The 2D scattering intensity is calculated in the same way as the 1D,
+but where the *q* vector is redefined as
 
 .. math::
 
@@ -39,25 +49,30 @@ References
 
 P Debye, *J. Phys. Colloid. Chem.*, 51 (1947) 18.
 
-R J Roe, *Methods of X-Ray and Neutron Scattering in Polymer Science*, Oxford University Press, New York (2000).
+R J Roe, *Methods of X-Ray and Neutron Scattering in Polymer Science*,
+Oxford University Press, New York (2000).
 
 http://www.ncnr.nist.gov/staff/hammouda/distance_learning/chapter_28.pdf
 """
 
 from numpy import inf, exp, errstate
 
-name =  "mono_gauss_coil"
-title =  "Scattering from monodisperse polymer coils"
+name = "mono_gauss_coil"
+title = "Scattering from monodisperse polymer coils"
 
-description =  """
+description = """
     Evaluates the scattering from 
     monodisperse polymer chains.
     """
-category =  "shape-independent"
+category = "shape-independent"
 
-#             ["name", "units", default, [lower, upper], "type", "description"],
-parameters =  [["i_zero", "1/cm", 70.0, [0.0, inf], "", "Intensity at q=0"],
-               ["radius_gyration", "Ang", 75.0, [0.0, inf], "", "Radius of gyration"]]
+# pylint: disable=bad-whitespace, line-too-long
+#   ["name", "units", default, [lower, upper], "type", "description"],
+parameters = [
+    ["i_zero", "1/cm", 70.0, [0.0, inf], "", "Intensity at q=0"],
+    ["radius_gyration", "Ang", 75.0, [0.0, inf], "", "Radius of gyration"],
+    ]
+# pylint: enable=bad-whitespace, line-too-long
 
 # NB: Scale and Background are implicit parameters on every model
 def Iq(q, i_zero, radius_gyration):
@@ -70,13 +85,10 @@ def Iq(q, i_zero, radius_gyration):
     return inten
 Iq.vectorized = True # Iq accepts an array of q values
 
-demo =  dict(scale = 1.0,
-            i_zero = 70.0,
-            radius_gyration = 75.0,
-            background = 0.0)
+demo = dict(scale=1.0, i_zero=70.0, radius_gyration=75.0, background=0.0)
 
 # these unit test values taken from SasView 3.1.2
-tests =  [
+tests = [
     [{'scale': 1.0, 'i_zero': 70.0, 'radius_gyration': 75.0, 'background': 0.0},
      [0.0106939, 0.469418], [57.1241, 0.112859]],
     ]

@@ -45,8 +45,8 @@ COMMON_PARAMETERS = [
     ("background", "1/cm", 1e-3, (0.0, np.inf), "", "Source background"),
 ]
 assert (len(COMMON_PARAMETERS) == 2
-        and COMMON_PARAMETERS[0][0]=="scale"
-        and COMMON_PARAMETERS[1][0]=="background"), "don't change common parameters"
+        and COMMON_PARAMETERS[0][0] == "scale"
+        and COMMON_PARAMETERS[1][0] == "background"), "don't change common parameters"
 
 
 def make_parameter_table(pars):
@@ -100,11 +100,9 @@ def parse_parameter(name, units='', default=np.NaN,
                 low, high = user_limits
                 limits = (float(low), float(high))
             except Exception:
-                print("user_limits",user_limits)
-                raise ValueError("invalid limits for %s"%name)
-            else:
-                if low >= high:
-                    raise ValueError("require lower limit < upper limit")
+                raise ValueError("invalid limits for %s: %r"%(name,user_limits))
+            if low >= high:
+                raise ValueError("require lower limit < upper limit")
 
     # Process default value as float, making sure it is in range
     if not isinstance(default, (int, float)):
@@ -132,7 +130,7 @@ def parse_parameter(name, units='', default=np.NaN,
         pid, ref = name, None
 
     # automatically identify sld types
-    if ptype== '' and (pid.startswith('sld') or pid.endswith('sld')):
+    if ptype == '' and (pid.startswith('sld') or pid.endswith('sld')):
         ptype = 'sld'
 
     # Check if using a vector definition, name[k], as the parameter name
@@ -183,7 +181,7 @@ def expand_pars(partable, pars):
         result = partable.defaults.copy()
         scalars = dict((name, value) for name, value in pars.items()
                        if name not in lookup or lookup[name].length == 1)
-        vectors = dict((name,value) for name,value in pars.items()
+        vectors = dict((name, value) for name, value in pars.items()
                        if name in lookup and lookup[name].length > 1)
         #print("lookup", lookup)
         #print("scalars", scalars)
@@ -200,7 +198,7 @@ def expand_pars(partable, pars):
                 else:
                     # supoprt for the form
                     #    dict(thickness=[20,10,3])
-                    for (k,v) in enumerate(value):
+                    for (k, v) in enumerate(value):
                         scalars[name+str(k+1)] = v
         result.update(scalars)
         #print("expanded", result)
@@ -276,9 +274,12 @@ class Parameter(object):
     * *polydisperse* is true if the parameter accepts a polydispersity
 
     * *relative_pd* is true if that polydispersity is a portion of the
-    value (so a 10% length dipsersity would use a polydispersity value of 0.1)
-    rather than absolute dispersisity (such as an angle plus or minus
-    15 degrees).
+      value (so a 10% length dipsersity would use a polydispersity value
+      of 0.1) rather than absolute dispersisity (such as an angle plus or
+      minus 15 degrees).
+
+    *choices* is the option names for a drop down list of options, as for
+    example, might be used to set the value of a shape parameter.
 
     These values are set by :func:`make_parameter_table` and
     :func:`parse_parameter` therein.
@@ -323,11 +324,11 @@ class Parameter(object):
 
     def as_function_argument(self):
         # type: () -> str
-        """
+        r"""
         Declare the variable as a function argument.
 
         For example, the parameter thickness with length 3 will
-        return "double *thickness", with no spaces before and
+        return "double \*thickness", with no spaces before and
         no comma afterward.
         """
         if self.length == 1:
@@ -368,34 +369,34 @@ class ParameterTable(object):
     used. The following information is needed to set up the kernel functions:
 
     * *kernel_parameters* is the list of parameters in the kernel parameter
-    table, with vector parameter p declared as p[].
+      table, with vector parameter p declared as p[].
 
     * *iq_parameters* is the list of parameters to the Iq(q, ...) function,
-    with vector parameter p sent as p[].
+      with vector parameter p sent as p[].
 
     * *iqxy_parameters* is the list of parameters to the Iqxy(qx, qy, ...)
-    function, with vector parameter p sent as p[].
+      function, with vector parameter p sent as p[].
 
     * *form_volume_parameters* is the list of parameters to the form_volume(...)
-    function, with vector parameter p sent as p[].
+      function, with vector parameter p sent as p[].
 
     Problem details, which sets up the polydispersity loops, requires the
     following:
 
     * *theta_offset* is the offset of the theta parameter in the kernel parameter
-    table, with vector parameters counted as n individual parameters
-    p1, p2, ..., or offset is -1 if there is no theta parameter.
+      table, with vector parameters counted as n individual parameters
+      p1, p2, ..., or offset is -1 if there is no theta parameter.
 
     * *max_pd* is the maximum number of polydisperse parameters, with vector
-    parameters counted as n individual parameters p1, p2, ...  Note that
-    this number is limited to sasmodels.modelinfo.MAX_PD.
+      parameters counted as n individual parameters p1, p2, ...  Note that
+      this number is limited to sasmodels.modelinfo.MAX_PD.
 
     * *npars* is the total number of parameters to the kernel, with vector
-    parameters counted as n individual parameters p1, p2, ...
+      parameters counted as n individual parameters p1, p2, ...
 
     * *call_parameters* is the complete list of parameters to the kernel,
-    including scale and background, with vector parameters recorded as
-    individual parameters p1, p2, ...
+      including scale and background, with vector parameters recorded as
+      individual parameters p1, p2, ...
 
     * *active_1d* is the set of names that may be polydisperse for 1d data
 
@@ -404,7 +405,6 @@ class ParameterTable(object):
     User parameters are the set of parameters visible to the user, including
     the scale and background parameters that the kernel does not see.  User
     parameters don't use vector notation, and instead use p1, p2, ...
-
     """
     # scale and background are implicit parameters
     COMMON = [Parameter(*p) for p in COMMON_PARAMETERS]
@@ -521,6 +521,7 @@ class ParameterTable(object):
                                    p.limits, p.type, p.description)
                     pk.polydisperse = p.polydisperse
                     pk.relative_pd = p.relative_pd
+                    pk.choices = p.choices
                     full_list.append(pk)
 
         # Add the magnetic parameters to the end of the call parameter list.
@@ -827,12 +828,12 @@ class ModelInfo(object):
     #: Location of the model description in the documentation.  This takes the
     #: form of "section" or "section:subsection".  So for example,
     #: :ref:`porod` uses *category="shape-independent"* so it is in the
-    #: :ref:`Shape-independent` section whereas
-    #: :ref:`capped_cylinder` uses: *category="shape:cylinder"*, which puts
+    #: :ref:`shape-independent` section whereas
+    #: :ref:`capped-cylinder` uses: *category="shape:cylinder"*, which puts
     #: it in the :ref:`shape-cylinder` section.
     category = None         # type: Optional[str]
     #: True if the model can be computed accurately with single precision.
-    #: This is True by default, but models such as :ref:`bcc_paracrystal` set
+    #: This is True by default, but models such as :ref:`bcc-paracrystal` set
     #: it to False because they require double precision calculations.
     single = None           # type: bool
     #: True if the model is a structure factor used to model the interaction

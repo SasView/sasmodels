@@ -13,9 +13,16 @@
 #  else
 #    define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
 #  endif
+   // Intel CPU on Mac gives strange values for erf(); also on the tested
+   // platforms (intel, nvidia, amd), the cephes erf() is significantly
+   // faster than that available in the native OpenCL.
+   #define NEED_ERF
    // OpenCL only has type generic math
-   #define erff erf
-   #define erfcf erfc
+   #define expf exp
+   #ifndef NEED_ERF
+   #  define erff erf
+   #  define erfcf erfc
+   #endif
 #else // !USE_OPENCL
 // Use SAS_DOUBLE to force the use of double even for float kernels
 #  define SAS_DOUBLE dou ## ble
@@ -121,6 +128,9 @@
 #endif
 #ifndef M_E
 #  define M_E 2.718281828459045091
+#endif
+#ifndef M_SQRT1_2
+#  define M_SQRT1_2 0.70710678118654746
 #endif
 
 // Non-standard function library
