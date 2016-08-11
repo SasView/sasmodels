@@ -362,18 +362,6 @@ CONVERSION_TABLE = {
             "radius_effective_pd_n": "effect_radius_pd_n"
         }
     ],
-    "hardsphere2": [
-        "HardsphereStructure",
-        {}
-    ],
-    "hardsphere3": [
-        "HardsphereStructure",
-        {}
-    ],
-    "hardsphere4": [
-        "HardsphereStructure",
-        {}
-    ],
     "hayter_msa": [
         "HayterMSAStructure",
         {
