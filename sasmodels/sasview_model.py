@@ -57,7 +57,7 @@ def _register_old_models():
     from sasmodels.conversion_table import CONVERSION_TABLE
     for new_name, conversion in CONVERSION_TABLE.items():
         old_name = conversion[0]
-        module_attrs = { old_name: find_model(new_name) }
+        module_attrs = {old_name: find_model(new_name)}
         ConstructedModule = type(old_name, (), module_attrs)
         old_path = 'sas.models.' + old_name
         setattr(sas.models, old_path, ConstructedModule)
