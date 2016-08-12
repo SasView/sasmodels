@@ -43,7 +43,5 @@ Our so-called 2D scattering intensity functions provide $P(Q,\phi)$ for an orien
 $q$ vector in the plane of the detector. We define the angle $\phi$ as the angle between the $q$ vector and the horizontal
 ($x$) axis of the plane of the detector.
 
-For information about polarised and magnetic scattering, see here_.
+For information about polarised and magnetic scattering, see :ref:`magnetism`.
 
-
-.. _here: polar_mag_help.html

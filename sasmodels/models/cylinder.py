@@ -2,6 +2,8 @@
 # Note: model title and parameter table are inserted automatically
 r"""
 The form factor is normalized by the particle volume V = \piR^2L.
+For information about polarised and magnetic scattering, see
+the :ref:`magnetism` documentation.
 
 Definition
 ----------
