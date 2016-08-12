@@ -18,14 +18,6 @@ from os.path import basename, splitext
 
 import numpy as np  # type: ignore
 
-# Monkey patch sas.sascalc.fit as sas.models so that sas.models.pluginmodel
-# is available to the plugin modules.
-import sys
-import sas
-import sas.sascalc.fit
-sys.modules['sas.models'] = sas.sascalc.fit
-sas.models = sas.sascalc.fit
-
 from . import core
 from . import custom
 from . import generate
@@ -44,6 +36,32 @@ try:
     SasviewModelType = Callable[[int], "SasviewModel"]
 except ImportError:
     pass
+
+SUPPORT_OLD_STYLE_PLUGINS = True
+
+def _register_old_models():
+    # type: () -> None
+    """
+    Place the new models into sasview under the old names.
+
+    Monkey patch sas.sascalc.fit as sas.models so that sas.models.pluginmodel
+    is available to the plugin modules.
+    """
+    import sys
+    import sas
+    import sas.sascalc.fit
+    sys.modules['sas.models'] = sas.sascalc.fit
+    sas.models = sas.sascalc.fit
+
+    import sas.models
+    from sasmodels.conversion_table import CONVERSION_TABLE
+    for new_name, conversion in CONVERSION_TABLE.items():
+        old_name = conversion[0]
+        module_attrs = {old_name: find_model(new_name)}
+        ConstructedModule = type(old_name, (), module_attrs)
+        old_path = 'sas.models.' + old_name
+        setattr(sas.models, old_path, ConstructedModule)
+        sys.modules[old_path] = ConstructedModule
 
 
 # TODO: separate x_axis_label from multiplicity info
@@ -85,6 +103,9 @@ def load_standard_models():
             models.append(MODELS[name])
         except Exception:
             logging.error(traceback.format_exc())
+    if SUPPORT_OLD_STYLE_PLUGINS:
+        _register_old_models()
+
     return models
 
 
@@ -674,6 +695,22 @@ def test_model_list():
         except:
             annotate_exception("when loading "+name)
             raise
+
+def test_old_name():
+    # type: () -> None
+    """
+    Load and run cylinder model from sas.models.CylinderModel
+    """
+    if not SUPPORT_OLD_STYLE_PLUGINS:
+        return
+    try:
+        # if sasview is not on the path then don't try to test it
+        import sas
+    except ImportError:
+        return
+    load_standard_models()
+    from sas.models.CylinderModel import CylinderModel
+    CylinderModel().evalDistribution([0.1, 0.1])
 
 if __name__ == "__main__":
     print("cylinder(0.1,0.1)=%g"%test_model())
