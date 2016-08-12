@@ -3,7 +3,7 @@
 r"""
 The form factor is normalized by the particle volume V = \piR^2L.
 For information about polarised and magnetic scattering, see
-the :ref:`magnetism` documentation.
+the :doc:`magnetic help <../sasgui/perspectives/fitting/mag_help>` documentation.
 
 Definition
 ----------

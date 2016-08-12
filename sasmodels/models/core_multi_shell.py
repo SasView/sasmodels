@@ -25,7 +25,7 @@ orientation of the $q$ vector which is defined as
           effective radius for $S(Q)$ when $P(Q)*S(Q)$ is applied.
 
 For information about polarised and magnetic scattering, see
-the :ref:`magnetism` documentation.
+the :doc:`magnetic help <../sasgui/perspectives/fitting/mag_help>` documentation.
 
 Our model uses the form factor calculations implemented in a c-library provided
 by the NIST Center for Neutron Research (Kline, 2006).

@@ -7,5 +7,5 @@ SAS Model Reference
    :maxdepth: 4
 
    intro.rst
-   magnetism.rst
    refs.rst
+   magnetism/magnetism.rst
