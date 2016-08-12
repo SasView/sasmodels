@@ -3,7 +3,7 @@
 Polarisation/Magnetic Scattering
 =======================================================
 
-Magnetic scattering is implemented in seven (2D) models
+Magnetic scattering is implemented in five (2D) models
 
 *  :ref:`sphere`
 *  :ref:`core-shell-sphere`
