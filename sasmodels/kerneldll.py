@@ -379,12 +379,12 @@ class DllKernel(Kernel):
             self.result.ctypes.data,   # results
             self.real(cutoff), # cutoff
         ]
-        #print("kerneldll values", values)
+        #print("Calling DLL")
+        #call_details.show(values)
         step = 100
-        for start in range(0, call_details.pd_prod, step):
-            stop = min(start+step, call_details.pd_prod)
+        for start in range(0, call_details.num_eval, step):
+            stop = min(start + step, call_details.num_eval)
             args[1:3] = [start, stop]
-            #print("calling DLL")
             kernel(*args) # type: ignore
 
         #print("returned",self.q_input.q, self.result)

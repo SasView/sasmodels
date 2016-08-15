@@ -70,11 +70,11 @@ class CallDetails(object):
         #   pd_length[max_pd]  length of each pd param
         #   pd_offset[max_pd]  offset of pd values in parameter array
         #   pd_stride[max_pd]  index of pd value in loop = n//stride[k]
-        #   pd_prod            total length of pd loop
-        #   pd_sum             total length of the weight vector
+        #   num_eval           total length of pd loop
+        #   num_weights        total length of the weight vector
         #   num_active         number of pd params
         #   theta_par          parameter number for theta parameter
-        self.buffer = np.zeros(4*max_pd + 4, 'i4')
+        self.buffer = np.empty(4*max_pd + 4, 'i4')
 
         # generate views on different parts of the array
         self._pd_par = self.buffer[0 * max_pd:1 * max_pd]
@@ -84,6 +84,17 @@ class CallDetails(object):
 
         # theta_par is fixed
         self.theta_par = parameters.theta_offset
+
+        # offset and length are for all parameters, not just pd parameters
+        # They are not sent to the kernel function, though they could be.
+        # They are used by the composite models (sum and product) to
+        # figure out offsets into the combined value list.
+        self.offset = None  # type: np.ndarray
+        self.length = None  # type: np.ndarray
+
+        # keep hold of ifno show() so we can break a values vector
+        # into the individual components
+        self.info = model_info
 
     @property
     def pd_par(self):
@@ -106,22 +117,22 @@ class CallDetails(object):
         return self._pd_stride
 
     @property
-    def pd_prod(self):
+    def num_eval(self):
         """Total size of the pd mesh"""
         return self.buffer[-4]
 
-    @pd_prod.setter
-    def pd_prod(self, v):
+    @num_eval.setter
+    def num_eval(self, v):
         """Total size of the pd mesh"""
         self.buffer[-4] = v
 
     @property
-    def pd_sum(self):
+    def num_weights(self):
         """Total length of all the weight vectors"""
         return self.buffer[-3]
 
-    @pd_sum.setter
-    def pd_sum(self, v):
+    @num_weights.setter
+    def num_weights(self, v):
         """Total length of all the weight vectors"""
         self.buffer[-3] = v
 
@@ -145,72 +156,112 @@ class CallDetails(object):
         """Location of the theta parameter in the parameter vector"""
         self.buffer[-1] = v
 
-    def show(self):
+    def show(self, values=None):
         """Print the polydispersity call details to the console"""
-        print("num_active", self.num_active)
-        print("pd_prod", self.pd_prod)
-        print("pd_sum", self.pd_sum)
-        print("theta par", self.theta_par)
-        print("pd_par", self.pd_par)
-        print("pd_length", self.pd_length)
-        print("pd_offset", self.pd_offset)
-        print("pd_stride", self.pd_stride)
+        print("===== %s details ===="%self.info.name)
+        print("num_active:%d  num_eval:%d  num_weights:%d  theta=%d"
+              % (self.num_active, self.num_eval, self.num_weights, self.theta_par))
+        if self.pd_par.size:
+            print("pd_par", self.pd_par)
+            print("pd_length", self.pd_length)
+            print("pd_offset", self.pd_offset)
+            print("pd_stride", self.pd_stride)
+        if values is not None:
+            nvalues = self.info.parameters.nvalues
+            print("scale, background", values[:2])
+            print("val", values[2:nvalues])
+            print("pd", values[nvalues:nvalues+self.num_weights])
+            print("wt", values[nvalues+self.num_weights:nvalues+2*self.num_weights])
+            print("offsets", self.offset)
 
 
-def mono_details(model_info):
-    # type: (ModelInfo) -> CallDetails
-    """
-    Return a :class:`CallDetails` object for a monodisperse calculation
-    of the model defined by *model_info*.
-    """
-    call_details = CallDetails(model_info)
-    call_details.pd_prod = 1
-    call_details.pd_sum = model_info.parameters.nvalues
-    call_details.pd_par[:] = np.arange(0, model_info.parameters.max_pd)
-    call_details.pd_length[:] = 1
-    call_details.pd_offset[:] = np.arange(0, model_info.parameters.max_pd)
-    call_details.pd_stride[:] = 1
-    return call_details
-
-
-def poly_details(model_info, weights):
+def make_details(model_info, length, offset, num_weights):
     """
     Return a :class:`CallDetails` object for a polydisperse calculation
-    of the model defined by *model_info* for the given set of *weights*.
-    *weights* is a list of vectors, one for each parameter.  Monodisperse
-    parameters should provide a weight vector containing [1.0].
+    of the model defined by *model_info*.  Polydispersity is defined by
+    the *length* of the polydispersity distribution for each parameter
+    and the *offset* of the distribution in the polydispersity array.
+    Monodisperse parameters should use a polydispersity length of one
+    with weight 1.0. *num_weights* is the total length of the polydispersity
+    array.
     """
-    # type: (ModelInfo) -> CallDetails
-    #print("weights",weights)
-    #weights = weights[2:] # Skip scale and background
+    # type: (ModelInfo, np.ndarray, np.ndarray, int) -> CallDetails
+    #pars = model_info.parameters.call_parameters[2:model_info.parameters.npars+2]
+    #print(", ".join(str(i)+"-"+p.id for i,p in enumerate(pars)))
+    #print("len:",length)
+    #print("off:",offset)
 
-    # Decreasing list of polydispersity lengths
-    #print([p.id for p in model_info.parameters.call_parameters])
-    pd_length = np.array([len(w)
-                          for w in weights[2:2+model_info.parameters.npars]])
-    num_active = np.sum(pd_length > 1)
+    # Check that we arn't using too many polydispersity loops
+    num_active = np.sum(length > 1)
     max_pd = model_info.parameters.max_pd
     if num_active > max_pd:
         raise ValueError("Too many polydisperse parameters")
 
-    pd_offset = np.cumsum(np.hstack((0, pd_length)))
-    #print(", ".join(str(i)+"-"+p.id for i,p in enumerate(model_info.parameters.call_parameters)))
-    #print("len:",pd_length)
-    #print("off:",pd_offset)
+    # Decreasing list of polydpersity lengths
     # Note: the reversing view, x[::-1], does not require a copy
-    idx = np.argsort(pd_length)[::-1][:max_pd]
-    pd_stride = np.cumprod(np.hstack((1, pd_length[idx])))
+    idx = np.argsort(length)[::-1][:max_pd]
+    pd_stride = np.cumprod(np.hstack((1, length[idx])))
 
     call_details = CallDetails(model_info)
     call_details.pd_par[:max_pd] = idx
-    call_details.pd_length[:max_pd] = pd_length[idx]
-    call_details.pd_offset[:max_pd] = pd_offset[idx]
+    call_details.pd_length[:max_pd] = length[idx]
+    call_details.pd_offset[:max_pd] = offset[idx]
     call_details.pd_stride[:max_pd] = pd_stride[:-1]
-    call_details.pd_prod = pd_stride[-1]
-    call_details.pd_sum = sum(len(w) for w in weights)
+    call_details.num_eval = pd_stride[-1]
+    call_details.num_weights = num_weights
     call_details.num_active = num_active
+    call_details.length = length
+    call_details.offset = offset
     #call_details.show()
     return call_details
+
+
+ZEROS = tuple([0.]*31)
+def make_kernel_args(kernel, pairs):
+    # type: (Kernel, Tuple[List[np.ndarray], List[np.ndarray]]) -> Tuple[CallDetails, np.ndarray, bool]
+    """
+    Converts (value, weight) pairs into parameters for the kernel call.
+
+    Returns a CallDetails object indicating the polydispersity, a data object
+    containing the different values, and the magnetic flag indicating whether
+    any magnetic magnitudes are non-zero. Magnetic vectors (M0, phi, theta) are
+    converted to rectangular coordinates (mx, my, mz).
+    """
+    npars = kernel.info.parameters.npars
+    nvalues = kernel.info.parameters.nvalues
+    scalars = [v[0][0] for v in pairs]
+    values, weights = zip(*pairs[2:npars+2]) if npars else ((),())
+    length = np.array([len(w) for w in weights])
+    offset = np.cumsum(np.hstack((0, length)))
+    call_details = make_details(kernel.info, length, offset[:-1], offset[-1])
+    # Pad value array to a 32 value boundaryd
+    data_len = nvalues + 2*sum(len(v) for v in values)
+    extra = (32 - data_len%32)%32
+    data = np.hstack((scalars,) + values + weights + ZEROS[:extra])
+    data = data.astype(kernel.dtype)
+    is_magnetic = convert_magnetism(kernel.info.parameters, data)
+    #call_details.show()
+    return call_details, data, is_magnetic
+
+
+def convert_magnetism(parameters, values):
+    """
+    Convert magnetism values from polar to rectangular coordinates.
+
+    Returns True if any magnetism is present.
+    """
+    mag = values[parameters.nvalues-3*parameters.nmagnetic:parameters.nvalues]
+    mag = mag.reshape(-1, 3)
+    scale = mag[:,0]
+    if np.any(scale):
+        theta, phi = mag[:, 1]*pi/180., mag[:, 2]*pi/180.
+        cos_theta = cos(theta)
+        mag[:, 0] = scale*cos_theta*cos(phi)  # mx
+        mag[:, 1] = scale*sin(theta)  # my
+        mag[:, 2] = -scale*cos_theta*sin(phi)  # mz
+        return True
+    else:
+        return False
 
 
 def dispersion_mesh(model_info, pars):
@@ -238,54 +289,3 @@ def dispersion_mesh(model_info, pars):
             offset += n
         value = pars
     return value, weight
-
-
-
-def build_details(kernel, pairs):
-    # type: (Kernel, Tuple[List[np.ndarray], List[np.ndarray]]) -> Tuple[CallDetails, np.ndarray, bool]
-    """
-    Converts (value, weight) pairs into parameters for the kernel call.
-
-    Returns a CallDetails object indicating the polydispersity, a data object
-    containing the different values, and the magnetic flag indicating whether
-    any magnetic magnitudes are non-zero. Magnetic vectors (M0, phi, theta) are
-    converted to rectangular coordinates (mx, my, mz).
-    """
-    values, weights = zip(*pairs)
-    scalars = [v[0] for v in values]
-    if all(len(w) == 1 for w in weights):
-        call_details = mono_details(kernel.info)
-        # Pad value array to a 32 value boundary
-        data_len = 3*len(scalars)
-        extra = ((data_len+31)//32)*32 - data_len
-        data = np.array(scalars+scalars+[1.]*len(scalars)+[0.]*extra,
-                        dtype=kernel.dtype)
-    else:
-        call_details = poly_details(kernel.info, weights)
-        # Pad value array to a 32 value boundary
-        data_len = len(scalars) + 2*sum(len(v) for v in values)
-        extra = ((data_len+31)//32)*32 - data_len
-        data = np.hstack(scalars+list(values)+list(weights)+[0.]*extra)
-        data = data.astype(kernel.dtype)
-    is_magnetic = convert_magnetism(kernel.info.parameters, data)
-    #call_details.show()
-    return call_details, data, is_magnetic
-
-def convert_magnetism(parameters, values):
-    """
-    Convert magnetism values from polar to rectangular coordinates.
-
-    Returns True if any magnetism is present.
-    """
-    mag = values[parameters.nvalues-3*parameters.nmagnetic:parameters.nvalues]
-    mag = mag.reshape(-1, 3)
-    scale = mag[:,0]
-    if np.any(scale):
-        theta, phi = mag[:, 1]*pi/180., mag[:, 2]*pi/180.
-        cos_theta = cos(theta)
-        mag[:, 0] = scale*cos_theta*cos(phi)  # mx
-        mag[:, 1] = scale*sin(theta)  # my
-        mag[:, 2] = -scale*cos_theta*sin(phi)  # mz
-        return True
-    else:
-        return False

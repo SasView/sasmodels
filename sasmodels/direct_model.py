@@ -29,7 +29,7 @@ from . import sesans  # type: ignore
 from . import weights
 from . import resolution
 from . import resolution2d
-from .details import build_details, dispersion_mesh
+from .details import make_kernel_args, dispersion_mesh
 
 try:
     from typing import Optional, Dict, Tuple
@@ -69,7 +69,7 @@ def call_kernel(calculator, pars, cutoff=0., mono=False):
                  else ([pars.get(p.name, p.default)], [1.0]))
                 for p in parameters.call_parameters]
 
-    call_details, values, is_magnetic = build_details(calculator, vw_pairs)
+    call_details, values, is_magnetic = make_kernel_args(calculator, vw_pairs)
     #print("values:", values)
     return calculator(call_details, values, cutoff, is_magnetic)
 

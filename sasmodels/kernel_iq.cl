@@ -21,8 +21,8 @@ typedef struct {
     int32_t pd_offset[MAX_PD];  // offset of pd weights in the value & weight vector
     int32_t pd_stride[MAX_PD];  // stride to move to the next index at this level
 #endif // MAX_PD > 0
-    int32_t pd_prod;            // total number of voxels in hypercube
-    int32_t pd_sum;             // total length of the weights vector
+    int32_t num_eval;           // total number of voxels in hypercube
+    int32_t num_weights;        // total length of the weights vector
     int32_t num_active;         // number of non-trivial pd loops
     int32_t theta_par;          // id of spherical correction variable
 } ProblemDetails;
@@ -89,14 +89,8 @@ void KERNEL_NAME(
   if (q_index >= nq) return;
 
   // Storage for the current parameter values.  These will be updated as we
-  // walk the polydispersity cube.  local_values will be aliased to pvec.
+  // walk the polydispersity cube.
   ParameterBlock local_values;
-
-  // Fill in the initial variables
-  for (int i=0; i < NUM_PARS; i++) {
-    local_values.vector[i] = values[2+i];
-//if (q_index==0) printf("p%d = %g\n",i, local_values.vector[i]);
-  }
 
 #if defined(MAGNETIC) && NUM_MAGNETIC>0
   // Location of the sld parameters in the parameter vector.
@@ -116,18 +110,23 @@ void KERNEL_NAME(
   SINCOS(-values[NUM_PARS+4]*M_PI_180, sin_mspin, cos_mspin);
 #endif // MAGNETIC
 
-  double pd_norm, this_result;
-  if (pd_start == 0) {
-    pd_norm = this_result = 0.0;
-  } else {
-    pd_norm = result[nq];
-    this_result = result[q_index];
+  // Fill in the initial variables
+  //   values[0] is scale
+  //   values[1] is background
+  for (int i=0; i < NUM_PARS; i++) {
+    local_values.vector[i] = values[2+i];
+//if (q_index==0) printf("p%d = %g\n",i, local_values.vector[i]);
   }
+//if (q_index==0) printf("NUM_VALUES:%d  NUM_PARS:%d  MAX_PD:%d\n", NUM_VALUES, NUM_PARS, MAX_PD);
+//if (q_index==0) printf("start:%d stop:%d\n", pd_start, pd_stop);
+
+  double pd_norm = (pd_start == 0 ? 0.0 : result[nq]);
+  double this_result = (pd_start == 0 ? 0.0 : result[q_index]);
 //if (q_index==0) printf("start %d %g %g\n", pd_start, pd_norm, this_result);
 
 #if MAX_PD>0
-  global const double *pd_value = values + NUM_VALUES + 2;
-  global const double *pd_weight = pd_value + details->pd_sum;
+  global const double *pd_value = values + NUM_VALUES;
+  global const double *pd_weight = pd_value + details->num_weights;
 #endif
 
   // Jump into the middle of the polydispersity loop
@@ -255,7 +254,7 @@ void KERNEL_NAME(
         double scattering = 0.0;
         // TODO: what is the magnetic scattering at q=0
         if (qsq > 1.e-16) {
-          double p[4];  // spin_i, spin_f
+          double p[4];  // dd, du, ud, uu
           p[0] = (qy*cos_mspin + qx*sin_mspin)/qsq;
           p[3] = -p[0];
           p[1] = p[2] = (qy*sin_mspin - qx*cos_mspin)/qsq;

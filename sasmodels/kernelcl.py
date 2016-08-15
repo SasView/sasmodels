@@ -551,17 +551,18 @@ class GpuKernel(Kernel):
             self.real(cutoff),
         ]
         #print("Calling OpenCL")
-        #print("values",values)
+        #call_details.show(values)
         # Call kernel and retrieve results
         last_call = None
         step = 100
-        for start in range(0, call_details.pd_prod, step):
-            stop = min(start+step, call_details.pd_prod)
+        for start in range(0, call_details.num_eval, step):
+            stop = min(start + step, call_details.num_eval)
             #print("queuing",start,stop)
             args[1:3] = [np.int32(start), np.int32(stop)]
             last_call = [kernel(self.queue, self.q_input.global_size,
                                 None, *args, wait_for=last_call)]
         cl.enqueue_copy(self.queue, self.result, self.result_b)
+        #print("result", self.result)
 
         # Free buffers
         for v in (details_b, values_b):
@@ -569,7 +570,7 @@ class GpuKernel(Kernel):
 
         scale = values[0]/self.result[self.q_input.nq]
         background = values[1]
-        #print("scale",scale,background)
+        #print("scale",scale,values[0],self.result[self.q_input.nq])
         return scale*self.result[:self.q_input.nq] + background
         # return self.result[:self.q_input.nq]
 

@@ -21,14 +21,19 @@ typedef struct {
     int32_t pd_offset[MAX_PD];  // offset of pd weights in the value & weight vector
     int32_t pd_stride[MAX_PD];  // stride to move to the next index at this level
 #endif // MAX_PD > 0
-    int32_t pd_prod;            // total number of voxels in hypercube
-    int32_t pd_sum;             // total length of the weights vector
+    int32_t num_eval;           // total number of voxels in hypercube
+    int32_t num_weights;        // total length of the weights vector
     int32_t num_active;         // number of non-trivial pd loops
     int32_t theta_par;          // id of spherical correction variable
 } ProblemDetails;
 
+// Intel HD 4000 needs private arrays to be a multiple of 4 long
 typedef struct {
     PARAMETER_TABLE
+} ParameterTable;
+typedef union {
+    ParameterTable table;
+    double vector[4*((NUM_PARS+3)/4)];
 } ParameterBlock;
 #endif // _PAR_BLOCK_
 
@@ -78,14 +83,12 @@ void KERNEL_NAME(
     const double cutoff     // cutoff in the polydispersity weight product
     )
 {
-
   // Storage for the current parameter values.  These will be updated as we
-  // walk the polydispersity cube.  local_values will be aliased to pvec.
+  // walk the polydispersity cube.
   ParameterBlock local_values;
-  double *pvec = (double *)&local_values;
 
 #if defined(MAGNETIC) && NUM_MAGNETIC>0
-  // Location of the sld parameters in the parameter pvec.
+  // Location of the sld parameters in the parameter vector.
   // These parameters are updated with the effective sld due to magnetism.
   #if NUM_MAGNETIC > 3
   const int32_t slds[] = { MAGNETIC_PARS };
@@ -109,27 +112,24 @@ void KERNEL_NAME(
   #pragma omp parallel for
   #endif
   for (int i=0; i < NUM_PARS; i++) {
-    pvec[i] = values[2+i];
-//printf("p%d = %g\n",i, pvec[i]);
+    local_values.vector[i] = values[2+i];
+//printf("p%d = %g\n",i, local_values.vector[i]);
   }
+//printf("NUM_VALUES:%d  NUM_PARS:%d  MAX_PD:%d\n", NUM_VALUES, NUM_PARS, MAX_PD);
+//printf("start:%d  stop:%d\n", pd_start, pd_stop);
 
-  double pd_norm;
-//printf("start: %d %d\n",pd_start, pd_stop);
+  double pd_norm = (pd_start == 0 ? 0.0 : result[nq]);
   if (pd_start == 0) {
-    pd_norm = 0.0;
     #ifdef USE_OPENMP
     #pragma omp parallel for
     #endif
     for (int q_index=0; q_index < nq; q_index++) result[q_index] = 0.0;
-//printf("initializing %d\n", nq);
-  } else {
-    pd_norm = result[nq];
   }
 //printf("start %d %g %g\n", pd_start, pd_norm, result[0]);
 
 #if MAX_PD>0
-  global const double *pd_value = values + NUM_VALUES + 2;
-  global const double *pd_weight = pd_value + details->pd_sum;
+  global const double *pd_value = values + NUM_VALUES;
+  global const double *pd_weight = pd_value + details->num_weights;
 #endif
 
   // Jump into the middle of the polydispersity loop
@@ -168,7 +168,7 @@ void KERNEL_NAME(
   const int p0=details->pd_par[0];
   global const double *v0 = pd_value + details->pd_offset[0];
   global const double *w0 = pd_weight + details->pd_offset[0];
-//printf("w0:%p, values:%p, diff:%d, %d\n",w0,values,(w0-values),NUM_VALUES);
+//printf("w0:%p, values:%p, diff:%ld, %d\n",w0,values,(w0-values), NUM_VALUES);
 #endif
 
 
@@ -185,60 +185,59 @@ void KERNEL_NAME(
 
   int step = pd_start;
 
-
 #if MAX_PD>4
   const double weight5 = 1.0;
   while (i4 < n4) {
-    pvec[p4] = v4[i4];
+    local_values.vector[p4] = v4[i4];
     double weight4 = w4[i4] * weight5;
-//printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 4, p4, i4, n4, pvec[p4], weight4);
+//printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 4, p4, i4, n4, local_values.vector[p4], weight4);
 #elif MAX_PD>3
     const double weight4 = 1.0;
 #endif
 #if MAX_PD>3
   while (i3 < n3) {
-    pvec[p3] = v3[i3];
+    local_values.vector[p3] = v3[i3];
     double weight3 = w3[i3] * weight4;
-//printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 3, p3, i3, n3, pvec[p3], weight3);
+//printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 3, p3, i3, n3, local_values.vector[p3], weight3);
 #elif MAX_PD>2
     const double weight3 = 1.0;
 #endif
 #if MAX_PD>2
   while (i2 < n2) {
-    pvec[p2] = v2[i2];
+    local_values.vector[p2] = v2[i2];
     double weight2 = w2[i2] * weight3;
-//printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 2, p2, i2, n2, pvec[p2], weight2);
+//printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 2, p2, i2, n2, local_values.vector[p2], weight2);
 #elif MAX_PD>1
     const double weight2 = 1.0;
 #endif
 #if MAX_PD>1
   while (i1 < n1) {
-    pvec[p1] = v1[i1];
+    local_values.vector[p1] = v1[i1];
     double weight1 = w1[i1] * weight2;
-//printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 1, p1, i1, n1, pvec[p1], weight1);
+//printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 1, p1, i1, n1, local_values.vector[p1], weight1);
 #elif MAX_PD>0
     const double weight1 = 1.0;
 #endif
 #if MAX_PD>0
   if (slow_theta) { // Theta is not in inner loop
-    spherical_correction = fmax(fabs(cos(M_PI_180*pvec[theta_par])), 1.e-6);
+    spherical_correction = fmax(fabs(cos(M_PI_180*local_values.vector[theta_par])), 1.e-6);
   }
   while(i0 < n0) {
-    pvec[p0] = v0[i0];
+    local_values.vector[p0] = v0[i0];
     double weight0 = w0[i0] * weight1;
-//printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 0, p0, i0, n0, pvec[p0], weight0);
+//printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 0, p0, i0, n0, local_values.vector[p0], weight0);
     if (fast_theta) { // Theta is in inner loop
-      spherical_correction = fmax(fabs(cos(M_PI_180*pvec[p0])), 1.e-6);
+      spherical_correction = fmax(fabs(cos(M_PI_180*local_values.vector[p0])), 1.e-6);
     }
 #else
     const double weight0 = 1.0;
 #endif
 
-//printf("step:%d of %d, pars:",step,pd_stop); for (int i=0; i < NUM_PARS; i++) printf("p%d=%g ",i, pvec[i]); printf("\n");
+//printf("step:%d of %d, pars:",step,pd_stop); for (int i=0; i < NUM_PARS; i++) printf("p%d=%g ",i, local_values.vector[i]); printf("\n");
 //printf("sphcor: %g\n", spherical_correction);
 
     #ifdef INVALID
-    if (!INVALID(local_values))
+    if (!INVALID(local_values.table))
     #endif
     {
       // Accumulate I(q)
@@ -247,7 +246,7 @@ void KERNEL_NAME(
         // spherical correction is set at a minimum of 1e-6, otherwise there
         // would be problems looking at models with theta=90.
         const double weight = weight0 * spherical_correction;
-        pd_norm += weight * CALL_VOLUME(local_values);
+        pd_norm += weight * CALL_VOLUME(local_values.table);
 
         #ifdef USE_OPENMP
         #pragma omp parallel for
@@ -262,7 +261,7 @@ void KERNEL_NAME(
           double scattering = 0.0;
           // TODO: what is the magnetic scattering at q=0
           if (qsq > 1.e-16) {
-            double p[4];
+            double p[4];  // dd, du, ud, uu
             p[0] = (qy*cos_mspin + qx*sin_mspin)/qsq;
             p[3] = -p[0];
             p[1] = p[2] = (qy*sin_mspin - qx*cos_mspin)/qsq;
@@ -277,7 +276,7 @@ void KERNEL_NAME(
                   #define M2 NUM_PARS+8
                   #define M3 NUM_PARS+13
                   #define SLD(_M_offset, _sld_offset) \
-                      pvec[_sld_offset] = xs * (axis \
+                      local_values.vector[_sld_offset] = xs * (axis \
                       ? (index==1 ? -values[_M_offset+2] : values[_M_offset+2]) \
                       : mag_sld(qx, qy, pk, values[_M_offset], values[_M_offset+1], \
                                 (spin_flip ? 0.0 : values[_sld_offset+2])))
@@ -295,13 +294,13 @@ void KERNEL_NAME(
                       SLD(M1+3*sk, slds[sk]);
                   }
                   #endif
-                  scattering += CALL_IQ(q, q_index, local_values);
+                  scattering += CALL_IQ(q, q_index, local_values.table);
                 }
               }
             }
           }
 #else  // !MAGNETIC
-          const double scattering = CALL_IQ(q, q_index, local_values);
+          const double scattering = CALL_IQ(q, q_index, local_values.table);
 #endif // !MAGNETIC
 //printf("q_index:%d %g %g %g %g\n",q_index, scattering, weight, spherical_correction, weight0);
           result[q_index] += weight * scattering;

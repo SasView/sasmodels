@@ -99,6 +99,7 @@ class PyKernel(Kernel):
     Call :meth:`release` when done with the kernel instance.
     """
     def __init__(self, kernel, model_info, q_input):
+        # type: (callable, ModelInfo, List[np.ndarray]) -> None
         self.dtype = np.dtype('d')
         self.info = model_info
         self.q_input = q_input
@@ -155,12 +156,17 @@ class PyKernel(Kernel):
                         else (lambda: 1.0))
 
     def __call__(self, call_details, values, cutoff, magnetic):
-        assert isinstance(call_details, details.CallDetails)
+        # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
+        if magnetic:
+            raise NotImplementedError("Magnetism not implemented for pure python models")
+        #print("Calling python kernel")
+        #call_details.show(values)
         res = _loops(self._parameter_vector, self._form, self._volume,
                      self.q_input.nq, call_details, values, cutoff)
         return res
 
     def release(self):
+        # type: () -> None
         """
         Free resources associated with the kernel.
         """
@@ -188,8 +194,8 @@ def _loops(parameters, form, form_volume, nq, call_details, values, cutoff):
         else:
             return np.ones(nq, 'd')*background
 
-    pd_value = values[2+n_pars:2+n_pars + call_details.pd_sum]
-    pd_weight = values[2+n_pars + call_details.pd_sum:]
+    pd_value = values[2+n_pars:2+n_pars + call_details.num_weights]
+    pd_weight = values[2+n_pars + call_details.num_weights:]
 
     pd_norm = 0.0
     spherical_correction = 1.0
@@ -208,7 +214,7 @@ def _loops(parameters, form, form_volume, nq, call_details, values, cutoff):
     pd_length = call_details.pd_length[:call_details.num_active]
 
     total = np.zeros(nq, 'd')
-    for loop_index in range(call_details.pd_prod):
+    for loop_index in range(call_details.num_eval):
         # update polydispersity parameter values
         if p0_index == p0_length:
             pd_index = (loop_index//pd_stride)%pd_length

@@ -38,6 +38,7 @@ class Kernel(object):
     dim = None  # type: str
     info = None  # type: ModelInfo
     results = None # type: List[np.ndarray]
+    dtype = None  # type: np.dtype
 
     def __call__(self, call_details, values, cutoff, magnetic):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray

@@ -23,7 +23,7 @@ from . import custom
 from . import generate
 from . import weights
 from . import modelinfo
-from .details import build_details, dispersion_mesh
+from .details import make_kernel_args, dispersion_mesh
 
 try:
     from typing import Dict, Mapping, Any, Sequence, Tuple, NamedTuple, List, Optional, Union, Callable
@@ -564,7 +564,7 @@ class SasviewModel(object):
         calculator = self._model.make_kernel(q_vectors)
         parameters = self._model_info.parameters
         pairs = [self._get_weights(p) for p in parameters.call_parameters]
-        call_details, values, is_magnetic = build_details(calculator, pairs)
+        call_details, values, is_magnetic = make_kernel_args(calculator, pairs)
         #call_details.show()
         #print("pairs", pairs)
         #print("params", self.params)
