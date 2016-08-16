@@ -17,6 +17,7 @@ calculations.
    developer/index.rst
    ref/index.rst
    ref/models/index.rst
+   ref/magnetism/index.rst
    api/index.rst
 
 Indices and Tables
