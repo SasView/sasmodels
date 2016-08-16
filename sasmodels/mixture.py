@@ -27,7 +27,7 @@ except ImportError:
 def make_mixture_info(parts):
     # type: (List[ModelInfo]) -> ModelInfo
     """
-    Create info block for product model.
+    Create info block for mixture model.
     """
     flatten = []
     for part in parts:
@@ -39,6 +39,7 @@ def make_mixture_info(parts):
 
     # Build new parameter list
     combined_pars = []
+    demo = {}
     for k, part in enumerate(parts):
         # Parameter prefix per model, A_, B_, ...
         # Note that prefix must also be applied to id and length_control
@@ -54,6 +55,8 @@ def make_mixture_info(parts):
             if p.length_control is not None:
                 p.length_control = prefix + p.length_control
             combined_pars.append(p)
+        demo.update((prefix+k, v) for k, v in part.demo.items()
+                    if k != "background")
     #print("pars",combined_pars)
     parameters = ParameterTable(combined_pars)
     parameters.max_pd = sum(part.parameters.max_pd for part in parts)
@@ -75,7 +78,7 @@ def make_mixture_info(parts):
     # Iq, Iqxy, form_volume, ER, VR and sesans
     # Remember the component info blocks so we can build the model
     model_info.composition = ('mixture', parts)
-    model_info.demo = {}
+    model_info.demo = demo
     return model_info
 
 
@@ -114,7 +117,7 @@ class MixtureKernel(Kernel):
         self.dtype = self.kernels[0].dtype
 
     def __call__(self, call_details, values, cutoff, magnetic):
-        # type: (CallDetails, np.ndarray, np.ndarry, float) -> np.ndarray
+        # type: (CallDetails, np.ndarray, np.ndarry, float, bool) -> np.ndarray
         scale, background = values[0:2]
         total = 0.0
         # remember the parts for plotting later
@@ -138,6 +141,7 @@ class MixtureKernel(Kernel):
 
 class MixtureParts(object):
     def __init__(self, model_info, kernels, call_details, values):
+        # type: (ModelInfo, List[Kernel], CallDetails, np.ndarray) -> None
         self.model_info = model_info
         self.parts = model_info.composition[1]
         self.kernels = kernels
