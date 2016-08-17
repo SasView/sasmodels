@@ -46,7 +46,7 @@ Spin-flips    (+ -) and (- +)
 If the angles of the $Q$ vector and the spin-axis $x'$ to the $x$ - axis are
 $\phi$ and $\theta_{up}$, respectively, then, depending on the spin state of the
 neutrons, the scattering length densities, including the nuclear scattering
-length density ($\beta_N$) are
+length density ($\beta{_N}$) are
 
 .. math::
     \beta_{\pm\pm} =  \beta_N \mp D_M M_{\perp x'}
