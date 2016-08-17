@@ -21,7 +21,7 @@ scattering length.
 
 
 .. figure::
-    img/mag_vector.bmp
+    mag_img/mag_vector.bmp
 
 The magnetic scattering length density is then
 
@@ -41,7 +41,7 @@ No spin-flips (+ +) and (- -)
 Spin-flips    (+ -) and (- +)
 
 .. figure::
-    img/M_angles_pic.bmp
+    mag_img/M_angles_pic.bmp
 
 If the angles of the $Q$ vector and the spin-axis $x'$ to the $x$ - axis are
 $\phi$ and $\theta_{up}$, respectively, then, depending on the spin state of the
