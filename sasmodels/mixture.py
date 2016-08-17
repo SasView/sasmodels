@@ -115,13 +115,14 @@ class MixtureKernel(Kernel):
         self.info =  model_info
         self.kernels = kernels
         self.dtype = self.kernels[0].dtype
+        self.results = []  # type: List[np.ndarray]
 
     def __call__(self, call_details, values, cutoff, magnetic):
         # type: (CallDetails, np.ndarray, np.ndarry, float, bool) -> np.ndarray
         scale, background = values[0:2]
         total = 0.0
         # remember the parts for plotting later
-        self.results = []
+        self.results = []  # type: List[np.ndarray]
         offset = 2 # skip scale & background
         parts = MixtureParts(self.info, self.kernels, call_details, values)
         for kernel, kernel_details, kernel_values in parts:

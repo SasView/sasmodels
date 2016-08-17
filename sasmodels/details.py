@@ -176,6 +176,7 @@ class CallDetails(object):
 
 
 def make_details(model_info, length, offset, num_weights):
+    # type: (ModelInfo, np.ndarray, np.ndarray, int) -> CallDetails
     """
     Return a :class:`CallDetails` object for a polydisperse calculation
     of the model defined by *model_info*.  Polydispersity is defined by
@@ -185,7 +186,6 @@ def make_details(model_info, length, offset, num_weights):
     with weight 1.0. *num_weights* is the total length of the polydispersity
     array.
     """
-    # type: (ModelInfo, np.ndarray, np.ndarray, int) -> CallDetails
     #pars = model_info.parameters.call_parameters[2:model_info.parameters.npars+2]
     #print(", ".join(str(i)+"-"+p.id for i,p in enumerate(pars)))
     #print("len:",length)
@@ -274,7 +274,7 @@ def dispersion_mesh(model_info, pars):
     parameter set in the vector.
     """
     value, weight = zip(*pars)
-    weight = [w if w else [1.] for w in weight]
+    #weight = [w if len(w)>0 else [1.] for w in weight]
     weight = np.vstack([v.flatten() for v in meshgrid(*weight)])
     weight = np.prod(weight, axis=0)
     value = [v.flatten() for v in meshgrid(*value)]

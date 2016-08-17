@@ -179,15 +179,15 @@ def revert_pars(model_info, pars):
     if model_info.composition is not None:
         composition_type, parts = model_info.composition
         if composition_type == 'product':
-            oldpars = {'scale':'scale_factor'}
-            oldpars.update(_get_old_pars(parts[0]))
-            oldpars.update(_get_old_pars(parts[1]))
+            translation = {'scale':'scale_factor'}
+            translation.update(_get_translation_table(parts[0]))
+            translation.update(_get_translation_table(parts[1]))
         else:
             raise NotImplementedError("cannot convert to sasview sum")
     else:
         translation = _get_translation_table(model_info)
-        oldpars = _revert_pars(_unscale_sld(model_info, pars), translation)
-        oldpars = _trim_vectors(model_info, pars, oldpars)
+    oldpars = _revert_pars(_unscale_sld(model_info, pars), translation)
+    oldpars = _trim_vectors(model_info, pars, oldpars)
 
     # Make sure the control parameter is an integer
     if "CONTROL" in oldpars:
