@@ -16,12 +16,12 @@ SLD is uniform, is a combination of the nuclear and magnetic SLDs and, for polar
 neutrons, also depends on the spin states of the neutrons.
 
 For magnetic scattering, only the magnetization component $\mathbf{M_\perp}$
-perpendicular to the scattering vector $\mathbf{Q}$ contributes to the the magnetic
+perpendicular to the scattering vector $\mathbf{Q}$ contributes to the magnetic
 scattering length.
 
 
 .. figure::
-    img/mag_vector.bmp
+    mag_img/mag_vector.bmp
 
 The magnetic scattering length density is then
 
@@ -41,12 +41,12 @@ No spin-flips (+ +) and (- -)
 Spin-flips    (+ -) and (- +)
 
 .. figure::
-    img/M_angles_pic.bmp
+    mag_img/M_angles_pic.bmp
 
 If the angles of the $Q$ vector and the spin-axis $x'$ to the $x$ - axis are
 $\phi$ and $\theta_{up}$, respectively, then, depending on the spin state of the
 neutrons, the scattering length densities, including the nuclear scattering
-length density ($\beta_N$) are
+length density ($\beta{_N}$) are
 
 .. math::
     \beta_{\pm\pm} =  \beta_N \mp D_M M_{\perp x'}
@@ -82,7 +82,7 @@ The user input parameters are:
 
 ===========   ================================================================
  M0_sld        = $D_M M_0$
- Up_theta      = $\theta_up$
+ Up_theta      = $\theta_{up}$
  M_theta       = $\theta_M$
  M_phi         = $\phi_M$
  Up_frac_i     = (spin up)/(spin up + spin down) neutrons *before* the sample

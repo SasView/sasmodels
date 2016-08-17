@@ -5,7 +5,7 @@ This model provides the form factor, $P(q)$, for a spherical particle with
 a core-shell structure. The form factor is normalized by the particle volume.
 
 For information about polarised and magnetic scattering, see
-the :doc:`magnetic help <../sasgui/perspectives/fitting/mag_help>` documentation.
+the :ref:`magnetism` documentation.
 
 Definition
 ----------
