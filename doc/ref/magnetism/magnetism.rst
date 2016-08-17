@@ -16,7 +16,7 @@ SLD is uniform, is a combination of the nuclear and magnetic SLDs and, for polar
 neutrons, also depends on the spin states of the neutrons.
 
 For magnetic scattering, only the magnetization component $\mathbf{M_\perp}$
-perpendicular to the scattering vector $\mathbf{Q}$ contributes to the the magnetic
+perpendicular to the scattering vector $\mathbf{Q}$ contributes to the magnetic
 scattering length.
 
 
@@ -82,7 +82,7 @@ The user input parameters are:
 
 ===========   ================================================================
  M0_sld        = $D_M M_0$
- Up_theta      = $\theta_up$
+ Up_theta      = $\theta_{up}$
  M_theta       = $\theta_M$
  M_phi         = $\phi_M$
  Up_frac_i     = (spin up)/(spin up + spin down) neutrons *before* the sample
