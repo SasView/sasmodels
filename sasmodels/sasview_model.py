@@ -114,6 +114,7 @@ def load_custom_model(path):
     """
     Load a custom model given the model path.
     """
+    #print("load custom", path)
     kernel_module = custom.load_custom_kernel_module(path)
     try:
         model = kernel_module.Model

@@ -280,29 +280,27 @@ class GpuEnvironment(object):
             warnings.warn("pyopencl.create_some_context() failed")
             warnings.warn("the environment variable 'PYOPENCL_CTX' might not be set correctly")
 
-    def compile_program(self, name, source, dtype, fast=False):
-        # type: (str, str, np.dtype, bool) -> cl.Program
+    def compile_program(self, name, source, dtype, fast, timestamp):
+        # type: (str, str, np.dtype, bool, float) -> cl.Program
         """
         Compile the program for the device in the given context.
         """
+        # Note: PyOpenCL caches based on md5 hash of source, options and device
+        # so we don't really need to cache things for ourselves.  I'll do so
+        # anyway just to save some data munging time.
         key = "%s-%s%s"%(name, dtype, ("-fast" if fast else ""))
+        # Check timestamp on program
+        program, program_timestamp = self.compiled.get(key, (None, np.inf))
+        if program_timestamp < timestamp:
+            del self.compiled[key]
         if key not in self.compiled:
             context = self.get_context(dtype)
             logging.info("building %s for OpenCL %s", key,
                          context.devices[0].name.strip())
             program = compile_model(self.get_context(dtype),
                                     str(source), dtype, fast)
-            self.compiled[key] = program
-        return self.compiled[key]
-
-    def release_program(self, name):
-        # type: (str) -> None
-        """
-        Free memory associated with the program on the device.
-        """
-        if name in self.compiled:
-            self.compiled[name].release()
-            del self.compiled[name]
+            self.compiled[key] = (program, timestamp)
+        return program
 
 def _get_default_context():
     # type: () -> List[cl.Context]
@@ -398,11 +396,13 @@ class GpuModel(KernelModel):
         # type: (List[np.ndarray]) -> "GpuKernel"
         if self.program is None:
             compile_program = environment().compile_program
+            timestamp = generate.timestamp(self.info)
             self.program = compile_program(
                 self.info.name,
                 self.source['opencl'],
                 self.dtype,
-                self.fast)
+                self.fast,
+                timestamp)
             variants = ['Iq', 'Iqxy', 'Imagnetic']
             names = [generate.kernel_name(self.info, k) for k in variants]
             kernels = [getattr(self.program, k) for k in names]
@@ -420,7 +420,6 @@ class GpuModel(KernelModel):
         Free the resources associated with the model.
         """
         if self.program is not None:
-            environment().release_program(self.info.name)
             self.program = None
 
     def __del__(self):
