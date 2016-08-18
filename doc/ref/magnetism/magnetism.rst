@@ -3,13 +3,16 @@
 Polarisation/Magnetic Scattering
 =======================================================
 
-Magnetic scattering is implemented in five (2D) models
+In earlier versions of SasView magnetic scattering was implemented in just five 
+(2D) models
 
 *  :ref:`sphere`
 *  :ref:`core-shell-sphere`
 *  :ref:`core-multi-shell`
 *  :ref:`cylinder`
 *  :ref:`parallelepiped`
+
+From SasView 4.x it is implemented on most models in the 'shape' category.
 
 In general, the scattering length density (SLD = $\beta$) in each region where the
 SLD is uniform, is a combination of the nuclear and magnetic SLDs and, for polarised
