@@ -45,7 +45,7 @@ except ImportError:
 #    load_model_info
 #    build_model
 
-KINDS = ("all", "py", "c", "double", "single", "1d", "2d",
+KINDS = ("all", "py", "c", "double", "single", "gpu", "1d", "2d",
          "nonmagnetic", "magnetic")
 def list_models(kind=None):
     # type: () -> List[str]
@@ -59,6 +59,7 @@ def list_models(kind=None):
         * c: compiled models only
         * single: models which support single precision
         * double: models which require double precision
+        * gpu: models which compiles on GPU
         * 1d: models which are 1D only, or 2D using abs(q)
         * 2d: models which can be 2D
         * magnetic: models with an sld
@@ -84,6 +85,8 @@ def _matches(name, kind):
     elif kind == "double" and not info.single:
         return True
     elif kind == "single" and info.single:
+        return True
+    elif kind == "gpu" and info.gpu:
         return True
     elif kind == "2d" and any(p.type == 'orientation' for p in pars):
         return True
@@ -214,9 +217,10 @@ def parse_dtype(model_info, dtype=None, platform=None):
     fast flag set to True.
     """
     # Assign default platform, overriding ocl with dll if OpenCL is unavailable
+    # If gpu=False OpenCL is switched off
     if platform is None:
         platform = "ocl"
-    if platform == "ocl" and not HAVE_OPENCL:
+    if platform == "ocl" and not HAVE_OPENCL or not model_info.gpu:
         platform = "dll"
 
     # Check if type indicates dll regardless of which platform is given

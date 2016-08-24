@@ -562,6 +562,8 @@ def make_engine(model_info, data, dtype, cutoff):
         return eval_sasview(model_info, data)
     elif dtype.endswith('!'):
         return eval_ctypes(model_info, data, dtype=dtype[:-1], cutoff=cutoff)
+    elif not model_info.gpu:
+        return eval_ctypes(model_info, data, dtype=dtype, cutoff=cutoff)
     else:
         return eval_opencl(model_info, data, dtype=dtype, cutoff=cutoff)
 
