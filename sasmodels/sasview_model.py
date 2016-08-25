@@ -453,10 +453,9 @@ class SasviewModel(object):
         Return a list of polydispersity parameters for the model
         """
         # TODO: fix test so that parameter order doesn't matter
-        ret = ['%s.%s' % (p.name, ext)
-               for p in self._model_info.parameters.user_parameters()
-               for ext in ('npts', 'nsigmas', 'width')
-               if p.polydisperse]
+        ret = ['%s.%s' % (p_name, ext)
+               for p_name in self.dispersion.keys()
+               for ext in ('npts', 'nsigmas', 'width')]
         #print(ret)
         return ret
 
