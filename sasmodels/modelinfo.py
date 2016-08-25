@@ -730,7 +730,7 @@ def make_model_info(kernel_module):
     info.docs = kernel_module.__doc__
     info.category = getattr(kernel_module, 'category', None)
     info.single = getattr(kernel_module, 'single', True)
-    info.gpu = getattr(kernel_module, 'gpu', True)
+    info.opencl = getattr(kernel_module, 'opencl', True)
     info.structure_factor = getattr(kernel_module, 'structure_factor', False)
     info.profile_axes = getattr(kernel_module, 'profile_axes', ['x', 'y'])
     info.source = getattr(kernel_module, 'source', [])
