@@ -315,7 +315,24 @@ def model_sources(model_info):
     return [_search(search_path, f) for f in model_info.source]
 
 
-def timestamp(model_info):
+def dll_timestamp(model_info):
+    # type: (ModelInfo) -> int
+    """
+    Return a timestamp for the model corresponding to the most recently
+    changed file or dependency.
+    """
+    # TODO: fails DRY; templates appear two places.
+    model_templates = [joinpath(DATA_PATH, filename)
+                       for filename in ('kernel_header.c', 'kernel_iq.c')]
+    source_files = (model_sources(model_info)
+                    + model_templates
+                    + [model_info.filename])
+    # Note: file may not exist when it is a standard model from library.zip
+    times = [getmtime(f) for f in source_files if exists(f)]
+    newest = max(times) if times else 0
+    return newest
+
+def ocl_timestamp(model_info):
     # type: (ModelInfo) -> int
     """
     Return a timestamp for the model corresponding to the most recently
@@ -324,21 +341,16 @@ def timestamp(model_info):
     Note that this does not look at the time stamps for the OpenCL header
     information since that need not trigger a recompile of the DLL.
     """
-    source_files = (model_sources(model_info)
-                    + model_templates()
-                    + [model_info.filename])
-    newest = max(getmtime(f) for f in source_files)
-    return newest
-
-
-def model_templates():
-    # type: () -> List[str]
     # TODO: fails DRY; templates appear two places.
-    # should instead have model_info contain a list of paths
-    # Note: kernel_iq.cl is not on this list because changing it need not
-    # trigger a recompile of the dll.
-    return [joinpath(DATA_PATH, filename)
-            for filename in ('kernel_header.c', 'kernel_iq.c')]
+    model_templates = [joinpath(DATA_PATH, filename)
+                       for filename in ('kernel_header.c', 'kernel_iq.cl')]
+    source_files = (model_sources(model_info)
+                    + model_templates
+                    + [model_info.filename])
+    # Note: file may not exist when it is a standard model from library.zip
+    times = [getmtime(f) for f in source_files if exists(f)]
+    newest = max(times) if times else 0
+    return newest
 
 
 def convert_type(source, dtype):

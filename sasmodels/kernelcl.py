@@ -396,7 +396,7 @@ class GpuModel(KernelModel):
         # type: (List[np.ndarray]) -> "GpuKernel"
         if self.program is None:
             compile_program = environment().compile_program
-            timestamp = generate.timestamp(self.info)
+            timestamp = generate.ocl_timestamp(self.info)
             self.program = compile_program(
                 self.info.name,
                 self.source['opencl'],

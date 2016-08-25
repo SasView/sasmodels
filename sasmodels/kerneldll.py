@@ -225,7 +225,7 @@ def make_dll(source, model_info, dtype=F64):
         need_recompile = False
     else:
         dll_time = os.path.getmtime(dll)
-        newest_source = generate.timestamp(model_info)
+        newest_source = generate.dll_timestamp(model_info)
         need_recompile = dll_time < newest_source
     if need_recompile:
         basename = splitext(os.path.basename(dll))[0] + "_"
