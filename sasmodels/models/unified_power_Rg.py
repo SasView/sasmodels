@@ -20,10 +20,10 @@ The empirical fit function is:
 .. math::
 
     I(q) = \text{background}
-    + \Sum_{i=1}^N \left[
-        G_i \exp\left(-\frac{q^2R_{gi}^2}{3}\right)
-       + B_i \exp\left(-\frac{q^2R_{g(i+1)}^2}{3}\right)
-             \left(\frac{1}{q_i^*}\right)^{P_i}
+    + \sum_{i=1}^N \Bigl[
+        G_i \exp\Bigl(-\frac{q^2R_{gi}^2}{3}\Bigr)
+       + B_i \exp\Bigl(-\frac{q^2R_{g(i+1)}^2}{3}\Bigr)
+             \Bigl(\frac{1}{q_i^*}\Bigr)^{P_i} \Bigr]
 
 where
 
