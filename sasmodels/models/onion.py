@@ -336,7 +336,7 @@ def profile(sld_core, radius_core, sld_solvent, n_shells,
     rho.append(sld_core)
 
     # add in the shells
-    for k in range(n_shells):
+    for k in range(int(n_shells)):
         # Left side of each shells
         z_current = z[-1]
         z.append(z_current)
