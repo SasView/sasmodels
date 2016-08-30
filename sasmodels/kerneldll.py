@@ -388,7 +388,8 @@ class DllKernel(Kernel):
             kernel(*args) # type: ignore
 
         #print("returned",self.q_input.q, self.result)
-        scale = values[0]/self.result[self.q_input.nq]
+        pd_norm = self.result[self.q_input.nq]
+        scale = values[0]/(pd_norm if pd_norm!=0.0 else 1.0)
         background = values[1]
         #print("scale",scale,background)
         return scale*self.result[:self.q_input.nq] + background

@@ -567,9 +567,10 @@ class GpuKernel(Kernel):
         for v in (details_b, values_b):
             if v is not None: v.release()
 
-        scale = values[0]/self.result[self.q_input.nq]
+        pd_norm = self.result[self.q_input.nq]
+        scale = values[0]/(pd_norm if pd_norm!=0.0 else 1.0)
         background = values[1]
-        #print("scale",scale,values[0],self.result[self.q_input.nq])
+        #print("scale",scale,values[0],self.result[self.q_input.nq],background)
         return scale*self.result[:self.q_input.nq] + background
         # return self.result[:self.q_input.nq]
 
