@@ -333,9 +333,9 @@ def constrain_new_to_old(model_info, pars):
         elif name == 'spherical_sld':
             pars['n_shells'] = math.ceil(pars['n_shells'])
             pars['n_steps'] = math.ceil(pars['n_steps'])
-            for k in range(1, 12):
+            for k in range(1, 11):
                 pars['shape%d'%k] = math.trunc(pars['shape%d'%k]+0.5)
-            for k in range(2, 12):
+            for k in range(2, 11):
                 pars['thickness%d_pd_n'%k] = 0
                 pars['interface%d_pd_n'%k] = 0
 
