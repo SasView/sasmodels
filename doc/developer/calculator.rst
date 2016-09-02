@@ -1,37 +1,136 @@
+.. currentmodule:: sasmodels
+
 Calculator Interface
 ====================
 
-The environment needs to provide the following #defines:
+This document describes the layer between the form factor kernels and the
+model calculator which implements the polydispersity and magnetic SLD
+calculations.  There are three separate implementations of this layer,
+*kernelcl.py* for OpenCL, which operates on a single Q value at a time,
+*kerneldll.c* for the DLL, which loops over a vector of Q values, and
+*kernelpy.py* for python models which operates on vector Q values.
+
+Each implementation provides three different calls *Iq*, *Iqxy* and *Imagnetic*
+for 1-D, 2-D and 2-D magnetic kernels respectively.
+
+The C code is defined in *kernel_iq.c* and *kernel_iq.cl* for DLL and OpenCL
+respectively.  The kernel call looks as follows::
+
+  kernel void KERNEL_NAME(
+      int nq,                  // Number of q values in the q vector
+      int pd_start,            // Starting position in the polydispersity loop
+      int pd_stop,             // Ending position in the polydispersity loop
+      ProblemDetails *details, // Polydispersity info
+      double *values,          // Value and weights vector
+      double *q,               // q or (qx,qy) vector
+      double *result,          // returned I(q), with result[nq] = pd_weight
+      double cutoff)           // polydispersity weight cutoff
+
+The details for OpenCL and the python loop are slightly different, but these
+data structures are common.
+
+*nq* indicates the number of q values that will be calculated.
+
+The *pd_start* and *pd_stop* parameters set the range of the polydispersity
+loop to compute for the current kernel call.   Give a polydispersity
+calculation with 30 weights for length and 30 weights for radius for example,
+there are a total of 900 calls to the form factor required to compute the
+kernel.  These might be done in chunks of 100, so the first call would start
+at zero and stop after 100 iterations.  The second call would then have to set
+the length index to 3 and the radius index to 10 for a position of 3*30+10=100,
+and could then proceed to position 200.  This allows us to interrupt the
+calculation in the middle of a long polydispersity loop without having to
+do special tricks with the C code.  More importantly, it stops the OpenCL
+kernel in a reasonable time; because the GPU is used by the operating
+system to show its windows, if a GPU kernel runs too long then it will be
+automatically killed and no results will be returned to the caller.
+
+The *ProblemDetails* structure is a direct map of the
+:class:`details.CallDetails` buffer.  This indicates which parameters are
+polydisperse, and where in the values vector the values and weights can be
+found.  For each polydisperse parameter there is a parameter id, the length
+of the polydispersity loop for that parameter, the offset of the parameter
+values in the pd value and pd weight vectors and the 'stride' from one index
+to the next, which is used to translate between the position in the
+polydispersity loop and the particular parameter indices.  The *num_eval*
+field is the total size of the polydispersity loop.  *num_weights* is the
+number of elements in the pd value and pd weight vectors.  *num_active* is
+the number of non-trivial pd loops (polydisperse parameters should be ordered
+by decreasing pd vector length, with a length of 1 meaning no polydispersity).
+Oriented objects in 2-D need a cos(theta) spherical correction on the angular
+variation in order to preserve the 'surface area' of the weight distribution.
+*theta_par* is the id of the polar coordinate parameter if there is one.
+
+
+The *values* vector consists of the fixed values for the model plus pd value
+and pd weight vectors.  There are *NUM_VALUES* fixed values for the model,
+which includes the initial two slots for scale and background, the NUM_PARS
+values for the kernel parameters, three slots for the applied magnetism, and
+three slots for each of the SLD parameters for the sample magnetiziation
+*(Mx, My, Mz)*.  Sample magnetization is translated from *(M, theta, phi)*
+to *(Mx, My, Mz)* before the kernel is called.   After the fixed values comes
+the pd value vector, with the polydispersity values for each parameter
+stacked one after the other.  The order isn't important since the location
+for each parameter is stored in the *pd_offset* field of the *ProblemDetails*
+structure, but the values do need to be contiguous.  After *num_weights*
+values, the pd weight vector is stored, with the same configuration as the
+pd value vector.  Note that the pd vectors can contain values that are not
+in the polydispersity loop; this is used by :class:`mixture.MixtureKernel`
+to make it easier to call the various component kernels.
+
+The *q* vector contains one value for each q for *Iq* kernels, or a pair
+of *(qx,qy)* values for each q for *Iqxy* and *Imagnetic* kernels.  OpenCL
+pads all vectors to 32 value boundaries just to be safe, including the
+*values* vector and the the *results* vector.
+
+The *results* vector contains one slot for each of the *nq* values, plus
+one extra slot at the end for the current polydisperse normalization.  This
+is required when the polydispersity loop is broken across several kernel
+calls.
+
+*cutoff* is a importance cutoff so that points which contribute negligibly
+to the total scattering can be skipped without calculating them.
+
+:func:`generate.make_source` defines the following C macros:
 
 - USE_OPENCL is defined if running in opencl
-- KERNEL declares a function to be available externally
-- KERNEL_NAME is the name of the function being declared
 - MAX_PD is the maximum depth of the polydispersity loop [model specific]
-- NPARS is the number of parameters in the kernel
-- PARAMETER_TABLE is the declaration of the parameters to the kernel::
+- NUM_PARS is the number of parameter values in the kernel.  This may be
+  more than the number of parameters if some of the parameters are vector
+  values.
+- NUM_VALUES is the number of fixed values, which defines the offset in the
+  value list to the polydisperse value and weight vectors.
+- NUM_MAGNETIC is the number of magnetic SLDs
+- MAGNETIC_PARS is a comma separated list of the magnetic SLDs, indicating
+  their locations in the values vector.
+- MAGNETIC_PAR0 to MAGNETIC_PAR2 are the first three magnetic parameter ids
+  so we can hard code the setting of magnetic values if there are only a
+  few of them.
+- KERNEL_NAME is the name of the function being declared
+- PARAMETER_TABLE is the declaration of the parameters to the kernel:
 
-    Cylinder:
+    Cylinder::
 
         #define PARAMETER_TABLE \
         double length; \
         double radius; \
         double sld; \
-        double sld_solvent
+        double sld_solvent;
 
     Note: scale and background are never included
 
-    Multi-shell cylinder (10 shell max):
+    Multi-shell cylinder (10 shell max)::
 
         #define PARAMETER_TABLE \
         double num_shells; \
         double length; \
         double radius[10]; \
         double sld[10]; \
-        double sld_solvent
+        double sld_solvent;
 
-- CALL_IQ(q, i, var) is the declaration of a call to the kernel::
+- CALL_IQ(q, i, var) is the declaration of a call to the kernel:
 
-    Cylinder:
+    Cylinder::
 
         #define CALL_IQ(q, i, var) Iq(q[i], \
         var.length, \
@@ -39,7 +138,7 @@ The environment needs to provide the following #defines:
         var.sld, \
         var.sld_solvent)
 
-    Multi-shell cylinder:
+    Multi-shell cylinder::
 
         #define CALL_IQ(q, i, var) Iq(q[i], \
         var.num_shells, \
@@ -48,7 +147,7 @@ The environment needs to provide the following #defines:
         var.sld, \
         var.sld_solvent)
 
-    Cylinder2D:
+    Cylinder2D::
 
         #define CALL_IQ(q, i, var) Iqxy(q[2*i], q[2*i+1], \
         var.length, \
@@ -63,17 +162,19 @@ The environment needs to provide the following #defines:
         #define CALL_VOLUME(var) \
         form_volume(var.length, var.radius)
 
-- INVALID(var) is a test for model parameters in the correct range::
+There is an additional macro that can be defined within the model.c file:
 
-    Cylinder:
+- INVALID(var) is a test for model parameters in the correct range:
+
+    Cylinder::
 
         #define INVALID(var) 0
 
-    BarBell:
+    BarBell::
 
         #define INVALID(var) (var.bell_radius < var.radius)
 
-    Model with complicated constraints:
+    Model with complicated constraints::
 
         inline bool constrained(p1, p2, p3) { return expression; }
         #define INVALID(var) constrained(var.p1, var.p2, var.p3)
@@ -85,42 +186,51 @@ weighted sum across all the weights.  Parameters may be passed to the
 underlying calculation engine as scalars or vectors, but the polydispersity
 calculator treats the parameter set as one long vector.
 
-Let's assume we have 6 parameters in the model, with two polydisperse::
+Let's assume we have 8 parameters in the model, with two polydisperse.  Since
+this is a 1-D model the orientation parameters won't be used::
 
     0: scale        {scl = constant}
     1: background   {bkg = constant}
-    2: length       {l = vector of 30pts}
-    3: radius       {r = vector of 10pts}
+    2: radius       {r = vector of 10pts}
+    3: length       {l = vector of 30pts}
     4: sld          {s = constant/(radius**2*length)}
     5: sld_solvent  {s2 = constant}
+    6: theta        {not used}
+    7: phi          {not used}
 
-This generates the following call to the kernel (where x stands for an
-arbitrary value that is not used by the kernel evaluator)::
+This generates the following call to the kernel.  Note that parameters 4 and
+5 are treated as polydisperse even though they are not --- this is because
+it is harmless to do so and simplifies the looping code::
 
-    NPARS = 4  // scale and background are in all models
-    problem {
-        pd_par = {3, 2, x, x}         // parameters *radius* and *length* vary
-        pd_length = {30, 10, 0, 0}    // *length* has more, so it is first
-        pd_offset = {10, 0, x, x}     // *length* starts at index 10 in weights
+    MAX_PD = 4
+    NUM_PARS = 6          // kernel parameters only
+    NUM_VALUES = 17       // all values, including scale and background
+    NUM_MAGNETIC = 2      // two parameters might be magnetic
+    MAGNETIC_PARS = 4, 5  // they are sld and sld_solvent
+    MAGNETIC_PAR0 = 4     // sld index
+    MAGNETIC_PAR1 = 5     // solvent index
+
+    details {
+        pd_par = {3, 2, 4, 5}         // parameters *radius* and *length* vary
+        pd_length = {30, 10, 1, 1}    // *length* has more, so it is first
+        pd_offset = {10, 0, 31, 32}   // *length* starts at index 10 in weights
         pd_stride = {1, 30, 300, 300} // cumulative product of pd length
-        pd_isvol = {True, True, x, x}       // true if weight is a volume weight
-        par_offset = {2, 3, 303, 313}  // parameter offsets
-        par_coord = {0, 3, 2, 1} // bitmap of parameter dependencies
-        fast_coord_index = {3, 5, x, x} // radius and sld have fast index
-        fast_coord_count = 2  // two parameters vary with *length* distribution
-        theta_var = -1   // no spherical correction
-        fast_theta = 0   // spherical correction angle is not pd 1
+        num_eval = 300   // 300 values in the polydispersity loop
+        num_weights = 42 // 42 values in the pd vector
+        num_active = 2   // only the first two pd are active
+        theta_var =  6   // spherical correction
     }
 
-    weight = { l0, .., l29, r0, .., r9} //length comes first as the longest vec
-    pars = { scl, bkg, l0, ..., l29, r0, r1, ..., r9,
-             s[l0,r0], ... s[l0,r9], s[l1,r0], ... s[l29,r9] , s2}
-             //where s[x,y] stands for material sld, s2 = solvent sld
+    values = { scl, bkg,                                  // universal
+               r, l, s, s2, theta, phi,                   // kernel pars
+               in spin, out spin, spin angle,             // applied magnetism
+               mx s, my s, mz s, mx s2, my s2, mz s2,     // magnetic slds
+               r0, .., r9, l0, .., l29, s, s2,            // pd values
+               r0, .., r9, l0, .., l29, s, s2}            // pd weights
 
     nq = 130
     q = { q0, q1, ..., q130, x, x }  # pad to 8 element boundary
-    result = {r1, ..., r130, norm, vol, vol_norm, x, x, x, x, x, x, x}
-
+    result = {r1, ..., r130, pd_norm, x }
 
 The polydisperse parameters are stored in as an array of parameter
 indices, one for each polydisperse parameter, stored in pd_par[n].
@@ -135,65 +245,31 @@ decreasing order of length for highest efficiency.
 
 We limit the number of polydisperse dimensions to MAX_PD (currently 4),
 though some models may have fewer if they have fewer polydisperse
-parameters. This cuts the size of the structure in half compared to
-allowing a separate polydispersity for each parameter.  This will
-help a little bit for models with large numbers of parameters, such
-as the onion model.
+parameters.  The main reason for the limit is to reduce code size.
+Each additional polydisperse parameter requires a separate polydispersity
+loop.  If more than 4 levels of polydispersity are needed, then kernel_iq.c
+and kernel_iq.cl will need to be extended.
 
-Parameters may be coordinated.  That is, we may have the value of one
-parameter depend on a set of other parameters, some of which may be
-polydisperse.  For example, if sld is inversely proportional to the
-volume of a cylinder, and the length and radius are independently
-polydisperse, then for each combination of length and radius we need a
-separate value for the sld.  The caller must provide a coordination table
-for each parameter containing the value for each parameter given the
-value of the polydisperse parameters v1, v2, etc.  The tables for each
-parameter are arranged contiguously in a vector, with offset[k] giving the
-starting location of parameter k in the vector.  Each parameter defines
-par_coord[k] as a bit mask indicating which polydispersity parameters the
-parameter depends upon. Usually this is zero, indicating that the parameter
-is independent, but for the cylinder example given, the bits for the
-radius and length polydispersity parameters would both be set, the result
-being a (#radius x #length) table, or maybe a (#length x #radius) table
-if length comes first in the polydispersity table.
-
-NB: If we can guarantee that a compiler and OpenCL driver are available,
-we could instead create the coordination function on the fly for each
-parameter, saving memory and transfer time, but requiring a C compiler
-as part of the environment.
-
-In ordering the polydisperse parameters by decreasing length we can
-iterate over the longest dispersion weight vector first.  All parameters
-coordinated with this weight vector (the 'fast' parameters), can be
-updated with a simple increment to the next position in the parameter
-value table.  The indices of these parameters is stored in fast_coord_index[],
-with fast_coord_count being the number of fast parameters.  A total
-of NPARS slots is allocated to allow for the case that all parameters
-are coordinated with the fast index, though this will likely be mostly
-empty.  When the fast increment count reaches the end of the weight
-vector, then the index of the second polydisperse parameter must be
-incremented, and all of its coordinated parameters updated.  Because this
-operation is not in the inner loop, a slower algorithm can be used.
+Constraints between parameters are not supported.  Instead users will
+have to define a new model with the constraints built in by making a
+copy of the existing model.  Mac provides OpenCL and we are supplying
+the tinycc compiler for Windows so this won't be a complete limitation,
+but it is rather inconvenient.  The process could perhaps be automated
+so that there is no code copying required, just an alternate CALL_IQ
+macro that implements the constraints.  Think carefully about constraining
+theta since the polar coordinates normalization is tied to this parameter.
 
 If there is no polydispersity we pretend that it is polydisperisty with one
 parameter, pd_start=0 and pd_stop=1.  We may or may not short circuit the
 calculation in this case, depending on how much time it saves.
 
-The problem details structure can be allocated and sent in as an integer
-array using the read-only flag.  This allows us to copy it once per fit
+The problem details structure could be allocated and sent in as an integer
+array using the read-only flag.  This would allow us to copy it once per fit
 along with the weights vector, since features such as the number of
 polydisperity elements per pd parameter or the coordinated won't change
-between function evaluations.  A new parameter vector is sent for
-each I(q) evaluation.
-
-To protect against expensive evaluations taking all the GPU resource
-on large fits, the entire polydispersity will not be computed at once.
-Instead, a start and stop location will be sent, indicating where in the
-polydispersity loop the calculation should start and where it should
-stop.  We can do this for arbitrary start/stop points since we have
-unwound the nested loop.  Instead, we use the same technique as array
-index translation, using div and mod to figure out the i,j,k,...
-indices in the virtual nested loop.
+between function evaluations.  A new parameter vector must be sent for
+each I(q) evaluation.  This is not currently implemented, and would require
+some resturcturing of the :class:`sasview_model.SasviewModel` interface.
 
 The results array will be initialized to zero for polydispersity loop
 entry zero, and preserved between calls to [start, stop] so that the
@@ -202,16 +278,7 @@ scale will be applied when the loop reaches the end.  This does require
 that the results array be allocated read-write, which is less efficient
 for the GPU, but it makes the calling sequence much more manageable.
 
-Scale and background cannot be coordinated with other polydisperse parameters
-
-Oriented objects in 2-D need a spherical correction on the angular variation
-in order to preserve the 'surface area' of the weight distribution.
-
-cutoff parameter limits integration area within polydispersity hypercude,
-which speeds calculations
-
 For accuracy we may want to introduce Kahan summation into the integration::
-
 
     double accumulated_error = 0.0;
     ...
@@ -223,3 +290,8 @@ For accuracy we may want to introduce Kahan summation into the integration::
     #else
         ret += next;
     #endif
+
+This will require accumulated error for each I(q) value to be preserved
+between kernel calls to implement this fully.  The kernel_iq.c code, which
+loops over q for each parameter set in the polydispersity loop, will need
+also need the accumalation vector.

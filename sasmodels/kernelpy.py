@@ -186,13 +186,11 @@ def _loops(parameters, form, form_volume, nq, call_details, values, cutoff):
     ################################################################
     n_pars = len(parameters)
     parameters[:] = values[2:n_pars+2]
-    scale, background = values[0], values[1]
     if call_details.num_active == 0:
-        norm = float(form_volume())
-        if norm > 0.0:
-            return (scale/norm)*form() + background
-        else:
-            return np.ones(nq, 'd')*background
+        pd_norm = float(form_volume())
+        scale = values[0]/(pd_norm if pd_norm != 0.0 else 1.0)
+        background = values[1]
+        return scale*form() + background
 
     pd_value = values[2+n_pars:2+n_pars + call_details.num_weights]
     pd_weight = values[2+n_pars + call_details.num_weights:]
@@ -244,10 +242,9 @@ def _loops(parameters, form, form_volume, nq, call_details, values, cutoff):
             total += weight * Iq
             pd_norm += weight * form_volume()
 
-    if pd_norm > 0.0:
-        return (scale/pd_norm)*total + background
-    else:
-        return np.ones(nq, 'd')*background
+    scale = values[0]/(pd_norm if pd_norm != 0.0 else 1.0)
+    background = values[1]
+    return scale*total + background
 
 
 def _create_default_functions(model_info):

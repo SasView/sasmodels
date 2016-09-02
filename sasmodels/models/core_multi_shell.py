@@ -115,7 +115,7 @@ def profile(sld_core, radius, sld_solvent, n, sld, thickness):
     rho.append(sld_core)
 
     # add in the shells
-    for k in range(n):
+    for k in range(int(n)):
         # Left side of each shells
         z.append(z[-1])
         rho.append(sld[k])

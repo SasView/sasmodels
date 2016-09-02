@@ -7,7 +7,7 @@ Exponential/Power-law fit method developed by G. Beaucage. Four functions
 are included so that 1, 2, 3, or 4 levels can be used. In addition a 0 level
 has been added which simply calculates
 
-.. math:
+.. math::
 
     I(q) = \text{scale} / q + \text{background}
 
@@ -15,19 +15,19 @@ The Beaucage method is able to reasonably approximate the scattering from
 many different types of particles, including fractal clusters, random coils
 (Debye equation), ellipsoidal particles, etc.
 
-The empirical fit function is (eq 9'):
+The empirical fit function is:
 
-.. math:
+.. math::
 
     I(q) = \text{background}
-    + \Sum_{i=1}^N \left[
-        G_i \exp\left(-\frac{q^2R_{gi}^2}{3}\right)
-       + B_i \exp\left(-\frac{q^2R_{g(i+1)}^2}{3}\right)
-             \left(\frac{1}{q_i^*}\right)^{P_i}
+    + \sum_{i=1}^N \Bigl[
+        G_i \exp\Bigl(-\frac{q^2R_{gi}^2}{3}\Bigr)
+       + B_i \exp\Bigl(-\frac{q^2R_{g(i+1)}^2}{3}\Bigr)
+             \Bigl(\frac{1}{q_i^*}\Bigr)^{P_i} \Bigr]
 
 where
 
-.. math:
+.. math::
 
     q_i^* = \frac{q}{\operatorname{erf}^3(q R_{gi}/\sqrt{6}}
 
@@ -44,7 +44,7 @@ See the references for further information on choosing the parameters.
 For 2D data: The 2D scattering intensity is calculated in the same way as 1D,
 where the $q$ vector is defined as
 
-.. math:
+.. math::
 
     q = \sqrt{q_x^2 + q_y^2}
 
@@ -65,6 +65,13 @@ from numpy import inf, exp, sqrt, errstate
 from scipy.special import erf
 
 category = "shape-independent"
+name = "unified_power_Rg"
+title = "Unified Power Rg"
+description = """
+        The Beaucage model employs the empirical multiple level unified
+        Exponential/Power-law fit method developed by G. Beaucage. Four functions
+        are included so that 1, 2, 3, or 4 levels can be used.
+        """
 
 # pylint: disable=bad-whitespace, line-too-long
 parameters = [
