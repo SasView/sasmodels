@@ -218,10 +218,13 @@ def parse_dtype(model_info, dtype=None, platform=None):
     """
     # Assign default platform, overriding ocl with dll if OpenCL is unavailable
     # If opencl=False OpenCL is switched off
-    if platform is None or model_info.opencl:
+    # Finally one can force OpenCL calculation even if HAVE_OPENCL=False
+    if platform is None:
         platform = "ocl"
     if platform == "ocl" and not HAVE_OPENCL or not model_info.opencl:
         platform = "dll"
+    #if  model_info.opencl and not HAVE_OPENCL:
+    #    platform = "ocl"
 
     # Check if type indicates dll regardless of which platform is given
     if dtype is not None and dtype.endswith('!'):
