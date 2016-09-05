@@ -21,7 +21,7 @@ from . import mixture
 from . import kernelpy
 from . import kerneldll
 
-if "SAS_OPENCL" not in os.environ:
+if os.environ["SAS_OPENCL"]=="None":
     HAVE_OPENCL = False
 else:
     try:
