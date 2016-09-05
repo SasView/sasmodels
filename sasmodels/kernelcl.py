@@ -36,7 +36,8 @@ drivers are available by starting python and running:
 
 Once you have done that, it will show the available drivers which you
 can select.  It will then tell you that you can use these drivers
-automatically by setting the PYOPENCL_CTX environment variable.
+automatically by setting the SAS_OPENCL environment variable, which is
+PYOPENCL_CTX equivalent but not conflicting with other pyopnecl programs.
 
 Some graphics cards have multiple devices on the same card.  You cannot
 yet use both of them concurrently to evaluate models, but you can run
@@ -226,7 +227,9 @@ class GpuEnvironment(object):
         #self.context = cl.create_some_context()
 
         self.context = None
-        if 'PYOPENCL_CTX' in os.environ:
+        if 'SAS_OPENCL' in os.environ:
+            #Setting PYOPENCL_CTX as a SAS_OPENCL to create cl context
+            os.environ["PYOPENCL_CTX"] = os.environ["SAS_OPENCL"]
             self._create_some_context()
 
         if not self.context:
@@ -270,7 +273,7 @@ class GpuEnvironment(object):
         # type: () -> cl.Context
         """
         Protected call to cl.create_some_context without interactivity.  Use
-        this if PYOPENCL_CTX is set in the environment.  Sets the *context*
+        this if SAS_OPENCL is set in the environment.  Sets the *context*
         attribute.
         """
         try:
@@ -278,7 +281,7 @@ class GpuEnvironment(object):
         except Exception as exc:
             warnings.warn(str(exc))
             warnings.warn("pyopencl.create_some_context() failed")
-            warnings.warn("the environment variable 'PYOPENCL_CTX' might not be set correctly")
+            warnings.warn("the environment variable 'SAS_OPENCL' might not be set correctly")
 
     def compile_program(self, name, source, dtype, fast, timestamp):
         # type: (str, str, np.dtype, bool, float) -> cl.Program

@@ -20,11 +20,15 @@ from . import product
 from . import mixture
 from . import kernelpy
 from . import kerneldll
-try:
-    from . import kernelcl
-    HAVE_OPENCL = True
-except Exception:
+
+if "SAS_OPENCL" not in os.environ:
     HAVE_OPENCL = False
+else:
+    try:
+        from . import kernelcl
+        HAVE_OPENCL = True
+    except Exception:
+        HAVE_OPENCL = False
 
 try:
     from typing import List, Union, Optional, Any
@@ -218,17 +222,11 @@ def parse_dtype(model_info, dtype=None, platform=None):
     """
     # Assign default platform, overriding ocl with dll if OpenCL is unavailable
     # If opencl=False OpenCL is switched off
-    # Finally one can force OpenCL calculation even if HAVE_OPENCL=False
-
-    if "SAS_OPENCL" in os.environ:
-        sasopencl = os.environ["SAS_OPENCL"]
 
     if platform is None:
         platform = "ocl"
     if platform == "ocl" and not HAVE_OPENCL or not model_info.opencl:
         platform = "dll"
-    #if  model_info.opencl and not HAVE_OPENCL:
-    #    platform = "ocl"
 
     # Check if type indicates dll regardless of which platform is given
     if dtype is not None and dtype.endswith('!'):
