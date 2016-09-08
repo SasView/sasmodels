@@ -67,8 +67,8 @@ category = "shape:sphere"
 #   ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [
     ["second_moment", "Ang", 23.0, [0.0, inf], "", "Second moment of polymer distribution"],
-    ["adsorbed_amount", "mg/m2", 1.9, [0.0, inf], "", "Adsorbed amount of polymer"],
-    ["density_shell", "g/cm3", 0.7, [0.0, inf], "", "Bulk density of polymer in the shell"],
+    ["adsorbed_amount", "mg/m^2", 1.9, [0.0, inf], "", "Adsorbed amount of polymer"],
+    ["density_shell", "g/cm^3", 0.7, [0.0, inf], "", "Bulk density of polymer in the shell"],
     ["radius", "Ang", 500.0, [0.0, inf], "", "Core particle radius"],
     ["volfraction", "None", 0.14, [0.0, inf], "", "Core particle volume fraction"],
     ["sld_shell", "1e-6/Ang^2", 1.5, [-inf, inf], "sld", "Polymer shell SLD"],

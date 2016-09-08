@@ -217,8 +217,8 @@ RST_UNITS = {
     "degrees": "degree",
     "1/cm": "|cm^-1|",
     "Ang/cm": "|Ang*cm^-1|",
-    "g/cm3": "|g/cm^3|",
-    "mg/m2": "|mg/m^2|",
+    "g/cm^3": "|g/cm^3|",
+    "mg/m^2": "|mg/m^2|",
     "": "None",
     }
 
