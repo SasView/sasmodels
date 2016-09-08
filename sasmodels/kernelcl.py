@@ -230,6 +230,7 @@ class GpuEnvironment(object):
         if 'SAS_OPENCL' in os.environ:
             #Setting PYOPENCL_CTX as a SAS_OPENCL to create cl context
             os.environ["PYOPENCL_CTX"] = os.environ["SAS_OPENCL"]
+        if 'PYOPENCL_CTX' in os.environ:
             self._create_some_context()
 
         if not self.context:

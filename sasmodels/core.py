@@ -21,7 +21,7 @@ from . import mixture
 from . import kernelpy
 from . import kerneldll
 
-if "SAS_OPENCL" in os.environ and os.environ["SAS_OPENCL"]=="None":
+if os.environ.get("SAS_OPENCL", "").lower() == "none":
     HAVE_OPENCL = False
 else:
     try:
@@ -227,6 +227,11 @@ def parse_dtype(model_info, dtype=None, platform=None):
         platform = "ocl"
     if platform == "ocl" and not HAVE_OPENCL or not model_info.opencl:
         platform = "dll"
+
+    # if platform is None:
+    #     platform = "ocl" if model_info.opencl else "dll"
+    # if platform == "ocl" and not HAVE_OPENCL:
+    #     platform = "dll"
 
     # Check if type indicates dll regardless of which platform is given
     if dtype is not None and dtype.endswith('!'):

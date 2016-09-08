@@ -103,6 +103,7 @@ description = """
             from pi/2 to zero of...
             f(q,alpha)^(2)*sin(alpha)*dalpha + background
 """
+#opencl=False
 category = "shape:cylinder"
 
 #             [ "name", "units", default, [lower, upper], "type", "description"],
