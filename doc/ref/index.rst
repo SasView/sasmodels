@@ -8,4 +8,5 @@ SAS Model Reference
 
    intro.rst
    refs.rst
+   compilation.rst
    magnetism/magnetism.rst
