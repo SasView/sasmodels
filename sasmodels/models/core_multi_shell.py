@@ -131,7 +131,7 @@ def profile(sld_core, radius, sld_solvent, n, sld, thickness):
 
 def ER(radius, n, thickness):
     """Effective radius"""
-    n = n[0]  # n cannot be polydisperse
+    n = int(n[0])  # n cannot be polydisperse
     return np.sum(thickness[:n], axis=0) + radius
 
 demo = dict(sld_core=6.4,
