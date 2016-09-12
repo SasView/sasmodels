@@ -9,12 +9,43 @@ unicode, or with mathjax.
 import re
 from contextlib import contextmanager
 
+# CRUFT: locale.getlocale() fails on some versions of OS X
+# See https://bugs.python.org/issue18378
+import locale
+if hasattr(locale, '_parse_localename'):
+    try:
+        locale._parse_localename('UTF-8')
+    except ValueError:
+        _old_parse_localename = locale._parse_localename
+        def _parse_localename(localename):
+            code = locale.normalize(localename)
+            if code == 'UTF-8':
+                return None, code
+            else:
+                return _old_parse_localename(localename)
+        locale._parse_localename = _parse_localename
+
 from docutils.core import publish_parts
 from docutils.writers.html4css1 import HTMLTranslator
 from docutils.nodes import SkipNode
 
+def wxview(html, url="", size=(850, 540)):
+    import wx
+    from wx.html2 import WebView
+    frame = wx.Frame(None, -1, size=size)
+    view = WebView.New(frame)
+    view.SetPage(html, url)
+    frame.Show()
+    return frame
 
-def rst2html(rst, part="whole", math_output="html"):
+def view_rst(filename):
+    from os.path import expanduser
+    with open(expanduser(filename)) as fid:
+        rst = fid.read()
+    html = rst2html(rst)
+    wxview(html)
+
+def rst2html(rst, part="whole", math_output="mathjax"):
     r"""
     Convert restructured text into simple html.
 
@@ -43,6 +74,12 @@ def rst2html(rst, part="whole", math_output="html"):
         settings = {"math_output": math_output}
     else:
         settings = {"math-output": math_output}
+
+    # TODO: support stylesheets
+    #html_root = "/full/path/to/_static/"
+    #sheets = [html_root+s for s in ["basic.css","classic.css"]]
+    #settings["embed_styesheet"] = True
+    #settings["stylesheet_path"] = sheets
 
     # math2html and mathml do not support \frac12
     rst = replace_compact_fraction(rst)

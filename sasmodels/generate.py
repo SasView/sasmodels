@@ -705,7 +705,8 @@ def make_doc(model_info):
     """
     Iq_units = "The returned value is scaled to units of |cm^-1| |sr^-1|, absolute scale."
     Sq_units = "The returned value is a dimensionless structure factor, $S(q)$."
-    docs = convert_section_titles_to_boldface(model_info.docs)
+    docs = model_info.docs if model_info.docs is not None else ""
+    docs = convert_section_titles_to_boldface(docs)
     pars = make_partable(model_info.parameters.COMMON
                          + model_info.parameters.kernel_parameters)
     subst = dict(id=model_info.id.replace('_', '-'),
@@ -717,12 +718,61 @@ def make_doc(model_info):
     return DOC_HEADER % subst
 
 
+# TODO: need a single source for rst_prolog; it is also in doc/rst_prolog
+RST_PROLOG = """\
+.. |Ang| unicode:: U+212B
+.. |Ang^-1| replace:: |Ang|\ :sup:`-1`
+.. |Ang^2| replace:: |Ang|\ :sup:`2`
+.. |Ang^-2| replace:: |Ang|\ :sup:`-2`
+.. |1e-6Ang^-2| replace:: 10\ :sup:`-6`\ |Ang|\ :sup:`-2`
+.. |Ang^3| replace:: |Ang|\ :sup:`3`
+.. |Ang^-3| replace:: |Ang|\ :sup:`-3`
+.. |Ang^-4| replace:: |Ang|\ :sup:`-4`
+.. |cm^-1| replace:: cm\ :sup:`-1`
+.. |cm^2| replace:: cm\ :sup:`2`
+.. |cm^-2| replace:: cm\ :sup:`-2`
+.. |cm^3| replace:: cm\ :sup:`3`
+.. |1e15cm^3| replace:: 10\ :sup:`15`\ cm\ :sup:`3`
+.. |cm^-3| replace:: cm\ :sup:`-3`
+.. |sr^-1| replace:: sr\ :sup:`-1`
+.. |P0| replace:: P\ :sub:`0`\
+
+.. |equiv| unicode:: U+2261
+.. |noteql| unicode:: U+2260
+.. |TM| unicode:: U+2122
+
+.. |cdot| unicode:: U+00B7
+.. |deg| unicode:: U+00B0
+.. |g/cm^3| replace:: g\ |cdot|\ cm\ :sup:`-3`
+.. |mg/m^2| replace:: mg\ |cdot|\ m\ :sup:`-2`
+.. |fm^2| replace:: fm\ :sup:`2`
+.. |Ang*cm^-1| replace:: |Ang|\ |cdot|\ cm\ :sup:`-1`
+"""
+
+# TODO: make a better fake reference role
+RST_ROLES = """\
+.. role:: ref
+
+.. role:: numref
+
+"""
+
 def make_html(model_info):
     """
     Convert model docs directly to html.
     """
     from . import rst2html
-    return rst2html.convert(make_doc(model_info))
+
+    rst = make_doc(model_info)
+    return rst2html.rst2html("".join((RST_ROLES, RST_PROLOG, rst)))
+
+def view_html(model_name):
+    from . import rst2html
+    from . import modelinfo
+    kernel_module = load_kernel_module(model_name)
+    info = modelinfo.make_model_info(kernel_module)
+    url = "file://"+dirname(info.filename)+"/"
+    rst2html.wxview(make_html(info), url=url)
 
 def demo_time():
     # type: () -> None
