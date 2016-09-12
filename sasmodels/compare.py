@@ -957,16 +957,18 @@ def explore(opts):
     from bumps.names import FitProblem  # type: ignore
     from bumps.gui.app_frame import AppFrame  # type: ignore
 
-    problem = FitProblem(Explore(opts))
     is_mac = "cocoa" in wx.version()
-    app = wx.App()
-    frame = AppFrame(parent=None, title="explore")
+    # Create an app if not running embedded
+    app = wx.App() if wx.GetApp() is None else None
+    problem = FitProblem(Explore(opts))
+    frame = AppFrame(parent=None, title="explore", size=(1000,700))
     if not is_mac: frame.Show()
     frame.panel.set_model(model=problem)
     frame.panel.Layout()
     frame.panel.aui.Split(0, wx.TOP)
     if is_mac: frame.Show()
-    app.MainLoop()
+    # If running withing an app, start the main loop
+    if app: app.MainLoop()
 
 class Explore(object):
     """
