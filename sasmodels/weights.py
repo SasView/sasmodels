@@ -1,10 +1,12 @@
 """
 SAS distributions for polydispersity.
 """
-# TODO: include dispersion docs with the disperser models
+from __future__ import division
 from math import sqrt  # type: ignore
 import numpy as np  # type: ignore
 from scipy.special import gammaln  # type: ignore
+
+# TODO: include dispersion docs with the disperser models
 
 class Dispersion(object):
     """
