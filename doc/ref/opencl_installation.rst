@@ -4,8 +4,8 @@
 OpenCL Installation
 *******************
 
-1. Check if you have OpenCL/pyopecl already installed
-=====================================================
+1. Check if you have OpenCL already installed
+=============================================
 
 Windows
 =========

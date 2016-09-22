@@ -1,13 +1,13 @@
 .. _models-complitation:
 
-******************
-Models Compliation
-******************
+****************
+GPU Computations
+****************
 SasView model evaluations can run on your graphics card (GPU) or they can run
 on the processor (CPU).
 
 To run on the GPU, your computer must have OpenCL drivers installed.
-For information about OpenCL and pyopencl installation see the
+For information about OpenCL installation see the
 :ref:`opencl-installation` documentation
 
 Where the model is evaluated is a little bit complicated.

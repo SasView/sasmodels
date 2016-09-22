@@ -8,5 +8,5 @@ SAS Model Reference
 
    intro.rst
    refs.rst
-   compilation.rst
+   gpu_computations.rst
    magnetism/magnetism.rst
