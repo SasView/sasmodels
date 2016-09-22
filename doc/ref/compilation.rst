@@ -7,15 +7,8 @@ SasView model evaluations can run on your graphics card (GPU) or they can run
 on the processor (CPU).
 
 To run on the GPU, your computer must have OpenCL drivers installed.
-
-... give details on how to identify graphics cards, how to tell if OpenCL
-is already installed and where to get drivers if it is not ...
-
-Note that Intel provides an OpenCL drivers for Intel processors.
-This can sometimes make use of special vector instructions across multiple
-processors, so it is worth installing if the GPU does not support double
-precision.
-You can install this driver alongside the GPU driver for NVIDIA or AMD.
+For information about OpenCL and pyopencl installation see the
+:ref:`opencl-installation` documentation
 
 Where the model is evaluated is a little bit complicated.
 If the model has the line *single=False* then it requires double precision.
