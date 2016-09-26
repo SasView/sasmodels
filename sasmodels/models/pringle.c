@@ -41,16 +41,8 @@ void _integrate_bessel(
         sumC += y*C;
     }
 
-    #if 1
-    // TODO: should the normalization be to R^2 or the last value, r^2
-    // the gaussian window does not go all the way from 0 to 1.
-    //radius = Gauss76Z[75] * zm + zb;
-    *Sn = zm*sumS / (r*r);
-    *Cn = zm*sumC / (r*r);
-    #else
     *Sn = zm*sumS / (radius*radius);
     *Cn = zm*sumC / (radius*radius);
-    #endif
 }
 
 static
@@ -108,9 +100,7 @@ double _integrate_psi(
 
 double form_volume(double radius, double thickness, double alpha, double beta)
 {
-    // TODO: Normalize by form volume
-    //return M_PI*radius*radius*thickness;
-    return 1.0;
+    return M_PI*radius*radius*thickness;
 }
 
 double Iq(
@@ -125,7 +115,5 @@ double Iq(
     double form = _integrate_psi(q, radius, thickness, alpha, beta);
     double contrast = sld_pringle - sld_solvent;
     double volume = M_PI*radius*radius*thickness;
-    // TODO: If normalize by form volume, need an extra volume here
-    //return 1.0e-4*form * square(contrast * volume);
-    return 1.0e-4*form * square(contrast) * volume;
+    return 1.0e-4*form * square(contrast * volume);
 }

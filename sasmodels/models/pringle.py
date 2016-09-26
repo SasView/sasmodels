@@ -16,13 +16,13 @@ where
 
 .. math::
 
-    C_n = \int^{R}_{0} r dr\cos(qr^2\alpha \cos{\psi})
+    C_n = \frac{1}{r^2}\int^{R}_{0} r dr\cos(qr^2\alpha \cos{\psi})
     J_n\left( qr^2\beta \cos{\psi}\right)
     J_{2n}\left( qr \sin{\psi}\right)
 
 .. math::
 
-    S_n = \int^{R}_{0} r dr\sin(qr^2\alpha \cos{\psi})
+    S_n = \frac{1}{r^2}\int^{R}_{0} r dr\sin(qr^2\alpha \cos{\psi})
     J_n\left( qr^2\beta \cos{\psi}\right)
     J_{2n}\left( qr \sin{\psi}\right)
 
@@ -46,7 +46,7 @@ Derivation by Stefan Alexandru Rautu.
 
 **Last Modified by:** Wojciech Wpotrzebowski **on:** March 20, 2016
 
-**Last Reviewed by:** Paul Butler **on:** March 21, 2016
+**Last Reviewed by:** Andrew Jackson **on:** September 26, 2016
 
 """
 
