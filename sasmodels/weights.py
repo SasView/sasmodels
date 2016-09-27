@@ -102,9 +102,9 @@ class RectangleDispersion(Dispersion):
     type = "rectangle"
     default = dict(npts=35, width=0, nsigmas=1.70325)
     def _weights(self, center, sigma, lb, ub):
-        x = self._linspace(center, sigma*sqrt(3.0), lb, ub)
-        px = np.ones_like(x)
-        return x, px
+        x = self._linspace(center, sigma, lb, ub)
+        x = x[np.fabs(x-center) <= np.fabs(sigma)*sqrt(3.0)]
+        return x, np.ones_like(x)
 
 
 class LogNormalDispersion(Dispersion):
