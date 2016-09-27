@@ -119,7 +119,9 @@ class LogNormalDispersion(Dispersion):
     default = dict(npts=80, width=0, nsigmas=8)
     def _weights(self, center, sigma, lb, ub):
         x = self._linspace(center, sigma, max(lb, 1e-8), max(ub, 1e-8))
-        px = np.exp(-0.5*(np.log(x)-center)**2/sigma**2)/(x*sigma)
+        # sigma in the lognormal function is in ln(R) space, thus needs converting
+        sig = np.fabs(sigma/center)
+        px = np.exp(-0.5*((np.log(x)-np.log(center))/sig)**2)/(x*sig)
         return x, px
 
 
@@ -245,3 +247,4 @@ def plot_weights(model_info, pairs):
                 pylab.plot(v, w, '-o', label=s)
         pylab.grid(True)
         pylab.legend()
+        #pylab.show()
