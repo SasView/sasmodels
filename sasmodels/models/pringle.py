@@ -102,7 +102,7 @@ tests = [
       'sld_pringle': 1.0,
       'sld_solvent': 6.3,
       'background': 0.001,
-     }, 0.1, 9.88653],
+     }, 0.1, 9.87676],
 
     [{'scale' : 1.0,
       'radius': 60.0,
@@ -112,7 +112,7 @@ tests = [
       'sld_pringle': 1.0,
       'sld_solvent': 6.3,
       'background': 0.001,
-     }, 0.01, 290.854],
+     }, 0.01, 290.56723],
 
     [{'scale' : 1.0,
       'radius': 60.0,
@@ -121,6 +121,6 @@ tests = [
       'beta': 0.02,
       'sld_pringle': 1.0,
       'sld_solvent': 6.3,
-      'background': 6.3,
-     }, 0.001, 317.935],
+      'background': 0.001,
+     }, 0.001, 317.40847],
 ]
