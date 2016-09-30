@@ -1,21 +1,21 @@
-double form_volume(double a_side, double b_side, double c_side, 
-                   double arim_thickness, double brim_thickness, double crim_thickness);
+double form_volume(double length_a, double length_b, double length_c, 
+                   double thick_rim_a, double thick_rim_b, double thick_rim_c);
 double Iq(double q, double core_sld, double arim_sld, double brim_sld, double crim_sld,
-          double solvent_sld, double a_side, double b_side, double c_side,
-          double arim_thickness, double brim_thickness, double crim_thickness);
+          double solvent_sld, double length_a, double length_b, double length_c,
+          double thick_rim_a, double thick_rim_b, double thick_rim_c);
 double Iqxy(double qx, double qy, double core_sld, double arim_sld, double brim_sld,
-            double crim_sld, double solvent_sld, double a_side, double b_side,
-            double c_side, double arim_thickness, double brim_thickness,
-            double crim_thickness, double theta, double phi, double psi);
+            double crim_sld, double solvent_sld, double length_a, double length_b,
+            double length_c, double thick_rim_a, double thick_rim_b,
+            double thick_rim_c, double theta, double phi, double psi);
 
-double form_volume(double a_side, double b_side, double c_side, 
-                   double arim_thickness, double brim_thickness, double crim_thickness)
+double form_volume(double length_a, double length_b, double length_c, 
+                   double thick_rim_a, double thick_rim_b, double thick_rim_c)
 {
-    //return a_side * b_side * c_side;
-    return a_side * b_side * c_side + 
-           2.0 * arim_thickness * b_side * c_side + 
-           2.0 * brim_thickness * a_side * c_side +
-           2.0 * crim_thickness * a_side * b_side;
+    //return length_a * length_b * length_c;
+    return length_a * length_b * length_c + 
+           2.0 * thick_rim_a * length_b * length_c + 
+           2.0 * thick_rim_b * length_a * length_c +
+           2.0 * thick_rim_c * length_a * length_b;
 }
 
 double Iq(double q,
@@ -24,29 +24,29 @@ double Iq(double q,
     double brim_sld,
     double crim_sld,
     double solvent_sld,
-    double a_side,
-    double b_side,
-    double c_side,
-    double arim_thickness,
-    double brim_thickness,
-    double crim_thickness)
+    double length_a,
+    double length_b,
+    double length_c,
+    double thick_rim_a,
+    double thick_rim_b,
+    double thick_rim_c)
 {
     // Code converted from functions CSPPKernel and CSParallelepiped in libCylinder.c_scaled
     // Did not understand the code completely, it should be rechecked (Miguel Gonzalez)
     
     double t1, t2, t3, t4, tmp, answer;   
-    double mu = q * b_side;
+    double mu = q * length_b;
     
     //calculate volume before rescaling (in original code, but not used)
-    //double vol = form_volume(a_side, b_side, c_side, arim_thickness, brim_thickness, crim_thickness);		
-    //double vol = a_side * b_side * c_side + 
-    //       2.0 * arim_thickness * b_side * c_side + 
-    //       2.0 * brim_thickness * a_side * c_side +
-    //       2.0 * crim_thickness * a_side * b_side;
+    //double vol = form_volume(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c);		
+    //double vol = length_a * length_b * length_c + 
+    //       2.0 * thick_rim_a * length_b * length_c + 
+    //       2.0 * thick_rim_b * length_a * length_c +
+    //       2.0 * thick_rim_c * length_a * length_b;
     
     // Scale sides by B
-    double a_scaled = a_side / b_side;
-    double c_scaled = c_side / b_side;
+    double a_scaled = length_a / length_b;
+    double c_scaled = length_c / length_b;
 
     // DelRho values (note that drC is not used later)       
 	double dr0 = core_sld-solvent_sld;
@@ -73,20 +73,20 @@ double Iq(double q,
             double uu = 0.5 * ( Gauss76Z[j] + 1.0 );
             double mudum = mu * sqrt(1.0-sigma*sigma);
 
-	        double Vin = a_side * b_side * c_side;
-	        //double Vot = (a_side * b_side * c_side +
-            //            2.0 * arim_thickness * b_side * c_side +
-            //            2.0 * a_side * brim_thickness * c_side +
-            //            2.0 * a_side * b_side * crim_thickness);
-	        double V1 = (2.0 * arim_thickness * b_side * c_side);    // incorrect V1 (aa*bb*cc+2*ta*bb*cc)
-	        double V2 = (2.0 * a_side * brim_thickness * c_side);    // incorrect V2(aa*bb*cc+2*aa*tb*cc)
+	        double Vin = length_a * length_b * length_c;
+	        //double Vot = (length_a * length_b * length_c +
+            //            2.0 * thick_rim_a * length_b * length_c +
+            //            2.0 * length_a * thick_rim_b * length_c +
+            //            2.0 * length_a * length_b * thick_rim_c);
+	        double V1 = (2.0 * thick_rim_a * length_b * length_c);    // incorrect V1 (aa*bb*cc+2*ta*bb*cc)
+	        double V2 = (2.0 * length_a * thick_rim_b * length_c);    // incorrect V2(aa*bb*cc+2*aa*tb*cc)
 	
             // ta and tb correspond to the definitions in CSPPKernel, but they don't make sense to me (MG)
             // the a_scaled in the definition of tb was present in CSPPKernel in libCylinder.c,
             // while in cspkernel in csparallelepiped.cpp (used for the 2D), all the definitions
             // for ta, tb, tc use also A + 2*rim_thickness (but not scaled by B!!!)            
-            double ta = (a_scaled+2.0*arim_thickness)/b_side; 
-            double tb = (a_scaled+2.0*brim_thickness)/b_side;
+            double ta = (a_scaled+2.0*thick_rim_a)/length_b; 
+            double tb = (a_scaled+2.0*thick_rim_b)/length_b;
     
 	        double arg1 = (0.5*mudum*a_scaled) * sin(0.5*M_PI*uu);
 	        double arg2 = (0.5*mudum) * cos(0.5*M_PI*uu);
@@ -159,12 +159,12 @@ double Iqxy(double qx, double qy,
     double brim_sld,
     double crim_sld,
     double solvent_sld,
-    double a_side,
-    double b_side,
-    double c_side,
-    double arim_thickness,
-    double brim_thickness,
-    double crim_thickness,
+    double length_a,
+    double length_b,
+    double length_c,
+    double thick_rim_a,
+    double thick_rim_b,
+    double thick_rim_c,
     double theta,
     double phi,
     double psi)
@@ -216,25 +216,25 @@ double Iqxy(double qx, double qy,
 	double drA = arim_sld-solvent_sld;
 	double drB = brim_sld-solvent_sld;
 	double drC = crim_sld-solvent_sld;
-	double Vin = a_side * b_side * c_side;
+	double Vin = length_a * length_b * length_c;
     // As for the 1D case, Vot is not used
-	//double Vot = (a_side * b_side * c_side +
-    //              2.0 * arim_thickness * b_side * c_side +
-    //              2.0 * a_side * brim_thickness * c_side +
-    //              2.0 * a_side * b_side * crim_thickness);
-	double V1 = (2.0 * arim_thickness * b_side * c_side);    // incorrect V1 (aa*bb*cc+2*ta*bb*cc)
-	double V2 = (2.0 * a_side * brim_thickness * c_side);    // incorrect V2(aa*bb*cc+2*aa*tb*cc)
-    double V3 = (2.0 * a_side * b_side * crim_thickness);
+	//double Vot = (length_a * length_b * length_c +
+    //              2.0 * thick_rim_a * length_b * length_c +
+    //              2.0 * length_a * thick_rim_b * length_c +
+    //              2.0 * length_a * length_b * thick_rim_c);
+	double V1 = (2.0 * thick_rim_a * length_b * length_c);    // incorrect V1 (aa*bb*cc+2*ta*bb*cc)
+	double V2 = (2.0 * length_a * thick_rim_b * length_c);    // incorrect V2(aa*bb*cc+2*aa*tb*cc)
+    double V3 = (2.0 * length_a * length_b * thick_rim_c);
     // The definitions of ta, tb, tc are not the same as in the 1D case because there is no
-    // the scaling by B. The use of a_side for the 3 of them seems clearly a mistake to me,
+    // the scaling by B. The use of length_a for the 3 of them seems clearly a mistake to me,
     // but for the moment I let it like this until understanding better the code.
-	double ta = a_side + 2.0*arim_thickness;
-    double tb = a_side + 2.0*brim_thickness;
-    double tc = a_side + 2.0*crim_thickness;
+	double ta = length_a + 2.0*thick_rim_a;
+    double tb = length_a + 2.0*thick_rim_b;
+    double tc = length_a + 2.0*thick_rim_c;
     //handle arg=0 separately, as sin(t)/t -> 1 as t->0
-    double argA = 0.5*q*a_side*cos_val_a;
-    double argB = 0.5*q*b_side*cos_val_b;
-    double argC = 0.5*q*c_side*cos_val_c;
+    double argA = 0.5*q*length_a*cos_val_a;
+    double argB = 0.5*q*length_b*cos_val_b;
+    double argC = 0.5*q*length_c*cos_val_c;
     double argtA = 0.5*q*ta*cos_val_a;
     double argtB = 0.5*q*tb*cos_val_b;
     double argtC = 0.5*q*tc*cos_val_c;

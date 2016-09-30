@@ -1,22 +1,22 @@
-double form_volume(double equat_core,
-                   double polar_core,
-                   double equat_shell,
-                   double polar_shell);
+double form_volume(double radius_equat_core,
+                   double radius_polar_core,
+                   double radius_equat_shell,
+                   double radius_polar_shell);
 double Iq(double q,
-          double equat_core,
-          double polar_core,
-          double equat_shell,
-          double polar_shell,
+          double radius_equat_core,
+          double radius_polar_core,
+          double radius_equat_shell,
+          double radius_polar_shell,
           double sld_core,
           double sld_shell,
           double sld_solvent);
 
 
 double Iqxy(double qx, double qy,
-          double equat_core,
-          double polar_core,
-          double equat_shell,
-          double polar_shell,
+          double radius_equat_core,
+          double radius_polar_core,
+          double radius_equat_shell,
+          double radius_polar_shell,
           double sld_core,
           double sld_shell,
           double sld_solvent,
@@ -24,21 +24,21 @@ double Iqxy(double qx, double qy,
           double phi);
 
 
-double form_volume(double equat_core,
-                   double polar_core,
-                   double equat_shell,
-                   double polar_shell)
+double form_volume(double radius_equat_core,
+                   double radius_polar_core,
+                   double radius_equat_shell,
+                   double radius_polar_shell)
 {
-    double vol = 4.0*M_PI/3.0*equat_shell*equat_shell*polar_shell;
+    double vol = 4.0*M_PI/3.0*radius_equat_shell*radius_equat_shell*radius_polar_shell;
     return vol;
 }
 
 static double
 core_shell_ellipsoid_kernel(double q,
-          double equat_core,
-          double polar_core,
-          double equat_shell,
-          double polar_shell,
+          double radius_equat_core,
+          double radius_polar_core,
+          double radius_equat_shell,
+          double radius_polar_shell,
           double sld_core,
           double sld_shell,
           double sld_solvent)
@@ -56,10 +56,10 @@ core_shell_ellipsoid_kernel(double q,
     for(int i=0;i<N_POINTS_76;i++) {
         double zi = ( Gauss76Z[i]*(uplim-lolim) + uplim + lolim )/2.0;
         double yyy = Gauss76Wt[i] * gfn4(zi,
-                                  equat_core,
-                                  polar_core,
-                                  equat_shell,
-                                  polar_shell,
+                                  radius_equat_core,
+                                  radius_polar_core,
+                                  radius_equat_shell,
+                                  radius_polar_shell,
                                   delpc,
                                   delps,
                                   q);
@@ -76,10 +76,10 @@ core_shell_ellipsoid_kernel(double q,
 
 static double
 core_shell_ellipsoid_kernel_2d(double q, double q_x, double q_y,
-          double equat_core,
-          double polar_core,
-          double equat_shell,
-          double polar_shell,
+          double radius_equat_core,
+          double radius_polar_core,
+          double radius_equat_shell,
+          double radius_polar_shell,
           double sld_core,
           double sld_shell,
           double sld_solvent,
@@ -104,10 +104,10 @@ core_shell_ellipsoid_kernel_2d(double q, double q_x, double q_y,
 
     // Call the IGOR library function to get the kernel: MUST use gfn4 not gf2 because of the def of params.
     double answer = gfn4(cos_val,
-                  equat_core,
-                  polar_core,
-                  equat_shell,
-                  polar_shell,
+                  radius_equat_core,
+                  radius_polar_core,
+                  radius_equat_shell,
+                  radius_polar_shell,
                   sldcs,
                   sldss,
                   q);
@@ -119,19 +119,19 @@ core_shell_ellipsoid_kernel_2d(double q, double q_x, double q_y,
 }
 
 double Iq(double q,
-          double equat_core,
-          double polar_core,
-          double equat_shell,
-          double polar_shell,
+          double radius_equat_core,
+          double radius_polar_core,
+          double radius_equat_shell,
+          double radius_polar_shell,
           double sld_core,
           double sld_shell,
           double sld_solvent)
 {
     double intensity = core_shell_ellipsoid_kernel(q,
-           equat_core,
-           polar_core,
-           equat_shell,
-           polar_shell,
+           radius_equat_core,
+           radius_polar_core,
+           radius_equat_shell,
+           radius_polar_shell,
            sld_core,
            sld_shell,
            sld_solvent);
@@ -141,10 +141,10 @@ double Iq(double q,
 
 
 double Iqxy(double qx, double qy,
-          double equat_core,
-          double polar_core,
-          double equat_shell,
-          double polar_shell,
+          double radius_equat_core,
+          double radius_polar_core,
+          double radius_equat_shell,
+          double radius_polar_shell,
           double sld_core,
           double sld_shell,
           double sld_solvent,
@@ -154,10 +154,10 @@ double Iqxy(double qx, double qy,
     double q;
     q = sqrt(qx*qx+qy*qy);
     double intensity = core_shell_ellipsoid_kernel_2d(q, qx/q, qy/q,
-                       equat_core,
-                       polar_core,
-                       equat_shell,
-                       polar_shell,
+                       radius_equat_core,
+                       radius_polar_core,
+                       radius_equat_shell,
+                       radius_polar_shell,
                        sld_core,
                        sld_shell,
                        sld_solvent,

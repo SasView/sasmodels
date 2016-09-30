@@ -51,7 +51,7 @@ core_shell_ellipsoid_xt model may be much better.
 
 .. note::
     The 2nd virial coefficient of the solid ellipsoid is calculated based on
-    the *radius_a* (= *polar_shell)* and *radius_b (= equat_shell)* values,
+    the *radius_a* (= *radius_polar_shell)* and *radius_b (= radius_equat_shell)* values,
     and used as the effective radius for *S(Q)* when $P(Q) * S(Q)$ is applied.
 
 .. figure:: img/core_shell_ellipsoid_angle_projection.jpg
@@ -81,10 +81,10 @@ description = """
     = scale*<f^2>/Vol + bkg, where f is the
     single particle scattering amplitude.
     [Parameters]:
-    equat_core = equatorial radius of core, Rminor_core,
-    polar_core = polar radius of core, Rmajor_core,
-    equat_shell = equatorial radius of shell, Rminor_outer,
-    polar_shell = polar radius of shell, Rmajor_outer,
+    radius_equat_core = equatorial radius of core, Rminor_core,
+    radius_polar_core = polar radius of core, Rmajor_core,
+    radius_equat_shell = equatorial radius of shell, Rminor_outer,
+    radius_polar_shell = polar radius of shell, Rmajor_outer,
     sld_core = scattering length density of core,
     sld_shell = scattering length density of shell,
     sld_solvent = scattering length density of solvent,
@@ -101,10 +101,10 @@ category = "shape:ellipsoid"
 # pylint: disable=bad-whitespace, line-too-long
 #   ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [
-    ["equat_core",  "Ang",      200,   [0, inf],    "volume",      "Equatorial radius of core, r minor core"],
-    ["polar_core",  "Ang",       10,   [0, inf],    "volume",      "Polar radius of core, r major core"],
-    ["equat_shell", "Ang",      250,   [0, inf],    "volume",      "Equatorial radius of shell, r minor outer"],
-    ["polar_shell", "Ang",       30,   [0, inf],    "volume",      "Polar radius of shell, r major outer"],
+    ["radius_equat_core",  "Ang",      200,   [0, inf],    "volume",      "Equatorial radius of core, r minor core"],
+    ["radius_polar_core",  "Ang",       10,   [0, inf],    "volume",      "Polar radius of core, r major core"],
+    ["radius_equat_shell", "Ang",      250,   [0, inf],    "volume",      "Equatorial radius of shell, r minor outer"],
+    ["radius_polar_shell", "Ang",       30,   [0, inf],    "volume",      "Polar radius of shell, r major outer"],
     ["sld_core",    "1e-6/Ang^2", 2,   [-inf, inf], "sld",         "Core scattering length density"],
     ["sld_shell",   "1e-6/Ang^2", 1,   [-inf, inf], "sld",         "Shell scattering length density"],
     ["sld_solvent", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",         "Solvent scattering length density"],
@@ -115,19 +115,19 @@ parameters = [
 
 source = ["lib/sph_j1c.c", "lib/gfn.c", "lib/gauss76.c", "core_shell_ellipsoid.c"]
 
-def ER(equat_core, polar_core, equat_shell, polar_shell):
+def ER(radius_equat_core, radius_polar_core, radius_equat_shell, radius_polar_shell):
     """
         Returns the effective radius used in the S*P calculation
     """
     from .ellipsoid import ER as ellipsoid_ER
-    return ellipsoid_ER(polar_shell, equat_shell)
+    return ellipsoid_ER(radius_polar_shell, radius_equat_shell)
 
 
 demo = dict(scale=1, background=0.001,
-            equat_core=200.0,
-            polar_core=10.0,
-            equat_shell=250.0,
-            polar_shell=30.0,
+            radius_equat_core=200.0,
+            radius_polar_core=10.0,
+            radius_equat_shell=250.0,
+            radius_polar_shell=30.0,
             sld_core=2.0,
             sld_shell=1.0,
             sld_solvent=6.3,
@@ -141,10 +141,10 @@ qy = q*sin(phi)
 
 tests = [
     # Accuracy tests based on content in test/utest_other_models.py
-    [{'equat_core': 200.0,
-      'polar_core': 20.0,
-      'equat_shell': 250.0,
-      'polar_shell': 30.0,
+    [{'radius_equat_core': 200.0,
+      'radius_polar_core': 20.0,
+      'radius_equat_shell': 250.0,
+      'radius_polar_shell': 30.0,
       'sld_core': 2.0,
       'sld_shell': 1.0,
       'sld_solvent': 6.3,
@@ -155,10 +155,10 @@ tests = [
     # Additional tests with larger range of parameters
     [{'background': 0.01}, 0.1, 8.86741],
 
-    [{'equat_core': 20.0,
-      'polar_core': 200.0,
-      'equat_shell': 54.0,
-      'polar_shell': 3.0,
+    [{'radius_equat_core': 20.0,
+      'radius_polar_core': 200.0,
+      'radius_equat_shell': 54.0,
+      'radius_polar_shell': 3.0,
       'sld_core': 20.0,
       'sld_shell': 10.0,
       'sld_solvent': 6.0,
@@ -168,10 +168,10 @@ tests = [
 
     [{'background': 0.001}, (0.4, 0.5), 0.00170471],
 
-    [{'equat_core': 20.0,
-      'polar_core': 200.0,
-      'equat_shell': 54.0,
-      'polar_shell': 3.0,
+    [{'radius_equat_core': 20.0,
+      'radius_polar_core': 200.0,
+      'radius_equat_shell': 54.0,
+      'radius_polar_shell': 3.0,
       'sld_core': 20.0,
       'sld_shell': 10.0,
       'sld_solvent': 6.0,

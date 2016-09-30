@@ -1,8 +1,8 @@
-double form_volume(double radius, double rim_thickness, double face_thickness, double length);
+double form_volume(double radius, double thick_rim, double thick_face, double length);
 double Iq(double q,
           double radius,
-          double rim_thickness,
-          double face_thickness,
+          double thick_rim,
+          double thick_face,
           double length,
           double core_sld,
           double face_sld,
@@ -12,8 +12,8 @@ double Iq(double q,
 
 double Iqxy(double qx, double qy,
           double radius,
-          double rim_thickness,
-          double face_thickness,
+          double thick_rim,
+          double thick_face,
           double length,
           double core_sld,
           double face_sld,
@@ -23,9 +23,9 @@ double Iqxy(double qx, double qy,
           double phi);
 
 
-double form_volume(double radius, double rim_thickness, double face_thickness, double length)
+double form_volume(double radius, double thick_rim, double thick_face, double length)
 {
-    return M_PI*(radius+rim_thickness)*(radius+rim_thickness)*(length+2*face_thickness);
+    return M_PI*(radius+thick_rim)*(radius+thick_rim)*(length+2*thick_face);
 }
 
 static double
@@ -101,8 +101,8 @@ bicelle_integration(double qq,
 static double
 bicelle_kernel_2d(double q, double q_x, double q_y,
           double radius,
-          double rim_thickness,
-          double face_thickness,
+          double thick_rim,
+          double thick_face,
           double length,
           double core_sld,
           double face_sld,
@@ -124,7 +124,7 @@ bicelle_kernel_2d(double q, double q_x, double q_y,
     const double alpha = acos( cos_val );
 
     // Get the kernel
-    double answer = bicelle_kernel(q, radius, rim_thickness, face_thickness,
+    double answer = bicelle_kernel(q, radius, thick_rim, thick_face,
                            length/2.0, core_sld, face_sld, rim_sld,
                            solvent_sld, alpha) / fabs(sin(alpha));
 
@@ -135,15 +135,15 @@ bicelle_kernel_2d(double q, double q_x, double q_y,
 
 double Iq(double q,
           double radius,
-          double rim_thickness,
-          double face_thickness,
+          double thick_rim,
+          double thick_face,
           double length,
           double core_sld,
           double face_sld,
           double rim_sld,
           double solvent_sld)
 {
-    double intensity = bicelle_integration(q, radius, rim_thickness, face_thickness,
+    double intensity = bicelle_integration(q, radius, thick_rim, thick_face,
                        length, core_sld, face_sld, rim_sld, solvent_sld);
     return intensity*1.0e-4;
 }
@@ -151,8 +151,8 @@ double Iq(double q,
 
 double Iqxy(double qx, double qy,
           double radius,
-          double rim_thickness,
-          double face_thickness,
+          double thick_rim,
+          double thick_face,
           double length,
           double core_sld,
           double face_sld,
@@ -165,8 +165,8 @@ double Iqxy(double qx, double qy,
     q = sqrt(qx*qx+qy*qy);
     double intensity = bicelle_kernel_2d(q, qx/q, qy/q,
                       radius,
-                      rim_thickness,
-                      face_thickness,
+                      thick_rim,
+                      thick_face,
                       length,
                       core_sld,
                       face_sld,
