@@ -125,7 +125,7 @@ parameters = [["thickness", "Ang", 33.0, [0, inf], "volume",
              ]
 
 
-source = ["lamellar_stack_paracrystal_kernel.c"]
+source = ["lamellar_stack_paracrystal.c"]
 
 form_volume = """
     return 1.0;

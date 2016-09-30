@@ -111,7 +111,7 @@ parameters = [
      "Solvent scattering length density"],
     ]
 
-source = ["lamellar_hg_stack_caille_kernel.c"]
+source = ["lamellar_hg_stack_caille.c"]
 
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?

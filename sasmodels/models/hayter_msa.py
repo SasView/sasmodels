@@ -80,7 +80,7 @@ parameters = [
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["hayter_msa_kernel.c"]
+source = ["hayter_msa.c"]
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
 form_volume = """

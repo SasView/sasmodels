@@ -95,7 +95,7 @@ parameters = [
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lamellar_stack_caille_kernel.c"]
+source = ["lamellar_stack_caille.c"]
 
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
