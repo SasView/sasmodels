@@ -37,6 +37,7 @@ import numpy as np  # type: ignore
 
 from . import core
 from . import kerneldll
+from . import weights
 from .data import plot_theory, empty_data1D, empty_data2D
 from .direct_model import DirectModel
 from .convert import revert_name, revert_pars, constrain_new_to_old
@@ -389,6 +390,7 @@ def eval_sasview(model_info, data):
     import sas.models
     from sas.models.qsmearing import smear_selection
     from sas.models.MultiplicationModel import MultiplicationModel
+    from sas.models.dispersion_models import models as dispersers
 
     def get_model_class(name):
         # type: (str) -> "sas.models.BaseComponent"
@@ -421,6 +423,7 @@ def eval_sasview(model_info, data):
                             % model_info.id)
         ModelClass = get_model_class(old_name)
         model = [ModelClass()]
+    model[0].disperser_handles = {}
 
     # build a smearer with which to call the model, if necessary
     smearer = smear_selection(data, model=model)
@@ -457,11 +460,20 @@ def eval_sasview(model_info, data):
             # happen in revert_pars, but it hasn't been called yet.
             model[0] = ModelClass(control)
         # paying for parameter conversion each time to keep life simple, if not fast
+        for k, v in oldpars.items():
+            if k.endswith('.type'):
+                par = k[:-5]
+                cls = dispersers[v if v != 'rectangle' else 'rectangula']
+                handle = cls()
+                model[0].disperser_handles[par] = handle
+                model[0].set_dispersion(par, handle)
+
         #print("sasview pars",oldpars)
         for k, v in oldpars.items():
             name_attr = k.split('.')  # polydispersity components
             if len(name_attr) == 2:
-                model[0].dispersion[name_attr[0]][name_attr[1]] = v
+                par, disp_par = name_attr
+                model[0].dispersion[par][disp_par] = v
             else:
                 model[0].setParam(k, v)
         return theory()

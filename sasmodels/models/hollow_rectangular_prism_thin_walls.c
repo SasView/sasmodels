@@ -1,27 +1,27 @@
-double form_volume(double a_side, double b2a_ratio, double c2a_ratio);
-double Iq(double q, double sld, double solvent_sld, double a_side, 
+double form_volume(double length_a, double b2a_ratio, double c2a_ratio);
+double Iq(double q, double sld, double solvent_sld, double length_a, 
           double b2a_ratio, double c2a_ratio);
 double Iqxy(double qx, double qy, double sld, double solvent_sld, 
-            double a_side, double b2a_ratio, double c2a_ratio);
+            double length_a, double b2a_ratio, double c2a_ratio);
 
-double form_volume(double a_side, double b2a_ratio, double c2a_ratio)
+double form_volume(double length_a, double b2a_ratio, double c2a_ratio)
 {
-    double b_side = a_side * b2a_ratio;
-    double c_side = a_side * c2a_ratio;
-    double vol_shell = 2.0 * (a_side*b_side + a_side*c_side + b_side*c_side);
+    double b_side = length_a * b2a_ratio;
+    double c_side = length_a * c2a_ratio;
+    double vol_shell = 2.0 * (length_a*b_side + length_a*c_side + b_side*c_side);
     return vol_shell;
 }
 
 double Iq(double q,
     double sld,
     double solvent_sld,
-    double a_side,
+    double length_a,
     double b2a_ratio,
     double c2a_ratio)
 {
-    double b_side = a_side * b2a_ratio;
-    double c_side = a_side * c2a_ratio;
-    double a_half = 0.5 * a_side;
+    double b_side = length_a * b2a_ratio;
+    double c_side = length_a * c2a_ratio;
+    double a_half = 0.5 * length_a;
     double b_half = 0.5 * b_side;
     double c_half = 0.5 * c_side;
 
@@ -87,11 +87,11 @@ double Iq(double q,
 double Iqxy(double qx, double qy,
     double sld,
     double solvent_sld,
-    double a_side,
+    double length_a,
     double b2a_ratio,
     double c2a_ratio)
 {
     double q = sqrt(qx*qx + qy*qy);
-    double intensity = Iq(q, sld, solvent_sld, a_side, b2a_ratio, c2a_ratio); 
+    double intensity = Iq(q, sld, solvent_sld, length_a, b2a_ratio, c2a_ratio); 
     return intensity;    
 }

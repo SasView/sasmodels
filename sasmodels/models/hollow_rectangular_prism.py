@@ -104,7 +104,7 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
                "Parallelepiped scattering length density"],
               ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Solvent scattering length density"],
-              ["a_side", "Ang", 35, [0, inf], "volume",
+              ["length_a", "Ang", 35, [0, inf], "volume",
                "Shorter side of the parallelepiped"],
               ["b2a_ratio", "Ang", 1, [0, inf], "volume",
                "Ratio sides b/a"],
@@ -116,31 +116,31 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
 
 source = ["lib/gauss76.c", "hollow_rectangular_prism.c"]
 
-def ER(a_side, b2a_ratio, c2a_ratio, thickness):
+def ER(length_a, b2a_ratio, c2a_ratio, thickness):
     """
     Return equivalent radius (ER)
     thickness parameter not used
     """
-    b_side = a_side * b2a_ratio
-    c_side = a_side * c2a_ratio
+    b_side = length_a * b2a_ratio
+    c_side = length_a * c2a_ratio
 
     # surface average radius (rough approximation)
-    surf_rad = sqrt(a_side * b_side / pi)
+    surf_rad = sqrt(length_a * b_side / pi)
 
     ddd = 0.75 * surf_rad * (2 * surf_rad * c_side + (c_side + surf_rad) * (c_side + pi * surf_rad))
     return 0.5 * (ddd) ** (1. / 3.)
 
-def VR(a_side, b2a_ratio, c2a_ratio, thickness):
+def VR(length_a, b2a_ratio, c2a_ratio, thickness):
     """
     Return shell volume and total volume
     """
-    b_side = a_side * b2a_ratio
-    c_side = a_side * c2a_ratio
-    a_core = a_side - 2.0*thickness
+    b_side = length_a * b2a_ratio
+    c_side = length_a * c2a_ratio
+    a_core = length_a - 2.0*thickness
     b_core = b_side - 2.0*thickness
     c_core = c_side - 2.0*thickness
     vol_core = a_core * b_core * c_core
-    vol_total = a_side * b_side * c_side
+    vol_total = length_a * b_side * c_side
     vol_shell = vol_total - vol_core
     return vol_total, vol_shell
 
@@ -148,8 +148,8 @@ def VR(a_side, b2a_ratio, c2a_ratio, thickness):
 # parameters for demo
 demo = dict(scale=1, background=0,
             sld=6.3e-6, sld_solvent=1.0e-6,
-            a_side=35, b2a_ratio=1, c2a_ratio=1, thickness=1,
-            a_side_pd=0.1, a_side_pd_n=10,
+            length_a=35, b2a_ratio=1, c2a_ratio=1, thickness=1,
+            length_a_pd=0.1, length_a_pd_n=10,
             b2a_ratio_pd=0.1, b2a_ratio_pd_n=1,
             c2a_ratio_pd=0.1, c2a_ratio_pd_n=1)
 

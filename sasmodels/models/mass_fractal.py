@@ -67,11 +67,11 @@ description = """
         * sin[(Dm-1)*arctan(x*colength)])/x]
         where delta = sldParticle -sldSolv.
         radius       =  Particle radius
-        mass_dim  =  Mass fractal dimension
+        fractal_dim_mass  =  Mass fractal dimension
         cutoff_length  =  Cut-off length
         background   =  background
         Ref.:Mildner, Hall,J Phys D Appl Phys(1986), 9, 1535-1545
-        Note I: This model is valid for 1<mass_dim<6.
+        Note I: This model is valid for 1<fractal_dim_mass<6.
         Note II: This model is not in absolute scale.
         """
 category = "shape-independent"
@@ -79,7 +79,7 @@ category = "shape-independent"
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["radius",        "Ang",  10.0, [0.0, inf], "", "Particle radius"],
-              ["mass_dim",      "",      1.9, [1.0, 6.0], "", "Mass fractal dimension"],
+              ["fractal_dim_mass",      "",      1.9, [1.0, 6.0], "", "Mass fractal dimension"],
               ["cutoff_length", "Ang", 100.0, [0.0, inf], "", "Cut-off length"],
              ]
 # pylint: enable=bad-whitespace, line-too-long
@@ -88,31 +88,31 @@ source = ["lib/sph_j1c.c", "lib/sas_gamma.c", "mass_fractal.c"]
 
 demo = dict(scale=1, background=0,
             radius=10.0,
-            mass_dim=1.9,
+            fractal_dim_mass=1.9,
             cutoff_length=100.0)
 
 tests = [
 
     # Accuracy tests based on content in test/utest_other_models.py
     [{'radius':         10.0,
-      'mass_dim':        1.9,
+      'fractal_dim_mass':        1.9,
       'cutoff_length': 100.0,
      }, 0.05, 279.59422],
 
     # Additional tests with larger range of parameters
     [{'radius':        2.0,
-      'mass_dim':      3.3,
+      'fractal_dim_mass':      3.3,
       'cutoff_length': 1.0,
      }, 0.5, 1.29116774904],
 
     [{'radius':        1.0,
-      'mass_dim':      1.3,
+      'fractal_dim_mass':      1.3,
       'cutoff_length': 1.0,
       'background':    0.8,
      }, 0.001, 1.69747015932],
 
     [{'radius':        1.0,
-      'mass_dim':      2.3,
+      'fractal_dim_mass':      2.3,
       'cutoff_length': 1.0,
       'scale':        10.0,
      }, 0.051, 11.6237966145],

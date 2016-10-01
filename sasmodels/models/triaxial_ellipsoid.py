@@ -87,13 +87,13 @@ category = "shape:ellipsoid"
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Ellipsoid scattering length density"],
-              ["solvent_sld", "1e-6/Ang^2", 1, [-inf, inf], "sld",
+              ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Solvent scattering length density"],
-              ["req_minor", "Ang", 20, [0, inf], "volume",
+              ["radius_equat_minor", "Ang", 20, [0, inf], "volume",
                "Minor equatorial radius"],
-              ["req_major", "Ang", 400, [0, inf], "volume",
+              ["radius_equat_major", "Ang", 400, [0, inf], "volume",
                "Major equatorial radius"],
-              ["rpolar", "Ang", 10, [0, inf], "volume",
+              ["radius_polar", "Ang", 10, [0, inf], "volume",
                "Polar radius"],
               ["theta", "degrees", 60, [-inf, inf], "orientation",
                "In plane angle"],
@@ -105,21 +105,21 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
 
 source = ["lib/sph_j1c.c", "lib/gauss76.c", "triaxial_ellipsoid.c"]
 
-def ER(req_minor, req_major, rpolar):
+def ER(radius_equat_minor, radius_equat_major, radius_polar):
     """
         Returns the effective radius used in the S*P calculation
     """
     import numpy as np
     from .ellipsoid import ER as ellipsoid_ER
-    return ellipsoid_ER(rpolar, np.sqrt(req_minor * req_major))
+    return ellipsoid_ER(radius_polar, np.sqrt(radius_equat_minor * radius_equat_major))
 
 demo = dict(scale=1, background=0,
-            sld=6, solvent_sld=1,
+            sld=6, sld_solvent=1,
             theta=30, phi=15, psi=5,
-            req_minor=25, req_major=36, rpolar=50,
-            req_minor_pd=0, req_minor_pd_n=1,
-            req_major_pd=0, req_major_pd_n=1,
-            rpolar_pd=.2, rpolar_pd_n=30,
+            radius_equat_minor=25, radius_equat_major=36, radius_polar=50,
+            radius_equat_minor_pd=0, radius_equat_minor_pd_n=1,
+            radius_equat_major_pd=0, radius_equat_major_pd_n=1,
+            radius_polar_pd=.2, radius_polar_pd_n=30,
             theta_pd=15, theta_pd_n=45,
             phi_pd=15, phi_pd_n=1,
             psi_pd=15, psi_pd_n=1)

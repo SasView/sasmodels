@@ -2,12 +2,12 @@ double form_volume(double radius);
 
 double Iq(double q,
           double radius,
-          double surface_dim,
+          double fractal_dim_surf,
           double cutoff_length);
 
 static double _surface_fractal_kernel(double q,
     double radius,
-    double surface_dim,
+    double fractal_dim_surf,
     double cutoff_length)
 {
     double pq, sq, mmo, result;
@@ -19,7 +19,7 @@ static double _surface_fractal_kernel(double q,
     pq = pq*pq;
 
     //calculate S(q)
-    mmo = 5.0 - surface_dim;
+    mmo = 5.0 - fractal_dim_surf;
     sq  = sas_gamma(mmo)*sin(-(mmo)*atan(q*cutoff_length));
     sq *= pow(cutoff_length, mmo);
     sq /= pow((1.0 + (q*cutoff_length)*(q*cutoff_length)),(mmo/2.0));
@@ -37,9 +37,9 @@ double form_volume(double radius){
 
 double Iq(double q,
     double radius,
-    double surface_dim,
+    double fractal_dim_surf,
     double cutoff_length
     )
 {
-    return _surface_fractal_kernel(q, radius, surface_dim, cutoff_length);
+    return _surface_fractal_kernel(q, radius, fractal_dim_surf, cutoff_length);
 }
