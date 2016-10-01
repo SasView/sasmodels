@@ -55,32 +55,32 @@ description = """
 category = "shape-independent"
 # pylint: disable=bad-whitespace, line-too-long
 #            ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["gauss_scale_factor",   "",    100.0,  [-inf, inf], "", "Gauss scale factor"],
-              ["static_cor_length",    "Ang", 100.0,  [0, inf],    "", "Static correlation length"],
-              ["lorentz_scale_factor", "",     50.0,  [-inf, inf], "", "Lorentzian scale factor"],
-              ["dynamic_cor_length",   "Ang",  20.0,  [0, inf],    "", "Dynamic correlation length"],
+parameters = [["gauss_scale",   "",    100.0,  [-inf, inf], "", "Gauss scale factor"],
+              ["cor_length_static",    "Ang", 100.0,  [0, inf],    "", "Static correlation length"],
+              ["lorentz_scale", "",     50.0,  [-inf, inf], "", "Lorentzian scale factor"],
+              ["cor_length_dynamic",   "Ang",  20.0,  [0, inf],    "", "Dynamic correlation length"],
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
 def Iq(q,
-       gauss_scale_factor=100.0,
-       static_cor_length=100.0,
-       lorentz_scale_factor=50.0,
-       dynamic_cor_length=20.0):
+       gauss_scale=100.0,
+       cor_length_static=100.0,
+       lorentz_scale=50.0,
+       cor_length_dynamic=20.0):
     """
 
     :param q:                    Input q-value
-    :param gauss_scale_factor:   Gauss scale factor
-    :param static_cor_length:    Static correlation length
-    :param lorentz_scale_factor: Lorentzian scale factor
-    :param dynamic_cor_length:   Dynamic correlation length
+    :param gauss_scale:   Gauss scale factor
+    :param cor_length_static:    Static correlation length
+    :param lorentz_scale: Lorentzian scale factor
+    :param cor_length_dynamic:   Dynamic correlation length
     :return:                     1-D intensity
     """
 
-    term1 = gauss_scale_factor *\
-            exp(-1.0*q*q*static_cor_length*static_cor_length/2.0)
-    term2 = lorentz_scale_factor /\
-            (1.0+(q*dynamic_cor_length)*(q*dynamic_cor_length))
+    term1 = gauss_scale *\
+            exp(-1.0*q*q*cor_length_static*cor_length_static/2.0)
+    term2 = lorentz_scale /\
+            (1.0+(q*cor_length_dynamic)*(q*cor_length_dynamic))
 
     return term1 + term2
 
@@ -88,50 +88,50 @@ Iq.vectorized = True  # Iq accepts an array of q values
 
 
 demo = dict(scale=1, background=0.1,
-            gauss_scale_factor=100.0,
-            static_cor_length=100.0,
-            lorentz_scale_factor=50.0,
-            dynamic_cor_length=20.0)
+            gauss_scale=100.0,
+            cor_length_static=100.0,
+            lorentz_scale=50.0,
+            cor_length_dynamic=20.0)
 
 tests = [
 
     # Accuracy tests based on content in test/utest_extra_models.py
-    [{'gauss_scale_factor':  100.0,
-      'static_cor_length':   100.0,
-      'lorentz_scale_factor': 50.0,
-      'dynamic_cor_length':   20.0,
+    [{'gauss_scale':  100.0,
+      'cor_length_static':   100.0,
+      'lorentz_scale': 50.0,
+      'cor_length_dynamic':   20.0,
      }, 0.001, 149.482],
 
-    [{'gauss_scale_factor':  100.0,
-      'static_cor_length':   100.0,
-      'lorentz_scale_factor': 50.0,
-      'dynamic_cor_length':   20.0,
+    [{'gauss_scale':  100.0,
+      'cor_length_static':   100.0,
+      'lorentz_scale': 50.0,
+      'cor_length_dynamic':   20.0,
      }, 0.105363, 9.1913],
 
-    [{'gauss_scale_factor':  100.0,
-      'static_cor_length':   100.0,
-      'lorentz_scale_factor': 50.0,
-      'dynamic_cor_length':   20.0,
+    [{'gauss_scale':  100.0,
+      'cor_length_static':   100.0,
+      'lorentz_scale': 50.0,
+      'cor_length_dynamic':   20.0,
      }, 0.441623, 0.633811],
 
     # Additional tests with larger range of parameters
-    [{'gauss_scale_factor':  10.0,
-      'static_cor_length':  100.0,
-      'lorentz_scale_factor': 3.0,
-      'dynamic_cor_length':   1.0,
+    [{'gauss_scale':  10.0,
+      'cor_length_static':  100.0,
+      'lorentz_scale': 3.0,
+      'cor_length_dynamic':   1.0,
      }, 0.1, 2.9712970297],
 
-    [{'gauss_scale_factor':  10.0,
-      'static_cor_length':  100.0,
-      'lorentz_scale_factor': 3.0,
-      'dynamic_cor_length':   1.0,
+    [{'gauss_scale':  10.0,
+      'cor_length_static':  100.0,
+      'lorentz_scale': 3.0,
+      'cor_length_dynamic':   1.0,
       'background':         100.0
      }, 5.0, 100.116384615],
 
-    [{'gauss_scale_factor':  10.0,
-      'static_cor_length':  100.0,
-      'lorentz_scale_factor': 3.0,
-      'dynamic_cor_length':   1.0,
+    [{'gauss_scale':  10.0,
+      'cor_length_static':  100.0,
+      'lorentz_scale': 3.0,
+      'cor_length_dynamic':   1.0,
       'background':           0.0,
      }, 200., 7.49981250469e-05],
     ]

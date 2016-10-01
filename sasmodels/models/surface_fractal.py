@@ -65,12 +65,12 @@ description = """\
         where
         delta        =  sldParticle -sldSolv.
         radius       =  Particle radius
-        surface_dim  =  Surface fractal dimension (Ds)
+        fractal_dim_surf  =  Surface fractal dimension (Ds)
         co_length    =  Cut-off length
         background   =  background
 
         Ref.   :Mildner, Hall,J Phys D Appl Phys(1986), 19, 1535-1545
-        Note I : This model is valid for 1<surface_dim<3 with limited q range.
+        Note I : This model is valid for 1<fractal_dim_surf<3 with limited q range.
         Note II: This model is not in absolute scale.
 """
 category = "shape-independent"
@@ -79,7 +79,7 @@ category = "shape-independent"
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["radius",        "Ang", 10.0, [0, inf],   "",
                "Particle radius"],
-              ["surface_dim",   "",    2.0,  [1, 3],   "",
+              ["fractal_dim_surf",   "",    2.0,  [1, 3],   "",
                "Surface fractal dimension"],
               ["cutoff_length", "Ang", 500., [0.0, inf], "",
                "Cut-off Length"],
@@ -89,29 +89,29 @@ parameters = [["radius",        "Ang", 10.0, [0, inf],   "",
 source = ["lib/sph_j1c.c", "lib/sas_gamma.c", "surface_fractal.c"]
 
 demo = dict(scale=1, background=0,
-            radius=10, surface_dim=2.0, cutoff_length=500)
+            radius=10, fractal_dim_surf=2.0, cutoff_length=500)
 
 tests = [
     # Accuracy tests based on content in test/utest_other_models.py
     [{'radius': 10.0,
-      'surface_dim': 2.0,
+      'fractal_dim_surf': 2.0,
       'cutoff_length': 500.0,
      }, 0.05, 301428.66016],
 
     # Additional tests with larger range of parameters
     [{'radius': 1.0,
-      'surface_dim': 1.0,
+      'fractal_dim_surf': 1.0,
       'cutoff_length': 10.0,
      }, 0.332070182643, 1125.00421004],
 
     [{'radius': 3.5,
-      'surface_dim': 0.1,
+      'fractal_dim_surf': 0.1,
       'cutoff_length': 30.0,
       'background': 0.01,
      }, 5.0, 0.00999998891322],
 
     [{'radius': 3.0,
-      'surface_dim': 1.0,
+      'fractal_dim_surf': 1.0,
       'cutoff_length': 33.0,
       'scale': 0.1,
      }, 0.51, 2.50120147004],

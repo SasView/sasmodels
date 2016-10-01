@@ -50,7 +50,7 @@ single = False  # double precision only!
 #  dp[1] = fabs(charge());
 #  dp[2] = volfraction();
 #  dp[3] = temperature();
-#  dp[4] = salt_concentration();
+#  dp[4] = concentration_salt();
 #  dp[5] = dielectconst();
 
 
@@ -75,7 +75,7 @@ parameters = [
     ["volfraction",   "None",     0.0192, [0, 0.74],   "", "volume fraction of spheres"],
     ["charge",        "e",   19.0,    [0, inf],    "", "charge on sphere (in electrons)"],
     ["temperature",   "K",  318.16,   [0, inf],    "", "temperature, in Kelvin, for Debye length calculation"],
-    ["salt_concentration",      "M",    0.0,    [-inf, inf], "", "conc of salt, moles/litre, 1:1 electolyte, for Debye length"],
+    ["concentration_salt",      "M",    0.0,    [-inf, inf], "", "conc of salt, moles/litre, 1:1 electolyte, for Debye length"],
     ["dielectconst",  "None",    71.08,   [-inf, inf], "", "dielectric constant (relative permittivity) of solvent, default water, for Debye length"]
     ]
 # pylint: enable=bad-whitespace, line-too-long
@@ -92,12 +92,12 @@ form_volume = """
 # default parameter set,  use  compare.sh -midQ -linear
 # note the calculation varies in different limiting cases so a wide range of
 # parameters will be required for a thorough test!
-# odd that the default st has salt_concentration zero
+# odd that the default st has concentration_salt zero
 demo = dict(radius_effective=20.75,
             charge=19.0,
             volfraction=0.0192,
             temperature=318.16,
-            salt_concentration=0.05,
+            concentration_salt=0.05,
             dielectconst=71.08,
             radius_effective_pd=0.1,
             radius_effective_pd_n=40)
@@ -112,7 +112,7 @@ tests = [
       'charge': 19.0,
       'volfraction': 0.0192,
       'temperature': 298.0,
-      'salt_concentration': 0,
+      'concentration_salt': 0,
       'dielectconst': 78.0,
       'radius_effective_pd': 0},
      [0.00001, 0.0010, 0.01, 0.075], [0.0711646, 0.0712928, 0.0847006, 1.07150]],
@@ -122,7 +122,7 @@ tests = [
       'charge': 19.0,
       'volfraction': 0.0192,
       'temperature': 298.0,
-      'salt_concentration': 0.05,
+      'concentration_salt': 0.05,
       'dielectconst': 78.0,
       'radius_effective_pd': 0.1,
       'radius_effective_pd_n': 40},

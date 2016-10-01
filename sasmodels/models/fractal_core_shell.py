@@ -30,7 +30,7 @@ while the fractal structure factor $S(q)$ is
     S(q) = \frac{D_f\Gamma(D_f-1)\sin((D_f-1)\tan^{-1}(q\xi))}
     {(qr_c)^{D_f}\left(1+\frac{1}{q^2\xi ^2} \right)^{\frac{D_f-1}{2}}}
 
-where $D_f$ = frac_dim, |xi| = cor_length, $r_c$ = (core) radius, and
+where $D_f$ = fractal_dim, |xi| = cor_length, $r_c$ = (core) radius, and
 $scale$ = volume fraction.
 
 The fractal structure is as documented in the fractal model.
@@ -68,7 +68,7 @@ parameters = [
     ["sld_shell",   "1e-6/Ang^2", 2.0,  [-inf, inf], "sld",    "Sphere shell scattering length density"],
     ["sld_solvent", "1e-6/Ang^2", 3.0,  [-inf, inf], "sld",    "Solvent scattering length density"],
     ["volfraction", "",           1.0,  [0, inf],    "",       "Volume fraction of building block spheres"],
-    ["frac_dim",    "",           2.0,  [-inf, inf], "",       "Fractal dimension"],
+    ["fractal_dim",    "",           2.0,  [-inf, inf], "",       "Fractal dimension"],
     ["cor_length",  "Ang",      100.0,  [0, inf],    "",       "Correlation length of fractal-like aggregates"]]
 # pylint: enable=bad-whitespace, line-too-long
 
@@ -82,7 +82,7 @@ demo = dict(scale=0.05,
             sld_shell=1.0,
             sld_solvent=6.35,
             volfraction=0.05,
-            frac_dim=2.0,
+            fractal_dim=2.0,
             cor_length=100.0)
 
 def ER(radius, thickness):

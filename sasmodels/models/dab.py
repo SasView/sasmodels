@@ -54,12 +54,12 @@ L: the correlation length
 category = "shape-independent"
 
 #             ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["length", "Ang", 50.0, [0, inf], "", "correlation length"],
+parameters = [["cor_length", "Ang", 50.0, [0, inf], "", "correlation length"],
              ]
 
 Iq = """
-    double numerator   = pow(length, 3);
-    double denominator = pow(1 + pow(q*length,2), 2);
+    double numerator   = pow(cor_length, 3);
+    double denominator = pow(1 + pow(q*cor_length,2), 2);
     
     return numerator / denominator ;
     """
@@ -68,4 +68,4 @@ Iq = """
 
 # VR defaults to 1.0
 
-demo = dict(scale=1, background=0, length=50)
+demo = dict(scale=1, background=0, cor_length=50)

@@ -53,23 +53,23 @@ a single disc, respectively.
     \left(\frac{2J_1(qR\sin{\alpha})}{qR\sin{\alpha}}\right)
     \right]^2 \sin{\alpha}\ d\alpha
 
-where $d$ = thickness of the layer (*layer_thick*),
-$2h$ = core thickness (*core_thick*), and $R$ = radius of the disc (*radius*).
+where $d$ = thickness of the layer (*thick_layer*),
+$2h$ = core thickness (*thick_core*), and $R$ = radius of the disc (*radius*).
 
 .. math::
 
     S(q) = 1 + \frac{1}{2}\sum_{k=1}^n(n-k)\cos{(kDq\cos{\alpha})}
-    \exp\left[ -k(q\cos{\alpha})^2\sigma_D/2\right]
+    \exp\left[ -k(q\cos{\alpha})^2\sigma_Dnn/2\right]
 
 where $n$ is the total number of the disc stacked (*n_stacking*),
 $D = 2(d+h)$ is the next neighbor center-to-center distance (d-spacing),
-and $\sigma_D$ = the Gaussian standard deviation of the d-spacing (*sigma_d*).
+and $\sigma_Dnn$ = the Gaussian standard deviation of the d-spacing (*sigma_dnn*).
 
 .. note::
-    Each assmebly in the stack is layer/core/layer, so the spacing of the
+    Each assembly in the stack is layer/core/layer, so the spacing of the
     cores is core plus two layers. The 2nd virial coefficient of the cylinder
     is calculated based on the *radius* and *length*
-    = *n_stacking* * (*core_thick* + 2 * *layer_thick*)
+    = *n_stacking* * (*thick_core* + 2 * *thick_layer*)
     values, and used as the effective radius for $S(Q)$ when $P(Q) * S(Q)$
     is applied.
 
@@ -113,12 +113,12 @@ title = ""
 description = """\
     One layer of disk consists of a core, a top layer, and a bottom layer.
     radius =  the radius of the disk
-    core_thick = thickness of the core
-    layer_thick = thickness of a layer
+    thick_core = thickness of the core
+    thick_layer = thickness of a layer
     sld_core = the SLD of the core
     sld_layer = the SLD of the layers
     n_stacking = the number of the disks
-    sigma_d =  Gaussian STD of d-spacing
+    sigma_dnn =  Gaussian STD of d-spacing
     sld_solvent = the SLD of the solvent
     """
 category = "shape:cylinder"
@@ -126,11 +126,11 @@ category = "shape:cylinder"
 # pylint: disable=bad-whitespace, line-too-long
 #   ["name", "units", default, [lower, upper], "type","description"],
 parameters = [
-    ["core_thick",  "Ang",        10.0, [0, inf],    "volume",      "Thickness of the core disk"],
-    ["layer_thick", "Ang",        10.0, [0, inf],    "volume",      "Thickness of layer each side of core"],
+    ["thick_core",  "Ang",        10.0, [0, inf],    "volume",      "Thickness of the core disk"],
+    ["thick_layer", "Ang",        10.0, [0, inf],    "volume",      "Thickness of layer each side of core"],
     ["radius",      "Ang",        15.0, [0, inf],    "volume",      "Radius of the stacked disk"],
     ["n_stacking",  "",            1.0, [0, inf],    "volume",      "Number of stacked layer/core/layer disks"],
-    ["sigma_d",     "Ang",         0,   [0, inf],    "",            "GSD of disks sigma_d"],
+    ["sigma_dnn",   "Ang",         0,   [0, inf],    "",            "Sigma of nearest neighbor spacing"],
     ["sld_core",    "1e-6/Ang^2",  4,   [-inf, inf], "sld",         "Core scattering length density"],
     ["sld_layer",   "1e-6/Ang^2",  0.0, [-inf, inf], "sld",         "Layer scattering length density"],
     ["sld_solvent", "1e-6/Ang^2",  5.0, [-inf, inf], "sld",         "Solvent scattering length density"],
@@ -143,11 +143,11 @@ source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "stacked_disks.c"]
 
 demo = dict(background=0.001,
             scale=0.01,
-            core_thick=10.0,
-            layer_thick=10.0,
+            thick_core=10.0,
+            thick_layer=10.0,
             radius=15.0,
             n_stacking=1,
-            sigma_d=0,
+            sigma_dnn=0,
             sld_core=4,
             sld_layer=0.0,
             sld_solvent=5.0,
@@ -157,11 +157,11 @@ demo = dict(background=0.001,
 tests = [
     # Accuracy tests based on content in test/utest_extra_models.py.
     # Added 2 tests with n_stacked = 5 using SasView 3.1.2 - PDB
-    [{'core_thick': 10.0,
-      'layer_thick': 15.0,
+    [{'thick_core': 10.0,
+      'thick_layer': 15.0,
       'radius': 3000.0,
       'n_stacking': 1.0,
-      'sigma_d': 0.0,
+      'sigma_dnn': 0.0,
       'sld_core': 4.0,
       'sld_layer': -0.4,
       'solvent_sd': 5.0,
@@ -171,11 +171,11 @@ tests = [
       'background': 0.001,
      }, 0.001, 5075.12],
 
-    [{'core_thick': 10.0,
-      'layer_thick': 15.0,
+    [{'thick_core': 10.0,
+      'thick_layer': 15.0,
       'radius': 3000.0,
       'n_stacking': 5.0,
-      'sigma_d': 0.0,
+      'sigma_dnn': 0.0,
       'sld_core': 4.0,
       'sld_layer': -0.4,
       'solvent_sd': 5.0,
@@ -185,11 +185,11 @@ tests = [
       'background': 0.001,
      }, 0.001, 5065.12793824],
 
-    [{'core_thick': 10.0,
-      'layer_thick': 15.0,
+    [{'thick_core': 10.0,
+      'thick_layer': 15.0,
       'radius': 3000.0,
       'n_stacking': 5.0,
-      'sigma_d': 0.0,
+      'sigma_dnn': 0.0,
       'sld_core': 4.0,
       'sld_layer': -0.4,
       'solvent_sd': 5.0,
@@ -199,11 +199,11 @@ tests = [
       'background': 0.001,
      }, 0.164, 0.0127673597265],
 
-    [{'core_thick': 10.0,
-      'layer_thick': 15.0,
+    [{'thick_core': 10.0,
+      'thick_layer': 15.0,
       'radius': 3000.0,
       'n_stacking': 1.0,
-      'sigma_d': 0.0,
+      'sigma_dnn': 0.0,
       'sld_core': 4.0,
       'sld_layer': -0.4,
       'solvent_sd': 5.0,
@@ -213,11 +213,11 @@ tests = [
       'background': 0.001,
      }, [0.001, 90.0], [5075.12, 0.001]],
 
-    [{'core_thick': 10.0,
-      'layer_thick': 15.0,
+    [{'thick_core': 10.0,
+      'thick_layer': 15.0,
       'radius': 3000.0,
       'n_stacking': 1.0,
-      'sigma_d': 0.0,
+      'sigma_dnn': 0.0,
       'sld_core': 4.0,
       'sld_layer': -0.4,
       'solvent_sd': 5.0,
@@ -227,11 +227,11 @@ tests = [
       'background': 0.001,
      }, ([0.4, 0.5]), [0.00105074, 0.00121761]],
 
-    [{'core_thick': 10.0,
-      'layer_thick': 15.0,
+    [{'thick_core': 10.0,
+      'thick_layer': 15.0,
       'radius': 3000.0,
       'n_stacking': 1.0,
-      'sigma_d': 0.0,
+      'sigma_dnn': 0.0,
       'sld_core': 4.0,
       'sld_layer': -0.4,
       'solvent_sd': 5.0,

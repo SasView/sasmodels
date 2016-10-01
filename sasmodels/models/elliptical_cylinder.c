@@ -1,35 +1,35 @@
-double form_volume(double r_minor, double r_ratio, double length);
-double Iq(double q, double r_minor, double r_ratio, double length,
+double form_volume(double radius_minor, double r_ratio, double length);
+double Iq(double q, double radius_minor, double r_ratio, double length,
           double sld, double solvent_sld);
-double Iqxy(double qx, double qy, double r_minor, double r_ratio, double length,
+double Iqxy(double qx, double qy, double radius_minor, double r_ratio, double length,
             double sld, double solvent_sld, double theta, double phi, double psi);
 
 
-double _elliptical_cylinder_kernel(double q, double r_minor, double r_ratio, double theta);
+double _elliptical_cylinder_kernel(double q, double radius_minor, double r_ratio, double theta);
 
-double _elliptical_cylinder_kernel(double q, double r_minor, double r_ratio, double theta)
+double _elliptical_cylinder_kernel(double q, double radius_minor, double r_ratio, double theta)
 {
     // This is the function LAMBDA1^2 in Feigin's notation
     // q is the q-value for the calculation (1/A)
-    // r_minor is the transformed radius"a" in Feigin's notation
+    // radius_minor is the transformed radius"a" in Feigin's notation
     // r_ratio is the ratio (major radius)/(minor radius) of the Ellipsoid [=] ---
     // theta is the dummy variable of the integration
 
     double retval,arg;
 
-    arg = q*r_minor*sqrt((1.0+r_ratio*r_ratio)/2+(1.0-r_ratio*r_ratio)*cos(theta)/2);
+    arg = q*radius_minor*sqrt((1.0+r_ratio*r_ratio)/2+(1.0-r_ratio*r_ratio)*cos(theta)/2);
     //retval = 2.0*J1(arg)/arg;
     retval = sas_J1c(arg);
     return retval*retval ;
 }
 
 
-double form_volume(double r_minor, double r_ratio, double length)
+double form_volume(double radius_minor, double r_ratio, double length)
 {
-    return M_PI * r_minor * r_minor * r_ratio * length;
+    return M_PI * radius_minor * radius_minor * r_ratio * length;
 }
 
-double Iq(double q, double r_minor, double r_ratio, double length,
+double Iq(double q, double radius_minor, double r_ratio, double length,
           double sld, double solvent_sld) {
 
     const int nordi=76; //order of integration
@@ -54,7 +54,7 @@ double Iq(double q, double r_minor, double r_ratio, double length,
         //setup inner integral over the ellipsoidal cross-section
         summj=0;
         zi = ( Gauss76Z[i]*(vb-va) + va + vb )/2.0;     //the "x" dummy
-        arg = r_minor*sqrt(1.0-zi*zi);
+        arg = radius_minor*sqrt(1.0-zi*zi);
         for(int j=0;j<nordj;j++) {
             //20 gauss points for the inner integral
             zij = ( Gauss20Z[j]*(vbj-vaj) + vaj + vbj )/2.0;        //the "y" dummy
@@ -76,12 +76,12 @@ double Iq(double q, double r_minor, double r_ratio, double length,
     // Multiply by contrast^2
     answer *= delrho*delrho;
 
-    const double vol = form_volume(r_minor, r_ratio, length);
+    const double vol = form_volume(radius_minor, r_ratio, length);
     return answer*vol*vol*1.0e-4;
 }
 
 
-double Iqxy(double qx, double qy, double r_minor, double r_ratio, double length,
+double Iqxy(double qx, double qy, double radius_minor, double r_ratio, double length,
             double sld, double solvent_sld, double theta, double phi, double psi) {
     const double _theta = theta * M_PI / 180.0;
     const double _phi = phi * M_PI / 180.0;
@@ -138,8 +138,8 @@ double Iqxy(double qx, double qy, double r_minor, double r_ratio, double length,
       cos_mu = 1.0;
     }
 
-    const double r_major = r_ratio * r_minor;
-    const double qr = q*sqrt( r_major*r_major*cos_nu*cos_nu + r_minor*r_minor*cos_mu*cos_mu );
+    const double r_major = r_ratio * radius_minor;
+    const double qr = q*sqrt( r_major*r_major*cos_nu*cos_nu + radius_minor*radius_minor*cos_mu*cos_mu );
     const double qL = q*length*cos_val/2.0;
 
     double Be;
@@ -158,6 +158,6 @@ double Iqxy(double qx, double qy, double r_minor, double r_ratio, double length,
     }
 
     const double k = 2.0 * Be * Si;
-    const double vol = form_volume(r_minor, r_ratio, length);
+    const double vol = form_volume(radius_minor, r_ratio, length);
     return (sld - solvent_sld) * (sld - solvent_sld) * k * k *vol*vol*1.0e-4;
 }

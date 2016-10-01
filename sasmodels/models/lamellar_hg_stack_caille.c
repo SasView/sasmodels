@@ -3,8 +3,8 @@
 */
 
 double Iq(double qval,
-      double tail_length,
-      double head_length,
+      double length_tail,
+      double length_head,
       double Nlayers, 
       double dd,
       double Cp,
@@ -13,8 +13,8 @@ double Iq(double qval,
       double solvent_sld);
 
 double Iq(double qval,
-      double tail_length,
-      double head_length,
+      double length_tail,
+      double length_head,
       double Nlayers, 
       double dd,
       double Cp,
@@ -33,8 +33,8 @@ double Iq(double qval,
 
   NN = trunc(Nlayers);    //be sure that NN is an integer
   
-  Pq = (head_sld-solvent_sld)*(sin(qval*(head_length+tail_length))-sin(qval*tail_length)) +
-              (tail_sld-solvent_sld)*sin(qval*tail_length);
+  Pq = (head_sld-solvent_sld)*(sin(qval*(length_head+length_tail))-sin(qval*length_tail)) +
+              (tail_sld-solvent_sld)*sin(qval*length_tail);
   Pq *= Pq;
   Pq *= 4.0/(qval*qval);
 

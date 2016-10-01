@@ -15,7 +15,7 @@ polymer chains (exponent = $m$). This second term characterizes the
 polymer/solvent interactions and therefore the thermodynamics. The two
 multiplicative factors $A$ and $C$, and the two exponents $n$ and $m$ are
 used as fitting parameters. (Respectively *porod_scale*, *lorentz_scale*,
-*exponent_p* and *exponent_l* in the parameter list.) The remaining
+*porod_exp* and *lorentz_exp* in the parameter list.) The remaining
 parameter $\xi$ (*cor_length* in the parameter list) is a correlation
 length for the polymer chains. Note that when $m=2$ this functional form
 becomes the familiar Lorentzian function. Some interpretation of the
@@ -47,25 +47,25 @@ parameters = [
               ["lorentz_scale", "", 10.0, [0, inf], "", "Lorentzian Scaling Factor"],
               ["porod_scale", "", 1e-06, [0, inf], "", "Porod Scaling Factor"],
               ["cor_length", "Ang", 50.0, [0, inf], "", "Correlation length, xi, in Lorentzian"],
-              ["exponent_p", "", 3.0, [0, inf], "", "Porod Exponent, n, in q^-n"],
-              ["exponent_l", "1/Ang^2", 2.0, [0, inf], "", "Lorentzian Exponent, m, in 1/( 1 + (q.xi)^m)"],
+              ["porod_exp", "", 3.0, [0, inf], "", "Porod Exponent, n, in q^-n"],
+              ["lorentz_exp", "1/Ang^2", 2.0, [0, inf], "", "Lorentzian Exponent, m, in 1/( 1 + (q.xi)^m)"],
              ]
 # pylint: enable=bad-continuation, line-too-long
 
-def Iq(q, lorentz_scale, porod_scale, cor_length, exponent_p, exponent_l):
+def Iq(q, lorentz_scale, porod_scale, cor_length, porod_exp, lorentz_exp):
     """
     1D calculation of the Correlation length model
     """
     with errstate(divide='ignore'):
-        porod = porod_scale / q**exponent_p
-        lorentz = lorentz_scale / (1.0 + (q * cor_length)**exponent_l)
+        porod = porod_scale / q**porod_exp
+        lorentz = lorentz_scale / (1.0 + (q * cor_length)**lorentz_exp)
     inten = porod + lorentz
     return inten
 Iq.vectorized = True
 
 # parameters for demo
 demo = dict(lorentz_scale=10.0, porod_scale=1.0e-06, cor_length=50.0,
-            exponent_p=3.0, exponent_l=2.0, background=0.1,
+            porod_exp=3.0, lorentz_exp=2.0, background=0.1,
            )
 
 tests = [[{}, 0.001, 1009.98],

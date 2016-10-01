@@ -24,7 +24,7 @@ The form factor $P(q)$ is
             + \Delta\rho_T\sin(q\delta_T)
         \right\rbrace^2
 
-where $\delta_T$ is *tail_length*, $\delta_H$ is *head_length*,
+where $\delta_T$ is *length_tail*, $\delta_H$ is *length_head*,
 $\Delta\rho_H$ is the head contrast (*sld_head* $-$ *sld_solvent*),
 and $\Delta\rho_T$ is tail contrast (*sld* $-$ *sld_solvent*).
 
@@ -66,8 +66,8 @@ category = "shape:lamellae"
 
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["tail_length", "Ang",       15,   [0, inf],  "volume",  "Tail thickness ( total = H+T+T+H)"],
-              ["head_length", "Ang",       10,   [0, inf],  "volume",  "Head thickness"],
+parameters = [["length_tail", "Ang",       15,   [0, inf],  "volume",  "Tail thickness ( total = H+T+T+H)"],
+              ["length_head", "Ang",       10,   [0, inf],  "volume",  "Head thickness"],
               ["sld",         "1e-6/Ang^2", 0.4, [-inf,inf], "sld",    "Tail scattering length density"],
               ["sld_head",    "1e-6/Ang^2", 3.0, [-inf,inf], "sld",    "Head scattering length density"],
               ["sld_solvent", "1e-6/Ang^2", 6,   [-inf,inf], "sld",    "Solvent scattering length density"]]
@@ -83,16 +83,16 @@ Iq = """
     const double qsq = q*q;
     const double drh = sld_head - sld_solvent;
     const double drt = sld - sld_solvent;    //correction 13FEB06 by L.Porcar
-    const double qT = q*tail_length;
+    const double qT = q*length_tail;
     double Pq, inten;
-    Pq = drh*(sin(q*(head_length+tail_length))-sin(qT)) + drt*sin(qT);
+    Pq = drh*(sin(q*(length_head+length_tail))-sin(qT)) + drt*sin(qT);
     Pq *= Pq;
     Pq *= 4.0/(qsq);
 
     inten = 2.0e-4*M_PI*Pq/qsq;
 
     // normalize by the bilayer thickness
-    inten /= 2.0*(head_length+tail_length);
+    inten /= 2.0*(length_head+length_tail);
 
     return inten;
     """
@@ -101,14 +101,14 @@ Iq = """
 # VR defaults to 1.0
 
 demo = dict(scale=1, background=0,
-            tail_length=15, head_length=10,
+            length_tail=15, length_head=10,
             sld=0.4, sld_head=3.0, sld_solvent=6.0,
-            tail_length_pd=0.2, tail_length_pd_n=40,
-            head_length_pd=0.01, head_length_pd_n=40)
+            length_tail_pd=0.2, length_tail_pd_n=40,
+            length_head_pd=0.01, length_head_pd_n=40)
 
 #
 tests = [
-    [{'scale': 1.0, 'background': 0.0, 'tail_length': 15.0, 'head_length': 10.0,
+    [{'scale': 1.0, 'background': 0.0, 'length_tail': 15.0, 'length_head': 10.0,
       'sld': 0.4, 'sld_head': 3.0, 'sld_solvent': 6.0},
      [0.001], [653143.9209]],
 ]

@@ -1,11 +1,11 @@
-double form_volume(double radius, double core_radius, double length);
+double form_volume(double radius, double radius_core, double length);
 
-double Iq(double q, double radius, double core_radius, double length, double sld,
+double Iq(double q, double radius, double radius_core, double length, double sld,
 	double solvent_sld);
-double Iqxy(double qx, double qy, double radius, double core_radius, double length, double sld,
+double Iqxy(double qx, double qy, double radius, double radius_core, double length, double sld,
 	double solvent_sld, double theta, double phi);
 
-#define INVALID(v) (v.core_radius >= v.radius)
+#define INVALID(v) (v.radius_core >= v.radius)
 
 // From Igor library
 static double hollow_cylinder_scaling(
@@ -26,13 +26,13 @@ static double hollow_cylinder_scaling(
 
 
 static double _hollow_cylinder_kernel(
-    double q, double core_radius, double radius, double length, double dum)
+    double q, double radius_core, double radius, double length, double dum)
 {
     const double qs = q*sqrt(1.0-dum*dum);
     const double lam1 = sas_J1c(radius*qs);
-    const double lam2 = sas_J1c(core_radius*qs);
-    const double gamma_sq = square(core_radius/radius);
-    //Note: lim_{r -> r_c} psi = J0(core_radius*qs)
+    const double lam2 = sas_J1c(radius_core*qs);
+    const double gamma_sq = square(radius_core/radius);
+    //Note: lim_{r -> r_c} psi = J0(radius_core*qs)
     const double psi = (lam1 - gamma_sq*lam2)/(1.0 - gamma_sq);	//SRK 10/19/00
     const double t2 = sinc(q*length*dum/2.0);
     return square(psi*t2);
@@ -40,7 +40,7 @@ static double _hollow_cylinder_kernel(
 
 
 static double hollow_cylinder_analytical_2D_scaled(
-    double q, double q_x, double q_y, double radius, double core_radius,
+    double q, double q_x, double q_y, double radius, double radius_core,
     double length, double sld, double solvent_sld, double theta, double phi)
 {
     double cyl_x, cyl_y; //, cyl_z
@@ -64,23 +64,23 @@ static double hollow_cylinder_analytical_2D_scaled(
     // axis of the cylinder
     cos_val = cyl_x*q_x + cyl_y*q_y;// + cyl_z*q_z;
 
-    answer = _hollow_cylinder_kernel(q, core_radius, radius, length, cos_val);
+    answer = _hollow_cylinder_kernel(q, radius_core, radius, length, cos_val);
 
-    vol = form_volume(radius, core_radius, length);
+    vol = form_volume(radius, radius_core, length);
     answer = hollow_cylinder_scaling(answer, delrho, vol);
 
     return answer;
 }
 
 
-double form_volume(double radius, double core_radius, double length)
+double form_volume(double radius, double radius_core, double length)
 {
-    double v_shell = M_PI*length*(radius*radius-core_radius*core_radius);
+    double v_shell = M_PI*length*(radius*radius-radius_core*radius_core);
     return(v_shell);
 }
 
 
-double Iq(double q, double radius, double core_radius, double length,
+double Iq(double q, double radius, double radius_core, double length,
     double sld, double solvent_sld)
 {
     int i;
@@ -94,12 +94,12 @@ double Iq(double q, double radius, double core_radius, double length,
     summ = 0.0;			//initialize intergral
     for (i=0;i<76;i++) {
         zi = ( Gauss76Z[i] * (upper-lower) + lower + upper )/2.0;
-        inter = Gauss76Wt[i] * _hollow_cylinder_kernel(q, core_radius, radius, length, zi);
+        inter = Gauss76Wt[i] * _hollow_cylinder_kernel(q, radius_core, radius, length, zi);
         summ += inter;
     }
 
     norm = summ*(upper-lower)/2.0;
-    volume = form_volume(radius, core_radius, length);
+    volume = form_volume(radius, radius_core, length);
     delrho = solvent_sld - sld;
     answer = hollow_cylinder_scaling(norm, delrho, volume);
 
@@ -107,9 +107,9 @@ double Iq(double q, double radius, double core_radius, double length,
 }
 
 
-double Iqxy(double qx, double qy, double radius, double core_radius,
+double Iqxy(double qx, double qy, double radius, double radius_core,
     double length, double sld, double solvent_sld, double theta, double phi)
 {
     const double q = sqrt(qx*qx+qy*qy);
-    return hollow_cylinder_analytical_2D_scaled(q, qx/q, qy/q, radius, core_radius, length, sld, solvent_sld, theta, phi);
+    return hollow_cylinder_analytical_2D_scaled(q, qx/q, qy/q, radius, radius_core, length, sld, solvent_sld, theta, phi);
 }

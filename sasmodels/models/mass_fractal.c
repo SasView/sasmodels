@@ -2,16 +2,16 @@ double form_volume(double radius);
 
 double Iq(double q,
           double radius,
-          double mass_dim,
+          double fractal_dim_mass,
           double cutoff_length);
 
 static double _mass_fractal_kernel(double q,
           double radius,
-          double mass_dim,
+          double fractal_dim_mass,
           double cutoff_length)
 {
     // Actively check the argument.
-    if (mass_dim <= 1.0){
+    if (fractal_dim_mass <= 1.0){
        return 0.0;
     }
 
@@ -20,7 +20,7 @@ static double _mass_fractal_kernel(double q,
     pq = pq*pq;
 
     //calculate S(q)
-    double mmo = mass_dim-1.0;
+    double mmo = fractal_dim_mass-1.0;
     double sq = sas_gamma(mmo)*sin((mmo)*atan(q*cutoff_length));
     sq *= pow(cutoff_length, mmo);
     sq /= pow((1.0 + (q*cutoff_length)*(q*cutoff_length)),(mmo/2.0));
@@ -38,11 +38,11 @@ double form_volume(double radius){
 
 double Iq(double q,
           double radius,
-          double mass_dim,
+          double fractal_dim_mass,
           double cutoff_length)
 {
     return _mass_fractal_kernel(q,
            radius,
-           mass_dim,
+           fractal_dim_mass,
            cutoff_length);
 }

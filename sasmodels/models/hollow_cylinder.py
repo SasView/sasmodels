@@ -38,7 +38,7 @@ based on the radius and 2 length values, and used as the effective radius
 for $S(q)$ when $P(q) \cdot S(q)$ is applied.
 
 In the parameters, the contrast represents SLD :sub:`shell` - SLD :sub:`solvent`
-and the *radius* is $R_\text{shell}$ while *core_radius* is $R_\text{core}$.
+and the *radius* is $R_\text{shell}$ while *radius_core* is $R_\text{core}$.
 
 To provide easy access to the orientation of the core-shell cylinder, we define
 the axis of the cylinder using two angles $\theta$ and $\phi$
@@ -57,7 +57,7 @@ name = "hollow_cylinder"
 title = ""
 description = """
 P(q) = scale*<f*f>/Vol + background, where f is the scattering amplitude.
-core_radius = the radius of core
+radius_core = the radius of core
 radius = the radius of shell
 length = the total length of the cylinder
 sld = SLD of the shell
@@ -69,7 +69,7 @@ category = "shape:cylinder"
 #   ["name", "units", default, [lower, upper], "type","description"],
 parameters = [
     ["radius",      "Ang",     30.0, [0, inf],    "volume",      "Cylinder radius"],
-    ["core_radius", "Ang",     20.0, [0, inf],    "volume",      "Hollow core radius"],
+    ["radius_core", "Ang",     20.0, [0, inf],    "volume",      "Hollow core radius"],
     ["length",      "Ang",    400.0, [0, inf],    "volume",      "Cylinder length"],
     ["sld",         "1/Ang^2",  6.3, [-inf, inf], "sld",         "Cylinder sld"],
     ["sld_solvent", "1/Ang^2",  1,   [-inf, inf], "sld",         "Solvent sld"],
@@ -81,10 +81,10 @@ parameters = [
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "hollow_cylinder.c"]
 
 # pylint: disable=W0613
-def ER(radius, core_radius, length):
+def ER(radius, radius_core, length):
     """
     :param radius:      Cylinder radius
-    :param core_radius: Hollow core radius, UNUSED
+    :param radius_core: Hollow core radius, UNUSED
     :param length:      Cylinder length
     :return:            Effective radius
     """
@@ -98,24 +98,24 @@ def ER(radius, core_radius, length):
     diam = pow(ddd, (1.0/3.0))
     return diam
 
-def VR(radius, core_radius, length):
+def VR(radius, radius_core, length):
     """
     :param radius:      Cylinder radius
-    :param core_radius: Hollow core radius
+    :param radius_core: Hollow core radius
     :param length:      Cylinder length
     :return:            Volf ratio for P(q)*S(q)
     """
-    vol_core = pi*core_radius*core_radius*length
+    vol_core = pi*radius_core*radius_core*length
     vol_total = pi*radius*radius*length
     vol_shell = vol_total - vol_core
     return vol_shell, vol_total
 
 # parameters for demo
 demo = dict(scale=1.0, background=0.0, length=400.0, radius=30.0,
-            core_radius=20.0, sld=6.3, sld_solvent=1, theta=90, phi=0,
+            radius_core=20.0, sld=6.3, sld_solvent=1, theta=90, phi=0,
             radius_pd=.2, radius_pd_n=9,
             length_pd=.2, length_pd_n=10,
-            core_radius_pd=.2, core_radius_pd_n=9,
+            radius_core_pd=.2, radius_core_pd_n=9,
             theta_pd=10, theta_pd_n=5,
            )
 

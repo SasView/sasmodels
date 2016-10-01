@@ -65,9 +65,9 @@ description = """
         a = Rg^2/(3*Dm/2)
         b = rg^2/(3*(6-Ds-Dm)/2)
         scale        =  scale factor * N*Volume^2*contrast^2
-        mass_dim       =  Dm (mass fractal dimension)
-        surface_dim  =  Ds
-        cluster_rg  =  Rg
+        fractal_dim_mass       =  Dm (mass fractal dimension)
+        fractal_dim_surf  =  Ds
+        rg_cluster  =  Rg
         primary_rg    =  rg
         background   =  background
         Ref: Schmidt, J Appl Cryst, eq(19), (1991), 24, 414-435
@@ -78,11 +78,11 @@ category = "shape-independent"
 
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["mass_dim",      "",    1.8, [1e-16, 6.0], "",
+parameters = [["fractal_dim_mass",      "",    1.8, [1e-16, 6.0], "",
                "Mass fractal dimension"],
-              ["surface_dim",   "",    2.3, [1e-16, 6.0], "",
+              ["fractal_dim_surf",   "",    2.3, [1e-16, 6.0], "",
                "Surface fractal dimension"],
-              ["cluster_rg", "Ang",   86.7, [0.0, inf], "",
+              ["rg_cluster", "Ang",   86.7, [0.0, inf], "",
                "Cluster radius of gyration"],
               ["primary_rg", "Ang", 4000.,  [0.0, inf], "",
                "Primary particle radius of gyration"],
@@ -92,38 +92,38 @@ parameters = [["mass_dim",      "",    1.8, [1e-16, 6.0], "",
 source = ["mass_surface_fractal.c"]
 
 demo = dict(scale=1, background=0,
-            mass_dim=1.8,
-            surface_dim=2.3,
-            cluster_rg=86.7,
+            fractal_dim_mass=1.8,
+            fractal_dim_surf=2.3,
+            rg_cluster=86.7,
             primary_rg=4000.0)
 
 tests = [
 
     # Accuracy tests based on content in test/utest_other_models.py
-    [{'mass_dim':      1.8,
-      'surface_dim':   2.3,
-      'cluster_rg':   86.7,
+    [{'fractal_dim_mass':      1.8,
+      'fractal_dim_surf':   2.3,
+      'rg_cluster':   86.7,
       'primary_rg': 4000.0,
       'background':    0.0,
      }, 0.05, 1.77537e-05],
 
     # Additional tests with larger range of parameters
-    [{'mass_dim':      3.3,
-      'surface_dim':   1.0,
-      'cluster_rg':   90.0,
+    [{'fractal_dim_mass':      3.3,
+      'fractal_dim_surf':   1.0,
+      'rg_cluster':   90.0,
       'primary_rg': 4000.0,
      }, 0.001, 0.18562699016],
 
-    [{'mass_dim':      1.3,
-      'surface_dim':   1.0,
-      'cluster_rg':   90.0,
+    [{'fractal_dim_mass':      1.3,
+      'fractal_dim_surf':   1.0,
+      'rg_cluster':   90.0,
       'primary_rg': 2000.0,
       'background':    0.8,
      }, 0.001, 1.16539753641],
 
-    [{'mass_dim':      2.3,
-      'surface_dim':   1.0,
-      'cluster_rg':   90.0,
+    [{'fractal_dim_mass':      2.3,
+      'fractal_dim_surf':   1.0,
+      'rg_cluster':   90.0,
       'primary_rg': 1000.0,
       'scale':        10.0,
       'background':    0.0,

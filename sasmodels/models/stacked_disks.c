@@ -1,14 +1,14 @@
-double form_volume(double core_thick,
-                   double layer_thick,
+double form_volume(double thick_core,
+                   double thick_layer,
                    double radius,
                    double n_stacking);
 
 double Iq(double q,
-          double core_thick,
-          double layer_thick,
+          double thick_core,
+          double thick_layer,
           double radius,
           double n_stacking,
-          double sigma_d,
+          double sigma_dnn,
           double core_sld,
           double layer_sld,
           double solvent_sld);
@@ -20,9 +20,9 @@ double _kernel(double qq,
                double layer_sld,
                double solvent_sld,
                double halfheight,
-               double layer_thick,
+               double thick_layer,
                double zi,
-               double sigma_d,
+               double sigma_dnn,
                double d,
                double n_stacking)
 
@@ -37,7 +37,7 @@ double _kernel(double qq,
 	const double besarg2 = qq*radius*sin(zi);
 
 	const double sinarg1 = qq*halfheight*cos(zi);
-	const double sinarg2 = qq*(halfheight+layer_thick)*cos(zi);
+	const double sinarg2 = qq*(halfheight+thick_layer)*cos(zi);
 
 	const double be1 = sas_J1c(besarg1);
 	const double be2 = sas_J1c(besarg2);
@@ -47,7 +47,7 @@ double _kernel(double qq,
 	const double dr1 = (core_sld-solvent_sld);
 	const double dr2 = (layer_sld-solvent_sld);
 	const double area = M_PI*radius*radius;
-	const double totald=2.0*(layer_thick+halfheight);
+	const double totald=2.0*(thick_layer+halfheight);
 
 	const double t1 = area*(2.0*halfheight)*dr1*(si1)*(be1);
 	const double t2 = area*dr2*(totald*si2-2.0*halfheight*si1)*(be2);
@@ -58,7 +58,7 @@ double _kernel(double qq,
 	// loop for the structure facture S(q)
 	double sqq=0.0;
 	for(int kk=1;kk<n_stacking;kk+=1) {
-		double dexpt=qq*cos(zi)*qq*cos(zi)*d*d*sigma_d*sigma_d*kk/2.0;
+		double dexpt=qq*cos(zi)*qq*cos(zi)*d*d*sigma_dnn*sigma_dnn*kk/2.0;
 		sqq=sqq+(n_stacking-kk)*cos(qq*cos(zi)*d*kk)*exp(-1.*dexpt);
 	}
 
@@ -73,11 +73,11 @@ double _kernel(double qq,
 
 static
 double stacked_disks_kernel(double q,
-                            double core_thick,
-                            double layer_thick,
+                            double thick_core,
+                            double thick_layer,
                             double radius,
                             double n_stacking,
-                            double sigma_d,
+                            double sigma_dnn,
                             double core_sld,
                             double layer_sld,
                             double solvent_sld)
@@ -87,8 +87,8 @@ like clay platelets that are not exfoliated
 */
 	double summ = 0.0;	//initialize integral
 
-	double d=2.0*layer_thick+core_thick;
-	double halfheight = core_thick/2.0;
+	double d=2.0*thick_layer+thick_core;
+	double halfheight = thick_core/2.0;
 
 	for(int i=0;i<N_POINTS_76;i++) {
 		double zi = (Gauss76Z[i] + 1.0)*M_PI/4.0;
@@ -99,9 +99,9 @@ like clay platelets that are not exfoliated
 		                   layer_sld,
 		                   solvent_sld,
 		                   halfheight,
-		                   layer_thick,
+		                   thick_layer,
 		                   zi,
-		                   sigma_d,
+		                   sigma_dnn,
 		                   d,
 		                   n_stacking);
 		summ += yyy;
@@ -116,11 +116,11 @@ like clay platelets that are not exfoliated
 }
 
 static double stacked_disks_kernel_2d(double q, double q_x, double q_y,
-                            double core_thick,
-                            double layer_thick,
+                            double thick_core,
+                            double thick_layer,
                             double radius,
                             double n_stacking,
-                            double sigma_d,
+                            double sigma_dnn,
                             double core_sld,
                             double layer_sld,
                             double solvent_sld,
@@ -153,17 +153,17 @@ static double stacked_disks_kernel_2d(double q, double q_x, double q_y,
     double alpha = acos( cos_val );
 
     // Call the IGOR library function to get the kernel
-    double d = 2 * layer_thick + core_thick;
-    double halfheight = core_thick/2.0;
+    double d = 2 * thick_layer + thick_core;
+    double halfheight = thick_core/2.0;
     double answer = _kernel(q,
                      radius,
                      core_sld,
                      layer_sld,
                      solvent_sld,
                      halfheight,
-                     layer_thick,
+                     thick_layer,
                      alpha,
-                     sigma_d,
+                     sigma_dnn,
                      d,
                      n_stacking);
 
@@ -174,30 +174,30 @@ static double stacked_disks_kernel_2d(double q, double q_x, double q_y,
     return answer;
 }
 
-double form_volume(double core_thick,
-                   double layer_thick,
+double form_volume(double thick_core,
+                   double thick_layer,
                    double radius,
                    double n_stacking){
-    double d = 2 * layer_thick + core_thick;
+    double d = 2 * thick_layer + thick_core;
     return acos(-1.0) * radius * radius * d * n_stacking;
 }
 
 double Iq(double q,
-          double core_thick,
-          double layer_thick,
+          double thick_core,
+          double thick_layer,
           double radius,
           double n_stacking,
-          double sigma_d,
+          double sigma_dnn,
           double core_sld,
           double layer_sld,
           double solvent_sld)
 {
     return stacked_disks_kernel(q,
-                    core_thick,
-                    layer_thick,
+                    thick_core,
+                    thick_layer,
                     radius,
                     n_stacking,
-                    sigma_d,
+                    sigma_dnn,
                     core_sld,
                     layer_sld,
                     solvent_sld);
