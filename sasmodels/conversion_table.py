@@ -305,7 +305,7 @@ CONVERSION_TABLE = {
             "cor_length_dynamic": "dyn_colength",
             "cor_length_static": "stat_colength",
             "background": "background",
-            "lorentz_scale: "scale_l"
+            "lorentz_scale": "scale_l"
         }
     ],
     "gaussian_peak": [
