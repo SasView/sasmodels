@@ -59,11 +59,11 @@ $2h$ = core thickness (*thick_core*), and $R$ = radius of the disc (*radius*).
 .. math::
 
     S(q) = 1 + \frac{1}{2}\sum_{k=1}^n(n-k)\cos{(kDq\cos{\alpha})}
-    \exp\left[ -k(q\cos{\alpha})^2\sigma_Dnn/2\right]
+    \exp\left[ -k(q\cos{\alpha})^2\sigma_d/2\right]
 
 where $n$ is the total number of the disc stacked (*n_stacking*),
 $D = 2(d+h)$ is the next neighbor center-to-center distance (d-spacing),
-and $\sigma_Dnn$ = the Gaussian standard deviation of the d-spacing (*sigma_dnn*).
+and $\sigma_d$ = the Gaussian standard deviation of the d-spacing (*sigma_d*).
 
 .. note::
     Each assembly in the stack is layer/core/layer, so the spacing of the
@@ -118,7 +118,7 @@ description = """\
     sld_core = the SLD of the core
     sld_layer = the SLD of the layers
     n_stacking = the number of the disks
-    sigma_dnn =  Gaussian STD of d-spacing
+    sigma_d =  Gaussian STD of d-spacing
     sld_solvent = the SLD of the solvent
     """
 category = "shape:cylinder"
@@ -130,7 +130,7 @@ parameters = [
     ["thick_layer", "Ang",        10.0, [0, inf],    "volume",      "Thickness of layer each side of core"],
     ["radius",      "Ang",        15.0, [0, inf],    "volume",      "Radius of the stacked disk"],
     ["n_stacking",  "",            1.0, [0, inf],    "volume",      "Number of stacked layer/core/layer disks"],
-    ["sigma_dnn",   "Ang",         0,   [0, inf],    "",            "Sigma of nearest neighbor spacing"],
+    ["sigma_d",     "Ang",         0,   [0, inf],    "",            "Sigma of nearest neighbor spacing"],
     ["sld_core",    "1e-6/Ang^2",  4,   [-inf, inf], "sld",         "Core scattering length density"],
     ["sld_layer",   "1e-6/Ang^2",  0.0, [-inf, inf], "sld",         "Layer scattering length density"],
     ["sld_solvent", "1e-6/Ang^2",  5.0, [-inf, inf], "sld",         "Solvent scattering length density"],
@@ -147,7 +147,7 @@ demo = dict(background=0.001,
             thick_layer=10.0,
             radius=15.0,
             n_stacking=1,
-            sigma_dnn=0,
+            sigma_d=0,
             sld_core=4,
             sld_layer=0.0,
             sld_solvent=5.0,
@@ -161,7 +161,7 @@ tests = [
       'thick_layer': 15.0,
       'radius': 3000.0,
       'n_stacking': 1.0,
-      'sigma_dnn': 0.0,
+      'sigma_d': 0.0,
       'sld_core': 4.0,
       'sld_layer': -0.4,
       'solvent_sd': 5.0,
@@ -175,7 +175,7 @@ tests = [
       'thick_layer': 15.0,
       'radius': 3000.0,
       'n_stacking': 5.0,
-      'sigma_dnn': 0.0,
+      'sigma_d': 0.0,
       'sld_core': 4.0,
       'sld_layer': -0.4,
       'solvent_sd': 5.0,
@@ -189,7 +189,7 @@ tests = [
       'thick_layer': 15.0,
       'radius': 3000.0,
       'n_stacking': 5.0,
-      'sigma_dnn': 0.0,
+      'sigma_d': 0.0,
       'sld_core': 4.0,
       'sld_layer': -0.4,
       'solvent_sd': 5.0,
@@ -203,7 +203,7 @@ tests = [
       'thick_layer': 15.0,
       'radius': 3000.0,
       'n_stacking': 1.0,
-      'sigma_dnn': 0.0,
+      'sigma_d': 0.0,
       'sld_core': 4.0,
       'sld_layer': -0.4,
       'solvent_sd': 5.0,
@@ -217,7 +217,7 @@ tests = [
       'thick_layer': 15.0,
       'radius': 3000.0,
       'n_stacking': 1.0,
-      'sigma_dnn': 0.0,
+      'sigma_d': 0.0,
       'sld_core': 4.0,
       'sld_layer': -0.4,
       'solvent_sd': 5.0,
@@ -231,7 +231,7 @@ tests = [
       'thick_layer': 15.0,
       'radius': 3000.0,
       'n_stacking': 1.0,
-      'sigma_dnn': 0.0,
+      'sigma_d': 0.0,
       'sld_core': 4.0,
       'sld_layer': -0.4,
       'solvent_sd': 5.0,

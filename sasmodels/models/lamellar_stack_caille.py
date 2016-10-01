@@ -39,7 +39,7 @@ where
               && \text{Caille constant}
     \end{align*}
 
-Here $d$ = (repeat) spacing, $\delta$ = bilayer thickness,
+Here $d$ = (repeat) d_spacing, $\delta$ = bilayer thickness,
 the contrast $\Delta\rho$ = SLD(headgroup) - SLD(solvent),
 $K$ = smectic bending elasticity, $B$ = compression modulus, and
 $N$ = number of lamellar plates (*n_plates*).
@@ -88,7 +88,7 @@ single = False  # TODO: check
 parameters = [
     ["thickness",        "Ang",      30.0,  [0, inf],   "volume", "sheet thickness"],
     ["Nlayers",          "",          20,   [0, inf],   "",       "Number of layers"],
-    ["spacing",          "Ang",      400.,  [0.0,inf],  "volume", "d-spacing of Caille S(Q)"],
+    ["d_spacing",        "Ang",      400.,  [0.0,inf],  "volume", "lamellar d-spacing of Caille S(Q)"],
     ["Caille_parameter", "1/Ang^2",    0.1, [0.0,0.8],  "",       "Caille parameter"],
     ["sld",              "1e-6/Ang^2", 6.3, [-inf,inf], "sld",    "layer scattering length density"],
     ["sld_solvent",      "1e-6/Ang^2", 1.0, [-inf,inf], "sld",    "Solvent scattering length density"],
@@ -107,16 +107,16 @@ form_volume = """
 # VR defaults to 1.0
 
 demo = dict(scale=1, background=0,
-            thickness=67., Nlayers=3.75, spacing=200.,
+            thickness=67., Nlayers=3.75, d_spacing=200.,
             Caille_parameter=0.268, sld=1.0, sld_solvent=6.34,
             thickness_pd=0.1, thickness_pd_n=100,
-            spacing_pd=0.05, spacing_pd_n=40)
+            d_spacing_pd=0.05, d_spacing_pd_n=40)
 
 #
 tests = [
     [{'scale': 1.0, 'background': 0.0, 'thickness': 30., 'Nlayers': 20.0,
-      'spacing': 400., 'Caille_parameter': 0.1, 'sld': 6.3,
-      'sld_solvent': 1.0, 'thickness_pd': 0.0, 'spacing_pd': 0.0},
+      'd_spacing': 400., 'Caille_parameter': 0.1, 'sld': 6.3,
+      'sld_solvent': 1.0, 'thickness_pd': 0.0, 'd_spacing_pd': 0.0},
      [0.001], [28895.13397]]
     ]
 # ADDED by: RKH  ON: 18Mar2016  converted from sasview previously, now renaming everything & sorting the docs
