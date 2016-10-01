@@ -1,19 +1,18 @@
 r"""
-An alternative version of $P(q)$ for the core_shell_ellipsoid
-having as parameters the core axial ratio X and a shell thickness,
-which are more often what we would like to determine.
-
-This model is also better behaved when polydispersity is applied than the four
-independent radii in core_shell_ellipsoid model.
-
 Definition
 ----------
+
+Parameters for this model are the core axial ratio X and a shell thickness,
+which are more often what we would like to determine and makes the model
+better behaved, particularly when polydispersity is applied than the four
+independent radii used in the original parameterization of this model.
+
 
 .. figure:: img/core_shell_ellipsoid_geometry.png
 
 The geometric parameters of this model are
 
-*radius_equat_core =* equatorial core radius *= R_minor_core*
+*radius_equat_core =* equatorial core radius *= Rminor_core*
 
 *X_core = polar_core / radius_equat_core = Rmajor_core / Rminor_core*
 
@@ -57,10 +56,10 @@ R K Heenan, 2015, reparametrised the core_shell_ellipsoid model
 
 from numpy import inf, sin, cos, pi
 
-name = "core_shell_ellipsoid_xt"
+name = "core_shell_ellipsoid"
 title = "Form factor for an spheroid ellipsoid particle with a core shell structure."
 description = """
-        [core_shell_ellipsoid_xt] Calculates the form factor for an spheroid
+        [core_shell_ellipsoid] Calculates the form factor for an spheroid
         ellipsoid particle with a core_shell structure.
         The form factor is averaged over all possible
         orientations of the ellipsoid such that P(q)
@@ -100,7 +99,7 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sph_j1c.c", "lib/gfn.c", "lib/gauss76.c",
-          "core_shell_ellipsoid_xt.c"]
+          "core_shell_ellipsoid.c"]
 
 def ER(radius_equat_core, x_core, thick_shell, x_polar_shell):
     """
