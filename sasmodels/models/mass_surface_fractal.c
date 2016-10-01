@@ -4,13 +4,13 @@ double Iq(double q,
           double fractal_dim_mass,
           double fractal_dim_surf,
           double rg_cluster,
-          double primary_rg);
+          double rg_primary);
 
 static double _mass_surface_fractal_kernel(double q,
           double fractal_dim_mass,
           double fractal_dim_surf,
           double rg_cluster,
-          double primary_rg)
+          double rg_primary)
 {
      //computation
     double tot_dim = 6.0 - fractal_dim_surf - fractal_dim_mass;
@@ -18,7 +18,7 @@ static double _mass_surface_fractal_kernel(double q,
     tot_dim /= 2.0;
 
     double rc_norm = rg_cluster * rg_cluster / (3.0 * fractal_dim_mass);
-    double rp_norm = primary_rg * primary_rg / (3.0 * tot_dim);
+    double rp_norm = rg_primary * rg_primary / (3.0 * tot_dim);
 
     //x for P
     double x_val1 = 1.0 +  q * q * rc_norm;
@@ -43,11 +43,11 @@ double Iq(double q,
           double fractal_dim_mass,
           double fractal_dim_surf,
           double rg_cluster,
-          double primary_rg)
+          double rg_primary)
 {
     return _mass_surface_fractal_kernel(q,
             fractal_dim_mass,
             fractal_dim_surf,
             rg_cluster,
-            primary_rg);
+            rg_primary);
 }

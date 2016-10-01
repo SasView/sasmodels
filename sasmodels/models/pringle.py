@@ -67,7 +67,7 @@ parameters = [
     ["thickness",   "Ang",         10.0,   [0, inf],    "volume", "Thickness of pringle"],
     ["alpha",       "",            0.001,  [-inf, inf], "volume", "Curvature parameter alpha"],
     ["beta",        "",            0.02,   [-inf, inf], "volume", "Curvature paramter beta"],
-    ["sld_pringle", "1e-6/Ang^2",  1.0,    [-inf, inf], "sld", "Pringle sld"],
+    ["sld", "1e-6/Ang^2",  1.0,    [-inf, inf], "sld", "Pringle sld"],
     ["sld_solvent", "1e-6/Ang^2",  6.3,    [-inf, inf], "sld", "Solvent sld"]
     ]
 # pylint: enable=bad-whitespace, line-too-long
@@ -90,7 +90,7 @@ demo = dict(background=0.0,
             thickness=10.0,
             alpha=0.001,
             beta=0.02,
-            sld_pringle=1.0,
+            sld=1.0,
             sld_solvent=6.35)
 
 tests = [
@@ -99,7 +99,7 @@ tests = [
       'thickness': 10.0,
       'alpha': 0.001,
       'beta': 0.02,
-      'sld_pringle': 1.0,
+      'sld': 1.0,
       'sld_solvent': 6.3,
       'background': 0.001,
      }, 0.1, 9.87676],
@@ -109,7 +109,7 @@ tests = [
       'thickness': 10.0,
       'alpha': 0.001,
       'beta': 0.02,
-      'sld_pringle': 1.0,
+      'sld': 1.0,
       'sld_solvent': 6.3,
       'background': 0.001,
      }, 0.01, 290.56723],
@@ -119,7 +119,7 @@ tests = [
       'thickness': 10.0,
       'alpha': 0.001,
       'beta': 0.02,
-      'sld_pringle': 1.0,
+      'sld': 1.0,
       'sld_solvent': 6.3,
       'background': 0.001,
      }, 0.001, 317.40847],

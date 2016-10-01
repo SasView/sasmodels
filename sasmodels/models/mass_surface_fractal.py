@@ -68,7 +68,7 @@ description = """
         fractal_dim_mass       =  Dm (mass fractal dimension)
         fractal_dim_surf  =  Ds
         rg_cluster  =  Rg
-        primary_rg    =  rg
+        rg_primary    =  rg
         background   =  background
         Ref: Schmidt, J Appl Cryst, eq(19), (1991), 24, 414-435
         Hurd, Schaefer, Martin, Phys Rev A, eq(2),(1987),35, 2361-2364
@@ -84,7 +84,7 @@ parameters = [["fractal_dim_mass",      "",    1.8, [1e-16, 6.0], "",
                "Surface fractal dimension"],
               ["rg_cluster", "Ang",   86.7, [0.0, inf], "",
                "Cluster radius of gyration"],
-              ["primary_rg", "Ang", 4000.,  [0.0, inf], "",
+              ["rg_primary", "Ang", 4000.,  [0.0, inf], "",
                "Primary particle radius of gyration"],
              ]
 # pylint: enable=bad-whitespace, line-too-long
@@ -95,7 +95,7 @@ demo = dict(scale=1, background=0,
             fractal_dim_mass=1.8,
             fractal_dim_surf=2.3,
             rg_cluster=86.7,
-            primary_rg=4000.0)
+            rg_primary=4000.0)
 
 tests = [
 
@@ -103,7 +103,7 @@ tests = [
     [{'fractal_dim_mass':      1.8,
       'fractal_dim_surf':   2.3,
       'rg_cluster':   86.7,
-      'primary_rg': 4000.0,
+      'rg_primary': 4000.0,
       'background':    0.0,
      }, 0.05, 1.77537e-05],
 
@@ -111,20 +111,20 @@ tests = [
     [{'fractal_dim_mass':      3.3,
       'fractal_dim_surf':   1.0,
       'rg_cluster':   90.0,
-      'primary_rg': 4000.0,
+      'rg_primary': 4000.0,
      }, 0.001, 0.18562699016],
 
     [{'fractal_dim_mass':      1.3,
       'fractal_dim_surf':   1.0,
       'rg_cluster':   90.0,
-      'primary_rg': 2000.0,
+      'rg_primary': 2000.0,
       'background':    0.8,
      }, 0.001, 1.16539753641],
 
     [{'fractal_dim_mass':      2.3,
       'fractal_dim_surf':   1.0,
       'rg_cluster':   90.0,
-      'primary_rg': 1000.0,
+      'rg_primary': 1000.0,
       'scale':        10.0,
       'background':    0.0,
      }, 0.051, 0.000169548800377],
