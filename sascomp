@@ -18,7 +18,7 @@ def main():
     sys.path.insert(0, sasmodels)
 
     import sasmodels.compare
-    sasmodels.compare.main()
+    sasmodels.compare.main(*sys.argv[1:])
 
 if __name__ == "__main__":
     main()

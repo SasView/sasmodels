@@ -361,6 +361,7 @@ def convert_type(source, dtype):
     Floating point constants are tagged with 'f' for single precision or 'L'
     for long double precision.
     """
+    source = _fix_tgmath_int(source)
     if dtype == F16:
         fbytes = 2
         source = _convert_type(source, "half", "f")
@@ -390,11 +391,151 @@ def _convert_type(source, type_name, constant_flag):
     # to double2.
     source = re.sub(r'(^|[^a-zA-Z0-9_]c?)double(([248]|16)?($|[^a-zA-Z0-9_]))',
                     r'\1%s\2'%type_name, source)
+    source = _tag_float(source, constant_flag)
+    return source
+
+TGMATH_INT_RE = re.compile(r"""
+(?: # Non-capturing match; not lookbehind since pattern length is variable
+  \b              # word boundary
+   # various math functions
+  (a?(sin|cos|tan)h? | atan2
+   | erfc? | tgamma
+   | exp(2|10|m1)? | log(2|10|1p)? | pow[nr]? | sqrt | rsqrt | rootn
+   | fabs | fmax | fmin
+   )
+  \s*[(]\s*       # open parenthesis
+)
+[+-]?(0|[1-9]\d*) # integer
+(?=               # lookahead match: don't want to move from end of int
+  \s*[,)]         # comma or close parenthesis for end of argument
+)                 # end lookahead
+""", re.VERBOSE)
+def _fix_tgmath_int(source):
+    # type: (str) -> str
+    """
+    Replace f(integer) with f(integer.) for sin, cos, pow, etc.
+
+    OS X OpenCL complains that it can't resolve the type generic calls to
+    the standard math functions when they are called with integer constants,
+    but this does not happen with the Windows Intel driver for example.
+    To avoid confusion on the matrix marketplace, automatically promote
+    integers to floats if we recognize them in the source.
+
+    The specific functions we look for are:
+
+        trigonometric: sin, asin, sinh, asinh, etc., and atan2
+        exponential:   exp, exp2, exp10, expm1, log, log2, log10, logp1
+        power:         pow, pown, powr, sqrt, rsqrt, rootn
+        special:       erf, erfc, tgamma
+        float:         fabs, fmin, fmax
+
+    Note that we don't convert the second argument of dual argument
+    functions: atan2, fmax, fmin, pow, powr.  This could potentially
+    be a problem for pow(x, 2), but that case seems to work without change.
+    """
+    out = TGMATH_INT_RE.sub(r'\g<0>.', source)
+    return out
+
+
+# Floating point regular expression
+#
+# Define parts:
+#
+#    E = [eE][+-]?\d+    : Exponent
+#    P = [.]             : Decimal separator
+#    N = [1-9]\d*        : Natural number, no leading zeros
+#    Z = 0               : Zero
+#    F = \d+             : Fractional number, maybe leading zeros
+#    F? = \d*            : Optional fractional number
+#
+# We want to reject bare natural numbers and bare decimal points, so we
+# need to tediously outline the cases where we have either a fraction or
+# an exponent:
+#
+#   ( ZP | ZPF | ZE | ZPE | ZPFE | NP | NPF | NE | NPE | NPFE | PF | PFE )
+#
+#
+# We can then join cases by making parts optional.  The following are
+# some ways to do this:
+#
+#   ( (Z|N)(P|PF|E|PE|PFE) | PFE? )                   # Split on lead
+#     => ( (Z|N)(PF?|(PF?)?E) | PFE? )
+#   ( ((Z|N)PF?|PF)E? | (Z|N)E)                       # Split on point
+#   ( (ZP|ZPF|NP|NPF|PF) | (Z|ZP|ZPF|N|NP|NPF|PF)E )  # Split on E
+#     => ( ((Z|N)PF?|PF) | ((Z|N)(PF?)? | PF) E )
+FLOAT_RE = re.compile(r"""
+    (?<!\w)  # use negative lookbehind since '.' confuses \b test
+    # use split on lead to match float ( (Z|N)(PF?|(PF?)?E) | PFE? )
+    ( ( 0 | [1-9]\d* )                     # ( ( Z | N )
+      ([.]\d* | ([.]\d*)? [eE][+-]?\d+ )   #   (PF? | (PF?)? E )
+    | [.]\d+ ([eE][+-]?\d+)?               # | PF (E)?
+    )                                      # )
+    (?!\w)  # use negative lookahead since '.' confuses \b test
+    """, re.VERBOSE)
+def _tag_float(source, constant_flag):
     # Convert floating point constants to single by adding 'f' to the end,
     # or long double with an 'L' suffix.  OS/X complains if you don't do this.
-    source = re.sub(r'[^a-zA-Z_](\d*[.]\d+|\d+[.]\d*)([eE][+-]?\d+)?',
-                    r'\g<0>%s'%constant_flag, source)
-    return source
+    out = FLOAT_RE.sub(r'\g<0>%s'%constant_flag, source)
+    #print("in",repr(source),"out",repr(out), constant_flag)
+    return out
+
+def test_tag_float():
+
+    cases="""
+ZP  : 0.
+ZPF : 0.0,0.01,0.1
+Z  E: 0e+001
+ZP E: 0.E0
+ZPFE: 0.13e-031
+NP  : 1., 12.
+NPF : 1.0001, 1.1, 1.0
+N  E: 1e0, 37E-080
+NP E: 1.e0, 37.E-080
+NPFE: 845.017e+22
+ PF : .1, .0, .0100
+ PFE: .6e+9, .82E-004
+# isolated cases
+0.
+1e0
+0.13e-013
+# untouched
+struct3.e3, 03.05.67, 37
+# expressions
+3.75+-1.6e-7-27+13.2
+a3.e2 - 0.
+4*atan(1)
+4.*atan(1.)
+"""
+
+    output="""
+ZP  : 0.f
+ZPF : 0.0f,0.01f,0.1f
+Z  E: 0e+001f
+ZP E: 0.E0f
+ZPFE: 0.13e-031f
+NP  : 1.f, 12.f
+NPF : 1.0001f, 1.1f, 1.0f
+N  E: 1e0f, 37E-080f
+NP E: 1.e0f, 37.E-080f
+NPFE: 845.017e+22f
+ PF : .1f, .0f, .0100f
+ PFE: .6e+9f, .82E-004f
+# isolated cases
+0.f
+1e0f
+0.13e-013f
+# untouched
+struct3.e3, 03.05.67, 37
+# expressions
+3.75f+-1.6e-7f-27+13.2f
+a3.e2 - 0.f
+4*atan(1)
+4.f*atan(1.f)
+"""
+
+    for case_in, case_out in zip(cases.split('\n'), output.split('\n')):
+        out = _tag_float(case_in, 'f')
+        assert case_out == out, "%r => %r"%(case_in, out)
 
 
 def kernel_name(model_info, variant):
@@ -705,7 +846,8 @@ def make_doc(model_info):
     """
     Iq_units = "The returned value is scaled to units of |cm^-1| |sr^-1|, absolute scale."
     Sq_units = "The returned value is a dimensionless structure factor, $S(q)$."
-    docs = convert_section_titles_to_boldface(model_info.docs)
+    docs = model_info.docs if model_info.docs is not None else ""
+    docs = convert_section_titles_to_boldface(docs)
     pars = make_partable(model_info.parameters.COMMON
                          + model_info.parameters.kernel_parameters)
     subst = dict(id=model_info.id.replace('_', '-'),
@@ -717,12 +859,61 @@ def make_doc(model_info):
     return DOC_HEADER % subst
 
 
+# TODO: need a single source for rst_prolog; it is also in doc/rst_prolog
+RST_PROLOG = """\
+.. |Ang| unicode:: U+212B
+.. |Ang^-1| replace:: |Ang|\ :sup:`-1`
+.. |Ang^2| replace:: |Ang|\ :sup:`2`
+.. |Ang^-2| replace:: |Ang|\ :sup:`-2`
+.. |1e-6Ang^-2| replace:: 10\ :sup:`-6`\ |Ang|\ :sup:`-2`
+.. |Ang^3| replace:: |Ang|\ :sup:`3`
+.. |Ang^-3| replace:: |Ang|\ :sup:`-3`
+.. |Ang^-4| replace:: |Ang|\ :sup:`-4`
+.. |cm^-1| replace:: cm\ :sup:`-1`
+.. |cm^2| replace:: cm\ :sup:`2`
+.. |cm^-2| replace:: cm\ :sup:`-2`
+.. |cm^3| replace:: cm\ :sup:`3`
+.. |1e15cm^3| replace:: 10\ :sup:`15`\ cm\ :sup:`3`
+.. |cm^-3| replace:: cm\ :sup:`-3`
+.. |sr^-1| replace:: sr\ :sup:`-1`
+.. |P0| replace:: P\ :sub:`0`\
+
+.. |equiv| unicode:: U+2261
+.. |noteql| unicode:: U+2260
+.. |TM| unicode:: U+2122
+
+.. |cdot| unicode:: U+00B7
+.. |deg| unicode:: U+00B0
+.. |g/cm^3| replace:: g\ |cdot|\ cm\ :sup:`-3`
+.. |mg/m^2| replace:: mg\ |cdot|\ m\ :sup:`-2`
+.. |fm^2| replace:: fm\ :sup:`2`
+.. |Ang*cm^-1| replace:: |Ang|\ |cdot|\ cm\ :sup:`-1`
+"""
+
+# TODO: make a better fake reference role
+RST_ROLES = """\
+.. role:: ref
+
+.. role:: numref
+
+"""
+
 def make_html(model_info):
     """
     Convert model docs directly to html.
     """
     from . import rst2html
-    return rst2html.convert(make_doc(model_info))
+
+    rst = make_doc(model_info)
+    return rst2html.rst2html("".join((RST_ROLES, RST_PROLOG, rst)))
+
+def view_html(model_name):
+    from . import rst2html
+    from . import modelinfo
+    kernel_module = load_kernel_module(model_name)
+    info = modelinfo.make_model_info(kernel_module)
+    url = "file://"+dirname(info.filename)+"/"
+    rst2html.wxview(make_html(info), url=url)
 
 def demo_time():
     # type: () -> None

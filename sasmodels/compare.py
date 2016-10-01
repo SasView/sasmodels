@@ -788,41 +788,41 @@ def get_pars(model_info, use_demo=False):
     return pars
 
 
-def parse_opts():
-    # type: () -> Dict[str, Any]
+def parse_opts(argv):
+    # type: (List[str]) -> Dict[str, Any]
     """
     Parse command line options.
     """
     MODELS = core.list_models()
-    flags = [arg for arg in sys.argv[1:]
+    flags = [arg for arg in argv
              if arg.startswith('-')]
-    values = [arg for arg in sys.argv[1:]
+    values = [arg for arg in argv
               if not arg.startswith('-') and '=' in arg]
-    args = [arg for arg in sys.argv[1:]
+    positional_args = [arg for arg in argv
             if not arg.startswith('-') and '=' not in arg]
     models = "\n    ".join("%-15s"%v for v in MODELS)
-    if len(args) == 0:
+    if len(positional_args) == 0:
         print(USAGE)
         print("\nAvailable models:")
         print(columnize(MODELS, indent="  "))
-        sys.exit(1)
-    if len(args) > 3:
+        return None
+    if len(positional_args) > 3:
         print("expected parameters: model N1 N2")
 
-    name = args[0]
+    name = positional_args[0]
     try:
         model_info = core.load_model_info(name)
     except ImportError as exc:
         print(str(exc))
         print("Could not find model; use one of:\n    " + models)
-        sys.exit(1)
+        return None
 
     invalid = [o[1:] for o in flags
                if o[1:] not in NAME_OPTIONS
                and not any(o.startswith('-%s='%t) for t in VALUE_OPTIONS)]
     if invalid:
         print("Invalid options: %s"%(", ".join(invalid)))
-        sys.exit(1)
+        return None
 
 
     # pylint: disable=bad-whitespace
@@ -897,8 +897,8 @@ def parse_opts():
     elif len(engines) > 2:
         del engines[2:]
 
-    n1 = int(args[1]) if len(args) > 1 else 1
-    n2 = int(args[2]) if len(args) > 2 else 1
+    n1 = int(positional_args[1]) if len(positional_args) > 1 else 1
+    n2 = int(positional_args[2]) if len(positional_args) > 2 else 1
     use_sasview = any(engine == 'sasview' and count > 0
                       for engine, count in zip(engines, [n1, n2]))
 
@@ -915,7 +915,7 @@ def parse_opts():
             # extract base name without polydispersity info
             s = set(p.split('_pd')[0] for p in pars)
             print("%r invalid; parameters are: %s"%(k, ", ".join(sorted(s))))
-            sys.exit(1)
+            return None
         presets[k] = float(v) if not k.endswith('type') else v
 
     # randomize parameters
@@ -969,16 +969,18 @@ def explore(opts):
     from bumps.names import FitProblem  # type: ignore
     from bumps.gui.app_frame import AppFrame  # type: ignore
 
-    problem = FitProblem(Explore(opts))
     is_mac = "cocoa" in wx.version()
-    app = wx.App()
-    frame = AppFrame(parent=None, title="explore")
+    # Create an app if not running embedded
+    app = wx.App() if wx.GetApp() is None else None
+    problem = FitProblem(Explore(opts))
+    frame = AppFrame(parent=None, title="explore", size=(1000,700))
     if not is_mac: frame.Show()
     frame.panel.set_model(model=problem)
     frame.panel.Layout()
     frame.panel.aui.Split(0, wx.TOP)
     if is_mac: frame.Show()
-    app.MainLoop()
+    # If running withing an app, start the main loop
+    if app: app.MainLoop()
 
 class Explore(object):
     """
@@ -1047,16 +1049,17 @@ class Explore(object):
             self.limits = vmax*1e-7, 1.3*vmax
 
 
-def main():
-    # type: () -> None
+def main(*argv):
+    # type: (*str) -> None
     """
     Main program.
     """
-    opts = parse_opts()
-    if opts['explore']:
-        explore(opts)
-    else:
-        compare(opts)
+    opts = parse_opts(argv)
+    if opts is not None:
+        if opts['explore']:
+            explore(opts)
+        else:
+            compare(opts)
 
 if __name__ == "__main__":
-    main()
+    main(*sys.argv[1:])
