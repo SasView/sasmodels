@@ -803,7 +803,7 @@ class IgorComparisonTest(unittest.TestCase):
         from .core import load_model
         pars = {
             'scale':0.05,
-            'r_polar':500, 'r_equatorial':15000,
+            'radius_polar':500, 'radius_equatorial':15000,
             'sld':6, 'sld_solvent': 1,
             }
         form = load_model('ellipsoid', dtype='double')
