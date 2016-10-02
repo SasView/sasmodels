@@ -648,19 +648,19 @@ CONVERSION_TABLE = {
             "sld_solvent": "sldSolv"
         }
     ],
-    "rpa": [
-        "RPA10Model",
-        {
-            "K12": "Kab", "K13": "Kac", "K14": "Kad",
-            "K23": "Kbc", "K24": "Kbd", "K34": "Kcd",
-            "N1": "Na", "N2": "Nb", "N3": "Nc", "N4": "Nd",
-            "L1": "La", "L2": "Lb", "L3": "Lc", "L4": "Ld",
-            "v1": "va", "v2": "vb", "v3": "vc", "v4": "vd",
-            "b1": "ba", "b2": "bb", "b3": "bc", "b4": "bd",
-            "Phi1": "Phia", "Phi2": "Phib", "Phi3": "Phic", "Phi4": "Phid",
-            "case_num": "lcase_n"
-        }
-    ],
+    # "rpa": [
+    #     "RPA10Model",
+    #     {
+    #         "K12": "Kab", "K13": "Kac", "K14": "Kad",
+    #         "K23": "Kbc", "K24": "Kbd", "K34": "Kcd",
+    #         "N1": "Na", "N2": "Nb", "N3": "Nc", "N4": "Nd",
+    #         "L1": "La", "L2": "Lb", "L3": "Lc", "L4": "Ld",
+    #         "v1": "va", "v2": "vb", "v3": "vc", "v4": "vd",
+    #         "b1": "ba", "b2": "bb", "b3": "bc", "b4": "bd",
+    #         "Phi1": "Phia", "Phi2": "Phib", "Phi3": "Phic", "Phi4": "Phid",
+    #         "case_num": "lcase_n"
+    #     }
+    # ],
     "sc_paracrystal": [
         "SCCrystalModel",
         {
