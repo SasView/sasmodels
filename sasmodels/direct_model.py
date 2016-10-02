@@ -84,6 +84,9 @@ def call_ER(model_info, pars):
     """
     if model_info.ER is None:
         return 1.0
+    elif not model_info.parameters.form_volume_parameters:
+        # handle the case where ER is provided but model is not polydisperse
+        return model_info.ER()
     else:
         value, weight = _vol_pars(model_info, pars)
         individual_radii = model_info.ER(*value)
@@ -100,6 +103,9 @@ def call_VR(model_info, pars):
     """
     if model_info.VR is None:
         return 1.0
+    elif not model_info.parameters.form_volume_parameters:
+        # handle the case where ER is provided but model is not polydisperse
+        return model_info.VR()
     else:
         value, weight = _vol_pars(model_info, pars)
         whole, part = model_info.VR(*value)
@@ -151,6 +157,7 @@ def _vol_pars(model_info, pars):
     vol_pars = [get_weights(p, pars)
                 for p in model_info.parameters.call_parameters
                 if p.type == 'volume']
+    #import pylab; pylab.plot(vol_pars[0][0],vol_pars[0][1]); pylab.show()
     value, weight = dispersion_mesh(model_info, vol_pars)
     return value, weight
 
@@ -394,7 +401,7 @@ def main():
     model_info = load_model_info(model_name)
     model = build_model(model_info)
     calculator = DirectModel(data, model)
-    pars = dict((k, float(v))
+    pars = dict((k, (float(v) if not k.endswith("_pd_type") else v))
                 for pair in sys.argv[3:]
                 for k, v in [pair.split('=')])
     if call == "ER_VR":

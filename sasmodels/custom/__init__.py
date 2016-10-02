@@ -16,7 +16,7 @@ try:
     from importlib.util import spec_from_file_location, module_from_spec  # type: ignore
     def load_module_from_path(fullname, path):
         """load module from *path* as *fullname*"""
-        spec = spec_from_file_location(fullname, path)
+        spec = spec_from_file_location(fullname, os.path.expanduser(path))
         module = module_from_spec(spec)
         spec.loader.exec_module(module)
         return module
@@ -25,7 +25,7 @@ except ImportError:
     import imp
     def load_module_from_path(fullname, path):
         """load module from *path* as *fullname*"""
-        module = imp.load_source(fullname, path)
+        module = imp.load_source(fullname, os.path.expanduser(path))
         #os.unlink(path+"c")  # remove the automatic pyc file
         return module
 
@@ -34,5 +34,6 @@ def load_custom_kernel_module(path):
     # Pull off the last .ext if it exists; there may be others
     name = basename(splitext(path)[0])
     # Placing the model in the 'sasmodels.custom' name space.
-    kernel_module = load_module_from_path('sasmodels.custom.'+name, path)
+    kernel_module = load_module_from_path('sasmodels.custom.'+name,
+                                          os.path.expanduser(path))
     return kernel_module

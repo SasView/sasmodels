@@ -49,7 +49,8 @@ import unittest
 
 import numpy as np  # type: ignore
 
-from .core import list_models, load_model_info, build_model, HAVE_OPENCL
+from . import core
+from .core import list_models, load_model_info, build_model
 from .direct_model import call_kernel, call_ER, call_VR
 from .exception import annotate_exception
 from .modelinfo import expand_pars
@@ -97,7 +98,7 @@ def make_suite(loaders, models):
 
         if is_py:  # kernel implemented in python
             test_name = "Model: %s, Kernel: python"%model_name
-            test_method_name = "test_%s_python" % model_name
+            test_method_name = "test_%s_python" % model_info.id
             test = ModelTestCase(test_name, model_info,
                                  test_method_name,
                                  platform="dll",  # so that
@@ -105,9 +106,9 @@ def make_suite(loaders, models):
             suite.addTest(test)
         else:   # kernel implemented in C
             # test using opencl if desired and available
-            if 'opencl' in loaders and HAVE_OPENCL:
+            if 'opencl' in loaders and core.HAVE_OPENCL:
                 test_name = "Model: %s, Kernel: OpenCL"%model_name
-                test_method_name = "test_%s_opencl" % model_name
+                test_method_name = "test_%s_opencl" % model_info.id
                 # Using dtype=None so that the models that are only
                 # correct for double precision are not tested using
                 # single precision.  The choice is determined by the
@@ -121,7 +122,7 @@ def make_suite(loaders, models):
             # test using dll if desired
             if 'dll' in loaders:
                 test_name = "Model: %s, Kernel: dll"%model_name
-                test_method_name = "test_%s_dll" % model_name
+                test_method_name = "test_%s_dll" % model_info.id
                 test = ModelTestCase(test_name, model_info,
                                      test_method_name,
                                      platform="dll",
@@ -248,10 +249,55 @@ def is_near(target, actual, digits=5):
     shift = 10**math.ceil(math.log10(abs(target)))
     return abs(target-actual)/shift < 1.5*10**-digits
 
-def main():
-    # type: () -> int
+def run_one(model):
+    # type: (str) -> None
     """
-    Run tests given is sys.argv.
+    Run the tests for a single model, printing the results to stdout.
+
+    *model* can by a python file, which is handy for checking user defined
+    plugin models.
+    """
+    # Note that running main() directly did not work from within the
+    # wxPython pycrust console.  Instead of the results appearing in the
+    # window they were printed to the underlying console.
+    from unittest.runner import TextTestResult, _WritelnDecorator
+
+    # Build a object to capture and print the test results
+    stream = _WritelnDecorator(sys.stdout)  # Add writeln() method to stream
+    verbosity = 2
+    descriptions = True
+    result = TextTestResult(stream, descriptions, verbosity)
+
+    # Build a test suite containing just the model
+    loaders = ['opencl']
+    models = [model]
+    try:
+        suite = make_suite(loaders, models)
+    except Exception:
+        import traceback
+        stream.writeln(traceback.format_exc())
+        return
+
+    # Run the test suite
+    suite.run(result)
+
+    # Print the failures and errors
+    for _, tb in result.errors:
+        stream.writeln(tb)
+    for _, tb in result.failures:
+        stream.writeln(tb)
+
+    # Check if there are user defined tests.
+    # Yes, it is naughty to peek into the structure of the test suite, and
+    # to assume that it contains only one test.
+    if not suite._tests[0].info.tests:
+        stream.writeln("Note: %s has no user defined tests."%model)
+
+
+def main(*models):
+    # type: (*str) -> int
+    """
+    Run tests given is models.
 
     Returns 0 if success or 1 if any tests fail.
     """
@@ -262,14 +308,13 @@ def main():
         from unittest import TextTestRunner as TestRunner
         test_args = {}
 
-    models = sys.argv[1:]
     if models and models[0] == '-v':
         verbosity = 2
         models = models[1:]
     else:
         verbosity = 1
     if models and models[0] == 'opencl':
-        if not HAVE_OPENCL:
+        if not core.HAVE_OPENCL:
             print("opencl is not available")
             return 1
         loaders = ['opencl']
@@ -317,4 +362,4 @@ def model_tests():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(*sys.argv[1:]))
