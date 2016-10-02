@@ -143,6 +143,20 @@ CONVERSION_TABLE = {
         }
     ],
     "core_shell_ellipsoid": [
+        "CoreShellEllipsoidModel",
+        {
+            "phi": "axis_phi",
+            "sld_core": "sld_core",
+            "polar_shell": "polar_shell",
+            "sld_solvent": "sld_solvent",
+            "equat_shell": "equat_shell",
+            "equat_core": "equat_core",
+            "theta": "axis_theta",
+            "polar_core": "polar_core",
+            "sld_shell": "sld_shell"
+        }
+    ],
+    "core_shell_ellipsoid": [
         "CoreShellEllipsoidXTModel",
         {
             "phi": "axis_phi",
