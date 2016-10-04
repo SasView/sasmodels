@@ -42,7 +42,7 @@ MAX_PD = 4 #: Maximum number of simultaneously polydisperse parameters
 # depends on the some polydisperse parameter with the current implementation
 COMMON_PARAMETERS = [
     ("scale", "", 1, (0.0, np.inf), "", "Source intensity"),
-    ("background", "1/cm", 1e-3, (0.0, np.inf), "", "Source background"),
+    ("background", "1/cm", 1e-3, (-np.inf, np.inf), "", "Source background"),
 ]
 assert (len(COMMON_PARAMETERS) == 2
         and COMMON_PARAMETERS[0][0] == "scale"
