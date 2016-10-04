@@ -237,8 +237,8 @@ def make_dll(source, model_info, dtype=F64):
         # comment the following to keep the generated c file
         # Note: if there is a syntax error then compile raises an error
         # and the source file will not be deleted.
-        os.unlink(filename)
-        #print("saving compiled file in %r"%filename)
+        #os.unlink(filename)
+        print("saving compiled file in %r"%filename)
     return dll
 
 
@@ -279,7 +279,7 @@ class DllModel(KernelModel):
 
     def _load_dll(self):
         # type: () -> None
-        #print("dll", self.dllpath)
+        print("dll", self.dllpath)
         try:
             self._dll = ct.CDLL(self.dllpath)
         except:
