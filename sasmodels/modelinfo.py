@@ -767,7 +767,7 @@ class ModelInfo(object):
     of *Iq* and *Iqxy* if they need to be defined.
     """
     #: Full path to the file defining the kernel, if any.
-    filename = None         # type: Optiona[str]
+    filename = None         # type: Optional[str]
     #: Id of the kernel used to load it from the filesystem.
     id = None               # type: str
     #: Display name of the model, which defaults to the model id but with

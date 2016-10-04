@@ -2,9 +2,15 @@
 SAS distributions for polydispersity.
 """
 # TODO: include dispersion docs with the disperser models
+from __future__ import division, print_function
+
 from math import sqrt  # type: ignore
+from collections import OrderedDict
+
 import numpy as np  # type: ignore
 from scipy.special import gammaln  # type: ignore
+
+# TODO: include dispersion docs with the disperser models
 
 class Dispersion(object):
     """
@@ -53,7 +59,8 @@ class Dispersion(object):
                 return np.array([center], 'd'), np.array([1.], 'd')
             else:
                 return np.array([], 'd'), np.array([], 'd')
-        return self._weights(center, sigma, lb, ub)
+        x, px = self._weights(center, sigma, lb, ub)
+        return x, px
 
     def _weights(self, center, sigma, lb, ub):
         """actual work of computing the weights"""
@@ -78,6 +85,9 @@ class GaussianDispersion(Dispersion):
     type = "gaussian"
     default = dict(npts=35, width=0, nsigmas=3)
     def _weights(self, center, sigma, lb, ub):
+        # TODO: sample high probability regions more densely
+        # i.e., step uniformly in cumulative density rather than x value
+        # so weight = 1/Npts for all weights, but values are unevenly spaced
         x = self._linspace(center, sigma, lb, ub)
         px = np.exp((x-center)**2 / (-2.0 * sigma * sigma))
         return x, px
@@ -94,9 +104,9 @@ class RectangleDispersion(Dispersion):
     type = "rectangle"
     default = dict(npts=35, width=0, nsigmas=1.70325)
     def _weights(self, center, sigma, lb, ub):
-        x = self._linspace(center, sigma*sqrt(3.0), lb, ub)
-        px = np.ones_like(x)
-        return x, px
+        x = self._linspace(center, sigma, lb, ub)
+        x = x[np.fabs(x-center) <= np.fabs(sigma)*sqrt(3.0)]
+        return x, np.ones_like(x)
 
 
 class LogNormalDispersion(Dispersion):
@@ -111,7 +121,9 @@ class LogNormalDispersion(Dispersion):
     default = dict(npts=80, width=0, nsigmas=8)
     def _weights(self, center, sigma, lb, ub):
         x = self._linspace(center, sigma, max(lb, 1e-8), max(ub, 1e-8))
-        px = np.exp(-0.5*(np.log(x)-center)**2/sigma**2)/(x*sigma)
+        # sigma in the lognormal function is in ln(R) space, thus needs converting
+        sig = np.fabs(sigma/center)
+        px = np.exp(-0.5*((np.log(x)-np.log(center))/sig)**2)/(x*sig)
         return x, px
 
 
@@ -164,8 +176,10 @@ class ArrayDispersion(Dispersion):
         self.npts = len(values)
 
     def _weights(self, center, sigma, lb, ub):
-        # TODO: interpolate into the array dispersion using npts
-        x = center + self.values*sigma
+        # TODO: rebin the array dispersion using npts
+        # TODO: use a distribution that can be recentered and scaled
+        x = self.values
+        #x = center + self.values*sigma
         idx = (x >= lb) & (x <= ub)
         x = x[idx]
         px = self.weights[idx]
@@ -173,9 +187,14 @@ class ArrayDispersion(Dispersion):
 
 
 # dispersion name -> disperser lookup table.
-MODELS = dict((d.type, d) for d in (
-    GaussianDispersion, RectangleDispersion,
-    ArrayDispersion, SchulzDispersion, LogNormalDispersion
+# Maintain order since this is used by sasview GUI to order the options in
+# the dispersion type combobox.
+MODELS = OrderedDict((d.type, d) for d in (
+    RectangleDispersion,
+    ArrayDispersion,
+    LogNormalDispersion,
+    GaussianDispersion,
+    SchulzDispersion,
 ))
 
 
@@ -193,14 +212,41 @@ def get_weights(disperser, n, width, nsigmas, value, limits, relative):
 
     *value* is the value of the parameter in the model.
 
-    *limits* is [lb, ub], the lower and upper bound of the weight value.
+    *limits* is [lb, ub], the lower and upper bound on the possible values.
 
     *relative* is true if *width* is defined in proportion to the value
     of the parameter, and false if it is an absolute width.
 
     Returns *(value, weight)*, where *value* and *weight* are vectors.
     """
+    if disperser == "array":
+        raise NotImplementedError("Don't handle arrays through get_weights; use values and weights directly")
     cls = MODELS[disperser]
     obj = cls(n, width, nsigmas)
     v, w = obj.get_weights(value, limits[0], limits[1], relative)
     return v, w
+
+
+def plot_weights(model_info, pairs):
+    # type: (ModelInfo, List[Tuple[np.ndarray, np.ndarray]]) -> None
+    """
+    Plot the weights returned by :func:`get_weights`.
+
+    *model_info* is
+    :param model_info:
+    :param pairs:
+    :return:
+    """
+    import pylab
+
+    if any(len(values)>1 for values, weights in pairs):
+        labels = [p.name for p in model_info.parameters.call_parameters]
+        pylab.interactive(True)
+        pylab.figure()
+        for (v,w), s in zip(pairs, labels):
+            if len(v) > 1:
+                #print("weights for", s, v, w)
+                pylab.plot(v, w, '-o', label=s)
+        pylab.grid(True)
+        pylab.legend()
+        #pylab.show()

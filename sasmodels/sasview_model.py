@@ -564,6 +564,7 @@ class SasviewModel(object):
         calculator = self._model.make_kernel(q_vectors)
         parameters = self._model_info.parameters
         pairs = [self._get_weights(p) for p in parameters.call_parameters]
+        #weights.plot_weights(self._model_info, pairs)
         call_details, values, is_magnetic = make_kernel_args(calculator, pairs)
         #call_details.show()
         #print("pairs", pairs)
@@ -617,16 +618,15 @@ class SasviewModel(object):
             # The current method of relying on the sasview GUI to
             # remember them is kind of funky.
             # Note: can't seem to get disperser parameters from sasview
-            # (1) Could create a sasview model that has not yet # been
+            # (1) Could create a sasview model that has not yet been
             # converted, assign the disperser to one of its polydisperse
             # parameters, then retrieve the disperser parameters from the
-            # sasview model.  (2) Could write a disperser parameter retriever
-            # in sasview.  (3) Could modify sasview to use sasmodels.weights
-            # dispersers.
+            # sasview model.
+            # (2) Could write a disperser parameter retriever in sasview.
+            # (3) Could modify sasview to use sasmodels.weights dispersers.
             # For now, rely on the fact that the sasview only ever uses
             # new dispersers in the set_dispersion call and create a new
             # one instead of trying to assign parameters.
-            dispersion = weights.MODELS[dispersion.type]()
             self.dispersion[parameter] = dispersion.get_pars()
         else:
             raise ValueError("%r is not a dispersity or orientation parameter")
@@ -657,9 +657,12 @@ class SasviewModel(object):
                 return [np.NaN], [1.0]
         elif par.polydisperse:
             dis = self.dispersion[par.name]
-            value, weight = weights.get_weights(
-                dis['type'], dis['npts'], dis['width'], dis['nsigmas'],
-                self.params[par.name], par.limits, par.relative_pd)
+            if dis['type'] == 'array':
+                value, weight = dis['values'], dis['weights']
+            else:
+                value, weight = weights.get_weights(
+                    dis['type'], dis['npts'], dis['width'], dis['nsigmas'],
+                    self.params[par.name], par.limits, par.relative_pd)
             return value, weight / np.sum(weight)
         else:
             return [self.params[par.name]], [1.0]

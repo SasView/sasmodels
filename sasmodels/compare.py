@@ -37,6 +37,7 @@ import numpy as np  # type: ignore
 
 from . import core
 from . import kerneldll
+from . import weights
 from .data import plot_theory, empty_data1D, empty_data2D
 from .direct_model import DirectModel
 from .convert import revert_name, revert_pars, constrain_new_to_old
@@ -389,6 +390,7 @@ def eval_sasview(model_info, data):
     import sas.models
     from sas.models.qsmearing import smear_selection
     from sas.models.MultiplicationModel import MultiplicationModel
+    from sas.models.dispersion_models import models as dispersers
 
     def get_model_class(name):
         # type: (str) -> "sas.models.BaseComponent"
@@ -421,6 +423,7 @@ def eval_sasview(model_info, data):
                             % model_info.id)
         ModelClass = get_model_class(old_name)
         model = [ModelClass()]
+    model[0].disperser_handles = {}
 
     # build a smearer with which to call the model, if necessary
     smearer = smear_selection(data, model=model)
@@ -457,11 +460,20 @@ def eval_sasview(model_info, data):
             # happen in revert_pars, but it hasn't been called yet.
             model[0] = ModelClass(control)
         # paying for parameter conversion each time to keep life simple, if not fast
+        for k, v in oldpars.items():
+            if k.endswith('.type'):
+                par = k[:-5]
+                cls = dispersers[v if v != 'rectangle' else 'rectangula']
+                handle = cls()
+                model[0].disperser_handles[par] = handle
+                model[0].set_dispersion(par, handle)
+
         #print("sasview pars",oldpars)
         for k, v in oldpars.items():
             name_attr = k.split('.')  # polydispersity components
             if len(name_attr) == 2:
-                model[0].dispersion[name_attr[0]][name_attr[1]] = v
+                par, disp_par = name_attr
+                model[0].dispersion[par][disp_par] = v
             else:
                 model[0].setParam(k, v)
         return theory()
@@ -776,41 +788,41 @@ def get_pars(model_info, use_demo=False):
     return pars
 
 
-def parse_opts():
-    # type: () -> Dict[str, Any]
+def parse_opts(argv):
+    # type: (List[str]) -> Dict[str, Any]
     """
     Parse command line options.
     """
     MODELS = core.list_models()
-    flags = [arg for arg in sys.argv[1:]
+    flags = [arg for arg in argv
              if arg.startswith('-')]
-    values = [arg for arg in sys.argv[1:]
+    values = [arg for arg in argv
               if not arg.startswith('-') and '=' in arg]
-    args = [arg for arg in sys.argv[1:]
+    positional_args = [arg for arg in argv
             if not arg.startswith('-') and '=' not in arg]
     models = "\n    ".join("%-15s"%v for v in MODELS)
-    if len(args) == 0:
+    if len(positional_args) == 0:
         print(USAGE)
         print("\nAvailable models:")
         print(columnize(MODELS, indent="  "))
-        sys.exit(1)
-    if len(args) > 3:
+        return None
+    if len(positional_args) > 3:
         print("expected parameters: model N1 N2")
 
-    name = args[0]
+    name = positional_args[0]
     try:
         model_info = core.load_model_info(name)
     except ImportError as exc:
         print(str(exc))
         print("Could not find model; use one of:\n    " + models)
-        sys.exit(1)
+        return None
 
     invalid = [o[1:] for o in flags
                if o[1:] not in NAME_OPTIONS
                and not any(o.startswith('-%s='%t) for t in VALUE_OPTIONS)]
     if invalid:
         print("Invalid options: %s"%(", ".join(invalid)))
-        sys.exit(1)
+        return None
 
 
     # pylint: disable=bad-whitespace
@@ -885,8 +897,8 @@ def parse_opts():
     elif len(engines) > 2:
         del engines[2:]
 
-    n1 = int(args[1]) if len(args) > 1 else 1
-    n2 = int(args[2]) if len(args) > 2 else 1
+    n1 = int(positional_args[1]) if len(positional_args) > 1 else 1
+    n2 = int(positional_args[2]) if len(positional_args) > 2 else 1
     use_sasview = any(engine == 'sasview' and count > 0
                       for engine, count in zip(engines, [n1, n2]))
 
@@ -903,7 +915,7 @@ def parse_opts():
             # extract base name without polydispersity info
             s = set(p.split('_pd')[0] for p in pars)
             print("%r invalid; parameters are: %s"%(k, ", ".join(sorted(s))))
-            sys.exit(1)
+            return None
         presets[k] = float(v) if not k.endswith('type') else v
 
     # randomize parameters
@@ -957,16 +969,18 @@ def explore(opts):
     from bumps.names import FitProblem  # type: ignore
     from bumps.gui.app_frame import AppFrame  # type: ignore
 
-    problem = FitProblem(Explore(opts))
     is_mac = "cocoa" in wx.version()
-    app = wx.App()
-    frame = AppFrame(parent=None, title="explore")
+    # Create an app if not running embedded
+    app = wx.App() if wx.GetApp() is None else None
+    problem = FitProblem(Explore(opts))
+    frame = AppFrame(parent=None, title="explore", size=(1000,700))
     if not is_mac: frame.Show()
     frame.panel.set_model(model=problem)
     frame.panel.Layout()
     frame.panel.aui.Split(0, wx.TOP)
     if is_mac: frame.Show()
-    app.MainLoop()
+    # If running withing an app, start the main loop
+    if app: app.MainLoop()
 
 class Explore(object):
     """
@@ -1035,16 +1049,17 @@ class Explore(object):
             self.limits = vmax*1e-7, 1.3*vmax
 
 
-def main():
-    # type: () -> None
+def main(*argv):
+    # type: (*str) -> None
     """
     Main program.
     """
-    opts = parse_opts()
-    if opts['explore']:
-        explore(opts)
-    else:
-        compare(opts)
+    opts = parse_opts(argv)
+    if opts is not None:
+        if opts['explore']:
+            explore(opts)
+        else:
+            compare(opts)
 
 if __name__ == "__main__":
-    main()
+    main(*sys.argv[1:])

@@ -41,8 +41,8 @@ where
     \end{align*}
 
 
-$\delta_T$ is the tail length (or *tail_length*), $\delta_H$ is the head
-thickness (or *head_length*), $\Delta\rho_H$ is SLD(headgroup) - SLD(solvent),
+$\delta_T$ is the tail length (or *length_tail*), $\delta_H$ is the head
+thickness (or *length_head*), $\Delta\rho_H$ is SLD(headgroup) - SLD(solvent),
 and $\Delta\rho_T$ is SLD(tail) - SLD(headgroup). Here $d$ is (repeat) spacing,
 $K$ is smectic bending elasticity, $B$ is compression modulus, and $N$ is the
 number of lamellar plates (*Nlayers*).
@@ -93,14 +93,14 @@ single = False  # TODO: check
 parameters = [
     #   [ "name", "units", default, [lower, upper], "type",
     #     "description" ],
-    ["tail_length", "Ang", 10, [0, inf], "volume",
+    ["length_tail", "Ang", 10, [0, inf], "volume",
      "Tail thickness"],
-    ["head_length", "Ang", 2, [0, inf], "volume",
+    ["length_head", "Ang", 2, [0, inf], "volume",
      "head thickness"],
     ["Nlayers", "", 30, [0, inf], "",
      "Number of layers"],
-    ["spacing", "Ang", 40., [0.0, inf], "volume",
-     "d-spacing of Caille S(Q)"],
+    ["d_spacing", "Ang", 40., [0.0, inf], "volume",
+     "lamellar d-spacing of Caille S(Q)"],
     ["Caille_parameter", "", 0.001, [0.0, 0.8], "",
      "Caille parameter"],
     ["sld", "1e-6/Ang^2", 0.4, [-inf, inf], "sld",
@@ -111,7 +111,7 @@ parameters = [
      "Solvent scattering length density"],
     ]
 
-source = ["lamellar_hg_stack_caille_kernel.c"]
+source = ["lamellar_hg_stack_caille.c"]
 
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
@@ -124,18 +124,18 @@ form_volume = """
 
 demo = dict(
     scale=1, background=0,
-    Nlayers=20, spacing=200., Caille_parameter=0.05,
-    tail_length=15, head_length=10,
+    Nlayers=20, d_spacing=200., Caille_parameter=0.05,
+    length_tail=15, length_head=10,
     #sld=-1, sld_head=4.0, sld_solvent=6.0,
     sld=-1, sld_head=4.1, sld_solvent=6.0,
-    tail_length_pd=0.1, tail_length_pd_n=20,
-    head_length_pd=0.05, head_length_pd_n=30,
-    spacing_pd=0.2, spacing_pd_n=40,
+    length_tail_pd=0.1, length_tail_pd_n=20,
+    length_head_pd=0.05, length_head_pd_n=30,
+    d_spacing_pd=0.2, d_spacing_pd_n=40,
     )
 
 #
-tests = [[{'scale': 1.0, 'background': 0.0, 'tail_length': 10.0, 'head_length': 2.0,
-           'Nlayers': 30.0, 'spacing': 40., 'Caille_parameter': 0.001, 'sld': 0.4,
-           'sld_head': 2.0, 'sld_solvent': 6.0, 'tail_length_pd': 0.0,
-           'head_length_pd': 0.0, 'spacing_pd': 0.0}, [0.001], [6838238.571488]]]
+tests = [[{'scale': 1.0, 'background': 0.0, 'length_tail': 10.0, 'length_head': 2.0,
+           'Nlayers': 30.0, 'd_spacing': 40., 'Caille_parameter': 0.001, 'sld': 0.4,
+           'sld_head': 2.0, 'sld_solvent': 6.0, 'length_tail_pd': 0.0,
+           'length_head_pd': 0.0, 'd_spacing_pd': 0.0}, [0.001], [6838238.571488]]]
 # ADDED by: RKH  ON: 18Mar2016  converted from sasview previously, now renaming everything & sorting the docs

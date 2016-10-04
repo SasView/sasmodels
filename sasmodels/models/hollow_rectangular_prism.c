@@ -1,18 +1,18 @@
-double form_volume(double a_side, double b2a_ratio, double c2a_ratio, double thickness);
-double Iq(double q, double sld, double solvent_sld, double a_side, 
+double form_volume(double length_a, double b2a_ratio, double c2a_ratio, double thickness);
+double Iq(double q, double sld, double solvent_sld, double length_a, 
           double b2a_ratio, double c2a_ratio, double thickness);
 double Iqxy(double qx, double qy, double sld, double solvent_sld, 
-            double a_side, double b2a_ratio, double c2a_ratio, double thickness);
+            double length_a, double b2a_ratio, double c2a_ratio, double thickness);
 
-double form_volume(double a_side, double b2a_ratio, double c2a_ratio, double thickness)
+double form_volume(double length_a, double b2a_ratio, double c2a_ratio, double thickness)
 {
-    double b_side = a_side * b2a_ratio;
-    double c_side = a_side * c2a_ratio;
-    double a_core = a_side - 2.0*thickness;
+    double b_side = length_a * b2a_ratio;
+    double c_side = length_a * c2a_ratio;
+    double a_core = length_a - 2.0*thickness;
     double b_core = b_side - 2.0*thickness;
     double c_core = c_side - 2.0*thickness;
     double vol_core = a_core * b_core * c_core;
-    double vol_total = a_side * b_side * c_side;
+    double vol_total = length_a * b_side * c_side;
     double vol_shell = vol_total - vol_core;
     return vol_shell;
 }
@@ -20,16 +20,16 @@ double form_volume(double a_side, double b2a_ratio, double c2a_ratio, double thi
 double Iq(double q,
     double sld,
     double solvent_sld,
-    double a_side,
+    double length_a,
     double b2a_ratio,
     double c2a_ratio,
     double thickness)
 {
     double termA1, termA2, termB1, termB2, termC1, termC2;
     
-    double b_side = a_side * b2a_ratio;
-    double c_side = a_side * c2a_ratio;
-    double a_half = 0.5 * a_side;
+    double b_side = length_a * b2a_ratio;
+    double c_side = length_a * c2a_ratio;
+    double a_half = 0.5 * length_a;
     double b_half = 0.5 * b_side;
     double c_half = 0.5 * c_side;
 
@@ -72,7 +72,7 @@ double Iq(double q,
 	        arg = q * (b_half-thickness) * sin(theta) * cos(phi);
 	        if (fabs(arg) > 1.e-16) {termB2 = sin(arg)/arg;} else {termB2 = 1.0;}
 
-            double AP1 = (a_side*b_side*c_side) * termA1 * termB1 * termC1;
+            double AP1 = (length_a*b_side*c_side) * termA1 * termB1 * termC1;
             double AP2 = 8.0 * (a_half-thickness) * (b_half-thickness) * (c_half-thickness) * termA2 * termB2 * termC2;
             double AP = AP1 - AP2;
 
@@ -104,12 +104,12 @@ double Iq(double q,
 double Iqxy(double qx, double qy,
     double sld,
     double solvent_sld,
-    double a_side,
+    double length_a,
     double b2a_ratio,
     double c2a_ratio,
     double thickness)
 {
     double q = sqrt(qx*qx + qy*qy);
-    double intensity = Iq(q, sld, solvent_sld, a_side, b2a_ratio, c2a_ratio, thickness); 
+    double intensity = Iq(q, sld, solvent_sld, length_a, b2a_ratio, c2a_ratio, thickness); 
     return intensity;    
 }

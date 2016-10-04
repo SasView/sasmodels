@@ -123,7 +123,7 @@ parameters = [["dnn",         "Ang",       220,    [-inf, inf], "",            "
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sph_j1c.c", "lib/gauss150.c", "lib/sphere_form.c", "bcc_paracrystal_kernel.c"]
+source = ["lib/sph_j1c.c", "lib/gauss150.c", "lib/sphere_form.c", "bcc_paracrystal.c"]
 
 # parameters for demo
 demo = dict(

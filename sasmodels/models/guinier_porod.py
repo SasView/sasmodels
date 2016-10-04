@@ -71,13 +71,13 @@ name = "guinier_porod"
 title = "Guinier-Porod function"
 description = """\
          I(q) = scale/q^s* exp ( - R_g^2 q^2 / (3-s) ) for q<= ql
-         = scale/q^m*exp((-ql^2*Rg^2)/(3-s))*ql^(m-s) for q>=ql
-                        where ql = sqrt((m-s)(3-s)/2)/Rg.
+         = scale/q^porod_exp*exp((-ql^2*Rg^2)/(3-s))*ql^(porod_exp-s) for q>=ql
+                        where ql = sqrt((porod_exp-s)(3-s)/2)/Rg.
                         List of parameters:
                         scale = Guinier Scale
                         s = Dimension Variable
                         Rg = Radius of Gyration [A] 
-                        m = Porod Exponent
+                        porod_exp = Porod Exponent
                         background  = Background [1/cm]"""
 
 category = "shape-independent"
@@ -86,16 +86,16 @@ category = "shape-independent"
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["rg", "Ang", 60.0, [0, inf], "", "Radius of gyration"],
               ["s",  "",    1.0,  [0, inf], "", "Dimension variable"],
-              ["m",  "",    3.0,  [0, inf], "", "Porod exponent"]]
+              ["porod_exp",  "",    3.0,  [0, inf], "", "Porod exponent"]]
 # pylint: enable=bad-whitespace, line-too-long
 
 # pylint: disable=C0103
-def Iq(q, rg, s, m):
+def Iq(q, rg, s, porod_exp):
     """
     @param q: Input q-value
     """
     n = 3.0 - s
-    ms = 0.5*(m-s) # =(n-3+m)/2
+    ms = 0.5*(porod_exp-s) # =(n-3+porod_exp)/2
 
     # preallocate return value
     iq = 0.0*q
@@ -108,11 +108,11 @@ def Iq(q, rg, s, m):
     idx = q < sqrt(n*ms)/rg
     with errstate(divide='ignore'):
         iq[idx] = q[idx]**-s * exp(-(q[idx]*rg)**2/n)
-        iq[~idx] = q[~idx]**-m * (exp(-ms) * (n*ms/rg**2)**ms)
+        iq[~idx] = q[~idx]**-porod_exp * (exp(-ms) * (n*ms/rg**2)**ms)
     return iq
 
 Iq.vectorized = True # Iq accepts an array of q values
 
-demo = dict(scale=1.5, background=0.5, rg=60, s=1.0, m=3.0)
+demo = dict(scale=1.5, background=0.5, rg=60, s=1.0, porod_exp=3.0)
 
 tests = [[{'scale': 1.5, 'background':0.5}, 0.04, 5.290096890253155]]

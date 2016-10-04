@@ -70,14 +70,14 @@ category = "shape-independent"
 #   ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [
     ["i_zero", "1/cm", 70.0, [0.0, inf], "", "Intensity at q=0"],
-    ["radius_gyration", "Ang", 75.0, [0.0, inf], "", "Radius of gyration"],
+    ["rg", "Ang", 75.0, [0.0, inf], "", "Radius of gyration"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
 # NB: Scale and Background are implicit parameters on every model
-def Iq(q, i_zero, radius_gyration):
+def Iq(q, i_zero, rg):
     # pylint: disable = missing-docstring
-    z = (q * radius_gyration)**2
+    z = (q * rg)**2
 
     with errstate(invalid='ignore'):
         inten = (i_zero * 2.0) * (exp(-z) + z - 1.0)/z**2
@@ -85,10 +85,10 @@ def Iq(q, i_zero, radius_gyration):
     return inten
 Iq.vectorized = True # Iq accepts an array of q values
 
-demo = dict(scale=1.0, i_zero=70.0, radius_gyration=75.0, background=0.0)
+demo = dict(scale=1.0, i_zero=70.0, rg=75.0, background=0.0)
 
 # these unit test values taken from SasView 3.1.2
 tests = [
-    [{'scale': 1.0, 'i_zero': 70.0, 'radius_gyration': 75.0, 'background': 0.0},
+    [{'scale': 1.0, 'i_zero': 70.0, 'rg': 75.0, 'background': 0.0},
      [0.0106939, 0.469418], [57.1241, 0.112859]],
     ]

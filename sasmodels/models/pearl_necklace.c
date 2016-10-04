@@ -1,17 +1,17 @@
-double _pearl_necklace_kernel(double q, double radius, double edge_separation,
+double _pearl_necklace_kernel(double q, double radius, double edge_sep,
 	double thick_string, double num_pearls, double sld_pearl,
 	double sld_string, double sld_solv);
-double form_volume(double radius, double edge_separation,
-	double string_thickness, double number_of_pearls);
+double form_volume(double radius, double edge_sep,
+	double thick_string, double num_pearls);
 
-double Iq(double q, double radius, double edge_separation,
-	double string_thickness, double number_of_pearls, double sld, 
+double Iq(double q, double radius, double edge_sep,
+	double thick_string, double num_pearls, double sld, 
 	double string_sld, double solvent_sld);
 
-#define INVALID(v) (v.string_thickness >= v.radius || v.number_of_pearls <= 0)
+#define INVALID(v) (v.thick_string >= v.radius || v.num_pearls <= 0)
 
 // From Igor library
-double _pearl_necklace_kernel(double q, double radius, double edge_separation, double thick_string,
+double _pearl_necklace_kernel(double q, double radius, double edge_sep, double thick_string,
 	double num_pearls, double sld_pearl, double sld_string, double sld_solv)
 {
 	//relative slds
@@ -26,16 +26,16 @@ double _pearl_necklace_kernel(double q, double radius, double edge_separation, d
 	double pi = 4.0*atan(1.0);
 	
 	// center to center distance between the neighboring pearls
-	double A_s = edge_separation + 2.0 * radius;
+	double A_s = edge_sep + 2.0 * radius;
 	
 	// Repeated Calculations
 	double sincasq = sinc(q*A_s);
 	double oneminussinc = 1 - sincasq;
 	double q_r = q * radius;
-	double q_edge = q * edge_separation;
+	double q_edge = q * edge_sep;
 	
 	// each volume
-	double string_vol = edge_separation * pi * thick_string * thick_string / 4.0;
+	double string_vol = edge_sep * pi * thick_string * thick_string / 4.0;
 	double pearl_vol = 4.0 / 3.0 * pi * radius * radius * radius;
 
 	//total volume
@@ -104,32 +104,32 @@ double _pearl_necklace_kernel(double q, double radius, double edge_separation, d
 	return (form_factor);
 }
 
-double form_volume(double radius, double edge_separation,
-	double string_thickness, double number_of_pearls)
+double form_volume(double radius, double edge_sep,
+	double thick_string, double num_pearls)
 {
 	double total_vol;
 
 	double pi = 4.0*atan(1.0);
-	double number_of_strings = number_of_pearls - 1.0;
+	double number_of_strings = num_pearls - 1.0;
 	
-	double string_vol = edge_separation * pi * string_thickness * string_thickness / 4.0;
+	double string_vol = edge_sep * pi * thick_string * thick_string / 4.0;
 	double pearl_vol = 4.0 / 3.0 * pi * radius * radius * radius;
 
 	total_vol = number_of_strings * string_vol;
-	total_vol += number_of_pearls * pearl_vol;
+	total_vol += num_pearls * pearl_vol;
 
 	return(total_vol);
 }
 
-double Iq(double q, double radius, double edge_separation,
-	double string_thickness, double number_of_pearls, double sld, 
+double Iq(double q, double radius, double edge_sep,
+	double thick_string, double num_pearls, double sld, 
 	double string_sld, double solvent_sld)
 {
 	double value, tot_vol;
 	
-	value = _pearl_necklace_kernel(q, radius, edge_separation, string_thickness,
-		number_of_pearls, sld, string_sld, solvent_sld);
-	tot_vol = form_volume(radius, edge_separation, string_thickness, number_of_pearls);
+	value = _pearl_necklace_kernel(q, radius, edge_sep, thick_string,
+		num_pearls, sld, string_sld, solvent_sld);
+	tot_vol = form_volume(radius, edge_sep, thick_string, num_pearls);
 
 	return value*tot_vol;
 }

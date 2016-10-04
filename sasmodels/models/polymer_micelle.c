@@ -6,7 +6,7 @@ double Iq(double q,
         double core_sld,
         double corona_sld,
         double radius_core,
-        double radius_gyr,
+        double rg,
         double d_penetration,
         double n_aggreg);
 
@@ -18,7 +18,7 @@ static double micelle_spherical_kernel(double q,
         double core_sld,
         double corona_sld,
         double radius_core,
-        double radius_gyr,
+        double rg,
         double d_penetration,
         double n_aggreg)
 {
@@ -34,13 +34,13 @@ static double micelle_spherical_kernel(double q,
     const double term1 = n_aggreg*n_aggreg*beta_core*beta_core*bes_core*bes_core;
 
     // Self-correlation term of the chains
-    const double qrg2 = q*radius_gyr*q*radius_gyr;
+    const double qrg2 = q*rg*q*rg;
     const double debye_chain = (qrg2 == 0.0) ? 1.0 : 2.0*(expm1(-qrg2)+qrg2)/(qrg2*qrg2);
     const double term2 = n_aggreg * beta_corona * beta_corona * debye_chain;
 
     // Interference cross-term between core and chains
     const double chain_ampl = (qrg2 == 0.0) ? 1.0 : -expm1(-qrg2)/qrg2;
-    const double bes_corona = sinc(q*(radius_core + d_penetration * radius_gyr));
+    const double bes_corona = sinc(q*(radius_core + d_penetration * rg));
     const double term3 = 2 * n_aggreg * n_aggreg * beta_core * beta_corona *
                  bes_core * chain_ampl * bes_corona;
 
@@ -69,7 +69,7 @@ double Iq(double q,
         double core_sld,
         double corona_sld,
         double radius_core,
-        double radius_gyr,
+        double rg,
         double d_penetration,
         double n_aggreg)
 {
@@ -81,7 +81,7 @@ double Iq(double q,
             core_sld,
             corona_sld,
             radius_core,
-            radius_gyr,
+            rg,
             d_penetration,
             n_aggreg);
 }
