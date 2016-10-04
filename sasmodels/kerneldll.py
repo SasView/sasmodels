@@ -240,10 +240,10 @@ def make_dll(source, model_info, dtype=F64):
 
     if not os.path.exists(dll):
         need_recompile = True
-    elif getattr(sys, 'frozen', None) is not None:
-        # TODO: don't suppress time stamp
-        # Currently suppressing recompile when running in a frozen environment
-        need_recompile = False
+    #elif getattr(sys, 'frozen', None) is not None:
+    #    # TODO: don't suppress time stamp
+    #    # Currently suppressing recompile when running in a frozen environment
+    #    need_recompile = False
     else:
         dll_time = os.path.getmtime(dll)
         newest_source = generate.dll_timestamp(model_info)
