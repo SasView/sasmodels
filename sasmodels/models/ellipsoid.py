@@ -73,7 +73,7 @@ $p(\theta,\phi) = 1.0$ and comparing with the output of the 1D calculation.
     Comparison of the intensity for uniformly distributed ellipsoids
     calculated from our 2D model and the intensity from the NIST SANS
     analysis software. The parameters used were: *scale* = 1.0,
-    *r_polar* = 20 |Ang|, *r_equatorial* = 400 |Ang|,
+    *radius_polar* = 20 |Ang|, *radius_equatorial* = 400 |Ang|,
     *contrast* = 3e-6 |Ang^-2|, and *background* = 0.0 |cm^-1|.
 
 The discrepancy above $q$ = 0.3 |cm^-1| is due to the way the form factors
@@ -121,9 +121,9 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Ellipsoid scattering length density"],
               ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Solvent scattering length density"],
-              ["r_polar", "Ang", 20, [0, inf], "volume",
+              ["radius_polar", "Ang", 20, [0, inf], "volume",
                "Polar radius"],
-              ["r_equatorial", "Ang", 400, [0, inf], "volume",
+              ["radius_equatorial", "Ang", 400, [0, inf], "volume",
                "Equatorial radius"],
               ["theta", "degrees", 60, [-inf, inf], "orientation",
                "In plane angle"],
@@ -133,17 +133,17 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
 
 source = ["lib/sph_j1c.c", "lib/gauss76.c", "ellipsoid.c"]
 
-def ER(r_polar, r_equatorial):
+def ER(radius_polar, radius_equatorial):
     import numpy as np
 
-    ee = np.empty_like(r_polar)
-    idx = r_polar > r_equatorial
-    ee[idx] = (r_polar[idx] ** 2 - r_equatorial[idx] ** 2) / r_polar[idx] ** 2
-    idx = r_polar < r_equatorial
-    ee[idx] = (r_equatorial[idx] ** 2 - r_polar[idx] ** 2) / r_equatorial[idx] ** 2
-    idx = r_polar == r_equatorial
-    ee[idx] = 2 * r_polar[idx]
-    valid = (r_polar * r_equatorial != 0)
+    ee = np.empty_like(radius_polar)
+    idx = radius_polar > radius_equatorial
+    ee[idx] = (radius_polar[idx] ** 2 - radius_equatorial[idx] ** 2) / radius_polar[idx] ** 2
+    idx = radius_polar < radius_equatorial
+    ee[idx] = (radius_equatorial[idx] ** 2 - radius_polar[idx] ** 2) / radius_equatorial[idx] ** 2
+    idx = radius_polar == radius_equatorial
+    ee[idx] = 2 * radius_polar[idx]
+    valid = (radius_polar * radius_equatorial != 0)
     bd = 1.0 - ee[valid]
     e1 = np.sqrt(ee[valid])
     b1 = 1.0 + np.arcsin(e1) / (e1 * np.sqrt(bd))
@@ -151,16 +151,16 @@ def ER(r_polar, r_equatorial):
     b2 = 1.0 + bd / 2 / e1 * np.log(bL)
     delta = 0.75 * b1 * b2
 
-    ddd = np.zeros_like(r_polar)
-    ddd[valid] = 2.0 * (delta + 1.0) * r_polar * r_equatorial ** 2
+    ddd = np.zeros_like(radius_polar)
+    ddd[valid] = 2.0 * (delta + 1.0) * radius_polar * radius_equatorial ** 2
     return 0.5 * ddd ** (1.0 / 3.0)
 
 
 demo = dict(scale=1, background=0,
             sld=6, sld_solvent=1,
-            r_polar=50, r_equatorial=30,
+            radius_polar=50, radius_equatorial=30,
             theta=30, phi=15,
-            r_polar_pd=.2, r_polar_pd_n=15,
-            r_equatorial_pd=.2, r_equatorial_pd_n=15,
+            radius_polar_pd=.2, radius_polar_pd_n=15,
+            radius_equatorial_pd=.2, radius_equatorial_pd_n=15,
             theta_pd=15, theta_pd_n=45,
             phi_pd=15, phi_pd_n=1)

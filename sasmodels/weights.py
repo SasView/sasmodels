@@ -10,6 +10,8 @@ from collections import OrderedDict
 import numpy as np  # type: ignore
 from scipy.special import gammaln  # type: ignore
 
+# TODO: include dispersion docs with the disperser models
+
 class Dispersion(object):
     """
     Base dispersion object.

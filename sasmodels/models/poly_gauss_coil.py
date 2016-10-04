@@ -73,16 +73,16 @@ category = "shape-independent"
 #   ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [
     ["i_zero",          "1/cm", 70.0, [0.0, inf], "", "Intensity at q=0"],
-    ["radius_gyration",  "Ang", 75.0, [0.0, inf], "", "Radius of gyration"],
+    ["rg",  "Ang", 75.0, [0.0, inf], "", "Radius of gyration"],
     ["polydispersity",  "None",  2.0, [1.0, inf], "", "Polymer Mw/Mn"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
 # NB: Scale and Background are implicit parameters on every model
-def Iq(q, i_zero, radius_gyration, polydispersity):
+def Iq(q, i_zero, rg, polydispersity):
     # pylint: disable = missing-docstring
     u = polydispersity - 1.0
-    z = (q*radius_gyration)**2 / (1.0 + 2.0*u)
+    z = (q*rg)**2 / (1.0 + 2.0*u)
     # need to trap the case of the polydispersity being 1 (ie, monodisperse!)
     if polydispersity == 1.0:
         inten = i_zero * 2.0 * (exp(-z) + z - 1.0)
@@ -96,13 +96,13 @@ Iq.vectorized = True  # Iq accepts an array of q values
 
 demo = dict(scale=1.0,
             i_zero=70.0,
-            radius_gyration=75.0,
+            rg=75.0,
             polydispersity=2.0,
             background=0.0)
 
 # these unit test values taken from SasView 3.1.2
 tests = [
-    [{'scale': 1.0, 'i_zero': 70.0, 'radius_gyration': 75.0,
+    [{'scale': 1.0, 'i_zero': 70.0, 'rg': 75.0,
       'polydispersity': 2.0, 'background': 0.0},
      [0.0106939, 0.469418], [57.6405, 0.169016]],
     ]

@@ -44,8 +44,8 @@ parameters = [
     ["sld_solvent",   "1e-6/Ang^2", 6.4,  [0.0, inf], "sld", "Solvent scattering length density"],
     ["sld_core",      "1e-6/Ang^2", 0.34, [0.0, inf], "sld", "Core scattering length density"],
     ["sld_corona",    "1e-6/Ang^2", 0.8,  [0.0, inf], "sld", "Corona scattering length density"],
-    ["radius_core",   "Ang",       45.0,  [0.0, inf], "", "Radius of core ( must be >> radius_gyr )"],
-    ["radius_gyr",    "Ang",       20.0,  [0.0, inf], "", "Radius of gyration of chains in corona"],
+    ["radius_core",   "Ang",       45.0,  [0.0, inf], "", "Radius of core ( must be >> rg )"],
+    ["rg",    "Ang",       20.0,  [0.0, inf], "", "Radius of gyration of chains in corona"],
     ["d_penetration", "",           1.0,  [-inf, inf], "", "Factor to mimic non-penetration of Gaussian chains"],
     ["n_aggreg",      "",           6.0,  [-inf, inf], "", "Aggregation number of the micelle"],
     ]
@@ -53,7 +53,7 @@ parameters = [
 
 single = False
 
-source = ["lib/sph_j1c.c", "polymer_micelle_kernel.c"]
+source = ["lib/sph_j1c.c", "polymer_micelle.c"]
 
 demo = dict(scale=1, background=0,
             ndensity=8.94,
@@ -63,7 +63,7 @@ demo = dict(scale=1, background=0,
             sld_core=0.34,
             sld_corona=0.8,
             radius_core=45.0,
-            radius_gyr=20.0,
+            rg=20.0,
             d_penetration=1.0,
             n_aggreg=6.0)
 

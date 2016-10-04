@@ -1,20 +1,20 @@
-double form_volume(double bell_radius, double radius, double length);
+double form_volume(double radius_bell, double radius, double length);
 double Iq(double q, double sld, double solvent_sld,
-        double bell_radius, double radius, double length);
+        double radius_bell, double radius, double length);
 double Iqxy(double qx, double qy, double sld, double solvent_sld,
-        double bell_radius, double radius, double length,
+        double radius_bell, double radius, double length,
         double theta, double phi);
 
-#define INVALID(v) (v.bell_radius < v.radius)
+#define INVALID(v) (v.radius_bell < v.radius)
 
 //barbell kernel - same as dumbell
 static double
-_bell_kernel(double q, double h, double bell_radius,
+_bell_kernel(double q, double h, double radius_bell,
              double half_length, double sin_alpha, double cos_alpha)
 {
     // translate a point in [-1,1] to a point in [lower,upper]
     const double upper = 1.0;
-    const double lower = h/bell_radius;
+    const double lower = h/radius_bell;
     const double zm = 0.5*(upper-lower);
     const double zb = 0.5*(upper+lower);
 
@@ -25,9 +25,9 @@ _bell_kernel(double q, double h, double bell_radius,
     // where:
     //    m = q R cos(alpha)
     //    b = q(L/2-h) cos(alpha)
-    const double m = q*bell_radius*cos_alpha; // cos argument slope
+    const double m = q*radius_bell*cos_alpha; // cos argument slope
     const double b = q*(half_length-h)*cos_alpha; // cos argument intercept
-    const double qrst = q*bell_radius*sin_alpha; // Q*R*sin(theta)
+    const double qrst = q*radius_bell*sin_alpha; // Q*R*sin(theta)
     double total = 0.0;
     for (int i = 0; i < 76; i++){
         const double t = Gauss76Z[i]*zm + zb;
@@ -38,28 +38,28 @@ _bell_kernel(double q, double h, double bell_radius,
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     const double integral = total*zm;
-    const double bell_Fq = 2*M_PI*cube(bell_radius)*integral;
+    const double bell_Fq = 2*M_PI*cube(radius_bell)*integral;
     return bell_Fq;
 }
 
-double form_volume(double bell_radius,
+double form_volume(double radius_bell,
         double radius,
         double length)
 {
 
     // bell radius should never be less than radius when this is called
-    const double hdist = sqrt(square(bell_radius) - square(radius));
-    const double p1 = 2.0/3.0*cube(bell_radius);
-    const double p2 = square(bell_radius)*hdist;
+    const double hdist = sqrt(square(radius_bell) - square(radius));
+    const double p1 = 2.0/3.0*cube(radius_bell);
+    const double p2 = square(radius_bell)*hdist;
     const double p3 = cube(hdist)/3.0;
 
     return M_PI*square(radius)*length + 2.0*M_PI*(p1+p2-p3);
 }
 
 double Iq(double q, double sld, double solvent_sld,
-          double bell_radius, double radius, double length)
+          double radius_bell, double radius, double length)
 {
-    const double h = -sqrt(bell_radius*bell_radius - radius*radius);
+    const double h = -sqrt(radius_bell*radius_bell - radius*radius);
     const double half_length = 0.5*length;
 
     // translate a point in [-1,1] to a point in [0, pi/2]
@@ -71,7 +71,7 @@ double Iq(double q, double sld, double solvent_sld,
         double sin_alpha, cos_alpha; // slots to hold sincos function output
         SINCOS(alpha, sin_alpha, cos_alpha);
 
-        const double bell_Fq = _bell_kernel(q, h, bell_radius, half_length, sin_alpha, cos_alpha);
+        const double bell_Fq = _bell_kernel(q, h, radius_bell, half_length, sin_alpha, cos_alpha);
         const double bj = sas_J1c(q*radius*sin_alpha);
         const double si = sinc(q*half_length*cos_alpha);
         const double cyl_Fq = M_PI*radius*radius*length*bj*si;
@@ -89,7 +89,7 @@ double Iq(double q, double sld, double solvent_sld,
 
 double Iqxy(double qx, double qy,
         double sld, double solvent_sld,
-        double bell_radius, double radius, double length,
+        double radius_bell, double radius, double length,
         double theta, double phi)
 {
     // Compute angle alpha between q and the cylinder axis
@@ -99,12 +99,12 @@ double Iqxy(double qx, double qy,
     const double cos_val = cn*cos(phi*M_PI_180)*(qx/q) + sn*(qy/q);
     const double alpha = acos(cos_val); // rod angle relative to q
 
-    const double h = -sqrt(square(bell_radius) - square(radius));
+    const double h = -sqrt(square(radius_bell) - square(radius));
     const double half_length = 0.5*length;
 
     double sin_alpha, cos_alpha; // slots to hold sincos function output
     SINCOS(alpha, sin_alpha, cos_alpha);
-    const double bell_Fq = _bell_kernel(q, h, bell_radius, half_length, sin_alpha, cos_alpha);
+    const double bell_Fq = _bell_kernel(q, h, radius_bell, half_length, sin_alpha, cos_alpha);
     const double bj = sas_J1c(q*radius*sin_alpha);
     const double si = sinc(q*half_length*cos_alpha);
     const double cyl_Fq = M_PI*radius*radius*length*bj*si;

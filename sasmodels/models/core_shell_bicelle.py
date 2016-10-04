@@ -75,8 +75,8 @@ category = "shape:cylinder"
 #             ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [
     ["radius",         "Ang",       20, [0, inf],    "volume",      "Cylinder core radius"],
-    ["rim_thickness",  "Ang",       10, [0, inf],    "volume",      "Rim shell thickness"],
-    ["face_thickness", "Ang",       10, [0, inf],    "volume",      "Cylinder face thickness"],
+    ["thick_rim",  "Ang",       10, [0, inf],    "volume",      "Rim shell thickness"],
+    ["thick_face", "Ang",       10, [0, inf],    "volume",      "Cylinder face thickness"],
     ["length",         "Ang",      400, [0, inf],    "volume",      "Cylinder length"],
     ["sld_core",       "1e-6/Ang^2", 1, [-inf, inf], "sld",         "Cylinder core scattering length density"],
     ["sld_face",       "1e-6/Ang^2", 4, [-inf, inf], "sld",         "Cylinder face scattering length density"],
@@ -93,8 +93,8 @@ source = ["lib/Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
 
 demo = dict(scale=1, background=0,
             radius=20.0,
-            rim_thickness=10.0,
-            face_thickness=10.0,
+            thick_rim=10.0,
+            thick_face=10.0,
             length=400.0,
             sld_core=1.0,
             sld_face=4.0,
@@ -107,8 +107,8 @@ qx, qy = 0.4 * cos(90), 0.5 * sin(0)
 tests = [
     # Accuracy tests based on content in test/utest_other_models.py
     [{'radius': 20.0,
-      'rim_thickness': 10.0,
-      'face_thickness': 10.0,
+      'thick_rim': 10.0,
+      'thick_face': 10.0,
       'length': 400.0,
       'sld_core': 1.0,
       'sld_face': 4.0,
@@ -118,8 +118,8 @@ tests = [
      }, 0.001, 353.550],
 
     [{'radius': 20.0,
-      'rim_thickness': 10.0,
-      'face_thickness': 10.0,
+      'thick_rim': 10.0,
+      'thick_face': 10.0,
       'length': 400.0,
       'sld_core': 1.0,
       'sld_face': 4.0,
@@ -132,8 +132,8 @@ tests = [
 
     # Additional tests with larger range of parameters
     [{'radius': 3.0,
-      'rim_thickness': 100.0,
-      'face_thickness': 100.0,
+      'thick_rim': 100.0,
+      'thick_face': 100.0,
       'length': 1200.0,
       'sld_core': 5.0,
       'sld_face': 41.0,

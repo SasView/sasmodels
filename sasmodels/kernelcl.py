@@ -53,6 +53,7 @@ from __future__ import print_function
 import os
 import warnings
 import logging
+import time
 
 import numpy as np  # type: ignore
 
@@ -556,14 +557,22 @@ class GpuKernel(Kernel):
         #print("Calling OpenCL")
         #call_details.show(values)
         # Call kernel and retrieve results
-        last_call = None
-        step = 100
+        wait_for = None
+        last_nap = time.clock()
+        step = 1000000//self.q_input.nq + 1
         for start in range(0, call_details.num_eval, step):
             stop = min(start + step, call_details.num_eval)
             #print("queuing",start,stop)
             args[1:3] = [np.int32(start), np.int32(stop)]
-            last_call = [kernel(self.queue, self.q_input.global_size,
-                                None, *args, wait_for=last_call)]
+            wait_for = [kernel(self.queue, self.q_input.global_size, None,
+                               *args, wait_for=wait_for)]
+            if stop < call_details.num_eval:
+                # Allow other processes to run
+                wait_for[0].wait()
+                current_time = time.clock()
+                if current_time - last_nap > 0.5:
+                    time.sleep(0.05)
+                    last_nap = current_time
         cl.enqueue_copy(self.queue, self.result, self.result_b)
         #print("result", self.result)
 

@@ -109,7 +109,7 @@ category = "shape:cylinder"
 
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["r_minor",     "Ang",        20.0,  [0, inf],    "volume",      "Ellipse minor radius"],
+parameters = [["radius_minor",     "Ang",        20.0,  [0, inf],    "volume",      "Ellipse minor radius"],
               ["axis_ratio",   "",          1.5,   [1, inf],    "volume",      "Ratio of major radius over minor radius"],
               ["length",      "Ang",        400.0, [1, inf],    "volume",      "Length of the cylinder"],
               ["sld",         "1e-6/Ang^2", 4.0,   [-inf, inf], "sld",         "Cylinder scattering length density"],
@@ -123,28 +123,28 @@ parameters = [["r_minor",     "Ang",        20.0,  [0, inf],    "volume",      "
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "lib/gauss20.c",
           "elliptical_cylinder.c"]
 
-demo = dict(scale=1, background=0, r_minor=100, axis_ratio=1.5, length=400.0,
+demo = dict(scale=1, background=0, radius_minor=100, axis_ratio=1.5, length=400.0,
             sld=4.0, sld_solvent=1.0, theta=10.0, phi=20, psi=30,
             theta_pd=10, phi_pd=2, psi_pd=3)
 
-def ER(r_minor, axis_ratio, length):
+def ER(radius_minor, axis_ratio, length):
     """
         Equivalent radius
-        @param r_minor: Ellipse minor radius
+        @param radius_minor: Ellipse minor radius
         @param axis_ratio: Ratio of major radius over minor radius
         @param length: Length of the cylinder
     """
-    radius = sqrt(r_minor * r_minor * axis_ratio)
+    radius = sqrt(radius_minor * radius_minor * axis_ratio)
     ddd = 0.75 * radius * (2 * radius * length
                            + (length + radius) * (length + pi * radius))
     return 0.5 * (ddd) ** (1. / 3.)
 
 tests = [
-    [{'r_minor': 20.0, 'axis_ratio': 1.5, 'length':400.0}, 'ER', 79.89245454155024],
-    [{'r_minor': 20.0, 'axis_ratio': 1.2, 'length':300.0}, 'VR', 1],
+    [{'radius_minor': 20.0, 'axis_ratio': 1.5, 'length':400.0}, 'ER', 79.89245454155024],
+    [{'radius_minor': 20.0, 'axis_ratio': 1.2, 'length':300.0}, 'VR', 1],
 
     # The SasView test result was 0.00169, with a background of 0.001
-    [{'r_minor': 20.0, 'axis_ratio': 1.5, 'sld': 4.0, 'length':400.0,
+    [{'radius_minor': 20.0, 'axis_ratio': 1.5, 'sld': 4.0, 'length':400.0,
       'sld_solvent':1.0, 'background':0.0},
      0.001, 675.504402],
 ]

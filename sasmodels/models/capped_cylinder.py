@@ -95,13 +95,13 @@ description = """That is, a sphereocylinder
     end cap radius lies within the cylinder.
     Note: As the length of cylinder -->0,
     it becomes a Convex Lens.
-    It must be that radius <(=) cap_radius.
+    It must be that radius <(=) radius_cap.
     [Parameters];
     scale: volume fraction of spheres,
     background:incoherent background,
     radius: radius of the cylinder,
     length: length of the cylinder,
-    cap_radius: radius of the semi-spherical cap,
+    radius_cap: radius of the semi-spherical cap,
     sld: SLD of the capped cylinder,
     sld_solvent: SLD of the solvent.
 """
@@ -121,7 +121,7 @@ parameters = [["sld",         "1e-6/Ang^2", 4, [-inf, inf], "sld",    "Cylinder 
               # barbell model.  This leads to the natural value of zero for no cap
               # in the capped cylinder, and zero for no bar in the barbell model.  In
               # both models, one would be a pill.
-              ["cap_radius", "Ang",     20, [0, inf],    "volume", "Cap radius"],
+              ["radius_cap", "Ang",     20, [0, inf],    "volume", "Cap radius"],
               ["length",     "Ang",    400, [0, inf],    "volume", "Cylinder length"],
               ["theta",      "degrees", 60, [-inf, inf], "orientation", "In plane angle"],
               ["phi",        "degrees", 60, [-inf, inf], "orientation", "Out of plane angle"],
@@ -132,10 +132,10 @@ source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "capped_cylinder.c"]
 
 demo = dict(scale=1, background=0,
             sld=6, sld_solvent=1,
-            radius=260, cap_radius=290, length=290,
+            radius=260, radius_cap=290, length=290,
             theta=30, phi=15,
             radius_pd=.2, radius_pd_n=1,
-            cap_radius_pd=.2, cap_radius_pd_n=1,
+            radius_cap_pd=.2, radius_cap_pd_n=1,
             length_pd=.2, length_pd_n=10,
             theta_pd=15, theta_pd_n=45,
             phi_pd=15, phi_pd_n=1)

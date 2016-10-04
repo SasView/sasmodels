@@ -61,9 +61,9 @@ category = "shape-independent"
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["guinier_scale",    "cm^-1",   1.7, [-inf, inf], "", "Guinier length scale"],
-              ["lorentzian_scale", "cm^-1",   3.5, [-inf, inf], "", "Lorentzian length scale"],
-              ["gyration_radius",  "Ang",     104.0, [2, inf],    "", "Radius of gyration"],
-              ["fractal_exp",      "",          2.0, [0, inf],    "", "Fractal exponent"],
+              ["lorentz_scale", "cm^-1",   3.5, [-inf, inf], "", "Lorentzian length scale"],
+              ["rg",  "Ang",     104.0, [2, inf],    "", "Radius of gyration"],
+              ["fractal_dim",      "",          2.0, [0, inf],    "", "Fractal exponent"],
               ["cor_length",       "Ang",      16.0, [0, inf],    "", "Correlation length"]
              ]
 # pylint: enable=bad-whitespace, line-too-long
@@ -72,23 +72,23 @@ source = ["gel_fit.c"]
 
 demo = dict(background=0.01,
             guinier_scale=1.7,
-            lorentzian_scale=3.5,
-            gyration_radius=104,
-            fractal_exp=2.0,
+            lorentz_scale=3.5,
+            rg=104,
+            fractal_dim=2.0,
             cor_length=16.0)
 
 tests = [[{'guinier_scale': 1.0,
-           'lorentzian_scale': 1.0,
-           'gyration_radius': 10.0,
-           'fractal_exp': 10.0,
+           'lorentz_scale': 1.0,
+           'rg': 10.0,
+           'fractal_dim': 10.0,
            'cor_length': 20.0,
            'background': 0.0,
           }, 0.1, 0.716532],
 
          [{'guinier_scale': 4.0,
-           'lorentzian_scale': 10.0,
-           'gyration_radius': 500.0,
-           'fractal_exp': 1.0,
+           'lorentz_scale': 10.0,
+           'rg': 500.0,
+           'fractal_dim': 1.0,
            'cor_length': 20.0,
            'background': 20.0,
           }, 5.0, 20.1224653026],

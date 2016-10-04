@@ -21,10 +21,10 @@ In the equations below,
 
 - *Nlayers* is the number of layers $N$,
 
-- *spacing* is the average distance between adjacent layers
+- *d_spacing* is the average distance between adjacent layers
   $\langle D \rangle$, and
 
-- *spacing_polydisp* is the relative standard deviation of the Gaussian
+- *sigma_d* is the relative standard deviation of the Gaussian
   layer distance distribution $\sigma_D / \langle D \rangle$.
 
 
@@ -114,10 +114,10 @@ parameters = [["thickness", "Ang", 33.0, [0, inf], "volume",
                "sheet thickness"],
               ["Nlayers", "", 20, [0, inf], "",
                "Number of layers"],
-              ["spacing", "Ang", 250., [0.0, inf], "",
-               "d-spacing of paracrystal stack"],
-              ["spacing_polydisp", "Ang", 0.0, [0.0, inf], "",
-               "d-spacing polydispersity"],
+              ["d_spacing", "Ang", 250., [0.0, inf], "",
+               "lamellar spacing of paracrystal stack"],
+              ["sigma_d", "Ang", 0.0, [0.0, inf], "",
+               "Sigma (polydispersity) of the lamellar spacing"],
               ["sld", "1e-6/Ang^2", 1.0, [-inf, inf], "sld",
                "layer scattering length density"],
               ["sld_solvent", "1e-6/Ang^2", 6.34, [-inf, inf], "sld",
@@ -125,7 +125,7 @@ parameters = [["thickness", "Ang", 33.0, [0, inf], "volume",
              ]
 
 
-source = ["lamellar_stack_paracrystal_kernel.c"]
+source = ["lamellar_stack_paracrystal.c"]
 
 form_volume = """
     return 1.0;
@@ -135,14 +135,14 @@ form_volume = """
 # VR defaults to 1.0
 
 demo = dict(scale=1, background=0,
-            thickness=33, Nlayers=20, spacing=250, spacing_polydisp=0.2,
+            thickness=33, Nlayers=20, d_spacing=250, sigma_d=0.2,
             sld=1.0, sld_solvent=6.34,
             thickness_pd=0.2, thickness_pd_n=40)
 
 #
 tests = [
     [{'scale': 1.0, 'background': 0.0, 'thickness': 33.,'Nlayers': 20.0,
-      'spacing': 250., 'spacing_polydisp': 0.2, 'sld': 1.0,
+      'd_spacing': 250., 'sigma_d': 0.2, 'sld': 1.0,
       'sld_solvent': 6.34, 'thickness_pd': 0.0, 'thickness_pd_n': 40 },
      [0.001, 0.215268], [21829.3, 0.00487686]],
 ]

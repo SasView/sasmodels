@@ -228,32 +228,32 @@ Available models:
 """)
     print_models()
 
-def main():
+def main(argv):
     """
     Main program.
     """
-    if len(sys.argv) not in (6, 7):
+    if len(argv) not in (5, 6):
         print_help()
-        sys.exit(1)
+        return
 
-    model = sys.argv[1]
+    model = argv[0]
     if not (model in MODELS) and (model != "all"):
         print('Bad model %s.  Use "all" or one of:'%model)
         print_models()
-        sys.exit(1)
+        return
     try:
-        count = int(sys.argv[2])
-        is2D = sys.argv[3].startswith('2d')
-        assert sys.argv[3][1] == 'd'
-        Nq = int(sys.argv[3][2:])
-        mono = sys.argv[4] == 'mono'
-        cutoff = float(sys.argv[4]) if not mono else 0
-        base = sys.argv[5]
-        comp = sys.argv[6] if len(sys.argv) > 6 else "sasview"
+        count = int(argv[1])
+        is2D = argv[2].startswith('2d')
+        assert argv[2][1] == 'd'
+        Nq = int(argv[2][2:])
+        mono = argv[3] == 'mono'
+        cutoff = float(argv[3]) if not mono else 0
+        base = argv[4]
+        comp = argv[5] if len(argv) > 5 else "sasview"
     except Exception:
         traceback.print_exc()
         print_usage()
-        sys.exit(1)
+        return
 
     data, index = make_data({'qmax':1.0, 'is2d':is2D, 'nq':Nq, 'res':0.,
                              'accuracy': 'Low', 'view':'log', 'zero': False})
@@ -264,5 +264,5 @@ def main():
 
 if __name__ == "__main__":
     #from .compare import push_seed
-    #with push_seed(1): main()
-    main()
+    #with push_seed(1): main(sys.argv[1:])
+    main(sys.argv[1:])

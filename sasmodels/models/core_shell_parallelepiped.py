@@ -123,17 +123,17 @@ parameters = [["sld_core", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Parallelepiped C rim scattering length density"],
               ["sld_solvent", "1e-6/Ang^2", 6, [-inf, inf], "sld",
                "Solvent scattering length density"],
-              ["a_side", "Ang", 35, [0, inf], "volume",
+              ["length_a", "Ang", 35, [0, inf], "volume",
                "Shorter side of the parallelepiped"],
-              ["b_side", "Ang", 75, [0, inf], "volume",
+              ["length_b", "Ang", 75, [0, inf], "volume",
                "Second side of the parallelepiped"],
-              ["c_side", "Ang", 400, [0, inf], "volume",
+              ["length_c", "Ang", 400, [0, inf], "volume",
                "Larger side of the parallelepiped"],
-              ["arim_thickness", "Ang", 10, [0, inf], "volume",
+              ["thick_rim_a", "Ang", 10, [0, inf], "volume",
                "Thickness of A rim"],
-              ["brim_thickness", "Ang", 10, [0, inf], "volume",
+              ["thick_rim_b", "Ang", 10, [0, inf], "volume",
                "Thickness of B rim"],
-              ["crim_thickness", "Ang", 10, [0, inf], "volume",
+              ["thick_rim_c", "Ang", 10, [0, inf], "volume",
                "Thickness of C rim"],
               ["theta", "degrees", 0, [-inf, inf], "orientation",
                "In plane angle"],
@@ -146,15 +146,15 @@ parameters = [["sld_core", "1e-6/Ang^2", 1, [-inf, inf], "sld",
 source = ["lib/gauss76.c", "core_shell_parallelepiped.c"]
 
 
-def ER(a_side, b_side, c_side, arim_thickness, brim_thickness, crim_thickness):
+def ER(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c):
     """
         Return equivalent radius (ER)
     """
 
     # surface average radius (rough approximation)
-    surf_rad = sqrt((a_side + 2.0*arim_thickness) * (b_side + 2.0*brim_thickness) / pi)
+    surf_rad = sqrt((length_a + 2.0*thick_rim_a) * (length_b + 2.0*thick_rim_b) / pi)
 
-    height = c_side + 2.0*crim_thickness
+    height = length_c + 2.0*thick_rim_c
 
     ddd = 0.75 * surf_rad * (2 * surf_rad * height + (height + surf_rad) * (height + pi * surf_rad))
     return 0.5 * (ddd) ** (1. / 3.)
@@ -165,15 +165,15 @@ def ER(a_side, b_side, c_side, arim_thickness, brim_thickness, crim_thickness):
 demo = dict(scale=1, background=0.0,
             sld_core=1e-6, sld_a=2e-6, sld_b=4e-6,
             sld_c=2e-6, sld_solvent=6e-6,
-            a_side=35, b_side=75, c_side=400,
-            arim_thickness=10, brim_thickness=10, crim_thickness=10,
+            length_a=35, length_b=75, length_c=400,
+            thick_rim_a=10, thick_rim_b=10, thick_rim_c=10,
             theta=0, phi=0, psi=0,
-            a_side_pd=0.1, a_side_pd_n=1,
-            b_side_pd=0.1, b_side_pd_n=1,
-            c_side_pd=0.1, c_side_pd_n=1,
-            arim_thickness_pd=0.1, arim_thickness_pd_n=1,
-            brim_thickness_pd=0.1, brim_thickness_pd_n=1,
-            crim_thickness_pd=0.1, crim_thickness_pd_n=1,
+            length_a_pd=0.1, length_a_pd_n=1,
+            length_b_pd=0.1, length_b_pd_n=1,
+            length_c_pd=0.1, length_c_pd_n=1,
+            thick_rim_a_pd=0.1, thick_rim_a_pd_n=1,
+            thick_rim_b_pd=0.1, thick_rim_b_pd_n=1,
+            thick_rim_c_pd=0.1, thick_rim_c_pd_n=1,
             theta_pd=10, theta_pd_n=1,
             phi_pd=10, phi_pd_n=1,
             psi_pd=10, psi_pd_n=10)

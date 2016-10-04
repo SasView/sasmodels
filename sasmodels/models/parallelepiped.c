@@ -1,7 +1,7 @@
-double form_volume(double a_side, double b_side, double c_side);
-double Iq(double q, double sld, double solvent_sld, double a_side, double b_side, double c_side);
+double form_volume(double length_a, double length_b, double length_c);
+double Iq(double q, double sld, double solvent_sld, double length_a, double length_b, double length_c);
 double Iqxy(double qx, double qy, double sld, double solvent_sld,
-    double a_side, double b_side, double c_side, double theta, double phi, double psi);
+    double length_a, double length_b, double length_c, double theta, double phi, double psi);
 
 // From Igor library
 double _pkernel(double a, double b,double c, double ala, double alb, double alc);
@@ -31,26 +31,26 @@ double _pkernel(double a, double b,double c, double ala, double alb, double alc)
 }
 
 
-double form_volume(double a_side, double b_side, double c_side)
+double form_volume(double length_a, double length_b, double length_c)
 {
-    return a_side * b_side * c_side;
+    return length_a * length_b * length_c;
 }
 
 
 double Iq(double q,
     double sld,
     double solvent_sld,
-    double a_side,
-    double b_side,
-    double c_side)
+    double length_a,
+    double length_b,
+    double length_c)
 {
     double tmp1, tmp2;
     
-    double mu = q * b_side;
+    double mu = q * length_b;
     
     // Scale sides by B
-    double a_scaled = a_side / b_side;
-    double c_scaled = c_side / b_side;
+    double a_scaled = length_a / length_b;
+    double c_scaled = length_c / length_b;
         
     //Order of integration
     int nordi=76;			        
@@ -101,7 +101,7 @@ double Iq(double q,
         
     }	
    
-    const double vd = (sld-solvent_sld) * form_volume(a_side, b_side, c_side);
+    const double vd = (sld-solvent_sld) * form_volume(length_a, length_b, length_c);
     
     // convert from [1e-12 A-1] to [cm-1] and 0.5 factor for outer integral
     return 1.0e-4 * 0.5 * vd * vd * summ;
@@ -112,9 +112,9 @@ double Iq(double q,
 double Iqxy(double qx, double qy,
     double sld,
     double solvent_sld,
-    double a_side,
-    double b_side,
-    double c_side,
+    double length_a,
+    double length_b,
+    double length_c,
     double theta,
     double phi,
     double psi)
@@ -160,9 +160,9 @@ double Iqxy(double qx, double qy,
     }
     
     // Call the IGOR library function to get the kernel
-    double form = _pkernel( q*a_side, q*b_side, q*c_side, cos_val_a, cos_val_b, cos_val_c);
+    double form = _pkernel( q*length_a, q*length_b, q*length_c, cos_val_a, cos_val_b, cos_val_c);
   
     // Multiply by contrast^2
-    const double vd = (sld - solvent_sld) * form_volume(a_side, b_side, c_side);
+    const double vd = (sld - solvent_sld) * form_volume(length_a, length_b, length_c);
     return 1.0e-4 * vd * vd * form;
 }

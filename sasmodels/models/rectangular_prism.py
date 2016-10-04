@@ -98,7 +98,7 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
                "Parallelepiped scattering length density"],
               ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Solvent scattering length density"],
-              ["a_side", "Ang", 35, [0, inf], "volume",
+              ["length_a", "Ang", 35, [0, inf], "volume",
                "Shorter side of the parallelepiped"],
               ["b2a_ratio", "Ang", 1, [0, inf], "volume",
                "Ratio sides b/a"],
@@ -108,15 +108,15 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
 
 source = ["lib/gauss76.c", "rectangular_prism.c"]
 
-def ER(a_side, b2a_ratio, c2a_ratio):
+def ER(length_a, b2a_ratio, c2a_ratio):
     """
         Return equivalent radius (ER)
     """
-    b_side = a_side * b2a_ratio
-    c_side = a_side * c2a_ratio
+    b_side = length_a * b2a_ratio
+    c_side = length_a * c2a_ratio
 
     # surface average radius (rough approximation)
-    surf_rad = sqrt(a_side * b_side / pi)
+    surf_rad = sqrt(length_a * b_side / pi)
 
     ddd = 0.75 * surf_rad * (2 * surf_rad * c_side + (c_side + surf_rad) * (c_side + pi * surf_rad))
     return 0.5 * (ddd) ** (1. / 3.)
@@ -125,8 +125,8 @@ def ER(a_side, b2a_ratio, c2a_ratio):
 # parameters for demo
 demo = dict(scale=1, background=0,
             sld=6.3e-6, sld_solvent=1.0e-6,
-            a_side=35, b2a_ratio=1, c2a_ratio=1,
-            a_side_pd=0.1, a_side_pd_n=10,
+            length_a=35, b2a_ratio=1, c2a_ratio=1,
+            length_a_pd=0.1, length_a_pd_n=10,
             b2a_ratio_pd=0.1, b2a_ratio_pd_n=1,
             c2a_ratio_pd=0.1, c2a_ratio_pd_n=1)
 

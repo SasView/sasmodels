@@ -1,7 +1,6 @@
 r"""
 For information about polarised and magnetic scattering, see
 the :ref:`magnetism` documentation.
-documentation.
 
 Definition
 ----------
@@ -15,9 +14,9 @@ The 1D scattering intensity is calculated in the following way (Guinier, 1955)
         \right]^2 + \text{background}
 
 where *scale* is a volume fraction, $V$ is the volume of the scatterer,
-$r$ is the radius of the sphere, *background* is the background level and
+$r$ is the radius of the sphere and *background* is the background level.
 *sld* and *sld_solvent* are the scattering length densities (SLDs) of the
-scatterer and the solvent respectively.
+scatterer and the solvent respectively, whose difference is $\Delta\rho$.
 
 Note that if your data is in absolute scale, the *scale* should represent
 the volume fraction (which is unitless) if you have a good fit. If not,
@@ -90,3 +89,14 @@ demo = dict(scale=1, background=0,
             sld=6, sld_solvent=1,
             radius=120,
             radius_pd=.2, radius_pd_n=45)
+
+tests = [
+    [{}, 0.2, 0.726362],
+    [{"scale": 1., "background": 0., "sld": 6., "sld_solvent": 1.,
+      "radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
+     0.2, 0.228843],
+    [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45}, "ER", 120.],
+    [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45}, "VR", 1.],
+]
+
+

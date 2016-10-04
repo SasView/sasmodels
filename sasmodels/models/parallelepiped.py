@@ -189,11 +189,11 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Parallelepiped scattering length density"],
               ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Solvent scattering length density"],
-              ["a_side", "Ang", 35, [0, inf], "volume",
+              ["length_a", "Ang", 35, [0, inf], "volume",
                "Shorter side of the parallelepiped"],
-              ["b_side", "Ang", 75, [0, inf], "volume",
+              ["length_b", "Ang", 75, [0, inf], "volume",
                "Second side of the parallelepiped"],
-              ["c_side", "Ang", 400, [0, inf], "volume",
+              ["length_c", "Ang", 400, [0, inf], "volume",
                "Larger side of the parallelepiped"],
               ["theta", "degrees", 60, [-inf, inf], "orientation",
                "In plane angle"],
@@ -205,15 +205,15 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
 
 source = ["lib/gauss76.c", "parallelepiped.c"]
 
-def ER(a_side, b_side, c_side):
+def ER(length_a, length_b, length_c):
     """
         Return effective radius (ER) for P(q)*S(q)
     """
 
     # surface average radius (rough approximation)
-    surf_rad = sqrt(a_side * b_side / pi)
+    surf_rad = sqrt(length_a * length_b / pi)
 
-    ddd = 0.75 * surf_rad * (2 * surf_rad * c_side + (c_side + surf_rad) * (c_side + pi * surf_rad))
+    ddd = 0.75 * surf_rad * (2 * surf_rad * length_c + (length_c + surf_rad) * (length_c + pi * surf_rad))
     return 0.5 * (ddd) ** (1. / 3.)
 
 # VR defaults to 1.0
@@ -221,11 +221,11 @@ def ER(a_side, b_side, c_side):
 # parameters for demo
 demo = dict(scale=1, background=0,
             sld=6.3e-6, sld_solvent=1.0e-6,
-            a_side=35, b_side=75, c_side=400,
+            length_a=35, length_b=75, length_c=400,
             theta=45, phi=30, psi=15,
-            a_side_pd=0.1, a_side_pd_n=10,
-            b_side_pd=0.1, b_side_pd_n=1,
-            c_side_pd=0.1, c_side_pd_n=1,
+            length_a_pd=0.1, length_a_pd_n=10,
+            length_b_pd=0.1, length_b_pd_n=1,
+            length_c_pd=0.1, length_c_pd_n=1,
             theta_pd=10, theta_pd_n=1,
             phi_pd=10, phi_pd_n=1,
             psi_pd=10, psi_pd_n=10)

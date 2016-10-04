@@ -5,7 +5,7 @@ double Iq(double q,
           double thickness,
           double alpha,
           double beta,
-          double sld_pringle,
+          double sld,
           double sld_solvent);
 
 
@@ -109,11 +109,11 @@ double Iq(
     double thickness,
     double alpha,
     double beta,
-    double sld_pringle,
+    double sld,
     double sld_solvent)
 {
     double form = _integrate_psi(q, radius, thickness, alpha, beta);
-    double contrast = sld_pringle - sld_solvent;
+    double contrast = sld - sld_solvent;
     double volume = M_PI*radius*radius*thickness;
     return 1.0e-4*form * square(contrast * volume);
 }
