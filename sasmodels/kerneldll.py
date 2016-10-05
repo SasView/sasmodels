@@ -72,6 +72,7 @@ from os.path import join as joinpath, splitext
 import subprocess
 import tempfile
 import ctypes as ct  # type: ignore
+import _ctypes as _ct
 from ctypes import c_void_p, c_int32, c_longdouble, c_double, c_float  # type: ignore
 import logging
 
@@ -258,8 +259,8 @@ def make_dll(source, model_info, dtype=F64):
         # comment the following to keep the generated c file
         # Note: if there is a syntax error then compile raises an error
         # and the source file will not be deleted.
-        #os.unlink(filename)
-        print("saving compiled file in %r"%filename)
+        os.unlink(filename)
+        #print("saving compiled file in %r"%filename)
     return dll
 
 
@@ -300,7 +301,6 @@ class DllModel(KernelModel):
 
     def _load_dll(self):
         # type: () -> None
-        print("dll", self.dllpath)
         try:
             self._dll = ct.CDLL(self.dllpath)
         except:
@@ -343,17 +343,13 @@ class DllModel(KernelModel):
         """
         Release any resources associated with the model.
         """
+        dll_handle = self._dll._handle
         if os.name == 'nt':
-            #dll = ct.cdll.LoadLibrary(self.dllpath)
-            dll = ct.CDLL(self.dllpath)
-            dll_handle = dll._handle
-            #dll_handle = ct.c_void_p(dll._handle)
-            del dll, self._dll
-            self._dll = None
             ct.windll.kernel32.FreeLibrary(dll_handle)
         else:
-            pass
-
+            _ct.dlclose(dll_handle)
+        del self._dll
+        self._dll = None
 
 class DllKernel(Kernel):
     """
