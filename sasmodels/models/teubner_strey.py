@@ -18,7 +18,7 @@ periodicity, $d$, and correlation length $\xi$ as:
 
 .. math::
 
-    a_2 &= \biggl[1+\bigl(\frac{2\pi\xi}{d}\bigr)^2\biggr]\\
+    a_2 &= \biggl[1+\bigl(\frac{2\pi\xi}{d}\bigr)^2\biggr]^2\\
     c_1 &= -2\xi^2\bigl(\frac{2\pi\xi}{d}\bigr)^2+2\xi^2\\
     c_2 &= \xi^4
 
@@ -91,8 +91,9 @@ parameters = [
 def Iq(q, volfraction, sld, sld_solvent,d,xi):
     """SAS form"""
     drho2 = (sld-sld_solvent)*(sld-sld_solvent)
-    a2 = power(1.0+power(2.0*pi*xi/d,2.0),2.0)
-    c1 = -2.0*xi*xi*power(2.0*pi*xi/d,2.0)+2*xi*xi
+    k = 2.0*pi*xi/d
+    a2 = power(1.0+power(k,2.0),2.0)
+    c1 = -2.0*xi*xi*power(k,2.0)+2*xi*xi
     c2 = power(xi,4.0)
     prefactor = 8.0*pi*volfraction*(1.0-volfraction)*drho2*c2/xi
     #k2 = (2.0*pi/d)*(2.0*pi/d)

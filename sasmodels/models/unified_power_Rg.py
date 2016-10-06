@@ -94,8 +94,12 @@ def Iq(q, level, rg, power, B, G):
         for i in range(ilevel):
             exp_now = exp(-(q*rg[i])**2/3.)
             pow_now = (erf(q*rg[i]/sqrt(6.))**3/q)**power[i]
-            exp_next = exp(-(q*rg[i+1])**2/3.) if i < ilevel-1 else 1.
+            if i < ilevel-1:
+                exp_next = exp(-(q*rg[i+1])**2/3.)
+            else:
+                exp_next = 1
             result += G[i]*exp_now + B[i]*exp_next*pow_now
+
     result[q == 0] = np.sum(G[:ilevel])
     return result
 
