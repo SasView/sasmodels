@@ -10,3 +10,4 @@ SAS Model Reference
    refs.rst
    compilation.rst
    magnetism/magnetism.rst
+   sesans/sans_to_sesans.rst
