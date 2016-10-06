@@ -311,10 +311,10 @@ def constrain_pars(model_info, pars):
     if '*' in name:
         name = name.split('*')[0]
 
-    if name == 'capped_cylinder' and pars['cap_radius'] < pars['radius']:
-        pars['radius'], pars['cap_radius'] = pars['cap_radius'], pars['radius']
-    if name == 'barbell' and pars['bell_radius'] < pars['radius']:
-        pars['radius'], pars['bell_radius'] = pars['bell_radius'], pars['radius']
+    if name == 'capped_cylinder' and pars['radius_cap'] < pars['radius']:
+        pars['radius'], pars['radius_cap'] = pars['radius_cap'], pars['radius']
+    if name == 'barbell' and pars['radius_bell'] < pars['radius']:
+        pars['radius'], pars['radius_bell'] = pars['radius_bell'], pars['radius']
 
     # Limit guinier to an Rg such that Iq > 1e-30 (single precision cutoff)
     if name == 'guinier':

@@ -1,14 +1,12 @@
-#barbell model
-# Note: model title and parameter table are inserted automatically
 r"""
+Definition
+----------
+
 Calculates the scattering from a barbell-shaped cylinder.  Like
 :ref:`capped-cylinder`, this is a sphereocylinder with spherical end
 caps that have a radius larger than that of the cylinder, but with the center
 of the end cap radius lying outside of the cylinder. See the diagram for
 the details of the geometry and restrictions on parameter values.
-
-Definition
-----------
 
 .. figure:: img/barbell_geometry.jpg
 
@@ -74,15 +72,23 @@ The 2D scattering intensity is calculated similar to the 2D cylinder model.
     Definition of the angles for oriented 2D barbells.
 
 .. figure:: img/cylinder_angle_projection.jpg
+    :width: 600px
 
     Examples of the angles for oriented pp against the detector plane.
 
 References
 ----------
 
-H Kaya, *J. Appl. Cryst.*, 37 (2004) 37 223-230
+.. [#] H Kaya, *J. Appl. Cryst.*, 37 (2004) 37 223-230
+.. [#] H Kaya and N R deSouza, *J. Appl. Cryst.*, 37 (2004) 508-509 (addenda
+   and errata)
 
-H Kaya and N R deSouza, *J. Appl. Cryst.*, 37 (2004) 508-509 (addenda and errata)
+Authorship and Verification
+----------------------------
+
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Paul Butler **Date:** March 20, 2016
+* **Last Reviewed by:** Paul Butler **Date:** March 20, 2016
 """
 from numpy import inf
 
