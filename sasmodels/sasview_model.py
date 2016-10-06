@@ -574,7 +574,10 @@ class SasviewModel(object):
         result = calculator(call_details, values, cutoff=self.cutoff,
                             magnetic=is_magnetic)
         calculator.release()
-        self._model.release()
+        try:
+            self._model.release()
+        except:
+            pass
         return result
 
     def calculate_ER(self):
