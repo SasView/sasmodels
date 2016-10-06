@@ -1,6 +1,8 @@
 .. currentmodule:: sasmodels
 .. Wim Bouwman, DUT, written at codecamp-V, Oct2016
 
+.. _SESANS:
+
 SANS to SESANS conversion
 =========================
 
