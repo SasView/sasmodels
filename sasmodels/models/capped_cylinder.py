@@ -1,13 +1,13 @@
 r"""
+Definitions
+-----------
+
 Calculates the scattering from a cylinder with spherical section end-caps.
 Like :ref:`barbell`, this is a sphereocylinder with end caps that have a
 radius larger than that of the cylinder, but with the center of the end cap
 radius lying within the cylinder. This model simply becomes a convex
 lens when the length of the cylinder $L=0$. See the diagram for the details
 of the geometry and restrictions on parameter values.
-
-Definitions
------------
 
 .. figure:: img/capped_cylinder_geometry.jpg
 
@@ -75,15 +75,23 @@ The 2D scattering intensity is calculated similar to the 2D cylinder model.
     Definition of the angles for oriented 2D cylinders.
 
 .. figure:: img/cylinder_angle_projection.jpg
+    :width: 600px
 
     Examples of the angles for oriented 2D cylinders against the detector plane.
 
 References
 ----------
 
-H Kaya, *J. Appl. Cryst.*, 37 (2004) 223-230
+.. [#] H Kaya, *J. Appl. Cryst.*, 37 (2004) 223-230
+.. [#] H Kaya and N-R deSouza, *J. Appl. Cryst.*, 37 (2004) 508-509 (addenda 
+   and errata)
 
-H Kaya and N-R deSouza, *J. Appl. Cryst.*, 37 (2004) 508-509 (addenda and errata)
+Authorship and Verification
+----------------------------
+
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Paul Butler **Date:** September 30, 2016
+* **Last Reviewed by:** Richard Heenan **Date:** March 19, 2016
 """
 from numpy import inf
 

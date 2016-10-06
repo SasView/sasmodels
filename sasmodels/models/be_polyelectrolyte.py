@@ -1,11 +1,9 @@
 r"""
-This model calculates the structure factor of a polyelectrolyte solution with
-the RPA expression derived by Borue and Erukhimovich.
-
 Definition
 ----------
-
-The scattering intensity $I(q)$ is calculated as
+This model calculates the structure factor of a polyelectrolyte solution with
+the RPA expression derived by Borue and Erukhimovich\ [#Borue]_.  The scattering intensity
+$I(q)$ is calculated as
 
 .. math::
 
@@ -35,15 +33,18 @@ NB: $1 barn = 10^{-24} cm^2$
 References
 ----------
 
-V Y Borue, I Y Erukhimovich, *Macromolecules*, 21 (1988) 3240
+.. [#Borue] V Y Borue, I Y Erukhimovich, *Macromolecules*, 21 (1988) 3240
+.. [#] J F Joanny, L Leibler, *Journal de Physique*, 51 (1990) 545
+.. [#] A Moussaid, F Schosseler, J P Munch, S Candau, *J. Journal de Physique
+   II France*, 3 (1993) 573
+.. [#] E Raphael, J F Joanny, *Europhysics Letters*, 11 (1990) 179
 
-J F Joanny, L Leibler, *Journal de Physique*, 51 (1990) 545
+Authorship and Verification
+----------------------------
 
-A Moussaid, F Schosseler, J P Munch, S Candau,
-*J. Journal de Physique II France*, 3 (1993) 573
-
-E Raphael, J F Joanny, *Europhysics Letters*, 11 (1990) 179
-
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Paul Kienzle **Date:** July 24, 2016
+* **Last Reviewed by:** Piotr rozyczko **Date:** January 27, 2016
 """
 
 from numpy import inf, pi, sqrt

@@ -1,5 +1,4 @@
 r"""
-
 Definition
 ----------
 This model provides the form factor for a circular cylinder with a
@@ -12,8 +11,8 @@ factor is normalized by the particle volume.
 
 .. figure:: img/core_shell_bicelle_geometry.png
 
-    (Graphic from DOI: 10.1039/C0NP00002G, note however that the model here
-    calculates for rectangular, not curved, rims.)
+    Core shell geometry (Graphic from ref [#Matusmori]_).
+    Note however that the model here calculates for rectangular, not curved, rims.
 
 The output of the 1D scattering intensity function for randomly oriented
 cylinders is then given by the equation above.
@@ -27,15 +26,24 @@ use the c-library from NIST.
     Definition of the angles for the oriented core shell bicelle tmodel.
 
 .. figure:: img/cylinder_angle_projection.jpg
+    :width: 600px
 
     Examples of the angles for oriented pp against the detector plane.
 
 References
 ----------
 
-L A Feigin and D I Svergun,
-*Structure Analysis by Small-Angle X-Ray and Neutron Scattering,*
-Plenum Press, New York, (1987)
+.. [#Matusmori] `N Matsumori and M Murata <http://dx.doi.org/10.1039/C0NP0000
+   2G>`_, *Nat. Prod. Rep.* 27 (2010) 1480-1492
+.. [#] L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and
+   Neutron Scattering,* Plenum Press, New York, (1987)
+
+Authorship and Verification
+----------------------------
+
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Paul Butler **Date:** Septmber 30, 2016
+* **Last Reviewed by:** Under Review **Date:** October 5, 2016
 
 """
 

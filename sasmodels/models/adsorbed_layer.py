@@ -1,8 +1,7 @@
-#adsorbed_layer model
-#conversion of Core2ndMomentModel.py
-#converted by Steve King, Mar 2016
-
 r"""
+Definition
+----------
+
 This model describes the scattering from a layer of surfactant or polymer
 adsorbed on large, smooth, notionally spherical particles under the conditions
 that (i) the particles (cores) are contrast-matched to the dispersion medium,
@@ -18,9 +17,6 @@ homogeneous step-function). For comparison, if the thickness of a (traditional
 core-shell like) step function distribution is $t$, the second moment about
 the mean of the density distribution (ie, the distance of the centre-of-mass
 of the distribution from the interface), $\sigma = \sqrt{t^2/12}$.
-
-Definition
-----------
 
 .. math::
 
@@ -43,11 +39,21 @@ than one of these parameters will generally fail. Also note that unlike
 other shape models, no volume normalization is applied to this model (the
 calculation is exact).
 
+The code for this model is based originally on a a fortran implementation by
+Steve King at ISIS in the SANDRA package c. 1990.
+
 References
 ----------
 
-S King, P Griffiths, J Hone, and T Cosgrove,
-*SANS from Adsorbed Polymer Layers*, *Macromol. Symp.*, 190 (2002) 33-42.
+.. [#] S King, P Griffiths, J Hone, and T Cosgrove, *SANS from Adsorbed Polymer
+   Layers*, *Macromol. Symp.*, 190 (2002) 33-42.
+
+Authorship and Verification
+----------------------------
+
+* **Author:** Jae-Hi Cho **Date:** pre 2010
+* **Last Modified by:** Paul Kienzle **Date:** April 14, 2016
+* **Last Reviewed by:** Steve King **Date:** March 18, 2016
 """
 
 from numpy import inf, pi, exp, errstate
@@ -79,13 +85,6 @@ parameters = [
 # NB: Scale and Background are implicit parameters on every model
 def Iq(q, second_moment, adsorbed_amount, density_shell, radius,
        volfraction, sld_shell, sld_solvent):
-    # pylint: disable = missing-docstring
-    #deltarhosqrd =  (sld_shell - sld_solvent) * (sld_shell - sld_solvent)
-    #numerator =  6.0 * pi * volfraction * (adsorbed_amount * adsorbed_amount)
-    #denominator =  (q * q) * (density_shell * density_shell) * radius
-    #eterm =  exp(-1.0 * (q * q) * (second_moment * second_moment))
-    ##scale by 10^-2 for units conversion to cm^-1
-    #inten =  1.0e-02 * deltarhosqrd * ((numerator / denominator) * eterm)
     with errstate(divide='ignore'):
         aa = ((sld_shell - sld_solvent)/density_shell * adsorbed_amount) / q
     bb = q * second_moment

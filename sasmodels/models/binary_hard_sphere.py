@@ -1,7 +1,7 @@
 r"""
-
 Definition
 ----------
+
 The binary hard sphere model provides the scattering intensity, for binary
 mixture of hard spheres including hard sphere interaction between those
 particles, using rhw Percus-Yevick closure. The calculation is an exact
@@ -60,16 +60,16 @@ See the references for details.
 References
 ----------
 
-N W Ashcroft and D C Langreth, *Physical Review*, 156 (1967) 685-692
-[Errata found in *Phys. Rev.* 166 (1968) 934]
+.. [#] N W Ashcroft and D C Langreth, *Physical Review*, 156 (1967) 685-692
+   [Errata found in *Phys. Rev.* 166 (1968) 934]
+.. [#] S R Kline, *J Appl. Cryst.*, 39 (2006) 895
 
-S R Kline, *J Appl. Cryst.*, 39 (2006) 895
+Authorship and Verification
+----------------------------
 
-**Author:** NIST IGOR/DANSE **on:** pre 2010
-
-**Last Modified by:** Paul Butler **on:** March 20, 2016
-
-**Last Reviewed by:** Paul Butler **on:** March 20, 2016
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Paul Butler **Date:** March 20, 2016
+* **Last Reviewed by:** Paul Butler **Date:** March 20, 2016
 """
 
 from numpy import inf

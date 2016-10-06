@@ -1,4 +1,7 @@
 r"""
+Definition
+----------
+
 This model calculates an empirical functional form for SAS data characterized
 by a broad scattering peak. Many SAS spectra are characterized by a broad peak
 even though they are from amorphous soft materials. For example, soft systems
@@ -8,9 +11,6 @@ layered structures, etc.
 The d-spacing corresponding to the broad peak is a characteristic distance
 between the scattering inhomogeneities (such as in lamellar, cylindrical, or
 spherical morphologies, or for bicontinuous structures).
-
-Definition
-----------
 
 The scattering intensity $I(q)$ is calculated as
 
@@ -32,7 +32,12 @@ References
 
 None.
 
-*2013/09/09 - Description reviewed by King, S and Parker, P.*
+Authorship and Verification
+----------------------------
+
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Paul kienle **Date:** July 24, 2016
+* **Last Reviewed by:** Richard Heenan **Date:** March 21, 2016
 """
 
 from numpy import inf, errstate

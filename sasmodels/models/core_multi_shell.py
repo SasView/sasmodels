@@ -32,17 +32,17 @@ by the NIST Center for Neutron Research (Kline, 2006).
 
 References
 ----------
-See the :ref:`core-shell-sphere` model documentation.
 
-L A Feigin and D I Svergun,
-*Structure Analysis by Small-Angle X-Ray and Neutron Scattering*,
-Plenum Press, New York, 1987.
+.. [#] See the :ref:`core-shell-sphere` model documentation.
+.. [#] L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*,
+   Plenum Press, New York, 1987.
 
-**Author:** NIST IGOR/DANSE **on:** pre 2010
+Authorship and Verification
+----------------------------
 
-**Last Modified by:** in progress **on:** March 20, 2016
-
-**Last Reviewed by:** in progress **on:** March 20, 2016
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Paul Kienzle **Date:** September 12, 2016
+* **Last Reviewed by:** Under Review **Date:** as of October 5, 2016
 """
 
 
