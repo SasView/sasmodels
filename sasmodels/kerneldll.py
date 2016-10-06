@@ -73,7 +73,6 @@ import subprocess
 import tempfile
 import ctypes as ct  # type: ignore
 import _ctypes as _ct
-from ctypes import c_void_p, c_int32, c_longdouble, c_double, c_float  # type: ignore
 import logging
 
 import numpy as np  # type: ignore
@@ -111,7 +110,7 @@ elif os.name == 'nt':
 else:
     compiler = "unix"
 
-ARCH = "" if ct.sizeof(c_void_p) > 4 else "x86"  # 4 byte pointers on x86
+ARCH = "" if ct.sizeof(ct.c_void_p) > 4 else "x86"  # 4 byte pointers on x86
 if compiler == "unix":
     # Generic unix compile
     # On mac users will need the X code command line tools installed
@@ -241,10 +240,6 @@ def make_dll(source, model_info, dtype=F64):
 
     if not os.path.exists(dll):
         need_recompile = True
-    #elif getattr(sys, 'frozen', None) is not None:
-    #    # TODO: don't suppress time stamp
-    #    # Currently suppressing recompile when running in a frozen environment
-    #    need_recompile = False
     else:
         dll_time = os.path.getmtime(dll)
         newest_source = generate.dll_timestamp(model_info)
@@ -307,12 +302,12 @@ class DllModel(KernelModel):
             annotate_exception("while loading "+self.dllpath)
             raise
 
-        float_type = (c_float if self.dtype == generate.F32
-                      else c_double if self.dtype == generate.F64
-                      else c_longdouble)
+        float_type = (ct.c_float if self.dtype == generate.F32
+                      else ct.c_double if self.dtype == generate.F64
+                      else ct.c_longdouble)
 
         # int, int, int, int*, double*, double*, double*, double*, double
-        argtypes = [c_int32]*3 + [c_void_p]*4 + [float_type]
+        argtypes = [ct.c_int32]*3 + [ct.c_void_p]*4 + [float_type]
         names = [generate.kernel_name(self.info, variant)
                  for variant in ("Iq", "Iqxy", "Imagnetic")]
         self._kernels = [self._dll[name] for name in names]
@@ -406,7 +401,7 @@ class DllKernel(Kernel):
 
         #print("returned",self.q_input.q, self.result)
         pd_norm = self.result[self.q_input.nq]
-        scale = values[0]/(pd_norm if pd_norm!=0.0 else 1.0)
+        scale = values[0]/(pd_norm if pd_norm != 0.0 else 1.0)
         background = values[1]
         #print("scale",scale,background)
         return scale*self.result[:self.q_input.nq] + background
