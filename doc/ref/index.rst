@@ -8,6 +8,6 @@ SAS Model Reference
 
    intro.rst
    refs.rst
-   compilation.rst
+   gpu_computations.rst
    magnetism/magnetism.rst
    sesans/sans_to_sesans.rst
