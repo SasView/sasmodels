@@ -1,13 +1,13 @@
 r"""
 Definition
 ----------
+
 This model provides the form factor for a circular cylinder with a
 core-shell scattering length density profile. Thus this is a variation
 of a core-shell cylinder or disc where the shell on the walls and ends
 may be of different thicknesses and scattering length densities. The form
 factor is normalized by the particle volume.
 
-.. _core-shell-bicelle-geometry:
 
 .. figure:: img/core_shell_bicelle_geometry.png
 
@@ -20,8 +20,46 @@ factor is normalized by the particle volume.
    to decide how to distribute "heads" and "tails" between the rim, face 
    and core regions in order to estimate appropriate starting parameters.
 
+Given the scattering length densities (sld) $\rho_c$, the core sld, $\rho_f$,
+the face sld, $\rho_r$, the rim sld and $\rho_s$ the solvent sld, the
+scattering length density variation along the cylinder axis is:
+
+.. math::
+
+    \rho(r) = 
+      \begin{cases} 
+      &\rho_c \text{ for } 0 \lt r \lt R; -L \lt z\lt L \\[1.5ex]
+      &\rho_f \text{ for } 0 \lt r \lt R; -(L+2t) \lt z\lt -L;
+      L \lt z\lt (L+2t) \\[1.5ex]
+      &\rho_r\text{ for } 0 \lt r \lt R; -(L+2t) \lt z\lt -L; L \lt z\lt (L+2t)
+      \end{cases}
+
+The form factor for the bicelle is calculated in cylindrical coordinates, where
+$\alpha$ is the angle between the $Q$ vector and the cylinder axis, to give:
+
+.. math::
+
+    I(Q,\alpha) = \frac{\text{scale}}{V} \cdot
+        F(Q,\alpha)^2 + \text{background}
+where
+
+.. math::
+
+    \begin{align}    
+    F(Q,\alpha) = &\frac{1}{V_t} \bigg[ 
+    (\rho_c - \rho_f) V_c \frac{J_1(QRsin \alpha)}{QRsin\alpha}\frac{2 \cdot QLcos\alpha}{QLcos\alpha} \\
+    &+(\rho_f - \rho_r) V_{c+f} \frac{J_1(QRsin\alpha)}{QRsin\alpha}\frac{2 \cdot Q(L+t_f)cos\alpha}{Q(L+t_f)cos\alpha} \\
+    &+(\rho_r - \rho_s) V_t \frac{J_1(Q(R+t_r)sin\alpha)}{Q(R+t_r)sin\alpha}\frac{2 \cdot Q(L+t_f)cos\alpha}{Q(L+t_f)cos\alpha}
+    \bigg]
+    \end{align} 
+
+where $V_t$ is the total volume of the bicelle, $V_c$ the volume of the core,
+$V_{c+f}$ the volume of the core plus the volume of the faces, $R$ is the radius
+of the core, $L$ the length of the core, $t_f$ the thickness of the face, $t_r$
+the thickness of the rim and $J_1$ the usual first order bessel function.
+
 The output of the 1D scattering intensity function for randomly oriented
-cylinders is then given by the equation above.
+cylinders is then given by integrating over all possible $\theta$ and $\phi$.
 
 The *theta* and *phi* parameters are not used for the 1D output.
 Our implementation of the scattering kernel and the 1D scattering intensity
@@ -39,18 +77,17 @@ use the c-library from NIST.
 References
 ----------
 
-.. [#Matusmori] `N Matsumori and M Murata <http://dx.doi.org/10.1039/C0NP0000
-   2G>`_, *Nat. Prod. Rep.* 27 (2010) 1480-1492
-.. [#] L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and
-   Neutron Scattering,* Plenum Press, New York, (1987)
+.. [#] D Singh (2009). *Small angle scattering studies of self assembly in
+   lipid mixtures*, John's Hopkins University Thesis (2009) 223-225. `Available
+   from Proquest <http://search.proquest.com/docview/304915826?accountid
+   =26379>`_
 
 Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
-* **Last Modified by:** Paul Butler **Date:** Septmber 30, 2016
-* **Last Reviewed by:** Under Review **Date:** October 5, 2016
-
+* **Last Modified by:** Paul Butler **Date:** September 30, 2016
+* **Last Reviewed by:** Richard Heenan **Date:** October 5, 2016
 """
 
 from numpy import inf, sin, cos
