@@ -11,8 +11,14 @@ factor is normalized by the particle volume.
 
 .. figure:: img/core_shell_bicelle_geometry.png
 
-    Core shell geometry (Graphic from ref [#Matusmori]_).
-    Note however that the model here calculates for rectangular, not curved, rims.
+    Schematic cross-section of bicelle. Note however that the model here
+    calculates for rectangular, not curved, rims as shown below.
+
+.. figure:: img/core_shell_bicelle_parameters.png
+
+   Cross section of cylindrical symmetry model used here. Users will have 
+   to decide how to distribute "heads" and "tails" between the rim, face 
+   and core regions in order to estimate appropriate starting parameters.
 
 The output of the 1D scattering intensity function for randomly oriented
 cylinders is then given by the equation above.
@@ -52,27 +58,31 @@ from numpy import inf, sin, cos
 name = "core_shell_bicelle"
 title = "Circular cylinder with a core-shell scattering length density profile.."
 description = """
-    P(q,alpha)= scale/Vs*f(q)^(2) + bkg,  where: f(q)= 2(sld_core
-    - solvant_sld)* Vc*sin[qLcos(alpha/2)]
-    /[qLcos(alpha/2)]*J1(qRsin(alpha))
-    /[qRsin(alpha)]+2(shell_sld-sld_solvent)
-    *Vs*sin[q(L+T)cos(alpha/2)][[q(L+T)
-    *cos(alpha/2)]*J1(q(R+T)sin(alpha))
-    /q(R+T)sin(alpha)]
+    P(q,alpha)= (scale/Vs)*f(q)^(2) + bkg,  where: 
+    f(q)= Vt(sld_rim - sld_solvent)* sin[qLt.cos(alpha)/2]
+    /[qLt.cos(alpha)/2]*J1(qRout.sin(alpha))
+    /[qRout.sin(alpha)]+
+    (sld_core-sld_face)*Vc*sin[qLcos(alpha)/2][[qL
+    *cos(alpha)/2]*J1(qRc.sin(alpha))
+    /qRc.sin(alpha)]+
+    (sld_face-sld_rim)*(Vc+Vf)*sin[q(L+2.thick_face).
+    cos(alpha)/2][[q(L+2.thick_face)*cos(alpha)/2]*
+    J1(qRc.sin(alpha))/qRc.sin(alpha)]
 
     alpha:is the angle between the axis of
     the cylinder and the q-vector
-    Vs: the volume of the outer shell
-    Vc: the volume of the core
+    Vt = pi.(Rc + thick_rim)^2.Lt : total volume
+    Vc = pi.Rc^2.L :the volume of the core
+    Vf = 2.pi.Rc^2.thick_face
+    Rc = radius: is the core radius
     L: the length of the core
-    shell_sld: the scattering length density
-    of the shell
+    Lt = L + 2.thick_face: total length
+    Rout = radius + thick_rim
+    sld_core, sld_rim, sld_face:scattering length
+    densities within the particle
     sld_solvent: the scattering length density
     of the solvent
     bkg: the background
-    T: the thickness
-    R+T: is the outer radius
-    L+2T: The total length of the outershell
     J1: the first order Bessel function
     theta: axis_theta of the cylinder
     phi: the axis_phi of the cylinder...
