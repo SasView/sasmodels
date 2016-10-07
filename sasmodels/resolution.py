@@ -306,7 +306,7 @@ def slit_resolution(q_calc, q, width, height, n_height=30):
             #print(in_x + abs_x)
             weights[i, :] = (in_x + abs_x) * np.diff(q_edges) / (2*h)
         else:
-            for k in range(-n_height, h_height+1):
+            for k in range(-n_height, n_height+1):
                 weights[i, :] += _q_perp_weights(q_edges, qi+k*h/n_height, w)
             weights[i, :] /= 2*n_height + 1
 
