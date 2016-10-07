@@ -20,7 +20,7 @@ The command::
 
 then results in a GUI from which you can control the fit.
 
-.. image:: sesans_img\SphereLineFitSasView.png
+.. image:: sesans_img/SphereLineFitSasView.png
 
 All the parameters and names in sesans_sphere_2micron.py (shown below) can be adjusted to fit your own problem::
 
@@ -84,7 +84,7 @@ The fit can be started by::
 
 This yields after the fitting:
 
-.. image:: sesans_img\HardSphereLineFitSasView.png
+.. image:: sesans_img/HardSphereLineFitSasView.png
 
 The code sesans_parameters_css-hs.py can then be used as a template for a fitting problem with a structure factor::
 
