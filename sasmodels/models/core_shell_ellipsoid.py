@@ -10,26 +10,10 @@ independent radii used in the original parameterization of this model.
 
 .. figure:: img/core_shell_ellipsoid_geometry.png
 
-The geometric parameters of this model are
+The geometric parameters of this model are shown in the diagram above, which
+shows (a) a cross section of the circular equator and (b) a cross section through
+the poles, of a prolate ellipsoid.
 
-*radius_equat_core =* equatorial core radius *= Rminor_core*
-
-*X_core = polar_core / radius_equat_core = Rmajor_core / Rminor_core*
-
-*Thick_shell = equat_outer - radius_equat_core = Rminor_outer - Rminor_core*
-
-*XpolarShell = Tpolar_shell / Thick_shell = (Rmajor_outer - Rmajor_core)/
-(Rminor_outer - Rminor_core)*
-
-In terms of the original radii
-
-*polar_core = radius_equat_core * X_core*
-
-*equat_shell = radius_equat_core + Thick_shell*
-
-*polar_shell = radius_equat_core * X_core + Thick_shell * XpolarShell*
-
-(where we note that "shell" perhaps confusingly, relates to the outer radius)
 When *X_core < 1* the core is oblate; when *X_core > 1* it is prolate.
 *X_core = 1* is a spherical core.
 
@@ -40,7 +24,9 @@ When including an $S(q)$, the radius in $S(q)$ is calculated to be that of
 a sphere with the same 2nd virial coefficient of the outer surface of the
 ellipsoid. This may have some undesirable effects if the aspect ratio of the
 ellipsoid is large (ie, if $X << 1$ or $X >> 1$ ), when the $S(q)$
-- which assumes spheres - will not in any case be valid.
+- which assumes spheres - will not in any case be valid.  Generating a 
+custom product model will enable separate effective volume fraction and effective 
+radius in the $S(q)$.
 
 If SAS data are in absolute units, and the SLDs are correct, then scale should
 be the total volume fraction of the "outer particle". When $S(q)$ is introduced
@@ -49,8 +35,16 @@ or contain some other units conversion factor (for example, if you have SAXS dat
 
 References
 ----------
+see for example:
+Kotlarchyk, M.; Chen, S.-H. J. Chem. Phys., 1983, 79, 2461.
+Berr, S.  J. Phys. Chem., 1987, 91, 4760.
 
-R K Heenan, 2015, reparametrised the core_shell_ellipsoid model
+Authorship and Verification
+----------------------------
+
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Richard Heenan (reparametrised model) **Date:** 2015
+* **Last Reviewed by:** Richard Heenan **Date:** October 6, 2016
 
 """
 
