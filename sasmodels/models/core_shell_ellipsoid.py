@@ -11,14 +11,14 @@ independent radii used in the original parameterization of this model.
 .. figure:: img/core_shell_ellipsoid_geometry.png
 
 The geometric parameters of this model are shown in the diagram above, which
-shows (a) a cross section of the circular equator and (b) a cross section through
+shows (a) a cut through at the circular equator and (b) a cross section through
 the poles, of a prolate ellipsoid.
 
 When *X_core < 1* the core is oblate; when *X_core > 1* it is prolate.
 *X_core = 1* is a spherical core.
 
 For a fixed shell thickness *XpolarShell = 1*, to scale the shell thickness
-pro-rata with the radius *XpolarShell = X_core*.
+pro-rata with the radius set or constrain *XpolarShell = X_core*.
 
 When including an $S(q)$, the radius in $S(q)$ is calculated to be that of
 a sphere with the same 2nd virial coefficient of the outer surface of the
@@ -32,6 +32,50 @@ If SAS data are in absolute units, and the SLDs are correct, then scale should
 be the total volume fraction of the "outer particle". When $S(q)$ is introduced
 this moves to the $S(q)$ volume fraction, and scale should then be 1.0,
 or contain some other units conversion factor (for example, if you have SAXS data).
+
+The calculation of intensity follows that for the solid ellipsoid, but with separate
+terms for the core-shell and shell-solvent boundaries.
+
+.. math::
+
+    P(q,\alpha) = \frac{\text{scale}}{V} F^2(q,\alpha) + \text{background}
+
+where
+
+.. math::
+    \begin{align}    
+    F(q,\alpha) = &f(q,radius\_equat\_core,radius\_equat\_core.x\_core,\alpha) \\
+    &+ f(q,radius\_equat\_core + thick\_shell,radius\_equat\_core.x\_core + thick\_shell.x\_polar\_shell,\alpha)
+    \end{align} 
+
+where
+ 
+.. math::
+
+    f(q,R_e,R_p,\alpha) = \frac{3 \Delta \rho V (\sin[qr(R_p,R_e,\alpha)]
+                - \cos[qr(R_p,R_e,\alpha)])}
+                {[qr(R_p,R_e,\alpha)]^3}
+
+and
+
+.. math::
+
+    r(R_e,R_p,\alpha) = \left[ R_e^2 \sin^2 \alpha
+        + R_p^2 \cos^2 \alpha \right]^{1/2}
+
+
+$\alpha$ is the angle between the axis of the ellipsoid and $\vec q$,
+$V = (4/3)\pi R_pR_e^2$ is the volume of the ellipsoid , $R_p$ is the polar radius along the
+rotational axis of the ellipsoid, $R_e$ is the equatorial radius perpendicular
+to the rotational axis of the ellipsoid and $\Delta \rho$ (contrast) is the
+scattering length density difference, either $(sld\_core - sld\_shell)$ or $(sld\_shell - sld\_solvent)$.
+
+For randomly oriented particles:
+
+.. math::
+
+   F^2(q)=\int_{0}^{\pi/2}{F^2(q,\alpha)\sin(\alpha)d\alpha}
+
 
 References
 ----------
