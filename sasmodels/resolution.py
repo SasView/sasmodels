@@ -56,6 +56,15 @@ class Perfect1D(Resolution):
         return theory
 
 
+class SESANS1D(Resolution):
+
+    def __init__(self, data, q_calc):
+        self.data = data
+        self.q_calc = q_calc
+
+    def apply(self, theory):
+        return sesans.transform(self.data, self.q_calc, theory, None, None)
+
 class Pinhole1D(Resolution):
     r"""
     Pinhole aperture with q-dependent gaussian resolution.
