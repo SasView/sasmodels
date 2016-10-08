@@ -10,12 +10,57 @@ Definition
 ----------
 
 The 1D scattering intensity for this model is calculated according to
-the equations given by Pedersen (Pedersen, 2000).
+the equations given by Pedersen (Pedersen, 2000), summarised briefly here.
+
+The micelle core is imagined as $N\_aggreg$ polymer heads, each of volume $v\_core$,
+which then defines a micelle core of $radius\_core$, which is a separate parameter
+even though it could be directly determined.
+The Gaussian random coil tails, of gyration radius $rg$, are imagined uniformly 
+distributed around the spherical core, centred at a distance $radius\_core + d\_penetration.rg$
+from the micelle centre, where $d\_penetration$ is of order unity.
+A volume $v\_corona$ is defined for each coil.
+The model in detail seems to separately parametrise the terms for the shape of I(Q) and the
+relative intensity of each term, so use with caution and check parameters for consistency.
+The spherical core is monodisperse, so it's intensity and the cross terms may have sharp
+oscillations (use q resolution smearing if needs be to help remove them).
+
+.. math::
+    P(q) = N^2\beta^2_s\Phi(qR)^2+N\beta^2_cP_c(q)+2N^2\beta_s\beta_cS_{sc}s_c(q)+N(N-1)\beta_c^2S_{cc}(q)
+    
+    \beta_s = v\_core(sld\_core - sld\_solvent)
+    
+    \beta_c = v\_corona(sld\_corona - sld\_solvent)
+
+where $N = n\_aggreg$, and for the spherical core of radius $R$ 
+
+.. math::   
+   \Phi(qR)= \frac{\sin(qr) - qr\cos(qr)}{(qr)^3}
+
+whilst for the Gaussian coils
+
+.. math::
+
+   P_c(q) &= 2 [\exp(-Z) + Z - 1] / Z^2
+
+   Z &= (q R_g)^2
+
+The sphere to coil ( core to corona) and coil to coil (corona to corona) cross terms are
+approximated by:
+
+.. math::
+   
+   S_{sc}(q)=\Phi(qR)\psi(Z)\frac{sin(q(R+d.R_g))}{q(R+d.R_g)}
+   
+   S_{cc}(q)=\psi(Z)^2\left[\frac{sin(q(R+d.R_g))}{q(R+d.R_g)} \right ]^2
+   
+   \psi(Z)=\frac{[1-exp^{-Z}]}{Z}
 
 Validation
 ----------
 
-This model has not yet been validated. Feb2015
+$P(q)$ above is multiplied by $ndensity$, and a units conversion of 10^{-13}, so $scale$
+is likely 1.0 if the scattering data is in absolute units. This model has not yet been 
+independently validated.
 
 
 References
@@ -30,9 +75,14 @@ from numpy import inf
 name = "polymer_micelle"
 title = "Polymer micelle model"
 description = """
-    This model provides an approximate form factor, P(q), for a micelle with
-    a spherical core with Gaussian polymer chains attached to the surface.
+This model provides the form factor, $P(q)$, for a micelle with a spherical
+core and Gaussian polymer chains attached to the surface, thus may be applied
+to block copolymer micelles. To work well the Gaussian chains must be much
+smaller than the core, which is often not the case.  Please study the
+reference to Pedersen and full documentation carefully. 
     """
+
+
 category = "shape:sphere"
 
 # pylint: disable=bad-whitespace, line-too-long

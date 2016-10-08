@@ -4,11 +4,14 @@ Definition
 
 This model calculates the SAS signal of a phase separating solution under spinodal decomposition. 
 The scattering intensity $I(q)$ is calculated as
-.. math:: I(q) = I_{max}\frac{(1+\gamma/2)x^2}{\gamma/2+x^{2+\gamma}}+B
-where $x=q/q_0$ and $B$ is a flat background. The characteristic structure length
- scales with the correlation peak at $q_0$. The exponent $\gamma$ is equal to 
+
+.. math:: 
+    I(q) = I_{max}\frac{(1+\gamma/2)x^2}{\gamma/2+x^{2+\gamma}}+B
+
+where $x=q/q_0$ and $B$ is a flat background. The characteristic structure length 
+scales with the correlation peak at $q_0$. The exponent $\gamma$ is equal to 
 $d+1$ with d the dimensionality of the off-critical concentration mixtures.
-A transition to $\gamma=2 d$is seen near the percolation treshold into the 
+A transition to $\gamma=2d$ is seen near the percolation threshold into the 
 critical concentration regime.
 
 References
@@ -42,8 +45,8 @@ category = "shape-independent"
 
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["scale",    "",  1.0, [-inf, inf], "", "Scale factor"],
-              ["gamma",      "",      3.0, [-inf, inf], "", "Exponent"],
+parameters = [["scale",    "",      1.0, [-inf, inf], "", "Scale factor"],
+              ["gamma",      "",    3.0, [-inf, inf], "", "Exponent"],
               ["q_0",  "1/Ang",     0.1, [-inf, inf], "", "Correlation peak position"]
              ]
 # pylint: enable=bad-whitespace, line-too-long
