@@ -41,15 +41,16 @@ $\alpha$ is the angle between the $Q$ vector and the cylinder axis, to give:
 
     I(Q,\alpha) = \frac{\text{scale}}{V} \cdot
         F(Q,\alpha)^2 + \text{background}
+
 where
 
 .. math::
 
-    \begin{align}    
-    F(Q,\alpha) = &\frac{1}{V_t} \bigg[ 
-    (\rho_c - \rho_f) V_c \frac{J_1(QRsin \alpha)}{QRsin\alpha}\frac{2 \cdot QLcos\alpha}{QLcos\alpha} \\
-    &+(\rho_f - \rho_r) V_{c+f} \frac{J_1(QRsin\alpha)}{QRsin\alpha}\frac{2 \cdot Q(L+t_f)cos\alpha}{Q(L+t_f)cos\alpha} \\
-    &+(\rho_r - \rho_s) V_t \frac{J_1(Q(R+t_r)sin\alpha)}{Q(R+t_r)sin\alpha}\frac{2 \cdot Q(L+t_f)cos\alpha}{Q(L+t_f)cos\alpha}
+        \begin{align}    
+    F(Q,\alpha) = &\bigg[ 
+    (\rho_c - \rho_f) V_c \frac{J_1(QRsin \alpha)}{QRsin\alpha}\frac{2 \cdot sin(QLcos\alpha/2)}{QLcos\alpha} \\
+    &+(\rho_f - \rho_r) V_{c+f} \frac{J_1(QRsin\alpha)}{QRsin\alpha}\frac{2 \cdot sin(Q(L/2+t_f)cos\alpha)}{Q(L+2t_f)cos\alpha} \\
+    &+(\rho_r - \rho_s) V_t \frac{J_1(Q(R+t_r)sin\alpha)}{Q(R+t_r)sin\alpha}\frac{2 \cdot sin(Q(L/2+t_f)cos\alpha)}{Q(L+2t_f)cos\alpha}
     \bigg]
     \end{align} 
 
@@ -129,10 +130,10 @@ category = "shape:cylinder"
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [
-    ["radius",         "Ang",       20, [0, inf],    "volume",      "Cylinder core radius"],
+    ["radius",         "Ang",       80, [0, inf],    "volume",      "Cylinder core radius"],
     ["thick_rim",  "Ang",       10, [0, inf],    "volume",      "Rim shell thickness"],
     ["thick_face", "Ang",       10, [0, inf],    "volume",      "Cylinder face thickness"],
-    ["length",         "Ang",      400, [0, inf],    "volume",      "Cylinder length"],
+    ["length",         "Ang",      50, [0, inf],    "volume",      "Cylinder length"],
     ["sld_core",       "1e-6/Ang^2", 1, [-inf, inf], "sld",         "Cylinder core scattering length density"],
     ["sld_face",       "1e-6/Ang^2", 4, [-inf, inf], "sld",         "Cylinder face scattering length density"],
     ["sld_rim",        "1e-6/Ang^2", 4, [-inf, inf], "sld",         "Cylinder rim scattering length density"],

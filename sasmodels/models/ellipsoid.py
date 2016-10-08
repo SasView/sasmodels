@@ -35,6 +35,13 @@ rotational axis of the ellipsoid, $R_e$ is the equatorial radius perpendicular
 to the rotational axis of the ellipsoid and $\Delta \rho$ (contrast) is the
 scattering length density difference between the scatterer and the solvent.
 
+For randomly oriented particles:
+
+.. math::
+
+   F^2(q)=\int_{0}^{\pi/2}{F^2(q,\alpha)\sin(\alpha)d\alpha}
+
+
 To provide easy access to the orientation of the ellipsoid, we define
 the rotation axis of the ellipsoid using two angles $\theta$ and $\phi$.
 These angles are defined in the

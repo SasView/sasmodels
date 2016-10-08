@@ -13,13 +13,13 @@ given by (Guinier, 1955)
 
 .. math::
 
-    P(q,\alpha) = \frac{\text{scale}}{V} F^2(q) + \text{background}
+    P(q,\alpha) = \frac{\text{scale}}{V} F^2(q,\alpha) + \text{background}
 
 where
 
 .. math::
 
-    F(q) = 2 (\Delta \rho) V
+    F(q,\alpha) = 2 (\Delta \rho) V
            \frac{\sin \left(\tfrac12 qL\cos\alpha \right)}
                 {\tfrac12 qL \cos \alpha}
            \frac{J_1 \left(q R \sin \alpha\right)}{q R \sin \alpha}
@@ -30,9 +30,16 @@ radius of the cylinder, and $\Delta\rho$ (contrast) is the scattering length
 density difference between the scatterer and the solvent. $J_1$ is the
 first order Bessel function.
 
+For randomly oriented particles:
+
+.. math::
+
+    F^2(q)=\int_{0}^{\pi/2}{F^2(q,\alpha)\sin(\alpha)d\alpha}
+
+
 To provide easy access to the orientation of the cylinder, we define the
 axis of the cylinder using two angles $\theta$ and $\phi$. Those angles
-are defined in :numref:`cylinder-angle-definition`.
+are defined in :numref:`cylinder-angle-definition` .
 
 .. _cylinder-angle-definition:
 

@@ -16,7 +16,7 @@ The scattering intensity $I(q)$ is calculated as
 
 .. math:: I(q) = \frac{A}{q^n} + \frac{C}{1 + (|q - q_0|\xi)^m} + B
 
-Here the peak position is related to the d-spacing as $q_o = 2\pi / d_o$.
+Here the peak position is related to the d-spacing as $q_0 = 2\pi / d_0$.
 
 $A$ is the Porod law scale factor, $n$ the Porod exponent, $C$ is the
 Lorentzian scale factor, $m$ the exponent of $q$, $\xi$ the screening length,
