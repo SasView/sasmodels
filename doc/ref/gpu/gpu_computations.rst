@@ -1,4 +1,4 @@
-.. _models-complitation:
+.. _models-computation:
 
 ****************
 GPU Computations
