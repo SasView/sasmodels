@@ -14,6 +14,7 @@ from __future__ import division
 import numpy as np  # type: ignore
 from numpy import pi, exp  # type: ignore
 from scipy.special import jv as besselj
+from sas.sasgui.perspectives.fitting.fitpage import FitPage
 #import direct_model.DataMixin as model
         
 def make_q(q_max, Rmax):
@@ -60,12 +61,13 @@ def transform(data, q_calc, Iq_calc, qmono, Iq_mono):
     nqmono is the number of q vectors to be used for the detector integration
     """
     nqmono = len(qmono)
-    if nqmono == 0:
+    #if nqmono == 0 # if radiobutton hankel is active
+    if FitPage.hankel.GetValue():
         result = call_hankel(data, q_calc, Iq_calc)
     elif nqmono == 1:
         q = qmono[0]
         result = call_HankelAccept(data, q_calc, Iq_calc, q, Iq_mono)
-    else:
+    else: #if radiobutton Cosine is active
         Qx, Qy = [qmono[0], qmono[1]]
         Qx = np.reshape(Qx, nqx, nqy)
         Qy = np.reshape(Qy, nqx, nqy)

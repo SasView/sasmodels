@@ -42,7 +42,6 @@ class Resolution(object):
         """
         raise NotImplementedError("Subclass does not define the apply function")
 
-
 class Perfect1D(Resolution):
     """
     Resolution function to use when there is no actual resolution smearing
