@@ -114,7 +114,6 @@ def load_custom_model(path):
     """
     Load a custom model given the model path.
     """
-    #print("load custom", path)
     kernel_module = custom.load_custom_kernel_module(path)
     try:
         model = kernel_module.Model
@@ -126,6 +125,16 @@ def load_custom_model(path):
     except AttributeError:
         model_info = modelinfo.make_model_info(kernel_module)
         model = _make_model_from_info(model_info)
+
+    # If we are trying to load a model that already exists,
+    # append a version number to its name.
+    # Note that models appear to be periodically reloaded 
+    # by SasView and keeping track of whether we are reloading 
+    # a model or loading it for the first time is tricky.
+    # For now, just allow one custom model of a given name.
+    if model.name in MODELS:
+        model.name = "%s_v2" % model.name
+
     MODELS[model.name] = model
     return model
 
