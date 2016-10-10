@@ -911,10 +911,13 @@ def make_html(model_info):
     return rst2html.rst2html("".join((RST_ROLES, RST_PROLOG, rst)))
 
 def view_html(model_name):
-    from . import rst2html
     from . import modelinfo
     kernel_module = load_kernel_module(model_name)
     info = modelinfo.make_model_info(kernel_module)
+    view_html_from_info(info)
+
+def view_html_from_info(info):
+    from . import rst2html
     url = "file://"+dirname(info.filename)+"/"
     rst2html.wxview(make_html(info), url=url)
 
