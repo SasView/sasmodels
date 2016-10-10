@@ -319,6 +319,10 @@ class SasviewModel(object):
             hidden |= set([self.multiplicity_info.control])
         else:
             hidden = set()
+        if self._model_info.structure_factor:
+            hidden.add('scale')
+            hidden.add('background')
+            self._model_info.parameters.defaults['background'] = 0.
 
         self._persistency_dict = {}
         self.params = collections.OrderedDict()
@@ -667,7 +671,9 @@ class SasviewModel(object):
             if par.name == self.multiplicity_info.control:
                 return [self.multiplicity], [1.0]
             else:
-                return [np.NaN], [1.0]
+                # For hidden parameters use the default value.
+                value = self._model_info.parameters.defaults.get(par.name, np.NaN)
+                return [value], [1.0]
         elif par.polydisperse:
             dis = self.dispersion[par.name]
             if dis['type'] == 'array':
@@ -688,6 +694,17 @@ def test_model():
     Cylinder = _make_standard_model('cylinder')
     cylinder = Cylinder()
     return cylinder.evalDistribution([0.1, 0.1])
+
+def test_structure_factor():
+    # type: () -> float
+    """
+    Test that a sasview model (cylinder) can be run.
+    """
+    Model = _make_standard_model('hardsphere')
+    model = Model()
+    value = model.evalDistribution([0.1, 0.1])
+    if np.isnan(value):
+        raise ValueError("hardsphere returns null")
 
 def test_rpa():
     # type: () -> float
