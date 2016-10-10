@@ -24,7 +24,9 @@ of the q vector which is defined as:
 
 
 The outer most radius
-$radius + n_{pairs} * thick_{shell} + (n_{pairs} - 1) * thick_{solvent}$
+
+$radius + n\_pairs * thick\_shell + (n\_pairs- 1) * thick\_solvent$
+
 is used for both the volume fraction normalization and for the 
 effective radius for *S(Q)* when $P(Q) * S(Q)$ is applied.
 
