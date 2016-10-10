@@ -7,7 +7,9 @@ loaded from a file by :func:`generate.load_kernel_module` they are loaded
 as if they exist in *sasmodels.custom*.  This package needs to exist for this
 to occur without error.
 """
+from __future__ import division, print_function
 
+import sys
 import os
 from os.path import basename, splitext
 
@@ -25,6 +27,9 @@ except ImportError:
     import imp
     def load_module_from_path(fullname, path):
         """load module from *path* as *fullname*"""
+        # Clear out old definitions, if any
+        if fullname in sys.modules:
+            del sys.modules[fullname]
         module = imp.load_source(fullname, os.path.expanduser(path))
         #os.unlink(path+"c")  # remove the automatic pyc file
         return module
