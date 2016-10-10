@@ -14,7 +14,7 @@ from __future__ import division
 import numpy as np  # type: ignore
 from numpy import pi, exp  # type: ignore
 from scipy.special import jv as besselj
-from sas.sasgui.perspectives.fitting.fitpage import FitPage
+#from sas.sasgui.perspectives.fitting.fitpage import FitPage
 #import direct_model.DataMixin as model
         
 def make_q(q_max, Rmax):
@@ -59,31 +59,38 @@ def transform(data, q_calc, Iq_calc, qmono, Iq_mono):
     Decides which transform type is to be used, based on the experiment data file contents (header)
     (2016-03-19: currently controlled from parameters script)
     nqmono is the number of q vectors to be used for the detector integration
+    qmono are the detector limits: can be a 1D or 2D array (depending on Q-limit or Qx,Qy limits)
     """
-    nqmono = len(qmono)
-    #if nqmono == 0 # if radiobutton hankel is active
-    if FitPage.hankel.GetValue():
+    if qmono == None:
         result = call_hankel(data, q_calc, Iq_calc)
-    elif nqmono == 1:
-        q = qmono[0]
-        result = call_HankelAccept(data, q_calc, Iq_calc, q, Iq_mono)
-    else: #if radiobutton Cosine is active
-        Qx, Qy = [qmono[0], qmono[1]]
-        Qx = np.reshape(Qx, nqx, nqy)
-        Qy = np.reshape(Qy, nqx, nqy)
-        Iq_mono = np.reshape(Iq_mono, nqx, nqy)
-        qx = Qx[0, :]
-        qy = Qy[:, 0]
-        result = call_Cosine2D(data, q_calc, Iq_calc, qx, qy, Iq_mono)
+    else:
+         nqmono = len(qmono)
+         if nqmono == 0: # if radiobutton hankel is active
+        #if FitPage.hankel.GetValue():
+            result = call_hankel(data, q_calc, Iq_calc)
+         elif nqmono == 1:
+            q = qmono[0]
+            result = call_HankelAccept(data, q_calc, Iq_calc, q, Iq_mono)
+         else: #if radiobutton Cosine is active
+            Qx, Qy = [qmono[0], qmono[1]]
+            Qx = np.reshape(Qx, nqx, nqy)
+            Qy = np.reshape(Qy, nqx, nqy)
+            Iq_mono = np.reshape(Iq_mono, nqx, nqy)
+            qx = Qx[0, :]
+            qy = Qy[:, 0]
+            result = call_Cosine2D(data, q_calc, Iq_calc, qx, qy, Iq_mono)
 
     return result
 
 def call_hankel(data, q_calc, Iq_calc):
-    return hankel((data.x, data.x_unit),
-                  (data.lam, data.lam_unit),
-                  (data.sample.thickness,
-                   data.sample.thickness_unit),
-                  q_calc, Iq_calc)
+ #   data.lam_unit='nm'
+    #return hankel((data.x, data.x_unit),
+      #            (data.lam, data.lam_unit),
+       #           (data.sample.thickness,
+        #           data.sample.thickness_unit),
+         #         q_calc, Iq_calc)
+
+    return hankel((data.x, data._xunit), q_calc, Iq_calc)
   
 def call_HankelAccept(data, q_calc, Iq_calc, q_mono, Iq_mono):
     return hankel(data.x, data.lam * 1e-9,
@@ -167,7 +174,8 @@ def HankelAccept(wavelength, magfield, thickness, q, Iq, theta, modelname):
 
     P = exp(thickness*wavelength**2/(4*pi**2)*(G-G[0]))
     
-def hankel(SElength, wavelength, thickness, q, Iq):
+#def hankel(SElength, wavelength, thickness, q, Iq):
+def hankel(SElength, q, Iq):
     r"""
     Compute the expected SESANS polarization for a given SANS pattern.
 
@@ -190,8 +198,8 @@ def hankel(SElength, wavelength, thickness, q, Iq):
     """
 
     from sas.sascalc.data_util.nxsunit import Converter
-    wavelength = Converter(wavelength[1])(wavelength[0],"A")
-    thickness = Converter(thickness[1])(thickness[0],"A")
+    #wavelength = Converter(wavelength[1])(wavelength[0],"A")
+    #thickness = Converter(thickness[1])(thickness[0],"A")
     Iq = Converter("1/cm")(Iq,"1/A") # All models default to inverse centimeters
     SElength = Converter(SElength[1])(SElength[0],"A")
 
@@ -202,7 +210,7 @@ def hankel(SElength, wavelength, thickness, q, Iq):
     for i, SElength_i in enumerate(SElength):
         integral = besselj(0, q*SElength_i)*Iq*q
         G[i] = np.sum(integral)
-    G0 = np.sum(Iq*q)
+    G0 = np.sum(Iq*q) #relation to ksi? For generalization to all models
 
     # [m^-1] step size in q, needed for integration
     dq = (q[1]-q[0])
@@ -211,6 +219,7 @@ def hankel(SElength, wavelength, thickness, q, Iq):
     G *= dq*2*pi
     G0 = np.sum(Iq*q)*dq*2*np.pi
 
-    P = exp(thickness*wavelength**2/(4*pi**2)*(G-G0))
+    #P = exp(thickness*wavelength**2/(4*pi**2)*(G-G0))
+    P = (G-G0)/(4*pi**2)
 
     return P

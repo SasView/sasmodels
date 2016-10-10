@@ -9,6 +9,8 @@ from scipy.special import erf  # type: ignore
 from numpy import sqrt, log, log10, exp, pi  # type: ignore
 import numpy as np  # type: ignore
 
+from sasmodels import sesans
+
 __all__ = ["Resolution", "Perfect1D", "Pinhole1D", "Slit1D",
            "apply_resolution_matrix", "pinhole_resolution", "slit_resolution",
            "pinhole_extend_q", "slit_extend_q", "bin_edges",
@@ -58,6 +60,7 @@ class Perfect1D(Resolution):
 class SESANS1D(Resolution):
 
     def __init__(self, data, q_calc):
+        self.q = data.x
         self.data = data
         self.q_calc = q_calc
 
