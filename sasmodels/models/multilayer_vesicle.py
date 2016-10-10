@@ -4,8 +4,9 @@ Definition
 
 This model is a trivial extension of the core_shell_sphere function to include
 *N* shells where the core is filled with solvent and the shells are interleaved
-with layers of solvent. For *N = 1*, this returns the same as the vesicle model.
-The shell thicknessess and SLD are constant across all shells as expected for
+with layers of solvent. For *N = 1*, this returns the same as the vesicle model,
+except for the normalisation, which here is to outermost volume.
+The shell thicknessess and SLD are constant for all shells as expected for
 a multilayer vesicle.
 
 .. figure:: img/multi_shell_geometry.jpg
@@ -23,8 +24,9 @@ of the q vector which is defined as:
 
 .. note:
     The outer most radius
-    $radius + n_pairs * thicn_shell + (n_pairs - 1) * thick_solvent$
-    is used as the effective radius for *S(Q)* when $P(Q) * S(Q)$ is applied.
+    $radius + n_pairs * thick_shell + (n_pairs - 1) * thick_solvent$
+    is used for both the volume fraction normalization and for the 
+    effective radius for *S(Q)* when $P(Q) * S(Q)$ is applied.
 
 For information about polarised and magnetic scattering, see
 the :ref:`magnetism` documentation.
@@ -61,7 +63,7 @@ description = """
     thick_solvent: water thickness
     sld_solvent: solvent scattering length density
     sld: shell scattering length density
-    n_pairs:number of pairs of water/shell
+    n_pairs:number of "shell plus solvent" layer pairs
     background: incoherent background
         """
 category = "shape:sphere"
@@ -70,12 +72,12 @@ category = "shape:sphere"
 #   ["name", "units", default, [lower, upper], "type","description"],
 parameters = [
     ["volfraction", "",  0.05, [0.0, 1],  "", "volume fraction of vesicles"],
-    ["radius", "Ang", 60.0, [0.0, inf],  "", "Core radius of the multishell"],
-    ["thick_shell", "Ang",        10.0, [0.0, inf],  "", "Shell thickness"],
-    ["thick_solvent", "Ang",        10.0, [0.0, inf],  "", "Water thickness"],
-    ["sld_solvent",    "1e-6/Ang^2",  6.4, [-inf, inf], "sld", "Core scattering length density"],
+    ["radius", "Ang", 60.0, [0.0, inf],  "", "radius of solvent filled core"],
+    ["thick_shell", "Ang",        10.0, [0.0, inf],  "", "thickness of one shell"],
+    ["thick_solvent", "Ang",        10.0, [0.0, inf],  "", "solvent thickness between shells"],
+    ["sld_solvent",    "1e-6/Ang^2",  6.4, [-inf, inf], "sld", "solvent scattering length density"],
     ["sld",   "1e-6/Ang^2",  0.4, [-inf, inf], "sld", "Shell scattering length density"],
-    ["n_pairs",     "",            2.0, [1.0, inf],  "", "Number of pairs of water and shell"],
+    ["n_pairs",     "",            2.0, [1.0, inf],  "", "Number of shell plus solvent layer pairs"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 

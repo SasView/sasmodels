@@ -74,7 +74,7 @@ description = """
         radius : the core radius of the vesicle
         thickness: the shell thickness
         sld: the shell SLD
-        sld_slovent: the solvent (and core) SLD
+        sld_solvent: the solvent (and core) SLD
         background: incoherent background
         volfraction: shell volume fraction
         scale : scale factor = 1 if on absolute scale"""
