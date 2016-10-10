@@ -122,6 +122,8 @@ def load_custom_model(path):
         # with an instance variable that has the same value.
         if model.name == "":
             model.name = splitext(basename(path))[0]
+        if not hasattr(model, 'filename'):
+            model.filename = kernel_module.__file__
     except AttributeError:
         model_info = modelinfo.make_model_info(kernel_module)
         model = _make_model_from_info(model_info)
