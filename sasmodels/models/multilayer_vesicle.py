@@ -22,11 +22,11 @@ of the q vector which is defined as:
 
     q = \sqrt{q_x^2 + q_y^2}
 
-.. note:
-    The outer most radius
-    $radius + n_pairs * thick_shell + (n_pairs - 1) * thick_solvent$
-    is used for both the volume fraction normalization and for the 
-    effective radius for *S(Q)* when $P(Q) * S(Q)$ is applied.
+
+The outer most radius
+$radius + n_{pairs} * thick_{shell} + (n_{pairs} - 1) * thick_{solvent}$
+is used for both the volume fraction normalization and for the 
+effective radius for *S(Q)* when $P(Q) * S(Q)$ is applied.
 
 For information about polarised and magnetic scattering, see
 the :ref:`magnetism` documentation.
