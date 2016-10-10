@@ -124,6 +124,8 @@ def load_custom_model(path):
             model.name = splitext(basename(path))[0]
         if not hasattr(model, 'filename'):
             model.filename = kernel_module.__file__
+        if not hasattr(model, 'id'):
+            model.id = splitext(basename(model.filename))[0]
     except AttributeError:
         model_info = modelinfo.make_model_info(kernel_module)
         model = _make_model_from_info(model_info)
