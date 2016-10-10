@@ -126,14 +126,18 @@ def load_custom_model(path):
         model_info = modelinfo.make_model_info(kernel_module)
         model = _make_model_from_info(model_info)
 
-    # If we are trying to load a model that already exists,
-    # append a version number to its name.
-    # Note that models appear to be periodically reloaded 
-    # by SasView and keeping track of whether we are reloading 
-    # a model or loading it for the first time is tricky.
-    # For now, just allow one custom model of a given name.
-    if model.name in MODELS:
-        model.name = "%s_v2" % model.name
+    # If a model name already exists and we are loading a different model,
+    # use the model file name as the model name.
+    if model.name in MODELS and not model.filename == MODELS[model.name].filename:
+        _previous_name = model.name
+        model.name = model.id
+        
+        # If the new model name is still in the model list (for instance,
+        # if we put a cylinder.py in our plug-in directory), then append
+        # an identifier.
+        if model.name in MODELS and not model.filename == MODELS[model.name].filename:
+            model.name = model.id + '_user'
+        logging.info("Model %s already exists: using %s [%s]", _previous_name, model.name, model.filename)
 
     MODELS[model.name] = model
     return model
@@ -162,6 +166,7 @@ def _make_model_from_info(model_info):
         SasviewModel.__init__(self, multiplicity=multiplicity)
     attrs = _generate_model_attributes(model_info)
     attrs['__init__'] = __init__
+    attrs['filename'] = model_info.filename
     ConstructedModel = type(model_info.name, (SasviewModel,), attrs) # type: SasviewModelType
     return ConstructedModel
 
@@ -319,6 +324,10 @@ class SasviewModel(object):
             hidden |= set([self.multiplicity_info.control])
         else:
             hidden = set()
+        if self._model_info.structure_factor:
+            hidden.add('scale')
+            hidden.add('background')
+            self._model_info.parameters.defaults['background'] = 0.
 
         self._persistency_dict = {}
         self.params = collections.OrderedDict()
@@ -667,7 +676,9 @@ class SasviewModel(object):
             if par.name == self.multiplicity_info.control:
                 return [self.multiplicity], [1.0]
             else:
-                return [np.NaN], [1.0]
+                # For hidden parameters use the default value.
+                value = self._model_info.parameters.defaults.get(par.name, np.NaN)
+                return [value], [1.0]
         elif par.polydisperse:
             dis = self.dispersion[par.name]
             if dis['type'] == 'array':
@@ -688,6 +699,17 @@ def test_model():
     Cylinder = _make_standard_model('cylinder')
     cylinder = Cylinder()
     return cylinder.evalDistribution([0.1, 0.1])
+
+def test_structure_factor():
+    # type: () -> float
+    """
+    Test that a sasview model (cylinder) can be run.
+    """
+    Model = _make_standard_model('hardsphere')
+    model = Model()
+    value = model.evalDistribution([0.1, 0.1])
+    if np.isnan(value):
+        raise ValueError("hardsphere returns null")
 
 def test_rpa():
     # type: () -> float
