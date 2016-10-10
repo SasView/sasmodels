@@ -287,11 +287,20 @@ def run_one(model):
     for _, tb in result.failures:
         stream.writeln(tb)
 
-    # Check if there are user defined tests.
-    # Yes, it is naughty to peek into the structure of the test suite, and
-    # to assume that it contains only one test.
-    if not suite._tests[0].info.tests:
-        stream.writeln("Note: %s has no user defined tests."%model)
+    # Warn if there are no user defined tests.
+    # Note: the test suite constructed above only has one test in it, which
+    # runs through some smoke tests to make sure the model runs, then runs
+    # through the input-output pairs given in the model definition file.  To
+    # check if any such pairs are defined, therefore, we just need to check if
+    # they are in the first test of the test suite.  We do this with an
+    # iterator since we don't have direct access to the list of tests in the
+    # test suite.
+    for test in suite:
+        if not test.info.tests:
+            stream.writeln("Note: %s has no user defined tests."%model)
+        break
+    else:
+        stream.writeln("Note: no test suite created --- this should never happen")
 
 
 def main(*models):
