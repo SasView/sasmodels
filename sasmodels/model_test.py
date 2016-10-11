@@ -120,7 +120,7 @@ def make_suite(loaders, models):
                 suite.addTest(test)
 
             # test using dll if desired
-            if 'dll' in loaders:
+            if 'dll' in loaders or not core.HAVE_OPENCL:
                 test_name = "Model: %s, Kernel: dll"%model_name
                 test_method_name = "test_%s_dll" % model_info.id
                 test = ModelTestCase(test_name, model_info,
@@ -269,7 +269,7 @@ def run_one(model):
     result = TextTestResult(stream, descriptions, verbosity)
 
     # Build a test suite containing just the model
-    loaders = ['opencl']
+    loaders = ['opencl'] if core.HAVE_OPENCL else ['dll']
     models = [model]
     try:
         suite = make_suite(loaders, models)
@@ -287,11 +287,20 @@ def run_one(model):
     for _, tb in result.failures:
         stream.writeln(tb)
 
-    # Check if there are user defined tests.
-    # Yes, it is naughty to peek into the structure of the test suite, and
-    # to assume that it contains only one test.
-    if not suite._tests[0].info.tests:
-        stream.writeln("Note: %s has no user defined tests."%model)
+    # Warn if there are no user defined tests.
+    # Note: the test suite constructed above only has one test in it, which
+    # runs through some smoke tests to make sure the model runs, then runs
+    # through the input-output pairs given in the model definition file.  To
+    # check if any such pairs are defined, therefore, we just need to check if
+    # they are in the first test of the test suite.  We do this with an
+    # iterator since we don't have direct access to the list of tests in the
+    # test suite.
+    for test in suite:
+        if not test.info.tests:
+            stream.writeln("Note: %s has no user defined tests."%model)
+        break
+    else:
+        stream.writeln("Note: no test suite created --- this should never happen")
 
 
 def main(*models):
@@ -324,10 +333,10 @@ def main(*models):
         loaders = ['dll']
         models = models[1:]
     elif models and models[0] == 'opencl_and_dll':
-        loaders = ['opencl', 'dll']
+        loaders = ['opencl', 'dll'] if core.HAVE_OPENCL else ['dll']
         models = models[1:]
     else:
-        loaders = ['opencl', 'dll']
+        loaders = ['opencl', 'dll'] if core.HAVE_OPENCL else ['dll']
     if not models:
         print("""\
 usage:
@@ -356,9 +365,17 @@ def model_tests():
 
     Run "nosetests sasmodels" on the command line to invoke it.
     """
-    tests = make_suite(['opencl', 'dll'], ['all'])
+    loaders = ['opencl', 'dll'] if core.HAVE_OPENCL else ['dll']
+    tests = make_suite(loaders, ['all'])
     for test_i in tests:
-        yield test_i.run_all
+        # In order for nosetest to see the correct test name, need to set
+        # the description attribute of the returned function.  Since we
+        # can't do this for the returned instance, wrap it in a lambda and
+        # set the description on the lambda.  Otherwise we could just do:
+        #    yield test_i.run_all
+        L = lambda: test_i.run_all()
+        L.description = test_i.test_name
+        yield L
 
 
 if __name__ == "__main__":

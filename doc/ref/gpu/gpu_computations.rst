@@ -4,7 +4,7 @@
 GPU Computations
 ****************
 SasView model evaluations can run on your graphics card (GPU) or they can run
-on the processor (CPU).
+on the processor (CPU). In general, calculations performed on the GPU will run faster.
 
 To run on the GPU, your computer must have OpenCL drivers installed.
 For information about OpenCL installation see this
@@ -38,8 +38,8 @@ The device order is important: GPU is checked before CPU on the assumption that
 it will be faster. By examining ~/sasview.log you can see which device SasView
 chose to run the model.
 
-If you don't want to use OpenCL, you can set *SAS_OPENCL=None*
-in the environment, and it will only use normal programs.
+**If you don't want to use OpenCL, you can set** *SAS_OPENCL=None*
+**in your environment settings, and it will only use normal programs.**
 
 If you want to use one of the other devices, you can run the following
 from the python console in SasView::

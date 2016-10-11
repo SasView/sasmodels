@@ -4,8 +4,9 @@ Definition
 
 This model is a trivial extension of the core_shell_sphere function to include
 *N* shells where the core is filled with solvent and the shells are interleaved
-with layers of solvent. For *N = 1*, this returns the same as the vesicle model.
-The shell thicknessess and SLD are constant across all shells as expected for
+with layers of solvent. For *N = 1*, this returns the same as the vesicle model,
+except for the normalisation, which here is to outermost volume.
+The shell thicknessess and SLD are constant for all shells as expected for
 a multilayer vesicle.
 
 .. figure:: img/multi_shell_geometry.jpg
@@ -14,6 +15,29 @@ a multilayer vesicle.
 
 See the :ref:`core-shell-sphere` model for more documentation.
 
+The 1D scattering intensity is calculated in the following way (Guinier, 1955)
+
+.. math::
+
+    P(q) = \frac{\text{scale.volfraction}}{V_t} F^2(q) + \text{background}
+
+where
+
+.. math::
+
+     F(q) = (\rho_{shell}-\rho_{solv}) \sum_{i=1}^{n\_pairs} \left[
+     3V(R_i)\frac{\sin(qR_i)-qR_i\cos(qR_i)}{(qR_i)^3} \\
+      - 3V(R_i+t_s)\frac{\sin(q(R_i+t_s))-q(R_i+t_s)\cos(q(R_i+t_s))}{(q(R_i+t_s))^3}
+     \right]
+
+
+where $R_i = r_c + (i-1)(t_s + t_w)$
+   
+where $V_t$ is the volume of the whole particle, $V(R)$ is the volume of a sphere
+of radius $R$, $r_c$ is the radius of the core, $\rho_{shell}$ is the scattering length 
+density of a shell, $\rho_{solv}$ is the scattering length density of the solvent.
+
+
 The 2D scattering intensity is the same as 1D, regardless of the orientation
 of the q vector which is defined as:
 
@@ -21,10 +45,13 @@ of the q vector which is defined as:
 
     q = \sqrt{q_x^2 + q_y^2}
 
-.. note:
-    The outer most radius
-    $radius + n_pairs * thicn_shell + (n_pairs - 1) * thick_solvent$
-    is used as the effective radius for *S(Q)* when $P(Q) * S(Q)$ is applied.
+
+The outer most radius
+
+$radius + n\_pairs * thick\_shell + (n\_pairs- 1) * thick\_solvent$
+
+is used for both the volume fraction normalization and for the 
+effective radius for *S(Q)* when $P(Q) * S(Q)$ is applied.
 
 For information about polarised and magnetic scattering, see
 the :ref:`magnetism` documentation.
@@ -61,7 +88,7 @@ description = """
     thick_solvent: water thickness
     sld_solvent: solvent scattering length density
     sld: shell scattering length density
-    n_pairs:number of pairs of water/shell
+    n_pairs:number of "shell plus solvent" layer pairs
     background: incoherent background
         """
 category = "shape:sphere"
@@ -70,12 +97,12 @@ category = "shape:sphere"
 #   ["name", "units", default, [lower, upper], "type","description"],
 parameters = [
     ["volfraction", "",  0.05, [0.0, 1],  "", "volume fraction of vesicles"],
-    ["radius", "Ang", 60.0, [0.0, inf],  "", "Core radius of the multishell"],
-    ["thick_shell", "Ang",        10.0, [0.0, inf],  "", "Shell thickness"],
-    ["thick_solvent", "Ang",        10.0, [0.0, inf],  "", "Water thickness"],
-    ["sld_solvent",    "1e-6/Ang^2",  6.4, [-inf, inf], "sld", "Core scattering length density"],
+    ["radius", "Ang", 60.0, [0.0, inf],  "", "radius of solvent filled core"],
+    ["thick_shell", "Ang",        10.0, [0.0, inf],  "", "thickness of one shell"],
+    ["thick_solvent", "Ang",        10.0, [0.0, inf],  "", "solvent thickness between shells"],
+    ["sld_solvent",    "1e-6/Ang^2",  6.4, [-inf, inf], "sld", "solvent scattering length density"],
     ["sld",   "1e-6/Ang^2",  0.4, [-inf, inf], "sld", "Shell scattering length density"],
-    ["n_pairs",     "",            2.0, [1.0, inf],  "", "Number of pairs of water and shell"],
+    ["n_pairs",     "",            2.0, [1.0, inf],  "", "Number of shell plus solvent layer pairs"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
