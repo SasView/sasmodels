@@ -200,13 +200,10 @@ def hankel(SElength, q, Iq):
     from sas.sascalc.data_util.nxsunit import Converter
     #wavelength = Converter(wavelength[1])(wavelength[0],"A")
     #thickness = Converter(thickness[1])(thickness[0],"A")
-    Iq = Converter("1/cm")(Iq,"1/A") # All models default to inverse centimeters
+    #Iq = Converter("1/cm")(Iq,"1/A") # All models default to inverse centimeters
     SElength = Converter(SElength[1])(SElength[0],"A")
 
     G = np.zeros_like(SElength, 'd')
-#==============================================================================
-#     Hankel Transform method if "wavelength" is a scalar; mono-chromatic SESANS
-#==============================================================================
     for i, SElength_i in enumerate(SElength):
         integral = besselj(0, q*SElength_i)*Iq*q
         G[i] = np.sum(integral)
@@ -221,5 +218,6 @@ def hankel(SElength, q, Iq):
 
     #P = exp(thickness*wavelength**2/(4*pi**2)*(G-G0))
     P = (G-G0)/(4*pi**2)
+    #P=G-G0
 
     return P
