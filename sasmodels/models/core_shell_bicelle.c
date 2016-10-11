@@ -116,8 +116,8 @@ bicelle_kernel_2d(double q, double q_x, double q_y,
     phi *= M_PI_180;
 
     // Cylinder orientation
-    const double cyl_x = cos(theta) * cos(phi);
-    const double cyl_y = sin(theta);
+    const double cyl_x = sin(theta) * cos(phi);
+    const double cyl_y = sin(theta) * sin(phi);
 
     // Compute the angle btw vector q and the axis of the cylinder
     const double cos_val = cyl_x*q_x + cyl_y*q_y;

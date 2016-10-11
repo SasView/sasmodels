@@ -263,8 +263,8 @@ kernel void IQXY_KERNEL_NAME(
       if (!isnan(scattering)) { // if scattering is bad, exclude it from sum
       #if defined(IQXY_HAS_THETA)
         // Force a nominal value for the spherical correction even when
-        // theta is +90/-90 so that there are no divide by zero problems.
-        // For cos(theta) fixed at 90, we effectively multiply top and bottom
+        // theta is +0/180 so that there are no divide by zero problems.
+        // For sin(theta) fixed at 0 and 180, we effectively multiply top and bottom
         // by 1e-6, so the effect cancels.
         const double spherical_correction = fmax(fabs(cos(M_PI_180*theta)), 1.e-6);
         weight *= spherical_correction;

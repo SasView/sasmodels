@@ -9,7 +9,7 @@ summing the results.  The interface to :class:`PyModel` matches those for
 from __future__ import division, print_function
 
 import numpy as np  # type: ignore
-from numpy import pi, cos  #type: ignore
+from numpy import pi, sin, cos  #type: ignore
 
 from . import details
 from .generate import F64
@@ -219,7 +219,7 @@ def _loops(parameters, form, form_volume, nq, call_details, values, cutoff):
             parameters[pd_par] = pd_value[pd_offset+pd_index]
             partial_weight = np.prod(pd_weight[pd_offset+pd_index][1:])
             if call_details.theta_par >= 0:
-                cor = cos(pi / 180 * parameters[call_details.theta_par])
+                cor = sin(pi / 180 * parameters[call_details.theta_par])
                 spherical_correction = max(abs(cor), 1e-6)
             p0_index = loop_index%p0_length
 

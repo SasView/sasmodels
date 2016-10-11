@@ -76,14 +76,11 @@ and $\sigma_d$ = the Gaussian standard deviation of the d-spacing (*sigma_d*).
 To provide easy access to the orientation of the stacked disks, we define
 the axis of the cylinder using two angles $\theta$ and $\varphi$.
 
-.. figure:: img/stacked_disks_angle_definition.jpg
+.. figure:: img/cylinder_angle_definition.jpg
 
-    Examples of the angles for oriented stacked disks against
+    Examples of the angles against
     the detector plane.
 
-.. figure:: img/stacked_disks_angle_projection.jpg
-
-    Examples of the angles for oriented pp against the detector plane.
 
 Our model uses the form factor calculations implemented in a c-library provided
 by the NIST Center for Neutron Research (Kline, 2006)

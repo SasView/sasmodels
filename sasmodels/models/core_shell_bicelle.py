@@ -70,10 +70,6 @@ use the c-library from NIST.
 
     Definition of the angles for the oriented core shell bicelle tmodel.
 
-.. figure:: img/cylinder_angle_projection.jpg
-    :width: 600px
-
-    Examples of the angles for oriented pp against the detector plane.
 
 References
 ----------
@@ -160,40 +156,3 @@ demo = dict(scale=1, background=0,
             phi=0)
 
 qx, qy = 0.4 * cos(90), 0.5 * sin(0)
-tests = [
-    # Accuracy tests based on content in test/utest_other_models.py
-    [{'radius': 20.0,
-      'thick_rim': 10.0,
-      'thick_face': 10.0,
-      'length': 400.0,
-      'sld_core': 1.0,
-      'sld_face': 4.0,
-      'sld_rim': 4.0,
-      'sld_solvent': 1.0,
-      'background': 0.0,
-     }, 0.001, 353.550],
-
-    [{'radius': 20.0,
-      'thick_rim': 10.0,
-      'thick_face': 10.0,
-      'length': 400.0,
-      'sld_core': 1.0,
-      'sld_face': 4.0,
-      'sld_rim': 4.0,
-      'sld_solvent': 1.0,
-      'theta': 90.0,
-      'phi': 0.0,
-      'background': 0.00,
-     }, (qx, qy), 24.9167],
-
-    # Additional tests with larger range of parameters
-    [{'radius': 3.0,
-      'thick_rim': 100.0,
-      'thick_face': 100.0,
-      'length': 1200.0,
-      'sld_core': 5.0,
-      'sld_face': 41.0,
-      'sld_rim': 42.0,
-      'sld_solvent': 21.0,
-     }, 0.05, 1670.1828],
-    ]

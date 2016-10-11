@@ -56,11 +56,7 @@ $S(q)$ when $P(q) \cdot S(q)$ is applied.
 
 The $\theta$ and $\phi$ parameters are not used for the 1D output.
 
-.. _ellipsoid-geometry:
 
-.. figure:: img/ellipsoid_angle_projection.jpg
-
-    The angles for oriented ellipsoid, shown here as oblate, $a$ = $R_p$ and $b$ = $R_e$
 
 Validation
 ----------

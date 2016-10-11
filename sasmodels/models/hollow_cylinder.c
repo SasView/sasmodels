@@ -53,8 +53,8 @@ static double hollow_cylinder_analytical_2D_scaled(
     delrho = solvent_sld - sld;
 
     // Cylinder orientation
-    cyl_x = cos(theta) * cos(phi);
-    cyl_y = sin(theta);
+    cyl_x = sin(theta) * cos(phi);
+    cyl_y = sin(theta) * sin(phi);
     //cyl_z = -cos(theta) * sin(phi);
 
     // q vector

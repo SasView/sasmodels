@@ -51,10 +51,11 @@ double Iqxy(double qx, double qy,
     double sn, cn;
 
     const double q = sqrt(qx*qx + qy*qy);
-    SINCOS(theta*M_PI_180, sn, cn);
-    // TODO: check if this is actually sin(alpha), not cos(alpha)
-    const double cos_alpha = cn*cos(phi*M_PI_180)*(qx/q) + sn*(qy/q);
-    const double form = _ellipsoid_kernel(q, radius_polar, radius_equatorial, cos_alpha);
+    SINCOS(phi*M_PI_180, sn, cn);
+    const double cos_alpha = (q==0. ? 1.0 : (cn*qx + sn*qy)*sin(theta*M_PI_180)/q);
+    const double alpha = acos(cos_alpha);
+    SINCOS(alpha, sn, cn);
+    const double form = _ellipsoid_kernel(q, radius_polar, radius_equatorial, sn);
     const double s = (sld - sld_solvent) * form_volume(radius_polar, radius_equatorial);
 
     return 1.0e-4 * form * s * s;
