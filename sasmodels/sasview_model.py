@@ -124,6 +124,12 @@ def load_custom_model(path):
             model.name = splitext(basename(path))[0]
         if not hasattr(model, 'filename'):
             model.filename = kernel_module.__file__
+            # For old models, treat .pyc and .py files interchangeably.
+            # This is needed because of the Sum|Multi(p1,p2) types of models
+            # and the convoluted way in which they are created.
+            if model.filename.endswith(".py"):
+                logging.info("Loading %s as .pyc", model.filename)
+                model.filename = model.filename+'c'
         if not hasattr(model, 'id'):
             model.id = splitext(basename(model.filename))[0]
     except AttributeError:
