@@ -39,7 +39,7 @@ $\alpha$ is the angle between the $Q$ vector and the cylinder axis, to give:
 
 .. math::
 
-    I(Q,\alpha) = \frac{\text{scale}}{V} \cdot
+    I(Q,\alpha) = \frac{\text{scale}}{V_t} \cdot
         F(Q,\alpha)^2 + \text{background}
 
 where
