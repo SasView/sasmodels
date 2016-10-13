@@ -20,6 +20,7 @@ import numpy as np  # type: ignore
 
 from . import core
 from . import custom
+from . import product
 from . import generate
 from . import weights
 from . import modelinfo
@@ -166,6 +167,13 @@ def _make_standard_model(name):
     model_info = modelinfo.make_model_info(kernel_module)
     return _make_model_from_info(model_info)
 
+
+def MultiplicationModel(form_factor, structure_factor):
+    # type: ("SasviewModel", "SasviewModel") -> "SasviewModel"
+    model_info = product.make_product_info(form_factor._model_info,
+                                           structure_factor._model_info)
+    ConstructedModel = _make_model_from_info(model_info)
+    return ConstructedModel()
 
 def _make_model_from_info(model_info):
     # type: (ModelInfo) -> SasviewModelType
