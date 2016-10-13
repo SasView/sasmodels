@@ -183,14 +183,18 @@ class ProductKernel(Kernel):
         s_offset = np.hstack((nweights, s_offset))
         s_details = make_details(s_info, s_length, s_offset, nweights+1)
         v, w = weights[:nweights], weights[nweights:]
-        s_values = [[1., 0., p_er, s_vr],
-                    # er and vf already included, so start one past the
-                    # volfrac parameter, and go two less than the number
-                    # of S parameters.
-                    values[2+p_npars+2:2+p_npars+s_npars-1],
-                    # no magnetism parameters to include for S
-                    # add er into the (value, weights) pairs
-                    v, [p_er], w, [1.0]]
+        s_values = [
+            # scale=1, background=0, radius_effective=p_er, volfraction=s_vr
+            [1., 0., p_er, s_vr],
+            # structure factor parameters start after scale, background and
+            # all the form factor parameters.  Skip the volfraction parameter
+            # as well, since it is computed elsewhere, and go to the end of the
+            # parameter list.
+            values[2+p_npars+1:2+p_npars+s_npars],
+            # no magnetism parameters to include for S
+            # add er into the (value, weights) pairs
+            v, [p_er], w, [1.0]
+        ]
         spacer = (32 - sum(len(v) for v in s_values)%32)%32
         s_values.append([0.]*spacer)
         s_values = np.hstack(s_values).astype(self.s_kernel.dtype)
@@ -199,11 +203,11 @@ class ProductKernel(Kernel):
         p_result = self.p_kernel(p_details, p_values, cutoff, magnetic)
         s_result = self.s_kernel(s_details, s_values, cutoff, False)
 
+        #print("p_npars",p_npars,s_npars,p_er,s_vr,values[2+p_npars+1:2+p_npars+s_npars])
         #call_details.show(values)
         #print("values", values)
         #p_details.show(p_values)
         #print("=>", p_result)
-        #print("p val", s_values)
         #s_details.show(s_values)
         #print("=>", s_result)
 

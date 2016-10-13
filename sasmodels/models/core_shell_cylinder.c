@@ -68,12 +68,12 @@ double Iqxy(double qx, double qy,
     double sn, cn; // slots to hold sincos function output
 
     // Compute angle alpha between q and the cylinder axis
-    SINCOS(theta*M_PI_180, sn, cn);
+    SINCOS(phi*M_PI_180, sn, cn);
     // # The following correction factor exists in sasview, but it can't be
     // # right, so we are leaving it out for now.
     // const double correction = fabs(cn)*M_PI_2;
     const double q = sqrt(qx*qx+qy*qy);
-    const double cos_val = cn*cos(phi*M_PI_180)*(qx/q) + sn*(qy/q);
+    const double cos_val = (q==0. ? 1.0 : (cn*qx + sn*qy)*sin(theta*M_PI_180)/q);
     const double alpha = acos(cos_val);
 
     const double core_qr = q*radius;

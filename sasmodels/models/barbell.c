@@ -94,9 +94,9 @@ double Iqxy(double qx, double qy,
 {
     // Compute angle alpha between q and the cylinder axis
     double sn, cn; // slots to hold sincos function output
-    SINCOS(theta*M_PI_180, sn, cn);
-    const double q = sqrt(qx*qx+qy*qy);
-    const double cos_val = cn*cos(phi*M_PI_180)*(qx/q) + sn*(qy/q);
+    SINCOS(phi*M_PI_180, sn, cn);
+    const double q = sqrt(qx*qx + qy*qy);
+    const double cos_val = (q==0. ? 1.0 : (cn*qx + sn*qy)*sin(theta*M_PI_180)/q);
     const double alpha = acos(cos_val); // rod angle relative to q
 
     const double h = -sqrt(square(radius_bell) - square(radius));

@@ -141,8 +141,8 @@ static double stacked_disks_kernel_2d(double q, double q_x, double q_y,
     (void) sp;
 
     // parallelepiped orientation
-    const double cyl_x = ct * cp;
-    const double cyl_y = st;
+    const double cyl_x = st * cp;
+    const double cyl_y = st * sp;
 
     // Compute the angle btw vector q and the
     // axis of the parallelepiped

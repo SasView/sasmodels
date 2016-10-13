@@ -95,8 +95,8 @@ core_shell_ellipsoid_xt_kernel_2d(double q, double q_x, double q_y,
     phi = phi * M_PI_180;
 
     // ellipsoid orientation, the axis of the rotation is consistent with the ploar axis.
-    const double cyl_x = cos(theta) * cos(phi);
-    const double cyl_y = sin(theta);
+    const double cyl_x = sin(theta) * cos(phi);
+    const double cyl_y = sin(theta) * sin(phi);
 
     const double sldcs = core_sld - shell_sld;
     const double sldss = shell_sld- solvent_sld;

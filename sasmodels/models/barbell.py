@@ -71,10 +71,6 @@ The 2D scattering intensity is calculated similar to the 2D cylinder model.
 
     Definition of the angles for oriented 2D barbells.
 
-.. figure:: img/cylinder_angle_projection.jpg
-    :width: 600px
-
-    Examples of the angles for oriented pp against the detector plane.
 
 References
 ----------

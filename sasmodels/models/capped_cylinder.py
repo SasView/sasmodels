@@ -74,10 +74,6 @@ The 2D scattering intensity is calculated similar to the 2D cylinder model.
 
     Definition of the angles for oriented 2D cylinders.
 
-.. figure:: img/cylinder_angle_projection.jpg
-    :width: 600px
-
-    Examples of the angles for oriented 2D cylinders against the detector plane.
 
 References
 ----------
@@ -131,8 +127,8 @@ parameters = [["sld",         "1e-6/Ang^2", 4, [-inf, inf], "sld",    "Cylinder 
               # both models, one would be a pill.
               ["radius_cap", "Ang",     20, [0, inf],    "volume", "Cap radius"],
               ["length",     "Ang",    400, [0, inf],    "volume", "Cylinder length"],
-              ["theta",      "degrees", 60, [-inf, inf], "orientation", "In plane angle"],
-              ["phi",        "degrees", 60, [-inf, inf], "orientation", "Out of plane angle"],
+              ["theta",      "degrees", 60, [-inf, inf], "orientation", "inclination angle"],
+              ["phi",        "degrees", 60, [-inf, inf], "orientation", "deflection angle"],
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
