@@ -70,7 +70,7 @@ B Jakobs, T Sottmann, R Strey, and I Grillo, *J. Chem. Phys.*, 115 (2001), 580
 """
 
 import numpy as np
-from numpy import inf,power,pi
+from numpy import inf, pi
 
 name = "teubner_strey"
 title = "Teubner-Strey model of microemulsions"
@@ -92,9 +92,9 @@ def Iq(q, volfraction, sld, sld_solvent,d,xi):
     """SAS form"""
     drho2 = (sld-sld_solvent)*(sld-sld_solvent)
     k = 2.0*pi*xi/d
-    a2 = power(1.0+power(k,2.0),2.0)
-    c1 = -2.0*xi*xi*power(k,2.0)+2*xi*xi
-    c2 = power(xi,4.0)
+    a2 = (1.0 + k**2)**2
+    c1 = 2.0*xi**2 * (1.0 - k**2)
+    c2 = xi**4
     prefactor = 8.0*pi*volfraction*(1.0-volfraction)*drho2*c2/xi
     #k2 = (2.0*pi/d)*(2.0*pi/d)
     #xi2 = 1/(xi*xi)

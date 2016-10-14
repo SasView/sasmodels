@@ -99,8 +99,8 @@ def VR(radius, thickness):
         @param radius: core radius
         @param thickness: shell thickness
     """
-    whole = 4.0 * pi / 3.0 * pow((radius + thickness), 3)
-    core = 4.0 * pi / 3.0 * radius * radius * radius
+    whole = 4.0/3.0 * pi * (radius + thickness)**3
+    core = 4.0/3.0 * pi * radius**3
     return whole, whole-core
 
 tests = [[{'radius': 20.0, 'thickness': 10.0}, 'ER', 30.0],

@@ -31,7 +31,7 @@ double _FCCeval(double Theta, double Phi, double temp1, double temp3) {
 	const double temp9 = -sin_theta*cos_phi + sin_theta*sin_phi;
 
 	const double temp10 = exp((-1.0/8.0)*temp1*((temp7*temp7)+(temp8*temp8)+(temp9*temp9)));
-	result = pow((1.0-(temp10*temp10)),3)*temp6
+	result = cube(1.0-(temp10*temp10))*temp6
 	    / ( (1.0 - 2.0*temp10*cos(0.5*temp3*temp7) + temp10*temp10)
 	      * (1.0 - 2.0*temp10*cos(0.5*temp3*temp8) + temp10*temp10)
 	      * (1.0 - 2.0*temp10*cos(0.5*temp3*temp9) + temp10*temp10));

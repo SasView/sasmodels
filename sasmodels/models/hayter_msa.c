@@ -47,7 +47,7 @@ double Iq(double QQ,
 	IonSt=0.5 * Elcharge*Elcharge*(zz*VolFrac/Vp+2.0*cs);
 	Kappa=sqrt(2*Beta*IonSt/Perm);     //Kappa calc from Ionic strength
 									   //	Kappa=2/SIdiam					// Use to compare with HP paper
-	gMSAWave[5]=Beta*charge*charge/(M_PI*Perm*SIdiam*pow((2.0+Kappa*SIdiam),2));
+	gMSAWave[5]=Beta*charge*charge/(M_PI*Perm*SIdiam*square(2.0+Kappa*SIdiam));
 	
 	//         Finally set up dimensionless parameters 
 	Qdiam=QQ*diam;

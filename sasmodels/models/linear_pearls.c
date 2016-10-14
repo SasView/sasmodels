@@ -42,16 +42,8 @@ double linear_pearls_kernel(double q,
     //center to center distance between the neighboring pearls
     double separation = edge_sep + 2.0 * radius;
 
-    double x=q*radius;
-
-    // Try Taylor on x*xos(x)
-	// double out_cos = x - pow(x,3)/2 + pow(x,5)/24 - pow(x,7)/720 + pow(x,9)/40320;
-    // psi -= x*out_cos;
-
     //sine functions of a pearl
-    double psi = sin(q * radius);
-    psi -= x * cos(x);
-    psi /= pow((q * radius), 3.0);
+    double psi = sph_j1c(q * radius);
 
     // N pearls contribution
     int n_max = num_pearls - 1;
@@ -60,9 +52,7 @@ double linear_pearls_kernel(double q,
         n_contrib += (2.0*(num_pearls-num)*sinc(q*separation*num));
     }
     // form factor for num_pearls
-    double form_factor = n_contrib;
-    form_factor *= pow((m_s*psi*3.0), 2.0);
-    form_factor /= (tot_vol * 1.0e4);
+    double form_factor = 1.0e-4 * n_contrib * square(m_s*psi) / tot_vol;
 
     return form_factor;
 }

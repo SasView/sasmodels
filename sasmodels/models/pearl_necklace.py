@@ -111,7 +111,7 @@ def ER(radius, edge_sep, thick_string, num_pearls):
     Calculation for effective radius.
     """
     tot_vol = volume(radius, edge_sep, thick_string, num_pearls)
-    rad_out = pow((3.0*tot_vol/4.0/pi), 0.33333)
+    rad_out = (tot_vol/(4.0/3.0*pi)) ** (1./3.)
     return rad_out
 
 # parameters for demo

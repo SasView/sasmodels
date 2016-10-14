@@ -48,13 +48,12 @@ sc_integrand(double dnn, double d_factor, double qq, double xx, double yy)
 
 	double da = d_factor*dnn;
 	double temp1 = qq*qq*da*da;
-	double temp2 = pow( 1.0-exp(-1.0*temp1) ,3);
+	double temp2 = cube(-expm1(-temp1));
 	double temp3 = qq*dnn;
 	double temp4 = 2.0*exp(-0.5*temp1);
 	double temp5 = exp(-1.0*temp1);
 
-	double integrand = temp2*sc_eval(yy,xx,temp3,temp4,temp5);
-	integrand /= M_PI_2;
+	double integrand = temp2*sc_eval(yy,xx,temp3,temp4,temp5)/M_PI_2;
 
 	return(integrand);
 }
