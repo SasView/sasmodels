@@ -74,7 +74,7 @@ double Iq(double q,
     // the definitions of termA, termB, termC.
     // The factor 2 appears because the theta integral has been defined between 
     // 0 and pi/2, instead of 0 to pi.
-    answer *= (2.0/M_PI); //Form factor P(q)
+    answer /= M_PI_2; //Form factor P(q)
 
     // Multiply by contrast^2 and volume^2
     answer *= (sld-solvent_sld)*(sld-solvent_sld)*volume*volume;

@@ -25,9 +25,9 @@ double Iq(double q,
 
    //Integration limits to use in Gaussian quadrature
     double v1a = 0.0;
-    double v1b = 0.5 * M_PI;  //theta integration limits
+    double v1b = M_PI_2;  //theta integration limits
     double v2a = 0.0;
-    double v2b = 0.5 * M_PI;  //phi integration limits
+    double v2b = M_PI_2;  //phi integration limits
     
     //Order of integration
     int nordi=76;			        
@@ -70,7 +70,7 @@ double Iq(double q,
 
     // Normalize as in Eqn. (15) without the volume factor (as cancels with (V*DelRho)^2 normalization)
     // The factor 2 is due to the different theta integration limit (pi/2 instead of pi)
-    answer *= (2.0/M_PI);
+    answer /= M_PI_2;
 
     // Multiply by contrast^2. Factor corresponding to volume^2 cancels with previous normalization.
     answer *= (sld-solvent_sld)*(sld-solvent_sld);

@@ -38,7 +38,7 @@ _bell_kernel(double q, double h, double radius_bell,
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     const double integral = total*zm;
-    const double bell_fq = 2*M_PI*cube(radius_bell)*integral;
+    const double bell_fq = 2.0*M_PI*cube(radius_bell)*integral;
     return bell_fq;
 }
 

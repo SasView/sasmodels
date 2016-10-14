@@ -15,5 +15,5 @@ double Iq(double q, double radius, double thickness, double core_sld, double she
 
 double form_volume(double radius, double thickness)
 {
-    return 4.0 * M_PI / 3.0 * pow((radius + thickness), 3);
+    return M_4PI_3 * cube(radius + thickness);
 }

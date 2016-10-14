@@ -33,7 +33,7 @@ static double _mass_fractal_kernel(double q,
 }
 double form_volume(double radius){
 
-    return 1.333333333333333*M_PI*radius*radius*radius;
+    return M_4PI_3*radius*radius*radius;
 }
 
 double Iq(double q,

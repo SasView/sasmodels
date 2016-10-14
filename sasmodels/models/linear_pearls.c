@@ -18,7 +18,7 @@ double linear_pearls_kernel(double q,
 double form_volume(double radius, double num_pearls)
 {
     // Pearl volume
-    double pearl_vol = 4.0 /3.0 * M_PI * pow(radius, 3.0);
+    double pearl_vol = M_4PI_3 * cube(radius);
     // Return total volume
     return num_pearls * pearl_vol;;
 }
@@ -34,7 +34,7 @@ double linear_pearls_kernel(double q,
     //relative sld
     double contrast_pearl = pearl_sld - solvent_sld;
     //each volume
-    double pearl_vol = 4.0 /3.0 * M_PI * pow(radius, 3.0);
+    double pearl_vol = M_4PI_3 * cube(radius);
     //total volume
     double tot_vol = num_pearls * pearl_vol;
     //mass

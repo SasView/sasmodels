@@ -22,9 +22,6 @@ double _pearl_necklace_kernel(double q, double radius, double edge_sep, double t
 	num_pearls = floor(num_pearls + 0.5); //Force integer number of pearls
 	double num_strings = num_pearls - 1.0;
 	
-	//Pi
-	double pi = 4.0*atan(1.0);
-	
 	// center to center distance between the neighboring pearls
 	double A_s = edge_sep + 2.0 * radius;
 	
@@ -35,8 +32,8 @@ double _pearl_necklace_kernel(double q, double radius, double edge_sep, double t
 	double q_edge = q * edge_sep;
 	
 	// each volume
-	double string_vol = edge_sep * pi * thick_string * thick_string / 4.0;
-	double pearl_vol = 4.0 / 3.0 * pi * radius * radius * radius;
+	double string_vol = edge_sep * M_PI * thick_string * thick_string / 4.0;
+	double pearl_vol = M_4PI_3 * radius * radius * radius;
 
 	//total volume
 	double tot_vol;
@@ -109,11 +106,10 @@ double form_volume(double radius, double edge_sep,
 {
 	double total_vol;
 
-	double pi = 4.0*atan(1.0);
 	double number_of_strings = num_pearls - 1.0;
 	
-	double string_vol = edge_sep * pi * thick_string * thick_string / 4.0;
-	double pearl_vol = 4.0 / 3.0 * pi * radius * radius * radius;
+	double string_vol = edge_sep * M_PI * thick_string * thick_string / 4.0;
+	double pearl_vol = M_4PI_3 * radius * radius * radius;
 
 	total_vol = number_of_strings * string_vol;
 	total_vol += num_pearls * pearl_vol;

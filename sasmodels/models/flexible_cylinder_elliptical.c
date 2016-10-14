@@ -17,7 +17,7 @@ elliptical_crosssection(double q, double a, double b)
     double summ=0.0;
 
     for(int i=0;i<N_POINTS_76;i++) {
-        double zi = ( Gauss76Z[i] + 1.0 )*M_PI/4.0;
+        double zi = ( Gauss76Z[i] + 1.0 )*M_PI_4;
         double sn, cn;
         SINCOS(zi, sn, cn);
         double arg = q*sqrt(a*a*sn*sn+b*b*cn*cn);

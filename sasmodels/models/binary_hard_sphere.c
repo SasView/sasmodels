@@ -48,8 +48,8 @@ double Iq(double q,
     
     // /* do form factor calculations  */
     
-    v1 = 4.0*M_PI/3.0*r1*r1*r1;
-    v2 = 4.0*M_PI/3.0*r2*r2*r2;
+    v1 = M_4PI_3*r1*r1*r1;
+    v2 = M_4PI_3*r2*r2*r2;
     
     n1 = phi1/v1;
     n2 = phi2/v2;
@@ -69,8 +69,8 @@ double Iq(double q,
     //}
     sc1 = sph_j1c(qr1);
     sc2 = sph_j1c(qr2);
-    b1 = r1*r1*r1*(rho1-rhos)*4.0/3.0*M_PI*sc1;
-    b2 = r2*r2*r2*(rho2-rhos)*4.0/3.0*M_PI*sc2;
+    b1 = r1*r1*r1*(rho1-rhos)*M_4PI_3*sc1;
+    b2 = r2*r2*r2*(rho2-rhos)*M_4PI_3*sc2;
     inten = n1*b1*b1*psf11;
     inten += sqrt(n1*n2)*2.0*b1*b2*psf12;
     inten += n2*b2*b2*psf22;

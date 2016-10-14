@@ -54,7 +54,7 @@ sc_integrand(double dnn, double d_factor, double qq, double xx, double yy)
 	double temp5 = exp(-1.0*temp1);
 
 	double integrand = temp2*sc_eval(yy,xx,temp3,temp4,temp5);
-	integrand *= 2.0/M_PI;
+	integrand /= M_PI_2;
 
 	return(integrand);
 }
@@ -67,7 +67,7 @@ double Iq(double q,
           double solvent_sld)
 {
 	const double va = 0.0;
-	const double vb = M_PI/2.0; //orientation average, outer integral
+	const double vb = M_PI_2; //orientation average, outer integral
 
     double summ=0.0;
     double answer=0.0;

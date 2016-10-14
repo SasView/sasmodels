@@ -9,7 +9,7 @@ double Iqxy(double qx, double qy, double sld, double sld_solvent,
 
 double form_volume(double radius_equat_minor, double radius_equat_major, double radius_polar)
 {
-    return 1.333333333333333*M_PI*radius_equat_minor*radius_equat_major*radius_polar;
+    return M_4PI_3*radius_equat_minor*radius_equat_major*radius_polar;
 }
 
 double Iq(double q,

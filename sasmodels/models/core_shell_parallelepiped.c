@@ -88,10 +88,10 @@ double Iq(double q,
             double ta = (a_scaled+2.0*thick_rim_a)/length_b; 
             double tb = (a_scaled+2.0*thick_rim_b)/length_b;
     
-	        double arg1 = (0.5*mudum*a_scaled) * sin(0.5*M_PI*uu);
-	        double arg2 = (0.5*mudum) * cos(0.5*M_PI*uu);
-	        double arg3=  (0.5*mudum*ta) * sin(0.5*M_PI*uu);
-	        double arg4=  (0.5*mudum*tb) * cos(0.5*M_PI*uu);
+	        double arg1 = (0.5*mudum*a_scaled) * sin(M_PI_2*uu);
+	        double arg2 = (0.5*mudum) * cos(M_PI_2*uu);
+	        double arg3=  (0.5*mudum*ta) * sin(M_PI_2*uu);
+	        double arg4=  (0.5*mudum*tb) * cos(M_PI_2*uu);
 
 	        if(arg1==0.0){
 		        t1 = 1.0;

@@ -70,8 +70,8 @@ double Iq(double q,
 
             double uu = 0.5 * ( Gauss76Z[j] + 1.0 );
             double mudum = mu * sqrt(1.0-sigma*sigma);
-	        double arg1 = 0.5 * mudum * cos(0.5*M_PI*uu);
-	        double arg2 = 0.5 * mudum * a_scaled * sin(0.5*M_PI*uu);
+	        double arg1 = 0.5 * mudum * cos(M_PI_2*uu);
+	        double arg2 = 0.5 * mudum * a_scaled * sin(M_PI_2*uu);
             if(arg1==0.0) {
 	        tmp1 = 1.0;
             } else {
