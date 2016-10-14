@@ -57,19 +57,9 @@ double Iqxy(double qx, double qy,
     double phi,
     double psi)
 {
-    double stheta, ctheta;
-    double sphi, cphi;
-    double spsi, cpsi;
+    double q, calpha, cmu, cnu;
+    ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, calpha, cmu, cnu);
 
-    const double q = sqrt(qx*qx + qy*qy);
-    const double qxhat = qx/q;
-    const double qyhat = qy/q;
-    SINCOS(theta*M_PI_180, stheta, ctheta);
-    SINCOS(phi*M_PI_180, sphi, cphi);
-    SINCOS(psi*M_PI_180, spsi, cpsi);
-    const double calpha = ctheta*cphi*qxhat + stheta*qyhat;
-    const double cnu = (-cphi*spsi*stheta + sphi*cpsi)*qxhat + spsi*ctheta*qyhat;
-    const double cmu = (-stheta*cpsi*cphi - spsi*sphi)*qxhat + ctheta*cpsi*qyhat;
     const double t = q*sqrt(radius_equat_minor*radius_equat_minor*cnu*cnu
                           + radius_equat_major*radius_equat_major*cmu*cmu
                           + radius_polar*radius_polar*calpha*calpha);

@@ -30,6 +30,7 @@ double _BCCeval(double Theta, double Phi, double temp1, double temp3) {
 	const double temp7 =  sin_theta*cos_phi + sin_theta*sin_phi + cos_theta;
 	const double temp8 = -sin_theta*cos_phi - sin_theta*sin_phi + cos_theta;
 	const double temp9 = -sin_theta*cos_phi + sin_theta*sin_phi - cos_theta;
+
 	const double temp10 = exp((-1.0/8.0)*temp1*(temp7*temp7 + temp8*temp8 + temp9*temp9));
 	result = pow(1.0-(temp10*temp10),3)*temp6
 	    / ( (1.0 - 2.0*temp10*cos(0.5*temp3*temp7) + temp10*temp10)
@@ -80,91 +81,32 @@ double Iq(double q, double dnn,
 	answer = answer*sphere_form(q,radius,sld,solvent_sld)*latticescale;
 
     return answer;
-
-
 }
 
 
-double Iqxy(double qx, double qy, double dnn,
-    double d_factor, double radius,double sld, double solvent_sld,
-    double theta, double phi, double psi){
+double Iqxy(double qx, double qy,
+    double dnn, double d_factor, double radius,
+    double sld, double solvent_sld,
+    double theta, double phi, double psi)
+{
+    double q, cos_a1, cos_a2, cos_a3;
+    ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, cos_a3, cos_a2, cos_a1);
 
-  double b3_x, b3_y, b1_x, b1_y, b2_x, b2_y; //b3_z,
-  //double q_z;
-  double cos_val_b3, cos_val_b2, cos_val_b1;
-  double a1_dot_q, a2_dot_q,a3_dot_q;
-  double answer;
-  double Zq, Fkq, Fkq_2;
+    const double a1 = +cos_a3 - cos_a1 + cos_a2;
+    const double a2 = +cos_a3 + cos_a1 - cos_a2;
+    const double a3 = -cos_a3 + cos_a1 + cos_a2;
 
-  //convert to q and make scaled values
-  double q = sqrt(qx*qx+qy*qy);
-  double q_x = qx/q;
-  double q_y = qy/q;
+    const double qd = 0.5*q*dnn;
+    const double exp_qd = exp(0.5*square(qd*d_factor)*(a1*a1 + a2*a2 + a3*a3));
+    const double sinh_qd = 0.5*exp_qd - 0.5/exp_qd;
+    const double cosh_qd = 0.5*exp_qd + 0.5/exp_qd;
 
-  //convert angle degree to radian
-  theta = theta * M_PI_180;
-  phi = phi * M_PI_180;
-  psi = psi * M_PI_180;
+    const double Zq = sinh_qd/(cosh_qd - cos(qd*a1))
+                    * sinh_qd/(cosh_qd - cos(qd*a2))
+                    * sinh_qd/(cosh_qd - cos(qd*a3));
 
-  const double Da = d_factor*dnn;
-  const double s1 = dnn/sqrt(0.75);
-
-
-  //the occupied volume of the lattice
-  const double latticescale = 2.0*sphere_volume(radius/s1);
-  // q vector
-  //q_z = 0.0; // for SANS; assuming qz is negligible
-  /// Angles here are respect to detector coordinate
-  ///  instead of against q coordinate(PRB 36(46), 3(6), 1754(3854))
-    // b3 axis orientation
-    b3_x = cos(theta) * cos(phi);
-    b3_y = sin(theta);
-    //b3_z = -cos(theta) * sin(phi);
-    cos_val_b3 =  b3_x*q_x + b3_y*q_y;// + b3_z*q_z;
-
-    //alpha = acos(cos_val_b3);
-    // b1 axis orientation
-    b1_x = -cos(phi)*sin(psi) * sin(theta)+sin(phi)*cos(psi);
-    b1_y = sin(psi)*cos(theta);
-    cos_val_b1 = b1_x*q_x + b1_y*q_y;
-    // b2 axis orientation
-    b2_x = -sin(theta)*cos(psi)*cos(phi)-sin(psi)*sin(phi);
-  	b2_y = cos(theta)*cos(psi);
-    cos_val_b2 = b2_x*q_x + b2_y*q_y;
-
-    // The following test should always pass
-    if (fabs(cos_val_b3)>1.0) {
-      //printf("bcc_ana_2D: Unexpected error: cos()>1\n");
-      cos_val_b3 = 1.0;
-    }
-    if (fabs(cos_val_b2)>1.0) {
-      //printf("bcc_ana_2D: Unexpected error: cos()>1\n");
-      cos_val_b2 = 1.0;
-    }
-    if (fabs(cos_val_b1)>1.0) {
-      //printf("bcc_ana_2D: Unexpected error: cos()>1\n");
-      cos_val_b1 = 1.0;
-    }
-    // Compute the angle btw vector q and the a3 axis
-    a3_dot_q = 0.5*dnn*q*(cos_val_b2+cos_val_b1-cos_val_b3);
-
-    // a1 axis
-    a1_dot_q = 0.5*dnn*q*(cos_val_b3+cos_val_b2-cos_val_b1);
-
-    // a2 axis
-    a2_dot_q = 0.5*dnn*q*(cos_val_b3+cos_val_b1-cos_val_b2);
-
-
-    // Get Fkq and Fkq_2
-    Fkq = exp(-0.5*pow(Da/dnn,2.0)*(a1_dot_q*a1_dot_q+a2_dot_q*a2_dot_q+a3_dot_q*a3_dot_q));
-    Fkq_2 = Fkq*Fkq;
-    // Call Zq=Z1*Z2*Z3
-    Zq = (1.0-Fkq_2)/(1.0-2.0*Fkq*cos(a1_dot_q)+Fkq_2);
-    Zq *= (1.0-Fkq_2)/(1.0-2.0*Fkq*cos(a2_dot_q)+Fkq_2);
-    Zq *= (1.0-Fkq_2)/(1.0-2.0*Fkq*cos(a3_dot_q)+Fkq_2);
-
-  // Use SphereForm directly from libigor
-  answer = sphere_form(q,radius,sld,solvent_sld)*Zq*latticescale;
-
-  return answer;
- }
+    const double Fq = sphere_form(q,radius,sld,solvent_sld)*Zq;
+    //the occupied volume of the lattice
+    const double lattice_scale = 2.0*sphere_volume(sqrt(0.75)*radius/dnn);
+    return lattice_scale * Fq;
+}

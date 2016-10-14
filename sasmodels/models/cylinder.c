@@ -32,7 +32,7 @@ double orient_avg_1D(double q, double radius, double length)
         double sn, cn; // slots to hold sincos function output
         // alpha(theta,phi) the projection of the cylinder on the detector plane
         SINCOS(alpha, sn, cn);
-        total += Gauss76Wt[i] * fq(q, sn, cn, radius, length)* fq(q, sn, cn, radius, length) * sn;
+        total += Gauss76Wt[i] * square(fq(q, sn, cn, radius, length)) * sn;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     return total*zm;
@@ -57,16 +57,8 @@ double Iqxy(double qx, double qy,
     double theta,
     double phi)
 {
-    double sn, cn; // slots to hold sincos function output
-
-    // Compute angle alpha between q and the cylinder axis
-    SINCOS(phi*M_PI_180, sn, cn);
-    const double q = sqrt(qx*qx + qy*qy);
-    const double cos_val = (q==0. ? 1.0 : (cn*qx + sn*qy)*sin(theta*M_PI_180)/q);
-
-    const double alpha = acos(cos_val);
-
-    SINCOS(alpha, sn, cn);
+    double q, sin_alpha, cos_alpha;
+    ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sin_alpha, cos_alpha);
     const double s = (sld-solvent_sld) * form_volume(radius, length);
-    return 1.0e-4 * square(s * fq(q, sn, cn, radius, length));
+    return 1.0e-4 * square(s * fq(q, sin_alpha, cos_alpha, radius, length));
 }

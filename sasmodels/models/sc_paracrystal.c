@@ -59,8 +59,7 @@ sc_integrand(double dnn, double d_factor, double qq, double xx, double yy)
 	return(integrand);
 }
 
-static
-double sc_crystal_kernel(double q,
+double Iq(double q,
           double dnn,
           double d_factor,
           double radius,
@@ -102,8 +101,7 @@ double sc_crystal_kernel(double q,
 	return answer;
 }
 
-static
-double sc_crystal_kernel_2d(double q, double q_x, double q_y,
+double Iqxy(double qx, double qy,
           double dnn,
           double d_factor,
           double radius,
@@ -113,116 +111,20 @@ double sc_crystal_kernel_2d(double q, double q_x, double q_y,
           double phi,
           double psi)
 {
-    //convert angle degree to radian
-    theta = theta * M_PI_180;
-    phi = phi * M_PI_180;
-    psi = psi * M_PI_180;
+    double q, cos_a1, cos_a2, cos_a3;
+    ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, cos_a3, cos_a2, cos_a1);
 
-    const double qda_2 = pow(q*d_factor*dnn,2.0);
+    const double qd = q*dnn;
+    const double exp_qd = exp(0.5*square(qd*d_factor));
+    const double sinh_qd = 0.5*exp_qd - 0.5/exp_qd;
+    const double cosh_qd = 0.5*exp_qd + 0.5/exp_qd;
 
-    double snt, cnt;
-    SINCOS(theta, snt, cnt);
+    const double Zq = sinh_qd/(cosh_qd - cos(qd*cos_a1))
+                    * sinh_qd/(cosh_qd - cos(qd*cos_a2))
+                    * sinh_qd/(cosh_qd - cos(qd*cos_a3));
 
-    double snp, cnp;
-    SINCOS(phi, snp, cnp);
-
-    double sns, cns;
-    SINCOS(psi, sns, cns);
-
-    /// Angles here are respect to detector coordinate instead of against
-    //  q coordinate(PRB 36, 3, 1754)
-    // a3 axis orientation
-
-    const double a3_x = cnt * cnp;
-    const double a3_y = snt;
-
-    // Compute the angle btw vector q and the a3 axis
-    double cos_val_a3 = a3_x*q_x + a3_y*q_y;
-
-    // a1 axis orientation
-    const double a1_x = -cnp*sns * snt+snp*cns;
-    const double a1_y = sns*cnt;
-
-    double cos_val_a1 = a1_x*q_x + a1_y*q_y;
-
-    // a2 axis orientation
-    const double a2_x = -snt*cns*cnp-sns*snp;
-    const double a2_y = cnt*cns;
-
-    // a2 axis
-    const double cos_val_a2 =  a2_x*q_x + a2_y*q_y;
-
-    // The following test should always pass
-    if (fabs(cos_val_a3)>1.0) {
-        //printf("parallel_ana_2D: Unexpected error: cos(alpha)>1\n");
-        cos_val_a3 = 1.0;
-    }
-    if (fabs(cos_val_a1)>1.0) {
-        //printf("parallel_ana_2D: Unexpected error: cos(alpha)>1\n");
-        cos_val_a1 = 1.0;
-    }
-    if (fabs(cos_val_a2)>1.0) {
-        //printf("parallel_ana_2D: Unexpected error: cos(alpha)>1\n");
-        cos_val_a3 = 1.0;
-    }
-
-    const double a3_dot_q = dnn*q*cos_val_a3;
-    const double a1_dot_q = dnn*q*cos_val_a1;
-    const double a2_dot_q = dnn*q*cos_val_a2;
-
-    // Call Zq=Z1*Z2*Z3
-    double Zq = (1.0-exp(-qda_2))/(1.0-2.0*exp(-0.5*qda_2)*cos(a1_dot_q)+exp(-qda_2));
-    Zq *= (1.0-exp(-qda_2))/(1.0-2.0*exp(-0.5*qda_2)*cos(a2_dot_q)+exp(-qda_2));
-    Zq *= (1.0-exp(-qda_2))/(1.0-2.0*exp(-0.5*qda_2)*cos(a3_dot_q)+exp(-qda_2));
-
-    // Use SphereForm directly from libigor
-    double answer = sphere_form(q, radius, sphere_sld, solvent_sld)*Zq;
-
-    //consider scales
-    const double latticeScale = sphere_volume(radius/dnn);
-    answer *= latticeScale;
-
-    return answer;
+    const double Fq = sphere_form(q, radius, sphere_sld, solvent_sld)*Zq;
+    //the occupied volume of the lattice
+    const double lattice_scale = sphere_volume(radius/dnn);
+    return lattice_scale * Fq;
 }
-
-double Iq(double q,
-          double dnn,
-          double d_factor,
-          double radius,
-          double sphere_sld,
-          double solvent_sld)
-{
-    return sc_crystal_kernel(q,
-              dnn,
-              d_factor,
-              radius,
-              sphere_sld,
-              solvent_sld);
-}
-
-// Iqxy is never called since no orientation or magnetic parameters.
-double Iqxy(double qx, double qy,
-            double dnn,
-            double d_factor,
-            double radius,
-            double sphere_sld,
-            double solvent_sld,
-            double theta,
-            double phi,
-            double psi)
-{
-    double q = sqrt(qx*qx + qy*qy);
-
-
-    return sc_crystal_kernel_2d(q, qx/q, qy/q,
-                  dnn,
-                  d_factor,
-                  radius,
-                  sphere_sld,
-                  solvent_sld,
-                  theta,
-                  phi,
-                  psi);
-
-}
-
