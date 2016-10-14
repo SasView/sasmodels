@@ -10,14 +10,12 @@ double Iqxy(double qx, double qy, double core_sld, double shell_sld, double solv
 double _cyl(double twovd, double besarg, double siarg);
 double _cyl(double twovd, double besarg, double siarg)
 {
-    const double bj = (besarg == 0.0 ? 0.5 : 0.5*sas_J1c(besarg));
-    const double si = (siarg == 0.0 ? 1.0 : sin(siarg)/siarg);
-    return twovd*si*bj;
+    return twovd * sinc(siarg) * sas_J1c(besarg);
 }
 
 double form_volume(double radius, double thickness, double length)
 {
-    return M_PI*(radius+thickness)*(radius+thickness)*(length+2*thickness);
+    return M_PI*(radius+thickness)*(radius+thickness)*(length+2.0*thickness);
 }
 
 double Iq(double q,
@@ -65,16 +63,8 @@ double Iqxy(double qx, double qy,
     double theta,
     double phi)
 {
-    double sn, cn; // slots to hold sincos function output
-
-    // Compute angle alpha between q and the cylinder axis
-    SINCOS(phi*M_PI_180, sn, cn);
-    // # The following correction factor exists in sasview, but it can't be
-    // # right, so we are leaving it out for now.
-    // const double correction = fabs(cn)*M_PI_2;
-    const double q = sqrt(qx*qx+qy*qy);
-    const double cos_val = (q==0. ? 1.0 : (cn*qx + sn*qy)*sin(theta*M_PI_180)/q);
-    const double alpha = acos(cos_val);
+    double q, sin_alpha, cos_alpha;
+    ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sin_alpha, cos_alpha);
 
     const double core_qr = q*radius;
     const double core_qh = q*0.5*length;
@@ -85,8 +75,7 @@ double Iqxy(double qx, double qy,
     const double shell_twovd = 2.0 * form_volume(radius,thickness,length)
                              * (shell_sld-solvent_sld);
 
-    SINCOS(alpha, sn, cn);
-    const double fq = _cyl(core_twovd, core_qr*sn, core_qh*cn)
-        + _cyl(shell_twovd, shell_qr*sn, shell_qh*cn);
+    const double fq = _cyl(core_twovd, core_qr*sin_alpha, core_qh*cos_alpha)
+        + _cyl(shell_twovd, shell_qr*sin_alpha, shell_qh*cos_alpha);
     return 1.0e-4 * fq * fq;
 }
