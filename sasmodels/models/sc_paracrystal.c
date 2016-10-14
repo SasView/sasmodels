@@ -115,13 +115,12 @@ double Iqxy(double qx, double qy,
     ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, cos_a3, cos_a2, cos_a1);
 
     const double qd = q*dnn;
-    const double exp_qd = exp(0.5*square(qd*d_factor));
-    const double sinh_qd = 0.5*exp_qd - 0.5/exp_qd;
-    const double cosh_qd = 0.5*exp_qd + 0.5/exp_qd;
-
-    const double Zq = sinh_qd/(cosh_qd - cos(qd*cos_a1))
-                    * sinh_qd/(cosh_qd - cos(qd*cos_a2))
-                    * sinh_qd/(cosh_qd - cos(qd*cos_a3));
+    const double arg = 0.5*square(qd*d_factor);
+    const double tanh_qd = tanh(arg);
+    const double cosh_qd = cosh(arg);
+    const double Zq = tanh_qd/(1. - cos(qd*cos_a1)/cosh_qd)
+                    * tanh_qd/(1. - cos(qd*cos_a2)/cosh_qd)
+                    * tanh_qd/(1. - cos(qd*cos_a3)/cosh_qd);
 
     const double Fq = sphere_form(q, radius, sphere_sld, solvent_sld)*Zq;
     //the occupied volume of the lattice

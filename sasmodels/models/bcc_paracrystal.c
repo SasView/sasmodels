@@ -97,13 +97,12 @@ double Iqxy(double qx, double qy,
     const double a3 = -cos_a3 + cos_a1 + cos_a2;
 
     const double qd = 0.5*q*dnn;
-    const double exp_qd = exp(0.5*square(qd*d_factor)*(a1*a1 + a2*a2 + a3*a3));
-    const double sinh_qd = 0.5*exp_qd - 0.5/exp_qd;
-    const double cosh_qd = 0.5*exp_qd + 0.5/exp_qd;
-
-    const double Zq = sinh_qd/(cosh_qd - cos(qd*a1))
-                    * sinh_qd/(cosh_qd - cos(qd*a2))
-                    * sinh_qd/(cosh_qd - cos(qd*a3));
+    const double arg = 0.5*square(qd*d_factor)*(a1*a1 + a2*a2 + a3*a3);
+    const double tanh_qd = tanh(arg);
+    const double cosh_qd = cosh(arg);
+    const double Zq = tanh_qd/(1. - cos(qd*a1)/cosh_qd)
+                    * tanh_qd/(1. - cos(qd*a2)/cosh_qd)
+                    * tanh_qd/(1. - cos(qd*a3)/cosh_qd);
 
     const double Fq = sphere_form(q,radius,sld,solvent_sld)*Zq;
     //the occupied volume of the lattice
