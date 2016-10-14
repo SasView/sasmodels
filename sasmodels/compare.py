@@ -80,6 +80,7 @@ Options (* for default):
     -edit starts the parameter explorer
     -default/-demo* use demo vs default parameters
     -html shows the model docs instead of running the model
+    -title="note" adds note to the plot title, after the model name
 
 Any two calculation engines can be selected for comparison:
 
@@ -678,6 +679,9 @@ def compare(opts, limits=None):
             err, errstr, errview = resid, "abs err", "linear"
         else:
             err, errstr, errview = abs(relerr), "rel err", "log"
+        #sorted = np.sort(err.flatten())
+        #cutoff = sorted[int(sorted.size*0.95)]
+        #err[err>cutoff] = cutoff
         #err,errstr = base/comp,"ratio"
         plot_theory(data, None, resid=err, view=errview, use_data=False)
         if view == 'linear':
@@ -690,7 +694,7 @@ def compare(opts, limits=None):
     fig = plt.gcf()
     fig.suptitle(opts['name'])
 
-    if n_comp > 0 and n_base > 0 and '-hist' in opts:
+    if n_comp > 0 and n_base > 0 and opts['show_hist']:
         plt.figure()
         v = relerr
         v[v == 0] = 0.5*np.min(np.abs(v[v != 0]))
