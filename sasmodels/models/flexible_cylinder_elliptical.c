@@ -1,8 +1,6 @@
 double form_volume(double length, double kuhn_length, double radius);
 double Iq(double q, double length, double kuhn_length, double radius,
           double axis_ratio, double sld, double solvent_sld);
-double Iqxy(double qx, double qy, double length, double kuhn_length,
-            double radius, double axis_ratio, double sld, double solvent_sld);
 double flexible_cylinder_ex_kernel(double q, double length, double kuhn_length,
                                 double radius, double axis_ratio, double sld,
                                 double solvent_sld);
@@ -76,23 +74,3 @@ double Iq(double q,
     return result;
 }
 
-double Iqxy(double qx, double qy,
-            double length,
-            double kuhn_length,
-            double radius,
-            double axis_ratio,
-            double sld,
-            double solvent_sld)
-{
-    double q;
-    q = sqrt(qx*qx+qy*qy);
-    double result = flexible_cylinder_ex_kernel(q,
-                    length,
-                    kuhn_length,
-                    radius,
-                    axis_ratio,
-                    sld,
-                    solvent_sld);
-
-    return result;
-}

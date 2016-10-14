@@ -1,8 +1,6 @@
 double form_volume(double length_a, double b2a_ratio, double c2a_ratio);
 double Iq(double q, double sld, double solvent_sld, double length_a, 
           double b2a_ratio, double c2a_ratio);
-double Iqxy(double qx, double qy, double sld, double solvent_sld, 
-            double length_a, double b2a_ratio, double c2a_ratio);
 
 double form_volume(double length_a, double b2a_ratio, double c2a_ratio)
 {
@@ -27,9 +25,9 @@ double Iq(double q,
 
    //Integration limits to use in Gaussian quadrature
     double v1a = 0.0;
-    double v1b = 0.5 * M_PI;  //theta integration limits
+    double v1b = M_PI_2;  //theta integration limits
     double v2a = 0.0;
-    double v2b = 0.5 * M_PI;  //phi integration limits
+    double v2b = M_PI_2;  //phi integration limits
     
     //Order of integration
     int nordi=76;			        
@@ -86,16 +84,4 @@ double Iq(double q,
 
     return answer;
     
-}
-
-double Iqxy(double qx, double qy,
-    double sld,
-    double solvent_sld,
-    double length_a,
-    double b2a_ratio,
-    double c2a_ratio)
-{
-    double q = sqrt(qx*qx + qy*qy);
-    double intensity = Iq(q, sld, solvent_sld, length_a, b2a_ratio, c2a_ratio); 
-    return intensity;    
 }

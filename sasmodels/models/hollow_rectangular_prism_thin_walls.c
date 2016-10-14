@@ -1,8 +1,6 @@
 double form_volume(double length_a, double b2a_ratio, double c2a_ratio);
 double Iq(double q, double sld, double solvent_sld, double length_a, 
           double b2a_ratio, double c2a_ratio);
-double Iqxy(double qx, double qy, double sld, double solvent_sld, 
-            double length_a, double b2a_ratio, double c2a_ratio);
 
 double form_volume(double length_a, double b2a_ratio, double c2a_ratio)
 {
@@ -82,16 +80,4 @@ double Iq(double q,
 
     return answer;
     
-}
-
-double Iqxy(double qx, double qy,
-    double sld,
-    double solvent_sld,
-    double length_a,
-    double b2a_ratio,
-    double c2a_ratio)
-{
-    double q = sqrt(qx*qx + qy*qy);
-    double intensity = Iq(q, sld, solvent_sld, length_a, b2a_ratio, c2a_ratio); 
-    return intensity;    
 }

@@ -6,12 +6,6 @@ double Iq(double q,
     double lg_sld, double sm_sld, double solvent_sld
     );
     
-double Iqxy(double qx, double qy,
-    double lg_radius, double sm_radius,
-    double lg_vol_frac, double sm_vol_frac,
-    double lg_sld, double sm_sld, double solvent_sld
-    );
-
 void calculate_psfs(double qval,
     double r2, double nf2,
     double aa, double phi,
@@ -87,19 +81,6 @@ double Iq(double q,
     return(inten);
 }
 
-
-double Iqxy(double qx, double qy,
-    double lg_radius, double sm_radius,
-    double lg_vol_frac, double sm_vol_frac,
-    double lg_sld, double sm_sld, double solvent_sld)
-    
-{
-    double q = sqrt(qx*qx + qy*qy);
-    return Iq(q,
-        lg_radius, sm_radius,
-        lg_vol_frac, sm_vol_frac,
-        lg_sld, sm_sld, solvent_sld);
-}
 
 void calculate_psfs(double qval,
     double r2, double nf2,
