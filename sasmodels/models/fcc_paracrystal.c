@@ -92,9 +92,9 @@ double Iqxy(double qx, double qy,
     double q, cos_a1, cos_a2, cos_a3;
     ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, cos_a3, cos_a2, cos_a1);
 
-    const double a1 = +cos_a3 + cos_a2;
-    const double a2 = +cos_a3 + cos_a1;
-    const double a3 = -cos_a3 + cos_a2;
+    const double a1 = cos_a2 + cos_a3;
+    const double a2 = cos_a3 + cos_a1;
+    const double a3 = cos_a2 + cos_a1;
     const double qd = 0.5*q*dnn;
     const double exp_qd = exp(0.5*square(qd*d_factor)*(a1*a1 + a2*a2 + a3*a3));
     const double sinh_qd = 0.5*exp_qd - 0.5/exp_qd;
