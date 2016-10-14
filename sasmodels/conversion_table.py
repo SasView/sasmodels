@@ -728,7 +728,9 @@ CONVERSION_TABLE = {
             "sld_core": "core_sld",
             "theta": "axis_theta",
             "sld_solvent": "solvent_sld",
-            "n_stacking": "n_stacking"
+            "n_stacking": "n_stacking",
+            "thick_layer": "layer_thick",
+            "thick_core": "core_thick",
         }
     ],
     "star_polymer": [

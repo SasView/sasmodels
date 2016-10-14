@@ -37,14 +37,14 @@ import numpy as np  # type: ignore
 
 from . import core
 from . import kerneldll
-from . import weights
+from . import exception
 from .data import plot_theory, empty_data1D, empty_data2D
 from .direct_model import DirectModel
 from .convert import revert_name, revert_pars, constrain_new_to_old
 
 try:
     from typing import Optional, Dict, Any, Callable, Tuple
-except:
+except Exception:
     pass
 else:
     from .modelinfo import ModelInfo, Parameter, ParameterSet
@@ -465,10 +465,17 @@ def eval_sasview(model_info, data):
         for k, v in oldpars.items():
             if k.endswith('.type'):
                 par = k[:-5]
+                if v == 'gaussian': continue
                 cls = dispersers[v if v != 'rectangle' else 'rectangula']
                 handle = cls()
                 model[0].disperser_handles[par] = handle
-                model[0].set_dispersion(par, handle)
+                try:
+                    model[0].set_dispersion(par, handle)
+                except Exception:
+                    exception.annotate_exception("while setting %s to %r"
+                                                 %(par, v))
+                    raise
+
 
         #print("sasview pars",oldpars)
         for k, v in oldpars.items():
