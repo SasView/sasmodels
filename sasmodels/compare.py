@@ -80,6 +80,7 @@ Options (* for default):
     -edit starts the parameter explorer
     -default/-demo* use demo vs default parameters
     -html shows the model docs instead of running the model
+    -title="graph title" adds a title to the plot
 
 Any two calculation engines can be selected for comparison:
 
@@ -688,7 +689,8 @@ def compare(opts, limits=None):
     #    h = plt.colorbar()
     #    h.ax.set_title(cbar_title)
     fig = plt.gcf()
-    fig.suptitle(opts['name'])
+    extra_title = ' '+opts['title'] if opts['title'] else ''
+    fig.suptitle(opts['name'] + extra_title)
 
     if n_comp > 0 and n_base > 0 and '-hist' in opts:
         plt.figure()
@@ -741,7 +743,7 @@ NAME_OPTIONS = set([
     ])
 VALUE_OPTIONS = [
     # Note: random is both a name option and a value option
-    'cutoff', 'random', 'nq', 'res', 'accuracy',
+    'cutoff', 'random', 'nq', 'res', 'accuracy', 'title',
     ]
 
 def columnize(items, indent="", width=79):
@@ -846,6 +848,7 @@ def parse_opts(argv):
         'use_demo'  : True,
         'zero'      : False,
         'html'      : False,
+        'title'     : None,
     }
     engines = []
     for arg in flags:
@@ -866,6 +869,7 @@ def parse_opts(argv):
         elif arg.startswith('-accuracy='): opts['accuracy'] = arg[10:]
         elif arg.startswith('-cutoff='):   opts['cutoff'] = float(arg[8:])
         elif arg.startswith('-random='):   opts['seed'] = int(arg[8:])
+        elif arg.startswith('-title'):     opts['title'] = arg[7:]
         elif arg == '-random':  opts['seed'] = np.random.randint(1000000)
         elif arg == '-preset':  opts['seed'] = -1
         elif arg == '-mono':    opts['mono'] = True
