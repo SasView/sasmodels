@@ -106,6 +106,6 @@ double Iqxy(double qx, double qy,
 
     const double Fq = sphere_form(q,radius,sld,solvent_sld)*Zq;
     //the occupied volume of the lattice
-    const double lattice_scale = 2.0*sphere_volume(M_SQRT1_2*radius/dnn);
+    const double lattice_scale = 4.0*sphere_volume(M_SQRT1_2*radius/dnn);
     return lattice_scale * Fq;
 }
