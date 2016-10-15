@@ -220,7 +220,7 @@ def ER(length_a, length_b, length_c):
 
 # parameters for demo
 demo = dict(scale=1, background=0,
-            sld=6.3e-6, sld_solvent=1.0e-6,
+            sld=6.3, sld_solvent=1.0,
             length_a=35, length_b=75, length_c=400,
             theta=45, phi=30, psi=15,
             length_a_pd=0.1, length_a_pd_n=10,
