@@ -172,20 +172,20 @@ CONVERSION_TABLE = {
     "core_shell_parallelepiped": [
         "CSParallelepipedModel",
         {
-            "phi": "parallel_phi",
-            "psi": "parallel_psi",
             "sld_core": "sld_pcore",
-            "sld_c": "sld_rimC",
+            "sld_a": "sld_rimA",
             "sld_b": "sld_rimB",
+            "sld_c": "sld_rimC",
             "sld_solvent": "sld_solv",
             "length_a": "shortA",
-            "sld_a": "sld_rimA",
             "length_b": "midB",
-            "thick_rimc": "rimC",
-            "theta": "parallel_theta",
-            "thick_rim_a": "rimA",
             "length_c": "longC",
-            "thick_rim_b": "rimB"
+            "thick_rim_a": "rimA",
+            "thick_rim_c": "rimC",
+            "thick_rim_b": "rimB",
+            "theta": "parallel_theta",
+            "phi": "parallel_phi",
+            "psi": "parallel_psi",
         }
     ],
     "core_shell_sphere": [
