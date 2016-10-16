@@ -165,6 +165,7 @@ import sys
 from os.path import abspath, dirname, join as joinpath, exists, isdir, getmtime
 import re
 import string
+from zlib import crc32
 
 import numpy as np  # type: ignore
 
@@ -355,6 +356,13 @@ def ocl_timestamp(model_info):
     newest = max(times) if times else 0
     return newest
 
+def tag_source(source):
+    # type: (str) -> str
+    """
+    Return a unique tag for the source code.
+    """
+    # Note: need 0xffffffff&val to force an unsigned 32-bit number
+    return "%08X"%(0xffffffff&crc32(source))
 
 def convert_type(source, dtype):
     # type: (str, np.dtype) -> str
