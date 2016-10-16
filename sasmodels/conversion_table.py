@@ -256,12 +256,13 @@ CONVERSION_TABLE = {
     "elliptical_cylinder": [
         "EllipticalCylinderModel",
         {
+            "axis_ratio": "r_ratio",
+            "radius_minor": "r_minor",
+            "sld": "sldCyl",
+            "sld_solvent": "sldSolv",
+            "theta": "cyl_theta",
             "phi": "cyl_phi",
             "psi": "cyl_psi",
-            "theta": "cyl_theta",
-            "sld": "sldCyl",
-            "axis_ratio": "r_ratio",
-            "sld_solvent": "sldSolv"
         }
     ],
     "fcc_paracrystal": [
