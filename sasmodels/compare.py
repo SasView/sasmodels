@@ -32,6 +32,7 @@ import sys
 import math
 import datetime
 import traceback
+import re
 
 import numpy as np  # type: ignore
 
@@ -41,6 +42,7 @@ from . import exception
 from .data import plot_theory, empty_data1D, empty_data2D
 from .direct_model import DirectModel
 from .convert import revert_name, revert_pars, constrain_new_to_old
+from .generate import FLOAT_RE
 
 try:
     from typing import Optional, Dict, Any, Callable, Tuple
@@ -611,8 +613,8 @@ def compare(opts, limits=None):
     as the values are adjusted, making it easier to see the effects of the
     parameters.
     """
-    n_base, n_comp = opts['n1'], opts['n2']
-    pars = opts['pars']
+    n_base, n_comp = opts['count']
+    pars, pars2 = opts['pars']
     data = opts['data']
 
     # silence the linter
@@ -636,7 +638,7 @@ def compare(opts, limits=None):
     # Comparison calculation
     if n_comp > 0:
         try:
-            comp_raw, comp_time = time_calculation(comp, pars, n_comp)
+            comp_raw, comp_time = time_calculation(comp, pars2, n_comp)
             comp_value = np.ma.masked_invalid(comp_raw)
             print("%s t=%.2f ms, intensity=%.0f"
                   % (comp.engine, comp_time, comp_value.sum()))
@@ -699,7 +701,8 @@ def compare(opts, limits=None):
     #    h = plt.colorbar()
     #    h.ax.set_title(cbar_title)
     fig = plt.gcf()
-    fig.suptitle(opts['name'])
+    extra_title = ' '+opts['title'] if opts['title'] else ''
+    fig.suptitle(":".join(opts['name']) + extra_title)
 
     if n_comp > 0 and n_base > 0 and opts['show_hist']:
         plt.figure()
@@ -752,7 +755,7 @@ NAME_OPTIONS = set([
     ])
 VALUE_OPTIONS = [
     # Note: random is both a name option and a value option
-    'cutoff', 'random', 'nq', 'res', 'accuracy',
+    'cutoff', 'random', 'nq', 'res', 'accuracy', 'title',
     ]
 
 def columnize(items, indent="", width=79):
@@ -799,6 +802,11 @@ def get_pars(model_info, use_demo=False):
         pars.update(model_info.demo)
     return pars
 
+INTEGER_RE = re.compile("^[+-]?[1-9][0-9]*$")
+def isnumber(str):
+    match = FLOAT_RE.match(str)
+    isfloat = (match and not str[match.end():])
+    return isfloat or INTEGER_RE.match(str)
 
 def parse_opts(argv):
     # type: (List[str]) -> Dict[str, Any]
@@ -821,14 +829,6 @@ def parse_opts(argv):
     if len(positional_args) > 3:
         print("expected parameters: model N1 N2")
 
-    name = positional_args[0]
-    try:
-        model_info = core.load_model_info(name)
-    except ImportError as exc:
-        print(str(exc))
-        print("Could not find model; use one of:\n    " + models)
-        return None
-
     invalid = [o[1:] for o in flags
                if o[1:] not in NAME_OPTIONS
                and not any(o.startswith('-%s='%t) for t in VALUE_OPTIONS)]
@@ -836,6 +836,9 @@ def parse_opts(argv):
         print("Invalid options: %s"%(", ".join(invalid)))
         return None
 
+    name = positional_args[0]
+    n1 = int(positional_args[1]) if len(positional_args) > 1 else 1
+    n2 = int(positional_args[2]) if len(positional_args) > 2 else 1
 
     # pylint: disable=bad-whitespace
     # Interpret the flags
@@ -857,6 +860,7 @@ def parse_opts(argv):
         'use_demo'  : True,
         'zero'      : False,
         'html'      : False,
+        'title'     : None,
     }
     engines = []
     for arg in flags:
@@ -877,6 +881,7 @@ def parse_opts(argv):
         elif arg.startswith('-accuracy='): opts['accuracy'] = arg[10:]
         elif arg.startswith('-cutoff='):   opts['cutoff'] = float(arg[8:])
         elif arg.startswith('-random='):   opts['seed'] = int(arg[8:])
+        elif arg.startswith('-title'):     opts['title'] = arg[7:]
         elif arg == '-random':  opts['seed'] = np.random.randint(1000000)
         elif arg == '-preset':  opts['seed'] = -1
         elif arg == '-mono':    opts['mono'] = True
@@ -901,49 +906,93 @@ def parse_opts(argv):
         elif arg == '-html':    opts['html'] = True
     # pylint: enable=bad-whitespace
 
+    if ':' in name:
+        name, name2 = name.split(':',2)
+    else:
+        name2 = name
+    try:
+        model_info = core.load_model_info(name)
+        model_info2 = core.load_model_info(name2) if name2 != name else model_info
+    except ImportError as exc:
+        print(str(exc))
+        print("Could not find model; use one of:\n    " + models)
+        return None
+
+    # Get demo parameters from model definition, or use default parameters
+    # if model does not define demo parameters
+    pars = get_pars(model_info, opts['use_demo'])
+    pars2 = get_pars(model_info2, opts['use_demo'])
+    # randomize parameters
+    #pars.update(set_pars)  # set value before random to control range
+    if opts['seed'] > -1:
+        pars = randomize_pars(model_info, pars, seed=opts['seed'])
+        if model_info != model_info2:
+            pars2 = randomize_pars(model_info2, pars2, seed=opts['seed'])
+        else:
+            pars2 = pars.copy()
+        print("Randomize using -random=%i"%opts['seed'])
+    if opts['mono']:
+        pars = suppress_pd(pars)
+        pars2 = suppress_pd(pars2)
+
+    # Fill in parameters given on the command line
+    presets = {}
+    presets2 = {}
+    for arg in values:
+        k, v = arg.split('=', 1)
+        if k not in pars and k not in pars2:
+            # extract base name without polydispersity info
+            s = set(p.split('_pd')[0] for p in pars)
+            print("%r invalid; parameters are: %s"%(k, ", ".join(sorted(s))))
+            return None
+        v1, v2 = v.split(':',2) if ':' in v else (v,v)
+        if v1 and k in pars:
+            presets[k] = float(v1) if isnumber(v1) else v1
+        if v2 and k in pars2:
+            presets2[k] = float(v2) if isnumber(v2) else v2
+
+    # Evaluate preset parameter expressions
+    context = pars.copy()
+    context.update((k,v) for k,v in presets.items() if isinstance(v, float))
+    for k, v in presets.items():
+        if not isinstance(v, float) and not k.endswith('_type'):
+            presets[k] = eval(v, context)
+    context = pars.copy()
+    context.update(presets)
+    context.update((k,v) for k,v in presets2.items() if isinstance(v, float))
+    for k, v in presets2.items():
+        if not isinstance(v, float) and not k.endswith('_type'):
+            presets2[k] = eval(v, context)
+
+    # update parameters with presets
+    pars.update(presets)  # set value after random to control value
+    pars2.update(presets2)  # set value after random to control value
+    #import pprint; pprint.pprint(model_info)
+    constrain_pars(model_info, pars)
+    constrain_pars(model_info2, pars2)
+
+    same_model = name == name2 and pars == pars
     if len(engines) == 0:
-        engines.extend(['single', 'double'])
+        if same_model:
+            engines.extend(['single', 'double'])
+        else:
+            engines.extend(['single', 'single'])
     elif len(engines) == 1:
-        if engines[0][0] == 'double':
+        if not same_model:
+            engines.append(engines[0])
+        elif engines[0] == 'double':
             engines.append('single')
         else:
             engines.append('double')
     elif len(engines) > 2:
         del engines[2:]
 
-    n1 = int(positional_args[1]) if len(positional_args) > 1 else 1
-    n2 = int(positional_args[2]) if len(positional_args) > 2 else 1
     use_sasview = any(engine == 'sasview' and count > 0
                       for engine, count in zip(engines, [n1, n2]))
-
-    # Get demo parameters from model definition, or use default parameters
-    # if model does not define demo parameters
-    pars = get_pars(model_info, opts['use_demo'])
-
-
-    # Fill in parameters given on the command line
-    presets = {}
-    for arg in values:
-        k, v = arg.split('=', 1)
-        if k not in pars:
-            # extract base name without polydispersity info
-            s = set(p.split('_pd')[0] for p in pars)
-            print("%r invalid; parameters are: %s"%(k, ", ".join(sorted(s))))
-            return None
-        presets[k] = float(v) if not k.endswith('type') else v
-
-    # randomize parameters
-    #pars.update(set_pars)  # set value before random to control range
-    if opts['seed'] > -1:
-        pars = randomize_pars(model_info, pars, seed=opts['seed'])
-        print("Randomize using -random=%i"%opts['seed'])
-    if opts['mono']:
-        pars = suppress_pd(pars)
-    pars.update(presets)  # set value after random to control value
-    #import pprint; pprint.pprint(model_info)
-    constrain_pars(model_info, pars)
     if use_sasview:
         constrain_new_to_old(model_info, pars)
+        constrain_new_to_old(model_info2, pars2)
+
     if opts['show_pars']:
         print(str(parlist(model_info, pars, opts['is2d'])))
 
@@ -954,20 +1003,19 @@ def parse_opts(argv):
     else:
         base = None
     if n2:
-        comp = make_engine(model_info, data, engines[1], opts['cutoff'])
+        comp = make_engine(model_info2, data, engines[1], opts['cutoff'])
     else:
         comp = None
 
     # pylint: disable=bad-whitespace
     # Remember it all
     opts.update({
-        'name'      : name,
-        'def'       : model_info,
-        'n1'        : n1,
-        'n2'        : n2,
-        'presets'   : presets,
-        'pars'      : pars,
         'data'      : data,
+        'name'      : [name, name2],
+        'def'       : [model_info, model_info2],
+        'count'     : [n1, n2],
+        'presets'   : [presets, presets2],
+        'pars'      : [pars, pars2],
         'engines'   : [base, comp],
     })
     # pylint: enable=bad-whitespace
@@ -982,7 +1030,7 @@ def show_docs(opts):
     import wx  # type: ignore
     from .generate import view_html_from_info
     app = wx.App() if wx.GetApp() is None else None
-    view_html_from_info(opts['def'])
+    view_html_from_info(opts['def'][0])
     if app: app.MainLoop()
 
 
@@ -1021,8 +1069,8 @@ class Explore(object):
         from . import bumps_model
         config_matplotlib()
         self.opts = opts
-        model_info = opts['def']
-        pars, pd_types = bumps_model.create_parameters(model_info, **opts['pars'])
+        model_info = opts['def'][0]
+        pars, pd_types = bumps_model.create_parameters(model_info, **opts['pars'][0])
         # Initialize parameter ranges, fixing the 2D parameters for 1D data.
         if not opts['is2d']:
             for p in model_info.parameters.user_parameters(is2d=False):
@@ -1068,7 +1116,8 @@ class Explore(object):
         """
         pars = dict((k, v.value) for k, v in self.pars.items())
         pars.update(self.pd_types)
-        self.opts['pars'] = pars
+        self.opts['pars'][0] = pars
+        self.opts['pars'][1] = pars
         limits = compare(self.opts, limits=self.limits)
         if self.limits is None:
             vmin, vmax = limits
