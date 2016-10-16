@@ -57,16 +57,6 @@ double Iq(double q,
     qr1 = r1*q;
     qr2 = r2*q;
 
-    //if (qr1 == 0){
-        //sc1 = 1.0/3.0;
-    //}else{
-        //sc1 = (sin(qr1)-qr1*cos(qr1))/qr1/qr1/qr1;
-    //}
-    //if (qr2 == 0){
-        //sc2 = 1.0/3.0;
-    //}else{
-        //sc2 = (sin(qr2)-qr2*cos(qr2))/qr2/qr2/qr2;
-    //}
     sc1 = sph_j1c(qr1);
     sc2 = sph_j1c(qr2);
     b1 = r1*r1*r1*(rho1-rhos)*M_4PI_3*sc1;
