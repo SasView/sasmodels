@@ -2,23 +2,23 @@
 double Si(double x);
 double Si(double x)
 {
-    if (x >= M_PI*6.2/4.0){
-        const double z = 1./(x*x);
+    if (x >= M_PI*6.2/4.0) {
+        const double xxinv = 1./(x*x);
         // Explicitly writing factorial values triples the speed of the calculation
-        const double out_cos = (((-720.*z + 24.)*z - 2.)*z + 1.)/x;
-        const double out_sin = (((-5040.*z + 120.)*z - 6.)*z + 1)*z;
+        const double out_cos = (((-720.*xxinv + 24.)*xxinv - 2.)*xxinv + 1.)/x;
+        const double out_sin = (((-5040.*xxinv + 120.)*xxinv - 6.)*xxinv + 1)*xxinv;
 
-        double cos_x, sin_x;
-        SINCOS(x, cos_x, sin_x);
+        double sin_x, cos_x;
+        SINCOS(x, sin_x, cos_x);
         return M_PI_2 - cos_x*out_cos - sin_x*out_sin;
     } else {
-        const double z = x*x;
+        const double xx = x*x;
         // Explicitly writing factorial values triples the speed of the calculation
-        return (((((-1./439084800.*z
-            + 1./3265920.)*z
-            - 1./35280.)*z
-            + 1./600.)*z
-            - 1./18.)*z
+        return (((((-1./439084800.*xx
+            + 1./3265920.)*xx
+            - 1./35280.)*xx
+            + 1./600.)*xx
+            - 1./18.)*xx
             + 1.)*x;
     }
 }
