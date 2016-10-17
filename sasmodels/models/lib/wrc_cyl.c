@@ -21,7 +21,8 @@ static double
 Rgsquarezero(double q, double L, double b)
 {
     const double r = b/L;
-    return (L*b/6.0) * (1.0 - r*(1.5 + r*(1.5 + r*0.75*expm1(-2.0/r))));
+    return (L*b/6.0) * (1.0 + r*(-1.5 + r*(1.5 + r*0.75*expm1(-2.0/r))));
+
 }
 
 //
