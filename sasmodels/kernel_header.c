@@ -147,14 +147,24 @@ inline double square(double x) { return x*x; }
 inline double cube(double x) { return x*x*x; }
 inline double sinc(double x) { return x==0 ? 1.0 : sin(x)/x; }
 
- #define ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sn, cn) do { \
-     SINCOS(phi*M_PI_180, sn, cn); \
-     q = sqrt(qx*qx + qy*qy); \
-     cn  = (q==0. ? 1.0 : (cn*qx + sn*qy)/q * cos(theta*M_PI_180));  \
-     sn = sqrt(1 - cn*cn); \
- } while (0)
+#if 0
+#define ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sn, cn) do { \
+    SINCOS(phi*M_PI_180, sn, cn); \
+    q = sqrt(qx*qx + qy*qy); \
+    cn  = (q==0. ? 1.0 : (cn*qx + sn*qy)/q * cos(theta*M_PI_180));  \
+    sn = sqrt(1 - cn*cn); \
+    } while (0)
+#else
+// SasView 3.x definition of orientation
+#define ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sn, cn) do { \
+    SINCOS(theta*M_PI_180, sn, cn); \
+    q = sqrt(qx*qx + qy*qy);\
+    cn = (q==0. ? 1.0 : (cn*cos(phi*M_PI_180)*qx + sn*qy)/q); \
+    sn = sqrt(1 - cn*cn); \
+    } while (0)
+#endif
 
- #define ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, cos_alpha, cos_mu, cos_nu) do { \
+#define ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, cos_alpha, cos_mu, cos_nu) do { \
     q = sqrt(qx*qx + qy*qy); \
     const double qxhat = qx/q; \
     const double qyhat = qy/q; \
@@ -167,4 +177,4 @@ inline double sinc(double x) { return x==0 ? 1.0 : sin(x)/x; }
     cos_alpha = cos_theta*cos_phi*qxhat + sin_theta*qyhat; \
     cos_mu = (-sin_theta*cos_psi*cos_phi - sin_psi*sin_phi)*qxhat + cos_theta*cos_psi*qyhat; \
     cos_nu = (-cos_phi*sin_psi*sin_theta + sin_phi*cos_psi)*qxhat + sin_psi*cos_theta*qyhat; \
- } while (0)
+    } while (0)
