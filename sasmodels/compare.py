@@ -110,6 +110,9 @@ Program description
 
 kerneldll.ALLOW_SINGLE_PRECISION_DLLS = True
 
+# list of math functions for use in evaluating parameters
+MATH = dict((k,getattr(math, k)) for k in dir(math) if not k.startswith('_'))
+
 # CRUFT python 2.6
 if not hasattr(datetime.timedelta, 'total_seconds'):
     def delay(dt):
@@ -922,6 +925,7 @@ def parse_opts(argv):
     # if model does not define demo parameters
     pars = get_pars(model_info, opts['use_demo'])
     pars2 = get_pars(model_info2, opts['use_demo'])
+    pars2.update((k, v) for k, v in pars.items() if k in pars2)
     # randomize parameters
     #pars.update(set_pars)  # set value before random to control range
     if opts['seed'] > -1:
@@ -952,12 +956,12 @@ def parse_opts(argv):
             presets2[k] = float(v2) if isnumber(v2) else v2
 
     # Evaluate preset parameter expressions
-    context = pars.copy()
+    context = MATH.copy()
+    context.update(pars)
     context.update((k,v) for k,v in presets.items() if isinstance(v, float))
     for k, v in presets.items():
         if not isinstance(v, float) and not k.endswith('_type'):
             presets[k] = eval(v, context)
-    context = pars.copy()
     context.update(presets)
     context.update((k,v) for k,v in presets2.items() if isinstance(v, float))
     for k, v in presets2.items():
@@ -994,7 +998,13 @@ def parse_opts(argv):
         constrain_new_to_old(model_info2, pars2)
 
     if opts['show_pars']:
-        print(str(parlist(model_info, pars, opts['is2d'])))
+        if not same_model:
+            print("==== %s ====="%model_info.name)
+            print(str(parlist(model_info, pars, opts['is2d'])))
+            print("==== %s ====="%model_info2.name)
+            print(str(parlist(model_info2, pars2, opts['is2d'])))
+        else:
+            print(str(parlist(model_info, pars, opts['is2d'])))
 
     # Create the computational engines
     data, _ = make_data(opts)
