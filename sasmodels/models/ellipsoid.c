@@ -7,9 +7,17 @@ double _ellipsoid_kernel(double q, double radius_polar, double radius_equatorial
 double _ellipsoid_kernel(double q, double radius_polar, double radius_equatorial, double sin_alpha)
 {
     double ratio = radius_polar/radius_equatorial;
-    const double u = q*radius_equatorial*sqrt(1.0
-                   + sin_alpha*sin_alpha*(ratio*ratio - 1.0));
-    const double f = sph_j1c(u);
+    // Given the following under the radical:
+    //     1 + sin^2(T) (v^2 - 1)
+    // we can expand to match the form given in Guinier (1955)
+    //     = (1 - sin^2(T)) + v^2 sin^2(T) = cos^2(T) + sin^2(T)
+    // Instead of using pythagoras we could pass in sin and cos; this may be
+    // slightly better for 2D which has already computed it, but it introduces
+    // an extra sqrt and square for 1-D not required by the current form, so
+    // leave it as is.
+    const double r = radius_equatorial
+                     * sqrt(1.0 + sin_alpha*sin_alpha*(ratio*ratio - 1.0));
+    const double f = sph_j1c(q*r);
 
     return f*f;
 }

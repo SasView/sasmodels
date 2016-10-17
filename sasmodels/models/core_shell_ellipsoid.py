@@ -124,7 +124,7 @@ category = "shape:ellipsoid"
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [
-    ["radius_equat_core","Ang",     20,   [0, inf],    "volume",      "Equatorial radius of core"],
+    ["radius_equat_core","Ang",     20,   [0, inf],   "volume",      "Equatorial radius of core"],
     ["x_core",        "None",       3,   [0, inf],    "volume",      "axial ratio of core, X = r_polar/r_equatorial"],
     ["thick_shell",   "Ang",       30,   [0, inf],    "volume",      "thickness of shell at equator"],
     ["x_polar_shell", "",           1,   [0, inf],    "volume",      "ratio of thickness of shell at pole to that at equator"],

@@ -17,7 +17,7 @@ double fq(double q, double sn, double cn, double radius, double length)
     // precompute qr and qh to save time in the loop
     const double qr = q*radius;
     const double qh = q*0.5*length; 
-    return  sas_J1c(qr*sn) * sinc(qh*cn) ;
+    return sas_J1c(qr*sn) * sinc(qh*cn);
 }
 
 double orient_avg_1D(double q, double radius, double length)
@@ -59,6 +59,8 @@ double Iqxy(double qx, double qy,
 {
     double q, sin_alpha, cos_alpha;
     ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sin_alpha, cos_alpha);
+    //printf("sn: %g cn: %g\n", sin_alpha, cos_alpha);
     const double s = (sld-solvent_sld) * form_volume(radius, length);
-    return 1.0e-4 * square(s * fq(q, sin_alpha, cos_alpha, radius, length));
+    const double form = fq(q, sin_alpha, cos_alpha, radius, length);
+    return 1.0e-4 * square(s * form);
 }
