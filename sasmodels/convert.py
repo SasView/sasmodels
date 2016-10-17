@@ -1,9 +1,8 @@
 """
 Convert models to and from sasview.
 """
-from __future__ import print_function
+from __future__ import print_function, division
 
-from os.path import join as joinpath, abspath, dirname
 import math
 import warnings
 
@@ -16,7 +15,6 @@ MODELS_WITHOUT_SCALE = [
     'broad_peak',
     'two_lorentzian',
     "two_power_law",
-    'gel_fit',
     'gauss_lorentz_gel',
     'be_polyelectrolyte',
     'correlation_length',
@@ -214,31 +212,6 @@ def revert_pars(model_info, pars):
     for name in namelist:
         if name in MODELS_WITHOUT_VOLFRACTION:
             del oldpars['volfraction']
-        if name == 'stacked_disks':
-            _remove_pd(oldpars, 'n_stacking', name)
-        elif name == 'pearl_necklace':
-            _remove_pd(oldpars, 'num_pearls', name)
-            _remove_pd(oldpars, 'thick_string', name)
-        elif name == 'core_shell_parallelepiped':
-            _remove_pd(oldpars, 'rimA', name)
-            _remove_pd(oldpars, 'rimB', name)
-            _remove_pd(oldpars, 'rimC', name)
-        elif name == 'polymer_micelle':
-            if 'ndensity' in oldpars:
-                oldpars['ndensity'] *= 1e15
-        elif name == 'spherical_sld':
-            oldpars["CONTROL"] -= 1
-            # remove polydispersity from shells
-            for k in range(1, 11):
-                _remove_pd(oldpars, 'thick_flat'+str(k), 'thickness')
-                _remove_pd(oldpars, 'thick_inter'+str(k), 'interface')
-            # remove extra shells
-            for k in range(int(pars['n_shells']), 11):
-                oldpars.pop('sld_flat'+str(k), 0)
-                oldpars.pop('thick_flat'+str(k), 0)
-                oldpars.pop('thick_inter'+str(k), 0)
-                oldpars.pop('func_inter'+str(k), 0)
-                oldpars.pop('nu_inter'+str(k), 0)
         elif name == 'core_multi_shell':
             # kill extra shells
             for k in range(5, 11):
@@ -251,10 +224,21 @@ def revert_pars(model_info, pars):
                 _remove_pd(oldpars, 'thick_shell'+str(k), 'thickness')
         elif name == 'core_shell_parallelepiped':
             _remove_pd(oldpars, 'rimA', name)
+            _remove_pd(oldpars, 'rimB', name)
+            _remove_pd(oldpars, 'rimC', name)
+        elif name == 'hollow_cylinder':
+            # now uses radius and thickness
+            oldpars['radius'] += oldpars['core_radius']
         elif name in ['mono_gauss_coil', 'poly_gauss_coil']:
             del oldpars['i_zero']
         elif name == 'onion':
             oldpars.pop('n_shells', None)
+        elif name == 'pearl_necklace':
+            _remove_pd(oldpars, 'num_pearls', name)
+            _remove_pd(oldpars, 'thick_string', name)
+        elif name == 'polymer_micelle':
+            if 'ndensity' in oldpars:
+                oldpars['ndensity'] *= 1e15
         elif name == 'rpa':
             # convert scattering lengths from femtometers to centimeters
             for p in "L1", "L2", "L3", "L4":
@@ -271,6 +255,38 @@ def revert_pars(model_info, pars):
                         oldpars.pop(p+k, None)
                 for k in "Kab,Kac,Kad".split(','):
                     oldpars.pop(k, None)
+        elif name == 'spherical_sld':
+            oldpars["CONTROL"] -= 1
+            # remove polydispersity from shells
+            for k in range(1, 11):
+                _remove_pd(oldpars, 'thick_flat'+str(k), 'thickness')
+                _remove_pd(oldpars, 'thick_inter'+str(k), 'interface')
+            # remove extra shells
+            for k in range(int(pars['n_shells']), 11):
+                oldpars.pop('sld_flat'+str(k), 0)
+                oldpars.pop('thick_flat'+str(k), 0)
+                oldpars.pop('thick_inter'+str(k), 0)
+                oldpars.pop('func_inter'+str(k), 0)
+                oldpars.pop('nu_inter'+str(k), 0)
+        elif name == 'stacked_disks':
+            _remove_pd(oldpars, 'n_stacking', name)
+        elif name == 'teubner_strey':
+            # basically redoing the entire Teubner-Strey calculations here.
+            volfraction = oldpars.pop('volfraction_a')
+            xi = oldpars.pop('xi')
+            d = oldpars.pop('d')
+            sld_a = oldpars.pop('sld_a')
+            sld_b = oldpars.pop('sld_b')
+            drho = 1e6*(sld_a - sld_b)  # conversion autoscaled these
+            k = 2.0*math.pi*xi/d
+            a2 = (1.0 + k**2)**2
+            c1 = 2.0 * xi**2 * (1.0 - k**2)
+            c2 = xi**4
+            prefactor = 8.0*math.pi*volfraction*(1.0-volfraction)*drho**2*c2/xi
+            scale = 1e-4*prefactor
+            oldpars['scale'] = a2/scale
+            oldpars['c1'] = c1/scale
+            oldpars['c2'] = c2/scale
 
     #print("convert from",list(sorted(pars)))
     #print("convert to",list(sorted(oldpars.items())))
@@ -314,22 +330,24 @@ def constrain_new_to_old(model_info, pars):
     for name in namelist:
         if name in MODELS_WITHOUT_VOLFRACTION:
             pars['volfraction'] = 1
-        if name == 'pearl_necklace':
-            pars['string_thickness_pd_n'] = 0
-            pars['number_of_pearls_pd_n'] = 0
+        if name == 'core_multi_shell':
+            pars['n'] = min(math.ceil(pars['n']), 4)
+        elif name == 'gel_fit':
+            pars['scale'] = 1
         elif name == 'line':
             pars['scale'] = 1
             pars['background'] = 0
-        elif name == 'rpa':
-            pars['case_num'] = int(pars['case_num'])
         elif name == 'mono_gauss_coil':
             pars['i_zero'] = 1
-        elif name == 'poly_gauss_coil':
-            pars['i_zero'] = 1
-        elif name == 'core_multi_shell':
-            pars['n'] = min(math.ceil(pars['n']), 4)
         elif name == 'onion':
             pars['n_shells'] = math.ceil(pars['n_shells'])
+        elif name == 'pearl_necklace':
+            pars['string_thickness_pd_n'] = 0
+            pars['number_of_pearls_pd_n'] = 0
+        elif name == 'poly_gauss_coil':
+            pars['i_zero'] = 1
+        elif name == 'rpa':
+            pars['case_num'] = int(pars['case_num'])
         elif name == 'spherical_sld':
             pars['n_shells'] = math.ceil(pars['n_shells'])
             pars['n_steps'] = math.ceil(pars['n_steps'])
@@ -338,4 +356,6 @@ def constrain_new_to_old(model_info, pars):
             for k in range(2, 11):
                 pars['thickness%d_pd_n'%k] = 0
                 pars['interface%d_pd_n'%k] = 0
+        elif name == 'teubner_strey':
+            pars['scale'] = 1
 
