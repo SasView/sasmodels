@@ -91,7 +91,7 @@ parameters = [["radius", "Ang", 80.0, [0, inf], "volume",
                "Scattering length density of the solvent"],
              ]
 
-source = ["lib/Si.c", "pearl_necklace.c"]
+source = ["lib/Si.c", "lib/sph_j1c.c", "pearl_necklace.c"]
 single = False  # use double precision unless told otherwise
 
 def volume(radius, edge_sep, thick_string, num_pearls):

@@ -1,131 +1,91 @@
-double _pearl_necklace_kernel(double q, double radius, double edge_sep,
-	double thick_string, double num_pearls, double sld_pearl,
-	double sld_string, double sld_solv);
 double form_volume(double radius, double edge_sep,
-	double thick_string, double num_pearls);
-
+    double thick_string, double num_pearls);
 double Iq(double q, double radius, double edge_sep,
-	double thick_string, double num_pearls, double sld, 
-	double string_sld, double solvent_sld);
+    double thick_string, double num_pearls, double sld, 
+    double string_sld, double solvent_sld);
 
 #define INVALID(v) (v.thick_string >= v.radius || v.num_pearls <= 0)
 
 // From Igor library
-double _pearl_necklace_kernel(double q, double radius, double edge_sep, double thick_string,
-	double num_pearls, double sld_pearl, double sld_string, double sld_solv)
+static double
+_pearl_necklace_kernel(double q, double radius, double edge_sep, double thick_string,
+    double num_pearls, double sld_pearl, double sld_string, double sld_solv)
 {
-	//relative slds
-	double contrast_pearl = sld_pearl - sld_solv;
-	double contrast_string = sld_string - sld_solv;
-	
-	// number of string segments
-	num_pearls = floor(num_pearls + 0.5); //Force integer number of pearls
-	double num_strings = num_pearls - 1.0;
-	
-	// center to center distance between the neighboring pearls
-	double A_s = edge_sep + 2.0 * radius;
-	
-	// Repeated Calculations
-	double sincasq = sinc(q*A_s);
-	double oneminussinc = 1 - sincasq;
-	double q_r = q * radius;
-	double q_edge = q * edge_sep;
-	
-	// each volume
-	double string_vol = edge_sep * M_PI * thick_string * thick_string / 4.0;
-	double pearl_vol = M_4PI_3 * radius * radius * radius;
+    // number of string segments
+    num_pearls = floor(num_pearls + 0.5); //Force integer number of pearls
+    const double num_strings = num_pearls - 1.0;
 
-	//total volume
-	double tot_vol;
-	//each masses
-	double m_r= contrast_string * string_vol;
-	double m_s= contrast_pearl * pearl_vol;
-	double psi, gamma, beta;
-	//form factors
-	double sss, srr, srs; //cross
-	double srr_1, srr_2, srr_3;
-	double form_factor;
-	tot_vol = num_strings * string_vol;
-	tot_vol += num_pearls * pearl_vol;
+    //each masses: contrast * volume
+    const double contrast_pearl = sld_pearl - sld_solv;
+    const double contrast_string = sld_string - sld_solv;
+    const double string_vol = edge_sep * M_PI_4 * thick_string * thick_string;
+    const double pearl_vol = M_4PI_3 * radius * radius * radius;
+    const double m_string = contrast_string * string_vol;
+    const double m_pearl = contrast_pearl * pearl_vol;
 
-	//sine functions of a pearl
-	psi = sin(q_r);
-	psi -= q_r * cos(q_r);
-	psi *= 3.0;
-	psi /= q_r * q_r * q_r;
+    // center to center distance between the neighboring pearls
+    const double A_s = edge_sep + 2.0 * radius;
 
-	// Note take only 20 terms in Si series: 10 terms may be enough though.
-	gamma = Si(q_edge);
-	gamma /= (q_edge);
-	beta = Si(q * (A_s - radius));
-	beta -= Si(q_r);
-	beta /= q_edge;
+    //sine functions of a pearl
+    // Note: lim_(q->0) Si(q*a)/(q*b) = a/b
+    // So therefore:
+    //    beta = q==0. ? 1.0 : (Si(q*(A_s-radius)) - Si(q*radius))/q_edge;
+    //    gamma = q==0. ? 1.0 : Si(q_edge)/q_edge;
+    // But there is a 1/(1-sinc) term below which blows up so don't bother
+    const double q_edge = q * edge_sep;
+    const double beta = (Si(q*(A_s-radius)) - Si(q*radius)) / q_edge;
+    const double gamma = Si(q_edge) / q_edge;
+    const double psi = sph_j1c(q*radius);
 
-	// form factor for num_pearls
-	sss = 1.0 - pow(sincasq, num_pearls);
-	sss /= oneminussinc * oneminussinc;
-	sss *= -sincasq;
-	sss -= num_pearls / 2.0;
-	sss += num_pearls / oneminussinc;
-	sss *= 2.0 * m_s * psi * m_s * psi;
+    // Precomputed sinc terms
+    const double si = sinc(q*A_s);
+    const double omsi = 1.0 - si;
+    const double pow_si = pow(si, num_pearls);
 
-	// form factor for num_strings (like thin rods)
-	srr_1 = -sinc(q_edge/2.0) * sinc(q_edge/2.0);
+    // form factor for num_pearls
+    const double sss = 2.0*square(m_pearl*psi) * (
+        - si * (1.0 - pow_si) / (omsi*omsi)
+        + num_pearls / omsi
+        - 0.5 * num_pearls
+        );
 
-	srr_1 += 2.0 * gamma;
-	srr_1 *= num_strings;
-	srr_2 = 2.0/oneminussinc;
-	srr_2 *= num_strings;
-	srr_2 *= beta * beta;
-	srr_3 = 1.0 - pow(sincasq, num_strings);
-	srr_3 /= oneminussinc * oneminussinc;
-	srr_3 *= beta * beta;
-	srr_3 *= -2.0;
+    // form factor for num_strings (like thin rods)
+    const double srr = m_string * m_string * (
+        - 2.0 * (1.0 - pow_si/si)*beta*beta / (omsi*omsi)
+        + 2.0 * num_strings*beta*beta / omsi
+        + num_strings * (2.0*gamma - square(sinc(q_edge/2.0)))
+        );
 
-	// total srr
-	srr = srr_1 + srr_2 + srr_3;
-	srr *= m_r * m_r;
+    // form factor for correlations
+    const double srs = 4.0 * m_string * m_pearl * beta * psi * (
+        - si * (1.0 - pow_si/si) / (omsi*omsi)
+        + num_strings / omsi
+        );
 
-	// form factor for correlations
-	srs = 1.0;
-	srs -= pow(sincasq, num_strings);
-	srs /= oneminussinc * oneminussinc;
-	srs *= -sincasq;
-	srs += num_strings/oneminussinc;
-	srs *= 4.0;
-	srs *= (m_r * m_s * beta * psi);
+    const double form = sss + srr + srs;
 
-	form_factor = sss + srr + srs;
-	form_factor /= (tot_vol * 1.0e4); // norm by volume and A^-1 to cm^-1
-
-	return (form_factor);
+    return 1.0e-4 * form;
 }
 
 double form_volume(double radius, double edge_sep,
-	double thick_string, double num_pearls)
+    double thick_string, double num_pearls)
 {
-	double total_vol;
+    num_pearls = floor(num_pearls + 0.5); //Force integer number of pearls
 
-	double number_of_strings = num_pearls - 1.0;
-	
-	double string_vol = edge_sep * M_PI * thick_string * thick_string / 4.0;
-	double pearl_vol = M_4PI_3 * radius * radius * radius;
+    const double num_strings = num_pearls - 1.0;
+    const double string_vol = edge_sep * M_PI_4 * thick_string * thick_string;
+    const double pearl_vol = M_4PI_3 * radius * radius * radius;
+    const double volume = num_strings*string_vol + num_pearls*pearl_vol;
 
-	total_vol = number_of_strings * string_vol;
-	total_vol += num_pearls * pearl_vol;
-
-	return(total_vol);
+    return volume;
 }
 
 double Iq(double q, double radius, double edge_sep,
-	double thick_string, double num_pearls, double sld, 
-	double string_sld, double solvent_sld)
+    double thick_string, double num_pearls, double sld, 
+    double string_sld, double solvent_sld)
 {
-	double value, tot_vol;
-	
-	value = _pearl_necklace_kernel(q, radius, edge_sep, thick_string,
-		num_pearls, sld, string_sld, solvent_sld);
-	tot_vol = form_volume(radius, edge_sep, thick_string, num_pearls);
+    const double form = _pearl_necklace_kernel(q, radius, edge_sep,
+        thick_string, num_pearls, sld, string_sld, solvent_sld);
 
-	return value*tot_vol;
+    return form;
 }
