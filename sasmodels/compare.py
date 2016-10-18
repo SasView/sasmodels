@@ -885,7 +885,7 @@ def parse_opts(argv):
         'seed'      : -1,  # default to preset
         'mono'      : False,
         # Default to magnetic a magnetic moment is set on the command line
-        'magnetic'  : any(v.startswith('M0:') for v in values),
+        'magnetic'  : False,
         'show_pars' : False,
         'show_hist' : False,
         'rel_err'   : True,
@@ -970,6 +970,9 @@ def parse_opts(argv):
     if opts['mono']:
         pars = suppress_pd(pars)
         pars2 = suppress_pd(pars2)
+    if not opts['magnetic']:
+        pars = suppress_magnetism(pars)
+        pars2 = suppress_magnetism(pars2)
 
     # Fill in parameters given on the command line
     presets = {}
@@ -986,6 +989,14 @@ def parse_opts(argv):
             presets[k] = float(v1) if isnumber(v1) else v1
         if v2 and k in pars2:
             presets2[k] = float(v2) if isnumber(v2) else v2
+
+    # If pd given on the command line, default pd_n to 35
+    for k, v in list(presets.items()):
+        if k.endswith('_pd'):
+            presets.setdefault(k+'_n', 35.)
+    for k, v in list(presets2.items()):
+        if k.endswith('_pd'):
+            presets2.setdefault(k+'_n', 35.)
 
     # Evaluate preset parameter expressions
     context = MATH.copy()
@@ -1006,9 +1017,6 @@ def parse_opts(argv):
     #import pprint; pprint.pprint(model_info)
     constrain_pars(model_info, pars)
     constrain_pars(model_info2, pars2)
-    if not opts['magnetic']:
-        pars = suppress_magnetism(pars)
-        pars2 = suppress_magnetism(pars2)
 
     same_model = name == name2 and pars == pars
     if len(engines) == 0:
