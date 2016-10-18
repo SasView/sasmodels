@@ -48,7 +48,6 @@ core_shell_ellipsoid_xt_kernel(double q,
     const double lolim = 0.0;
     const double uplim = 1.0;
 
-    double summ = 0.0;	 //initialize intergral
 
     const double delpc = core_sld - shell_sld; //core - shell
     const double delps = shell_sld - solvent_sld; //shell - solvent
@@ -58,24 +57,17 @@ core_shell_ellipsoid_xt_kernel(double q,
     const double equat_shell = radius_equat_core + thick_shell;
     const double polar_shell = radius_equat_core*x_core + thick_shell*x_polar_shell;
 
-    for(int i=0;i<N_POINTS_76;i++) {
+    double summ = 0.0;	 //initialize intergral
+    for(int i=0;i<76;i++) {
         double zi = 0.5*( Gauss76Z[i]*(uplim-lolim) + uplim + lolim );
-        double yyy = Gauss76Wt[i] * gfn4(zi,
-                                  radius_equat_core,
-                                  polar_core,
-                                  equat_shell,
-                                  polar_shell,
-                                  delpc,
-                                  delps,
-                                  q);
-        summ += yyy;
+        double yyy = gfn4(zi, radius_equat_core, polar_core, equat_shell,
+                          polar_shell, delpc, delps, q);
+        summ += Gauss76Wt[i] * yyy;
     }
+    summ *= 0.5*(uplim-lolim);
 
-    double answer = 0.5*(uplim-lolim)*summ;
-    //convert to [cm-1]
-    answer *= 1.0e-4;
-
-    return answer;
+    // convert to [cm-1]
+    return 1.0e-4 * summ;
 }
 
 static double
