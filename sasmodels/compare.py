@@ -319,19 +319,22 @@ def constrain_pars(model_info, pars):
     if '*' in name:
         name = name.split('*')[0]
 
-    if name == 'capped_cylinder' and pars['radius_cap'] < pars['radius']:
-        pars['radius'], pars['radius_cap'] = pars['radius_cap'], pars['radius']
-    if name == 'barbell' and pars['radius_bell'] < pars['radius']:
-        pars['radius'], pars['radius_bell'] = pars['radius_bell'], pars['radius']
+    if name == 'barbell':
+        if pars['radius_bell'] < pars['radius']:
+            pars['radius'], pars['radius_bell'] = pars['radius_bell'], pars['radius']
 
-    # Limit guinier to an Rg such that Iq > 1e-30 (single precision cutoff)
-    if name == 'guinier':
+    elif name == 'capped_cylinder':
+        if pars['radius_cap'] < pars['radius']:
+            pars['radius'], pars['radius_cap'] = pars['radius_cap'], pars['radius']
+
+    elif name == 'guinier':
+        # Limit guinier to an Rg such that Iq > 1e-30 (single precision cutoff)
         #q_max = 0.2  # mid q maximum
         q_max = 1.0  # high q maximum
         rg_max = np.sqrt(90*np.log(10) + 3*np.log(pars['scale']))/q_max
         pars['rg'] = min(pars['rg'], rg_max)
 
-    if name == 'rpa':
+    elif name == 'rpa':
         # Make sure phi sums to 1.0
         if pars['case_num'] < 2:
             pars['Phi1'] = 0.
@@ -341,6 +344,9 @@ def constrain_pars(model_info, pars):
         total = sum(pars['Phi'+c] for c in '1234')
         for c in '1234':
             pars['Phi'+c] /= total
+
+    elif name == 'stacked_disks':
+        pars['n_stacking'] = math.ceil(pars['n_stacking'])
 
 def parlist(model_info, pars, is2d):
     # type: (ModelInfo, ParameterSet, bool) -> str
@@ -718,9 +724,10 @@ def compare(opts, limits=None):
             err, errstr, errview = resid, "abs err", "linear"
         else:
             err, errstr, errview = abs(relerr), "rel err", "log"
-        #sorted = np.sort(err.flatten())
-        #cutoff = sorted[int(sorted.size*0.95)]
-        #err[err>cutoff] = cutoff
+        if 0:  # 95% cutoff
+            sorted = np.sort(err.flatten())
+            cutoff = sorted[int(sorted.size*0.95)]
+            err[err>cutoff] = cutoff
         #err,errstr = base/comp,"ratio"
         plot_theory(data, None, resid=err, view=errview, use_data=False)
         if view == 'linear':
@@ -964,8 +971,14 @@ def parse_opts(argv):
         pars = randomize_pars(model_info, pars, seed=opts['seed'])
         if model_info != model_info2:
             pars2 = randomize_pars(model_info2, pars2, seed=opts['seed'])
+            # Share values for parameters with the same name
+            for k, v in pars.items():
+                if k in pars2:
+                    pars2[k] = v
         else:
             pars2 = pars.copy()
+        constrain_pars(model_info, pars)
+        constrain_pars(model_info2, pars2)
         print("Randomize using -random=%i"%opts['seed'])
     if opts['mono']:
         pars = suppress_pd(pars)
@@ -1015,8 +1028,6 @@ def parse_opts(argv):
     pars.update(presets)  # set value after random to control value
     pars2.update(presets2)  # set value after random to control value
     #import pprint; pprint.pprint(model_info)
-    constrain_pars(model_info, pars)
-    constrain_pars(model_info2, pars2)
 
     same_model = name == name2 and pars == pars
     if len(engines) == 0:
