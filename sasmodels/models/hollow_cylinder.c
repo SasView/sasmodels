@@ -10,7 +10,7 @@ double Iqxy(double qx, double qy, double radius, double thickness, double length
 static double
 _hollow_cylinder_scaling(double integrand, double delrho, double volume)
 {
-    return 1.0e-4 * square(volume * delrho * integrand);
+    return 1.0e-4 * square(volume * delrho) * integrand;
 }
 
 
@@ -31,8 +31,8 @@ _hollow_cylinder_kernel(double q,
 double
 form_volume(double radius, double thickness, double length)
 {
-    double v_shell = M_PI*length*((radius+thickness)*(radius+thickness)-radius*radius);
-    return(v_shell);
+    double v_shell = M_PI*length*(square(radius+thickness) - radius*radius);
+    return v_shell;
 }
 
 
@@ -49,7 +49,7 @@ Iq(double q, double radius, double thickness, double length,
         const double sin_val = sqrt(1.0 - cos_val*cos_val);
         const double inter = _hollow_cylinder_kernel(q, radius, thickness, length,
                                                      sin_val, cos_val);
-        summ += Gauss76Wt[i] * inter;
+        summ += Gauss76Wt[i] * inter * inter;
     }
 
     const double Aq = 0.5*summ*(upper-lower);
@@ -68,7 +68,6 @@ Iqxy(double qx, double qy,
         sin_alpha, cos_alpha);
 
     const double vol = form_volume(radius, thickness, length);
-    return _hollow_cylinder_scaling(Aq, solvent_sld-sld, vol);
+    return _hollow_cylinder_scaling(Aq*Aq, solvent_sld-sld, vol);
 }
-
 
