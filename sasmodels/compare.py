@@ -72,6 +72,7 @@ Options (* for default):
     -1d*/-2d computes 1d or 2d data
     -preset*/-random[=seed] preset or random parameters
     -mono/-poly* force monodisperse/polydisperse
+    -magnetic/-nonmagnetic* suppress magnetism
     -cutoff=1e-5* cutoff value for including a point in polydispersity
     -pars/-nopars* prints the parameter set or not
     -abs/-rel* plot relative or absolute error
@@ -348,7 +349,12 @@ def parlist(model_info, pars, is2d):
     """
     lines = []
     parameters = model_info.parameters
+    magnetic = False
     for p in parameters.user_parameters(pars, is2d):
+        if any(p.id.startswith(x) for x in ('M0:', 'mtheta:', 'mphi:')):
+            continue
+        if p.id.startswith('up:') and not magnetic:
+            continue
         fields = dict(
             value=pars.get(p.id, p.default),
             pd=pars.get(p.id+"_pd", 0.),
@@ -356,14 +362,18 @@ def parlist(model_info, pars, is2d):
             nsigma=pars.get(p.id+"_pd_nsgima", 3.),
             pdtype=pars.get(p.id+"_pd_type", 'gaussian'),
             relative_pd=p.relative_pd,
+            M0=pars.get('M0:'+p.id, 0.),
+            mphi=pars.get('mphi:'+p.id, 0.),
+            mtheta=pars.get('mtheta:'+p.id, 0.),
         )
         lines.append(_format_par(p.name, **fields))
+        magnetic = magnetic or fields['M0'] != 0.
     return "\n".join(lines)
 
     #return "\n".join("%s: %s"%(p, v) for p, v in sorted(pars.items()))
 
 def _format_par(name, value=0., pd=0., n=0, nsigma=3., pdtype='gaussian',
-                relative_pd=False):
+                relative_pd=False, M0=0., mphi=0., mtheta=0.):
     # type: (str, float, float, int, float, str) -> str
     line = "%s: %g"%(name, value)
     if pd != 0.  and n != 0:
@@ -371,6 +381,8 @@ def _format_par(name, value=0., pd=0., n=0, nsigma=3., pdtype='gaussian',
             pd *= value
         line += " +/- %g  (%d points in [-%g,%g] sigma %s)"\
                 % (pd, n, nsigma, nsigma, pdtype)
+    if M0 != 0.:
+        line += "  M0:%.3f  mphi:%.1f  mtheta:%.1f" % (M0, mphi, mtheta)
     return line
 
 def suppress_pd(pars):
@@ -384,6 +396,19 @@ def suppress_pd(pars):
     pars = pars.copy()
     for p in pars:
         if p.endswith("_pd_n"): pars[p] = 0
+    return pars
+
+def suppress_magnetism(pars):
+    # type: (ParameterSet) -> ParameterSet
+    """
+    Suppress theta_pd for now until the normalization is resolved.
+
+    May also suppress complete polydispersity of the model to test
+    models more quickly.
+    """
+    pars = pars.copy()
+    for p in pars:
+        if p.startswith("M0:"): pars[p] = 0
     return pars
 
 def eval_sasview(model_info, data):
@@ -686,6 +711,8 @@ def compare(opts, limits=None):
         plt.title("%s t=%.2f ms"%(comp.engine, comp_time))
         #cbar_title = "log I"
     if n_comp > 0 and n_base > 0:
+        if not opts['is2d']:
+            plot_theory(data, base_value, view=view, use_data=False, limits=limits)
         plt.subplot(133)
         if not opts['rel_err']:
             err, errstr, errview = resid, "abs err", "linear"
@@ -749,6 +776,7 @@ NAME_OPTIONS = set([
     '2d', '1d',
     'preset', 'random',
     'poly', 'mono',
+    'magnetic', 'nonmagnetic',
     'nopars', 'pars',
     'rel', 'abs',
     'linear', 'log', 'q4',
@@ -856,6 +884,8 @@ def parse_opts(argv):
         'cutoff'    : 0.0,
         'seed'      : -1,  # default to preset
         'mono'      : False,
+        # Default to magnetic a magnetic moment is set on the command line
+        'magnetic'  : any(v.startswith('M0:') for v in values),
         'show_pars' : False,
         'show_hist' : False,
         'rel_err'   : True,
@@ -889,6 +919,8 @@ def parse_opts(argv):
         elif arg == '-preset':  opts['seed'] = -1
         elif arg == '-mono':    opts['mono'] = True
         elif arg == '-poly':    opts['mono'] = False
+        elif arg == '-magnetic':       opts['magnetic'] = True
+        elif arg == '-nonmagnetic':    opts['magnetic'] = False
         elif arg == '-pars':    opts['show_pars'] = True
         elif arg == '-nopars':  opts['show_pars'] = False
         elif arg == '-hist':    opts['show_hist'] = True
@@ -974,6 +1006,9 @@ def parse_opts(argv):
     #import pprint; pprint.pprint(model_info)
     constrain_pars(model_info, pars)
     constrain_pars(model_info2, pars2)
+    if not opts['magnetic']:
+        pars = suppress_magnetism(pars)
+        pars2 = suppress_magnetism(pars2)
 
     same_model = name == name2 and pars == pars
     if len(engines) == 0:
