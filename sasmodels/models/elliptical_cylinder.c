@@ -5,26 +5,8 @@ double Iqxy(double qx, double qy, double radius_minor, double r_ratio, double le
             double sld, double solvent_sld, double theta, double phi, double psi);
 
 
-
-static double
-_kernel(double q, double radius_minor, double r_ratio, double theta)
-{
-    // This is the function LAMBDA1^2 in Feigin's notation
-    // q is the q-value for the calculation (1/A)
-    // radius_minor is the transformed radius"a" in Feigin's notation
-    // r_ratio is the ratio (major radius)/(minor radius) of the Ellipsoid [=] ---
-    // theta is the dummy variable of the integration
-
-    double retval,arg;
-
-    arg = q*radius_minor*sqrt((1.0+r_ratio*r_ratio)/2+(1.0-r_ratio*r_ratio)*cos(theta)/2);
-    //retval = 2.0*J1(arg)/arg;
-    retval = sas_J1c(arg);
-    return retval*retval ;
-}
-
-
-double form_volume(double radius_minor, double r_ratio, double length)
+double
+form_volume(double radius_minor, double r_ratio, double length)
 {
     return M_PI * radius_minor * radius_minor * r_ratio * length;
 }
