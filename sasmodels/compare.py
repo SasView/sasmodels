@@ -334,6 +334,12 @@ def constrain_pars(model_info, pars):
         rg_max = np.sqrt(90*np.log(10) + 3*np.log(pars['scale']))/q_max
         pars['rg'] = min(pars['rg'], rg_max)
 
+    elif name == 'pearl_necklace':
+        if pars['radius'] < pars['thick_string']:
+            pars['radius'], pars['thick_string'] = pars['thick_string'], pars['radius']
+        pars['num_pearls'] = math.ceil(pars['num_pearls'])
+        pass
+
     elif name == 'rpa':
         # Make sure phi sums to 1.0
         if pars['case_num'] < 2:
