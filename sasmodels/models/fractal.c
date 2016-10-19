@@ -1,54 +1,45 @@
-double Iq(double q,
-          double volfraction,
-          double radius,
-          double fractal_dim,
-          double cor_length,
-          double sld_block,
-          double sld_solvent);
+#define INVALID(p) (p.fractal_dim <= 0.0)
 
-double Iq(double q,
-          double volfraction,
-          double radius,
-          double fractal_dim,
-          double cor_length,
-          double sld_block,
-          double sld_solvent)
+static double
+Iq(double q,
+   double volfraction,
+   double radius,
+   double fractal_dim,
+   double cor_length,
+   double sld_block,
+   double sld_solvent)
 {
-    double qr,r0,Df,corr,phi,sldp,sldm;
-    double pq,sq,inten;
-    
-     // Actively check the argument - needed for mass fractal - is it needie
-     //here?
-    if (fractal_dim <= 0.0){
-       return 0.0;
-    }
-   
-    phi = volfraction;        // volume fraction of building block spheres...
-    r0 = radius;     //  radius of building block
-    Df = fractal_dim;     //  fractal dimension
-    corr = cor_length;       //  correlation length of fractal-like aggregates
-    sldp = sld_block;       // SLD of building block
-    sldm = sld_solvent;       // SLD of matrix or solution
- 
-     qr=q*r0;
-    
     //calculate P(q) for the spherical subunits
-    pq = phi*M_4PI_3*r0*r0*r0*(sldp-sldm)*(sldp-sldm)*sph_j1c(qr)*sph_j1c(qr);
+    const double pq = M_4PI_3*cube(radius) * square((sld_block-sld_solvent)*sph_j1c(q*radius));
     
-    //calculate S(q)
-    sq = Df*sas_gamma(Df-1.0)*sin((Df-1.0)*atan(q*corr));
-    sq /= pow(qr,Df) * pow((1.0 + 1.0/(q*corr)/(q*corr)),((Df-1.0)/2.0));
-    sq += 1.0;
-    
-    //combine, scale to units cm-1 sr-1 (assuming data on absolute scale)
-    //and return
-    inten = pq*sq;
-    // convert I(1/A) to (1/cm)
-    inten *= 1.0e8;
-    //convert rho^2 in 10^-6 1/A to 1/A
-    inten *= 1.0e-12;    
-    
-    
-    return(inten);
+    //calculate S(q),  using Teixeira, Eq(15)
+    double sq;
+    if (q > 0. && fractal_dim > 1.) {
+        // q>0, D>0
+        const double D = fractal_dim;
+        const double Dm1 = fractal_dim - 1.0;
+        // Note: for large Dm1, sin(Dm1*atan(q*cor_length) can go negative
+        const double t1 = D*sas_gamma(Dm1)*sin(Dm1*atan(q*cor_length));
+        const double t2 = pow(q*radius, -D);
+        const double t3 = pow(1.0 + 1.0/square(q*cor_length), -0.5*Dm1);
+        sq = 1.0 + t1 * t2 * t3;
+    } else if (q > 0.) {
+        // q>0, D=1
+        sq = 1.0 + atan(q*cor_length) / (q*radius);
+    } else if (fractal_dim > 1.) {
+        // q=0, D>1
+        const double D = fractal_dim;
+        sq = 1.0 + pow(cor_length/radius, D)*sas_gamma(D+1.0);
+    } else {
+        // q=0, D=1
+        sq = 1.0 + cor_length/radius;
+    }
+
+    // scale to units cm-1 sr-1 (assuming data on absolute scale)
+    //    convert I(1/A) to (1/cm)  => 1e8 * I(q)
+    //    convert rho^2 in 10^-6 1/A to 1/A  => 1e-12 * I(q)
+    //    combined: 1e-4 * I(q)
+
+    return 1.e-4 * volfraction * pq * sq;
 }
 
