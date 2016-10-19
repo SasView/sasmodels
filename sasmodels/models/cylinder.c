@@ -32,7 +32,7 @@ double orient_avg_1D(double q, double radius, double length)
         double sn, cn; // slots to hold sincos function output
         // alpha(theta,phi) the projection of the cylinder on the detector plane
         SINCOS(alpha, sn, cn);
-        total += Gauss76Wt[i] * square(fq(q, sn, cn, radius, length)) * sn;
+        total += Gauss76Wt[i] * square( fq(q, sn, cn, radius, length) ) * sn;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     return total*zm;

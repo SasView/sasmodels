@@ -48,9 +48,9 @@ where
 
         \begin{align}    
     F(Q,\alpha) = &\bigg[ 
-    (\rho_c - \rho_f) V_c \frac{J_1(QRsin \alpha)}{QRsin\alpha}\frac{2 \cdot sin(QLcos\alpha/2)}{QLcos\alpha} \\
-    &+(\rho_f - \rho_r) V_{c+f} \frac{J_1(QRsin\alpha)}{QRsin\alpha}\frac{2 \cdot sin(Q(L/2+t_f)cos\alpha)}{Q(L+2t_f)cos\alpha} \\
-    &+(\rho_r - \rho_s) V_t \frac{J_1(Q(R+t_r)sin\alpha)}{Q(R+t_r)sin\alpha}\frac{2 \cdot sin(Q(L/2+t_f)cos\alpha)}{Q(L+2t_f)cos\alpha}
+    (\rho_c - \rho_f) V_c \frac{2J_1(QRsin \alpha)}{QRsin\alpha}\frac{sin(QLcos\alpha/2)}{Q(L/2)cos\alpha} \\
+    &+(\rho_f - \rho_r) V_{c+f} \frac{2J_1(QRsin\alpha)}{QRsin\alpha}\frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha} \\
+    &+(\rho_r - \rho_s) V_t \frac{2J_1(Q(R+t_r)sin\alpha)}{Q(R+t_r)sin\alpha}\frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha}
     \bigg]
     \end{align} 
 
