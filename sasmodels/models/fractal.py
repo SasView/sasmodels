@@ -83,7 +83,7 @@ parameters = [["volfraction", "", 0.05, [0.0, 1], "",
                "volume fraction of blocks"],
               ["radius",    "Ang",  5.0, [0.0, inf], "",
                "radius of particles"],
-              ["fractal_dim",      "",  2.0, [1.0, 6.0], "",
+              ["fractal_dim",      "",  2.0, [0.0, 6.0], "",
                "fractal dimension"],
               ["cor_length", "Ang", 100.0, [0.0, inf], "",
                "cluster correlation length"],
@@ -94,7 +94,7 @@ parameters = [["volfraction", "", 0.05, [0.0, 1], "",
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sph_j1c.c", "lib/sas_gamma.c", "fractal.c"]
+source = ["lib/sph_j1c.c", "lib/sas_gamma.c", "lib/fractal_sq.c", "fractal.c"]
 
 demo = dict(volfraction=0.05,
             radius=5.0,

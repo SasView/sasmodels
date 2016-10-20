@@ -136,4 +136,17 @@ small:
 #endif // NEED_TGAMMA
 
 
-inline double sas_gamma( double x) { return tgamma(x+1)/x; }
+inline double sas_gamma(double x) {
+#if 1
+    // Fast reliable gamma in [-n,171], where n is a small integer
+    double norm = 1.;
+    while (x < 1.) {
+        norm *= x;
+        x += 1.0;
+    }
+    return tgamma(x)/norm;
+#else
+    // Fast reliable gamma in [0,170]
+    return tgamma(x+1)/x;
+#endif
+}

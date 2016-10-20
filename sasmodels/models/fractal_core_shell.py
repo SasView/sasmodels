@@ -68,12 +68,13 @@ parameters = [
     ["sld_shell",   "1e-6/Ang^2", 2.0,  [-inf, inf], "sld",    "Sphere shell scattering length density"],
     ["sld_solvent", "1e-6/Ang^2", 3.0,  [-inf, inf], "sld",    "Solvent scattering length density"],
     ["volfraction", "",           1.0,  [0.0, inf],  "",       "Volume fraction of building block spheres"],
-    ["fractal_dim",    "",        2.0,  [1.0, 6.0],  "",       "Fractal dimension"],
+    ["fractal_dim",    "",        2.0,  [0.0, 6.0],  "",       "Fractal dimension"],
     ["cor_length",  "Ang",      100.0,  [0.0, inf],  "",       "Correlation length of fractal-like aggregates"],
 ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sph_j1c.c", "lib/sas_gamma.c", "lib/core_shell.c", "fractal_core_shell.c"]
+source = ["lib/sph_j1c.c", "lib/sas_gamma.c", "lib/core_shell.c",
+          "lib/fractal_sq.c", "fractal_core_shell.c"]
 
 demo = dict(scale=0.05,
             background=0,
