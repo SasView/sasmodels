@@ -653,6 +653,13 @@ def compare(opts, limits=None):
     as the values are adjusted, making it easier to see the effects of the
     parameters.
     """
+    result = run_models(opts, verbose=True)
+    if opts['plot']:  # Note: never called from explore
+        plot_models(opts, result, limits=limits)
+
+def run_models(opts, verbose=False):
+    # type: (Dict[str, Any]) -> Dict[str, Any]
+
     n_base, n_comp = opts['count']
     pars, pars2 = opts['pars']
     data = opts['data']
@@ -660,6 +667,7 @@ def compare(opts, limits=None):
     # silence the linter
     base = opts['engines'][0] if n_base else None
     comp = opts['engines'][1] if n_comp else None
+
     base_time = comp_time = None
     base_value = comp_value = resid = relerr = None
 
@@ -668,8 +676,9 @@ def compare(opts, limits=None):
         try:
             base_raw, base_time = time_calculation(base, pars, n_base)
             base_value = np.ma.masked_invalid(base_raw)
-            print("%s t=%.2f ms, intensity=%.0f"
-                  % (base.engine, base_time, base_value.sum()))
+            if verbose:
+                print("%s t=%.2f ms, intensity=%.0f"
+                      % (base.engine, base_time, base_value.sum()))
             _show_invalid(data, base_value)
         except ImportError:
             traceback.print_exc()
@@ -680,8 +689,9 @@ def compare(opts, limits=None):
         try:
             comp_raw, comp_time = time_calculation(comp, pars2, n_comp)
             comp_value = np.ma.masked_invalid(comp_raw)
-            print("%s t=%.2f ms, intensity=%.0f"
-                  % (comp.engine, comp_time, comp_value.sum()))
+            if verbose:
+                print("%s t=%.2f ms, intensity=%.0f"
+                      % (comp.engine, comp_time, comp_value.sum()))
             _show_invalid(data, comp_value)
         except ImportError:
             traceback.print_exc()
@@ -691,40 +701,76 @@ def compare(opts, limits=None):
     if n_base > 0 and n_comp > 0:
         resid = (base_value - comp_value)
         relerr = resid/np.where(comp_value != 0., abs(comp_value), 1.0)
-        _print_stats("|%s-%s|"
-                     % (base.engine, comp.engine) + (" "*(3+len(comp.engine))),
-                     resid)
-        _print_stats("|(%s-%s)/%s|"
-                     % (base.engine, comp.engine, comp.engine),
-                     relerr)
+        if verbose:
+            _print_stats("|%s-%s|"
+                         % (base.engine, comp.engine) + (" "*(3+len(comp.engine))),
+                         resid)
+            _print_stats("|(%s-%s)/%s|"
+                         % (base.engine, comp.engine, comp.engine),
+                         relerr)
+
+    return dict(base_value=base_value, comp_value=comp_value,
+                base_time=base_time, comp_time=comp_time,
+                resid=resid, relerr=relerr)
+
+
+def _print_stats(label, err):
+    # type: (str, np.ma.ndarray) -> None
+    # work with trimmed data, not the full set
+    sorted_err = np.sort(abs(err.compressed()))
+    if len(sorted_err) == 0.:
+        print(label + "  no valid values")
+        return
+
+    p50 = int((len(sorted_err)-1)*0.50)
+    p98 = int((len(sorted_err)-1)*0.98)
+    data = [
+        "max:%.3e"%sorted_err[-1],
+        "median:%.3e"%sorted_err[p50],
+        "98%%:%.3e"%sorted_err[p98],
+        "rms:%.3e"%np.sqrt(np.mean(sorted_err**2)),
+        "zero-offset:%+.3e"%np.mean(sorted_err),
+        ]
+    print(label+"  "+"  ".join(data))
+
+
+def plot_models(opts, result, limits=None):
+    # type: (Dict[str, Any], Dict[str, Any], Optional[Tuple[float, float]]) -> Tuple[float, float]
+    base_value, comp_value= result['base_value'], result['comp_value']
+    base_time, comp_time = result['base_time'], result['comp_time']
+    resid, relerr = result['resid'], result['relerr']
+
+    have_base, have_comp = (base_value is not None), (comp_value is not None)
+    base = opts['engines'][0] if have_base else None
+    comp = opts['engines'][1] if have_comp else None
+    data = opts['data']
 
     # Plot if requested
-    if not opts['plot'] and not opts['explore']: return
     view = opts['view']
     import matplotlib.pyplot as plt
     if limits is None:
         vmin, vmax = np.Inf, -np.Inf
-        if n_base > 0:
+        if have_base:
             vmin = min(vmin, base_value.min())
             vmax = max(vmax, base_value.max())
-        if n_comp > 0:
+        if have_comp:
             vmin = min(vmin, comp_value.min())
             vmax = max(vmax, comp_value.max())
         limits = vmin, vmax
 
-    if n_base > 0:
-        if n_comp > 0: plt.subplot(131)
+    if have_base:
+        if have_comp: plt.subplot(131)
         plot_theory(data, base_value, view=view, use_data=False, limits=limits)
         plt.title("%s t=%.2f ms"%(base.engine, base_time))
         #cbar_title = "log I"
-    if n_comp > 0:
-        if n_base > 0: plt.subplot(132)
+    if have_comp:
+        if have_base: plt.subplot(132)
+        if not opts['is2d'] and have_base:
+            plot_theory(data, base_value, view=view, use_data=False, limits=limits)
         plot_theory(data, comp_value, view=view, use_data=False, limits=limits)
         plt.title("%s t=%.2f ms"%(comp.engine, comp_time))
         #cbar_title = "log I"
-    if n_comp > 0 and n_base > 0:
-        if not opts['is2d']:
-            plot_theory(data, base_value, view=view, use_data=False, limits=limits)
+    if have_base and have_comp:
         plt.subplot(133)
         if not opts['rel_err']:
             err, errstr, errview = resid, "abs err", "linear"
@@ -747,7 +793,7 @@ def compare(opts, limits=None):
     extra_title = ' '+opts['title'] if opts['title'] else ''
     fig.suptitle(":".join(opts['name']) + extra_title)
 
-    if n_comp > 0 and n_base > 0 and opts['show_hist']:
+    if have_base and have_comp and opts['show_hist']:
         plt.figure()
         v = relerr
         v[v == 0] = 0.5*np.min(np.abs(v[v != 0]))
@@ -762,20 +808,6 @@ def compare(opts, limits=None):
 
     return limits
 
-def _print_stats(label, err):
-    # type: (str, np.ma.ndarray) -> None
-    # work with trimmed data, not the full set
-    sorted_err = np.sort(abs(err.compressed()))
-    p50 = int((len(sorted_err)-1)*0.50)
-    p98 = int((len(sorted_err)-1)*0.98)
-    data = [
-        "max:%.3e"%sorted_err[-1],
-        "median:%.3e"%sorted_err[p50],
-        "98%%:%.3e"%sorted_err[p98],
-        "rms:%.3e"%np.sqrt(np.mean(sorted_err**2)),
-        "zero-offset:%+.3e"%np.mean(sorted_err),
-        ]
-    print(label+"  "+"  ".join(data))
 
 
 
@@ -1112,16 +1144,22 @@ def explore(opts):
     import wx  # type: ignore
     from bumps.names import FitProblem  # type: ignore
     from bumps.gui.app_frame import AppFrame  # type: ignore
+    from bumps.gui import signal
 
     is_mac = "cocoa" in wx.version()
     # Create an app if not running embedded
     app = wx.App() if wx.GetApp() is None else None
-    problem = FitProblem(Explore(opts))
+    model = Explore(opts)
+    problem = FitProblem(model)
     frame = AppFrame(parent=None, title="explore", size=(1000,700))
     if not is_mac: frame.Show()
     frame.panel.set_model(model=problem)
     frame.panel.Layout()
     frame.panel.aui.Split(0, wx.TOP)
+    def reset_parameters(event):
+        model.revert_values()
+        signal.update_parameters(problem)
+    frame.Bind(wx.EVT_TOOL, reset_parameters, frame.ToolBar.GetToolByPos(1))
     if is_mac: frame.Show()
     # If running withing an app, start the main loop
     if app: app.MainLoop()
@@ -1139,8 +1177,11 @@ class Explore(object):
         from . import bumps_model
         config_matplotlib()
         self.opts = opts
-        model_info = opts['def'][0]
-        pars, pd_types = bumps_model.create_parameters(model_info, **opts['pars'][0])
+        p1, p2 = opts['pars']
+        m1, m2 = opts['def']
+        self.fix_p2 = m1 != m2 or p1 != p2
+        model_info = m1
+        pars, pd_types = bumps_model.create_parameters(model_info, **p1)
         # Initialize parameter ranges, fixing the 2D parameters for 1D data.
         if not opts['is2d']:
             for p in model_info.parameters.user_parameters(is2d=False):
@@ -1154,8 +1195,16 @@ class Explore(object):
                 v.range(*parameter_range(k, v.value))
 
         self.pars = pars
+        self.starting_values = dict((k, v.value) for k, v in pars.items())
         self.pd_types = pd_types
         self.limits = None
+
+    def revert_values(self):
+        for k, v in self.starting_values.items():
+            self.pars[k].value = v
+
+    def model_update(self):
+        pass
 
     def numpoints(self):
         # type: () -> int
@@ -1187,11 +1236,15 @@ class Explore(object):
         pars = dict((k, v.value) for k, v in self.pars.items())
         pars.update(self.pd_types)
         self.opts['pars'][0] = pars
-        self.opts['pars'][1] = pars
-        limits = compare(self.opts, limits=self.limits)
+        if not self.fix_p2:
+            self.opts['pars'][1] = pars
+        result = run_models(self.opts)
+        limits = plot_models(self.opts, result, limits=self.limits)
         if self.limits is None:
             vmin, vmax = limits
             self.limits = vmax*1e-7, 1.3*vmax
+            import pylab; pylab.clf()
+            plot_models(self.opts, result, limits=self.limits)
 
 
 def main(*argv):
