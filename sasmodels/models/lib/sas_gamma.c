@@ -4,6 +4,7 @@ The OpenCL gamma function fails miserably on values lower than 1.0
 while works fine on larger values.
 We use gamma definition Gamma(t + 1) = t * Gamma(t) to compute
 to function for values lower than 1.0. Namely Gamma(t) = 1/t * Gamma(t + 1)
+For t < 0, we use Gamma(t) = pi / ( Gamma(1 - t) * sin(pi * t) )
 */
 
 #if defined(NEED_TGAMMA)
@@ -136,17 +137,16 @@ small:
 #endif // NEED_TGAMMA
 
 
-inline double sas_gamma(double x) {
-#if 1
-    // Fast reliable gamma in [-n,171], where n is a small integer
-    double norm = 1.;
-    while (x < 1.) {
-        norm *= x;
-        x += 1.0;
-    }
-    return tgamma(x)/norm;
-#else
-    // Fast reliable gamma in [0,170]
-    return tgamma(x+1)/x;
-#endif
+inline double sas_gamma(double x)
+{
+    // Note: the builtin tgamma can give slow and unreliable results for x<1.
+    // The following transform extends it to zero and to negative values.
+    // It should return NaN for zero and negative integers but doesn't.
+    // The accuracy is okay but not wonderful for negative numbers, maybe
+    // one or two digits lost in the calculation. If higher accuracy is
+    // needed, you could test the following loop:
+    //    double norm = 1.;
+    //    while (x<1.) { norm*=x; x+=1.; }
+    //    return tgamma(x)/norm;
+    return (x<0. ? M_PI/tgamma(1.-x)/sin(M_PI*x) : tgamma(x+1)/x);
 }
