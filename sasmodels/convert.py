@@ -207,9 +207,9 @@ def _hand_convert(name, oldpars):
         k = math.sqrt(1 - 0.5*p_c1/p_c2*xi**2)
         d = 2*math.pi*xi/k
 
-        # solve quadratic phi (1-phi) = scale/(1e-4 8 pi drho^2 xi^3)
+        # solve quadratic phi (1-phi) = xi/(1e-4 8 pi drho^2 c2)
         # favour volume fraction in [0, 0.5]
-        c = xi/(p_c2*1e-4*8.0*math.pi*drho**2)
+        c = xi / (1e-4 * 8.0 * math.pi * drho**2 * p_c2)
         phi = 0.5 - math.sqrt(0.25 - c)
 
         # scale sld_a by 1e-6 because the translator will scale it back
