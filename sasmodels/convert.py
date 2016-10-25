@@ -7,6 +7,7 @@ import math
 import warnings
 
 from .conversion_table import CONVERSION_TABLE
+from .core import load_model_info
 
 # List of models which SasView versions don't contain the explicit 'scale' argument.
 # When converting such a model, please update this list.
@@ -53,6 +54,69 @@ PD_DOT = [
     ("_pd_type", ".type"),
     ]
 
+def _rescale(par, scale):
+    return [pk*scale for pk in par] if isinstance(par, list) else par*scale
+
+def _is_sld(model_info, id):
+    """
+    Return True if parameter is a magnetic magnitude or SLD parameter.
+    """
+    if id.startswith('M0:'):
+        return True
+    if '_pd' in id or '.' in id:
+        return False
+    for p in model_info.parameters.call_parameters:
+        if p.id == id:
+            return p.type == 'sld'
+    # check through kernel parameters in case it is a named as a vector
+    for p in model_info.parameters.kernel_parameters:
+        if p.id == id:
+            return p.type == 'sld'
+    raise ValueError("unknown parameter %r in conversion"%id)
+
+def _rescale_sld(model_info, pars, scale):
+    """
+    rescale all sld parameters in the new model definition by *scale* so the
+    numbers are nicer.  Relies on the fact that all sld parameters in the
+    new model definition end with sld.  For backward conversion use
+    *scale=1e-6*.  For forward conversion use *scale=1e6*.
+    """
+    return dict((id, (_rescale(v, scale) if _is_sld(model_info, id) else v))
+                for id, v in pars.items())
+
+
+def _get_translation_table(model_info):
+    _, translation = CONVERSION_TABLE.get(model_info.id, [None, {}])
+    translation = translation.copy()
+    for p in model_info.parameters.kernel_parameters:
+        if p.length > 1:
+            newid = p.id
+            oldid = translation.get(p.id, p.id)
+            translation.pop(newid, None)
+            for k in range(1, p.length+1):
+                if newid+str(k) not in translation:
+                    translation[newid+str(k)] = oldid+str(k)
+    # Remove control parameter from the result
+    if model_info.control:
+        translation[model_info.control] = "CONTROL"
+    return translation
+
+# ========= FORWARD CONVERSION sasview 3.x => sasmodels ===========
+def _dot_pd_to_underscore_pd(par):
+    if par.endswith(".width"):
+        return par[:-6]+"_pd"
+    elif par.endswith(".type"):
+        return par[:-5]+"_pd_type"
+    elif par.endswith(".nsigmas"):
+        return par[:-8]+"_pd_nsigma"
+    elif par.endswith(".npts"):
+        return par[:-5]+"_pd_n"
+    else:
+        return par
+
+def _pd_to_underscores(pars):
+    return dict((_dot_pd_to_underscore_pd(k), v) for k, v in pars.items())
+
 def _convert_pars(pars, mapping):
     """
     Rename the parameters and any associated polydispersity attributes.
@@ -60,63 +124,127 @@ def _convert_pars(pars, mapping):
     newpars = pars.copy()
     for new, old in mapping.items():
         if old == new: continue
+        if old is None: continue
         for underscore, dot in PD_DOT:
-            if old+dot in newpars:
+            source = old+dot
+            if source in newpars:
                 if new is not None:
-                    newpars[new+underscore] = pars[old+dot]
-                del newpars[old+dot]
+                    target = new+dot
+                else:
+                    target = None
+                if source != target:
+                    if target:
+                        newpars[target] = pars[old+dot]
+                    del newpars[source]
     return newpars
 
-def convert_model(name, pars):
+
+def _conversion_target(model_name):
+    """
+    Find the sasmodel name which translates into the sasview name.
+
+    Note: *CoreShellEllipsoidModel* translates into *core_shell_ellipsoid:1*.
+    This is necessary since there is only one variant in sasmodels for the
+    two variants in sasview.
+    """
+    for sasmodels_name, [sasview_name, _] in CONVERSION_TABLE.items():
+        if sasview_name == model_name:
+            return sasmodels_name
+    return None
+
+
+def _hand_convert(name, oldpars):
+    if name == 'core_shell_parallelepiped':
+        # Make sure pd on rim parameters defaults to zero
+        # ... probably not necessary.
+        oldpars['rimA.width'] = 0.0
+        oldpars['rimB.width'] = 0.0
+        oldpars['rimC.width'] = 0.0
+    elif name == 'hollow_cylinder':
+        # now uses radius and thickness
+        thickness = oldpars['radius'] - oldpars['core_radius']
+        pd = oldpars['radius.width']*oldpars['radius']/thickness
+        oldpars['radius'] = thickness
+        oldpars['radius.width'] = pd
+    elif name == 'pearl_necklace':
+        pass
+        #_remove_pd(oldpars, 'num_pearls', name)
+        #_remove_pd(oldpars, 'thick_string', name)
+    elif name == 'polymer_micelle':
+        if 'ndensity' in oldpars:
+            oldpars['ndensity'] /= 1e15
+    elif name == 'rpa':
+        # convert scattering lengths from femtometers to centimeters
+        for p in "L1", "L2", "L3", "L4":
+            if p in oldpars: oldpars[p] /= 1e-13
+    elif name == 'spherical_sld':
+        oldpars["CONTROL"] += 1
+    elif name == 'teubner_strey':
+        # basically undoing the entire Teubner-Strey calculations here.
+        #    drho = (sld_a - sld_b)
+        #    k = 2.0*math.pi*xi/d
+        #    a2 = (1.0 + k**2)**2
+        #    c1 = 2.0 * xi**2 * (1.0 - k**2)
+        #    c2 = xi**4
+        #    prefactor = 8.0*math.pi*phi*(1.0-phi)*drho**2*c2/xi
+        #    scale = 1e-4*prefactor
+        #    oldpars['scale'] = a2/scale
+        #    oldpars['c1'] = c1/scale
+        #    oldpars['c2'] = c2/scale
+
+        # need xi, d, sld_a, sld_b, phi=volfraction_a
+        # assume contrast is 1.0e-6, scale=1, background=0
+        sld_a, sld_b = 1.0, 0.
+        drho = sld_a - sld_b
+
+        # find xi
+        p_scale = oldpars['scale']
+        p_c1 = oldpars['c1']
+        p_c2= oldpars['c2']
+        xi = math.sqrt(2/(math.sqrt(p_scale/p_c2) + 0.5*p_c1/p_c2))
+
+        # find d from xi
+        k = math.sqrt(1 - 0.5*p_c1/p_c2*xi**2)
+        d = 2*math.pi*xi/k
+
+        # solve quadratic phi (1-phi) = scale/(1e-4 8 pi drho^2 xi^3)
+        # favour volume fraction in [0, 0.5]
+        c = xi/(p_c2*1e-4*8.0*math.pi*drho**2)
+        phi = 0.5 - math.sqrt(0.25 - c)
+
+        # scale sld_a by 1e-6 because the translator will scale it back
+        oldpars.update(volfraction_a=phi, xi=xi, d=d, sld_a=sld_a*1e-6,
+                       sld_b=sld_b, scale=1.0)
+        oldpars.pop('c1')
+        oldpars.pop('c2')
+
+    return oldpars
+
+def convert_model(name, pars, use_underscore=False):
     """
     Convert model from old style parameter names to new style.
     """
-    _, _ = name, pars # lint
-    raise NotImplementedError
-    # need to load all new models in order to determine old=>new
-    # model name mapping
+    newname = _conversion_target(name)
+    if newname is None:
+        return name, pars
+    if newname.endswith(':1'):
+        model_info = load_model_info(newname[:-2])
+        # Know that the table exists and isn't multiplicity so grab it directly
+        translation = CONVERSION_TABLE[newname]
+    else:
+        model_info = load_model_info(newname)
+        translation = _get_translation_table(model_info)
+    newpars = _hand_convert(newname, pars.copy())
+    newpars = _convert_pars(newpars, translation)
+    newpars = _rescale_sld(model_info, newpars, 1e6)
+    newpars.setdefault('scale', 1.0)
+    newpars.setdefault('background', 0.0)
+    if use_underscore:
+        newpars = _pd_to_underscores(newpars)
+    return newname, newpars
 
-def _unscale(par, scale):
-    return [pk*scale for pk in par] if isinstance(par, list) else par*scale
 
-def _is_sld(modelinfo, id):
-    if id.startswith('M0:'):
-        return True
-    if (id.endswith('_pd') or id.endswith('_pd_n') or id.endswith('_pd_nsigma')
-            or id.endswith('_pd_width') or id.endswith('_pd_type')):
-        return False
-    for p in modelinfo.parameters.call_parameters:
-        if p.id == id:
-            return p.type == 'sld'
-    # check through kernel parameters in case it is a named as a vector
-    for p in modelinfo.parameters.kernel_parameters:
-        if p.id == id:
-            return p.type == 'sld'
-    raise ValueError("unknown parameter %r in conversion"%id)
-
-def _unscale_sld(modelinfo, pars):
-    """
-    rescale all sld parameters in the new model definition by 1e6 so the
-    numbers are nicer.  Relies on the fact that all sld parameters in the
-    new model definition end with sld.
-    """
-    return dict((id, (_unscale(v, 1e-6) if _is_sld(modelinfo, id) else v))
-                for id, v in pars.items())
-
-def _remove_pd(pars, key, name):
-    """
-    Remove polydispersity from the parameter list.
-
-    Note: operates in place
-    """
-    # Bumps style parameter names
-    width = pars.pop(key+".width", 0.0)
-    n_points = pars.pop(key+".npts", 0)
-    if width != 0.0 and n_points != 0:
-        warnings.warn("parameter %s not polydisperse in sasview %s"%(key, name))
-    pars.pop(key+".nsigmas", None)
-    pars.pop(key+".type", None)
-    return pars
+# ========= BACKWARD CONVERSION sasmodels => sasview 3.x ===========
 
 def _revert_pars(pars, mapping):
     """
@@ -143,21 +271,20 @@ def revert_name(model_info):
     oldname, _ = CONVERSION_TABLE.get(model_info.id, [None, {}])
     return oldname
 
-def _get_translation_table(model_info):
-    _, translation = CONVERSION_TABLE.get(model_info.id, [None, {}])
-    translation = translation.copy()
-    for p in model_info.parameters.kernel_parameters:
-        if p.length > 1:
-            newid = p.id
-            oldid = translation.get(p.id, p.id)
-            translation.pop(newid, None)
-            for k in range(1, p.length+1):
-                if newid+str(k) not in translation:
-                    translation[newid+str(k)] = oldid+str(k)
-    # Remove control parameter from the result
-    if model_info.control:
-        translation[model_info.control] = "CONTROL"
-    return translation
+def _remove_pd(pars, key, name):
+    """
+    Remove polydispersity from the parameter list.
+
+    Note: operates in place
+    """
+    # Bumps style parameter names
+    width = pars.pop(key+".width", 0.0)
+    n_points = pars.pop(key+".npts", 0)
+    if width != 0.0 and n_points != 0:
+        warnings.warn("parameter %s not polydisperse in sasview %s"%(key, name))
+    pars.pop(key+".nsigmas", None)
+    pars.pop(key+".type", None)
+    return pars
 
 def _trim_vectors(model_info, pars, oldpars):
     _, translation = CONVERSION_TABLE.get(model_info.id, [None, {}])
@@ -184,7 +311,7 @@ def revert_pars(model_info, pars):
             raise NotImplementedError("cannot convert to sasview sum")
     else:
         translation = _get_translation_table(model_info)
-    oldpars = _revert_pars(_unscale_sld(model_info, pars), translation)
+    oldpars = _revert_pars(_rescale_sld(model_info, pars, 1e-6), translation)
     oldpars = _trim_vectors(model_info, pars, oldpars)
 
     # Make sure the control parameter is an integer
@@ -228,9 +355,11 @@ def revert_pars(model_info, pars):
             _remove_pd(oldpars, 'rimC', name)
         elif name == 'hollow_cylinder':
             # now uses radius and thickness
-            oldpars['radius'] += oldpars['core_radius']
-        elif name in ['mono_gauss_coil', 'poly_gauss_coil']:
-            del oldpars['i_zero']
+            thickness = oldpars['core_radius']
+            oldpars['radius'] += thickness
+            oldpars['radius.width'] *= thickness/oldpars['radius']
+        #elif name in ['mono_gauss_coil', 'poly_gauss_coil']:
+        #    del oldpars['i_zero']
         elif name == 'onion':
             oldpars.pop('n_shells', None)
         elif name == 'pearl_necklace':
@@ -338,14 +467,14 @@ def constrain_new_to_old(model_info, pars):
             pars['scale'] = 1
             pars['background'] = 0
         elif name == 'mono_gauss_coil':
-            pars['i_zero'] = 1
+            pars['scale'] = 1
         elif name == 'onion':
             pars['n_shells'] = math.ceil(pars['n_shells'])
         elif name == 'pearl_necklace':
             pars['string_thickness_pd_n'] = 0
             pars['number_of_pearls_pd_n'] = 0
         elif name == 'poly_gauss_coil':
-            pars['i_zero'] = 1
+            pars['scale'] = 1
         elif name == 'rpa':
             pars['case_num'] = int(pars['case_num'])
         elif name == 'spherical_sld':
@@ -358,4 +487,55 @@ def constrain_new_to_old(model_info, pars):
                 pars['interface%d_pd_n'%k] = 0
         elif name == 'teubner_strey':
             pars['scale'] = 1
+            if pars['volfraction_a'] > 0.5:
+                pars['volfraction_a'] = 1.0 - pars['volfraction_a']
+        elif name == 'unified_power_Rg':
+            pars['level'] = int(pars['level'])
 
+def _check_one(name, seed=None):
+    """
+    Generate a random set of parameters for *name*, and check that they can
+    be converted back to SasView 3.x and forward again to sasmodels.  Raises
+    an error if the parameters are changed.
+    """
+    from . import compare
+
+    model_info = load_model_info(name)
+
+    old_name = revert_name(model_info)
+    if old_name is None:
+        return
+
+    pars = compare.get_pars(model_info, use_demo=False)
+    pars = compare.randomize_pars(model_info, pars, seed=seed)
+    if name == "teubner_strey":
+        # T-S model is underconstrained, so fix the assumptions.
+        pars['sld_a'], pars['sld_b'] = 1.0, 0.0
+    compare.constrain_pars(model_info, pars)
+    constrain_new_to_old(model_info, pars)
+    old_pars = revert_pars(model_info, pars)
+    new_name, new_pars = convert_model(old_name, old_pars, use_underscore=True)
+    if 1:
+        print("==== %s in ====="%name)
+        print(str(compare.parlist(model_info, pars, True)))
+        print("==== %s ====="%old_name)
+        for k, v in sorted(old_pars.items()):
+            print(k, v)
+        print("==== %s out ====="%new_name)
+        print(str(compare.parlist(model_info, new_pars, True)))
+    assert name==new_name, "%r != %r"%(name, new_name)
+    for k, v in new_pars.items():
+        assert k in pars, "%s: %r appeared from conversion"%(name, k)
+        if isinstance(v, float):
+            assert abs(v-pars[k])<=abs(1e-12*v), "%s: %r  %s != %s"%(name, k, v, pars[k])
+        else:
+            assert v == pars[k], "%s: %r  %s != %s"%(name, k, v, pars[k])
+    for k, v in pars.items():
+        assert k in pars, "%s: %r not converted"%(name, k)
+
+def test_backward_forward():
+    from .core import list_models
+    for name in list_models('all'):
+        L = lambda: _check_one(name, seed=1)
+        L.description = name
+        yield L

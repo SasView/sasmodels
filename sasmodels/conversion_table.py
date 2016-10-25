@@ -142,16 +142,16 @@ CONVERSION_TABLE = {
             "sld_core": "core_sld"
         }
     ],
-    "core_shell_ellipsoid(nonXT)": [
+    "core_shell_ellipsoid:1": [
         "CoreShellEllipsoidModel",
         {
             "sld_core": "sld_core",
             "sld_shell": "sld_shell",
             "sld_solvent": "sld_solvent",
             "equat_core": "equat_core",
-            "equat_shell": "equat_shell",
-            "polar_core": "polar_core",
-            "polar_shell": "polar_shell",
+            "thick_shell": "equat_shell",
+            "x_core": "polar_core",
+            "x_polar_shell": "polar_shell",
             "theta": "axis_theta",
             "phi": "axis_phi",
         }
@@ -398,22 +398,22 @@ CONVERSION_TABLE = {
     "hollow_rectangular_prism": [
         "RectangularHollowPrismModel",
         {
-            "b2a_ratio": "b2a_ratio",
-            "length_a": "short_side",
             "sld": "sldPipe",
-            "length_c": "c2a_ratio",
             "sld_solvent": "sldSolv",
-            "thickness": "thickness"
+            "length_a": "short_side",
+            "b2a_ratio": "b2a_ratio",
+            "c2a_ratio": "c2a_ratio",
+            "thickness": "thickness",
         }
     ],
     "hollow_rectangular_prism_thin_walls": [
         "RectangularHollowPrismInfThinWallsModel",
         {
             "sld": "sldPipe",
-            "b2a_ratio": "b2a_ratio",
+            "sld_solvent": "sldSolv",
             "length_a": "short_side",
-            "length_c": "c2a_ratio",
-            "sld_solvent": "sldSolv"
+            "b2a_ratio": "b2a_ratio",
+            "c2a_ratio": "c2a_ratio",
         }
     ],
     "lamellar": [
@@ -514,8 +514,8 @@ CONVERSION_TABLE = {
         "DebyeModel",
         {
             "rg": "rg",
-            "scale": "scale",
-            "background": "background"
+            "i_zero": "scale",
+            "background": "background",
         }
     ],
     "multilayer_vesicle": [
@@ -575,11 +575,11 @@ CONVERSION_TABLE = {
         "PearlNecklaceModel",
         {
             "scale": "scale",
-            "string_thickness": "thick_string",
+            "thick_string": "thick_string",
             "sld_string": "sld_string",
             "sld_solvent": "sld_solv",
             "edge_sep": "edge_separation",
-            "number_of_pearls": "num_pearls",
+            "num_pearls": "num_pearls",
             "radius": "radius",
             "background": "background",
             "sld": "sld_pearl"
@@ -590,8 +590,8 @@ CONVERSION_TABLE = {
         {
             "rg": "rg",
             "polydispersity": "poly_m",
-            "scale": "scale",
-            "background": "background"
+            "i_zero": "scale",
+            "background": "background",
         }
     ],
     "polymer_excl_volume": [
@@ -637,7 +637,7 @@ CONVERSION_TABLE = {
         "PringlesModel",
         {
             "scale": "scale",
-            "solvent_sld": "sld_solvent",
+            "sld_solvent": "sld_solvent",
             "thickness": "thickness",
             "beta": "beta",
             "radius": "radius",
@@ -664,9 +664,9 @@ CONVERSION_TABLE = {
         "RectangularPrismModel",
         {
             "sld": "sldPipe",
-            "b2a_ratio": "b2a_ratio",
             "length_a": "short_side",
-            "length_c": "c2a_ratio",
+            "b2a_ratio": "b2a_ratio",
+            "c2a_ratio": "c2a_ratio",
             "sld_solvent": "sldSolv"
         }
     ],
