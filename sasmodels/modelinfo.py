@@ -547,7 +547,7 @@ class ParameterTable(object):
         #print("call parameters", full_list)
         return full_list
 
-    def user_parameters(self, pars=None, is2d=True):
+    def user_parameters(self, pars, is2d=True):
         # type: (Dict[str, float], bool) -> List[Parameter]
         """
         Return the list of parameters for the given data type.

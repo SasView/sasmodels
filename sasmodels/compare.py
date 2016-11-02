@@ -1184,7 +1184,7 @@ class Explore(object):
         pars, pd_types = bumps_model.create_parameters(model_info, **p1)
         # Initialize parameter ranges, fixing the 2D parameters for 1D data.
         if not opts['is2d']:
-            for p in model_info.parameters.user_parameters(is2d=False):
+            for p in model_info.parameters.user_parameters({}, is2d=False):
                 for ext in ['', '_pd', '_pd_n', '_pd_nsigma']:
                     k = p.name+ext
                     v = pars.get(k, None)
