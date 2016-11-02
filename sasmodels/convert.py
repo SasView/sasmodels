@@ -161,6 +161,24 @@ def _hand_convert(name, oldpars):
         oldpars['rimB.width'] = 0.0
         oldpars['rimC.width'] = 0.0
     elif name == 'core_shell_ellipsoid:1':
+        # Reverse translation (from new to old), from core_shell_ellipsoid.c
+        #    equat_shell = equat_core + thick_shell
+        #    polar_core = equat_core * x_core
+        #    polar_shell = equat_core * x_core + thick_shell*x_polar_shell
+        # Forward translation (from old to new), inverting reverse translation:
+        #    thick_shell = equat_shell - equat_core
+        #    x_core = polar_core / equat_core
+        #    x_polar_shell = (polar_shell - polar_core)/(equat_shell - equat_core)
+        # Auto translation (old <=> new) happens after hand_convert
+        #    equat_shell <=> thick_shell
+        #    polar_core <=> x_core
+        #    polar_shell <=> x_polar_shell
+        # So...
+        equat_core, equat_shell = oldpars['equat_core'], oldpars['equat_shell']
+        polar_core, polar_shell = oldpars['polar_core'], oldpars['polar_shell']
+        oldpars['equat_shell'] = equat_shell - equat_core
+        oldpars['polar_core'] = polar_core / equat_core
+        oldpars['polar_shell'] = (polar_shell-polar_core)/(equat_shell-equat_core)
     elif name == 'hollow_cylinder':
         # now uses radius and thickness
         thickness = oldpars['radius'] - oldpars['core_radius']
