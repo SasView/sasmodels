@@ -365,22 +365,20 @@ CONVERSION_TABLE = {
     "hardsphere": [
         "HardsphereStructure",
         {
-            "radius_effective_pd": "effect_radius_pd",
+            "scale": "scale_factor",
             "radius_effective": "effect_radius",
-            "radius_effective_pd_n": "effect_radius_pd_n"
         }
     ],
     "hayter_msa": [
         "HayterMSAStructure",
         {
+            "scale": "scale_factor",
             "radius_effective": "effect_radius",
             "volfraction": "volfraction",
             "charge": "charge",
             "temperature": "temperature",
             "concentration_salt": "saltconc",
             "dielectconst": "dielectconst",
-            #"radius_effective_pd_n": "effect_radius_pd_n",
-            #"radius_effective_pd": "effect_radius_pd",
         }
     ],
     "hollow_cylinder": [
@@ -737,9 +735,10 @@ CONVERSION_TABLE = {
     "squarewell": [
         "SquareWellStructure",
         {
-            "radius_effective_pd": "effect_radius_pd",
+            "scale": "scale_factor",
             "radius_effective": "effect_radius",
-            "radius_effective_pd_n": "effect_radius_pd_n"
+            "wellwidth": "wellwidth",
+            "welldepth": "welldepth",
         }
     ],
     "stacked_disks": [
@@ -765,9 +764,8 @@ CONVERSION_TABLE = {
     "stickyhardsphere": [
         "StickyHSStructure",
         {
-            "radius_effective_pd": "effect_radius_pd",
+            "scale": "scale_factor",
             "radius_effective": "effect_radius",
-            "radius_effective_pd_n": "effect_radius_pd_n"
         }
     ],
     "surface_fractal": [

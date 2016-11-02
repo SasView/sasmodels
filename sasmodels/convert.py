@@ -160,6 +160,7 @@ def _hand_convert(name, oldpars):
         oldpars['rimA.width'] = 0.0
         oldpars['rimB.width'] = 0.0
         oldpars['rimC.width'] = 0.0
+    elif name == 'core_shell_ellipsoid:1':
     elif name == 'hollow_cylinder':
         # now uses radius and thickness
         thickness = oldpars['radius'] - oldpars['core_radius']
@@ -227,9 +228,11 @@ def convert_model(name, pars, use_underscore=False):
     newname = _conversion_target(name)
     if newname is None:
         return name, pars
-    if newname.endswith(':1'):
+    if ':' in newname:   # core_shell_ellipsoid:1
         model_info = load_model_info(newname[:-2])
         # Know that the table exists and isn't multiplicity so grab it directly
+        # Can't use _get_translation_table since that will return the 'bare'
+        # version.
         translation = CONVERSION_TABLE[newname]
     else:
         model_info = load_model_info(newname)
@@ -304,8 +307,8 @@ def revert_pars(model_info, pars):
     if model_info.composition is not None:
         composition_type, parts = model_info.composition
         if composition_type == 'product':
-            translation = {'scale':'scale_factor'}
-            translation.update(_get_translation_table(parts[0]))
+            translation = _get_translation_table(parts[0])
+            # structure factor models include scale:scale_factor mapping
             translation.update(_get_translation_table(parts[1]))
         else:
             raise NotImplementedError("cannot convert to sasview sum")
