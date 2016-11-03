@@ -353,7 +353,7 @@ class SasviewModel(object):
         self.params = collections.OrderedDict()
         self.dispersion = collections.OrderedDict()
         self.details = {}
-        for p in self._model_info.parameters.user_parameters():
+        for p in self._model_info.parameters.user_parameters({}, is2d=True):
             if p.name in hidden:
                 continue
             self.params[p.name] = p.default
