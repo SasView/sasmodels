@@ -29,7 +29,9 @@ in a fractal-like clusters.  P(q) and S(q) are calculated as:
     \frac{\sin[(D_f-1) \tan^{-1}(q \xi) ]}{(q R_0)^{D_f}}
 
 where $\xi$ is the correlation length representing the cluster size and $D_f$
-is the fractal dimension, representing the self similarity of the structure.
+is the fractal dimension, representing the self similarity of the structure. 
+Note that S(q) here goes negative if $D_f$ is too large, and the Gamma function 
+diverges at $D_f$=0 and $D_f$=1.  
 
 **Polydispersity on the radius is provided for.**
 
