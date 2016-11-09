@@ -54,6 +54,28 @@ def make_all_q(data):
         # data.has_z_acceptance
         return [q]
 
+def hankeltrafo(H0, H, Iq_calc):
+    G0 = np.dot(H0, Iq_calc)
+    G=[]
+    for i in range(len(H[0, :])):
+        Gtmp = np.dot(H[:, i], Iq_calc)
+        G.append(Gtmp)
+    P = G - G0
+    return P  # This is the logarithmic P, not the linear one as found in Andersson2008
+
+"""
+class HankelTransform(object):
+    def __init__(self,q_calc, SElength):
+        dq = q_calc[1]-q_calc[0]
+        self.H0 = dq / (2 * pi) * q_calc
+        self.H = dq / (2 * pi) * besselj(0, np.outer(q_calc, SElength))
+
+    def apply(self, Iq_calc):
+        G0 = np.dot(self.H0, Iq_calc)
+        G = np.dot(self.H, Iq_calc)
+        return G - G0 #This is the logarithmic G, not the linear one as found in Andersson2008
+"""
+
 def transform(data, q_calc, Iq_calc, qmono, Iq_mono):
     """
     Decides which transform type is to be used, based on the experiment data file contents (header)
@@ -207,7 +229,7 @@ def hankel(SElength, q, Iq):
     for i, SElength_i in enumerate(SElength):
         integral = besselj(0, q*SElength_i)*Iq*q
         G[i] = np.sum(integral)
-    G0 = np.sum(Iq*q) #relation to ksi? For generalization to all models
+    #G0 = np.sum(Iq*q) #relation to ksi? For generalization to all models
 
     # [m^-1] step size in q, needed for integration
     dq = (q[1]-q[0])
