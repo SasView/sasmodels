@@ -110,7 +110,7 @@ description = """
 category = "shape:cylinder"
 
 #             [ "name", "units", default, [lower, upper], "type", "description"],
-parameters = [["sld", "4e-6/Ang^2", 4, [-inf, inf], "sld",
+parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Cylinder scattering length density"],
               ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Solvent scattering length density"],
