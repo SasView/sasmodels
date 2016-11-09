@@ -59,7 +59,7 @@ usage: compare.py model N1 N2 [options...] [key=val]
 Compare the speed and value for a model between the SasView original and the
 sasmodels rewrite.
 
-model is the name of the model to compare (see below).
+model or model1,model2 are the names of the models to compare (see below).
 N1 is the number of times to run sasmodels (default=1).
 N2 is the number times to run sasview (default=1).
 
@@ -91,11 +91,13 @@ Any two calculation engines can be selected for comparison:
     -single!/-double!/-quad! sets an OpenMP calculation engine
     -sasview sets the sasview calculation engine
 
-The default is -single -sasview.  Note that the interpretation of quad
+The default is -single -double.  Note that the interpretation of quad
 precision depends on architecture, and may vary from 64-bit to 128-bit,
 with 80-bit floats being common (1e-19 precision).
 
 Key=value pairs allow you to set specific values for the model parameters.
+Key=value1,value2 to compare different values of the same parameter.
+value can be an expression including other parameters
 """
 
 # Update docs with command line usage string.   This is separate from the usual
@@ -884,6 +886,15 @@ def isnumber(str):
     isfloat = (match and not str[match.end():])
     return isfloat or INTEGER_RE.match(str)
 
+# For distinguishing pairs of models for comparison
+# key-value pair separator =
+# shell characters  | & ; <> $ % ' " \ # `
+# model and parameter names _
+# parameter expressions - + * / . ( )
+# path characters including tilde expansion and windows drive ~ / :
+# not sure about brackets [] {}
+# maybe one of the following @ ? ^ ! ,
+MODEL_SPLIT = ','
 def parse_opts(argv):
     # type: (List[str]) -> Dict[str, Any]
     """
@@ -986,8 +997,8 @@ def parse_opts(argv):
         elif arg == '-html':    opts['html'] = True
     # pylint: enable=bad-whitespace
 
-    if ':' in name:
-        name, name2 = name.split(':',2)
+    if MODEL_SPLIT in name:
+        name, name2 = name.split(MODEL_SPLIT, 2)
     else:
         name2 = name
     try:
@@ -1035,7 +1046,7 @@ def parse_opts(argv):
             s = set(p.split('_pd')[0] for p in pars)
             print("%r invalid; parameters are: %s"%(k, ", ".join(sorted(s))))
             return None
-        v1, v2 = v.split(':',2) if ':' in v else (v,v)
+        v1, v2 = v.split(MODEL_SPLIT, 2) if MODEL_SPLIT in v else (v,v)
         if v1 and k in pars:
             presets[k] = float(v1) if isnumber(v1) else v1
         if v2 and k in pars2:
