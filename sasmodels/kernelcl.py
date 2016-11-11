@@ -529,8 +529,9 @@ class GpuKernel(Kernel):
         env = environment()
         self.queue = env.get_queue(dtype)
 
+        q_size = max(len(self.result), q_input.global_size[0])
         self.result_b = cl.Buffer(self.queue.context, mf.READ_WRITE,
-                                  q_input.global_size[0] * dtype.itemsize)
+                                  q_size * dtype.itemsize)
         self.q_input = q_input # allocated by GpuInput above
 
         self._need_release = [self.result_b, self.q_input]
