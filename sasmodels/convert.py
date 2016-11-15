@@ -219,14 +219,18 @@ def _hand_convert(name, oldpars):
     elif name == 'polymer_micelle':
         if 'ndensity' in oldpars:
             oldpars['ndensity'] /= 1e15
+        if 'ndensity.lower' in oldpars:
             oldpars['ndensity.lower'] /= 1e15
+        if 'ndensity.upper' in oldpars:
             oldpars['ndensity.upper'] /= 1e15
     elif name == 'rpa':
         # convert scattering lengths from femtometers to centimeters
         for p in "L1", "L2", "L3", "L4":
             if p in oldpars:
                 oldpars[p] /= 1e-13
+            if p + ".lower" in oldpars:
                 oldpars[p + ".lower"] /= 1e-13
+            if p + ".upper" in oldpars:
                 oldpars[p + ".upper"] /= 1e-13
     elif name == 'spherical_sld':
         oldpars["CONTROL"] += 1
