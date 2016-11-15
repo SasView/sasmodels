@@ -54,6 +54,14 @@ PD_DOT = [
     ("_pd_type", ".type"),
     ]
 
+CONVERT_OLD =[
+    "fittable",
+    "std",
+    "upper",
+    "lower",
+    "units"
+]
+
 def _rescale(par, scale):
     return [pk*scale for pk in par] if isinstance(par, list) else par*scale
 
@@ -116,6 +124,25 @@ def _dot_pd_to_underscore_pd(par):
 
 def _pd_to_underscores(pars):
     return dict((_dot_pd_to_underscore_pd(k), v) for k, v in pars.items())
+
+def _convert_name(conv_dict, pars):
+    """
+    Renames parameter values (upper, lower, etc) to v4.0 names
+    :param conv_dict: conversion dictionary mapping new name : old name
+    :param pars: parameters to convert
+    :return:
+    """
+    import re
+    new_pars = {}
+    for key_par, value_par in pars.iteritems():
+        for key_conv, value_conv in conv_dict.iteritems():
+            if re.search(value_conv, key_par):
+                new_pars[key_par.replace(value_conv, key_conv)] = value_par
+                break
+            elif re.search("background", key_par) or re.search("scale", key_par):
+                new_pars[key_par] = value_par
+                break
+    return new_pars
 
 def _convert_pars(pars, mapping):
     """
@@ -192,10 +219,15 @@ def _hand_convert(name, oldpars):
     elif name == 'polymer_micelle':
         if 'ndensity' in oldpars:
             oldpars['ndensity'] /= 1e15
+            oldpars['ndensity.lower'] /= 1e15
+            oldpars['ndensity.upper'] /= 1e15
     elif name == 'rpa':
         # convert scattering lengths from femtometers to centimeters
         for p in "L1", "L2", "L3", "L4":
-            if p in oldpars: oldpars[p] /= 1e-13
+            if p in oldpars:
+                oldpars[p] /= 1e-13
+                oldpars[p + ".lower"] /= 1e-13
+                oldpars[p + ".upper"] /= 1e-13
     elif name == 'spherical_sld':
         oldpars["CONTROL"] += 1
     elif name == 'teubner_strey':
@@ -255,7 +287,8 @@ def convert_model(name, pars, use_underscore=False):
     else:
         model_info = load_model_info(newname)
         translation = _get_translation_table(model_info)
-    newpars = _hand_convert(newname, pars.copy())
+    newpars = _convert_name(translation, pars.copy())
+    newpars = _hand_convert(newname, newpars)
     newpars = _convert_pars(newpars, translation)
     newpars = _rescale_sld(model_info, newpars, 1e6)
     newpars.setdefault('scale', 1.0)
