@@ -3,6 +3,7 @@ Convert models to and from sasview.
 """
 from __future__ import print_function, division
 
+import re
 import math
 import warnings
 
@@ -71,6 +72,8 @@ def _is_sld(model_info, id):
     """
     if id.startswith('M0:'):
         return True
+    if id.startswith('volfraction') or id.startswith('radius_effective'):
+        return False
     if '_pd' in id or '.' in id:
         return False
     for p in model_info.parameters.call_parameters:
@@ -132,16 +135,23 @@ def _convert_name(conv_dict, pars):
     :param pars: parameters to convert
     :return:
     """
-    import re
     new_pars = {}
+    i = 0
+    j = 0
     for key_par, value_par in pars.iteritems():
+        j += 1
         for key_conv, value_conv in conv_dict.iteritems():
             if re.search(value_conv, key_par):
                 new_pars[key_par.replace(value_conv, key_conv)] = value_par
+                i += 1
                 break
             elif re.search("background", key_par) or re.search("scale", key_par):
                 new_pars[key_par] = value_par
+                i += 1
                 break
+        if i != j:
+            new_pars[key_par] = value_par
+            i += 1
     return new_pars
 
 def _convert_pars(pars, mapping):
@@ -294,7 +304,8 @@ def convert_model(name, pars, use_underscore=False):
     newpars = _convert_name(translation, pars.copy())
     newpars = _hand_convert(newname, newpars)
     newpars = _convert_pars(newpars, translation)
-    newpars = _rescale_sld(model_info, newpars, 1e6)
+    if not model_info.structure_factor:
+        newpars = _rescale_sld(model_info, newpars, 1e6)
     newpars.setdefault('scale', 1.0)
     newpars.setdefault('background', 0.0)
     if use_underscore:
