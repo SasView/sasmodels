@@ -48,20 +48,11 @@ MAGNETIC_SASVIEW_MODELS = [
 
 # Convert new style names for polydispersity info to old style names
 PD_DOT = [
-    ("", ""),
     ("_pd", ".width"),
     ("_pd_n", ".npts"),
     ("_pd_nsigma", ".nsigmas"),
     ("_pd_type", ".type"),
     ]
-
-CONVERT_OLD =[
-    "fittable",
-    "std",
-    "upper",
-    "lower",
-    "units"
-]
 
 def _rescale(par, scale):
     return [pk*scale for pk in par] if isinstance(par, list) else par*scale
@@ -219,9 +210,10 @@ def _hand_convert(name, oldpars):
     elif name == 'hollow_cylinder':
         # now uses radius and thickness
         thickness = oldpars['radius'] - oldpars['core_radius']
-        pd = oldpars['radius.width']*oldpars['radius']/thickness
         oldpars['radius'] = thickness
-        oldpars['radius.width'] = pd
+        if 'radius.width' in oldpars:
+            pd = oldpars['radius.width']*oldpars['radius']/thickness
+            oldpars['radius.width'] = pd
     elif name == 'pearl_necklace':
         pass
         #_remove_pd(oldpars, 'num_pearls', name)
@@ -266,10 +258,13 @@ def _hand_convert(name, oldpars):
         p_scale = oldpars['scale']
         p_c1 = oldpars['c1']
         p_c2= oldpars['c2']
-        xi = math.sqrt(2/(math.sqrt(p_scale/p_c2) + 0.5*p_c1/p_c2))
+        i_1 = 0.5*p_c1/p_c2
+        i_2 = math.sqrt(math.fabs(p_scale/p_c2))
+        i_3 = 2/(i_1 + i_2)
+        xi = math.sqrt(math.fabs(i_3))
 
         # find d from xi
-        k = math.sqrt(1 - 0.5*p_c1/p_c2*xi**2)
+        k = math.sqrt(math.fabs(1 - 0.5*p_c1/p_c2*xi**2))
         d = 2*math.pi*xi/k
 
         # solve quadratic phi (1-phi) = xi/(1e-4 8 pi drho^2 c2)
@@ -301,8 +296,8 @@ def convert_model(name, pars, use_underscore=False):
     else:
         model_info = load_model_info(newname)
         translation = _get_translation_table(model_info)
-    newpars = _convert_name(translation, pars.copy())
-    newpars = _hand_convert(newname, newpars)
+    newpars = _hand_convert(newname, pars.copy())
+    newpars = _convert_name(translation, newpars)
     newpars = _convert_pars(newpars, translation)
     if not model_info.structure_factor:
         newpars = _rescale_sld(model_info, newpars, 1e6)
