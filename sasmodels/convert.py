@@ -292,7 +292,7 @@ def convert_model(name, pars, use_underscore=False):
         # Know that the table exists and isn't multiplicity so grab it directly
         # Can't use _get_translation_table since that will return the 'bare'
         # version.
-        translation = CONVERSION_TABLE[newname]
+        translation = CONVERSION_TABLE[newname][1]
     else:
         model_info = load_model_info(newname)
         translation = _get_translation_table(model_info)
