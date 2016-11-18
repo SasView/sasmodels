@@ -163,8 +163,7 @@ def ER(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c):
 
 # parameters for demo
 demo = dict(scale=1, background=0.0,
-            sld_core=1e-6, sld_a=2e-6, sld_b=4e-6,
-            sld_c=2e-6, sld_solvent=6e-6,
+            sld_core=1, sld_a=2, sld_b=4, sld_c=2, sld_solvent=6,
             length_a=35, length_b=75, length_c=400,
             thick_rim_a=10, thick_rim_b=10, thick_rim_c=10,
             theta=0, phi=0, psi=0,
@@ -176,7 +175,7 @@ demo = dict(scale=1, background=0.0,
             thick_rim_c_pd=0.1, thick_rim_c_pd_n=1,
             theta_pd=10, theta_pd_n=1,
             phi_pd=10, phi_pd_n=1,
-            psi_pd=10, psi_pd_n=10)
+            psi_pd=10, psi_pd_n=1)
 
 qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
 tests = [[{}, 0.2, 0.533149288477],

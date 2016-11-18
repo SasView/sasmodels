@@ -62,17 +62,19 @@ category = "shape-independent"
 # pylint: disable=bad-whitespace, line-too-long
 #   ["name", "units", default, [lower, upper], "type","description"],
 parameters = [
-    ["radius",      "Ang",        60.0, [0, inf],    "volume", "Sphere core radius"],
-    ["thickness",   "Ang",        10.0, [0, inf],    "volume", "Sphere shell thickness"],
+    ["radius",      "Ang",        60.0, [0.0, inf],  "volume", "Sphere core radius"],
+    ["thickness",   "Ang",        10.0, [0.0, inf],  "volume", "Sphere shell thickness"],
     ["sld_core",    "1e-6/Ang^2", 1.0,  [-inf, inf], "sld",    "Sphere core scattering length density"],
     ["sld_shell",   "1e-6/Ang^2", 2.0,  [-inf, inf], "sld",    "Sphere shell scattering length density"],
     ["sld_solvent", "1e-6/Ang^2", 3.0,  [-inf, inf], "sld",    "Solvent scattering length density"],
-    ["volfraction", "",           1.0,  [0, inf],    "",       "Volume fraction of building block spheres"],
-    ["fractal_dim",    "",           2.0,  [-inf, inf], "",       "Fractal dimension"],
-    ["cor_length",  "Ang",      100.0,  [0, inf],    "",       "Correlation length of fractal-like aggregates"]]
+    ["volfraction", "",           1.0,  [0.0, inf],  "",       "Volume fraction of building block spheres"],
+    ["fractal_dim",    "",        2.0,  [0.0, 6.0],  "",       "Fractal dimension"],
+    ["cor_length",  "Ang",      100.0,  [0.0, inf],  "",       "Correlation length of fractal-like aggregates"],
+]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sph_j1c.c", "lib/sas_gamma.c", "lib/core_shell.c", "fractal_core_shell.c"]
+source = ["lib/sph_j1c.c", "lib/sas_gamma.c", "lib/core_shell.c",
+          "lib/fractal_sq.c", "fractal_core_shell.c"]
 
 demo = dict(scale=0.05,
             background=0,
@@ -99,8 +101,8 @@ def VR(radius, thickness):
         @param radius: core radius
         @param thickness: shell thickness
     """
-    whole = 4.0 * pi / 3.0 * pow((radius + thickness), 3)
-    core = 4.0 * pi / 3.0 * radius * radius * radius
+    whole = 4.0/3.0 * pi * (radius + thickness)**3
+    core = 4.0/3.0 * pi * radius**3
     return whole, whole-core
 
 tests = [[{'radius': 20.0, 'thickness': 10.0}, 'ER', 30.0],

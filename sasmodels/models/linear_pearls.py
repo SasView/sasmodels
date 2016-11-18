@@ -62,7 +62,7 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 single = False
 
-source = ["linear_pearls.c"]
+source = ["lib/sph_j1c.c", "linear_pearls.c"]
 
 demo = dict(scale=1.0, background=0.0,
             radius=80.0,

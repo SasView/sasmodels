@@ -49,7 +49,7 @@ def _register_old_models():
     is available to the plugin modules.
     """
     import sys
-    import sas
+    import sas   # needed in order to set sas.models
     import sas.sascalc.fit
     sys.modules['sas.models'] = sas.sascalc.fit
     sas.models = sas.sascalc.fit
@@ -57,6 +57,8 @@ def _register_old_models():
     import sas.models
     from sasmodels.conversion_table import CONVERSION_TABLE
     for new_name, conversion in CONVERSION_TABLE.items():
+        # CoreShellEllipsoidModel => core_shell_ellipsoid:1
+        new_name = new_name.split(':')[0]
         old_name = conversion[0]
         module_attrs = {old_name: find_model(new_name)}
         ConstructedModule = type(old_name, (), module_attrs)
@@ -227,7 +229,7 @@ def _generate_model_attributes(model_info):
     orientation_params = []
     magnetic_params = []
     fixed = []
-    for p in model_info.parameters.user_parameters():
+    for p in model_info.parameters.user_parameters({}, is2d=True):
         if p.type == 'orientation':
             orientation_params.append(p.name)
             orientation_params.append(p.name+".width")
@@ -351,7 +353,7 @@ class SasviewModel(object):
         self.params = collections.OrderedDict()
         self.dispersion = collections.OrderedDict()
         self.details = {}
-        for p in self._model_info.parameters.user_parameters():
+        for p in self._model_info.parameters.user_parameters({}, is2d=True):
             if p.name in hidden:
                 continue
             self.params[p.name] = p.default

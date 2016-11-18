@@ -5,159 +5,77 @@ double Iqxy(double qx, double qy, double radius_minor, double r_ratio, double le
             double sld, double solvent_sld, double theta, double phi, double psi);
 
 
-double _elliptical_cylinder_kernel(double q, double radius_minor, double r_ratio, double theta);
-
-double _elliptical_cylinder_kernel(double q, double radius_minor, double r_ratio, double theta)
-{
-    // This is the function LAMBDA1^2 in Feigin's notation
-    // q is the q-value for the calculation (1/A)
-    // radius_minor is the transformed radius"a" in Feigin's notation
-    // r_ratio is the ratio (major radius)/(minor radius) of the Ellipsoid [=] ---
-    // theta is the dummy variable of the integration
-
-    double retval,arg;
-
-    arg = q*radius_minor*sqrt((1.0+r_ratio*r_ratio)/2+(1.0-r_ratio*r_ratio)*cos(theta)/2);
-    //retval = 2.0*J1(arg)/arg;
-    retval = sas_J1c(arg);
-    return retval*retval ;
-}
-
-
-double form_volume(double radius_minor, double r_ratio, double length)
+double
+form_volume(double radius_minor, double r_ratio, double length)
 {
     return M_PI * radius_minor * radius_minor * r_ratio * length;
 }
 
-double Iq(double q, double radius_minor, double r_ratio, double length,
-          double sld, double solvent_sld) {
-
-    const int nordi=76; //order of integration
-    const int nordj=20;
-    double va,vb;       //upper and lower integration limits
-    double summ,zi,yyy,answer;         //running tally of integration
-    double summj,vaj,vbj,zij,arg,si;            //for the inner integration
-
+double
+Iq(double q, double radius_minor, double r_ratio, double length,
+   double sld, double solvent_sld)
+{
     // orientational average limits
-    va = 0.0;
-    vb = 1.0;
+    const double va = 0.0;
+    const double vb = 1.0;
     // inner integral limits
-    vaj=0.0;
-    vbj=M_PI;
+    const double vaj=0.0;
+    const double vbj=M_PI;
+
+    const double radius_major = r_ratio * radius_minor;
+    const double rA = 0.5*(square(radius_major) + square(radius_minor));
+    const double rB = 0.5*(square(radius_major) - square(radius_minor));
 
     //initialize integral
-    summ = 0.0;
-
-    const double delrho = sld - solvent_sld;
-
-    for(int i=0;i<nordi;i++) {
+    double outer_sum = 0.0;
+    for(int i=0;i<76;i++) {
         //setup inner integral over the ellipsoidal cross-section
-        summj=0;
-        zi = ( Gauss76Z[i]*(vb-va) + va + vb )/2.0;     //the "x" dummy
-        arg = radius_minor*sqrt(1.0-zi*zi);
-        for(int j=0;j<nordj;j++) {
+        const double cos_val = ( Gauss76Z[i]*(vb-va) + va + vb )/2.0;
+        const double sin_val = sqrt(1.0 - cos_val*cos_val);
+        //const double arg = radius_minor*sin_val;
+        double inner_sum=0;
+        for(int j=0;j<20;j++) {
             //20 gauss points for the inner integral
-            zij = ( Gauss20Z[j]*(vbj-vaj) + vaj + vbj )/2.0;        //the "y" dummy
-            yyy = Gauss20Wt[j] * _elliptical_cylinder_kernel(q, arg, r_ratio, zij);
-            summj += yyy;
+            const double theta = ( Gauss20Z[j]*(vbj-vaj) + vaj + vbj )/2.0;
+            const double r = sin_val*sqrt(rA - rB*cos(theta));
+            const double be = sas_J1c(q*r);
+            inner_sum += Gauss20Wt[j] * be * be;
         }
         //now calculate the value of the inner integral
-        answer = (vbj-vaj)/2.0*summj;
+        inner_sum *= 0.5*(vbj-vaj);
 
         //now calculate outer integral
-        arg = q*length*zi/2.0;
-        si = square(sinc(arg));
-        yyy = Gauss76Wt[i] * answer * si;
-        summ += yyy;
+        const double si = sinc(q*0.5*length*cos_val);
+        outer_sum += Gauss76Wt[i] * inner_sum * si * si;
     }
+    outer_sum *= 0.5*(vb-va);
 
     //divide integral by Pi
-    answer = (vb-va)/2.0*summ/M_PI;
-    // Multiply by contrast^2
-    answer *= delrho*delrho;
+    const double form = outer_sum/M_PI;
 
+    // scale by contrast and volume, and convert to to 1/cm units
     const double vol = form_volume(radius_minor, r_ratio, length);
-    return answer*vol*vol*1.0e-4;
+    const double delrho = sld - solvent_sld;
+    return 1.0e-4*square(delrho*vol)*form;
 }
 
 
-double Iqxy(double qx, double qy, double radius_minor, double r_ratio, double length,
-            double sld, double solvent_sld, double theta, double phi, double psi) {
-    const double _theta = theta * M_PI / 180.0;
-    const double _phi = phi * M_PI / 180.0;
-    const double _psi = psi * M_PI / 180.0;
-    const double q = sqrt(qx*qx+qy*qy);
-    const double q_x = qx/q;
-    const double q_y = qy/q;
+double
+Iqxy(double qx, double qy,
+     double radius_minor, double r_ratio, double length,
+     double sld, double solvent_sld,
+     double theta, double phi, double psi)
+{
+    double q, cos_val, cos_mu, cos_nu;
+    ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, cos_val, cos_mu, cos_nu);
 
-    //Cylinder orientation
-    double cyl_x = cos(_theta) * cos(_phi);
-    double cyl_y = sin(_theta);
-
-    //cyl_z = -cos(_theta) * sin(_phi);
-
-    // q vector
-    //q_z = 0;
-
-    // Note: cos(alpha) = 0 and 1 will get an
-    // undefined value from CylKernel
-    //alpha = acos( cos_val );
-
-    //ellipse orientation:
-    // the elliptical corss section was transformed and projected
-    // into the detector plane already through sin(alpha)and furthermore psi remains as same
-    // on the detector plane.
-    // So, all we need is to calculate the angle (nu) of the minor axis of the ellipse wrt
-    // the wave vector q.
-
-    //x- y- component on the detector plane.
-    const double ella_x =  -cos(_phi)*sin(_psi) * sin(_theta)+sin(_phi)*cos(_psi);
-    const double ella_y =  sin(_psi)*cos(_theta);
-    const double ellb_x =  -sin(_theta)*cos(_psi)*cos(_phi)-sin(_psi)*sin(_phi);
-    const double ellb_y =  cos(_theta)*cos(_psi);
-
-    // Compute the angle btw vector q and the
-    // axis of the cylinder
-    double cos_val = cyl_x*q_x + cyl_y*q_y;// + cyl_z*q_z;
-
-    // calculate the axis of the ellipse wrt q-coord.
-    double cos_nu = ella_x*q_x + ella_y*q_y;
-    double cos_mu = ellb_x*q_x + ellb_y*q_y;
-
-    // The following test should always pass
-    if (fabs(cos_val)>1.0) {
-      //printf("cyl_ana_2D: Unexpected error: cos(alpha)>1\n");
-      cos_val = 1.0;
-    }
-    if (fabs(cos_nu)>1.0) {
-      //printf("cyl_ana_2D: Unexpected error: cos(nu)>1\n");
-      cos_nu = 1.0;
-    }
-    if (fabs(cos_mu)>1.0) {
-      //printf("cyl_ana_2D: Unexpected error: cos(nu)>1\n");
-      cos_mu = 1.0;
-    }
-
-    const double r_major = r_ratio * radius_minor;
-    const double qr = q*sqrt( r_major*r_major*cos_nu*cos_nu + radius_minor*radius_minor*cos_mu*cos_mu );
-    const double qL = q*length*cos_val/2.0;
-
-    double Be;
-    if (qr==0){
-      Be = 0.5;
-    }else{
-      //Be = NR_BessJ1(qr)/qr;
-      Be = 0.5*sas_J1c(qr);
-    }
-
-    double Si;
-    if (qL==0){
-      Si = 1.0;
-    }else{
-      Si = sin(qL)/qL;
-    }
-
-    const double k = 2.0 * Be * Si;
+    // Compute:  r = sqrt((radius_major*cos_nu)^2 + (radius_minor*cos_mu)^2)
+    // Given:    radius_major = r_ratio * radius_minor
+    const double r = radius_minor*sqrt(square(r_ratio*cos_nu) + cos_mu*cos_mu);
+    const double be = sas_J1c(q*r);
+    const double si = sinc(q*0.5*length*cos_val);
+    const double Aq = be * si;
+    const double delrho = sld - solvent_sld;
     const double vol = form_volume(radius_minor, r_ratio, length);
-    return (sld - solvent_sld) * (sld - solvent_sld) * k * k *vol*vol*1.0e-4;
+    return 1.0e-4 * square(delrho * vol * Aq);
 }

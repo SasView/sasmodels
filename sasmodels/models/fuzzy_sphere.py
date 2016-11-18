@@ -85,7 +85,7 @@ source = ["lib/sph_j1c.c"]
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
 form_volume = """
-    return 1.333333333333333*M_PI*radius*radius*radius;
+    return M_4PI_3*cube(radius);
     """
 
 Iq = """

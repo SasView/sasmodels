@@ -58,7 +58,8 @@ Polymer Characterisation*, Wiley, (1999).
 http://www.ncnr.nist.gov/staff/hammouda/distance_learning/chapter_28.pdf
 """
 
-from numpy import inf, exp, power
+import numpy as np
+from numpy import inf, expm1, power
 
 name = "poly_gauss_coil"
 title = "Scattering from polydisperse polymer coils"
@@ -82,16 +83,29 @@ parameters = [
 def Iq(q, i_zero, rg, polydispersity):
     # pylint: disable = missing-docstring
     u = polydispersity - 1.0
-    z = (q*rg)**2 / (1.0 + 2.0*u)
+    z = q**2 * (rg**2 / (1.0 + 2.0*u))
+
     # need to trap the case of the polydispersity being 1 (ie, monodisperse!)
     if polydispersity == 1.0:
-        inten = i_zero * 2.0 * (exp(-z) + z - 1.0)
+        result = 2.0 * (expm1(-z) + z)
+        index = q != 0.
+        result[index] /= z[index]**2
+        result[~index] = 1.0
     else:
-        inten = i_zero * 2.0 * (power(1.0 + u*z, -1.0/u) + z - 1.0) / (1.0 + u)
-    index = q != 0.
-    inten[~index] = i_zero
-    inten[index] /= z[index]**2
-    return inten
+        # Taylor series around z=0 of (2*(1+uz)^(-1/u) + z - 1) / (z^2(u+1))
+        p = [
+            #(-1 - 20*u - 155*u**2 - 580*u**3 - 1044*u**4 - 720*u**5) / 2520.,
+            #( 1 + 14*u + 71*u**2 + 154*u**3 + 120*u**4) / 360.,
+            #(-1 - 9*u - 26*u**2 - 24*u**3) / 60.,
+            ( 1 + 5*u + 6*u**2) / 12.,
+            (-1 - 2*u) / 3.,
+            ( 1 ),
+            ]
+        result = 2.0 * (power(1.0 + u*z, -1.0/u) + z - 1.0) / (1.0 + u)
+        index = z > 1e-4
+        result[index] /= z[index]**2
+        result[~index] = np.polyval(p, z[~index])
+    return i_zero * result
 Iq.vectorized = True  # Iq accepts an array of q values
 
 demo = dict(scale=1.0,

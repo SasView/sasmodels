@@ -2,24 +2,23 @@
 double Si(double x);
 double Si(double x)
 {
-    double out;
-
-    if (x >= M_PI*6.2/4.0){
-        double out_sin = 0.0;
-        double out_cos = 0.0;
-        out = M_PI/2.0;
-
+    if (x >= M_PI*6.2/4.0) {
+        const double xxinv = 1./(x*x);
         // Explicitly writing factorial values triples the speed of the calculation
-        out_cos = 1./x - 2./pow(x,3) + 24./pow(x,5) - 720./pow(x,7);
-        out_sin = 1./pow(x,2) - 6./pow(x,4) + 120./pow(x,6) - 5040./pow(x,8);
+        const double out_cos = (((-720.*xxinv + 24.)*xxinv - 2.)*xxinv + 1.)/x;
+        const double out_sin = (((-5040.*xxinv + 120.)*xxinv - 6.)*xxinv + 1)*xxinv;
 
-        out -= cos(x) * out_cos;
-        out -= sin(x) * out_sin;
-        return out;
+        double sin_x, cos_x;
+        SINCOS(x, sin_x, cos_x);
+        return M_PI_2 - cos_x*out_cos - sin_x*out_sin;
+    } else {
+        const double xx = x*x;
+        // Explicitly writing factorial values triples the speed of the calculation
+        return (((((-1./439084800.*xx
+            + 1./3265920.)*xx
+            - 1./35280.)*xx
+            + 1./600.)*xx
+            - 1./18.)*xx
+            + 1.)*x;
     }
-
-    // Explicitly writing factorial values triples the speed of the calculation
-    out = x - pow(x, 3)/18. + pow(x,5)/600. - pow(x,7)/35280. + pow(x,9)/3265920. - pow(x,11)/439084800.;
-
-    return out;
 }

@@ -77,16 +77,13 @@ description = """
 category = "shape-independent"
 
 # pylint: disable=bad-whitespace, line-too-long
-#             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["fractal_dim_mass",      "",    1.8, [1e-16, 6.0], "",
-               "Mass fractal dimension"],
-              ["fractal_dim_surf",   "",    2.3, [1e-16, 6.0], "",
-               "Surface fractal dimension"],
-              ["rg_cluster", "Ang",   86.7, [0.0, inf], "",
-               "Cluster radius of gyration"],
-              ["rg_primary", "Ang", 4000.,  [0.0, inf], "",
-               "Primary particle radius of gyration"],
-             ]
+#   ["name", "units", default, [lower, upper], "type","description"],
+parameters = [
+    ["fractal_dim_mass", "",      1.8, [0.0, 6.0], "", "Mass fractal dimension"],
+    ["fractal_dim_surf", "",      2.3, [0.0, 6.0], "", "Surface fractal dimension"],
+    ["rg_cluster",       "Ang",  86.7, [0.0, inf], "", "Cluster radius of gyration"],
+    ["rg_primary",       "Ang", 4000., [0.0, inf], "", "Primary particle radius of gyration"],
+]
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["mass_surface_fractal.c"]

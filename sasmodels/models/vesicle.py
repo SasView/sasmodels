@@ -115,8 +115,8 @@ def VR(radius, thickness):
     :return whole-core: volume of the shell
     '''
 
-    whole = 4. * pi * (radius + thickness) ** 3. / 3.
-    core = 4. * pi * radius ** 3. / 3.
+    whole = 4./3. * pi * (radius + thickness)**3
+    core = 4./3. * pi * radius**3
     return whole, whole - core
 
 

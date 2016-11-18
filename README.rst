@@ -45,13 +45,6 @@ sld scaled by 1e6 so the numbers are nicer.  The model name is "cylinder"
 
 lamellar.py is an example of a single file model with embedded C code.
 
-Magnetism hasn't been implemented yet.  We may want a separate Imagnetic
-calculator with the extra parameters and calculations.   We should
-return all desired spin states together so we can share the work of
-computing the form factors for the different magnetic contrasts.  This
-will mean extending the data handler to support multiple cross sections
-in the same data set.
-
 |TravisStatus|_
 
 .. |TravisStatus| image:: https://travis-ci.org/SasView/sasmodels.svg?branch=master

@@ -68,9 +68,10 @@ K V Schubert, R Strey, S R Kline and E W Kaler,
 H Endo, M Mihailescu, M. Monkenbusch, J Allgaier, G Gompper, D Richter,
 B Jakobs, T Sottmann, R Strey, and I Grillo, *J. Chem. Phys.*, 115 (2001), 580
 """
+from __future__ import division
 
 import numpy as np
-from numpy import inf,power,pi
+from numpy import inf, pi
 
 name = "teubner_strey"
 title = "Teubner-Strey model of microemulsions"
@@ -88,18 +89,14 @@ parameters = [
     ["xi", "Ang", 30.0, [0, inf], "", "Correlation length"],
     ]
 
-def Iq(q, volfraction, sld, sld_solvent,d,xi):
+def Iq(q, volfraction_a, sld_a, sld_b, d, xi):
     """SAS form"""
-    drho2 = (sld-sld_solvent)*(sld-sld_solvent)
+    drho = sld_a - sld_b
     k = 2.0*pi*xi/d
-    a2 = power(1.0+power(k,2.0),2.0)
-    c1 = -2.0*xi*xi*power(k,2.0)+2*xi*xi
-    c2 = power(xi,4.0)
-    prefactor = 8.0*pi*volfraction*(1.0-volfraction)*drho2*c2/xi
-    #k2 = (2.0*pi/d)*(2.0*pi/d)
-    #xi2 = 1/(xi*xi)
-    #q2 = q*q
-    #result = prefactor/((xi2+k2)*(xi2+k2)+2.0*(xi2-k2)*q2+q2*q2)
+    a2 = (1.0 + k**2)**2
+    c1 = 2.0*xi**2 * (1.0 - k**2)
+    c2 = xi**4
+    prefactor = 8.0*pi * volfraction_a*(1.0 - volfraction_a) * drho**2 * c2/xi
     return 1.0e-4*prefactor / np.polyval([c2, c1, a2], q**2)
 
 Iq.vectorized = True  # Iq accepts an array of q values
