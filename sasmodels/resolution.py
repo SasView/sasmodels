@@ -10,6 +10,7 @@ from numpy import sqrt, log, log10, exp, pi  # type: ignore
 import numpy as np  # type: ignore
 
 from sasmodels import sesans
+from sasmodels.sesans import SesansTransform as SesansTransform
 
 __all__ = ["Resolution", "Perfect1D", "Pinhole1D", "Slit1D",
            "apply_resolution_matrix", "pinhole_resolution", "slit_resolution",
@@ -56,27 +57,6 @@ class Perfect1D(Resolution):
     def apply(self, theory):
         return theory
 
-
-class SESANS1D(Resolution):
-    def __init__(self, data, H0, H, q_calc):
-        self.q = data.x
-        self.H0 = H0
-        self.H = H
-        self.data=data
-        self.q_calc = q_calc
-    def apply(self, theory):
-        return sesans.SesansTransform.apply(theory)
-        #return sesans.hankeltrafo(self.H0, self.H, theory)
-
-"""
-    def __init__(self, data, q_calc):
-        self.q = data.x
-        self.data = data
-        self.q_calc = q_calc
-
-    def apply(self, theory):
-        return sesans.transform(self.data, self.q_calc, theory, None, None)
-"""
 class Pinhole1D(Resolution):
     r"""
     Pinhole aperture with q-dependent gaussian resolution.
