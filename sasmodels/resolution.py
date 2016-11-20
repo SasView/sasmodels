@@ -65,7 +65,8 @@ class SESANS1D(Resolution):
         self.data=data
         self.q_calc = q_calc
     def apply(self, theory):
-        return sesans.hankeltrafo(self.H0, self.H, theory)
+        return sesans.SesansTransform.apply(theory)
+        #return sesans.hankeltrafo(self.H0, self.H, theory)
 
 """
     def __init__(self, data, q_calc):
