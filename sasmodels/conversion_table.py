@@ -210,7 +210,7 @@ CONVERSION_TABLE = {
         }
     ],
     "correlation_length": [
-        "CorrLengthModel",
+        "CorrLength",
         {
             "porod_scale": "scale_p",
             "lorentz_scale": "scale_l",
@@ -298,7 +298,7 @@ CONVERSION_TABLE = {
         }
     ],
     "fractal_core_shell": [
-        "FractalCoreShellModel",
+        "FractalCoreShell",
         {
             "sld_core": "core_sld",
             "sld_shell": "shell_sld",
@@ -320,7 +320,7 @@ CONVERSION_TABLE = {
         }
     ],
     "gauss_lorentz_gel": [
-        "GaussLorentzGelModel",
+        "GaussLorentzGel",
         {
             "gauss_scale": "scale_g",
             "cor_length_dynamic": "dyn_colength",
@@ -330,7 +330,7 @@ CONVERSION_TABLE = {
         }
     ],
     "gaussian_peak": [
-        "PeakGaussModel",
+        "Peak Gauss Model",
         {
             "peak_pos": "q0",
             "sigma": "B",
@@ -347,13 +347,13 @@ CONVERSION_TABLE = {
         }
     ],
     "guinier": [
-        "GuinierModel",
+        "Guinier",
         {
             "rg": "rg"
         }
     ],
     "guinier_porod": [
-        "GuinierPorodModel",
+        "GuinierPorod",
         {
             "s": "dim",
             "rg": "rg",
@@ -485,7 +485,7 @@ CONVERSION_TABLE = {
         }
     ],
     "lorentz": [
-        "LorentzModel",
+        "Lorentz",
         {
             "cor_length": "length"
         }
@@ -509,7 +509,7 @@ CONVERSION_TABLE = {
         }
     ],
     "mono_gauss_coil": [
-        "DebyeModel",
+        "Debye",
         {
             "rg": "rg",
             "i_zero": "scale",
@@ -563,7 +563,7 @@ CONVERSION_TABLE = {
         }
     ],
     "peak_lorentz": [
-        "PeakLorentzModel",
+        "Peak Lorentz Model",
         {
             "peak_pos": "q0",
             "peak_hwhm": "B"
@@ -801,7 +801,7 @@ CONVERSION_TABLE = {
         }
     ],
     "two_lorentzian": [
-        "TwoLorentzianModel",
+        "TwoLorentzian",
         {
             "lorentz_scale_1": "scale_1",
             "lorentz_scale_2": "scale_2",
@@ -813,7 +813,7 @@ CONVERSION_TABLE = {
         }
     ],
     "two_power_law": [
-        "TwoPowerLawModel",
+        "TwoPowerLaw",
         {
             "coefficent_1": "coef_A",
             "power_2": "power2",
@@ -823,7 +823,7 @@ CONVERSION_TABLE = {
         }
     ],
     "unified_power_Rg": [
-        "UnifiedPowerRgModel",
+        "UnifiedPowerRg",
         {
         }
     ],

@@ -63,8 +63,6 @@ def _is_sld(model_info, id):
     """
     if id.startswith('M0:'):
         return True
-    if id.startswith('volfraction') or id.startswith('radius_effective'):
-        return False
     if '_pd' in id or '.' in id:
         return False
     for p in model_info.parameters.call_parameters:
@@ -74,7 +72,7 @@ def _is_sld(model_info, id):
     for p in model_info.parameters.kernel_parameters:
         if p.id == id:
             return p.type == 'sld'
-    raise ValueError("unknown parameter %r in conversion"%id)
+    return False
 
 def _rescale_sld(model_info, pars, scale):
     """
@@ -136,7 +134,7 @@ def _convert_name(conv_dict, pars):
                 new_pars[key_par.replace(value_conv, key_conv)] = value_par
                 i += 1
                 break
-            elif re.search("background", key_par) or re.search("scale", key_par):
+            elif "background" == key_par or "scale" == key_par:
                 new_pars[key_par] = value_par
                 i += 1
                 break
@@ -235,7 +233,11 @@ def _hand_convert(name, oldpars):
             if p + ".upper" in oldpars:
                 oldpars[p + ".upper"] /= 1e-13
     elif name == 'spherical_sld':
-        oldpars["CONTROL"] += 1
+        oldpars["CONTROL"] = 0
+        i = 0
+        while "nu_inter" + str(i) in oldpars:
+            oldpars["CONTROL"] += 1
+            i += 1
     elif name == 'teubner_strey':
         # basically undoing the entire Teubner-Strey calculations here.
         #    drho = (sld_a - sld_b)
