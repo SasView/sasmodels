@@ -22,11 +22,9 @@ double Iq(double QQ,
 	double SofQ, Qdiam, Vp, ss;
 	double SIdiam, diam, Kappa, cs, IonSt;
 	double  Perm, Beta;
-	double pi, charge;
+	double charge;
 	int ierr;
 	
-	pi = M_PI;
-
 	diam=2*radius_effective;		//in A
 
 						////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37,7 +35,7 @@ double Iq(double QQ,
 	Perm=dialec*FrSpPerm;	//in C^2/(N  m^2)
 	charge=zz*Elcharge;		//in Coulomb (C)
 	SIdiam = diam*1.0E-10;		//in m
-	Vp=4.0*pi/3.0*(SIdiam/2.0)*(SIdiam/2.0)*(SIdiam/2.0);	//in m^3
+	Vp=M_4PI_3*cube(SIdiam/2.0);	//in m^3
 	cs=csalt*6.022E23*1.0E3;	//# salt molecules/m^3
 	
 	//         Compute the derived values of :
@@ -49,7 +47,7 @@ double Iq(double QQ,
 	IonSt=0.5 * Elcharge*Elcharge*(zz*VolFrac/Vp+2.0*cs);
 	Kappa=sqrt(2*Beta*IonSt/Perm);     //Kappa calc from Ionic strength
 									   //	Kappa=2/SIdiam					// Use to compare with HP paper
-	gMSAWave[5]=Beta*charge*charge/(pi*Perm*SIdiam*pow((2.0+Kappa*SIdiam),2));
+	gMSAWave[5]=Beta*charge*charge/(M_PI*Perm*SIdiam*square(2.0+Kappa*SIdiam));
 	
 	//         Finally set up dimensionless parameters 
 	Qdiam=QQ*diam;

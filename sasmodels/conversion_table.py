@@ -142,50 +142,51 @@ CONVERSION_TABLE = {
             "sld_core": "core_sld"
         }
     ],
-    "core_shell_ellipsoid": [
+    "core_shell_ellipsoid:1": [
         "CoreShellEllipsoidModel",
         {
-            "phi": "axis_phi",
             "sld_core": "sld_core",
-            "polar_shell": "polar_shell",
+            "sld_shell": "sld_shell",
             "sld_solvent": "sld_solvent",
-            "equat_shell": "equat_shell",
-            "equat_core": "equat_core",
+            "radius_equat_core": "equat_core",
+            "x_core": "polar_core",
+            "thick_shell": "equat_shell",
+            "x_polar_shell": "polar_shell",
             "theta": "axis_theta",
-            "polar_core": "polar_core",
-            "sld_shell": "sld_shell"
+            "phi": "axis_phi",
         }
     ],
     "core_shell_ellipsoid": [
         "CoreShellEllipsoidXTModel",
         {
-            "phi": "axis_phi",
             "sld_core": "sld_core",
-            "x_core": "X_core",
+            "sld_shell": "sld_shell",
             "sld_solvent": "sld_solvent",
+            "radius_equat_core": "equat_core",
             "thick_shell": "T_shell",
+            "x_core": "X_core",
             "x_polar_shell": "XpolarShell",
             "theta": "axis_theta",
-            "sld_shell": "sld_shell"
+            "phi": "axis_phi",
         }
     ],
     "core_shell_parallelepiped": [
         "CSParallelepipedModel",
         {
-            "phi": "parallel_phi",
-            "psi": "parallel_psi",
             "sld_core": "sld_pcore",
-            "sld_c": "sld_rimC",
+            "sld_a": "sld_rimA",
             "sld_b": "sld_rimB",
+            "sld_c": "sld_rimC",
             "sld_solvent": "sld_solv",
             "length_a": "shortA",
-            "sld_a": "sld_rimA",
             "length_b": "midB",
-            "thick_rimc": "rimC",
-            "theta": "parallel_theta",
-            "thick_rim_a": "rimA",
             "length_c": "longC",
-            "thick_rim_b": "rimB"
+            "thick_rim_a": "rimA",
+            "thick_rim_c": "rimC",
+            "thick_rim_b": "rimB",
+            "theta": "parallel_theta",
+            "phi": "parallel_phi",
+            "psi": "parallel_psi",
         }
     ],
     "core_shell_sphere": [
@@ -239,7 +240,7 @@ CONVERSION_TABLE = {
     "dab": [
         "DABModel",
         {
-            "length": "length"
+            "cor_length": "length"
         }
     ],
     "ellipsoid": [
@@ -256,12 +257,13 @@ CONVERSION_TABLE = {
     "elliptical_cylinder": [
         "EllipticalCylinderModel",
         {
+            "axis_ratio": "r_ratio",
+            "radius_minor": "r_minor",
+            "sld": "sldCyl",
+            "sld_solvent": "sldSolv",
+            "theta": "cyl_theta",
             "phi": "cyl_phi",
             "psi": "cyl_psi",
-            "theta": "cyl_theta",
-            "sld": "sldCyl",
-            "axis_ratio": "r_ratio",
-            "sld_solvent": "sldSolv"
         }
     ],
     "fcc_paracrystal": [
@@ -298,9 +300,14 @@ CONVERSION_TABLE = {
     "fractal_core_shell": [
         "FractalCoreShellModel",
         {
+            "sld_core": "core_sld",
             "sld_shell": "shell_sld",
             "sld_solvent": "solvent_sld",
-            "sld_core": "core_sld"
+            "radius": "radius",
+            "thickness": "thickness",
+            "fractal_dim": "frac_dim",
+            "cor_length": "cor_length",
+            "volfraction": "volfraction",
         }
     ],
     "fuzzy_sphere": [
@@ -325,7 +332,8 @@ CONVERSION_TABLE = {
     "gaussian_peak": [
         "PeakGaussModel",
         {
-            "sigma": "B"
+            "peak_pos": "q0",
+            "sigma": "B",
         }
     ],
     "gel_fit": [
@@ -333,9 +341,9 @@ CONVERSION_TABLE = {
         {
             "rg": "radius",
             "lorentz_scale": "lScale",
-            "fractal_dim": "FractalExp",
+            "guinier_scale": "gScale",
+            "fractal_dim": "scale",
             "cor_length": "zeta",
-            "guinier_scale": "gScale"
         }
     ],
     "guinier": [
@@ -349,7 +357,7 @@ CONVERSION_TABLE = {
         {
             "s": "dim",
             "rg": "rg",
-            "m": "m",
+            "porod_exp": "m",
             "scale": "scale",
             "background": "background"
         }
@@ -357,53 +365,53 @@ CONVERSION_TABLE = {
     "hardsphere": [
         "HardsphereStructure",
         {
-            "radius_effective_pd": "effect_radius_pd",
+            "scale": "scale_factor",
             "radius_effective": "effect_radius",
-            "radius_effective_pd_n": "effect_radius_pd_n"
         }
     ],
     "hayter_msa": [
         "HayterMSAStructure",
         {
-            "salt_concentration": "saltconc",
-            "radius_effective_pd": "effect_radius_pd",
+            "scale": "scale_factor",
             "radius_effective": "effect_radius",
-            "radius_effective_pd_n": "effect_radius_pd_n"
+            "volfraction": "volfraction",
+            "charge": "charge",
+            "temperature": "temperature",
+            "concentration_salt": "saltconc",
+            "dielectconst": "dielectconst",
         }
     ],
     "hollow_cylinder": [
         "HollowCylinderModel",
         {
-            "phi": "axis_phi",
-            "scale": "scale",
-            "radius_core": "core_radius",
-            "sld_solvent": "sldSolv",
-            "length": "length",
-            "radius": "radius",
-            "background": "background",
             "sld": "sldCyl",
-            "theta": "axis_theta"
+            "sld_solvent": "sldSolv",
+            "radius": "core_radius",
+            "thickness": "radius",
+            "length": "length",
+            "theta": "axis_theta",
+            "phi": "axis_phi",
         }
     ],
     "hollow_rectangular_prism": [
         "RectangularHollowPrismModel",
         {
-            "b2a_ratio": "b2a_ratio",
-            "length_a": "short_side",
             "sld": "sldPipe",
-            "length_c": "c2a_ratio",
             "sld_solvent": "sldSolv",
-            "thickness": "thickness"
+            "length_a": "short_side",
+            "b2a_ratio": "b2a_ratio",
+            "c2a_ratio": "c2a_ratio",
+            "thickness": "thickness",
         }
     ],
     "hollow_rectangular_prism_thin_walls": [
         "RectangularHollowPrismInfThinWallsModel",
         {
             "sld": "sldPipe",
-            "b2a_ratio": "b2a_ratio",
+            "sld_solvent": "sldSolv",
             "length_a": "short_side",
-            "length_c": "c2a_ratio",
-            "sld_solvent": "sldSolv"
+            "b2a_ratio": "b2a_ratio",
+            "c2a_ratio": "c2a_ratio",
         }
     ],
     "lamellar": [
@@ -427,31 +435,36 @@ CONVERSION_TABLE = {
     "lamellar_hg_stack_caille": [
         "LamellarPSHGModel",
         {
-            "Caille_parameter": "caille",
-            "Nlayers": "n_plates",
+            "sld": "sld_tail",
             "sld_head": "sld_head",
+            "sld_solvent": "sld_solvent",
             "length_tail": "deltaT",
             "length_head": "deltaH",
-            "sld": "sld_tail",
-            "sld_solvent": "sld_solvent"
+            "d_spacing": "spacing",
+            "Caille_parameter": "caille",
+            "Nlayers": "n_plates",
         }
     ],
     "lamellar_stack_caille": [
         "LamellarPSModel",
         {
             "sld": "sld_bi",
+            "sld_solvent": "sld_sol",
+            "thickness": "delta",
+            "d_spacing": "spacing",
             "Caille_parameter": "caille",
             "Nlayers": "N_plates",
-            "sld_solvent": "sld_sol",
-            "thickness": "delta"
         }
     ],
     "lamellar_stack_paracrystal": [
         "LamellarPCrystalModel",
         {
             "sld": "sld_layer",
+            "sld_solvent": "sld_solvent",
+            "thickness": "thickness",
+            "d_spacing": "spacing",
             "sigma_d": "pd_spacing",
-            "sld_solvent": "sld_solvent"
+            "Nlayers": "Nlayers",
         }
     ],
     "line": [
@@ -499,8 +512,8 @@ CONVERSION_TABLE = {
         "DebyeModel",
         {
             "rg": "rg",
-            "scale": "scale",
-            "background": "background"
+            "i_zero": "scale",
+            "background": "background",
         }
     ],
     "multilayer_vesicle": [
@@ -575,8 +588,8 @@ CONVERSION_TABLE = {
         {
             "rg": "rg",
             "polydispersity": "poly_m",
-            "scale": "scale",
-            "background": "background"
+            "i_zero": "scale",
+            "background": "background",
         }
     ],
     "polymer_excl_volume": [
@@ -593,7 +606,14 @@ CONVERSION_TABLE = {
         {
             "sld_corona": "rho_corona",
             "sld_solvent": "rho_solv",
-            "sld_core": "rho_core"
+            "sld_core": "rho_core",
+            "ndensity": "ndensity",
+            "v_core": "v_core",
+            "v_corona": "v_corona",
+            "radius_core": "radius_core",
+            "rg": "radius_gyr",
+            "d_penetration": "d_penetration",
+            "n_aggreg": "n_aggreg",
         }
     ],
     "porod": [
@@ -615,7 +635,7 @@ CONVERSION_TABLE = {
         "PringlesModel",
         {
             "scale": "scale",
-            "solvent_sld": "sld_solvent",
+            "sld_solvent": "sld_solvent",
             "thickness": "thickness",
             "beta": "beta",
             "radius": "radius",
@@ -642,9 +662,9 @@ CONVERSION_TABLE = {
         "RectangularPrismModel",
         {
             "sld": "sldPipe",
-            "b2a_ratio": "b2a_ratio",
             "length_a": "short_side",
-            "length_c": "c2a_ratio",
+            "b2a_ratio": "b2a_ratio",
+            "c2a_ratio": "c2a_ratio",
             "sld_solvent": "sldSolv"
         }
     ],
@@ -715,9 +735,10 @@ CONVERSION_TABLE = {
     "squarewell": [
         "SquareWellStructure",
         {
-            "radius_effective_pd": "effect_radius_pd",
+            "scale": "scale_factor",
             "radius_effective": "effect_radius",
-            "radius_effective_pd_n": "effect_radius_pd_n"
+            "wellwidth": "wellwidth",
+            "welldepth": "welldepth",
         }
     ],
     "stacked_disks": [
@@ -728,7 +749,9 @@ CONVERSION_TABLE = {
             "sld_core": "core_sld",
             "theta": "axis_theta",
             "sld_solvent": "solvent_sld",
-            "n_stacking": "n_stacking"
+            "n_stacking": "n_stacking",
+            "thick_layer": "layer_thick",
+            "thick_core": "core_thick",
         }
     ],
     "star_polymer": [
@@ -741,9 +764,8 @@ CONVERSION_TABLE = {
     "stickyhardsphere": [
         "StickyHSStructure",
         {
-            "radius_effective_pd": "effect_radius_pd",
+            "scale": "scale_factor",
             "radius_effective": "effect_radius",
-            "radius_effective_pd_n": "effect_radius_pd_n"
         }
     ],
     "surface_fractal": [
@@ -757,7 +779,12 @@ CONVERSION_TABLE = {
     "teubner_strey": [
         "TeubnerStreyModel",
         {
-            "a2": "scale"
+            # Note: parameters are completely rewritten in convert.py
+            "volfraction_a": "volfraction_a",
+            "sld_a": "sld_a",
+            "sld_b": "sld_b",
+            "d": "d",
+            "xi": "xi",
         }
     ],
     "triaxial_ellipsoid": [

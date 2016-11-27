@@ -7,9 +7,17 @@ double _ellipsoid_kernel(double q, double radius_polar, double radius_equatorial
 double _ellipsoid_kernel(double q, double radius_polar, double radius_equatorial, double sin_alpha)
 {
     double ratio = radius_polar/radius_equatorial;
-    const double u = q*radius_equatorial*sqrt(1.0
-                   + sin_alpha*sin_alpha*(ratio*ratio - 1.0));
-    const double f = sph_j1c(u);
+    // Given the following under the radical:
+    //     1 + sin^2(T) (v^2 - 1)
+    // we can expand to match the form given in Guinier (1955)
+    //     = (1 - sin^2(T)) + v^2 sin^2(T) = cos^2(T) + sin^2(T)
+    // Instead of using pythagoras we could pass in sin and cos; this may be
+    // slightly better for 2D which has already computed it, but it introduces
+    // an extra sqrt and square for 1-D not required by the current form, so
+    // leave it as is.
+    const double r = radius_equatorial
+                     * sqrt(1.0 + sin_alpha*sin_alpha*(ratio*ratio - 1.0));
+    const double f = sph_j1c(q*r);
 
     return f*f;
 }
@@ -48,14 +56,9 @@ double Iqxy(double qx, double qy,
     double theta,
     double phi)
 {
-    double sn, cn;
-
-    const double q = sqrt(qx*qx + qy*qy);
-    SINCOS(phi*M_PI_180, sn, cn);
-    const double cos_alpha = (q==0. ? 1.0 : (cn*qx + sn*qy)*sin(theta*M_PI_180)/q);
-    const double alpha = acos(cos_alpha);
-    SINCOS(alpha, sn, cn);
-    const double form = _ellipsoid_kernel(q, radius_polar, radius_equatorial, sn);
+    double q, sin_alpha, cos_alpha;
+    ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sin_alpha, cos_alpha);
+    const double form = _ellipsoid_kernel(q, radius_polar, radius_equatorial, sin_alpha);
     const double s = (sld - sld_solvent) * form_volume(radius_polar, radius_equatorial);
 
     return 1.0e-4 * form * s * s;

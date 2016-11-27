@@ -12,7 +12,7 @@ Definition
 The 1D scattering intensity for this model is calculated by forming
 the difference of the amplitudes of two massive parallelepipeds
 differing in their outermost dimensions in each direction by the
-same length increment :math:`2\Delta` (Nayuk, 2012).
+same length increment $2\Delta$ (Nayuk, 2012).
 
 As in the case of the massive parallelepiped model (:ref:`rectangular-prism`),
 the scattering amplitude is computed for a particular orientation of the
@@ -57,11 +57,11 @@ $A \le B \le C$, and the volume $V$ of the parallelepiped is
 The 1D scattering intensity is then calculated as
 
 .. math::
-  I(q) = \text{scale} \times V \times (\rho_{\text{p}} -
-  \rho_{\text{solvent}})^2 \times P(q) + \text{background}
+  I(q) = \text{scale} \times V \times (\rho_\text{p} -
+  \rho_\text{solvent})^2 \times P(q) + \text{background}
 
-where $\rho_{\text{p}}$ is the scattering length of the parallelepiped,
-$\rho_{\text{solvent}}$ is the scattering length of the solvent,
+where $\rho_\text{p}$ is the scattering length of the parallelepiped,
+$\rho_\text{solvent}$ is the scattering length of the solvent,
 and (if the data are in absolute units) *scale* represents the volume fraction
 (which is unitless).
 
@@ -147,7 +147,7 @@ def VR(length_a, b2a_ratio, c2a_ratio, thickness):
 
 # parameters for demo
 demo = dict(scale=1, background=0,
-            sld=6.3e-6, sld_solvent=1.0e-6,
+            sld=6.3, sld_solvent=1.0,
             length_a=35, b2a_ratio=1, c2a_ratio=1, thickness=1,
             length_a_pd=0.1, length_a_pd_n=10,
             b2a_ratio_pd=0.1, b2a_ratio_pd_n=1,

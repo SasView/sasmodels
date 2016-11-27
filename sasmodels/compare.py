@@ -32,19 +32,21 @@ import sys
 import math
 import datetime
 import traceback
+import re
 
 import numpy as np  # type: ignore
 
 from . import core
 from . import kerneldll
-from . import weights
+from . import exception
 from .data import plot_theory, empty_data1D, empty_data2D
 from .direct_model import DirectModel
 from .convert import revert_name, revert_pars, constrain_new_to_old
+from .generate import FLOAT_RE
 
 try:
     from typing import Optional, Dict, Any, Callable, Tuple
-except:
+except Exception:
     pass
 else:
     from .modelinfo import ModelInfo, Parameter, ParameterSet
@@ -57,7 +59,7 @@ usage: compare.py model N1 N2 [options...] [key=val]
 Compare the speed and value for a model between the SasView original and the
 sasmodels rewrite.
 
-model is the name of the model to compare (see below).
+model or model1,model2 are the names of the models to compare (see below).
 N1 is the number of times to run sasmodels (default=1).
 N2 is the number times to run sasview (default=1).
 
@@ -70,6 +72,7 @@ Options (* for default):
     -1d*/-2d computes 1d or 2d data
     -preset*/-random[=seed] preset or random parameters
     -mono/-poly* force monodisperse/polydisperse
+    -magnetic/-nonmagnetic* suppress magnetism
     -cutoff=1e-5* cutoff value for including a point in polydispersity
     -pars/-nopars* prints the parameter set or not
     -abs/-rel* plot relative or absolute error
@@ -80,7 +83,7 @@ Options (* for default):
     -edit starts the parameter explorer
     -default/-demo* use demo vs default parameters
     -html shows the model docs instead of running the model
-    -title="graph title" adds a title to the plot
+    -title="note" adds note to the plot title, after the model name
 
 Any two calculation engines can be selected for comparison:
 
@@ -88,11 +91,13 @@ Any two calculation engines can be selected for comparison:
     -single!/-double!/-quad! sets an OpenMP calculation engine
     -sasview sets the sasview calculation engine
 
-The default is -single -sasview.  Note that the interpretation of quad
+The default is -single -double.  Note that the interpretation of quad
 precision depends on architecture, and may vary from 64-bit to 128-bit,
 with 80-bit floats being common (1e-19 precision).
 
 Key=value pairs allow you to set specific values for the model parameters.
+Key=value1,value2 to compare different values of the same parameter.
+value can be an expression including other parameters
 """
 
 # Update docs with command line usage string.   This is separate from the usual
@@ -107,6 +112,9 @@ Program description
            + USAGE)
 
 kerneldll.ALLOW_SINGLE_PRECISION_DLLS = True
+
+# list of math functions for use in evaluating parameters
+MATH = dict((k,getattr(math, k)) for k in dir(math) if not k.startswith('_'))
 
 # CRUFT python 2.6
 if not hasattr(datetime.timedelta, 'total_seconds'):
@@ -313,19 +321,28 @@ def constrain_pars(model_info, pars):
     if '*' in name:
         name = name.split('*')[0]
 
-    if name == 'capped_cylinder' and pars['radius_cap'] < pars['radius']:
-        pars['radius'], pars['radius_cap'] = pars['radius_cap'], pars['radius']
-    if name == 'barbell' and pars['radius_bell'] < pars['radius']:
-        pars['radius'], pars['radius_bell'] = pars['radius_bell'], pars['radius']
+    if name == 'barbell':
+        if pars['radius_bell'] < pars['radius']:
+            pars['radius'], pars['radius_bell'] = pars['radius_bell'], pars['radius']
 
-    # Limit guinier to an Rg such that Iq > 1e-30 (single precision cutoff)
-    if name == 'guinier':
+    elif name == 'capped_cylinder':
+        if pars['radius_cap'] < pars['radius']:
+            pars['radius'], pars['radius_cap'] = pars['radius_cap'], pars['radius']
+
+    elif name == 'guinier':
+        # Limit guinier to an Rg such that Iq > 1e-30 (single precision cutoff)
         #q_max = 0.2  # mid q maximum
         q_max = 1.0  # high q maximum
         rg_max = np.sqrt(90*np.log(10) + 3*np.log(pars['scale']))/q_max
         pars['rg'] = min(pars['rg'], rg_max)
 
-    if name == 'rpa':
+    elif name == 'pearl_necklace':
+        if pars['radius'] < pars['thick_string']:
+            pars['radius'], pars['thick_string'] = pars['thick_string'], pars['radius']
+        pars['num_pearls'] = math.ceil(pars['num_pearls'])
+        pass
+
+    elif name == 'rpa':
         # Make sure phi sums to 1.0
         if pars['case_num'] < 2:
             pars['Phi1'] = 0.
@@ -336,6 +353,9 @@ def constrain_pars(model_info, pars):
         for c in '1234':
             pars['Phi'+c] /= total
 
+    elif name == 'stacked_disks':
+        pars['n_stacking'] = math.ceil(pars['n_stacking'])
+
 def parlist(model_info, pars, is2d):
     # type: (ModelInfo, ParameterSet, bool) -> str
     """
@@ -343,7 +363,12 @@ def parlist(model_info, pars, is2d):
     """
     lines = []
     parameters = model_info.parameters
+    magnetic = False
     for p in parameters.user_parameters(pars, is2d):
+        if any(p.id.startswith(x) for x in ('M0:', 'mtheta:', 'mphi:')):
+            continue
+        if p.id.startswith('up:') and not magnetic:
+            continue
         fields = dict(
             value=pars.get(p.id, p.default),
             pd=pars.get(p.id+"_pd", 0.),
@@ -351,14 +376,18 @@ def parlist(model_info, pars, is2d):
             nsigma=pars.get(p.id+"_pd_nsgima", 3.),
             pdtype=pars.get(p.id+"_pd_type", 'gaussian'),
             relative_pd=p.relative_pd,
+            M0=pars.get('M0:'+p.id, 0.),
+            mphi=pars.get('mphi:'+p.id, 0.),
+            mtheta=pars.get('mtheta:'+p.id, 0.),
         )
         lines.append(_format_par(p.name, **fields))
+        magnetic = magnetic or fields['M0'] != 0.
     return "\n".join(lines)
 
     #return "\n".join("%s: %s"%(p, v) for p, v in sorted(pars.items()))
 
 def _format_par(name, value=0., pd=0., n=0, nsigma=3., pdtype='gaussian',
-                relative_pd=False):
+                relative_pd=False, M0=0., mphi=0., mtheta=0.):
     # type: (str, float, float, int, float, str) -> str
     line = "%s: %g"%(name, value)
     if pd != 0.  and n != 0:
@@ -366,6 +395,8 @@ def _format_par(name, value=0., pd=0., n=0, nsigma=3., pdtype='gaussian',
             pd *= value
         line += " +/- %g  (%d points in [-%g,%g] sigma %s)"\
                 % (pd, n, nsigma, nsigma, pdtype)
+    if M0 != 0.:
+        line += "  M0:%.3f  mphi:%.1f  mtheta:%.1f" % (M0, mphi, mtheta)
     return line
 
 def suppress_pd(pars):
@@ -379,6 +410,19 @@ def suppress_pd(pars):
     pars = pars.copy()
     for p in pars:
         if p.endswith("_pd_n"): pars[p] = 0
+    return pars
+
+def suppress_magnetism(pars):
+    # type: (ParameterSet) -> ParameterSet
+    """
+    Suppress theta_pd for now until the normalization is resolved.
+
+    May also suppress complete polydispersity of the model to test
+    models more quickly.
+    """
+    pars = pars.copy()
+    for p in pars:
+        if p.startswith("M0:"): pars[p] = 0
     return pars
 
 def eval_sasview(model_info, data):
@@ -465,10 +509,17 @@ def eval_sasview(model_info, data):
         for k, v in oldpars.items():
             if k.endswith('.type'):
                 par = k[:-5]
+                if v == 'gaussian': continue
                 cls = dispersers[v if v != 'rectangle' else 'rectangula']
                 handle = cls()
                 model[0].disperser_handles[par] = handle
-                model[0].set_dispersion(par, handle)
+                try:
+                    model[0].set_dispersion(par, handle)
+                except Exception:
+                    exception.annotate_exception("while setting %s to %r"
+                                                 %(par, v))
+                    raise
+
 
         #print("sasview pars",oldpars)
         for k, v in oldpars.items():
@@ -604,13 +655,21 @@ def compare(opts, limits=None):
     as the values are adjusted, making it easier to see the effects of the
     parameters.
     """
-    n_base, n_comp = opts['n1'], opts['n2']
-    pars = opts['pars']
+    result = run_models(opts, verbose=True)
+    if opts['plot']:  # Note: never called from explore
+        plot_models(opts, result, limits=limits)
+
+def run_models(opts, verbose=False):
+    # type: (Dict[str, Any]) -> Dict[str, Any]
+
+    n_base, n_comp = opts['count']
+    pars, pars2 = opts['pars']
     data = opts['data']
 
     # silence the linter
     base = opts['engines'][0] if n_base else None
     comp = opts['engines'][1] if n_comp else None
+
     base_time = comp_time = None
     base_value = comp_value = resid = relerr = None
 
@@ -619,8 +678,9 @@ def compare(opts, limits=None):
         try:
             base_raw, base_time = time_calculation(base, pars, n_base)
             base_value = np.ma.masked_invalid(base_raw)
-            print("%s t=%.2f ms, intensity=%.0f"
-                  % (base.engine, base_time, base_value.sum()))
+            if verbose:
+                print("%s t=%.2f ms, intensity=%.0f"
+                      % (base.engine, base_time, base_value.sum()))
             _show_invalid(data, base_value)
         except ImportError:
             traceback.print_exc()
@@ -629,10 +689,11 @@ def compare(opts, limits=None):
     # Comparison calculation
     if n_comp > 0:
         try:
-            comp_raw, comp_time = time_calculation(comp, pars, n_comp)
+            comp_raw, comp_time = time_calculation(comp, pars2, n_comp)
             comp_value = np.ma.masked_invalid(comp_raw)
-            print("%s t=%.2f ms, intensity=%.0f"
-                  % (comp.engine, comp_time, comp_value.sum()))
+            if verbose:
+                print("%s t=%.2f ms, intensity=%.0f"
+                      % (comp.engine, comp_time, comp_value.sum()))
             _show_invalid(data, comp_value)
         except ImportError:
             traceback.print_exc()
@@ -642,43 +703,85 @@ def compare(opts, limits=None):
     if n_base > 0 and n_comp > 0:
         resid = (base_value - comp_value)
         relerr = resid/np.where(comp_value != 0., abs(comp_value), 1.0)
-        _print_stats("|%s-%s|"
-                     % (base.engine, comp.engine) + (" "*(3+len(comp.engine))),
-                     resid)
-        _print_stats("|(%s-%s)/%s|"
-                     % (base.engine, comp.engine, comp.engine),
-                     relerr)
+        if verbose:
+            _print_stats("|%s-%s|"
+                         % (base.engine, comp.engine) + (" "*(3+len(comp.engine))),
+                         resid)
+            _print_stats("|(%s-%s)/%s|"
+                         % (base.engine, comp.engine, comp.engine),
+                         relerr)
+
+    return dict(base_value=base_value, comp_value=comp_value,
+                base_time=base_time, comp_time=comp_time,
+                resid=resid, relerr=relerr)
+
+
+def _print_stats(label, err):
+    # type: (str, np.ma.ndarray) -> None
+    # work with trimmed data, not the full set
+    sorted_err = np.sort(abs(err.compressed()))
+    if len(sorted_err) == 0.:
+        print(label + "  no valid values")
+        return
+
+    p50 = int((len(sorted_err)-1)*0.50)
+    p98 = int((len(sorted_err)-1)*0.98)
+    data = [
+        "max:%.3e"%sorted_err[-1],
+        "median:%.3e"%sorted_err[p50],
+        "98%%:%.3e"%sorted_err[p98],
+        "rms:%.3e"%np.sqrt(np.mean(sorted_err**2)),
+        "zero-offset:%+.3e"%np.mean(sorted_err),
+        ]
+    print(label+"  "+"  ".join(data))
+
+
+def plot_models(opts, result, limits=None):
+    # type: (Dict[str, Any], Dict[str, Any], Optional[Tuple[float, float]]) -> Tuple[float, float]
+    base_value, comp_value= result['base_value'], result['comp_value']
+    base_time, comp_time = result['base_time'], result['comp_time']
+    resid, relerr = result['resid'], result['relerr']
+
+    have_base, have_comp = (base_value is not None), (comp_value is not None)
+    base = opts['engines'][0] if have_base else None
+    comp = opts['engines'][1] if have_comp else None
+    data = opts['data']
 
     # Plot if requested
-    if not opts['plot'] and not opts['explore']: return
     view = opts['view']
     import matplotlib.pyplot as plt
     if limits is None:
         vmin, vmax = np.Inf, -np.Inf
-        if n_base > 0:
+        if have_base:
             vmin = min(vmin, base_value.min())
             vmax = max(vmax, base_value.max())
-        if n_comp > 0:
+        if have_comp:
             vmin = min(vmin, comp_value.min())
             vmax = max(vmax, comp_value.max())
         limits = vmin, vmax
 
-    if n_base > 0:
-        if n_comp > 0: plt.subplot(131)
+    if have_base:
+        if have_comp: plt.subplot(131)
         plot_theory(data, base_value, view=view, use_data=False, limits=limits)
         plt.title("%s t=%.2f ms"%(base.engine, base_time))
         #cbar_title = "log I"
-    if n_comp > 0:
-        if n_base > 0: plt.subplot(132)
+    if have_comp:
+        if have_base: plt.subplot(132)
+        if not opts['is2d'] and have_base:
+            plot_theory(data, base_value, view=view, use_data=False, limits=limits)
         plot_theory(data, comp_value, view=view, use_data=False, limits=limits)
         plt.title("%s t=%.2f ms"%(comp.engine, comp_time))
         #cbar_title = "log I"
-    if n_comp > 0 and n_base > 0:
+    if have_base and have_comp:
         plt.subplot(133)
         if not opts['rel_err']:
             err, errstr, errview = resid, "abs err", "linear"
         else:
             err, errstr, errview = abs(relerr), "rel err", "log"
+        if 0:  # 95% cutoff
+            sorted = np.sort(err.flatten())
+            cutoff = sorted[int(sorted.size*0.95)]
+            err[err>cutoff] = cutoff
         #err,errstr = base/comp,"ratio"
         plot_theory(data, None, resid=err, view=errview, use_data=False)
         if view == 'linear':
@@ -690,9 +793,9 @@ def compare(opts, limits=None):
     #    h.ax.set_title(cbar_title)
     fig = plt.gcf()
     extra_title = ' '+opts['title'] if opts['title'] else ''
-    fig.suptitle(opts['name'] + extra_title)
+    fig.suptitle(":".join(opts['name']) + extra_title)
 
-    if n_comp > 0 and n_base > 0 and '-hist' in opts:
+    if have_base and have_comp and opts['show_hist']:
         plt.figure()
         v = relerr
         v[v == 0] = 0.5*np.min(np.abs(v[v != 0]))
@@ -707,20 +810,6 @@ def compare(opts, limits=None):
 
     return limits
 
-def _print_stats(label, err):
-    # type: (str, np.ma.ndarray) -> None
-    # work with trimmed data, not the full set
-    sorted_err = np.sort(abs(err.compressed()))
-    p50 = int((len(sorted_err)-1)*0.50)
-    p98 = int((len(sorted_err)-1)*0.98)
-    data = [
-        "max:%.3e"%sorted_err[-1],
-        "median:%.3e"%sorted_err[p50],
-        "98%%:%.3e"%sorted_err[p98],
-        "rms:%.3e"%np.sqrt(np.mean(sorted_err**2)),
-        "zero-offset:%+.3e"%np.mean(sorted_err),
-        ]
-    print(label+"  "+"  ".join(data))
 
 
 
@@ -734,6 +823,7 @@ NAME_OPTIONS = set([
     '2d', '1d',
     'preset', 'random',
     'poly', 'mono',
+    'magnetic', 'nonmagnetic',
     'nopars', 'pars',
     'rel', 'abs',
     'linear', 'log', 'q4',
@@ -790,7 +880,21 @@ def get_pars(model_info, use_demo=False):
         pars.update(model_info.demo)
     return pars
 
+INTEGER_RE = re.compile("^[+-]?[1-9][0-9]*$")
+def isnumber(str):
+    match = FLOAT_RE.match(str)
+    isfloat = (match and not str[match.end():])
+    return isfloat or INTEGER_RE.match(str)
 
+# For distinguishing pairs of models for comparison
+# key-value pair separator =
+# shell characters  | & ; <> $ % ' " \ # `
+# model and parameter names _
+# parameter expressions - + * / . ( )
+# path characters including tilde expansion and windows drive ~ / :
+# not sure about brackets [] {}
+# maybe one of the following @ ? ^ ! ,
+MODEL_SPLIT = ','
 def parse_opts(argv):
     # type: (List[str]) -> Dict[str, Any]
     """
@@ -812,14 +916,6 @@ def parse_opts(argv):
     if len(positional_args) > 3:
         print("expected parameters: model N1 N2")
 
-    name = positional_args[0]
-    try:
-        model_info = core.load_model_info(name)
-    except ImportError as exc:
-        print(str(exc))
-        print("Could not find model; use one of:\n    " + models)
-        return None
-
     invalid = [o[1:] for o in flags
                if o[1:] not in NAME_OPTIONS
                and not any(o.startswith('-%s='%t) for t in VALUE_OPTIONS)]
@@ -827,6 +923,9 @@ def parse_opts(argv):
         print("Invalid options: %s"%(", ".join(invalid)))
         return None
 
+    name = positional_args[0]
+    n1 = int(positional_args[1]) if len(positional_args) > 1 else 1
+    n2 = int(positional_args[2]) if len(positional_args) > 2 else 1
 
     # pylint: disable=bad-whitespace
     # Interpret the flags
@@ -841,6 +940,8 @@ def parse_opts(argv):
         'cutoff'    : 0.0,
         'seed'      : -1,  # default to preset
         'mono'      : False,
+        # Default to magnetic a magnetic moment is set on the command line
+        'magnetic'  : False,
         'show_pars' : False,
         'show_hist' : False,
         'rel_err'   : True,
@@ -874,6 +975,8 @@ def parse_opts(argv):
         elif arg == '-preset':  opts['seed'] = -1
         elif arg == '-mono':    opts['mono'] = True
         elif arg == '-poly':    opts['mono'] = False
+        elif arg == '-magnetic':       opts['magnetic'] = True
+        elif arg == '-nonmagnetic':    opts['magnetic'] = False
         elif arg == '-pars':    opts['show_pars'] = True
         elif arg == '-nopars':  opts['show_pars'] = False
         elif arg == '-hist':    opts['show_hist'] = True
@@ -894,51 +997,117 @@ def parse_opts(argv):
         elif arg == '-html':    opts['html'] = True
     # pylint: enable=bad-whitespace
 
+    if MODEL_SPLIT in name:
+        name, name2 = name.split(MODEL_SPLIT, 2)
+    else:
+        name2 = name
+    try:
+        model_info = core.load_model_info(name)
+        model_info2 = core.load_model_info(name2) if name2 != name else model_info
+    except ImportError as exc:
+        print(str(exc))
+        print("Could not find model; use one of:\n    " + models)
+        return None
+
+    # Get demo parameters from model definition, or use default parameters
+    # if model does not define demo parameters
+    pars = get_pars(model_info, opts['use_demo'])
+    pars2 = get_pars(model_info2, opts['use_demo'])
+    pars2.update((k, v) for k, v in pars.items() if k in pars2)
+    # randomize parameters
+    #pars.update(set_pars)  # set value before random to control range
+    if opts['seed'] > -1:
+        pars = randomize_pars(model_info, pars, seed=opts['seed'])
+        if model_info != model_info2:
+            pars2 = randomize_pars(model_info2, pars2, seed=opts['seed'])
+            # Share values for parameters with the same name
+            for k, v in pars.items():
+                if k in pars2:
+                    pars2[k] = v
+        else:
+            pars2 = pars.copy()
+        constrain_pars(model_info, pars)
+        constrain_pars(model_info2, pars2)
+        print("Randomize using -random=%i"%opts['seed'])
+    if opts['mono']:
+        pars = suppress_pd(pars)
+        pars2 = suppress_pd(pars2)
+    if not opts['magnetic']:
+        pars = suppress_magnetism(pars)
+        pars2 = suppress_magnetism(pars2)
+
+    # Fill in parameters given on the command line
+    presets = {}
+    presets2 = {}
+    for arg in values:
+        k, v = arg.split('=', 1)
+        if k not in pars and k not in pars2:
+            # extract base name without polydispersity info
+            s = set(p.split('_pd')[0] for p in pars)
+            print("%r invalid; parameters are: %s"%(k, ", ".join(sorted(s))))
+            return None
+        v1, v2 = v.split(MODEL_SPLIT, 2) if MODEL_SPLIT in v else (v,v)
+        if v1 and k in pars:
+            presets[k] = float(v1) if isnumber(v1) else v1
+        if v2 and k in pars2:
+            presets2[k] = float(v2) if isnumber(v2) else v2
+
+    # If pd given on the command line, default pd_n to 35
+    for k, v in list(presets.items()):
+        if k.endswith('_pd'):
+            presets.setdefault(k+'_n', 35.)
+    for k, v in list(presets2.items()):
+        if k.endswith('_pd'):
+            presets2.setdefault(k+'_n', 35.)
+
+    # Evaluate preset parameter expressions
+    context = MATH.copy()
+    context.update(pars)
+    context.update((k,v) for k,v in presets.items() if isinstance(v, float))
+    for k, v in presets.items():
+        if not isinstance(v, float) and not k.endswith('_type'):
+            presets[k] = eval(v, context)
+    context.update(presets)
+    context.update((k,v) for k,v in presets2.items() if isinstance(v, float))
+    for k, v in presets2.items():
+        if not isinstance(v, float) and not k.endswith('_type'):
+            presets2[k] = eval(v, context)
+
+    # update parameters with presets
+    pars.update(presets)  # set value after random to control value
+    pars2.update(presets2)  # set value after random to control value
+    #import pprint; pprint.pprint(model_info)
+
+    same_model = name == name2 and pars == pars
     if len(engines) == 0:
-        engines.extend(['single', 'double'])
+        if same_model:
+            engines.extend(['single', 'double'])
+        else:
+            engines.extend(['single', 'single'])
     elif len(engines) == 1:
-        if engines[0][0] == 'double':
+        if not same_model:
+            engines.append(engines[0])
+        elif engines[0] == 'double':
             engines.append('single')
         else:
             engines.append('double')
     elif len(engines) > 2:
         del engines[2:]
 
-    n1 = int(positional_args[1]) if len(positional_args) > 1 else 1
-    n2 = int(positional_args[2]) if len(positional_args) > 2 else 1
     use_sasview = any(engine == 'sasview' and count > 0
                       for engine, count in zip(engines, [n1, n2]))
-
-    # Get demo parameters from model definition, or use default parameters
-    # if model does not define demo parameters
-    pars = get_pars(model_info, opts['use_demo'])
-
-
-    # Fill in parameters given on the command line
-    presets = {}
-    for arg in values:
-        k, v = arg.split('=', 1)
-        if k not in pars:
-            # extract base name without polydispersity info
-            s = set(p.split('_pd')[0] for p in pars)
-            print("%r invalid; parameters are: %s"%(k, ", ".join(sorted(s))))
-            return None
-        presets[k] = float(v) if not k.endswith('type') else v
-
-    # randomize parameters
-    #pars.update(set_pars)  # set value before random to control range
-    if opts['seed'] > -1:
-        pars = randomize_pars(model_info, pars, seed=opts['seed'])
-        print("Randomize using -random=%i"%opts['seed'])
-    if opts['mono']:
-        pars = suppress_pd(pars)
-    pars.update(presets)  # set value after random to control value
-    #import pprint; pprint.pprint(model_info)
-    constrain_pars(model_info, pars)
     if use_sasview:
         constrain_new_to_old(model_info, pars)
+        constrain_new_to_old(model_info2, pars2)
+
     if opts['show_pars']:
-        print(str(parlist(model_info, pars, opts['is2d'])))
+        if not same_model:
+            print("==== %s ====="%model_info.name)
+            print(str(parlist(model_info, pars, opts['is2d'])))
+            print("==== %s ====="%model_info2.name)
+            print(str(parlist(model_info2, pars2, opts['is2d'])))
+        else:
+            print(str(parlist(model_info, pars, opts['is2d'])))
 
     # Create the computational engines
     data, _ = make_data(opts)
@@ -947,20 +1116,19 @@ def parse_opts(argv):
     else:
         base = None
     if n2:
-        comp = make_engine(model_info, data, engines[1], opts['cutoff'])
+        comp = make_engine(model_info2, data, engines[1], opts['cutoff'])
     else:
         comp = None
 
     # pylint: disable=bad-whitespace
     # Remember it all
     opts.update({
-        'name'      : name,
-        'def'       : model_info,
-        'n1'        : n1,
-        'n2'        : n2,
-        'presets'   : presets,
-        'pars'      : pars,
         'data'      : data,
+        'name'      : [name, name2],
+        'def'       : [model_info, model_info2],
+        'count'     : [n1, n2],
+        'presets'   : [presets, presets2],
+        'pars'      : [pars, pars2],
         'engines'   : [base, comp],
     })
     # pylint: enable=bad-whitespace
@@ -975,7 +1143,7 @@ def show_docs(opts):
     import wx  # type: ignore
     from .generate import view_html_from_info
     app = wx.App() if wx.GetApp() is None else None
-    view_html_from_info(opts['def'])
+    view_html_from_info(opts['def'][0])
     if app: app.MainLoop()
 
 
@@ -987,16 +1155,22 @@ def explore(opts):
     import wx  # type: ignore
     from bumps.names import FitProblem  # type: ignore
     from bumps.gui.app_frame import AppFrame  # type: ignore
+    from bumps.gui import signal
 
     is_mac = "cocoa" in wx.version()
     # Create an app if not running embedded
     app = wx.App() if wx.GetApp() is None else None
-    problem = FitProblem(Explore(opts))
+    model = Explore(opts)
+    problem = FitProblem(model)
     frame = AppFrame(parent=None, title="explore", size=(1000,700))
     if not is_mac: frame.Show()
     frame.panel.set_model(model=problem)
     frame.panel.Layout()
     frame.panel.aui.Split(0, wx.TOP)
+    def reset_parameters(event):
+        model.revert_values()
+        signal.update_parameters(problem)
+    frame.Bind(wx.EVT_TOOL, reset_parameters, frame.ToolBar.GetToolByPos(1))
     if is_mac: frame.Show()
     # If running withing an app, start the main loop
     if app: app.MainLoop()
@@ -1014,11 +1188,14 @@ class Explore(object):
         from . import bumps_model
         config_matplotlib()
         self.opts = opts
-        model_info = opts['def']
-        pars, pd_types = bumps_model.create_parameters(model_info, **opts['pars'])
+        p1, p2 = opts['pars']
+        m1, m2 = opts['def']
+        self.fix_p2 = m1 != m2 or p1 != p2
+        model_info = m1
+        pars, pd_types = bumps_model.create_parameters(model_info, **p1)
         # Initialize parameter ranges, fixing the 2D parameters for 1D data.
         if not opts['is2d']:
-            for p in model_info.parameters.user_parameters(is2d=False):
+            for p in model_info.parameters.user_parameters({}, is2d=False):
                 for ext in ['', '_pd', '_pd_n', '_pd_nsigma']:
                     k = p.name+ext
                     v = pars.get(k, None)
@@ -1029,8 +1206,16 @@ class Explore(object):
                 v.range(*parameter_range(k, v.value))
 
         self.pars = pars
+        self.starting_values = dict((k, v.value) for k, v in pars.items())
         self.pd_types = pd_types
         self.limits = None
+
+    def revert_values(self):
+        for k, v in self.starting_values.items():
+            self.pars[k].value = v
+
+    def model_update(self):
+        pass
 
     def numpoints(self):
         # type: () -> int
@@ -1061,11 +1246,16 @@ class Explore(object):
         """
         pars = dict((k, v.value) for k, v in self.pars.items())
         pars.update(self.pd_types)
-        self.opts['pars'] = pars
-        limits = compare(self.opts, limits=self.limits)
+        self.opts['pars'][0] = pars
+        if not self.fix_p2:
+            self.opts['pars'][1] = pars
+        result = run_models(self.opts)
+        limits = plot_models(self.opts, result, limits=self.limits)
         if self.limits is None:
             vmin, vmax = limits
             self.limits = vmax*1e-7, 1.3*vmax
+            import pylab; pylab.clf()
+            plot_models(self.opts, result, limits=self.limits)
 
 
 def main(*argv):

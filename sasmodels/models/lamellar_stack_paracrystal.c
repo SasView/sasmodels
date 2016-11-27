@@ -66,7 +66,7 @@ paraCryst_sn(double ww, double qval, double davg, long Nlayers, double an) {
 	
 	double Snq;
 
-	Snq = an/( (double)Nlayers*pow((1.0+ww*ww-2.0*ww*cos(qval*davg)),2) );
+	Snq = an/( (double)Nlayers*square(1.0+ww*ww-2.0*ww*cos(qval*davg)) );
 	
 	return(Snq);
 }
