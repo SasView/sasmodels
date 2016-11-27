@@ -1,13 +1,10 @@
-# core shell cylinder model
-# Note: model title and parameter table are inserted automatically
 r"""
-The form factor is normalized by the particle volume.
-
 Definition
 ----------
 
 The output of the 2D scattering intensity function for oriented core-shell
-cylinders is given by (Kline, 2006)
+cylinders is given by (Kline, 2006 [#kline]_). The form factor is normalized
+by the particle volume.
 
 .. math::
 
@@ -60,23 +57,19 @@ $S(q)$ when $P(q) \cdot S(q)$ is applied.
 
 The $\theta$ and $\phi$ parameters are not used for the 1D output.
 
-Validation
-----------
-
-Validation of our code was done by comparing the output of the 1D model to
-the output of the software provided by the NIST (Kline, 2006).
-
-Averaging over a distribution of orientation is done by evaluating the
-equation above. Since we have no other software to compare the
-implementation of the intensity for fully oriented cylinders, we
-compared the result of averaging our 2D output using a uniform
-distribution $p(\theta,\phi) = 1.0$.
-
 Reference
 ---------
-see, for example, Ian Livsey  J. Chem. Soc., Faraday Trans. 2, 1987,83, 1445-1452
 
-2016/03/18 - Description reviewed by RKH
+.. [#] see, for example, Ian Livsey  J. Chem. Soc., Faraday Trans. 2, 1987,83,
+   1445-1452
+.. [#kline] S R Kline, *J Appl. Cryst.*, 39 (2006) 895
+
+Authorship and Verification
+----------------------------
+
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Paul Kienzle **Date:** Aug 8, 2016
+* **Last Reviewed by:** Richard Heenan **Date:** March 18, 2016
 """
 
 from numpy import pi, inf
@@ -157,4 +150,4 @@ demo = dict(scale=1, background=0,
             thickness_pd=.2, thickness_pd_n=10,
             theta_pd=15, theta_pd_n=45,
             phi_pd=15, phi_pd_n=1)
-# ADDED by:  RKH  ON: 18Mar2016 renamed sld's etc
+
