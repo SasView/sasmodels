@@ -82,8 +82,7 @@ the axis of the cylinder using two angles $\theta$ and $\varphi$.
 
 
 Our model is derived from the form factor calculations implemented in a
-c-library provided by the NIST Center for Neutron Research
-(Kline, 2006)\ [#CIT_Kline]_
+c-library provided by the NIST Center for Neutron Research\ [#CIT_Kline]_
 
 References
 ----------
