@@ -342,7 +342,7 @@ CONVERSION_TABLE = {
             "rg": "radius",
             "lorentz_scale": "lScale",
             "guinier_scale": "gScale",
-            "fractal_dim": "scale",
+            "fractal_dim": "FractalExp",
             "cor_length": "zeta",
         }
     ],
@@ -453,7 +453,7 @@ CONVERSION_TABLE = {
             "thickness": "delta",
             "d_spacing": "spacing",
             "Caille_parameter": "caille",
-            "Nlayers": "N_plates",
+            "Nlayers": "n_plates",
         }
     ],
     "lamellar_stack_paracrystal": [
