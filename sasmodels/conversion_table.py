@@ -7,6 +7,8 @@ determine the equivalent parameter set when comparing a sasmodels model to
 the models defined in SasView 3.1.
 """
 
+# TODO: May need to version this for future versions of sasview when
+# TODO: models are reparameterized
 
 CONVERSION_TABLE = {
     "adsorbed_layer": [
@@ -824,8 +826,16 @@ CONVERSION_TABLE = {
     ],
     "unified_power_Rg": [
         "UnifiedPowerRg",
-        {
-        }
+        dict(((field_new+str(index), field_old+str(index))
+              for field_new, field_old in [("rg", "Rg"),
+                                           ("power", "power"),
+                                           ("G", "G"),
+                                           ("B", "B"),]
+              for index in range(11)),
+             **{
+                   "background": "background",
+                   "scale": "scale",
+               })
     ],
     "vesicle": [
         "VesicleModel",

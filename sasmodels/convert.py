@@ -52,6 +52,12 @@ PD_DOT = [
     ("_pd_n", ".npts"),
     ("_pd_nsigma", ".nsigmas"),
     ("_pd_type", ".type"),
+    (".lower", ".lower"),
+    (".upper", ".upper"),
+    (".fittable", ".fittable"),
+    (".std", ".std"),
+    (".units", ".units"),
+    ("", "")
     ]
 
 def _rescale(par, scale):
@@ -117,34 +123,6 @@ def _dot_pd_to_underscore_pd(par):
 def _pd_to_underscores(pars):
     return dict((_dot_pd_to_underscore_pd(k), v) for k, v in pars.items())
 
-def _convert_name(conv_dict, pars):
-    """
-    Renames parameter values (upper, lower, etc) to v4.0 names
-    :param conv_dict: conversion dictionary mapping new name : old name
-    :param pars: parameters to convert
-    :return:
-    """
-    new_pars = {}
-    i = 0
-    j = 0
-    for key_par, value_par in pars.iteritems():
-        j += 1
-        for key_conv, value_conv in conv_dict.iteritems():
-            if value_conv is None:
-                pass
-            elif "background" == key_par or "scale" == key_par:
-                new_pars[key_par] = value_par
-                i += 1
-                break
-            elif re.search(value_conv, key_par):
-                new_pars[key_par.replace(value_conv, key_conv)] = value_par
-                i += 1
-                break
-        if i != j:
-            new_pars[key_par] = value_par
-            i += 1
-    return new_pars
-
 def _convert_pars(pars, mapping):
     """
     Rename the parameters and any associated polydispersity attributes.
@@ -165,7 +143,6 @@ def _convert_pars(pars, mapping):
                         newpars[target] = pars[old+dot]
                     del newpars[source]
     return newpars
-
 
 def _conversion_target(model_name):
     """
@@ -214,20 +191,6 @@ def _hand_convert(name, oldpars):
         if 'radius.width' in oldpars:
             pd = oldpars['radius.width']*oldpars['radius']/thickness
             oldpars['radius.width'] = pd
-    elif name == 'mono_gauss_coil':
-        if 'scale' in oldpars:
-            oldpars['i_zero'] = oldpars['scale']
-            oldpars['scale'] = 1.0
-        if 'scale.lower' in oldpars:
-            oldpars['i_zero.lower'] = oldpars['scale.lower']
-        if 'scale.upper' in oldpars:
-            oldpars['i_zero.upper'] = oldpars['scale.upper']
-        if 'scale.fittable' in oldpars:
-            oldpars['i_zero.fittable'] = oldpars['scale.fittable']
-        if 'scale.std' in oldpars:
-            oldpars['i_zero.std'] = oldpars['scale.std']
-        if 'scale.units' in oldpars:
-            oldpars['i_zero.units'] = oldpars['scale.units']
     elif name == 'multilayer_vesicle':
         if 'scale' in oldpars:
             oldpars['volfraction'] = oldpars['scale']
@@ -329,7 +292,6 @@ def convert_model(name, pars, use_underscore=False):
         model_info = load_model_info(newname)
         translation = _get_translation_table(model_info)
     newpars = _hand_convert(newname, pars.copy())
-    newpars = _convert_name(translation, newpars)
     newpars = _convert_pars(newpars, translation)
     if not model_info.structure_factor:
         newpars = _rescale_sld(model_info, newpars, 1e6)
