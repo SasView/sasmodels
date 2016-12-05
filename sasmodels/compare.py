@@ -1062,6 +1062,7 @@ def parse_opts(argv):
 
     # Evaluate preset parameter expressions
     context = MATH.copy()
+    context['np'] = np
     context.update(pars)
     context.update((k,v) for k,v in presets.items() if isinstance(v, float))
     for k, v in presets.items():
