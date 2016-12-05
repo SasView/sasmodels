@@ -7,10 +7,9 @@ determine the equivalent parameter set when comparing a sasmodels model to
 the models defined in SasView 3.1.
 """
 
-# TODO: May need to version this for future versions of sasview when
-# TODO: models are reparameterized
-
 CONVERSION_TABLE = {
+    "4.1.0" : {},
+    "4.0.1" : {
     "adsorbed_layer": [
         "Core2ndMomentModel",
         {
@@ -844,4 +843,5 @@ CONVERSION_TABLE = {
             "sld_solvent": "solv_sld"
         }
     ]
+    }
 }

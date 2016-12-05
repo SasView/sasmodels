@@ -91,8 +91,8 @@ def _rescale_sld(model_info, pars, scale):
                 for id, v in pars.items())
 
 
-def _get_translation_table(model_info):
-    _, translation = CONVERSION_TABLE.get(model_info.id, [None, {}])
+def _get_translation_table(model_info, version='4.0.1'):
+    _, translation = CONVERSION_TABLE.get(version).get(model_info.id, [None, {}])
     translation = translation.copy()
     for p in model_info.parameters.kernel_parameters:
         if p.length > 1:
@@ -144,7 +144,7 @@ def _convert_pars(pars, mapping):
                     del newpars[source]
     return newpars
 
-def _conversion_target(model_name):
+def _conversion_target(model_name, version='4.0.1'):
     """
     Find the sasmodel name which translates into the sasview name.
 
@@ -152,20 +152,20 @@ def _conversion_target(model_name):
     This is necessary since there is only one variant in sasmodels for the
     two variants in sasview.
     """
-    for sasmodels_name, [sasview_name, _] in CONVERSION_TABLE.items():
+    for sasmodels_name, [sasview_name, _] in CONVERSION_TABLE.get(version).items():
         if sasview_name == model_name:
             return sasmodels_name
     return None
 
 
-def _hand_convert(name, oldpars):
-    if name == 'core_shell_parallelepiped':
+def _hand_convert(name, oldpars, version='4.0.1'):
+    if name == 'core_shell_parallelepiped' and version == '4.0.1':
         # Make sure pd on rim parameters defaults to zero
         # ... probably not necessary.
         oldpars['rimA.width'] = 0.0
         oldpars['rimB.width'] = 0.0
         oldpars['rimC.width'] = 0.0
-    elif name == 'core_shell_ellipsoid:1':
+    elif name == 'core_shell_ellipsoid:1' and version == '4.0.1':
         # Reverse translation (from new to old), from core_shell_ellipsoid.c
         #    equat_shell = equat_core + thick_shell
         #    polar_core = equat_core * x_core
@@ -184,14 +184,14 @@ def _hand_convert(name, oldpars):
         oldpars['equat_shell'] = equat_shell - equat_core
         oldpars['polar_core'] = polar_core / equat_core
         oldpars['polar_shell'] = (polar_shell-polar_core)/(equat_shell-equat_core)
-    elif name == 'hollow_cylinder':
+    elif name == 'hollow_cylinder' and version == '4.0.1':
         # now uses radius and thickness
         thickness = oldpars['radius'] - oldpars['core_radius']
         oldpars['radius'] = thickness
         if 'radius.width' in oldpars:
             pd = oldpars['radius.width']*oldpars['radius']/thickness
             oldpars['radius.width'] = pd
-    elif name == 'multilayer_vesicle':
+    elif name == 'multilayer_vesicle' and version == '4.0.1':
         if 'scale' in oldpars:
             oldpars['volfraction'] = oldpars['scale']
             oldpars['scale'] = 1.0
@@ -205,18 +205,18 @@ def _hand_convert(name, oldpars):
             oldpars['volfraction.std'] = oldpars['scale.std']
         if 'scale.units' in oldpars:
             oldpars['volfraction.units'] = oldpars['scale.units']
-    elif name == 'pearl_necklace':
+    elif name == 'pearl_necklace' and version == '4.0.1':
         pass
         #_remove_pd(oldpars, 'num_pearls', name)
         #_remove_pd(oldpars, 'thick_string', name)
-    elif name == 'polymer_micelle':
+    elif name == 'polymer_micelle' and version == '4.0.1':
         if 'ndensity' in oldpars:
             oldpars['ndensity'] /= 1e15
         if 'ndensity.lower' in oldpars:
             oldpars['ndensity.lower'] /= 1e15
         if 'ndensity.upper' in oldpars:
             oldpars['ndensity.upper'] /= 1e15
-    elif name == 'rpa':
+    elif name == 'rpa' and version == '4.0.1':
         # convert scattering lengths from femtometers to centimeters
         for p in "L1", "L2", "L3", "L4":
             if p in oldpars:
@@ -225,13 +225,13 @@ def _hand_convert(name, oldpars):
                 oldpars[p + ".lower"] /= 1e-13
             if p + ".upper" in oldpars:
                 oldpars[p + ".upper"] /= 1e-13
-    elif name == 'spherical_sld':
+    elif name == 'spherical_sld' and version == '4.0.1':
         oldpars["CONTROL"] = 0
         i = 0
         while "nu_inter" + str(i) in oldpars:
             oldpars["CONTROL"] += 1
             i += 1
-    elif name == 'teubner_strey':
+    elif name == 'teubner_strey' and version == '4.0.1':
         # basically undoing the entire Teubner-Strey calculations here.
         #    drho = (sld_a - sld_b)
         #    k = 2.0*math.pi*xi/d
@@ -279,26 +279,30 @@ def convert_model(name, pars, use_underscore=False):
     """
     Convert model from old style parameter names to new style.
     """
-    newname = _conversion_target(name)
-    if newname is None:
-        return name, pars
-    if ':' in newname:   # core_shell_ellipsoid:1
-        model_info = load_model_info(newname[:-2])
-        # Know that the table exists and isn't multiplicity so grab it directly
-        # Can't use _get_translation_table since that will return the 'bare'
-        # version.
-        translation = CONVERSION_TABLE[newname][1]
-    else:
-        model_info = load_model_info(newname)
-        translation = _get_translation_table(model_info)
-    newpars = _hand_convert(newname, pars.copy())
-    newpars = _convert_pars(newpars, translation)
-    if not model_info.structure_factor:
-        newpars = _rescale_sld(model_info, newpars, 1e6)
-    newpars.setdefault('scale', 1.0)
-    newpars.setdefault('background', 0.0)
-    if use_underscore:
-        newpars = _pd_to_underscores(newpars)
+    newpars = pars
+    for version, _ in sorted(CONVERSION_TABLE.iteritems()):
+        newname = _conversion_target(name, version)
+        if newname is None:
+            newname = name
+            continue
+        if ':' in newname:   # core_shell_ellipsoid:1
+            model_info = load_model_info(newname[:-2])
+            # Know that the table exists and isn't multiplicity so grab it directly
+            # Can't use _get_translation_table since that will return the 'bare'
+            # version.
+            translation = CONVERSION_TABLE.get(version)[newname][1]
+        else:
+            model_info = load_model_info(newname)
+            translation = _get_translation_table(model_info, version)
+        newpars = _hand_convert(newname, newpars, version)
+        newpars = _convert_pars(newpars, translation)
+        if not model_info.structure_factor:
+            newpars = _rescale_sld(model_info, newpars, 1e6)
+        newpars.setdefault('scale', 1.0)
+        newpars.setdefault('background', 0.0)
+        if use_underscore:
+            newpars = _pd_to_underscores(newpars)
+        name = newname
     return newname, newpars
 
 
