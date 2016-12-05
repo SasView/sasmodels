@@ -70,6 +70,8 @@ double _kernel(double q,
 
     // loop for the structure factor S(q)
     double qd_cos_alpha = q*d*cos_alpha;
+    //d*cos_alpha is the projection of d onto q (in other words the component
+    //of d that is parallel to q.
     double debye_arg = -0.5*square(qd_cos_alpha*sigma_dnn);
     double sq=0.0;
     for (int kk=1; kk<n_stacking; kk++) {
@@ -78,7 +80,10 @@ double _kernel(double q,
     // end of loop for S(q)
     sq = 1.0 + 2.0*sq/n_stacking;
 
-    return pq * sq;
+    return pq * sq * n_stacking;
+    // volume normalization should be per disk not per stack but form_volume
+    // is per stack so correct here for now.  Could change form_volume but
+    // if one ever wants to use P*S we need the ER based on the total volume
 }
 
 
