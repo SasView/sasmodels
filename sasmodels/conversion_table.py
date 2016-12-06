@@ -4,12 +4,31 @@ Parameter conversion table
 *CONVERSION_TABLE* gives the old model name and a dictionary of old parameter
 names for each parameter in sasmodels.  This is used by :mod:`convert` to
 determine the equivalent parameter set when comparing a sasmodels model to
-the models defined in SasView 3.1.
+the models defined in previous versions of SasView and sasmodels. This is now
+versioned based on the version number of SasView.
+
+When any sasmodels parameter or model name is changed, this must be modified to
+account for that.
+
+Usage:
+<old_Sasview_version> : {
+    <new_model_name> : [
+        <old_model_name> ,
+        {
+            <new_param_name_1> : <old_param_name_1>,
+            ...
+            <new_param_name_n> : <old_param_name_n>
+        }
+    ]
+}
+
+Any future parameter and model name changes can and should be given in this
+table for future compatibility.
 """
 
 CONVERSION_TABLE = {
-    "4.1.0" : {},
-    "4.0.1" : {
+    "4.0.1" : {},
+    "3.1.2" : {
     "adsorbed_layer": [
         "Core2ndMomentModel",
         {

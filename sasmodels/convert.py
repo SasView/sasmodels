@@ -152,20 +152,21 @@ def _conversion_target(model_name, version='4.0.1'):
     This is necessary since there is only one variant in sasmodels for the
     two variants in sasview.
     """
-    for sasmodels_name, [sasview_name, _] in CONVERSION_TABLE.get(version).items():
+    for sasmodels_name, [sasview_name, _] in \
+            CONVERSION_TABLE.get(version).items():
         if sasview_name == model_name:
             return sasmodels_name
     return None
 
-
-def _hand_convert(name, oldpars, version='4.0.1'):
-    if name == 'core_shell_parallelepiped' and version == '4.0.1':
+def _hand_convert(name, oldpars, version='3.1.2'):
+    base_version = '3.1.2'
+    if name == 'core_shell_parallelepiped' and version == base_version:
         # Make sure pd on rim parameters defaults to zero
         # ... probably not necessary.
         oldpars['rimA.width'] = 0.0
         oldpars['rimB.width'] = 0.0
         oldpars['rimC.width'] = 0.0
-    elif name == 'core_shell_ellipsoid:1' and version == '4.0.1':
+    elif name == 'core_shell_ellipsoid:1' and version == base_version:
         # Reverse translation (from new to old), from core_shell_ellipsoid.c
         #    equat_shell = equat_core + thick_shell
         #    polar_core = equat_core * x_core
@@ -184,14 +185,14 @@ def _hand_convert(name, oldpars, version='4.0.1'):
         oldpars['equat_shell'] = equat_shell - equat_core
         oldpars['polar_core'] = polar_core / equat_core
         oldpars['polar_shell'] = (polar_shell-polar_core)/(equat_shell-equat_core)
-    elif name == 'hollow_cylinder' and version == '4.0.1':
+    elif name == 'hollow_cylinder' and version == base_version:
         # now uses radius and thickness
         thickness = oldpars['radius'] - oldpars['core_radius']
         oldpars['radius'] = thickness
         if 'radius.width' in oldpars:
             pd = oldpars['radius.width']*oldpars['radius']/thickness
             oldpars['radius.width'] = pd
-    elif name == 'multilayer_vesicle' and version == '4.0.1':
+    elif name == 'multilayer_vesicle' and version == base_version:
         if 'scale' in oldpars:
             oldpars['volfraction'] = oldpars['scale']
             oldpars['scale'] = 1.0
@@ -205,11 +206,11 @@ def _hand_convert(name, oldpars, version='4.0.1'):
             oldpars['volfraction.std'] = oldpars['scale.std']
         if 'scale.units' in oldpars:
             oldpars['volfraction.units'] = oldpars['scale.units']
-    elif name == 'pearl_necklace' and version == '4.0.1':
+    elif name == 'pearl_necklace' and version == base_version:
         pass
         #_remove_pd(oldpars, 'num_pearls', name)
         #_remove_pd(oldpars, 'thick_string', name)
-    elif name == 'polymer_micelle' and version == '4.0.1':
+    elif name == 'polymer_micelle' and version == base_version:
         if 'ndensity' in oldpars:
             oldpars['ndensity'] /= 1e15
         if 'ndensity.lower' in oldpars:
@@ -225,13 +226,13 @@ def _hand_convert(name, oldpars, version='4.0.1'):
                 oldpars[p + ".lower"] /= 1e-13
             if p + ".upper" in oldpars:
                 oldpars[p + ".upper"] /= 1e-13
-    elif name == 'spherical_sld' and version == '4.0.1':
+    elif name == 'spherical_sld' and version == base_version:
         oldpars["CONTROL"] = 0
         i = 0
         while "nu_inter" + str(i) in oldpars:
             oldpars["CONTROL"] += 1
             i += 1
-    elif name == 'teubner_strey' and version == '4.0.1':
+    elif name == 'teubner_strey' and version == base_version:
         # basically undoing the entire Teubner-Strey calculations here.
         #    drho = (sld_a - sld_b)
         #    k = 2.0*math.pi*xi/d
@@ -287,7 +288,7 @@ def convert_model(name, pars, use_underscore=False):
             continue
         if ':' in newname:   # core_shell_ellipsoid:1
             model_info = load_model_info(newname[:-2])
-            # Know that the table exists and isn't multiplicity so grab it directly
+            # Know the table exists and isn't multiplicity so grab it directly
             # Can't use _get_translation_table since that will return the 'bare'
             # version.
             translation = CONVERSION_TABLE.get(version)[newname][1]
@@ -304,7 +305,6 @@ def convert_model(name, pars, use_underscore=False):
             newpars = _pd_to_underscores(newpars)
         name = newname
     return newname, newpars
-
 
 # ========= BACKWARD CONVERSION sasmodels => sasview 3.x ===========
 
