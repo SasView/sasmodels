@@ -48,8 +48,8 @@ Copyright 1984, 1987, 2000 by Stephen L. Moshier
 
 #if FLOAT_SIZE > 4
 
-double jn( int n, double x );
-double jn( int n, double x ) {
+double cephes_jn( int n, double x );
+double cephes_jn( int n, double x ) {
 
     // PAK: seems to be machine epsilon/2
     const double MACHEP = 1.11022302462515654042E-16;
@@ -73,11 +73,11 @@ double jn( int n, double x ) {
     }
 
     if( n == 0 )
-        return( sign * j0(x) );
+        return( sign * cephes_j0(x) );
     if( n == 1 )
-        return( sign * j1(x) );
+        return( sign * cephes_j1(x) );
     if( n == 2 )
-        return( sign * (2.0 * j1(x) / x  -  j0(x)) );
+        return( sign * (2.0 * cephes_j1(x) / x  -  cephes_j0(x)) );
 
     if( x < MACHEP )
         return( 0.0 );
@@ -110,17 +110,17 @@ double jn( int n, double x ) {
     } while( --k > 0 );
 
     if( fabs(pk) > fabs(pkm1) )
-        ans = j1(x)/pk;
+        ans = cephes_j1(x)/pk;
     else
-        ans = j0(x)/pkm1;
+        ans = cephes_j0(x)/pkm1;
 
     return( sign * ans );
 }
 
 #else
 
-float jnf(int n, float x);
-float jnf(int n, float x)
+float cephes_jnf(int n, float x);
+float cephes_jnf(int n, float x)
 {
     // PAK: seems to be machine epsilon/2
     const double MACHEP = 5.9604645e-08;
@@ -144,11 +144,11 @@ float jnf(int n, float x)
     }
 
     if( n == 0 )
-        return( sign * j0f(x) );
+        return( sign * cephes_j0f(x) );
     if( n == 1 )
-        return( sign * j1f(x) );
+        return( sign * cephes_j1f(x) );
     if( n == 2 )
-        return( sign * (2.0 * j1f(x) / x  -  j0f(x)) );
+        return( sign * (2.0 * cephes_j1f(x) / x  -  cephes_j0f(x)) );
 
     if( x < MACHEP )
         return( 0.0 );
@@ -187,15 +187,15 @@ float jnf(int n, float x)
         ans = -ans;
 
     if( r > ans )  /* if( fabs(pk) > fabs(pkm1) ) */
-        ans = sign * j1f(x)/pk;
+        ans = sign * cephes_j1f(x)/pk;
     else
-        ans = sign * j0f(x)/pkm1;
+        ans = sign * cephes_j0f(x)/pkm1;
     return( ans );
 }
 #endif
 
 #if FLOAT_SIZE>4
-#define sas_JN jn
+#define sas_JN cephes_jn
 #else
-#define sas_JN jnf
+#define sas_JN cephes_jnf
 #endif
