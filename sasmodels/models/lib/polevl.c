@@ -27,7 +27,7 @@
  * coef[0] = C  , ..., coef[N] = C  .
  *            N                   0
  *
- *  The function p1evl() assumes that coef[N] = 1.0 and is
+ * The function p1evl() assumes that C_N = 1.0 and is
  * omitted from the array.  Its calling arguments are
  * otherwise the same as polevl().
  *
