@@ -38,15 +38,28 @@ _bell_kernel(double q, double h, double radius_bell,
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     const double integral = total*zm;
-    const double bell_Fq = 2*M_PI*cube(radius_bell)*integral;
-    return bell_Fq;
+    const double bell_fq = 2.0*M_PI*cube(radius_bell)*integral;
+    return bell_fq;
 }
+
+static double
+_fq(double q, double h,
+    double radius_bell, double radius, double half_length,
+    double sin_alpha, double cos_alpha)
+{
+    const double bell_fq = _bell_kernel(q, h, radius_bell, half_length, sin_alpha, cos_alpha);
+    const double bj = sas_J1c(q*radius*sin_alpha);
+    const double si = sinc(q*half_length*cos_alpha);
+    const double cyl_fq = 2.0*M_PI*radius*radius*half_length*bj*si;
+    const double Aq = bell_fq + cyl_fq;
+    return Aq;
+}
+
 
 double form_volume(double radius_bell,
         double radius,
         double length)
 {
-
     // bell radius should never be less than radius when this is called
     const double hdist = sqrt(square(radius_bell) - square(radius));
     const double p1 = 2.0/3.0*cube(radius_bell);
@@ -70,12 +83,7 @@ double Iq(double q, double sld, double solvent_sld,
         const double alpha= Gauss76Z[i]*zm + zb;
         double sin_alpha, cos_alpha; // slots to hold sincos function output
         SINCOS(alpha, sin_alpha, cos_alpha);
-
-        const double bell_Fq = _bell_kernel(q, h, radius_bell, half_length, sin_alpha, cos_alpha);
-        const double bj = sas_J1c(q*radius*sin_alpha);
-        const double si = sinc(q*half_length*cos_alpha);
-        const double cyl_Fq = M_PI*radius*radius*length*bj*si;
-        const double Aq = bell_Fq + cyl_Fq;
+        const double Aq = _fq(q, h, radius_bell, radius, half_length, sin_alpha, cos_alpha);
         total += Gauss76Wt[i] * Aq * Aq * sin_alpha;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
@@ -92,23 +100,11 @@ double Iqxy(double qx, double qy,
         double radius_bell, double radius, double length,
         double theta, double phi)
 {
-    // Compute angle alpha between q and the cylinder axis
-    double sn, cn; // slots to hold sincos function output
-    SINCOS(theta*M_PI_180, sn, cn);
-    const double q = sqrt(qx*qx+qy*qy);
-    const double cos_val = cn*cos(phi*M_PI_180)*(qx/q) + sn*(qy/q);
-    const double alpha = acos(cos_val); // rod angle relative to q
+    double q, sin_alpha, cos_alpha;
+    ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sin_alpha, cos_alpha);
 
     const double h = -sqrt(square(radius_bell) - square(radius));
-    const double half_length = 0.5*length;
-
-    double sin_alpha, cos_alpha; // slots to hold sincos function output
-    SINCOS(alpha, sin_alpha, cos_alpha);
-    const double bell_Fq = _bell_kernel(q, h, radius_bell, half_length, sin_alpha, cos_alpha);
-    const double bj = sas_J1c(q*radius*sin_alpha);
-    const double si = sinc(q*half_length*cos_alpha);
-    const double cyl_Fq = M_PI*radius*radius*length*bj*si;
-    const double Aq = cyl_Fq + bell_Fq;
+    const double Aq = _fq(q, h, radius_bell, radius, 0.5*length, sin_alpha, cos_alpha);
 
     // Multiply by contrast^2 and convert to cm-1
     const double s = (sld - solvent_sld);

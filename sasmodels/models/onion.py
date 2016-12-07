@@ -365,14 +365,14 @@ def profile(sld_core, radius_core, sld_solvent, n_shells,
 
     return np.asarray(z), np.asarray(rho)
 
-def ER(core_radius, n, thickness):
+def ER(radius_core, n, thickness):
     """Effective radius"""
-    return np.sum(thickness[:int(n[0])], axis=0) + core_radius
+    return np.sum(thickness[:int(n[0])], axis=0) + radius_core
 
 demo = {
     "sld_solvent": 2.2,
     "sld_core": 1.0,
-    "core_radius": 100,
+    "radius_core": 100,
     "n_shells": 4,
     "sld_in": [0.5, 1.5, 0.9, 2.0],
     "sld_out": [nan, 0.9, 1.2, 1.6],
@@ -380,8 +380,8 @@ demo = {
     "A": [0, -1, 1e-4, 1],
     # Could also specify them individually as
     # "A1": 0, "A2": -1, "A3": 1e-4, "A4": 1,
-    #"core_radius_pd_n": 10,
-    #"core_radius_pd": 0.4,
+    #"radius_core_pd_n": 10,
+    #"radius_core_pd": 0.4,
     #"thickness4_pd_n": 10,
     #"thickness4_pd": 0.4,
     }

@@ -6,12 +6,6 @@ double Iq(double q,
     double lg_sld, double sm_sld, double solvent_sld
     );
     
-double Iqxy(double qx, double qy,
-    double lg_radius, double sm_radius,
-    double lg_vol_frac, double sm_vol_frac,
-    double lg_sld, double sm_sld, double solvent_sld
-    );
-
 void calculate_psfs(double qval,
     double r2, double nf2,
     double aa, double phi,
@@ -54,8 +48,8 @@ double Iq(double q,
     
     // /* do form factor calculations  */
     
-    v1 = 4.0*M_PI/3.0*r1*r1*r1;
-    v2 = 4.0*M_PI/3.0*r2*r2*r2;
+    v1 = M_4PI_3*r1*r1*r1;
+    v2 = M_4PI_3*r2*r2*r2;
     
     n1 = phi1/v1;
     n2 = phi2/v2;
@@ -63,20 +57,10 @@ double Iq(double q,
     qr1 = r1*q;
     qr2 = r2*q;
 
-    //if (qr1 == 0){
-        //sc1 = 1.0/3.0;
-    //}else{
-        //sc1 = (sin(qr1)-qr1*cos(qr1))/qr1/qr1/qr1;
-    //}
-    //if (qr2 == 0){
-        //sc2 = 1.0/3.0;
-    //}else{
-        //sc2 = (sin(qr2)-qr2*cos(qr2))/qr2/qr2/qr2;
-    //}
     sc1 = sph_j1c(qr1);
     sc2 = sph_j1c(qr2);
-    b1 = r1*r1*r1*(rho1-rhos)*4.0/3.0*M_PI*sc1;
-    b2 = r2*r2*r2*(rho2-rhos)*4.0/3.0*M_PI*sc2;
+    b1 = r1*r1*r1*(rho1-rhos)*M_4PI_3*sc1;
+    b2 = r2*r2*r2*(rho2-rhos)*M_4PI_3*sc2;
     inten = n1*b1*b1*psf11;
     inten += sqrt(n1*n2)*2.0*b1*b2*psf12;
     inten += n2*b2*b2*psf22;
@@ -87,19 +71,6 @@ double Iq(double q,
     return(inten);
 }
 
-
-double Iqxy(double qx, double qy,
-    double lg_radius, double sm_radius,
-    double lg_vol_frac, double sm_vol_frac,
-    double lg_sld, double sm_sld, double solvent_sld)
-    
-{
-    double q = sqrt(qx*qx + qy*qy);
-    return Iq(q,
-        lg_radius, sm_radius,
-        lg_vol_frac, sm_vol_frac,
-        lg_sld, sm_sld, solvent_sld);
-}
 
 void calculate_psfs(double qval,
     double r2, double nf2,

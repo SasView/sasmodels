@@ -9,39 +9,24 @@ The scattering intensity $I(q)$ is calculated as
 
 .. math::
 
-    I(q) = scale \times P(q)S(q) + background
-
-.. math::
-
-    P(q) = F(qR)^2
-
-.. math::
-
-    F(x) = \frac{3\left[sin(x)-xcos(x)\right]}{x^3}
-
-.. math::
-
-    S(q) = \frac{\Gamma(5-D_S)\zeta^{5-D_S}}{\left[1+(q\zeta)^2
-    \right]^{(5-D_S)/2}}
-    \frac{sin\left[(D_S - 5) tan^{-1}(q\zeta) \right]}{q}
-
-.. math::
-
-    scale = scale\_factor \times NV^2(\rho_{particle} - \rho_{solvent})^2
-
-.. math::
-
-    V = \frac{4}{3}\pi R^3
+    I(q) &= \text{scale} \times P(q)S(q) + \text{background} \\
+    P(q) &= F(qR)^2 \\
+    F(x) &= \frac{3\left[\sin(x)-x\cos(x)\right]}{x^3} \\
+    S(q) &= \Gamma(5-D_S)\xi^{\,5-D_S}\left[1+(q\xi)^2 \right]^{-(5-D_S)/2}
+            \sin\left[-(5-D_S) \tan^{-1}(q\xi) \right] q^{-1} \\
+    \text{scale} &= \text{scale_factor}\, N V^2(\rho_\text{particle} - \rho_\text{solvent})^2 \\
+    V &= \frac{4}{3}\pi R^3
 
 where $R$ is the radius of the building block, $D_S$ is the **surface** fractal
-dimension,| \zeta\|  is the cut-off length, $\rho_{solvent}$ is the scattering
-length density of the solvent,
-and $\rho_{particle}$ is the scattering length density of particles.
+dimension, $\xi$ is the cut-off length, $\rho_\text{solvent}$ is the scattering
+length density of the solvent and $\rho_\text{particle}$ is the scattering
+length density of particles.
 
 .. note::
-    The surface fractal dimension $D_s$ is only valid if $1<surface\_dim<3$.
-    It is also only valid over a limited $q$ range (see the reference for
-    details)
+
+    The surface fractal dimension is only valid if $1<D_S<3$. The result is
+    only valid over a limited $q$ range, $\tfrac{5}{3-D_S}\xi^{\,-1} < q < R^{-1}$.
+    See the reference for details.
 
 
 References
@@ -88,7 +73,7 @@ parameters = [["radius",        "Ang", 10.0, [0, inf],   "",
 
 source = ["lib/sph_j1c.c", "lib/sas_gamma.c", "surface_fractal.c"]
 
-demo = dict(scale=1, background=0,
+demo = dict(scale=1, background=1e-5,
             radius=10, fractal_dim_surf=2.0, cutoff_length=500)
 
 tests = [

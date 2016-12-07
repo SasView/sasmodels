@@ -2,7 +2,7 @@
 # Note: model title and parameter table are inserted automatically
 r"""
 
-This model provides the form factor, *P(q)*, for a hollow rectangular
+This model provides the form factor, $P(q)$, for a hollow rectangular
 prism with infinitely thin walls. It computes only the 1D scattering, not the 2D.
 
 
@@ -13,47 +13,49 @@ The 1D scattering intensity for this model is calculated according to the
 equations given by Nayuk and Huber (Nayuk, 2012).
 
 Assuming a hollow parallelepiped with infinitely thin walls, edge lengths
-:math:`A \le B \le C` and presenting an orientation with respect to the
-scattering vector given by |theta| and |phi|, where |theta| is the angle
-between the *z* axis and the longest axis of the parallelepiped *C*, and
-|phi| is the angle between the scattering vector (lying in the *xy* plane)
-and the *y* axis, the form factor is given by
+$A \le B \le C$ and presenting an orientation with respect to the
+scattering vector given by $\theta$ and $\phi$, where $\theta$ is the angle
+between the $z$ axis and the longest axis of the parallelepiped $C$, and
+$\phi$ is the angle between the scattering vector (lying in the $xy$ plane)
+and the $y$ axis, the form factor is given by
 
 .. math::
-  P(q) =  \frac{1}{V^2} \frac{2}{\pi} \int_0^{\frac{\pi}{2}}
-  \int_0^{\frac{\pi}{2}} [A_L(q)+A_T(q)]^2 \sin\theta d\theta d\phi
+
+    P(q) = \frac{1}{V^2} \frac{2}{\pi} \int_0^{\frac{\pi}{2}}
+           \int_0^{\frac{\pi}{2}} [A_L(q)+A_T(q)]^2 \sin\theta\,d\theta\,d\phi
 
 where
 
 .. math::
-  V = 2AB + 2AC + 2BC
 
-.. math::
-  A_L(q) =  8 \times \frac{ \sin \bigl( q \frac{A}{2} \sin\phi \sin\theta \bigr)
-                              \sin \bigl( q \frac{B}{2} \cos\phi \sin\theta \bigr)
-                              \cos \bigl( q \frac{C}{2} \cos\theta \bigr) }
-                            {q^2 \, \sin^2\theta \, \sin\phi \cos\phi}
-
-.. math::
-  A_T(q) =  A_F(q) \times \frac{2 \, \sin \bigl( q \frac{C}{2} \cos\theta \bigr)}{q \, \cos\theta}
+    V &= 2AB + 2AC + 2BC \\
+    A_L(q) &=  8 \times \frac{
+            \sin \left( \tfrac{1}{2} q A \sin\phi \sin\theta \right)
+            \sin \left( \tfrac{1}{2} q B \cos\phi \sin\theta \right)
+            \cos \left( \tfrac{1}{2} q C \cos\theta \right)
+        }{q^2 \, \sin^2\theta \, \sin\phi \cos\phi} \\
+    A_T(q) &=  A_F(q) \times
+      \frac{2\,\sin \left( \tfrac{1}{2} q C \cos\theta \right)}{q\,\cos\theta}
 
 and
 
 .. math::
-  A_F(q) =  4 \frac{ \cos \bigl( q \frac{A}{2} \sin\phi \sin\theta \bigr)
-                       \sin \bigl( q \frac{B}{2} \cos\phi \sin\theta \bigr) }
+
+  A_F(q) =  4 \frac{ \cos \left( \tfrac{1}{2} q A \sin\phi \sin\theta \right)
+                       \sin \left( \tfrac{1}{2} q B \cos\phi \sin\theta \right) }
                      {q \, \cos\phi \, \sin\theta} +
-              4 \frac{ \sin \bigl( q \frac{A}{2} \sin\phi \sin\theta \bigr)
-                       \cos \bigl( q \frac{B}{2} \cos\phi \sin\theta \bigr) }
+              4 \frac{ \sin \left( \tfrac{1}{2} q A \sin\phi \sin\theta \right)
+                       \cos \left( \tfrac{1}{2} q B \cos\phi \sin\theta \right) }
                      {q \, \sin\phi \, \sin\theta}
 
 The 1D scattering intensity is then calculated as
 
 .. math::
-  I(q) = \mbox{scale} \times V \times (\rho_{\mbox{p}} - \rho_{\mbox{solvent}})^2 \times P(q)
 
-where *V* is the volume of the rectangular prism, :math:`\rho_{\mbox{p}}`
-is the scattering length of the parallelepiped, :math:`\rho_{\mbox{solvent}}`
+  I(q) = \text{scale} \times V \times (\rho_\text{p} - \rho_\text{solvent})^2 \times P(q)
+
+where $V$ is the volume of the rectangular prism, $\rho_\text{p}$
+is the scattering length of the parallelepiped, $\rho_\text{solvent}$
 is the scattering length of the solvent, and (if the data are in absolute
 units) *scale* represents the volume fraction (which is unitless).
 
@@ -126,7 +128,7 @@ def VR(length_a, b2a_ratio, c2a_ratio):
 
 # parameters for demo
 demo = dict(scale=1, background=0,
-            sld=6.3e-6, sld_solvent=1.0e-6,
+            sld=6.3, sld_solvent=1.0,
             length_a=35, b2a_ratio=1, c2a_ratio=1,
             length_a_pd=0.1, length_a_pd_n=10,
             b2a_ratio_pd=0.1, b2a_ratio_pd_n=1,

@@ -77,11 +77,12 @@ description = """
 category = "shape-independent"
 
 # pylint: disable=bad-whitespace, line-too-long
-#             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["radius",        "Ang",  10.0, [0.0, inf], "", "Particle radius"],
-              ["fractal_dim_mass",      "",      1.9, [1.0, 6.0], "", "Mass fractal dimension"],
-              ["cutoff_length", "Ang", 100.0, [0.0, inf], "", "Cut-off length"],
-             ]
+#   ["name", "units", default, [lower, upper], "type","description"],
+parameters = [
+    ["radius",           "Ang",  10.0, [0.0, inf], "", "Particle radius"],
+    ["fractal_dim_mass", "",      1.9, [1.0, 6.0], "", "Mass fractal dimension"],
+    ["cutoff_length",    "Ang", 100.0, [0.0, inf], "", "Cut-off length"],
+]
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sph_j1c.c", "lib/sas_gamma.c", "mass_fractal.c"]

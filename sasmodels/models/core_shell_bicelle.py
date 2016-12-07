@@ -48,9 +48,9 @@ where
 
         \begin{align}    
     F(Q,\alpha) = &\bigg[ 
-    (\rho_c - \rho_f) V_c \frac{J_1(QRsin \alpha)}{QRsin\alpha}\frac{2 \cdot sin(QLcos\alpha/2)}{QLcos\alpha} \\
-    &+(\rho_f - \rho_r) V_{c+f} \frac{J_1(QRsin\alpha)}{QRsin\alpha}\frac{2 \cdot sin(Q(L/2+t_f)cos\alpha)}{Q(L+2t_f)cos\alpha} \\
-    &+(\rho_r - \rho_s) V_t \frac{J_1(Q(R+t_r)sin\alpha)}{Q(R+t_r)sin\alpha}\frac{2 \cdot sin(Q(L/2+t_f)cos\alpha)}{Q(L+2t_f)cos\alpha}
+    (\rho_c - \rho_f) V_c \frac{2J_1(QRsin \alpha)}{QRsin\alpha}\frac{sin(QLcos\alpha/2)}{Q(L/2)cos\alpha} \\
+    &+(\rho_f - \rho_r) V_{c+f} \frac{2J_1(QRsin\alpha)}{QRsin\alpha}\frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha} \\
+    &+(\rho_r - \rho_s) V_t \frac{2J_1(Q(R+t_r)sin\alpha)}{Q(R+t_r)sin\alpha}\frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha}
     \bigg]
     \end{align} 
 
@@ -70,10 +70,6 @@ use the c-library from NIST.
 
     Definition of the angles for the oriented core shell bicelle tmodel.
 
-.. figure:: img/cylinder_angle_projection.jpg
-    :width: 600px
-
-    Examples of the angles for oriented pp against the detector plane.
 
 References
 ----------
@@ -160,40 +156,3 @@ demo = dict(scale=1, background=0,
             phi=0)
 
 qx, qy = 0.4 * cos(90), 0.5 * sin(0)
-tests = [
-    # Accuracy tests based on content in test/utest_other_models.py
-    [{'radius': 20.0,
-      'thick_rim': 10.0,
-      'thick_face': 10.0,
-      'length': 400.0,
-      'sld_core': 1.0,
-      'sld_face': 4.0,
-      'sld_rim': 4.0,
-      'sld_solvent': 1.0,
-      'background': 0.0,
-     }, 0.001, 353.550],
-
-    [{'radius': 20.0,
-      'thick_rim': 10.0,
-      'thick_face': 10.0,
-      'length': 400.0,
-      'sld_core': 1.0,
-      'sld_face': 4.0,
-      'sld_rim': 4.0,
-      'sld_solvent': 1.0,
-      'theta': 90.0,
-      'phi': 0.0,
-      'background': 0.00,
-     }, (qx, qy), 24.9167],
-
-    # Additional tests with larger range of parameters
-    [{'radius': 3.0,
-      'thick_rim': 100.0,
-      'thick_face': 100.0,
-      'length': 1200.0,
-      'sld_core': 5.0,
-      'sld_face': 41.0,
-      'sld_rim': 42.0,
-      'sld_solvent': 21.0,
-     }, 0.05, 1670.1828],
-    ]

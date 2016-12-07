@@ -12,7 +12,7 @@ of shells. The scattering length density profile for the default sld values
     for the default SLDs.*
 
 The 2D scattering intensity is the same as $P(q)$ above, regardless of the
-orientation of the $q$ vector which is defined as
+orientation of the $\vec q$ vector which is defined as
 
 .. math::
 
@@ -28,21 +28,22 @@ For information about polarised and magnetic scattering, see
 the :ref:`magnetism` documentation.
 
 Our model uses the form factor calculations implemented in a c-library provided
-by the NIST Center for Neutron Research (Kline, 2006).
+by the NIST Center for Neutron Research (Kline, 2006) [#kline]_.
 
 References
 ----------
 
 .. [#] See the :ref:`core-shell-sphere` model documentation.
-.. [#] L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*,
-   Plenum Press, New York, 1987.
+.. [#kline] S R Kline, *J Appl. Cryst.*, 39 (2006) 895
+.. [#] L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and
+   Neutron Scattering*, Plenum Press, New York, 1987.
 
 Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Kienzle **Date:** September 12, 2016
-* **Last Reviewed by:** Under Review **Date:** as of October 5, 2016
+* **Last Reviewed by:** Paul Kienzle **Date:** September 12, 2016
 """
 
 

@@ -154,5 +154,14 @@ def test_dollar():
     assert replace_dollar(u"a ($in parens$) a") == u"a (:math:`in parens`) a"
     assert replace_dollar(u"a (again $in parens$) a") == u"a (again :math:`in parens`) a"
 
+def view_rst_app(filename):
+    import wx  # type: ignore
+    app = wx.App()
+    view_rst(filename)
+    app.MainLoop()
+
+
 if __name__ == "__main__":
-    test_dollar()
+    import sys
+    view_rst_app(sys.argv[1])
+

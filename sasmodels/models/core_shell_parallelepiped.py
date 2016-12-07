@@ -1,6 +1,7 @@
-# core_shell_parallelepiped model
-# Note: model title and parameter table are inserted automatically
 r"""
+Definition
+----------
+
 Calculates the form factor for a rectangular solid with a core-shell structure.
 **The thickness and the scattering length density of the shell or "rim"
 can be different on all three (pairs) of faces.**
@@ -14,11 +15,6 @@ The form factor is normalized by the particle volume $V$ such that
 where $\langle \ldots \rangle$ is an average over all possible orientations
 of the rectangular solid.
 
-An instrument resolution smeared version of the model is also provided.
-
-
-Definition
-----------
 
 The function calculated is the form factor of the rectangular solid below.
 The core of the solid is defined by the dimensions $A$, $B$, $C$ such that
@@ -40,19 +36,31 @@ The volume of the solid is
 
 **meaning that there are "gaps" at the corners of the solid.**
 
-The intensity calculated follows the :ref:`parallelepiped` model, with the core-shell
-intensity being calculated as the square of the sum of the amplitudes of the
-core and shell, in the same manner as a core-shell model.
+The intensity calculated follows the :ref:`parallelepiped` model, with the
+core-shell intensity being calculated as the square of the sum of the
+amplitudes of the core and shell, in the same manner as a core-shell model.
 
-**For the calculation of the form factor to be valid, the sides of the solid
-MUST be chosen such that** $A < B < C$.
-**If this inequality is not satisfied, the model will not report an error,
-and the calculation will not be correct.**
+.. math::
+
+    F_{a}(Q,\alpha,\beta)=
+    \Bigg(\frac{sin(Q(L_A+2t_A)/2sin\alpha sin\beta)}{Q(L_A+2t_A)/2sin\alpha
+    sin\beta)}
+    - \frac{sin(QL_A/2sin\alpha sin\beta)}{QL_A/2sin\alpha sin\beta)} \Bigg)
+    + \frac{sin(QL_B/2sin\alpha sin\beta)}{QL_B/2sin\alpha sin\beta)}
+    + \frac{sin(QL_C/2sin\alpha sin\beta)}{QL_C/2sin\alpha sin\beta)}
+
+.. note::
+
+    For the calculation of the form factor to be valid, the sides of the solid
+    MUST be chosen such that** $A < B < C$.
+    If this inequality is not satisfied, the model will not report an error,
+    but the calculation will not be correct and thus the result wrong.
 
 FITTING NOTES
 If the scale is set equal to the particle volume fraction, |phi|, the returned
 value is the scattered intensity per unit volume, $I(q) = \phi P(q)$.
-However, **no interparticle interference effects are included in this calculation.**
+However, **no interparticle interference effects are included in this
+calculation.**
 
 There are many parameters in this model. Hold as many fixed as possible with
 known values, or you will certainly end up at a solution that is unphysical.
@@ -67,10 +75,6 @@ NB: The 2nd virial coefficient of the core_shell_parallelepiped is calculated
 based on the the averaged effective radius $(=\sqrt{(A+2t_A)(B+2t_B)/\pi})$
 and length $(C+2t_C)$ values, and used as the effective radius
 for $S(Q)$ when $P(Q) * S(Q)$ is applied.
-
-.. Comment by Miguel Gonzalez:
-   The later seems to contradict the previous statement that interparticle interference
-   effects are not included.
 
 To provide easy access to the orientation of the parallelepiped, we define the
 axis of the cylinder using three angles $\theta$, $\phi$ and $\Psi$.
@@ -97,9 +101,19 @@ by the NIST Center for Neutron Research (Kline, 2006).
 References
 ----------
 
-P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
-Equations (1), (13-14). (in German)
+.. [#] P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
+    Equations (1), (13-14). (in German)
+.. [#] D Singh (2009). *Small angle scattering studies of self assembly in
+   lipid mixtures*, John's Hopkins University Thesis (2009) 223-225. `Available
+   from Proquest <http://search.proquest.com/docview/304915826?accountid
+   =26379>`_
 
+Authorship and Verification
+----------------------------
+
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Paul Butler **Date:** September 30, 2016
+* **Last Reviewed by:** Miguel Gonzales **Date:** March 21, 2016
 """
 
 import numpy as np
@@ -163,8 +177,7 @@ def ER(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c):
 
 # parameters for demo
 demo = dict(scale=1, background=0.0,
-            sld_core=1e-6, sld_a=2e-6, sld_b=4e-6,
-            sld_c=2e-6, sld_solvent=6e-6,
+            sld_core=1, sld_a=2, sld_b=4, sld_c=2, sld_solvent=6,
             length_a=35, length_b=75, length_c=400,
             thick_rim_a=10, thick_rim_b=10, thick_rim_c=10,
             theta=0, phi=0, psi=0,
@@ -176,7 +189,7 @@ demo = dict(scale=1, background=0.0,
             thick_rim_c_pd=0.1, thick_rim_c_pd_n=1,
             theta_pd=10, theta_pd_n=1,
             phi_pd=10, phi_pd_n=1,
-            psi_pd=10, psi_pd_n=10)
+            psi_pd=10, psi_pd_n=1)
 
 qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
 tests = [[{}, 0.2, 0.533149288477],
