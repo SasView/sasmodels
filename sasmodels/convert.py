@@ -91,7 +91,7 @@ def _rescale_sld(model_info, pars, scale):
                 for id, v in pars.items())
 
 
-def _get_translation_table(model_info, version='4.0.1'):
+def _get_translation_table(model_info, version='3.1.2'):
     _, translation = CONVERSION_TABLE.get(version).get(model_info.id, [None, {}])
     translation = translation.copy()
     for p in model_info.parameters.kernel_parameters:
@@ -144,7 +144,7 @@ def _convert_pars(pars, mapping):
                     del newpars[source]
     return newpars
 
-def _conversion_target(model_name, version='4.0.1'):
+def _conversion_target(model_name, version='3.1.2'):
     """
     Find the sasmodel name which translates into the sasview name.
 
@@ -217,7 +217,7 @@ def _hand_convert(name, oldpars, version='3.1.2'):
             oldpars['ndensity.lower'] /= 1e15
         if 'ndensity.upper' in oldpars:
             oldpars['ndensity.upper'] /= 1e15
-    elif name == 'rpa' and version == '4.0.1':
+    elif name == 'rpa' and version == base_version:
         # convert scattering lengths from femtometers to centimeters
         for p in "L1", "L2", "L3", "L4":
             if p in oldpars:
@@ -227,11 +227,25 @@ def _hand_convert(name, oldpars, version='3.1.2'):
             if p + ".upper" in oldpars:
                 oldpars[p + ".upper"] /= 1e-13
     elif name == 'spherical_sld' and version == base_version:
-        oldpars["CONTROL"] = 0
-        i = 0
-        while "nu_inter" + str(i) in oldpars:
-            oldpars["CONTROL"] += 1
-            i += 1
+        j = 0
+        while "func_inter" + str(j) in oldpars:
+            name = "func_inter" + str(j)
+            new_name = "shape" + str(j + 1)
+            if oldpars[name] == 'Erf(|nu|*z)':
+                oldpars[new_name] = int(0)
+            elif oldpars[name] == 'RPower(z^|nu|)':
+                oldpars[new_name] = int(1)
+            elif oldpars[name] == 'LPower(z^|nu|)':
+                oldpars[new_name] = int(2)
+            elif oldpars[name] == 'RExp(-|nu|*z)':
+                oldpars[new_name] = int(3)
+            elif oldpars[name] == 'LExp(-|nu|*z)':
+                oldpars[new_name] = int(4)
+            else:
+                oldpars[new_name] = int(0)
+            oldpars.pop(name)
+            oldpars['n_shells'] = str(j + 1)
+            j += 1
     elif name == 'teubner_strey' and version == base_version:
         # basically undoing the entire Teubner-Strey calculations here.
         #    drho = (sld_a - sld_b)
