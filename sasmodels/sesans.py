@@ -43,8 +43,10 @@ class SesansTransform(object):
         return P
 
     def _set_q(self):
-        q_min = dq = 0.1 * 2*pi / self.Rmax
+        #q_min = dq = 0.1 * 2*pi / self.Rmax
+
         q_max = self.zaccept
+        q_min = dq = q_max / 100000
         q=np.arange(q_min, q_max, q_min)
         self.q = q
         self.dq = dq
@@ -56,10 +58,20 @@ class SesansTransform(object):
         SElength = self.SE
 
         H0 = dq / (2 * pi) * q
-        repSE, repq = np.meshgrid(SElength, q)
-        repq=np.array(repq,dtype='float32')
-        repSE=np.array(repSE,dtype='float32')
-        H = dq / (2 * pi) * j0(repSE*repq)*repq
+        q=np.array(q,dtype='float32')
+        SElength=np.array(SElength,dtype='float32')
+
+        # Using numpy tile, dtype is conserved
+        repq=np.tile(q,(SElength.size,1))
+        repSE=np.tile(SElength,(q.size,1))
+        H = dq / (2 * pi) * j0(repSE*repq.T)*repq.T
+
+        # Using numpy meshgrid - meshgrid produces float64 from float32 inputs! Problem for 32-bit OS: Memerrors!
+        #H0 = dq / (2 * pi) * q
+        #repSE, repq = np.meshgrid(SElength, q)
+        #repq=np.array(repq,dtype='float32')
+        #repSE=np.array(repSE,dtype='float32')
+        #H = dq / (2 * pi) * j0(repSE*repq)*repq
 
         self._H, self._H0 = H, H0
 
