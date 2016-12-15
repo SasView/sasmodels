@@ -9,6 +9,9 @@ from scipy.special import erf  # type: ignore
 from numpy import sqrt, log, log10, exp, pi  # type: ignore
 import numpy as np  # type: ignore
 
+from sasmodels import sesans
+from sasmodels.sesans import SesansTransform as SesansTransform
+
 __all__ = ["Resolution", "Perfect1D", "Pinhole1D", "Slit1D",
            "apply_resolution_matrix", "pinhole_resolution", "slit_resolution",
            "pinhole_extend_q", "slit_extend_q", "bin_edges",
@@ -42,7 +45,6 @@ class Resolution(object):
         """
         raise NotImplementedError("Subclass does not define the apply function")
 
-
 class Perfect1D(Resolution):
     """
     Resolution function to use when there is no actual resolution smearing
@@ -54,7 +56,6 @@ class Perfect1D(Resolution):
 
     def apply(self, theory):
         return theory
-
 
 class Pinhole1D(Resolution):
     r"""
