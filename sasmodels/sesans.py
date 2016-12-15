@@ -45,8 +45,10 @@ class SesansTransform(object):
     def _set_q(self):
         #q_min = dq = 0.1 * 2*pi / self.Rmax
 
-        q_max = self.zaccept
-        q_min = dq = q_max / 100000
+        q_max = 2*pi / (self.SE[1]-self.SE[0])
+        q_min = dq = 0.1 *2*pi / (np.size(self.SE) * self.SE[-1])
+
+        #q_min = dq = q_max / 100000
         q=np.arange(q_min, q_max, q_min)
         self.q = q
         self.dq = dq
