@@ -30,7 +30,6 @@ from . import weights
 from . import resolution
 from . import resolution2d
 from .details import make_kernel_args, dispersion_mesh
-from sas.sasgui.perspectives.fitting.fitpage import FitPage
 
 try:
     from typing import Optional, Dict, Tuple
@@ -193,7 +192,6 @@ class DataMixin(object):
 
         # interpret data
         if hasattr(data, 'lam'):
-        #if not FitPage.no_transform.GetValue(): #if the no_transform radio button is not active DOES NOT WORK! not active before fitting
             self.data_type = 'sesans'
         elif hasattr(data, 'qx_data'):
             self.data_type = 'Iqxy'
