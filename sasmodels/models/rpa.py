@@ -113,6 +113,7 @@ def hidden(case_num):
     """
     Return a list of parameters to hide depending on the multiplicity parameter.
     """
+    case_num = int(case_num+0.5)
     if case_num < 2:
         return HIDE_AB
     elif case_num < 5:
