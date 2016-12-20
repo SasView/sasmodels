@@ -322,7 +322,7 @@ def profile(sld_core, radius_core, sld_solvent, n_shells,
     """
     Returns shape profile with x=radius, y=SLD.
     """
-
+    n_shells = int(n_shells+0.5)
     total_radius = 1.25*(sum(thickness[:n_shells]) + radius_core + 1)
     dz = total_radius/400  # 400 points for a smooth plot
 
@@ -365,9 +365,10 @@ def profile(sld_core, radius_core, sld_solvent, n_shells,
 
     return np.asarray(z), np.asarray(rho)
 
-def ER(radius_core, n, thickness):
+def ER(radius_core, n_shells, thickness):
     """Effective radius"""
-    return np.sum(thickness[:int(n[0])], axis=0) + radius_core
+    n = int(n_shells[0]+0.5)
+    return np.sum(thickness[:n], axis=0) + radius_core
 
 demo = {
     "sld_solvent": 2.2,
