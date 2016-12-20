@@ -1,8 +1,9 @@
 static double form_volume(
-    int n_shells,
+    double fp_n_shells,
     double thickness[],
     double interface[])
 {
+    int n_shells= (int)(fp_n_shells + 0.5);
     double r = 0.0;
     for (int i=0; i < n_shells; i++) {
         r += thickness[i] + interface[i];
@@ -19,7 +20,7 @@ static double blend(int shape, double nu, double z)
     } else if (shape==1) {
         return pow(z, nu);
     } else if (shape==2) {
-        return 1.0 - pow(1. - z, nu);
+        return 1.0 - pow(1.0 - z, nu);
     } else if (shape==3) {
         return expm1(-nu*z)/expm1(-nu);
     } else if (shape==4) {
@@ -43,16 +44,18 @@ static double f_linear(double q, double r, double contrast, double slope)
 
 static double Iq(
     double q,
-    int n_shells,
+    double fp_n_shells,
     double sld_solvent,
     double sld[],
     double thickness[],
     double interface[],
     double shape[],
     double nu[],
-    int n_steps)
+    double fp_n_steps)
 {
     // iteration for # of shells + core + solvent
+    int n_shells = (int)(fp_n_shells + 0.5);
+    int n_steps = (int)(fp_n_steps + 0.5);
     double f=0.0;
     double r=0.0;
     for (int shell=0; shell<n_shells; shell++){
