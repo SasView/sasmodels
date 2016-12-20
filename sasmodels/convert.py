@@ -91,7 +91,7 @@ def _rescale_sld(model_info, pars, scale):
                 for id, v in pars.items())
 
 
-def _get_translation_table(model_info, version='3.1.2'):
+def _get_translation_table(model_info, version=(3,1,2)):
     _, translation = CONVERSION_TABLE.get(version).get(model_info.id, [None, {}])
     translation = translation.copy()
     for p in model_info.parameters.kernel_parameters:
@@ -144,7 +144,7 @@ def _convert_pars(pars, mapping):
                     del newpars[source]
     return newpars
 
-def _conversion_target(model_name, version='3.1.2'):
+def _conversion_target(model_name, version=(3,1,2)):
     """
     Find the sasmodel name which translates into the sasview name.
 
@@ -158,8 +158,8 @@ def _conversion_target(model_name, version='3.1.2'):
             return sasmodels_name
     return None
 
-def _hand_convert(name, oldpars, version='3.1.2'):
-    if version == '3.1.2':
+def _hand_convert(name, oldpars, version=(3,1,2)):
+    if version == (3,1,2):
         oldpars = _hand_convert_3_1_2_to_4_1(name, oldpars)
     return oldpars
 
@@ -315,7 +315,8 @@ def convert_model(name, pars, use_underscore=False):
             translation = _get_translation_table(model_info, version)
         newpars = _hand_convert(newname, newpars, version)
         newpars = _convert_pars(newpars, translation)
-        if not model_info.structure_factor:
+        # TODO: Still not convinced this is the best check
+        if not model_info.structure_factor and version == (3,1,2):
             newpars = _rescale_sld(model_info, newpars, 1e6)
         newpars.setdefault('scale', 1.0)
         newpars.setdefault('background', 0.0)

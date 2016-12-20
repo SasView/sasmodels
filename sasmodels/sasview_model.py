@@ -56,16 +56,15 @@ def _register_old_models():
 
     import sas.models
     from sasmodels.conversion_table import CONVERSION_TABLE
-    for version, _ in sorted(CONVERSION_TABLE.iteritems()):
-        for new_name, conversion in CONVERSION_TABLE.get(version).items():
-            # CoreShellEllipsoidModel => core_shell_ellipsoid:1
-            new_name = new_name.split(':')[0]
-            old_name = conversion[0]
-            module_attrs = {old_name: find_model(new_name)}
-            ConstructedModule = type(old_name, (), module_attrs)
-            old_path = 'sas.models.' + old_name
-            setattr(sas.models, old_path, ConstructedModule)
-            sys.modules[old_path] = ConstructedModule
+    for new_name, conversion in CONVERSION_TABLE.get((3,1,2)).items():
+        # CoreShellEllipsoidModel => core_shell_ellipsoid:1
+        new_name = new_name.split(':')[0]
+        old_name = conversion[0]
+        module_attrs = {old_name: find_model(new_name)}
+        ConstructedModule = type(old_name, (), module_attrs)
+        old_path = 'sas.models.' + old_name
+        setattr(sas.models, old_path, ConstructedModule)
+        sys.modules[old_path] = ConstructedModule
 
 
 # TODO: separate x_axis_label from multiplicity info

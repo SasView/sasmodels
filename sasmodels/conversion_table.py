@@ -27,8 +27,8 @@ table for future compatibility.
 """
 
 CONVERSION_TABLE = {
-    "4.0.1" : {},
-    "3.1.2" : {
+    (4,0,1) : {},
+    (3,1,2) : {
     "adsorbed_layer": [
         "Core2ndMomentModel",
         {
