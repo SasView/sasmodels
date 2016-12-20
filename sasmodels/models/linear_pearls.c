@@ -3,20 +3,21 @@ double form_volume(double radius, double num_pearls);
 double Iq(double q,
             double radius,
             double edge_sep,
-            double num_pearls,
+            double fp_num_pearls,
             double pearl_sld,
             double solvent_sld);
 
 double linear_pearls_kernel(double q,
             double radius,
             double edge_sep,
-            double num_pearls,
+            int num_pearls,
             double pearl_sld,
             double solvent_sld);
 
 
-double form_volume(double radius, double num_pearls)
+double form_volume(double radius, double fp_num_pearls)
 {
+    int num_pearls = (int)(fp_num_pearls + 0.5);
     // Pearl volume
     double pearl_vol = M_4PI_3 * cube(radius);
     // Return total volume
@@ -26,11 +27,10 @@ double form_volume(double radius, double num_pearls)
 double linear_pearls_kernel(double q,
             double radius,
             double edge_sep,
-            double num_pearls,
+            int num_pearls,
             double pearl_sld,
             double solvent_sld)
 {
-    double n_contrib;
     //relative sld
     double contrast_pearl = pearl_sld - solvent_sld;
     //each volume
@@ -46,10 +46,9 @@ double linear_pearls_kernel(double q,
     double psi = sph_j1c(q * radius);
 
     // N pearls contribution
-    int n_max = num_pearls - 1;
-    n_contrib = num_pearls;
-    for(int num=1; num<=n_max; num++) {
-        n_contrib += (2.0*(num_pearls-num)*sinc(q*separation*num));
+    double n_contrib = (double)num_pearls;
+    for(int num=1; num<num_pearls; num++) {
+        n_contrib += 2.0*(num_pearls-num)*sinc(q*separation*num);
     }
     // form factor for num_pearls
     double form_factor = 1.0e-4 * n_contrib * square(m_s*psi) / tot_vol;
@@ -60,11 +59,12 @@ double linear_pearls_kernel(double q,
 double Iq(double q,
             double radius,
             double edge_sep,
-            double num_pearls,
+            double fp_num_pearls,
             double pearl_sld,
             double solvent_sld)
 {
 
+    int num_pearls = (int)(fp_num_pearls + 0.5);
 	double result = linear_pearls_kernel(q,
                     radius,
                     edge_sep,

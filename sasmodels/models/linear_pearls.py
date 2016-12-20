@@ -15,9 +15,9 @@ is given by (Dobrynin, 1996)
 
 .. math::
 
-    P(Q) = \frac{scale}{V}\left[ m_{p}^2
-    \left(N+2\sum_{n-1}^{N-1}(N-n)\frac{sin(qnl)}{qnl}\right)
-    \left( 3\frac{sin(qR)-qRcos(qR)}{(qr)^3}\right)^2\right]
+    P(Q) = \frac{\text{scale}}{V}\left[ m_{p}^2
+    \left(N+2\sum_{n-1}^{N-1}(N-n)\frac{\sin(qnl)}{qnl}\right)
+    \left( 3\frac{\sin(qR)-qR\cos(qR)}{(qr)^3}\right)^2\right]
 
 where the mass $m_p$ is $(SLD_{pearl}-SLD_{solvent})*(volume\ of\ N\ pearls)$.
 V is the total volume.
@@ -55,7 +55,7 @@ category = "shape:sphere"
 parameters = [
     ["radius",      "Ang",       80.0, [0, inf],     "", "Radius of the pearls"],
     ["edge_sep",    "Ang",      350.0, [0, inf],     "", "Length of the string segment - surface to surface"],
-    ["num_pearls",  "",           3.0, [0, inf],     "", "Number of the pearls"],
+    ["num_pearls",  "",           3.0, [1, inf],     "", "Number of the pearls"],
     ["sld",   "1e-6/Ang^2", 1.0, [-inf, inf],  "sld", "SLD of the pearl spheres"],
     ["sld_solvent", "1e-6/Ang^2", 6.3, [-inf, inf],  "sld", "SLD of the solvent"],
     ]
