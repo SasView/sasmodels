@@ -9,15 +9,15 @@ smaller particles forming a structure similar to that of Pickering emulsions.
 
     Schematic of the raspberry model
 
-In order to calculate the form factor of the entire complex, the self-
-correlation of the large droplet, the self-correlation of the particles, the
-correlation terms between different particles and the cross terms between large
-droplet and small particles all need to be calculated.
+In order to calculate the form factor of the entire complex, the
+self-correlation of the large droplet, the self-correlation of the particles,
+the correlation terms between different particles and the cross terms between
+large droplet and small particles all need to be calculated.
 
-Consider two infinitely thin shells of radii R1 and R2 separated by distance r.
-The general structure of the equation is then the form factor of the two shells
-multiplied by the phase factor that accounts for the separation of their
-centers.
+Consider two infinitely thin shells of radii $R_1$ and $R_2$ separated by
+distance $r$. The general structure of the equation is then the form factor
+of the two shells multiplied by the phase factor that accounts for the
+separation of their centers.
 
 .. math::
 
