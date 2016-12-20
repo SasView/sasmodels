@@ -147,7 +147,7 @@ inline double square(double x) { return x*x; }
 inline double cube(double x) { return x*x*x; }
 inline double sinc(double x) { return x==0 ? 1.0 : sin(x)/x; }
 
-#if 0
+#if 1
 #define ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sn, cn) do { \
     SINCOS(phi*M_PI_180, sn, cn); \
     q = sqrt(qx*qx + qy*qy); \
