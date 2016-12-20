@@ -125,7 +125,7 @@ parameters = [
     ["thick_core",  "Ang",        10.0, [0, inf],    "volume",      "Thickness of the core disk"],
     ["thick_layer", "Ang",        10.0, [0, inf],    "volume",      "Thickness of layer each side of core"],
     ["radius",      "Ang",        15.0, [0, inf],    "volume",      "Radius of the stacked disk"],
-    ["n_stacking",  "",            1.0, [0, inf],    "volume",      "Number of stacked layer/core/layer disks"],
+    ["n_stacking",  "",            1.0, [1, inf],    "volume",      "Number of stacked layer/core/layer disks"],
     ["sigma_d",     "Ang",         0,   [0, inf],    "",            "Sigma of nearest neighbor spacing"],
     ["sld_core",    "1e-6/Ang^2",  4,   [-inf, inf], "sld",         "Core scattering length density"],
     ["sld_layer",   "1e-6/Ang^2",  0.0, [-inf, inf], "sld",         "Layer scattering length density"],

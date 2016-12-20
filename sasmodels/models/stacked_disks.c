@@ -1,43 +1,16 @@
-double form_volume(double thick_core,
-                   double thick_layer,
-                   double radius,
-                   double n_stacking);
-
-double Iq(double q,
-          double thick_core,
-          double thick_layer,
-          double radius,
-          double n_stacking,
-          double sigma_dnn,
-          double core_sld,
-          double layer_sld,
-          double solvent_sld);
-
-double Iqxy(double qx, double qy,
-          double thick_core,
-          double thick_layer,
-          double radius,
-          double n_stacking,
-          double sigma_dnn,
-          double core_sld,
-          double layer_sld,
-          double solvent_sld,
-          double theta,
-          double phi);
-
-static
-double _kernel(double q,
-               double radius,
-               double core_sld,
-               double layer_sld,
-               double solvent_sld,
-               double halfheight,
-               double thick_layer,
-               double sin_alpha,
-               double cos_alpha,
-               double sigma_dnn,
-               double d,
-               double n_stacking)
+static double stacked_disks_kernel(
+    double q,
+    double halfheight,
+    double thick_layer,
+    double radius,
+    double n_stacking,
+    double sigma_dnn,
+    double core_sld,
+    double layer_sld,
+    double solvent_sld,
+    double sin_alpha,
+    double cos_alpha,
+    double d)
 
 {
     // q is the q-value for the calculation (1/A)
@@ -87,16 +60,16 @@ double _kernel(double q,
 }
 
 
-static
-double stacked_disks_kernel(double q,
-                            double thick_core,
-                            double thick_layer,
-                            double radius,
-                            double n_stacking,
-                            double sigma_dnn,
-                            double core_sld,
-                            double layer_sld,
-                            double solvent_sld)
+static double stacked_disks_1d(
+    double q,
+    double thick_core,
+    double thick_layer,
+    double radius,
+    double n_stacking,
+    double sigma_dnn,
+    double core_sld,
+    double layer_sld,
+    double solvent_sld)
 {
 /*    StackedDiscsX  :  calculates the form factor of a stacked "tactoid" of core shell disks
 like clay platelets that are not exfoliated
@@ -110,18 +83,18 @@ like clay platelets that are not exfoliated
         double zi = (Gauss76Z[i] + 1.0)*M_PI_4;
         double sin_alpha, cos_alpha; // slots to hold sincos function output
         SINCOS(zi, sin_alpha, cos_alpha);
-        double yyy = _kernel(q,
+        double yyy = stacked_disks_kernel(q,
+                           halfheight,
+                           thick_layer,
                            radius,
+                           n_stacking,
+                           sigma_dnn,
                            core_sld,
                            layer_sld,
                            solvent_sld,
-                           halfheight,
-                           thick_layer,
                            sin_alpha,
                            cos_alpha,
-                           sigma_dnn,
-                           d,
-                           n_stacking);
+                           d);
         summ += Gauss76Wt[i] * yyy * sin_alpha;
     }
 
@@ -131,25 +104,30 @@ like clay platelets that are not exfoliated
     return 1.0e-4*answer;
 }
 
-double form_volume(double thick_core,
-                   double thick_layer,
-                   double radius,
-                   double n_stacking){
+static double form_volume(
+    double thick_core,
+    double thick_layer,
+    double radius,
+    double fp_n_stacking)
+{
+    int n_stacking = (int)(fp_n_stacking + 0.5);
     double d = 2.0 * thick_layer + thick_core;
     return M_PI * radius * radius * d * n_stacking;
 }
 
-double Iq(double q,
-          double thick_core,
-          double thick_layer,
-          double radius,
-          double n_stacking,
-          double sigma_dnn,
-          double core_sld,
-          double layer_sld,
-          double solvent_sld)
+static double Iq(
+    double q,
+    double thick_core,
+    double thick_layer,
+    double radius,
+    double fp_n_stacking,
+    double sigma_dnn,
+    double core_sld,
+    double layer_sld,
+    double solvent_sld)
 {
-    return stacked_disks_kernel(q,
+    int n_stacking = (int)(fp_n_stacking + 0.5);
+    return stacked_disks_1d(q,
                     thick_core,
                     thick_layer,
                     radius,
@@ -161,36 +139,36 @@ double Iq(double q,
 }
 
 
-double
-Iqxy(double qx, double qy,
-     double thick_core,
-     double thick_layer,
-     double radius,
-     double n_stacking,
-     double sigma_dnn,
-     double core_sld,
-     double layer_sld,
-     double solvent_sld,
-     double theta,
-     double phi)
+static double Iqxy(double qx, double qy,
+    double thick_core,
+    double thick_layer,
+    double radius,
+    double fp_n_stacking,
+    double sigma_dnn,
+    double core_sld,
+    double layer_sld,
+    double solvent_sld,
+    double theta,
+    double phi)
 {
+    int n_stacking = (int)(fp_n_stacking + 0.5);
     double q, sin_alpha, cos_alpha;
     ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sin_alpha, cos_alpha);
 
     double d = 2.0 * thick_layer + thick_core;
     double halfheight = 0.5*thick_core;
-    double answer = _kernel(q,
+    double answer = stacked_disks_kernel(q,
+                     halfheight,
+                     thick_layer,
                      radius,
+                     n_stacking,
+                     sigma_dnn,
                      core_sld,
                      layer_sld,
                      solvent_sld,
-                     halfheight,
-                     thick_layer,
                      sin_alpha,
                      cos_alpha,
-                     sigma_dnn,
-                     d,
-                     n_stacking);
+                     d);
 
     //convert to [cm-1]
     answer *= 1.0e-4;
