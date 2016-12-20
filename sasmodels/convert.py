@@ -159,14 +159,18 @@ def _conversion_target(model_name, version='3.1.2'):
     return None
 
 def _hand_convert(name, oldpars, version='3.1.2'):
-    base_version = '3.1.2'
-    if name == 'core_shell_parallelepiped' and version == base_version:
+    if version == '3.1.2':
+        oldpars = _hand_convert_3_1_2_to_4_1(name, oldpars)
+    return oldpars
+
+def _hand_convert_3_1_2_to_4_1(name, oldpars):
+    if name == 'core_shell_parallelepiped':
         # Make sure pd on rim parameters defaults to zero
         # ... probably not necessary.
         oldpars['rimA.width'] = 0.0
         oldpars['rimB.width'] = 0.0
         oldpars['rimC.width'] = 0.0
-    elif name == 'core_shell_ellipsoid:1' and version == base_version:
+    elif name == 'core_shell_ellipsoid:1':
         # Reverse translation (from new to old), from core_shell_ellipsoid.c
         #    equat_shell = equat_core + thick_shell
         #    polar_core = equat_core * x_core
@@ -185,14 +189,14 @@ def _hand_convert(name, oldpars, version='3.1.2'):
         oldpars['equat_shell'] = equat_shell - equat_core
         oldpars['polar_core'] = polar_core / equat_core
         oldpars['polar_shell'] = (polar_shell-polar_core)/(equat_shell-equat_core)
-    elif name == 'hollow_cylinder' and version == base_version:
+    elif name == 'hollow_cylinder':
         # now uses radius and thickness
         thickness = oldpars['radius'] - oldpars['core_radius']
         oldpars['radius'] = thickness
         if 'radius.width' in oldpars:
             pd = oldpars['radius.width']*oldpars['radius']/thickness
             oldpars['radius.width'] = pd
-    elif name == 'multilayer_vesicle' and version == base_version:
+    elif name == 'multilayer_vesicle':
         if 'scale' in oldpars:
             oldpars['volfraction'] = oldpars['scale']
             oldpars['scale'] = 1.0
@@ -206,18 +210,18 @@ def _hand_convert(name, oldpars, version='3.1.2'):
             oldpars['volfraction.std'] = oldpars['scale.std']
         if 'scale.units' in oldpars:
             oldpars['volfraction.units'] = oldpars['scale.units']
-    elif name == 'pearl_necklace' and version == base_version:
+    elif name == 'pearl_necklace':
         pass
         #_remove_pd(oldpars, 'num_pearls', name)
         #_remove_pd(oldpars, 'thick_string', name)
-    elif name == 'polymer_micelle' and version == base_version:
+    elif name == 'polymer_micelle':
         if 'ndensity' in oldpars:
             oldpars['ndensity'] /= 1e15
         if 'ndensity.lower' in oldpars:
             oldpars['ndensity.lower'] /= 1e15
         if 'ndensity.upper' in oldpars:
             oldpars['ndensity.upper'] /= 1e15
-    elif name == 'rpa' and version == base_version:
+    elif name == 'rpa':
         # convert scattering lengths from femtometers to centimeters
         for p in "L1", "L2", "L3", "L4":
             if p in oldpars:
@@ -226,7 +230,7 @@ def _hand_convert(name, oldpars, version='3.1.2'):
                 oldpars[p + ".lower"] /= 1e-13
             if p + ".upper" in oldpars:
                 oldpars[p + ".upper"] /= 1e-13
-    elif name == 'spherical_sld' and version == base_version:
+    elif name == 'spherical_sld':
         j = 0
         while "func_inter" + str(j) in oldpars:
             name = "func_inter" + str(j)
@@ -246,7 +250,7 @@ def _hand_convert(name, oldpars, version='3.1.2'):
             oldpars.pop(name)
             oldpars['n_shells'] = str(j + 1)
             j += 1
-    elif name == 'teubner_strey' and version == base_version:
+    elif name == 'teubner_strey':
         # basically undoing the entire Teubner-Strey calculations here.
         #    drho = (sld_a - sld_b)
         #    k = 2.0*math.pi*xi/d
