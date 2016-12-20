@@ -84,23 +84,23 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 def Iq(q, level, rg, power, B, G):
-    ilevel = int(level)
-    if ilevel == 0:
+    level = int(level + 0.5)
+    if level == 0:
         with errstate(divide='ignore'):
             return 1./q
 
     with errstate(divide='ignore', invalid='ignore'):
         result = np.zeros(q.shape, 'd')
-        for i in range(ilevel):
+        for i in range(level):
             exp_now = exp(-(q*rg[i])**2/3.)
             pow_now = (erf(q*rg[i]/sqrt(6.))**3/q)**power[i]
-            if i < ilevel-1:
+            if i < level-1:
                 exp_next = exp(-(q*rg[i+1])**2/3.)
             else:
                 exp_next = 1
             result += G[i]*exp_now + B[i]*exp_next*pow_now
 
-    result[q == 0] = np.sum(G[:ilevel])
+    result[q == 0] = np.sum(G[:level])
     return result
 
 Iq.vectorized = True
