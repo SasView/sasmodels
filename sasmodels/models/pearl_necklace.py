@@ -99,6 +99,7 @@ def volume(radius, edge_sep, thick_string, num_pearls):
     Calculates the total particle volume of the necklace.
     Redundant with form_volume.
     """
+    num_pearls = int(num_pearls + 0.5)
     number_of_strings = num_pearls - 1.0
     string_vol = edge_sep * pi * pow((thick_string / 2.0), 2.0)
     pearl_vol = 4.0 /3.0 * pi * pow(radius, 3.0)
@@ -110,6 +111,7 @@ def ER(radius, edge_sep, thick_string, num_pearls):
     """
     Calculation for effective radius.
     """
+    num_pearls = int(num_pearls + 0.5)
     tot_vol = volume(radius, edge_sep, thick_string, num_pearls)
     rad_out = (tot_vol/(4.0/3.0*pi)) ** (1./3.)
     return rad_out

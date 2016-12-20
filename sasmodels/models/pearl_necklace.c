@@ -1,15 +1,15 @@
 double form_volume(double radius, double edge_sep,
-    double thick_string, double num_pearls);
+    double thick_string, double fp_num_pearls);
 double Iq(double q, double radius, double edge_sep,
-    double thick_string, double num_pearls, double sld, 
+    double thick_string, double fp_num_pearls, double sld,
     double string_sld, double solvent_sld);
 
 #define INVALID(v) (v.thick_string >= v.radius || v.num_pearls <= 0)
 
 // From Igor library
 static double
-_pearl_necklace_kernel(double q, double radius, double edge_sep, double thick_string,
-    double num_pearls, double sld_pearl, double sld_string, double sld_solv)
+pearl_necklace_kernel(double q, double radius, double edge_sep, double thick_string,
+    int num_pearls, double sld_pearl, double sld_string, double sld_solv)
 {
     // number of string segments
     num_pearls = floor(num_pearls + 0.5); //Force integer number of pearls
@@ -68,11 +68,10 @@ _pearl_necklace_kernel(double q, double radius, double edge_sep, double thick_st
 }
 
 double form_volume(double radius, double edge_sep,
-    double thick_string, double num_pearls)
+    double thick_string, double fp_num_pearls)
 {
-    num_pearls = floor(num_pearls + 0.5); //Force integer number of pearls
-
-    const double num_strings = num_pearls - 1.0;
+    const int num_pearls = (int)(fp_num_pearls + 0.5); //Force integer number of pearls
+    const int num_strings = num_pearls - 1;
     const double string_vol = edge_sep * M_PI_4 * thick_string * thick_string;
     const double pearl_vol = M_4PI_3 * radius * radius * radius;
     const double volume = num_strings*string_vol + num_pearls*pearl_vol;
@@ -81,10 +80,11 @@ double form_volume(double radius, double edge_sep,
 }
 
 double Iq(double q, double radius, double edge_sep,
-    double thick_string, double num_pearls, double sld, 
+    double thick_string, double fp_num_pearls, double sld,
     double string_sld, double solvent_sld)
 {
-    const double form = _pearl_necklace_kernel(q, radius, edge_sep,
+    const int num_pearls = (int)(fp_num_pearls + 0.5); //Force integer number of pearls
+    const double form = pearl_necklace_kernel(q, radius, edge_sep,
         thick_string, num_pearls, sld, string_sld, solvent_sld);
 
     return form;
