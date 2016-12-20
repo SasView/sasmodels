@@ -106,6 +106,7 @@ def profile(sld_core, radius, sld_solvent, n, sld, thickness):
     """
     Returns the SLD profile *r* (Ang), and *rho* (1e-6/Ang^2).
     """
+    n = int(n+0.5)
     z = []
     rho = []
 
