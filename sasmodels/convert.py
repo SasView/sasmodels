@@ -294,13 +294,18 @@ def _hand_convert_3_1_2_to_4_1(name, oldpars):
 
     return oldpars
 
-def convert_model(name, pars, use_underscore=False):
+def convert_model(name, pars, use_underscore=False, model_version=(3,1,2)):
     """
     Convert model from old style parameter names to new style.
     """
     newpars = pars
-    for version, _ in sorted(CONVERSION_TABLE.iteritems()):
+    keys = sorted(CONVERSION_TABLE.keys())
+    for i, version in enumerate(keys):
+        # If the save state is from a later version, skip the check
+        if model_version > version and model_version != keys[i+1]:
+            continue
         newname = _conversion_target(name, version)
+        # If no conversion is found, move on
         if newname is None:
             newname = name
             continue
