@@ -59,7 +59,7 @@ def _register_old_models():
     for new_name, conversion in CONVERSION_TABLE.get((3,1,2)).items():
         # CoreShellEllipsoidModel => core_shell_ellipsoid:1
         new_name = new_name.split(':')[0]
-        old_name = conversion[0]
+        old_name = conversion[0] if len(conversion) < 3 else conversion[2]
         module_attrs = {old_name: find_model(new_name)}
         ConstructedModule = type(old_name, (), module_attrs)
         old_path = 'sas.models.' + old_name

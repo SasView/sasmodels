@@ -238,7 +238,8 @@ CONVERSION_TABLE = {
             "porod_exp": "exponent_p",
             "lorentz_exp": "exponent_l",
             "cor_length": "length_l"
-        }
+        },
+        "CorrLengthModel"
     ],
     "cylinder": [
         "CylinderModel",
@@ -329,7 +330,8 @@ CONVERSION_TABLE = {
             "fractal_dim": "frac_dim",
             "cor_length": "cor_length",
             "volfraction": "volfraction",
-        }
+        },
+        "FractalCoreShellModel"
     ],
     "fuzzy_sphere": [
         "FuzzySphereModel",
@@ -348,14 +350,16 @@ CONVERSION_TABLE = {
             "cor_length_static": "stat_colength",
             "background": "background",
             "lorentz_scale": "scale_l"
-        }
+        },
+        "GaussLorentzGelModel"
     ],
     "gaussian_peak": [
         "Peak Gauss Model",
         {
             "peak_pos": "q0",
             "sigma": "B",
-        }
+        },
+        "PeakGaussModel",
     ],
     "gel_fit": [
         "GelFitModel",
@@ -371,7 +375,8 @@ CONVERSION_TABLE = {
         "Guinier",
         {
             "rg": "rg"
-        }
+        },
+        "GuinierModel",
     ],
     "guinier_porod": [
         "GuinierPorod",
@@ -381,7 +386,8 @@ CONVERSION_TABLE = {
             "porod_exp": "m",
             "scale": "scale",
             "background": "background"
-        }
+        },
+        "GuinierPorodModel",
     ],
     "hardsphere": [
         "HardsphereStructure",
@@ -509,7 +515,8 @@ CONVERSION_TABLE = {
         "Lorentz",
         {
             "cor_length": "length"
-        }
+        },
+        "LorentzModel",
     ],
     "mass_fractal": [
         "MassFractalModel",
@@ -535,7 +542,8 @@ CONVERSION_TABLE = {
             "rg": "rg",
             "i_zero": "scale",
             "background": "background",
-        }
+        },
+        "DebyeModel",
     ],
     "multilayer_vesicle": [
         "MultiShellModel",
@@ -588,7 +596,8 @@ CONVERSION_TABLE = {
         {
             "peak_pos": "q0",
             "peak_hwhm": "B"
-        }
+        },
+        "PeakLorentzModel",
     ],
     "pearl_necklace": [
         "PearlNecklaceModel",
@@ -831,7 +840,8 @@ CONVERSION_TABLE = {
             "lorentz_length_2": "length_2",
             "lorentz_length_1": "length_1",
             "background": "background"
-        }
+        },
+        "TwoLorentzianModel",
     ],
     "two_power_law": [
         "TwoPowerLaw",
@@ -841,7 +851,8 @@ CONVERSION_TABLE = {
             "power_1": "power1",
             "background": "background",
             "crossover": "qc"
-        }
+        },
+        "TwoPowerLawModel",
     ],
     "unified_power_Rg": [
         "UnifiedPowerRg",
@@ -854,7 +865,8 @@ CONVERSION_TABLE = {
              **{
                    "background": "background",
                    "scale": "scale",
-               })
+               }),
+        "UnifiedPowerRgModel",
     ],
     "vesicle": [
         "VesicleModel",
