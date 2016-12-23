@@ -92,7 +92,7 @@ def _rescale_sld(model_info, pars, scale):
 
 
 def _get_translation_table(model_info, version=(3,1,2)):
-    _, translation = CONVERSION_TABLE.get(version).get(model_info.id, [None, {}])
+    _, translation = CONVERSION_TABLE.get(version, {}).get(model_info.id, [None, {}])
     translation = translation.copy()
     for p in model_info.parameters.kernel_parameters:
         if p.length > 1:
@@ -153,7 +153,7 @@ def _conversion_target(model_name, version=(3,1,2)):
     two variants in sasview.
     """
     for sasmodels_name, [sasview_name, _] in \
-            CONVERSION_TABLE.get(version).items():
+            CONVERSION_TABLE.get(version, {}).items():
         if sasview_name == model_name:
             return sasmodels_name
     return None
@@ -301,10 +301,15 @@ def convert_model(name, pars, use_underscore=False, model_version=(3,1,2)):
     newpars = pars
     keys = sorted(CONVERSION_TABLE.keys())
     for i, version in enumerate(keys):
+        # Don't allow indices outside list
+        next_i = i + 1
+        if next_i == len(keys):
+            next_i = i
         # If the save state is from a later version, skip the check
-        if model_version > version and model_version != keys[i+1]:
-            continue
-        newname = _conversion_target(name, version)
+        if model_version <= keys[next_i]:
+            newname = _conversion_target(name, version)
+        else:
+            newname = None
         # If no conversion is found, move on
         if newname is None:
             newname = name
@@ -314,7 +319,7 @@ def convert_model(name, pars, use_underscore=False, model_version=(3,1,2)):
             # Know the table exists and isn't multiplicity so grab it directly
             # Can't use _get_translation_table since that will return the 'bare'
             # version.
-            translation = CONVERSION_TABLE.get(version)[newname][1]
+            translation = CONVERSION_TABLE.get(version, {})[newname][1]
         else:
             model_info = load_model_info(newname)
             translation = _get_translation_table(model_info, version)

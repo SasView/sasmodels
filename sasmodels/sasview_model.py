@@ -56,7 +56,7 @@ def _register_old_models():
 
     import sas.models
     from sasmodels.conversion_table import CONVERSION_TABLE
-    for new_name, conversion in CONVERSION_TABLE.get((3,1,2)).items():
+    for new_name, conversion in CONVERSION_TABLE.get((3,1,2), {}).items():
         # CoreShellEllipsoidModel => core_shell_ellipsoid:1
         new_name = new_name.split(':')[0]
         old_name = conversion[0]
