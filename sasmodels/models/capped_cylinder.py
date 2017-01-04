@@ -20,22 +20,22 @@ The scattered intensity $I(q)$ is calculated as
 
 .. math::
 
-    I(q) = \frac{\Delta \rho^2}{V} \left<A^2(q)\right>
+    I(q) = \frac{\Delta \rho^2}{V} \left<A^2(q,\alpha).sin(\alpha)\right>
 
-where the amplitude $A(q)$ is given as
+where the amplitude $A(q,\alpha)$ with the rod axis at angle $\alpha$ to $q$ is given as
 
 .. math::
 
     A(q) =&\ \pi r^2L
-        \frac{\sin\left(\tfrac12 qL\cos\theta\right)}
-            {\tfrac12 qL\cos\theta}
-        \frac{2 J_1(qr\sin\theta)}{qr\sin\theta} \\
+        \frac{\sin\left(\tfrac12 qL\cos\alpha\right)}
+            {\tfrac12 qL\cos\alpha}
+        \frac{2 J_1(qr\sin\alpha)}{qr\sin\alpha} \\
         &\ + 4 \pi R^3 \int_{-h/R}^1 dt
-        \cos\left[ q\cos\theta
+        \cos\left[ q\cos\alpha
             \left(Rt + h + {\tfrac12} L\right)\right]
         \times (1-t^2)
-        \frac{J_1\left[qR\sin\theta \left(1-t^2\right)^{1/2}\right]}
-             {qR\sin\theta \left(1-t^2\right)^{1/2}}
+        \frac{J_1\left[qR\sin\alpha \left(1-t^2\right)^{1/2}\right]}
+             {qR\sin\alpha \left(1-t^2\right)^{1/2}}
 
 The $\left<\ldots\right>$ brackets denote an average of the structure over
 all orientations. $\left< A^2(q)\right>$ is then the form factor, $P(q)$.
@@ -87,7 +87,8 @@ Authorship and Verification
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Butler **Date:** September 30, 2016
-* **Last Reviewed by:** Richard Heenan **Date:** March 19, 2016
+* **Last Reviewed by:** Richard Heenan **Date:** January 4, 2017
+
 """
 from numpy import inf
 

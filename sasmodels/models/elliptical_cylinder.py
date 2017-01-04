@@ -19,24 +19,26 @@ The function calculated is
 .. math::
 
     I(\vec q)=\frac{1}{V_\text{cyl}}\int{d\psi}\int{d\phi}\int{
-        p(\theta,\phi,\psi)F^2(\vec q,\alpha,\psi)\sin(\theta)d\theta}
+        p(\theta,\phi,\psi)F^2(\vec q,\alpha,\psi)\sin(\alpha)d\alpha}
 
 with the functions
 
 .. math::
 
-    F(\vec q,\alpha,\psi) = 2\frac{J_1(a)\sin(b)}{ab}
+    F(q,\alpha,\psi) = 2\frac{J_1(a)\sin(b)}{ab}
 
 where
 
 .. math::
 
-    a &= \vec q\sin(\alpha)\left[
-        r^2_\text{major}\sin^2(\psi)+r^2_\text{minor}\cos(\psi) \right]^{1/2}
+    a = qr'\sin(\alpha)
+    
+    b = q\frac{L}{2}\cos(\alpha)
+    
+    r'=\frac{r_{minor}}{\sqrt{2}}\sqrt{(1+\nu^{2}) + (1-\nu^{2})cos(\psi)}
 
-    b &= \vec q\frac{L}{2}\cos(\alpha)
 
-and the angle $\Psi$ is defined as the orientation of the major axis of the
+and the angle $\psi$ is defined as the orientation of the major axis of the
 ellipse with respect to the vector $\vec q$. The angle $\alpha$ is the angle
 between the axis of the cylinder and $\vec q$.
 
@@ -94,7 +96,15 @@ References
 ----------
 
 L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and
-Neutron Scattering*, Plenum, New York, (1987)
+Neutron Scattering*, Plenum, New York, (1987) [see table 3.4]
+
+Authorship and Verification
+----------------------------
+
+* **Author:**
+* **Last Modified by:** 
+* **Last Reviewed by:**  Richard Heenan - corrected equation in docs **Date:** December 21, 2016
+
 """
 
 from numpy import pi, inf, sqrt
