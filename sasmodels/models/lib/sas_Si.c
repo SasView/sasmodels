@@ -1,6 +1,6 @@
 // integral of sin(x)/x Taylor series approximated to w/i 0.1%
-double Si(double x);
-double Si(double x)
+double sas_Si(double x);
+double sas_Si(double x)
 {
     if (x >= M_PI*6.2/4.0) {
         const double xxinv = 1./(x*x);
