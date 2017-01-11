@@ -582,6 +582,18 @@ class SasviewModel(object):
             raise TypeError("evalDistribution expects q or [qx, qy], not %r"
                             % type(qdist))
 
+    def get_composition_models(self):
+        """
+            Returns usable models that compose this model
+        """
+        s_model = None
+        p_model = None
+        if hasattr(self._model_info, "composition") \
+           and self._model_info.composition is not None:
+            p_model = _make_model_from_info(self._model_info.composition[1][0])()
+            s_model = _make_model_from_info(self._model_info.composition[1][1])()
+        return p_model, s_model
+
     def calculate_Iq(self, qx, qy=None):
         # type: (Sequence[float], Optional[Sequence[float]]) -> np.ndarray
         """

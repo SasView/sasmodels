@@ -63,18 +63,18 @@ class Pinhole2D(Resolution):
         # TODO: maybe don't need to hold copy of qx,qy,dqx,dqy,data,index
         # just need q_calc and weights
         self.data = data
-        self.index = index
+        self.index = index if index is not None else slice(None)
 
-        self.qx_data = data.qx_data[index]
-        self.qy_data = data.qy_data[index]
-        self.q_data = data.q_data[index]
+        self.qx_data = data.qx_data[self.index]
+        self.qy_data = data.qy_data[self.index]
+        self.q_data = data.q_data[self.index]
 
         dqx = getattr(data, 'dqx_data', None)
         dqy = getattr(data, 'dqy_data', None)
         if dqx is not None and dqy is not None:
             # Here dqx and dqy mean dq_parr and dq_perp
-            self.dqx_data = dqx[index]
-            self.dqy_data = dqy[index]
+            self.dqx_data = dqx[self.index]
+            self.dqy_data = dqy[self.index]
             ## Remove singular points if exists
             self.dqx_data[self.dqx_data < SIGMA_ZERO] = SIGMA_ZERO
             self.dqy_data[self.dqy_data < SIGMA_ZERO] = SIGMA_ZERO
@@ -125,7 +125,7 @@ class Pinhole2D(Resolution):
 
         # The angle (phi) of the original q point
         q_phi = np.arctan(q_phi).repeat(nbins)\
-            .reshape(nq, nbins).transpose().flatten()
+            .reshape([nq, nbins]).transpose().flatten()
         ## Find Gaussian weight for each dq bins: The weight depends only
         #  on r-direction (The integration may not need)
         weight_res = (np.exp(-0.5 * (r - bin_size / 2.0)**2)  -

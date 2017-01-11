@@ -8,13 +8,13 @@ by the particle volume.
 
 .. math::
 
-    I(q,\alpha) = \frac{\text{scale}}{V_s} F^2(q) + \text{background}
+    I(q,\alpha) = \frac{\text{scale}}{V_s} F^2(q,\alpha).sin(\alpha) + \text{background}
 
 where
 
 .. math::
 
-    F(q) = &\ (\rho_c - \rho_s) V_c
+    F(q,\alpha) = &\ (\rho_c - \rho_s) V_c
            \frac{\sin \left( q \tfrac12 L\cos\alpha \right)}
                 {q \tfrac12 L\cos\alpha}
            \frac{2 J_1 \left( qR\sin\alpha \right)}

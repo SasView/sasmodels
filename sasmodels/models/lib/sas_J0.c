@@ -53,7 +53,7 @@ Copyright 1984, 1987, 1989, 2000 by Stephen L. Moshier
 
 #if FLOAT_SIZE>4
 //Cephes double precission
-double j0(double x);
+double cephes_j0(double x);
 
  constant double PPJ0[8] = {
         7.96936729297347051624E-4,
@@ -145,7 +145,7 @@ double j0(double x);
         1.71086294081043136091E18,
   };
 
-double j0(double x)
+double cephes_j0(double x)
 {
     double w, z, p, q, xn;
 
@@ -184,7 +184,7 @@ double j0(double x)
 }
 #else
 //Cephes single precission
-float j0f(float x);
+float cephes_j0f(float x);
 
  constant float MOJ0[8] = {
         -6.838999669318810E-002,
@@ -219,7 +219,7 @@ float j0f(float x);
         0.0
  };
 
-float j0f(float x)
+float cephes_j0f(float x)
 {
     float xx, w, z, p, q, xn;
 
@@ -255,7 +255,7 @@ float j0f(float x)
 #endif
 
 #if FLOAT_SIZE>4
-#define sas_J0 j0
+#define sas_J0 cephes_j0
 #else
-#define sas_J0 j0f
+#define sas_J0 cephes_j0f
 #endif
