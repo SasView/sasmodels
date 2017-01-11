@@ -151,10 +151,11 @@ qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
 # After redefinition of angles, find new tests values.  Was 10 10 in old coords
 tests = [[{}, 0.2, 0.042761386790780453],
         [{}, [0.2], [0.042761386790780453]],
-#  expect new      [{'theta':80.1534480601659, 'phi':10.1510817110481}, (qx, qy), 0.03514647218513852],
-#         [{'theta':80.1534480601659, 'phi':10.1510817110481}, [(qx, qy)], [0.03514647218513852]],
-# old, but calcs .0344268         [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.03514647218513852],
-#                       [{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.03514647218513852]],
+#  new coords    
+        [{'theta':80.1534480601659, 'phi':10.1510817110481}, (qx, qy), 0.03514647218513852],
+        [{'theta':80.1534480601659, 'phi':10.1510817110481}, [(qx, qy)], [0.03514647218513852]],
+# old coords   [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.03514647218513852],
+#              [{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.03514647218513852]],
         ]
 del qx, qy  # not necessary to delete, but cleaner
 # ADDED by:  RKH  ON: 18Mar2016 renamed sld's etc
