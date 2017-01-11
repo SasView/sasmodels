@@ -49,7 +49,7 @@ _fq(double q, double h,
 {
     const double bell_fq = _bell_kernel(q, h, radius_bell, half_length, sin_alpha, cos_alpha);
     const double bj = sas_J1c(q*radius*sin_alpha);
-    const double si = sinc(q*half_length*cos_alpha);
+    const double si = sas_sinx_x(q*half_length*cos_alpha);
     const double cyl_fq = 2.0*M_PI*radius*radius*half_length*bj*si;
     const double Aq = bell_fq + cyl_fq;
     return Aq;

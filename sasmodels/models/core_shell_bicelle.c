@@ -56,8 +56,8 @@ bicelle_kernel(double qq,
 
     be1 = sas_J1c(besarg1);
     be2 = sas_J1c(besarg2);
-    si1 = sinc(sinarg1);
-    si2 = sinc(sinarg2);
+    si1 = sas_sinx_x(sinarg1);
+    si2 = sas_sinx_x(sinarg2);
 
     const double t = vol1*dr1*si1*be1 +
                      vol2*dr2*si2*be2 +

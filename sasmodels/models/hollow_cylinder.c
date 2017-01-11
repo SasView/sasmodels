@@ -25,7 +25,7 @@ _hollow_cylinder_kernel(double q,
     //Note: lim_{thickness -> 0} psi = J0(radius*qs)
     //Note: lim_{radius -> 0} psi = sas_J1c(thickness*qs)
     const double psi = (lam1 - gamma_sq*lam2)/(1.0 - gamma_sq);	//SRK 10/19/00
-    const double t2 = sinc(0.5*q*length*cos_val);
+    const double t2 = sas_sinx_x(0.5*q*length*cos_val);
     return psi*t2;
 }
 

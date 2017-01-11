@@ -90,7 +90,7 @@ double _integrate_psi(
         double sin_psi, cos_psi;
         SINCOS(psi, sin_psi, cos_psi);
         double bessel_term = _sum_bessel_orders(radius, alpha, beta, q*sin_psi, q*cos_psi);
-        double sinc_term = square(sinc(q * thickness * cos_psi / 2.0));
+        double sinc_term = square(sas_sinx_x(q * thickness * cos_psi / 2.0));
         double pringle_kernel = 4.0 * sin_psi * bessel_term * sinc_term;
         sum += Gauss76Wt[i] * pringle_kernel;
     }

@@ -54,7 +54,7 @@ _fq(double q, double h, double radius_cap, double radius, double half_length,
 {
     const double cap_Fq = _cap_kernel(q, h, radius_cap, half_length, sin_alpha, cos_alpha);
     const double bj = sas_J1c(q*radius*sin_alpha);
-    const double si = sinc(q*half_length*cos_alpha);
+    const double si = sas_sinx_x(q*half_length*cos_alpha);
     const double cyl_Fq = 2.0*M_PI*radius*radius*half_length*bj*si;
     const double Aq = cap_Fq + cyl_Fq;
     return Aq;

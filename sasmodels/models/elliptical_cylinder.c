@@ -45,7 +45,7 @@ Iq(double q, double radius_minor, double r_ratio, double length,
         inner_sum *= 0.5*(vbj-vaj);
 
         //now calculate outer integral
-        const double si = sinc(q*0.5*length*cos_val);
+        const double si = sas_sinx_x(q*0.5*length*cos_val);
         outer_sum += Gauss76Wt[i] * inner_sum * si * si;
     }
     outer_sum *= 0.5*(vb-va);
@@ -73,7 +73,7 @@ Iqxy(double qx, double qy,
     // Given:    radius_major = r_ratio * radius_minor
     const double r = radius_minor*sqrt(square(r_ratio*cos_nu) + cos_mu*cos_mu);
     const double be = sas_J1c(q*r);
-    const double si = sinc(q*0.5*length*cos_val);
+    const double si = sas_sinx_x(q*0.5*length*cos_val);
     const double Aq = be * si;
     const double delrho = sld - solvent_sld;
     const double vol = form_volume(radius_minor, r_ratio, length);

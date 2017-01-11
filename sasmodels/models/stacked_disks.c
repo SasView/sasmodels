@@ -55,8 +55,8 @@ double _kernel(double q,
     const double be1 = sas_J1c(besarg1);
     //const double be2 = sas_J1c(besarg2);
     const double be2 = be1;
-    const double si1 = sinc(sinarg1);
-    const double si2 = sinc(sinarg2);
+    const double si1 = sas_sinx_x(sinarg1);
+    const double si2 = sas_sinx_x(sinarg2);
 
     const double dr1 = core_sld - solvent_sld;
     const double dr2 = layer_sld - solvent_sld;

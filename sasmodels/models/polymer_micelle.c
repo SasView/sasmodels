@@ -40,7 +40,7 @@ static double micelle_spherical_kernel(double q,
 
     // Interference cross-term between core and chains
     const double chain_ampl = (qrg2 == 0.0) ? 1.0 : -expm1(-qrg2)/qrg2;
-    const double bes_corona = sinc(q*(radius_core + d_penetration * rg));
+    const double bes_corona = sas_sinx_x(q*(radius_core + d_penetration * rg));
     const double term3 = 2.0 * n_aggreg * n_aggreg * beta_core * beta_corona *
                  bes_core * chain_ampl * bes_corona;
 

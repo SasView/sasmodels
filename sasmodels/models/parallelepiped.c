@@ -38,13 +38,13 @@ double Iq(double q,
             const double uu = 0.5 * ( Gauss76Z[j] + 1.0 );
             double sin_uu, cos_uu;
             SINCOS(M_PI_2*uu, sin_uu, cos_uu);
-            const double si1 = sinc(mu_proj * sin_uu * a_scaled);
-            const double si2 = sinc(mu_proj * cos_uu);
+            const double si1 = sas_sinx_x(mu_proj * sin_uu * a_scaled);
+            const double si2 = sas_sinx_x(mu_proj * cos_uu);
             inner_total += Gauss76Wt[j] * square(si1 * si2);
         }
         inner_total *= 0.5;
 
-        const double si = sinc(mu * c_scaled * sigma);
+        const double si = sas_sinx_x(mu * c_scaled * sigma);
         outer_total += Gauss76Wt[i] * inner_total * si * si;
     }
     outer_total *= 0.5;
@@ -69,9 +69,9 @@ double Iqxy(double qx, double qy,
     double q, cos_val_a, cos_val_b, cos_val_c;
     ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, cos_val_c, cos_val_b, cos_val_a);
 
-    const double siA = sinc(0.5*q*length_a*cos_val_a);
-    const double siB = sinc(0.5*q*length_b*cos_val_b);
-    const double siC = sinc(0.5*q*length_c*cos_val_c);
+    const double siA = sas_sinx_x(0.5*q*length_a*cos_val_a);
+    const double siB = sas_sinx_x(0.5*q*length_b*cos_val_b);
+    const double siC = sas_sinx_x(0.5*q*length_c*cos_val_c);
     const double V = form_volume(length_a, length_b, length_c);
     const double drho = (sld - solvent_sld);
     const double form = V * drho * siA * siB * siC;

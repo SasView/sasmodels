@@ -54,9 +54,9 @@ double Iq(double q,
     psiS = sph_j1c(q*rS);
 
     //Cross term between large and small particles
-    sfLS = psiL*psiS*sinc(q*(rL+deltaS*rS));
+    sfLS = psiL*psiS*sas_sinx_x(q*(rL+deltaS*rS));
     //Cross term between small particles at the surface
-    sfSS = psiS*psiS*sinc(q*(rL+deltaS*rS))*sinc(q*(rL+deltaS*rS));
+    sfSS = psiS*psiS*sas_sinx_x(q*(rL+deltaS*rS))*sas_sinx_x(q*(rL+deltaS*rS));
 
     //Large sphere form factor term
     f2 = delrhoL*delrhoL*VL*VL*psiL*psiL;

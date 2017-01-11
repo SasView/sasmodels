@@ -38,7 +38,7 @@ _pearl_necklace_kernel(double q, double radius, double edge_sep, double thick_st
     const double psi = sph_j1c(q*radius);
 
     // Precomputed sinc terms
-    const double si = sinc(q*A_s);
+    const double si = sas_sinx_x(q*A_s);
     const double omsi = 1.0 - si;
     const double pow_si = pow(si, num_pearls);
 
@@ -53,7 +53,7 @@ _pearl_necklace_kernel(double q, double radius, double edge_sep, double thick_st
     const double srr = m_string * m_string * (
         - 2.0 * (1.0 - pow_si/si)*beta*beta / (omsi*omsi)
         + 2.0 * num_strings*beta*beta / omsi
-        + num_strings * (2.0*gamma - square(sinc(q_edge/2.0)))
+        + num_strings * (2.0*gamma - square(sas_sinx_x(q_edge/2.0)))
         );
 
     // form factor for correlations

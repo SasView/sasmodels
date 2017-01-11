@@ -10,7 +10,7 @@ double Iqxy(double qx, double qy, double core_sld, double shell_sld, double solv
 double _cyl(double vd, double besarg, double siarg);
 double _cyl(double vd, double besarg, double siarg)
 {
-    return vd * sinc(siarg) * sas_J1c(besarg);
+    return vd * sas_sinx_x(siarg) * sas_J1c(besarg);
 }
 
 double form_volume(double radius, double thickness, double length)
