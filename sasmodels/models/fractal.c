@@ -13,7 +13,7 @@ Iq(double q,
 
     //calculate P(q) for the spherical subunits
     const double V = M_4PI_3*cube(radius);
-    const double pq = V * square((sld_block-sld_solvent)*sph_j1c(q*radius));
+    const double pq = V * square((sld_block-sld_solvent)*sas_3j1x_x(q*radius));
 
     // scale to units cm-1 sr-1 (assuming data on absolute scale)
     //    convert I(1/A) to (1/cm)  => 1e8 * I(q)

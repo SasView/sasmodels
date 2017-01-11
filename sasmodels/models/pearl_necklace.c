@@ -35,7 +35,7 @@ _pearl_necklace_kernel(double q, double radius, double edge_sep, double thick_st
     const double q_edge = q * edge_sep;
     const double beta = (Si(q*(A_s-radius)) - Si(q*radius)) / q_edge;
     const double gamma = Si(q_edge) / q_edge;
-    const double psi = sph_j1c(q*radius);
+    const double psi = sas_3j1x_x(q*radius);
 
     // Precomputed sinc terms
     const double si = sas_sinx_x(q*A_s);

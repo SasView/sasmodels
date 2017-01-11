@@ -151,7 +151,7 @@ parameters = [["sld_lg", "1e-6/Ang^2", -0.4, [-inf, inf], "sld",
                "fractional penetration depth of small spheres into large sphere"],
              ]
 
-source = ["lib/sph_j1c.c", "raspberry.c"]
+source = ["lib/sas_3j1x_x.c", "raspberry.c"]
 
 # parameters for demo
 demo = dict(scale=1, background=0.001,

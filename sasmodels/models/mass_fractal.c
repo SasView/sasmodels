@@ -4,7 +4,7 @@ static double
 Iq(double q, double radius, double fractal_dim_mass, double cutoff_length)
 {
     //calculate P(q)
-    const double pq = square(sph_j1c(q*radius));
+    const double pq = square(sas_3j1x_x(q*radius));
 
     //calculate S(q)
     // S(q) = gamma(D-1) sin((D-1)atan(q c))/q c^(D-1) (1+(q c)^2)^(-(D-1)/2)

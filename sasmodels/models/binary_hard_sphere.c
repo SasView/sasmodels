@@ -57,8 +57,8 @@ double Iq(double q,
     qr1 = r1*q;
     qr2 = r2*q;
 
-    sc1 = sph_j1c(qr1);
-    sc2 = sph_j1c(qr2);
+    sc1 = sas_3j1x_x(qr1);
+    sc2 = sas_3j1x_x(qr2);
     b1 = r1*r1*r1*(rho1-rhos)*M_4PI_3*sc1;
     b2 = r2*r2*r2*(rho2-rhos)*M_4PI_3*sc2;
     inten = n1*b1*b1*psf11;

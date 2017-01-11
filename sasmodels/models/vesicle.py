@@ -93,7 +93,7 @@ parameters = [["sld", "1e-6/Ang^2", 0.5, [-inf, inf], "sld",
                "vesicle shell thickness"],
              ]
 
-source = ["lib/sph_j1c.c", "vesicle.c"]
+source = ["lib/sas_3j1x_x.c", "vesicle.c"]
 
 def ER(radius, thickness):
     '''

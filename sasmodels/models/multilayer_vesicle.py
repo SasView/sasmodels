@@ -106,7 +106,7 @@ parameters = [
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sph_j1c.c", "multilayer_vesicle.c"]
+source = ["lib/sas_3j1x_x.c", "multilayer_vesicle.c"]
 
 polydispersity = ["radius", "n_pairs"]
 

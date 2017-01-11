@@ -50,8 +50,8 @@ double Iq(double q,
     slT = delrhoL*VL + Np*delrhoS*VS;
 
     //Form factors for each particle
-    psiL = sph_j1c(q*rL);
-    psiS = sph_j1c(q*rS);
+    psiL = sas_3j1x_x(q*rL);
+    psiS = sas_3j1x_x(q*rS);
 
     //Cross term between large and small particles
     sfLS = psiL*psiS*sas_sinx_x(q*(rL+deltaS*rS));

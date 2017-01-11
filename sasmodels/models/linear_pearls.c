@@ -43,7 +43,7 @@ double linear_pearls_kernel(double q,
     double separation = edge_sep + 2.0 * radius;
 
     //sine functions of a pearl
-    double psi = sph_j1c(q * radius);
+    double psi = sas_3j1x_x(q * radius);
 
     // N pearls contribution
     int n_max = num_pearls - 1;

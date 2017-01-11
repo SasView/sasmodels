@@ -30,7 +30,7 @@ static double micelle_spherical_kernel(double q,
     const double beta_corona = v_corona * (rho_corona - rho_solv);
 
     // Self-correlation term of the core
-    const double bes_core = sph_j1c(q*radius_core);
+    const double bes_core = sas_3j1x_x(q*radius_core);
     const double term1 = square(n_aggreg*beta_core*bes_core);
 
     // Self-correlation term of the chains
