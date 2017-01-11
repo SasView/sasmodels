@@ -84,8 +84,8 @@ double
             const double rr = sqrt(rA - rB*cos(beta));
             double besarg1 = qq*rr*sin_alpha;
             double besarg2 = qq*(rr+radthick)*sin_alpha;
-            be1 = sas_J1c(besarg1);
-            be2 = sas_J1c(besarg2);
+            be1 = sas_2J1x_x(besarg1);
+            be2 = sas_2J1x_x(besarg2);
             inner_sum += Gauss76Wt[j] *square(dr1*si1*be1 +
                                               dr2*si2*be2 +
                                               dr3*si2*be1);
@@ -128,8 +128,8 @@ Iqxy(double qx, double qy,
     // Given:    radius_major = r_ratio * radius_minor  
     // ASSUME the sin_alpha is included in the separate integration over orientation of rod angle
     const double r = rad*sqrt(square(x_core*cos_nu) + cos_mu*cos_mu);
-    const double be1 = sas_J1c(qq*r);
-    const double be2 = sas_J1c( qq*(r + radthick ) );
+    const double be1 = sas_2J1x_x( qq*r );
+    const double be2 = sas_2J1x_x( qq*(r + radthick ) );
     const double si1 = sas_sinx_x( qq*halfheight*cos_val );
     const double si2 = sas_sinx_x( qq*(halfheight + facthick)*cos_val );
     const double Aq = square( vol1*dr1*si1*be1 + vol2*dr2*si2*be2 +  vol3*dr3*si2*be1);

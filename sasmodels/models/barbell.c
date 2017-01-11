@@ -32,7 +32,7 @@ _bell_kernel(double q, double h, double radius_bell,
     for (int i = 0; i < 76; i++){
         const double t = Gauss76Z[i]*zm + zb;
         const double radical = 1.0 - t*t;
-        const double bj = sas_J1c(qrst*sqrt(radical));
+        const double bj = sas_2J1x_x(qrst*sqrt(radical));
         const double Fq = cos(m*t + b) * radical * bj;
         total += Gauss76Wt[i] * Fq;
     }
@@ -48,7 +48,7 @@ _fq(double q, double h,
     double sin_alpha, double cos_alpha)
 {
     const double bell_fq = _bell_kernel(q, h, radius_bell, half_length, sin_alpha, cos_alpha);
-    const double bj = sas_J1c(q*radius*sin_alpha);
+    const double bj = sas_2J1x_x(q*radius*sin_alpha);
     const double si = sas_sinx_x(q*half_length*cos_alpha);
     const double cyl_fq = 2.0*M_PI*radius*radius*half_length*bj*si;
     const double Aq = bell_fq + cyl_fq;

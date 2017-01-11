@@ -38,7 +38,7 @@ Iq(double q, double radius_minor, double r_ratio, double length,
             //20 gauss points for the inner integral
             const double theta = ( Gauss20Z[j]*(vbj-vaj) + vaj + vbj )/2.0;
             const double r = sin_val*sqrt(rA - rB*cos(theta));
-            const double be = sas_J1c(q*r);
+            const double be = sas_2J1x_x(q*r);
             inner_sum += Gauss20Wt[j] * be * be;
         }
         //now calculate the value of the inner integral
@@ -72,7 +72,7 @@ Iqxy(double qx, double qy,
     // Compute:  r = sqrt((radius_major*cos_nu)^2 + (radius_minor*cos_mu)^2)
     // Given:    radius_major = r_ratio * radius_minor
     const double r = radius_minor*sqrt(square(r_ratio*cos_nu) + cos_mu*cos_mu);
-    const double be = sas_J1c(q*r);
+    const double be = sas_2J1x_x(q*r);
     const double si = sas_sinx_x(q*0.5*length*cos_val);
     const double Aq = be * si;
     const double delrho = sld - solvent_sld;
