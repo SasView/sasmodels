@@ -120,7 +120,7 @@ description = """
         and polydispersity integrals more logical (as previously the shell could disappear).
     """
 category = "shape:ellipsoid"
-
+single = False
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [

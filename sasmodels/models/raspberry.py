@@ -128,7 +128,7 @@ description = """
                 background = background (cm-1)
             Ref: J. coll. inter. sci. (2010) vol. 343 (1) pp. 36-41."""
 category = "shape:sphere"
-#single = False
+single = False
 
 #             [ "name", "units", default, [lower, upper], "type", "description"],
 parameters = [["sld_lg", "1e-6/Ang^2", -0.4, [-inf, inf], "sld",

@@ -183,7 +183,7 @@ description = """
             parallelepiped and the q-vector for 1D
 """
 category = "shape:parallelepiped"
-
+single = False
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Parallelepiped scattering length density"],

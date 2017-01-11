@@ -102,7 +102,7 @@ P(q,alpha)= scale/Vs*f(q)^(2) + background,
      phi: the axis_phi of the cylinder
 """
 category = "shape:cylinder"
-
+single = False
 #             ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [["sld_core", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Cylinder core scattering length density"],
