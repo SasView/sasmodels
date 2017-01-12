@@ -14,7 +14,6 @@ from numpy import pi, sin, cos  #type: ignore
 from . import details
 from .generate import F64
 from .kernel import KernelModel, Kernel
-import gc
 
 try:
     from typing import Union, Callable
@@ -79,7 +78,6 @@ class PyInput(object):
         Free resources associated with the model inputs.
         """
         self.q = None
-        gc.collect()
 
 class PyKernel(Kernel):
     """

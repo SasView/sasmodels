@@ -1,7 +1,7 @@
 # cylinder model
 # Note: model title and parameter table are inserted automatically
 r"""
-The form factor is normalized by the particle volume V = \piR^2L.
+
 For information about polarised and magnetic scattering, see
 the :ref:`magnetism` documentation.
 
@@ -13,7 +13,7 @@ given by (Guinier, 1955)
 
 .. math::
 
-    P(q,\alpha) = \frac{\text{scale}}{V} F^2(q,\alpha) + \text{background}
+    P(q,\alpha) = \frac{\text{scale}}{V} F^2(q,\alpha).sin(\alpha) + \text{background}
 
 where
 
@@ -24,7 +24,7 @@ where
                 {\tfrac12 qL \cos \alpha}
            \frac{J_1 \left(q R \sin \alpha\right)}{q R \sin \alpha}
 
-and $\alpha$ is the angle between the axis of the cylinder and $\vec q$, $V$
+and $\alpha$ is the angle between the axis of the cylinder and $\vec q$, $V =\pi R^2L$
 is the volume of the cylinder, $L$ is the length of the cylinder, $R$ is the
 radius of the cylinder, and $\Delta\rho$ (contrast) is the scattering length
 density difference between the scatterer and the solvent. $J_1$ is the
@@ -34,11 +34,28 @@ For randomly oriented particles:
 
 .. math::
 
-    F^2(q)=\int_{0}^{\pi/2}{F^2(q,\theta)\sin(\theta)d\theta}
+    F^2(q)=\int_{0}^{\pi/2}{F^2(q,\alpha)\sin(\alpha)d\alpha}=\int_{0}^{1}{F^2(q,u)du}
 
 
-To provide easy access to the orientation of the cylinder, we define the
-axis of the cylinder using two angles $\theta$ and $\phi$. Those angles
+Numerical integration is simplified by a change of variable to $u = cos(\alpha)$ with 
+$sin(\alpha)=\sqrt{1-u^2}$. 
+
+The output of the 1D scattering intensity function for randomly oriented
+cylinders is thus given by
+
+.. math::
+
+    P(q) = \frac{\text{scale}}{V}
+        \int_0^{\pi/2} F^2(q,\alpha) \sin \alpha\ d\alpha + \text{background}
+
+
+NB: The 2nd virial coefficient of the cylinder is calculated based on the
+radius and length values, and used as the effective radius for $S(q)$
+when $P(q) \cdot S(q)$ is applied.
+
+For oriented cylinders, we define the direction of the
+axis of the cylinder using two angles $\theta$ (note this is not the
+same as the scattering angle used in q) and $\phi$. Those angles
 are defined in :numref:`cylinder-angle-definition` .
 
 .. _cylinder-angle-definition:
@@ -47,20 +64,7 @@ are defined in :numref:`cylinder-angle-definition` .
 
     Definition of the angles for oriented cylinders.
 
-
-NB: The 2nd virial coefficient of the cylinder is calculated based on the
-radius and length values, and used as the effective radius for $S(q)$
-when $P(q) \cdot S(q)$ is applied.
-
-The output of the 1D scattering intensity function for randomly oriented
-cylinders is then given by
-
-.. math::
-
-    P(q) = \frac{\text{scale}}{V}
-        \int_0^{\pi/2} F^2(q,\alpha) \sin \alpha\ d\alpha + \text{background}
-
-The $\theta$ and $\phi$ parameters are not used for the 1D output.
+The $\theta$ and $\phi$ parameters only appear in the model when fitting 2d data.
 
 Validation
 ----------
@@ -73,11 +77,11 @@ by averaging over a uniform distribution of orientations using
 .. math::
 
     P(q) = \int_0^{\pi/2} d\phi
-        \int_0^\pi p(\alpha) P_0(q,\alpha) \sin \alpha\ d\alpha
+        \int_0^\pi p(\theta) P_0(q,\theta) \sin \theta\ d\theta
 
 
 where $p(\theta,\phi) = 1$ is the probability distribution for the orientation
-and $P_0(q,\alpha)$ is the scattering intensity for the fully oriented
+and $P_0(q,\theta)$ is the scattering intensity for the fully oriented
 system, and then comparing to the 1D result.
 
 References
@@ -144,11 +148,14 @@ demo = dict(scale=1, background=0,
             phi_pd=10, phi_pd_n=5)
 
 qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
-# After redefinition of angles, find new tests values 
-#tests = [[{}, 0.2, 0.042761386790780453],
-#         [{}, [0.2], [0.042761386790780453]],
-#         [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.03514647218513852],
-#         [{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.03514647218513852]],
-#        ]
+# After redefinition of angles, find new tests values.  Was 10 10 in old coords
+tests = [[{}, 0.2, 0.042761386790780453],
+        [{}, [0.2], [0.042761386790780453]],
+#  new coords    
+        [{'theta':80.1534480601659, 'phi':10.1510817110481}, (qx, qy), 0.03514647218513852],
+        [{'theta':80.1534480601659, 'phi':10.1510817110481}, [(qx, qy)], [0.03514647218513852]],
+# old coords   [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.03514647218513852],
+#              [{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.03514647218513852]],
+        ]
 del qx, qy  # not necessary to delete, but cleaner
 # ADDED by:  RKH  ON: 18Mar2016 renamed sld's etc

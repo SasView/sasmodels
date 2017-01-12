@@ -40,7 +40,7 @@ $\alpha$ is the angle between the $Q$ vector and the cylinder axis, to give:
 .. math::
 
     I(Q,\alpha) = \frac{\text{scale}}{V_t} \cdot
-        F(Q,\alpha)^2 + \text{background}
+        F(Q,\alpha)^2.sin(\alpha) + \text{background}
 
 where
 
@@ -84,7 +84,7 @@ Authorship and Verification
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Butler **Date:** September 30, 2016
-* **Last Reviewed by:** Richard Heenan **Date:** October 5, 2016
+* **Last Reviewed by:** Richard Heenan **Date:** January 4, 2017
 """
 
 from numpy import inf, sin, cos
