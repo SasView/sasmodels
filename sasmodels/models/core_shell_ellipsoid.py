@@ -164,7 +164,6 @@ q = 0.1
 # tests had in old coords theta=0, phi=0; new coords theta=90, phi=0
 qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
-phi = 0.0
 # 11Jan2017 RKH sorted tests after redefinition of angles
 tests = [
      # Accuracy tests based on content in test/utest_coreshellellipsoidXTmodel.py
@@ -192,8 +191,12 @@ tests = [
       'background': 0.0,
       'scale': 1.0,
      }, 0.01, 8688.53],
-# why does it need theta setting here, not globally above?
-   [{'background': 0.001, 'theta':90.0}, (0.4, 0.5), 0.00690673],
+
+   # 2D tests
+   [{'background': 0.001,
+     'theta': 90.0,
+     'phi': 0.0,
+     }, (0.4, 0.5), 0.00690673],
 
    [{'radius_equat_core': 20.0,
       'x_core': 200.0,
@@ -205,5 +208,6 @@ tests = [
       'background': 0.01,
       'scale': 0.01,
       'theta': 90.0,
+      'phi': 0.0,
      }, (qx, qy), 0.01000025],
     ]
