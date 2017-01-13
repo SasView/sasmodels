@@ -152,9 +152,9 @@ def _conversion_target(model_name, version=(3,1,2)):
     This is necessary since there is only one variant in sasmodels for the
     two variants in sasview.
     """
-    for sasmodels_name, [sasview_name, _] in \
+    for sasmodels_name, sasview_dict in \
             CONVERSION_TABLE.get(version, {}).items():
-        if sasview_name == model_name:
+        if sasview_dict[0] == model_name:
             return sasmodels_name
     return None
 
