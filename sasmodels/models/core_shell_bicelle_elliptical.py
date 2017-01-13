@@ -111,7 +111,7 @@ description = """
     Compare also the core_shell_bicelle and elliptical_cylinder models.
       """
 category = "shape:cylinder"
-single = False
+
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [
