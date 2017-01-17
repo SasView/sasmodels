@@ -29,12 +29,12 @@ double Iq(double q,
     // core first, then add in shell
     contrast = sld_solvent-sld;
     vol = M_4PI_3*cube(radius);
-    f = vol * sph_j1c(q*radius) * contrast;
+    f = vol * sas_3j1x_x(q*radius) * contrast;
  
     //now the shell. No volume normalization as this is done by the caller
     contrast = sld-sld_solvent;
     vol = M_4PI_3*cube(radius+thickness);
-    f += vol * sph_j1c(q*(radius+thickness)) * contrast;
+    f += vol * sas_3j1x_x(q*(radius+thickness)) * contrast;
 
     //rescale to [cm-1]. 
     f2 = volfraction * f*f*1.0e-4;

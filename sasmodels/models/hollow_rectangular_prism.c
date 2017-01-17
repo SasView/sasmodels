@@ -44,8 +44,8 @@ double Iq(double q,
         double sin_theta, cos_theta;
         SINCOS(theta, sin_theta, cos_theta);
 
-        const double termC1 = sinc(q * c_half * cos(theta));
-        const double termC2 = sinc(q * (c_half-thickness)*cos(theta));
+        const double termC1 = sas_sinx_x(q * c_half * cos(theta));
+        const double termC2 = sas_sinx_x(q * (c_half-thickness)*cos(theta));
 
         double inner_sum = 0.0;
         for(int j=0; j<76; j++) {
@@ -56,11 +56,11 @@ double Iq(double q,
 
             // Amplitude AP from eqn. (13), rewritten to avoid round-off effects when arg=0
 
-            const double termA1 = sinc(q * a_half * sin_theta * sin_phi);
-            const double termA2 = sinc(q * (a_half-thickness) * sin_theta * sin_phi);
+            const double termA1 = sas_sinx_x(q * a_half * sin_theta * sin_phi);
+            const double termA2 = sas_sinx_x(q * (a_half-thickness) * sin_theta * sin_phi);
 
-            const double termB1 = sinc(q * b_half * sin_theta * cos_phi);
-            const double termB2 = sinc(q * (b_half-thickness) * sin_theta * cos_phi);
+            const double termB1 = sas_sinx_x(q * b_half * sin_theta * cos_phi);
+            const double termB2 = sas_sinx_x(q * (b_half-thickness) * sin_theta * cos_phi);
 
             const double AP1 = vol_total * termA1 * termB1 * termC1;
             const double AP2 = vol_core * termA2 * termB2 * termC2;

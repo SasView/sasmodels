@@ -115,7 +115,7 @@ parameters = [["dnn", "Ang", 220, [-inf, inf], "", "Nearest neighbour distance"]
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sph_j1c.c", "lib/gauss150.c", "lib/sphere_form.c", "fcc_paracrystal.c"]
+source = ["lib/sas_3j1x_x.c", "lib/gauss150.c", "lib/sphere_form.c", "fcc_paracrystal.c"]
 
 # parameters for demo
 demo = dict(scale=1, background=0,

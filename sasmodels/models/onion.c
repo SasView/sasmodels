@@ -5,7 +5,7 @@ f_exp(double q, double r, double sld_in, double sld_out,
 {
   const double vol = M_4PI_3 * cube(r);
   const double qr = q * r;
-  const double bes = sph_j1c(qr);
+  const double bes = sas_3j1x_x(qr);
   const double alpha = A * r/thickness;
   double result;
   if (qr == 0.0) {

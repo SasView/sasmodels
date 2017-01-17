@@ -140,7 +140,7 @@ parameters = [
 
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
+source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
           "core_shell_bicelle.c"]
 
 demo = dict(scale=1, background=0,
