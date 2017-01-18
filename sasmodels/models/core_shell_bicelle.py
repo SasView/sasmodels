@@ -155,4 +155,4 @@ demo = dict(scale=1, background=0,
             theta=90,
             phi=0)
 
-qx, qy = 0.4 * cos(90), 0.5 * sin(0)
+#qx, qy = 0.4 * cos(pi/2.0), 0.5 * sin(0)
