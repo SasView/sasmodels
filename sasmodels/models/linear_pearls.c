@@ -43,13 +43,13 @@ double linear_pearls_kernel(double q,
     double separation = edge_sep + 2.0 * radius;
 
     //sine functions of a pearl
-    double psi = sph_j1c(q * radius);
+    double psi = sas_3j1x_x(q * radius);
 
     // N pearls contribution
     int n_max = num_pearls - 1;
     n_contrib = num_pearls;
     for(int num=1; num<=n_max; num++) {
-        n_contrib += (2.0*(num_pearls-num)*sinc(q*separation*num));
+        n_contrib += (2.0*(num_pearls-num)*sas_sinx_x(q*separation*num));
     }
     // form factor for num_pearls
     double form_factor = 1.0e-4 * n_contrib * square(m_s*psi) / tot_vol;

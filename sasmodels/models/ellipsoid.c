@@ -17,7 +17,7 @@ double _ellipsoid_kernel(double q, double radius_polar, double radius_equatorial
     // leave it as is.
     const double r = radius_equatorial
                      * sqrt(1.0 + sin_alpha*sin_alpha*(ratio*ratio - 1.0));
-    const double f = sph_j1c(q*r);
+    const double f = sas_3j1x_x(q*r);
 
     return f*f;
 }

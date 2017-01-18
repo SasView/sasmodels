@@ -19,13 +19,13 @@ double multilayer_vesicle_kernel(double q,
 
         // layer 1
         voli = M_4PI_3*ri*ri*ri;
-        fval += voli*sldi*sph_j1c(ri*q);
+        fval += voli*sldi*sas_3j1x_x(ri*q);
 
         ri += thick_shell;
 
         // layer 2
         voli = M_4PI_3*ri*ri*ri;
-        fval -= voli*sldi*sph_j1c(ri*q);
+        fval -= voli*sldi*sas_3j1x_x(ri*q);
 
         //do 2 layers at a time
         ii += 1;

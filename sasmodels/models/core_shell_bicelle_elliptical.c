@@ -75,8 +75,8 @@ double
         double inner_sum=0;
         double sinarg1 = qq*halfheight*cos_alpha;
         double sinarg2 = qq*(halfheight+facthick)*cos_alpha;
-        si1 = sinc(sinarg1);
-        si2 = sinc(sinarg2);
+        si1 = sas_sinx_x(sinarg1);
+        si2 = sas_sinx_x(sinarg2);
         for(int j=0;j<76;j++) {
             //76 gauss points for the inner integral (WAS 20 points,so this may make unecessarily slow, but playing safe)
             //const double beta = ( Gauss76Z[j]*(vbj-vaj) + vaj + vbj )/2.0;
@@ -84,8 +84,8 @@ double
             const double rr = sqrt(rA - rB*cos(beta));
             double besarg1 = qq*rr*sin_alpha;
             double besarg2 = qq*(rr+radthick)*sin_alpha;
-            be1 = sas_J1c(besarg1);
-            be2 = sas_J1c(besarg2);
+            be1 = sas_2J1x_x(besarg1);
+            be2 = sas_2J1x_x(besarg2);
             inner_sum += Gauss76Wt[j] *square(dr1*si1*be1 +
                                               dr2*si2*be2 +
                                               dr3*si2*be1);
@@ -128,10 +128,10 @@ Iqxy(double qx, double qy,
     // Given:    radius_major = r_ratio * radius_minor  
     // ASSUME the sin_alpha is included in the separate integration over orientation of rod angle
     const double r = rad*sqrt(square(x_core*cos_nu) + cos_mu*cos_mu);
-    const double be1 = sas_J1c(qq*r);
-    const double be2 = sas_J1c( qq*(r + radthick ) );
-    const double si1 = sinc( qq*halfheight*cos_val );
-    const double si2 = sinc( qq*(halfheight + facthick)*cos_val );
+    const double be1 = sas_2J1x_x( qq*r );
+    const double be2 = sas_2J1x_x( qq*(r + radthick ) );
+    const double si1 = sas_sinx_x( qq*halfheight*cos_val );
+    const double si2 = sas_sinx_x( qq*(halfheight + facthick)*cos_val );
     const double Aq = square( vol1*dr1*si1*be1 + vol2*dr2*si2*be2 +  vol3*dr3*si2*be1);
     //const double vol = form_volume(radius_minor, r_ratio, length);
     return 1.0e-4 * Aq;

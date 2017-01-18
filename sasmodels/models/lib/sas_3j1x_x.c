@@ -6,7 +6,7 @@
 * in this case it is likely cancellation errors in the original expression
 * using double precision that are the source.
 */
-double sph_j1c(double q);
+double sas_3j1x_x(double q);
 
 // The choice of the number of terms in the series and the cutoff value for
 // switching between series and direct calculation depends on the numeric
@@ -43,7 +43,7 @@ double sph_j1c(double q);
 #define SPH_J1C_CUTOFF 0.7
 #endif
 
-double sph_j1c(double q)
+double sas_3j1x_x(double q)
 {
     if (q < SPH_J1C_CUTOFF) {
         const double q2 = q*q;

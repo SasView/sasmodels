@@ -216,8 +216,8 @@ float cephes_j1f(float x)
 #endif
 
 //Finally J1c function that equals 2*J1(x)/x
-double sas_J1c(double x);
-double sas_J1c(double x)
+double sas_2J1x_x(double x);
+double sas_2J1x_x(double x)
 {
     return (x != 0.0 ) ? 2.0*sas_J1(x)/x : 1.0;
 }
