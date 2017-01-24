@@ -92,8 +92,8 @@ def _rescale_sld(model_info, pars, scale):
 
 
 def _get_translation_table(model_info, version=(3,1,2)):
-    _, translation = CONVERSION_TABLE.get(version, {}).get(model_info.id, [None, {}])
-    translation = translation.copy()
+    dict = CONVERSION_TABLE.get(version, {}).get(model_info.id, [None, {}])
+    translation = dict[1].copy()
     for p in model_info.parameters.kernel_parameters:
         if p.length > 1:
             newid = p.id
