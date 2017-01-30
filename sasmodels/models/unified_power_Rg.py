@@ -15,8 +15,8 @@ The Beaucage method is able to reasonably approximate the scattering from
 many different types of particles, including fractal clusters, random coils
 (Debye equation), ellipsoidal particles, etc.
 
-The model works best for *mass* fractal systems characterized by Porod exponents 
-between 5/3 and 3. It should not be used for *surface* fractal systems. Hammouda 
+The model works best for mass fractal systems characterized by Porod exponents 
+between 5/3 and 3. It should not be used for surface fractal systems. Hammouda 
 (2010) has pointed out a deficiency in the way this model handles the 
 transitioning between the Guinier and Porod regimes and which can create 
 artefacts that appear as kinks in the fitted model function.
@@ -64,8 +64,7 @@ G Beaucage, *J. Appl. Cryst.*, 28 (1995) 717-728
 
 G Beaucage, *J. Appl. Cryst.*, 29 (1996) 134-146
 
-B Hammouda, *Analysis of the Beaucage model*, 
-*J. Appl. Cryst.*, (2010), 43, 1474–1478
+B Hammouda, *Analysis of the Beaucage model, J. Appl. Cryst.*, (2010), 43, 1474-1478
 
 """
 
