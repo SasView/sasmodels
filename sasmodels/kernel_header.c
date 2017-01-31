@@ -145,7 +145,7 @@
 #endif
 inline double square(double x) { return x*x; }
 inline double cube(double x) { return x*x*x; }
-inline double sinc(double x) { return x==0 ? 1.0 : sin(x)/x; }
+inline double sas_sinx_x(double x) { return x==0 ? 1.0 : sin(x)/x; }
 
 #if 1
 //think cos(theta) should be sin(theta) in new coords, RKH 11Jan2017

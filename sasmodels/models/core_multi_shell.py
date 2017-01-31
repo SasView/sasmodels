@@ -100,7 +100,7 @@ parameters = [["sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "sld",
                "Thickness of shell k"],
              ]
 
-source = ["lib/sph_j1c.c", "core_multi_shell.c"]
+source = ["lib/sas_3j1x_x.c", "core_multi_shell.c"]
 
 def profile(sld_core, radius, sld_solvent, n, sld, thickness):
     """

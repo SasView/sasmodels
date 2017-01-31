@@ -38,7 +38,7 @@ _cap_kernel(double q, double h, double radius_cap,
     for (int i=0; i<76 ;i++) {
         const double t = Gauss76Z[i]*zm + zb;
         const double radical = 1.0 - t*t;
-        const double bj = sas_J1c(qrst*sqrt(radical));
+        const double bj = sas_2J1x_x(qrst*sqrt(radical));
         const double Fq = cos(m*t + b) * radical * bj;
         total += Gauss76Wt[i] * Fq;
     }
@@ -53,8 +53,8 @@ _fq(double q, double h, double radius_cap, double radius, double half_length,
     double sin_alpha, double cos_alpha)
 {
     const double cap_Fq = _cap_kernel(q, h, radius_cap, half_length, sin_alpha, cos_alpha);
-    const double bj = sas_J1c(q*radius*sin_alpha);
-    const double si = sinc(q*half_length*cos_alpha);
+    const double bj = sas_2J1x_x(q*radius*sin_alpha);
+    const double si = sas_sinx_x(q*half_length*cos_alpha);
     const double cyl_Fq = 2.0*M_PI*radius*radius*half_length*bj*si;
     const double Aq = cap_Fq + cyl_Fq;
     return Aq;

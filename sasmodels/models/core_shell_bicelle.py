@@ -140,7 +140,7 @@ parameters = [
 
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
+source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
           "core_shell_bicelle.c"]
 
 demo = dict(scale=1, background=0,
@@ -155,4 +155,4 @@ demo = dict(scale=1, background=0,
             theta=90,
             phi=0)
 
-qx, qy = 0.4 * cos(90), 0.5 * sin(0)
+#qx, qy = 0.4 * cos(pi/2.0), 0.5 * sin(0)

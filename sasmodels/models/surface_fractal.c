@@ -14,7 +14,7 @@ static double _surface_fractal_kernel(double q,
     double cutoff_length)
 {
     // calculate P(q)
-    const double pq = square(sph_j1c(q*radius));
+    const double pq = square(sas_3j1x_x(q*radius));
 
     // calculate S(q)
     // Note: lim q->0 S(q) = -gamma(mmo) cutoff_length^mmo (mmo cutoff_length)

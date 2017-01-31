@@ -138,7 +138,7 @@ Code follows the C99 standard with the following extensions and conditions::
     M_4PI_3 = 4pi/3
     square(x) = x*x
     cube(x) = x*x*x
-    sinc(x) = sin(x)/x, with sin(0)/0 -> 1
+    sas_sinx_x(x) = sin(x)/x, with sin(0)/0 -> 1
     all double precision constants must include the decimal point
     all double declarations may be converted to half, float, or long double
     FLOAT_SIZE is the number of bytes in the converted variables

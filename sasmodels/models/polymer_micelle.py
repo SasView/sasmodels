@@ -103,7 +103,7 @@ parameters = [
 
 single = False
 
-source = ["lib/sph_j1c.c", "polymer_micelle.c"]
+source = ["lib/sas_3j1x_x.c", "polymer_micelle.c"]
 
 demo = dict(scale=1, background=0,
             ndensity=8.94,

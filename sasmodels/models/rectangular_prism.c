@@ -32,7 +32,7 @@ double Iq(double q,
         double sin_theta, cos_theta;
         SINCOS(theta, sin_theta, cos_theta);
 
-        const double termC = sinc(q * c_half * cos_theta);
+        const double termC = sas_sinx_x(q * c_half * cos_theta);
 
         double inner_sum = 0.0;
         for(int j=0; j<76; j++) {
@@ -41,8 +41,8 @@ double Iq(double q,
             SINCOS(phi, sin_phi, cos_phi);
 
             // Amplitude AP from eqn. (12), rewritten to avoid round-off effects when arg=0
-            const double termA = sinc(q * a_half * sin_theta * sin_phi);
-            const double termB = sinc(q * b_half * sin_theta * cos_phi);
+            const double termA = sas_sinx_x(q * a_half * sin_theta * sin_phi);
+            const double termB = sas_sinx_x(q * b_half * sin_theta * cos_phi);
             const double AP = termA * termB * termC;
             inner_sum += Gauss76Wt[j] * AP * AP;
         }

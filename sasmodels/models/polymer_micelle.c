@@ -30,7 +30,7 @@ static double micelle_spherical_kernel(double q,
     const double beta_corona = v_corona * (rho_corona - rho_solv);
 
     // Self-correlation term of the core
-    const double bes_core = sph_j1c(q*radius_core);
+    const double bes_core = sas_3j1x_x(q*radius_core);
     const double term1 = square(n_aggreg*beta_core*bes_core);
 
     // Self-correlation term of the chains
@@ -40,7 +40,7 @@ static double micelle_spherical_kernel(double q,
 
     // Interference cross-term between core and chains
     const double chain_ampl = (qrg2 == 0.0) ? 1.0 : -expm1(-qrg2)/qrg2;
-    const double bes_corona = sinc(q*(radius_core + d_penetration * rg));
+    const double bes_corona = sas_sinx_x(q*(radius_core + d_penetration * rg));
     const double term3 = 2.0 * n_aggreg * n_aggreg * beta_core * beta_corona *
                  bes_core * chain_ampl * bes_corona;
 
