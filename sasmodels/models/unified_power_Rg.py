@@ -37,7 +37,9 @@ where
 
 .. math::
 
-    q_i^* = \frac{q}{\operatorname{erf}^3(q R_{gi}/\sqrt{6}}
+    q_i^* = q \left[\operatorname{erf}
+            \left(\frac{q R_{gi}}{\sqrt{6}}\right)
+        \right]^{-3}
 
 
 For each level, the four parameters $G_i$, $R_{gi}$, $B_i$ and $P_i$ must
