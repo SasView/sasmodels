@@ -27,18 +27,18 @@ class SesansTransform(object):
     q = None  # type: np.ndarray
 
     # transform arrays
-    _H = None  # type: np.ndarray
-    _H0 = None # type: np.ndarray
+    H = None  # type: np.ndarray
+    H0 = None # type: np.ndarray
 
-    def set_transform(self, SE, zaccept, Rmax):
+    def __init__(self, SE, zaccept, Rmax):
         if self.SE is None or len(SE) != len(self.SE) or np.any(SE != self.SE) or zaccept != self.zaccept or Rmax != self.Rmax:
             self.SE, self.zaccept, self.Rmax = SE, zaccept, Rmax
             self._set_q()
             self._set_hankel()
 
     def apply(self, Iq):
-        G0 = np.dot(self._H0, Iq)
-        G = np.dot(self._H.T, Iq)
+        G0 = np.dot(self.H0, Iq)
+        G = np.dot(self.H.T, Iq)
         P = G - G0
         return P
 
@@ -75,14 +75,14 @@ class SesansTransform(object):
         #repSE=np.array(repSE,dtype='float32')
         #H = dq / (2 * pi) * j0(repSE*repq)*repq
 
-        self._H, self._H0 = H, H0
+        self.H, self.H0 = H, H0
 
 class SESANS1D(SesansTransform):
-    def __init__(self, data, _H0, _H, q_calc):
+    def __init__(self, data, H0, H, q_calc):
         # x values of the data (Sasview requires these to be named "q")
         self.q = data.x
-        self._H0 = _H0
-        self._H = _H
+        self.H0 = H0
+        self.H = H
         # Pysmear does some checks on the smearer object, these checks require the "data" object...
         self.data=data
         # q values of the SAS model
