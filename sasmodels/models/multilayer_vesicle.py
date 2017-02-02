@@ -19,24 +19,29 @@ The 1D scattering intensity is calculated in the following way (Guinier, 1955)
 
 .. math::
 
-    P(q) = \frac{\text{scale.volfraction}}{V_t} F^2(q) + \text{background}
+    P(q) = \text{scale}\frac{\phi}{V(R_N)} F^2(q) + \text{background}
 
 where
 
 .. math::
 
-     F(q) = (\rho_{shell}-\rho_{solv}) \sum_{i=1}^{n\_pairs} \left[
-     3V(R_i)\frac{\sin(qR_i)-qR_i\cos(qR_i)}{(qR_i)^3} \\
-      - 3V(R_i+t_s)\frac{\sin(q(R_i+t_s))-q(R_i+t_s)\cos(q(R_i+t_s))}{(q(R_i+t_s))^3}
+     F(q) = (\rho_\text{shell}-\rho_\text{solv}) \sum_{i=1}^{N} \left[
+     3V(r_i)\frac{\sin(qr_i) - qr_i\cos(qr_i)}{(qr_i)^3}
+     - 3V(R_i)\frac{\sin(qR_i) - qR_i\cos(qR_i)}{(qR_i)^3}
      \right]
 
+for
 
-where $R_i = r_c + (i-1)(t_s + t_w)$
-   
-where $V_t$ is the volume of the whole particle, $V(R)$ is the volume of a sphere
-of radius $R$, $r_c$ is the radius of the core, $\rho_{shell}$ is the scattering length 
-density of a shell, $\rho_{solv}$ is the scattering length density of the solvent.
+.. math::
 
+     r_i &= r_c + (i-1)(t_s + t_w) && \text{ solvent radius before shell } i \\
+     R_i &= r_i + t_s && \text{ shell radius for shell } i
+
+$\phi$ is the volume fraction of particles, $V(r)$ is the volume of a sphere
+of radius $r$, $r_c$ is the radius of the core, $t_s$ is the thickness of
+the shell, $t_w$ is the thickness of the solvent layer between the shells,
+$\rho_\text{shell}$ is the scattering length density of a shell, and
+$\rho_\text{solv}$ is the scattering length density of the solvent.
 
 The 2D scattering intensity is the same as 1D, regardless of the orientation
 of the q vector which is defined as:
@@ -45,13 +50,8 @@ of the q vector which is defined as:
 
     q = \sqrt{q_x^2 + q_y^2}
 
-
-The outer most radius
-
-$radius + n\_pairs * thick\_shell + (n\_pairs- 1) * thick\_solvent$
-
-is used for both the volume fraction normalization and for the 
-effective radius for *S(Q)* when $P(Q) * S(Q)$ is applied.
+The outer-most shell radius $R_N$ is used as the effective radius
+for $P(Q)$ when $P(Q) * S(Q)$ is applied.
 
 For information about polarised and magnetic scattering, see
 the :ref:`magnetism` documentation.
@@ -88,7 +88,7 @@ description = """
     thick_solvent: water thickness
     sld_solvent: solvent scattering length density
     sld: shell scattering length density
-    n_pairs:number of "shell plus solvent" layer pairs
+    n_shells:number of "shell plus solvent" layer pairs
     background: incoherent background
         """
 category = "shape:sphere"
@@ -97,18 +97,20 @@ category = "shape:sphere"
 #   ["name", "units", default, [lower, upper], "type","description"],
 parameters = [
     ["volfraction", "",  0.05, [0.0, 1],  "", "volume fraction of vesicles"],
-    ["radius", "Ang", 60.0, [0.0, inf],  "", "radius of solvent filled core"],
-    ["thick_shell", "Ang",        10.0, [0.0, inf],  "", "thickness of one shell"],
-    ["thick_solvent", "Ang",        10.0, [0.0, inf],  "", "solvent thickness between shells"],
+    ["radius", "Ang", 60.0, [0.0, inf],  "volume", "radius of solvent filled core"],
+    ["thick_shell", "Ang",        10.0, [0.0, inf],  "volume", "thickness of one shell"],
+    ["thick_solvent", "Ang",        10.0, [0.0, inf],  "volume", "solvent thickness between shells"],
     ["sld_solvent",    "1e-6/Ang^2",  6.4, [-inf, inf], "sld", "solvent scattering length density"],
     ["sld",   "1e-6/Ang^2",  0.4, [-inf, inf], "sld", "Shell scattering length density"],
-    ["n_pairs",     "",            2.0, [1.0, inf],  "", "Number of shell plus solvent layer pairs"],
+    ["n_shells",     "",            2.0, [1.0, inf],  "volume", "Number of shell plus solvent layer pairs"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sas_3j1x_x.c", "multilayer_vesicle.c"]
 
-polydispersity = ["radius", "n_pairs"]
+def ER(radius, thick_shell, thick_solvent, n_shells):
+    n_shells = int(n_shells+0.5)
+    return radius + n_shells * (thick_shell + thick_solvent) - thick_solvent
 
 demo = dict(scale=1, background=0,
             volfraction=0.05,
@@ -117,7 +119,7 @@ demo = dict(scale=1, background=0,
             thick_solvent=10.0,
             sld_solvent=6.4,
             sld=0.4,
-            n_pairs=2.0)
+            n_shells=2.0)
 
 tests = [
     # Accuracy tests based on content in test/utest_other_models.py
@@ -126,7 +128,7 @@ tests = [
       'thick_solvent': 10.0,
       'sld_solvent': 6.4,
       'sld': 0.4,
-      'n_pairs': 2.0,
+      'n_shells': 2.0,
       'scale': 1.0,
       'background': 0.001,
      }, 0.001, 122.1405],
@@ -137,7 +139,7 @@ tests = [
       'thick_solvent': 10.0,
       'sld_solvent': 6.4,
       'sld': 0.4,
-      'n_pairs': 2.0,
+      'n_shells': 2.0,
       'scale': 1.0,
       'background': 0.001,
      }, (0.001, 0.30903), 1.61873],
