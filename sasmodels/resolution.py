@@ -83,6 +83,7 @@ class Pinhole1D(Resolution):
                        if q_calc is None else np.sort(q_calc))
         self.weight_matrix = pinhole_resolution(self.q_calc, self.q,
                                 np.maximum(q_width, MINIMUM_RESOLUTION))
+        self.q_calc = abs(self.q_calc)
 
     def apply(self, theory):
         return apply_resolution_matrix(self.weight_matrix, theory)
@@ -124,6 +125,7 @@ class Slit1D(Resolution):
             if q_calc is None else np.sort(q_calc)
         self.weight_matrix = \
             slit_resolution(self.q_calc, self.q, qx_width, qy_width)
+        self.q_calc = abs(self.q_calc)
 
     def apply(self, theory):
         return apply_resolution_matrix(self.weight_matrix, theory)
@@ -152,7 +154,7 @@ def pinhole_resolution(q_calc, q, q_width):
     # The current algorithm is a midpoint rectangle rule.  In the test case,
     # neither trapezoid nor Simpson's rule improved the accuracy.
     edges = bin_edges(q_calc)
-    edges[edges < 0.0] = 0.0 # clip edges below zero
+    #edges[edges < 0.0] = 0.0 # clip edges below zero
     cdf = erf((edges[:, None] - q[None, :]) / (sqrt(2.0)*q_width)[None, :])
     weights = cdf[1:] - cdf[:-1]
     weights /= np.sum(weights, axis=0)[None, :]
@@ -285,7 +287,7 @@ def slit_resolution(q_calc, q, width, height, n_height=30):
 
     # The current algorithm is a midpoint rectangle rule.
     q_edges = bin_edges(q_calc) # Note: requires q > 0
-    q_edges[q_edges < 0.0] = 0.0 # clip edges below zero
+    #q_edges[q_edges < 0.0] = 0.0 # clip edges below zero
     weights = np.zeros((len(q), len(q_calc)), 'd')
 
     #print(q_calc)
