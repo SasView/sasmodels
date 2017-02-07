@@ -71,7 +71,7 @@ parameters = [["radius",        "Ang", 10.0, [0, inf],   "",
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sph_j1c.c", "lib/sas_gamma.c", "surface_fractal.c"]
+source = ["lib/sas_3j1x_x.c", "lib/sas_gamma.c", "surface_fractal.c"]
 
 demo = dict(scale=1, background=1e-5,
             radius=10, fractal_dim_surf=2.0, cutoff_length=500)

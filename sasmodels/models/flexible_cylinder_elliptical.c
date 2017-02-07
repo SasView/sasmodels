@@ -21,7 +21,7 @@ elliptical_crosssection(double q, double a, double b)
         double sn, cn;
         SINCOS(zi, sn, cn);
         const double arg = q*sqrt(a*a*sn*sn + b*b*cn*cn);
-        const double yyy = sas_J1c(arg);
+        const double yyy = sas_2J1x_x(arg);
         sum += Gauss76Wt[i] * yyy * yyy;
     }
     sum *= 0.5;

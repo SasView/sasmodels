@@ -40,7 +40,7 @@ $\alpha$ is the angle between the $Q$ vector and the cylinder axis, to give:
 .. math::
 
     I(Q,\alpha) = \frac{\text{scale}}{V_t} \cdot
-        F(Q,\alpha)^2 + \text{background}
+        F(Q,\alpha)^2.sin(\alpha) + \text{background}
 
 where
 
@@ -84,7 +84,7 @@ Authorship and Verification
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Butler **Date:** September 30, 2016
-* **Last Reviewed by:** Richard Heenan **Date:** October 5, 2016
+* **Last Reviewed by:** Richard Heenan **Date:** January 4, 2017
 """
 
 from numpy import inf, sin, cos
@@ -140,7 +140,7 @@ parameters = [
 
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
+source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
           "core_shell_bicelle.c"]
 
 demo = dict(scale=1, background=0,
@@ -155,4 +155,4 @@ demo = dict(scale=1, background=0,
             theta=90,
             phi=0)
 
-qx, qy = 0.4 * cos(90), 0.5 * sin(0)
+#qx, qy = 0.4 * cos(pi/2.0), 0.5 * sin(0)

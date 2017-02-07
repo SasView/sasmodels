@@ -19,13 +19,13 @@ _hollow_cylinder_kernel(double q,
     double radius, double thickness, double length, double sin_val, double cos_val)
 {
     const double qs = q*sin_val;
-    const double lam1 = sas_J1c((radius+thickness)*qs);
-    const double lam2 = sas_J1c(radius*qs);
+    const double lam1 = sas_2J1x_x((radius+thickness)*qs);
+    const double lam2 = sas_2J1x_x(radius*qs);
     const double gamma_sq = square(radius/(radius+thickness));
-    //Note: lim_{thickness -> 0} psi = J0(radius*qs)
-    //Note: lim_{radius -> 0} psi = sas_J1c(thickness*qs)
+    //Note: lim_{thickness -> 0} psi = sas_J0(radius*qs)
+    //Note: lim_{radius -> 0} psi = sas_2J1x_x(thickness*qs)
     const double psi = (lam1 - gamma_sq*lam2)/(1.0 - gamma_sq);	//SRK 10/19/00
-    const double t2 = sinc(0.5*q*length*cos_val);
+    const double t2 = sas_sinx_x(0.5*q*length*cos_val);
     return psi*t2;
 }
 

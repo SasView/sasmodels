@@ -34,7 +34,7 @@ static double f_linear(double q, double r, double contrast, double slope)
 {
     const double qr = q * r;
     const double qrsq = qr * qr;
-    const double bes = sph_j1c(qr);
+    const double bes = sas_3j1x_x(qr);
     double sinqr, cosqr;
     SINCOS(qr, sinqr, cosqr);
     const double fun = 3.0*r*(2.0*qr*sinqr - (qrsq-2.0)*cosqr)/(qrsq*qrsq);
@@ -62,9 +62,9 @@ static double Iq(
         const double sld_l = sld[shell];
 
         // uniform shell; r=0 => r^3=0 => f=0, so works for core as well.
-        f -= M_4PI_3 * cube(r) * sld_l * sph_j1c(q*r);
+        f -= M_4PI_3 * cube(r) * sld_l * sas_3j1x_x(q*r);
         r += thickness[shell];
-        f += M_4PI_3 * cube(r) * sld_l * sph_j1c(q*r);
+        f += M_4PI_3 * cube(r) * sld_l * sas_3j1x_x(q*r);
 
         // iterate over sub_shells in the interface
         const double dr = interface[shell]/n_steps;
@@ -94,7 +94,7 @@ static double Iq(
         }
     }
     // add in solvent effect
-    f -= M_4PI_3 * cube(r) * sld_solvent * sph_j1c(q*r);
+    f -= M_4PI_3 * cube(r) * sld_solvent * sas_3j1x_x(q*r);
 
     const double f2 = f * f * 1.0e-4;
     return f2;

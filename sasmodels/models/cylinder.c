@@ -17,7 +17,7 @@ double fq(double q, double sn, double cn, double radius, double length)
     // precompute qr and qh to save time in the loop
     const double qr = q*radius;
     const double qh = q*0.5*length; 
-    return sas_J1c(qr*sn) * sinc(qh*cn);
+    return sas_2J1x_x(qr*sn) * sas_sinx_x(qh*cn);
 }
 
 double orient_avg_1D(double q, double radius, double length)

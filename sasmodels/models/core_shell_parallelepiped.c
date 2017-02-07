@@ -86,10 +86,10 @@ double Iq(double q,
             const double uu = 0.5 * ( Gauss76Z[j] + 1.0 );
             double sin_uu, cos_uu;
             SINCOS(M_PI_2*uu, sin_uu, cos_uu);
-            const double si1 = sinc(mu_proj * sin_uu * a_scaled);
-            const double si2 = sinc(mu_proj * cos_uu);
-            const double si3 = sinc(mu_proj * sin_uu * ta);
-            const double si4 = sinc(mu_proj * cos_uu * tb);
+            const double si1 = sas_sinx_x(mu_proj * sin_uu * a_scaled);
+            const double si2 = sas_sinx_x(mu_proj * cos_uu);
+            const double si3 = sas_sinx_x(mu_proj * sin_uu * ta);
+            const double si4 = sas_sinx_x(mu_proj * cos_uu * tb);
 
             // Expression in libCylinder.c (neither drC nor Vot are used)
             const double form = scale12*si1*si2 + scale23*si2*si3 + scale14*si1*si4;
@@ -108,7 +108,7 @@ double Iq(double q,
         inner_total *= 0.5;
 
         // now sum up the outer integral
-        const double si = sinc(mu * c_scaled * sigma);
+        const double si = sas_sinx_x(mu * c_scaled * sigma);
         outer_total += Gauss76Wt[i] * inner_total * si * si;
     }
     outer_total *= 0.5;
@@ -159,12 +159,12 @@ double Iqxy(double qx, double qy,
     double tb = length_a + 2.0*thick_rim_b;
     double tc = length_a + 2.0*thick_rim_c;
     //handle arg=0 separately, as sin(t)/t -> 1 as t->0
-    double siA = sinc(0.5*q*length_a*cos_val_a);
-    double siB = sinc(0.5*q*length_b*cos_val_b);
-    double siC = sinc(0.5*q*length_c*cos_val_c);
-    double siAt = sinc(0.5*q*ta*cos_val_a);
-    double siBt = sinc(0.5*q*tb*cos_val_b);
-    double siCt = sinc(0.5*q*tc*cos_val_c);
+    double siA = sas_sinx_x(0.5*q*length_a*cos_val_a);
+    double siB = sas_sinx_x(0.5*q*length_b*cos_val_b);
+    double siC = sas_sinx_x(0.5*q*length_c*cos_val_c);
+    double siAt = sas_sinx_x(0.5*q*ta*cos_val_a);
+    double siBt = sas_sinx_x(0.5*q*tb*cos_val_b);
+    double siCt = sas_sinx_x(0.5*q*tc*cos_val_c);
     
 
     // f uses Vin, V1, V2, and V3 and it seems to have more sense than the value computed

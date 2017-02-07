@@ -65,7 +65,7 @@ parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Sphere radius"],
              ]
 
-source = ["lib/sph_j1c.c", "lib/sphere_form.c"]
+source = ["lib/sas_3j1x_x.c", "lib/sphere_form.c"]
 
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?

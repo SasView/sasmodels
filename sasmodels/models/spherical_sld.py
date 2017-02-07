@@ -213,7 +213,7 @@ parameters = [["n_shells",             "",           1,      [1, 10],        "vo
               ["n_steps",              "",           35,     [0, inf],       "", "number of steps in each interface (must be an odd integer)"],
              ]
 # pylint: enable=bad-whitespace, line-too-long
-source = ["lib/polevl.c", "lib/sas_erf.c", "lib/sph_j1c.c", "spherical_sld.c"]
+source = ["lib/polevl.c", "lib/sas_erf.c", "lib/sas_3j1x_x.c", "spherical_sld.c"]
 single = False  # TODO: fix low q behaviour
 
 profile_axes = ['Radius (A)', 'SLD (1e-6/A^2)']

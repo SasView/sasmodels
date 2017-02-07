@@ -33,12 +33,12 @@ pearl_necklace_kernel(double q, double radius, double edge_sep, double thick_str
     //    gamma = q==0. ? 1.0 : Si(q_edge)/q_edge;
     // But there is a 1/(1-sinc) term below which blows up so don't bother
     const double q_edge = q * edge_sep;
-    const double beta = (Si(q*(A_s-radius)) - Si(q*radius)) / q_edge;
-    const double gamma = Si(q_edge) / q_edge;
-    const double psi = sph_j1c(q*radius);
+    const double beta = (sas_Si(q*(A_s-radius)) - sas_Si(q*radius)) / q_edge;
+    const double gamma = sas_Si(q_edge) / q_edge;
+    const double psi = sas_3j1x_x(q*radius);
 
     // Precomputed sinc terms
-    const double si = sinc(q*A_s);
+    const double si = sas_sinx_x(q*A_s);
     const double omsi = 1.0 - si;
     const double pow_si = pow(si, num_pearls);
 
@@ -53,7 +53,7 @@ pearl_necklace_kernel(double q, double radius, double edge_sep, double thick_str
     const double srr = m_string * m_string * (
         - 2.0 * (1.0 - pow_si/si)*beta*beta / (omsi*omsi)
         + 2.0 * num_strings*beta*beta / omsi
-        + num_strings * (2.0*gamma - square(sinc(q_edge/2.0)))
+        + num_strings * (2.0*gamma - square(sas_sinx_x(q_edge/2.0)))
         );
 
     // form factor for correlations

@@ -2,10 +2,10 @@ r"""
 Definition
 ----------
 
-The Beaucage model employs the empirical multiple level unified
-Exponential/Power-law fit method developed by G. Beaucage. Four functions
-are included so that 1, 2, 3, or 4 levels can be used. In addition a 0 level
-has been added which simply calculates
+This model employs the empirical multiple level unified Exponential/Power-law 
+fit method developed by Beaucage. Four functions are included so that 1, 2, 3, 
+or 4 levels can be used. In addition a 0 level has been added which simply 
+calculates
 
 .. math::
 
@@ -14,6 +14,14 @@ has been added which simply calculates
 The Beaucage method is able to reasonably approximate the scattering from
 many different types of particles, including fractal clusters, random coils
 (Debye equation), ellipsoidal particles, etc.
+
+The model works best for mass fractal systems characterized by Porod exponents 
+between 5/3 and 3. It should not be used for surface fractal systems. Hammouda 
+(2010) has pointed out a deficiency in the way this model handles the 
+transitioning between the Guinier and Porod regimes and which can create 
+artefacts that appear as kinks in the fitted model function.
+
+Also see the Guinier_Porod model.
 
 The empirical fit function is:
 
@@ -29,7 +37,9 @@ where
 
 .. math::
 
-    q_i^* = \frac{q}{\operatorname{erf}^3(q R_{gi}/\sqrt{6}}
+    q_i^* = q \left[\operatorname{erf}
+            \left(\frac{q R_{gi}}{\sqrt{6}}\right)
+        \right]^{-3}
 
 
 For each level, the four parameters $G_i$, $R_{gi}$, $B_i$ and $P_i$ must
@@ -55,6 +65,8 @@ References
 G Beaucage, *J. Appl. Cryst.*, 28 (1995) 717-728
 
 G Beaucage, *J. Appl. Cryst.*, 29 (1996) 134-146
+
+B Hammouda, *Analysis of the Beaucage model, J. Appl. Cryst.*, (2010), 43, 1474-1478
 
 """
 

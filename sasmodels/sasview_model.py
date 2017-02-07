@@ -56,10 +56,10 @@ def _register_old_models():
 
     import sas.models
     from sasmodels.conversion_table import CONVERSION_TABLE
-    for new_name, conversion in CONVERSION_TABLE.items():
+    for new_name, conversion in CONVERSION_TABLE.get((3,1,2), {}).items():
         # CoreShellEllipsoidModel => core_shell_ellipsoid:1
         new_name = new_name.split(':')[0]
-        old_name = conversion[0]
+        old_name = conversion[0] if len(conversion) < 3 else conversion[2]
         module_attrs = {old_name: find_model(new_name)}
         ConstructedModule = type(old_name, (), module_attrs)
         old_path = 'sas.models.' + old_name
@@ -581,6 +581,18 @@ class SasviewModel(object):
         else:
             raise TypeError("evalDistribution expects q or [qx, qy], not %r"
                             % type(qdist))
+
+    def get_composition_models(self):
+        """
+            Returns usable models that compose this model
+        """
+        s_model = None
+        p_model = None
+        if hasattr(self._model_info, "composition") \
+           and self._model_info.composition is not None:
+            p_model = _make_model_from_info(self._model_info.composition[1][0])()
+            s_model = _make_model_from_info(self._model_info.composition[1][1])()
+        return p_model, s_model
 
     def calculate_Iq(self, qx, qy=None):
         # type: (Sequence[float], Optional[Sequence[float]]) -> np.ndarray

@@ -313,7 +313,7 @@ parameters = [
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sph_j1c.c", "onion.c"]
+source = ["lib/sas_3j1x_x.c", "onion.c"]
 single = False
 
 profile_axes = ['Radius (A)', 'SLD (1e-6/A^2)']

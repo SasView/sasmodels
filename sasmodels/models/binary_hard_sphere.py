@@ -107,7 +107,7 @@ parameters = [["radius_lg", "Ang", 100, [0, inf], "",
                "Solvent scattering length density"],
              ]
 
-source = ["lib/sph_j1c.c", "binary_hard_sphere.c"]
+source = ["lib/sas_3j1x_x.c", "binary_hard_sphere.c"]
 
 # parameters for demo and documentation
 demo = dict(sld_lg=3.5, sld_sm=0.5, sld_solvent=6.36,
