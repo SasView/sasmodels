@@ -103,7 +103,7 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Out of plane angle"],
              ]
 
-source = ["lib/sph_j1c.c", "lib/gauss76.c", "triaxial_ellipsoid.c"]
+source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "triaxial_ellipsoid.c"]
 
 def ER(radius_equat_minor, radius_equat_major, radius_polar):
     """

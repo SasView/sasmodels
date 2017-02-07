@@ -66,7 +66,8 @@ Authorship and Verification
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Kienzle **Date:** July 24, 2016
-* **Last Reviewed by:** Piotr rozyczko **Date:** January 27, 2016
+* **Last Reviewed by:** Paul Butler and Richard Heenan **Date:** 
+  October 07, 2016
 """
 
 from numpy import inf, pi, sqrt

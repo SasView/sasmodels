@@ -134,7 +134,7 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Out of plane angle"],
              ]
 
-source = ["lib/sph_j1c.c", "lib/gauss76.c", "ellipsoid.c"]
+source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "ellipsoid.c"]
 
 def ER(radius_polar, radius_equatorial):
     import numpy as np

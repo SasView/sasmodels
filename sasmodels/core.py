@@ -52,7 +52,7 @@ except ImportError:
 KINDS = ("all", "py", "c", "double", "single", "opencl", "1d", "2d",
          "nonmagnetic", "magnetic")
 def list_models(kind=None):
-    # type: () -> List[str]
+    # type: (str) -> List[str]
     """
     Return the list of available models on the model path.
 

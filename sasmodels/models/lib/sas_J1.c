@@ -41,7 +41,7 @@ Copyright 1984, 1987, 1989, 2000 by Stephen L. Moshier
 
 #if FLOAT_SIZE>4
 //Cephes double pression function
-double j1(double x);
+double cephes_j1(double x);
 
 constant double RPJ1[8] = {
     -8.99971225705559398224E8,
@@ -105,7 +105,7 @@ constant double QQJ1[8] = {
     3.36093607810698293419E2,
     0.0 };
 
-double j1(double x)
+double cephes_j1(double x)
 {
 
     double w, z, p, q, xn;
@@ -143,7 +143,7 @@ double j1(double x)
 
 #else
 //Single precission version of cephes
-float j1f(float x);
+float cephes_j1f(float x);
 
 constant float JPJ1[8] = {
     -4.878788132172128E-009,
@@ -178,7 +178,7 @@ constant float PH1J1[8] = {
     3.749989509080821E-001
     };
 
-float j1f(float x)
+float cephes_j1f(float x)
 {
 
     float xx, w, z, p, q, xn;
@@ -210,14 +210,14 @@ float j1f(float x)
 #endif
 
 #if FLOAT_SIZE>4
-#define sas_J1 j1
+#define sas_J1 cephes_j1
 #else
-#define sas_J1 j1f
+#define sas_J1 cephes_j1f
 #endif
 
 //Finally J1c function that equals 2*J1(x)/x
-double sas_J1c(double x);
-double sas_J1c(double x)
+double sas_2J1x_x(double x);
+double sas_2J1x_x(double x)
 {
     return (x != 0.0 ) ? 2.0*sas_J1(x)/x : 1.0;
 }

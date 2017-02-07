@@ -229,7 +229,7 @@ def make_kernel_args(kernel, pairs):
     """
     npars = kernel.info.parameters.npars
     nvalues = kernel.info.parameters.nvalues
-    scalars = [v[0][0] for v in pairs]
+    scalars = [(v[0] if len(v) else np.NaN) for v, w in pairs]
     values, weights = zip(*pairs[2:npars+2]) if npars else ((),())
     length = np.array([len(w) for w in weights])
     offset = np.cumsum(np.hstack((0, length)))

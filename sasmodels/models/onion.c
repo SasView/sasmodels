@@ -5,7 +5,7 @@ f_exp(double q, double r, double sld_in, double sld_out,
 {
   const double vol = M_4PI_3 * cube(r);
   const double qr = q * r;
-  const double bes = sph_j1c(qr);
+  const double bes = sas_3j1x_x(qr);
   const double alpha = A * r/thickness;
   double result;
   if (qr == 0.0) {
@@ -29,10 +29,10 @@ f_exp(double q, double r, double sld_in, double sld_out,
 }
 
 static double
-form_volume(double core_radius, double n, double thickness[])
+form_volume(double radius_core, double n, double thickness[])
 {
   int i;
-  double r = core_radius;
+  double r = radius_core;
   for (i=0; i < n; i++) {
     r += thickness[i];
   }
@@ -40,12 +40,12 @@ form_volume(double core_radius, double n, double thickness[])
 }
 
 static double
-Iq(double q, double sld_core, double core_radius, double sld_solvent,
+Iq(double q, double sld_core, double radius_core, double sld_solvent,
     double n_shells, double sld_in[], double sld_out[], double thickness[],
     double A[])
 {
   int n = (int)(n_shells+0.5);
-  double r_out = core_radius;
+  double r_out = radius_core;
   double f = f_exp(q, r_out, sld_core, 0.0, 0.0, 0.0, 0.0);
   for (int i=0; i < n; i++){
     const double r_in = r_out;

@@ -40,7 +40,7 @@ def Iq(q):
     @param q: Input q-value
     """
     with errstate(divide='ignore'):
-        return power(q, -4)
+        return q**-4
 
 Iq.vectorized = True  # Iq accepts an array of q values
 

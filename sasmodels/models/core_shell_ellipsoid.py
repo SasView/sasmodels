@@ -124,7 +124,7 @@ category = "shape:ellipsoid"
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [
-    ["radius_equat_core","Ang",     20,   [0, inf],    "volume",      "Equatorial radius of core"],
+    ["radius_equat_core","Ang",     20,   [0, inf],   "volume",      "Equatorial radius of core"],
     ["x_core",        "None",       3,   [0, inf],    "volume",      "axial ratio of core, X = r_polar/r_equatorial"],
     ["thick_shell",   "Ang",       30,   [0, inf],    "volume",      "thickness of shell at equator"],
     ["x_polar_shell", "",           1,   [0, inf],    "volume",      "ratio of thickness of shell at pole to that at equator"],
@@ -136,7 +136,7 @@ parameters = [
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sph_j1c.c", "lib/gfn.c", "lib/gauss76.c",
+source = ["lib/sas_3j1x_x.c", "lib/gfn.c", "lib/gauss76.c",
           "core_shell_ellipsoid.c"]
 
 def ER(radius_equat_core, x_core, thick_shell, x_polar_shell):
@@ -161,47 +161,53 @@ demo = dict(scale=0.05, background=0.001,
             phi=0)
 
 q = 0.1
-phi = pi/6
-qx = q*cos(phi)
-qy = q*sin(phi)
-# After redefinition of angles find new reasonable values for unit test
-#tests = [
-#    # Accuracy tests based on content in test/utest_coreshellellipsoidXTmodel.py
-#    [{'radius_equat_core': 200.0,
-#      'x_core': 0.1,
-#      'thick_shell': 50.0,
-#      'x_polar_shell': 0.2,
-#      'sld_core': 2.0,
-#      'sld_shell': 1.0,
-#      'sld_solvent': 6.3,
-#      'background': 0.001,
-#      'scale': 1.0,
-#     }, 1.0, 0.00189402],
+# tests had in old coords theta=0, phi=0; new coords theta=90, phi=0
+qx = q*cos(pi/6.0)
+qy = q*sin(pi/6.0)
+# 11Jan2017 RKH sorted tests after redefinition of angles
+tests = [
+     # Accuracy tests based on content in test/utest_coreshellellipsoidXTmodel.py
+    [{'radius_equat_core': 200.0,
+      'x_core': 0.1,
+      'thick_shell': 50.0,
+      'x_polar_shell': 0.2,
+      'sld_core': 2.0,
+      'sld_shell': 1.0,
+      'sld_solvent': 6.3,
+      'background': 0.001,
+      'scale': 1.0,
+     }, 1.0, 0.00189402],
 
     # Additional tests with larger range of parameters
-#    [{'background': 0.01}, 0.1, 11.6915],
+    [{'background': 0.01}, 0.1, 11.6915],
 
-#    [{'radius_equat_core': 20.0,
-#      'x_core': 200.0,
-#      'thick_shell': 54.0,
-#      'x_polar_shell': 3.0,
-#      'sld_core': 20.0,
-#      'sld_shell': 10.0,
-#      'sld_solvent': 6.0,
-#      'background': 0.0,
-#      'scale': 1.0,
-#     }, 0.01, 8688.53],
+    [{'radius_equat_core': 20.0,
+      'x_core': 200.0,
+      'thick_shell': 54.0,
+      'x_polar_shell': 3.0,
+      'sld_core': 20.0,
+      'sld_shell': 10.0,
+      'sld_solvent': 6.0,
+      'background': 0.0,
+      'scale': 1.0,
+     }, 0.01, 8688.53],
 
-#   [{'background': 0.001}, (0.4, 0.5), 0.00690673],
+   # 2D tests
+   [{'background': 0.001,
+     'theta': 90.0,
+     'phi': 0.0,
+     }, (0.4, 0.5), 0.00690673],
 
-#   [{'radius_equat_core': 20.0,
-#      'x_core': 200.0,
-#      'thick_shell': 54.0,
-#      'x_polar_shell': 3.0,
-#      'sld_core': 20.0,
-#      'sld_shell': 10.0,
-#      'sld_solvent': 6.0,
-#      'background': 0.01,
-#      'scale': 0.01,
-#     }, (qx, qy), 0.0100002],
-#    ]
+   [{'radius_equat_core': 20.0,
+      'x_core': 200.0,
+      'thick_shell': 54.0,
+      'x_polar_shell': 3.0,
+      'sld_core': 20.0,
+      'sld_shell': 10.0,
+      'sld_solvent': 6.0,
+      'background': 0.01,
+      'scale': 0.01,
+      'theta': 90.0,
+      'phi': 0.0,
+     }, (qx, qy), 0.01000025],
+    ]

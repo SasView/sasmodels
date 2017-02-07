@@ -80,17 +80,17 @@ parameters = [["sld",         "1e-6/Ang^2",  1, [-inf, inf], "sld",    "Particle
              ]
 # pylint: enable=bad-whitespace,line-too-long
 
-source = ["lib/sph_j1c.c"]
+source = ["lib/sas_3j1x_x.c"]
 
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
 form_volume = """
-    return 1.333333333333333*M_PI*radius*radius*radius;
+    return M_4PI_3*cube(radius);
     """
 
 Iq = """
     const double qr = q*radius;
-    const double bes = sph_j1c(qr);
+    const double bes = sas_3j1x_x(qr);
     const double qf = q*fuzziness;
     const double fq = bes * (sld - sld_solvent) * form_volume(radius) * exp(-0.5*qf*qf);
     return 1.0e-4*fq*fq;

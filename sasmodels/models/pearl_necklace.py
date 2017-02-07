@@ -91,7 +91,7 @@ parameters = [["radius", "Ang", 80.0, [0, inf], "volume",
                "Scattering length density of the solvent"],
              ]
 
-source = ["lib/Si.c", "pearl_necklace.c"]
+source = ["lib/sas_Si.c", "lib/sas_3j1x_x.c", "pearl_necklace.c"]
 single = False  # use double precision unless told otherwise
 
 def volume(radius, edge_sep, thick_string, num_pearls):
@@ -111,7 +111,7 @@ def ER(radius, edge_sep, thick_string, num_pearls):
     Calculation for effective radius.
     """
     tot_vol = volume(radius, edge_sep, thick_string, num_pearls)
-    rad_out = pow((3.0*tot_vol/4.0/pi), 0.33333)
+    rad_out = (tot_vol/(4.0/3.0*pi)) ** (1./3.)
     return rad_out
 
 # parameters for demo

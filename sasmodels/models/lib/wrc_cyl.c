@@ -13,8 +13,7 @@ AlphaSquare(double x)
     //     (x/8.67)*(x/8.67)*(x/8.67)),(0.176/3.0) );
     //return t;
 
-    return pow( (1.0 + (x/3.12)*(x/3.12) +
-         (x/8.67)*(x/8.67)*(x/8.67)),(0.176/3.0) );
+    return pow(1.0+square(x/3.12)+cube(x/8.67), 0.176/3.0);
 }
 
 //
@@ -22,8 +21,8 @@ static double
 Rgsquarezero(double q, double L, double b)
 {
     const double r = b/L;
-    return (L*b/6.0) *
-           (1.0 - r*1.5  + 1.5*r*r - 0.75*r*r*r*(1.0 - exp(-2.0/r)));
+    return (L*b/6.0) * (1.0 + r*(-1.5 + r*(1.5 + r*0.75*expm1(-2.0/r))));
+
 }
 
 //
@@ -40,7 +39,7 @@ Rgsquare(double q, double L, double b)
     return AlphaSquare(L/b)*L*b/6.0;
 }
 
-static inline double
+static double
 sech_WR(double x)
 {
     return(1/cosh(x));
@@ -50,7 +49,6 @@ static double
 a1long(double q, double L, double b, double p1, double p2, double q0)
 {
     double C;
-    const double onehalf = 1.0/2.0;
 
     if( L/b > 10.0) {
         C = 3.06/pow((L/b),0.44);
@@ -85,7 +83,7 @@ a1long(double q, double L, double b, double p1, double p2, double q0)
          (7.0*b2)/(15.0*Rg02))));
 
     const double t2 = (2.0*b4*(((-1.0) + pow((double)M_E,(-(Rg02/b2))) +
-         Rg02/b2))*((1.0 + onehalf*(((-1.0) -
+         Rg02/b2))*((1.0 + 0.5*(((-1.0) -
          tanh((-C4 + Rgb/C5)))))));
 
     const double t3 = ((C3*pow(Rgb,((-3.0)/miu)) +
@@ -111,11 +109,11 @@ a1long(double q, double L, double b, double p1, double p2, double q0)
          Rg02/b2))*pow(sech_WR(((-C4) + Rgb)/C5),2));
 
     const double t9 = (2.0*b4*(((2.0*q0*Rg2)/b -
-         (2.0*pow((double)M_E,(-(Rg02/b2)))*q0*Rg2)/b))*((1.0 + onehalf*(((-1.0) -
+         (2.0*pow((double)M_E,(-(Rg02/b2)))*q0*Rg2)/b))*((1.0 + 0.5*(((-1.0) -
          tanh(((-C4) + Rgb)/C5))))));
 
     const double t10 = (8.0*b4*b*(((-1.0) + pow((double)M_E,(-(Rg02/b2))) +
-         Rg02/b2))*((1.0 + onehalf*(((-1.0) - tanh(((-C4) +
+         Rg02/b2))*((1.0 + 0.5*(((-1.0) - tanh(((-C4) +
          Rgb)/C5))))));
 
     const double t11 = (((-((3.0*C3*Rg*pow(((Rgb)),((-1.0) -
@@ -130,7 +128,7 @@ a1long(double q, double L, double b, double p1, double p2, double q0)
           (7.0*b2)/(15.0*Rg02))));
 
     const double t14 = (2.0*b4*(((-1.0) + pow((double)M_E,(-(Rg02/b2))) +
-          Rg02/b2))*((1.0 + onehalf*(((-1.0) - tanh(((-C4) +
+          Rg02/b2))*((1.0 + 0.5*(((-1.0) - tanh(((-C4) +
           Rgb)/C5))))));
 
     const double t15 = ((C3*pow(((Rgb)),((-3.0)/miu)) +
@@ -139,11 +137,11 @@ a1long(double q, double L, double b, double p1, double p2, double q0)
 
 
     double yy = (pow(q0,p1)*(((-((b*M_PI)/(L*q0))) +t1/L +t2/(q04*Rg22) +
-        onehalf*t3*t4)) + (t5*((pow(q0,(p1 - p2))*
+        0.5*t3*t4)) + (t5*((pow(q0,(p1 - p2))*
         (((-pow(q0,(-p1)))*(((b2*M_PI)/(L*q02) +t6/L +t7/(2.0*C5) -
-        t8/(C5*q04*Rg22) + t9/(q04*Rg22) -t10/(q05*Rg22) + onehalf*t11*t12)) -
+        t8/(C5*q04*Rg22) + t9/(q04*Rg22) -t10/(q05*Rg22) + 0.5*t11*t12)) -
         b*p1*pow(q0,((-1.0) - p1))*(((-((b*M_PI)/(L*q0))) + t13/L +
-        t14/(q04*Rg22) + onehalf*t15*((1.0 + tanh(((-C4) +
+        t14/(q04*Rg22) + 0.5*t15*((1.0 + tanh(((-C4) +
         Rgb)/C5)))))))))));
 
     return (yy);
@@ -153,7 +151,6 @@ static double
 a2long(double q, double L, double b, double p1, double p2, double q0)
 {
     double C;
-    const double onehalf = 1.0/2.0;
 
     if( L/b > 10.0) {
         C = 3.06/pow((L/b),0.44);
@@ -200,11 +197,11 @@ a2long(double q, double L, double b, double p1, double p2, double q0)
 
     const double t5 = (2.0*b4*(((2.0*q0*Rg2)/b -
          (2.0*pow((double)M_E,(-(Rg02/b2)))*q0*Rg2)/b))*
-         ((1.0 + onehalf*(((-1.0) - tanh(((-C4) +
+         ((1.0 + 0.5*(((-1.0) - tanh(((-C4) +
          Rgb)/C5))))))/(q04*Rg22);
 
     const double t6 = (8.0*b4*b*(((-1.0) + pow((double)M_E,(-(Rg02/b2))) +
-         Rg02/b2))*((1.0 + onehalf*(((-1) - tanh(((-C4) +
+         Rg02/b2))*((1.0 + 0.5*(((-1) - tanh(((-C4) +
          Rgb)/C5))))))/(q05*Rg22);
 
     const double t7 = (((-((3.0*C3*Rg*pow(((Rgb)),((-1.0) -
@@ -218,13 +215,13 @@ a2long(double q, double L, double b, double p1, double p2, double q0)
          (7.0*b2)/(15*Rg02))) + (7.0*b2)/(15.0*Rg02))))/L;
 
     const double t10 = (2.0*b4*(((-1) + pow((double)M_E,(-(Rg02/b2))) +
-          Rg02/b2))*((1.0 + onehalf*(((-1) - tanh(((-C4) +
+          Rg02/b2))*((1.0 + 0.5*(((-1) - tanh(((-C4) +
           Rgb)/C5))))))/(q04*Rg22);
 
     const double yy = ((-1.0*(t1* ((-pow(q0,-p1)*(((b2*M_PI)/(L*q02) +
-         t2 + t3 - t4 + t5 - t6 + onehalf*t7*t8)) - b*p1*pow(q0,((-1.0) - p1))*
+         t2 + t3 - t4 + t5 - t6 + 0.5*t7*t8)) - b*p1*pow(q0,((-1.0) - p1))*
          (((-((b*M_PI)/(L*q0))) + t9 + t10 +
-         onehalf*((C3*pow(((Rgb)),((-3.0)/miu)) +
+         0.5*((C3*pow(((Rgb)),((-3.0)/miu)) +
          C2*pow(((Rgb)),((-2.0)/miu)) +
          C1*pow(((Rgb)),((-1.0)/miu))))*
          ((1.0 + tanh(((-C4) + Rgb)/C5))))))))));

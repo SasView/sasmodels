@@ -93,7 +93,7 @@ parameters = [["sld", "1e-6/Ang^2", 0.5, [-inf, inf], "sld",
                "vesicle shell thickness"],
              ]
 
-source = ["lib/sph_j1c.c", "vesicle.c"]
+source = ["lib/sas_3j1x_x.c", "vesicle.c"]
 
 def ER(radius, thickness):
     '''
@@ -115,8 +115,8 @@ def VR(radius, thickness):
     :return whole-core: volume of the shell
     '''
 
-    whole = 4. * pi * (radius + thickness) ** 3. / 3.
-    core = 4. * pi * radius ** 3. / 3.
+    whole = 4./3. * pi * (radius + thickness)**3
+    core = 4./3. * pi * radius**3
     return whole, whole - core
 
 

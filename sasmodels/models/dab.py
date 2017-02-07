@@ -58,8 +58,8 @@ parameters = [["cor_length", "Ang", 50.0, [0, inf], "", "correlation length"],
              ]
 
 Iq = """
-    double numerator   = pow(cor_length, 3);
-    double denominator = pow(1 + pow(q*cor_length,2), 2);
+    double numerator   = cube(cor_length);
+    double denominator = square(1 + square(q*cor_length));
     
     return numerator / denominator ;
     """

@@ -7,10 +7,7 @@ double Iq(double q,
 double form_volume(double radius, double thickness)
 {
     //note that for the vesicle model, the volume is ONLY the shell volume
-    double volume;
-    volume =4.*M_PI*(radius+thickness)*(radius+thickness)*(radius+thickness)/3;
-    volume -=4.*M_PI*radius*radius*radius/3.;
-    return volume;
+    return M_4PI_3*(cube(radius+thickness) - cube(radius));
 }
 
 double Iq(double q,
@@ -31,16 +28,16 @@ double Iq(double q,
 
     // core first, then add in shell
     contrast = sld_solvent-sld;
-    vol = 4.0*M_PI/3.0*radius*radius*radius;
-    f = vol*sph_j1c(q*radius)*contrast;
+    vol = M_4PI_3*cube(radius);
+    f = vol * sas_3j1x_x(q*radius) * contrast;
  
     //now the shell. No volume normalization as this is done by the caller
     contrast = sld-sld_solvent;
-    vol = 4.0*M_PI/3.0*(radius+thickness)*(radius+thickness)*(radius+thickness);
-    f += vol*sph_j1c(q*(radius+thickness))*contrast;
+    vol = M_4PI_3*cube(radius+thickness);
+    f += vol * sas_3j1x_x(q*(radius+thickness)) * contrast;
 
     //rescale to [cm-1]. 
-    f2 = volfraction*f*f*1.0e-4;
+    f2 = volfraction * f*f*1.0e-4;
     
-    return(f2);
+    return f2;
 }

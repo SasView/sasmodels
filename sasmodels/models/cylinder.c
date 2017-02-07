@@ -17,7 +17,7 @@ double fq(double q, double sn, double cn, double radius, double length)
     // precompute qr and qh to save time in the loop
     const double qr = q*radius;
     const double qh = q*0.5*length; 
-    return  sas_J1c(qr*sn) * sinc(qh*cn) ;
+    return sas_2J1x_x(qr*sn) * sas_sinx_x(qh*cn);
 }
 
 double orient_avg_1D(double q, double radius, double length)
@@ -57,16 +57,10 @@ double Iqxy(double qx, double qy,
     double theta,
     double phi)
 {
-    double sn, cn; // slots to hold sincos function output
-
-    // Compute angle alpha between q and the cylinder axis
-    SINCOS(phi*M_PI_180, sn, cn);
-    const double q = sqrt(qx*qx + qy*qy);
-    const double cos_val = (q==0. ? 1.0 : (cn*qx + sn*qy)*sin(theta*M_PI_180)/q);
-
-    const double alpha = acos(cos_val);
-
-    SINCOS(alpha, sn, cn);
+    double q, sin_alpha, cos_alpha;
+    ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sin_alpha, cos_alpha);
+    //printf("sn: %g cn: %g\n", sin_alpha, cos_alpha);
     const double s = (sld-solvent_sld) * form_volume(radius, length);
-    return 1.0e-4 * square(s * fq(q, sn, cn, radius, length));
+    const double form = fq(q, sin_alpha, cos_alpha, radius, length);
+    return 1.0e-4 * square(s * form);
 }

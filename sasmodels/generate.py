@@ -138,7 +138,7 @@ Code follows the C99 standard with the following extensions and conditions::
     M_4PI_3 = 4pi/3
     square(x) = x*x
     cube(x) = x*x*x
-    sinc(x) = sin(x)/x, with sin(0)/0 -> 1
+    sas_sinx_x(x) = sin(x)/x, with sin(0)/0 -> 1
     all double precision constants must include the decimal point
     all double declarations may be converted to half, float, or long double
     FLOAT_SIZE is the number of bytes in the converted variables
@@ -165,6 +165,7 @@ import sys
 from os.path import abspath, dirname, join as joinpath, exists, isdir, getmtime
 import re
 import string
+from zlib import crc32
 
 import numpy as np  # type: ignore
 
@@ -355,6 +356,13 @@ def ocl_timestamp(model_info):
     newest = max(times) if times else 0
     return newest
 
+def tag_source(source):
+    # type: (str) -> str
+    """
+    Return a unique tag for the source code.
+    """
+    # Note: need 0xffffffff&val to force an unsigned 32-bit number
+    return "%08X"%(0xffffffff&crc32(source))
 
 def convert_type(source, dtype):
     # type: (str, np.dtype) -> str

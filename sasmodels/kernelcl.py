@@ -293,7 +293,8 @@ class GpuEnvironment(object):
         # Note: PyOpenCL caches based on md5 hash of source, options and device
         # so we don't really need to cache things for ourselves.  I'll do so
         # anyway just to save some data munging time.
-        key = "%s-%s%s"%(name, dtype, ("-fast" if fast else ""))
+        tag = generate.tag_source(source)
+        key = "%s-%s-%s%s"%(name, dtype, tag, ("-fast" if fast else ""))
         # Check timestamp on program
         program, program_timestamp = self.compiled.get(key, (None, np.inf))
         if program_timestamp < timestamp:

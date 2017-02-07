@@ -25,7 +25,7 @@ double Iqxy(double qx, double qy,
 
 double form_volume(double radius, double thick_rim, double thick_face, double length)
 {
-    return M_PI*(radius+thick_rim)*(radius+thick_rim)*(length+2*thick_face);
+    return M_PI*(radius+thick_rim)*(radius+thick_rim)*(length+2.0*thick_face);
 }
 
 static double
@@ -38,7 +38,8 @@ bicelle_kernel(double qq,
               double rhoh,
               double rhor,
               double rhosolv,
-              double dum)
+              double sin_alpha,
+              double cos_alpha)
 {
     double si1,si2,be1,be2;
 
@@ -48,25 +49,23 @@ bicelle_kernel(double qq,
     const double vol1 = M_PI*rad*rad*(2.0*length);
     const double vol2 = M_PI*(rad+radthick)*(rad+radthick)*2.0*(length+facthick);
     const double vol3 = M_PI*rad*rad*2.0*(length+facthick);
-    double sn,cn;
-    SINCOS(dum, sn, cn);
-    double besarg1 = qq*rad*sn;
-    double besarg2 = qq*(rad+radthick)*sn;
-    double sinarg1 = qq*length*cn;
-    double sinarg2 = qq*(length+facthick)*cn;
+    double besarg1 = qq*rad*sin_alpha;
+    double besarg2 = qq*(rad+radthick)*sin_alpha;
+    double sinarg1 = qq*length*cos_alpha;
+    double sinarg2 = qq*(length+facthick)*cos_alpha;
 
-    be1 = sas_J1c(besarg1);
-    be2 = sas_J1c(besarg2);
-    si1 = sinc(sinarg1);
-    si2 = sinc(sinarg2);
+    be1 = sas_2J1x_x(besarg1);
+    be2 = sas_2J1x_x(besarg2);
+    si1 = sas_sinx_x(sinarg1);
+    si2 = sas_sinx_x(sinarg2);
 
     const double t = vol1*dr1*si1*be1 +
                      vol2*dr2*si2*be2 +
                      vol3*dr3*si2*be1;
 
-    const double retval = t*t*sn;
+    const double retval = t*t*sin_alpha;
 
-    return(retval);
+    return retval;
 
 }
 
@@ -82,24 +81,27 @@ bicelle_integration(double qq,
                    double rhosolv)
 {
     // set up the integration end points
-    const double uplim = M_PI/4;
-    const double halfheight = length/2.0;
+    const double uplim = M_PI_4;
+    const double halfheight = 0.5*length;
 
     double summ = 0.0;
     for(int i=0;i<N_POINTS_76;i++) {
-        double zi = (Gauss76Z[i] + 1.0)*uplim;
+        double alpha = (Gauss76Z[i] + 1.0)*uplim;
+        double sin_alpha, cos_alpha; // slots to hold sincos function output
+        SINCOS(alpha, sin_alpha, cos_alpha);
         double yyy = Gauss76Wt[i] * bicelle_kernel(qq, rad, radthick, facthick,
-                             halfheight, rhoc, rhoh, rhor,rhosolv, zi);
+                             halfheight, rhoc, rhoh, rhor, rhosolv,
+                             sin_alpha, cos_alpha);
         summ += yyy;
     }
 
     // calculate value of integral to return
     double answer = uplim*summ;
-    return(answer);
+    return answer;
 }
 
 static double
-bicelle_kernel_2d(double q, double q_x, double q_y,
+bicelle_kernel_2d(double qx, double qy,
           double radius,
           double thick_rim,
           double thick_face,
@@ -111,22 +113,12 @@ bicelle_kernel_2d(double q, double q_x, double q_y,
           double theta,
           double phi)
 {
-    //convert angle degree to radian
-    theta *= M_PI_180;
-    phi *= M_PI_180;
+    double q, sin_alpha, cos_alpha;
+    ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sin_alpha, cos_alpha);
 
-    // Cylinder orientation
-    const double cyl_x = sin(theta) * cos(phi);
-    const double cyl_y = sin(theta) * sin(phi);
-
-    // Compute the angle btw vector q and the axis of the cylinder
-    const double cos_val = cyl_x*q_x + cyl_y*q_y;
-    const double alpha = acos( cos_val );
-
-    // Get the kernel
     double answer = bicelle_kernel(q, radius, thick_rim, thick_face,
-                           length/2.0, core_sld, face_sld, rim_sld,
-                           solvent_sld, alpha) / fabs(sin(alpha));
+                           0.5*length, core_sld, face_sld, rim_sld,
+                           solvent_sld, sin_alpha, cos_alpha) / fabs(sin_alpha);
 
     answer *= 1.0e-4;
 
@@ -161,9 +153,7 @@ double Iqxy(double qx, double qy,
           double theta,
           double phi)
 {
-    double q;
-    q = sqrt(qx*qx+qy*qy);
-    double intensity = bicelle_kernel_2d(q, qx/q, qy/q,
+    double intensity = bicelle_kernel_2d(qx, qy,
                       radius,
                       thick_rim,
                       thick_face,
