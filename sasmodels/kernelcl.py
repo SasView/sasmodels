@@ -463,16 +463,14 @@ class GpuInput(object):
         # at this point, so instead using 32, which is good on the set of
         # architectures tested so far.
         if self.is_2d:
-            # Note: 17 rather than 15 because results is 2 elements
-            # longer than input.
-            width = ((self.nq+17)//16)*16
+            # Note: 16 rather than 15 because result is 1 longer than input.
+            width = ((self.nq+16)//16)*16
             self.q = np.empty((width, 2), dtype=dtype)
             self.q[:self.nq, 0] = q_vectors[0]
             self.q[:self.nq, 1] = q_vectors[1]
         else:
-            # Note: 33 rather than 31 because results is 2 elements
-            # longer than input.
-            width = ((self.nq+33)//32)*32
+            # Note: 32 rather than 31 because result is 1 longer than input.
+            width = ((self.nq+32)//32)*32
             self.q = np.empty(width, dtype=dtype)
             self.q[:self.nq] = q_vectors[0]
         self.global_size = [self.q.shape[0]]
@@ -522,16 +520,15 @@ class GpuKernel(Kernel):
         self.dtype = dtype
         self.dim = '2d' if q_input.is_2d else '1d'
         # plus three for the normalization values
-        self.result = np.empty(q_input.nq+3, dtype)
+        self.result = np.empty(q_input.nq+1, dtype)
 
         # Inputs and outputs for each kernel call
         # Note: res may be shorter than res_b if global_size != nq
         env = environment()
         self.queue = env.get_queue(dtype)
 
-        q_size = max(len(self.result), q_input.global_size[0])
         self.result_b = cl.Buffer(self.queue.context, mf.READ_WRITE,
-                                  q_size * dtype.itemsize)
+                                  q_input.global_size[0] * dtype.itemsize)
         self.q_input = q_input # allocated by GpuInput above
 
         self._need_release = [self.result_b, self.q_input]
