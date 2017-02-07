@@ -40,7 +40,7 @@ Iq(double qval,
 //	Zq = (1-ww^2)/(1+ww^2-2*ww*cos(qval*davg))
 	
 	const double xi = th/2.0;		//use 1/2 the bilayer thickness
-	const double Pbil = square(sinc(qval*xi));
+	const double Pbil = square(sas_sinx_x(qval*xi));
 	
 	const double contr = sld - solvent_sld;
 	const double inten = 2.0*M_PI*contr*contr*Pbil*Znq/(qval*qval);
