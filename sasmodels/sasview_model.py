@@ -15,6 +15,7 @@ import collections
 import traceback
 import logging
 from os.path import basename, splitext
+import thread
 
 import numpy as np  # type: ignore
 
@@ -37,6 +38,8 @@ try:
     SasviewModelType = Callable[[int], "SasviewModel"]
 except ImportError:
     pass
+
+calculation_lock = thread.allocate_lock()
 
 SUPPORT_OLD_STYLE_PLUGINS = True
 
@@ -604,6 +607,16 @@ class SasviewModel(object):
         This should NOT be used for fitting since it copies the *q* vectors
         to the card for each evaluation.
         """
+        ## uncomment the following when trying to debug the uncoordinated calls
+        ## to calculate_Iq
+        #if calculation_lock.locked():
+        #    logging.info("calculation waiting for another thread to complete")
+        #    logging.info("\n".join(traceback.format_stack()))
+
+        with calculation_lock:
+            return self._calculate_Iq(qx, qy)
+
+    def _calculate_Iq(self, qx, qy=None):
         #core.HAVE_OPENCL = False
         if self._model is None:
             self._model = core.build_model(self._model_info)
