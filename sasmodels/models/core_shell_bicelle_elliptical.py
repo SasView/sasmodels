@@ -82,6 +82,7 @@ see the :ref:`elliptical-cylinder` model for further information.
 .. figure:: img/elliptical_cylinder_angle_definition.jpg
 
     Definition of the angles for the oriented core_shell_bicelle_elliptical model.
+    Note that *theta* and *phi* are currently defined differently to those for the core_shell_bicelle model.
 
 
 References
@@ -148,7 +149,7 @@ demo = dict(scale=1, background=0,
             phi=0,
             psi=0)
 
-qx, qy = 0.4 * cos(90), 0.5 * sin(0)
+#qx, qy = 0.4 * cos(pi/2.0), 0.5 * sin(0)
 
 tests = [
     [{'radius': 30.0, 'x_core': 3.0, 'thick_rim':8.0, 'thick_face':14.0, 'length':50.0}, 'ER', 1],

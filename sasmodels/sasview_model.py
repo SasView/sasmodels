@@ -15,6 +15,7 @@ import collections
 import traceback
 import logging
 from os.path import basename, splitext
+import thread
 
 import numpy as np  # type: ignore
 
@@ -38,6 +39,8 @@ try:
 except ImportError:
     pass
 
+calculation_lock = thread.allocate_lock()
+
 SUPPORT_OLD_STYLE_PLUGINS = True
 
 def _register_old_models():
@@ -56,10 +59,10 @@ def _register_old_models():
 
     import sas.models
     from sasmodels.conversion_table import CONVERSION_TABLE
-    for new_name, conversion in CONVERSION_TABLE.items():
+    for new_name, conversion in CONVERSION_TABLE.get((3,1,2), {}).items():
         # CoreShellEllipsoidModel => core_shell_ellipsoid:1
         new_name = new_name.split(':')[0]
-        old_name = conversion[0]
+        old_name = conversion[0] if len(conversion) < 3 else conversion[2]
         module_attrs = {old_name: find_model(new_name)}
         ConstructedModule = type(old_name, (), module_attrs)
         old_path = 'sas.models.' + old_name
@@ -604,6 +607,16 @@ class SasviewModel(object):
         This should NOT be used for fitting since it copies the *q* vectors
         to the card for each evaluation.
         """
+        ## uncomment the following when trying to debug the uncoordinated calls
+        ## to calculate_Iq
+        #if calculation_lock.locked():
+        #    logging.info("calculation waiting for another thread to complete")
+        #    logging.info("\n".join(traceback.format_stack()))
+
+        with calculation_lock:
+            return self._calculate_Iq(qx, qy)
+
+    def _calculate_Iq(self, qx, qy=None):
         #core.HAVE_OPENCL = False
         if self._model is None:
             self._model = core.build_model(self._model_info)

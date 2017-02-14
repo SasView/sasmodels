@@ -52,6 +52,12 @@ PD_DOT = [
     ("_pd_n", ".npts"),
     ("_pd_nsigma", ".nsigmas"),
     ("_pd_type", ".type"),
+    (".lower", ".lower"),
+    (".upper", ".upper"),
+    (".fittable", ".fittable"),
+    (".std", ".std"),
+    (".units", ".units"),
+    ("", "")
     ]
 
 def _rescale(par, scale):
@@ -63,8 +69,6 @@ def _is_sld(model_info, id):
     """
     if id.startswith('M0:'):
         return True
-    if id.startswith('volfraction') or id.startswith('radius_effective'):
-        return False
     if '_pd' in id or '.' in id:
         return False
     for p in model_info.parameters.call_parameters:
@@ -74,7 +78,7 @@ def _is_sld(model_info, id):
     for p in model_info.parameters.kernel_parameters:
         if p.id == id:
             return p.type == 'sld'
-    raise ValueError("unknown parameter %r in conversion"%id)
+    return False
 
 def _rescale_sld(model_info, pars, scale):
     """
@@ -87,9 +91,9 @@ def _rescale_sld(model_info, pars, scale):
                 for id, v in pars.items())
 
 
-def _get_translation_table(model_info):
-    _, translation = CONVERSION_TABLE.get(model_info.id, [None, {}])
-    translation = translation.copy()
+def _get_translation_table(model_info, version=(3,1,2)):
+    conv_param = CONVERSION_TABLE.get(version, {}).get(model_info.id, [None, {}])
+    translation = conv_param[1].copy()
     for p in model_info.parameters.kernel_parameters:
         if p.length > 1:
             newid = p.id
@@ -119,32 +123,6 @@ def _dot_pd_to_underscore_pd(par):
 def _pd_to_underscores(pars):
     return dict((_dot_pd_to_underscore_pd(k), v) for k, v in pars.items())
 
-def _convert_name(conv_dict, pars):
-    """
-    Renames parameter values (upper, lower, etc) to v4.0 names
-    :param conv_dict: conversion dictionary mapping new name : old name
-    :param pars: parameters to convert
-    :return:
-    """
-    new_pars = {}
-    i = 0
-    j = 0
-    for key_par, value_par in pars.iteritems():
-        j += 1
-        for key_conv, value_conv in conv_dict.iteritems():
-            if re.search(value_conv, key_par):
-                new_pars[key_par.replace(value_conv, key_conv)] = value_par
-                i += 1
-                break
-            elif re.search("background", key_par) or re.search("scale", key_par):
-                new_pars[key_par] = value_par
-                i += 1
-                break
-        if i != j:
-            new_pars[key_par] = value_par
-            i += 1
-    return new_pars
-
 def _convert_pars(pars, mapping):
     """
     Rename the parameters and any associated polydispersity attributes.
@@ -166,8 +144,7 @@ def _convert_pars(pars, mapping):
                     del newpars[source]
     return newpars
 
-
-def _conversion_target(model_name):
+def _conversion_target(model_name, version=(3,1,2)):
     """
     Find the sasmodel name which translates into the sasview name.
 
@@ -175,13 +152,18 @@ def _conversion_target(model_name):
     This is necessary since there is only one variant in sasmodels for the
     two variants in sasview.
     """
-    for sasmodels_name, [sasview_name, _] in CONVERSION_TABLE.items():
-        if sasview_name == model_name:
+    for sasmodels_name, sasview_dict in \
+            CONVERSION_TABLE.get(version, {}).items():
+        if sasview_dict[0] == model_name:
             return sasmodels_name
     return None
 
+def _hand_convert(name, oldpars, version=(3,1,2)):
+    if version == (3,1,2):
+        oldpars = _hand_convert_3_1_2_to_4_1(name, oldpars)
+    return oldpars
 
-def _hand_convert(name, oldpars):
+def _hand_convert_3_1_2_to_4_1(name, oldpars):
     if name == 'core_shell_parallelepiped':
         # Make sure pd on rim parameters defaults to zero
         # ... probably not necessary.
@@ -214,6 +196,20 @@ def _hand_convert(name, oldpars):
         if 'radius.width' in oldpars:
             pd = oldpars['radius.width']*oldpars['radius']/thickness
             oldpars['radius.width'] = pd
+    elif name == 'multilayer_vesicle':
+        if 'scale' in oldpars:
+            oldpars['volfraction'] = oldpars['scale']
+            oldpars['scale'] = 1.0
+        if 'scale.lower' in oldpars:
+            oldpars['volfraction.lower'] = oldpars['scale.lower']
+        if 'scale.upper' in oldpars:
+            oldpars['volfraction.upper'] = oldpars['scale.upper']
+        if 'scale.fittable' in oldpars:
+            oldpars['volfraction.fittable'] = oldpars['scale.fittable']
+        if 'scale.std' in oldpars:
+            oldpars['volfraction.std'] = oldpars['scale.std']
+        if 'scale.units' in oldpars:
+            oldpars['volfraction.units'] = oldpars['scale.units']
     elif name == 'pearl_necklace':
         pass
         #_remove_pd(oldpars, 'num_pearls', name)
@@ -235,7 +231,25 @@ def _hand_convert(name, oldpars):
             if p + ".upper" in oldpars:
                 oldpars[p + ".upper"] /= 1e-13
     elif name == 'spherical_sld':
-        oldpars["CONTROL"] += 1
+        j = 0
+        while "func_inter" + str(j) in oldpars:
+            name = "func_inter" + str(j)
+            new_name = "shape" + str(j + 1)
+            if oldpars[name] == 'Erf(|nu|*z)':
+                oldpars[new_name] = int(0)
+            elif oldpars[name] == 'RPower(z^|nu|)':
+                oldpars[new_name] = int(1)
+            elif oldpars[name] == 'LPower(z^|nu|)':
+                oldpars[new_name] = int(2)
+            elif oldpars[name] == 'RExp(-|nu|*z)':
+                oldpars[new_name] = int(3)
+            elif oldpars[name] == 'LExp(-|nu|*z)':
+                oldpars[new_name] = int(4)
+            else:
+                oldpars[new_name] = int(0)
+            oldpars.pop(name)
+            oldpars['n_shells'] = str(j + 1)
+            j += 1
     elif name == 'teubner_strey':
         # basically undoing the entire Teubner-Strey calculations here.
         #    drho = (sld_a - sld_b)
@@ -280,33 +294,46 @@ def _hand_convert(name, oldpars):
 
     return oldpars
 
-def convert_model(name, pars, use_underscore=False):
+def convert_model(name, pars, use_underscore=False, model_version=(3,1,2)):
     """
     Convert model from old style parameter names to new style.
     """
-    newname = _conversion_target(name)
-    if newname is None:
-        return name, pars
-    if ':' in newname:   # core_shell_ellipsoid:1
-        model_info = load_model_info(newname[:-2])
-        # Know that the table exists and isn't multiplicity so grab it directly
-        # Can't use _get_translation_table since that will return the 'bare'
-        # version.
-        translation = CONVERSION_TABLE[newname][1]
-    else:
-        model_info = load_model_info(newname)
-        translation = _get_translation_table(model_info)
-    newpars = _hand_convert(newname, pars.copy())
-    newpars = _convert_name(translation, newpars)
-    newpars = _convert_pars(newpars, translation)
-    if not model_info.structure_factor:
-        newpars = _rescale_sld(model_info, newpars, 1e6)
-    newpars.setdefault('scale', 1.0)
-    newpars.setdefault('background', 0.0)
-    if use_underscore:
-        newpars = _pd_to_underscores(newpars)
+    newpars = pars
+    keys = sorted(CONVERSION_TABLE.keys())
+    for i, version in enumerate(keys):
+        # Don't allow indices outside list
+        next_i = i + 1
+        if next_i == len(keys):
+            next_i = i
+        # If the save state is from a later version, skip the check
+        if model_version <= keys[next_i]:
+            newname = _conversion_target(name, version)
+        else:
+            newname = None
+        # If no conversion is found, move on
+        if newname is None:
+            newname = name
+            continue
+        if ':' in newname:   # core_shell_ellipsoid:1
+            model_info = load_model_info(newname[:-2])
+            # Know the table exists and isn't multiplicity so grab it directly
+            # Can't use _get_translation_table since that will return the 'bare'
+            # version.
+            translation = CONVERSION_TABLE.get(version, {})[newname][1]
+        else:
+            model_info = load_model_info(newname)
+            translation = _get_translation_table(model_info, version)
+        newpars = _hand_convert(newname, newpars, version)
+        newpars = _convert_pars(newpars, translation)
+        # TODO: Still not convinced this is the best check
+        if not model_info.structure_factor and version == (3,1,2):
+            newpars = _rescale_sld(model_info, newpars, 1e6)
+        newpars.setdefault('scale', 1.0)
+        newpars.setdefault('background', 0.0)
+        if use_underscore:
+            newpars = _pd_to_underscores(newpars)
+        name = newname
     return newname, newpars
-
 
 # ========= BACKWARD CONVERSION sasmodels => sasview 3.x ===========
 
