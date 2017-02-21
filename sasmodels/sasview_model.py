@@ -733,10 +733,10 @@ class SasviewModel(object):
         else:
             return [self.params[par.name]], [1.0]
 
-def test_model():
+def test_cylinder():
     # type: () -> float
     """
-    Test that a sasview model (cylinder) can be run.
+    Test that the cylinder model runs, returning the value at [0.1,0.1].
     """
     Cylinder = _make_standard_model('cylinder')
     cylinder = Cylinder()
@@ -745,7 +745,7 @@ def test_model():
 def test_structure_factor():
     # type: () -> float
     """
-    Test that a sasview model (cylinder) can be run.
+    Test that 2-D hardsphere model runs and doesn't produce NaN.
     """
     Model = _make_standard_model('hardsphere')
     model = Model()
@@ -756,17 +756,28 @@ def test_structure_factor():
 def test_rpa():
     # type: () -> float
     """
-    Test that a sasview model (cylinder) can be run.
+    Test that the 2-D RPA model runs
     """
     RPA = _make_standard_model('rpa')
     rpa = RPA(3)
     return rpa.evalDistribution([0.1, 0.1])
 
+def test_empty_distribution():
+    # type: () -> None
+    """
+    Make sure that sasmodels returns NaN when there are no polydispersity points
+    """
+    Cylinder = _make_standard_model('cylinder')
+    cylinder = Cylinder()
+    cylinder.setParam('radius', -1.0)
+    cylinder.setParam('background', 0.)
+    Iq = cylinder.evalDistribution(np.asarray([0.1]))
+    assert np.isnan(Iq[0]), "empty distribution fails"
 
 def test_model_list():
     # type: () -> None
     """
-    Make sure that all models build as sasview models.
+    Make sure that all models build as sasview models
     """
     from .exception import annotate_exception
     for name in core.list_models():
@@ -793,4 +804,5 @@ def test_old_name():
     CylinderModel().evalDistribution([0.1, 0.1])
 
 if __name__ == "__main__":
-    print("cylinder(0.1,0.1)=%g"%test_model())
+    print("cylinder(0.1,0.1)=%g"%test_cylinder())
+    #test_empty_distribution()
