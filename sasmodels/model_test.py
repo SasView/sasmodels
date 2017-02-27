@@ -180,17 +180,57 @@ def _hide_model_case_from_nose():
                 for test in smoke_tests + tests:
                     self.run_one(model, test)
 
-                if not tests and self.platform == "dll":
+                # Check for missing tests.  Only do so for the "dll" tests
+                # to reduce noise from both opencl and dll, and because
+                # python kernels use platform="dll".
+                if self.platform == "dll":
+                    missing = []
                     ## Uncomment the following to make forgetting the test
-                    ## values an error.  Only do so for the "dll" tests
-                    ## to reduce noise from both opencl and dll, and because
-                    ## python kernels use platform="dll".
-                    #raise Exception("No test cases provided")
-                    pass
+                    ## an error
+                    missing = self._find_missing_tests()
+                    if missing:
+                        raise ValueError("Missing tests for "+", ".join(missing))
 
             except:
                 annotate_exception(self.test_name)
                 raise
+
+        def _find_missing_tests(self):
+            # type: () -> None
+            """make sure there are 1D, 2D, ER and VR tests as appropriate"""
+            model_has_VR = callable(self.info.VR)
+            model_has_ER = callable(self.info.ER)
+            model_has_1D = True
+            model_has_2D = any(p.type == 'orientation'
+                               for p in self.info.parameters.kernel_parameters)
+
+            # Lists of tests that have a result that is not None
+            single = [test for test in self.info.tests
+                      if not isinstance(test[2], list) and test[2] is not None]
+            tests_has_VR = any(test[1] == 'VR' for test in single)
+            tests_has_ER = any(test[1] == 'ER' for test in single)
+            tests_has_1D_single = any(isinstance(test[1], float) for test in single)
+            tests_has_2D_single = any(isinstance(test[1], tuple) for test in single)
+
+            multiple = [test for test in self.info.tests
+                        if isinstance(test[2], list)
+                            and not all(result is None for result in test[2])]
+            tests_has_1D_multiple = any(isinstance(test[1][0], float)
+                                        for test in multiple)
+            tests_has_2D_multiple = any(isinstance(test[1][0], tuple)
+                                        for test in multiple)
+
+            missing = []
+            if model_has_VR and not tests_has_VR:
+                missing.append("VR")
+            if model_has_ER and not tests_has_ER:
+                missing.append("ER")
+            if model_has_1D and not (tests_has_1D_single or tests_has_1D_multiple):
+                missing.append("1D")
+            if model_has_2D and not (tests_has_2D_single or tests_has_2D_multiple):
+                missing.append("2D")
+
+            return missing
 
         def run_one(self, model, test):
             # type: (KernelModel, TestCondition) -> None
