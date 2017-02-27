@@ -105,7 +105,8 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
     pars = get_pars(model_info, use_demo=True)
     header = ('\n"Model","%s","Count","%d","Dimension","%s"'
               % (name, N, "2D" if is_2d else "1D"))
-    if not mono: header += ',"Cutoff",%g'%(cutoff,)
+    if not mono:
+        header += ',"Cutoff",%g'%(cutoff,)
     print(header)
 
     if is_2d:
@@ -160,11 +161,12 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
     first = True
     max_diff = [0]
     for k in range(N):
-        print("%s %d"%(name, k), file=sys.stderr)
+        print("Model %s %d"%(name, k+1), file=sys.stderr)
         seed = np.random.randint(1e6)
         pars_i = randomize_pars(model_info, pars, seed)
         constrain_pars(model_info, pars_i)
-        constrain_new_to_old(model_info, pars_i)
+        if 'sasview' in (base, comp):
+            constrain_new_to_old(model_info, pars_i)
         if mono:
             pars_i = suppress_pd(pars_i)
 
@@ -203,8 +205,9 @@ def print_help():
     print_usage()
     print("""\
 
-MODEL is the model name of the model or "all" for all the models
-in alphabetical order.
+MODEL is the model name of the model or one of the model types listed in
+sasmodels.core.list_models (all, py, c, double, single, opencl, 1d, 2d,
+nonmagnetic, magnetic).  Model types can be combined, such as 2d+single.
 
 COUNT is the number of randomly generated parameter sets to try. A value
 of "10000" is a reasonable check for monodisperse models, or "100" for
@@ -236,10 +239,13 @@ def main(argv):
         print_help()
         return
 
-    model = argv[0]
-    if not (model in MODELS) and (model != "all"):
-        print('Bad model %s.  Use "all" or one of:'%model)
+    target = argv[0]
+    try:
+        model_list = [target] if target in MODELS else core.list_models(target)
+    except ValueError:
+        print('Bad model %s.  Use model type or one of:'%model)
         print_models()
+        print('model types: all, py, c, double, single, opencl, 1d, 2d, nonmagnetic, magnetic')
         return
     try:
         count = int(argv[1])
@@ -257,7 +263,6 @@ def main(argv):
 
     data, index = make_data({'qmax':1.0, 'is2d':is2D, 'nq':Nq, 'res':0.,
                              'accuracy': 'Low', 'view':'log', 'zero': False})
-    model_list = [model] if model != "all" else MODELS
     for model in model_list:
         compare_instance(model, data, index, N=count, mono=mono,
                          cutoff=cutoff, base=base, comp=comp)
