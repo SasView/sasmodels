@@ -96,15 +96,43 @@ def make_suite(loaders, models):
         # available in some environmentes.
         is_py = callable(model_info.Iq)
 
+        # Some OpenCL drivers seem to be flaky, and are not producing the
+        # expected result.  Since we don't have known test values yet for
+        # all of our models, we are instead going to compare the results
+        # for the 'smoke test' (that is, evaluation at q=0.1 for the default
+        # parameters just to see that the model runs to completion) between
+        # the OpenCL and the DLL.  To do this, we define a 'stash' which is
+        # shared between OpenCL and DLL tests.  This is just a list.  If the
+        # list is empty (which it will be when DLL runs, if the DLL runs
+        # first), then the results are appended to the list.  If the list
+        # is not empty (which it will be when OpenCL runs second), the results
+        # are compared to the results stored in the first element of the list.
+        # This is a horrible stateful hack which only makes sense because the
+        # test suite is thrown away after being run once.
+        stash = []
+
         if is_py:  # kernel implemented in python
             test_name = "Model: %s, Kernel: python"%model_name
             test_method_name = "test_%s_python" % model_info.id
             test = ModelTestCase(test_name, model_info,
                                  test_method_name,
                                  platform="dll",  # so that
-                                 dtype="double")
+                                 dtype="double",
+                                 stash=stash)
             suite.addTest(test)
         else:   # kernel implemented in C
+
+            # test using dll if desired
+            if 'dll' in loaders or not core.HAVE_OPENCL:
+                test_name = "Model: %s, Kernel: dll"%model_name
+                test_method_name = "test_%s_dll" % model_info.id
+                test = ModelTestCase(test_name, model_info,
+                                     test_method_name,
+                                     platform="dll",
+                                     dtype="double",
+                                     stash=stash)
+                suite.addTest(test)
+
             # test using opencl if desired and available
             if 'opencl' in loaders and core.HAVE_OPENCL:
                 test_name = "Model: %s, Kernel: OpenCL"%model_name
@@ -115,18 +143,9 @@ def make_suite(loaders, models):
                 # presence of *single=False* in the model file.
                 test = ModelTestCase(test_name, model_info,
                                      test_method_name,
-                                     platform="ocl", dtype=None)
+                                     platform="ocl", dtype=None,
+                                     stash=stash)
                 #print("defining", test_name)
-                suite.addTest(test)
-
-            # test using dll if desired
-            if 'dll' in loaders or not core.HAVE_OPENCL:
-                test_name = "Model: %s, Kernel: dll"%model_name
-                test_method_name = "test_%s_dll" % model_info.id
-                test = ModelTestCase(test_name, model_info,
-                                     test_method_name,
-                                     platform="dll",
-                                     dtype="double")
                 suite.addTest(test)
 
     return suite
@@ -143,12 +162,13 @@ def _hide_model_case_from_nose():
         description file.
         """
         def __init__(self, test_name, model_info, test_method_name,
-                     platform, dtype):
-            # type: (str, ModelInfo, str, str, DType) -> None
+                     platform, dtype, stash):
+            # type: (str, ModelInfo, str, str, DType, List[Any]) -> None
             self.test_name = test_name
             self.info = model_info
             self.platform = platform
             self.dtype = dtype
+            self.stash = stash  # container for the results of the first run
 
             setattr(self, test_method_name, self.run_all)
             unittest.TestCase.__init__(self, test_method_name)
@@ -173,21 +193,25 @@ def _hide_model_case_from_nose():
                 ({}, 'VR', None),
                 ]
 
-            tests = self.info.tests
+            tests = smoke_tests + self.info.tests
             try:
                 model = build_model(self.info, dtype=self.dtype,
                                     platform=self.platform)
-                for test in smoke_tests + tests:
-                    self.run_one(model, test)
+                results = [self.run_one(model, test) for test in tests]
+                if self.stash:
+                    for test, target, actual in zip(tests, self.stash[0], results):
+                        assert np.all(abs(target-actual)<2e-5*abs(actual)),\
+                            "expected %s but got %s for %s"%(target, actual, test[0])
+                else:
+                    self.stash.append(results)
 
                 # Check for missing tests.  Only do so for the "dll" tests
                 # to reduce noise from both opencl and dll, and because
                 # python kernels use platform="dll".
                 if self.platform == "dll":
                     missing = []
-                    ## Uncomment the following to make forgetting the test
-                    ## an error
-                    missing = self._find_missing_tests()
+                    ## Uncomment the following to require test cases
+                    #missing = self._find_missing_tests()
                     if missing:
                         raise ValueError("Missing tests for "+", ".join(missing))
 
@@ -246,9 +270,9 @@ def _hide_model_case_from_nose():
             self.assertEqual(len(y), len(x))
 
             if x[0] == 'ER':
-                actual = [call_ER(model.info, pars)]
+                actual = np.array([call_ER(model.info, pars)])
             elif x[0] == 'VR':
-                actual = [call_VR(model.info, pars)]
+                actual = np.array([call_VR(model.info, pars)])
             elif isinstance(x[0], tuple):
                 qx, qy = zip(*x)
                 q_vectors = [np.array(qx), np.array(qy)]
@@ -277,6 +301,7 @@ def _hide_model_case_from_nose():
                     self.assertTrue(yi == actual_yi or is_near(yi, actual_yi, 5),
                                     'f(%s); expected:%s; actual:%s'
                                     % (xi, yi, actual_yi))
+            return actual
 
     return ModelTestCase
 
