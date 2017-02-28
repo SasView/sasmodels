@@ -69,8 +69,7 @@ double Iq(double QQ,
 	if (ierr>=0) {
 		SofQ=sqhcal(Qdiam, gMSAWave);
 	}else{
-       	//SofQ=NaN;
-		SofQ=-1.0;
+       	SofQ=NAN;
 		//	print "Error Level = ",ierr
 		//      print "Please report HPMSA problem with above error code"
 	}
