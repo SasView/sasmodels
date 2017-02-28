@@ -3,20 +3,23 @@ double Iq(double q, double sld, double sld_solvent, double radius_polar, double 
 double Iqxy(double qx, double qy, double sld, double sld_solvent,
     double radius_polar, double radius_equatorial, double theta, double phi);
 
-double _ellipsoid_kernel(double q, double radius_polar, double radius_equatorial, double sin_alpha);
-double _ellipsoid_kernel(double q, double radius_polar, double radius_equatorial, double sin_alpha)
+static double
+_ellipsoid_kernel(double q, double radius_polar, double radius_equatorial, double cos_alpha)
 {
     double ratio = radius_polar/radius_equatorial;
-    // Given the following under the radical:
-    //     1 + sin^2(T) (v^2 - 1)
-    // we can expand to match the form given in Guinier (1955)
-    //     = (1 - sin^2(T)) + v^2 sin^2(T) = cos^2(T) + sin^2(T)
+    // Using ratio v = Rp/Re, we can expand the following to match the
+    // form given in Guinier (1955)
+    //     r = Re * sqrt(1 + cos^2(T) (v^2 - 1))
+    //       = Re * sqrt( (1 - cos^2(T)) + v^2 cos^2(T) )
+    //       = Re * sqrt( sin^2(T) + v^2 cos^2(T) )
+    //       = sqrt( Re^2 sin^2(T) + Rp^2 cos^2(T) )
+    //
     // Instead of using pythagoras we could pass in sin and cos; this may be
     // slightly better for 2D which has already computed it, but it introduces
     // an extra sqrt and square for 1-D not required by the current form, so
     // leave it as is.
     const double r = radius_equatorial
-                     * sqrt(1.0 + sin_alpha*sin_alpha*(ratio*ratio - 1.0));
+                     * sqrt(1.0 + cos_alpha*cos_alpha*(ratio*ratio - 1.0));
     const double f = sas_3j1x_x(q*r);
 
     return f*f;
@@ -38,9 +41,9 @@ double Iq(double q,
     const double zb = 0.5;
     double total = 0.0;
     for (int i=0;i<76;i++) {
-        //const double sin_alpha = (Gauss76Z[i]*(upper-lower) + upper + lower)/2;
-        const double sin_alpha = Gauss76Z[i]*zm + zb;
-        total += Gauss76Wt[i] * _ellipsoid_kernel(q, radius_polar, radius_equatorial, sin_alpha);
+        //const double cos_alpha = (Gauss76Z[i]*(upper-lower) + upper + lower)/2;
+        const double cos_alpha = Gauss76Z[i]*zm + zb;
+        total += Gauss76Wt[i] * _ellipsoid_kernel(q, radius_polar, radius_equatorial, cos_alpha);
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     const double form = total*zm;
@@ -58,7 +61,7 @@ double Iqxy(double qx, double qy,
 {
     double q, sin_alpha, cos_alpha;
     ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sin_alpha, cos_alpha);
-    const double form = _ellipsoid_kernel(q, radius_polar, radius_equatorial, sin_alpha);
+    const double form = _ellipsoid_kernel(q, radius_polar, radius_equatorial, cos_alpha);
     const double s = (sld - sld_solvent) * form_volume(radius_polar, radius_equatorial);
 
     return 1.0e-4 * form * s * s;
