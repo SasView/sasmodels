@@ -186,7 +186,7 @@ def _hide_model_case_from_nose():
                 #({}, 0.0, None),
                 #({}, (0.0, 0.0), None),
                 # test vector form
-                ({}, [0.1]*2, [None]*2),
+                ({}, [0.001, 0.01, 0.1], [None]*3),
                 ({}, [(0.1, 0.1)]*2, [None]*2),
                 # test that ER/VR will run if they exist
                 ({}, 'ER', None),
@@ -200,7 +200,7 @@ def _hide_model_case_from_nose():
                 results = [self.run_one(model, test) for test in tests]
                 if self.stash:
                     for test, target, actual in zip(tests, self.stash[0], results):
-                        assert np.all(abs(target-actual)<2e-5*abs(actual)),\
+                        assert np.all(abs(target-actual) < 5e-5*abs(actual)),\
                             "expected %s but got %s for %s"%(target, actual, test[0])
                 else:
                     self.stash.append(results)
