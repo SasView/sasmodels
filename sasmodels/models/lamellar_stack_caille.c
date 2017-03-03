@@ -25,11 +25,7 @@ Iq(double qval,
   Pq = 2.0*contr*contr/qval/qval*(1.0-cos(qval*del));
 
   Sq = 0.0;
-  // the vital "=" in ii<=  added March 2015
-  for (int ii=1; ii<=Nlayers-1; ii++) {
-
-    //fii = (double)ii;   //do I really need to do this? - unused variable, removed 18Feb2015
-
+  for (int ii=1; ii < Nlayers; ii++) {
     temp = 0.0;
     alpha = Cp/4.0/M_PI/M_PI*(log(M_PI*ii) + Euler);
     //t1 = 2.0*dQ*dQ*dd*dd*alpha;
@@ -40,7 +36,7 @@ Iq(double qval,
     //temp *= cos(dd*qval*ii/(1.0+t1));
     temp *= cos(dd*qval*ii);
     //temp *= exp(-1.0*(t2 + t3)/(2.0*(1.0+t1)) );
-    temp *= exp(-t2/2.0 );
+    temp *= exp(-t2/2.0);
     //temp /= sqrt(1.0+t1);
 
     Sq += temp;

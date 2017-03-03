@@ -27,7 +27,7 @@ Iq(double qval,
   Pq *= 4.0/(qval*qval);
 
   Sq = 0.0;
-  for(int ii=1; ii<=Nlayers-1; ii++) {
+  for(int ii=1; ii < Nlayers; ii++) {
     temp = 0.0;
     alpha = Cp/4.0/M_PI/M_PI*(log(M_PI*ii) + Euler);
     //t1 = 2.0*dQ*dQ*dd*dd*alpha;
@@ -39,7 +39,7 @@ Iq(double qval,
     temp *= cos(dd*qval*ii);
     //if (temp < 0) printf("q=%g: ii=%d, cos(dd*q*ii)=cos(%g) < 0\n",qval,ii,dd*qval*ii);
     //temp *= exp(-1.0*(t2 + t3)/(2.0*(1.0+t1)) );
-    temp *= exp(-t2/2.0 );
+    temp *= exp(-t2/2.0);
     //temp /= sqrt(1.0+t1);
 
     Sq += temp;
