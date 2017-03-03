@@ -12,7 +12,6 @@ pearl_necklace_kernel(double q, double radius, double edge_sep, double thick_str
     int num_pearls, double sld_pearl, double sld_string, double sld_solv)
 {
     // number of string segments
-    num_pearls = floor(num_pearls + 0.5); //Force integer number of pearls
     const double num_strings = num_pearls - 1.0;
 
     //each masses: contrast * volume
