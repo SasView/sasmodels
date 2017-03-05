@@ -316,6 +316,9 @@ double Iq(double q, double case_num,
 
   Intg=Lad*Lad*S11+Lbd*Lbd*S22+Lcd*Lcd*S33+2.0*Lad*Lbd*S12+2.0*Lbd*Lcd*S23+2.0*Lad*Lcd*S13;
 
+  //rescale for units of Lij^2 (in 10e-12 m^2 to m^2 ?)
+  Intg *= 1.0e-24;    
+
   return Intg;
 
 
