@@ -58,6 +58,9 @@ double Iq(double q, double case_num,
     Kab = Kac = Kad = -0.0004;
   }
  
+  // Set volume fraction of component D based on constraint that sum of vol frac =1
+  Phi[3]=1.0-Phi[0]-Phi[1]-Phi[2];
+
   //set up values for cross terms in case of block copolymers (1,3,4,6,7,8,9)
   Nab=sqrt(N[0]*N[1]);
   Nac=sqrt(N[0]*N[2]);

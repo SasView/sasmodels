@@ -106,8 +106,8 @@ source = ["rpa.c"]
 single = False
 
 control = "case_num"
-HIDE_NONE = set()
-HIDE_A = set("N1 Phi1 v1 L1 b1 K12 K13 K14".split())
+HIDE_ALL = set("Phi4".split())
+HIDE_A = set("N1 Phi1 v1 L1 b1 K12 K13 K14".split()).union(HIDE_ALL)
 HIDE_AB = set("N2 Phi2 v2 L2 b2 K23 K24".split()).union(HIDE_A)
 def hidden(case_num):
     """
@@ -118,5 +118,5 @@ def hidden(case_num):
     elif case_num < 5:
         return HIDE_A
     else:
-        return HIDE_NONE
+        return HIDE_ALL
 
