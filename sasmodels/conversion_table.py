@@ -4,11 +4,30 @@ Parameter conversion table
 *CONVERSION_TABLE* gives the old model name and a dictionary of old parameter
 names for each parameter in sasmodels.  This is used by :mod:`convert` to
 determine the equivalent parameter set when comparing a sasmodels model to
-the models defined in SasView 3.1.
+the models defined in previous versions of SasView and sasmodels. This is now
+versioned based on the version number of SasView.
+
+When any sasmodels parameter or model name is changed, this must be modified to
+account for that.
+
+Usage:
+<old_Sasview_version> : {
+    <new_model_name> : [
+        <old_model_name> ,
+        {
+            <new_param_name_1> : <old_param_name_1>,
+            ...
+            <new_param_name_n> : <old_param_name_n>
+        }
+    ]
+}
+
+Any future parameter and model name changes can and should be given in this
+table for future compatibility.
 """
 
-
 CONVERSION_TABLE = {
+    (3,1,2) : {
     "adsorbed_layer": [
         "Core2ndMomentModel",
         {
@@ -210,14 +229,15 @@ CONVERSION_TABLE = {
         }
     ],
     "correlation_length": [
-        "CorrLengthModel",
+        "CorrLength",
         {
             "porod_scale": "scale_p",
             "lorentz_scale": "scale_l",
             "porod_exp": "exponent_p",
             "lorentz_exp": "exponent_l",
             "cor_length": "length_l"
-        }
+        },
+        "CorrLengthModel"
     ],
     "cylinder": [
         "CylinderModel",
@@ -298,7 +318,7 @@ CONVERSION_TABLE = {
         }
     ],
     "fractal_core_shell": [
-        "FractalCoreShellModel",
+        "FractalCoreShell",
         {
             "sld_core": "core_sld",
             "sld_shell": "shell_sld",
@@ -308,7 +328,8 @@ CONVERSION_TABLE = {
             "fractal_dim": "frac_dim",
             "cor_length": "cor_length",
             "volfraction": "volfraction",
-        }
+        },
+        "FractalCoreShellModel"
     ],
     "fuzzy_sphere": [
         "FuzzySphereModel",
@@ -320,21 +341,23 @@ CONVERSION_TABLE = {
         }
     ],
     "gauss_lorentz_gel": [
-        "GaussLorentzGelModel",
+        "GaussLorentzGel",
         {
             "gauss_scale": "scale_g",
             "cor_length_dynamic": "dyn_colength",
             "cor_length_static": "stat_colength",
             "background": "background",
             "lorentz_scale": "scale_l"
-        }
+        },
+        "GaussLorentzGelModel"
     ],
     "gaussian_peak": [
-        "PeakGaussModel",
+        "Peak Gauss Model",
         {
             "peak_pos": "q0",
             "sigma": "B",
-        }
+        },
+        "PeakGaussModel",
     ],
     "gel_fit": [
         "GelFitModel",
@@ -342,25 +365,27 @@ CONVERSION_TABLE = {
             "rg": "radius",
             "lorentz_scale": "lScale",
             "guinier_scale": "gScale",
-            "fractal_dim": "scale",
+            "fractal_dim": "FractalExp",
             "cor_length": "zeta",
         }
     ],
     "guinier": [
-        "GuinierModel",
+        "Guinier",
         {
             "rg": "rg"
-        }
+        },
+        "GuinierModel",
     ],
     "guinier_porod": [
-        "GuinierPorodModel",
+        "GuinierPorod",
         {
             "s": "dim",
             "rg": "rg",
             "porod_exp": "m",
             "scale": "scale",
             "background": "background"
-        }
+        },
+        "GuinierPorodModel",
     ],
     "hardsphere": [
         "HardsphereStructure",
@@ -453,7 +478,7 @@ CONVERSION_TABLE = {
             "thickness": "delta",
             "d_spacing": "spacing",
             "Caille_parameter": "caille",
-            "Nlayers": "N_plates",
+            "Nlayers": "n_plates",
         }
     ],
     "lamellar_stack_paracrystal": [
@@ -485,10 +510,11 @@ CONVERSION_TABLE = {
         }
     ],
     "lorentz": [
-        "LorentzModel",
+        "Lorentz",
         {
             "cor_length": "length"
-        }
+        },
+        "LorentzModel",
     ],
     "mass_fractal": [
         "MassFractalModel",
@@ -509,12 +535,13 @@ CONVERSION_TABLE = {
         }
     ],
     "mono_gauss_coil": [
-        "DebyeModel",
+        "Debye",
         {
             "rg": "rg",
             "i_zero": "scale",
             "background": "background",
-        }
+        },
+        "DebyeModel",
     ],
     "multilayer_vesicle": [
         "MultiShellModel",
@@ -563,11 +590,12 @@ CONVERSION_TABLE = {
         }
     ],
     "peak_lorentz": [
-        "PeakLorentzModel",
+        "Peak Lorentz Model",
         {
             "peak_pos": "q0",
             "peak_hwhm": "B"
-        }
+        },
+        "PeakLorentzModel",
     ],
     "pearl_necklace": [
         "PearlNecklaceModel",
@@ -801,7 +829,7 @@ CONVERSION_TABLE = {
         }
     ],
     "two_lorentzian": [
-        "TwoLorentzianModel",
+        "TwoLorentzian",
         {
             "lorentz_scale_1": "scale_1",
             "lorentz_scale_2": "scale_2",
@@ -810,22 +838,33 @@ CONVERSION_TABLE = {
             "lorentz_length_2": "length_2",
             "lorentz_length_1": "length_1",
             "background": "background"
-        }
+        },
+        "TwoLorentzianModel",
     ],
     "two_power_law": [
-        "TwoPowerLawModel",
+        "TwoPowerLaw",
         {
             "coefficent_1": "coef_A",
             "power_2": "power2",
             "power_1": "power1",
             "background": "background",
             "crossover": "qc"
-        }
+        },
+        "TwoPowerLawModel",
     ],
     "unified_power_Rg": [
+        "UnifiedPowerRg",
+        dict(((field_new+str(index), field_old+str(index))
+              for field_new, field_old in [("rg", "Rg"),
+                                           ("power", "power"),
+                                           ("G", "G"),
+                                           ("B", "B"),]
+              for index in range(11)),
+             **{
+                   "background": "background",
+                   "scale": "scale",
+               }),
         "UnifiedPowerRgModel",
-        {
-        }
     ],
     "vesicle": [
         "VesicleModel",
@@ -834,4 +873,5 @@ CONVERSION_TABLE = {
             "sld_solvent": "solv_sld"
         }
     ]
+    }
 }
