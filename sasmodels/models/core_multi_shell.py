@@ -106,6 +106,7 @@ def profile(sld_core, radius, sld_solvent, n, sld, thickness):
     """
     Returns the SLD profile *r* (Ang), and *rho* (1e-6/Ang^2).
     """
+    n = int(n+0.5)
     z = []
     rho = []
 
@@ -132,7 +133,7 @@ def profile(sld_core, radius, sld_solvent, n, sld, thickness):
 
 def ER(radius, n, thickness):
     """Effective radius"""
-    n = int(n[0])  # n cannot be polydisperse
+    n = int(n[0]+0.5)  # n is a control parameter and is not polydisperse
     return np.sum(thickness[:n], axis=0) + radius
 
 demo = dict(sld_core=6.4,

@@ -112,7 +112,7 @@ single = False
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["thickness", "Ang", 33.0, [0, inf], "volume",
                "sheet thickness"],
-              ["Nlayers", "", 20, [0, inf], "",
+              ["Nlayers", "", 20, [1, inf], "",
                "Number of layers"],
               ["d_spacing", "Ang", 250., [0.0, inf], "",
                "lamellar spacing of paracrystal stack"],

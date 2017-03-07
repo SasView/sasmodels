@@ -18,13 +18,11 @@ See the :ref:`core-shell-sphere` model for more documentation.
 The 1D scattering intensity is calculated in the following way (Guinier, 1955)
 
 .. math::
-
-    P(q) = \text{scale}\frac{\phi}{V(R_N)} F^2(q) + \text{background}
+    P(q) = \text{scale} \cdot \frac{\phi}{V(R_N)} F^2(q) + \text{background}
 
 where
 
 .. math::
-
      F(q) = (\rho_\text{shell}-\rho_\text{solv}) \sum_{i=1}^{N} \left[
      3V(r_i)\frac{\sin(qr_i) - qr_i\cos(qr_i)}{(qr_i)^3}
      - 3V(R_i)\frac{\sin(qR_i) - qR_i\cos(qR_i)}{(qR_i)^3}
@@ -43,15 +41,16 @@ the shell, $t_w$ is the thickness of the solvent layer between the shells,
 $\rho_\text{shell}$ is the scattering length density of a shell, and
 $\rho_\text{solv}$ is the scattering length density of the solvent.
 
+The outer-most shell radius $R_N$ is used as the effective radius
+for $P(Q)$ when $P(Q) * S(Q)$ is applied.
+
+
 The 2D scattering intensity is the same as 1D, regardless of the orientation
 of the q vector which is defined as:
 
 .. math::
 
     q = \sqrt{q_x^2 + q_y^2}
-
-The outer-most shell radius $R_N$ is used as the effective radius
-for $P(Q)$ when $P(Q) * S(Q)$ is applied.
 
 For information about polarised and magnetic scattering, see
 the :ref:`magnetism` documentation.
@@ -69,7 +68,7 @@ New York, (1987).
 
 **Author:** NIST IGOR/DANSE **on:** pre 2010
 
-**Last Modified by:** Piotr Rozyczko**on:** Feb 24, 2016
+**Last Modified by:** Piotr Rozyczko **on:** Feb 24, 2016
 
 **Last Reviewed by:** Paul Butler **on:** March 20, 2016
 
@@ -105,6 +104,9 @@ parameters = [
     ["n_shells",     "",            2.0, [1.0, inf],  "volume", "Number of shell plus solvent layer pairs"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
+
+# TODO: proposed syntax for specifying which parameters can be polydisperse
+#polydispersity = ["radius", "thick_shell"]
 
 source = ["lib/sas_3j1x_x.c", "multilayer_vesicle.c"]
 
