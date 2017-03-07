@@ -38,7 +38,8 @@ double Iq(double q, double fp_case_num,
   double S11,S12,S13,S14,S21,S22,S23,S24;
   double S31,S32,S33,S34,S41,S42,S43,S44;
   double Lad,Lbd,Lcd,Nav,Intg;
-
+  
+  // Set values for non existent parameters (eg. no A or B in case 0 and 1 etc)
   //icase was shifted to N-1 from the original code
   if (icase <= 1){
     Phi[0] = Phi[1] = 0.0000001;
@@ -56,7 +57,11 @@ double Iq(double q, double fp_case_num,
     b[0] = 5.0;
     Kab = Kac = Kad = -0.0004;
   }
+ 
+  // Set volume fraction of component D based on constraint that sum of vol frac =1
+  Phi[3]=1.0-Phi[0]-Phi[1]-Phi[2];
 
+  //set up values for cross terms in case of block copolymers (1,3,4,6,7,8,9)
   Nab=sqrt(N[0]*N[1]);
   Nac=sqrt(N[0]*N[2]);
   Nad=sqrt(N[0]*N[3]);
@@ -78,40 +83,44 @@ double Iq(double q, double fp_case_num,
   Phibd=sqrt(Phi[1]*Phi[3]);
   Phicd=sqrt(Phi[2]*Phi[3]);
 
+  // Calculate Q^2 * Rg^2 for each homopolymer assuming random walk 
   Xa=q*q*b[0]*b[0]*N[0]/6.0;
   Xb=q*q*b[1]*b[1]*N[1]/6.0;
   Xc=q*q*b[2]*b[2]*N[2]/6.0;
   Xd=q*q*b[3]*b[3]*N[3]/6.0;
 
-  Paa=2.0*(exp(-Xa)-1.0+Xa)/(Xa*Xa);
-  S0aa=N[0]*Phi[0]*v[0]*Paa;
-  Pab=((1.0-exp(-Xa))/Xa)*((1.0-exp(-Xb))/Xb);
+  //calculate all partial structure factors Pij and normalize n^2
+  Paa=2.0*(exp(-Xa)-1.0+Xa)/(Xa*Xa); // free A chain form factor
+  S0aa=N[0]*Phi[0]*v[0]*Paa; // Phi * Vp * P(Q)= I(Q0)/delRho^2
+  Pab=((1.0-exp(-Xa))/Xa)*((1.0-exp(-Xb))/Xb); //AB diblock (anchored Paa * anchored Pbb) partial form factor
   S0ab=(Phiab*vab*Nab)*Pab;
-  Pac=((1.0-exp(-Xa))/Xa)*exp(-Xb)*((1.0-exp(-Xc))/Xc);
+  Pac=((1.0-exp(-Xa))/Xa)*exp(-Xb)*((1.0-exp(-Xc))/Xc); //ABC triblock AC partial form factor
   S0ac=(Phiac*vac*Nac)*Pac;
-  Pad=((1.0-exp(-Xa))/Xa)*exp(-Xb-Xc)*((1.0-exp(-Xd))/Xd);
+  Pad=((1.0-exp(-Xa))/Xa)*exp(-Xb-Xc)*((1.0-exp(-Xd))/Xd); //ABCD four block
   S0ad=(Phiad*vad*Nad)*Pad;
 
   S0ba=S0ab;
-  Pbb=2.0*(exp(-Xb)-1.0+Xb)/(Xb*Xb);
+  Pbb=2.0*(exp(-Xb)-1.0+Xb)/(Xb*Xb); // free B chain
   S0bb=N[1]*Phi[1]*v[1]*Pbb;
-  Pbc=((1.0-exp(-Xb))/Xb)*((1.0-exp(-Xc))/Xc);
+  Pbc=((1.0-exp(-Xb))/Xb)*((1.0-exp(-Xc))/Xc); // BC diblock
   S0bc=(Phibc*vbc*Nbc)*Pbc;
-  Pbd=((1.0-exp(-Xb))/Xb)*exp(-Xc)*((1.0-exp(-Xd))/Xd);
+  Pbd=((1.0-exp(-Xb))/Xb)*exp(-Xc)*((1.0-exp(-Xd))/Xd); // BCD triblock
   S0bd=(Phibd*vbd*Nbd)*Pbd;
 
   S0ca=S0ac;
   S0cb=S0bc;
-  Pcc=2.0*(exp(-Xc)-1.0+Xc)/(Xc*Xc);
+  Pcc=2.0*(exp(-Xc)-1.0+Xc)/(Xc*Xc); // Free C chain
   S0cc=N[2]*Phi[2]*v[2]*Pcc;
-  Pcd=((1.0-exp(-Xc))/Xc)*((1.0-exp(-Xd))/Xd);
+  Pcd=((1.0-exp(-Xc))/Xc)*((1.0-exp(-Xd))/Xd); // CD diblock
   S0cd=(Phicd*vcd*Ncd)*Pcd;
 
   S0da=S0ad;
   S0db=S0bd;
   S0dc=S0cd;
-  Pdd=2.0*(exp(-Xd)-1.0+Xd)/(Xd*Xd);
+  Pdd=2.0*(exp(-Xd)-1.0+Xd)/(Xd*Xd); // free D chain
   S0dd=N[3]*Phi[3]*v[3]*Pdd;
+
+  // Reset all unused partial structure factors to 0 (depends on case)
   //icase was shifted to N-1 from the original code
   switch(icase){
   case 0:
@@ -192,6 +201,7 @@ double Iq(double q, double fp_case_num,
   S0db=S0bd;
   S0dc=S0cd;
 
+  // self chi parameter is 0 ... of course
   Kaa=0.0;
   Kbb=0.0;
   Kcc=0.0;
@@ -242,6 +252,7 @@ double Iq(double q, double fp_case_num,
 
   ZZ=S0ad*(T11*S0ad+T12*S0bd+T13*S0cd)+S0bd*(T21*S0ad+T22*S0bd+T23*S0cd)+S0cd*(T31*S0ad+T32*S0bd+T33*S0cd);
 
+  // D is considered the matrix or background component so enters here
   m=1.0/(S0dd-ZZ);
 
   N11=m*X11+Zaa;
@@ -296,12 +307,19 @@ double Iq(double q, double fp_case_num,
   S43=S34;
   S44=S11+S22+S33+2.0*S12+2.0*S13+2.0*S23;
 
+  //calculate contrast where L[i] is the scattering length of i and D is the matrix
+  //Note that should multiply by Nav to get units of SLD which will become
+  // Nav*2 in the next line (SLD^2) but then normalization in that line would
+  //need to divide by Nav leaving only Nav or sqrt(Nav) before squaring. 
   Nav=6.022045e+23;
   Lad=(L[0]/v[0]-L[3]/v[3])*sqrt(Nav);
   Lbd=(L[1]/v[1]-L[3]/v[3])*sqrt(Nav);
   Lcd=(L[2]/v[2]-L[3]/v[3])*sqrt(Nav);
 
   Intg=Lad*Lad*S11+Lbd*Lbd*S22+Lcd*Lcd*S33+2.0*Lad*Lbd*S12+2.0*Lbd*Lcd*S23+2.0*Lad*Lcd*S13;
+
+  //rescale for units of Lij^2 (fm^2 to cm^2)
+  Intg *= 1.0e-26;    
 
   return Intg;
 
