@@ -1,10 +1,10 @@
-double Iq(double q, double case_num,
+double Iq(double q, double fp_case_num,
     double N[], double Phi[], double v[], double L[], double b[],
     double Kab, double Kac, double Kad,
     double Kbc, double Kbd, double Kcd
     );
 
-double Iq(double q, double case_num,
+double Iq(double q, double fp_case_num,
     double N[],    // DEGREE OF POLYMERIZATION
     double Phi[],  // VOL FRACTION
     double v[],    // SPECIFIC VOLUME
@@ -14,7 +14,7 @@ double Iq(double q, double case_num,
     double Kbc, double Kbd, double Kcd
     )
 {
-  int icase = (int)case_num;
+  int icase = (int)(fp_case_num+0.5);
 
   double Nab,Nac,Nad,Nbc,Nbd,Ncd;
   double Phiab,Phiac,Phiad,Phibc,Phibd,Phicd;
