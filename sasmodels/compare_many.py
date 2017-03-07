@@ -188,7 +188,8 @@ def print_usage():
     """
     Print the command usage string.
     """
-    print("usage: compare_many.py MODEL COUNT (1dNQ|2dNQ) (CUTOFF|mono) (single|double|quad)")
+    print("usage: compare_many.py MODEL COUNT (1dNQ|2dNQ) (CUTOFF|mono) (single|double|quad)",
+          file=sys.stderr)
 
 
 def print_models():
@@ -222,10 +223,13 @@ values are "1d100" for 1-D and "2d32" for 2-D.
 CUTOFF is the cutoff value to use for the polydisperse distribution. Weights
 below the cutoff will be ignored.  Use "mono" for monodisperse models.  The
 choice of polydisperse parameters, and the number of points in the distribution
-is set in compare.py defaults for each model.
+is set in compare.py defaults for each model.  Polydispersity is given in the
+"demo" attribute of each model.
 
 PRECISION is the floating point precision to use for comparisons.  If two
-precisions are given, then compare one to the other, ignoring sasview.
+precisions are given, then compare one to the other.  Precision is one of
+fast, single, double for GPU or single!, double!, quad! for DLL.  If no
+precision is given, then use single and double! respectively.
 
 Available models:
 """)
@@ -235,7 +239,7 @@ def main(argv):
     """
     Main program.
     """
-    if len(argv) not in (5, 6):
+    if len(argv) not in (3, 4, 5, 6):
         print_help()
         return
 
@@ -243,7 +247,7 @@ def main(argv):
     try:
         model_list = [target] if target in MODELS else core.list_models(target)
     except ValueError:
-        print('Bad model %s.  Use model type or one of:'%model)
+        print('Bad model %s.  Use model type or one of:' % target, file=sys.stderr)
         print_models()
         print('model types: all, py, c, double, single, opencl, 1d, 2d, nonmagnetic, magnetic')
         return
@@ -252,10 +256,10 @@ def main(argv):
         is2D = argv[2].startswith('2d')
         assert argv[2][1] == 'd'
         Nq = int(argv[2][2:])
-        mono = argv[3] == 'mono'
+        mono = len(argv) <= 3 or argv[3] == 'mono'
         cutoff = float(argv[3]) if not mono else 0
-        base = argv[4]
-        comp = argv[5] if len(argv) > 5 else "sasview"
+        base = argv[4] if len(argv) > 4 else "single"
+        comp = argv[5] if len(argv) > 5 else "double!"
     except Exception:
         traceback.print_exc()
         print_usage()
