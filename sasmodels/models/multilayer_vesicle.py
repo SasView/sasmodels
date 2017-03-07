@@ -18,25 +18,30 @@ See the :ref:`core-shell-sphere` model for more documentation.
 The 1D scattering intensity is calculated in the following way (Guinier, 1955)
 
 .. math::
+    P(q) = \text{scale} \cdot \frac{V_f}{V_t} F^2(q) + \text{background}
 
-    P(q) = \frac{\text{scale.volfraction}}{V_t} F^2(q) + \text{background}
-
-where
+for
 
 .. math::
+    F(q) = (\rho_\text{shell}-\rho_\text{solv}) \sum_{i=1}^{n_\text{pairs}}
+        \left[
+          3V(R_i)\frac{\sin(qR_i)-qR_i\cos(qR_i)}{(qR_i)^3} \\
+          - 3V(R_i+t_s)\frac{\sin(q(R_i+t_s))-q(R_i+t_s)\cos(q(R_i+t_s))}{(q(R_i+t_s))^3}
+        \right]
 
-     F(q) = (\rho_{shell}-\rho_{solv}) \sum_{i=1}^{n\_pairs} \left[
-     3V(R_i)\frac{\sin(qR_i)-qR_i\cos(qR_i)}{(qR_i)^3} \\
-      - 3V(R_i+t_s)\frac{\sin(q(R_i+t_s))-q(R_i+t_s)\cos(q(R_i+t_s))}{(q(R_i+t_s))^3}
-     \right]
+and
 
+.. math::
+     R_i = r_c + (i-1)(t_s + t_w)
 
-where $R_i = r_c + (i-1)(t_s + t_w)$
-   
-where $V_t$ is the volume of the whole particle, $V(R)$ is the volume of a sphere
-of radius $R$, $r_c$ is the radius of the core, $\rho_{shell}$ is the scattering length 
-density of a shell, $\rho_{solv}$ is the scattering length density of the solvent.
+where $V_f$ is the volume fraction of particles, $V_t$ is the volume of the
+whole particle, $V(r)$ is the volume of a sphere of radius $r$, $r_c$ is the
+radius of the core, $\rho_\text{shell}$ is the scattering length density of a
+shell, $\rho_\text{solv}$ is the scattering length density of the solvent.
 
+The outer most radius, $r_o = R_n + t_s$, is used for both the volume fraction
+normalization and for the effective radius for *S(Q)* when $P(Q) * S(Q)$
+is applied.
 
 The 2D scattering intensity is the same as 1D, regardless of the orientation
 of the q vector which is defined as:
@@ -44,14 +49,6 @@ of the q vector which is defined as:
 .. math::
 
     q = \sqrt{q_x^2 + q_y^2}
-
-
-The outer most radius
-
-$radius + n\_pairs * thick\_shell + (n\_pairs- 1) * thick\_solvent$
-
-is used for both the volume fraction normalization and for the 
-effective radius for *S(Q)* when $P(Q) * S(Q)$ is applied.
 
 For information about polarised and magnetic scattering, see
 the :ref:`magnetism` documentation.
@@ -69,7 +66,7 @@ New York, (1987).
 
 **Author:** NIST IGOR/DANSE **on:** pre 2010
 
-**Last Modified by:** Piotr Rozyczko**on:** Feb 24, 2016
+**Last Modified by:** Piotr Rozyczko **on:** Feb 24, 2016
 
 **Last Reviewed by:** Paul Butler **on:** March 20, 2016
 
@@ -108,6 +105,7 @@ parameters = [
 
 source = ["lib/sas_3j1x_x.c", "multilayer_vesicle.c"]
 
+# TODO: the following line does nothing
 polydispersity = ["radius", "n_pairs"]
 
 demo = dict(scale=1, background=0,

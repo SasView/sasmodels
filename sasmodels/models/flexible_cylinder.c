@@ -1,5 +1,5 @@
 static double
-form_volume(length, kuhn_length, radius)
+form_volume(double length, double kuhn_length, double radius)
 {
     return 1.0;
 }

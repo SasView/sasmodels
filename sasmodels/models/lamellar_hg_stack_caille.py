@@ -97,7 +97,7 @@ parameters = [
      "Tail thickness"],
     ["length_head", "Ang", 2, [0, inf], "volume",
      "head thickness"],
-    ["Nlayers", "", 30, [0, inf], "",
+    ["Nlayers", "", 30, [1, inf], "",
      "Number of layers"],
     ["d_spacing", "Ang", 40., [0.0, inf], "volume",
      "lamellar d-spacing of Caille S(Q)"],
