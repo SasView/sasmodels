@@ -4,7 +4,7 @@ Definition
 
 This model is a trivial extension of the core_shell_sphere function to include
 *N* shells where the core is filled with solvent and the shells are interleaved
-with layers of solvent. For *N = 1*, this returns the same as the vesicle model,
+with layers of solvent. For $N = 1$, this returns the same as the vesicle model,
 except for the normalisation, which here is to outermost volume.
 The shell thicknessess and SLD are constant for all shells as expected for
 a multilayer vesicle.
@@ -44,6 +44,19 @@ $\rho_\text{solv}$ is the scattering length density of the solvent.
 The outer-most shell radius $R_N$ is used as the effective radius
 for $P(Q)$ when $P(Q) * S(Q)$ is applied.
 
+For mixed systems in which some vesicles have 1 shell, some have 2,
+etc., use polydispersity on $N$ to model the data.  For example,
+create a file such as *shell_dist.txt* containing the relative portion
+of each vesicle size::
+
+    1 20
+    2  4
+    3  1
+
+Turn on polydispersity and select an array distribution for the *n_shells*
+parameter.  Choose the above *shell_dist.txt* file, and the model will be
+computed with 80% 1-shell vesicles, 16% 2-shell vesicles and 4%
+3-shell vesicles.
 
 The 2D scattering intensity is the same as 1D, regardless of the orientation
 of the q vector which is defined as:
