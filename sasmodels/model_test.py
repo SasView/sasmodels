@@ -201,7 +201,7 @@ def _hide_model_case_from_nose():
                 if self.stash:
                     for test, target, actual in zip(tests, self.stash[0], results):
                         assert np.all(abs(target-actual) < 5e-5*abs(actual)),\
-                            "expected %s but got %s for %s"%(target, actual, test[0])
+                            "GPU/CPU comparison expected %s but got %s for %s"%(target, actual, test[0])
                 else:
                     self.stash.append(results)
 
