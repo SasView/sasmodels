@@ -16,11 +16,7 @@ __all__ = ["Resolution", "Perfect1D", "Pinhole1D", "Slit1D",
           ]
 
 MINIMUM_RESOLUTION = 1e-8
-
-
-# When extrapolating to -q, what is the minimum positive q relative to q_min
-# that we wish to calculate?
-MIN_Q_SCALE_FOR_NEGATIVE_Q_EXTRAPOLATION = 0.01
+MINIMUM_ABSOLUTE_Q = 0.02  # relative to the minimum q in the data
 
 class Resolution(object):
     """
@@ -81,6 +77,13 @@ class Pinhole1D(Resolution):
         self.q, self.q_width = q, q_width
         self.q_calc = (pinhole_extend_q(q, q_width, nsigma=nsigma)
                        if q_calc is None else np.sort(q_calc))
+
+        # Protect against models which are not defined for very low q.  Limit
+        # the smallest q value evaluated (in absolute) to 0.02*min
+        cutoff = MINIMUM_ABSOLUTE_Q*np.min(self.q)
+        self.q_calc = self.q_calc[abs(self.q_calc) >= cutoff]
+
+        # Build weight matrix from calculated q values
         self.weight_matrix = pinhole_resolution(self.q_calc, self.q,
                                 np.maximum(q_width, MINIMUM_RESOLUTION))
         self.q_calc = abs(self.q_calc)
@@ -123,6 +126,13 @@ class Slit1D(Resolution):
         self.q = q.flatten()
         self.q_calc = slit_extend_q(q, qx_width, qy_width) \
             if q_calc is None else np.sort(q_calc)
+
+        # Protect against models which are not defined for very low q.  Limit
+        # the smallest q value evaluated (in absolute) to 0.02*min
+        cutoff = MINIMUM_ABSOLUTE_Q*np.min(self.q)
+        self.q_calc = self.q_calc[abs(self.q_calc) >= cutoff]
+
+        # Build weight matrix from calculated q values
         self.weight_matrix = \
             slit_resolution(self.q_calc, self.q, qx_width, qy_width)
         self.q_calc = abs(self.q_calc)
@@ -393,11 +403,10 @@ def linear_extrapolation(q, q_min, q_max):
     interval.  Extrapolation above uses about the same size as the final
     interval.
 
-    if *q_min* is zero or less then *q[0]/10* is used instead.
+    Note that extrapolated values may be negative.
     """
     q = np.sort(q)
     if q_min + 2*MINIMUM_RESOLUTION < q[0]:
-        if q_min <= 0: q_min = q_min*MIN_Q_SCALE_FOR_NEGATIVE_Q_EXTRAPOLATION
         n_low = np.ceil((q[0]-q_min) / (q[1]-q[0])) if q[1] > q[0] else 15
         q_low = np.linspace(q_min, q[0], n_low+1)[:-1]
     else:
