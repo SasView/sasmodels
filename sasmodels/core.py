@@ -68,12 +68,21 @@ def list_models(kind=None):
         * 2d: models which can be 2D
         * magnetic: models with an sld
         * nommagnetic: models without an sld
+
+    For multiple conditions, combine with plus.  For example, *c+single+2d*
+    would return all oriented models implemented in C which can be computed
+    accurately with single precision arithmetic.
     """
-    if kind and kind not in KINDS:
+    if kind and any(k not in KINDS for k in kind.split('+')):
         raise ValueError("kind not in " + ", ".join(KINDS))
     files = sorted(glob(joinpath(generate.MODEL_PATH, "[a-zA-Z]*.py")))
     available_models = [basename(f)[:-3] for f in files]
-    selected = [name for name in available_models if _matches(name, kind)]
+    if kind and '+' in kind:
+        all_kinds = kind.split('+')
+        condition = lambda name: all(_matches(name, k) for k in all_kinds)
+    else:
+        condition = lambda name: _matches(name, kind)
+    selected = [name for name in available_models if condition(name)]
 
     return selected
 

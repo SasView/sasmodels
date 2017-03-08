@@ -321,6 +321,10 @@ def constrain_pars(model_info, pars):
     if '*' in name:
         name = name.split('*')[0]
 
+    # Suppress magnetism for python models (not yet implemented)
+    if callable(model_info.Iq):
+        pars.update(suppress_magnetism(pars))
+
     if name == 'barbell':
         if pars['radius_bell'] < pars['radius']:
             pars['radius'], pars['radius_bell'] = pars['radius_bell'], pars['radius']
