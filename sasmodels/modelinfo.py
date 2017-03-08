@@ -729,8 +729,6 @@ def make_model_info(kernel_module):
     info.composition = None
     info.docs = kernel_module.__doc__
     info.category = getattr(kernel_module, 'category', None)
-    info.single = getattr(kernel_module, 'single', True)
-    info.opencl = getattr(kernel_module, 'opencl', True)
     info.structure_factor = getattr(kernel_module, 'structure_factor', False)
     info.profile_axes = getattr(kernel_module, 'profile_axes', ['x', 'y'])
     info.source = getattr(kernel_module, 'source', [])
@@ -744,6 +742,9 @@ def make_model_info(kernel_module):
     info.Imagnetic = getattr(kernel_module, 'Imagnetic', None) # type: ignore
     info.profile = getattr(kernel_module, 'profile', None) # type: ignore
     info.sesans = getattr(kernel_module, 'sesans', None) # type: ignore
+    # Default single and opencl to True for C models.  Python models have callable Iq.
+    info.opencl = getattr(kernel_module, 'opencl', not callable(info.Iq))
+    info.single = getattr(kernel_module, 'single', not callable(info.Iq))
 
     # multiplicity info
     control_pars = [p.id for p in parameters.kernel_parameters if p.is_control]
