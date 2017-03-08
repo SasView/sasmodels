@@ -1,10 +1,10 @@
-double Iq(double q, double case_num,
+double Iq(double q, double fp_case_num,
     double N[], double Phi[], double v[], double L[], double b[],
     double Kab, double Kac, double Kad,
     double Kbc, double Kbd, double Kcd
     );
 
-double Iq(double q, double case_num,
+double Iq(double q, double fp_case_num,
     double N[],    // DEGREE OF POLYMERIZATION
     double Phi[],  // VOL FRACTION
     double v[],    // SPECIFIC VOLUME
@@ -14,7 +14,7 @@ double Iq(double q, double case_num,
     double Kbc, double Kbd, double Kcd
     )
 {
-  int icase = (int)case_num;
+  int icase = (int)(fp_case_num+0.5);
 
   double Nab,Nac,Nad,Nbc,Nbd,Ncd;
   double Phiab,Phiac,Phiad,Phibc,Phibd,Phicd;
@@ -308,7 +308,9 @@ double Iq(double q, double case_num,
   S44=S11+S22+S33+2.0*S12+2.0*S13+2.0*S23;
 
   //calculate contrast where L[i] is the scattering length of i and D is the matrix
-  //need to verify why the sqrt of Nav rather than just Nav (assuming v is molar volume)
+  //Note that should multiply by Nav to get units of SLD which will become
+  // Nav*2 in the next line (SLD^2) but then normalization in that line would
+  //need to divide by Nav leaving only Nav or sqrt(Nav) before squaring. 
   Nav=6.022045e+23;
   Lad=(L[0]/v[0]-L[3]/v[3])*sqrt(Nav);
   Lbd=(L[1]/v[1]-L[3]/v[3])*sqrt(Nav);
@@ -316,8 +318,8 @@ double Iq(double q, double case_num,
 
   Intg=Lad*Lad*S11+Lbd*Lbd*S22+Lcd*Lcd*S33+2.0*Lad*Lbd*S12+2.0*Lbd*Lcd*S23+2.0*Lad*Lcd*S13;
 
-  //rescale for units of Lij^2 (in 10e-12 m^2 to m^2 ?)
-  Intg *= 1.0e-24;    
+  //rescale for units of Lij^2 (fm^2 to cm^2)
+  Intg *= 1.0e-26;    
 
   return Intg;
 

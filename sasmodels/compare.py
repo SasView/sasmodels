@@ -339,7 +339,6 @@ def constrain_pars(model_info, pars):
     elif name == 'pearl_necklace':
         if pars['radius'] < pars['thick_string']:
             pars['radius'], pars['thick_string'] = pars['thick_string'], pars['radius']
-        pars['num_pearls'] = math.ceil(pars['num_pearls'])
         pass
 
     elif name == 'rpa':
@@ -352,9 +351,6 @@ def constrain_pars(model_info, pars):
         total = sum(pars['Phi'+c] for c in '1234')
         for c in '1234':
             pars['Phi'+c] /= total
-
-    elif name == 'stacked_disks':
-        pars['n_stacking'] = math.ceil(pars['n_stacking'])
 
 def parlist(model_info, pars, is2d):
     # type: (ModelInfo, ParameterSet, bool) -> str

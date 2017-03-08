@@ -6,7 +6,7 @@ double multilayer_vesicle_kernel(double q,
           double thick_solvent,
           double sld_solvent,
           double sld,
-          double n_pairs)
+          int n_pairs)
 {
     //calculate with a loop, two shells at a time
     int ii = 0;
@@ -46,8 +46,9 @@ double Iq(double q,
           double thick_solvent,
           double sld_solvent,
           double sld,
-          double n_pairs)
+          double fp_n_pairs)
 {
+    int n_pairs = (int)(fp_n_pairs + 0.5);
     return multilayer_vesicle_kernel(q,
            volfraction,
            radius,
