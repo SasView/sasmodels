@@ -548,7 +548,7 @@ CONVERSION_TABLE = {
         {
             "radius": "core_radius",
             "sld_solvent": "core_sld",
-            "n_pairs": "n_pairs",
+            "n_shells": "n_pairs",
             "thick_shell": "s_thickness",
             "sld": "shell_sld",
             "thick_solvent": "w_thickness",

@@ -4,7 +4,7 @@ Definition
 
 This model is a trivial extension of the core_shell_sphere function to include
 *N* shells where the core is filled with solvent and the shells are interleaved
-with layers of solvent. For *N = 1*, this returns the same as the vesicle model,
+with layers of solvent. For $N = 1$, this returns the same as the vesicle model,
 except for the normalisation, which here is to outermost volume.
 The shell thicknessess and SLD are constant for all shells as expected for
 a multilayer vesicle.
@@ -18,30 +18,45 @@ See the :ref:`core-shell-sphere` model for more documentation.
 The 1D scattering intensity is calculated in the following way (Guinier, 1955)
 
 .. math::
-    P(q) = \text{scale} \cdot \frac{V_f}{V_t} F^2(q) + \text{background}
+    P(q) = \text{scale} \cdot \frac{\phi}{V(R_N)} F^2(q) + \text{background}
+
+where
+
+.. math::
+     F(q) = (\rho_\text{shell}-\rho_\text{solv}) \sum_{i=1}^{N} \left[
+     3V(r_i)\frac{\sin(qr_i) - qr_i\cos(qr_i)}{(qr_i)^3}
+     - 3V(R_i)\frac{\sin(qR_i) - qR_i\cos(qR_i)}{(qR_i)^3}
+     \right]
 
 for
 
 .. math::
-    F(q) = (\rho_\text{shell}-\rho_\text{solv}) \sum_{i=1}^{n_\text{pairs}}
-        \left[
-          3V(R_i)\frac{\sin(qR_i)-qR_i\cos(qR_i)}{(qR_i)^3} \\
-          - 3V(R_i+t_s)\frac{\sin(q(R_i+t_s))-q(R_i+t_s)\cos(q(R_i+t_s))}{(q(R_i+t_s))^3}
-        \right]
 
-and
+     r_i &= r_c + (i-1)(t_s + t_w) && \text{ solvent radius before shell } i \\
+     R_i &= r_i + t_s && \text{ shell radius for shell } i
 
-.. math::
-     R_i = r_c + (i-1)(t_s + t_w)
+$\phi$ is the volume fraction of particles, $V(r)$ is the volume of a sphere
+of radius $r$, $r_c$ is the radius of the core, $t_s$ is the thickness of
+the shell, $t_w$ is the thickness of the solvent layer between the shells,
+$\rho_\text{shell}$ is the scattering length density of a shell, and
+$\rho_\text{solv}$ is the scattering length density of the solvent.
 
-where $V_f$ is the volume fraction of particles, $V_t$ is the volume of the
-whole particle, $V(r)$ is the volume of a sphere of radius $r$, $r_c$ is the
-radius of the core, $\rho_\text{shell}$ is the scattering length density of a
-shell, $\rho_\text{solv}$ is the scattering length density of the solvent.
+The outer-most shell radius $R_N$ is used as the effective radius
+for $P(Q)$ when $P(Q) * S(Q)$ is applied.
 
-The outer most radius, $r_o = R_n + t_s$, is used for both the volume fraction
-normalization and for the effective radius for *S(Q)* when $P(Q) * S(Q)$
-is applied.
+For mixed systems in which some vesicles have 1 shell, some have 2,
+etc., use polydispersity on $N$ to model the data.  For example,
+create a file such as *shell_dist.txt* containing the relative portion
+of each vesicle size::
+
+    1 20
+    2  4
+    3  1
+
+Turn on polydispersity and select an array distribution for the *n_shells*
+parameter.  Choose the above *shell_dist.txt* file, and the model will be
+computed with 80% 1-shell vesicles, 16% 2-shell vesicles and 4%
+3-shell vesicles.
 
 The 2D scattering intensity is the same as 1D, regardless of the orientation
 of the q vector which is defined as:
@@ -85,7 +100,7 @@ description = """
     thick_solvent: water thickness
     sld_solvent: solvent scattering length density
     sld: shell scattering length density
-    n_pairs:number of "shell plus solvent" layer pairs
+    n_shells:number of "shell plus solvent" layer pairs
     background: incoherent background
         """
 category = "shape:sphere"
@@ -94,19 +109,23 @@ category = "shape:sphere"
 #   ["name", "units", default, [lower, upper], "type","description"],
 parameters = [
     ["volfraction", "",  0.05, [0.0, 1],  "", "volume fraction of vesicles"],
-    ["radius", "Ang", 60.0, [0.0, inf],  "", "radius of solvent filled core"],
-    ["thick_shell", "Ang",        10.0, [0.0, inf],  "", "thickness of one shell"],
-    ["thick_solvent", "Ang",        10.0, [0.0, inf],  "", "solvent thickness between shells"],
+    ["radius", "Ang", 60.0, [0.0, inf],  "volume", "radius of solvent filled core"],
+    ["thick_shell", "Ang",        10.0, [0.0, inf],  "volume", "thickness of one shell"],
+    ["thick_solvent", "Ang",        10.0, [0.0, inf],  "volume", "solvent thickness between shells"],
     ["sld_solvent",    "1e-6/Ang^2",  6.4, [-inf, inf], "sld", "solvent scattering length density"],
     ["sld",   "1e-6/Ang^2",  0.4, [-inf, inf], "sld", "Shell scattering length density"],
-    ["n_pairs",     "",            2.0, [1.0, inf],  "", "Number of shell plus solvent layer pairs"],
+    ["n_shells",     "",            2.0, [1.0, inf],  "volume", "Number of shell plus solvent layer pairs"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
+# TODO: proposed syntax for specifying which parameters can be polydisperse
+#polydispersity = ["radius", "thick_shell"]
+
 source = ["lib/sas_3j1x_x.c", "multilayer_vesicle.c"]
 
-# TODO: the following line does nothing
-polydispersity = ["radius", "n_pairs"]
+def ER(radius, thick_shell, thick_solvent, n_shells):
+    n_shells = int(n_shells+0.5)
+    return radius + n_shells * (thick_shell + thick_solvent) - thick_solvent
 
 demo = dict(scale=1, background=0,
             volfraction=0.05,
@@ -115,7 +134,7 @@ demo = dict(scale=1, background=0,
             thick_solvent=10.0,
             sld_solvent=6.4,
             sld=0.4,
-            n_pairs=2.0)
+            n_shells=2.0)
 
 tests = [
     # Accuracy tests based on content in test/utest_other_models.py
@@ -124,7 +143,7 @@ tests = [
       'thick_solvent': 10.0,
       'sld_solvent': 6.4,
       'sld': 0.4,
-      'n_pairs': 2.0,
+      'n_shells': 2.0,
       'scale': 1.0,
       'background': 0.001,
      }, 0.001, 122.1405],
@@ -135,7 +154,7 @@ tests = [
       'thick_solvent': 10.0,
       'sld_solvent': 6.4,
       'sld': 0.4,
-      'n_pairs': 2.0,
+      'n_shells': 2.0,
       'scale': 1.0,
       'background': 0.001,
      }, (0.001, 0.30903), 1.61873],
