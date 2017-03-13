@@ -2,12 +2,12 @@ r"""
 Definition
 ----------
 
-This model is a trivial extension of the core_shell_sphere function to include
-*N* shells where the core is filled with solvent and the shells are interleaved
-with layers of solvent. For $N = 1$, this returns the same as the vesicle model,
-except for the normalisation, which here is to outermost volume.
-The shell thicknessess and SLD are constant for all shells as expected for
-a multilayer vesicle.
+This model is a trivial extension of the core_shell_sphere function where the
+core is filled with solvent and is surrounded by $N$ shells of material
+(such as lipids) interleaved with $N - 1$ layers of solvent. For $N = 1$, this
+returns the same as the vesicle model, except for the normalisation, which here
+is to outermost volume. The shell thicknesses and SLD are constant for all
+shells as expected for a multilayer vesicle.
 
 .. figure:: img/multi_shell_geometry.jpg
 
@@ -41,22 +41,45 @@ the shell, $t_w$ is the thickness of the solvent layer between the shells,
 $\rho_\text{shell}$ is the scattering length density of a shell, and
 $\rho_\text{solv}$ is the scattering length density of the solvent.
 
-The outer-most shell radius $R_N$ is used as the effective radius
-for $P(Q)$ when $P(Q) * S(Q)$ is applied.
+USAGE NOTES
 
-For mixed systems in which some vesicles have 1 shell, some have 2,
-etc., use polydispersity on $N$ to model the data.  For example,
-create a file such as *shell_dist.txt* containing the relative portion
-of each vesicle size::
+* The outer-most shell radius $R_N$ is used as the effective radius
+  for $P(Q)$ when $P(Q) * S(Q)$ is applied.
+  calculations rather slow.
+* The number of shells is always rounded to an integer value as a non interger
+  number of layers is not physical.
+* Thus Polydispersity should only be applied to number of shells **VERY
+  CAREFULLY**.  A possible legitimate use would be for mixed systems in which
+  some vesicles have 1 shell, some have 2, etc. A polydispersity on $N$ can be
+  used to model the data by using the "array distriubtion" feature. First
+  create a file such as *shell_dist.txt* containing the relative portion
+  of each vesicle size::
 
     1 20
     2  4
     3  1
 
-Turn on polydispersity and select an array distribution for the *n_shells*
-parameter.  Choose the above *shell_dist.txt* file, and the model will be
-computed with 80% 1-shell vesicles, 16% 2-shell vesicles and 4%
-3-shell vesicles.
+  Turn on polydispersity and select an array distribution for the *n_shells*
+  parameter.  Choose the above *shell_dist.txt* file, and the model will be
+  computed with 80% 1-shell vesicles, 16% 2-shell vesicles and 4%
+  3-shell vesicles.
+* This is a highly non-linear, highly oscillatory (especially around the
+  q-values that correspond to the repeat distance of the layers), model
+  function complicated by the fact that the number of water/shell pairs must
+  physically be an integer value, although the optimization treats it as a
+  floating point value. Thus it may be that the resolution interpolation is not
+  sufficiently fine grained in certain cases. Please report any such occurences
+  to the SasView team. Generally, for the best possible experience:
+ * Start with the best possible guess
+ * Using a priori knowledge, hold as many parameters fixed as possible
+ * if N=1, tw (water thickness) must by definition be zero. Both N and tw should
+   be fixed during fitting.
+ * If N>1, use constraints to keep N > 1
+ * Because N only really moves in integer steps, it may get "stuck" if the
+   optimizer step size is too small so care should be taken
+   If you experience problems with this please contact the SasView team and let
+   them know the issue preferably with example data and model which fail to
+   converge.
 
 The 2D scattering intensity is the same as 1D, regardless of the orientation
 of the q vector which is defined as:
@@ -68,22 +91,20 @@ of the q vector which is defined as:
 For information about polarised and magnetic scattering, see
 the :ref:`magnetism` documentation.
 
-This code is based on the form factor calculations implemented in the NIST
-Center for Neutron Research provided c-library (Kline, 2006).
-
 References
 ----------
 
-B Cabane, *Small Angle Scattering Methods*,
-in *Surfactant Solutions: New Methods of Investigation*,
-Ch.2, Surfactant Science Series Vol. 22, Ed. R Zana and M Dekker,
-New York, (1987).
+.. [#] B Cabane, *Small Angle Scattering Methods*, in *Surfactant Solutions:
+   New Methods of Investigation*, Ch.2, Surfactant Science Series Vol. 22, Ed.
+   R Zana and M Dekker, New York, (1987).
 
-**Author:** NIST IGOR/DANSE **on:** pre 2010
+Authorship and Verification
+----------------------------
 
-**Last Modified by:** Piotr Rozyczko **on:** Feb 24, 2016
-
-**Last Reviewed by:** Paul Butler **on:** March 20, 2016
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Converted to sasmodels by:** Piotr Rozyczko **Date:** Feb 24, 2016
+* **Last Modified by:** Paul Kienzle **Date:** Feb 7, 2017
+* **Last Reviewed by:** Paul Butler **Date:** March 12, 2017
 
 """
 
