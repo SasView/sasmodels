@@ -87,7 +87,7 @@ single = False  # TODO: check
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [
     ["thickness",        "Ang",      30.0,  [0, inf],   "volume", "sheet thickness"],
-    ["Nlayers",          "",          20,   [0, inf],   "",       "Number of layers"],
+    ["Nlayers",          "",          20,   [1, inf],   "",       "Number of layers"],
     ["d_spacing",        "Ang",      400.,  [0.0,inf],  "volume", "lamellar d-spacing of Caille S(Q)"],
     ["Caille_parameter", "1/Ang^2",    0.1, [0.0,0.8],  "",       "Caille parameter"],
     ["sld",              "1e-6/Ang^2", 6.3, [-inf,inf], "sld",    "layer scattering length density"],

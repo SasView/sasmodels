@@ -232,6 +232,8 @@ def profile(n_shells, sld_solvent, sld, thickness,
     Returns shape profile with x=radius, y=SLD.
     """
 
+    n_shells = int(n_shells + 0.5)
+    n_steps = int(n_steps + 0.5)
     z = []
     rho = []
     z_next = 0
@@ -239,7 +241,7 @@ def profile(n_shells, sld_solvent, sld, thickness,
     z.append(z_next)
     rho.append(sld[0])
 
-    for i in range(0, int(n_shells)):
+    for i in range(0, n_shells):
         z_next += thickness[i]
         z.append(z_next)
         rho.append(sld[i])
@@ -260,7 +262,7 @@ def profile(n_shells, sld_solvent, sld, thickness,
 
 def ER(n_shells, thickness, interface):
     """Effective radius"""
-    n_shells = int(n_shells)
+    n_shells = int(n_shells + 0.5)
     total = (np.sum(thickness[:n_shells], axis=1)
              + np.sum(interface[:n_shells], axis=1))
     return total

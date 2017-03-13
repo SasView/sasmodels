@@ -1,4 +1,7 @@
 r"""
+Definition
+----------
+
 Calculates the macroscopic scattering intensity for a multi-component
 homogeneous mixture of polymers using the Random Phase Approximation.
 This general formalism contains 10 specific cases
@@ -23,36 +26,61 @@ Case 8: A-B/C-D mixture of two diblock copolymers A-B and C-D
 
 Case 9: A-B-C-D tetra-block copolymer
 
-**NB: these case numbers are different from those in the NIST SANS package!**
+.. note::
+    These case numbers are different from those in the NIST SANS package!
 
-Only one case can be used at any one time.
+The models are based on the papers by Akcasu et al. [#Akcasu]_ and by
+Hammouda [#Hammouda]_ assuming the polymer follows Gaussian statistics such
+that $R_g^2 = n b^2/6$ where $b$ is the statistical segment length and $n$ is
+the number of statistical segment lengths. A nice tutorial on how these are
+constructed and implemented can be found in chapters 28 and 39 of Boualem
+Hammouda's 'SANS Toolbox'[#toolbox]_.
 
-The RPA (mean field) formalism only applies only when the multicomponent
-polymer mixture is in the homogeneous mixed-phase region.
+In brief the macroscopic cross sections are derived from the general forms
+for homopolymer scattering and the multiblock cross-terms while the inter
+polymer cross terms are described in the usual way by the $\chi$ parameter.
 
-**Component D is assumed to be the "background" component (ie, all contrasts
-are calculated with respect to component D).** So the scattering contrast
-for a C/D blend = [SLD(component C) - SLD(component D)]\ :sup:`2`.
+USAGE NOTES:
 
-Depending on which case is being used, the number of fitting parameters - the
-segment lengths (ba, bb, etc) and $\chi$ parameters (Kab, Kac, etc) - vary.
-The *scale* parameter should be held equal to unity.
+* Only one case can be used at any one time.
+* The RPA (mean field) formalism only applies only when the multicomponent
+  polymer mixture is in the homogeneous mixed-phase region.
+* **Component D is assumed to be the "background" component (ie, all contrasts
+  are calculated with respect to component D).** So the scattering contrast
+  for a C/D blend = [SLD(component C) - SLD(component D)]\ :sup:`2`.
+* Depending on which case is being used, the number of fitting parameters can 
+  vary.
 
-The input parameters are the degrees of polymerization, the volume fractions,
-the specific volumes, and the neutron scattering length densities for each
-component.
+  .. Note::
+    * In general the degrees of polymerization, the volume
+      fractions, the molar volumes, and the neutron scattering lengths for each
+      component are obtained from other methods and held fixed while The *scale*
+      parameter should be held equal to unity.
+    * The variables are normally the segment lengths (b\ :sub:`a`, b\ :sub:`b`,
+      etc) and $\chi$ parameters (K\ :sub:`ab`, K\ :sub:`ac`, etc).
 
 
 References
 ----------
 
-A Z Akcasu, R Klein and B Hammouda, *Macromolecules*, 26 (1993) 4136
+.. [#Akcasu] A Z Akcasu, R Klein and B Hammouda, *Macromolecules*, 26 (1993)
+   4136.
+.. [#Hammouda] B. Hammouda, *Advances in Polymer Science* 106 (1993) 87.
+.. [#toolbox] https://www.ncnr.nist.gov/staff/hammouda/the_sans_toolbox.pdf
+
+Authorship and Verification
+----------------------------
+
+* **Author:** Boualem Hammouda - NIST IGOR/DANSE **Date:** pre 2010
+* **Converted to sasmodels by:** Paul Kienzle **Date:** July 18, 2016
+* **Last Modified by:** Paul Butler **Date:** March 12, 2017
+* **Last Reviewed by:** Paul Butler **Date:** March 12, 2017
 """
 
 from numpy import inf
 
 name = "rpa"
-title = "Random Phase Approximation - unfinished work in progress"
+title = "Random Phase Approximation"
 description = """
 This formalism applies to multicomponent polymer mixtures in the
 homogeneous (mixed) phase region only.
@@ -89,7 +117,7 @@ parameters = [
 
     ["N[4]", "", 1000.0, [1, inf], "", "Degree of polymerization"],
     ["Phi[4]", "", 0.25, [0, 1], "", "volume fraction"],
-    ["v[4]", "mL/mol", 100.0, [0, inf], "", "specific volume"],
+    ["v[4]", "mL/mol", 100.0, [0, inf], "", "molar volume"],
     ["L[4]", "fm", 10.0, [-inf, inf], "", "scattering length"],
     ["b[4]", "Ang", 5.0, [0, inf], "", "segment length"],
 
@@ -106,17 +134,18 @@ source = ["rpa.c"]
 single = False
 
 control = "case_num"
-HIDE_NONE = set()
-HIDE_A = set("N1 Phi1 v1 L1 b1 K12 K13 K14".split())
+HIDE_ALL = set("Phi4".split())
+HIDE_A = set("N1 Phi1 v1 L1 b1 K12 K13 K14".split()).union(HIDE_ALL)
 HIDE_AB = set("N2 Phi2 v2 L2 b2 K23 K24".split()).union(HIDE_A)
 def hidden(case_num):
     """
     Return a list of parameters to hide depending on the multiplicity parameter.
     """
+    case_num = int(case_num+0.5)
     if case_num < 2:
         return HIDE_AB
     elif case_num < 5:
         return HIDE_A
     else:
-        return HIDE_NONE
+        return HIDE_ALL
 

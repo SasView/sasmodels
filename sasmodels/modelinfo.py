@@ -229,10 +229,13 @@ class Parameter(object):
     The available kernel parameters are defined as a list, with each parameter
     defined as a sublist with the following elements:
 
-    *name* is the name that will be used in the call to the kernel
-    function and the name that will be displayed to the user.  Names
+    *name* is the name that will be displayed to the user.  Names
     should be lower case, with words separated by underscore.  If
-    acronyms are used, the whole acronym should be upper case.
+    acronyms are used, the whole acronym should be upper case. For vector
+    parameters, the name will be followed by *[len]* where *len* is an
+    integer length of the vector, or the name of the parameter which
+    controls the length.  The attribute *id* will be created from name
+    without the length.
 
     *units* should be one of *degrees* for angles, *Ang* for lengths,
     *1e-6/Ang^2* for SLDs.
@@ -602,7 +605,8 @@ class ParameterTable(object):
 
         # Using the call_parameters table, we already have expanded forms
         # for each of the vector parameters; put them in a lookup table
-        expanded_pars = dict((p.name, p) for p in self.call_parameters)
+        # Note: p.id and p.name are currently identical for the call parameters
+        expanded_pars = dict((p.id, p) for p in self.call_parameters)
 
         def append_group(name):
             """add the named parameter, and related magnetic parameters if any"""
@@ -729,8 +733,6 @@ def make_model_info(kernel_module):
     info.composition = None
     info.docs = kernel_module.__doc__
     info.category = getattr(kernel_module, 'category', None)
-    info.single = getattr(kernel_module, 'single', True)
-    info.opencl = getattr(kernel_module, 'opencl', True)
     info.structure_factor = getattr(kernel_module, 'structure_factor', False)
     info.profile_axes = getattr(kernel_module, 'profile_axes', ['x', 'y'])
     info.source = getattr(kernel_module, 'source', [])
@@ -744,6 +746,9 @@ def make_model_info(kernel_module):
     info.Imagnetic = getattr(kernel_module, 'Imagnetic', None) # type: ignore
     info.profile = getattr(kernel_module, 'profile', None) # type: ignore
     info.sesans = getattr(kernel_module, 'sesans', None) # type: ignore
+    # Default single and opencl to True for C models.  Python models have callable Iq.
+    info.opencl = getattr(kernel_module, 'opencl', not callable(info.Iq))
+    info.single = getattr(kernel_module, 'single', not callable(info.Iq))
 
     # multiplicity info
     control_pars = [p.id for p in parameters.kernel_parameters if p.is_control]

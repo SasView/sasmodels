@@ -2,7 +2,7 @@ double form_volume(void);
 
 double Iq(double q, double radius2, double arms);
 
-static double _mass_fractal_kernel(double q, double radius2, double arms)
+static double star_polymer_kernel(double q, double radius2, double arms)
 {
 
     double u_2 = radius2 * q * q;
@@ -22,5 +22,5 @@ double form_volume(void)
 
 double Iq(double q, double radius2, double arms)
 {
-    return _mass_fractal_kernel(q, radius2, arms);
+    return star_polymer_kernel(q, radius2, arms);
 }
