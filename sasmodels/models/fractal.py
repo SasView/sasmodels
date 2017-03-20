@@ -19,19 +19,16 @@ in a fractal-like clusters.  P(q) and S(q) are calculated as:
 
 .. math::
 
-    P(q)&= F(qR_0)^2
-
-    F(q)&= \frac{3 (\sin x - x \cos x)}{x^3}
-
-    V_\text{particle} &= \frac{4}{3}\ \pi R_0
-
+    P(q)&= F(qR_0)^2 \\
+    F(q)&= \frac{3 (\sin x - x \cos x)}{x^3} \\
+    V_\text{particle} &= \frac{4}{3}\ \pi R_0 \\
     S(q) &= 1 + \frac{D_f\  \Gamma\!(D_f-1)}{[1+1/(q \xi)^2\  ]^{(D_f -1)/2}}
     \frac{\sin[(D_f-1) \tan^{-1}(q \xi) ]}{(q R_0)^{D_f}}
 
 where $\xi$ is the correlation length representing the cluster size and $D_f$
 is the fractal dimension, representing the self similarity of the structure. 
 Note that S(q) here goes negative if $D_f$ is too large, and the Gamma function 
-diverges at $D_f$=0 and $D_f$=1.  
+diverges at $D_f=0$ and $D_f=1$.
 
 **Polydispersity on the radius is provided for.**
 
