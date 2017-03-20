@@ -46,13 +46,15 @@ For 2D data: The 2D scattering intensity is calculated in the same way as
 References
 ----------
 
-J Teixeira, *J. Appl. Cryst.*, 21 (1988) 781-785
+.. [#] J Teixeira, *J. Appl. Cryst.*, 21 (1988) 781-785
 
-**Author:** NIST IGOR/DANSE **on:** pre 2010
+Authorship and Verification
+----------------------------
 
-**Last Modified by:** Paul Butler **on:** March 20, 2016
-
-**Last Reviewed by:** Paul Butler **on:** March 20, 2016
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Converted to sasmodels by:** Paul Butler **Date:** March 19, 2016
+* **Last Modified by:** Paul Butler **Date:** March 12, 2017
+* **Last Reviewed by:** Paul Butler **Date:** March 12, 2017
 
 """
 
@@ -83,7 +85,7 @@ category = "shape-independent"
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["volfraction", "", 0.05, [0.0, 1], "",
                "volume fraction of blocks"],
-              ["radius",    "Ang",  5.0, [0.0, inf], "",
+              ["radius",    "Ang",  5.0, [0.0, inf], "volume",
                "radius of particles"],
               ["fractal_dim",      "",  2.0, [0.0, 6.0], "",
                "fractal dimension"],
