@@ -44,28 +44,31 @@ def make_product_info(p_info, s_info):
     # make sure volume fraction is the second parameter of the
     # structure factor calculator.  Structure factors should not
     # have any magnetic parameters
-    assert(s_info.parameters.kernel_parameters[0].id == ER_ID)
-    assert(s_info.parameters.kernel_parameters[1].id == VF_ID)
-    assert(s_info.parameters.magnetism_index == [])
+    if not s_info.parameters.kernel_parameters[0].id == ER_ID:
+        raise TypeError("S needs %s as first parameter"%ER_ID)
+    if not s_info.parameters.kernel_parameters[1].id == VF_ID:
+        raise TypeError("S needs %s as second parameter"%VF_ID)
+    if not s_info.parameters.magnetism_index == []:
+        raise TypeError("S should not have SLD parameters")
     p_id, p_name, p_pars = p_info.id, p_info.name, p_info.parameters
     s_id, s_name, s_pars = s_info.id, s_info.name, s_info.parameters
-    p_set = set(p.id for p in p_pars.call_parameters)
-    s_set = set(p.id for p in s_pars.call_parameters)
 
-    if p_set & s_set:
-        # there is some overlap between the parameter names; tag the
-        # overlapping S parameters with name_S.
-        # Skip the first parameter of s, which is effective radius
-        s_list = [(suffix_parameter(par) if par.id in p_set else par)
-                  for par in s_pars.kernel_parameters[1:]]
-    else:
-        # Skip the first parameter of s, which is effective radius
-        s_list = s_pars.kernel_parameters[1:]
+    # Create list of parameters for the combined model.  Skip the first
+    # parameter of S, which we verified above is effective radius.  If there
+    # are any names in P that overlap with those in S, modify the name in S
+    # to distinguish it.
+    p_set = set(p.id for p in p_pars.kernel_parameters)
+    s_list = [(_tag_parameter(par) if par.id in p_set else par)
+              for par in s_pars.kernel_parameters[1:]]
+    # Check if still a collision after renaming.  This could happen if for
+    # example S has volfrac and P has both volfrac and volfrac_S.
+    if any(p.id in p_set for p in s_list):
+        raise TypeError("name collision: P has P.name and P.name_S while S has S.name")
+
     translate_name = dict((old.id, new.id) for old, new
                           in zip(s_pars.kernel_parameters[1:], s_list))
     demo = {}
-    demo.update((k, v) for k, v in p_info.demo.items()
-                if k not in ("background", "scale"))
+    demo.update(p_info.demo.items())
     demo.update((translate_name[k], v) for k, v in s_info.demo.items()
                 if k not in ("background", "scale") and not k.startswith(ER_ID))
     combined_pars = p_pars.kernel_parameters + s_list
@@ -89,13 +92,29 @@ def make_product_info(p_info, s_info):
     # Iq, Iqxy, form_volume, ER, VR and sesans
     # Remember the component info blocks so we can build the model
     model_info.composition = ('product', [p_info, s_info])
-    model_info.demo = {}
+    model_info.demo = demo
+
+    ## Show the parameter table with the demo values
+    #from .compare import get_pars, parlist
+    #print("==== %s ====="%model_info.name)
+    #values = get_pars(model_info, use_demo=True)
+    #print(parlist(model_info, values, is2d=True))
     return model_info
 
-def suffix_parameter(par, suffix):
+def _tag_parameter(par):
+    """
+    Tag the parameter name with _S to indicate that the parameter comes from
+    the structure factor parameter set.  This is only necessary if the
+    form factor model includes a parameter of the same name as a parameter
+    in the structure factor.
+    """
     par = copy(par)
-    par.name = par.name + " S"
+    # Protect against a vector parameter in S by appending the vector length
+    # to the renamed parameter.  Note: haven't tested this since no existing
+    # structure factor models contain vector parameters.
+    vector_length = par.name[len(par.id):]
     par.id = par.id + "_S"
+    par.name = par.id + vector_length
     return par
 
 class ProductModel(KernelModel):
