@@ -17,37 +17,48 @@ where
 
 .. math::
 
-    F(q,\alpha) = \frac{3 \Delta \rho V (\sin[qr(R_p,R_e,\alpha)]
-                - \cos[qr(R_p,R_e,\alpha)])}
-                {[qr(R_p,R_e,\alpha)]^3}
+    F(q,\alpha) = \Delta \rho V \frac{3(\sin qr  - qr \cos qr)}{(qr)^3}
 
-and
+for
 
 .. math::
 
-    r(R_p,R_e,\alpha) = \left[ R_e^2 \sin^2 \alpha
-        + R_p^2 \cos^2 \alpha \right]^{1/2}
+    r = \left[ R_e^2 \sin^2 \alpha + R_p^2 \cos^2 \alpha \right]^{1/2}
 
 
 $\alpha$ is the angle between the axis of the ellipsoid and $\vec q$,
-$V = (4/3)\pi R_pR_e^2$ is the volume of the ellipsoid , $R_p$ is the polar radius along the
-rotational axis of the ellipsoid, $R_e$ is the equatorial radius perpendicular
-to the rotational axis of the ellipsoid and $\Delta \rho$ (contrast) is the
-scattering length density difference between the scatterer and the solvent.
+$V = (4/3)\pi R_pR_e^2$ is the volume of the ellipsoid, $R_p$ is the polar
+radius along the rotational axis of the ellipsoid, $R_e$ is the equatorial
+radius perpendicular to the rotational axis of the ellipsoid and
+$\Delta \rho$ (contrast) is the scattering length density difference between
+the scatterer and the solvent.
 
-For randomly oriented particles:
+For randomly oriented particles use the orientational average,
 
 .. math::
 
-   F^2(q)=\int_{0}^{\pi/2}{F^2(q,\alpha)\sin(\alpha)d\alpha}
+   \langle F^2(q) \rangle = \int_{0}^{\pi/2}{F^2(q,\alpha)\sin(\alpha)\,d\alpha}
 
+
+computed via substitution of $u=\sin(\alpha)$, $du=\cos(\alpha)\,d\alpha$ as
+
+.. math::
+
+    \langle F^2(q) \rangle = \int_0^1{F^2(q, u)\,du}
+
+with
+
+.. math::
+
+    r = R_e \left[ 1 + u^2\left(R_p^2/R_e^2 - 1\right)\right]^{1/2}
 
 To provide easy access to the orientation of the ellipsoid, we define
 the rotation axis of the ellipsoid using two angles $\theta$ and $\phi$.
 These angles are defined in the
 :ref:`cylinder orientation figure <cylinder-angle-definition>`.
 For the ellipsoid, $\theta$ is the angle between the rotational axis
-and the $z$ -axis.
+and the $z$ -axis in the $xz$ plane followed by a rotation by $\phi$
+in the $xy$ plane.
 
 NB: The 2nd virial coefficient of the solid ellipsoid is calculated based
 on the $R_p$ and $R_e$ values, and used as the effective radius for
@@ -89,12 +100,23 @@ obtained by summing over 501 equidistant points. Our result was found
 to be stable over the range of $q$ shown for a number of points higher
 than 500.
 
+Model was also tested against the triaxial ellipsoid model with equal major
+and minor equatorial radii.  It is also consistent with the cyclinder model
+with polar radius equal to length and equatorial radius equal to radius.
+
 References
 ----------
 
 L A Feigin and D I Svergun.
 *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*,
 Plenum Press, New York, 1987.
+
+Authorship and Verification
+----------------------------
+
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Converted to sasmodels by:** Helen Park **Date:** July 9, 2014
+* **Last Modified by:** Paul Kienzle **Date:** March 22, 2017
 """
 
 from numpy import inf
