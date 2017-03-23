@@ -43,11 +43,10 @@ amplitudes of the core and shell, in the same manner as a core-shell model.
 .. math::
 
     F_{a}(Q,\alpha,\beta)=
-    \Bigg(\frac{sin(Q(L_A+2t_A)/2sin\alpha sin\beta)}{Q(L_A+2t_A)/2sin\alpha
-    sin\beta)}
-    - \frac{sin(QL_A/2sin\alpha sin\beta)}{QL_A/2sin\alpha sin\beta)} \Bigg)
-    + \frac{sin(QL_B/2sin\alpha sin\beta)}{QL_B/2sin\alpha sin\beta)}
-    + \frac{sin(QL_C/2sin\alpha sin\beta)}{QL_C/2sin\alpha sin\beta)}
+    \left[\frac{\sin(Q(L_A+2t_A)/2\sin\alpha \sin\beta)}{Q(L_A+2t_A)/2\sin\alpha\sin\beta}
+    - \frac{\sin(QL_A/2\sin\alpha \sin\beta)}{QL_A/2\sin\alpha \sin\beta} \right]
+    \left[\frac{\sin(QL_B/2\sin\alpha \sin\beta)}{QL_B/2\sin\alpha \sin\beta} \right]
+    \left[\frac{\sin(QL_C/2\sin\alpha \sin\beta)}{QL_C/2\sin\alpha \sin\beta} \right]
 
 .. note::
 
@@ -57,7 +56,7 @@ amplitudes of the core and shell, in the same manner as a core-shell model.
     but the calculation will not be correct and thus the result wrong.
 
 FITTING NOTES
-If the scale is set equal to the particle volume fraction, |phi|, the returned
+If the scale is set equal to the particle volume fraction, $\phi$, the returned
 value is the scattered intensity per unit volume, $I(q) = \phi P(q)$.
 However, **no interparticle interference effects are included in this
 calculation.**
