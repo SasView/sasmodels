@@ -1,36 +1,67 @@
 # triaxial ellipsoid model
 # Note: model title and parameter table are inserted automatically
 r"""
-All three axes are of different lengths with $R_a \leq R_b \leq R_c$
-**Users should maintain this inequality for all calculations**.
-
-.. math::
-
-    P(q) = \text{scale} V \left< F^2(q) \right> + \text{background}
-
-where the volume $V = 4/3 \pi R_a R_b R_c$, and the averaging
-$\left<\ldots\right>$ is applied over all orientations for 1D.
-
-.. figure:: img/triaxial_ellipsoid_geometry.jpg
-
-    Ellipsoid schematic.
-
 Definition
 ----------
 
-The form factor calculated is
+.. figure:: img/triaxial_ellipsoid_geometry.jpg
+
+    Ellipsoid with $R_a$ as *radius_equat_minor*, $R_b$ as *radius_equat_major*
+    and $R_c$ as *radius_polar*.  For highest accuracy in the orientational
+    average, prefer $R_c > R_b > R_a$.
+
+Given an ellipsoid
 
 .. math::
 
-    P(q) = \frac{\text{scale}}{V}\int_0^1\int_0^1
-        \Phi^2(qR_a^2\cos^2( \pi x/2) + qR_b^2\sin^2(\pi y/2)(1-y^2) + R_c^2y^2)
-        dx dy
+    \frac{X^2}{R_a^2} + \frac{Y^2}{R_b^2} + \frac{Z^2}{R_c^2} = 1
+
+the scattering is defined by the average over all orientations $\Omega$,
+
+.. math::
+
+    P(q) = \text{scale}\frac{V}{4 \pi}\int_\Omega \Phi^2(qr) d\Omega + \text{background}
 
 where
 
 .. math::
 
-    \Phi(u) = 3 u^{-3} (\sin u - u \cos u)
+    \Phi(qr) &= 3 j_1(qr)/qr = 3 (\sin qr - qr \cos qr)/(qr)^3 \\
+    r^2 &= R_a^2e^2 + R_b^2f^2 + R_c^2g^2 \\
+    V &= \tfrac{4}{3} \pi R_a R_b R_c
+
+The $e$, $f$ and $g$ terms are the projections of the orientation vector on $X$,
+$Y$ and $Z$ respectively.  Keeping the orientation fixed at the canonical
+axes, we can integrate over the incident direction using polar angle
+$-\pi/2 \le \gamma \le \pi/2$ and equatorial angle $0 \le \phi \le 2\pi$
+(as defined in ref [1]),
+
+ .. math::
+
+     \langle\Phi^2\rangle = \int_0^{2\pi} \int_{-\pi/2}^{\pi/2} \Phi^2(qr) \cos \gamma\,d\gamma d\phi
+
+with $e = \cos\gamma \sin\phi$, $f = \cos\gamma \cos\phi$ and $g = \sin\gamma$.
+A little algebra yields
+
+.. math::
+
+    r^2 = b^2(p_a \sin^2 \phi \cos^2 \gamma + 1 + p_c \sin^2 \gamma)
+
+for
+
+.. math::
+
+    p_a = \frac{a^2}{b^2} - 1 \text{ and } p_c = \frac{c^2}{b^2} - 1
+
+Due to symmetry, the ranges can be restricted to a single quadrant
+$0 \le \gamma \le \pi/2$ and $0 \le \phi \le \pi/2$, scaling the resulting
+integral by 8. The computation is done using the substitution $u = \sin\gamma$,
+$du = \cos\gamma\,d\gamma$, giving
+
+.. math::
+
+    \langle\Phi^2\rangle &= 8 \int_0^{\pi/2} \int_0^1 \Phi^2(qr) du d\phi \\
+    r^2 &= b^2(p_a \sin^2(\phi)(1 - u^2) + 1 + p_c u^2)
 
 To provide easy access to the orientation of the triaxial ellipsoid,
 we define the axis of the cylinder using the angles $\theta$, $\phi$
@@ -68,8 +99,10 @@ over all possible angles.
 References
 ----------
 
-L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray
-and Neutron Scattering*, Plenum, New York, 1987.
+[1] Finnigan, J.A., Jacobs, D.J., 1971.
+*Light scattering by ellipsoidal particles in solution*,
+J. Phys. D: Appl. Phys. 4, 72-77. doi:10.1088/0022-3727/4/1/310
+
 """
 
 from numpy import inf
@@ -90,11 +123,11 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
               ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Solvent scattering length density"],
               ["radius_equat_minor", "Ang", 20, [0, inf], "volume",
-               "Minor equatorial radius"],
+               "Minor equatorial radius, Ra"],
               ["radius_equat_major", "Ang", 400, [0, inf], "volume",
-               "Major equatorial radius"],
+               "Major equatorial radius, Rb"],
               ["radius_polar", "Ang", 10, [0, inf], "volume",
-               "Polar radius"],
+               "Polar radius, Rc"],
               ["theta", "degrees", 60, [-inf, inf], "orientation",
                "In plane angle"],
               ["phi", "degrees", 60, [-inf, inf], "orientation",
