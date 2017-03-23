@@ -82,7 +82,7 @@ Options (* for default):
     -accuracy=Low accuracy of the resolution calculation Low, Mid, High, Xhigh
     -edit starts the parameter explorer
     -default/-demo* use demo vs default parameters
-    -html shows the model docs instead of running the model
+    -help/-html shows the model docs instead of running the model
     -title="note" adds note to the plot title, after the model name
 
 Any two calculation engines can be selected for comparison:
@@ -828,7 +828,7 @@ NAME_OPTIONS = set([
     'rel', 'abs',
     'linear', 'log', 'q4',
     'hist', 'nohist',
-    'edit', 'html',
+    'edit', 'html', 'help',
     'demo', 'default',
     ])
 VALUE_OPTIONS = [
@@ -995,6 +995,7 @@ def parse_opts(argv):
         elif arg == '-demo':    opts['use_demo'] = True
         elif arg == '-default':    opts['use_demo'] = False
         elif arg == '-html':    opts['html'] = True
+        elif arg == '-help':    opts['html'] = True
     # pylint: enable=bad-whitespace
 
     if MODEL_SPLIT in name:
