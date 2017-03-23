@@ -7,8 +7,7 @@ Definition
 .. figure:: img/triaxial_ellipsoid_geometry.jpg
 
     Ellipsoid with $R_a$ as *radius_equat_minor*, $R_b$ as *radius_equat_major*
-    and $R_c$ as *radius_polar*.  For highest accuracy in the orientational
-    average, prefer $R_c > R_b > R_a$.
+    and $R_c$ as *radius_polar*.
 
 Given an ellipsoid
 
