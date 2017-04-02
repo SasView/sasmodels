@@ -63,8 +63,13 @@ def draw_shimmy(ax, theta, phi, psi, dtheta, dphi, dpsi):
         [ 1,  1,  0],
         [ 1,  1,  1],
     ]
+    if dtheta == 0:
+        cloud = [v for v in cloud if v[0] == 0]
+    if dphi == 0:
+        cloud = [v for v in cloud if v[1] == 0]
+    if dpsi == 0:
+        cloud = [v for v in cloud if v[2] == 0]
     draw_shape(ax, size, view, shimmy, steps=100, alpha=0.8)
-    cloud = []
     for point in cloud:
         shimmy=[dtheta*point[0], dphi*point[1], dpsi*point[2]]
         draw_shape(ax, size, view, shimmy, alpha=0.8)
@@ -195,6 +200,7 @@ def main():
     phi, dphi = -45., 3.
     psi, dpsi = -45., 3.
     theta, phi, psi = 0, 0, 0
+    dtheta, dphi, dpsi = 0, 0, 0
     #dist = 'rect'
     dist = 'gauss'
 
@@ -202,7 +208,7 @@ def main():
     axtheta  = plt.axes([0.1, 0.15, 0.45, 0.04], axisbg=axcolor)
     axphi = plt.axes([0.1, 0.1, 0.45, 0.04], axisbg=axcolor)
     axpsi = plt.axes([0.1, 0.05, 0.45, 0.04], axisbg=axcolor)
-    stheta = Slider(axtheta, 'Theta', -180, 180, valinit=theta)
+    stheta = Slider(axtheta, 'Theta', -90, 90, valinit=theta)
     sphi = Slider(axphi, 'Phi', -180, 180, valinit=phi)
     spsi = Slider(axpsi, 'Psi', -180, 180, valinit=psi)
     axdtheta  = plt.axes([0.75, 0.15, 0.15, 0.04], axisbg=axcolor)
