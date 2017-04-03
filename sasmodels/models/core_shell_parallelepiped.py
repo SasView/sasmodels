@@ -3,8 +3,14 @@ Definition
 ----------
 
 Calculates the form factor for a rectangular solid with a core-shell structure.
-**The thickness and the scattering length density of the shell or "rim"
-can be different on all three (pairs) of faces.**
+The thickness and the scattering length density of the shell or 
+"rim" can be different on each (pair) of faces. However at this time
+the model does **NOT** actually calculate a c face rim despite the presence of
+the parameter.
+
+.. note::
+   This model was originally ported from NIST IGOR macros. However,t is not
+   yet fully understood by the SasView developers and is currently review.
 
 The form factor is normalized by the particle volume $V$ such that
 
@@ -34,7 +40,8 @@ The volume of the solid is
 
     V = ABC + 2t_ABC + 2t_BAC + 2t_CAB
 
-**meaning that there are "gaps" at the corners of the solid.**
+**meaning that there are "gaps" at the corners of the solid.**  Again note that
+$t_C = 0$ currently. 
 
 The intensity calculated follows the :ref:`parallelepiped` model, with the
 core-shell intensity being calculated as the square of the sum of the
@@ -91,12 +98,6 @@ $q$ plane. For example, $\Psi = 0$ when the *short_b* axis is parallel to the
     Examples of the angles for oriented core-shell parallelepipeds against the
     detector plane.
 
-Validation
-----------
-
-The model uses the form factor calculations implemented in a c-library provided
-by the NIST Center for Neutron Research (Kline, 2006).
-
 References
 ----------
 
@@ -111,8 +112,9 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
-* **Last Modified by:** Paul Butler **Date:** September 30, 2016
-* **Last Reviewed by:** Miguel Gonzales **Date:** March 21, 2016
+* **Converted to sasmodels by:** Miguel Gonzales **Date:** February 26, 2016
+* **Last Modified by:** Wojciech Potrzebowski **Date:** January 11, 2017
+* **Currently Under review by:** Paul Butler
 """
 
 import numpy as np
