@@ -29,6 +29,7 @@ On Windows you will need to remove the quotes.
 from __future__ import print_function
 
 import sys
+import os
 import math
 import datetime
 import traceback
@@ -39,7 +40,7 @@ import numpy as np  # type: ignore
 from . import core
 from . import kerneldll
 from . import exception
-from .data import plot_theory, empty_data1D, empty_data2D
+from .data import plot_theory, empty_data1D, empty_data2D, load_data
 from .direct_model import DirectModel
 from .convert import revert_name, revert_pars, constrain_new_to_old
 from .generate import FLOAT_RE
@@ -84,6 +85,7 @@ Options (* for default):
     -default/-demo* use demo vs default parameters
     -html shows the model docs instead of running the model
     -title="note" adds note to the plot title, after the model name
+    -data="path" uses q, dq from the data file
 
 Any two calculation engines can be selected for comparison:
 
@@ -746,6 +748,7 @@ def plot_models(opts, result, limits=None):
     base = opts['engines'][0] if have_base else None
     comp = opts['engines'][1] if have_comp else None
     data = opts['data']
+    use_data = have_base ^ have_comp
 
     # Plot if requested
     view = opts['view']
@@ -762,14 +765,14 @@ def plot_models(opts, result, limits=None):
 
     if have_base:
         if have_comp: plt.subplot(131)
-        plot_theory(data, base_value, view=view, use_data=False, limits=limits)
+        plot_theory(data, base_value, view=view, use_data=use_data, limits=limits)
         plt.title("%s t=%.2f ms"%(base.engine, base_time))
         #cbar_title = "log I"
     if have_comp:
         if have_base: plt.subplot(132)
         if not opts['is2d'] and have_base:
-            plot_theory(data, base_value, view=view, use_data=False, limits=limits)
-        plot_theory(data, comp_value, view=view, use_data=False, limits=limits)
+            plot_theory(data, base_value, view=view, use_data=use_data, limits=limits)
+        plot_theory(data, comp_value, view=view, use_data=use_data, limits=limits)
         plt.title("%s t=%.2f ms"%(comp.engine, comp_time))
         #cbar_title = "log I"
     if have_base and have_comp:
@@ -783,7 +786,7 @@ def plot_models(opts, result, limits=None):
             cutoff = sorted[int(sorted.size*0.95)]
             err[err>cutoff] = cutoff
         #err,errstr = base/comp,"ratio"
-        plot_theory(data, None, resid=err, view=errview, use_data=False)
+        plot_theory(data, None, resid=err, view=errview, use_data=use_data)
         if view == 'linear':
             plt.xscale('linear')
         plt.title("max %s = %.3g"%(errstr, abs(err).max()))
@@ -833,7 +836,7 @@ NAME_OPTIONS = set([
     ])
 VALUE_OPTIONS = [
     # Note: random is both a name option and a value option
-    'cutoff', 'random', 'nq', 'res', 'accuracy', 'title',
+    'cutoff', 'random', 'nq', 'res', 'accuracy', 'title', 'data',
     ]
 
 def columnize(items, indent="", width=79):
@@ -950,6 +953,7 @@ def parse_opts(argv):
         'zero'      : False,
         'html'      : False,
         'title'     : None,
+        'data'      : None,
     }
     engines = []
     for arg in flags:
@@ -970,7 +974,8 @@ def parse_opts(argv):
         elif arg.startswith('-accuracy='): opts['accuracy'] = arg[10:]
         elif arg.startswith('-cutoff='):   opts['cutoff'] = float(arg[8:])
         elif arg.startswith('-random='):   opts['seed'] = int(arg[8:])
-        elif arg.startswith('-title'):     opts['title'] = arg[7:]
+        elif arg.startswith('-title='):    opts['title'] = arg[7:]
+        elif arg.startswith('-data='):     opts['data'] = arg[6:]
         elif arg == '-random':  opts['seed'] = np.random.randint(1000000)
         elif arg == '-preset':  opts['seed'] = -1
         elif arg == '-mono':    opts['mono'] = True
@@ -1111,7 +1116,10 @@ def parse_opts(argv):
             print(str(parlist(model_info, pars, opts['is2d'])))
 
     # Create the computational engines
-    data, _ = make_data(opts)
+    if opts['data'] is not None:
+        data = load_data(os.path.expanduser(opts['data']))
+    else:
+        data, _ = make_data(opts)
     if n1:
         base = make_engine(model_info, data, engines[0], opts['cutoff'])
     else:
