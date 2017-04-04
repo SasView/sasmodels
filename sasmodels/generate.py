@@ -927,7 +927,7 @@ def view_html(model_name):
 def view_html_from_info(info):
     from . import rst2html
     url = "file://"+dirname(info.filename)+"/"
-    rst2html.wxview(make_html(info), url=url)
+    rst2html.view_html(make_html(info), url=url)
 
 def demo_time():
     # type: () -> None

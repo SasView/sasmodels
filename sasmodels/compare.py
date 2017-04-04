@@ -1149,12 +1149,15 @@ def show_docs(opts):
     """
     show html docs for the model
     """
-    import wx  # type: ignore
-    from .generate import view_html_from_info
-    app = wx.App() if wx.GetApp() is None else None
-    view_html_from_info(opts['def'][0])
-    if app: app.MainLoop()
+    import os
+    from .generate import make_html
+    from . import rst2html
 
+    info = opts['def'][0]
+    html = make_html(info)
+    path = os.path.dirname(info.filename)
+    url = "file://"+path.replace("\\","/")[2:]+"/"
+    rst2html.view_html_qtapp(html, url)
 
 def explore(opts):
     # type: (Dict[str, Any]) -> None
