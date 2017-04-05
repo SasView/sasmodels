@@ -53,6 +53,10 @@ before_install:
 
   - conda install --yes python=$PY $NUMPYSPEC scipy cython mako cffi
 
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      pip install pyopencl;
+    fi;
+
 install:
   - pip install bumps
   - pip install unittest-xml-reporting
