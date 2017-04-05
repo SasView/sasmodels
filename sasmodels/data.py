@@ -53,6 +53,10 @@ def load_data(filename):
     data = loader.load(filename)
     if data is None:
         raise IOError("Data %r could not be loaded" % filename)
+    if hasattr(data, 'x'):
+        data.qmin, data.qmax = data.x.min(), data.x.max()
+        data.mask = (np.isnan(data.y) if data.y is not None
+                     else np.zeros_like(data.x, dtype='bool'))
     return data
 
 
@@ -347,7 +351,7 @@ def plot_data(data, view='log', limits=None):
     # Note: kind of weird using the plot result functions to plot just the
     # data, but they already handle the masking and graph markup already, so
     # do not repeat.
-    if hasattr(data, 'lam'):
+    if hasattr(data, 'isSesans') and data.isSesans:
         _plot_result_sesans(data, None, None, use_data=True, limits=limits)
     elif hasattr(data, 'qx_data'):
         _plot_result2D(data, None, None, view, use_data=True, limits=limits)
@@ -375,7 +379,7 @@ def plot_theory(data, theory, resid=None, view='log',
 
     *Iq_calc* is the raw theory values without resolution smearing
     """
-    if hasattr(data, 'lam'):
+    if hasattr(data, 'isSesans') and data.isSesans:
         _plot_result_sesans(data, theory, resid, use_data=True, limits=limits)
     elif hasattr(data, 'qx_data'):
         _plot_result2D(data, theory, resid, view, use_data, limits=limits)

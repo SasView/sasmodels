@@ -191,7 +191,7 @@ class DataMixin(object):
         self._model = model
 
         # interpret data
-        if hasattr(data, 'lam'):
+        if hasattr(data, 'isSesans') and data.isSesans:
             self.data_type = 'sesans'
         elif hasattr(data, 'qx_data'):
             self.data_type = 'Iqxy'
