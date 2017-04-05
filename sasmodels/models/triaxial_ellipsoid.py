@@ -15,11 +15,11 @@ Given an ellipsoid
 
     \frac{X^2}{R_a^2} + \frac{Y^2}{R_b^2} + \frac{Z^2}{R_c^2} = 1
 
-the scattering is defined by the average over all orientations $\Omega$,
+the scattering for randomly oriented particles is defined by the average over all orientations $\Omega$ of:
 
 .. math::
 
-    P(q) = \text{scale}\frac{V}{4 \pi}\int_\Omega \Phi^2(qr) d\Omega + \text{background}
+    P(q) = \text{scale}(\Delta\rho)^2\frac{V}{4 \pi}\int_\Omega \Phi^2(qr) d\Omega + \text{background}
 
 where
 
@@ -78,7 +78,7 @@ $a$ axis is parallel to the $x$ axis of the detector.
 
 The radius-of-gyration for this system is  $R_g^2 = (R_a R_b R_c)^2/5$.
 
-The contrast is defined as SLD(ellipsoid) - SLD(solvent).  In the
+The contrast $\Delta\rho$ is defined as SLD(ellipsoid) - SLD(solvent).  In the
 parameters, $R_a$ is the minor equatorial radius, $R_b$ is the major
 equatorial radius, and $R_c$ is the polar radius of the ellipsoid.
 
@@ -101,6 +101,13 @@ References
 [1] Finnigan, J.A., Jacobs, D.J., 1971.
 *Light scattering by ellipsoidal particles in solution*,
 J. Phys. D: Appl. Phys. 4, 72-77. doi:10.1088/0022-3727/4/1/310
+
+Authorship and Verification
+----------------------------
+
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Paul Kienzle (improved calculation) **Date:** April 4, 2017
+* **Last Reviewed by:** Paul Kienzle &Richard Heenan **Date:**  April 4, 2017
 
 """
 
@@ -143,6 +150,9 @@ def ER(radius_equat_minor, radius_equat_major, radius_polar):
     """
     import numpy as np
     from .ellipsoid import ER as ellipsoid_ER
+     # now that radii can be in any size order, radii need sorting a,b,c where a~b and c is either much smaller or much larger
+     # also need some unit tests!
+    
     return ellipsoid_ER(radius_polar, np.sqrt(radius_equat_minor * radius_equat_major))
 
 demo = dict(scale=1, background=0,
