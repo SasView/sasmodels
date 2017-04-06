@@ -102,7 +102,7 @@ Authorship and Verification
 * **Last Reviewed by:** Paul Butler and Paul Kienzle **on:** November 26, 2016
 """
 
-from numpy import inf
+from numpy import inf, sin, cos, pi
 
 name = "stacked_disks"
 title = "Form factor for a stacked set of non exfoliated core/shell disks"
@@ -151,7 +151,10 @@ demo = dict(background=0.001,
             phi=0)
 # After redefinition of spherical coordinates -
 # tests had in old coords theta=0, phi=0; new coords theta=90, phi=0
-# but should not matter here as so far all the tests are 1D not 2D
+q = 0.1
+# april 6 2017, rkh added a 2d unit test, assume correct!
+qx = q*cos(pi/6.0)
+qy = q*sin(pi/6.0)
 tests = [
 # Accuracy tests based on content in test/utest_extra_models.py.
 # Added 2 tests with n_stacked = 5 using SasView 3.1.2 - PDB; for which alas q=0.001 values seem closer to n_stacked=1 not 5, changed assuming my 4.1 code OK, RKH
@@ -183,6 +186,19 @@ tests = [
 #     }, 0.001, 5065.12793824],    n_stacking=1 not 5 ? slight change in value here 11jan2017, check other cpu types
 #     }, 0.001, 5075.11570493],
      }, 0.001, 25325.635693],
+    [{'thick_core': 10.0,
+      'thick_layer': 15.0,
+      'radius': 100.0,
+      'n_stacking': 5,
+      'sigma_d': 0.0,
+      'sld_core': 4.0,
+      'sld_layer': -0.4,
+      'solvent_sd': 5.0,
+      'theta': 90.0,
+      'phi': 20.0,
+      'scale': 0.01,
+      'background': 0.001},
+      (qx, qy), 0.0491167089952  ],
     [{'thick_core': 10.0,
       'thick_layer': 15.0,
       'radius': 3000.0,
@@ -227,6 +243,19 @@ tests = [
       'scale': 0.01,
       'background': 0.001,
      }, ([0.4, 0.5]), [0.00105074, 0.00121761]],
+    [{'thick_core': 10.0,
+      'thick_layer': 15.0,
+      'radius': 3000.0,
+      'n_stacking': 1.0,
+      'sigma_d': 0.0,
+      'sld_core': 4.0,
+      'sld_layer': -0.4,
+      'solvent_sd': 5.0,
+      'theta': 90.0,
+      'phi': 20.0,
+      'scale': 0.01,
+      'background': 0.001,
+     }, (qx, qy), 0.0341738733124 ],
 
     [{'thick_core': 10.0,
       'thick_layer': 15.0,

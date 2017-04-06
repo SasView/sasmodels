@@ -98,7 +98,7 @@ Authorship and Verification
 * **Last Reviewed by:** Richard Heenan **Date:** March 21, 2016
 """
 
-from numpy import inf
+from numpy import inf, pi
 
 name = "bcc_paracrystal"
 title = "Body-centred cubic lattic with paracrystalline distortion"
@@ -140,3 +140,9 @@ demo = dict(
     phi_pd=15, phi_pd_n=0,
     psi_pd=15, psi_pd_n=0,
     )
+# april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
+q =4.*pi/220.
+tests = [
+    [{ },
+     [0.001, q, 0.215268], [1.46601394721, 2.85851284174, 0.00866710287078]],
+]

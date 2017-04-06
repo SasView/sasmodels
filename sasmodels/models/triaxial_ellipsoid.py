@@ -111,7 +111,7 @@ Authorship and Verification
 
 """
 
-from numpy import inf
+from numpy import inf, sin, cos, pi
 
 name = "triaxial_ellipsoid"
 title = "Ellipsoid of uniform scattering length density with three independent axes."
@@ -165,3 +165,12 @@ demo = dict(scale=1, background=0,
             theta_pd=15, theta_pd_n=45,
             phi_pd=15, phi_pd_n=1,
             psi_pd=15, psi_pd_n=1)
+q = 0.1
+# april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
+# add 2d test after pull #890
+qx = q*cos(pi/6.0)
+qy = q*sin(pi/6.0)
+tests = [[{}, 0.05, 24.8839548033],
+#        [{'theta':80., 'phi':10.}, (qx, qy), 9999. ],
+        ]
+del qx, qy  # not necessary to delete, but cleaner

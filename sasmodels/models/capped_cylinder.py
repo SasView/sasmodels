@@ -90,7 +90,7 @@ Authorship and Verification
 * **Last Reviewed by:** Richard Heenan **Date:** January 4, 2017
 
 """
-from numpy import inf
+from numpy import inf, sin, cos, pi
 
 name = "capped_cylinder"
 title = "Right circular cylinder with spherical end caps and uniform SLD"
@@ -144,3 +144,11 @@ demo = dict(scale=1, background=0,
             length_pd=.2, length_pd_n=10,
             theta_pd=15, theta_pd_n=45,
             phi_pd=15, phi_pd_n=1)
+q = 0.1
+# april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
+qx = q*cos(pi/6.0)
+qy = q*sin(pi/6.0)
+tests = [[{}, 0.075, 26.0698570695],
+        [{'theta':80., 'phi':10.}, (qx, qy), 0.561811990502],
+        ]
+del qx, qy  # not necessary to delete, but cleaner

@@ -87,7 +87,7 @@ Authorship and Verification
 * **Last Reviewed by:** Richard Heenan **Date:** January 4, 2017
 """
 
-from numpy import inf, sin, cos
+from numpy import inf, sin, cos, pi
 
 name = "core_shell_bicelle"
 title = "Circular cylinder with a core-shell scattering length density profile.."
@@ -154,5 +154,12 @@ demo = dict(scale=1, background=0,
             sld_solvent=1.0,
             theta=90,
             phi=0)
+q = 0.1
+# april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
+qx = q*cos(pi/6.0)
+qy = q*sin(pi/6.0)
+tests = [[{}, 0.05, 7.4883545957],
+        [{'theta':80., 'phi':10.}, (qx, qy), 2.81048892474 ],
+        ]
+del qx, qy  # not necessary to delete, but cleaner
 
-#qx, qy = 0.4 * cos(pi/2.0), 0.5 * sin(0)
