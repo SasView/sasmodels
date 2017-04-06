@@ -64,23 +64,28 @@ $du = \cos\gamma\,d\gamma$, giving
 
 To provide easy access to the orientation of the triaxial ellipsoid,
 we define the axis of the cylinder using the angles $\theta$, $\phi$
-and $\psi$. These angles are defined on
-:numref:`triaxial-ellipsoid-angles` .
+and $\psi$. These angles are defined analogously to the elliptical_cylinder below
+
+.. figure:: img/elliptical_cylinder_angle_definition.png
+
+    Definition of angles for oriented triaxial ellipsoid, where radii shown here are $a < b << c$
+    and angle $\Psi$ is a rotation around the axis of the particle.
+
 The angle $\psi$ is the rotational angle around its own $c$ axis
 against the $q$ plane. For example, $\psi = 0$ when the
 $a$ axis is parallel to the $x$ axis of the detector.
 
 .. _triaxial-ellipsoid-angles:
 
-.. figure:: img/triaxial_ellipsoid_angle_projection.jpg
+.. figure:: img/triaxial_ellipsoid_angle_projection.png
 
-    The angles for oriented ellipsoid.
+    Some example angles for oriented ellipsoid.
 
 The radius-of-gyration for this system is  $R_g^2 = (R_a R_b R_c)^2/5$.
 
 The contrast $\Delta\rho$ is defined as SLD(ellipsoid) - SLD(solvent).  In the
 parameters, $R_a$ is the minor equatorial radius, $R_b$ is the major
-equatorial radius, and $R_c$ is the polar radius of the ellipsoid.
+equatorial radius, and $R_c$ is the polar radius of the ellipsoid. 
 
 NB: The 2nd virial coefficient of the triaxial solid ellipsoid is
 calculated based on the polar radius $R_p = R_c$ and equatorial

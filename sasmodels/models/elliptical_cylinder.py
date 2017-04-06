@@ -63,14 +63,15 @@ $x$ axis of the detector.
 All angle parameters are valid and given only for 2D calculation; ie, an
 oriented system.
 
-.. figure:: img/elliptical_cylinder_angle_definition.jpg
+.. figure:: img/elliptical_cylinder_angle_definition.png
 
-    Definition of angles for 2D
+    Definition of angles for oriented elliptical cylinder, where axis_ratio >1,
+    and angle $\Psi$ is a rotation around the axis of the cylinder.
 
-.. figure:: img/cylinder_angle_projection.jpg
+.. figure:: img/elliptical_cylinder_angle_projection.png
 
     Examples of the angles for oriented elliptical cylinders against the
-    detector plane.
+    detector plane, with $\Psi$ = 0.
 
 NB: The 2nd virial coefficient of the cylinder is calculated based on the
 averaged radius $(=\sqrt{r_\text{minor}^2 * \text{axis ratio}})$ and length

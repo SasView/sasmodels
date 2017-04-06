@@ -32,7 +32,7 @@ There are rectangular "slabs" of thickness $t_A$ that add to the $A$ dimension
 (on the $BC$ faces). There are similar slabs on the $AC$ $(=t_B)$ and $AB$
 $(=t_C)$ faces. The projection in the $AB$ plane is then
 
-.. image:: img/core_shell_parallelepiped_projection.jpg
+.. image:: img/core_shell_parallelepiped_projection.png
 
 The volume of the solid is
 
@@ -79,8 +79,9 @@ The returned value is in units of |cm^-1|, on absolute scale.
 
 NB: The 2nd virial coefficient of the core_shell_parallelepiped is calculated
 based on the the averaged effective radius $(=\sqrt{(A+2t_A)(B+2t_B)/\pi})$
-and length $(C+2t_C)$ values, and used as the effective radius
-for $S(Q)$ when $P(Q) * S(Q)$ is applied.
+and length $(C+2t_C)$ values, after appropriately
+sorting the three dimensions to give an oblate or prolate particle, to give an 
+effective radius, for $S(Q)$ when $P(Q) * S(Q)$ is applied.
 
 To provide easy access to the orientation of the parallelepiped, we define the
 axis of the cylinder using three angles $\theta$, $\phi$ and $\Psi$.
@@ -89,7 +90,7 @@ The angle $\Psi$ is the rotational angle around the *long_c* axis against the
 $q$ plane. For example, $\Psi = 0$ when the *short_b* axis is parallel to the
 *x*-axis of the detector.
 
-.. figure:: img/parallelepiped_angle_definition.jpg
+.. figure:: img/parallelepiped_angle_definition.png
 
     Definition of the angles for oriented core-shell parallelepipeds.
 

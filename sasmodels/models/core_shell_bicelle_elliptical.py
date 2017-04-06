@@ -79,10 +79,10 @@ For oriented bicellles the *theta*, *phi* and *psi* orientation parameters only 
 see the :ref:`elliptical-cylinder` model for further information.
 
 
-.. figure:: img/elliptical_cylinder_angle_definition.jpg
+.. figure:: img/elliptical_cylinder_angle_definition.png
 
-    Definition of the angles for the oriented core_shell_bicelle_elliptical model.
-    Note that *theta* and *phi* are currently defined differently to those for the core_shell_bicelle model.
+    Definition of the angles for the oriented core_shell_bicelle_elliptical particles.   
+
 
 
 References

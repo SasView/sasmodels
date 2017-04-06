@@ -64,6 +64,10 @@ are defined in :numref:`cylinder-angle-definition` .
 
     Definition of the angles for oriented cylinders.
 
+.. figure:: img/cylinder_angle_projection.png
+
+    Examples for oriented cylinders.
+
 The $\theta$ and $\phi$ parameters only appear in the model when fitting 2d data.
 
 Validation

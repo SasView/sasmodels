@@ -20,9 +20,9 @@ Definition
 
 .. note::
 
-   The edge of the solid must satisfy the condition that $A < B < C$.
-   This requirement is not enforced in the model, so it is up to the
-   user to check this during the analysis.
+   The edge of the solid used to have to satisfy the condition that $A < B < C$.
+   After some improvements to the effective radius calculation, used with an S(Q),
+   it is beleived that this is no longer the case. 
 
 The 1D scattering intensity $I(q)$ is calculated as:
 
@@ -70,7 +70,8 @@ with
 The scattering intensity per unit volume is returned in units of |cm^-1|.
 
 NB: The 2nd virial coefficient of the parallelepiped is calculated based on
-the averaged effective radius $(=\sqrt{A B / \pi})$ and
+the averaged effective radius, after appropriately
+sorting the three dimensions, to give an oblate or prolate particle, $(=\sqrt{A B / \pi})$ and
 length $(= C)$ values, and used as the effective radius for
 $S(q)$ when $P(q) \cdot S(q)$ is applied.
 
@@ -101,13 +102,13 @@ $A$ along $z$ and $B$ along $x$.
 
 .. _parallelepiped-orientation:
 
-.. figure:: img/parallelepiped_angle_definition.jpg
+.. figure:: img/parallelepiped_angle_definition.png
 
-    Definition of the angles for oriented parallelepipeds.
+    Definition of the angles for oriented parallelepiped, shown with $A < B < C$.
 
-.. figure:: img/parallelepiped_angle_projection.jpg
+.. figure:: img/parallelepiped_angle_projection.png
 
-    Examples of the angles for oriented parallelepipeds against the
+    Examples of the angles for an oriented parallelepiped against the
     detector plane.
 
 For a given orientation of the parallelepiped, the 2D form factor is
@@ -115,9 +116,9 @@ calculated as
 
 .. math::
 
-    P(q_x, q_y) = \left[\frac{\sin(qA\cos\alpha/2)}{(qA\cos\alpha/2)}\right]^2
-                  \left[\frac{\sin(qB\cos\beta/2)}{(qB\cos\beta/2)}\right]^2
-                  \left[\frac{\sin(qC\cos\gamma/2)}{(qC\cos\gamma/2)}\right]^2
+    P(q_x, q_y) = \left[\frac{\sin(\tfrac{1}{2}qA\cos\alpha)}{(\tfrac{1}{2}qA\cos\alpha)}\right]^2
+                  \left[\frac{\sin(\tfrac{1}{2}qB\cos\beta)}{(\tfrac{1}{2}qB\cos\beta)}\right]^2
+                  \left[\frac{\sin(\tfrac{1}{2}qC\cos\gamma)}{(\tfrac{1}{2}qC\cos\gamma)}\right]^2
 
 with
 
@@ -153,8 +154,6 @@ Validation of the code was done by comparing the output of the 1D calculation
 to the angular average of the output of a 2D calculation over all possible
 angles.
 
-This model is based on form factor calculations implemented in a c-library
-provided by the NIST Center for Neutron Research (Kline, 2006).
 
 References
 ----------
@@ -162,6 +161,15 @@ References
 P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
 
 R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+
+Authorship and Verification
+----------------------------
+
+* **Author:** This model is based on form factor calculations implemented in a c-library
+provided by the NIST Center for Neutron Research (Kline, 2006).
+* **Last Modified by:**  Paul Kienzle **Date:** April 05, 2017
+* **Last Reviewed by:**  Richard Heenan **Date:** April 06, 2017
+
 """
 
 import numpy as np
