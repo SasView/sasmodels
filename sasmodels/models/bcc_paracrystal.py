@@ -141,6 +141,7 @@ demo = dict(
     psi_pd=15, psi_pd_n=0,
     )
 # april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
+# add 2d test later
 q =4.*pi/220.
 tests = [
     [{ },

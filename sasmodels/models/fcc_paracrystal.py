@@ -89,7 +89,7 @@ Hideki Matsuoka et. al. *Physical Review B*, 41 (1990) 3854 -3856
 (Corrections to FCC and BCC lattice structure calculation)
 """
 
-from numpy import inf
+from numpy import inf, pi
 
 name = "fcc_paracrystal"
 title = "Face-centred cubic lattic with paracrystalline distortion"
@@ -127,3 +127,10 @@ demo = dict(scale=1, background=0,
             phi_pd=15, phi_pd_n=0,
             psi_pd=15, psi_pd_n=0,
            )
+# april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
+# add 2d test later
+q =4.*pi/220.
+tests = [
+    [{ },
+     [0.001, q, 0.215268], [0.275164706668, 5.7776842567, 0.00958167119232]],
+]
