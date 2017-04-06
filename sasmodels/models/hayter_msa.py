@@ -73,9 +73,9 @@ description = """\
 parameters = [
     ["radius_effective", "Ang", 20.75,   [0, inf],    "volume", "effective radius of charged sphere"],
     ["volfraction",   "None",     0.0192, [0, 0.74],   "", "volume fraction of spheres"],
-    ["charge",        "e",   19.0,    [0, inf],    "", "charge on sphere (in electrons)"],
-    ["temperature",   "K",  318.16,   [0, inf],    "", "temperature, in Kelvin, for Debye length calculation"],
-    ["concentration_salt",      "M",    0.0,    [-inf, inf], "", "conc of salt, moles/litre, 1:1 electolyte, for Debye length"],
+    ["charge",        "e",   19.0,    [0, 200],    "", "charge on sphere (in electrons)"],
+    ["temperature",   "K",  318.16,   [0, 450],    "", "temperature, in Kelvin, for Debye length calculation"],
+    ["concentration_salt",      "M",    0.0,    [0, inf], "", "conc of salt, moles/litre, 1:1 electolyte, for Debye length"],
     ["dielectconst",  "None",    71.08,   [-inf, inf], "", "dielectric constant (relative permittivity) of solvent, default water, for Debye length"]
     ]
 # pylint: enable=bad-whitespace, line-too-long
