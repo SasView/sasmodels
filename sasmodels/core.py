@@ -249,7 +249,7 @@ def parse_dtype(model_info, dtype=None, platform=None):
     elif dtype == "quad":
         dtype = "longdouble"
     elif dtype == "half":
-        dtype = "f16"
+        dtype = "float16"
 
     # Convert dtype string to numpy dtype.
     if dtype is None:
