@@ -207,13 +207,18 @@ source = ["lib/gauss76.c", "parallelepiped.c"]
 
 def ER(length_a, length_b, length_c):
     """
-        Return effective radius (ER) for P(q)*S(q)
+    Return effective radius (ER) for P(q)*S(q)
     """
-
+    # now that axes can be in any size order, need to sort a,b,c where a~b and c is either much smaller 
+    # or much larger
+    abc = np.vstack((length_a, length_b, length_c))
+    abc = np.sort(abc, axis=0)
+    selector = (abc[1] - abc[0]) > (abc[2] - abc[1])
+    length = np.where(selector, abc[0], abc[2])
     # surface average radius (rough approximation)
-    surf_rad = sqrt(length_a * length_b / pi)
+    radius = np.sqrt(np.where(~selector, abc[0]*abc[1], abc[1]*abc[2]) / pi)
 
-    ddd = 0.75 * surf_rad * (2 * surf_rad * length_c + (length_c + surf_rad) * (length_c + pi * surf_rad))
+    ddd = 0.75 * radius * (2*radius*length + (length + radius)*(length + pi*radius))
     return 0.5 * (ddd) ** (1. / 3.)
 
 # VR defaults to 1.0
