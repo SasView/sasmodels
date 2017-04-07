@@ -85,7 +85,7 @@ The radius-of-gyration for this system is  $R_g^2 = (R_a R_b R_c)^2/5$.
 
 The contrast $\Delta\rho$ is defined as SLD(ellipsoid) - SLD(solvent).  In the
 parameters, $R_a$ is the minor equatorial radius, $R_b$ is the major
-equatorial radius, and $R_c$ is the polar radius of the ellipsoid. 
+equatorial radius, and $R_c$ is the polar radius of the ellipsoid.
 
 NB: The 2nd virial coefficient of the triaxial solid ellipsoid is
 calculated based on the polar radius $R_p = R_c$ and equatorial
@@ -116,7 +116,7 @@ Authorship and Verification
 
 """
 
-from numpy import inf
+from numpy import inf, sin, cos, pi
 
 name = "triaxial_ellipsoid"
 title = "Ellipsoid of uniform scattering length density with three independent axes."
@@ -156,7 +156,7 @@ def ER(radius_equat_minor, radius_equat_major, radius_polar):
     import numpy as np
     from .ellipsoid import ER as ellipsoid_ER
 
-    # now that radii can be in any size order, radii need sorting a,b,c where a~b and c is either much smaller 
+    # now that radii can be in any size order, radii need sorting a,b,c where a~b and c is either much smaller
     # or much larger
     radii = np.vstack((radius_equat_major, radius_equat_minor, radius_polar))
     radii = np.sort(radii, axis=0)
@@ -176,4 +176,12 @@ demo = dict(scale=1, background=0,
             phi_pd=15, phi_pd_n=1,
             psi_pd=15, psi_pd_n=1)
 
-# TODO: need some unit tests!
+q = 0.1
+# april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
+# add 2d test after pull #890
+qx = q*cos(pi/6.0)
+qy = q*sin(pi/6.0)
+tests = [[{}, 0.05, 24.8839548033],
+#        [{'theta':80., 'phi':10.}, (qx, qy), 9999. ],
+        ]
+del qx, qy  # not necessary to delete, but cleaner

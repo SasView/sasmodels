@@ -108,7 +108,7 @@ Authorship and Verification
 
 """
 
-from numpy import pi, inf, sqrt
+from numpy import pi, inf, sqrt, sin, cos
 
 name = "elliptical_cylinder"
 title = "Form factor for an elliptical cylinder."
@@ -149,6 +149,10 @@ def ER(radius_minor, axis_ratio, length):
     ddd = 0.75 * radius * (2 * radius * length
                            + (length + radius) * (length + pi * radius))
     return 0.5 * (ddd) ** (1. / 3.)
+q = 0.1
+# april 6 2017, rkh added a 2d unit test, NOT READY YET pull #890 branch assume correct!
+qx = q*cos(pi/6.0)
+qy = q*sin(pi/6.0)
 
 tests = [
     [{'radius_minor': 20.0, 'axis_ratio': 1.5, 'length':400.0}, 'ER', 79.89245454155024],
@@ -158,4 +162,5 @@ tests = [
     [{'radius_minor': 20.0, 'axis_ratio': 1.5, 'sld': 4.0, 'length':400.0,
       'sld_solvent':1.0, 'background':0.0},
      0.001, 675.504402],
+#    [{'theta':80., 'phi':10.}, (qx, qy), 7.88866563001 ],
 ]

@@ -119,7 +119,7 @@ Authorship and Verification
 * **Last Modified by:** Paul Kienzle **Date:** March 22, 2017
 """
 
-from numpy import inf
+from numpy import inf, sin, cos, pi
 
 name = "ellipsoid"
 title = "Ellipsoid of revolution with uniform scattering length density."
@@ -189,3 +189,11 @@ demo = dict(scale=1, background=0,
             radius_equatorial_pd=.2, radius_equatorial_pd_n=15,
             theta_pd=15, theta_pd_n=45,
             phi_pd=15, phi_pd_n=1)
+q = 0.1
+# april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
+qx = q*cos(pi/6.0)
+qy = q*sin(pi/6.0)
+tests = [[{}, 0.05, 54.8525847025],
+        [{'theta':80., 'phi':10.}, (qx, qy), 1.74134670026 ],
+        ]
+del qx, qy  # not necessary to delete, but cleaner

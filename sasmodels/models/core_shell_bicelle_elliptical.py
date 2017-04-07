@@ -98,7 +98,7 @@ Authorship and Verification
 * **Last Reviewed by:**  Richard Heenan BEWARE 2d data yet to be checked **Date:** December 14, 2016
 """
 
-from numpy import inf, sin, cos
+from numpy import inf, sin, cos, pi
 
 name = "core_shell_bicelle_elliptical"
 title = "Elliptical cylinder with a core-shell scattering length density profile.."
@@ -149,7 +149,10 @@ demo = dict(scale=1, background=0,
             phi=0,
             psi=0)
 
-#qx, qy = 0.4 * cos(pi/2.0), 0.5 * sin(0)
+q = 0.1
+# april 6 2017, rkh added a 2d unit test, NOT READY YET pull #890 branch assume correct!
+qx = q*cos(pi/6.0)
+qy = q*sin(pi/6.0)
 
 tests = [
     [{'radius': 30.0, 'x_core': 3.0, 'thick_rim':8.0, 'thick_face':14.0, 'length':50.0}, 'ER', 1],
@@ -158,4 +161,7 @@ tests = [
     [{'radius': 30.0, 'x_core': 3.0, 'thick_rim':8.0, 'thick_face':14.0, 'length':50.0,
     'sld_core':4.0, 'sld_face':7.0, 'sld_rim':1.0, 'sld_solvent':6.0, 'background':0.0},
     0.015, 286.540286],
-]
+#    [{'theta':80., 'phi':10.}, (qx, qy), 7.88866563001 ],
+        ]
+
+del qx, qy  # not necessary to delete, but cleaner

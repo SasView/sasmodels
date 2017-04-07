@@ -86,7 +86,7 @@ Authorship and Verification
 * **Last Modified by:** Paul Butler **Date:** March 20, 2016
 * **Last Reviewed by:** Richard Heenan **Date:** January 4, 2017
 """
-from numpy import inf
+from numpy import inf, sin, cos, pi
 
 name = "barbell"
 title = "Cylinder with spherical end caps"
@@ -124,3 +124,11 @@ demo = dict(scale=1, background=0,
             theta_pd=15, theta_pd_n=0,
             phi_pd=15, phi_pd_n=0,
            )
+q = 0.1
+# april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
+qx = q*cos(pi/6.0)
+qy = q*sin(pi/6.0)
+tests = [[{}, 0.075, 25.5691260532],
+        [{'theta':80., 'phi':10.}, (qx, qy), 3.04233067789],
+        ]
+del qx, qy  # not necessary to delete, but cleaner
