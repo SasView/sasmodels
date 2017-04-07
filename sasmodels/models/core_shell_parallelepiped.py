@@ -50,10 +50,10 @@ amplitudes of the core and shell, in the same manner as a core-shell model.
 .. math::
 
     F_{a}(Q,\alpha,\beta)=
-    \left[\frac{\sin(Q(L_A+2t_A)/2\sin\alpha \sin\beta)}{Q(L_A+2t_A)/2\sin\alpha\sin\beta}
-    - \frac{\sin(QL_A/2\sin\alpha \sin\beta)}{QL_A/2\sin\alpha \sin\beta} \right]
-    \left[\frac{\sin(QL_B/2\sin\alpha \sin\beta)}{QL_B/2\sin\alpha \sin\beta} \right]
-    \left[\frac{\sin(QL_C/2\sin\alpha \sin\beta)}{QL_C/2\sin\alpha \sin\beta} \right]
+    \left[\frac{\tfrac{1}{2}\sin(Q(L_A+2t_A)\sin\alpha \sin\beta)}{\tfrac{1}{2}Q(L_A+2t_A)\sin\alpha\sin\beta}
+    - \frac{\sin(\tfrac{1}{2}QL_A\sin\alpha \sin\beta)}{\tfrac{1}{2}QL_A\sin\alpha \sin\beta} \right]
+    \left[\frac{\sin(\tfrac{1}{2}QL_B\sin\alpha \sin\beta)}{\tfrac{1}{2}QL_B\sin\alpha \sin\beta} \right]
+    \left[\frac{\sin(\tfrac{1}{2}QL_C\sin\alpha \sin\beta)}{\tfrac{1}{2}QL_C\sin\alpha \sin\beta} \right]
 
 .. note::
 
@@ -119,7 +119,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import pi, inf, sqrt
+from numpy import pi, inf, sqrt, cos, sin
 
 name = "core_shell_parallelepiped"
 title = "Rectangular solid with a core-shell structure."
@@ -193,10 +193,11 @@ demo = dict(scale=1, background=0.0,
             phi_pd=10, phi_pd_n=1,
             psi_pd=10, psi_pd_n=1)
 
-qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
+# rkh 7/4/17 add random unit test for 2d, note make all params different, 2d values not tested against other codes or models
+qx, qy = 0.2 * cos(pi/6.), 0.2 * sin(pi/6.)
 tests = [[{}, 0.2, 0.533149288477],
          [{}, [0.2], [0.533149288477]],
-         [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.032102135569],
-         [{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.032102135569]],
+         [{'theta':10.0, 'phi':20.0}, (qx, qy), 0.0853299803222],
+         [{'theta':10.0, 'phi':20.0}, [(qx, qy)], [0.0853299803222]],
         ]
 del qx, qy  # not necessary to delete, but cleaner

@@ -173,7 +173,7 @@ provided by the NIST Center for Neutron Research (Kline, 2006).
 """
 
 import numpy as np
-from numpy import pi, inf, sqrt
+from numpy import pi, inf, sqrt, sin, cos
 
 name = "parallelepiped"
 title = "Rectangular parallelepiped with uniform scattering length density."
@@ -242,11 +242,11 @@ demo = dict(scale=1, background=0,
             theta_pd=10, theta_pd_n=1,
             phi_pd=10, phi_pd_n=1,
             psi_pd=10, psi_pd_n=10)
-
-qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
+# rkh 7/4/17 add random unit test for 2d, note make all params different, 2d values not tested against other codes or models
+qx, qy = 0.2 * cos(pi/6.), 0.2 * sin(pi/6.)
 tests = [[{}, 0.2, 0.17758004974],
          [{}, [0.2], [0.17758004974]],
-         [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.00560296014],
-         [{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.00560296014]],
+         [{'theta':10.0, 'phi':20.0}, (qx, qy), 0.0089517140475],
+         [{'theta':10.0, 'phi':20.0}, [(qx, qy)], [0.0089517140475]],
         ]
 del qx, qy  # not necessary to delete, but cleaner
