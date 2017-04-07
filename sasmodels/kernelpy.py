@@ -234,7 +234,7 @@ def _loops(parameters, form, form_volume, nq, call_details, values, cutoff):
             # Assume that NaNs are only generated if the parameters are bad;
             # exclude all q for that NaN.  Even better would be to have an
             # INVALID expression like the C models, but that is too expensive.
-            Iq = form()
+            Iq = np.asarray(form(), 'd')
             if np.isnan(Iq).any(): continue
 
             # update value and norm
