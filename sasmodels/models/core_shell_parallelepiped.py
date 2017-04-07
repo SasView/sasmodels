@@ -9,8 +9,8 @@ the model does **NOT** actually calculate a c face rim despite the presence of
 the parameter.
 
 .. note::
-   This model was originally ported from NIST IGOR macros. However,t is not
-   yet fully understood by the SasView developers and is currently review.
+   This model was originally ported from NIST IGOR macros. However, it is not
+   yet fully understood by the SasView developers and is currently under review.
 
 The form factor is normalized by the particle volume $V$ such that
 
@@ -32,7 +32,7 @@ There are rectangular "slabs" of thickness $t_A$ that add to the $A$ dimension
 (on the $BC$ faces). There are similar slabs on the $AC$ $(=t_B)$ and $AB$
 $(=t_C)$ faces. The projection in the $AB$ plane is then
 
-.. image:: img/core_shell_parallelepiped_projection.png
+.. image:: img/core_shell_parallelepiped_projection.jpg
 
 The volume of the solid is
 
@@ -50,15 +50,16 @@ amplitudes of the core and shell, in the same manner as a core-shell model.
 .. math::
 
     F_{a}(Q,\alpha,\beta)=
-    \left[\frac{\tfrac{1}{2}\sin(Q(L_A+2t_A)\sin\alpha \sin\beta)}{\tfrac{1}{2}Q(L_A+2t_A)\sin\alpha\sin\beta}
+    \left[\frac{\sin(\tfrac{1}{2}Q(L_A+2t_A)\sin\alpha \sin\beta)}{\tfrac{1}{2}Q(L_A+2t_A)\sin\alpha\sin\beta}
     - \frac{\sin(\tfrac{1}{2}QL_A\sin\alpha \sin\beta)}{\tfrac{1}{2}QL_A\sin\alpha \sin\beta} \right]
     \left[\frac{\sin(\tfrac{1}{2}QL_B\sin\alpha \sin\beta)}{\tfrac{1}{2}QL_B\sin\alpha \sin\beta} \right]
     \left[\frac{\sin(\tfrac{1}{2}QL_C\sin\alpha \sin\beta)}{\tfrac{1}{2}QL_C\sin\alpha \sin\beta} \right]
 
 .. note::
 
+    Why does t_B not appear in the above equation?
     For the calculation of the form factor to be valid, the sides of the solid
-    MUST be chosen such that** $A < B < C$.
+    MUST (perhaps not any more?) be chosen such that** $A < B < C$.
     If this inequality is not satisfied, the model will not report an error,
     but the calculation will not be correct and thus the result wrong.
 
@@ -94,7 +95,7 @@ $q$ plane. For example, $\Psi = 0$ when the *short_b* axis is parallel to the
 
     Definition of the angles for oriented core-shell parallelepipeds.
 
-.. figure:: img/parallelepiped_angle_projection.jpg
+.. figure:: img/parallelepiped_angle_projection.png
 
     Examples of the angles for oriented core-shell parallelepipeds against the
     detector plane.
