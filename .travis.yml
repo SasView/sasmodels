@@ -1,24 +1,20 @@
-# Test Travis CL
-
 language: python
 python:
-  - "2.7"
-# whitelist
+- '2.7'
 branches:
   only:
-    - master
-# command to install dependencies
+  - master
 virtualenv:
   system_site_packages: true
 before_install:
-  - sudo apt-get update;
-  - sudo apt-get install python-numpy python-scipy
-#  - sudo apt-get install opencl-headers
-
+- sudo apt-get update;
+- sudo apt-get install python-numpy python-scipy
 install:
-#  - pip install pyopencl
-  - pip install bumps
-  - pip install unittest-xml-reporting
+- pip install bumps
+- pip install unittest-xml-reporting
 script:
-  - export WORKSPACE=/home/travis/build/SasView/sasmodels/
-  - python -m sasmodels.model_test dll all
+- export WORKSPACE=/home/travis/build/SasView/sasmodels/
+- python -m sasmodels.model_test dll all
+notifications:
+  slack:
+    secure: xNAUeSu1/it/x9Q2CSg79aw1LLc7d6mLpcqSCTeKROp71RhkFf8VjJnJm/lEbKHNC8yj5H9UHrz5DmzwJzI+6oMt4NdEeS6WvGhwGY/wCt2IcJKxw0vj1DAU04qFMS041Khwclo6jIqm76DloinXvmvsS+K/nSyQkF7q4egSlwA=
