@@ -545,6 +545,10 @@ DTYPE_MAP = {
     'f16': '16',
     'f32': '32',
     'f64': '64',
+    'float16': '16',
+    'float32': '32',
+    'float64': '64',
+    'float128': '128',
     'longdouble': '128',
 }
 def eval_opencl(model_info, data, dtype='single', cutoff=0.):
