@@ -24,16 +24,16 @@ def draw_beam(ax):
     z = np.outer(np.ones_like(u), v)
 
     ax.plot_surface(x, y, z, rstride=4, cstride=4, color='y', alpha=0.5)
-    
+
 def draw_shimmy(ax, theta, phi, psi, dtheta, dphi, dpsi):
-    size=[0.1, 0.4, 1.0] 
+    size=[0.1, 0.4, 1.0]
     view=[theta, phi, psi]
     shimmy=[0,0,0]
     #draw_shape = draw_parallelepiped
     draw_shape = draw_ellipsoid
-    
+
     #np.random.seed(10)
-    #cloud = np.random.randn(10,3) 
+    #cloud = np.random.randn(10,3)
     cloud = [
         [-1, -1, -1],
         [-1, -1,  0],
@@ -120,7 +120,7 @@ def draw_parallelepiped(ax, size, view, shimmy, alpha=1):
     points = np.matrix([x,y,z])
     points = Rz(dpsi)*Ry(dtheta)*Rx(dphi)*points
     points = Rz(phi)*Ry(theta)*Rz(psi)*points
-	
+
     x,y,z = [np.array(v).flatten() for v in points]
     ax.plot_trisurf(x, y, triangles=tri, Z=z, color='w', alpha=alpha)
 
