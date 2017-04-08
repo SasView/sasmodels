@@ -8,9 +8,9 @@ the :ref:`magnetism` documentation.
 Definition
 ----------
 
-| This model calculates the scattering from a rectangular parallelepiped
-| (\:numref:`parallelepiped-image`\).
-| If you need to apply polydispersity, see also :ref:`rectangular-prism`.
+ This model calculates the scattering from a rectangular parallelepiped
+ (\:numref:`parallelepiped-image`\).
+ If you need to apply polydispersity, see also :ref:`rectangular-prism`.
 
 .. _parallelepiped-image:
 
@@ -66,7 +66,6 @@ with
     S(x) &= \frac{\sin x}{x}
 
     \mu &= qB
-
 
 The scattering intensity per unit volume is returned in units of |cm^-1|.
 
@@ -167,7 +166,7 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** This model is based on form factor calculations implemented
-in a c-library provided by the NIST Center for Neutron Research (Kline, 2006).
+    in a c-library provided by the NIST Center for Neutron Research (Kline, 2006).
 * **Last Modified by:**  Paul Kienzle **Date:** April 05, 2017
 * **Last Reviewed by:**  Richard Heenan **Date:** April 06, 2017
 

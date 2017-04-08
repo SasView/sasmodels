@@ -117,6 +117,7 @@ Authorship and Verification
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Kienzle (improved calculation) **Date:** April 4, 2017
 * **Last Reviewed by:** Paul Kienzle & Richard Heenan **Date:**  April 4, 2017
+"""
 
 from numpy import inf, sin, cos, pi
 
@@ -124,9 +125,8 @@ name = "triaxial_ellipsoid"
 title = "Ellipsoid of uniform scattering length density with three independent axes."
 
 description = """
-Note: During fitting ensure that the inequality ra<rb<rc is not
-	violated. Otherwise the calculation will
-	not be correct.
+   Note - fitting ensure that the inequality ra<rb<rc is not
+   violated. Otherwise the calculation may not be correct.
 """
 category = "shape:ellipsoid"
 
