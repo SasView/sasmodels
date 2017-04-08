@@ -44,13 +44,23 @@ class SesansTransform(object):
         # type: (np.ndarray, float, float) -> None
         #import logging; logging.info("creating SESANS transform")
         self.q = z
+        # isoriented flag determines whether data is from an oriented sample or not, should be in the data or selectable in GUI.
+        #if self.isoriented==False
         self._set_hankel(SElength, zaccept, Rmax)
+        #if self.isoriented==True
+        self._set_cosmat(SElength, zaccept, Rmax)
 
     def apply(self, Iq):
-        # tye: (np.ndarray) -> np.ndarray
-        G0 = np.dot(self._H0, Iq)
-        G = np.dot(self._H.T, Iq)
-        P = G - G0
+        if len(Iq.size) == 1: # if isotropic, do Hankel transform
+            # type: (np.ndarray) -> np.ndarray
+            G0 = np.dot(self._H0, Iq)
+            G = np.dot(self._H.T, Iq)
+            P = G - G0
+        elif len(Iq.size) == 2:
+            dq=self.q_calc[0]
+            G0 = sum(np.dot(self._cos0, Iq)*dq)
+            G = sum(np.dot(self._cosmat.T, Iq)*dq)
+            P = G - G0
         return P
 
     def _set_hankel(self, SElength, zaccept, Rmax):
@@ -72,3 +82,25 @@ class SesansTransform(object):
 
         self.q_calc = q
         self._H, self._H0 = H, H0
+
+    def _set_cosmat(self, SElength, zaccept, Rmax):
+        # type: (np.ndarray, float, float) -> None
+        # Force float32 arrays, otherwise run into memory problems on some machines
+        SElength = np.asarray(SElength, dtype='float32')
+        #qymax and qzmax depend on detector shape
+        qzmax=
+        # Rmax = #value in text box somewhere in FitPage?
+        q_max = 2 * pi / (SElength[1] - SElength[0])
+        q_min = 0.1 * 2 * pi / (np.size(SElength) * SElength[-1])
+
+        q = np.arange(q_min, q_max, q_min, dtype='float32')
+        dq = q_min
+
+        cos0 = np.float32(dq / (2 * pi))
+
+        repq = np.tile(q, (SElength.size, 1)).T
+        repSE = np.tile(SElength, (q.size, 1))
+        cosmat = np.float32(dq / (2 * pi)) * np.cos(repSE * repq)
+
+        self.q_calc = q
+        self._cosmat, self._cos0 = cosmat, cos0
