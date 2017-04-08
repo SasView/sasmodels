@@ -57,7 +57,7 @@ where $n$ is the total number of the disc stacked (*n_stacking*),
 $D = 2(d+h)$ is the next neighbor center-to-center distance (d-spacing),
 and $\sigma_d$ = the Gaussian standard deviation of the d-spacing (*sigma_d*).
 Note that $D\cos(\alpha)$ is the component of $D$ parallel to $q$ and the last
-term in the equation above is effectively a Debye-Waller factor term. 
+term in the equation above is effectively a Debye-Waller factor term.
 
 .. note::
 
@@ -157,7 +157,9 @@ qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
 tests = [
 # Accuracy tests based on content in test/utest_extra_models.py.
-# Added 2 tests with n_stacked = 5 using SasView 3.1.2 - PDB; for which alas q=0.001 values seem closer to n_stacked=1 not 5, changed assuming my 4.1 code OK, RKH
+# Added 2 tests with n_stacked = 5 using SasView 3.1.2 - PDB;
+# for which alas q=0.001 values seem closer to n_stacked=1 not 5,
+# changed assuming my 4.1 code OK, RKH
     [{'thick_core': 10.0,
       'thick_layer': 15.0,
       'radius': 3000.0,

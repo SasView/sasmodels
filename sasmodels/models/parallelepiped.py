@@ -22,8 +22,8 @@ Definition
 .. note::
 
    The edge of the solid used to have to satisfy the condition that $A < B < C$.
-   After some improvements to the effective radius calculation, used with an S(Q),
-   it is beleived that this is no longer the case.
+   After some improvements to the effective radius calculation, used with
+   an S(Q), it is beleived that this is no longer the case.
 
 The 1D scattering intensity $I(q)$ is calculated as:
 
@@ -71,8 +71,8 @@ with
 The scattering intensity per unit volume is returned in units of |cm^-1|.
 
 NB: The 2nd virial coefficient of the parallelepiped is calculated based on
-the averaged effective radius, after appropriately
-sorting the three dimensions, to give an oblate or prolate particle, $(=\sqrt{A B / \pi})$ and
+the averaged effective radius, after appropriately sorting the three
+dimensions, to give an oblate or prolate particle, $(=\sqrt{AB/\pi})$ and
 length $(= C)$ values, and used as the effective radius for
 $S(q)$ when $P(q) \cdot S(q)$ is applied.
 
@@ -105,7 +105,7 @@ $A$ along $z$ and $B$ along $x$.
 
 .. figure:: img/parallelepiped_angle_definition.png
 
-    Definition of the angles for oriented parallelepiped, shown with $A < B < C$.
+    Definition of the angles for oriented parallelepiped, shown with $A<B<C$.
 
 .. figure:: img/parallelepiped_angle_projection.png
 
@@ -166,8 +166,8 @@ R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
 Authorship and Verification
 ----------------------------
 
-* **Author:** This model is based on form factor calculations implemented in a c-library
-provided by the NIST Center for Neutron Research (Kline, 2006).
+* **Author:** This model is based on form factor calculations implemented
+in a c-library provided by the NIST Center for Neutron Research (Kline, 2006).
 * **Last Modified by:**  Paul Kienzle **Date:** April 05, 2017
 * **Last Reviewed by:**  Richard Heenan **Date:** April 06, 2017
 

@@ -15,11 +15,13 @@ Given an ellipsoid
 
     \frac{X^2}{R_a^2} + \frac{Y^2}{R_b^2} + \frac{Z^2}{R_c^2} = 1
 
-the scattering for randomly oriented particles is defined by the average over all orientations $\Omega$ of:
+the scattering for randomly oriented particles is defined by the average over
+all orientations $\Omega$ of:
 
 .. math::
 
-    P(q) = \text{scale}(\Delta\rho)^2\frac{V}{4 \pi}\int_\Omega \Phi^2(qr) d\Omega + \text{background}
+    P(q) = \text{scale}(\Delta\rho)^2\frac{V}{4 \pi}\int_\Omega\Phi^2(qr)\,d\Omega
+           + \text{background}
 
 where
 
@@ -37,7 +39,8 @@ $-\pi/2 \le \gamma \le \pi/2$ and equatorial angle $0 \le \phi \le 2\pi$
 
  .. math::
 
-     \langle\Phi^2\rangle = \int_0^{2\pi} \int_{-\pi/2}^{\pi/2} \Phi^2(qr) \cos \gamma\,d\gamma d\phi
+     \langle\Phi^2\rangle = \int_0^{2\pi} \int_{-\pi/2}^{\pi/2} \Phi^2(qr)
+                                                \cos \gamma\,d\gamma d\phi
 
 with $e = \cos\gamma \sin\phi$, $f = \cos\gamma \cos\phi$ and $g = \sin\gamma$.
 A little algebra yields
@@ -68,8 +71,9 @@ and $\psi$. These angles are defined analogously to the elliptical_cylinder belo
 
 .. figure:: img/elliptical_cylinder_angle_definition.png
 
-    Definition of angles for oriented triaxial ellipsoid, where radii shown here are $a < b << c$
-    and angle $\Psi$ is a rotation around the axis of the particle.
+    Definition of angles for oriented triaxial ellipsoid, where radii shown
+    here are $a < b << c$ and angle $\Psi$ is a rotation around the axis
+    of the particle.
 
 The angle $\psi$ is the rotational angle around its own $c$ axis
 against the $q$ plane. For example, $\psi = 0$ when the
@@ -114,14 +118,12 @@ Authorship and Verification
 * **Last Modified by:** Paul Kienzle (improved calculation) **Date:** April 4, 2017
 * **Last Reviewed by:** Paul Kienzle & Richard Heenan **Date:**  April 4, 2017
 
-"""
-
 from numpy import inf, sin, cos, pi
 
 name = "triaxial_ellipsoid"
 title = "Ellipsoid of uniform scattering length density with three independent axes."
 
-description = """\
+description = """
 Note: During fitting ensure that the inequality ra<rb<rc is not
 	violated. Otherwise the calculation will
 	not be correct.
@@ -156,8 +158,8 @@ def ER(radius_equat_minor, radius_equat_major, radius_polar):
     import numpy as np
     from .ellipsoid import ER as ellipsoid_ER
 
-    # now that radii can be in any size order, radii need sorting a,b,c where a~b and c is either much smaller
-    # or much larger
+    # now that radii can be in any size order, radii need sorting a,b,c
+    # where a~b and c is either much smaller or much larger
     radii = np.vstack((radius_equat_major, radius_equat_minor, radius_polar))
     radii = np.sort(radii, axis=0)
     selector = (radii[1] - radii[0]) > (radii[2] - radii[1])
@@ -177,7 +179,8 @@ demo = dict(scale=1, background=0,
             psi_pd=15, psi_pd_n=1)
 
 q = 0.1
-# april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
+# april 6 2017, rkh add unit tests
+#     NOT compared with any other calc method, assume correct!
 # add 2d test after pull #890
 qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
