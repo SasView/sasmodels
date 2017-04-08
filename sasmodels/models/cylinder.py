@@ -37,8 +37,8 @@ For randomly oriented particles:
     F^2(q)=\int_{0}^{\pi/2}{F^2(q,\alpha)\sin(\alpha)d\alpha}=\int_{0}^{1}{F^2(q,u)du}
 
 
-Numerical integration is simplified by a change of variable to $u = cos(\alpha)$ with 
-$sin(\alpha)=\sqrt{1-u^2}$. 
+Numerical integration is simplified by a change of variable to $u = cos(\alpha)$ with
+$sin(\alpha)=\sqrt{1-u^2}$.
 
 The output of the 1D scattering intensity function for randomly oriented
 cylinders is thus given by
@@ -155,7 +155,7 @@ qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
 # After redefinition of angles, find new tests values.  Was 10 10 in old coords
 tests = [[{}, 0.2, 0.042761386790780453],
         [{}, [0.2], [0.042761386790780453]],
-#  new coords    
+#  new coords
         [{'theta':80.1534480601659, 'phi':10.1510817110481}, (qx, qy), 0.03514647218513852],
         [{'theta':80.1534480601659, 'phi':10.1510817110481}, [(qx, qy)], [0.03514647218513852]],
 # old coords   [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.03514647218513852],
