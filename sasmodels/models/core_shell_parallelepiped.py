@@ -5,8 +5,8 @@ Definition
 Calculates the form factor for a rectangular solid with a core-shell structure.
 The thickness and the scattering length density of the shell or 
 "rim" can be different on each (pair) of faces. However at this time
-the model does **NOT** actually calculate a c face rim despite the presence of
-the parameter.
+the 1D calculation does **NOT** actually calculate a c face rim despite the presence of
+the parameter. Some other aspects of the 1D calculation may be wrong.
 
 .. note::
    This model was originally ported from NIST IGOR macros. However, it is not
