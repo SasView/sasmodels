@@ -78,9 +78,10 @@ The 2D (Anisotropic model) is based on the reference below where $I(q)$ is
 approximated for 1d scattering. Thus the scattering pattern for 2D may not
 be accurate.
 
-.. figure:: img/bcc_angle_definition.png
+.. figure:: img/parallelepiped_angle_definition.png
 
-    Orientation of the crystal with respect to the scattering plane.
+    Orientation of the crystal with respect to the scattering plane, when 
+    $\theta = \phi = 0$ the $c$ axis is along the beam direction (the $z$ axis).
 
 References
 ----------

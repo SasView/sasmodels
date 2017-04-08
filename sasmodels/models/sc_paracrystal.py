@@ -82,7 +82,10 @@ approximated for 1d scattering. Thus the scattering pattern for 2D may not
 be accurate. Note that we are not responsible for any incorrectness of the 2D
 model computation.
 
-.. figure:: img/sc_crystal_angle_definition.jpg
+.. figure:: img/parallelepiped_angle_definition.png
+
+    Orientation of the crystal with respect to the scattering plane, when 
+    $\theta = \phi = 0$ the $c$ axis is along the beam direction (the $z$ axis).
 
 Reference
 ---------
