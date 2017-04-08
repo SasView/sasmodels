@@ -150,10 +150,10 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Polar radius"],
               ["radius_equatorial", "Ang", 400, [0, inf], "volume",
                "Equatorial radius"],
-              ["theta", "degrees", 60, [-inf, inf], "orientation",
-               "In plane angle"],
-              ["phi", "degrees", 60, [-inf, inf], "orientation",
-               "Out of plane angle"],
+              ["theta", "degrees", 60, [-360, 360], "orientation",
+               "ellipsoid axis to beam angle"],
+              ["phi", "degrees", 60, [-360, 360], "orientation",
+               "rotation about beam"],
              ]
 
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "ellipsoid.c"]

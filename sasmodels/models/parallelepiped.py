@@ -204,12 +204,12 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Second side of the parallelepiped"],
               ["length_c", "Ang", 400, [0, inf], "volume",
                "Larger side of the parallelepiped"],
-              ["theta", "degrees", 60, [-inf, inf], "orientation",
-               "In plane angle"],
-              ["phi", "degrees", 60, [-inf, inf], "orientation",
-               "Out of plane angle"],
-              ["psi", "degrees", 60, [-inf, inf], "orientation",
-               "Rotation angle around its own c axis against q plane"],
+              ["theta", "degrees", 60, [-360, 360], "orientation",
+               "c axis to beam angle"],
+              ["phi", "degrees", 60, [-360, 360], "orientation",
+               "rotation about beam"],
+              ["psi", "degrees", 60, [-360, 360], "orientation",
+               "rotation about c axis"],
              ]
 
 source = ["lib/gauss76.c", "parallelepiped.c"]

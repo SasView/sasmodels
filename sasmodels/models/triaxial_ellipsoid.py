@@ -112,11 +112,7 @@ Authorship and Verification
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Kienzle (improved calculation) **Date:** April 4, 2017
-<<<<<<< HEAD
-* **Last Reviewed by:** Paul Kienzle &Richard Heenan **Date:**  April 4, 2017
-=======
 * **Last Reviewed by:** Paul Kienzle & Richard Heenan **Date:**  April 4, 2017
->>>>>>> 3fd04991e2575b02401723d8534c376cd9b66305
 
 """
 
@@ -143,12 +139,12 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Major equatorial radius, Rb"],
               ["radius_polar", "Ang", 10, [0, inf], "volume",
                "Polar radius, Rc"],
-              ["theta", "degrees", 60, [-inf, inf], "orientation",
-               "In plane angle"],
-              ["phi", "degrees", 60, [-inf, inf], "orientation",
-               "Out of plane angle"],
-              ["psi", "degrees", 60, [-inf, inf], "orientation",
-               "Out of plane angle"],
+              ["theta", "degrees", 60, [-360, 360], "orientation",
+               "polar axis to beam angle"],
+              ["phi", "degrees", 60, [-360, 360], "orientation",
+               "rotation about beam"],
+              ["psi", "degrees", 60, [-360, 360], "orientation",
+               "rotation about polar axis"],
              ]
 
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "triaxial_ellipsoid.c"]
