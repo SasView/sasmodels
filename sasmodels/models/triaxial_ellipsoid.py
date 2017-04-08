@@ -112,7 +112,11 @@ Authorship and Verification
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Kienzle (improved calculation) **Date:** April 4, 2017
+<<<<<<< HEAD
 * **Last Reviewed by:** Paul Kienzle &Richard Heenan **Date:**  April 4, 2017
+=======
+* **Last Reviewed by:** Paul Kienzle & Richard Heenan **Date:**  April 4, 2017
+>>>>>>> 3fd04991e2575b02401723d8534c376cd9b66305
 
 """
 

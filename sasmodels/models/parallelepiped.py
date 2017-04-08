@@ -23,7 +23,7 @@ Definition
 
    The edge of the solid used to have to satisfy the condition that $A < B < C$.
    After some improvements to the effective radius calculation, used with an S(Q),
-   it is beleived that this is no longer the case. 
+   it is beleived that this is no longer the case.
 
 The 1D scattering intensity $I(q)$ is calculated as:
 
@@ -188,7 +188,7 @@ description = """
             S(x) = sin(x)/x
             mu = q*B
         V: Volume of the rectangular parallelepiped
-        alpha: angle between the long axis of the 
+        alpha: angle between the long axis of the
             parallelepiped and the q-vector for 1D
 """
 category = "shape:parallelepiped"
@@ -218,7 +218,7 @@ def ER(length_a, length_b, length_c):
     """
     Return effective radius (ER) for P(q)*S(q)
     """
-    # now that axes can be in any size order, need to sort a,b,c where a~b and c is either much smaller 
+    # now that axes can be in any size order, need to sort a,b,c where a~b and c is either much smaller
     # or much larger
     abc = np.vstack((length_a, length_b, length_c))
     abc = np.sort(abc, axis=0)
