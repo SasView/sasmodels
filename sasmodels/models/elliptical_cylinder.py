@@ -56,22 +56,28 @@ by the particle volume
 To provide easy access to the orientation of the elliptical cylinder, we
 define the axis of the cylinder using two angles $\theta$, $\phi$ and $\Psi$
 (see :ref:`cylinder orientation <cylinder-angle-definition>`). The angle
-$\Psi$ is the rotational angle around its own long_c axis against the $q$ plane.
-For example, $\Psi = 0$ when the $r_\text{minor}$ axis is parallel to the
-$x$ axis of the detector.
+$\Psi$ is the rotational angle around its own long_c axis. 
 
 All angle parameters are valid and given only for 2D calculation; ie, an
 oriented system.
 
 .. figure:: img/elliptical_cylinder_angle_definition.png
 
-    Definition of angles for oriented elliptical cylinder, where axis_ratio >1,
-    and angle $\Psi$ is a rotation around the axis of the cylinder.
+    Definition of angles for oriented elliptical cylinder, where axis_ratio is drawn >1,
+    and angle $\Psi$ is now a rotation around the axis of the cylinder.
 
 .. figure:: img/elliptical_cylinder_angle_projection.png
 
     Examples of the angles for oriented elliptical cylinders against the
     detector plane, with $\Psi$ = 0.
+
+The $\theta$ and $\phi$ parameters to orient the cylinder only appear in the model when fitting 2d data. 
+On introducing "Orientational Distribution" in the angles, "distribution of theta" and "distribution of phi" parameters will
+appear. These are actually rotations about the axes $\delta_1$ and $\delta_2$ of the cylinder, the $b$ and $a$ axes of the 
+cylinder cross section. (When $\theta = \phi = 0$ these are parallel to the $Y$ and $X$ axes of the instrument.) 
+The third orientation distribution, in $\psi$, is about the $c$ axis of the particle. Some experimentation may be required to 
+understand the 2d patterns fully. (Earlier implementations had numerical integration issues in some circumstances when orientation 
+distributions passed through 90 degrees, such situations, with very broad distributions, should still be approached with care.) 
 
 NB: The 2nd virial coefficient of the cylinder is calculated based on the
 averaged radius $(=\sqrt{r_\text{minor}^2 * \text{axis ratio}})$ and length

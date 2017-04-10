@@ -62,11 +62,12 @@ the thickness of the rim and $J_1$ the usual first order bessel function.
 The output of the 1D scattering intensity function for randomly oriented
 cylinders is then given by integrating over all possible $\theta$ and $\phi$.
 
-The *theta* and *phi* parameters are not used for the 1D output.
+For oriented bicelles the *theta*, and *phi* orientation parameters will appear when fitting 2D data, 
+see the :ref:`cylinder` model for further information.
 Our implementation of the scattering kernel and the 1D scattering intensity
 use the c-library from NIST.
 
-.. figure:: img/cylinder_angle_definition.jpg
+.. figure:: img/cylinder_angle_definition.png
 
     Definition of the angles for the oriented core shell bicelle model,
     note that the cylinder axis of the bicelle starts along the beam direction

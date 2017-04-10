@@ -76,7 +76,7 @@ term in the equation above is effectively a Debye-Waller factor term.
 To provide easy access to the orientation of the stacked disks, we define
 the axis of the cylinder using two angles $\theta$ and $\varphi$.
 
-.. figure:: img/cylinder_angle_definition.jpg
+.. figure:: img/cylinder_angle_definition.png
 
     Examples of the angles against the detector plane.
 

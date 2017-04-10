@@ -111,6 +111,14 @@ $A$ along $z$ and $B$ along $x$.
     Examples of the angles for an oriented parallelepiped against the
     detector plane.
 
+On introducing "Orientational Distribution" in the angles, "distribution of theta" and "distribution of phi" parameters will
+appear. These are actually rotations about axes $\delta_1$ and $\delta_2$ of the parallelepiped, perpendicular to the $a$ x $c$ and $b$ x $c$ faces. 
+(When $\theta = \phi = 0$ these are parallel to the $Y$ and $X$ axes of the instrument.) The third orientation distribution, in $\psi$, is 
+about the $c$ axis of the particle, perpendicular to the $a$ x $b$ face. Some experimentation may be required to 
+understand the 2d patterns fully. (Earlier implementations had numerical integration issues in some circumstances when orientation 
+distributions passed through 90 degrees, such situations, with very broad distributions, should still be approached with care.) 
+
+    
 For a given orientation of the parallelepiped, the 2D form factor is
 calculated as
 

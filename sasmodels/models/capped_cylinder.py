@@ -70,7 +70,7 @@ and its radius of gyration is
 
 The 2D scattering intensity is calculated similar to the 2D cylinder model.
 
-.. figure:: img/cylinder_angle_definition.jpg
+.. figure:: img/cylinder_angle_definition.png
 
     Definition of the angles for oriented 2D cylinders.
 

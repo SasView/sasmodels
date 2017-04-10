@@ -76,6 +76,8 @@ For randomly oriented particles:
 
    F^2(q)=\int_{0}^{\pi/2}{F^2(q,\alpha)\sin(\alpha)d\alpha}
 
+For oriented ellipsoids the *theta*, *phi* and *psi* orientation parameters will appear when fitting 2D data, 
+see the :ref:`elliptical-cylinder` model for further information.
 
 References
 ----------

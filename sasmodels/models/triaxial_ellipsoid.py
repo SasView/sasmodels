@@ -75,9 +75,8 @@ and $\psi$. These angles are defined analogously to the elliptical_cylinder belo
     here are $a < b << c$ and angle $\Psi$ is a rotation around the axis
     of the particle.
 
-The angle $\psi$ is the rotational angle around its own $c$ axis
-against the $q$ plane. For example, $\psi = 0$ when the
-$a$ axis is parallel to the $x$ axis of the detector.
+For oriented ellipsoids the *theta*, *phi* and *psi* orientation parameters will appear when fitting 2D data, 
+see the :ref:`elliptical-cylinder` model for further information.
 
 .. _triaxial-ellipsoid-angles:
 

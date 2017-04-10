@@ -75,7 +75,7 @@ setting radius to $R/Xcore$ and axial ratio to $1/Xcore$ gives an equivalent sol
 The output of the 1D scattering intensity function for randomly oriented
 bicelles is then given by integrating over all possible $\alpha$ and $\psi$.
 
-For oriented bicellles the *theta*, *phi* and *psi* orientation parameters only appear when fitting 2D data, 
+For oriented bicelles the *theta*, *phi* and *psi* orientation parameters will appear when fitting 2D data, 
 see the :ref:`elliptical-cylinder` model for further information.
 
 

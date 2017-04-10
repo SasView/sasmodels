@@ -60,15 +60,23 @@ are defined in :numref:`cylinder-angle-definition` .
 
 .. _cylinder-angle-definition:
 
-.. figure:: img/cylinder_angle_definition.jpg
+.. figure:: img/cylinder_angle_definition.png
 
-    Definition of the angles for oriented cylinders.
+    Definition of the $\theta$ and $\phi$ orientation angles for a cylinder relative 
+    to the beam line coordinates, plus an indication of their orientation distributions 
+    which are described as rotations about each of the perpendicular axes $\delta_1$ and $\delta_2$ 
+    in the frame of the cylinder itself, which when $\theta = \phi = 0$ are parallel to the $Y$ and $X$ axes.
 
 .. figure:: img/cylinder_angle_projection.png
 
     Examples for oriented cylinders.
 
-The $\theta$ and $\phi$ parameters only appear in the model when fitting 2d data.
+The $\theta$ and $\phi$ parameters to orient the cylinder only appear in the model when fitting 2d data. 
+On introducing "Orientational Distribution" in the angles, "distribution of theta" and "distribution of phi" parameters will
+appear. These are actually rotations about the axes $\delta_1$ and $\delta_2$ of the cylinder, which when $\theta = \phi = 0$ are parallel 
+to the $Y$ and $X$ axes of the instrument respectively. Some experimentation may be required to understand the 2d patterns fully.
+(Earlier implementations had numerical integration issues in some circumstances when orientation distributions passed through 90 degrees, such 
+situations, with very broad distributions, should still be approached with care.) 
 
 Validation
 ----------
