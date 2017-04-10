@@ -24,7 +24,9 @@ Given the scattering length densities (sld) $\rho_c$, the core sld, $\rho_f$,
 the face sld, $\rho_r$, the rim sld and $\rho_s$ the solvent sld, the
 scattering length density variation along the cylinder axis is:
 
-.. math::
+..
+
+  .. math::
 
     \rho(r) = 
       \begin{cases} 
@@ -40,7 +42,7 @@ $\alpha$ is the angle between the $Q$ vector and the cylinder axis, to give:
 .. math::
 
     I(Q,\alpha) = \frac{\text{scale}}{V_t} \cdot
-        F(Q,\alpha)^2.sin(\alpha) + \text{background}
+        F(Q,\alpha)^2 \cdot sin(\alpha) + \text{background}
 
 where
 
