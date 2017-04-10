@@ -23,7 +23,7 @@ Iq(double q,
 {
     double si1,si2,be1,be2;
      // core_shell_bicelle_elliptical, RKH Dec 2016, based on elliptical_cylinder and core_shell_bicelle
-     // tested against limiting cases of cylinder, elliptical_cylinder and core_shell_bicelle
+     // tested against limiting cases of cylinder, elliptical_cylinder, stacked_discs, and core_shell_bicelle
      //    const double uplim = M_PI_4;
     const double halfheight = 0.5*length;
     //const double va = 0.0;
@@ -33,8 +33,8 @@ Iq(double q,
     //const double vbj=M_PI;
 
     const double r_major = r_minor * x_core;
-    const double rA = 0.5*(square(r_major) + square(r_minor));
-    const double rB = 0.5*(square(r_major) - square(r_minor));
+    const double r2A = 0.5*(square(r_major) + square(r_minor));
+    const double r2B = 0.5*(square(r_major) - square(r_minor));
     const double dr1 = (rhoc-rhoh)   *M_PI*r_minor*r_major*(2.0*halfheight);;
     const double dr2 = (rhor-rhosolv)*M_PI*(r_minor+thick_rim)*(r_major+thick_rim)*2.0*(halfheight+thick_face);
     const double dr3 = (rhoh-rhor)   *M_PI*r_minor*r_major*2.0*(halfheight+thick_face);
@@ -59,7 +59,7 @@ Iq(double q,
             //76 gauss points for the inner integral (WAS 20 points,so this may make unecessarily slow, but playing safe)
             //const double beta = ( Gauss76Z[j]*(vbj-vaj) + vaj + vbj )/2.0;
             const double beta = ( Gauss76Z[j] +1.0)*M_PI_2;
-            const double rr = sqrt(rA - rB*cos(beta));
+            const double rr = sqrt(r2A - r2B*cos(beta));
             double besarg1 = q*rr*sin_alpha;
             double besarg2 = q*(rr+thick_rim)*sin_alpha;
             be1 = sas_2J1x_x(besarg1);
