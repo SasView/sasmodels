@@ -147,7 +147,7 @@ def load_custom_model(path):
     if model.name in MODELS and not model.filename == MODELS[model.name].filename:
         _previous_name = model.name
         model.name = model.id
-        
+
         # If the new model name is still in the model list (for instance,
         # if we put a cylinder.py in our plug-in directory), then append
         # an identifier.
@@ -597,6 +597,12 @@ class SasviewModel(object):
             s_model = _make_model_from_info(self._model_info.composition[1][1])()
         return p_model, s_model
 
+
+    def calc_composition_models(self, qx):
+        with calculation_lock:
+            self._calculate_Iq(qx)
+            return self._intermediate_results
+
     def calculate_Iq(self, qx, qy=None):
         # type: (Sequence[float], Optional[Sequence[float]]) -> np.ndarray
         """
@@ -636,6 +642,7 @@ class SasviewModel(object):
         #print("is_mag", is_magnetic)
         result = calculator(call_details, values, cutoff=self.cutoff,
                             magnetic=is_magnetic)
+        self._intermediate_results = getattr(calculator, 'results', None)
         calculator.release()
         self._model.release()
         return result
