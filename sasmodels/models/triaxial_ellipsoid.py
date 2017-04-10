@@ -180,10 +180,10 @@ demo = dict(scale=1, background=0,
 q = 0.1
 # april 6 2017, rkh add unit tests
 #     NOT compared with any other calc method, assume correct!
-# add 2d test after pull #890
+# check 2d test after pull #890
 qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
 tests = [[{}, 0.05, 24.8839548033],
-#        [{'theta':80., 'phi':10.}, (qx, qy), 9999. ],
+        [{'theta':80., 'phi':10.}, (qx, qy), 166.712060266 ],
         ]
 del qx, qy  # not necessary to delete, but cleaner
