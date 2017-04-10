@@ -47,7 +47,9 @@ where a numerical integration of $F(Q,\alpha, \psi)^2.sin(\alpha)$ is carried ou
 
 .. math::
 
-        \begin{align}    
+    :nowrap:
+
+    \begin{align}
     F(Q,\alpha,\psi) = &\bigg[ 
     (\rho_c - \rho_f) V_c \frac{2J_1(QR'sin \alpha)}{QR'sin\alpha}\frac{sin(QLcos\alpha/2)}{Q(L/2)cos\alpha} \\
     &+(\rho_f - \rho_r) V_{c+f} \frac{2J_1(QR'sin\alpha)}{QR'sin\alpha}\frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha} \\
