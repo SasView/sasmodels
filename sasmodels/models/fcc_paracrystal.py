@@ -128,10 +128,11 @@ demo = dict(scale=1, background=0,
             phi_pd=15, phi_pd_n=0,
             psi_pd=15, psi_pd_n=0,
            )
-# april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
-# add 2d test later
+# april 10 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
 q =4.*pi/220.
 tests = [
     [{ },
      [0.001, q, 0.215268], [0.275164706668, 5.7776842567, 0.00958167119232]],
+     [{}, (-0.047,-0.007), 238.103096286],
+     [{}, (0.053,0.063), 0.863609587796 ],
 ]

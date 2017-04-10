@@ -148,10 +148,12 @@ demo = dict(scale=1, background=0,
             psi=0.0)
 
 tests = [
-    # Accuracy tests based on content in test/utest_extra_models.py
+    # Accuracy tests based on content in test/utest_extra_models.py, 2d tests added April 10, 2017
     [{}, 0.001, 10.3048],
     [{}, 0.215268, 0.00814889],
-    [{}, (0.414467), 0.001313289]
+    [{}, (0.414467), 0.001313289],
+    [{'theta':10.0,'phi':20,'psi':30.0},(0.045,-0.035),18.0397138402 ],
+    [{'theta':10.0,'phi':20,'psi':30.0},(0.023,0.045),0.0177333171285 ]
     ]
 
 
