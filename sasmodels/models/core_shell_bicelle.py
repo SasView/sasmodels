@@ -45,8 +45,9 @@ $\alpha$ is the angle between the $Q$ vector and the cylinder axis, to give:
 where
 
 .. math::
+    :nowrap:
 
-        \begin{align}    
+    \begin{align}
     F(Q,\alpha) = &\bigg[ 
     (\rho_c - \rho_f) V_c \frac{2J_1(QRsin \alpha)}{QRsin\alpha}\frac{sin(QLcos\alpha/2)}{Q(L/2)cos\alpha} \\
     &+(\rho_f - \rho_r) V_{c+f} \frac{2J_1(QRsin\alpha)}{QRsin\alpha}\frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha} \\

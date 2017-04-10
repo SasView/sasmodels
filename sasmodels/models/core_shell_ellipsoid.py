@@ -43,6 +43,8 @@ terms for the core-shell and shell-solvent boundaries.
 where
 
 .. math::
+    :nowrap:
+    
     \begin{align}    
     F(q,\alpha) = &f(q,radius\_equat\_core,radius\_equat\_core.x\_core,\alpha) \\
     &+ f(q,radius\_equat\_core + thick\_shell,radius\_equat\_core.x\_core + thick\_shell.x\_polar\_shell,\alpha)
