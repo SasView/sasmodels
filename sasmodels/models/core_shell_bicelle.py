@@ -25,7 +25,6 @@ the face sld, $\rho_r$, the rim sld and $\rho_s$ the solvent sld, the
 scattering length density variation along the cylinder axis is:
 
 .. math::
-    :nowrap:
 
     \rho(r) = 
       \begin{cases} 
