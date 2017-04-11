@@ -21,9 +21,11 @@ Definition
 
 .. note::
 
-   The edge of the solid used to have to satisfy the condition that $A < B < C$.
-   After some improvements to the effective radius calculation, used with
-   an S(Q), it is beleived that this is no longer the case.
+The three dimensions of the parallelepiped (strictly here a cuboid) may be given in 
+$any$ size order. To avoid multiple fit solutions, especially
+with Monte-Carlo fit methods, it may be advisable to restrict their ranges. There may 
+be a number of closely similar "best fits", so some trial and error, or fixing of some 
+dimensions at expected values, may help.
 
 The 1D scattering intensity $I(q)$ is calculated as:
 
