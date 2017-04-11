@@ -41,12 +41,11 @@ for the ellipsoidal cross section core, to give:
 .. math::
 
     I(Q,\alpha,\psi) = \frac{\text{scale}}{V_t} \cdot
-        F(Q,\alpha, \psi)^2.sin(\alpha) + \text{background}
+        F(Q,\alpha, \psi)^2 \cdot sin(\alpha) + \text{background}
 
-where a numerical integration of $F(Q,\alpha, \psi)^2.sin(\alpha)$ is carried out over \alpha and \psi for:
+where a numerical integration of $F(Q,\alpha, \psi)^2 \cdot sin(\alpha)$ is carried out over \alpha and \psi for:
 
 .. math::
-
     :nowrap:
 
     \begin{align}
