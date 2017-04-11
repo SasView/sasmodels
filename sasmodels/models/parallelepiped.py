@@ -8,9 +8,9 @@ the :ref:`magnetism` documentation.
 Definition
 ----------
 
-| This model calculates the scattering from a rectangular parallelepiped
-| (\:numref:`parallelepiped-image`\).
-| If you need to apply polydispersity, see also :ref:`rectangular-prism`.
+ This model calculates the scattering from a rectangular parallelepiped
+ (\:numref:`parallelepiped-image`\).
+ If you need to apply polydispersity, see also :ref:`rectangular-prism`.
 
 .. _parallelepiped-image:
 
@@ -67,7 +67,6 @@ with
 
     \mu &= qB
 
-
 The scattering intensity per unit volume is returned in units of |cm^-1|.
 
 NB: The 2nd virial coefficient of the parallelepiped is calculated based on
@@ -112,6 +111,14 @@ $A$ along $z$ and $B$ along $x$.
     Examples of the angles for an oriented parallelepiped against the
     detector plane.
 
+On introducing "Orientational Distribution" in the angles, "distribution of theta" and "distribution of phi" parameters will
+appear. These are actually rotations about axes $\delta_1$ and $\delta_2$ of the parallelepiped, perpendicular to the $a$ x $c$ and $b$ x $c$ faces. 
+(When $\theta = \phi = 0$ these are parallel to the $Y$ and $X$ axes of the instrument.) The third orientation distribution, in $\psi$, is 
+about the $c$ axis of the particle, perpendicular to the $a$ x $b$ face. Some experimentation may be required to 
+understand the 2d patterns fully. (Earlier implementations had numerical integration issues in some circumstances when orientation 
+distributions passed through 90 degrees, such situations, with very broad distributions, should still be approached with care.) 
+
+    
 For a given orientation of the parallelepiped, the 2D form factor is
 calculated as
 
@@ -167,7 +174,7 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** This model is based on form factor calculations implemented
-in a c-library provided by the NIST Center for Neutron Research (Kline, 2006).
+    in a c-library provided by the NIST Center for Neutron Research (Kline, 2006).
 * **Last Modified by:**  Paul Kienzle **Date:** April 05, 2017
 * **Last Reviewed by:**  Richard Heenan **Date:** April 06, 2017
 
@@ -204,12 +211,12 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Second side of the parallelepiped"],
               ["length_c", "Ang", 400, [0, inf], "volume",
                "Larger side of the parallelepiped"],
-              ["theta", "degrees", 60, [-inf, inf], "orientation",
-               "In plane angle"],
-              ["phi", "degrees", 60, [-inf, inf], "orientation",
-               "Out of plane angle"],
-              ["psi", "degrees", 60, [-inf, inf], "orientation",
-               "Rotation angle around its own c axis against q plane"],
+              ["theta", "degrees", 60, [-360, 360], "orientation",
+               "c axis to beam angle"],
+              ["phi", "degrees", 60, [-360, 360], "orientation",
+               "rotation about beam"],
+              ["psi", "degrees", 60, [-360, 360], "orientation",
+               "rotation about c axis"],
              ]
 
 source = ["lib/gauss76.c", "parallelepiped.c"]

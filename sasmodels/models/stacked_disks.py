@@ -76,7 +76,7 @@ term in the equation above is effectively a Debye-Waller factor term.
 To provide easy access to the orientation of the stacked disks, we define
 the axis of the cylinder using two angles $\theta$ and $\varphi$.
 
-.. figure:: img/cylinder_angle_definition.jpg
+.. figure:: img/cylinder_angle_definition.png
 
     Examples of the angles against the detector plane.
 
@@ -130,8 +130,8 @@ parameters = [
     ["sld_core",    "1e-6/Ang^2",  4,   [-inf, inf], "sld",         "Core scattering length density"],
     ["sld_layer",   "1e-6/Ang^2",  0.0, [-inf, inf], "sld",         "Layer scattering length density"],
     ["sld_solvent", "1e-6/Ang^2",  5.0, [-inf, inf], "sld",         "Solvent scattering length density"],
-    ["theta",       "degrees",     0,   [-inf, inf], "orientation", "Orientation of the stacked disk axis w/respect incoming beam"],
-    ["phi",         "degrees",     0,   [-inf, inf], "orientation", "Orientation of the stacked disk in the plane of the detector"],
+    ["theta",       "degrees",     0,   [-360, 360], "orientation", "Orientation of the stacked disk axis w/respect incoming beam"],
+    ["phi",         "degrees",     0,   [-360, 360], "orientation", "Rotation about beam"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 

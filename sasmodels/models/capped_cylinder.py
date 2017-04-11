@@ -70,7 +70,7 @@ and its radius of gyration is
 
 The 2D scattering intensity is calculated similar to the 2D cylinder model.
 
-.. figure:: img/cylinder_angle_definition.jpg
+.. figure:: img/cylinder_angle_definition.png
 
     Definition of the angles for oriented 2D cylinders.
 
@@ -128,8 +128,8 @@ parameters = [["sld",         "1e-6/Ang^2", 4, [-inf, inf], "sld",    "Cylinder 
               # both models, one would be a pill.
               ["radius_cap", "Ang",     20, [0, inf],    "volume", "Cap radius"],
               ["length",     "Ang",    400, [0, inf],    "volume", "Cylinder length"],
-              ["theta",      "degrees", 60, [-inf, inf], "orientation", "inclination angle"],
-              ["phi",        "degrees", 60, [-inf, inf], "orientation", "deflection angle"],
+              ["theta",      "degrees", 60, [-360, 360], "orientation", "cylinder axis to beam angle"],
+              ["phi",        "degrees", 60, [-360, 360], "orientation", "rotation about beam"],
              ]
 # pylint: enable=bad-whitespace, line-too-long
 

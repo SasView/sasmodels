@@ -129,9 +129,9 @@ parameters = [["dnn",         "Ang",       220.0, [0.0, inf],  "",            "N
               ["radius",      "Ang",        40.0, [0.0, inf],  "volume",      "Radius of sphere"],
               ["sld",  "1e-6/Ang^2",         3.0, [0.0, inf],  "sld",         "Sphere scattering length density"],
               ["sld_solvent", "1e-6/Ang^2",  6.3, [0.0, inf],  "sld",         "Solvent scattering length density"],
-              ["theta",       "degrees",     0.0, [-inf, inf], "orientation", "Orientation of the a1 axis w/respect incoming beam"],
-              ["phi",         "degrees",     0.0, [-inf, inf], "orientation", "Orientation of the a2 in the plane of the detector"],
-              ["psi",         "degrees",     0.0, [-inf, inf], "orientation", "Orientation of the a3 in the plane of the detector"],
+              ["theta",       "degrees",    0,    [-360, 360], "orientation", "c axis to beam angle"],
+              ["phi",         "degrees",    0,    [-360, 360], "orientation", "rotation about beam"],
+              ["psi",         "degrees",    0,    [-360, 360], "orientation", "rotation about c axis"]
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
@@ -148,10 +148,12 @@ demo = dict(scale=1, background=0,
             psi=0.0)
 
 tests = [
-    # Accuracy tests based on content in test/utest_extra_models.py
+    # Accuracy tests based on content in test/utest_extra_models.py, 2d tests added April 10, 2017
     [{}, 0.001, 10.3048],
     [{}, 0.215268, 0.00814889],
-    [{}, (0.414467), 0.001313289]
+    [{}, (0.414467), 0.001313289],
+    [{'theta':10.0,'phi':20,'psi':30.0},(0.045,-0.035),18.0397138402 ],
+    [{'theta':10.0,'phi':20,'psi':30.0},(0.023,0.045),0.0177333171285 ]
     ]
 
 

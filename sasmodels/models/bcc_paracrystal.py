@@ -122,9 +122,9 @@ parameters = [["dnn",         "Ang",       220,    [-inf, inf], "",            "
               ["radius",      "Ang",        40,    [0, inf],    "volume",      "Particle radius"],
               ["sld",         "1e-6/Ang^2",  4,    [-inf, inf], "sld",         "Particle scattering length density"],
               ["sld_solvent", "1e-6/Ang^2",  1,    [-inf, inf], "sld",         "Solvent scattering length density"],
-              ["theta",       "degrees",    60,    [-inf, inf], "orientation", "In plane angle"],
-              ["phi",         "degrees",    60,    [-inf, inf], "orientation", "Out of plane angle"],
-              ["psi",         "degrees",    60,    [-inf, inf], "orientation", "Out of plane angle"]
+              ["theta",       "degrees",    60,    [-360, 360], "orientation", "c axis to beam angle"],
+              ["phi",         "degrees",    60,    [-360, 360], "orientation", "rotation about beam"],
+              ["psi",         "degrees",    60,    [-360, 360], "orientation", "rotation about c axis"]
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
@@ -147,4 +147,6 @@ q =4.*pi/220.
 tests = [
     [{ },
      [0.001, q, 0.215268], [1.46601394721, 2.85851284174, 0.00866710287078]],
-]
+    [{'theta':20.0,'phi':30,'psi':40.0},(-0.017,0.035),2082.20264399 ],
+    [{'theta':20.0,'phi':30,'psi':40.0},(-0.081,0.011),0.436323144781 ]
+    ]

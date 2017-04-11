@@ -75,9 +75,8 @@ and $\psi$. These angles are defined analogously to the elliptical_cylinder belo
     here are $a < b << c$ and angle $\Psi$ is a rotation around the axis
     of the particle.
 
-The angle $\psi$ is the rotational angle around its own $c$ axis
-against the $q$ plane. For example, $\psi = 0$ when the
-$a$ axis is parallel to the $x$ axis of the detector.
+For oriented ellipsoids the *theta*, *phi* and *psi* orientation parameters will appear when fitting 2D data, 
+see the :ref:`elliptical-cylinder` model for further information.
 
 .. _triaxial-ellipsoid-angles:
 
@@ -125,9 +124,8 @@ name = "triaxial_ellipsoid"
 title = "Ellipsoid of uniform scattering length density with three independent axes."
 
 description = """
-Note: During fitting ensure that the inequality ra<rb<rc is not
-	violated. Otherwise the calculation will
-	not be correct.
+   Note - fitting ensure that the inequality ra<rb<rc is not
+   violated. Otherwise the calculation may not be correct.
 """
 category = "shape:ellipsoid"
 
@@ -142,12 +140,12 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Major equatorial radius, Rb"],
               ["radius_polar", "Ang", 10, [0, inf], "volume",
                "Polar radius, Rc"],
-              ["theta", "degrees", 60, [-inf, inf], "orientation",
-               "In plane angle"],
-              ["phi", "degrees", 60, [-inf, inf], "orientation",
-               "Out of plane angle"],
-              ["psi", "degrees", 60, [-inf, inf], "orientation",
-               "Out of plane angle"],
+              ["theta", "degrees", 60, [-360, 360], "orientation",
+               "polar axis to beam angle"],
+              ["phi", "degrees", 60, [-360, 360], "orientation",
+               "rotation about beam"],
+              ["psi", "degrees", 60, [-360, 360], "orientation",
+               "rotation about polar axis"],
              ]
 
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "triaxial_ellipsoid.c"]
@@ -182,10 +180,10 @@ demo = dict(scale=1, background=0,
 q = 0.1
 # april 6 2017, rkh add unit tests
 #     NOT compared with any other calc method, assume correct!
-# add 2d test after pull #890
+# check 2d test after pull #890
 qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
 tests = [[{}, 0.05, 24.8839548033],
-#        [{'theta':80., 'phi':10.}, (qx, qy), 9999. ],
+        [{'theta':80., 'phi':10.}, (qx, qy), 166.712060266 ],
         ]
 del qx, qy  # not necessary to delete, but cleaner

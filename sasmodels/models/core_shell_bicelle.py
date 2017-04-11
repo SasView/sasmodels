@@ -46,7 +46,7 @@ where
 
 .. math::
 
-        \begin{align}    
+    \begin{align}    
     F(Q,\alpha) = &\bigg[ 
     (\rho_c - \rho_f) V_c \frac{2J_1(QRsin \alpha)}{QRsin\alpha}\frac{sin(QLcos\alpha/2)}{Q(L/2)cos\alpha} \\
     &+(\rho_f - \rho_r) V_{c+f} \frac{2J_1(QRsin\alpha)}{QRsin\alpha}\frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha} \\
@@ -62,13 +62,16 @@ the thickness of the rim and $J_1$ the usual first order bessel function.
 The output of the 1D scattering intensity function for randomly oriented
 cylinders is then given by integrating over all possible $\theta$ and $\phi$.
 
-The *theta* and *phi* parameters are not used for the 1D output.
+For oriented bicelles the *theta*, and *phi* orientation parameters will appear when fitting 2D data, 
+see the :ref:`cylinder` model for further information.
 Our implementation of the scattering kernel and the 1D scattering intensity
 use the c-library from NIST.
 
-.. figure:: img/cylinder_angle_definition.jpg
+.. figure:: img/cylinder_angle_definition.png
 
-    Definition of the angles for the oriented core shell bicelle tmodel.
+    Definition of the angles for the oriented core shell bicelle model,
+    note that the cylinder axis of the bicelle starts along the beam direction
+    when $\theta  = \phi = 0$.
 
 
 References
@@ -134,8 +137,8 @@ parameters = [
     ["sld_face",       "1e-6/Ang^2", 4, [-inf, inf], "sld",         "Cylinder face scattering length density"],
     ["sld_rim",        "1e-6/Ang^2", 4, [-inf, inf], "sld",         "Cylinder rim scattering length density"],
     ["sld_solvent",    "1e-6/Ang^2", 1, [-inf, inf], "sld",         "Solvent scattering length density"],
-    ["theta",          "degrees",   90, [-inf, inf], "orientation", "In plane angle"],
-    ["phi",            "degrees",    0, [-inf, inf], "orientation", "Out of plane angle"],
+    ["theta",          "degrees",   90, [-360, 360], "orientation", "cylinder axis to beam angle"],
+    ["phi",            "degrees",    0, [-360, 360], "orientation", "rotation about beam"]
     ]
 
 # pylint: enable=bad-whitespace, line-too-long
@@ -159,7 +162,7 @@ q = 0.1
 qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
 tests = [[{}, 0.05, 7.4883545957],
-        [{'theta':80., 'phi':10.}, (qx, qy), 2.81048892474 ],
+        [{'theta':80., 'phi':10.}, (qx, qy), 2.81048892474 ]
         ]
 del qx, qy  # not necessary to delete, but cleaner
 

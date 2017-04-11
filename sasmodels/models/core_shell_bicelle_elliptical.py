@@ -75,7 +75,7 @@ setting radius to $R/Xcore$ and axial ratio to $1/Xcore$ gives an equivalent sol
 The output of the 1D scattering intensity function for randomly oriented
 bicelles is then given by integrating over all possible $\alpha$ and $\psi$.
 
-For oriented bicellles the *theta*, *phi* and *psi* orientation parameters only appear when fitting 2D data, 
+For oriented bicelles the *theta*, *phi* and *psi* orientation parameters will appear when fitting 2D data, 
 see the :ref:`elliptical-cylinder` model for further information.
 
 
@@ -118,16 +118,16 @@ category = "shape:cylinder"
 parameters = [
     ["radius",         "Ang",       30, [0, inf],    "volume",      "Cylinder core radius"],
     ["x_core",        "None",       3,  [0, inf],    "volume",      "axial ratio of core, X = r_polar/r_equatorial"],
-    ["thick_rim",  "Ang",        8, [0, inf],    "volume",      "Rim shell thickness"],
-    ["thick_face", "Ang",       14, [0, inf],    "volume",      "Cylinder face thickness"],
-    ["length",         "Ang",      50, [0, inf],    "volume",      "Cylinder length"],
+    ["thick_rim",  "Ang",            8, [0, inf],    "volume",      "Rim shell thickness"],
+    ["thick_face", "Ang",           14, [0, inf],    "volume",      "Cylinder face thickness"],
+    ["length",         "Ang",       50, [0, inf],    "volume",      "Cylinder length"],
     ["sld_core",       "1e-6/Ang^2", 4, [-inf, inf], "sld",         "Cylinder core scattering length density"],
     ["sld_face",       "1e-6/Ang^2", 7, [-inf, inf], "sld",         "Cylinder face scattering length density"],
     ["sld_rim",        "1e-6/Ang^2", 1, [-inf, inf], "sld",         "Cylinder rim scattering length density"],
     ["sld_solvent",    "1e-6/Ang^2", 6, [-inf, inf], "sld",         "Solvent scattering length density"],
-    ["theta",          "degrees",   90, [-360, 360], "orientation", "In plane angle"],
-    ["phi",            "degrees",    0, [-360, 360], "orientation", "Out of plane angle"],
-    ["psi",            "degrees",    0, [-360, 360], "orientation", "Major axis angle relative to Q"],
+    ["theta",       "degrees",    90.0, [-360, 360], "orientation", "cylinder axis to beam angle"],
+    ["phi",         "degrees",    0,    [-360, 360], "orientation", "rotation about beam"],
+    ["psi",         "degrees",    0,    [-360, 360], "orientation", "rotation about cylinder axis"]
     ]
 
 # pylint: enable=bad-whitespace, line-too-long
