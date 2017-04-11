@@ -44,8 +44,6 @@ class SesansTransform(object):
         # type: (np.ndarray, float, float) -> None
         #import logging; logging.info("creating SESANS transform")
         self.q = z
-        # isoriented flag determines whether data is from an oriented sample or
-        # not, should be a selection variable upon entering SESANS data.
         self._set_hankel(SElength, zaccept, Rmax)
 
     def apply(self, Iq):
@@ -104,15 +102,13 @@ class OrientedSesansTransform(object):
         # type: (np.ndarray, float, float) -> None
         #import logging; logging.info("creating SESANS transform")
         self.q = z
-        # isoriented flag determines whether data is from an oriented sample or
-        # not, should be a selection variable upon entering SESANS data.
         self._set_cosmat(SElength, zaccept, Rmax)
 
     def apply(self, Iq):
         dq = self.q_calc[0][0]
         Iq = np.reshape(Iq, self._Iq_shape)
         G0 = self._cos0 * np.sum(Iq) * dq
-        G = np.sum(np.dot(Iq, self._cosmat.T), axis=1) * dq
+        G = np.sum(np.dot(Iq, self._cosmat), axis=0) * dq
         P = G - G0
         return P
 
@@ -124,12 +120,13 @@ class OrientedSesansTransform(object):
         # Rmax = #value in text box somewhere in FitPage?
         q_max = 2 * pi / (SElength[1] - SElength[0])
         q_min = 0.1 * 2 * pi / (np.size(SElength) * SElength[-1])
+        q_min *= 100
 
         q = np.arange(q_min, q_max, q_min, dtype='float32')
         dq = q_min
 
         cos0 = np.float32(dq / (2 * pi))
-        cosmat = np.float32(dq / (2 * pi)) * np.cos(q[:, None] * SE[None, :])
+        cosmat = np.float32(dq / (2 * pi)) * np.cos(q[:, None] * SElength[None, :])
 
         qx, qy = np.meshgrid(q, q)
         self._Iq_shape = qx.shape
