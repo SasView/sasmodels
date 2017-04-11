@@ -449,19 +449,26 @@ def _plot_result1D(data, theory, resid, view, use_data,
             mtheory[~np.isfinite(mtheory)] = masked
             if view is 'log':
                 mtheory[mtheory <= 0] = masked
-            plt.plot(data.x, scale*mtheory, '-', hold=True)
+            plt.plot(data.x, scale*mtheory, '-')
             all_positive = all_positive and (mtheory > 0).all()
             some_present = some_present or (mtheory.count() > 0)
 
         if limits is not None:
             plt.ylim(*limits)
 
-        plt.xscale('linear' if not some_present or non_positive_x  else view)
+        plt.xscale('linear' if not some_present or non_positive_x
+                   else view if view is not None
+                   else 'log')
         plt.yscale('linear'
                    if view == 'q4' or not some_present or not all_positive
-                   else view)
+                   else view if view is not None
+                   else 'log')
         plt.xlabel("$q$/A$^{-1}$")
         plt.ylabel('$I(q)$')
+        title = ("data and model" if use_theory and use_data
+                 else "data" if use_data
+                 else "model")
+        plt.title(title)
 
     if use_calc:
         # Only have use_calc if have use_theory
@@ -481,10 +488,11 @@ def _plot_result1D(data, theory, resid, view, use_data,
 
         if num_plots > 1:
             plt.subplot(1, num_plots, use_calc + 2)
-        plt.plot(data.x, mresid, '-')
+        plt.plot(data.x, mresid, '.')
         plt.xlabel("$q$/A$^{-1}$")
         plt.ylabel('residuals')
-        plt.xscale('linear' if not some_present or non_positive_x else view)
+        plt.xscale('linear')
+        plt.title('(model - Iq)/dIq')
 
 
 @protect
@@ -511,9 +519,9 @@ def _plot_result_sesans(data, theory, resid, use_data, limits=None):
                 plt.errorbar(data.x, data.y, yerr=data.dy)
         if theory is not None:
             if is_tof:
-                plt.plot(data.x, np.log(theory)/(data.lam*data.lam), '-', hold=True)
+                plt.plot(data.x, np.log(theory)/(data.lam*data.lam), '-')
             else:
-                plt.plot(data.x, theory, '-', hold=True)
+                plt.plot(data.x, theory, '-')
         if limits is not None:
             plt.ylim(*limits)
 
