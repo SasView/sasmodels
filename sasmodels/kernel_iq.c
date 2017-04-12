@@ -24,7 +24,7 @@ typedef struct {
     int32_t num_eval;           // total number of voxels in hypercube
     int32_t num_weights;        // total length of the weights vector
     int32_t num_active;         // number of non-trivial pd loops
-    int32_t theta_par;          // id of spherical correction variable
+    int32_t theta_par;          // id of spherical correction variable (not used)
 } ProblemDetails;
 
 // Intel HD 4000 needs private arrays to be a multiple of 4 long
@@ -172,17 +172,6 @@ void KERNEL_NAME(
 #endif
 
 
-#if MAX_PD>0
-  const int theta_par = details->theta_par;
-  const int fast_theta = (theta_par == p0);
-  const int slow_theta = (theta_par >= 0 && !fast_theta);
-  double spherical_correction = 1.0;
-#else
-  // Note: if not polydisperse the weights cancel and we don't need the
-  // spherical correction.
-  const double spherical_correction = 1.0;
-#endif
-
   int step = pd_start;
 
 #if MAX_PD>4
@@ -219,16 +208,10 @@ void KERNEL_NAME(
     const double weight1 = 1.0;
 #endif
 #if MAX_PD>0
-  if (slow_theta) { // Theta is not in inner loop
-    spherical_correction = fmax(fabs(cos(M_PI_180*local_values.vector[theta_par])), 1.e-6);
-  }
   while(i0 < n0) {
     local_values.vector[p0] = v0[i0];
     double weight0 = w0[i0] * weight1;
 //printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 0, p0, i0, n0, local_values.vector[p0], weight0);
-    if (fast_theta) { // Theta is in inner loop
-      spherical_correction = fmax(fabs(cos(M_PI_180*local_values.vector[p0])), 1.e-6);
-    }
 #else
     const double weight0 = 1.0;
 #endif
@@ -243,10 +226,7 @@ void KERNEL_NAME(
       // Accumulate I(q)
       // Note: weight==0 must always be excluded
       if (weight0 > cutoff) {
-        // spherical correction is set at a minimum of 1e-6, otherwise there
-        // would be problems looking at models with theta=90.
-        const double weight = weight0 * spherical_correction;
-        pd_norm += weight * CALL_VOLUME(local_values.table);
+        pd_norm += weight0 * CALL_VOLUME(local_values.table);
 
         #ifdef USE_OPENMP
         #pragma omp parallel for
@@ -303,7 +283,7 @@ void KERNEL_NAME(
           const double scattering = CALL_IQ(q, q_index, local_values.table);
 #endif // !MAGNETIC
 //printf("q_index:%d %g %g %g %g\n",q_index, scattering, weight, spherical_correction, weight0);
-          result[q_index] += weight * scattering;
+          result[q_index] += weight0 * scattering;
         }
       }
     }

@@ -196,12 +196,10 @@ def _loops(parameters, form, form_volume, nq, call_details, values, cutoff):
     pd_weight = values[2+n_pars + call_details.num_weights:]
 
     pd_norm = 0.0
-    spherical_correction = 1.0
     partial_weight = np.NaN
     weight = np.NaN
 
     p0_par = call_details.pd_par[0]
-    p0_is_theta = (p0_par == call_details.theta_par)
     p0_length = call_details.pd_length[0]
     p0_index = p0_length
     p0_offset = call_details.pd_offset[0]
@@ -218,16 +216,10 @@ def _loops(parameters, form, form_volume, nq, call_details, values, cutoff):
             pd_index = (loop_index//pd_stride)%pd_length
             parameters[pd_par] = pd_value[pd_offset+pd_index]
             partial_weight = np.prod(pd_weight[pd_offset+pd_index][1:])
-            if call_details.theta_par >= 0:
-                cor = sin(pi / 180 * parameters[call_details.theta_par])
-                spherical_correction = max(abs(cor), 1e-6)
             p0_index = loop_index%p0_length
 
         weight = partial_weight * pd_weight[p0_offset + p0_index]
         parameters[p0_par] = pd_value[p0_offset + p0_index]
-        if p0_is_theta:
-            cor = cos(pi/180 * parameters[p0_par])
-            spherical_correction = max(abs(cor), 1e-6)
         p0_index += 1
         if weight > cutoff:
             # Call the scattering function
@@ -238,7 +230,6 @@ def _loops(parameters, form, form_volume, nq, call_details, values, cutoff):
             if np.isnan(Iq).any(): continue
 
             # update value and norm
-            weight *= spherical_correction
             total += weight * Iq
             pd_norm += weight * form_volume()
 

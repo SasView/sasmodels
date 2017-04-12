@@ -190,7 +190,7 @@ def transform_xyz(view, jitter, x, y, z):
 
 def apply_jitter(jitter, points):
     dtheta, dphi, dpsi = jitter
-    points = Rz(dpsi)*Ry(dtheta)*Rx(dphi)*points
+    points = Rx(dphi)*Ry(dtheta)*Rz(dpsi)*points
     return points
 
 def orient_relative_to_beam(view, points):
@@ -256,11 +256,9 @@ def main():
         jitter = sdtheta.val, sdphi.val, sdpsi.val
         ax.cla()
         draw_beam(ax, (0, 0))
-        if 0:
-            draw_jitter(ax, view, jitter)
-        else:
-            draw_jitter(ax, view, (0,0,0))
-            draw_mesh(ax, view, jitter)
+        draw_jitter(ax, view, jitter)
+        #draw_jitter(ax, view, (0,0,0))
+        draw_mesh(ax, view, jitter)
         plt.gcf().canvas.draw()
 
     stheta.on_changed(lambda v: update(v,'theta'))

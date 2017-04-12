@@ -54,6 +54,10 @@ class Dispersion(object):
         For orientation parameters use absolute.
         """
         sigma = self.width * center if relative else self.width
+        if not relative:
+            # For orientation, the jitter is relative to 0 not the angle
+            #center = 0
+            pass
         if sigma == 0 or self.npts < 2:
             if lb <= center <= ub:
                 return np.array([center], 'd'), np.array([1.], 'd')
