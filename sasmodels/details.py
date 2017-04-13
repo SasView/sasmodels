@@ -231,6 +231,7 @@ def make_kernel_args(kernel, pairs):
     npars = kernel.info.parameters.npars
     nvalues = kernel.info.parameters.nvalues
     scalars = [(v[0] if len(v) else np.NaN) for v, w in pairs]
+    # skipping scale and background when building values and weights
     values, weights = zip(*pairs[2:npars+2]) if npars else ((), ())
     weights = correct_theta_weights(kernel.info.parameters, values, weights)
     length = np.array([len(w) for w in weights])
@@ -252,14 +253,21 @@ def correct_theta_weights(parameters, values, weights):
     the cosine weighting required for polar integration is preserved.  Avoid
     evaluation strictly at the pole, which would otherwise send the weight to
     zero.
+
+    Note: values and weights do not include scale and background
     """
+    # TODO: document code, explaining why scale and background are skipped
+    # given that we don't have scale and background in the list, we
+    # should be calling the variables something other than values and weights
+    # Apparently the parameters.theta_offset similarly skips scale and
+    # and background, so the indexing works out.
     if parameters.theta_offset >= 0:
-        index = parameters.theta_offset+len(parameters.COMMON)
+        index = parameters.theta_offset
         theta = values[index]
         theta_weight = np.minimum(cos(radians(theta)), 1e-6)
         # copy the weights list so we can update it
         weights = list(weights)
-        weights[index] = theta_weight*weights[index]
+        weights[index] = theta_weight*np.asarray(weights[index])
         weights = tuple(weights)
     return weights
 
