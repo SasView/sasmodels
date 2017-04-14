@@ -154,6 +154,22 @@ def wxview(html, url="", size=(850, 540)):
     frame.Show()
     return frame
 
+def view_html_wxapp(html, url=""):
+    import wx  # type: ignore
+    app = wx.App()
+    frame = wxview(html, url)
+    app.MainLoop()
+
+def view_url_wxapp(url):
+    import wx  # type: ignore
+    from wx.html2 import WebView
+    app = wx.App()
+    frame = wx.Frame(None, -1, size=(850, 540))
+    view = WebView.New(frame)
+    view.LoadURL(url)
+    frame.Show()
+    app.MainLoop()
+
 def qtview(html, url=""):
     try:
         from PyQt5.QtWebKitWidgets import QWebView
@@ -166,12 +182,6 @@ def qtview(html, url=""):
     helpView.show()
     return helpView
 
-def view_html_wxapp(html, url=""):
-    import wx  # type: ignore
-    app = wx.App()
-    frame = wxview(html, url)
-    app.MainLoop()
-
 def view_html_qtapp(html, url=""):
     import sys
     try:
@@ -182,16 +192,40 @@ def view_html_qtapp(html, url=""):
     frame = qtview(html, url)
     sys.exit(app.exec_())
 
-def view_rst_app(filename, qt=False):
+def view_url_qtapp(url):
+    import sys
+    try:
+        from PyQt5.QtWidgets import QApplication
+    except ImportError:
+        from PyQt4.QtGui import QApplication
+    app = QApplication([])
+    try:
+        from PyQt5.QtWebKitWidgets import QWebView
+        from PyQt5.QtCore import QUrl
+    except ImportError:
+        from PyQt4.QtWebkit import QWebView
+        from PyQt4.QtCore import QUrl
+    frame = QWebView()
+    frame.load(QUrl(url))
+    frame.show()
+    sys.exit(app.exec_())
+
+def view_help(filename, qt=False):
     import os
-    html = load_rst_as_html(filename)
-    url="file://"+os.path.abspath(filename)+"/"
-    if qt:
-        view_html_qtapp(html, url)
+    url="file:///"+os.path.abspath(filename).replace("\\","/")
+    if filename.endswith('.rst'):
+        html = load_rst_as_html(filename)
+        if qt:
+            view_html_qtapp(html, url)
+        else:
+            view_html_wxapp(html, url)
     else:
-        view_html_wxapp(html, url)
+        if qt:
+            view_url_qtapp(url)
+        else:
+            view_url_wxapp(url)
 
 if __name__ == "__main__":
     import sys
-    view_rst_app(sys.argv[1], qt=True)
+    view_help(sys.argv[1], qt=True)
 
