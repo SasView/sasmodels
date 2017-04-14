@@ -264,7 +264,7 @@ def correct_theta_weights(parameters, values, weights):
     if parameters.theta_offset >= 0:
         index = parameters.theta_offset
         theta = values[index]
-        theta_weight = np.minimum(cos(radians(theta)), 1e-6)
+        theta_weight = np.minimum(abs(cos(radians(theta))), 1e-6)
         # copy the weights list so we can update it
         weights = list(weights)
         weights[index] = theta_weight*np.asarray(weights[index])
