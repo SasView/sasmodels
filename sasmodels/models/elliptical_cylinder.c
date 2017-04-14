@@ -1,17 +1,10 @@
-double form_volume(double radius_minor, double r_ratio, double length);
-double Iq(double q, double radius_minor, double r_ratio, double length,
-          double sld, double solvent_sld);
-double Iqxy(double qx, double qy, double radius_minor, double r_ratio, double length,
-            double sld, double solvent_sld, double theta, double phi, double psi);
-
-
-double
+static double
 form_volume(double radius_minor, double r_ratio, double length)
 {
     return M_PI * radius_minor * radius_minor * r_ratio * length;
 }
 
-double
+static double
 Iq(double q, double radius_minor, double r_ratio, double length,
    double sld, double solvent_sld)
 {
@@ -60,7 +53,7 @@ Iq(double q, double radius_minor, double r_ratio, double length,
 }
 
 
-double
+static double
 Iqxy(double qx, double qy,
      double radius_minor, double r_ratio, double length,
      double sld, double solvent_sld,
@@ -68,12 +61,15 @@ Iqxy(double qx, double qy,
 {
     double q, xhat, yhat, zhat;
     ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, xhat, yhat, zhat);
+    const double qa = q*xhat;
+    const double qb = q*yhat;
+    const double qc = q*zhat;
 
     // Compute:  r = sqrt((radius_major*cos_nu)^2 + (radius_minor*cos_mu)^2)
     // Given:    radius_major = r_ratio * radius_minor
-    const double r = radius_minor*sqrt(square(r_ratio*xhat) + square(yhat));
-    const double be = sas_2J1x_x(q*r);
-    const double si = sas_sinx_x(q*zhat*0.5*length);
+    const double qr = radius_minor*sqrt(square(r_ratio*qa) + square(qb));
+    const double be = sas_2J1x_x(qr);
+    const double si = sas_sinx_x(qc*0.5*length);
     const double Aq = be * si;
     const double delrho = sld - solvent_sld;
     const double vol = form_volume(radius_minor, r_ratio, length);

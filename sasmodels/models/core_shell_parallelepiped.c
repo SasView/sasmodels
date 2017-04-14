@@ -1,4 +1,4 @@
-double form_volume(double length_a, double length_b, double length_c, 
+double form_volume(double length_a, double length_b, double length_c,
                    double thick_rim_a, double thick_rim_b, double thick_rim_c);
 double Iq(double q, double core_sld, double arim_sld, double brim_sld, double crim_sld,
           double solvent_sld, double length_a, double length_b, double length_c,
@@ -8,12 +8,12 @@ double Iqxy(double qx, double qy, double core_sld, double arim_sld, double brim_
             double length_c, double thick_rim_a, double thick_rim_b,
             double thick_rim_c, double theta, double phi, double psi);
 
-double form_volume(double length_a, double length_b, double length_c, 
+double form_volume(double length_a, double length_b, double length_c,
                    double thick_rim_a, double thick_rim_b, double thick_rim_c)
 {
     //return length_a * length_b * length_c;
-    return length_a * length_b * length_c + 
-           2.0 * thick_rim_a * length_b * length_c + 
+    return length_a * length_b * length_c +
+           2.0 * thick_rim_a * length_b * length_c +
            2.0 * thick_rim_b * length_a * length_c +
            2.0 * thick_rim_c * length_a * length_b;
 }
@@ -33,16 +33,16 @@ double Iq(double q,
 {
     // Code converted from functions CSPPKernel and CSParallelepiped in libCylinder.c_scaled
     // Did not understand the code completely, it should be rechecked (Miguel Gonzalez)
-    
+
     const double mu = 0.5 * q * length_b;
-    
+
     //calculate volume before rescaling (in original code, but not used)
-    //double vol = form_volume(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c);        
-    //double vol = length_a * length_b * length_c + 
-    //       2.0 * thick_rim_a * length_b * length_c + 
+    //double vol = form_volume(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c);
+    //double vol = length_a * length_b * length_c +
+    //       2.0 * thick_rim_a * length_b * length_c +
     //       2.0 * thick_rim_b * length_a * length_c +
     //       2.0 * thick_rim_c * length_a * length_b;
-    
+
     // Scale sides by B
     const double a_scaled = length_a / length_b;
     const double c_scaled = length_c / length_b;
@@ -100,8 +100,8 @@ double Iq(double q,
             //   tmp =( dr0*tmp1*tmp2*tmp3*Vin + drA*(tmpt1-tmp1)*tmp2*tmp3*V1+ drB*tmp1*(tmpt2-tmp2)*tmp3*V2 + drC*tmp1*tmp2*(tmpt3-tmp3)*V3)*
             //   ( dr0*tmp1*tmp2*tmp3*Vin + drA*(tmpt1-tmp1)*tmp2*tmp3*V1+ drB*tmp1*(tmpt2-tmp2)*tmp3*V2 + drC*tmp1*tmp2*(tmpt3-tmp3)*V3);   //  correct FF : square of sum of phase factors
             // This is the function called by csparallelepiped_analytical_2D_scaled,
-            // while CSParallelepipedModel calls CSParallelepiped in libCylinder.c        
-            
+            // while CSParallelepipedModel calls CSParallelepiped in libCylinder.c
+
             //  correct FF : sum of square of phase factors
             inner_total += Gauss76Wt[j] * form * form;
         }
@@ -135,6 +135,9 @@ double Iqxy(double qx, double qy,
 {
     double q, zhat, yhat, xhat;
     ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, xhat, yhat, zhat);
+    const double qa = q*xhat;
+    const double qb = q*yhat;
+    const double qc = q*zhat;
 
     // cspkernel in csparallelepiped recoded here
     const double dr0 = core_sld-solvent_sld;
@@ -159,13 +162,13 @@ double Iqxy(double qx, double qy,
     double tb = length_a + 2.0*thick_rim_b;
     double tc = length_a + 2.0*thick_rim_c;
     //handle arg=0 separately, as sin(t)/t -> 1 as t->0
-    double siA = sas_sinx_x(0.5*q*length_a*xhat);
-    double siB = sas_sinx_x(0.5*q*length_b*yhat);
-    double siC = sas_sinx_x(0.5*q*length_c*zhat);
-    double siAt = sas_sinx_x(0.5*q*ta*xhat);
-    double siBt = sas_sinx_x(0.5*q*tb*yhat);
-    double siCt = sas_sinx_x(0.5*q*tc*zhat);
-    
+    double siA = sas_sinx_x(0.5*length_a*qa);
+    double siB = sas_sinx_x(0.5*length_b*qb);
+    double siC = sas_sinx_x(0.5*length_c*qc);
+    double siAt = sas_sinx_x(0.5*ta*qa);
+    double siBt = sas_sinx_x(0.5*tb*qb);
+    double siCt = sas_sinx_x(0.5*tc*qc);
+
 
     // f uses Vin, V1, V2, and V3 and it seems to have more sense than the value computed
     // in the 1D code, but should be checked!
@@ -173,6 +176,6 @@ double Iqxy(double qx, double qy,
                + drA*(siAt-siA)*siB*siC*V1
                + drB*siA*(siBt-siB)*siC*V2
                + drC*siA*siB*(siCt*siCt-siC)*V3);
-   
+
     return 1.0e-4 * f * f;
 }

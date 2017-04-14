@@ -80,7 +80,7 @@ be accurate.
 
 .. figure:: img/parallelepiped_angle_definition.png
 
-    Orientation of the crystal with respect to the scattering plane, when 
+    Orientation of the crystal with respect to the scattering plane, when
     $\theta = \phi = 0$ the $c$ axis is along the beam direction (the $z$ axis).
 
 References

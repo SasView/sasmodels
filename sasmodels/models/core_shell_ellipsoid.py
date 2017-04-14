@@ -24,8 +24,8 @@ When including an $S(q)$, the radius in $S(q)$ is calculated to be that of
 a sphere with the same 2nd virial coefficient of the outer surface of the
 ellipsoid. This may have some undesirable effects if the aspect ratio of the
 ellipsoid is large (ie, if $X << 1$ or $X >> 1$ ), when the $S(q)$
-- which assumes spheres - will not in any case be valid.  Generating a 
-custom product model will enable separate effective volume fraction and effective 
+- which assumes spheres - will not in any case be valid.  Generating a
+custom product model will enable separate effective volume fraction and effective
 radius in the $S(q)$.
 
 If SAS data are in absolute units, and the SLDs are correct, then scale should
@@ -43,13 +43,13 @@ terms for the core-shell and shell-solvent boundaries.
 where
 
 .. math::
-    \begin{align}    
+    \begin{align}
     F(q,\alpha) = &f(q,radius\_equat\_core,radius\_equat\_core.x\_core,\alpha) \\
     &+ f(q,radius\_equat\_core + thick\_shell,radius\_equat\_core.x\_core + thick\_shell.x\_polar\_shell,\alpha)
-    \end{align} 
+    \end{align}
 
 where
- 
+
 .. math::
 
     f(q,R_e,R_p,\alpha) = \frac{3 \Delta \rho V (\sin[qr(R_p,R_e,\alpha)]
@@ -76,7 +76,7 @@ For randomly oriented particles:
 
    F^2(q)=\int_{0}^{\pi/2}{F^2(q,\alpha)\sin(\alpha)d\alpha}
 
-For oriented ellipsoids the *theta*, *phi* and *psi* orientation parameters will appear when fitting 2D data, 
+For oriented ellipsoids the *theta*, *phi* and *psi* orientation parameters will appear when fitting 2D data,
 see the :ref:`elliptical-cylinder` model for further information.
 
 References
@@ -138,8 +138,7 @@ parameters = [
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sas_3j1x_x.c", "lib/gfn.c", "lib/gauss76.c",
-          "core_shell_ellipsoid.c"]
+source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "core_shell_ellipsoid.c"]
 
 def ER(radius_equat_core, x_core, thick_shell, x_polar_shell):
     """

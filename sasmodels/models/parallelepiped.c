@@ -19,11 +19,11 @@ double Iq(double q,
     double length_c)
 {
     const double mu = 0.5 * q * length_b;
-    
+
     // Scale sides by B
     const double a_scaled = length_a / length_b;
     const double c_scaled = length_c / length_b;
-        
+
     // outer integral (with gauss points), integration limits = 0, 1
     double outer_total = 0; //initialize integral
 
@@ -68,10 +68,13 @@ double Iqxy(double qx, double qy,
 {
     double q, xhat, yhat, zhat;
     ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, xhat, yhat, zhat);
+    const double qa = q*xhat;
+    const double qb = q*yhat;
+    const double qc = q*zhat;
 
-    const double siA = sas_sinx_x(0.5*length_a*q*xhat);
-    const double siB = sas_sinx_x(0.5*length_b*q*yhat);
-    const double siC = sas_sinx_x(0.5*length_c*q*zhat);
+    const double siA = sas_sinx_x(0.5*length_a*qa);
+    const double siB = sas_sinx_x(0.5*length_b*qb);
+    const double siC = sas_sinx_x(0.5*length_c*qc);
     const double V = form_volume(length_a, length_b, length_c);
     const double drho = (sld - solvent_sld);
     const double form = V * drho * siA * siB * siC;
