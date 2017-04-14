@@ -18,15 +18,15 @@ model = Model(
     kernel,
     scale=0.08, background=0,
     sld=.291, sld_solvent=7.105,
-    r_polar=1800, r_polar_pd=0.222296, r_polar_pd_n=0,
-    r_equatorial=2600, r_equatorial_pd=0.28, r_equatorial_pd_n=0,
+    radius_polar=1800, radius_polar_pd=0.222296, radius_polar_pd_n=0,
+    radius_equatorial=2600, radius_equatorial_pd=0.28, radius_equatorial_pd_n=0,
     theta=60, theta_pd=0, theta_pd_n=0,
     phi=60, phi_pd=0, phi_pd_n=0,
     )
 
 # SET THE FITTING PARAMETERS
-model.r_polar.range(1000, 10000)
-model.r_equatorial.range(1000, 10000)
+model.radius_polar.range(1000, 10000)
+model.radius_equatorial.range(1000, 10000)
 model.theta.range(0, 360)
 model.phi.range(0, 360)
 model.background.range(0,1000)
