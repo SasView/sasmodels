@@ -65,15 +65,21 @@ $du = \cos\gamma\,d\gamma$, giving
     \langle\Phi^2\rangle &= 8 \int_0^{\pi/2} \int_0^1 \Phi^2(qr) du d\phi \\
     r^2 &= b^2(p_a \sin^2(\phi)(1 - u^2) + 1 + p_c u^2)
 
+Though for convenience we describe the three radii of the ellipsoid as equatorial
+and polar, they may be given in $any$ size order. To avoid multiple solutions, especially
+with Monte-Carlo fit methods, it may be advisable to restrict their ranges. For typical
+small angle diffraction situations there may be a number of closely similar "best fits",
+so some trial and error, or fixing of some radii at expected values, may help.
+    
 To provide easy access to the orientation of the triaxial ellipsoid,
 we define the axis of the cylinder using the angles $\theta$, $\phi$
-and $\psi$. These angles are defined analogously to the elliptical_cylinder below
+and $\psi$. These angles are defined analogously to the elliptical_cylinder below, note that
+angle $\phi$ is now NOT the same as in the equations above.
 
 .. figure:: img/elliptical_cylinder_angle_definition.png
 
-    Definition of angles for oriented triaxial ellipsoid, where radii shown
-    here are $a < b << c$ and angle $\Psi$ is a rotation around the axis
-    of the particle.
+    Definition of angles for oriented triaxial ellipsoid, where radii are for illustration here 
+    $a < b << c$ and angle $\Psi$ is a rotation around the axis of the particle.
 
 For oriented ellipsoids the *theta*, *phi* and *psi* orientation parameters will appear when fitting 2D data, 
 see the :ref:`elliptical-cylinder` model for further information.
@@ -82,7 +88,7 @@ see the :ref:`elliptical-cylinder` model for further information.
 
 .. figure:: img/triaxial_ellipsoid_angle_projection.png
 
-    Some example angles for oriented ellipsoid.
+    Some examples for an oriented triaxial ellipsoid.
 
 The radius-of-gyration for this system is  $R_g^2 = (R_a R_b R_c)^2/5$.
 
@@ -91,8 +97,9 @@ parameters, $R_a$ is the minor equatorial radius, $R_b$ is the major
 equatorial radius, and $R_c$ is the polar radius of the ellipsoid.
 
 NB: The 2nd virial coefficient of the triaxial solid ellipsoid is
-calculated based on the polar radius $R_p = R_c$ and equatorial
-radius $R_e = \sqrt{R_a R_b}$, and used as the effective radius for
+calculated after sorting the three radii to give the most appropriate
+prolate or oblate form, from the new polar radius $R_p = R_c$ and effective equatorial
+radius,  $R_e = \sqrt{R_a R_b}$, to then be used as the effective radius for
 $S(q)$ when $P(q) \cdot S(q)$ is applied.
 
 Validation
@@ -124,8 +131,7 @@ name = "triaxial_ellipsoid"
 title = "Ellipsoid of uniform scattering length density with three independent axes."
 
 description = """
-   Note - fitting ensure that the inequality ra<rb<rc is not
-   violated. Otherwise the calculation may not be correct.
+   Triaxial ellipsoid - see main documentation.
 """
 category = "shape:ellipsoid"
 

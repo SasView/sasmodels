@@ -198,8 +198,8 @@ description = """
         """
 category = "shape:sphere"
 
-SHAPES = [["erf(|nu|*z)", "Rpow(z^|nu|)", "Lpow(z^|nu|)",
-           "Rexp(-|nu|z)", "Lexp(-|nu|z)"]]
+SHAPES = ["erf(|nu|*z)", "Rpow(z^|nu|)", "Lpow(z^|nu|)",
+          "Rexp(-|nu|z)", "Lexp(-|nu|z)"]
 
 # pylint: disable=bad-whitespace, line-too-long
 #            ["name", "units", default, [lower, upper], "type", "description"],
@@ -208,7 +208,7 @@ parameters = [["n_shells",             "",           1,      [1, 10],        "vo
               ["sld[n_shells]",        "1e-6/Ang^2", 4.06,   [-inf, inf],    "sld", "sld of the shell"],
               ["thickness[n_shells]",  "Ang",        100.0,  [0, inf],       "volume", "thickness shell"],
               ["interface[n_shells]",  "Ang",        50.0,   [0, inf],       "volume", "thickness of the interface"],
-              ["shape[n_shells]",      "",           0,      SHAPES,         "", "interface shape"],
+              ["shape[n_shells]",      "",           0,      [SHAPES],       "", "interface shape"],
               ["nu[n_shells]",         "",           2.5,    [0, inf],       "", "interface shape exponent"],
               ["n_steps",              "",           35,     [0, inf],       "", "number of steps in each interface (must be an odd integer)"],
              ]
