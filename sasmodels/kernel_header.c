@@ -163,7 +163,7 @@ inline double sas_sinx_x(double x) { return x==0 ? 1.0 : sin(x)/x; }
 #define ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sn, cn) do { \
     SINCOS(phi*M_PI_180, sn, cn); \
     q = sqrt(qx*qx + qy*qy); \
-    cn  = (q==0. ? 1.0 : (cn*qx + sn*qy)/q * sin(theta*M_PI_180));  \
+    cn = (q==0. ? 1.0 : (cn*qx + sn*qy)/q * sin(theta*M_PI_180));  \
     sn = sqrt(1 - cn*cn); \
     } while (0)
 #else
