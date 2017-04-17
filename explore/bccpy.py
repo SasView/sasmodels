@@ -46,6 +46,40 @@ RADIUS = 40.0
 SLD = 3.0
 SLD_SOLVENT = 6.3
 
+# Note: using Matsuoka 1990; this is different from what
+# is in the sasmodels/models code  (see bcc vs bcc_old).
+# The difference is that the sign of phi and theta seem to be
+# negative in the old vs. the new, yielding a pattern that is
+# swapped left to right and top to bottom.
+def sc(qa, qb, qc):
+    return qa, qb, qc
+
+def bcc(qa, qb, qc):
+    a1 = (+qa + qb + qc)/2
+    a2 = (-qa - qb + qc)/2
+    a3 = (-qa + qb - qc)/2
+    return a1, a2, a3
+
+def bcc_old(qa, qb, qc):
+    a1 = (+qa + qb - qc)/2.0
+    a2 = (+qa - qb + qc)/2.0
+    a3 = (-qa + qb + qc)/2.0
+    return a1, a2, a3
+
+def fcc(qa, qb, qc):
+    a1 = ( 0. + qb + qc)/2
+    a2 = (-qa + 0. + qc)/2
+    a3 = (-qa + qb + 0.)/2
+    return a1, a2, a3
+
+def fcc_old(qa, qb, qc):
+    a1 = ( qa + qb + 0.)/2
+    a2 = ( qa + 0. + qc)/2
+    a3 = ( 0. + qb + qc)/2
+    return a1, a2, a3
+
+KERNEL = bcc
+
 def kernel(q, dnn, d_factor, theta, phi):
     """
     S(q) kernel for paracrystal forms.
@@ -55,25 +89,16 @@ def kernel(q, dnn, d_factor, theta, phi):
     qb = qab*sin(phi)
     qc = q*cos(theta)
 
-    if 0: # sc
-        a1, a2, a3 = qa, qb, qc
-        dcos = dnn
-    if 1: # bcc
-        a1 = +qa - qc + qb
-        a2 = +qa + qc - qb
-        a3 = -qa + qc + qb
-        dcos = dnn/2
-    if 0: # fcc
-        a1 = qb + qa
-        a2 = qa + qc
-        a3 = qb + qc
-        dcos = dnn/2
+    a1, a2, a3 = KERNEL(qa, qb, qc)
 
-    arg = 0.5*square(dnn*d_factor)*(a1**2 + a2**2 + a3**2)
-    exp_arg = exp(-arg)
-    den = [((exp_arg - 2*cos(dcos*a))*exp_arg + 1.0) for a in (a1, a2, a3)]
-    Sq = -expm1(-2*arg)**3/np.prod(den, axis=0)
-    return Sq
+    # Note: paper says that different directions can have different distortion
+    # factors.  Easy enough to add to the code.  This would definitely break
+    # 8-fold symmetry.
+    arg = -0.5*square(dnn*d_factor)*(a1**2 + a2**2 + a3**2)
+    exp_arg = exp(arg)
+    den = [((exp_arg - 2*cos(dnn*a))*exp_arg + 1.0) for a in (a1, a2, a3)]
+    Zq = -expm1(2*arg)**3/np.prod(den, axis=0)
+    return Zq
 
 
 def scipy_dblquad(q=Q, dnn=DNN, d_factor=D_FACTOR):
@@ -84,8 +109,8 @@ def scipy_dblquad(q=Q, dnn=DNN, d_factor=D_FACTOR):
     evals = [0]
     def integrand(theta, phi):
         evals[0] += 1
-        Sq = kernel(q=q, dnn=dnn, d_factor=d_factor, theta=theta, phi=phi)
-        return Sq*sin(theta)
+        Zq = kernel(q=q, dnn=dnn, d_factor=d_factor, theta=theta, phi=phi)
+        return Zq*sin(theta)
     ans = dblquad(integrand, 0, pi/2, lambda x: 0, lambda x: pi/2)[0]*8/(4*pi)
     print("dblquad evals =", evals[0])
     return ans
@@ -133,9 +158,9 @@ def gauss_quad(q=Q, dnn=DNN, d_factor=D_FACTOR, n=150):
     Atheta, Aphi = np.meshgrid(theta, phi)
     Aw = w[None, :] * w[:, None]
     sin_theta = np.fmax(abs(sin(Atheta)), 1e-6)
-    Sq = kernel(q=q, dnn=dnn, d_factor=d_factor, theta=Atheta, phi=Aphi)
+    Zq = kernel(q=q, dnn=dnn, d_factor=d_factor, theta=Atheta, phi=Aphi)
     print("gauss %d evals ="%n, n**2)
-    return np.sum(Sq*Aw*sin_theta)*8/(4*pi)
+    return np.sum(Zq*Aw*sin_theta)*8/(4*pi)
 
 
 def gridded_integrals(q=0.001, dnn=DNN, d_factor=D_FACTOR, n=300):
@@ -147,13 +172,13 @@ def gridded_integrals(q=0.001, dnn=DNN, d_factor=D_FACTOR, n=300):
     theta = np.linspace(0, pi/2, n)
     phi = np.linspace(0, pi/2, n)
     Atheta, Aphi = np.meshgrid(theta, phi)
-    Sq = kernel(q=Q, dnn=dnn, d_factor=d_factor, theta=Atheta, phi=Aphi)
-    Sq *= abs(sin(Atheta))
+    Zq = kernel(q=Q, dnn=dnn, d_factor=d_factor, theta=Atheta, phi=Aphi)
+    Zq *= abs(sin(Atheta))
     dx, dy = theta[1]-theta[0], phi[1]-phi[0]
-    print("rect", n, np.sum(Sq)*dx*dy*8/(4*pi))
-    print("trapz", n, np.trapz(np.trapz(Sq, dx=dx), dx=dy)*8/(4*pi))
-    print("simpson", n, simps(simps(Sq, dx=dx), dx=dy)*8/(4*pi))
-    print("romb", n, romb(romb(Sq, dx=dx), dx=dy)*8/(4*pi))
+    print("rect", n, np.sum(Zq)*dx*dy*8/(4*pi))
+    print("trapz", n, np.trapz(np.trapz(Zq, dx=dx), dx=dy)*8/(4*pi))
+    print("simpson", n, simps(simps(Zq, dx=dx), dx=dy)*8/(4*pi))
+    print("romb", n, romb(romb(Zq, dx=dx), dx=dy)*8/(4*pi))
     print("gridded %d evals ="%n, n**2)
 
 def plot(q=0.001, dnn=DNN, d_factor=D_FACTOR, n=300):
@@ -167,11 +192,12 @@ def plot(q=0.001, dnn=DNN, d_factor=D_FACTOR, n=300):
     #theta = np.linspace(0, pi/2, n)
     #phi = np.linspace(0, pi/2, n)
     Atheta, Aphi = np.meshgrid(theta, phi)
-    Sq = kernel(q=Q, dnn=dnn, d_factor=d_factor, theta=Atheta, phi=Aphi)
-    Sq *= abs(sin(Atheta))
-    pylab.pcolor(degrees(theta), degrees(phi), log10(np.fmax(Sq, 1.e-6)))
+    Zq = kernel(q=Q, dnn=dnn, d_factor=d_factor, theta=Atheta, phi=Aphi)
+    Zq *= abs(sin(Atheta))
+    pylab.pcolor(degrees(theta), degrees(phi), log10(np.fmax(Zq, 1.e-6)))
     pylab.axis('tight')
-    pylab.title("BCC S(q) for q=%g, dnn=%g d_factor=%g" % (q, dnn, d_factor))
+    pylab.title("%s Z(q) for q=%g, dnn=%g d_factor=%g"
+                % (KERNEL.__name__, q, dnn, d_factor))
     pylab.xlabel("theta (degrees)")
     pylab.ylabel("phi (degrees)")
     cbar = pylab.colorbar()

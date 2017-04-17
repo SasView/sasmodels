@@ -1,34 +1,36 @@
 static double
-_sq_fcc(double qa, double qb, double qc, double dnn, double d_factor)
+fcc_Zq(double qa, double qb, double qc, double dnn, double d_factor)
 {
-    // Rewriting equations for efficiency, accuracy and readability, and so
-    // code is reusable between 1D and 2D models.
-    const double a1 = qb + qa;
-    const double a2 = qa + qc;
-    const double a3 = qb + qc;
-
-    const double half_dnn = 0.5*dnn;
-    const double arg = 0.5*square(half_dnn*d_factor)*(a1*a1 + a2*a2 + a3*a3);
+#if 0  // Equations as written in Matsuoka
+    const double a1 = ( qa + qb)/2.0;
+    const double a2 = (-qa + qc)/2.0;
+    const double a3 = (-qa + qb)/2.0;
+#else
+    const double a1 = ( qa + qb)/2.0;
+    const double a2 = ( qa + qc)/2.0;
+    const double a3 = ( qb + qc)/2.0;
+#endif
 
     // Numerator: (1 - exp(a)^2)^3
     //         => (-(exp(2a) - 1))^3
     //         => -expm1(2a)^3
-    // Denominator: prod(1 - 2 cos(xk) exp(a) + exp(a)^2)
-    //         => exp(a)^2 - 2 cos(xk) exp(a) + 1
-    //         => (exp(a) - 2 cos(xk)) * exp(a) + 1
-    const double exp_arg = exp(-arg);
-    const double Sq = -cube(expm1(-2.0*arg))
-        / ( ((exp_arg - 2.0*cos(half_dnn*a1))*exp_arg + 1.0)
-          * ((exp_arg - 2.0*cos(half_dnn*a2))*exp_arg + 1.0)
-          * ((exp_arg - 2.0*cos(half_dnn*a3))*exp_arg + 1.0));
+    // Denominator: prod(1 - 2 cos(d ak) exp(a) + exp(2a))
+    //         => prod(exp(a)^2 - 2 cos(d ak) exp(a) + 1)
+    //         => prod((exp(a) - 2 cos(d ak)) * exp(a) + 1)
+    const double arg = -0.5*square(dnn*d_factor)*(a1*a1 + a2*a2 + a3*a3);
+    const double exp_arg = exp(arg);
+    const double Zq = -cube(expm1(2.0*arg))
+        / ( ((exp_arg - 2.0*cos(dnn*a1))*exp_arg + 1.0)
+          * ((exp_arg - 2.0*cos(dnn*a2))*exp_arg + 1.0)
+          * ((exp_arg - 2.0*cos(dnn*a3))*exp_arg + 1.0));
 
-    return Sq;
+    return Zq;
 }
 
 
 // occupied volume fraction calculated from lattice symmetry and sphere radius
 static double
-_fcc_volume_fraction(double radius, double dnn)
+fcc_volume_fraction(double radius, double dnn)
 {
     return 4.0*sphere_volume(M_SQRT1_2*radius/dnn);
 }
@@ -65,17 +67,17 @@ static double Iq(double q, double dnn,
             SINCOS(phi, sin_phi, cos_phi);
             const double qa = qab*cos_phi;
             const double qb = qab*sin_phi;
-            const double fq = _sq_fcc(qa, qb, qc, dnn, d_factor);
-            inner_sum += Gauss150Wt[j] * fq;
+            const double form = fcc_Zq(qa, qb, qc, dnn, d_factor);
+            inner_sum += Gauss150Wt[j] * form;
         }
         inner_sum *= phi_m;  // sum(f(x)dx) = sum(f(x)) dx
         outer_sum += Gauss150Wt[i] * inner_sum * sin_theta;
     }
     outer_sum *= theta_m;
-    const double Sq = outer_sum/(4.0*M_PI);
+    const double Zq = outer_sum/(4.0*M_PI);
     const double Pq = sphere_form(q, radius, sld, solvent_sld);
 
-    return _fcc_volume_fraction(radius, dnn) * Pq * Sq;
+    return fcc_volume_fraction(radius, dnn) * Pq * Zq;
 }
 
 
@@ -92,6 +94,6 @@ static double Iqxy(double qx, double qy,
 
     q = sqrt(qa*qa + qb*qb + qc*qc);
     const double Pq = sphere_form(q, radius, sld, solvent_sld);
-    const double Sq = _sq_fcc(qa, qb, qc, dnn, d_factor);
-    return _fcc_volume_fraction(radius, dnn) * Pq * Sq;
+    const double Zq = fcc_Zq(qa, qb, qc, dnn, d_factor);
+    return fcc_volume_fraction(radius, dnn) * Pq * Zq;
 }
