@@ -50,13 +50,26 @@ def load_data(filename):
     """
     from sas.sascalc.dataloader.loader import Loader  # type: ignore
     loader = Loader()
-    data = loader.load(filename)
-    if data is None:
+    # Allow for one part in multipart file
+    if '[' in filename:
+        filename, indexstr = filename[:-1].split('[')
+        index = int(indexstr)
+    else:
+        index = None
+    datasets = loader.load(filename)
+    if datasets is None:
         raise IOError("Data %r could not be loaded" % filename)
+    if not isinstance(datasets, list):
+        datasets = [datasets]
+    if index is None and len(datasets) > 1:
+        raise ValueError("Need to specify filename[index] for multipart data")
+    data = datasets[index if index is not None else 0]
     if hasattr(data, 'x'):
         data.qmin, data.qmax = data.x.min(), data.x.max()
         data.mask = (np.isnan(data.y) if data.y is not None
                      else np.zeros_like(data.x, dtype='bool'))
+    elif hasattr(data, 'qx_data'):
+        data.mask = ~data.mask
     return data
 
 
