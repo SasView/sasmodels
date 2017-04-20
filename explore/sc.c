@@ -3,9 +3,19 @@ sc_Zq(double qa, double qb, double qc, double dnn, double d_factor)
 {
     // Rewriting equations for efficiency, accuracy and readability, and so
     // code is reusable between 1D and 2D models.
+    #if 1  // SC
     const double a1 = qa;
     const double a2 = qb;
     const double a3 = qc;
+    #elif 1 // BCC
+    const double a1 = (+qa + qb + qc)/2.;
+    const double a2 = (-qa - qb + qc)/2.;
+    const double a3 = (-qa + qb - qc)/2.;
+    #elif 1 // FCC
+    const double a1 = ( qa + qb)/2.0;
+    const double a2 = (-qa + qc)/2.0;
+    const double a3 = (-qa + qb)/2.0;
+    #endif
 
     const double arg = -0.5*square(dnn*d_factor)*(a1*a1 + a2*a2 + a3*a3);
 
@@ -112,7 +122,7 @@ if (sym > 0.) {
     Zq = outer_sum/(4.0*M_PI);
 }
 
-    return Zq;
+    //return Zq;
     const double Pq = sphere_form(q, radius, sld, solvent_sld);
     return sc_volume_fraction(radius, dnn) * Pq * Zq;
 }
@@ -133,5 +143,6 @@ static double Iqxy(double qx, double qy,
     q = sqrt(qa*qa + qb*qb + qc*qc);
     const double Pq = sphere_form(q, radius, sld, solvent_sld);
     const double Zq = sc_Zq(qa, qb, qc, dnn, d_factor);
+    return Zq;
     return sc_volume_fraction(radius, dnn) * Pq * Zq;
 }
