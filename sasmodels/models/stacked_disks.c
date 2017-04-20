@@ -148,12 +148,12 @@ static double Iqxy(double qx, double qy,
     double theta,
     double phi)
 {
-    int n_stacking = (int)(fp_n_stacking + 0.5);
     double q, sin_alpha, cos_alpha;
     ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sin_alpha, cos_alpha);
     const double qab = q*sin_alpha;
     const double qc = q*cos_alpha;
 
+    int n_stacking = (int)(fp_n_stacking + 0.5);
     double d = 2.0 * thick_layer + thick_core;
     double halfheight = 0.5*thick_core;
     double answer = stacked_disks_kernel(qab, qc,
