@@ -15,7 +15,7 @@ except ImportError:
 else:
     from sasmodels.modelinfo import ModelInfo
 
-TEMPLATE="""\
+TEMPLATE = """\
 ..
     Generated from doc/gentoc.py -- DO NOT EDIT --
 
@@ -29,7 +29,7 @@ TEMPLATE="""\
 
 """
 
-MODEL_TOC_PATH = "ref/models"
+MODEL_TOC_PATH = "guide/models"
 
 def _make_category(category_name, label, title, parent=None):
     # type: (str, str, str, Optional[BinaryIO]) -> BinaryIO
@@ -64,17 +64,18 @@ def generate_toc(model_files):
     for item in model_files:
         # assume model is in sasmodels/models/name.py, and ignore the full path
         model_name = basename(item)[:-3]
-        if model_name.startswith('_'): continue
+        if model_name.startswith('_'):
+            continue
         model_info = load_model_info(model_name)
         if model_info.category is None:
             print("Missing category for", item, file=sys.stderr)
         else:
-            category.setdefault(model_info.category,[]).append(model_name)
+            category.setdefault(model_info.category, []).append(model_name)
 
     # Check category names
-    for k,v in category.items():
+    for k, v in category.items():
         if len(v) == 1:
-            print("Category %s contains only %s"%(k,v[0]), file=sys.stderr)
+            print("Category %s contains only %s"%(k, v[0]), file=sys.stderr)
 
     # Generate category files for the table of contents.
     # Initially we had "shape functions" as an additional TOC level, but we
@@ -85,18 +86,19 @@ def generate_toc(model_files):
     # to come at the end of the TOC.  All other categories will come in
     # alphabetical order before them.
 
-    if not exists(MODEL_TOC_PATH): mkdir(MODEL_TOC_PATH)
+    if not exists(MODEL_TOC_PATH):
+        mkdir(MODEL_TOC_PATH)
     model_toc = _make_category(
-        'index',  'Models', 'Model Functions')
+        'index', 'Models', 'Model Functions')
     #shape_toc = _make_category(
     #    'shape',  'Shapes', 'Shape Functions', model_toc)
     free_toc = _make_category(
-        'shape-independent',  'Shape-independent',
+        'shape-independent', 'Shape-independent',
         'Shape-Independent Functions')
     struct_toc = _make_category(
-        'structure-factor',  'Structure-factor', 'Structure Factors')
+        'structure-factor', 'Structure-factor', 'Structure Factors')
     custom_toc = _make_category(
-        'custom-models',  'Custom-models', 'Custom Models')
+        'custom-models', 'Custom-models', 'Custom Models')
 
     # remember to top level categories
     cat_files = {
@@ -108,14 +110,14 @@ def generate_toc(model_files):
         }
 
     # Process the model lists
-    for k,v in sorted(category.items()):
+    for k, v in sorted(category.items()):
         if ':' in k:
-            cat,subcat = k.split(':')
+            cat, subcat = k.split(':')
             _maybe_make_category(cat, v, cat_files, model_toc)
             cat_file = cat_files[cat]
-            label = "-".join((cat,subcat))
+            label = "-".join((cat, subcat))
             filename = label
-            title = subcat.capitalize()+" Functions"
+            title = subcat.capitalize() + " Functions"
             sub_toc = _make_category(filename, label, title, cat_file)
             for model in sorted(v):
                 _add_model(sub_toc, model)
@@ -129,11 +131,12 @@ def generate_toc(model_files):
     #_add_subcategory('shape', model_toc)
     _add_subcategory('shape-independent', model_toc)
     _add_subcategory('structure-factor', model_toc)
-    _add_subcategory('custom-models', model_toc)
+    #_add_subcategory('custom-models', model_toc)
 
     # Close the top-level category files
     #model_toc.close()
-    for f in cat_files.values(): f.close()
+    for f in cat_files.values():
+        f.close()
 
 
 if __name__ == "__main__":

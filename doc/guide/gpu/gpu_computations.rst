@@ -3,7 +3,7 @@
 ****************
 GPU Computations
 ****************
-SasView model evaluations can run on your graphics card (GPU) or they can run
+sasmodels evaluations can run on your graphics card (GPU) or they can run
 on the processor (CPU). In general, calculations performed on the GPU will run faster.
 
 To run on the GPU, your computer must have OpenCL drivers installed.
@@ -31,7 +31,7 @@ By default, SasView looks for one GPU and one CPU device
 from available OpenCL platforms.
 
 SasView prefers AMD or NVIDIA drivers for GPU, and prefers Intel or
-Apple drivers for CPU. Both GPU and CPU are included on the assumption that CPU 
+Apple drivers for CPU. Both GPU and CPU are included on the assumption that CPU
 is always available and supports double precision.
 
 The device order is important: GPU is checked before CPU on the assumption that
@@ -62,5 +62,7 @@ If you want one of the other compilers, be sure to have it available
 in your *PATH* so SasView can find it!
 
 
-.. note::
-    This help document was last changed by Steve King, 08Oct2016
+*Document History*
+
+| 2016-10-08 Steve King
+| 2017-05-07 Paul Kienzle

@@ -37,7 +37,7 @@ def rst2html(rst, part="whole", math_output="mathjax"):
     - html
     - mathml
     - mathjax
-    See `http://docutils.sourceforge.net/docs/user/config.html#math-output`_
+    See `<http://docutils.sourceforge.net/docs/user/config.html#math-output>`_
     for details.
 
     The following *part* choices are available:

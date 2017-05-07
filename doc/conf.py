@@ -41,6 +41,9 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest',
               'numfig',
              ]
 
+# Redirect mathjax to a different CDN
+mathjax_path = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
