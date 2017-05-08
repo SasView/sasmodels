@@ -14,4 +14,5 @@ SAS Models Guide
    sesans/sans_to_sesans.rst
    sesans/sesans_fitting.rst
    plugin.rst
+   scripting.rst
    refs.rst

@@ -55,7 +55,7 @@ def genfiles(package, package_name, modules, dir='api'):
 
 
 modules = [
-    ('__init__', 'Top level namespace'),
+    ('__init__', 'Sasmodels package'),
     #('alignment', 'GPU data alignment [unused]'),
     ('bumps_model', 'Bumps interface'),
     ('compare_many', 'Batch compare models on different compute engines'),
