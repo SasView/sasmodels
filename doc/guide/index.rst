@@ -7,9 +7,11 @@ SAS Models Guide
    :maxdepth: 4
 
    intro.rst
-   gpu/gpu_computations.rst
-   gpu/opencl_installation.rst
+   install.rst
+   pd/polydispersity.rst
+   resolution.rst
    magnetism/magnetism.rst
    sesans/sans_to_sesans.rst
    sesans/sesans_fitting.rst
+   plugin.rst
    refs.rst

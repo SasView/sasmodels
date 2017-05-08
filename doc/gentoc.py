@@ -97,8 +97,8 @@ def generate_toc(model_files):
         'Shape-Independent Functions')
     struct_toc = _make_category(
         'structure-factor', 'Structure-factor', 'Structure Factors')
-    custom_toc = _make_category(
-        'custom-models', 'Custom-models', 'Custom Models')
+    #custom_toc = _make_category(
+    #    'custom-models', 'Custom-models', 'Custom Models')
 
     # remember to top level categories
     cat_files = {
@@ -106,7 +106,7 @@ def generate_toc(model_files):
         'shape':model_toc,
         'shape-independent':free_toc,
         'structure-factor': struct_toc,
-        'custom': custom_toc,
+        #'custom': custom_toc,
         }
 
     # Process the model lists

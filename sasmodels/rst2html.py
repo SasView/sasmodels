@@ -210,9 +210,29 @@ def view_url_qtapp(url):
     frame.show()
     sys.exit(app.exec_())
 
+def can_use_qt():
+    """
+    Return True if QWebView exists.
+
+    Checks first in PyQt5 then in PyQt4
+    """
+    try:
+        from PyQt5.QtWebKitWidgets import QWebView
+        return True
+    except ImportError:
+        try:
+            from PyQt4.QtWebkit import QWebView
+            return True
+        except ImportError:
+            return False
+
 def view_help(filename, qt=False):
     import os
-    url="file:///"+os.path.abspath(filename).replace("\\","/")
+
+    if qt:
+        qt = can_use_qt()
+
+    url = "file:///"+os.path.abspath(filename).replace("\\", "/")
     if filename.endswith('.rst'):
         html = load_rst_as_html(filename)
         if qt:
