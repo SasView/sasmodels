@@ -4,7 +4,7 @@
 # To Sasview/documents/scripts
 
 import sys
-sys.path.append('C:\Users\gonzalezm\Git\sasmodels')
+#sys.path.append('path_to_sasmodels')
 
 from bumps.names import *
 from sasmodels.core import load_model
