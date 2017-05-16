@@ -76,6 +76,8 @@ For randomly oriented particles:
 
    F^2(q)=\int_{0}^{\pi/2}{F^2(q,\alpha)\sin(\alpha)d\alpha}
 
+For oriented ellipsoids the *theta*, *phi* and *psi* orientation parameters will appear when fitting 2D data, 
+see the :ref:`elliptical-cylinder` model for further information.
 
 References
 ----------
@@ -131,8 +133,8 @@ parameters = [
     ["sld_core",      "1e-6/Ang^2", 2,   [-inf, inf], "sld",         "Core scattering length density"],
     ["sld_shell",     "1e-6/Ang^2", 1,   [-inf, inf], "sld",         "Shell scattering length density"],
     ["sld_solvent",   "1e-6/Ang^2", 6.3, [-inf, inf], "sld",         "Solvent scattering length density"],
-    ["theta",         "degrees",    0,   [-inf, inf], "orientation", "Oblate orientation wrt incoming beam"],
-    ["phi",           "degrees",    0,   [-inf, inf], "orientation", "Oblate orientation in the plane of the detector"],
+    ["theta",         "degrees",    0,   [-360, 360], "orientation", "elipsoid axis to beam angle"],
+    ["phi",           "degrees",    0,   [-360, 360], "orientation", "rotation about beam"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 

@@ -72,7 +72,7 @@ Authorship and Verification
 * **Last Reviewed by:** Richard Heenan **Date:** March 18, 2016
 """
 
-from numpy import pi, inf
+from numpy import pi, inf, sin, cos
 
 name = "core_shell_cylinder"
 title = "Right circular cylinder with a core-shell scattering length density profile."
@@ -116,10 +116,10 @@ parameters = [["sld_core", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Cylinder shell thickness"],
               ["length", "Ang", 400, [0, inf], "volume",
                "Cylinder length"],
-              ["theta", "degrees", 60, [-inf, inf], "orientation",
-               "In plane angle"],
-              ["phi", "degrees", 60, [-inf, inf], "orientation",
-               "Out of plane angle"],
+              ["theta", "degrees", 60, [-360, 360], "orientation",
+               "cylinder axis to beam angle"],
+              ["phi", "degrees",   60, [-360, 360], "orientation",
+               "rotation about beam"],
              ]
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "core_shell_cylinder.c"]
@@ -150,4 +150,11 @@ demo = dict(scale=1, background=0,
             thickness_pd=.2, thickness_pd_n=10,
             theta_pd=15, theta_pd_n=45,
             phi_pd=15, phi_pd_n=1)
-
+q = 0.1
+# april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
+qx = q*cos(pi/6.0)
+qy = q*sin(pi/6.0)
+tests = [[{}, 0.075, 10.8552692237],
+        [{}, (qx, qy), 0.444618752741 ],
+        ]
+del qx, qy  # not necessary to delete, but cleaner

@@ -37,8 +37,8 @@ For randomly oriented particles:
     F^2(q)=\int_{0}^{\pi/2}{F^2(q,\alpha)\sin(\alpha)d\alpha}=\int_{0}^{1}{F^2(q,u)du}
 
 
-Numerical integration is simplified by a change of variable to $u = cos(\alpha)$ with 
-$sin(\alpha)=\sqrt{1-u^2}$. 
+Numerical integration is simplified by a change of variable to $u = cos(\alpha)$ with
+$sin(\alpha)=\sqrt{1-u^2}$.
 
 The output of the 1D scattering intensity function for randomly oriented
 cylinders is thus given by
@@ -60,11 +60,23 @@ are defined in :numref:`cylinder-angle-definition` .
 
 .. _cylinder-angle-definition:
 
-.. figure:: img/cylinder_angle_definition.jpg
+.. figure:: img/cylinder_angle_definition.png
 
-    Definition of the angles for oriented cylinders.
+    Definition of the $\theta$ and $\phi$ orientation angles for a cylinder relative 
+    to the beam line coordinates, plus an indication of their orientation distributions 
+    which are described as rotations about each of the perpendicular axes $\delta_1$ and $\delta_2$ 
+    in the frame of the cylinder itself, which when $\theta = \phi = 0$ are parallel to the $Y$ and $X$ axes.
 
-The $\theta$ and $\phi$ parameters only appear in the model when fitting 2d data.
+.. figure:: img/cylinder_angle_projection.png
+
+    Examples for oriented cylinders.
+
+The $\theta$ and $\phi$ parameters to orient the cylinder only appear in the model when fitting 2d data. 
+On introducing "Orientational Distribution" in the angles, "distribution of theta" and "distribution of phi" parameters will
+appear. These are actually rotations about the axes $\delta_1$ and $\delta_2$ of the cylinder, which when $\theta = \phi = 0$ are parallel 
+to the $Y$ and $X$ axes of the instrument respectively. Some experimentation may be required to understand the 2d patterns fully.
+(Earlier implementations had numerical integration issues in some circumstances when orientation distributions passed through 90 degrees, such 
+situations, with very broad distributions, should still be approached with care.) 
 
 Validation
 ----------
@@ -122,10 +134,10 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Cylinder radius"],
               ["length", "Ang", 400, [0, inf], "volume",
                "Cylinder length"],
-              ["theta", "degrees", 60, [-inf, inf], "orientation",
-               "latitude"],
-              ["phi", "degrees", 60, [-inf, inf], "orientation",
-               "longitude"],
+              ["theta", "degrees", 60, [-360, 360], "orientation",
+               "cylinder axis to beam angle"],
+              ["phi", "degrees",   60, [-360, 360], "orientation",
+               "rotation about beam"],
              ]
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",  "cylinder.c"]
@@ -151,7 +163,7 @@ qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
 # After redefinition of angles, find new tests values.  Was 10 10 in old coords
 tests = [[{}, 0.2, 0.042761386790780453],
         [{}, [0.2], [0.042761386790780453]],
-#  new coords    
+#  new coords
         [{'theta':80.1534480601659, 'phi':10.1510817110481}, (qx, qy), 0.03514647218513852],
         [{'theta':80.1534480601659, 'phi':10.1510817110481}, [(qx, qy)], [0.03514647218513852]],
 # old coords   [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.03514647218513852],
