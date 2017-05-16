@@ -46,7 +46,7 @@ def draw_mesh_current(ax, theta, dtheta, phi, dphi, radius=10., dist='gauss'):
     ax.scatter(x, y, z, c=w, marker='o', vmin=0., vmax=1.0)
 
 def draw_mesh_new(ax, theta, dtheta, phi, dphi, flow, radius=10., dist='gauss'):
-    theta_center = radians(theta)
+    theta_center = radians(90-theta)
     phi_center = radians(phi)
     flow_center = radians(flow)
     dtheta = radians(dtheta)
@@ -136,7 +136,7 @@ def main():
             draw_mesh_current(ax, theta=theta, dtheta=dtheta, phi=phi, dphi=dphi,
                               radius=11., dist=dist)
         if not axis.startswith('d'):
-            ax.view_init(elev=theta, azim=phi)
+            ax.view_init(elev=90-theta if use_new else theta, azim=phi)
         plt.gcf().canvas.draw()
 
     stheta.on_changed(lambda v: update(v,'theta'))
