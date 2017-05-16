@@ -30,7 +30,6 @@ def _mp_fn(x):
     """
     Actual function that gets evaluated.  The caller just vectorizes.
     """
-    #return mp.mpf(2)*mp.j1(x)/x
     return mp.j1(x)
 
 def np_fn(x, dtype):
@@ -39,7 +38,6 @@ def np_fn(x, dtype):
     """
     from scipy.special import j1 as J1
     x = np.asarray(x, dtype)
-    #return np.asarray(2, dtype)*J1(x)/x
     return J1(x)
 
 def sasmodels_fn(x, dtype, platform='ocl'):

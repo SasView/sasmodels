@@ -1,5 +1,5 @@
 r"""
-Show numerical precision of $sin(x)/x$.
+Show numerical precision of $\ln \Gamma(x)$.
 """
 
 import numpy as np

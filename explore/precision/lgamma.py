@@ -1,5 +1,5 @@
 r"""
-Show numerical precision of $2 J_1(x)/x$.
+Show numerical precision of $\ln \Gamma(x)$.
 """
 import sys; sys.path.insert(0, '..')
 
