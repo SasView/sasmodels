@@ -108,12 +108,10 @@ constant double QQJ1[8] = {
 double cephes_j1(double x)
 {
 
-    double w, z, p, q, xn, abs_x, sign_x;
+    double w, z, p, q, abs_x, sign_x;
 
     const double Z1 = 1.46819706421238932572E1;
     const double Z2 = 4.92184563216946036703E1;
-    const double THPIO4 =  2.35619449019234492885;
-    const double SQ2OPI = 0.79788456080286535588;
 
     // 2017-05-18 PAK - mathematica and mpmath use J1(-x) = -J1(x)
     if (x < 0) {
@@ -135,13 +133,23 @@ double cephes_j1(double x)
     z = w * w;
     p = polevl( z, PPJ1, 6)/polevl( z, PQJ1, 6 );
     q = polevl( z, QPJ1, 7)/p1evl( z, QQJ1, 7 );
-    xn = abs_x - THPIO4;
 
-    double sn, cn;
-    SINCOS(xn, sn, cn);
-    p = p * cn - w * q * sn;
-
-    return( sign_x * p * SQ2OPI / sqrt(abs_x) );
+    // 2017-05-19 PAK improve accuracy using trig identies
+    // original:
+    //    const double THPIO4 =  2.35619449019234492885;
+    //    const double SQ2OPI = 0.79788456080286535588;
+    //    double sin_xn, cos_xn;
+    //    SINCOS(abs_x - THPIO4, sin_xn, cos_xn);
+    //    p = p * cos_xn - w * q * sin_xn;
+    //    return( sign_x * p * SQ2OPI / sqrt(abs_x) );
+    // expanding p*cos(a - 3 pi/4) - wq sin(a - 3 pi/4)
+    //    [ p(sin(a) - cos(a)) + wq(sin(a) + cos(a)) / sqrt(2)
+    // note that sqrt(1/2) * sqrt(2/pi) = sqrt(1/pi)
+    const double SQRT1_PI = 0.56418958354775628;
+    double sin_x, cos_x;
+    SINCOS(abs_x, sin_x, cos_x);
+    p = p*(sin_x - cos_x) + w*q*(sin_x + cos_x);
+    return( sign_x * p * SQRT1_PI / sqrt(abs_x) );
 }
 
 #else
@@ -187,7 +195,6 @@ float cephes_j1f(float xx)
     float x, w, z, p, q, xn;
 
     const float Z1 = 1.46819706421238932572E1;
-    const float THPIO4F =  2.35619449019234492885;    /* 3*pi/4 */
 
 
     // 2017-05-18 PAK - mathematica and mpmath use J1(-x) = -J1(x)
@@ -206,8 +213,20 @@ float cephes_j1f(float xx)
 
     p = w * polevl( q, MO1J1, 7);
     w = q*q;
-    xn = q * polevl( w, PH1J1, 7) - THPIO4F;
-    p = p * cos(xn + x);
+    // 2017-05-19 PAK improve accuracy using trig identies
+    // original:
+    //    const float THPIO4F =  2.35619449019234492885;    /* 3*pi/4 */
+    //    xn = q * polevl( w, PH1J1, 7) - THPIO4F;
+    //    p = p * cos(xn + x);
+    //    return( xx < 0. ? -p : p );
+    // expanding cos(a + b - 3 pi/4) is
+    //    [sin(a)sin(b) + sin(a)cos(b) + cos(a)sin(b)-cos(a)cos(b)] / sqrt(2)
+    xn = q * polevl( w, PH1J1, 7);
+    float cos_xn, sin_xn;
+    float cos_x, sin_x;
+    SINCOS(xn, sin_xn, cos_xn);  // about xn and 1
+    SINCOS(x, sin_x, cos_x);
+    p *= M_SQRT1_2*(sin_xn*(sin_x+cos_x) + cos_xn*(sin_x-cos_x));
 
     return( xx < 0. ? -p : p );
 }

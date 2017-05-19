@@ -56,35 +56,54 @@ class Comparator(object):
         calculator = direct_model.DirectModel(data.empty_data1D(x), model)
         return calculator(background=0)
 
-    def run(self, xrange="log", diff=True):
+    def run(self, xrange="log", diff="relative"):
         r"""
         Compare accuracy of different methods for computing f.
 
-        *xrange* is log=[10^-3,10^5], linear=[1,1000], zoom[1000,1010],
-        or neg=[-100,100].
+        *xrange* is::
 
-        *diff* is False if showing function value rather than relative error.
+            log:    [10^-3,10^5]
+            logq:   [10^-4, 10^1]
+            linear: [1,1000]
+            zoom:   [1000,1010]
+            neg:    [-100,100]
+
+        *diff* is "relative", "absolute" or "none"
 
         *x_bits* is the precision with which the x values are specified.  The
         default 23 should reproduce the equivalent of a single precisio
         """
-        linear = xrange != "log"
+        linear = not xrange.startswith("log")
         if xrange == "zoom":
             lin_min, lin_max, lin_steps = 1000, 1010, 2000
         elif xrange == "neg":
             lin_min, lin_max, lin_steps = -100.1, 100.1, 2000
-        else:
+        elif xrange == "linear":
             lin_min, lin_max, lin_steps = 1, 1000, 2000
-        lin_min = max(lin_min, self.limits[0])
-        lin_max = min(lin_max, self.limits[1])
-        log_min, log_max, log_steps = -3, 5, 400
+        elif xrange == "log":
+            log_min, log_max, log_steps = -3, 5, 400
+        elif xrange == "logq":
+            log_min, log_max, log_steps = -4, 1, 400
+        else:
+            raise ValueError("unknown range "+xrange)
         with mp.workprec(500):
+            # Note: we make sure that we are comparing apples to apples...
+            # The x points are set using single precision so that we are
+            # examining the accuracy of the transformation from x to f(x)
+            # rather than x to f(nearest(x)) where nearest(x) is the nearest
+            # value to x in the given precision.
             if linear:
+                lin_min = max(lin_min, self.limits[0])
+                lin_max = min(lin_max, self.limits[1])
                 qrf = np.linspace(lin_min, lin_max, lin_steps, dtype='single')
+                #qrf = np.linspace(lin_min, lin_max, lin_steps, dtype='double')
                 qr = [mp.mpf(float(v)) for v in qrf]
                 #qr = mp.linspace(lin_min, lin_max, lin_steps)
             else:
+                log_min = np.log10(max(10**log_min, self.limits[0]))
+                log_max = np.log10(min(10**log_max, self.limits[1]))
                 qrf = np.logspace(log_min, log_max, log_steps, dtype='single')
+                #qrf = np.logspace(log_min, log_max, log_steps, dtype='double')
                 qr = [mp.mpf(float(v)) for v in qrf]
                 #qr = [10**v for v in mp.linspace(log_min, log_max, log_steps)]
 
@@ -97,7 +116,7 @@ class Comparator(object):
         pylab.legend(loc='best')
         pylab.suptitle(self.name + " compared to 500-bit mpmath")
 
-    def compare(self, x, precision, target, linear=False, diff=True):
+    def compare(self, x, precision, target, linear=False, diff="relative"):
         r"""
         Compare the different computation methods using the given precision.
         """
@@ -112,23 +131,28 @@ class Comparator(object):
         plotdiff(x, target, self.call_numpy(x, precision), 'numpy '+precision, diff=diff)
         plotdiff(x, target, self.call_ocl(x, precision, 0), 'OpenCL '+precision, diff=diff)
         pylab.xlabel(self.xaxis)
-        if diff:
+        if diff == "relative":
             pylab.ylabel("relative error")
+        elif diff == "absolute":
+            pylab.ylabel("absolute error")
         else:
             pylab.ylabel(self.name)
             pylab.semilogx(x, target, '-', label="true value")
         if linear:
             pylab.xscale('linear')
 
-def plotdiff(x, target, actual, label, diff=True):
+def plotdiff(x, target, actual, label, diff):
     """
     Plot the computed value.
 
     Use relative error if SHOW_DIFF, otherwise just plot the value directly.
     """
-    if diff:
+    if diff == "relative":
         err = np.array([abs((t-a)/t) for t, a in zip(target, actual)], 'd')
         #err = np.clip(err, 0, 1)
+        pylab.loglog(x, err, '-', label=label)
+    elif diff == "absolute":
+        err = np.array([abs((t-a)) for t, a in zip(target, actual)], 'd')
         pylab.loglog(x, err, '-', label=label)
     else:
         limits = np.min(target), np.max(target)
@@ -288,18 +312,45 @@ def mp_cyl(x):
     theta = f(THETA)*mp.pi/f(180)
     qr = x * f(RADIUS)*mp.sin(theta)
     qh = x * f(LENGTH)/f(2)*mp.cos(theta)
-    return (f(2)*mp.j1(qr)/qr * mp.sin(qh)/qh)**f(2)
+    be = f(2)*mp.j1(qr)/qr
+    si = mp.sin(qh)/qh
+    background = f(0)
+    #background = f(1)/f(1000)
+    volume = mp.pi*f(RADIUS)**f(2)*f(LENGTH)
+    contrast = f(5)
+    units = f(1)/f(10000)
+    #return be
+    #return si
+    return units*(volume*contrast*be*si)**f(2)/volume + background
 def np_cyl(x):
     f = np.float64 if x.dtype == np.float64 else np.float32
     theta = f(THETA)*f(np.pi)/f(180)
     qr = x * f(RADIUS)*np.sin(theta)
     qh = x * f(LENGTH)/f(2)*np.cos(theta)
-    return (f(2)*scipy.special.j1(qr)/qr*np.sin(qh)/qh)**f(2)
+    be = f(2)*scipy.special.j1(qr)/qr
+    si = np.sin(qh)/qh
+    background = f(0)
+    #background = f(1)/f(1000)
+    volume = f(np.pi)*f(RADIUS)**2*f(LENGTH)
+    contrast = f(5)
+    units = f(1)/f(10000)
+    #return be
+    #return si
+    return units*(volume*contrast*be*si)**f(2)/volume + background
 ocl_cyl = """\
     double THETA = %(THETA).15e*M_PI_180;
     double qr = q*%(RADIUS).15e*sin(THETA);
     double qh = q*0.5*%(LENGTH).15e*cos(THETA);
-    return square(sas_2J1x_x(qr)*sas_sinx_x(qh));
+    double be = sas_2J1x_x(qr);
+    double si = sas_sinx_x(qh);
+    double background = 0;
+    //double background = 0.001;
+    double volume = M_PI*square(%(RADIUS).15e)*%(LENGTH).15e;
+    double contrast = 5.0;
+    double units = 1e-4;
+    //return be;
+    //return si;
+    return units*square(volume*contrast*be*si)/volume + background;
 """%{"LENGTH":LENGTH, "RADIUS": RADIUS, "THETA": THETA}
 add_function(
     name="cylinder(r=%g, l=%g, theta=%g)"%(RADIUS, LENGTH, THETA),
@@ -427,40 +478,51 @@ ALL_FUNCTIONS.discard("2J1/x:alt")
 def usage():
     names = ", ".join(sorted(ALL_FUNCTIONS))
     print("""\
-usage: precision.py [-f] [--log|--linear|--zoom|--neg] name...
+usage: precision.py [-f/a/r] [-x<range>] name...
 where
-    -f indicates that the function value should be plotted rather than error,
-    --log indicates log stepping in [10^-3, 10^5]
-    --linear indicates linear stepping in [1, 1000]
-    --zoom indicates linear stepping in [1000, 1010]
-    --neg indicates linear stepping in [-100.1, 100.1]
+    -f indicates that the function value should be plotted,
+    -a indicates that the absolute error should be plotted,
+    -r indicates that the relative error should be plotted (default),
+    -x<range> indicates the steps in x, where <range> is one of the following
+      log indicates log stepping in [10^-3, 10^5] (default)
+      logq indicates log stepping in [10^-4, 10^1]
+      linear indicates linear stepping in [1, 1000]
+      zoom indicates linear stepping in [1000, 1010]
+      neg indicates linear stepping in [-100.1, 100.1]
 and name is "all [first]" or one of:
     """+names)
     sys.exit(1)
 
 def main():
     import sys
-    diff = True
+    diff = "relative"
     xrange = "log"
-    args = sys.argv[1:]
-    if '-f' in args:
-        args.remove('-f')
-        diff = False
-    for k in "log linear zoom neg".split():
-        if '--'+k in args:
-            args.remove('--'+k)
-            xrange = k
-    if not args:
+    options = [v for v in sys.argv[1:] if v.startswith('-')]
+    for opt in options:
+        if opt == '-f':
+            diff = "none"
+        elif opt == '-r':
+            diff = "relative"
+        elif opt == '-a':
+            diff = "absolute"
+        elif opt.startswith('-x'):
+            xrange = opt[2:]
+        else:
+            usage()
+
+    names = [v for v in sys.argv[1:] if not v.startswith('-')]
+    if not names:
         usage()
-    if args[0] == "all":
-        cutoff = args[1] if len(args) > 1 else ""
-        args = list(sorted(ALL_FUNCTIONS))
-        args = [k for k in args if k >= cutoff]
-    if any(k not in FUNCTIONS for k in args):
+
+    if names[0] == "all":
+        cutoff = names[1] if len(names) > 1 else ""
+        names = list(sorted(ALL_FUNCTIONS))
+        names = [k for k in names if k >= cutoff]
+    if any(k not in FUNCTIONS for k in names):
         usage()
-    multiple = len(args) > 1
+    multiple = len(names) > 1
     pylab.interactive(multiple)
-    for k in args:
+    for k in names:
         pylab.clf()
         comparator = FUNCTIONS[k]
         comparator.run(xrange=xrange, diff=diff)
