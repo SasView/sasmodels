@@ -66,12 +66,12 @@ double Iqxy(double qx, double qy,
     double phi,
     double psi)
 {
-    double q, cos_val_a, cos_val_b, cos_val_c;
-    ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, cos_val_c, cos_val_b, cos_val_a);
+    double q, xhat, yhat, zhat;
+    ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, xhat, yhat, zhat);
 
-    const double siA = sas_sinx_x(0.5*q*length_a*cos_val_a);
-    const double siB = sas_sinx_x(0.5*q*length_b*cos_val_b);
-    const double siC = sas_sinx_x(0.5*q*length_c*cos_val_c);
+    const double siA = sas_sinx_x(0.5*length_a*q*xhat);
+    const double siB = sas_sinx_x(0.5*length_b*q*yhat);
+    const double siC = sas_sinx_x(0.5*length_c*q*zhat);
     const double V = form_volume(length_a, length_b, length_c);
     const double drho = (sld - solvent_sld);
     const double form = V * drho * siA * siB * siC;

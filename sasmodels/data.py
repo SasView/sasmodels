@@ -50,9 +50,26 @@ def load_data(filename):
     """
     from sas.sascalc.dataloader.loader import Loader  # type: ignore
     loader = Loader()
-    data = loader.load(filename)
-    if data is None:
+    # Allow for one part in multipart file
+    if '[' in filename:
+        filename, indexstr = filename[:-1].split('[')
+        index = int(indexstr)
+    else:
+        index = None
+    datasets = loader.load(filename)
+    if datasets is None:
         raise IOError("Data %r could not be loaded" % filename)
+    if not isinstance(datasets, list):
+        datasets = [datasets]
+    if index is None and len(datasets) > 1:
+        raise ValueError("Need to specify filename[index] for multipart data")
+    data = datasets[index if index is not None else 0]
+    if hasattr(data, 'x'):
+        data.qmin, data.qmax = data.x.min(), data.x.max()
+        data.mask = (np.isnan(data.y) if data.y is not None
+                     else np.zeros_like(data.x, dtype='bool'))
+    elif hasattr(data, 'qx_data'):
+        data.mask = ~data.mask
     return data
 
 
@@ -347,7 +364,7 @@ def plot_data(data, view='log', limits=None):
     # Note: kind of weird using the plot result functions to plot just the
     # data, but they already handle the masking and graph markup already, so
     # do not repeat.
-    if hasattr(data, 'lam'):
+    if hasattr(data, 'isSesans') and data.isSesans:
         _plot_result_sesans(data, None, None, use_data=True, limits=limits)
     elif hasattr(data, 'qx_data'):
         _plot_result2D(data, None, None, view, use_data=True, limits=limits)
@@ -375,7 +392,7 @@ def plot_theory(data, theory, resid=None, view='log',
 
     *Iq_calc* is the raw theory values without resolution smearing
     """
-    if hasattr(data, 'lam'):
+    if hasattr(data, 'isSesans') and data.isSesans:
         _plot_result_sesans(data, theory, resid, use_data=True, limits=limits)
     elif hasattr(data, 'qx_data'):
         _plot_result2D(data, theory, resid, view, use_data, limits=limits)
@@ -445,19 +462,26 @@ def _plot_result1D(data, theory, resid, view, use_data,
             mtheory[~np.isfinite(mtheory)] = masked
             if view is 'log':
                 mtheory[mtheory <= 0] = masked
-            plt.plot(data.x, scale*mtheory, '-', hold=True)
+            plt.plot(data.x, scale*mtheory, '-')
             all_positive = all_positive and (mtheory > 0).all()
             some_present = some_present or (mtheory.count() > 0)
 
         if limits is not None:
             plt.ylim(*limits)
 
-        plt.xscale('linear' if not some_present or non_positive_x  else view)
+        plt.xscale('linear' if not some_present or non_positive_x
+                   else view if view is not None
+                   else 'log')
         plt.yscale('linear'
                    if view == 'q4' or not some_present or not all_positive
-                   else view)
+                   else view if view is not None
+                   else 'log')
         plt.xlabel("$q$/A$^{-1}$")
         plt.ylabel('$I(q)$')
+        title = ("data and model" if use_theory and use_data
+                 else "data" if use_data
+                 else "model")
+        plt.title(title)
 
     if use_calc:
         # Only have use_calc if have use_theory
@@ -477,10 +501,11 @@ def _plot_result1D(data, theory, resid, view, use_data,
 
         if num_plots > 1:
             plt.subplot(1, num_plots, use_calc + 2)
-        plt.plot(data.x, mresid, '-')
+        plt.plot(data.x, mresid, '.')
         plt.xlabel("$q$/A$^{-1}$")
         plt.ylabel('residuals')
-        plt.xscale('linear' if not some_present or non_positive_x else view)
+        plt.xscale('linear')
+        plt.title('(model - Iq)/dIq')
 
 
 @protect
@@ -507,9 +532,9 @@ def _plot_result_sesans(data, theory, resid, use_data, limits=None):
                 plt.errorbar(data.x, data.y, yerr=data.dy)
         if theory is not None:
             if is_tof:
-                plt.plot(data.x, np.log(theory)/(data.lam*data.lam), '-', hold=True)
+                plt.plot(data.x, np.log(theory)/(data.lam*data.lam), '-')
             else:
-                plt.plot(data.x, theory, '-', hold=True)
+                plt.plot(data.x, theory, '-')
         if limits is not None:
             plt.ylim(*limits)
 

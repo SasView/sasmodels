@@ -29,22 +29,6 @@ from docutils.core import publish_parts
 from docutils.writers.html4css1 import HTMLTranslator
 from docutils.nodes import SkipNode
 
-def wxview(html, url="", size=(850, 540)):
-    import wx
-    from wx.html2 import WebView
-    frame = wx.Frame(None, -1, size=size)
-    view = WebView.New(frame)
-    view.SetPage(html, url)
-    frame.Show()
-    return frame
-
-def view_rst(filename):
-    from os.path import expanduser
-    with open(expanduser(filename)) as fid:
-        rst = fid.read()
-    html = rst2html(rst)
-    wxview(html)
-
 def rst2html(rst, part="whole", math_output="mathjax"):
     r"""
     Convert restructured text into simple html.
@@ -154,14 +138,94 @@ def test_dollar():
     assert replace_dollar(u"a ($in parens$) a") == u"a (:math:`in parens`) a"
     assert replace_dollar(u"a (again $in parens$) a") == u"a (again :math:`in parens`) a"
 
-def view_rst_app(filename):
+def load_rst_as_html(filename):
+    from os.path import expanduser
+    with open(expanduser(filename)) as fid:
+        rst = fid.read()
+    html = rst2html(rst)
+    return html
+
+def wxview(html, url="", size=(850, 540)):
+    import wx
+    from wx.html2 import WebView
+    frame = wx.Frame(None, -1, size=size)
+    view = WebView.New(frame)
+    view.SetPage(html, url)
+    frame.Show()
+    return frame
+
+def view_html_wxapp(html, url=""):
     import wx  # type: ignore
     app = wx.App()
-    view_rst(filename)
+    frame = wxview(html, url)
     app.MainLoop()
 
+def view_url_wxapp(url):
+    import wx  # type: ignore
+    from wx.html2 import WebView
+    app = wx.App()
+    frame = wx.Frame(None, -1, size=(850, 540))
+    view = WebView.New(frame)
+    view.LoadURL(url)
+    frame.Show()
+    app.MainLoop()
+
+def qtview(html, url=""):
+    try:
+        from PyQt5.QtWebKitWidgets import QWebView
+        from PyQt5.QtCore import QUrl
+    except ImportError:
+        from PyQt4.QtWebkit import QWebView
+        from PyQt4.QtCore import QUrl
+    helpView = QWebView()
+    helpView.setHtml(html, QUrl(url))
+    helpView.show()
+    return helpView
+
+def view_html_qtapp(html, url=""):
+    import sys
+    try:
+        from PyQt5.QtWidgets import QApplication
+    except ImportError:
+        from PyQt4.QtGui import QApplication
+    app = QApplication([])
+    frame = qtview(html, url)
+    sys.exit(app.exec_())
+
+def view_url_qtapp(url):
+    import sys
+    try:
+        from PyQt5.QtWidgets import QApplication
+    except ImportError:
+        from PyQt4.QtGui import QApplication
+    app = QApplication([])
+    try:
+        from PyQt5.QtWebKitWidgets import QWebView
+        from PyQt5.QtCore import QUrl
+    except ImportError:
+        from PyQt4.QtWebkit import QWebView
+        from PyQt4.QtCore import QUrl
+    frame = QWebView()
+    frame.load(QUrl(url))
+    frame.show()
+    sys.exit(app.exec_())
+
+def view_help(filename, qt=False):
+    import os
+    url="file:///"+os.path.abspath(filename).replace("\\","/")
+    if filename.endswith('.rst'):
+        html = load_rst_as_html(filename)
+        if qt:
+            view_html_qtapp(html, url)
+        else:
+            view_html_wxapp(html, url)
+    else:
+        if qt:
+            view_url_qtapp(url)
+        else:
+            view_url_wxapp(url)
 
 if __name__ == "__main__":
     import sys
-    view_rst_app(sys.argv[1])
+    view_help(sys.argv[1], qt=True)
 

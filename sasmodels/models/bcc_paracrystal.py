@@ -78,9 +78,10 @@ The 2D (Anisotropic model) is based on the reference below where $I(q)$ is
 approximated for 1d scattering. Thus the scattering pattern for 2D may not
 be accurate.
 
-.. figure:: img/bcc_angle_definition.png
+.. figure:: img/parallelepiped_angle_definition.png
 
-    Orientation of the crystal with respect to the scattering plane.
+    Orientation of the crystal with respect to the scattering plane, when 
+    $\theta = \phi = 0$ the $c$ axis is along the beam direction (the $z$ axis).
 
 References
 ----------
@@ -98,7 +99,7 @@ Authorship and Verification
 * **Last Reviewed by:** Richard Heenan **Date:** March 21, 2016
 """
 
-from numpy import inf
+from numpy import inf, pi
 
 name = "bcc_paracrystal"
 title = "Body-centred cubic lattic with paracrystalline distortion"
@@ -121,9 +122,9 @@ parameters = [["dnn",         "Ang",       220,    [-inf, inf], "",            "
               ["radius",      "Ang",        40,    [0, inf],    "volume",      "Particle radius"],
               ["sld",         "1e-6/Ang^2",  4,    [-inf, inf], "sld",         "Particle scattering length density"],
               ["sld_solvent", "1e-6/Ang^2",  1,    [-inf, inf], "sld",         "Solvent scattering length density"],
-              ["theta",       "degrees",    60,    [-inf, inf], "orientation", "In plane angle"],
-              ["phi",         "degrees",    60,    [-inf, inf], "orientation", "Out of plane angle"],
-              ["psi",         "degrees",    60,    [-inf, inf], "orientation", "Out of plane angle"]
+              ["theta",       "degrees",    60,    [-360, 360], "orientation", "c axis to beam angle"],
+              ["phi",         "degrees",    60,    [-360, 360], "orientation", "rotation about beam"],
+              ["psi",         "degrees",    60,    [-360, 360], "orientation", "rotation about c axis"]
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
@@ -140,3 +141,12 @@ demo = dict(
     phi_pd=15, phi_pd_n=0,
     psi_pd=15, psi_pd_n=0,
     )
+# april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
+# add 2d test later
+q =4.*pi/220.
+tests = [
+    [{ },
+     [0.001, q, 0.215268], [1.46601394721, 2.85851284174, 0.00866710287078]],
+    [{'theta':20.0,'phi':30,'psi':40.0},(-0.017,0.035),2082.20264399 ],
+    [{'theta':20.0,'phi':30,'psi':40.0},(-0.081,0.011),0.436323144781 ]
+    ]

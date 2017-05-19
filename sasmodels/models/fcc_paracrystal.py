@@ -75,9 +75,10 @@ approximated for 1d scattering. Thus the scattering pattern for 2D may not
 be accurate. Note that we are not responsible for any incorrectness of the
 2D model computation.
 
-.. figure:: img/bcc_angle_definition.png
+.. figure:: img/parallelepiped_angle_definition.png
 
-    Orientation of the crystal with respect to the scattering plane.
+    Orientation of the crystal with respect to the scattering plane, when 
+    $\theta = \phi = 0$ the $c$ axis is along the beam direction (the $z$ axis).
 
 References
 ----------
@@ -89,7 +90,7 @@ Hideki Matsuoka et. al. *Physical Review B*, 41 (1990) 3854 -3856
 (Corrections to FCC and BCC lattice structure calculation)
 """
 
-from numpy import inf
+from numpy import inf, pi
 
 name = "fcc_paracrystal"
 title = "Face-centred cubic lattic with paracrystalline distortion"
@@ -109,9 +110,9 @@ parameters = [["dnn", "Ang", 220, [-inf, inf], "", "Nearest neighbour distance"]
               ["radius", "Ang", 40, [0, inf], "volume", "Particle radius"],
               ["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld", "Particle scattering length density"],
               ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "sld", "Solvent scattering length density"],
-              ["theta", "degrees", 60, [-inf, inf], "orientation", "In plane angle"],
-              ["phi", "degrees", 60, [-inf, inf], "orientation", "Out of plane angle"],
-              ["psi", "degrees", 60, [-inf, inf], "orientation", "Out of plane angle"]
+              ["theta",       "degrees",    60,    [-360, 360], "orientation", "c axis to beam angle"],
+              ["phi",         "degrees",    60,    [-360, 360], "orientation", "rotation about beam"],
+              ["psi",         "degrees",    60,    [-360, 360], "orientation", "rotation about c axis"]
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
@@ -127,3 +128,11 @@ demo = dict(scale=1, background=0,
             phi_pd=15, phi_pd_n=0,
             psi_pd=15, psi_pd_n=0,
            )
+# april 10 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
+q =4.*pi/220.
+tests = [
+    [{ },
+     [0.001, q, 0.215268], [0.275164706668, 5.7776842567, 0.00958167119232]],
+     [{}, (-0.047,-0.007), 238.103096286],
+     [{}, (0.053,0.063), 0.863609587796 ],
+]

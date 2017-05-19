@@ -29,6 +29,7 @@ On Windows you will need to remove the quotes.
 from __future__ import print_function
 
 import sys
+import os
 import math
 import datetime
 import traceback
@@ -39,7 +40,7 @@ import numpy as np  # type: ignore
 from . import core
 from . import kerneldll
 from . import exception
-from .data import plot_theory, empty_data1D, empty_data2D
+from .data import plot_theory, empty_data1D, empty_data2D, load_data
 from .direct_model import DirectModel
 from .convert import revert_name, revert_pars, constrain_new_to_old
 from .generate import FLOAT_RE
@@ -71,7 +72,7 @@ Options (* for default):
     -zero indicates that q=0 should be included
     -1d*/-2d computes 1d or 2d data
     -preset*/-random[=seed] preset or random parameters
-    -mono/-poly* force monodisperse/polydisperse
+    -mono*/-poly force monodisperse or allow polydisperse demo parameters
     -magnetic/-nonmagnetic* suppress magnetism
     -cutoff=1e-5* cutoff value for including a point in polydispersity
     -pars/-nopars* prints the parameter set or not
@@ -82,8 +83,9 @@ Options (* for default):
     -accuracy=Low accuracy of the resolution calculation Low, Mid, High, Xhigh
     -edit starts the parameter explorer
     -default/-demo* use demo vs default parameters
-    -html shows the model docs instead of running the model
+    -help/-html shows the model docs instead of running the model
     -title="note" adds note to the plot title, after the model name
+    -data="path" uses q, dq from the data file
 
 Any two calculation engines can be selected for comparison:
 
@@ -543,6 +545,10 @@ DTYPE_MAP = {
     'f16': '16',
     'f32': '32',
     'f64': '64',
+    'float16': '16',
+    'float32': '32',
+    'float64': '64',
+    'float128': '128',
     'longdouble': '128',
 }
 def eval_opencl(model_info, data, dtype='single', cutoff=0.):
@@ -746,11 +752,12 @@ def plot_models(opts, result, limits=None):
     base = opts['engines'][0] if have_base else None
     comp = opts['engines'][1] if have_comp else None
     data = opts['data']
+    use_data = (opts['datafile'] is not None) and (have_base ^ have_comp)
 
     # Plot if requested
     view = opts['view']
     import matplotlib.pyplot as plt
-    if limits is None:
+    if limits is None and not use_data:
         vmin, vmax = np.Inf, -np.Inf
         if have_base:
             vmin = min(vmin, base_value.min())
@@ -762,14 +769,14 @@ def plot_models(opts, result, limits=None):
 
     if have_base:
         if have_comp: plt.subplot(131)
-        plot_theory(data, base_value, view=view, use_data=False, limits=limits)
+        plot_theory(data, base_value, view=view, use_data=use_data, limits=limits)
         plt.title("%s t=%.2f ms"%(base.engine, base_time))
         #cbar_title = "log I"
     if have_comp:
         if have_base: plt.subplot(132)
         if not opts['is2d'] and have_base:
-            plot_theory(data, base_value, view=view, use_data=False, limits=limits)
-        plot_theory(data, comp_value, view=view, use_data=False, limits=limits)
+            plot_theory(data, base_value, view=view, use_data=use_data, limits=limits)
+        plot_theory(data, comp_value, view=view, use_data=use_data, limits=limits)
         plt.title("%s t=%.2f ms"%(comp.engine, comp_time))
         #cbar_title = "log I"
     if have_base and have_comp:
@@ -783,7 +790,7 @@ def plot_models(opts, result, limits=None):
             cutoff = sorted[int(sorted.size*0.95)]
             err[err>cutoff] = cutoff
         #err,errstr = base/comp,"ratio"
-        plot_theory(data, None, resid=err, view=errview, use_data=False)
+        plot_theory(data, None, resid=err, view=errview, use_data=use_data)
         if view == 'linear':
             plt.xscale('linear')
         plt.title("max %s = %.3g"%(errstr, abs(err).max()))
@@ -828,12 +835,12 @@ NAME_OPTIONS = set([
     'rel', 'abs',
     'linear', 'log', 'q4',
     'hist', 'nohist',
-    'edit', 'html',
+    'edit', 'html', 'help',
     'demo', 'default',
     ])
 VALUE_OPTIONS = [
     # Note: random is both a name option and a value option
-    'cutoff', 'random', 'nq', 'res', 'accuracy', 'title',
+    'cutoff', 'random', 'nq', 'res', 'accuracy', 'title', 'data',
     ]
 
 def columnize(items, indent="", width=79):
@@ -939,7 +946,7 @@ def parse_opts(argv):
         'accuracy'  : 'Low',
         'cutoff'    : 0.0,
         'seed'      : -1,  # default to preset
-        'mono'      : False,
+        'mono'      : True,
         # Default to magnetic a magnetic moment is set on the command line
         'magnetic'  : False,
         'show_pars' : False,
@@ -950,6 +957,7 @@ def parse_opts(argv):
         'zero'      : False,
         'html'      : False,
         'title'     : None,
+        'datafile'  : None,
     }
     engines = []
     for arg in flags:
@@ -970,7 +978,8 @@ def parse_opts(argv):
         elif arg.startswith('-accuracy='): opts['accuracy'] = arg[10:]
         elif arg.startswith('-cutoff='):   opts['cutoff'] = float(arg[8:])
         elif arg.startswith('-random='):   opts['seed'] = int(arg[8:])
-        elif arg.startswith('-title'):     opts['title'] = arg[7:]
+        elif arg.startswith('-title='):    opts['title'] = arg[7:]
+        elif arg.startswith('-data='):     opts['datafile'] = arg[6:]
         elif arg == '-random':  opts['seed'] = np.random.randint(1000000)
         elif arg == '-preset':  opts['seed'] = -1
         elif arg == '-mono':    opts['mono'] = True
@@ -995,6 +1004,7 @@ def parse_opts(argv):
         elif arg == '-demo':    opts['use_demo'] = True
         elif arg == '-default':    opts['use_demo'] = False
         elif arg == '-html':    opts['html'] = True
+        elif arg == '-help':    opts['html'] = True
     # pylint: enable=bad-whitespace
 
     if MODEL_SPLIT in name:
@@ -1111,7 +1121,10 @@ def parse_opts(argv):
             print(str(parlist(model_info, pars, opts['is2d'])))
 
     # Create the computational engines
-    data, _ = make_data(opts)
+    if opts['datafile'] is not None:
+        data = load_data(os.path.expanduser(opts['datafile']))
+    else:
+        data, _ = make_data(opts)
     if n1:
         base = make_engine(model_info, data, engines[0], opts['cutoff'])
     else:
@@ -1141,12 +1154,15 @@ def show_docs(opts):
     """
     show html docs for the model
     """
-    import wx  # type: ignore
-    from .generate import view_html_from_info
-    app = wx.App() if wx.GetApp() is None else None
-    view_html_from_info(opts['def'][0])
-    if app: app.MainLoop()
+    import os
+    from .generate import make_html
+    from . import rst2html
 
+    info = opts['def'][0]
+    html = make_html(info)
+    path = os.path.dirname(info.filename)
+    url = "file://"+path.replace("\\","/")[2:]+"/"
+    rst2html.view_html_qtapp(html, url)
 
 def explore(opts):
     # type: (Dict[str, Any]) -> None
