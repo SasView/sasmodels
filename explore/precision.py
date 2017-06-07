@@ -268,21 +268,21 @@ add_function(
     mp_function=mp.gamma,
     np_function=scipy.special.gamma,
     ocl_function=make_ocl("return sas_gamma(q);", "sas_gamma", ["lib/sas_gamma.c"]),
-    limits=(-3.1,10),
+    limits=(-3.1, 10),
 )
 add_function(
     name="erf(x)",
     mp_function=mp.erf,
     np_function=scipy.special.erf,
     ocl_function=make_ocl("return sas_erf(q);", "sas_erf", ["lib/polevl.c", "lib/sas_erf.c"]),
-    limits=(-5.,5.),
+    limits=(-5., 5.),
 )
 add_function(
     name="erfc(x)",
     mp_function=mp.erfc,
     np_function=scipy.special.erfc,
     ocl_function=make_ocl("return sas_erfc(q);", "sas_erfc", ["lib/polevl.c", "lib/sas_erf.c"]),
-    limits=(-5.,5.),
+    limits=(-5., 5.),
 )
 add_function(
     name="arctan(x)",
@@ -296,6 +296,24 @@ add_function(
     # Note: no taylor expansion near 0
     np_function=lambda x: 3*(np.sin(x)/x - np.cos(x))/(x*x),
     ocl_function=make_ocl("return sas_3j1x_x(q);", "sas_j1c", ["lib/sas_3j1x_x.c"]),
+)
+add_function(
+    name="(1-cos(x))/x^2",
+    mp_function=lambda x: (1 - mp.cos(x))/(x*x),
+    np_function=lambda x: (1 - np.cos(x))/(x*x),
+    ocl_function=make_ocl("return (1-cos(q))/q/q;", "sas_1mcosx_x2"),
+)
+add_function(
+    name="(1-sin(x)/x)/x",
+    mp_function=lambda x: 1/x - mp.sin(x)/(x*x),
+    np_function=lambda x: 1/x - np.sin(x)/(x*x),
+    ocl_function=make_ocl("return (1-sas_sinx_x(q))/q;", "sas_1msinx_x_x"),
+)
+add_function(
+    name="(1/2+(1-cos(x))/x^2-sin(x)/x)/x",
+    mp_function=lambda x: (0.5 - mp.sin(x)/x + (1-mp.cos(x))/(x*x))/x,
+    np_function=lambda x: (0.5 - np.sin(x)/x + (1-np.cos(x))/(x*x))/x,
+    ocl_function=make_ocl("return (0.5-sin(q)/q + (1-cos(q))/q/q)/q;", "sas_T2"),
 )
 add_function(
     name="fmod_2pi",
