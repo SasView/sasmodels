@@ -491,8 +491,9 @@ def _tag_float(source, constant_flag):
     return out
 
 def test_tag_float():
+    """check that floating point constants are properly identified and tagged with 'f'"""
 
-    cases="""
+    cases = """
 ZP  : 0.
 ZPF : 0.0,0.01,0.1
 Z  E: 0e+001
@@ -518,7 +519,7 @@ a3.e2 - 0.
 4.*atan(1.)
 """
 
-    output="""
+    output = """
 ZP  : 0.f
 ZPF : 0.0f,0.01f,0.1f
 Z  E: 0e+001f
@@ -610,7 +611,9 @@ def _gen_fn(name, pars, body, filename, line):
 def _call_pars(prefix, pars):
     # type: (str, List[Parameter]) -> List[str]
     """
-    Return a list of *prefix.parameter* from parameter items.
+    Return a list of *prefix+parameter* from parameter items.
+
+    *prefix* should be "v." if v is a struct.
     """
     return [p.as_call_reference(prefix) for p in pars]
 
@@ -732,7 +735,7 @@ def make_source(model_info):
         pars_sqrt = ["sqrt(_q[2*_i]*_q[2*_i]+_q[2*_i+1]*_q[2*_i+1])"] + refs[1:]
         call_iqxy = "#define CALL_IQ(_q,_i,_v) Iq(%s)" % (",".join(pars_sqrt))
 
-    magpars = [k-2 for k,p in enumerate(partable.call_parameters)
+    magpars = [k-2 for k, p in enumerate(partable.call_parameters)
                if p.type == 'sld']
 
     # Fill in definitions for numbers of parameters
@@ -741,7 +744,7 @@ def make_source(model_info):
     source.append("#define NUM_VALUES %d" % partable.nvalues)
     source.append("#define NUM_MAGNETIC %d" % partable.nmagnetic)
     source.append("#define MAGNETIC_PARS %s"%",".join(str(k) for k in magpars))
-    for k,v in enumerate(magpars[:3]):
+    for k, v in enumerate(magpars[:3]):
         source.append("#define MAGNETIC_PAR%d %d"%(k+1, v))
 
     # TODO: allow mixed python/opencl kernels?
@@ -778,7 +781,7 @@ def kernels(kernel, call_iq, call_iqxy, name):
         code,
         "#undef CALL_IQ",
         "#undef KERNEL_NAME",
-         ]
+    ]
 
     imagnetic = [
         # define the Imagnetic kernel
@@ -871,7 +874,7 @@ def make_doc(model_info):
 
 
 # TODO: need a single source for rst_prolog; it is also in doc/rst_prolog
-RST_PROLOG = """\
+RST_PROLOG = r"""\
 .. |Ang| unicode:: U+212B
 .. |Ang^-1| replace:: |Ang|\ :sup:`-1`
 .. |Ang^2| replace:: |Ang|\ :sup:`2`

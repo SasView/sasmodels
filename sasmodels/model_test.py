@@ -84,7 +84,8 @@ def make_suite(loaders, models):
     else:
         skip = []
     for model_name in models:
-        if model_name in skip: continue
+        if model_name in skip:
+            continue
         model_info = load_model_info(model_name)
 
         #print('------')
@@ -238,7 +239,7 @@ def _hide_model_case_from_nose():
 
             multiple = [test for test in self.info.tests
                         if isinstance(test[2], list)
-                            and not all(result is None for result in test[2])]
+                        and not all(result is None for result in test[2])]
             tests_has_1D_multiple = any(isinstance(test[1][0], float)
                                         for test in multiple)
             tests_has_2D_multiple = any(isinstance(test[1][0], tuple)
@@ -261,6 +262,9 @@ def _hide_model_case_from_nose():
             """Run a single test case."""
             user_pars, x, y = test
             pars = expand_pars(self.info.parameters, user_pars)
+            invalid = invalid_pars(self.info.parameters, pars)
+            if invalid:
+                raise ValueError("Unknown parameters in test: " + ", ".join(invalid))
 
             if not isinstance(y, list):
                 y = [y]
@@ -304,6 +308,23 @@ def _hide_model_case_from_nose():
             return actual
 
     return ModelTestCase
+
+def invalid_pars(partable, pars):
+    # type: (ParameterTable, Dict[str, float])
+    """
+    Return a list of parameter names that are not part of the model.
+    """
+    names = set(p.id for p in partable.call_parameters)
+    invalid = []
+    for par in sorted(pars.keys()):
+        parts = par.split('_pd')
+        if len(parts) > 1 and parts[1] not in ("", "_n", "nsigma", "type"):
+            invalid.append(par)
+            continue
+        if parts[0] not in names:
+            invalid.append(par)
+    return invalid
+
 
 def is_near(target, actual, digits=5):
     # type: (float, float, int) -> bool

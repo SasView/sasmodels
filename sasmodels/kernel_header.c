@@ -13,7 +13,7 @@
 #  else
 #    define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
 #  endif
-   // Intel CPU on Mac gives strange values for erf(); also on the tested
+   // Intel CPU on Mac gives strange values for erf(); on the verified
    // platforms (intel, nvidia, amd), the cephes erf() is significantly
    // faster than that available in the native OpenCL.
    #define NEED_ERF
@@ -56,7 +56,7 @@
      #if defined(__TINYC__)
          typedef int int32_t;
          #include <math.h>
-         // TODO: test isnan
+         // TODO: check isnan is correct
          inline double _isnan(double x) { return x != x; } // hope this doesn't optimize away!
          #undef isnan
          #define isnan(x) _isnan(x)

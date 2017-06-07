@@ -161,10 +161,11 @@ double cephes_erfc(double a)
         // The line below causes problems on the GPU, so inline
         // the erf function instead and z < 1.0.
         //return (1.0 - cephes_erf(a));
-        z = x * x;
-        y = x * polevl(z, TD, 4) / p1evl(z, UD, 5);
+        // 2017-05-18 PAK - use erf(a) rather than erf(|a|)
+        z = a * a;
+        y = a * polevl(z, TD, 4) / p1evl(z, UD, 5);
 
-        return y;
+        return 1.0 - y;
     }
 
     z = -a * a;
@@ -275,10 +276,11 @@ float cephes_erfcf(float a)
         //The line below is a troublemaker for GPU, so sas_erf function
         //is explicit here for the case < 1.0
         //return (1.0 - sas_erf(a));
-        z = x * x;
-        y = x * polevl( z, TF, 6 );
+        // 2017-05-18 PAK - use erf(a) rather than erf(|a|)
+        z = a * a;
+        y = a * polevl( z, TF, 6 );
 
-        return y;
+        return 1.0 - y;
     }
 
     z = -a * a;
