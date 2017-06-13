@@ -30,6 +30,13 @@ If you have multiple GPU devices you can tell SasView which device to use.
 By default, SasView looks for one GPU and one CPU device
 from available OpenCL platforms.
 
+OpenCL devices can be set from OpenCL options dialog in Fitting menu or as
+enviromental variables.
+
+**If you don't want to use OpenCL, you can select "No OpenCL" option from**
+**GUI dialog or set *SAS_OPENCL=None* in your environment settings**
+**This will only use normal programs.**
+
 SasView prefers AMD or NVIDIA drivers for GPU, and prefers Intel or
 Apple drivers for CPU. Both GPU and CPU are included on the assumption that CPU 
 is always available and supports double precision.
@@ -38,11 +45,9 @@ The device order is important: GPU is checked before CPU on the assumption that
 it will be faster. By examining ~/sasview.log you can see which device SasView
 chose to run the model.
 
-**If you don't want to use OpenCL, you can set** *SAS_OPENCL=None*
-**in your environment settings, and it will only use normal programs.**
-
-If you want to use one of the other devices, you can run the following
-from the python console in SasView::
+If you want to use one of the other devices, you can select it from OpenCL
+options dialog (accessible from Fitting menu) or run the following from
+the python console in SasView::
 
     import pyopencl as cl
     cl.create_some_context()

@@ -5,12 +5,12 @@ Definition
 Calculates the form factor for a rectangular solid with a core-shell structure.
 The thickness and the scattering length density of the shell or 
 "rim" can be different on each (pair) of faces. However at this time
-the model does **NOT** actually calculate a c face rim despite the presence of
-the parameter.
+the 1D calculation does **NOT** actually calculate a c face rim despite the presence of
+the parameter. Some other aspects of the 1D calculation may be wrong.
 
 .. note::
-   This model was originally ported from NIST IGOR macros. However,t is not
-   yet fully understood by the SasView developers and is currently review.
+   This model was originally ported from NIST IGOR macros. However, it is not
+   yet fully understood by the SasView developers and is currently under review.
 
 The form factor is normalized by the particle volume $V$ such that
 
@@ -47,16 +47,24 @@ The intensity calculated follows the :ref:`parallelepiped` model, with the
 core-shell intensity being calculated as the square of the sum of the
 amplitudes of the core and shell, in the same manner as a core-shell model.
 
+.. math::
+
+    F_{a}(Q,\alpha,\beta)=
+    \left[\frac{\sin(\tfrac{1}{2}Q(L_A+2t_A)\sin\alpha \sin\beta)}{\tfrac{1}{2}Q(L_A+2t_A)\sin\alpha\sin\beta}
+    - \frac{\sin(\tfrac{1}{2}QL_A\sin\alpha \sin\beta)}{\tfrac{1}{2}QL_A\sin\alpha \sin\beta} \right]
+    \left[\frac{\sin(\tfrac{1}{2}QL_B\sin\alpha \sin\beta)}{\tfrac{1}{2}QL_B\sin\alpha \sin\beta} \right]
+    \left[\frac{\sin(\tfrac{1}{2}QL_C\sin\alpha \sin\beta)}{\tfrac{1}{2}QL_C\sin\alpha \sin\beta} \right]
 
 .. note::
 
+    Why does t_B not appear in the above equation?
     For the calculation of the form factor to be valid, the sides of the solid
-    MUST be chosen such that** $A < B < C$.
+    MUST (perhaps not any more?) be chosen such that** $A < B < C$.
     If this inequality is not satisfied, the model will not report an error,
     but the calculation will not be correct and thus the result wrong.
 
 FITTING NOTES
-If the scale is set equal to the particle volume fraction, |phi|, the returned
+If the scale is set equal to the particle volume fraction, $\phi$, the returned
 value is the scattered intensity per unit volume, $I(q) = \phi P(q)$.
 However, **no interparticle interference effects are included in this
 calculation.**
@@ -72,8 +80,9 @@ The returned value is in units of |cm^-1|, on absolute scale.
 
 NB: The 2nd virial coefficient of the core_shell_parallelepiped is calculated
 based on the the averaged effective radius $(=\sqrt{(A+2t_A)(B+2t_B)/\pi})$
-and length $(C+2t_C)$ values, and used as the effective radius
-for $S(Q)$ when $P(Q) * S(Q)$ is applied.
+and length $(C+2t_C)$ values, after appropriately
+sorting the three dimensions to give an oblate or prolate particle, to give an 
+effective radius, for $S(Q)$ when $P(Q) * S(Q)$ is applied.
 
 To provide easy access to the orientation of the parallelepiped, we define the
 axis of the cylinder using three angles $\theta$, $\phi$ and $\Psi$.
@@ -82,11 +91,11 @@ The angle $\Psi$ is the rotational angle around the *long_c* axis against the
 $q$ plane. For example, $\Psi = 0$ when the *short_b* axis is parallel to the
 *x*-axis of the detector.
 
-.. figure:: img/parallelepiped_angle_definition.jpg
+.. figure:: img/parallelepiped_angle_definition.png
 
     Definition of the angles for oriented core-shell parallelepipeds.
 
-.. figure:: img/parallelepiped_angle_projection.jpg
+.. figure:: img/parallelepiped_angle_projection.png
 
     Examples of the angles for oriented core-shell parallelepipeds against the
     detector plane.
@@ -111,7 +120,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import pi, inf, sqrt
+from numpy import pi, inf, sqrt, cos, sin
 
 name = "core_shell_parallelepiped"
 title = "Rectangular solid with a core-shell structure."
@@ -143,12 +152,12 @@ parameters = [["sld_core", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Thickness of B rim"],
               ["thick_rim_c", "Ang", 10, [0, inf], "volume",
                "Thickness of C rim"],
-              ["theta", "degrees", 0, [-inf, inf], "orientation",
-               "In plane angle"],
-              ["phi", "degrees", 0, [-inf, inf], "orientation",
-               "Out of plane angle"],
-              ["psi", "degrees", 0, [-inf, inf], "orientation",
-               "Rotation angle around its own c axis against q plane"],
+              ["theta", "degrees", 0, [-360, 360], "orientation",
+               "c axis to beam angle"],
+              ["phi", "degrees", 0, [-360, 360], "orientation",
+               "rotation about beam"],
+              ["psi", "degrees", 0, [-360, 360], "orientation",
+               "rotation about c axis"],
              ]
 
 source = ["lib/gauss76.c", "core_shell_parallelepiped.c"]
@@ -185,10 +194,11 @@ demo = dict(scale=1, background=0.0,
             phi_pd=10, phi_pd_n=1,
             psi_pd=10, psi_pd_n=1)
 
-qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
+# rkh 7/4/17 add random unit test for 2d, note make all params different, 2d values not tested against other codes or models
+qx, qy = 0.2 * cos(pi/6.), 0.2 * sin(pi/6.)
 tests = [[{}, 0.2, 0.533149288477],
          [{}, [0.2], [0.533149288477]],
-         [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.032102135569],
-         [{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.032102135569]],
+         [{'theta':10.0, 'phi':20.0}, (qx, qy), 0.0853299803222],
+         [{'theta':10.0, 'phi':20.0}, [(qx, qy)], [0.0853299803222]],
         ]
 del qx, qy  # not necessary to delete, but cleaner
