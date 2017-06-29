@@ -721,14 +721,14 @@ def make_model_info(kernel_module):
     #print("make parameter table", kernel_module.parameters)
     parameters = make_parameter_table(getattr(kernel_module, 'parameters', []))
     demo = expand_pars(parameters, getattr(kernel_module, 'demo', None))
-    filename = abspath(kernel_module.__file__)
+    filename = abspath(kernel_module.__file__).replace('.pyc', '.py')
     kernel_id = splitext(basename(filename))[0]
     name = getattr(kernel_module, 'name', None)
     if name is None:
         name = " ".join(w.capitalize() for w in kernel_id.split('_'))
 
     info.id = kernel_id  # string used to load the kernel
-    info.filename = abspath(kernel_module.__file__)
+    info.filename = filename
     info.name = name
     info.title = getattr(kernel_module, 'title', name+" model")
     info.description = getattr(kernel_module, 'description', 'no description')
