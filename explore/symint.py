@@ -107,6 +107,22 @@ def plot(q, n=300):
     pylab.xlabel("theta (degrees)")
     pylab.ylabel("Iq 1/cm")
 
+def Iq_trapz(q, n):
+    theta = np.linspace(THETA_LOW, THETA_HIGH, n)
+    Zq = kernel(q=q, theta=theta)
+    Zq *= abs(sin(theta))
+    dx = theta[1]-theta[0]
+    return np.trapz(Zq, dx=dx)*SCALE/pi
+
+def plot_Iq(q, n, form="trapz"):
+    if form == "trapz":
+        I = np.array([Iq_trapz(qk, n) for qk in q])
+    elif form == "gauss":
+        I = np.array([gauss_quad(qk, n) for qk in q])
+    pylab.loglog(q, I, label="%s, n=%d"%(form, n))
+    pylab.xlabel("q (1/A)")
+    pylab.ylabel("Iq (1/cm)")
+
 NORM, KERNEL = make_cylinder(radius=10., length=100000.)
 #NORM, KERNEL = make_cylinder(radius=10., length=10000.)
 #NORM, KERNEL = make_cylinder(radius=10., length=30.)
@@ -126,5 +142,10 @@ if __name__ == "__main__":
     plot(0.5, n=2000)
     plot(0.6, n=2000)
     plot(0.8, n=2000)
+    pylab.legend()
+    pylab.figure()
+    plot_Iq(np.logspace(-3,0,200), n=2**16+1, form="trapz")
+    plot_Iq(np.logspace(-3,0,200), n=2**10+1, form="trapz")
+    plot_Iq(np.logspace(-3,0,200), n=150, form="gauss")
     pylab.legend()
     pylab.show()
