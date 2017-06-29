@@ -149,7 +149,7 @@ if __name__ == "__main__":
     #plot_Iq(np.logspace(-3, 0, 400), n=2**19+1, form="trapz")
     q1, I1 = plot_Iq(np.logspace(-3, 0, 400), n=2**16+1, form="trapz")
     #plot_Iq(np.logspace(-3, 0, 400), n=2**10+1, form="trapz")
-    q2, I2 = plot_Iq(np.logspace(-3, 0, 400), n=1000, form="gauss")
+    q2, I2 = plot_Iq(np.logspace(-3, 0, 400), n=1024, form="gauss")
     #plot_Iq(np.logspace(-3, 0, 400), n=300, form="gauss")
     plot_Iq(np.logspace(-3, 0, 400), n=150, form="gauss")
     plot_Iq(np.logspace(-3, 0, 400), n=76, form="gauss")
