@@ -282,13 +282,31 @@ from scipy.special import jn as sas_JN
 def sas_Si(x):
     return scipy.special.sici(x)[0]
 
+def sas_j1(x):
+    if np.isscalar(x):
+        retvalue = (sin(x) - x*cos(x))/x**2 if x != 0. else 0.
+    else:
+        with np.errstate(all='ignore'):
+            retvalue = (sin(x) - x*cos(x))/x**2
+        retvalue[x == 0.] = 0.
+        
 def sas_3j1x_x(x):
-    retvalue = 3*sas_j1(x)/x
-    retvalue[x==0] = 1.
+    if np.isscalar(x):
+        retvalue = 3*(sin(x) - x*cos(x))/x**3 if x != 0. else 1.
+    else:
+        with np.errstate(all='ignore'):
+            retvalue = 3*(sin(x) - x*cos(x))/x**3
+        retvalue[x == 0.] = 1.
+    return retvalue
 
 def sas_2J1x_x(x):
-    retvalue = 2*sas_J1(x)/x
-    retvalue[x==0] = 1.
+    if np.isscalar(x):
+        retvalue = 2*sas_J1(x)/x if x != 0 else 1.
+    else:
+        with np.errstate(all='ignore'):
+            retvalue = 2*sas_J1(x)/x
+        retvalue[x==0] = 1.
+    return retvalue
 
 
 # Gaussians
