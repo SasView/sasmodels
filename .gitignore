@@ -19,3 +19,5 @@
 /.pydevproject
 /.idea
 /sasmodels.egg-info/
+/example/Fit_*/
+/example/batch_fit.csv
