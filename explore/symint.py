@@ -31,6 +31,14 @@ def make_cylinder(radius, length):
     norm = 1e-4*volume*CONTRAST**2
     return norm, cylinder
 
+def make_inf_cylinder(radius, length):
+    def inf_cylinder(q):
+        return norm/q * sas_2J1x_x(q*radius)**2
+    inf_cylinder.__doc__ = "inf cylinder radius=%g, length=%g"%(radius, length)
+    volume = pi*radius**2*length
+    norm = 1e-4*volume*CONTRAST**2*pi/length
+    return inf_cylinder
+
 def make_sphere(radius):
     def sphere(qab, qc):
         q = sqrt(qab**2 + qc**2)
@@ -114,46 +122,50 @@ def Iq_trapz(q, n):
 
 def plot_Iq(q, n, form="trapz"):
     if form == "trapz":
-        I = np.array([Iq_trapz(qk, n) for qk in q])
+        Iq = np.array([Iq_trapz(qk, n) for qk in q])
     elif form == "gauss":
-        I = np.array([gauss_quad(qk, n) for qk in q])
-    pylab.loglog(q, I, label="%s, n=%d"%(form, n))
+        Iq = np.array([gauss_quad(qk, n) for qk in q])
+    pylab.loglog(q, Iq, label="%s, n=%d"%(form, n))
     pylab.xlabel("q (1/A)")
     pylab.ylabel("Iq (1/cm)")
     pylab.title(KERNEL.__doc__ + " I(q) circular average")
-    return q, I
+    return Iq
 
-NORM, KERNEL = make_cylinder(radius=10., length=100000.)
-#NORM, KERNEL = make_cylinder(radius=10., length=50000.)
-#NORM, KERNEL = make_cylinder(radius=10., length=20000.)
-#NORM, KERNEL = make_cylinder(radius=10., length=10000.)
-#NORM, KERNEL = make_cylinder(radius=10., length=5000.)
-#NORM, KERNEL = make_cylinder(radius=10., length=1000.)
-#NORM, KERNEL = make_cylinder(radius=10., length=500.)
-#NORM, KERNEL = make_cylinder(radius=10., length=100.)
-#NORM, KERNEL = make_cylinder(radius=10., length=30.)
+radius = 10.
+length = 1e5
+NORM, KERNEL = make_cylinder(radius=radius, length=length)
+inf_cyl = make_inf_cylinder(radius=radius, length=length)
 #NORM, KERNEL = make_sphere(radius=50.)
 
+
 if __name__ == "__main__":
-    Q = 0.8
+    Q = 0.386
     for n in (20, 76, 150, 300, 1000): #, 10000, 30000):
         print("gauss", n, gauss_quad(Q, n=n))
     for k in (8, 10, 13, 16, 19):
         gridded_integrals(Q, n=2**k+1)
+    #print("inf cyl", 0, inf_cyl(Q))
     #scipy_romberg(Q)
+
+    plot(0.386, n=2000)
     plot(0.5, n=2000)
-    plot(0.6, n=2000)
     plot(0.8, n=2000)
     pylab.legend()
     pylab.figure()
-    #plot_Iq(np.logspace(-3, 0, 400), n=2**19+1, form="trapz")
-    q1, I1 = plot_Iq(np.logspace(-3, 0, 400), n=2**16+1, form="trapz")
-    #plot_Iq(np.logspace(-3, 0, 400), n=2**10+1, form="trapz")
-    q2, I2 = plot_Iq(np.logspace(-3, 0, 400), n=1024, form="gauss")
-    #plot_Iq(np.logspace(-3, 0, 400), n=300, form="gauss")
-    plot_Iq(np.logspace(-3, 0, 400), n=150, form="gauss")
-    plot_Iq(np.logspace(-3, 0, 400), n=76, form="gauss")
+
+    q = np.logspace(-3, 0, 400)
+    I1 = inf_cyl(q)
+    I2 = plot_Iq(q, n=2**19+1, form="trapz")
+    #plot_Iq(q, n=2**16+1, form="trapz")
+    #plot_Iq(q, n=2**10+1, form="trapz")
+    plot_Iq(q, n=1024, form="gauss")
+    #plot_Iq(q, n=300, form="gauss")
+    #plot_Iq(q, n=150, form="gauss")
+    #plot_Iq(q, n=76, form="gauss")
+    pylab.loglog(q, inf_cyl(q), label="limit")
     pylab.legend()
-    #pylab.figure()
-    #pylab.semilogx(q1, (I2 - I1)/I1)
+
+    pylab.figure()
+    pylab.semilogx(q, (I2 - I1)/I1)
+
     pylab.show()
