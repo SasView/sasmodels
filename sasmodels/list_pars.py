@@ -11,11 +11,12 @@ addition to just the parameter name.
 from __future__ import print_function
 
 import sys
+import argparse
 
 from .core import load_model_info, list_models
 from .compare import columnize
 
-def find_pars():
+def find_pars(type=None):
     """
     Find all parameters in all models.
 
@@ -25,18 +26,19 @@ def find_pars():
     for name in list_models():
         model_info = load_model_info(name)
         for p in model_info.parameters.kernel_parameters:
-            partable.setdefault(p.name, [])
-            partable[p.name].append(name)
+            if type is None or p.type == type:
+                partable.setdefault(p.name, [])
+                partable[p.name].append(name)
     return partable
 
-def list_pars(names_only=True):
+def list_pars(names_only=True, type=None):
     """
     Print all parameters in all models.
 
     If *names_only* then only print the parameter name, not the models it
     occurs in.
     """
-    partable = find_pars()
+    partable = find_pars(type)
     if names_only:
         print(columnize(list(sorted(partable.keys()))))
     else:
@@ -47,14 +49,22 @@ def main():
     """
     Program to list the parameters used across all models.
     """
-    if len(sys.argv) == 2 and sys.argv[1] == '-v':
-        verbose = True
-    elif len(sys.argv) == 1:
-        verbose = False
-    else:
-        print(__doc__)
-        sys.exit(1)
-    list_pars(names_only=not verbose)
+    parser = argparse.ArgumentParser(
+        description="Find all parameters in all models",
+        )
+    parser.add_argument(
+        '-v', '--verbose',
+        action='store_true',
+        help="list models which use this argument")
+    parser.add_argument(
+        'type', default="any", nargs='?',
+        metavar="volume|orientation|sld|none|any",
+        choices=['volume', 'orientation', 'sld', None, 'any'],
+        type=lambda v: None if v == 'any' else '' if v == 'none' else v,
+        help="only list arguments of the given type")
+    args = parser.parse_args()
+
+    list_pars(names_only=not args.verbose, type=args.type)
 
 if __name__ == "__main__":
     main()
