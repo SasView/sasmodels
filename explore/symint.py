@@ -31,13 +31,13 @@ def make_cylinder(radius, length):
     norm = 1e-4*volume*CONTRAST**2
     return norm, cylinder
 
-def make_inf_cylinder(radius, length):
-    def inf_cylinder(q):
+def make_long_cylinder(radius, length):
+    def long_cylinder(q):
         return norm/q * sas_2J1x_x(q*radius)**2
-    inf_cylinder.__doc__ = "inf cylinder radius=%g, length=%g"%(radius, length)
+    long_cylinder.__doc__ = "long cylinder radius=%g, length=%g"%(radius, length)
     volume = pi*radius**2*length
     norm = 1e-4*volume*CONTRAST**2*pi/length
-    return inf_cylinder
+    return long_cylinder
 
 def make_sphere(radius):
     def sphere(qab, qc):
@@ -134,7 +134,7 @@ def plot_Iq(q, n, form="trapz"):
 radius = 10.
 length = 1e5
 NORM, KERNEL = make_cylinder(radius=radius, length=length)
-inf_cyl = make_inf_cylinder(radius=radius, length=length)
+long_cyl = make_long_cylinder(radius=radius, length=length)
 #NORM, KERNEL = make_sphere(radius=50.)
 
 
@@ -144,7 +144,7 @@ if __name__ == "__main__":
         print("gauss", n, gauss_quad(Q, n=n))
     for k in (8, 10, 13, 16, 19):
         gridded_integrals(Q, n=2**k+1)
-    #print("inf cyl", 0, inf_cyl(Q))
+    #print("inf cyl", 0, long_cyl(Q))
     #scipy_romberg(Q)
 
     plot(0.386, n=2000)
@@ -154,7 +154,7 @@ if __name__ == "__main__":
     pylab.figure()
 
     q = np.logspace(-3, 0, 400)
-    I1 = inf_cyl(q)
+    I1 = long_cyl(q)
     I2 = plot_Iq(q, n=2**19+1, form="trapz")
     #plot_Iq(q, n=2**16+1, form="trapz")
     #plot_Iq(q, n=2**10+1, form="trapz")
@@ -162,7 +162,7 @@ if __name__ == "__main__":
     #plot_Iq(q, n=300, form="gauss")
     #plot_Iq(q, n=150, form="gauss")
     #plot_Iq(q, n=76, form="gauss")
-    pylab.loglog(q, inf_cyl(q), label="limit")
+    pylab.loglog(q, long_cyl(q), label="limit")
     pylab.legend()
 
     pylab.figure()
