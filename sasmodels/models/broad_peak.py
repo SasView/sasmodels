@@ -93,6 +93,22 @@ def Iq(q,
     return inten
 Iq.vectorized = True  # Iq accepts an array of q values
 
+def random():
+    import numpy as np
+    pars = dict(
+        scale=1,
+        porod_scale=10**np.random.uniform(-8, -5),
+        porod_exp=np.random.uniform(1, 6),
+        lorentz_scale=10**np.random.uniform(0.3, 6),
+        lorentz_length=10**np.random.uniform(0, 2),
+        peak_pos=10**np.random.uniform(-3, -1),
+        lorentz_exp=np.random.uniform(1, 4),
+    )
+    pars['lorentz_length'] /= pars['peak_pos']
+    pars['lorentz_scale'] *= pars['porod_scale'] / pars['peak_pos']**pars['porod_exp']
+    #pars['porod_scale'] = 0.
+    return pars
+
 demo = dict(scale=1, background=0,
             porod_scale=1.0e-05, porod_exp=3,
             lorentz_scale=10, lorentz_length=50, peak_pos=0.1, lorentz_exp=2)
