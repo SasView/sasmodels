@@ -69,8 +69,8 @@ Each shell can have a unique thickness and sld.
 	sld_solv: the SLD of the solvent
 	sld_shell: the SLD of the shell#
 	A_shell#: the coefficient in the exponential function
-	
-	
+
+
     scale: 1.0 if data is on absolute scale
     volfraction: volume fraction of spheres
     radius: the radius of the core
@@ -101,6 +101,23 @@ parameters = [["sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "sld",
              ]
 
 source = ["lib/sas_3j1x_x.c", "core_multi_shell.c"]
+
+def random():
+    import numpy as np
+    num_shells = np.minimum(np.random.poisson(3)+1, 10)
+    total_radius = 10**np.random.uniform(1.7, 4)
+    thickness = np.random.exponential(size=num_shells+1)
+    thickness *= total_radius/np.sum(thickness)
+    volume_fraction = 10**np.random.uniform(-4, -1)
+    pars = dict(
+        #background=0,
+        scale=volume_fraction/total_radius**3*1e10,
+        n=num_shells,
+        radius=thickness[0],
+    )
+    for k, v in enumerate(thickness[1:]):
+        pars['thickness%d'%(k+1)] = v
+    return pars
 
 def profile(sld_core, radius, sld_solvent, n, sld, thickness):
     """

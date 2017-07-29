@@ -16,7 +16,7 @@ is calculated as
 
     r_{0}^2 = \frac{1}{\alpha \sqrt{C_a} \left( b/\sqrt{48\pi L_b}\right)}
 
-where 
+where
 
 $K$ is the contrast factor for the polymer which is defined differently than in
 other models and is given in barns where $1 barn = 10^{-24} cm^2$.  $K$ is
@@ -27,14 +27,14 @@ defined as:
     K = a^2
 
     a = b_p - (v_p/v_s) b_s
-    
+
 where $b_p$ and $b_s$ are sum of the scattering lengths of the atoms
 constituting the monomer of the polymer and the sum of the scattering lengths
 of the atoms constituting the solvent molecules respectively, and $v_p$ and
 $v_s$ are the partial molar volume of the polymer and the solvent respectively
 
 $L_b$ is the Bjerrum length(|Ang|) - **Note:** This parameter needs to be
-kept constant for a given solvent and temperature! 
+kept constant for a given solvent and temperature!
 
 $h$ is the virial parameter (|Ang^3|/mol) - **Note:** See [#Borue]_ for the
 correct interpretation of this parameter.  It incorporates second and third
@@ -66,7 +66,7 @@ Authorship and Verification
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Kienzle **Date:** July 24, 2016
-* **Last Reviewed by:** Paul Butler and Richard Heenan **Date:** 
+* **Last Reviewed by:** Paul Butler and Richard Heenan **Date:**
   October 07, 2016
 """
 
@@ -138,6 +138,28 @@ def Iq(q,
 
 Iq.vectorized = True  # Iq accepts an array of q values
 
+def random():
+    import numpy as np
+    pars = dict(
+        scale=10000, #background=0,
+        #polymer_concentration=0.7,
+        polymer_concentration=np.random.beta(5, 3), # around 70%
+        #salt_concentration=0.0,
+        # keep salt concentration extremely low
+        # and use explicit molar to match polymer concentration
+        salt_concentration=np.random.beta(1, 100)*6.022136e-4,
+        #contrast_factor=10.0,
+        contrast_fact=np.random.uniform(1, 100),
+        #bjerrum_length=7.1,
+        bjerrum_length=np.random.uniform(1, 10),
+        #virial_param=12.0,
+        virial_param=np.random.uniform(-1000, 30),
+        #monomer_length=10.0,
+        monomer_length=10.0**(4*np.random.beta(1.5, 3)),
+        #ionization_degree=0.05,
+        ionization_degree=np.random.beta(1.5, 4),
+    )
+    return pars
 
 demo = dict(scale=1, background=0.1,
             contrast_factor=10.0,
