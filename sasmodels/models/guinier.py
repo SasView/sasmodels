@@ -32,7 +32,7 @@ name = "guinier"
 title = ""
 description = """
  I(q) = scale.exp ( - rg^2 q^2 / 3.0 )
- 
+
     List of default parameters:
     scale = scale
     rg = Radius of gyration
@@ -47,6 +47,20 @@ Iq = """
     double value = exp(-exponent);
     return value;
 """
+
+def random():
+    import numpy as np
+    scale = 10**np.random.uniform(1, 5)
+    # Note: compare.py has rg cutoff for guinier, so use that
+    q_max = 1.0
+    rg_max = np.sqrt(90*np.log(10) + 3*np.log(scale))/q_max
+    rg = 10**np.random.uniform(0, np.log10(rg_max))
+    pars = dict(
+        #background=0,
+        scale=scale,
+        rg=rg,
+    )
+    return pars
 
 # parameters for demo
 demo = dict(scale=1.0, rg=60.0)

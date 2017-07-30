@@ -97,6 +97,23 @@ parameters = [
 
 source = ["lamellar_stack_caille.c"]
 
+def random():
+    import numpy as np
+    total_thickness = 10**np.random.uniform(2, 4.7)
+    Nlayers = np.random.randint(2, 200)
+    d_spacing = total_thickness / Nlayers
+    thickness = d_spacing * np.random.uniform(0, 1)
+    Caille_parameter = np.random.uniform(0, 0.8)
+    scale = thickness * 10**np.random.uniform(-7, -4)
+    pars = dict(
+        scale=1,
+        thickness=thickness,
+        Nlayers=Nlayers,
+        d_spacing=d_spacing,
+        Caille_parameter=Caille_parameter,
+    )
+    return pars
+
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
 form_volume = """

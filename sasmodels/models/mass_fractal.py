@@ -87,6 +87,21 @@ parameters = [
 
 source = ["lib/sas_3j1x_x.c", "lib/sas_gamma.c", "mass_fractal.c"]
 
+def random():
+    import numpy as np
+    radius = 10**np.random.uniform(0.7, 4)
+    cutoff_length = 10**np.random.uniform(0.7, 2)*radius
+    fractal_dim_mass = 2*np.random.beta(3, 4) + 1
+    Vf = 10**np.random.uniform(-4, -1)
+    pars = dict(
+        #background=0,
+        scale=1, #1e5*Vf/radius**(fractal_dim_mass),
+        radius=radius,
+        cutoff_length=cutoff_length,
+        fractal_dim_mass=fractal_dim_mass,
+    )
+    return pars
+
 demo = dict(scale=1, background=0,
             radius=10.0,
             fractal_dim_mass=1.9,

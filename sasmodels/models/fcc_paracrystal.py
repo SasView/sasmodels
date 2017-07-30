@@ -77,7 +77,7 @@ be accurate. Note that we are not responsible for any incorrectness of the
 
 .. figure:: img/parallelepiped_angle_definition.png
 
-    Orientation of the crystal with respect to the scattering plane, when 
+    Orientation of the crystal with respect to the scattering plane, when
     $\theta = \phi = 0$ the $c$ axis is along the beam direction (the $z$ axis).
 
 References
@@ -117,6 +117,26 @@ parameters = [["dnn", "Ang", 220, [-inf, inf], "", "Nearest neighbour distance"]
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sas_3j1x_x.c", "lib/gauss150.c", "lib/sphere_form.c", "fcc_paracrystal.c"]
+
+def random():
+    import numpy as np
+    # Define lattice spacing as a multiple of the particle radius
+    # using the formulat a = 4 r/sqrt(3).  Systems which are ordered
+    # are probably mostly filled, so use a distribution which goes from
+    # zero to one, but leaving 90% of them within 80% of the
+    # maximum bcc packing.  Lattice distortion values are empirically
+    # useful between 0.01 and 0.7.  Use an exponential distribution
+    # in this range 'cuz its easy.
+    dnn_fraction = np.random.beta(a=10, b=1)
+    pars = dict(
+        #sld=1, sld_solvent=0, scale=1, background=1e-32,
+        radius=10**np.random.uniform(1.3, 4),
+        d_factor=10**np.random.uniform(-2, -0.7),  # sigma_d in 0.01-0.7
+    )
+    pars['dnn'] = pars['radius']*4/np.sqrt(3)/dnn_fraction
+    #pars['scale'] = 1/(0.68*dnn_fraction**3)  # bcc packing fraction is 0.68
+    pars['scale'] = 1
+    return pars
 
 # parameters for demo
 demo = dict(scale=1, background=0,

@@ -97,6 +97,19 @@ Iq = """
     return inten;
     """
 
+def random():
+    import numpy as np
+    thickness = 10**np.random.uniform(1, 4)
+    length_head = thickness * np.random.uniform(0, 1)
+    length_tail = thickness - length_head
+    scale = thickness * 10**np.random.uniform(-7, -4)
+    pars = dict(
+        scale=scale,
+        length_head=length_head,
+        length_tail=length_tail,
+    )
+    return pars
+
 # ER defaults to 0.0
 # VR defaults to 1.0
 

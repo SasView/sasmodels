@@ -26,8 +26,8 @@ in a fractal-like clusters.  P(q) and S(q) are calculated as:
     \frac{\sin[(D_f-1) \tan^{-1}(q \xi) ]}{(q R_0)^{D_f}}
 
 where $\xi$ is the correlation length representing the cluster size and $D_f$
-is the fractal dimension, representing the self similarity of the structure. 
-Note that S(q) here goes negative if $D_f$ is too large, and the Gamma function 
+is the fractal dimension, representing the self similarity of the structure.
+Note that S(q) here goes negative if $D_f$ is too large, and the Gamma function
 diverges at $D_f=0$ and $D_f=1$.
 
 **Polydispersity on the radius is provided for.**
@@ -54,6 +54,7 @@ Authorship and Verification
 * **Last Reviewed by:** Paul Butler **Date:** March 12, 2017
 
 """
+from __future__ import division
 
 from numpy import inf
 
@@ -96,6 +97,26 @@ parameters = [["volfraction", "", 0.05, [0.0, 1], "",
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sas_3j1x_x.c", "lib/sas_gamma.c", "lib/fractal_sq.c", "fractal.c"]
+
+def random():
+    import numpy as np
+    radius = 10**np.random.uniform(0.7, 4)
+    #radius = 5
+    cor_length = 10**np.random.uniform(0.7, 2)*radius
+    #cor_length = 20*radius
+    volfraction = 10**np.random.uniform(-3, -1)
+    #volfraction = 0.05
+    fractal_dim = 2*np.random.beta(3, 4) + 1
+    #fractal_dim = 2
+    pars = dict(
+        #background=0, sld_block=1, sld_solvent=0,
+        scale=1e4/radius**(fractal_dim/2),
+        volfraction=volfraction,
+        radius=radius,
+        cor_length=cor_length,
+        fractal_dim=fractal_dim,
+    )
+    return pars
 
 demo = dict(volfraction=0.05,
             radius=5.0,

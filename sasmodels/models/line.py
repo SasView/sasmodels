@@ -67,6 +67,17 @@ def Iqxy(qx, qy, *args):
 
 Iqxy.vectorized = True  # Iqxy accepts an array of qx qy values
 
+def random():
+    import numpy as np
+    slope = 1e5*np.random.uniform(-1, 1)
+    offset = 1e-5 + (0 if slope > 0 else -slope)
+    intercept = 10**np.random.uniform(0, 5) + offset
+    pars = dict(
+        scale=1, background=0,
+        slope=slope,
+        intercept=intercept,
+    )
+    return pars
 
 tests = [
     [{'intercept': 1.0, 'slope': 1.0, }, 1.0, 2.001],

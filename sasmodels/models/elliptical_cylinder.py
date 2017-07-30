@@ -32,9 +32,9 @@ where
 .. math::
 
     a = qr'\sin(\alpha)
-    
+
     b = q\frac{L}{2}\cos(\alpha)
-    
+
     r'=\frac{r_{minor}}{\sqrt{2}}\sqrt{(1+\nu^{2}) + (1-\nu^{2})cos(\psi)}
 
 
@@ -56,7 +56,7 @@ by the particle volume
 To provide easy access to the orientation of the elliptical cylinder, we
 define the axis of the cylinder using two angles $\theta$, $\phi$ and $\Psi$
 (see :ref:`cylinder orientation <cylinder-angle-definition>`). The angle
-$\Psi$ is the rotational angle around its own long_c axis. 
+$\Psi$ is the rotational angle around its own long_c axis.
 
 All angle parameters are valid and given only for 2D calculation; ie, an
 oriented system.
@@ -71,13 +71,13 @@ oriented system.
     Examples of the angles for oriented elliptical cylinders against the
     detector plane, with $\Psi$ = 0.
 
-The $\theta$ and $\phi$ parameters to orient the cylinder only appear in the model when fitting 2d data. 
+The $\theta$ and $\phi$ parameters to orient the cylinder only appear in the model when fitting 2d data.
 On introducing "Orientational Distribution" in the angles, "distribution of theta" and "distribution of phi" parameters will
-appear. These are actually rotations about the axes $\delta_1$ and $\delta_2$ of the cylinder, the $b$ and $a$ axes of the 
-cylinder cross section. (When $\theta = \phi = 0$ these are parallel to the $Y$ and $X$ axes of the instrument.) 
-The third orientation distribution, in $\psi$, is about the $c$ axis of the particle. Some experimentation may be required to 
-understand the 2d patterns fully. (Earlier implementations had numerical integration issues in some circumstances when orientation 
-distributions passed through 90 degrees, such situations, with very broad distributions, should still be approached with care.) 
+appear. These are actually rotations about the axes $\delta_1$ and $\delta_2$ of the cylinder, the $b$ and $a$ axes of the
+cylinder cross section. (When $\theta = \phi = 0$ these are parallel to the $Y$ and $X$ axes of the instrument.)
+The third orientation distribution, in $\psi$, is about the $c$ axis of the particle. Some experimentation may be required to
+understand the 2d patterns fully. (Earlier implementations had numerical integration issues in some circumstances when orientation
+distributions passed through 90 degrees, such situations, with very broad distributions, should still be approached with care.)
 
 NB: The 2nd virial coefficient of the cylinder is calculated based on the
 averaged radius $(=\sqrt{r_\text{minor}^2 * \text{axis ratio}})$ and length
@@ -109,7 +109,7 @@ Authorship and Verification
 ----------------------------
 
 * **Author:**
-* **Last Modified by:** 
+* **Last Modified by:**
 * **Last Reviewed by:**  Richard Heenan - corrected equation in docs **Date:** December 21, 2016
 
 """
@@ -155,6 +155,24 @@ def ER(radius_minor, axis_ratio, length):
     ddd = 0.75 * radius * (2 * radius * length
                            + (length + radius) * (length + pi * radius))
     return 0.5 * (ddd) ** (1. / 3.)
+
+def random():
+    import numpy as np
+    # V = pi * radius_major * radius_minor * length;
+    V = 10**np.random.uniform(3, 9)
+    length = 10**np.random.uniform(1, 3)
+    axis_ratio = 10**(4*np.random.uniform(-2, 2)
+    radius_minor = np.sqrt(V/length/axis_ratio)
+    Vf = 10**np.random.uniform(-4, -2)
+    pars = dict(
+        #background=0, sld=0, sld_solvent=1,
+        scale=1e9*Vf/V,
+        length=length,
+        radius_minor=radius_minor,
+        axis_ratio=axis_ratio,
+    )
+    return pars
+
 q = 0.1
 # april 6 2017, rkh added a 2d unit test, NOT READY YET pull #890 branch assume correct!
 qx = q*cos(pi/6.0)

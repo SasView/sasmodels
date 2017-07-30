@@ -88,6 +88,26 @@ parameters = [
 
 source = ["mass_surface_fractal.c"]
 
+def random():
+    import numpy as np
+    fractal_dim = np.random.uniform(1, 6)
+    surface_portion = np.random.uniform(0, 1)
+    fractal_dim_surf = fractal_dim*surface_portion
+    fractal_dim_mass = fractal_dim - fractal_dim_surf
+    rg_cluster = 10**np.random.uniform(1, 5)
+    rg_primary = rg_cluster*10**np.random.uniform(-4, -1)
+    scale = 10**np.random.uniform(2, 5)
+    pars = dict(
+        #background=0,
+        scale=scale,
+        fractal_dim_mass=fractal_dim_mass,
+        fractal_dim_surf=fractal_dim_surf,
+        rg_cluster=rg_cluster,
+        rg_primary=rg_primary,
+    )
+    return pars
+
+
 demo = dict(scale=1, background=0,
             fractal_dim_mass=1.8,
             fractal_dim_surf=2.3,

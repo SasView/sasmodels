@@ -1,7 +1,7 @@
 # ellipsoid model
 # Note: model title and parameter table are inserted automatically
 r"""
-The form factor is normalized by the particle volume 
+The form factor is normalized by the particle volume
 
 Definition
 ----------
@@ -118,6 +118,7 @@ Authorship and Verification
 * **Converted to sasmodels by:** Helen Park **Date:** July 9, 2014
 * **Last Modified by:** Paul Kienzle **Date:** March 22, 2017
 """
+from __future__ import division
 
 from numpy import inf, sin, cos, pi
 
@@ -176,10 +177,23 @@ def ER(radius_polar, radius_equatorial):
     b2 = 1.0 + bd / 2 / e1 * np.log(bL)
     delta = 0.75 * b1 * b2
 
-    ddd = np.zeros_like(radius_polar)
+    #ddd = np.zeros_like(radius_polar)
     ddd[valid] = 2.0 * (delta + 1.0) * radius_polar * radius_equatorial ** 2
     return 0.5 * ddd ** (1.0 / 3.0)
 
+def random():
+    import numpy as np
+    V = 10**np.random.uniform(4, 12)
+    radius_polar = 10**np.random.uniform(1.3, 4)
+    radius_equatorial = np.sqrt(V/radius_polar) # ignore 4/3 pi
+    Vf = 10**np.random.uniform(-4, -2)
+    pars = dict(
+        #background=0, sld=0, sld_solvent=1,
+        scale=1e9*Vf/V,
+        radius_polar=radius_polar,
+        radius_equatorial=radius_equatorial,
+    )
+    return pars
 
 demo = dict(scale=1, background=0,
             sld=6, sld_solvent=1,

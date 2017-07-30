@@ -88,6 +88,16 @@ Iq = """
     return 4.0e-4*M_PI*sub*sub/qsq * 2.0*sinq2*sinq2 / (thickness*qsq);
     """
 
+def random():
+    import numpy as np
+    thickness = 10**np.random.uniform(1, 4)
+    scale = thickness * 10**np.random.uniform(-7, -4)
+    pars = dict(
+        scale=scale,
+        thickness=thickness,
+    )
+    return pars
+
 # ER defaults to 0.0
 # VR defaults to 1.0
 
