@@ -73,8 +73,19 @@ parameters = [["radius",        "Ang", 10.0, [0, inf],   "",
 
 source = ["lib/sas_3j1x_x.c", "lib/sas_gamma.c", "surface_fractal.c"]
 
-demo = dict(scale=1, background=1e-5,
-            radius=10, fractal_dim_surf=2.0, cutoff_length=500)
+def random():
+    import numpy as np
+    radius = 10**np.random.uniform(1, 4)
+    fractal_dim_surf = np.random.uniform(1, 3-1e-6)
+    cutoff_length = 1e6  # Sets the low q limit; keep it big for sim
+    pars = dict(
+        #background=0,
+        scale=1,
+        radius=radius,
+        fractal_dim_surf=fractal_dim_surf,
+        cutoff_length=cutoff_length,
+    )
+    return pars
 
 tests = [
     # Accuracy tests based on content in test/utest_other_models.py

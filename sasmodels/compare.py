@@ -367,6 +367,10 @@ def constrain_pars(model_info, pars):
 
     elif name == 'guinier':
         # Limit guinier to an Rg such that Iq > 1e-30 (single precision cutoff)
+        # I(q) = A e^-(Rg^2 q^2/3) > e^-(30 ln 10)
+        # => ln A - (Rg^2 q^2/3) > -30 ln 10
+        # => Rg^2 q^2/3 < 30 ln 10 + ln A
+        # => Rg < sqrt(90 ln 10 + 3 ln A)/q
         #q_max = 0.2  # mid q maximum
         q_max = 1.0  # high q maximum
         rg_max = np.sqrt(90*np.log(10) + 3*np.log(pars['scale']))/q_max
@@ -1318,10 +1322,10 @@ def main(*argv):
     Main program.
     """
     opts = parse_opts(argv)
-    if opts['seed'] > -1:
-        print("Randomize using -random=%i"%opts['seed'])
-        np.random.seed(opts['seed'])
     if opts is not None:
+        if opts['seed'] > -1:
+            print("Randomize using -random=%i"%opts['seed'])
+            np.random.seed(opts['seed'])
         if opts['html']:
             show_docs(opts)
         elif opts['explore']:
