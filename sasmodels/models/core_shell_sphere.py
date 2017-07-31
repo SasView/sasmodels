@@ -56,7 +56,7 @@ from numpy import pi, inf
 name = "core_shell_sphere"
 title = "Form factor for a monodisperse spherical particle with particle with a core-shell structure."
 description = """
-    F^2(q) = 3/V_s [V_c (sld_core-sld_shell) (sin(q*radius)-q*radius*cos(q*radius))/(q*radius)^3 
+    F^2(q) = 3/V_s [V_c (sld_core-sld_shell) (sin(q*radius)-q*radius*cos(q*radius))/(q*radius)^3
                    + V_s (sld_shell-sld_solvent) (sin(q*r_s)-q*r_s*cos(q*r_s))/(q*r_s)^3]
 
             V_s: Volume of the sphere shell
@@ -97,6 +97,19 @@ def VR(radius, thickness):
     whole = 4.0/3.0 * pi * (radius + thickness)**3
     core = 4.0/3.0 * pi * radius**3
     return whole, whole - core
+
+def random():
+    import numpy as np
+    total_radius = 10**np.random.uniform(1.3, 4.3)
+    radius = np.random.uniform(0, 1)*total_radius
+    thickness = total_radius - radius
+    Vf = 10**np.random.uniform(4, 6)/total_radius**3
+    pars = dict(
+        scale=Vf,
+        radius=radius,
+        thickness=thickness,
+    )
+    return pars
 
 tests = [
     [{'radius': 20.0, 'thickness': 10.0}, 'ER', 30.0],
