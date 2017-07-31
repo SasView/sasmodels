@@ -317,9 +317,50 @@ def _randomize_one(model_info, name, value):
     limits = (max(par.limits[0], low), min(par.limits[1], high))
     return np.random.uniform(*limits)
 
+def _random_pd(model_info, pars):
+    pd = [p for p in model_info.parameters.kernel_parameters if p.polydisperse]
+    pd_volume = []
+    pd_oriented = []
+    for p in pd:
+        if p.type == 'orientation':
+            pd_oriented.append(p.name)
+        elif p.length_control is not None:
+            n = pars.get(p.length_control, 1)
+            pd_volume.extend(p.name+str(k+1) for k in range(n))
+        elif p.length > 1:
+            pd_volume.extend(p.name+str(k+1) for k in range(p.length))
+        else:
+            pd_volume.append(p.name)
+    u = np.random.rand()
+    n = len(pd_volume)
+    if u < 0.01 or n < 1:
+        pass  # 1% chance of no polydispersity
+    elif u < 0.86 or n < 2:
+        pars[np.random.choice(pd_volume)+"_pd_n"] = 35
+    elif u < 0.99 or n < 3:
+        choices = np.random.choice(len(pd_volume), size=2)
+        pars[pd_volume[choices[0]]+"_pd_n"] = 25
+        pars[pd_volume[choices[1]]+"_pd_n"] = 10
+    else:
+        choices = np.random.choice(len(pd_volume), size=3)
+        pars[pd_volume[choices[0]]+"_pd_n"] = 25
+        pars[pd_volume[choices[1]]+"_pd_n"] = 10
+        pars[pd_volume[choices[2]]+"_pd_n"] = 5
+    if pd_oriented:
+        pars['theta_pd_n'] = 20
+        if np.random.rand() < 0.1:
+            pars['phi_pd_n'] = 5
+        if np.random.rand() < 0.1:
+            pars['psi_pd_n'] = 5
 
-def randomize_pars(model_info, pars, seed=None):
-    # type: (ModelInfo, ParameterSet, int) -> ParameterSet
+    ## Show selected polydispersity
+    #for name, value in pars.items():
+    #    if name.endswith('_pd_n') and value > 0:
+    #        print(name, value, pars.get(name[:-5], 0), pars.get(name[:-2], 0))
+
+
+def randomize_pars(model_info, pars):
+    # type: (ModelInfo, ParameterSet) -> ParameterSet
     """
     Generate random values for all of the parameters.
 
@@ -333,8 +374,9 @@ def randomize_pars(model_info, pars, seed=None):
                        for p, v in sorted(pars.items()))
     if model_info.random is not None:
         random_pars.update(model_info.random())
-
+    _random_pd(model_info, random_pars)
     return random_pars
+
 
 def constrain_pars(model_info, pars):
     # type: (ModelInfo, ParameterSet) -> None
@@ -347,6 +389,7 @@ def constrain_pars(model_info, pars):
 
     Warning: this updates the *pars* dictionary in place.
     """
+    # TODO: move the model specific code to the individual models
     name = model_info.id
     # if it is a product model, then just look at the form factor since
     # none of the structure factors need any constraints.
@@ -445,7 +488,8 @@ def suppress_pd(pars):
     """
     pars = pars.copy()
     for p in pars:
-        if p.endswith("_pd_n"): pars[p] = 0
+        if p.endswith("_pd_n"):
+            pars[p] = 0
     return pars
 
 def suppress_magnetism(pars):
