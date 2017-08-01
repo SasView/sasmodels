@@ -139,41 +139,26 @@ source = ["lib/sas_3j1x_x.c", "lib/sphere_form.c", "lib/gauss150.c", "sc_paracry
 
 def random():
     import numpy as np
-    # Define lattice spacing as a multiple of the particle radius
-    # using the formulat a = 4 r/sqrt(3).  Systems which are ordered
-    # are probably mostly filled, so use a distribution which goes from
-    # zero to one, but leaving 90% of them within 80% of the
-    # maximum bcc packing.  Lattice distortion values are empirically
-    # useful between 0.01 and 0.7.  Use an exponential distribution
-    # in this range 'cuz its easy.
+    # copied from bcc_paracrystal
+    radius = 10**np.random.uniform(1.3, 4)
+    d_factor = 10**np.random.uniform(-2, -0.7)  # sigma_d in 0.01-0.7
     dnn_fraction = np.random.beta(a=10, b=1)
+    dnn = radius*4/np.sqrt(3)/dnn_fraction
     pars = dict(
         #sld=1, sld_solvent=0, scale=1, background=1e-32,
-        radius=10**np.random.uniform(1.3, 4),
-        d_factor=10**np.random.uniform(-2, -0.7),  # sigma_d in 0.01-0.7
+        dnn=dnn,
+        d_factor=d_factor,
+        radius=radius,
     )
-    pars['dnn'] = pars['radius']*4/np.sqrt(3)/dnn_fraction
-    #pars['scale'] = 1/(0.68*dnn_fraction**3)  # bcc packing fraction is 0.68
-    pars['scale'] = 1
     return pars
-
-demo = dict(scale=1, background=0,
-            dnn=220.0,
-            d_factor=0.06,
-            radius=40.0,
-            sld=3.0,
-            sld_solvent=6.3,
-            theta=0.0,
-            phi=0.0,
-            psi=0.0)
 
 tests = [
     # Accuracy tests based on content in test/utest_extra_models.py, 2d tests added April 10, 2017
     [{}, 0.001, 10.3048],
     [{}, 0.215268, 0.00814889],
-    [{}, (0.414467), 0.001313289],
-    [{'theta':10.0,'phi':20,'psi':30.0},(0.045,-0.035),18.0397138402 ],
-    [{'theta':10.0,'phi':20,'psi':30.0},(0.023,0.045),0.0177333171285 ]
+    [{}, 0.414467, 0.001313289],
+    [{'theta': 10.0, 'phi': 20, 'psi': 30.0}, (0.045, -0.035), 18.0397138402],
+    [{'theta': 10.0, 'phi': 20, 'psi': 30.0}, (0.023, 0.045), 0.0177333171285],
     ]
 
 

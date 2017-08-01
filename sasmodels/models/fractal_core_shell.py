@@ -112,7 +112,6 @@ def random():
     #fractal_dim = 2
     pars = dict(
         #background=0, sld_block=1, sld_solvent=0,
-        scale=1e3/total_radius**(fractal_dim/2),
         volfraction=volfraction,
         radius=radius,
         cor_length=cor_length,

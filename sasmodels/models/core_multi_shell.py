@@ -108,10 +108,8 @@ def random():
     total_radius = 10**np.random.uniform(1.7, 4)
     thickness = np.random.exponential(size=num_shells+1)
     thickness *= total_radius/np.sum(thickness)
-    volume_fraction = 10**np.random.uniform(-4, -1)
     pars = dict(
         #background=0,
-        scale=volume_fraction/total_radius**3*1e10,
         n=num_shells,
         radius=thickness[0],
     )

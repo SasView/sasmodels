@@ -131,9 +131,7 @@ def random():
     length_head = thickness * np.random.uniform(0, 1)
     length_tail = thickness - length_head
     Caille_parameter = np.random.uniform(0, 0.8)
-    scale = thickness * 10**np.random.uniform(-7, -4)
     pars = dict(
-        scale=1,
         length_head=length_head,
         length_tail=length_tail,
         Nlayers=Nlayers,

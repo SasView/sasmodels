@@ -104,9 +104,7 @@ def random():
     d_spacing = total_thickness / Nlayers
     thickness = d_spacing * np.random.uniform(0, 1)
     Caille_parameter = np.random.uniform(0, 0.8)
-    scale = thickness * 10**np.random.uniform(-7, -4)
     pars = dict(
-        scale=1,
         thickness=thickness,
         Nlayers=Nlayers,
         d_spacing=d_spacing,

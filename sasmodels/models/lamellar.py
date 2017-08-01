@@ -91,9 +91,7 @@ Iq = """
 def random():
     import numpy as np
     thickness = 10**np.random.uniform(1, 4)
-    scale = thickness * 10**np.random.uniform(-7, -4)
     pars = dict(
-        scale=scale,
         thickness=thickness,
     )
     return pars

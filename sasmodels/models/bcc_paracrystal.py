@@ -139,34 +139,24 @@ def random():
     # maximum bcc packing.  Lattice distortion values are empirically
     # useful between 0.01 and 0.7.  Use an exponential distribution
     # in this range 'cuz its easy.
+    radius = 10**np.random.uniform(1.3, 4)
+    d_factor = 10**np.random.uniform(-2, -0.7)  # sigma_d in 0.01-0.7
     dnn_fraction = np.random.beta(a=10, b=1)
+    dnn = radius*4/np.sqrt(3)/dnn_fraction
     pars = dict(
         #sld=1, sld_solvent=0, scale=1, background=1e-32,
-        radius=10**np.random.uniform(1.3, 4),
-        d_factor=10**np.random.uniform(-2, -0.7),  # sigma_d in 0.01-0.7
+        dnn=dnn,
+        d_factor=d_factor,
+        radius=radius,
     )
-    pars['dnn'] = pars['radius']*4/np.sqrt(3)/dnn_fraction
-    #pars['scale'] = 1/(0.68*dnn_fraction**3)  # bcc packing fraction is 0.68
-    pars['scale'] = 1
     return pars
 
-# parameters for demo
-demo = dict(
-    scale=1, background=0,
-    dnn=220, d_factor=0.06, sld=4, sld_solvent=1,
-    radius=40,
-    theta=60, phi=60, psi=60,
-    radius_pd=.2, radius_pd_n=2,
-    theta_pd=15, theta_pd_n=0,
-    phi_pd=15, phi_pd_n=0,
-    psi_pd=15, psi_pd_n=0,
-    )
 # april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
 # add 2d test later
 q =4.*pi/220.
 tests = [
     [{ },
      [0.001, q, 0.215268], [1.46601394721, 2.85851284174, 0.00866710287078]],
-    [{'theta':20.0,'phi':30,'psi':40.0},(-0.017,0.035),2082.20264399 ],
-    [{'theta':20.0,'phi':30,'psi':40.0},(-0.081,0.011),0.436323144781 ]
+    [{'theta': 20.0, 'phi': 30, 'psi': 40.0}, (-0.017, 0.035), 2082.20264399],
+    [{'theta': 20.0, 'phi': 30, 'psi': 40.0}, (-0.081, 0.011), 0.436323144781],
     ]

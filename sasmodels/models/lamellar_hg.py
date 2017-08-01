@@ -102,9 +102,7 @@ def random():
     thickness = 10**np.random.uniform(1, 4)
     length_head = thickness * np.random.uniform(0, 1)
     length_tail = thickness - length_head
-    scale = thickness * 10**np.random.uniform(-7, -4)
     pars = dict(
-        scale=scale,
         length_head=length_head,
         length_tail=length_tail,
     )
