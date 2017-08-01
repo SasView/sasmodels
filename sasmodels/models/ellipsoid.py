@@ -183,13 +183,11 @@ def ER(radius_polar, radius_equatorial):
 
 def random():
     import numpy as np
-    V = 10**np.random.uniform(4, 12)
+    V = 10**np.random.uniform(5, 12)
     radius_polar = 10**np.random.uniform(1.3, 4)
     radius_equatorial = np.sqrt(V/radius_polar) # ignore 4/3 pi
-    Vf = 10**np.random.uniform(-4, -2)
     pars = dict(
         #background=0, sld=0, sld_solvent=1,
-        scale=1e9*Vf/V,
         radius_polar=radius_polar,
         radius_equatorial=radius_equatorial,
     )

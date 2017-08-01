@@ -53,7 +53,7 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
-* **Last Modified by:** Richard Heenan **Date:** October 06, 2016 
+* **Last Modified by:** Richard Heenan **Date:** October 06, 2016
    (reparametrised to use thickness, not outer radius)
 * **Last Reviewed by:** Richard Heenan **Date:** October 06, 2016
 
@@ -120,14 +120,18 @@ def VR(radius, thickness, length):
     vol_shell = vol_total - vol_core
     return vol_shell, vol_total
 
-# parameters for demo
-demo = dict(scale=1.0, background=0.0, length=400.0, radius=20.0,
-            thickness=10, sld=6.3, sld_solvent=1, theta=90, phi=0,
-            thickness_pd=0.2, thickness_pd_n=9,
-            length_pd=.2, length_pd_n=10,
-            radius_pd=.2, radius_pd_n=9,
-            theta_pd=10, theta_pd_n=5,
-           )
+def random():
+    import numpy as np
+    length = 10**np.random.uniform(2, 6)
+    radius = 10**np.random.uniform(1, 3)
+    kuhn_length = 10**np.random.uniform(-2, -0.7)*length  # at least 10 segments
+    pars = dict(
+        length=length,
+        radius=radius,
+        kuhn_length=kuhn_length,
+    )
+    return pars
+
 q = 0.1
 # april 6 2017, rkh added a 2d unit test, assume correct!
 qx = q*cos(pi/6.0)

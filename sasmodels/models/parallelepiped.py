@@ -21,10 +21,10 @@ Definition
 
 .. note::
 
-The three dimensions of the parallelepiped (strictly here a cuboid) may be given in 
+The three dimensions of the parallelepiped (strictly here a cuboid) may be given in
 $any$ size order. To avoid multiple fit solutions, especially
-with Monte-Carlo fit methods, it may be advisable to restrict their ranges. There may 
-be a number of closely similar "best fits", so some trial and error, or fixing of some 
+with Monte-Carlo fit methods, it may be advisable to restrict their ranges. There may
+be a number of closely similar "best fits", so some trial and error, or fixing of some
 dimensions at expected values, may help.
 
 The 1D scattering intensity $I(q)$ is calculated as:
@@ -114,13 +114,13 @@ $A$ along $z$ and $B$ along $x$.
     detector plane.
 
 On introducing "Orientational Distribution" in the angles, "distribution of theta" and "distribution of phi" parameters will
-appear. These are actually rotations about axes $\delta_1$ and $\delta_2$ of the parallelepiped, perpendicular to the $a$ x $c$ and $b$ x $c$ faces. 
-(When $\theta = \phi = 0$ these are parallel to the $Y$ and $X$ axes of the instrument.) The third orientation distribution, in $\psi$, is 
-about the $c$ axis of the particle, perpendicular to the $a$ x $b$ face. Some experimentation may be required to 
-understand the 2d patterns fully. (Earlier implementations had numerical integration issues in some circumstances when orientation 
-distributions passed through 90 degrees, such situations, with very broad distributions, should still be approached with care.) 
+appear. These are actually rotations about axes $\delta_1$ and $\delta_2$ of the parallelepiped, perpendicular to the $a$ x $c$ and $b$ x $c$ faces.
+(When $\theta = \phi = 0$ these are parallel to the $Y$ and $X$ axes of the instrument.) The third orientation distribution, in $\psi$, is
+about the $c$ axis of the particle, perpendicular to the $a$ x $b$ face. Some experimentation may be required to
+understand the 2d patterns fully. (Earlier implementations had numerical integration issues in some circumstances when orientation
+distributions passed through 90 degrees, such situations, with very broad distributions, should still be approached with care.)
 
-    
+
 For a given orientation of the parallelepiped, the 2D form factor is
 calculated as
 
@@ -240,6 +240,18 @@ def ER(length_a, length_b, length_c):
     return 0.5 * (ddd) ** (1. / 3.)
 
 # VR defaults to 1.0
+
+
+def random():
+    import numpy as np
+    a, b, c = 10**np.random.uniform(1, 4.7, size=3)
+    pars = dict(
+        length_a=a,
+        length_b=b,
+        length_c=c,
+    )
+    return pars
+
 
 # parameters for demo
 demo = dict(scale=1, background=0,

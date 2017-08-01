@@ -269,6 +269,9 @@ def _randomize_one(model_info, name, value):
     """
     Randomize a single parameter.
     """
+    # Set the amount of polydispersity/angular dispersion, but by default pd_n
+    # is zero so there is no polydispersity.  This allows us to turn on/off
+    # pd by setting pd_n, and still have randomly generated values
     if name.endswith('_pd'):
         par = model_info.parameters[name[:-3]]
         if par.type == 'orientation':
@@ -278,41 +281,58 @@ def _randomize_one(model_info, name, value):
             # Let polydispersity peak around 15%; 95% < 0.4; max=100%
             return np.random.beta(1.5, 7)
 
+    # pd is selected globally rather than per parameter, so set to 0 for no pd
+    # In particular, when multiple pd dimensions, want to decrease the number
+    # of points per dimension for faster computation
     if name.endswith('_pd_n'):
-        # let pd be selected globally rather than per parameter
         return 0
 
+    # Don't mess with distribution type for now
     if name.endswith('_pd_type'):
-        # Don't mess with distribution type for now
         return 'gaussian'
 
+    # type-dependent value of number of sigmas; for gaussian use 3.
     if name.endswith('_pd_nsigma'):
-        # type-dependent value; for gaussian use 3.
         return 3.
 
+    # background in the range [0.01, 1]
     if name == 'background':
-        return np.random.uniform(0, 1)
+        return 10**np.random.uniform(-2, 0)
 
+    # scale defaults to 0.1% to 30% volume fraction
     if name == 'scale':
-        return 10**np.random.uniform(-5,0)
+        return 10**np.random.uniform(-3, -0.5)
 
+    # If it is a list of choices, pick one at random with equal probability
+    # In practice, the model specific random generator will override.
     par = model_info.parameters[name]
     if len(par.limits) > 2:  # choice list
         return np.random.randint(len(par.limits))
 
+    # If it is a fixed range, pick from it with equal probability.
+    # For logarithmic ranges, the model will have to override.
     if np.isfinite(par.limits).all():
         return np.random.uniform(*par.limits)
 
+    # If the paramter is marked as an sld use the range of neutron slds
+    # Should be doing something with randomly selected contrast matching
+    # but for now use random contrasts.  Since real data is contrast-matched,
+    # this will favour selection of hollow models when they exist.
     if par.type == 'sld':
         # Range of neutron SLDs
         return np.random.uniform(-0.5, 12)
 
+    # Guess at the random length/radius/thickness.  In practice, all models
+    # are going to set their own reasonable ranges.
     if par.type == 'volume':
         if ('length' in par.name or
                 'radius' in par.name or
                 'thick' in par.name):
-            return 10**np.random.uniform(2,4)
+            return 10**np.random.uniform(2, 4)
 
+    # In the absence of any other info, select a value in [0, 2v], or
+    # [-2|v|, 2|v|] if v is negative, or [0, 1] if v is zero.  Mostly the
+    # model random parameter generators will override this default.
     low, high = parameter_range(par.name, value)
     limits = (max(par.limits[0], low), min(par.limits[1], high))
     return np.random.uniform(*limits)

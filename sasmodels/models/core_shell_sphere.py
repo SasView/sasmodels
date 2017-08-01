@@ -103,9 +103,7 @@ def random():
     total_radius = 10**np.random.uniform(1.3, 4.3)
     radius = np.random.uniform(0, 1)*total_radius
     thickness = total_radius - radius
-    Vf = 10**np.random.uniform(4, 6)/total_radius**3
     pars = dict(
-        scale=Vf,
         radius=radius,
         thickness=thickness,
     )
