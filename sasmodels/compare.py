@@ -668,7 +668,7 @@ def eval_ctypes(model_info, data, dtype='double', cutoff=0.):
     """
     model = core.build_model(model_info, dtype=dtype, platform="dll")
     calculator = DirectModel(data, model, cutoff=cutoff)
-    calculator.engine = "OMP%s"%DTYPE_MAP[dtype]
+    calculator.engine = "OMP%s"%DTYPE_MAP[str(model.dtype)]
     return calculator
 
 def time_calculation(calculator, pars, evals=1):

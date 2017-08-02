@@ -32,6 +32,7 @@ class PyModel(KernelModel):
         # Make sure Iq and Iqxy are available and vectorized
         _create_default_functions(model_info)
         self.info = model_info
+        self.dtype = np.dtype('d')
 
     def make_kernel(self, q_vectors):
         logging.info("creating python kernel " + self.info.name)
