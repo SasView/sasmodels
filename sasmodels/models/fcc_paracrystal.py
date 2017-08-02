@@ -124,7 +124,7 @@ def random():
     radius = 10**np.random.uniform(1.3, 4)
     d_factor = 10**np.random.uniform(-2, -0.7)  # sigma_d in 0.01-0.7
     dnn_fraction = np.random.beta(a=10, b=1)
-    dnn = radius*4/np.sqrt(3)/dnn_fraction
+    dnn = radius*4/np.sqrt(2)/dnn_fraction
     pars = dict(
         #sld=1, sld_solvent=0, scale=1, background=1e-32,
         dnn=dnn,
@@ -134,10 +134,9 @@ def random():
     return pars
 
 # april 10 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
-q =4.*pi/220.
+q = 4.*pi/220.
 tests = [
-    [{ },
-     [0.001, q, 0.215268], [0.275164706668, 5.7776842567, 0.00958167119232]],
-     [{}, (-0.047, -0.007), 238.103096286 ],
-     [{}, (0.053, 0.063), 0.863609587796 ],
+    [{}, [0.001, q, 0.215268], [0.275164706668, 5.7776842567, 0.00958167119232]],
+    [{}, (-0.047, -0.007), 238.103096286],
+    [{}, (0.053, 0.063), 0.863609587796],
 ]

@@ -140,6 +140,7 @@ Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
     import numpy as np
+    # TODO: review random be_polyelectrolyte model generation
     pars = dict(
         scale=10000, #background=0,
         #polymer_concentration=0.7,

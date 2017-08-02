@@ -139,9 +139,7 @@ def random():
     thickness = d_spacing * np.random.uniform(0, 1)
     # Let polydispersity peak around 15%; 95% < 0.4; max=100%
     sigma_d = np.random.beta(1.5, 7)
-    scale = thickness * 10**np.random.uniform(-7, -4)
     pars = dict(
-        #scale=1,
         thickness=thickness,
         Nlayers=Nlayers,
         d_spacing=d_spacing,

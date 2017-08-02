@@ -762,6 +762,8 @@ def compare(opts, limits=None):
     limits = np.Inf, -np.Inf
     for k in range(opts['sets']):
         opts['pars'] = parse_pars(opts)
+        if opts['pars'] is None:
+            return
         result = run_models(opts, verbose=True)
         if opts['plot']:
             limits = plot_models(opts, result, limits=limits, setnum=k)
@@ -1394,6 +1396,8 @@ def main(*argv):
             show_docs(opts)
         elif opts['explore']:
             opts['pars'] = parse_pars(opts)
+            if opts['pars'] is None:
+                return
             explore(opts)
         else:
             compare(opts)

@@ -148,7 +148,12 @@ def VR(length_a, b2a_ratio, c2a_ratio, thickness):
 def random():
     import numpy as np
     a, b, c = 10**np.random.uniform(1, 4.7, size=3)
-    thickness = np.random.uniform(0.01, 0.49) * min(a, b, c)
+    # Thickness is limited to 1/2 the smallest dimension
+    # Use a distribution with a preference for thin shell or thin core
+    # Avoid core,shell radii < 1
+    min_dim = 0.5*min(a, b, c)
+    thickness = np.random.beta(0.5, 0.5)*(min_dim-2) + 1
+    #print(a, b, c, thickness, thickness/min_dim)
     pars = dict(
         length_a=a,
         b2a_ratio=b/a,

@@ -116,6 +116,20 @@ def ER(radius, edge_sep, thick_string, num_pearls):
     rad_out = (tot_vol/(4.0/3.0*pi)) ** (1./3.)
     return rad_out
 
+def random():
+    import numpy as np
+    radius = 10**np.random.uniform(1, 3) # 1 - 1000
+    thick_string = 10**np.random.uniform(0, np.log10(radius)-1) # 1 - radius/10
+    edge_sep = 10**np.random.uniform(0, 3)  # 1 - 1000
+    num_pearls = np.round(10**np.random.uniform(0.3, 3)) # 2 - 1000
+    pars = dict(
+        radius=radius,
+        edge_sep=edge_sep,
+        thick_string=thick_string,
+        num_pearls=num_pearls,
+    )
+    return pars
+
 # parameters for demo
 demo = dict(scale=1, background=0, radius=80.0, edge_sep=350.0,
             num_pearls=3, sld=1, sld_solvent=6.3, sld_string=1,

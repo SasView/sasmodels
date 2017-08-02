@@ -244,11 +244,11 @@ def ER(length_a, length_b, length_c):
 
 def random():
     import numpy as np
-    a, b, c = 10**np.random.uniform(1, 4.7, size=3)
+    length = 10**np.random.uniform(1, 4.7, size=3)
     pars = dict(
-        length_a=a,
-        length_b=b,
-        length_c=c,
+        length_a=length[0],
+        length_b=length[1],
+        length_c=length[2],
     )
     return pars
 

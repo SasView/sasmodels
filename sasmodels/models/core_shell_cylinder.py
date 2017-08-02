@@ -141,6 +141,21 @@ def VR(radius, thickness, length):
     core = pi * radius ** 2 * length
     return whole, whole - core
 
+def random():
+    import numpy as np
+    outer_radius = 10**np.random.uniform(1, 4.7)
+    # Use a distribution with a preference for thin shell or thin core
+    # Avoid core,shell radii < 1
+    radius = np.random.beta(0.5, 0.5)*(outer_radius-2) + 1
+    thickness = outer_radius - core
+    length = np.random.uniform(1, 4.7)
+    pars = dict(
+        radius=radius,
+        thickness=thickness,
+        length=length,
+    )
+    return pars
+
 demo = dict(scale=1, background=0,
             sld_core=6, sld_shell=8, sld_solvent=1,
             radius=45, thickness=25, length=340,

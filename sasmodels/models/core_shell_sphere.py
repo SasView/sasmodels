@@ -100,9 +100,11 @@ def VR(radius, thickness):
 
 def random():
     import numpy as np
-    total_radius = 10**np.random.uniform(1.3, 4.3)
-    radius = np.random.uniform(0, 1)*total_radius
-    thickness = total_radius - radius
+    outer_radius = 10**np.random.uniform(1.3, 4.3)
+    # Use a distribution with a preference for thin shell or thin core
+    # Avoid core,shell radii < 1
+    radius = np.random.beta(0.5, 0.5)*(outer_radius-2) + 1
+    thickness = outer_radius - core
     pars = dict(
         radius=radius,
         thickness=thickness,
@@ -111,12 +113,11 @@ def random():
 
 tests = [
     [{'radius': 20.0, 'thickness': 10.0}, 'ER', 30.0],
-     # TODO: VR test suppressed until we sort out new product model
-     # and determine what to do with volume ratio.
-     #[{'radius': 20.0, 'thickness': 10.0}, 'VR', 0.703703704],
+    # TODO: VR test suppressed until we sort out new product model
+    # and determine what to do with volume ratio.
+    #[{'radius': 20.0, 'thickness': 10.0}, 'VR', 0.703703704],
 
-     # The SasView test result was 0.00169, with a background of 0.001
-     [{'radius': 60.0, 'thickness': 10.0, 'sld_core': 1.0, 'sld_shell':2.0,
-       'sld_solvent':3.0, 'background':0.0},
-      0.4, 0.000698838],
+    # The SasView test result was 0.00169, with a background of 0.001
+    [{'radius': 60.0, 'thickness': 10.0, 'sld_core': 1.0, 'sld_shell': 2.0,
+      'sld_solvent': 3.0, 'background': 0.0}, 0.4, 0.000698838],
 ]

@@ -3,7 +3,7 @@ Definition
 ----------
 
 Calculates the form factor for a rectangular solid with a core-shell structure.
-The thickness and the scattering length density of the shell or 
+The thickness and the scattering length density of the shell or
 "rim" can be different on each (pair) of faces. However at this time
 the 1D calculation does **NOT** actually calculate a c face rim despite the presence of
 the parameter. Some other aspects of the 1D calculation may be wrong.
@@ -41,7 +41,7 @@ The volume of the solid is
     V = ABC + 2t_ABC + 2t_BAC + 2t_CAB
 
 **meaning that there are "gaps" at the corners of the solid.**  Again note that
-$t_C = 0$ currently. 
+$t_C = 0$ currently.
 
 The intensity calculated follows the :ref:`parallelepiped` model, with the
 core-shell intensity being calculated as the square of the sum of the
@@ -81,7 +81,7 @@ The returned value is in units of |cm^-1|, on absolute scale.
 NB: The 2nd virial coefficient of the core_shell_parallelepiped is calculated
 based on the the averaged effective radius $(=\sqrt{(A+2t_A)(B+2t_B)/\pi})$
 and length $(C+2t_C)$ values, after appropriately
-sorting the three dimensions to give an oblate or prolate particle, to give an 
+sorting the three dimensions to give an oblate or prolate particle, to give an
 effective radius, for $S(Q)$ when $P(Q) * S(Q)$ is applied.
 
 To provide easy access to the orientation of the parallelepiped, we define the
@@ -125,7 +125,7 @@ from numpy import pi, inf, sqrt, cos, sin
 name = "core_shell_parallelepiped"
 title = "Rectangular solid with a core-shell structure."
 description = """
-     P(q)= 
+     P(q)=
 """
 category = "shape:parallelepiped"
 
@@ -177,6 +177,21 @@ def ER(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c):
     return 0.5 * (ddd) ** (1. / 3.)
 
 # VR defaults to 1.0
+
+def random():
+    import numpy as np
+    outer = 10**np.random.uniform(1, 4.7, size=3)
+    thick = np.random.beta(0.5, 0.5, size=3)*(outer-2) + 1
+    length = outer - thick
+    pars = dict(
+        length_a=length[0],
+        length_b=length[1],
+        length_c=length[2],
+        thick_rim_a=thick[0],
+        thick_rim_b=thick[1],
+        thick_rim_c=thick[2],
+    )
+    return pars
 
 # parameters for demo
 demo = dict(scale=1, background=0.0,

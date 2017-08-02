@@ -137,6 +137,25 @@ parameters = [
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "stacked_disks.c"]
 
+def random():
+    import numpy as np
+    radius = 10**np.random.uniform(1, 4.7)
+    total_stack = 10**np.random.uniform(1, 4.7)
+    n_stacking = int(10**np.random.uniform(0, np.log10(total_stack)-1) + 0.5)
+    d = total_stack/n_stacking
+    thick_core = np.random.uniform(0, d-2)  # at least 1 A for each layer
+    thick_layer = (d - thick_core)/2
+    # Let polydispersity peak around 15%; 95% < 0.4; max=100%
+    sigma_d = d * np.random.beta(1.5, 7)
+    pars = dict(
+        thick_core=thick_core,
+        thick_layer=thick_layer,
+        radius=radius,
+        n_stacking=n_stacking,
+        sigma_d=sigma_d,
+    )
+    return pars
+
 demo = dict(background=0.001,
             scale=0.01,
             thick_core=10.0,

@@ -64,12 +64,17 @@ single = False
 
 source = ["lib/sas_3j1x_x.c", "linear_pearls.c"]
 
-demo = dict(scale=1.0, background=0.0,
-            radius=80.0,
-            edge_sep=350.0,
-            num_pearls=3,
-            sld=1.0,
-            sld_solvent=6.3)
+def random():
+    import numpy as np
+    radius = 10**np.random.uniform(1, 3) # 1 - 1000
+    edge_sep = 10**np.random.uniform(0, 3)  # 1 - 1000
+    num_pearls = np.round(10**np.random.uniform(0.3, 3)) # 2 - 1000
+    pars = dict(
+        radius=radius,
+        edge_sep=edge_sep,
+        num_pearls=num_pearls,
+    )
+    return pars
 
 """
 Tests temporarily disabled, until single-double precision accuracy issue solved.

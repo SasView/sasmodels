@@ -122,16 +122,27 @@ def VR(radius, thickness, length):
 
 def random():
     import numpy as np
-    length = 10**np.random.uniform(2, 6)
-    radius = 10**np.random.uniform(1, 3)
-    kuhn_length = 10**np.random.uniform(-2, -0.7)*length  # at least 10 segments
+    length = 10**np.random.uniform(1, 4.7)
+    outer_radius = 10**np.random.uniform(1, 4.7)
+    # Use a distribution with a preference for thin shell or thin core
+    # Avoid core,shell radii < 1
+    thickness = np.random.beta(0.5, 0.5)*(outer_radius-2) + 1
+    radius = outer_radius - thickness
     pars = dict(
         length=length,
         radius=radius,
-        kuhn_length=kuhn_length,
+        thickness=thickness,
     )
     return pars
 
+# parameters for demo
+demo = dict(scale=1.0, background=0.0, length=400.0, radius=20.0,
+            thickness=10, sld=6.3, sld_solvent=1, theta=90, phi=0,
+            thickness_pd=0.2, thickness_pd_n=9,
+            length_pd=.2, length_pd_n=10,
+            radius_pd=.2, radius_pd_n=9,
+            theta_pd=10, theta_pd_n=5,
+           )
 q = 0.1
 # april 6 2017, rkh added a 2d unit test, assume correct!
 qx = q*cos(pi/6.0)

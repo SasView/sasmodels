@@ -153,6 +153,26 @@ parameters = [["sld_lg", "1e-6/Ang^2", -0.4, [-inf, inf], "sld",
 
 source = ["lib/sas_3j1x_x.c", "raspberry.c"]
 
+def random():
+    import numpy as np
+    # Limit volume fraction to 20% each
+    volfraction_lg = 10**np.random.uniform(-3, -0.3)
+    volfraction_sm = 10**np.random.uniform(-3, -0.3)
+    # Prefer most particles attached (peak near 60%), but not all or none
+    surface_fraction = np.random.beta(6, 4)
+    radius_lg = 10**np.random.uniform(1.7, 4.7)  # 500 - 50000 A
+    radius_sm = 10**np.random.uniform(-3, -0.3)*radius_lg  # 0.1% - 20%
+    penetration = np.random.beta(1, 10) # up to 20% pen. for 90% of examples
+    pars = dict(
+        volfraction_lg=volfraction_lg,
+        volfraction_sm=volfraction_sm,
+        surface_fraction=surface_fraction,
+        radius_lg=radius_lg,
+        radius_sm=radius_sm,
+        penetration=penetration,
+    )
+    return pars
+
 # parameters for demo
 demo = dict(scale=1, background=0.001,
             sld_lg=-0.4, sld_sm=3.5, sld_solvent=6.36,

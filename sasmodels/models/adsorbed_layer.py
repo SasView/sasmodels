@@ -98,7 +98,7 @@ def random():
     #    curve = scale * e**(-second_moment^2 q^2)/q^2
     #    scale = 6 pi/100 (contrast/density*absorbed_amount)^2 * Vf/radius
     # the remaining parameters can be randomly generated from zero to
-    # twice the default value.
+    # twice the default value as done by default in compare.py
     import numpy as np
     pars = dict(
         scale=1,

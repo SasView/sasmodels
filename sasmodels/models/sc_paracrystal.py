@@ -143,7 +143,7 @@ def random():
     radius = 10**np.random.uniform(1.3, 4)
     d_factor = 10**np.random.uniform(-2, -0.7)  # sigma_d in 0.01-0.7
     dnn_fraction = np.random.beta(a=10, b=1)
-    dnn = radius*4/np.sqrt(3)/dnn_fraction
+    dnn = radius*4/np.sqrt(4)/dnn_fraction
     pars = dict(
         #sld=1, sld_solvent=0, scale=1, background=1e-32,
         dnn=dnn,
