@@ -658,7 +658,7 @@ def eval_opencl(model_info, data, dtype='single', cutoff=0.):
         raise RuntimeError("OpenCL not available")
     model = core.build_model(model_info, dtype=dtype, platform="ocl")
     calculator = DirectModel(data, model, cutoff=cutoff)
-    calculator.engine = "OCL%s"%DTYPE_MAP[dtype]
+    calculator.engine = "OCL%s"%DTYPE_MAP[str(model.dtype)]
     return calculator
 
 def eval_ctypes(model_info, data, dtype='double', cutoff=0.):
@@ -729,10 +729,10 @@ def make_engine(model_info, data, dtype, cutoff):
     """
     if dtype == 'sasview':
         return eval_sasview(model_info, data)
-    elif dtype.endswith('!'):
-        return eval_ctypes(model_info, data, dtype=dtype[:-1], cutoff=cutoff)
-    else:
+    elif dtype is None or dtype.endswith('!'):
         return eval_opencl(model_info, data, dtype=dtype, cutoff=cutoff)
+    else:
+        return eval_ctypes(model_info, data, dtype=dtype[:-1], cutoff=cutoff)
 
 def _show_invalid(data, theory):
     # type: (Data, np.ma.ndarray) -> None
