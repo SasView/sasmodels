@@ -161,7 +161,7 @@ def random():
     # V = pi * radius_major * radius_minor * length;
     V = 10**np.random.uniform(3, 9)
     length = 10**np.random.uniform(1, 3)
-    axis_ratio = 10**(4*np.random.uniform(-2, 2)
+    axis_ratio = 10**np.random.uniform(-2, 2)
     radius_minor = np.sqrt(V/length/axis_ratio)
     Vf = 10**np.random.uniform(-4, -2)
     pars = dict(
