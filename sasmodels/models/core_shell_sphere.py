@@ -104,7 +104,7 @@ def random():
     # Use a distribution with a preference for thin shell or thin core
     # Avoid core,shell radii < 1
     radius = np.random.beta(0.5, 0.5)*(outer_radius-2) + 1
-    thickness = outer_radius - core
+    thickness = outer_radius - radius
     pars = dict(
         radius=radius,
         thickness=thickness,

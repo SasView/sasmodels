@@ -154,10 +154,10 @@ def random():
     import numpy as np
     V = 10**np.random.uniform(5, 12)
     outer_polar = 10**np.random.uniform(1.3, 4)
-    outer_equatorial = np.sqrt(V/radius_polar) # ignore 4/3 pi
+    outer_equatorial = np.sqrt(V/outer_polar) # ignore 4/3 pi
     # Use a distribution with a preference for thin shell or thin core
     # Avoid core,shell radii < 1
-    thickness_polar = np.random.beta(0.5, 0.5)*(outer__polar-2) + 1
+    thickness_polar = np.random.beta(0.5, 0.5)*(outer_polar-2) + 1
     thickness_equatorial = np.random.beta(0.5, 0.5)*(outer_equatorial-2) + 1
     radius_polar = outer_polar - thickness_polar
     radius_equatorial = outer_equatorial - thickness_equatorial
