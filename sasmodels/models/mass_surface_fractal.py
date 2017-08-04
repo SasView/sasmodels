@@ -90,7 +90,7 @@ source = ["mass_surface_fractal.c"]
 
 def random():
     import numpy as np
-    fractal_dim = np.random.uniform(1, 6)
+    fractal_dim = np.random.uniform(0, 6)
     surface_portion = np.random.uniform(0, 1)
     fractal_dim_surf = fractal_dim*surface_portion
     fractal_dim_mass = fractal_dim - fractal_dim_surf

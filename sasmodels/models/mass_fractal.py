@@ -27,21 +27,21 @@ The scattering intensity $I(q)$ is calculated as
 
 .. math::
 
-    scale = scale\_factor \times NV^2(\rho_{particle} - \rho_{solvent})^2
+    scale = scale\_factor \times NV^2(\rho_\text{particle} - \rho_\text{solvent})^2
 
 .. math::
 
     V = \frac{4}{3}\pi R^3
 
 where $R$ is the radius of the building block, $D_m$ is the **mass** fractal
-dimension, | \zeta\|  is the cut-off length, $\rho_{solvent}$ is the scattering
-length density of the solvent,
-and $\rho_{particle}$ is the scattering length density of particles.
+dimension, $\zeta$  is the cut-off length, $\rho_\text{solvent}$ is the scattering
+length density of the solvent, and $\rho_\text{particle}$ is the scattering
+length density of particles.
 
 .. note::
 
     The mass fractal dimension ( $D_m$ ) is only
-    valid if $0 < mass\_dim < 6$. It is also only valid over a limited
+    valid if $1 < mass\_dim < 6$. It is also only valid over a limited
     $q$ range (see the reference for details).
 
 
@@ -91,6 +91,7 @@ def random():
     import numpy as np
     radius = 10**np.random.uniform(0.7, 4)
     cutoff_length = 10**np.random.uniform(0.7, 2)*radius
+    # TODO: fractal dimension should range from 1 to 5
     fractal_dim_mass = 2*np.random.beta(3, 4) + 1
     Vf = 10**np.random.uniform(-4, -1)
     pars = dict(

@@ -345,7 +345,7 @@ def _random_pd(model_info, pars):
         if p.type == 'orientation':
             pd_oriented.append(p.name)
         elif p.length_control is not None:
-            n = pars.get(p.length_control, 1)
+            n = int(pars.get(p.length_control, 1) + 0.5)
             pd_volume.extend(p.name+str(k+1) for k in range(n))
         elif p.length > 1:
             pd_volume.extend(p.name+str(k+1) for k in range(p.length))
