@@ -83,6 +83,8 @@ def ER(radius):
     """
     return radius
 
+# VR defaults to 1.0
+
 def random():
     import numpy as np
     radius = 10**np.random.uniform(1.3, 4)
@@ -90,13 +92,6 @@ def random():
         radius=radius,
     )
     return pars
-
-# VR defaults to 1.0
-
-demo = dict(scale=1, background=0,
-            sld=6, sld_solvent=1,
-            radius=120,
-            radius_pd=.2, radius_pd_n=45)
 
 tests = [
     [{}, 0.2, 0.726362],

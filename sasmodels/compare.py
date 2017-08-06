@@ -492,10 +492,12 @@ def parlist(model_info, pars, is2d):
     lines = []
     parameters = model_info.parameters
     magnetic = False
+    magnetic_pars = []
     for p in parameters.user_parameters(pars, is2d):
         if any(p.id.startswith(x) for x in ('M0:', 'mtheta:', 'mphi:')):
             continue
-        if p.id.startswith('up:') and not magnetic:
+        if p.id.startswith('up:'):
+            magnetic_pars.append("%s=%s"%(p.id, pars.get(p.id, p.default)))
             continue
         fields = dict(
             value=pars.get(p.id, p.default),
@@ -510,6 +512,8 @@ def parlist(model_info, pars, is2d):
         )
         lines.append(_format_par(p.name, **fields))
         magnetic = magnetic or fields['M0'] != 0.
+    if magnetic and magnetic_pars:
+        lines.append(" ".join(magnetic_pars))
     return "\n".join(lines)
 
     #return "\n".join("%s: %s"%(p, v) for p, v in sorted(pars.items()))
@@ -527,31 +531,59 @@ def _format_par(name, value=0., pd=0., n=0, nsigma=3., pdtype='gaussian',
         line += "  M0:%.3f  mphi:%.1f  mtheta:%.1f" % (M0, mphi, mtheta)
     return line
 
-def suppress_pd(pars):
+def suppress_pd(pars, suppress=True):
     # type: (ParameterSet) -> ParameterSet
     """
-    Suppress theta_pd for now until the normalization is resolved.
-
-    May also suppress complete polydispersity of the model to test
-    models more quickly.
+    If suppress is True complete eliminate polydispersity of the model to test
+    models more quickly.  If suppress is False, make sure at least one
+    parameter is polydisperse, setting the first polydispersity parameter to
+    15% if no polydispersity is given (with no explicit demo parameters given
+    in the model, there will be no default polydispersity).
     """
     pars = pars.copy()
-    for p in pars:
-        if p.endswith("_pd_n"):
-            pars[p] = 0
+    if suppress:
+        for p in pars:
+            if p.endswith("_pd_n"):
+                pars[p] = 0
+    else:
+        any_pd = False
+        first_pd = None
+        for p in pars:
+            if p.endswith("_pd_n"):
+                any_pd |= (pars[p] != 0 and pars[p[:-2]] != 0.)
+                if first_pd is None:
+                    first_pd = p
+        if not any_pd and first_pd is not None:
+            if pars[first_pd] == 0:
+                pars[first_pd] = 35
+            if pars[first_pd[:-2]] == 0:
+                pars[first_pd[:-2]] = 0.15
     return pars
 
-def suppress_magnetism(pars):
+def suppress_magnetism(pars, suppress=True):
     # type: (ParameterSet) -> ParameterSet
     """
-    Suppress theta_pd for now until the normalization is resolved.
-
-    May also suppress complete polydispersity of the model to test
-    models more quickly.
+    If suppress is True complete eliminate magnetism of the model to test
+    models more quickly.  If suppress is False, make sure at least one sld
+    parameter is magnetic, setting the first parameter to have a strong
+    magnetic sld (8/A^2) at 60 degrees (with no explicit demo parameters given
+    in the model, there will be no default magnetism).
     """
     pars = pars.copy()
-    for p in pars:
-        if p.startswith("M0:"): pars[p] = 0
+    if suppress:
+        for p in pars:
+            if p.startswith("M0:"):
+                pars[p] = 0
+    else:
+        any_mag = False
+        first_mag = None
+        for p in pars:
+            if p.startswith("M0:"):
+                any_mag |= (pars[p] != 0)
+                if first_mag is None:
+                    first_mag = p
+        if not any_mag and first_mag is not None:
+            pars[first_mag] = 8.
     return pars
 
 def eval_sasview(model_info, data):
@@ -875,7 +907,7 @@ def _print_stats(label, err):
 
 def plot_models(opts, result, limits=(np.Inf, -np.Inf), setnum=0):
     # type: (Dict[str, Any], Dict[str, Any], Optional[Tuple[float, float]]) -> Tuple[float, float]
-    base_value, comp_value= result['base_value'], result['comp_value']
+    base_value, comp_value = result['base_value'], result['comp_value']
     base_time, comp_time = result['base_time'], result['comp_time']
     resid, relerr = result['resid'], result['relerr']
 
@@ -1152,10 +1184,14 @@ def parse_opts(argv):
         elif arg == '-sasview': opts['engine'] = 'sasview'
         elif arg == '-edit':    opts['explore'] = True
         elif arg == '-demo':    opts['use_demo'] = True
-        elif arg == '-default':    opts['use_demo'] = False
+        elif arg == '-default': opts['use_demo'] = False
         elif arg == '-html':    opts['html'] = True
         elif arg == '-help':    opts['html'] = True
     # pylint: enable=bad-whitespace
+
+    # Magnetism forces 2D for now
+    if opts['magnetic']:
+        opts['is2d'] = True
 
     # Force random if more than one set
     if opts['sets'] > 1 and opts['seed'] < 0:
@@ -1240,12 +1276,10 @@ def parse_pars(opts):
             pars2 = pars.copy()
         constrain_pars(model_info, pars)
         constrain_pars(model_info2, pars2)
-    if opts['mono']:
-        pars = suppress_pd(pars)
-        pars2 = suppress_pd(pars2)
-    if not opts['magnetic']:
-        pars = suppress_magnetism(pars)
-        pars2 = suppress_magnetism(pars2)
+    pars = suppress_pd(pars, opts['mono'])
+    pars2 = suppress_pd(pars2, opts['mono'])
+    pars = suppress_magnetism(pars, not opts['magnetic'])
+    pars2 = suppress_magnetism(pars2, not opts['magnetic'])
 
     # Fill in parameters given on the command line
     presets = {}
