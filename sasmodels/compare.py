@@ -55,51 +55,81 @@ else:
     Calculator = Callable[[float], np.ndarray]
 
 USAGE = """
-usage: compare.py model N1 N2 [options...] [key=val]
+usage: sascomp model [options...] [key=val]
 
-Compare the speed and value for a model between the SasView original and the
-sasmodels rewrite.
+Generate and compare SAS models.  If a single model is specified it shows
+a plot of that model.  Different models can be compared, or the same model
+with different parameters.  The same model with the same parameters can
+be compared with different calculation engines to see the effects of precision
+on the resultant values.
 
 model or model1,model2 are the names of the models to compare (see below).
-N1 is the number of times to run sasmodels (default=1).
-N2 is the number times to run sasview (default=1).
 
 Options (* for default):
 
-    -plot*/-noplot plots or suppress the plot of the model
+    === data generation ===
+    -data="path" uses q, dq from the data file
+    -noise=0 sets the measurement error dI/I
+    -res=0 sets the resolution width dQ/Q if calculating with resolution
     -lowq*/-midq/-highq/-exq use q values up to 0.05, 0.2, 1.0, 10.0
     -nq=128 sets the number of Q points in the data set
-    -zero indicates that q=0 should be included
     -1d*/-2d computes 1d or 2d data
+    -zero indicates that q=0 should be included
+
+    === model parameters ===
     -preset*/-random[=seed] preset or random parameters
-    -mono*/-poly force monodisperse or allow polydisperse demo parameters
-    -magnetic/-nonmagnetic* suppress magnetism
-    -cutoff=1e-5* cutoff value for including a point in polydispersity
+    -sets=n generates n random datasets, with the seed given by -random=seed
     -pars/-nopars* prints the parameter set or not
-    -abs/-rel* plot relative or absolute error
-    -linear/-log*/-q4 intensity scaling
-    -hist/-nohist* plot histogram of relative error
-    -res=0 sets the resolution width dQ/Q if calculating with resolution
-    -accuracy=Low accuracy of the resolution calculation Low, Mid, High, Xhigh
-    -edit starts the parameter explorer
     -default/-demo* use demo vs default parameters
-    -help/-html shows the model docs instead of running the model
-    -title="note" adds note to the plot title, after the model name
-    -data="path" uses q, dq from the data file
 
-Any two calculation engines can be selected for comparison:
+    === calculation options ===
+    -mono*/-poly force monodisperse or allow polydisperse demo parameters
+    -cutoff=1e-5* cutoff value for including a point in polydispersity
+    -magnetic/-nonmagnetic* suppress magnetism
+    -accuracy=Low accuracy of the resolution calculation Low, Mid, High, Xhigh
 
+    === precision options ===
+    -calc=default uses the default calcution precision
     -single/-double/-half/-fast sets an OpenCL calculation engine
     -single!/-double!/-quad! sets an OpenMP calculation engine
     -sasview sets the sasview calculation engine
 
-The default is -single -double.  Note that the interpretation of quad
-precision depends on architecture, and may vary from 64-bit to 128-bit,
-with 80-bit floats being common (1e-19 precision).
+    === plotting ===
+    -plot*/-noplot plots or suppress the plot of the model
+    -linear/-log*/-q4 intensity scaling on plots
+    -hist/-nohist* plot histogram of relative error
+    -abs/-rel* plot relative or absolute error
+    -title="note" adds note to the plot title, after the model name
+
+    === output options ===
+    -edit starts the parameter explorer
+    -help/-html shows the model docs instead of running the model
+
+The interpretation of quad precision depends on architecture, and may
+vary from 64-bit to 128-bit, with 80-bit floats being common (1e-19 precision).
+On unix and mac you may need single quotes around the DLL computation
+engines, such as -calc='single!,double!' since !, is treated as a history
+expansion request in the shell.
 
 Key=value pairs allow you to set specific values for the model parameters.
-Key=value1,value2 to compare different values of the same parameter.
-value can be an expression including other parameters
+Key=value1,value2 to compare different values of the same parameter. The
+value can be an expression including other parameters.
+
+Items later on the command line override those that appear earlier.
+
+Examples:
+
+    # compare single and double precision calculation for a barbell
+    sascomp barbell -calc=single,double
+
+    # generate 10 random lorentz models, with seed=27
+    sascomp lorentz -sets=10 -seed=27
+
+    # compare ellipsoid with R = R_polar = R_equatorial to sphere of radius R
+    sascomp sphere,ellipsoid radius_polar=radius radius_equatorial=radius
+
+    # model timing test requires multiple evals to perform the estimate
+    sascomp pringle -calc=single,double -timing=100,100 -noplot
 """
 
 # Update docs with command line usage string.   This is separate from the usual
@@ -110,8 +140,7 @@ __doc__ = (__doc__  # pylint: disable=redefined-builtin
 Program description
 -------------------
 
-"""
-           + USAGE)
+""" + USAGE)
 
 kerneldll.ALLOW_SINGLE_PRECISION_DLLS = True
 
@@ -774,34 +803,31 @@ def compare(opts, limits=None):
 def run_models(opts, verbose=False):
     # type: (Dict[str, Any]) -> Dict[str, Any]
 
-    n_base, n_comp = opts['count']
-    pars, pars2 = opts['pars']
+    base, comp = opts['engines']
+    base_n, comp_n = opts['count']
+    base_pars, comp_pars = opts['pars']
     data = opts['data']
 
-    # silence the linter
-    base = opts['engines'][0] if n_base else None
-    comp = opts['engines'][1] if n_comp else None
+    comparison = comp is not None
 
     base_time = comp_time = None
     base_value = comp_value = resid = relerr = None
 
     # Base calculation
-    if n_base > 0:
-        try:
-            base_raw, base_time = time_calculation(base, pars, n_base)
-            base_value = np.ma.masked_invalid(base_raw)
-            if verbose:
-                print("%s t=%.2f ms, intensity=%.0f"
-                      % (base.engine, base_time, base_value.sum()))
-            _show_invalid(data, base_value)
-        except ImportError:
-            traceback.print_exc()
-            n_base = 0
+    try:
+        base_raw, base_time = time_calculation(base, base_pars, base_n)
+        base_value = np.ma.masked_invalid(base_raw)
+        if verbose:
+            print("%s t=%.2f ms, intensity=%.0f"
+                  % (base.engine, base_time, base_value.sum()))
+        _show_invalid(data, base_value)
+    except ImportError:
+        traceback.print_exc()
 
     # Comparison calculation
-    if n_comp > 0:
+    if comparison:
         try:
-            comp_raw, comp_time = time_calculation(comp, pars2, n_comp)
+            comp_raw, comp_time = time_calculation(comp, comp_pars, comp_n)
             comp_value = np.ma.masked_invalid(comp_raw)
             if verbose:
                 print("%s t=%.2f ms, intensity=%.0f"
@@ -809,10 +835,9 @@ def run_models(opts, verbose=False):
             _show_invalid(data, comp_value)
         except ImportError:
             traceback.print_exc()
-            n_comp = 0
 
     # Compare, but only if computing both forms
-    if n_base > 0 and n_comp > 0:
+    if comparison:
         resid = (base_value - comp_value)
         relerr = resid/np.where(comp_value != 0., abs(comp_value), 1.0)
         if verbose:
@@ -855,8 +880,7 @@ def plot_models(opts, result, limits=(np.Inf, -np.Inf), setnum=0):
     resid, relerr = result['resid'], result['relerr']
 
     have_base, have_comp = (base_value is not None), (comp_value is not None)
-    base = opts['engines'][0] if have_base else None
-    comp = opts['engines'][1] if have_comp else None
+    base, comp = opts['engines']
     data = opts['data']
     use_data = (opts['datafile'] is not None) and (have_base ^ have_comp)
 
@@ -873,12 +897,14 @@ def plot_models(opts, result, limits=(np.Inf, -np.Inf), setnum=0):
     limits = vmin, vmax
 
     if have_base:
-        if have_comp: plt.subplot(131)
+        if have_comp:
+            plt.subplot(131)
         plot_theory(data, base_value, view=view, use_data=use_data, limits=limits)
         plt.title("%s t=%.2f ms"%(base.engine, base_time))
         #cbar_title = "log I"
     if have_comp:
-        if have_base: plt.subplot(132)
+        if have_base:
+            plt.subplot(132)
         if not opts['is2d'] and have_base:
             plot_theory(data, base_value, view=view, use_data=use_data, limits=limits)
         plot_theory(data, comp_value, view=view, use_data=use_data, limits=limits)
@@ -893,7 +919,7 @@ def plot_models(opts, result, limits=(np.Inf, -np.Inf), setnum=0):
         if 0:  # 95% cutoff
             sorted = np.sort(err.flatten())
             cutoff = sorted[int(sorted.size*0.95)]
-            err[err>cutoff] = cutoff
+            err[err > cutoff] = cutoff
         #err,errstr = base/comp,"ratio"
         plot_theory(data, None, resid=err, view=errview, use_data=use_data)
         if view == 'linear':
@@ -922,26 +948,47 @@ def plot_models(opts, result, limits=(np.Inf, -np.Inf), setnum=0):
 
 # ===========================================================================
 #
-NAME_OPTIONS = set([
+
+# Set of command line options.
+# Normal options such as -plot/-noplot are specified as 'name'.
+# For options such as -nq=500 which require a value use 'name='.
+#
+OPTIONS = [
+    # Plotting
     'plot', 'noplot',
-    'half', 'fast', 'single', 'double',
-    'single!', 'double!', 'quad!', 'sasview',
-    'lowq', 'midq', 'highq', 'exq', 'zero',
-    '2d', '1d',
-    'preset', 'random',
-    'poly', 'mono',
-    'magnetic', 'nonmagnetic',
-    'nopars', 'pars',
-    'rel', 'abs',
     'linear', 'log', 'q4',
+    'rel', 'abs',
     'hist', 'nohist',
-    'edit', 'html', 'help',
-    'demo', 'default',
-    ])
-VALUE_OPTIONS = [
-    # Note: random is both a name option and a value option
-    'cutoff', 'random', 'nq', 'res', 'accuracy', 'title', 'data', 'sets'
+    'title=',
+
+    # Data generation
+    'data=', 'noise=', 'res=',
+    'nq=', 'lowq', 'midq', 'highq', 'exq', 'zero',
+    '2d', '1d',
+
+    # Parameter set
+    'preset', 'random', 'random=', 'sets=',
+    'demo', 'default',  # TODO: remove demo/default
+    'nopars', 'pars',
+
+    # Calculation options
+    'poly', 'mono', 'cutoff=',
+    'magnetic', 'nonmagnetic',
+    'accuracy=',
+
+    # Precision options
+    'calc=',
+    'half', 'fast', 'single', 'double', 'single!', 'double!', 'quad!',
+    'sasview',  # TODO: remove sasview 3.x support
+    'timing=',
+
+    # Output options
+    'help', 'html', 'edit',
     ]
+
+NAME_OPTIONS = set(k for k in OPTIONS if not k.endswith('='))
+VALUE_OPTIONS = [k[:-1] for k in OPTIONS if k.endswith('=')]
+
 
 def columnize(items, indent="", width=79):
     # type: (List[str], str, int) -> str
@@ -1001,7 +1048,7 @@ def isnumber(str):
 # path characters including tilde expansion and windows drive ~ / :
 # not sure about brackets [] {}
 # maybe one of the following @ ? ^ ! ,
-MODEL_SPLIT = ','
+PAR_SPLIT = ','
 def parse_opts(argv):
     # type: (List[str]) -> Dict[str, Any]
     """
@@ -1020,8 +1067,6 @@ def parse_opts(argv):
         print("\nAvailable models:")
         print(columnize(MODELS, indent="  "))
         return None
-    if len(positional_args) > 3:
-        print("expected parameters: model N1 N2")
 
     invalid = [o[1:] for o in flags
                if o[1:] not in NAME_OPTIONS
@@ -1030,9 +1075,7 @@ def parse_opts(argv):
         print("Invalid options: %s"%(", ".join(invalid)))
         return None
 
-    name = positional_args[0]
-    n1 = int(positional_args[1]) if len(positional_args) > 1 else 1
-    n2 = int(positional_args[2]) if len(positional_args) > 2 else 1
+    name = positional_args[-1]
 
     # pylint: disable=bad-whitespace
     # Interpret the flags
@@ -1043,8 +1086,9 @@ def parse_opts(argv):
         'qmax'      : 0.05,
         'nq'        : 128,
         'res'       : 0.0,
+        'noise'     : 0.0,
         'accuracy'  : 'Low',
-        'cutoff'    : 0.0,
+        'cutoff'    : '0.0',
         'seed'      : -1,  # default to preset
         'mono'      : True,
         # Default to magnetic a magnetic moment is set on the command line
@@ -1059,8 +1103,9 @@ def parse_opts(argv):
         'title'     : None,
         'datafile'  : None,
         'sets'      : 1,
+        'engine'    : 'default',
+        'evals'     : '1',
     }
-    engines = []
     for arg in flags:
         if arg == '-noplot':    opts['plot'] = False
         elif arg == '-plot':    opts['plot'] = True
@@ -1076,12 +1121,15 @@ def parse_opts(argv):
         elif arg == '-zero':    opts['zero'] = True
         elif arg.startswith('-nq='):       opts['nq'] = int(arg[4:])
         elif arg.startswith('-res='):      opts['res'] = float(arg[5:])
+        elif arg.startswith('-noise='):    opts['noise'] = float(arg[7:])
         elif arg.startswith('-sets='):     opts['sets'] = int(arg[6:])
         elif arg.startswith('-accuracy='): opts['accuracy'] = arg[10:]
-        elif arg.startswith('-cutoff='):   opts['cutoff'] = float(arg[8:])
+        elif arg.startswith('-cutoff='):   opts['cutoff'] = arg[8:]
         elif arg.startswith('-random='):   opts['seed'] = int(arg[8:])
         elif arg.startswith('-title='):    opts['title'] = arg[7:]
         elif arg.startswith('-data='):     opts['datafile'] = arg[6:]
+        elif arg.startswith('-calc='):     opts['engine'] = arg[6:]
+        elif arg.startswith('-neval='):    opts['evals'] = arg[7:]
         elif arg == '-random':  opts['seed'] = np.random.randint(1000000)
         elif arg == '-preset':  opts['seed'] = -1
         elif arg == '-mono':    opts['mono'] = True
@@ -1094,14 +1142,14 @@ def parse_opts(argv):
         elif arg == '-nohist':  opts['show_hist'] = False
         elif arg == '-rel':     opts['rel_err'] = True
         elif arg == '-abs':     opts['rel_err'] = False
-        elif arg == '-half':    engines.append(arg[1:])
-        elif arg == '-fast':    engines.append(arg[1:])
-        elif arg == '-single':  engines.append(arg[1:])
-        elif arg == '-double':  engines.append(arg[1:])
-        elif arg == '-single!': engines.append(arg[1:])
-        elif arg == '-double!': engines.append(arg[1:])
-        elif arg == '-quad!':   engines.append(arg[1:])
-        elif arg == '-sasview': engines.append(arg[1:])
+        elif arg == '-half':    opts['engine'] = 'half'
+        elif arg == '-fast':    opts['engine'] = 'fast'
+        elif arg == '-single':  opts['engine'] = 'single'
+        elif arg == '-double':  opts['engine'] = 'double'
+        elif arg == '-single!': opts['engine'] = 'single!'
+        elif arg == '-double!': opts['engine'] = 'double!'
+        elif arg == '-quad!':   opts['engine'] = 'quad!'
+        elif arg == '-sasview': opts['engine'] = 'sasview'
         elif arg == '-edit':    opts['explore'] = True
         elif arg == '-demo':    opts['use_demo'] = True
         elif arg == '-default':    opts['use_demo'] = False
@@ -1113,46 +1161,46 @@ def parse_opts(argv):
     if opts['sets'] > 1 and opts['seed'] < 0:
         opts['seed'] = np.random.randint(1000000)
 
-    if MODEL_SPLIT in name:
-        name, name2 = name.split(MODEL_SPLIT, 2)
-    else:
-        name2 = name
-    try:
-        model_info = core.load_model_info(name)
-        model_info2 = core.load_model_info(name2) if name2 != name else model_info
-    except ImportError as exc:
-        print(str(exc))
-        print("Could not find model; use one of:\n    " + models)
-        return None
-
-    # TODO: check if presets are different when deciding if models are same
-    same_model = name == name2
-    if len(engines) == 0:
-        if same_model:
-            engines.extend(['single', 'double'])
-        else:
-            engines.extend(['single', 'single'])
-    elif len(engines) == 1:
-        if not same_model:
-            engines.append(engines[0])
-        elif engines[0] == 'double':
-            engines.append('single')
-        else:
-            engines.append('double')
-    elif len(engines) > 2:
-        del engines[2:]
-
     # Create the computational engines
     if opts['datafile'] is not None:
         data = load_data(os.path.expanduser(opts['datafile']))
     else:
         data, _ = make_data(opts)
-    if n1:
-        base = make_engine(model_info, data, engines[0], opts['cutoff'])
+
+    comparison = any(PAR_SPLIT in v for v in values)
+    if PAR_SPLIT in name:
+        names = name.split(PAR_SPLIT, 2)
+        comparison = True
     else:
-        base = None
-    if n2:
-        comp = make_engine(model_info2, data, engines[1], opts['cutoff'])
+        names = [name]*2
+    try:
+        model_info = [core.load_model_info(k) for k in names]
+    except ImportError as exc:
+        print(str(exc))
+        print("Could not find model; use one of:\n    " + models)
+        return None
+
+    if PAR_SPLIT in opts['engine']:
+        engine_types = opts['engine'].split(PAR_SPLIT, 2)
+        comparison = True
+    else:
+        engine_types = [opts['engine']]*2
+
+    if PAR_SPLIT in opts['evals']:
+        evals = [int(k) for k in opts['evals'].split(PAR_SPLIT, 2)]
+        comparison = True
+    else:
+        evals = [int(opts['evals'])]*2
+
+    if PAR_SPLIT in opts['cutoff']:
+        cutoff = [float(k) for k in opts['cutoff'].split(PAR_SPLIT, 2)]
+        comparison = True
+    else:
+        cutoff = [float(opts['cutoff'])]*2
+
+    base = make_engine(model_info[0], data, engine_types[0], cutoff[0])
+    if comparison:
+        comp = make_engine(model_info[1], data, engine_types[1], cutoff[1])
     else:
         comp = None
 
@@ -1160,9 +1208,9 @@ def parse_opts(argv):
     # Remember it all
     opts.update({
         'data'      : data,
-        'name'      : [name, name2],
-        'def'       : [model_info, model_info2],
-        'count'     : [n1, n2],
+        'name'      : names,
+        'def'       : model_info,
+        'count'     : evals,
         'engines'   : [base, comp],
         'values'    : values,
     })
@@ -1209,7 +1257,7 @@ def parse_pars(opts):
             s = set(p.split('_pd')[0] for p in pars)
             print("%r invalid; parameters are: %s"%(k, ", ".join(sorted(s))))
             return None
-        v1, v2 = v.split(MODEL_SPLIT, 2) if MODEL_SPLIT in v else (v,v)
+        v1, v2 = v.split(PAR_SPLIT, 2) if PAR_SPLIT in v else (v,v)
         if v1 and k in pars:
             presets[k] = float(v1) if isnumber(v1) else v1
         if v2 and k in pars2:

@@ -111,6 +111,8 @@ L A Feigin and D I Svergun.
 *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*,
 Plenum Press, New York, 1987.
 
+A. Isihara. J. Chem. Phys. 18(1950) 1446-1449
+
 Authorship and Verification
 ----------------------------
 
@@ -161,7 +163,7 @@ source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "ellipsoid.c"]
 
 def ER(radius_polar, radius_equatorial):
     import numpy as np
-# see equation (26) in A.Isihara, J.Chem.Phys. 18(1950)1446-1449
+    # see equation (26) in A.Isihara, J.Chem.Phys. 18(1950)1446-1449
     ee = np.empty_like(radius_polar)
     idx = radius_polar > radius_equatorial
     ee[idx] = (radius_polar[idx] ** 2 - radius_equatorial[idx] ** 2) / radius_polar[idx] ** 2
