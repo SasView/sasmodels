@@ -344,12 +344,13 @@ def _randomize_one(model_info, name, value):
         return np.random.uniform(*par.limits)
 
     # If the paramter is marked as an sld use the range of neutron slds
-    # Should be doing something with randomly selected contrast matching
-    # but for now use random contrasts.  Since real data is contrast-matched,
-    # this will favour selection of hollow models when they exist.
+    # TODO: ought to randomly contrast match a pair of SLDs
     if par.type == 'sld':
-        # Range of neutron SLDs
         return np.random.uniform(-0.5, 12)
+
+    # Limit magnetic SLDs to a smaller range, from zero to iron=5/A^2
+    if par.name.startswith('M0:'):
+        return np.random.uniform(0, 5)
 
     # Guess at the random length/radius/thickness.  In practice, all models
     # are going to set their own reasonable ranges.
