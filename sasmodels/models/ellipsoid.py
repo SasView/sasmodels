@@ -179,7 +179,7 @@ def ER(radius_polar, radius_equatorial):
     b2 = 1.0 + bd / 2 / e1 * np.log(bL)
     delta = 0.75 * b1 * b2
 
-    #ddd = np.zeros_like(radius_polar)
+    ddd = np.zeros_like(radius_polar)
     ddd[valid] = 2.0 * (delta + 1.0) * radius_polar * radius_equatorial ** 2
     return 0.5 * ddd ** (1.0 / 3.0)
 
