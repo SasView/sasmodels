@@ -46,7 +46,11 @@ from __future__ import print_function
 
 import sys
 import unittest
-from StringIO import StringIO
+
+try:
+    from StringIO import StringIO
+except ImportError: # StringIO.StringIO renamed to io.StringIO in Python 3
+    from io import StringIO
 
 import numpy as np  # type: ignore
 
