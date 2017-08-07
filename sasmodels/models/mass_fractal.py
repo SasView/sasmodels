@@ -91,7 +91,7 @@ def random():
     import numpy as np
     radius = 10**np.random.uniform(0.7, 4)
     cutoff_length = 10**np.random.uniform(0.7, 2)*radius
-    # TODO: fractal dimension should range from 1 to 5
+    # TODO: fractal dimension should range from 1 to 6
     fractal_dim_mass = 2*np.random.beta(3, 4) + 1
     Vf = 10**np.random.uniform(-4, -1)
     pars = dict(

@@ -401,7 +401,9 @@ def _random_pd(model_info, pars):
         if np.random.rand() < 0.1:
             pars['phi_pd_n'] = 5
         if np.random.rand() < 0.1:
-            pars['psi_pd_n'] = 5
+            if any(p.name == 'psi' for p in model_info.parameters.kernel_parameters):
+                #print("generating psi_pd_n")
+                pars['psi_pd_n'] = 5
 
     ## Show selected polydispersity
     #for name, value in pars.items():
@@ -542,6 +544,7 @@ def suppress_pd(pars, suppress=True):
     in the model, there will be no default polydispersity).
     """
     pars = pars.copy()
+    #print("pars=", pars)
     if suppress:
         for p in pars:
             if p.endswith("_pd_n"):
@@ -551,13 +554,14 @@ def suppress_pd(pars, suppress=True):
         first_pd = None
         for p in pars:
             if p.endswith("_pd_n"):
-                any_pd |= (pars[p] != 0 and pars[p[:-2]] != 0.)
+                pd = pars.get(p[:-2], 0.)
+                any_pd |= (pars[p] != 0 and pd != 0.)
                 if first_pd is None:
                     first_pd = p
         if not any_pd and first_pd is not None:
             if pars[first_pd] == 0:
                 pars[first_pd] = 35
-            if pars[first_pd[:-2]] == 0:
+            if first_pd[:-2] not in pars or pars[first_pd[:-2]] == 0:
                 pars[first_pd[:-2]] = 0.15
     return pars
 
