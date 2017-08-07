@@ -46,6 +46,7 @@ from __future__ import print_function
 
 import sys
 import unittest
+from StringIO import StringIO
 
 import numpy as np  # type: ignore
 
@@ -349,7 +350,7 @@ def run_one(model):
     from unittest.runner import TextTestResult, _WritelnDecorator
 
     # Build a object to capture and print the test results
-    stream = _WritelnDecorator(sys.stdout)  # Add writeln() method to stream
+    stream = _WritelnDecorator(StringIO())  # Add writeln() method to stream
     verbosity = 2
     descriptions = True
     result = TextTestResult(stream, descriptions, verbosity)
@@ -387,6 +388,10 @@ def run_one(model):
         break
     else:
         stream.writeln("Note: no test suite created --- this should never happen")
+
+    output = stream.getvalue()
+    stream.close()
+    return output
 
 
 def main(*models):
