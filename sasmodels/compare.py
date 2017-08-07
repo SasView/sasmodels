@@ -78,7 +78,7 @@ Options (* for default):
 
     === model parameters ===
     -preset*/-random[=seed] preset or random parameters
-    -sets=n generates n random datasets, with the seed given by -random=seed
+    -sets=n generates n random datasets with the seed given by -random=seed
     -pars/-nopars* prints the parameter set or not
     -default/-demo* use demo vs default parameters
 
@@ -1139,7 +1139,7 @@ def parse_opts(argv):
         'html'      : False,
         'title'     : None,
         'datafile'  : None,
-        'sets'      : 1,
+        'sets'      : 0,
         'engine'    : 'default',
         'evals'     : '1',
     }
@@ -1198,9 +1198,11 @@ def parse_opts(argv):
     if opts['magnetic']:
         opts['is2d'] = True
 
-    # Force random if more than one set
-    if opts['sets'] > 1 and opts['seed'] < 0:
+    # Force random if sets is used
+    if opts['sets'] >= 1 and opts['seed'] < 0:
         opts['seed'] = np.random.randint(1000000)
+    if opts['sets'] == 0:
+        opts['sets'] = 1
 
     # Create the computational engines
     if opts['datafile'] is not None:
