@@ -1,5 +1,7 @@
 .. currentmodule:: sasmodels
 
+.. _Calculator_Interface:
+
 Calculator Interface
 ====================
 

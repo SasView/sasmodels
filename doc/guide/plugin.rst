@@ -609,7 +609,7 @@ file in the order given, otherwise these functions will not be available.
         sorted from highest to lowest.
 
         :code:`source = ["lib/polevl.c", ...]`
-        (`link to code <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/polevl.c>`_)
+        (`polevl.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/polevl.c>`_)
 
     sas_gamma(x):
         Gamma function $\text{sas_gamma}(x) = \Gamma(x)$.
@@ -617,8 +617,8 @@ file in the order given, otherwise these functions will not be available.
         The standard math function, tgamma(x) is unstable for $x < 1$
         on some platforms.
 
-        :code:`source = ["lib/sasgamma.c", ...]`
-        (`link to code <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_gamma.c>`_)
+        :code:`source = ["lib/sas_gamma.c", ...]`
+        (`sas_gamma.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_gamma.c>`_)
 
     sas_erf(x), sas_erfc(x):
         Error function
@@ -630,7 +630,7 @@ file in the order given, otherwise these functions will not be available.
         on some platforms.
 
         :code:`source = ["lib/polevl.c", "lib/sas_erf.c", ...]`
-        (`link to error functions' code <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_erf.c>`_)
+        (`sas_erf.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_erf.c>`_)
 
     sas_J0(x):
         Bessel function of the first kind $\text{sas_J0}(x)=J_0(x)$ where
@@ -639,7 +639,7 @@ file in the order given, otherwise these functions will not be available.
         The standard math function j0(x) is not available on all platforms.
 
         :code:`source = ["lib/polevl.c", "lib/sas_J0.c", ...]`
-        (`link to Bessel function's code <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_J0.c>`_)
+        (`sas_J0.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_J0.c>`_)
 
     sas_J1(x):
         Bessel function of the first kind  $\text{sas_J1}(x)=J_1(x)$ where
@@ -648,7 +648,7 @@ file in the order given, otherwise these functions will not be available.
         The standard math function j1(x) is not available on all platforms.
 
         :code:`source = ["lib/polevl.c", "lib/sas_J1.c", ...]`
-        (`link to Bessel function's code <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_J1.c>`_)
+        (`sas_J1.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_J1.c>`_)
 
     sas_JN(n, x):
         Bessel function of the first kind and integer order $n$:
@@ -659,7 +659,7 @@ file in the order given, otherwise these functions will not be available.
         The standard math function jn(n, x) is not available on all platforms.
 
         :code:`source = ["lib/polevl.c", "lib/sas_J0.c", "lib/sas_J1.c", "lib/sas_JN.c", ...]`
-        (`link to Bessel function's code <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_JN.c>`_)
+        (`sas_JN.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_JN.c>`_)
 
     sas_Si(x):
         Sine integral $\text{Si}(x) = \int_0^x \tfrac{\sin t}{t}\,dt$.
@@ -683,7 +683,7 @@ file in the order given, otherwise these functions will not be available.
            + \frac{x^9}{9\times 9!} - \frac{x^{11}}{11\times 11!}
 
         :code:`source = ["lib/Si.c", ...]`
-        (`link to code <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/Si.c>`_)
+        (`Si.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/Si.c>`_)
 
     sas_3j1x_x(x):
         Spherical Bessel form
@@ -694,7 +694,7 @@ file in the order given, otherwise these functions will not be available.
         This function uses a Taylor series for small $x$ for numerical accuracy.
 
         :code:`source = ["lib/sas_3j1x_x.c", ...]`
-        (`link to code <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_3j1x_x.c>`_)
+        (`sas_3j1x_x.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_3j1x_x.c>`_)
 
 
     sas_2J1x_x(x):
@@ -703,7 +703,7 @@ file in the order given, otherwise these functions will not be available.
         and first order.
 
         :code:`source = ["lib/polevl.c", "lib/sas_J1.c", ...]`
-        (`link to Bessel form's code <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_J1.c>`_)
+        (`sas_J1.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_J1.c>`_)
 
 
     Gauss76Z[i], Gauss76Wt[i]:
@@ -714,7 +714,7 @@ file in the order given, otherwise these functions will not be available.
         quadrature and in :code:`gauss150.c` for 150-point quadrature.
 
         :code:`source = ["lib/gauss76.c", ...]`
-        (`link to code <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/gauss76.c>`_)
+        (`gauss76.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/gauss76.c>`_)
 
 
 

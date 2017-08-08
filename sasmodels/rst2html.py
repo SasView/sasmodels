@@ -175,7 +175,7 @@ def qtview(html, url=""):
         from PyQt5.QtWebKitWidgets import QWebView
         from PyQt5.QtCore import QUrl
     except ImportError:
-        from PyQt4.QtWebkit import QWebView
+        from PyQt4.QtWebKit import QWebView
         from PyQt4.QtCore import QUrl
     helpView = QWebView()
     helpView.setHtml(html, QUrl(url))
@@ -203,7 +203,7 @@ def view_url_qtapp(url):
         from PyQt5.QtWebKitWidgets import QWebView
         from PyQt5.QtCore import QUrl
     except ImportError:
-        from PyQt4.QtWebkit import QWebView
+        from PyQt4.QtWebKit import QWebView
         from PyQt4.QtCore import QUrl
     frame = QWebView()
     frame.load(QUrl(url))
@@ -221,7 +221,7 @@ def can_use_qt():
         return True
     except ImportError:
         try:
-            from PyQt4.QtWebkit import QWebView
+            from PyQt4.QtWebKit import QWebView
             return True
         except ImportError:
             return False
