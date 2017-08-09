@@ -6,22 +6,16 @@ matrix:
   include:
     - os: linux
       env:
-        - PY=3.4
-  exclude:
+        - PY=2.7
     - os: linux
+      env:
+        - PY=3.4
+    - os: osx
+      env:
+        - PY=2.7
+    - os: osx
       env:
         - PY=3.6
-    - os: linux
-      env:
-        - PY=2.7
-    - os: osx
-      language: generic
-      env:
-        - PY=2.7
-    - os: osx
-      language: generic
-      env:
-        - PY=3.5
 
 # whitelist
 branches:
@@ -53,9 +47,10 @@ before_install:
 
   - conda install --yes python=$PY numpy scipy cython mako cffi
 
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      pip install pyopencl;
-    fi;
+  # Not testing with opencl below, so don't need to install it
+  #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+  #    pip install pyopencl;
+  #  fi;
 
 install:
   - pip install bumps
