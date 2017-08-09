@@ -6,26 +6,22 @@ matrix:
   include:
     - os: linux
       env:
-        - PY=2.7
-        - NUMPYSPEC=numpy
-    - os: linux
-      env:
         - PY=3.4
-        - NUMPYSPEC=numpy
+  exclude:
     - os: linux
       env:
         - PY=3.6
-        - NUMPYSPEC=numpy
+    - os: linux
+      env:
+        - PY=2.7
     - os: osx
       language: generic
       env:
         - PY=2.7
-        - NUMPYSPEC=numpy
     - os: osx
       language: generic
       env:
-        - PY=3
-        - NUMPYSPEC=numpy
+        - PY=3.5
 
 # whitelist
 branches:
@@ -55,9 +51,7 @@ before_install:
   # Useful for debugging any issues with conda
   - conda info -a
 
-  - conda install --yes python=$PY $NUMPYSPEC scipy cython mako cffi
-
-  - python --version
+  - conda install --yes python=$PY numpy scipy cython mako cffi
 
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
       pip install pyopencl;
@@ -68,8 +62,8 @@ install:
   - pip install unittest-xml-reporting
 
 script:
-- export WORKSPACE=/home/travis/build/SasView/sasmodels/
-- python -m sasmodels.model_test dll all
+- python --version
+- python -m sasmodels.model_test -v dll all
 
 notifications:
   slack:
