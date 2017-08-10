@@ -75,14 +75,14 @@ setting radius to $R/Xcore$ and axial ratio to $1/Xcore$ gives an equivalent sol
 The output of the 1D scattering intensity function for randomly oriented
 bicelles is then given by integrating over all possible $\alpha$ and $\psi$.
 
-For oriented bicellles the *theta*, *phi* and *psi* orientation parameters only appear when fitting 2D data, 
+For oriented bicelles the *theta*, *phi* and *psi* orientation parameters will appear when fitting 2D data, 
 see the :ref:`elliptical-cylinder` model for further information.
 
 
-.. figure:: img/elliptical_cylinder_angle_definition.jpg
+.. figure:: img/elliptical_cylinder_angle_definition.png
 
-    Definition of the angles for the oriented core_shell_bicelle_elliptical model.
-    Note that *theta* and *phi* are currently defined differently to those for the core_shell_bicelle model.
+    Definition of the angles for the oriented core_shell_bicelle_elliptical particles.   
+
 
 
 References
@@ -98,7 +98,7 @@ Authorship and Verification
 * **Last Reviewed by:**  Richard Heenan BEWARE 2d data yet to be checked **Date:** December 14, 2016
 """
 
-from numpy import inf, sin, cos
+from numpy import inf, sin, cos, pi
 
 name = "core_shell_bicelle_elliptical"
 title = "Elliptical cylinder with a core-shell scattering length density profile.."
@@ -118,16 +118,16 @@ category = "shape:cylinder"
 parameters = [
     ["radius",         "Ang",       30, [0, inf],    "volume",      "Cylinder core radius"],
     ["x_core",        "None",       3,  [0, inf],    "volume",      "axial ratio of core, X = r_polar/r_equatorial"],
-    ["thick_rim",  "Ang",        8, [0, inf],    "volume",      "Rim shell thickness"],
-    ["thick_face", "Ang",       14, [0, inf],    "volume",      "Cylinder face thickness"],
-    ["length",         "Ang",      50, [0, inf],    "volume",      "Cylinder length"],
+    ["thick_rim",  "Ang",            8, [0, inf],    "volume",      "Rim shell thickness"],
+    ["thick_face", "Ang",           14, [0, inf],    "volume",      "Cylinder face thickness"],
+    ["length",         "Ang",       50, [0, inf],    "volume",      "Cylinder length"],
     ["sld_core",       "1e-6/Ang^2", 4, [-inf, inf], "sld",         "Cylinder core scattering length density"],
     ["sld_face",       "1e-6/Ang^2", 7, [-inf, inf], "sld",         "Cylinder face scattering length density"],
     ["sld_rim",        "1e-6/Ang^2", 1, [-inf, inf], "sld",         "Cylinder rim scattering length density"],
     ["sld_solvent",    "1e-6/Ang^2", 6, [-inf, inf], "sld",         "Solvent scattering length density"],
-    ["theta",          "degrees",   90, [-360, 360], "orientation", "In plane angle"],
-    ["phi",            "degrees",    0, [-360, 360], "orientation", "Out of plane angle"],
-    ["psi",            "degrees",    0, [-360, 360], "orientation", "Major axis angle relative to Q"],
+    ["theta",       "degrees",    90.0, [-360, 360], "orientation", "cylinder axis to beam angle"],
+    ["phi",         "degrees",    0,    [-360, 360], "orientation", "rotation about beam"],
+    ["psi",         "degrees",    0,    [-360, 360], "orientation", "rotation about cylinder axis"]
     ]
 
 # pylint: enable=bad-whitespace, line-too-long
@@ -149,7 +149,10 @@ demo = dict(scale=1, background=0,
             phi=0,
             psi=0)
 
-#qx, qy = 0.4 * cos(pi/2.0), 0.5 * sin(0)
+q = 0.1
+# april 6 2017, rkh added a 2d unit test, NOT READY YET pull #890 branch assume correct!
+qx = q*cos(pi/6.0)
+qy = q*sin(pi/6.0)
 
 tests = [
     [{'radius': 30.0, 'x_core': 3.0, 'thick_rim':8.0, 'thick_face':14.0, 'length':50.0}, 'ER', 1],
@@ -158,4 +161,7 @@ tests = [
     [{'radius': 30.0, 'x_core': 3.0, 'thick_rim':8.0, 'thick_face':14.0, 'length':50.0,
     'sld_core':4.0, 'sld_face':7.0, 'sld_rim':1.0, 'sld_solvent':6.0, 'background':0.0},
     0.015, 286.540286],
-]
+#    [{'theta':80., 'phi':10.}, (qx, qy), 7.88866563001 ],
+        ]
+
+del qx, qy  # not necessary to delete, but cleaner

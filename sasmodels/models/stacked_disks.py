@@ -57,7 +57,7 @@ where $n$ is the total number of the disc stacked (*n_stacking*),
 $D = 2(d+h)$ is the next neighbor center-to-center distance (d-spacing),
 and $\sigma_d$ = the Gaussian standard deviation of the d-spacing (*sigma_d*).
 Note that $D\cos(\alpha)$ is the component of $D$ parallel to $q$ and the last
-term in the equation above is effectively a Debye-Waller factor term. 
+term in the equation above is effectively a Debye-Waller factor term.
 
 .. note::
 
@@ -76,7 +76,7 @@ term in the equation above is effectively a Debye-Waller factor term.
 To provide easy access to the orientation of the stacked disks, we define
 the axis of the cylinder using two angles $\theta$ and $\varphi$.
 
-.. figure:: img/cylinder_angle_definition.jpg
+.. figure:: img/cylinder_angle_definition.png
 
     Examples of the angles against the detector plane.
 
@@ -102,7 +102,7 @@ Authorship and Verification
 * **Last Reviewed by:** Paul Butler and Paul Kienzle **on:** November 26, 2016
 """
 
-from numpy import inf
+from numpy import inf, sin, cos, pi
 
 name = "stacked_disks"
 title = "Form factor for a stacked set of non exfoliated core/shell disks"
@@ -130,8 +130,8 @@ parameters = [
     ["sld_core",    "1e-6/Ang^2",  4,   [-inf, inf], "sld",         "Core scattering length density"],
     ["sld_layer",   "1e-6/Ang^2",  0.0, [-inf, inf], "sld",         "Layer scattering length density"],
     ["sld_solvent", "1e-6/Ang^2",  5.0, [-inf, inf], "sld",         "Solvent scattering length density"],
-    ["theta",       "degrees",     0,   [-inf, inf], "orientation", "Orientation of the stacked disk axis w/respect incoming beam"],
-    ["phi",         "degrees",     0,   [-inf, inf], "orientation", "Orientation of the stacked disk in the plane of the detector"],
+    ["theta",       "degrees",     0,   [-360, 360], "orientation", "Orientation of the stacked disk axis w/respect incoming beam"],
+    ["phi",         "degrees",     0,   [-360, 360], "orientation", "Rotation about beam"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
@@ -151,10 +151,15 @@ demo = dict(background=0.001,
             phi=0)
 # After redefinition of spherical coordinates -
 # tests had in old coords theta=0, phi=0; new coords theta=90, phi=0
-# but should not matter here as so far all the tests are 1D not 2D
-tests = [
+q = 0.1
+# april 6 2017, rkh added a 2d unit test, assume correct!
+qx = q*cos(pi/6.0)
+qy = q*sin(pi/6.0)
 # Accuracy tests based on content in test/utest_extra_models.py.
-# Added 2 tests with n_stacked = 5 using SasView 3.1.2 - PDB; for which alas q=0.001 values seem closer to n_stacked=1 not 5, changed assuming my 4.1 code OK, RKH
+# Added 2 tests with n_stacked = 5 using SasView 3.1.2 - PDB;
+# for which alas q=0.001 values seem closer to n_stacked=1 not 5,
+# changed assuming my 4.1 code OK, RKH
+tests = [
     [{'thick_core': 10.0,
       'thick_layer': 15.0,
       'radius': 3000.0,
@@ -162,7 +167,7 @@ tests = [
       'sigma_d': 0.0,
       'sld_core': 4.0,
       'sld_layer': -0.4,
-      'solvent_sd': 5.0,
+      'sld_solvent': 5.0,
       'theta': 90.0,
       'phi': 0.0,
       'scale': 0.01,
@@ -175,7 +180,7 @@ tests = [
       'sigma_d': 0.0,
       'sld_core': 4.0,
       'sld_layer': -0.4,
-      'solvent_sd': 5.0,
+      'sld_solvent': 5.0,
       'theta': 90.0,
       'phi': 0.0,
       'scale': 0.01,
@@ -185,12 +190,25 @@ tests = [
      }, 0.001, 25325.635693],
     [{'thick_core': 10.0,
       'thick_layer': 15.0,
+      'radius': 100.0,
+      'n_stacking': 5,
+      'sigma_d': 0.0,
+      'sld_core': 4.0,
+      'sld_layer': -0.4,
+      'sld_solvent': 5.0,
+      'theta': 90.0,
+      'phi': 20.0,
+      'scale': 0.01,
+      'background': 0.001,
+     }, (qx, qy), 0.0491167089952],
+    [{'thick_core': 10.0,
+      'thick_layer': 15.0,
       'radius': 3000.0,
       'n_stacking': 5,
       'sigma_d': 0.0,
       'sld_core': 4.0,
       'sld_layer': -0.4,
-      'solvent_sd': 5.0,
+      'sld_solvent': 5.0,
       'theta': 90.0,
       'phi': 0.0,
       'scale': 0.01,
@@ -206,7 +224,7 @@ tests = [
       'sigma_d': 0.0,
       'sld_core': 4.0,
       'sld_layer': -0.4,
-      'solvent_sd': 5.0,
+      'sld_solvent': 5.0,
       'theta': 90.0,
       'phi': 0.0,
       'scale': 0.01,
@@ -221,12 +239,27 @@ tests = [
       'sigma_d': 0.0,
       'sld_core': 4.0,
       'sld_layer': -0.4,
-      'solvent_sd': 5.0,
+      'sld_solvent': 5.0,
       'theta': 90.0,
       'phi': 0.0,
       'scale': 0.01,
       'background': 0.001,
      }, ([0.4, 0.5]), [0.00105074, 0.00121761]],
+#    [{'thick_core': 10.0,
+#      'thick_layer': 15.0,
+#      'radius': 3000.0,
+#      'n_stacking': 1.0,
+#      'sigma_d': 0.0,
+#      'sld_core': 4.0,
+#      'sld_layer': -0.4,
+#      'sld_solvent': 5.0,
+#      'theta': 90.0,
+#      'phi': 20.0,
+#      'scale': 0.01,
+#      'background': 0.001,
+# 2017-05-18 PAK temporarily suppress output of qx,qy test; j1 is not accurate for large qr
+#     }, (qx, qy), 0.0341738733124],
+#     }, (qx, qy), None],
 
     [{'thick_core': 10.0,
       'thick_layer': 15.0,
@@ -235,12 +268,11 @@ tests = [
       'sigma_d': 0.0,
       'sld_core': 4.0,
       'sld_layer': -0.4,
-     'solvent_sd': 5.0,
+      'sld_solvent': 5.0,
       'theta': 90.0,
       'phi': 0.0,
       'scale': 0.01,
       'background': 0.001,
      }, ([1.3, 1.57]), [0.0010039, 0.0010038]],
     ]
-# 11Jan2017   RKH checking unit test agai, note they are all 1D, no 2D
-
+# 11Jan2017   RKH checking unit test again, note they are all 1D, no 2D

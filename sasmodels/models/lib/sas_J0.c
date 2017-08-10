@@ -234,16 +234,17 @@ float cephes_j0f(float x)
     else
         xx = x;
 
-    if( x <= 2.0 ) {
+    // 2017-05-18 PAK - support negative x
+    if( xx <= 2.0 ) {
         z = xx * xx;
-        if( x < 1.0e-3 )
+        if( xx < 1.0e-3 )
             return( 1.0 - 0.25*z );
 
         p = (z-DR1) * polevl( z, JPJ0, 4);
         return( p );
     }
 
-    q = 1.0/x;
+    q = 1.0/xx;
     w = sqrt(q);
 
     p = w * polevl( q, MOJ0, 7);

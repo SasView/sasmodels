@@ -119,14 +119,14 @@ tests = [
       'background': 0.0,
      }, 0.150141, 0.125945],
 
-    [{'coeffcent_1':    1.0,
+    [{'coefficent_1':    1.0,
       'crossover':  0.04,
       'power_1':    1.0,
       'power_2':    4.0,
       'background': 0.0,
      }, 0.442528, 0.00166884],
 
-    [{'coeffcent_1':    1.0,
+    [{'coefficent_1':    1.0,
       'crossover':  0.04,
       'power_1':    1.0,
       'power_2':    4.0,
