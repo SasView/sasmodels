@@ -37,7 +37,7 @@ def rst2html(rst, part="whole", math_output="mathjax"):
     - html
     - mathml
     - mathjax
-    See `http://docutils.sourceforge.net/docs/user/config.html#math-output`_
+    See `<http://docutils.sourceforge.net/docs/user/config.html#math-output>`_
     for details.
 
     The following *part* choices are available:
@@ -175,7 +175,7 @@ def qtview(html, url=""):
         from PyQt5.QtWebKitWidgets import QWebView
         from PyQt5.QtCore import QUrl
     except ImportError:
-        from PyQt4.QtWebkit import QWebView
+        from PyQt4.QtWebKit import QWebView
         from PyQt4.QtCore import QUrl
     helpView = QWebView()
     helpView.setHtml(html, QUrl(url))
@@ -203,16 +203,36 @@ def view_url_qtapp(url):
         from PyQt5.QtWebKitWidgets import QWebView
         from PyQt5.QtCore import QUrl
     except ImportError:
-        from PyQt4.QtWebkit import QWebView
+        from PyQt4.QtWebKit import QWebView
         from PyQt4.QtCore import QUrl
     frame = QWebView()
     frame.load(QUrl(url))
     frame.show()
     sys.exit(app.exec_())
 
+def can_use_qt():
+    """
+    Return True if QWebView exists.
+
+    Checks first in PyQt5 then in PyQt4
+    """
+    try:
+        from PyQt5.QtWebKitWidgets import QWebView
+        return True
+    except ImportError:
+        try:
+            from PyQt4.QtWebKit import QWebView
+            return True
+        except ImportError:
+            return False
+
 def view_help(filename, qt=False):
     import os
-    url="file:///"+os.path.abspath(filename).replace("\\","/")
+
+    if qt:
+        qt = can_use_qt()
+
+    url = "file:///"+os.path.abspath(filename).replace("\\", "/")
     if filename.endswith('.rst'):
         html = load_rst_as_html(filename)
         if qt:

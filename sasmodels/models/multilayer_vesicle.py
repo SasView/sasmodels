@@ -70,12 +70,13 @@ USAGE NOTES
   floating point value. Thus it may be that the resolution interpolation is not
   sufficiently fine grained in certain cases. Please report any such occurences
   to the SasView team. Generally, for the best possible experience:
- * Start with the best possible guess
- * Using a priori knowledge, hold as many parameters fixed as possible
- * if N=1, tw (water thickness) must by definition be zero. Both N and tw should
+
+ - Start with the best possible guess
+ - Using a priori knowledge, hold as many parameters fixed as possible
+ - if N=1, tw (water thickness) must by definition be zero. Both N and tw should
    be fixed during fitting.
- * If N>1, use constraints to keep N > 1
- * Because N only really moves in integer steps, it may get "stuck" if the
+ - If N>1, use constraints to keep N > 1
+ - Because N only really moves in integer steps, it may get "stuck" if the
    optimizer step size is too small so care should be taken
    If you experience problems with this please contact the SasView team and let
    them know the issue preferably with example data and model which fail to
