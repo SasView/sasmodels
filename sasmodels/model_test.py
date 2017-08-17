@@ -49,7 +49,9 @@ import unittest
 
 try:
     from StringIO import StringIO
-except ImportError: # StringIO.StringIO renamed to io.StringIO in Python 3
+except ImportError:
+    # StringIO.StringIO renamed to io.StringIO in Python 3
+    # Note: io.StringIO exists in python 2, but using unicode instead of str
     from io import StringIO
 
 import numpy as np  # type: ignore
@@ -341,7 +343,7 @@ def is_near(target, actual, digits=5):
     return abs(target-actual)/shift < 1.5*10**-digits
 
 def run_one(model):
-    # type: (str) -> None
+    # type: (str) -> str
     """
     Run the tests for a single model, printing the results to stdout.
 
