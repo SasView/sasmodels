@@ -72,7 +72,7 @@ Options (* for default):
     -zero indicates that q=0 should be included
     -1d*/-2d computes 1d or 2d data
     -preset*/-random[=seed] preset or random parameters
-    -mono/-poly* force monodisperse/polydisperse
+    -mono*/-poly force monodisperse or allow polydisperse demo parameters
     -magnetic/-nonmagnetic* suppress magnetism
     -cutoff=1e-5* cutoff value for including a point in polydispersity
     -pars/-nopars* prints the parameter set or not
@@ -83,7 +83,7 @@ Options (* for default):
     -accuracy=Low accuracy of the resolution calculation Low, Mid, High, Xhigh
     -edit starts the parameter explorer
     -default/-demo* use demo vs default parameters
-    -html shows the model docs instead of running the model
+    -help/-html shows the model docs instead of running the model
     -title="note" adds note to the plot title, after the model name
     -data="path" uses q, dq from the data file
 
@@ -752,12 +752,12 @@ def plot_models(opts, result, limits=None):
     base = opts['engines'][0] if have_base else None
     comp = opts['engines'][1] if have_comp else None
     data = opts['data']
-    use_data = have_base ^ have_comp
+    use_data = (opts['datafile'] is not None) and (have_base ^ have_comp)
 
     # Plot if requested
     view = opts['view']
     import matplotlib.pyplot as plt
-    if limits is None:
+    if limits is None and not use_data:
         vmin, vmax = np.Inf, -np.Inf
         if have_base:
             vmin = min(vmin, base_value.min())
@@ -835,7 +835,7 @@ NAME_OPTIONS = set([
     'rel', 'abs',
     'linear', 'log', 'q4',
     'hist', 'nohist',
-    'edit', 'html',
+    'edit', 'html', 'help',
     'demo', 'default',
     ])
 VALUE_OPTIONS = [
@@ -946,7 +946,7 @@ def parse_opts(argv):
         'accuracy'  : 'Low',
         'cutoff'    : 0.0,
         'seed'      : -1,  # default to preset
-        'mono'      : False,
+        'mono'      : True,
         # Default to magnetic a magnetic moment is set on the command line
         'magnetic'  : False,
         'show_pars' : False,
@@ -957,7 +957,7 @@ def parse_opts(argv):
         'zero'      : False,
         'html'      : False,
         'title'     : None,
-        'data'      : None,
+        'datafile'  : None,
     }
     engines = []
     for arg in flags:
@@ -979,7 +979,7 @@ def parse_opts(argv):
         elif arg.startswith('-cutoff='):   opts['cutoff'] = float(arg[8:])
         elif arg.startswith('-random='):   opts['seed'] = int(arg[8:])
         elif arg.startswith('-title='):    opts['title'] = arg[7:]
-        elif arg.startswith('-data='):     opts['data'] = arg[6:]
+        elif arg.startswith('-data='):     opts['datafile'] = arg[6:]
         elif arg == '-random':  opts['seed'] = np.random.randint(1000000)
         elif arg == '-preset':  opts['seed'] = -1
         elif arg == '-mono':    opts['mono'] = True
@@ -1004,6 +1004,7 @@ def parse_opts(argv):
         elif arg == '-demo':    opts['use_demo'] = True
         elif arg == '-default':    opts['use_demo'] = False
         elif arg == '-html':    opts['html'] = True
+        elif arg == '-help':    opts['html'] = True
     # pylint: enable=bad-whitespace
 
     if MODEL_SPLIT in name:
@@ -1120,8 +1121,8 @@ def parse_opts(argv):
             print(str(parlist(model_info, pars, opts['is2d'])))
 
     # Create the computational engines
-    if opts['data'] is not None:
-        data = load_data(os.path.expanduser(opts['data']))
+    if opts['datafile'] is not None:
+        data = load_data(os.path.expanduser(opts['datafile']))
     else:
         data, _ = make_data(opts)
     if n1:

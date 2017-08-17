@@ -29,11 +29,11 @@ double form_volume(double radius, double thick_rim, double thick_face, double le
 }
 
 static double
-bicelle_kernel(double qq,
+bicelle_kernel(double q,
               double rad,
               double radthick,
               double facthick,
-              double length,
+              double halflength,
               double rhoc,
               double rhoh,
               double rhor,
@@ -41,36 +41,30 @@ bicelle_kernel(double qq,
               double sin_alpha,
               double cos_alpha)
 {
-    double si1,si2,be1,be2;
-
     const double dr1 = rhoc-rhoh;
     const double dr2 = rhor-rhosolv;
     const double dr3 = rhoh-rhor;
-    const double vol1 = M_PI*rad*rad*(2.0*length);
-    const double vol2 = M_PI*(rad+radthick)*(rad+radthick)*2.0*(length+facthick);
-    const double vol3 = M_PI*rad*rad*2.0*(length+facthick);
-    double besarg1 = qq*rad*sin_alpha;
-    double besarg2 = qq*(rad+radthick)*sin_alpha;
-    double sinarg1 = qq*length*cos_alpha;
-    double sinarg2 = qq*(length+facthick)*cos_alpha;
+    const double vol1 = M_PI*square(rad)*2.0*(halflength);
+    const double vol2 = M_PI*square(rad+radthick)*2.0*(halflength+facthick);
+    const double vol3 = M_PI*square(rad)*2.0*(halflength+facthick);
 
-    be1 = sas_2J1x_x(besarg1);
-    be2 = sas_2J1x_x(besarg2);
-    si1 = sas_sinx_x(sinarg1);
-    si2 = sas_sinx_x(sinarg2);
+    const double be1 = sas_2J1x_x(q*(rad)*sin_alpha);
+    const double be2 = sas_2J1x_x(q*(rad+radthick)*sin_alpha);
+    const double si1 = sas_sinx_x(q*(halflength)*cos_alpha);
+    const double si2 = sas_sinx_x(q*(halflength+facthick)*cos_alpha);
 
     const double t = vol1*dr1*si1*be1 +
                      vol2*dr2*si2*be2 +
                      vol3*dr3*si2*be1;
 
-    const double retval = t*t*sin_alpha;
+    const double retval = t*t;
 
     return retval;
 
 }
 
 static double
-bicelle_integration(double qq,
+bicelle_integration(double q,
                    double rad,
                    double radthick,
                    double facthick,
@@ -82,17 +76,17 @@ bicelle_integration(double qq,
 {
     // set up the integration end points
     const double uplim = M_PI_4;
-    const double halfheight = 0.5*length;
+    const double halflength = 0.5*length;
 
     double summ = 0.0;
     for(int i=0;i<N_POINTS_76;i++) {
         double alpha = (Gauss76Z[i] + 1.0)*uplim;
         double sin_alpha, cos_alpha; // slots to hold sincos function output
         SINCOS(alpha, sin_alpha, cos_alpha);
-        double yyy = Gauss76Wt[i] * bicelle_kernel(qq, rad, radthick, facthick,
-                             halfheight, rhoc, rhoh, rhor, rhosolv,
+        double yyy = Gauss76Wt[i] * bicelle_kernel(q, rad, radthick, facthick,
+                             halflength, rhoc, rhoh, rhor, rhosolv,
                              sin_alpha, cos_alpha);
-        summ += yyy;
+        summ += yyy*sin_alpha;
     }
 
     // calculate value of integral to return
@@ -118,11 +112,8 @@ bicelle_kernel_2d(double qx, double qy,
 
     double answer = bicelle_kernel(q, radius, thick_rim, thick_face,
                            0.5*length, core_sld, face_sld, rim_sld,
-                           solvent_sld, sin_alpha, cos_alpha) / fabs(sin_alpha);
-
-    answer *= 1.0e-4;
-
-    return answer;
+                           solvent_sld, sin_alpha, cos_alpha);
+    return 1.0e-4*answer;
 }
 
 double Iq(double q,

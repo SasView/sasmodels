@@ -66,14 +66,14 @@ Iqxy(double qx, double qy,
      double sld, double solvent_sld,
      double theta, double phi, double psi)
 {
-    double q, cos_val, cos_mu, cos_nu;
-    ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, cos_val, cos_mu, cos_nu);
+    double q, xhat, yhat, zhat;
+    ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, xhat, yhat, zhat);
 
     // Compute:  r = sqrt((radius_major*cos_nu)^2 + (radius_minor*cos_mu)^2)
     // Given:    radius_major = r_ratio * radius_minor
-    const double r = radius_minor*sqrt(square(r_ratio*cos_nu) + cos_mu*cos_mu);
+    const double r = radius_minor*sqrt(square(r_ratio*xhat) + square(yhat));
     const double be = sas_2J1x_x(q*r);
-    const double si = sas_sinx_x(q*0.5*length*cos_val);
+    const double si = sas_sinx_x(q*zhat*0.5*length);
     const double Aq = be * si;
     const double delrho = sld - solvent_sld;
     const double vol = form_volume(radius_minor, r_ratio, length);

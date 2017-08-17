@@ -14,7 +14,7 @@ from copy import deepcopy
 import collections
 import traceback
 import logging
-from os.path import basename, splitext
+from os.path import basename, splitext, abspath, getmtime
 import thread
 
 import numpy as np  # type: ignore
@@ -39,36 +39,13 @@ try:
 except ImportError:
     pass
 
+logger = logging.getLogger(__name__)
+
 calculation_lock = thread.allocate_lock()
 
+#: True if pre-existing plugins, with the old names and parameters, should
+#: continue to be supported.
 SUPPORT_OLD_STYLE_PLUGINS = True
-
-def _register_old_models():
-    # type: () -> None
-    """
-    Place the new models into sasview under the old names.
-
-    Monkey patch sas.sascalc.fit as sas.models so that sas.models.pluginmodel
-    is available to the plugin modules.
-    """
-    import sys
-    import sas   # needed in order to set sas.models
-    import sas.sascalc.fit
-    sys.modules['sas.models'] = sas.sascalc.fit
-    sas.models = sas.sascalc.fit
-
-    import sas.models
-    from sasmodels.conversion_table import CONVERSION_TABLE
-    for new_name, conversion in CONVERSION_TABLE.get((3,1,2), {}).items():
-        # CoreShellEllipsoidModel => core_shell_ellipsoid:1
-        new_name = new_name.split(':')[0]
-        old_name = conversion[0] if len(conversion) < 3 else conversion[2]
-        module_attrs = {old_name: find_model(new_name)}
-        ConstructedModule = type(old_name, (), module_attrs)
-        old_path = 'sas.models.' + old_name
-        setattr(sas.models, old_path, ConstructedModule)
-        sys.modules[old_path] = ConstructedModule
-
 
 # TODO: separate x_axis_label from multiplicity info
 MultiplicityInfo = collections.namedtuple(
@@ -76,7 +53,11 @@ MultiplicityInfo = collections.namedtuple(
     ["number", "control", "choices", "x_axis_label"],
 )
 
-MODELS = {}
+#: set of defined models (standard and custom)
+MODELS = {}  # type: Dict[str, SasviewModelType]
+#: custom model {path: model} mapping so we can check timestamps
+MODEL_BY_PATH = {}  # type: Dict[str, SasviewModelType]
+
 def find_model(modelname):
     # type: (str) -> SasviewModelType
     """
@@ -102,17 +83,15 @@ def load_standard_models():
     If there is an error loading a model, then a traceback is logged and the
     model is not returned.
     """
-    models = []
     for name in core.list_models():
         try:
             MODELS[name] = _make_standard_model(name)
-            models.append(MODELS[name])
         except Exception:
-            logging.error(traceback.format_exc())
+            logger.error(traceback.format_exc())
     if SUPPORT_OLD_STYLE_PLUGINS:
         _register_old_models()
 
-    return models
+    return list(MODELS.values())
 
 
 def load_custom_model(path):
@@ -120,8 +99,14 @@ def load_custom_model(path):
     """
     Load a custom model given the model path.
     """
+    model = MODEL_BY_PATH.get(path, None)
+    if model is not None and model.timestamp == getmtime(path):
+        #logger.info("Model already loaded %s", path)
+        return model
+
+    #logger.info("Loading model %s", path)
     kernel_module = custom.load_custom_kernel_module(path)
-    try:
+    if hasattr(kernel_module, 'Model'):
         model = kernel_module.Model
         # Old style models do not set the name in the class attributes, so
         # set it here; this name will be overridden when the object is created
@@ -129,33 +114,30 @@ def load_custom_model(path):
         if model.name == "":
             model.name = splitext(basename(path))[0]
         if not hasattr(model, 'filename'):
-            model.filename = kernel_module.__file__
-            # For old models, treat .pyc and .py files interchangeably.
-            # This is needed because of the Sum|Multi(p1,p2) types of models
-            # and the convoluted way in which they are created.
-            if model.filename.endswith(".py"):
-                logging.info("Loading %s as .pyc", model.filename)
-                model.filename = model.filename+'c'
+            model.filename = abspath(kernel_module.__file__).replace('.pyc', '.py')
         if not hasattr(model, 'id'):
             model.id = splitext(basename(model.filename))[0]
-    except AttributeError:
+    else:
         model_info = modelinfo.make_model_info(kernel_module)
         model = _make_model_from_info(model_info)
+    model.timestamp = getmtime(path)
 
     # If a model name already exists and we are loading a different model,
     # use the model file name as the model name.
     if model.name in MODELS and not model.filename == MODELS[model.name].filename:
         _previous_name = model.name
         model.name = model.id
-        
+
         # If the new model name is still in the model list (for instance,
         # if we put a cylinder.py in our plug-in directory), then append
         # an identifier.
         if model.name in MODELS and not model.filename == MODELS[model.name].filename:
             model.name = model.id + '_user'
-        logging.info("Model %s already exists: using %s [%s]", _previous_name, model.name, model.filename)
+        logger.info("Model %s already exists: using %s [%s]",
+                    _previous_name, model.name, model.filename)
 
     MODELS[model.name] = model
+    MODEL_BY_PATH[path] = model
     return model
 
 
@@ -171,6 +153,33 @@ def _make_standard_model(name):
     kernel_module = generate.load_kernel_module(name)
     model_info = modelinfo.make_model_info(kernel_module)
     return _make_model_from_info(model_info)
+
+
+def _register_old_models():
+    # type: () -> None
+    """
+    Place the new models into sasview under the old names.
+
+    Monkey patch sas.sascalc.fit as sas.models so that sas.models.pluginmodel
+    is available to the plugin modules.
+    """
+    import sys
+    import sas   # needed in order to set sas.models
+    import sas.sascalc.fit
+    sys.modules['sas.models'] = sas.sascalc.fit
+    sas.models = sas.sascalc.fit
+
+    import sas.models
+    from sasmodels.conversion_table import CONVERSION_TABLE
+    for new_name, conversion in CONVERSION_TABLE.get((3, 1, 2), {}).items():
+        # CoreShellEllipsoidModel => core_shell_ellipsoid:1
+        new_name = new_name.split(':')[0]
+        old_name = conversion[0] if len(conversion) < 3 else conversion[2]
+        module_attrs = {old_name: find_model(new_name)}
+        ConstructedModule = type(old_name, (), module_attrs)
+        old_path = 'sas.models.' + old_name
+        setattr(sas.models, old_path, ConstructedModule)
+        sys.modules[old_path] = ConstructedModule
 
 
 def MultiplicationModel(form_factor, structure_factor):
@@ -282,11 +291,11 @@ class SasviewModel(object):
     category = None     # type: str
 
     #: names of the orientation parameters in the order they appear
-    orientation_params = None # type: Sequence[str]
+    orientation_params = None # type: List[str]
     #: names of the magnetic parameters in the order they appear
-    magnetic_params = None    # type: Sequence[str]
+    magnetic_params = None    # type: List[str]
     #: names of the fittable parameters
-    fixed = None              # type: Sequence[str]
+    fixed = None              # type: List[str]
     # TODO: the attribute fixed is ill-named
 
     # Axis labels
@@ -610,8 +619,8 @@ class SasviewModel(object):
         ## uncomment the following when trying to debug the uncoordinated calls
         ## to calculate_Iq
         #if calculation_lock.locked():
-        #    logging.info("calculation waiting for another thread to complete")
-        #    logging.info("\n".join(traceback.format_stack()))
+        #    logger.info("calculation waiting for another thread to complete")
+        #    logger.info("\n".join(traceback.format_stack()))
 
         with calculation_lock:
             return self._calculate_Iq(qx, qy)
