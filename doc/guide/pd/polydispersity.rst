@@ -207,7 +207,7 @@ Note about DLS polydispersity
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Many commercial Dynamic Light Scattering (DLS) instruments produce a size
-polydispersity parameter, sometimes even given the symbol $p$! This
+polydispersity parameter, sometimes even given the symbol $p$ This
 parameter is defined as the relative standard deviation coefficient of
 variation of the size distribution and is NOT the same as the polydispersity
 parameters in the Lognormal and Schulz distributions above (though they all

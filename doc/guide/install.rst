@@ -59,7 +59,7 @@ OpenCL Installation
 protection as CPU devices. If your code attempts to write outside allocated
 memory buffers unpredicatable behaviour may result (eg, your video display
 may freeze, or your system may crash, etc). Do not install OpenCL drivers
-ithout first checking for known issues (eg, some computer manufacturers
+without first checking for known issues (eg, some computer manufacturers
 install modified graphics drivers so replacing these may not be a good
 idea!). If in doubt, seek advice from an IT professional before proceeding
 further.*

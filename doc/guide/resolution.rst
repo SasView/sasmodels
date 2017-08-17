@@ -168,8 +168,8 @@ Pinhole Smearing
 **This is the type of smearing normally encountered with data from synchrotron**
 **SAXS cameras and SANS instruments.**
 
-The pinhole smearing computation is performed in a similar fashion to the slit-
-smeared case above except that the weight function used is a Gaussian. Thus
+The pinhole smearing computation is performed in a similar fashion to the
+slit-smeared case above except that the weight function used is a Gaussian. Thus
 Equation 6 becomes
 
 .. math::
