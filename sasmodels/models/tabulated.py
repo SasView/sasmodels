@@ -72,18 +72,30 @@ def initialize(q=None, qx=None, qy=None, I=None):
     update_interpolator()
 
 
+def numpyze(calc_I):
+    """
+    Transform positional arguments into numpy arrays
+    :param calc_I: Intensities calculator
+    :return: function acting on the transformed positional arguments
+    """
+    def wrapper(*args, **kwargs):
+        numpy_args = [np.array(arg, dtype=np.float) for arg in args]
+        return calc_I(*numpy_args, **kwargs)
+
+
+@numpyze
 def Iq(q, scale=1.0):
     """
     :param q:     sequence of momentum transfer values
     :param scale: scaling factor
     :return:      calculated intensities
     """
-    q_a = np.array(q, dtype='float')
-    return scale * _attr['itp'](q_a)
+    return scale * _attr['itp'](q)
 
 Iq.vectorized = True  # Iq accepts an array of q values
 
 
+@numpyze
 def Iqxy(qx, qy, scale=1.0):
     """
     :param qx:    sequence of momentum transfer values along X-axis
@@ -91,9 +103,7 @@ def Iqxy(qx, qy, scale=1.0):
     :param scale: scaling factor
     :return:      calculated intensities
     """
-    qx_a = np.array(qx, dtype='float')
-    qy_a = np.array(qy, dtype='float')
-    return scale * _attr['itp'](qx_a, qy_a)
+    return scale * _attr['itp'](qx, qy)
     pass
 
 Iqxy.vectorized = True  # Iqxy accepts arrays of qx, qy values
