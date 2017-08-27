@@ -1,14 +1,16 @@
 .. currentmodule:: sasmodels
 
+.. _Calculator_Interface:
+
 Calculator Interface
 ====================
 
 This document describes the layer between the form factor kernels and the
 model calculator which implements the polydispersity and magnetic SLD
 calculations.  There are three separate implementations of this layer,
-*kernelcl.py* for OpenCL, which operates on a single Q value at a time,
-*kerneldll.c* for the DLL, which loops over a vector of Q values, and
-*kernelpy.py* for python models which operates on vector Q values.
+:mod:`kernelcl` for OpenCL, which operates on a single Q value at a time,
+:mod:`kerneldll` for the DLL, which loops over a vector of Q values, and
+:mod:`kernelpy` for python models which operates on vector Q values.
 
 Each implementation provides three different calls *Iq*, *Iqxy* and *Imagnetic*
 for 1-D, 2-D and 2-D magnetic kernels respectively.
