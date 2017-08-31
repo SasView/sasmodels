@@ -125,7 +125,7 @@ def load_model(model_name, dtype=None, platform='ocl'):
                        dtype=dtype, platform=platform)
 
 
-def load_model_info(model_name):
+def load_model_info(model_name, force_mixture=False):
     # type: (str) -> modelinfo.ModelInfo
     """
     Load a model definition given the model name.
@@ -133,18 +133,28 @@ def load_model_info(model_name):
     *model_name* is the name of the model, or perhaps a model expression
     such as sphere*hardsphere or sphere+cylinder.
 
+    *force_mixture* if true, MixtureModel will be used for combining models.
+    Otherwise either MixtureModel will be used for addition and ProductModel
+    will be used for multiplication
+
     This returns a handle to the module defining the model.  This can be
     used with functions in generate to build the docs or extract model info.
     """
     parts = model_name.split('+')
     if len(parts) > 1:
+        # Always use MixtureModel for addition
         model_info_list = [load_model_info(p) for p in parts]
         return mixture.make_mixture_info(model_info_list)
 
     parts = model_name.split('*')
     if len(parts) > 1:
+        if force_mixture:
+            # Use MixtureModel for multiplication if forced
+            model_info_list = [load_model_info(p) for p in parts]
+            return mixture.make_mixture_info(model_info_list, operation='*')
         if len(parts) > 2:
             raise ValueError("use P*S to apply structure factor S to model P")
+        # Use ProductModel
         P_info, Q_info = [load_model_info(p) for p in parts]
         return product.make_product_info(P_info, Q_info)
 

@@ -24,7 +24,7 @@ try:
 except ImportError:
     pass
 
-def make_mixture_info(parts):
+def make_mixture_info(parts, operation='+'):
     # type: (List[ModelInfo]) -> ModelInfo
     """
     Create info block for mixture model.
@@ -45,9 +45,11 @@ def make_mixture_info(parts):
         # Note that prefix must also be applied to id and length_control
         # to support vector parameters
         prefix = chr(ord('A')+k) + '_'
-        scale =  Parameter(prefix+'scale', default=1.0,
-                           description="model intensity for " + part.name)
-        combined_pars.append(scale)
+        if operation == '+':
+            # If model is a sum model, each constituent model gets its own scale parameter
+            scale =  Parameter(prefix+'scale', default=1.0,
+                            description="model intensity for " + part.name)
+            combined_pars.append(scale)
         for p in part.parameters.kernel_parameters:
             p = copy(p)
             p.name = prefix + p.name
@@ -62,8 +64,9 @@ def make_mixture_info(parts):
     parameters.max_pd = sum(part.parameters.max_pd for part in parts)
 
     model_info = ModelInfo()
-    model_info.id = '+'.join(part.id for part in parts)
-    model_info.name = ' + '.join(part.name for part in parts)
+    model_info.id = operation.join(part.id for part in parts)
+    model_info.operation = operation
+    model_info.name = operation.join(part.name for part in parts)
     model_info.filename = None
     model_info.title = 'Mixture model with ' + model_info.name
     model_info.description = model_info.title
@@ -115,6 +118,7 @@ class MixtureKernel(Kernel):
         self.info =  model_info
         self.kernels = kernels
         self.dtype = self.kernels[0].dtype
+        self.operation = model_info.operation
         self.results = []  # type: List[np.ndarray]
 
     def __call__(self, call_details, values, cutoff, magnetic):
@@ -123,13 +127,19 @@ class MixtureKernel(Kernel):
         total = 0.0
         # remember the parts for plotting later
         self.results = []  # type: List[np.ndarray]
-        offset = 2 # skip scale & background
         parts = MixtureParts(self.info, self.kernels, call_details, values)
         for kernel, kernel_details, kernel_values in parts:
             #print("calling kernel", kernel.info.name)
             result = kernel(kernel_details, kernel_values, cutoff, magnetic)
-            #print(kernel.info.name, result)
-            total += result
+            result = np.array(result).astype(kernel.dtype)
+            # print(kernel.info.name, result)
+            if self.operation == '+':
+                total += result
+            elif self.operation == '*':
+                if np.all(total) == 0.0:
+                    total = result
+                else:
+                    total *= result
             self.results.append(result)
 
         return scale*total + background
@@ -170,7 +180,9 @@ class MixtureParts(object):
         #call_details.show(values)
 
         self.part_num += 1
-        self.par_index += info.parameters.npars + 1
+        self.par_index += info.parameters.npars
+        if self.model_info.operation == '+':
+            self.par_index += 1 # Account for each constituent model's scale param
         self.mag_index += 3 * len(info.parameters.magnetism_index)
 
         return kernel, call_details, values
@@ -181,11 +193,12 @@ class MixtureParts(object):
         # par_index is index into values array of the current parameter,
         # which includes the initial scale and background parameters.
         # We want the index into the weight length/offset for each parameter.
-        # Exclude the initial scale and background, so subtract two, but each
-        # component has its own scale factor which we need to skip when
-        # constructing the details for the kernel, so add one, giving a
-        # net subtract one.
-        index = slice(par_index - 1, par_index - 1 + info.parameters.npars)
+        # Exclude the initial scale and background, so subtract two. If we're
+        # building an addition model, each component has its own scale factor
+        # which we need to skip when constructing the details for the kernel, so
+        # add one, giving a net subtract one.
+        diff = 1 if self.model_info.operation == '+' else 2
+        index = slice(par_index - diff, par_index - diff + info.parameters.npars)
         length = full.length[index]
         offset = full.offset[index]
         # The complete weight vector is being sent to each part so that
@@ -195,9 +208,10 @@ class MixtureParts(object):
 
     def _part_values(self, info, par_index, mag_index):
         # type: (ModelInfo, int, int) -> np.ndarray
-        #print(info.name, par_index, self.values[par_index:par_index + info.parameters.npars + 1])
-        scale = self.values[par_index]
-        pars = self.values[par_index + 1:par_index + info.parameters.npars + 1]
+        # Set each constituent model's scale to 1 if this is a multiplication model
+        scale = self.values[par_index] if self.model_info.operation == '+' else 1.0
+        diff = 1 if self.model_info.operation == '+' else 0 # Skip scale if addition model
+        pars = self.values[par_index + diff:par_index + info.parameters.npars + diff]
         nmagnetic = len(info.parameters.magnetism_index)
         if nmagnetic:
             spin_state = self.values[self.spin_index:self.spin_index + 3]
