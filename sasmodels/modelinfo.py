@@ -717,6 +717,9 @@ def make_model_info(kernel_module):
     Note: vectorized Iq and Iqxy functions will be created for python
     models when the model is first called, not when the model is loaded.
     """
+    if hasattr(kernel_module, "model_info"):
+        # Custom sum/multi models
+        return kernel_module.model_info
     info = ModelInfo()
     #print("make parameter table", kernel_module.parameters)
     parameters = make_parameter_table(getattr(kernel_module, 'parameters', []))
