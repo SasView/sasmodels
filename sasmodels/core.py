@@ -125,7 +125,43 @@ def load_model(model_name, dtype=None, platform='ocl'):
                        dtype=dtype, platform=platform)
 
 
-def load_model_info(model_name, force_mixture=False):
+# def load_model_info(model_name, force_mixture=False):
+#     # type: (str) -> modelinfo.ModelInfo
+#     """
+#     Load a model definition given the model name.
+
+#     *model_name* is the name of the model, or perhaps a model expression
+#     such as sphere*hardsphere or sphere+cylinder.
+
+#     *force_mixture* if true, MixtureModel will be used for combining models.
+#     Otherwise either MixtureModel will be used for addition and ProductModel
+#     will be used for multiplication
+
+#     This returns a handle to the module defining the model.  This can be
+#     used with functions in generate to build the docs or extract model info.
+#     """
+#     parts = model_name.split('+')
+#     if len(parts) > 1:
+#         # Always use MixtureModel for addition
+#         model_info_list = [load_model_info(p) for p in parts]
+#         return mixture.make_mixture_info(model_info_list)
+
+#     parts = model_name.split('*')
+#     if len(parts) > 1:
+#         if force_mixture:
+#             # Use MixtureModel for multiplication if forced
+#             model_info_list = [load_model_info(p) for p in parts]
+#             return mixture.make_mixture_info(model_info_list, operation='*')
+#         if len(parts) > 2:
+#             raise ValueError("use P*S to apply structure factor S to model P")
+#         # Use ProductModel
+#         P_info, Q_info = [load_model_info(p) for p in parts]
+#         return product.make_product_info(P_info, Q_info)
+
+#     kernel_module = generate.load_kernel_module(model_name)
+#     return modelinfo.make_model_info(kernel_module)
+
+def load_model_info(model_string):
     # type: (str) -> modelinfo.ModelInfo
     """
     Load a model definition given the model name.
@@ -133,33 +169,32 @@ def load_model_info(model_name, force_mixture=False):
     *model_name* is the name of the model, or perhaps a model expression
     such as sphere*hardsphere or sphere+cylinder.
 
-    *force_mixture* if true, MixtureModel will be used for combining models.
-    Otherwise either MixtureModel will be used for addition and ProductModel
-    will be used for multiplication
-
     This returns a handle to the module defining the model.  This can be
     used with functions in generate to build the docs or extract model info.
     """
-    parts = model_name.split('+')
-    if len(parts) > 1:
-        # Always use MixtureModel for addition
-        model_info_list = [load_model_info(p) for p in parts]
-        return mixture.make_mixture_info(model_info_list)
+    # TODO: parse an expression like form@structure to create a P(Q)*S(Q) model
+    product_parts = []
+    addition_parts = []
 
-    parts = model_name.split('*')
-    if len(parts) > 1:
-        if force_mixture:
-            # Use MixtureModel for multiplication if forced
-            model_info_list = [load_model_info(p) for p in parts]
-            return mixture.make_mixture_info(model_info_list, operation='*')
-        if len(parts) > 2:
-            raise ValueError("use P*S to apply structure factor S to model P")
-        # Use ProductModel
-        P_info, Q_info = [load_model_info(p) for p in parts]
-        return product.make_product_info(P_info, Q_info)
+    addition_parts_names = model_string.split('+')
+    if len(addition_parts_names) >= 2:
+        addition_parts = [load_model_info(part) for part in addition_parts_names]
+    elif len(addition_parts_names) == 1:
+        product_parts_names = model_string.split('*')
+        if len(product_parts_names) >= 2:
+            product_parts = [load_model_info(part) for part in product_parts_names]
+        elif len(product_parts_names) == 1:
+            kernel_module = generate.load_kernel_module(product_parts_names[0])
+            return modelinfo.make_model_info(kernel_module)
 
-    kernel_module = generate.load_kernel_module(model_name)
-    return modelinfo.make_model_info(kernel_module)
+    model = None
+    if len(product_parts) > 1:
+        model = mixture.make_mixture_info(product_parts, operation='*')
+    if len(addition_parts) > 1:
+        if model is not None:
+            addition_parts.append(model)
+        model = mixture.make_mixture_info(addition_parts, operation='+')
+    return model
 
 
 def build_model(model_info, dtype=None, platform="ocl"):

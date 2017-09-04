@@ -29,25 +29,85 @@ def make_mixture_info(parts, operation='+'):
     """
     Create info block for mixture model.
     """
-    flatten = []
-    for part in parts:
-        if part.composition and part.composition[0] == 'mixture':
-            flatten.extend(part.composition[1])
-        else:
-            flatten.append(part)
-    parts = flatten
-
     # Build new parameter list
     combined_pars = []
     demo = {}
+
+    model_num = 0
+    all_parts = copy(parts)
+    is_flat = False
+    while not is_flat:
+        is_flat = True
+        for part in all_parts:
+            if part.composition and part.composition[0] == 'mixture' and \
+                len(part.composition[1]) > 1:
+                all_parts += part.composition[1]
+                all_parts.remove(part)
+                is_flat = False
+
+    # When creating a mixture model that is a sum of product models (ie (1*2)+(3*4))
+    # the parameters for models 1 & 2 will be prefixed with A & B respectively,
+    # but so will the parameters for models 3 & 4. We need to rename models 3 & 4
+    # so that they are prefixed with C & D to avoid overlap of parameter names.
+    used_prefixes = []
+    for part in parts:
+        i = 0
+        if part.composition and part.composition[0] == 'mixture':
+            npars_list = [info.parameters.npars for info in part.composition[1]]
+            for npars in npars_list:
+                # List of params of one of the constituent models of part
+                submodel_pars = part.parameters.kernel_parameters[i:i+npars]
+                # Prefix of the constituent model
+                prefix = submodel_pars[0].name[0]
+                if prefix not in used_prefixes: # Haven't seen this prefix so far
+                    used_prefixes.append(prefix)
+                    i += npars
+                    continue
+                while prefix in used_prefixes:
+                    # This prefix has been already used, so change it to the
+                    # next letter that hasn't been used
+                    prefix = chr(ord(prefix) + 1)
+                used_prefixes.append(prefix)
+                prefix += "_"
+                # Update the parameters of this constituent model to use the
+                # new prefix
+                for par in submodel_pars:
+                    par.id = prefix + par.id[2:]
+                    par.name = prefix + par.name[2:]
+                    if par.length_control is not None:
+                        par.length_control = prefix + par.length_control[2:]
+                i += npars
+
+    model_num = len(all_parts) - len(parts)
+    if model_num != 0:
+        model_num += 1
+
     for k, part in enumerate(parts):
         # Parameter prefix per model, A_, B_, ...
         # Note that prefix must also be applied to id and length_control
         # to support vector parameters
-        prefix = chr(ord('A')+k) + '_'
+        prefix = chr(ord('A')+k+model_num) + '_'
+        if part.composition and part.composition[0] == 'mixture':
+            # Parameter already has a prefix as it's part of a composition model
+            prefix = ''
+            model_num -= 1
+            
         if operation == '+':
             # If model is a sum model, each constituent model gets its own scale parameter
-            scale =  Parameter(prefix+'scale', default=1.0,
+            scale_prefix = prefix
+            if prefix == '' and part.operation == '*':
+                # `part` is a composition product model. Find the prefixes of
+                # it's parameters to form a new prefix for the scale, eg:
+                # a model with A*B*C will have ABC_scale
+                sub_prefixes = []
+                for param in part.parameters.kernel_parameters:
+                    # Prefix of constituent model
+                    sub_prefix = param.id.split('_')[0]
+                    if sub_prefix not in sub_prefixes:
+                        sub_prefixes.append(sub_prefix)
+                # Concatenate sub_prefixes to form prefix for the scale
+                scale_prefix = ''.join(sub_prefixes) + '_'
+            scale =  Parameter(scale_prefix + 'scale', default=1.0,
                             description="model intensity for " + part.name)
             combined_pars.append(scale)
         for p in part.parameters.kernel_parameters:
@@ -66,7 +126,7 @@ def make_mixture_info(parts, operation='+'):
     model_info = ModelInfo()
     model_info.id = operation.join(part.id for part in parts)
     model_info.operation = operation
-    model_info.name = operation.join(part.name for part in parts)
+    model_info.name = '(' + operation.join(part.name for part in parts) + ')'
     model_info.filename = None
     model_info.title = 'Mixture model with ' + model_info.name
     model_info.description = model_info.title
