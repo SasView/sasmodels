@@ -24,9 +24,7 @@ Given the scattering length densities (sld) $\rho_c$, the core sld, $\rho_f$,
 the face sld, $\rho_r$, the rim sld and $\rho_s$ the solvent sld, the
 scattering length density variation along the cylinder axis is:
 
-..
-
-  .. math::
+.. math::
 
     \rho(r) =
       \begin{cases}
@@ -49,13 +47,13 @@ where
 .. math::
     :nowrap:
 
-    \begin{align}
+    \begin{align*}
     F(Q,\alpha) = &\bigg[
     (\rho_c - \rho_f) V_c \frac{2J_1(QRsin \alpha)}{QRsin\alpha}\frac{sin(QLcos\alpha/2)}{Q(L/2)cos\alpha} \\
     &+(\rho_f - \rho_r) V_{c+f} \frac{2J_1(QRsin\alpha)}{QRsin\alpha}\frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha} \\
     &+(\rho_r - \rho_s) V_t \frac{2J_1(Q(R+t_r)sin\alpha)}{Q(R+t_r)sin\alpha}\frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha}
     \bigg]
-    \end{align}
+    \end{align*}
 
 where $V_t$ is the total volume of the bicelle, $V_c$ the volume of the core,
 $V_{c+f}$ the volume of the core plus the volume of the faces, $R$ is the radius

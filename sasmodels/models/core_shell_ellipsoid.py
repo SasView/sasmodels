@@ -45,10 +45,10 @@ where
 .. math::
     :nowrap:
 
-    \begin{align}
+    \begin{align*}
     F(q,\alpha) = &f(q,radius\_equat\_core,radius\_equat\_core.x\_core,\alpha) \\
     &+ f(q,radius\_equat\_core + thick\_shell,radius\_equat\_core.x\_core + thick\_shell.x\_polar\_shell,\alpha)
-    \end{align}
+    \end{align*}
 
 where
 
