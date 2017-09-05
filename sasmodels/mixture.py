@@ -78,19 +78,17 @@ def make_mixture_info(parts, operation='+'):
                         par.length_control = prefix + par.length_control[2:]
                 i += npars
 
-    model_num = len(all_parts) - len(parts)
-    if model_num != 0:
-        model_num += 1
-
-    for k, part in enumerate(parts):
+    for part in parts:
         # Parameter prefix per model, A_, B_, ...
         # Note that prefix must also be applied to id and length_control
         # to support vector parameters
-        prefix = chr(ord('A')+k+model_num) + '_'
-        if part.composition and part.composition[0] == 'mixture':
-            # Parameter already has a prefix as it's part of a composition model
-            prefix = ''
-            model_num -= 1
+        prefix = ''
+        if not part.composition:
+            # Model isn't a composition model, so it's parameters don't have a
+            # a prefix. Add the next available prefix
+            prefix = chr(ord('A')+len(used_prefixes))
+            used_prefixes.append(prefix)
+            prefix += '_'
             
         if operation == '+':
             # If model is a sum model, each constituent model gets its own scale parameter
