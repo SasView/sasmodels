@@ -124,55 +124,25 @@ def load_model(model_name, dtype=None, platform='ocl'):
     return build_model(load_model_info(model_name),
                        dtype=dtype, platform=platform)
 
-
-# def load_model_info(model_name, force_mixture=False):
-#     # type: (str) -> modelinfo.ModelInfo
-#     """
-#     Load a model definition given the model name.
-
-#     *model_name* is the name of the model, or perhaps a model expression
-#     such as sphere*hardsphere or sphere+cylinder.
-
-#     *force_mixture* if true, MixtureModel will be used for combining models.
-#     Otherwise either MixtureModel will be used for addition and ProductModel
-#     will be used for multiplication
-
-#     This returns a handle to the module defining the model.  This can be
-#     used with functions in generate to build the docs or extract model info.
-#     """
-#     parts = model_name.split('+')
-#     if len(parts) > 1:
-#         # Always use MixtureModel for addition
-#         model_info_list = [load_model_info(p) for p in parts]
-#         return mixture.make_mixture_info(model_info_list)
-
-#     parts = model_name.split('*')
-#     if len(parts) > 1:
-#         if force_mixture:
-#             # Use MixtureModel for multiplication if forced
-#             model_info_list = [load_model_info(p) for p in parts]
-#             return mixture.make_mixture_info(model_info_list, operation='*')
-#         if len(parts) > 2:
-#             raise ValueError("use P*S to apply structure factor S to model P")
-#         # Use ProductModel
-#         P_info, Q_info = [load_model_info(p) for p in parts]
-#         return product.make_product_info(P_info, Q_info)
-
-#     kernel_module = generate.load_kernel_module(model_name)
-#     return modelinfo.make_model_info(kernel_module)
-
 def load_model_info(model_string):
     # type: (str) -> modelinfo.ModelInfo
     """
     Load a model definition given the model name.
 
-    *model_name* is the name of the model, or perhaps a model expression
-    such as sphere*hardsphere or sphere+cylinder.
+    *model_string* is the name of the model, or perhaps a model expression
+    such as sphere*cylinder or sphere+cylinder. Use '@' for a structure
+    factor product, eg sphere@hardsphere.
 
     This returns a handle to the module defining the model.  This can be
     used with functions in generate to build the docs or extract model info.
     """
-    # TODO: parse an expression like form@structure to create a P(Q)*S(Q) model
+    if '@' in model_string:
+        parts = model_string.split('@')
+        if len(parts) != 2:
+            raise ValueError("Use P@S to apply a structure factor S to model P")
+        P_info, Q_info = [load_model_info(part) for part in parts]
+        return product.make_product_info(P_info, Q_info)
+
     product_parts = []
     addition_parts = []
 
