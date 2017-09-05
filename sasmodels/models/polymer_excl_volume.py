@@ -107,8 +107,8 @@ category = "shape-independent"
 # pylint: disable=bad-whitespace, line-too-long
 #   ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [
-    ["rg",        "Ang", 60.0, [0, inf],    "", "Radius of Gyration"],
-    ["porod_exp", "",     3.0, [-inf, inf], "", "Porod exponent"],
+    ["rg",        "Ang", 60.0, [0, inf], "", "Radius of Gyration"],
+    ["porod_exp", "",     3.0, [0, inf], "", "Porod exponent"],
 ]
 # pylint: enable=bad-whitespace, line-too-long
 
@@ -131,6 +131,19 @@ def Iq(q, rg=60.0, porod_exp=3.0):
     return result
 
 Iq.vectorized = True  # Iq accepts an array of q values
+
+def random():
+    import numpy as np
+    rg = 10**np.random.uniform(0, 4)
+    porod_exp = np.random.uniform(1e-3, 6)
+    scale = 10**np.random.uniform(1, 5)
+    pars = dict(
+        #background=0,
+        scale=scale,
+        rg=rg,
+        porod_exp=porod_exp,
+    )
+    return pars
 
 tests = [
     # Accuracy tests based on content in test/polyexclvol_default_igor.txt

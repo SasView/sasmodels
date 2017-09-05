@@ -2,9 +2,9 @@ r"""
 Definition
 ----------
 
-This model employs the empirical multiple level unified Exponential/Power-law 
-fit method developed by Beaucage. Four functions are included so that 1, 2, 3, 
-or 4 levels can be used. In addition a 0 level has been added which simply 
+This model employs the empirical multiple level unified Exponential/Power-law
+fit method developed by Beaucage. Four functions are included so that 1, 2, 3,
+or 4 levels can be used. In addition a 0 level has been added which simply
 calculates
 
 .. math::
@@ -15,10 +15,10 @@ The Beaucage method is able to reasonably approximate the scattering from
 many different types of particles, including fractal clusters, random coils
 (Debye equation), ellipsoidal particles, etc.
 
-The model works best for mass fractal systems characterized by Porod exponents 
-between 5/3 and 3. It should not be used for surface fractal systems. Hammouda 
-(2010) has pointed out a deficiency in the way this model handles the 
-transitioning between the Guinier and Porod regimes and which can create 
+The model works best for mass fractal systems characterized by Porod exponents
+between 5/3 and 3. It should not be used for surface fractal systems. Hammouda
+(2010) has pointed out a deficiency in the way this model handles the
+transitioning between the Guinier and Porod regimes and which can create
 artefacts that appear as kinks in the fitted model function.
 
 Also see the Guinier_Porod model.
@@ -87,7 +87,7 @@ description = """
 
 # pylint: disable=bad-whitespace, line-too-long
 parameters = [
-    ["level",     "",     1,      [0, 6], "", "Level number"],
+    ["level",     "",     1,      [1, 6], "", "Level number"],
     ["rg[level]", "Ang",  15.8,   [0, inf], "", "Radius of gyration"],
     ["power[level]", "",  4,      [-inf, inf], "", "Power"],
     ["B[level]",  "1/cm", 4.5e-6, [-inf, inf], "", ""],
@@ -116,6 +116,27 @@ def Iq(q, level, rg, power, B, G):
     return result
 
 Iq.vectorized = True
+
+def random():
+    import numpy as np
+    from scipy.special import gamma
+    level = np.minimum(np.random.poisson(0.5) + 1, 6)
+    n = level
+    power = np.random.uniform(1.6, 3, n)
+    rg = 10**np.random.uniform(1, 5, n)
+    G = np.random.uniform(0.1, 10, n)**2 * 10**np.random.uniform(0.3, 3, n)
+    B = G * power / rg**power * gamma(power/2)
+    scale = 10**np.random.uniform(1, 4)
+    pars = dict(
+        #background=0,
+        scale=scale,
+        level=level,
+    )
+    pars.update(("power%d"%(k+1), v) for k, v in enumerate(power))
+    pars.update(("rg%d"%(k+1), v) for k, v in enumerate(rg))
+    pars.update(("B%d"%(k+1), v) for k, v in enumerate(B))
+    pars.update(("G%d"%(k+1), v) for k, v in enumerate(G))
+    return pars
 
 demo = dict(
     level=2,

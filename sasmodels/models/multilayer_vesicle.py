@@ -149,14 +149,27 @@ def ER(radius, thick_shell, thick_solvent, n_shells):
     n_shells = int(n_shells+0.5)
     return radius + n_shells * (thick_shell + thick_solvent) - thick_solvent
 
-demo = dict(scale=1, background=0,
-            volfraction=0.05,
-            radius=60.0,
-            thick_shell=10.0,
-            thick_solvent=10.0,
-            sld_solvent=6.4,
-            sld=0.4,
-            n_shells=2.0)
+def random():
+    import numpy as np
+    volfraction = 10**np.random.uniform(-3, -0.5)  # scale from 0.1% to 30%
+    radius = 10**np.random.uniform(0, 2.5) # core less than 300 A
+    total_thick = 10**np.random.uniform(2, 4) # up to 10000 A of shells
+    # random number of shells, with shell+solvent thickness > 10 A
+    n_shells = int(10**np.random.uniform(0, np.log10(total_thick)-1)+0.5)
+    # split total shell thickness with preference for shell over solvent;
+    # make sure that shell thickness is at least 1 A
+    one_thick = total_thick/n_shells
+    thick_solvent = 10**np.random.uniform(-2, 0)*(one_thick - 1)
+    thick_shell = one_thick - thick_solvent
+    pars = dict(
+        scale=1,
+        volfraction=volfraction,
+        radius=radius,
+        thick_shell=thick_shell,
+        thick_solvent=thick_solvent,
+        n_shells=n_shells,
+    )
+    return pars
 
 tests = [
     # Accuracy tests based on content in test/utest_other_models.py

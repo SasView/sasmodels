@@ -23,7 +23,7 @@ below:
     3V_s(\rho_s-\rho_{solv})
     \frac{\sin(qr_s)-qr_s\cos(qr_s)}{(qr_s)^3}\right]^2
 
-    S(q) &= 1 + \frac{D_f\ \Gamma\!(D_f-1)}{[1+1/(q\xi)^2]^{(D_f-1)/2}} 
+    S(q) &= 1 + \frac{D_f\ \Gamma\!(D_f-1)}{[1+1/(q\xi)^2]^{(D_f-1)/2}}
     \frac{\sin[(D_f-1)\tan^{-1}(q\xi)]}{(qr_s)^{D_f}}
 
 where $\phi$ is the volume fraction of particles, $V_s$ is the volume of the
@@ -32,7 +32,7 @@ $\rho_{solv}$ are the scattering length densities of the core, shell, and
 solvent respectively, $r_c$ and $r_s$ are the radius of the core and the radius
 of the whole particle respectively, $D_f$ is the fractal dimension, and |xi| the
 correlation length.
- 
+
 Polydispersity of radius and thickness are also provided for.
 
 This model does not allow for anisotropy and thus the 2D scattering intensity
@@ -96,6 +96,25 @@ parameters = [
 
 source = ["lib/sas_3j1x_x.c", "lib/sas_gamma.c", "lib/core_shell.c",
           "lib/fractal_sq.c", "fractal_core_shell.c"]
+
+def random():
+    import numpy as np
+    outer_radius = 10**np.random.uniform(0.7, 4)
+    # Use a distribution with a preference for thin shell or thin core
+    # Avoid core,shell radii < 1
+    thickness = np.random.beta(0.5, 0.5)*(outer_radius-2) + 1
+    radius = outer_radius - thickness
+    cor_length = 10**np.random.uniform(0.7, 2)*outer_radius
+    volfraction = 10**np.random.uniform(-3, -1)
+    fractal_dim = 2*np.random.beta(3, 4) + 1
+    pars = dict(
+        #background=0, sld_block=1, sld_solvent=0,
+        volfraction=volfraction,
+        radius=radius,
+        cor_length=cor_length,
+        fractal_dim=fractal_dim,
+    )
+    return pars
 
 demo = dict(scale=0.05,
             background=0,

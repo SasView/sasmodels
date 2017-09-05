@@ -92,6 +92,24 @@ def Iq(q,
 
 Iq.vectorized = True  # Iq accepts an array of q values
 
+def random():
+    import numpy as np
+    scale = 10**np.random.uniform(0, 4, 2)
+    length = 10**np.random.uniform(1, 4, 2)
+    expon = np.random.uniform(1, 6, 2)
+
+    pars = dict(
+        #background=0,
+        scale=1, # scale provided in model
+        lorentz_scale_1=scale[0],
+        lorentz_length_1=length[0],
+        lorentz_exp_1=expon[0],
+        lorentz_scale_2=scale[1],
+        lorentz_length_2=length[1],
+        lorentz_exp_2=expon[1],
+    )
+    return pars
+
 
 demo = dict(scale=1, background=0.1,
             lorentz_scale_1=10,

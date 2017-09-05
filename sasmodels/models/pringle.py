@@ -84,14 +84,18 @@ def ER(radius, thickness, alpha, beta):
                            * (thickness + pi * radius))
     return 0.5 * (ddd) ** (1. / 3.)
 
-demo = dict(background=0.0,
-            scale=1.0,
-            radius=60.0,
-            thickness=10.0,
-            alpha=0.001,
-            beta=0.02,
-            sld=1.0,
-            sld_solvent=6.35)
+def random():
+    import numpy as np
+    alpha, beta = 10**np.random.uniform(-1, 1, size=2)
+    radius = 10**np.random.uniform(1, 3)
+    thickness = 10**np.random.uniform(0.7, 2)
+    pars = dict(
+        radius=radius,
+        thickness=thickness,
+        alpha=alpha,
+        beta=beta,
+    )
+    return pars
 
 tests = [
     [{'scale' : 1.0,

@@ -53,7 +53,7 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
-* **Last Modified by:** Richard Heenan **Date:** October 06, 2016 
+* **Last Modified by:** Richard Heenan **Date:** October 06, 2016
    (reparametrised to use thickness, not outer radius)
 * **Last Reviewed by:** Richard Heenan **Date:** October 06, 2016
 
@@ -119,6 +119,21 @@ def VR(radius, thickness, length):
     vol_total = pi*router*router*length
     vol_shell = vol_total - vol_core
     return vol_shell, vol_total
+
+def random():
+    import numpy as np
+    length = 10**np.random.uniform(1, 4.7)
+    outer_radius = 10**np.random.uniform(1, 4.7)
+    # Use a distribution with a preference for thin shell or thin core
+    # Avoid core,shell radii < 1
+    thickness = np.random.beta(0.5, 0.5)*(outer_radius-2) + 1
+    radius = outer_radius - thickness
+    pars = dict(
+        length=length,
+        radius=radius,
+        thickness=thickness,
+    )
+    return pars
 
 # parameters for demo
 demo = dict(scale=1.0, background=0.0, length=400.0, radius=20.0,

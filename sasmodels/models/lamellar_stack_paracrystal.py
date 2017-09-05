@@ -129,7 +129,23 @@ source = ["lamellar_stack_paracrystal.c"]
 
 form_volume = """
     return 1.0;
-    """
+"""
+
+def random():
+    import numpy as np
+    total_thickness = 10**np.random.uniform(2, 4.7)
+    Nlayers = np.random.randint(2, 200)
+    d_spacing = total_thickness / Nlayers
+    thickness = d_spacing * np.random.uniform(0, 1)
+    # Let polydispersity peak around 15%; 95% < 0.4; max=100%
+    sigma_d = np.random.beta(1.5, 7)
+    pars = dict(
+        thickness=thickness,
+        Nlayers=Nlayers,
+        d_spacing=d_spacing,
+        sigma_d=sigma_d,
+    )
+    return pars
 
 # ER defaults to 0.0
 # VR defaults to 1.0

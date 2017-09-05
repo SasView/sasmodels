@@ -15,7 +15,7 @@ the equations given by Pedersen (Pedersen, 2000), summarised briefly here.
 The micelle core is imagined as $N\_aggreg$ polymer heads, each of volume $v\_core$,
 which then defines a micelle core of $radius\_core$, which is a separate parameter
 even though it could be directly determined.
-The Gaussian random coil tails, of gyration radius $rg$, are imagined uniformly 
+The Gaussian random coil tails, of gyration radius $rg$, are imagined uniformly
 distributed around the spherical core, centred at a distance $radius\_core + d\_penetration.rg$
 from the micelle centre, where $d\_penetration$ is of order unity.
 A volume $v\_corona$ is defined for each coil.
@@ -26,14 +26,14 @@ oscillations (use q resolution smearing if needs be to help remove them).
 
 .. math::
     P(q) = N^2\beta^2_s\Phi(qR)^2+N\beta^2_cP_c(q)+2N^2\beta_s\beta_cS_{sc}s_c(q)+N(N-1)\beta_c^2S_{cc}(q)
-    
+
     \beta_s = v\_core(sld\_core - sld\_solvent)
-    
+
     \beta_c = v\_corona(sld\_corona - sld\_solvent)
 
-where $N = n\_aggreg$, and for the spherical core of radius $R$ 
+where $N = n\_aggreg$, and for the spherical core of radius $R$
 
-.. math::   
+.. math::
    \Phi(qR)= \frac{\sin(qr) - qr\cos(qr)}{(qr)^3}
 
 whilst for the Gaussian coils
@@ -48,18 +48,18 @@ The sphere to coil ( core to corona) and coil to coil (corona to corona) cross t
 approximated by:
 
 .. math::
-   
+
    S_{sc}(q)=\Phi(qR)\psi(Z)\frac{sin(q(R+d.R_g))}{q(R+d.R_g)}
-   
+
    S_{cc}(q)=\psi(Z)^2\left[\frac{sin(q(R+d.R_g))}{q(R+d.R_g)} \right ]^2
-   
+
    \psi(Z)=\frac{[1-exp^{-Z}]}{Z}
 
 Validation
 ----------
 
 $P(q)$ above is multiplied by $ndensity$, and a units conversion of 10^{-13}, so $scale$
-is likely 1.0 if the scattering data is in absolute units. This model has not yet been 
+is likely 1.0 if the scattering data is in absolute units. This model has not yet been
 independently validated.
 
 
@@ -70,7 +70,7 @@ J Pedersen, *J. Appl. Cryst.*, 33 (2000) 637-640
 
 """
 
-from numpy import inf
+from numpy import inf, pi
 
 name = "polymer_micelle"
 title = "Polymer micelle model"
@@ -79,7 +79,7 @@ This model provides the form factor, $P(q)$, for a micelle with a spherical
 core and Gaussian polymer chains attached to the surface, thus may be applied
 to block copolymer micelles. To work well the Gaussian chains must be much
 smaller than the core, which is often not the case.  Please study the
-reference to Pedersen and full documentation carefully. 
+reference to Pedersen and full documentation carefully.
     """
 
 
@@ -105,18 +105,33 @@ single = False
 
 source = ["lib/sas_3j1x_x.c", "polymer_micelle.c"]
 
-demo = dict(scale=1, background=0,
-            ndensity=8.94,
-            v_core=62624.0,
-            v_corona=61940.0,
-            sld_solvent=6.4,
-            sld_core=0.34,
-            sld_corona=0.8,
-            radius_core=45.0,
-            rg=20.0,
-            d_penetration=1.0,
-            n_aggreg=6.0)
-
+def random():
+    import numpy as np
+    radius_core = 10**np.random.uniform(1, 3)
+    rg = radius_core * 10**np.random.uniform(-2, -0.3)
+    d_penetration = np.random.randn()*0.05 + 1
+    n_aggreg = np.random.randint(3, 30)
+    # volume of head groups is the core volume over the number of groups,
+    # with a correction for packing fraction of the head groups.
+    v_core = 4*pi/3*radius_core**3/n_aggreg * 0.68
+    # Rg^2 for gaussian coil is a^2n/6 => a^2 = 6 Rg^2/n
+    # a=2r => r = Rg sqrt(3/2n)
+    # v = 4/3 pi r^3 n => v = 4/3 pi Rg^3 (3/2n)^(3/2) n = pi Rg^3 sqrt(6/n)
+    tail_segments = np.random.randint(6, 30)
+    v_corona = pi * rg**3 * np.sqrt(6/tail_segments)
+    V = 4*pi/3*(radius_core + rg)**3
+    pars = dict(
+        background=0,
+        scale=1e7/V,
+        ndensity=8.94,
+        v_core=v_core,
+        v_corona=v_corona,
+        radius_core=radius_core,
+        rg=rg,
+        d_penetration=d_penetration,
+        n_aggreg=n_aggreg,
+    )
+    return pars
 
 tests = [
     [{}, 0.01, 15.3532],

@@ -82,9 +82,15 @@ parameters = [["rg_squared", "Ang^2", 100.0, [0.0, inf], "", "Ensemble radius of
 
 source = ["star_polymer.c"]
 
-demo = dict(scale=1, background=0,
-            rg_squared=100.0,
-            arms=3.0)
+def random():
+    import numpy as np
+    pars = dict(
+        #background=0,
+        scale=10**np.random.uniform(1, 4),
+        rg_squared=10**np.random.uniform(1, 8),
+        arms=np.random.uniform(1, 6),
+    )
+    return pars
 
 tests = [[{'rg_squared': 2.0,
            'arms':    3.3,

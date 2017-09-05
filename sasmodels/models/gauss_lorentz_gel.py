@@ -2,7 +2,7 @@ r"""
 This model calculates the scattering from a gel structure,
 but typically a physical rather than chemical network.
 It is modeled as a sum of a low-q exponential decay (which happens to
-give a functional form similar to Guinier scattering, so interpret with 
+give a functional form similar to Guinier scattering, so interpret with
 care) plus a Lorentzian at higher-q values. See also the gel_fit model.
 
 Definition
@@ -85,6 +85,23 @@ def Iq(q,
     return term1 + term2
 
 Iq.vectorized = True  # Iq accepts an array of q values
+
+
+def random():
+    import numpy as np
+    gauss_scale = 10**np.random.uniform(1, 3)
+    lorentz_scale = 10**np.random.uniform(1, 3)
+    cor_length_static = 10**np.random.uniform(0, 3)
+    cor_length_dynamic = 10**np.random.uniform(0, 3)
+    pars = dict(
+        #background=0,
+        scale=1,
+        gauss_scale=gauss_scale,
+        lorentz_scale=lorentz_scale,
+        cor_length_static=cor_length_static,
+        cor_length_dynamic=cor_length_dynamic,
+    )
+    return pars
 
 
 demo = dict(scale=1, background=0.1,

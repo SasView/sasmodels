@@ -97,6 +97,17 @@ parameters = [
      "stickiness, tau"],
     ]
 
+def random():
+    import numpy as np
+    pars = dict(
+        scale=1, background=0,
+        radius_effective=10**np.random.uniform(1, 4.7),
+        volfraction=np.random.uniform(0.00001, 0.74),
+        perturb=10**np.random.uniform(-2, -1),
+        stickiness=np.random.uniform(0, 1),
+    )
+    return pars
+
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
 form_volume = """
