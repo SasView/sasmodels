@@ -1,7 +1,7 @@
 # ellipsoid model
 # Note: model title and parameter table are inserted automatically
 r"""
-The form factor is normalized by the particle volume 
+The form factor is normalized by the particle volume
 
 Definition
 ----------
@@ -111,6 +111,8 @@ L A Feigin and D I Svergun.
 *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*,
 Plenum Press, New York, 1987.
 
+A. Isihara. J. Chem. Phys. 18(1950) 1446-1449
+
 Authorship and Verification
 ----------------------------
 
@@ -118,6 +120,7 @@ Authorship and Verification
 * **Converted to sasmodels by:** Helen Park **Date:** July 9, 2014
 * **Last Modified by:** Paul Kienzle **Date:** March 22, 2017
 """
+from __future__ import division
 
 from numpy import inf, sin, cos, pi
 
@@ -160,7 +163,7 @@ source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "ellipsoid.c"]
 
 def ER(radius_polar, radius_equatorial):
     import numpy as np
-# see equation (26) in A.Isihara, J.Chem.Phys. 18(1950)1446-1449
+    # see equation (26) in A.Isihara, J.Chem.Phys. 18(1950)1446-1449
     ee = np.empty_like(radius_polar)
     idx = radius_polar > radius_equatorial
     ee[idx] = (radius_polar[idx] ** 2 - radius_equatorial[idx] ** 2) / radius_polar[idx] ** 2
@@ -180,6 +183,17 @@ def ER(radius_polar, radius_equatorial):
     ddd[valid] = 2.0 * (delta + 1.0) * radius_polar * radius_equatorial ** 2
     return 0.5 * ddd ** (1.0 / 3.0)
 
+def random():
+    import numpy as np
+    V = 10**np.random.uniform(5, 12)
+    radius_polar = 10**np.random.uniform(1.3, 4)
+    radius_equatorial = np.sqrt(V/radius_polar) # ignore 4/3 pi
+    pars = dict(
+        #background=0, sld=0, sld_solvent=1,
+        radius_polar=radius_polar,
+        radius_equatorial=radius_equatorial,
+    )
+    return pars
 
 demo = dict(scale=1, background=0,
             sld=6, sld_solvent=1,

@@ -307,7 +307,7 @@ def parse_dtype(model_info, dtype=None, platform=None):
         dtype = "float16"
 
     # Convert dtype string to numpy dtype.
-    if dtype is None:
+    if dtype is None or dtype == "default":
         numpy_dtype = (generate.F32 if platform == "ocl" and model_info.single
                        else generate.F64)
     else:

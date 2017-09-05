@@ -62,21 +62,21 @@ are defined in :numref:`cylinder-angle-definition` .
 
 .. figure:: img/cylinder_angle_definition.png
 
-    Definition of the $\theta$ and $\phi$ orientation angles for a cylinder relative 
-    to the beam line coordinates, plus an indication of their orientation distributions 
-    which are described as rotations about each of the perpendicular axes $\delta_1$ and $\delta_2$ 
+    Definition of the $\theta$ and $\phi$ orientation angles for a cylinder relative
+    to the beam line coordinates, plus an indication of their orientation distributions
+    which are described as rotations about each of the perpendicular axes $\delta_1$ and $\delta_2$
     in the frame of the cylinder itself, which when $\theta = \phi = 0$ are parallel to the $Y$ and $X$ axes.
 
 .. figure:: img/cylinder_angle_projection.png
 
     Examples for oriented cylinders.
 
-The $\theta$ and $\phi$ parameters to orient the cylinder only appear in the model when fitting 2d data. 
+The $\theta$ and $\phi$ parameters to orient the cylinder only appear in the model when fitting 2d data.
 On introducing "Orientational Distribution" in the angles, "distribution of theta" and "distribution of phi" parameters will
-appear. These are actually rotations about the axes $\delta_1$ and $\delta_2$ of the cylinder, which when $\theta = \phi = 0$ are parallel 
+appear. These are actually rotations about the axes $\delta_1$ and $\delta_2$ of the cylinder, which when $\theta = \phi = 0$ are parallel
 to the $Y$ and $X$ axes of the instrument respectively. Some experimentation may be required to understand the 2d patterns fully.
-(Earlier implementations had numerical integration issues in some circumstances when orientation distributions passed through 90 degrees, such 
-situations, with very broad distributions, should still be approached with care.) 
+(Earlier implementations had numerical integration issues in some circumstances when orientation distributions passed through 90 degrees, such
+situations, with very broad distributions, should still be approached with care.)
 
 Validation
 ----------
@@ -148,6 +148,20 @@ def ER(radius, length):
     """
     ddd = 0.75 * radius * (2 * radius * length + (length + radius) * (length + pi * radius))
     return 0.5 * (ddd) ** (1. / 3.)
+
+def random():
+    import numpy as np
+    V = 10**np.random.uniform(5, 12)
+    length = 10**np.random.uniform(-2, 2)*V**0.333
+    radius = np.sqrt(V/length/np.pi)
+    pars = dict(
+        #scale=1,
+        #background=0,
+        length=length,
+        radius=radius,
+    )
+    return pars
+
 
 # parameters for demo
 demo = dict(scale=1, background=0,

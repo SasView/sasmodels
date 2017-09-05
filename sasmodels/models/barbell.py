@@ -114,6 +114,27 @@ parameters = [["sld",         "1e-6/Ang^2",   4, [-inf, inf], "sld",         "Ba
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "barbell.c"]
 
+def random():
+    import numpy as np
+    # TODO: increase volume range once problem with bell radius is fixed
+    # The issue is that bell radii of more than about 200 fail at high q
+    V = 10**np.random.uniform(7, 9)
+    bar_volume = 10**np.random.uniform(-4, -1)*V
+    bell_volume = V - bar_volume
+    bell_radius = (bell_volume/6)**0.3333  # approximate
+    min_bar = bar_volume/np.pi/bell_radius**2
+    bar_length = 10**np.random.uniform(0, 3)*min_bar
+    bar_radius = np.sqrt(bar_volume/bar_length/np.pi)
+    if bar_radius > bell_radius:
+        bell_radius, bar_radius = bar_radius, bell_radius
+    pars = dict(
+        #background=0,
+        radius_bell=bell_radius,
+        radius=bar_radius,
+        length=bar_length,
+    )
+    return pars
+
 # parameters for demo
 demo = dict(scale=1, background=0,
             sld=6, sld_solvent=1,

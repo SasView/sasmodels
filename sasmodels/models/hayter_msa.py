@@ -63,7 +63,7 @@ description = """\
         Interparticle structure factor S(Q)for a charged hard spheres.
         Routine takes absolute value of charge, use HardSphere if charge
         goes to zero.
-        In sasview the effective radius and volume fraction may be calculated 
+        In sasview the effective radius and volume fraction may be calculated
         from the parameters used in P(Q).
 """
 
@@ -88,6 +88,24 @@ form_volume = """
     """
 # ER defaults to 0.0
 # VR defaults to 1.0
+
+def random():
+    import numpy as np
+    # TODO: too many failures for random hayter_msa parameters
+    pars = dict(
+        scale=1, background=0,
+        radius_effective=10**np.random.uniform(1, 4.7),
+        volfraction=10**np.random.uniform(-2, 0),  # high volume fraction
+        charge=min(int(10**np.random.uniform(0, 1.3)+0.5), 200),
+        temperature=10**np.random.uniform(0, np.log10(450)), # max T = 450
+        #concentration_salt=10**np.random.uniform(-3, 1),
+        dialectconst=10**np.random.uniform(0, 6),
+        #charge=10,
+        #temperature=318.16,
+        concentration_salt=0.0,
+        #dielectconst=71.08,
+    )
+    return pars
 
 # default parameter set,  use  compare.sh -midQ -linear
 # note the calculation varies in different limiting cases so a wide range of

@@ -70,7 +70,7 @@ and polar, they may be given in $any$ size order. To avoid multiple solutions, e
 with Monte-Carlo fit methods, it may be advisable to restrict their ranges. For typical
 small angle diffraction situations there may be a number of closely similar "best fits",
 so some trial and error, or fixing of some radii at expected values, may help.
-    
+
 To provide easy access to the orientation of the triaxial ellipsoid,
 we define the axis of the cylinder using the angles $\theta$, $\phi$
 and $\psi$. These angles are defined analogously to the elliptical_cylinder below, note that
@@ -78,10 +78,10 @@ angle $\phi$ is now NOT the same as in the equations above.
 
 .. figure:: img/elliptical_cylinder_angle_definition.png
 
-    Definition of angles for oriented triaxial ellipsoid, where radii are for illustration here 
+    Definition of angles for oriented triaxial ellipsoid, where radii are for illustration here
     $a < b << c$ and angle $\Psi$ is a rotation around the axis of the particle.
 
-For oriented ellipsoids the *theta*, *phi* and *psi* orientation parameters will appear when fitting 2D data, 
+For oriented ellipsoids the *theta*, *phi* and *psi* orientation parameters will appear when fitting 2D data,
 see the :ref:`elliptical-cylinder` model for further information.
 
 .. _triaxial-ellipsoid-angles:
@@ -171,6 +171,17 @@ def ER(radius_equat_minor, radius_equat_major, radius_polar):
     polar = np.where(selector, radii[0], radii[2])
     equatorial = np.sqrt(np.where(~selector, radii[0]*radii[1], radii[1]*radii[2]))
     return ellipsoid_ER(polar, equatorial)
+
+def random():
+    import numpy as np
+    a, b, c = 10**np.random.uniform(1, 4.7, size=3)
+    pars = dict(
+        radius_equat_minor=a,
+        radius_equat_major=b,
+        radius_polar=c,
+    )
+    return pars
+
 
 demo = dict(scale=1, background=0,
             sld=6, sld_solvent=1,

@@ -93,6 +93,19 @@ def Iq(q, second_moment, adsorbed_amount, density_shell, radius,
     return inten
 Iq.vectorized = True  # Iq accepts an array of q values
 
+def random():
+    # only care about the value of second_moment:
+    #    curve = scale * e**(-second_moment^2 q^2)/q^2
+    #    scale = 6 pi/100 (contrast/density*absorbed_amount)^2 * Vf/radius
+    # the remaining parameters can be randomly generated from zero to
+    # twice the default value as done by default in compare.py
+    import numpy as np
+    pars = dict(
+        scale=1,
+        second_moment=10**np.random.uniform(1, 3),
+    )
+    return pars
+
 # unit test values taken from SasView 3.1.2
 tests = [
     [{'scale': 1.0, 'second_moment': 23.0, 'adsorbed_amount': 1.9,

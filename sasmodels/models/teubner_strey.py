@@ -101,7 +101,22 @@ def Iq(q, volfraction_a, sld_a, sld_b, d, xi):
 
 Iq.vectorized = True  # Iq accepts an array of q values
 
+def random():
+    import numpy as np
+    d = 10**np.random.uniform(1, 4)
+    xi = 10**np.random.uniform(-0.3, 2)*d
+    pars = dict(
+        #background=0,
+        scale=100,
+        volfraction_a=10**np.random.uniform(-3, 0),
+        sld_a=np.random.uniform(-0.5, 12),
+        sld_b=np.random.uniform(-0.5, 12),
+        d=d,
+        xi=xi,
+    )
+    return pars
+
 demo = dict(scale=1, background=0, volfraction_a=0.5,
-                     sld_a=0.3, sld_b=6.3,
-                     d=100.0, xi=30.0)
+            sld_a=0.3, sld_b=6.3,
+            d=100.0, xi=30.0)
 tests = [[{}, 0.06, 41.5918888453]]

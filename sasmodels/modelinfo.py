@@ -467,6 +467,15 @@ class ParameterTable(object):
                          if p.polydisperse and p.type not in ('orientation', 'magnetic'))
         self.pd_2d = set(p.name for p in self.call_parameters if p.polydisperse)
 
+    def __getitem__(self, key):
+        # Find the parameter definition
+        for par in self.call_parameters:
+            if par.name == key:
+                break
+        else:
+            raise KeyError("unknown parameter %r"%key)
+        return par
+
     def _set_vector_lengths(self):
         # type: () -> List[str]
         """
@@ -756,6 +765,7 @@ def make_model_info(kernel_module):
     # Default single and opencl to True for C models.  Python models have callable Iq.
     info.opencl = getattr(kernel_module, 'opencl', not callable(info.Iq))
     info.single = getattr(kernel_module, 'single', not callable(info.Iq))
+    info.random = getattr(kernel_module, 'random', None)
 
     # multiplicity info
     control_pars = [p.id for p in parameters.kernel_parameters if p.is_control]

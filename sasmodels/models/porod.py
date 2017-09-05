@@ -44,6 +44,17 @@ def Iq(q):
 
 Iq.vectorized = True  # Iq accepts an array of q values
 
+def random():
+    import numpy as np
+    sld, solvent = np.random.uniform(-0.5, 12, size=2)
+    radius = 10**np.random.uniform(1, 4.7)
+    Vf = 10**np.random.uniform(-3, -1)
+    scale = 1e-4 * Vf * 2*np.pi*(sld-solvent)**2/(3*radius)
+    pars = dict(
+        scale=scale,
+    )
+    return pars
+
 demo = dict(scale=1.5, background=0.5)
 
 tests = [

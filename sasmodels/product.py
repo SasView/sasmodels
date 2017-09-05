@@ -92,6 +92,8 @@ def make_product_info(p_info, s_info):
     # Iq, Iqxy, form_volume, ER, VR and sesans
     # Remember the component info blocks so we can build the model
     model_info.composition = ('product', [p_info, s_info])
+    # TODO: delegate random to p_info, s_info
+    #model_info.random = lambda: {}
     model_info.demo = demo
 
     ## Show the parameter table with the demo values

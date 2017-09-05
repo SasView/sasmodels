@@ -126,6 +126,17 @@ def VR(length_a, b2a_ratio, c2a_ratio):
     return vol_shell, vol_total
 
 
+def random():
+    import numpy as np
+    a, b, c = 10**np.random.uniform(1, 4.7, size=3)
+    pars = dict(
+        length_a=a,
+        b2a_ratio=b/a,
+        c2a_ratio=c/a,
+    )
+    return pars
+
+
 # parameters for demo
 demo = dict(scale=1, background=0,
             sld=6.3, sld_solvent=1.0,
