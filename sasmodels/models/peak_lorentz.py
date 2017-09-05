@@ -58,6 +58,18 @@ def Iq(q, peak_pos, peak_hwhm):
     return inten
 Iq.vectorized = True  # Iq accepts an array of q values
 
+def random():
+    import numpy as np
+    peak_pos = 10**np.random.uniform(-3, -1)
+    peak_hwhm = peak_pos * 10**np.random.uniform(-3, 0)
+    pars = dict(
+        #background=0,
+        scale=10**np.random.uniform(2, 6),
+        peak_pos=peak_pos,
+        peak_hwhm=peak_hwhm,
+    )
+    return pars
+
 demo = dict(scale=100, background=1.0,
             peak_pos=0.05, peak_hwhm=0.005)
 

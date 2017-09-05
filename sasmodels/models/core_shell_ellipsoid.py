@@ -149,17 +149,27 @@ def ER(radius_equat_core, x_core, thick_shell, x_polar_shell):
     equat_outer = radius_equat_core + thick_shell
     return ellipsoid_ER(polar_outer, equat_outer)
 
-
-demo = dict(scale=0.05, background=0.001,
-            radius_equat_core=20.0,
-            x_core=3.0,
-            thick_shell=30.0,
-            x_polar_shell=1.0,
-            sld_core=2.0,
-            sld_shell=1.0,
-            sld_solvent=6.3,
-            theta=0,
-            phi=0)
+def random():
+    import numpy as np
+    V = 10**np.random.uniform(5, 12)
+    outer_polar = 10**np.random.uniform(1.3, 4)
+    outer_equatorial = np.sqrt(V/outer_polar) # ignore 4/3 pi
+    # Use a distribution with a preference for thin shell or thin core
+    # Avoid core,shell radii < 1
+    thickness_polar = np.random.beta(0.5, 0.5)*(outer_polar-2) + 1
+    thickness_equatorial = np.random.beta(0.5, 0.5)*(outer_equatorial-2) + 1
+    radius_polar = outer_polar - thickness_polar
+    radius_equatorial = outer_equatorial - thickness_equatorial
+    x_core = radius_polar/radius_equatorial
+    x_polar_shell = thickness_polar/thickness_equatorial
+    pars = dict(
+        #background=0, sld=0, sld_solvent=1,
+        radius_equat_core=radius_equatorial,
+        x_core=x_core,
+        thick_shell=thickness_equatorial,
+        x_polar_shell=x_polar_shell,
+    )
+    return pars
 
 q = 0.1
 # tests had in old coords theta=0, phi=0; new coords theta=90, phi=0

@@ -16,8 +16,8 @@ factor is normalized by the particle volume.
 
 .. figure:: img/core_shell_bicelle_parameters.png
 
-   Cross section of cylindrical symmetry model used here. Users will have 
-   to decide how to distribute "heads" and "tails" between the rim, face 
+   Cross section of cylindrical symmetry model used here. Users will have
+   to decide how to distribute "heads" and "tails" between the rim, face
    and core regions in order to estimate appropriate starting parameters.
 
 Given the scattering length densities (sld) $\rho_c$, the core sld, $\rho_f$,
@@ -26,8 +26,8 @@ scattering length density variation along the cylinder axis is:
 
 .. math::
 
-    \rho(r) = 
-      \begin{cases} 
+    \rho(r) =
+      \begin{cases}
       &\rho_c \text{ for } 0 \lt r \lt R; -L \lt z\lt L \\[1.5ex]
       &\rho_f \text{ for } 0 \lt r \lt R; -(L+2t) \lt z\lt -L;
       L \lt z\lt (L+2t) \\[1.5ex]
@@ -46,13 +46,13 @@ where
 
 .. math::
 
-    \begin{align}    
-    F(Q,\alpha) = &\bigg[ 
+    \begin{align}
+    F(Q,\alpha) = &\bigg[
     (\rho_c - \rho_f) V_c \frac{2J_1(QRsin \alpha)}{QRsin\alpha}\frac{sin(QLcos\alpha/2)}{Q(L/2)cos\alpha} \\
     &+(\rho_f - \rho_r) V_{c+f} \frac{2J_1(QRsin\alpha)}{QRsin\alpha}\frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha} \\
     &+(\rho_r - \rho_s) V_t \frac{2J_1(Q(R+t_r)sin\alpha)}{Q(R+t_r)sin\alpha}\frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha}
     \bigg]
-    \end{align} 
+    \end{align}
 
 where $V_t$ is the total volume of the bicelle, $V_c$ the volume of the core,
 $V_{c+f}$ the volume of the core plus the volume of the faces, $R$ is the radius
@@ -62,7 +62,7 @@ the thickness of the rim and $J_1$ the usual first order bessel function.
 The output of the 1D scattering intensity function for randomly oriented
 cylinders is then given by integrating over all possible $\theta$ and $\phi$.
 
-For oriented bicelles the *theta*, and *phi* orientation parameters will appear when fitting 2D data, 
+For oriented bicelles the *theta*, and *phi* orientation parameters will appear when fitting 2D data,
 see the :ref:`cylinder` model for further information.
 Our implementation of the scattering kernel and the 1D scattering intensity
 use the c-library from NIST.
@@ -95,7 +95,7 @@ from numpy import inf, sin, cos, pi
 name = "core_shell_bicelle"
 title = "Circular cylinder with a core-shell scattering length density profile.."
 description = """
-    P(q,alpha)= (scale/Vs)*f(q)^(2) + bkg,  where: 
+    P(q,alpha)= (scale/Vs)*f(q)^(2) + bkg,  where:
     f(q)= Vt(sld_rim - sld_solvent)* sin[qLt.cos(alpha)/2]
     /[qLt.cos(alpha)/2]*J1(qRout.sin(alpha))
     /[qRout.sin(alpha)]+
@@ -145,6 +145,16 @@ parameters = [
 
 source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
           "core_shell_bicelle.c"]
+
+def random():
+    import numpy as np
+    pars = dict(
+        radius=10**np.random.uniform(1.3, 3),
+        length=10**np.random.uniform(1.3, 4),
+        thick_rim=10**np.random.uniform(0, 1.7),
+        thick_face=10**np.random.uniform(0, 1.7),
+    )
+    return pars
 
 demo = dict(scale=1, background=0,
             radius=20.0,

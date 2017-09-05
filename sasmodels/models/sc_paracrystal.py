@@ -137,21 +137,26 @@ parameters = [["dnn",         "Ang",       220.0, [0.0, inf],  "",            "N
 
 source = ["lib/sas_3j1x_x.c", "lib/sphere_form.c", "lib/gauss150.c", "sc_paracrystal.c"]
 
-demo = dict(scale=1, background=0,
-            dnn=220.0,
-            d_factor=0.06,
-            radius=40.0,
-            sld=3.0,
-            sld_solvent=6.3,
-            theta=0.0,
-            phi=0.0,
-            psi=0.0)
+def random():
+    import numpy as np
+    # copied from bcc_paracrystal
+    radius = 10**np.random.uniform(1.3, 4)
+    d_factor = 10**np.random.uniform(-2, -0.7)  # sigma_d in 0.01-0.7
+    dnn_fraction = np.random.beta(a=10, b=1)
+    dnn = radius*4/np.sqrt(4)/dnn_fraction
+    pars = dict(
+        #sld=1, sld_solvent=0, scale=1, background=1e-32,
+        dnn=dnn,
+        d_factor=d_factor,
+        radius=radius,
+    )
+    return pars
 
 tests = [
     # Accuracy tests based on content in test/utest_extra_models.py, 2d tests added April 10, 2017
     [{}, 0.001, 10.3048],
     [{}, 0.215268, 0.00814889],
     [{}, 0.414467, 0.001313289],
-    [{'theta':10.0,'phi':20,'psi':30.0},(0.045,-0.035),18.0397138402 ],
-    [{'theta':10.0,'phi':20,'psi':30.0},(0.023,0.045),0.0177333171285 ]
+    [{'theta': 10.0, 'phi': 20, 'psi': 30.0}, (0.045, -0.035), 18.0397138402],
+    [{'theta': 10.0, 'phi': 20, 'psi': 30.0}, (0.023, 0.045), 0.0177333171285],
     ]

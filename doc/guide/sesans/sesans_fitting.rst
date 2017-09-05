@@ -6,13 +6,18 @@
 Fitting SESANS Data
 ===================
 
-.. note:: A proper installation of the developers setup of SasView (http://trac.sasview.org/wiki/AnacondaSetup) is a prerequisite for using these instructions.
+.. note::
+
+    A proper installation of the developers setup of SasView
+    (http://trac.sasview.org/wiki/AnacondaSetup) is a prerequisite for
+    using these instructions.
 
 It is possible to fit SESANS measurements from the command line in Python.
 
 Simple Fits
 ...........
-In the folder sasmodels/example the file sesans_sphere_2micron.py gives an example of how to fit a shape to a measurement.
+In the folder sasmodels/example the file sesans_sphere_2micron.py gives
+an example of how to fit a shape to a measurement.
 
 The command::
 
@@ -22,7 +27,8 @@ then results in a GUI from which you can control the fit.
 
 .. image:: sesans_img/SphereLineFitSasView.png
 
-All the parameters and names in sesans_sphere_2micron.py (shown below) can be adjusted to fit your own problem::
+All the parameters and names in sesans_sphere_2micron.py (shown below) can
+be adjusted to fit your own problem::
 
   """
   This is a data file  used to load in sesans data and fit it using the bumps engine
@@ -63,8 +69,8 @@ All the parameters and names in sesans_sphere_2micron.py (shown below) can be ad
 
   # Constraints
   # model.param_name = f(other params)
-  # EXAMPLE: model.scale = model.radius*model.radius*(1 - phi) - where radius and scale are model functions and phi is
-  # a custom parameter
+  # EXAMPLE: model.scale = model.radius*model.radius*(1 - phi) - where radius
+  # and scale are model functions and phi is a custom parameter
   model.scale = phi*(1-phi)
 
   # Send to the fitting engine
@@ -73,10 +79,12 @@ All the parameters and names in sesans_sphere_2micron.py (shown below) can be ad
 
 Incorporating a Structure Factor
 ................................
-An example of how to also include a structure factor can be seen in the following example taken from Washington et al., 
-*Soft Matter*\, (2014), 10, 3016 (dx.doi.org/10.1039/C3SM53027B). These are time-of-flight measurements, which is the 
-reason that not the polarisation is plotted, but the :math:`\frac{log(P/P_0)}{\lambda^2}` . The sample is a dispersion 
-of core-shell colloids at a high volume fraction with hard sphere interactions.
+An example of how to also include a structure factor can be seen in the
+following example taken from Washington et al., *Soft Matter*\, (2014), 10, 3016
+(dx.doi.org/10.1039/C3SM53027B). These are time-of-flight measurements, which
+is the reason that not the polarisation is plotted, but the
+:math:`\frac{log(P/P_0)}{\lambda^2}` . The sample is a dispersion of
+core-shell colloids at a high volume fraction with hard sphere interactions.
 
 The fit can be started by::
 
@@ -86,7 +94,8 @@ This yields after the fitting:
 
 .. image:: sesans_img/HardSphereLineFitSasView.png
 
-The code sesans_parameters_css-hs.py can then be used as a template for a fitting problem with a structure factor::
+The code sesans_parameters_css-hs.py can then be used as a template for a
+fitting problem with a structure factor::
 
  """
  This is a data file  used to load in sesans data and fit it using the bumps engine
@@ -130,8 +139,8 @@ The code sesans_parameters_css-hs.py can then be used as a template for a fittin
 
  # Constraints
  # model.param_name = f(other params)
- # EXAMPLE: model.scale = model.radius*model.radius*(1 - phi) - where radius and scale are model functions and phi is
- # a custom parameter
+ # EXAMPLE: model.scale = model.radius*model.radius*(1 - phi) - where radius
+ # and scale are model functions and phi is a custom parameter
  model.scale = phi*(1-phi)
  model.volfraction = phi
  model.shell_sld = pen*2.88

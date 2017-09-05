@@ -41,4 +41,3 @@ def align_data(x, dtype, alignment=128):
     view = align_empty(x.shape, dtype, alignment=alignment)
     view[:] = x
     return view
-

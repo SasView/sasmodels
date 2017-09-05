@@ -50,4 +50,15 @@ Iq = """
 
 # VR defaults to 1.0
 
-demo = dict(scale=1, background=0, peak_pos=0.05, sigma=0.005)
+def random():
+    import numpy as np
+    peak_pos = 10**np.random.uniform(-3, -1)
+    sigma = 10**np.random.uniform(-1.3, -0.3)*peak_pos
+    scale = 10**np.random.uniform(0, 4)
+    pars = dict(
+        #background=1e-8,
+        scale=scale,
+        peak_pos=peak_pos,
+        sigam=sigma,
+    )
+    return pars
