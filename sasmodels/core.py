@@ -9,6 +9,7 @@ __all__ = [
     ]
 
 import os
+import re
 from os.path import basename, dirname, join as joinpath
 from glob import glob
 
@@ -20,6 +21,7 @@ from . import product
 from . import mixture
 from . import kernelpy
 from . import kerneldll
+from . import custom
 
 if os.environ.get("SAS_OPENCL", "").lower() == "none":
     HAVE_OPENCL = False
@@ -29,6 +31,13 @@ else:
         HAVE_OPENCL = True
     except Exception:
         HAVE_OPENCL = False
+
+CUSTOM_MODEL_PATH = os.environ.get('SAS_MODELPATH', "")
+if CUSTOM_MODEL_PATH == "":
+    path = joinpath(os.path.expanduser("~"), ".sasmodels", "custom_models")
+    if not os.path.isdir(path):
+        os.makedirs(path)
+    CUSTOM_MODEL_PATH = path
 
 try:
     from typing import List, Union, Optional, Any
@@ -131,7 +140,8 @@ def load_model_info(model_string):
 
     *model_string* is the name of the model, or perhaps a model expression
     such as sphere*cylinder or sphere+cylinder. Use '@' for a structure
-    factor product, eg sphere@hardsphere.
+    factor product, e.g. sphere@hardsphere. Custom models can be specified by
+    prefixing the model name with 'custom.', e.g. 'custom.MyModel+sphere'.
 
     This returns a handle to the module defining the model.  This can be
     used with functions in generate to build the docs or extract model info.
@@ -154,6 +164,20 @@ def load_model_info(model_string):
         if len(product_parts_names) >= 2:
             product_parts = [load_model_info(part) for part in product_parts_names]
         elif len(product_parts_names) == 1:
+            if "custom." in product_parts_names[0]:
+                # Extract ModelName from "custom.ModelName"
+                pattern = "custom.([A-Za-z0-9_-]+)"
+                result = re.match(pattern, product_parts_names[0])
+                if result is None:
+                    raise ValueError("Model name in invalid format: " + product_parts_names[0])
+                model_name = result.group(1)
+                # Use ModelName to find the path to the custom model file
+                model_path = joinpath(CUSTOM_MODEL_PATH, model_name + ".py")
+                if not os.path.isfile(model_path):
+                    raise ValueError("The model file {} doesn't exist".format(model_path))
+                kernel_module = custom.load_custom_kernel_module(model_path)
+                return modelinfo.make_model_info(kernel_module)
+            # Model is a core model
             kernel_module = generate.load_kernel_module(product_parts_names[0])
             return modelinfo.make_model_info(kernel_module)
 
