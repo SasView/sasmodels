@@ -1,6 +1,6 @@
 r"""
 This model provides the form factor, $P(q)$, for a multi-shell sphere where
-the scattering length density (SLD) of the each shell is described by an
+the scattering length density (SLD) of each shell is described by an
 exponential, linear, or constant function. The form factor is normalized by
 the volume of the sphere where the SLD is not identical to the SLD of the
 solvent. We currently provide up to 9 shells with this model.
@@ -141,7 +141,7 @@ so this case is equivalent to
     \end{align*}
 
 For $A = 0$, the exponential function has no dependence on the radius (so that
-$\rho_\text{out}$ is ignored this case) and becomes flat. We set the constant
+$\rho_\text{out}$ is ignored in this case) and becomes flat. We set the constant
 to $\rho_\text{in}$ for convenience, and thus the form factor contributed by
 the shells is
 
@@ -345,7 +345,7 @@ def profile(sld_core, radius_core, sld_solvent, n_shells,
         if fabs(A[k]) < 1.0e-16:
             # flat shell
             z.append(z_current + thickness[k])
-            rho.append(sld_out[k])
+            rho.append(sld_in[k])
         else:
             # exponential shell
             # num_steps must be at least 1, so use floor()+1 rather than ceil
@@ -356,7 +356,7 @@ def profile(sld_core, radius_core, sld_solvent, n_shells,
             for z_shell in np.linspace(0, thickness[k], num_steps+1):
                 z.append(z_current+z_shell)
                 rho.append(slope*exp(A[k]*z_shell/thickness[k]) + const)
-
+    
     # add in the solvent
     z.append(z[-1])
     rho.append(sld_solvent)

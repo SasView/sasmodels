@@ -61,7 +61,7 @@ name = "mono_gauss_coil"
 title = "Scattering from monodisperse polymer coils"
 
 description = """
-    Evaluates the scattering from 
+    Evaluates the scattering from
     monodisperse polymer chains.
     """
 category = "shape-independent"
@@ -84,6 +84,17 @@ def Iq(q, i_zero, rg):
         inten[q == 0] = i_zero
     return inten
 Iq.vectorized = True # Iq accepts an array of q values
+
+def random():
+    import numpy as np
+    rg = 10**np.random.uniform(0, 4)
+    #rg = 1e3
+    pars = dict(
+        #scale=1, background=0,
+        i_zero=1e7, # i_zero is a simple scale
+        rg=rg,
+    )
+    return pars
 
 demo = dict(scale=1.0, i_zero=70.0, rg=75.0, background=0.0)
 

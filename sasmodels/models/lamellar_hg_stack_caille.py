@@ -122,6 +122,24 @@ form_volume = """
 # ER defaults to 0.0
 # VR defaults to 1.0
 
+def random():
+    import numpy as np
+    total_thickness = 10**np.random.uniform(2, 4.7)
+    Nlayers = np.random.randint(2, 200)
+    d_spacing = total_thickness / Nlayers
+    thickness = d_spacing * np.random.uniform(0, 1)
+    length_head = thickness * np.random.uniform(0, 1)
+    length_tail = thickness - length_head
+    Caille_parameter = np.random.uniform(0, 0.8)
+    pars = dict(
+        length_head=length_head,
+        length_tail=length_tail,
+        Nlayers=Nlayers,
+        d_spacing=d_spacing,
+        Caille_parameter=Caille_parameter,
+    )
+    return pars
+
 demo = dict(
     scale=1, background=0,
     Nlayers=20, d_spacing=200., Caille_parameter=0.05,

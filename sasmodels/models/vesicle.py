@@ -119,6 +119,20 @@ def VR(radius, thickness):
     core = 4./3. * pi * radius**3
     return whole, whole - core
 
+def random():
+    import numpy as np
+    total_radius = 10**np.random.uniform(1.3, 5)
+    radius = total_radius * np.random.uniform(0, 1)
+    thickness = total_radius - radius
+    volfraction = 10**np.random.uniform(-3, -1)
+    pars = dict(
+        #background=0,
+        scale=1,  # volfraction is part of the model, so scale=1
+        radius=radius,
+        thickness=thickness,
+        volfraction=volfraction,
+    )
+    return pars
 
 # parameters for demo
 demo = dict(sld=0.5, sld_solvent=6.36,

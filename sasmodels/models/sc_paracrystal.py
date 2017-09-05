@@ -82,7 +82,10 @@ approximated for 1d scattering. Thus the scattering pattern for 2D may not
 be accurate. Note that we are not responsible for any incorrectness of the 2D
 model computation.
 
-.. figure:: img/sc_crystal_angle_definition.jpg
+.. figure:: img/parallelepiped_angle_definition.png
+
+    Orientation of the crystal with respect to the scattering plane, when
+    $\theta = \phi = 0$ the $c$ axis is along the beam direction (the $z$ axis).
 
 Reference
 ---------
@@ -126,29 +129,36 @@ parameters = [["dnn",         "Ang",       220.0, [0.0, inf],  "",            "N
               ["radius",      "Ang",        40.0, [0.0, inf],  "volume",      "Radius of sphere"],
               ["sld",  "1e-6/Ang^2",         3.0, [0.0, inf],  "sld",         "Sphere scattering length density"],
               ["sld_solvent", "1e-6/Ang^2",  6.3, [0.0, inf],  "sld",         "Solvent scattering length density"],
-              ["theta",       "degrees",     0.0, [-inf, inf], "orientation", "Orientation of the a1 axis w/respect incoming beam"],
-              ["phi",         "degrees",     0.0, [-inf, inf], "orientation", "Orientation of the a2 in the plane of the detector"],
-              ["psi",         "degrees",     0.0, [-inf, inf], "orientation", "Orientation of the a3 in the plane of the detector"],
+              ["theta",       "degrees",    0,    [-360, 360], "orientation", "c axis to beam angle"],
+              ["phi",         "degrees",    0,    [-360, 360], "orientation", "rotation about beam"],
+              ["psi",         "degrees",    0,    [-360, 360], "orientation", "rotation about c axis"]
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sas_3j1x_x.c", "lib/sphere_form.c", "lib/gauss150.c", "sc_paracrystal.c"]
 
-demo = dict(scale=1, background=0,
-            dnn=220.0,
-            d_factor=0.06,
-            radius=40.0,
-            sld=3.0,
-            sld_solvent=6.3,
-            theta=0.0,
-            phi=0.0,
-            psi=0.0)
+def random():
+    import numpy as np
+    # copied from bcc_paracrystal
+    radius = 10**np.random.uniform(1.3, 4)
+    d_factor = 10**np.random.uniform(-2, -0.7)  # sigma_d in 0.01-0.7
+    dnn_fraction = np.random.beta(a=10, b=1)
+    dnn = radius*4/np.sqrt(4)/dnn_fraction
+    pars = dict(
+        #sld=1, sld_solvent=0, scale=1, background=1e-32,
+        dnn=dnn,
+        d_factor=d_factor,
+        radius=radius,
+    )
+    return pars
 
 tests = [
-    # Accuracy tests based on content in test/utest_extra_models.py
+    # Accuracy tests based on content in test/utest_extra_models.py, 2d tests added April 10, 2017
     [{}, 0.001, 10.3048],
     [{}, 0.215268, 0.00814889],
-    [{}, (0.414467), 0.001313289]
+    [{}, 0.414467, 0.001313289],
+    [{'theta': 10.0, 'phi': 20, 'psi': 30.0}, (0.045, -0.035), 18.0397138402],
+    [{'theta': 10.0, 'phi': 20, 'psi': 30.0}, (0.023, 0.045), 0.0177333171285],
     ]
 
 

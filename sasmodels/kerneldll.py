@@ -96,22 +96,22 @@ except ImportError:
     pass
 
 if "SAS_COMPILER" in os.environ:
-    compiler = os.environ["SAS_COMPILER"]
+    COMPILER = os.environ["SAS_COMPILER"]
 elif os.name == 'nt':
-    # If vcvarsall.bat has been called, then VCINSTALLDIR is in the environment
-    # and we can use the MSVC compiler.  Otherwise, if tinycc is available
-    # the use it.  Otherwise, hope that mingw is available.
-    if "VCINSTALLDIR" in os.environ:
-        compiler = "msvc"
-    elif tinycc:
-        compiler = "tinycc"
+    if tinycc is not None:
+        COMPILER = "tinycc"
+    elif "VCINSTALLDIR" in os.environ:
+        # If vcvarsall.bat has been called, then VCINSTALLDIR is in the environment
+        # and we can use the MSVC compiler.  Otherwise, if tinycc is available
+        # the use it.  Otherwise, hope that mingw is available.
+        COMPILER = "msvc"
     else:
-        compiler = "mingw"
+        COMPILER = "mingw"
 else:
-    compiler = "unix"
+    COMPILER = "unix"
 
 ARCH = "" if ct.sizeof(ct.c_void_p) > 4 else "x86"  # 4 byte pointers on x86
-if compiler == "unix":
+if COMPILER == "unix":
     # Generic unix compile
     # On mac users will need the X code command line tools installed
     #COMPILE = "gcc-mp-4.7 -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm -lgomp"
@@ -122,7 +122,7 @@ if compiler == "unix":
     def compile_command(source, output):
         """unix compiler command"""
         return CC + [source, "-o", output, "-lm"]
-elif compiler == "msvc":
+elif COMPILER == "msvc":
     # Call vcvarsall.bat before compiling to set path, headers, libs, etc.
     # MSVC compiler is available, so use it.  OpenMP requires a copy of
     # vcomp90.dll on the path.  One may be found here:
@@ -138,13 +138,13 @@ elif compiler == "msvc":
     def compile_command(source, output):
         """MSVC compiler command"""
         return CC + ["/Tp%s"%source] + LN + ["/OUT:%s"%output]
-elif compiler == "tinycc":
+elif COMPILER == "tinycc":
     # TinyCC compiler.
     CC = [tinycc.TCC] + "-shared -rdynamic -Wall".split()
     def compile_command(source, output):
         """tinycc compiler command"""
         return CC + [source, "-o", output]
-elif compiler == "mingw":
+elif COMPILER == "mingw":
     # MinGW compiler.
     CC = "gcc -shared -std=c99 -O2 -Wall".split()
     if "SAS_OPENMP" in os.environ:

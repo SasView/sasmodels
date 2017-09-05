@@ -1,22 +1,13 @@
 .. _magnetism:
 
 Polarisation/Magnetic Scattering
-=======================================================
+================================
 
-In earlier versions of SasView magnetic scattering was implemented in just five 
-(2D) models
-
-*  :ref:`sphere`
-*  :ref:`core-shell-sphere`
-*  :ref:`core-multi-shell`
-*  :ref:`cylinder`
-*  :ref:`parallelepiped`
-
-From SasView 4.x it is implemented on most models in the 'shape' category.
-
-In general, the scattering length density (SLD = $\beta$) in each region where the
-SLD is uniform, is a combination of the nuclear and magnetic SLDs and, for polarised
-neutrons, also depends on the spin states of the neutrons.
+Models which define a scattering length density parameter can be evaluated
+ as magnetic models. In general, the scattering length density (SLD =
+ $\beta$) in each region where the SLD is uniform, is a combination of the
+ nuclear and magnetic SLDs and, for polarised neutrons, also depends on the
+ spin states of the neutrons.
 
 For magnetic scattering, only the magnetization component $\mathbf{M_\perp}$
 perpendicular to the scattering vector $\mathbf{Q}$ contributes to the magnetic
@@ -97,3 +88,7 @@ The user input parameters are:
 
 .. note::
     This help document was last changed by Steve King, 02May2015
+
+* Document History *
+
+| 2017-05-08 Paul Kienzle

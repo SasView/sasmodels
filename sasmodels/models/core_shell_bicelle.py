@@ -16,8 +16,8 @@ factor is normalized by the particle volume.
 
 .. figure:: img/core_shell_bicelle_parameters.png
 
-   Cross section of cylindrical symmetry model used here. Users will have 
-   to decide how to distribute "heads" and "tails" between the rim, face 
+   Cross section of cylindrical symmetry model used here. Users will have
+   to decide how to distribute "heads" and "tails" between the rim, face
    and core regions in order to estimate appropriate starting parameters.
 
 Given the scattering length densities (sld) $\rho_c$, the core sld, $\rho_f$,
@@ -28,8 +28,8 @@ scattering length density variation along the cylinder axis is:
 
   .. math::
 
-    \rho(r) = 
-      \begin{cases} 
+    \rho(r) =
+      \begin{cases}
       &\rho_c \text{ for } 0 \lt r \lt R; -L \lt z\lt L \\[1.5ex]
       &\rho_f \text{ for } 0 \lt r \lt R; -(L+2t) \lt z\lt -L;
       L \lt z\lt (L+2t) \\[1.5ex]
@@ -50,12 +50,12 @@ where
     :nowrap:
 
     \begin{align}
-    F(Q,\alpha) = &\bigg[ 
+    F(Q,\alpha) = &\bigg[
     (\rho_c - \rho_f) V_c \frac{2J_1(QRsin \alpha)}{QRsin\alpha}\frac{sin(QLcos\alpha/2)}{Q(L/2)cos\alpha} \\
     &+(\rho_f - \rho_r) V_{c+f} \frac{2J_1(QRsin\alpha)}{QRsin\alpha}\frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha} \\
     &+(\rho_r - \rho_s) V_t \frac{2J_1(Q(R+t_r)sin\alpha)}{Q(R+t_r)sin\alpha}\frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha}
     \bigg]
-    \end{align} 
+    \end{align}
 
 where $V_t$ is the total volume of the bicelle, $V_c$ the volume of the core,
 $V_{c+f}$ the volume of the core plus the volume of the faces, $R$ is the radius
@@ -65,13 +65,16 @@ the thickness of the rim and $J_1$ the usual first order bessel function.
 The output of the 1D scattering intensity function for randomly oriented
 cylinders is then given by integrating over all possible $\theta$ and $\phi$.
 
-The *theta* and *phi* parameters are not used for the 1D output.
+For oriented bicelles the *theta*, and *phi* orientation parameters will appear when fitting 2D data,
+see the :ref:`cylinder` model for further information.
 Our implementation of the scattering kernel and the 1D scattering intensity
 use the c-library from NIST.
 
-.. figure:: img/cylinder_angle_definition.jpg
+.. figure:: img/cylinder_angle_definition.png
 
-    Definition of the angles for the oriented core shell bicelle tmodel.
+    Definition of the angles for the oriented core shell bicelle model,
+    note that the cylinder axis of the bicelle starts along the beam direction
+    when $\theta  = \phi = 0$.
 
 
 References
@@ -90,12 +93,12 @@ Authorship and Verification
 * **Last Reviewed by:** Richard Heenan **Date:** January 4, 2017
 """
 
-from numpy import inf, sin, cos
+from numpy import inf, sin, cos, pi
 
 name = "core_shell_bicelle"
 title = "Circular cylinder with a core-shell scattering length density profile.."
 description = """
-    P(q,alpha)= (scale/Vs)*f(q)^(2) + bkg,  where: 
+    P(q,alpha)= (scale/Vs)*f(q)^(2) + bkg,  where:
     f(q)= Vt(sld_rim - sld_solvent)* sin[qLt.cos(alpha)/2]
     /[qLt.cos(alpha)/2]*J1(qRout.sin(alpha))
     /[qRout.sin(alpha)]+
@@ -137,14 +140,24 @@ parameters = [
     ["sld_face",       "1e-6/Ang^2", 4, [-inf, inf], "sld",         "Cylinder face scattering length density"],
     ["sld_rim",        "1e-6/Ang^2", 4, [-inf, inf], "sld",         "Cylinder rim scattering length density"],
     ["sld_solvent",    "1e-6/Ang^2", 1, [-inf, inf], "sld",         "Solvent scattering length density"],
-    ["theta",          "degrees",   90, [-inf, inf], "orientation", "In plane angle"],
-    ["phi",            "degrees",    0, [-inf, inf], "orientation", "Out of plane angle"],
+    ["theta",          "degrees",   90, [-360, 360], "orientation", "cylinder axis to beam angle"],
+    ["phi",            "degrees",    0, [-360, 360], "orientation", "rotation about beam"]
     ]
 
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
           "core_shell_bicelle.c"]
+
+def random():
+    import numpy as np
+    pars = dict(
+        radius=10**np.random.uniform(1.3, 3),
+        length=10**np.random.uniform(1.3, 4),
+        thick_rim=10**np.random.uniform(0, 1.7),
+        thick_face=10**np.random.uniform(0, 1.7),
+    )
+    return pars
 
 demo = dict(scale=1, background=0,
             radius=20.0,
@@ -157,5 +170,12 @@ demo = dict(scale=1, background=0,
             sld_solvent=1.0,
             theta=90,
             phi=0)
+q = 0.1
+# april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
+qx = q*cos(pi/6.0)
+qy = q*sin(pi/6.0)
+tests = [[{}, 0.05, 7.4883545957],
+        [{'theta':80., 'phi':10.}, (qx, qy), 2.81048892474 ]
+        ]
+del qx, qy  # not necessary to delete, but cleaner
 
-#qx, qy = 0.4 * cos(pi/2.0), 0.5 * sin(0)

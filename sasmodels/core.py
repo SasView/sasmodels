@@ -116,8 +116,10 @@ def load_model(model_name, dtype=None, platform='ocl'):
     """
     Load model info and build model.
 
-    *model_name* is the name of the model as used by :func:`load_model_info`.
-    Additional keyword arguments are passed directly to :func:`build_model`.
+    *model_name* is the name of the model, or perhaps a model expression
+    such as sphere*hardsphere or sphere+cylinder.
+
+    *dtype* and *platform* are given by :func:`build_model`.
     """
     return build_model(load_model_info(model_name),
                        dtype=dtype, platform=platform)
@@ -127,6 +129,9 @@ def load_model_info(model_name):
     # type: (str) -> modelinfo.ModelInfo
     """
     Load a model definition given the model name.
+
+    *model_name* is the name of the model, or perhaps a model expression
+    such as sphere*hardsphere or sphere+cylinder.
 
     This returns a handle to the module defining the model.  This can be
     used with functions in generate to build the docs or extract model info.
@@ -226,8 +231,19 @@ def parse_dtype(model_info, dtype=None, platform=None):
     Interpret dtype string, returning np.dtype and fast flag.
 
     Possible types include 'half', 'single', 'double' and 'quad'.  If the
-    type is 'fast', then this is equivalent to dtype 'single' with the
-    fast flag set to True.
+    type is 'fast', then this is equivalent to dtype 'single' but using
+    fast native functions rather than those with the precision level guaranteed
+    by the OpenCL standard.
+
+    Platform preference can be specfied ("ocl" vs "dll"), with the default
+    being OpenCL if it is availabe.  If the dtype name ends with '!' then
+    platform is forced to be DLL rather than OpenCL.
+
+    This routine ignores the preferences within the model definition.  This
+    is by design.  It allows us to test models in single precision even when
+    we have flagged them as requiring double precision so we can easily check
+    the performance on different platforms without having to change the model
+    definition.
     """
     # Assign default platform, overriding ocl with dll if OpenCL is unavailable
     # If opencl=False OpenCL is switched off
@@ -249,10 +265,10 @@ def parse_dtype(model_info, dtype=None, platform=None):
     elif dtype == "quad":
         dtype = "longdouble"
     elif dtype == "half":
-        dtype = "f16"
+        dtype = "float16"
 
     # Convert dtype string to numpy dtype.
-    if dtype is None:
+    if dtype is None or dtype == "default":
         numpy_dtype = (generate.F32 if platform == "ocl" and model_info.single
                        else generate.F64)
     else:

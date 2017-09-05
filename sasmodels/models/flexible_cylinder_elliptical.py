@@ -111,13 +111,19 @@ parameters = [
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "lib/wrc_cyl.c",
           "flexible_cylinder_elliptical.c"]
 
-demo = dict(scale=1.0, background=0.0001,
-            length=1000.0,
-            kuhn_length=100.0,
-            radius=20.0,
-            axis_ratio=1.5,
-            sld=1.0,
-            sld_solvent=6.3)
+def random():
+    import numpy as np
+    length = 10**np.random.uniform(2, 6)
+    radius = 10**np.random.uniform(1, 3)
+    axis_ratio = 10**np.random.uniform(-1, 1)
+    kuhn_length = 10**np.random.uniform(-2, -0.7)*length  # at least 10 segments
+    pars = dict(
+        length=length,
+        radius=radius,
+        axis_ratio=axis_ratio,
+        kuhn_length=kuhn_length,
+    )
+    return pars
 
 tests = [
     # Accuracy tests based on content in test/utest_other_models.py

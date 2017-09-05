@@ -209,12 +209,19 @@ except TypeError:
     F128 = None
 
 # Conversion from units defined in the parameter table for each model
-# to units displayed in the sphinx documentation.
+# to units displayed in the sphinx documentation. 
+# This section associates the unit with the macro to use to produce the LaTex
+# code.  The macro itself needs to be defined in sasmodels/doc/rst_prolog.
+#
+# NOTE: there is an RST_PROLOG at the end of this file which is NOT
+# used for the bundled documentation. Still as long as we are defining the macros
+# in two places any new addition should define the macro in both places. 
 RST_UNITS = {
     "Ang": "|Ang|",
     "1/Ang": "|Ang^-1|",
     "1/Ang^2": "|Ang^-2|",
     "Ang^3": "|Ang^3|",
+    "Ang^2": "|Ang^2|",
     "1e15/cm^3": "|1e15cm^3|",
     "Ang^3/mol": "|Ang^3|/mol",
     "1e-6/Ang^2": "|1e-6Ang^-2|",
@@ -491,8 +498,9 @@ def _tag_float(source, constant_flag):
     return out
 
 def test_tag_float():
+    """check that floating point constants are properly identified and tagged with 'f'"""
 
-    cases="""
+    cases = """
 ZP  : 0.
 ZPF : 0.0,0.01,0.1
 Z  E: 0e+001
@@ -518,7 +526,7 @@ a3.e2 - 0.
 4.*atan(1.)
 """
 
-    output="""
+    output = """
 ZP  : 0.f
 ZPF : 0.0f,0.01f,0.1f
 Z  E: 0e+001f
@@ -610,7 +618,9 @@ def _gen_fn(name, pars, body, filename, line):
 def _call_pars(prefix, pars):
     # type: (str, List[Parameter]) -> List[str]
     """
-    Return a list of *prefix.parameter* from parameter items.
+    Return a list of *prefix+parameter* from parameter items.
+
+    *prefix* should be "v." if v is a struct.
     """
     return [p.as_call_reference(prefix) for p in pars]
 
@@ -732,7 +742,7 @@ def make_source(model_info):
         pars_sqrt = ["sqrt(_q[2*_i]*_q[2*_i]+_q[2*_i+1]*_q[2*_i+1])"] + refs[1:]
         call_iqxy = "#define CALL_IQ(_q,_i,_v) Iq(%s)" % (",".join(pars_sqrt))
 
-    magpars = [k-2 for k,p in enumerate(partable.call_parameters)
+    magpars = [k-2 for k, p in enumerate(partable.call_parameters)
                if p.type == 'sld']
 
     # Fill in definitions for numbers of parameters
@@ -741,7 +751,7 @@ def make_source(model_info):
     source.append("#define NUM_VALUES %d" % partable.nvalues)
     source.append("#define NUM_MAGNETIC %d" % partable.nmagnetic)
     source.append("#define MAGNETIC_PARS %s"%",".join(str(k) for k in magpars))
-    for k,v in enumerate(magpars[:3]):
+    for k, v in enumerate(magpars[:3]):
         source.append("#define MAGNETIC_PAR%d %d"%(k+1, v))
 
     # TODO: allow mixed python/opencl kernels?
@@ -778,7 +788,7 @@ def kernels(kernel, call_iq, call_iqxy, name):
         code,
         "#undef CALL_IQ",
         "#undef KERNEL_NAME",
-         ]
+    ]
 
     imagnetic = [
         # define the Imagnetic kernel
@@ -871,7 +881,7 @@ def make_doc(model_info):
 
 
 # TODO: need a single source for rst_prolog; it is also in doc/rst_prolog
-RST_PROLOG = """\
+RST_PROLOG = r"""\
 .. |Ang| unicode:: U+212B
 .. |Ang^-1| replace:: |Ang|\ :sup:`-1`
 .. |Ang^2| replace:: |Ang|\ :sup:`2`
@@ -927,7 +937,7 @@ def view_html(model_name):
 def view_html_from_info(info):
     from . import rst2html
     url = "file://"+dirname(info.filename)+"/"
-    rst2html.wxview(make_html(info), url=url)
+    rst2html.view_html(make_html(info), url=url)
 
 def demo_time():
     # type: () -> None

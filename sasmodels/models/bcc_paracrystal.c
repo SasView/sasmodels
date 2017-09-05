@@ -89,12 +89,12 @@ double Iqxy(double qx, double qy,
     double sld, double solvent_sld,
     double theta, double phi, double psi)
 {
-    double q, cos_a1, cos_a2, cos_a3;
-    ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, cos_a3, cos_a2, cos_a1);
+    double q, zhat, yhat, xhat;
+    ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, xhat, yhat, zhat);
 
-    const double a1 = +cos_a3 - cos_a1 + cos_a2;
-    const double a2 = +cos_a3 + cos_a1 - cos_a2;
-    const double a3 = -cos_a3 + cos_a1 + cos_a2;
+    const double a1 = +xhat - zhat + yhat;
+    const double a2 = +xhat + zhat - yhat;
+    const double a3 = -xhat + zhat + yhat;
 
     const double qd = 0.5*q*dnn;
     const double arg = 0.5*square(qd*d_factor)*(a1*a1 + a2*a2 + a3*a3);

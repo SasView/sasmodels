@@ -53,13 +53,13 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
-* **Last Modified by:** Richard Heenan **Date:** October 06, 2016 
+* **Last Modified by:** Richard Heenan **Date:** October 06, 2016
    (reparametrised to use thickness, not outer radius)
 * **Last Reviewed by:** Richard Heenan **Date:** October 06, 2016
 
 """
 
-from numpy import pi, inf
+from numpy import pi, inf, sin, cos
 
 name = "hollow_cylinder"
 title = ""
@@ -79,10 +79,10 @@ parameters = [
     ["radius",      "Ang",     20.0, [0, inf],    "volume",      "Cylinder core radius"],
     ["thickness",   "Ang",     10.0, [0, inf],    "volume",      "Cylinder wall thickness"],
     ["length",      "Ang",    400.0, [0, inf],    "volume",      "Cylinder total length"],
-    ["sld",         "1/Ang^2",  6.3, [-inf, inf], "sld",         "Cylinder sld"],
-    ["sld_solvent", "1/Ang^2",  1,   [-inf, inf], "sld",         "Solvent sld"],
-    ["theta",       "degrees", 90,   [-360, 360], "orientation", "Theta angle"],
-    ["phi",         "degrees",  0,   [-360, 360], "orientation", "Phi angle"],
+    ["sld",         "1e-6/Ang^2",  6.3, [-inf, inf], "sld",         "Cylinder sld"],
+    ["sld_solvent", "1e-6/Ang^2",  1,   [-inf, inf], "sld",         "Solvent sld"],
+    ["theta",       "degrees", 90,   [-360, 360], "orientation", "Cylinder axis to beam angle"],
+    ["phi",         "degrees",  0,   [-360, 360], "orientation", "Rotation about beam"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
@@ -120,6 +120,21 @@ def VR(radius, thickness, length):
     vol_shell = vol_total - vol_core
     return vol_shell, vol_total
 
+def random():
+    import numpy as np
+    length = 10**np.random.uniform(1, 4.7)
+    outer_radius = 10**np.random.uniform(1, 4.7)
+    # Use a distribution with a preference for thin shell or thin core
+    # Avoid core,shell radii < 1
+    thickness = np.random.beta(0.5, 0.5)*(outer_radius-2) + 1
+    radius = outer_radius - thickness
+    pars = dict(
+        length=length,
+        radius=radius,
+        thickness=thickness,
+    )
+    return pars
+
 # parameters for demo
 demo = dict(scale=1.0, background=0.0, length=400.0, radius=20.0,
             thickness=10, sld=6.3, sld_solvent=1, theta=90, phi=0,
@@ -128,10 +143,15 @@ demo = dict(scale=1.0, background=0.0, length=400.0, radius=20.0,
             radius_pd=.2, radius_pd_n=9,
             theta_pd=10, theta_pd_n=5,
            )
-
+q = 0.1
+# april 6 2017, rkh added a 2d unit test, assume correct!
+qx = q*cos(pi/6.0)
+qy = q*sin(pi/6.0)
 # Parameters for unit tests
 tests = [
     [{}, 0.00005, 1764.926],
     [{}, 'VR', 1.8],
-    [{}, 0.001, 1756.76]
-    ]
+    [{}, 0.001, 1756.76],
+    [{}, (qx, qy), 2.36885476192  ],
+        ]
+del qx, qy  # not necessary to delete, but cleaner

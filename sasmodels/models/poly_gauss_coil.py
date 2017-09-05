@@ -65,7 +65,7 @@ name = "poly_gauss_coil"
 title = "Scattering from polydisperse polymer coils"
 
 description = """
-    Evaluates the scattering from 
+    Evaluates the scattering from
     polydisperse polymer chains.
     """
 category = "shape-independent"
@@ -95,11 +95,11 @@ def Iq(q, i_zero, rg, polydispersity):
         # Taylor series around z=0 of (2*(1+uz)^(-1/u) + z - 1) / (z^2(u+1))
         p = [
             #(-1 - 20*u - 155*u**2 - 580*u**3 - 1044*u**4 - 720*u**5) / 2520.,
-            #( 1 + 14*u + 71*u**2 + 154*u**3 + 120*u**4) / 360.,
+            #(+1 + 14*u + 71*u**2 + 154*u**3 + 120*u**4) / 360.,
             #(-1 - 9*u - 26*u**2 - 24*u**3) / 60.,
-            ( 1 + 5*u + 6*u**2) / 12.,
+            (+1 + 5*u + 6*u**2) / 12.,
             (-1 - 2*u) / 3.,
-            ( 1 ),
+            (+1),
             ]
         result = 2.0 * (power(1.0 + u*z, -1.0/u) + z - 1.0) / (1.0 + u)
         index = z > 1e-4
@@ -107,6 +107,19 @@ def Iq(q, i_zero, rg, polydispersity):
         result[~index] = np.polyval(p, z[~index])
     return i_zero * result
 Iq.vectorized = True  # Iq accepts an array of q values
+
+def random():
+    import numpy as np
+    rg = 10**np.random.uniform(0, 4)
+    #rg = 1e3
+    polydispersity = 10**np.random.uniform(0, 3)
+    pars = dict(
+        #scale=1, background=0,
+        i_zero=1e7, # i_zero is a simple scale
+        rg=rg,
+        polydispersity=polydispersity,
+    )
+    return pars
 
 demo = dict(scale=1.0,
             i_zero=70.0,

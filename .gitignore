@@ -10,7 +10,7 @@
 /doc/_build/
 /doc/api/
 /doc/model/
-/doc/ref/models
+/doc/guide/models
 .mplconfig
 /pylint_violations.txt
 /coverage.xml
@@ -19,3 +19,5 @@
 /.pydevproject
 /.idea
 /sasmodels.egg-info/
+/example/Fit_*/
+/example/batch_fit.csv

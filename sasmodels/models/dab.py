@@ -60,9 +60,19 @@ parameters = [["cor_length", "Ang", 50.0, [0, inf], "", "correlation length"],
 Iq = """
     double numerator   = cube(cor_length);
     double denominator = square(1 + square(q*cor_length));
-    
+
     return numerator / denominator ;
     """
+
+def random():
+    import numpy as np
+    pars = dict(
+        scale=10**np.random.uniform(1, 4),
+        cor_length=10**np.random.uniform(0.3, 3),
+        #background = 0,
+    )
+    pars['scale'] /= pars['cor_length']**3
+    return pars
 
 # ER defaults to 1.0
 

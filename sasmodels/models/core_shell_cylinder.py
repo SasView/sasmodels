@@ -72,7 +72,7 @@ Authorship and Verification
 * **Last Reviewed by:** Richard Heenan **Date:** March 18, 2016
 """
 
-from numpy import pi, inf
+from numpy import pi, inf, sin, cos
 
 name = "core_shell_cylinder"
 title = "Right circular cylinder with a core-shell scattering length density profile."
@@ -116,10 +116,10 @@ parameters = [["sld_core", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Cylinder shell thickness"],
               ["length", "Ang", 400, [0, inf], "volume",
                "Cylinder length"],
-              ["theta", "degrees", 60, [-inf, inf], "orientation",
-               "In plane angle"],
-              ["phi", "degrees", 60, [-inf, inf], "orientation",
-               "Out of plane angle"],
+              ["theta", "degrees", 60, [-360, 360], "orientation",
+               "cylinder axis to beam angle"],
+              ["phi", "degrees",   60, [-360, 360], "orientation",
+               "rotation about beam"],
              ]
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "core_shell_cylinder.c"]
@@ -141,6 +141,21 @@ def VR(radius, thickness, length):
     core = pi * radius ** 2 * length
     return whole, whole - core
 
+def random():
+    import numpy as np
+    outer_radius = 10**np.random.uniform(1, 4.7)
+    # Use a distribution with a preference for thin shell or thin core
+    # Avoid core,shell radii < 1
+    radius = np.random.beta(0.5, 0.5)*(outer_radius-2) + 1
+    thickness = outer_radius - radius
+    length = np.random.uniform(1, 4.7)
+    pars = dict(
+        radius=radius,
+        thickness=thickness,
+        length=length,
+    )
+    return pars
+
 demo = dict(scale=1, background=0,
             sld_core=6, sld_shell=8, sld_solvent=1,
             radius=45, thickness=25, length=340,
@@ -150,4 +165,11 @@ demo = dict(scale=1, background=0,
             thickness_pd=.2, thickness_pd_n=10,
             theta_pd=15, theta_pd_n=45,
             phi_pd=15, phi_pd_n=1)
-
+q = 0.1
+# april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
+qx = q*cos(pi/6.0)
+qy = q*sin(pi/6.0)
+tests = [[{}, 0.075, 10.8552692237],
+        [{}, (qx, qy), 0.444618752741 ],
+        ]
+del qx, qy  # not necessary to delete, but cleaner

@@ -103,9 +103,9 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
                "Solvent scattering length density"],
               ["length_a", "Ang", 35, [0, inf], "volume",
                "Shorter side of the parallelepiped"],
-              ["b2a_ratio", "Ang", 1, [0, inf], "volume",
+              ["b2a_ratio", "", 1, [0, inf], "volume",
                "Ratio sides b/a"],
-              ["c2a_ratio", "Ang", 1, [0, inf], "volume",
+              ["c2a_ratio", "", 1, [0, inf], "volume",
                "Ratio sides c/a"],
              ]
 
@@ -124,6 +124,15 @@ def ER(length_a, b2a_ratio, c2a_ratio):
     ddd = 0.75 * surf_rad * (2 * surf_rad * c_side + (c_side + surf_rad) * (c_side + pi * surf_rad))
     return 0.5 * (ddd) ** (1. / 3.)
 
+def random():
+    import numpy as np
+    a, b, c = 10**np.random.uniform(1, 4.7, size=3)
+    pars = dict(
+        length_a=a,
+        b2a_ratio=b/a,
+        c2a_ratio=c/a,
+    )
+    return pars
 
 # parameters for demo
 demo = dict(scale=1, background=0,
