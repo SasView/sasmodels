@@ -56,7 +56,7 @@ from numpy import pi, inf
 name = "core_shell_sphere"
 title = "Form factor for a monodisperse spherical particle with particle with a core-shell structure."
 description = """
-    F^2(q) = 3/V_s [V_c (sld_core-sld_shell) (sin(q*radius)-q*radius*cos(q*radius))/(q*radius)^3 
+    F^2(q) = 3/V_s [V_c (sld_core-sld_shell) (sin(q*radius)-q*radius*cos(q*radius))/(q*radius)^3
                    + V_s (sld_shell-sld_solvent) (sin(q*r_s)-q*r_s*cos(q*r_s))/(q*r_s)^3]
 
             V_s: Volume of the sphere shell
@@ -98,14 +98,26 @@ def VR(radius, thickness):
     core = 4.0/3.0 * pi * radius**3
     return whole, whole - core
 
+def random():
+    import numpy as np
+    outer_radius = 10**np.random.uniform(1.3, 4.3)
+    # Use a distribution with a preference for thin shell or thin core
+    # Avoid core,shell radii < 1
+    radius = np.random.beta(0.5, 0.5)*(outer_radius-2) + 1
+    thickness = outer_radius - radius
+    pars = dict(
+        radius=radius,
+        thickness=thickness,
+    )
+    return pars
+
 tests = [
     [{'radius': 20.0, 'thickness': 10.0}, 'ER', 30.0],
-     # TODO: VR test suppressed until we sort out new product model
-     # and determine what to do with volume ratio.
-     #[{'radius': 20.0, 'thickness': 10.0}, 'VR', 0.703703704],
+    # TODO: VR test suppressed until we sort out new product model
+    # and determine what to do with volume ratio.
+    #[{'radius': 20.0, 'thickness': 10.0}, 'VR', 0.703703704],
 
-     # The SasView test result was 0.00169, with a background of 0.001
-     [{'radius': 60.0, 'thickness': 10.0, 'sld_core': 1.0, 'sld_shell':2.0,
-       'sld_solvent':3.0, 'background':0.0},
-      0.4, 0.000698838],
+    # The SasView test result was 0.00169, with a background of 0.001
+    [{'radius': 60.0, 'thickness': 10.0, 'sld_core': 1.0, 'sld_shell': 2.0,
+      'sld_solvent': 3.0, 'background': 0.0}, 0.4, 0.000698838],
 ]

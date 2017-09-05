@@ -104,6 +104,16 @@ def ER(radius):
 
 # VR defaults to 1.0
 
+def random():
+    import numpy as np
+    radius = 10**np.random.uniform(1, 4.7)
+    fuzziness = 10**np.random.uniform(-2, -0.5)*radius  # 1% to 31% fuzziness
+    pars = dict(
+        radius=radius,
+        fuzziness=fuzziness,
+    )
+    return pars
+
 demo = dict(scale=1, background=0.001,
             sld=1, sld_solvent=3,
             radius=60,

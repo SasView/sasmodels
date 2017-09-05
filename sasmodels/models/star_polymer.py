@@ -1,9 +1,12 @@
 r"""
-The Benoit model for a simple star polymer, with Gaussian coils arms from
-a common point.
-
 Definition
 ----------
+
+Calcuates the scattering from a simple star polymer with f equal Gaussian coil
+arms. A star being defined as a branched polymer with all the branches
+emanating from a common central (in the case of this model) point.  It is
+derived as a special case of on the Benoit model for general branched
+polymers\ [#CITBenoit]_ as also used by Richter ''et. al.''\ [#CITRichter]_
 
 For a star with $f$ arms the scattering intensity $I(q)$ is calculated as
 
@@ -14,23 +17,42 @@ For a star with $f$ arms the scattering intensity $I(q)$ is calculated as
 
 where
 
-.. math:: v=\frac{u^2f}{(3f-2)}
+.. math:: v=\frac{uf}{(3f-2)}
 
 and
 
 .. math:: u = \left\langle R_{g}^2\right\rangle q^2
 
-contains the square of the ensemble average radius-of-gyration of an arm.
+contains the square of the ensemble average radius-of-gyration of the full
+polymer while v contains the radius of gyration of a single arm $R_{arm}$.
+The two are related as:
+
+.. math:: R_{arm}^2 = \frac{f}{3f-2} R_{g}^2
+
 Note that when there is only one arm, $f = 1$, the Debye Gaussian coil
-equation is recovered. Star polymers in solutions tend to have strong
-interparticle and osmotic effects, so the Benoit equation may not work well.
-At small $q$ the Guinier term and hence $I(q=0)$ is the same as for $f$ arms
-of radius of gyration $R_g$, as described for the :ref:`mono-gauss-coil` model.
+equation is recovered.
+
+.. note::
+   Star polymers in solutions tend to have strong interparticle and osmotic
+   effects. Thus the Benoit equation may not work well for many real cases.
+   At small $q$ the Guinier term and hence $I(q=0)$ is the same as for $f$ arms
+   of radius of gyration $R_g$, as described for the :ref:`mono-gauss-coil`
+   model. A newer model for star polymer incorporating excluded volume has been
+   developed by Li et al in arXiv:1404.6269 [physics.chem-ph].
 
 References
 ----------
 
-H Benoit *J. Polymer Science*, 11, 596-599 (1953)
+.. [#CITBenoit] H Benoit *J. Polymer Science*, 11, 507-510 (1953)
+.. [#CITRichter] D Richter, B. Farago, J. S. Huang, L. J. Fetters,
+   B Ewen *Macromolecules*, 22, 468-472 (1989)
+
+Authorship and Verification
+----------------------------
+
+* **Author:** Kieran Campbell **Date:** July 24, 2012
+* **Last Modified by:** Paul Butler **Date:** Auguts 26, 2017
+* **Last Reviewed by:** Ziang Li and Richard Heenan **Date:** May 17, 2017
 """
 
 from numpy import inf
@@ -44,23 +66,31 @@ description = """
         where
         - v = u^2f/(3f-2)
         - u = <R_g^2>q^2, where <R_g^2> is the ensemble average radius of
-        gyration squared of an arm
+        gyration squared of the entire polymer
         - f is the number of arms on the star
+        - the radius of gyration of an arm is given b
+        Rg_arm^2 = R_g^2 * f/(3f-2)
         """
 category = "shape-independent"
 single = False
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["rg_squared", "Ang^2", 100.0, [0.0, inf], "", "Ensemble radius of gyration SQUARED of an arm"],
+parameters = [["rg_squared", "Ang^2", 100.0, [0.0, inf], "", "Ensemble radius of gyration SQUARED of the full polymer"],
               ["arms",    "",      3,   [1.0, 6.0], "", "Number of arms in the model"],
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["star_polymer.c"]
 
-demo = dict(scale=1, background=0,
-            rg_squared=100.0,
-            arms=3.0)
+def random():
+    import numpy as np
+    pars = dict(
+        #background=0,
+        scale=10**np.random.uniform(1, 4),
+        rg_squared=10**np.random.uniform(1, 8),
+        arms=np.random.uniform(1, 6),
+    )
+    return pars
 
 tests = [[{'rg_squared': 2.0,
            'arms':    3.3,

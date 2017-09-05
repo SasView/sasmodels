@@ -74,14 +74,14 @@ form_volume = """
 
 Iq = r"""
       double D,A,B,G,X,X2,X4,S,C,FF,HARDSPH;
-      // these are c compiler instructions, can also put normal code inside the "if else" structure 
+      // these are c compiler instructions, can also put normal code inside the "if else" structure
       #if FLOAT_SIZE > 4
       // double precision    orig had 0.2, don't call the variable cutoff as PAK already has one called that! Must use UPPERCASE name please.
       //  0.05 better, 0.1 OK
       #define CUTOFFHS 0.05
       #else
       // 0.1 bad, 0.2 OK, 0.3 good, 0.4 better, 0.8 no good
-      #define CUTOFFHS 0.4  
+      #define CUTOFFHS 0.4
       #endif
 
       if(fabs(radius_effective) < 1.E-12) {
@@ -109,9 +109,9 @@ Iq = r"""
 
       if(X < CUTOFFHS) {
       // RKH Feb 2016, use Taylor series expansion for small X
-      // else no obvious way to rearrange the equations to avoid needing a very high number of significant figures. 
-      // Series expansion found using Mathematica software. Numerical test in .xls showed terms to X^2 are sufficient 
-      // for 5 or 6 significant figures, but I put the X^4 one in anyway 
+      // else no obvious way to rearrange the equations to avoid needing a very high number of significant figures.
+      // Series expansion found using Mathematica software. Numerical test in .xls showed terms to X^2 are sufficient
+      // for 5 or 6 significant figures, but I put the X^4 one in anyway
             //FF = 8*A +6*B + 4*G - (0.8*A +2.0*B/3.0 +0.5*G)*X2 +(A/35. +B/40. +G/50.)*X4;
             // refactoring the polynomial makes it very slightly faster (0.5 not 0.6 msec)
             //FF = 8*A +6*B + 4*G + ( -0.8*A -2.0*B/3.0 -0.5*G +(A/35. +B/40. +G/50.)*X2)*X2;
@@ -151,6 +151,15 @@ Iq = r"""
 //printf("HS4 %g: %g\n",q,HARDSPH);
       return(HARDSPH);
    """
+
+def random():
+    import numpy as np
+    pars = dict(
+        scale=1, background=0,
+        radius_effective=10**np.random.uniform(1, 4),
+        volfraction=10**np.random.uniform(-2, 0),  # high volume fraction
+    )
+    return pars
 
 # ER defaults to 0.0
 # VR defaults to 1.0

@@ -40,11 +40,11 @@ class SesansTransform(object):
     _H = None  # type: np.ndarray
     _H0 = None # type: np.ndarray
 
-    def __init__(self, z, SElength, zaccept, Rmax):
+    def __init__(self, z, SElength, lam, zaccept, Rmax):
         # type: (np.ndarray, float, float) -> None
         #import logging; logging.info("creating SESANS transform")
         self.q = z
-        self._set_hankel(SElength, zaccept, Rmax)
+        self._set_hankel(SElength, lam, zaccept, Rmax)
 
     def apply(self, Iq):
         # tye: (np.ndarray) -> np.ndarray
@@ -53,7 +53,7 @@ class SesansTransform(object):
         P = G - G0
         return P
 
-    def _set_hankel(self, SElength, zaccept, Rmax):
+    def _set_hankel(self, SElength, lam, zaccept, Rmax):
         # type: (np.ndarray, float, float) -> None
         # Force float32 arrays, otherwise run into memory problems on some machines
         SElength = np.asarray(SElength, dtype='float32')
@@ -69,6 +69,11 @@ class SesansTransform(object):
         repq = np.tile(q, (SElength.size, 1)).T
         repSE = np.tile(SElength, (q.size, 1))
         H = np.float32(dq/(2*pi)) * j0(repSE*repq) * repq
+
+        replam = np.tile(lam, (q.size, 1))
+        reptheta = np.arcsin(repq*replam/2*np.pi)
+        mask = reptheta > zaccept
+        H[mask] = 0
 
         self.q_calc = q
         self._H, self._H0 = H, H0

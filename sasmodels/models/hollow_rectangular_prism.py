@@ -145,6 +145,24 @@ def VR(length_a, b2a_ratio, c2a_ratio, thickness):
     return vol_total, vol_shell
 
 
+def random():
+    import numpy as np
+    a, b, c = 10**np.random.uniform(1, 4.7, size=3)
+    # Thickness is limited to 1/2 the smallest dimension
+    # Use a distribution with a preference for thin shell or thin core
+    # Avoid core,shell radii < 1
+    min_dim = 0.5*min(a, b, c)
+    thickness = np.random.beta(0.5, 0.5)*(min_dim-2) + 1
+    #print(a, b, c, thickness, thickness/min_dim)
+    pars = dict(
+        length_a=a,
+        b2a_ratio=b/a,
+        c2a_ratio=c/a,
+        thickness=thickness,
+    )
+    return pars
+
+
 # parameters for demo
 demo = dict(scale=1, background=0,
             sld=6.3, sld_solvent=1.0,

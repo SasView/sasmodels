@@ -49,6 +49,15 @@ def Iq(q, power):
     return result
 Iq.vectorized = True  # Iq accepts an array of q values
 
+def random():
+    import numpy as np
+    power = np.random.uniform(1, 6)
+    pars = dict(
+        scale=0.1**power*10**np.random.uniform(-4, 2),
+        power=power,
+    )
+    return pars
+
 demo = dict(scale=1.0, power=4.0, background=0.0)
 
 tests = [
