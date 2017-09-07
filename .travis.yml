@@ -30,6 +30,7 @@ addons:
       opencl-headers
 
 before_install:
+  - openssl aes-256-cbc -K $encrypted_2459146b3814_key -iv $encrypted_2459146b3814_iv -in .travis/travis_rsa.enc -out .travis/travis_rsa -d
   - echo $TRAVIS_OS_NAME
 
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
@@ -61,6 +62,13 @@ install:
 script:
 - python --version
 - python -m sasmodels.model_test -v dll all
+
+deploy:
+  skip_cleanup: true
+  provider: script
+  script: /bin/sh -xe ./deploy.sh
+  on:
+    branch: master
 
 notifications:
   slack:
