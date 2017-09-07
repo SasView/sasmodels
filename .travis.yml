@@ -23,6 +23,7 @@ addons:
   apt:
     packages: opencl-headers
 before_install:
+- mkdir .travis
 - openssl aes-256-cbc -K $encrypted_2459146b3814_key -iv $encrypted_2459146b3814_iv
   -in travis_rsa.enc -out .travis/travis_rsa -d
 - echo $TRAVIS_OS_NAME
