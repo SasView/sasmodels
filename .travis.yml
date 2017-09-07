@@ -1,75 +1,53 @@
 language: python
-
-sudo:  false
-
+sudo: false
 matrix:
   include:
-    - os: linux
-      env:
-        - PY=2.7
-    - os: linux
-      env:
-        - PY=3.6
-    - os: osx
-      language: generic
-      env:
-        - PY=2.7
-    - os: osx
-      language: generic
-      env:
-        - PY=3.5
-
-# whitelist
+  - os: linux
+    env:
+    - PY=2.7
+  - os: linux
+    env:
+    - PY=3.6
+  - os: osx
+    language: generic
+    env:
+    - PY=2.7
+  - os: osx
+    language: generic
+    env:
+    - PY=3.5
 branches:
   only:
-    - master
-
+  - master
 addons:
   apt:
-    packages:
-      opencl-headers
-
+    packages: opencl-headers
 before_install:
-  - openssl aes-256-cbc -K $encrypted_2459146b3814_key -iv $encrypted_2459146b3814_iv -in .travis/travis_rsa.enc -out .travis/travis_rsa -d
-  - echo $TRAVIS_OS_NAME
-
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-    fi;
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
-    fi;
-
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  - hash -r
-  - conda update --yes conda
-
-  # Useful for debugging any issues with conda
-  - conda info -a
-
-  - conda install --yes python=$PY numpy scipy cython mako cffi
-
-  # Not testing with opencl below, so don't need to install it
-  #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-  #    pip install pyopencl;
-  #  fi;
-
+- openssl aes-256-cbc -K $encrypted_2459146b3814_key -iv $encrypted_2459146b3814_iv
+  -in travis_rsa.enc -out .travis/travis_rsa -d
+- echo $TRAVIS_OS_NAME
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+  -O miniconda.sh; fi;
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+  -O miniconda.sh; fi;
+- bash miniconda.sh -b -p $HOME/miniconda
+- export PATH="$HOME/miniconda/bin:$PATH"
+- hash -r
+- conda update --yes conda
+- conda info -a
+- conda install --yes python=$PY numpy scipy cython mako cffi
 install:
-  - pip install bumps
-  - pip install unittest-xml-reporting
-
+- pip install bumps
+- pip install unittest-xml-reporting
 script:
 - python --version
 - python -m sasmodels.model_test -v dll all
-
 deploy:
   skip_cleanup: true
   provider: script
-  script: /bin/sh -xe ./deploy.sh
+  script: "/bin/sh -xe ./deploy.sh"
   on:
     branch: master
-
 notifications:
   slack:
     secure: xNAUeSu1/it/x9Q2CSg79aw1LLc7d6mLpcqSCTeKROp71RhkFf8VjJnJm/lEbKHNC8yj5H9UHrz5DmzwJzI+6oMt4NdEeS6WvGhwGY/wCt2IcJKxw0vj1DAU04qFMS041Khwclo6jIqm76DloinXvmvsS+K/nSyQkF7q4egSlwA=
