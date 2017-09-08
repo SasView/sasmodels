@@ -1,3 +1,4 @@
+echo -e "Host danse.chem.utk.edu\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 eval "$(ssh-agent -s)"
 chmod 600 .travis/travis_rsa
 ssh-add .travis/travis_rsa

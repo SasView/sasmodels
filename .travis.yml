@@ -39,11 +39,11 @@ before_install:
 install:
 - pip install bumps
 - pip install unittest-xml-reporting
-before-script:
-- echo -e "Host danse.chem.utk.edu\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 script:
 - python --version
 - python -m sasmodels.model_test -v dll all
+before_deploy:
+- echo -e "Host danse.chem.utk.edu\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 deploy:
     skip_cleanup: true
     provider: script
