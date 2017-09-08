@@ -42,6 +42,12 @@ install:
 script:
 - python --version
 - python -m sasmodels.model_test -v dll all
+deploy:
+    skip_cleanup: true
+    provider: script
+    script: /bin/sh -ex ./deploy.sh
+    on:
+        branch: master
 notifications:
   slack:
     secure: xNAUeSu1/it/x9Q2CSg79aw1LLc7d6mLpcqSCTeKROp71RhkFf8VjJnJm/lEbKHNC8yj5H9UHrz5DmzwJzI+6oMt4NdEeS6WvGhwGY/wCt2IcJKxw0vj1DAU04qFMS041Khwclo6jIqm76DloinXvmvsS+K/nSyQkF7q4egSlwA=
