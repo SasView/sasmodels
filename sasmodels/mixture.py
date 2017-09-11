@@ -39,7 +39,6 @@ def make_mixture_info(parts):
 
     # Build new parameter list
     combined_pars = []
-    demo = {}
     for k, part in enumerate(parts):
         # Parameter prefix per model, A_, B_, ...
         # Note that prefix must also be applied to id and length_control
@@ -55,11 +54,16 @@ def make_mixture_info(parts):
             if p.length_control is not None:
                 p.length_control = prefix + p.length_control
             combined_pars.append(p)
-        demo.update((prefix+k, v) for k, v in part.demo.items()
-                    if k != "background")
-    #print("pars",combined_pars)
     parameters = ParameterTable(combined_pars)
     parameters.max_pd = sum(part.parameters.max_pd for part in parts)
+
+    def random():
+        combined_pars = {}
+        for k, part in enumerate(parts):
+            prefix = chr(ord('A')+k) + '_'
+            pars = part.random()
+            combined_pars.update((prefix+k, v) for k, v in pars.items())
+        return combined_pars
 
     model_info = ModelInfo()
     model_info.id = '+'.join(part.id for part in parts)
@@ -70,6 +74,7 @@ def make_mixture_info(parts):
     model_info.docs = model_info.title
     model_info.category = "custom"
     model_info.parameters = parameters
+    model_info.random = random
     #model_info.single = any(part['single'] for part in parts)
     model_info.structure_factor = False
     model_info.variant_info = None
@@ -78,7 +83,6 @@ def make_mixture_info(parts):
     # Iq, Iqxy, form_volume, ER, VR and sesans
     # Remember the component info blocks so we can build the model
     model_info.composition = ('mixture', parts)
-    model_info.demo = demo
     return model_info
 
 
@@ -87,6 +91,7 @@ class MixtureModel(KernelModel):
         # type: (ModelInfo, List[KernelModel]) -> None
         self.info = model_info
         self.parts = parts
+        self.dtype = parts[0].dtype
 
     def make_kernel(self, q_vectors):
         # type: (List[np.ndarray]) -> MixtureKernel
