@@ -32,8 +32,8 @@ for
 
 .. math::
 
-     r_i &= r_c + (i-1)(t_s + t_w) && \text{ solvent radius before shell } i \\
-     R_i &= r_i + t_s && \text{ shell radius for shell } i
+     r_i &= r_c + (i-1)(t_s + t_w) \text{ solvent radius before shell } i \\
+     R_i &= r_i + t_s \text{ shell radius for shell } i
 
 $\phi$ is the volume fraction of particles, $V(r)$ is the volume of a sphere
 of radius $r$, $r_c$ is the radius of the core, $t_s$ is the thickness of

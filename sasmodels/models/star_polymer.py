@@ -6,7 +6,7 @@ Calcuates the scattering from a simple star polymer with f equal Gaussian coil
 arms. A star being defined as a branched polymer with all the branches
 emanating from a common central (in the case of this model) point.  It is
 derived as a special case of on the Benoit model for general branched
-polymers\ [#CITBenoit]_ as also used by Richter ''et. al.''\ [#CITRichter]_
+polymers\ [#CITBenoit]_ as also used by Richter *et al.*\ [#CITRichter]_
 
 For a star with $f$ arms the scattering intensity $I(q)$ is calculated as
 

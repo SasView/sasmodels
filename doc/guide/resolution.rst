@@ -211,7 +211,7 @@ $y'_0 = -x_0 \sin(\theta) + y_0 \cos(\theta)$.
 Note that the rotation angle is zero for a $x$\ -\ $y$ symmetric
 elliptical Gaussian distribution. The $A$ is a normalization factor.
 
-.. figure:: resolution_2d_rotation.gif
+.. figure:: resolution_2d_rotation.png
 
     Coordinate axis rotation for 2D resolution calculation.
 
