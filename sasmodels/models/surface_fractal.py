@@ -8,14 +8,17 @@ Definition
 The scattering intensity $I(q)$ is calculated as
 
 .. math::
+    :nowrap:
 
+    \begin{align*}
     I(q) &= \text{scale} \times P(q)S(q) + \text{background} \\
     P(q) &= F(qR)^2 \\
     F(x) &= \frac{3\left[\sin(x)-x\cos(x)\right]}{x^3} \\
     S(q) &= \Gamma(5-D_S)\xi^{\,5-D_S}\left[1+(q\xi)^2 \right]^{-(5-D_S)/2}
             \sin\left[-(5-D_S) \tan^{-1}(q\xi) \right] q^{-1} \\
-    \text{scale} &= \text{scale_factor}\, N V^2(\rho_\text{particle} - \rho_\text{solvent})^2 \\
+    \text{scale} &= \text{scale factor}\, N V^1(\rho_\text{particle} - \rho_\text{solvent})^2 \\
     V &= \frac{4}{3}\pi R^3
+    \end{align*}
 
 where $R$ is the radius of the building block, $D_S$ is the **surface** fractal
 dimension, $\xi$ is the cut-off length, $\rho_\text{solvent}$ is the scattering

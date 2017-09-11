@@ -30,7 +30,7 @@ of the parallelepiped, $\phi$ is the angle between the scattering vector
 .. math::
   :nowrap:
 
-  \begin{align}
+  \begin{align*}
   A_{P\Delta}(q) & =  A B C
     \left[\frac{\sin \bigl( q \frac{C}{2} \cos\theta \bigr)}
     {\left( q \frac{C}{2} \cos\theta \right)} \right]
@@ -46,7 +46,7 @@ of the parallelepiped, $\phi$ is the angle between the scattering vector
     {q \bigl(\frac{A}{2}-\Delta\bigr) \sin\theta \sin\phi} \right]
     \left[ \frac{\sin \bigl[ q \bigl(\frac{B}{2}-\Delta\bigr) \sin\theta \cos\phi \bigr]}
     {q \bigl(\frac{B}{2}-\Delta\bigr) \sin\theta \cos\phi} \right]
-  \end{align}
+  \end{align*}
 
 where $A$, $B$ and $C$ are the external sides of the parallelepiped fulfilling
 $A \le B \le C$, and the volume $V$ of the parallelepiped is

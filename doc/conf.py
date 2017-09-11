@@ -210,6 +210,8 @@ latex_documents = [
 # Additional stuff for the LaTeX preamble.
 #latex_preamble = ''
 LATEX_PREAMBLE=r"""
+\newcommand{\lt}{<}
+\newcommand{\gt}{>}
 \renewcommand{\AA}{\text{\r{A}}} % Allow \AA in math mode
 \usepackage[utf8]{inputenc}      % Allow unicode symbols in text
 \DeclareUnicodeCharacter {00B7} {\ensuremath{\cdot}}   % cdot
