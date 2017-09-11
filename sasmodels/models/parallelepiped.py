@@ -19,13 +19,11 @@ Definition
 
    Parallelepiped with the corresponding definition of sides.
 
-.. note::
-
-The three dimensions of the parallelepiped (strictly here a cuboid) may be given in
-$any$ size order. To avoid multiple fit solutions, especially
-with Monte-Carlo fit methods, it may be advisable to restrict their ranges. There may
-be a number of closely similar "best fits", so some trial and error, or fixing of some
-dimensions at expected values, may help.
+The three dimensions of the parallelepiped (strictly here a cuboid) may be
+given in *any* size order. To avoid multiple fit solutions, especially
+with Monte-Carlo fit methods, it may be advisable to restrict their ranges.
+There may be a number of closely similar "best fits", so some trial and
+error, or fixing of some dimensions at expected values, may help.
 
 The 1D scattering intensity $I(q)$ is calculated as:
 

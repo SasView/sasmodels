@@ -209,13 +209,13 @@ except TypeError:
     F128 = None
 
 # Conversion from units defined in the parameter table for each model
-# to units displayed in the sphinx documentation. 
+# to units displayed in the sphinx documentation.
 # This section associates the unit with the macro to use to produce the LaTex
 # code.  The macro itself needs to be defined in sasmodels/doc/rst_prolog.
 #
 # NOTE: there is an RST_PROLOG at the end of this file which is NOT
 # used for the bundled documentation. Still as long as we are defining the macros
-# in two places any new addition should define the macro in both places. 
+# in two places any new addition should define the macro in both places.
 RST_UNITS = {
     "Ang": "|Ang|",
     "1/Ang": "|Ang^-1|",
@@ -897,11 +897,6 @@ RST_PROLOG = r"""\
 .. |1e15cm^3| replace:: 10\ :sup:`15`\ cm\ :sup:`3`
 .. |cm^-3| replace:: cm\ :sup:`-3`
 .. |sr^-1| replace:: sr\ :sup:`-1`
-.. |P0| replace:: P\ :sub:`0`\
-
-.. |equiv| unicode:: U+2261
-.. |noteql| unicode:: U+2260
-.. |TM| unicode:: U+2122
 
 .. |cdot| unicode:: U+00B7
 .. |deg| unicode:: U+00B0
