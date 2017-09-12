@@ -119,7 +119,7 @@ def load_custom_model(path):
             model.id = splitext(basename(model.filename))[0]
     else:
         model_info = modelinfo.make_model_info(kernel_module)
-        model = _make_model_from_info(model_info)
+        model = make_model_from_info(model_info)
     model.timestamp = getmtime(path)
 
     # If a model name already exists and we are loading a different model,
@@ -141,6 +141,20 @@ def load_custom_model(path):
     return model
 
 
+def make_model_from_info(model_info):
+    # type: (ModelInfo) -> SasviewModelType
+    """
+    Convert *model_info* into a SasView model wrapper.
+    """
+    def __init__(self, multiplicity=None):
+        SasviewModel.__init__(self, multiplicity=multiplicity)
+    attrs = _generate_model_attributes(model_info)
+    attrs['__init__'] = __init__
+    attrs['filename'] = model_info.filename
+    ConstructedModel = type(model_info.name, (SasviewModel,), attrs) # type: SasviewModelType
+    return ConstructedModel
+
+
 def _make_standard_model(name):
     # type: (str) -> SasviewModelType
     """
@@ -152,9 +166,9 @@ def _make_standard_model(name):
     """
     kernel_module = generate.load_kernel_module(name)
     model_info = modelinfo.make_model_info(kernel_module)
-    return _make_model_from_info(model_info)
+    return make_model_from_info(model_info)
 
-
+    
 def _register_old_models():
     # type: () -> None
     """
@@ -186,21 +200,9 @@ def MultiplicationModel(form_factor, structure_factor):
     # type: ("SasviewModel", "SasviewModel") -> "SasviewModel"
     model_info = product.make_product_info(form_factor._model_info,
                                            structure_factor._model_info)
-    ConstructedModel = _make_model_from_info(model_info)
+    ConstructedModel = make_model_from_info(model_info)
     return ConstructedModel()
 
-def _make_model_from_info(model_info):
-    # type: (ModelInfo) -> SasviewModelType
-    """
-    Convert *model_info* into a SasView model wrapper.
-    """
-    def __init__(self, multiplicity=None):
-        SasviewModel.__init__(self, multiplicity=multiplicity)
-    attrs = _generate_model_attributes(model_info)
-    attrs['__init__'] = __init__
-    attrs['filename'] = model_info.filename
-    ConstructedModel = type(model_info.name, (SasviewModel,), attrs) # type: SasviewModelType
-    return ConstructedModel
 
 def _generate_model_attributes(model_info):
     # type: (ModelInfo) -> Dict[str, Any]
@@ -602,8 +604,8 @@ class SasviewModel(object):
         p_model = None
         if hasattr(self._model_info, "composition") \
            and self._model_info.composition is not None:
-            p_model = _make_model_from_info(self._model_info.composition[1][0])()
-            s_model = _make_model_from_info(self._model_info.composition[1][1])()
+            p_model = make_model_from_info(self._model_info.composition[1][0])()
+            s_model = make_model_from_info(self._model_info.composition[1][1])()
         return p_model, s_model
 
     def calculate_Iq(self, qx, qy=None):

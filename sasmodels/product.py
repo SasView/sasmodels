@@ -80,8 +80,8 @@ def make_product_info(p_info, s_info):
         return combined_pars
 
     model_info = ModelInfo()
-    model_info.id = '*'.join((p_id, s_id))
-    model_info.name = '*'.join((p_name, s_name))
+    model_info.id = '@'.join((p_id, s_id))
+    model_info.name = '@'.join((p_name, s_name))
     model_info.filename = None
     model_info.title = 'Product of %s and %s'%(p_name, s_name)
     model_info.description = model_info.title
