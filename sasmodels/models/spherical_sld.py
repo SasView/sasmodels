@@ -17,11 +17,11 @@ interface. The form factor is normalized by the total volume of the sphere.
 
 Interface shapes are as follows::
 
-    0: erf(|nu|*z)
-    1: Rpow(z^|nu|)
-    2: Lpow(z^|nu|)
-    3: Rexp(-|nu|z)
-    4: Lexp(-|nu|z)
+    0: erf($\nu z$)
+    1: Rpow($z^\nu$)
+    2: Lpow($z^\nu$)
+    3: Rexp($-\nu z$)
+    4: Lexp($-\nu z$)
 
 Definition
 ----------
