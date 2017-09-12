@@ -200,8 +200,9 @@ def _hide_model_case_from_nose():
                 ({}, 'ER', None),
                 ({}, 'VR', None),
                 ]
-
-            tests = smoke_tests + self.info.tests
+            tests = smoke_tests
+            if self.info.tests is not None:
+                tests += self.info.tests
             try:
                 model = build_model(self.info, dtype=self.dtype,
                                     platform=self.platform)
@@ -370,7 +371,6 @@ def run_one(model):
         import traceback
         stream.writeln(traceback.format_exc())
         return
-
     # Run the test suite
     suite.run(result)
 
