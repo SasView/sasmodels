@@ -601,6 +601,31 @@ class SasviewModel(object):
         returns parts of the composition model or None if not a composition
         model.
         """
+        # TODO: have calculate_Iq return the intermediates.
+        #
+        # The current interface causes calculate_Iq() to be called twice,
+        # once to get the combined result and again to get the intermediate
+        # results.  This is necessary for now.
+        # Long term, the solution is to change the interface to calculate_Iq
+        # so that it returns a results object containing all the bits:
+        #     the A, B, C, ... of the composition model
+        #     the P and S of the product model,
+        #     the combined model before resolution smearing,
+        #     the sasmodel before sesans conversion,
+        #     the oriented 2D model used to fit oriented usans data,
+        #     the final I(q),
+        #     ...
+        # Have the model calculator add all of these blindly to the data
+        # tree, and update the graphs which contain them.  The fitter
+        # needs to be updated to use the I(q) value only, ignoring the rest.
+        #
+        # The simple fix of returning the existing intermediate results
+        # will not work for a couple of reasons: (1) another thread may
+        # sneak in to compute its own results before calc_composition_models
+        # is called, and (2) calculate_Iq is currently called three times:
+        # once with q, once with q values before qmin and once with q values
+        # after q max.  Both of these should be addressed before
+        # replacing this code.
         with calculation_lock:
             self._calculate_Iq(qx)
             return self._intermediate_results
