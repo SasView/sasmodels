@@ -24,30 +24,89 @@ try:
 except ImportError:
     pass
 
-def make_mixture_info(parts):
+def make_mixture_info(parts, operation='+'):
     # type: (List[ModelInfo]) -> ModelInfo
     """
     Create info block for mixture model.
     """
-    flatten = []
-    for part in parts:
-        if part.composition and part.composition[0] == 'mixture':
-            flatten.extend(part.composition[1])
-        else:
-            flatten.append(part)
-    parts = flatten
-
     # Build new parameter list
     combined_pars = []
-    demo = {}
-    for k, part in enumerate(parts):
+
+    model_num = 0
+    all_parts = copy(parts)
+    is_flat = False
+    while not is_flat:
+        is_flat = True
+        for part in all_parts:
+            if part.composition and part.composition[0] == 'mixture' and \
+                len(part.composition[1]) > 1:
+                all_parts += part.composition[1]
+                all_parts.remove(part)
+                is_flat = False
+
+    # When creating a mixture model that is a sum of product models (ie (1*2)+(3*4))
+    # the parameters for models 1 & 2 will be prefixed with A & B respectively,
+    # but so will the parameters for models 3 & 4. We need to rename models 3 & 4
+    # so that they are prefixed with C & D to avoid overlap of parameter names.
+    used_prefixes = []
+    for part in parts:
+        i = 0
+        if part.composition and part.composition[0] == 'mixture':
+            npars_list = [info.parameters.npars for info in part.composition[1]]
+            for npars in npars_list:
+                # List of params of one of the constituent models of part
+                submodel_pars = part.parameters.kernel_parameters[i:i+npars]
+                # Prefix of the constituent model
+                prefix = submodel_pars[0].name[0]
+                if prefix not in used_prefixes: # Haven't seen this prefix so far
+                    used_prefixes.append(prefix)
+                    i += npars
+                    continue
+                while prefix in used_prefixes:
+                    # This prefix has been already used, so change it to the
+                    # next letter that hasn't been used
+                    prefix = chr(ord(prefix) + 1)
+                used_prefixes.append(prefix)
+                prefix += "_"
+                # Update the parameters of this constituent model to use the
+                # new prefix
+                for par in submodel_pars:
+                    par.id = prefix + par.id[2:]
+                    par.name = prefix + par.name[2:]
+                    if par.length_control is not None:
+                        par.length_control = prefix + par.length_control[2:]
+                i += npars
+
+    for part in parts:
         # Parameter prefix per model, A_, B_, ...
         # Note that prefix must also be applied to id and length_control
         # to support vector parameters
-        prefix = chr(ord('A')+k) + '_'
-        scale =  Parameter(prefix+'scale', default=1.0,
-                           description="model intensity for " + part.name)
-        combined_pars.append(scale)
+        prefix = ''
+        if not part.composition:
+            # Model isn't a composition model, so it's parameters don't have a
+            # a prefix. Add the next available prefix
+            prefix = chr(ord('A')+len(used_prefixes))
+            used_prefixes.append(prefix)
+            prefix += '_'
+            
+        if operation == '+':
+            # If model is a sum model, each constituent model gets its own scale parameter
+            scale_prefix = prefix
+            if prefix == '' and part.operation == '*':
+                # `part` is a composition product model. Find the prefixes of
+                # it's parameters to form a new prefix for the scale, eg:
+                # a model with A*B*C will have ABC_scale
+                sub_prefixes = []
+                for param in part.parameters.kernel_parameters:
+                    # Prefix of constituent model
+                    sub_prefix = param.id.split('_')[0]
+                    if sub_prefix not in sub_prefixes:
+                        sub_prefixes.append(sub_prefix)
+                # Concatenate sub_prefixes to form prefix for the scale
+                scale_prefix = ''.join(sub_prefixes) + '_'
+            scale =  Parameter(scale_prefix + 'scale', default=1.0,
+                            description="model intensity for " + part.name)
+            combined_pars.append(scale)
         for p in part.parameters.kernel_parameters:
             p = copy(p)
             p.name = prefix + p.name
@@ -55,21 +114,28 @@ def make_mixture_info(parts):
             if p.length_control is not None:
                 p.length_control = prefix + p.length_control
             combined_pars.append(p)
-        demo.update((prefix+k, v) for k, v in part.demo.items()
-                    if k != "background")
-    #print("pars",combined_pars)
     parameters = ParameterTable(combined_pars)
     parameters.max_pd = sum(part.parameters.max_pd for part in parts)
 
+    def random():
+        combined_pars = {}
+        for k, part in enumerate(parts):
+            prefix = chr(ord('A')+k) + '_'
+            pars = part.random()
+            combined_pars.update((prefix+k, v) for k, v in pars.items())
+        return combined_pars
+
     model_info = ModelInfo()
-    model_info.id = '+'.join(part.id for part in parts)
-    model_info.name = ' + '.join(part.name for part in parts)
+    model_info.id = operation.join(part.id for part in parts)
+    model_info.operation = operation
+    model_info.name = '(' + operation.join(part.name for part in parts) + ')'
     model_info.filename = None
     model_info.title = 'Mixture model with ' + model_info.name
     model_info.description = model_info.title
     model_info.docs = model_info.title
     model_info.category = "custom"
     model_info.parameters = parameters
+    model_info.random = random
     #model_info.single = any(part['single'] for part in parts)
     model_info.structure_factor = False
     model_info.variant_info = None
@@ -78,7 +144,6 @@ def make_mixture_info(parts):
     # Iq, Iqxy, form_volume, ER, VR and sesans
     # Remember the component info blocks so we can build the model
     model_info.composition = ('mixture', parts)
-    model_info.demo = demo
     return model_info
 
 
@@ -87,6 +152,7 @@ class MixtureModel(KernelModel):
         # type: (ModelInfo, List[KernelModel]) -> None
         self.info = model_info
         self.parts = parts
+        self.dtype = parts[0].dtype
 
     def make_kernel(self, q_vectors):
         # type: (List[np.ndarray]) -> MixtureKernel
@@ -115,6 +181,7 @@ class MixtureKernel(Kernel):
         self.info =  model_info
         self.kernels = kernels
         self.dtype = self.kernels[0].dtype
+        self.operation = model_info.operation
         self.results = []  # type: List[np.ndarray]
 
     def __call__(self, call_details, values, cutoff, magnetic):
@@ -123,13 +190,19 @@ class MixtureKernel(Kernel):
         total = 0.0
         # remember the parts for plotting later
         self.results = []  # type: List[np.ndarray]
-        offset = 2 # skip scale & background
         parts = MixtureParts(self.info, self.kernels, call_details, values)
         for kernel, kernel_details, kernel_values in parts:
             #print("calling kernel", kernel.info.name)
             result = kernel(kernel_details, kernel_values, cutoff, magnetic)
-            #print(kernel.info.name, result)
-            total += result
+            result = np.array(result).astype(kernel.dtype)
+            # print(kernel.info.name, result)
+            if self.operation == '+':
+                total += result
+            elif self.operation == '*':
+                if np.all(total) == 0.0:
+                    total = result
+                else:
+                    total *= result
             self.results.append(result)
 
         return scale*total + background
@@ -170,7 +243,9 @@ class MixtureParts(object):
         #call_details.show(values)
 
         self.part_num += 1
-        self.par_index += info.parameters.npars + 1
+        self.par_index += info.parameters.npars
+        if self.model_info.operation == '+':
+            self.par_index += 1 # Account for each constituent model's scale param
         self.mag_index += 3 * len(info.parameters.magnetism_index)
 
         return kernel, call_details, values
@@ -181,11 +256,12 @@ class MixtureParts(object):
         # par_index is index into values array of the current parameter,
         # which includes the initial scale and background parameters.
         # We want the index into the weight length/offset for each parameter.
-        # Exclude the initial scale and background, so subtract two, but each
-        # component has its own scale factor which we need to skip when
-        # constructing the details for the kernel, so add one, giving a
-        # net subtract one.
-        index = slice(par_index - 1, par_index - 1 + info.parameters.npars)
+        # Exclude the initial scale and background, so subtract two. If we're
+        # building an addition model, each component has its own scale factor
+        # which we need to skip when constructing the details for the kernel, so
+        # add one, giving a net subtract one.
+        diff = 1 if self.model_info.operation == '+' else 2
+        index = slice(par_index - diff, par_index - diff + info.parameters.npars)
         length = full.length[index]
         offset = full.offset[index]
         # The complete weight vector is being sent to each part so that
@@ -195,9 +271,10 @@ class MixtureParts(object):
 
     def _part_values(self, info, par_index, mag_index):
         # type: (ModelInfo, int, int) -> np.ndarray
-        #print(info.name, par_index, self.values[par_index:par_index + info.parameters.npars + 1])
-        scale = self.values[par_index]
-        pars = self.values[par_index + 1:par_index + info.parameters.npars + 1]
+        # Set each constituent model's scale to 1 if this is a multiplication model
+        scale = self.values[par_index] if self.model_info.operation == '+' else 1.0
+        diff = 1 if self.model_info.operation == '+' else 0 # Skip scale if addition model
+        pars = self.values[par_index + diff:par_index + info.parameters.npars + diff]
         nmagnetic = len(info.parameters.magnetism_index)
         if nmagnetic:
             spin_state = self.values[self.spin_index:self.spin_index + 3]

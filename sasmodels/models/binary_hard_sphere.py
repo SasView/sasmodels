@@ -22,12 +22,12 @@ based on the diameter ratio and the volume fractions.
 .. math::
     :nowrap:
 
-    \begin{align}
+    \begin{align*}
     x &= \frac{(\phi_2 / \phi)\alpha^3}{(1-(\phi_2/\phi) + (\phi_2/\phi)
     \alpha^3)} \\
     \phi &= \phi_1 + \phi_2 = \text{total volume fraction} \\
     \alpha &= R_1/R_2 = \text{size ratio}
-    \end{align}
+    \end{align*}
 
 The 2D scattering intensity is the same as 1D, regardless of the orientation of
 the *q* vector which is defined as

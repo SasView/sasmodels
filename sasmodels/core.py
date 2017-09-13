@@ -9,6 +9,7 @@ __all__ = [
     ]
 
 import os
+import re
 from os.path import basename, dirname, join as joinpath
 from glob import glob
 
@@ -20,6 +21,7 @@ from . import product
 from . import mixture
 from . import kernelpy
 from . import kerneldll
+from . import custom
 
 if os.environ.get("SAS_OPENCL", "").lower() == "none":
     HAVE_OPENCL = False
@@ -29,6 +31,13 @@ else:
         HAVE_OPENCL = True
     except Exception:
         HAVE_OPENCL = False
+
+CUSTOM_MODEL_PATH = os.environ.get('SAS_MODELPATH', "")
+if CUSTOM_MODEL_PATH == "":
+    path = joinpath(os.path.expanduser("~"), ".sasmodels", "custom_models")
+    if not os.path.isdir(path):
+        os.makedirs(path)
+    CUSTOM_MODEL_PATH = path
 
 try:
     from typing import List, Union, Optional, Any
@@ -124,32 +133,62 @@ def load_model(model_name, dtype=None, platform='ocl'):
     return build_model(load_model_info(model_name),
                        dtype=dtype, platform=platform)
 
-
-def load_model_info(model_name):
+def load_model_info(model_string):
     # type: (str) -> modelinfo.ModelInfo
     """
     Load a model definition given the model name.
 
-    *model_name* is the name of the model, or perhaps a model expression
-    such as sphere*hardsphere or sphere+cylinder.
+    *model_string* is the name of the model, or perhaps a model expression
+    such as sphere*cylinder or sphere+cylinder. Use '@' for a structure
+    factor product, e.g. sphere@hardsphere. Custom models can be specified by
+    prefixing the model name with 'custom.', e.g. 'custom.MyModel+sphere'.
 
     This returns a handle to the module defining the model.  This can be
     used with functions in generate to build the docs or extract model info.
     """
-    parts = model_name.split('+')
-    if len(parts) > 1:
-        model_info_list = [load_model_info(p) for p in parts]
-        return mixture.make_mixture_info(model_info_list)
-
-    parts = model_name.split('*')
-    if len(parts) > 1:
-        if len(parts) > 2:
-            raise ValueError("use P*S to apply structure factor S to model P")
-        P_info, Q_info = [load_model_info(p) for p in parts]
+    if '@' in model_string:
+        parts = model_string.split('@')
+        if len(parts) != 2:
+            raise ValueError("Use P@S to apply a structure factor S to model P")
+        P_info, Q_info = [load_model_info(part) for part in parts]
         return product.make_product_info(P_info, Q_info)
 
-    kernel_module = generate.load_kernel_module(model_name)
-    return modelinfo.make_model_info(kernel_module)
+    product_parts = []
+    addition_parts = []
+
+    addition_parts_names = model_string.split('+')
+    if len(addition_parts_names) >= 2:
+        addition_parts = [load_model_info(part) for part in addition_parts_names]
+    elif len(addition_parts_names) == 1:
+        product_parts_names = model_string.split('*')
+        if len(product_parts_names) >= 2:
+            product_parts = [load_model_info(part) for part in product_parts_names]
+        elif len(product_parts_names) == 1:
+            if "custom." in product_parts_names[0]:
+                # Extract ModelName from "custom.ModelName"
+                pattern = "custom.([A-Za-z0-9_-]+)"
+                result = re.match(pattern, product_parts_names[0])
+                if result is None:
+                    raise ValueError("Model name in invalid format: " + product_parts_names[0])
+                model_name = result.group(1)
+                # Use ModelName to find the path to the custom model file
+                model_path = joinpath(CUSTOM_MODEL_PATH, model_name + ".py")
+                if not os.path.isfile(model_path):
+                    raise ValueError("The model file {} doesn't exist".format(model_path))
+                kernel_module = custom.load_custom_kernel_module(model_path)
+                return modelinfo.make_model_info(kernel_module)
+            # Model is a core model
+            kernel_module = generate.load_kernel_module(product_parts_names[0])
+            return modelinfo.make_model_info(kernel_module)
+
+    model = None
+    if len(product_parts) > 1:
+        model = mixture.make_mixture_info(product_parts, operation='*')
+    if len(addition_parts) > 1:
+        if model is not None:
+            addition_parts.append(model)
+        model = mixture.make_mixture_info(addition_parts, operation='+')
+    return model
 
 
 def build_model(model_info, dtype=None, platform="ocl"):

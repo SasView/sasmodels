@@ -30,7 +30,7 @@ where $\phi$ is the volume fraction of particles, $V_s$ is the volume of the
 whole particle, $V_c$ is the volume of the core, $\rho_c$, $\rho_s$, and
 $\rho_{solv}$ are the scattering length densities of the core, shell, and
 solvent respectively, $r_c$ and $r_s$ are the radius of the core and the radius
-of the whole particle respectively, $D_f$ is the fractal dimension, and |xi| the
+of the whole particle respectively, $D_f$ is the fractal dimension, and $\xi$ the
 correlation length.
 
 Polydispersity of radius and thickness are also provided for.
