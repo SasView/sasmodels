@@ -1,4 +1,4 @@
-if [[ $encrypted_cb04388797b6_iv ]]
+if [ "$encrypted_cb04388797b6_iv" ]
 then
     eval "$(ssh-agent -s)"
     chmod 600 .travis/travis_rsa
