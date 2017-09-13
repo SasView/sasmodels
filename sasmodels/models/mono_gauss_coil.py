@@ -23,12 +23,9 @@ where
 .. math::
 
      I_0 &= \phi_\text{poly} \cdot V
-            \cdot (\rho_\text{poly} - \rho_\text{solv})^2
-
-     P(q) &= 2 [\exp(-Z) + Z - 1] / Z^2
-
-     Z &= (q R_g)^2
-
+            \cdot (\rho_\text{poly} - \rho_\text{solv})^2 \\
+     P(q) &= 2 [\exp(-Z) + Z - 1] / Z^2 \\
+     Z &= (q R_g)^2 \\
      V &= M / (N_A \delta)
 
 Here, $\phi_\text{poly}$ is the volume fraction of polymer, $V$ is the

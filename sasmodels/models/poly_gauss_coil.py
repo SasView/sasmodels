@@ -20,14 +20,10 @@ where
 
 .. math::
 
-     I_0 &= \phi_\text{poly} \cdot V \cdot (\rho_\text{poly}-\rho_\text{solv})^2
-
-     P(q) &= 2 [(1 + UZ)^{-1/U} + Z - 1] / [(1 + U) Z^2]
-
-     Z &= [(q R_g)^2] / (1 + 2U)
-
-     U &= (Mw / Mn) - 1 = \text{polydispersity ratio} - 1
-
+     I_0 &= \phi_\text{poly} \cdot V \cdot (\rho_\text{poly}-\rho_\text{solv})^2 \\
+     P(q) &= 2 [(1 + UZ)^{-1/U} + Z - 1] / [(1 + U) Z^2] \\
+     Z &= [(q R_g)^2] / (1 + 2U) \\
+     U &= (Mw / Mn) - 1 = \text{polydispersity ratio} - 1 \\
      V &= M / (N_A \delta)
 
 Here, $\phi_\text{poly}$, is the volume fraction of polymer, $V$ is the
