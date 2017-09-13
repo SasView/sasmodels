@@ -35,10 +35,12 @@ equation is recovered.
 .. note::
    Star polymers in solutions tend to have strong interparticle and osmotic
    effects. Thus the Benoit equation may not work well for many real cases.
-   At small $q$ the Guinier term and hence $I(q=0)$ is the same as for $f$ arms
-   of radius of gyration $R_g$, as described for the :ref:`mono-gauss-coil`
-   model. A newer model for star polymer incorporating excluded volume has been
-   developed by Li et al in arXiv:1404.6269 [physics.chem-ph].
+   A newer model for star polymer incorporating excluded volume has been
+   developed by Li et al in arXiv:1404.6269 [physics.chem-ph].  Also, at small
+   $q$ the scattering, i.e. the Guinier term, is not sensitive to the number of
+   arms, and hence 'scale' here is simply $I(q=0)$ as described for the
+   :ref:`mono-gauss-coil` model, using volume fraction $\phi$ and volume V
+   for the whole star polymer.
 
 References
 ----------
