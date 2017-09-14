@@ -44,10 +44,12 @@ def make_product_info(p_info, s_info):
     # make sure volume fraction is the second parameter of the
     # structure factor calculator.  Structure factors should not
     # have any magnetic parameters
+    if not len(s_info.parameters.kernel_parameters) >= 2:
+        raise TypeError("S needs {} and {} as its first parameters".format(ER_ID, VF_ID))
     if not s_info.parameters.kernel_parameters[0].id == ER_ID:
-        raise TypeError("S needs %s as first parameter"%ER_ID)
+        raise TypeError("S needs {} as first parameter".format(ER_ID))
     if not s_info.parameters.kernel_parameters[1].id == VF_ID:
-        raise TypeError("S needs %s as second parameter"%VF_ID)
+        raise TypeError("S needs {} as second parameter".format(VF_ID))
     if not s_info.parameters.magnetism_index == []:
         raise TypeError("S should not have SLD parameters")
     p_id, p_name, p_pars = p_info.id, p_info.name, p_info.parameters
