@@ -21,16 +21,12 @@ Ornstein-Zernicke equation
 
 .. math::
 
-    I(q) = scale \times P(q) + background
-
+    I(q) = scale \times P(q) + background \\
     P(q) = \left\{ \left[ 1+(q^2a)\right]^{D_m/2} \times
                    \left[ 1+(q^2b)\right]^{(6-D_s-D_m)/2}
-           \right\}^{-1}
-
-    a = R_{g}^2/(3D_m/2)
-
-    b = r_{g}^2/[-3(D_s+D_m-6)/2]
-
+           \right\}^{-1} \\
+    a = R_{g}^2/(3D_m/2) \\
+    b = r_{g}^2/[-3(D_s+D_m-6)/2] \\
     scale = scale\_factor \times NV^2 (\rho_{particle} - \rho_{solvent})^2
 
 where $R_g$ is the size of the cluster, $r_g$ is the size of the primary

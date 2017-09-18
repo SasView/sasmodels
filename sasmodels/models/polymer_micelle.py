@@ -25,10 +25,8 @@ The spherical core is monodisperse, so it's intensity and the cross terms may ha
 oscillations (use q resolution smearing if needs be to help remove them).
 
 .. math::
-    P(q) = N^2\beta^2_s\Phi(qR)^2+N\beta^2_cP_c(q)+2N^2\beta_s\beta_cS_{sc}s_c(q)+N(N-1)\beta_c^2S_{cc}(q)
-
-    \beta_s = v\_core(sld\_core - sld\_solvent)
-
+    P(q) = N^2\beta^2_s\Phi(qR)^2+N\beta^2_cP_c(q)+2N^2\beta_s\beta_cS_{sc}s_c(q)+N(N-1)\beta_c^2S_{cc}(q) \\
+    \beta_s = v\_core(sld\_core - sld\_solvent) \\
     \beta_c = v\_corona(sld\_corona - sld\_solvent)
 
 where $N = n\_aggreg$, and for the spherical core of radius $R$
@@ -40,8 +38,7 @@ whilst for the Gaussian coils
 
 .. math::
 
-   P_c(q) &= 2 [\exp(-Z) + Z - 1] / Z^2
-
+   P_c(q) &= 2 [\exp(-Z) + Z - 1] / Z^2 \\
    Z &= (q R_g)^2
 
 The sphere to coil ( core to corona) and coil to coil (corona to corona) cross terms are
@@ -49,10 +46,8 @@ approximated by:
 
 .. math::
 
-   S_{sc}(q)=\Phi(qR)\psi(Z)\frac{sin(q(R+d.R_g))}{q(R+d.R_g)}
-
-   S_{cc}(q)=\psi(Z)^2\left[\frac{sin(q(R+d.R_g))}{q(R+d.R_g)} \right ]^2
-
+   S_{sc}(q)=\Phi(qR)\psi(Z)\frac{sin(q(R+d.R_g))}{q(R+d.R_g)} \\
+   S_{cc}(q)=\psi(Z)^2\left[\frac{sin(q(R+d.R_g))}{q(R+d.R_g)} \right ]^2 \\
    \psi(Z)=\frac{[1-exp^{-Z}]}{Z}
 
 Validation

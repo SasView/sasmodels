@@ -119,7 +119,7 @@ def load_custom_model(path):
             model.id = splitext(basename(model.filename))[0]
     else:
         model_info = modelinfo.make_model_info(kernel_module)
-        model = _make_model_from_info(model_info)
+        model = make_model_from_info(model_info)
     model.timestamp = getmtime(path)
 
     # If a model name already exists and we are loading a different model,
@@ -141,6 +141,20 @@ def load_custom_model(path):
     return model
 
 
+def make_model_from_info(model_info):
+    # type: (ModelInfo) -> SasviewModelType
+    """
+    Convert *model_info* into a SasView model wrapper.
+    """
+    def __init__(self, multiplicity=None):
+        SasviewModel.__init__(self, multiplicity=multiplicity)
+    attrs = _generate_model_attributes(model_info)
+    attrs['__init__'] = __init__
+    attrs['filename'] = model_info.filename
+    ConstructedModel = type(model_info.name, (SasviewModel,), attrs) # type: SasviewModelType
+    return ConstructedModel
+
+
 def _make_standard_model(name):
     # type: (str) -> SasviewModelType
     """
@@ -152,7 +166,7 @@ def _make_standard_model(name):
     """
     kernel_module = generate.load_kernel_module(name)
     model_info = modelinfo.make_model_info(kernel_module)
-    return _make_model_from_info(model_info)
+    return make_model_from_info(model_info)
 
 
 def _register_old_models():
@@ -186,21 +200,9 @@ def MultiplicationModel(form_factor, structure_factor):
     # type: ("SasviewModel", "SasviewModel") -> "SasviewModel"
     model_info = product.make_product_info(form_factor._model_info,
                                            structure_factor._model_info)
-    ConstructedModel = _make_model_from_info(model_info)
+    ConstructedModel = make_model_from_info(model_info)
     return ConstructedModel()
 
-def _make_model_from_info(model_info):
-    # type: (ModelInfo) -> SasviewModelType
-    """
-    Convert *model_info* into a SasView model wrapper.
-    """
-    def __init__(self, multiplicity=None):
-        SasviewModel.__init__(self, multiplicity=multiplicity)
-    attrs = _generate_model_attributes(model_info)
-    attrs['__init__'] = __init__
-    attrs['filename'] = model_info.filename
-    ConstructedModel = type(model_info.name, (SasviewModel,), attrs) # type: SasviewModelType
-    return ConstructedModel
 
 def _generate_model_attributes(model_info):
     # type: (ModelInfo) -> Dict[str, Any]
@@ -594,17 +596,44 @@ class SasviewModel(object):
             raise TypeError("evalDistribution expects q or [qx, qy], not %r"
                             % type(qdist))
 
-    def get_composition_models(self):
+    def calc_composition_models(self, qx):
         """
-            Returns usable models that compose this model
+        returns parts of the composition model or None if not a composition
+        model.
         """
-        s_model = None
-        p_model = None
-        if hasattr(self._model_info, "composition") \
-           and self._model_info.composition is not None:
-            p_model = _make_model_from_info(self._model_info.composition[1][0])()
-            s_model = _make_model_from_info(self._model_info.composition[1][1])()
-        return p_model, s_model
+        # TODO: have calculate_Iq return the intermediates.
+        #
+        # The current interface causes calculate_Iq() to be called twice,
+        # once to get the combined result and again to get the intermediate
+        # results.  This is necessary for now.
+        # Long term, the solution is to change the interface to calculate_Iq
+        # so that it returns a results object containing all the bits:
+        #     the A, B, C, ... of the composition model (and any subcomponents?)
+        #     the P and S of the product model,
+        #     the combined model before resolution smearing,
+        #     the sasmodel before sesans conversion,
+        #     the oriented 2D model used to fit oriented usans data,
+        #     the final I(q),
+        #     ...
+        #
+        # Have the model calculator add all of these blindly to the data
+        # tree, and update the graphs which contain them.  The fitter
+        # needs to be updated to use the I(q) value only, ignoring the rest.
+        #
+        # The simple fix of returning the existing intermediate results
+        # will not work for a couple of reasons: (1) another thread may
+        # sneak in to compute its own results before calc_composition_models
+        # is called, and (2) calculate_Iq is currently called three times:
+        # once with q, once with q values before qmin and once with q values
+        # after q max.  Both of these should be addressed before
+        # replacing this code.
+        composition = self._model_info.composition
+        if composition and composition[0] == 'product': # only P*S for now
+            with calculation_lock:
+                self._calculate_Iq(qx)
+                return self._intermediate_results
+        else:
+            return None
 
     def calculate_Iq(self, qx, qy=None):
         # type: (Sequence[float], Optional[Sequence[float]]) -> np.ndarray
@@ -645,6 +674,7 @@ class SasviewModel(object):
         #print("is_mag", is_magnetic)
         result = calculator(call_details, values, cutoff=self.cutoff,
                             magnetic=is_magnetic)
+        self._intermediate_results = getattr(calculator, 'results', None)
         calculator.release()
         self._model.release()
         return result

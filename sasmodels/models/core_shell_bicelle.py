@@ -40,19 +40,20 @@ $\alpha$ is the angle between the $Q$ vector and the cylinder axis, to give:
 .. math::
 
     I(Q,\alpha) = \frac{\text{scale}}{V_t} \cdot
-        F(Q,\alpha)^2.sin(\alpha) + \text{background}
+        F(Q,\alpha)^2 \cdot sin(\alpha) + \text{background}
 
 where
 
 .. math::
+    :nowrap:
 
-    \begin{align}
+    \begin{align*}
     F(Q,\alpha) = &\bigg[
     (\rho_c - \rho_f) V_c \frac{2J_1(QRsin \alpha)}{QRsin\alpha}\frac{sin(QLcos\alpha/2)}{Q(L/2)cos\alpha} \\
     &+(\rho_f - \rho_r) V_{c+f} \frac{2J_1(QRsin\alpha)}{QRsin\alpha}\frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha} \\
     &+(\rho_r - \rho_s) V_t \frac{2J_1(Q(R+t_r)sin\alpha)}{Q(R+t_r)sin\alpha}\frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha}
     \bigg]
-    \end{align}
+    \end{align*}
 
 where $V_t$ is the total volume of the bicelle, $V_c$ the volume of the core,
 $V_{c+f}$ the volume of the core plus the volume of the faces, $R$ is the radius

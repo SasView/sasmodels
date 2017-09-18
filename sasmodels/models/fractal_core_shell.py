@@ -21,8 +21,7 @@ below:
     P(q) &= \frac{\phi}{V_s}\left[3V_c(\rho_c-\rho_s)
     \frac{\sin(qr_c)-qr_c\cos(qr_c)}{(qr_c)^3}+
     3V_s(\rho_s-\rho_{solv})
-    \frac{\sin(qr_s)-qr_s\cos(qr_s)}{(qr_s)^3}\right]^2
-
+    \frac{\sin(qr_s)-qr_s\cos(qr_s)}{(qr_s)^3}\right]^2 \\
     S(q) &= 1 + \frac{D_f\ \Gamma\!(D_f-1)}{[1+1/(q\xi)^2]^{(D_f-1)/2}}
     \frac{\sin[(D_f-1)\tan^{-1}(q\xi)]}{(qr_s)^{D_f}}
 
@@ -30,7 +29,7 @@ where $\phi$ is the volume fraction of particles, $V_s$ is the volume of the
 whole particle, $V_c$ is the volume of the core, $\rho_c$, $\rho_s$, and
 $\rho_{solv}$ are the scattering length densities of the core, shell, and
 solvent respectively, $r_c$ and $r_s$ are the radius of the core and the radius
-of the whole particle respectively, $D_f$ is the fractal dimension, and |xi| the
+of the whole particle respectively, $D_f$ is the fractal dimension, and $\xi$ the
 correlation length.
 
 Polydispersity of radius and thickness are also provided for.

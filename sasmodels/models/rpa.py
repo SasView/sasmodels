@@ -29,12 +29,12 @@ Case 9: A-B-C-D tetra-block copolymer
 .. note::
     These case numbers are different from those in the NIST SANS package!
 
-The models are based on the papers by Akcasu et al. [#Akcasu]_ and by
-Hammouda [#Hammouda]_ assuming the polymer follows Gaussian statistics such
+The models are based on the papers by Akcasu *et al.* and by
+Hammouda assuming the polymer follows Gaussian statistics such
 that $R_g^2 = n b^2/6$ where $b$ is the statistical segment length and $n$ is
 the number of statistical segment lengths. A nice tutorial on how these are
 constructed and implemented can be found in chapters 28 and 39 of Boualem
-Hammouda's 'SANS Toolbox'[#toolbox]_.
+Hammouda's 'SANS Toolbox'.
 
 In brief the macroscopic cross sections are derived from the general forms
 for homopolymer scattering and the multiblock cross-terms while the inter
@@ -48,7 +48,7 @@ USAGE NOTES:
 * **Component D is assumed to be the "background" component (ie, all contrasts
   are calculated with respect to component D).** So the scattering contrast
   for a C/D blend = [SLD(component C) - SLD(component D)]\ :sup:`2`.
-* Depending on which case is being used, the number of fitting parameters can 
+* Depending on which case is being used, the number of fitting parameters can
   vary.
 
   .. Note::
@@ -56,17 +56,18 @@ USAGE NOTES:
       fractions, the molar volumes, and the neutron scattering lengths for each
       component are obtained from other methods and held fixed while The *scale*
       parameter should be held equal to unity.
-    * The variables are normally the segment lengths (b\ :sub:`a`, b\ :sub:`b`,
-      etc) and $\chi$ parameters (K\ :sub:`ab`, K\ :sub:`ac`, etc).
-
+    * The variables are normally the segment lengths ($b_a$, $b_b$,
+      etc.) and $\chi$ parameters ($K_{ab}$, $K_{ac}$, etc).
 
 References
 ----------
 
-.. [#Akcasu] A Z Akcasu, R Klein and B Hammouda, *Macromolecules*, 26 (1993)
-   4136.
-.. [#Hammouda] B. Hammouda, *Advances in Polymer Science* 106 (1993) 87.
-.. [#toolbox] https://www.ncnr.nist.gov/staff/hammouda/the_sans_toolbox.pdf
+A Z Akcasu, R Klein and B Hammouda, *Macromolecules*, 26 (1993) 4136.
+
+B. Hammouda, *Advances in Polymer Science* 106 (1993) 87.
+
+B. Hammouda, *SANS Toolbox*
+https://www.ncnr.nist.gov/staff/hammouda/the_sans_toolbox.pdf.
 
 Authorship and Verification
 ----------------------------

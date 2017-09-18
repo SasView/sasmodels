@@ -19,13 +19,11 @@ Definition
 
    Parallelepiped with the corresponding definition of sides.
 
-.. note::
-
-The three dimensions of the parallelepiped (strictly here a cuboid) may be given in
-$any$ size order. To avoid multiple fit solutions, especially
-with Monte-Carlo fit methods, it may be advisable to restrict their ranges. There may
-be a number of closely similar "best fits", so some trial and error, or fixing of some
-dimensions at expected values, may help.
+The three dimensions of the parallelepiped (strictly here a cuboid) may be
+given in *any* size order. To avoid multiple fit solutions, especially
+with Monte-Carlo fit methods, it may be advisable to restrict their ranges.
+There may be a number of closely similar "best fits", so some trial and
+error, or fixing of some dimensions at expected values, may help.
 
 The 1D scattering intensity $I(q)$ is calculated as:
 
@@ -63,10 +61,8 @@ with
     \phi_Q(\mu,a) &= \int_0^1
         \left\{S\left[\frac{\mu}{2}\cos\left(\frac{\pi}{2}u\right)\right]
                S\left[\frac{\mu a}{2}\sin\left(\frac{\pi}{2}u\right)\right]
-               \right\}^2 du
-
-    S(x) &= \frac{\sin x}{x}
-
+               \right\}^2 du \\
+    S(x) &= \frac{\sin x}{x} \\
     \mu &= qB
 
 The scattering intensity per unit volume is returned in units of |cm^-1|.
@@ -134,10 +130,8 @@ with
 
 .. math::
 
-    \cos\alpha &= \hat A \cdot \hat q,
-
-    \cos\beta  &= \hat B \cdot \hat q,
-
+    \cos\alpha &= \hat A \cdot \hat q, \\
+    \cos\beta  &= \hat B \cdot \hat q, \\
     \cos\gamma &= \hat C \cdot \hat q
 
 and the scattering intensity as:

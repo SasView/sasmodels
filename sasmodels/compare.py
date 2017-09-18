@@ -87,6 +87,7 @@ Options (* for default):
     -cutoff=1e-5* cutoff value for including a point in polydispersity
     -magnetic/-nonmagnetic* suppress magnetism
     -accuracy=Low accuracy of the resolution calculation Low, Mid, High, Xhigh
+    -neval=1 sets the number of evals for more accurate timing
 
     === precision options ===
     -calc=default uses the default calcution precision
@@ -1012,12 +1013,12 @@ OPTIONS = [
     'poly', 'mono', 'cutoff=',
     'magnetic', 'nonmagnetic',
     'accuracy=',
+    'neval=',  # for timing...
 
     # Precision options
     'calc=',
     'half', 'fast', 'single', 'double', 'single!', 'double!', 'quad!',
     'sasview',  # TODO: remove sasview 3.x support
-    'timing=',
 
     # Output options
     'help', 'html', 'edit',
@@ -1067,7 +1068,7 @@ def get_pars(model_info, use_demo=False):
                 pars[p.id + ext] = val
 
     # Plug in values given in demo
-    if use_demo:
+    if use_demo and model_info.demo:
         pars.update(model_info.demo)
     return pars
 
