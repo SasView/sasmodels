@@ -24,8 +24,8 @@ When including an $S(q)$, the radius in $S(q)$ is calculated to be that of
 a sphere with the same 2nd virial coefficient of the outer surface of the
 ellipsoid. This may have some undesirable effects if the aspect ratio of the
 ellipsoid is large (ie, if $X << 1$ or $X >> 1$ ), when the $S(q)$
-- which assumes spheres - will not in any case be valid.  Generating a 
-custom product model will enable separate effective volume fraction and effective 
+- which assumes spheres - will not in any case be valid.  Generating a
+custom product model will enable separate effective volume fraction and effective
 radius in the $S(q)$.
 
 If SAS data are in absolute units, and the SLDs are correct, then scale should
@@ -43,13 +43,15 @@ terms for the core-shell and shell-solvent boundaries.
 where
 
 .. math::
-    \begin{align}    
+    :nowrap:
+
+    \begin{align*}
     F(q,\alpha) = &f(q,radius\_equat\_core,radius\_equat\_core.x\_core,\alpha) \\
     &+ f(q,radius\_equat\_core + thick\_shell,radius\_equat\_core.x\_core + thick\_shell.x\_polar\_shell,\alpha)
-    \end{align} 
+    \end{align*}
 
 where
- 
+
 .. math::
 
     f(q,R_e,R_p,\alpha) = \frac{3 \Delta \rho V (\sin[qr(R_p,R_e,\alpha)]
@@ -76,6 +78,8 @@ For randomly oriented particles:
 
    F^2(q)=\int_{0}^{\pi/2}{F^2(q,\alpha)\sin(\alpha)d\alpha}
 
+For oriented ellipsoids the *theta*, *phi* and *psi* orientation parameters will appear when fitting 2D data,
+see the :ref:`elliptical-cylinder` model for further information.
 
 References
 ----------
@@ -131,8 +135,8 @@ parameters = [
     ["sld_core",      "1e-6/Ang^2", 2,   [-inf, inf], "sld",         "Core scattering length density"],
     ["sld_shell",     "1e-6/Ang^2", 1,   [-inf, inf], "sld",         "Shell scattering length density"],
     ["sld_solvent",   "1e-6/Ang^2", 6.3, [-inf, inf], "sld",         "Solvent scattering length density"],
-    ["theta",         "degrees",    0,   [-inf, inf], "orientation", "Oblate orientation wrt incoming beam"],
-    ["phi",           "degrees",    0,   [-inf, inf], "orientation", "Oblate orientation in the plane of the detector"],
+    ["theta",         "degrees",    0,   [-360, 360], "orientation", "elipsoid axis to beam angle"],
+    ["phi",           "degrees",    0,   [-360, 360], "orientation", "rotation about beam"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
@@ -148,17 +152,27 @@ def ER(radius_equat_core, x_core, thick_shell, x_polar_shell):
     equat_outer = radius_equat_core + thick_shell
     return ellipsoid_ER(polar_outer, equat_outer)
 
-
-demo = dict(scale=0.05, background=0.001,
-            radius_equat_core=20.0,
-            x_core=3.0,
-            thick_shell=30.0,
-            x_polar_shell=1.0,
-            sld_core=2.0,
-            sld_shell=1.0,
-            sld_solvent=6.3,
-            theta=0,
-            phi=0)
+def random():
+    import numpy as np
+    V = 10**np.random.uniform(5, 12)
+    outer_polar = 10**np.random.uniform(1.3, 4)
+    outer_equatorial = np.sqrt(V/outer_polar) # ignore 4/3 pi
+    # Use a distribution with a preference for thin shell or thin core
+    # Avoid core,shell radii < 1
+    thickness_polar = np.random.beta(0.5, 0.5)*(outer_polar-2) + 1
+    thickness_equatorial = np.random.beta(0.5, 0.5)*(outer_equatorial-2) + 1
+    radius_polar = outer_polar - thickness_polar
+    radius_equatorial = outer_equatorial - thickness_equatorial
+    x_core = radius_polar/radius_equatorial
+    x_polar_shell = thickness_polar/thickness_equatorial
+    pars = dict(
+        #background=0, sld=0, sld_solvent=1,
+        radius_equat_core=radius_equatorial,
+        x_core=x_core,
+        thick_shell=thickness_equatorial,
+        x_polar_shell=x_polar_shell,
+    )
+    return pars
 
 q = 0.1
 # tests had in old coords theta=0, phi=0; new coords theta=90, phi=0

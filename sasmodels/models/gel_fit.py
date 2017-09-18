@@ -70,6 +70,24 @@ parameters = [["guinier_scale",    "cm^-1",   1.7, [-inf, inf], "", "Guinier len
 
 source = ["gel_fit.c"]
 
+def random():
+    import numpy as np
+    guinier_scale = 10**np.random.uniform(1, 3)
+    lorentz_scale = 10**np.random.uniform(1, 3)
+    rg = 10**np.random.uniform(1, 5)
+    fractal_dim = np.random.uniform(0, 6)
+    cor_length = 10**np.random.uniform(0, 3)
+    pars = dict(
+        #background=0,
+        scale=1,
+        guinier_scale=guinier_scale,
+        lorentz_scale=lorentz_scale,
+        rg=rg,
+        fractal_dim=fractal_dim,
+        cor_length=cor_length
+    )
+    return pars
+
 demo = dict(background=0.01,
             guinier_scale=1.7,
             lorentz_scale=3.5,

@@ -80,8 +80,7 @@ For $A > 0$,
     f_\text{shell} &= 4 \pi \int_{r_{\text{shell}-1}}^{r_\text{shell}}
         \left[ B\exp
             \left(A (r - r_{\text{shell}-1}) / \Delta t_\text{shell} \right) + C
-        \right] \frac{\sin(qr)}{qr}\,r^2\,\mathrm{d}r
-
+        \right] \frac{\sin(qr)}{qr}\,r^2\,\mathrm{d}r \\
     &= 3BV(r_\text{shell}) e^A h(\alpha_\text{out},\beta_\text{out})
         - 3BV(r_{\text{shell}-1}) h(\alpha_\text{in},\beta_\text{in})
         + 3CV(r_{\text{shell}}) \frac{j_1(\beta_\text{out})}{\beta_\text{out}}
@@ -94,11 +93,11 @@ for
 
     \begin{align*}
     B&=\frac{\rho_\text{out} - \rho_\text{in}}{e^A-1}
-         &C &= \frac{\rho_\text{in}e^A - \rho_\text{out}}{e^A-1} \\
+         & C &= \frac{\rho_\text{in}e^A - \rho_\text{out}}{e^A-1} \\
     \alpha_\text{in} &= A\frac{r_{\text{shell}-1}}{\Delta t_\text{shell}}
-         &\alpha_\text{out} &= A\frac{r_\text{shell}}{\Delta t_\text{shell}} \\
+         & \alpha_\text{out} &= A\frac{r_\text{shell}}{\Delta t_\text{shell}} \\
     \beta_\text{in} &= qr_{\text{shell}-1}
-        &\beta_\text{out} &= qr_\text{shell} \\
+        & \beta_\text{out} &= qr_\text{shell} \\
     \end{align*}
 
 where $h$ is

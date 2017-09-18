@@ -14,6 +14,7 @@ The scattering intensity $I(q)$ is calculated as
     For 2D plots intensity has different definition than other shape independent models
 
 .. math::
+
     I(q) = \text{scale} (I(qx) \cdot I(qy)) + \text{background}
 
 References
@@ -67,6 +68,19 @@ def Iqxy(qx, qy, *args):
 
 Iqxy.vectorized = True  # Iqxy accepts an array of qx qy values
 
+def random():
+    import numpy as np
+    scale = 10**np.random.uniform(0, 3)
+    slope = np.random.uniform(-1, 1)*1e2
+    offset = 1e-5 + (0 if slope > 0 else -slope)
+    intercept = 10**np.random.uniform(0, 1) + offset
+    pars = dict(
+        #background=0,
+        scale=scale,
+        slope=slope,
+        intercept=intercept,
+    )
+    return pars
 
 tests = [
     [{'intercept': 1.0, 'slope': 1.0, }, 1.0, 2.001],

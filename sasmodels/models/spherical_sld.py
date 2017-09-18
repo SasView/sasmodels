@@ -17,11 +17,11 @@ interface. The form factor is normalized by the total volume of the sphere.
 
 Interface shapes are as follows::
 
-    0: erf(|nu|*z)
-    1: Rpow(z^|nu|)
-    2: Lpow(z^|nu|)
-    3: Rexp(-|nu|z)
-    4: Lexp(-|nu|z)
+    0: erf($\nu z$)
+    1: Rpow($z^\nu$)
+    2: Lpow($z^\nu$)
+    3: Rexp($-\nu z$)
+    4: Lexp($-\nu z$)
 
 Definition
 ----------
@@ -50,11 +50,9 @@ so that individual terms can be calculated as follows:
     \frac{\sin(qr)} {qr} r^2 dr =
     3 \rho_\text{core} V(r_\text{core})
     \Big[ \frac{\sin(qr_\text{core}) - qr_\text{core} \cos(qr_\text{core})}
-    {qr_\text{core}^3} \Big]
-
+    {qr_\text{core}^3} \Big] \\
     f_{\text{inter}_i} &= 4 \pi \int_{\Delta t_{ \text{inter}_i } }
-    \rho_{ \text{inter}_i } \frac{\sin(qr)} {qr} r^2 dr
-
+    \rho_{ \text{inter}_i } \frac{\sin(qr)} {qr} r^2 dr \\
     f_{\text{shell}_i} &= 4 \pi \int_{\Delta t_{ \text{inter}_i } }
     \rho_{ \text{flat}_i } \frac{\sin(qr)} {qr} r^2 dr =
     3 \rho_{ \text{flat}_i } V ( r_{ \text{inter}_i } +
@@ -65,8 +63,7 @@ so that individual terms can be calculated as follows:
     {q ( r_{\text{inter}_i} + \Delta t_{ \text{inter}_i } )^3 }  \Big]
     -3 \rho_{ \text{flat}_i } V(r_{ \text{inter}_i })
     \Big[ \frac{\sin(qr_{\text{inter}_i}) - qr_{\text{flat}_i}
-    \cos(qr_{\text{inter}_i}) } {qr_{\text{inter}_i}^3} \Big]
-
+    \cos(qr_{\text{inter}_i}) } {qr_{\text{inter}_i}^3} \Big] \\
     f_\text{solvent} &= 4 \pi \int_{r_N}^{\infty} \rho_\text{solvent}
     \frac{\sin(qr)} {qr} r^2 dr =
     3 \rho_\text{solvent} V(r_N)
@@ -121,22 +118,19 @@ interface, we can find its contribution to the form factor $P(q)$
     \rho_{ \text{inter}_i } \frac{\sin(qr)} {qr} r^2 dr =
     4 \pi \sum_{j=1}^{n_\text{steps}}
     \int_{r_j}^{r_{j+1}} \rho_{ \text{inter}_i } (r_j)
-    \frac{\sin(qr)} {qr} r^2 dr
-
-    &\approx 4 \pi \sum_{j=1}^{n_\text{steps}} \Big[
+    \frac{\sin(qr)} {qr} r^2 dr \\
+    \approx 4 \pi \sum_{j=1}^{n_\text{steps}} \Big[
     3 ( \rho_{ \text{inter}_i } ( r_{j+1} ) - \rho_{ \text{inter}_i }
     ( r_{j} ) V (r_j)
     \Big[ \frac {r_j^2 \beta_\text{out}^2 \sin(\beta_\text{out})
     - (\beta_\text{out}^2-2) \cos(\beta_\text{out}) }
-    {\beta_\text{out}^4 } \Big]
-
-    &{} - 3 ( \rho_{ \text{inter}_i } ( r_{j+1} ) - \rho_{ \text{inter}_i }
+    {\beta_\text{out}^4 } \Big] \\
+    {} - 3 ( \rho_{ \text{inter}_i } ( r_{j+1} ) - \rho_{ \text{inter}_i }
     ( r_{j} ) V ( r_{j-1} )
     \Big[ \frac {r_{j-1}^2 \sin(\beta_\text{in})
     - (\beta_\text{in}^2-2) \cos(\beta_\text{in}) }
-    {\beta_\text{in}^4 } \Big]
-
-    &{} + 3 \rho_{ \text{inter}_i } ( r_{j+1} )  V ( r_j )
+    {\beta_\text{in}^4 } \Big] \\
+    {} + 3 \rho_{ \text{inter}_i } ( r_{j+1} )  V ( r_j )
     \Big[ \frac {\sin(\beta_\text{out}) - \cos(\beta_\text{out}) }
     {\beta_\text{out}^4 } \Big]
     - 3 \rho_{ \text{inter}_i } ( r_{j} )  V ( r_j )
@@ -151,9 +145,9 @@ where
 
     \begin{align*}
     V(a) &= \frac {4\pi}{3}a^3 && \\
-    a_\text{in} &\sim \frac{r_j}{r_{j+1} -r_j} \text{, } &a_\text{out}
-    &\sim \frac{r_{j+1}}{r_{j+1} -r_j} \\
-    \beta_\text{in} &= qr_j \text{, } &\beta_\text{out} &= qr_{j+1}
+    a_\text{in} \sim \frac{r_j}{r_{j+1} -r_j} \text{, } & a_\text{out}
+    \sim \frac{r_{j+1}}{r_{j+1} -r_j} \\
+    \beta_\text{in} &= qr_j \text{, } & \beta_\text{out} &= qr_{j+1}
     \end{align*}
 
 

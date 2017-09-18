@@ -22,12 +22,12 @@ based on the diameter ratio and the volume fractions.
 .. math::
     :nowrap:
 
-    \begin{align}
+    \begin{align*}
     x &= \frac{(\phi_2 / \phi)\alpha^3}{(1-(\phi_2/\phi) + (\phi_2/\phi)
     \alpha^3)} \\
     \phi &= \phi_1 + \phi_2 = \text{total volume fraction} \\
     \alpha &= R_1/R_2 = \text{size ratio}
-    \end{align}
+    \end{align*}
 
 The 2D scattering intensity is the same as 1D, regardless of the orientation of
 the *q* vector which is defined as
@@ -108,6 +108,26 @@ parameters = [["radius_lg", "Ang", 100, [0, inf], "",
              ]
 
 source = ["lib/sas_3j1x_x.c", "binary_hard_sphere.c"]
+
+def random():
+    import numpy as np
+    # TODO: binary_hard_sphere fails at low qr
+    radius_lg = 10**np.random.uniform(2, 4.7)
+    radius_sm = 10**np.random.uniform(2, 4.7)
+    volfraction_lg = 10**np.random.uniform(-3, -0.3)
+    volfraction_sm = 10**np.random.uniform(-3, -0.3)
+    # TODO: Get slightly different results if large and small are swapped
+    # modify the model so it doesn't care which is which
+    if radius_lg < radius_sm:
+        radius_lg, radius_sm = radius_sm, radius_lg
+        volfraction_lg, volfraction_sm = volfraction_sm, volfraction_lg
+    pars = dict(
+        radius_lg=radius_lg,
+        radius_sm=radius_sm,
+        volfraction_lg=volfraction_lg,
+        volfraction_sm=volfraction_sm,
+    )
+    return pars
 
 # parameters for demo and documentation
 demo = dict(sld_lg=3.5, sld_sm=0.5, sld_solvent=6.36,

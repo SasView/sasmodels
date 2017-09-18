@@ -70,7 +70,7 @@ and its radius of gyration is
 
 The 2D scattering intensity is calculated similar to the 2D cylinder model.
 
-.. figure:: img/cylinder_angle_definition.jpg
+.. figure:: img/cylinder_angle_definition.png
 
     Definition of the angles for oriented 2D cylinders.
 
@@ -79,7 +79,7 @@ References
 ----------
 
 .. [#] H Kaya, *J. Appl. Cryst.*, 37 (2004) 223-230
-.. [#] H Kaya and N-R deSouza, *J. Appl. Cryst.*, 37 (2004) 508-509 (addenda 
+.. [#] H Kaya and N-R deSouza, *J. Appl. Cryst.*, 37 (2004) 508-509 (addenda
    and errata)
 
 Authorship and Verification
@@ -90,7 +90,7 @@ Authorship and Verification
 * **Last Reviewed by:** Richard Heenan **Date:** January 4, 2017
 
 """
-from numpy import inf
+from numpy import inf, sin, cos, pi
 
 name = "capped_cylinder"
 title = "Right circular cylinder with spherical end caps and uniform SLD"
@@ -128,12 +128,34 @@ parameters = [["sld",         "1e-6/Ang^2", 4, [-inf, inf], "sld",    "Cylinder 
               # both models, one would be a pill.
               ["radius_cap", "Ang",     20, [0, inf],    "volume", "Cap radius"],
               ["length",     "Ang",    400, [0, inf],    "volume", "Cylinder length"],
-              ["theta",      "degrees", 60, [-inf, inf], "orientation", "inclination angle"],
-              ["phi",        "degrees", 60, [-inf, inf], "orientation", "deflection angle"],
+              ["theta",      "degrees", 60, [-360, 360], "orientation", "cylinder axis to beam angle"],
+              ["phi",        "degrees", 60, [-360, 360], "orientation", "rotation about beam"],
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "capped_cylinder.c"]
+
+def random():
+    import numpy as np
+    # TODO: increase volume range once problem with bell radius is fixed
+    # The issue is that bell radii of more than about 200 fail at high q
+    V = 10**np.random.uniform(7, 9)
+    bar_volume = 10**np.random.uniform(-4, -1)*V
+    bell_volume = V - bar_volume
+    bell_radius = (bell_volume/6)**0.3333  # approximate
+    min_bar = bar_volume/np.pi/bell_radius**2
+    bar_length = 10**np.random.uniform(0, 3)*min_bar
+    bar_radius = np.sqrt(bar_volume/bar_length/np.pi)
+    if bar_radius > bell_radius:
+        bell_radius, bar_radius = bar_radius, bell_radius
+    pars = dict(
+        #background=0,
+        radius_cap=bell_radius,
+        radius=bar_radius,
+        length=bar_length,
+    )
+    return pars
+
 
 demo = dict(scale=1, background=0,
             sld=6, sld_solvent=1,
@@ -144,3 +166,11 @@ demo = dict(scale=1, background=0,
             length_pd=.2, length_pd_n=10,
             theta_pd=15, theta_pd_n=45,
             phi_pd=15, phi_pd_n=1)
+q = 0.1
+# april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
+qx = q*cos(pi/6.0)
+qy = q*sin(pi/6.0)
+tests = [[{}, 0.075, 26.0698570695],
+        [{'theta':80., 'phi':10.}, (qx, qy), 0.561811990502],
+        ]
+del qx, qy  # not necessary to delete, but cleaner

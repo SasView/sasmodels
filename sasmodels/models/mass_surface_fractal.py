@@ -21,16 +21,12 @@ Ornstein-Zernicke equation
 
 .. math::
 
-    I(q) = scale \times P(q) + background
-
+    I(q) = scale \times P(q) + background \\
     P(q) = \left\{ \left[ 1+(q^2a)\right]^{D_m/2} \times
                    \left[ 1+(q^2b)\right]^{(6-D_s-D_m)/2}
-           \right\}^{-1}
-
-    a = R_{g}^2/(3D_m/2)
-
-    b = r_{g}^2/[-3(D_s+D_m-6)/2]
-
+           \right\}^{-1} \\
+    a = R_{g}^2/(3D_m/2) \\
+    b = r_{g}^2/[-3(D_s+D_m-6)/2] \\
     scale = scale\_factor \times NV^2 (\rho_{particle} - \rho_{solvent})^2
 
 where $R_g$ is the size of the cluster, $r_g$ is the size of the primary
@@ -87,6 +83,26 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["mass_surface_fractal.c"]
+
+def random():
+    import numpy as np
+    fractal_dim = np.random.uniform(0, 6)
+    surface_portion = np.random.uniform(0, 1)
+    fractal_dim_surf = fractal_dim*surface_portion
+    fractal_dim_mass = fractal_dim - fractal_dim_surf
+    rg_cluster = 10**np.random.uniform(1, 5)
+    rg_primary = rg_cluster*10**np.random.uniform(-4, -1)
+    scale = 10**np.random.uniform(2, 5)
+    pars = dict(
+        #background=0,
+        scale=scale,
+        fractal_dim_mass=fractal_dim_mass,
+        fractal_dim_surf=fractal_dim_surf,
+        rg_cluster=rg_cluster,
+        rg_primary=rg_primary,
+    )
+    return pars
+
 
 demo = dict(scale=1, background=0,
             fractal_dim_mass=1.8,

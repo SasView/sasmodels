@@ -45,7 +45,8 @@ double sas_3j1x_x(double q);
 
 double sas_3j1x_x(double q)
 {
-    if (q < SPH_J1C_CUTOFF) {
+    // 2017-05-18 PAK - support negative q
+    if (fabs(q) < SPH_J1C_CUTOFF) {
         const double q2 = q*q;
         return (1.0 + q2*(-3./30. + q2*(3./840. + q2*(-3./45360.))));// + q2*(3./3991680.)))));
     } else {

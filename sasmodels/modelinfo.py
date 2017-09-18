@@ -100,7 +100,7 @@ def parse_parameter(name, units='', default=np.NaN,
                 low, high = user_limits
                 limits = (float(low), float(high))
             except Exception:
-                raise ValueError("invalid limits for %s: %r"%(name,user_limits))
+                raise ValueError("invalid limits for %s: %r"%(name, user_limits))
             if low >= high:
                 raise ValueError("require lower limit < upper limit")
 
@@ -341,6 +341,10 @@ class Parameter(object):
 
     def as_call_reference(self, prefix=""):
         # type: (str) -> str
+        """
+        Return *prefix* + parameter name.  For struct references, use "v."
+        as the prefix.
+        """
         # Note: if the parameter is a struct type, then we will need to use
         # &prefix+id.  For scalars and vectors we can just use prefix+id.
         return prefix + self.id
@@ -419,7 +423,7 @@ class ParameterTable(object):
 
         self.npars = sum(p.length for p in self.kernel_parameters)
         self.nmagnetic = sum(p.length for p in self.kernel_parameters
-                             if p.type=='sld')
+                             if p.type == 'sld')
         self.nvalues = 2 + self.npars
         if self.nmagnetic:
             self.nvalues += 3 + 3*self.nmagnetic
@@ -456,12 +460,21 @@ class ParameterTable(object):
         # true if has 2D parameters
         self.has_2d = any(p.type in ('orientation', 'magnetic')
                           for p in self.kernel_parameters)
-        self.magnetism_index = [k for k,p in enumerate(self.call_parameters)
+        self.magnetism_index = [k for k, p in enumerate(self.call_parameters)
                                 if p.id.startswith('M0:')]
 
         self.pd_1d = set(p.name for p in self.call_parameters
                          if p.polydisperse and p.type not in ('orientation', 'magnetic'))
         self.pd_2d = set(p.name for p in self.call_parameters if p.polydisperse)
+
+    def __getitem__(self, key):
+        # Find the parameter definition
+        for par in self.call_parameters:
+            if par.name == key:
+                break
+        else:
+            raise KeyError("unknown parameter %r"%key)
+        return par
 
     def _set_vector_lengths(self):
         # type: () -> List[str]
@@ -543,9 +556,9 @@ class ParameterTable(object):
                     Parameter('M0:'+p.id, '1e-6/Ang^2', 0., [-np.inf, np.inf],
                               'magnetic', 'magnetic amplitude for '+p.description),
                     Parameter('mtheta:'+p.id, 'degrees', 0., [-90., 90.],
-                               'magnetic', 'magnetic latitude for '+p.description),
+                              'magnetic', 'magnetic latitude for '+p.description),
                     Parameter('mphi:'+p.id, 'degrees', 0., [-180., 180.],
-                               'magnetic', 'magnetic longitude for '+p.description),
+                              'magnetic', 'magnetic longitude for '+p.description),
                 ])
         #print("call parameters", full_list)
         return full_list
@@ -682,9 +695,9 @@ def _find_source_lines(model_info, kernel_module):
         return None
 
     if (model_info.Iq is None
-        and model_info.Iqxy is None
-        and model_info.Imagnetic is None
-        and model_info.form_volume is None):
+            and model_info.Iqxy is None
+            and model_info.Imagnetic is None
+            and model_info.form_volume is None):
         return
 
     # find the defintion lines for the different code blocks
@@ -713,18 +726,21 @@ def make_model_info(kernel_module):
     Note: vectorized Iq and Iqxy functions will be created for python
     models when the model is first called, not when the model is loaded.
     """
+    if hasattr(kernel_module, "model_info"):
+        # Custom sum/multi models
+        return kernel_module.model_info
     info = ModelInfo()
     #print("make parameter table", kernel_module.parameters)
     parameters = make_parameter_table(getattr(kernel_module, 'parameters', []))
     demo = expand_pars(parameters, getattr(kernel_module, 'demo', None))
-    filename = abspath(kernel_module.__file__)
+    filename = abspath(kernel_module.__file__).replace('.pyc', '.py')
     kernel_id = splitext(basename(filename))[0]
     name = getattr(kernel_module, 'name', None)
     if name is None:
         name = " ".join(w.capitalize() for w in kernel_id.split('_'))
 
     info.id = kernel_id  # string used to load the kernel
-    info.filename = abspath(kernel_module.__file__)
+    info.filename = filename
     info.name = name
     info.title = getattr(kernel_module, 'title', name+" model")
     info.description = getattr(kernel_module, 'description', 'no description')
@@ -749,6 +765,7 @@ def make_model_info(kernel_module):
     # Default single and opencl to True for C models.  Python models have callable Iq.
     info.opencl = getattr(kernel_module, 'opencl', not callable(info.Iq))
     info.single = getattr(kernel_module, 'single', not callable(info.Iq))
+    info.random = getattr(kernel_module, 'random', None)
 
     # multiplicity info
     control_pars = [p.id for p in parameters.kernel_parameters if p.is_control]
@@ -842,6 +859,10 @@ class ModelInfo(object):
     #: This is True by default, but models such as :ref:`bcc-paracrystal` set
     #: it to False because they require double precision calculations.
     single = None           # type: bool
+    #: True if the model can be run as an opencl model.  If for some reason
+    #: the model cannot be run in opencl (e.g., because the model passes
+    #: functions by reference), then set this to false.
+    opencl = None           # type: bool
     #: True if the model is a structure factor used to model the interaction
     #: between form factor models.  This will default to False if it is not
     #: provided in the file.

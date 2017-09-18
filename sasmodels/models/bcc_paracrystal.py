@@ -78,9 +78,10 @@ The 2D (Anisotropic model) is based on the reference below where $I(q)$ is
 approximated for 1d scattering. Thus the scattering pattern for 2D may not
 be accurate.
 
-.. figure:: img/bcc_angle_definition.png
+.. figure:: img/parallelepiped_angle_definition.png
 
-    Orientation of the crystal with respect to the scattering plane.
+    Orientation of the crystal with respect to the scattering plane, when
+    $\theta = \phi = 0$ the $c$ axis is along the beam direction (the $z$ axis).
 
 References
 ----------
@@ -98,7 +99,7 @@ Authorship and Verification
 * **Last Reviewed by:** Richard Heenan **Date:** March 21, 2016
 """
 
-from numpy import inf
+from numpy import inf, pi
 
 name = "bcc_paracrystal"
 title = "Body-centred cubic lattic with paracrystalline distortion"
@@ -121,22 +122,40 @@ parameters = [["dnn",         "Ang",       220,    [-inf, inf], "",            "
               ["radius",      "Ang",        40,    [0, inf],    "volume",      "Particle radius"],
               ["sld",         "1e-6/Ang^2",  4,    [-inf, inf], "sld",         "Particle scattering length density"],
               ["sld_solvent", "1e-6/Ang^2",  1,    [-inf, inf], "sld",         "Solvent scattering length density"],
-              ["theta",       "degrees",    60,    [-inf, inf], "orientation", "In plane angle"],
-              ["phi",         "degrees",    60,    [-inf, inf], "orientation", "Out of plane angle"],
-              ["psi",         "degrees",    60,    [-inf, inf], "orientation", "Out of plane angle"]
+              ["theta",       "degrees",    60,    [-360, 360], "orientation", "c axis to beam angle"],
+              ["phi",         "degrees",    60,    [-360, 360], "orientation", "rotation about beam"],
+              ["psi",         "degrees",    60,    [-360, 360], "orientation", "rotation about c axis"]
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sas_3j1x_x.c", "lib/gauss150.c", "lib/sphere_form.c", "bcc_paracrystal.c"]
 
-# parameters for demo
-demo = dict(
-    scale=1, background=0,
-    dnn=220, d_factor=0.06, sld=4, sld_solvent=1,
-    radius=40,
-    theta=60, phi=60, psi=60,
-    radius_pd=.2, radius_pd_n=2,
-    theta_pd=15, theta_pd_n=0,
-    phi_pd=15, phi_pd_n=0,
-    psi_pd=15, psi_pd_n=0,
+def random():
+    import numpy as np
+    # Define lattice spacing as a multiple of the particle radius
+    # using the formulat a = 4 r/sqrt(3).  Systems which are ordered
+    # are probably mostly filled, so use a distribution which goes from
+    # zero to one, but leaving 90% of them within 80% of the
+    # maximum bcc packing.  Lattice distortion values are empirically
+    # useful between 0.01 and 0.7.  Use an exponential distribution
+    # in this range 'cuz its easy.
+    radius = 10**np.random.uniform(1.3, 4)
+    d_factor = 10**np.random.uniform(-2, -0.7)  # sigma_d in 0.01-0.7
+    dnn_fraction = np.random.beta(a=10, b=1)
+    dnn = radius*4/np.sqrt(3)/dnn_fraction
+    pars = dict(
+        #sld=1, sld_solvent=0, scale=1, background=1e-32,
+        dnn=dnn,
+        d_factor=d_factor,
+        radius=radius,
     )
+    return pars
+
+# april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
+# add 2d test later
+q = 4.*pi/220.
+tests = [
+    [{}, [0.001, q, 0.215268], [1.46601394721, 2.85851284174, 0.00866710287078]],
+    [{'theta': 20.0, 'phi': 30, 'psi': 40.0}, (-0.017, 0.035), 2082.20264399],
+    [{'theta': 20.0, 'phi': 30, 'psi': 40.0}, (-0.081, 0.011), 0.436323144781],
+    ]

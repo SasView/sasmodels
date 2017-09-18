@@ -97,6 +97,21 @@ def Iq(q,
 
 Iq.vectorized = True  # Iq accepts an array of q values
 
+def random():
+    import numpy as np
+    coefficient_1 = 1
+    crossover = 10**np.random.uniform(-3, -1)
+    power_1 = np.random.uniform(1, 6)
+    power_2 = np.random.uniform(1, 6)
+    pars = dict(
+        scale=1, #background=0,
+        coefficient_1=coefficient_1,
+        crossover=crossover,
+        power_1=power_1,
+        power_2=power_2,
+    )
+    return pars
+
 demo = dict(scale=1, background=0.0,
             coefficent_1=1.0,
             crossover=0.04,
@@ -119,14 +134,14 @@ tests = [
       'background': 0.0,
      }, 0.150141, 0.125945],
 
-    [{'coeffcent_1':    1.0,
+    [{'coefficent_1':    1.0,
       'crossover':  0.04,
       'power_1':    1.0,
       'power_2':    4.0,
       'background': 0.0,
      }, 0.442528, 0.00166884],
 
-    [{'coeffcent_1':    1.0,
+    [{'coefficent_1':    1.0,
       'crossover':  0.04,
       'power_1':    1.0,
       'power_2':    4.0,

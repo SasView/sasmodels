@@ -32,8 +32,8 @@ for
 
 .. math::
 
-     r_i &= r_c + (i-1)(t_s + t_w) && \text{ solvent radius before shell } i \\
-     R_i &= r_i + t_s && \text{ shell radius for shell } i
+     r_i &= r_c + (i-1)(t_s + t_w) \text{ solvent radius before shell } i \\
+     R_i &= r_i + t_s \text{ shell radius for shell } i
 
 $\phi$ is the volume fraction of particles, $V(r)$ is the volume of a sphere
 of radius $r$, $r_c$ is the radius of the core, $t_s$ is the thickness of
@@ -70,12 +70,13 @@ USAGE NOTES
   floating point value. Thus it may be that the resolution interpolation is not
   sufficiently fine grained in certain cases. Please report any such occurences
   to the SasView team. Generally, for the best possible experience:
- * Start with the best possible guess
- * Using a priori knowledge, hold as many parameters fixed as possible
- * if N=1, tw (water thickness) must by definition be zero. Both N and tw should
+
+ - Start with the best possible guess
+ - Using a priori knowledge, hold as many parameters fixed as possible
+ - if N=1, tw (water thickness) must by definition be zero. Both N and tw should
    be fixed during fitting.
- * If N>1, use constraints to keep N > 1
- * Because N only really moves in integer steps, it may get "stuck" if the
+ - If N>1, use constraints to keep N > 1
+ - Because N only really moves in integer steps, it may get "stuck" if the
    optimizer step size is too small so care should be taken
    If you experience problems with this please contact the SasView team and let
    them know the issue preferably with example data and model which fail to
@@ -148,14 +149,27 @@ def ER(radius, thick_shell, thick_solvent, n_shells):
     n_shells = int(n_shells+0.5)
     return radius + n_shells * (thick_shell + thick_solvent) - thick_solvent
 
-demo = dict(scale=1, background=0,
-            volfraction=0.05,
-            radius=60.0,
-            thick_shell=10.0,
-            thick_solvent=10.0,
-            sld_solvent=6.4,
-            sld=0.4,
-            n_shells=2.0)
+def random():
+    import numpy as np
+    volfraction = 10**np.random.uniform(-3, -0.5)  # scale from 0.1% to 30%
+    radius = 10**np.random.uniform(0, 2.5) # core less than 300 A
+    total_thick = 10**np.random.uniform(2, 4) # up to 10000 A of shells
+    # random number of shells, with shell+solvent thickness > 10 A
+    n_shells = int(10**np.random.uniform(0, np.log10(total_thick)-1)+0.5)
+    # split total shell thickness with preference for shell over solvent;
+    # make sure that shell thickness is at least 1 A
+    one_thick = total_thick/n_shells
+    thick_solvent = 10**np.random.uniform(-2, 0)*(one_thick - 1)
+    thick_shell = one_thick - thick_solvent
+    pars = dict(
+        scale=1,
+        volfraction=volfraction,
+        radius=radius,
+        thick_shell=thick_shell,
+        thick_solvent=thick_solvent,
+        n_shells=n_shells,
+    )
+    return pars
 
 tests = [
     # Accuracy tests based on content in test/utest_other_models.py

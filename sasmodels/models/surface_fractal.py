@@ -8,14 +8,17 @@ Definition
 The scattering intensity $I(q)$ is calculated as
 
 .. math::
+    :nowrap:
 
+    \begin{align*}
     I(q) &= \text{scale} \times P(q)S(q) + \text{background} \\
     P(q) &= F(qR)^2 \\
     F(x) &= \frac{3\left[\sin(x)-x\cos(x)\right]}{x^3} \\
     S(q) &= \Gamma(5-D_S)\xi^{\,5-D_S}\left[1+(q\xi)^2 \right]^{-(5-D_S)/2}
             \sin\left[-(5-D_S) \tan^{-1}(q\xi) \right] q^{-1} \\
-    \text{scale} &= \text{scale_factor}\, N V^2(\rho_\text{particle} - \rho_\text{solvent})^2 \\
+    \text{scale} &= \text{scale factor}\, N V^1(\rho_\text{particle} - \rho_\text{solvent})^2 \\
     V &= \frac{4}{3}\pi R^3
+    \end{align*}
 
 where $R$ is the radius of the building block, $D_S$ is the **surface** fractal
 dimension, $\xi$ is the cut-off length, $\rho_\text{solvent}$ is the scattering
@@ -73,8 +76,19 @@ parameters = [["radius",        "Ang", 10.0, [0, inf],   "",
 
 source = ["lib/sas_3j1x_x.c", "lib/sas_gamma.c", "surface_fractal.c"]
 
-demo = dict(scale=1, background=1e-5,
-            radius=10, fractal_dim_surf=2.0, cutoff_length=500)
+def random():
+    import numpy as np
+    radius = 10**np.random.uniform(1, 4)
+    fractal_dim_surf = np.random.uniform(1, 3-1e-6)
+    cutoff_length = 1e6  # Sets the low q limit; keep it big for sim
+    pars = dict(
+        #background=0,
+        scale=1,
+        radius=radius,
+        fractal_dim_surf=fractal_dim_surf,
+        cutoff_length=cutoff_length,
+    )
+    return pars
 
 tests = [
     # Accuracy tests based on content in test/utest_other_models.py

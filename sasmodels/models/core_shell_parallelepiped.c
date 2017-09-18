@@ -133,8 +133,8 @@ double Iqxy(double qx, double qy,
     double phi,
     double psi)
 {
-    double q, cos_val_a, cos_val_b, cos_val_c;
-    ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, cos_val_c, cos_val_b, cos_val_a);
+    double q, zhat, yhat, xhat;
+    ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, xhat, yhat, zhat);
 
     // cspkernel in csparallelepiped recoded here
     const double dr0 = core_sld-solvent_sld;
@@ -159,12 +159,12 @@ double Iqxy(double qx, double qy,
     double tb = length_a + 2.0*thick_rim_b;
     double tc = length_a + 2.0*thick_rim_c;
     //handle arg=0 separately, as sin(t)/t -> 1 as t->0
-    double siA = sas_sinx_x(0.5*q*length_a*cos_val_a);
-    double siB = sas_sinx_x(0.5*q*length_b*cos_val_b);
-    double siC = sas_sinx_x(0.5*q*length_c*cos_val_c);
-    double siAt = sas_sinx_x(0.5*q*ta*cos_val_a);
-    double siBt = sas_sinx_x(0.5*q*tb*cos_val_b);
-    double siCt = sas_sinx_x(0.5*q*tc*cos_val_c);
+    double siA = sas_sinx_x(0.5*q*length_a*xhat);
+    double siB = sas_sinx_x(0.5*q*length_b*yhat);
+    double siC = sas_sinx_x(0.5*q*length_c*zhat);
+    double siAt = sas_sinx_x(0.5*q*ta*xhat);
+    double siBt = sas_sinx_x(0.5*q*tb*yhat);
+    double siCt = sas_sinx_x(0.5*q*tc*zhat);
     
 
     // f uses Vin, V1, V2, and V3 and it seems to have more sense than the value computed

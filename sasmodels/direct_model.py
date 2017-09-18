@@ -295,11 +295,22 @@ class DataMixin(object):
         y = Iq + np.random.randn(*dy.shape) * dy
         self.Iq = y
         if self.data_type in ('Iq', 'Iq-oriented'):
+            if self._data.y is None:
+                self._data.y = np.empty(len(self._data.x), 'd')
+            if self._data.dy is None:
+                self._data.dy = np.empty(len(self._data.x), 'd')
             self._data.dy[self.index] = dy
             self._data.y[self.index] = y
         elif self.data_type == 'Iqxy':
+            if self._data.data is None:
+                self._data.data = np.empty_like(self._data.qx_data, 'd')
+            if self._data.err_data is None:
+                self._data.err_data = np.empty_like(self._data.qx_data, 'd')
             self._data.data[self.index] = y
+            self._data.err_data[self.index] = dy
         elif self.data_type == 'sesans':
+            if self._data.y is None:
+                self._data.y = np.empty(len(self._data.x), 'd')
             self._data.y[self.index] = y
         else:
             raise ValueError("Unknown model")
