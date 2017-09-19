@@ -2,6 +2,8 @@ from __future__ import print_function
 
 import sys, os, math, re
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 sys.path.insert(0, os.path.abspath('..'))
 from sasmodels import generate, core
