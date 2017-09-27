@@ -366,6 +366,34 @@ implicit to all models, so they do not need to be included in the parameter tabl
     dispersion.
 
 
+Integer Parameters
+..................
+
+Some models will have integer parameters, such as number of pearls in the
+pearl necklace model, or number of shells in the multi-layer vesicle model.
+The optimizers in BUMPS treat all parameters as floating point numbers which
+can take arbitrary values, even for integer parameters, so your model should
+round the incoming parameter value to the nearest integer inside your model
+you should round to the nearest integer.  In C code, you can do this using::
+
+    static double
+    Iq(double q, ..., double fp_n, ...)
+    {
+        int n = (int)(fp_n + 0.5);
+        ...
+    }
+
+in python::
+
+    def Iq(q, ..., n, ...):
+        n = int(n+0.5)
+        ...
+
+Derivatibve based optimizers such as Levenberg-Marquardt will not work
+for integer parameters since the partial derivative is always zero, but
+the remaining optimizers (DREAM, differential evolution, Nelder-Mead simplex)
+will still function.
+
 Model Computation
 .................
 
