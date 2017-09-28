@@ -30,8 +30,10 @@ except ImportError:
         # Clear out old definitions, if any
         if fullname in sys.modules:
             del sys.modules[fullname]
+        if path.endswith(".py") and os.path.exists(path) and os.path.exists(path+"c"):
+            # remove automatic pyc file before loading a py file
+            os.unlink(path+"c")
         module = imp.load_source(fullname, os.path.expanduser(path))
-        #os.unlink(path+"c")  # remove the automatic pyc file
         return module
 
 def load_custom_kernel_module(path):

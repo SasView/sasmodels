@@ -15,7 +15,10 @@ import collections
 import traceback
 import logging
 from os.path import basename, splitext, abspath, getmtime
-import thread
+try:
+    import _thread as thread
+except ImportError:
+    import thread
 
 import numpy as np  # type: ignore
 

@@ -8,6 +8,7 @@ SAS Models Guide
 
    intro.rst
    install.rst
+   gpu_setup.rst
    pd/polydispersity.rst
    resolution.rst
    magnetism/magnetism.rst

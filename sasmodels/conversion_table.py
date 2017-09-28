@@ -10,17 +10,18 @@ versioned based on the version number of SasView.
 When any sasmodels parameter or model name is changed, this must be modified to
 account for that.
 
-Usage:
-<old_Sasview_version> : {
-    <new_model_name> : [
-        <old_model_name> ,
-        {
-            <new_param_name_1> : <old_param_name_1>,
-            ...
-            <new_param_name_n> : <old_param_name_n>
-        }
-    ]
-}
+Usage::
+
+    <old_Sasview_version> : {
+        <new_model_name> : [
+            <old_model_name> ,
+            {
+                <new_param_name_1> : <old_param_name_1>,
+                ...
+                <new_param_name_n> : <old_param_name_n>
+            }
+        ]
+    }
 
 Any future parameter and model name changes can and should be given in this
 table for future compatibility.
