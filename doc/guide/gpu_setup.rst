@@ -4,6 +4,11 @@
 GPU Setup
 ********************
 
+SAS model evaluations can run on your graphics card (GPU) or they can run
+on the processor (CPU). In general, calculations performed on the GPU
+will run faster.
+
+
 OpenCL Installation
 *******************
 *Warning! GPU devices do not in general offer the same level of memory
@@ -73,26 +78,18 @@ with the normal quarterly OS X updates from Apple.
 GPU Selection
 *************
 
-SAS model evaluations can run on your graphics card (GPU) or they can run
-on the processor (CPU). In general, calculations performed on the GPU will run faster.
-
-To run on the GPU, your computer must have OpenCL drivers installed.
-For information about OpenCL installation see this
-:ref:`opencl-installation` guidance.
-
-Where the model is evaluated is a little bit complicated.
+The logic for choosing the compute platform is a little bit complicated.
 If the model has the line *single=False* then it requires double precision.
 If the GPU is single precision only, then it will try running via OpenCL
 on the CPU.  If the OpenCL driver is not available for the CPU then
 it will run as a normal program on the CPU.
 
 For models with a large number of parameters or with a lot of code,
-the GPU may be too small to run the program effectively.
-In this case, you should try simplifying the model, maybe breaking it
-into several different modules so that you don't need *IF* statements in your code.
-If it is still too big, you can set *opencl=False* in the model file and
-the model will only run as a normal program on the CPU.
-This will not usually be necessary.
+the GPU may be too small to run the program effectively. In this case, you
+should try simplifying the model, maybe breaking it into several different
+models so that you don't need *IF* statements in your code. If it is still
+too big, you can set *opencl=False* in the model file and the model will
+only run as a normal program on the CPU. This will not usually be necessary.
 
 Device Selection
 ================

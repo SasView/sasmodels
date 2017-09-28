@@ -86,9 +86,7 @@ The user input parameters are:
 .. note::
     The values of the 'Up_frac_i' and 'Up_frac_f' must be in the range 0 to 1.
 
-.. note::
-    This help document was last changed by Steve King, 02May2015
+*Document History*
 
-* Document History *
-
+| 2015-05-02 Steve King
 | 2017-05-08 Paul Kienzle
