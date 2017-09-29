@@ -16,10 +16,10 @@ example, peaks or fringes might be slightly broadened. This is known as
 remove the resolution contribution - a process called *desmearing* - or add the
 resolution contribution into a model calculation/simulation (which by definition
 will be exact) to make it more representative of what has been measured
-experimentally - a process called *smearing*. sasmodels does the latter.
+experimentally - a process called *smearing*. Sasmodels does the latter.
 
 Both smearing and desmearing rely on functions to describe the resolution
-effect. sasmodels provides three smearing algorithms:
+effect. Sasmodels provides three smearing algorithms:
 
 *  *Slit Smearing*
 *  *Pinhole Smearing*
@@ -98,7 +98,7 @@ Solution 1
            = \int_0^{\Delta q_u} d\left(\sqrt{q'^2-q^2}\right)\, I(q')
 
 For discrete $q$ values, at the $q$ values of the data points and at the $q$
-values extended up to $q_N = q_i + \Delta q_v$ the smeared
+values extended up to $q_N = q_i + \Delta q_u$ the smeared
 intensity can be approximately calculated as
 
 .. math::
