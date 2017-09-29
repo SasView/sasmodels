@@ -532,7 +532,7 @@ def _format_par(name, value=0., pd=0., n=0, nsigma=3., pdtype='gaussian',
         line += " +/- %g  (%d points in [-%g,%g] sigma %s)"\
                 % (pd, n, nsigma, nsigma, pdtype)
     if M0 != 0.:
-        line += "  M0:%.3f  mphi:%.1f  mtheta:%.1f" % (M0, mphi, mtheta)
+        line += "  M0:%.3f  mtheta:%.1f  mphi:%.1f" % (M0, mtheta, mphi)
     return line
 
 def suppress_pd(pars, suppress=True):
