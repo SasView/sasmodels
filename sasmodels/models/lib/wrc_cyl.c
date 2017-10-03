@@ -120,10 +120,21 @@ static double
 Sdebye(double qsq)
 {
 #if FLOAT_SIZE>4
-#define DEBYE_CUTOFF 0.01  // 1e-13 error
+#define DEBYE_CUTOFF 0.1  // 1e-14 error
 #else
-#define DEBYE_CUTOFF 1.0  // 1e-7 error
+#define DEBYE_CUTOFF 0.9  // 4e-7 error
 #endif
+
+/* For double precision, the following gets 1e-15 error rather than 1e-14
+    if (qsq < 9./16.) {
+        // PadeApproximant[2*Exp[-x^2] + x^2-1)/x^4, {x, 0, 8}]
+        const double A1=1./12., A2=2./99., A3=1./2640., A4=1./23760., A5=-1./1995840.;
+        const double B1=5./12., B2=5./66., B3=1./132., B4=1./2376., B5=1./95040.;
+        const double x = qsq;
+        return (((((A5*x + A4)*x + A3)*x + A2)*x + A1)*x + 1.)
+                /(((((B5*x + B4)*x + B3)*x + B2)*x + B1)*x + 1.);
+    }
+*/
 
     if (qsq < DEBYE_CUTOFF) {
         const double x = qsq;
@@ -136,19 +147,6 @@ Sdebye(double qsq)
         const double C6 = +1./20160.;
         const double C7 = -1./181440.;
         return ((((((C7*x + C6)*x + C5)*x + C4)*x + C3)*x + C2)*x + C1)*x + C0;
-    /* failed attempt to improve double precision better than 1e-13
-    } else if (qsq < 1.0) {
-        // taylor series around q^2 = 0.5
-        const double x = qsq - 0.5;
-        const double sqrt_e = sqrt(M_E);
-        const double C0 = 8./sqrt_e - 4.;
-        const double C1 = 24. - 40./sqrt_e;
-        const double C2 = 132./sqrt_e - 80.;
-        const double C3 = 224. - 1108./(3.*sqrt_e);
-        const double C4 = 2849./(3.*sqrt_e) - 576.;
-        const double C5 = 1408 - 11607./(5.*sqrt_e);
-        return ((((C5*x + C4)*x + C3)*x + C2)*x + C1)*x + C0;
-    */
     } else {
         return 2.*(exp(-qsq) + qsq - 1.)/(qsq*qsq);
     }

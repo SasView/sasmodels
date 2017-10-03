@@ -80,6 +80,7 @@ class Comparator(object):
             lin_min, lin_max, lin_steps = -100.1, 100.1, 2000
         elif xrange == "linear":
             lin_min, lin_max, lin_steps = 1, 1000, 2000
+            lin_min, lin_max, lin_steps = 0.001, 2, 2000
         elif xrange == "log":
             log_min, log_max, log_steps = -3, 5, 400
         elif xrange == "logq":
@@ -327,7 +328,33 @@ add_function(
     np_function=lambda x: 2*(np.exp(-x**2) + x**2 - 1)/x**4,
     ocl_function=make_ocl("""
     const double qsq = q*q;
-    if (qsq < 0.1) {
+    if (qsq < -0.75*0.75) { // Pade approximation around 0
+        const double x = qsq;
+        if (0) {
+            // PadeApproximant[2*Exp[-x^2] + x^2-1)/x^4, {x, 0, 4}]
+            return (x*x/180. + 1.)/((1./30.*x + 1./3.)*x + 1);
+        } else if (0) {
+            // padeapproximant[2*exp[-x^2] + x^2-1)/x^4, {x, 0, 6}]
+            // works for single precision, with qsq < 1
+            const double A1=1./24., A2=1./84, A3=-1./3360;
+            const double B1=3./8., B2=3./56., B3=1./336.;
+            return (((A3*x + A2)*x + A1)*x + 1.)/(((B3*x + B2)*x + B1)*x + 1.);
+        } else if (0) {
+            // PadeApproximant[2*Exp[-x^2] + x^2-1)/x^4, {x, 0, 8}]
+            const double A1=1./15., A2=1./60, A3=0., A4=1./75600.;
+            const double B1=2./5., B2=1./15., B3=1./180., B4=1./5040.;
+            return ((((A4*x + A3)*x + A2)*x + A1)*x + 1.)
+                  /((((B4*x + B3)*x + B2)*x + B1)*x + 1.);
+
+        } else {
+            // PadeApproximant[2*Exp[-x^2] + x^2-1)/x^4, {x, 0, 8}]
+            // works for double precision, with qsq < 9/16
+            const double A1=1./12., A2=2./99., A3=1./2640., A4=1./23760., A5=-1./1995840.;
+            const double B1=5./12., B2=5./66., B3=1./132., B4=1./2376., B5=1./95040.;
+            return (((((A5*x + A4)*x + A3)*x + A2)*x + A1)*x + 1.)
+                  /(((((B5*x + B4)*x + B3)*x + B2)*x + B1)*x + 1.);
+        }
+    } else if (qsq < 0.1) { // Taylor series around 0.
         const double x = qsq;
         const double C0 = +1.;
         const double C1 = -1./3.;
@@ -338,20 +365,9 @@ add_function(
         const double C6 = +1./20160.;
         const double C7 = -1./181440.;
         //return ((((C5*x + C4)*x + C3)*x + C2)*x + C1)*x + C0;
-        return (((((C6*x + C5)*x + C4)*x + C3)*x + C2)*x + C1)*x + C0;
-        //return ((((((C7*x + C6)*x + C5)*x + C4)*x + C3)*x + C2)*x + C1)*x + C0;
-    } /* else if (qsq < 1.0) {
-        // taylor series around q^2 = 0.5
-        const double x = qsq - 0.5;
-        const double sqrt_e = sqrt(M_E);
-        const double C0 = 8./sqrt_e - 4.;
-        const double C1 = 24. - 40./sqrt_e;
-        const double C2 = 132./sqrt_e - 80.;
-        const double C3 = 224. - 1108./(3.*sqrt_e);
-        const double C4 = 2849./(3.*sqrt_e) - 576.;
-        const double C5 = 1408 - 11607./(5.*sqrt_e);
-        return ((((C5*x + C4)*x + C3)*x + C2)*x + C1)*x + C0;
-    } */ else {
+        //return (((((C6*x + C5)*x + C4)*x + C3)*x + C2)*x + C1)*x + C0;
+        return ((((((C7*x + C6)*x + C5)*x + C4)*x + C3)*x + C2)*x + C1)*x + C0;
+    } else {
         return 2.*(exp(-qsq) + qsq - 1.)/(qsq*qsq);
     }
     """, "sas_debye"),
