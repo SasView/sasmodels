@@ -321,6 +321,41 @@ add_function(
     np_function=lambda x: np.fmod(x, 2*np.pi),
     ocl_function=make_ocl("return fmod(q, 2*M_PI);", "sas_fmod"),
 )
+add_function(
+    name="debye",
+    mp_function=lambda x: 2*(mp.exp(-x**2) + x**2 - 1)/x**4,
+    np_function=lambda x: 2*(np.exp(-x**2) + x**2 - 1)/x**4,
+    ocl_function=make_ocl("""
+    const double qsq = q*q;
+    if (qsq < 0.1) {
+        const double x = qsq;
+        const double C0 = +1.;
+        const double C1 = -1./3.;
+        const double C2 = +1./12.;
+        const double C3 = -1./60.;
+        const double C4 = +1./360.;
+        const double C5 = -1./2520.;
+        const double C6 = +1./20160.;
+        const double C7 = -1./181440.;
+        //return ((((C5*x + C4)*x + C3)*x + C2)*x + C1)*x + C0;
+        return (((((C6*x + C5)*x + C4)*x + C3)*x + C2)*x + C1)*x + C0;
+        //return ((((((C7*x + C6)*x + C5)*x + C4)*x + C3)*x + C2)*x + C1)*x + C0;
+    } /* else if (qsq < 1.0) {
+        // taylor series around q^2 = 0.5
+        const double x = qsq - 0.5;
+        const double sqrt_e = sqrt(M_E);
+        const double C0 = 8./sqrt_e - 4.;
+        const double C1 = 24. - 40./sqrt_e;
+        const double C2 = 132./sqrt_e - 80.;
+        const double C3 = 224. - 1108./(3.*sqrt_e);
+        const double C4 = 2849./(3.*sqrt_e) - 576.;
+        const double C5 = 1408 - 11607./(5.*sqrt_e);
+        return ((((C5*x + C4)*x + C3)*x + C2)*x + C1)*x + C0;
+    } */ else {
+        return 2.*(exp(-qsq) + qsq - 1.)/(qsq*qsq);
+    }
+    """, "sas_debye"),
+)
 
 RADIUS=3000
 LENGTH=30

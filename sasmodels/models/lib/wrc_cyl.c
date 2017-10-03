@@ -1,60 +1,34 @@
 /*
     Functions for WRC implementation of flexible cylinders
 */
-double Sk_WR(double q, double L, double b);
-
 
 static double
-AlphaSquare(double x)
+Rgsquare(double L, double b)
 {
-    // Potentially faster. Needs proper benchmarking.
-    // add native_powr to kernel_template
-    //double t = native_powr( (1.0 + (x/3.12)*(x/3.12) +
-    //     (x/8.67)*(x/8.67)*(x/8.67)),(0.176/3.0) );
-    //return t;
-
-    return pow(1.0+square(x/3.12)+cube(x/8.67), 0.176/3.0);
+    const double x = L/b;
+    // Use Horner's method to evaluate:
+    //     pow(1.0+square(x/3.12)+cube(x/8.67), 0.176/3.0)
+    // Too many digits on the coefficients, but necessary for consistency
+    const double alphasq =
+        pow(1.0 + square(x)*(1.534414548417740e-03*x + 1.027284681130835e-01),
+            5.866666666666667e-02);
+    return alphasq*L*b/6.0;
 }
 
-//
 static double
-Rgsquarezero(double q, double L, double b)
+Rgsquareshort(double L, double b)
 {
     const double r = b/L;
-    return (L*b/6.0) * (1.0 + r*(-1.5 + r*(1.5 + r*0.75*expm1(-2.0/r))));
-
-}
-
-//
-static double
-Rgsquareshort(double q, double L, double b)
-{
-    return AlphaSquare(L/b) * Rgsquarezero(q,L,b);
-}
-
-//
-static double
-Rgsquare(double q, double L, double b)
-{
-    return AlphaSquare(L/b)*L*b/6.0;
+    return Rgsquare(L, b) * (1.0 + r*(-1.5 + r*(1.5 + r*0.75*expm1(-2.0/r))));
 }
 
 static double
-sech_WR(double x)
+a_long(double qp, double L, double b/*, double p1, double p2, double q0*/)
 {
-    return(1/cosh(x));
-}
-
-static double
-a1long(double q, double L, double b, double p1, double p2, double q0)
-{
-    double C;
-
-    if( L/b > 10.0) {
-        C = 3.06/pow((L/b),0.44);
-    } else {
-        C = 1.0;
-    }
+    // Note: caller sends p1, p2, q0 in as constants.
+    const double p1 = 4.12;
+    const double p2 = 4.42;
+    const double q0 = 3.1;
 
     const double C1 = 1.22;
     const double C2 = 0.4288;
@@ -63,207 +37,76 @@ a1long(double q, double L, double b, double p1, double p2, double q0)
     const double C5 = 0.1477;
     const double miu = 0.585;
 
-    const double Rg2 = Rgsquare(q,L,b);
-    const double Rg22 = Rg2*Rg2;
-    const double Rg = sqrt(Rg2);
-    const double Rgb = Rg*q0/b;
 
-    const double b2 = b*b;
+    const double C = (L/b>10.0 ? 3.06*pow(L/b, -0.44) : 1.0);
+    const double r2 = Rgsquare(L,b);
+    const double r = sqrt(r2);
+    const double qr_b = q0*r/b;
+    const double qr_b_sq = qr_b*qr_b;
+    const double qr_b_4 = qr_b_sq*qr_b_sq;
+    const double qr_b_miu = pow(qr_b, -1.0/miu);
+    const double em1_qr_b_sq = expm1(-qr_b_sq);
+    const double sech2 = 1.0/square(cosh((qr_b-C4)/C5));
+    const double tanh1m = 1.0 - tanh(-C4 + qr_b/C5);
+
+    const double t1 = pow(q0, 1.0 + p1 + p2)/(b*(p1-p2));
+    const double t2 = C/(15.0*L) * (
+        + 14.0*b*b*em1_qr_b_sq/(q0*qr_b_sq)
+        + 2.0*q0*r2*exp(-qr_b_sq)*(11.0 + 7.0/qr_b_sq));
+    const double t11 = ((C3*qr_b_miu + C2)*qr_b_miu + C1)*qr_b_miu;
+    const double t3 = r*sech2/(2.*C5)*t11;
+    const double t4 = r*(em1_qr_b_sq + qr_b_sq)*sech2 / (C5*qr_b_4);
+    const double t5 = -2.0 * r*qr_b*em1_qr_b_sq * tanh1m / qr_b_4;
+    const double t10 = (em1_qr_b_sq + qr_b_sq) * tanh1m / qr_b_4;
+    const double t6 = 4.0*b/q0 * t10;
+    const double t7 = r*((-3.0*C3*qr_b_miu -2.0*C2)*qr_b_miu -1.0*C1)*qr_b_miu/(miu*qr_b);
+    const double t8 = 2.0 - tanh1m;
+    const double t9 = b*C/(15.0*L) * (4.0 - exp(-qr_b_sq) * (11.0 + 7.0/qr_b_sq) + 7.0/qr_b_sq);
+    const double t12 = b*b*M_PI/(L*q0*q0) + t2 + t3 - t4 + t5 - t6 + 0.5*t7*t8;
+    const double t13 = -b*M_PI/(L*q0) + t9 + t10 + 0.5*t11*t8;
+
+    const double a1 = pow(q0,p1)*t13 - t1*pow(q0,-p2)*(t12 + b*p1/q0*t13);
+    const double a2 = t1*pow(q0,-p1)*(t12 + b*p1/q0*t13);
+
+    const double ans = a1*pow(qp*b, -p1) + a2*pow(qp*b, -p2) + M_PI/(qp*L);
+    return ans;
+}
+
+static double
+_short(double r2, double exp_qr_b, double L, double b, double p1short,
+        double p2short, double q0)
+{
+    const double qr2 = q0*q0 * r2;
     const double b3 = b*b*b;
-    const double b4 = b3*b;
-    const double q02 = q0*q0;
-    const double q03 = q0*q0*q0;
-    const double q04 = q03*q0;
-    const double q05 = q04*q0;
+    const double q0p = pow(q0, -4.0 + p1short);
 
-    const double Rg02 = Rg2*q02;
+    double yy = 1.0/(L*r2*r2) * b/exp_qr_b*q0p
+        * (8.0*b3*L
+           - 8.0*b3*exp_qr_b*L
+           + 2.0*b3*exp_qr_b*L*p2short
+           - 2.0*b*exp_qr_b*L*p2short*qr2
+           + 4.0*b*exp_qr_b*L*qr2
+           - 2.0*b3*L*p2short
+           + 4.0*b*L*qr2
+           - M_PI*exp_qr_b*qr2*q0*r2
+           + M_PI*exp_qr_b*p2short*qr2*q0*r2);
 
-    const double t1 = (b*C*((4.0/15.0 - pow((double)M_E,(-(Rg02/b2))) *
-         ((11.0/15.0 + (7.0*b2)/(15.0*Rg02))) +
-         (7.0*b2)/(15.0*Rg02))));
-
-    const double t2 = (2.0*b4*(((-1.0) + pow((double)M_E,(-(Rg02/b2))) +
-         Rg02/b2))*((1.0 + 0.5*(((-1.0) -
-         tanh((-C4 + Rgb/C5)))))));
-
-    const double t3 = ((C3*pow(Rgb,((-3.0)/miu)) +
-         C2*pow(Rgb,((-2.0)/miu)) +
-         C1*pow(Rgb,((-1.0)/miu))));
-
-    const double t4 = ((1.0 + tanh(((-C4) + Rgb)/C5)));
-
-    const double t5 = (1.0/(b*p1*pow(q0,((-1.0) - p1 - p2)) -
-         b*p2*pow(q0,((-1.0) - p1 - p2))));
-
-    const double t6 = (b*C*(((-((14.0*b3)/(15.0*q03*Rg2))) +
-         (14.0*b3*pow((double)M_E,(-(Rg02/b2))))/(15.0*q03*Rg2) +
-         (2.0*pow((double)M_E,(-(Rg02/b2)))*q0*((11.0/15.0 +
-         (7.0*b2)/(15.0*Rg02)))*Rg2)/b)));
-
-    const double t7 = (Rg*((C3*pow(((Rgb)),((-3.0)/miu)) +
-         C2*pow(((Rgb)),((-2.0)/miu)) +
-         C1*pow(((Rgb)),((-1.0)/miu))))*pow(sech_WR(((-C4) +
-         Rgb)/C5),2));
-
-    const double t8 = (b4*Rg*(((-1.0) + pow((double)M_E,(-(Rg02/b2))) +
-         Rg02/b2))*pow(sech_WR(((-C4) + Rgb)/C5),2));
-
-    const double t9 = (2.0*b4*(((2.0*q0*Rg2)/b -
-         (2.0*pow((double)M_E,(-(Rg02/b2)))*q0*Rg2)/b))*((1.0 + 0.5*(((-1.0) -
-         tanh(((-C4) + Rgb)/C5))))));
-
-    const double t10 = (8.0*b4*b*(((-1.0) + pow((double)M_E,(-(Rg02/b2))) +
-         Rg02/b2))*((1.0 + 0.5*(((-1.0) - tanh(((-C4) +
-         Rgb)/C5))))));
-
-    const double t11 = (((-((3.0*C3*Rg*pow(((Rgb)),((-1.0) -
-          3.0/miu)))/miu)) - (2.0*C2*Rg*pow(((Rgb)),((-1.0) -
-          2.0/miu)))/miu - (C1*Rg*pow(((Rgb)),((-1.0) -
-          1.0/miu)))/miu));
-
-    const double t12 = ((1.0 + tanh(((-C4) + Rgb)/C5)));
-
-    const double t13 = (b*C*((4.0/15.0 - pow((double)M_E,(-(Rg02/b2)))*((11.0/15.0 +
-          (7.0*b2)/(15.0*q02* Rg2))) +
-          (7.0*b2)/(15.0*Rg02))));
-
-    const double t14 = (2.0*b4*(((-1.0) + pow((double)M_E,(-(Rg02/b2))) +
-          Rg02/b2))*((1.0 + 0.5*(((-1.0) - tanh(((-C4) +
-          Rgb)/C5))))));
-
-    const double t15 = ((C3*pow(((Rgb)),((-3.0)/miu)) +
-        C2*pow(((Rgb)),((-2.0)/miu)) +
-        C1*pow(((Rgb)),((-1.0)/miu))));
-
-
-    double yy = (pow(q0,p1)*(((-((b*M_PI)/(L*q0))) +t1/L +t2/(q04*Rg22) +
-        0.5*t3*t4)) + (t5*((pow(q0,(p1 - p2))*
-        (((-pow(q0,(-p1)))*(((b2*M_PI)/(L*q02) +t6/L +t7/(2.0*C5) -
-        t8/(C5*q04*Rg22) + t9/(q04*Rg22) -t10/(q05*Rg22) + 0.5*t11*t12)) -
-        b*p1*pow(q0,((-1.0) - p1))*(((-((b*M_PI)/(L*q0))) + t13/L +
-        t14/(q04*Rg22) + 0.5*t15*((1.0 + tanh(((-C4) +
-        Rgb)/C5)))))))))));
-
-    return (yy);
-}
-
-static double
-a2long(double q, double L, double b, double p1, double p2, double q0)
-{
-    double C;
-
-    if( L/b > 10.0) {
-        C = 3.06/pow((L/b),0.44);
-    } else {
-        C = 1.0;
-    }
-
-    const double C1 = 1.22;
-    const double C2 = 0.4288;
-    const double C3 = -1.651;
-    const double C4 = 1.523;
-    const double C5 = 0.1477;
-    const double miu = 0.585;
-
-    const double Rg2 = Rgsquare(q,L,b);
-    const double Rg22 = Rg2*Rg2;
-    const double b2 = b*b;
-    const double b3 = b*b*b;
-    const double b4 = b3*b;
-    const double q02 = q0*q0;
-    const double q03 = q0*q0*q0;
-    const double q04 = q03*q0;
-    const double q05 = q04*q0;
-    const double Rg = sqrt(Rg2);
-    const double Rgb = Rg*q0/b;
-    const double Rg02 = Rg2*q02;
-
-    const double t1 = (1.0/(b* p1*pow(q0,((-1.0) - p1 - p2)) -
-         b*p2*pow(q0,((-1.0) - p1 - p2)) ));
-
-    const double t2 = (b*C*(((-1.0*((14.0*b3)/(15.0*q03*Rg2))) +
-         (14.0*b3*pow((double)M_E,(-(Rg02/b2))))/(15.0*q03*Rg2) +
-         (2.0*pow((double)M_E,(-(Rg02/b2)))*q0*((11.0/15.0 +
-         (7*b2)/(15.0*Rg02)))*Rg2)/b)))/L;
-
-    const double t3 = (Rg*((C3*pow(((Rgb)),((-3.0)/miu)) +
-         C2*pow(((Rgb)),((-2.0)/miu)) +
-         C1*pow(((Rgb)),((-1.0)/miu))))*
-         pow(sech_WR(((-C4) +Rgb)/C5),2.0))/(2.0*C5);
-
-    const double t4 = (b4*Rg*(((-1.0) + pow((double)M_E,(-(Rg02/b2))) +
-         Rg02/b2))*pow(sech_WR(((-C4) +
-         Rgb)/C5),2))/(C5*q04*Rg22);
-
-    const double t5 = (2.0*b4*(((2.0*q0*Rg2)/b -
-         (2.0*pow((double)M_E,(-(Rg02/b2)))*q0*Rg2)/b))*
-         ((1.0 + 0.5*(((-1.0) - tanh(((-C4) +
-         Rgb)/C5))))))/(q04*Rg22);
-
-    const double t6 = (8.0*b4*b*(((-1.0) + pow((double)M_E,(-(Rg02/b2))) +
-         Rg02/b2))*((1.0 + 0.5*(((-1) - tanh(((-C4) +
-         Rgb)/C5))))))/(q05*Rg22);
-
-    const double t7 = (((-((3.0*C3*Rg*pow(((Rgb)),((-1.0) -
-         3.0/miu)))/miu)) - (2.0*C2*Rg*pow(((Rgb)),
-         ((-1.0) - 2.0/miu)))/miu - (C1*Rg*pow(((Rgb)),
-         ((-1.0) - 1.0/miu)))/miu));
-
-    const double t8 = ((1.0 + tanh(((-C4) + Rgb)/C5)));
-
-    const double t9 = (b*C*((4.0/15.0 - pow((double)M_E,(-(Rg02/b2)))*((11.0/15.0 +
-         (7.0*b2)/(15*Rg02))) + (7.0*b2)/(15.0*Rg02))))/L;
-
-    const double t10 = (2.0*b4*(((-1) + pow((double)M_E,(-(Rg02/b2))) +
-          Rg02/b2))*((1.0 + 0.5*(((-1) - tanh(((-C4) +
-          Rgb)/C5))))))/(q04*Rg22);
-
-    const double yy = ((-1.0*(t1* ((-pow(q0,-p1)*(((b2*M_PI)/(L*q02) +
-         t2 + t3 - t4 + t5 - t6 + 0.5*t7*t8)) - b*p1*pow(q0,((-1.0) - p1))*
-         (((-((b*M_PI)/(L*q0))) + t9 + t10 +
-         0.5*((C3*pow(((Rgb)),((-3.0)/miu)) +
-         C2*pow(((Rgb)),((-2.0)/miu)) +
-         C1*pow(((Rgb)),((-1.0)/miu))))*
-         ((1.0 + tanh(((-C4) + Rgb)/C5))))))))));
-
-    return (yy);
-}
-
-//
-static double
-a_short(double q, double L, double b, double p1short,
-        double p2short, double factor, double pdiff, double q0)
-{
-    const double Rg2_sh = Rgsquareshort(q,L,b);
-    const double Rg2_sh2 = Rg2_sh*Rg2_sh;
-    const double b3 = b*b*b;
-    const double t1 = ((q0*q0*Rg2_sh)/(b*b));
-    const double Et1 = exp(t1);
-    const double Emt1 = 1.0/Et1;
-    const double q02 = q0*q0;
-    const double q0p = pow(q0,(-4.0 + p1short) );
-
-    double yy = ((factor/(L*(pdiff)*Rg2_sh2)*
-        ((b*Emt1*q0p*((8.0*b3*L - 8.0*b3*Et1*L - 2.0*b3*L*p2short +
-        2.0*b3*Et1*L*p2short + 4.0*b*L*q02*Rg2_sh + 4.0*b*Et1*L*q02*Rg2_sh -
-        2.0*b*Et1*L*p2short*q02*Rg2_sh - Et1*M_PI*q02*q0*Rg2_sh2 +
-        Et1*p2short*M_PI*q02*q0*Rg2_sh2))))));
-
-    return(yy);
+    return yy;
 }
 static double
-a1short(double q, double L, double b, double p1short, double p2short, double q0)
+a_short(double qp, double L, double b
+        /*double p1short, double p2short*/, double q0)
 {
+    const double p1short = 5.36;
+    const double p2short = 5.62;
 
-    double factor = 1.0;
-    return a_short(q, L, b, p1short, p2short, factor, p1short - p2short, q0);
-}
-
-static double
-a2short(double q, double L, double b, double p1short, double p2short, double q0)
-{
-    double factor = -1.0;
-    return a_short(q, L, b, p2short, p1short, factor, p1short-p2short, q0);
+    const double r2 = Rgsquareshort(L,b);
+    const double exp_qr_b = exp(r2*square(q0/b));
+    const double pdiff = p1short - p2short;
+    const double a1 = _short(r2,exp_qr_b,L,b,p1short,p2short,q0)/pdiff;
+    const double a2= -_short(r2,exp_qr_b,L,b,p2short,p1short,q0)/pdiff;
+    const double ans = a1*pow(qp*b, -p1short) + a2*pow(qp*b, -p2short) + M_PI/(qp*L);
+    return ans;
 }
 
 //WR named this w (too generic)
@@ -273,132 +116,114 @@ w_WR(double x)
     return 0.5*(1 + tanh((x - 1.523)/0.1477));
 }
 
-//
 static double
-u1(double q, double L, double b)
+Sdebye(double qsq)
 {
-    return Rgsquareshort(q,L,b)*q*q;
+#if FLOAT_SIZE>4
+#define DEBYE_CUTOFF 0.01  // 1e-13 error
+#else
+#define DEBYE_CUTOFF 1.0  // 1e-7 error
+#endif
+
+    if (qsq < DEBYE_CUTOFF) {
+        const double x = qsq;
+        const double C0 = +1.;
+        const double C1 = -1./3.;
+        const double C2 = +1./12.;
+        const double C3 = -1./60.;
+        const double C4 = +1./360.;
+        const double C5 = -1./2520.;
+        const double C6 = +1./20160.;
+        const double C7 = -1./181440.;
+        return ((((((C7*x + C6)*x + C5)*x + C4)*x + C3)*x + C2)*x + C1)*x + C0;
+    /* failed attempt to improve double precision better than 1e-13
+    } else if (qsq < 1.0) {
+        // taylor series around q^2 = 0.5
+        const double x = qsq - 0.5;
+        const double sqrt_e = sqrt(M_E);
+        const double C0 = 8./sqrt_e - 4.;
+        const double C1 = 24. - 40./sqrt_e;
+        const double C2 = 132./sqrt_e - 80.;
+        const double C3 = 224. - 1108./(3.*sqrt_e);
+        const double C4 = 2849./(3.*sqrt_e) - 576.;
+        const double C5 = 1408 - 11607./(5.*sqrt_e);
+        return ((((C5*x + C4)*x + C3)*x + C2)*x + C1)*x + C0;
+    */
+    } else {
+        return 2.*(exp(-qsq) + qsq - 1.)/(qsq*qsq);
+    }
 }
 
-static double
-u_WR(double q, double L, double b)
-{
-    return Rgsquare(q,L,b)*q*q;
-}
-
-static double
-Sdebye_kernel(double arg)
-{
-    // ORIGINAL
-    double result = 2.0*(exp(-arg) + arg -1.0)/(arg*arg);
-
-    // CONVERSION 1 from http://herbie.uwplse.org/
-    //
-    // exhibits discontinuity - needs more investigation
-    //double a1 = 1.0/6.0;
-    //double a2 = 1.0/72.0;
-    //double a3 = 1.0/24.0;
-    //double result = pow((1.0 - a1*arg - (a2+a3)*arg*arg), 2);
-
-    return result;
-}
-static double
-Sdebye(double q, double L, double b)
-{
-    double arg = u_WR(q,L,b);
-    return Sdebye_kernel(arg);
-}
-
-//
-static double
-Sdebye1(double q, double L, double b)
-{
-    double arg = u1(q,L,b);
-    return Sdebye_kernel(arg);
-
-}
-
-//
 static double
 Sexv(double q, double L, double b)
 {
-
     const double C1=1.22;
     const double C2=0.4288;
     const double C3=-1.651;
     const double miu = 0.585;
-    const double qRg = q*sqrt(Rgsquare(q,L,b));
-    const double x = pow(qRg, -1.0/miu);
+    const double qr = q*sqrt(Rgsquare(L,b));
+    const double x = pow(qr, -1.0/miu);
+    const double w = w_WR(qr);
 
-    double yy = (1.0 - w_WR(qRg))*Sdebye(q,L,b) +
-            w_WR(qRg)*x*(C1 + x*(C2 + x*C3));
-    return (yy);
+    const double base = (1.0 - w)*Sdebye(qr*qr);
+    const double correction = w*x*(C1 + x*(C2 + x*C3));
+    return base + correction;
 }
 
 
 static double
-Sexvnew(double q, double L, double b)
+Sexv_new(double q, double L, double b)
 {
-    double yy;
+    // Modified by Yun on Oct. 15,
 
-    const double C1 =1.22;
-    const double C2 =0.4288;
-    const double C3 =-1.651;
-    const double miu = 0.585;
+    // Correction factor to apply to the returned Sexv
+    const double qr = q*sqrt(Rgsquare(L,b));
+    const double qr2 = qr*qr;
+    const double t1 = (4.0/15.0 + 7.0/(15.0*qr2) - (11.0/15.0 + 7.0/(15.0*qr2))*exp(-qr2))*(b/L);
+    const double C = (L/b > 10.0) ? 3.06*pow(L/b, -0.44)*t1 : t1;
+
+    const double Sexv_orig = Sexv(q, L, b);
+
+    // calculating the derivative to decide on the correction (cutoff) term?
+    // Note: this is modified from WRs original code
     const double del=1.05;
-    const double qRg = q*sqrt(Rgsquare(q,L,b));
-    const double x = pow(qRg, -1.0/miu);
+    const double qdel = (Sexv(q*del,L,b) - Sexv_orig)/(q*(del - 1.0));
 
-
-    //calculating the derivative to decide on the corection (cutoff) term?
-    // I have modified this from WRs original code
-    const double qdel = (Sexv(q*del,L,b)-Sexv(q,L,b))/(q*del - q);
-    const double C_star2 =(qdel >= 0.0) ? 0.0 : 1.0;
-
-    yy = (1.0 - w_WR(qRg))*Sdebye(q,L,b) +
-         C_star2*w_WR(qRg)*
-         x*(C1 + x*(C2 + x*C3));
-
-    return (yy);
+    if (qdel < 0) {
+        // return Sexv with the additional correction
+        return Sexv_orig + C;
+    } else {
+        // recalculate Sexv base and return it with the additional correction
+        const double w = w_WR(qr);
+        return (1.0 - w)*Sdebye(qr2) + C;
+    }
 }
 
-double Sk_WR(double q, double L, double b)
+
+static double
+Sk_WR(double q, double L, double b)
 {
-    //
-    const double p1 = 4.12;
-    const double p2 = 4.42;
-    const double p1short = 5.36;
-    const double p2short = 5.62;
-    const double q0 = 3.1;
+    const double Rg_short = sqrt(Rgsquareshort(L, b));
+    double q0short = fmax(1.9/Rg_short, 3.0);
+    double ans;
 
-    double q0short = fmax(1.9/sqrt(Rgsquareshort(q,L,b)),3.0);
-    double Sexvmodify, ans;
-
-    const double C =(L/b > 10.0) ? 3.06/pow((L/b),0.44) : 1.0;
-
-    if( L > 4*b ) { // Longer Chains
-       if (q*b <= 3.1) {   //Modified by Yun on Oct. 15,
-         Sexvmodify = Sexvnew(q, L, b);
-         ans = Sexvmodify + C * (4.0/15.0 + 7.0/(15.0*u_WR(q,L,b)) -
-            (11.0/15.0 + 7.0/(15.0*u_WR(q,L,b)))*exp(-u_WR(q,L,b)))*(b/L);
-
-       } else { //q(i)*b > 3.1
-         ans = a1long(q, L, b, p1, p2, q0)/(pow((q*b),p1)) +
-               a2long(q, L, b, p1, p2, q0)/(pow((q*b),p2)) + M_PI/(q*L);
-       }
-    } else { //L <= 4*b Shorter Chains
-       if (q*b <= fmax(1.9/sqrt(Rgsquareshort(q,L,b)),3.0) ) {
-         if (q*b<=0.01) {
-            ans = 1.0 - Rgsquareshort(q,L,b)*(q*q)/3.0;
-         } else {
-            ans = Sdebye1(q,L,b);
-         }
-       } else {  //q*b > max(1.9/sqrt(Rgsquareshort(q(i),L,b)),3)
-         ans = a1short(q,L,b,p1short,p2short,q0short)/(pow((q*b),p1short)) +
-               a2short(q,L,b,p1short,p2short,q0short)/(pow((q*b),p2short)) +
-               M_PI/(q*L);
-       }
+    if( L > 4*b ) { // L > 4*b : Longer Chains
+        if (q*b <= 3.1) {
+            ans = Sexv_new(q, L, b);
+        } else { //q(i)*b > 3.1
+            ans = a_long(q, L, b /*, p1, p2, q0*/);
+        }
+    } else { // L <= 4*b : Shorter Chains
+        if (q*b <= q0short) { // q*b <= fmax(1.9/Rg_short, 3)
+            if (q*b <= 0.01) {
+                ans = 1.0 - square(q*Rg_short)/3.0;
+            } else {
+                ans = Sdebye(square(q*Rg_short));
+            }
+        } else {  // q*b > max(1.9/Rg_short, 3)
+            ans = a_short(q, L, b /*, p1short, p2short*/, q0short);
+        }
     }
 
-  return(ans);
+    return ans;
 }
