@@ -325,36 +325,33 @@ add_function(
 add_function(
     name="debye",
     mp_function=lambda x: 2*(mp.exp(-x**2) + x**2 - 1)/x**4,
-    np_function=lambda x: 2*(np.exp(-x**2) + x**2 - 1)/x**4,
+    np_function=lambda x: 2*(np.expm1(-x**2) + x**2)/x**4,
     ocl_function=make_ocl("""
     const double qsq = q*q;
-    if (qsq < -0.75*0.75) { // Pade approximation around 0
+    if (qsq < 1.0) { // Pade approximation
         const double x = qsq;
-        if (0) {
+        if (0) { // 0.36 single
             // PadeApproximant[2*Exp[-x^2] + x^2-1)/x^4, {x, 0, 4}]
             return (x*x/180. + 1.)/((1./30.*x + 1./3.)*x + 1);
-        } else if (0) {
+        } else if (0) { // 1.0 for single
             // padeapproximant[2*exp[-x^2] + x^2-1)/x^4, {x, 0, 6}]
-            // works for single precision, with qsq < 1
             const double A1=1./24., A2=1./84, A3=-1./3360;
             const double B1=3./8., B2=3./56., B3=1./336.;
             return (((A3*x + A2)*x + A1)*x + 1.)/(((B3*x + B2)*x + B1)*x + 1.);
-        } else if (0) {
+        } else if (1) { // 1.0 for single, 0.25 for double
             // PadeApproximant[2*Exp[-x^2] + x^2-1)/x^4, {x, 0, 8}]
             const double A1=1./15., A2=1./60, A3=0., A4=1./75600.;
             const double B1=2./5., B2=1./15., B3=1./180., B4=1./5040.;
             return ((((A4*x + A3)*x + A2)*x + A1)*x + 1.)
                   /((((B4*x + B3)*x + B2)*x + B1)*x + 1.);
-
-        } else {
+        } else { // 1.0 for single, 0.5 for double
             // PadeApproximant[2*Exp[-x^2] + x^2-1)/x^4, {x, 0, 8}]
-            // works for double precision, with qsq < 9/16
             const double A1=1./12., A2=2./99., A3=1./2640., A4=1./23760., A5=-1./1995840.;
             const double B1=5./12., B2=5./66., B3=1./132., B4=1./2376., B5=1./95040.;
             return (((((A5*x + A4)*x + A3)*x + A2)*x + A1)*x + 1.)
                   /(((((B5*x + B4)*x + B3)*x + B2)*x + B1)*x + 1.);
         }
-    } else if (qsq < 0.1) { // Taylor series around 0.
+    } else if (qsq < 1.) { // Taylor series; 0.9 for single, 0.25 for double
         const double x = qsq;
         const double C0 = +1.;
         const double C1 = -1./3.;
@@ -368,7 +365,7 @@ add_function(
         //return (((((C6*x + C5)*x + C4)*x + C3)*x + C2)*x + C1)*x + C0;
         return ((((((C7*x + C6)*x + C5)*x + C4)*x + C3)*x + C2)*x + C1)*x + C0;
     } else {
-        return 2.*(exp(-qsq) + qsq - 1.)/(qsq*qsq);
+        return 2.*(expm1(-qsq) + qsq)/(qsq*qsq);
     }
     """, "sas_debye"),
 )
