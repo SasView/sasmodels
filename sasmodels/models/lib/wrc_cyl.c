@@ -191,6 +191,7 @@ Sk_WR(double q, double L, double b)
     double q0short = fmax(1.9/Rg_short, 3.0);
     double ans;
 
+
     if( L > 4*b ) { // L > 4*b : Longer Chains
         if (q*b <= 3.1) {
             ans = Sexv_new(q, L, b);
@@ -199,8 +200,14 @@ Sk_WR(double q, double L, double b)
         }
     } else { // L <= 4*b : Shorter Chains
         if (q*b <= q0short) { // q*b <= fmax(1.9/Rg_short, 3)
-            // 2017-10-01 pkienzle: moved low q approximation into Sdebye()
             //printf("branch C-%d q=%g L=%g b=%g\n", square(q*Rg_short)<DEBYE_CUTOFF, q, L, b);
+            // Note that q0short is usually 3, but it will be greater than 3
+            // small enough b, depending on the L/b ratio:
+            //     L/b == 1 => b < 2.37
+            //     L/b == 2 => b < 1.36
+            //     L/b == 3 => b < 1.00
+            //     L/b == 4 => b < 0.816
+            // 2017-10-01 pkienzle: moved low q approximation into Sdebye()
             ans = Sdebye(square(q*Rg_short));
         } else {  // q*b > max(1.9/Rg_short, 3)
             //printf("branch D q=%g L=%g b=%g\n", q, L, b);
