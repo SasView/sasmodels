@@ -25,7 +25,7 @@ static double
 w_WR(double x)
 {
     // Pedersen eq. 16:
-    //    w = 1 - [1 + tanh((x-C4)/C5)]/2
+    //    w = [1 + tanh((x-C4)/C5)]/2
     const double C4 = 1.523;
     const double C5 = 0.1477;
     return 0.5 + 0.5*tanh((x - C4)/C5);
@@ -149,7 +149,7 @@ Sexv(double q, double L, double b)
     const double qr = q*sqrt(Rgsquare(L,b));
     const double qr_miu = pow(qr, -1.0/miu);
     const double w = w_WR(qr);
-    const double t10 = qr*Sdebye(qr*qr)*(1.0 - w);
+    const double t10 = Sdebye(qr*qr)*(1.0 - w);
     const double t11 = ((C3*qr_miu + C2)*qr_miu + C1)*qr_miu;
 
     return t10 + w*t11;
