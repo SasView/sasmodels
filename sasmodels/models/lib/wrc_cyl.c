@@ -53,7 +53,7 @@ Sdebye(double qsq)
 }
 
 static double
-a_long(double qp, double L, double b/*, double p1, double p2, double q0*/)
+a_long(double q, double L, double b/*, double p1, double p2, double q0*/)
 {
     const double p1 = 4.12;
     const double p2 = 4.42;
@@ -68,6 +68,7 @@ a_long(double qp, double L, double b/*, double p1, double p2, double q0*/)
     const double miu = 0.585;
 
     const double C = (L/b>10.0 ? 3.06*pow(L/b, -0.44) : 1.0);
+    //printf("branch B-%d q=%g L=%g b=%g\n", C==1.0, q, L, b);
     const double r2 = Rgsquare(L,b);
     const double r = sqrt(r2);
     const double qr_b = q0*r/b;
@@ -96,7 +97,7 @@ a_long(double qp, double L, double b/*, double p1, double p2, double q0*/)
     const double a1 = pow(q0,p1)*t13 - t1*pow(q0,-p2)*(t12 + b*p1/q0*t13);
     const double a2 = t1*pow(q0,-p1)*(t12 + b*p1/q0*t13);
 
-    const double ans = a1*pow(qp*b, -p1) + a2*pow(qp*b, -p2) + M_PI/(qp*L);
+    const double ans = a1*pow(q*b, -p1) + a2*pow(q*b, -p2) + M_PI/(q*L);
     return ans;
 }
 
@@ -172,8 +173,10 @@ Sexv_new(double q, double L, double b)
     const double qdel = (Sexv(q*del,L,b) - Sexv_orig)/(q*(del - 1.0));
 
     if (qdel < 0) {
+        //printf("branch A1-%d q=%g L=%g b=%g\n", C==1.0, q, L, b);
         return t9 + Sexv_orig;
     } else {
+        //printf("branch A2-%d q=%g L=%g b=%g\n", C==1.0, q, L, b);
         const double w = w_WR(qr);
         const double t10 = Sdebye(qr*qr)*(1.0 - w);
         return t9 + t10;
@@ -197,8 +200,10 @@ Sk_WR(double q, double L, double b)
     } else { // L <= 4*b : Shorter Chains
         if (q*b <= q0short) { // q*b <= fmax(1.9/Rg_short, 3)
             // 2017-10-01 pkienzle: moved low q approximation into Sdebye()
+            //printf("branch C-%d q=%g L=%g b=%g\n", square(q*Rg_short)<DEBYE_CUTOFF, q, L, b);
             ans = Sdebye(square(q*Rg_short));
         } else {  // q*b > max(1.9/Rg_short, 3)
+            //printf("branch D q=%g L=%g b=%g\n", q, L, b);
             ans = a_short(q, L, b /*, p1short, p2short*/, q0short);
         }
     }

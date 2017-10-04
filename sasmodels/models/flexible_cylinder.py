@@ -89,7 +89,7 @@ def random():
     import numpy as np
     length = 10**np.random.uniform(2, 6)
     radius = 10**np.random.uniform(1, 3)
-    kuhn_length = 10**np.random.uniform(-2, -0.7)*length  # at least 10 segments
+    kuhn_length = 10**np.random.uniform(-2, 0)*length
     pars = dict(
         length=length,
         radius=radius,
