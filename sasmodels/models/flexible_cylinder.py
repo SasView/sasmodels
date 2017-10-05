@@ -99,14 +99,13 @@ def random():
 
 tests = [
     # Accuracy tests based on content in test/utest_other_models.py
-    # Currently fails in OCL
-    # [{'length':     1000.0,  # test T1
-    #  'kuhn_length': 100.0,
-    #  'radius':       20.0,
-    #  'sld':           1.0,
-    #  'sld_solvent':   6.3,
-    #  'background':    0.0001,
-    #  }, 0.001, 3509.2187],
+    [{'length':     1000.0,  # test T1
+      'kuhn_length': 100.0,
+      'radius':       20.0,
+      'sld':           1.0,
+      'sld_solvent':   6.3,
+      'background':    0.0001,
+     }, 0.001, 3509.2187],
 
     # Additional tests with larger range of parameters
     [{'length':    1000.0,  # test T2
