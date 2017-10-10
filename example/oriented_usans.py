@@ -5,7 +5,7 @@ from sasmodels.core import load_model
 from sasmodels.bumps_model import Model, Experiment
 
 # Spherical particle data, not ellipsoids
-sans, usans = load_data('../../sasview/sasview/test/1d_data/latex_smeared.xml')
+sans, usans = load_data('latex_smeared.xml', index='all')
 usans.qmin, usans.qmax = np.min(usans.x), np.max(usans.x)
 usans.mask = (usans.x < 0.0)
 usans.oriented = True
