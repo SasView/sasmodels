@@ -55,7 +55,7 @@ def load_data(filename, index=0):
         filename, indexstr = filename[:-1].split('[')
         index = int(indexstr)
     datasets = loader.load(filename)
-    if datasets is None:
+    if not datasets:  # None or []
         raise IOError("Data %r could not be loaded" % filename)
     if not isinstance(datasets, list):
         datasets = [datasets]
