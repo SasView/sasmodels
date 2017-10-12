@@ -43,7 +43,7 @@ except ImportError:
 else:
     Data = Union["Data1D", "Data2D", "SesansData"]
 
-def load_data(filename):
+def load_data(filename, index=0):
     # type: (str) -> Data
     """
     Load data using a sasview loader.
@@ -54,23 +54,19 @@ def load_data(filename):
     if '[' in filename:
         filename, indexstr = filename[:-1].split('[')
         index = int(indexstr)
-    else:
-        index = None
     datasets = loader.load(filename)
-    if datasets is None:
+    if not datasets:  # None or []
         raise IOError("Data %r could not be loaded" % filename)
     if not isinstance(datasets, list):
         datasets = [datasets]
-    if index is None and len(datasets) > 1:
-        raise ValueError("Need to specify filename[index] for multipart data")
-    data = datasets[index if index is not None else 0]
-    if hasattr(data, 'x'):
-        data.qmin, data.qmax = data.x.min(), data.x.max()
-        data.mask = (np.isnan(data.y) if data.y is not None
-                     else np.zeros_like(data.x, dtype='bool'))
-    elif hasattr(data, 'qx_data'):
-        data.mask = ~data.mask
-    return data
+    for data in datasets:
+        if hasattr(data, 'x'):
+            data.qmin, data.qmax = data.x.min(), data.x.max()
+            data.mask = (np.isnan(data.y) if data.y is not None
+                        else np.zeros_like(data.x, dtype='bool'))
+        elif hasattr(data, 'qx_data'):
+            data.mask = ~data.mask
+    return datasets[index] if index != 'all' else datasets
 
 
 def set_beam_stop(data, radius, outer=None):
