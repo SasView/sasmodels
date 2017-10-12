@@ -68,6 +68,12 @@ To run the model use the *bumps* program::
 
     $ bumps example/model.py --preview
 
+Note that bumps and sasmodels are included as part of the SasView
+distribution.  On windows, bumps can be called from the cmd prompt
+as follows::
+
+    SasViewCom bumps.cli example/model.py --preview
+
 Using sasmodels directly
 ========================
 
@@ -104,3 +110,7 @@ example should help, *example/cylinder_eval.py*::
     Iq = call_kernel(kernel, dict(radius=200.))
     plt.loglog(q, Iq)
     plt.show()
+
+On windows, this can be called from the cmd prompt using sasview as::
+
+    SasViewCom example/cylinder_eval.py

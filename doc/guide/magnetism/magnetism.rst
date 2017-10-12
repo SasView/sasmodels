@@ -76,7 +76,7 @@ The user input parameters are:
 
 ===========   ================================================================
  M0_sld        = $D_M M_0$
- Up_theta      = $\theta_{up}$
+ Up_theta      = $\theta_\mathrm{up}$
  M_theta       = $\theta_M$
  M_phi         = $\phi_M$
  Up_frac_i     = (spin up)/(spin up + spin down) neutrons *before* the sample

@@ -132,9 +132,10 @@ class Experiment(DataMixin):
     The resulting model can be used directly in a Bumps FitProblem call.
     """
     _cache = None # type: Dict[str, np.ndarray]
-    def __init__(self, data, model, cutoff=1e-5):
+    def __init__(self, data, model, cutoff=1e-5, name=None):
         # type: (Data, Model, float) -> None
         # remember inputs so we can inspect from outside
+        self.name = data.filename if name is None else name
         self.model = model
         self.cutoff = cutoff
         self._interpret_data(data, model.sasmodel)
@@ -203,7 +204,9 @@ class Experiment(DataMixin):
         Plot the data and residuals.
         """
         data, theory, resid = self._data, self.theory(), self.residuals()
-        plot_theory(data, theory, resid, view, Iq_calc=self.Iq_calc)
+        # TODO: hack to display oriented usans 2-D pattern
+        Iq_calc = self.Iq_calc if isinstance(self.Iq_calc, tuple) else None
+        plot_theory(data, theory, resid, view, Iq_calc=Iq_calc)
 
     def simulate_data(self, noise=None):
         # type: (float) -> None
