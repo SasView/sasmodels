@@ -1,6 +1,32 @@
 #!/usr/bin/env python
 r"""
-Show numerical precision of $2 J_1(x)/x$.
+Show numerical precision of various expressions.
+
+Evaluates the same function(s) in single and double precision and compares
+the results to 500 digit mpmath evaluation of the same function.
+
+Note: a quick way to generation C and python code for taylor series
+expansions from sympy:
+
+    import sympy as sp
+    x = sp.var("x")
+    f = sp.sin(x)/x
+    t = sp.series(f, n=12).removeO()  # taylor series with no O(x^n) term
+    p = sp.horner(t)   # Horner representation
+    p = p.replace(x**2, sp.var("xsq")  # simplify if alternate terms are zero
+    p = p.n(15)  # evaluate coefficients to 15 digits (optional)
+    c_code = sp.ccode(p, assign_to=sp.var("p"))  # convert to c code
+    py_code = c[:-1]  # strip semicolon to convert c to python
+
+    # mpmath has pade() rational function approximation, which might work
+    # better than the taylor series for some functions:
+    P, Q = mp.pade(sp.Poly(t.n(15),x).coeffs(), L, M)
+    P = sum(a*x**n for n,a in enumerate(reversed(P)))
+    Q = sum(a*x**n for n,a in enumerate(reversed(Q)))
+    c_code = sp.ccode(sp.horner(P)/sp.horner(Q), assign_to=sp.var("p"))
+
+    # There are richardson and shanks series accelerators in both sympy
+    # and mpmath that may be helpful.
 """
 from __future__ import division, print_function
 
