@@ -1,9 +1,3 @@
-double form_volume(double radius, double thickness, double length);
-double Iq(double q, double radius, double thickness, double length, double sld,
-    double solvent_sld);
-double Iqxy(double qx, double qy, double radius, double thickness, double length, double sld,
-    double solvent_sld, double theta, double phi);
-
 //#define INVALID(v) (v.radius_core >= v.radius)
 
 // From Igor library
@@ -27,7 +21,7 @@ _fq(double qab, double qc,
     return psi*t2;
 }
 
-double
+static double
 form_volume(double radius, double thickness, double length)
 {
     double v_shell = M_PI*length*(square(radius+thickness) - radius*radius);
@@ -35,7 +29,7 @@ form_volume(double radius, double thickness, double length)
 }
 
 
-double
+static double
 Iq(double q, double radius, double thickness, double length,
     double sld, double solvent_sld)
 {
@@ -56,16 +50,11 @@ Iq(double q, double radius, double thickness, double length,
     return _hollow_cylinder_scaling(Aq, solvent_sld - sld, volume);
 }
 
-double
-Iqxy(double qx, double qy,
+static double
+Iqxy(double qab, double qc,
     double radius, double thickness, double length,
-    double sld, double solvent_sld, double theta, double phi)
+    double sld, double solvent_sld)
 {
-    double q, sin_alpha, cos_alpha;
-    ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sin_alpha, cos_alpha);
-    const double qab = q*sin_alpha;
-    const double qc = q*cos_alpha;
-
     const double form = _fq(qab, qc, radius, thickness, length);
 
     const double vol = form_volume(radius, thickness, length);

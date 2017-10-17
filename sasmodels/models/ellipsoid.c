@@ -38,19 +38,12 @@ Iq(double q,
 }
 
 static double
-Iqxy(double qx, double qy,
+Iqxy(double qab, double qc,
     double sld,
     double sld_solvent,
     double radius_polar,
-    double radius_equatorial,
-    double theta,
-    double phi)
+    double radius_equatorial)
 {
-    double q, sin_alpha, cos_alpha;
-    ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sin_alpha, cos_alpha);
-    const double qab = q*sin_alpha;
-    const double qc = q*cos_alpha;
-
     const double qr = sqrt(square(radius_equatorial*qab) + square(radius_polar*qc));
     const double f = sas_3j1x_x(qr);
     const double s = (sld - sld_solvent) * form_volume(radius_polar, radius_equatorial);

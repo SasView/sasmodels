@@ -45,22 +45,13 @@ Iq(double q,
 }
 
 static double
-Iqxy(double qx, double qy,
+Iqxy(double qa, double qb, double qc,
     double sld,
     double sld_solvent,
     double radius_equat_minor,
     double radius_equat_major,
-    double radius_polar,
-    double theta,
-    double phi,
-    double psi)
+    double radius_polar)
 {
-    double q, xhat, yhat, zhat;
-    ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, xhat, yhat, zhat);
-    const double qa = q*xhat;
-    const double qb = q*yhat;
-    const double qc = q*zhat;
-
     const double qr = sqrt(square(radius_equat_minor*qa)
                            + square(radius_equat_major*qb)
                            + square(radius_polar*qc));

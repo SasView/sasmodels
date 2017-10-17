@@ -54,17 +54,10 @@ Iq(double q, double radius_minor, double r_ratio, double length,
 
 
 static double
-Iqxy(double qx, double qy,
+Iqxy(double qa, double qb, double qc,
      double radius_minor, double r_ratio, double length,
-     double sld, double solvent_sld,
-     double theta, double phi, double psi)
+     double sld, double solvent_sld)
 {
-    double q, xhat, yhat, zhat;
-    ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, xhat, yhat, zhat);
-    const double qa = q*xhat;
-    const double qb = q*yhat;
-    const double qc = q*zhat;
-
     // Compute:  r = sqrt((radius_major*cos_nu)^2 + (radius_minor*cos_mu)^2)
     // Given:    radius_major = r_ratio * radius_minor
     const double qr = radius_minor*sqrt(square(r_ratio*qa) + square(qb));

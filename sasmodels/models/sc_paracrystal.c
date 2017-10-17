@@ -35,9 +35,10 @@ form_volume(double radius)
 }
 
 
-static double Iq(double q, double dnn,
-  double d_factor, double radius,
-  double sld, double solvent_sld)
+static double
+Iq(double q, double dnn,
+    double d_factor, double radius,
+    double sld, double solvent_sld)
 {
     // translate a point in [-1,1] to a point in [0, 2 pi]
     const double phi_m = M_PI_4;
@@ -75,18 +76,12 @@ static double Iq(double q, double dnn,
 }
 
 
-static double Iqxy(double qx, double qy,
+static double
+Iqxy(double qa, double qb, double qc,
     double dnn, double d_factor, double radius,
-    double sld, double solvent_sld,
-    double theta, double phi, double psi)
+    double sld, double solvent_sld)
 {
-    double q, zhat, yhat, xhat;
-    ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, xhat, yhat, zhat);
-    const double qa = q*xhat;
-    const double qb = q*yhat;
-    const double qc = q*zhat;
-
-    q = sqrt(qa*qa + qb*qb + qc*qc);
+    const double q = sqrt(qa*qa + qb*qb + qc*qc);
     const double Pq = sphere_form(q, radius, sld, solvent_sld);
     const double Zq = sc_Zq(qa, qb, qc, dnn, d_factor);
     return sc_volume_fraction(radius, dnn) * Pq * Zq;

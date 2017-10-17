@@ -74,22 +74,15 @@ Iq(double q,
 }
 
 static double
-Iqxy(double qx, double qy,
+Iqxy(double qab, double qc,
     double radius_equat_core,
     double x_core,
     double thick_shell,
     double x_polar_shell,
     double core_sld,
     double shell_sld,
-    double solvent_sld,
-    double theta,
-    double phi)
+    double solvent_sld)
 {
-    double q, sin_alpha, cos_alpha;
-    ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sin_alpha, cos_alpha);
-    const double qab = q*sin_alpha;
-    const double qc = q*cos_alpha;
-
     const double sld_core_shell = core_sld - shell_sld;
     const double sld_shell_solvent = shell_sld - solvent_sld;
 

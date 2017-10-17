@@ -1,17 +1,12 @@
-double form_volume(double length_a, double length_b, double length_c);
-double Iq(double q, double sld, double solvent_sld,
-    double length_a, double length_b, double length_c);
-double Iqxy(double qx, double qy, double sld, double solvent_sld,
-    double length_a, double length_b, double length_c,
-    double theta, double phi, double psi);
-
-double form_volume(double length_a, double length_b, double length_c)
+static double
+form_volume(double length_a, double length_b, double length_c)
 {
     return length_a * length_b * length_c;
 }
 
 
-double Iq(double q,
+static double
+Iq(double q,
     double sld,
     double solvent_sld,
     double length_a,
@@ -56,22 +51,14 @@ double Iq(double q,
 }
 
 
-double Iqxy(double qx, double qy,
+static double
+Iq2d(double qa, double qb, double qc,
     double sld,
     double solvent_sld,
     double length_a,
     double length_b,
-    double length_c,
-    double theta,
-    double phi,
-    double psi)
+    double length_c)
 {
-    double q, xhat, yhat, zhat;
-    ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, xhat, yhat, zhat);
-    const double qa = q*xhat;
-    const double qb = q*yhat;
-    const double qc = q*zhat;
-
     const double siA = sas_sinx_x(0.5*length_a*qa);
     const double siB = sas_sinx_x(0.5*length_b*qb);
     const double siC = sas_sinx_x(0.5*length_c*qc);

@@ -1,25 +1,25 @@
 // NOTE that "length" here is the full height of the core!
 static double
 form_volume(double r_minor,
-        double x_core,
-        double thick_rim,
-        double thick_face,
-        double length)
+    double x_core,
+    double thick_rim,
+    double thick_face,
+    double length)
 {
     return M_PI*(r_minor+thick_rim)*(r_minor*x_core+thick_rim)*(length+2.0*thick_face);
 }
 
 static double
 Iq(double q,
-        double r_minor,
-        double x_core,
-        double thick_rim,
-        double thick_face,
-        double length,
-        double sld_core,
-        double sld_face,
-        double sld_rim,
-        double sld_solvent)
+    double r_minor,
+    double x_core,
+    double thick_rim,
+    double thick_face,
+    double length,
+    double sld_core,
+    double sld_face,
+    double sld_rim,
+    double sld_solvent)
 {
      // core_shell_bicelle_elliptical, RKH Dec 2016, based on elliptical_cylinder and core_shell_bicelle
      // tested against limiting cases of cylinder, elliptical_cylinder, stacked_discs, and core_shell_bicelle
@@ -70,26 +70,17 @@ Iq(double q,
 }
 
 static double
-Iqxy(double qx, double qy,
-          double r_minor,
-          double x_core,
-          double thick_rim,
-          double thick_face,
-          double length,
-          double sld_core,
-          double sld_face,
-          double sld_rim,
-          double sld_solvent,
-          double theta,
-          double phi,
-          double psi)
+Iqxy(double qa, double qb, double qc,
+    double r_minor,
+    double x_core,
+    double thick_rim,
+    double thick_face,
+    double length,
+    double sld_core,
+    double sld_face,
+    double sld_rim,
+    double sld_solvent)
 {
-    double q, xhat, yhat, zhat;
-    ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, xhat, yhat, zhat);
-    const double qa = q*xhat;
-    const double qb = q*yhat;
-    const double qc = q*zhat;
-
     const double dr1 = sld_core-sld_face;
     const double dr2 = sld_rim-sld_solvent;
     const double dr3 = sld_face-sld_rim;

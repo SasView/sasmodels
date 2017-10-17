@@ -66,7 +66,7 @@ Iq(double q,
 }
 
 static double
-Iqxy(double qx, double qy,
+Iqxy(double qab, double qc,
     double radius,
     double thick_rim,
     double thick_face,
@@ -74,15 +74,8 @@ Iqxy(double qx, double qy,
     double core_sld,
     double face_sld,
     double rim_sld,
-    double solvent_sld,
-    double theta,
-    double phi)
+    double solvent_sld)
 {
-    double q, sin_alpha, cos_alpha;
-    ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sin_alpha, cos_alpha);
-    const double qab = q*sin_alpha;
-    const double qc = q*cos_alpha;
-
     double fq = bicelle_kernel(qab, qc, radius, thick_rim, thick_face,
                            0.5*length, core_sld, face_sld, rim_sld,
                            solvent_sld);

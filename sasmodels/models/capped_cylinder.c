@@ -1,9 +1,3 @@
-double form_volume(double radius, double radius_cap, double length);
-double Iq(double q, double sld, double solvent_sld,
-    double radius, double radius_cap, double length);
-double Iqxy(double qx, double qy, double sld, double solvent_sld,
-    double radius, double radius_cap, double length, double theta, double phi);
-
 #define INVALID(v) (v.radius_cap < v.radius)
 
 // Integral over a convex lens kernel for t in [h/R,1].  See the docs for
@@ -16,7 +10,7 @@ double Iqxy(double qx, double qy, double sld, double solvent_sld,
 //   theta is the angle of the cylinder wrt q.
 static double
 _cap_kernel(double qab, double qc, double h, double radius_cap,
-            double half_length)
+    double half_length)
 {
     // translate a point in [-1,1] to a point in [lower,upper]
     const double upper = 1.0;
@@ -59,7 +53,8 @@ _fq(double qab, double qc, double h, double radius_cap, double radius, double ha
     return Aq;
 }
 
-double form_volume(double radius, double radius_cap, double length)
+static double
+form_volume(double radius, double radius_cap, double length)
 {
     // cap radius should never be less than radius when this is called
 
@@ -88,8 +83,9 @@ double form_volume(double radius, double radius_cap, double length)
     return M_PI*(radius*radius*(length+hc) + hc*hc*hc/3.0);
 }
 
-double Iq(double q, double sld, double solvent_sld,
-          double radius, double radius_cap, double length)
+static double
+Iq(double q, double sld, double solvent_sld,
+    double radius, double radius_cap, double length)
 {
     const double h = sqrt(radius_cap*radius_cap - radius*radius);
     const double half_length = 0.5*length;
@@ -117,16 +113,11 @@ double Iq(double q, double sld, double solvent_sld,
 }
 
 
-double Iqxy(double qx, double qy,
+static double
+Iqxy(double qab, double qc,
     double sld, double solvent_sld, double radius,
-    double radius_cap, double length,
-    double theta, double phi)
+    double radius_cap, double length)
 {
-    double q, sin_alpha, cos_alpha;
-    ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sin_alpha, cos_alpha);
-    const double qab = q*sin_alpha;
-    const double qc = q*cos_alpha;
-
     const double h = sqrt(radius_cap*radius_cap - radius*radius);
     const double Aq = _fq(qab, qc, h, radius_cap, radius, 0.5*length);
 

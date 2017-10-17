@@ -1,10 +1,3 @@
-double form_volume(double radius_bell, double radius, double length);
-double Iq(double q, double sld, double solvent_sld,
-        double radius_bell, double radius, double length);
-double Iqxy(double qx, double qy, double sld, double solvent_sld,
-        double radius_bell, double radius, double length,
-        double theta, double phi);
-
 #define INVALID(v) (v.radius_bell < v.radius)
 
 //barbell kernel - same as dumbell
@@ -54,10 +47,10 @@ _fq(double qab, double qc, double h,
     return Aq;
 }
 
-
-double form_volume(double radius_bell,
-        double radius,
-        double length)
+static double
+form_volume(double radius_bell,
+    double radius,
+    double length)
 {
     // bell radius should never be less than radius when this is called
     const double hdist = sqrt(square(radius_bell) - square(radius));
@@ -68,8 +61,9 @@ double form_volume(double radius_bell,
     return M_PI*square(radius)*length + 2.0*M_PI*(p1+p2-p3);
 }
 
-double Iq(double q, double sld, double solvent_sld,
-          double radius_bell, double radius, double length)
+static double
+Iq(double q, double sld, double solvent_sld,
+    double radius_bell, double radius, double length)
 {
     const double h = -sqrt(radius_bell*radius_bell - radius*radius);
     const double half_length = 0.5*length;
@@ -94,16 +88,11 @@ double Iq(double q, double sld, double solvent_sld,
 }
 
 
-double Iqxy(double qx, double qy,
-        double sld, double solvent_sld,
-        double radius_bell, double radius, double length,
-        double theta, double phi)
+static double
+Iqxy(double qab, double qc,
+    double sld, double solvent_sld,
+    double radius_bell, double radius, double length)
 {
-    double q, sin_alpha, cos_alpha;
-    ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sin_alpha, cos_alpha);
-    const double qab = q*sin_alpha;
-    const double qc = q*cos_alpha;
-
     const double h = -sqrt(square(radius_bell) - square(radius));
     const double Aq = _fq(qab, qc, h, radius_bell, radius, 0.5*length);
 

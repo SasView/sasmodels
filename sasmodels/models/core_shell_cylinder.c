@@ -47,21 +47,14 @@ Iq(double q,
 }
 
 
-double Iqxy(double qx, double qy,
+double Iqxy(double qab, double qc,
     double core_sld,
     double shell_sld,
     double solvent_sld,
     double radius,
     double thickness,
-    double length,
-    double theta,
-    double phi)
+    double length)
 {
-    double q, sin_alpha, cos_alpha;
-    ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sin_alpha, cos_alpha);
-    const double qab = q*sin_alpha;
-    const double qc = q*cos_alpha;
-
     const double core_r = radius;
     const double core_h = 0.5*length;
     const double core_vd = form_volume(radius,0,length) * (core_sld-shell_sld);

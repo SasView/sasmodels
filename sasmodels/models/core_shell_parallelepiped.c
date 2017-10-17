@@ -1,15 +1,6 @@
-double form_volume(double length_a, double length_b, double length_c,
-                   double thick_rim_a, double thick_rim_b, double thick_rim_c);
-double Iq(double q, double core_sld, double arim_sld, double brim_sld, double crim_sld,
-          double solvent_sld, double length_a, double length_b, double length_c,
-          double thick_rim_a, double thick_rim_b, double thick_rim_c);
-double Iqxy(double qx, double qy, double core_sld, double arim_sld, double brim_sld,
-            double crim_sld, double solvent_sld, double length_a, double length_b,
-            double length_c, double thick_rim_a, double thick_rim_b,
-            double thick_rim_c, double theta, double phi, double psi);
-
-double form_volume(double length_a, double length_b, double length_c,
-                   double thick_rim_a, double thick_rim_b, double thick_rim_c)
+static double
+form_volume(double length_a, double length_b, double length_c,
+    double thick_rim_a, double thick_rim_b, double thick_rim_c)
 {
     //return length_a * length_b * length_c;
     return length_a * length_b * length_c +
@@ -18,7 +9,8 @@ double form_volume(double length_a, double length_b, double length_c,
            2.0 * thick_rim_c * length_a * length_b;
 }
 
-double Iq(double q,
+static double
+Iq(double q,
     double core_sld,
     double arim_sld,
     double brim_sld,
@@ -117,7 +109,8 @@ double Iq(double q,
     return 1.0e-4 * outer_total;
 }
 
-double Iqxy(double qx, double qy,
+static double
+Iqxy(double qa, double qb, double qc,
     double core_sld,
     double arim_sld,
     double brim_sld,
@@ -128,17 +121,8 @@ double Iqxy(double qx, double qy,
     double length_c,
     double thick_rim_a,
     double thick_rim_b,
-    double thick_rim_c,
-    double theta,
-    double phi,
-    double psi)
+    double thick_rim_c)
 {
-    double q, zhat, yhat, xhat;
-    ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, xhat, yhat, zhat);
-    const double qa = q*xhat;
-    const double qb = q*yhat;
-    const double qc = q*zhat;
-
     // cspkernel in csparallelepiped recoded here
     const double dr0 = core_sld-solvent_sld;
     const double drA = arim_sld-solvent_sld;
