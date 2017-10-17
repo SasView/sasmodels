@@ -86,6 +86,9 @@
 #endif // !USE_OPENCL
 
 #if defined(NEED_EXPM1)
+   // TODO: precision is a half digit lower than numpy on mac in [1e-7, 0.5]
+   // Run "explore/precision.py sas_expm1" to see this (may have to fiddle
+   // the xrange for log to see the complete range).
    static SAS_DOUBLE expm1(SAS_DOUBLE x_in) {
       double x = (double)x_in;  // go back to float for single precision kernels
       // Adapted from the cephes math library.
@@ -146,68 +149,3 @@
 inline double square(double x) { return x*x; }
 inline double cube(double x) { return x*x*x; }
 inline double sas_sinx_x(double x) { return x==0 ? 1.0 : sin(x)/x; }
-
-// To rotate from the canonical position to theta, phi, psi, first rotate by
-// psi about the major axis, oriented along z, which is a rotation in the
-// detector plane xy. Next rotate by theta about the y axis, aligning the major
-// axis in the xz plane. Finally, rotate by phi in the detector plane xy.
-// To compute the scattering, undo these rotations in reverse order:
-//     rotate in xy by -phi, rotate in xz by -theta, rotate in xy by -psi
-// The returned q is the length of the q vector and (xhat, yhat, zhat) is a unit
-// vector in the q direction.
-// To change between counterclockwise and clockwise rotation, change the
-// sign of phi and psi.
-
-#if 1
-//think cos(theta) should be sin(theta) in new coords, RKH 11Jan2017
-#define ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sn, cn) do { \
-    SINCOS(phi*M_PI_180, sn, cn); \
-    q = sqrt(qx*qx + qy*qy); \
-    cn = (q==0. ? 1.0 : (cn*qx + sn*qy)/q * sin(theta*M_PI_180));  \
-    sn = sqrt(1 - cn*cn); \
-    } while (0)
-#else
-// SasView 3.x definition of orientation
-#define ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sn, cn) do { \
-    SINCOS(theta*M_PI_180, sn, cn); \
-    q = sqrt(qx*qx + qy*qy);\
-    cn = (q==0. ? 1.0 : (cn*cos(phi*M_PI_180)*qx + sn*qy)/q); \
-    sn = sqrt(1 - cn*cn); \
-    } while (0)
-#endif
-
-#if 1
-#define ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, xhat, yhat, zhat) do { \
-    q = sqrt(qx*qx + qy*qy); \
-    const double qxhat = qx/q; \
-    const double qyhat = qy/q; \
-    double sin_theta, cos_theta; \
-    double sin_phi, cos_phi; \
-    double sin_psi, cos_psi; \
-    SINCOS(theta*M_PI_180, sin_theta, cos_theta); \
-    SINCOS(phi*M_PI_180, sin_phi, cos_phi); \
-    SINCOS(psi*M_PI_180, sin_psi, cos_psi); \
-    xhat = qxhat*(-sin_phi*sin_psi + cos_theta*cos_phi*cos_psi) \
-         + qyhat*( cos_phi*sin_psi + cos_theta*sin_phi*cos_psi); \
-    yhat = qxhat*(-sin_phi*cos_psi - cos_theta*cos_phi*sin_psi) \
-         + qyhat*( cos_phi*cos_psi - cos_theta*sin_phi*sin_psi); \
-    zhat = qxhat*(-sin_theta*cos_phi) \
-         + qyhat*(-sin_theta*sin_phi); \
-    } while (0)
-#else
-// SasView 3.x definition of orientation
-#define ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, cos_alpha, cos_mu, cos_nu) do { \
-    q = sqrt(qx*qx + qy*qy); \
-    const double qxhat = qx/q; \
-    const double qyhat = qy/q; \
-    double sin_theta, cos_theta; \
-    double sin_phi, cos_phi; \
-    double sin_psi, cos_psi; \
-    SINCOS(theta*M_PI_180, sin_theta, cos_theta); \
-    SINCOS(phi*M_PI_180, sin_phi, cos_phi); \
-    SINCOS(psi*M_PI_180, sin_psi, cos_psi); \
-    cos_alpha = cos_theta*cos_phi*qxhat + sin_theta*qyhat; \
-    cos_mu = (-sin_theta*cos_psi*cos_phi - sin_psi*sin_phi)*qxhat + cos_theta*cos_psi*qyhat; \
-    cos_nu = (-cos_phi*sin_psi*sin_theta + sin_phi*cos_psi)*qxhat + sin_psi*cos_theta*qyhat; \
-    } while (0)
-#endif

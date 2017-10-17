@@ -713,7 +713,7 @@ def make_source(model_info):
 
     # Define the parameter table
     # TODO: plug in current line number
-    source.append('#line 542 "sasmodels/generate.py"')
+    source.append('#line 716 "sasmodels/generate.py"')
     source.append("#define PARAMETER_TABLE \\")
     source.append("\\\n".join(p.as_definition()
                               for p in partable.kernel_parameters))
@@ -729,18 +729,22 @@ def make_source(model_info):
         call_volume = "#define CALL_VOLUME(v) 1.0"
     source.append(call_volume)
 
-    refs = ["_q[_i]"] + _call_pars("_v.", partable.iq_parameters)
-    call_iq = "#define CALL_IQ(_q,_i,_v) Iq(%s)" % (",".join(refs))
+    model_refs = _call_pars("_v.", partable.iq_parameters)
+    pars = ",".join(["_q"] + model_refs)
+    call_iq = "#define CALL_IQ(_q, _v) Iq(%s)" % pars
     if _have_Iqxy(user_code) or isinstance(model_info.Iqxy, str):
-        # Call 2D model
-        refs = ["_q[2*_i]", "_q[2*_i+1]"] + _call_pars("_v.", partable.iqxy_parameters)
-        call_iqxy = "#define CALL_IQ(_q,_i,_v) Iqxy(%s)" % (",".join(refs))
+        if partable.is_asymmetric:
+            pars = ",".join(["_qa", "_qb", "_qc"] + model_refs)
+            call_iqxy = "#define CALL_IQ_ABC(_qa,_qb,_qc,_v) Iqxy(%s)" % pars
+            clear_iqxy = "#undef CALL_IQ_ABC"
+        else:
+            pars = ",".join(["_qa", "_qc"] + model_refs)
+            call_iqxy = "#define CALL_IQ_AC(_qa,_qc,_v) Iqxy(%s)" % pars
+            clear_iqxy = "#undef CALL_IQ_AC"
     else:
-        # Call 1D model with sqrt(qx^2 + qy^2)
-        #warnings.warn("Creating Iqxy = Iq(sqrt(qx^2 + qy^2))")
-        # still defined:: refs = ["q[i]"] + _call_pars("v", iq_parameters)
-        pars_sqrt = ["sqrt(_q[2*_i]*_q[2*_i]+_q[2*_i+1]*_q[2*_i+1])"] + refs[1:]
-        call_iqxy = "#define CALL_IQ(_q,_i,_v) Iq(%s)" % (",".join(pars_sqrt))
+        pars = ",".join(["_qa"] + model_refs)
+        call_iqxy = "#define CALL_IQ_A(_qa,_v) Iq(%s)" % pars
+        clear_iqxy = "#undef CALL_IQ_A"
 
     magpars = [k-2 for k, p in enumerate(partable.call_parameters)
                if p.type == 'sld']
@@ -756,8 +760,8 @@ def make_source(model_info):
 
     # TODO: allow mixed python/opencl kernels?
 
-    ocl = kernels(ocl_code, call_iq, call_iqxy, model_info.name)
-    dll = kernels(dll_code, call_iq, call_iqxy, model_info.name)
+    ocl = kernels(ocl_code, call_iq, call_iqxy, clear_iqxy, model_info.name)
+    dll = kernels(dll_code, call_iq, call_iqxy, clear_iqxy, model_info.name)
     result = {
         'dll': '\n'.join(source+dll[0]+dll[1]+dll[2]),
         'opencl': '\n'.join(source+ocl[0]+ocl[1]+ocl[2]),
@@ -766,7 +770,7 @@ def make_source(model_info):
     return result
 
 
-def kernels(kernel, call_iq, call_iqxy, name):
+def kernels(kernel, call_iq, call_iqxy, clear_iqxy, name):
     # type: ([str,str], str, str, str) -> List[str]
     code = kernel[0]
     path = kernel[1].replace('\\', '\\\\')
@@ -786,7 +790,7 @@ def kernels(kernel, call_iq, call_iqxy, name):
         call_iqxy,
         '#line 1 "%s Iqxy"' % path,
         code,
-        "#undef CALL_IQ",
+        clear_iqxy,
         "#undef KERNEL_NAME",
     ]
 
@@ -797,8 +801,8 @@ def kernels(kernel, call_iq, call_iqxy, name):
         call_iqxy,
         '#line 1 "%s Imagnetic"' % path,
         code,
+        clear_iqxy,
         "#undef MAGNETIC",
-        "#undef CALL_IQ",
         "#undef KERNEL_NAME",
     ]
 

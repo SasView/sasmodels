@@ -69,7 +69,80 @@ static double mag_sld(double qx, double qy, double p,
     return sld + perp*p;
 }
 
-#endif // MAGNETIC
+//#endif // MAGNETIC
+
+// TODO: way too hackish
+// For the 1D kernel, CALL_IQ_[A,AC,ABC] and MAGNETIC are not defined
+// so view_direct *IS NOT* included
+// For the 2D kernel, CALL_IQ_[A,AC,ABC] is defined but MAGNETIC is not
+// so view_direct *IS* included
+// For the magnetic kernel, CALL_IQ_[A,AC,ABC] is defined, but so is MAGNETIC
+// so view_direct *IS NOT* included
+#else // !MAGNETIC
+
+// ===== Implement jitter in orientation =====
+// To change the definition of the angles, run explore/angles.py, which
+// uses sympy to generate the equations.
+
+#if defined(CALL_IQ_AC) // oriented symmetric
+static double
+view_direct(double qx, double qy,
+             double theta, double phi,
+             ParameterTable table)
+{
+    double sin_theta, cos_theta;
+    double sin_phi, cos_phi;
+
+    // reverse view
+    SINCOS(theta*M_PI_180, sin_theta, cos_theta);
+    SINCOS(phi*M_PI_180, sin_phi, cos_phi);
+    const double qa = qx*cos_phi*cos_theta + qy*sin_phi*cos_theta;
+    const double qb = -qx*sin_phi + qy*cos_phi;
+    const double qc = qx*sin_theta*cos_phi + qy*sin_phi*sin_theta;
+
+    // reverse jitter after view
+    SINCOS(table.theta*M_PI_180, sin_theta, cos_theta);
+    SINCOS(table.phi*M_PI_180, sin_phi, cos_phi);
+    const double dqc = qa*sin_theta - qb*sin_phi*cos_theta + qc*cos_phi*cos_theta;
+
+    // Indirect calculation of qab, from qab^2 = |q|^2 - qc^2
+    const double dqa = sqrt(-dqc*dqc + qx*qx + qy*qy);
+
+    return CALL_IQ_AC(dqa, dqc, table);
+}
+
+#elif defined(CALL_IQ_ABC) // oriented asymmetric
+
+static double
+view_direct(double qx, double qy,
+             double theta, double phi, double psi,
+             ParameterTable table)
+{
+    double sin_theta, cos_theta;
+    double sin_phi, cos_phi;
+    double sin_psi, cos_psi;
+
+    // reverse view
+    SINCOS(theta*M_PI_180, sin_theta, cos_theta);
+    SINCOS(phi*M_PI_180, sin_phi, cos_phi);
+    SINCOS(psi*M_PI_180, sin_psi, cos_psi);
+    const double qa = qx*(sin_phi*sin_psi + cos_phi*cos_psi*cos_theta) + qy*(sin_phi*cos_psi*cos_theta - sin_psi*cos_phi);
+    const double qb = qx*(-sin_phi*cos_psi + sin_psi*cos_phi*cos_theta) + qy*(sin_phi*sin_psi*cos_theta + cos_phi*cos_psi);
+    const double qc = qx*sin_theta*cos_phi + qy*sin_phi*sin_theta;
+
+    // reverse jitter after view
+    SINCOS(table.theta*M_PI_180, sin_theta, cos_theta);
+    SINCOS(table.phi*M_PI_180, sin_phi, cos_phi);
+    SINCOS(table.psi*M_PI_180, sin_psi, cos_psi);
+    const double dqa = qa*cos_psi*cos_theta + qb*(sin_phi*sin_theta*cos_psi - sin_psi*cos_phi) + qc*(-sin_phi*sin_psi - sin_theta*cos_phi*cos_psi);
+    const double dqb = qa*sin_psi*cos_theta + qb*(sin_phi*sin_psi*sin_theta + cos_phi*cos_psi) + qc*(sin_phi*cos_psi - sin_psi*sin_theta*cos_phi);
+    const double dqc = qa*sin_theta - qb*sin_phi*cos_theta + qc*cos_phi*cos_theta;
+
+    return CALL_IQ_ABC(dqa, dqb, dqc, table);
+}
+#endif
+
+#endif // !MAGNETIC
 
 kernel
 void KERNEL_NAME(
@@ -109,6 +182,15 @@ void KERNEL_NAME(
   set_spins(values[NUM_PARS+2], values[NUM_PARS+3], spins);
   SINCOS(-values[NUM_PARS+4]*M_PI_180, sin_mspin, cos_mspin);
 #endif // MAGNETIC
+
+#if defined(CALL_IQ_AC) // oriented symmetric
+  const double theta = values[details->theta_par+2];
+  const double phi = values[details->theta_par+3];
+#elif defined(CALL_IQ_ABC) // oriented asymmetric
+  const double theta = values[details->theta_par+2];
+  const double phi = values[details->theta_par+3];
+  const double psi = values[details->theta_par+4];
+#endif
 
   // Fill in the initial variables
   //   values[0] is scale
@@ -214,6 +296,9 @@ void KERNEL_NAME(
 #endif
 
 //if (q_index == 0) {printf("step:%d of %d, pars:",step,pd_stop); for (int i=0; i < NUM_PARS; i++) printf("p%d=%g ",i, local_values.vector[i]); printf("\n"); }
+//#if defined(CALL_IQ_AC) // oriented symmetric
+//if (q_index == 0) {printf("step:%d of %d, pars:",step,pd_stop); printf("theta=%g dtheta=%g",theta,local_values.table.theta); printf("\n"); }
+//#endif
 
     #ifdef INVALID
     if (!INVALID(local_values.table))
@@ -266,13 +351,29 @@ void KERNEL_NAME(
                     SLD(M1+3*sk, slds[sk]);
                 }
                 #endif
-                scattering += CALL_IQ(q, q_index, local_values.table);
+#  if defined(CALL_IQ_A) // unoriented
+                scattering += CALL_IQ_A(sqrt(qsq), local_values.table);
+#  elif defined(CALL_IQ_AC) // oriented symmetric
+                scattering += view_direct(qx, qy, theta, phi, local_values.table);
+#  elif defined(CALL_IQ_ABC) // oriented asymmetric
+                scattering += view_direct(qx, qy, theta, phi, psi, local_values.table);
+#  endif
               }
             }
           }
         }
-#else  // !MAGNETIC
-        const double scattering = CALL_IQ(q, q_index, local_values.table);
+#elif defined(CALL_IQ) // 1d, not MAGNETIC
+          const double scattering = CALL_IQ(q[q_index], local_values.table);
+#else  // 2d data, not magnetic
+          const double qx = q[2*q_index];
+          const double qy = q[2*q_index+1];
+#  if defined(CALL_IQ_A) // unoriented
+          const double scattering = CALL_IQ_A(sqrt(qx*qx+qy*qy), local_values.table);
+#  elif defined(CALL_IQ_AC) // oriented symmetric
+          const double scattering = view_direct(qx, qy, theta, phi, local_values.table);
+#  elif defined(CALL_IQ_ABC) // oriented asymmetric
+          const double scattering = view_direct(qx, qy, theta, phi, psi, local_values.table);
+#  endif
 #endif // !MAGNETIC
         this_result += weight0 * scattering;
       }

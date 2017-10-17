@@ -56,7 +56,7 @@ class Dispersion(object):
         sigma = self.width * center if relative else self.width
         if not relative:
             # For orientation, the jitter is relative to 0 not the angle
-            #center = 0
+            center = 0
             pass
         if sigma == 0 or self.npts < 2:
             if lb <= center <= ub:
@@ -228,7 +228,7 @@ def get_weights(disperser, n, width, nsigmas, value, limits, relative):
     cls = MODELS[disperser]
     obj = cls(n, width, nsigmas)
     v, w = obj.get_weights(value, limits[0], limits[1], relative)
-    return v, w
+    return v, w/np.sum(w)
 
 
 def plot_weights(model_info, pairs):

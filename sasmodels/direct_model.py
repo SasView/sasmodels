@@ -65,11 +65,10 @@ def call_kernel(calculator, pars, cutoff=0., mono=False):
         active = lambda name: True
 
     #print("pars",[p.id for p in parameters.call_parameters])
-    vw_pairs = [(get_weights(p, pars) if active(p.name)
-                 else ([pars.get(p.name, p.default)], [1.0]))
-                for p in parameters.call_parameters]
+    mesh = [get_weights(p, pars, active(p.name))
+            for p in parameters.call_parameters]
 
-    call_details, values, is_magnetic = make_kernel_args(calculator, vw_pairs)
+    call_details, values, is_magnetic = make_kernel_args(calculator, mesh)
     #print("values:", values)
     return calculator(call_details, values, cutoff, is_magnetic)
 
@@ -129,7 +128,7 @@ def call_profile(model_info, **pars):
     return x, y, model_info.profile_axes
 
 
-def get_weights(parameter, values):
+def get_weights(parameter, values, active=True):
     # type: (Parameter, Dict[str, float]) -> Tuple[np.ndarray, np.ndarray]
     """
     Generate the distribution for parameter *name* given the parameter values
@@ -139,17 +138,21 @@ def get_weights(parameter, values):
     from the *pars* dictionary for parameter value and parameter dispersion.
     """
     value = float(values.get(parameter.name, parameter.default))
-    relative = parameter.relative_pd
-    limits = parameter.limits
-    disperser = values.get(parameter.name+'_pd_type', 'gaussian')
     npts = values.get(parameter.name+'_pd_n', 0)
     width = values.get(parameter.name+'_pd', 0.0)
-    nsigma = values.get(parameter.name+'_pd_nsigma', 3.0)
-    if npts == 0 or width == 0:
-        return [value], [1.0]
-    value, weight = weights.get_weights(
-        disperser, npts, width, nsigma, value, limits, relative)
-    return value, weight / np.sum(weight)
+    if npts == 0 or width == 0 or not active:
+        # Note: orientation parameters have the viewing angle as the parameter
+        # value and the jitter in the distribution, so be sure to set the
+        # empty pd for orientation parameters to 0.
+        pd = [value if parameter.type != 'orientation' else 0.0], [1.0]
+    else:
+        relative = parameter.relative_pd
+        limits = parameter.limits
+        disperser = values.get(parameter.name+'_pd_type', 'gaussian')
+        nsigma = values.get(parameter.name+'_pd_nsigma', 3.0)
+        pd = weights.get_weights(disperser, npts, width, nsigma,
+                                value, limits, relative)
+    return value, pd[0], pd[1]
 
 
 def _vol_pars(model_info, pars):

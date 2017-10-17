@@ -112,8 +112,9 @@ class PyKernel(Kernel):
         self.dim = '2d' if q_input.is_2d else '1d'
 
         partable = model_info.parameters
-        kernel_parameters = (partable.iqxy_parameters if q_input.is_2d
-                             else partable.iq_parameters)
+        #kernel_parameters = (partable.iqxy_parameters if q_input.is_2d
+        #                     else partable.iq_parameters)
+        kernel_parameters = partable.iq_parameters
         volume_parameters = partable.form_volume_parameters
 
         # Create an array to hold the parameter values.  There will be a

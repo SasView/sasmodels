@@ -90,7 +90,7 @@ Options (* for default):
     -neval=1 sets the number of evals for more accurate timing
 
     === precision options ===
-    -calc=default uses the default calcution precision
+    -engine=default uses the default calcution precision
     -single/-double/-half/-fast sets an OpenCL calculation engine
     -single!/-double!/-quad! sets an OpenMP calculation engine
     -sasview sets the sasview calculation engine
@@ -109,7 +109,7 @@ Options (* for default):
 The interpretation of quad precision depends on architecture, and may
 vary from 64-bit to 128-bit, with 80-bit floats being common (1e-19 precision).
 On unix and mac you may need single quotes around the DLL computation
-engines, such as -calc='single!,double!' since !, is treated as a history
+engines, such as -engine='single!,double!' since !, is treated as a history
 expansion request in the shell.
 
 Key=value pairs allow you to set specific values for the model parameters.
@@ -121,7 +121,7 @@ Items later on the command line override those that appear earlier.
 Examples:
 
     # compare single and double precision calculation for a barbell
-    sascomp barbell -calc=single,double
+    sascomp barbell -engine=single,double
 
     # generate 10 random lorentz models, with seed=27
     sascomp lorentz -sets=10 -seed=27
@@ -130,7 +130,7 @@ Examples:
     sascomp sphere,ellipsoid radius_polar=radius radius_equatorial=radius
 
     # model timing test requires multiple evals to perform the estimate
-    sascomp pringle -calc=single,double -timing=100,100 -noplot
+    sascomp pringle -engine=single,double -timing=100,100 -noplot
 """
 
 # Update docs with command line usage string.   This is separate from the usual
@@ -1016,7 +1016,7 @@ OPTIONS = [
     'neval=',  # for timing...
 
     # Precision options
-    'calc=',
+    'engine=',
     'half', 'fast', 'single', 'double', 'single!', 'double!', 'quad!',
     'sasview',  # TODO: remove sasview 3.x support
 
@@ -1166,7 +1166,7 @@ def parse_opts(argv):
         elif arg.startswith('-random='):   opts['seed'] = int(arg[8:])
         elif arg.startswith('-title='):    opts['title'] = arg[7:]
         elif arg.startswith('-data='):     opts['datafile'] = arg[6:]
-        elif arg.startswith('-calc='):     opts['engine'] = arg[6:]
+        elif arg.startswith('-engine='):   opts['engine'] = arg[8:]
         elif arg.startswith('-neval='):    opts['evals'] = arg[7:]
         elif arg == '-random':  opts['seed'] = np.random.randint(1000000)
         elif arg == '-preset':  opts['seed'] = -1
