@@ -1,53 +1,222 @@
+#!/usr/bin/env python
+"""
+Generate code for orientation transforms using symbolic algebra.
+
+To make it easier to generate correct transforms for oriented shapes, we
+use the sympy symbolic alegbra package to do the matrix multiplication.
+The transforms are displayed both using an ascii math notation, and as
+C or python code which can be pasted directly into the kernel driver.
+
+If ever we decide to change conventions, we simply need to adjust the
+order and parameters to the rotation matrices.  For display we want to
+use forward transforms for the mesh describing the shape, first applying
+jitter, then adjusting the view.  For calculation we know the effective q
+so we instead need to first unwind the view, using the inverse rotation,
+then undo the jitter to get the q to calculate for the shape in its
+canonical orientation.
+
+Set *OUTPUT* to the type of code you want to see: ccode, python, math
+or any combination.
+"""
+
 from __future__ import print_function
 
+import codecs
+import sys
+import re
+
 import sympy as sp
-sp.init_printing()
-dphi, dpsi, dtheta = sp.var("phi_d psi_d theta_d")
-phi, psi, theta = sp.var("phi psi theta")
-x, y, z = sp.var("x y z")
-qx, qy, qz = sp.var("qx qy qz")
-qa, qb, qc = sp.var("qa qb qc")
+from sympy import pi, sqrt, sin, cos, Matrix, Eq
+
+# Select output
+OUTPUT = ""
+OUTPUT = OUTPUT + "ccode"
+#OUTPUT = OUTPUT + "python "
+OUTPUT = OUTPUT + "math "
+REUSE_SINCOS = True
+QC_ONLY = True # show only what is needed for dqc in the symmetric case
+
+# include unicode symbols in output, even if piping to a pager
+sys.stdout = codecs.getwriter('utf8')(sys.stdout)
+sp.init_printing(use_unicode=True)
+
+def subs(s):
+    """
+    Transform sympy generated code to follow sasmodels naming conventions.
+    """
+    if REUSE_SINCOS:
+        s = re.sub(r'(phi|psi|theta)\^\+', r'\1', s)  # jitter rep:  V^+ => V
+    s = re.sub(r'([a-z]*)\^\+', r'd\1', s)  # jitter rep:  V^+ => dV
+    s = re.sub(r'(cos|sin)\(([a-z]*)\)', r'\1_\2', s)  # cos(V) => cos_V
+    s = re.sub(r'pow\(([a-z]*), 2\)', r'\1*\1', s)  # pow(V, 2) => V*V
+    return s
+
+def comment(s):
+    r"""
+    Add a comment to the generated code.  Use '\n' to separate lines.
+    """
+    if 'ccode' in OUTPUT:
+        for line in s.split("\n"):
+            print("// " + line if line else "")
+    if 'python' in OUTPUT:
+        for line in s.split("\n"):
+            print("    ## " + line if line else "")
+
+def vprint(var, vec, comment=None, post=None):
+    """
+    Generate assignment statements.
+
+    *var* could be a single sympy symbol or a 1xN vector of symbols.
+
+    *vec* could be a single sympy expression or a 1xN vector of expressions
+    such as results from a matrix-vector multiplication.
+
+    *comment* if present is added to the start of the block as documentation.
+    """
+    #for v, row in zip(var, vec): sp.pprint(Eq(v, row))
+    desc = sp.pretty(Eq(var, vec), wrap_line=False)
+    if not isinstance(var, Matrix):
+        var, vec = [var], [vec]
+    if 'ccode' in OUTPUT:
+        if 'math' in OUTPUT:
+            print("\n// " + comment if comment else "")
+            print("/*")
+            for line in desc.split("\n"):
+                print(" * "+line)
+            print(" *\n */")
+        else:
+            print("\n    // " + comment if comment else "")
+        if post:
+            print("    // " + post)
+        for v, row in zip(var, vec):
+            print(subs("    const double " + sp.ccode(row, assign_to=v)))
+    if 'python' in OUTPUT:
+        if comment:
+            print("\n    ## " + comment)
+        if 'math' in OUTPUT:
+            for line in desc.split("\n"):
+                print("    # " + line)
+        if post:
+            print("    ## " + post)
+        for v, row in zip(var, vec):
+            print(subs("    " + sp.ccode(row, assign_to=v)[:-1]))
+
+    if OUTPUT == 'math ':
+        print("\n// " + comment if comment else "")
+        if post: print("// " + post)
+        print(desc)
+
+def mprint(var, mat, comment=None, post=None):
+    """
+    Generate assignment statements for matrix elements.
+    """
+    n = sp.prod(var.shape)
+    vprint(var.reshape(n, 1), mat.reshape(n, 1), comment=comment, post=post)
 
 def Rx(a):
-    return sp.Matrix([[1, 0, 0], [0, sp.cos(a), sp.sin(a)], [0, -sp.sin(a), sp.cos(a)]])
+    """Rotate y and z about x"""
+    return Matrix([[1, 0, 0], [0, cos(a), sin(a)], [0, -sin(a), cos(a)]])
+
 def Ry(a):
-    return sp.Matrix([[sp.cos(a), 0, sp.sin(a)], [0, 1, 0], [-sp.sin(a), 0, sp.cos(a)]])
+    """Rotate x and z about y"""
+    return Matrix([[cos(a), 0, sin(a)], [0, 1, 0], [-sin(a), 0, cos(a)]])
+
 def Rz(a):
-    return sp.Matrix([[sp.cos(a), sp.sin(a), 0], [-sp.sin(a), sp.cos(a), 0], [0, 0, 1]])
+    """Rotate x and y about z"""
+    return Matrix([[cos(a), sin(a), 0], [-sin(a), cos(a), 0], [0, 0, 1]])
 
-print("==== asymmetric ====")
-q_xy = sp.Matrix([[qx], [qy], [0]])
-q_abc = sp.Matrix([[qa], [qb], [qc]])
-p_xyz = sp.Matrix([[x], [y], [z]])
-jitter = Rx(dphi)*Ry(dtheta)*Rz(dpsi)
-view = Rz(phi)*Ry(theta)*Rz(psi)
-view_inv = Rz(-psi)*Ry(-theta)*Rz(-phi)
-print(">> jitter rotation")
-for row in jitter*p_xyz: sp.pprint(row)
-#print("\n>> jitter plus view")
-#for row in view*jitter*p_xyz: sp.pprint(row)
-print("\n>> view reverse")
-for row in view_inv*q_xy: sp.pprint(row)
-print("\n>> jitter reverse")
-jitter_inv = Rz(-psi)*Ry(-theta)*Rx(-phi)
-for row in jitter_inv*q_abc: sp.pprint(row)
-print("\n>> jitter view reverse")
-jitter_inv = Rz(-dpsi)*Ry(-dtheta)*Rx(-dphi)
-for row in jitter_inv*view_inv*q_xy: sp.pprint(row)
 
-print("\n\n==== symmetric ====")
-q_x = sp.Matrix([[qx], [0], [0]])
-q_ac = sp.Matrix([[qa], [0], [qc]])
-p_xyz = sp.Matrix([[x], [y], [z]])
-jitter = Rx(dphi)*Ry(dtheta)
-view = Rz(phi)*Ry(theta)
-jitter_inv = Ry(-dtheta)*Rx(-dphi)
-view_inv = Ry(-theta)*Rz(-phi)
-print(">> jitter rotation")
-for row in jitter*p_xyz: sp.pprint(row)
-#print("\n>> jitter plus view")
-#for row in view*jitter*p_xyz: sp.pprint(row)
-print("\n>> view reverse")
-for row in view_inv*q_x: sp.pprint(row)
-print("\n>> jitter reverse")
-for row in jitter_inv*q_ac: sp.pprint(row)
+## ===============  Describe the transforms ====================
+
+# Define symbols used.  Note that if you change the symbols for the jitter
+# angles, you will need to update the subs() function accordingly.
+dphi, dpsi, dtheta = sp.var("phi^+ psi^+ theta^+")
+phi, psi, theta = sp.var("phi psi theta")
+#dphi, dpsi, dtheta = sp.var("beta^+ gamma^+ alpha^+")
+#phi, psi, theta = sp.var("beta gamma alpha")
+x, y, z = sp.var("x y z")
+q = sp.var("q")
+qx, qy, qz = sp.var("qx qy qz")
+dqx, dqy, dqz = sp.var("qx^+ qy^+ qz^+")
+qa, qb, qc = sp.var("qa qb qc")
+dqa, dqb, dqc = sp.var("qa^+ qb^+ qc^+")
+qab = sp.var("qab")
+
+# 3x3 matrix M
+J = Matrix([sp.var("J(1:4)(1:4)")]).reshape(3,3)
+V = Matrix([sp.var("V(1:4)(1:4)")]).reshape(3,3)
+R = Matrix([sp.var("R(1:4)(1:4)")]).reshape(3,3)
+
+# various vectors
+q_xy = Matrix([[qx], [qy], [0]])
+q_abc = Matrix([[qa], [qb], [qc]])
+q_xyz = Matrix([[qx], [qy], [qz]])
+dq_abc = Matrix([[dqa], [dqb], [dqc]])
+dq_xyz = Matrix([[dqx], [dqy], [dqz]])
+
+# By comparing the code we generate to sasmodel 4.x orientation code, we
+# are apparently using the opposite convention for phi than I expected.
+# Theta
+#theta = pi/2 - theta
+phi = -phi
+dphi = -dphi
+
+def print_steps(jitter, jitter_inv, view, view_inv, qc_only):
+    """
+    Show the forward/reverse transform code for view and jitter.
+    """
+    if 0:  # forward calculations
+        vprint(q_xyz, jitter*q_abc, "apply jitter")
+        vprint(dq_xyz, view*q_xyz, "apply view after jitter")
+
+        #vprint(dq_xyz, view*jitter*q_abc, "combine view and jitter")
+        mprint(M, view*jitter, "forward matrix")
+
+    if 1:  # reverse calculations
+        pre_view = "set angles from view" if REUSE_SINCOS else None
+        pre_jitter = "set angles from jitter" if REUSE_SINCOS else None
+        index = slice(2,3) if qc_only else slice(None,None)
+
+        comment("\n**** direct ****")
+        vprint(q_abc, view_inv*q_xy, "reverse view", post=pre_view)
+        vprint(dq_abc[index,:], (jitter_inv*q_abc)[index,:],
+               "reverse jitter after view", post=pre_jitter)
+
+        comment("\n\n**** precalc ****")
+        #vprint(q_abc, jitter_inv*view_inv*q_xy, "combine jitter and view reverse")
+        mprint(V[:,:2], view_inv[:,:2], "reverse view matrix", post=pre_view)
+        mprint(J[index,:], jitter_inv[index,:], "reverse jitter matrix", post=pre_jitter)
+        mprint(R[index,:2], (J*V)[index,:2], "reverse matrix")
+        comment("\n**** per point ****")
+        mprint(q_abc[index,:], (R*q_xy)[index,:], "applied reverse matrix")
+        #mprint(q_abc, J*V*q_xy, "applied reverse matrix")
+        #mprint(M, jitter_inv*view_inv, "reverse matrix direct")
+
+        #vprint(q_abc, M*q_xy, "matrix application")
+
+comment("==== asymmetric ====")
+print_steps(
+    jitter=Rx(dphi)*Ry(dtheta)*Rz(dpsi),
+    jitter_inv=Rz(-dpsi)*Ry(-dtheta)*Rx(-dphi),
+    view=Rz(phi)*Ry(theta)*Rz(psi),
+    view_inv=Rz(-psi)*Ry(-theta)*Rz(-phi),
+    qc_only=False,
+)
+
+comment("\n\n==== symmetric ====")
+print_steps(
+    jitter=Rx(dphi)*Ry(dtheta),
+    jitter_inv=Ry(-dtheta)*Rx(-dphi),
+    view=Rz(phi)*Ry(theta),
+    view_inv=Ry(-theta)*Rz(-phi),
+    qc_only=QC_ONLY,
+)
+
+comment("\n**** qab from qc ****")
+# The indirect calculation of qab is better than directly c
+# alculating qab^2 = qa^2 + qb^2 since qc can be computed
+# as qc = M31*qx + M32*qy, thus requiring only two elements
+# of the rotation matrix.
+#vprint(qab, sqrt(qa**2 + qb**2), "Direct calculation of qab")
+vprint(dqa, sqrt((qx**2+qy**2) - dqc**2),
+       "Indirect calculation of qab, from qab^2 = |q|^2 - qc^2")
