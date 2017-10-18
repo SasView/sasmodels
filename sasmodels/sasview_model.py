@@ -758,22 +758,24 @@ class SasviewModel(object):
         """
         if par.name not in self.params:
             if par.name == self.multiplicity_info.control:
-                return [self.multiplicity], [1.0]
+                return self.multiplicity, [self.multiplicity], [1.0]
             else:
                 # For hidden parameters use the default value.
-                value = self._model_info.parameters.defaults.get(par.name, np.NaN)
-                return [value], [1.0]
+                default = self._model_info.parameters.defaults.get(par.name, np.NaN)
+                return [default], [1.0]
         elif par.polydisperse:
+            value = self.params[par.name]
             dis = self.dispersion[par.name]
             if dis['type'] == 'array':
-                value, weight = dis['values'], dis['weights']
+                dispersity, weight = dis['values'], dis['weights']
             else:
-                value, weight = weights.get_weights(
+                dispersity, weight = weights.get_weights(
                     dis['type'], dis['npts'], dis['width'], dis['nsigmas'],
-                    self.params[par.name], par.limits, par.relative_pd)
-            return value, weight / np.sum(weight)
+                    value, par.limits, par.relative_pd)
+            return value, dispersity, weight
         else:
-            return [self.params[par.name]], [1.0]
+            value = self.params[par.name]
+            return value, [value if par.relative_pd else 0.0], [1.0]
 
 def test_cylinder():
     # type: () -> float

@@ -140,13 +140,13 @@ def get_weights(parameter, values, active=True):
     value = float(values.get(parameter.name, parameter.default))
     npts = values.get(parameter.name+'_pd_n', 0)
     width = values.get(parameter.name+'_pd', 0.0)
+    relative = parameter.relative_pd
     if npts == 0 or width == 0 or not active:
         # Note: orientation parameters have the viewing angle as the parameter
         # value and the jitter in the distribution, so be sure to set the
         # empty pd for orientation parameters to 0.
-        pd = [value if parameter.type != 'orientation' else 0.0], [1.0]
+        pd = [value if relative else 0.0], [1.0]
     else:
-        relative = parameter.relative_pd
         limits = parameter.limits
         disperser = values.get(parameter.name+'_pd_type', 'gaussian')
         nsigma = values.get(parameter.name+'_pd_nsigma', 3.0)
