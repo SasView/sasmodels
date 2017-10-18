@@ -645,10 +645,13 @@ def _plot_2d_signal(data, signal, vmin=None, vmax=None, view='log'):
     xmin, xmax = min(data.qx_data), max(data.qx_data)
     ymin, ymax = min(data.qy_data), max(data.qy_data)
     if view == 'log':
-        vmin, vmax = np.log10(vmin), np.log10(vmax)
+        vmin_scaled, vmax_scaled= np.log10(vmin), np.log10(vmax)
+    else:
+        vmin_scaled, vmax_scaled = vmin, vmax
     plt.imshow(plottable.reshape(len(data.x_bins), len(data.y_bins)),
                interpolation='nearest', aspect=1, origin='lower',
-               extent=[xmin, xmax, ymin, ymax], vmin=vmin, vmax=vmax)
+               extent=[xmin, xmax, ymin, ymax],
+               vmin=vmin_scaled, vmax=vmax_scaled)
     plt.xlabel("$q_x$/A$^{-1}$")
     plt.ylabel("$q_y$/A$^{-1}$")
     return vmin, vmax

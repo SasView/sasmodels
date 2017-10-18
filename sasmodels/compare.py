@@ -826,7 +826,6 @@ def compare(opts, limits=None):
     as the values are adjusted, making it easier to see the effects of the
     parameters.
     """
-    limits = np.Inf, -np.Inf
     for k in range(opts['sets']):
         opts['pars'] = parse_pars(opts)
         if opts['pars'] is None:
@@ -837,6 +836,7 @@ def compare(opts, limits=None):
     if opts['plot']:
         import matplotlib.pyplot as plt
         plt.show()
+    return limits
 
 def run_models(opts, verbose=False):
     # type: (Dict[str, Any]) -> Dict[str, Any]
@@ -911,8 +911,10 @@ def _print_stats(label, err):
     print(label+"  "+"  ".join(data))
 
 
-def plot_models(opts, result, limits=(np.Inf, -np.Inf), setnum=0):
+def plot_models(opts, result, limits=None, setnum=0):
     # type: (Dict[str, Any], Dict[str, Any], Optional[Tuple[float, float]]) -> Tuple[float, float]
+    import matplotlib.pyplot as plt
+
     base_value, comp_value = result['base_value'], result['comp_value']
     base_time, comp_time = result['base_time'], result['comp_time']
     resid, relerr = result['resid'], result['relerr']
@@ -924,15 +926,15 @@ def plot_models(opts, result, limits=(np.Inf, -np.Inf), setnum=0):
 
     # Plot if requested
     view = opts['view']
-    import matplotlib.pyplot as plt
-    vmin, vmax = limits
-    if have_base:
-        vmin = min(vmin, base_value.min())
-        vmax = max(vmax, base_value.max())
-    if have_comp:
-        vmin = min(vmin, comp_value.min())
-        vmax = max(vmax, comp_value.max())
-    limits = vmin, vmax
+    if limits is None:
+        vmin, vmax = np.inf, -np.inf
+        if have_base:
+            vmin = min(vmin, base_value.min())
+            vmax = max(vmax, base_value.max())
+        if have_comp:
+            vmin = min(vmin, comp_value.min())
+            vmax = max(vmax, comp_value.max())
+        limits = vmin, vmax
 
     if have_base:
         if have_comp:
@@ -1422,7 +1424,7 @@ class Explore(object):
         self.pars = pars
         self.starting_values = dict((k, v.value) for k, v in pars.items())
         self.pd_types = pd_types
-        self.limits = np.Inf, -np.Inf
+        self.limits = None
 
     def revert_values(self):
         for k, v in self.starting_values.items():
