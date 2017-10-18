@@ -231,26 +231,26 @@ def get_weights(disperser, n, width, nsigmas, value, limits, relative):
     return v, w/np.sum(w)
 
 
-def plot_weights(model_info, pairs):
-    # type: (ModelInfo, List[Tuple[np.ndarray, np.ndarray]]) -> None
+def plot_weights(model_info, mesh):
+    # type: (ModelInfo, List[Tuple[float, np.ndarray, np.ndarray]]) -> None
     """
     Plot the weights returned by :func:`get_weights`.
 
-    *model_info* is
-    :param model_info:
-    :param pairs:
-    :return:
+    *model_info* defines model parameters, etc.
+
+    *mesh* is a list of tuples containing (*value*, *dispersity*, *weights*)
+    for each parameter, where (*dispersity*, *weights*) pairs are the
+    distributions to be plotted.
     """
     import pylab
 
-    if any(len(values)>1 for values, weights in pairs):
+    if any(len(dispersity)>1 for value, dispersity, weights in mesh):
         labels = [p.name for p in model_info.parameters.call_parameters]
-        pylab.interactive(True)
+        #pylab.interactive(True)
         pylab.figure()
-        for (v,w), s in zip(pairs, labels):
-            if len(v) > 1:
-                #print("weights for", s, v, w)
-                pylab.plot(v, w, '-o', label=s)
+        for (v,x,w), s in zip(mesh, labels):
+            if len(x) > 1:
+                pylab.plot(x, w, '-o', label=s)
         pylab.grid(True)
         pylab.legend()
         #pylab.show()

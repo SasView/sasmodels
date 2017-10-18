@@ -41,9 +41,10 @@ from . import core
 from . import kerneldll
 from . import exception
 from .data import plot_theory, empty_data1D, empty_data2D, load_data
-from .direct_model import DirectModel
+from .direct_model import DirectModel, get_mesh
 from .convert import revert_name, revert_pars, constrain_new_to_old
 from .generate import FLOAT_RE
+from .weights import plot_weights
 
 try:
     from typing import Optional, Dict, Any, Callable, Tuple
@@ -101,6 +102,7 @@ Options (* for default):
     -hist/-nohist* plot histogram of relative error
     -abs/-rel* plot relative or absolute error
     -title="note" adds note to the plot title, after the model name
+    -weights shows weights plots for the polydisperse parameters
 
     === output options ===
     -edit starts the parameter explorer
@@ -833,6 +835,12 @@ def compare(opts, limits=None):
         result = run_models(opts, verbose=True)
         if opts['plot']:
             limits = plot_models(opts, result, limits=limits, setnum=k)
+        if opts['show_weights']:
+            base, _ = opts['engines']
+            base_pars, _ = opts['pars']
+            model_info = base._kernel.info
+            dim = base._kernel.dim
+            plot_weights(model_info, get_mesh(model_info, base_pars, dim=dim))
     if opts['plot']:
         import matplotlib.pyplot as plt
         plt.show()
@@ -995,7 +1003,7 @@ def plot_models(opts, result, limits=None, setnum=0):
 #
 OPTIONS = [
     # Plotting
-    'plot', 'noplot',
+    'plot', 'noplot', 'weights',
     'linear', 'log', 'q4',
     'rel', 'abs',
     'hist', 'nohist',
@@ -1145,6 +1153,7 @@ def parse_opts(argv):
         'sets'      : 0,
         'engine'    : 'default',
         'evals'     : '1',
+        'show_weights' : False,
     }
     for arg in flags:
         if arg == '-noplot':    opts['plot'] = False
@@ -1193,6 +1202,7 @@ def parse_opts(argv):
         elif arg == '-edit':    opts['explore'] = True
         elif arg == '-demo':    opts['use_demo'] = True
         elif arg == '-default': opts['use_demo'] = False
+        elif arg == '-weights': opts['show_weights'] = True
         elif arg == '-html':    opts['html'] = True
         elif arg == '-help':    opts['html'] = True
     # pylint: enable=bad-whitespace
