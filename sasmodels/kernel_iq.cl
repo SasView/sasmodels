@@ -126,16 +126,16 @@ view_direct(double qx, double qy,
     SINCOS(theta*M_PI_180, sin_theta, cos_theta);
     SINCOS(phi*M_PI_180, sin_phi, cos_phi);
     SINCOS(psi*M_PI_180, sin_psi, cos_psi);
-    const double qa = qx*(sin_phi*sin_psi + cos_phi*cos_psi*cos_theta) + qy*(sin_phi*cos_psi*cos_theta - sin_psi*cos_phi);
-    const double qb = qx*(-sin_phi*cos_psi + sin_psi*cos_phi*cos_theta) + qy*(sin_phi*sin_psi*cos_theta + cos_phi*cos_psi);
+    const double qa = qx*(-sin_phi*sin_psi + cos_phi*cos_psi*cos_theta) + qy*(sin_phi*cos_psi*cos_theta + sin_psi*cos_phi);
+    const double qb = qx*(-sin_phi*cos_psi - sin_psi*cos_phi*cos_theta) + qy*(-sin_phi*sin_psi*cos_theta + cos_phi*cos_psi);
     const double qc = qx*sin_theta*cos_phi + qy*sin_phi*sin_theta;
 
     // reverse jitter after view
     SINCOS(table.theta*M_PI_180, sin_theta, cos_theta);
     SINCOS(table.phi*M_PI_180, sin_phi, cos_phi);
     SINCOS(table.psi*M_PI_180, sin_psi, cos_psi);
-    const double dqa = qa*cos_psi*cos_theta + qb*(sin_phi*sin_theta*cos_psi - sin_psi*cos_phi) + qc*(-sin_phi*sin_psi - sin_theta*cos_phi*cos_psi);
-    const double dqb = qa*sin_psi*cos_theta + qb*(sin_phi*sin_psi*sin_theta + cos_phi*cos_psi) + qc*(sin_phi*cos_psi - sin_psi*sin_theta*cos_phi);
+    const double dqa = qa*cos_psi*cos_theta + qb*(sin_phi*sin_theta*cos_psi + sin_psi*cos_phi) + qc*(sin_phi*sin_psi - sin_theta*cos_phi*cos_psi);
+    const double dqb = -qa*sin_psi*cos_theta + qb*(-sin_phi*sin_psi*sin_theta + cos_phi*cos_psi) + qc*(sin_phi*cos_psi + sin_psi*sin_theta*cos_phi);
     const double dqc = qa*sin_theta - qb*sin_phi*cos_theta + qc*cos_phi*cos_theta;
 
     return CALL_IQ_ABC(dqa, dqb, dqc, table);
