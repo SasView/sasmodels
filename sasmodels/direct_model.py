@@ -55,6 +55,7 @@ def call_kernel(calculator, pars, cutoff=0., mono=False):
     *mono* is True if polydispersity should be set to none on all parameters.
     """
     mesh = get_mesh(calculator.info, pars, dim=calculator.dim, mono=mono)
+    #print("pars", list(zip(*mesh))[0])
     call_details, values, is_magnetic = make_kernel_args(calculator, mesh)
     #print("values:", values)
     return calculator(call_details, values, cutoff, is_magnetic)
@@ -151,11 +152,11 @@ def _get_par_weights(parameter, values, active=True):
     npts = values.get(parameter.name+'_pd_n', 0)
     width = values.get(parameter.name+'_pd', 0.0)
     relative = parameter.relative_pd
-    if npts == 0 or width == 0 or not active:
+    if npts == 0 or width == 0.0 or not active:
         # Note: orientation parameters have the viewing angle as the parameter
         # value and the jitter in the distribution, so be sure to set the
         # empty pd for orientation parameters to 0.
-        pd = [value if relative else 0.0], [1.0]
+        pd = [value if relative or not parameter.polydisperse else 0.0], [1.0]
     else:
         limits = parameter.limits
         disperser = values.get(parameter.name+'_pd_type', 'gaussian')
@@ -165,14 +166,14 @@ def _get_par_weights(parameter, values, active=True):
     return value, pd[0], pd[1]
 
 
-def _vol_pars(model_info, pars):
+def _vol_pars(model_info, values):
     # type: (ModelInfo, ParameterSet) -> Tuple[np.ndarray, np.ndarray]
-    vol_pars = [get_weights(p, pars)
+    vol_pars = [_get_par_weights(p, values)
                 for p in model_info.parameters.call_parameters
                 if p.type == 'volume']
     #import pylab; pylab.plot(vol_pars[0][0],vol_pars[0][1]); pylab.show()
-    value, weight = dispersion_mesh(model_info, vol_pars)
-    return value, weight
+    dispersity, weight = dispersion_mesh(model_info, vol_pars)
+    return dispersity, weight
 
 
 class DataMixin(object):

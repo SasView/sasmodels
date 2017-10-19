@@ -233,7 +233,7 @@ def make_kernel_args(kernel, mesh):
     scalars = [value for value, dispersity, weight in mesh]
     # skipping scale and background when building values and weights
     values, dispersity, weights = zip(*mesh[2:npars+2]) if npars else ((), (), ())
-    weights = correct_theta_weights(kernel.info.parameters, values, weights)
+    weights = correct_theta_weights(kernel.info.parameters, dispersity, weights)
     length = np.array([len(w) for w in weights])
     offset = np.cumsum(np.hstack((0, length)))
     call_details = make_details(kernel.info, length, offset[:-1], offset[-1])
@@ -246,29 +246,34 @@ def make_kernel_args(kernel, mesh):
     #call_details.show()
     return call_details, data, is_magnetic
 
-def correct_theta_weights(parameters, values, weights):
+def correct_theta_weights(parameters, dispersity, weights):
     # type: (ParameterTable, Sequence[np.ndarray], Sequence[np.ndarray]) -> Sequence[np.ndarray]
     """
     If there is a theta parameter, update the weights of that parameter so that
-    the cosine weighting required for polar integration is preserved.  Avoid
-    evaluation strictly at the pole, which would otherwise send the weight to
-    zero.
+    the cosine weighting required for polar integration is preserved.
 
-    Note: values and weights do not include scale and background
+    Avoid evaluation strictly at the pole, which would otherwise send the
+    weight to zero.  This is probably not a problem in practice (if dispersity
+    is +/- 90, then you probably should be using a 1-D model of the circular
+    average).
+
+    Note: scale and background parameters are not include in the tuples for
+    dispersity and weights, so index is parameters.theta_offset, not
+    parameters.theta_offset+2
+
+    Returns updated weights vectors
     """
-    # TODO: document code, explaining why scale and background are skipped
-    # given that we don't have scale and background in the list, we
-    # should be calling the variables something other than values and weights
+    # TODO: explain in a comment why scale and background are missing
     # Apparently the parameters.theta_offset similarly skips scale and
-    # and background, so the indexing works out.
+    # and background, so the indexing works out, but they are still shipped
+    # to the kernel, so we need to add two there.
     if parameters.theta_offset >= 0:
         index = parameters.theta_offset
-        theta = values[index]
-        theta_weight = np.minimum(abs(cos(radians(theta))), 1e-6)
-        # copy the weights list so we can update it
-        weights = list(weights)
-        weights[index] = theta_weight*np.asarray(weights[index])
-        weights = tuple(weights)
+        theta = dispersity[index]
+        # TODO: modify the dispersity vector to avoid the theta=-90,90,270,...
+        theta_weight = abs(cos(radians(theta)))
+        weights = tuple(theta_weight*v if k == index else v
+                        for k, v in enumerate(weights))
     return weights
 
 

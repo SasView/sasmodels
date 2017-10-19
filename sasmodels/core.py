@@ -271,8 +271,9 @@ def parse_dtype(model_info, dtype=None, platform=None):
 
     Possible types include 'half', 'single', 'double' and 'quad'.  If the
     type is 'fast', then this is equivalent to dtype 'single' but using
-    fast native functions rather than those with the precision level guaranteed
-    by the OpenCL standard.
+    fast native functions rather than those with the precision level
+    guaranteed by the OpenCL standard.  'default' will choose the appropriate
+    default for the model and platform.
 
     Platform preference can be specfied ("ocl" vs "dll"), with the default
     being OpenCL if it is availabe.  If the dtype name ends with '!' then
