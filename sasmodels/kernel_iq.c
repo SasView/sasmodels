@@ -1,4 +1,3 @@
-
 /*
     ##########################################################
     #                                                        #
@@ -10,6 +9,29 @@
     #                                                        #
     ##########################################################
 */
+
+// NOTE: the following macros are defined in generate.py:
+//
+//  MAX_PD : the maximum number of dispersity loops allowed
+//  NUM_PARS : the number of parameters in the parameter table
+//  NUM_VALUES : the number of values to skip at the start of the
+//      values array before you get to the dispersity values.
+//  NUM_MAGNETIC : the number of magnetic parameters
+//  PARAMETER_TABLE : list of parameter declarations used to create the
+//      ParameterTable type.
+//  KERNEL_NAME : model_Iq, model_Iqxy or model_Imagnetic.  This code is
+//      included three times, once for each kernel type.
+//  MAGNETIC_PARS : a comma-separated list of indices to the sld
+//      parameters in the parameter table.
+//  MAGNETIC_PAR1, ... : the first few indices of slds in the parameter table.
+//  MAGNETIC : defined when the magnetic kernel is being instantiated
+//  CALL_VOLUME(table) : call the form volume function
+//  CALL_IQ(q, table) : call the Iq function for 1D calcs.
+//  CALL_IQ_A(q, table) : call the Iq function with |q| for 2D data.
+//  CALL_IQ_AC(qa, qc, table) : call the Iqxy function for symmetric shapes
+//  CALL_IQ_ABC(qa, qc, table) : call the Iqxy function for asymmetric shapes
+//  INVALID(table) : test if the current point is feesible to calculate.  This
+//      will be defined in the kernel definition file.
 
 #ifndef _PAR_BLOCK_ // protected block so we can include this code twice.
 #define _PAR_BLOCK_
@@ -37,8 +59,8 @@ typedef union {
 } ParameterBlock;
 #endif // _PAR_BLOCK_
 
-
-#if defined(MAGNETIC) && NUM_MAGNETIC>0
+#if defined(MAGNETIC) && NUM_MAGNETIC > 0
+// ===== Helper functions for magnetism =====
 
 // Return value restricted between low and high
 static double clip(double value, double low, double high)
@@ -62,90 +84,96 @@ static void set_spins(double in_spin, double out_spin, double spins[4])
   spins[3] = sqrt(sqrt(in_spin * out_spin));             // uu
 }
 
+// Compute the magnetic sld
 static double mag_sld(double qx, double qy, double p,
                        double mx, double my, double sld)
 {
     const double perp = qy*mx - qx*my;
     return sld + perp*p;
 }
-//#endif // MAGNETIC
 
-// TODO: way too hackish
-// For the 1D kernel, CALL_IQ_[A,AC,ABC] and MAGNETIC are not defined
-// so view_direct *IS NOT* included
-// For the 2D kernel, CALL_IQ_[A,AC,ABC] is defined but MAGNETIC is not
-// so view_direct *IS* included
-// For the magnetic kernel, CALL_IQ_[A,AC,ABC] is defined, but so is MAGNETIC
-// so view_direct *IS NOT* included
-#else // !MAGNETIC
+#endif
 
-// ===== Implement jitter in orientation =====
+// ===== Helper functions for orientation and jitter =====
+
 // To change the definition of the angles, run explore/angles.py, which
 // uses sympy to generate the equations.
 
-#if defined(CALL_IQ_AC) // oriented symmetric
-static double
-view_direct(double qx, double qy,
-             double theta, double phi,
-             ParameterTable table)
+#if !defined(_QAC_SECTION) && defined(CALL_IQ_AC)
+#define _QAC_SECTION
+
+typedef struct {
+    double R31, R32;
+} QACRotation;
+
+// Fill in the rotation matrix R from the view angles (theta, phi) and the
+// jitter angles (dtheta, dphi).  This matrix can be applied to all of the
+// (qx, qy) points in the image to produce R*[qx,qy]' = [qa,qc]'
+static void
+qac_rotation(
+    QACRotation *rotation,
+    double theta, double phi,
+    double dtheta, double dphi)
 {
     double sin_theta, cos_theta;
     double sin_phi, cos_phi;
 
-    // reverse view
+    // reverse view matrix
     SINCOS(theta*M_PI_180, sin_theta, cos_theta);
     SINCOS(phi*M_PI_180, sin_phi, cos_phi);
-    const double qa = qx*cos_phi*cos_theta + qy*sin_phi*cos_theta;
-    const double qb = -qx*sin_phi + qy*cos_phi;
-    const double qc = qx*sin_theta*cos_phi + qy*sin_phi*sin_theta;
+    const double V11 = cos_phi*cos_theta;
+    const double V12 = sin_phi*cos_theta;
+    const double V21 = -sin_phi;
+    const double V22 = cos_phi;
+    const double V31 = sin_theta*cos_phi;
+    const double V32 = sin_phi*sin_theta;
 
-    // reverse jitter after view
-    SINCOS(table.theta*M_PI_180, sin_theta, cos_theta);
-    SINCOS(table.phi*M_PI_180, sin_phi, cos_phi);
-    const double dqc = qa*sin_theta - qb*sin_phi*cos_theta + qc*cos_phi*cos_theta;
+    // reverse jitter matrix
+    SINCOS(dtheta*M_PI_180, sin_theta, cos_theta);
+    SINCOS(dphi*M_PI_180, sin_phi, cos_phi);
+    const double J31 = sin_theta;
+    const double J32 = -sin_phi*cos_theta;
+    const double J33 = cos_phi*cos_theta;
 
+    // reverse matrix
+    rotation->R31 = J31*V11 + J32*V21 + J33*V31;
+    rotation->R32 = J31*V12 + J32*V22 + J33*V32;
+}
+
+// Apply the rotation matrix returned from qac_rotation to the point (qx,qy),
+// returning R*[qx,qy]' = [qa,qc]'
+static double
+qac_apply(
+    QACRotation rotation,
+    double qx, double qy,
+    double *qa_out, double *qc_out)
+{
+    const double dqc = rotation.R31*qx + rotation.R32*qy;
     // Indirect calculation of qab, from qab^2 = |q|^2 - qc^2
     const double dqa = sqrt(-dqc*dqc + qx*qx + qy*qy);
 
-    return CALL_IQ_AC(dqa, dqc, table);
+    *qa_out = dqa;
+    *qc_out = dqc;
 }
+#endif // _QAC_SECTION
 
-#elif defined(CALL_IQ_ABC) // oriented asymmetric
+#if !defined(_QABC_SECTION) && defined(CALL_IQ_ABC)
+#define _QABC_SECTION
 
-static double
-view_direct(double qx, double qy,
-             double theta, double phi, double psi,
-             ParameterTable table)
-{
-    double sin_theta, cos_theta;
-    double sin_phi, cos_phi;
-    double sin_psi, cos_psi;
+typedef struct {
+    double R11, R12;
+    double R21, R22;
+    double R31, R32;
+} QABCRotation;
 
-    // reverse view
-    SINCOS(theta*M_PI_180, sin_theta, cos_theta);
-    SINCOS(phi*M_PI_180, sin_phi, cos_phi);
-    SINCOS(psi*M_PI_180, sin_psi, cos_psi);
-    const double qa = qx*(-sin_phi*sin_psi + cos_phi*cos_psi*cos_theta) + qy*(sin_phi*cos_psi*cos_theta + sin_psi*cos_phi);
-    const double qb = qx*(-sin_phi*cos_psi - sin_psi*cos_phi*cos_theta) + qy*(-sin_phi*sin_psi*cos_theta + cos_phi*cos_psi);
-    const double qc = qx*sin_theta*cos_phi + qy*sin_phi*sin_theta;
-
-    // reverse jitter after view
-    SINCOS(table.theta*M_PI_180, sin_theta, cos_theta);
-    SINCOS(table.phi*M_PI_180, sin_phi, cos_phi);
-    SINCOS(table.psi*M_PI_180, sin_psi, cos_psi);
-    const double dqa = qa*cos_psi*cos_theta + qb*(sin_phi*sin_theta*cos_psi + sin_psi*cos_phi) + qc*(sin_phi*sin_psi - sin_theta*cos_phi*cos_psi);
-    const double dqb = -qa*sin_psi*cos_theta + qb*(-sin_phi*sin_psi*sin_theta + cos_phi*cos_psi) + qc*(sin_phi*cos_psi + sin_psi*sin_theta*cos_phi);
-    const double dqc = qa*sin_theta - qb*sin_phi*cos_theta + qc*cos_phi*cos_theta;
-
-    return CALL_IQ_ABC(dqa, dqb, dqc, table);
-}
-/* TODO: use precalculated jitter for faster 2D calcs on DLL.
+// Fill in the rotation matrix R from the view angles (theta, phi, psi) and the
+// jitter angles (dtheta, dphi, dpsi).  This matrix can be applied to all of the
+// (qx, qy) points in the image to produce R*[qx,qy]' = [qa,qb,qc]'
 static void
-view_precalc(
+qabc_rotation(
+    QABCRotation *rotation,
     double theta, double phi, double psi,
-    ParameterTable table,
-    double *R11, double *R12, double *R21,
-    double *R22, double *R31, double *R32)
+    double dtheta, double dphi, double dpsi)
 {
     double sin_theta, cos_theta;
     double sin_phi, cos_phi;
@@ -155,51 +183,53 @@ view_precalc(
     SINCOS(theta*M_PI_180, sin_theta, cos_theta);
     SINCOS(phi*M_PI_180, sin_phi, cos_phi);
     SINCOS(psi*M_PI_180, sin_psi, cos_psi);
-    const double V11 = sin_phi*sin_psi + cos_phi*cos_psi*cos_theta;
-    const double V12 = sin_phi*cos_psi*cos_theta - sin_psi*cos_phi;
-    const double V21 = -sin_phi*cos_psi + sin_psi*cos_phi*cos_theta;
-    const double V22 = sin_phi*sin_psi*cos_theta + cos_phi*cos_psi;
+    const double V11 = -sin_phi*sin_psi + cos_phi*cos_psi*cos_theta;
+    const double V12 = sin_phi*cos_psi*cos_theta + sin_psi*cos_phi;
+    const double V21 = -sin_phi*cos_psi - sin_psi*cos_phi*cos_theta;
+    const double V22 = -sin_phi*sin_psi*cos_theta + cos_phi*cos_psi;
     const double V31 = sin_theta*cos_phi;
     const double V32 = sin_phi*sin_theta;
 
     // reverse jitter matrix
-    SINCOS(table.theta*M_PI_180, sin_theta, cos_theta);
-    SINCOS(table.phi*M_PI_180, sin_phi, cos_phi);
-    SINCOS(table.psi*M_PI_180, sin_psi, cos_psi);
+    SINCOS(dtheta*M_PI_180, sin_theta, cos_theta);
+    SINCOS(dphi*M_PI_180, sin_phi, cos_phi);
+    SINCOS(dpsi*M_PI_180, sin_psi, cos_psi);
     const double J11 = cos_psi*cos_theta;
-    const double J12 = sin_phi*sin_theta*cos_psi - sin_psi*cos_phi;
-    const double J13 = -sin_phi*sin_psi - sin_theta*cos_phi*cos_psi;
-    const double J21 = sin_psi*cos_theta;
-    const double J22 = sin_phi*sin_psi*sin_theta + cos_phi*cos_psi;
-    const double J23 = sin_phi*cos_psi - sin_psi*sin_theta*cos_phi;
+    const double J12 = sin_phi*sin_theta*cos_psi + sin_psi*cos_phi;
+    const double J13 = sin_phi*sin_psi - sin_theta*cos_phi*cos_psi;
+    const double J21 = -sin_psi*cos_theta;
+    const double J22 = -sin_phi*sin_psi*sin_theta + cos_phi*cos_psi;
+    const double J23 = sin_phi*cos_psi + sin_psi*sin_theta*cos_phi;
     const double J31 = sin_theta;
     const double J32 = -sin_phi*cos_theta;
     const double J33 = cos_phi*cos_theta;
 
     // reverse matrix
-    *R11 = J11*V11 + J12*V21 + J13*V31;
-    *R12 = J11*V12 + J12*V22 + J13*V32;
-    *R21 = J21*V11 + J22*V21 + J23*V31;
-    *R22 = J21*V12 + J22*V22 + J23*V32;
-    *R31 = J31*V11 + J32*V21 + J33*V31;
-    *R32 = J31*V12 + J32*V22 + J33*V32;
+    rotation->R11 = J11*V11 + J12*V21 + J13*V31;
+    rotation->R12 = J11*V12 + J12*V22 + J13*V32;
+    rotation->R21 = J21*V11 + J22*V21 + J23*V31;
+    rotation->R22 = J21*V12 + J22*V22 + J23*V32;
+    rotation->R31 = J31*V11 + J32*V21 + J33*V31;
+    rotation->R32 = J31*V12 + J32*V22 + J33*V32;
 }
 
+// Apply the rotation matrix returned from qabc_rotation to the point (qx,qy),
+// returning R*[qx,qy]' = [qa,qb,qc]'
 static double
-view_apply(double qx, double qy,
-    double R11, double R12, double R21, double R22, double R31, double R32,
-    ParameterTable table)
+qabc_apply(
+    QABCRotation rotation,
+    double qx, double qy,
+    double *qa_out, double *qb_out, double *qc_out)
 {
-    const double dqa = R11*qx + R12*qy;
-    const double dqb = R21*qx + R22*qy;
-    const double dqc = R31*qx + R32*qy;
-
-    CALL_IQ_ABC(dqa, dqb, dqc, table);
+    *qa_out = rotation.R11*qx + rotation.R12*qy;
+    *qb_out = rotation.R21*qx + rotation.R22*qy;
+    *qc_out = rotation.R31*qx + rotation.R32*qy;
 }
-*/
-#endif
 
-#endif // !MAGNETIC
+#endif // _QABC_SECTION
+
+
+// ==================== KERNEL CODE ========================
 
 kernel
 void KERNEL_NAME(
@@ -213,6 +243,17 @@ void KERNEL_NAME(
     const double cutoff     // cutoff in the polydispersity weight product
     )
 {
+#ifdef USE_OPENCL
+  // who we are and what element we are working with
+  const int q_index = get_global_id(0);
+  if (q_index >= nq) return;
+#else
+  // Define q_index here so that debugging statements can be written to work
+  // for both OpenCL and DLL using:
+  //    if (q_index == 0) {printf(...);}
+  int q_index = 0;
+#endif
+
   // Storage for the current parameter values.  These will be updated as we
   // walk the polydispersity cube.
   ParameterBlock local_values;
@@ -224,25 +265,16 @@ void KERNEL_NAME(
   const int32_t slds[] = { MAGNETIC_PARS };
   #endif
 
-  // TODO: could precompute these outside of the kernel.
   // Interpret polarization cross section.
   //     up_frac_i = values[NUM_PARS+2];
   //     up_frac_f = values[NUM_PARS+3];
   //     up_angle = values[NUM_PARS+4];
+  // TODO: could precompute more magnetism parameters before calling the kernel.
   double spins[4];
   double cos_mspin, sin_mspin;
   set_spins(values[NUM_PARS+2], values[NUM_PARS+3], spins);
   SINCOS(-values[NUM_PARS+4]*M_PI_180, sin_mspin, cos_mspin);
 #endif // MAGNETIC
-
-#if defined(CALL_IQ_AC) // oriented symmetric
-  const double theta = values[details->theta_par+2];
-  const double phi = values[details->theta_par+3];
-#elif defined(CALL_IQ_ABC) // oriented asymmetric
-  const double theta = values[details->theta_par+2];
-  const double phi = values[details->theta_par+3];
-  const double psi = values[details->theta_par+4];
-#endif
 
   // Fill in the initial variables
   //   values[0] is scale
@@ -252,229 +284,365 @@ void KERNEL_NAME(
   #endif
   for (int i=0; i < NUM_PARS; i++) {
     local_values.vector[i] = values[2+i];
-//printf("p%d = %g\n",i, local_values.vector[i]);
+//if (q_index==0) printf("p%d = %g\n",i, local_values.vector[i]);
   }
-//printf("NUM_VALUES:%d  NUM_PARS:%d  MAX_PD:%d\n", NUM_VALUES, NUM_PARS, MAX_PD);
-//printf("start:%d  stop:%d\n", pd_start, pd_stop);
+//if (q_index==0) printf("NUM_VALUES:%d  NUM_PARS:%d  MAX_PD:%d\n", NUM_VALUES, NUM_PARS, MAX_PD);
+//if (q_index==0) printf("start:%d  stop:%d\n", pd_start, pd_stop);
 
-  double pd_norm = (pd_start == 0 ? 0.0 : result[nq]);
-  if (pd_start == 0) {
-    #ifdef USE_OPENMP
-    #pragma omp parallel for
-    #endif
-    for (int q_index=0; q_index < nq; q_index++) result[q_index] = 0.0;
+  // If pd_start is zero that means that we are starting a new calculation,
+  // and must initialize the result to zero.  Otherwise, we are restarting
+  // the calculation from somewhere in the middle of the dispersity mesh,
+  // and we update the value rather than reset it. Similarly for the
+  // normalization factor, which is stored as the final value in the
+  // results vector (one past the number of q values).
+  //
+  // The code differs slightly between opencl and dll since opencl is only
+  // seeing one q value (stored in the variable "this_result") while the dll
+  // version must loop over all q.
+  #ifdef USE_OPENCL
+    double pd_norm = (pd_start == 0 ? 0.0 : result[nq]);
+    double this_result = (pd_start == 0 ? 0.0 : result[q_index]);
+  #else // !USE_OPENCL
+    double pd_norm = (pd_start == 0 ? 0.0 : result[nq]);
+    if (pd_start == 0) {
+      #ifdef USE_OPENMP
+      #pragma omp parallel for
+      #endif
+      for (int q_index=0; q_index < nq; q_index++) result[q_index] = 0.0;
+    }
+//if (q_index==0) printf("start %d %g %g\n", pd_start, pd_norm, result[0]);
+#endif // !USE_OPENCL
+
+
+// ====== macros to set up the parts of the loop =======
+/*
+Based on the level of the loop, uses C preprocessor magic to construct
+level-specific looping variables, including these from loop level 3:
+
+  int n3 : length of loop for mesh level 3
+  int i3 : current position in the loop for level 3, which is calculated
+       from a combination of pd_start, pd_stride[3] and pd_length[3].
+  int p3 : is the index into the parameter table for mesh level 3
+  double v3[] : pointer into dispersity array to values for loop 3
+  double w3[] : pointer into dispersity array to weights for loop 3
+  double weight3 : the product of weights from levels 3 and up, computed
+       as weight5*weight4*w3[i3].  Note that we need an outermost
+       value weight5 set to 1.0 for this to work properly.
+
+After expansion, the loop struction will look like the following:
+
+  // --- PD_INIT(4) ---
+  const int n4 = pd_length[4];
+  const int p4 = pd_par[4];
+  global const double *v4 = pd_value + pd_offset[4];
+  global const double *w4 = pd_weight + pd_offset[4];
+  int i4 = (pd_start/pd_stride[4])%n4;  // position in level 4 at pd_start
+
+  // --- PD_INIT(3) ---
+  const int n3 = pd_length[3];
+  ...
+  int i3 = (pd_start/pd_stride[3])%n3;  // position in level 3 at pd_start
+
+  PD_INIT(2)
+  PD_INIT(1)
+  PD_INIT(0)
+
+  // --- PD_OUTERMOST_WEIGHT(5) ---
+  const double weight5 = 1.0;
+
+  // --- PD_OPEN(4,5) ---
+  while (i4 < n4) {
+    parameter[p4] = v4[i4];  // set the value for pd parameter 4 at this mesh point
+    const double weight4 = w4[i4] * weight5;
+
+    // from PD_OPEN(3,4)
+    while (i3 < n3) {
+      parameter[p3] = v3[i3];  // set the value for pd parameter 3 at this mesh point
+      const double weight3 = w3[i3] * weight4;
+
+      PD_OPEN(3,2)
+      PD_OPEN(2,1)
+      PD_OPEN(0,1)
+
+      ... main loop body ...
+
+      ++step;  // increment counter representing position in dispersity mesh
+
+      PD_CLOSE(0)
+      PD_CLOSE(1)
+      PD_CLOSE(2)
+
+      // --- PD_CLOSE(3) ---
+      if (step >= pd_stop) break;
+      ++i3;
+    }
+    i3 = 0; // reset loop counter for next round through the loop
+
+    // --- PD_CLOSE(4) ---
+    if (step >= pd_stop) break;
+    ++i4;
   }
-//printf("start %d %g %g\n", pd_start, pd_norm, result[0]);
+  i4 = 0; // reset loop counter even though no more rounds through the loop
 
+*/
+
+// Define looping variables
+#define PD_INIT(_LOOP) \
+  const int n##_LOOP = details->pd_length[_LOOP]; \
+  const int p##_LOOP = details->pd_par[_LOOP]; \
+  global const double *v##_LOOP = pd_value + details->pd_offset[_LOOP]; \
+  global const double *w##_LOOP = pd_weight + details->pd_offset[_LOOP]; \
+  int i##_LOOP = (pd_start/details->pd_stride[_LOOP])%n##_LOOP;
+
+// Jump into the middle of the polydispersity loop
+#define PD_OPEN(_LOOP,_OUTER) \
+  while (i##_LOOP < n##_LOOP) { \
+    local_values.vector[p##_LOOP] = v##_LOOP[i##_LOOP]; \
+    const double weight##_LOOP = w##_LOOP[i##_LOOP] * weight##_OUTER;
+
+// create the variable "weight#=1.0" where # is the outermost level+1 (=MAX_PD).
+#define _PD_OUTERMOST_WEIGHT(_n) const double weight##_n = 1.0;
+#define PD_OUTERMOST_WEIGHT(_n) _PD_OUTERMOST_WEIGHT(_n)
+
+// Close out the loop
+#define PD_CLOSE(_LOOP) \
+    if (step >= pd_stop) break; \
+    ++i##_LOOP; \
+  } \
+  i##_LOOP = 0;
+
+// The main loop body is essentially:
+//
+//    BUILD_ROTATION      // construct the rotation matrix qxy => qabc
+//    for each q
+//        FETCH_Q         // set qx,qy from the q input vector
+//        APPLY_ROTATION  // convert qx,qy to qa,qb,qc
+//        CALL_KERNEL     // scattering = Iqxy(qa, qb, qc, p1, p2, ...)
+//
+// Depending on the shape type (radial, axial, triaxial), the variables
+// and calling parameters will be slightly different.  These macros
+// capture the differences in one spot so the rest of the code is easier
+// to read.
+#if defined(CALL_IQ)
+  // unoriented 1D
+  double qk;
+  #define FETCH_Q do { qk = q[q_index]; } while (0)
+  #define BUILD_ROTATION do {} while(0)
+  #define APPLY_ROTATION do {} while(0)
+  #define CALL_KERNEL CALL_IQ(qk, local_values.table)
+
+#elif defined(CALL_IQ_A)
+  // unoriented 2D
+  double qx, qy;
+  #define FETCH_Q do { qx = q[2*q_index]; qy = q[2*q_index+1]; } while (0)
+  #define BUILD_ROTATION do {} while(0)
+  #define APPLY_ROTATION do {} while(0)
+  #define CALL_KERNEL CALL_IQ_A(sqrt(qx*qx+qy*qy), local_values.table)
+
+#elif defined(CALL_IQ_AC)
+  // oriented symmetric 2D
+  double qx, qy;
+  #define FETCH_Q do { qx = q[2*q_index]; qy = q[2*q_index+1]; } while (0)
+  double qa, qc;
+  QACRotation rotation;
+  // Grab the "view" angles (theta, phi) from the initial parameter table.
+  // These are separate from the "jitter" angles (dtheta, dphi) which are
+  // stored with the dispersity values and copied to the local parameter
+  // table as we go through the mesh.
+  const double theta = values[details->theta_par+2];
+  const double phi = values[details->theta_par+3];
+  #define BUILD_ROTATION qac_rotation(&rotation, \
+    theta, phi, local_values.table.theta, local_values.table.phi)
+  #define APPLY_ROTATION qac_apply(rotation, qx, qy, &qa, &qc)
+  #define CALL_KERNEL CALL_IQ_AC(qa, qc, local_values.table)
+
+#elif defined(CALL_IQ_ABC)
+  // oriented asymmetric 2D
+  double qx, qy;
+  #define FETCH_Q do { qx = q[2*q_index]; qy = q[2*q_index+1]; } while (0)
+  double qa, qb, qc;
+  QABCRotation rotation;
+  // Grab the "view" angles (theta, phi, psi) from the initial parameter table.
+  // These are separate from the "jitter" angles (dtheta, dphi, dpsi) which are
+  // stored with the dispersity values and copied to the local parameter
+  // table as we go through the mesh.
+  const double theta = values[details->theta_par+2];
+  const double phi = values[details->theta_par+3];
+  const double psi = values[details->theta_par+4];
+  #define BUILD_ROTATION qabc_rotation(&rotation, \
+    theta, phi, psi, local_values.table.theta, \
+    local_values.table.phi, local_values.table.psi)
+  #define APPLY_ROTATION qabc_apply(rotation, qx, qy, &qa, &qb, &qc)
+  #define CALL_KERNEL CALL_IQ_ABC(qa, qb, qc, local_values.table)
+
+#endif
+
+// ====== construct the loops =======
+
+// Pointers to the start of the dispersity and weight vectors, if needed.
 #if MAX_PD>0
   global const double *pd_value = values + NUM_VALUES;
   global const double *pd_weight = pd_value + details->num_weights;
 #endif
 
-  // Jump into the middle of the polydispersity loop
+// The variable "step" is the current position in the dispersity loop.
+// It will be incremented each time a new point in the mesh is accumulated,
+// and used to test whether we have reached pd_stop.
+int step = pd_start;
+
+// define looping variables
 #if MAX_PD>4
-  int n4=details->pd_length[4];
-  int i4=(pd_start/details->pd_stride[4])%n4;
-  const int p4=details->pd_par[4];
-  global const double *v4 = pd_value + details->pd_offset[4];
-  global const double *w4 = pd_weight + details->pd_offset[4];
+  PD_INIT(4)
 #endif
 #if MAX_PD>3
-  int n3=details->pd_length[3];
-  int i3=(pd_start/details->pd_stride[3])%n3;
-  const int p3=details->pd_par[3];
-  global const double *v3 = pd_value + details->pd_offset[3];
-  global const double *w3 = pd_weight + details->pd_offset[3];
-//printf("offset %d: %d %d\n", 3, details->pd_offset[3], NUM_VALUES);
+  PD_INIT(3)
 #endif
 #if MAX_PD>2
-  int n2=details->pd_length[2];
-  int i2=(pd_start/details->pd_stride[2])%n2;
-  const int p2=details->pd_par[2];
-  global const double *v2 = pd_value + details->pd_offset[2];
-  global const double *w2 = pd_weight + details->pd_offset[2];
+  PD_INIT(2)
 #endif
 #if MAX_PD>1
-  int n1=details->pd_length[1];
-  int i1=(pd_start/details->pd_stride[1])%n1;
-  const int p1=details->pd_par[1];
-  global const double *v1 = pd_value + details->pd_offset[1];
-  global const double *w1 = pd_weight + details->pd_offset[1];
+  PD_INIT(1)
 #endif
 #if MAX_PD>0
-  int n0=details->pd_length[0];
-  int i0=(pd_start/details->pd_stride[0])%n0;
-  const int p0=details->pd_par[0];
-  global const double *v0 = pd_value + details->pd_offset[0];
-  global const double *w0 = pd_weight + details->pd_offset[0];
-//printf("w0:%p, values:%p, diff:%ld, %d\n",w0,values,(w0-values), NUM_VALUES);
+  PD_INIT(0)
 #endif
 
-
-  int step = pd_start;
-
+// open nested loops
+PD_OUTERMOST_WEIGHT(MAX_PD)
 #if MAX_PD>4
-  const double weight5 = 1.0;
-  while (i4 < n4) {
-    local_values.vector[p4] = v4[i4];
-    double weight4 = w4[i4] * weight5;
-//printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 4, p4, i4, n4, local_values.vector[p4], weight4);
-#elif MAX_PD>3
-    const double weight4 = 1.0;
+  PD_OPEN(4,5)
 #endif
 #if MAX_PD>3
-  while (i3 < n3) {
-    local_values.vector[p3] = v3[i3];
-    double weight3 = w3[i3] * weight4;
-//printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 3, p3, i3, n3, local_values.vector[p3], weight3);
-#elif MAX_PD>2
-    const double weight3 = 1.0;
+  PD_OPEN(3,4)
 #endif
 #if MAX_PD>2
-  while (i2 < n2) {
-    local_values.vector[p2] = v2[i2];
-    double weight2 = w2[i2] * weight3;
-//printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 2, p2, i2, n2, local_values.vector[p2], weight2);
-#elif MAX_PD>1
-    const double weight2 = 1.0;
+  PD_OPEN(2,3)
 #endif
 #if MAX_PD>1
-  while (i1 < n1) {
-    local_values.vector[p1] = v1[i1];
-    double weight1 = w1[i1] * weight2;
-//printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 1, p1, i1, n1, local_values.vector[p1], weight1);
-#elif MAX_PD>0
-    const double weight1 = 1.0;
+  PD_OPEN(1,2)
 #endif
 #if MAX_PD>0
-  while(i0 < n0) {
-    local_values.vector[p0] = v0[i0];
-    double weight0 = w0[i0] * weight1;
-//printf("step:%d level %d: p:%d i:%d n:%d value:%g weight:%g\n", step, 0, p0, i0, n0, local_values.vector[p0], weight0);
-#else
-    const double weight0 = 1.0;
+  PD_OPEN(0,1)
 #endif
 
-//printf("step:%d of %d, pars:",step,pd_stop); for (int i=0; i < NUM_PARS; i++) printf("p%d=%g ",i, local_values.vector[i]); printf("\n");
-//printf("sphcor: %g\n", spherical_correction);
 
-    #ifdef INVALID
-    if (!INVALID(local_values.table))
-    #endif
-    {
-      // Accumulate I(q)
-      // Note: weight==0 must always be excluded
-      if (weight0 > cutoff) {
-        pd_norm += weight0 * CALL_VOLUME(local_values.table);
+//if (q_index==0) {printf("step:%d of %d, pars:",step,pd_stop); for (int i=0; i < NUM_PARS; i++) printf("p%d=%g ",i, local_values.vector[i]); printf("\n");}
 
-        #ifdef USE_OPENMP
-        #pragma omp parallel for
-        #endif
-        for (int q_index=0; q_index<nq; q_index++) {
-#if defined(MAGNETIC) && NUM_MAGNETIC > 0
-          const double qx = q[2*q_index];
-          const double qy = q[2*q_index+1];
-          const double qsq = qx*qx + qy*qy;
+  // ====== loop body =======
+  #ifdef INVALID
+  if (!INVALID(local_values.table))
+  #endif
+  {
+    // Accumulate I(q)
+    // Note: weight==0 must always be excluded
+    if (weight0 > cutoff) {
+      pd_norm += weight0 * CALL_VOLUME(local_values.table);
+      BUILD_ROTATION;
 
-          // Constant across orientation, polydispersity for given qx, qy
-          double scattering = 0.0;
-          // TODO: what is the magnetic scattering at q=0
-          if (qsq > 1.e-16) {
-            double p[4];  // dd, du, ud, uu
-            p[0] = (qy*cos_mspin + qx*sin_mspin)/qsq;
-            p[3] = -p[0];
-            p[1] = p[2] = (qy*sin_mspin - qx*cos_mspin)/qsq;
+#ifndef USE_OPENCL
+      // DLL needs to explicitly loop over the q values.
+      #ifdef USE_OPENMP
+      #pragma omp parallel for
+      #endif
+      for (q_index=0; q_index<nq; q_index++)
+#endif // !USE_OPENCL
+      {
 
-            for (int index=0; index<4; index++) {
-              const double xs = spins[index];
-              if (xs > 1.e-8) {
-                const int spin_flip = (index==1) || (index==2);
-                const double pk = p[index];
-                for (int axis=0; axis<=spin_flip; axis++) {
-                  #define M1 NUM_PARS+5
-                  #define M2 NUM_PARS+8
-                  #define M3 NUM_PARS+13
-                  #define SLD(_M_offset, _sld_offset) \
-                      local_values.vector[_sld_offset] = xs * (axis \
-                      ? (index==1 ? -values[_M_offset+2] : values[_M_offset+2]) \
-                      : mag_sld(qx, qy, pk, values[_M_offset], values[_M_offset+1], \
-                                (spin_flip ? 0.0 : values[_sld_offset+2])))
-                  #if NUM_MAGNETIC==1
-                      SLD(M1, MAGNETIC_PAR1);
-                  #elif NUM_MAGNETIC==2
-                      SLD(M1, MAGNETIC_PAR1);
-                      SLD(M2, MAGNETIC_PAR2);
-                  #elif NUM_MAGNETIC==3
-                      SLD(M1, MAGNETIC_PAR1);
-                      SLD(M2, MAGNETIC_PAR2);
-                      SLD(M3, MAGNETIC_PAR3);
-                  #else
+        FETCH_Q;
+        APPLY_ROTATION;
+
+        // ======= COMPUTE SCATTERING ==========
+        #if defined(MAGNETIC) && NUM_MAGNETIC > 0
+        // Constant across orientation, polydispersity for given qx, qy
+        double scattering = 0.0;
+        // TODO: what is the magnetic scattering at q=0
+        const double qsq = qx*qx + qy*qy;
+        if (qsq > 1.e-16) {
+          double p[4];  // dd, du, ud, uu
+          p[0] = (qy*cos_mspin + qx*sin_mspin)/qsq;
+          p[3] = -p[0];
+          p[1] = p[2] = (qy*sin_mspin - qx*cos_mspin)/qsq;
+
+          for (int index=0; index<4; index++) {
+            const double xs = spins[index];
+            if (xs > 1.e-8) {
+              const int spin_flip = (index==1) || (index==2);
+              const double pk = p[index];
+              for (int axis=0; axis<=spin_flip; axis++) {
+                #define SLD(_M_offset, _sld_offset) \
+                    local_values.vector[_sld_offset] = xs * (axis \
+                    ? (index==1 ? -values[_M_offset+2] : values[_M_offset+2]) \
+                    : mag_sld(qx, qy, pk, values[_M_offset], values[_M_offset+1], \
+                              (spin_flip ? 0.0 : values[_sld_offset+2])))
+                #define M1 NUM_PARS+5
+                #if NUM_MAGNETIC==1
+                  SLD(M1, MAGNETIC_PAR1);
+                #elif NUM_MAGNETIC==2
+                  SLD(M1, MAGNETIC_PAR1);
+                  SLD(M1+3, MAGNETIC_PAR2);
+                #elif NUM_MAGNETIC==3
+                  SLD(M1, MAGNETIC_PAR1);
+                  SLD(M1+3, MAGNETIC_PAR2);
+                  SLD(M1+6, MAGNETIC_PAR3);
+                #else
                   for (int sk=0; sk<NUM_MAGNETIC; sk++) {
                       SLD(M1+3*sk, slds[sk]);
                   }
-                  #endif
-#  if defined(CALL_IQ_A) // unoriented
-                  scattering += CALL_IQ_A(sqrt(qsq), local_values.table);
-#  elif defined(CALL_IQ_AC) // oriented symmetric
-                  scattering += view_direct(qx, qy, theta, phi, local_values.table);
-#  elif defined(CALL_IQ_ABC) // oriented asymmetric
-                  scattering += view_direct(qx, qy, theta, phi, psi, local_values.table);
-#  endif
-                }
+                #endif
+                #undef SLD
+                scattering += CALL_KERNEL;
               }
             }
           }
-#elif defined(CALL_IQ) // 1d, not MAGNETIC
-          const double scattering = CALL_IQ(q[q_index], local_values.table);
-#else  // 2d data, not magnetic
-          const double qx = q[2*q_index];
-          const double qy = q[2*q_index+1];
-#  if defined(CALL_IQ_A) // unoriented
-          const double scattering = CALL_IQ_A(sqrt(qx*qx+qy*qy), local_values.table);
-#  elif defined(CALL_IQ_AC) // oriented symmetric
-          const double scattering = view_direct(qx, qy, theta, phi, local_values.table);
-#  elif defined(CALL_IQ_ABC) // oriented asymmetric
-          const double scattering = view_direct(qx, qy, theta, phi, psi, local_values.table);
-#  endif
-#endif // !MAGNETIC
-//printf("q_index:%d %g %g %g %g\n",q_index, scattering, weight, spherical_correction, weight0);
-          result[q_index] += weight0 * scattering;
         }
+        #else  // !MAGNETIC
+        const double scattering = CALL_KERNEL;
+        #endif // !MAGNETIC
+//printf("q_index:%d %g %g %g %g\n", q_index, scattering, weight, weight0);
+
+        #ifdef USE_OPENCL
+        this_result += weight0 * scattering;
+        #else // !USE_OPENCL
+        result[q_index] += weight0 * scattering;
+        #endif // !USE_OPENCL
       }
     }
-    ++step;
-#if MAX_PD>0
-    if (step >= pd_stop) break;
-    ++i0;
   }
-  i0 = 0;
+
+// close nested loops
+++step;
+#if MAX_PD>0
+  PD_CLOSE(0)
 #endif
 #if MAX_PD>1
-    if (step >= pd_stop) break;
-    ++i1;
-  }
-  i1 = 0;
+  PD_CLOSE(1)
 #endif
 #if MAX_PD>2
-    if (step >= pd_stop) break;
-    ++i2;
-  }
-  i2 = 0;
+  PD_CLOSE(2)
 #endif
 #if MAX_PD>3
-    if (step >= pd_stop) break;
-    ++i3;
-  }
-  i3 = 0;
+  PD_CLOSE(3)
 #endif
 #if MAX_PD>4
-    if (step >= pd_stop) break;
-    ++i4;
-  }
-  i4 = 0;
+  PD_CLOSE(4)
 #endif
 
-//printf("res: %g/%g\n", result[0], pd_norm);
-  // Remember the updated norm.
+// clear the macros in preparation for the next kernel
+#undef PD_INIT
+#undef PD_OPEN
+#undef PD_CLOSE
+#undef FETCH_Q
+#undef BUILD_ROTATION
+#undef APPLY_ROTATION
+#undef CALL_KERNEL
+
+// Remember the current result and the updated norm.
+#ifdef USE_OPENCL
+  result[q_index] = this_result;
+  if (q_index == 0) result[nq] = pd_norm;
+//if (q_index == 0) printf("res: %g/%g\n", result[0], pd_norm);
+#else // !USE_OPENCL
   result[nq] = pd_norm;
+//printf("res: %g/%g\n", result[0], pd_norm);
+#endif // !USE_OPENCL
 }

@@ -166,6 +166,7 @@ from os.path import abspath, dirname, join as joinpath, exists, isdir, getmtime
 import re
 import string
 from zlib import crc32
+from inspect import currentframe, getframeinfo
 
 import numpy as np  # type: ignore
 
@@ -684,10 +685,13 @@ def make_source(model_info):
 
     # Load templates and user code
     kernel_header = load_template('kernel_header.c')
-    dll_code = load_template('kernel_iq.c')
-    ocl_code = load_template('kernel_iq.cl')
-    #ocl_code = load_template('kernel_iq_local.cl')
+    kernel_code = load_template('kernel_iq.c')
     user_code = [(f, open(f).read()) for f in model_sources(model_info)]
+
+    # What kind of 2D model do we need?
+    xy_mode = ('qa' if not _have_Iqxy(user_code) and not isinstance(model_info.Iqxy, str)
+               else 'qac' if not partable.is_asymmetric
+               else 'qabc')
 
     # Build initial sources
     source = []
@@ -712,8 +716,9 @@ def make_source(model_info):
                               model_info.filename, model_info._Iqxy_line))
 
     # Define the parameter table
-    # TODO: plug in current line number
-    source.append('#line 716 "sasmodels/generate.py"')
+    lineno = getframeinfo(currentframe()).lineno + 2
+    source.append('#line %d "sasmodels/generate.py"'%lineno)
+    #source.append('introduce breakage in generate to test lineno reporting')
     source.append("#define PARAMETER_TABLE \\")
     source.append("\\\n".join(p.as_definition()
                               for p in partable.kernel_parameters))
@@ -732,16 +737,15 @@ def make_source(model_info):
     model_refs = _call_pars("_v.", partable.iq_parameters)
     pars = ",".join(["_q"] + model_refs)
     call_iq = "#define CALL_IQ(_q, _v) Iq(%s)" % pars
-    if _have_Iqxy(user_code) or isinstance(model_info.Iqxy, str):
-        if partable.is_asymmetric:
-            pars = ",".join(["_qa", "_qb", "_qc"] + model_refs)
-            call_iqxy = "#define CALL_IQ_ABC(_qa,_qb,_qc,_v) Iqxy(%s)" % pars
-            clear_iqxy = "#undef CALL_IQ_ABC"
-        else:
-            pars = ",".join(["_qa", "_qc"] + model_refs)
-            call_iqxy = "#define CALL_IQ_AC(_qa,_qc,_v) Iqxy(%s)" % pars
-            clear_iqxy = "#undef CALL_IQ_AC"
-    else:
+    if xy_mode == 'qabc':
+        pars = ",".join(["_qa", "_qb", "_qc"] + model_refs)
+        call_iqxy = "#define CALL_IQ_ABC(_qa,_qb,_qc,_v) Iqxy(%s)" % pars
+        clear_iqxy = "#undef CALL_IQ_ABC"
+    elif xy_mode == 'qac':
+        pars = ",".join(["_qa", "_qc"] + model_refs)
+        call_iqxy = "#define CALL_IQ_AC(_qa,_qc,_v) Iqxy(%s)" % pars
+        clear_iqxy = "#undef CALL_IQ_AC"
+    else:  # xy_mode == 'qa'
         pars = ",".join(["_qa"] + model_refs)
         call_iqxy = "#define CALL_IQ_A(_qa,_v) Iq(%s)" % pars
         clear_iqxy = "#undef CALL_IQ_A"
@@ -760,8 +764,8 @@ def make_source(model_info):
 
     # TODO: allow mixed python/opencl kernels?
 
-    ocl = kernels(ocl_code, call_iq, call_iqxy, clear_iqxy, model_info.name)
-    dll = kernels(dll_code, call_iq, call_iqxy, clear_iqxy, model_info.name)
+    ocl = kernels(kernel_code, call_iq, call_iqxy, clear_iqxy, model_info.name)
+    dll = kernels(kernel_code, call_iq, call_iqxy, clear_iqxy, model_info.name)
     result = {
         'dll': '\n'.join(source+dll[0]+dll[1]+dll[2]),
         'opencl': '\n'.join(source+ocl[0]+ocl[1]+ocl[2]),
