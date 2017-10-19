@@ -106,8 +106,6 @@ to the total scattering can be skipped without calculating them.
 - NUM_MAGNETIC is the number of magnetic SLDs
 - MAGNETIC_PARS is a comma separated list of the magnetic SLDs, indicating
   their locations in the values vector.
-- MAGNETIC_PAR1, ... are the first three magnetic parameter ids so we can
-  hard code the setting of magnetic values if there are only a few of them.
 - KERNEL_NAME is the name of the function being declared
 - PARAMETER_TABLE is the declaration of the parameters to the kernel:
 
@@ -207,8 +205,6 @@ it is harmless to do so and simplifies the looping code::
     NUM_VALUES = 17       // all values, including scale and background
     NUM_MAGNETIC = 2      // two parameters might be magnetic
     MAGNETIC_PARS = 4, 5  // they are sld and sld_solvent
-    MAGNETIC_PAR0 = 4     // sld index
-    MAGNETIC_PAR1 = 5     // solvent index
 
     details {
         pd_par = {3, 2, 4, 5}         // parameters *radius* and *length* vary

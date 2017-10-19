@@ -30,9 +30,9 @@ is the Pauli spin.
 Assuming that incident neutrons are polarized parallel (+) and anti-parallel (-)
 to the $x'$ axis, the possible spin states after the sample are then
 
-No spin-flips (+ +) and (- -)
+Non spin-flip (+ +) and (- -)
 
-Spin-flips    (+ -) and (- +)
+Spin-flip    (+ -) and (- +)
 
 .. figure::
     mag_img/M_angles_pic.png
@@ -40,34 +40,34 @@ Spin-flips    (+ -) and (- +)
 If the angles of the $Q$ vector and the spin-axis $x'$ to the $x$ - axis are
 $\phi$ and $\theta_{up}$, respectively, then, depending on the spin state of the
 neutrons, the scattering length densities, including the nuclear scattering
-length density ($\beta{_N}$) are
+length density $(\beta{_N})$ are
 
 .. math::
     \beta_{\pm\pm} =  \beta_N \mp D_M M_{\perp x'}
-    \text{ when there are no spin-flips}
+    \text{ for non spin-flip states}
 
 and
 
 .. math::
     \beta_{\pm\mp} =  -D_M (M_{\perp y'} \pm iM_{\perp z'})
-    \text{ when there are}
+    \text{ for spin-flip states}
 
 where
 
 .. math::
-    M_{\perp x'} = M_{0q_x}\cos(\theta_{up})+M_{0q_y}\sin(\theta_{up}) \\
-    M_{\perp y'} = M_{0q_y}\cos(\theta_{up})-M_{0q_x}\sin(\theta_{up}) \\
-    M_{\perp z'} = M_{0z} \\
-    M_{0q_x} = (M_{0x}\cos\phi - M_{0y}\sin\phi)\cos\phi \\
-    M_{0q_y} = (M_{0y}\sin\phi - M_{0x}\cos\phi)\sin\phi
+    M_{\perp x'} &= M_{0q_x}\cos(\theta_{up})+M_{0q_y}\sin(\theta_{up}) \\
+    M_{\perp y'} &= M_{0q_y}\cos(\theta_{up})-M_{0q_x}\sin(\theta_{up}) \\
+    M_{\perp z'} &= M_{0z} \\
+    M_{0q_x} &= (M_{0x}\cos\phi - M_{0y}\sin\phi)\cos\phi \\
+    M_{0q_y} &= (M_{0y}\sin\phi - M_{0x}\cos\phi)\sin\phi
 
 Here, $M_{0x}$, $M_{0x}$, $M_{0z}$ are the x, y and z components
 of the magnetization vector given in the laboratory xyz frame given by
 
 .. math::
-    M_{0x} = M_0\cos\theta_M\cos\phi_M \\
-    M_{0y} = M_0\sin\theta_M \\
-    M_{0z} = -M_0\cos\theta_M\sin\phi_M
+    M_{0x} &= M_0\cos\theta_M\cos\phi_M \\
+    M_{0y} &= M_0\sin\theta_M \\
+    M_{0z} &= -M_0\cos\theta_M\sin\phi_M
 
 and the magnetization angles $\theta_M$ and $\phi_M$ are defined in
 the figure above.

@@ -759,8 +759,6 @@ def make_source(model_info):
     source.append("#define NUM_VALUES %d" % partable.nvalues)
     source.append("#define NUM_MAGNETIC %d" % partable.nmagnetic)
     source.append("#define MAGNETIC_PARS %s"%",".join(str(k) for k in magpars))
-    for k, v in enumerate(magpars[:3]):
-        source.append("#define MAGNETIC_PAR%d %d"%(k+1, v))
 
     # TODO: allow mixed python/opencl kernels?
 

@@ -16,15 +16,14 @@
 //  NUM_PARS : the number of parameters in the parameter table
 //  NUM_VALUES : the number of values to skip at the start of the
 //      values array before you get to the dispersity values.
-//  NUM_MAGNETIC : the number of magnetic parameters
 //  PARAMETER_TABLE : list of parameter declarations used to create the
 //      ParameterTable type.
 //  KERNEL_NAME : model_Iq, model_Iqxy or model_Imagnetic.  This code is
 //      included three times, once for each kernel type.
+//  MAGNETIC : defined when the magnetic kernel is being instantiated
+//  NUM_MAGNETIC : the number of magnetic parameters
 //  MAGNETIC_PARS : a comma-separated list of indices to the sld
 //      parameters in the parameter table.
-//  MAGNETIC_PAR1, ... : the first few indices of slds in the parameter table.
-//  MAGNETIC : defined when the magnetic kernel is being instantiated
 //  CALL_VOLUME(table) : call the form volume function
 //  CALL_IQ(q, table) : call the Iq function for 1D calcs.
 //  CALL_IQ_A(q, table) : call the Iq function with |q| for 2D data.
@@ -38,8 +37,8 @@
 
 typedef struct {
 #if MAX_PD > 0
-    int32_t pd_par[MAX_PD];     // id of the nth polydispersity variable
-    int32_t pd_length[MAX_PD];  // length of the nth polydispersity weight vector
+    int32_t pd_par[MAX_PD];     // id of the nth dispersity variable
+    int32_t pd_length[MAX_PD];  // length of the nth dispersity weight vector
     int32_t pd_offset[MAX_PD];  // offset of pd weights in the value & weight vector
     int32_t pd_stride[MAX_PD];  // stride to move to the next index at this level
 #endif // MAX_PD > 0
@@ -72,25 +71,51 @@ static double clip(double value, double low, double high)
 // To convert spin cross sections to sld b:
 //     uu * (sld - m_sigma_x);
 //     dd * (sld + m_sigma_x);
-//     ud * (m_sigma_y + 1j*m_sigma_z);
-//     du * (m_sigma_y - 1j*m_sigma_z);
-static void set_spins(double in_spin, double out_spin, double spins[4])
+//     ud * (m_sigma_y - 1j*m_sigma_z);
+//     du * (m_sigma_y + 1j*m_sigma_z);
+// weights for spin crosssections: dd du real, ud real, uu, du imag, ud imag
+static void set_spin_weights(double in_spin, double out_spin, double spins[4])
 {
   in_spin = clip(in_spin, 0.0, 1.0);
   out_spin = clip(out_spin, 0.0, 1.0);
   spins[0] = sqrt(sqrt((1.0-in_spin) * (1.0-out_spin))); // dd
-  spins[1] = sqrt(sqrt((1.0-in_spin) * out_spin));       // du
-  spins[2] = sqrt(sqrt(in_spin * (1.0-out_spin)));       // ud
+  spins[1] = sqrt(sqrt((1.0-in_spin) * out_spin));       // du real
+  spins[2] = sqrt(sqrt(in_spin * (1.0-out_spin)));       // ud real
   spins[3] = sqrt(sqrt(in_spin * out_spin));             // uu
+  spins[4] = spins[1]; // du imag
+  spins[5] = spins[2]; // ud imag
 }
 
 // Compute the magnetic sld
-static double mag_sld(double qx, double qy, double p,
-                       double mx, double my, double sld)
+static double mag_sld(
+  const int xs, // 0=dd, 1=du real, 2=ud real, 3=uu, 4=du imag, 5=up imag
+  const double qx, const double qy,
+  const double px, const double py,
+  const double sld,
+  const double mx, const double my, const double mz
+)
 {
+  if (xs < 4) {
     const double perp = qy*mx - qx*my;
-    return sld + perp*p;
+    switch (xs) {
+      case 0: // uu => sld - D M_perpx
+          return sld - px*perp;
+      case 1: // ud real => -D M_perpy
+          return py*perp;
+      case 2: // du real => -D M_perpy
+          return py*perp;
+      case 3: // dd real => sld + D M_perpx
+          return sld + px*perp;
+    }
+  } else {
+    if (xs== 4) {
+      return -mz;  // ud imag => -D M_perpz
+    } else { // index == 5
+      return mz;   // du imag => D M_perpz
+    }
+  }
 }
+
 
 #endif
 
@@ -234,13 +259,13 @@ qabc_apply(
 kernel
 void KERNEL_NAME(
     int32_t nq,                 // number of q values
-    const int32_t pd_start,     // where we are in the polydispersity loop
-    const int32_t pd_stop,      // where we are stopping in the polydispersity loop
+    const int32_t pd_start,     // where we are in the dispersity loop
+    const int32_t pd_stop,      // where we are stopping in the dispersity loop
     global const ProblemDetails *details,
     global const double *values,
     global const double *q, // nq q values, with padding to boundary
     global double *result,  // nq+1 return values, again with padding
-    const double cutoff     // cutoff in the polydispersity weight product
+    const double cutoff     // cutoff in the dispersity weight product
     )
 {
 #ifdef USE_OPENCL
@@ -255,24 +280,22 @@ void KERNEL_NAME(
 #endif
 
   // Storage for the current parameter values.  These will be updated as we
-  // walk the polydispersity cube.
+  // walk the dispersity mesh.
   ParameterBlock local_values;
 
 #if defined(MAGNETIC) && NUM_MAGNETIC>0
   // Location of the sld parameters in the parameter vector.
   // These parameters are updated with the effective sld due to magnetism.
-  #if NUM_MAGNETIC > 3
   const int32_t slds[] = { MAGNETIC_PARS };
-  #endif
 
   // Interpret polarization cross section.
   //     up_frac_i = values[NUM_PARS+2];
   //     up_frac_f = values[NUM_PARS+3];
   //     up_angle = values[NUM_PARS+4];
   // TODO: could precompute more magnetism parameters before calling the kernel.
-  double spins[4];
+  double spins[8];  // uu, ud real, du real, dd, ud imag, du imag, fill, fill
   double cos_mspin, sin_mspin;
-  set_spins(values[NUM_PARS+2], values[NUM_PARS+3], spins);
+  set_spin_weights(values[NUM_PARS+2], values[NUM_PARS+3], spins);
   SINCOS(-values[NUM_PARS+4]*M_PI_180, sin_mspin, cos_mspin);
 #endif // MAGNETIC
 
@@ -394,7 +417,7 @@ After expansion, the loop struction will look like the following:
   global const double *w##_LOOP = pd_weight + details->pd_offset[_LOOP]; \
   int i##_LOOP = (pd_start/details->pd_stride[_LOOP])%n##_LOOP;
 
-// Jump into the middle of the polydispersity loop
+// Jump into the middle of the dispersity loop
 #define PD_OPEN(_LOOP,_OUTER) \
   while (i##_LOOP < n##_LOOP) { \
     local_values.vector[p##_LOOP] = v##_LOOP[i##_LOOP]; \
@@ -426,23 +449,23 @@ After expansion, the loop struction will look like the following:
 #if defined(CALL_IQ)
   // unoriented 1D
   double qk;
-  #define FETCH_Q do { qk = q[q_index]; } while (0)
-  #define BUILD_ROTATION do {} while(0)
-  #define APPLY_ROTATION do {} while(0)
-  #define CALL_KERNEL CALL_IQ(qk, local_values.table)
+  #define FETCH_Q() do { qk = q[q_index]; } while (0)
+  #define BUILD_ROTATION() do {} while(0)
+  #define APPLY_ROTATION() do {} while(0)
+  #define CALL_KERNEL() CALL_IQ(qk, local_values.table)
 
 #elif defined(CALL_IQ_A)
   // unoriented 2D
   double qx, qy;
-  #define FETCH_Q do { qx = q[2*q_index]; qy = q[2*q_index+1]; } while (0)
-  #define BUILD_ROTATION do {} while(0)
-  #define APPLY_ROTATION do {} while(0)
-  #define CALL_KERNEL CALL_IQ_A(sqrt(qx*qx+qy*qy), local_values.table)
+  #define FETCH_Q() do { qx = q[2*q_index]; qy = q[2*q_index+1]; } while (0)
+  #define BUILD_ROTATION() do {} while(0)
+  #define APPLY_ROTATION() do {} while(0)
+  #define CALL_KERNEL() CALL_IQ_A(sqrt(qx*qx+qy*qy), local_values.table)
 
 #elif defined(CALL_IQ_AC)
   // oriented symmetric 2D
   double qx, qy;
-  #define FETCH_Q do { qx = q[2*q_index]; qy = q[2*q_index+1]; } while (0)
+  #define FETCH_Q() do { qx = q[2*q_index]; qy = q[2*q_index+1]; } while (0)
   double qa, qc;
   QACRotation rotation;
   // Grab the "view" angles (theta, phi) from the initial parameter table.
@@ -451,15 +474,15 @@ After expansion, the loop struction will look like the following:
   // table as we go through the mesh.
   const double theta = values[details->theta_par+2];
   const double phi = values[details->theta_par+3];
-  #define BUILD_ROTATION qac_rotation(&rotation, \
+  #define BUILD_ROTATION() qac_rotation(&rotation, \
     theta, phi, local_values.table.theta, local_values.table.phi)
-  #define APPLY_ROTATION qac_apply(rotation, qx, qy, &qa, &qc)
-  #define CALL_KERNEL CALL_IQ_AC(qa, qc, local_values.table)
+  #define APPLY_ROTATION() qac_apply(rotation, qx, qy, &qa, &qc)
+  #define CALL_KERNEL() CALL_IQ_AC(qa, qc, local_values.table)
 
 #elif defined(CALL_IQ_ABC)
   // oriented asymmetric 2D
   double qx, qy;
-  #define FETCH_Q do { qx = q[2*q_index]; qy = q[2*q_index+1]; } while (0)
+  #define FETCH_Q() do { qx = q[2*q_index]; qy = q[2*q_index+1]; } while (0)
   double qa, qb, qc;
   QABCRotation rotation;
   // Grab the "view" angles (theta, phi, psi) from the initial parameter table.
@@ -469,11 +492,11 @@ After expansion, the loop struction will look like the following:
   const double theta = values[details->theta_par+2];
   const double phi = values[details->theta_par+3];
   const double psi = values[details->theta_par+4];
-  #define BUILD_ROTATION qabc_rotation(&rotation, \
+  #define BUILD_ROTATION() qabc_rotation(&rotation, \
     theta, phi, psi, local_values.table.theta, \
     local_values.table.phi, local_values.table.psi)
-  #define APPLY_ROTATION qabc_apply(rotation, qx, qy, &qa, &qb, &qc)
-  #define CALL_KERNEL CALL_IQ_ABC(qa, qb, qc, local_values.table)
+  #define APPLY_ROTATION() qabc_apply(rotation, qx, qy, &qa, &qb, &qc)
+  #define CALL_KERNEL() CALL_IQ_ABC(qa, qb, qc, local_values.table)
 
 #endif
 
@@ -537,7 +560,7 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
     // Note: weight==0 must always be excluded
     if (weight0 > cutoff) {
       pd_norm += weight0 * CALL_VOLUME(local_values.table);
-      BUILD_ROTATION;
+      BUILD_ROTATION();
 
 #ifndef USE_OPENCL
       // DLL needs to explicitly loop over the q values.
@@ -548,62 +571,48 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
 #endif // !USE_OPENCL
       {
 
-        FETCH_Q;
-        APPLY_ROTATION;
+        FETCH_Q();
+        APPLY_ROTATION();
 
         // ======= COMPUTE SCATTERING ==========
         #if defined(MAGNETIC) && NUM_MAGNETIC > 0
-        // Constant across orientation, polydispersity for given qx, qy
-        double scattering = 0.0;
-        // TODO: what is the magnetic scattering at q=0
-        const double qsq = qx*qx + qy*qy;
-        if (qsq > 1.e-16) {
-          double p[4];  // dd, du, ud, uu
-          p[0] = (qy*cos_mspin + qx*sin_mspin)/qsq;
-          p[3] = -p[0];
-          p[1] = p[2] = (qy*sin_mspin - qx*cos_mspin)/qsq;
+          // Compute the scattering from the magnetic cross sections.
+          double scattering = 0.0;
+          const double qsq = qx*qx + qy*qy;
+          if (qsq > 1.e-16) {
+            // TODO: what is the magnetic scattering at q=0
+            const double px = (qy*cos_mspin + qx*sin_mspin)/qsq;
+            const double py = (qy*sin_mspin - qx*cos_mspin)/qsq;
 
-          for (int index=0; index<4; index++) {
-            const double xs = spins[index];
-            if (xs > 1.e-8) {
-              const int spin_flip = (index==1) || (index==2);
-              const double pk = p[index];
-              for (int axis=0; axis<=spin_flip; axis++) {
-                #define SLD(_M_offset, _sld_offset) \
-                    local_values.vector[_sld_offset] = xs * (axis \
-                    ? (index==1 ? -values[_M_offset+2] : values[_M_offset+2]) \
-                    : mag_sld(qx, qy, pk, values[_M_offset], values[_M_offset+1], \
-                              (spin_flip ? 0.0 : values[_sld_offset+2])))
-                #define M1 NUM_PARS+5
-                #if NUM_MAGNETIC==1
-                  SLD(M1, MAGNETIC_PAR1);
-                #elif NUM_MAGNETIC==2
-                  SLD(M1, MAGNETIC_PAR1);
-                  SLD(M1+3, MAGNETIC_PAR2);
-                #elif NUM_MAGNETIC==3
-                  SLD(M1, MAGNETIC_PAR1);
-                  SLD(M1+3, MAGNETIC_PAR2);
-                  SLD(M1+6, MAGNETIC_PAR3);
-                #else
-                  for (int sk=0; sk<NUM_MAGNETIC; sk++) {
-                      SLD(M1+3*sk, slds[sk]);
-                  }
-                #endif
-                #undef SLD
-                scattering += CALL_KERNEL;
+            // loop over uu, ud real, du real, dd, ud imag, du imag
+            for (int xs=0; xs<6; xs++) {
+              const double xs_weight = spins[xs];
+              if (xs_weight > 1.e-8) {
+                // Since the cross section weight is significant, set the slds
+                // to the effective slds for this cross section, call the
+                // kernel, and add according to weight.
+                for (int sk=0; sk<NUM_MAGNETIC; sk++) {
+                  const int32_t mag_index = NUM_PARS+5 + 3*sk;
+                  const int32_t sld_index = slds[sk];
+                  const double mx = values[mag_index];
+                  const double my = values[mag_index+1];
+                  const double mz = values[mag_index+2];
+                  local_values.vector[sld_index] =
+                    mag_sld(xs, qx, qy, px, py, values[sld_index+2], mx, my, mz);
+                }
+                scattering += xs_weight * CALL_KERNEL();
               }
             }
           }
-        }
         #else  // !MAGNETIC
-        const double scattering = CALL_KERNEL;
+          const double scattering = CALL_KERNEL();
         #endif // !MAGNETIC
 //printf("q_index:%d %g %g %g %g\n", q_index, scattering, weight, weight0);
 
         #ifdef USE_OPENCL
-        this_result += weight0 * scattering;
+          this_result += weight0 * scattering;
         #else // !USE_OPENCL
-        result[q_index] += weight0 * scattering;
+          result[q_index] += weight0 * scattering;
         #endif // !USE_OPENCL
       }
     }
@@ -627,15 +636,6 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
   PD_CLOSE(4)
 #endif
 
-// clear the macros in preparation for the next kernel
-#undef PD_INIT
-#undef PD_OPEN
-#undef PD_CLOSE
-#undef FETCH_Q
-#undef BUILD_ROTATION
-#undef APPLY_ROTATION
-#undef CALL_KERNEL
-
 // Remember the current result and the updated norm.
 #ifdef USE_OPENCL
   result[q_index] = this_result;
@@ -645,4 +645,13 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
   result[nq] = pd_norm;
 //printf("res: %g/%g\n", result[0], pd_norm);
 #endif // !USE_OPENCL
+
+// clear the macros in preparation for the next kernel
+#undef PD_INIT
+#undef PD_OPEN
+#undef PD_CLOSE
+#undef FETCH_Q
+#undef BUILD_ROTATION
+#undef APPLY_ROTATION
+#undef CALL_KERNEL
 }
