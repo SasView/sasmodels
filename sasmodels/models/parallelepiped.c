@@ -52,7 +52,7 @@ Iq(double q,
 
 
 static double
-Iq2d(double qa, double qb, double qc,
+Iqxy(double qa, double qb, double qc,
     double sld,
     double solvent_sld,
     double length_a,
