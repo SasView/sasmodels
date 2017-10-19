@@ -113,17 +113,28 @@ def mprint(var, mat, comment=None, post=None):
     n = sp.prod(var.shape)
     vprint(var.reshape(n, 1), mat.reshape(n, 1), comment=comment, post=post)
 
+# From wikipedia:
+#    https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
 def Rx(a):
     """Rotate y and z about x"""
-    return Matrix([[1, 0, 0], [0, cos(a), sin(a)], [0, -sin(a), cos(a)]])
+    R = [[1, 0, 0],
+         [0, +cos(a), -sin(a)],
+         [0, +sin(a), +cos(a)]]
+    return Matrix(R)
 
 def Ry(a):
     """Rotate x and z about y"""
-    return Matrix([[cos(a), 0, sin(a)], [0, 1, 0], [-sin(a), 0, cos(a)]])
+    R = [[+cos(a), 0, +sin(a)],
+         [0, 1, 0],
+         [-sin(a), 0, +cos(a)]]
+    return Matrix(R)
 
 def Rz(a):
     """Rotate x and y about z"""
-    return Matrix([[cos(a), sin(a), 0], [-sin(a), cos(a), 0], [0, 0, 1]])
+    R = [[+cos(a), -sin(a), 0],
+         [+sin(a), +cos(a), 0],
+         [0, 0, 1]]
+    return Matrix(R)
 
 
 ## ===============  Describe the transforms ====================
@@ -153,13 +164,6 @@ q_abc = Matrix([[qa], [qb], [qc]])
 q_xyz = Matrix([[qx], [qy], [qz]])
 dq_abc = Matrix([[dqa], [dqb], [dqc]])
 dq_xyz = Matrix([[dqx], [dqy], [dqz]])
-
-# By comparing the code we generate to sasmodel 4.x orientation code, we
-# are apparently using the opposite convention for phi than I expected.
-# Theta
-#theta = pi/2 - theta
-phi = -phi
-dphi = -dphi
 
 def print_steps(jitter, jitter_inv, view, view_inv, qc_only):
     """
