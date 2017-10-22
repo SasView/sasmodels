@@ -272,8 +272,8 @@ def correct_theta_weights(parameters, dispersity, weights):
         theta = dispersity[index]
         # TODO: modify the dispersity vector to avoid the theta=-90,90,270,...
         theta_weight = abs(cos(radians(theta)))
-        weights = tuple(theta_weight*v if k == index else v
-                        for k, v in enumerate(weights))
+        weights = tuple(theta_weight*w if k == index else w
+                        for k, w in enumerate(weights))
     return weights
 
 
