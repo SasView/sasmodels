@@ -502,6 +502,13 @@ class ParameterTable(object):
             raise KeyError("unknown parameter %r"%key)
         return par
 
+    def __contains__(self, key):
+        for par in self.call_parameters:
+            if par.name == key:
+                return True
+        else:
+            return False
+
     def _set_vector_lengths(self):
         # type: () -> List[str]
         """

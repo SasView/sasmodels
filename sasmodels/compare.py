@@ -82,9 +82,10 @@ Options (* for default):
     -sets=n generates n random datasets with the seed given by -random=seed
     -pars/-nopars* prints the parameter set or not
     -default/-demo* use demo vs default parameters
+    -sphere[=150] set up spherical integration over theta/phi using n points
 
     === calculation options ===
-    -mono*/-poly force monodisperse or allow polydisperse demo parameters
+    -mono*/-poly force monodisperse or allow polydisperse random parameters
     -cutoff=1e-5* cutoff value for including a point in polydispersity
     -magnetic/-nonmagnetic* suppress magnetism
     -accuracy=Low accuracy of the resolution calculation Low, Mid, High, Xhigh
@@ -278,7 +279,7 @@ def parameter_range(p, v):
     elif any(s in p for s in ('theta', 'phi', 'psi')):
         # orientation in [-180,180], orientation pd in [0,45]
         if p.endswith('_pd'):
-            return 0., 45.
+            return 0., 180.
         else:
             return -180., 180.
     elif p.endswith('_pd'):
@@ -433,6 +434,16 @@ def randomize_pars(model_info, pars):
     return random_pars
 
 
+def limit_dimensions(model_info, pars, maxdim):
+    # type: (ModelInfo, ParameterSet, float) -> None
+    """
+    Limit parameters of units of Ang to maxdim.
+    """
+    for p in model_info.parameters.call_parameters:
+        value = pars[p.name]
+        if p.units == 'Ang' and value > maxdim:
+            pars[p.name] = maxdim*10**np.random.uniform(-3,0)
+
 def constrain_pars(model_info, pars):
     # type: (ModelInfo, ParameterSet) -> None
     """
@@ -495,6 +506,7 @@ def parlist(model_info, pars, is2d):
     """
     Format the parameter list for printing.
     """
+    is2d = True
     lines = []
     parameters = model_info.parameters
     magnetic = False
@@ -816,7 +828,7 @@ def _show_invalid(data, theory):
         print("   *** ", ", ".join("I(%g)=%g"%(x, y) for x, y in bad))
 
 
-def compare(opts, limits=None):
+def compare(opts, limits=None, maxdim=np.inf):
     # type: (Dict[str, Any], Optional[Tuple[float, float]]) -> Tuple[float, float]
     """
     Preform a comparison using options from the command line.
@@ -827,9 +839,16 @@ def compare(opts, limits=None):
     the limits are set when the model is initially called, and maintained
     as the values are adjusted, making it easier to see the effects of the
     parameters.
+
+    *maxdim* is the maximum value for any parameter with units of Angstrom.
     """
     for k in range(opts['sets']):
-        opts['pars'] = parse_pars(opts)
+        if k > 1:
+            # print a separate seed for each dataset for better reproducibility
+            new_seed = np.random.randint(1000000)
+            print("Set %d uses -random=%i"%(k+1,new_seed))
+            np.random.seed(new_seed)
+        opts['pars'] = parse_pars(opts, maxdim=maxdim)
         if opts['pars'] is None:
             return
         result = run_models(opts, verbose=True)
@@ -970,8 +989,8 @@ def plot_models(opts, result, limits=None, setnum=0):
             err[err > cutoff] = cutoff
         #err,errstr = base/comp,"ratio"
         plot_theory(data, None, resid=err, view=errview, use_data=use_data)
-        if view == 'linear':
-            plt.xscale('linear')
+        plt.xscale('log' if view == 'log' else linear)
+        plt.legend(['P%d'%(k+1) for k in range(setnum+1)], loc='best')
         plt.title("max %s = %.3g"%(errstr, abs(err).max()))
         #cbar_title = errstr if errview=="linear" else "log "+errstr
     #if is2D:
@@ -1018,6 +1037,7 @@ OPTIONS = [
     'preset', 'random', 'random=', 'sets=',
     'demo', 'default',  # TODO: remove demo/default
     'nopars', 'pars',
+    'sphere', 'sphere=', # integrate over a sphere in 2d with n points
 
     # Calculation options
     'poly', 'mono', 'cutoff=',
@@ -1152,8 +1172,9 @@ def parse_opts(argv):
         'datafile'  : None,
         'sets'      : 0,
         'engine'    : 'default',
-        'evals'     : '1',
+        'count'     : '1',
         'show_weights' : False,
+        'sphere'    : 0,
     }
     for arg in flags:
         if arg == '-noplot':    opts['plot'] = False
@@ -1178,7 +1199,10 @@ def parse_opts(argv):
         elif arg.startswith('-title='):    opts['title'] = arg[7:]
         elif arg.startswith('-data='):     opts['datafile'] = arg[6:]
         elif arg.startswith('-engine='):   opts['engine'] = arg[8:]
-        elif arg.startswith('-neval='):    opts['evals'] = arg[7:]
+        elif arg.startswith('-neval='):    opts['count'] = arg[7:]
+        elif arg.startswith('-sphere'):
+            opts['sphere'] = int(arg[8:]) if len(arg) > 7 else 150
+            opts['is2d'] = True
         elif arg == '-random':  opts['seed'] = np.random.randint(1000000)
         elif arg == '-preset':  opts['seed'] = -1
         elif arg == '-mono':    opts['mono'] = True
@@ -1237,26 +1261,26 @@ def parse_opts(argv):
         return None
 
     if PAR_SPLIT in opts['engine']:
-        engine_types = opts['engine'].split(PAR_SPLIT, 2)
+        opts['engine'] = opts['engine'].split(PAR_SPLIT, 2)
         comparison = True
     else:
-        engine_types = [opts['engine']]*2
+        opts['engine'] = [opts['engine']]*2
 
-    if PAR_SPLIT in opts['evals']:
-        evals = [int(k) for k in opts['evals'].split(PAR_SPLIT, 2)]
+    if PAR_SPLIT in opts['count']:
+        opts['count'] = [int(k) for k in opts['count'].split(PAR_SPLIT, 2)]
         comparison = True
     else:
-        evals = [int(opts['evals'])]*2
+        opts['count'] = [int(opts['count'])]*2
 
     if PAR_SPLIT in opts['cutoff']:
-        cutoff = [float(k) for k in opts['cutoff'].split(PAR_SPLIT, 2)]
+        opts['cutoff'] = [float(k) for k in opts['cutoff'].split(PAR_SPLIT, 2)]
         comparison = True
     else:
-        cutoff = [float(opts['cutoff'])]*2
+        opts['cutoff'] = [float(opts['cutoff'])]*2
 
-    base = make_engine(model_info[0], data, engine_types[0], cutoff[0])
+    base = make_engine(model_info[0], data, opts['engine'][0], opts['cutoff'][0])
     if comparison:
-        comp = make_engine(model_info[1], data, engine_types[1], cutoff[1])
+        comp = make_engine(model_info[1], data, opts['engine'][1], opts['cutoff'][1])
     else:
         comp = None
 
@@ -1265,17 +1289,40 @@ def parse_opts(argv):
     opts.update({
         'data'      : data,
         'name'      : names,
-        'def'       : model_info,
-        'count'     : evals,
+        'info'      : model_info,
         'engines'   : [base, comp],
         'values'    : values,
     })
     # pylint: enable=bad-whitespace
 
+    # Set the integration parameters to the half sphere
+    if opts['sphere'] > 0:
+        set_spherical_integration_parameters(opts, opts['sphere'])
+
     return opts
 
-def parse_pars(opts):
-    model_info, model_info2 = opts['def']
+def set_spherical_integration_parameters(opts, steps):
+    """
+    Set integration parameters for spherical integration over the entire
+    surface in theta-phi coordinates.
+    """
+    # Set the integration parameters to the half sphere
+    opts['values'].extend([
+        'theta=90',
+        'theta_pd=%g'%(90/np.sqrt(3)),
+        'theta_pd_n=%d'%steps,
+        'theta_pd_type=rectangle',
+        'phi=0',
+        'phi_pd=%g'%(180/np.sqrt(3)),
+        'phi_pd_n=%d'%(2*steps),
+        'phi_pd_type=rectangle',
+        #'background=0',
+    ])
+    if 'psi' in opts['info'][0].parameters:
+        opts['values'].append('psi=0')
+
+def parse_pars(opts, maxdim=np.inf):
+    model_info, model_info2 = opts['info']
 
     # Get demo parameters from model definition, or use default parameters
     # if model does not define demo parameters
@@ -1286,8 +1333,10 @@ def parse_pars(opts):
     #pars.update(set_pars)  # set value before random to control range
     if opts['seed'] > -1:
         pars = randomize_pars(model_info, pars)
+        limit_dimensions(model_info, pars, maxdim)
         if model_info != model_info2:
             pars2 = randomize_pars(model_info2, pars2)
+            limit_dimensions(model_info, pars2, maxdim)
             # Share values for parameters with the same name
             for k, v in pars.items():
                 if k in pars2:
@@ -1364,7 +1413,7 @@ def show_docs(opts):
     from .generate import make_html
     from . import rst2html
 
-    info = opts['def'][0]
+    info = opts['info'][0]
     html = make_html(info)
     path = os.path.dirname(info.filename)
     url = "file://"+path.replace("\\","/")[2:]+"/"
@@ -1415,7 +1464,7 @@ class Explore(object):
         self.opts = opts
         opts['pars'] = list(opts['pars'])
         p1, p2 = opts['pars']
-        m1, m2 = opts['def']
+        m1, m2 = opts['info']
         self.fix_p2 = m1 != m2 or p1 != p2
         model_info = m1
         pars, pd_types = bumps_model.create_parameters(model_info, **p1)
