@@ -1195,15 +1195,19 @@ def parse_opts(argv):
         elif arg.startswith('-sets='):     opts['sets'] = int(arg[6:])
         elif arg.startswith('-accuracy='): opts['accuracy'] = arg[10:]
         elif arg.startswith('-cutoff='):   opts['cutoff'] = arg[8:]
-        elif arg.startswith('-random='):   opts['seed'] = int(arg[8:])
         elif arg.startswith('-title='):    opts['title'] = arg[7:]
         elif arg.startswith('-data='):     opts['datafile'] = arg[6:]
         elif arg.startswith('-engine='):   opts['engine'] = arg[8:]
         elif arg.startswith('-neval='):    opts['count'] = arg[7:]
+        elif arg.startswith('-random='):
+            opts['seed'] = int(arg[8:])
+            opts['sets'] = 0
+        elif arg == '-random':
+            opts['seed'] = np.random.randint(1000000)
+            opts['sets'] = 0
         elif arg.startswith('-sphere'):
             opts['sphere'] = int(arg[8:]) if len(arg) > 7 else 150
             opts['is2d'] = True
-        elif arg == '-random':  opts['seed'] = np.random.randint(1000000)
         elif arg == '-preset':  opts['seed'] = -1
         elif arg == '-mono':    opts['mono'] = True
         elif arg == '-poly':    opts['mono'] = False
@@ -1308,18 +1312,19 @@ def set_spherical_integration_parameters(opts, steps):
     """
     # Set the integration parameters to the half sphere
     opts['values'].extend([
-        'theta=90',
+        #'theta=90',
         'theta_pd=%g'%(90/np.sqrt(3)),
         'theta_pd_n=%d'%steps,
         'theta_pd_type=rectangle',
-        'phi=0',
+        #'phi=0',
         'phi_pd=%g'%(180/np.sqrt(3)),
         'phi_pd_n=%d'%(2*steps),
         'phi_pd_type=rectangle',
         #'background=0',
     ])
     if 'psi' in opts['info'][0].parameters:
-        opts['values'].append('psi=0')
+        #opts['values'].append('psi=0')
+        pass
 
 def parse_pars(opts, maxdim=np.inf):
     model_info, model_info2 = opts['info']
