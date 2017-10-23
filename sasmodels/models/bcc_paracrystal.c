@@ -6,7 +6,7 @@ bcc_Zq(double qa, double qb, double qc, double dnn, double d_factor)
     const double a2 = (+qa - qb + qc)/2.0;
     const double a3 = (+qa + qb - qc)/2.0;
 
-#if 0
+#if 1
     // Matsuoka 29-30-31
     //     Z_k numerator: 1 - exp(a)^2
     //     Z_k denominator: 1 - 2 cos(d a_k) exp(a) + exp(2a)

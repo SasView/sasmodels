@@ -199,29 +199,35 @@ def print_steps(jitter, jitter_inv, view, view_inv, qc_only):
 
         #vprint(q_abc, M*q_xy, "matrix application")
 
-comment("==== asymmetric ====")
-print_steps(
-    jitter=Rx(dphi)*Ry(dtheta)*Rz(dpsi),
-    jitter_inv=Rz(-dpsi)*Ry(-dtheta)*Rx(-dphi),
-    view=Rz(phi)*Ry(theta)*Rz(psi),
-    view_inv=Rz(-psi)*Ry(-theta)*Rz(-phi),
-    qc_only=False,
-)
+if 1:
+    comment("==== asymmetric ====")
+    print_steps(
+        jitter=Rx(dphi)*Ry(dtheta)*Rz(dpsi),
+        jitter_inv=Rz(-dpsi)*Ry(-dtheta)*Rx(-dphi),
+        view=Rz(phi)*Ry(theta)*Rz(psi),
+        view_inv=Rz(-psi)*Ry(-theta)*Rz(-phi),
+        qc_only=False,
+    )
 
-comment("\n\n==== symmetric ====")
-print_steps(
-    jitter=Rx(dphi)*Ry(dtheta),
-    jitter_inv=Ry(-dtheta)*Rx(-dphi),
-    view=Rz(phi)*Ry(theta),
-    view_inv=Ry(-theta)*Rz(-phi),
-    qc_only=QC_ONLY,
-)
+    comment("\n\n==== symmetric ====")
+    print_steps(
+        jitter=Rx(dphi)*Ry(dtheta),
+        jitter_inv=Ry(-dtheta)*Rx(-dphi),
+        view=Rz(phi)*Ry(theta),
+        view_inv=Ry(-theta)*Rz(-phi),
+        qc_only=QC_ONLY,
+    )
 
-comment("\n**** qab from qc ****")
-# The indirect calculation of qab is better than directly c
-# alculating qab^2 = qa^2 + qb^2 since qc can be computed
-# as qc = M31*qx + M32*qy, thus requiring only two elements
-# of the rotation matrix.
-#vprint(qab, sqrt(qa**2 + qb**2), "Direct calculation of qab")
-vprint(dqa, sqrt((qx**2+qy**2) - dqc**2),
-       "Indirect calculation of qab, from qab^2 = |q|^2 - qc^2")
+    comment("\n**** qab from qc ****")
+    # The indirect calculation of qab is better than directly c
+    # alculating qab^2 = qa^2 + qb^2 since qc can be computed
+    # as qc = M31*qx + M32*qy, thus requiring only two elements
+    # of the rotation matrix.
+    #vprint(qab, sqrt(qa**2 + qb**2), "Direct calculation of qab")
+    vprint(dqa, sqrt((qx**2+qy**2) - dqc**2),
+        "Indirect calculation of qab, from qab^2 = |q|^2 - qc^2")
+
+if 0:
+    comment("==== asymmetric (old) ====")
+    view_inv = Rz(-psi)*Rx(theta)*Ry(-(pi/2 - phi))
+    vprint(q_abc, view_inv*q_xy, "reverse view")
