@@ -990,14 +990,9 @@ def plot_models(opts, result, limits=None, setnum=0):
             cutoff = sorted[int(sorted.size*0.95)]
             err[err > cutoff] = cutoff
         #err,errstr = base/comp,"ratio"
-<<<<<<< HEAD
         plot_theory(data, None, resid=err, view=errview, use_data=use_data)
         plt.xscale('log' if view == 'log' else linear)
         plt.legend(['P%d'%(k+1) for k in range(setnum+1)], loc='best')
-=======
-        plot_theory(data, None, resid=err, view=view, use_data=use_data)
-        plt.yscale(errview)
->>>>>>> master
         plt.title("max %s = %.3g"%(errstr, abs(err).max()))
         #cbar_title = errstr if errview=="linear" else "log "+errstr
     #if is2D:
