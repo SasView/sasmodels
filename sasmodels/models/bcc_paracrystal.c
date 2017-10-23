@@ -1,37 +1,53 @@
 static double
 bcc_Zq(double qa, double qb, double qc, double dnn, double d_factor)
 {
-#if 0  // Equations as written in Matsuoka
-    const double a1 = (+qa + qb + qc)/2.0;
-    const double a2 = (-qa - qb + qc)/2.0;
-    const double a3 = (-qa + qb - qc)/2.0;
-#else
-    const double a1 = (+qa + qb - qc)/2.0;
+    // Equations from Matsuoka 26-27-28, multiplied by |q|
+    const double a1 = (-qa + qb + qc)/2.0;
     const double a2 = (+qa - qb + qc)/2.0;
-    const double a3 = (-qa + qb + qc)/2.0;
-#endif
+    const double a3 = (+qa + qb - qc)/2.0;
 
-#if 1
-    // Numerator: (1 - exp(a)^2)^3
-    //         => (-(exp(2a) - 1))^3
-    //         => -expm1(2a)^3
-    // Denominator: prod(1 - 2 cos(d ak) exp(a) + exp(2a))
-    //         => prod(exp(a)^2 - 2 cos(d ak) exp(a) + 1)
-    //         => prod((exp(a) - 2 cos(d ak)) * exp(a) + 1)
+#if 0
+    // Matsuoka 29-30-31
+    //     Z_k numerator: 1 - exp(a)^2
+    //     Z_k denominator: 1 - 2 cos(d a_k) exp(a) + exp(2a)
+    // Rewriting numerator
+    //         => -(exp(2a) - 1)
+    //         => -expm1(2a)
+    // Rewriting denominator
+    //         => exp(a)^2 - 2 cos(d ak) exp(a) + 1)
+    //         => (exp(a) - 2 cos(d ak)) * exp(a) + 1
     const double arg = -0.5*square(dnn*d_factor)*(a1*a1 + a2*a2 + a3*a3);
     const double exp_arg = exp(arg);
     const double Zq = -cube(expm1(2.0*arg))
         / ( ((exp_arg - 2.0*cos(dnn*a1))*exp_arg + 1.0)
           * ((exp_arg - 2.0*cos(dnn*a2))*exp_arg + 1.0)
           * ((exp_arg - 2.0*cos(dnn*a3))*exp_arg + 1.0));
-#else
-    // Alternate form, which perhaps is more approachable
-    const double arg = -0.5*square(dnn*d_factor)*(a1*a1 + a2*a2 + a3*a3);
+
+#elif 0
+    // ** Alternate form, which perhaps is more approachable
+    //     Z_k numerator   => -[(exp(2a) - 1) / 2.exp(a)] 2.exp(a)
+    //                     => -[sinh(a)] exp(a)
+    //     Z_k denominator => [(exp(2a) + 1) / 2.exp(a) - cos(d a_k)] 2.exp(a)
+    //                     => [cosh(a) - cos(d a_k)] 2.exp(a)
+    //     => Z_k = -sinh(a) / [cosh(a) - cos(d a_k)]
+    //            = sinh(-a) / [cosh(-a) - cos(d a_k)]
+    //
+    // One more step leads to the form in sasview 3.x for 2d models
+    //            = tanh(-a) / [1 - cos(d a_k)/cosh(-a)]
+    //
+    const double arg = 0.5*square(dnn*d_factor)*(a1*a1 + a2*a2 + a3*a3);
     const double sinh_qd = sinh(arg);
     const double cosh_qd = cosh(arg);
     const double Zq = sinh_qd/(cosh_qd - cos(dnn*a1))
                     * sinh_qd/(cosh_qd - cos(dnn*a2))
                     * sinh_qd/(cosh_qd - cos(dnn*a3));
+#else
+    const double arg = 0.5*square(dnn*d_factor)*(a1*a1 + a2*a2 + a3*a3);
+    const double tanh_qd = tanh(arg);
+    const double cosh_qd = cosh(arg);
+    const double Zq = tanh_qd/(1.0 - cos(dnn*a1)/cosh_qd)
+                    * tanh_qd/(1.0 - cos(dnn*a2)/cosh_qd)
+                    * tanh_qd/(1.0 - cos(dnn*a3)/cosh_qd);
 #endif
 
     return Zq;

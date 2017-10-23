@@ -1,16 +1,20 @@
 static double
 sc_Zq(double qa, double qb, double qc, double dnn, double d_factor)
 {
+    // Equations from Matsuoka 9-10-11, multiplied by |q|
     const double a1 = qa;
     const double a2 = qb;
     const double a3 = qc;
 
-    // Numerator: (1 - exp(a)^2)^3
-    //         => (-(exp(2a) - 1))^3
-    //         => -expm1(2a)^3
-    // Denominator: prod(1 - 2 cos(d ak) exp(a) + exp(2a))
-    //         => prod(exp(a)^2 - 2 cos(d ak) exp(a) + 1)
-    //         => prod((exp(a) - 2 cos(d ak)) * exp(a) + 1)
+    // Matsuoka 13-14-15
+    //     Z_k numerator: 1 - exp(a)^2
+    //     Z_k denominator: 1 - 2 cos(d a_k) exp(a) + exp(2a)
+    // Rewriting numerator
+    //         => -(exp(2a) - 1)
+    //         => -expm1(2a)
+    // Rewriting denominator
+    //         => exp(a)^2 - 2 cos(d ak) exp(a) + 1)
+    //         => (exp(a) - 2 cos(d ak)) * exp(a) + 1
     const double arg = -0.5*square(dnn*d_factor)*(a1*a1 + a2*a2 + a3*a3);
     const double exp_arg = exp(arg);
     const double Zq = -cube(expm1(2.0*arg))
