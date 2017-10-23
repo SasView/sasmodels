@@ -106,6 +106,7 @@ class Comparator(object):
             lin_min, lin_max, lin_steps = -100.1, 100.1, 2000
         elif xrange == "linear":
             lin_min, lin_max, lin_steps = 1, 1000, 2000
+            lin_min, lin_max, lin_steps = 0.001, 2, 2000
         elif xrange == "log":
             log_min, log_max, log_steps = -3, 5, 400
         elif xrange == "logq":
@@ -353,6 +354,53 @@ add_function(
     mp_function=lambda x: mp.fmod(x, 2*mp.pi),
     np_function=lambda x: np.fmod(x, 2*np.pi),
     ocl_function=make_ocl("return fmod(q, 2*M_PI);", "sas_fmod"),
+)
+add_function(
+    name="debye",
+    mp_function=lambda x: 2*(mp.exp(-x**2) + x**2 - 1)/x**4,
+    np_function=lambda x: 2*(np.expm1(-x**2) + x**2)/x**4,
+    ocl_function=make_ocl("""
+    const double qsq = q*q;
+    if (qsq < 1.0) { // Pade approximation
+        const double x = qsq;
+        if (0) { // 0.36 single
+            // PadeApproximant[2*Exp[-x^2] + x^2-1)/x^4, {x, 0, 4}]
+            return (x*x/180. + 1.)/((1./30.*x + 1./3.)*x + 1);
+        } else if (0) { // 1.0 for single
+            // padeapproximant[2*exp[-x^2] + x^2-1)/x^4, {x, 0, 6}]
+            const double A1=1./24., A2=1./84, A3=-1./3360;
+            const double B1=3./8., B2=3./56., B3=1./336.;
+            return (((A3*x + A2)*x + A1)*x + 1.)/(((B3*x + B2)*x + B1)*x + 1.);
+        } else if (1) { // 1.0 for single, 0.25 for double
+            // PadeApproximant[2*Exp[-x^2] + x^2-1)/x^4, {x, 0, 8}]
+            const double A1=1./15., A2=1./60, A3=0., A4=1./75600.;
+            const double B1=2./5., B2=1./15., B3=1./180., B4=1./5040.;
+            return ((((A4*x + A3)*x + A2)*x + A1)*x + 1.)
+                  /((((B4*x + B3)*x + B2)*x + B1)*x + 1.);
+        } else { // 1.0 for single, 0.5 for double
+            // PadeApproximant[2*Exp[-x^2] + x^2-1)/x^4, {x, 0, 8}]
+            const double A1=1./12., A2=2./99., A3=1./2640., A4=1./23760., A5=-1./1995840.;
+            const double B1=5./12., B2=5./66., B3=1./132., B4=1./2376., B5=1./95040.;
+            return (((((A5*x + A4)*x + A3)*x + A2)*x + A1)*x + 1.)
+                  /(((((B5*x + B4)*x + B3)*x + B2)*x + B1)*x + 1.);
+        }
+    } else if (qsq < 1.) { // Taylor series; 0.9 for single, 0.25 for double
+        const double x = qsq;
+        const double C0 = +1.;
+        const double C1 = -1./3.;
+        const double C2 = +1./12.;
+        const double C3 = -1./60.;
+        const double C4 = +1./360.;
+        const double C5 = -1./2520.;
+        const double C6 = +1./20160.;
+        const double C7 = -1./181440.;
+        //return ((((C5*x + C4)*x + C3)*x + C2)*x + C1)*x + C0;
+        //return (((((C6*x + C5)*x + C4)*x + C3)*x + C2)*x + C1)*x + C0;
+        return ((((((C7*x + C6)*x + C5)*x + C4)*x + C3)*x + C2)*x + C1)*x + C0;
+    } else {
+        return 2.*(expm1(-qsq) + qsq)/(qsq*qsq);
+    }
+    """, "sas_debye"),
 )
 
 RADIUS=3000
