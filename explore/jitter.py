@@ -385,7 +385,7 @@ def build_model(model_name, n=150, qmax=0.5, **pars):
 
     return calculator
 
-def select_calculator(model_name, n=150):
+def select_calculator(model_name, n=150, size=(10,40,100)):
     """
     Create a model calculator for the given shape.
 
@@ -398,7 +398,7 @@ def select_calculator(model_name, n=150):
     equitorial axes and polar axis respectively.  See :func:`build_model`
     for details on the returned calculator.
     """
-    a, b, c = 10, 40, 100
+    a, b, c = size
     if model_name == 'sphere':
         calculator = build_model('sphere', n=n, radius=c)
         a = b = c
@@ -425,14 +425,14 @@ def select_calculator(model_name, n=150):
 
     return calculator, (a, b, c)
 
-def main(model_name='parallelepiped'):
+def main(model_name='parallelepiped', size=(10, 40, 100)):
     """
     Show an interactive orientation and jitter demo.
 
     *model_name* is one of the models available in :func:`select_model`.
     """
     # set up calculator
-    calculator, size = select_calculator(model_name, n=150)
+    calculator, size = select_calculator(model_name, n=150, size=size)
 
     ## uncomment to set an independent the colour range for every view
     ## If left commented, the colour range is fixed for all views
@@ -511,4 +511,5 @@ def main(model_name='parallelepiped'):
 
 if __name__ == "__main__":
     model_name = sys.argv[1] if len(sys.argv) > 1 else 'parallelepiped'
-    main(model_name)
+    size = tuple(int(v) for v in sys.argv[2].split(',')) if len(sys.argv) > 2 else (10, 40, 100)
+    main(model_name, size)
