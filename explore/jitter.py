@@ -456,7 +456,10 @@ def main(model_name='parallelepiped', size=(10, 40, 100)):
     #gs = gridspec.GridSpec(2,1,height_ratios=[4,1])
     #ax = plt.subplot(gs[0], projection='3d')
     ax = plt.axes([0.0, 0.2, 1.0, 0.8], projection='3d')
-    ax.axis('square')
+    try:  # CRUFT: not all versions of matplotlib accept 'square' 3d projection
+        ax.axis('square')
+    except Exception:
+        pass
 
     axcolor = 'lightgoldenrodyellow'
 
