@@ -1330,7 +1330,12 @@ def set_spherical_integration_parameters(opts, steps):
         #'background=0',
     ])
     if 'psi' in opts['info'][0].parameters:
-        #opts['values'].append('psi=0')
+        opts['values'].extend([
+            #'psi=0',
+            'psi_pd=%g'%(180/np.sqrt(3)),
+            'psi_pd_n=%d'%(2*steps),
+            'psi_pd_type=rectangle',
+        ])
         pass
 
 def parse_pars(opts, maxdim=np.inf):

@@ -18,7 +18,7 @@ import numpy as np
 
 from sasmodels import compare, data
 
-def main(angle=0, steps=150):
+def main(angle=0, steps=76):
     # Parse the options using the parser in sasmodels.compare.  -angle
     # is an additional parameter that is parsed separately., with -sphere=n and -angle=a as additional arguments
     # Pull out angle ans
