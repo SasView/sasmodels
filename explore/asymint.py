@@ -99,7 +99,7 @@ def make_triaxial_ellipsoid(a, b, c, env=NPenv):
     def Fq(qa, qb, qc):
         qr = env.sqrt((a*qa)**2 + (b*qb)**2 + (c*qc)**2)
         return env.sas_3j1x_x(qr)
-    Fq.__doc__ = "triaxial ellipse minor=%g, major=%g polar=%g"%(a, b, c)
+    Fq.__doc__ = "triaxial ellipsoid minor=%g, major=%g polar=%g"%(a, b, c)
     volume = 4*env.pi*a*b*c/3
     norm = CONTRAST**2*volume/10000
     return norm, Fq
@@ -176,8 +176,8 @@ elif shape == 'cylinder':
 elif shape == 'triaxial_ellipsoid':
     #A, B, C = 4450, 14000, 47
     A, B, C = 445, 140, 47  # integer for the sake of mpf
-    NORM, KERNEL = make_triellip(A, B, C)
-    NORM_MP, KERNEL_MP = make_triellip(A, B, C, env=MPenv)
+    NORM, KERNEL = make_triaxial_ellipsoid(A, B, C)
+    NORM_MP, KERNEL_MP = make_triaxial_ellipsoid(A, B, C, env=MPenv)
 elif shape == 'parallelepiped':
     #A, B, C = 4450, 14000, 47
     A, B, C = 445, 140, 47  # integer for the sake of mpf
@@ -336,7 +336,7 @@ def plot_2d(q, n=300):
 def main(Qstr):
     Q = float(Qstr)
     if shape == 'sphere':
-        print("exact", NORM*sas_3j1x_x(Q*RADIUS)**2)
+        print("exact", NORM*sp.sas_3j1x_x(Q*RADIUS)**2)
     print("gauss-20", *gauss_quad_2d(Q, n=20))
     print("gauss-76", *gauss_quad_2d(Q, n=76))
     print("gauss-150", *gauss_quad_2d(Q, n=150))
