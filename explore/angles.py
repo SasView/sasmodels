@@ -228,6 +228,11 @@ if 1:
         "Indirect calculation of qab, from qab^2 = |q|^2 - qc^2")
 
 if 0:
-    comment("==== asymmetric (old) ====")
+    comment("==== asymmetric (3.x) ====")
     view_inv = Rz(-psi)*Rx(theta)*Ry(-(pi/2 - phi))
     vprint(q_abc, view_inv*q_xy, "reverse view")
+    print("""  existing code
+    cos_alpha = cos_theta*cos_phi*qxhat + sin_theta*qyhat;
+    cos_mu = (-sin_theta*cos_psi*cos_phi - sin_psi*sin_phi)*qxhat + cos_theta*cos_psi*qyhat;
+    cos_nu = (-cos_phi*sin_psi*sin_theta + sin_phi*cos_psi)*qxhat + sin_psi*cos_theta*qyhat;
+    """)

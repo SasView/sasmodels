@@ -201,6 +201,7 @@ def _hide_model_case_from_nose():
                 ({}, 'VR', None),
                 ]
             tests = smoke_tests
+            #tests = []
             if self.info.tests is not None:
                 tests += self.info.tests
             try:
