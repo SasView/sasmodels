@@ -23,33 +23,36 @@ shape = 'parallelepiped' if len(sys.argv) < 2 else sys.argv[1]
 Qstr = '0.005' if len(sys.argv) < 3 else sys.argv[2]
 
 class MPenv:
-    sqrt = mp.sqrt
-    exp = mp.exp
-    expm1 = mp.expm1
-    cos = mp.cos
-    sin = mp.sin
-    tan = mp.tan
+    sqrt = staticmethod(mp.sqrt)
+    exp = staticmethod(mp.exp)
+    expm1 = staticmethod(mp.expm1)
+    cos = staticmethod(mp.cos)
+    sin = staticmethod(mp.sin)
+    tan = staticmethod(mp.tan)
+    @staticmethod
     def sas_3j1x_x(x):
         return 3*(mp.sin(x)/x - mp.cos(x))/(x*x)
+    @staticmethod
     def sas_2J1x_x(x):
         return 2*mp.j1(x)/x
+    @staticmethod
     def sas_sinx_x(x):
         return mp.sin(x)/x
     pi = mp.pi
-    mpf = mp.mpf
+    mpf = staticmethod(mp.mpf)
 
 class NPenv:
-    sqrt = np.sqrt
-    exp = np.exp
-    expm1 = np.expm1
-    cos = np.cos
-    sin = np.sin
-    tan = np.tan
-    sas_3j1x_x = sp.sas_3j1x_x
-    sas_2J1x_x = sp.sas_2J1x_x
-    sas_sinx_x = sp.sas_sinx_x
+    sqrt = staticmethod(np.sqrt)
+    exp = staticmethod(np.exp)
+    expm1 = staticmethod(np.expm1)
+    cos = staticmethod(np.cos)
+    sin = staticmethod(np.sin)
+    tan = staticmethod(np.tan)
+    sas_3j1x_x = staticmethod(sp.sas_3j1x_x)
+    sas_2J1x_x = staticmethod(sp.sas_2J1x_x)
+    sas_sinx_x = staticmethod(sp.sas_sinx_x)
     pi = np.pi
-    mpf = float
+    mpf = staticmethod(float)
 
 SLD = 3
 SLD_SOLVENT = 6
