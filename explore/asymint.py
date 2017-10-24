@@ -1,6 +1,25 @@
 #!/usr/bin/env python
 """
 Asymmetric shape integration
+
+Usage:
+
+    explore/asymint.py [MODEL] [q-value]
+
+Computes the numerical integral over theta and phi of the given model at a
+single point q using different algorithms or the same algorithm with different
+precision.  It also displays a 2-D image of the theta-phi surface that is
+being integrated.
+
+The available models are:
+
+    triaxial_ellipsoid, parallelpiped, paracrystal, cylinder, sphere
+
+Cylinder and sphere are included as simple checks on the integration
+algorithms. Cylinder is better investigated using 1-D integration methods in
+explore/symint.py.  Sphere has an easily computed analytic value which is
+identical for all theta-phi for a given q, so it is useful for checking
+that the normalization constants are correct for the different algorithms.
 """
 
 from __future__ import print_function, division
@@ -115,9 +134,9 @@ def make_paracrystal(radius, dnn, d_factor, lattice='bcc', env=NPenv):
         a3 = (-qa + qb - qc)/2
         return a1, a2, a3
     def fcc(qa, qb, qc):
-        a1 = ( 0. + qb + qc)/2
-        a2 = (-qa + 0. + qc)/2
-        a3 = (-qa + qb + 0.)/2
+        a1 = ( 0 + qb + qc)/2
+        a2 = (-qa + 0 + qc)/2
+        a3 = (-qa + qb + 0)/2
         return a1, a2, a3
     lattice_fn = {'sc': sc, 'bcc': bcc, 'fcc': fcc}[lattice]
     radius, dnn, d_factor = env.mpf(radius), env.mpf(dnn), env.mpf(d_factor)
@@ -125,7 +144,6 @@ def make_paracrystal(radius, dnn, d_factor, lattice='bcc', env=NPenv):
         a1, a2, a3 = lattice_fn(qa, qb, qc)
         # Note: paper says that different directions can have different
         # distoration factors.  Easy enough to add to the code.
-        # This would definitely break 8-fold symmetry.
         arg = -(dnn*d_factor)**2*(a1**2 + a2**2 + a3**2)/2
         exp_arg = env.exp(arg)
         den = [((exp_arg - 2*env.cos(dnn*a))*exp_arg + 1) for a in (a1, a2, a3)]
@@ -133,17 +151,17 @@ def make_paracrystal(radius, dnn, d_factor, lattice='bcc', env=NPenv):
 
         q = env.sqrt(qa**2 + qb**2 + qc**2)
         Fq = env.sas_3j1x_x(q*radius)
-        # the kernel computes F(q)**2, but we need S(q)*F(q)**2
+        # the caller computes F(q)**2, but we need it to compute S(q)*F(q)**2
         return env.sqrt(Sq)*Fq
     Fq.__doc__ = "%s paracrystal a=%g da=%g r=%g"%(lattice, dnn, d_factor, radius)
     def sphere_volume(r): return 4*env.pi*r**3/3
     Vf = {
         'sc': sphere_volume(radius/dnn),
         'bcc': 2*sphere_volume(env.sqrt(3)/2*radius/dnn),
-        'fcc': 4*sphere_volume(radius/dnn/env.sqrt(2)),
+        'fcc': 4*sphere_volume(1/env.sqrt(2)*radius/dnn),
     }[lattice]
     volume = sphere_volume(radius)
-    norm = CONTRAST**2*volume*Vf/10000
+    norm = CONTRAST**2*volume/10000*Vf
     return norm, Fq
 
 if shape == 'sphere':
