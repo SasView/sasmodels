@@ -121,7 +121,7 @@ def plot_Iq(q, n, form="trapz"):
     if form == "trapz":
         Iq = np.array([Iq_trapz(qk, n) for qk in q])
     elif form == "gauss":
-        Iq = np.array([gauss_quad(qk, n) for qk in q])
+        Iq = np.array([gauss_quad_1d(qk, n) for qk in q])
     pylab.loglog(q, Iq, label="%s, n=%d"%(form, n))
     pylab.xlabel("q (1/A)")
     pylab.ylabel("Iq (1/cm)")
@@ -138,7 +138,7 @@ long_cyl = make_long_cylinder(radius=radius, length=length)
 if __name__ == "__main__":
     Q = 0.386
     for n in (20, 76, 150, 300, 1000): #, 10000, 30000):
-        print("gauss-%d"%n, gauss_quad(Q, n=n))
+        print("gauss-%d"%n, gauss_quad_1d(Q, n=n))
     for k in (8, 10, 13, 16, 19):
         gridded_1d(Q, n=2**k+1)
     #print("inf cyl", 0, long_cyl(Q))
