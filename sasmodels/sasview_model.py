@@ -204,6 +204,13 @@ def MultiplicationModel(form_factor, structure_factor):
     model_info = product.make_product_info(form_factor._model_info,
                                            structure_factor._model_info)
     ConstructedModel = make_model_from_info(model_info)
+    if form_factor.is_multiplicity_model:
+        ConstructedModel.is_multiplicity_model = True
+        ConstructedModel.multiplicity_info = form_factor.multiplicity_info
+        ConstructedModel.non_fittable = form_factor.non_fittable
+        return ConstructedModel(form_factor.multiplicity)
+    else:
+        return ConstructedModel()
     return ConstructedModel()
 
 
