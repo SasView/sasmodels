@@ -160,6 +160,10 @@ V = Matrix([sp.var("V(1:4)(1:4)")]).reshape(3,3)
 R = Matrix([sp.var("R(1:4)(1:4)")]).reshape(3,3)
 
 # various vectors
+xyz = Matrix([[x], [y], [z]])
+x_hat = Matrix([[x], [0], [0]])
+y_hat = Matrix([[0], [y], [0]])
+z_hat = Matrix([[0], [0], [z]])
 q_xy = Matrix([[qx], [qy], [0]])
 q_abc = Matrix([[qa], [qb], [qc]])
 q_xyz = Matrix([[qx], [qy], [qz]])
@@ -172,10 +176,13 @@ def print_steps(jitter, jitter_inv, view, view_inv, qc_only):
     """
     if 0:  # forward calculations
         vprint(q_xyz, jitter*q_abc, "apply jitter")
+        #vprint(xyz, jitter*z_hat, "r")
+        #mprint(J, jitter, "forward jitter")
         vprint(dq_xyz, view*q_xyz, "apply view after jitter")
+        #mprint(V, view, "forward view")
 
         #vprint(dq_xyz, view*jitter*q_abc, "combine view and jitter")
-        mprint(M, view*jitter, "forward matrix")
+        mprint(R, view*jitter, "forward matrix")
 
     if 1:  # reverse calculations
         pre_view = "set angles from view" if REUSE_SINCOS else None
@@ -195,7 +202,7 @@ def print_steps(jitter, jitter_inv, view, view_inv, qc_only):
         comment("\n**** per point ****")
         mprint(q_abc[index,:], (R*q_xy)[index,:], "applied reverse matrix")
         #mprint(q_abc, J*V*q_xy, "applied reverse matrix")
-        #mprint(M, jitter_inv*view_inv, "reverse matrix direct")
+        #mprint(R[index,:2], jitter_inv*view_inv, "reverse matrix direct")
 
         #vprint(q_abc, M*q_xy, "matrix application")
 
@@ -209,6 +216,7 @@ if 1:
         qc_only=False,
     )
 
+if 1:
     comment("\n\n==== symmetric ====")
     print_steps(
         jitter=Rx(dphi)*Ry(dtheta),
