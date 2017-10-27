@@ -35,7 +35,7 @@ try:
     from .modelinfo import ModelInfo, Parameter
     from .kernel import KernelModel
     MultiplicityInfoType = NamedTuple(
-        'MuliplicityInfo',
+        'MultiplicityInfo',
         [("number", int), ("control", str), ("choices", List[str]),
          ("x_axis_label", str)])
     SasviewModelType = Callable[[int], "SasviewModel"]
