@@ -211,7 +211,6 @@ def MultiplicationModel(form_factor, structure_factor):
         return ConstructedModel(form_factor.multiplicity)
     else:
         return ConstructedModel()
-    return ConstructedModel()
 
 
 def _generate_model_attributes(model_info):
