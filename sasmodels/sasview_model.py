@@ -204,13 +204,7 @@ def MultiplicationModel(form_factor, structure_factor):
     model_info = product.make_product_info(form_factor._model_info,
                                            structure_factor._model_info)
     ConstructedModel = make_model_from_info(model_info)
-    if form_factor.is_multiplicity_model:
-        ConstructedModel.is_multiplicity_model = True
-        ConstructedModel.multiplicity_info = form_factor.multiplicity_info
-        ConstructedModel.non_fittable = form_factor.non_fittable
-        return ConstructedModel(form_factor.multiplicity)
-    else:
-        return ConstructedModel()
+    return ConstructedModel(form_factor.multiplicity)    
 
 
 def _generate_model_attributes(model_info):
@@ -328,7 +322,7 @@ class SasviewModel(object):
     is_form_factor = False
     #: True if model has multiplicity
     is_multiplicity_model = False
-    #: Mulitplicity information
+    #: Multiplicity information
     multiplicity_info = None # type: MultiplicityInfoType
 
     # Per-instance variables
@@ -359,7 +353,7 @@ class SasviewModel(object):
         # we provide some sort of data description including title, labels
         # and lines to plot.
 
-        # Get the list of hidden parameters given the mulitplicity
+        # Get the list of hidden parameters given the multiplicity
         # Don't include multiplicity in the list of parameters
         self.multiplicity = multiplicity
         if multiplicity is not None:
