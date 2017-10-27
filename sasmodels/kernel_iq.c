@@ -32,6 +32,16 @@
 //  INVALID(table) : test if the current point is feesible to calculate.  This
 //      will be defined in the kernel definition file.
 
+// Set SCALED_PHI to 1 if dphi represents distance rather than longitude.
+// That is, in order to make an equally spaced mesh on a curved surface,
+// you will need to scale longitude displacement by cos(latitude) to account
+// for the reduction in distance per degree latitude as you move away from
+// the equator.  Points on the mesh with scaled dphi values more than 180
+// degrees are not included in the dispersity calculation. This should make
+// the integral over the entire surface work by sampling fewer points near
+// the poles.
+# define USE_SCALED_DPHI 1
+
 #ifndef _PAR_BLOCK_ // protected block so we can include this code twice.
 #define _PAR_BLOCK_
 
@@ -449,6 +459,7 @@ After expansion, the loop struction will look like the following:
 #if defined(CALL_IQ)
   // unoriented 1D
   double qk;
+  #define SCALE_DPHI_AND_SET_WEIGHT() const double weight=weight0
   #define FETCH_Q() do { qk = q[q_index]; } while (0)
   #define BUILD_ROTATION() do {} while(0)
   #define APPLY_ROTATION() do {} while(0)
@@ -457,6 +468,7 @@ After expansion, the loop struction will look like the following:
 #elif defined(CALL_IQ_A)
   // unoriented 2D
   double qx, qy;
+  #define SCALE_DPHI_AND_SET_WEIGHT() const double weight=weight0
   #define FETCH_Q() do { qx = q[2*q_index]; qy = q[2*q_index+1]; } while (0)
   #define BUILD_ROTATION() do {} while(0)
   #define APPLY_ROTATION() do {} while(0)
@@ -474,8 +486,24 @@ After expansion, the loop struction will look like the following:
   // table as we go through the mesh.
   const double theta = values[details->theta_par+2];
   const double phi = values[details->theta_par+3];
-  #define BUILD_ROTATION() qac_rotation(&rotation, \
-    theta, phi, local_values.table.theta, local_values.table.phi)
+  double dtheta, dphi, weight;
+  #if USE_SCALED_DPHI
+    #define SCALE_DPHI_AND_SET_WEIGHT() do { \
+      dtheta = local_values.table.theta; \
+      dphi = local_values.table.phi; \
+      weight = weight0; \
+      if (dtheta != 90.0) dphi /= fabs(cos(dtheta*M_PI_180)); \
+      else if (dphi != 0.0) weight = 0.; \
+      if (fabs(dphi) >= 180.) weight = 0.; \
+    } while (0)
+  #else
+    #define SCALE_DPHI_AND_SET_WEIGHT() do { \
+      dtheta = local_values.table.theta; \
+      dphi = local_values.table.phi; \
+      weight = fabs(cos(dtheta*M_PI_180)) * weight0; \
+    } while (0)
+  #endif
+  #define BUILD_ROTATION() qac_rotation(&rotation, theta, phi, dtheta, dphi);
   #define APPLY_ROTATION() qac_apply(rotation, qx, qy, &qa, &qc)
   #define CALL_KERNEL() CALL_IQ_AC(qa, qc, local_values.table)
 
@@ -492,9 +520,26 @@ After expansion, the loop struction will look like the following:
   const double theta = values[details->theta_par+2];
   const double phi = values[details->theta_par+3];
   const double psi = values[details->theta_par+4];
-  #define BUILD_ROTATION() qabc_rotation(&rotation, \
-    theta, phi, psi, local_values.table.theta, \
-    local_values.table.phi, local_values.table.psi)
+  double dtheta, dphi, dpsi, weight;
+  #if USE_SCALED_DPHI
+    #define SCALE_DPHI_AND_SET_WEIGHT() do { \
+      dtheta = local_values.table.theta; \
+      dphi = local_values.table.phi; \
+      dpsi = local_values.table.psi; \
+      weight = weight0; \
+      if (dtheta != 90.0) dphi /= fabs(cos(dtheta*M_PI_180)); \
+      else if (dphi != 0.0) weight = 0.; \
+      if (fabs(dphi) >= 180.) weight = 0.; \
+    } while (0)
+  #else
+    #define SCALE_DPHI_AND_SET_WEIGHT() do { \
+      dtheta = local_values.table.theta; \
+      dphi = local_values.table.phi; \
+      dpsi = local_values.table.psi; \
+      weight = fabs(cos(dtheta*M_PI_180)) * weight0; \
+    } while (0)
+  #endif
+  #define BUILD_ROTATION() qabc_rotation(&rotation, theta, phi, psi, dtheta, dphi, dpsi)
   #define APPLY_ROTATION() qabc_apply(rotation, qx, qy, &qa, &qb, &qc)
   #define CALL_KERNEL() CALL_IQ_ABC(qa, qb, qc, local_values.table)
 
@@ -550,6 +595,7 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
 
 
 //if (q_index==0) {printf("step:%d of %d, pars:",step,pd_stop); for (int i=0; i < NUM_PARS; i++) printf("p%d=%g ",i, local_values.vector[i]); printf("\n");}
+  SCALE_DPHI_AND_SET_WEIGHT();
 
   // ====== loop body =======
   #ifdef INVALID
@@ -558,8 +604,8 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
   {
     // Accumulate I(q)
     // Note: weight==0 must always be excluded
-    if (weight0 > cutoff) {
-      pd_norm += weight0 * CALL_VOLUME(local_values.table);
+    if (weight > cutoff) {
+      pd_norm += weight * CALL_VOLUME(local_values.table);
       BUILD_ROTATION();
 
 #ifndef USE_OPENCL
@@ -607,12 +653,12 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
         #else  // !MAGNETIC
           const double scattering = CALL_KERNEL();
         #endif // !MAGNETIC
-//printf("q_index:%d %g %g %g %g\n", q_index, scattering, weight, weight0);
+//printf("q_index:%d %g %g %g %g\n", q_index, scattering, weight0);
 
         #ifdef USE_OPENCL
-          this_result += weight0 * scattering;
+          this_result += weight * scattering;
         #else // !USE_OPENCL
-          result[q_index] += weight0 * scattering;
+          result[q_index] += weight * scattering;
         #endif // !USE_OPENCL
       }
     }
@@ -650,6 +696,7 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
 #undef PD_INIT
 #undef PD_OPEN
 #undef PD_CLOSE
+#undef SCALE_DPHI_AND_SET_WEIGHT
 #undef FETCH_Q
 #undef BUILD_ROTATION
 #undef APPLY_ROTATION
