@@ -15,6 +15,8 @@ from matplotlib import cm
 import numpy as np
 from numpy import pi, cos, sin, sqrt, exp, degrees, radians
 
+SCALED_PHI = True
+
 def draw_beam(ax, view=(0, 0)):
     """
     Draw the beam going from source at (0, 0, 1) to detector at (0, 0, -1)
@@ -176,18 +178,33 @@ def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian'):
     else:
         raise ValueError("expected dist to be 'gaussian' or 'rectangle'")
 
+    if SCALED_PHI:
+        scale_phi = lambda dtheta, dphi: (
+            dphi/abs(cos(radians(dtheta))) if dtheta != 90
+            else 0 if dphi == 0
+            else 4*pi)
+        w = np.outer(weights, weights)
+    else:
+        scale_phi = lambda dtheta, dphe: dphi
+        w = np.outer(weights*cos(radians(dtheta*t)), weights)
+
     # mesh in theta, phi formed by rotating z
     z = np.matrix([[0], [0], [radius]])
-    points = np.hstack([Rx(phi_i)*Ry(theta_i)*z
+    points = np.hstack([Rx(scale_phi(theta_i, phi_j))*Ry(theta_i)*z
                         for theta_i in dtheta*t
-                        for phi_i in dphi*t])
+                        for phi_j in dphi*t])
+    # select just the active points (i.e., those with phi < 180
+    active = np.array([abs(scale_phi(theta_i, phi_j)) < 180
+                       for theta_i in dtheta*t
+                       for phi_j in dphi*t])
+    points = points[:, active]
+    w = w.flatten()[active]
+
     # rotate relative to beam
     points = orient_relative_to_beam(view, points)
 
-    w = np.outer(weights*cos(radians(dtheta*t)), weights)
-
     x, y, z = [np.array(v).flatten() for v in points]
-    ax.scatter(x, y, z, c=w.flatten(), marker='o', vmin=0., vmax=1.)
+    ax.scatter(x, y, z, c=w, marker='o', vmin=0., vmax=1.)
 
 def draw_labels(ax, view, jitter, text):
     """
