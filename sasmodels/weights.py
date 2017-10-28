@@ -96,6 +96,20 @@ class GaussianDispersion(Dispersion):
         px = np.exp((x-center)**2 / (-2.0 * sigma * sigma))
         return x, px
 
+class UniformDispersion(Dispersion):
+    r"""
+    Uniform dispersion, with width $\sigma$.
+
+    .. math::
+
+        w = 1
+    """
+    type = "uniform"
+    default = dict(npts=35, width=0, nsigmas=1)
+    def _weights(self, center, sigma, lb, ub):
+        x = self._linspace(center, sigma, lb, ub)
+        x = x[np.fabs(x-center) <= np.fabs(sigma)]
+        return x, np.ones_like(x)
 
 class RectangleDispersion(Dispersion):
     r"""
@@ -209,6 +223,7 @@ class BoltzmannDispersion(Dispersion):
 # the dispersion type combobox.
 MODELS = OrderedDict((d.type, d) for d in (
     RectangleDispersion,
+    UniformDispersion,
     ArrayDispersion,
     LogNormalDispersion,
     GaussianDispersion,

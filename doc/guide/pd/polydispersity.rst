@@ -42,6 +42,7 @@ calculations are generally more robust with more data points or more angles.
 The following six distribution functions are provided:
 
 *  *Rectangular Distribution*
+*  *Uniform Distribution*
 *  *Gaussian Distribution*
 *  *Lognormal Distribution*
 *  *Schulz Distribution*
@@ -82,6 +83,31 @@ whilst the polydispersity is
 .. figure:: pd_rectangular.jpg
 
     Rectangular distribution.
+
+Uniform Distribution
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Uniform Distribution is defined as
+
+    .. math::
+
+        f(x) = \frac{1}{\text{Norm}}
+        \begin{cases}
+          1 & \text{for } |x - \bar x| \leq \sigma \\
+          0 & \text{for } |x - \bar x| > \sigma
+        \end{cases}
+
+    where $\bar x$ is the mean of the distribution, $\sigma$ is the half-width, and
+    *Norm* is a normalization factor which is determined during the numerical
+    calculation.
+
+    Note that the polydispersity is given by
+
+    .. math:: \text{PD} = \sigma / \bar x
+
+    .. figure:: pd_uniform.jpg
+
+        Uniform distribution.
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
