@@ -63,16 +63,20 @@ are forbidden. Thus the peak positions correspond to (just the first 5)
     \text{Indices} & (111)  & (200) & (220) & (311) & (222)
     \end{array}
 
-**NB**: The calculation of $Z(q)$ is a double numerical integral that
-must be carried out with a high density of points to properly capture
-the sharp peaks of the paracrystalline scattering. So be warned that the
-calculation is SLOW. Go get some coffee. Fitting of any experimental data
-must be resolution smeared for any meaningful fit. This makes a triple
-integral. Very, very slow. Go get lunch!
+.. note::
+
+  The calculation of $Z(q)$ is a double numerical integral that
+  must be carried out with a high density of points to properly capture
+  the sharp peaks of the paracrystalline scattering.     
+  So be warned that the calculation is slow. Fitting of any experimental data 
+  must be resolution smeared for any meaningful fit. This makes a triple integral
+  which may be very slow.
 
 The 2D (Anisotropic model) is based on the reference below where $I(q)$ is
 approximated for 1d scattering. Thus the scattering pattern for 2D may not
-be accurate. Note that we are not responsible for any incorrectness of the
+be accurate particularly at low $q$. For general details of the calculation 
+and angular dispersions for oriented particles see :ref:`orientation` .
+Note that we are not responsible for any incorrectness of the
 2D model computation.
 
 .. figure:: img/parallelepiped_angle_definition.png

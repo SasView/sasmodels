@@ -41,7 +41,8 @@ On introducing "Orientational Distribution" in the angles, "distribution of thet
 appear. These are actually rotations about the axes $\delta_1$ and $\delta_2$ of the cylinder, the $b$ and $a$ axes of the
 cylinder cross section. (When $\theta = \phi = 0$ these are parallel to the $Y$ and $X$ axes of the instrument.)
 The third orientation distribution, in $\psi$, is about the $c$ axis of the particle. Some experimentation may be required to
-understand the 2d patterns fully. A number of different shapes of distribution are available, as described for polydispersity.
+understand the 2d patterns fully. A number of different shapes of distribution are available, as described for 
+polydispersity, see :ref:`polydispersityhelp` .
 
 Earlier versions of SasView had numerical integration issues in some circumstances when 
 distributions passed through 90 degrees. The distributions in particle coordinates are more robust, but should still be approached 
@@ -51,11 +52,11 @@ Note that the form factors for asymmetric particles are also performing numerica
 care should be taken, especially with very large particles or more extreme aspect ratios. Users can experiment with the 
 values of Npts and Nsigs, the number of steps used in the integration and the range spanned in number of standard deviations.
 The standard deviation is entered in units of degrees. For a rectangular (uniform) distribution the full width 
-should be $\pm\sqrt(3)$ ~ 1.73 standard deviations.
+should be $\pm\sqrt(3)$ ~ 1.73 standard deviations (this may be changed soon).
 
 Where appropriate, for best numerical results, keep $a < b < c$ and the $\theta$ distribution narrower than the $\phi$ distribution.
 
-Some more detailed technical notes are provided in the Developer section of this manual.
+Some more detailed technical notes are provided in the developer section of this manual :ref:`orientation_developer` .
     
 *Document History*
 

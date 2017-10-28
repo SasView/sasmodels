@@ -5,12 +5,14 @@
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
+.. _polydispersityhelp:
+
 Polydispersity Distributions
 ----------------------------
 
-With some models in sasmodels we can calculate the average form factor for a
+With some models in sasmodels we can calculate the average intensity for a
 population of particles that exhibit size and/or orientational
-polydispersity. The resultant form factor is normalized by the average
+polydispersity. The resultant intensity is normalized by the average
 particle volume such that
 
 .. math::

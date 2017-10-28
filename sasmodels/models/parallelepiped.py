@@ -73,9 +73,9 @@ dimensions, to give an oblate or prolate particle, $(=\sqrt{AB/\pi})$ and
 length $(= C)$ values, and used as the effective radius for
 $S(q)$ when $P(q) \cdot S(q)$ is applied.
 
-To provide easy access to the orientation of the parallelepiped, we define
-three angles $\theta$, $\phi$ and $\Psi$. The definition of $\theta$ and
-$\phi$ is the same as for the cylinder model (see also figures below).
+For 2d data the orientation of the particle is required, described using 
+angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further details 
+of the calculation and angular dispersions see :ref:`orientation` .
 
 .. Comment by Miguel Gonzalez:
    The following text has been commented because I think there are two
@@ -88,15 +88,11 @@ $\phi$ is the same as for the cylinder model (see also figures below).
 
 The angle $\Psi$ is the rotational angle around the $C$ axis.
 For $\theta = 0$ and $\phi = 0$, $\Psi = 0$ corresponds to the $B$ axis
-oriented parallel to the y-axis of the detector with $A$ along the z-axis.
+oriented parallel to the y-axis of the detector with $A$ along the x-axis.
 For other $\theta$, $\phi$ values, the parallelepiped has to be first rotated
-$\theta$ degrees around $z$ and $\phi$ degrees around $y$,
-before doing a final rotation of $\Psi$ degrees around the resulting $C$ to
-obtain the final orientation of the parallelepiped.
-For example, for $\theta = 0$ and $\phi = 90$, we have that $\Psi = 0$
-corresponds to $A$ along $x$ and $B$ along $y$,
-while for $\theta = 90$ and $\phi = 0$, $\Psi = 0$ corresponds to
-$A$ along $z$ and $B$ along $x$.
+$\theta$ degrees in the $z-x$ plane and then $\phi$ degrees around the $z$ axis,
+before doing a final rotation of $\Psi$ degrees around the resulting $C$ axis
+of the particle to obtain the final orientation of the parallelepiped.
 
 .. _parallelepiped-orientation:
 
@@ -113,9 +109,7 @@ On introducing "Orientational Distribution" in the angles, "distribution of thet
 appear. These are actually rotations about axes $\delta_1$ and $\delta_2$ of the parallelepiped, perpendicular to the $a$ x $c$ and $b$ x $c$ faces.
 (When $\theta = \phi = 0$ these are parallel to the $Y$ and $X$ axes of the instrument.) The third orientation distribution, in $\psi$, is
 about the $c$ axis of the particle, perpendicular to the $a$ x $b$ face. Some experimentation may be required to
-understand the 2d patterns fully. (Earlier implementations had numerical integration issues in some circumstances when orientation
-distributions passed through 90 degrees, such situations, with very broad distributions, should still be approached with care.)
-
+understand the 2d patterns fully as discussed in :ref:`orientation` . 
 
 For a given orientation of the parallelepiped, the 2D form factor is
 calculated as

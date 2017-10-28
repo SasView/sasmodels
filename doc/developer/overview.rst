@@ -165,6 +165,8 @@ painfully slow if not vectorized).
 Further details are provided in the next section,
 :ref:`Calculator_Interface`
 
+.. _orientation_developer:
+
 Orientation and Numerical Integration
 -------------------------------------
 

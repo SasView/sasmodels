@@ -1,13 +1,5 @@
 # pylint: disable=line-too-long
 r"""
-Definition for 2D (orientated system)
--------------------------------------
-
-The angles $\theta$ and $\phi$ define the orientation of the axis of the
-cylinder. The angle $\Psi$ is defined as the orientation of the major
-axis of the ellipse with respect to the vector $Q$. A gaussian polydispersity
-can be added to any of the orientation angles, and also for the minor
-radius and the ratio of the ellipse radii.
 
 .. figure:: img/elliptical_cylinder_geometry.png
 
@@ -43,28 +35,24 @@ ellipse with respect to the vector $\vec q$. The angle $\alpha$ is the angle
 between the axis of the cylinder and $\vec q$.
 
 
-Definition for 1D (no preferred orientation)
---------------------------------------------
-
-The form factor is averaged over all possible orientation before normalized
+For 1D scattering, with no preferred orientation, the form factor is averaged over all possible orientations and normalized
 by the particle volume
 
 .. math::
 
     P(q) = \text{scale}  <F^2> / V
 
-To provide easy access to the orientation of the elliptical cylinder, we
-define the axis of the cylinder using two angles $\theta$, $\phi$ and $\Psi$
-(see :ref:`cylinder orientation <cylinder-angle-definition>`). The angle
-$\Psi$ is the rotational angle around its own long_c axis.
+For 2d data the orientation of the particle is required, described using a different set 
+of angles as in the diagrams below, for further details of the calculation and angular 
+dispersions  see :ref:`orientation` .
 
-All angle parameters are valid and given only for 2D calculation; ie, an
-oriented system.
 
 .. figure:: img/elliptical_cylinder_angle_definition.png
 
-    Definition of angles for oriented elliptical cylinder, where axis_ratio is drawn >1,
-    and angle $\Psi$ is now a rotation around the axis of the cylinder.
+    Note that the angles here are not the same as in the equations for the scattering function.
+    Rotation $\theta$, initially in the $xz$ plane, is carried out first, then
+    rotation $\phi$ about the $z$ axis, finally rotation $\Psi$ is now around the axis of the cylinder.
+    The neutron or X-ray beam is along the $z$ axis.
 
 .. figure:: img/elliptical_cylinder_angle_projection.png
 
@@ -72,12 +60,7 @@ oriented system.
     detector plane, with $\Psi$ = 0.
 
 The $\theta$ and $\phi$ parameters to orient the cylinder only appear in the model when fitting 2d data.
-On introducing "Orientational Distribution" in the angles, "distribution of theta" and "distribution of phi" parameters will
-appear. These are actually rotations about the axes $\delta_1$ and $\delta_2$ of the cylinder, the $b$ and $a$ axes of the
-cylinder cross section. (When $\theta = \phi = 0$ these are parallel to the $Y$ and $X$ axes of the instrument.)
-The third orientation distribution, in $\psi$, is about the $c$ axis of the particle. Some experimentation may be required to
-understand the 2d patterns fully. (Earlier implementations had numerical integration issues in some circumstances when orientation
-distributions passed through 90 degrees, such situations, with very broad distributions, should still be approached with care.)
+
 
 NB: The 2nd virial coefficient of the cylinder is calculated based on the
 averaged radius $(=\sqrt{r_\text{minor}^2 * \text{axis ratio}})$ and length
