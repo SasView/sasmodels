@@ -495,7 +495,7 @@ def main(model_name='parallelepiped', size=(10, 40, 100)):
     # in sasmodels is sqrt(3) times the given width.  Divide by sqrt(3) to keep
     # the maximum width to 90.
     dlimit = 30 if dist == 'gaussian' else 90/sqrt(3)
-    sdtheta = Slider(axdtheta, 'dTheta', 0, dlimit, valinit=dtheta)
+    sdtheta = Slider(axdtheta, 'dTheta', 0, 2*dlimit, valinit=dtheta)
     sdphi = Slider(axdphi, 'dPhi', 0, 2*dlimit, valinit=dphi)
     sdpsi = Slider(axdpsi, 'dPsi', 0, 2*dlimit, valinit=dpsi)
 
@@ -511,7 +511,7 @@ def main(model_name='parallelepiped', size=(10, 40, 100)):
         draw_beam(ax, (0, 0))
         draw_jitter(ax, view, jitter, dist=dist, size=size)
         #draw_jitter(ax, view, (0,0,0))
-        draw_mesh(ax, view, jitter, dist=dist)
+        draw_mesh(ax, view, jitter, dist=dist, n=30)
         draw_scattering(calculator, ax, view, jitter, dist=dist)
         plt.gcf().canvas.draw()
 

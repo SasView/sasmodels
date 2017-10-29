@@ -80,7 +80,7 @@ class Dispersion(object):
 
 class GaussianDispersion(Dispersion):
     r"""
-    Gaussian dispersion, with 1-\ $\sigma$ width.
+    Gaussian dispersion, with 1-$\sigma$ width.
 
     .. math::
 
@@ -115,7 +115,7 @@ class RectangleDispersion(Dispersion):
 
 class LogNormalDispersion(Dispersion):
     r"""
-    log Gaussian dispersion, with 1-\ $\sigma$ width.
+    log Gaussian dispersion, with 1-$\sigma$ width.
 
     .. math::
 
@@ -133,7 +133,7 @@ class LogNormalDispersion(Dispersion):
 
 class SchulzDispersion(Dispersion):
     r"""
-    Schultz dispersion, with 1-\ $\sigma$ width.
+    Schultz dispersion, with 1-$\sigma$ width.
 
     .. math::
 

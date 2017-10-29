@@ -208,7 +208,7 @@ the primed axes are all in the coordinate rotated by an angle $\theta$ about
 the $z$\ -axis (see the figure below) so that
 $x'_0 = x_0 \cos(\theta) + y_0 \sin(\theta)$ and
 $y'_0 = -x_0 \sin(\theta) + y_0 \cos(\theta)$.
-Note that the rotation angle is zero for a $x$\ -\ $y$ symmetric
+Note that the rotation angle is zero for a $x$-$y$ symmetric
 elliptical Gaussian distribution. The $A$ is a normalization factor.
 
 .. figure:: resolution_2d_rotation.png
@@ -232,7 +232,7 @@ that $I(x',y')$ is constant within the bins. Then
 **[Equation 10]**
 
 Since the weighting factor on each of the bins is known, it is convenient to
-transform $x'$\ -\ $y'$ back to $x$\ -\ $y$ coordinates (by rotating it
+transform $x'$-$y'$ back to $x$-$y$ coordinates (by rotating it
 by $-\theta$ around the $z$\ -axis).
 
 Then, for a polar symmetric smear
@@ -253,7 +253,7 @@ where
     x'_0 &= q = \sqrt{x_0^2 + y_0^2} \\
     y'_0 &= 0
 
-while for a $x$\ -\ $y$ symmetric smear
+while for a $x$-$y$ symmetric smear
 
 .. math::
 

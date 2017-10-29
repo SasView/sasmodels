@@ -103,7 +103,7 @@ def replace_compact_fraction(content):
     return _compact_fraction.sub(r"\1{\2}{\3}", content)
 
 
-_dollar = re.compile(r"(?:^|(?<=\s|[(]))[$]([^\n]*?)(?<![\\])[$](?:$|(?=\s|[.,;)\\]))")
+_dollar = re.compile(r"(?:^|(?<=\s|[-(]))[$]([^\n]*?)(?<![\\])[$](?:$|(?=\s|[-.,;)\\]))")
 _notdollar = re.compile(r"\\[$]")
 def replace_dollar(content):
     r"""
@@ -247,5 +247,5 @@ def view_help(filename, qt=False):
 
 if __name__ == "__main__":
     import sys
-    view_help(sys.argv[1], qt=True)
+    view_help(sys.argv[1], qt=False)
 
