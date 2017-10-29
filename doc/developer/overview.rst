@@ -179,10 +179,10 @@ use different sets of rotation axes to define Euler angles, or different
 names for the same angles. Therefore, any discussion employing Euler angles
 should always be preceded by their definition."
 
-We are using the z-y-z convention with extrinsic rotations $\Psi-\theta-\phi$
-for the particle orientation and $x-y-z$ convention with extrinsic rotations
-$\psi-\theta-\phi$ for jitter, with jitter applied before particle
-orientation.
+We are using the $z$-$y$-$z$ convention with extrinsic rotations
+$\Psi$-$\theta$-$\phi$ for the particle orientation and $x$-$y$-$z$
+convention with extrinsic rotations $\Psi$-$\theta$-$\phi$ for jitter, with
+jitter applied before particle orientation.
 
 For numerical integration within form factors etc. sasmodels is mostly using
 Gaussian quadrature with 20, 76 or 150 points depending on the model. It also
@@ -190,48 +190,51 @@ makes use of symmetries such as calculating only over one quadrant rather
 than the whole sphere. There is often a U-substitution replacing $\theta$
 with $cos(\theta)$ which changes the limits of integration from 0 to $\pi/2$
 to 0 to 1 and also conveniently absorbs the $sin(\theta)$ scale factor in the
-integration. This can cause confusion if checking equations to say include in
-a paper or thesis! Most models use the same core kernel code expressed in
-terms of the rotated view (qa, qb, qc) for both the 1D and the 2D models, but
-there are also historical quirks such as the parallelepiped model, which has
-a useless transformation representing j0(a qa) as j0(b qa a/b).
+integration. This can cause confusion if checking equations to include in a
+paper or thesis! Most models use the same core kernel code expressed in terms
+of the rotated view ($q_a$, $q_b$, $q_c$) for both the 1D and the 2D models,
+but there are also historical quirks such as the parallelepiped model, which
+has a useless transformation representing $j_0(a q_a)$ as $j_0(b q_a a/b)$.
 
-Useful testing routines include -
+Useful testing routines include:
 
 :mod:`asymint` a direct implementation of the surface integral for certain
 models to get a more trusted value for the 1D integral using a
 reimplementation of the 2D kernel in python and mpmath (which computes math
 functions to arbitrary precision). It uses $\theta$ ranging from 0 to $\pi$
 and $\phi$ ranging from 0 to $2\pi$. It perhaps would benefit from including
-the U-substitution for theta.
+the U-substitution for $\theta$.
 
 :mod:`check1d` uses sasmodels 1D integration and compares that with a
 rectangle distribution in $\theta$ and $\phi$, with $\theta$ limits set to
-$\pm90/\sqrt(3)$ and $\phi$ limits set to $\pm180/\sqrt(3)$ [The rectangle
+$\pm 90/\sqrt(3)$ and $\phi$ limits set to $\pm 180/\sqrt(3)$ [The rectangle
 weight function uses the fact that the distribution width column is labelled
-sigma to decide that the 1-sigma width of a rectangular distribution needs to
+sigma to decide that the 1-$\sigma$ width of a rectangular distribution needs to
 be multiplied by $\sqrt(3)$ to get the corresponding gaussian equivalent, or
 similar reasoning.] This should rotate the sample through the entire
-$\theta-\phi$ surface according to the pattern that you see in jitter.py when
+$\theta$-$\phi$ surface according to the pattern that you see in jitter.py when
 you modify it to use 'rectangle' rather than 'gaussian' for its distribution
-without changing the viewing angle. When computing the dispersity integral,
-weights are scaled by abs(cos(dtheta)) to account for the points in phi
-getting closer together as dtheta increases. This integrated dispersion is
-computed at a set of $(qx, qy)$ points $(q cos(\alpha), q sin(\alpha))$ at
-some angle $\alpha$ (currently angle=0) for each q used in the 1-D
-integration. The individual q points should be equivalent to asymint rect-n
-when the viewing angle is set to (theta,phi,psi) = (90, 0, 0). Such tests can
-help to validate that 2d intensity is consistent with 1d models.
+without changing the viewing angle. In order to match the 1-D pattern for
+an arbitrary viewing angle on triaxial shapes, we need to integrate
+over $\theta$, $\phi$ and $\Psi$.
 
-:mod:`sascomp -sphere=n` uses the identical rectangular distribution to
-compute the pattern of the qx-qy grid. You can see from triaxial_ellipsoid
-that there may be something wrong conceptually since the pattern is no longer
-circular when the view (theta,phi,psi) is not (90, phi, 0). check1d shows
-that it is different from the sasmodels 1D integral even when at theta=0,
-psi=0. Cross checking the values with asymint, the sasmodels 1D integral is
-better at low q, though for very large structures there are not enough points
-in the integration for sasmodels 1D to compute the high q 1D integral
-correctly. [Some of that may now be fixed?]
+When computing the dispersity integral, weights are scaled by
+$|\cos(\delta \theta)|$ to account for the points in $\phi$ getting closer
+together as $\delta \theta$ increases.
+[This will probably change so that instead of adjusting the weights, we will
+adjust $\delta\theta$-$\delta\phi$ mesh so that the point density in
+$\delta\phi$ is lower at larger $\delta\theta$. The flag USE_SCALED_PHI in
+*kernel_iq.c* selects an alternative algorithm.]
+
+The integrated dispersion is computed at a set of $(qx, qy)$ points $(q
+\cos(\alpha), q \sin(\alpha))$ at some angle $\alpha$ (currently angle=0) for
+each $q$ used in the 1-D integration. The individual $q$ points should be
+equivalent to asymint rect-n when the viewing angle is set to
+$(\theta,\phi,\Psi) = (90, 0, 0)$. Such tests can help to validate that 2d
+models are consistent with 1d models.
+
+:mod:`sascomp -sphere=n` uses the same rectangular distribution as check1d to
+compute the pattern of the $q_x$-$q_y$ grid.
 
 The :mod:`sascomp` utility can be used for 2d as well as 1d calculations to
 compare results for two sets of parameters or processor types, for example
