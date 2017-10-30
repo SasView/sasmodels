@@ -100,6 +100,10 @@ def make_product_info(p_info, s_info):
     # Remember the component info blocks so we can build the model
     model_info.composition = ('product', [p_info, s_info])
     model_info.control = p_info.control
+    model_info.hidden = p_info.hidden
+    model_info.profile = p_info.profile
+    model_info.profile_axes = p_info.profile_axes
+    
     # TODO: delegate random to p_info, s_info
     #model_info.random = lambda: {}
 

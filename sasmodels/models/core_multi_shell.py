@@ -117,7 +117,7 @@ def random():
         pars['thickness%d'%(k+1)] = v
     return pars
 
-def profile(sld_core, radius, sld_solvent, n, sld, thickness):
+def profile(sld_core, radius, sld_solvent, n, sld, thickness, **kwargs):
     """
     Returns the SLD profile *r* (Ang), and *rho* (1e-6/Ang^2).
     """
