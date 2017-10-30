@@ -196,9 +196,37 @@ def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian'):
             #print("(%+7.2f, %+7.2f) => (%+7.2f, %+7.2f)"%(theta_i, phi_j, latitude, longitude))
             return Rz(longitude)*Ry(latitude)
         def weight(theta_i, phi_j, wi, wj):
+            # Weighting for each point comes from the integral:
+            #     \int\int I(q, lat, log) sin(lat) dlat dlog
+            # We are doing a conformal mapping from disk to sphere, so we need
+            # a change of variables g(theta, phi) -> (lat, long):
+            #     lat, long = sqrt(theta^2 + phi^2), arctan(phi/theta)
+            # giving:
+            #     dtheta dphi = det(J) dlat dlong
+            # where J is the jacobian from the partials of g. Using
+            #     R = sqrt(theta^2 + phi^2),
+            # then
+            #     J = [[x/R, Y/R], -y/R^2, x/R^2]]
+            # and
+            #     det(J) = 1/R
+            # with the final integral being:
+            #    \int\int I(q, theta, phi) sin(R)/R dtheta dphi
+            #
+            # This does approximately the right thing, decreasing the weight
+            # of each point as you go farther out on the disk, but it hasn't
+            # yet been checked against the 1D integral results. Prior
+            # to declaring this "good enough" and checking that integrals
+            # work in practice, we will examine alternative mappings.
+            #
+            # The issue is that the mapping does not support the case of free
+            # rotation about a single axis correctly, with a small deviation
+            # in the orthogonal axis independent of the first axis.  Like the
+            # usual polar coordiates integration, the integrated sections
+            # form wedges, though at least in this case the wedge cuts through
+            # the entire sphere, and treats theta and phi identically.
             latitude = sqrt(theta_i**2 + phi_j**2)
-            w = wi*wj if latitude < 180 else 0
-            return w
+            w = sin(radians(latitude))/latitude if latitude != 0 else 1
+            return w*wi*wj if latitude < 180 else 0
     elif PROJECTION == 'azimuthal_equal_area':
         # https://en.wikipedia.org/wiki/Lambert_azimuthal_equal-area_projection
         def rotate(theta_i, phi_j):
@@ -208,9 +236,9 @@ def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian'):
             #print("(%+7.2f, %+7.2f) => (%+7.2f, %+7.2f)"%(theta_i, phi_j, latitude, longitude))
             return Rz(longitude)*Ry(latitude)
         def weight(theta_i, phi_j, wi, wj):
-            R = sqrt(theta_i**2 + phi_j**2)
-            return wi*wj if R <= 180 else 0
-            #return wi*wj if latitude <= 180 else 0
+            latitude = sqrt(theta_i**2 + phi_j**2)
+            w = sin(radians(latitude))/latitude if latitude != 0 else 1
+            return w*wi*wj if latitude < 180 else 0
     elif SCALED_PHI == 10:  # random thrashing
         def rotate(theta_i, phi_j):
             theta_i, phi_j = 2*theta_i/abs(cos(radians(phi_j))), 2*phi_j/cos(radians(theta_i))
@@ -233,8 +261,10 @@ def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian'):
     w = np.array([weight(theta_i, phi_j, wi, wj)
                   for wi, theta_i in zip(weights, dtheta*t)
                   for wj, phi_j in zip(weights, dphi*t)])
+    #print(max(w), min(w), min(w[w>0]))
     points = points[:, w>0]
     w = w[w>0]
+    w /= max(w)
 
     if 0: # Kent distribution
         points = np.hstack([Rx(phi_j)*Ry(theta_i)*z for theta_i in 30*t for phi_j in 60*t])
@@ -503,8 +533,8 @@ def main(model_name='parallelepiped', size=(10, 40, 100)):
     calculator.limits = None
 
     ## use gaussian distribution unless testing integration
-    #dist = 'rectangle'
-    dist = 'gaussian'
+    dist = 'rectangle'
+    #dist = 'gaussian'
 
     ## initial view
     #theta, dtheta = 70., 10.
