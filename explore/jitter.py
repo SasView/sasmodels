@@ -15,8 +15,6 @@ from matplotlib import cm
 import numpy as np
 from numpy import pi, cos, sin, sqrt, exp, degrees, radians
 
-SCALED_PHI = True
-
 def draw_beam(ax, view=(0, 0)):
     """
     Draw the beam going from source at (0, 0, 1) to detector at (0, 0, -1)
@@ -178,32 +176,81 @@ def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian'):
     else:
         raise ValueError("expected dist to be 'gaussian' or 'rectangle'")
 
-    if SCALED_PHI:
-        scale_phi = lambda dtheta, dphi: (
-            dphi/abs(cos(radians(dtheta))) if dtheta != 90
-            else 0 if dphi == 0
-            else 4*pi)
-        w = np.outer(weights, weights)
+    #PROJECTION = 'stretched_phi'
+    PROJECTION = 'azimuthal_equidistance'
+    #PROJECTION = 'azimuthal_equal_area'
+    if PROJECTION == 'stretced_phi':
+        def rotate(theta_i, phi_j):
+            if theta_i != 90:
+                phi_j /= cos(radians(theta_i))
+            return Rx(phi_j)*Ry(theta_i)
+        def weight(theta_i, phi_j, wi, wj):
+            if theta_i != 90:
+                phi_j /= cos(radians(theta_i))
+            return wi*wj if abs(phi_j) < 180 else 0
+    elif PROJECTION == 'azimuthal_equidistance':
+        # https://en.wikipedia.org/wiki/Azimuthal_equidistant_projection
+        def rotate(theta_i, phi_j):
+            latitude = sqrt(theta_i**2 + phi_j**2)
+            longitude = degrees(np.arctan2(phi_j, theta_i))
+            #print("(%+7.2f, %+7.2f) => (%+7.2f, %+7.2f)"%(theta_i, phi_j, latitude, longitude))
+            return Rz(longitude)*Ry(latitude)
+        def weight(theta_i, phi_j, wi, wj):
+            latitude = sqrt(theta_i**2 + phi_j**2)
+            w = wi*wj if latitude < 180 else 0
+            return w
+    elif PROJECTION == 'azimuthal_equal_area':
+        # https://en.wikipedia.org/wiki/Lambert_azimuthal_equal-area_projection
+        def rotate(theta_i, phi_j):
+            R = min(1, sqrt(theta_i**2 + phi_j**2)/180)
+            latitude = 180-degrees(2*np.arccos(R))
+            longitude = degrees(np.arctan2(phi_j, theta_i))
+            #print("(%+7.2f, %+7.2f) => (%+7.2f, %+7.2f)"%(theta_i, phi_j, latitude, longitude))
+            return Rz(longitude)*Ry(latitude)
+        def weight(theta_i, phi_j, wi, wj):
+            R = sqrt(theta_i**2 + phi_j**2)
+            return wi*wj if R <= 180 else 0
+            #return wi*wj if latitude <= 180 else 0
+    elif SCALED_PHI == 10:  # random thrashing
+        def rotate(theta_i, phi_j):
+            theta_i, phi_j = 2*theta_i/abs(cos(radians(phi_j))), 2*phi_j/cos(radians(theta_i))
+            return Rx(phi_j)*Ry(theta_i)
+        def weight(theta_i, phi_j, wi, wj):
+            theta_i, phi_j = 2*theta_i/abs(cos(radians(phi_j))), 2*phi_j/cos(radians(theta_i))
+            return wi*wj if abs(phi_j) < 180 else 0
     else:
-        scale_phi = lambda dtheta, dphe: dphi
-        w = np.outer(weights*cos(radians(dtheta*t)), weights)
+        def rotate(theta_i, phi_j):
+            return Rx(phi_j)*Ry(theta_i)
+        def weight(theta_i, phi_j, wi, wj):
+            return wi*wj*cos(radians(theta_i))
 
     # mesh in theta, phi formed by rotating z
     z = np.matrix([[0], [0], [radius]])
-    points = np.hstack([Rx(scale_phi(theta_i, phi_j))*Ry(theta_i)*z
+    points = np.hstack([rotate(theta_i, phi_j)*z
                         for theta_i in dtheta*t
                         for phi_j in dphi*t])
     # select just the active points (i.e., those with phi < 180
-    active = np.array([abs(scale_phi(theta_i, phi_j)) < 180
-                       for theta_i in dtheta*t
-                       for phi_j in dphi*t])
-    points = points[:, active]
-    w = w.flatten()[active]
+    w = np.array([weight(theta_i, phi_j, wi, wj)
+                  for wi, theta_i in zip(weights, dtheta*t)
+                  for wj, phi_j in zip(weights, dphi*t)])
+    points = points[:, w>0]
+    w = w[w>0]
+
+    if 0: # Kent distribution
+        points = np.hstack([Rx(phi_j)*Ry(theta_i)*z for theta_i in 30*t for phi_j in 60*t])
+        xp, yp, zp = [np.array(v).flatten() for v in points]
+        kappa = max(1e6, radians(dtheta)/(2*pi))
+        beta = 1/max(1e-6, radians(dphi)/(2*pi))/kappa
+        w = exp(kappa*zp) #+ beta*(xp**2 + yp**2)
+        print(kappa, dtheta, radians(dtheta), min(w), max(w), sum(w))
+        #w /= abs(cos(radians(
+        #w /= sum(w)
 
     # rotate relative to beam
     points = orient_relative_to_beam(view, points)
 
     x, y, z = [np.array(v).flatten() for v in points]
+    #plt.figure(2); plt.clf(); plt.hist(z, bins=np.linspace(-1, 1, 51))
     ax.scatter(x, y, z, c=w, marker='o', vmin=0., vmax=1.)
 
 def draw_labels(ax, view, jitter, text):
