@@ -84,10 +84,10 @@ and length $(C+2t_C)$ values, after appropriately
 sorting the three dimensions to give an oblate or prolate particle, to give an
 effective radius, for $S(Q)$ when $P(Q) * S(Q)$ is applied.
 
-For 2d data the orientation of the particle is required, described using 
-angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further details 
+For 2d data the orientation of the particle is required, described using
+angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further details
 of the calculation and angular dispersions see :ref:`orientation` .
-The angle $\Psi$ is the rotational angle around the *long_c* axis. For example, 
+The angle $\Psi$ is the rotational angle around the *long_c* axis. For example,
 $\Psi = 0$ when the *short_b* axis is parallel to the *x*-axis of the detector.
 
 .. figure:: img/parallelepiped_angle_definition.png
