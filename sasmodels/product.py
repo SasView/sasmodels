@@ -101,7 +101,14 @@ def make_product_info(p_info, s_info):
     model_info.composition = ('product', [p_info, s_info])
     model_info.control = p_info.control
     model_info.hidden = p_info.hidden
-    model_info.profile = p_info.profile
+    if getattr(p_info, 'profile', None) is not None:
+        def profile(**kwargs):
+            list_params = [p.name.split('[')[0] for p in p_info.parameters.kernel_parameters]
+            form_factor_args = dict((k, v) for k, v in kwargs.items() if k in list_params)            
+            return p_info.profile(**form_factor_args)
+    else:
+        profile = None
+    model_info.profile = profile
     model_info.profile_axes = p_info.profile_axes
     
     # TODO: delegate random to p_info, s_info

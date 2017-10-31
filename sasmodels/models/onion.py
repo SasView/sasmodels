@@ -317,7 +317,7 @@ single = False
 
 profile_axes = ['Radius (A)', 'SLD (1e-6/A^2)']
 def profile(sld_core, radius_core, sld_solvent, n_shells,
-            sld_in, sld_out, thickness, A, **kwargs):
+            sld_in, sld_out, thickness, A):
     """
     Returns shape profile with x=radius, y=SLD.
     """

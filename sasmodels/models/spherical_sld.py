@@ -221,7 +221,7 @@ SHAPE_FUNCTIONS = [
 ]
 
 def profile(n_shells, sld_solvent, sld, thickness,
-            interface, shape, nu, n_steps, **kwargs):
+            interface, shape, nu, n_steps):
     """
     Returns shape profile with x=radius, y=SLD.
     """
