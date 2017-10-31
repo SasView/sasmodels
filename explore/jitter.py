@@ -199,7 +199,10 @@ def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian',
         phi, with theta being slightly worse.  Computationally it is much
         cheaper for wide theta-phi meshes since it excludes points which
         lie outside the sinusoid near theta +/- 90 rather than packing
-        them close together as in equirectangle.
+        them close together as in equirectangle.  Note that the poles
+        will be slightly overweighted for theta > 90 with the circle
+        from theta at 90+dt winding backwards around the pole, overlapping
+        the circle from theta at 90-dt.
     Guyour (hemisphere-in-a-square)  **not implemented**
         <https://en.wikipedia.org/wiki/Guyou_hemisphere-in-a-square_projection>
         Promising.  With tiling should allow rotation in phi or theta
