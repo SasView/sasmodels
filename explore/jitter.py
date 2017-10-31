@@ -8,6 +8,8 @@ from __future__ import division, print_function
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
+import argparse
+
 import mpl_toolkits.mplot3d   # Adds projection='3d' option to subplot
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, CheckButtons
@@ -88,7 +90,7 @@ def draw_jitter(ax, view, jitter, dist='gaussian', size=(0.1, 0.4, 1.0)):
     if dpsi == 0:
         cloud = [v for v in cloud if v[2] == 0]
     draw_shape(ax, size, view, [0, 0, 0], steps=100, alpha=0.8)
-    scale = 1/sqrt(3) if dist == 'rectangle' else 1
+    scale = {'gaussian':1, 'rectangle':1/sqrt(3), 'uniform':1/3}[dist]
     for point in cloud:
         delta = [scale*dtheta*point[0], scale*dphi*point[1], scale*dpsi*point[2]]
         draw_shape(ax, size, view, delta, alpha=0.8)
@@ -158,38 +160,85 @@ def draw_sphere(ax, radius=10., steps=100):
     z = radius * np.outer(np.ones(np.size(u)), np.cos(v))
     ax.plot_surface(x, y, z, rstride=4, cstride=4, color='w')
 
-def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian'):
+PROJECTIONS = [
+    'equirectangular', 'azimuthal_equidistance', 'sinusoidal',
+]
+def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian',
+              projection='equirectangular'):
     """
     Draw the dispersion mesh showing the theta-phi orientations at which
     the model will be evaluated.
+
+    jitter projections
+    <https://en.wikipedia.org/wiki/List_of_map_projections>
+
+    equirectangular (standard latitude-longitude mesh)
+        <https://en.wikipedia.org/wiki/Equirectangular_projection>
+        Allows free movement in phi (around the equator), but theta is
+        limited to +/- 90, and points are cos-weighted. Jitter in phi is
+        uniform in weight along a line of latitude.  With small theta and
+        phi ranging over +/- 180 this forms a wobbling disk.  With small
+        phi and theta ranging over +/- 90 this forms a wedge like a slice
+        of an orange.
+    azimuthal_equidistance (Postel)
+        <https://en.wikipedia.org/wiki/Azimuthal_equidistant_projection>
+        Preserves distance from center, and so is an excellent map for
+        representing a bivariate gaussian on the surface.  Theta and phi
+        operate identically, cutting wegdes from the antipode of the viewing
+        angle.  This unfortunately does not allow free movement in either
+        theta or phi since the orthogonal wobble decreases to 0 as the body
+        rotates through 180 degrees.
+    sinusoidal (Sanson-Flamsteed, Mercator equal-area)
+        <https://en.wikipedia.org/wiki/Sinusoidal_projection>
+        Preserves arc length with latitude, giving bad behaviour at
+        theta near +/- 90.  Theta and phi operate somewhat differently,
+        so a system with a-b-c dtheta-dphi-dpsi will not give the same
+        value as one with b-a-c dphi-dtheta-dpsi, as would be the case
+        for azimuthal equidistance.  Free movement using theta or phi
+        uniform over +/- 180 will work, but not as well as equirectangular
+        phi, with theta being slightly worse.  Computationally it is much
+        cheaper for wide theta-phi meshes since it excludes points which
+        lie outside the sinusoid near theta +/- 90 rather than packing
+        them close together as in equirectangle.
+    Guyour (hemisphere-in-a-square)  **not implemented**
+        <https://en.wikipedia.org/wiki/Guyou_hemisphere-in-a-square_projection>
+        Promising.  With tiling should allow rotation in phi or theta
+        through +/- 180, preserving almost disk-like behaviour in either
+        direction (phi rotation will not be as uniform as it is in
+        equirectangular; not sure about theta).  Unfortunately, distortion
+        is not restricted to the corners of the theta-phi mesh, so this will
+        not be as good as the azimuthal equidistance project for gaussian
+        distributions.
+    azimuthal_equal_area  **incomplete**
+        <https://en.wikipedia.org/wiki/Lambert_azimuthal_equal-area_projection>
+        Preserves the relative density of the surface patches.  Not that
+        useful and not completely implemented
+    Gauss-Kreuger **not implemented**
+        <https://en.wikipedia.org/wiki/Transverse_Mercator_projection#Ellipsoidal_transverse_Mercator>
+        Should allow free movement in theta, but phi is distorted.
     """
     theta, phi, psi = view
     dtheta, dphi, dpsi = jitter
 
+    t = np.linspace(-1, 1, n)
+    weights = np.ones_like(t)
     if dist == 'gaussian':
-        t = np.linspace(-3, 3, n)
+        t *= 3
         weights = exp(-0.5*t**2)
     elif dist == 'rectangle':
         # Note: uses sasmodels ridiculous definition of rectangle width
-        t = np.linspace(-1, 1, n)*sqrt(3)
-        weights = np.ones_like(t)
+        t *= sqrt(3)
+    elif dist == 'uniform':
+        pass
     else:
-        raise ValueError("expected dist to be 'gaussian' or 'rectangle'")
+        raise ValueError("expected dist to be gaussian, rectangle or uniform")
 
-    #PROJECTION = 'stretched_phi'
-    PROJECTION = 'azimuthal_equidistance'
-    #PROJECTION = 'azimuthal_equal_area'
-    if PROJECTION == 'stretced_phi':
+    if projection == 'equirectangular':
         def rotate(theta_i, phi_j):
-            if theta_i != 90:
-                phi_j /= cos(radians(theta_i))
             return Rx(phi_j)*Ry(theta_i)
         def weight(theta_i, phi_j, wi, wj):
-            if theta_i != 90:
-                phi_j /= cos(radians(theta_i))
-            return wi*wj if abs(phi_j) < 180 else 0
-    elif PROJECTION == 'azimuthal_equidistance':
-        # https://en.wikipedia.org/wiki/Azimuthal_equidistant_projection
+            return wi*wj*cos(radians(theta_i))
+    elif projection == 'azimuthal_equidistance':
         def rotate(theta_i, phi_j):
             latitude = sqrt(theta_i**2 + phi_j**2)
             longitude = degrees(np.arctan2(phi_j, theta_i))
@@ -227,8 +276,19 @@ def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian'):
             latitude = sqrt(theta_i**2 + phi_j**2)
             w = sin(radians(latitude))/latitude if latitude != 0 else 1
             return w*wi*wj if latitude < 180 else 0
-    elif PROJECTION == 'azimuthal_equal_area':
-        # https://en.wikipedia.org/wiki/Lambert_azimuthal_equal-area_projection
+    elif projection == 'sinusoidal':
+        def rotate(theta_i, phi_j):
+            latitude = theta_i
+            scale = cos(radians(latitude))
+            longitude = phi_j/scale if abs(phi_j) < abs(scale)*180 else 0
+            #print("(%+7.2f, %+7.2f) => (%+7.2f, %+7.2f)"%(theta_i, phi_j, latitude, longitude))
+            return Rx(longitude)*Ry(latitude)
+        def weight(theta_i, phi_j, wi, wj):
+            latitude = theta_i
+            scale = cos(radians(latitude))
+            w = 1 if abs(phi_j) < abs(scale)*180 else 0
+            return w*wi*wj
+    elif projection == 'azimuthal_equal_area':
         def rotate(theta_i, phi_j):
             R = min(1, sqrt(theta_i**2 + phi_j**2)/180)
             latitude = 180-degrees(2*np.arccos(R))
@@ -239,18 +299,8 @@ def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian'):
             latitude = sqrt(theta_i**2 + phi_j**2)
             w = sin(radians(latitude))/latitude if latitude != 0 else 1
             return w*wi*wj if latitude < 180 else 0
-    elif SCALED_PHI == 10:  # random thrashing
-        def rotate(theta_i, phi_j):
-            theta_i, phi_j = 2*theta_i/abs(cos(radians(phi_j))), 2*phi_j/cos(radians(theta_i))
-            return Rx(phi_j)*Ry(theta_i)
-        def weight(theta_i, phi_j, wi, wj):
-            theta_i, phi_j = 2*theta_i/abs(cos(radians(phi_j))), 2*phi_j/cos(radians(theta_i))
-            return wi*wj if abs(phi_j) < 180 else 0
     else:
-        def rotate(theta_i, phi_j):
-            return Rx(phi_j)*Ry(theta_i)
-        def weight(theta_i, phi_j, wi, wj):
-            return wi*wj*cos(radians(theta_i))
+        raise ValueError("unknown projection %r"%projection)
 
     # mesh in theta, phi formed by rotating z
     z = np.matrix([[0], [0], [radius]])
@@ -397,11 +447,10 @@ def draw_scattering(calculator, ax, view, jitter, dist='gaussian'):
     orientation and orientation dispersity.  *dist* is one of the sasmodels
     weight distributions.
     """
-    ## Sasmodels use sqrt(3)*width for the rectangle range; scale to the
-    ## proper width for comparison. Commented out since now using the
-    ## sasmodels definition of width for rectangle.
-    #scale = 1/sqrt(3) if dist == 'rectangle' else 1
-    scale = 1
+    if dist == 'uniform':  # uniform is not yet in this branch
+        dist, scale = 'rectangle', 1/sqrt(3)
+    else:
+        scale = 1
 
     # add the orientation parameters to the model parameters
     theta, phi, psi = view
@@ -519,7 +568,24 @@ def select_calculator(model_name, n=150, size=(10,40,100)):
 
     return calculator, (a, b, c)
 
-def main(model_name='parallelepiped', size=(10, 40, 100)):
+SHAPES = [
+    'parallelepiped', 'triaxial_ellipsoid', 'bcc_paracrystal',
+    'cylinder', 'ellipsoid',
+    'sphere',
+ ]
+
+DISTRIBUTIONS = [
+    'gaussian', 'rectangle', 'uniform',
+]
+DIST_LIMITS = {
+    'gaussian': 30,
+    'rectangle': 90/sqrt(3),
+    'uniform': 90,
+}
+
+def run(model_name='parallelepiped', size=(10, 40, 100),
+        dist='gaussian', mesh=30,
+        projection='equirectangular'):
     """
     Show an interactive orientation and jitter demo.
 
@@ -531,10 +597,6 @@ def main(model_name='parallelepiped', size=(10, 40, 100)):
     ## uncomment to set an independent the colour range for every view
     ## If left commented, the colour range is fixed for all views
     calculator.limits = None
-
-    ## use gaussian distribution unless testing integration
-    dist = 'rectangle'
-    #dist = 'gaussian'
 
     ## initial view
     #theta, dtheta = 70., 10.
@@ -571,7 +633,7 @@ def main(model_name='parallelepiped', size=(10, 40, 100)):
     # Note: using ridiculous definition of rectangle distribution, whose width
     # in sasmodels is sqrt(3) times the given width.  Divide by sqrt(3) to keep
     # the maximum width to 90.
-    dlimit = 30 if dist == 'gaussian' else 90/sqrt(3)
+    dlimit = DIST_LIMITS[dist]
     sdtheta = Slider(axdtheta, 'dTheta', 0, 2*dlimit, valinit=dtheta)
     sdphi = Slider(axdphi, 'dPhi', 0, 2*dlimit, valinit=dphi)
     sdpsi = Slider(axdpsi, 'dPsi', 0, 2*dlimit, valinit=dpsi)
@@ -582,13 +644,13 @@ def main(model_name='parallelepiped', size=(10, 40, 100)):
         jitter = sdtheta.val, sdphi.val, sdpsi.val
         # set small jitter as 0 if multiple pd dims
         dims = sum(v > 0 for v in jitter)
-        limit = [0, 0, 2, 5][dims]
+        limit = [0, 0, 0.5, 5][dims]
         jitter = [0 if v < limit else v for v in jitter]
         ax.cla()
         draw_beam(ax, (0, 0))
         draw_jitter(ax, view, jitter, dist=dist, size=size)
         #draw_jitter(ax, view, (0,0,0))
-        draw_mesh(ax, view, jitter, dist=dist, n=30)
+        draw_mesh(ax, view, jitter, dist=dist, n=mesh, projection=projection)
         draw_scattering(calculator, ax, view, jitter, dist=dist)
         plt.gcf().canvas.draw()
 
@@ -606,7 +668,21 @@ def main(model_name='parallelepiped', size=(10, 40, 100)):
     ## go interactive
     plt.show()
 
+def main():
+    parser = argparse.ArgumentParser(
+        description="Display jitter",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        )
+    parser.add_argument('-p', '--projection', choices=PROJECTIONS, default=PROJECTIONS[0], help='coordinate projection')
+    parser.add_argument('-s', '--size', type=str, default='10,40,100', help='a,b,c lengths')
+    parser.add_argument('-d', '--distribution', choices=DISTRIBUTIONS, default=DISTRIBUTIONS[0], help='jitter distribution')
+    parser.add_argument('-m', '--mesh', type=int, default=30, help='#points in theta-phi mesh')
+    parser.add_argument('shape', choices=SHAPES, nargs='?', default=SHAPES[0], help='oriented shape')
+    opts = parser.parse_args()
+    size = tuple(int(v) for v in opts.size.split(','))
+    run(opts.shape, size=size,
+        mesh=opts.mesh, dist=opts.distribution,
+        projection=opts.projection)
+
 if __name__ == "__main__":
-    model_name = sys.argv[1] if len(sys.argv) > 1 else 'parallelepiped'
-    size = tuple(int(v) for v in sys.argv[2].split(',')) if len(sys.argv) > 2 else (10, 40, 100)
-    main(model_name, size)
+    main()
