@@ -1,10 +1,43 @@
+# Copyright 2013-2016 Mike Bostock
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
+#
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+#
+# * Neither the name of the author nor the names of contributors may be used to
+#   endorse or promote products derived from this software without specific prior
+#   written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+# ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# https://github.com/d3/d3-geo-projection
+# commit fd2886555e46b35163c7b898d43c7d1bcebbba7c 2016-07-02
+#
+# 2017-11-01 Paul Kienzle
+# * converted to python, using degrees rather than radians
 from __future__ import division, print_function
 
 import numpy as np
 from numpy import sqrt, pi, tan, cos, sin, log, exp, arctan2 as atan2, sign, radians, degrees
 
-# mpmath version of special functions
 _ = """
+# mpmath version of special functions
 import mpmath as mp
 sn, cn, dn = [mp.ellipfun(v) for v in 'sn', 'cn', 'dn']
 
@@ -83,10 +116,99 @@ def ellipticFi(phi, psi, m):
     c = (m - 1) * cotphi2
     cotlambda2 = (-b + sqrt(b * b - 4 * c)) / 2
     re = ellipticF(atan(1 / sqrt(cotlambda2)), m) * sign(phi)
-    im = ellipticF(atan(sqrt((cotlambda2 / cotphi2 - 1) / m)), 1 - m) * sign(psi)
+    im = ellipticF(atan(sqrt(np.maximum(0,(cotlambda2 / cotphi2 - 1) / m))), 1 - m) * sign(psi)
     return re + 1j*im
 
+sqrt2 = sqrt(2)
+
+# [PAK] renamed k_ => cos_u, k => sin_u, k*k => sinsq_u to avoid k,K confusion
+# cos_u = 0.171572875253809902396622551580603842860656249246103853646...
+# sinsq_u = 0.970562748477140585620264690516376942836062504523376878120...
+# K = 5.415790687177373152821133989303623814510776592635531270636...
+def guyou(lam, phi):
+    # [PAK] wrap into [-pi/2, pi/2] radians
+    x, y = np.asarray(lam), np.asarray(phi)
+    xn, x = divmod(x+90, 180)
+    yn, y = divmod(y+90, 180)
+    xn, lam = xn*180, radians(x-90)
+    yn, phi = yn*180, radians(y-90)
+
+    # Compute constant K
+    cos_u = (sqrt2 - 1) / (sqrt2 + 1)
+    sinsq_u = 1 - cos_u**2
+    K = ellipticF(pi/2, sinsq_u)
+
+    # [PAK] simplify expressions, using the fact that f = -1
+    # Note: exp(f log(x)) => 1/x,  cos(f x) => cos(x), sin(f x) => -sin(x)
+    r = 1/(tan(pi/4 + abs(phi)/2) * sqrt(cos_u))
+    at = atan(r * (cos(lam) - 1j*sin(lam)))
+    t = ellipticFi(at.real, at.imag, sinsq_u)
+    x, y = (-t.imag, sign(phi + (phi==0))*(0.5 * K - t.real))
+
+    # [PAK] convert to degrees, and return to original tile
+    return degrees(x)+xn, degrees(y)+yn
+
+def guyou_invert(x, y):
+    # [PAK] wrap into [-pi/2, pi/2] radians
+    x, y = np.asarray(x), np.asarray(y)
+    xn, x = divmod(x+90, 180)
+    yn, y = divmod(y+90, 180)
+    xn, x = xn*180, radians(x-90)
+    yn, y = yn*180, radians(y-90)
+
+    # compute constant K
+    cos_u = (sqrt2 - 1) / (sqrt2 + 1)
+    sinsq_u = 1 - cos_u**2
+    K = ellipticF(pi/2, sinsq_u)
+
+    # [PAK] simplify expressions, using the fact that f = -1
+    # Note: exp(0.5/f log(x)) => 1/sqrt(x), a x.real^2 + a x.imag^2 => a|x|^2
+    j = ellipticJi(0.5 * K - y, -x, sinsq_u)
+    tn = j[0]/j[1]  # j[0], j[1] are complex
+    lam = -atan2(tn.imag, tn.real)
+    phi = 2*atan(1/sqrt(cos_u*abs(tn)**2)) - pi/2
+
+    # [PAK] convert to degrees, and return to original tile
+    return degrees(lam)+xn, degrees(phi)+yn
+
+def plot_grid():
+    import matplotlib.pyplot as plt
+    from numpy import linspace
+    lat_line = linspace(-90, 90, 400)
+    long_line = linspace(-90, 90, 400)
+
+    #scale = 1
+    limit, step, scale = 90, 10, 2
+    plt.subplot(211)
+    for lat in range(-limit, limit+1, step):
+        x, y = guyou(scale*lat_line, scale*lat)
+        plt.plot(x, y, 'g')
+
+    for long in range(-limit, limit+1, step):
+        x, y = guyou(scale*long, scale*long_line)
+        plt.plot(x, y, 'b')
+    #plt.xlabel('longitude')
+    plt.ylabel('latitude')
+
+    plt.subplot(212)
+    for lat in range(-limit, limit+1, step):
+        x, y = guyou_invert(scale*lat_line, scale*lat)
+        plt.plot(x, y, 'g')
+
+    for long in range(-limit, limit+1, step):
+        x, y = guyou_invert(scale*long, scale*long_line)
+        plt.plot(x, y, 'b')
+    plt.xlabel('longitude')
+    plt.ylabel('latitude')
+
+if __name__ == "__main__":
+    plot_grid()
+    import matplotlib.pyplot as plt; plt.show()
+
+
 _ = """
+// Javascript source for elliptic functions
+//
 // Returns [sn, cn, dn](u + iv|m).
 export function ellipticJi(u, v, m) {
   var a, b, c;
@@ -202,91 +324,49 @@ export function ellipticF(phi, m) {
     c = ((a = c) - b) / 2;
   }
   return phi / (pow(2, i) * a);
+
+
+export function guyouRaw(lambda, phi) {
+  var k_ = (sqrt2 - 1) / (sqrt2 + 1),
+      k = sqrt(1 - k_ * k_),
+      K = ellipticF(halfPi, k * k),
+      f = -1,
+      psi = log(tan(pi / 4 + abs(phi) / 2)),
+      r = exp(f * psi) / sqrt(k_),
+      at = guyouComplexAtan(r * cos(f * lambda), r * sin(f * lambda)),
+      t = ellipticFi(at[0], at[1], k * k);
+  return [-t[1], (phi >= 0 ? 1 : -1) * (0.5 * K - t[0])];
+}
+
+function guyouComplexAtan(x, y) {
+  var x2 = x * x,
+      y_1 = y + 1,
+      t = 1 - x2 - y * y;
+  return [
+   0.5 * ((x >= 0 ? halfPi : -halfPi) - atan2(t, 2 * x)),
+    -0.25 * log(t * t + 4 * x2) +0.5 * log(y_1 * y_1 + x2)
+  ];
+}
+
+function guyouComplexDivide(a, b) {
+  var denominator = b[0] * b[0] + b[1] * b[1];
+  return [
+    (a[0] * b[0] + a[1] * b[1]) / denominator,
+    (a[1] * b[0] - a[0] * b[1]) / denominator
+  ];
+}
+
+guyouRaw.invert = function(x, y) {
+  var k_ = (sqrt2 - 1) / (sqrt2 + 1),
+      k = sqrt(1 - k_ * k_),
+      K = ellipticF(halfPi, k * k),
+      f = -1,
+      j = ellipticJi(0.5 * K - y, -x, k * k),
+      tn = guyouComplexDivide(j[0], j[1]),
+      lambda = atan2(tn[1], tn[0]) / f;
+  return [
+    lambda,
+    2 * atan(exp(0.5 / f * log(k_ * tn[0] * tn[0] + k_ * tn[1] * tn[1]))) - halfPi
+  ];
+};
 """
-
-def guyouComplexAtan(x, y):
-    x2 = x * x
-    y_1 = y + 1
-    t = 1 - x2 - y * y
-    return (
-       0.5 * (sign(x+(x==0))*halfPi - atan2(t, 2 * x)),
-       -0.25 * log(t * t + 4 * x2) +0.5 * log(y_1 * y_1 + x2)
-    )
-
-sqrt2 = sqrt(2)
-halfPi = pi/2
-
-# From d3-geo-projections
-def guyou(lam, phi):
-    x, y = np.asarray(lam), np.asarray(phi)
-    xn, x = divmod(x+90, 180)
-    yn, y = divmod(y+90, 180)
-    xn, lam = xn*180, radians(x-90)
-    yn, phi = yn*180, radians(y-90)
-
-    k_ = (sqrt2 - 1) / (sqrt2 + 1)
-    k = sqrt(1 - k_ * k_)
-    K = ellipticF(halfPi, k * k)
-    f = -1
-    psi = log(tan(pi / 4 + abs(phi) / 2))
-    r = exp(f * psi) / sqrt(k_)
-    at = guyouComplexAtan(r * cos(f * lam), r * sin(f * lam))
-    t = ellipticFi(at[0], at[1], k * k)
-    #return [-t.imag, (1 if phi >=0 else -1)*(0.5 * K - t.real)]
-    x, y = (-t.imag, sign(phi + (phi==0))*(0.5 * K - t.real))
-    return degrees(x)+xn, degrees(y)+yn
-
-#def guyouComplexDivide(a, b):
-#    denominator = b[0] * b[0] + b[1] * b[1]
-#    return [
-#        (a[0] * b[0] + a[1] * b[1]) / denominator,
-#        (a[1] * b[0] - a[0] * b[1]) / denominator
-#    ]
-
-def guyou_invert(x, y):
-    x, y = np.asarray(x), np.asarray(y)
-    xn, x = divmod(x+90, 180)
-    yn, y = divmod(y+90, 180)
-    xn, x = xn*180, radians(x-90)
-    yn, y = yn*180, radians(y-90)
-
-    k_ = (sqrt2 - 1) / (sqrt2 + 1)
-    k = sqrt(1 - k_ * k_)
-    K = ellipticF(halfPi, k * k)
-    f = -1
-    j = ellipticJi(0.5 * K - y, -x, k * k)
-    #tn = guyouComplexDivide(j[0], j[1])
-    #lam = atan2(tn[1], tn[0]) / f
-    tn = j[0]/j[1]  # j[0], j[1] are complex
-    lam = atan2(tn.imag, tn.real) / f
-    phi = 2 * atan(exp(0.5 / f * log(k_ * tn.real**2 + k_ * tn.imag**2))) - halfPi
-    return degrees(lam)+xn, degrees(phi)+yn
-
-def plot_grid():
-    import matplotlib.pyplot as plt
-    from numpy import linspace
-    lat_line = linspace(-90, 90, 100)[1:-1]
-    long_line = linspace(-90, 90, 100)[1:-1]
-
-    #scale = 1
-    scale = 2
-    plt.subplot(211)
-    for lat in range(-80, 81, 10):
-        x, y = guyou(scale*lat_line, scale*lat)
-        plt.plot(x, y, 'g')
-
-    for long in range(-80, 81, 10):
-        x, y = guyou(scale*long, scale*long_line)
-        plt.plot(x, y, 'b')
-    plt.subplot(212)
-    for lat in range(-80, 81, 10):
-        x, y = guyou_invert(scale*lat_line, scale*lat)
-        plt.plot(x, y, 'g')
-
-    for long in range(-80, 81, 10):
-        x, y = guyou_invert(scale*long, scale*long_line)
-        plt.plot(x, y, 'b')
-
-if __name__ == "__main__":
-    plot_grid()
-    import matplotlib.pyplot as plt; plt.show()
