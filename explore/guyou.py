@@ -279,6 +279,8 @@ export function ellipticJ(u, m) {
     phi = (asin(t) + phi) / 2;
   } while (--i);
 
+  // Note: cephes uses dn = sqrt(1 - m*sin^2 phi) rather than cos(phi)/cos(phi-b)
+  // This agrees with matlab docs: dn = sqrt(1 - m sin^2 phi)
   return [sin(phi), t = cos(phi), t / cos(phi - b), phi];
 }
 
