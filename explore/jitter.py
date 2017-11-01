@@ -161,7 +161,9 @@ def draw_sphere(ax, radius=10., steps=100):
     ax.plot_surface(x, y, z, rstride=4, cstride=4, color='w')
 
 PROJECTIONS = [
-    'equirectangular', 'azimuthal_equidistance', 'sinusoidal', 'guyou',
+    # in order of PROJECTION number; do not change without updating the
+    # constants in kernel_iq.c
+    'equirectangular', 'sinusoidal', 'guyou', 'azimuthal_equidistance',
 ]
 def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian',
               projection='equirectangular'):
@@ -238,12 +240,32 @@ def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian',
     else:
         raise ValueError("expected dist to be gaussian, rectangle or uniform")
 
-    if projection == 'equirectangular':
+    if projection == 'equirectangular':  #define PROJECTION 1
         def rotate(theta_i, phi_j):
             return Rx(phi_j)*Ry(theta_i)
         def weight(theta_i, phi_j, wi, wj):
             return wi*wj*abs(cos(radians(theta_i)))
-    elif projection == 'azimuthal_equidistance':
+    elif projection == 'sinusoidal':  #define PROJECTION 2
+        def rotate(theta_i, phi_j):
+            latitude = theta_i
+            scale = cos(radians(latitude))
+            longitude = phi_j/scale if abs(phi_j) < abs(scale)*180 else 0
+            #print("(%+7.2f, %+7.2f) => (%+7.2f, %+7.2f)"%(theta_i, phi_j, latitude, longitude))
+            return Rx(longitude)*Ry(latitude)
+        def weight(theta_i, phi_j, wi, wj):
+            latitude = theta_i
+            scale = cos(radians(latitude))
+            w = 1 if abs(phi_j) < abs(scale)*180 else 0
+            return w*wi*wj
+    elif projection == 'guyou':  #define PROJECTION 3  (eventually?)
+        def rotate(theta_i, phi_j):
+            from guyou import guyou_invert
+            #latitude, longitude = guyou_invert([theta_i], [phi_j])
+            longitude, latitude = guyou_invert([phi_j], [theta_i])
+            return Rx(longitude[0])*Ry(latitude[0])
+        def weight(theta_i, phi_j, wi, wj):
+            return wi*wj
+    elif projection == 'azimuthal_equidistance':  # Note: Rz Ry, not Rx Ry
         def rotate(theta_i, phi_j):
             latitude = sqrt(theta_i**2 + phi_j**2)
             longitude = degrees(np.arctan2(phi_j, theta_i))
@@ -281,18 +303,6 @@ def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian',
             latitude = sqrt(theta_i**2 + phi_j**2)
             w = sin(radians(latitude))/latitude if latitude != 0 else 1
             return w*wi*wj if latitude < 180 else 0
-    elif projection == 'sinusoidal':
-        def rotate(theta_i, phi_j):
-            latitude = theta_i
-            scale = cos(radians(latitude))
-            longitude = phi_j/scale if abs(phi_j) < abs(scale)*180 else 0
-            #print("(%+7.2f, %+7.2f) => (%+7.2f, %+7.2f)"%(theta_i, phi_j, latitude, longitude))
-            return Rx(longitude)*Ry(latitude)
-        def weight(theta_i, phi_j, wi, wj):
-            latitude = theta_i
-            scale = cos(radians(latitude))
-            w = 1 if abs(phi_j) < abs(scale)*180 else 0
-            return w*wi*wj
     elif projection == 'azimuthal_equal_area':
         def rotate(theta_i, phi_j):
             R = min(1, sqrt(theta_i**2 + phi_j**2)/180)
@@ -304,14 +314,6 @@ def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian',
             latitude = sqrt(theta_i**2 + phi_j**2)
             w = sin(radians(latitude))/latitude if latitude != 0 else 1
             return w*wi*wj if latitude < 180 else 0
-    elif projection == 'guyou':
-        def rotate(theta_i, phi_j):
-            from guyou import guyou_invert
-            #latitude, longitude = guyou_invert([theta_i], [phi_j])
-            longitude, latitude = guyou_invert([phi_j], [theta_i])
-            return Rx(longitude[0])*Ry(latitude[0])
-        def weight(theta_i, phi_j, wi, wj):
-            return wi*wj
     else:
         raise ValueError("unknown projection %r"%projection)
 
@@ -489,7 +491,9 @@ def draw_scattering(calculator, ax, view, jitter, dist='gaussian'):
         # use limits from orientation (0,0,0)
         vmin, vmax = calculator.limits
     else:
-        vmin, vmax = clipped_range(Iqxy, portion=0.95, mode='top')
+        vmax = Iqxy.max()
+        vmin = vmax*10**-7
+        #vmin, vmax = clipped_range(Iqxy, portion=portion, mode='top')
     #print("range",(vmin,vmax))
     #qx, qy = np.meshgrid(qx, qy)
     if 0:
@@ -604,6 +608,14 @@ def run(model_name='parallelepiped', size=(10, 40, 100),
 
     *model_name* is one of the models available in :func:`select_model`.
     """
+    # projection number according to 1-order position in list, but
+    # only 1 and 2 are implemented so far.
+    from sasmodels import generate
+    generate.PROJECTION = PROJECTIONS.index(projection) + 1
+    if generate.PROJECTION > 2:
+        print("*** PROJECTION %s not implemented in scattering function ***"%projection)
+        generate.PROJECTION = 2
+
     # set up calculator
     calculator, size = select_calculator(model_name, n=150, size=size)
 
