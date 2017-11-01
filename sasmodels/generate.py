@@ -179,6 +179,10 @@ try:
 except ImportError:
     pass
 
+# jitter projection to use in the kernel code.  See explore/jitter.py
+# for details.  To change it from a program, set generate.PROJECTION.
+PROJECTION = 1
+
 def get_data_path(external_dir, target_file):
     path = abspath(dirname(__file__))
     if exists(joinpath(path, target_file)):
@@ -763,6 +767,7 @@ def make_source(model_info):
     source.append("#define NUM_VALUES %d" % partable.nvalues)
     source.append("#define NUM_MAGNETIC %d" % partable.nmagnetic)
     source.append("#define MAGNETIC_PARS %s"%",".join(str(k) for k in magpars))
+    source.append("#define PROJECTION %d"%PROJECTION)
 
     # TODO: allow mixed python/opencl kernels?
 
