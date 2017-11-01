@@ -161,7 +161,7 @@ def draw_sphere(ax, radius=10., steps=100):
     ax.plot_surface(x, y, z, rstride=4, cstride=4, color='w')
 
 PROJECTIONS = [
-    'equirectangular', 'azimuthal_equidistance', 'sinusoidal',
+    'equirectangular', 'azimuthal_equidistance', 'sinusoidal', 'guyou',
 ]
 def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian',
               projection='equirectangular'):
@@ -203,15 +203,17 @@ def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian',
         will be slightly overweighted for theta > 90 with the circle
         from theta at 90+dt winding backwards around the pole, overlapping
         the circle from theta at 90-dt.
-    Guyour (hemisphere-in-a-square)  **not implemented**
+    Guyou (hemisphere-in-a-square) **not weighted**
         <https://en.wikipedia.org/wiki/Guyou_hemisphere-in-a-square_projection>
-        Promising.  With tiling should allow rotation in phi or theta
-        through +/- 180, preserving almost disk-like behaviour in either
-        direction (phi rotation will not be as uniform as it is in
-        equirectangular; not sure about theta).  Unfortunately, distortion
-        is not restricted to the corners of the theta-phi mesh, so this will
-        not be as good as the azimuthal equidistance project for gaussian
-        distributions.
+        With tiling, allows rotation in phi or theta through +/- 180, with
+        uniform spacing.  Both theta and phi allow free rotation, with wobble
+        in the orthogonal direction reasonably well behaved (though not as
+        good as equirectangular phi). The forward/reverse transformations
+        relies on elliptic integrals that are somewhat expensive, so the
+        behaviour has to be very good to justify the cost and complexity.
+        The weighting function for each point has not yet been computed.
+        Note: run the module *guyou.py* directly and it will show the forward
+        and reverse mappings.
     azimuthal_equal_area  **incomplete**
         <https://en.wikipedia.org/wiki/Lambert_azimuthal_equal-area_projection>
         Preserves the relative density of the surface patches.  Not that
@@ -302,6 +304,14 @@ def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian',
             latitude = sqrt(theta_i**2 + phi_j**2)
             w = sin(radians(latitude))/latitude if latitude != 0 else 1
             return w*wi*wj if latitude < 180 else 0
+    elif projection == 'guyou':
+        def rotate(theta_i, phi_j):
+            from guyou import guyou_invert
+            #latitude, longitude = guyou_invert([theta_i], [phi_j])
+            longitude, latitude = guyou_invert([phi_j], [theta_i])
+            return Rx(longitude[0])*Ry(latitude[0])
+        def weight(theta_i, phi_j, wi, wj):
+            return wi*wj
     else:
         raise ValueError("unknown projection %r"%projection)
 
