@@ -242,7 +242,7 @@ def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian',
         def rotate(theta_i, phi_j):
             return Rx(phi_j)*Ry(theta_i)
         def weight(theta_i, phi_j, wi, wj):
-            return wi*wj*cos(radians(theta_i))
+            return wi*wj*abs(cos(radians(theta_i)))
     elif projection == 'azimuthal_equidistance':
         def rotate(theta_i, phi_j):
             latitude = sqrt(theta_i**2 + phi_j**2)
@@ -620,8 +620,10 @@ def run(model_name='parallelepiped', size=(10, 40, 100),
 
     ## create the plot window
     #plt.hold(True)
+    plt.subplots(num=None, figsize=(5.5, 5.5))
     plt.set_cmap('gist_earth')
     plt.clf()
+    plt.gcf().canvas.set_window_title(projection)
     #gs = gridspec.GridSpec(2,1,height_ratios=[4,1])
     #ax = plt.subplot(gs[0], projection='3d')
     ax = plt.axes([0.0, 0.2, 1.0, 0.8], projection='3d')
