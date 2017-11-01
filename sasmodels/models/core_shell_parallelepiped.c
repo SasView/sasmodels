@@ -2,7 +2,6 @@ static double
 form_volume(double length_a, double length_b, double length_c,
     double thick_rim_a, double thick_rim_b, double thick_rim_c)
 {
-    //return length_a * length_b * length_c;
     return length_a * length_b * length_c +
            2.0 * thick_rim_a * length_b * length_c +
            2.0 * thick_rim_b * length_a * length_c +
@@ -23,88 +22,99 @@ Iq(double q,
     double thick_rim_b,
     double thick_rim_c)
 {
-    // Code converted from functions CSPPKernel and CSParallelepiped in libCylinder.c_scaled
+    // Code converted from functions CSPPKernel and CSParallelepiped in libCylinder.c
     // Did not understand the code completely, it should be rechecked (Miguel Gonzalez)
     //Code is rewritten,the code is compliant with Diva Singhs thesis now (Dirk Honecker)
 
     const double mu = 0.5 * q * length_b;
 
-    //calculate volume before rescaling (in original code, but not used)
-    //double vol = form_volume(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c);
-    //double vol = length_a * length_b * length_c +
-    //       2.0 * thick_rim_a * length_b * length_c +
-    //       2.0 * thick_rim_b * length_a * length_c +
-    //       2.0 * thick_rim_c * length_a * length_b;
-
     // Scale sides by B
-    const double a_scaled = length_a / length_b;
-    const double c_scaled = length_c / length_b;
+    const double a_over_b = length_a / length_b;
+    const double c_over_b = length_c / length_b;
 
-    double ta = a_scaled + 2.0*thick_rim_a/length_b; // incorrect ta = (a_scaled + 2.0*thick_rim_a)/length_b;
-    double tb = 1+ 2.0*thick_rim_b/length_b; // incorrect tb = (a_scaled + 2.0*thick_rim_b)/length_b;
-    double tc = c_scaled + 2.0*thick_rim_c/length_b; //not present
+    double tA_over_b = a_over_b + 2.0*thick_rim_a/length_b;
+    double tB_over_b = 1+ 2.0*thick_rim_b/length_b;
+    double tC_over_b = c_over_b + 2.0*thick_rim_c/length_b;
 
     double Vin = length_a * length_b * length_c;
-    //double Vot = (length_a * length_b * length_c +
-    //            2.0 * thick_rim_a * length_b * length_c +
-    //            2.0 * length_a * thick_rim_b * length_c +
-    //            2.0 * length_a * length_b * thick_rim_c);
-    double V1 = (2.0 * thick_rim_a * length_b * length_c);    // incorrect V1 (aa*bb*cc+2*ta*bb*cc)
-    double V2 = (2.0 * length_a * thick_rim_b * length_c);    // incorrect V2(aa*bb*cc+2*aa*tb*cc)
-    double V3 = (2.0 * length_a * length_b * thick_rim_c);    //not present
+    double VtA = (2.0 * thick_rim_a * length_b * length_c);
+    double VtB = (2.0 * length_a * thick_rim_b * length_c);
+    double VtC = (2.0 * length_a * length_b * thick_rim_c);
 
     // Scale factors (note that drC is not used later)
-    const double drho0 = (core_sld-solvent_sld);
-    const double drhoA = (arim_sld-solvent_sld);
-    const double drhoB = (brim_sld-solvent_sld);
-    const double drhoC = (crim_sld-solvent_sld);  // incorrect const double drC_Vot = (crim_sld-solvent_sld)*Vot;
-
+    const double dr0 = (core_sld-solvent_sld);
+    const double drA = (arim_sld-solvent_sld);
+    const double drB = (brim_sld-solvent_sld);
+    const double drC = (crim_sld-solvent_sld);
 
     // Precompute scale factors for combining cross terms from the shape
-    const double scale23 = drhoA*V1;
-    const double scale14 = drhoB*V2;
-    const double scale24 = drhoC*V3;
-    const double scale11 = drho0*Vin;
-    const double scale12 = drho0*Vin - scale23 - scale14 - scale24;
+    const double dr0_Vin = dr0*Vin;
+    const double drA_VtA = drA*VtA;
+    const double drB_VtB = drB*VtB;
+    const double drC_VtC = drC*VtC;
+    const double drV_delta = dr0_Vin - drA_VtA - drB_VtB - drC_VtC;
+
+    /*  *************** algorithm description ******************
+
+    // Rewrite f as x*siC + y*siCt to move the siC/siCt calculation out
+    // of the inner loop.  That is:
+
+    f = (di-da-db-dc) sa sb sc + da sa' sb sc + db sa sb' sc + dc sa sb sc'
+      =  [ (di-da-db-dc) sa sb + da sa' sb + db sa sb' ] sc  + [dc sa sb] sc'
+      = x sc + y sc'
+
+    // where:
+    di = delta rho_core V_core
+    da = delta rho_rimA V_rimA
+    db = delta rho_rimB V_rimB
+    dc = delta rho_rimC V_rimC
+    sa = j_0 (q_a a/2)    // siA the code
+    sb = j_0 (q_b b/2)
+    sc = j_0 (q_c c/2)
+    sa' = j_0(q_a a_rim/2)  // siAt the code
+    sb' = j_0(q_b b_rim/2)
+    sc' = j_0(q_c c_rim/2)
+
+    // qa, qb, and qc are generated using polar coordinates, with the
+    // outer loop integrating over [0,1] after the u-substitution
+    //    sigma = cos(theta), sqrt(1-sigma^2) = sin(theta)
+    // and inner loop integrating over [0, pi/2] as
+    //    uu = phi
+
+    ************************************************************  */
 
     // outer integral (with gauss points), integration limits = 0, 1
-    double outer_total = 0; //initialize integral
-
+    double outer_sum = 0; //initialize integral
     for( int i=0; i<76; i++) {
         double sigma = 0.5 * ( Gauss76Z[i] + 1.0 );
         double mu_proj = mu * sqrt(1.0-sigma*sigma);
 
-        // inner integral (with gauss points), integration limits = 0, 1
-        double inner_total = 0.0;
-        double inner_total_crim = 0.0;
+        // inner integral (with gauss points), integration limits = 0, pi/2
+        const double siC = sas_sinx_x(mu * sigma * c_over_b);
+        const double siCt = sas_sinx_x(mu * sigma * tC_over_b);
+        double inner_sum = 0.0;
         for(int j=0; j<76; j++) {
             const double uu = 0.5 * ( Gauss76Z[j] + 1.0 );
             double sin_uu, cos_uu;
             SINCOS(M_PI_2*uu, sin_uu, cos_uu);
-            const double si1 = sas_sinx_x(mu_proj * sin_uu * a_scaled);
-            const double si2 = sas_sinx_x(mu_proj * cos_uu );
-            const double si3 = sas_sinx_x(mu_proj * sin_uu * ta);
-            const double si4 = sas_sinx_x(mu_proj * cos_uu * tb);
+            const double siA = sas_sinx_x(mu_proj * sin_uu * a_over_b);
+            const double siB = sas_sinx_x(mu_proj * cos_uu );
+            const double siAt = sas_sinx_x(mu_proj * sin_uu * tA_over_b);
+            const double siBt = sas_sinx_x(mu_proj * cos_uu * tB_over_b);
 
-            // Expression in libCylinder.c (neither drC nor Vot are used)
-            const double form = scale12*si1*si2 + scale23*si2*si3 + scale14*si1*si4;
-            const double form_crim = scale11*si1*si2;
+            const double x = drV_delta*siA*siB + drA_VtA*siB*siAt + drB_VtB*siA*siBt;
+            const double form = x*siC + drC_VtC*siA*siB*siCt;
 
-            //  correct FF : sum of square of phase factors
-            inner_total += Gauss76Wt[j] * form * form;
-            inner_total_crim += Gauss76Wt[j] * form_crim * form_crim;
+            inner_sum += Gauss76Wt[j] * form * form;
         }
-        inner_total *= 0.5;
-        inner_total_crim *= 0.5;
+        inner_sum *= 0.5;
         // now sum up the outer integral
-        const double si = sas_sinx_x(mu * c_scaled * sigma);
-        const double si_crim = sas_sinx_x(mu * tc * sigma);
-        outer_total += Gauss76Wt[i] * (inner_total * si * si + inner_total_crim * si_crim * si_crim);
+        outer_sum += Gauss76Wt[i] * inner_sum;
     }
-    outer_total *= 0.5;
+    outer_sum *= 0.5;
 
     //convert from [1e-12 A-1] to [cm-1]
-    return 1.0e-4 * outer_total;
+    return 1.0e-4 * outer_sum;
 }
 
 static double
@@ -128,35 +138,30 @@ Iqxy(double qa, double qb, double qc,
     const double drC = crim_sld-solvent_sld;
 
     double Vin = length_a * length_b * length_c;
-    double V1 = 2.0 * thick_rim_a * length_b * length_c;    // incorrect V1(aa*bb*cc+2*ta*bb*cc)
-    double V2 = 2.0 * length_a * thick_rim_b * length_c;    // incorrect V2(aa*bb*cc+2*aa*tb*cc)
-    double V3 = 2.0 * length_a * length_b * thick_rim_c;
-    // As for the 1D case, Vot is not used
-    //double Vot = (length_a * length_b * length_c +
-    //              2.0 * thick_rim_a * length_b * length_c +
-    //              2.0 * length_a * thick_rim_b * length_c +
-    //              2.0 * length_a * length_b * thick_rim_c);
+    double VtA = 2.0 * thick_rim_a * length_b * length_c;
+    double VtB = 2.0 * length_a * thick_rim_b * length_c;
+    double VtC = 2.0 * length_a * length_b * thick_rim_c;
 
     // The definitions of ta, tb, tc are not the same as in the 1D case because there is no
     // the scaling by B.
-    double ta = length_a + 2.0*thick_rim_a;
-    double tb = length_b + 2.0*thick_rim_b;
-    double tc = length_c + 2.0*thick_rim_c;
+    double tA = length_a + 2.0*thick_rim_a;
+    double tB = length_b + 2.0*thick_rim_b;
+    double tC = length_c + 2.0*thick_rim_c;
     //handle arg=0 separately, as sin(t)/t -> 1 as t->0
     double siA = sas_sinx_x(0.5*length_a*qa);
     double siB = sas_sinx_x(0.5*length_b*qb);
     double siC = sas_sinx_x(0.5*length_c*qc);
-    double siAt = sas_sinx_x(0.5*ta*qa);
-    double siBt = sas_sinx_x(0.5*tb*qb);
-    double siCt = sas_sinx_x(0.5*tc*qc);
+    double siAt = sas_sinx_x(0.5*tA*qa);
+    double siBt = sas_sinx_x(0.5*tB*qb);
+    double siCt = sas_sinx_x(0.5*tC*qc);
 
 
     // f uses Vin, V1, V2, and V3 and it seems to have more sense than the value computed
     // in the 1D code, but should be checked!
-    double f = ( dr0*siA*siB*siC*Vin
-               + drA*(siAt-siA)*siB*siC*V1
-               + drB*siA*(siBt-siB)*siC*V2
-               + drC*siA*siB*(siCt-siC)*V3);
+    double f = ( dr0*Vin*siA*siB*siC
+               + drA*VtA*(siAt-siA)*siB*siC
+               + drB*VtB*siA*(siBt-siB)*siC
+               + drC*VtC*siA*siB*(siCt-siC));
 
     return 1.0e-4 * f * f;
 }
