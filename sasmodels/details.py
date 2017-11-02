@@ -317,7 +317,7 @@ def dispersion_mesh(model_info, mesh):
     and w is a vector containing the products for weights for each
     parameter set in the vector.
     """
-    value, dispersity, weight = zip(*mesh)
+    _, dispersity, weight = zip(*mesh)
     #weight = [w if len(w)>0 else [1.] for w in weight]
     weight = np.vstack([v.flatten() for v in meshgrid(*weight)])
     weight = np.prod(weight, axis=0)

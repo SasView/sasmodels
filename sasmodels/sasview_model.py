@@ -672,11 +672,14 @@ class SasviewModel(object):
         call_details, values, is_magnetic = make_kernel_args(calculator, pairs)
         #call_details.show()
         #print("pairs", pairs)
+        #for k, p in enumerate(self._model_info.parameters.call_parameters):
+        #    print(k, p.name, *pairs[k])
         #print("params", self.params)
         #print("values", values)
         #print("is_mag", is_magnetic)
         result = calculator(call_details, values, cutoff=self.cutoff,
                             magnetic=is_magnetic)
+        #print("result", result)
         self._intermediate_results = getattr(calculator, 'results', None)
         calculator.release()
         self._model.release()
@@ -760,9 +763,8 @@ class SasviewModel(object):
             if par.name == self.multiplicity_info.control:
                 return self.multiplicity, [self.multiplicity], [1.0]
             else:
-                # For hidden parameters use the default value.
-                default = self._model_info.parameters.defaults.get(par.name, np.NaN)
-                return default, [default], [1.0]
+                # For hidden parameters use NaN
+                return np.NaN, [np.NaN], [1.0]
         elif par.polydisperse:
             value = self.params[par.name]
             dis = self.dispersion[par.name]
@@ -775,7 +777,7 @@ class SasviewModel(object):
             return value, dispersity, weight
         else:
             value = self.params[par.name]
-            return value, [value if par.relative_pd else 0.0], [1.0]
+            return value, [value], [1.0]
 
 def test_cylinder():
     # type: () -> float
@@ -796,6 +798,18 @@ def test_structure_factor():
     value = model.evalDistribution([0.1, 0.1])
     if np.isnan(value):
         raise ValueError("hardsphere returns null")
+
+def test_product():
+    # type: () -> float
+    """
+    Test that 2-D hardsphere model runs and doesn't produce NaN.
+    """
+    S = _make_standard_model('hayter_msa')()
+    P = _make_standard_model('cylinder')()
+    model = MultiplicationModel(P, S)
+    value = model.evalDistribution([0.1, 0.1])
+    if np.isnan(value):
+        raise ValueError("cylinder*hatyer_msa returns null")
 
 def test_rpa():
     # type: () -> float
@@ -849,4 +863,6 @@ def test_old_name():
 
 if __name__ == "__main__":
     print("cylinder(0.1,0.1)=%g"%test_cylinder())
+    #test_product()
+    #test_rpa()
     #test_empty_distribution()
