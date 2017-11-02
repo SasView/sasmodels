@@ -192,7 +192,7 @@ def make_details(model_info, length, offset, num_weights):
     #print("len:",length)
     #print("off:",offset)
 
-    # Check that we arn't using too many polydispersity loops
+    # Check that we aren't using too many polydispersity loops
     num_active = np.sum(length > 1)
     max_pd = model_info.parameters.max_pd
     if num_active > max_pd:
