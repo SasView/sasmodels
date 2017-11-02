@@ -124,7 +124,7 @@ sqrt2 = sqrt(2)
 # [PAK] renamed k_ => cos_u, k => sin_u, k*k => sinsq_u to avoid k,K confusion
 # cos_u = 0.171572875253809902396622551580603842860656249246103853646...
 # sinsq_u = 0.970562748477140585620264690516376942836062504523376878120...
-# K = 5.415790687177373152821133989303623814510776592635531270636...
+# K = 3.165103454447431823666270142140819753058976299237578486994...
 def guyou(lam, phi):
     # [PAK] wrap into [-pi/2, pi/2] radians
     x, y = np.asarray(lam), np.asarray(phi)
@@ -162,11 +162,12 @@ def guyou_invert(x, y):
     K = ellipticF(pi/2, sinsq_u)
 
     # [PAK] simplify expressions, using the fact that f = -1
-    # Note: exp(0.5/f log(x)) => 1/sqrt(x), a x.real^2 + a x.imag^2 => a|x|^2
-    j = ellipticJi(0.5 * K - y, -x, sinsq_u)
+    j = ellipticJi(K/2 - y, -x, sinsq_u)
     tn = j[0]/j[1]  # j[0], j[1] are complex
-    lam = -atan2(tn.imag, tn.real)
-    phi = 2*atan(1/sqrt(cos_u*abs(tn)**2)) - pi/2
+    # Note: -atan2(im(x)/re(x)) => angle(x)
+    lam = -np.angle(tn)
+    # Note: exp(0.5/f log(a re(x)^2 + a im(x)^2)) => 1/(sqrt(a) |x|)
+    phi = 2*atan(1/sqrt(cos_u)/abs(tn)) - pi/2
 
     # [PAK] convert to degrees, and return to original tile
     return degrees(lam)+xn, degrees(phi)+yn
