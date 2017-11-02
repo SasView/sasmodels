@@ -204,7 +204,7 @@ def MultiplicationModel(form_factor, structure_factor):
     model_info = product.make_product_info(form_factor._model_info,
                                            structure_factor._model_info)
     ConstructedModel = make_model_from_info(model_info)
-    return ConstructedModel(form_factor.multiplicity)    
+    return ConstructedModel(form_factor.multiplicity)
 
 
 def _generate_model_attributes(model_info):
@@ -762,7 +762,7 @@ class SasviewModel(object):
             else:
                 # For hidden parameters use the default value.
                 default = self._model_info.parameters.defaults.get(par.name, np.NaN)
-                return [default], [1.0]
+                return default, [default], [1.0]
         elif par.polydisperse:
             value = self.params[par.name]
             dis = self.dispersion[par.name]
