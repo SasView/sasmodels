@@ -204,7 +204,7 @@ def MultiplicationModel(form_factor, structure_factor):
     model_info = product.make_product_info(form_factor._model_info,
                                            structure_factor._model_info)
     ConstructedModel = make_model_from_info(model_info)
-    return ConstructedModel(form_factor.multiplicity)    
+    return ConstructedModel(form_factor.multiplicity)
 
 
 def _generate_model_attributes(model_info):

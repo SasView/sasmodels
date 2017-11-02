@@ -100,6 +100,18 @@ def make_product_info(p_info, s_info):
     # Remember the component info blocks so we can build the model
     model_info.composition = ('product', [p_info, s_info])
     model_info.control = p_info.control
+    model_info.hidden = p_info.hidden
+    if getattr(p_info, 'profile', None) is not None:
+        profile_pars = set(p.id for p in p_info.parameters.kernel_parameters)
+        def profile(**kwargs):
+            # extract the profile args
+            kwargs = dict((k, v) for k, v in kwargs.items() if k in profile_pars)
+            return p_info.profile(**kwargs)
+    else:
+        profile = None
+    model_info.profile = profile
+    model_info.profile_axes = p_info.profile_axes
+
     # TODO: delegate random to p_info, s_info
     #model_info.random = lambda: {}
 
