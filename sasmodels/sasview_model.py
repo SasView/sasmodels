@@ -763,8 +763,10 @@ class SasviewModel(object):
             if par.name == self.multiplicity_info.control:
                 return self.multiplicity, [self.multiplicity], [1.0]
             else:
-                # For hidden parameters use NaN
-                return np.NaN, [np.NaN], [1.0]
+                # For hidden parameters use default values.  This sets
+                # scale=1 and background=0 for structure factors
+                default = self._model_info.parameters.defaults.get(par.name, np.NaN)
+                return default, [default], [1.0]
         elif par.polydisperse:
             value = self.params[par.name]
             dis = self.dispersion[par.name]
@@ -795,9 +797,11 @@ def test_structure_factor():
     """
     Model = _make_standard_model('hardsphere')
     model = Model()
-    value = model.evalDistribution([0.1, 0.1])
-    if np.isnan(value):
-        raise ValueError("hardsphere returns null")
+    value2d = model.evalDistribution([0.1, 0.1])
+    value1d = model.evalDistribution(np.array([0.1*np.sqrt(2)]))
+    #print("hardsphere", value1d, value2d)
+    if np.isnan(value1d) or np.isnan(value2d):
+        raise ValueError("hardsphere returns nan")
 
 def test_product():
     # type: () -> float
@@ -864,5 +868,6 @@ def test_old_name():
 if __name__ == "__main__":
     print("cylinder(0.1,0.1)=%g"%test_cylinder())
     #test_product()
-    #test_rpa()
+    #test_structure_factor()
+    #print("rpa:", test_rpa())
     #test_empty_distribution()
