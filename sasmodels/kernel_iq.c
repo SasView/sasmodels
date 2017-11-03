@@ -12,7 +12,8 @@
 
 // NOTE: the following macros are defined in generate.py:
 //
-//  MAX_PD : the maximum number of dispersity loops allowed
+//  MAX_PD : the maximum number of dispersity loops allowed for this model,
+//      which will be at most modelinfo.MAX_PD.
 //  NUM_PARS : the number of parameters in the parameter table
 //  NUM_VALUES : the number of values to skip at the start of the
 //      values array before you get to the dispersity values.
@@ -281,10 +282,23 @@ void KERNEL_NAME(
   int q_index = 0;
 #endif
 
-  // Storage for the current parameter values.  These will be updated as we
-  // walk the dispersity mesh.
+  // ** Fill in the local values table **
+  // Storage for the current parameter values.
+  // These will be updated as we walk the dispersity mesh.
   ParameterBlock local_values;
+  //   values[0] is scale
+  //   values[1] is background
+  #ifdef USE_OPENMP
+  #pragma omp parallel for
+  #endif
+  for (int i=0; i < NUM_PARS; i++) {
+    local_values.vector[i] = values[2+i];
+    //if (q_index==0) printf("p%d = %g\n",i, local_values.vector[i]);
+  }
+  //if (q_index==0) printf("NUM_VALUES:%d  NUM_PARS:%d  MAX_PD:%d\n", NUM_VALUES, NUM_PARS, MAX_PD);
+  //if (q_index==0) printf("start:%d  stop:%d\n", pd_start, pd_stop);
 
+  // ** Precompute magnatism values **
 #if defined(MAGNETIC) && NUM_MAGNETIC>0
   // Location of the sld parameters in the parameter vector.
   // These parameters are updated with the effective sld due to magnetism.
@@ -301,19 +315,7 @@ void KERNEL_NAME(
   SINCOS(-values[NUM_PARS+4]*M_PI_180, sin_mspin, cos_mspin);
 #endif // MAGNETIC
 
-  // Fill in the initial variables
-  //   values[0] is scale
-  //   values[1] is background
-  #ifdef USE_OPENMP
-  #pragma omp parallel for
-  #endif
-  for (int i=0; i < NUM_PARS; i++) {
-    local_values.vector[i] = values[2+i];
-//if (q_index==0) printf("p%d = %g\n",i, local_values.vector[i]);
-  }
-//if (q_index==0) printf("NUM_VALUES:%d  NUM_PARS:%d  MAX_PD:%d\n", NUM_VALUES, NUM_PARS, MAX_PD);
-//if (q_index==0) printf("start:%d  stop:%d\n", pd_start, pd_stop);
-
+  // ** Fill in the initial results **
   // If pd_start is zero that means that we are starting a new calculation,
   // and must initialize the result to zero.  Otherwise, we are restarting
   // the calculation from somewhere in the middle of the dispersity mesh,
@@ -335,7 +337,7 @@ void KERNEL_NAME(
       #endif
       for (int q_index=0; q_index < nq; q_index++) result[q_index] = 0.0;
     }
-//if (q_index==0) printf("start %d %g %g\n", pd_start, pd_norm, result[0]);
+    //if (q_index==0) printf("start %d %g %g\n", pd_start, pd_norm, result[0]);
 #endif // !USE_OPENCL
 
 
@@ -389,7 +391,13 @@ After expansion, the loop struction will look like the following:
       PD_OPEN(2,1)
       PD_OPEN(0,1)
 
-      ... main loop body ...
+      // ... main loop body ...
+      APPLY_PROJECTION    // convert jitter values to spherical coords
+      BUILD_ROTATION      // construct the rotation matrix qxy => qabc
+      for each q
+          FETCH_Q         // set qx,qy from the q input vector
+          APPLY_ROTATION  // convert qx,qy to qa,qb,qc
+          CALL_KERNEL     // scattering = Iqxy(qa, qb, qc, p1, p2, ...)
 
       ++step;  // increment counter representing position in dispersity mesh
 
@@ -411,43 +419,14 @@ After expansion, the loop struction will look like the following:
 
 */
 
-// Define looping variables
-#define PD_INIT(_LOOP) \
-  const int n##_LOOP = details->pd_length[_LOOP]; \
-  const int p##_LOOP = details->pd_par[_LOOP]; \
-  global const double *v##_LOOP = pd_value + details->pd_offset[_LOOP]; \
-  global const double *w##_LOOP = pd_weight + details->pd_offset[_LOOP]; \
-  int i##_LOOP = (pd_start/details->pd_stride[_LOOP])%n##_LOOP;
 
-// Jump into the middle of the dispersity loop
-#define PD_OPEN(_LOOP,_OUTER) \
-  while (i##_LOOP < n##_LOOP) { \
-    local_values.vector[p##_LOOP] = v##_LOOP[i##_LOOP]; \
-    const double weight##_LOOP = w##_LOOP[i##_LOOP] * weight##_OUTER;
+// ** prepare inner loops **
 
-// create the variable "weight#=1.0" where # is the outermost level+1 (=MAX_PD).
-#define _PD_OUTERMOST_WEIGHT(_n) const double weight##_n = 1.0;
-#define PD_OUTERMOST_WEIGHT(_n) _PD_OUTERMOST_WEIGHT(_n)
-
-// Close out the loop
-#define PD_CLOSE(_LOOP) \
-    if (step >= pd_stop) break; \
-    ++i##_LOOP; \
-  } \
-  i##_LOOP = 0;
-
-// The main loop body is essentially:
-//
-//    BUILD_ROTATION      // construct the rotation matrix qxy => qabc
-//    for each q
-//        FETCH_Q         // set qx,qy from the q input vector
-//        APPLY_ROTATION  // convert qx,qy to qa,qb,qc
-//        CALL_KERNEL     // scattering = Iqxy(qa, qb, qc, p1, p2, ...)
-//
 // Depending on the shape type (radial, axial, triaxial), the variables
-// and calling parameters will be slightly different.  These macros
-// capture the differences in one spot so the rest of the code is easier
-// to read.
+// and calling parameters in the loop body will be slightly different.
+// Macros capture the differences in one spot so the rest of the code
+// is easier to read. The code below both declares variables for the
+// inner loop and defines the macros that use them.
 
 #if defined(CALL_IQ)
   // unoriented 1D
@@ -485,6 +464,7 @@ After expansion, the loop struction will look like the following:
   // theta, phi, dtheta, dphi are defined below in projection to avoid repeated code.
   // psi and dpsi are only for IQ_ABC, so they are processed here.
   const double psi = values[details->theta_par+4];
+  local_values.table.psi = 0.;
   #define BUILD_ROTATION() qabc_rotation(&rotation, theta, phi, psi, dtheta, dphi, local_values.table.psi)
   #define APPLY_ROTATION() qabc_apply(rotation, qx, qy, &qa, &qb, &qc)
   #define CALL_KERNEL() CALL_IQ_ABC(qa, qb, qc, local_values.table)
@@ -500,6 +480,9 @@ After expansion, the loop struction will look like the following:
   // Grab the "view" angles (theta, phi, psi) from the initial parameter table.
   const double theta = values[details->theta_par+2];
   const double phi = values[details->theta_par+3];
+  // Make sure jitter angle defaults to zero if there is no jitter distribution
+  local_values.table.theta = 0.;
+  local_values.table.phi = 0.;
   // The "jitter" angles (dtheta, dphi, dpsi) are stored with the
   // dispersity values and copied to the local parameter table as
   // we go through the mesh.
@@ -522,6 +505,32 @@ After expansion, the loop struction will look like the following:
   #endif
 #endif // !spherosymmetric projection
 
+// ** define looping macros **
+
+// Define looping variables
+#define PD_INIT(_LOOP) \
+  const int n##_LOOP = details->pd_length[_LOOP]; \
+  const int p##_LOOP = details->pd_par[_LOOP]; \
+  global const double *v##_LOOP = pd_value + details->pd_offset[_LOOP]; \
+  global const double *w##_LOOP = pd_weight + details->pd_offset[_LOOP]; \
+  int i##_LOOP = (pd_start/details->pd_stride[_LOOP])%n##_LOOP;
+
+// Jump into the middle of the dispersity loop
+#define PD_OPEN(_LOOP,_OUTER) \
+  while (i##_LOOP < n##_LOOP) { \
+    local_values.vector[p##_LOOP] = v##_LOOP[i##_LOOP]; \
+    const double weight##_LOOP = w##_LOOP[i##_LOOP] * weight##_OUTER;
+
+// create the variable "weight#=1.0" where # is the outermost level+1 (=MAX_PD).
+#define _PD_OUTERMOST_WEIGHT(_n) const double weight##_n = 1.0;
+#define PD_OUTERMOST_WEIGHT(_n) _PD_OUTERMOST_WEIGHT(_n)
+
+// Close out the loop
+#define PD_CLOSE(_LOOP) \
+    if (step >= pd_stop) break; \
+    ++i##_LOOP; \
+  } \
+  i##_LOOP = 0;
 
 // ====== construct the loops =======
 
@@ -535,6 +544,8 @@ After expansion, the loop struction will look like the following:
 // It will be incremented each time a new point in the mesh is accumulated,
 // and used to test whether we have reached pd_stop.
 int step = pd_start;
+
+// *** define loops for each of 0, 1, 2, ..., modelinfo.MAX_PD-1 ***
 
 // define looping variables
 #if MAX_PD>4
@@ -570,7 +581,6 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
 #if MAX_PD>0
   PD_OPEN(0,1)
 #endif
-
 
 //if (q_index==0) {printf("step:%d of %d, pars:",step,pd_stop); for (int i=0; i < NUM_PARS; i++) printf("p%d=%g ",i, local_values.vector[i]); printf("\n");}
 
@@ -671,7 +681,7 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
 //printf("res: %g/%g\n", result[0], pd_norm);
 #endif // !USE_OPENCL
 
-// clear the macros in preparation for the next kernel
+// ** clear the macros in preparation for the next kernel **
 #undef PD_INIT
 #undef PD_OPEN
 #undef PD_CLOSE
