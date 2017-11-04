@@ -787,7 +787,7 @@ def make_data(opts):
         q = np.linspace(-qmax, qmax, nq)  # type: np.ndarray
         data = empty_data2D(q, resolution=res)
         data.accuracy = opts['accuracy']
-        set_beam_stop(data, 0.0004)
+        set_beam_stop(data, qmin)
         index = ~data.mask
     else:
         if opts['view'] == 'log' and not opts['zero']:
@@ -1353,7 +1353,7 @@ def parse_pars(opts, maxdim=np.inf):
         limit_dimensions(model_info, pars, maxdim)
         if model_info != model_info2:
             pars2 = randomize_pars(model_info2, pars2)
-            limit_dimensions(model_info, pars2, maxdim)
+            limit_dimensions(model_info2, pars2, maxdim)
             # Share values for parameters with the same name
             for k, v in pars.items():
                 if k in pars2:
