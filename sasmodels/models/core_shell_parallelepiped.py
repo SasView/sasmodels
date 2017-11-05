@@ -108,7 +108,7 @@ References
 .. [#] P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
     Equations (1), (13-14). (in German)
 .. [#] D Singh (2009). *Small angle scattering studies of self assembly in
-   lipid mixtures*, John's Hopkins University Thesis (2009) 223-225. `Available
+   lipid mixtures*, Johns Hopkins University Thesis (2009) 223-225. `Available
    from Proquest <http://search.proquest.com/docview/304915826?accountid
    =26379>`_
 

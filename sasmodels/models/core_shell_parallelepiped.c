@@ -1,11 +1,29 @@
+// Set OVERLAPPING to 1 in order to fill in the edges of the box, with
+// c endcaps and b overlapping a.  With the proper choice of parameters,
+// (setting rim slds to sld, core sld to solvent, rim thickness to thickness
+// and subtracting 2*thickness from length, this should match the hollow
+// rectangular prism.)  Set it to 0 for the documented behaviour.
+#define OVERLAPPING 0
 static double
 form_volume(double length_a, double length_b, double length_c,
     double thick_rim_a, double thick_rim_b, double thick_rim_c)
 {
-    return length_a * length_b * length_c +
-           2.0 * thick_rim_a * length_b * length_c +
-           2.0 * thick_rim_b * length_a * length_c +
-           2.0 * thick_rim_c * length_a * length_b;
+    return
+#if OVERLAPPING
+        // Hollow rectangular prism only includes the volume of the shell
+        // so uncomment the next line when comparing.  Solid rectangular
+        // prism, or parallelepiped want filled cores, so comment when
+        // comparing.
+        //-length_a * length_b * length_c +
+        (length_a + 2.0*thick_rim_a) *
+        (length_b + 2.0*thick_rim_b) *
+        (length_c + 2.0*thick_rim_c);
+#else
+        length_a * length_b * length_c +
+        2.0 * thick_rim_a * length_b * length_c +
+        2.0 * length_a * thick_rim_b * length_c +
+        2.0 * length_a * length_b * thick_rim_c;
+#endif
 }
 
 static double
@@ -37,51 +55,27 @@ Iq(double q,
     double tC_over_b = c_over_b + 2.0*thick_rim_c/length_b;
 
     double Vin = length_a * length_b * length_c;
-    double VtA = (2.0 * thick_rim_a * length_b * length_c);
-    double VtB = (2.0 * length_a * thick_rim_b * length_c);
-    double VtC = (2.0 * length_a * length_b * thick_rim_c);
+#if OVERLAPPING
+    const double capA_area = length_b*length_c;
+    const double capB_area = (length_a+2.*thick_rim_a)*length_c;
+    const double capC_area = (length_a+2.*thick_rim_a)*(length_b+2.*thick_rim_b);
+#else
+    const double capA_area = length_b*length_c;
+    const double capB_area = length_a*length_c;
+    const double capC_area = length_a*length_b;
+#endif
+    const double Va = length_a * capA_area;
+    const double Vb = length_b * capB_area;
+    const double Vc = length_c * capC_area;
+    const double Vat = Va + 2.0 * thick_rim_a * capA_area;
+    const double Vbt = Vb + 2.0 * thick_rim_b * capB_area;
+    const double Vct = Vc + 2.0 * thick_rim_c * capC_area;
 
     // Scale factors (note that drC is not used later)
     const double dr0 = (core_sld-solvent_sld);
     const double drA = (arim_sld-solvent_sld);
     const double drB = (brim_sld-solvent_sld);
     const double drC = (crim_sld-solvent_sld);
-
-    // Precompute scale factors for combining cross terms from the shape
-    const double dr0_Vin = dr0*Vin;
-    const double drA_VtA = drA*VtA;
-    const double drB_VtB = drB*VtB;
-    const double drC_VtC = drC*VtC;
-    const double drV_delta = dr0_Vin - drA_VtA - drB_VtB - drC_VtC;
-
-    /*  *************** algorithm description ******************
-
-    // Rewrite f as x*siC + y*siCt to move the siC/siCt calculation out
-    // of the inner loop.  That is:
-
-    f = (di-da-db-dc) sa sb sc + da sa' sb sc + db sa sb' sc + dc sa sb sc'
-      =  [ (di-da-db-dc) sa sb + da sa' sb + db sa sb' ] sc  + [dc sa sb] sc'
-      = x sc + y sc'
-
-    // where:
-    di = delta rho_core V_core
-    da = delta rho_rimA V_rimA
-    db = delta rho_rimB V_rimB
-    dc = delta rho_rimC V_rimC
-    sa = j_0 (q_a a/2)    // siA the code
-    sb = j_0 (q_b b/2)
-    sc = j_0 (q_c c/2)
-    sa' = j_0(q_a a_rim/2)  // siAt the code
-    sb' = j_0(q_b b_rim/2)
-    sc' = j_0(q_c c_rim/2)
-
-    // qa, qb, and qc are generated using polar coordinates, with the
-    // outer loop integrating over [0,1] after the u-substitution
-    //    sigma = cos(theta), sqrt(1-sigma^2) = sin(theta)
-    // and inner loop integrating over [0, pi/2] as
-    //    uu = phi
-
-    ************************************************************  */
 
     // outer integral (with gauss points), integration limits = 0, 1
     double outer_sum = 0; //initialize integral
@@ -102,10 +96,19 @@ Iq(double q,
             const double siAt = sas_sinx_x(mu_proj * sin_uu * tA_over_b);
             const double siBt = sas_sinx_x(mu_proj * cos_uu * tB_over_b);
 
-            const double x = drV_delta*siA*siB + drA_VtA*siB*siAt + drB_VtB*siA*siBt;
-            const double form = x*siC + drC_VtC*siA*siB*siCt;
+#if OVERLAPPING
+            const double f = dr0*Vin*siA*siB*siC
+                + drA*(Vat*siAt-Va*siA)*siB*siC
+                + drB*siAt*(Vbt*siBt-Vb*siB)*siC
+                + drC*siAt*siBt*(Vct*siCt-Vc*siC);
+#else
+            const double f = dr0*Vin*siA*siB*siC
+                + drA*(Vat*siAt-Va*siA)*siB*siC
+                + drB*siA*(Vbt*siBt-Vb*siB)*siC
+                + drC*siA*siB*(Vct*siCt-Vc*siC);
+#endif
 
-            inner_sum += Gauss76Wt[j] * form * form;
+            inner_sum += Gauss76Wt[j] * f * f;
         }
         inner_sum *= 0.5;
         // now sum up the outer integral
@@ -138,30 +141,45 @@ Iqxy(double qa, double qb, double qc,
     const double drC = crim_sld-solvent_sld;
 
     double Vin = length_a * length_b * length_c;
-    double VtA = 2.0 * thick_rim_a * length_b * length_c;
-    double VtB = 2.0 * length_a * thick_rim_b * length_c;
-    double VtC = 2.0 * length_a * length_b * thick_rim_c;
+#if OVERLAPPING
+    const double capA_area = length_b*length_c;
+    const double capB_area = (length_a+2.*thick_rim_a)*length_c;
+    const double capC_area = (length_a+2.*thick_rim_a)*(length_b+2.*thick_rim_b);
+#else
+    const double capA_area = length_b*length_c;
+    const double capB_area = length_a*length_c;
+    const double capC_area = length_a*length_b;
+#endif
+    const double Va = length_a * capA_area;
+    const double Vb = length_b * capB_area;
+    const double Vc = length_c * capC_area;
+    const double Vat = Va + 2.0 * thick_rim_a * capA_area;
+    const double Vbt = Vb + 2.0 * thick_rim_b * capB_area;
+    const double Vct = Vc + 2.0 * thick_rim_c * capC_area;
 
     // The definitions of ta, tb, tc are not the same as in the 1D case because there is no
     // the scaling by B.
-    double tA = length_a + 2.0*thick_rim_a;
-    double tB = length_b + 2.0*thick_rim_b;
-    double tC = length_c + 2.0*thick_rim_c;
-    //handle arg=0 separately, as sin(t)/t -> 1 as t->0
-    double siA = sas_sinx_x(0.5*length_a*qa);
-    double siB = sas_sinx_x(0.5*length_b*qb);
-    double siC = sas_sinx_x(0.5*length_c*qc);
-    double siAt = sas_sinx_x(0.5*tA*qa);
-    double siBt = sas_sinx_x(0.5*tB*qb);
-    double siCt = sas_sinx_x(0.5*tC*qc);
+    const double tA = length_a + 2.0*thick_rim_a;
+    const double tB = length_b + 2.0*thick_rim_b;
+    const double tC = length_c + 2.0*thick_rim_c;
+    const double siA = sas_sinx_x(0.5*length_a*qa);
+    const double siB = sas_sinx_x(0.5*length_b*qb);
+    const double siC = sas_sinx_x(0.5*length_c*qc);
+    const double siAt = sas_sinx_x(0.5*tA*qa);
+    const double siBt = sas_sinx_x(0.5*tB*qb);
+    const double siCt = sas_sinx_x(0.5*tC*qc);
 
-
-    // f uses Vin, V1, V2, and V3 and it seems to have more sense than the value computed
-    // in the 1D code, but should be checked!
-    double f = ( dr0*Vin*siA*siB*siC
-               + drA*VtA*(siAt-siA)*siB*siC
-               + drB*VtB*siA*(siBt-siB)*siC
-               + drC*VtC*siA*siB*(siCt-siC));
+#if OVERLAPPING
+    const double f = dr0*Vin*siA*siB*siC
+        + drA*(Vat*siAt-Va*siA)*siB*siC
+        + drB*siAt*(Vbt*siBt-Vb*siB)*siC
+        + drC*siAt*siBt*(Vct*siCt-Vc*siC);
+#else
+    const double f = dr0*Vin*siA*siB*siC
+        + drA*(Vat*siAt-Va*siA)*siB*siC
+        + drB*siA*(Vbt*siBt-Vb*siB)*siC
+        + drC*siA*siB*(Vct*siCt-Vc*siC);
+#endif
 
     return 1.0e-4 * f * f;
 }
