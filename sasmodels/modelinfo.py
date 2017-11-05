@@ -29,7 +29,8 @@ else:
     TestValue = Union[float, List[float]]
     TestCondition = Tuple[ParameterSetUser, TestInput, TestValue]
 
-MAX_PD = 4 #: Maximum number of simultaneously polydisperse parameters
+# If MAX_PD changes, need to change the loop macros in kernel_iq.c
+MAX_PD = 5 #: Maximum number of simultaneously polydisperse parameters
 
 # assumptions about common parameters exist throughout the code, such as:
 # (1) kernel functions Iq, Iqxy, form_volume, ... don't see them

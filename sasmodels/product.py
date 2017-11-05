@@ -100,6 +100,18 @@ def make_product_info(p_info, s_info):
     # Remember the component info blocks so we can build the model
     model_info.composition = ('product', [p_info, s_info])
     model_info.control = p_info.control
+    model_info.hidden = p_info.hidden
+    if getattr(p_info, 'profile', None) is not None:
+        profile_pars = set(p.id for p in p_info.parameters.kernel_parameters)
+        def profile(**kwargs):
+            # extract the profile args
+            kwargs = dict((k, v) for k, v in kwargs.items() if k in profile_pars)
+            return p_info.profile(**kwargs)
+    else:
+        profile = None
+    model_info.profile = profile
+    model_info.profile_axes = p_info.profile_axes
+
     # TODO: delegate random to p_info, s_info
     #model_info.random = lambda: {}
 
@@ -266,7 +278,10 @@ def calc_er_vr(model_info, call_details, values):
     value = values[nvalues:nvalues + call_details.num_weights]
     weight = values[nvalues + call_details.num_weights: nvalues + 2*call_details.num_weights]
     npars = model_info.parameters.npars
-    pairs = [(value[offset:offset+length], weight[offset:offset+length])
+    # Note: changed from pairs ([v], [w]) to triples (p, [v], [w]), but the
+    # dispersion mesh code doesn't actually care about the nominal parameter
+    # value, p, so set it to None.
+    pairs = [(None, value[offset:offset+length], weight[offset:offset+length])
              for p, offset, length
              in zip(model_info.parameters.call_parameters[2:2+npars],
                     call_details.offset,
