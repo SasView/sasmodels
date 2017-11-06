@@ -61,21 +61,36 @@ circumstances when distributions passed through 90 degrees. The distributions
 in particle coordinates are more robust, but should still be approached with
 care for large ranges of angle.
 
-Note that the form factors for asymmetric particles are also performing
-numerical integrations over one or more variables, so care should be taken,
-especially with very large particles or more extreme aspect ratios. Users can
-experiment with the values of *Npts* and *Nsigs*, the number of steps used in the
-integration and the range spanned in number of standard deviations. The
-standard deviation is entered in units of degrees. For a rectangular
-(uniform) distribution the full width should be $\pm \sqrt(3)$ ~ 1.73 standard
-deviations (this may be changed soon).
+.. note::
+    Note that the form factors for oriented particles are also performing
+    numerical integrations over one or more variables, so care should be taken,
+    especially with very large particles or more extreme aspect ratios. In such 
+    cases results may not be accurate, particularly at very high Q, unless the model
+    has been specifically coded to use limiting forms of the scattering equations.
+    
+    For best numerical results keep the $\theta$ distribution narrower than the $\phi$ 
+    distribution. Thus for asymmetric particles, such as elliptical_cylinder, you may 
+    need to reorder the sizes of the three axes to acheive the desired result. 
+    This is due to the issues of mapping a rectangular distribution onto the 
+    surface of a sphere.
 
-Where appropriate, for best numerical results, keep $a < b < c$ and the
-$\theta$ distribution narrower than the $\phi$ distribution.
+Users can experiment with the values of *Npts* and *Nsigs*, the number of steps 
+used in the integration and the range spanned in number of standard deviations. 
+The standard deviation is entered in units of degrees. For a "rectangular" 
+distribution the full width should be $\pm \sqrt(3)$ ~ 1.73 standard deviations. 
+The new "uniform" distribution avoids this by letting you directly specify the 
+half width.
+
+The angular distributions will be truncated outside of the range -180 to +180 
+degrees, so beware of using saying a broad Gaussian distribution with large value
+of *Nsigs*, as the array of *Npts* may be truncated to many fewer points than would 
+give a good integration,as well as becoming rather meaningless. (At some point 
+in the future the actual polydispersity arrays may be made available to the user 
+for inspection.)
 
 Some more detailed technical notes are provided in the developer section of
 this manual :ref:`orientation_developer` .
 
 *Document History*
 
-| 2017-10-27 Richard Heenan
+| 2017-11-06 Richard Heenan
