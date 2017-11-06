@@ -85,13 +85,39 @@ CONTRAST = SLD - SLD_SOLVENT
 def make_parallelepiped(a, b, c, env=NPenv):
     a, b, c = env.mpf(a), env.mpf(b), env.mpf(c)
     def Fq(qa, qb, qc):
-        siA = env.sas_sinx_x(0.5*a*qa/2)
-        siB = env.sas_sinx_x(0.5*b*qb/2)
-        siC = env.sas_sinx_x(0.5*c*qc/2)
+        siA = env.sas_sinx_x(a*qa/2)
+        siB = env.sas_sinx_x(b*qb/2)
+        siC = env.sas_sinx_x(c*qc/2)
         return siA * siB * siC
     Fq.__doc__ = "parallelepiped a=%g, b=%g c=%g"%(a, b, c)
     volume = a*b*c
     norm = CONTRAST**2*volume/10000
+    return norm, Fq
+
+def make_core_shell_parallelepiped(a, b, c, da, db, dc, slda, sldb, sldc, env=NPenv):
+    a, b, c = env.mpf(a), env.mpf(b), env.mpf(c)
+    da, db, dc = env.mpf(da), env.mpf(db), env.mpf(dc)
+    slda, sldb, sldc = env.mpf(slda), env.mpf(sldb), env.mpf(sldc)
+    drV0 = CONTRAST*a*b*c
+    dra, drb, drc = slda-SLD_SOLVENT, sldb-SLD_SOLVENT, sldc-SLD_SOLVENT
+    Aa, Ab, Ac = b*c, a*c, a*b
+    Ta, Tb, Tc = a + 2*da, b + 2*db, c + 2*dc
+    drVa, drVb, drVc = dra*a*Aa, drb*b*Ab, drc*c*Ac
+    drVTa, drVTb, drVTc = dra*Ta*Aa, drb*Tb*Ab, drc*Tc*Ac
+    def Fq(qa, qb, qc):
+        siA = env.sas_sinx_x(a*qa/2)
+        siB = env.sas_sinx_x(b*qb/2)
+        siC = env.sas_sinx_x(c*qc/2)
+        siAt = env.sas_sinx_x(Ta*qa/2)
+        siBt = env.sas_sinx_x(Tb*qb/2)
+        siCt = env.sas_sinx_x(Tc*qc/2)
+        return (drV0*siA*siB*siC
+            + (drVTa*siAt-drVa*siA)*siB*siC
+            + siA*(drVTb*siBt-drVb*siB)*siC
+            + siA*siB*(drVTc*siCt-drVc*siC))
+    Fq.__doc__ = "core-shell parallelepiped a=%g, b=%g c=%g"%(a, b, c)
+    volume = a*b*c + 2*da*Aa + 2*db*Ab + 2*dc*Ac
+    norm = 1/(volume*10000)
     return norm, Fq
 
 def make_triaxial_ellipsoid(a, b, c, env=NPenv):
@@ -183,6 +209,22 @@ elif shape == 'parallelepiped':
     A, B, C = 445, 140, 47  # integer for the sake of mpf
     NORM, KERNEL = make_parallelepiped(A, B, C)
     NORM_MP, KERNEL_MP = make_parallelepiped(A, B, C, env=MPenv)
+elif shape == 'core_shell_parallelepiped':
+    #A, B, C = 4450, 14000, 47
+    #A, B, C = 445, 140, 47  # integer for the sake of mpf
+    A, B, C = 6800, 114, 1380
+    DA, DB, DC = 2300, 21, 58
+    SLDA, SLDB, SLDC = "5", "-0.3", "11.5"
+    if 1: # C shortest
+        B, C = C, B
+        DB, DC = DC, DB
+        SLDB, SLDC = SLDC, SLDB
+    elif 0: # C longest
+        A, C = C, A
+        DA, DC = DC, DA
+        SLDA, SLDC = SLDC, SLDA
+    NORM, KERNEL = make_core_shell_parallelepiped(A, B, C, DA, DB, DC, SLDA, SLDB, SLDC)
+    NORM_MP, KERNEL_MP = make_core_shell_parallelepiped(A, B, C, DA, DB, DC, SLDA, SLDB, SLDC, env=MPenv)
 elif shape == 'paracrystal':
     LATTICE = 'bcc'
     #LATTICE = 'fcc'
@@ -341,11 +383,14 @@ def main(Qstr):
     print("gauss-76", *gauss_quad_2d(Q, n=76))
     print("gauss-150", *gauss_quad_2d(Q, n=150))
     print("gauss-500", *gauss_quad_2d(Q, n=500))
+    print("gauss-1025", *gauss_quad_2d(Q, n=1025))
+    print("gauss-2049", *gauss_quad_2d(Q, n=2049))
     #gridded_2d(Q, n=2**8+1)
     gridded_2d(Q, n=2**10+1)
-    #gridded_2d(Q, n=2**13+1)
+    #gridded_2d(Q, n=2**12+1)
     #gridded_2d(Q, n=2**15+1)
-    if shape != 'paracrystal':  # adaptive forms are too slow!
+    if shape not in ('paracrystal', 'core_shell_parallelepiped'):
+        # adaptive forms on models for which the calculations are fast enough
         print("dblquad", *scipy_dblquad_2d(Q))
         print("semi-romberg-100", *semi_romberg_2d(Q, n=100))
         print("romberg", *scipy_romberg_2d(Q))
