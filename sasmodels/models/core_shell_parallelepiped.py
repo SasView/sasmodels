@@ -4,13 +4,8 @@ Definition
 
 Calculates the form factor for a rectangular solid with a core-shell structure.
 The thickness and the scattering length density of the shell or
-"rim" can be different on each (pair) of faces. However at this time
-the 1D calculation does **NOT** actually calculate a c face rim despite the presence of
-the parameter. Some other aspects of the 1D calculation may be wrong.
+"rim" can be different on each (pair) of faces.
 
-.. note::
-   This model was originally ported from NIST IGOR macros. However, it is not
-   yet fully understood by the SasView developers and is currently under review.
 
 The form factor is normalized by the particle volume $V$ such that
 
@@ -40,28 +35,35 @@ The volume of the solid is
 
     V = ABC + 2t_ABC + 2t_BAC + 2t_CAB
 
-**meaning that there are "gaps" at the corners of the solid.**  Again note that
-$t_C = 0$ currently.
+**meaning that there are "gaps" at the corners of the solid.**
 
 The intensity calculated follows the :ref:`parallelepiped` model, with the
 core-shell intensity being calculated as the square of the sum of the
-amplitudes of the core and shell, in the same manner as a core-shell model.
+amplitudes of the core and the slabs on the edges.
+
+the scattering amplitude is computed for a particular orientation of the core-shell
+parallelepiped with respect to the scattering vector and then averaged over all
+possible orientations, where $\alpha$ is the angle between the $z$ axis and the longest axis $C$
+of the parallelepiped, $\beta$ is the angle between projection of the particle in the $xy$ detector plane and the $y$ axis.
+
+.. math::
+    \begin{align*}
+    F(Q)&=A B C (\rho_\text{core}-\rho_\text{solvent})  S(A \sin\alpha \sin\beta)S(B \sin\alpha \cos\beta)S(C \cos\alpha) \\
+    &+ 2t_A B C (\rho_\text{A}-\rho_\text{solvent})  \left[S((A+t_A) \sin\alpha \sin\beta)-S(A \sin\alpha \sin\beta)\right] S(B \sin\alpha \cos\beta) S(C \cos\alpha)\\
+    &+ 2 A t_B C (\rho_\text{B}-\rho_\text{solvent})  S(A \sin\alpha \sin\beta) \left[S((B+t_B) \sin\alpha \cos\beta)-S(B \sin\alpha \cos\beta)\right] S(C \cos\alpha)\\
+    &+ 2 A B t_C (\rho_\text{C}-\rho_\text{solvent}) S(A \sin\alpha \sin\beta) S(B \sin\alpha \cos\beta) \left[S((C+t_C) \cos\alpha)-S(C \cos\alpha)\right]
+    \end{align*}
+
+with
 
 .. math::
 
-    F_{a}(Q,\alpha,\beta)=
-    \left[\frac{\sin(\tfrac{1}{2}Q(L_A+2t_A)\sin\alpha \sin\beta)}{\tfrac{1}{2}Q(L_A+2t_A)\sin\alpha\sin\beta}
-    - \frac{\sin(\tfrac{1}{2}QL_A\sin\alpha \sin\beta)}{\tfrac{1}{2}QL_A\sin\alpha \sin\beta} \right]
-    \left[\frac{\sin(\tfrac{1}{2}QL_B\sin\alpha \sin\beta)}{\tfrac{1}{2}QL_B\sin\alpha \sin\beta} \right]
-    \left[\frac{\sin(\tfrac{1}{2}QL_C\sin\alpha \sin\beta)}{\tfrac{1}{2}QL_C\sin\alpha \sin\beta} \right]
+    S(x) = \frac{\sin \tfrac{1}{2}Q x}{\tfrac{1}{2}Q x}
 
-.. note::
-
-    Why does t_B not appear in the above equation?
-    For the calculation of the form factor to be valid, the sides of the solid
-    MUST (perhaps not any more?) be chosen such that** $A < B < C$.
-    If this inequality is not satisfied, the model will not report an error,
-    but the calculation will not be correct and thus the result wrong.
+where $\rho_\text{core}$, $\rho_\text{A}$, $\rho_\text{B}$ and $\rho_\text{C}$ are
+the scattering length of the parallelepiped core, and the rectangular slabs of
+thickness $t_A$, $t_B$ and $t_C$, respectively.
+$\rho_\text{solvent}$ is the scattering length of the solvent.
 
 FITTING NOTES
 If the scale is set equal to the particle volume fraction, $\phi$, the returned
@@ -71,10 +73,6 @@ calculation.**
 
 There are many parameters in this model. Hold as many fixed as possible with
 known values, or you will certainly end up at a solution that is unphysical.
-
-Constraints must be applied during fitting to ensure that the inequality
-$A < B < C$ is not violated. The calculation will not report an error,
-but the results will not be correct.
 
 The returned value is in units of |cm^-1|, on absolute scale.
 
@@ -90,11 +88,15 @@ of the calculation and angular dispersions see :ref:`orientation` .
 The angle $\Psi$ is the rotational angle around the *long_c* axis. For example,
 $\Psi = 0$ when the *short_b* axis is parallel to the *x*-axis of the detector.
 
+For 2d, constraints must be applied during fitting to ensure that the inequality
+$A < B < C$ is not violated, and hence the correct definition of angles is preserved. The calculation will not report an error,
+but the results may be not correct.
+
 .. figure:: img/parallelepiped_angle_definition.png
 
     Definition of the angles for oriented core-shell parallelepipeds.
     Note that rotation $\theta$, initially in the $xz$ plane, is carried out first, then
-    rotation $\phi$ about the $z$ axis, finally rotation $\Psi$ is now around the axis of the cylinder.
+    rotation $\phi$ about the $z$ axis, finally rotation $\Psi$ is now around the axis of the parallelepiped.
     The neutron or X-ray beam is along the $z$ axis.
 
 .. figure:: img/parallelepiped_angle_projection.png

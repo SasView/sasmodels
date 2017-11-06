@@ -4,7 +4,7 @@ r"""
 
 This model provides the form factor, $P(q)$, for a hollow rectangular
 parallelepiped with a wall of thickness $\Delta$.
-It computes only the 1D scattering, not the 2D.
+
 
 Definition
 ----------
@@ -65,7 +65,27 @@ $\rho_\text{solvent}$ is the scattering length of the solvent,
 and (if the data are in absolute units) *scale* represents the volume fraction
 (which is unitless).
 
-**The 2D scattering intensity is not computed by this model.**
+For 2d data the orientation of the particle is required, described using
+angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further details
+of the calculation and angular dispersions see :ref:`orientation` .
+The angle $\Psi$ is the rotational angle around the long *C* axis. For example,
+$\Psi = 0$ when the *B* axis is parallel to the *x*-axis of the detector.
+
+For 2d, constraints must be applied during fitting to ensure that the inequality
+$A < B < C$ is not violated, and hence the correct definition of angles is preserved. The calculation will not report an error,
+but the results may be not correct.
+
+.. figure:: img/parallelepiped_angle_definition.png
+
+    Definition of the angles for oriented hollow rectangular prism.
+    Note that rotation $\theta$, initially in the $xz$ plane, is carried out first, then
+    rotation $\phi$ about the $z$ axis, finally rotation $\Psi$ is now around the axis of the prism.
+    The neutron or X-ray beam is along the $z$ axis.
+
+.. figure:: img/parallelepiped_angle_projection.png
+
+    Examples of the angles for oriented hollow rectangular prisms against the
+    detector plane.
 
 
 Validation
@@ -180,4 +200,3 @@ demo = dict(scale=1, background=0,
 tests = [[{}, 0.2, 0.76687283098],
          [{}, [0.2], [0.76687283098]],
         ]
-
