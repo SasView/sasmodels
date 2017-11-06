@@ -268,6 +268,24 @@ DOC_HEADER = """.. _%(id)s:
 """
 
 
+def set_integration_size(info, n):
+    # type: (ModelInfo, int) -> None
+    """
+    Update the model definition, replacing the gaussian integration with
+    a gaussian integration of a different size.
+
+    Note: this really ought to be a method in modelinfo, but that leads to
+    import loops.
+    """
+    if (info.source and any(lib.startswith('lib/gauss') for lib in info.source)):
+        import os.path
+        from .gengauss import gengauss
+        path = os.path.join(MODEL_PATH, "lib", "gauss%d.c"%n)
+        if not os.path.exists(path):
+            gengauss(n, path)
+        info.source = ["lib/gauss%d.c"%n if lib.startswith('lib/gauss')
+                        else lib for lib in info.source]
+
 def format_units(units):
     # type: (str) -> str
     """
