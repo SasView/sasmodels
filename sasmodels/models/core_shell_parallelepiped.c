@@ -79,16 +79,16 @@ Iq(double q,
 
     // outer integral (with gauss points), integration limits = 0, 1
     double outer_sum = 0; //initialize integral
-    for( int i=0; i<76; i++) {
-        double sigma = 0.5 * ( Gauss76Z[i] + 1.0 );
+    for( int i=0; i<GAUSS_N; i++) {
+        double sigma = 0.5 * ( GAUSS_Z[i] + 1.0 );
         double mu_proj = mu * sqrt(1.0-sigma*sigma);
 
         // inner integral (with gauss points), integration limits = 0, pi/2
         const double siC = sas_sinx_x(mu * sigma * c_over_b);
         const double siCt = sas_sinx_x(mu * sigma * tC_over_b);
         double inner_sum = 0.0;
-        for(int j=0; j<76; j++) {
-            const double uu = 0.5 * ( Gauss76Z[j] + 1.0 );
+        for(int j=0; j<GAUSS_N; j++) {
+            const double uu = 0.5 * ( GAUSS_Z[j] + 1.0 );
             double sin_uu, cos_uu;
             SINCOS(M_PI_2*uu, sin_uu, cos_uu);
             const double siA = sas_sinx_x(mu_proj * sin_uu * a_over_b);
@@ -108,11 +108,11 @@ Iq(double q,
                 + drC*siA*siB*(Vct*siCt-Vc*siC);
 #endif
 
-            inner_sum += Gauss76Wt[j] * f * f;
+            inner_sum += GAUSS_W[j] * f * f;
         }
         inner_sum *= 0.5;
         // now sum up the outer integral
-        outer_sum += Gauss76Wt[i] * inner_sum;
+        outer_sum += GAUSS_W[i] * inner_sum;
     }
     outer_sum *= 0.5;
 

@@ -28,13 +28,13 @@ void _integrate_bessel(
     double sumS = 0.0;		// initialize integral
     double sumC = 0.0;		// initialize integral
     double r;
-    for (int i=0; i < 76; i++) {
-        r = Gauss76Z[i]*zm + zb;
+    for (int i=0; i < GAUSS_N; i++) {
+        r = GAUSS_Z[i]*zm + zb;
 
         const double qrs = r*q_sin_psi;
         const double qrrc = r*r*q_cos_psi;
 
-        double y = Gauss76Wt[i] * r * sas_JN(n, beta*qrrc) * sas_JN(2*n, qrs);
+        double y = GAUSS_W[i] * r * sas_JN(n, beta*qrrc) * sas_JN(2*n, qrs);
         double S, C;
         SINCOS(alpha*qrrc, S, C);
         sumS += y*S;
@@ -85,14 +85,14 @@ double _integrate_psi(
     const double zb = M_PI_4;
 
     double sum = 0.0;
-    for (int i = 0; i < 76; i++) {
-        double psi = Gauss76Z[i]*zm + zb;
+    for (int i = 0; i < GAUSS_N; i++) {
+        double psi = GAUSS_Z[i]*zm + zb;
         double sin_psi, cos_psi;
         SINCOS(psi, sin_psi, cos_psi);
         double bessel_term = _sum_bessel_orders(radius, alpha, beta, q*sin_psi, q*cos_psi);
         double sinc_term = square(sas_sinx_x(q * thickness * cos_psi / 2.0));
         double pringle_kernel = 4.0 * sin_psi * bessel_term * sinc_term;
-        sum += Gauss76Wt[i] * pringle_kernel;
+        sum += GAUSS_W[i] * pringle_kernel;
     }
 
     return zm * sum;

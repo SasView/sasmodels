@@ -27,16 +27,16 @@ double Iq(double q,
     const double v2b = M_PI_2;  //phi integration limits
 
     double outer_sum = 0.0;
-    for(int i=0; i<76; i++) {
-        const double theta = 0.5 * ( Gauss76Z[i]*(v1b-v1a) + v1a + v1b );
+    for(int i=0; i<GAUSS_N; i++) {
+        const double theta = 0.5 * ( GAUSS_Z[i]*(v1b-v1a) + v1a + v1b );
         double sin_theta, cos_theta;
         SINCOS(theta, sin_theta, cos_theta);
 
         const double termC = sas_sinx_x(q * c_half * cos_theta);
 
         double inner_sum = 0.0;
-        for(int j=0; j<76; j++) {
-            double phi = 0.5 * ( Gauss76Z[j]*(v2b-v2a) + v2a + v2b );
+        for(int j=0; j<GAUSS_N; j++) {
+            double phi = 0.5 * ( GAUSS_Z[j]*(v2b-v2a) + v2a + v2b );
             double sin_phi, cos_phi;
             SINCOS(phi, sin_phi, cos_phi);
 
@@ -44,10 +44,10 @@ double Iq(double q,
             const double termA = sas_sinx_x(q * a_half * sin_theta * sin_phi);
             const double termB = sas_sinx_x(q * b_half * sin_theta * cos_phi);
             const double AP = termA * termB * termC;
-            inner_sum += Gauss76Wt[j] * AP * AP;
+            inner_sum += GAUSS_W[j] * AP * AP;
         }
         inner_sum = 0.5 * (v2b-v2a) * inner_sum;
-        outer_sum += Gauss76Wt[i] * inner_sum * sin_theta;
+        outer_sum += GAUSS_W[i] * inner_sum * sin_theta;
     }
 
     double answer = 0.5*(v1b-v1a)*outer_sum;

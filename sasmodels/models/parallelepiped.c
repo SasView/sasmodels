@@ -22,25 +22,25 @@ Iq(double q,
     // outer integral (with gauss points), integration limits = 0, 1
     double outer_total = 0; //initialize integral
 
-    for( int i=0; i<76; i++) {
-        const double sigma = 0.5 * ( Gauss76Z[i] + 1.0 );
+    for( int i=0; i<GAUSS_N; i++) {
+        const double sigma = 0.5 * ( GAUSS_Z[i] + 1.0 );
         const double mu_proj = mu * sqrt(1.0-sigma*sigma);
 
         // inner integral (with gauss points), integration limits = 0, 1
         // corresponding to angles from 0 to pi/2.
         double inner_total = 0.0;
-        for(int j=0; j<76; j++) {
-            const double uu = 0.5 * ( Gauss76Z[j] + 1.0 );
+        for(int j=0; j<GAUSS_N; j++) {
+            const double uu = 0.5 * ( GAUSS_Z[j] + 1.0 );
             double sin_uu, cos_uu;
             SINCOS(M_PI_2*uu, sin_uu, cos_uu);
             const double si1 = sas_sinx_x(mu_proj * sin_uu * a_scaled);
             const double si2 = sas_sinx_x(mu_proj * cos_uu);
-            inner_total += Gauss76Wt[j] * square(si1 * si2);
+            inner_total += GAUSS_W[j] * square(si1 * si2);
         }
         inner_total *= 0.5;
 
         const double si = sas_sinx_x(mu * c_scaled * sigma);
-        outer_total += Gauss76Wt[i] * inner_total * si * si;
+        outer_total += GAUSS_W[i] * inner_total * si * si;
     }
     outer_total *= 0.5;
 

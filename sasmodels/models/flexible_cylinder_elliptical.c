@@ -16,13 +16,13 @@ elliptical_crosssection(double q, double a, double b)
 {
     double sum=0.0;
 
-    for(int i=0;i<N_POINTS_76;i++) {
-        const double zi = ( Gauss76Z[i] + 1.0 )*M_PI_4;
+    for(int i=0;i<GAUSS_N;i++) {
+        const double zi = ( GAUSS_Z[i] + 1.0 )*M_PI_4;
         double sn, cn;
         SINCOS(zi, sn, cn);
         const double arg = q*sqrt(a*a*sn*sn + b*b*cn*cn);
         const double yyy = sas_2J1x_x(arg);
-        sum += Gauss76Wt[i] * yyy * yyy;
+        sum += GAUSS_W[i] * yyy * yyy;
     }
     sum *= 0.5;
     return(sum);

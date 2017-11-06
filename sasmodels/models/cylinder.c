@@ -20,13 +20,13 @@ orient_avg_1D(double q, double radius, double length)
     const double zb = M_PI_4;
 
     double total = 0.0;
-    for (int i=0; i<76 ;i++) {
-        const double theta = Gauss76Z[i]*zm + zb;
+    for (int i=0; i<GAUSS_N ;i++) {
+        const double theta = GAUSS_Z[i]*zm + zb;
         double sin_theta, cos_theta; // slots to hold sincos function output
         // theta (theta,phi) the projection of the cylinder on the detector plane
         SINCOS(theta , sin_theta, cos_theta);
         const double form = fq(q*sin_theta, q*cos_theta, radius, length);
-        total += Gauss76Wt[i] * form * form * sin_theta;
+        total += GAUSS_W[i] * form * form * sin_theta;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     return total*zm;
