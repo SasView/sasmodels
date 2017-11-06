@@ -27,12 +27,12 @@ Iq(double q, double radius_minor, double r_ratio, double length,
         const double sin_val = sqrt(1.0 - cos_val*cos_val);
         //const double arg = radius_minor*sin_val;
         double inner_sum=0;
-        for(int j=0;j<20;j++) {
-            //20 gauss points for the inner integral
-            const double theta = ( Gauss20Z[j]*(vbj-vaj) + vaj + vbj )/2.0;
+        for(int j=0;j<76;j++) {
+            //20 gauss points for the inner integral, increase to 76, RKH 6Nov2017
+            const double theta = ( Gauss76Z[j]*(vbj-vaj) + vaj + vbj )/2.0;
             const double r = sin_val*sqrt(rA - rB*cos(theta));
             const double be = sas_2J1x_x(q*r);
-            inner_sum += Gauss20Wt[j] * be * be;
+            inner_sum += Gauss76Wt[j] * be * be;
         }
         //now calculate the value of the inner integral
         inner_sum *= 0.5*(vbj-vaj);
@@ -60,7 +60,7 @@ Iqxy(double qa, double qb, double qc,
 {
     // Compute:  r = sqrt((radius_major*cos_nu)^2 + (radius_minor*cos_mu)^2)
     // Given:    radius_major = r_ratio * radius_minor
-    const double qr = radius_minor*sqrt(square(r_ratio*qa) + square(qb));
+    const double qr = radius_minor*sqrt(square(r_ratio*qb) + square(qa));
     const double be = sas_2J1x_x(qr);
     const double si = sas_sinx_x(qc*0.5*length);
     const double Aq = be * si;
