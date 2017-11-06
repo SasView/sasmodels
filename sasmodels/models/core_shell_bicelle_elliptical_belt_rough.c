@@ -90,7 +90,7 @@ Iqxy(double qa, double qb, double qc,
           double rhosolv,
           double sigma)
 {
-    // THIS NEEDS TESTING
+    // integrated 2d seems to match 1d reasonably well, except perhaps at very high Q
     // Vol1,2,3 and dr1,2,3 are now for Vcore, Vcore+rim, Vcore+face,
     const double dr1 = -rhor - rhoh + rhoc + rhosolv;
     const double dr2 = rhor-rhosolv;
@@ -102,10 +102,10 @@ Iqxy(double qa, double qb, double qc,
     const double vol3 = M_PI*r_minor*r_major*2.0*(halfheight+thick_face);
 
     // Compute effective radius in rotated coordinates
-    const double qr_hat = sqrt(square(r_major*qa) + square(r_minor*qb));
+    const double qr_hat = sqrt(square(r_major*qb) + square(r_minor*qa));
     // does this need to be changed for the "missing corners" where there there is no "belt" ?
-    const double qrshell_hat = sqrt(square((r_major+thick_rim)*qa)
-                                   + square((r_minor+thick_rim)*qb));
+    const double qrshell_hat = sqrt(square((r_major+thick_rim)*qb)
+                                   + square((r_minor+thick_rim)*qa));
     const double be1 = sas_2J1x_x( qr_hat );
     const double be2 = sas_2J1x_x( qrshell_hat );
     const double si1 = sas_sinx_x( halfheight*qc );
