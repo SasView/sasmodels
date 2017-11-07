@@ -28,7 +28,7 @@ def main(angle=0, steps=76):
             steps = int(arg[8:])
         elif arg.startswith('-angle='):
             angle = float(arg[7:])
-        else:
+        elif arg != "-2d":
             argv.append(arg)
     opts = compare.parse_opts(argv)
 
