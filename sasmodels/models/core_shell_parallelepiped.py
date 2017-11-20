@@ -214,11 +214,11 @@ demo = dict(scale=1, background=0.0,
             psi_pd=10, psi_pd_n=1)
 
 # rkh 7/4/17 add random unit test for 2d, note make all params different, 2d values not tested against other codes or models
-qx, qy = 0.2 * cos(pi/6.), 0.2 * sin(pi/6.)
-tests = [[{}, 0.2, 0.533149288477],
-         [{}, [0.2], [0.533149288477]],
-         [{'theta':10.0, 'phi':20.0}, (qx, qy), 0.0853299803222],
-         [{'theta':10.0, 'phi':20.0}, [(qx, qy)], [0.0853299803222]],
-        ]
-del tests  # TODO: fix the tests
-del qx, qy  # not necessary to delete, but cleaner
+if 0:  # pak: model rewrite; need to update tests
+    qx, qy = 0.2 * cos(pi/6.), 0.2 * sin(pi/6.)
+    tests = [[{}, 0.2, 0.533149288477],
+            [{}, [0.2], [0.533149288477]],
+            [{'theta':10.0, 'phi':20.0}, (qx, qy), 0.0853299803222],
+            [{'theta':10.0, 'phi':20.0}, [(qx, qy)], [0.0853299803222]],
+            ]
+    del qx, qy  # not necessary to delete, but cleaner
