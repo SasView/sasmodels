@@ -218,4 +218,5 @@ tests = [[{}, 0.2, 0.533149288477],
          [{'theta':10.0, 'phi':20.0}, (qx, qy), 0.0853299803222],
          [{'theta':10.0, 'phi':20.0}, [(qx, qy)], [0.0853299803222]],
         ]
+del tests  # TODO: fix the tests
 del qx, qy  # not necessary to delete, but cleaner
