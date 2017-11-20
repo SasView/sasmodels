@@ -141,10 +141,20 @@ def _tag_parameter(par):
 class ProductModel(KernelModel):
     def __init__(self, model_info, P, S):
         # type: (ModelInfo, KernelModel, KernelModel) -> None
+        #: Combined info plock for the product model
         self.info = model_info
+        #: Form factor modelling individual particles.
         self.P = P
+        #: Structure factor modelling interaction between particles.
         self.S = S
-        self.dtype = P.dtype
+        #: Model precision. This is not really relevant, since it is the
+        #: individual P and S models that control the effective dtype,
+        #: converting the q-vectors to the correct type when the kernels
+        #: for each are created. Ideally this should be set to the more
+        #: precise type to avoid loss of precision, but precision in q is
+        #: not critical (single is good enough for our purposes), so it just
+        #: uses the precision of the form factor.
+        self.dtype = P.dtype  # type: np.dtype
 
     def make_kernel(self, q_vectors):
         # type: (List[np.ndarray]) -> Kernel
