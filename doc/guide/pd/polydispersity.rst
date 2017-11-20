@@ -94,8 +94,8 @@ The Gaussian Distribution is defined as
     f(x) = \frac{1}{\text{Norm}}
            \exp\left(-\frac{(x - \bar x)^2}{2\sigma^2}\right)
 
-where $\bar x$ is the mean of the distribution and *Norm* is a normalization factor
-which is determined during the numerical calculation.
+where $\bar x$ is the mean of the distribution and *Norm* is a normalization
+factor which is determined during the numerical calculation.
 
 The polydispersity is
 
@@ -121,8 +121,8 @@ where $\mu=\ln(x_\text{med})$ when $x_\text{med}$ is the median value of the
 distribution, and *Norm* is a normalization factor which will be determined
 during the numerical calculation.
 
-The median value for the distribution will be the value given for the respective
-size parameter, for example, *radius=60*.
+The median value for the distribution will be the value given for the
+respective size parameter, for example, *radius=60*.
 
 The polydispersity is given by $\sigma$
 
@@ -207,7 +207,7 @@ Note about DLS polydispersity
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Many commercial Dynamic Light Scattering (DLS) instruments produce a size
-polydispersity parameter, sometimes even given the symbol $p$ This
+polydispersity parameter, sometimes even given the symbol $p$\ ! This
 parameter is defined as the relative standard deviation coefficient of
 variation of the size distribution and is NOT the same as the polydispersity
 parameters in the Lognormal and Schulz distributions above (though they all

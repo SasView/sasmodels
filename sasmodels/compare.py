@@ -72,6 +72,7 @@ Options (* for default):
     -noise=0 sets the measurement error dI/I
     -res=0 sets the resolution width dQ/Q if calculating with resolution
     -lowq*/-midq/-highq/-exq use q values up to 0.05, 0.2, 1.0, 10.0
+    -q=min:max alternative specification of qrange
     -nq=128 sets the number of Q points in the data set
     -1d*/-2d computes 1d or 2d data
     -zero indicates that q=0 should be included
@@ -532,7 +533,7 @@ def _format_par(name, value=0., pd=0., n=0, nsigma=3., pdtype='gaussian',
         line += " +/- %g  (%d points in [-%g,%g] sigma %s)"\
                 % (pd, n, nsigma, nsigma, pdtype)
     if M0 != 0.:
-        line += "  M0:%.3f  mphi:%.1f  mtheta:%.1f" % (M0, mphi, mtheta)
+        line += "  M0:%.3f  mtheta:%.1f  mphi:%.1f" % (M0, mtheta, mphi)
     return line
 
 def suppress_pd(pars, suppress=True):
@@ -767,7 +768,7 @@ def make_data(opts):
     *opts* contains the options, with 'qmax', 'nq', 'res',
     'accuracy', 'is2d' and 'view' parsed from the command line.
     """
-    qmax, nq, res = opts['qmax'], opts['nq'], opts['res']
+    qmin, qmax, nq, res = opts['qmin'], opts['qmax'], opts['nq'], opts['res']
     if opts['is2d']:
         q = np.linspace(-qmax, qmax, nq)  # type: np.ndarray
         data = empty_data2D(q, resolution=res)
@@ -776,10 +777,9 @@ def make_data(opts):
         index = ~data.mask
     else:
         if opts['view'] == 'log' and not opts['zero']:
-            qmax = math.log10(qmax)
-            q = np.logspace(qmax-3, qmax, nq)
+            q = np.logspace(math.log10(qmin), math.log10(qmax), nq)
         else:
-            q = np.linspace(0.001*qmax, qmax, nq)
+            q = np.linspace(qmin, qmax, nq)
         if opts['zero']:
             q = np.hstack((0, q))
         data = empty_data1D(q, resolution=res)
@@ -954,14 +954,15 @@ def plot_models(opts, result, limits=(np.Inf, -np.Inf), setnum=0):
             err, errstr, errview = resid, "abs err", "linear"
         else:
             err, errstr, errview = abs(relerr), "rel err", "log"
+            if (err == 0.).all():
+                errview = 'linear'
         if 0:  # 95% cutoff
             sorted = np.sort(err.flatten())
             cutoff = sorted[int(sorted.size*0.95)]
             err[err > cutoff] = cutoff
         #err,errstr = base/comp,"ratio"
-        plot_theory(data, None, resid=err, view=errview, use_data=use_data)
-        if view == 'linear':
-            plt.xscale('linear')
+        plot_theory(data, None, resid=err, view=view, use_data=use_data)
+        plt.yscale(errview)
         plt.title("max %s = %.3g"%(errstr, abs(err).max()))
         #cbar_title = errstr if errview=="linear" else "log "+errstr
     #if is2D:
@@ -1000,8 +1001,8 @@ OPTIONS = [
     'title=',
 
     # Data generation
-    'data=', 'noise=', 'res=',
-    'nq=', 'lowq', 'midq', 'highq', 'exq', 'zero',
+    'data=', 'noise=', 'res=', 'nq=', 'q=',
+    'lowq', 'midq', 'highq', 'exq', 'zero',
     '2d', '1d',
 
     # Parameter set
@@ -1121,6 +1122,7 @@ def parse_opts(argv):
         'plot'      : True,
         'view'      : 'log',
         'is2d'      : False,
+        'qmin'      : None,
         'qmax'      : 0.05,
         'nq'        : 128,
         'res'       : 0.0,
@@ -1158,6 +1160,8 @@ def parse_opts(argv):
         elif arg == '-lowq':    opts['qmax'] = 0.05
         elif arg == '-zero':    opts['zero'] = True
         elif arg.startswith('-nq='):       opts['nq'] = int(arg[4:])
+        elif arg.startswith('-q='):
+            opts['qmin'], opts['qmax'] = [float(v) for v in arg[3:].split(':')]
         elif arg.startswith('-res='):      opts['res'] = float(arg[5:])
         elif arg.startswith('-noise='):    opts['noise'] = float(arg[7:])
         elif arg.startswith('-sets='):     opts['sets'] = int(arg[6:])
@@ -1206,6 +1210,8 @@ def parse_opts(argv):
         opts['sets'] = 1
 
     # Create the computational engines
+    if opts['qmin'] is None:
+        opts['qmin'] = 0.001*opts['qmax']
     if opts['datafile'] is not None:
         data = load_data(os.path.expanduser(opts['datafile']))
     else:

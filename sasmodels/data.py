@@ -43,7 +43,7 @@ except ImportError:
 else:
     Data = Union["Data1D", "Data2D", "SesansData"]
 
-def load_data(filename):
+def load_data(filename, index=0):
     # type: (str) -> Data
     """
     Load data using a sasview loader.
@@ -54,23 +54,19 @@ def load_data(filename):
     if '[' in filename:
         filename, indexstr = filename[:-1].split('[')
         index = int(indexstr)
-    else:
-        index = None
     datasets = loader.load(filename)
-    if datasets is None:
+    if not datasets:  # None or []
         raise IOError("Data %r could not be loaded" % filename)
     if not isinstance(datasets, list):
         datasets = [datasets]
-    if index is None and len(datasets) > 1:
-        raise ValueError("Need to specify filename[index] for multipart data")
-    data = datasets[index if index is not None else 0]
-    if hasattr(data, 'x'):
-        data.qmin, data.qmax = data.x.min(), data.x.max()
-        data.mask = (np.isnan(data.y) if data.y is not None
-                     else np.zeros_like(data.x, dtype='bool'))
-    elif hasattr(data, 'qx_data'):
-        data.mask = ~data.mask
-    return data
+    for data in datasets:
+        if hasattr(data, 'x'):
+            data.qmin, data.qmax = data.x.min(), data.x.max()
+            data.mask = (np.isnan(data.y) if data.y is not None
+                        else np.zeros_like(data.x, dtype='bool'))
+        elif hasattr(data, 'qx_data'):
+            data.mask = ~data.mask
+    return datasets[index] if index != 'all' else datasets
 
 
 def set_beam_stop(data, radius, outer=None):
@@ -437,6 +433,7 @@ def _plot_result1D(data, theory, resid, view, use_data,
     non_positive_x = (data.x <= 0.0).any()
 
     scale = data.x**4 if view == 'q4' else 1.0
+    xscale = yscale = 'linear' if view == 'linear' else 'log'
 
     if use_data or use_theory:
         if num_plots > 1:
@@ -469,14 +466,17 @@ def _plot_result1D(data, theory, resid, view, use_data,
         if limits is not None:
             plt.ylim(*limits)
 
-        plt.xscale('linear' if not some_present or non_positive_x
-                   else view if view is not None
-                   else 'log')
-        plt.yscale('linear'
-                   if view == 'q4' or not some_present or not all_positive
-                   else view if view is not None
-                   else 'log')
+
+        xscale = ('linear' if not some_present or non_positive_x
+                  else view if view is not None
+                  else 'log')
+        yscale = ('linear'
+                  if view == 'q4' or not some_present or not all_positive
+                  else view if view is not None
+                  else 'log')
+        plt.xscale(xscale)
         plt.xlabel("$q$/A$^{-1}$")
+        plt.yscale(yscale)
         plt.ylabel('$I(q)$')
         title = ("data and model" if use_theory and use_data
                  else "data" if use_data
@@ -504,8 +504,9 @@ def _plot_result1D(data, theory, resid, view, use_data,
         plt.plot(data.x, mresid, '.')
         plt.xlabel("$q$/A$^{-1}$")
         plt.ylabel('residuals')
-        plt.xscale('linear')
         plt.title('(model - Iq)/dIq')
+        plt.xscale(xscale)
+        plt.yscale('linear')
 
 
 @protect

@@ -33,9 +33,9 @@ class PyModel(KernelModel):
         _create_default_functions(model_info)
         self.info = model_info
         self.dtype = np.dtype('d')
+        logging.info("load python model " + self.info.name)
 
     def make_kernel(self, q_vectors):
-        logging.info("creating python kernel " + self.info.name)
         q_input = PyInput(q_vectors, dtype=F64)
         kernel = self.info.Iqxy if q_input.is_2d else self.info.Iq
         return PyKernel(kernel, self.info, q_input)

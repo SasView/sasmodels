@@ -369,6 +369,10 @@ def tag_source(source):
     Return a unique tag for the source code.
     """
     # Note: need 0xffffffff&val to force an unsigned 32-bit number
+    try:
+        source = source.encode('utf8')
+    except AttributeError: # bytes has no encode attribute in python 3
+        pass
     return "%08X"%(0xffffffff&crc32(source))
 
 def convert_type(source, dtype):
