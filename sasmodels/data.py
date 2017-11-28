@@ -63,7 +63,7 @@ def load_data(filename, index=0):
         if hasattr(data, 'x'):
             data.qmin, data.qmax = data.x.min(), data.x.max()
             data.mask = (np.isnan(data.y) if data.y is not None
-                        else np.zeros_like(data.x, dtype='bool'))
+                         else np.zeros_like(data.x, dtype='bool'))
         elif hasattr(data, 'qx_data'):
             data.mask = ~data.mask
     return datasets[index] if index != 'all' else datasets
@@ -426,8 +426,8 @@ def _plot_result1D(data, theory, resid, view, use_data,
     from numpy.ma import masked_array, masked  # type: ignore
 
     if getattr(data, 'radial', False):
-        radial_data.x = radial_data.q_data
-        radial_data.y = radial_data.data
+        data.x = data.q_data
+        data.y = data.data
 
     use_data = use_data and data.y is not None
     use_theory = theory is not None

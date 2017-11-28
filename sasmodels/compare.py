@@ -943,7 +943,7 @@ def _print_stats(label, err):
     # type: (str, np.ma.ndarray) -> None
     # work with trimmed data, not the full set
     sorted_err = np.sort(abs(err.compressed()))
-    if len(sorted_err) == 0.:
+    if len(sorted_err) == 0:
         print(label + "  no valid values")
         return
 
@@ -1080,8 +1080,8 @@ OPTIONS = [
     'help', 'html', 'edit',
     ]
 
-NAME_OPTIONS = set(k for k in OPTIONS if not k.endswith('='))
-VALUE_OPTIONS = [k[:-1] for k in OPTIONS if k.endswith('=')]
+NAME_OPTIONS = (lambda: set(k for k in OPTIONS if not k.endswith('=')))()
+VALUE_OPTIONS = (lambda: [k[:-1] for k in OPTIONS if k.endswith('=')])()
 
 
 def columnize(items, indent="", width=79):
@@ -1173,7 +1173,7 @@ def parse_opts(argv):
 
     name = positional_args[-1]
 
-    # pylint: disable=bad-whitespace
+    # pylint: disable=bad-whitespace,C0321
     # Interpret the flags
     opts = {
         'plot'      : True,
@@ -1264,7 +1264,7 @@ def parse_opts(argv):
         elif arg == '-weights': opts['show_weights'] = True
         elif arg == '-html':    opts['html'] = True
         elif arg == '-help':    opts['html'] = True
-    # pylint: enable=bad-whitespace
+    # pylint: enable=bad-whitespace,C0321
 
     # Magnetism forces 2D for now
     if opts['magnetic']:
@@ -1463,7 +1463,6 @@ def show_docs(opts):
     """
     show html docs for the model
     """
-    import os
     from .generate import make_html
     from . import rst2html
 
@@ -1498,7 +1497,8 @@ def explore(opts):
         model.revert_values()
         signal.update_parameters(problem)
     frame.Bind(wx.EVT_TOOL, _reset_parameters, frame.ToolBar.GetToolByPos(1))
-    if is_mac: frame.Show()
+    if is_mac:
+        frame.Show()
     # If running withing an app, start the main loop
     if app:
         app.MainLoop()

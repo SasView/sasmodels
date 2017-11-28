@@ -191,42 +191,20 @@ file in the order given, otherwise these functions will not be available.
         quadrature and in :code:`gauss150.c` for 150-point quadrature.
 
 """
+# pylint: disable=unused-import
+
 import numpy as np
-import scipy.special
 
 # Functions to add to our standard set
 from numpy import degrees, radians
 
 # C99 standard math library functions
-M_PI, M_PI_2, M_PI_4, M_SQRT1_2, M_E = np.pi, np.pi/2, np.pi/4, np.sqrt(0.5), np.e
 from numpy import exp, log, power as pow, expm1, sqrt
 from numpy import sin, cos, tan, arcsin as asin, arccos as acos, arctan as atan
 from numpy import sinh, cosh, tanh, arcsinh as asinh, arccosh as acosh, arctanh as atanh
 from numpy import arctan2 as atan2
 from numpy import fmin, fmax, trunc, rint
 from numpy import NAN, inf as INFINITY
-
-# erf, erfc, tgamma, lgamma  **do not use**
-
-# non-standard constants and functions
-M_PI_180, M_4PI_3 = M_PI/180, 4*M_PI/3
-
-# can't do SINCOS in python; use "s, c = SINCOS(x)" instead
-def SINCOS(x): return sin(x), cos(x)
-
-def square(x): return x*x
-
-def cube(x): return x*x*x
-
-from numpy import sinc as _sinc
-def sas_sinx_x(x): return _sinc(x/M_PI)
-def powr(x, y): return x**y
-def pown(x, n): return x**n
-
-FLOAT_SIZE = 8
-
-def polevl(x, c, n): return np.polyval(c[:n], x)
-def p1evl(x, c, n): return np.polyval(np.hstack(([1.], c))[:n], x)
 
 from scipy.special import gamma as sas_gamma
 from scipy.special import erf as sas_erf
@@ -235,18 +213,66 @@ from scipy.special import j0 as sas_J0
 from scipy.special import j1 as sas_J1
 from scipy.special import jn as sas_JN
 
+# erf, erfc, tgamma, lgamma  **do not use**
+
+# C99 standard math constants
+M_PI, M_PI_2, M_PI_4, M_SQRT1_2, M_E = np.pi, np.pi/2, np.pi/4, np.sqrt(0.5), np.e
+
+# non-standard constants
+M_PI_180, M_4PI_3 = M_PI/180, 4*M_PI/3
+
+# can't do SINCOS in python; use "s, c = SINCOS(x)" instead
+def SINCOS(x):
+    """return sin(x), cos(x)"""
+    return sin(x), cos(x)
+
+def square(x):
+    """return x^2"""
+    return x*x
+
+def cube(x):
+    """return x^3"""
+    return x*x*x
+
+def sas_sinx_x(x):
+    """return sin(x)/x"""
+    from numpy import sinc as _sinc
+    return _sinc(x/M_PI)
+
+def powr(x, y):
+    """return x^y for x>0"""
+    return x**y
+def pown(x, n):
+    """return x^n for n integer"""
+    return x**n
+
+FLOAT_SIZE = 8
+
+def polevl(x, c, n):
+    """return p(x) for polynomial p of degree n-1 with coefficients c"""
+    return np.polyval(c[:n], x)
+
+def p1evl(x, c, n):
+    """return x^n + p(x) for polynomial p of degree n-1 with coefficients c"""
+    return np.polyval(np.hstack(([1.], c))[:n], x)
+
 def sas_Si(x):
-    return scipy.special.sici(x)[0]
+    """return Si(x)"""
+    from scipy.special import sici
+    return sici(x)[0]
 
 def sas_j1(x):
+    """return j1(x)"""
     if np.isscalar(x):
         retvalue = (sin(x) - x*cos(x))/x**2 if x != 0. else 0.
     else:
         with np.errstate(all='ignore'):
             retvalue = (sin(x) - x*cos(x))/x**2
         retvalue[x == 0.] = 0.
+    return retvalue
 
 def sas_3j1x_x(x):
+    """return 3*j1(x)/x"""
     if np.isscalar(x):
         retvalue = 3*(sin(x) - x*cos(x))/x**3 if x != 0. else 1.
     else:
@@ -256,6 +282,7 @@ def sas_3j1x_x(x):
     return retvalue
 
 def sas_2J1x_x(x):
+    """return 2*J1(x)/x"""
     if np.isscalar(x):
         retvalue = 2*sas_J1(x)/x if x != 0 else 1.
     else:

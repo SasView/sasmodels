@@ -3,7 +3,6 @@ Convert models to and from sasview.
 """
 from __future__ import print_function, division
 
-import re
 import math
 import warnings
 
@@ -63,20 +62,20 @@ PD_DOT = [
 def _rescale(par, scale):
     return [pk*scale for pk in par] if isinstance(par, list) else par*scale
 
-def _is_sld(model_info, id):
+def _is_sld(model_info, par):
     """
     Return True if parameter is a magnetic magnitude or SLD parameter.
     """
-    if id.startswith('M0:'):
+    if par.startswith('M0:'):
         return True
-    if '_pd' in id or '.' in id:
+    if '_pd' in par or '.' in par:
         return False
     for p in model_info.parameters.call_parameters:
-        if p.id == id:
+        if p.id == par:
             return p.type == 'sld'
     # check through kernel parameters in case it is a named as a vector
     for p in model_info.parameters.kernel_parameters:
-        if p.id == id:
+        if p.id == par:
             return p.type == 'sld'
     return False
 
@@ -87,11 +86,11 @@ def _rescale_sld(model_info, pars, scale):
     new model definition end with sld.  For backward conversion use
     *scale=1e-6*.  For forward conversion use *scale=1e6*.
     """
-    return dict((id, (_rescale(v, scale) if _is_sld(model_info, id) else v))
-                for id, v in pars.items())
+    return dict((par, (_rescale(v, scale) if _is_sld(model_info, par) else v))
+                for par, v in pars.items())
 
 
-def _get_translation_table(model_info, version=(3,1,2)):
+def _get_translation_table(model_info, version=(3, 1, 2)):
     conv_param = CONVERSION_TABLE.get(version, {}).get(model_info.id, [None, {}])
     translation = conv_param[1].copy()
     for p in model_info.parameters.kernel_parameters:
@@ -129,9 +128,11 @@ def _convert_pars(pars, mapping):
     """
     newpars = pars.copy()
     for new, old in mapping.items():
-        if old == new: continue
-        if old is None: continue
-        for underscore, dot in PD_DOT:
+        if old == new:
+            continue
+        if old is None:
+            continue
+        for _, dot in PD_DOT:
             source = old+dot
             if source in newpars:
                 if new is not None:
@@ -158,8 +159,8 @@ def _conversion_target(model_name, version=(3,1,2)):
             return sasmodels_name
     return None
 
-def _hand_convert(name, oldpars, version=(3,1,2)):
-    if version == (3,1,2):
+def _hand_convert(name, oldpars, version=(3, 1, 2)):
+    if version == (3, 1, 2):
         oldpars = _hand_convert_3_1_2_to_4_1(name, oldpars)
     return oldpars
 
@@ -294,7 +295,7 @@ def _hand_convert_3_1_2_to_4_1(name, oldpars):
 
     return oldpars
 
-def convert_model(name, pars, use_underscore=False, model_version=(3,1,2)):
+def convert_model(name, pars, use_underscore=False, model_version=(3, 1, 2)):
     """
     Convert model from old style parameter names to new style.
     """
@@ -326,7 +327,7 @@ def convert_model(name, pars, use_underscore=False, model_version=(3,1,2)):
         newpars = _hand_convert(newname, newpars, version)
         newpars = _convert_pars(newpars, translation)
         # TODO: Still not convinced this is the best check
-        if not model_info.structure_factor and version == (3,1,2):
+        if not model_info.structure_factor and version == (3, 1, 2):
             newpars = _rescale_sld(model_info, newpars, 1e6)
         newpars.setdefault('scale', 1.0)
         newpars.setdefault('background', 0.0)
@@ -614,11 +615,12 @@ def _check_one(name, seed=None):
             print(k, v)
         print("==== %s out ====="%new_name)
         print(str(compare.parlist(model_info, new_pars, True)))
-    assert name==new_name, "%r != %r"%(name, new_name)
+    assert name == new_name, "%r != %r"%(name, new_name)
     for k, v in new_pars.items():
         assert k in pars, "%s: %r appeared from conversion"%(name, k)
         if isinstance(v, float):
-            assert abs(v-pars[k])<=abs(1e-12*v), "%s: %r  %s != %s"%(name, k, v, pars[k])
+            assert abs(v-pars[k]) <= abs(1e-12*v), \
+                "%s: %r  %s != %s"%(name, k, v, pars[k])
         else:
             assert v == pars[k], "%s: %r  %s != %s"%(name, k, v, pars[k])
     for k, v in pars.items():

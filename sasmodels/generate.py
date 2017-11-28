@@ -162,7 +162,7 @@ from __future__ import print_function
 #__all__ = ["model_info", "make_doc", "make_source", "convert_type"]
 
 import sys
-from os.path import abspath, dirname, join as joinpath, exists, isdir, getmtime
+from os.path import abspath, dirname, join as joinpath, exists, getmtime
 import re
 import string
 from zlib import crc32
@@ -653,11 +653,10 @@ def _have_Iqxy(sources):
     If you want to comment out an Iqxy function, use // on the front of the
     line instead.
     """
-    for path, code in sources:
+    for _path, code in sources:
         if _IQXY_PATTERN.search(code):
             return True
-    else:
-        return False
+    return False
 
 
 def _add_source(source, code, path):
@@ -771,8 +770,8 @@ def make_source(model_info):
 
     # TODO: allow mixed python/opencl kernels?
 
-    ocl = kernels(kernel_code, call_iq, call_iqxy, clear_iqxy, model_info.name)
-    dll = kernels(kernel_code, call_iq, call_iqxy, clear_iqxy, model_info.name)
+    ocl = _kernels(kernel_code, call_iq, call_iqxy, clear_iqxy, model_info.name)
+    dll = _kernels(kernel_code, call_iq, call_iqxy, clear_iqxy, model_info.name)
     result = {
         'dll': '\n'.join(source+dll[0]+dll[1]+dll[2]),
         'opencl': '\n'.join(source+ocl[0]+ocl[1]+ocl[2]),
@@ -781,7 +780,7 @@ def make_source(model_info):
     return result
 
 
-def kernels(kernel, call_iq, call_iqxy, clear_iqxy, name):
+def _kernels(kernel, call_iq, call_iqxy, clear_iqxy, name):
     # type: ([str,str], str, str, str) -> List[str]
     code = kernel[0]
     path = kernel[1].replace('\\', '\\\\')
@@ -930,6 +929,7 @@ RST_ROLES = """\
 """
 
 def make_html(model_info):
+    # type: (ModelInfo) -> str
     """
     Convert model docs directly to html.
     """
@@ -939,12 +939,20 @@ def make_html(model_info):
     return rst2html.rst2html("".join((RST_ROLES, RST_PROLOG, rst)))
 
 def view_html(model_name):
+    # type: (str) -> None
+    """
+    Load the model definition and view its help.
+    """
     from . import modelinfo
     kernel_module = load_kernel_module(model_name)
     info = modelinfo.make_model_info(kernel_module)
     view_html_from_info(info)
 
 def view_html_from_info(info):
+    # type: (ModelInfo) -> None
+    """
+    View the help for a loaded model definition.
+    """
     from . import rst2html
     url = "file://"+dirname(info.filename)+"/"
     rst2html.view_html(make_html(info), url=url)
@@ -969,7 +977,6 @@ def main():
     """
     Program which prints the source produced by the model.
     """
-    import sys
     from .modelinfo import make_model_info
 
     if len(sys.argv) <= 1:
