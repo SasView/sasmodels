@@ -1,14 +1,11 @@
-double form_volume(double radius_polar, double radius_equatorial);
-double Iq(double q, double sld, double sld_solvent, double radius_polar, double radius_equatorial);
-double Iqxy(double qx, double qy, double sld, double sld_solvent,
-    double radius_polar, double radius_equatorial, double theta, double phi);
-
-double form_volume(double radius_polar, double radius_equatorial)
+static double
+form_volume(double radius_polar, double radius_equatorial)
 {
     return M_4PI_3*radius_polar*radius_equatorial*radius_equatorial;
 }
 
-double Iq(double q,
+static  double
+Iq(double q,
     double sld,
     double sld_solvent,
     double radius_polar,
@@ -40,21 +37,16 @@ double Iq(double q,
     return 1.0e-4 * s * s * form;
 }
 
-double Iqxy(double qx, double qy,
+static double
+Iqxy(double qab, double qc,
     double sld,
     double sld_solvent,
     double radius_polar,
-    double radius_equatorial,
-    double theta,
-    double phi)
+    double radius_equatorial)
 {
-    double q, sin_alpha, cos_alpha;
-    ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sin_alpha, cos_alpha);
-    const double r = sqrt(square(radius_equatorial*sin_alpha)
-                          + square(radius_polar*cos_alpha));
-    const double f = sas_3j1x_x(q*r);
+    const double qr = sqrt(square(radius_equatorial*qab) + square(radius_polar*qc));
+    const double f = sas_3j1x_x(qr);
     const double s = (sld - sld_solvent) * form_volume(radius_polar, radius_equatorial);
 
     return 1.0e-4 * square(f * s);
 }
-

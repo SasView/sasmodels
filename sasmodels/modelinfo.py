@@ -29,7 +29,8 @@ else:
     TestValue = Union[float, List[float]]
     TestCondition = Tuple[ParameterSetUser, TestInput, TestValue]
 
-MAX_PD = 4 #: Maximum number of simultaneously polydisperse parameters
+# If MAX_PD changes, need to change the loop macros in kernel_iq.c
+MAX_PD = 5 #: Maximum number of simultaneously polydisperse parameters
 
 # assumptions about common parameters exist throughout the code, such as:
 # (1) kernel functions Iq, Iqxy, form_volume, ... don't see them
@@ -381,7 +382,7 @@ class ParameterTable(object):
     * *iq_parameters* is the list of parameters to the Iq(q, ...) function,
       with vector parameter p sent as p[].
 
-    * *iqxy_parameters* is the list of parameters to the Iqxy(qx, qy, ...)
+    * [removed] *iqxy_parameters* is the list of parameters to the Iqxy(qx, qy, ...)
       function, with vector parameter p sent as p[].
 
     * *form_volume_parameters* is the list of parameters to the form_volume(...)
@@ -419,6 +420,7 @@ class ParameterTable(object):
     def __init__(self, parameters):
         # type: (List[Parameter]) -> None
         self.kernel_parameters = parameters
+        self._check_angles()
         self._set_vector_lengths()
 
         self.npars = sum(p.length for p in self.kernel_parameters)
@@ -437,8 +439,9 @@ class ParameterTable(object):
         # to the underlying kernel functions.
         self.iq_parameters = [p for p in self.kernel_parameters
                               if p.type not in ('orientation', 'magnetic')]
-        self.iqxy_parameters = [p for p in self.kernel_parameters
-                                if p.type != 'magnetic']
+        # note: orientation no longer sent to Iqxy, so its the same as
+        #self.iqxy_parameters = [p for p in self.kernel_parameters
+        #                        if p.type != 'magnetic']
         self.form_volume_parameters = [p for p in self.kernel_parameters
                                        if p.type == 'volume']
 
@@ -460,12 +463,36 @@ class ParameterTable(object):
         # true if has 2D parameters
         self.has_2d = any(p.type in ('orientation', 'magnetic')
                           for p in self.kernel_parameters)
+        self.is_asymmetric = any(p.name == 'psi' for p in self.kernel_parameters)
         self.magnetism_index = [k for k, p in enumerate(self.call_parameters)
                                 if p.id.startswith('M0:')]
 
         self.pd_1d = set(p.name for p in self.call_parameters
                          if p.polydisperse and p.type not in ('orientation', 'magnetic'))
         self.pd_2d = set(p.name for p in self.call_parameters if p.polydisperse)
+
+    def _check_angles(self):
+        theta = phi = psi = -1
+        for k, p in enumerate(self.kernel_parameters):
+            if p.name == 'theta':
+                theta = k
+                if p.type != 'orientation':
+                    raise TypeError("theta must be an orientation parameter")
+            elif p.name == 'phi':
+                phi = k
+                if p.type != 'orientation':
+                    raise TypeError("phi must be an orientation parameter")
+            elif p.name == 'psi':
+                psi = k
+                if p.type != 'orientation':
+                    raise TypeError("psi must be an orientation parameter")
+        if theta >= 0 and phi >= 0:
+            if phi != theta+1:
+                raise TypeError("phi must follow theta")
+            if psi >= 0 and psi != phi+1:
+                raise TypeError("psi must follow phi")
+        elif theta >= 0 or phi >= 0 or psi >= 0:
+            raise TypeError("oriented shapes must have both theta and phi and maybe psi")
 
     def __getitem__(self, key):
         # Find the parameter definition
@@ -475,6 +502,13 @@ class ParameterTable(object):
         else:
             raise KeyError("unknown parameter %r"%key)
         return par
+
+    def __contains__(self, key):
+        for par in self.call_parameters:
+            if par.name == key:
+                return True
+        else:
+            return False
 
     def _set_vector_lengths(self):
         # type: () -> List[str]

@@ -140,8 +140,7 @@ parameters = [
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sas_3j1x_x.c", "lib/gfn.c", "lib/gauss76.c",
-          "core_shell_ellipsoid.c"]
+source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "core_shell_ellipsoid.c"]
 
 def ER(radius_equat_core, x_core, thick_shell, x_polar_shell):
     """

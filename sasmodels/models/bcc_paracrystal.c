@@ -1,111 +1,117 @@
-double form_volume(double radius);
-double Iq(double q,double dnn,double d_factor, double radius,double sld, double solvent_sld);
-double Iqxy(double qx, double qy, double dnn,
-    double d_factor, double radius,double sld, double solvent_sld,
-    double theta, double phi, double psi);
+static double
+bcc_Zq(double qa, double qb, double qc, double dnn, double d_factor)
+{
+    // Equations from Matsuoka 26-27-28, multiplied by |q|
+    const double a1 = (-qa + qb + qc)/2.0;
+    const double a2 = (+qa - qb + qc)/2.0;
+    const double a3 = (+qa + qb - qc)/2.0;
 
-double _BCC_Integrand(double q, double dnn, double d_factor, double theta, double phi);
-double _BCCeval(double Theta, double Phi, double temp1, double temp3);
-double _sphereform(double q, double radius, double sld, double solvent_sld);
+#if 1
+    // Matsuoka 29-30-31
+    //     Z_k numerator: 1 - exp(a)^2
+    //     Z_k denominator: 1 - 2 cos(d a_k) exp(a) + exp(2a)
+    // Rewriting numerator
+    //         => -(exp(2a) - 1)
+    //         => -expm1(2a)
+    // Rewriting denominator
+    //         => exp(a)^2 - 2 cos(d ak) exp(a) + 1)
+    //         => (exp(a) - 2 cos(d ak)) * exp(a) + 1
+    const double arg = -0.5*square(dnn*d_factor)*(a1*a1 + a2*a2 + a3*a3);
+    const double exp_arg = exp(arg);
+    const double Zq = -cube(expm1(2.0*arg))
+        / ( ((exp_arg - 2.0*cos(dnn*a1))*exp_arg + 1.0)
+          * ((exp_arg - 2.0*cos(dnn*a2))*exp_arg + 1.0)
+          * ((exp_arg - 2.0*cos(dnn*a3))*exp_arg + 1.0));
 
+#elif 0
+    // ** Alternate form, which perhaps is more approachable
+    //     Z_k numerator   => -[(exp(2a) - 1) / 2.exp(a)] 2.exp(a)
+    //                     => -[sinh(a)] exp(a)
+    //     Z_k denominator => [(exp(2a) + 1) / 2.exp(a) - cos(d a_k)] 2.exp(a)
+    //                     => [cosh(a) - cos(d a_k)] 2.exp(a)
+    //     => Z_k = -sinh(a) / [cosh(a) - cos(d a_k)]
+    //            = sinh(-a) / [cosh(-a) - cos(d a_k)]
+    //
+    // One more step leads to the form in sasview 3.x for 2d models
+    //            = tanh(-a) / [1 - cos(d a_k)/cosh(-a)]
+    //
+    const double arg = 0.5*square(dnn*d_factor)*(a1*a1 + a2*a2 + a3*a3);
+    const double sinh_qd = sinh(arg);
+    const double cosh_qd = cosh(arg);
+    const double Zq = sinh_qd/(cosh_qd - cos(dnn*a1))
+                    * sinh_qd/(cosh_qd - cos(dnn*a2))
+                    * sinh_qd/(cosh_qd - cos(dnn*a3));
+#else
+    const double arg = 0.5*square(dnn*d_factor)*(a1*a1 + a2*a2 + a3*a3);
+    const double tanh_qd = tanh(arg);
+    const double cosh_qd = cosh(arg);
+    const double Zq = tanh_qd/(1.0 - cos(dnn*a1)/cosh_qd)
+                    * tanh_qd/(1.0 - cos(dnn*a2)/cosh_qd)
+                    * tanh_qd/(1.0 - cos(dnn*a3)/cosh_qd);
+#endif
 
-double _BCC_Integrand(double q, double dnn, double d_factor, double theta, double phi) {
-
-	const double Da = d_factor*dnn;
-	const double temp1 = q*q*Da*Da;
-	const double temp3 = q*dnn;
-
-	double retVal = _BCCeval(theta,phi,temp1,temp3)/(4.0*M_PI);
-	return(retVal);
+    return Zq;
 }
 
-double _BCCeval(double Theta, double Phi, double temp1, double temp3) {
 
-	double result;
-	double sin_theta,cos_theta,sin_phi,cos_phi;
-	SINCOS(Theta, sin_theta, cos_theta);
-	SINCOS(Phi, sin_phi, cos_phi);
-
-	const double temp6 =  sin_theta;
-	const double temp7 =  sin_theta*cos_phi + sin_theta*sin_phi + cos_theta;
-	const double temp8 = -sin_theta*cos_phi - sin_theta*sin_phi + cos_theta;
-	const double temp9 = -sin_theta*cos_phi + sin_theta*sin_phi - cos_theta;
-
-	const double temp10 = exp((-1.0/8.0)*temp1*(temp7*temp7 + temp8*temp8 + temp9*temp9));
-	result = cube(1.0 - (temp10*temp10))*temp6
-	    / ( (1.0 - 2.0*temp10*cos(0.5*temp3*temp7) + temp10*temp10)
-	      * (1.0 - 2.0*temp10*cos(0.5*temp3*temp8) + temp10*temp10)
-	      * (1.0 - 2.0*temp10*cos(0.5*temp3*temp9) + temp10*temp10));
-
-	return (result);
+// occupied volume fraction calculated from lattice symmetry and sphere radius
+static double
+bcc_volume_fraction(double radius, double dnn)
+{
+    return 2.0*sphere_volume(sqrt(0.75)*radius/dnn);
 }
 
-double form_volume(double radius){
+static double
+form_volume(double radius)
+{
     return sphere_volume(radius);
 }
 
 
-double Iq(double q, double dnn,
-  double d_factor, double radius,
-  double sld, double solvent_sld){
+static double Iq(double q, double dnn,
+    double d_factor, double radius,
+    double sld, double solvent_sld)
+{
+    // translate a point in [-1,1] to a point in [0, 2 pi]
+    const double phi_m = M_PI;
+    const double phi_b = M_PI;
+    // translate a point in [-1,1] to a point in [0, pi]
+    const double theta_m = M_PI_2;
+    const double theta_b = M_PI_2;
 
-	//Volume fraction calculated from lattice symmetry and sphere radius
-	const double s1 = dnn/sqrt(0.75);
-	const double latticescale = 2.0*sphere_volume(radius/s1);
-
-    const double va = 0.0;
-    const double vb = 2.0*M_PI;
-    const double vaj = 0.0;
-    const double vbj = M_PI;
-
-    double summ = 0.0;
-    double answer = 0.0;
-	for(int i=0; i<150; i++) {
-		//setup inner integral over the ellipsoidal cross-section
-		double summj=0.0;
-		const double zphi = ( Gauss150Z[i]*(vb-va) + va + vb )/2.0;		//the outer dummy is phi
-		for(int j=0;j<150;j++) {
-			//20 gauss points for the inner integral
-			double ztheta = ( Gauss150Z[j]*(vbj-vaj) + vaj + vbj )/2.0;		//the inner dummy is theta
-			double yyy = Gauss150Wt[j] * _BCC_Integrand(q,dnn,d_factor,ztheta,zphi);
-			summj += yyy;
-		}
-		//now calculate the value of the inner integral
-		double answer = (vbj-vaj)/2.0*summj;
-
-		//now calculate outer integral
-		summ = summ+(Gauss150Wt[i] * answer);
-	}		//final scaling is done at the end of the function, after the NT_FP64 case
-
-	answer = (vb-va)/2.0*summ;
-	answer = answer*sphere_form(q,radius,sld,solvent_sld)*latticescale;
-
-    return answer;
+    double outer_sum = 0.0;
+    for(int i=0; i<150; i++) {
+        double inner_sum = 0.0;
+        const double theta = Gauss150Z[i]*theta_m + theta_b;
+        double sin_theta, cos_theta;
+        SINCOS(theta, sin_theta, cos_theta);
+        const double qc = q*cos_theta;
+        const double qab = q*sin_theta;
+        for(int j=0;j<150;j++) {
+            const double phi = Gauss150Z[j]*phi_m + phi_b;
+            double sin_phi, cos_phi;
+            SINCOS(phi, sin_phi, cos_phi);
+            const double qa = qab*cos_phi;
+            const double qb = qab*sin_phi;
+            const double form = bcc_Zq(qa, qb, qc, dnn, d_factor);
+            inner_sum += Gauss150Wt[j] * form;
+        }
+        inner_sum *= phi_m;  // sum(f(x)dx) = sum(f(x)) dx
+        outer_sum += Gauss150Wt[i] * inner_sum * sin_theta;
+    }
+    outer_sum *= theta_m;
+    const double Zq = outer_sum/(4.0*M_PI);
+    const double Pq = sphere_form(q, radius, sld, solvent_sld);
+    return bcc_volume_fraction(radius, dnn) * Pq * Zq;
 }
 
 
-double Iqxy(double qx, double qy,
+static double Iqxy(double qa, double qb, double qc,
     double dnn, double d_factor, double radius,
-    double sld, double solvent_sld,
-    double theta, double phi, double psi)
+    double sld, double solvent_sld)
 {
-    double q, zhat, yhat, xhat;
-    ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, xhat, yhat, zhat);
-
-    const double a1 = +xhat - zhat + yhat;
-    const double a2 = +xhat + zhat - yhat;
-    const double a3 = -xhat + zhat + yhat;
-
-    const double qd = 0.5*q*dnn;
-    const double arg = 0.5*square(qd*d_factor)*(a1*a1 + a2*a2 + a3*a3);
-    const double tanh_qd = tanh(arg);
-    const double cosh_qd = cosh(arg);
-    const double Zq = tanh_qd/(1. - cos(qd*a1)/cosh_qd)
-                    * tanh_qd/(1. - cos(qd*a2)/cosh_qd)
-                    * tanh_qd/(1. - cos(qd*a3)/cosh_qd);
-
-    const double Fq = sphere_form(q,radius,sld,solvent_sld)*Zq;
-    //the occupied volume of the lattice
-    const double lattice_scale = 2.0*sphere_volume(sqrt(0.75)*radius/dnn);
-    return lattice_scale * Fq;
+    const double q = sqrt(qa*qa + qb*qb + qc*qc);
+    const double Zq = bcc_Zq(qa, qb, qc, dnn, d_factor);
+    const double Pq = sphere_form(q, radius, sld, solvent_sld);
+    return bcc_volume_fraction(radius, dnn) * Pq * Zq;
 }

@@ -53,18 +53,19 @@ NB: The 2nd virial coefficient of the cylinder is calculated based on the
 radius and length values, and used as the effective radius for $S(q)$
 when $P(q) \cdot S(q)$ is applied.
 
-For oriented cylinders, we define the direction of the
+For 2d scattering from oriented cylinders, we define the direction of the
 axis of the cylinder using two angles $\theta$ (note this is not the
 same as the scattering angle used in q) and $\phi$. Those angles
-are defined in :numref:`cylinder-angle-definition` .
+are defined in :numref:`cylinder-angle-definition` , for further details see :ref:`orientation` .
 
 .. _cylinder-angle-definition:
 
 .. figure:: img/cylinder_angle_definition.png
 
-    Definition of the $\theta$ and $\phi$ orientation angles for a cylinder relative
-    to the beam line coordinates, plus an indication of their orientation distributions
-    which are described as rotations about each of the perpendicular axes $\delta_1$ and $\delta_2$
+    Angles $\theta$ and $\phi$ orient the cylinder relative
+    to the beam line coordinates, where the beam is along the $z$ axis. Rotation $\theta$, initially 
+    in the $xz$ plane, is carried out first, then rotation $\phi$ about the $z$ axis. Orientation distributions
+    are described as rotations about two perpendicular axes $\delta_1$ and $\delta_2$
     in the frame of the cylinder itself, which when $\theta = \phi = 0$ are parallel to the $Y$ and $X$ axes.
 
 .. figure:: img/cylinder_angle_projection.png
@@ -72,11 +73,6 @@ are defined in :numref:`cylinder-angle-definition` .
     Examples for oriented cylinders.
 
 The $\theta$ and $\phi$ parameters to orient the cylinder only appear in the model when fitting 2d data.
-On introducing "Orientational Distribution" in the angles, "distribution of theta" and "distribution of phi" parameters will
-appear. These are actually rotations about the axes $\delta_1$ and $\delta_2$ of the cylinder, which when $\theta = \phi = 0$ are parallel
-to the $Y$ and $X$ axes of the instrument respectively. Some experimentation may be required to understand the 2d patterns fully.
-(Earlier implementations had numerical integration issues in some circumstances when orientation distributions passed through 90 degrees, such
-situations, with very broad distributions, should still be approached with care.)
 
 Validation
 ----------

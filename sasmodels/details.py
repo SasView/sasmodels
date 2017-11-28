@@ -14,7 +14,7 @@ can be passed to one of the computational kernels.
 from __future__ import print_function
 
 import numpy as np  # type: ignore
-from numpy import pi, cos, sin
+from numpy import pi, cos, sin, radians
 
 try:
     np.meshgrid([])
@@ -28,11 +28,12 @@ except Exception:
             return [np.asarray(v) for v in args]
 
 try:
-    from typing import List
+    from typing import List, Tuple, Sequence
 except ImportError:
     pass
 else:
     from .modelinfo import ModelInfo
+    from .modelinfo import ParameterTable
 
 
 class CallDetails(object):
@@ -52,7 +53,7 @@ class CallDetails(object):
     One of the parameters may be the latitude.  When integrating in polar
     coordinates, the total circumference decreases as latitude varies from
     pi r^2 at the equator to 0 at the pole, and the weight associated
-    with a range of phi values needs to be scaled by this circumference.
+    with a range of latitude values needs to be scaled by this circumference.
     This scale factor needs to be updated each time the theta value
     changes.  *theta_par* indicates which of the values in the parameter
     vector is the latitude parameter, or -1 if there is no latitude
@@ -191,7 +192,7 @@ def make_details(model_info, length, offset, num_weights):
     #print("len:",length)
     #print("off:",offset)
 
-    # Check that we arn't using too many polydispersity loops
+    # Check that we aren't using too many polydispersity loops
     num_active = np.sum(length > 1)
     max_pd = model_info.parameters.max_pd
     if num_active > max_pd:
@@ -217,10 +218,10 @@ def make_details(model_info, length, offset, num_weights):
 
 
 ZEROS = tuple([0.]*31)
-def make_kernel_args(kernel, pairs):
+def make_kernel_args(kernel, mesh):
     # type: (Kernel, Tuple[List[np.ndarray], List[np.ndarray]]) -> Tuple[CallDetails, np.ndarray, bool]
     """
-    Converts (value, weight) pairs into parameters for the kernel call.
+    Converts (value, dispersity, weight) for each parameter into kernel pars.
 
     Returns a CallDetails object indicating the polydispersity, a data object
     containing the different values, and the magnetic flag indicating whether
@@ -229,22 +230,55 @@ def make_kernel_args(kernel, pairs):
     """
     npars = kernel.info.parameters.npars
     nvalues = kernel.info.parameters.nvalues
-    scalars = [(v[0] if len(v) else np.NaN) for v, w in pairs]
-    values, weights = zip(*pairs[2:npars+2]) if npars else ((),())
+    scalars = [value for value, dispersity, weight in mesh]
+    # skipping scale and background when building values and weights
+    values, dispersity, weights = zip(*mesh[2:npars+2]) if npars else ((), (), ())
+    #weights = correct_theta_weights(kernel.info.parameters, dispersity, weights)
     length = np.array([len(w) for w in weights])
     offset = np.cumsum(np.hstack((0, length)))
     call_details = make_details(kernel.info, length, offset[:-1], offset[-1])
     # Pad value array to a 32 value boundaryd
-    data_len = nvalues + 2*sum(len(v) for v in values)
+    data_len = nvalues + 2*sum(len(v) for v in dispersity)
     extra = (32 - data_len%32)%32
-    data = np.hstack((scalars,) + values + weights + ZEROS[:extra])
+    data = np.hstack((scalars,) + dispersity + weights + ZEROS[:extra])
     data = data.astype(kernel.dtype)
     is_magnetic = convert_magnetism(kernel.info.parameters, data)
     #call_details.show()
     return call_details, data, is_magnetic
 
+def correct_theta_weights(parameters, dispersity, weights):
+    # type: (ParameterTable, Sequence[np.ndarray], Sequence[np.ndarray]) -> Sequence[np.ndarray]
+    """
+    If there is a theta parameter, update the weights of that parameter so that
+    the cosine weighting required for polar integration is preserved.
+
+    Avoid evaluation strictly at the pole, which would otherwise send the
+    weight to zero.  This is probably not a problem in practice (if dispersity
+    is +/- 90, then you probably should be using a 1-D model of the circular
+    average).
+
+    Note: scale and background parameters are not include in the tuples for
+    dispersity and weights, so index is parameters.theta_offset, not
+    parameters.theta_offset+2
+
+    Returns updated weights vectors
+    """
+    # TODO: explain in a comment why scale and background are missing
+    # Apparently the parameters.theta_offset similarly skips scale and
+    # and background, so the indexing works out, but they are still shipped
+    # to the kernel, so we need to add two there.
+    if parameters.theta_offset >= 0:
+        index = parameters.theta_offset
+        theta = dispersity[index]
+        # TODO: modify the dispersity vector to avoid the theta=-90,90,270,...
+        theta_weight = abs(cos(radians(theta)))
+        weights = tuple(theta_weight*w if k == index else w
+                        for k, w in enumerate(weights))
+    return weights
+
 
 def convert_magnetism(parameters, values):
+    # type: (ParameterTable, Sequence[np.ndarray]) -> bool
     """
     Convert magnetism values from polar to rectangular coordinates.
 
@@ -254,7 +288,7 @@ def convert_magnetism(parameters, values):
     mag = mag.reshape(-1, 3)
     scale = mag[:,0]
     if np.any(scale):
-        theta, phi = mag[:, 1]*pi/180., mag[:, 2]*pi/180.
+        theta, phi = radians(mag[:, 1]), radians(mag[:, 2])
         cos_theta = cos(theta)
         mag[:, 0] = scale*cos_theta*cos(phi)  # mx
         mag[:, 1] = scale*sin(theta)  # my
@@ -264,28 +298,38 @@ def convert_magnetism(parameters, values):
         return False
 
 
-def dispersion_mesh(model_info, pars):
+def dispersion_mesh(model_info, mesh):
     # type: (ModelInfo) -> Tuple[List[np.ndarray], List[np.ndarray]]
     """
     Create a mesh grid of dispersion parameters and weights.
+
+    *mesh* is a list of (value, dispersity, weights), where the values
+    are the individual parameter values, and (dispersity, weights) is
+    the distribution of parameter values.
+
+    Only the volume parameters should be included in this list.  Orientation
+    parameters do not affect the calculation of effective radius or volume
+    ratio.  This is convenient since it avoids the distinction between
+    value and dispersity that is present in orientation parameters but not
+    shape parameters.
 
     Returns [p1,p2,...],w where pj is a vector of values for parameter j
     and w is a vector containing the products for weights for each
     parameter set in the vector.
     """
-    value, weight = zip(*pars)
+    _, dispersity, weight = zip(*mesh)
     #weight = [w if len(w)>0 else [1.] for w in weight]
     weight = np.vstack([v.flatten() for v in meshgrid(*weight)])
     weight = np.prod(weight, axis=0)
-    value = [v.flatten() for v in meshgrid(*value)]
+    dispersity = [v.flatten() for v in meshgrid(*dispersity)]
     lengths = [par.length for par in model_info.parameters.kernel_parameters
                if par.type == 'volume']
     if any(n > 1 for n in lengths):
         pars = []
         offset = 0
         for n in lengths:
-            pars.append(np.vstack(value[offset:offset+n])
-                        if n > 1 else value[offset])
+            pars.append(np.vstack(dispersity[offset:offset+n])
+                        if n > 1 else dispersity[offset])
             offset += n
-        value = pars
-    return value, weight
+        dispersity = pars
+    return dispersity, weight

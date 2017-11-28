@@ -85,9 +85,9 @@ def make_suite(loaders, models):
     ModelTestCase = _hide_model_case_from_nose()
     suite = unittest.TestSuite()
 
-    if models[0] == 'all':
+    if models[0] in core.KINDS:
         skip = models[1:]
-        models = list_models()
+        models = list_models(models[0])
     else:
         skip = []
     for model_name in models:
@@ -201,6 +201,7 @@ def _hide_model_case_from_nose():
                 ({}, 'VR', None),
                 ]
             tests = smoke_tests
+            #tests = []
             if self.info.tests is not None:
                 tests += self.info.tests
             try:

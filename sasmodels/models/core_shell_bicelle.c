@@ -1,160 +1,83 @@
-double form_volume(double radius, double thick_rim, double thick_face, double length);
-double Iq(double q,
-          double radius,
-          double thick_rim,
-          double thick_face,
-          double length,
-          double core_sld,
-          double face_sld,
-          double rim_sld,
-          double solvent_sld);
-
-
-double Iqxy(double qx, double qy,
-          double radius,
-          double thick_rim,
-          double thick_face,
-          double length,
-          double core_sld,
-          double face_sld,
-          double rim_sld,
-          double solvent_sld,
-          double theta,
-          double phi);
-
-
-double form_volume(double radius, double thick_rim, double thick_face, double length)
+static double
+form_volume(double radius, double thick_rim, double thick_face, double length)
 {
-    return M_PI*(radius+thick_rim)*(radius+thick_rim)*(length+2.0*thick_face);
+    return M_PI*square(radius+thick_rim)*(length+2.0*thick_face);
 }
 
 static double
-bicelle_kernel(double q,
-              double rad,
-              double radthick,
-              double facthick,
-              double halflength,
-              double rhoc,
-              double rhoh,
-              double rhor,
-              double rhosolv,
-              double sin_alpha,
-              double cos_alpha)
+bicelle_kernel(double qab,
+    double qc,
+    double radius,
+    double thick_radius,
+    double thick_face,
+    double halflength,
+    double sld_core,
+    double sld_face,
+    double sld_rim,
+    double sld_solvent)
 {
-    const double dr1 = rhoc-rhoh;
-    const double dr2 = rhor-rhosolv;
-    const double dr3 = rhoh-rhor;
-    const double vol1 = M_PI*square(rad)*2.0*(halflength);
-    const double vol2 = M_PI*square(rad+radthick)*2.0*(halflength+facthick);
-    const double vol3 = M_PI*square(rad)*2.0*(halflength+facthick);
+    const double dr1 = sld_core-sld_face;
+    const double dr2 = sld_rim-sld_solvent;
+    const double dr3 = sld_face-sld_rim;
+    const double vol1 = M_PI*square(radius)*2.0*(halflength);
+    const double vol2 = M_PI*square(radius+thick_radius)*2.0*(halflength+thick_face);
+    const double vol3 = M_PI*square(radius)*2.0*(halflength+thick_face);
 
-    const double be1 = sas_2J1x_x(q*(rad)*sin_alpha);
-    const double be2 = sas_2J1x_x(q*(rad+radthick)*sin_alpha);
-    const double si1 = sas_sinx_x(q*(halflength)*cos_alpha);
-    const double si2 = sas_sinx_x(q*(halflength+facthick)*cos_alpha);
+    const double be1 = sas_2J1x_x((radius)*qab);
+    const double be2 = sas_2J1x_x((radius+thick_radius)*qab);
+    const double si1 = sas_sinx_x((halflength)*qc);
+    const double si2 = sas_sinx_x((halflength+thick_face)*qc);
 
     const double t = vol1*dr1*si1*be1 +
                      vol2*dr2*si2*be2 +
                      vol3*dr3*si2*be1;
 
-    const double retval = t*t;
-
-    return retval;
-
+    return t;
 }
 
 static double
-bicelle_integration(double q,
-                   double rad,
-                   double radthick,
-                   double facthick,
-                   double length,
-                   double rhoc,
-                   double rhoh,
-                   double rhor,
-                   double rhosolv)
+Iq(double q,
+    double radius,
+    double thick_radius,
+    double thick_face,
+    double length,
+    double sld_core,
+    double sld_face,
+    double sld_rim,
+    double sld_solvent)
 {
     // set up the integration end points
     const double uplim = M_PI_4;
     const double halflength = 0.5*length;
 
-    double summ = 0.0;
+    double total = 0.0;
     for(int i=0;i<N_POINTS_76;i++) {
-        double alpha = (Gauss76Z[i] + 1.0)*uplim;
-        double sin_alpha, cos_alpha; // slots to hold sincos function output
-        SINCOS(alpha, sin_alpha, cos_alpha);
-        double yyy = Gauss76Wt[i] * bicelle_kernel(q, rad, radthick, facthick,
-                             halflength, rhoc, rhoh, rhor, rhosolv,
-                             sin_alpha, cos_alpha);
-        summ += yyy*sin_alpha;
+        double theta = (Gauss76Z[i] + 1.0)*uplim;
+        double sin_theta, cos_theta; // slots to hold sincos function output
+        SINCOS(theta, sin_theta, cos_theta);
+        double fq = bicelle_kernel(q*sin_theta, q*cos_theta, radius, thick_radius, thick_face,
+                                   halflength, sld_core, sld_face, sld_rim, sld_solvent);
+        total += Gauss76Wt[i]*fq*fq*sin_theta;
     }
 
     // calculate value of integral to return
-    double answer = uplim*summ;
-    return answer;
-}
-
-static double
-bicelle_kernel_2d(double qx, double qy,
-          double radius,
-          double thick_rim,
-          double thick_face,
-          double length,
-          double core_sld,
-          double face_sld,
-          double rim_sld,
-          double solvent_sld,
-          double theta,
-          double phi)
-{
-    double q, sin_alpha, cos_alpha;
-    ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sin_alpha, cos_alpha);
-
-    double answer = bicelle_kernel(q, radius, thick_rim, thick_face,
-                           0.5*length, core_sld, face_sld, rim_sld,
-                           solvent_sld, sin_alpha, cos_alpha);
+    double answer = total*uplim;
     return 1.0e-4*answer;
 }
 
-double Iq(double q,
-          double radius,
-          double thick_rim,
-          double thick_face,
-          double length,
-          double core_sld,
-          double face_sld,
-          double rim_sld,
-          double solvent_sld)
+static double
+Iqxy(double qab, double qc,
+    double radius,
+    double thick_rim,
+    double thick_face,
+    double length,
+    double core_sld,
+    double face_sld,
+    double rim_sld,
+    double solvent_sld)
 {
-    double intensity = bicelle_integration(q, radius, thick_rim, thick_face,
-                       length, core_sld, face_sld, rim_sld, solvent_sld);
-    return intensity*1.0e-4;
-}
-
-
-double Iqxy(double qx, double qy,
-          double radius,
-          double thick_rim,
-          double thick_face,
-          double length,
-          double core_sld,
-          double face_sld,
-          double rim_sld,
-          double solvent_sld,
-          double theta,
-          double phi)
-{
-    double intensity = bicelle_kernel_2d(qx, qy,
-                      radius,
-                      thick_rim,
-                      thick_face,
-                      length,
-                      core_sld,
-                      face_sld,
-                      rim_sld,
-                      solvent_sld,
-                      theta,
-                      phi);
-
-    return intensity;
+    double fq = bicelle_kernel(qab, qc, radius, thick_rim, thick_face,
+                           0.5*length, core_sld, face_sld, rim_sld,
+                           solvent_sld);
+    return 1.0e-4*fq*fq;
 }

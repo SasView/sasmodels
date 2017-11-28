@@ -12,6 +12,7 @@ SAS Models Guide
    pd/polydispersity.rst
    resolution.rst
    magnetism/magnetism.rst
+   orientation/orientation.rst
    sesans/sans_to_sesans.rst
    sesans/sesans_fitting.rst
    plugin.rst

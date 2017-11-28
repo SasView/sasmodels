@@ -35,7 +35,7 @@ try:
     from .modelinfo import ModelInfo, Parameter
     from .kernel import KernelModel
     MultiplicityInfoType = NamedTuple(
-        'MuliplicityInfo',
+        'MultiplicityInfo',
         [("number", int), ("control", str), ("choices", List[str]),
          ("x_axis_label", str)])
     SasviewModelType = Callable[[int], "SasviewModel"]
@@ -672,11 +672,14 @@ class SasviewModel(object):
         call_details, values, is_magnetic = make_kernel_args(calculator, pairs)
         #call_details.show()
         #print("pairs", pairs)
+        #for k, p in enumerate(self._model_info.parameters.call_parameters):
+        #    print(k, p.name, *pairs[k])
         #print("params", self.params)
         #print("values", values)
         #print("is_mag", is_magnetic)
         result = calculator(call_details, values, cutoff=self.cutoff,
                             magnetic=is_magnetic)
+        #print("result", result)
         self._intermediate_results = getattr(calculator, 'results', None)
         calculator.release()
         self._model.release()
@@ -758,22 +761,25 @@ class SasviewModel(object):
         """
         if par.name not in self.params:
             if par.name == self.multiplicity_info.control:
-                return [self.multiplicity], [1.0]
+                return self.multiplicity, [self.multiplicity], [1.0]
             else:
-                # For hidden parameters use the default value.
-                value = self._model_info.parameters.defaults.get(par.name, np.NaN)
-                return [value], [1.0]
+                # For hidden parameters use default values.  This sets
+                # scale=1 and background=0 for structure factors
+                default = self._model_info.parameters.defaults.get(par.name, np.NaN)
+                return default, [default], [1.0]
         elif par.polydisperse:
+            value = self.params[par.name]
             dis = self.dispersion[par.name]
             if dis['type'] == 'array':
-                value, weight = dis['values'], dis['weights']
+                dispersity, weight = dis['values'], dis['weights']
             else:
-                value, weight = weights.get_weights(
+                dispersity, weight = weights.get_weights(
                     dis['type'], dis['npts'], dis['width'], dis['nsigmas'],
-                    self.params[par.name], par.limits, par.relative_pd)
-            return value, weight / np.sum(weight)
+                    value, par.limits, par.relative_pd)
+            return value, dispersity, weight
         else:
-            return [self.params[par.name]], [1.0]
+            value = self.params[par.name]
+            return value, [value], [1.0]
 
 def test_cylinder():
     # type: () -> float
@@ -791,9 +797,23 @@ def test_structure_factor():
     """
     Model = _make_standard_model('hardsphere')
     model = Model()
+    value2d = model.evalDistribution([0.1, 0.1])
+    value1d = model.evalDistribution(np.array([0.1*np.sqrt(2)]))
+    #print("hardsphere", value1d, value2d)
+    if np.isnan(value1d) or np.isnan(value2d):
+        raise ValueError("hardsphere returns nan")
+
+def test_product():
+    # type: () -> float
+    """
+    Test that 2-D hardsphere model runs and doesn't produce NaN.
+    """
+    S = _make_standard_model('hayter_msa')()
+    P = _make_standard_model('cylinder')()
+    model = MultiplicationModel(P, S)
     value = model.evalDistribution([0.1, 0.1])
     if np.isnan(value):
-        raise ValueError("hardsphere returns null")
+        raise ValueError("cylinder*hatyer_msa returns null")
 
 def test_rpa():
     # type: () -> float
@@ -847,4 +867,7 @@ def test_old_name():
 
 if __name__ == "__main__":
     print("cylinder(0.1,0.1)=%g"%test_cylinder())
+    #test_product()
+    #test_structure_factor()
+    #print("rpa:", test_rpa())
     #test_empty_distribution()

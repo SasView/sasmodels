@@ -52,13 +52,13 @@ with
 
     r = R_e \left[ 1 + u^2\left(R_p^2/R_e^2 - 1\right)\right]^{1/2}
 
-To provide easy access to the orientation of the ellipsoid, we define
-the rotation axis of the ellipsoid using two angles $\theta$ and $\phi$.
-These angles are defined in the
+For 2d data from oriented ellipsoids the direction of the rotation axis of 
+the ellipsoid is defined using two angles $\theta$ and $\phi$ as for the 
 :ref:`cylinder orientation figure <cylinder-angle-definition>`.
 For the ellipsoid, $\theta$ is the angle between the rotational axis
 and the $z$ -axis in the $xz$ plane followed by a rotation by $\phi$
-in the $xy$ plane.
+in the $xy$ plane, for further details of the calculation and angular 
+dispersions see :ref:`orientation` .
 
 NB: The 2nd virial coefficient of the solid ellipsoid is calculated based
 on the $R_p$ and $R_e$ values, and used as the effective radius for

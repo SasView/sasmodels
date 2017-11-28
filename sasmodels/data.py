@@ -362,7 +362,7 @@ def plot_data(data, view='log', limits=None):
     # do not repeat.
     if hasattr(data, 'isSesans') and data.isSesans:
         _plot_result_sesans(data, None, None, use_data=True, limits=limits)
-    elif hasattr(data, 'qx_data'):
+    elif hasattr(data, 'qx_data') and not getattr(data, 'radial', False):
         _plot_result2D(data, None, None, view, use_data=True, limits=limits)
     else:
         _plot_result1D(data, None, None, view, use_data=True, limits=limits)
@@ -390,7 +390,7 @@ def plot_theory(data, theory, resid=None, view='log',
     """
     if hasattr(data, 'isSesans') and data.isSesans:
         _plot_result_sesans(data, theory, resid, use_data=True, limits=limits)
-    elif hasattr(data, 'qx_data'):
+    elif hasattr(data, 'qx_data') and not getattr(data, 'radial', False):
         _plot_result2D(data, theory, resid, view, use_data, limits=limits)
     else:
         _plot_result1D(data, theory, resid, view, use_data,
@@ -424,6 +424,10 @@ def _plot_result1D(data, theory, resid, view, use_data,
     """
     import matplotlib.pyplot as plt  # type: ignore
     from numpy.ma import masked_array, masked  # type: ignore
+
+    if getattr(data, 'radial', False):
+        radial_data.x = radial_data.q_data
+        radial_data.y = radial_data.data
 
     use_data = use_data and data.y is not None
     use_theory = theory is not None
@@ -650,10 +654,13 @@ def _plot_2d_signal(data, signal, vmin=None, vmax=None, view='log'):
     xmin, xmax = min(data.qx_data), max(data.qx_data)
     ymin, ymax = min(data.qy_data), max(data.qy_data)
     if view == 'log':
-        vmin, vmax = np.log10(vmin), np.log10(vmax)
+        vmin_scaled, vmax_scaled= np.log10(vmin), np.log10(vmax)
+    else:
+        vmin_scaled, vmax_scaled = vmin, vmax
     plt.imshow(plottable.reshape(len(data.x_bins), len(data.y_bins)),
                interpolation='nearest', aspect=1, origin='lower',
-               extent=[xmin, xmax, ymin, ymax], vmin=vmin, vmax=vmax)
+               extent=[xmin, xmax, ymin, ymax],
+               vmin=vmin_scaled, vmax=vmax_scaled)
     plt.xlabel("$q_x$/A$^{-1}$")
     plt.ylabel("$q_y$/A$^{-1}$")
     return vmin, vmax

@@ -288,7 +288,10 @@ def calc_er_vr(model_info, call_details, values):
     value = values[nvalues:nvalues + call_details.num_weights]
     weight = values[nvalues + call_details.num_weights: nvalues + 2*call_details.num_weights]
     npars = model_info.parameters.npars
-    pairs = [(value[offset:offset+length], weight[offset:offset+length])
+    # Note: changed from pairs ([v], [w]) to triples (p, [v], [w]), but the
+    # dispersion mesh code doesn't actually care about the nominal parameter
+    # value, p, so set it to None.
+    pairs = [(None, value[offset:offset+length], weight[offset:offset+length])
              for p, offset, length
              in zip(model_info.parameters.call_parameters[2:2+npars],
                     call_details.offset,
