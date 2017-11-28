@@ -22,6 +22,7 @@ try:
 except Exception:
     # CRUFT: np.meshgrid requires multiple vectors
     def meshgrid(*args):
+        """See docs from a recent version of numpy"""
         if len(args) > 1:
             return np.meshgrid(*args)
         else:
@@ -230,9 +231,9 @@ def make_kernel_args(kernel, mesh):
     """
     npars = kernel.info.parameters.npars
     nvalues = kernel.info.parameters.nvalues
-    scalars = [value for value, dispersity, weight in mesh]
+    scalars = [value for value, _dispersity, _weight in mesh]
     # skipping scale and background when building values and weights
-    values, dispersity, weights = zip(*mesh[2:npars+2]) if npars else ((), (), ())
+    _values, dispersity, weights = zip(*mesh[2:npars+2]) if npars else ((), (), ())
     #weights = correct_theta_weights(kernel.info.parameters, dispersity, weights)
     length = np.array([len(w) for w in weights])
     offset = np.cumsum(np.hstack((0, length)))
@@ -286,7 +287,7 @@ def convert_magnetism(parameters, values):
     """
     mag = values[parameters.nvalues-3*parameters.nmagnetic:parameters.nvalues]
     mag = mag.reshape(-1, 3)
-    scale = mag[:,0]
+    scale = mag[:, 0]
     if np.any(scale):
         theta, phi = radians(mag[:, 1]), radians(mag[:, 2])
         cos_theta = cos(theta)

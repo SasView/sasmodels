@@ -149,8 +149,14 @@ Program description
 
 kerneldll.ALLOW_SINGLE_PRECISION_DLLS = True
 
-# list of math functions for use in evaluating parameters
-MATH = dict((k,getattr(math, k)) for k in dir(math) if not k.startswith('_'))
+def build_math_context():
+    # type: () -> Dict[str, Callable]
+    """build dictionary of functions from math module"""
+    return dict((k, getattr(math, k))
+                for k in dir(math) if not k.startswith('_'))
+
+#: list of math functions for use in evaluating parameters
+MATH = build_math_context()
 
 # CRUFT python 2.6
 if not hasattr(datetime.timedelta, 'total_seconds'):
@@ -230,7 +236,7 @@ class push_seed(object):
         # type: () -> None
         pass
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, tb):
         # type: (Any, BaseException, Any) -> None
         # TODO: better typing for __exit__ method
         np.random.set_state(self._state)
@@ -373,6 +379,18 @@ def _randomize_one(model_info, name, value):
     return np.random.uniform(*limits)
 
 def _random_pd(model_info, pars):
+    # type: (ModelInfo, Dict[str, float]) -> None
+    """
+    Generate a random dispersity distribution for the model.
+
+    1% no shape dispersity
+    85% single shape parameter
+    13% two shape parameters
+    1% three shape parameters
+
+    If oriented, then put dispersity in theta, add phi and psi dispersity
+    with 10% probability for each.
+    """
     pd = [p for p in model_info.parameters.kernel_parameters if p.polydisperse]
     pd_volume = []
     pd_oriented = []
@@ -443,7 +461,7 @@ def limit_dimensions(model_info, pars, maxdim):
     for p in model_info.parameters.call_parameters:
         value = pars[p.name]
         if p.units == 'Ang' and value > maxdim:
-            pars[p.name] = maxdim*10**np.random.uniform(-3,0)
+            pars[p.name] = maxdim*10**np.random.uniform(-3, 0)
 
 def constrain_pars(model_info, pars):
     # type: (ModelInfo, ParameterSet) -> None
@@ -489,7 +507,6 @@ def constrain_pars(model_info, pars):
     elif name == 'pearl_necklace':
         if pars['radius'] < pars['thick_string']:
             pars['radius'], pars['thick_string'] = pars['thick_string'], pars['radius']
-        pass
 
     elif name == 'rpa':
         # Make sure phi sums to 1.0
@@ -607,6 +624,7 @@ def suppress_magnetism(pars, suppress=True):
             pars[first_mag] = 8.
     return pars
 
+# TODO: remove support for sasview 3.x models
 def eval_sasview(model_info, data):
     # type: (Modelinfo, Data) -> Calculator
     """
@@ -620,7 +638,7 @@ def eval_sasview(model_info, data):
     from sas.models.MultiplicationModel import MultiplicationModel
     from sas.models.dispersion_models import models as dispersers
 
-    def get_model_class(name):
+    def _get_model_class(name):
         # type: (str) -> "sas.models.BaseComponent"
         #print("new",sorted(_pars.items()))
         __import__('sas.models.' + name)
@@ -640,7 +658,7 @@ def eval_sasview(model_info, data):
     if model_info.composition:
         composition_type, parts = model_info.composition
         if composition_type == 'product':
-            P, S = [get_model_class(revert_name(p))() for p in parts]
+            P, S = [_get_model_class(revert_name(p))() for p in parts]
             model = [MultiplicationModel(P, S)]
         else:
             raise ValueError("sasview mixture models not supported by compare")
@@ -648,8 +666,8 @@ def eval_sasview(model_info, data):
         old_name = revert_name(model_info)
         if old_name is None:
             raise ValueError("model %r does not exist in old sasview"
-                            % model_info.id)
-        ModelClass = get_model_class(old_name)
+                             % model_info.id)
+        ModelClass = _get_model_class(old_name)
         model = [ModelClass()]
     model[0].disperser_handles = {}
 
@@ -846,7 +864,7 @@ def compare(opts, limits=None, maxdim=np.inf):
         if k > 1:
             # print a separate seed for each dataset for better reproducibility
             new_seed = np.random.randint(1000000)
-            print("Set %d uses -random=%i"%(k+1,new_seed))
+            print("Set %d uses -random=%i"%(k+1, new_seed))
             np.random.seed(new_seed)
         opts['pars'] = parse_pars(opts, maxdim=maxdim)
         if opts['pars'] is None:
@@ -867,6 +885,9 @@ def compare(opts, limits=None, maxdim=np.inf):
 
 def run_models(opts, verbose=False):
     # type: (Dict[str, Any]) -> Dict[str, Any]
+    """
+    Process a parameter set, return calculation results and times.
+    """
 
     base, comp = opts['engines']
     base_n, comp_n = opts['count']
@@ -940,6 +961,9 @@ def _print_stats(label, err):
 
 def plot_models(opts, result, limits=None, setnum=0):
     # type: (Dict[str, Any], Dict[str, Any], Optional[Tuple[float, float]]) -> Tuple[float, float]
+    """
+    Plot the results from :func:`run_model`.
+    """
     import matplotlib.pyplot as plt
 
     base_value, comp_value = result['base_value'], result['comp_value']
@@ -986,8 +1010,8 @@ def plot_models(opts, result, limits=None, setnum=0):
             if (err == 0.).all():
                 errview = 'linear'
         if 0:  # 95% cutoff
-            sorted = np.sort(err.flatten())
-            cutoff = sorted[int(sorted.size*0.95)]
+            sorted_err = np.sort(err.flatten())
+            cutoff = sorted_err[int(sorted_err.size*0.95)]
             err[err > cutoff] = cutoff
         #err,errstr = base/comp,"ratio"
         plot_theory(data, None, resid=err, view=errview, use_data=use_data)
@@ -1105,10 +1129,12 @@ def get_pars(model_info, use_demo=False):
     return pars
 
 INTEGER_RE = re.compile("^[+-]?[1-9][0-9]*$")
-def isnumber(str):
-    match = FLOAT_RE.match(str)
-    isfloat = (match and not str[match.end():])
-    return isfloat or INTEGER_RE.match(str)
+def isnumber(s):
+    # type: (str) -> bool
+    """Return True if string contains an int or float"""
+    match = FLOAT_RE.match(s)
+    isfloat = (match and not s[match.end():])
+    return isfloat or INTEGER_RE.match(s)
 
 # For distinguishing pairs of models for comparison
 # key-value pair separator =
@@ -1313,6 +1339,7 @@ def parse_opts(argv):
     return opts
 
 def set_spherical_integration_parameters(opts, steps):
+    # type: (Dict[str, Any], int) -> None
     """
     Set integration parameters for spherical integration over the entire
     surface in theta-phi coordinates.
@@ -1336,9 +1363,19 @@ def set_spherical_integration_parameters(opts, steps):
             'psi_pd_n=%d'%(2*steps),
             'psi_pd_type=rectangle',
         ])
-        pass
 
 def parse_pars(opts, maxdim=np.inf):
+    # type: (Dict[str, Any], float) -> Tuple[Dict[str, float], Dict[str, float]]
+    """
+    Generate a parameter set.
+
+    The default values come from the model, or a randomized model if a seed
+    value is given.  Next, evaluate any parameter expressions, constraining
+    the value of the parameter within and between models.  If *maxdim* is
+    given, limit parameters with units of Angstrom to this value.
+
+    Returns a pair of parameter dictionaries for base and comparison models.
+    """
     model_info, model_info2 = opts['info']
 
     # Get demo parameters from model definition, or use default parameters
@@ -1377,7 +1414,7 @@ def parse_pars(opts, maxdim=np.inf):
             s = set(p.split('_pd')[0] for p in pars)
             print("%r invalid; parameters are: %s"%(k, ", ".join(sorted(s))))
             return None
-        v1, v2 = v.split(PAR_SPLIT, 2) if PAR_SPLIT in v else (v,v)
+        v1, v2 = v.split(PAR_SPLIT, 2) if PAR_SPLIT in v else (v, v)
         if v1 and k in pars:
             presets[k] = float(v1) if isnumber(v1) else v1
         if v2 and k in pars2:
@@ -1433,7 +1470,7 @@ def show_docs(opts):
     info = opts['info'][0]
     html = make_html(info)
     path = os.path.dirname(info.filename)
-    url = "file://"+path.replace("\\","/")[2:]+"/"
+    url = "file://" + path.replace("\\", "/")[2:] + "/"
     rst2html.view_html_qtapp(html, url)
 
 def explore(opts):
@@ -1457,10 +1494,10 @@ def explore(opts):
     frame.panel.set_model(model=problem)
     frame.panel.Layout()
     frame.panel.aui.Split(0, wx.TOP)
-    def reset_parameters(event):
+    def _reset_parameters(event):
         model.revert_values()
         signal.update_parameters(problem)
-    frame.Bind(wx.EVT_TOOL, reset_parameters, frame.ToolBar.GetToolByPos(1))
+    frame.Bind(wx.EVT_TOOL, _reset_parameters, frame.ToolBar.GetToolByPos(1))
     if is_mac: frame.Show()
     # If running withing an app, start the main loop
     if app:
@@ -1503,10 +1540,18 @@ class Explore(object):
         self.limits = None
 
     def revert_values(self):
+        # type: () -> None
+        """
+        Restore starting values of the parameters.
+        """
         for k, v in self.starting_values.items():
             self.pars[k].value = v
 
     def model_update(self):
+        # type: () -> None
+        """
+        Respond to signal that model parameters have been changed.
+        """
         pass
 
     def numpoints(self):

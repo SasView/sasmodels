@@ -73,16 +73,19 @@ term in the equation above is effectively a Debye-Waller factor term.
     especially around the q-values that correspond to the repeat distance of
     the layers.
 
-2d scattering from oriented stacks is calculated in the same way as for cylinders,
-for further details of the calculation and angular dispersions see :ref:`orientation` . 
+2d scattering from oriented stacks is calculated in the same way as for
+cylinders, for further details of the calculation and angular dispersions
+see :ref:`orientation`.
 
 .. figure:: img/cylinder_angle_definition.png
 
     Angles $\theta$ and $\phi$ orient the stack of discs relative
-    to the beam line coordinates, where the beam is along the $z$ axis. Rotation $\theta$, initially 
-    in the $xz$ plane, is carried out first, then rotation $\phi$ about the $z$ axis. Orientation distributions
-    are described as rotations about two perpendicular axes $\delta_1$ and $\delta_2$
-    in the frame of the cylinder itself, which when $\theta = \phi = 0$ are parallel to the $Y$ and $X$ axes.
+    to the beam line coordinates, where the beam is along the $z$ axis.
+    Rotation $\theta$, initially in the $xz$ plane, is carried out first,
+    then rotation $\phi$ about the $z$ axis. Orientation distributions are
+    described as rotations about two perpendicular axes $\delta_1$ and
+    $\delta_2$ in the frame of the cylinder itself, which when
+    $\theta = \phi = 0$ are parallel to the $Y$ and $X$ axes.
 
 
 Our model is derived from the form factor calculations implemented in a

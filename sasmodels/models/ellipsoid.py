@@ -52,12 +52,12 @@ with
 
     r = R_e \left[ 1 + u^2\left(R_p^2/R_e^2 - 1\right)\right]^{1/2}
 
-For 2d data from oriented ellipsoids the direction of the rotation axis of 
-the ellipsoid is defined using two angles $\theta$ and $\phi$ as for the 
+For 2d data from oriented ellipsoids the direction of the rotation axis of
+the ellipsoid is defined using two angles $\theta$ and $\phi$ as for the
 :ref:`cylinder orientation figure <cylinder-angle-definition>`.
 For the ellipsoid, $\theta$ is the angle between the rotational axis
 and the $z$ -axis in the $xz$ plane followed by a rotation by $\phi$
-in the $xy$ plane, for further details of the calculation and angular 
+in the $xy$ plane, for further details of the calculation and angular
 dispersions see :ref:`orientation` .
 
 NB: The 2nd virial coefficient of the solid ellipsoid is calculated based
@@ -208,6 +208,6 @@ q = 0.1
 qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
 tests = [[{}, 0.05, 54.8525847025],
-        [{'theta':80., 'phi':10.}, (qx, qy), 1.74134670026 ],
+        [{'theta':80., 'phi':10.}, (qx, qy), 1.74134670026],
         ]
 del qx, qy  # not necessary to delete, but cleaner
