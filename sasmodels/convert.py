@@ -6,6 +6,8 @@ from __future__ import print_function, division
 import math
 import warnings
 
+import numpy as np
+
 from .conversion_table import CONVERSION_TABLE
 from .core import load_model_info
 
@@ -145,7 +147,7 @@ def _convert_pars(pars, mapping):
                     del newpars[source]
     return newpars
 
-def _conversion_target(model_name, version=(3,1,2)):
+def _conversion_target(model_name, version=(3, 1, 2)):
     """
     Find the sasmodel name which translates into the sasview name.
 
@@ -599,7 +601,9 @@ def _check_one(name, seed=None):
         return
 
     pars = compare.get_pars(model_info, use_demo=False)
-    pars = compare.randomize_pars(model_info, pars, seed=seed)
+    if seed is not None:
+        np.random.seed(seed)
+    pars = compare.randomize_pars(model_info, pars)
     if name == "teubner_strey":
         # T-S model is underconstrained, so fix the assumptions.
         pars['sld_a'], pars['sld_b'] = 1.0, 0.0

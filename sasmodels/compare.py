@@ -42,18 +42,20 @@ from . import kerneldll
 from . import exception
 from .data import plot_theory, empty_data1D, empty_data2D, load_data
 from .direct_model import DirectModel, get_mesh
-from .convert import revert_name, revert_pars, constrain_new_to_old
+from .convert import revert_name, revert_pars
 from .generate import FLOAT_RE
 from .weights import plot_weights
 
+# pylint: disable=unused-import
 try:
     from typing import Optional, Dict, Any, Callable, Tuple
-except Exception:
+except ImportError:
     pass
 else:
     from .modelinfo import ModelInfo, Parameter, ParameterSet
     from .data import Data
     Calculator = Callable[[float], np.ndarray]
+# pylint: enable=unused-import
 
 USAGE = """
 usage: sascomp model [options...] [key=val]
@@ -96,7 +98,6 @@ Options (* for default):
     -engine=default uses the default calcution precision
     -single/-double/-half/-fast sets an OpenCL calculation engine
     -single!/-double!/-quad! sets an OpenMP calculation engine
-    -sasview sets the sasview calculation engine
 
     === plotting ===
     -plot*/-noplot plots or suppress the plot of the model
@@ -236,9 +237,8 @@ class push_seed(object):
         # type: () -> None
         pass
 
-    def __exit__(self, exc_type, exc_value, tb):
+    def __exit__(self, exc_type, exc_value, trace):
         # type: (Any, BaseException, Any) -> None
-        # TODO: better typing for __exit__ method
         np.random.set_state(self._state)
 
 def tic():
@@ -257,8 +257,6 @@ def set_beam_stop(data, radius, outer=None):
     # type: (Data, float, float) -> None
     """
     Add a beam stop of the given *radius*.  If *outer*, make an annulus.
-
-    Note: this function does not require sasview
     """
     if hasattr(data, 'qx_data'):
         q = np.sqrt(data.qx_data**2 + data.qy_data**2)
@@ -624,115 +622,6 @@ def suppress_magnetism(pars, suppress=True):
             pars[first_mag] = 8.
     return pars
 
-# TODO: remove support for sasview 3.x models
-def eval_sasview(model_info, data):
-    # type: (Modelinfo, Data) -> Calculator
-    """
-    Return a model calculator using the pre-4.0 SasView models.
-    """
-    # importing sas here so that the error message will be that sas failed to
-    # import rather than the more obscure smear_selection not imported error
-    import sas
-    import sas.models
-    from sas.models.qsmearing import smear_selection
-    from sas.models.MultiplicationModel import MultiplicationModel
-    from sas.models.dispersion_models import models as dispersers
-
-    def _get_model_class(name):
-        # type: (str) -> "sas.models.BaseComponent"
-        #print("new",sorted(_pars.items()))
-        __import__('sas.models.' + name)
-        ModelClass = getattr(getattr(sas.models, name, None), name, None)
-        if ModelClass is None:
-            raise ValueError("could not find model %r in sas.models"%name)
-        return ModelClass
-
-    # WARNING: ugly hack when handling model!
-    # Sasview models with multiplicity need to be created with the target
-    # multiplicity, so we cannot create the target model ahead of time for
-    # for multiplicity models.  Instead we store the model in a list and
-    # update the first element of that list with the new multiplicity model
-    # every time we evaluate.
-
-    # grab the sasview model, or create it if it is a product model
-    if model_info.composition:
-        composition_type, parts = model_info.composition
-        if composition_type == 'product':
-            P, S = [_get_model_class(revert_name(p))() for p in parts]
-            model = [MultiplicationModel(P, S)]
-        else:
-            raise ValueError("sasview mixture models not supported by compare")
-    else:
-        old_name = revert_name(model_info)
-        if old_name is None:
-            raise ValueError("model %r does not exist in old sasview"
-                             % model_info.id)
-        ModelClass = _get_model_class(old_name)
-        model = [ModelClass()]
-    model[0].disperser_handles = {}
-
-    # build a smearer with which to call the model, if necessary
-    smearer = smear_selection(data, model=model)
-    if hasattr(data, 'qx_data'):
-        q = np.sqrt(data.qx_data**2 + data.qy_data**2)
-        index = ((~data.mask) & (~np.isnan(data.data))
-                 & (q >= data.qmin) & (q <= data.qmax))
-        if smearer is not None:
-            smearer.model = model  # because smear_selection has a bug
-            smearer.accuracy = data.accuracy
-            smearer.set_index(index)
-            def _call_smearer():
-                smearer.model = model[0]
-                return smearer.get_value()
-            theory = _call_smearer
-        else:
-            theory = lambda: model[0].evalDistribution([data.qx_data[index],
-                                                        data.qy_data[index]])
-    elif smearer is not None:
-        theory = lambda: smearer(model[0].evalDistribution(data.x))
-    else:
-        theory = lambda: model[0].evalDistribution(data.x)
-
-    def calculator(**pars):
-        # type: (float, ...) -> np.ndarray
-        """
-        Sasview calculator for model.
-        """
-        oldpars = revert_pars(model_info, pars)
-        # For multiplicity models, create a model with the correct multiplicity
-        control = oldpars.pop("CONTROL", None)
-        if control is not None:
-            # sphericalSLD has one fewer multiplicity.  This update should
-            # happen in revert_pars, but it hasn't been called yet.
-            model[0] = ModelClass(control)
-        # paying for parameter conversion each time to keep life simple, if not fast
-        for k, v in oldpars.items():
-            if k.endswith('.type'):
-                par = k[:-5]
-                if v == 'gaussian': continue
-                cls = dispersers[v if v != 'rectangle' else 'rectangula']
-                handle = cls()
-                model[0].disperser_handles[par] = handle
-                try:
-                    model[0].set_dispersion(par, handle)
-                except Exception:
-                    exception.annotate_exception("while setting %s to %r"
-                                                 %(par, v))
-                    raise
-
-
-        #print("sasview pars",oldpars)
-        for k, v in oldpars.items():
-            name_attr = k.split('.')  # polydispersity components
-            if len(name_attr) == 2:
-                par, disp_par = name_attr
-                model[0].dispersion[par][disp_par] = v
-            else:
-                model[0].setParam(k, v)
-        return theory()
-
-    calculator.engine = "sasview"
-    return calculator
 
 DTYPE_MAP = {
     'half': '16',
@@ -826,9 +715,7 @@ def make_engine(model_info, data, dtype, cutoff):
     Datatypes with '!' appended are evaluated using external C DLLs rather
     than OpenCL.
     """
-    if dtype == 'sasview':
-        return eval_sasview(model_info, data)
-    elif dtype is None or not dtype.endswith('!'):
+    if dtype is None or not dtype.endswith('!'):
         return eval_opencl(model_info, data, dtype=dtype, cutoff=cutoff)
     else:
         return eval_ctypes(model_info, data, dtype=dtype[:-1], cutoff=cutoff)
@@ -1074,7 +961,6 @@ OPTIONS = [
     # Precision options
     'engine=',
     'half', 'fast', 'single', 'double', 'single!', 'double!', 'quad!',
-    'sasview',  # TODO: remove sasview 3.x support
 
     # Output options
     'help', 'html', 'edit',
@@ -1257,7 +1143,6 @@ def parse_opts(argv):
         elif arg == '-single!': opts['engine'] = 'single!'
         elif arg == '-double!': opts['engine'] = 'double!'
         elif arg == '-quad!':   opts['engine'] = 'quad!'
-        elif arg == '-sasview': opts['engine'] = 'sasview'
         elif arg == '-edit':    opts['explore'] = True
         elif arg == '-demo':    opts['use_demo'] = True
         elif arg == '-default': opts['use_demo'] = False
