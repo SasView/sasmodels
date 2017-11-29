@@ -54,6 +54,7 @@ R Schweins and K Huber, *Particle Scattering Factor of Pearl Necklace Chains*,
 *Macromol. Symp.* 211 (2004) 25-42 2004
 """
 
+import numpy as np
 from numpy import inf, pi
 
 name = "pearl_necklace"
@@ -117,7 +118,6 @@ def ER(radius, edge_sep, thick_string, num_pearls):
     return rad_out
 
 def random():
-    import numpy as np
     radius = 10**np.random.uniform(1, 3) # 1 - 1000
     thick_string = 10**np.random.uniform(0, np.log10(radius)-1) # 1 - radius/10
     edge_sep = 10**np.random.uniform(0, 3)  # 1 - 1000

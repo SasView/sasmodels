@@ -31,6 +31,7 @@ from . import resolution
 from . import resolution2d
 from .details import make_kernel_args, dispersion_mesh
 
+# pylint: disable=unused-import
 try:
     from typing import Optional, Dict, Tuple
 except ImportError:
@@ -39,6 +40,7 @@ else:
     from .data import Data
     from .kernel import Kernel, KernelModel
     from .modelinfo import Parameter, ParameterSet
+# pylint: enable=unused-import
 
 def call_kernel(calculator, pars, cutoff=0., mono=False):
     # type: (Kernel, ParameterSet, float, bool) -> np.ndarray
@@ -162,7 +164,7 @@ def _get_par_weights(parameter, values, active=True):
         disperser = values.get(parameter.name+'_pd_type', 'gaussian')
         nsigma = values.get(parameter.name+'_pd_nsigma', 3.0)
         pd = weights.get_weights(disperser, npts, width, nsigma,
-                                value, limits, relative)
+                                 value, limits, relative)
     return value, pd[0], pd[1]
 
 
@@ -410,7 +412,7 @@ def main():
     if call != "ER_VR":
         try:
             values = [float(v) for v in call.split(',')]
-        except Exception:
+        except ValueError:
             values = []
         if len(values) == 1:
             q, = values

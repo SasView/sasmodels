@@ -15,6 +15,7 @@ import inspect
 import numpy as np  # type: ignore
 
 # Optional typing
+# pylint: disable=unused-import
 try:
     from typing import Tuple, List, Union, Dict, Optional, Any, Callable, Sequence, Set
     from types import ModuleType
@@ -29,6 +30,7 @@ else:
     TestInput = Union[str, float, List[float], Tuple[float, float], List[Tuple[float, float]]]
     TestValue = Union[float, List[float]]
     TestCondition = Tuple[ParameterSetUser, TestInput, TestValue]
+# pylint: enable=unused-import
 
 # If MAX_PD changes, need to change the loop macros in kernel_iq.c
 MAX_PD = 5 #: Maximum number of simultaneously polydisperse parameters

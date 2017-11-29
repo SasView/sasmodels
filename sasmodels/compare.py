@@ -39,10 +39,8 @@ import numpy as np  # type: ignore
 
 from . import core
 from . import kerneldll
-from . import exception
 from .data import plot_theory, empty_data1D, empty_data2D, load_data
 from .direct_model import DirectModel, get_mesh
-from .convert import revert_name, revert_pars
 from .generate import FLOAT_RE
 from .weights import plot_weights
 

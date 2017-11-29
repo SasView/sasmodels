@@ -27,6 +27,7 @@ References
 None.
 """
 
+import numpy as np
 from numpy import inf
 
 name = "gaussian_peak"
@@ -51,7 +52,6 @@ Iq = """
 # VR defaults to 1.0
 
 def random():
-    import numpy as np
     peak_pos = 10**np.random.uniform(-3, -1)
     sigma = 10**np.random.uniform(-1.3, -0.3)*peak_pos
     scale = 10**np.random.uniform(0, 4)

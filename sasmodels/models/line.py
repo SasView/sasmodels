@@ -21,8 +21,9 @@ References
 ----------
 
 None.
-
 """
+
+import numpy as np
 from numpy import inf
 
 name = "line"
@@ -69,7 +70,6 @@ def Iqxy(qx, qy, *args):
 Iqxy.vectorized = True  # Iqxy accepts an array of qx qy values
 
 def random():
-    import numpy as np
     scale = 10**np.random.uniform(0, 3)
     slope = np.random.uniform(-1, 1)*1e2
     offset = 1e-5 + (0 if slope > 0 else -slope)

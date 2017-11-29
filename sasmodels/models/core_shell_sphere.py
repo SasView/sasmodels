@@ -51,6 +51,7 @@ the output of the software provided by NIST (Kline, 2006). Figure 1 shows a
 comparison of the output of our model and the output of the NIST software.
 """
 
+import numpy as np
 from numpy import pi, inf
 
 name = "core_shell_sphere"
@@ -99,7 +100,6 @@ def VR(radius, thickness):
     return whole, whole - core
 
 def random():
-    import numpy as np
     outer_radius = 10**np.random.uniform(1.3, 4.3)
     # Use a distribution with a preference for thin shell or thin core
     # Avoid core,shell radii < 1

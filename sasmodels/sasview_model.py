@@ -30,8 +30,10 @@ from . import weights
 from . import modelinfo
 from .details import make_kernel_args, dispersion_mesh
 
+# pylint: disable=unused-import
 try:
-    from typing import Dict, Mapping, Any, Sequence, Tuple, NamedTuple, List, Optional, Union, Callable
+    from typing import (Dict, Mapping, Any, Sequence, Tuple, NamedTuple,
+                        List, Optional, Union, Callable)
     from .modelinfo import ModelInfo, Parameter
     from .kernel import KernelModel
     MultiplicityInfoType = NamedTuple(
@@ -41,6 +43,7 @@ try:
     SasviewModelType = Callable[[int], "SasviewModel"]
 except ImportError:
     pass
+# pylint: enable=unused-import
 
 logger = logging.getLogger(__name__)
 
@@ -837,7 +840,7 @@ def test_empty_distribution():
     cylinder.setParam('radius', -1.0)
     cylinder.setParam('background', 0.)
     Iq = cylinder.evalDistribution(np.asarray([0.1]))
-    assert np.isnan(Iq[0]), "empty distribution fails"
+    assert Iq[0] == 0., "empty distribution fails"
 
 def test_model_list():
     # type: () -> None

@@ -52,10 +52,10 @@ Authorship and Verification
 * **Converted to sasmodels by:** Paul Butler **Date:** March 19, 2016
 * **Last Modified by:** Paul Butler **Date:** March 12, 2017
 * **Last Reviewed by:** Paul Butler **Date:** March 12, 2017
-
 """
 from __future__ import division
 
+import numpy as np
 from numpy import inf
 
 name = "fractal"
@@ -99,7 +99,6 @@ parameters = [["volfraction", "", 0.05, [0.0, 1], "",
 source = ["lib/sas_3j1x_x.c", "lib/sas_gamma.c", "lib/fractal_sq.c", "fractal.c"]
 
 def random():
-    import numpy as np
     radius = 10**np.random.uniform(0.7, 4)
     #radius = 5
     cor_length = 10**np.random.uniform(0.7, 2)*radius

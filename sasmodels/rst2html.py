@@ -248,6 +248,9 @@ def view_help(filename, qt=False):
         else:
             view_url_wxapp(url)
 
-if __name__ == "__main__":
+def main():
     import sys
     view_help(sys.argv[1], qt=False)
+
+if __name__ == "__main__":
+    main()

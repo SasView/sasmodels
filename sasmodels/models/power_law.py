@@ -26,6 +26,7 @@ References
 None.
 """
 
+import numpy as np
 from numpy import inf, errstate
 
 name = "power_law"
@@ -50,7 +51,6 @@ def Iq(q, power):
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
-    import numpy as np
     power = np.random.uniform(1, 6)
     pars = dict(
         scale=0.1**power*10**np.random.uniform(-4, 2),

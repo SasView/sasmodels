@@ -173,11 +173,13 @@ import numpy as np  # type: ignore
 from .modelinfo import Parameter
 from .custom import load_custom_kernel_module
 
+# pylint: disable=unused-import
 try:
     from typing import Tuple, Sequence, Iterator, Dict
     from .modelinfo import ModelInfo
 except ImportError:
     pass
+# pylint: enable=unused-import
 
 # jitter projection to use in the kernel code.  See explore/jitter.py
 # for details.  To change it from a program, set generate.PROJECTION.

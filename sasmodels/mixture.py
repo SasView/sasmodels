@@ -19,10 +19,12 @@ from .modelinfo import Parameter, ParameterTable, ModelInfo
 from .kernel import KernelModel, Kernel
 from .details import make_details
 
+# pylint: disable=unused-import
 try:
     from typing import List
 except ImportError:
     pass
+# pylint: enable=unused-import
 
 def make_mixture_info(parts, operation='+'):
     # type: (List[ModelInfo]) -> ModelInfo
@@ -32,7 +34,6 @@ def make_mixture_info(parts, operation='+'):
     # Build new parameter list
     combined_pars = []
 
-    model_num = 0
     all_parts = copy(parts)
     is_flat = False
     while not is_flat:
@@ -88,7 +89,7 @@ def make_mixture_info(parts, operation='+'):
             prefix = chr(ord('A')+len(used_prefixes))
             used_prefixes.append(prefix)
             prefix += '_'
-            
+
         if operation == '+':
             # If model is a sum model, each constituent model gets its own scale parameter
             scale_prefix = prefix
@@ -104,8 +105,8 @@ def make_mixture_info(parts, operation='+'):
                         sub_prefixes.append(sub_prefix)
                 # Concatenate sub_prefixes to form prefix for the scale
                 scale_prefix = ''.join(sub_prefixes) + '_'
-            scale =  Parameter(scale_prefix + 'scale', default=1.0,
-                            description="model intensity for " + part.name)
+            scale = Parameter(scale_prefix + 'scale', default=1.0,
+                              description="model intensity for " + part.name)
             combined_pars.append(scale)
         for p in part.parameters.kernel_parameters:
             p = copy(p)
@@ -178,7 +179,7 @@ class MixtureKernel(Kernel):
     def __init__(self, model_info, kernels):
         # type: (ModelInfo, List[Kernel]) -> None
         self.dim = kernels[0].dim
-        self.info =  model_info
+        self.info = model_info
         self.kernels = kernels
         self.dtype = self.kernels[0].dtype
         self.operation = model_info.operation

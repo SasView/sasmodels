@@ -38,12 +38,14 @@ if CUSTOM_MODEL_PATH == "":
     if not os.path.isdir(CUSTOM_MODEL_PATH):
         os.makedirs(CUSTOM_MODEL_PATH)
 
+# pylint: disable=unused-import
 try:
     from typing import List, Union, Optional, Any
     from .kernel import KernelModel
     from .modelinfo import ModelInfo
 except ImportError:
     pass
+# pylint: enable=unused-import
 
 # TODO: refactor composite model support
 # The current load_model_info/build_model does not reuse existing model

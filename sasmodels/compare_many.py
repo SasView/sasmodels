@@ -263,8 +263,10 @@ def main(argv):
         print_usage()
         return
 
-    data, index = make_data({'qmax':1.0, 'is2d':is2D, 'nq':Nq, 'res':0.,
-                             'accuracy': 'Low', 'view':'log', 'zero': False})
+    data, index = make_data({
+        'qmin': 0.001, 'qmax': 1.0, 'is2d': is2D, 'nq': Nq, 'res': 0.,
+        'accuracy': 'Low', 'view':'log', 'zero': False
+        })
     for model in model_list:
         compare_instance(model, data, index, N=count, mono=mono,
                          cutoff=cutoff, base=base, comp=comp)

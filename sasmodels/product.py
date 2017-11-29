@@ -15,14 +15,18 @@ from __future__ import print_function, division
 from copy import copy
 import numpy as np  # type: ignore
 
-from .modelinfo import Parameter, ParameterTable, ModelInfo
+from .modelinfo import ParameterTable, ModelInfo
 from .kernel import KernelModel, Kernel
 from .details import make_details, dispersion_mesh
 
+# pylint: disable=unused-import
 try:
     from typing import Tuple
 except ImportError:
     pass
+else:
+    from .modelinfo import ParameterSet
+# pylint: enable=unused-import
 
 # TODO: make estimates available to constraints
 #ESTIMATED_PARAMETERS = [
@@ -75,10 +79,9 @@ def make_product_info(p_info, s_info):
     def random():
         combined_pars = p_info.random()
         s_names = set(par.id for par in s_pars.kernel_parameters[1:])
-        s = s_info.random()
         combined_pars.update((translate_name[k], v)
-                    for k, v in s_info.random().items()
-                    if k in s_names)
+                             for k, v in s_info.random().items()
+                             if k in s_names)
         return combined_pars
 
     model_info = ModelInfo()

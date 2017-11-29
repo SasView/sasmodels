@@ -274,7 +274,7 @@ def _hand_convert_3_1_2_to_4_1(name, oldpars):
         # find xi
         p_scale = oldpars['scale']
         p_c1 = oldpars['c1']
-        p_c2= oldpars['c2']
+        p_c2 = oldpars['c2']
         i_1 = 0.5*p_c1/p_c2
         i_2 = math.sqrt(math.fabs(p_scale/p_c2))
         i_3 = 2/(i_1 + i_2)

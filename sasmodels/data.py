@@ -632,8 +632,8 @@ def _plot_result2D(data,         # type: Data2D
             plt.subplot(1, num_plots, 1)
         _plot_2d_signal(data, target, view=view, vmin=vmin, vmax=vmax)
         plt.title('data')
-        handle = plt.colorbar()
-        handle.set_label('$I(q)$')
+        h = plt.colorbar()
+        h.set_label('$I(q)$')
 
     # plot theory
     if use_theory:
@@ -641,10 +641,10 @@ def _plot_result2D(data,         # type: Data2D
             plt.subplot(1, num_plots, use_data+1)
         _plot_2d_signal(data, theory, view=view, vmin=vmin, vmax=vmax)
         plt.title('theory')
-        handle = plt.colorbar()
-        handle.set_label(r'$\log_{10}I(q)$' if view == 'log'
-                         else r'$q^4 I(q)$' if view == 'q4'
-                         else '$I(q)$')
+        h = plt.colorbar()
+        h.set_label(r'$\log_{10}I(q)$' if view == 'log'
+                    else r'$q^4 I(q)$' if view == 'q4'
+                    else '$I(q)$')
 
     # plot resid
     if use_resid:
@@ -652,8 +652,8 @@ def _plot_result2D(data,         # type: Data2D
             plt.subplot(1, num_plots, use_data+use_theory+1)
         _plot_2d_signal(data, resid, view='linear')
         plt.title('residuals')
-        handle = plt.colorbar()
-        handle.set_label(r'$\Delta I(q)$')
+        h = plt.colorbar()
+        h.set_label(r'$\Delta I(q)$')
 
 
 @protect

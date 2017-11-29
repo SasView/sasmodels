@@ -94,6 +94,7 @@ Hideki Matsuoka et. al. *Physical Review B*, 41 (1990) 3854 -3856
 (Corrections to FCC and BCC lattice structure calculation)
 """
 
+import numpy as np
 from numpy import inf, pi
 
 name = "fcc_paracrystal"
@@ -123,7 +124,6 @@ parameters = [["dnn", "Ang", 220, [-inf, inf], "", "Nearest neighbour distance"]
 source = ["lib/sas_3j1x_x.c", "lib/gauss150.c", "lib/sphere_form.c", "fcc_paracrystal.c"]
 
 def random():
-    import numpy as np
     # copied from bcc_paracrystal
     radius = 10**np.random.uniform(1.3, 4)
     d_factor = 10**np.random.uniform(-2, -0.7)  # sigma_d in 0.01-0.7

@@ -14,7 +14,7 @@ can be passed to one of the computational kernels.
 from __future__ import print_function
 
 import numpy as np  # type: ignore
-from numpy import pi, cos, sin, radians
+from numpy import cos, sin, radians
 
 try:
     np.meshgrid([])
@@ -28,6 +28,7 @@ except Exception:
         else:
             return [np.asarray(v) for v in args]
 
+# pylint: disable=unused-import
 try:
     from typing import List, Tuple, Sequence
 except ImportError:
@@ -35,6 +36,7 @@ except ImportError:
 else:
     from .modelinfo import ModelInfo
     from .modelinfo import ParameterTable
+# pylint: enable=unused-import
 
 
 class CallDetails(object):
@@ -219,8 +221,10 @@ def make_details(model_info, length, offset, num_weights):
 
 
 ZEROS = tuple([0.]*31)
-def make_kernel_args(kernel, mesh):
-    # type: (Kernel, Tuple[List[np.ndarray], List[np.ndarray]]) -> Tuple[CallDetails, np.ndarray, bool]
+def make_kernel_args(kernel, # type: Kernel
+                     mesh    # type: Tuple[List[np.ndarray], List[np.ndarray]]
+                    ):
+    # type: (...) -> Tuple[CallDetails, np.ndarray, bool]
     """
     Converts (value, dispersity, weight) for each parameter into kernel pars.
 
@@ -247,8 +251,11 @@ def make_kernel_args(kernel, mesh):
     #call_details.show()
     return call_details, data, is_magnetic
 
-def correct_theta_weights(parameters, dispersity, weights):
-    # type: (ParameterTable, Sequence[np.ndarray], Sequence[np.ndarray]) -> Sequence[np.ndarray]
+def correct_theta_weights(parameters, # type: ParameterTable
+                          dispersity, # type: Sequence[np.ndarray]
+                          weights     # type: Sequence[np.ndarray]
+                         ):
+    # type: (...) -> Sequence[np.ndarray]
     """
     If there is a theta parameter, update the weights of that parameter so that
     the cosine weighting required for polar integration is preserved.
