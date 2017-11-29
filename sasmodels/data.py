@@ -526,7 +526,7 @@ def _plot_result_sesans(data, theory, resid, use_data, limits=None):
     num_plots = (use_data or use_theory) + use_resid
 
     if use_data or use_theory:
-        is_tof = (data.lam != data.lam[0]).any()
+        is_tof = data.lam is not None and (data.lam != data.lam[0]).any()
         if num_plots > 1:
             plt.subplot(1, num_plots, 1)
         if use_data:
