@@ -27,7 +27,7 @@ resolution smearing if needs be to help remove them).
 
 .. math::
     P(q) &= N^2\beta^2_s\Phi(qr)^2 + N\beta^2_cP_c(q)
-            + 2N^2\beta_s\beta_cS_{sc}s_c(q) + N(N-1)\beta_c^2S_{cc}(q) \\
+            + 2N^2\beta_s\beta_cS_{sc}(q) + N(N-1)\beta_c^2S_{cc}(q) \\
     \beta_s &= V_\text{core}(\rho_\text{core} - \rho_\text{solvent}) \\
     \beta_c &= V_\text{corona}(\rho_\text{corona} - \rho_\text{solvent})
 
