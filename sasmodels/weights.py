@@ -275,19 +275,11 @@ def plot_weights(model_info, mesh):
     """
     import pylab
 
-<<<<<<< HEAD
-    if any(len(dispersity)>1 for value, dispersity, weights in mesh):
-        labels = [p.name for p in model_info.parameters.call_parameters]
-        #pylab.interactive(True)
-        pylab.figure()
-        for (v,x,w), s in zip(mesh, labels):
-=======
     if any(len(dispersity) > 1 for value, dispersity, weights in mesh):
         labels = [p.name for p in model_info.parameters.call_parameters]
         #pylab.interactive(True)
         pylab.figure()
         for (v, x, w), s in zip(mesh, labels):
->>>>>>> master
             if len(x) > 1:
                 pylab.plot(x, w, '-o', label=s)
         pylab.grid(True)
