@@ -68,6 +68,11 @@ References
 ----------
 
 J Pedersen, *J. Appl. Cryst.*, 33 (2000) 637-640
+
+* **Modified by:** Richard Heenan **Date:** March 20, 2016
+* **Verified by:** Paul Kienzle **Date:** November 29, 2017
+* **Description modified by:** Paul Kienzle **Date:** November 29, 2017
+* **Description reviewed by:** Steve King **Date:** November 30, 2017
 """
 
 import numpy as np
