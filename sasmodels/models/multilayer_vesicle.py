@@ -106,7 +106,6 @@ Authorship and Verification
 * **Converted to sasmodels by:** Piotr Rozyczko **Date:** Feb 24, 2016
 * **Last Modified by:** Paul Kienzle **Date:** Feb 7, 2017
 * **Last Reviewed by:** Paul Butler **Date:** March 12, 2017
-
 """
 
 import numpy as np

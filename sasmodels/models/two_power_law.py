@@ -36,11 +36,9 @@ References
 
 None.
 
-**Author:** NIST IGOR/DANSE **on:** pre 2010
-
-**Last Modified by:** Wojciech Wpotrzebowski **on:** February 18, 2016
-
-**Last Reviewed by:** Paul Butler **on:** March 21, 2016
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Wojciech Wpotrzebowski **Date:** February 18, 2016
+* **Last Reviewed by:** Paul Butler **Date:** March 21, 2016
 """
 
 import numpy as np
