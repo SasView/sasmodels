@@ -108,6 +108,7 @@ Science*, 343(1) (2010) 36-41
 **Reviewed by:** Andrew Jackson **on:** March 20, 2016
 """
 
+import numpy as np
 from numpy import inf
 
 name = "raspberry"
@@ -154,7 +155,6 @@ parameters = [["sld_lg", "1e-6/Ang^2", -0.4, [-inf, inf], "sld",
 source = ["lib/sas_3j1x_x.c", "raspberry.c"]
 
 def random():
-    import numpy as np
     # Limit volume fraction to 20% each
     volfraction_lg = 10**np.random.uniform(-3, -0.3)
     volfraction_sm = 10**np.random.uniform(-3, -0.3)

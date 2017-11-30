@@ -67,6 +67,7 @@ S V G Menon, C Manohar, and K S Rao, *J. Chem. Phys.*, 95(12) (1991) 9186-9190
 
 # TODO: refactor so that we pull in the old sansmodels.c_extensions
 
+import numpy as np
 from numpy import inf
 
 name = "stickyhardsphere"
@@ -98,7 +99,6 @@ parameters = [
     ]
 
 def random():
-    import numpy as np
     pars = dict(
         scale=1, background=0,
         radius_effective=10**np.random.uniform(1, 4.7),

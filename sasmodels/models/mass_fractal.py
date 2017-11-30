@@ -50,10 +50,9 @@ References
 
 D Mildner and P Hall, *J. Phys. D: Appl. Phys.*,
 19 (1986) 1535-1545 Equation(9)
-
-
 """
 
+import numpy as np
 from numpy import inf
 
 name = "mass_fractal"
@@ -88,15 +87,14 @@ parameters = [
 source = ["lib/sas_3j1x_x.c", "lib/sas_gamma.c", "mass_fractal.c"]
 
 def random():
-    import numpy as np
     radius = 10**np.random.uniform(0.7, 4)
     cutoff_length = 10**np.random.uniform(0.7, 2)*radius
     # TODO: fractal dimension should range from 1 to 6
     fractal_dim_mass = 2*np.random.beta(3, 4) + 1
-    Vf = 10**np.random.uniform(-4, -1)
+    #volfrac = 10**np.random.uniform(-4, -1)
     pars = dict(
         #background=0,
-        scale=1, #1e5*Vf/radius**(fractal_dim_mass),
+        scale=1, #1e5*volfrac/radius**(fractal_dim_mass),
         radius=radius,
         cutoff_length=cutoff_length,
         fractal_dim_mass=fractal_dim_mass,

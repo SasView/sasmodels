@@ -15,8 +15,10 @@ import inspect
 import numpy as np  # type: ignore
 
 # Optional typing
+# pylint: disable=unused-import
 try:
     from typing import Tuple, List, Union, Dict, Optional, Any, Callable, Sequence, Set
+    from types import ModuleType
 except ImportError:
     pass
 else:
@@ -28,6 +30,7 @@ else:
     TestInput = Union[str, float, List[float], Tuple[float, float], List[Tuple[float, float]]]
     TestValue = Union[float, List[float]]
     TestCondition = Tuple[ParameterSetUser, TestInput, TestValue]
+# pylint: enable=unused-import
 
 # If MAX_PD changes, need to change the loop macros in kernel_iq.c
 MAX_PD = 5 #: Maximum number of simultaneously polydisperse parameters
@@ -498,17 +501,14 @@ class ParameterTable(object):
         # Find the parameter definition
         for par in self.call_parameters:
             if par.name == key:
-                break
-        else:
-            raise KeyError("unknown parameter %r"%key)
-        return par
+                return par
+        raise KeyError("unknown parameter %r"%key)
 
     def __contains__(self, key):
         for par in self.call_parameters:
             if par.name == key:
                 return True
-        else:
-            return False
+        return False
 
     def _set_vector_lengths(self):
         # type: () -> List[str]
@@ -525,15 +525,9 @@ class ParameterTable(object):
         Note: This modifies the underlying parameter object.
         """
         # Sort out the length of the vector parameters such as thickness[n]
-
         for p in self.kernel_parameters:
             if p.length_control:
-                for ref in self.kernel_parameters:
-                    if ref.id == p.length_control:
-                        break
-                else:
-                    raise ValueError("no reference variable %r for %s"
-                                     % (p.length_control, p.name))
+                ref = self._get_ref(p)
                 ref.is_control = True
                 ref.polydisperse = False
                 low, high = ref.limits
@@ -541,6 +535,14 @@ class ParameterTable(object):
                     raise ValueError("expected limits on %s to be within [0, 20]"
                                      % ref.name)
                 p.length = int(high)
+
+    def _get_ref(self, p):
+        # type: (Parameter) -> Parameter
+        for ref in self.kernel_parameters:
+            if ref.id == p.length_control:
+                return ref
+        raise ValueError("no reference variable %r for %s"
+                         % (p.length_control, p.name))
 
     def _get_defaults(self):
         # type: () -> ParameterSet
@@ -713,6 +715,7 @@ def isstr(x):
 
 
 def _find_source_lines(model_info, kernel_module):
+    # type: (ModelInfo, ModuleType) -> None
     """
     Identify the location of the C source inside the model definition file.
 
@@ -966,6 +969,8 @@ class ModelInfo(object):
     #: Returns *sesans(z, a, b, ...)* for models which can directly compute
     #: the SESANS correlation function.  Note: not currently implemented.
     sesans = None           # type: Optional[Callable[[np.ndarray], np.ndarray]]
+    #: Returns a random parameter set for the model
+    random = None           # type: Optional[Callable[[], Dict[str, float]]]
 
     # line numbers within the python file for bits of C source, if defined
     # NB: some compilers fail with a "#line 0" directive, so default to 1.

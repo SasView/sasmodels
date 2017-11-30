@@ -259,12 +259,12 @@ Plenum Press, New York, 1987.
 #   lim_(q->0) h(r) = (140D r^3 + 180C r^4 + 144B r^5 + 120A r^6)/720
 #
 
-
 from __future__ import division
+
+from math import fabs, exp, expm1
 
 import numpy as np
 from numpy import inf, nan
-from math import fabs, exp, expm1
 
 name = "onion"
 title = "Onion shell model with constant, linear or exponential density"
@@ -355,7 +355,7 @@ def profile(sld_core, radius_core, sld_solvent, n_shells,
             for z_shell in np.linspace(0, thickness[k], num_steps+1):
                 z.append(z_current+z_shell)
                 rho.append(slope*exp(A[k]*z_shell/thickness[k]) + const)
-    
+
     # add in the solvent
     z.append(z[-1])
     rho.append(sld_solvent)
@@ -385,4 +385,3 @@ demo = {
     #"thickness4_pd_n": 10,
     #"thickness4_pd": 0.4,
     }
-

@@ -11,16 +11,16 @@ the kernel should be released, which also releases the inputs.
 
 from __future__ import division, print_function
 
-import numpy as np
-
+# pylint: disable=unused-import
 try:
     from typing import List
 except ImportError:
     pass
 else:
+    import numpy as np
     from .details import CallDetails
     from .modelinfo import ModelInfo
-    import numpy as np  # type: ignore
+# pylint: enable=unused-import
 
 class KernelModel(object):
     info = None  # type: ModelInfo

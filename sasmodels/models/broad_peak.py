@@ -40,6 +40,7 @@ Authorship and Verification
 * **Last Reviewed by:** Richard Heenan **Date:** March 21, 2016
 """
 
+import numpy as np
 from numpy import inf, errstate
 
 name = "broad_peak"
@@ -94,7 +95,6 @@ def Iq(q,
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
-    import numpy as np
     pars = dict(
         scale=1,
         porod_scale=10**np.random.uniform(-8, -5),

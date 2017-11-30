@@ -103,6 +103,7 @@ Authorship and Verification
 * **Last Reviewed by:** Richard Heenan **Date:** March 21, 2016
 """
 
+import numpy as np
 from numpy import inf, pi
 
 name = "bcc_paracrystal"
@@ -135,7 +136,6 @@ parameters = [["dnn",         "Ang",       220,    [-inf, inf], "",            "
 source = ["lib/sas_3j1x_x.c", "lib/gauss150.c", "lib/sphere_form.c", "bcc_paracrystal.c"]
 
 def random():
-    import numpy as np
     # Define lattice spacing as a multiple of the particle radius
     # using the formulat a = 4 r/sqrt(3).  Systems which are ordered
     # are probably mostly filled, so use a distribution which goes from

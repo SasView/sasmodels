@@ -39,21 +39,21 @@ import numpy as np  # type: ignore
 
 from . import core
 from . import kerneldll
-from . import exception
 from .data import plot_theory, empty_data1D, empty_data2D, load_data
 from .direct_model import DirectModel, get_mesh
-from .convert import revert_name, revert_pars, constrain_new_to_old
 from .generate import FLOAT_RE, set_integration_size
 from .weights import plot_weights
 
+# pylint: disable=unused-import
 try:
     from typing import Optional, Dict, Any, Callable, Tuple
-except Exception:
+except ImportError:
     pass
 else:
     from .modelinfo import ModelInfo, Parameter, ParameterSet
     from .data import Data
     Calculator = Callable[[float], np.ndarray]
+# pylint: enable=unused-import
 
 USAGE = """
 usage: sascomp model [options...] [key=val]
@@ -96,7 +96,6 @@ Options (* for default):
     -engine=default uses the default calcution precision
     -single/-double/-half/-fast sets an OpenCL calculation engine
     -single!/-double!/-quad! sets an OpenMP calculation engine
-    -sasview sets the sasview calculation engine
 
     === plotting ===
     -plot*/-noplot plots or suppress the plot of the model
@@ -149,8 +148,14 @@ Program description
 
 kerneldll.ALLOW_SINGLE_PRECISION_DLLS = True
 
-# list of math functions for use in evaluating parameters
-MATH = dict((k,getattr(math, k)) for k in dir(math) if not k.startswith('_'))
+def build_math_context():
+    # type: () -> Dict[str, Callable]
+    """build dictionary of functions from math module"""
+    return dict((k, getattr(math, k))
+                for k in dir(math) if not k.startswith('_'))
+
+#: list of math functions for use in evaluating parameters
+MATH = build_math_context()
 
 # CRUFT python 2.6
 if not hasattr(datetime.timedelta, 'total_seconds'):
@@ -230,9 +235,8 @@ class push_seed(object):
         # type: () -> None
         pass
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, trace):
         # type: (Any, BaseException, Any) -> None
-        # TODO: better typing for __exit__ method
         np.random.set_state(self._state)
 
 def tic():
@@ -251,8 +255,6 @@ def set_beam_stop(data, radius, outer=None):
     # type: (Data, float, float) -> None
     """
     Add a beam stop of the given *radius*.  If *outer*, make an annulus.
-
-    Note: this function does not require sasview
     """
     if hasattr(data, 'qx_data'):
         q = np.sqrt(data.qx_data**2 + data.qy_data**2)
@@ -373,6 +375,18 @@ def _randomize_one(model_info, name, value):
     return np.random.uniform(*limits)
 
 def _random_pd(model_info, pars):
+    # type: (ModelInfo, Dict[str, float]) -> None
+    """
+    Generate a random dispersity distribution for the model.
+
+    1% no shape dispersity
+    85% single shape parameter
+    13% two shape parameters
+    1% three shape parameters
+
+    If oriented, then put dispersity in theta, add phi and psi dispersity
+    with 10% probability for each.
+    """
     pd = [p for p in model_info.parameters.kernel_parameters if p.polydisperse]
     pd_volume = []
     pd_oriented = []
@@ -443,7 +457,7 @@ def limit_dimensions(model_info, pars, maxdim):
     for p in model_info.parameters.call_parameters:
         value = pars[p.name]
         if p.units == 'Ang' and value > maxdim:
-            pars[p.name] = maxdim*10**np.random.uniform(-3,0)
+            pars[p.name] = maxdim*10**np.random.uniform(-3, 0)
 
 def constrain_pars(model_info, pars):
     # type: (ModelInfo, ParameterSet) -> None
@@ -489,7 +503,6 @@ def constrain_pars(model_info, pars):
     elif name == 'pearl_necklace':
         if pars['radius'] < pars['thick_string']:
             pars['radius'], pars['thick_string'] = pars['thick_string'], pars['radius']
-        pass
 
     elif name == 'rpa':
         # Make sure phi sums to 1.0
@@ -607,114 +620,6 @@ def suppress_magnetism(pars, suppress=True):
             pars[first_mag] = 8.
     return pars
 
-def eval_sasview(model_info, data):
-    # type: (Modelinfo, Data) -> Calculator
-    """
-    Return a model calculator using the pre-4.0 SasView models.
-    """
-    # importing sas here so that the error message will be that sas failed to
-    # import rather than the more obscure smear_selection not imported error
-    import sas
-    import sas.models
-    from sas.models.qsmearing import smear_selection
-    from sas.models.MultiplicationModel import MultiplicationModel
-    from sas.models.dispersion_models import models as dispersers
-
-    def get_model_class(name):
-        # type: (str) -> "sas.models.BaseComponent"
-        #print("new",sorted(_pars.items()))
-        __import__('sas.models.' + name)
-        ModelClass = getattr(getattr(sas.models, name, None), name, None)
-        if ModelClass is None:
-            raise ValueError("could not find model %r in sas.models"%name)
-        return ModelClass
-
-    # WARNING: ugly hack when handling model!
-    # Sasview models with multiplicity need to be created with the target
-    # multiplicity, so we cannot create the target model ahead of time for
-    # for multiplicity models.  Instead we store the model in a list and
-    # update the first element of that list with the new multiplicity model
-    # every time we evaluate.
-
-    # grab the sasview model, or create it if it is a product model
-    if model_info.composition:
-        composition_type, parts = model_info.composition
-        if composition_type == 'product':
-            P, S = [get_model_class(revert_name(p))() for p in parts]
-            model = [MultiplicationModel(P, S)]
-        else:
-            raise ValueError("sasview mixture models not supported by compare")
-    else:
-        old_name = revert_name(model_info)
-        if old_name is None:
-            raise ValueError("model %r does not exist in old sasview"
-                            % model_info.id)
-        ModelClass = get_model_class(old_name)
-        model = [ModelClass()]
-    model[0].disperser_handles = {}
-
-    # build a smearer with which to call the model, if necessary
-    smearer = smear_selection(data, model=model)
-    if hasattr(data, 'qx_data'):
-        q = np.sqrt(data.qx_data**2 + data.qy_data**2)
-        index = ((~data.mask) & (~np.isnan(data.data))
-                 & (q >= data.qmin) & (q <= data.qmax))
-        if smearer is not None:
-            smearer.model = model  # because smear_selection has a bug
-            smearer.accuracy = data.accuracy
-            smearer.set_index(index)
-            def _call_smearer():
-                smearer.model = model[0]
-                return smearer.get_value()
-            theory = _call_smearer
-        else:
-            theory = lambda: model[0].evalDistribution([data.qx_data[index],
-                                                        data.qy_data[index]])
-    elif smearer is not None:
-        theory = lambda: smearer(model[0].evalDistribution(data.x))
-    else:
-        theory = lambda: model[0].evalDistribution(data.x)
-
-    def calculator(**pars):
-        # type: (float, ...) -> np.ndarray
-        """
-        Sasview calculator for model.
-        """
-        oldpars = revert_pars(model_info, pars)
-        # For multiplicity models, create a model with the correct multiplicity
-        control = oldpars.pop("CONTROL", None)
-        if control is not None:
-            # sphericalSLD has one fewer multiplicity.  This update should
-            # happen in revert_pars, but it hasn't been called yet.
-            model[0] = ModelClass(control)
-        # paying for parameter conversion each time to keep life simple, if not fast
-        for k, v in oldpars.items():
-            if k.endswith('.type'):
-                par = k[:-5]
-                if v == 'gaussian': continue
-                cls = dispersers[v if v != 'rectangle' else 'rectangula']
-                handle = cls()
-                model[0].disperser_handles[par] = handle
-                try:
-                    model[0].set_dispersion(par, handle)
-                except Exception:
-                    exception.annotate_exception("while setting %s to %r"
-                                                 %(par, v))
-                    raise
-
-
-        #print("sasview pars",oldpars)
-        for k, v in oldpars.items():
-            name_attr = k.split('.')  # polydispersity components
-            if len(name_attr) == 2:
-                par, disp_par = name_attr
-                model[0].dispersion[par][disp_par] = v
-            else:
-                model[0].setParam(k, v)
-        return theory()
-
-    calculator.engine = "sasview"
-    return calculator
 
 DTYPE_MAP = {
     'half': '16',
@@ -811,9 +716,7 @@ def make_engine(model_info, data, dtype, cutoff, ngauss=0):
     if ngauss:
         set_integration_size(model_info, ngauss)
 
-    if dtype == 'sasview':
-        return eval_sasview(model_info, data)
-    elif dtype is None or not dtype.endswith('!'):
+    if dtype is None or not dtype.endswith('!'):
         return eval_opencl(model_info, data, dtype=dtype, cutoff=cutoff)
     else:
         return eval_ctypes(model_info, data, dtype=dtype[:-1], cutoff=cutoff)
@@ -849,7 +752,7 @@ def compare(opts, limits=None, maxdim=np.inf):
         if k > 1:
             # print a separate seed for each dataset for better reproducibility
             new_seed = np.random.randint(1000000)
-            print("Set %d uses -random=%i"%(k+1,new_seed))
+            print("Set %d uses -random=%i"%(k+1, new_seed))
             np.random.seed(new_seed)
         opts['pars'] = parse_pars(opts, maxdim=maxdim)
         if opts['pars'] is None:
@@ -870,6 +773,9 @@ def compare(opts, limits=None, maxdim=np.inf):
 
 def run_models(opts, verbose=False):
     # type: (Dict[str, Any]) -> Dict[str, Any]
+    """
+    Process a parameter set, return calculation results and times.
+    """
 
     base, comp = opts['engines']
     base_n, comp_n = opts['count']
@@ -925,7 +831,7 @@ def _print_stats(label, err):
     # type: (str, np.ma.ndarray) -> None
     # work with trimmed data, not the full set
     sorted_err = np.sort(abs(err.compressed()))
-    if len(sorted_err) == 0.:
+    if len(sorted_err) == 0:
         print(label + "  no valid values")
         return
 
@@ -943,6 +849,9 @@ def _print_stats(label, err):
 
 def plot_models(opts, result, limits=None, setnum=0):
     # type: (Dict[str, Any], Dict[str, Any], Optional[Tuple[float, float]]) -> Tuple[float, float]
+    """
+    Plot the results from :func:`run_model`.
+    """
     import matplotlib.pyplot as plt
 
     base_value, comp_value = result['base_value'], result['comp_value']
@@ -989,8 +898,8 @@ def plot_models(opts, result, limits=None, setnum=0):
             if (err == 0.).all():
                 errview = 'linear'
         if 0:  # 95% cutoff
-            sorted = np.sort(err.flatten())
-            cutoff = sorted[int(sorted.size*0.95)]
+            sorted_err = np.sort(err.flatten())
+            cutoff = sorted_err[int(sorted_err.size*0.95)]
             err[err > cutoff] = cutoff
         #err,errstr = base/comp,"ratio"
         plot_theory(data, None, resid=err, view=errview, use_data=use_data)
@@ -1053,14 +962,13 @@ OPTIONS = [
     # Precision options
     'engine=',
     'half', 'fast', 'single', 'double', 'single!', 'double!', 'quad!',
-    'sasview',  # TODO: remove sasview 3.x support
 
     # Output options
     'help', 'html', 'edit',
     ]
 
-NAME_OPTIONS = set(k for k in OPTIONS if not k.endswith('='))
-VALUE_OPTIONS = [k[:-1] for k in OPTIONS if k.endswith('=')]
+NAME_OPTIONS = (lambda: set(k for k in OPTIONS if not k.endswith('=')))()
+VALUE_OPTIONS = (lambda: [k[:-1] for k in OPTIONS if k.endswith('=')])()
 
 
 def columnize(items, indent="", width=79):
@@ -1108,10 +1016,12 @@ def get_pars(model_info, use_demo=False):
     return pars
 
 INTEGER_RE = re.compile("^[+-]?[1-9][0-9]*$")
-def isnumber(str):
-    match = FLOAT_RE.match(str)
-    isfloat = (match and not str[match.end():])
-    return isfloat or INTEGER_RE.match(str)
+def isnumber(s):
+    # type: (str) -> bool
+    """Return True if string contains an int or float"""
+    match = FLOAT_RE.match(s)
+    isfloat = (match and not s[match.end():])
+    return isfloat or INTEGER_RE.match(s)
 
 # For distinguishing pairs of models for comparison
 # key-value pair separator =
@@ -1150,7 +1060,7 @@ def parse_opts(argv):
 
     name = positional_args[-1]
 
-    # pylint: disable=bad-whitespace
+    # pylint: disable=bad-whitespace,C0321
     # Interpret the flags
     opts = {
         'plot'      : True,
@@ -1236,14 +1146,13 @@ def parse_opts(argv):
         elif arg == '-single!': opts['engine'] = 'single!'
         elif arg == '-double!': opts['engine'] = 'double!'
         elif arg == '-quad!':   opts['engine'] = 'quad!'
-        elif arg == '-sasview': opts['engine'] = 'sasview'
         elif arg == '-edit':    opts['explore'] = True
         elif arg == '-demo':    opts['use_demo'] = True
         elif arg == '-default': opts['use_demo'] = False
         elif arg == '-weights': opts['show_weights'] = True
         elif arg == '-html':    opts['html'] = True
         elif arg == '-help':    opts['html'] = True
-    # pylint: enable=bad-whitespace
+    # pylint: enable=bad-whitespace,C0321
 
     # Magnetism forces 2D for now
     if opts['magnetic']:
@@ -1327,6 +1236,7 @@ def parse_opts(argv):
     return opts
 
 def set_spherical_integration_parameters(opts, steps):
+    # type: (Dict[str, Any], int) -> None
     """
     Set integration parameters for spherical integration over the entire
     surface in theta-phi coordinates.
@@ -1350,9 +1260,19 @@ def set_spherical_integration_parameters(opts, steps):
             'psi_pd_n=%d'%(2*steps),
             'psi_pd_type=rectangle',
         ])
-        pass
 
 def parse_pars(opts, maxdim=np.inf):
+    # type: (Dict[str, Any], float) -> Tuple[Dict[str, float], Dict[str, float]]
+    """
+    Generate a parameter set.
+
+    The default values come from the model, or a randomized model if a seed
+    value is given.  Next, evaluate any parameter expressions, constraining
+    the value of the parameter within and between models.  If *maxdim* is
+    given, limit parameters with units of Angstrom to this value.
+
+    Returns a pair of parameter dictionaries for base and comparison models.
+    """
     model_info, model_info2 = opts['info']
 
     # Get demo parameters from model definition, or use default parameters
@@ -1391,7 +1311,7 @@ def parse_pars(opts, maxdim=np.inf):
             s = set(p.split('_pd')[0] for p in pars)
             print("%r invalid; parameters are: %s"%(k, ", ".join(sorted(s))))
             return None
-        v1, v2 = v.split(PAR_SPLIT, 2) if PAR_SPLIT in v else (v,v)
+        v1, v2 = v.split(PAR_SPLIT, 2) if PAR_SPLIT in v else (v, v)
         if v1 and k in pars:
             presets[k] = float(v1) if isnumber(v1) else v1
         if v2 and k in pars2:
@@ -1440,14 +1360,13 @@ def show_docs(opts):
     """
     show html docs for the model
     """
-    import os
     from .generate import make_html
     from . import rst2html
 
     info = opts['info'][0]
     html = make_html(info)
     path = os.path.dirname(info.filename)
-    url = "file://"+path.replace("\\","/")[2:]+"/"
+    url = "file://" + path.replace("\\", "/")[2:] + "/"
     rst2html.view_html_qtapp(html, url)
 
 def explore(opts):
@@ -1471,11 +1390,12 @@ def explore(opts):
     frame.panel.set_model(model=problem)
     frame.panel.Layout()
     frame.panel.aui.Split(0, wx.TOP)
-    def reset_parameters(event):
+    def _reset_parameters(event):
         model.revert_values()
         signal.update_parameters(problem)
-    frame.Bind(wx.EVT_TOOL, reset_parameters, frame.ToolBar.GetToolByPos(1))
-    if is_mac: frame.Show()
+    frame.Bind(wx.EVT_TOOL, _reset_parameters, frame.ToolBar.GetToolByPos(1))
+    if is_mac:
+        frame.Show()
     # If running withing an app, start the main loop
     if app:
         app.MainLoop()
@@ -1517,10 +1437,18 @@ class Explore(object):
         self.limits = None
 
     def revert_values(self):
+        # type: () -> None
+        """
+        Restore starting values of the parameters.
+        """
         for k, v in self.starting_values.items():
             self.pars[k].value = v
 
     def model_update(self):
+        # type: () -> None
+        """
+        Respond to signal that model parameters have been changed.
+        """
         pass
 
     def numpoints(self):

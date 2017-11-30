@@ -86,6 +86,8 @@ Authorship and Verification
 * **Last Modified by:** Paul Butler **Date:** March 20, 2016
 * **Last Reviewed by:** Richard Heenan **Date:** January 4, 2017
 """
+
+import numpy as np
 from numpy import inf, sin, cos, pi
 
 name = "barbell"
@@ -115,12 +117,11 @@ parameters = [["sld",         "1e-6/Ang^2",   4, [-inf, inf], "sld",         "Ba
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "barbell.c"]
 
 def random():
-    import numpy as np
     # TODO: increase volume range once problem with bell radius is fixed
     # The issue is that bell radii of more than about 200 fail at high q
-    V = 10**np.random.uniform(7, 9)
-    bar_volume = 10**np.random.uniform(-4, -1)*V
-    bell_volume = V - bar_volume
+    volume = 10**np.random.uniform(7, 9)
+    bar_volume = 10**np.random.uniform(-4, -1)*volume
+    bell_volume = volume - bar_volume
     bell_radius = (bell_volume/6)**0.3333  # approximate
     min_bar = bar_volume/np.pi/bell_radius**2
     bar_length = 10**np.random.uniform(0, 3)*min_bar
@@ -149,7 +150,8 @@ q = 0.1
 # april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
 qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
-tests = [[{}, 0.075, 25.5691260532],
-        [{'theta':80., 'phi':10.}, (qx, qy), 3.04233067789],
-        ]
+tests = [
+    [{}, 0.075, 25.5691260532],
+    [{'theta':80., 'phi':10.}, (qx, qy), 3.04233067789],
+]
 del qx, qy  # not necessary to delete, but cleaner

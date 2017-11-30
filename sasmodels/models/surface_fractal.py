@@ -36,9 +36,9 @@ References
 ----------
 
 D Mildner and P Hall, *J. Phys. D: Appl. Phys.*, 19 (1986) 1535-1545
-
 """
 
+import numpy as np
 from numpy import inf
 
 name = "surface_fractal"
@@ -77,7 +77,6 @@ parameters = [["radius",        "Ang", 10.0, [0, inf],   "",
 source = ["lib/sas_3j1x_x.c", "lib/sas_gamma.c", "surface_fractal.c"]
 
 def random():
-    import numpy as np
     radius = 10**np.random.uniform(1, 4)
     fractal_dim_surf = np.random.uniform(1, 3-1e-6)
     cutoff_length = 1e6  # Sets the low q limit; keep it big for sim

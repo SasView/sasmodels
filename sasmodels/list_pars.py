@@ -10,7 +10,6 @@ addition to just the parameter name.
 """
 from __future__ import print_function
 
-import sys
 import argparse
 
 from .core import load_model_info, list_models

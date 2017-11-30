@@ -1,5 +1,5 @@
 """
-This is a data file  used to load in sesans data and fit it using the bumps engine
+This is a data file used to load in sesans data and fit it using the bumps engine
 """
 from bumps.names import *
 
@@ -37,11 +37,10 @@ param_range = {
 
 # Constraints
 # model.param_name = f(other params)
-# EXAMPLE: model.scale = model.radius*model.radius*(1 - phi) - where radius and scale are model functions and phi is
-# a custom parameter
+# EXAMPLE: model.scale = model.radius*model.radius*(1 - phi) - where radius
+# and scale are model functions and phi is a custom parameter
 model.scale = phi*(1-phi)
 
 # Send to the fitting engine
 # DO NOT MODIFY THIS LINE
 problem = sesansfit.sesans_fit(sesans_file, model, initial_vals, custom_params, param_range)
-

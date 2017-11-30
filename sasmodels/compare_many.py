@@ -21,7 +21,7 @@ import numpy as np  # type: ignore
 from . import core
 from .compare import (randomize_pars, suppress_pd, make_data,
                       make_engine, get_pars, columnize,
-                      constrain_pars, constrain_new_to_old)
+                      constrain_pars)
 
 MODELS = core.list_models()
 
@@ -79,10 +79,9 @@ PRECISION = {
     'single!': 5e-5,
     'double!': 5e-14,
     'quad!': 5e-18,
-    'sasview': 5e-14,
 }
 def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
-                     base='sasview', comp='double'):
+                     base='single', comp='double'):
     r"""
     Compare the model under different calculation engines.
 
@@ -163,10 +162,9 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
     for k in range(N):
         print("Model %s %d"%(name, k+1), file=sys.stderr)
         seed = np.random.randint(1e6)
-        pars_i = randomize_pars(model_info, pars, seed)
+        np.random.seed(seed)
+        pars_i = randomize_pars(model_info, pars)
         constrain_pars(model_info, pars_i)
-        if 'sasview' in (base, comp):
-            constrain_new_to_old(model_info, pars_i)
         if mono:
             pars_i = suppress_pd(pars_i)
 
@@ -265,8 +263,10 @@ def main(argv):
         print_usage()
         return
 
-    data, index = make_data({'qmax':1.0, 'is2d':is2D, 'nq':Nq, 'res':0.,
-                             'accuracy': 'Low', 'view':'log', 'zero': False})
+    data, index = make_data({
+        'qmin': 0.001, 'qmax': 1.0, 'is2d': is2D, 'nq': Nq, 'res': 0.,
+        'accuracy': 'Low', 'view':'log', 'zero': False
+        })
     for model in model_list:
         compare_instance(model, data, index, N=count, mono=mono,
                          cutoff=cutoff, base=base, comp=comp)

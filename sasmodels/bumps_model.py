@@ -19,6 +19,7 @@ import numpy as np  # type: ignore
 from .data import plot_theory
 from .direct_model import DataMixin
 
+# pylint: disable=unused-import
 try:
     from typing import Dict, Union, Tuple, Any
     from .data import Data1D, Data2D
@@ -27,6 +28,7 @@ try:
     Data = Union[Data1D, Data2D]
 except ImportError:
     pass
+# pylint: enable=unused-import
 
 try:
     # Optional import. This allows the doc builder and nosetests to run even
@@ -36,8 +38,10 @@ except ImportError:
     pass
 
 
-def create_parameters(model_info, **kwargs):
-    # type: (ModelInfo, **Union[float, str, Parameter]) -> Tuple[Dict[str, Parameter], Dict[str, str]]
+def create_parameters(model_info,  # type: ModelInfo
+                      **kwargs     # type: Union[float, str, Parameter]
+                     ):
+    # type: (...) -> Tuple[Dict[str, Parameter], Dict[str, str]]
     """
     Generate Bumps parameters from the model info.
 
@@ -237,4 +241,3 @@ class Experiment(DataMixin):
         # type: (Dict[str, Any]) -> None
         # pylint: disable=attribute-defined-outside-init
         self.__dict__ = state
-

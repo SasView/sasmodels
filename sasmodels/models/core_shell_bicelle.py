@@ -49,9 +49,15 @@ where
 
     \begin{align*}
     F(Q,\alpha) = &\bigg[
-    (\rho_c - \rho_f) V_c \frac{2J_1(QRsin \alpha)}{QRsin\alpha}\frac{sin(QLcos\alpha/2)}{Q(L/2)cos\alpha} \\
-    &+(\rho_f - \rho_r) V_{c+f} \frac{2J_1(QRsin\alpha)}{QRsin\alpha}\frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha} \\
-    &+(\rho_r - \rho_s) V_t \frac{2J_1(Q(R+t_r)sin\alpha)}{Q(R+t_r)sin\alpha}\frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha}
+    (\rho_c - \rho_f) V_c
+     \frac{2J_1(QRsin \alpha)}{QRsin\alpha}
+     \frac{sin(QLcos\alpha/2)}{Q(L/2)cos\alpha} \\
+    &+(\rho_f - \rho_r) V_{c+f}
+     \frac{2J_1(QRsin\alpha)}{QRsin\alpha}
+     \frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha} \\
+    &+(\rho_r - \rho_s) V_t
+     \frac{2J_1(Q(R+t_r)sin\alpha)}{Q(R+t_r)sin\alpha}
+     \frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha}
     \bigg]
     \end{align*}
 
@@ -63,8 +69,8 @@ the thickness of the rim and $J_1$ the usual first order bessel function.
 The output of the 1D scattering intensity function for randomly oriented
 cylinders is then given by integrating over all possible $\theta$ and $\phi$.
 
-For oriented bicelles the *theta*, and *phi* orientation parameters will appear when fitting 2D data,
-see the :ref:`cylinder` model for further information.
+For oriented bicelles the *theta*, and *phi* orientation parameters will appear
+when fitting 2D data, see the :ref:`cylinder` model for further information.
 Our implementation of the scattering kernel and the 1D scattering intensity
 use the c-library from NIST.
 
@@ -91,6 +97,7 @@ Authorship and Verification
 * **Last Reviewed by:** Richard Heenan **Date:** January 4, 2017
 """
 
+import numpy as np
 from numpy import inf, sin, cos, pi
 
 name = "core_shell_bicelle"
@@ -148,7 +155,6 @@ source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
           "core_shell_bicelle.c"]
 
 def random():
-    import numpy as np
     pars = dict(
         radius=10**np.random.uniform(1.3, 3),
         length=10**np.random.uniform(1.3, 4),
@@ -172,8 +178,8 @@ q = 0.1
 # april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
 qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
-tests = [[{}, 0.05, 7.4883545957],
-        [{'theta':80., 'phi':10.}, (qx, qy), 2.81048892474 ]
-        ]
+tests = [
+    [{}, 0.05, 7.4883545957],
+    [{'theta':80., 'phi':10.}, (qx, qy), 2.81048892474]
+]
 del qx, qy  # not necessary to delete, but cleaner
-

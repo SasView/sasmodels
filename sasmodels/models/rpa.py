@@ -149,4 +149,3 @@ def hidden(case_num):
         return HIDE_A
     else:
         return HIDE_ALL
-

@@ -40,6 +40,8 @@ J B Hayter and J Penfold, *Molecular Physics*, 42 (1981) 109-118
 
 J P Hansen and J B Hayter, *Molecular Physics*, 46 (1982) 651-656
 """
+
+import numpy as np
 from numpy import inf
 
 category = "structure-factor"
@@ -90,7 +92,6 @@ form_volume = """
 # VR defaults to 1.0
 
 def random():
-    import numpy as np
     # TODO: too many failures for random hayter_msa parameters
     pars = dict(
         scale=1, background=0,

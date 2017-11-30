@@ -94,9 +94,9 @@ Authorship and Verification
 * **Author:**
 * **Last Modified by:**
 * **Last Reviewed by:**  Richard Heenan - corrected equation in docs **Date:** December 21, 2016
-
 """
 
+import numpy as np
 from numpy import pi, inf, sqrt, sin, cos
 
 name = "elliptical_cylinder"
@@ -139,16 +139,15 @@ def ER(radius_minor, axis_ratio, length):
     return 0.5 * (ddd) ** (1. / 3.)
 
 def random():
-    import numpy as np
     # V = pi * radius_major * radius_minor * length;
-    V = 10**np.random.uniform(3, 9)
+    volume = 10**np.random.uniform(3, 9)
     length = 10**np.random.uniform(1, 3)
     axis_ratio = 10**np.random.uniform(0, 2)
-    radius_minor = np.sqrt(V/length/axis_ratio)
-    Vf = 10**np.random.uniform(-4, -2)
+    radius_minor = np.sqrt(volume/length/axis_ratio)
+    volfrac = 10**np.random.uniform(-4, -2)
     pars = dict(
         #background=0, sld=0, sld_solvent=1,
-        scale=1e9*Vf/V,
+        scale=1e9*volfrac/volume,
         length=length,
         radius_minor=radius_minor,
         axis_ratio=axis_ratio,
@@ -168,5 +167,5 @@ tests = [
     [{'radius_minor': 20.0, 'axis_ratio': 1.5, 'sld': 4.0, 'length':400.0,
       'sld_solvent':1.0, 'background':0.0},
      0.001, 675.504402],
-#    [{'theta':80., 'phi':10.}, (qx, qy), 7.88866563001 ],
+    #[{'theta':80., 'phi':10.}, (qx, qy), 7.88866563001 ],
 ]

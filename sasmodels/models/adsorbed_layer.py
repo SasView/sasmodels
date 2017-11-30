@@ -56,6 +56,7 @@ Authorship and Verification
 * **Last Reviewed by:** Steve King **Date:** March 18, 2016
 """
 
+import numpy as np
 from numpy import inf, pi, exp, errstate
 
 name = "adsorbed_layer"
@@ -99,7 +100,6 @@ def random():
     #    scale = 6 pi/100 (contrast/density*absorbed_amount)^2 * Vf/radius
     # the remaining parameters can be randomly generated from zero to
     # twice the default value as done by default in compare.py
-    import numpy as np
     pars = dict(
         scale=1,
         second_moment=10**np.random.uniform(1, 3),

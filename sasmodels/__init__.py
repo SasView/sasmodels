@@ -46,5 +46,3 @@ def data_files():
         _expand_patterns(['models', 'img'], ['*.*']),
         ]
     return return_list
-
-

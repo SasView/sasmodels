@@ -30,8 +30,10 @@ from . import weights
 from . import modelinfo
 from .details import make_kernel_args, dispersion_mesh
 
+# pylint: disable=unused-import
 try:
-    from typing import Dict, Mapping, Any, Sequence, Tuple, NamedTuple, List, Optional, Union, Callable
+    from typing import (Dict, Mapping, Any, Sequence, Tuple, NamedTuple,
+                        List, Optional, Union, Callable)
     from .modelinfo import ModelInfo, Parameter
     from .kernel import KernelModel
     MultiplicityInfoType = NamedTuple(
@@ -41,6 +43,7 @@ try:
     SasviewModelType = Callable[[int], "SasviewModel"]
 except ImportError:
     pass
+# pylint: enable=unused-import
 
 logger = logging.getLogger(__name__)
 
@@ -185,9 +188,9 @@ def _register_old_models():
     import sas.sascalc.fit
     sys.modules['sas.models'] = sas.sascalc.fit
     sas.models = sas.sascalc.fit
-
     import sas.models
     from sasmodels.conversion_table import CONVERSION_TABLE
+
     for new_name, conversion in CONVERSION_TABLE.get((3, 1, 2), {}).items():
         # CoreShellEllipsoidModel => core_shell_ellipsoid:1
         new_name = new_name.split(':')[0]
@@ -201,6 +204,9 @@ def _register_old_models():
 
 def MultiplicationModel(form_factor, structure_factor):
     # type: ("SasviewModel", "SasviewModel") -> "SasviewModel"
+    """
+    Returns a constructed product model from form_factor and structure_factor.
+    """
     model_info = product.make_product_info(form_factor._model_info,
                                            structure_factor._model_info)
     ConstructedModel = make_model_from_info(model_info)
@@ -834,7 +840,7 @@ def test_empty_distribution():
     cylinder.setParam('radius', -1.0)
     cylinder.setParam('background', 0.)
     Iq = cylinder.evalDistribution(np.asarray([0.1]))
-    assert np.isnan(Iq[0]), "empty distribution fails"
+    assert Iq[0] == 0., "empty distribution fails"
 
 def test_model_list():
     # type: () -> None

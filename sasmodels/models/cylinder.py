@@ -63,7 +63,7 @@ are defined in :numref:`cylinder-angle-definition` , for further details see :re
 .. figure:: img/cylinder_angle_definition.png
 
     Angles $\theta$ and $\phi$ orient the cylinder relative
-    to the beam line coordinates, where the beam is along the $z$ axis. Rotation $\theta$, initially 
+    to the beam line coordinates, where the beam is along the $z$ axis. Rotation $\theta$, initially
     in the $xz$ plane, is carried out first, then rotation $\phi$ about the $z$ axis. Orientation distributions
     are described as rotations about two perpendicular axes $\delta_1$ and $\delta_2$
     in the frame of the cylinder itself, which when $\theta = \phi = 0$ are parallel to the $Y$ and $X$ axes.
@@ -132,11 +132,11 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Cylinder length"],
               ["theta", "degrees", 60, [-360, 360], "orientation",
                "cylinder axis to beam angle"],
-              ["phi", "degrees",   60, [-360, 360], "orientation",
+              ["phi", "degrees", 60, [-360, 360], "orientation",
                "rotation about beam"],
              ]
 
-source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",  "cylinder.c"]
+source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "cylinder.c"]
 
 def ER(radius, length):
     """
@@ -146,10 +146,9 @@ def ER(radius, length):
     return 0.5 * (ddd) ** (1. / 3.)
 
 def random():
-    import numpy as np
-    V = 10**np.random.uniform(5, 12)
-    length = 10**np.random.uniform(-2, 2)*V**0.333
-    radius = np.sqrt(V/length/np.pi)
+    volume = 10**np.random.uniform(5, 12)
+    length = 10**np.random.uniform(-2, 2)*volume**0.333
+    radius = np.sqrt(volume/length/np.pi)
     pars = dict(
         #scale=1,
         #background=0,
@@ -171,13 +170,15 @@ demo = dict(scale=1, background=0,
 
 qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
 # After redefinition of angles, find new tests values.  Was 10 10 in old coords
-tests = [[{}, 0.2, 0.042761386790780453],
-        [{}, [0.2], [0.042761386790780453]],
-#  new coords
-        [{'theta':80.1534480601659, 'phi':10.1510817110481}, (qx, qy), 0.03514647218513852],
-        [{'theta':80.1534480601659, 'phi':10.1510817110481}, [(qx, qy)], [0.03514647218513852]],
-# old coords   [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.03514647218513852],
-#              [{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.03514647218513852]],
-        ]
+tests = [
+    [{}, 0.2, 0.042761386790780453],
+    [{}, [0.2], [0.042761386790780453]],
+    #  new coords
+    [{'theta':80.1534480601659, 'phi':10.1510817110481}, (qx, qy), 0.03514647218513852],
+    [{'theta':80.1534480601659, 'phi':10.1510817110481}, [(qx, qy)], [0.03514647218513852]],
+    # old coords
+    #[{'theta':10.0, 'phi':10.0}, (qx, qy), 0.03514647218513852],
+    #[{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.03514647218513852]],
+]
 del qx, qy  # not necessary to delete, but cleaner
 # ADDED by:  RKH  ON: 18Mar2016 renamed sld's etc

@@ -89,9 +89,9 @@ Reference
 
 M Bergstrom, J S Pedersen, P Schurtenberger, S U Egelhaaf,
 *J. Phys. Chem. B*, 103 (1999) 9888-9897
-
 """
 
+import numpy as np
 from numpy import inf
 
 name = "lamellar_stack_paracrystal"
@@ -132,7 +132,6 @@ form_volume = """
 """
 
 def random():
-    import numpy as np
     total_thickness = 10**np.random.uniform(2, 4.7)
     Nlayers = np.random.randint(2, 200)
     d_spacing = total_thickness / Nlayers
@@ -157,9 +156,10 @@ demo = dict(scale=1, background=0,
 
 #
 tests = [
-    [{'scale': 1.0, 'background': 0.0, 'thickness': 33.,'Nlayers': 20.0,
+    [{'scale': 1.0, 'background': 0.0, 'thickness': 33., 'Nlayers': 20.0,
       'd_spacing': 250., 'sigma_d': 0.2, 'sld': 1.0,
-      'sld_solvent': 6.34, 'thickness_pd': 0.0, 'thickness_pd_n': 40 },
+      'sld_solvent': 6.34, 'thickness_pd': 0.0, 'thickness_pd_n': 40},
      [0.001, 0.215268], [21829.3, 0.00487686]],
 ]
-# ADDED by: RKH  ON: 18Mar2016  converted from sasview previously, now renaming everything & sorting the docs
+# ADDED by: RKH  ON: 18Mar2016  converted from sasview previously,
+# now renaming everything & sorting the docs

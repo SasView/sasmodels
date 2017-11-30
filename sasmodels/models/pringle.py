@@ -47,9 +47,9 @@ Derivation by Stefan Alexandru Rautu.
 **Last Modified by:** Wojciech Wpotrzebowski **on:** March 20, 2016
 
 **Last Reviewed by:** Andrew Jackson **on:** September 26, 2016
-
 """
 
+import numpy as np
 from numpy import inf, pi
 
 name = "pringle"
@@ -85,7 +85,6 @@ def ER(radius, thickness, alpha, beta):
     return 0.5 * (ddd) ** (1. / 3.)
 
 def random():
-    import numpy as np
     alpha, beta = 10**np.random.uniform(-1, 1, size=2)
     radius = 10**np.random.uniform(1, 3)
     thickness = 10**np.random.uniform(0.7, 2)
