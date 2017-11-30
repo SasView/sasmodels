@@ -42,36 +42,16 @@ Iq(double q,
 {
     // Code converted from functions CSPPKernel and CSParallelepiped in libCylinder.c
     // Did not understand the code completely, it should be rechecked (Miguel Gonzalez)
-    //Code is rewritten,the code is compliant with Diva Singhs thesis now (Dirk Honecker)
+    // Code is rewritten,the code is compliant with Diva Singhs thesis now (Dirk Honecker)
+    // Code rewritten (PAK)
 
-    const double mu = 0.5 * q * length_b;
+    const double half_q = 0.5*q;
 
-    // Scale sides by B
-    const double a_over_b = length_a / length_b;
-    const double c_over_b = length_c / length_b;
+    const double tA = length_a + 2.0*thick_rim_a;
+    const double tB = length_b + 2.0*thick_rim_b;
+    const double tC = length_c + 2.0*thick_rim_c;
 
-    double tA_over_b = a_over_b + 2.0*thick_rim_a/length_b;
-    double tB_over_b = 1+ 2.0*thick_rim_b/length_b;
-    double tC_over_b = c_over_b + 2.0*thick_rim_c/length_b;
-
-    double Vin = length_a * length_b * length_c;
-#if OVERLAPPING
-    const double capA_area = length_b*length_c;
-    const double capB_area = (length_a+2.*thick_rim_a)*length_c;
-    const double capC_area = (length_a+2.*thick_rim_a)*(length_b+2.*thick_rim_b);
-#else
-    const double capA_area = length_b*length_c;
-    const double capB_area = length_a*length_c;
-    const double capC_area = length_a*length_b;
-#endif
-    const double Va = length_a * capA_area;
-    const double Vb = length_b * capB_area;
-    const double Vc = length_c * capC_area;
-    const double Vat = Va + 2.0 * thick_rim_a * capA_area;
-    const double Vbt = Vb + 2.0 * thick_rim_b * capB_area;
-    const double Vct = Vc + 2.0 * thick_rim_c * capC_area;
-
-    // Scale factors (note that drC is not used later)
+    // Scale factors
     const double dr0 = (core_sld-solvent_sld);
     const double drA = (arim_sld-solvent_sld);
     const double drB = (brim_sld-solvent_sld);
@@ -80,32 +60,32 @@ Iq(double q,
     // outer integral (with gauss points), integration limits = 0, 1
     double outer_sum = 0; //initialize integral
     for( int i=0; i<76; i++) {
-        double sigma = 0.5 * ( Gauss76Z[i] + 1.0 );
-        double mu_proj = mu * sqrt(1.0-sigma*sigma);
+        const double cos_alpha = 0.5 * ( Gauss76Z[i] + 1.0 );
+        const double mu = half_q * sqrt(1.0-cos_alpha*cos_alpha);
 
         // inner integral (with gauss points), integration limits = 0, pi/2
-        const double siC = sas_sinx_x(mu * sigma * c_over_b);
-        const double siCt = sas_sinx_x(mu * sigma * tC_over_b);
+        const double siC = length_c * sas_sinx_x(length_c * cos_alpha * half_q);
+        const double siCt = tC * sas_sinx_x(tC * cos_alpha * half_q);
         double inner_sum = 0.0;
         for(int j=0; j<76; j++) {
-            const double uu = 0.5 * ( Gauss76Z[j] + 1.0 );
-            double sin_uu, cos_uu;
-            SINCOS(M_PI_2*uu, sin_uu, cos_uu);
-            const double siA = sas_sinx_x(mu_proj * sin_uu * a_over_b);
-            const double siB = sas_sinx_x(mu_proj * cos_uu );
-            const double siAt = sas_sinx_x(mu_proj * sin_uu * tA_over_b);
-            const double siBt = sas_sinx_x(mu_proj * cos_uu * tB_over_b);
+            const double beta = 0.5 * ( Gauss76Z[j] + 1.0 );
+            double sin_beta, cos_beta;
+            SINCOS(M_PI_2*beta, sin_beta, cos_beta);
+            const double siA = length_a * sas_sinx_x(length_a * mu * sin_beta);
+            const double siB = length_b * sas_sinx_x(length_b * mu * cos_beta);
+            const double siAt = tA * sas_sinx_x(tA * mu * sin_beta);
+            const double siBt = tB * sas_sinx_x(tB * mu * cos_beta);
 
 #if OVERLAPPING
-            const double f = dr0*Vin*siA*siB*siC
-                + drA*(Vat*siAt-Va*siA)*siB*siC
-                + drB*siAt*(Vbt*siBt-Vb*siB)*siC
-                + drC*siAt*siBt*(Vct*siCt-Vc*siC);
+            const double f = dr0*siA*siB*siC
+                + drA*(siAt-siA)*siB*siC
+                + drB*siAt*(siBt-siB)*siC
+                + drC*siAt*siBt*(siCt-siC);
 #else
-            const double f = dr0*Vin*siA*siB*siC
-                + drA*(Vat*siAt-Va*siA)*siB*siC
-                + drB*siA*(Vbt*siBt-Vb*siB)*siC
-                + drC*siA*siB*(Vct*siCt-Vc*siC);
+            const double f = dr0*siA*siB*siC
+                + drA*(siAt-siA)*siB*siC
+                + drB*siA*(siBt-siB)*siC
+                + drC*siA*siB*(siCt-siC);
 #endif
 
             inner_sum += Gauss76Wt[j] * f * f;
@@ -140,45 +120,28 @@ Iqxy(double qa, double qb, double qc,
     const double drB = brim_sld-solvent_sld;
     const double drC = crim_sld-solvent_sld;
 
-    double Vin = length_a * length_b * length_c;
-#if OVERLAPPING
-    const double capA_area = length_b*length_c;
-    const double capB_area = (length_a+2.*thick_rim_a)*length_c;
-    const double capC_area = (length_a+2.*thick_rim_a)*(length_b+2.*thick_rim_b);
-#else
-    const double capA_area = length_b*length_c;
-    const double capB_area = length_a*length_c;
-    const double capC_area = length_a*length_b;
-#endif
-    const double Va = length_a * capA_area;
-    const double Vb = length_b * capB_area;
-    const double Vc = length_c * capC_area;
-    const double Vat = Va + 2.0 * thick_rim_a * capA_area;
-    const double Vbt = Vb + 2.0 * thick_rim_b * capB_area;
-    const double Vct = Vc + 2.0 * thick_rim_c * capC_area;
-
     // The definitions of ta, tb, tc are not the same as in the 1D case because there is no
     // the scaling by B.
     const double tA = length_a + 2.0*thick_rim_a;
     const double tB = length_b + 2.0*thick_rim_b;
     const double tC = length_c + 2.0*thick_rim_c;
-    const double siA = sas_sinx_x(0.5*length_a*qa);
-    const double siB = sas_sinx_x(0.5*length_b*qb);
-    const double siC = sas_sinx_x(0.5*length_c*qc);
-    const double siAt = sas_sinx_x(0.5*tA*qa);
-    const double siBt = sas_sinx_x(0.5*tB*qb);
-    const double siCt = sas_sinx_x(0.5*tC*qc);
+    const double siA = length_a*sas_sinx_x(0.5*length_a*qa);
+    const double siB = length_b*sas_sinx_x(0.5*length_b*qb);
+    const double siC = length_c*sas_sinx_x(0.5*length_c*qc);
+    const double siAt = tA*sas_sinx_x(0.5*tA*qa);
+    const double siBt = tB*sas_sinx_x(0.5*tB*qb);
+    const double siCt = tC*sas_sinx_x(0.5*tC*qc);
 
 #if OVERLAPPING
-    const double f = dr0*Vin*siA*siB*siC
-        + drA*(Vat*siAt-Va*siA)*siB*siC
-        + drB*siAt*(Vbt*siBt-Vb*siB)*siC
-        + drC*siAt*siBt*(Vct*siCt-Vc*siC);
+    const double f = dr0*siA*siB*siC
+        + drA*(siAt-siA)*siB*siC
+        + drB*siAt*(siBt-siB)*siC
+        + drC*siAt*siBt*(siCt-siC);
 #else
-    const double f = dr0*Vin*siA*siB*siC
-        + drA*(Vat*siAt-Va*siA)*siB*siC
-        + drB*siA*(Vbt*siBt-Vb*siB)*siC
-        + drC*siA*siB*(Vct*siCt-Vc*siC);
+    const double f = dr0*siA*siB*siC
+        + drA*(siAt-siA)*siB*siC
+        + drB*siA*(siBt-siB)*siC
+        + drC*siA*siB*(siCt-siC);
 #endif
 
     return 1.0e-4 * f * f;

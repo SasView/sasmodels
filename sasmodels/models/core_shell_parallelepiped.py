@@ -39,35 +39,51 @@ The intensity calculated follows the :ref:`parallelepiped` model, with the
 core-shell intensity being calculated as the square of the sum of the
 amplitudes of the core and the slabs on the edges.
 
-the scattering amplitude is computed for a particular orientation of the core-shell
-parallelepiped with respect to the scattering vector and then averaged over all
-possible orientations, where $\alpha$ is the angle between the $z$ axis and the longest axis $C$
-of the parallelepiped, $\beta$ is the angle between projection of the particle in the $xy$ detector plane and the $y$ axis.
+the scattering amplitude is computed for a particular orientation of the
+core-shell parallelepiped with respect to the scattering vector and then
+averaged over all possible orientations, where $\alpha$ is the angle between
+the $z$ axis and the $C$ axis of the parallelepiped, $\beta$ is
+the angle between projection of the particle in the $xy$ detector plane
+and the $y$ axis.
 
 .. math::
-    \begin{align*}
-    F(Q)&=A B C (\rho_\text{core}-\rho_\text{solvent})  S(A \sin\alpha \sin\beta)S(B \sin\alpha \cos\beta)S(C \cos\alpha) \\
-    &+ 2t_A B C (\rho_\text{A}-\rho_\text{solvent})  \left[S((A+t_A) \sin\alpha \sin\beta)-S(A \sin\alpha \sin\beta)\right] S(B \sin\alpha \cos\beta) S(C \cos\alpha)\\
-    &+ 2 A t_B C (\rho_\text{B}-\rho_\text{solvent})  S(A \sin\alpha \sin\beta) \left[S((B+t_B) \sin\alpha \cos\beta)-S(B \sin\alpha \cos\beta)\right] S(C \cos\alpha)\\
-    &+ 2 A B t_C (\rho_\text{C}-\rho_\text{solvent}) S(A \sin\alpha \sin\beta) S(B \sin\alpha \cos\beta) \left[S((C+t_C) \cos\alpha)-S(C \cos\alpha)\right]
-    \end{align*}
+
+    F(Q)
+    &= (\rho_\text{core}-\rho_\text{solvent})
+       S(Q_A, A) S(Q_B, B) S(Q_C, C) \\
+    &+ (\rho_\text{A}-\rho_\text{solvent})
+        \left[S(Q_A, A+2t_A) - S(Q_A, Q)\right] S(Q_B, B) S(Q_C, C) \\
+    &+ (\rho_\text{B}-\rho_\text{solvent})
+        S(Q_A, A) \left[S(Q_B, B+2t_B) - S(Q_B, B)\right] S(Q_C, C) \\
+    &+ (\rho_\text{C}-\rho_\text{solvent})
+        S(Q_A, A) S(Q_B, B) \left[S(Q_C, C+2t_C) - S(Q_C, C)\right]
 
 with
 
 .. math::
 
-    S(x) = \frac{\sin \tfrac{1}{2}Q x}{\tfrac{1}{2}Q x}
+    S(Q, L) = L \frac{\sin \tfrac{1}{2} Q L}{\tfrac{1}{2} Q L}
 
-where $\rho_\text{core}$, $\rho_\text{A}$, $\rho_\text{B}$ and $\rho_\text{C}$ are
-the scattering length of the parallelepiped core, and the rectangular slabs of
-thickness $t_A$, $t_B$ and $t_C$, respectively.
-$\rho_\text{solvent}$ is the scattering length of the solvent.
+and
+
+.. math::
+
+    Q_A &= \sin\alpha \sin\beta \\
+    Q_B &= \sin\alpha \cos\beta \\
+    Q_C &= \cos\alpha
+
+
+where $\rho_\text{core}$, $\rho_\text{A}$, $\rho_\text{B}$ and $\rho_\text{C}$
+are the scattering length of the parallelepiped core, and the rectangular
+slabs of thickness $t_A$, $t_B$ and $t_C$, respectively. $\rho_\text{solvent}$
+is the scattering length of the solvent.
 
 FITTING NOTES
+~~~~~~~~~~~~~
+
 If the scale is set equal to the particle volume fraction, $\phi$, the returned
-value is the scattered intensity per unit volume, $I(q) = \phi P(q)$.
-However, **no interparticle interference effects are included in this
-calculation.**
+value is the scattered intensity per unit volume, $I(q) = \phi P(q)$. However,
+**no interparticle interference effects are included in this calculation.**
 
 There are many parameters in this model. Hold as many fixed as possible with
 known values, or you will certainly end up at a solution that is unphysical.
@@ -76,18 +92,19 @@ The returned value is in units of |cm^-1|, on absolute scale.
 
 NB: The 2nd virial coefficient of the core_shell_parallelepiped is calculated
 based on the the averaged effective radius $(=\sqrt{(A+2t_A)(B+2t_B)/\pi})$
-and length $(C+2t_C)$ values, after appropriately
-sorting the three dimensions to give an oblate or prolate particle, to give an
-effective radius, for $S(Q)$ when $P(Q) * S(Q)$ is applied.
+and length $(C+2t_C)$ values, after appropriately sorting the three dimensions
+to give an oblate or prolate particle, to give an effective radius,
+for $S(Q)$ when $P(Q) * S(Q)$ is applied.
 
 For 2d data the orientation of the particle is required, described using
-angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further details
-of the calculation and angular dispersions see :ref:`orientation` .
+angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further
+details of the calculation and angular dispersions see :ref:`orientation`.
 The angle $\Psi$ is the rotational angle around the *long_c* axis. For example,
 $\Psi = 0$ when the *short_b* axis is parallel to the *x*-axis of the detector.
 
-For 2d, constraints must be applied during fitting to ensure that the inequality
-$A < B < C$ is not violated, and hence the correct definition of angles is preserved. The calculation will not report an error,
+For 2d, constraints must be applied during fitting to ensure that the
+inequality $A < B < C$ is not violated, and hence the correct definition
+of angles is preserved. The calculation will not report an error,
 but the results may be not correct.
 
 .. figure:: img/parallelepiped_angle_definition.png
@@ -172,11 +189,13 @@ def ER(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c):
     """
 
     # surface average radius (rough approximation)
-    surf_rad = sqrt((length_a + 2.0*thick_rim_a) * (length_b + 2.0*thick_rim_b) / pi)
+    surf_rad = sqrt((length_a + 2.0*thick_rim_a)
+                    * (length_b + 2.0*thick_rim_b) / pi)
 
     height = length_c + 2.0*thick_rim_c
 
-    ddd = 0.75 * surf_rad * (2 * surf_rad * height + (height + surf_rad) * (height + pi * surf_rad))
+    ddd = (0.75 * surf_rad * (2 * surf_rad * height
+           + (height + surf_rad) * (height + pi * surf_rad)))
     return 0.5 * (ddd) ** (1. / 3.)
 
 # VR defaults to 1.0
@@ -211,7 +230,8 @@ demo = dict(scale=1, background=0.0,
             phi_pd=10, phi_pd_n=1,
             psi_pd=10, psi_pd_n=1)
 
-# rkh 7/4/17 add random unit test for 2d, note make all params different, 2d values not tested against other codes or models
+# rkh 7/4/17 add random unit test for 2d, note make all params different,
+# 2d values not tested against other codes or models
 if 0:  # pak: model rewrite; need to update tests
     qx, qy = 0.2 * cos(pi/6.), 0.2 * sin(pi/6.)
     tests = [[{}, 0.2, 0.533149288477],
