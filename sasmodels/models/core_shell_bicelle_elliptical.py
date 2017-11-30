@@ -6,7 +6,8 @@ This model provides the form factor for an elliptical cylinder with a
 core-shell scattering length density profile. Thus this is a variation
 of the core-shell bicelle model, but with an elliptical cylinder for the core.
 Outer shells on the rims and flat ends may be of different thicknesses and
-scattering length densities. The form factor is normalized by the total particle volume.
+scattering length densities. The form factor is normalized by the total
+particle volume.
 
 
 .. figure:: img/core_shell_bicelle_geometry.png
@@ -35,24 +36,31 @@ scattering length density variation along the bicelle axis is:
       \end{cases}
 
 The form factor for the bicelle is calculated in cylindrical coordinates, where
-$\alpha$ is the angle between the $Q$ vector and the cylinder axis, and $\psi$ is the angle
-for the ellipsoidal cross section core, to give:
+$\alpha$ is the angle between the $Q$ vector and the cylinder axis, and $\psi$
+is the angle for the ellipsoidal cross section core, to give:
 
 .. math::
 
     I(Q,\alpha,\psi) = \frac{\text{scale}}{V_t} \cdot
         F(Q,\alpha, \psi)^2 \cdot sin(\alpha) + \text{background}
 
-where a numerical integration of $F(Q,\alpha, \psi)^2 \cdot sin(\alpha)$ is carried out over \alpha and \psi for:
+where a numerical integration of $F(Q,\alpha, \psi)^2 \cdot sin(\alpha)$
+is carried out over \alpha and \psi for:
 
 .. math::
     :nowrap:
 
     \begin{align*}
     F(Q,\alpha,\psi) = &\bigg[
-    (\rho_c - \rho_f) V_c \frac{2J_1(QR'sin \alpha)}{QR'sin\alpha}\frac{sin(QLcos\alpha/2)}{Q(L/2)cos\alpha} \\
-    &+(\rho_f - \rho_r) V_{c+f} \frac{2J_1(QR'sin\alpha)}{QR'sin\alpha}\frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha} \\
-    &+(\rho_r - \rho_s) V_t \frac{2J_1(Q(R'+t_r)sin\alpha)}{Q(R'+t_r)sin\alpha}\frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha}
+    (\rho_c - \rho_f) V_c
+     \frac{2J_1(QR'sin \alpha)}{QR'sin\alpha}
+     \frac{sin(QLcos\alpha/2)}{Q(L/2)cos\alpha} \\
+    &+(\rho_f - \rho_r) V_{c+f}
+     \frac{2J_1(QR'sin\alpha)}{QR'sin\alpha}
+     \frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha} \\
+    &+(\rho_r - \rho_s) V_t
+     \frac{2J_1(Q(R'+t_r)sin\alpha)}{Q(R'+t_r)sin\alpha}
+     \frac{sin(Q(L/2+t_f)cos\alpha)}{Q(L/2+t_f)cos\alpha}
     \bigg]
     \end{align*}
 
@@ -63,21 +71,24 @@ where
     R'=\frac{R}{\sqrt{2}}\sqrt{(1+X_{core}^{2}) + (1-X_{core}^{2})cos(\psi)}
 
 
-and $V_t = \pi.(R+t_r)(Xcore.R+t_r)^2.(L+2.t_f)$ is the total volume of the bicelle,
-$V_c = \pi.Xcore.R^2.L$ the volume of the core, $V_{c+f} = \pi.Xcore.R^2.(L+2.t_f)$
-the volume of the core plus the volume of the faces, $R$ is the radius
-of the core, $Xcore$ is the axial ratio of the core, $L$ the length of the core,
-$t_f$ the thickness of the face, $t_r$ the thickness of the rim and $J_1$ the usual
-first order bessel function. The core has radii $R$ and $Xcore.R$ so is circular,
-as for the core_shell_bicelle model, for $Xcore$ =1. Note that you may need to
-limit the range of $Xcore$, especially if using the Monte-Carlo algorithm, as
-setting radius to $R/Xcore$ and axial ratio to $1/Xcore$ gives an equivalent solution!
+and $V_t = \pi.(R+t_r)(Xcore.R+t_r)^2.(L+2.t_f)$ is the total volume of
+the bicelle, $V_c = \pi.Xcore.R^2.L$ the volume of the core,
+$V_{c+f} = \pi.Xcore.R^2.(L+2.t_f)$ the volume of the core plus the volume
+of the faces, $R$ is the radius of the core, $Xcore$ is the axial ratio of
+the core, $L$ the length of the core, $t_f$ the thickness of the face, $t_r$
+the thickness of the rim and $J_1$ the usual first order bessel function.
+The core has radii $R$ and $Xcore.R$ so is circular, as for the
+core_shell_bicelle model, for $Xcore$ =1. Note that you may need to
+limit the range of $Xcore$, especially if using the Monte-Carlo algorithm,
+as setting radius to $R/Xcore$ and axial ratio to $1/Xcore$ gives an
+equivalent solution!
 
 The output of the 1D scattering intensity function for randomly oriented
 bicelles is then given by integrating over all possible $\alpha$ and $\psi$.
 
-For oriented bicelles the *theta*, *phi* and *psi* orientation parameters will appear when fitting 2D data,
-see the :ref:`elliptical-cylinder` model for further information.
+For oriented bicelles the *theta*, *phi* and *psi* orientation parameters will
+appear when fitting 2D data, see the :ref:`elliptical-cylinder` model
+for further information.
 
 
 .. figure:: img/elliptical_cylinder_angle_definition.png
@@ -99,6 +110,7 @@ Authorship and Verification
 * **Last Reviewed by:**  Richard Heenan BEWARE 2d data yet to be checked **Date:** December 14, 2016
 """
 
+import numpy as np
 from numpy import inf, sin, cos, pi
 
 name = "core_shell_bicelle_elliptical"
@@ -137,7 +149,6 @@ source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
           "core_shell_bicelle_elliptical.c"]
 
 def random():
-    import numpy as np
     outer_major = 10**np.random.uniform(1, 4.7)
     outer_minor = 10**np.random.uniform(1, 4.7)
     # Use a distribution with a preference for thin shell or thin core,
@@ -169,13 +180,17 @@ qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
 
 tests = [
-    [{'radius': 30.0, 'x_core': 3.0, 'thick_rim':8.0, 'thick_face':14.0, 'length':50.0}, 'ER', 1],
-    [{'radius': 30.0, 'x_core': 3.0, 'thick_rim':8.0, 'thick_face':14.0, 'length':50.0}, 'VR', 1],
+    [{'radius': 30.0, 'x_core': 3.0,
+      'thick_rim': 8.0, 'thick_face': 14.0, 'length': 50.0}, 'ER', 1],
+    [{'radius': 30.0, 'x_core': 3.0,
+      'thick_rim': 8.0, 'thick_face': 14.0, 'length': 50.0}, 'VR', 1],
 
-    [{'radius': 30.0, 'x_core': 3.0, 'thick_rim':8.0, 'thick_face':14.0, 'length':50.0,
-    'sld_core':4.0, 'sld_face':7.0, 'sld_rim':1.0, 'sld_solvent':6.0, 'background':0.0},
-    0.015, 286.540286],
-#    [{'theta':80., 'phi':10.}, (qx, qy), 7.88866563001 ],
-        ]
+    [{'radius': 30.0, 'x_core': 3.0,
+      'thick_rim': 8.0, 'thick_face': 14.0, 'length': 50.0,
+      'sld_core': 4.0, 'sld_face': 7.0, 'sld_rim': 1.0,
+      'sld_solvent': 6.0, 'background': 0.0},
+     0.015, 286.540286],
+    #[{'theta':80., 'phi':10.}, (qx, qy), 7.88866563001],
+]
 
 del qx, qy  # not necessary to delete, but cleaner

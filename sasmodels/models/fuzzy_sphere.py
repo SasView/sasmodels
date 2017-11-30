@@ -54,6 +54,7 @@ M Stieger, J. S Pedersen, P Lindner, W Richtering, *Langmuir*,
 20 (2004) 7283-7292
 """
 
+import numpy as np
 from numpy import inf
 
 name = "fuzzy_sphere"
@@ -105,7 +106,6 @@ def ER(radius):
 # VR defaults to 1.0
 
 def random():
-    import numpy as np
     radius = 10**np.random.uniform(1, 4.7)
     fuzziness = 10**np.random.uniform(-2, -0.5)*radius  # 1% to 31% fuzziness
     pars = dict(

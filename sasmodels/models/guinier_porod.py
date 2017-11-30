@@ -62,9 +62,9 @@ Reference
 B Hammouda, *A new Guinier-Porod model, J. Appl. Cryst.*, (2010), 43, 716-719
 
 B Hammouda, *Analysis of the Beaucage model, J. Appl. Cryst.*, (2010), 43, 1474-1478
-
 """
 
+import numpy as np
 from numpy import inf, sqrt, exp, errstate
 
 name = "guinier_porod"
@@ -114,7 +114,6 @@ def Iq(q, rg, s, porod_exp):
 Iq.vectorized = True # Iq accepts an array of q values
 
 def random():
-    import numpy as np
     rg = 10**np.random.uniform(1, 5)
     s = np.random.uniform(0, 3)
     porod_exp = s + np.random.uniform(0, 3)

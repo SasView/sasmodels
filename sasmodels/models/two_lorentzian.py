@@ -33,6 +33,7 @@ None.
 **Last Reviewed by:** Paul Butler **on:** March 21, 2016
 """
 
+import numpy as np
 from numpy import inf, power
 
 name = "two_lorentzian"
@@ -93,7 +94,6 @@ def Iq(q,
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
-    import numpy as np
     scale = 10**np.random.uniform(0, 4, 2)
     length = 10**np.random.uniform(1, 4, 2)
     expon = np.random.uniform(1, 6, 2)

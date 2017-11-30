@@ -38,11 +38,13 @@ Both *msvc* and *mingw* require that the compiler is available on your path.
 For *msvc*, this can done by running vcvarsall.bat in a windows terminal.
 Install locations are system dependent, such as:
 
-    C:\Program Files (x86)\Common Files\Microsoft\Visual C++ for Python\9.0\vcvarsall.bat
+    C:\Program Files (x86)\Common Files\Microsoft\Visual
+    C++ for Python\9.0\vcvarsall.bat
 
 or maybe
 
-    C:\Users\yourname\AppData\Local\Programs\Common\Microsoft\Visual C++ for Python\9.0\vcvarsall.bat
+    C:\Users\yourname\AppData\Local\Programs\Common\Microsoft\Visual
+    C++ for Python\9.0\vcvarsall.bat
 
 OpenMP for *msvc* requires the Microsoft vcomp90.dll library, which doesn't
 seem to be included with the compiler, nor does there appear to be a public
@@ -88,12 +90,14 @@ from .kernelpy import PyInput
 from .exception import annotate_exception
 from .generate import F16, F32, F64
 
+# pylint: disable=unused-import
 try:
     from typing import Tuple, Callable, Any
     from .modelinfo import ModelInfo
     from .details import CallDetails
 except ImportError:
     pass
+# pylint: enable=unused-import
 
 if "SAS_COMPILER" in os.environ:
     COMPILER = os.environ["SAS_COMPILER"]

@@ -6,7 +6,6 @@ Calculates the form factor for a rectangular solid with a core-shell structure.
 The thickness and the scattering length density of the shell or
 "rim" can be different on each (pair) of faces.
 
-
 The form factor is normalized by the particle volume $V$ such that
 
 .. math::
@@ -15,7 +14,6 @@ The form factor is normalized by the particle volume $V$ such that
 
 where $\langle \ldots \rangle$ is an average over all possible orientations
 of the rectangular solid.
-
 
 The function calculated is the form factor of the rectangular solid below.
 The core of the solid is defined by the dimensions $A$, $B$, $C$ such that
@@ -95,9 +93,10 @@ but the results may be not correct.
 .. figure:: img/parallelepiped_angle_definition.png
 
     Definition of the angles for oriented core-shell parallelepipeds.
-    Note that rotation $\theta$, initially in the $xz$ plane, is carried out first, then
-    rotation $\phi$ about the $z$ axis, finally rotation $\Psi$ is now around the axis of the parallelepiped.
-    The neutron or X-ray beam is along the $z$ axis.
+    Note that rotation $\theta$, initially in the $xz$ plane, is carried
+    out first, then rotation $\phi$ about the $z$ axis, finally rotation
+    $\Psi$ is now around the axis of the cylinder. The neutron or X-ray
+    beam is along the $z$ axis.
 
 .. figure:: img/parallelepiped_angle_projection.png
 
@@ -183,7 +182,6 @@ def ER(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c):
 # VR defaults to 1.0
 
 def random():
-    import numpy as np
     outer = 10**np.random.uniform(1, 4.7, size=3)
     thick = np.random.beta(0.5, 0.5, size=3)*(outer-2) + 1
     length = outer - thick
@@ -217,8 +215,8 @@ demo = dict(scale=1, background=0.0,
 if 0:  # pak: model rewrite; need to update tests
     qx, qy = 0.2 * cos(pi/6.), 0.2 * sin(pi/6.)
     tests = [[{}, 0.2, 0.533149288477],
-            [{}, [0.2], [0.533149288477]],
-            [{'theta':10.0, 'phi':20.0}, (qx, qy), 0.0853299803222],
-            [{'theta':10.0, 'phi':20.0}, [(qx, qy)], [0.0853299803222]],
+             [{}, [0.2], [0.533149288477]],
+             [{'theta':10.0, 'phi':20.0}, (qx, qy), 0.0853299803222],
+             [{'theta':10.0, 'phi':20.0}, [(qx, qy)], [0.0853299803222]],
             ]
     del qx, qy  # not necessary to delete, but cleaner

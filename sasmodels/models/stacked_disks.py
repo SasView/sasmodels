@@ -9,8 +9,8 @@ $S(q)$ proposed by Kratky and Porod in 1949\ [#CIT1949]_ assuming the next
 neighbor distance (d-spacing) in the stack of parallel discs obeys a Gaussian
 distribution. As such the normalization of this "composite" form factor is
 relative to the individual disk volume, not the volume of the stack of disks.
-This model is appropriate for example for non non exfoliated clay particles such
-as Laponite.
+This model is appropriate for example for non non exfoliated clay particles
+such as Laponite.
 
 .. figure:: img/stacked_disks_geometry.png
 
@@ -31,8 +31,8 @@ where the contrast
 
     \Delta \rho_i = \rho_i - \rho_\text{solvent}
 
-and $N$ is the number of individual (single) discs per unit volume, $\alpha$ is
-the angle between the axis of the disc and $q$, and $V_t$ and $V_c$ are the
+and $N$ is the number of individual (single) discs per unit volume, $\alpha$
+is the angle between the axis of the disc and $q$, and $V_t$ and $V_c$ are the
 total volume and the core volume of a single disc, respectively, and
 
 .. math::
@@ -73,16 +73,19 @@ term in the equation above is effectively a Debye-Waller factor term.
     especially around the q-values that correspond to the repeat distance of
     the layers.
 
-2d scattering from oriented stacks is calculated in the same way as for cylinders,
-for further details of the calculation and angular dispersions see :ref:`orientation` . 
+2d scattering from oriented stacks is calculated in the same way as for
+cylinders, for further details of the calculation and angular dispersions
+see :ref:`orientation`.
 
 .. figure:: img/cylinder_angle_definition.png
 
     Angles $\theta$ and $\phi$ orient the stack of discs relative
-    to the beam line coordinates, where the beam is along the $z$ axis. Rotation $\theta$, initially 
-    in the $xz$ plane, is carried out first, then rotation $\phi$ about the $z$ axis. Orientation distributions
-    are described as rotations about two perpendicular axes $\delta_1$ and $\delta_2$
-    in the frame of the cylinder itself, which when $\theta = \phi = 0$ are parallel to the $Y$ and $X$ axes.
+    to the beam line coordinates, where the beam is along the $z$ axis.
+    Rotation $\theta$, initially in the $xz$ plane, is carried out first,
+    then rotation $\phi$ about the $z$ axis. Orientation distributions are
+    described as rotations about two perpendicular axes $\delta_1$ and
+    $\delta_2$ in the frame of the cylinder itself, which when
+    $\theta = \phi = 0$ are parallel to the $Y$ and $X$ axes.
 
 
 Our model is derived from the form factor calculations implemented in a
@@ -106,6 +109,7 @@ Authorship and Verification
 * **Last Reviewed by:** Paul Butler and Paul Kienzle **on:** November 26, 2016
 """
 
+import numpy as np
 from numpy import inf, sin, cos, pi
 
 name = "stacked_disks"
@@ -142,7 +146,6 @@ parameters = [
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "stacked_disks.c"]
 
 def random():
-    import numpy as np
     radius = 10**np.random.uniform(1, 4.7)
     total_stack = 10**np.random.uniform(1, 4.7)
     n_stacking = int(10**np.random.uniform(0, np.log10(total_stack)-1) + 0.5)
@@ -208,8 +211,10 @@ tests = [
       'phi': 0.0,
       'scale': 0.01,
       'background': 0.001,
-#     }, 0.001, 5065.12793824],    n_stacking=1 not 5 ? slight change in value here 11jan2017, check other cpu types
-#     }, 0.001, 5075.11570493],
+      # n_stacking=1 not 5 ? slight change in value here 11jan2017,
+      # check other cpu types
+      #}, 0.001, 5065.12793824],
+      #}, 0.001, 5075.11570493],
      }, 0.001, 25325.635693],
     [{'thick_core': 10.0,
       'thick_layer': 15.0,
@@ -236,8 +241,10 @@ tests = [
       'phi': 0.0,
       'scale': 0.01,
       'background': 0.001,
-#     }, 0.164, 0.0127673597265],    n_stacking=1 not 5 ?  slight change in value here 11jan2017, check other cpu types
-#     }, 0.164, 0.01480812968],
+      # n_stacking=1 not 5 ?  slight change in value here 11jan2017,
+      # check other cpu types
+      #}, 0.164, 0.0127673597265],
+      #}, 0.164, 0.01480812968],
      }, 0.164, 0.0598367986509],
 
     [{'thick_core': 10.0,
@@ -252,7 +259,8 @@ tests = [
       'phi': 0.0,
       'scale': 0.01,
       'background': 0.001,
-# second test here was at q=90, changed it to q=5, note I(q) is then just value of flat background
+      # second test here was at q=90, changed it to q=5,
+      # note I(q) is then just value of flat background
      }, [0.001, 5.0], [5075.12, 0.001]],
 
     [{'thick_core': 10.0,
@@ -268,21 +276,22 @@ tests = [
       'scale': 0.01,
       'background': 0.001,
      }, ([0.4, 0.5]), [0.00105074, 0.00121761]],
-#    [{'thick_core': 10.0,
-#      'thick_layer': 15.0,
-#      'radius': 3000.0,
-#      'n_stacking': 1.0,
-#      'sigma_d': 0.0,
-#      'sld_core': 4.0,
-#      'sld_layer': -0.4,
-#      'sld_solvent': 5.0,
-#      'theta': 90.0,
-#      'phi': 20.0,
-#      'scale': 0.01,
-#      'background': 0.001,
-# 2017-05-18 PAK temporarily suppress output of qx,qy test; j1 is not accurate for large qr
-#     }, (qx, qy), 0.0341738733124],
-#     }, (qx, qy), None],
+    #[{'thick_core': 10.0,
+    #  'thick_layer': 15.0,
+    #  'radius': 3000.0,
+    #  'n_stacking': 1.0,
+    #  'sigma_d': 0.0,
+    #  'sld_core': 4.0,
+    #  'sld_layer': -0.4,
+    #  'sld_solvent': 5.0,
+    #  'theta': 90.0,
+    #  'phi': 20.0,
+    #  'scale': 0.01,
+    #  'background': 0.001,
+    # 2017-05-18 PAK temporarily suppress output of qx,qy test; j1 is
+    #     not accurate for large qr
+    # }, (qx, qy), 0.0341738733124],
+    # }, (qx, qy), None],
 
     [{'thick_core': 10.0,
       'thick_layer': 15.0,

@@ -11,18 +11,19 @@ from __future__ import division, print_function
 import logging
 
 import numpy as np  # type: ignore
-from numpy import pi, sin, cos  #type: ignore
 
-from . import details
 from .generate import F64
 from .kernel import KernelModel, Kernel
 
+# pylint: disable=unused-import
 try:
     from typing import Union, Callable
 except ImportError:
     pass
 else:
+    from . import details
     DType = Union[None, str, np.dtype]
+# pylint: enable=unused-import
 
 class PyModel(KernelModel):
     """
@@ -178,8 +179,15 @@ class PyKernel(Kernel):
         self.q_input.release()
         self.q_input = None
 
-def _loops(parameters, form, form_volume, nq, call_details, values, cutoff):
-    # type: (np.ndarray, Callable[[], np.ndarray], Callable[[], float], int, details.CallDetails, np.ndarray, np.ndarray, float) -> None
+def _loops(parameters,    # type: np.ndarray
+           form,          # type: Callable[[], np.ndarray]
+           form_volume,   # type: Callable[[], float]
+           nq,            # type: int
+           call_details,  # type: details.CallDetails
+           values,        # type: np.ndarray
+           cutoff         # type: float
+          ):
+    # type: (...) -> None
     ################################################################
     #                                                              #
     #   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #

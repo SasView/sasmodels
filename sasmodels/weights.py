@@ -224,7 +224,8 @@ def get_weights(disperser, n, width, nsigmas, value, limits, relative):
     Returns *(value, weight)*, where *value* and *weight* are vectors.
     """
     if disperser == "array":
-        raise NotImplementedError("Don't handle arrays through get_weights; use values and weights directly")
+        raise NotImplementedError("Don't handle arrays through get_weights;"
+                                  " use values and weights directly")
     cls = MODELS[disperser]
     obj = cls(n, width, nsigmas)
     v, w = obj.get_weights(value, limits[0], limits[1], relative)
@@ -244,11 +245,11 @@ def plot_weights(model_info, mesh):
     """
     import pylab
 
-    if any(len(dispersity)>1 for value, dispersity, weights in mesh):
+    if any(len(dispersity) > 1 for value, dispersity, weights in mesh):
         labels = [p.name for p in model_info.parameters.call_parameters]
         #pylab.interactive(True)
         pylab.figure()
-        for (v,x,w), s in zip(mesh, labels):
+        for (v, x, w), s in zip(mesh, labels):
             if len(x) > 1:
                 pylab.plot(x, w, '-o', label=s)
         pylab.grid(True)

@@ -33,9 +33,9 @@ References
 
 G Evmenenko, E Theunissen, K Mortensen, H Reynaers, *Polymer*,
 42 (2001) 2907-2913
-
 """
 
+import numpy as np
 from numpy import inf, exp
 
 name = "gauss_lorentz_gel"
@@ -88,7 +88,6 @@ Iq.vectorized = True  # Iq accepts an array of q values
 
 
 def random():
-    import numpy as np
     gauss_scale = 10**np.random.uniform(1, 3)
     lorentz_scale = 10**np.random.uniform(1, 3)
     cor_length_static = 10**np.random.uniform(0, 3)

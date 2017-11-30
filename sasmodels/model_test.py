@@ -62,6 +62,7 @@ from .direct_model import call_kernel, call_ER, call_VR
 from .exception import annotate_exception
 from .modelinfo import expand_pars
 
+# pylint: disable=unused-import
 try:
     from typing import List, Iterator, Callable
 except ImportError:
@@ -69,6 +70,7 @@ except ImportError:
 else:
     from .modelinfo import ParameterTable, ParameterSet, TestCondition, ModelInfo
     from .kernel import KernelModel
+# pylint: enable=unused-import
 
 
 def make_suite(loaders, models):
@@ -210,8 +212,9 @@ def _hide_model_case_from_nose():
                 results = [self.run_one(model, test) for test in tests]
                 if self.stash:
                     for test, target, actual in zip(tests, self.stash[0], results):
-                        assert np.all(abs(target-actual) < 5e-5*abs(actual)),\
-                            "GPU/CPU comparison expected %s but got %s for %s"%(target, actual, test[0])
+                        assert np.all(abs(target-actual) < 5e-5*abs(actual)), \
+                            ("GPU/CPU comparison expected %s but got %s for %s"
+                             % (target, actual, test[0]))
                 else:
                     self.stash.append(results)
 

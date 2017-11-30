@@ -67,6 +67,8 @@ F Nallet, R Laversanne, and D Roux, J. Phys. II France, 3, (1993) 487-502
 
 also in J. Phys. Chem. B, 105, (2001) 11081-11088
 """
+
+import numpy as np
 from numpy import inf
 
 name = "lamellar_stack_caille"
@@ -98,7 +100,6 @@ parameters = [
 source = ["lamellar_stack_caille.c"]
 
 def random():
-    import numpy as np
     total_thickness = 10**np.random.uniform(2, 4.7)
     Nlayers = np.random.randint(2, 200)
     d_spacing = total_thickness / Nlayers

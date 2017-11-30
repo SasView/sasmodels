@@ -210,6 +210,9 @@ def view_url_qtapp(url):
     frame.show()
     sys.exit(app.exec_())
 
+# Set default html viewer
+view_html = view_html_qtapp
+
 def can_use_qt():
     """
     Return True if QWebView exists.
@@ -245,7 +248,9 @@ def view_help(filename, qt=False):
         else:
             view_url_wxapp(url)
 
-if __name__ == "__main__":
+def main():
     import sys
     view_help(sys.argv[1], qt=False)
 
+if __name__ == "__main__":
+    main()

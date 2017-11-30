@@ -52,6 +52,7 @@ Oxford University Press, New York (2000).
 http://www.ncnr.nist.gov/staff/hammouda/distance_learning/chapter_28.pdf
 """
 
+import numpy as np
 from numpy import inf, exp, errstate
 
 name = "mono_gauss_coil"
@@ -83,7 +84,6 @@ def Iq(q, i_zero, rg):
 Iq.vectorized = True # Iq accepts an array of q values
 
 def random():
-    import numpy as np
     rg = 10**np.random.uniform(0, 4)
     #rg = 1e3
     pars = dict(
