@@ -1,5 +1,7 @@
-static double stacked_disks_kernel(
-    double q,
+static double
+stacked_disks_kernel(
+    double qab,
+    double qc,
     double halfheight,
     double thick_layer,
     double radius,
@@ -8,8 +10,6 @@ static double stacked_disks_kernel(
     double core_sld,
     double layer_sld,
     double solvent_sld,
-    double sin_alpha,
-    double cos_alpha,
     double d)
 
 {
@@ -19,11 +19,11 @@ static double stacked_disks_kernel(
     // halfheight is the *Half* CORE-LENGTH of the cylinder = L (A)
     // zi is the dummy variable for the integration (x in Feigin's notation)
 
-    const double besarg1 = q*radius*sin_alpha;
-    //const double besarg2 = q*radius*sin_alpha;
+    const double besarg1 = radius*qab;
+    //const double besarg2 = radius*qab;
 
-    const double sinarg1 = q*halfheight*cos_alpha;
-    const double sinarg2 = q*(halfheight+thick_layer)*cos_alpha;
+    const double sinarg1 = halfheight*qc;
+    const double sinarg2 = (halfheight+thick_layer)*qc;
 
     const double be1 = sas_2J1x_x(besarg1);
     //const double be2 = sas_2J1x_x(besarg2);
@@ -42,7 +42,7 @@ static double stacked_disks_kernel(
     double pq = square(t1 + t2);
 
     // loop for the structure factor S(q)
-    double qd_cos_alpha = q*d*cos_alpha;
+    double qd_cos_alpha = d*qc;
     //d*cos_alpha is the projection of d onto q (in other words the component
     //of d that is parallel to q.
     double debye_arg = -0.5*square(qd_cos_alpha*sigma_dnn);
@@ -60,7 +60,8 @@ static double stacked_disks_kernel(
 }
 
 
-static double stacked_disks_1d(
+static double
+stacked_disks_1d(
     double q,
     double thick_core,
     double thick_layer,
@@ -83,7 +84,7 @@ like clay platelets that are not exfoliated
         double zi = (Gauss76Z[i] + 1.0)*M_PI_4;
         double sin_alpha, cos_alpha; // slots to hold sincos function output
         SINCOS(zi, sin_alpha, cos_alpha);
-        double yyy = stacked_disks_kernel(q,
+        double yyy = stacked_disks_kernel(q*sin_alpha, q*cos_alpha,
                            halfheight,
                            thick_layer,
                            radius,
@@ -92,8 +93,6 @@ like clay platelets that are not exfoliated
                            core_sld,
                            layer_sld,
                            solvent_sld,
-                           sin_alpha,
-                           cos_alpha,
                            d);
         summ += Gauss76Wt[i] * yyy * sin_alpha;
     }
@@ -104,7 +103,8 @@ like clay platelets that are not exfoliated
     return 1.0e-4*answer;
 }
 
-static double form_volume(
+static double
+form_volume(
     double thick_core,
     double thick_layer,
     double radius,
@@ -115,7 +115,8 @@ static double form_volume(
     return M_PI * radius * radius * d * n_stacking;
 }
 
-static double Iq(
+static double
+Iq(
     double q,
     double thick_core,
     double thick_layer,
@@ -139,7 +140,8 @@ static double Iq(
 }
 
 
-static double Iqxy(double qx, double qy,
+static double
+Iqxy(double qab, double qc,
     double thick_core,
     double thick_layer,
     double radius,
@@ -147,17 +149,12 @@ static double Iqxy(double qx, double qy,
     double sigma_dnn,
     double core_sld,
     double layer_sld,
-    double solvent_sld,
-    double theta,
-    double phi)
+    double solvent_sld)
 {
     int n_stacking = (int)(fp_n_stacking + 0.5);
-    double q, sin_alpha, cos_alpha;
-    ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sin_alpha, cos_alpha);
-
     double d = 2.0 * thick_layer + thick_core;
     double halfheight = 0.5*thick_core;
-    double answer = stacked_disks_kernel(q,
+    double answer = stacked_disks_kernel(qab, qc,
                      halfheight,
                      thick_layer,
                      radius,
@@ -166,8 +163,6 @@ static double Iqxy(double qx, double qy,
                      core_sld,
                      layer_sld,
                      solvent_sld,
-                     sin_alpha,
-                     cos_alpha,
                      d);
 
     //convert to [cm-1]

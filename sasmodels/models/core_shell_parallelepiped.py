@@ -4,9 +4,9 @@ Definition
 
 Calculates the form factor for a rectangular solid with a core-shell structure.
 The thickness and the scattering length density of the shell or
-"rim" can be different on each (pair) of faces. However at this time
-the 1D calculation does **NOT** actually calculate a c face rim despite the presence of
-the parameter. Some other aspects of the 1D calculation may be wrong.
+"rim" can be different on each (pair) of faces. However at this time the 1D
+calculation does **NOT** actually calculate a c face rim despite the presence
+of the parameter. Some other aspects of the 1D calculation may be wrong.
 
 .. note::
    This model was originally ported from NIST IGOR macros. However, it is not
@@ -50,10 +50,14 @@ amplitudes of the core and shell, in the same manner as a core-shell model.
 .. math::
 
     F_{a}(Q,\alpha,\beta)=
-    \left[\frac{\sin(\tfrac{1}{2}Q(L_A+2t_A)\sin\alpha \sin\beta)}{\tfrac{1}{2}Q(L_A+2t_A)\sin\alpha\sin\beta}
-    - \frac{\sin(\tfrac{1}{2}QL_A\sin\alpha \sin\beta)}{\tfrac{1}{2}QL_A\sin\alpha \sin\beta} \right]
-    \left[\frac{\sin(\tfrac{1}{2}QL_B\sin\alpha \sin\beta)}{\tfrac{1}{2}QL_B\sin\alpha \sin\beta} \right]
-    \left[\frac{\sin(\tfrac{1}{2}QL_C\sin\alpha \sin\beta)}{\tfrac{1}{2}QL_C\sin\alpha \sin\beta} \right]
+    \left[\frac{\sin(\tfrac{1}{2}Q(L_A+2t_A)\sin\alpha \sin\beta)
+               }{\tfrac{1}{2}Q(L_A+2t_A)\sin\alpha\sin\beta}
+    - \frac{\sin(\tfrac{1}{2}QL_A\sin\alpha \sin\beta)
+           }{\tfrac{1}{2}QL_A\sin\alpha \sin\beta} \right]
+    \left[\frac{\sin(\tfrac{1}{2}QL_B\sin\alpha \sin\beta)
+               }{\tfrac{1}{2}QL_B\sin\alpha \sin\beta} \right]
+    \left[\frac{\sin(\tfrac{1}{2}QL_C\sin\alpha \sin\beta)
+               }{\tfrac{1}{2}QL_C\sin\alpha \sin\beta} \right]
 
 .. note::
 
@@ -84,16 +88,19 @@ and length $(C+2t_C)$ values, after appropriately
 sorting the three dimensions to give an oblate or prolate particle, to give an
 effective radius, for $S(Q)$ when $P(Q) * S(Q)$ is applied.
 
-To provide easy access to the orientation of the parallelepiped, we define the
-axis of the cylinder using three angles $\theta$, $\phi$ and $\Psi$.
-(see :ref:`cylinder orientation <cylinder-angle-definition>`).
-The angle $\Psi$ is the rotational angle around the *long_c* axis against the
-$q$ plane. For example, $\Psi = 0$ when the *short_b* axis is parallel to the
-*x*-axis of the detector.
+For 2d data the orientation of the particle is required, described using
+angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further details
+of the calculation and angular dispersions see :ref:`orientation` .
+The angle $\Psi$ is the rotational angle around the *long_c* axis. For example,
+$\Psi = 0$ when the *short_b* axis is parallel to the *x*-axis of the detector.
 
 .. figure:: img/parallelepiped_angle_definition.png
 
     Definition of the angles for oriented core-shell parallelepipeds.
+    Note that rotation $\theta$, initially in the $xz$ plane, is carried
+    out first, then rotation $\phi$ about the $z$ axis, finally rotation
+    $\Psi$ is now around the axis of the cylinder. The neutron or X-ray
+    beam is along the $z$ axis.
 
 .. figure:: img/parallelepiped_angle_projection.png
 
@@ -179,7 +186,6 @@ def ER(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c):
 # VR defaults to 1.0
 
 def random():
-    import numpy as np
     outer = 10**np.random.uniform(1, 4.7, size=3)
     thick = np.random.beta(0.5, 0.5, size=3)*(outer-2) + 1
     length = outer - thick
@@ -213,8 +219,8 @@ demo = dict(scale=1, background=0.0,
 if 0:  # pak: model rewrite; need to update tests
     qx, qy = 0.2 * cos(pi/6.), 0.2 * sin(pi/6.)
     tests = [[{}, 0.2, 0.533149288477],
-            [{}, [0.2], [0.533149288477]],
-            [{'theta':10.0, 'phi':20.0}, (qx, qy), 0.0853299803222],
-            [{'theta':10.0, 'phi':20.0}, [(qx, qy)], [0.0853299803222]],
+             [{}, [0.2], [0.533149288477]],
+             [{'theta':10.0, 'phi':20.0}, (qx, qy), 0.0853299803222],
+             [{'theta':10.0, 'phi':20.0}, [(qx, qy)], [0.0853299803222]],
             ]
     del qx, qy  # not necessary to delete, but cleaner

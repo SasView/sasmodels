@@ -23,6 +23,7 @@ L.S. Qrnstein and F. Zernike, *Proc. Acad. Sci. Amsterdam* 17, 793 (1914), and
 *Z. Phys.* 19, 134 (1918), and 27, 761 {1926); referred to as QZ.
 """
 
+import numpy as np
 from numpy import inf
 
 name = "lorentz"
@@ -48,7 +49,6 @@ Iq = """
 """
 
 def random():
-    import numpy as np
     pars = dict(
         #background=0,
         scale=10**np.random.uniform(1, 4),

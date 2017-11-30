@@ -31,6 +31,7 @@ from . import resolution
 from . import resolution2d
 from .details import make_kernel_args, dispersion_mesh
 
+# pylint: disable=unused-import
 try:
     from typing import Optional, Dict, Tuple
 except ImportError:
@@ -39,6 +40,7 @@ else:
     from .data import Data
     from .kernel import Kernel, KernelModel
     from .modelinfo import Parameter, ParameterSet
+# pylint: enable=unused-import
 
 def call_kernel(calculator, pars, cutoff=0., mono=False):
     # type: (Kernel, ParameterSet, float, bool) -> np.ndarray
@@ -54,25 +56,11 @@ def call_kernel(calculator, pars, cutoff=0., mono=False):
 
     *mono* is True if polydispersity should be set to none on all parameters.
     """
-    parameters = calculator.info.parameters
-    if mono:
-        active = lambda name: False
-    elif calculator.dim == '1d':
-        active = lambda name: name in parameters.pd_1d
-    elif calculator.dim == '2d':
-        active = lambda name: name in parameters.pd_2d
-    else:
-        active = lambda name: True
-
-    #print("pars",[p.id for p in parameters.call_parameters])
-    vw_pairs = [(get_weights(p, pars) if active(p.name)
-                 else ([pars.get(p.name, p.default)], [1.0]))
-                for p in parameters.call_parameters]
-
-    call_details, values, is_magnetic = make_kernel_args(calculator, vw_pairs)
+    mesh = get_mesh(calculator.info, pars, dim=calculator.dim, mono=mono)
+    #print("pars", list(zip(*mesh))[0])
+    call_details, values, is_magnetic = make_kernel_args(calculator, mesh)
     #print("values:", values)
     return calculator(call_details, values, cutoff, is_magnetic)
-
 
 def call_ER(model_info, pars):
     # type: (ModelInfo, ParameterSet) -> float
@@ -128,9 +116,33 @@ def call_profile(model_info, **pars):
     x, y = model_info.profile(**args)
     return x, y, model_info.profile_axes
 
+def get_mesh(model_info, values, dim='1d', mono=False):
+    # type: (ModelInfo, Dict[str, float], str, bool) -> List[Tuple[float, np.ndarray, np.ndarry]]
+    """
+    Retrieve the dispersity mesh described by the parameter set.
 
-def get_weights(parameter, values):
-    # type: (Parameter, Dict[str, float]) -> Tuple[np.ndarray, np.ndarray]
+    Returns a list of *(value, dispersity, weights)* with one tuple for each
+    parameter in the model call parameters.  Inactive parameters return the
+    default value with a weight of 1.0.
+    """
+    parameters = model_info.parameters
+    if mono:
+        active = lambda name: False
+    elif dim == '1d':
+        active = lambda name: name in parameters.pd_1d
+    elif dim == '2d':
+        active = lambda name: name in parameters.pd_2d
+    else:
+        active = lambda name: True
+
+    #print("pars",[p.id for p in parameters.call_parameters])
+    mesh = [_get_par_weights(p, values, active(p.name))
+            for p in parameters.call_parameters]
+    return mesh
+
+
+def _get_par_weights(parameter, values, active=True):
+    # type: (Parameter, Dict[str, float]) -> Tuple[float, np.ndarray, np.ndarray]
     """
     Generate the distribution for parameter *name* given the parameter values
     in *pars*.
@@ -139,27 +151,48 @@ def get_weights(parameter, values):
     from the *pars* dictionary for parameter value and parameter dispersion.
     """
     value = float(values.get(parameter.name, parameter.default))
-    relative = parameter.relative_pd
-    limits = parameter.limits
-    disperser = values.get(parameter.name+'_pd_type', 'gaussian')
     npts = values.get(parameter.name+'_pd_n', 0)
     width = values.get(parameter.name+'_pd', 0.0)
-    nsigma = values.get(parameter.name+'_pd_nsigma', 3.0)
-    if npts == 0 or width == 0:
-        return [value], [1.0]
-    value, weight = weights.get_weights(
-        disperser, npts, width, nsigma, value, limits, relative)
-    return value, weight / np.sum(weight)
+    relative = parameter.relative_pd
+    if npts == 0 or width == 0.0 or not active:
+        # Note: orientation parameters have the viewing angle as the parameter
+        # value and the jitter in the distribution, so be sure to set the
+        # empty pd for orientation parameters to 0.
+        pd = [value if relative or not parameter.polydisperse else 0.0], [1.0]
+    else:
+        limits = parameter.limits
+        disperser = values.get(parameter.name+'_pd_type', 'gaussian')
+        nsigma = values.get(parameter.name+'_pd_nsigma', 3.0)
+        pd = weights.get_weights(disperser, npts, width, nsigma,
+                                 value, limits, relative)
+    return value, pd[0], pd[1]
 
 
-def _vol_pars(model_info, pars):
+def _vol_pars(model_info, values):
     # type: (ModelInfo, ParameterSet) -> Tuple[np.ndarray, np.ndarray]
-    vol_pars = [get_weights(p, pars)
+    vol_pars = [_get_par_weights(p, values)
                 for p in model_info.parameters.call_parameters
                 if p.type == 'volume']
     #import pylab; pylab.plot(vol_pars[0][0],vol_pars[0][1]); pylab.show()
-    value, weight = dispersion_mesh(model_info, vol_pars)
-    return value, weight
+    dispersity, weight = dispersion_mesh(model_info, vol_pars)
+    return dispersity, weight
+
+
+def _make_sesans_transform(data):
+    from sas.sascalc.data_util.nxsunit import Converter
+
+    # Pre-compute the Hankel matrix (H)
+    SElength = Converter(data._xunit)(data.x, "A")
+
+    theta_max = Converter("radians")(data.sample.zacceptance)[0]
+    q_max = 2 * np.pi / np.max(data.source.wavelength) * np.sin(theta_max)
+    zaccept = Converter("1/A")(q_max, "1/" + data.source.wavelength_unit),
+
+    Rmax = 10000000
+    hankel = sesans.SesansTransform(data.x, SElength,
+                                    data.source.wavelength,
+                                    zaccept, Rmax)
+    return hankel
 
 
 class DataMixin(object):
@@ -201,16 +234,14 @@ class DataMixin(object):
             self.data_type = 'Iq'
 
         if self.data_type == 'sesans':
-            q = sesans.make_q(data.sample.zacceptance, data.Rmax)
+            res = _make_sesans_transform(data)
             index = slice(None, None)
-            res = None
             if data.y is not None:
                 Iq, dIq = data.y, data.dy
             else:
                 Iq, dIq = None, None
             #self._theory = np.zeros_like(q)
-            q_vectors = [q]
-            q_mono = sesans.make_all_q(data)
+            q_vectors = [res.q_calc]
         elif self.data_type == 'Iqxy':
             #if not model.info.parameters.has_2d:
             #    raise ValueError("not 2D without orientation or magnetic parameters")
@@ -229,7 +260,6 @@ class DataMixin(object):
                                          nsigma=3.0, accuracy=accuracy)
             #self._theory = np.zeros_like(self.Iq)
             q_vectors = res.q_calc
-            q_mono = []
         elif self.data_type == 'Iq':
             index = (data.x >= data.qmin) & (data.x <= data.qmax)
             if data.y is not None:
@@ -254,7 +284,6 @@ class DataMixin(object):
 
             #self._theory = np.zeros_like(self.Iq)
             q_vectors = [res.q_calc]
-            q_mono = []
         elif self.data_type == 'Iq-oriented':
             index = (data.x >= data.qmin) & (data.x <= data.qmax)
             if data.y is not None:
@@ -271,14 +300,12 @@ class DataMixin(object):
                                       qx_width=data.dxw[index],
                                       qy_width=data.dxl[index])
             q_vectors = res.q_calc
-            q_mono = []
         else:
             raise ValueError("Unknown data type") # never gets here
 
         # Remember function inputs so we can delay loading the function and
         # so we can save/restore state
         self._kernel_inputs = q_vectors
-        self._kernel_mono_inputs = q_mono
         self._kernel = None
         self.Iq, self.dIq, self.index = Iq, dIq, index
         self.resolution = res
@@ -316,9 +343,6 @@ class DataMixin(object):
         # type: (ParameterSet, float) -> np.ndarray
         if self._kernel is None:
             self._kernel = self._model.make_kernel(self._kernel_inputs)
-            self._kernel_mono = (
-                self._model.make_kernel(self._kernel_mono_inputs)
-                if self._kernel_mono_inputs else None)
 
         Iq_calc = call_kernel(self._kernel, pars, cutoff=cutoff)
         # Storing the calculated Iq values so that they can be plotted.
@@ -326,19 +350,12 @@ class DataMixin(object):
         # TODO: extend plotting of calculate Iq to other measurement types
         # TODO: refactor so we don't store the result in the model
         self.Iq_calc = Iq_calc
-        if self.data_type == 'sesans':
-            Iq_mono = (call_kernel(self._kernel_mono, pars, mono=True)
-                       if self._kernel_mono_inputs else None)
-            result = sesans.transform(self._data,
-                                      self._kernel_inputs[0], Iq_calc,
-                                      self._kernel_mono_inputs, Iq_mono)
-        else:
-            result = self.resolution.apply(Iq_calc)
-            if hasattr(self.resolution, 'nx'):
-                self.Iq_calc = (
-                    self.resolution.qx_calc, self.resolution.qy_calc,
-                    np.reshape(Iq_calc, (self.resolution.ny, self.resolution.nx))
-                )
+        result = self.resolution.apply(Iq_calc)
+        if hasattr(self.resolution, 'nx'):
+            self.Iq_calc = (
+                self.resolution.qx_calc, self.resolution.qy_calc,
+                np.reshape(Iq_calc, (self.resolution.ny, self.resolution.nx))
+            )
         return result
 
 
@@ -395,7 +412,7 @@ def main():
     if call != "ER_VR":
         try:
             values = [float(v) for v in call.split(',')]
-        except Exception:
+        except ValueError:
             values = []
         if len(values) == 1:
             q, = values

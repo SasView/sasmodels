@@ -37,9 +37,9 @@ P Debye, A M Bueche, *Scattering by an Inhomogeneous Solid*, *J. Appl. Phys.*,
 20 (1949) 518
 
 *2013/09/09 - Description reviewed by King, S and Parker, P.*
-
 """
 
+import numpy as np
 from numpy import inf
 
 name = "dab"
@@ -65,7 +65,6 @@ Iq = """
     """
 
 def random():
-    import numpy as np
     pars = dict(
         scale=10**np.random.uniform(1, 4),
         cor_length=10**np.random.uniform(0.3, 3),

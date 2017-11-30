@@ -62,6 +62,7 @@ Sons, New York, (1955)
 **Last Reviewed by:** Paul Butler **on:** March 20, 2016
 """
 
+import numpy as np
 from numpy import pi, inf
 
 name = "vesicle"
@@ -120,7 +121,6 @@ def VR(radius, thickness):
     return whole, whole - core
 
 def random():
-    import numpy as np
     total_radius = 10**np.random.uniform(1.3, 5)
     radius = total_radius * np.random.uniform(0, 1)
     thickness = total_radius - radius

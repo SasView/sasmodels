@@ -73,12 +73,14 @@ from pyopencl.characterize import get_fast_inaccurate_build_options
 from . import generate
 from .kernel import KernelModel, Kernel
 
+# pylint: disable=unused-import
 try:
     from typing import Tuple, Callable, Any
     from .modelinfo import ModelInfo
     from .details import CallDetails
 except ImportError:
     pass
+# pylint: enable=unused-import
 
 # CRUFT: pyopencl < 2017.1  (as of June 2016 needs quotes around include path)
 def quote_path(v):

@@ -43,6 +43,7 @@ None.
 **Last Reviewed by:** Paul Butler **on:** March 21, 2016
 """
 
+import numpy as np
 from numpy import inf, power, empty, errstate
 
 name = "two_power_law"
@@ -87,7 +88,7 @@ def Iq(q,
     :param power_2:             Exponent of power law function at high Q
     :return:                    Calculated intensity
     """
-    result= empty(q.shape, 'd')
+    result = empty(q.shape, 'd')
     index = (q <= crossover)
     with errstate(divide='ignore'):
         coefficent_2 = coefficent_1 * power(crossover, power_2 - power_1)
@@ -98,7 +99,6 @@ def Iq(q,
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
-    import numpy as np
     coefficient_1 = 1
     crossover = 10**np.random.uniform(-3, -1)
     power_1 = np.random.uniform(1, 6)

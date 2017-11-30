@@ -23,7 +23,8 @@ L A Feigin, D I Svergun, G W Taylor. *Structure Analysis by Small-Angle
 X-ray and Neutron Scattering*. Springer. (1987)
 """
 
-from numpy import power, inf, errstate
+import numpy as np
+from numpy import inf, errstate
 
 name = "porod"
 title = "Porod function"
@@ -45,7 +46,6 @@ def Iq(q):
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
-    import numpy as np
     sld, solvent = np.random.uniform(-0.5, 12, size=2)
     radius = 10**np.random.uniform(1, 4.7)
     Vf = 10**np.random.uniform(-3, -1)

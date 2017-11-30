@@ -223,8 +223,8 @@ class Slit2D(Resolution):
 
         # Build weight matrix for resolution integration
         if np.any(qx_width > 0):
-            self.weights = resolution.pinhole_resolution(qx_calc, q,
-                    np.maximum(qx_width, resolution.MINIMUM_RESOLUTION))
+            self.weights = resolution.pinhole_resolution(
+                qx_calc, q, np.maximum(qx_width, resolution.MINIMUM_RESOLUTION))
         elif len(qx_calc) == len(q) and np.all(qx_calc == q):
             self.weights = None
         else:
@@ -235,4 +235,3 @@ class Slit2D(Resolution):
         if self.weights is not None:
             Iq = resolution.apply_resolution_matrix(self.weights, Iq)
         return Iq
-

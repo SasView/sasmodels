@@ -73,9 +73,9 @@ dimensions, to give an oblate or prolate particle, $(=\sqrt{AB/\pi})$ and
 length $(= C)$ values, and used as the effective radius for
 $S(q)$ when $P(q) \cdot S(q)$ is applied.
 
-To provide easy access to the orientation of the parallelepiped, we define
-three angles $\theta$, $\phi$ and $\Psi$. The definition of $\theta$ and
-$\phi$ is the same as for the cylinder model (see also figures below).
+For 2d data the orientation of the particle is required, described using
+angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further details
+of the calculation and angular dispersions see :ref:`orientation` .
 
 .. Comment by Miguel Gonzalez:
    The following text has been commented because I think there are two
@@ -88,15 +88,11 @@ $\phi$ is the same as for the cylinder model (see also figures below).
 
 The angle $\Psi$ is the rotational angle around the $C$ axis.
 For $\theta = 0$ and $\phi = 0$, $\Psi = 0$ corresponds to the $B$ axis
-oriented parallel to the y-axis of the detector with $A$ along the z-axis.
+oriented parallel to the y-axis of the detector with $A$ along the x-axis.
 For other $\theta$, $\phi$ values, the parallelepiped has to be first rotated
-$\theta$ degrees around $z$ and $\phi$ degrees around $y$,
-before doing a final rotation of $\Psi$ degrees around the resulting $C$ to
-obtain the final orientation of the parallelepiped.
-For example, for $\theta = 0$ and $\phi = 90$, we have that $\Psi = 0$
-corresponds to $A$ along $x$ and $B$ along $y$,
-while for $\theta = 90$ and $\phi = 0$, $\Psi = 0$ corresponds to
-$A$ along $z$ and $B$ along $x$.
+$\theta$ degrees in the $z-x$ plane and then $\phi$ degrees around the $z$ axis,
+before doing a final rotation of $\Psi$ degrees around the resulting $C$ axis
+of the particle to obtain the final orientation of the parallelepiped.
 
 .. _parallelepiped-orientation:
 
@@ -109,13 +105,14 @@ $A$ along $z$ and $B$ along $x$.
     Examples of the angles for an oriented parallelepiped against the
     detector plane.
 
-On introducing "Orientational Distribution" in the angles, "distribution of theta" and "distribution of phi" parameters will
-appear. These are actually rotations about axes $\delta_1$ and $\delta_2$ of the parallelepiped, perpendicular to the $a$ x $c$ and $b$ x $c$ faces.
-(When $\theta = \phi = 0$ these are parallel to the $Y$ and $X$ axes of the instrument.) The third orientation distribution, in $\psi$, is
-about the $c$ axis of the particle, perpendicular to the $a$ x $b$ face. Some experimentation may be required to
-understand the 2d patterns fully. (Earlier implementations had numerical integration issues in some circumstances when orientation
-distributions passed through 90 degrees, such situations, with very broad distributions, should still be approached with care.)
-
+On introducing "Orientational Distribution" in the angles, "distribution of
+theta" and "distribution of phi" parameters will appear. These are actually
+rotations about axes $\delta_1$ and $\delta_2$ of the parallelepiped,
+perpendicular to the $a$ x $c$ and $b$ x $c$ faces. (When $\theta = \phi = 0$
+these are parallel to the $Y$ and $X$ axes of the instrument.) The third
+orientation distribution, in $\psi$, is about the $c$ axis of the particle,
+perpendicular to the $a$ x $b$ face. Some experimentation may be required to
+understand the 2d patterns fully as discussed in :ref:`orientation` .
 
 For a given orientation of the parallelepiped, the 2D form factor is
 calculated as
@@ -170,10 +167,9 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** This model is based on form factor calculations implemented
-    in a c-library provided by the NIST Center for Neutron Research (Kline, 2006).
+  in a c-library provided by the NIST Center for Neutron Research (Kline, 2006).
 * **Last Modified by:**  Paul Kienzle **Date:** April 05, 2017
 * **Last Reviewed by:**  Richard Heenan **Date:** April 06, 2017
-
 """
 
 import numpy as np
@@ -221,14 +217,14 @@ def ER(length_a, length_b, length_c):
     """
     Return effective radius (ER) for P(q)*S(q)
     """
-    # now that axes can be in any size order, need to sort a,b,c where a~b and c is either much smaller
-    # or much larger
+    # now that axes can be in any size order, need to sort a,b,c
+    # where a~b and c is either much smaller or much larger
     abc = np.vstack((length_a, length_b, length_c))
     abc = np.sort(abc, axis=0)
     selector = (abc[1] - abc[0]) > (abc[2] - abc[1])
     length = np.where(selector, abc[0], abc[2])
     # surface average radius (rough approximation)
-    radius = np.sqrt(np.where(~selector, abc[0]*abc[1], abc[1]*abc[2]) / pi)
+    radius = sqrt(np.where(~selector, abc[0]*abc[1], abc[1]*abc[2]) / pi)
 
     ddd = 0.75 * radius * (2*radius*length + (length + radius)*(length + pi*radius))
     return 0.5 * (ddd) ** (1. / 3.)
@@ -237,7 +233,6 @@ def ER(length_a, length_b, length_c):
 
 
 def random():
-    import numpy as np
     length = 10**np.random.uniform(1, 4.7, size=3)
     pars = dict(
         length_a=length[0],
@@ -258,7 +253,8 @@ demo = dict(scale=1, background=0,
             theta_pd=10, theta_pd_n=1,
             phi_pd=10, phi_pd_n=1,
             psi_pd=10, psi_pd_n=10)
-# rkh 7/4/17 add random unit test for 2d, note make all params different, 2d values not tested against other codes or models
+# rkh 7/4/17 add random unit test for 2d, note make all params different,
+# 2d values not tested against other codes or models
 qx, qy = 0.2 * cos(pi/6.), 0.2 * sin(pi/6.)
 tests = [[{}, 0.2, 0.17758004974],
          [{}, [0.2], [0.17758004974]],

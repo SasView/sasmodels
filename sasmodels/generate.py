@@ -162,21 +162,28 @@ from __future__ import print_function
 #__all__ = ["model_info", "make_doc", "make_source", "convert_type"]
 
 import sys
-from os.path import abspath, dirname, join as joinpath, exists, isdir, getmtime
+from os.path import abspath, dirname, join as joinpath, exists, getmtime
 import re
 import string
 from zlib import crc32
+from inspect import currentframe, getframeinfo
 
 import numpy as np  # type: ignore
 
 from .modelinfo import Parameter
 from .custom import load_custom_kernel_module
 
+# pylint: disable=unused-import
 try:
     from typing import Tuple, Sequence, Iterator, Dict
     from .modelinfo import ModelInfo
 except ImportError:
     pass
+# pylint: enable=unused-import
+
+# jitter projection to use in the kernel code.  See explore/jitter.py
+# for details.  To change it from a program, set generate.PROJECTION.
+PROJECTION = 1
 
 def get_data_path(external_dir, target_file):
     path = abspath(dirname(__file__))
@@ -648,11 +655,10 @@ def _have_Iqxy(sources):
     If you want to comment out an Iqxy function, use // on the front of the
     line instead.
     """
-    for path, code in sources:
+    for _path, code in sources:
         if _IQXY_PATTERN.search(code):
             return True
-    else:
-        return False
+    return False
 
 
 def _add_source(source, code, path):
@@ -688,10 +694,13 @@ def make_source(model_info):
 
     # Load templates and user code
     kernel_header = load_template('kernel_header.c')
-    dll_code = load_template('kernel_iq.c')
-    ocl_code = load_template('kernel_iq.cl')
-    #ocl_code = load_template('kernel_iq_local.cl')
+    kernel_code = load_template('kernel_iq.c')
     user_code = [(f, open(f).read()) for f in model_sources(model_info)]
+
+    # What kind of 2D model do we need?
+    xy_mode = ('qa' if not _have_Iqxy(user_code) and not isinstance(model_info.Iqxy, str)
+               else 'qac' if not partable.is_asymmetric
+               else 'qabc')
 
     # Build initial sources
     source = []
@@ -716,8 +725,9 @@ def make_source(model_info):
                               model_info.filename, model_info._Iqxy_line))
 
     # Define the parameter table
-    # TODO: plug in current line number
-    source.append('#line 542 "sasmodels/generate.py"')
+    lineno = getframeinfo(currentframe()).lineno + 2
+    source.append('#line %d "sasmodels/generate.py"'%lineno)
+    #source.append('introduce breakage in generate to test lineno reporting')
     source.append("#define PARAMETER_TABLE \\")
     source.append("\\\n".join(p.as_definition()
                               for p in partable.kernel_parameters))
@@ -733,18 +743,21 @@ def make_source(model_info):
         call_volume = "#define CALL_VOLUME(v) 1.0"
     source.append(call_volume)
 
-    refs = ["_q[_i]"] + _call_pars("_v.", partable.iq_parameters)
-    call_iq = "#define CALL_IQ(_q,_i,_v) Iq(%s)" % (",".join(refs))
-    if _have_Iqxy(user_code) or isinstance(model_info.Iqxy, str):
-        # Call 2D model
-        refs = ["_q[2*_i]", "_q[2*_i+1]"] + _call_pars("_v.", partable.iqxy_parameters)
-        call_iqxy = "#define CALL_IQ(_q,_i,_v) Iqxy(%s)" % (",".join(refs))
-    else:
-        # Call 1D model with sqrt(qx^2 + qy^2)
-        #warnings.warn("Creating Iqxy = Iq(sqrt(qx^2 + qy^2))")
-        # still defined:: refs = ["q[i]"] + _call_pars("v", iq_parameters)
-        pars_sqrt = ["sqrt(_q[2*_i]*_q[2*_i]+_q[2*_i+1]*_q[2*_i+1])"] + refs[1:]
-        call_iqxy = "#define CALL_IQ(_q,_i,_v) Iq(%s)" % (",".join(pars_sqrt))
+    model_refs = _call_pars("_v.", partable.iq_parameters)
+    pars = ",".join(["_q"] + model_refs)
+    call_iq = "#define CALL_IQ(_q, _v) Iq(%s)" % pars
+    if xy_mode == 'qabc':
+        pars = ",".join(["_qa", "_qb", "_qc"] + model_refs)
+        call_iqxy = "#define CALL_IQ_ABC(_qa,_qb,_qc,_v) Iqxy(%s)" % pars
+        clear_iqxy = "#undef CALL_IQ_ABC"
+    elif xy_mode == 'qac':
+        pars = ",".join(["_qa", "_qc"] + model_refs)
+        call_iqxy = "#define CALL_IQ_AC(_qa,_qc,_v) Iqxy(%s)" % pars
+        clear_iqxy = "#undef CALL_IQ_AC"
+    else:  # xy_mode == 'qa'
+        pars = ",".join(["_qa"] + model_refs)
+        call_iqxy = "#define CALL_IQ_A(_qa,_v) Iq(%s)" % pars
+        clear_iqxy = "#undef CALL_IQ_A"
 
     magpars = [k-2 for k, p in enumerate(partable.call_parameters)
                if p.type == 'sld']
@@ -755,13 +768,12 @@ def make_source(model_info):
     source.append("#define NUM_VALUES %d" % partable.nvalues)
     source.append("#define NUM_MAGNETIC %d" % partable.nmagnetic)
     source.append("#define MAGNETIC_PARS %s"%",".join(str(k) for k in magpars))
-    for k, v in enumerate(magpars[:3]):
-        source.append("#define MAGNETIC_PAR%d %d"%(k+1, v))
+    source.append("#define PROJECTION %d"%PROJECTION)
 
     # TODO: allow mixed python/opencl kernels?
 
-    ocl = kernels(ocl_code, call_iq, call_iqxy, model_info.name)
-    dll = kernels(dll_code, call_iq, call_iqxy, model_info.name)
+    ocl = _kernels(kernel_code, call_iq, call_iqxy, clear_iqxy, model_info.name)
+    dll = _kernels(kernel_code, call_iq, call_iqxy, clear_iqxy, model_info.name)
     result = {
         'dll': '\n'.join(source+dll[0]+dll[1]+dll[2]),
         'opencl': '\n'.join(source+ocl[0]+ocl[1]+ocl[2]),
@@ -770,7 +782,7 @@ def make_source(model_info):
     return result
 
 
-def kernels(kernel, call_iq, call_iqxy, name):
+def _kernels(kernel, call_iq, call_iqxy, clear_iqxy, name):
     # type: ([str,str], str, str, str) -> List[str]
     code = kernel[0]
     path = kernel[1].replace('\\', '\\\\')
@@ -790,7 +802,7 @@ def kernels(kernel, call_iq, call_iqxy, name):
         call_iqxy,
         '#line 1 "%s Iqxy"' % path,
         code,
-        "#undef CALL_IQ",
+        clear_iqxy,
         "#undef KERNEL_NAME",
     ]
 
@@ -801,8 +813,8 @@ def kernels(kernel, call_iq, call_iqxy, name):
         call_iqxy,
         '#line 1 "%s Imagnetic"' % path,
         code,
+        clear_iqxy,
         "#undef MAGNETIC",
-        "#undef CALL_IQ",
         "#undef KERNEL_NAME",
     ]
 
@@ -919,6 +931,7 @@ RST_ROLES = """\
 """
 
 def make_html(model_info):
+    # type: (ModelInfo) -> str
     """
     Convert model docs directly to html.
     """
@@ -928,12 +941,20 @@ def make_html(model_info):
     return rst2html.rst2html("".join((RST_ROLES, RST_PROLOG, rst)))
 
 def view_html(model_name):
+    # type: (str) -> None
+    """
+    Load the model definition and view its help.
+    """
     from . import modelinfo
     kernel_module = load_kernel_module(model_name)
     info = modelinfo.make_model_info(kernel_module)
     view_html_from_info(info)
 
 def view_html_from_info(info):
+    # type: (ModelInfo) -> None
+    """
+    View the help for a loaded model definition.
+    """
     from . import rst2html
     url = "file://"+dirname(info.filename)+"/"
     rst2html.view_html(make_html(info), url=url)
@@ -958,7 +979,6 @@ def main():
     """
     Program which prints the source produced by the model.
     """
-    import sys
     from .modelinfo import make_model_info
 
     if len(sys.argv) <= 1:

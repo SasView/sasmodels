@@ -1,15 +1,6 @@
-double form_volume(double length_a, double length_b, double length_c,
-                   double thick_rim_a, double thick_rim_b, double thick_rim_c);
-double Iq(double q, double core_sld, double arim_sld, double brim_sld, double crim_sld,
-          double solvent_sld, double length_a, double length_b, double length_c,
-          double thick_rim_a, double thick_rim_b, double thick_rim_c);
-double Iqxy(double qx, double qy, double core_sld, double arim_sld, double brim_sld,
-            double crim_sld, double solvent_sld, double length_a, double length_b,
-            double length_c, double thick_rim_a, double thick_rim_b,
-            double thick_rim_c, double theta, double phi, double psi);
-
-double form_volume(double length_a, double length_b, double length_c,
-                   double thick_rim_a, double thick_rim_b, double thick_rim_c)
+static double
+form_volume(double length_a, double length_b, double length_c,
+    double thick_rim_a, double thick_rim_b, double thick_rim_c)
 {
     //return length_a * length_b * length_c;
     return length_a * length_b * length_c +
@@ -18,7 +9,8 @@ double form_volume(double length_a, double length_b, double length_c,
            2.0 * thick_rim_c * length_a * length_b;
 }
 
-double Iq(double q,
+static double
+Iq(double q,
     double core_sld,
     double arim_sld,
     double brim_sld,
@@ -60,7 +52,6 @@ double Iq(double q,
     double V1 = (2.0 * thick_rim_a * length_b * length_c);    // incorrect V1 (aa*bb*cc+2*ta*bb*cc)
     double V2 = (2.0 * length_a * thick_rim_b * length_c);    // incorrect V2(aa*bb*cc+2*aa*tb*cc)
     double V3 = (2.0 * length_a * length_b * thick_rim_c);    //not present
-    double Vot = Vin + V1 + V2 + V3;
 
     // Scale factors (note that drC is not used later)
     const double drho0 = (core_sld-solvent_sld);
@@ -99,7 +90,6 @@ double Iq(double q,
             const double form = scale12*si1*si2 + scale23*si2*si3 + scale14*si1*si4;
             const double form_crim = scale11*si1*si2;
 
-
             //  correct FF : sum of square of phase factors
             inner_total += Gauss76Wt[j] * form * form;
             inner_total_crim += Gauss76Wt[j] * form_crim * form_crim;
@@ -117,7 +107,8 @@ double Iq(double q,
     return 1.0e-4 * outer_total;
 }
 
-double Iqxy(double qx, double qy,
+static double
+Iqxy(double qa, double qb, double qc,
     double core_sld,
     double arim_sld,
     double brim_sld,
@@ -128,14 +119,8 @@ double Iqxy(double qx, double qy,
     double length_c,
     double thick_rim_a,
     double thick_rim_b,
-    double thick_rim_c,
-    double theta,
-    double phi,
-    double psi)
+    double thick_rim_c)
 {
-    double q, zhat, yhat, xhat;
-    ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, xhat, yhat, zhat);
-
     // cspkernel in csparallelepiped recoded here
     const double dr0 = core_sld-solvent_sld;
     const double drA = arim_sld-solvent_sld;
@@ -158,12 +143,12 @@ double Iqxy(double qx, double qy,
     double tb = length_b + 2.0*thick_rim_b;
     double tc = length_c + 2.0*thick_rim_c;
     //handle arg=0 separately, as sin(t)/t -> 1 as t->0
-    double siA = sas_sinx_x(0.5*q*length_a*xhat);
-    double siB = sas_sinx_x(0.5*q*length_b*yhat);
-    double siC = sas_sinx_x(0.5*q*length_c*zhat);
-    double siAt = sas_sinx_x(0.5*q*ta*xhat);
-    double siBt = sas_sinx_x(0.5*q*tb*yhat);
-    double siCt = sas_sinx_x(0.5*q*tc*zhat);
+    double siA = sas_sinx_x(0.5*length_a*qa);
+    double siB = sas_sinx_x(0.5*length_b*qb);
+    double siC = sas_sinx_x(0.5*length_c*qc);
+    double siAt = sas_sinx_x(0.5*ta*qa);
+    double siBt = sas_sinx_x(0.5*tb*qb);
+    double siCt = sas_sinx_x(0.5*tc*qc);
 
 
     // f uses Vin, V1, V2, and V3 and it seems to have more sense than the value computed

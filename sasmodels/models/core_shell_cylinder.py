@@ -72,6 +72,7 @@ Authorship and Verification
 * **Last Reviewed by:** Richard Heenan **Date:** March 18, 2016
 """
 
+import numpy as np
 from numpy import pi, inf, sin, cos
 
 name = "core_shell_cylinder"
@@ -118,7 +119,7 @@ parameters = [["sld_core", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Cylinder length"],
               ["theta", "degrees", 60, [-360, 360], "orientation",
                "cylinder axis to beam angle"],
-              ["phi", "degrees",   60, [-360, 360], "orientation",
+              ["phi", "degrees", 60, [-360, 360], "orientation",
                "rotation about beam"],
              ]
 
@@ -142,7 +143,6 @@ def VR(radius, thickness, length):
     return whole, whole - core
 
 def random():
-    import numpy as np
     outer_radius = 10**np.random.uniform(1, 4.7)
     # Use a distribution with a preference for thin shell or thin core
     # Avoid core,shell radii < 1
@@ -169,7 +169,8 @@ q = 0.1
 # april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
 qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
-tests = [[{}, 0.075, 10.8552692237],
-        [{}, (qx, qy), 0.444618752741 ],
-        ]
+tests = [
+    [{}, 0.075, 10.8552692237],
+    [{}, (qx, qy), 0.444618752741],
+]
 del qx, qy  # not necessary to delete, but cleaner

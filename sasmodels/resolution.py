@@ -5,6 +5,8 @@ This defines classes for 1D and 2D resolution calculations.
 """
 from __future__ import division
 
+import unittest
+
 from scipy.special import erf  # type: ignore
 from numpy import sqrt, log, log10, exp, pi  # type: ignore
 import numpy as np  # type: ignore
@@ -84,8 +86,8 @@ class Pinhole1D(Resolution):
         self.q_calc = self.q_calc[abs(self.q_calc) >= cutoff]
 
         # Build weight matrix from calculated q values
-        self.weight_matrix = pinhole_resolution(self.q_calc, self.q,
-                                np.maximum(q_width, MINIMUM_RESOLUTION))
+        self.weight_matrix = pinhole_resolution(
+            self.q_calc, self.q, np.maximum(q_width, MINIMUM_RESOLUTION))
         self.q_calc = abs(self.q_calc)
 
     def apply(self, theory):
@@ -475,8 +477,6 @@ def geometric_extrapolation(q, q_min, q_max, points_per_decade=None):
 ############################################################################
 # unit tests
 ############################################################################
-import unittest
-
 
 def eval_form(q, form, pars):
     """
@@ -546,7 +546,7 @@ def romberg_slit_1d(q, width, height, form, pars):
             u_sub = sqrt((qi+h_grid)**2 + w_grid**2)
             f_at_u = np.interp(u_sub, q_calc, Iq)
             #print(np.trapz(Iu, w_grid, axis=1))
-            total  = np.trapz(np.trapz(f_at_u, w_grid, axis=1), h_grid[:, 0])
+            total = np.trapz(np.trapz(f_at_u, w_grid, axis=1), h_grid[:, 0])
             result[i] = total / (2*h*w)
             # from scipy.integrate import dblquad
             # r, err = dblquad(_int_wh, -h, h, lambda h: 0., lambda h: w,

@@ -1,5 +1,5 @@
 r"""
-For information about polarised and magnetic scattering, see 
+For information about polarised and magnetic scattering, see
 the :doc:`magnetic help <../sasgui/perspectives/fitting/mag_help>` documentation.
 
 Definition
@@ -103,7 +103,8 @@ def sesans(z, sld, sld_solvent, radius):
     low = ((d > 0) & (d < 2))
     dlow = d[low]
     dlow2 = dlow ** 2
-    g[low] = sqrt(1 - dlow2 / 4.) * (1 + dlow2 / 8.) + dlow2 / 2.*(1 - dlow2 / 16.) * log(dlow / (2. + sqrt(4. - dlow2)))
+    g[low] = (sqrt(1 - dlow2/4.) * (1 + dlow2/8.)
+              + dlow2/2.*(1 - dlow2/16.) * log(dlow / (2. + sqrt(4. - dlow2))))
     return g
 sesans.vectorized = True  # sesans accepts an array of z values
 

@@ -125,6 +125,7 @@ Authorship and Verification
 * **Last Reviewed by:** Paul Kienzle & Richard Heenan **Date:**  April 4, 2017
 """
 
+import numpy as np
 from numpy import inf, sin, cos, pi
 
 name = "triaxial_ellipsoid"
@@ -173,7 +174,6 @@ def ER(radius_equat_minor, radius_equat_major, radius_polar):
     return ellipsoid_ER(polar, equatorial)
 
 def random():
-    import numpy as np
     a, b, c = 10**np.random.uniform(1, 4.7, size=3)
     pars = dict(
         radius_equat_minor=a,
@@ -200,7 +200,8 @@ q = 0.1
 # check 2d test after pull #890
 qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
-tests = [[{}, 0.05, 24.8839548033],
-        [{'theta':80., 'phi':10.}, (qx, qy), 166.712060266 ],
-        ]
+tests = [
+    [{}, 0.05, 24.8839548033],
+    [{'theta':80., 'phi':10.}, (qx, qy), 166.712060266],
+    ]
 del qx, qy  # not necessary to delete, but cleaner

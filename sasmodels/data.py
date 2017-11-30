@@ -36,12 +36,14 @@ import traceback
 
 import numpy as np  # type: ignore
 
+# pylint: disable=unused-import
 try:
     from typing import Union, Dict, List, Optional
 except ImportError:
     pass
 else:
     Data = Union["Data1D", "Data2D", "SesansData"]
+# pylint: enable=unused-import
 
 def load_data(filename, index=0):
     # type: (str) -> Data
@@ -63,7 +65,7 @@ def load_data(filename, index=0):
         if hasattr(data, 'x'):
             data.qmin, data.qmax = data.x.min(), data.x.max()
             data.mask = (np.isnan(data.y) if data.y is not None
-                        else np.zeros_like(data.x, dtype='bool'))
+                         else np.zeros_like(data.x, dtype='bool'))
         elif hasattr(data, 'qx_data'):
             data.mask = ~data.mask
     return datasets[index] if index != 'all' else datasets
@@ -136,8 +138,13 @@ class Data1D(object):
 
     *_yaxis*, *_yunit*: label and units for the *y* axis
     """
-    def __init__(self, x=None, y=None, dx=None, dy=None):
-        # type: (Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray]) -> None
+    def __init__(self,
+                 x=None,  # type: Optional[np.ndarray]
+                 y=None,  # type: Optional[np.ndarray]
+                 dx=None, # type: Optional[np.ndarray]
+                 dy=None  # type: Optional[np.ndarray]
+                ):
+        # type: (...) -> None
         self.x, self.y, self.dx, self.dy = x, y, dx, dy
         self.dxl = None
         self.filename = None
@@ -210,8 +217,15 @@ class Data2D(object):
 
     *x_bins*, *y_bins*: grid steps in *x* and *y* directions
     """
-    def __init__(self, x=None, y=None, z=None, dx=None, dy=None, dz=None):
-        # type: (Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray]) -> None
+    def __init__(self,
+                 x=None,   # type: Optional[np.ndarray]
+                 y=None,   # type: Optional[np.ndarray]
+                 z=None,   # type: Optional[np.ndarray]
+                 dx=None,  # type: Optional[np.ndarray]
+                 dy=None,  # type: Optional[np.ndarray]
+                 dz=None   # type: Optional[np.ndarray]
+                ):
+        # type: (...) -> None
         self.qx_data, self.dqx_data = x, dx
         self.qy_data, self.dqy_data = y, dy
         self.data, self.err_data = z, dz
@@ -362,15 +376,21 @@ def plot_data(data, view='log', limits=None):
     # do not repeat.
     if hasattr(data, 'isSesans') and data.isSesans:
         _plot_result_sesans(data, None, None, use_data=True, limits=limits)
-    elif hasattr(data, 'qx_data'):
+    elif hasattr(data, 'qx_data') and not getattr(data, 'radial', False):
         _plot_result2D(data, None, None, view, use_data=True, limits=limits)
     else:
         _plot_result1D(data, None, None, view, use_data=True, limits=limits)
 
 
-def plot_theory(data, theory, resid=None, view='log',
-                use_data=True, limits=None, Iq_calc=None):
-    # type: (Data, Optional[np.ndarray], Optional[np.ndarray], str, bool, Optional[Tuple[float,float]], Optional[np.ndarray]) -> None
+def plot_theory(data,          # type: Data
+                theory,        # type: Optional[np.ndarray]
+                resid=None,    # type: Optional[np.ndarray]
+                view='log',    # type: str
+                use_data=True, # type: bool
+                limits=None,   # type: Optional[np.ndarray]
+                Iq_calc=None   # type: Optional[np.ndarray]
+               ):
+    # type: (...) -> None
     """
     Plot theory calculation.
 
@@ -390,7 +410,7 @@ def plot_theory(data, theory, resid=None, view='log',
     """
     if hasattr(data, 'isSesans') and data.isSesans:
         _plot_result_sesans(data, theory, resid, use_data=True, limits=limits)
-    elif hasattr(data, 'qx_data'):
+    elif hasattr(data, 'qx_data') and not getattr(data, 'radial', False):
         _plot_result2D(data, theory, resid, view, use_data, limits=limits)
     else:
         _plot_result1D(data, theory, resid, view, use_data,
@@ -416,14 +436,24 @@ def protect(func):
 
 
 @protect
-def _plot_result1D(data, theory, resid, view, use_data,
-                   limits=None, Iq_calc=None):
-    # type: (Data1D, Optional[np.ndarray], Optional[np.ndarray], str, bool, Optional[Tuple[float, float]], Optional[np.ndarray]) -> None
+def _plot_result1D(data,         # type: Data1D
+                   theory,       # type: Optional[np.ndarray]
+                   resid,        # type: Optional[np.ndarray]
+                   view,         # type: str
+                   use_data,     # type: bool
+                   limits=None,  # type: Optional[Tuple[float, float]]
+                   Iq_calc=None  # type: Optional[np.ndarray]
+                  ):
+    # type: (...) -> None
     """
     Plot the data and residuals for 1D data.
     """
     import matplotlib.pyplot as plt  # type: ignore
     from numpy.ma import masked_array, masked  # type: ignore
+
+    if getattr(data, 'radial', False):
+        data.x = data.q_data
+        data.y = data.data
 
     use_data = use_data and data.y is not None
     use_theory = theory is not None
@@ -510,8 +540,13 @@ def _plot_result1D(data, theory, resid, view, use_data,
 
 
 @protect
-def _plot_result_sesans(data, theory, resid, use_data, limits=None):
-    # type: (SesansData, Optional[np.ndarray], Optional[np.ndarray], bool, Optional[Tuple[float, float]]) -> None
+def _plot_result_sesans(data,        # type: SesansData
+                        theory,      # type: Optional[np.ndarray]
+                        resid,       # type: Optional[np.ndarray]
+                        use_data,    # type: bool
+                        limits=None  # type: Optional[Tuple[float, float]]
+                       ):
+    # type: (...) -> None
     """
     Plot SESANS results.
     """
@@ -522,7 +557,7 @@ def _plot_result_sesans(data, theory, resid, use_data, limits=None):
     num_plots = (use_data or use_theory) + use_resid
 
     if use_data or use_theory:
-        is_tof = (data.lam != data.lam[0]).any()
+        is_tof = data.lam is not None and (data.lam != data.lam[0]).any()
         if num_plots > 1:
             plt.subplot(1, num_plots, 1)
         if use_data:
@@ -555,8 +590,14 @@ def _plot_result_sesans(data, theory, resid, use_data, limits=None):
 
 
 @protect
-def _plot_result2D(data, theory, resid, view, use_data, limits=None):
-    # type: (Data2D, Optional[np.ndarray], Optional[np.ndarray], str, bool, Optional[Tuple[float,float]]) -> None
+def _plot_result2D(data,         # type: Data2D
+                   theory,       # type: Optional[np.ndarray]
+                   resid,        # type: Optional[np.ndarray]
+                   view,         # type: str
+                   use_data,     # type: bool
+                   limits=None   # type: Optional[Tuple[float, float]]
+                  ):
+    # type: (...) -> None
     """
     Plot the data and residuals for 2D data.
     """
@@ -616,8 +657,13 @@ def _plot_result2D(data, theory, resid, view, use_data, limits=None):
 
 
 @protect
-def _plot_2d_signal(data, signal, vmin=None, vmax=None, view='log'):
-    # type: (Data2D, np.ndarray, Optional[float], Optional[float], str) -> Tuple[float, float]
+def _plot_2d_signal(data,       # type: Data2D
+                    signal,     # type: np.ndarray
+                    vmin=None,  # type: Optional[float]
+                    vmax=None,  # type: Optional[float]
+                    view='log'  # type: str
+                   ):
+    # type: (...) -> Tuple[float, float]
     """
     Plot the target value for the data.  This could be the data itself,
     the theory calculation, or the residuals.
@@ -632,16 +678,22 @@ def _plot_2d_signal(data, signal, vmin=None, vmax=None, view='log'):
     valid = np.isfinite(image)
     if view == 'log':
         valid[valid] = (image[valid] > 0)
-        if vmin is None: vmin = image[valid & ~data.mask].min()
-        if vmax is None: vmax = image[valid & ~data.mask].max()
+        if vmin is None:
+            vmin = image[valid & ~data.mask].min()
+        if vmax is None:
+            vmax = image[valid & ~data.mask].max()
         image[valid] = np.log10(image[valid])
     elif view == 'q4':
         image[valid] *= (data.qx_data[valid]**2+data.qy_data[valid]**2)**2
-        if vmin is None: vmin = image[valid & ~data.mask].min()
-        if vmax is None: vmax = image[valid & ~data.mask].max()
+        if vmin is None:
+            vmin = image[valid & ~data.mask].min()
+        if vmax is None:
+            vmax = image[valid & ~data.mask].max()
     else:
-        if vmin is None: vmin = image[valid & ~data.mask].min()
-        if vmax is None: vmax = image[valid & ~data.mask].max()
+        if vmin is None:
+            vmin = image[valid & ~data.mask].min()
+        if vmax is None:
+            vmax = image[valid & ~data.mask].max()
 
     image[~valid | data.mask] = 0
     #plottable = Iq
@@ -650,10 +702,13 @@ def _plot_2d_signal(data, signal, vmin=None, vmax=None, view='log'):
     xmin, xmax = min(data.qx_data), max(data.qx_data)
     ymin, ymax = min(data.qy_data), max(data.qy_data)
     if view == 'log':
-        vmin, vmax = np.log10(vmin), np.log10(vmax)
+        vmin_scaled, vmax_scaled = np.log10(vmin), np.log10(vmax)
+    else:
+        vmin_scaled, vmax_scaled = vmin, vmax
     plt.imshow(plottable.reshape(len(data.x_bins), len(data.y_bins)),
                interpolation='nearest', aspect=1, origin='lower',
-               extent=[xmin, xmax, ymin, ymax], vmin=vmin, vmax=vmax)
+               extent=[xmin, xmax, ymin, ymax],
+               vmin=vmin_scaled, vmax=vmax_scaled)
     plt.xlabel("$q_x$/A$^{-1}$")
     plt.ylabel("$q_y$/A$^{-1}$")
     return vmin, vmax

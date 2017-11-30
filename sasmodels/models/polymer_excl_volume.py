@@ -89,9 +89,9 @@ H Benoit, *Comptes Rendus*, 245 (1957) 2244-2247
 
 B Hammouda, *SANS from Homogeneous Polymer Mixtures - A Unified Overview,
 Advances in Polym. Sci.* 106(1993) 87-133
-
 """
 
+import numpy as np
 from numpy import inf, power, errstate
 from scipy.special import gammainc, gamma
 
@@ -123,9 +123,9 @@ def Iq(q, rg=60.0, porod_exp=3.0):
     usub = (q*rg)**2 * (2.0/porod_exp + 1.0) * (2.0/porod_exp + 2.0)/6.0
     with errstate(divide='ignore', invalid='ignore'):
         upow = power(usub, -0.5*porod_exp)
-        result= (porod_exp*upow *
-                 (gamma(0.5*porod_exp)*gammainc(0.5*porod_exp, usub) -
-                  upow*gamma(porod_exp)*gammainc(porod_exp, usub)))
+        result = (porod_exp*upow *
+                  (gamma(0.5*porod_exp)*gammainc(0.5*porod_exp, usub) -
+                   upow*gamma(porod_exp)*gammainc(porod_exp, usub)))
     result[q <= 0] = 1.0
 
     return result
@@ -133,7 +133,6 @@ def Iq(q, rg=60.0, porod_exp=3.0):
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
-    import numpy as np
     rg = 10**np.random.uniform(0, 4)
     porod_exp = np.random.uniform(1e-3, 6)
     scale = 10**np.random.uniform(1, 5)

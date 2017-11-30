@@ -41,6 +41,7 @@ References
 J K Percus, J Yevick, *J. Phys. Rev.*, 110, (1958) 1
 """
 
+import numpy as np
 from numpy import inf
 
 name = "hardsphere"
@@ -76,8 +77,10 @@ Iq = r"""
       double D,A,B,G,X,X2,X4,S,C,FF,HARDSPH;
       // these are c compiler instructions, can also put normal code inside the "if else" structure
       #if FLOAT_SIZE > 4
-      // double precision    orig had 0.2, don't call the variable cutoff as PAK already has one called that! Must use UPPERCASE name please.
-      //  0.05 better, 0.1 OK
+      // double precision
+      // orig had 0.2, don't call the variable cutoff as PAK already has one called that!
+      // Must use UPPERCASE name please.
+      // 0.05 better, 0.1 OK
       #define CUTOFFHS 0.05
       #else
       // 0.1 bad, 0.2 OK, 0.3 good, 0.4 better, 0.8 no good
@@ -89,7 +92,8 @@ Iq = r"""
 //printf("HS1 %g: %g\n",q,HARDSPH);
                return(HARDSPH);
       }
-      // removing use of pow(xxx,2) and rearranging the calcs of A, B & G cut ~40% off execution time ( 0.5 to 0.3 msec)
+      // removing use of pow(xxx,2) and rearranging the calcs
+      // of A, B & G cut ~40% off execution time ( 0.5 to 0.3 msec)
       X = 1.0/( 1.0 -volfraction);
       D= X*X;
       A= (1.+2.*volfraction)*D;
@@ -109,8 +113,10 @@ Iq = r"""
 
       if(X < CUTOFFHS) {
       // RKH Feb 2016, use Taylor series expansion for small X
-      // else no obvious way to rearrange the equations to avoid needing a very high number of significant figures.
-      // Series expansion found using Mathematica software. Numerical test in .xls showed terms to X^2 are sufficient
+      // else no obvious way to rearrange the equations to avoid
+      // needing a very high number of significant figures.
+      // Series expansion found using Mathematica software. Numerical test
+      // in .xls showed terms to X^2 are sufficient
       // for 5 or 6 significant figures, but I put the X^4 one in anyway
             //FF = 8*A +6*B + 4*G - (0.8*A +2.0*B/3.0 +0.5*G)*X2 +(A/35. +B/40. +G/50.)*X4;
             // refactoring the polynomial makes it very slightly faster (0.5 not 0.6 msec)
@@ -129,7 +135,8 @@ Iq = r"""
       X4=X2*X2;
       SINCOS(X,S,C);
 
-// RKH Feb 2016, use version FISH code as is better than original sasview one at small Q in single precision, and more than twice as fast in double.
+// RKH Feb 2016, use version FISH code as is better than original sasview one
+// at small Q in single precision, and more than twice as fast in double.
       //FF=A*(S-X*C)/X + B*(2.*X*S -(X2-2.)*C -2.)/X2 + G*( (4.*X2*X -24.*X)*S -(X4 -12.*X2 +24.)*C +24. )/X4;
       // refactoring the polynomial here & above makes it slightly faster
 
@@ -153,7 +160,6 @@ Iq = r"""
    """
 
 def random():
-    import numpy as np
     pars = dict(
         scale=1, background=0,
         radius_effective=10**np.random.uniform(1, 4),
@@ -166,10 +172,12 @@ def random():
 
 demo = dict(radius_effective=200, volfraction=0.2,
             radius_effective_pd=0.1, radius_effective_pd_n=40)
-# Q=0.001 is in the Taylor series, low Q part, so add Q=0.1, assuming double precision sasview is correct
+# Q=0.001 is in the Taylor series, low Q part, so add Q=0.1,
+# assuming double precision sasview is correct
 tests = [
-        [ {'scale': 1.0, 'background' : 0.0, 'radius_effective' : 50.0,
-           'volfraction' : 0.2, 'radius_effective_pd' : 0},
-          [0.001,0.1], [0.209128,0.930587]],
-        ]
-# ADDED by: RKH  ON: 16Mar2016  using equations from FISH as better than orig sasview, see notes above. Added Taylor expansions at small Q,
+    [{'scale': 1.0, 'background' : 0.0, 'radius_effective' : 50.0,
+      'volfraction' : 0.2, 'radius_effective_pd' : 0},
+     [0.001, 0.1], [0.209128, 0.930587]],
+]
+# ADDED by: RKH  ON: 16Mar2016  using equations from FISH as better than
+# orig sasview, see notes above. Added Taylor expansions at small Q.
