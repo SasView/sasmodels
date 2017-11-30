@@ -187,16 +187,12 @@ def ER(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c):
     """
         Return equivalent radius (ER)
     """
+    from .parallelepiped import ER as ER_p
 
-    # surface average radius (rough approximation)
-    surf_rad = sqrt((length_a + 2.0*thick_rim_a)
-                    * (length_b + 2.0*thick_rim_b) / pi)
-
-    height = length_c + 2.0*thick_rim_c
-
-    ddd = (0.75 * surf_rad * (2 * surf_rad * height
-           + (height + surf_rad) * (height + pi * surf_rad)))
-    return 0.5 * (ddd) ** (1. / 3.)
+    a = length_a + 2*thick_rim_a
+    b = length_b + 2*thick_rim_b
+    c = length_c + 2*thick_rim_c
+    return ER_p(a, b, c)
 
 # VR defaults to 1.0
 
