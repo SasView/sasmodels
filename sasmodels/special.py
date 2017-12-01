@@ -205,9 +205,6 @@ from numpy import sinh, cosh, tanh, arcsinh as asinh, arccosh as acosh, arctanh 
 from numpy import arctan2 as atan2
 from numpy import fmin, fmax, trunc, rint
 from numpy import pi, nan, inf
-NAN = nan
-INFINITY = inf
-
 from scipy.special import gamma as sas_gamma
 from scipy.special import erf as sas_erf
 from scipy.special import erfc as sas_erfc
@@ -219,6 +216,8 @@ from scipy.special import jn as sas_JN
 
 # C99 standard math constants
 M_PI, M_PI_2, M_PI_4, M_SQRT1_2, M_E = np.pi, np.pi/2, np.pi/4, np.sqrt(0.5), np.e
+NAN = nan
+INFINITY = inf
 
 # non-standard constants
 M_PI_180, M_4PI_3 = M_PI/180, 4*M_PI/3
