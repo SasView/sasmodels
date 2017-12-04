@@ -131,16 +131,16 @@ def convert(info, module):
     functions = codegen.translate(
         [code[name] for name in ordered_dag(depends) if name in code],
         constants)
+    snippets.append(functions)
+    #print("source", info.source)
+    print("\n".join(snippets))
+    #return
+    raise RuntimeError("not yet converted...")
 
     # update model info
     info.source = unique_libs
-    info.c_code = "\n".join(snippets) +  functions
+    info.c_code = "\n".join(snippets)
     info.Iq = info.Iqxy = info.form_volume = None
-
-    print("source", info.source)
-    print(info.c_code)
-
-    raise RuntimeError("not yet converted...")
 
 
 # Modified from the following:
