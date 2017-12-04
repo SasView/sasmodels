@@ -49,6 +49,15 @@ UNARYOP_SYMBOLS[ast.UAdd] = '+'
 UNARYOP_SYMBOLS[ast.USub] = '-'
 
 
+def translate(functions, constants):
+    # type: (List[Tuple[str, str, int]], Dict[str, Any]) -> str
+    snippets = []
+    for source, filename, offset in functions:
+        tree = ast.parse(source)
+        snippet = to_source(tree) #, filename, offset)
+        snippets.append(snippet)
+    return "\n".join(snippets)
+
 def to_source(node, indent_with=' ' * 4, add_line_information=False):
     """This function can convert a node tree back into python sourcecode.
     This is useful for debugging purposes, especially if you're dealing with

@@ -64,6 +64,8 @@ def convert(info, module):
         return
 
     libs = []  # type: List[str]
+    snippets = []  # type: List[str]
+    constants = {} # type: Dict[str, Any]
     code = {}  # type: Dict[str, str]
     depends = {}  # type: Dict[str, List[str]]
     while translate:
@@ -89,13 +91,25 @@ def convert(info, module):
                     # not special: add function to translate stack
                     translate.append((name, obj))
             elif isinstance(obj, float):
-                code[name] = "const double %s = %.15g\n"%(name, obj)
+                constants[name] = obj
+                snippets.append("const double %s = %.15g;"%(name, obj))
             elif isinstance(obj, int):
-                code[name] = "const int %s = %d\n"%(name, obj)
+                constants[name] = obj
+                snippets.append("const int %s = %d;"%(name, obj))
             elif isinstance(obj, (list, tuple, np.ndarray)):
+                constants[name] = obj
+                # extend constant arrays to a multiple of 4; not sure if this
+                # is necessary, but some OpenCL targets broke if the number
+                # of parameters in the parameter table was not a multiple of 4,
+                # so do it for all constant arrays to be safe.
+                if len(obj)%4 != 0:
+                    obj = list(obj) + [0.]*(4-len(obj))
                 vals = ", ".join("%.15g"%v for v in obj)
-                code[name] = "const double %s[] = {%s};\n" %(name, vals)
+                snippets.append("const double %s[] = {%s};" %(name, vals))
             elif isinstance(obj, special.Gauss):
+                constants["GAUSS_N"] = obj.n
+                constants["GAUSS_Z"] = obj.z
+                constants["GAUSS_W"] = obj.w
                 libs.append('lib/gauss%d.c'%obj.n)
                 source = (source.replace(name+'.n', 'GAUSS_N')
                           .replace(name+'.z', 'GAUSS_Z')
@@ -104,9 +118,8 @@ def convert(info, module):
                 raise TypeError("Could not convert global %s of type %s"
                                 % (name, str(type(obj))))
 
-        tree = ast.parse(source)
-        snippet = codegen.to_source(tree) #, filename, offset)
-        code[function_name] = snippet
+        # add (possibly modified) source to set of functions to compile
+        code[function_name] = (source, filename, offset)
 
     # remove duplicates from the dependecy list
     unique_libs = []
@@ -114,9 +127,14 @@ def convert(info, module):
         if filename not in unique_libs:
             unique_libs.append(filename)
 
-    info.source = unique_libs
-    info.c_code = "\n".join(code[k] for k in ordered_dag(depends) if k in code)
+    # translate source
+    functions = codegen.translate(
+        [code[name] for name in ordered_dag(depends) if name in code],
+        constants)
 
+    # update model info
+    info.source = unique_libs
+    info.c_code = "\n".join(snippets) +  functions
     info.Iq = info.Iqxy = info.form_volume = None
 
     print("source", info.source)
