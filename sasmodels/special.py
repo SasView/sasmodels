@@ -2,18 +2,15 @@ r"""
 Special Functions
 .................
 
-The C code follows the C99 standard, with the usual math functions,
-as defined in
-`OpenCL <https://www.khronos.org/registry/cl/sdk/1.1/docs/man/xhtml/mathFunctions.html>`_.
-This includes the following:
+This following standard C99 math functions are available:
 
     M_PI, M_PI_2, M_PI_4, M_SQRT1_2, M_E:
         $\pi$, $\pi/2$, $\pi/4$, $1/\sqrt{2}$ and Euler's constant $e$
 
-    exp, log, pow(x,y), expm1, sqrt:
-        Power functions $e^x$, $\ln x$, $x^y$, $e^x - 1$, $\sqrt{x}$.
-        The function expm1(x) is accurate across all $x$, including $x$
-        very close to zero.
+    exp, log, pow(x,y), expm1, log1p, sqrt, cbrt:
+        Power functions $e^x$, $\ln x$, $x^y$, $e^x - 1$, $\ln 1 + x$,
+        $\sqrt{x}$, $\sqrt[3]{x}$. The functions expm1(x) and log1p(x)
+        are accurate across all $x$, including $x$ very close to zero.
 
     sin, cos, tan, asin, acos, atan:
         Trigonometry functions and inverses, operating on radians.
@@ -28,13 +25,14 @@ This includes the following:
         atan(y/x) would return a value in quadrant I. Similarly for
         quadrants II and IV when $x$ and $y$ have opposite sign.
 
-    fmin(x,y), fmax(x,y), trunc, rint:
+    fabs(x), fmin(x,y), fmax(x,y), trunc, rint:
         Floating point functions.  rint(x) returns the nearest integer.
 
     NAN:
         NaN, Not a Number, $0/0$.  Use isnan(x) to test for NaN.  Note that
         you cannot use :code:`x == NAN` to test for NaN values since that
-        will always return false.  NAN does not equal NAN!
+        will always return false.  NAN does not equal NAN!  The alternative,
+        :code:`x != x` may fail if the compiler optimizes the test away.
 
     INFINITY:
         $\infty, 1/0$.  Use isinf(x) to test for infinity, or isfinite(x)
@@ -88,8 +86,7 @@ Some non-standard constants and functions are also provided:
         graphics cards do not support double precision.  There is no provision
         for forcing a constant to stay double precision.
 
-The following special functions and scattering calculations are defined in
-`sasmodels/models/lib <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib>`_.
+The following special functions and scattering calculations are defined.
 These functions have been tuned to be fast and numerically stable down
 to $q=0$ even in single precision.  In some cases they work around bugs
 which appear on some platforms but not others, so use them where needed.
@@ -183,13 +180,16 @@ file in the order given, otherwise these functions will not be available.
         and first order.
 
 
-    Gauss76Z[i], Gauss76Wt[i]:
+    gauss76.n, gauss76.z[i], gauss76.w[i]:
         Points $z_i$ and weights $w_i$ for 76-point Gaussian quadrature, respectively,
         computing $\int_{-1}^1 f(z)\,dz \approx \sum_{i=1}^{76} w_i\,f(z_i)$.
+        When translating the model to C, include 'lib/gauss76.c' in the source
+        and use :code:`GAUSS_N`, :code:`GAUSS_Z`, and :code:`GAUSS_W`.
 
-        Similar arrays are available in :code:`gauss20.c` for 20-point
-        quadrature and in :code:`gauss150.c` for 150-point quadrature.
-
+        Similar arrays are available in :code:`gauss20` for 20-point quadrature
+        and :code:`gauss150.c` for 150-point quadrature. By using
+        :code:`import gauss76 as gauss` it is easy to change the number of
+        points in the integration.
 """
 # pylint: disable=unused-import
 
@@ -199,11 +199,11 @@ import numpy as np
 from numpy import degrees, radians
 
 # C99 standard math library functions
-from numpy import exp, log, power as pow, expm1, sqrt
+from numpy import exp, log, power as pow, expm1, logp1, sqrt, cbrt
 from numpy import sin, cos, tan, arcsin as asin, arccos as acos, arctan as atan
 from numpy import sinh, cosh, tanh, arcsinh as asinh, arccosh as acosh, arctanh as atanh
 from numpy import arctan2 as atan2
-from numpy import fmin, fmax, trunc, rint
+from numpy import fabs, fmin, fmax, trunc, rint
 from numpy import pi, nan, inf
 from scipy.special import gamma as sas_gamma
 from scipy.special import erf as sas_erf

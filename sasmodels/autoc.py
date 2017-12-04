@@ -66,14 +66,11 @@ def convert(info, module):
     depends = {}  # type: Dict[str, List[str]]
     while translate:
         function_name, function = translate.pop(0)
-        source = inspect.getsource(function)
-        tree = ast.parse(source)
         filename = function.__code__.co_filename
         offset = function.__code__.co_firstlineno
         refs = function.__code__.co_names
-        snippet = codegen.to_source(tree) #, filename, offset)
-        code[function_name] = snippet
         depends[function_name] = set(refs)
+        source = inspect.getsource(function)
         for name in refs:
             if name in tagged or name in DEFINES:
                 continue
@@ -98,12 +95,19 @@ def convert(info, module):
                 code[name] = "const double %s[] = {%s};\n" %(name, vals)
             elif isinstance(obj, special.Gauss):
                 libs.append('lib/gauss%d.c'%obj.n)
+                source = (source.replace(name+'.n', 'GAUSS_N')
+                          .replace(name+'.z', 'GAUSS_Z')
+                          .replace(name+'.w', 'GAUSS_W'))
             else:
                 raise TypeError("Could not convert global %s of type %s"
                                 % (name, str(type(obj))))
 
+        tree = ast.parse(source)
+        snippet = codegen.to_source(tree) #, filename, offset)
+        code[function_name] = snippet
+
     # remove duplicates from the dependecy list
-    unique_libs= []
+    unique_libs = []
     for filename in libs:
         if filename not in unique_libs:
             unique_libs.append(filename)
