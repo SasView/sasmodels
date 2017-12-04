@@ -55,6 +55,8 @@ def convert(info, module):
     for function_name in public_methods:
         function = getattr(info, function_name)
         if callable(function):
+            if getattr(function, 'vectorized', None):
+                return  # Don't try to translate vectorized code
             tagged.append(function_name)
             translate.append((function_name, function))
     if not translate:
