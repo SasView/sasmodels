@@ -101,11 +101,9 @@ K Larson-Smith, A Jackson, and D C Pozzo, *Small angle scattering model for
 Pickering emulsions and raspberry particles*, *Journal of Colloid and Interface
 Science*, 343(1) (2010) 36-41
 
-**Author:** Andrew Jackson **on:** 2008
-
-**Modified by:** Andrew Jackson **on:** March 20, 2016
-
-**Reviewed by:** Andrew Jackson **on:** March 20, 2016
+* **Author:** Andrew Jackson **Date:** 2008
+* **Modified by:** Andrew Jackson **Date:** March 20, 2016
+* **Reviewed by:** Andrew Jackson **Date:** March 20, 2016
 """
 
 import numpy as np
