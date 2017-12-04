@@ -199,7 +199,7 @@ import numpy as np
 from numpy import degrees, radians
 
 # C99 standard math library functions
-from numpy import exp, log, power as pow, expm1, logp1, sqrt, cbrt
+from numpy import exp, log, power as pow, expm1, log1p, sqrt, cbrt
 from numpy import sin, cos, tan, arcsin as asin, arccos as acos, arctan as atan
 from numpy import sinh, cosh, tanh, arcsinh as asinh, arccosh as acosh, arctanh as atanh
 from numpy import arctan2 as atan2
