@@ -677,6 +677,9 @@ outside = '40 C'
 def _hello(*args, **kw):
     x = sin(y) + cos(z.real)
     print("world", outside)
+    a, b = x, y
+    [a, b] = (x, y)
+    (a, b) = [x, y]
 
 if __name__ == "__main__":
     #print_function(print_function)

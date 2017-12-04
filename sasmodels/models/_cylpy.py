@@ -101,6 +101,7 @@ G. Fournet, Bull. Soc. Fr. Mineral. Cristallogr. 74, 39-113 (1951).
 
 import numpy as np  # type: ignore
 from sasmodels.special import sas_2J1x_x, sas_sinx_x, pi, inf, sincos, square, gauss76 as gauss
+from sasmodels.special import sin, cos
 
 name = "cylinder"
 title = "Right circular cylinder with uniform scattering length density."
@@ -153,7 +154,10 @@ def orient_avg_1D(q, radius, length):
     total = 0.0
     for i in range(gauss.n):
         theta = gauss.z[i]*zm + zb
-        sin_theta, cos_theta = sincos(theta)
+        # TODO: should be using u-substitution of cos(theta) over [0, 1]
+        #sin_theta, cos_theta = sincos(theta)
+        sin_theta = sin(theta)
+        cos_theta = cos(theta)
         form = fq(q*sin_theta, q*cos_theta, radius, length)
         total += gauss.w[i] * form * form * sin_theta
 
