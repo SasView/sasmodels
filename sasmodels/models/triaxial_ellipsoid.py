@@ -161,7 +161,6 @@ def ER(radius_equat_minor, radius_equat_major, radius_polar):
     """
     Returns the effective radius used in the S*P calculation
     """
-    import numpy as np
     from .ellipsoid import ER as ellipsoid_ER
 
     # now that radii can be in any size order, radii need sorting a,b,c

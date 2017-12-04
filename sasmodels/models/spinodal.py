@@ -25,8 +25,6 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** Dirk Honecker **Date:** Oct 7, 2016
-* **Last Modified by:**
-* **Last Reviewed by:**
 """
 
 import numpy as np

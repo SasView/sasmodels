@@ -55,11 +55,9 @@ References
 A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*, John Wiley and
 Sons, New York, (1955)
 
-**Author:** NIST IGOR/DANSE **on:** pre 2010
-
-**Last Modified by:** Paul Butler **on:** March 20, 2016
-
-**Last Reviewed by:** Paul Butler **on:** March 20, 2016
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Paul Butler **Date:** March 20, 2016
+* **Last Reviewed by:** Paul Butler **Date:** March 20, 2016
 """
 
 import numpy as np

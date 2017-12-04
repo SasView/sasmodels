@@ -54,8 +54,8 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
-* **Last Modified by:** Paul Butler and Paul Kienzle **on:** November 27, 2016
-* **Last Reviewed by:** Paul Butler and Paul Kienzle **on:** November 27, 2016
+* **Last Modified by:** Paul Butler and Paul Kienzle **Date:** November 27, 2016
+* **Last Reviewed by:** Paul Butler and Paul Kienzle **Date:** November 27, 2016
 """
 
 import numpy as np

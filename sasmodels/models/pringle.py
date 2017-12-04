@@ -42,11 +42,9 @@ Reference
 Karen Edler, Universtiy of Bath, Private Communication. 2012.
 Derivation by Stefan Alexandru Rautu.
 
-**Author:** Andrew Jackson **on:** 2008
-
-**Last Modified by:** Wojciech Wpotrzebowski **on:** March 20, 2016
-
-**Last Reviewed by:** Andrew Jackson **on:** September 26, 2016
+* **Author:** Andrew Jackson **Date:** 2008
+* **Last Modified by:** Wojciech Wpotrzebowski **Date:** March 20, 2016
+* **Last Reviewed by:** Andrew Jackson **Date:** September 26, 2016
 """
 
 import numpy as np
