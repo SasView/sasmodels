@@ -95,28 +95,35 @@ def make_parallelepiped(a, b, c, env=NPenv):
     return norm, Fq
 
 def make_core_shell_parallelepiped(a, b, c, da, db, dc, slda, sldb, sldc, env=NPenv):
+    overlapping = False
     a, b, c = env.mpf(a), env.mpf(b), env.mpf(c)
     da, db, dc = env.mpf(da), env.mpf(db), env.mpf(dc)
     slda, sldb, sldc = env.mpf(slda), env.mpf(sldb), env.mpf(sldc)
-    drV0 = CONTRAST*a*b*c
-    dra, drb, drc = slda-SLD_SOLVENT, sldb-SLD_SOLVENT, sldc-SLD_SOLVENT
-    Aa, Ab, Ac = b*c, a*c, a*b
-    Ta, Tb, Tc = a + 2*da, b + 2*db, c + 2*dc
-    drVa, drVb, drVc = dra*a*Aa, drb*b*Ab, drc*c*Ac
-    drVTa, drVTb, drVTc = dra*Ta*Aa, drb*Tb*Ab, drc*Tc*Ac
+    dr0 = CONTRAST
+    drA, drB, drC = slda-SLD_SOLVENT, sldb-SLD_SOLVENT, sldc-SLD_SOLVENT
+    tA, tB, tC = a + 2*da, b + 2*db, c + 2*dc
     def Fq(qa, qb, qc):
-        siA = env.sas_sinx_x(a*qa/2)
-        siB = env.sas_sinx_x(b*qb/2)
-        siC = env.sas_sinx_x(c*qc/2)
-        siAt = env.sas_sinx_x(Ta*qa/2)
-        siBt = env.sas_sinx_x(Tb*qb/2)
-        siCt = env.sas_sinx_x(Tc*qc/2)
-        return (drV0*siA*siB*siC
-            + (drVTa*siAt-drVa*siA)*siB*siC
-            + siA*(drVTb*siBt-drVb*siB)*siC
-            + siA*siB*(drVTc*siCt-drVc*siC))
+        siA = a*env.sas_sinx_x(a*qa/2)
+        siB = b*env.sas_sinx_x(b*qb/2)
+        siC = c*env.sas_sinx_x(c*qc/2)
+        siAt = tA*env.sas_sinx_x(tA*qa/2)
+        siBt = tB*env.sas_sinx_x(tB*qb/2)
+        siCt = tC*env.sas_sinx_x(tC*qc/2)
+        if overlapping:
+            return (dr0*siA*siB*siC
+                    + drA*(siAt-siA)*siB*siC
+                    + drB*siAt*(siBt-siB)*siC
+                    + drC*siAt*siBt*(siCt-siC))
+        else:
+            return (dr0*siA*siB*siC
+                    + drA*(siAt-siA)*siB*siC
+                    + drB*siA*(siBt-siB)*siC
+                    + drC*siA*siB*(siCt-siC))
     Fq.__doc__ = "core-shell parallelepiped a=%g, b=%g c=%g"%(a, b, c)
-    volume = a*b*c + 2*da*Aa + 2*db*Ab + 2*dc*Ac
+    if overlapping:
+        volume = a*b*c + 2*da*b*c + 2*tA*db*c + 2*tA*tB*dc
+    else:
+        volume = a*b*c + 2*da*b*c + 2*a*db*c + 2*a*b*dc
     norm = 1/(volume*10000)
     return norm, Fq
 
