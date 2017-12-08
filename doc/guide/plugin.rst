@@ -542,10 +542,10 @@ This includes the following:
 
     M_PI, M_PI_2, M_PI_4, M_SQRT1_2, M_E:
         $\pi$, $\pi/2$, $\pi/4$, $1/\sqrt{2}$ and Euler's constant $e$
-    exp, log, pow(x,y), expm1, sqrt:
-        Power functions $e^x$, $\ln x$, $x^y$, $e^x - 1$, $\sqrt{x}$.
-        The function expm1(x) is accurate across all $x$, including $x$
-        very close to zero.
+    exp, log, pow(x,y), expm1, log1p, sqrt, cbrt:
+        Power functions $e^x$, $\ln x$, $x^y$, $e^x - 1$, $\ln 1 + x$,
+        $\sqrt{x}$, $\sqrt[3]{x}$. The functions expm1(x) and log1p(x)
+        are accurate across all $x$, including $x$ very close to zero.
     sin, cos, tan, asin, acos, atan:
         Trigonometry functions and inverses, operating on radians.
     sinh, cosh, tanh, asinh, acosh, atanh:
@@ -556,12 +556,13 @@ This includes the following:
         both negative, then atan2(y,x) returns a value in quadrant III where
         atan(y/x) would return a value in quadrant I. Similarly for
         quadrants II and IV when $x$ and $y$ have opposite sign.
-    fmin(x,y), fmax(x,y), trunc, rint:
+    fabs(x), fmin(x,y), fmax(x,y), trunc, rint:
         Floating point functions.  rint(x) returns the nearest integer.
     NAN:
         NaN, Not a Number, $0/0$.  Use isnan(x) to test for NaN.  Note that
         you cannot use :code:`x == NAN` to test for NaN values since that
-        will always return false.  NAN does not equal NAN!
+        will always return false.  NAN does not equal NAN!  The alternative,
+        :code:`x != x` may fail if the compiler optimizes the test away.
     INFINITY:
         $\infty, 1/0$.  Use isinf(x) to test for infinity, or isfinite(x)
         to test for finite and not NaN.
@@ -733,6 +734,9 @@ file in the order given, otherwise these functions will not be available.
 
         Similar arrays are available in :code:`gauss20.c` for 20-point
         quadrature and in :code:`gauss150.c` for 150-point quadrature.
+        The macros :code:`GAUSS_N`, :code:`GAUSS_Z` and :code:`GAUSS_W` are
+        defined so that you can change the order of the integration by
+        selecting an different source without touching the C code.
 
         :code:`source = ["lib/gauss76.c", ...]`
         (`gauss76.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/gauss76.c>`_)

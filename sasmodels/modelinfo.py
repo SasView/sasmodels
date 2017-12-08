@@ -11,8 +11,11 @@ from __future__ import print_function
 from copy import copy
 from os.path import abspath, basename, splitext
 import inspect
+import logging
 
 import numpy as np  # type: ignore
+
+from . import autoc
 
 # Optional typing
 # pylint: disable=unused-import
@@ -31,6 +34,8 @@ else:
     TestValue = Union[float, List[float]]
     TestCondition = Tuple[ParameterSetUser, TestInput, TestValue]
 # pylint: enable=unused-import
+
+logger = logging.getLogger(__name__)
 
 # If MAX_PD changes, need to change the loop macros in kernel_iq.c
 MAX_PD = 5 #: Maximum number of simultaneously polydisperse parameters
@@ -788,6 +793,7 @@ def make_model_info(kernel_module):
     info.category = getattr(kernel_module, 'category', None)
     info.structure_factor = getattr(kernel_module, 'structure_factor', False)
     info.profile_axes = getattr(kernel_module, 'profile_axes', ['x', 'y'])
+    info.c_code = getattr(kernel_module, 'c_code', None)
     info.source = getattr(kernel_module, 'source', [])
     # TODO: check the structure of the tests
     info.tests = getattr(kernel_module, 'tests', [])
@@ -811,6 +817,11 @@ def make_model_info(kernel_module):
     info.hidden = getattr(kernel_module, 'hidden', None) # type: ignore
 
     _find_source_lines(info, kernel_module)
+    try:
+        autoc.convert(info, kernel_module)
+    except Exception as exc:
+        raise
+        logger.warn(str(exc))
 
     return info
 
@@ -934,6 +945,10 @@ class ModelInfo(object):
     #: Returns the occupied volume and the total volume for each parameter set.
     #: See :attr:`ER` for details on the parameters.
     VR = None               # type: Optional[Callable[[np.ndarray], Tuple[np.ndarray, np.ndarray]]]
+    #: Arbitrary C code containing supporting functions, etc., to be inserted
+    #: after everything in source.  This can include Iq and Iqxy functions with
+    #: the full function signature, including all parameters.
+    c_code = None
     #: Returns the form volume for python-based models.  Form volume is needed
     #: for volume normalization in the polydispersity integral.  If no
     #: parameters are *volume* parameters, then form volume is not needed.

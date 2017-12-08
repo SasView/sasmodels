@@ -708,6 +708,9 @@ def make_source(model_info):
     for path, code in user_code:
         _add_source(source, code, path)
 
+    if model_info.c_code:
+        source.append(model_info.c_code)
+
     # Make parameters for q, qx, qy so that we can use them in declarations
     q, qx, qy = [Parameter(name=v) for v in ('q', 'qx', 'qy')]
     # Generate form_volume function, etc. from body only
