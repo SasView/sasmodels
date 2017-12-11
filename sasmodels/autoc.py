@@ -9,7 +9,7 @@ from functools import reduce
 
 import numpy as np
 
-from . import codegen
+from . import py2c
 from . import special
 
 # pylint: disable=unused-import
@@ -128,14 +128,14 @@ def convert(info, module):
             unique_libs.append(filename)
 
     # translate source
-    functions = codegen.translate(
+    functions = py2c.translate(
         [code[name] for name in ordered_dag(depends) if name in code],
         constants)
     snippets.append(functions)
     #print("source", info.source)
     print("\n".join(snippets))
     #return
-    raise RuntimeError("not yet converted...")
+#    raise RuntimeError("not yet converted...")
 
     # update model info
     info.source = unique_libs
