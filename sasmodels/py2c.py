@@ -1161,3 +1161,4 @@ if __name__ == "__main__":
     except Exception as excp:
         print ("Error:\n" + str(excp.args))
     print("...Done")
+#            "program": "${workspaceRoot}/ -m sascomp.generate",

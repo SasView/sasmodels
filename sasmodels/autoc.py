@@ -131,9 +131,18 @@ def convert(info, module):
     functions = py2c.translate(
         [code[name] for name in ordered_dag(depends) if name in code],
         constants)
+    snippets.clear()
     snippets.append(functions)
     #print("source", info.source)
     print("\n".join(snippets))
+    try:
+        c_text = "\n".join(snippets)
+        translated = open ("_autoc.c", "a+")
+        translated.write (c_text)
+        translated.close()
+    except Exception as excp:
+        strErr = "Error:\n" + str(excp.args)
+        print(strErr)
     #return
 #    raise RuntimeError("not yet converted...")
 
