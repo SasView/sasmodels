@@ -6,6 +6,7 @@ from copy import copy
 import numpy as np
 from numpy import pi, radians, sin, cos, sqrt
 from numpy.random import poisson, uniform
+from numpy.polynomial.legendre import leggauss
 from scipy.integrate import simps
 from scipy.special import j1 as J1
 
@@ -361,12 +362,14 @@ def sas_3j1x_x(x):
     return retvalue
 
 def cylinder_Iq(q, radius, length):
-    height = length/2
+    z, w = leggauss(76)
+    cos_alpha = (z+1)/2
+    sin_alpha = sqrt(1.0 - cos_alpha**2)
     Iq = np.empty_like(q)
-    theta = np.linspace(0.0, pi/2, 500)
     for k, qk in enumerate(q):
-        qab, qc = qk*sin(theta), qk*cos(theta)
-        Iq[k] = simps((j0(qc*height)*sas_2J1x_x(qab*radius))**2 * sin(theta))
+        qab, qc = qk*sin_alpha, qk*cos_alpha
+        Fq = sas_2J1x_x(qab*radius) * j0(qc*length/2)
+        Iq[k] = np.sum(w*Fq**2)
     Iq = Iq/Iq[0]
     return Iq
 
@@ -375,34 +378,40 @@ def sphere_Iq(q, radius):
     return Iq/Iq[0]
 
 def csbox_Iq(q, a, b, c, da, db, dc, slda, sldb, sldc, sld_core):
+    z, w = leggauss(76)
+
     sld_solvent = 0
     overlapping = False
     dr0 = sld_core - sld_solvent
     drA, drB, drC = slda-sld_solvent, sldb-sld_solvent, sldc-sld_solvent
     tA, tB, tC = a + 2*da, b + 2*db, c + 2*dc
 
-    Iq = np.zeros_like(q)
-    for cos_alpha in np.linspace(0.0, 1.0, 100):
+    outer_sum = np.zeros_like(q)
+    for cos_alpha, outer_w in zip((z+1)/2, w):
         sin_alpha = sqrt(1.0-cos_alpha*cos_alpha)
         qc = q*cos_alpha
         siC = c*j0(c*qc/2)
         siCt = tC*j0(tC*qc/2)
-        for beta in np.linspace(0.0, pi/2, 100):
+        inner_sum = np.zeros_like(q)
+        for beta, inner_w in zip((z + 1)*pi/4, w):
             qa, qb = q*sin_alpha*sin(beta), q*sin_alpha*cos(beta)
             siA = a*j0(a*qa/2)
             siB = b*j0(b*qb/2)
             siAt = tA*j0(tA*qa/2)
             siBt = tB*j0(tB*qb/2)
             if overlapping:
-                Iq += (dr0*siA*siB*siC
-                       + drA*(siAt-siA)*siB*siC
-                       + drB*siAt*(siBt-siB)*siC
-                       + drC*siAt*siBt*(siCt-siC))**2
+                Fq = (dr0*siA*siB*siC
+                      + drA*(siAt-siA)*siB*siC
+                      + drB*siAt*(siBt-siB)*siC
+                      + drC*siAt*siBt*(siCt-siC))
             else:
-                Iq += (dr0*siA*siB*siC
-                       + drA*(siAt-siA)*siB*siC
-                       + drB*siA*(siBt-siB)*siC
-                       + drC*siA*siB*(siCt-siC))**2
+                Fq = (dr0*siA*siB*siC
+                      + drA*(siAt-siA)*siB*siC
+                      + drB*siA*(siBt-siB)*siC
+                      + drC*siA*siB*(siCt-siC))
+            inner_sum += inner_w * Fq**2
+        outer_sum += outer_w * inner_sum
+    Iq = outer_sum / 4  # = outer*um*zm*8.0/(4.0*M_PI)
     return Iq/Iq[0]
 
 def check_shape(shape, fn=None):

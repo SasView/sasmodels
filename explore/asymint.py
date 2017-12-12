@@ -222,6 +222,8 @@ elif shape == 'core_shell_parallelepiped':
     A, B, C = 6800, 114, 1380
     DA, DB, DC = 2300, 21, 58
     SLDA, SLDB, SLDC = "5", "-0.3", "11.5"
+    #A,B,C,DA,DB,DC,SLDA,SLDB,SLDC = 10,20,30,100,200,300,1,2,3
+    #SLD_SOLVENT,CONTRAST = 0, 4
     if 1: # C shortest
         B, C = C, B
         DB, DC = DC, DB
