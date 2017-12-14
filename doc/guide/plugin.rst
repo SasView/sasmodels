@@ -498,10 +498,13 @@ includes only the volume parameters.
 
 **source=['fn.c', ...]** includes the listed C source files in the
 program before *Iq* and *form_volume* are defined. This allows you to
-extend the library of C functions available to your model.  Note that
+extend the library of C functions available to your model.
+
+*c_code* includes arbitrary C code into your kernel, which can be
+handy for defining helper functions for *Iq* and *form_volume*. Note that
 you can put the full function definition for *Iq* and *form_volume*
-(include function declaration) into an external C file and add it to the list
-of sources instead of defining it within the python model file.
+(include function declaration) into *c_code* as well, or put them into an
+external C file and add that file to the list of sources.
 
 Models are defined using double precision declarations for the
 parameters and return values.  When a model is run using single
@@ -525,6 +528,9 @@ Rather than returning NAN from Iq, you must define the *INVALID(v)*.  The
 *v.par1*, *v.par2*, etc. For example::
 
     #define INVALID(v) (v.bell_radius < v.radius)
+
+The INVALID define can go into *Iq*, or *c_code*, or an external C file
+listed in *source*.
 
 Oriented Shapes
 ...............
