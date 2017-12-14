@@ -555,17 +555,25 @@ as *Iqac(qab, qc, par1, par2, ...)*.  In either case, the orientation
 parameters are not included in the function call.
 
 For 1D oriented shapes, an integral over all angles is usually needed for
-the *Iq* function. Using symmetry and the substitution $u = \cos(\alpha)$,
+the *Iq* function. Given symmetry and the substitution $u = \cos(\alpha)$,
 $du = -\sin(\alpha)\,d\alpha$ this becomes
 
 .. math::
 
-    I(q) &= \int_{-\pi/2}^{pi/2} \int_{-pi}^{pi}
-           F(q_a = q \sin(\alpha)\sin(\beta),
-             q_b = q \sin(\alpha)\cos(\beta),
-             q_c = q \cos(\alpha))^2 \sin(\alpha)\,d\beta\,d\alpha/(4\pi) \\
-        &= 8/(4\pi) \int_{0}^{pi/2} \int_{0}^{\pi/2} F^2 \sin(\alpha)\,d\beta\,d\alpha \\
-        &= 8/(4\pi) \int_0^1 \int_{0}^{\pi/2} F^2 \,d\beta\,du
+    I(q) &= \frac{1}{4\pi} \int_{-\pi/2}^{pi/2} \int_{-pi}^{pi}
+            F(q_a, q_b, q_c)^2 \sin(\alpha)\,d\beta\,d\alpha \\
+        &= \frac{8}{4\pi} \int_{0}^{pi/2} \int_{0}^{\pi/2}
+            F^2 \sin(\alpha)\,d\beta\,d\alpha \\
+        &= \frac{8}{4\pi} \int_1^0 \int_{0}^{\pi/2} - F^2 \,d\beta\,du \\
+        &= \frac{8}{4\pi} \int_0^1 \int_{0}^{\pi/2} F^2 \,d\beta\,du
+
+for
+
+.. math::
+
+    q_a &= q \sin(\alpha)\sin(\beta) = q \sqrt{1-u^2} \sin(\beta) \\
+    q_b &= q \sin(\alpha)\cos(\beta) = q \sqrt{1-u^2} \cos(\beta) \\
+    q_c &= q \cos(\alpha) = q u
 
 Using the $z, w$ values for Gauss-Legendre integration in "lib/gauss76.c", the
 numerical integration is then::
@@ -580,10 +588,10 @@ numerical integration is then::
             const double beta = M_PI_4 * GAUSS_Z[j] + M_PI_4;
             double sin_beta, cos_beta;
             SINCOS(beta, sin_beta, cos_beta);
-            const double qb = sin_alpha * cos_beta * q;
             const double qa = sin_alpha * sin_beta * q;
-            const double Fq = F(qa, qb, qc, ...);
-            inner_sum += GAUSS_W[j] * Fq*Fq;
+            const double qb = sin_alpha * cos_beta * q;
+            const double form = Fq(qa, qb, qc, ...);
+            inner_sum += GAUSS_W[j] * form * form;
         }
         outer_sum += GAUSS_W[i] * inner_sum;
     }
@@ -601,9 +609,17 @@ suffices:
 
 .. math::
 
-    I(q) &= \int_{-\pi/2}^{\pi/2} F(q_{ab} = q \sin(\alpha),
-            q_c = q \cos(\alpha))^2 \sin(\alpha)\,d\alpha/\pi \\
-         &= (2/\pi) \int_0^1 F^2\,du
+    I(q) &= \frac{1}{\pi}\int_{-\pi/2}^{\pi/2}
+            F(q_{ab}, q_c)^2 \sin(\alpha)\,d\alpha/\pi \\
+        &= \frac{2}{\pi} \int_0^1 F^2\,du
+
+for
+
+.. math::
+
+    q_{ab} &= q \sin(\alpha) = q \sqrt{1 - u^2} \\
+    q_c &= q \cos(\alpha) = q u
+
 
 with integration loop::
 
@@ -611,10 +627,10 @@ with integration loop::
     for (int i = 0; i < GAUSS_N; i++) {
         const double cos_alpha = 0.5*GAUSS_Z[i] + 0.5;
         const double sin_alpha = sqrt(1.0 - cos_alpha*cos_alpha);
-        const double qc = cos_alpha * q;
         const double qab = sin_alpha * q;
-        const double Fq = F(qab, qc, ...);
-        sum += GAUSS_W[j] * Fq*Fq;
+        const double qc = cos_alpha * q;
+        const double form = Fq(qab, qc, ...);
+        sum += GAUSS_W[j] * form * form;
     }
     sum *= 0.5; // = 2/pi * sum * (pi/2) / 2
 
