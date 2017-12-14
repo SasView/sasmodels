@@ -47,7 +47,7 @@ Iq(double q,
 }
 
 
-double Iqxy(double qab, double qc,
+double Iqac(double qab, double qc,
     double core_sld,
     double shell_sld,
     double solvent_sld,

@@ -89,7 +89,7 @@ Iq(double q, double sld, double solvent_sld,
 
 
 static double
-Iqxy(double qab, double qc,
+Iqac(double qab, double qc,
     double sld, double solvent_sld,
     double radius_bell, double radius, double length)
 {

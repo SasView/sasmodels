@@ -141,7 +141,7 @@ Iq(
 
 
 static double
-Iqxy(double qab, double qc,
+Iqac(double qab, double qc,
     double thick_core,
     double thick_layer,
     double radius,

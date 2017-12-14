@@ -148,10 +148,10 @@ parameters = [
     ["sld_face",       "1e-6/Ang^2", 7, [-inf, inf], "sld",         "Cylinder face scattering length density"],
     ["sld_rim",        "1e-6/Ang^2", 1, [-inf, inf], "sld",         "Cylinder rim scattering length density"],
     ["sld_solvent",    "1e-6/Ang^2", 6, [-inf, inf], "sld",         "Solvent scattering length density"],
+    ["sigma",       "Ang",        0,    [0, inf],    "",            "interfacial roughness"],
     ["theta",       "degrees",    90.0, [-360, 360], "orientation", "cylinder axis to beam angle"],
     ["phi",         "degrees",    0,    [-360, 360], "orientation", "rotation about beam"],
     ["psi",         "degrees",    0,    [-360, 360], "orientation", "rotation about cylinder axis"],
-    ["sigma",       "Ang",        0,    [0, inf],    "",            "interfacial roughness"]
     ]
 
 # pylint: enable=bad-whitespace, line-too-long

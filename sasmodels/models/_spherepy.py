@@ -87,10 +87,6 @@ def Iq(q, sld, sld_solvent, radius):
     return 1.0e-4 * fq ** 2
 Iq.vectorized = True  # Iq accepts an array of q values
 
-def Iqxy(qx, qy, sld, sld_solvent, radius):
-    return Iq(sqrt(qx ** 2 + qy ** 2), sld, sld_solvent, radius)
-Iqxy.vectorized = True  # Iqxy accepts arrays of qx, qy values
-
 def sesans(z, sld, sld_solvent, radius):
     """
     Calculate SESANS-correlation function for a solid sphere.

@@ -101,7 +101,7 @@ Iq(double q,
 }
 
 static double
-Iqxy(double qa, double qb, double qc,
+Iqabc(double qa, double qb, double qc,
     double core_sld,
     double arim_sld,
     double brim_sld,

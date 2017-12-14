@@ -45,7 +45,7 @@ Iq(double q,
 }
 
 static double
-Iqxy(double qa, double qb, double qc,
+Iqabc(double qa, double qb, double qc,
     double sld,
     double sld_solvent,
     double radius_equat_minor,

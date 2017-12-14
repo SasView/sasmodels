@@ -51,7 +51,7 @@ Iq(double q, double radius, double thickness, double length,
 }
 
 static double
-Iqxy(double qab, double qc,
+Iqac(double qab, double qc,
     double radius, double thickness, double length,
     double sld, double solvent_sld)
 {

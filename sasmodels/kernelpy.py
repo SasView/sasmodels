@@ -25,21 +25,22 @@ else:
     DType = Union[None, str, np.dtype]
 # pylint: enable=unused-import
 
+logger = logging.getLogger(__name__)
+
 class PyModel(KernelModel):
     """
     Wrapper for pure python models.
     """
     def __init__(self, model_info):
-        # Make sure Iq and Iqxy are available and vectorized
+        # Make sure Iq is available and vectorized
         _create_default_functions(model_info)
         self.info = model_info
         self.dtype = np.dtype('d')
-        logging.info("load python model " + self.info.name)
+        logger.info("load python model " + self.info.name)
 
     def make_kernel(self, q_vectors):
         q_input = PyInput(q_vectors, dtype=F64)
-        kernel = self.info.Iqxy if q_input.is_2d else self.info.Iq
-        return PyKernel(kernel, self.info, q_input)
+        return PyKernel(self.info, q_input)
 
     def release(self):
         """
@@ -88,7 +89,7 @@ class PyKernel(Kernel):
     """
     Callable SAS kernel.
 
-    *kernel* is the DllKernel object to call.
+    *kernel* is the kernel object to call.
 
     *model_info* is the module information
 
@@ -103,13 +104,12 @@ class PyKernel(Kernel):
 
     Call :meth:`release` when done with the kernel instance.
     """
-    def __init__(self, kernel, model_info, q_input):
+    def __init__(self, model_info, q_input):
         # type: (callable, ModelInfo, List[np.ndarray]) -> None
         self.dtype = np.dtype('d')
         self.info = model_info
         self.q_input = q_input
         self.res = np.empty(q_input.nq, q_input.dtype)
-        self.kernel = kernel
         self.dim = '2d' if q_input.is_2d else '1d'
 
         partable = model_info.parameters
@@ -158,8 +158,8 @@ class PyKernel(Kernel):
 
         # Generate a closure which calls the form_volume if it exists.
         form_volume = model_info.form_volume
-        self._volume = ((lambda: form_volume(*volume_args)) if form_volume
-                        else (lambda: 1.0))
+        self._volume = ((lambda: form_volume(*volume_args)) if form_volume else
+                        (lambda: 1.0))
 
     def __call__(self, call_details, values, cutoff, magnetic):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
@@ -260,8 +260,9 @@ def _create_default_functions(model_info):
     performs a similar role for Iq written in C.  This also vectorizes
     any functions that are not already marked as vectorized.
     """
+    # Note: must call create_vector_Iq before create_vector_Iqxy
     _create_vector_Iq(model_info)
-    _create_vector_Iqxy(model_info)  # call create_vector_Iq() first
+    _create_vector_Iqxy(model_info)
 
 
 def _create_vector_Iq(model_info):
@@ -279,11 +280,12 @@ def _create_vector_Iq(model_info):
         vector_Iq.vectorized = True
         model_info.Iq = vector_Iq
 
+
 def _create_vector_Iqxy(model_info):
     """
     Define Iqxy as a vector function if it exists, or default it from Iq().
     """
-    Iq, Iqxy = model_info.Iq, model_info.Iqxy
+    Iqxy = getattr(model_info, 'Iqxy', None)
     if callable(Iqxy):
         if not getattr(Iqxy, 'vectorized', False):
             #print("vectorizing Iqxy")
@@ -294,9 +296,10 @@ def _create_vector_Iqxy(model_info):
                 return np.array([Iqxy(qxi, qyi, *args) for qxi, qyi in zip(qx, qy)])
             vector_Iqxy.vectorized = True
             model_info.Iqxy = vector_Iqxy
-    elif callable(Iq):
+    else:
         #print("defaulting Iqxy")
         # Iq is vectorized because create_vector_Iq was already called.
+        Iq = model_info.Iq
         def default_Iqxy(qx, qy, *args):
             """
             Default 2D kernel.

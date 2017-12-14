@@ -257,6 +257,9 @@ def correct_theta_weights(parameters, # type: ParameterTable
                          ):
     # type: (...) -> Sequence[np.ndarray]
     """
+    **Deprecated** Theta weights will be computed in the kernel wrapper if
+    they are needed.
+
     If there is a theta parameter, update the weights of that parameter so that
     the cosine weighting required for polar integration is preserved.
 
@@ -271,14 +274,12 @@ def correct_theta_weights(parameters, # type: ParameterTable
 
     Returns updated weights vectors
     """
-    # TODO: explain in a comment why scale and background are missing
     # Apparently the parameters.theta_offset similarly skips scale and
     # and background, so the indexing works out, but they are still shipped
     # to the kernel, so we need to add two there.
     if parameters.theta_offset >= 0:
         index = parameters.theta_offset
         theta = dispersity[index]
-        # TODO: modify the dispersity vector to avoid the theta=-90,90,270,...
         theta_weight = abs(cos(radians(theta)))
         weights = tuple(theta_weight*w if k == index else w
                         for k, w in enumerate(weights))
