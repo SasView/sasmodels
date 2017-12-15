@@ -639,7 +639,7 @@ Magnetism
 
 Magnetism is supported automatically for all shapes by modifying the
 effective SLD of particle according to the Halpern-Johnson vector
-describing the interation between neutron spin and magnetic field.  All
+describing the interaction between neutron spin and magnetic field.  All
 parameters marked as type *sld* in the parameter table are treated as
 possibly magnetic particles with magnitude *M0* and direction
 *mtheta* and *mphi*.  Polarization parameters are also provided
