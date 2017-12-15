@@ -45,6 +45,8 @@ Update Notes
 12/07/2017, OE: Translation of integer division, '\\' in python, implemented in translate_integer_divide, called from visit_BinOp
 12/07/2017, OE: C variable definition handled in 'define_C_Vars'
               : Python integer division, '//', translated to C in 'translate_integer_divide'
+12/15/2017, OE: Precedence maintained by writing opening and closing parenthesesm '(',')',
+                in procedure 'visit_BinOp'.
 """
 import ast
 import sys
@@ -891,6 +893,7 @@ class SourceGenerator(NodeVisitor):
         self.write_c (")")
 
     def visit_BinOp(self, node):
+        self.write_c("(")
         if ('%s' % BINOP_SYMBOLS[type(node.op)] == BINOP_SYMBOLS[ast.Pow]):
             self.translate_power (node)
         elif ('%s' % BINOP_SYMBOLS[type(node.op)] == BINOP_SYMBOLS[ast.FloorDiv]):
@@ -899,6 +902,8 @@ class SourceGenerator(NodeVisitor):
             self.visit(node.left)
             self.write_c(' %s ' % BINOP_SYMBOLS[type(node.op)])
             self.visit(node.right)
+        self.write_c(")")
+
 #       for C
     def visit_BoolOp(self, node):
         self.write_c('(')
