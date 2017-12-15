@@ -291,8 +291,9 @@ class SourceGenerator(NodeVisitor):
 
     def add_semi_colon(self):
         semi_pos = self.current_statement.find(';')
-        if(semi_pos < 0):
-            self.write_c(';')
+        if(semi_pos > 0.0):
+            self.current_statement = self.current_statement.replace(';','')
+        self.write_c(';')
 
     def visit_Assign(self, node):
         self.add_current_line()
@@ -474,7 +475,7 @@ class SourceGenerator(NodeVisitor):
 
         self.visit(node.args)
 # for C
-        self.writeInclude()
+#        self.writeInclude()
         self.getMethodSignature()
 # for C
         self.signature_line = len(self.c_proc)
@@ -703,8 +704,8 @@ class SourceGenerator(NodeVisitor):
         else:
             self.write_c('return(')
             self.visit(node.value)
-        self.write_c(');')
-#      self.add_current_statement(self)
+        self.write_c(')')
+        self.add_semi_colon()
         self.add_c_line(self.current_statement)
         self.current_statement = ''
 
@@ -1100,13 +1101,19 @@ def print_function(f=None):
 
 def translate(functions, constants=0):
     sniplets = []
-    fname = functions[1]
-    python_file = open(fname, "r")
-    source = python_file.read()
-    python_file.close()
-    tree = ast.parse(source)
-    sniplet = to_source(tree, functions) # in the future add filename, offset, constants
-    sniplets.append(sniplet)
+    sniplets.append("#include <math.h>")
+    sniplets.append("static double pi = 3.14159265359;")
+    for source,fname,line_no in functions:
+        line_directive = '#line %d "%s"' %(line_no,fname)
+        line_directive = line_directive.replace('\\','\\\\')
+#        sniplets.append(line_directive)
+        tree = ast.parse(source)
+        sniplet = to_source(tree, functions) # in the future add filename, offset, constants
+        sniplets.append(sniplet)
+    c_code = "\n".join(sniplets)
+    f_out = open ("xlate.c", "w+")
+    f_out.write (c_code)
+    f_out.close()
     return("\n".join(sniplets))
 
 def get_file_names():
