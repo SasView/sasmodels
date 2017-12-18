@@ -538,8 +538,8 @@ class SourceGenerator(NodeVisitor):
         line_number = -1
         if(hasattr(node,'value')):
             line_number = node.value.lineno
-        elif hasattr(node,'iter'):
-            if hasattr(node.iter,'lineno'):
+        elif hasattr(node, 'iter'):
+            if hasattr(node.iter, 'lineno'):
                 line_number = node.iter.lineno
         return(line_number)
 
@@ -1042,28 +1042,18 @@ def print_function(f=None):
         tree_source = to_source(tree)
         print(tree_source)
 
-def add_constants (sniplets, c_constants):
+def add_constants(sniplets, c_constants):
     sniplets.append("#include <math.h>")
     sniplets.append("")
     vars = c_constants.keys()
     for c_var in vars:
         c_values = c_constants[c_var]
-        declare_values = str(c_values)
-        str_dcl = "double " + c_var
-        if (hasattr(c_values,'__len__')):
-            str_dcl += "[]"
-            len_prev = len(declare_values)
-            len_after = len_prev - 1
-            declare_values = declare_values.replace ('[','')
-            declare_values = declare_values.replace (']','').strip()
-            while (len_after < len_prev):
-                len_prev = len_after
-                declare_values = declare_values.replace ('  ',' ')
-                len_after = len(declare_values)
-            declare_values = "{" + declare_values.replace (' ',',') + "}"
-        str_dcl += " = " + declare_values + ";"
-        sniplets.append (str_dcl)
-        sniplets.append("")
+        if isinstance(c_values, (int, float)):
+            parts = ["double ", c_var, " = ", "%.15g"%c_values, ";"]
+        else:
+            elements = ["%.15g"%v for v in c_values]
+            parts = ["double ", c_var, "[]", " = ", "{\n   ", ", ".join(elements), "\n};"]
+        sniplets.append("".join(parts))
 
 def translate(functions, constants=0):
     sniplets = []
