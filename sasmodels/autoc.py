@@ -91,29 +91,15 @@ def convert(info, module):
                 else:
                     # not special: add function to translate stack
                     translate.append((name, obj))
-            elif isinstance(obj, float):
+            elif isinstance(obj, (int, float, list, tuple, np.ndarray)):
                 constants[name] = obj
-                snippets.append('#line 1 "%s"' % escaped_filename)
-                snippets.append("const double %s = %.15g;"%(name, obj))
-            elif isinstance(obj, int):
-                constants[name] = obj
-                snippets.append('#line 1 "%s"' % escaped_filename)
-                snippets.append("const int %s = %d;"%(name, obj))
-            elif isinstance(obj, (list, tuple, np.ndarray)):
-                constants[name] = obj
-                # extend constant arrays to a multiple of 4; not sure if this
-                # is necessary, but some OpenCL targets broke if the number
-                # of parameters in the parameter table was not a multiple of 4,
-                # so do it for all constant arrays to be safe.
-                if len(obj)%4 != 0:
-                    obj = list(obj) + [0.]*(4-len(obj))
-                vals = ", ".join("%.15g"%v for v in obj)
-                snippets.append('#line 1 "%s"' % escaped_filename)
-                snippets.append("const double %s[] = {%s};" %(name, vals))
+                # Claim all constants are declared on line 1
+                snippets.append('#line 1 "%s"'%escaped_filename)
+                snippets.append(define_constant(name, obj))
             elif isinstance(obj, special.Gauss):
-                constants["GAUSS_N"] = obj.n
-                constants["GAUSS_Z"] = obj.z
-                constants["GAUSS_W"] = obj.w
+                #constants["GAUSS_N"] = obj.n
+                #constants["GAUSS_Z"] = obj.z
+                #constants["GAUSS_W"] = obj.w
                 libs.append('lib/gauss%d.c'%obj.n)
                 source = (source.replace(name+'.n', 'GAUSS_N')
                           .replace(name+'.z', 'GAUSS_Z')
@@ -140,6 +126,23 @@ def convert(info, module):
     info.source = unique_libs
     info.c_code = "\n".join(snippets)
     info.Iq = info.Iqxy = info.form_volume = None
+
+def define_constant(name, value):
+    if isinstance(value, int):
+        parts = ["int ", name, " = ", "%d"%value, ";"]
+    elif isinstance(value, float):
+        parts = ["double ", name, " = ", "%.15g"%value, ";"]
+    else:
+        # extend constant arrays to a multiple of 4; not sure if this
+        # is necessary, but some OpenCL targets broke if the number
+        # of parameters in the parameter table was not a multiple of 4,
+        # so do it for all constant arrays to be safe.
+        if len(value)%4 != 0:
+            value = list(value) + [0.]*(4 - len(value)%4)
+        elements = ["%.15g"%v for v in value]
+        parts = ["double ", name, "[]", " = ",
+                 "{\n   ", ", ".join(elements), "\n};"]
+    return "".join(parts)
 
 
 # Modified from the following:
