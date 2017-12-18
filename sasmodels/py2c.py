@@ -242,14 +242,24 @@ class SourceGenerator(NodeVisitor):
                 want_comma.append(True)
 # for C
         for arg in node.args:
-            self.arguments.append(arg.arg)
+            # CRUFT: 2.7 uses arg.id, 3.x uses arg.arg
+            try:
+                arg_name = arg.arg
+            except AttributeError:
+                arg_name = arg.id
+            self.arguments.append(arg_name)
 
         padding = [None] *(len(node.args) - len(node.defaults))
         for arg, default in zip(node.args, padding + node.defaults):
             if default is not None:
-                self.warnings.append("Default Parameter unknown to C")
-                w_str = "Default Parameters are unknown to C: '" + arg.arg + \
-                        " = " + str(default.n) + "'"
+                # CRUFT: 2.7 uses arg.id, 3.x uses arg.arg
+                # CRUFT: 2.7 uses arg.id, 3.x uses arg.arg
+                try:
+                    arg_name = arg.arg
+                except AttributeError:
+                    arg_name = arg.id
+                w_str = ("Default Parameters are unknown to C: '%s = %s"
+                         % arg_name, str(default.n))
                 self.warnings.append(w_str)
 #                self.write_python('=')
 #                self.visit(default)
@@ -304,7 +314,7 @@ class SourceGenerator(NodeVisitor):
             self.visit(target)
         if(len(self.Tuples) > 0):
             tplTargets = list(self.Tuples)
-            self.Tuples.clear()
+            del self.Tuples[:]
         self.write_c(' = ')
         self.is_sequence = False
         self.visited_args = False
@@ -409,10 +419,10 @@ class SourceGenerator(NodeVisitor):
                 c_dcl = "    double " + name + "[] = {" + self.C_Vectors[n] + "};"
                 self.c_proc.insert(start_var, c_dcl + "\n")
                 start_var += 1
-        self.C_Vars.clear()
-        self.C_IntVars.clear()
-        self.C_Vectors.clear()
-        self.C_Pointers.clear()
+        del self.C_Vars[:]
+        del self.C_IntVars[:]
+        del self.C_Vectors[:]
+        del self.C_Pointers[:]
         self.C_DclPointers
         if(fLine == True):
             self.c_proc.insert(start_var, "\n")
@@ -425,12 +435,6 @@ class SourceGenerator(NodeVisitor):
         if(len(s) > 0):
             self.c_proc.insert(start_var, "    double " + s + ";\n")
             self.c_proc.insert(start_var + 1, "\n")
-
-    def writeInclude(self):
-        if(self.MathIncludeed == False):
-            self.add_c_line("#include <math.h>\n")
-            self.add_c_line("static double pi = 3.14159265359;\n")
-            self.MathIncludeed = True
 
     def ListToString(self, strings):
         s = ''
@@ -474,8 +478,6 @@ class SourceGenerator(NodeVisitor):
         args_str = ""
 
         self.visit(node.args)
-# for C
-#        self.writeInclude()
         self.getMethodSignature()
 # for C
         self.signature_line = len(self.c_proc)
@@ -801,7 +803,7 @@ class SourceGenerator(NodeVisitor):
 #       add variable to C_Vars if it ins't there yet, not an argument and not a number
         if((name not in self.C_Functions) and (name not in self.C_Vars) and \
             (name not in self.C_IntVars) and (name not in self.arguments) and \
-            (name.isnumeric() == False)):
+            (name.isdigit() == False)):
             if(self.InSubscript):
                 self.C_IntVars.append(node.id)
             else:
@@ -1100,21 +1102,15 @@ def print_function(f=None):
         print(tree_source)
 
 def translate(functions, constants=0):
-    sniplets = []
-    sniplets.append("#include <math.h>")
-    sniplets.append("static double pi = 3.14159265359;")
-    for source,fname,line_no in functions:
-        line_directive = '#line %d "%s"' %(line_no,fname)
-        line_directive = line_directive.replace('\\','\\\\')
-#        sniplets.append(line_directive)
+    snippets = []
+    for source, fname, line_no in functions:
+        line_directive = '#line %d "%s"'%(line_no, fname.replace('\\','\\\\'))
+        snippets.append(line_directive)
         tree = ast.parse(source)
-        sniplet = to_source(tree, functions) # in the future add filename, offset, constants
-        sniplets.append(sniplet)
-    c_code = "\n".join(sniplets)
-    f_out = open ("xlate.c", "w+")
-    f_out.write (c_code)
-    f_out.close()
-    return("\n".join(sniplets))
+        # in the future add filename, offset, constants
+        c_code = to_source(tree, functions)
+        snippets.append(c_code)
+    return snippets
 
 def get_file_names():
     fname_in = ""

@@ -184,7 +184,8 @@ def compile(source, output):
         shell = (os.name == 'nt')
         subprocess.check_output(command, shell=shell, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as exc:
-        raise RuntimeError("compile failed.\n%s\n%s"%(command_str, exc.output))
+        raise RuntimeError("compile failed.\n%s\n%s"
+                           % (command_str, exc.output.decode()))
     if not os.path.exists(output):
         raise RuntimeError("compile failed.  File is in %r"%source)
 

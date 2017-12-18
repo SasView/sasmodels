@@ -71,6 +71,7 @@ def convert(info, module):
     while translate:
         function_name, function = translate.pop(0)
         filename = function.__code__.co_filename
+        escaped_filename = filename.replace('\\', '\\\\')
         offset = function.__code__.co_firstlineno
         refs = function.__code__.co_names
         depends[function_name] = set(refs)
@@ -92,9 +93,11 @@ def convert(info, module):
                     translate.append((name, obj))
             elif isinstance(obj, float):
                 constants[name] = obj
+                snippets.append('#line 1 "%s"' % escaped_filename)
                 snippets.append("const double %s = %.15g;"%(name, obj))
             elif isinstance(obj, int):
                 constants[name] = obj
+                snippets.append('#line 1 "%s"' % escaped_filename)
                 snippets.append("const int %s = %d;"%(name, obj))
             elif isinstance(obj, (list, tuple, np.ndarray)):
                 constants[name] = obj
@@ -105,6 +108,7 @@ def convert(info, module):
                 if len(obj)%4 != 0:
                     obj = list(obj) + [0.]*(4-len(obj))
                 vals = ", ".join("%.15g"%v for v in obj)
+                snippets.append('#line 1 "%s"' % escaped_filename)
                 snippets.append("const double %s[] = {%s};" %(name, vals))
             elif isinstance(obj, special.Gauss):
                 constants["GAUSS_N"] = obj.n
@@ -128,23 +132,9 @@ def convert(info, module):
             unique_libs.append(filename)
 
     # translate source
-    functions = py2c.translate(
-        [code[name] for name in ordered_dag(depends) if name in code],
-        constants)
-    snippets.clear()
-    snippets.append(functions)
-    #print("source", info.source)
-    print("\n".join(snippets))
-    try:
-        c_text = "\n".join(snippets)
-        translated = open ("_autoc.c", "a+")
-        translated.write (c_text)
-        translated.close()
-    except Exception as excp:
-        strErr = "Error:\n" + str(excp.args)
-        print(strErr)
-    #return
-#    raise RuntimeError("not yet converted...")
+    ordered_code = [code[name] for name in ordered_dag(depends) if name in code]
+    functions = py2c.translate(ordered_code, constants)
+    snippets.extend(functions)
 
     # update model info
     info.source = unique_libs
