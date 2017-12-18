@@ -56,6 +56,9 @@ Update Notes
                 'translate_integer_divide'
 12/15/2017, OE: Precedence maintained by writing opening and closing
                 parenthesesm '(',')', in procedure 'visit_BinOp'.
+12/18/2017, OE: Added call to 'add_current_line()' at the beginning
+                of visit_Return
+
 """
 import ast
 import sys
@@ -98,7 +101,6 @@ UNARYOP_SYMBOLS[ast.UAdd] = '+'
 UNARYOP_SYMBOLS[ast.USub] = '-'
 
 
-#def to_source(node, indent_with=' ' * 4, add_line_information=False):
 def to_source(node, func_name, constants=None):
     """This function can convert a node tree back into python sourcecode.
     This is useful for debugging purposes, especially if you're dealing with
@@ -118,10 +120,8 @@ def to_source(node, func_name, constants=None):
     number information of statement nodes.
     """
     generator = SourceGenerator(' ' * 4, False, constants)
-#    generator.required_functions = func_name
     generator.visit(node)
 
-#    return ''.join(generator.result)
     return ''.join(generator.c_proc)
 
 def isevaluable(s):
@@ -252,8 +252,6 @@ class SourceGenerator(NodeVisitor):
                 w_str = "Default Parameters are unknown to C: '" + arg.arg + \
                         " = " + str(default.n) + "'"
                 self.warnings.append(w_str)
-#                self.write_python('=')
-#                self.visit(default)
 
     def decorators(self, node):
         for decorator in node.decorator_list:
@@ -311,7 +309,6 @@ class SourceGenerator(NodeVisitor):
         self.visited_args = False
         self.visit(node.value)
         self.add_semi_colon()
-#        self.write_c(';')
         self.add_current_line()
         for n, item in enumerate(self.Tuples):
             self.visit(tplTargets[n])
@@ -337,7 +334,6 @@ class SourceGenerator(NodeVisitor):
         self.write_c(' ' + BINOP_SYMBOLS[type(node.op)] + '= ')
         self.visit(node.value)
         self.add_semi_colon()
-#        self.write_c(';')
         self.add_current_line()
 
     def visit_ImportFrom(self, node):
@@ -398,11 +394,6 @@ class SourceGenerator(NodeVisitor):
             self.c_proc.insert(start_var, "    double " + s + ";\n")
             fLine = True
             start_var += 1
-#        if(len(self.C_IntVars) > 0):
-#            s = self.listToDeclare(self.C_IntVars)
-#            self.c_proc.insert(start_var, "    int " + s + ";\n")
-#            fLine = True
-#            start_var += 1
         if(len(self.C_Vectors) > 0):
             s = self.listToDeclare(self.C_Vectors)
             for n in range(len(self.C_Vectors)):
@@ -442,14 +433,12 @@ class SourceGenerator(NodeVisitor):
         return(s)
 
     def getMethodSignature(self):
-#        args_str = ListToString(self.arguments)
         args_str = ''
         for n in range(len(self.arguments)):
             args_str += "double " + self.arguments[n]
             if(n < (len(self.arguments) - 1)):
                 args_str += ", "
         return(args_str)
-#        self.strMethodSignature = 'double ' + self.name + '(' + args_str + ")"
 
     def InsertSignature(self):
         args_str = ''
@@ -469,18 +458,12 @@ class SourceGenerator(NodeVisitor):
         self.newline(node)
         self.arguments = []
         self.name = node.name
-#        if self.name not in self.required_functions[0]:
-#           return
         print("Parsing '" + self.name + "'")
         args_str = ""
 
         self.visit(node.args)
-# for C
-#        self.writeInclude()
         self.getMethodSignature()
-# for C
         self.signature_line = len(self.c_proc)
-#        self.add_c_line(self.strMethodSignature)
         self.add_c_line("\n{")
         start_vars = len(self.c_proc) + 1
         self.body(node.body)
@@ -597,9 +580,6 @@ class SourceGenerator(NodeVisitor):
 # node: for iterator is stored in node.target.
 # Iterator name is in node.target.id.
         self.add_current_line()
-#        if(len(self.current_statement) > 0):
-#            self.add_c_line(self.current_statement)
-#            self.current_statement = ''
         fForDone = False
         self.current_statement = ''
         if(hasattr(node.iter, 'func')):
@@ -699,7 +679,7 @@ class SourceGenerator(NodeVisitor):
         self.write_python('nonlocal ' + ', '.join(node.names))
 
     def visit_Return(self, node):
-        self.newline(node)
+        self.add_current_line()
         if node.value is None:
             self.write_c('return')
         else:
@@ -1047,47 +1027,8 @@ class SourceGenerator(NodeVisitor):
                 self.write_python(' if ')
                 self.visit(if_)
 
-#    def visit_excepthandler(self, node):
-#        self.newline(node)
-#        self.write_python('except')
-#        if node.type is not None:
-#            self.write_python(' ')
-#            self.visit(node.type)
-#            if node.name is not None:
-#                self.write_python(' as ')
-#                self.visit(node.name)
-#        self.body(node.body)
-
     def visit_arguments(self, node):
         self.signature(node)
-
-def Iq1(q, porod_scale, porod_exp, lorentz_scale, lorentz_length, peak_pos, lorentz_exp=17):
-    z1 = z2 = z = abs(q - peak_pos) * lorentz_length
-    if(q > p):
-        q = p + 17
-        p = q - 5
-    z3 = -8
-    inten = (porod_scale / q ** porod_exp
-                + lorentz_scale /(1 + z ** lorentz_exp))
-    return inten
-
-def Iq(q, porod_scale, porod_exp, lorentz_scale, lorentz_length, peak_pos, lorentz_exp=17):
-    z1 = z2 = z = abs(q - peak_pos) * lorentz_length
-    if(q > p):
-        q = p + 17
-        p = q - 5
-    elif(q == p):
-        q = p * q
-        q *= z1
-        p = z1
-    elif(q == 17):
-        q = p * q - 17
-    else:
-        q += 7
-    z3 = -8
-    inten = (porod_scale / q ** porod_exp
-                + lorentz_scale /(1 + z ** lorentz_exp))
-    return inten
 
 def print_function(f=None):
     """
@@ -1126,8 +1067,6 @@ def add_constants (sniplets, c_constants):
 
 def translate(functions, constants=0):
     sniplets = []
-#    sniplets.append("#include <math.h>")
-#    sniplets.append("static double pi = 3.14159265359;")
     add_constants (sniplets, constants)
     for source,fname,line_no in functions:
         line_directive = '#line %d "%s"' %(line_no,fname)
