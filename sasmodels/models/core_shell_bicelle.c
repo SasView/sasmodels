@@ -51,13 +51,13 @@ Iq(double q,
     const double halflength = 0.5*length;
 
     double total = 0.0;
-    for(int i=0;i<N_POINTS_76;i++) {
-        double theta = (Gauss76Z[i] + 1.0)*uplim;
+    for(int i=0;i<GAUSS_N;i++) {
+        double theta = (GAUSS_Z[i] + 1.0)*uplim;
         double sin_theta, cos_theta; // slots to hold sincos function output
         SINCOS(theta, sin_theta, cos_theta);
         double fq = bicelle_kernel(q*sin_theta, q*cos_theta, radius, thick_radius, thick_face,
                                    halflength, sld_core, sld_face, sld_rim, sld_solvent);
-        total += Gauss76Wt[i]*fq*fq*sin_theta;
+        total += GAUSS_W[i]*fq*fq*sin_theta;
     }
 
     // calculate value of integral to return
@@ -66,7 +66,7 @@ Iq(double q,
 }
 
 static double
-Iqxy(double qab, double qc,
+Iqac(double qab, double qc,
     double radius,
     double thick_rim,
     double thick_face,

@@ -20,7 +20,7 @@
 /.pydevproject
 /.idea
 .vscode
-xlate.c
 /sasmodels.egg-info/
 /example/Fit_*/
 /example/batch_fit.csv
+/sasmodels/models/lib/gauss*.c

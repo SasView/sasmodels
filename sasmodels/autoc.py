@@ -48,7 +48,7 @@ def convert(info, module):
     if info.source or info.c_code is not None:
         return
 
-    public_methods = "Iq", "Iqxy", "form_volume"
+    public_methods = "Iq", "Iqac", "Iqabc", "Iqxy", "form_volume"
 
     tagged = [] # type: List[str]
     translate = [] # type: List[Callable]
@@ -71,6 +71,7 @@ def convert(info, module):
     while translate:
         function_name, function = translate.pop(0)
         filename = function.__code__.co_filename
+        escaped_filename = filename.replace('\\', '\\\\')
         offset = function.__code__.co_firstlineno
         refs = function.__code__.co_names
         depends[function_name] = set(refs)
@@ -90,27 +91,18 @@ def convert(info, module):
                 else:
                     # not special: add function to translate stack
                     translate.append((name, obj))
-            elif isinstance(obj, float):
+            elif isinstance(obj, (int, float, list, tuple, np.ndarray)):
                 constants[name] = obj
-                snippets.append("const double %s = %.15g;"%(name, obj))
-            elif isinstance(obj, int):
-                constants[name] = obj
-                snippets.append("const int %s = %d;"%(name, obj))
-            elif isinstance(obj, (list, tuple, np.ndarray)):
-                constants[name] = obj
-                # extend constant arrays to a multiple of 4; not sure if this
-                # is necessary, but some OpenCL targets broke if the number
-                # of parameters in the parameter table was not a multiple of 4,
-                # so do it for all constant arrays to be safe.
-                if len(obj)%4 != 0:
-                    obj = list(obj) + [0.]*(4-len(obj))
-                vals = ", ".join("%.15g"%v for v in obj)
-                snippets.append("const double %s[] = {%s};" %(name, vals))
+                # Claim all constants are declared on line 1
+                snippets.append('#line 1 "%s"'%escaped_filename)
+                snippets.append(define_constant(name, obj))
             elif isinstance(obj, special.Gauss):
-                constants["GAUSS_N"] = obj.n
-                constants["GAUSS_Z"] = obj.z
-                constants["GAUSS_W"] = obj.w
-                libs.append('lib/gauss%d.c'%obj.n)
+                for var, value in zip(("N", "Z", "W"), (obj.n, obj.z, obj.w)):
+                    var = "GAUSS_"+var
+                    constants[var] = value
+                    snippets.append('#line 1 "%s"'%escaped_filename)
+                    snippets.append(define_constant(var, value))
+                #libs.append('lib/gauss%d.c'%obj.n)
                 source = (source.replace(name+'.n', 'GAUSS_N')
                           .replace(name+'.z', 'GAUSS_Z')
                           .replace(name+'.w', 'GAUSS_W'))
@@ -128,28 +120,31 @@ def convert(info, module):
             unique_libs.append(filename)
 
     # translate source
-    functions = py2c.translate(
-        [code[name] for name in ordered_dag(depends) if name in code],
-        constants)
-    snippets.clear()
-    snippets.append(functions)
-    #print("source", info.source)
-    print("\n".join(snippets))
-    try:
-        c_text = "\n".join(snippets)
-        translated = open ("_autoc.c", "a+")
-        translated.write (c_text)
-        translated.close()
-    except Exception as excp:
-        strErr = "Error:\n" + str(excp.args)
-        print(strErr)
-    #return
-#    raise RuntimeError("not yet converted...")
+    ordered_code = [code[name] for name in ordered_dag(depends) if name in code]
+    functions = py2c.translate(ordered_code, constants)
+    snippets.extend(functions)
 
     # update model info
     info.source = unique_libs
     info.c_code = "\n".join(snippets)
-    info.Iq = info.Iqxy = info.form_volume = None
+    info.Iq = info.Iqac = info.Iqabc = info.Iqxy = info.form_volume = None
+
+def define_constant(name, value):
+    if isinstance(value, int):
+        parts = ["int ", name, " = ", "%d"%value, ";"]
+    elif isinstance(value, float):
+        parts = ["double ", name, " = ", "%.15g"%value, ";"]
+    else:
+        # extend constant arrays to a multiple of 4; not sure if this
+        # is necessary, but some OpenCL targets broke if the number
+        # of parameters in the parameter table was not a multiple of 4,
+        # so do it for all constant arrays to be safe.
+        if len(value)%4 != 0:
+            value = list(value) + [0.]*(4 - len(value)%4)
+        elements = ["%.15g"%v for v in value]
+        parts = ["double ", name, "[]", " = ",
+                 "{\n   ", ", ".join(elements), "\n};"]
+    return "".join(parts)
 
 
 # Modified from the following:

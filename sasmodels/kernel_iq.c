@@ -30,6 +30,7 @@
 //  CALL_IQ_A(q, table) : call the Iq function with |q| for 2D data.
 //  CALL_IQ_AC(qa, qc, table) : call the Iqxy function for symmetric shapes
 //  CALL_IQ_ABC(qa, qc, table) : call the Iqxy function for asymmetric shapes
+//  CALL_IQ_XY(qx, qy, table) : call the Iqxy function for arbitrary models
 //  INVALID(table) : test if the current point is feesible to calculate.  This
 //      will be defined in the kernel definition file.
 //  PROJECTION : equirectangular=1, sinusoidal=2
@@ -468,6 +469,13 @@ After expansion, the loop struction will look like the following:
   #define BUILD_ROTATION() qabc_rotation(&rotation, theta, phi, psi, dtheta, dphi, local_values.table.psi)
   #define APPLY_ROTATION() qabc_apply(rotation, qx, qy, &qa, &qb, &qc)
   #define CALL_KERNEL() CALL_IQ_ABC(qa, qb, qc, local_values.table)
+#elif defined(CALL_IQ_XY)
+  // direct call to qx,qy calculator
+  double qx, qy;
+  #define FETCH_Q() do { qx = q[2*q_index]; qy = q[2*q_index+1]; } while (0)
+  #define BUILD_ROTATION() do {} while(0)
+  #define APPLY_ROTATION() do {} while(0)
+  #define CALL_KERNEL() CALL_IQ_XY(qx, qy, local_values.table)
 #endif
 
 // Doing jitter projection code outside the previous if block so that we don't
@@ -476,6 +484,36 @@ After expansion, the loop struction will look like the following:
 // complicated projections.
 #if defined(CALL_IQ) || defined(CALL_IQ_A)
   #define APPLY_PROJECTION() const double weight=weight0
+#elif defined(CALL_IQ_XY)
+  // CRUFT: support oriented model which define Iqxy rather than Iqac or Iqabc
+  // Need to plug the values for the orientation angles back into parameter
+  // table in case they were overridden by the orientation offset.  This
+  // means that orientation dispersity will not work for these models, but
+  // it was broken anyway, so no matter.  Still want to provide Iqxy in case
+  // the user model wants full control of orientation/magnetism.
+  #if defined(HAVE_PSI)
+    const double theta = values[details->theta_par+2];
+    const double phi = values[details->theta_par+3];
+    const double psi = values[details->theta_par+4];
+    double weight;
+    #define APPLY_PROJECTION() do { \
+      local_values.table.theta = theta; \
+      local_values.table.phi = phi; \
+      local_values.table.psi = psi; \
+      weight=weight0; \
+    } while (0)
+  #elif defined(HAVE_THETA)
+    const double theta = values[details->theta_par+2];
+    const double phi = values[details->theta_par+3];
+    double weight;
+    #define APPLY_PROJECTION() do { \
+      local_values.table.theta = theta; \
+      local_values.table.phi = phi; \
+      weight=weight0; \
+    } while (0)
+  #else
+    #define APPLY_PROJECTION() const double weight=weight0
+  #endif
 #else // !spherosymmetric projection
   // Grab the "view" angles (theta, phi, psi) from the initial parameter table.
   const double theta = values[details->theta_par+2];

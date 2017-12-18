@@ -6,6 +6,14 @@
  *  Copyright 2007 __MyCompanyName__. All rights reserved.
  *
  */
+ #ifdef GAUSS_N
+ # undef GAUSS_N
+ # undef GAUSS_Z
+ # undef GAUSS_W
+ #endif
+ #define GAUSS_N 20
+ #define GAUSS_Z Gauss20Z
+ #define GAUSS_W Gauss20Wt
 
 // Gaussians
 constant double Gauss20Wt[20]={

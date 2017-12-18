@@ -6,9 +6,19 @@
  *  Copyright 2007 __MyCompanyName__. All rights reserved.
  *
  */
+ #ifdef GAUSS_N
+ # undef GAUSS_N
+ # undef GAUSS_Z
+ # undef GAUSS_W
+ #endif
+ #define GAUSS_N 150
+ #define GAUSS_Z Gauss150Z
+ #define GAUSS_W Gauss150Wt
+
+// Note: using array size 152 so that it is a multiple of 4
 
 // Gaussians
-constant double Gauss150Z[150]={
+constant double Gauss150Z[152]={
   	-0.9998723404457334,
   	-0.9993274305065947,
   	-0.9983473449340834,
@@ -158,10 +168,12 @@ constant double Gauss150Z[150]={
   	0.9969322929775997,
   	0.9983473449340834,
   	0.9993274305065947,
-  	0.9998723404457334
+  	0.9998723404457334,
+  	0.,
+  	0.
 };
 
-constant double Gauss150Wt[150]={
+constant double Gauss150Wt[152]={
   	0.0003276086705538,
   	0.0007624720924706,
   	0.0011976474864367,
@@ -311,5 +323,7 @@ constant double Gauss150Wt[150]={
   	0.0016323569986067,
   	0.0011976474864367,
   	0.0007624720924706,
-  	0.0003276086705538
+  	0.0003276086705538,
+  	0.,
+  	0.
 };

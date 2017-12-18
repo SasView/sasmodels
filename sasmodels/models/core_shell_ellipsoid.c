@@ -58,14 +58,14 @@ Iq(double q,
     const double m = 0.5;
     const double b = 0.5;
     double total = 0.0;     //initialize intergral
-    for(int i=0;i<76;i++) {
-        const double cos_theta = Gauss76Z[i]*m + b;
+    for(int i=0;i<GAUSS_N;i++) {
+        const double cos_theta = GAUSS_Z[i]*m + b;
         const double sin_theta = sqrt(1.0 - cos_theta*cos_theta);
         double fq = _cs_ellipsoid_kernel(q*sin_theta, q*cos_theta,
             radius_equat_core, polar_core,
             equat_shell, polar_shell,
             sld_core_shell, sld_shell_solvent);
-        total += Gauss76Wt[i] * fq * fq;
+        total += GAUSS_W[i] * fq * fq;
     }
     total *= m;
 
@@ -74,7 +74,7 @@ Iq(double q,
 }
 
 static double
-Iqxy(double qab, double qc,
+Iqac(double qab, double qc,
     double radius_equat_core,
     double x_core,
     double thick_shell,

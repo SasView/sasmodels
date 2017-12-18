@@ -80,10 +80,10 @@ BINOP_SYMBOLS[ast.FloorDiv] = '//'
 
 BOOLOP_SYMBOLS = {}
 BOOLOP_SYMBOLS[ast.And] = '&&'
-BOOLOP_SYMBOLS[ast.Or]  = '||'
+BOOLOP_SYMBOLS[ast.Or] = '||'
 
 CMPOP_SYMBOLS = {}
-CMPOP_SYMBOLS[ast.Eq]    = '=='
+CMPOP_SYMBOLS[ast.Eq] = '=='
 CMPOP_SYMBOLS[ast.NotEq] = '!='
 CMPOP_SYMBOLS[ast.Lt] = '<'
 CMPOP_SYMBOLS[ast.LtE] = '<='
@@ -144,7 +144,7 @@ class SourceGenerator(NodeVisitor):
         self.indentation = 0
         self.new_lines = 0
         self.c_proc = []
-# for C
+        # for C
         self.signature_line = 0
         self.arguments = []
         self.name = ""
@@ -180,19 +180,19 @@ class SourceGenerator(NodeVisitor):
 
     def add_c_line(self, x):
         string = ''
-        for i in range(self.indentation):
+        for _ in range(self.indentation):
             string += ("    ")
         string += str(x)
         self.c_proc.append(str(string + "\n"))
         x = ''
 
     def add_current_line(self):
-        if(len(self.current_statement) > 0):
+        if self.current_statement:
             self.add_c_line(self.current_statement)
             self.current_statement = ''
 
     def AddUniqueVar(self, new_var):
-        if((new_var not in self.C_Vars)):
+        if new_var not in self.C_Vars:
             self.C_Vars.append(str(new_var))
 
     def WriteSincos(self, node):
@@ -209,20 +209,18 @@ class SourceGenerator(NodeVisitor):
         if node is not None and self.add_line_information:
             self.write_c('# line: %s' % node.lineno)
             self.new_lines = 1
-        if(len(self.current_statement)):
+        if self.current_statement:
             self.Statements.append(self.current_statement)
             self.current_statement = ''
 
     def body(self, statements):
-        if(len(self.current_statement)):
+        if self.current_statement:
             self.add_current_line()
         self.new_line = True
         self.indentation += 1
         for stmt in statements:
-            target_name = ''
-            if(hasattr(stmt, 'targets')):
-                if(hasattr(stmt.targets[0], 'id')):
-                    target_name = stmt.targets[0].id # target name needed for debug only
+            #if hasattr(stmt, 'targets') and hasattr(stmt.targets[0], 'id'):
+            #    target_name = stmt.targets[0].id # target name needed for debug only
             self.visit(stmt)
         self.add_current_line() # just for breaking point. to be deleted.
         self.indentation -= 1
@@ -241,16 +239,26 @@ class SourceGenerator(NodeVisitor):
                 self.write_c(', ')
             else:
                 want_comma.append(True)
-# for C
+
+        # for C
         for arg in node.args:
-            self.arguments.append(arg.arg)
+            # CRUFT: 2.7 uses arg.id, 3.x uses arg.arg
+            try:
+                arg_name = arg.arg
+            except AttributeError:
+                arg_name = arg.id
+            self.arguments.append(arg_name)
 
         padding = [None] *(len(node.args) - len(node.defaults))
         for arg, default in zip(node.args, padding + node.defaults):
             if default is not None:
-                self.warnings.append("Default Parameter unknown to C")
-                w_str = "Default Parameters are unknown to C: '" + arg.arg + \
-                        " = " + str(default.n) + "'"
+                # CRUFT: 2.7 uses arg.id, 3.x uses arg.arg
+                try:
+                    arg_name = arg.arg
+                except AttributeError:
+                    arg_name = arg.id
+                w_str = ("Default Parameters are unknown to C: '%s = %s"
+                         % arg_name, str(default.n))
                 self.warnings.append(w_str)
 
     def decorators(self, node):
@@ -270,19 +278,19 @@ class SourceGenerator(NodeVisitor):
             self.visit(node.msg)
 
     def define_C_Vars(self, target):
-        if(hasattr(target, 'id')):
-# a variable is considered an array if it apears in the agrument list
-# and being assigned to. For example, the variable p in the following
-# sniplet is a pointer, while q is not
-# def somefunc(p, q):
-#  p = q + 1
-#  return
-#
-            if(target.id not in self.C_Vars):
-                if(target.id in self.arguments):
+        if hasattr(target, 'id'):
+        # a variable is considered an array if it apears in the agrument list
+        # and being assigned to. For example, the variable p in the following
+        # sniplet is a pointer, while q is not
+        # def somefunc(p, q):
+        #  p = q + 1
+        #  return
+        #
+            if target.id not in self.C_Vars:
+                if target.id in self.arguments:
                     idx = self.arguments.index(target.id)
                     new_target = self.arguments[idx] + "[0]"
-                    if(new_target not in self.C_Pointers):
+                    if new_target not in self.C_Pointers:
                         target.id = new_target
                         self.C_Pointers.append(self.arguments[idx])
                 else:
@@ -290,8 +298,8 @@ class SourceGenerator(NodeVisitor):
 
     def add_semi_colon(self):
         semi_pos = self.current_statement.find(';')
-        if(semi_pos > 0.0):
-            self.current_statement = self.current_statement.replace(';','')
+        if semi_pos > 0.0:
+            self.current_statement = self.current_statement.replace(';', '')
         self.write_c(';')
 
     def visit_Assign(self, node):
@@ -301,9 +309,9 @@ class SourceGenerator(NodeVisitor):
                 self.write_c(' = ')
             self.define_C_Vars(target)
             self.visit(target)
-        if(len(self.Tuples) > 0):
+        if self.Tuples:
             tplTargets = list(self.Tuples)
-            self.Tuples.clear()
+            del self.Tuples[:]
         self.write_c(' = ')
         self.is_sequence = False
         self.visited_args = False
@@ -316,19 +324,19 @@ class SourceGenerator(NodeVisitor):
             self.visit(item)
             self.add_semi_colon()
             self.add_current_line()
-        if((self.is_sequence) and (not self.visited_args)):
+        if self.is_sequence and not self.visited_args:
             for target in node.targets:
-                if(hasattr(target, 'id')):
-                    if((target.id in self.C_Vars) and(target.id not in self.C_DclPointers)):
-                        if(target.id not in self.C_DclPointers):
+                if hasattr(target, 'id'):
+                    if target.id in self.C_Vars and target.id not in self.C_DclPointers:
+                        if target.id not in self.C_DclPointers:
                             self.C_DclPointers.append(target.id)
-                            if(target.id in self.C_Vars):
+                            if target.id in self.C_Vars:
                                 self.C_Vars.remove(target.id)
         self.current_statement = ''
 
     def visit_AugAssign(self, node):
-        if(node.target.id not in self.C_Vars):
-            if(node.target.id not in self.arguments):
+        if node.target.id not in self.C_Vars:
+            if node.target.id not in self.arguments:
                 self.C_Vars.append(node.target.id)
         self.visit(node.target)
         self.write_c(' ' + BINOP_SYMBOLS[type(node.op)] + '= ')
@@ -354,102 +362,69 @@ class SourceGenerator(NodeVisitor):
         self.newline(node)
         self.generic_visit(node)
 
-    def listToDeclare(self, Vars):
-        s = ''
-        if(len(Vars) > 0):
-            s = ",".join(Vars)
-        return(s)
+    def listToDeclare(self, vars):
+        return ", ".join(vars)
 
     def write_C_Pointers(self, start_var):
-        if(len(self.C_DclPointers) > 0):
-            vars = ""
+        if self.C_DclPointers:
+            var_list = []
             for c_ptr in self.C_DclPointers:
                 if(len(vars) > 0):
                     vars += ", "
-                if(c_ptr not in self.arguments):
-                    vars += "*" + c_ptr
-                if(c_ptr in self.C_Vars):
-                    if(c_ptr in self.C_Vars):
-                        self.C_Vars.remove(c_ptr)
-            if(len(vars) > 0):
-                c_dcl = "    double " + vars + ";"
-                self.c_proc.insert(start_var, c_dcl + "\n")
+                if c_ptr not in self.arguments:
+                    var_list.append("*" + c_ptr)
+                if c_ptr in self.C_Vars:
+                    self.C_Vars.remove(c_ptr)
+            if var_list:
+                c_dcl = "    double " + ", ".join(var_list) + ";\n"
+                self.c_proc.insert(start_var, c_dcl)
                 start_var += 1
         return start_var
 
     def insert_C_Vars(self, start_var):
         fLine = False
         start_var = self.write_C_Pointers(start_var)
-        if(len(self.C_IntVars) > 0):
+        if self.C_IntVars:
             for var in self.C_IntVars:
-                if(var in self.C_Vars):
+                if var in self.C_Vars:
                     self.C_Vars.remove(var)
             s = self.listToDeclare(self.C_IntVars)
             self.c_proc.insert(start_var, "    int " + s + ";\n")
             fLine = True
             start_var += 1
 
-        if(len(self.C_Vars) > 0):
+        if self.C_Vars:
             s = self.listToDeclare(self.C_Vars)
             self.c_proc.insert(start_var, "    double " + s + ";\n")
             fLine = True
             start_var += 1
-        if(len(self.C_Vectors) > 0):
+
+        if self.C_Vectors:
             s = self.listToDeclare(self.C_Vectors)
             for n in range(len(self.C_Vectors)):
                 name = "vec" + str(n+1)
                 c_dcl = "    double " + name + "[] = {" + self.C_Vectors[n] + "};"
                 self.c_proc.insert(start_var, c_dcl + "\n")
                 start_var += 1
-        self.C_Vars.clear()
-        self.C_IntVars.clear()
-        self.C_Vectors.clear()
-        self.C_Pointers.clear()
+
+        del self.C_Vars[:]
+        del self.C_IntVars[:]
+        del self.C_Vectors[:]
+        del self.C_Pointers[:]
         self.C_DclPointers
-        if(fLine == True):
+        if fLine:
             self.c_proc.insert(start_var, "\n")
-        return
-        s = ''
-        for n in range(len(self.C_Vars)):
-            s += str(self.C_Vars[n])
-            if n < len(self.C_Vars) - 1:
-                s += ", "
-        if(len(s) > 0):
-            self.c_proc.insert(start_var, "    double " + s + ";\n")
-            self.c_proc.insert(start_var + 1, "\n")
-
-    def writeInclude(self):
-        if(self.MathIncludeed == False):
-            self.add_c_line("#include <math.h>\n")
-            self.add_c_line("static double pi = 3.14159265359;\n")
-            self.MathIncludeed = True
-
-    def ListToString(self, strings):
-        s = ''
-        for n in range(len(strings)):
-            s += strings[n]
-            if(n < (len(strings) - 1)):
-                s += ", "
-        return(s)
-
-    def getMethodSignature(self):
-        args_str = ''
-        for n in range(len(self.arguments)):
-            args_str += "double " + self.arguments[n]
-            if(n < (len(self.arguments) - 1)):
-                args_str += ", "
-        return(args_str)
 
     def InsertSignature(self):
-        args_str = ''
-        for n in range(len(self.arguments)):
-            args_str += "double " + self.arguments[n]
-            if(self.arguments[n] in self.C_Pointers):
-                args_str += "[]"
-            if(n < (len(self.arguments) - 1)):
-                args_str += ", "
+        arg_decls = []
+        for arg in self.arguments:
+            decl = "double " + arg
+            if arg in self.C_Pointers:
+                decl += "[]"
+            arg_decls.append(decl)
+        args_str = ", ".join(arg_decls)
         self.strMethodSignature = 'double ' + self.name + '(' + args_str + ")"
-        if(self.signature_line >= 0):
+        if self.signature_line >= 0:
             self.c_proc.insert(self.signature_line, self.strMethodSignature)
 
     def visit_FunctionDef(self, node):
@@ -458,12 +433,14 @@ class SourceGenerator(NodeVisitor):
         self.newline(node)
         self.arguments = []
         self.name = node.name
-        print("Parsing '" + self.name + "'")
-        args_str = ""
+        #if self.name not in self.required_functions[0]:
+        #   return
+        #print("Parsing '" + self.name + "'")
 
         self.visit(node.args)
-        self.getMethodSignature()
+        # for C
         self.signature_line = len(self.c_proc)
+        #self.add_c_line(self.strMethodSignature)
         self.add_c_line("\n{")
         start_vars = len(self.c_proc) + 1
         self.body(node.body)
@@ -488,8 +465,7 @@ class SourceGenerator(NodeVisitor):
         for base in node.bases:
             paren_or_comma()
             self.visit(base)
-        # XXX: the if here is used to keep this module compatible
-        #      with python 2.6.
+        # CRUFT: python 2.6 does not have "keywords" attribute
         if hasattr(node, 'keywords'):
             for keyword in node.keywords:
                 paren_or_comma()
@@ -516,17 +492,17 @@ class SourceGenerator(NodeVisitor):
             else_ = node.orelse
             if len(else_) == 0:
                 break
-#            elif hasattr(else_, 'orelse'):
+            #elif hasattr(else_, 'orelse'):
             elif len(else_) == 1 and isinstance(else_[0], ast.If):
                 node = else_[0]
-#                self.newline()
+                #self.newline()
                 self.write_c('else if ')
                 self.visit(node.test)
                 self.write_c(' {')
                 self.body(node.body)
                 self.add_current_line()
                 self.add_c_line('}')
-#                break
+                #break
             else:
                 self.newline()
                 self.write_c('else {')
@@ -536,20 +512,20 @@ class SourceGenerator(NodeVisitor):
 
     def getNodeLineNo(self, node):
         line_number = -1
-        if(hasattr(node,'value')):
+        if hasattr(node, 'value'):
             line_number = node.value.lineno
         elif hasattr(node, 'iter'):
             if hasattr(node.iter, 'lineno'):
                 line_number = node.iter.lineno
-        return(line_number)
+        return line_number
 
     def GetNodeAsString(self, node):
         res = ''
-        if(hasattr(node, 'n')):
+        if hasattr(node, 'n'):
             res = str(node.n)
-        elif(hasattr(node, 'id')):
+        elif hasattr(node, 'id'):
             res = node.id
-        return(res)
+        return res
 
     def GetForRange(self, node):
         stop = ""
@@ -563,41 +539,41 @@ class SourceGenerator(NodeVisitor):
             for_args.append(self.current_statement)
             self.current_statement = ''
         self.current_statement = temp_statement
-        if(len(for_args) == 1):
+        if len(for_args) == 1:
             stop = for_args[0]
-        elif(len(for_args) == 2):
+        elif len(for_args) == 2:
             start = for_args[0]
             stop = for_args[1]
-        elif(len(for_args) == 3):
+        elif len(for_args) == 3:
             start = for_args[0]
             stop = for_args[1]
             start = for_args[2]
         else:
             raise("Ilegal for loop parameters")
-        return(start, stop, step)
+        return start, stop, step
 
     def visit_For(self, node):
-# node: for iterator is stored in node.target.
-# Iterator name is in node.target.id.
+        # node: for iterator is stored in node.target.
+        # Iterator name is in node.target.id.
         self.add_current_line()
         fForDone = False
         self.current_statement = ''
-        if(hasattr(node.iter, 'func')):
-            if(hasattr(node.iter.func, 'id')):
-                if(node.iter.func.id == 'range'):
+        if hasattr(node.iter, 'func'):
+            if hasattr(node.iter.func, 'id'):
+                if node.iter.func.id == 'range':
                     self.visit(node.target)
                     iterator = self.current_statement
                     self.current_statement = ''
-                    if(iterator not in self.C_IntVars):
+                    if iterator not in self.C_IntVars:
                         self.C_IntVars.append(iterator)
                     start, stop, step = self.GetForRange(node)
-                    self.write_c("for(" + iterator + "=" + str(start) + \
-                                  " ; " + iterator + " < " + str(stop) + \
-                                  " ; " + iterator + " += " + str(step) + ") {")
+                    self.write_c("for(" + iterator + "=" + str(start) +
+                                 " ; " + iterator + " < " + str(stop) +
+                                 " ; " + iterator + " += " + str(step) + ") {")
                     self.body_or_else(node)
                     self.write_c("}")
                     fForDone = True
-        if(fForDone == False):
+        if not fForDone:
             line_number = self.getNodeLineNo(node)
             self.current_statement = ''
             self.write_c('for ')
@@ -631,7 +607,7 @@ class SourceGenerator(NodeVisitor):
         self.write_python('pass')
 
     def visit_Print(self, node):
-# XXX: python 2.6 only
+        # CRUFT: python 2.6 only
         self.newline(node)
         self.write_c('print ')
         want_comma = False
@@ -699,7 +675,7 @@ class SourceGenerator(NodeVisitor):
         self.write_c('continue')
 
     def visit_Raise(self, node):
-        # XXX: Python 2.6 / 3.0 compatibility
+        # CRUFT: Python 2.6 / 3.0 compatibility
         self.newline(node)
         self.write_python('raise')
         if hasattr(node, 'exc') and node.exc is not None:
@@ -733,14 +709,14 @@ class SourceGenerator(NodeVisitor):
                 self.write_c(', ')
             else:
                 want_comma.append(True)
-        if(hasattr(node.func, 'id')):
-            if(node.func.id not in self.C_Functions):
+        if hasattr(node.func, 'id'):
+            if node.func.id not in self.C_Functions:
                 self.C_Functions.append(node.func.id)
-            if(node.func.id == 'abs'):
+            if node.func.id == 'abs':
                 self.write_c("fabs ")
-            elif(node.func.id == 'int'):
+            elif node.func.id == 'int':
                 self.write_c('(int) ')
-            elif(node.func.id == "SINCOS"):
+            elif node.func.id == "SINCOS":
                 self.WriteSincos(node)
                 return
             else:
@@ -771,19 +747,19 @@ class SourceGenerator(NodeVisitor):
 
     def visit_Name(self, node):
         self.write_c(node.id)
-        if((node.id in self.C_Pointers) and(not self.SubRef)):
+        if node.id in self.C_Pointers and not self.SubRef:
             self.write_c("[0]")
         name = ""
         sub = node.id.find("[")
-        if(sub > 0):
+        if sub > 0:
             name = node.id[0:sub].strip()
         else:
             name = node.id
-#       add variable to C_Vars if it ins't there yet, not an argument and not a number
-        if ((name not in self.C_Functions) and (name not in self.C_Vars) and \
-            (name not in self.C_IntVars) and (name not in self.arguments) and \
-            (name not in self.C_Constants) and (name.isnumeric() == False)):
-            if(self.InSubscript):
+        # add variable to C_Vars if it ins't there yet, not an argument and not a number
+        if (name not in self.C_Functions and name not in self.C_Vars and
+                name not in self.C_IntVars and name not in self.arguments and
+                name not in self.C_Constants and not name.isdigit()):
+            if self.InSubscript:
                 self.C_IntVars.append(node.id)
             else:
                 self.C_Vars.append(node.id)
@@ -809,17 +785,16 @@ class SourceGenerator(NodeVisitor):
             self.is_sequence = True
             s = ""
             for idx, item in enumerate(node.elts):
-                if((idx > 0) and(len(s) > 0)):
+                if idx > 0 and s:
                     s += ', '
-                if(hasattr(item, 'id')):
+                if hasattr(item, 'id'):
                     s += item.id
-                elif(hasattr(item, 'n')):
+                elif hasattr(item, 'n'):
                     s += str(item.n)
-            if(len(s) > 0):
+            if s:
                 self.C_Vectors.append(s)
                 vec_name = "vec"  + str(len(self.C_Vectors))
                 self.write_c(vec_name)
-                vec_name += "#"
         return visit
 
     visit_List = sequence_visit('[', ']')
@@ -839,43 +814,43 @@ class SourceGenerator(NodeVisitor):
     def get_special_power(self, string):
         function_name = ''
         is_negative_exp = False
-        if(isevaluable(str(self.current_statement))):
+        if isevaluable(str(self.current_statement)):
             exponent = eval(string)
             is_negative_exp = exponent < 0
             abs_exponent = abs(exponent)
-            if(abs_exponent == 2):
+            if abs_exponent == 2:
                 function_name = "square"
-            elif(abs_exponent == 3):
+            elif abs_exponent == 3:
                 function_name = "cube"
-            elif(abs_exponent == 0.5):
+            elif abs_exponent == 0.5:
                 function_name = "sqrt"
-            elif(abs_exponent == 1.0/3.0):
+            elif abs_exponent == 1.0/3.0:
                 function_name = "cbrt"
-        if(function_name == ''):
+        if function_name == '':
             function_name = "pow"
         return function_name, is_negative_exp
 
     def translate_power(self, node):
-# get exponent by visiting the right hand argument.
+        # get exponent by visiting the right hand argument.
         function_name = "pow"
         temp_statement = self.current_statement
-# 'visit' functions write the results to the 'current_statement' class memnber
-# Here, a temporary variable, 'temp_statement', is used, that enables the
-# use of the 'visit' function
+        # 'visit' functions write the results to the 'current_statement' class memnber
+        # Here, a temporary variable, 'temp_statement', is used, that enables the
+        # use of the 'visit' function
         self.current_statement = ''
         self.visit(node.right)
         exponent = self.current_statement.replace(' ', '')
         function_name, is_negative_exp = self.get_special_power(self.current_statement)
         self.current_statement = temp_statement
-        if(is_negative_exp):
+        if is_negative_exp:
             self.write_c("1.0 /(")
         self.write_c(function_name + "(")
         self.visit(node.left)
-        if(function_name == "pow"):
+        if function_name == "pow":
             self.write_c(", ")
             self.visit(node.right)
         self.write_c(")")
-        if(is_negative_exp):
+        if is_negative_exp:
             self.write_c(")")
         self.write_c(" ")
 
@@ -888,9 +863,9 @@ class SourceGenerator(NodeVisitor):
 
     def visit_BinOp(self, node):
         self.write_c("(")
-        if('%s' % BINOP_SYMBOLS[type(node.op)] == BINOP_SYMBOLS[ast.Pow]):
+        if '%s' % BINOP_SYMBOLS[type(node.op)] == BINOP_SYMBOLS[ast.Pow]:
             self.translate_power(node)
-        elif('%s' % BINOP_SYMBOLS[type(node.op)] == BINOP_SYMBOLS[ast.FloorDiv]):
+        elif '%s' % BINOP_SYMBOLS[type(node.op)] == BINOP_SYMBOLS[ast.FloorDiv]:
             self.translate_integer_divide(node)
         else:
             self.visit(node.left)
@@ -898,7 +873,7 @@ class SourceGenerator(NodeVisitor):
             self.visit(node.right)
         self.write_c(")")
 
-#       for C
+    # for C
     def visit_BoolOp(self, node):
         self.write_c('(')
         for idx, value in enumerate(node.values):
@@ -925,8 +900,8 @@ class SourceGenerator(NodeVisitor):
         self.write_c(')')
 
     def visit_Subscript(self, node):
-        if (node.value.id not in self.C_Constants):
-            if(node.value.id not in self.C_Pointers):
+        if node.value.id not in self.C_Constants:
+            if node.value.id not in self.C_Pointers:
                 self.C_Pointers.append(node.value.id)
         self.SubRef = True
         self.visit(node.value)
@@ -975,7 +950,7 @@ class SourceGenerator(NodeVisitor):
             for comprehension in node.generators:
                 self.visit(comprehension)
             self.write_c(right)
-#            self.write_python(right)
+            #self.write_python(right)
         return visit
 
     visit_ListComp = generator_visit('[', ']')
@@ -1004,7 +979,7 @@ class SourceGenerator(NodeVisitor):
         self.visit(node.value)
 
     def visit_Repr(self, node):
-        # XXX: python 2.6 only
+        # CRUFT: python 2.6 only
         self.write_c('`')
         self.visit(node.value)
         self.write_python('`')
@@ -1020,7 +995,7 @@ class SourceGenerator(NodeVisitor):
         self.write_c(' for ')
         self.visit(node.target)
         self.write_C(' in ')
-#        self.write_python(' in ')
+        #self.write_python(' in ')
         self.visit(node.iter)
         if node.ifs:
             for if_ in node.ifs:
@@ -1042,75 +1017,45 @@ def print_function(f=None):
         tree_source = to_source(tree)
         print(tree_source)
 
-def add_constants(sniplets, c_constants):
-    sniplets.append("#include <math.h>")
-    sniplets.append("")
-    vars = c_constants.keys()
-    for c_var in vars:
-        c_values = c_constants[c_var]
-        if isinstance(c_values, (int, float)):
-            parts = ["double ", c_var, " = ", "%.15g"%c_values, ";"]
-        else:
-            elements = ["%.15g"%v for v in c_values]
-            parts = ["double ", c_var, "[]", " = ", "{\n   ", ", ".join(elements), "\n};"]
-        sniplets.append("".join(parts))
-
 def translate(functions, constants=0):
-    sniplets = []
-    add_constants (sniplets, constants)
-    for source,fname,line_no in functions:
-        line_directive = '#line %d "%s"' %(line_no,fname)
-        line_directive = line_directive.replace('\\','\\\\')
-#        sniplets.append(line_directive)
+    snippets = []
+    #snippets.append("#include <math.h>")
+    #snippets.append("")
+    for source, fname, line_no in functions:
+        line_directive = '#line %d "%s"'%(line_no, fname.replace('\\', '\\\\'))
+        snippets.append(line_directive)
         tree = ast.parse(source)
-        sniplet = to_source(tree, functions, constants) # in the future add filename, offset, constants
-        sniplets.append(sniplet)
-    c_code = "\n".join(sniplets)
-    f_out = open ("xlate.c", "w+")
-    f_out.write (c_code)
-    f_out.close()
-    return("\n".join(sniplets))
+        # in the future add filename, offset, constants
+        c_code = to_source(tree, functions, constants)
+        snippets.append(c_code)
+    return snippets
 
-def get_file_names():
-    fname_in = ""
-    fname_out = ""
-    if(len(sys.argv) > 1):
-        fname_in = sys.argv[1]
-        fname_base = os.path.splitext(fname_in)
-        if(len(sys.argv) == 2):
-            fname_out = str(fname_base[0]) + '.c'
-        else:
-            fname_out = sys.argv[2]
-        if(len(fname_in) > 0):
-            python_file = open(sys.argv[1], "r")
-            if(len(fname_out) > 0):
-                file_out = open(fname_out, "w+")
-    return len(sys.argv), fname_in, fname_out
-
-if __name__ == "__main__":
+def main():
     import os
     print("Parsing...using Python" + sys.version)
-    try:
-        fname_in = ""
-        fname_out = ""
-        if(len(sys.argv) == 1):
-            print("Usage:\npython parse01.py <infile> [<outfile>](if omitted, output file is '<infile>.c'")
-        else:
-            fname_in = sys.argv[1]
-            fname_base = os.path.splitext(fname_in)
-            if(len(sys.argv) == 2):
-                fname_out = str(fname_base[0]) + '.c'
-            else:
-                fname_out = sys.argv[2]
-            if(len(fname_in) > 0):
-                python_file = open(sys.argv[1], "r")
-                if(len(fname_out) > 0):
-                    file_out = open(fname_out, "w+")
-                functions = ["MultAsgn", "Iq41", "Iq2"]
-                tpls = [functions, fname_in, 0]
-                c_txt = translate(tpls)
-                file_out.write(c_txt)
-                file_out.close()
-    except Exception as excp:
-        print("Error:\n" + str(excp.args))
+    if len(sys.argv) == 1:
+        print("""\
+Usage: python py2c.py <infile> [<outfile>]
+
+if outfile is omitted, output file is '<infile>.c'
+""")
+        return
+
+    fname_in = sys.argv[1]
+    if len(sys.argv) == 2:
+        fname_base = os.path.splitext(fname_in)[0]
+        fname_out = str(fname_base) + '.c'
+    else:
+        fname_out = sys.argv[2]
+
+    with open(fname_in, "r") as python_file:
+        code = python_file.read()
+
+    translation = translate([code, fname_in, 1])[0]
+
+    with open(fname_out, "w") as file_out:
+        file_out.write(translation)
     print("...Done")
+
+if __name__ == "__main__":
+    main()
