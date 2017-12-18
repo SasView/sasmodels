@@ -1099,10 +1099,27 @@ def print_function(f=None):
         tree_source = to_source(tree)
         print(tree_source)
 
+def add_constants (sniplets, c_constants):
+    sniplets.append("#include <math.h>")
+    sniplets.append("")
+    vars = c_constants.keys()
+    for c_var in vars:
+        declare_values = str(c_constants[c_var])
+        if (hasattr(declare_values,'__len__')):
+            declare_values = declare_values.replace ('  ',' ')
+            declare_values = declare_values.replace ('[ ','[')
+            declare_values = declare_values.replace (' ]',']')
+            declare_values = declare_values.replace (' ',',')
+        str_dcl = "double " + c_var
+        str_dcl += " = " + declare_values + ";"
+        sniplets.append (str_dcl)
+        sniplets.append("")
+
 def translate(functions, constants=0):
     sniplets = []
-    sniplets.append("#include <math.h>")
-    sniplets.append("static double pi = 3.14159265359;")
+#    sniplets.append("#include <math.h>")
+#    sniplets.append("static double pi = 3.14159265359;")
+    add_constants (sniplets, constants)
     for source,fname,line_no in functions:
         line_directive = '#line %d "%s"' %(line_no,fname)
         line_directive = line_directive.replace('\\','\\\\')
