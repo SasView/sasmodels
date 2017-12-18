@@ -80,8 +80,8 @@ like clay platelets that are not exfoliated
     double d = 2.0*thick_layer+thick_core;
     double halfheight = 0.5*thick_core;
 
-    for(int i=0; i<N_POINTS_76; i++) {
-        double zi = (Gauss76Z[i] + 1.0)*M_PI_4;
+    for(int i=0; i<GAUSS_N; i++) {
+        double zi = (GAUSS_Z[i] + 1.0)*M_PI_4;
         double sin_alpha, cos_alpha; // slots to hold sincos function output
         SINCOS(zi, sin_alpha, cos_alpha);
         double yyy = stacked_disks_kernel(q*sin_alpha, q*cos_alpha,
@@ -94,7 +94,7 @@ like clay platelets that are not exfoliated
                            layer_sld,
                            solvent_sld,
                            d);
-        summ += Gauss76Wt[i] * yyy * sin_alpha;
+        summ += GAUSS_W[i] * yyy * sin_alpha;
     }
 
     double answer = M_PI_4*summ;
@@ -141,7 +141,7 @@ Iq(
 
 
 static double
-Iqxy(double qab, double qc,
+Iqac(double qab, double qc,
     double thick_core,
     double thick_layer,
     double radius,

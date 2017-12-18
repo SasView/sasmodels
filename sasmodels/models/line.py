@@ -56,6 +56,7 @@ def Iq(q, intercept, slope):
 
 Iq.vectorized = True # Iq accepts an array of q values
 
+
 def Iqxy(qx, qy, *args):
     """
     :param qx:   Input q_x-value
@@ -68,6 +69,14 @@ def Iqxy(qx, qy, *args):
     return Iq(qx, *args)*Iq(qy, *args)
 
 Iqxy.vectorized = True  # Iqxy accepts an array of qx qy values
+
+# uncomment the following to test Iqxy in C models
+#del Iq, Iqxy
+#c_code = """
+#static double Iq(double q, double b, double m) { return m*q+b; }
+#static double Iqxy(double qx, double qy, double b, double m)
+#{ return (m*qx+b)*(m*qy+b); }
+#"""
 
 def random():
     scale = 10**np.random.uniform(0, 3)
