@@ -48,7 +48,7 @@ def convert(info, module):
     if info.source or info.c_code is not None:
         return
 
-    public_methods = "Iq", "Iqxy", "form_volume"
+    public_methods = "Iq", "Iqac", "Iqabc", "Iqxy", "form_volume"
 
     tagged = [] # type: List[str]
     translate = [] # type: List[Callable]
@@ -97,10 +97,12 @@ def convert(info, module):
                 snippets.append('#line 1 "%s"'%escaped_filename)
                 snippets.append(define_constant(name, obj))
             elif isinstance(obj, special.Gauss):
-                #constants["GAUSS_N"] = obj.n
-                #constants["GAUSS_Z"] = obj.z
-                #constants["GAUSS_W"] = obj.w
-                libs.append('lib/gauss%d.c'%obj.n)
+                for var, value in zip(("N", "Z", "W"), (obj.n, obj.z, obj.w)):
+                    var = "GAUSS_"+var
+                    constants[var] = value
+                    snippets.append('#line 1 "%s"'%escaped_filename)
+                    snippets.append(define_constant(var, value))
+                #libs.append('lib/gauss%d.c'%obj.n)
                 source = (source.replace(name+'.n', 'GAUSS_N')
                           .replace(name+'.z', 'GAUSS_Z')
                           .replace(name+'.w', 'GAUSS_W'))
@@ -125,7 +127,7 @@ def convert(info, module):
     # update model info
     info.source = unique_libs
     info.c_code = "\n".join(snippets)
-    info.Iq = info.Iqxy = info.form_volume = None
+    info.Iq = info.Iqac = info.Iqabc = info.Iqxy = info.form_volume = None
 
 def define_constant(name, value):
     if isinstance(value, int):

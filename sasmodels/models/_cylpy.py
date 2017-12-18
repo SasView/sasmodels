@@ -137,6 +137,8 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "rotation about beam"],
              ]
 
+py2c = True
+
 def invalid(v):
     return v.radius < 0 or v.length < 0
 
@@ -168,7 +170,7 @@ def Iq(q, sld, solvent_sld, radius, length):
     s = (sld - solvent_sld) * form_volume(radius, length)
     return 1.0e-4 * s * s * orient_avg_1D(q, radius, length)
 
-def Iqxy(qab, qc, sld, solvent_sld, radius, length):
+def Iqac(qab, qc, sld, solvent_sld, radius, length):
     s = (sld-solvent_sld) * form_volume(radius, length)
     form = fq(qab, qc, radius, length)
     return 1.0e-4 * square(s * form)

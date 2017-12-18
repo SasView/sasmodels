@@ -819,16 +819,16 @@ def make_model_info(kernel_module):
     info.control = getattr(kernel_module, 'control', default_control)
     info.hidden = getattr(kernel_module, 'hidden', None) # type: ignore
 
-    if callable(info.Iq) and parameters.has_2d:
-        raise ValueError("oriented python models not supported")
-
     info.lineno = {}
     _find_source_lines(info, kernel_module)
-    try:
-        autoc.convert(info, kernel_module)
-    except Exception as exc:
-        raise
-        logger.warn(str(exc))
+    if getattr(kernel_module, 'py2c', False):
+        try:
+            autoc.convert(info, kernel_module)
+        except Exception as exc:
+            logger.warn(str(exc) + " while converting %s from C to python"%name)
+
+    if callable(info.Iq) and parameters.has_2d:
+        raise ValueError("oriented python models not supported")
 
     return info
 
