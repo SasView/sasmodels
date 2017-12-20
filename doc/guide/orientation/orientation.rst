@@ -127,18 +127,27 @@ $[-180, 180]$, so swap the $a$ and $b$ axes so $\Delta\theta < \Delta\phi$
 and adjust $\Psi$ by 90. This works with the existing sasmodels shapes due to
 symmetry.
 
-There are alternative projections. The
-`sinusoidal projection <https://en.wikipedia.org/wiki/Sinusoidal_projection>`_
+Alternative projections were considered.
+The `sinusoidal projection <https://en.wikipedia.org/wiki/Sinusoidal_projection>`_
 works by scaling $\Delta\phi$ as $\Delta\theta$ increases, and dropping those
 points outside $[-180, 180]$. The distortions are a little less for middle
 ranges of $\Delta\theta$, but they are still severe for large $\Delta\theta$
-and the model is much harder to explain. The
-`Guyou projection <https://en.wikipedia.org/wiki/Guyou_hemisphere-in-a-square_projection>`_
+and the model is much harder to explain.
+The `azimuthal equidistance projection <https://en.wikipedia.org/wiki/Azimuthal_equidistant_projection>`_
+also improves on the equirectangular projection by extending the range of
+reasonable values for the $\Delta\theta$ range, with $\Delta\phi$ forming a
+wedge that cuts to the opposite side of the sphere rather than cutting to the
+pole. This projection has the nice property that distance from the center are
+preserved, and that $\Delta\theta$ and $\Delta\phi$ act the same.
+The `azimuthal equal area projection <https://en.wikipedia.org/wiki/Lambert_azimuthal_equal-area_projection>`_
+is like the azimuthal equidistance projection, but it preserves area instead
+of distance. It also has the same behaviour for $\Delta\theta$ and $\Delta\phi$.
+The `Guyou projection <https://en.wikipedia.org/wiki/Guyou_hemisphere-in-a-square_projection>`_
 has an excellent balance with reasonable distortion in both $\Delta\theta$
 and $\Delta\phi$, as well as preserving small patches. However, it is
-considerably more expensive to implement, and we have not yet computed the
+considerably more overhead, and we have not yet derived the formula for the
 distortion correction, measuring the degree of stretch at the point
-$(\Delta\theta, \Delta\phi)$ in the correction.
+$(\Delta\theta, \Delta\phi)$ on the map.
 
 .. note::
     Note that the form factors for oriented particles are performing
