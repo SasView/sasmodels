@@ -110,32 +110,35 @@ but the orientation is defined over a sphere, we are left with a
 problem, with different tradeoffs depending on how values in $\Delta\theta$
 and $\Delta\phi$ are translated into latitude/longitude on the sphere.
 
-Sasmodels is using the *equirectangular* projection. In this projection,
-square patches in angular dispersity become wedge-shaped patches on the
-sphere. To correct for the changing point density, there is a scale factor of
-$\sin(\Delta\theta)$ that applies to each point in the integral. This is not
-enough, though. Consider a shape which is tumbling freely around the $b$
-axis, with $\Delta\theta$ uniform in $[-180, 180]$. At $\pm 90$, all points
-in $\Delta\phi$ map to the pole, so the jitter will have a
-distinct angular preference. If the spin axis is normal to the beam
-(which will be the case for $\theta=90$ and $\Psi=90$), the scattering
-pattern should be circularly symmetric, but it will go to zero at $\pm 90$ due
-to the $\sin(\Delta\theta)$ correction. This problem does not appear for a shape
+Sasmodels is using the
+`equirectangular projection <https://en.wikipedia.org/wiki/Equirectangular_projection>`_.
+In this projection, square patches in angular dispersity become wedge-shaped
+patches on the sphere. To correct for the changing point density, there is a
+scale factor of $\sin(\Delta\theta)$ that applies to each point in the
+integral. This is not enough, though. Consider a shape which is tumbling
+freely around the $b$ axis, with $\Delta\theta$ uniform in $[-180, 180]$. At
+$\pm 90$, all points in $\Delta\phi$ map to the pole, so the jitter will have
+a distinct angular preference. If the spin axis is normal to the beam (which
+will be the case for $\theta=90$ and $\Psi=90$), the scattering pattern
+should be circularly symmetric, but it will go to zero at $\pm 90$ due to the
+$\sin(\Delta\theta)$ correction. This problem does not appear for a shape
 that is tumbling freely around the $a$ axis, with $\Delta\phi$ uniform in
 $[-180, 180]$, so swap the $a$ and $b$ axes so $\Delta\theta < \Delta\phi$
-and adjust $\Psi$ by 90. This works with the existing sasmodels shapes
-due to symmetry.
+and adjust $\Psi$ by 90. This works with the existing sasmodels shapes due to
+symmetry.
 
-There are alternative projections. The *sinusoidal* projection works by
-scaling $\Delta\phi$ as $\Delta\theta$ increases, and dropping those points
-outside $[-180, 180]$. The distortions are a little less for middle ranges of
-$\Delta\theta$, but they are still severe for large $\Delta\theta$ and the
-model is much harder to explain. The *Guyou* projection has an excellent
-balance with reasonable distortion in both $\Delta\theta$ and $\Delta\phi$,
-as well as preserving small patches. However, it is considerably more
-expensive to implement, and we have not yet computed the distortion
-correction, measuring the degree of stretch at the
-point $(\Delta\theta, \Delta\phi)$ in the correction.
+There are alternative projections. The
+`sinusoidal projection <https://en.wikipedia.org/wiki/Sinusoidal_projection>`_
+works by scaling $\Delta\phi$ as $\Delta\theta$ increases, and dropping those
+points outside $[-180, 180]$. The distortions are a little less for middle
+ranges of $\Delta\theta$, but they are still severe for large $\Delta\theta$
+and the model is much harder to explain. The
+`Guyou projection <https://en.wikipedia.org/wiki/Guyou_hemisphere-in-a-square_projection>`_
+has an excellent balance with reasonable distortion in both $\Delta\theta$
+and $\Delta\phi$, as well as preserving small patches. However, it is
+considerably more expensive to implement, and we have not yet computed the
+distortion correction, measuring the degree of stretch at the point
+$(\Delta\theta, \Delta\phi)$ in the correction.
 
 .. note::
     Note that the form factors for oriented particles are performing
