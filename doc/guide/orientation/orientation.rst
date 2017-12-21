@@ -85,7 +85,7 @@ in the reverse order, so
 
 
 The $\theta$ and $\phi$ orientation parameters for the cylinder only appear
-when fitting 2d data. On introducing "Orientation Distribution" in the
+when fitting 2d data. On introducing "Orientational Distribution" in the
 angles, "distribution of theta" and "distribution of phi" parameters will
 appear. These are actually rotations about the axes $\delta_1$ and $\delta_2$
 of the cylinder, which correspond to the $b$ and $a$ axes of the cylinder
@@ -118,13 +118,13 @@ scale factor of $\sin(\Delta\theta)$ that applies to each point in the
 integral. This is not enough, though. Consider a shape which is tumbling
 freely around the $b$ axis, with $\Delta\theta$ uniform in $[-180, 180]$. At
 $\pm 90$, all points in $\Delta\phi$ map to the pole, so the jitter will have
-a distinct angular preference. If the spin axis is normal to the beam (which
-will be the case for $\theta=90$ and $\Psi=90$), the scattering pattern
-should be circularly symmetric, but it will go to zero at $\pm 90$ due to the
+a distinct angular preference. If the spin axis is along the beam (which
+will be the case for $\theta=90$ and $\Psi=90$) the scattering pattern
+should be circularly symmetric, but it will go to zero at $q_x = 0$ due to the
 $\sin(\Delta\theta)$ correction. This problem does not appear for a shape
 that is tumbling freely around the $a$ axis, with $\Delta\phi$ uniform in
 $[-180, 180]$, so swap the $a$ and $b$ axes so $\Delta\theta < \Delta\phi$
-and adjust $\Psi$ by 90. This works with the existing sasmodels shapes due to
+and adjust $\Psi$ by 90. This works with the current sasmodels shapes due to
 symmetry.
 
 Alternative projections were considered.
@@ -144,10 +144,10 @@ is like the azimuthal equidistance projection, but it preserves area instead
 of distance. It also has the same behaviour for $\Delta\theta$ and $\Delta\phi$.
 The `Guyou projection <https://en.wikipedia.org/wiki/Guyou_hemisphere-in-a-square_projection>`_
 has an excellent balance with reasonable distortion in both $\Delta\theta$
-and $\Delta\phi$, as well as preserving small patches. However, it is
-considerably more overhead, and we have not yet derived the formula for the
-distortion correction, measuring the degree of stretch at the point
-$(\Delta\theta, \Delta\phi)$ on the map.
+and $\Delta\phi$, as well as preserving small patches. However, it requires
+considerably more computational overhead, and we have not yet derived the
+formula for the distortion correction, measuring the degree of stretch at
+the point $(\Delta\theta, \Delta\phi)$ on the map.
 
 .. note::
     Note that the form factors for oriented particles are performing
