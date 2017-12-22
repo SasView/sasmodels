@@ -809,8 +809,6 @@ def make_model_info(kernel_module):
     info.profile = getattr(kernel_module, 'profile', None) # type: ignore
     info.sesans = getattr(kernel_module, 'sesans', None) # type: ignore
     # Default single and opencl to True for C models.  Python models have callable Iq.
-    info.opencl = getattr(kernel_module, 'opencl', not callable(info.Iq))
-    info.single = getattr(kernel_module, 'single', not callable(info.Iq))
     info.random = getattr(kernel_module, 'random', None)
 
     # multiplicity info
@@ -826,6 +824,11 @@ def make_model_info(kernel_module):
             autoc.convert(info, kernel_module)
         except Exception as exc:
             logger.warn(str(exc) + " while converting %s from C to python"%name)
+
+    # Needs to come after autoc.convert since the Iq symbol may have been
+    # converted from python to C
+    info.opencl = getattr(kernel_module, 'opencl', not callable(info.Iq))
+    info.single = getattr(kernel_module, 'single', not callable(info.Iq))
 
     if callable(info.Iq) and parameters.has_2d:
         raise ValueError("oriented python models not supported")

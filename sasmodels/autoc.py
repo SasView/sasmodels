@@ -3,9 +3,7 @@ Automatically translate python models to C
 """
 from __future__ import print_function
 
-import ast
 import inspect
-from functools import reduce
 
 import numpy as np
 
@@ -95,13 +93,13 @@ def convert(info, module):
                 constants[name] = obj
                 # Claim all constants are declared on line 1
                 snippets.append('#line 1 "%s"'%escaped_filename)
-                snippets.append(define_constant(name, obj))
+                snippets.append(py2c.define_constant(name, obj))
             elif isinstance(obj, special.Gauss):
                 for var, value in zip(("N", "Z", "W"), (obj.n, obj.z, obj.w)):
                     var = "GAUSS_"+var
                     constants[var] = value
                     snippets.append('#line 1 "%s"'%escaped_filename)
-                    snippets.append(define_constant(var, value))
+                    snippets.append(py2c.define_constant(var, value))
                 #libs.append('lib/gauss%d.c'%obj.n)
                 source = (source.replace(name+'.n', 'GAUSS_N')
                           .replace(name+'.z', 'GAUSS_Z')
@@ -120,7 +118,7 @@ def convert(info, module):
             unique_libs.append(filename)
 
     # translate source
-    ordered_code = [code[name] for name in ordered_dag(depends) if name in code]
+    ordered_code = [code[name] for name in py2c.ordered_dag(depends) if name in code]
     functions = py2c.translate(ordered_code, constants)
     snippets.extend(functions)
 
@@ -128,45 +126,3 @@ def convert(info, module):
     info.source = unique_libs
     info.c_code = "\n".join(snippets)
     info.Iq = info.Iqac = info.Iqabc = info.Iqxy = info.form_volume = None
-
-def define_constant(name, value):
-    if isinstance(value, int):
-        parts = ["int ", name, " = ", "%d"%value, ";"]
-    elif isinstance(value, float):
-        parts = ["double ", name, " = ", "%.15g"%value, ";"]
-    else:
-        # extend constant arrays to a multiple of 4; not sure if this
-        # is necessary, but some OpenCL targets broke if the number
-        # of parameters in the parameter table was not a multiple of 4,
-        # so do it for all constant arrays to be safe.
-        if len(value)%4 != 0:
-            value = list(value) + [0.]*(4 - len(value)%4)
-        elements = ["%.15g"%v for v in value]
-        parts = ["double ", name, "[]", " = ",
-                 "{\n   ", ", ".join(elements), "\n};"]
-    return "".join(parts)
-
-
-# Modified from the following:
-#
-#    http://code.activestate.com/recipes/578272-topological-sort/
-#    Copyright (C) 2012 Sam Denton
-#    License: MIT
-def ordered_dag(dag):
-    # type: (Dict[T, Set[T]]) -> Iterator[T]
-    dag = dag.copy()
-
-    # make leaves depend on the empty set
-    leaves = reduce(set.union, dag.values()) - set(dag.keys())
-    dag.update({node: set() for node in leaves})
-    while True:
-        leaves = set(node for node, links in dag.items() if not links)
-        if not leaves:
-            break
-        for node in leaves:
-            yield node
-        dag = {node: (links-leaves)
-               for node, links in dag.items() if node not in leaves}
-    if dag:
-        raise ValueError("Cyclic dependes exists amongst these items:\n%s"
-                            % ", ".join(str(node) for node in dag.keys()))

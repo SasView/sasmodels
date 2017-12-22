@@ -139,6 +139,7 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
 
 py2c = True
 
+# TODO: "#define INVALID (expr)" is not supported
 def invalid(v):
     return v.radius < 0 or v.length < 0
 
@@ -205,7 +206,7 @@ demo = dict(scale=1, background=0,
             theta_pd=10, theta_pd_n=5,
             phi_pd=10, phi_pd_n=5)
 
-qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
+qx, qy = 0.2 * cos(2.5), 0.2 * sin(2.5)
 # After redefinition of angles, find new tests values.  Was 10 10 in old coords
 tests = [
     [{}, 0.2, 0.042761386790780453],
