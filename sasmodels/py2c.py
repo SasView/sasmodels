@@ -112,7 +112,7 @@ def to_source(tree, constants=None, fname=None, lineno=0):
     """
     generator = SourceGenerator(constants=constants, fname=fname, lineno=lineno)
     generator.visit(tree)
-    c_code = "\n".join(generator.c_proc)
+    c_code = "".join(generator.c_proc)
     return c_code
 
 def isevaluable(s):
@@ -198,7 +198,7 @@ class SourceGenerator(NodeVisitor):
     def newline(self, node=None, extra=0):
         self.new_lines = max(self.new_lines, 1 + extra)
         if node is not None and self.add_line_information:
-            self.write_c('# line: %s' % node.lineno)
+            self.write_c('// line: %s' % node.lineno)
             self.new_lines = 1
         if self.current_statement:
             self.statements.append(self.current_statement)
@@ -219,6 +219,8 @@ class SourceGenerator(NodeVisitor):
     def body_or_else(self, node):
         self.body(node.body)
         if node.orelse:
+            self.unsupported(node, "for...else/while...else not supported")
+
             self.newline()
             self.write_c('else:')
             self.body(node.orelse)
@@ -249,7 +251,7 @@ class SourceGenerator(NodeVisitor):
                 except AttributeError:
                     arg_name = arg.id
                 w_str = ("Default Parameters are unknown to C: '%s = %s"
-                         % arg_name, str(default.n))
+                         % (arg_name, str(default.n)))
                 self.warnings.append(w_str)
 
     def decorators(self, node):
@@ -434,7 +436,7 @@ class SourceGenerator(NodeVisitor):
         self.add_c_line("}\n")
         self.insert_signature()
         self.insert_c_vars(start_vars)
-        self.c_pointers = []
+        del self.c_pointers[:]
         self.current_function = ""
 
     def visit_ClassDef(self, node):
@@ -553,9 +555,11 @@ class SourceGenerator(NodeVisitor):
             self.visit(node.iter)
             self.write_c(':')
             # report the error
-            self.unsupported("unsupported " + self.current_statement)
+            self.unsupported(node, "unsupported " + self.current_statement)
 
     def visit_While(self, node):
+        self.unsupported(node)
+
         self.newline(node)
         self.write_c('while ')
         self.visit(node.test)
@@ -564,6 +568,7 @@ class SourceGenerator(NodeVisitor):
 
     def visit_With(self, node):
         self.unsupported(node)
+
         self.newline(node)
         self.write_python('with ')
         self.visit(node.context_expr)
@@ -580,6 +585,7 @@ class SourceGenerator(NodeVisitor):
     def visit_Print(self, node):
         # TODO: print support would be nice, though hard to do
         self.unsupported(node)
+
         # CRUFT: python 2.6 only
         self.newline(node)
         self.write_c('print ')
@@ -598,6 +604,7 @@ class SourceGenerator(NodeVisitor):
 
     def visit_Delete(self, node):
         self.unsupported(node)
+
         self.newline(node)
         self.write_python('del ')
         for idx, target in enumerate(node):
@@ -607,6 +614,7 @@ class SourceGenerator(NodeVisitor):
 
     def visit_TryExcept(self, node):
         self.unsupported(node)
+
         self.newline(node)
         self.write_python('try:')
         self.body(node.body)
@@ -615,6 +623,7 @@ class SourceGenerator(NodeVisitor):
 
     def visit_TryFinally(self, node):
         self.unsupported(node)
+
         self.newline(node)
         self.write_python('try:')
         self.body(node.body)
@@ -624,6 +633,7 @@ class SourceGenerator(NodeVisitor):
 
     def visit_Global(self, node):
         self.unsupported(node)
+
         self.newline(node)
         self.write_python('global ' + ', '.join(node.names))
 
@@ -653,6 +663,7 @@ class SourceGenerator(NodeVisitor):
 
     def visit_Raise(self, node):
         self.unsupported(node)
+
         # CRUFT: Python 2.6 / 3.0 compatibility
         self.newline(node)
         self.write_python('raise')
@@ -675,6 +686,7 @@ class SourceGenerator(NodeVisitor):
 
     def visit_Attribute(self, node):
         self.unsupported(node, "attribute reference a.b not supported")
+
         self.visit(node.value)
         self.write_python('.' + node.attr)
 
@@ -778,6 +790,7 @@ class SourceGenerator(NodeVisitor):
 
     def visit_Dict(self, node):
         self.unsupported(node)
+
         self.write_python('{')
         for idx, (key, value) in enumerate(zip(node.keys, node.values)):
             if idx:
@@ -907,11 +920,13 @@ class SourceGenerator(NodeVisitor):
 
     def visit_Yield(self, node):
         self.unsupported(node)
+
         self.write_python('yield ')
         self.visit(node.value)
 
     def visit_Lambda(self, node):
         self.unsupported(node)
+
         self.write_python('lambda ')
         self.visit(node.args)
         self.write_python(': ')
@@ -919,6 +934,7 @@ class SourceGenerator(NodeVisitor):
 
     def visit_Ellipsis(self, node):
         self.unsupported(node)
+
         self.write_python('Ellipsis')
 
     def generator_visit(left, right):
@@ -939,6 +955,7 @@ class SourceGenerator(NodeVisitor):
 
     def visit_DictComp(self, node):
         self.unsupported(node)
+
         self.write_python('{')
         self.visit(node.key)
         self.write_python(': ')
@@ -968,6 +985,7 @@ class SourceGenerator(NodeVisitor):
 
     def visit_alias(self, node):
         self.unsupported(node)
+
         self.write_python(node.name)
         if node.asname is not None:
             self.write_python(' as ' + node.asname)
@@ -1030,9 +1048,9 @@ def define_constant(name, value, block_size=1):
     """
     const = "constant "  # OpenCL needs globals to be constant
     if isinstance(value, int):
-        parts = [const + "int ", name, " = ", "%d"%value, ";"]
+        parts = [const + "int ", name, " = ", "%d"%value, ";\n"]
     elif isinstance(value, float):
-        parts = [const + "double ", name, " = ", "%.15g"%value, ";"]
+        parts = [const + "double ", name, " = ", "%.15g"%value, ";\n"]
     else:
         try:
             len(value)
@@ -1046,7 +1064,7 @@ def define_constant(name, value, block_size=1):
             value = list(value) + [0.]*(block_size - len(value)%block_size)
         elements = ["%.15g"%v for v in value]
         parts = [const + "double ", name, "[]", " = ",
-                 "{\n   ", ", ".join(elements), "\n};"]
+                 "{\n   ", ", ".join(elements), "\n};\n"]
 
     return "".join(parts)
 
@@ -1099,7 +1117,7 @@ def translate(functions, constants=None):
     #snippets.append("#include <math.h>")
     #snippets.append("")
     for source, fname, lineno in functions:
-        line_directive = '#line %d "%s"'%(lineno, fname.replace('\\', '\\\\'))
+        line_directive = '#line %d "%s"\n'%(lineno, fname.replace('\\', '\\\\'))
         snippets.append(line_directive)
         tree = ast.parse(source)
         c_code = to_source(tree, constants=constants, fname=fname, lineno=lineno)
@@ -1132,10 +1150,10 @@ if outfile is omitted, output file is '<infile>.c'
             .replace(name+'.z', 'GAUSS_Z')
             .replace(name+'.w', 'GAUSS_W'))
 
-    translation = translate([(code, fname_in, 1)])[0]
+    translation = translate([(code, fname_in, 1)])
 
     with open(fname_out, "w") as file_out:
-        file_out.write(translation)
+        file_out.write("".join(translation))
     print("...Done")
 
 if __name__ == "__main__":

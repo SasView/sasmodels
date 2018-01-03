@@ -92,13 +92,13 @@ def convert(info, module):
             elif isinstance(obj, (int, float, list, tuple, np.ndarray)):
                 constants[name] = obj
                 # Claim all constants are declared on line 1
-                snippets.append('#line 1 "%s"'%escaped_filename)
+                snippets.append('#line 1 "%s"\n'%escaped_filename)
                 snippets.append(py2c.define_constant(name, obj))
             elif isinstance(obj, special.Gauss):
                 for var, value in zip(("N", "Z", "W"), (obj.n, obj.z, obj.w)):
                     var = "GAUSS_"+var
                     constants[var] = value
-                    snippets.append('#line 1 "%s"'%escaped_filename)
+                    snippets.append('#line 1 "%s"\n'%escaped_filename)
                     snippets.append(py2c.define_constant(var, value))
                 #libs.append('lib/gauss%d.c'%obj.n)
                 source = (source.replace(name+'.n', 'GAUSS_N')
@@ -124,5 +124,5 @@ def convert(info, module):
 
     # update model info
     info.source = unique_libs
-    info.c_code = "\n".join(snippets)
+    info.c_code = "".join(snippets)
     info.Iq = info.Iqac = info.Iqabc = info.Iqxy = info.form_volume = None
