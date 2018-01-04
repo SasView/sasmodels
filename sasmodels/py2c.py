@@ -1280,7 +1280,7 @@ def translate(functions, constants=None):
 
 def main():
     import os
-    print("Parsing...using Python" + sys.version)
+    #print("Parsing...using Python" + sys.version)
     if len(sys.argv) == 1:
         print("""\
 Usage: python py2c.py <infile> [<outfile>]
@@ -1332,7 +1332,7 @@ double polyval(constant double *coef, double x, int N)
 
 """)
         file_out.write(c_code)
-    print("...Done")
+    #print("...Done")
 
 if __name__ == "__main__":
     main()
