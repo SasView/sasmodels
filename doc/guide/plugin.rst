@@ -537,18 +537,13 @@ Oriented Shapes
 
 If the scattering is dependent on the orientation of the shape, then you
 will need to include *orientation* parameters *theta*, *phi* and *psi*
-at the end of the parameter table.  Shape orientation uses *a*, *b* and *c*
-axes, corresponding to the *x*, *y* and *z* axes in the laboratory coordinate
-system, with *z* along the beam and *x*-*y* in the detector plane, with *x*
-horizontal and *y* vertical.  The *psi* parameter rotates the shape
-about its *c* axis, the *theta* parameter then rotates the *c* axis toward
-the *x* axis of the detector, then *phi* rotates the shape in the detector
-plane.  (Prior to these rotations, orientation dispersity will be applied
-as roll-pitch-yaw, rotating *c*, then *b* then *a* in the shape coordinate
-system.)  A particular *qx*, *qy* point on the detector, then corresponds
-to *qa*, *qb*, *qc* with respect to the shape.
+at the end of the parameter table.  As described in the section
+:ref:`orientation`, the individual $(q_x, q_y)$ points on the detector will
+be rotated into $(q_a, q_b, q_c)$ points relative to the sample in its
+canonical orientation with $a$-$b$-$c$ aligned with $x$-$y$-$z$ in the
+laboratory frame and beam travelling along $-z$.
 
-The oriented C model is called as *Iqabc(qa, qb, qc, par1, par2, ...)* where
+The oriented C model is called using *Iqabc(qa, qb, qc, par1, par2, ...)* where
 *par1*, etc. are the parameters to the model.  If the shape is rotationally
 symmetric about *c* then *psi* is not needed, and the model is called
 as *Iqac(qab, qc, par1, par2, ...)*.  In either case, the orientation
