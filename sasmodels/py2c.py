@@ -109,40 +109,41 @@ Based on a variant of codegen.py:
     :license: BSD.
 """
 
+# Update Notes
+# ============
+# 11/22/2017, O.E.   Each 'visit_*' method is to build a C statement string. It
+#                     shold insert 4 blanks per indentation level.
+#                     The 'body' method will combine all the strings, by adding
+#                     the 'current_statement' to the c_proc string list
+#    11/2017, OE: variables, argument definition implemented.
+#    Note: An argument is considered an array if it is the target of an
+#         assignment. In that case it is translated to <var>[0]
+# 11/27/2017, OE: 'pow' basicly working
+#   /12/2017, OE: Multiple assignment: a1,a2,...,an=b1,b2,...bn implemented
+#   /12/2017, OE: Power function, including special cases of
+#                 square(x)(pow(x,2)) and cube(x)(pow(x,3)), implemented in
+#                 translate_power, called from visit_BinOp
+# 12/07/2017, OE: Translation of integer division, '\\' in python, implemented
+#                 in translate_integer_divide, called from visit_BinOp
+# 12/07/2017, OE: C variable definition handled in 'define_c_vars'
+#               : Python integer division, '//', translated to C in
+#                 'translate_integer_divide'
+# 12/15/2017, OE: Precedence maintained by writing opening and closing
+#                 parenthesesm '(',')', in procedure 'visit_BinOp'.
+# 12/18/2017, OE: Added call to 'add_current_line()' at the beginning
+#                 of visit_Return
+# 2018-01-03, PK: Update interface for use in sasmodels
+# 2018-01-03, PK: support "expr if cond else expr" syntax
+# 2018-01-03, PK: x//y => (int)((x)/(y)) and x/y => ((double)(x)/(double)(y))
+# 2018-01-03, PK: True/False => true/false
+# 2018-01-03, PK: f(x) was introducing an extra semicolon
+# 2018-01-03, PK: simplistic print function, for debugging
+# 2018-01-03, PK: while expr: ... => while (expr) { ... }
 
-"""
-Update Notes
-============
-11/22/2017, O.E.   Each 'visit_*' method is to build a C statement string. It
-                    shold insert 4 blanks per indentation level.
-                    The 'body' method will combine all the strings, by adding
-                    the 'current_statement' to the c_proc string list
-   11/2017, OE: variables, argument definition implemented.
-   Note: An argument is considered an array if it is the target of an
-        assignment. In that case it is translated to <var>[0]
-11/27/2017, OE: 'pow' basicly working
-  /12/2017, OE: Multiple assignment: a1,a2,...,an=b1,b2,...bn implemented
-  /12/2017, OE: Power function, including special cases of
-                square(x)(pow(x,2)) and cube(x)(pow(x,3)), implemented in
-                translate_power, called from visit_BinOp
-12/07/2017, OE: Translation of integer division, '\\' in python, implemented
-                in translate_integer_divide, called from visit_BinOp
-12/07/2017, OE: C variable definition handled in 'define_c_vars'
-              : Python integer division, '//', translated to C in
-                'translate_integer_divide'
-12/15/2017, OE: Precedence maintained by writing opening and closing
-                parenthesesm '(',')', in procedure 'visit_BinOp'.
-12/18/2017, OE: Added call to 'add_current_line()' at the beginning
-                of visit_Return
-2018-01-03, PK: Update interface for use in sasmodels
-2018-01-03, PK: support "expr if cond else expr" syntax
-2018-01-03, PK: x//y => (int)((x)/(y)) and x/y => ((double)(x)/(double)(y))
-2018-01-03, PK: True/False => true/false
-2018-01-03, PK: f(x) was introducing an extra semicolon
-2018-01-03, PK: simplistic print function, for debugging
-"""
-import ast
+from __future__ import print_function
+
 import sys
+import ast
 from ast import NodeVisitor
 
 BINOP_SYMBOLS = {}
@@ -824,10 +825,16 @@ class SourceGenerator(NodeVisitor):
             self.add_semi_colon()
 
     TRANSLATE_CONSTANTS = {
+        # python 2 uses normal name references through vist_Name
         'True': 'true',
         'False': 'false',
         'None': 'NULL',  # "None" will probably fail for other reasons
+        # python 3 uses NameConstant
+        True: 'true',
+        False: 'false',
+        None: 'NULL',  # "None" will probably fail for other reasons
         }
+
     def visit_Name(self, node):
         translation = self.TRANSLATE_CONSTANTS.get(node.id, None)
         if translation:
@@ -850,6 +857,13 @@ class SourceGenerator(NodeVisitor):
                 self.c_int_vars.append(node.id)
             else:
                 self.c_vars.append(node.id)
+
+    def visit_NameConstant(self, node):
+        translation = self.TRANSLATE_CONSTANTS.get(node.value, None)
+        if translation is not None:
+            self.write_c(translation)
+        else:
+            self.unsupported(node, "don't know how to translate %r"%node.value)
 
     def visit_Str(self, node):
         s = node.s
