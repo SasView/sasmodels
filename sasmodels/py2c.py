@@ -1,44 +1,115 @@
-"""
-    py2c
-    ~~~~
+r"""
+py2c
+~~~~
 
-    Convert simple numeric python code into C code.
+Convert simple numeric python code into C code.
 
-    The translate() function works on
+This code is intended to translate direct algorithms for scientific code
+(mostly if statements and for loops operating on double precision values)
+into C code. Unlike projects like numba, cython, pypy and nuitka, the
+:func:`translate` function returns the corresponding C which can then be
+compiled with tinycc or sent to the GPU using CUDA or OpenCL.
 
-    Variables definition in C
-    -------------------------
-    Defining variables within the translate function is a bit of a guess work,
-    using following rules:
-    *   By default, a variable is a 'double'.
-    *   Variable in a for loop is an int.
-    *   Variable that is references with brackets is an array of doubles. The
-        variable within the brackets is integer. For example, in the
-        reference 'var1[var2]', var1 is a double array, and var2 is an integer.
-    *   Assignment to an argument makes that argument an array, and the index
-        in that assignment is 0.
-        For example, the following python code::
-            def func(arg1, arg2):
-                arg2 = 17.
-        is translated to the following C code::
-            double func(double arg1)
-            {
-                arg2[0] = 17.0;
-            }
-        For example, the following python code is translated to the
-        following C code::
+There is special handling certain constructs, such as *for i in range* and
+small integer powers.
 
-            def func(arg1, arg2):          double func(double arg1) {
-                arg2 = 17.                      arg2[0] = 17.0;
-                                            }
-    *   All functions are defined as double, even if there is no
-        return statement.
+**TODO: make a nice list of supported constructs***
 
-Based on codegen.py:
+Imports are not supported, but they are at least ignored so that properly
+constructed code can be run via python or translated to C without change.
 
+Most other python constructs are **not** supported:
+* classes
+* builtin types (dict, set, list)
+* exceptions
+* with context
+* del
+* yield
+* async
+* list slicing
+* multiple return values
+* "is/is not", "in/not in" conditionals
+
+There is limited support for list and list comprehensions, so long as they
+can be represented by a fixed array whose size is known at compile time, and
+they are small enough to be stored on the stack.
+
+Variables definition in C
+-------------------------
+Defining variables within the translate function is a bit of a guess work,
+using following rules:
+*   By default, a variable is a 'double'.
+*   Variable in a for loop is an int.
+*   Variable that is references with brackets is an array of doubles. The
+    variable within the brackets is integer. For example, in the
+    reference 'var1[var2]', var1 is a double array, and var2 is an integer.
+*   Assignment to an argument makes that argument an array, and the index
+    in that assignment is 0.
+    For example, the following python code::
+        def func(arg1, arg2):
+            arg2 = 17.
+    is translated to the following C code::
+        double func(double arg1)
+        {
+            arg2[0] = 17.0;
+        }
+    For example, the following python code is translated to the
+    following C code::
+
+        def func(arg1, arg2):          double func(double arg1) {
+            arg2 = 17.                      arg2[0] = 17.0;
+                                        }
+*   All functions are defined as double, even if there is no
+    return statement.
+
+Debugging
+---------
+
+*print* is partially supported using a simple regular expression. This
+requires a stylized form. Be sure to use print as a function instead of
+the print statement. If you are including substition variables, use the
+% string substitution style. Include parentheses around the substitution
+tuple, even if there is only one item; do not include the final comma even
+if it is a single item (yes, it won't be a tuple, but it makes the regexp
+much simpler). Keep the item on a single line. Here are three forms that work::
+
+    print("x") => printf("x\n");
+    print("x %g"%(a)) => printf("x %g\n", a);
+    print("x %g %g %g"%(a, b, c)) => printf("x %g %g %g\n", a, b, c);
+
+You can generate *main* using the *if __name__ == "__main__":* construct.
+This does a simple substitution with "def main():" before translation and
+a substitution with "int main(int argc, double *argv[])" after translation.
+The result is that the content of the *if* block becomes the content of *main*.
+Along with the print statement, you can run and test a translation standalone
+using::
+
+    python py2c.py source.py
+    cc source.c
+    ./a.out
+
+Known issues
+------------
+The following constructs may cause problems:
+
+* implicit arrays: possible namespace collision for variable "vec#"
+* swap fails: "x,y = y,x" will set x==y
+* top-level statements: code outside a function body causes errors
+* line number skew: each statement should be tagged with its own #line
+  to avoid skew as comments are skipped and loop bodies are wrapped with
+  braces, etc.
+
+References
+----------
+
+Based on a variant of codegen.py:
+
+    https://github.com/andreif/codegen
     :copyright: Copyright 2008 by Armin Ronacher.
     :license: BSD.
 """
+
+
 """
 Update Notes
 ============
@@ -63,7 +134,12 @@ Update Notes
                 parenthesesm '(',')', in procedure 'visit_BinOp'.
 12/18/2017, OE: Added call to 'add_current_line()' at the beginning
                 of visit_Return
-
+2018-01-03, PK: Update interface for use in sasmodels
+2018-01-03, PK: support "expr if cond else expr" syntax
+2018-01-03, PK: x//y => (int)((x)/(y)) and x/y => ((double)(x)/(double)(y))
+2018-01-03, PK: True/False => true/false
+2018-01-03, PK: f(x) was introducing an extra semicolon
+2018-01-03, PK: simplistic print function, for debugging
 """
 import ast
 import sys
@@ -154,6 +230,7 @@ class SourceGenerator(NodeVisitor):
         self.c_functions = []
         self.c_vectors = []
         self.c_constants = constants if constants is not None else {}
+        self.in_expr = False
         self.in_subref = False
         self.in_subscript = False
         self.tuples = []
@@ -290,13 +367,14 @@ class SourceGenerator(NodeVisitor):
                     self.c_vars.append(target.id)
 
     def add_semi_colon(self):
-        semi_pos = self.current_statement.find(';')
-        if semi_pos > 0.0:
-            self.current_statement = self.current_statement.replace(';', '')
+        #semi_pos = self.current_statement.find(';')
+        #if semi_pos >= 0:
+        #    self.current_statement = self.current_statement.replace(';', '')
         self.write_c(';')
 
     def visit_Assign(self, node):
         self.add_current_line()
+        self.in_expr = True
         for idx, target in enumerate(node.targets): # multi assign, as in 'a = b = c = 7'
             if idx:
                 self.write_c(' = ')
@@ -328,15 +406,18 @@ class SourceGenerator(NodeVisitor):
                             if target.id in self.c_vars:
                                 self.c_vars.remove(target.id)
         self.current_statement = ''
+        self.in_expr = False
 
     def visit_AugAssign(self, node):
         if node.target.id not in self.c_vars:
             if node.target.id not in self.arguments:
                 self.c_vars.append(node.target.id)
+        self.in_expr = True
         self.visit(node.target)
         self.write_c(' ' + BINOP_SYMBOLS[type(node.op)] + '= ')
         self.visit(node.value)
         self.add_semi_colon()
+        self.in_expr = False
         self.add_current_line()
 
     def visit_ImportFrom(self, node):
@@ -356,8 +437,10 @@ class SourceGenerator(NodeVisitor):
             self.visit(item)
 
     def visit_Expr(self, node):
+        #self.in_expr = True
         self.newline(node)
         self.generic_visit(node)
+        #self.in_expr = False
 
     def write_c_pointers(self, start_var):
         if self.c_dcl_pointers:
@@ -473,8 +556,11 @@ class SourceGenerator(NodeVisitor):
         self.body(node.body)
 
     def visit_If(self, node):
+
         self.write_c('if ')
+        self.in_expr = True
         self.visit(node.test)
+        self.in_expr = False
         self.write_c(' {')
         self.body(node.body)
         self.add_c_line('}')
@@ -487,7 +573,9 @@ class SourceGenerator(NodeVisitor):
                 node = else_[0]
                 #self.newline()
                 self.write_c('else if ')
+                self.in_expr = True
                 self.visit(node.test)
+                self.in_expr = False
                 self.write_c(' {')
                 self.body(node.body)
                 self.add_current_line()
@@ -540,7 +628,7 @@ class SourceGenerator(NodeVisitor):
                     if iterator not in self.c_int_vars:
                         self.c_int_vars.append(iterator)
                     start, stop, step = self.get_for_range(node)
-                    self.write_c("for(" + iterator + "=" + str(start) +
+                    self.write_c("for (" + iterator + "=" + str(start) +
                                  " ; " + iterator + " < " + str(stop) +
                                  " ; " + iterator + " += " + str(step) + ") {")
                     self.body_or_else(node)
@@ -558,13 +646,13 @@ class SourceGenerator(NodeVisitor):
             self.unsupported(node, "unsupported " + self.current_statement)
 
     def visit_While(self, node):
-        self.unsupported(node)
-
         self.newline(node)
         self.write_c('while ')
         self.visit(node.test)
-        self.write_c(':')
+        self.write_c(' {')
         self.body_or_else(node)
+        self.write_c('}')
+        self.add_current_line()
 
     def visit_With(self, node):
         self.unsupported(node)
@@ -583,7 +671,6 @@ class SourceGenerator(NodeVisitor):
         #self.write_python('pass')
 
     def visit_Print(self, node):
-        # TODO: print support would be nice, though hard to do
         self.unsupported(node)
 
         # CRUFT: python 2.6 only
@@ -643,6 +730,7 @@ class SourceGenerator(NodeVisitor):
 
     def visit_Return(self, node):
         self.add_current_line()
+        self.in_expr = True
         if node.value is None:
             self.write_c('return')
         else:
@@ -650,6 +738,7 @@ class SourceGenerator(NodeVisitor):
             self.visit(node.value)
         self.write_c(')')
         self.add_semi_colon()
+        self.in_expr = False
         self.add_c_line(self.current_statement)
         self.current_statement = ''
 
@@ -730,9 +819,20 @@ class SourceGenerator(NodeVisitor):
                 write_comma()
                 self.write_c('**')
                 self.visit(node.kwargs)
-        self.write_c(');')
+        self.write_c(')')
+        if not self.in_expr:
+            self.add_semi_colon()
 
+    TRANSLATE_CONSTANTS = {
+        'True': 'true',
+        'False': 'false',
+        'None': 'NULL',  # "None" will probably fail for other reasons
+        }
     def visit_Name(self, node):
+        translation = self.TRANSLATE_CONSTANTS.get(node.id, None)
+        if translation:
+            self.write_c(translation)
+            return
         self.write_c(node.id)
         if node.id in self.c_pointers and not self.in_subref:
             self.write_c("[0]")
@@ -752,10 +852,18 @@ class SourceGenerator(NodeVisitor):
                 self.c_vars.append(node.id)
 
     def visit_Str(self, node):
-        self.write_c(repr(node.s))
+        s = node.s
+        s = s.replace('\\','\\\\').replace('"','\\"').replace('\n','\\n')
+        self.write_c('"')
+        self.write_c(s)
+        self.write_c('"')
 
     def visit_Bytes(self, node):
-        self.write_c(repr(node.s))
+        s = node.s
+        s = s.replace('\\','\\\\').replace('"','\\"').replace('\n','\\n')
+        self.write_c('"')
+        self.write_c(s)
+        self.write_c('"')
 
     def visit_Num(self, node):
         self.write_c(repr(node.n))
@@ -841,14 +949,21 @@ class SourceGenerator(NodeVisitor):
         self.write_c(")")
         if is_negative_exp:
             self.write_c(")")
-        self.write_c(" ")
+        #self.write_c(" ")
 
     def translate_integer_divide(self, node):
-        self.write_c("(int)(")
+        self.write_c("(int)((")
         self.visit(node.left)
-        self.write_c(") /(int)(")
+        self.write_c(")/(")
         self.visit(node.right)
-        self.write_c(")")
+        self.write_c("))")
+
+    def translate_float_divide(self, node):
+        self.write_c("((double)(")
+        self.visit(node.left)
+        self.write_c(")/(double)(")
+        self.visit(node.right)
+        self.write_c("))")
 
     def visit_BinOp(self, node):
         self.write_c("(")
@@ -856,6 +971,8 @@ class SourceGenerator(NodeVisitor):
             self.translate_power(node)
         elif '%s' % BINOP_SYMBOLS[type(node.op)] == BINOP_SYMBOLS[ast.FloorDiv]:
             self.translate_integer_divide(node)
+        elif '%s' % BINOP_SYMBOLS[type(node.op)] == BINOP_SYMBOLS[ast.Div]:
+            self.translate_float_divide(node)
         else:
             self.visit(node.left)
             self.write_c(' %s ' % BINOP_SYMBOLS[type(node.op)])
@@ -965,11 +1082,13 @@ class SourceGenerator(NodeVisitor):
         self.write_python('}')
 
     def visit_IfExp(self, node):
-        self.visit(node.body)
-        self.write_c(' if ')
+        self.write_c('((')
         self.visit(node.test)
-        self.write_c(' else ')
+        self.write_c(')?(')
+        self.visit(node.body)
+        self.write_c('):(')
         self.visit(node.orelse)
+        self.write_c('))')
 
     def visit_Starred(self, node):
         self.write_c('*')
@@ -1108,10 +1227,28 @@ def ordered_dag(dag):
         raise ValueError("Cyclic dependes exists amongst these items:\n%s"
                          % ", ".join(str(node) for node in dag.keys()))
 
+import re
+PRINT_ARGS = re.compile(r'print[(]"(?P<template>[^"]*)" *% *[(](?P<args>[^\n]*)[)] *[)] *\n')
+SUBST_ARGS = r'printf("\g<template>\\n", \g<args>)\n'
+PRINT_STR = re.compile(r'print[(]"(?P<template>[^"]*)" *[)] *\n')
+SUBST_STR = r'printf("\g<template>\n")'
 def translate(functions, constants=None):
-    # type: (List[(str, str, int)], Dict[str, any]) -> List[str]
+    # type: (Sequence[(str, str, int)], Dict[str, any]) -> List[str]
     """
-    Convert a set of functions
+    Convert a list of functions to a list of C code strings.
+
+    A function is given by the tuple (source, filename, line number).
+
+    Global constants are given in a dictionary of {name: value}.  The
+    constants are used for name space resolution and type inferencing.
+    Constants are not translated by this code. Instead, call
+    :func:`define_constant` with name and value, and maybe block_size
+    if arrays need to be padded to the next block boundary.
+
+    Function prototypes are not generated. Use :func:`ordered_dag`
+    to list the functions in reverse order of dependency before calling
+    translate. [Maybe a future revision will return the function prototypes
+    so that a suitable "*.h" file can be generated.
     """
     snippets = []
     #snippets.append("#include <math.h>")
@@ -1119,6 +1256,9 @@ def translate(functions, constants=None):
     for source, fname, lineno in functions:
         line_directive = '#line %d "%s"\n'%(lineno, fname.replace('\\', '\\\\'))
         snippets.append(line_directive)
+        # Replace simple print function calls with printf statements
+        source = PRINT_ARGS.sub(SUBST_ARGS, source)
+        source = PRINT_STR.sub(SUBST_STR, source)
         tree = ast.parse(source)
         c_code = to_source(tree, constants=constants, fname=fname, lineno=lineno)
         snippets.append(c_code)
@@ -1148,12 +1288,36 @@ if outfile is omitted, output file is '<infile>.c'
     code = (code
             .replace(name+'.n', 'GAUSS_N')
             .replace(name+'.z', 'GAUSS_Z')
-            .replace(name+'.w', 'GAUSS_W'))
+            .replace(name+'.w', 'GAUSS_W')
+            .replace('if __name__ == "__main__"', "def main()")
+    )
 
-    translation = translate([(code, fname_in, 1)])
+
+    c_code = "".join(translate([(code, fname_in, 1)]))
+    c_code = c_code.replace("double main()", "int main(int argc, char *argv[])")
 
     with open(fname_out, "w") as file_out:
-        file_out.write("".join(translation))
+        file_out.write("""
+#include <stdio.h>
+#include <stdbool.h>
+#include <math.h>
+#define constant const
+double square(double x) { return x*x; }
+double cube(double x) { return x*x*x; }
+double polyval(constant double *coef, double x, int N)
+{
+    int i = 0;
+    double ans = coef[0];
+
+    while (i < N) {
+        ans = ans * x + coef[i++];
+    }
+
+    return ans;
+}
+
+""")
+        file_out.write(c_code)
     print("...Done")
 
 if __name__ == "__main__":
