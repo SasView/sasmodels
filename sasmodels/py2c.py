@@ -122,7 +122,7 @@ def to_source(tree, constants=None, fname=None, lineno=0):
     """
     generator = SourceGenerator(constants=constants, fname=fname, lineno=lineno)
     generator.visit(tree)
-    c_code = "\n".join(generator.c_proc)
+#    c_code = "\n".join(generator.c_proc)
     c_code = "".join(generator.c_proc)
     return (c_code, generator.warnings)
 
@@ -1279,6 +1279,25 @@ def get_files_names ():
             fname_out = sys.argv[2]
     return valid_params, fname_in,fname_out
 
+C_HEADER = """
+#include <stdio.h>
+#include <stdbool.h>
+#include <math.h>
+#define constant const
+double square(double x) { return x*x; }
+double cube(double x) { return x*x*x; }
+double polyval(constant double *coef, double x, int N)
+{
+    int i = 0;
+    double ans = coef[0];
+
+    while (i < N) {
+        ans = ans * x + coef[i++];
+    }
+
+    return ans;
+}
+"""
 def main():
     print("Parsing...using Python" + sys.version)
     valid_params, fname_in, fname_out = get_files_names ()
@@ -1292,11 +1311,14 @@ def main():
     code = (code
             .replace(name+'.n', 'GAUSS_N')
             .replace(name+'.z', 'GAUSS_Z')
-            .replace(name+'.w', 'GAUSS_W'))
-
+            .replace(name+'.w', 'GAUSS_W')
+            .replace('if __name__ == "__main__"', "def main()")
+           )
     translation,warnings = translate([(code, fname_in, 1)])
+    translation = translation.replace("double main()", "int main(int argc, char *argv[])")
 
     with open(fname_out, "w") as file_out:
+        file_out.write(C_HEADER)
         file_out.write(str(translation))
     if warnings:
         print("".join(str(warnings[0])))
