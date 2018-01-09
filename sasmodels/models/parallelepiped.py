@@ -166,8 +166,7 @@ R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
 Authorship and Verification
 ----------------------------
 
-* **Author:** This model is based on form factor calculations implemented
-  in a c-library provided by the NIST Center for Neutron Research (Kline, 2006).
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:**  Paul Kienzle **Date:** April 05, 2017
 * **Last Reviewed by:**  Richard Heenan **Date:** April 06, 2017
 """
