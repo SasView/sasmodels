@@ -44,6 +44,30 @@ def rotation(theta, phi, psi):
     """
     return Rx(phi)*Ry(theta)*Rz(psi)
 
+def apply_view(points, view):
+    """
+    Apply the view transform (theta, phi, psi) to a set of points.
+
+    Points are stored in a 3 x n numpy array.
+
+    View angles are in degrees.
+    """
+    theta, phi, psi = view
+    return np.asarray((Rz(phi)*Ry(theta)*Rz(psi))*np.matrix(points.T)).T
+
+
+def invert_view(qx, qy, view):
+    """
+    Return (qa, qb, qc) for the (theta, phi, psi) view angle at detector
+    pixel (qx, qy).
+
+    View angles are in degrees.
+    """
+    theta, phi, psi = view
+    q = np.vstack((qx.flatten(), qy.flatten(), 0*qx.flatten()))
+    return np.asarray((Rz(-psi)*Ry(-theta)*Rz(-phi))*np.matrix(q))
+
+
 class Shape:
     rotation = np.matrix([[1., 0, 0], [0, 1, 0], [0, 0, 1]])
     center = np.array([0., 0., 0.])[:, None]
@@ -219,6 +243,18 @@ class Helix(Shape):
         values = self.value.repeat(points.shape[0])
         return values, self._adjust(points)
 
+def calc_Iqxy(qx, qy, rho, points, volume=1, view=(0, 0, 0)):
+    x, y, z = points.T
+    qx, qy = np.broadcast_arrays(qx, qy)
+    qa, qb, qc = invert_view(qx, qy, view)
+    rho, volume = np.broadcast_arrays(rho, volume)
+    values = rho*volume
+
+    # I(q) = |sum V(r) rho(r) e^(1j q.r)|^2 / sum V(r)
+    Iq = [abs(np.sum(values*np.exp(1j*(qa_k*x + qb_k*y + qc_k*z))))**2
+            for qa_k, qb_k, qc_k in zip(qa.flat, qb.flat, qc.flat)]
+    return np.array(Iq).reshape(qx.shape) / np.sum(volume)
+
 def _calc_Pr_nonuniform(r, rho, points):
     # Make Pr a little be bigger than necessary so that only distances
     # min < d < max end up in Pr
@@ -332,6 +368,20 @@ def plot_calc(r, Pr, q, Iq, theory=None):
         plt.loglog(theory[0], theory[1], '-', label='analytic')
         plt.legend()
 
+def plot_calc_2d(qx, qy, Iqxy, theory=None):
+    import matplotlib.pyplot as plt
+    qx, qy = bin_edges(qx), bin_edges(qy)
+    #qx, qy = np.meshgrid(qx, qy)
+    if theory is not None:
+        plt.subplot(121)
+    plt.pcolormesh(qx, qy, np.log10(Iqxy))
+    plt.xlabel('qx (1/A)')
+    plt.ylabel('qy (1/A)')
+    if theory is not None:
+        plt.subplot(122)
+        plt.pcolormesh(qx, qy, np.log10(theory))
+        plt.xlabel('qx (1/A)')
+
 def plot_points(rho, points):
     import mpl_toolkits.mplot3d
     import matplotlib.pyplot as plt
@@ -372,6 +422,13 @@ def cylinder_Iq(q, radius, length):
         Iq[k] = np.sum(w*Fq**2)
     Iq = Iq/Iq[0]
     return Iq
+
+def cylinder_Iqxy(qx, qy, radius, length, view=(0, 0, 0)):
+    qa, qb, qc = invert_view(qx, qy, view)
+    qab = np.sqrt(qa**2 + qb**2)
+    Fq = sas_2J1x_x(qab*radius) * j0(qc*length/2)
+    Iq = Fq**2
+    return Iq.reshape(qx.shape)
 
 def sphere_Iq(q, radius):
     Iq = sas_3j1x_x(q*radius)**2
@@ -429,10 +486,29 @@ def check_shape(shape, fn=None):
     plot_calc(r, Pr, q, Iq, theory=theory)
     pylab.show()
 
+def check_shape_2d(shape, fn=None, view=(0, 0, 0)):
+    rho_solvent = 0
+    qx = qy = np.linspace(-1, 1, 100)
+    Qx, Qy = np.meshgrid(qx, qy)
+    sampling_density = 50000 / shape.volume()
+    rho, points = shape.sample(sampling_density)
+    Iqxy = calc_Iqxy(Qx, Qy, rho, points, view=view)
+    Iqxy += 0.001 * Iqxy.max()
+    theory = fn(Qx, Qy)+0.001 if fn is not None else None
+
+    import pylab
+    plot_calc_2d(qx, qy, Iqxy, theory=theory)
+    pylab.show()
+
 def check_cylinder(radius=25, length=125, rho=2.):
     shape = EllipticalCylinder(radius, radius, length, rho)
     fn = lambda q: cylinder_Iq(q, radius, length)
     check_shape(shape, fn)
+
+def check_cylinder_2d(radius=25, length=125, rho=2., view=(0, 0, 0)):
+    shape = EllipticalCylinder(radius, radius, length, rho)
+    fn = lambda qx, qy, view=view: cylinder_Iqxy(qx, qy, radius, length, view=view)
+    check_shape_2d(shape, fn, view=view)
 
 def check_sphere(radius=125, rho=2):
     shape = TriaxialEllipsoid(radius, radius, radius, rho)
@@ -453,6 +529,7 @@ def check_csbox(a=10, b=20, c=30, da=1, db=2, dc=3, slda=1, sldb=2, sldc=3, sld_
 
 if __name__ == "__main__":
     check_cylinder(radius=10, length=40)
+    #check_cylinder_2d(radius=10, length=40, view=(90,30,0))
     #check_sphere()
     #check_csbox()
     #check_csbox(da=100, db=200, dc=300)
