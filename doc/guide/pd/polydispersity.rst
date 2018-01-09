@@ -41,7 +41,7 @@ polydispersion to multiple parameters at the same time or increasing the
 number of points in the distribution will require patience! However, the
 calculations are generally more robust with more data points or more angles.
 
-The following six distribution functions are provided:
+The following distribution functions are provided:
 
 *  *Rectangular Distribution*
 *  *Uniform Distribution*
