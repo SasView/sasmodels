@@ -478,13 +478,13 @@ After expansion, the loop struction will look like the following:
   #define CALL_KERNEL() CALL_IQ_XY(qx, qy, local_values.table)
 #endif
 
-// Doing jitter projection code outside the previous if block so that we don't
-// need to repeat the identical logic in the IQ_AC and IQ_ABC branches.  This
-// will become more important if we implement more projections, or more
-// complicated projections.
-#if defined(CALL_IQ) || defined(CALL_IQ_A)
+// Define APPLY_PROJECTION depending on model symmetries. We do this outside
+// the previous if block so that we don't need to repeat the identical
+// logic in the IQ_AC and IQ_ABC branches.  This will become more important
+// if we implement more projections, or more complicated projections.
+#if defined(CALL_IQ) || defined(CALL_IQ_A)  // no orientation
   #define APPLY_PROJECTION() const double weight=weight0
-#elif defined(CALL_IQ_XY)
+#elif defined(CALL_IQ_XY) // pass orientation to the model
   // CRUFT: support oriented model which define Iqxy rather than Iqac or Iqabc
   // Need to plug the values for the orientation angles back into parameter
   // table in case they were overridden by the orientation offset.  This
@@ -514,7 +514,7 @@ After expansion, the loop struction will look like the following:
   #else
     #define APPLY_PROJECTION() const double weight=weight0
   #endif
-#else // !spherosymmetric projection
+#else // apply jitter and view before calling the model
   // Grab the "view" angles (theta, phi, psi) from the initial parameter table.
   const double theta = values[details->theta_par+2];
   const double phi = values[details->theta_par+3];
@@ -525,13 +525,13 @@ After expansion, the loop struction will look like the following:
   // dispersity values and copied to the local parameter table as
   // we go through the mesh.
   double dtheta, dphi, weight;
-  #if PROJECTION == 1
+  #if PROJECTION == 1 // equirectangular
     #define APPLY_PROJECTION() do { \
       dtheta = local_values.table.theta; \
       dphi = local_values.table.phi; \
       weight = fabs(cos(dtheta*M_PI_180)) * weight0; \
     } while (0)
-  #elif PROJECTION == 2
+  #elif PROJECTION == 2 // sinusoidal
     #define APPLY_PROJECTION() do { \
       dtheta = local_values.table.theta; \
       dphi = local_values.table.phi; \
@@ -541,7 +541,7 @@ After expansion, the loop struction will look like the following:
       if (fabs(dphi) >= 180.) weight = 0.; \
     } while (0)
   #endif
-#endif // !spherosymmetric projection
+#endif // done defining APPLY_PROJECTION
 
 // ** define looping macros **
 

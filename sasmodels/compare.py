@@ -91,6 +91,7 @@ Options (* for default):
     -magnetic/-nonmagnetic* suppress magnetism
     -accuracy=Low accuracy of the resolution calculation Low, Mid, High, Xhigh
     -neval=1 sets the number of evals for more accurate timing
+    -ngauss=0 overrides the number of points in the 1-D gaussian quadrature
 
     === precision options ===
     -engine=default uses the default calcution precision
