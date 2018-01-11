@@ -42,8 +42,8 @@ Iq(double q,
 {
     // Code converted from functions CSPPKernel and CSParallelepiped in libCylinder.c
     // Did not understand the code completely, it should be rechecked (Miguel Gonzalez)
-    // Code is rewritten,the code is compliant with Diva Singhs thesis now (Dirk Honecker)
-    // Code rewritten (PAK)
+    // Code is rewritten, the code is compliant with Diva Singh's thesis now (Dirk Honecker)
+    // Code rewritten; cross checked against hollow rectangular prism and realspace (PAK)
 
     const double half_q = 0.5*q;
 
@@ -120,8 +120,6 @@ Iqabc(double qa, double qb, double qc,
     const double drB = brim_sld-solvent_sld;
     const double drC = crim_sld-solvent_sld;
 
-    // The definitions of ta, tb, tc are not the same as in the 1D case because there is no
-    // the scaling by B.
     const double tA = length_a + 2.0*thick_rim_a;
     const double tB = length_b + 2.0*thick_rim_b;
     const double tC = length_c + 2.0*thick_rim_c;
