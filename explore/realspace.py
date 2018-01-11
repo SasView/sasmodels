@@ -243,17 +243,33 @@ class Helix(Shape):
         values = self.value.repeat(points.shape[0])
         return values, self._adjust(points)
 
-def calc_Iqxy(qx, qy, rho, points, volume=1, view=(0, 0, 0)):
-    x, y, z = points.T
+NUMBA = False
+if NUMBA:
+    from numba import njit
+    @njit("f8[:](f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:])")
+    def _Iqxy(values, x, y, z, qa, qb, qc):
+        Iq = np.zeros_like(qa)
+        for j in range(len(Iq)):
+            total = 0. + 0j
+            for k in range(len(Iq)):
+                total += values[k]*np.exp(1j*(qa[j]*x[k] + qb[j]*y[k] + qc[j]*z[k]))
+            Iq[j] = abs(total)**2
+        return Iq
+
+def calc_Iqxy(qx, qy, rho, points, volume=1.0, view=(0, 0, 0)):
     qx, qy = np.broadcast_arrays(qx, qy)
     qa, qb, qc = invert_view(qx, qy, view)
     rho, volume = np.broadcast_arrays(rho, volume)
     values = rho*volume
+    x, y, z = points.T
 
     # I(q) = |sum V(r) rho(r) e^(1j q.r)|^2 / sum V(r)
-    Iq = [abs(np.sum(values*np.exp(1j*(qa_k*x + qb_k*y + qc_k*z))))**2
-            for qa_k, qb_k, qc_k in zip(qa.flat, qb.flat, qc.flat)]
-    return np.array(Iq).reshape(qx.shape) / np.sum(volume)
+    if NUMBA:
+        Iq = _Iqxy(values, x, y, z, qa.flatten(), qb.flatten(), qc.flatten())
+    else:
+        Iq = [abs(np.sum(values*np.exp(1j*(qa_k*x + qb_k*y + qc_k*z))))**2
+              for qa_k, qb_k, qc_k in zip(qa.flat, qb.flat, qc.flat)]
+    return np.asarray(Iq).reshape(qx.shape) / np.sum(volume)
 
 def _calc_Pr_nonuniform(r, rho, points):
     # Make Pr a little be bigger than necessary so that only distances
@@ -274,25 +290,19 @@ def _calc_Pr_nonuniform(r, rho, points):
             t_next = t + 3
             print("processing %d of %d"%(k, len(rho)-1))
     Pr = extended_Pr[1:-1]
-    return Pr / Pr.max()
+    return Pr
 
-def calc_Pr(r, rho, points):
-    # P(r) with uniform steps in r is 3x faster; check if we are uniform
-    # before continuing
-    if np.max(np.abs(np.diff(r) - r[0])) > r[0]*0.01:
-        return _calc_Pr_nonuniform(r, rho, points)
-
+def _calc_Pr_uniform(r, rho, points):
     # Make Pr a little be bigger than necessary so that only distances
     # min < d < max end up in Pr
-    n_max = len(r)
+    dr, n_max = r[0], len(r)
     extended_Pr = np.zeros(n_max+1, 'd')
     t0 = time.clock()
     t_next = t0 + 3
-    row_zero = np.zeros(len(rho), 'i')
     for k, rho_k in enumerate(rho[:-1]):
         distances = sqrt(np.sum((points[k] - points[k+1:])**2, axis=1))
         weights = rho_k * rho[k+1:]
-        index = np.minimum(np.asarray(distances/r[0], 'i'), n_max)
+        index = np.minimum(np.asarray(distances/dr, 'i'), n_max)
         # Note: indices may be duplicated, so "Pr[index] += w" will not work!!
         extended_Pr += np.bincount(index, weights, n_max+1)
         t = time.clock()
@@ -304,7 +314,7 @@ def calc_Pr(r, rho, points):
     # Make Pr independent of sampling density.  The factor of 2 comes because
     # we are only accumulating the upper triangular distances.
     #Pr = Pr * 2 / len(rho)**2
-    return Pr / Pr.max()
+    return Pr
 
     # Can get an additional 2x by going to C.  Cuda/OpenCL will allow even
     # more speedup, though still bounded by the n^2 cose.
@@ -326,6 +336,40 @@ void pdfcalc(int n, const double *pts, const double *rho,
   }
 }
 """
+
+if NUMBA:
+    @njit("f8[:](f8[:], f8[:], f8[:,:])")
+    def _calc_Pr_uniform_jit(r, rho, points):
+        dr = r[0]
+        n_max = len(r)
+        Pr = np.zeros_like(r)
+        for j in range(len(rho) - 1):
+            x, y, z = points[j, 0], points[j, 1], points[j, 2]
+            for k in range(j+1, len(rho)):
+                distance = sqrt((x - points[k, 0])**2
+                                + (y - points[k, 1])**2
+                                + (z - points[k, 2])**2)
+                index = int(distance/dr)
+                if index < n_max:
+                    Pr[index] += rho[j] * rho[k]
+        # Make Pr independent of sampling density.  The factor of 2 comes because
+        # we are only accumulating the upper triangular distances.
+        #Pr = Pr * 2 / len(rho)**2
+        return Pr
+
+
+def calc_Pr(r, rho, points):
+    # P(r) with uniform steps in r is 3x faster; check if we are uniform
+    # before continuing
+    if np.max(np.abs(np.diff(r) - r[0])) > r[0]*0.01:
+        Pr = _calc_Pr_nonuniform(r, rho, points)
+    else:
+        if NUMBA:
+            Pr = _calc_Pr_uniform_jit(r, rho, points)
+        else:
+            Pr = _calc_Pr_uniform(r, rho, points)
+    return Pr / Pr.max()
+
 
 def j0(x):
     return np.sinc(x/np.pi)
@@ -403,9 +447,11 @@ def check_shape(shape, fn=None):
     rho_solvent = 0
     q = np.logspace(-3, 0, 200)
     r = shape.r_bins(q, r_step=0.01)
-    sampling_density = 50000 / shape.volume()
+    sampling_density = 6*5000 / shape.volume()
     rho, points = shape.sample(sampling_density)
+    t0 = time.time()
     Pr = calc_Pr(r, rho-rho_solvent, points)
+    print("calc Pr time", time.time() - t0)
     Iq = calc_Iq(q, r, Pr)
     theory = (q, fn(q)) if fn is not None else None
 
@@ -585,13 +631,13 @@ def check_csbox(a=10, b=20, c=30, da=1, db=2, dc=3, slda=1, sldb=2, sldc=3, sld_
     shape = Composite((core, side_a, side_b, side_c, side_a2, side_b2, side_c2))
     def fn(q):
         return csbox_Iq(q, a, b, c, da, db, dc, slda, sldb, sldc, sld_core)
-    check_shape(shape, fn)
+    #check_shape(shape, fn)
 
     view = (20, 30, 40)
     def fn_xy(qx, qy):
         return csbox_Iqxy(qx, qy, a, b, c, da, db, dc,
                           slda, sldb, sldc, sld_core, view=view)
-    #check_shape_2d(shape, fn_xy, view=view)
+    check_shape_2d(shape, fn_xy, view=view)
 
 if __name__ == "__main__":
     check_cylinder(radius=10, length=40)
