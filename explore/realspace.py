@@ -392,7 +392,8 @@ def plot_points(rho, points):
     except Exception:
         pass
     n = len(points)
-    index = np.random.choice(n, size=1000) if n > 1000 else slice(None, None)
+    #print("len points", n)
+    index = np.random.choice(n, size=500) if n > 500 else slice(None, None)
     ax.scatter(points[index, 0], points[index, 1], points[index, 2], c=rho[index])
     #low, high = points.min(axis=0), points.max(axis=0)
     #ax.axis([low[0], high[0], low[1], high[1], low[2], high[2]])
@@ -475,7 +476,7 @@ def check_shape(shape, fn=None):
     rho_solvent = 0
     q = np.logspace(-3, 0, 200)
     r = shape.r_bins(q, r_step=0.01)
-    sampling_density = 15000 / shape.volume()
+    sampling_density = 50000 / shape.volume()
     rho, points = shape.sample(sampling_density)
     Pr = calc_Pr(r, rho-rho_solvent, points)
     Iq = calc_Iq(q, r, Pr)
@@ -488,15 +489,25 @@ def check_shape(shape, fn=None):
 
 def check_shape_2d(shape, fn=None, view=(0, 0, 0)):
     rho_solvent = 0
-    qx = qy = np.linspace(-1, 1, 100)
+    nq, qmax = 100, 0.1
+    nq, qmax = 100, 0.03
+    qx = np.linspace(0.0, qmax, nq)
+    qy = np.linspace(0.0, qmax, nq)
     Qx, Qy = np.meshgrid(qx, qy)
-    sampling_density = 50000 / shape.volume()
+    sampling_density = 15000 / shape.volume()
+    #t0 = time.time()
     rho, points = shape.sample(sampling_density)
+    #print("sample time", time.time() - t0)
+    t0 = time.time()
     Iqxy = calc_Iqxy(Qx, Qy, rho, points, view=view)
+    print("calc time", time.time() - t0)
+    theory = fn(Qx, Qy) if fn is not None else None
     Iqxy += 0.001 * Iqxy.max()
-    theory = fn(Qx, Qy)+0.001 if fn is not None else None
+    if theory is not None:
+        theory += 0.001 * theory.max()
 
     import pylab
+    #plot_points(rho, points); pylab.figure()
     plot_calc_2d(qx, qy, Iqxy, theory=theory)
     pylab.show()
 
@@ -507,6 +518,28 @@ def check_cylinder(radius=25, length=125, rho=2.):
 
 def check_cylinder_2d(radius=25, length=125, rho=2., view=(0, 0, 0)):
     shape = EllipticalCylinder(radius, radius, length, rho)
+    fn = lambda qx, qy, view=view: cylinder_Iqxy(qx, qy, radius, length, view=view)
+    check_shape_2d(shape, fn, view=view)
+
+def check_cylinder_2d_lattice(radius=25, length=125, rho=2.,
+                              view=(0, 0, 0)):
+    nx, dx = 1, 2*radius
+    ny, dy = 30, 2*radius
+    nz, dz = 30, length
+    dx, dy, dz = 2*dx, 2*dy, 2*dz
+    def center(*args):
+        sigma = 0.333
+        space = 2
+        return [(space*n+np.random.randn()*sigma)*x for n, x in args]
+    shapes = [EllipticalCylinder(radius, radius, length, rho,
+                                 #center=(ix*dx, iy*dy, iz*dz)
+                                 orientation=np.random.randn(3)*0,
+                                 center=center((ix, dx), (iy, dy), (iz, dz))
+                                )
+              for ix in range(nx)
+              for iy in range(ny)
+              for iz in range(nz)]
+    shape = Composite(shapes)
     fn = lambda qx, qy, view=view: cylinder_Iqxy(qx, qy, radius, length, view=view)
     check_shape_2d(shape, fn, view=view)
 
@@ -530,6 +563,7 @@ def check_csbox(a=10, b=20, c=30, da=1, db=2, dc=3, slda=1, sldb=2, sldc=3, sld_
 if __name__ == "__main__":
     check_cylinder(radius=10, length=40)
     #check_cylinder_2d(radius=10, length=40, view=(90,30,0))
+    #check_cylinder_2d_lattice(radius=10, length=50, view=(90,30,0))
     #check_sphere()
     #check_csbox()
     #check_csbox(da=100, db=200, dc=300)
