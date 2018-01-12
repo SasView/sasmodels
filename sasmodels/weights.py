@@ -105,10 +105,10 @@ class UniformDispersion(Dispersion):
         w = 1
     """
     type = "uniform"
-    default = dict(npts=35, width=0, nsigmas=1)
+    default = dict(npts=35, width=0, nsigmas=None)
     def _weights(self, center, sigma, lb, ub):
-        x = self._linspace(center, sigma, lb, ub)
-        x = x[np.fabs(x-center) <= np.fabs(sigma)]
+        x = np.linspace(center-sigma, center+sigma, self.npts)
+        x = x[(x >= lb) & (x <= ub)]
         return x, np.ones_like(x)
 
 class RectangleDispersion(Dispersion):
@@ -122,10 +122,9 @@ class RectangleDispersion(Dispersion):
     type = "rectangle"
     default = dict(npts=35, width=0, nsigmas=1.73205)
     def _weights(self, center, sigma, lb, ub):
-        x = self._linspace(center, sigma, lb, ub)
-        x = x[np.fabs(x-center) <= np.fabs(sigma)*sqrt(3.0)]
-        return x, np.ones_like(x)
-
+         x = self._linspace(center, sigma, lb, ub)
+         x = x[np.fabs(x-center) <= np.fabs(sigma)*sqrt(3.0)]
+         return x, np.ones_like(x)
 
 class LogNormalDispersion(Dispersion):
     r"""

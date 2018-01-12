@@ -70,7 +70,7 @@ The Rectangular Distribution is defined as
 
 where $\bar x$ is the mean of the distribution, $w$ is the half-width, and
 *Norm* is a normalization factor which is determined during the numerical
-calculation.
+calculation. 
 
 Note that the standard deviation and the half width $w$ are different!
 
@@ -85,6 +85,8 @@ whilst the polydispersity is
 .. figure:: pd_rectangular.jpg
 
     Rectangular distribution.
+    
+
 
 Uniform Distribution
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -101,7 +103,7 @@ The Uniform Distribution is defined as
 
     where $\bar x$ is the mean of the distribution, $\sigma$ is the half-width, and
     *Norm* is a normalization factor which is determined during the numerical
-    calculation.
+    calculation. 
 
     Note that the polydispersity is given by
 
@@ -110,6 +112,8 @@ The Uniform Distribution is defined as
     .. figure:: pd_uniform.jpg
 
         Uniform distribution.
+        
+The value $N_\sigma$ is ignored for this distribution.        
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
@@ -195,7 +199,7 @@ The polydispersity is
 .. math:: p = \sigma / \bar x
 
 Note that larger values of PD might need larger number of points and $N_\sigma$.
-For example, at PD=0.7 and radius=60 |Ang|, Npts>=160 and Nsigmas>=15 at least.
+For example, at PD=0.7 and radius=60 |Ang|, Npts>=160 and $N_\sigma$>=15 at least.
 
 .. figure:: pd_schulz.jpg
 
