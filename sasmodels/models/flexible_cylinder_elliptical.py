@@ -82,6 +82,8 @@ W R Chen, P D Butler and L J Magid, *Incorporating Intermicellar Interactions in
 the Fitting of SANS Data from Cationic Wormlike Micelles.* Langmuir,
 22(15) 2006 6539-6548
 """
+
+import numpy as np
 from numpy import inf
 
 name = "flexible_cylinder_elliptical"
@@ -112,7 +114,6 @@ source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "lib/wrc_cyl.c",
           "flexible_cylinder_elliptical.c"]
 
 def random():
-    import numpy as np
     length = 10**np.random.uniform(2, 6)
     radius = 10**np.random.uniform(1, 3)
     axis_ratio = 10**np.random.uniform(-1, 1)
@@ -163,4 +164,3 @@ tests = [
       'background':    0.0,
      }, 1.0, 0.0016338264790]
     ]
-

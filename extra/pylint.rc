@@ -20,7 +20,7 @@ persistent=yes
 
 # List of plugins (as comma separated values of python modules names) to load,
 # usually to register additional checkers.
-load-plugins=pylint_numpy,pylint_pyopencl
+#load-plugins=pylint_numpy,pylint_scipy,pylint_pyopencl,pylint_sas
 
 # Use multiple processes to speed up Pylint.
 #jobs=4
@@ -279,8 +279,7 @@ ignore-mixin-members=yes
 # List of module names for which member attributes should not be checked
 # (useful for modules/projects where namespaces are manipulated during runtime
 # and thus existing member attributes cannot be deduced by static analysis
-ignored-modules=numpy,np,numpy.random,
-    bumps,sas,
+ignored-modules=bumps,sas,numpy,numpy.random,scipy,scipy.special
 
 # List of classes names for which member attributes should not be checked
 # (useful for classes with attributes dynamically set).

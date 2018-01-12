@@ -25,9 +25,9 @@ References
 ----------
 
 None.
-
 """
 
+import numpy as np
 from numpy import inf
 
 name = "peak_lorentz"
@@ -59,7 +59,6 @@ def Iq(q, peak_pos, peak_hwhm):
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
-    import numpy as np
     peak_pos = 10**np.random.uniform(-3, -1)
     peak_hwhm = peak_pos * 10**np.random.uniform(-3, 0)
     pars = dict(

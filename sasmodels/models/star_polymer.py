@@ -57,6 +57,7 @@ Authorship and Verification
 * **Last Reviewed by:** Ziang Li and Richard Heenan **Date:** May 17, 2017
 """
 
+import numpy as np
 from numpy import inf
 
 name = "star_polymer"
@@ -85,7 +86,6 @@ parameters = [["rg_squared", "Ang^2", 100.0, [0.0, inf], "", "Ensemble radius of
 source = ["star_polymer.c"]
 
 def random():
-    import numpy as np
     pars = dict(
         #background=0,
         scale=10**np.random.uniform(1, 4),

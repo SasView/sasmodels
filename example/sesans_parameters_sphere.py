@@ -45,4 +45,3 @@ model.scale = phi*(1-phi)
 # Send to the fitting engine
 # DO NOT MODIFY THIS LINE
 problem = sesansfit.sesans_fit(sesans_file, model, initial_vals, custom_params, param_range)
-

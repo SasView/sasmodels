@@ -52,13 +52,13 @@ with
 
     r = R_e \left[ 1 + u^2\left(R_p^2/R_e^2 - 1\right)\right]^{1/2}
 
-To provide easy access to the orientation of the ellipsoid, we define
-the rotation axis of the ellipsoid using two angles $\theta$ and $\phi$.
-These angles are defined in the
+For 2d data from oriented ellipsoids the direction of the rotation axis of
+the ellipsoid is defined using two angles $\theta$ and $\phi$ as for the
 :ref:`cylinder orientation figure <cylinder-angle-definition>`.
 For the ellipsoid, $\theta$ is the angle between the rotational axis
 and the $z$ -axis in the $xz$ plane followed by a rotation by $\phi$
-in the $xy$ plane.
+in the $xy$ plane, for further details of the calculation and angular
+dispersions see :ref:`orientation` .
 
 NB: The 2nd virial coefficient of the solid ellipsoid is calculated based
 on the $R_p$ and $R_e$ values, and used as the effective radius for
@@ -122,6 +122,7 @@ Authorship and Verification
 """
 from __future__ import division
 
+import numpy as np
 from numpy import inf, sin, cos, pi
 
 name = "ellipsoid"
@@ -162,7 +163,6 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "ellipsoid.c"]
 
 def ER(radius_polar, radius_equatorial):
-    import numpy as np
     # see equation (26) in A.Isihara, J.Chem.Phys. 18(1950)1446-1449
     ee = np.empty_like(radius_polar)
     idx = radius_polar > radius_equatorial
@@ -184,10 +184,9 @@ def ER(radius_polar, radius_equatorial):
     return 0.5 * ddd ** (1.0 / 3.0)
 
 def random():
-    import numpy as np
-    V = 10**np.random.uniform(5, 12)
+    volume = 10**np.random.uniform(5, 12)
     radius_polar = 10**np.random.uniform(1.3, 4)
-    radius_equatorial = np.sqrt(V/radius_polar) # ignore 4/3 pi
+    radius_equatorial = np.sqrt(volume/radius_polar) # ignore 4/3 pi
     pars = dict(
         #background=0, sld=0, sld_solvent=1,
         radius_polar=radius_polar,
@@ -207,7 +206,8 @@ q = 0.1
 # april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
 qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
-tests = [[{}, 0.05, 54.8525847025],
-        [{'theta':80., 'phi':10.}, (qx, qy), 1.74134670026 ],
-        ]
+tests = [
+    [{}, 0.05, 54.8525847025],
+    [{'theta':80., 'phi':10.}, (qx, qy), 1.74134670026],
+]
 del qx, qy  # not necessary to delete, but cleaner

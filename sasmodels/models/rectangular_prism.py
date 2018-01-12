@@ -80,9 +80,9 @@ References
 P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
 
 R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
-
 """
 
+import numpy as np
 from numpy import pi, inf, sqrt
 
 name = "rectangular_prism"
@@ -125,7 +125,6 @@ def ER(length_a, b2a_ratio, c2a_ratio):
     return 0.5 * (ddd) ** (1. / 3.)
 
 def random():
-    import numpy as np
     a, b, c = 10**np.random.uniform(1, 4.7, size=3)
     pars = dict(
         length_a=a,

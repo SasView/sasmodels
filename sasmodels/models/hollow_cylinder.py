@@ -37,7 +37,8 @@ Bessel function.
 based on the outer radius and full length, which give an the effective radius
 for structure factor $S(q)$ when $P(q) \cdot S(q)$ is applied.
 
-In the parameters,the *radius* is $R_\text{core}$ while *thickness* is $R_\text{outer} - R_\text{core}$.
+In the parameters,the *radius* is $R_\text{core}$ while *thickness*
+is $R_\text{outer} - R_\text{core}$.
 
 To provide easy access to the orientation of the core-shell cylinder, we define
 the axis of the cylinder using two angles $\theta$ and $\phi$
@@ -56,9 +57,9 @@ Authorship and Verification
 * **Last Modified by:** Richard Heenan **Date:** October 06, 2016
    (reparametrised to use thickness, not outer radius)
 * **Last Reviewed by:** Richard Heenan **Date:** October 06, 2016
-
 """
 
+import numpy as np
 from numpy import pi, inf, sin, cos
 
 name = "hollow_cylinder"
@@ -121,7 +122,6 @@ def VR(radius, thickness, length):
     return vol_shell, vol_total
 
 def random():
-    import numpy as np
     length = 10**np.random.uniform(1, 4.7)
     outer_radius = 10**np.random.uniform(1, 4.7)
     # Use a distribution with a preference for thin shell or thin core
@@ -152,6 +152,6 @@ tests = [
     [{}, 0.00005, 1764.926],
     [{}, 'VR', 1.8],
     [{}, 0.001, 1756.76],
-    [{}, (qx, qy), 2.36885476192  ],
-        ]
+    [{}, (qx, qy), 2.36885476192],
+]
 del qx, qy  # not necessary to delete, but cleaner

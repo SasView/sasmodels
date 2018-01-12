@@ -66,10 +66,10 @@ Authorship and Verification
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Kienzle **Date:** July 24, 2016
-* **Last Reviewed by:** Paul Butler and Richard Heenan **Date:**
-  October 07, 2016
+* **Last Reviewed by:** Paul Butler and Richard Heenan **Date:** October 07, 2016
 """
 
+import numpy as np
 from numpy import inf, pi, sqrt
 
 name = "be_polyelectrolyte"
@@ -139,7 +139,6 @@ def Iq(q,
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
-    import numpy as np
     # TODO: review random be_polyelectrolyte model generation
     pars = dict(
         scale=10000, #background=0,

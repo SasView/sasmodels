@@ -42,10 +42,9 @@ References
 F Nallet, R Laversanne, and D Roux, J. Phys. II France, 3, (1993) 487-502
 
 also in J. Phys. Chem. B, 105, (2001) 11081-11088
-
-
 """
 
+import numpy as np
 from numpy import inf
 
 name = "lamellar"
@@ -89,7 +88,6 @@ Iq = """
     """
 
 def random():
-    import numpy as np
     thickness = 10**np.random.uniform(1, 4)
     pars = dict(
         thickness=thickness,
@@ -103,10 +101,11 @@ demo = dict(scale=1, background=0,
             sld=6, sld_solvent=1,
             thickness=40,
             thickness_pd=0.2, thickness_pd_n=40)
-tests = [
-        [ {'scale': 1.0, 'background': 0.0, 'thickness': 50.0,
-           'sld': 1.0, 'sld_solvent': 6.3, 'thickness_pd': 0.0},
-          [0.001], [882289.54309]]
-        ]
-# ADDED by: converted by PAK? (or RKH?)     ON: 16Mar2016 - RKH adding unit tests from sasview to early 2015 conversion
 #  [(qx1, qy1), (qx2, qy2), ...], [I(qx1,qy1), I(qx2,qy2), ...]],
+tests = [
+    [{'scale': 1.0, 'background': 0.0, 'thickness': 50.0,
+      'sld': 1.0, 'sld_solvent': 6.3, 'thickness_pd': 0.0},
+     [0.001], [882289.54309]]
+]
+# ADDED by: converted by PAK? (or RKH?)
+# ON: 16Mar2016 - RKH adding unit tests from sasview to early 2015 conversion

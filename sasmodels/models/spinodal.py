@@ -2,32 +2,32 @@ r"""
 Definition
 ----------
 
-This model calculates the SAS signal of a phase separating solution under spinodal decomposition.
-The scattering intensity $I(q)$ is calculated as
+This model calculates the SAS signal of a phase separating solution
+under spinodal decomposition. The scattering intensity $I(q)$ is calculated as
 
 .. math::
     I(q) = I_{max}\frac{(1+\gamma/2)x^2}{\gamma/2+x^{2+\gamma}}+B
 
-where $x=q/q_0$ and $B$ is a flat background. The characteristic structure length
-scales with the correlation peak at $q_0$. The exponent $\gamma$ is equal to
-$d+1$ with d the dimensionality of the off-critical concentration mixtures.
-A transition to $\gamma=2d$ is seen near the percolation threshold into the
-critical concentration regime.
+where $x=q/q_0$ and $B$ is a flat background. The characteristic structure
+length scales with the correlation peak at $q_0$. The exponent $\gamma$ is
+equal to $d+1$ with d the dimensionality of the off-critical concentration
+mixtures. A transition to $\gamma=2d$ is seen near the percolation threshold
+into the critical concentration regime.
 
 References
 ----------
 
 H. Furukawa. Dynamics-scaling theory for phase-separating unmixing mixtures:
-Growth rates of droplets and scaling properties of autocorrelation functions. Physica A 123,497 (1984).
+Growth rates of droplets and scaling properties of autocorrelation functions.
+Physica A 123,497 (1984).
 
 Authorship and Verification
 ----------------------------
 
 * **Author:** Dirk Honecker **Date:** Oct 7, 2016
-* **Last Modified by:**
-* **Last Reviewed by:**
 """
 
+import numpy as np
 from numpy import inf, errstate
 
 name = "spinodal"
@@ -67,7 +67,6 @@ def Iq(q,
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
-    import numpy as np
     pars = dict(
         scale=10**np.random.uniform(1, 3),
         gamma=np.random.uniform(0, 6),

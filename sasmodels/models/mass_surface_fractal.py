@@ -48,9 +48,9 @@ P Schmidt, *J Appl. Cryst.*, 24 (1991) 414-435 Equation(19)
 
 A J Hurd, D W Schaefer, J E Martin, *Phys. Rev. A*,
 35 (1987) 2361-2364 Equation(2)
-
 """
 
+import numpy as np
 from numpy import inf
 
 name = "mass_surface_fractal"
@@ -85,7 +85,6 @@ parameters = [
 source = ["mass_surface_fractal.c"]
 
 def random():
-    import numpy as np
     fractal_dim = np.random.uniform(0, 6)
     surface_portion = np.random.uniform(0, 1)
     fractal_dim_surf = fractal_dim*surface_portion

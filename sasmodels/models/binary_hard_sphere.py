@@ -72,6 +72,7 @@ Authorship and Verification
 * **Last Reviewed by:** Paul Butler **Date:** March 20, 2016
 """
 
+import numpy as np
 from numpy import inf
 
 category = "shape:sphere"
@@ -110,7 +111,6 @@ parameters = [["radius_lg", "Ang", 100, [0, inf], "",
 source = ["lib/sas_3j1x_x.c", "binary_hard_sphere.c"]
 
 def random():
-    import numpy as np
     # TODO: binary_hard_sphere fails at low qr
     radius_lg = 10**np.random.uniform(2, 4.7)
     radius_sm = 10**np.random.uniform(2, 4.7)
@@ -136,4 +136,3 @@ demo = dict(sld_lg=3.5, sld_sm=0.5, sld_solvent=6.36,
 
 # NOTE: test results taken from values returned by SasView 3.1.2
 tests = [[{}, 0.001, 25.8927262013]]
-

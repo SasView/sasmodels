@@ -1,24 +1,19 @@
-double form_volume(double radius, double thickness, double length);
-double Iq(double q, double core_sld, double shell_sld, double solvent_sld,
-    double radius, double thickness, double length);
-double Iqxy(double qx, double qy, double core_sld, double shell_sld, double solvent_sld,
-    double radius, double thickness, double length, double theta, double phi);
-
 // vd = volume * delta_rho
-// besarg = q * R * sin(alpha)
-// siarg = q * L/2 * cos(alpha)
-double _cyl(double vd, double besarg, double siarg);
-double _cyl(double vd, double besarg, double siarg)
+// besarg = q * R * sin(theta)
+// siarg = q * L/2 * cos(theta)
+static double _cyl(double vd, double besarg, double siarg)
 {
     return vd * sas_sinx_x(siarg) * sas_2J1x_x(besarg);
 }
 
-double form_volume(double radius, double thickness, double length)
+static double
+form_volume(double radius, double thickness, double length)
 {
-    return M_PI*(radius+thickness)*(radius+thickness)*(length+2.0*thickness);
+    return M_PI*square(radius+thickness)*(length+2.0*thickness);
 }
 
-double Iq(double q,
+static double
+Iq(double q,
     double core_sld,
     double shell_sld,
     double solvent_sld,
@@ -27,23 +22,24 @@ double Iq(double q,
     double length)
 {
     // precalculate constants
-    const double core_qr = q*radius;
-    const double core_qh = q*0.5*length;
+    const double core_r = radius;
+    const double core_h = 0.5*length;
     const double core_vd = form_volume(radius,0,length) * (core_sld-shell_sld);
-    const double shell_qr = q*(radius + thickness);
-    const double shell_qh = q*(0.5*length + thickness);
+    const double shell_r = (radius + thickness);
+    const double shell_h = (0.5*length + thickness);
     const double shell_vd = form_volume(radius,thickness,length) * (shell_sld-solvent_sld);
     double total = 0.0;
-    // double lower=0, upper=M_PI_2;
     for (int i=0; i<76 ;i++) {
-        // translate a point in [-1,1] to a point in [lower,upper]
-        //const double alpha = ( Gauss76Z[i]*(upper-lower) + upper + lower )/2.0;
-        double sn, cn;
-        const double alpha = 0.5*(Gauss76Z[i]*M_PI_2 + M_PI_2);
-        SINCOS(alpha, sn, cn);
-        const double fq = _cyl(core_vd, core_qr*sn, core_qh*cn)
-            + _cyl(shell_vd, shell_qr*sn, shell_qh*cn);
-        total += Gauss76Wt[i] * fq * fq * sn;
+        // translate a point in [-1,1] to a point in [0, pi/2]
+        //const double theta = ( Gauss76Z[i]*(upper-lower) + upper + lower )/2.0;
+        double sin_theta, cos_theta;
+        const double theta = Gauss76Z[i]*M_PI_4 + M_PI_4;
+        SINCOS(theta, sin_theta,  cos_theta);
+        const double qab = q*sin_theta;
+        const double qc = q*cos_theta;
+        const double fq = _cyl(core_vd, core_r*qab, core_h*qc)
+            + _cyl(shell_vd, shell_r*qab, shell_h*qc);
+        total += Gauss76Wt[i] * fq * fq * sin_theta;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     //const double form = (upper-lower)/2.0*total;
@@ -51,27 +47,22 @@ double Iq(double q,
 }
 
 
-double Iqxy(double qx, double qy,
+double Iqxy(double qab, double qc,
     double core_sld,
     double shell_sld,
     double solvent_sld,
     double radius,
     double thickness,
-    double length,
-    double theta,
-    double phi)
+    double length)
 {
-    double q, sin_alpha, cos_alpha;
-    ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sin_alpha, cos_alpha);
-
-    const double core_qr = q*radius;
-    const double core_qh = q*0.5*length;
+    const double core_r = radius;
+    const double core_h = 0.5*length;
     const double core_vd = form_volume(radius,0,length) * (core_sld-shell_sld);
-    const double shell_qr = q*(radius + thickness);
-    const double shell_qh = q*(0.5*length + thickness);
+    const double shell_r = (radius + thickness);
+    const double shell_h = (0.5*length + thickness);
     const double shell_vd = form_volume(radius,thickness,length) * (shell_sld-solvent_sld);
 
-    const double fq = _cyl(core_vd, core_qr*sin_alpha, core_qh*cos_alpha)
-        + _cyl(shell_vd, shell_qr*sin_alpha, shell_qh*cos_alpha);
+    const double fq = _cyl(core_vd, core_r*qab, core_h*qc)
+        + _cyl(shell_vd, shell_r*qab, shell_h*qc);
     return 1.0e-4 * fq * fq;
 }

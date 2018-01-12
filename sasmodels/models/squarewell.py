@@ -44,8 +44,9 @@ References
 ----------
 
 R V Sharma, K C Sharma, *Physica*, 89A (1977) 213.
-
 """
+
+import numpy as np
 from numpy import inf
 
 name = "squarewell"
@@ -132,7 +133,6 @@ Iq = """
 # VR defaults to 1.0
 
 def random():
-    import numpy as np
     pars = dict(
         scale=1, background=0,
         radius_effective=10**np.random.uniform(1, 4.7),
@@ -147,8 +147,7 @@ demo = dict(radius_effective=50, volfraction=0.04, welldepth=1.5,
 #
 tests = [
     [{'scale': 1.0, 'background': 0.0, 'radius_effective': 50.0,
-      'volfraction': 0.04,'welldepth': 1.5, 'wellwidth': 1.2,
+      'volfraction': 0.04, 'welldepth': 1.5, 'wellwidth': 1.2,
       'radius_effective_pd': 0}, [0.001], [0.97665742]],
     ]
 # ADDED by: converting from sasview RKH  ON: 16Mar2016
-

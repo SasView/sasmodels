@@ -5,12 +5,14 @@
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
+.. _polydispersityhelp:
+
 Polydispersity Distributions
 ----------------------------
 
-With some models in sasmodels we can calculate the average form factor for a
+With some models in sasmodels we can calculate the average intensity for a
 population of particles that exhibit size and/or orientational
-polydispersity. The resultant form factor is normalized by the average
+polydispersity. The resultant intensity is normalized by the average
 particle volume such that
 
 .. math::
@@ -39,7 +41,7 @@ polydispersion to multiple parameters at the same time or increasing the
 number of points in the distribution will require patience! However, the
 calculations are generally more robust with more data points or more angles.
 
-The following six distribution functions are provided:
+The following distribution functions are provided:
 
 *  *Rectangular Distribution*
 *  *Uniform Distribution*

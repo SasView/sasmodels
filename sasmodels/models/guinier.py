@@ -26,6 +26,7 @@ A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*,
 John Wiley & Sons, New York (1955)
 """
 
+import numpy as np
 from numpy import inf
 
 name = "guinier"
@@ -49,7 +50,6 @@ Iq = """
 """
 
 def random():
-    import numpy as np
     scale = 10**np.random.uniform(1, 4)
     # Note: compare.py has Rg cutoff of 1e-30 at q=1 for guinier, so use that
     # log_10 Ae^(-(q Rg)^2/3) = log_10(A) - (q Rg)^2/ (3 ln 10) > -30

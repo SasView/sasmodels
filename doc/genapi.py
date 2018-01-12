@@ -58,8 +58,9 @@ modules = [
     ('__init__', 'Sasmodels package'),
     #('alignment', 'GPU data alignment [unused]'),
     ('bumps_model', 'Bumps interface'),
-    ('compare_many', 'Batch compare models on different compute engines'),
     ('compare', 'Compare models on different compute engines'),
+    ('compare_many', 'Batch compare models on different compute engines'),
+    ('conversion_table', 'Model conversion table'),
     ('convert', 'Sasview to sasmodel converter'),
     ('core', 'Model access'),
     ('data', 'Data layout and plotting routines'),
@@ -81,6 +82,7 @@ modules = [
     ('rst2html', 'Convert doc strings the web pages'),
     ('sasview_model', 'Sasview interface'),
     ('sesans', 'SESANS calculation routines'),
+    ('special', 'Special functions library'),
     ('weights', 'Distribution functions'),
 ]
 package = 'sasmodels'

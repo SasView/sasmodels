@@ -41,9 +41,9 @@ Mitsuhiro Shibayama, Toyoichi Tanaka, Charles C Han,
 
 Simon Mallam, Ferenc Horkay, Anne-Marie Hecht, Adrian R Rennie, Erik Geissler,
 *Macromolecules* 1991, 24, 543-548
-
 """
 
+import numpy as np
 from numpy import inf
 
 name = "gel_fit"
@@ -71,7 +71,6 @@ parameters = [["guinier_scale",    "cm^-1",   1.7, [-inf, inf], "", "Guinier len
 source = ["gel_fit.c"]
 
 def random():
-    import numpy as np
     guinier_scale = 10**np.random.uniform(1, 3)
     lorentz_scale = 10**np.random.uniform(1, 3)
     rg = 10**np.random.uniform(1, 5)

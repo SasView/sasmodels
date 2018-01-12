@@ -15,14 +15,18 @@ from __future__ import print_function, division
 from copy import copy
 import numpy as np  # type: ignore
 
-from .modelinfo import Parameter, ParameterTable, ModelInfo
+from .modelinfo import ParameterTable, ModelInfo
 from .kernel import KernelModel, Kernel
 from .details import make_details, dispersion_mesh
 
+# pylint: disable=unused-import
 try:
     from typing import Tuple
 except ImportError:
     pass
+else:
+    from .modelinfo import ParameterSet
+# pylint: enable=unused-import
 
 # TODO: make estimates available to constraints
 #ESTIMATED_PARAMETERS = [
@@ -75,10 +79,9 @@ def make_product_info(p_info, s_info):
     def random():
         combined_pars = p_info.random()
         s_names = set(par.id for par in s_pars.kernel_parameters[1:])
-        s = s_info.random()
         combined_pars.update((translate_name[k], v)
-                    for k, v in s_info.random().items()
-                    if k in s_names)
+                             for k, v in s_info.random().items()
+                             if k in s_names)
         return combined_pars
 
     model_info = ModelInfo()
@@ -99,6 +102,19 @@ def make_product_info(p_info, s_info):
     # Iq, Iqxy, form_volume, ER, VR and sesans
     # Remember the component info blocks so we can build the model
     model_info.composition = ('product', [p_info, s_info])
+    model_info.control = p_info.control
+    model_info.hidden = p_info.hidden
+    if getattr(p_info, 'profile', None) is not None:
+        profile_pars = set(p.id for p in p_info.parameters.kernel_parameters)
+        def profile(**kwargs):
+            # extract the profile args
+            kwargs = dict((k, v) for k, v in kwargs.items() if k in profile_pars)
+            return p_info.profile(**kwargs)
+    else:
+        profile = None
+    model_info.profile = profile
+    model_info.profile_axes = p_info.profile_axes
+
     # TODO: delegate random to p_info, s_info
     #model_info.random = lambda: {}
 
@@ -128,10 +144,20 @@ def _tag_parameter(par):
 class ProductModel(KernelModel):
     def __init__(self, model_info, P, S):
         # type: (ModelInfo, KernelModel, KernelModel) -> None
+        #: Combined info plock for the product model
         self.info = model_info
+        #: Form factor modelling individual particles.
         self.P = P
+        #: Structure factor modelling interaction between particles.
         self.S = S
-        self.dtype = P.dtype
+        #: Model precision. This is not really relevant, since it is the
+        #: individual P and S models that control the effective dtype,
+        #: converting the q-vectors to the correct type when the kernels
+        #: for each are created. Ideally this should be set to the more
+        #: precise type to avoid loss of precision, but precision in q is
+        #: not critical (single is good enough for our purposes), so it just
+        #: uses the precision of the form factor.
+        self.dtype = P.dtype  # type: np.dtype
 
     def make_kernel(self, q_vectors):
         # type: (List[np.ndarray]) -> Kernel
@@ -265,7 +291,10 @@ def calc_er_vr(model_info, call_details, values):
     value = values[nvalues:nvalues + call_details.num_weights]
     weight = values[nvalues + call_details.num_weights: nvalues + 2*call_details.num_weights]
     npars = model_info.parameters.npars
-    pairs = [(value[offset:offset+length], weight[offset:offset+length])
+    # Note: changed from pairs ([v], [w]) to triples (p, [v], [w]), but the
+    # dispersion mesh code doesn't actually care about the nominal parameter
+    # value, p, so set it to None.
+    pairs = [(None, value[offset:offset+length], weight[offset:offset+length])
              for p, offset, length
              in zip(model_info.parameters.call_parameters[2:2+npars],
                     call_details.offset,

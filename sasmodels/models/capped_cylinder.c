@@ -1,9 +1,3 @@
-double form_volume(double radius, double radius_cap, double length);
-double Iq(double q, double sld, double solvent_sld,
-    double radius, double radius_cap, double length);
-double Iqxy(double qx, double qy, double sld, double solvent_sld,
-    double radius, double radius_cap, double length, double theta, double phi);
-
 #define INVALID(v) (v.radius_cap < v.radius)
 
 // Integral over a convex lens kernel for t in [h/R,1].  See the docs for
@@ -13,10 +7,10 @@ double Iqxy(double qx, double qy, double sld, double solvent_sld,
 //       definition of h in the docs.
 //   radius_cap is the radius of the lens
 //   length is the cylinder length, or the separation between the lens halves
-//   alpha is the angle of the cylinder wrt q.
+//   theta is the angle of the cylinder wrt q.
 static double
-_cap_kernel(double q, double h, double radius_cap,
-                      double half_length, double sin_alpha, double cos_alpha)
+_cap_kernel(double qab, double qc, double h, double radius_cap,
+    double half_length)
 {
     // translate a point in [-1,1] to a point in [lower,upper]
     const double upper = 1.0;
@@ -25,20 +19,20 @@ _cap_kernel(double q, double h, double radius_cap,
     const double zb = 0.5*(upper+lower);
 
     // cos term in integral is:
-    //    cos (q (R t - h + L/2) cos(alpha))
+    //    cos (q (R t - h + L/2) cos(theta))
     // so turn it into:
     //    cos (m t + b)
     // where:
-    //    m = q R cos(alpha)
-    //    b = q(L/2-h) cos(alpha)
-    const double m = q*radius_cap*cos_alpha; // cos argument slope
-    const double b = q*(half_length-h)*cos_alpha; // cos argument intercept
-    const double qrst = q*radius_cap*sin_alpha; // Q*R*sin(theta)
+    //    m = q R cos(theta)
+    //    b = q(L/2-h) cos(theta)
+    const double m = radius_cap*qc; // cos argument slope
+    const double b = (half_length-h)*qc; // cos argument intercept
+    const double qab_r = radius_cap*qab; // Q*R*sin(theta)
     double total = 0.0;
     for (int i=0; i<76 ;i++) {
         const double t = Gauss76Z[i]*zm + zb;
         const double radical = 1.0 - t*t;
-        const double bj = sas_2J1x_x(qrst*sqrt(radical));
+        const double bj = sas_2J1x_x(qab_r*sqrt(radical));
         const double Fq = cos(m*t + b) * radical * bj;
         total += Gauss76Wt[i] * Fq;
     }
@@ -49,18 +43,18 @@ _cap_kernel(double q, double h, double radius_cap,
 }
 
 static double
-_fq(double q, double h, double radius_cap, double radius, double half_length,
-    double sin_alpha, double cos_alpha)
+_fq(double qab, double qc, double h, double radius_cap, double radius, double half_length)
 {
-    const double cap_Fq = _cap_kernel(q, h, radius_cap, half_length, sin_alpha, cos_alpha);
-    const double bj = sas_2J1x_x(q*radius*sin_alpha);
-    const double si = sas_sinx_x(q*half_length*cos_alpha);
+    const double cap_Fq = _cap_kernel(qab, qc, h, radius_cap, half_length);
+    const double bj = sas_2J1x_x(radius*qab);
+    const double si = sas_sinx_x(half_length*qc);
     const double cyl_Fq = 2.0*M_PI*radius*radius*half_length*bj*si;
     const double Aq = cap_Fq + cyl_Fq;
     return Aq;
 }
 
-double form_volume(double radius, double radius_cap, double length)
+static double
+form_volume(double radius, double radius_cap, double length)
 {
     // cap radius should never be less than radius when this is called
 
@@ -89,8 +83,9 @@ double form_volume(double radius, double radius_cap, double length)
     return M_PI*(radius*radius*(length+hc) + hc*hc*hc/3.0);
 }
 
-double Iq(double q, double sld, double solvent_sld,
-          double radius, double radius_cap, double length)
+static double
+Iq(double q, double sld, double solvent_sld,
+    double radius, double radius_cap, double length)
 {
     const double h = sqrt(radius_cap*radius_cap - radius*radius);
     const double half_length = 0.5*length;
@@ -100,13 +95,14 @@ double Iq(double q, double sld, double solvent_sld,
     const double zb = M_PI_4;
     double total = 0.0;
     for (int i=0; i<76 ;i++) {
-        const double alpha= Gauss76Z[i]*zm + zb;
-        double sin_alpha, cos_alpha; // slots to hold sincos function output
-        SINCOS(alpha, sin_alpha, cos_alpha);
-
-        const double Aq = _fq(q, h, radius_cap, radius, half_length, sin_alpha, cos_alpha);
-        // sin_alpha for spherical coord integration
-        total += Gauss76Wt[i] * Aq * Aq * sin_alpha;
+        const double theta = Gauss76Z[i]*zm + zb;
+        double sin_theta, cos_theta; // slots to hold sincos function output
+        SINCOS(theta, sin_theta, cos_theta);
+        const double qab = q*sin_theta;
+        const double qc = q*cos_theta;
+        const double Aq = _fq(qab, qc, h, radius_cap, radius, half_length);
+        // scale by sin_theta for spherical coord integration
+        total += Gauss76Wt[i] * Aq * Aq * sin_theta;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     const double form = total * zm;
@@ -117,16 +113,13 @@ double Iq(double q, double sld, double solvent_sld,
 }
 
 
-double Iqxy(double qx, double qy,
+static double
+Iqxy(double qab, double qc,
     double sld, double solvent_sld, double radius,
-    double radius_cap, double length,
-    double theta, double phi)
+    double radius_cap, double length)
 {
-    double q, sin_alpha, cos_alpha;
-    ORIENT_SYMMETRIC(qx, qy, theta, phi, q, sin_alpha, cos_alpha);
-
     const double h = sqrt(radius_cap*radius_cap - radius*radius);
-    const double Aq = _fq(q, h, radius_cap, radius, 0.5*length, sin_alpha, cos_alpha);
+    const double Aq = _fq(qab, qc, h, radius_cap, radius, 0.5*length);
 
     // Multiply by contrast^2 and convert to cm-1
     const double s = (sld - solvent_sld);

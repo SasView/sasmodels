@@ -55,13 +55,12 @@ References
 A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*, John Wiley and
 Sons, New York, (1955)
 
-**Author:** NIST IGOR/DANSE **on:** pre 2010
-
-**Last Modified by:** Paul Butler **on:** March 20, 2016
-
-**Last Reviewed by:** Paul Butler **on:** March 20, 2016
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Paul Butler **Date:** March 20, 2016
+* **Last Reviewed by:** Paul Butler **Date:** March 20, 2016
 """
 
+import numpy as np
 from numpy import pi, inf
 
 name = "vesicle"
@@ -120,7 +119,6 @@ def VR(radius, thickness):
     return whole, whole - core
 
 def random():
-    import numpy as np
     total_radius = 10**np.random.uniform(1.3, 5)
     radius = total_radius * np.random.uniform(0, 1)
     thickness = total_radius - radius

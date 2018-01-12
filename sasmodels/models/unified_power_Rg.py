@@ -67,14 +67,13 @@ G Beaucage, *J. Appl. Cryst.*, 28 (1995) 717-728
 G Beaucage, *J. Appl. Cryst.*, 29 (1996) 134-146
 
 B Hammouda, *Analysis of the Beaucage model, J. Appl. Cryst.*, (2010), 43, 1474-1478
-
 """
 
 from __future__ import division
 
 import numpy as np
 from numpy import inf, exp, sqrt, errstate
-from scipy.special import erf
+from scipy.special import erf, gamma
 
 category = "shape-independent"
 name = "unified_power_Rg"
@@ -118,8 +117,6 @@ def Iq(q, level, rg, power, B, G):
 Iq.vectorized = True
 
 def random():
-    import numpy as np
-    from scipy.special import gamma
     level = np.minimum(np.random.poisson(0.5) + 1, 6)
     n = level
     power = np.random.uniform(1.6, 3, n)

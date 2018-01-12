@@ -1,17 +1,12 @@
-double form_volume(double length_a, double length_b, double length_c);
-double Iq(double q, double sld, double solvent_sld,
-    double length_a, double length_b, double length_c);
-double Iqxy(double qx, double qy, double sld, double solvent_sld,
-    double length_a, double length_b, double length_c,
-    double theta, double phi, double psi);
-
-double form_volume(double length_a, double length_b, double length_c)
+static double
+form_volume(double length_a, double length_b, double length_c)
 {
     return length_a * length_b * length_c;
 }
 
 
-double Iq(double q,
+static double
+Iq(double q,
     double sld,
     double solvent_sld,
     double length_a,
@@ -19,11 +14,11 @@ double Iq(double q,
     double length_c)
 {
     const double mu = 0.5 * q * length_b;
-    
+
     // Scale sides by B
     const double a_scaled = length_a / length_b;
     const double c_scaled = length_c / length_b;
-        
+
     // outer integral (with gauss points), integration limits = 0, 1
     double outer_total = 0; //initialize integral
 
@@ -56,22 +51,17 @@ double Iq(double q,
 }
 
 
-double Iqxy(double qx, double qy,
+static double
+Iqxy(double qa, double qb, double qc,
     double sld,
     double solvent_sld,
     double length_a,
     double length_b,
-    double length_c,
-    double theta,
-    double phi,
-    double psi)
+    double length_c)
 {
-    double q, xhat, yhat, zhat;
-    ORIENT_ASYMMETRIC(qx, qy, theta, phi, psi, q, xhat, yhat, zhat);
-
-    const double siA = sas_sinx_x(0.5*length_a*q*xhat);
-    const double siB = sas_sinx_x(0.5*length_b*q*yhat);
-    const double siC = sas_sinx_x(0.5*length_c*q*zhat);
+    const double siA = sas_sinx_x(0.5*length_a*qa);
+    const double siB = sas_sinx_x(0.5*length_b*qb);
+    const double siC = sas_sinx_x(0.5*length_c*qc);
     const double V = form_volume(length_a, length_b, length_c);
     const double drho = (sld - solvent_sld);
     const double form = V * drho * siA * siB * siC;

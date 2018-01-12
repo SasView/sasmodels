@@ -106,9 +106,9 @@ Authorship and Verification
 * **Converted to sasmodels by:** Piotr Rozyczko **Date:** Feb 24, 2016
 * **Last Modified by:** Paul Kienzle **Date:** Feb 7, 2017
 * **Last Reviewed by:** Paul Butler **Date:** March 12, 2017
-
 """
 
+import numpy as np
 from numpy import inf
 
 name = "multilayer_vesicle"
@@ -150,7 +150,6 @@ def ER(radius, thick_shell, thick_solvent, n_shells):
     return radius + n_shells * (thick_shell + thick_solvent) - thick_solvent
 
 def random():
-    import numpy as np
     volfraction = 10**np.random.uniform(-3, -0.5)  # scale from 0.1% to 30%
     radius = 10**np.random.uniform(0, 2.5) # core less than 300 A
     total_thick = 10**np.random.uniform(2, 4) # up to 10000 A of shells

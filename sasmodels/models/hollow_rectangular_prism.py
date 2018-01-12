@@ -79,9 +79,9 @@ References
 ----------
 
 R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
-
 """
 
+import numpy as np
 from numpy import pi, inf, sqrt
 
 name = "hollow_rectangular_prism"
@@ -146,7 +146,6 @@ def VR(length_a, b2a_ratio, c2a_ratio, thickness):
 
 
 def random():
-    import numpy as np
     a, b, c = 10**np.random.uniform(1, 4.7, size=3)
     # Thickness is limited to 1/2 the smallest dimension
     # Use a distribution with a preference for thin shell or thin core
@@ -174,4 +173,3 @@ demo = dict(scale=1, background=0,
 tests = [[{}, 0.2, 0.76687283098],
          [{}, [0.2], [0.76687283098]],
         ]
-

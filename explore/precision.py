@@ -1,6 +1,32 @@
 #!/usr/bin/env python
 r"""
-Show numerical precision of $2 J_1(x)/x$.
+Show numerical precision of various expressions.
+
+Evaluates the same function(s) in single and double precision and compares
+the results to 500 digit mpmath evaluation of the same function.
+
+Note: a quick way to generation C and python code for taylor series
+expansions from sympy:
+
+    import sympy as sp
+    x = sp.var("x")
+    f = sp.sin(x)/x
+    t = sp.series(f, n=12).removeO()  # taylor series with no O(x^n) term
+    p = sp.horner(t)   # Horner representation
+    p = p.replace(x**2, sp.var("xsq")  # simplify if alternate terms are zero
+    p = p.n(15)  # evaluate coefficients to 15 digits (optional)
+    c_code = sp.ccode(p, assign_to=sp.var("p"))  # convert to c code
+    py_code = c[:-1]  # strip semicolon to convert c to python
+
+    # mpmath has pade() rational function approximation, which might work
+    # better than the taylor series for some functions:
+    P, Q = mp.pade(sp.Poly(t.n(15),x).coeffs(), L, M)
+    P = sum(a*x**n for n,a in enumerate(reversed(P)))
+    Q = sum(a*x**n for n,a in enumerate(reversed(Q)))
+    c_code = sp.ccode(sp.horner(P)/sp.horner(Q), assign_to=sp.var("p"))
+
+    # There are richardson and shanks series accelerators in both sympy
+    # and mpmath that may be helpful.
 """
 from __future__ import division, print_function
 
@@ -286,6 +312,13 @@ add_function(
     limits=(-5., 5.),
 )
 add_function(
+    name="expm1(x)",
+    mp_function=mp.expm1,
+    np_function=np.expm1,
+    ocl_function=make_ocl("return expm1(q);", "sas_expm1"),
+    limits=(-5., 5.),
+)
+add_function(
     name="arctan(x)",
     mp_function=mp.atan,
     np_function=np.arctan,
@@ -445,6 +478,37 @@ add_function(
     mp_function=mp.loggamma,
     np_function=scipy.special.gammaln,
     ocl_function=make_ocl(lanczos_gamma, "lgamma"),
+)
+
+replacement_expm1 = """\
+      double x = (double)q;  // go back to float for single precision kernels
+      // Adapted from the cephes math library.
+      // Copyright 1984 - 1992 by Stephen L. Moshier
+      if (x != x || x == 0.0) {
+         return x; // NaN and +/- 0
+      } else if (x < -0.5 || x > 0.5) {
+         return exp(x) - 1.0;
+      } else {
+         const double xsq = x*x;
+         const double p = (((
+            +1.2617719307481059087798E-4)*xsq
+            +3.0299440770744196129956E-2)*xsq
+            +9.9999999999999999991025E-1);
+         const double q = ((((
+            +3.0019850513866445504159E-6)*xsq
+            +2.5244834034968410419224E-3)*xsq
+            +2.2726554820815502876593E-1)*xsq
+            +2.0000000000000000000897E0);
+         double r = x * p;
+         r =  r / (q - r);
+         return r+r;
+       }
+"""
+add_function(
+    name="sas_expm1(x)",
+    mp_function=mp.expm1,
+    np_function=np.expm1,
+    ocl_function=make_ocl(replacement_expm1, "sas_expm1"),
 )
 
 # Alternate versions of 3 j1(x)/x, for posterity

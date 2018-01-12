@@ -9,9 +9,9 @@ __all__ = [
     ]
 
 import os
-import re
-from os.path import basename, dirname, join as joinpath
+from os.path import basename, join as joinpath
 from glob import glob
+import re
 
 import numpy as np # type: ignore
 
@@ -34,17 +34,18 @@ else:
 
 CUSTOM_MODEL_PATH = os.environ.get('SAS_MODELPATH', "")
 if CUSTOM_MODEL_PATH == "":
-    path = joinpath(os.path.expanduser("~"), ".sasmodels", "custom_models")
-    if not os.path.isdir(path):
-        os.makedirs(path)
-    CUSTOM_MODEL_PATH = path
+    CUSTOM_MODEL_PATH = joinpath(os.path.expanduser("~"), ".sasmodels", "custom_models")
+    if not os.path.isdir(CUSTOM_MODEL_PATH):
+        os.makedirs(CUSTOM_MODEL_PATH)
 
+# pylint: disable=unused-import
 try:
     from typing import List, Union, Optional, Any
     from .kernel import KernelModel
     from .modelinfo import ModelInfo
 except ImportError:
     pass
+# pylint: enable=unused-import
 
 # TODO: refactor composite model support
 # The current load_model_info/build_model does not reuse existing model
@@ -271,8 +272,9 @@ def parse_dtype(model_info, dtype=None, platform=None):
 
     Possible types include 'half', 'single', 'double' and 'quad'.  If the
     type is 'fast', then this is equivalent to dtype 'single' but using
-    fast native functions rather than those with the precision level guaranteed
-    by the OpenCL standard.
+    fast native functions rather than those with the precision level
+    guaranteed by the OpenCL standard.  'default' will choose the appropriate
+    default for the model and platform.
 
     Platform preference can be specfied ("ocl" vs "dll"), with the default
     being OpenCL if it is availabe.  If the dtype name ends with '!' then

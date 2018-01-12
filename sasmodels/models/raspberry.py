@@ -101,13 +101,12 @@ K Larson-Smith, A Jackson, and D C Pozzo, *Small angle scattering model for
 Pickering emulsions and raspberry particles*, *Journal of Colloid and Interface
 Science*, 343(1) (2010) 36-41
 
-**Author:** Andrew Jackson **on:** 2008
-
-**Modified by:** Andrew Jackson **on:** March 20, 2016
-
-**Reviewed by:** Andrew Jackson **on:** March 20, 2016
+* **Author:** Andrew Jackson **Date:** 2008
+* **Modified by:** Andrew Jackson **Date:** March 20, 2016
+* **Reviewed by:** Andrew Jackson **Date:** March 20, 2016
 """
 
+import numpy as np
 from numpy import inf
 
 name = "raspberry"
@@ -154,7 +153,6 @@ parameters = [["sld_lg", "1e-6/Ang^2", -0.4, [-inf, inf], "sld",
 source = ["lib/sas_3j1x_x.c", "raspberry.c"]
 
 def random():
-    import numpy as np
     # Limit volume fraction to 20% each
     volfraction_lg = 10**np.random.uniform(-3, -0.3)
     volfraction_sm = 10**np.random.uniform(-3, -0.3)

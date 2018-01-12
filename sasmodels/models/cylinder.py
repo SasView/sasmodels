@@ -53,18 +53,19 @@ NB: The 2nd virial coefficient of the cylinder is calculated based on the
 radius and length values, and used as the effective radius for $S(q)$
 when $P(q) \cdot S(q)$ is applied.
 
-For oriented cylinders, we define the direction of the
+For 2d scattering from oriented cylinders, we define the direction of the
 axis of the cylinder using two angles $\theta$ (note this is not the
 same as the scattering angle used in q) and $\phi$. Those angles
-are defined in :numref:`cylinder-angle-definition` .
+are defined in :numref:`cylinder-angle-definition` , for further details see :ref:`orientation` .
 
 .. _cylinder-angle-definition:
 
 .. figure:: img/cylinder_angle_definition.png
 
-    Definition of the $\theta$ and $\phi$ orientation angles for a cylinder relative
-    to the beam line coordinates, plus an indication of their orientation distributions
-    which are described as rotations about each of the perpendicular axes $\delta_1$ and $\delta_2$
+    Angles $\theta$ and $\phi$ orient the cylinder relative
+    to the beam line coordinates, where the beam is along the $z$ axis. Rotation $\theta$, initially
+    in the $xz$ plane, is carried out first, then rotation $\phi$ about the $z$ axis. Orientation distributions
+    are described as rotations about two perpendicular axes $\delta_1$ and $\delta_2$
     in the frame of the cylinder itself, which when $\theta = \phi = 0$ are parallel to the $Y$ and $X$ axes.
 
 .. figure:: img/cylinder_angle_projection.png
@@ -72,11 +73,6 @@ are defined in :numref:`cylinder-angle-definition` .
     Examples for oriented cylinders.
 
 The $\theta$ and $\phi$ parameters to orient the cylinder only appear in the model when fitting 2d data.
-On introducing "Orientational Distribution" in the angles, "distribution of theta" and "distribution of phi" parameters will
-appear. These are actually rotations about the axes $\delta_1$ and $\delta_2$ of the cylinder, which when $\theta = \phi = 0$ are parallel
-to the $Y$ and $X$ axes of the instrument respectively. Some experimentation may be required to understand the 2d patterns fully.
-(Earlier implementations had numerical integration issues in some circumstances when orientation distributions passed through 90 degrees, such
-situations, with very broad distributions, should still be approached with care.)
 
 Validation
 ----------
@@ -136,11 +132,11 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Cylinder length"],
               ["theta", "degrees", 60, [-360, 360], "orientation",
                "cylinder axis to beam angle"],
-              ["phi", "degrees",   60, [-360, 360], "orientation",
+              ["phi", "degrees", 60, [-360, 360], "orientation",
                "rotation about beam"],
              ]
 
-source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",  "cylinder.c"]
+source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "cylinder.c"]
 
 def ER(radius, length):
     """
@@ -150,10 +146,9 @@ def ER(radius, length):
     return 0.5 * (ddd) ** (1. / 3.)
 
 def random():
-    import numpy as np
-    V = 10**np.random.uniform(5, 12)
-    length = 10**np.random.uniform(-2, 2)*V**0.333
-    radius = np.sqrt(V/length/np.pi)
+    volume = 10**np.random.uniform(5, 12)
+    length = 10**np.random.uniform(-2, 2)*volume**0.333
+    radius = np.sqrt(volume/length/np.pi)
     pars = dict(
         #scale=1,
         #background=0,
@@ -175,13 +170,15 @@ demo = dict(scale=1, background=0,
 
 qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
 # After redefinition of angles, find new tests values.  Was 10 10 in old coords
-tests = [[{}, 0.2, 0.042761386790780453],
-        [{}, [0.2], [0.042761386790780453]],
-#  new coords
-        [{'theta':80.1534480601659, 'phi':10.1510817110481}, (qx, qy), 0.03514647218513852],
-        [{'theta':80.1534480601659, 'phi':10.1510817110481}, [(qx, qy)], [0.03514647218513852]],
-# old coords   [{'theta':10.0, 'phi':10.0}, (qx, qy), 0.03514647218513852],
-#              [{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.03514647218513852]],
-        ]
+tests = [
+    [{}, 0.2, 0.042761386790780453],
+    [{}, [0.2], [0.042761386790780453]],
+    #  new coords
+    [{'theta':80.1534480601659, 'phi':10.1510817110481}, (qx, qy), 0.03514647218513852],
+    [{'theta':80.1534480601659, 'phi':10.1510817110481}, [(qx, qy)], [0.03514647218513852]],
+    # old coords
+    #[{'theta':10.0, 'phi':10.0}, (qx, qy), 0.03514647218513852],
+    #[{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.03514647218513852]],
+]
 del qx, qy  # not necessary to delete, but cleaner
 # ADDED by:  RKH  ON: 18Mar2016 renamed sld's etc

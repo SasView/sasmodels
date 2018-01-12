@@ -39,9 +39,10 @@ References
 A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*,
 John Wiley and Sons, New York, (1955)
 
-*2013/09/09 and 2014/01/06 - Description reviewed by S King and P Parker.*
+* **Last Reviewed by:** S King and P Parker **Date:** 2013/09/09 and 2014/01/06
 """
 
+import numpy as np
 from numpy import inf
 
 name = "sphere"
@@ -86,7 +87,6 @@ def ER(radius):
 # VR defaults to 1.0
 
 def random():
-    import numpy as np
     radius = 10**np.random.uniform(1.3, 4)
     pars = dict(
         radius=radius,
@@ -101,5 +101,3 @@ tests = [
     [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45}, "ER", 120.],
     [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45}, "VR", 1.],
 ]
-
-

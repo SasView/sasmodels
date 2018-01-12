@@ -45,9 +45,6 @@ Authorship and Verification
 * **Last Modified by:** Paul Kienzle **Date:** September 12, 2016
 * **Last Reviewed by:** Paul Kienzle **Date:** September 12, 2016
 """
-
-
-
 from __future__ import division
 
 import numpy as np
@@ -103,7 +100,6 @@ parameters = [["sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "sld",
 source = ["lib/sas_3j1x_x.c", "core_multi_shell.c"]
 
 def random():
-    import numpy as np
     num_shells = np.minimum(np.random.poisson(3)+1, 10)
     total_radius = 10**np.random.uniform(1.7, 4)
     thickness = np.random.exponential(size=num_shells+1)
@@ -161,4 +157,4 @@ demo = dict(sld_core=6.4,
             thickness2_pd=0.3,
             thickness1_pd_n=10,
             thickness2_pd_n=10,
-            )
+           )

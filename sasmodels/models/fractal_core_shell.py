@@ -54,11 +54,11 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
-* **Last Modified by:** Paul Butler and Paul Kienzle **on:** November 27, 2016
-* **Last Reviewed by:** Paul Butler and Paul Kienzle **on:** November 27, 2016
-
+* **Last Modified by:** Paul Butler and Paul Kienzle **Date:** November 27, 2016
+* **Last Reviewed by:** Paul Butler and Paul Kienzle **Date:** November 27, 2016
 """
 
+import numpy as np
 from numpy import pi, inf
 
 name = "fractal_core_shell"
@@ -97,7 +97,6 @@ source = ["lib/sas_3j1x_x.c", "lib/sas_gamma.c", "lib/core_shell.c",
           "lib/fractal_sq.c", "fractal_core_shell.c"]
 
 def random():
-    import numpy as np
     outer_radius = 10**np.random.uniform(0.7, 4)
     # Use a distribution with a preference for thin shell or thin core
     # Avoid core,shell radii < 1

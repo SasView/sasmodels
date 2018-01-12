@@ -1,3 +1,5 @@
+import logging
+
 from bumps.names import *
 from sasmodels import core, bumps_model, sesans
 from sas.sascalc.dataloader.loader import Loader
@@ -7,7 +9,8 @@ def get_bumps_model(model_name):
     model = bumps_model.Model(kernel)
     return model
 
-def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[], acceptance_angle=None):
+def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[],
+               acceptance_angle=None):
     """
 
     @param file: SESANS file location
@@ -18,13 +21,17 @@ def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[], a
     @param constraints: dictionary of {parameter_name : constraint}
     @return: FitProblem for Bumps usage
     """
+    logging.basicConfig()
+
     initial_vals['background'] = 0.0
     try:
         loader = Loader()
-        data = loader.load(file)
-        if data is None: raise IOError("Could not load file %r"%(file))
+        data = loader.load(file)[0]
+        if data is None:
+            raise IOError("Could not load file %r"%(file))
 
-    except:
+    except Exception:
+        raise
         # If no loadable data file, generate random data
         SElength = np.linspace(0, 2400, 61) # [A]
         data = np.ones_like(SElength)
@@ -49,7 +56,7 @@ def sesans_fit(file, model, initial_vals={}, custom_params={}, param_range=[], a
     radius = initial_vals.get("radius", 1000)
     data.Rmax = 30*radius # [A]
 
-    if isinstance(model, basestring):
+    if isinstance(model, str):
         model = get_bumps_model(model)
 
     # Load custom parameters, initial values and parameter ranges

@@ -47,6 +47,7 @@ also in J. Phys. Chem. B, 105, (2001) 11081-11088
 *2014/04/17 - Description reviewed by S King and P Butler.*
 """
 
+import numpy as np
 from numpy import inf
 
 name = "lamellar_hg"
@@ -98,7 +99,6 @@ Iq = """
     """
 
 def random():
-    import numpy as np
     thickness = 10**np.random.uniform(1, 4)
     length_head = thickness * np.random.uniform(0, 1)
     length_tail = thickness - length_head
