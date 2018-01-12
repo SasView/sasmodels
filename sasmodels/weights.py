@@ -120,7 +120,7 @@ class RectangleDispersion(Dispersion):
         w = 1
     """
     type = "rectangle"
-    default = dict(npts=35, width=0, nsigmas=1.70325)
+    default = dict(npts=35, width=0, nsigmas=1.73205)
     def _weights(self, center, sigma, lb, ub):
         x = self._linspace(center, sigma, lb, ub)
         x = x[np.fabs(x-center) <= np.fabs(sigma)*sqrt(3.0)]
