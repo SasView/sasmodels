@@ -29,17 +29,17 @@ Iq(double q,
     const double shell_h = (0.5*length + thickness);
     const double shell_vd = form_volume(radius,thickness,length) * (shell_sld-solvent_sld);
     double total = 0.0;
-    for (int i=0; i<76 ;i++) {
+    for (int i=0; i<GAUSS_N ;i++) {
         // translate a point in [-1,1] to a point in [0, pi/2]
-        //const double theta = ( Gauss76Z[i]*(upper-lower) + upper + lower )/2.0;
+        //const double theta = ( GAUSS_Z[i]*(upper-lower) + upper + lower )/2.0;
         double sin_theta, cos_theta;
-        const double theta = Gauss76Z[i]*M_PI_4 + M_PI_4;
+        const double theta = GAUSS_Z[i]*M_PI_4 + M_PI_4;
         SINCOS(theta, sin_theta,  cos_theta);
         const double qab = q*sin_theta;
         const double qc = q*cos_theta;
         const double fq = _cyl(core_vd, core_r*qab, core_h*qc)
             + _cyl(shell_vd, shell_r*qab, shell_h*qc);
-        total += Gauss76Wt[i] * fq * fq * sin_theta;
+        total += GAUSS_W[i] * fq * fq * sin_theta;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     //const double form = (upper-lower)/2.0*total;

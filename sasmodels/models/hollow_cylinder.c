@@ -37,12 +37,12 @@ Iq(double q, double radius, double thickness, double length,
     const double upper = 1.0;        //limits of numerical integral
 
     double summ = 0.0;            //initialize intergral
-    for (int i=0;i<76;i++) {
-        const double cos_theta = 0.5*( Gauss76Z[i] * (upper-lower) + lower + upper );
+    for (int i=0;i<GAUSS_N;i++) {
+        const double cos_theta = 0.5*( GAUSS_Z[i] * (upper-lower) + lower + upper );
         const double sin_theta = sqrt(1.0 - cos_theta*cos_theta);
         const double form = _fq(q*sin_theta, q*cos_theta,
                                 radius, thickness, length);
-        summ += Gauss76Wt[i] * form * form;
+        summ += GAUSS_W[i] * form * form;
     }
 
     const double Aq = 0.5*summ*(upper-lower);

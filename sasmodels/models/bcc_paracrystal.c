@@ -80,24 +80,24 @@ static double Iq(double q, double dnn,
     const double theta_b = M_PI_2;
 
     double outer_sum = 0.0;
-    for(int i=0; i<150; i++) {
+    for(int i=0; i<GAUSS_N; i++) {
         double inner_sum = 0.0;
-        const double theta = Gauss150Z[i]*theta_m + theta_b;
+        const double theta = GAUSS_Z[i]*theta_m + theta_b;
         double sin_theta, cos_theta;
         SINCOS(theta, sin_theta, cos_theta);
         const double qc = q*cos_theta;
         const double qab = q*sin_theta;
-        for(int j=0;j<150;j++) {
-            const double phi = Gauss150Z[j]*phi_m + phi_b;
+        for(int j=0;j<GAUSS_N;j++) {
+            const double phi = GAUSS_Z[j]*phi_m + phi_b;
             double sin_phi, cos_phi;
             SINCOS(phi, sin_phi, cos_phi);
             const double qa = qab*cos_phi;
             const double qb = qab*sin_phi;
             const double form = bcc_Zq(qa, qb, qc, dnn, d_factor);
-            inner_sum += Gauss150Wt[j] * form;
+            inner_sum += GAUSS_W[j] * form;
         }
         inner_sum *= phi_m;  // sum(f(x)dx) = sum(f(x)) dx
-        outer_sum += Gauss150Wt[i] * inner_sum * sin_theta;
+        outer_sum += GAUSS_W[i] * inner_sum * sin_theta;
     }
     outer_sum *= theta_m;
     const double Zq = outer_sum/(4.0*M_PI);

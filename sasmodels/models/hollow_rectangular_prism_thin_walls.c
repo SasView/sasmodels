@@ -1,5 +1,5 @@
 double form_volume(double length_a, double b2a_ratio, double c2a_ratio);
-double Iq(double q, double sld, double solvent_sld, double length_a, 
+double Iq(double q, double sld, double solvent_sld, double length_a,
           double b2a_ratio, double c2a_ratio);
 
 double form_volume(double length_a, double b2a_ratio, double c2a_ratio)
@@ -28,10 +28,10 @@ double Iq(double q,
     const double v1b = M_PI_2;  //theta integration limits
     const double v2a = 0.0;
     const double v2b = M_PI_2;  //phi integration limits
-    
+
     double outer_sum = 0.0;
-    for(int i=0; i<76; i++) {
-        const double theta = 0.5 * ( Gauss76Z[i]*(v1b-v1a) + v1a + v1b );
+    for(int i=0; i<GAUSS_N; i++) {
+        const double theta = 0.5 * ( GAUSS_Z[i]*(v1b-v1a) + v1a + v1b );
 
         double sin_theta, cos_theta;
         double sin_c, cos_c;
@@ -43,8 +43,8 @@ double Iq(double q,
         const double termAT_theta = 8.0 * sin_c / (q*q*sin_theta*cos_theta);
 
         double inner_sum = 0.0;
-        for(int j=0; j<76; j++) {
-            const double phi = 0.5 * ( Gauss76Z[j]*(v2b-v2a) + v2a + v2b );
+        for(int j=0; j<GAUSS_N; j++) {
+            const double phi = 0.5 * ( GAUSS_Z[j]*(v2b-v2a) + v2a + v2b );
 
             double sin_phi, cos_phi;
             double sin_a, cos_a;
@@ -61,11 +61,11 @@ double Iq(double q,
             const double AT = termAT_theta
                 * ( cos_a*sin_b/cos_phi + cos_b*sin_a/sin_phi );
 
-            inner_sum += Gauss76Wt[j] * square(AL+AT);
+            inner_sum += GAUSS_W[j] * square(AL+AT);
         }
 
         inner_sum *= 0.5 * (v2b-v2a);
-        outer_sum += Gauss76Wt[i] * inner_sum * sin_theta;
+        outer_sum += GAUSS_W[i] * inner_sum * sin_theta;
     }
 
     outer_sum *= 0.5*(v1b-v1a);

@@ -21,25 +21,24 @@ Iq(double q, double radius_minor, double r_ratio, double length,
 
     //initialize integral
     double outer_sum = 0.0;
-    for(int i=0;i<76;i++) {
+    for(int i=0;i<GAUSS_N;i++) {
         //setup inner integral over the ellipsoidal cross-section
-        const double cos_val = ( Gauss76Z[i]*(vb-va) + va + vb )/2.0;
+        const double cos_val = ( GAUSS_Z[i]*(vb-va) + va + vb )/2.0;
         const double sin_val = sqrt(1.0 - cos_val*cos_val);
         //const double arg = radius_minor*sin_val;
         double inner_sum=0;
-        for(int j=0;j<76;j++) {
-            //20 gauss points for the inner integral, increase to 76, RKH 6Nov2017
-            const double theta = ( Gauss76Z[j]*(vbj-vaj) + vaj + vbj )/2.0;
+        for(int j=0;j<GAUSS_N;j++) {
+            const double theta = ( GAUSS_Z[j]*(vbj-vaj) + vaj + vbj )/2.0;
             const double r = sin_val*sqrt(rA - rB*cos(theta));
             const double be = sas_2J1x_x(q*r);
-            inner_sum += Gauss76Wt[j] * be * be;
+            inner_sum += GAUSS_W[j] * be * be;
         }
         //now calculate the value of the inner integral
         inner_sum *= 0.5*(vbj-vaj);
 
         //now calculate outer integral
         const double si = sas_sinx_x(q*0.5*length*cos_val);
-        outer_sum += Gauss76Wt[i] * inner_sum * si * si;
+        outer_sum += GAUSS_W[i] * inner_sum * si * si;
     }
     outer_sum *= 0.5*(vb-va);
 

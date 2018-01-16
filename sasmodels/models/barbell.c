@@ -22,12 +22,12 @@ _bell_kernel(double qab, double qc, double h, double radius_bell,
     const double b = (half_length-h)*qc; // cos argument intercept
     const double qab_r = radius_bell*qab; // Q*R*sin(theta)
     double total = 0.0;
-    for (int i = 0; i < 76; i++){
-        const double t = Gauss76Z[i]*zm + zb;
+    for (int i = 0; i < GAUSS_N; i++){
+        const double t = GAUSS_Z[i]*zm + zb;
         const double radical = 1.0 - t*t;
         const double bj = sas_2J1x_x(qab_r*sqrt(radical));
         const double Fq = cos(m*t + b) * radical * bj;
-        total += Gauss76Wt[i] * Fq;
+        total += GAUSS_W[i] * Fq;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     const double integral = total*zm;
@@ -72,12 +72,12 @@ Iq(double q, double sld, double solvent_sld,
     const double zm = M_PI_4;
     const double zb = M_PI_4;
     double total = 0.0;
-    for (int i = 0; i < 76; i++){
-        const double alpha= Gauss76Z[i]*zm + zb;
+    for (int i = 0; i < GAUSS_N; i++){
+        const double alpha= GAUSS_Z[i]*zm + zb;
         double sin_alpha, cos_alpha; // slots to hold sincos function output
         SINCOS(alpha, sin_alpha, cos_alpha);
         const double Aq = _fq(q*sin_alpha, q*cos_alpha, h, radius_bell, radius, half_length);
-        total += Gauss76Wt[i] * Aq * Aq * sin_alpha;
+        total += GAUSS_W[i] * Aq * Aq * sin_alpha;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     const double form = total*zm;
