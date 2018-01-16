@@ -1,5 +1,5 @@
 double form_volume(double length_a, double b2a_ratio, double c2a_ratio);
-double Iq(double q, double sld, double solvent_sld, double length_a, 
+double Iq(double q, double sld, double solvent_sld, double length_a,
           double b2a_ratio, double c2a_ratio);
 
 double form_volume(double length_a, double b2a_ratio, double c2a_ratio)
@@ -25,7 +25,7 @@ double Iq(double q,
     const double v1b = M_PI_2;  //theta integration limits
     const double v2a = 0.0;
     const double v2b = M_PI_2;  //phi integration limits
-    
+
     double outer_sum = 0.0;
     for(int i=0; i<76; i++) {
         const double theta = 0.5 * ( Gauss76Z[i]*(v1b-v1a) + v1a + v1b );
@@ -52,10 +52,10 @@ double Iq(double q,
 
     double answer = 0.5*(v1b-v1a)*outer_sum;
 
-    // Normalize by Pi (Eqn. 16). 
-    // The term (ABC)^2 does not appear because it was introduced before on 
+    // Normalize by Pi (Eqn. 16).
+    // The term (ABC)^2 does not appear because it was introduced before on
     // the definitions of termA, termB, termC.
-    // The factor 2 appears because the theta integral has been defined between 
+    // The factor 2 appears because the theta integral has been defined between
     // 0 and pi/2, instead of 0 to pi.
     answer /= M_PI_2; //Form factor P(q)
 
@@ -63,8 +63,38 @@ double Iq(double q,
     const double volume = length_a * length_b * length_c;
     answer *= square((sld-solvent_sld)*volume);
 
-    // Convert from [1e-12 A-1] to [cm-1] 
+    // Convert from [1e-12 A-1] to [cm-1]
     answer *= 1.0e-4;
 
     return answer;
+}
+
+
+double Iqxy(double qa, double qb, double qc,
+    double sld,
+    double solvent_sld,
+    double length_a,
+    double b2a_ratio,
+    double c2a_ratio)
+{
+    const double length_b = length_a * b2a_ratio;
+    const double length_c = length_a * c2a_ratio;
+    const double a_half = 0.5 * length_a;
+    const double b_half = 0.5 * length_b;
+    const double c_half = 0.5 * length_c;
+    const double volume = length_a * length_b * length_c;
+
+    // Amplitude AP from eqn. (13)
+
+    const double termA = sas_sinx_x(qa * a_half);
+    const double termB = sas_sinx_x(qb * b_half);
+    const double termC = sas_sinx_x(qc * c_half);
+
+    const double AP = termA * termB * termC;
+
+    // Multiply by contrast^2. Factor corresponding to volume^2 cancels with previous normalization.
+    const double delrho = sld - solvent_sld;
+
+    // Convert from [1e-12 A-1] to [cm-1]
+    return 1.0e-4 * square(volume * delrho * AP);
 }
