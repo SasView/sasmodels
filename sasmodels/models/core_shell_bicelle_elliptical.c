@@ -70,7 +70,7 @@ Iq(double q,
 }
 
 static double
-Iqxy(double qa, double qb, double qc,
+Iqabc(double qa, double qb, double qc,
     double r_minor,
     double x_core,
     double thick_rim,

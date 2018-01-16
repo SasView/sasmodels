@@ -74,7 +74,7 @@ Iq(double q,
 }
 
 static double
-Iqxy(double qab, double qc,
+Iqac(double qab, double qc,
     double radius_equat_core,
     double x_core,
     double thick_shell,

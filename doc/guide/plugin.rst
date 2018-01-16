@@ -291,8 +291,9 @@ defines the parameters that form the model.
 
 **Note: The order of the parameters in the definition will be the order of the
 parameters in the user interface and the order of the parameters in Iq(),
-Iqxy() and form_volume(). And** *scale* **and** *background* **parameters are
-implicit to all models, so they do not need to be included in the parameter table.**
+Iqac(), Iqabc() and form_volume(). And** *scale* **and** *background*
+**parameters are implicit to all models, so they do not need to be included
+in the parameter table.**
 
 - **"name"** is the name of the parameter shown on the FitPage.
 
@@ -361,11 +362,13 @@ implicit to all models, so they do not need to be included in the parameter tabl
     examined, the effective sld for that material will be used to compute the
     scattered intensity.
 
-  - "volume" parameters are passed to Iq(), Iqxy(), and form_volume(), and
-    have polydispersity loops generated automatically.
+  - "volume" parameters are passed to Iq(), Iqac(), Iqabc() and form_volume(),
+    and have polydispersity loops generated automatically.
 
-  - "orientation" parameters are only passed to Iqxy(), and have angular
-    dispersion.
+  - "orientation" parameters are not passed, but instead are combined with
+    orientation dispersity to translate *qx* and *qy* to *qa*, *qb* and *qc*.
+    These parameters should appear at the end of the table with the specific
+    names *theta*, *phi* and for asymmetric shapes *psi*, in that order.
 
 Some models will have integer parameters, such as number of pearls in the
 pearl necklace model, or number of shells in the multi-layer vesicle model.
@@ -418,9 +421,7 @@ computed value is
 
 That is, the individual models do not need to include polydispersity
 calculations, but instead rely on numerical integration to compute the
-appropriately smeared pattern.   Angular dispersion values over polar angle
-$\theta$ requires an additional $\cos \theta$ weighting due to decreased
-arc length for the equatorial angle $\phi$ with increasing latitude.
+appropriately smeared pattern.
 
 Python Models
 .............
@@ -468,10 +469,6 @@ Return np.NaN if the parameters are not valid (e.g., cap_radius < radius in
 barbell).  If I(q; pars) is NaN for any $q$, then those parameters will be
 ignored, and not included in the calculation of the weighted polydispersity.
 
-Similar to *Iq*, you can define *Iqxy(qx, qy, par1, par2, ...)* where the
-parameter list includes any orientation parameters.  If *Iqxy* is not defined,
-then it will default to *Iqxy = Iq(sqrt(qx**2+qy**2), par1, par2, ...)*.
-
 Models should define *form_volume(par1, par2, ...)* where the parameter
 list includes the *volume* parameters in order.  This is used for a weighted
 volume normalization so that scattering is on an absolute scale.  If
@@ -496,18 +493,18 @@ This expands into the equivalent C code::
         return I(q, par1, par2, ...);
     }
 
-*Iqxy* is similar to *Iq*, except it uses parameters *qx, qy* instead of *q*,
-and it includes orientation parameters.
-
 *form_volume* defines the volume of the shape. As in python models, it
 includes only the volume parameters.
 
-*Iqxy* will default to *Iq(sqrt(qx**2 + qy**2), par1, ...)* and
-*form_volume* will default to 1.0.
-
 **source=['fn.c', ...]** includes the listed C source files in the
-program before *Iq* and *Iqxy* are defined. This allows you to extend the
-library of C functions available to your model.
+program before *Iq* and *form_volume* are defined. This allows you to
+extend the library of C functions available to your model.
+
+*c_code* includes arbitrary C code into your kernel, which can be
+handy for defining helper functions for *Iq* and *form_volume*. Note that
+you can put the full function definition for *Iq* and *form_volume*
+(include function declaration) into *c_code* as well, or put them into an
+external C file and add that file to the list of sources.
 
 Models are defined using double precision declarations for the
 parameters and return values.  When a model is run using single
@@ -531,6 +528,125 @@ Rather than returning NAN from Iq, you must define the *INVALID(v)*.  The
 *v.par1*, *v.par2*, etc. For example::
 
     #define INVALID(v) (v.bell_radius < v.radius)
+
+The INVALID define can go into *Iq*, or *c_code*, or an external C file
+listed in *source*.
+
+Oriented Shapes
+...............
+
+If the scattering is dependent on the orientation of the shape, then you
+will need to include *orientation* parameters *theta*, *phi* and *psi*
+at the end of the parameter table.  As described in the section
+:ref:`orientation`, the individual $(q_x, q_y)$ points on the detector will
+be rotated into $(q_a, q_b, q_c)$ points relative to the sample in its
+canonical orientation with $a$-$b$-$c$ aligned with $x$-$y$-$z$ in the
+laboratory frame and beam travelling along $-z$.
+
+The oriented C model is called using *Iqabc(qa, qb, qc, par1, par2, ...)* where
+*par1*, etc. are the parameters to the model.  If the shape is rotationally
+symmetric about *c* then *psi* is not needed, and the model is called
+as *Iqac(qab, qc, par1, par2, ...)*.  In either case, the orientation
+parameters are not included in the function call.
+
+For 1D oriented shapes, an integral over all angles is usually needed for
+the *Iq* function. Given symmetry and the substitution $u = \cos(\alpha)$,
+$du = -\sin(\alpha)\,d\alpha$ this becomes
+
+.. math::
+
+    I(q) &= \frac{1}{4\pi} \int_{-\pi/2}^{pi/2} \int_{-pi}^{pi}
+            F(q_a, q_b, q_c)^2 \sin(\alpha)\,d\beta\,d\alpha \\
+        &= \frac{8}{4\pi} \int_{0}^{pi/2} \int_{0}^{\pi/2}
+            F^2 \sin(\alpha)\,d\beta\,d\alpha \\
+        &= \frac{8}{4\pi} \int_1^0 \int_{0}^{\pi/2} - F^2 \,d\beta\,du \\
+        &= \frac{8}{4\pi} \int_0^1 \int_{0}^{\pi/2} F^2 \,d\beta\,du
+
+for
+
+.. math::
+
+    q_a &= q \sin(\alpha)\sin(\beta) = q \sqrt{1-u^2} \sin(\beta) \\
+    q_b &= q \sin(\alpha)\cos(\beta) = q \sqrt{1-u^2} \cos(\beta) \\
+    q_c &= q \cos(\alpha) = q u
+
+Using the $z, w$ values for Gauss-Legendre integration in "lib/gauss76.c", the
+numerical integration is then::
+
+    double outer_sum = 0.0;
+    for (int i = 0; i < GAUSS_N; i++) {
+        const double cos_alpha = 0.5*GAUSS_Z[i] + 0.5;
+        const double sin_alpha = sqrt(1.0 - cos_alpha*cos_alpha);
+        const double qc = cos_alpha * q;
+        double inner_sum = 0.0;
+        for (int j = 0; j < GAUSS_N; j++) {
+            const double beta = M_PI_4 * GAUSS_Z[j] + M_PI_4;
+            double sin_beta, cos_beta;
+            SINCOS(beta, sin_beta, cos_beta);
+            const double qa = sin_alpha * sin_beta * q;
+            const double qb = sin_alpha * cos_beta * q;
+            const double form = Fq(qa, qb, qc, ...);
+            inner_sum += GAUSS_W[j] * form * form;
+        }
+        outer_sum += GAUSS_W[i] * inner_sum;
+    }
+    outer_sum *= 0.25; // = 8/(4 pi) * outer_sum * (pi/2) / 4
+
+The *z* values for the Gauss-Legendre integration extends from -1 to 1, so
+the double sum of *w[i]w[j]* explains the factor of 4.  Correcting for the
+average *dz[i]dz[j]* gives $(1-0) \cdot (\pi/2-0) = \pi/2$.  The $8/(4 \pi)$
+factor comes from the integral over the quadrant.  With less symmetry (eg.,
+in the bcc and fcc paracrystal models), then an integral over the entire
+sphere may be necessary.
+
+For simpler models which are rotationally symmetric a single integral
+suffices:
+
+.. math::
+
+    I(q) &= \frac{1}{\pi}\int_{-\pi/2}^{\pi/2}
+            F(q_{ab}, q_c)^2 \sin(\alpha)\,d\alpha/\pi \\
+        &= \frac{2}{\pi} \int_0^1 F^2\,du
+
+for
+
+.. math::
+
+    q_{ab} &= q \sin(\alpha) = q \sqrt{1 - u^2} \\
+    q_c &= q \cos(\alpha) = q u
+
+
+with integration loop::
+
+    double sum = 0.0;
+    for (int i = 0; i < GAUSS_N; i++) {
+        const double cos_alpha = 0.5*GAUSS_Z[i] + 0.5;
+        const double sin_alpha = sqrt(1.0 - cos_alpha*cos_alpha);
+        const double qab = sin_alpha * q;
+        const double qc = cos_alpha * q;
+        const double form = Fq(qab, qc, ...);
+        sum += GAUSS_W[j] * form * form;
+    }
+    sum *= 0.5; // = 2/pi * sum * (pi/2) / 2
+
+Magnetism
+.........
+
+Magnetism is supported automatically for all shapes by modifying the
+effective SLD of particle according to the Halpern-Johnson vector
+describing the interaction between neutron spin and magnetic field.  All
+parameters marked as type *sld* in the parameter table are treated as
+possibly magnetic particles with magnitude *M0* and direction
+*mtheta* and *mphi*.  Polarization parameters are also provided
+automatically for magnetic models to set the spin state of the measurement.
+
+For more complicated systems where magnetism is not uniform throughout
+the individual particles, you will need to write your own models.
+You should not mark the nuclear sld as type *sld*, but instead leave
+them unmarked and provide your own magnetism and polarization parameters.
+For 2D measurements you will need $(q_x, q_y)$ values for the measurement
+to compute the proper magnetism and orientation, which you can implement
+using *Iqxy(qx, qy, par1, par2, ...)*.
 
 Special Functions
 .................
@@ -795,15 +911,6 @@ Although it can be difficult to get your model to work on the GPU, the reward
 can be a model that runs 1000x faster on a good card.  Even your laptop may
 show a 50x improvement or more over the equivalent pure python model.
 
-External C Models
-.................
-
-External C models are very much like embedded C models, except that
-*Iq*, *Iqxy* and *form_volume* are defined in an external source file
-loaded using the *source=[...]* statement. You need to supply the function
-declarations for each of these that you need instead of building them
-automatically from the parameter table.
-
 
 .. _Form_Factors:
 
@@ -1005,7 +1112,7 @@ We are not aiming for zero lint just yet, only keeping it to a minimum.
 For now, don't worry too much about *invalid-name*. If you really want a
 variable name *Rg* for example because $R_g$ is the right name for the model
 parameter then ignore the lint errors.  Also, ignore *missing-docstring*
-for standard model functions *Iq*, *Iqxy*, etc.
+for standard model functions *Iq*, *Iqac*, etc.
 
 We will have delinting sessions at the SasView Code Camps, where we can
 decide on standards for model files, parameter names, etc.

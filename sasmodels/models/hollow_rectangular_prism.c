@@ -84,7 +84,7 @@ double Iq(double q,
     return 1.0e-4 * delrho * delrho * form;
 }
 
-double Iqxy(double qa, double qb, double qc,
+double Iqabc(double qa, double qb, double qc,
     double sld,
     double solvent_sld,
     double length_a,

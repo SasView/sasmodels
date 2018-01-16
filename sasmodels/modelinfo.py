@@ -36,7 +36,7 @@ else:
 MAX_PD = 5 #: Maximum number of simultaneously polydisperse parameters
 
 # assumptions about common parameters exist throughout the code, such as:
-# (1) kernel functions Iq, Iqxy, form_volume, ... don't see them
+# (1) kernel functions Iq, Iqxy, Iqac, Iqabc, form_volume, ... don't see them
 # (2) kernel drivers assume scale is par[0] and background is par[1]
 # (3) mixture models drop the background on components and replace the scale
 #     with a scale that varies from [-inf, inf]
@@ -255,9 +255,9 @@ class Parameter(object):
     If there are no limits, use +/-inf imported from numpy.
 
     *type* indicates how the parameter will be used.  "volume" parameters
-    will be used in all functions.  "orientation" parameters will be used
-    in *Iqxy* and *Imagnetic*.  "magnetic* parameters will be used in
-    *Imagnetic* only.  If *type* is the empty string, the parameter will
+    will be used in all functions.  "orientation" parameters are not passed,
+    but will be used to convert from *qx*, *qy* to *qa*, *qb*, *qc* in calls to
+    *Iqxy* and *Imagnetic*.  If *type* is the empty string, the parameter will
     be used in all of *Iq*, *Iqxy* and *Imagnetic*.  "sld" parameters
     can automatically be promoted to magnetic parameters, each of which
     will have a magnitude and a direction, which may be different from
@@ -385,9 +385,6 @@ class ParameterTable(object):
     * *iq_parameters* is the list of parameters to the Iq(q, ...) function,
       with vector parameter p sent as p[].
 
-    * [removed] *iqxy_parameters* is the list of parameters to the Iqxy(qx, qy, ...)
-      function, with vector parameter p sent as p[].
-
     * *form_volume_parameters* is the list of parameters to the form_volume(...)
       function, with vector parameter p sent as p[].
 
@@ -442,9 +439,8 @@ class ParameterTable(object):
         # to the underlying kernel functions.
         self.iq_parameters = [p for p in self.kernel_parameters
                               if p.type not in ('orientation', 'magnetic')]
-        # note: orientation no longer sent to Iqxy, so its the same as
-        #self.iqxy_parameters = [p for p in self.kernel_parameters
-        #                        if p.type != 'magnetic']
+        self.orientation_parameters = [p for p in self.kernel_parameters
+                                       if p.type == 'orientation']
         self.form_volume_parameters = [p for p in self.kernel_parameters
                                        if p.type == 'volume']
 
@@ -489,11 +485,17 @@ class ParameterTable(object):
                 psi = k
                 if p.type != 'orientation':
                     raise TypeError("psi must be an orientation parameter")
+            elif p.type == 'orientation':
+                raise TypeError("only theta, phi and psi can be orientation parameters")
         if theta >= 0 and phi >= 0:
+            last_par = len(self.kernel_parameters) - 1
             if phi != theta+1:
                 raise TypeError("phi must follow theta")
             if psi >= 0 and psi != phi+1:
                 raise TypeError("psi must follow phi")
+            #if (psi >= 0 and psi != last_par) or (psi < 0 and phi != last_par):
+            #    raise TypeError("orientation parameters must appear at the "
+            #                    "end of the parameter table")
         elif theta >= 0 or phi >= 0 or psi >= 0:
             raise TypeError("oriented shapes must have both theta and phi and maybe psi")
 
@@ -714,44 +716,42 @@ def isstr(x):
     return isinstance(x, str)
 
 
+#: Set of variables defined in the model that might contain C code
+C_SYMBOLS = ['Imagnetic', 'Iq', 'Iqxy', 'Iqac', 'Iqabc', 'form_volume', 'c_code']
+
 def _find_source_lines(model_info, kernel_module):
     # type: (ModelInfo, ModuleType) -> None
     """
     Identify the location of the C source inside the model definition file.
 
-    This code runs through the source of the kernel module looking for
-    lines that start with 'Iq', 'Iqxy' or 'form_volume'.  Clearly there are
-    all sorts of reasons why this might not work (e.g., code commented out
-    in a triple-quoted line block, code built using string concatenation,
-    or code defined in the branch of an 'if' block), but it should work
-    properly in the 95% case, and getting the incorrect line number will
-    be harmless.
+    This code runs through the source of the kernel module looking for lines
+    that contain C code (because it is a c function definition).  Clearly
+    there are all sorts of reasons why this might not work (e.g., code
+    commented out in a triple-quoted line block, code built using string
+    concatenation, code defined in the branch of an 'if' block, code imported
+    from another file), but it should work properly in the 95% case, and for
+    the remainder, getting the incorrect line number will merely be
+    inconvenient.
     """
-    # Check if we need line numbers at all
-    if callable(model_info.Iq):
-        return None
-
-    if (model_info.Iq is None
-            and model_info.Iqxy is None
-            and model_info.Imagnetic is None
-            and model_info.form_volume is None):
+    # Only need line numbers if we are creating a C module and the C symbols
+    # are defined.
+    if (callable(model_info.Iq)
+            or not any(hasattr(model_info, s) for s in C_SYMBOLS)):
         return
 
-    # find the defintion lines for the different code blocks
+    # load the module source if we can
     try:
         source = inspect.getsource(kernel_module)
     except IOError:
         return
-    for k, v in enumerate(source.split('\n')):
-        if v.startswith('Imagnetic'):
-            model_info._Imagnetic_line = k+1
-        elif v.startswith('Iqxy'):
-            model_info._Iqxy_line = k+1
-        elif v.startswith('Iq'):
-            model_info._Iq_line = k+1
-        elif v.startswith('form_volume'):
-            model_info._form_volume_line = k+1
 
+    # look for symbol at the start of the line
+    for lineno, line in enumerate(source.split('\n')):
+        for name in C_SYMBOLS:
+            if line.startswith(name):
+                # Add 1 since some compilers complain about "#line 0"
+                model_info.lineno[name] = lineno + 1
+                break
 
 def make_model_info(kernel_module):
     # type: (module) -> ModelInfo
@@ -760,7 +760,7 @@ def make_model_info(kernel_module):
 
     Fill in default values for parts of the module that are not provided.
 
-    Note: vectorized Iq and Iqxy functions will be created for python
+    Note: vectorized Iq and Iqac/Iqabc functions will be created for python
     models when the model is first called, not when the model is loaded.
     """
     if hasattr(kernel_module, "model_info"):
@@ -789,6 +789,7 @@ def make_model_info(kernel_module):
     info.structure_factor = getattr(kernel_module, 'structure_factor', False)
     info.profile_axes = getattr(kernel_module, 'profile_axes', ['x', 'y'])
     info.source = getattr(kernel_module, 'source', [])
+    info.c_code = getattr(kernel_module, 'c_code', None)
     # TODO: check the structure of the tests
     info.tests = getattr(kernel_module, 'tests', [])
     info.ER = getattr(kernel_module, 'ER', None) # type: ignore
@@ -796,6 +797,8 @@ def make_model_info(kernel_module):
     info.form_volume = getattr(kernel_module, 'form_volume', None) # type: ignore
     info.Iq = getattr(kernel_module, 'Iq', None) # type: ignore
     info.Iqxy = getattr(kernel_module, 'Iqxy', None) # type: ignore
+    info.Iqac = getattr(kernel_module, 'Iqac', None) # type: ignore
+    info.Iqabc = getattr(kernel_module, 'Iqabc', None) # type: ignore
     info.Imagnetic = getattr(kernel_module, 'Imagnetic', None) # type: ignore
     info.profile = getattr(kernel_module, 'profile', None) # type: ignore
     info.sesans = getattr(kernel_module, 'sesans', None) # type: ignore
@@ -810,6 +813,10 @@ def make_model_info(kernel_module):
     info.control = getattr(kernel_module, 'control', default_control)
     info.hidden = getattr(kernel_module, 'hidden', None) # type: ignore
 
+    if callable(info.Iq) and parameters.has_2d:
+        raise ValueError("oriented python models not supported")
+
+    info.lineno = {}
     _find_source_lines(info, kernel_module)
 
     return info
@@ -823,7 +830,7 @@ class ModelInfo(object):
     if the name is in a string.
 
     The structure should be mostly static, other than the delayed definition
-    of *Iq* and *Iqxy* if they need to be defined.
+    of *Iq*, *Iqac* and *Iqabc* if they need to be defined.
     """
     #: Full path to the file defining the kernel, if any.
     filename = None         # type: Optional[str]
@@ -905,11 +912,11 @@ class ModelInfo(object):
     #: provided in the file.
     structure_factor = None # type: bool
     #: List of C source files used to define the model.  The source files
-    #: should define the *Iq* function, and possibly *Iqxy*, though a default
-    #: *Iqxy = Iq(sqrt(qx**2+qy**2)* will be created if no *Iqxy* is provided.
-    #: Files containing the most basic functions must appear first in the list,
-    #: followed by the files that use those functions.  Form factors are
-    #: indicated by providing a :attr:`ER` function.
+    #: should define the *Iq* function, and possibly *Iqac* or *Iqabc* if the
+    #: model defines orientation parameters. Files containing the most basic
+    #: functions must appear first in the list, followed by the files that
+    #: use those functions.  Form factors are indicated by providing
+    #: an :attr:`ER` function.
     source = None           # type: List[str]
     #: The set of tests that must pass.  The format of the tests is described
     #: in :mod:`model_test`.
@@ -934,6 +941,10 @@ class ModelInfo(object):
     #: Returns the occupied volume and the total volume for each parameter set.
     #: See :attr:`ER` for details on the parameters.
     VR = None               # type: Optional[Callable[[np.ndarray], Tuple[np.ndarray, np.ndarray]]]
+    #: Arbitrary C code containing supporting functions, etc., to be inserted
+    #: after everything in source.  This can include Iq and Iqxy functions with
+    #: the full function signature, including all parameters.
+    c_code = None
     #: Returns the form volume for python-based models.  Form volume is needed
     #: for volume normalization in the polydispersity integral.  If no
     #: parameters are *volume* parameters, then form volume is not needed.
@@ -954,8 +965,10 @@ class ModelInfo(object):
     #: pointers to doubles.  Constants in floating point expressions should
     #: include the decimal point. See :mod:`generate` for more details.
     Iq = None               # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
-    #: Returns *I(qx, qy, a, b, ...)*.  The interface follows :attr:`Iq`.
-    Iqxy = None             # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
+    #: Returns *I(qab, qc, a, b, ...)*.  The interface follows :attr:`Iq`.
+    Iqac = None             # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
+    #: Returns *I(qa, qb, qc, a, b, ...)*.  The interface follows :attr:`Iq`.
+    Iqabc = None            # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
     #: Returns *I(qx, qy, a, b, ...)*.  The interface follows :attr:`Iq`.
     Imagnetic = None        # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
     #: Returns a model profile curve *x, y*.  If *profile* is defined, this
@@ -971,14 +984,8 @@ class ModelInfo(object):
     sesans = None           # type: Optional[Callable[[np.ndarray], np.ndarray]]
     #: Returns a random parameter set for the model
     random = None           # type: Optional[Callable[[], Dict[str, float]]]
-
-    # line numbers within the python file for bits of C source, if defined
-    # NB: some compilers fail with a "#line 0" directive, so default to 1.
-    _Imagnetic_line = 1
-    _Iqxy_line = 1
-    _Iq_line = 1
-    _form_volume_line = 1
-
+    #: Line numbers for symbols defining C code
+    lineno = None           # type: Dict[str, int]
 
     def __init__(self):
         # type: () -> None

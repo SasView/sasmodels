@@ -78,7 +78,7 @@ Iq(double q,
 }
 
 static double
-Iqxy(double qa, double qb, double qc,
+Iqabc(double qa, double qb, double qc,
           double r_minor,
           double x_core,
           double thick_rim,
@@ -113,4 +113,3 @@ Iqxy(double qa, double qb, double qc,
     const double Aq = square( vol1*dr1*si1*be1 + vol2*dr2*si1*be2 +  vol3*dr3*si2*be1);
     return 1.0e-4 * Aq*exp(-0.5*(square(qa) + square(qb) + square(qc) )*square(sigma));
 }
-

@@ -79,7 +79,7 @@ static double Iq(double q, double dnn,
 }
 
 
-static double Iqxy(double qa, double qb, double qc,
+static double Iqabc(double qa, double qb, double qc,
     double dnn, double d_factor, double radius,
     double sld, double solvent_sld)
 {

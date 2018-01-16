@@ -70,7 +70,7 @@ double Iq(double q,
 }
 
 
-double Iqxy(double qa, double qb, double qc,
+double Iqabc(double qa, double qb, double qc,
     double sld,
     double solvent_sld,
     double length_a,

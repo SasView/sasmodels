@@ -6,12 +6,19 @@ Small angle scattering models are defined by a set of kernel functions:
     *Iq(q, p1, p2, ...)* returns the scattering at q for a form with
     particular dimensions averaged over all orientations.
 
-    *Iqxy(qx, qy, p1, p2, ...)* returns the scattering at qx, qy for a form
-    with particular dimensions for a single orientation.
+    *Iqac(qab, qc, p1, p2, ...)* returns the scattering at qab, qc
+    for a rotationally symmetric form with particular dimensions.
+    qab, qc are determined from shape orientation and scattering angles.
+    This call is used if the shape has orientation parameters theta and phi.
 
-    *Imagnetic(qx, qy, result[], p1, p2, ...)* returns the scattering for the
-    polarized neutron spin states (up-up, up-down, down-up, down-down) for
-    a form with particular dimensions for a single orientation.
+    *Iqabc(qa, qb, qc, p1, p2, ...)* returns the scattering at qa, qb, qc
+    for a form with particular dimensions.  qa, qb, qc are determined from
+    shape orientation and scattering angles. This call is used if the shape
+    has orientation parameters theta, phi and psi.
+
+    *Iqxy(qx, qy, p1, p2, ...)* returns the scattering at qx, qy.  Use this
+    to create an arbitrary 2D theory function, needed for q-dependent
+    background functions and for models with non-uniform magnetism.
 
     *form_volume(p1, p2, ...)* returns the volume of the form with particular
     dimension, or 1.0 if no volume normalization is required.
@@ -30,15 +37,14 @@ set of .c files.  The model constructor will use them to create models with
 polydispersity across volume and orientation parameters, and provide
 scale and background parameters for each model.
 
-*Iq*, *Iqxy*, *Imagnetic* and *form_volume* should be stylized C-99
-functions written for OpenCL.  All functions need prototype declarations
-even if the are defined before they are used.  OpenCL does not support
-*#include* preprocessor directives, so instead the list of includes needs
-to be given as part of the metadata in the kernel module definition.
-The included files should be listed using a path relative to the kernel
-module, or if using "lib/file.c" if it is one of the standard includes
-provided with the sasmodels source.  The includes need to be listed in
-order so that functions are defined before they are used.
+C code should be stylized C-99 functions written for OpenCL. All functions
+need prototype declarations even if the are defined before they are used.
+Although OpenCL supports *#include* preprocessor directives, the list of
+includes should be given as part of the metadata in the kernel module
+definition. The included files should be listed using a path relative to the
+kernel module, or if using "lib/file.c" if it is one of the standard includes
+provided with the sasmodels source. The includes need to be listed in order
+so that functions are defined before they are used.
 
 Floating point values should be declared as *double*.  For single precision
 calculations, *double* will be replaced by *float*.  The single precision
@@ -106,11 +112,11 @@ The kernel module must set variables defining the kernel meta data:
     *VR* is a python function defining the volume ratio.  If it is not
     present, the volume ratio is 1.
 
-    *form_volume*, *Iq*, *Iqxy*, *Imagnetic* are strings containing the
-    C source code for the body of the volume, Iq, and Iqxy functions
+    *form_volume*, *Iq*, *Iqac*, *Iqabc* are strings containing
+    the C source code for the body of the volume, Iq, and Iqac functions
     respectively.  These can also be defined in the last source file.
 
-    *Iq* and *Iqxy* also be instead be python functions defining the
+    *Iq*, *Iqac*, *Iqabc* also be instead be python functions defining the
     kernel.  If they are marked as *Iq.vectorized = True* then the
     kernel is passed the entire *q* vector at once, otherwise it is
     passed values one *q* at a time.  The performance improvement of
@@ -167,6 +173,7 @@ import re
 import string
 from zlib import crc32
 from inspect import currentframe, getframeinfo
+import logging
 
 import numpy as np  # type: ignore
 
@@ -180,6 +187,8 @@ try:
 except ImportError:
     pass
 # pylint: enable=unused-import
+
+logger = logging.getLogger(__name__)
 
 # jitter projection to use in the kernel code.  See explore/jitter.py
 # for details.  To change it from a program, set generate.PROJECTION.
@@ -625,8 +634,8 @@ double %(name)s(%(pars)s) {
 }
 
 """
-def _gen_fn(name, pars, body, filename, line):
-    # type: (str, List[Parameter], str, str, int) -> str
+def _gen_fn(model_info, name, pars):
+    # type: (ModelInfo, str, List[Parameter]) -> str
     """
     Generate a function given pars and body.
 
@@ -638,9 +647,13 @@ def _gen_fn(name, pars, body, filename, line):
          }
     """
     par_decl = ', '.join(p.as_function_argument() for p in pars) if pars else 'void'
+    body = getattr(model_info, name)
+    filename = model_info.filename
+    # Note: if symbol is defined strangely in the module then default it to 1
+    lineno = model_info.lineno.get(name, 1)
     return _FN_TEMPLATE % {
         'name': name, 'pars': par_decl, 'body': body,
-        'filename': filename.replace('\\', '\\\\'), 'line': line,
+        'filename': filename.replace('\\', '\\\\'), 'line': lineno,
     }
 
 
@@ -655,36 +668,42 @@ def _call_pars(prefix, pars):
 
 
 # type in IQXY pattern could be single, float, double, long double, ...
-_IQXY_PATTERN = re.compile("^((inline|static) )? *([a-z ]+ )? *Iqxy *([(]|$)",
+_IQXY_PATTERN = re.compile(r"(^|\s)double\s+I(?P<mode>q(ab?c|xy))\s*[(]",
                            flags=re.MULTILINE)
-def _have_Iqxy(sources):
+def find_xy_mode(source):
     # type: (List[str]) -> bool
     """
-    Return true if any file defines Iqxy.
+    Return the xy mode as qa, qac, qabc or qxy.
 
     Note this is not a C parser, and so can be easily confused by
     non-standard syntax.  Also, it will incorrectly identify the following
-    as having Iqxy::
+    as having 2D models::
 
         /*
-        double Iqxy(qx, qy, ...) { ... fill this in later ... }
+        double Iqac(qab, qc, ...) { ... fill this in later ... }
         */
 
-    If you want to comment out an Iqxy function, use // on the front of the
-    line instead.
+    If you want to comment out the function, use // on the front of the
+    line::
+
+        /*
+        // double Iqac(qab, qc, ...) { ... fill this in later ... }
+        */
+
     """
-    for _path, code in sources:
-        if _IQXY_PATTERN.search(code):
-            return True
-    return False
+    for code in source:
+        m = _IQXY_PATTERN.search(code)
+        if m is not None:
+            return m.group('mode')
+    return 'qa'
 
 
-def _add_source(source, code, path):
+def _add_source(source, code, path, lineno=1):
     """
     Add a file to the list of source code chunks, tagged with path and line.
     """
     path = path.replace('\\', '\\\\')
-    source.append('#line 1 "%s"' % path)
+    source.append('#line %d "%s"' % (lineno, path))
     source.append(code)
 
 def make_source(model_info):
@@ -715,32 +734,49 @@ def make_source(model_info):
     kernel_code = load_template('kernel_iq.c')
     user_code = [(f, open(f).read()) for f in model_sources(model_info)]
 
-    # What kind of 2D model do we need?
-    xy_mode = ('qa' if not _have_Iqxy(user_code) and not isinstance(model_info.Iqxy, str)
-               else 'qac' if not partable.is_asymmetric
-               else 'qabc')
-
     # Build initial sources
     source = []
     _add_source(source, *kernel_header)
     for path, code in user_code:
         _add_source(source, code, path)
 
+    if model_info.c_code:
+        _add_source(source, model_info.c_code, model_info.filename,
+                    lineno=model_info.lineno.get('c_code', 1))
+
     # Make parameters for q, qx, qy so that we can use them in declarations
-    q, qx, qy = [Parameter(name=v) for v in ('q', 'qx', 'qy')]
+    q, qx, qy, qab, qa, qb, qc \
+        = [Parameter(name=v) for v in 'q qx qy qab qa qb qc'.split()]
     # Generate form_volume function, etc. from body only
     if isinstance(model_info.form_volume, str):
         pars = partable.form_volume_parameters
-        source.append(_gen_fn('form_volume', pars, model_info.form_volume,
-                              model_info.filename, model_info._form_volume_line))
+        source.append(_gen_fn(model_info, 'form_volume', pars))
     if isinstance(model_info.Iq, str):
         pars = [q] + partable.iq_parameters
-        source.append(_gen_fn('Iq', pars, model_info.Iq,
-                              model_info.filename, model_info._Iq_line))
+        source.append(_gen_fn(model_info, 'Iq', pars))
     if isinstance(model_info.Iqxy, str):
-        pars = [qx, qy] + partable.iqxy_parameters
-        source.append(_gen_fn('Iqxy', pars, model_info.Iqxy,
-                              model_info.filename, model_info._Iqxy_line))
+        pars = [qx, qy] + partable.iq_parameters + partable.orientation_parameters
+        source.append(_gen_fn(model_info, 'Iqxy', pars))
+    if isinstance(model_info.Iqac, str):
+        pars = [qab, qc] + partable.iq_parameters
+        source.append(_gen_fn(model_info, 'Iqac', pars))
+    if isinstance(model_info.Iqabc, str):
+        pars = [qa, qb, qc] + partable.iq_parameters
+        source.append(_gen_fn(model_info, 'Iqabc', pars))
+
+    # What kind of 2D model do we need?  Is it consistent with the parameters?
+    xy_mode = find_xy_mode(source)
+    if xy_mode == 'qabc' and not partable.is_asymmetric:
+        raise ValueError("asymmetric oriented models need to define Iqabc")
+    elif xy_mode == 'qac' and partable.is_asymmetric:
+        raise ValueError("symmetric oriented models need to define Iqac")
+    elif not partable.orientation_parameters and xy_mode in ('qac', 'qabc'):
+        raise ValueError("Unexpected function I%s for unoriented shape"%xy_mode)
+    elif partable.orientation_parameters and xy_mode not in ('qac', 'qabc'):
+        if xy_mode == 'qxy':
+            logger.warn("oriented shapes should define Iqac or Iqabc")
+        else:
+            raise ValueError("Expected function Iqac or Iqabc for oriented shape")
 
     # Define the parameter table
     lineno = getframeinfo(currentframe()).lineno + 2
@@ -766,16 +802,28 @@ def make_source(model_info):
     call_iq = "#define CALL_IQ(_q, _v) Iq(%s)" % pars
     if xy_mode == 'qabc':
         pars = ",".join(["_qa", "_qb", "_qc"] + model_refs)
-        call_iqxy = "#define CALL_IQ_ABC(_qa,_qb,_qc,_v) Iqxy(%s)" % pars
+        call_iqxy = "#define CALL_IQ_ABC(_qa,_qb,_qc,_v) Iqabc(%s)" % pars
         clear_iqxy = "#undef CALL_IQ_ABC"
     elif xy_mode == 'qac':
         pars = ",".join(["_qa", "_qc"] + model_refs)
-        call_iqxy = "#define CALL_IQ_AC(_qa,_qc,_v) Iqxy(%s)" % pars
+        call_iqxy = "#define CALL_IQ_AC(_qa,_qc,_v) Iqac(%s)" % pars
         clear_iqxy = "#undef CALL_IQ_AC"
-    else:  # xy_mode == 'qa'
+    elif xy_mode == 'qa':
         pars = ",".join(["_qa"] + model_refs)
         call_iqxy = "#define CALL_IQ_A(_qa,_v) Iq(%s)" % pars
         clear_iqxy = "#undef CALL_IQ_A"
+    elif xy_mode == 'qxy':
+        orientation_refs = _call_pars("_v.", partable.orientation_parameters)
+        pars = ",".join(["_qx", "_qy"] + model_refs + orientation_refs)
+        call_iqxy = "#define CALL_IQ_XY(_qx,_qy,_v) Iqxy(%s)" % pars
+        clear_iqxy = "#undef CALL_IQ_XY"
+        if partable.orientation_parameters:
+            call_iqxy += "\n#define HAVE_THETA"
+            clear_iqxy += "\n#undef HAVE_THETA"
+        if partable.is_asymmetric:
+            call_iqxy += "\n#define HAVE_PSI"
+            clear_iqxy += "\n#undef HAVE_PSI"
+
 
     magpars = [k-2 for k, p in enumerate(partable.call_parameters)
                if p.type == 'sld']

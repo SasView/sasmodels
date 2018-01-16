@@ -53,7 +53,7 @@ Iq(double q, double radius_minor, double r_ratio, double length,
 
 
 static double
-Iqxy(double qa, double qb, double qc,
+Iqabc(double qa, double qb, double qc,
      double radius_minor, double r_ratio, double length,
      double sld, double solvent_sld)
 {
