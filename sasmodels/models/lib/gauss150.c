@@ -1,11 +1,5 @@
-/*
- *  GaussWeights.c
- *  SANSAnalysis
- *
- *  Created by Andrew Jackson on 4/23/07.
- *  Copyright 2007 __MyCompanyName__. All rights reserved.
- *
- */
+// Created by Andrew Jackson on 4/23/07
+
  #ifdef GAUSS_N
  # undef GAUSS_N
  # undef GAUSS_Z
