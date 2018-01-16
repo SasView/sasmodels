@@ -172,11 +172,11 @@ qac_rotation(
 // returning R*[qx,qy]' = [qa,qc]'
 static double
 qac_apply(
-    QACRotation rotation,
+    QACRotation *rotation,
     double qx, double qy,
     double *qa_out, double *qc_out)
 {
-    const double dqc = rotation.R31*qx + rotation.R32*qy;
+    const double dqc = rotation->R31*qx + rotation->R32*qy;
     // Indirect calculation of qab, from qab^2 = |q|^2 - qc^2
     const double dqa = sqrt(-dqc*dqc + qx*qx + qy*qy);
 
@@ -245,13 +245,13 @@ qabc_rotation(
 // returning R*[qx,qy]' = [qa,qb,qc]'
 static double
 qabc_apply(
-    QABCRotation rotation,
+    QABCRotation *rotation,
     double qx, double qy,
     double *qa_out, double *qb_out, double *qc_out)
 {
-    *qa_out = rotation.R11*qx + rotation.R12*qy;
-    *qb_out = rotation.R21*qx + rotation.R22*qy;
-    *qc_out = rotation.R31*qx + rotation.R32*qy;
+    *qa_out = rotation->R11*qx + rotation->R12*qy;
+    *qb_out = rotation->R21*qx + rotation->R22*qy;
+    *qc_out = rotation->R31*qx + rotation->R32*qy;
 }
 
 #endif // _QABC_SECTION
@@ -452,7 +452,7 @@ After expansion, the loop struction will look like the following:
   QACRotation rotation;
   // theta, phi, dtheta, dphi are defined below in projection to avoid repeated code.
   #define BUILD_ROTATION() qac_rotation(&rotation, theta, phi, dtheta, dphi);
-  #define APPLY_ROTATION() qac_apply(rotation, qx, qy, &qa, &qc)
+  #define APPLY_ROTATION() qac_apply(&rotation, qx, qy, &qa, &qc)
   #define CALL_KERNEL() CALL_IQ_AC(qa, qc, local_values.table)
 
 #elif defined(CALL_IQ_ABC)
@@ -466,7 +466,7 @@ After expansion, the loop struction will look like the following:
   const double psi = values[details->theta_par+4];
   local_values.table.psi = 0.;
   #define BUILD_ROTATION() qabc_rotation(&rotation, theta, phi, psi, dtheta, dphi, local_values.table.psi)
-  #define APPLY_ROTATION() qabc_apply(rotation, qx, qy, &qa, &qb, &qc)
+  #define APPLY_ROTATION() qabc_apply(&rotation, qx, qy, &qa, &qb, &qc)
   #define CALL_KERNEL() CALL_IQ_ABC(qa, qb, qc, local_values.table)
 #endif
 
