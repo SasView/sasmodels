@@ -15,9 +15,9 @@
  #define GAUSS_Z Gauss150Z
  #define GAUSS_W Gauss150Wt
 
-// Note: using array size 152 so that it is a multiple of 4
 
-// Gaussians
+// Note: using array size 152 rather than 150 so that it is a multiple of 4.
+// Some OpenCL devices prefer that vectors start and end on nice boundaries.
 constant double Gauss150Z[152]={
   	-0.9998723404457334,
   	-0.9993274305065947,
@@ -169,8 +169,8 @@ constant double Gauss150Z[152]={
   	0.9983473449340834,
   	0.9993274305065947,
   	0.9998723404457334,
-  	0.,
-  	0.
+  	0., // zero padding is ignored
+  	0.  // zero padding is ignored
 };
 
 constant double Gauss150Wt[152]={
@@ -324,6 +324,6 @@ constant double Gauss150Wt[152]={
   	0.0011976474864367,
   	0.0007624720924706,
   	0.0003276086705538,
-  	0.,
-  	0.
+  	0., // zero padding is ignored
+  	0.  // zero padding is ignored
 };
