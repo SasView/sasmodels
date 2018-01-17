@@ -66,7 +66,7 @@ install:
     - cmd: conda update --yes --quiet conda
     - cmd: conda install --yes --quiet obvious-ci
     - cmd: conda install --yes --quiet numpy toolchain scipy cython cffi
-    - cmd: conda install --yes --channel conda-forge pyopencl
+    #- cmd: conda install --yes --channel conda-forge pyopencl
     - cmd: pip install bumps unittest-xml-reporting tinycc
 
 build_script:

@@ -184,6 +184,14 @@ $\Psi$-$\theta$-$\phi$ for the particle orientation and $x$-$y$-$z$
 convention with extrinsic rotations $\Psi$-$\theta$-$\phi$ for jitter, with
 jitter applied before particle orientation.
 
+When computing the orientation dispersity integral, the weights for
+the individual points depends on the map projection used to translate jitter
+angles into latitude/longitude.  The choice of projection is set by
+*sasmodels.generate.PROJECTION*, with the default *PROJECTION=1* for
+equirectangular and *PROJECTION=2* for sinusoidal.  The more complicated
+Guyou and Postel projections are not implemented. See explore.jitter.draw_mesh
+for details.
+
 For numerical integration within form factors etc. sasmodels is mostly using
 Gaussian quadrature with 20, 76 or 150 points depending on the model. It also
 makes use of symmetries such as calculating only over one quadrant rather
@@ -198,14 +206,43 @@ has a useless transformation representing $j_0(a q_a)$ as $j_0(b q_a a/b)$.
 
 Useful testing routines include:
 
-:mod:`asymint` a direct implementation of the surface integral for certain
-models to get a more trusted value for the 1D integral using a
-reimplementation of the 2D kernel in python and mpmath (which computes math
-functions to arbitrary precision). It uses $\theta$ ranging from 0 to $\pi$
-and $\phi$ ranging from 0 to $2\pi$. It perhaps would benefit from including
-the U-substitution for $\theta$.
+The *sascomp* utility is used to view and compare models with different
+parameters and calculation engines. The usual case is to simply plot a
+model that you are developing::
 
-:mod:`check1d` uses sasmodels 1D integration and compares that with a
+    python sascomp path/to/model.py
+
+Once the obvious problems are addressed, check the numerical precision
+across a variety of randomly generated inputs::
+
+    python sascomp -engine=single,double path/to/model.py -sets=10
+
+You can compare different parameter values for the same or different models.
+For example when looking along the long axis of a cylinder ($\theta=0$),
+dispersity in $\theta$ should be equivalent to dispersity in $\phi$
+when $\phi=90$::
+
+    python sascomp -2d cylinder theta=0 phi=0,90 theta_pd_type=rectangle \\
+    phi_pd_type=rectangle phi_pd=10,1 theta_pd=1,10 length=500 radius=10
+
+It turns out that they are not because the equirectangular map projection
+weights the points by $\cos(\theta)$ so $\Delta\theta$ is not identical
+to $\Delta\phi$.  Setting *PROJECTION=2* in :mod:`sasmodels.generate` helps
+somewhat.  Postel would help even more in this case, though leading
+to distortions elsewhere.  See :mod:`sasmodels.compare` for many more details.
+
+*sascomp -ngauss=n* allows you to set the number of quadrature points used
+for the 1D integration for any model.  For example, a carbon nanotube with
+length 10 $\mu$\ m and radius 1 nm is not computed correctly at high $q$::
+
+    python sascomp cylinder length=100000 radius=10 -ngauss=76,500 -double -highq
+
+Note: ticket 702 gives some forms for long rods and thin disks that may
+be used in place of the integration, depending on $q$, radius and length; if
+the cylinder model is updated with these corrections then above call will show
+no difference.
+
+*explore/check1d.py* uses sasmodels 1D integration and compares that with a
 rectangle distribution in $\theta$ and $\phi$, with $\theta$ limits set to
 $\pm 90/\sqrt(3)$ and $\phi$ limits set to $\pm 180/\sqrt(3)$ [The rectangle
 weight function uses the fact that the distribution width column is labelled
@@ -213,35 +250,59 @@ sigma to decide that the 1-$\sigma$ width of a rectangular distribution needs to
 be multiplied by $\sqrt(3)$ to get the corresponding gaussian equivalent, or
 similar reasoning.] This should rotate the sample through the entire
 $\theta$-$\phi$ surface according to the pattern that you see in jitter.py when
-you modify it to use 'rectangle' rather than 'gaussian' for its distribution
-without changing the viewing angle. In order to match the 1-D pattern for
-an arbitrary viewing angle on triaxial shapes, we need to integrate
+you use 'rectangle' rather than 'gaussian' for its distribution without
+changing the viewing angle. In order to match the 1-D pattern for an arbitrary
+viewing angle on triaxial shapes, we need to integrate
 over $\theta$, $\phi$ and $\Psi$.
 
-When computing the dispersity integral, weights are scaled by
-$|\cos(\delta \theta)|$ to account for the points in $\phi$ getting closer
-together as $\delta \theta$ increases.
-[This will probably change so that instead of adjusting the weights, we will
-adjust $\delta\theta$-$\delta\phi$ mesh so that the point density in
-$\delta\phi$ is lower at larger $\delta\theta$. The flag USE_SCALED_PHI in
-*kernel_iq.c* selects an alternative algorithm.]
+*sascomp -sphere=n* uses the same rectangular distribution as check1d to
+compute the pattern of the $q_x$-$q_y$ grid.  This ought to produce a
+spherically symmetric pattern.
 
-The integrated dispersion is computed at a set of $(qx, qy)$ points $(q
-\cos(\alpha), q \sin(\alpha))$ at some angle $\alpha$ (currently angle=0) for
-each $q$ used in the 1-D integration. The individual $q$ points should be
-equivalent to asymint rect-n when the viewing angle is set to
-$(\theta,\phi,\Psi) = (90, 0, 0)$. Such tests can help to validate that 2d
-models are consistent with 1d models.
+*explore/precision.py* investigates the accuracy of individual functions
+on the different execution platforms.  This includes the basic special
+functions as well as more complex expressions used in scattering.  In many
+cases the OpenCL function in sasmodels will use a polynomial approximation
+over part of the range to improve accuracy, as shown in::
 
-:mod:`sascomp -sphere=n` uses the same rectangular distribution as check1d to
-compute the pattern of the $q_x$-$q_y$ grid.
+    python explore/precision.py 3j1/x
 
-The :mod:`sascomp` utility can be used for 2d as well as 1d calculations to
-compare results for two sets of parameters or processor types, for example
-these two oriented cylinders here should be equivalent.
+*explore/realspace.py* allows you to set up a Monte Carlo simulation of your
+model by sampling random points within and computing the 1D and 2D scattering
+patterns.  This was used to check the core shell parallelepiped example.  This
+is similar to the general sas calculator in sasview, though it uses different
+code.
 
-:mod:`\./sascomp -2d cylinder theta=0 phi=0,90 theta_pd_type=rectangle phi_pd_type=rectangle phi_pd=10,1 theta_pd=1,10 length=500 radius=10`
+*explore/jitter.py* is for exploring different options for handling
+orientation and orientation dispersity.  It uses *explore/guyou.py* to
+generate the Guyou projection.
 
+*explore/asymint.py* is a direct implementation of the 1D integration for
+a number of different models.  It calculates the integral for a particular
+$q$ using several different integration schemes, including mpmath with 100
+bits of precision (33 digits), so you can use it to check the target values
+for the 1D model tests.  This is not a general purpose tool; you will need to
+edit the file to change the model parameters. It does not currently
+apply the $u=cos(\theta)$ substitution that many models are using
+internally so the 76-point gaussian quadrature may not match the value
+produced by the eqivalent model from sasmodels.
+
+*explore/symint.py* is for rotationally symmetric models (just cylinder for
+now), so it can compute an entire curve rather than a single $q$ point.  It
+includes code to compare the long cylinder approximation to cylinder.
+
+*explore/rpa.py* is for checking different implementations of the RPA model
+against calculations for specific blends.  This is a work in (suspended)
+progress.
+
+There are a few modules left over in *explore* that can probably be removed.
+*angular_pd.py* was an early version of *jitter.py*.  *sc.py* and *sc.c*
+was used to explore different calculations for paracrystal models; it has
+been absorbed into *asymint.py*. *transform_angles.py* translates orientation
+parameters from the SasView 3.x definition to sasmodels.
+
+*explore/angles.py* generates code for the view and jitter transformations.
+Keep this around since it may be needed if we add new projections.
 
 Testing
 -------

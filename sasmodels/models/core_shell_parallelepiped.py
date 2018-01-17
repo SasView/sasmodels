@@ -135,8 +135,10 @@ Authorship and Verification
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Converted to sasmodels by:** Miguel Gonzales **Date:** February 26, 2016
-* **Last Modified by:** Wojciech Potrzebowski **Date:** January 11, 2017
-* **Currently Under review by:** Paul Butler
+* **Last Modified by:** Paul Kienzle **Date:** October 17, 2017
+* Cross-checked against hollow rectangular prism and rectangular prism for
+  equal thickness overlapping sides, and by Monte Carlo sampling of points
+  within the shape for non-uniform, non-overlapping sides.
 """
 
 import numpy as np
