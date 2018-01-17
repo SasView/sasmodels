@@ -146,6 +146,8 @@ from __future__ import print_function
 import sys
 import ast
 from ast import NodeVisitor
+from inspect import currentframe, getframeinfo
+
 try: # for debugging, astor lets us print out the node as python
     import astor
 except ImportError:
@@ -1284,7 +1286,9 @@ def translate(functions, constants=None):
     return snippets, warnings
 
 
+C_HEADER_LINENO = getframeinfo(currentframe()).lineno + 2
 C_HEADER = """
+#line %d "%s"
 #include <stdio.h>
 #include <stdbool.h>
 #include <math.h>
@@ -1339,7 +1343,7 @@ def main():
     c_code = c_code.replace("double main()", "int main(int argc, char *argv[])")
 
     with open(fname_out, "w") as file_out:
-        file_out.write(C_HEADER)
+        file_out.write(C_HEADER%(C_HEADER_LINENO, __file__))
         file_out.write(c_code)
 
     if warnings:
