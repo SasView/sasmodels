@@ -61,8 +61,8 @@ install:
     - cmd: set "PATH=%OLDPATH%"
     - cmd: call %CONDA_INSTALL_LOCN%\Scripts\activate.bat
 
-    #- cmd: conda config --add channels conda-forge
-    #- cmd: conda config --set show_channel_urls true
+    - cmd: conda config --add channels conda-forge
+    - cmd: conda config --set show_channel_urls true
     - cmd: conda update --yes --quiet conda
     - cmd: conda install --yes --quiet obvious-ci
     - cmd: conda install --yes --quiet numpy toolchain scipy cython cffi
