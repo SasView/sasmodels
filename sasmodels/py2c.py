@@ -146,6 +146,10 @@ from __future__ import print_function
 import sys
 import ast
 from ast import NodeVisitor
+try: # for debugging, astor lets us print out the node as python
+    import astor
+except ImportError:
+    pass
 
 BINOP_SYMBOLS = {}
 BINOP_SYMBOLS[ast.Add] = '+'
@@ -192,19 +196,21 @@ def isevaluable(s):
     except Exception:
         return False
 
+def render_expression(tree):
+    generator = SourceGenerator()
+    generator.visit(tree)
+    c_code = "".join(generator.current_statement)
+    return c_code
+
 class SourceGenerator(NodeVisitor):
     """This visitor is able to transform a well formed syntax tree into python
     sourcecode.  For more details have a look at the docstring of the
     `node_to_source` function.
     """
 
-    def __init__(self, indent_with="    ", add_line_information=False,
-                 constants=None, fname=None, lineno=0):
-        self.result = []
+    def __init__(self, indent_with="    ", constants=None, fname=None, lineno=0):
         self.indent_with = indent_with
-        self.add_line_information = add_line_information
         self.indentation = 0
-        self.new_lines = 0
 
         # for C
         self.c_proc = []
@@ -214,7 +220,6 @@ class SourceGenerator(NodeVisitor):
         self.fname = fname
         self.lineno_offset = lineno
         self.warnings = []
-        self.statements = []
         self.current_statement = ""
         # TODO: use set rather than list for c_vars, ...
         self.c_vars = []
@@ -229,20 +234,14 @@ class SourceGenerator(NodeVisitor):
         self.in_subscript = False
         self.tuples = []
         self.required_functions = []
-        self.is_sequence = False
         self.visited_args = False
-
-    def write_python(self, x):
-        if self.new_lines:
-            if self.result:
-                self.result.append('\n' * self.new_lines)
-            self.result.append(self.indent_with * self.indentation)
-            self.new_lines = 0
-        self.result.append(x)
 
     def write_c(self, statement):
         # TODO: build up as a list rather than adding to string
         self.current_statement += statement
+
+    def write_python(self, x):
+        raise NotImplementedError("shouldn't be trying to write pythnon")
 
     def add_c_line(self, line):
         indentation = self.indent_with * self.indentation
@@ -266,14 +265,11 @@ class SourceGenerator(NodeVisitor):
         for arg in node.args:
             self.add_unique_var(arg.id)
 
-    def newline(self, node=None, extra=0):
-        self.new_lines = max(self.new_lines, 1 + extra)
-        if node is not None and self.add_line_information:
-            self.write_c('// line: %s' % node.lineno)
-            self.new_lines = 1
-        if self.current_statement:
-            self.statements.append(self.current_statement)
-            self.current_statement = ''
+    def track_lineno(self, node):
+        #print("newline", node, [s for s in dir(node) if not s.startswith('_')])
+        if hasattr(node, 'lineno'):
+            line = '#line %d "%s"\n' % (node.lineno+self.lineno_offset-1, self.fname)
+            self.c_proc.append(line)
 
     def body(self, statements):
         if self.current_statement:
@@ -292,7 +288,7 @@ class SourceGenerator(NodeVisitor):
         if node.orelse:
             self.unsupported(node, "for...else/while...else not supported")
 
-            self.newline()
+            self.track_lineno(node)
             self.write_c('else:')
             self.body(node.orelse)
 
@@ -326,15 +322,19 @@ class SourceGenerator(NodeVisitor):
                 self.warnings.append(w_str)
 
     def decorators(self, node):
+        if node.decorator_list:
+            self.unsupported(node.decorator_list[0])
         for decorator in node.decorator_list:
-            self.newline(decorator)
+            self.trac_lineno(decorator)
             self.write_python('@')
             self.visit(decorator)
 
     # Statements
 
     def visit_Assert(self, node):
-        self.newline(node)
+        self.unsupported(node)
+
+        self.track_lineno(node)
         self.write_c('assert ')
         self.visit(node.test)
         if node.msg is not None:
@@ -368,6 +368,7 @@ class SourceGenerator(NodeVisitor):
 
     def visit_Assign(self, node):
         self.add_current_line()
+        self.track_lineno(node)
         self.in_expr = True
         for idx, target in enumerate(node.targets): # multi assign, as in 'a = b = c = 7'
             if idx:
@@ -378,7 +379,6 @@ class SourceGenerator(NodeVisitor):
         targets = self.tuples[:]
         del self.tuples[:]
         self.write_c(' = ')
-        self.is_sequence = False
         self.visited_args = False
         self.visit(node.value)
         self.add_semi_colon()
@@ -391,14 +391,14 @@ class SourceGenerator(NodeVisitor):
             self.visit(item)
             self.add_semi_colon()
             self.add_current_line()
-        if self.is_sequence and not self.visited_args:
-            for target in node.targets:
-                if hasattr(target, 'id'):
-                    if target.id in self.c_vars and target.id not in self.c_dcl_pointers:
-                        if target.id not in self.c_dcl_pointers:
-                            self.c_dcl_pointers.append(target.id)
-                            if target.id in self.c_vars:
-                                self.c_vars.remove(target.id)
+        #if self.is_sequence and not self.visited_args:
+        #    for target in node.targets:
+        #        if hasattr(target, 'id'):
+        #            if target.id in self.c_vars and target.id not in self.c_dcl_pointers:
+        #                if target.id not in self.c_dcl_pointers:
+        #                    self.c_dcl_pointers.append(target.id)
+        #                    if target.id in self.c_vars:
+        #                        self.c_vars.remove(target.id)
         self.current_statement = ''
         self.in_expr = False
 
@@ -416,7 +416,7 @@ class SourceGenerator(NodeVisitor):
 
     def visit_ImportFrom(self, node):
         return  # import ignored
-        self.newline(node)
+        self.track_lineno(node)
         self.write_python('from %s%s import ' %('.' * node.level, node.module))
         for idx, item in enumerate(node.names):
             if idx:
@@ -425,14 +425,14 @@ class SourceGenerator(NodeVisitor):
 
     def visit_Import(self, node):
         return  # import ignored
-        self.newline(node)
+        self.track_lineno(node)
         for item in node.names:
             self.write_python('import ')
             self.visit(item)
 
     def visit_Expr(self, node):
         #self.in_expr = True
-        self.newline(node)
+        #self.track_lineno(node)
         self.generic_visit(node)
         #self.in_expr = False
 
@@ -505,9 +505,8 @@ class SourceGenerator(NodeVisitor):
         # if any warnings are generated by the function.
         warning_index = len(self.warnings)
 
-        self.newline(extra=1)
         self.decorators(node)
-        self.newline(node)
+        self.track_lineno(node)
         self.arguments = []
         self.visit(node.args)
         # for C
@@ -524,6 +523,8 @@ class SourceGenerator(NodeVisitor):
             self.warnings.insert(warning_index, "Warning in function '" + node.name + "':")
 
     def visit_ClassDef(self, node):
+        self.unsupported(node)
+
         have_args = []
         def paren_or_comma():
             if have_args:
@@ -532,9 +533,8 @@ class SourceGenerator(NodeVisitor):
                 have_args.append(True)
                 self.write_python('(')
 
-        self.newline(extra=2)
         self.decorators(node)
-        self.newline(node)
+        self.track_lineno(node)
         self.write_python('class %s' % node.name)
         for base in node.bases:
             paren_or_comma()
@@ -558,6 +558,7 @@ class SourceGenerator(NodeVisitor):
 
     def visit_If(self, node):
 
+        self.track_lineno(node)
         self.write_c('if ')
         self.in_expr = True
         self.visit(node.test)
@@ -572,7 +573,7 @@ class SourceGenerator(NodeVisitor):
             #elif hasattr(else_, 'orelse'):
             elif len(else_) == 1 and isinstance(else_[0], ast.If):
                 node = else_[0]
-                #self.newline()
+                self.track_lineno(node)
                 self.write_c('else if ')
                 self.in_expr = True
                 self.visit(node.test)
@@ -583,7 +584,7 @@ class SourceGenerator(NodeVisitor):
                 self.add_c_line('}')
                 #break
             else:
-                self.newline()
+                self.track_lineno(else_)
                 self.write_c('else {')
                 self.body(else_)
                 self.add_c_line('}')
@@ -650,7 +651,7 @@ class SourceGenerator(NodeVisitor):
             self.unsupported(node, "unsupported " + self.current_statement)
 
     def visit_While(self, node):
-        self.newline(node)
+        self.track_lineno(node)
         self.write_c('while ')
         self.visit(node.test)
         self.write_c(' {')
@@ -661,7 +662,7 @@ class SourceGenerator(NodeVisitor):
     def visit_With(self, node):
         self.unsupported(node)
 
-        self.newline(node)
+        self.track_lineno(node)
         self.write_python('with ')
         self.visit(node.context_expr)
         if node.optional_vars is not None:
@@ -671,14 +672,15 @@ class SourceGenerator(NodeVisitor):
         self.body(node.body)
 
     def visit_Pass(self, node):
-        self.newline(node)
+        #self.track_lineno(node)
         #self.write_python('pass')
+        pass
 
     def visit_Print(self, node):
         self.unsupported(node)
 
         # CRUFT: python 2.6 only
-        self.newline(node)
+        self.track_lineno(node)
         self.write_c('print ')
         want_comma = False
         if node.dest is not None:
@@ -696,7 +698,7 @@ class SourceGenerator(NodeVisitor):
     def visit_Delete(self, node):
         self.unsupported(node)
 
-        self.newline(node)
+        self.track_lineno(node)
         self.write_python('del ')
         for idx, target in enumerate(node):
             if idx:
@@ -706,7 +708,7 @@ class SourceGenerator(NodeVisitor):
     def visit_TryExcept(self, node):
         self.unsupported(node)
 
-        self.newline(node)
+        self.track_linno(node)
         self.write_python('try:')
         self.body(node.body)
         for handler in node.handlers:
@@ -715,25 +717,26 @@ class SourceGenerator(NodeVisitor):
     def visit_TryFinally(self, node):
         self.unsupported(node)
 
-        self.newline(node)
+        self.track_lineno(node)
         self.write_python('try:')
         self.body(node.body)
-        self.newline(node)
+        self.track_lineno(node)
         self.write_python('finally:')
         self.body(node.finalbody)
 
     def visit_Global(self, node):
         self.unsupported(node)
 
-        self.newline(node)
+        self.track_lineno(node)
         self.write_python('global ' + ', '.join(node.names))
 
     def visit_Nonlocal(self, node):
-        self.newline(node)
+        self.track_lineno(node)
         self.write_python('nonlocal ' + ', '.join(node.names))
 
     def visit_Return(self, node):
         self.add_current_line()
+        self.track_lineno(node)
         self.in_expr = True
         if node.value is None:
             self.write_c('return')
@@ -746,18 +749,18 @@ class SourceGenerator(NodeVisitor):
         self.current_statement = ''
 
     def visit_Break(self, node):
-        self.newline(node)
+        self.track_lineno(node)
         self.write_c('break')
 
     def visit_Continue(self, node):
-        self.newline(node)
+        self.track_lineno(node)
         self.write_c('continue')
 
     def visit_Raise(self, node):
         self.unsupported(node)
 
         # CRUFT: Python 2.6 / 3.0 compatibility
-        self.newline(node)
+        self.track_lineno(node)
         self.write_python('raise')
         if hasattr(node, 'exc') and node.exc is not None:
             self.write_python(' ')
@@ -869,14 +872,14 @@ class SourceGenerator(NodeVisitor):
 
     def visit_Str(self, node):
         s = node.s
-        s = s.replace('\\','\\\\').replace('"','\\"').replace('\n','\\n')
+        s = s.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
         self.write_c('"')
         self.write_c(s)
         self.write_c('"')
 
     def visit_Bytes(self, node):
         s = node.s
-        s = s.replace('\\','\\\\').replace('"','\\"').replace('\n','\\n')
+        s = s.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n')
         self.write_c('"')
         self.write_c(s)
         self.write_c('"')
@@ -891,26 +894,19 @@ class SourceGenerator(NodeVisitor):
             else:
                 self.visit(item)
 
-    def sequence_visit(left, right):
-        def visit(self, node):
-            self.is_sequence = True
-            s = ""
-            for idx, item in enumerate(node.elts):
-                if idx > 0 and s:
-                    s += ', '
-                if hasattr(item, 'id'):
-                    s += item.id
-                elif hasattr(item, 'n'):
-                    s += str(item.n)
-            if s:
-                self.c_vectors.append(s)
-                vec_name = "vec"  + str(len(self.c_vectors))
-                self.write_c(vec_name)
-        return visit
+    def visit_List(self, node):
+        #self.unsupported(node)
+        #print("visiting", node)
+        #print(astor.to_source(node))
+        #print(node.elts)
+        exprs = [render_expression(item) for item in node.elts]
+        if exprs:
+            self.c_vectors.append(', '.join(exprs))
+            vec_name = "vec"  + str(len(self.c_vectors))
+            self.write_c(vec_name)
 
-    visit_List = sequence_visit('[', ']')
-    visit_Set = sequence_visit('{', '}')
-    del sequence_visit
+    def visit_Set(self, node):
+        self.unsupported(node)
 
     def visit_Dict(self, node):
         self.unsupported(node)
@@ -1126,9 +1122,11 @@ class SourceGenerator(NodeVisitor):
             self.write_python(' as ' + node.asname)
 
     def visit_comprehension(self, node):
+        self.unsupported(node)
+
         self.write_c(' for ')
         self.visit(node.target)
-        self.write_C(' in ')
+        self.write_c(' in ')
         #self.write_python(' in ')
         self.visit(node.iter)
         if node.ifs:
@@ -1284,13 +1282,6 @@ def translate(functions, constants=None):
         snippets.append(c_code)
         warnings.extend(generator.warnings)
     return snippets, warnings
-
-def to_source(tree, constants=None, fname=None, lineno=0):
-    """
-    This function can convert a syntax tree into C sourcecode.
-    """
-    c_code = "".join(generator.c_proc)
-    return c_code
 
 
 C_HEADER = """
