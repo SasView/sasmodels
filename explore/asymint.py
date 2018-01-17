@@ -85,13 +85,46 @@ CONTRAST = SLD - SLD_SOLVENT
 def make_parallelepiped(a, b, c, env=NPenv):
     a, b, c = env.mpf(a), env.mpf(b), env.mpf(c)
     def Fq(qa, qb, qc):
-        siA = env.sas_sinx_x(0.5*a*qa/2)
-        siB = env.sas_sinx_x(0.5*b*qb/2)
-        siC = env.sas_sinx_x(0.5*c*qc/2)
+        siA = env.sas_sinx_x(a*qa/2)
+        siB = env.sas_sinx_x(b*qb/2)
+        siC = env.sas_sinx_x(c*qc/2)
         return siA * siB * siC
     Fq.__doc__ = "parallelepiped a=%g, b=%g c=%g"%(a, b, c)
     volume = a*b*c
     norm = CONTRAST**2*volume/10000
+    return norm, Fq
+
+def make_core_shell_parallelepiped(a, b, c, da, db, dc, slda, sldb, sldc, env=NPenv):
+    overlapping = False
+    a, b, c = env.mpf(a), env.mpf(b), env.mpf(c)
+    da, db, dc = env.mpf(da), env.mpf(db), env.mpf(dc)
+    slda, sldb, sldc = env.mpf(slda), env.mpf(sldb), env.mpf(sldc)
+    dr0 = CONTRAST
+    drA, drB, drC = slda-SLD_SOLVENT, sldb-SLD_SOLVENT, sldc-SLD_SOLVENT
+    tA, tB, tC = a + 2*da, b + 2*db, c + 2*dc
+    def Fq(qa, qb, qc):
+        siA = a*env.sas_sinx_x(a*qa/2)
+        siB = b*env.sas_sinx_x(b*qb/2)
+        siC = c*env.sas_sinx_x(c*qc/2)
+        siAt = tA*env.sas_sinx_x(tA*qa/2)
+        siBt = tB*env.sas_sinx_x(tB*qb/2)
+        siCt = tC*env.sas_sinx_x(tC*qc/2)
+        if overlapping:
+            return (dr0*siA*siB*siC
+                    + drA*(siAt-siA)*siB*siC
+                    + drB*siAt*(siBt-siB)*siC
+                    + drC*siAt*siBt*(siCt-siC))
+        else:
+            return (dr0*siA*siB*siC
+                    + drA*(siAt-siA)*siB*siC
+                    + drB*siA*(siBt-siB)*siC
+                    + drC*siA*siB*(siCt-siC))
+    Fq.__doc__ = "core-shell parallelepiped a=%g, b=%g c=%g"%(a, b, c)
+    if overlapping:
+        volume = a*b*c + 2*da*b*c + 2*tA*db*c + 2*tA*tB*dc
+    else:
+        volume = a*b*c + 2*da*b*c + 2*a*db*c + 2*a*b*dc
+    norm = 1/(volume*10000)
     return norm, Fq
 
 def make_triaxial_ellipsoid(a, b, c, env=NPenv):
@@ -183,6 +216,24 @@ elif shape == 'parallelepiped':
     A, B, C = 445, 140, 47  # integer for the sake of mpf
     NORM, KERNEL = make_parallelepiped(A, B, C)
     NORM_MP, KERNEL_MP = make_parallelepiped(A, B, C, env=MPenv)
+elif shape == 'core_shell_parallelepiped':
+    #A, B, C = 4450, 14000, 47
+    #A, B, C = 445, 140, 47  # integer for the sake of mpf
+    A, B, C = 6800, 114, 1380
+    DA, DB, DC = 2300, 21, 58
+    SLDA, SLDB, SLDC = "5", "-0.3", "11.5"
+    #A,B,C,DA,DB,DC,SLDA,SLDB,SLDC = 10,20,30,100,200,300,1,2,3
+    #SLD_SOLVENT,CONTRAST = 0, 4
+    if 1: # C shortest
+        B, C = C, B
+        DB, DC = DC, DB
+        SLDB, SLDC = SLDC, SLDB
+    elif 0: # C longest
+        A, C = C, A
+        DA, DC = DC, DA
+        SLDA, SLDC = SLDC, SLDA
+    NORM, KERNEL = make_core_shell_parallelepiped(A, B, C, DA, DB, DC, SLDA, SLDB, SLDC)
+    NORM_MP, KERNEL_MP = make_core_shell_parallelepiped(A, B, C, DA, DB, DC, SLDA, SLDB, SLDC, env=MPenv)
 elif shape == 'paracrystal':
     LATTICE = 'bcc'
     #LATTICE = 'fcc'
@@ -341,11 +392,14 @@ def main(Qstr):
     print("gauss-76", *gauss_quad_2d(Q, n=76))
     print("gauss-150", *gauss_quad_2d(Q, n=150))
     print("gauss-500", *gauss_quad_2d(Q, n=500))
+    print("gauss-1025", *gauss_quad_2d(Q, n=1025))
+    print("gauss-2049", *gauss_quad_2d(Q, n=2049))
     #gridded_2d(Q, n=2**8+1)
     gridded_2d(Q, n=2**10+1)
-    #gridded_2d(Q, n=2**13+1)
+    #gridded_2d(Q, n=2**12+1)
     #gridded_2d(Q, n=2**15+1)
-    if shape != 'paracrystal':  # adaptive forms are too slow!
+    if shape not in ('paracrystal', 'core_shell_parallelepiped'):
+        # adaptive forms on models for which the calculations are fast enough
         print("dblquad", *scipy_dblquad_2d(Q))
         print("semi-romberg-100", *semi_romberg_2d(Q, n=100))
         print("romberg", *scipy_romberg_2d(Q))

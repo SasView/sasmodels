@@ -344,7 +344,7 @@ add_function(
     ocl_function=make_ocl("return (1-sas_sinx_x(q))/q;", "sas_1msinx_x_x"),
 )
 add_function(
-    name="(1/2+(1-cos(x))/x^2-sin(x)/x)/x",
+    name="(1/2-sin(x)/x+(1-cos(x))/x^2)/x",
     mp_function=lambda x: (0.5 - mp.sin(x)/x + (1-mp.cos(x))/(x*x))/x,
     np_function=lambda x: (0.5 - np.sin(x)/x + (1-np.cos(x))/(x*x))/x,
     ocl_function=make_ocl("return (0.5-sin(q)/q + (1-cos(q))/q/q)/q;", "sas_T2"),
@@ -608,7 +608,7 @@ ALL_FUNCTIONS.discard("2J1/x:alt")
 def usage():
     names = ", ".join(sorted(ALL_FUNCTIONS))
     print("""\
-usage: precision.py [-f/a/r] [-x<range>] name...
+usage: precision.py [-f/a/r] [-x<range>] "name" ...
 where
     -f indicates that the function value should be plotted,
     -a indicates that the absolute error should be plotted,
@@ -619,7 +619,7 @@ where
       linear indicates linear stepping in [1, 1000]
       zoom indicates linear stepping in [1000, 1010]
       neg indicates linear stepping in [-100.1, 100.1]
-and name is "all [first]" or one of:
+and name is "all" or one of:
     """+names)
     sys.exit(1)
 

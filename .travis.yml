@@ -5,6 +5,7 @@ matrix:
   - os: linux
     env:
     - PY=2.7
+    - DEPLOY=True
   - os: linux
     env:
     - PY=3.6
@@ -50,6 +51,7 @@ deploy:
   script: "/bin/sh -ex ./deploy.sh"
   on:
     branch: master
+    condition: $DEPLOY = True
 notifications:
   slack:
     secure: xNAUeSu1/it/x9Q2CSg79aw1LLc7d6mLpcqSCTeKROp71RhkFf8VjJnJm/lEbKHNC8yj5H9UHrz5DmzwJzI+6oMt4NdEeS6WvGhwGY/wCt2IcJKxw0vj1DAU04qFMS041Khwclo6jIqm76DloinXvmvsS+K/nSyQkF7q4egSlwA=

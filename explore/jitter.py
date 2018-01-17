@@ -164,6 +164,7 @@ PROJECTIONS = [
     # in order of PROJECTION number; do not change without updating the
     # constants in kernel_iq.c
     'equirectangular', 'sinusoidal', 'guyou', 'azimuthal_equidistance',
+    'azimuthal_equal_area',
 ]
 def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian',
               projection='equirectangular'):

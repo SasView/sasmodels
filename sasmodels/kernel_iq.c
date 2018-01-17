@@ -30,6 +30,7 @@
 //  CALL_IQ_A(q, table) : call the Iq function with |q| for 2D data.
 //  CALL_IQ_AC(qa, qc, table) : call the Iqxy function for symmetric shapes
 //  CALL_IQ_ABC(qa, qc, table) : call the Iqxy function for asymmetric shapes
+//  CALL_IQ_XY(qx, qy, table) : call the Iqxy function for arbitrary models
 //  INVALID(table) : test if the current point is feesible to calculate.  This
 //      will be defined in the kernel definition file.
 //  PROJECTION : equirectangular=1, sinusoidal=2
@@ -172,11 +173,11 @@ qac_rotation(
 // returning R*[qx,qy]' = [qa,qc]'
 static double
 qac_apply(
-    QACRotation rotation,
+    QACRotation *rotation,
     double qx, double qy,
     double *qa_out, double *qc_out)
 {
-    const double dqc = rotation.R31*qx + rotation.R32*qy;
+    const double dqc = rotation->R31*qx + rotation->R32*qy;
     // Indirect calculation of qab, from qab^2 = |q|^2 - qc^2
     const double dqa = sqrt(-dqc*dqc + qx*qx + qy*qy);
 
@@ -245,13 +246,13 @@ qabc_rotation(
 // returning R*[qx,qy]' = [qa,qb,qc]'
 static double
 qabc_apply(
-    QABCRotation rotation,
+    QABCRotation *rotation,
     double qx, double qy,
     double *qa_out, double *qb_out, double *qc_out)
 {
-    *qa_out = rotation.R11*qx + rotation.R12*qy;
-    *qb_out = rotation.R21*qx + rotation.R22*qy;
-    *qc_out = rotation.R31*qx + rotation.R32*qy;
+    *qa_out = rotation->R11*qx + rotation->R12*qy;
+    *qb_out = rotation->R21*qx + rotation->R22*qy;
+    *qc_out = rotation->R31*qx + rotation->R32*qy;
 }
 
 #endif // _QABC_SECTION
@@ -452,7 +453,7 @@ After expansion, the loop struction will look like the following:
   QACRotation rotation;
   // theta, phi, dtheta, dphi are defined below in projection to avoid repeated code.
   #define BUILD_ROTATION() qac_rotation(&rotation, theta, phi, dtheta, dphi);
-  #define APPLY_ROTATION() qac_apply(rotation, qx, qy, &qa, &qc)
+  #define APPLY_ROTATION() qac_apply(&rotation, qx, qy, &qa, &qc)
   #define CALL_KERNEL() CALL_IQ_AC(qa, qc, local_values.table)
 
 #elif defined(CALL_IQ_ABC)
@@ -466,17 +467,54 @@ After expansion, the loop struction will look like the following:
   const double psi = values[details->theta_par+4];
   local_values.table.psi = 0.;
   #define BUILD_ROTATION() qabc_rotation(&rotation, theta, phi, psi, dtheta, dphi, local_values.table.psi)
-  #define APPLY_ROTATION() qabc_apply(rotation, qx, qy, &qa, &qb, &qc)
+  #define APPLY_ROTATION() qabc_apply(&rotation, qx, qy, &qa, &qb, &qc)
   #define CALL_KERNEL() CALL_IQ_ABC(qa, qb, qc, local_values.table)
+#elif defined(CALL_IQ_XY)
+  // direct call to qx,qy calculator
+  double qx, qy;
+  #define FETCH_Q() do { qx = q[2*q_index]; qy = q[2*q_index+1]; } while (0)
+  #define BUILD_ROTATION() do {} while(0)
+  #define APPLY_ROTATION() do {} while(0)
+  #define CALL_KERNEL() CALL_IQ_XY(qx, qy, local_values.table)
 #endif
 
-// Doing jitter projection code outside the previous if block so that we don't
-// need to repeat the identical logic in the IQ_AC and IQ_ABC branches.  This
-// will become more important if we implement more projections, or more
-// complicated projections.
-#if defined(CALL_IQ) || defined(CALL_IQ_A)
+// Define APPLY_PROJECTION depending on model symmetries. We do this outside
+// the previous if block so that we don't need to repeat the identical
+// logic in the IQ_AC and IQ_ABC branches.  This will become more important
+// if we implement more projections, or more complicated projections.
+#if defined(CALL_IQ) || defined(CALL_IQ_A)  // no orientation
   #define APPLY_PROJECTION() const double weight=weight0
-#else // !spherosymmetric projection
+#elif defined(CALL_IQ_XY) // pass orientation to the model
+  // CRUFT: support oriented model which define Iqxy rather than Iqac or Iqabc
+  // Need to plug the values for the orientation angles back into parameter
+  // table in case they were overridden by the orientation offset.  This
+  // means that orientation dispersity will not work for these models, but
+  // it was broken anyway, so no matter.  Still want to provide Iqxy in case
+  // the user model wants full control of orientation/magnetism.
+  #if defined(HAVE_PSI)
+    const double theta = values[details->theta_par+2];
+    const double phi = values[details->theta_par+3];
+    const double psi = values[details->theta_par+4];
+    double weight;
+    #define APPLY_PROJECTION() do { \
+      local_values.table.theta = theta; \
+      local_values.table.phi = phi; \
+      local_values.table.psi = psi; \
+      weight=weight0; \
+    } while (0)
+  #elif defined(HAVE_THETA)
+    const double theta = values[details->theta_par+2];
+    const double phi = values[details->theta_par+3];
+    double weight;
+    #define APPLY_PROJECTION() do { \
+      local_values.table.theta = theta; \
+      local_values.table.phi = phi; \
+      weight=weight0; \
+    } while (0)
+  #else
+    #define APPLY_PROJECTION() const double weight=weight0
+  #endif
+#else // apply jitter and view before calling the model
   // Grab the "view" angles (theta, phi, psi) from the initial parameter table.
   const double theta = values[details->theta_par+2];
   const double phi = values[details->theta_par+3];
@@ -487,13 +525,13 @@ After expansion, the loop struction will look like the following:
   // dispersity values and copied to the local parameter table as
   // we go through the mesh.
   double dtheta, dphi, weight;
-  #if PROJECTION == 1
+  #if PROJECTION == 1 // equirectangular
     #define APPLY_PROJECTION() do { \
       dtheta = local_values.table.theta; \
       dphi = local_values.table.phi; \
       weight = fabs(cos(dtheta*M_PI_180)) * weight0; \
     } while (0)
-  #elif PROJECTION == 2
+  #elif PROJECTION == 2 // sinusoidal
     #define APPLY_PROJECTION() do { \
       dtheta = local_values.table.theta; \
       dphi = local_values.table.phi; \
@@ -503,7 +541,7 @@ After expansion, the loop struction will look like the following:
       if (fabs(dphi) >= 180.) weight = 0.; \
     } while (0)
   #endif
-#endif // !spherosymmetric projection
+#endif // done defining APPLY_PROJECTION
 
 // ** define looping macros **
 

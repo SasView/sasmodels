@@ -11,8 +11,6 @@ parameters are defined here ($a$, $b/a$, $c/a$ instead of $a$, $b$, $c$)
 which allows use of polydispersity with this model while keeping the shape of
 the prism (e.g. setting $b/a = 1$ and $c/a = 1$ and applying polydispersity
 to *a* will generate a distribution of cubes of different sizes).
-Note also that, contrary to :ref:`parallelepiped`, it does not compute
-the 2D scattering.
 
 
 Definition
@@ -25,8 +23,7 @@ Note also that the angle definitions used in the code and the present
 documentation correspond to those used in (Nayuk, 2012) (see Fig. 1 of
 that reference), with $\theta$ corresponding to $\alpha$ in that paper,
 and not to the usual convention used for example in the
-:ref:`parallelepiped` model. As the present model does not compute
-the 2D scattering, this has no further consequences.
+:ref:`parallelepiped` model.
 
 In this model the scattering from a massive parallelepiped with an
 orientation with respect to the scattering vector given by $\theta$
@@ -64,7 +61,28 @@ is the scattering length of the parallelepiped, $\rho_\text{solvent}$
 is the scattering length of the solvent, and (if the data are in absolute
 units) *scale* represents the volume fraction (which is unitless).
 
-**The 2D scattering intensity is not computed by this model.**
+For 2d data the orientation of the particle is required, described using
+angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further details
+of the calculation and angular dispersions see :ref:`orientation` .
+The angle $\Psi$ is the rotational angle around the long *C* axis. For example,
+$\Psi = 0$ when the *B* axis is parallel to the *x*-axis of the detector.
+
+For 2d, constraints must be applied during fitting to ensure that the inequality
+$A < B < C$ is not violated, and hence the correct definition of angles is preserved. The calculation will not report an error,
+but the results may be not correct.
+
+.. figure:: img/parallelepiped_angle_definition.png
+
+    Definition of the angles for oriented core-shell parallelepipeds.
+    Note that rotation $\theta$, initially in the $xz$ plane, is carried out first, then
+    rotation $\phi$ about the $z$ axis, finally rotation $\Psi$ is now around the axis of the cylinder.
+    The neutron or X-ray beam is along the $z$ axis.
+
+.. figure:: img/parallelepiped_angle_projection.png
+
+    Examples of the angles for oriented rectangular prisms against the
+    detector plane.
+
 
 
 Validation
@@ -107,6 +125,12 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
                "Ratio sides b/a"],
               ["c2a_ratio", "", 1, [0, inf], "volume",
                "Ratio sides c/a"],
+              ["theta", "degrees", 0, [-360, 360], "orientation",
+               "c axis to beam angle"],
+              ["phi", "degrees", 0, [-360, 360], "orientation",
+               "rotation about beam"],
+              ["psi", "degrees", 0, [-360, 360], "orientation",
+               "rotation about c axis"],
              ]
 
 source = ["lib/gauss76.c", "rectangular_prism.c"]

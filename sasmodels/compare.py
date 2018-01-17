@@ -41,7 +41,7 @@ from . import core
 from . import kerneldll
 from .data import plot_theory, empty_data1D, empty_data2D, load_data
 from .direct_model import DirectModel, get_mesh
-from .generate import FLOAT_RE
+from .generate import FLOAT_RE, set_integration_size
 from .weights import plot_weights
 
 # pylint: disable=unused-import
@@ -91,6 +91,7 @@ Options (* for default):
     -magnetic/-nonmagnetic* suppress magnetism
     -accuracy=Low accuracy of the resolution calculation Low, Mid, High, Xhigh
     -neval=1 sets the number of evals for more accurate timing
+    -ngauss=0 overrides the number of points in the 1-D gaussian quadrature
 
     === precision options ===
     -engine=default uses the default calcution precision
@@ -692,7 +693,7 @@ def make_data(opts):
         q = np.linspace(-qmax, qmax, nq)  # type: np.ndarray
         data = empty_data2D(q, resolution=res)
         data.accuracy = opts['accuracy']
-        set_beam_stop(data, 0.0004)
+        set_beam_stop(data, qmin)
         index = ~data.mask
     else:
         if opts['view'] == 'log' and not opts['zero']:
@@ -705,7 +706,7 @@ def make_data(opts):
         index = slice(None, None)
     return data, index
 
-def make_engine(model_info, data, dtype, cutoff):
+def make_engine(model_info, data, dtype, cutoff, ngauss=0):
     # type: (ModelInfo, Data, str, float) -> Calculator
     """
     Generate the appropriate calculation engine for the given datatype.
@@ -713,6 +714,9 @@ def make_engine(model_info, data, dtype, cutoff):
     Datatypes with '!' appended are evaluated using external C DLLs rather
     than OpenCL.
     """
+    if ngauss:
+        set_integration_size(model_info, ngauss)
+
     if dtype is None or not dtype.endswith('!'):
         return eval_opencl(model_info, data, dtype=dtype, cutoff=cutoff)
     else:
@@ -953,7 +957,7 @@ OPTIONS = [
     # Calculation options
     'poly', 'mono', 'cutoff=',
     'magnetic', 'nonmagnetic',
-    'accuracy=',
+    'accuracy=', 'ngauss=',
     'neval=',  # for timing...
 
     # Precision options
@@ -1088,6 +1092,7 @@ def parse_opts(argv):
         'count'     : '1',
         'show_weights' : False,
         'sphere'    : 0,
+        'ngauss'    : '0',
     }
     for arg in flags:
         if arg == '-noplot':    opts['plot'] = False
@@ -1114,6 +1119,7 @@ def parse_opts(argv):
         elif arg.startswith('-data='):     opts['datafile'] = arg[6:]
         elif arg.startswith('-engine='):   opts['engine'] = arg[8:]
         elif arg.startswith('-neval='):    opts['count'] = arg[7:]
+        elif arg.startswith('-ngauss='):   opts['ngauss'] = arg[8:]
         elif arg.startswith('-random='):
             opts['seed'] = int(arg[8:])
             opts['sets'] = 0
@@ -1168,6 +1174,7 @@ def parse_opts(argv):
         data, _ = make_data(opts)
 
     comparison = any(PAR_SPLIT in v for v in values)
+
     if PAR_SPLIT in name:
         names = name.split(PAR_SPLIT, 2)
         comparison = True
@@ -1179,6 +1186,12 @@ def parse_opts(argv):
         print(str(exc))
         print("Could not find model; use one of:\n    " + models)
         return None
+
+    if PAR_SPLIT in opts['ngauss']:
+        opts['ngauss'] = [int(k) for k in opts['ngauss'].split(PAR_SPLIT, 2)]
+        comparison = True
+    else:
+        opts['ngauss'] = [int(opts['ngauss'])]*2
 
     if PAR_SPLIT in opts['engine']:
         opts['engine'] = opts['engine'].split(PAR_SPLIT, 2)
@@ -1198,9 +1211,11 @@ def parse_opts(argv):
     else:
         opts['cutoff'] = [float(opts['cutoff'])]*2
 
-    base = make_engine(model_info[0], data, opts['engine'][0], opts['cutoff'][0])
+    base = make_engine(model_info[0], data, opts['engine'][0],
+                       opts['cutoff'][0], opts['ngauss'][0])
     if comparison:
-        comp = make_engine(model_info[1], data, opts['engine'][1], opts['cutoff'][1])
+        comp = make_engine(model_info[1], data, opts['engine'][1],
+                           opts['cutoff'][1], opts['ngauss'][1])
     else:
         comp = None
 
@@ -1273,7 +1288,7 @@ def parse_pars(opts, maxdim=np.inf):
         limit_dimensions(model_info, pars, maxdim)
         if model_info != model_info2:
             pars2 = randomize_pars(model_info2, pars2)
-            limit_dimensions(model_info, pars2, maxdim)
+            limit_dimensions(model_info2, pars2, maxdim)
             # Share values for parameters with the same name
             for k, v in pars.items():
                 if k in pars2:
