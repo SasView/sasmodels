@@ -63,8 +63,8 @@ install:
 
     - cmd: conda config --add channels conda-forge
     - cmd: conda config --set show_channel_urls true
-    - cmd: conda update --yes --quiet conda
-    - cmd: conda install --yes --quiet obvious-ci
+    #- cmd: conda update --yes --quiet conda
+    #- cmd: conda install --yes --quiet obvious-ci
     - cmd: conda install --yes --quiet numpy toolchain scipy cython cffi
     - cmd: conda install --yes --channel conda-forge pyopencl
     - cmd: pip install bumps unittest-xml-reporting tinycc
@@ -75,4 +75,5 @@ build_script:
 
 test_script:
     # Run the project tests
-    - "%CMD_IN_ENV% python -m sasmodels.model_test dll all"
+    #- "%CMD_IN_ENV% python -m sasmodels.model_test dll all"
+    - python -m sasmodels.model_test dll all
