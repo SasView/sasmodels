@@ -22,7 +22,7 @@ environment:
 #      CONDA_INSTALL_LOCN: "C:\\Miniconda3"
     - TARGET_ARCH: "x86"
       CONDA_PY: "35"
-      PY_CONDITION: "python >=3.5"
+      PY_CONDITION: "python >=3.5,<3.6"
       CONDA_INSTALL_LOCN: "C:\\Miniconda35"
     - TARGET_ARCH: "x64"
       CONDA_PY: "27"
@@ -34,7 +34,7 @@ environment:
 #      CONDA_INSTALL_LOCN: "C:\\Miniconda3-x64"
     - TARGET_ARCH: "x64"
       CONDA_PY: "35"
-      PY_CONDITION: "python >=3.5"
+      PY_CONDITION: "python >=3.5,<3.6"
       CONDA_INSTALL_LOCN: "C:\\Miniconda35-x64"
 
 # We always use a 64-bit machine, but can build x86 distributions
@@ -48,7 +48,7 @@ install:
     - cmd: set CONDA_NPY=19
 
     # Remove cygwin (and therefore the git that comes with it).
-    # 2018-01-19 PAK: probably irrelevant since we already pulled the repo
+    # 2018-01-19 PAK: irrelevant since we already pulled the repo
     #- cmd: rmdir C:\cygwin /s /q
 
     # Set the conda path; would be nice to do this
