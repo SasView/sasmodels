@@ -52,7 +52,7 @@ install:
     #- cmd: rmdir C:\cygwin /s /q
 
     # Set the conda path; would be nice to do this
-    - cmd: path %CONDA_INSTALL_LOCN%\\Scripts;%PATH%
+    - cmd: path %CONDA_INSTALL_LOCN%\Scripts;%PATH%
 
     # Use the pre-installed Miniconda for the desired arch
     #
