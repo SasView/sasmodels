@@ -4,7 +4,7 @@ environment:
   # /E:ON and /V:ON options are not enabled in the batch script interpreter
   # See: http://stackoverflow.com/a/13751649/163740
   # 2018-01-19 PAK: probably irrelevant now that we are using tinycc rather than msvc
-  CMD_IN_ENV: "cmd /E:ON /V:ON /C obvci_appveyor_python_build_env.cmd"
+  #CMD_IN_ENV: "cmd /E:ON /V:ON /C obvci_appveyor_python_build_env.cmd"
 
   # Workaround for https://github.com/conda/conda-build/issues/636
   PYTHONIOENCODING: "UTF-8"
@@ -62,19 +62,27 @@ install:
     # so that we can update it. Then we remove it so that
     # we can do a proper activation.
     - cmd: conda update --yes --quiet conda python
-    - cmd: call "%CONDA_INSTALL_LOCN%\Scripts\activate.bat"
-    - cmd: conda config --add channels conda-forge
-    - cmd: conda config --set show_channel_urls true
-    - cmd: conda install --yes --quiet obvious-ci
-    - cmd: conda install --yes --quiet numpy toolchain scipy cython cffi
-    - cmd: conda install --yes --channel conda-forge pyopencl
+    - cmd: call %CONDA_INSTALL_LOCN%\Scripts\activate.bat
+    #- cmd: conda config --add channels conda-forge
+    #- cmd: conda config --set show_channel_urls true
+    #- cmd: conda install --yes --quiet obvious-ci
+    # 2018-01-19 PAK: skipping toolchain cython and cffi (these were for pyopencl?)
+    - cmd: conda install --yes --quiet numpy scipy
+    # 2018-01-19 PAK: skipping pyopencl; this would be needed for deploy but maybe not for test
+    #- cmd: conda install --yes --channel conda-forge pyopencl
     # 2018-01-19 PAK: 3rd party packages might need msvc, so %CMD_IN_ENV% may be needed for pip
     - cmd: pip install bumps unittest-xml-reporting tinycc
 
 build_script:
     # Build the project
-    - "%CMD_IN_ENV% python setup.py build"
+    # 2018-01-19 PAK: maybe need one of this if using msvc?
+    #- "%CMD_IN_ENV% python setup.py build"
+    #- cmd /E:ON /V:ON /C obvci_appveyor_python_build_env.cmd python setup.py build
+    - python setup.py build
 
 test_script:
     # Run the project tests
-    - "%CMD_IN_ENV% python -m sasmodels.model_test dll all"
+    # 2018-01-19 PAK: maybe need one of this if using msvc?
+    #- "%CMD_IN_ENV% python -m sasmodels.model_test dll all"
+    #- cmd /E:ON /V:ON /C obvci_appveyor_python_build_env.cmd python -m sasmoels.model_test dll all
+    - python -m sasmodels.model_test dll all
