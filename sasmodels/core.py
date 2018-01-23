@@ -158,11 +158,6 @@ def load_model_info(model_string):
             else:
                 results.append(load_model_info(term))
         return mixture.make_mixture_info(results, operation='+')
-        # parts = model_string.split('@')
-        # if len(parts) != 2:
-        #     raise ValueError("Use P@S to apply a structure factor S to model P")
-        # P_info, Q_info = [load_model_info(part) for part in parts]
-        # return product.make_product_info(P_info, Q_info)
 
     product_parts = []
     addition_parts = []
