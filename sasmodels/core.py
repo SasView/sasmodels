@@ -151,14 +151,14 @@ def load_model_info(model_string):
         parts = [load_model_info(part)
                  for part in model_string.split("+")]
         return mixture.make_mixture_info(parts, operation='+')
-    elif "@" in model_string:
-        p_info, q_info = [load_model_info(part)
-                          for part in model_string.split("@")]
-        return product.make_product_info(p_info, q_info)
     elif "*" in model_string:
         parts = [load_model_info(part)
                  for part in model_string.split("*")]
         return mixture.make_mixture_info(parts, operation='*')
+    elif "@" in model_string:
+        p_info, q_info = [load_model_info(part)
+                          for part in model_string.split("@")]
+        return product.make_product_info(p_info, q_info)
     # We are now dealing with a pure model
     elif "custom." in model_string:
         pattern = "custom.([A-Za-z0-9_-]+)"
