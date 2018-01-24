@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 """
-Application to explore the difference between sasview 3.x orientation
-dispersity and possible replacement algorithms.
+Jitter Explorer
+===============
+
+Application to explore orientation angle and angular dispersity.
 """
 from __future__ import division, print_function
 
@@ -617,7 +619,17 @@ def run(model_name='parallelepiped', size=(10, 40, 100),
     """
     Show an interactive orientation and jitter demo.
 
-    *model_name* is one of the models available in :func:`select_model`.
+    *model_name* is one of: sphere, cylinder, ellipsoid, parallelepiped,
+    triaxial_ellipsoid, or bcc_paracrystal.
+
+    *size* gives the dimensions (a, b, c) of the shape.
+
+    *dist* is the type of dispersition: gaussian, rectangle, or uniform.
+
+    *mesh* is the number of points in the dispersion mesh.
+
+    *projection* is the map projection to use for the mesh: equirectangular,
+    sinusoidal, guyou, azimuthal_equidistance, or azimuthal_equal_area.
     """
     # projection number according to 1-order position in list, but
     # only 1 and 2 are implemented so far.

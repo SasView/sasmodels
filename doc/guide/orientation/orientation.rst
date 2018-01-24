@@ -52,6 +52,13 @@ $a$-$b$-$c$ axes of the particle, with roll angle $\Psi$ about the $c$-axis,
 yaw angle $\theta$ about the $b$-axis and pitch angle $\phi$ about the
 $a$-axis.
 
+You can explore the view and jitter angles interactively using
+:func:`sasmodels.jitter.run`.  Enter the following into the python
+interpreter::
+
+    from sasmodels import jitter
+    jitter.run()
+
 More formally, starting with axes $a$-$b$-$c$ of the particle aligned
 with axes $x$-$y$-$z$ of the laboratory frame, the orientation dispersity
 is applied first, using the

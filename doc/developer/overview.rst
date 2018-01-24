@@ -189,7 +189,7 @@ the individual points depends on the map projection used to translate jitter
 angles into latitude/longitude.  The choice of projection is set by
 *sasmodels.generate.PROJECTION*, with the default *PROJECTION=1* for
 equirectangular and *PROJECTION=2* for sinusoidal.  The more complicated
-Guyou and Postel projections are not implemented. See explore.jitter.draw_mesh
+Guyou and Postel projections are not implemented. See jitter.draw_mesh
 for details.
 
 For numerical integration within form factors etc. sasmodels is mostly using
@@ -273,8 +273,8 @@ patterns.  This was used to check the core shell parallelepiped example.  This
 is similar to the general sas calculator in sasview, though it uses different
 code.
 
-*explore/jitter.py* is for exploring different options for handling
-orientation and orientation dispersity.  It uses *explore/guyou.py* to
+*sasmodels/jitter.py* is for exploring different options for handling
+orientation and orientation dispersity.  It uses *sasmodels/guyou.py* to
 generate the Guyou projection.
 
 *explore/asymint.py* is a direct implementation of the 1D integration for
