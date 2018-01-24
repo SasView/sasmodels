@@ -123,7 +123,7 @@ def draw_ellipsoid(ax, size, view, jitter, steps=25, alpha=1):
 
 def draw_parallelepiped(ax, size, view, jitter, steps=None, alpha=1):
     """Draw a parallelepiped."""
-    a,b,c = size
+    a, b, c = size
     x = a*np.array([ 1,-1, 1,-1, 1,-1, 1,-1])
     y = b*np.array([ 1, 1,-1,-1, 1, 1,-1,-1])
     z = c*np.array([ 1, 1, 1, 1,-1,-1,-1,-1])
@@ -140,6 +140,16 @@ def draw_parallelepiped(ax, size, view, jitter, steps=None, alpha=1):
 
     x, y, z = transform_xyz(view, jitter, x, y, z)
     ax.plot_trisurf(x, y, triangles=tri, Z=z, color='w', alpha=alpha)
+
+    # Draw pink face on box.
+    # Since I can't control face color, instead draw a thin box situated just
+    # in front of the "a+" face.
+    if 1:
+        x = a*np.array([ 1,-1, 1,-1, 1,-1, 1,-1])
+        y = b*np.array([ 1, 1,-1,-1, 1, 1,-1,-1])
+        z = c*np.array([ 1, 1, 1, 1,-1,-1,-1,-1])
+        x, y, z = transform_xyz(view, jitter, abs(x)*1.05, y, z)
+        ax.plot_trisurf(x, y, triangles=tri, Z=z, color=[1,0.6,0.6], alpha=alpha)
 
     draw_labels(ax, view, jitter, [
          ('c+', [ 0, 0, c], [ 1, 0, 0]),
