@@ -147,49 +147,33 @@ def load_model_info(model_string):
     This returns a handle to the module defining the model.  This can be
     used with functions in generate to build the docs or extract model info.
     """
-    if '@' in model_string:
-        parts = model_string.split('@')
-        if len(parts) != 2:
-            raise ValueError("Use P@S to apply a structure factor S to model P")
-        P_info, Q_info = [load_model_info(part) for part in parts]
-        return product.make_product_info(P_info, Q_info)
-
-    product_parts = []
-    addition_parts = []
-
-    addition_parts_names = model_string.split('+')
-    if len(addition_parts_names) >= 2:
-        addition_parts = [load_model_info(part) for part in addition_parts_names]
-    elif len(addition_parts_names) == 1:
-        product_parts_names = model_string.split('*')
-        if len(product_parts_names) >= 2:
-            product_parts = [load_model_info(part) for part in product_parts_names]
-        elif len(product_parts_names) == 1:
-            if "custom." in product_parts_names[0]:
-                # Extract ModelName from "custom.ModelName"
-                pattern = "custom.([A-Za-z0-9_-]+)"
-                result = re.match(pattern, product_parts_names[0])
-                if result is None:
-                    raise ValueError("Model name in invalid format: " + product_parts_names[0])
-                model_name = result.group(1)
-                # Use ModelName to find the path to the custom model file
-                model_path = joinpath(CUSTOM_MODEL_PATH, model_name + ".py")
-                if not os.path.isfile(model_path):
-                    raise ValueError("The model file {} doesn't exist".format(model_path))
-                kernel_module = custom.load_custom_kernel_module(model_path)
-                return modelinfo.make_model_info(kernel_module)
-            # Model is a core model
-            kernel_module = generate.load_kernel_module(product_parts_names[0])
-            return modelinfo.make_model_info(kernel_module)
-
-    model = None
-    if len(product_parts) > 1:
-        model = mixture.make_mixture_info(product_parts, operation='*')
-    if len(addition_parts) > 1:
-        if model is not None:
-            addition_parts.append(model)
-        model = mixture.make_mixture_info(addition_parts, operation='+')
-    return model
+    if "+" in model_string:
+        parts = [load_model_info(part)
+                 for part in model_string.split("+")]
+        return mixture.make_mixture_info(parts, operation='+')
+    elif "*" in model_string:
+        parts = [load_model_info(part)
+                 for part in model_string.split("*")]
+        return mixture.make_mixture_info(parts, operation='*')
+    elif "@" in model_string:
+        p_info, q_info = [load_model_info(part)
+                          for part in model_string.split("@")]
+        return product.make_product_info(p_info, q_info)
+    # We are now dealing with a pure model
+    elif "custom." in model_string:
+        pattern = "custom.([A-Za-z0-9_-]+)"
+        result = re.match(pattern, model_string)
+        if result is None:
+            raise ValueError("Model name in invalid format: " + model_string)
+        model_name = result.group(1)
+        # Use ModelName to find the path to the custom model file
+        model_path = joinpath(CUSTOM_MODEL_PATH, model_name + ".py")
+        if not os.path.isfile(model_path):
+            raise ValueError("The model file {} doesn't exist".format(model_path))
+        kernel_module = custom.load_custom_kernel_module(model_path)
+        return modelinfo.make_model_info(kernel_module)
+    kernel_module = generate.load_kernel_module(model_string)
+    return modelinfo.make_model_info(kernel_module)
 
 
 def build_model(model_info, dtype=None, platform="ocl"):
@@ -334,6 +318,56 @@ def list_models_main():
     import sys
     kind = sys.argv[1] if len(sys.argv) > 1 else "all"
     print("\n".join(list_models(kind)))
+
+def test_load():
+    # type: () -> None
+    """Check that model load works"""
+    def test_models(fst, snd):
+        """Confirm that two models produce the same parameters"""
+        fst = load_model(fst)
+        snd = load_model(snd)
+        # Remove the upper case characters frin the parameters, since
+        # they lasndel the order of events and we specfically are
+        # changin that aspect
+        fst = [[x for x in p.name if x == x.lower()] for p in fst.info.parameters.kernel_parameters]
+        snd = [[x for x in p.name if x == x.lower()] for p in snd.info.parameters.kernel_parameters]
+        assert sorted(fst) == sorted(snd), "{} != {}".format(fst, snd)
+
+
+    test_models(
+        "cylinder+sphere",
+        "sphere+cylinder")
+    test_models(
+        "cylinder*sphere",
+        "sphere*cylinder")
+    test_models(
+        "cylinder@hardsphere*sphere",
+        "sphere*cylinder@hardsphere")
+    test_models(
+        "barbell+sphere*cylinder@hardsphere",
+        "sphere*cylinder@hardsphere+barbell")
+    test_models(
+        "barbell+cylinder@hardsphere*sphere",
+        "cylinder@hardsphere*sphere+barbell")
+    test_models(
+        "barbell+sphere*cylinder@hardsphere",
+        "barbell+cylinder@hardsphere*sphere")
+    test_models(
+        "sphere*cylinder@hardsphere+barbell",
+        "cylinder@hardsphere*sphere+barbell")
+    test_models(
+        "barbell+sphere*cylinder@hardsphere",
+        "cylinder@hardsphere*sphere+barbell")
+    test_models(
+        "barbell+cylinder@hardsphere*sphere",
+        "sphere*cylinder@hardsphere+barbell")
+
+    #Test the the model produces the parameters that we would expect
+    model = load_model("cylinder@hardsphere*sphere")
+    actual = [p.name for p in model.info.parameters.kernel_parameters]
+    target = ("sld sld_solvent radius length theta phi volfraction"
+              " A_sld A_sld_solvent A_radius").split()
+    assert target == actual, "%s != %s"%(target, actual)
 
 if __name__ == "__main__":
     list_models_main()
