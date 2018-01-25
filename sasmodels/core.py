@@ -319,5 +319,55 @@ def list_models_main():
     kind = sys.argv[1] if len(sys.argv) > 1 else "all"
     print("\n".join(list_models(kind)))
 
+def test_load():
+    # type: () -> None
+    """Check that model load works"""
+    def test_models(fst, snd):
+        """Confirm that two models produce the same parameters"""
+        fst = load_model(fst)
+        snd = load_model(snd)
+        # Remove the upper case characters frin the parameters, since
+        # they lasndel the order of events and we specfically are
+        # changin that aspect
+        fst = [[x for x in p.name if x == x.lower()] for p in fst.info.parameters.kernel_parameters]
+        snd = [[x for x in p.name if x == x.lower()] for p in snd.info.parameters.kernel_parameters]
+        assert sorted(fst) == sorted(snd), "{} != {}".format(fst, snd)
+
+
+    test_models(
+        "cylinder+sphere",
+        "sphere+cylinder")
+    test_models(
+        "cylinder*sphere",
+        "sphere*cylinder")
+    test_models(
+        "cylinder@hardsphere*sphere",
+        "sphere*cylinder@hardsphere")
+    test_models(
+        "barbell+sphere*cylinder@hardsphere",
+        "sphere*cylinder@hardsphere+barbell")
+    test_models(
+        "barbell+cylinder@hardsphere*sphere",
+        "cylinder@hardsphere*sphere+barbell")
+    test_models(
+        "barbell+sphere*cylinder@hardsphere",
+        "barbell+cylinder@hardsphere*sphere")
+    test_models(
+        "sphere*cylinder@hardsphere+barbell",
+        "cylinder@hardsphere*sphere+barbell")
+    test_models(
+        "barbell+sphere*cylinder@hardsphere",
+        "cylinder@hardsphere*sphere+barbell")
+    test_models(
+        "barbell+cylinder@hardsphere*sphere",
+        "sphere*cylinder@hardsphere+barbell")
+
+    #Test the the model produces the parameters that we would expect
+    model = load_model("cylinder@hardsphere*sphere")
+    actual = [p.name for p in model.info.parameters.kernel_parameters]
+    target = ("sld sld_solvent radius length theta phi volfraction"
+              " A_sld A_sld_solvent A_radius").split()
+    assert target == actual, "%s != %s"%(target, actual)
+
 if __name__ == "__main__":
     list_models_main()
