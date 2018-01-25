@@ -232,7 +232,7 @@ class MixtureParts(object):
         self.mag_index = self.spin_index + 3
         return self
 
-    def next(self):
+    def __next__(self):
         # type: () -> Tuple[List[Callable], CallDetails, np.ndarray]
         if self.part_num >= len(self.parts):
             raise StopIteration()
@@ -250,6 +250,9 @@ class MixtureParts(object):
         self.mag_index += 3 * len(info.parameters.magnetism_index)
 
         return kernel, call_details, values
+
+    # CRUFT: py2 support
+    next = __next__
 
     def _part_details(self, info, par_index):
         # type: (ModelInfo, int) -> CallDetails
