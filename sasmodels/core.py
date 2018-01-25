@@ -148,11 +148,16 @@ def load_model_info(model_string):
     used with functions in generate to build the docs or extract model info.
     """
     if '@' in model_string:
-        parts = model_string.split('@')
-        if len(parts) != 2:
-            raise ValueError("Use P@S to apply a structure factor S to model P")
-        P_info, Q_info = [load_model_info(part) for part in parts]
-        return product.make_product_info(P_info, Q_info)
+        terms = model_string.split('+')
+        results = []
+        for term in terms:
+            if '@' in term:
+                p_info, q_info = [load_model_info(part)
+                                  for part in term.split("@")]
+                results.append(product.make_product_info(p_info, q_info))
+            else:
+                results.append(load_model_info(term))
+        return mixture.make_mixture_info(results, operation='+')
 
     product_parts = []
     addition_parts = []
