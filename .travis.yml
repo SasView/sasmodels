@@ -44,7 +44,7 @@ install:
 script:
 - python --version
 #- python -m sasmodels.model_test -v dll all
-- python -m pytest -v
+- python -m pytest -v --cache-clear
 before_deploy:
 - echo -e "Host danse.chem.utk.edu\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 deploy:

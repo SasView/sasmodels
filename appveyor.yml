@@ -88,4 +88,4 @@ test_script:
     #- cmd /E:ON /V:ON /C obvci_appveyor_python_build_env.cmd python -m sasmoels.model_test dll all
     #- python -m sasmodels.model_test dll all
     #- nosetests -v sasmodels/*.py
-    - python -m pytest -v
+    - python -m pytest -v --cache-clear
