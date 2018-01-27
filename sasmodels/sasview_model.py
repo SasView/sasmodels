@@ -858,7 +858,7 @@ def test_model_list():
 def test_old_name():
     # type: () -> None
     """
-    Load and run cylinder model from sas.models.CylinderModel
+    Load and run cylinder model as sas-models-CylinderModel
     """
     if not SUPPORT_OLD_STYLE_PLUGINS:
         return

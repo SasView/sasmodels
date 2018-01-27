@@ -122,7 +122,7 @@ def make_suite(loaders, models):
         stash = []
 
         if is_py:  # kernel implemented in python
-            test_name = "Model: %s, Kernel: python"%model_name
+            test_name = "%s-python"%model_name
             test_method_name = "test_%s_python" % model_info.id
             test = ModelTestCase(test_name, model_info,
                                  test_method_name,
@@ -134,7 +134,7 @@ def make_suite(loaders, models):
 
             # test using dll if desired
             if 'dll' in loaders or not core.HAVE_OPENCL:
-                test_name = "Model: %s, Kernel: dll"%model_name
+                test_name = "%s-dll"%model_name
                 test_method_name = "test_%s_dll" % model_info.id
                 test = ModelTestCase(test_name, model_info,
                                      test_method_name,
@@ -145,7 +145,7 @@ def make_suite(loaders, models):
 
             # test using opencl if desired and available
             if 'opencl' in loaders and core.HAVE_OPENCL:
-                test_name = "Model: %s, Kernel: OpenCL"%model_name
+                test_name = "%s-opencl"%model_name
                 test_method_name = "test_%s_opencl" % model_info.id
                 # Using dtype=None so that the models that are only
                 # correct for double precision are not tested using
@@ -468,15 +468,11 @@ def model_tests():
     """
     loaders = ['opencl', 'dll'] if core.HAVE_OPENCL else ['dll']
     tests = make_suite(loaders, ['all'])
-    for test_i in tests:
-        # In order for nosetest to see the correct test name, need to set
-        # the description attribute of the returned function.  Since we
-        # can't do this for the returned instance, wrap it in a lambda and
-        # set the description on the lambda.  Otherwise we could just do:
-        #    yield test_i.run_all
-        L = lambda: test_i.run_all()
-        L.description = test_i.test_name
-        yield L
+    for test in tests:
+        # In order for nosetest to show the test name, wrap the test.run_all
+        # instance in function that takes the test name as a parameter which
+        # will be displayed when the test is run.
+        yield lambda name: test.run_all(), test.test_name
 
 
 if __name__ == "__main__":

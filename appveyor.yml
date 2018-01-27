@@ -43,7 +43,7 @@ platform:
     - x64
 
 install:
-    # Set the CONDA_NPY, although it has no impact on the actual build. 
+    # Set the CONDA_NPY, although it has no impact on the actual build.
     # We need this because of a test within conda-build.
     - cmd: set CONDA_NPY=19
 
@@ -67,7 +67,8 @@ install:
     #- cmd: conda config --set show_channel_urls true
     #- cmd: conda install --yes --quiet obvious-ci
     # 2018-01-19 PAK: skipping toolchain cython and cffi (these were for pyopencl?)
-    - cmd: conda install --yes --quiet numpy scipy
+    # 2018-01-26 PAK: sasmodels uses yield generator for tests, which isn't supported in pytest 4+
+    - cmd: conda install --yes --quiet numpy scipy "pytest<4"
     # 2018-01-19 PAK: skipping pyopencl; this would be needed for deploy but maybe not for test
     #- cmd: conda install --yes --channel conda-forge pyopencl
     # 2018-01-19 PAK: 3rd party packages might need msvc, so %CMD_IN_ENV% may be needed for pip
@@ -85,4 +86,6 @@ test_script:
     # 2018-01-19 PAK: maybe need one of this if using msvc?
     #- "%CMD_IN_ENV% python -m sasmodels.model_test dll all"
     #- cmd /E:ON /V:ON /C obvci_appveyor_python_build_env.cmd python -m sasmoels.model_test dll all
-    - python -m sasmodels.model_test dll all
+    #- python -m sasmodels.model_test dll all
+    #- nosetests -v sasmodels/*.py
+    - python -m pytest -v
