@@ -37,7 +37,7 @@ before_install:
 - conda update --yes conda
 - conda info -a
 # 2018-01-26 PAK: sasmodels uses yield generator for tests, which isn't supported in pytest 4+
-- conda install --yes python=$PY numpy scipy cython mako cffi "pytest<4"
+- conda install --yes python=$PY numpy scipy cython mako docutils cffi "pytest<4"
 install:
 - pip install bumps
 - pip install unittest-xml-reporting

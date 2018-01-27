@@ -10,11 +10,25 @@ where each test has a description giving the name of the model.  For example
 leave the "::[3]" in the name since that is the way you can indicate this
 test specifically from the py.test command line. [This is perhaps because
 the modifyitems hook is only called after test selection.]
+
+*pytest_ignore_collect* skips kernelcl.py if pyopencl cannot be imported.
 """
 from __future__ import print_function
 
+import os.path
+
 import pytest
 from _pytest.unittest import TestCaseFunction
+
+try:
+    import pyopencl
+    TEST_PYOPENCL = True
+except ImportError:
+    TEST_PYOPENCL = False
+
+def pytest_ignore_collect(path, config):
+    ignore = TEST_PYOPENCL and path.basename == "kernelcl.py"
+    return ignore
 
 USE_DOCSTRING_AS_DESCRIPTION = True
 def pytest_collection_modifyitems(session, config, items):
