@@ -93,10 +93,10 @@ def make_mixture_info(parts, operation='+'):
         if operation == '+':
             # If model is a sum model, each constituent model gets its own scale parameter
             scale_prefix = prefix
-            if prefix == '' and hasattr(part,"operation") and part.operation == '*':
+            if prefix == '' and getattr(part, "operation", '') == '*':
                 # `part` is a composition product model. Find the prefixes of
-                # it's parameters to form a new prefix for the scale, eg:
-                # a model with A*B*C will have ABC_scale
+                # it's parameters to form a new prefix for the scale.
+                # For example, a model with A*B*C will have ABC_scale.
                 sub_prefixes = []
                 for param in part.parameters.kernel_parameters:
                     # Prefix of constituent model
