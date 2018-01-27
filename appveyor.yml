@@ -68,7 +68,7 @@ install:
     #- cmd: conda install --yes --quiet obvious-ci
     # 2018-01-19 PAK: skipping toolchain cython and cffi (these were for pyopencl?)
     # 2018-01-26 PAK: sasmodels uses yield generator for tests, which isn't supported in pytest 4+
-    - cmd: conda install --yes --quiet numpy scipy docutils "pytest<4"
+    - cmd: conda install --yes --quiet numpy scipy docutils setuptools "pytest<4"
     # 2018-01-19 PAK: skipping pyopencl; this would be needed for deploy but maybe not for test
     #- cmd: conda install --yes --channel conda-forge pyopencl
     # 2018-01-19 PAK: 3rd party packages might need msvc, so %CMD_IN_ENV% may be needed for pip
@@ -88,4 +88,5 @@ test_script:
     #- cmd /E:ON /V:ON /C obvci_appveyor_python_build_env.cmd python -m sasmoels.model_test dll all
     #- python -m sasmodels.model_test dll all
     #- nosetests -v sasmodels/*.py
-    - python -m pytest -v --cache-clear
+    #- python -m pytest -v --cache-clear
+    - python setup.py test --pytest-args -v

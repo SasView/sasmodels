@@ -1,7 +1,20 @@
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+import sys
+from setuptools import setup
+from setuptools.command.test import test as TestCommand
+
+class PyTest(TestCommand):
+    user_options = [('pytest-args=', 'a', "Arguments to pass to pytest")]
+
+    def initialize_options(self):
+        TestCommand.initialize_options(self)
+        self.pytest_args = ''
+
+    def run_tests(self):
+        import shlex
+        #import here, cause outside the eggs aren't loaded
+        import pytest
+        errno = pytest.main(shlex.split(self.pytest_args))
+        sys.exit(errno)
 
 def find_version(package):
     """Read package version string from __init__.py"""
@@ -47,11 +60,14 @@ setup(
         'sasmodels.models': ['*.c', 'lib/*.c'],
         'sasmodels': ['*.c', '*.cl'],
     },
-    install_requires = [
+    install_requires=[
     ],
-    extras_require = {
+    extras_require={
         'OpenCL': ["pyopencl"],
         'Bumps': ["bumps"],
         'TinyCC': ["tinycc"],
     },
+    build_requires=['setuptools'],
+    test_requires=['pytest'],
+    cmdclass = {'test': PyTest},
 )
