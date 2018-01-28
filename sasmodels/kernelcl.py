@@ -57,14 +57,13 @@ import time
 
 import numpy as np  # type: ignore
 
-import pyopencl as cl  # type: ignore
-from pyopencl import mem_flags as mf
-from pyopencl.characterize import get_fast_inaccurate_build_options
-
 try:
     if os.environ.get("SAS_OPENCL", "").lower() == "none":
         HAVE_OPENCL = False
     else:
+        import pyopencl as cl  # type: ignore
+        from pyopencl import mem_flags as mf
+        from pyopencl.characterize import get_fast_inaccurate_build_options
         # Ask OpenCL for the default context so that we know that one exists
         cl.create_some_context(interactive=False)
         HAVE_OPENCL = True
