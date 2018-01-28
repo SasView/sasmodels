@@ -21,7 +21,9 @@ import pytest
 from _pytest.unittest import TestCaseFunction
 
 try:
-    import pyopencl
+    # Ask OpenCL for the default context so that we know that one exists
+    import pyopencl as cl
+    cl.create_some_context(interactive=False)
     TEST_PYOPENCL = True
 except ImportError:
     TEST_PYOPENCL = False
