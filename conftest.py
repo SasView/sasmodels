@@ -20,18 +20,6 @@ import os.path
 import pytest
 from _pytest.unittest import TestCaseFunction
 
-try:
-    # Ask OpenCL for the default context so that we know that one exists
-    import pyopencl as cl
-    cl.create_some_context(interactive=False)
-    TEST_PYOPENCL = True
-except ImportError:
-    TEST_PYOPENCL = False
-
-def pytest_ignore_collect(path, config):
-    ignore = TEST_PYOPENCL and path.basename == "kernelcl.py"
-    return ignore
-
 USE_DOCSTRING_AS_DESCRIPTION = True
 def pytest_collection_modifyitems(session, config, items):
     """

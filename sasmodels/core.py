@@ -20,17 +20,12 @@ from . import modelinfo
 from . import product
 from . import mixture
 from . import kernelpy
+from . import kernelcl
 from . import kerneldll
 from . import custom
 
-if os.environ.get("SAS_OPENCL", "").lower() == "none":
-    HAVE_OPENCL = False
-else:
-    try:
-        from . import kernelcl
-        HAVE_OPENCL = True
-    except Exception:
-        HAVE_OPENCL = False
+# Other modules look for HAVE_OPENCL in core, not in kernelcl.
+HAVE_OPENCL = kernelcl.HAVE_OPENCL
 
 CUSTOM_MODEL_PATH = os.environ.get('SAS_MODELPATH', "")
 if CUSTOM_MODEL_PATH == "":

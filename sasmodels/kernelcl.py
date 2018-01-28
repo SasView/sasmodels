@@ -57,18 +57,21 @@ import time
 
 import numpy as np  # type: ignore
 
+import pyopencl as cl  # type: ignore
+from pyopencl import mem_flags as mf
+from pyopencl.characterize import get_fast_inaccurate_build_options
+
 try:
-    #raise NotImplementedError("OpenCL not yet implemented for new kernel template")
-    import pyopencl as cl  # type: ignore
-    # Ask OpenCL for the default context so that we know that one exists
-    cl.create_some_context(interactive=False)
+    if os.environ.get("SAS_OPENCL", "").lower() == "none":
+        HAVE_OPENCL = False
+    else:
+        # Ask OpenCL for the default context so that we know that one exists
+        cl.create_some_context(interactive=False)
+        HAVE_OPENCL = True
 except Exception as exc:
     warnings.warn("OpenCL startup failed with ***"
                   + str(exc) + "***; using C compiler instead")
-    raise RuntimeError("OpenCL not available")
-
-from pyopencl import mem_flags as mf
-from pyopencl.characterize import get_fast_inaccurate_build_options
+    HAVE_OPENCL = False
 
 from . import generate
 from .kernel import KernelModel, Kernel
@@ -101,8 +104,8 @@ def fix_pyopencl_include():
     if hasattr(cl, '_DEFAULT_INCLUDE_OPTIONS'):
         cl._DEFAULT_INCLUDE_OPTIONS = [quote_path(v) for v in cl._DEFAULT_INCLUDE_OPTIONS]
 
-fix_pyopencl_include()
-
+if HAVE_OPENCL:
+    fix_pyopencl_include()
 
 # The max loops number is limited by the amount of local memory available
 # on the device.  You don't want to make this value too big because it will
