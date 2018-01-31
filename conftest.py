@@ -19,6 +19,39 @@ import os.path
 
 import pytest
 from _pytest.unittest import TestCaseFunction
+from _pytest.compat import is_generator
+
+def pytest_pycollect_makeitem(collector, name, obj):
+    """
+    Convert test generator into list of function tests so that pytest doesn't
+    complain about deprecated yield tests.
+
+    Note that unlike nose, the tests are generated and saved instead of run
+    immediately.  This means that any dynamic context, such as a for-loop
+    variable, must be captured by wrapping the yield result in a function call.
+
+    For example::
+
+        for value in 1, 2, 3:
+            for test in test_cases:
+                yield test, value
+
+    will need to be changed to::
+
+        def build_test(test, value):
+            return test, value
+        for value in 1, 2, 3:
+            for test in test_cases:
+                yield build_test(test, value)
+
+    This allows the context (test and value) to be captured by lexical closure
+    in build_test. See https://stackoverflow.com/a/233835/6195051.
+    """
+    if collector.istestfunction(obj, name) and is_generator(obj):
+        tests = [pytest.Function(name, parent=collector, args=yielded[1:], callobj=yielded[0])
+                 for yielded in obj()]
+        return tests
+
 
 USE_DOCSTRING_AS_DESCRIPTION = True
 def pytest_collection_modifyitems(session, config, items):
