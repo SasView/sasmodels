@@ -288,8 +288,8 @@ def main():
     parser.add_argument('-2', '--2d', dest='is2d', action='store_true', help='oriented sample')
     parser.add_argument('-s', '--seed', default=-1, help='random pars with given seed')
     parser.add_argument('-r', '--random', action='store_true', help='random pars with random seed')
-    parser.add_argument('model', type=str, help='sas model')
-    parser.add_argument('pars', type=str, nargs='*', help='sas model')
+    parser.add_argument('model', type=str, help='sas model name such as cylinder')
+    parser.add_argument('pars', type=str, nargs='*', help='model parameters such as radius=30')
     opts = parser.parse_args()
     assert opts.nq%2 == 0, "require even # points"
 
