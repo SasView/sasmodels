@@ -2,6 +2,9 @@ from __future__ import division, print_function
 
 import time
 from copy import copy
+import os
+import argparse
+from collections import OrderedDict
 
 import numpy as np
 from numpy import pi, radians, sin, cos, sqrt
@@ -9,6 +12,12 @@ from numpy.random import poisson, uniform
 from numpy.polynomial.legendre import leggauss
 from scipy.integrate import simps
 from scipy.special import j1 as J1
+
+try:
+    import numba
+    USE_NUMBA = True
+except ImportError:
+    USE_NUMBA = False
 
 # Definition of rotation matrices comes from wikipedia:
 #    https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
@@ -243,11 +252,28 @@ class Helix(Shape):
         values = self.value.repeat(points.shape[0])
         return values, self._adjust(points)
 
-NUMBA = False
-if NUMBA:
+def csbox(a=10, b=20, c=30, da=1, db=2, dc=3, slda=1, sldb=2, sldc=3, sld_core=4):
+    core = Box(a, b, c, sld_core)
+    side_a = Box(da, b, c, slda, center=((a+da)/2, 0, 0))
+    side_b = Box(a, db, c, sldb, center=(0, (b+db)/2, 0))
+    side_c = Box(a, b, dc, sldc, center=(0, 0, (c+dc)/2))
+    side_a2 = copy(side_a).shift(-a-da, 0, 0)
+    side_b2 = copy(side_b).shift(0, -b-db, 0)
+    side_c2 = copy(side_c).shift(0, 0, -c-dc)
+    shape = Composite((core, side_a, side_b, side_c, side_a2, side_b2, side_c2))
+    return shape
+
+def _Iqxy(values, x, y, z, qa, qb, qc):
+    """I(q) = |sum V(r) rho(r) e^(1j q.r)|^2 / sum V(r)"""
+    Iq = [abs(np.sum(values*np.exp(1j*(qa_k*x + qb_k*y + qc_k*z))))**2
+            for qa_k, qb_k, qc_k in zip(qa.flat, qb.flat, qc.flat)]
+    return Iq
+
+if USE_NUMBA:
+    # Override simple numpy solution with numba if available
     from numba import njit
     @njit("f8[:](f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:])")
-    def _Iqxy(values, x, y, z, qa, qb, qc):
+    def _Iqxy_jit(values, x, y, z, qa, qb, qc):
         Iq = np.zeros_like(qa)
         for j in range(len(Iq)):
             total = 0. + 0j
@@ -264,11 +290,7 @@ def calc_Iqxy(qx, qy, rho, points, volume=1.0, view=(0, 0, 0)):
     x, y, z = points.T
 
     # I(q) = |sum V(r) rho(r) e^(1j q.r)|^2 / sum V(r)
-    if NUMBA:
-        Iq = _Iqxy(values, x, y, z, qa.flatten(), qb.flatten(), qc.flatten())
-    else:
-        Iq = [abs(np.sum(values*np.exp(1j*(qa_k*x + qb_k*y + qc_k*z))))**2
-              for qa_k, qb_k, qc_k in zip(qa.flat, qb.flat, qc.flat)]
+    Iq = _Iqxy(values, x, y, z, qa.flatten(), qb.flatten(), qc.flatten())
     return np.asarray(Iq).reshape(qx.shape) / np.sum(volume)
 
 def _calc_Pr_nonuniform(r, rho, points):
@@ -337,9 +359,10 @@ void pdfcalc(int n, const double *pts, const double *rho,
 }
 """
 
-if NUMBA:
+if USE_NUMBA:
+    # Override simple numpy solution with numba if available
     @njit("f8[:](f8[:], f8[:], f8[:,:])")
-    def _calc_Pr_uniform_jit(r, rho, points):
+    def _calc_Pr_uniform(r, rho, points):
         dr = r[0]
         n_max = len(r)
         Pr = np.zeros_like(r)
@@ -364,10 +387,7 @@ def calc_Pr(r, rho, points):
     if np.max(np.abs(np.diff(r) - r[0])) > r[0]*0.01:
         Pr = _calc_Pr_nonuniform(r, rho, points)
     else:
-        if NUMBA:
-            Pr = _calc_Pr_uniform_jit(r, rho, points)
-        else:
-            Pr = _calc_Pr_uniform(r, rho, points)
+        Pr = _calc_Pr_uniform(r, rho, points)
     return Pr / Pr.max()
 
 
@@ -398,6 +418,7 @@ def bin_edges(x):
         ])
     return edges
 
+# -------------- plotters ----------------
 def plot_calc(r, Pr, q, Iq, theory=None):
     import matplotlib.pyplot as plt
     plt.subplot(211)
@@ -409,7 +430,7 @@ def plot_calc(r, Pr, q, Iq, theory=None):
     plt.xlabel('q (1/A')
     plt.ylabel('Iq')
     if theory is not None:
-        plt.loglog(theory[0], theory[1], '-', label='analytic')
+        plt.loglog(theory[0], theory[1]/theory[1][0], '-', label='analytic')
         plt.legend()
 
 def plot_calc_2d(qx, qy, Iqxy, theory=None):
@@ -443,46 +464,7 @@ def plot_points(rho, points):
     #ax.axis([low[0], high[0], low[1], high[1], low[2], high[2]])
     ax.autoscale(True)
 
-def check_shape(shape, fn=None):
-    rho_solvent = 0
-    q = np.logspace(-3, 0, 200)
-    r = shape.r_bins(q, r_step=0.01)
-    sampling_density = 6*5000 / shape.volume()
-    rho, points = shape.sample(sampling_density)
-    t0 = time.time()
-    Pr = calc_Pr(r, rho-rho_solvent, points)
-    print("calc Pr time", time.time() - t0)
-    Iq = calc_Iq(q, r, Pr)
-    theory = (q, fn(q)) if fn is not None else None
-
-    import pylab
-    #plot_points(rho, points); pylab.figure()
-    plot_calc(r, Pr, q, Iq, theory=theory)
-    pylab.show()
-
-def check_shape_2d(shape, fn=None, view=(0, 0, 0)):
-    rho_solvent = 0
-    nq, qmax = 100, 1.0
-    qx = np.linspace(0.0, qmax, nq)
-    qy = np.linspace(0.0, qmax, nq)
-    Qx, Qy = np.meshgrid(qx, qy)
-    sampling_density = 50000 / shape.volume()
-    #t0 = time.time()
-    rho, points = shape.sample(sampling_density)
-    #print("sample time", time.time() - t0)
-    t0 = time.time()
-    Iqxy = calc_Iqxy(Qx, Qy, rho, points, view=view)
-    print("calc time", time.time() - t0)
-    theory = fn(Qx, Qy) if fn is not None else None
-    Iqxy += 0.001 * Iqxy.max()
-    if theory is not None:
-        theory += 0.001 * theory.max()
-
-    import pylab
-    #plot_points(rho, points); pylab.figure()
-    plot_calc_2d(qx, qy, Iqxy, theory=theory)
-    pylab.show()
-
+# ----------- Analytic models --------------
 def sas_sinx_x(x):
     with np.errstate(all='ignore'):
         retvalue = sin(x)/x
@@ -509,21 +491,48 @@ def cylinder_Iq(q, radius, length):
     Iq = np.empty_like(q)
     for k, qk in enumerate(q):
         qab, qc = qk*sin_alpha, qk*cos_alpha
-        Fq = sas_2J1x_x(qab*radius) * j0(qc*length/2)
+        Fq = sas_2J1x_x(qab*radius) * sas_sinx_x(qc*length/2)
         Iq[k] = np.sum(w*Fq**2)
     Iq = Iq/Iq[0]
     return Iq
 
 def cylinder_Iqxy(qx, qy, radius, length, view=(0, 0, 0)):
     qa, qb, qc = invert_view(qx, qy, view)
-    qab = np.sqrt(qa**2 + qb**2)
-    Fq = sas_2J1x_x(qab*radius) * j0(qc*length/2)
+    qab = sqrt(qa**2 + qb**2)
+    Fq = sas_2J1x_x(qab*radius) * sas_sinx_x(qc*length/2)
     Iq = Fq**2
     return Iq.reshape(qx.shape)
 
 def sphere_Iq(q, radius):
     Iq = sas_3j1x_x(q*radius)**2
     return Iq/Iq[0]
+
+def box_Iq(q, a, b, c):
+    z, w = leggauss(76)
+    outer_sum = np.zeros_like(q)
+    for cos_alpha, outer_w in zip((z+1)/2, w):
+        sin_alpha = sqrt(1.0-cos_alpha*cos_alpha)
+        qc = q*cos_alpha
+        siC = c*sas_sinx_x(c*qc/2)
+        inner_sum = np.zeros_like(q)
+        for beta, inner_w in zip((z + 1)*pi/4, w):
+            qa, qb = q*sin_alpha*sin(beta), q*sin_alpha*cos(beta)
+            siA = a*sas_sinx_x(a*qa/2)
+            siB = b*sas_sinx_x(b*qb/2)
+            Fq = siA*siB*siC
+            inner_sum += inner_w * Fq**2
+        outer_sum += outer_w * inner_sum
+    Iq = outer_sum / 4  # = outer*um*zm*8.0/(4.0*M_PI)
+    return Iq/Iq[0]
+
+def box_Iqxy(qx, qy, a, b, c, view=(0, 0, 0)):
+    qa, qb, qc = invert_view(qx, qy, view)
+    sia = sas_sinx_x(qa*a/2)
+    sib = sas_sinx_x(qb*b/2)
+    sic = sas_sinx_x(qc*c/2)
+    Fq = sia*sib*sic
+    Iq = Fq**2
+    return Iq.reshape(qx.shape)
 
 def csbox_Iq(q, a, b, c, da, db, dc, slda, sldb, sldc, sld_core):
     z, w = leggauss(76)
@@ -538,15 +547,15 @@ def csbox_Iq(q, a, b, c, da, db, dc, slda, sldb, sldc, sld_core):
     for cos_alpha, outer_w in zip((z+1)/2, w):
         sin_alpha = sqrt(1.0-cos_alpha*cos_alpha)
         qc = q*cos_alpha
-        siC = c*j0(c*qc/2)
-        siCt = tC*j0(tC*qc/2)
+        siC = c*sas_sinx_x(c*qc/2)
+        siCt = tC*sas_sinx_x(tC*qc/2)
         inner_sum = np.zeros_like(q)
         for beta, inner_w in zip((z + 1)*pi/4, w):
             qa, qb = q*sin_alpha*sin(beta), q*sin_alpha*cos(beta)
-            siA = a*j0(a*qa/2)
-            siB = b*j0(b*qb/2)
-            siAt = tA*j0(tA*qa/2)
-            siBt = tB*j0(tB*qb/2)
+            siA = a*sas_sinx_x(a*qa/2)
+            siB = b*sas_sinx_x(b*qb/2)
+            siAt = tA*sas_sinx_x(tA*qa/2)
+            siBt = tB*sas_sinx_x(tB*qb/2)
             if overlapping:
                 Fq = (dr0*siA*siB*siC
                       + drA*(siAt-siA)*siB*siC
@@ -583,18 +592,15 @@ def csbox_Iqxy(qx, qy, a, b, c, da, db, dc, slda, sldb, sldc, sld_core, view=(0,
     Iq = Fq**2
     return Iq.reshape(qx.shape)
 
+# --------- Test cases -----------
+
 def check_cylinder(radius=25, length=125, rho=2.):
     shape = EllipticalCylinder(radius, radius, length, rho)
-    fn = lambda q: cylinder_Iq(q, radius, length)
-    check_shape(shape, fn)
+    fn = lambda q: cylinder_Iq(q, radius, length)*rho**2
+    fn_xy = lambda qx, qy, view: cylinder_Iqxy(qx, qy, radius, length, view=view)*rho**2
+    return shape, fn, fn_xy
 
-def check_cylinder_2d(radius=25, length=125, rho=2., view=(0, 0, 0)):
-    shape = EllipticalCylinder(radius, radius, length, rho)
-    fn = lambda qx, qy, view=view: cylinder_Iqxy(qx, qy, radius, length, view=view)
-    check_shape_2d(shape, fn, view=view)
-
-def check_cylinder_2d_lattice(radius=25, length=125, rho=2.,
-                              view=(0, 0, 0)):
+def check_cylinder_lattice(radius=25, length=125, rho=2.):
     nx, dx = 1, 2*radius
     ny, dy = 30, 2*radius
     nz, dz = 30, length
@@ -603,6 +609,7 @@ def check_cylinder_2d_lattice(radius=25, length=125, rho=2.,
         sigma = 0.333
         space = 2
         return [(space*n+np.random.randn()*sigma)*x for n, x in args]
+    t0 = time.time()
     shapes = [EllipticalCylinder(radius, radius, length, rho,
                                  #center=(ix*dx, iy*dy, iz*dz)
                                  orientation=np.random.randn(3)*0,
@@ -612,37 +619,137 @@ def check_cylinder_2d_lattice(radius=25, length=125, rho=2.,
               for iy in range(ny)
               for iz in range(nz)]
     shape = Composite(shapes)
-    fn = lambda qx, qy, view=view: cylinder_Iqxy(qx, qy, radius, length, view=view)
-    check_shape_2d(shape, fn, view=view)
+    print("generate points time", time.time() - t0)
+    fn = None
+    fn_xy = lambda qx, qy, view: cylinder_Iqxy(qx, qy, radius, length, view=view)
+    return shape, fn, fn_xy
 
 def check_sphere(radius=125, rho=2):
     shape = TriaxialEllipsoid(radius, radius, radius, rho)
-    fn = lambda q: sphere_Iq(q, radius)
-    check_shape(shape, fn)
+    fn = lambda q: cylinder_Iq(q, radius, length)*rho**2
+    fn_xy = lambda qx, qy, view: sphere_Iq(np.sqrt(qx**2+qy**2), radius)*rho**2
+    return shape, fn, fn_xy
+
+def check_box(a=10, b=20, c=30, rho=2.):
+    shape = Box(a, b, c, rho)
+    fn = lambda q: box_Iq(q, a, b, c)*rho**2
+    fn_xy = lambda qx, qy, view: box_Iqxy(qx, qy, a, b, c, view=view)*rho**2
+    return shape, fn, fn_xy
+
+def check_box_lattice(a=10, b=20, c=30, rho=2.):
+    nx, dx = 3, a
+    ny, dy = 5, b
+    nz, dz = 5, c
+    dx, dy, dz = 2*dx, 2*dy, 2*dz
+    def center(*args):
+        sigma = 0.333
+        space = 2
+        return [(space*n+np.random.randn()*sigma)*x for n, x in args]
+    t0 = time.time()
+    shapes = [Box(a, b, c, rho,
+                  #center=(ix*dx, iy*dy, iz*dz)
+                  orientation=np.random.randn(3)*10,
+                  center=center((ix, dx), (iy, dy), (iz, dz))
+                 )
+              for ix in range(nx)
+              for iy in range(ny)
+              for iz in range(nz)]
+    shape = Composite(shapes)
+    print("generate points time", time.time() - t0)
+    fn = None
+    fn_xy = lambda qx, qy, view: box_Iqxy(qx, qy, a, b, c, view=view)
+    return shape, fn, fn_xy
+
 
 def check_csbox(a=10, b=20, c=30, da=1, db=2, dc=3, slda=1, sldb=2, sldc=3, sld_core=4):
-    core = Box(a, b, c, sld_core)
-    side_a = Box(da, b, c, slda, center=((a+da)/2, 0, 0))
-    side_b = Box(a, db, c, sldb, center=(0, (b+db)/2, 0))
-    side_c = Box(a, b, dc, sldc, center=(0, 0, (c+dc)/2))
-    side_a2 = copy(side_a).shift(-a-da, 0, 0)
-    side_b2 = copy(side_b).shift(0, -b-db, 0)
-    side_c2 = copy(side_c).shift(0, 0, -c-dc)
-    shape = Composite((core, side_a, side_b, side_c, side_a2, side_b2, side_c2))
-    def fn(q):
-        return csbox_Iq(q, a, b, c, da, db, dc, slda, sldb, sldc, sld_core)
-    #check_shape(shape, fn)
+    shape = csbox(a, b, c, da, db, dc, slda, sldb, sldc, sld_core)
+    fn = lambda q: csbox_Iq(q, a, b, c, da, db, dc, slda, sldb, sldc, sld_core)
+    fn_xy = lambda qx, qy, view: csbox_Iqxy(qx, qy, a, b, c, da, db, dc,
+                                            slda, sldb, sldc, sld_core, view=view)
+    return shape, fn, fn_xy
 
-    view = (20, 30, 40)
-    def fn_xy(qx, qy):
-        return csbox_Iqxy(qx, qy, a, b, c, da, db, dc,
-                          slda, sldb, sldc, sld_core, view=view)
-    check_shape_2d(shape, fn_xy, view=view)
+
+SHAPE_FUNCTIONS = OrderedDict([
+    ("cylinder", check_cylinder),
+    ("sphere", check_sphere),
+    ("box", check_box),
+    ("csbox", check_csbox),
+    ("multicyl", check_cylinder_lattice),
+    ("multibox", check_box_lattice),
+])
+SHAPES = list(SHAPE_FUNCTIONS.keys())
+
+def check_shape(title, shape, fn=None, show_points=False,
+                mesh=100, qmax=1.0, r_step=0.01, samples=5000):
+    rho_solvent = 0
+    qmin = qmax/1000.
+    q = np.logspace(np.log10(qmin), np.log10(qmax), mesh)
+    r = shape.r_bins(q, r_step=r_step)
+    sampling_density = samples / shape.volume()
+    rho, points = shape.sample(sampling_density)
+    t0 = time.time()
+    Pr = calc_Pr(r, rho-rho_solvent, points)
+    print("calc Pr time", time.time() - t0)
+    Iq = calc_Iq(q, r, Pr)
+    theory = (q, fn(q)) if fn is not None else None
+
+    import pylab
+    if show_points:
+         plot_points(rho, points); pylab.figure()
+    plot_calc(r, Pr, q, Iq, theory=theory)
+    pylab.gcf().canvas.set_window_title(title)
+    pylab.show()
+
+def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
+                   mesh=100, qmax=1.0, samples=5000):
+    rho_solvent = 0
+    qx = np.linspace(0.0, qmax, mesh)
+    qy = np.linspace(0.0, qmax, mesh)
+    Qx, Qy = np.meshgrid(qx, qy)
+    sampling_density = samples / shape.volume()
+    #t0 = time.time()
+    rho, points = shape.sample(sampling_density)
+    #print("sample time", time.time() - t0)
+    t0 = time.time()
+    Iqxy = calc_Iqxy(Qx, Qy, rho, points, view=view)
+    print("calc Iqxy time", time.time() - t0)
+    theory = fn(Qx, Qy, view) if fn is not None else None
+    Iqxy += 0.001 * Iqxy.max()
+    if theory is not None:
+        theory += 0.001 * theory.max()
+
+    import pylab
+    if show_points:
+        plot_points(rho, points); pylab.figure()
+    plot_calc_2d(qx, qy, Iqxy, theory=theory)
+    pylab.gcf().canvas.set_window_title(title)
+    pylab.show()
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Compute scattering from realspace sampling",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        )
+    parser.add_argument('-d', '--dim', type=int, default=1, help='dimension 1 or 2')
+    parser.add_argument('-m', '--mesh', type=int, default=100, help='number of mesh points')
+    parser.add_argument('-s', '--samples', type=int, default=5000, help="number of sample points")
+    parser.add_argument('-q', '--qmax', type=float, default=0.5, help='max q')
+    parser.add_argument('-v', '--view', type=str, default='0,0,0', help='theta,phi,psi angles')
+    parser.add_argument('-p', '--plot', action='store_true', help='plot points')
+    parser.add_argument('shape', choices=SHAPES, nargs='?', default=SHAPES[0], help='oriented shape')
+    parser.add_argument('pars', type=str, nargs='*', help='shape parameters')
+    opts = parser.parse_args()
+    pars = {key: float(value) for p in opts.pars for key, value in [p.split('=')]}
+    shape, fn, fn_xy = SHAPE_FUNCTIONS[opts.shape](**pars)
+    title = "%s(%s)" % (opts.shape, " ".join(opts.pars))
+    if opts.dim == 1:
+        check_shape(title, shape, fn, show_points=opts.plot,
+                    mesh=opts.mesh, qmax=opts.qmax, samples=opts.samples)
+    else:
+        view = tuple(float(v) for v in opts.view.split(','))
+        check_shape_2d(title, shape, fn_xy, view=view, show_points=opts.plot,
+                       mesh=opts.mesh, qmax=opts.qmax, samples=opts.samples)
+
 
 if __name__ == "__main__":
-    check_cylinder(radius=10, length=40)
-    #check_cylinder_2d(radius=10, length=40, view=(90,30,0))
-    #check_cylinder_2d_lattice(radius=10, length=50, view=(90,30,0))
-    #check_sphere()
-    #check_csbox()
-    #check_csbox(da=100, db=200, dc=300)
+    main()
