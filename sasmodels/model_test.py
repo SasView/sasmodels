@@ -160,7 +160,6 @@ def make_suite(loaders, models):
 
     return suite
 
-
 def _hide_model_case_from_nose():
     # type: () -> type
     class ModelTestCase(unittest.TestCase):
@@ -468,11 +467,17 @@ def model_tests():
     """
     loaders = ['opencl', 'dll'] if core.HAVE_OPENCL else ['dll']
     tests = make_suite(loaders, ['all'])
-    for test in tests:
+    def build_test(test):
         # In order for nosetest to show the test name, wrap the test.run_all
         # instance in function that takes the test name as a parameter which
-        # will be displayed when the test is run.
-        yield lambda name: test.run_all(), test.test_name
+        # will be displayed when the test is run.  Do this as a function so
+        # that it properly captures the context for tests that captured and
+        # run later.  If done directly in the for loop, then the looping
+        # variable test will be shared amongst all the tests, and we will be
+        # repeatedly testing vesicle.
+        return lambda name: test.run_all(), test.test_name
+    for test in tests:
+        yield build_test(test)
 
 
 if __name__ == "__main__":
