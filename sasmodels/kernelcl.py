@@ -147,11 +147,13 @@ def environment():
 
     This provides an OpenCL context and one queue per device.
     """
-    if not HAVE_OPENCL:
-        warnings.warn("OpenCL startup failed with ***"
-                      + OPENCL_ERROR + "***; using C compiler instead")
-    elif ENV is None:
+    if ENV is None:
+        if not HAVE_OPENCL:
+            raise RuntimeError("OpenCL startup failed with ***"
+                            + OPENCL_ERROR + "***; using C compiler instead")
         reset_environment()
+        if ENV is None:
+            raise RuntimeError("SAS_OPENCL=None in environment")
     return ENV
 
 def has_type(device, dtype):
