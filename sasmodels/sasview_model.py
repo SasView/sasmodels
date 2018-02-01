@@ -664,7 +664,6 @@ class SasviewModel(object):
             return self._calculate_Iq(qx, qy)
 
     def _calculate_Iq(self, qx, qy=None):
-        #core.HAVE_OPENCL = False
         if self._model is None:
             self._model = core.build_model(self._model_info)
         if qy is not None:

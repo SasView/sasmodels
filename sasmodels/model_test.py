@@ -61,6 +61,7 @@ from .core import list_models, load_model_info, build_model
 from .direct_model import call_kernel, call_ER, call_VR
 from .exception import annotate_exception
 from .modelinfo import expand_pars
+from .kernelcl import use_opencl
 
 # pylint: disable=unused-import
 try:
@@ -133,7 +134,7 @@ def make_suite(loaders, models):
         else:   # kernel implemented in C
 
             # test using dll if desired
-            if 'dll' in loaders or not core.HAVE_OPENCL:
+            if 'dll' in loaders or not use_opencl():
                 test_name = "%s-dll"%model_name
                 test_method_name = "test_%s_dll" % model_info.id
                 test = ModelTestCase(test_name, model_info,
@@ -144,7 +145,7 @@ def make_suite(loaders, models):
                 suite.addTest(test)
 
             # test using opencl if desired and available
-            if 'opencl' in loaders and core.HAVE_OPENCL:
+            if 'opencl' in loaders and use_opencl():
                 test_name = "%s-opencl"%model_name
                 test_method_name = "test_%s_opencl" % model_info.id
                 # Using dtype=None so that the models that are only
@@ -366,7 +367,7 @@ def run_one(model):
     result = TextTestResult(stream, descriptions, verbosity)
 
     # Build a test suite containing just the model
-    loaders = ['opencl'] if core.HAVE_OPENCL else ['dll']
+    loaders = ['opencl'] if use_opencl() else ['dll']
     models = [model]
     try:
         suite = make_suite(loaders, models)
@@ -423,7 +424,7 @@ def main(*models):
     else:
         verbosity = 1
     if models and models[0] == 'opencl':
-        if not core.HAVE_OPENCL:
+        if not use_opencl():
             print("opencl is not available")
             return 1
         loaders = ['opencl']
@@ -433,10 +434,10 @@ def main(*models):
         loaders = ['dll']
         models = models[1:]
     elif models and models[0] == 'opencl_and_dll':
-        loaders = ['opencl', 'dll'] if core.HAVE_OPENCL else ['dll']
+        loaders = ['opencl', 'dll'] if use_opencl() else ['dll']
         models = models[1:]
     else:
-        loaders = ['opencl', 'dll'] if core.HAVE_OPENCL else ['dll']
+        loaders = ['opencl', 'dll'] if use_opencl() else ['dll']
     if not models:
         print("""\
 usage:
@@ -465,7 +466,7 @@ def model_tests():
 
     Run "nosetests sasmodels" on the command line to invoke it.
     """
-    loaders = ['opencl', 'dll'] if core.HAVE_OPENCL else ['dll']
+    loaders = ['opencl', 'dll'] if use_opencl() else ['dll']
     tests = make_suite(loaders, ['all'])
     def build_test(test):
         # In order for nosetest to show the test name, wrap the test.run_all
@@ -475,7 +476,15 @@ def model_tests():
         # run later.  If done directly in the for loop, then the looping
         # variable test will be shared amongst all the tests, and we will be
         # repeatedly testing vesicle.
-        return lambda name: test.run_all(), test.test_name
+
+        # Note: in sasview sas.sasgui.perspectives.fitting.gpu_options
+        # requires that the test.description field be set.
+        wrap = lambda: test.run_all()
+        wrap.description = test.test_name
+        return wrap
+        # The following would work with nosetests and pytest:
+        #     return lambda name: test.run_all(), test.test_name
+
     for test in tests:
         yield build_test(test)
 

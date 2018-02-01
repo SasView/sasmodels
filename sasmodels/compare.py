@@ -39,6 +39,7 @@ import numpy as np  # type: ignore
 
 from . import core
 from . import kerneldll
+from . import kernelcl
 from .data import plot_theory, empty_data1D, empty_data2D, load_data
 from .direct_model import DirectModel, get_mesh
 from .generate import FLOAT_RE, set_integration_size
@@ -622,43 +623,6 @@ def suppress_magnetism(pars, suppress=True):
     return pars
 
 
-DTYPE_MAP = {
-    'half': '16',
-    'fast': 'fast',
-    'single': '32',
-    'double': '64',
-    'quad': '128',
-    'f16': '16',
-    'f32': '32',
-    'f64': '64',
-    'float16': '16',
-    'float32': '32',
-    'float64': '64',
-    'float128': '128',
-    'longdouble': '128',
-}
-def eval_opencl(model_info, data, dtype='single', cutoff=0.):
-    # type: (ModelInfo, Data, str, float) -> Calculator
-    """
-    Return a model calculator using the OpenCL calculation engine.
-    """
-    if not core.HAVE_OPENCL:
-        raise RuntimeError("OpenCL not available")
-    model = core.build_model(model_info, dtype=dtype, platform="ocl")
-    calculator = DirectModel(data, model, cutoff=cutoff)
-    calculator.engine = "OCL%s"%DTYPE_MAP[str(model.dtype)]
-    return calculator
-
-def eval_ctypes(model_info, data, dtype='double', cutoff=0.):
-    # type: (ModelInfo, Data, str, float) -> Calculator
-    """
-    Return a model calculator using the DLL calculation engine.
-    """
-    model = core.build_model(model_info, dtype=dtype, platform="dll")
-    calculator = DirectModel(data, model, cutoff=cutoff)
-    calculator.engine = "OMP%s"%DTYPE_MAP[str(model.dtype)]
-    return calculator
-
 def time_calculation(calculator, pars, evals=1):
     # type: (Calculator, ParameterSet, int) -> Tuple[np.ndarray, float]
     """
@@ -706,6 +670,37 @@ def make_data(opts):
         index = slice(None, None)
     return data, index
 
+DTYPE_MAP = {
+    'half': '16',
+    'fast': 'fast',
+    'single': '32',
+    'double': '64',
+    'quad': '128',
+    'f16': '16',
+    'f32': '32',
+    'f64': '64',
+    'float16': '16',
+    'float32': '32',
+    'float64': '64',
+    'float128': '128',
+    'longdouble': '128',
+}
+def eval_opencl(model_info, data, dtype='single', cutoff=0.):
+    # type: (ModelInfo, Data, str, float) -> Calculator
+    """
+    Return a model calculator using the OpenCL calculation engine.
+    """
+
+def eval_ctypes(model_info, data, dtype='double', cutoff=0.):
+    # type: (ModelInfo, Data, str, float) -> Calculator
+    """
+    Return a model calculator using the DLL calculation engine.
+    """
+    model = core.build_model(model_info, dtype=dtype, platform="dll")
+    calculator = DirectModel(data, model, cutoff=cutoff)
+    calculator.engine = "OMP%s"%DTYPE_MAP[str(model.dtype)]
+    return calculator
+
 def make_engine(model_info, data, dtype, cutoff, ngauss=0):
     # type: (ModelInfo, Data, str, float) -> Calculator
     """
@@ -717,10 +712,16 @@ def make_engine(model_info, data, dtype, cutoff, ngauss=0):
     if ngauss:
         set_integration_size(model_info, ngauss)
 
-    if dtype is None or not dtype.endswith('!'):
-        return eval_opencl(model_info, data, dtype=dtype, cutoff=cutoff)
-    else:
-        return eval_ctypes(model_info, data, dtype=dtype[:-1], cutoff=cutoff)
+    if dtype != "default" and not dtype.endswith('!') and not kernelcl.use_opencl():
+        raise RuntimeError("OpenCL not available " + kernelcl.OPENCL_ERROR)
+
+    model = core.build_model(model_info, dtype=dtype, platform="ocl")
+    calculator = DirectModel(data, model, cutoff=cutoff)
+    engine_type = calculator._model.__class__.__name__.replace('Model','').upper()
+    bits = calculator._model.dtype.itemsize*8
+    precision = "fast" if getattr(calculator._model, 'fast', False) else str(bits)
+    calculator.engine = "%s[%s]" % (engine_type, precision)
+    return calculator
 
 def _show_invalid(data, theory):
     # type: (Data, np.ma.ndarray) -> None

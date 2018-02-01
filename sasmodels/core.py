@@ -24,15 +24,6 @@ from . import kernelcl
 from . import kerneldll
 from . import custom
 
-# Other modules look for HAVE_OPENCL in core, not in kernelcl.
-HAVE_OPENCL = kernelcl.HAVE_OPENCL
-
-CUSTOM_MODEL_PATH = os.environ.get('SAS_MODELPATH', "")
-if CUSTOM_MODEL_PATH == "":
-    CUSTOM_MODEL_PATH = joinpath(os.path.expanduser("~"), ".sasmodels", "custom_models")
-    if not os.path.isdir(CUSTOM_MODEL_PATH):
-        os.makedirs(CUSTOM_MODEL_PATH)
-
 # pylint: disable=unused-import
 try:
     from typing import List, Union, Optional, Any
@@ -41,6 +32,12 @@ try:
 except ImportError:
     pass
 # pylint: enable=unused-import
+
+CUSTOM_MODEL_PATH = os.environ.get('SAS_MODELPATH', "")
+if CUSTOM_MODEL_PATH == "":
+    CUSTOM_MODEL_PATH = joinpath(os.path.expanduser("~"), ".sasmodels", "custom_models")
+    if not os.path.isdir(CUSTOM_MODEL_PATH):
+        os.makedirs(CUSTOM_MODEL_PATH)
 
 # TODO: refactor composite model support
 # The current load_model_info/build_model does not reuse existing model
@@ -270,7 +267,7 @@ def parse_dtype(model_info, dtype=None, platform=None):
 
     if platform is None:
         platform = "ocl"
-    if platform == "ocl" and not HAVE_OPENCL or not model_info.opencl:
+    if not kernelcl.use_opencl() or not model_info.opencl:
         platform = "dll"
 
     # Check if type indicates dll regardless of which platform is given

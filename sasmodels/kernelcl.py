@@ -57,20 +57,20 @@ import time
 
 import numpy as np  # type: ignore
 
+
+# Attempt to setup opencl. This may fail if the opencl package is not
+# installed or if it is installed but there are no devices available.
 try:
-    if os.environ.get("SAS_OPENCL", "").lower() == "none":
-        HAVE_OPENCL = False
-    else:
-        import pyopencl as cl  # type: ignore
-        from pyopencl import mem_flags as mf
-        from pyopencl.characterize import get_fast_inaccurate_build_options
-        # Ask OpenCL for the default context so that we know that one exists
-        cl.create_some_context(interactive=False)
-        HAVE_OPENCL = True
+    import pyopencl as cl  # type: ignore
+    from pyopencl import mem_flags as mf
+    from pyopencl.characterize import get_fast_inaccurate_build_options
+    # Ask OpenCL for the default context so that we know that one exists
+    cl.create_some_context(interactive=False)
+    HAVE_OPENCL = True
+    OPENCL_ERROR = ""
 except Exception as exc:
-    warnings.warn("OpenCL startup failed with ***"
-                  + str(exc) + "***; using C compiler instead")
     HAVE_OPENCL = False
+    OPENCL_ERROR = str(exc)
 
 from . import generate
 from .kernel import KernelModel, Kernel
@@ -129,8 +129,17 @@ _F64_PRAGMA = """\
 #endif
 """
 
+def use_opencl():
+    return HAVE_OPENCL and os.environ.get("SAS_OPENCL", "").lower() != "none"
 
 ENV = None
+def reset_environment():
+    """
+    Call to create a new OpenCL context, such as after a change to SAS_OPENCL.
+    """
+    global ENV
+    ENV = GpuEnvironment() if use_opencl() else None
+
 def environment():
     # type: () -> "GpuEnvironment"
     """
@@ -138,9 +147,11 @@ def environment():
 
     This provides an OpenCL context and one queue per device.
     """
-    global ENV
-    if ENV is None:
-        ENV = GpuEnvironment()
+    if not HAVE_OPENCL:
+        warnings.warn("OpenCL startup failed with ***"
+                      + OPENCL_ERROR + "***; using C compiler instead")
+    elif ENV is None:
+        reset_environment()
     return ENV
 
 def has_type(device, dtype):
