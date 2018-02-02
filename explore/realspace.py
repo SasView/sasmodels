@@ -273,11 +273,11 @@ if USE_NUMBA:
     # Override simple numpy solution with numba if available
     from numba import njit
     @njit("f8[:](f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:])")
-    def _Iqxy_jit(values, x, y, z, qa, qb, qc):
+    def _Iqxy(values, x, y, z, qa, qb, qc):
         Iq = np.zeros_like(qa)
         for j in range(len(Iq)):
             total = 0. + 0j
-            for k in range(len(Iq)):
+            for k in range(len(values)):
                 total += values[k]*np.exp(1j*(qa[j]*x[k] + qb[j]*y[k] + qc[j]*z[k]))
             Iq[j] = abs(total)**2
         return Iq
@@ -288,6 +288,8 @@ def calc_Iqxy(qx, qy, rho, points, volume=1.0, view=(0, 0, 0)):
     rho, volume = np.broadcast_arrays(rho, volume)
     values = rho*volume
     x, y, z = points.T
+    values, x, y, z, qa, qb, qc = [np.asarray(v, 'd')
+                                   for v in (values, x, y, z, qa, qb, qc)]
 
     # I(q) = |sum V(r) rho(r) e^(1j q.r)|^2 / sum V(r)
     Iq = _Iqxy(values, x, y, z, qa.flatten(), qb.flatten(), qc.flatten())
@@ -384,6 +386,7 @@ if USE_NUMBA:
 def calc_Pr(r, rho, points):
     # P(r) with uniform steps in r is 3x faster; check if we are uniform
     # before continuing
+    r, rho, points = [np.asarray(v, 'd') for v in (r, rho, points)]
     if np.max(np.abs(np.diff(r) - r[0])) > r[0]*0.01:
         Pr = _calc_Pr_nonuniform(r, rho, points)
     else:
