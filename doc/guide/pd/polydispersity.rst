@@ -41,13 +41,15 @@ polydispersion to multiple parameters at the same time or increasing the
 number of points in the distribution will require patience! However, the
 calculations are generally more robust with more data points or more angles.
 
-The following five distribution functions are provided:
+The following distribution functions are provided:
 
 *  *Rectangular Distribution*
+*  *Uniform Distribution*
 *  *Gaussian Distribution*
 *  *Lognormal Distribution*
 *  *Schulz Distribution*
 *  *Array Distribution*
+*  *Boltzmann Distribution*
 
 These are all implemented as *number-average* distributions.
 
@@ -83,6 +85,35 @@ whilst the polydispersity is
 .. figure:: pd_rectangular.jpg
 
     Rectangular distribution.
+
+
+
+Uniform Distribution
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Uniform Distribution is defined as
+
+    .. math::
+
+        f(x) = \frac{1}{\text{Norm}}
+        \begin{cases}
+          1 & \text{for } |x - \bar x| \leq \sigma \\
+          0 & \text{for } |x - \bar x| > \sigma
+        \end{cases}
+
+    where $\bar x$ is the mean of the distribution, $\sigma$ is the half-width, and
+    *Norm* is a normalization factor which is determined during the numerical
+    calculation.
+
+    Note that the polydispersity is given by
+
+    .. math:: \text{PD} = \sigma / \bar x
+
+    .. figure:: pd_uniform.jpg
+
+        Uniform distribution.
+
+The value $N_\sigma$ is ignored for this distribution.
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
@@ -182,7 +213,7 @@ M Kotlarchyk & S-H Chen, *J Chem Phys*, (1983), 79, 2461.
 Array Distribution
 ^^^^^^^^^^^^^^^^^^
 
-This user-definable distribution should be given as as a simple ASCII text
+This user-definable distribution should be given as a simple ASCII text
 file where the array is defined by two columns of numbers: $x$ and $f(x)$.
 The $f(x)$ will be normalized to 1 during the computation.
 
@@ -201,7 +232,33 @@ Example of what an array distribution file should look like:
 Only these array values are used computation, therefore the parameter value
 given for the model will have no affect, and will be ignored when computing
 the average.  This means that any parameter with an array distribution will
-not be fittable.
+not be fitable.
+
+.. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
+
+Boltzmann Distribution
+^^^^^^^^^^^^^^^^^^^^^^
+
+The Boltzmann Distribution is defined as
+
+.. math::
+
+    f(x) = \frac{1}{\text{Norm}}
+           \exp\left(-\frac{ | x - \bar x | }{\sigma}\right)
+
+where $\bar x$ is the mean of the distribution and *Norm* is a normalization
+factor which is determined during the numerical calculation.
+The width is defined as
+
+.. math:: \sigma=\frac{k T}{E}
+
+which is the inverse Boltzmann factor,
+where $k$ is the Boltzmann constant, $T$ the temperature in Kelvin and $E$ a
+characteristic energy per particle.
+
+.. figure:: pd_boltzmann.jpg
+
+    Boltzmann distribution.
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
