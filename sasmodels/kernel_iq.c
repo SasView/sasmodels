@@ -92,7 +92,7 @@ static void set_spin_weights(double in_spin, double out_spin, double spins[4])
 
 // Compute the magnetic sld
 static double mag_sld(
-  const int xs, // 0=dd, 1=du real, 2=ud real, 3=uu, 4=du imag, 5=up imag
+  const unsigned int xs, // 0=dd, 1=du real, 2=ud real, 3=uu, 4=du imag, 5=up imag
   const double qx, const double qy,
   const double px, const double py,
   const double sld,
@@ -102,6 +102,7 @@ static double mag_sld(
   if (xs < 4) {
     const double perp = qy*mx - qx*my;
     switch (xs) {
+      default: // keep compiler happy; condition ensures xs in [0,1,2,3]
       case 0: // uu => sld - D M_perpx
           return sld - px*perp;
       case 1: // ud real => -D M_perpy
@@ -658,7 +659,7 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
             const double py = (qy*sin_mspin - qx*cos_mspin)/qsq;
 
             // loop over uu, ud real, du real, dd, ud imag, du imag
-            for (int xs=0; xs<6; xs++) {
+            for (unsigned int xs=0; xs<6; xs++) {
               const double xs_weight = spins[xs];
               if (xs_weight > 1.e-8) {
                 // Since the cross section weight is significant, set the slds
