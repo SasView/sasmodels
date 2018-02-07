@@ -16,10 +16,10 @@ the modifyitems hook is only called after test selection.]
 from __future__ import print_function
 
 import os.path
+import inspect
 
 import pytest
 from _pytest.unittest import TestCaseFunction
-from _pytest.compat import is_generator
 
 def pytest_pycollect_makeitem(collector, name, obj):
     """
@@ -54,6 +54,17 @@ def pytest_pycollect_makeitem(collector, name, obj):
             test = pytest.Function(name+index, collector, args=args, callobj=call)
             tests.append(test)
         return tests
+
+def is_generator(func):
+    """
+    Returns True if function has yield.
+    """
+    # Cribbed from _pytest.compat is_generator and iscoroutinefunction; these
+    # may not be available as part of pytest 4.
+    coroutine = (getattr(func, '_is_coroutine', False) or
+                 getattr(inspect, 'iscoroutinefunction', lambda f: False)(func))
+    generator = inspect.isgeneratorfunction(func)
+    return generator and not coroutine
 
 def split_yielded_test(obj, number):
     if not isinstance(obj, (tuple, list)):
