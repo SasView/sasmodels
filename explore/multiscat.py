@@ -169,9 +169,13 @@ class MultipleScattering(Resolution):
             return q_corners, Iq + background
 
 def scattering_power(Iq, n):
+    """
+    Calculate the nth scattering power as a distribution.  To get the
+    weighted contribution, scale by $\lambda^k e^{-\lambda}/k!$.
+    """
     scale = np.sum(Iq)
     F = _forward_fft(Iq/scale)
-    result = scale * _inverse_fft(F**n)
+    result = _inverse_fft(F**n)
     return result
 
 def multiple_scattering(Iq, p, coverage=0.99, return_powers=False):
@@ -180,9 +184,8 @@ def multiple_scattering(Iq, p, coverage=0.99, return_powers=False):
 
     Given a probability p of scattering with the thickness, the expected
     number of scattering events, $\lambda$ is $-\log(1 - p)$, giving a
-    Poisson weighted sum of single, double, triple, ... scattering patterns.
-    The number of patterns used is based on coverage (default 99%).  If
-    return_poi
+    Poisson weighted sum of single, double, triple, etc. scattering patterns.
+    The number of patterns used is based on coverage (default 99%).
     """
     L = -np.log(1-p)
     num_scatter = truncated_poisson_invcdf(coverage, L)
