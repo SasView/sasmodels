@@ -161,8 +161,12 @@ class MultipleScattering(Resolution):
                 pylab.figure()
             if plot and powers:
                 import pylab
-                for k, Ipower in enumerate(Iq_powers):
-                    pylab.loglog(q_corners, Ipower, label="scattering=%d"%(k+1))
+                L = -np.log(1-self.probability)
+                pylab.loglog(q_corners, Iq, label="total %g"%self.probability)
+                for n, Ipower in enumerate(Iq_powers):
+                    k = n+1
+                    w = L**(k-1)/gamma(k+1)
+                    pylab.loglog(q_corners, w*Ipower, label="scattering**%d"%k)
                 pylab.legend()
                 pylab.figure()
 
