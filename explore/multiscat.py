@@ -6,7 +6,7 @@ Calculate multiple scattering using 2D FFT convolution.
 
 Usage:
 
-    -f, --fraction: the scattering probability
+    -p, --probability: the scattering probability
     -q, --qmax: that max q that you care about
     -w, --window: the extension window (q is calculated for qmax*window)
     -n, --nq: the number of mesh points (dq = qmax*window/nq)
@@ -19,57 +19,56 @@ Assume the probability of scattering is $p$. After each scattering event,
 $1-p$ neutrons will leave the system and go to the detector, and the remaining
 $p$ will scatter again.
 
-Let the scattering probability for a single scattering event at $q$ be $f(q)$,
+Let the scattering probability for $n$ scattering event at $q$ be $f_n(q)$,
 where
-.. math:: f(q) = p \frac{I_1(q)}{\int I_1(q) dq}
+.. math:: f_1(q) = \frac{I_1(q)}{\int I_1(q) dq}
 for $I_1(q)$, the single scattering from the system. After two scattering
-events, the scattering will be the convolution of the first scattering
-and itself, or $(f*f)(q)$.  After $n$ events it will be
-$(f* \cdots * f)(q)$.
-
-The total scattering after multiple events will then be the number that didn't
-scatter the first time $(=1-p)$ plus the number that scattered only once
-$(=(1-p)f)$ plus the number that scattered only twice $(=(1-p)(f*f))$, etc.,
-so
+events, the scattering probability will be the convolution of the first
+scattering and itself, or $f_2(q) = (f_1*f_1)(q)$.  After $n$ events it will be
+$f_n(q) = (f_1 * \cdots * f_1)(q)$.  The total scattering is calculated
+as the weighted sum of $f_k$, with weights following the Poisson distribution
+.. math:: P(k; \lambda) = \frac{\lambda^k e^{-\lambda}}{k!}
+for $\lambda$ determined by the total thickness divided by the mean
+free path between scattering, giving
 .. math::
-    I(q) = (1-p)\sum_{k=0}^{\infty} f^{*k}(q)
-Since convolution is linear, the contributions from the individual terms
-will fall off as $p^k$, so we can cut off the series
-at $n = \lceil \ln C / \ln p \rceil$ for some small fraction $C$ (default is
-$C = 0.001$).
+    I(q) = \sum_{k=0}^\infty P(k; \lambda) f_k(q)
+The $k=0$ term is ignored since it involves no scattering.
+We cut the series when cumulative probability is less than cutoff $C=99\%$,
+which is $\max n$ such that
+.. math::
+    \frac{\sum_{k=1}^n \frac{P(k; \lambda)}{1 - P(0; \lambda)} < C
 
 Using the convolution theorem, where
 $F = \mathcal{F}(f)$ is the Fourier transform,
-.. math::
-
-    f * g = \mathcal{F}^{-1}\{\mathcal{F}\{f\} \cdot \mathcal{F}\{g\}\}
-
+.. math:: f * g = \mathcal{F}^{-1}\{\mathcal{F}\{f\} \cdot \mathcal{F}\{g\}\}
 so
-.. math::
-
-    f * \ldots * f = \mathcal{F}^{-1}\{ F^n \}
-
+.. math:: f * \ldots * f = \mathcal{F}^{-1}\{ F^n \}
 Since the Fourier transform is a linear operator, we can move the polynomial
 expression for the convolution into the transform, giving
 .. math::
+    I(q) = \mathcal{F}^{-1}\left\{ \sum_{k=1}^{n} P(k; \lambda) F^k \right\}
+In the dilute limit $L \rightarrow 0$ only the $k=1$ term is active,
+and so
+.. math::
+    P(1; \lambda) = \lambda e{-\lambda} = \int I_1(q) dq
+therefore we compute
+.. math::
+    I(q) = \int I_1(q) dq \mathcal{F}^{-1}\left\{
+        \sum_{l=1}^{n} \frac{P(k; \lambda)}{P(1; \lambda))} F^k \right\}
 
-    I(q) = \mathcal{F}^{-1}\left\{ (1-p) \sum_{k=0}^{n} F^k \right\}
-
-We drop the transmission term, $k=0$, and rescale the result by the
-total scattering $\int I_1(q) dq$.
-
-For speed we use the fast fourier transform for a power of two.  The resulting
-$I(q)$ will be linearly spaced and likely heavily oversampled.  The usual
-pinhole or slit resolution calculation can performed from these calculated
-values.
+For speed we may use the fast fourier transform with a power of two.
+The resulting $I(q)$ will be linearly spaced and likely heavily oversampled.
+The usual pinhole or slit resolution calculation can performed from these
+calculated values.
 """
 
-from __future__ import print_function
+from __future__ import print_function, division
 
 import argparse
 import time
 
 import numpy as np
+from scipy.special import gamma
 
 from sasmodels import core
 from sasmodels import compare
@@ -80,11 +79,11 @@ from sasmodels.direct_model import call_kernel
 
 
 class MultipleScattering(Resolution):
-    def __init__(self, qmax, nq, fraction, is2d, window=2, power=0):
+    def __init__(self, qmax, nq, probability, is2d, window=2, power=0):
         self.qmax = qmax
         self.nq = nq
         self.power = power
-        self.fraction = fraction
+        self.probability = probability
         self.is2d = is2d
         self.window = window
 
@@ -106,8 +105,8 @@ class MultipleScattering(Resolution):
         self.q_calc = q_calc
         self.q_range = q_range
 
-    def apply(self, theory):
-        t0 = time.time()
+    def apply(self, theory, background=0.0, outfile="", plot=False):
+        #t0 = time.time()
         if self.is2d:
             Iq_calc = theory
         else:
@@ -116,146 +115,130 @@ class MultipleScattering(Resolution):
         Iq_calc = Iq_calc.reshape(self.nq, self.nq)
         #plotxy(Iq_calc); import pylab; pylab.figure()
         if self.power > 0:
-            Iqxy = autoconv_n(Iq_calc, self.power)
+            Iqxy = scattering_power(Iq_calc, self.power)
+            powers = []
         else:
-            Iqxy = multiple_scattering(Iq_calc, self.fraction, cutoff=0.001)
-        print("multiple scattering calc time", time.time()-t0)
+            Iqxy, powers = multiple_scattering(
+                Iq_calc, self.probability,
+                coverage=0.99,
+                return_powers=(outfile!="") or plot,
+                )
+        #print("multiple scattering calc time", time.time()-t0)
+
         #plotxy(Iqxy); import pylab; pylab.figure()
         if self.is2d:
-            if 1:
+            if outfile and powers:
+                data = np.vstack([Ipower.flatten() for Ipower in powers]).T
+                np.savetxt(outfile + "_powers.txt", data)
+            if outfile:
+                data = np.vstack(Iq_calc).T
+                np.savetxt(outfile + ".txt", data)
+            if plot:
                 import pylab
                 plotxy(Iq_calc)
                 pylab.title("single scattering")
                 pylab.figure()
 
-            return Iqxy
+            return Iqxy + background
         else:
             # circular average, no anti-aliasing
             Iq = np.histogram(self._qxy, bins=self._edges, weights=Iqxy)[0]/self._norm
+            if powers:
+                Iq_powers = [np.histogram(self._qxy, bins=self._edges, weights=Ipower)[0]/self._norm
+                             for Ipower in powers]#  or powers[:5] for the first five
 
-            if 1:
+            if outfile:
+                data = np.vstack([q_corners, theory, Iq]).T
+                np.savetxt(outfile + ".txt", data)
+            if outfile and powers:
+                # circular average, no anti-aliasing for individual powers
+                data = np.vstack([q_corners] + Iq_powers).T
+                np.savetxt(outfile + "_powers.txt", data)
+            if plot:
                 import pylab
-                pylab.loglog(q_corners, theory, label="single scattering")
-                if self.power > 0:
-                    label = "scattering power %d"%self.power
-                else:
-                    label = "scattering fraction %d"%self.fraction
-                pylab.loglog(q_corners, Iq, label=label)
+                plotxy(Iqxy)
+                pylab.title("multiple scattering")
+                pylab.figure()
+            if plot and powers:
+                import pylab
+                for k, Ipower in enumerate(Iq_powers):
+                    pylab.loglog(q_corners, Ipower, label="scattering=%d"%(k+1))
                 pylab.legend()
                 pylab.figure()
-                return Iqxy
-            return q_corners, Iq
 
-def multiple_scattering(Iq_calc, frac, cutoff=0.001):
-    #plotxy(Iq_calc)
-    num_scatter = int(np.ceil(np.log(cutoff)/np.log(frac)))
+            return q_corners, Iq + background
 
-    # Prepare padded array for transform
-    nq = Iq_calc.shape[0]
-    half_nq = nq//2
-    frame = np.zeros((2*nq, 2*nq))
-    frame[:half_nq, :half_nq] = Iq_calc[half_nq:, half_nq:]
-    frame[-half_nq:, :half_nq] = Iq_calc[:half_nq, half_nq:]
-    frame[:half_nq, -half_nq:] = Iq_calc[half_nq:, :half_nq]
-    frame[-half_nq:, -half_nq:] = Iq_calc[:half_nq, :half_nq]
-    #plotxy(frame)
+def scattering_power(Iq, n):
+    scale = np.sum(Iq)
+    F = _forward_fft(Iq/scale)
+    result = scale * _inverse_fft(F**n)
+    return result
+
+def multiple_scattering(Iq, p, coverage=0.99, return_powers=False):
+    """
+    Compute multiple scattering for I(q) given scattering probability p.
+
+    Given a probability p of scattering with the thickness, the expected
+    number of scattering events, $\lambda$ is $-\log(1 - p)$, giving a
+    Poisson weighted sum of single, double, triple, ... scattering patterns.
+    The number of patterns used is based on coverage (default 99%).  If
+    return_poi
+    """
+    L = -np.log(1-p)
+    num_scatter = truncated_poisson_invcdf(coverage, L)
 
     # Compute multiple scattering via convolution.
-    scale = np.sum(Iq_calc)
-    fourier_frame = np.fft.fft2(frame/scale)
-    #plotxy(abs(frame))
-    # total = (1-a)f + (1-a)af^2 + (1-a)a^2f^3 + ...
-    #       = (1-a)f[1 + af + (af)^2 + (af)^3 + ...]
-    multiple_scattering = (
-        (1-frac)*fourier_frame
-        *np.polyval(np.ones(num_scatter), frac*fourier_frame))
-    conv_frame = scale*np.fft.ifft2(multiple_scattering).real
+    scale = np.sum(Iq)
+    F = _forward_fft(Iq/scale)
+    coeffs = [L**(k-1)/gamma(k+1) for k in range(1, num_scatter+1)]
+    multiple_scattering = F * np.polyval(coeffs[::-1], F)
+    result = scale * _inverse_fft(multiple_scattering)
 
-    # Recover the transformed data
-    #plotxy(conv_frame)
-    Iq_conv = np.empty((nq, nq))
-    Iq_conv[half_nq:, half_nq:] = conv_frame[:half_nq, :half_nq]
-    Iq_conv[:half_nq, half_nq:] = conv_frame[-half_nq:, :half_nq]
-    Iq_conv[half_nq:, :half_nq] = conv_frame[:half_nq, -half_nq:]
-    Iq_conv[:half_nq, :half_nq] = conv_frame[-half_nq:, -half_nq:]
-    #plotxy(Iq_conv)
-    return Iq_conv
+    if return_powers:
+        powers = [scale * _inverse_fft(F**k) for k in range(1, num_scatter+1)]
+    else:
+        powers = []
 
-def multiple_scattering_cl(Iq_calc, frac, cutoff=0.001):
-    raise NotImplementedError("no support for opencl calculations at this time")
+    return result, powers
 
-    import pyopencl as cl
-    import pyopencl.array as cla
-    from gpyfft.fft import FFT
-    context = cl.create_some_context()
-    queue = cl.CommandQueue(context)
+def truncated_poisson_invcdf(p, L):
+    """
+    Return smallest k such that cdf(k; L) > p from the truncated Poisson
+    probability excluding k=0
+    """
+    # pmf(k; L) = L**k * exp(-L) / (k! * (1-exp(-L))
+    cdf = 0
+    pmf = -np.exp(-L) / np.expm1(-L)
+    k = 0
+    while cdf < p:
+        k += 1
+        pmf *= L/k
+        cdf += pmf
+    return k
 
-    #plotxy(Iq_calc)
-    num_scatter = int(np.ceil(np.log(cutoff)/np.log(frac)))
-
-    # Prepare padded array for transform
-    nq = Iq_calc.shape[0]
+def _forward_fft(Iq):
+    # Prepare padded array and forward transform
+    nq = Iq.shape[0]
     half_nq = nq//2
-    frame = np.zeros((2*nq, 2*nq), dtype='float32')
-    frame[:half_nq, :half_nq] = Iq_calc[half_nq:, half_nq:]
-    frame[-half_nq:, :half_nq] = Iq_calc[:half_nq, half_nq:]
-    frame[:half_nq, -half_nq:] = Iq_calc[half_nq:, :half_nq]
-    frame[-half_nq:, -half_nq:] = Iq_calc[:half_nq, :half_nq]
-    #plotxy(frame)
-
-    # Compute multiple scattering via convolution (OpenCL operations)
-    frame_gpu = cla.to_device(queue, frame)
-    fourier_frame_gpu = cla.zeros(frame.shape, dtype='complex64')
-    scale = frame_gpu.sum()
-    frame_gpu /= scale
-    transform = FFT(context, queue, frame_gpu, fourier_frame_gpu, axes=(0,1))
-    event, = transform.enqueue()
-    event.wait()
-    fourier_frame_gpu *= frac
-    multiple_scattering_gpu = fourier_frame_gpu.copy()
-    for _ in range(num_scatter-1):
-        multiple_scattering_gpu += 1
-        multiple_scattering_gpu *= fourier_frame_gpu
-    multiple_scattering_gpu *= (1 - frac)/frac
-    transform = FFT(context, queue, multiple_scattering_gpu, frame_gpu, axes=(0,1))
-    event, = transform.enqueue(forward=False)
-    event.wait()
-    conv_frame = cla.from_device(queue, frame_gpu)
-
-    # Recover the transformed data
-    #plotxy(conv_frame)
-    Iq_conv = np.empty((nq, nq))
-    Iq_conv[half_nq:, half_nq:] = conv_frame[:half_nq, :half_nq]
-    Iq_conv[:half_nq, half_nq:] = conv_frame[-half_nq:, :half_nq]
-    Iq_conv[half_nq:, :half_nq] = conv_frame[:half_nq, -half_nq:]
-    Iq_conv[:half_nq, :half_nq] = conv_frame[-half_nq:, -half_nq:]
-    #plotxy(Iq_conv)
-    return Iq_conv
-
-def autoconv_n(Iq_calc, power):
-    # Compute multiple scattering via convolution.
-    #plotxy(Iq_calc)
-    scale = np.sum(Iq_calc)
-    nq = Iq_calc.shape[0]
     frame = np.zeros((2*nq, 2*nq))
+    frame[:half_nq, :half_nq] = Iq[half_nq:, half_nq:]
+    frame[-half_nq:, :half_nq] = Iq[:half_nq, half_nq:]
+    frame[:half_nq, -half_nq:] = Iq[half_nq:, :half_nq]
+    frame[-half_nq:, -half_nq:] = Iq[:half_nq, :half_nq]
+    fourier_frame = np.fft.fft2(frame)
+    return fourier_frame
+
+def _inverse_fft(fourier_frame):
+    # Invert the transform and recover the transformed data
+    nq = fourier_frame.shape[0]//2
     half_nq = nq//2
-    frame[:half_nq, :half_nq] = Iq_calc[half_nq:, half_nq:]
-    frame[-half_nq:, :half_nq] = Iq_calc[:half_nq, half_nq:]
-    frame[:half_nq, -half_nq:] = Iq_calc[half_nq:, :half_nq]
-    frame[-half_nq:, -half_nq:] = Iq_calc[:half_nq, :half_nq]
-    #plotxy(frame)
-    fourier_frame = np.fft.fft2(frame/scale)
-    #plotxy(abs(frame))
-    fourier_frame = fourier_frame**power
-    conv_frame = scale*np.fft.ifft2(fourier_frame).real
-    #plotxy(conv_frame)
-    Iq_conv = np.empty((nq, nq))
-    Iq_conv[half_nq:, half_nq:] = conv_frame[:half_nq, :half_nq]
-    Iq_conv[:half_nq, half_nq:] = conv_frame[-half_nq:, :half_nq]
-    Iq_conv[half_nq:, :half_nq] = conv_frame[:half_nq, -half_nq:]
-    Iq_conv[:half_nq, :half_nq] = conv_frame[-half_nq:, -half_nq:]
-    #plotxy(Iq_conv)
-    return Iq_conv
+    frame = np.fft.ifft2(fourier_frame).real
+    Iq = np.empty((nq, nq))
+    Iq[half_nq:, half_nq:] = frame[:half_nq, :half_nq]
+    Iq[:half_nq, half_nq:] = frame[-half_nq:, :half_nq]
+    Iq[half_nq:, :half_nq] = frame[:half_nq, -half_nq:]
+    Iq[:half_nq, :half_nq] = frame[-half_nq:, -half_nq:]
+    return Iq
 
 def parse_pars(model, opts):
     # type: (ModelInfo, argparse.Namespace) -> Dict[str, float]
@@ -280,14 +263,15 @@ def main():
         description="Compute multiple scattering",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         )
-    parser.add_argument('-p', '--power', type=int, default=0, help="show pattern for nth scattering")
-    parser.add_argument('-f', '--fraction', type=float, default=0.1, help="scattering fraction")
+    parser.add_argument('-k', '--power', type=int, default=0, help="show pattern for nth scattering")
+    parser.add_argument('-p', '--probability', type=float, default=0.1, help="scattering probability")
     parser.add_argument('-n', '--nq', type=int, default=1024, help='number of mesh points')
     parser.add_argument('-q', '--qmax', type=float, default=0.5, help='max q')
     parser.add_argument('-w', '--window', type=float, default=2.0, help='q calc = q max * window')
     parser.add_argument('-2', '--2d', dest='is2d', action='store_true', help='oriented sample')
     parser.add_argument('-s', '--seed', default=-1, help='random pars with given seed')
     parser.add_argument('-r', '--random', action='store_true', help='random pars with random seed')
+    parser.add_argument('-o', '--outfile', type=str, default="", help='random pars with random seed')
     parser.add_argument('model', type=str, help='sas model name such as cylinder')
     parser.add_argument('pars', type=str, nargs='*', help='model parameters such as radius=30')
     opts = parser.parse_args()
@@ -295,24 +279,20 @@ def main():
 
     model = core.load_model(opts.model)
     pars = parse_pars(model, opts)
-    res = MultipleScattering(opts.qmax, opts.nq, opts.fraction, opts.is2d,
+    res = MultipleScattering(opts.qmax, opts.nq, opts.probability, opts.is2d,
                              window=opts.window, power=opts.power)
     kernel = model.make_kernel(res.q_calc)
     #print(pars)
     bg = pars.get('background', 0.0)
     pars['background'] = 0.0
     Iq_calc = call_kernel(kernel, pars)
-    t0 = time.time()
-    for i in range(10):
-        Iq_calc = call_kernel(kernel, pars)
-    print("single scattering calc time", (time.time()-t0)/10)
-    Iq = res.apply(Iq_calc) + bg
+    Iq = res.apply(Iq_calc, background=bg, outfile=opts.outfile, plot=True)
     plotxy(Iq)
     import pylab
     if opts.power > 0:
         pylab.title('scattering power %d'%opts.power)
     else:
-        pylab.title('multiple scattering with fraction %g'%opts.fraction)
+        pylab.title('multiple scattering with fraction %g'%opts.probability)
     pylab.show()
 
 def plotxy(Iq):
