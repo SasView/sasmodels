@@ -20,23 +20,9 @@ from . import modelinfo
 from . import product
 from . import mixture
 from . import kernelpy
+from . import kernelcl
 from . import kerneldll
 from . import custom
-
-if os.environ.get("SAS_OPENCL", "").lower() == "none":
-    HAVE_OPENCL = False
-else:
-    try:
-        from . import kernelcl
-        HAVE_OPENCL = True
-    except Exception:
-        HAVE_OPENCL = False
-
-CUSTOM_MODEL_PATH = os.environ.get('SAS_MODELPATH', "")
-if CUSTOM_MODEL_PATH == "":
-    CUSTOM_MODEL_PATH = joinpath(os.path.expanduser("~"), ".sasmodels", "custom_models")
-    if not os.path.isdir(CUSTOM_MODEL_PATH):
-        os.makedirs(CUSTOM_MODEL_PATH)
 
 # pylint: disable=unused-import
 try:
@@ -46,6 +32,12 @@ try:
 except ImportError:
     pass
 # pylint: enable=unused-import
+
+CUSTOM_MODEL_PATH = os.environ.get('SAS_MODELPATH', "")
+if CUSTOM_MODEL_PATH == "":
+    CUSTOM_MODEL_PATH = joinpath(os.path.expanduser("~"), ".sasmodels", "custom_models")
+    if not os.path.isdir(CUSTOM_MODEL_PATH):
+        os.makedirs(CUSTOM_MODEL_PATH)
 
 # TODO: refactor composite model support
 # The current load_model_info/build_model does not reuse existing model
@@ -275,7 +267,7 @@ def parse_dtype(model_info, dtype=None, platform=None):
 
     if platform is None:
         platform = "ocl"
-    if platform == "ocl" and not HAVE_OPENCL or not model_info.opencl:
+    if not kernelcl.use_opencl() or not model_info.opencl:
         platform = "dll"
 
     # Check if type indicates dll regardless of which platform is given
@@ -319,49 +311,56 @@ def list_models_main():
     kind = sys.argv[1] if len(sys.argv) > 1 else "all"
     print("\n".join(list_models(kind)))
 
-def test_load():
-    # type: () -> None
-    """Check that model load works"""
+def test_composite_order():
     def test_models(fst, snd):
         """Confirm that two models produce the same parameters"""
         fst = load_model(fst)
         snd = load_model(snd)
-        # Remove the upper case characters frin the parameters, since
-        # they lasndel the order of events and we specfically are
-        # changin that aspect
+        # Un-disambiguate parameter names so that we can check if the same
+        # parameters are in a pair of composite models. Since each parameter in
+        # the mixture model is tagged as e.g., A_sld, we ought to use a
+        # regex subsitution s/^[A-Z]+_/_/, but removing all uppercase letters
+        # is good enough.
         fst = [[x for x in p.name if x == x.lower()] for p in fst.info.parameters.kernel_parameters]
         snd = [[x for x in p.name if x == x.lower()] for p in snd.info.parameters.kernel_parameters]
         assert sorted(fst) == sorted(snd), "{} != {}".format(fst, snd)
 
+    def build_test(first, second):
+        test = lambda description: test_models(first, second)
+        description = first + " vs. " + second
+        return test, description
 
-    test_models(
+    yield build_test(
         "cylinder+sphere",
         "sphere+cylinder")
-    test_models(
+    yield build_test(
         "cylinder*sphere",
         "sphere*cylinder")
-    test_models(
+    yield build_test(
         "cylinder@hardsphere*sphere",
         "sphere*cylinder@hardsphere")
-    test_models(
+    yield build_test(
         "barbell+sphere*cylinder@hardsphere",
         "sphere*cylinder@hardsphere+barbell")
-    test_models(
+    yield build_test(
         "barbell+cylinder@hardsphere*sphere",
         "cylinder@hardsphere*sphere+barbell")
-    test_models(
+    yield build_test(
         "barbell+sphere*cylinder@hardsphere",
         "barbell+cylinder@hardsphere*sphere")
-    test_models(
+    yield build_test(
         "sphere*cylinder@hardsphere+barbell",
         "cylinder@hardsphere*sphere+barbell")
-    test_models(
+    yield build_test(
         "barbell+sphere*cylinder@hardsphere",
         "cylinder@hardsphere*sphere+barbell")
-    test_models(
+    yield build_test(
         "barbell+cylinder@hardsphere*sphere",
         "sphere*cylinder@hardsphere+barbell")
 
+def test_composite():
+    # type: () -> None
+    """Check that model load works"""
     #Test the the model produces the parameters that we would expect
     model = load_model("cylinder@hardsphere*sphere")
     actual = [p.name for p in model.info.parameters.kernel_parameters]

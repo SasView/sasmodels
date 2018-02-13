@@ -12,7 +12,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 import argparse
 
-import mpl_toolkits.mplot3d   # Adds projection='3d' option to subplot
+try: # CRUFT: travis-ci does not support mpl_toolkits.mplot3d
+    import mpl_toolkits.mplot3d  # Adds projection='3d' option to subplot
+except ImportError:
+    pass
+
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, CheckButtons
 from matplotlib import cm

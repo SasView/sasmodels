@@ -632,7 +632,6 @@ def _check_one(name, seed=None):
 
 def test_backward_forward():
     from .core import list_models
+    L = lambda name: _check_one(name, seed=1)
     for name in list_models('all'):
-        L = lambda: _check_one(name, seed=1)
-        L.description = name
-        yield L
+        yield L, name

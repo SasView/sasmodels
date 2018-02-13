@@ -57,18 +57,20 @@ import time
 
 import numpy as np  # type: ignore
 
+
+# Attempt to setup opencl. This may fail if the opencl package is not
+# installed or if it is installed but there are no devices available.
 try:
-    #raise NotImplementedError("OpenCL not yet implemented for new kernel template")
     import pyopencl as cl  # type: ignore
+    from pyopencl import mem_flags as mf
+    from pyopencl.characterize import get_fast_inaccurate_build_options
     # Ask OpenCL for the default context so that we know that one exists
     cl.create_some_context(interactive=False)
+    HAVE_OPENCL = True
+    OPENCL_ERROR = ""
 except Exception as exc:
-    warnings.warn("OpenCL startup failed with ***"
-                  + str(exc) + "***; using C compiler instead")
-    raise RuntimeError("OpenCL not available")
-
-from pyopencl import mem_flags as mf
-from pyopencl.characterize import get_fast_inaccurate_build_options
+    HAVE_OPENCL = False
+    OPENCL_ERROR = str(exc)
 
 from . import generate
 from .kernel import KernelModel, Kernel
@@ -101,8 +103,8 @@ def fix_pyopencl_include():
     if hasattr(cl, '_DEFAULT_INCLUDE_OPTIONS'):
         cl._DEFAULT_INCLUDE_OPTIONS = [quote_path(v) for v in cl._DEFAULT_INCLUDE_OPTIONS]
 
-fix_pyopencl_include()
-
+if HAVE_OPENCL:
+    fix_pyopencl_include()
 
 # The max loops number is limited by the amount of local memory available
 # on the device.  You don't want to make this value too big because it will
@@ -127,8 +129,17 @@ _F64_PRAGMA = """\
 #endif
 """
 
+def use_opencl():
+    return HAVE_OPENCL and os.environ.get("SAS_OPENCL", "").lower() != "none"
 
 ENV = None
+def reset_environment():
+    """
+    Call to create a new OpenCL context, such as after a change to SAS_OPENCL.
+    """
+    global ENV
+    ENV = GpuEnvironment() if use_opencl() else None
+
 def environment():
     # type: () -> "GpuEnvironment"
     """
@@ -136,9 +147,13 @@ def environment():
 
     This provides an OpenCL context and one queue per device.
     """
-    global ENV
     if ENV is None:
-        ENV = GpuEnvironment()
+        if not HAVE_OPENCL:
+            raise RuntimeError("OpenCL startup failed with ***"
+                            + OPENCL_ERROR + "***; using C compiler instead")
+        reset_environment()
+        if ENV is None:
+            raise RuntimeError("SAS_OPENCL=None in environment")
     return ENV
 
 def has_type(device, dtype):

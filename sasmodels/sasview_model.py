@@ -664,7 +664,6 @@ class SasviewModel(object):
             return self._calculate_Iq(qx, qy)
 
     def _calculate_Iq(self, qx, qy=None):
-        #core.HAVE_OPENCL = False
         if self._model is None:
             self._model = core.build_model(self._model_info)
         if qy is not None:
@@ -858,7 +857,7 @@ def test_model_list():
 def test_old_name():
     # type: () -> None
     """
-    Load and run cylinder model from sas.models.CylinderModel
+    Load and run cylinder model as sas-models-CylinderModel
     """
     if not SUPPORT_OLD_STYLE_PLUGINS:
         return
