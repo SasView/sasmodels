@@ -17,15 +17,18 @@ where $\nu$ is the excluded volume parameter
 $a$ is the statistical segment length of the polymer chain,
 and $n$ is the degree of polymerization.
 
-This integral was later put into an almost analytical form as follows
+This integral was put into an almost analytical form as follows
 (Hammouda, 1993)
 
 .. math::
 
-    P(Q)=\frac{1}{\nu U^{1/2\nu}}\gamma\left(\frac{1}{2\nu},U\right) -
-    \frac{1}{U^{1/2\nu}}\gamma\left(\frac{1}{\nu},U\right)
+    P(Q)=\frac{1}{\nu U^{1/2\nu}}
+    \left\{
+        \gamma\left(\frac{1}{2\nu},U\right) -
+        \frac{1}{U^{1/2\nu}}\gamma\left(\frac{1}{\nu},U\right)
+    \right\}
 
-later recast as (for example, Hore, 2013; Hammouda & Kim, 2017)
+and later recast as (for example, Hore, 2013; Hammouda & Kim, 2017)
 
 .. math::
 
@@ -36,7 +39,7 @@ where $\gamma(x,U)$ is the incomplete gamma function
 
 .. math::
 
-    \gamma(x,U)=\int_0^{U}dt\ exp(-t)t^{x-1}
+    \gamma(x,U)=\int_0^{U}dt\ \exp(-t)t^{x-1}
 
 and the variable $U$ is given in terms of the scattering vector $Q$ as
 
@@ -91,7 +94,7 @@ which the form factor is given by the familiar Debye function.
 
 .. math::
 
-    P(Q) = \frac{2}{Q^4R_{g}^4} \left[exp(-Q^2R_{g}^2) - 1 + Q^2R_{g}^2 \right]
+    P(Q) = \frac{2}{Q^4R_{g}^4} \left[\exp(-Q^2R_{g}^2) - 1 + Q^2R_{g}^2 \right]
 
 For 2D data: The 2D scattering intensity is calculated in the same way as 1D,
 where the $q$ vector is defined as
@@ -109,7 +112,7 @@ H Benoit, *Comptes Rendus*, 245 (1957) 2244-2247
 B Hammouda, *SANS from Homogeneous Polymer Mixtures - A Unified Overview,
 Advances in Polym. Sci.* 106 (1993) 87-133
 
-M Hore et al, *Co-Nonsolvency of Poly(n-isopropylacrylamide) in Deuterated 
+M Hore et al, *Co-Nonsolvency of Poly(n-isopropylacrylamide) in Deuterated
 Water/Ethanol Mixtures* 46 (2013) 7894-7901
 
 B Hammouda & M-H Kim, *The empirical core-chain model* 247 (2017) 434-440
