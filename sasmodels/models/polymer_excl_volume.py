@@ -150,6 +150,8 @@ def Iq(q, rg=60.0, porod_exp=3.0):
     usub = (q*rg)**2 * (2.0/porod_exp + 1.0) * (2.0/porod_exp + 2.0)/6.0
     with errstate(divide='ignore', invalid='ignore'):
         upow = power(usub, -0.5*porod_exp)
+        # Note: scipy gammainc is "regularized", being gamma(s,x)/Gamma(s),
+        # so need to scale by Gamma(s) to recover gamma(s, x).
         result = (porod_exp*upow *
                   (gamma(0.5*porod_exp)*gammainc(0.5*porod_exp, usub) -
                    upow*gamma(porod_exp)*gammainc(porod_exp, usub)))
