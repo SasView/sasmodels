@@ -16,8 +16,16 @@ where $\nu$ is the excluded volume parameter
 (which is related to the Porod exponent $m$ as $\nu=1/m$ ),
 $a$ is the statistical segment length of the polymer chain,
 and $n$ is the degree of polymerization.
+
 This integral was later put into an almost analytical form as follows
 (Hammouda, 1993)
+
+.. math::
+
+    P(Q)=\frac{1}{\nu U^{1/2\nu}}\gamma\left(\frac{1}{2\nu},U\right) -
+    \frac{1}{U^{1/2\nu}}\gamma\left(\frac{1}{\nu},U\right)
+
+later recast as (for example, Hore, 2013; Hammouda & Kim, 2017)
 
 .. math::
 
@@ -36,17 +44,28 @@ and the variable $U$ is given in terms of the scattering vector $Q$ as
 
     U=\frac{Q^2a^2n^{2\nu}}{6} = \frac{Q^2R_{g}^2(2\nu+1)(2\nu+2)}{6}
 
+The two analytic forms are equivalent. In the 1993 paper
+
+.. math::
+
+    \frac{1}{\nu U^{1/2\nu}}
+
+has been factored out.
+
+**SasView implements the 1993 expression**.
+
 The square of the radius-of-gyration is defined as
 
 .. math::
 
     R_{g}^2 = \frac{a^2n^{2\nu}}{(2\nu+1)(2\nu+2)}
 
-Note that this model applies only in the mass fractal range (ie, $5/3<=m<=3$ )
-and **does not apply** to surface fractals ( $3<m<=4$ ).
-It also does not reproduce the rigid rod limit (m=1) because it assumes chain
-flexibility from the outset. It may cover a portion of the semi-flexible chain
-range ( $1<m<5/3$ ).
+.. note::
+    This model applies only in the mass fractal range (ie, $5/3<=m<=3$ )
+    and **does not apply** to surface fractals ( $3<m<=4$ ).
+    It also does not reproduce the rigid rod limit (m=1) because it assumes chain
+    flexibility from the outset. It may cover a portion of the semi-flexible chain
+    range ( $1<m<5/3$ ).
 
 A low-Q expansion yields the Guinier form and a high-Q expansion yields the
 Porod form which is given by
@@ -88,7 +107,12 @@ References
 H Benoit, *Comptes Rendus*, 245 (1957) 2244-2247
 
 B Hammouda, *SANS from Homogeneous Polymer Mixtures - A Unified Overview,
-Advances in Polym. Sci.* 106(1993) 87-133
+Advances in Polym. Sci.* 106 (1993) 87-133
+
+M Hore et al, *Co-Nonsolvency of Poly(n-isopropylacrylamide) in Deuterated 
+Water/Ethanol Mixtures* 46 (2013) 7894-7901
+
+B Hammouda & M-H Kim, *The empirical core-chain model* 247 (2017) 434-440
 """
 
 import numpy as np
