@@ -1,17 +1,20 @@
 #define INVALID(v) (v.radius<0 || v.length<0)
 
+__device__
 static double
 form_volume(double radius, double length)
 {
     return M_PI*radius*radius*length;
 }
 
+__device__
 static double
 fq(double qab, double qc, double radius, double length)
 {
     return sas_2J1x_x(qab*radius) * sas_sinx_x(qc*0.5*length);
 }
 
+__device__
 static double
 orient_avg_1D(double q, double radius, double length)
 {
@@ -32,6 +35,7 @@ orient_avg_1D(double q, double radius, double length)
     return total*zm;
 }
 
+__device__
 static double
 Iq(double q,
     double sld,
@@ -43,6 +47,7 @@ Iq(double q,
     return 1.0e-4 * s * s * orient_avg_1D(q, radius, length);
 }
 
+__device__
 static double
 Iqac(double qab, double qc,
     double sld,

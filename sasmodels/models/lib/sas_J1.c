@@ -41,9 +41,8 @@ Copyright 1984, 1987, 1989, 2000 by Stephen L. Moshier
 
 #if FLOAT_SIZE>4
 //Cephes double pression function
-double cephes_j1(double x);
 
-constant double RPJ1[8] = {
+constant_var double RPJ1[8] = {
     -8.99971225705559398224E8,
     4.52228297998194034323E11,
     -7.27494245221818276015E13,
@@ -53,7 +52,7 @@ constant double RPJ1[8] = {
     0.0,
     0.0 };
 
-constant double RQJ1[8] = {
+constant_var double RQJ1[8] = {
     6.20836478118054335476E2,
     2.56987256757748830383E5,
     8.35146791431949253037E7,
@@ -64,7 +63,7 @@ constant double RQJ1[8] = {
     5.32278620332680085395E18
     };
 
-constant double PPJ1[8] = {
+constant_var double PPJ1[8] = {
     7.62125616208173112003E-4,
     7.31397056940917570436E-2,
     1.12719608129684925192E0,
@@ -75,7 +74,7 @@ constant double PPJ1[8] = {
     0.0} ;
 
 
-constant double PQJ1[8] = {
+constant_var double PQJ1[8] = {
     5.71323128072548699714E-4,
     6.88455908754495404082E-2,
     1.10514232634061696926E0,
@@ -85,7 +84,7 @@ constant double PQJ1[8] = {
     9.99999999999999997461E-1,
     0.0 };
 
-constant double QPJ1[8] = {
+constant_var double QPJ1[8] = {
     5.10862594750176621635E-2,
     4.98213872951233449420E0,
     7.58238284132545283818E1,
@@ -95,7 +94,7 @@ constant double QPJ1[8] = {
     2.11688757100572135698E2,
     2.52070205858023719784E1 };
 
-constant double QQJ1[8] = {
+constant_var double QQJ1[8] = {
     7.42373277035675149943E1,
     1.05644886038262816351E3,
     4.98641058337653607651E3,
@@ -105,6 +104,7 @@ constant double QQJ1[8] = {
     3.36093607810698293419E2,
     0.0 };
 
+__device__ static
 double cephes_j1(double x)
 {
 
@@ -154,9 +154,7 @@ double cephes_j1(double x)
 
 #else
 //Single precission version of cephes
-float cephes_j1f(float x);
-
-constant float JPJ1[8] = {
+constant_var float JPJ1[8] = {
     -4.878788132172128E-009,
     6.009061827883699E-007,
     -4.541343896997497E-005,
@@ -167,7 +165,7 @@ constant float JPJ1[8] = {
     0.0
     };
 
-constant float MO1J1[8] = {
+constant_var float MO1J1[8] = {
     6.913942741265801E-002,
     -2.284801500053359E-001,
     3.138238455499697E-001,
@@ -178,7 +176,7 @@ constant float MO1J1[8] = {
     7.978845453073848E-001
     };
 
-constant float PH1J1[8] = {
+constant_var float PH1J1[8] = {
     -4.497014141919556E+001,
     5.073465654089319E+001,
     -2.485774108720340E+001,
@@ -189,6 +187,7 @@ constant float PH1J1[8] = {
     3.749989509080821E-001
     };
 
+__device__ static
 float cephes_j1f(float xx)
 {
 
@@ -239,7 +238,7 @@ float cephes_j1f(float xx)
 #endif
 
 //Finally J1c function that equals 2*J1(x)/x
-double sas_2J1x_x(double x);
+__device__ static
 double sas_2J1x_x(double x)
 {
     return (x != 0.0 ) ? 2.0*sas_J1(x)/x : 1.0;

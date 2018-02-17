@@ -1,5 +1,7 @@
 #ifdef __OPENCL_VERSION__
 # define USE_OPENCL
+#elif defined(__CUDACC__)
+# define USE_CUDA
 #elif defined(_OPENMP)
 # define USE_OPENMP
 #endif
@@ -7,12 +9,22 @@
 // If opencl is not available, then we are compiling a C function
 // Note: if using a C++ compiler, then define kernel as extern "C"
 #ifdef USE_OPENCL
+
+   #define USE_GPU
    typedef int int32_t;
-#  if defined(USE_SINCOS)
-#    define SINCOS(angle,svar,cvar) svar=sincos(angle,&cvar)
-#  else
-#    define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
-#  endif
+   #define global_par global
+   #define local_par local
+   #define constant_par constant
+   #define global_var global
+   #define local_var local
+   #define constant_var constant
+   #define __device__
+
+   #if defined(USE_SINCOS)
+   #  define SINCOS(angle,svar,cvar) svar=sincos(angle,&cvar)
+   #else
+   #  define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
+   #endif
    // Intel CPU on Mac gives strange values for erf(); on the verified
    // platforms (intel, nvidia, amd), the cephes erf() is significantly
    // faster than that available in the native OpenCL.
@@ -23,10 +35,41 @@
    #  define erff erf
    #  define erfcf erfc
    #endif
-#else // !USE_OPENCL
-// Use SAS_DOUBLE to force the use of double even for float kernels
-#  define SAS_DOUBLE dou ## ble
-#  ifdef __cplusplus
+
+#elif defined(USE_CUDA)
+
+   #define USE_GPU
+   #define global_par
+   #define local_par
+   #define constant_par const
+   #define global_var
+   #define local_var __shared__
+   #define constant_var __constant__
+
+   #define kernel extern "C" __global__
+
+   // OpenCL powr(a,b) = C99 pow(a,b), b >= 0
+   // OpenCL pown(a,b) = C99 pow(a,b), b integer
+   #define powr(a,b) pow(a,b)
+   #define pown(a,b) pow(a,b)
+   //typedef int int32_t;
+   #if defined(USE_SINCOS)
+   #  define SINCOS(angle,svar,cvar) sincos(angle,&svar,&cvar)
+   #else
+   #  define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
+   #endif
+
+#else // !USE_OPENCL && !USE_CUDA
+
+   #define global_par
+   #define local_par
+   #define constant_par const
+   #define global_var
+   #define local_var
+   #define constant_var const
+   #define __device__
+
+   #ifdef __cplusplus
       #include <cstdio>
       #include <cmath>
       using namespace std;
@@ -50,7 +93,7 @@
          #include <cstdint>
      #endif
      inline void SINCOS(double angle, double &svar, double &cvar) { svar=sin(angle); cvar=cos(angle); }
-#  else // !__cplusplus
+   #else // !__cplusplus
      #include <inttypes.h>  // C99 guarantees that int32_t types is here
      #include <stdio.h>
      #if defined(__TINYC__)
@@ -75,15 +118,16 @@
      // MSVC doesn't support C99, so no need for dllexport on C99 branch
      #define kernel
      #define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
-#  endif  // !__cplusplus
-#  define global
-#  define local
-#  define constant const
-// OpenCL powr(a,b) = C99 pow(a,b), b >= 0
-// OpenCL pown(a,b) = C99 pow(a,b), b integer
-#  define powr(a,b) pow(a,b)
-#  define pown(a,b) pow(a,b)
+   #endif  // !__cplusplus
+   // OpenCL powr(a,b) = C99 pow(a,b), b >= 0
+   // OpenCL pown(a,b) = C99 pow(a,b), b integer
+   #define powr(a,b) pow(a,b)
+   #define pown(a,b) pow(a,b)
+
 #endif // !USE_OPENCL
+
+// Use SAS_DOUBLE to force the use of double even for float kernels
+#define SAS_DOUBLE dou ## ble
 
 #if defined(NEED_EXPM1)
    // TODO: precision is a half digit lower than numpy on mac in [1e-7, 0.5]
@@ -146,8 +190,11 @@
 #ifndef M_4PI_3
 #  define M_4PI_3 4.18879020478639
 #endif
+__device__
 inline double square(double x) { return x*x; }
+__device__
 inline double cube(double x) { return x*x*x; }
+__device__
 inline double sas_sinx_x(double x) { return x==0 ? 1.0 : sin(x)/x; }
 
 // CRUFT: support old style models with orientation received qx, qy and angles

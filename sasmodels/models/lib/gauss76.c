@@ -10,7 +10,7 @@
  #define GAUSS_W Gauss76Wt
 
 // Gaussians
-constant double Gauss76Wt[76]={
+constant_var double Gauss76Wt[76] = {
 	.00126779163408536,		//0
 	.00294910295364247,
 	.00462793522803742,
@@ -89,7 +89,7 @@ constant double Gauss76Wt[76]={
 	.00126779163408536		//75 (indexed from 0)
 };
 
-constant double Gauss76Z[76]={
+constant_var double Gauss76Z[76] = {
 	-.999505948362153,		//0
 	-.997397786355355,
 	-.993608772723527,

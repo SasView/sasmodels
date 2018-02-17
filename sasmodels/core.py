@@ -13,6 +13,9 @@ from os.path import basename, join as joinpath
 from glob import glob
 import re
 
+# Set "SAS_OPENCL=cuda" in the environment to use the CUDA rather than OpenCL
+USE_CUDA = os.environ.get("SAS_OPENCL", "") == "cuda"
+
 import numpy as np # type: ignore
 
 from . import generate
@@ -20,7 +23,10 @@ from . import modelinfo
 from . import product
 from . import mixture
 from . import kernelpy
-from . import kernelcl
+if USE_CUDA:
+    from . import kernelcuda
+else:
+    from . import kernelcl
 from . import kerneldll
 from . import custom
 
@@ -209,6 +215,9 @@ def build_model(model_info, dtype=None, platform="ocl"):
     if platform == "dll":
         #print("building dll", numpy_dtype)
         return kerneldll.load_dll(source['dll'], model_info, numpy_dtype)
+    elif USE_CUDA:
+        #print("building cuda", numpy_dtype)
+        return kernelcuda.GpuModel(source, model_info, numpy_dtype, fast=fast)
     else:
         #print("building ocl", numpy_dtype)
         return kernelcl.GpuModel(source, model_info, numpy_dtype, fast=fast)
@@ -267,8 +276,14 @@ def parse_dtype(model_info, dtype=None, platform=None):
 
     if platform is None:
         platform = "ocl"
-    if not kernelcl.use_opencl() or not model_info.opencl:
+    if not model_info.opencl:
         platform = "dll"
+    elif USE_CUDA:
+        if not kernelcuda.use_cuda():
+            platform = "dll"
+    else:
+        if not kernelcl.use_opencl():
+            platform = "dll"
 
     # Check if type indicates dll regardless of which platform is given
     if dtype is not None and dtype.endswith('!'):
@@ -293,7 +308,10 @@ def parse_dtype(model_info, dtype=None, platform=None):
 
     # Make sure that the type is supported by opencl, otherwise use dll
     if platform == "ocl":
-        env = kernelcl.environment()
+        if USE_CUDA:
+            env = kernelcuda.environment()
+        else:
+            env = kernelcl.environment()
         if not env.has_type(numpy_dtype):
             platform = "dll"
             if dtype is None:
