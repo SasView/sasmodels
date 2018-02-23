@@ -422,12 +422,14 @@ def bin_edges(x):
     return edges
 
 # -------------- plotters ----------------
-def plot_calc(r, Pr, q, Iq, theory=None):
+def plot_calc(r, Pr, q, Iq, theory=None, title=None):
     import matplotlib.pyplot as plt
     plt.subplot(211)
     plt.plot(r, Pr, '-', label="Pr")
     plt.xlabel('r (A)')
     plt.ylabel('Pr (1/A^2)')
+    if title is not None:
+        plt.title(title)
     plt.subplot(212)
     plt.loglog(q, Iq, '-', label='from Pr')
     plt.xlabel('q (1/A')
@@ -436,18 +438,29 @@ def plot_calc(r, Pr, q, Iq, theory=None):
         plt.loglog(theory[0], theory[1]/theory[1][0], '-', label='analytic')
         plt.legend()
 
-def plot_calc_2d(qx, qy, Iqxy, theory=None):
+def plot_calc_2d(qx, qy, Iqxy, theory=None, title=None):
     import matplotlib.pyplot as plt
     qx, qy = bin_edges(qx), bin_edges(qy)
     #qx, qy = np.meshgrid(qx, qy)
     if theory is not None:
         plt.subplot(121)
-    plt.pcolormesh(qx, qy, np.log10(Iqxy))
+    #plt.pcolor(qx, qy, np.log10(Iqxy))
+    extent = [qx[0], qx[-1], qy[0], qy[-1]]
+    plt.imshow(np.log10(Iqxy), extent=extent, interpolation="nearest",
+               origin='lower')
     plt.xlabel('qx (1/A)')
     plt.ylabel('qy (1/A)')
+    plt.axis('equal')
+    plt.axis(extent)
+    #plt.grid(True)
+    if title is not None:
+        plt.title(title)
     if theory is not None:
         plt.subplot(122)
-        plt.pcolormesh(qx, qy, np.log10(theory))
+        plt.imshow(np.log10(theory), extent=extent, interpolation="nearest",
+                   origin='lower')
+        plt.axis('equal')
+        plt.axis(extent)
         plt.xlabel('qx (1/A)')
 
 def plot_points(rho, points):
@@ -662,7 +675,7 @@ def check_shape(title, shape, fn=None, show_points=False,
     import pylab
     if show_points:
          plot_points(rho, points); pylab.figure()
-    plot_calc(r, Pr, q, Iq, theory=theory)
+    plot_calc(r, Pr, q, Iq, theory=theory, title=title)
     pylab.gcf().canvas.set_window_title(title)
     pylab.show()
 
@@ -687,7 +700,7 @@ def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
     import pylab
     if show_points:
         plot_points(rho, points); pylab.figure()
-    plot_calc_2d(qx, qy, Iqxy, theory=theory)
+    plot_calc_2d(qx, qy, Iqxy, theory=theory, title=title)
     pylab.gcf().canvas.set_window_title(title)
     pylab.show()
 
