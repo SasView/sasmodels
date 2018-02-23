@@ -115,9 +115,9 @@ def _build_sc():
     )
     atoms = list(zip(x, y, z))
     #print(list(enumerate(atoms)))
-    # Pull the dot at (1, 0, 0) to the front of the list
+    # Pull the dot at (0, 0, 1) to the front of the list
     # It will be highlighted in the view
-    index = 22
+    index = 14
     highlight = atoms[index]
     del atoms[index]
     atoms.insert(0, highlight)
