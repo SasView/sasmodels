@@ -210,8 +210,8 @@ class EllipticalBicelle(Shape):
         # then set value to face value if |z| > face/(length/2))
         values[abs(points[:, 2]) > self.length/(self.length + 2*self.thick_face)] = self.value_face
         # finally set value to rim value if outside the core ellipse
-        radius = (points[:, 0]**2*((self.ra + self.thick_rim)/self.ra)**2
-                  + points[:, 1]**2*((self.rb + self.thick_rim)/self.rb)**2)
+        radius = (points[:, 0]**2*(1 + self.thick_rim/self.ra)**2
+                  + points[:, 1]**2*(1 + self.thick_rim/self.rb)**2)
         values[radius>1] = self.value_rim
         return values, self._adjust(self._scale*points)
 
@@ -741,6 +741,8 @@ def build_cscyl(ra=30, rb=90, length=30, thick_rim=8, thick_face=14,
         radius=ra,
         x_core=rb/ra,
         length=length,
+        thick_rim=thick_rim,
+        thick_face=thick_face,
         sld_core=sld_core,
         sld_face=sld_face,
         sld_rim=sld_rim,
