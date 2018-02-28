@@ -170,9 +170,50 @@ class EllipticalCylinder(Shape):
         num_points = poisson(density*4*self.ra*self.rb*self.length)
         points = uniform(-1, 1, size=(num_points, 3))
         radius = points[:, 0]**2 + points[:, 1]**2
-        points = self._scale*points[radius <= 1]
+        points = points[radius <= 1]
         values = self.value.repeat(points.shape[0])
-        return values, self._adjust(points)
+        return values, self._adjust(self._scale*points)
+
+class EllipticalBicelle(Shape):
+    def __init__(self, ra, rb, length,
+                 thick_rim, thick_face,
+                 value_core, value_rim, value_face,
+                 center=(0, 0, 0), orientation=(0, 0, 0)):
+        self.rotate(*orientation)
+        self.shift(*center)
+        self.value = value_core
+        self.ra, self.rb, self.length = ra, rb, length
+        self.thick_rim, self.thick_face = thick_rim, thick_face
+        self.value_rim, self.value_face = value_rim, value_face
+
+        # reset cylinder to outer dimensions for calculating scale, etc.
+        ra = self.ra + self.thick_rim
+        rb = self.rb + self.thick_rim
+        length = self.length + 2*self.thick_face
+        self._scale = np.array([ra, rb, length/2])[None, :]
+        self.r_max = sqrt(4*max(ra, rb)**2 + length**2)
+        self.dims = 2*ra, 2*rb, length
+        self.volume = pi*ra*rb*length
+
+    def sample(self, density):
+        # randomly sample from a box of side length 2*r, excluding anything
+        # not in the cylinder
+        ra = self.ra + self.thick_rim
+        rb = self.rb + self.thick_rim
+        length = self.length + 2*self.thick_face
+        num_points = poisson(density*4*ra*rb*length)
+        points = uniform(-1, 1, size=(num_points, 3))
+        radius = points[:, 0]**2 + points[:, 1]**2
+        points = points[radius <= 1]
+        # set all to core value first
+        values = np.ones_like(points[:, 0])*self.value
+        # then set value to face value if |z| > face/(length/2))
+        values[abs(points[:, 2]) > self.length/(self.length + 2*self.thick_face)] = self.value_face
+        # finally set value to rim value if outside the core ellipse
+        radius = (points[:, 0]**2*(1+(self.thick_rim/self.ra)**2)
+                  + points[:, 1]**2*(1+(self.thick_rim/self.rb)**2))
+        values[radius>1] = self.value_rim
+        return values, self._adjust(self._scale*points)
 
 class TriaxialEllipsoid(Shape):
     def __init__(self, ra, rb, rc,
@@ -478,6 +519,9 @@ def plot_points(rho, points):
     ax.scatter(points[index, 0], points[index, 1], points[index, 2], c=rho[index])
     #low, high = points.min(axis=0), points.max(axis=0)
     #ax.axis([low[0], high[0], low[1], high[1], low[2], high[2]])
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_zlabel("z")
     ax.autoscale(True)
 
 # ----------- Analytic models --------------
@@ -608,6 +652,37 @@ def csbox_Iqxy(qx, qy, a, b, c, da, db, dc, slda, sldb, sldc, sld_core, view=(0,
     Iq = Fq**2
     return Iq.reshape(qx.shape)
 
+def sasmodels_Iq(kernel, q, pars):
+    from sasmodels.data import empty_data1D
+    from sasmodels.direct_model import DirectModel
+    data = empty_data1D(q)
+    calculator = DirectModel(data, kernel)
+    Iq = calculator(**pars)
+    return Iq
+
+def sasmodels_Iqxy(kernel, qx, qy, pars, view):
+    from sasmodels.data import Data2D
+    from sasmodels.direct_model import DirectModel
+    Iq = 100 * np.ones_like(qx)
+    data = Data2D(x=qx, y=qy, z=Iq, dx=None, dy=None, dz=np.sqrt(Iq))
+    data.x_bins = qx[0,:]
+    data.y_bins = qy[:,0]
+    data.filename = "fake data"
+
+    calculator = DirectModel(data, kernel)
+    pars_plus_view = pars.copy()
+    pars_plus_view.update(theta=view[0], phi=view[1], psi=view[2])
+    Iqxy = calculator(**pars_plus_view)
+    return Iqxy.reshape(qx.shape)
+
+def wrap_sasmodel(name, **pars):
+    from sasmodels.core import load_model
+    kernel = load_model(name)
+    fn = lambda q: sasmodels_Iq(kernel, q, pars)
+    fn_xy = lambda qx, qy, view: sasmodels_Iqxy(kernel, qx, qy, pars, view)
+    return fn, fn_xy
+
+
 # --------- Test cases -----------
 
 def build_cylinder(radius=25, length=125, rho=2.):
@@ -635,6 +710,41 @@ def build_csbox(a=10, b=20, c=30, da=1, db=2, dc=3, slda=1, sldb=2, sldc=3, sld_
                                             slda, sldb, sldc, sld_core, view=view)
     return shape, fn, fn_xy
 
+def build_ellcyl(ra=25, rb=50, length=125, rho=2.):
+    shape = EllipticalCylinder(ra, rb, length, rho)
+    fn, fn_xy = wrap_sasmodel(
+        'elliptical_cylinder',
+        scale=1,
+        background=0,
+        radius_minor=ra,
+        axis_ratio=rb/ra,
+        length=length,
+        sld=rho,
+        sld_solvent=0,
+    )
+    return shape, fn, fn_xy
+
+def build_cscyl(ra=30, rb=90, length=30, thick_rim=8, thick_face=14,
+                sld_core=4, sld_rim=1, sld_face=7):
+    shape = EllipticalBicelle(
+        ra=ra, rb=rb, length=length,
+        thick_rim=thick_rim, thick_face=thick_face,
+        value_core=sld_core, value_rim=sld_rim, value_face=sld_face,
+        )
+    fn, fn_xy = wrap_sasmodel(
+        'core_shell_bicelle_elliptical',
+        scale=1,
+        background=0,
+        radius=rb,
+        x_core=ra/rb,
+        length=length,
+        sld_core=sld_core,
+        sld_face=sld_face,
+        sld_rim=sld_rim,
+        sld_solvent=0,
+    )
+    return shape, fn, fn_xy
+
 def build_cubic_lattice(shape, nx=1, ny=1, nz=1, dx=2, dy=2, dz=2,
                   shuffle=0, rotate=0):
     a, b, c = shape.dims
@@ -651,10 +761,12 @@ def build_cubic_lattice(shape, nx=1, ny=1, nz=1, dx=2, dy=2, dz=2,
 
 
 SHAPE_FUNCTIONS = OrderedDict([
-    ("cylinder", build_cylinder),
+    ("cyl", build_cylinder),
+    ("ellcyl", build_ellcyl),
     ("sphere", build_sphere),
     ("box", build_box),
     ("csbox", build_csbox),
+    ("cscyl", build_cscyl),
 ])
 SHAPES = list(SHAPE_FUNCTIONS.keys())
 
@@ -682,8 +794,10 @@ def check_shape(title, shape, fn=None, show_points=False,
 def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
                    mesh=100, qmax=1.0, samples=5000):
     rho_solvent = 0
-    qx = np.linspace(0.0, qmax, mesh)
-    qy = np.linspace(0.0, qmax, mesh)
+    #qx = np.linspace(0.0, qmax, mesh)
+    #qy = np.linspace(0.0, qmax, mesh)
+    qx = np.linspace(-qmax, qmax, mesh)
+    qy = np.linspace(-qmax, qmax, mesh)
     Qx, Qy = np.meshgrid(qx, qy)
     sampling_density = samples / shape.volume
     t0 = time.time()
@@ -692,7 +806,9 @@ def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
     t0 = time.time()
     Iqxy = calc_Iqxy(Qx, Qy, rho, points, view=view)
     print("calc Iqxy time", time.time() - t0)
+    t0 = time.time()
     theory = fn(Qx, Qy, view) if fn is not None else None
+    print("calc theory time", time.time() - t0)
     Iqxy += 0.001 * Iqxy.max()
     if theory is not None:
         theory += 0.001 * theory.max()
