@@ -517,6 +517,9 @@ def plot_points(rho, points):
     #print("len points", n)
     index = np.random.choice(n, size=500) if n > 500 else slice(None, None)
     ax.scatter(points[index, 0], points[index, 1], points[index, 2], c=rho[index])
+    # make square axes
+    minmax = np.array([points.min(), points.max()])
+    ax.scatter(minmax, minmax, minmax, c='w')
     #low, high = points.min(axis=0), points.max(axis=0)
     #ax.axis([low[0], high[0], low[1], high[1], low[2], high[2]])
     ax.set_xlabel("x")
@@ -735,8 +738,8 @@ def build_cscyl(ra=30, rb=90, length=30, thick_rim=8, thick_face=14,
         'core_shell_bicelle_elliptical',
         scale=1,
         background=0,
-        radius=rb,
-        x_core=ra/rb,
+        radius=ra,
+        x_core=rb/ra,
         length=length,
         sld_core=sld_core,
         sld_face=sld_face,
