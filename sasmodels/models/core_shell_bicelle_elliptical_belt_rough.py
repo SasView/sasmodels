@@ -139,8 +139,8 @@ category = "shape:cylinder"
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [
-    ["radius",         "Ang",       30, [0, inf],    "volume",      "Cylinder core radius"],
-    ["x_core",        "None",       3,  [0, inf],    "volume",      "axial ratio of core, X = r_polar/r_equatorial"],
+    ["radius",         "Ang",       30, [0, inf],    "volume",      "Cylinder core radius r_minor"],
+    ["x_core",        "None",       3,  [0, inf],    "volume",      "Axial ratio of core, X = r_major/r_minor"],
     ["thick_rim",  "Ang",            8, [0, inf],    "volume",      "Rim or belt shell thickness"],
     ["thick_face", "Ang",           14, [0, inf],    "volume",      "Cylinder face thickness"],
     ["length",         "Ang",       50, [0, inf],    "volume",      "Cylinder length"],
@@ -148,10 +148,10 @@ parameters = [
     ["sld_face",       "1e-6/Ang^2", 7, [-inf, inf], "sld",         "Cylinder face scattering length density"],
     ["sld_rim",        "1e-6/Ang^2", 1, [-inf, inf], "sld",         "Cylinder rim scattering length density"],
     ["sld_solvent",    "1e-6/Ang^2", 6, [-inf, inf], "sld",         "Solvent scattering length density"],
-    ["sigma",       "Ang",        0,    [0, inf],    "",            "interfacial roughness"],
-    ["theta",       "degrees",    90.0, [-360, 360], "orientation", "cylinder axis to beam angle"],
-    ["phi",         "degrees",    0,    [-360, 360], "orientation", "rotation about beam"],
-    ["psi",         "degrees",    0,    [-360, 360], "orientation", "rotation about cylinder axis"],
+    ["sigma",       "Ang",        0,    [0, inf],    "",            "Interfacial roughness"],
+    ["theta",       "degrees",    90.0, [-360, 360], "orientation", "Cylinder axis to beam angle"],
+    ["phi",         "degrees",    0,    [-360, 360], "orientation", "Rotation about beam"],
+    ["psi",         "degrees",    0,    [-360, 360], "orientation", "Rotation about cylinder axis"],
     ]
 
 # pylint: enable=bad-whitespace, line-too-long
