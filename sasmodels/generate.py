@@ -168,7 +168,8 @@ from __future__ import print_function
 #__all__ = ["model_info", "make_doc", "make_source", "convert_type"]
 
 import sys
-from os.path import abspath, dirname, join as joinpath, exists, getmtime
+from os import environ
+from os.path import abspath, dirname, join as joinpath, exists, getmtime, sep
 import re
 import string
 from zlib import crc32
@@ -896,12 +897,20 @@ def load_kernel_module(model_name):
     :func:`sasmodels.custom.load_custom_kernel_module`, otherwise
     load it from :mod:`sasmodels.models`.
     """
+    # TODO: Keep current scheme (.py looks in custom folders)
+    plugin_path = environ.get('PLUGIN_MODEL_DIR', None)
     if model_name.endswith('.py'):
         kernel_module = load_custom_kernel_module(model_name)
     else:
-        from sasmodels import models
-        __import__('sasmodels.models.'+model_name)
-        kernel_module = getattr(models, model_name, None)
+        try:
+            from sasmodels import models
+            __import__('sasmodels.models.'+model_name)
+            kernel_module = getattr(models, model_name, None)
+        except Exception:
+            if plugin_path is not None:
+                file_name = model_name.split(sep)[-1]
+                model_name = plugin_path + sep + file_name + ".py"
+            kernel_module = load_custom_kernel_module(model_name)
     return kernel_module
 
 
