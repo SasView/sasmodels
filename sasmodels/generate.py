@@ -213,7 +213,7 @@ def get_data_path(external_dir, target_file):
     raise RuntimeError('Could not find '+joinpath(external_dir, target_file))
 
 EXTERNAL_DIR = 'sasmodels-data'
-DATA_PATH = get_data_path(EXTERNAL_DIR, 'kernel_template.c')
+DATA_PATH = get_data_path(EXTERNAL_DIR, 'kernel_iq.c')
 MODEL_PATH = joinpath(DATA_PATH, 'models')
 
 F16 = np.dtype('float16')
@@ -388,7 +388,7 @@ def ocl_timestamp(model_info):
     """
     # TODO: fails DRY; templates appear two places.
     model_templates = [joinpath(DATA_PATH, filename)
-                       for filename in ('kernel_header.c', 'kernel_iq.cl')]
+                       for filename in ('kernel_header.c', 'kernel_iq.c')]
     source_files = (model_sources(model_info)
                     + model_templates
                     + [model_info.filename])
