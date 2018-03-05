@@ -33,12 +33,12 @@ from sasmodels.core import load_model
 from sasmodels.bumps_model import Model, Experiment
 from sasmodels.data import load_data, set_beam_stop, set_top
 
-from multiscat import MultipleScattering
+from sasmodels.multiscat import MultipleScattering
 
 ## Load the data
 #data = load_data('DEC07267.DAT')
 #set_beam_stop(data, 0.003, outer=0.025)
-data = load_data('latex_smeared.xml', index=1)
+data = load_data('latex_smeared.xml', index=0)
 
 ## Define the model
 kernel = load_model("ellipsoid")
@@ -65,13 +65,11 @@ model.background.range(0,1000)
 model.scale.range(0, 0.1)
 
 # Mulitple scattering probability parameter
-# HACK: the parameter is assigned to model.theta, which is otherwise unused
-# since the dataset is 1D; this won't work for 2D data
+# HACK: the probability is stuffed in as an extra parameter to the experiment.
 probability = Parameter(name="probability", value=0.0)
 probability.range(0.0, 0.9)
-model.phi = probability
 
-M = Experiment(data=data, model=model)
+M = Experiment(data=data, model=model, extra_pars={'probability': probability})
 
 # Stack mulitple scattering on top of the existing resolution function.
 # Because resolution functions in sasview don't have fitting parameters,

@@ -136,7 +136,7 @@ class Experiment(DataMixin):
     The resulting model can be used directly in a Bumps FitProblem call.
     """
     _cache = None # type: Dict[str, np.ndarray]
-    def __init__(self, data, model, cutoff=1e-5, name=None):
+    def __init__(self, data, model, cutoff=1e-5, name=None, extra_pars=None):
         # type: (Data, Model, float) -> None
         # remember inputs so we can inspect from outside
         self.name = data.filename if name is None else name
@@ -144,6 +144,7 @@ class Experiment(DataMixin):
         self.cutoff = cutoff
         self._interpret_data(data, model.sasmodel)
         self._cache = {}
+        self.extra_pars = extra_pars
 
     def update(self):
         # type: () -> None
@@ -165,7 +166,10 @@ class Experiment(DataMixin):
         """
         Return a dictionary of parameters
         """
-        return self.model.parameters()
+        pars = self.model.parameters()
+        if self.extra_pars:
+            pars.update(self.extra_pars)
+        return pars
 
     def theory(self):
         # type: () -> np.ndarray
