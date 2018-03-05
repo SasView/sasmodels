@@ -344,6 +344,11 @@ class DataMixin(object):
         if self._kernel is None:
             self._kernel = self._model.make_kernel(self._kernel_inputs)
 
+        # Need to pull background out of resolution for multiple scattering
+        background = pars.get('background', 0.)
+        pars = pars.copy()
+        pars['background'] = 0.
+
         Iq_calc = call_kernel(self._kernel, pars, cutoff=cutoff)
         # Storing the calculated Iq values so that they can be plotted.
         # Only applies to oriented USANS data for now.
@@ -356,7 +361,7 @@ class DataMixin(object):
                 self.resolution.qx_calc, self.resolution.qy_calc,
                 np.reshape(Iq_calc, (self.resolution.ny, self.resolution.nx))
             )
-        return result
+        return result + background
 
 
 class DirectModel(DataMixin):
