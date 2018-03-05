@@ -19,13 +19,20 @@ The function calculated is the form factor of the rectangular solid below.
 The core of the solid is defined by the dimensions $A$, $B$, $C$ such that
 $A < B < C$.
 
-.. image:: img/core_shell_parallelepiped_geometry.jpg
+.. figure:: img/parallelepiped_geometry.jpg
+
+   Core of the core shell Parallelepiped with the corresponding definition
+   of sides.
+
 
 There are rectangular "slabs" of thickness $t_A$ that add to the $A$ dimension
 (on the $BC$ faces). There are similar slabs on the $AC$ $(=t_B)$ and $AB$
 $(=t_C)$ faces. The projection in the $AB$ plane is then
 
-.. image:: img/core_shell_parallelepiped_projection.jpg
+.. figure:: img/core_shell_parallelepiped_projection.jpg
+
+   AB cut through the core-shell parllelipiped showing the cross secion of
+   four of the six shell slabs
 
 The volume of the solid is
 
@@ -48,11 +55,11 @@ and the $y$ axis.
 
 .. math::
 
-    F(Q)
+    F(q)
     &= (\rho_\text{core}-\rho_\text{solvent})
        S(Q_A, A) S(Q_B, B) S(Q_C, C) \\
     &+ (\rho_\text{A}-\rho_\text{solvent})
-        \left[S(Q_A, A+2t_A) - S(Q_A, Q)\right] S(Q_B, B) S(Q_C, C) \\
+        \left[S(Q_A, A+2t_A) - S(Q_A, A)\right] S(Q_B, B) S(Q_C, C) \\
     &+ (\rho_\text{B}-\rho_\text{solvent})
         S(Q_A, A) \left[S(Q_B, B+2t_B) - S(Q_B, B)\right] S(Q_C, C) \\
     &+ (\rho_\text{C}-\rho_\text{solvent})
@@ -68,9 +75,9 @@ and
 
 .. math::
 
-    Q_A &= \sin\alpha \sin\beta \\
-    Q_B &= \sin\alpha \cos\beta \\
-    Q_C &= \cos\alpha
+    Q_A &= q \sin\alpha \sin\beta \\
+    Q_B &= q \sin\alpha \cos\beta \\
+    Q_C &= q \cos\alpha
 
 
 where $\rho_\text{core}$, $\rho_\text{A}$, $\rho_\text{B}$ and $\rho_\text{C}$
@@ -94,7 +101,7 @@ NB: The 2nd virial coefficient of the core_shell_parallelepiped is calculated
 based on the the averaged effective radius $(=\sqrt{(A+2t_A)(B+2t_B)/\pi})$
 and length $(C+2t_C)$ values, after appropriately sorting the three dimensions
 to give an oblate or prolate particle, to give an effective radius,
-for $S(Q)$ when $P(Q) * S(Q)$ is applied.
+for $S(q)$ when $P(q) * S(q)$ is applied.
 
 For 2d data the orientation of the particle is required, described using
 angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further

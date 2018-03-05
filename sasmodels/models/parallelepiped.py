@@ -9,7 +9,7 @@ Definition
 ----------
 
  This model calculates the scattering from a rectangular parallelepiped
- (\:numref:`parallelepiped-image`\).
+ (:numref:`parallelepiped-image`).
  If you need to apply polydispersity, see also :ref:`rectangular-prism`.
 
 .. _parallelepiped-image:
