@@ -705,13 +705,185 @@ def _plot_2d_signal(data,       # type: Data2D
         vmin_scaled, vmax_scaled = np.log10(vmin), np.log10(vmax)
     else:
         vmin_scaled, vmax_scaled = vmin, vmax
-    plt.imshow(plottable.reshape(len(data.x_bins), len(data.y_bins)),
+    nx, ny = len(data.x_bins), len(data.y_bins)
+    x_bins, y_bins, image = _build_matrix(data, plottable)
+    plt.imshow(image,
                interpolation='nearest', aspect=1, origin='lower',
                extent=[xmin, xmax, ymin, ymax],
                vmin=vmin_scaled, vmax=vmax_scaled)
     plt.xlabel("$q_x$/A$^{-1}$")
     plt.ylabel("$q_y$/A$^{-1}$")
     return vmin, vmax
+
+
+# === The following is modified from sas.sasgui.plottools.PlotPanel
+def _build_matrix(self, plottable):
+    """
+    Build a matrix for 2d plot from a vector
+    Returns a matrix (image) with ~ square binning
+    Requirement: need 1d array formats of
+    self.data, self.qx_data, and self.qy_data
+    where each one corresponds to z, x, or y axis values
+
+    """
+    # No qx or qy given in a vector format
+    if self.qx_data is None or self.qy_data is None \
+            or self.qx_data.ndim != 1 or self.qy_data.ndim != 1:
+        return self.x_bins, self.y_bins, plottable
+
+    # maximum # of loops to fillup_pixels
+    # otherwise, loop could never stop depending on data
+    max_loop = 1
+    # get the x and y_bin arrays.
+    x_bins, y_bins = _get_bins(self)
+    # set zero to None
+
+    #Note: Can not use scipy.interpolate.Rbf:
+    # 'cause too many data points (>10000)<=JHC.
+    # 1d array to use for weighting the data point averaging
+    #when they fall into a same bin.
+    weights_data = np.ones([self.data.size])
+    # get histogram of ones w/len(data); this will provide
+    #the weights of data on each bins
+    weights, xedges, yedges = np.histogram2d(x=self.qy_data,
+                                             y=self.qx_data,
+                                             bins=[y_bins, x_bins],
+                                             weights=weights_data)
+    # get histogram of data, all points into a bin in a way of summing
+    image, xedges, yedges = np.histogram2d(x=self.qy_data,
+                                           y=self.qx_data,
+                                           bins=[y_bins, x_bins],
+                                           weights=plottable)
+    # Now, normalize the image by weights only for weights>1:
+    # If weight == 1, there is only one data point in the bin so
+    # that no normalization is required.
+    image[weights > 1] = image[weights > 1] / weights[weights > 1]
+    # Set image bins w/o a data point (weight==0) as None (was set to zero
+    # by histogram2d.)
+    image[weights == 0] = None
+
+    # Fill empty bins with 8 nearest neighbors only when at least
+    #one None point exists
+    loop = 0
+
+    # do while loop until all vacant bins are filled up up
+    #to loop = max_loop
+    while (weights == 0).any():
+        if loop >= max_loop:  # this protects never-ending loop
+            break
+        image = _fillup_pixels(self, image=image, weights=weights)
+        loop += 1
+
+    return x_bins, y_bins, image
+
+def _get_bins(self):
+    """
+    get bins
+    set x_bins and y_bins into self, 1d arrays of the index with
+    ~ square binning
+    Requirement: need 1d array formats of
+    self.qx_data, and self.qy_data
+    where each one corresponds to  x, or y axis values
+    """
+    # find max and min values of qx and qy
+    xmax = self.qx_data.max()
+    xmin = self.qx_data.min()
+    ymax = self.qy_data.max()
+    ymin = self.qy_data.min()
+
+    # calculate the range of qx and qy: this way, it is a little
+    # more independent
+    x_size = xmax - xmin
+    y_size = ymax - ymin
+
+    # estimate the # of pixels on each axes
+    npix_y = int(np.floor(np.sqrt(len(self.qy_data))))
+    npix_x = int(np.floor(len(self.qy_data) / npix_y))
+
+    # bin size: x- & y-directions
+    xstep = x_size / (npix_x - 1)
+    ystep = y_size / (npix_y - 1)
+
+    # max and min taking account of the bin sizes
+    xmax = xmax + xstep / 2.0
+    xmin = xmin - xstep / 2.0
+    ymax = ymax + ystep / 2.0
+    ymin = ymin - ystep / 2.0
+
+    # store x and y bin centers in q space
+    x_bins = np.linspace(xmin, xmax, npix_x)
+    y_bins = np.linspace(ymin, ymax, npix_y)
+
+    return x_bins, y_bins
+
+def _fillup_pixels(self, image=None, weights=None):
+    """
+    Fill z values of the empty cells of 2d image matrix
+    with the average over up-to next nearest neighbor points
+
+    :param image: (2d matrix with some zi = None)
+
+    :return: image (2d array )
+
+    :TODO: Find better way to do for-loop below
+
+    """
+    # No image matrix given
+    if image is None or np.ndim(image) != 2 \
+            or np.isfinite(image).all() \
+            or weights is None:
+        return image
+    # Get bin size in y and x directions
+    len_y = len(image)
+    len_x = len(image[1])
+    temp_image = np.zeros([len_y, len_x])
+    weit = np.zeros([len_y, len_x])
+    # do for-loop for all pixels
+    for n_y in range(len(image)):
+        for n_x in range(len(image[1])):
+            # find only null pixels
+            if weights[n_y][n_x] > 0 or np.isfinite(image[n_y][n_x]):
+                continue
+            else:
+                # find 4 nearest neighbors
+                # check where or not it is at the corner
+                if n_y != 0 and np.isfinite(image[n_y - 1][n_x]):
+                    temp_image[n_y][n_x] += image[n_y - 1][n_x]
+                    weit[n_y][n_x] += 1
+                if n_x != 0 and np.isfinite(image[n_y][n_x - 1]):
+                    temp_image[n_y][n_x] += image[n_y][n_x - 1]
+                    weit[n_y][n_x] += 1
+                if n_y != len_y - 1 and np.isfinite(image[n_y + 1][n_x]):
+                    temp_image[n_y][n_x] += image[n_y + 1][n_x]
+                    weit[n_y][n_x] += 1
+                if n_x != len_x - 1 and np.isfinite(image[n_y][n_x + 1]):
+                    temp_image[n_y][n_x] += image[n_y][n_x + 1]
+                    weit[n_y][n_x] += 1
+                # go 4 next nearest neighbors when no non-zero
+                # neighbor exists
+                if n_y != 0 and n_x != 0 and \
+                        np.isfinite(image[n_y - 1][n_x - 1]):
+                    temp_image[n_y][n_x] += image[n_y - 1][n_x - 1]
+                    weit[n_y][n_x] += 1
+                if n_y != len_y - 1 and n_x != 0 and \
+                        np.isfinite(image[n_y + 1][n_x - 1]):
+                    temp_image[n_y][n_x] += image[n_y + 1][n_x - 1]
+                    weit[n_y][n_x] += 1
+                if n_y != len_y and n_x != len_x - 1 and \
+                        np.isfinite(image[n_y - 1][n_x + 1]):
+                    temp_image[n_y][n_x] += image[n_y - 1][n_x + 1]
+                    weit[n_y][n_x] += 1
+                if n_y != len_y - 1 and n_x != len_x - 1 and \
+                        np.isfinite(image[n_y + 1][n_x + 1]):
+                    temp_image[n_y][n_x] += image[n_y + 1][n_x + 1]
+                    weit[n_y][n_x] += 1
+
+    # get it normalized
+    ind = (weit > 0)
+    image[ind] = temp_image[ind] / weit[ind]
+
+    return image
+
 
 def demo():
     # type: () -> None
