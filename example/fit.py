@@ -178,7 +178,7 @@ elif name == "triaxial_ellipsoid":
     #model.psi_pd.range(0, 360)
 
 else:
-    print "No parameters for %s"%name
+    print("No parameters for %s"%name)
     sys.exit(1)
 
 model.cutoff = cutoff
@@ -191,3 +191,7 @@ if section == "both":
    problem = FitProblem([M, tan_M])
 else:
    problem = FitProblem(M)
+
+if __name__ == "__main__":
+   problem.plot()
+   import pylab; pylab.show()
