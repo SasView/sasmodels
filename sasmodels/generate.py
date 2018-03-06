@@ -897,8 +897,6 @@ def load_kernel_module(model_name):
     :func:`sasmodels.custom.load_custom_kernel_module`, otherwise
     load it from :mod:`sasmodels.models`.
     """
-    # TODO: Keep current scheme (.py looks in custom folders)
-    plugin_path = environ.get('PLUGIN_MODEL_DIR', None)
     if model_name.endswith('.py'):
         kernel_module = load_custom_kernel_module(model_name)
     else:
@@ -906,11 +904,15 @@ def load_kernel_module(model_name):
             from sasmodels import models
             __import__('sasmodels.models.'+model_name)
             kernel_module = getattr(models, model_name, None)
-        except Exception:
+        except ImportError:
+            # If the model isn't a built in model, try the plugin directory
+            plugin_path = environ.get('PLUGIN_MODEL_DIR', None)
             if plugin_path is not None:
                 file_name = model_name.split(sep)[-1]
                 model_name = plugin_path + sep + file_name + ".py"
-            kernel_module = load_custom_kernel_module(model_name)
+                kernel_module = load_custom_kernel_module(model_name)
+            else:
+                raise
     return kernel_module
 
 
