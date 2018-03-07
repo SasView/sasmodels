@@ -10,7 +10,8 @@ The form factor is normalized by the particle volume $V$ such that
 
 .. math::
 
-    I(q) = \text{scale}\frac{\langle f^2 \rangle}{V} + \text{background}
+    I(q) = \text{scale}\frac{\langle P(q,\alpha,\beta) \rangle}{V} 
+    + \text{background}
 
 where $\langle \ldots \rangle$ is an average over all possible orientations
 of the rectangular solid.
@@ -52,6 +53,13 @@ averaged over all possible orientations, where $\alpha$ is the angle between
 the $z$ axis and the $C$ axis of the parallelepiped, $\beta$ is
 the angle between projection of the particle in the $xy$ detector plane
 and the $y$ axis.
+
+.. math::
+
+    P(q)=\int_{0}^{\pi/2}\int_{0}^{\pi/2}F^2(q,\alpha,\beta) \ cos\alpha
+    \ d\alpha \ d\beta
+
+and
 
 .. math::
 
