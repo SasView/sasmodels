@@ -906,7 +906,7 @@ def load_kernel_module(model_name):
             kernel_module = getattr(models, model_name, None)
         except ImportError:
             # If the model isn't a built in model, try the plugin directory
-            plugin_path = environ.get('PLUGIN_MODEL_DIR', None)
+            plugin_path = environ.get('SAS_MODELPATH', None)
             if plugin_path is not None:
                 file_name = model_name.split(sep)[-1]
                 model_name = plugin_path + sep + file_name + ".py"
