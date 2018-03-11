@@ -143,7 +143,7 @@ class NumpyCalculator:
         F_convolved = F * np.polyval(poly, F)
         frame = np.fft.ifft2(F_convolved)
         result = scale * _inverse_shift(frame.real, dtype=self.dtype)
-        #print("multiscat time", time.time()-t0)
+        #print("numpy multiscat time", time.time()-t0)
         return result
 
 # polyval1(c, x) computes (...((c0 x + c1) x + c2) x ... + cn) x
@@ -236,7 +236,7 @@ class OpenclCalculator(NumpyCalculator):
         frame = gpu_data.get()
         #result = scale * _inverse_shift(frame.real, dtype=self.dtype)
         result = scale * _inverse_shift(frame.real, dtype=self.dtype)
-        #print("multiscat time", time.time()-t0)
+        #print("OpenCL multiscat time", time.time()-t0)
         return result
 
 Calculator = OpenclCalculator if HAVE_OPENCL else NumpyCalculator
