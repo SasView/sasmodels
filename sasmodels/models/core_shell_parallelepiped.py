@@ -10,13 +10,13 @@ The form factor is normalized by the particle volume $V$ such that
 
 .. math::
 
-    I(q) = \text{scale}\frac{\langle P(q,\alpha,\beta) \rangle}{V} 
+    I(q) = \frac{\text{scale}}{V} \langle P(q,\alpha,\beta) \rangle 
     + \text{background}
 
 where $\langle \ldots \rangle$ is an average over all possible orientations
-of the rectangular solid.
+of the rectangular solid, and the usual $\Delta \rho^2 \ V^2$ term cannot be
+pulled out of the form factor term due to the multiple slds in the model.
 
-The function calculated is the form factor of the rectangular solid below.
 The core of the solid is defined by the dimensions $A$, $B$, $C$ such that
 $A < B < C$.
 
@@ -28,42 +28,40 @@ $A < B < C$.
 
 There are rectangular "slabs" of thickness $t_A$ that add to the $A$ dimension
 (on the $BC$ faces). There are similar slabs on the $AC$ $(=t_B)$ and $AB$
-$(=t_C)$ faces. The projection in the $AB$ plane is then
+$(=t_C)$ faces. The projection in the $AB$ plane is
 
 .. figure:: img/core_shell_parallelepiped_projection.jpg
 
    AB cut through the core-shell parllelipiped showing the cross secion of
-   four of the six shell slabs
+   four of the six shell slabs. As can be seen This model leaves **"gaps"**
+   at the corners of the solid.
 
-The volume of the solid is
+
+The total volume of the solid is thus given as
 
 .. math::
 
     V = ABC + 2t_ABC + 2t_BAC + 2t_CAB
 
-**meaning that there are "gaps" at the corners of the solid.**
-
 The intensity calculated follows the :ref:`parallelepiped` model, with the
 core-shell intensity being calculated as the square of the sum of the
-amplitudes of the core and the slabs on the edges.
-
-the scattering amplitude is computed for a particular orientation of the
-core-shell parallelepiped with respect to the scattering vector and then
-averaged over all possible orientations, where $\alpha$ is the angle between
-the $z$ axis and the $C$ axis of the parallelepiped, $\beta$ is
-the angle between projection of the particle in the $xy$ detector plane
-and the $y$ axis.
+amplitudes of the core and the slabs on the edges. The scattering amplitude is
+computed for a particular orientation of the core-shell parallelepiped with
+respect to the scattering vector and then averaged over all possible
+orientations, where $\alpha$ is the angle between the $z$ axis and the $C$ axis
+of the parallelepiped, and $\beta$ is the angle between the projection of the
+particle in the $xy$ detector plane and the $y$ axis.
 
 .. math::
 
-    P(q)=\int_{0}^{\pi/2}\int_{0}^{\pi/2}F^2(q,\alpha,\beta) \ cos\alpha
-    \ d\alpha \ d\beta
+    P(q)=\frac {\int_{0}^{\pi/2}\int_{0}^{\pi/2}F^2(q,\alpha,\beta) \ sin\alpha
+    \ d\alpha \ d\beta} {\int_{0}^{\pi/2} \ sin\alpha \ d\alpha \ d\beta}
 
 and
 
 .. math::
 
-    F(q)
+    F(q,\alpha,\beta)
     &= (\rho_\text{core}-\rho_\text{solvent})
        S(Q_A, A) S(Q_B, B) S(Q_C, C) \\
     &+ (\rho_\text{A}-\rho_\text{solvent})
@@ -77,7 +75,7 @@ with
 
 .. math::
 
-    S(Q, L) = L \frac{\sin \tfrac{1}{2} Q L}{\tfrac{1}{2} Q L}
+    S(Q_X, L) = L \frac{\sin \tfrac{1}{2} Q_X L}{\tfrac{1}{2} Q_X L}
 
 and
 
@@ -92,6 +90,15 @@ where $\rho_\text{core}$, $\rho_\text{A}$, $\rho_\text{B}$ and $\rho_\text{C}$
 are the scattering length of the parallelepiped core, and the rectangular
 slabs of thickness $t_A$, $t_B$ and $t_C$, respectively. $\rho_\text{solvent}$
 is the scattering length of the solvent.
+
+.. note:: 
+
+   the code actually implements two substitutions: $d(cos\alpha)$ is
+   substituted for -$sin\alpha \ d\alpha$ (note that in the
+   :ref:`parallelepiped` code this is explicitly implemented with
+   $\sigma = cos\alpha$), and $\beta$ is set to $\beta = u \pi/2$ so that
+   $du = \pi/2 \ d\beta$.  Thus both integrals go from 0 to 1 rather than 0
+   to $\pi/2$.
 
 FITTING NOTES
 ~~~~~~~~~~~~~
@@ -117,10 +124,10 @@ details of the calculation and angular dispersions see :ref:`orientation`.
 The angle $\Psi$ is the rotational angle around the *long_c* axis. For example,
 $\Psi = 0$ when the *short_b* axis is parallel to the *x*-axis of the detector.
 
-For 2d, constraints must be applied during fitting to ensure that the
-inequality $A < B < C$ is not violated, and hence the correct definition
-of angles is preserved. The calculation will not report an error,
-but the results may be not correct.
+.. note:: For 2d, constraints must be applied during fitting to ensure that the
+   inequality $A < B < C$ is not violated, and hence the correct definition
+   of angles is preserved. The calculation will not report an error,
+   but the results may be not correct.
 
 .. figure:: img/parallelepiped_angle_definition.png
 

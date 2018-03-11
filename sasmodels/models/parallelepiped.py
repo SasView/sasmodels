@@ -38,16 +38,18 @@ The 1D scattering intensity $I(q)$ is calculated as:
 .. math::
 
     I(q) = \frac{\text{scale}}{V} (\Delta\rho \cdot V)^2
-           \left< P(q, \alpha) \right> + \text{background}
+           \left< P(q, \alpha, \beta) \right> + \text{background}
 
 where the volume $V = A B C$, the contrast is defined as
-$\Delta\rho = \rho_\text{p} - \rho_\text{solvent}$,
-$P(q, \alpha)$ is the form factor corresponding to a parallelepiped oriented
-at an angle $\alpha$ (angle between the long axis C and $\vec q$),
-and the averaging $\left<\ldots\right>$ is applied over all orientations.
+$\Delta\rho = \rho_\text{p} - \rho_\text{solvent}$, $P(q, \alpha, \beta)$
+is the form factor corresponding to a parallelepiped oriented
+at an angle $\alpha$ (angle between the long axis C and $\vec q$), and $\beta$
+( the angle between the projection of the particle in the $xy$ detector plane
+and the $y$ axis) and the averaging $\left<\ldots\right>$ is applied over all
+orientations.
 
 Assuming $a = A/B < 1$, $b = B /B = 1$, and $c = C/B > 1$, the
-form factor is given by (Mittelbach and Porod, 1961)
+form factor is given by (Mittelbach and Porod, 1961 [#Mittelbach]_)
 
 .. math::
 
@@ -65,7 +67,8 @@ with
     S(x) &= \frac{\sin x}{x} \\
     \mu &= qB
 
-The scattering intensity per unit volume is returned in units of |cm^-1|.
+where substitution of $\sigma = cos\alpha$ and $\beta = \pi/2 \ u$ have been
+applied.
 
 NB: The 2nd virial coefficient of the parallelepiped is calculated based on
 the averaged effective radius, after appropriately sorting the three
@@ -119,9 +122,12 @@ calculated as
 
 .. math::
 
-    P(q_x, q_y) = \left[\frac{\sin(\tfrac{1}{2}qA\cos\alpha)}{(\tfrac{1}{2}qA\cos\alpha)}\right]^2
-                  \left[\frac{\sin(\tfrac{1}{2}qB\cos\beta)}{(\tfrac{1}{2}qB\cos\beta)}\right]^2
-                  \left[\frac{\sin(\tfrac{1}{2}qC\cos\gamma)}{(\tfrac{1}{2}qC\cos\gamma)}\right]^2
+    P(q_x, q_y) = \left[\frac{\sin(\tfrac{1}{2}qA\cos\alpha)}{(\tfrac{1}
+                   {2}qA\cos\alpha)}\right]^2
+                  \left[\frac{\sin(\tfrac{1}{2}qB\cos\beta)}{(\tfrac{1}
+                   {2}qB\cos\beta)}\right]^2
+                  \left[\frac{\sin(\tfrac{1}{2}qC\cos\gamma)}{(\tfrac{1}
+                   {2}qC\cos\gamma)}\right]^2
 
 with
 
@@ -159,9 +165,9 @@ angles.
 References
 ----------
 
-P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
-
-R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+.. [#Mittelbach] P Mittelbach and G Porod, *Acta Physica Austriaca*,
+   14 (1961) 185-211
+.. [#] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
 
 Authorship and Verification
 ----------------------------
