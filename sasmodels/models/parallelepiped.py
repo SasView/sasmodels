@@ -1,16 +1,14 @@
 # parallelepiped model
 # Note: model title and parameter table are inserted automatically
 r"""
-The form factor is normalized by the particle volume.
-For information about polarised and magnetic scattering, see
-the :ref:`magnetism` documentation.
-
 Definition
 ----------
 
  This model calculates the scattering from a rectangular parallelepiped
  (:numref:`parallelepiped-image`).
- If you need to apply polydispersity, see also :ref:`rectangular-prism`.
+ If you need to apply polydispersity, see also :ref:`rectangular-prism`. For
+ information about polarised and magnetic scattering, see
+the :ref:`magnetism` documentation.
 
 .. _parallelepiped-image:
 
@@ -25,7 +23,8 @@ with Monte-Carlo fit methods, it may be advisable to restrict their ranges.
 There may be a number of closely similar "best fits", so some trial and
 error, or fixing of some dimensions at expected values, may help.
 
-The 1D scattering intensity $I(q)$ is calculated as:
+The form factor is normalized by the particle volume and the 1D scattering
+intensity $I(q)$ is then calculated as:
 
 .. Comment by Miguel Gonzalez:
    I am modifying the original text because I find the notation a little bit

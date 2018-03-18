@@ -142,6 +142,15 @@ $\Psi = 0$ when the *short_b* axis is parallel to the *x*-axis of the detector.
     Examples of the angles for oriented core-shell parallelepipeds against the
     detector plane.
 
+
+Validation
+----------
+
+Cross-checked against hollow rectangular prism and rectangular prism for equal
+thickness overlapping sides, and by Monte Carlo sampling of points within the
+shape for non-uniform, non-overlapping sides.
+
+
 References
 ----------
 
@@ -158,9 +167,6 @@ Authorship and Verification
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Converted to sasmodels by:** Miguel Gonzalez **Date:** February 26, 2016
 * **Last Modified by:** Paul Kienzle **Date:** October 17, 2017
-* Cross-checked against hollow rectangular prism and rectangular prism for
-  equal thickness overlapping sides, and by Monte Carlo sampling of points
-  within the shape for non-uniform, non-overlapping sides.
 """
 
 import numpy as np
