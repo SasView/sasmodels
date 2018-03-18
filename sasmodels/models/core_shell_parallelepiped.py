@@ -22,7 +22,7 @@ $A < B < C$.
 
 .. figure:: img/parallelepiped_geometry.jpg
 
-   Core of the core shell Parallelepiped with the corresponding definition
+   Core of the core shell parallelepiped with the corresponding definition
    of sides.
 
 
@@ -32,8 +32,8 @@ $(=t_C)$ faces. The projection in the $AB$ plane is
 
 .. figure:: img/core_shell_parallelepiped_projection.jpg
 
-   AB cut through the core-shell parllelipiped showing the cross secion of
-   four of the six shell slabs. As can be seen This model leaves **"gaps"**
+   AB cut through the core-shell parallelipiped showing the cross secion of
+   four of the six shell slabs. As can be seen, this model leaves **"gaps"**
    at the corners of the solid.
 
 
@@ -75,7 +75,7 @@ with
 
 .. math::
 
-    S(Q_X, L) = L \frac{\sin \tfrac{1}{2} Q_X L}{\tfrac{1}{2} Q_X L}
+    S(Q_X, L) = L \frac{\sin (\tfrac{1}{2} Q_X L)}{\tfrac{1}{2} Q_X L}
 
 and
 
@@ -87,7 +87,7 @@ and
 
 
 where $\rho_\text{core}$, $\rho_\text{A}$, $\rho_\text{B}$ and $\rho_\text{C}$
-are the scattering length of the parallelepiped core, and the rectangular
+are the scattering lengths of the parallelepiped core, and the rectangular
 slabs of thickness $t_A$, $t_B$ and $t_C$, respectively. $\rho_\text{solvent}$
 is the scattering length of the solvent.
 
@@ -115,11 +115,11 @@ The returned value is in units of |cm^-1|, on absolute scale.
 NB: The 2nd virial coefficient of the core_shell_parallelepiped is calculated
 based on the the averaged effective radius $(=\sqrt{(A+2t_A)(B+2t_B)/\pi})$
 and length $(C+2t_C)$ values, after appropriately sorting the three dimensions
-to give an oblate or prolate particle, to give an effective radius,
+to give an oblate or prolate particle, to give an effective radius
 for $S(q)$ when $P(q) * S(q)$ is applied.
 
 For 2d data the orientation of the particle is required, described using
-angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further
+angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below. For further
 details of the calculation and angular dispersions see :ref:`orientation`.
 The angle $\Psi$ is the rotational angle around the *long_c* axis. For example,
 $\Psi = 0$ when the *short_b* axis is parallel to the *x*-axis of the detector.
@@ -134,7 +134,7 @@ $\Psi = 0$ when the *short_b* axis is parallel to the *x*-axis of the detector.
     Definition of the angles for oriented core-shell parallelepipeds.
     Note that rotation $\theta$, initially in the $xz$ plane, is carried
     out first, then rotation $\phi$ about the $z$ axis, finally rotation
-    $\Psi$ is now around the axis of the cylinder. The neutron or X-ray
+    $\Psi$ is now around the axis of the particle. The neutron or X-ray
     beam is along the $z$ axis.
 
 .. figure:: img/parallelepiped_angle_projection.png
@@ -156,7 +156,7 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
-* **Converted to sasmodels by:** Miguel Gonzales **Date:** February 26, 2016
+* **Converted to sasmodels by:** Miguel Gonzalez **Date:** February 26, 2016
 * **Last Modified by:** Paul Kienzle **Date:** October 17, 2017
 * Cross-checked against hollow rectangular prism and rectangular prism for
   equal thickness overlapping sides, and by Monte Carlo sampling of points
