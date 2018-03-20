@@ -22,13 +22,16 @@ particle volume such that
 where $F$ is the scattering amplitude and $\langle\cdot\rangle$ denotes an
 average over the size distribution.
 
-Each distribution is characterized by its center $\bar x$, its width $\sigma$,
-the number of sigmas $N_\sigma$ to include from the tails, and the number of
-points used to compute the average. The center of the distribution is set by the
-value of the model parameter.  Volume parameters have polydispersity *PD*
-(not to be confused with a molecular weight distributions in polymer science)
-leading to a size distribution of width $\text{PD} = \sigma / \bar x$, but
-orientation parameters use an angular distributions of width $\sigma$.
+Each distribution is characterized by a center value $\bar x$ or $x_\text{med}$, 
+a width parameter $\sigma$ (note this is *not necessarily* the standard deviation, so read 
+the description carefully), the number of sigmas $N_\sigma$ to include from the 
+tails of the distribution, and the number of points used to compute the average. 
+The center of the distribution is set by the value of the model parameter. 
+
+Volume parameters have polydispersity *PD* (not to be confused with a molecular 
+weight distributions in polymer science), but orientation parameters use angular 
+distributions of width $\sigma$.
+
 $N_\sigma$ determines how far into the tails to evaluate the distribution, with
 larger values of $N_\sigma$ required for heavier tailed distributions.
 The scattering in general falls rapidly with $qr$ so the usual assumption
@@ -43,53 +46,33 @@ calculations are generally more robust with more data points or more angles.
 
 The following distribution functions are provided:
 
-*  *Rectangular Distribution*
 *  *Uniform Distribution*
+*  *Rectangular Distribution*
 *  *Gaussian Distribution*
+*  *Boltzmann Distribution*
 *  *Lognormal Distribution*
 *  *Schulz Distribution*
 *  *Array Distribution*
-*  *Boltzmann Distribution*
 
 These are all implemented as *number-average* distributions.
 
+Additional distributions are under consideration.
+
+Suggested Applications
+^^^^^^^^^^^^^^^^^^^^^^
+
+If applying polydispersion to parameters describing particle sizes, use 
+the Lognormal or Schulz distributions.
+
+If applying polydispersion to parameters describing interfacial thicknesses 
+or angular orientations, use the Gaussian or Boltzmann distributions.
+
+The array distribution allows a user-defined distribution to be applied.
+
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
-Rectangular Distribution
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-The Rectangular Distribution is defined as
-
-.. math::
-
-    f(x) = \frac{1}{\text{Norm}}
-    \begin{cases}
-      1 & \text{for } |x - \bar x| \leq w \\
-      0 & \text{for } |x - \bar x| > w
-    \end{cases}
-
-where $\bar x$ is the mean of the distribution, $w$ is the half-width, and
-*Norm* is a normalization factor which is determined during the numerical
-calculation.
-
-Note that the standard deviation and the half width $w$ are different!
-
-The standard deviation is
-
-.. math:: \sigma = w / \sqrt{3}
-
-whilst the polydispersity is
-
-.. math:: \text{PD} = \sigma / \bar x
-
-.. figure:: pd_rectangular.jpg
-
-    Rectangular distribution.
-
-
-
 Uniform Distribution
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
 
 The Uniform Distribution is defined as
 
@@ -101,11 +84,11 @@ The Uniform Distribution is defined as
           0 & \text{for } |x - \bar x| > \sigma
         \end{cases}
 
-    where $\bar x$ is the mean of the distribution, $\sigma$ is the half-width, and
-    *Norm* is a normalization factor which is determined during the numerical
-    calculation.
+    where $\bar x$ ($x_\text{mean}$ in the figure) is the mean of the distribution, 
+    $\sigma$ is the half-width, and *Norm* is a normalization factor which is 
+    determined during the numerical calculation.
 
-    Note that the polydispersity is given by
+    The polydispersity in sasmodels is given by
 
     .. math:: \text{PD} = \sigma / \bar x
 
@@ -117,96 +100,172 @@ The value $N_\sigma$ is ignored for this distribution.
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
+Rectangular Distribution
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Rectangular Distribution is defined as
+
+    .. math::
+
+        f(x) = \frac{1}{\text{Norm}}
+        \begin{cases}
+          1 & \text{for } |x - \bar x| \leq w \\
+          0 & \text{for } |x - \bar x| > w
+        \end{cases}
+
+    where $\bar x$ ($x_\text{mean}$ in the figure) is the mean of the distribution, 
+    $w$ is the half-width, and *Norm* is a normalization factor which is determined 
+    during the numerical calculation.
+
+    Note that the standard deviation and the half width $w$ are different!
+
+    The standard deviation is
+
+    .. math:: \sigma = w / \sqrt{3}
+
+    whilst the polydispersity in sasmodels is given by
+
+    .. math:: \text{PD} = \sigma / \bar x
+
+    .. figure:: pd_rectangular.jpg
+
+        Rectangular distribution.
+        
+    .. note:: The Rectangular Distribution is deprecated in favour of the Uniform Distribution 
+              above and is described here for backwards compatibility with earlier versions of SasView only.
+
+.. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
+
 Gaussian Distribution
 ^^^^^^^^^^^^^^^^^^^^^
 
 The Gaussian Distribution is defined as
 
-.. math::
+    .. math::
 
-    f(x) = \frac{1}{\text{Norm}}
-           \exp\left(-\frac{(x - \bar x)^2}{2\sigma^2}\right)
+        f(x) = \frac{1}{\text{Norm}}
+               \exp\left(-\frac{(x - \bar x)^2}{2\sigma^2}\right)
 
-where $\bar x$ is the mean of the distribution and *Norm* is a normalization
-factor which is determined during the numerical calculation.
+    where $\bar x$ ($x_\text{mean}$ in the figure) is the mean of the distribution 
+    and *Norm* is a normalization factor which is determined during the numerical calculation.
 
-The polydispersity is
+    The polydispersity in sasmodels is given by
 
-.. math:: \text{PD} = \sigma / \bar x
+    .. math:: \text{PD} = \sigma / \bar x
 
-.. figure:: pd_gaussian.jpg
+    .. figure:: pd_gaussian.jpg
 
-    Normal distribution.
+        Normal distribution.
+
+.. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
+
+Boltzmann Distribution
+^^^^^^^^^^^^^^^^^^^^^^
+
+The Boltzmann Distribution is defined as
+
+    .. math::
+
+        f(x) = \frac{1}{\text{Norm}}
+               \exp\left(-\frac{ | x - \bar x | }{\sigma}\right)
+
+    where $\bar x$ ($x_\text{mean}$ in the figure) is the mean of the distribution 
+    and *Norm* is a normalization factor which is determined during the numerical calculation.
+
+    The width is defined as
+
+    .. math:: \sigma=\frac{k T}{E}
+
+    which is the inverse Boltzmann factor, where $k$ is the Boltzmann constant, 
+    $T$ the temperature in Kelvin and $E$ a characteristic energy per particle.
+
+    .. figure:: pd_boltzmann.jpg
+
+        Boltzmann distribution.
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
 Lognormal Distribution
 ^^^^^^^^^^^^^^^^^^^^^^
 
+The Lognormal Distribution describes a function of $x$ where $\ln (x)$ has a normal distribution. 
+The result is a distribution that is skewed towards larger values of $x$.
+
 The Lognormal Distribution is defined as
 
-.. math::
+    .. math::
 
-    f(x) = \frac{1}{\text{Norm}}
-           \frac{1}{xp}\exp\left(-\frac{(\ln(x) - \mu)^2}{2p^2}\right)
+        f(x) = \frac{1}{\text{Norm}}
+               \frac{1}{x\sigma}\exp\left(-\frac{1}{2}\bigg(\frac{\ln(x) - \mu}{\sigma}\bigg)^2\right)
+           
+    where *Norm* is a normalization factor which will be determined during the numerical calculation, 
+    $\mu=\ln(x_\text{med})$ and $x_\text{med}$ is the *median* value of the *lognormal* distribution, 
+    but $\sigma$ is a parameter describing the width of the underlying *normal* distribution.
 
-where $\mu=\ln(x_\text{med})$ when $x_\text{med}$ is the median value of the
-distribution, and *Norm* is a normalization factor which will be determined
-during the numerical calculation.
+    $x_\text{med}$ will be the value given for the respective size parameter in sasmodels, for 
+    example, *radius=60*.
 
-The median value for the distribution will be the value given for the
-respective size parameter, for example, *radius=60*.
+    The polydispersity in sasmodels is given by
 
-The polydispersity is given by $\sigma$
+    .. math:: \text{PD} = p = \sigma / x_\text{med}
 
-.. math:: \text{PD} = p
+    The mean value of the distribution is given by $\bar x = \exp(\mu+ p^2/2)$ and the peak value 
+    by $\max x = \exp(\mu - p^2)$.
 
-For the angular distribution
+    The variance (the square of the standard deviation) of the *lognormal* distribution is given by
 
-.. math:: p = \sigma / x_\text{med}
+    .. math::
 
-The mean value is given by $\bar x = \exp(\mu+ p^2/2)$. The peak value
-is given by $\max x = \exp(\mu - p^2)$.
+        \nu = [\exp({\sigma}^2) - 1] \exp({2\mu + \sigma^2})
 
-.. figure:: pd_lognormal.jpg
+    Note that larger values of PD might need a larger number of points and $N_\sigma$.
+    
+    .. figure:: pd_lognormal.jpg
 
-    Lognormal distribution.
+        Lognormal distribution.
 
-This distribution function spreads more, and the peak shifts to the left, as
-$p$ increases, so it requires higher values of $N_\sigma$ and more points
-in the distribution.
+For further information on the Lognormal distribution see:
+http://en.wikipedia.org/wiki/Log-normal_distribution and 
+http://mathworld.wolfram.com/LogNormalDistribution.html
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
 Schulz Distribution
 ^^^^^^^^^^^^^^^^^^^
 
+The Schulz (sometimes written Schultz) distribution is similar to the Lognormal distribution, 
+in that it is also skewed towards larger values of $x$, but which has computational advantages 
+over the Lognormal distribution.
+
 The Schulz distribution is defined as
 
-.. math::
+    .. math::
 
-    f(x) = \frac{1}{\text{Norm}}
-           (z+1)^{z+1}(x/\bar x)^z\frac{\exp[-(z+1)x/\bar x]}{\bar x\Gamma(z+1)}
+        f(x) = \frac{1}{\text{Norm}}
+               (z+1)^{z+1}(x/\bar x)^z\frac{\exp[-(z+1)x/\bar x]}{\bar x\Gamma(z+1)}
 
-where $\bar x$ is the mean of the distribution and *Norm* is a normalization
-factor which is determined during the numerical calculation, and $z$ is a
-measure of the width of the distribution such that
+    where $\bar x$ ($x_\text{mean}$ in the figure) is the mean of the distribution, 
+    *Norm* is a normalization factor which is determined during the numerical calculation, 
+    and $z$ is a measure of the width of the distribution such that
 
-.. math:: z = (1-p^2) / p^2
+    .. math:: z = (1-p^2) / p^2
 
-The polydispersity is
+    where $p$ is the polydispersity in sasmodels given by
 
-.. math:: p = \sigma / \bar x
+    .. math:: PD = p = \sigma / \bar x
 
-Note that larger values of PD might need larger number of points and $N_\sigma$.
-For example, at PD=0.7 and radius=60 |Ang|, Npts>=160 and Nsigmas>=15 at least.
+    and $\sigma$ is the RMS deviation from $\bar x$.
+    
+    Note that larger values of PD might need a larger number of points and $N_\sigma$.
+    For example, for PD=0.7 with radius=60 |Ang|, at least Npts>=160 and Nsigmas>=15 are required.
 
-.. figure:: pd_schulz.jpg
+    .. figure:: pd_schulz.jpg
 
-    Schulz distribution.
+        Schulz distribution.
 
 For further information on the Schulz distribution see:
-M Kotlarchyk & S-H Chen, *J Chem Phys*, (1983), 79, 2461.
+M Kotlarchyk & S-H Chen, *J Chem Phys*, (1983), 79, 2461 and
+M Kotlarchyk, RB Stephens, and JS Huang, *J Phys Chem*, (1988), 92, 1533 
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
@@ -236,32 +295,6 @@ not be fitable.
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
-Boltzmann Distribution
-^^^^^^^^^^^^^^^^^^^^^^
-
-The Boltzmann Distribution is defined as
-
-.. math::
-
-    f(x) = \frac{1}{\text{Norm}}
-           \exp\left(-\frac{ | x - \bar x | }{\sigma}\right)
-
-where $\bar x$ is the mean of the distribution and *Norm* is a normalization
-factor which is determined during the numerical calculation.
-The width is defined as
-
-.. math:: \sigma=\frac{k T}{E}
-
-which is the inverse Boltzmann factor,
-where $k$ is the Boltzmann constant, $T$ the temperature in Kelvin and $E$ a
-characteristic energy per particle.
-
-.. figure:: pd_boltzmann.jpg
-
-    Boltzmann distribution.
-
-.. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
-
 Note about DLS polydispersity
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -272,6 +305,12 @@ variation of the size distribution and is NOT the same as the polydispersity
 parameters in the Lognormal and Schulz distributions above (though they all
 related) except when the DLS polydispersity parameter is <0.13.
 
+.. math::
+
+    p_{DLS} = \sqrt(\nu / \bar x^2)
+
+where $\nu$ is the variance of the distribution and $\bar x$ is the mean value of x.
+
 For more information see:
 S King, C Washington & R Heenan, *Phys Chem Chem Phys*, (2005), 7, 143
 
@@ -281,3 +320,4 @@ S King, C Washington & R Heenan, *Phys Chem Chem Phys*, (2005), 7, 143
 
 | 2015-05-01 Steve King
 | 2017-05-08 Paul Kienzle
+| 2018-03-20 Steve King
