@@ -705,7 +705,7 @@ def _plot_2d_signal(data,       # type: Data2D
         vmin_scaled, vmax_scaled = np.log10(vmin), np.log10(vmax)
     else:
         vmin_scaled, vmax_scaled = vmin, vmax
-    nx, ny = len(data.x_bins), len(data.y_bins)
+    #nx, ny = len(data.x_bins), len(data.y_bins)
     x_bins, y_bins, image = _build_matrix(data, plottable)
     plt.imshow(image,
                interpolation='nearest', aspect=1, origin='lower',
@@ -771,7 +771,7 @@ def _build_matrix(self, plottable):
     while (weights == 0).any():
         if loop >= max_loop:  # this protects never-ending loop
             break
-        image = _fillup_pixels(self, image=image, weights=weights)
+        image = _fillup_pixels(image=image, weights=weights)
         loop += 1
 
     return x_bins, y_bins, image
@@ -816,7 +816,7 @@ def _get_bins(self):
 
     return x_bins, y_bins
 
-def _fillup_pixels(self, image=None, weights=None):
+def _fillup_pixels(image=None, weights=None):
     """
     Fill z values of the empty cells of 2d image matrix
     with the average over up-to next nearest neighbor points

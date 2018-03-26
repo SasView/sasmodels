@@ -7,9 +7,6 @@ Application to explore orientation angle and angular dispersity.
 """
 from __future__ import division, print_function
 
-import sys, os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-
 import argparse
 
 try: # CRUFT: travis-ci does not support mpl_toolkits.mplot3d
@@ -49,7 +46,7 @@ def draw_beam(ax, view=(0, 0)):
 
 def draw_ellipsoid(ax, size, view, jitter, steps=25, alpha=1):
     """Draw an ellipsoid."""
-    a,b,c = size
+    a, b, c = size
     u = np.linspace(0, 2 * np.pi, steps)
     v = np.linspace(0, np.pi, steps)
     x = a*np.outer(np.cos(u), np.sin(v))
@@ -60,19 +57,21 @@ def draw_ellipsoid(ax, size, view, jitter, steps=25, alpha=1):
     ax.plot_surface(x, y, z, rstride=4, cstride=4, color='w', alpha=alpha)
 
     draw_labels(ax, view, jitter, [
-         ('c+', [ 0, 0, c], [ 1, 0, 0]),
-         ('c-', [ 0, 0,-c], [ 0, 0,-1]),
-         ('a+', [ a, 0, 0], [ 0, 0, 1]),
-         ('a-', [-a, 0, 0], [ 0, 0,-1]),
-         ('b+', [ 0, b, 0], [-1, 0, 0]),
-         ('b-', [ 0,-b, 0], [-1, 0, 0]),
+        ('c+', [+0, +0, +c], [+1, +0, +0]),
+        ('c-', [+0, +0, -c], [+0, +0, -1]),
+        ('a+', [+a, +0, +0], [+0, +0, +1]),
+        ('a-', [-a, +0, +0], [+0, +0, -1]),
+        ('b+', [+0, +b, +0], [-1, +0, +0]),
+        ('b-', [+0, -b, +0], [-1, +0, +0]),
     ])
 
 def draw_sc(ax, size, view, jitter, steps=None, alpha=1):
+    """Draw points for simple cubic paracrystal"""
     atoms = _build_sc()
     _draw_crystal(ax, size, view, jitter, atoms=atoms)
 
 def draw_fcc(ax, size, view, jitter, steps=None, alpha=1):
+    """Draw points for face-centered cubic paracrystal"""
     # Build the simple cubic crystal
     atoms = _build_sc()
     # Define the centers for each face
@@ -87,6 +86,7 @@ def draw_fcc(ax, size, view, jitter, steps=None, alpha=1):
     _draw_crystal(ax, size, view, jitter, atoms=atoms)
 
 def draw_bcc(ax, size, view, jitter, steps=None, alpha=1):
+    """Draw points for body-centered cubic paracrystal"""
     # Build the simple cubic crystal
     atoms = _build_sc()
     # Define the centers for each octant
@@ -126,18 +126,18 @@ def _build_sc():
 def draw_parallelepiped(ax, size, view, jitter, steps=None, alpha=1):
     """Draw a parallelepiped."""
     a, b, c = size
-    x = a*np.array([ 1,-1, 1,-1, 1,-1, 1,-1])
-    y = b*np.array([ 1, 1,-1,-1, 1, 1,-1,-1])
-    z = c*np.array([ 1, 1, 1, 1,-1,-1,-1,-1])
+    x = a*np.array([+1, -1, +1, -1, +1, -1, +1, -1])
+    y = b*np.array([+1, +1, -1, -1, +1, +1, -1, -1])
+    z = c*np.array([+1, +1, +1, +1, -1, -1, -1, -1])
     tri = np.array([
         # counter clockwise triangles
         # z: up/down, x: right/left, y: front/back
-        [0,1,2], [3,2,1], # top face
-        [6,5,4], [5,6,7], # bottom face
-        [0,2,6], [6,4,0], # right face
-        [1,5,7], [7,3,1], # left face
-        [2,3,6], [7,6,3], # front face
-        [4,1,0], [5,1,4], # back face
+        [0, 1, 2], [3, 2, 1], # top face
+        [6, 5, 4], [5, 6, 7], # bottom face
+        [0, 2, 6], [6, 4, 0], # right face
+        [1, 5, 7], [7, 3, 1], # left face
+        [2, 3, 6], [7, 6, 3], # front face
+        [4, 1, 0], [5, 1, 4], # back face
     ])
 
     x, y, z = transform_xyz(view, jitter, x, y, z)
@@ -148,19 +148,19 @@ def draw_parallelepiped(ax, size, view, jitter, steps=None, alpha=1):
     # in front of the "c+" face.  Use the c face so that rotations about psi
     # rotate that face.
     if 1:
-        x = a*np.array([ 1,-1, 1,-1, 1,-1, 1,-1])
-        y = b*np.array([ 1, 1,-1,-1, 1, 1,-1,-1])
-        z = c*np.array([ 1, 1, 1, 1,-1,-1,-1,-1])
+        x = a*np.array([+1, -1, +1, -1, +1, -1, +1, -1])
+        y = b*np.array([+1, +1, -1, -1, +1, +1, -1, -1])
+        z = c*np.array([+1, +1, +1, +1, -1, -1, -1, -1])
         x, y, z = transform_xyz(view, jitter, x, y, abs(z)+0.001)
-        ax.plot_trisurf(x, y, triangles=tri, Z=z, color=[1,0.6,0.6], alpha=alpha)
+        ax.plot_trisurf(x, y, triangles=tri, Z=z, color=[1, 0.6, 0.6], alpha=alpha)
 
     draw_labels(ax, view, jitter, [
-         ('c+', [ 0, 0, c], [ 1, 0, 0]),
-         ('c-', [ 0, 0,-c], [ 0, 0,-1]),
-         ('a+', [ a, 0, 0], [ 0, 0, 1]),
-         ('a-', [-a, 0, 0], [ 0, 0,-1]),
-         ('b+', [ 0, b, 0], [-1, 0, 0]),
-         ('b-', [ 0,-b, 0], [-1, 0, 0]),
+        ('c+', [+0, +0, +c], [+1, +0, +0]),
+        ('c-', [+0, +0, -c], [+0, +0, -1]),
+        ('a+', [+a, +0, +0], [+0, +0, +1]),
+        ('a-', [-a, +0, +0], [+0, +0, -1]),
+        ('b+', [+0, +b, +0], [-1, +0, +0]),
+        ('b-', [+0, -b, +0], [-1, +0, +0]),
     ])
 
 def draw_sphere(ax, radius=10., steps=100):
@@ -186,32 +186,32 @@ def draw_jitter(ax, view, jitter, dist='gaussian', size=(0.1, 0.4, 1.0),
     #cloud = np.random.randn(10,3)
     cloud = [
         [-1, -1, -1],
-        [-1, -1,  0],
-        [-1, -1,  1],
-        [-1,  0, -1],
-        [-1,  0,  0],
-        [-1,  0,  1],
-        [-1,  1, -1],
-        [-1,  1,  0],
-        [-1,  1,  1],
-        [ 0, -1, -1],
-        [ 0, -1,  0],
-        [ 0, -1,  1],
-        [ 0,  0, -1],
-        [ 0,  0,  0],
-        [ 0,  0,  1],
-        [ 0,  1, -1],
-        [ 0,  1,  0],
-        [ 0,  1,  1],
-        [ 1, -1, -1],
-        [ 1, -1,  0],
-        [ 1, -1,  1],
-        [ 1,  0, -1],
-        [ 1,  0,  0],
-        [ 1,  0,  1],
-        [ 1,  1, -1],
-        [ 1,  1,  0],
-        [ 1,  1,  1],
+        [-1, -1, +0],
+        [-1, -1, +1],
+        [-1, +0, -1],
+        [-1, +0, +0],
+        [-1, +0, +1],
+        [-1, +1, -1],
+        [-1, +1, +0],
+        [-1, +1, +1],
+        [+0, -1, -1],
+        [+0, -1, +0],
+        [+0, -1, +1],
+        [+0, +0, -1],
+        [+0, +0, +0],
+        [+0, +0, +1],
+        [+0, +1, -1],
+        [+0, +1, +0],
+        [+0, +1, +1],
+        [+1, -1, -1],
+        [+1, -1, +0],
+        [+1, -1, +1],
+        [+1, +0, -1],
+        [+1, +0, +0],
+        [+1, +0, +1],
+        [+1, +1, -1],
+        [+1, +1, +0],
+        [+1, +1, +1],
     ]
     dtheta, dphi, dpsi = jitter
     if dtheta == 0:
@@ -227,7 +227,7 @@ def draw_jitter(ax, view, jitter, dist='gaussian', size=(0.1, 0.4, 1.0),
         draw_shape(ax, size, view, delta, alpha=0.8)
     for v in 'xyz':
         a, b, c = size
-        lim = np.sqrt(a**2+b**2+c**2)
+        lim = np.sqrt(a**2 + b**2 + c**2)
         getattr(ax, 'set_'+v+'lim')([-lim, lim])
         getattr(ax, v+'axis').label.set_text(v)
 
@@ -296,9 +296,6 @@ def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian',
         <https://en.wikipedia.org/wiki/Transverse_Mercator_projection#Ellipsoidal_transverse_Mercator>
         Should allow free movement in theta, but phi is distorted.
     """
-    theta, phi, psi = view
-    dtheta, dphi, dpsi = jitter
-
     t = np.linspace(-1, 1, n)
     weights = np.ones_like(t)
     if dist == 'gaussian':
@@ -313,37 +310,37 @@ def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian',
         raise ValueError("expected dist to be gaussian, rectangle or uniform")
 
     if projection == 'equirectangular':  #define PROJECTION 1
-        def rotate(theta_i, phi_j):
+        def _rotate(theta_i, phi_j):
             return Rx(phi_j)*Ry(theta_i)
-        def weight(theta_i, phi_j, wi, wj):
+        def _weight(theta_i, phi_j, wi, wj):
             return wi*wj*abs(cos(radians(theta_i)))
     elif projection == 'sinusoidal':  #define PROJECTION 2
-        def rotate(theta_i, phi_j):
+        def _rotate(theta_i, phi_j):
             latitude = theta_i
             scale = cos(radians(latitude))
             longitude = phi_j/scale if abs(phi_j) < abs(scale)*180 else 0
             #print("(%+7.2f, %+7.2f) => (%+7.2f, %+7.2f)"%(theta_i, phi_j, latitude, longitude))
             return Rx(longitude)*Ry(latitude)
-        def weight(theta_i, phi_j, wi, wj):
+        def _weight(theta_i, phi_j, wi, wj):
             latitude = theta_i
             scale = cos(radians(latitude))
             w = 1 if abs(phi_j) < abs(scale)*180 else 0
             return w*wi*wj
     elif projection == 'guyou':  #define PROJECTION 3  (eventually?)
-        def rotate(theta_i, phi_j):
+        def _rotate(theta_i, phi_j):
             from guyou import guyou_invert
             #latitude, longitude = guyou_invert([theta_i], [phi_j])
             longitude, latitude = guyou_invert([phi_j], [theta_i])
             return Rx(longitude[0])*Ry(latitude[0])
-        def weight(theta_i, phi_j, wi, wj):
+        def _weight(theta_i, phi_j, wi, wj):
             return wi*wj
     elif projection == 'azimuthal_equidistance':  # Note: Rz Ry, not Rx Ry
-        def rotate(theta_i, phi_j):
+        def _rotate(theta_i, phi_j):
             latitude = sqrt(theta_i**2 + phi_j**2)
             longitude = degrees(np.arctan2(phi_j, theta_i))
             #print("(%+7.2f, %+7.2f) => (%+7.2f, %+7.2f)"%(theta_i, phi_j, latitude, longitude))
             return Rz(longitude)*Ry(latitude)
-        def weight(theta_i, phi_j, wi, wj):
+        def _weight(theta_i, phi_j, wi, wj):
             # Weighting for each point comes from the integral:
             #     \int\int I(q, lat, log) sin(lat) dlat dlog
             # We are doing a conformal mapping from disk to sphere, so we need
@@ -376,13 +373,13 @@ def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian',
             w = sin(radians(latitude))/latitude if latitude != 0 else 1
             return w*wi*wj if latitude < 180 else 0
     elif projection == 'azimuthal_equal_area':
-        def rotate(theta_i, phi_j):
+        def _rotate(theta_i, phi_j):
             R = min(1, sqrt(theta_i**2 + phi_j**2)/180)
             latitude = 180-degrees(2*np.arccos(R))
             longitude = degrees(np.arctan2(phi_j, theta_i))
             #print("(%+7.2f, %+7.2f) => (%+7.2f, %+7.2f)"%(theta_i, phi_j, latitude, longitude))
             return Rz(longitude)*Ry(latitude)
-        def weight(theta_i, phi_j, wi, wj):
+        def _weight(theta_i, phi_j, wi, wj):
             latitude = sqrt(theta_i**2 + phi_j**2)
             w = sin(radians(latitude))/latitude if latitude != 0 else 1
             return w*wi*wj if latitude < 180 else 0
@@ -390,17 +387,18 @@ def draw_mesh(ax, view, jitter, radius=1.2, n=11, dist='gaussian',
         raise ValueError("unknown projection %r"%projection)
 
     # mesh in theta, phi formed by rotating z
+    dtheta, dphi, dpsi = jitter
     z = np.matrix([[0], [0], [radius]])
-    points = np.hstack([rotate(theta_i, phi_j)*z
+    points = np.hstack([_rotate(theta_i, phi_j)*z
                         for theta_i in dtheta*t
                         for phi_j in dphi*t])
     # select just the active points (i.e., those with phi < 180
-    w = np.array([weight(theta_i, phi_j, wi, wj)
+    w = np.array([_weight(theta_i, phi_j, wi, wj)
                   for wi, theta_i in zip(weights, dtheta*t)
                   for wj, phi_j in zip(weights, dphi*t)])
     #print(max(w), min(w), min(w[w>0]))
-    points = points[:, w>0]
-    w = w[w>0]
+    points = points[:, w > 0]
+    w = w[w > 0]
     w /= max(w)
 
     if 0: # Kent distribution
@@ -468,7 +466,7 @@ def transform_xyz(view, jitter, x, y, z):
     """
     x, y, z = [np.asarray(v) for v in (x, y, z)]
     shape = x.shape
-    points = np.matrix([x.flatten(),y.flatten(),z.flatten()])
+    points = np.matrix([x.flatten(), y.flatten(), z.flatten()])
     points = apply_jitter(jitter, points)
     points = orient_relative_to_beam(view, points)
     x, y, z = [np.array(v).reshape(shape) for v in points]
@@ -542,7 +540,7 @@ def draw_scattering(calculator, ax, view, jitter, dist='gaussian'):
     # add the orientation parameters to the model parameters
     theta, phi, psi = view
     theta_pd, phi_pd, psi_pd = [scale*v for v in jitter]
-    theta_pd_n, phi_pd_n, psi_pd_n = PD_N_TABLE[(theta_pd>0, phi_pd>0, psi_pd>0)]
+    theta_pd_n, phi_pd_n, psi_pd_n = PD_N_TABLE[(theta_pd > 0, phi_pd > 0, psi_pd > 0)]
     ## increase pd_n for testing jitter integration rather than simple viz
     #theta_pd_n, phi_pd_n, psi_pd_n = [5*v for v in (theta_pd_n, phi_pd_n, psi_pd_n)]
 
@@ -570,7 +568,7 @@ def draw_scattering(calculator, ax, view, jitter, dist='gaussian'):
     #qx, qy = np.meshgrid(qx, qy)
     if 0:
         level = np.asarray(255*(Iqxy - vmin)/(vmax - vmin), 'i')
-        level[level<0] = 0
+        level[level < 0] = 0
         colors = plt.get_cmap()(level)
         ax.plot_surface(qx, qy, -1.1, rstride=1, cstride=1, facecolors=colors)
     elif 1:
@@ -617,7 +615,7 @@ def build_model(model_name, n=150, qmax=0.5, **pars):
 
     return calculator
 
-def select_calculator(model_name, n=150, size=(10,40,100)):
+def select_calculator(model_name, n=150, size=(10, 40, 100)):
     """
     Create a model calculator for the given shape.
 
@@ -640,8 +638,8 @@ def select_calculator(model_name, n=150, size=(10,40,100)):
         dnn = c
         radius = 0.5*c
         calculator = build_model('sc_paracrystal', n=n, dnn=dnn,
-                                  d_factor=d_factor, radius=(1-d_factor)*radius,
-                                  background=0)
+                                 d_factor=d_factor, radius=(1-d_factor)*radius,
+                                 background=0)
     elif model_name == 'fcc_paracrystal':
         a = b = c
         # nearest neigbour distance dnn should be 2 radius, but I think the
@@ -649,8 +647,8 @@ def select_calculator(model_name, n=150, size=(10,40,100)):
         dnn = 0.5*c
         radius = sqrt(2)/4 * c
         calculator = build_model('fcc_paracrystal', n=n, dnn=dnn,
-                                  d_factor=d_factor, radius=(1-d_factor)*radius,
-                                  background=0)
+                                 d_factor=d_factor, radius=(1-d_factor)*radius,
+                                 background=0)
     elif model_name == 'bcc_paracrystal':
         a = b = c
         # nearest neigbour distance dnn should be 2 radius, but I think the
@@ -658,8 +656,8 @@ def select_calculator(model_name, n=150, size=(10,40,100)):
         dnn = 0.5*c
         radius = sqrt(3)/2 * c
         calculator = build_model('bcc_paracrystal', n=n, dnn=dnn,
-                                  d_factor=d_factor, radius=(1-d_factor)*radius,
-                                  background=0)
+                                 d_factor=d_factor, radius=(1-d_factor)*radius,
+                                 background=0)
     elif model_name == 'cylinder':
         calculator = build_model('cylinder', n=n, qmax=0.3, radius=b, length=c)
         a = b
@@ -684,7 +682,7 @@ SHAPES = [
     'sphere', 'ellipsoid', 'triaxial_ellipsoid',
     'cylinder',
     'fcc_paracrystal', 'bcc_paracrystal', 'sc_paracrystal',
- ]
+]
 
 DRAW_SHAPES = {
     'fcc_paracrystal': draw_fcc,
@@ -760,16 +758,16 @@ def run(model_name='parallelepiped', size=(10, 40, 100),
     axcolor = 'lightgoldenrodyellow'
 
     ## add control widgets to plot
-    axtheta  = plt.axes([0.1, 0.15, 0.45, 0.04], axisbg=axcolor)
+    axtheta = plt.axes([0.1, 0.15, 0.45, 0.04], axisbg=axcolor)
     axphi = plt.axes([0.1, 0.1, 0.45, 0.04], axisbg=axcolor)
     axpsi = plt.axes([0.1, 0.05, 0.45, 0.04], axisbg=axcolor)
     stheta = Slider(axtheta, 'Theta', -90, 90, valinit=theta)
     sphi = Slider(axphi, 'Phi', -180, 180, valinit=phi)
     spsi = Slider(axpsi, 'Psi', -180, 180, valinit=psi)
 
-    axdtheta  = plt.axes([0.75, 0.15, 0.15, 0.04], axisbg=axcolor)
+    axdtheta = plt.axes([0.75, 0.15, 0.15, 0.04], axisbg=axcolor)
     axdphi = plt.axes([0.75, 0.1, 0.15, 0.04], axisbg=axcolor)
-    axdpsi= plt.axes([0.75, 0.05, 0.15, 0.04], axisbg=axcolor)
+    axdpsi = plt.axes([0.75, 0.05, 0.15, 0.04], axisbg=axcolor)
     # Note: using ridiculous definition of rectangle distribution, whose width
     # in sasmodels is sqrt(3) times the given width.  Divide by sqrt(3) to keep
     # the maximum width to 90.
@@ -796,7 +794,7 @@ def run(model_name='parallelepiped', size=(10, 40, 100),
         plt.gcf().canvas.draw()
 
     ## bind control widgets to view updater
-    stheta.on_changed(lambda v: update(v,'theta'))
+    stheta.on_changed(lambda v: update(v, 'theta'))
     sphi.on_changed(lambda v: update(v, 'phi'))
     spsi.on_changed(lambda v: update(v, 'psi'))
     sdtheta.on_changed(lambda v: update(v, 'dtheta'))
@@ -814,11 +812,18 @@ def main():
         description="Display jitter",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         )
-    parser.add_argument('-p', '--projection', choices=PROJECTIONS, default=PROJECTIONS[0], help='coordinate projection')
-    parser.add_argument('-s', '--size', type=str, default='10,40,100', help='a,b,c lengths')
-    parser.add_argument('-d', '--distribution', choices=DISTRIBUTIONS, default=DISTRIBUTIONS[0], help='jitter distribution')
-    parser.add_argument('-m', '--mesh', type=int, default=30, help='#points in theta-phi mesh')
-    parser.add_argument('shape', choices=SHAPES, nargs='?', default=SHAPES[0], help='oriented shape')
+    parser.add_argument('-p', '--projection', choices=PROJECTIONS,
+                        default=PROJECTIONS[0],
+                        help='coordinate projection')
+    parser.add_argument('-s', '--size', type=str, default='10,40,100',
+                        help='a,b,c lengths')
+    parser.add_argument('-d', '--distribution', choices=DISTRIBUTIONS,
+                        default=DISTRIBUTIONS[0],
+                        help='jitter distribution')
+    parser.add_argument('-m', '--mesh', type=int, default=30,
+                        help='#points in theta-phi mesh')
+    parser.add_argument('shape', choices=SHAPES, nargs='?', default=SHAPES[0],
+                        help='oriented shape')
     opts = parser.parse_args()
     size = tuple(int(v) for v in opts.size.split(','))
     run(opts.shape, size=size,

@@ -289,14 +289,13 @@ def set_integration_size(info, n):
     Note: this really ought to be a method in modelinfo, but that leads to
     import loops.
     """
-    if (info.source and any(lib.startswith('lib/gauss') for lib in info.source)):
-        import os.path
+    if info.source and any(lib.startswith('lib/gauss') for lib in info.source):
         from .gengauss import gengauss
-        path = os.path.join(MODEL_PATH, "lib", "gauss%d.c"%n)
-        if not os.path.exists(path):
+        path = joinpath(MODEL_PATH, "lib", "gauss%d.c"%n)
+        if not exists(path):
             gengauss(n, path)
         info.source = ["lib/gauss%d.c"%n if lib.startswith('lib/gauss')
-                        else lib for lib in info.source]
+                       else lib for lib in info.source]
 
 def format_units(units):
     # type: (str) -> str
@@ -320,12 +319,12 @@ def make_partable(pars):
     column_widths = [max(w, len(h))
                      for w, h in zip(column_widths, PARTABLE_HEADERS)]
 
-    sep = " ".join("="*w for w in column_widths)
+    underbar = " ".join("="*w for w in column_widths)
     lines = [
-        sep,
+        underbar,
         " ".join("%-*s" % (w, h)
                  for w, h in zip(column_widths, PARTABLE_HEADERS)),
-        sep,
+        underbar,
         ]
     for p in pars:
         lines.append(" ".join([
@@ -334,7 +333,7 @@ def make_partable(pars):
             "%-*s" % (column_widths[2], format_units(p.units)),
             "%*g" % (column_widths[3], p.default),
             ]))
-    lines.append(sep)
+    lines.append(underbar)
     return "\n".join(lines)
 
 
@@ -612,13 +611,16 @@ def indent(s, depth):
     Indent a string of text with *depth* additional spaces on each line.
     """
     spaces = " "*depth
-    sep = "\n" + spaces
-    return spaces + sep.join(s.split("\n"))
+    interline_separator = "\n" + spaces
+    return spaces + interline_separator.join(s.split("\n"))
 
 
 _template_cache = {}  # type: Dict[str, Tuple[int, str, str]]
 def load_template(filename):
     # type: (str) -> str
+    """
+    Load template file from sasmodels resource directory.
+    """
     path = joinpath(DATA_PATH, filename)
     mtime = getmtime(path)
     if filename not in _template_cache or mtime > _template_cache[filename][0]:

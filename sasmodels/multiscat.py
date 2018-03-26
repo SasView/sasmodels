@@ -260,21 +260,27 @@ def scattering_powers(Iq, n, dtype='f', transform=None):
     return powers
 
 def scattering_coeffs(p, coverage=0.99):
+    r"""
+    Return the coefficients of the scattering powers for transmission
+    probability *p*.  This is just the corresponding values for the
+    Poisson distribution for $\lambda = -\ln(1-p)$ such that
+    $\sum_{k = 0 \ldots n} P(k; \lambda)$ is larger than *coverage*.
+    """
     L = -np.log(1-p)
     num_scatter = truncated_poisson_invcdf(coverage, L)
     coeffs = [L**k/gamma(k+2) for k in range(num_scatter)]
     return coeffs
 
-def truncated_poisson_invcdf(p, L):
+def truncated_poisson_invcdf(coverage, L):
     r"""
-    Return smallest k such that cdf(k; L) > p from the truncated Poisson
+    Return smallest k such that cdf(k; L) > coverage from the truncated Poisson
     probability excluding k=0
     """
     # pmf(k; L) = L**k * exp(-L) / (k! * (1-exp(-L))
     cdf = 0
     pmf = -np.exp(-L) / np.expm1(-L)
     k = 0
-    while cdf < p:
+    while cdf < coverage:
         k += 1
         pmf *= L/k
         cdf += pmf
@@ -304,34 +310,34 @@ def _inverse_shift(frame, dtype=PRECISION):
 
 
 class MultipleScattering(Resolution):
+    r"""
+    Compute multiple scattering using Fourier convolution.
+
+    The fourier steps are determined by *qmax*, the maximum $q$ value
+    desired, *nq* the number of $q$ steps and *window*, the amount
+    of padding around the circular convolution.  The $q$ spacing
+    will be $\Delta q = 2 q_\mathrm{max} w / n_q$.  If *nq* is not
+    given it will use $n_q = 2^k$ such that $\Delta q < q_\mathrm{min}$.
+
+    *probability* is related to the expected number of scattering
+    events in the sample $\lambda$ as $p = 1 = e^{-\lambda}$.  As a
+    hack to allow probability to be a fitted parameter, the "value"
+    can be a function that takes no parameters and returns the current
+    value of the probability.  *coverage* determines how many scattering
+    steps to consider.  The default is 0.99, which sets $n$ such that
+    $1 \ldots n$ covers 99% of the Poisson probability mass function.
+
+    *is2d* is True then 2D scattering is used, otherwise it accepts
+    and returns 1D scattering.
+
+    *resolution* is the resolution function to apply after multiple
+    scattering.  If present, then the resolution $q$ vectors will provide
+    default values for *qmin*, *qmax* and *nq*.
+    """
     def __init__(self, qmin=None, qmax=None, nq=None, window=2,
                  probability=None, coverage=0.99,
                  is2d=False, resolution=None,
                  dtype=PRECISION):
-        r"""
-        Compute multiple scattering using Fourier convolution.
-
-        The fourier steps are determined by *qmax*, the maximum $q$ value
-        desired, *nq* the number of $q$ steps and *window*, the amount
-        of padding around the circular convolution.  The $q$ spacing
-        will be $\Delta q = 2 q_\mathrm{max} w / n_q$.  If *nq* is not
-        given it will use $n_q = 2^k$ such that $\Delta q < q_\mathrm{min}$.
-
-        *probability* is related to the expected number of scattering
-        events in the sample $\lambda$ as $p = 1 = e^{-\lambda}$.  As a
-        hack to allow probability to be a fitted parameter, the "value"
-        can be a function that takes no parameters and returns the current
-        value of the probability.  *coverage* determines how many scattering
-        steps to consider.  The default is 0.99, which sets $n$ such that
-        $1 \ldots n$ covers 99% of the Poisson probability mass function.
-
-        *is2d* is True then 2D scattering is used, otherwise it accepts
-        and returns 1D scattering.
-
-        *resolution* is the resolution function to apply after multiple
-        scattering.  If present, then the resolution $q$ vectors will provide
-        default values for *qmin*, *qmax* and *nq*.
-        """
         # Infer qmin, qmax from instrument resolution calculator, if present
         if resolution is not None:
             is2d = hasattr(resolution, 'qx_data')
@@ -424,6 +430,10 @@ class MultipleScattering(Resolution):
         # Prepare the multiple scattering calculator (either numpy or OpenCL)
         self.transform = Calculator((2*nq, 2*nq), dtype=dtype)
 
+        # Iq and Iqxy will be set during apply
+        self.Iq = None # type: np.ndarray
+        self.Iqxy = None # type: np.ndarray
+
     def apply(self, theory):
         if self.is2d:
             Iq_calc = theory
@@ -470,6 +480,10 @@ class MultipleScattering(Resolution):
             return Iq
 
     def radial_profile(self, Iqxy):
+        """
+        Compute that radial profile for the given Iqxy grid.  The grid should
+        be defined as for
+        """
         # circular average, no anti-aliasing
         Iq = np.histogram(self._radius, bins=self._edges, weights=Iqxy)[0]/self._norm
         return Iq
@@ -477,7 +491,8 @@ class MultipleScattering(Resolution):
 
 def annular_average(qxy, Iqxy, qbins):
     """
-    Compute annular average of points at
+    Compute annular average of points in *Iqxy* at *qbins*.  The $q_x$, $q_y$
+    coordinates for *Iqxy* are given in *qxy*.
     """
     qxy, Iqxy = qxy.flatten(), Iqxy.flatten()
     index = np.argsort(qxy)

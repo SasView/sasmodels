@@ -30,11 +30,19 @@
 # commit fd2886555e46b35163c7b898d43c7d1bcebbba7c 2016-07-02
 #
 # 2017-11-01 Paul Kienzle
-# * converted to python, using degrees rather than radians
+# * converted to python, with degrees rather than radians
+"""
+Convert between latitude-longitude and Guyou map coordinates.
+"""
+
 from __future__ import division, print_function
 
 import numpy as np
-from numpy import sqrt, pi, tan, cos, sin, log, exp, arctan2 as atan2, sign, radians, degrees
+from numpy import sqrt, pi, tan, cos, sin, sign, radians, degrees
+from numpy import sinh, arctan as atan
+
+# scipy version of special functions
+from scipy.special import ellipj as ellipticJ, ellipkinc as ellipticF
 
 _ = """
 # mpmath version of special functions
@@ -58,21 +66,17 @@ def ellipticF(phi, m):
     return mp.ellipf(phi, m)
 """
 
-# scipy version of special functions
-from scipy.special import ellipj as ellipticJ, ellipkinc as ellipticF
-from numpy import sinh, sign, arctan as atan
-
 def ellipticJi(u, v, m):
     scalar = np.isscalar(u) and np.isscalar(v) and np.isscalar(m)
     u, v, m = np.broadcast_arrays(u, v, m)
-    result = np.empty_like([u,u,u], 'D')
-    real = v==0
-    imag = u==0
+    result = np.empty_like([u, u, u], 'D')
+    real = (v == 0)
+    imag = (u == 0)
     mixed = ~(real|imag)
     result[:, real] = _ellipticJi_real(u[real], m[real])
     result[:, imag] = _ellipticJi_imag(v[imag], m[imag])
     result[:, mixed] = _ellipticJi(u[mixed], v[mixed], m[mixed])
-    return result[0,:] if scalar else result
+    return result[0, :] if scalar else result
 
 def _ellipticJi_real(u, m):
     sn, cn, dn, phi = ellipticJ(u, m)
@@ -103,7 +107,8 @@ def ellipticFi(phi, psi, m):
         phi, psi, m = np.broadcast_arrays(phi, psi, m)
         result = np.empty_like(phi, 'D')
         index = (phi == 0)
-        result[index] = ellipticF(atan(sinh(abs(phi[index]))), 1-m[index]) * sign(psi[index])
+        result[index] = ellipticF(atan(sinh(abs(phi[index]))),
+                                  1-m[index]) * sign(psi[index])
         result[~index] = ellipticFi(phi[~index], psi[~index], m[~index])
         return result.reshape(1)[0] if scalar else result
 
@@ -116,16 +121,18 @@ def ellipticFi(phi, psi, m):
     c = (m - 1) * cotphi2
     cotlambda2 = (-b + sqrt(b * b - 4 * c)) / 2
     re = ellipticF(atan(1 / sqrt(cotlambda2)), m) * sign(phi)
-    im = ellipticF(atan(sqrt(np.maximum(0,(cotlambda2 / cotphi2 - 1) / m))), 1 - m) * sign(psi)
+    im = ellipticF(atan(sqrt(np.maximum(0, (cotlambda2 / cotphi2 - 1) / m))),
+                   1 - m) * sign(psi)
     return re + 1j*im
 
-sqrt2 = sqrt(2)
+SQRT2 = sqrt(2)
 
 # [PAK] renamed k_ => cos_u, k => sin_u, k*k => sinsq_u to avoid k,K confusion
 # cos_u = 0.171572875253809902396622551580603842860656249246103853646...
 # sinsq_u = 0.970562748477140585620264690516376942836062504523376878120...
 # K = 3.165103454447431823666270142140819753058976299237578486994...
 def guyou(lam, phi):
+    """Transform from (latitude, longitude) to point (x, y)"""
     # [PAK] wrap into [-pi/2, pi/2] radians
     x, y = np.asarray(lam), np.asarray(phi)
     xn, x = divmod(x+90, 180)
@@ -134,7 +141,7 @@ def guyou(lam, phi):
     yn, phi = yn*180, radians(y-90)
 
     # Compute constant K
-    cos_u = (sqrt2 - 1) / (sqrt2 + 1)
+    cos_u = (SQRT2 - 1) / (SQRT2 + 1)
     sinsq_u = 1 - cos_u**2
     K = ellipticF(pi/2, sinsq_u)
 
@@ -143,12 +150,13 @@ def guyou(lam, phi):
     r = 1/(tan(pi/4 + abs(phi)/2) * sqrt(cos_u))
     at = atan(r * (cos(lam) - 1j*sin(lam)))
     t = ellipticFi(at.real, at.imag, sinsq_u)
-    x, y = (-t.imag, sign(phi + (phi==0))*(0.5 * K - t.real))
+    x, y = (-t.imag, sign(phi + (phi == 0))*(0.5 * K - t.real))
 
     # [PAK] convert to degrees, and return to original tile
     return degrees(x)+xn, degrees(y)+yn
 
 def guyou_invert(x, y):
+    """Transform from point (x, y) on plot to (latitude, longitude)"""
     # [PAK] wrap into [-pi/2, pi/2] radians
     x, y = np.asarray(x), np.asarray(y)
     xn, x = divmod(x+90, 180)
@@ -157,7 +165,7 @@ def guyou_invert(x, y):
     yn, y = yn*180, radians(y-90)
 
     # compute constant K
-    cos_u = (sqrt2 - 1) / (sqrt2 + 1)
+    cos_u = (SQRT2 - 1) / (SQRT2 + 1)
     sinsq_u = 1 - cos_u**2
     K = ellipticF(pi/2, sinsq_u)
 
@@ -173,6 +181,7 @@ def guyou_invert(x, y):
     return degrees(lam)+xn, degrees(phi)+yn
 
 def plot_grid():
+    """Plot the latitude-longitude grid for Guyou transform"""
     import matplotlib.pyplot as plt
     from numpy import linspace
     lat_line = linspace(-90, 90, 400)
@@ -202,10 +211,13 @@ def plot_grid():
     plt.xlabel('longitude')
     plt.ylabel('latitude')
 
-if __name__ == "__main__":
+def main():
     plot_grid()
-    import matplotlib.pyplot as plt; plt.show()
+    import matplotlib.pyplot as plt
+    plt.show()
 
+if __name__ == "__main__":
+    main()
 
 _ = """
 // Javascript source for elliptic functions

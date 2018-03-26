@@ -717,7 +717,7 @@ def make_engine(model_info, data, dtype, cutoff, ngauss=0):
 
     model = core.build_model(model_info, dtype=dtype, platform="ocl")
     calculator = DirectModel(data, model, cutoff=cutoff)
-    engine_type = calculator._model.__class__.__name__.replace('Model','').upper()
+    engine_type = calculator._model.__class__.__name__.replace('Model', '').upper()
     bits = calculator._model.dtype.itemsize*8
     precision = "fast" if getattr(calculator._model, 'fast', False) else str(bits)
     calculator.engine = "%s[%s]" % (engine_type, precision)
@@ -1490,7 +1490,8 @@ class Explore(object):
         if self.limits is None:
             vmin, vmax = limits
             self.limits = vmax*1e-7, 1.3*vmax
-            import pylab; pylab.clf()
+            import pylab
+            pylab.clf()
             plot_models(self.opts, result, limits=self.limits)
 
 
