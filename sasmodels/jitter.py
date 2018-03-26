@@ -98,7 +98,7 @@ def draw_bcc(axes, size, view, jitter, steps=None, alpha=1):
     atoms.extend(zip(x, y, z))
     _draw_crystal(axes, size, view, jitter, atoms=atoms)
 
-def _draw_crystal(axes, size, view, jitter, steps=None, alpha=1, atoms=None):
+def _draw_crystal(axes, size, view, jitter, atoms=None):
     atoms, size = np.asarray(atoms, 'd').T, np.asarray(size, 'd')
     x, y, z = atoms*size[:, None]
     x, y, z = transform_xyz(view, jitter, x, y, z)
@@ -297,14 +297,14 @@ def draw_mesh(axes, view, jitter, radius=1.2, n=11, dist='gaussian',
     """
     # TODO: try Kent distribution instead of a gaussian warped by projection
 
-    t = np.linspace(-1, 1, n)
-    weights = np.ones_like(t)
+    dist_x = np.linspace(-1, 1, n)
+    weights = np.ones_like(dist_x)
     if dist == 'gaussian':
-        t *= 3
-        weights = exp(-0.5*t**2)
+        dist_x *= 3
+        weights = exp(-0.5*dist_x**2)
     elif dist == 'rectangle':
         # Note: uses sasmodels ridiculous definition of rectangle width
-        t *= sqrt(3)
+        dist_x *= sqrt(3)
     elif dist == 'uniform':
         pass
     else:
@@ -391,22 +391,22 @@ def draw_mesh(axes, view, jitter, radius=1.2, n=11, dist='gaussian',
     dtheta, dphi, dpsi = jitter
     z = np.matrix([[0], [0], [radius]])
     points = np.hstack([_rotate(theta_i, phi_j)*z
-                        for theta_i in dtheta*t
-                        for phi_j in dphi*t])
-    w = np.array([_weight(theta_i, phi_j, w_i, w_j)
-                  for w_i, theta_i in zip(weights, dtheta*t)
-                  for w_j, phi_j in zip(weights, dphi*t)])
-    #print(max(w), min(w), min(w[w>0]))
-    points = points[:, w > 0]
-    w = w[w > 0]
-    w /= max(w)
+                        for theta_i in dtheta*dist_x
+                        for phi_j in dphi*dist_x])
+    dist_w = np.array([_weight(theta_i, phi_j, w_i, w_j)
+                       for w_i, theta_i in zip(weights, dtheta*dist_x)
+                       for w_j, phi_j in zip(weights, dphi*dist_x)])
+    #print(max(dist_w), min(dist_w), min(dist_w[dist_w > 0]))
+    points = points[:, dist_w > 0]
+    dist_w = dist_w[dist_w > 0]
+    dist_w /= max(dist_w)
 
     # rotate relative to beam
     points = orient_relative_to_beam(view, points)
 
     x, y, z = [np.array(v).flatten() for v in points]
     #plt.figure(2); plt.clf(); plt.hist(z, bins=np.linspace(-1, 1, 51))
-    axes.scatter(x, y, z, c=w, marker='o', vmin=0., vmax=1.)
+    axes.scatter(x, y, z, c=dist_w, marker='o', vmin=0., vmax=1.)
 
 def draw_labels(axes, view, jitter, text):
     """
@@ -429,26 +429,26 @@ def draw_labels(axes, view, jitter, text):
 def Rx(angle):
     """Construct a matrix to rotate points about *x* by *angle* degrees."""
     angle = radians(angle)
-    R = [[1, 0, 0],
-         [0, +cos(angle), -sin(angle)],
-         [0, +sin(angle), +cos(angle)]]
-    return np.matrix(R)
+    rot = [[1, 0, 0],
+           [0, +cos(angle), -sin(angle)],
+           [0, +sin(angle), +cos(angle)]]
+    return np.matrix(rot)
 
 def Ry(angle):
     """Construct a matrix to rotate points about *y* by *angle* degrees."""
     angle = radians(angle)
-    R = [[+cos(angle), 0, +sin(angle)],
-         [0, 1, 0],
-         [-sin(angle), 0, +cos(angle)]]
-    return np.matrix(R)
+    rot = [[+cos(angle), 0, +sin(angle)],
+           [0, 1, 0],
+           [-sin(angle), 0, +cos(angle)]]
+    return np.matrix(rot)
 
 def Rz(angle):
     """Construct a matrix to rotate points about *z* by *angle* degrees."""
     angle = radians(angle)
-    R = [[+cos(angle), -sin(angle), 0],
-         [+sin(angle), +cos(angle), 0],
-         [0, 0, 1]]
-    return np.matrix(R)
+    rot = [[+cos(angle), -sin(angle), 0],
+           [+sin(angle), +cos(angle), 0],
+           [0, 0, 1]]
+    return np.matrix(rot)
 
 def transform_xyz(view, jitter, x, y, z):
     """
@@ -563,7 +563,7 @@ def draw_scattering(calculator, axes, view, jitter, dist='gaussian'):
         axes.plot_surface(qx, qy, -1.1, rstride=1, cstride=1, facecolors=colors)
     elif 1:
         axes.contourf(qx/qx.max(), qy/qy.max(), Iqxy, zdir='z', offset=-1.1,
-                    levels=np.linspace(vmin, vmax, 24))
+                      levels=np.linspace(vmin, vmax, 24))
     else:
         axes.pcolormesh(qx, qy, Iqxy)
 
@@ -582,12 +582,12 @@ def build_model(model_name, n=150, qmax=0.5, **pars):
     for plotting.  See the :class:`sasmodels.direct_model.DirectModel` class
     for details.
     """
-    from sasmodels.core import load_model_info, build_model
+    from sasmodels.core import load_model_info, build_model as build_sasmodel
     from sasmodels.data import empty_data2D
     from sasmodels.direct_model import DirectModel
 
     model_info = load_model_info(model_name)
-    model = build_model(model_info) #, dtype='double!')
+    model = build_sasmodel(model_info) #, dtype='double!')
     q = np.linspace(-qmax, qmax, n)
     data = empty_data2D(q, q)
     calculator = DirectModel(data, model)

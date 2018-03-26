@@ -194,11 +194,12 @@ def plot_grid():
         x, y = guyou(scale*lat_line, scale*lat)
         plt.plot(x, y, 'g')
 
-    for long in range(-limit, limit+1, step):
-        x, y = guyou(scale*long, scale*long_line)
+    for longitude in range(-limit, limit+1, step):
+        x, y = guyou(scale*longitude, scale*long_line)
         plt.plot(x, y, 'b')
     #plt.xlabel('longitude')
     plt.ylabel('latitude')
+    plt.title('forward transform')
 
     plt.subplot(212)
     for lat in range(-limit, limit+1, step):
@@ -210,8 +211,10 @@ def plot_grid():
         plt.plot(x, y, 'b')
     plt.xlabel('longitude')
     plt.ylabel('latitude')
+    plt.title('inverse transform')
 
 def main():
+    """Show the Guyou transformation"""
     plot_grid()
     import matplotlib.pyplot as plt
     plt.show()
