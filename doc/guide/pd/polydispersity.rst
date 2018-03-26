@@ -77,25 +77,25 @@ Uniform Distribution
 
 The Uniform Distribution is defined as
 
-    .. math::
+.. math::
 
-        f(x) = \frac{1}{\text{Norm}}
-        \begin{cases}
-          1 & \text{for } |x - \bar x| \leq \sigma \\
-          0 & \text{for } |x - \bar x| > \sigma
-        \end{cases}
+    f(x) = \frac{1}{\text{Norm}}
+    \begin{cases}
+        1 & \text{for } |x - \bar x| \leq \sigma \\
+        0 & \text{for } |x - \bar x| > \sigma
+    \end{cases}
 
-    where $\bar x$ ($x_\text{mean}$ in the figure) is the mean of the
-    distribution, $\sigma$ is the half-width, and *Norm* is a normalization
-    factor which is determined during the numerical calculation.
+where $\bar x$ ($x_\text{mean}$ in the figure) is the mean of the
+distribution, $\sigma$ is the half-width, and *Norm* is a normalization
+factor which is determined during the numerical calculation.
 
-    The polydispersity in sasmodels is given by
+The polydispersity in sasmodels is given by
 
-    .. math:: \text{PD} = \sigma / \bar x
+.. math:: \text{PD} = \sigma / \bar x
 
-    .. figure:: pd_uniform.jpg
+.. figure:: pd_uniform.jpg
 
-        Uniform distribution.
+    Uniform distribution.
 
 The value $N_\sigma$ is ignored for this distribution.
 
@@ -106,35 +106,35 @@ Rectangular Distribution
 
 The Rectangular Distribution is defined as
 
-    .. math::
+.. math::
 
-        f(x) = \frac{1}{\text{Norm}}
-        \begin{cases}
-          1 & \text{for } |x - \bar x| \leq w \\
-          0 & \text{for } |x - \bar x| > w
-        \end{cases}
+    f(x) = \frac{1}{\text{Norm}}
+    \begin{cases}
+        1 & \text{for } |x - \bar x| \leq w \\
+        0 & \text{for } |x - \bar x| > w
+    \end{cases}
 
-    where $\bar x$ ($x_\text{mean}$ in the figure) is the mean of the
-    distribution, $w$ is the half-width, and *Norm* is a normalization
-    factor which is determined during the numerical calculation.
+where $\bar x$ ($x_\text{mean}$ in the figure) is the mean of the
+distribution, $w$ is the half-width, and *Norm* is a normalization
+factor which is determined during the numerical calculation.
 
-    Note that the standard deviation and the half width $w$ are different!
+Note that the standard deviation and the half width $w$ are different!
 
-    The standard deviation is
+The standard deviation is
 
-    .. math:: \sigma = w / \sqrt{3}
+.. math:: \sigma = w / \sqrt{3}
 
-    whilst the polydispersity in sasmodels is given by
+whilst the polydispersity in sasmodels is given by
 
-    .. math:: \text{PD} = \sigma / \bar x
+.. math:: \text{PD} = \sigma / \bar x
 
-    .. figure:: pd_rectangular.jpg
+.. figure:: pd_rectangular.jpg
 
-        Rectangular distribution.
+    Rectangular distribution.
 
-    .. note:: The Rectangular Distribution is deprecated in favour of the
-              Uniform Distribution above and is described here for backwards
-              compatibility with earlier versions of SasView only.
+.. note:: The Rectangular Distribution is deprecated in favour of the
+            Uniform Distribution above and is described here for backwards
+            compatibility with earlier versions of SasView only.
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
@@ -143,22 +143,22 @@ Gaussian Distribution
 
 The Gaussian Distribution is defined as
 
-    .. math::
+.. math::
 
-        f(x) = \frac{1}{\text{Norm}}
-               \exp\left(-\frac{(x - \bar x)^2}{2\sigma^2}\right)
+    f(x) = \frac{1}{\text{Norm}}
+            \exp\left(-\frac{(x - \bar x)^2}{2\sigma^2}\right)
 
-    where $\bar x$ ($x_\text{mean}$ in the figure) is the mean of the
-    distribution and *Norm* is a normalization factor which is determined
-    during the numerical calculation.
+where $\bar x$ ($x_\text{mean}$ in the figure) is the mean of the
+distribution and *Norm* is a normalization factor which is determined
+during the numerical calculation.
 
-    The polydispersity in sasmodels is given by
+The polydispersity in sasmodels is given by
 
-    .. math:: \text{PD} = \sigma / \bar x
+.. math:: \text{PD} = \sigma / \bar x
 
-    .. figure:: pd_gaussian.jpg
+.. figure:: pd_gaussian.jpg
 
-        Normal distribution.
+    Normal distribution.
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
@@ -167,25 +167,25 @@ Boltzmann Distribution
 
 The Boltzmann Distribution is defined as
 
-    .. math::
+.. math::
 
-        f(x) = \frac{1}{\text{Norm}}
-               \exp\left(-\frac{ | x - \bar x | }{\sigma}\right)
+    f(x) = \frac{1}{\text{Norm}}
+            \exp\left(-\frac{ | x - \bar x | }{\sigma}\right)
 
-    where $\bar x$ ($x_\text{mean}$ in the figure) is the mean of the
-    distribution and *Norm* is a normalization factor which is determined
-    during the numerical calculation.
+where $\bar x$ ($x_\text{mean}$ in the figure) is the mean of the
+distribution and *Norm* is a normalization factor which is determined
+during the numerical calculation.
 
-    The width is defined as
+The width is defined as
 
-    .. math:: \sigma=\frac{k T}{E}
+.. math:: \sigma=\frac{k T}{E}
 
-    which is the inverse Boltzmann factor, where $k$ is the Boltzmann constant,
-    $T$ the temperature in Kelvin and $E$ a characteristic energy per particle.
+which is the inverse Boltzmann factor, where $k$ is the Boltzmann constant,
+$T$ the temperature in Kelvin and $E$ a characteristic energy per particle.
 
-    .. figure:: pd_boltzmann.jpg
+.. figure:: pd_boltzmann.jpg
 
-        Boltzmann distribution.
+    Boltzmann distribution.
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
@@ -198,40 +198,40 @@ larger values of $x$.
 
 The Lognormal Distribution is defined as
 
-    .. math::
+.. math::
 
-        f(x) = \frac{1}{\text{Norm}}\frac{1}{x\sigma}
-               \exp\left(-\frac{1}{2}
-                         \bigg(\frac{\ln(x) - \mu}{\sigma}\bigg)^2\right)
+    f(x) = \frac{1}{\text{Norm}}\frac{1}{x\sigma}
+            \exp\left(-\frac{1}{2}
+                        \bigg(\frac{\ln(x) - \mu}{\sigma}\bigg)^2\right)
 
-    where *Norm* is a normalization factor which will be determined during
-    the numerical calculation, $\mu=\ln(x_\text{med})$ and $x_\text{med}$
-    is the *median* value of the *lognormal* distribution, but $\sigma$ is
-    a parameter describing the width of the underlying *normal* distribution.
+where *Norm* is a normalization factor which will be determined during
+the numerical calculation, $\mu=\ln(x_\text{med})$ and $x_\text{med}$
+is the *median* value of the *lognormal* distribution, but $\sigma$ is
+a parameter describing the width of the underlying *normal* distribution.
 
-    $x_\text{med}$ will be the value given for the respective size parameter
-    in sasmodels, for example, *radius=60*.
+$x_\text{med}$ will be the value given for the respective size parameter
+in sasmodels, for example, *radius=60*.
 
-    The polydispersity in sasmodels is given by
+The polydispersity in sasmodels is given by
 
-    .. math:: \text{PD} = p = \sigma / x_\text{med}
+.. math:: \text{PD} = p = \sigma / x_\text{med}
 
-    The mean value of the distribution is given by $\bar x = \exp(\mu+ p^2/2)$
-    and the peak value by $\max x = \exp(\mu - p^2)$.
+The mean value of the distribution is given by $\bar x = \exp(\mu+ p^2/2)$
+and the peak value by $\max x = \exp(\mu - p^2)$.
 
-    The variance (the square of the standard deviation) of the *lognormal*
-    distribution is given by
+The variance (the square of the standard deviation) of the *lognormal*
+distribution is given by
 
-    .. math::
+.. math::
 
-        \nu = [\exp({\sigma}^2) - 1] \exp({2\mu + \sigma^2})
+    \nu = [\exp({\sigma}^2) - 1] \exp({2\mu + \sigma^2})
 
-    Note that larger values of PD might need a larger number of points
-    and $N_\sigma$.
+Note that larger values of PD might need a larger number of points
+and $N_\sigma$.
 
-    .. figure:: pd_lognormal.jpg
+.. figure:: pd_lognormal.jpg
 
-        Lognormal distribution.
+    Lognormal distribution.
 
 For further information on the Lognormal distribution see:
 http://en.wikipedia.org/wiki/Log-normal_distribution and
@@ -248,31 +248,31 @@ $x$, but which has computational advantages over the Lognormal distribution.
 
 The Schulz distribution is defined as
 
-    .. math::
+.. math::
 
-        f(x) = \frac{1}{\text{Norm}} (z+1)^{z+1}(x/\bar x)^z
-               \frac{\exp[-(z+1)x/\bar x]}{\bar x\Gamma(z+1)}
+    f(x) = \frac{1}{\text{Norm}} (z+1)^{z+1}(x/\bar x)^z
+            \frac{\exp[-(z+1)x/\bar x]}{\bar x\Gamma(z+1)}
 
-    where $\bar x$ ($x_\text{mean}$ in the figure) is the mean of the
-    distribution, *Norm* is a normalization factor which is determined
-    during the numerical calculation, and $z$ is a measure of the width
-    of the distribution such that
+where $\bar x$ ($x_\text{mean}$ in the figure) is the mean of the
+distribution, *Norm* is a normalization factor which is determined
+during the numerical calculation, and $z$ is a measure of the width
+of the distribution such that
 
-    .. math:: z = (1-p^2) / p^2
+.. math:: z = (1-p^2) / p^2
 
-    where $p$ is the polydispersity in sasmodels given by
+where $p$ is the polydispersity in sasmodels given by
 
-    .. math:: PD = p = \sigma / \bar x
+.. math:: PD = p = \sigma / \bar x
 
-    and $\sigma$ is the RMS deviation from $\bar x$.
+and $\sigma$ is the RMS deviation from $\bar x$.
 
-    Note that larger values of PD might need a larger number of points
-    and $N_\sigma$. For example, for PD=0.7 with radius=60 |Ang|, at least
-    Npts>=160 and Nsigmas>=15 are required.
+Note that larger values of PD might need a larger number of points
+and $N_\sigma$. For example, for PD=0.7 with radius=60 |Ang|, at least
+Npts>=160 and Nsigmas>=15 are required.
 
-    .. figure:: pd_schulz.jpg
+.. figure:: pd_schulz.jpg
 
-        Schulz distribution.
+    Schulz distribution.
 
 For further information on the Schulz distribution see:
 M Kotlarchyk & S-H Chen, *J Chem Phys*, (1983), 79, 2461 and
@@ -321,7 +321,7 @@ related) except when the DLS polydispersity parameter is <0.13.
     p_{DLS} = \sqrt(\nu / \bar x^2)
 
 where $\nu$ is the variance of the distribution and $\bar x$ is the mean
-value of x.
+value of $x$.
 
 For more information see:
 S King, C Washington & R Heenan, *Phys Chem Chem Phys*, (2005), 7, 143
