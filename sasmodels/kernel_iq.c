@@ -172,7 +172,7 @@ qac_rotation(
 
 // Apply the rotation matrix returned from qac_rotation to the point (qx,qy),
 // returning R*[qx,qy]' = [qa,qc]'
-static double
+static void
 qac_apply(
     QACRotation *rotation,
     double qx, double qy,
@@ -245,7 +245,7 @@ qabc_rotation(
 
 // Apply the rotation matrix returned from qabc_rotation to the point (qx,qy),
 // returning R*[qx,qy]' = [qa,qb,qc]'
-static double
+static void
 qabc_apply(
     QABCRotation *rotation,
     double qx, double qy,

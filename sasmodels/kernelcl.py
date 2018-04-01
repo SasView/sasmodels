@@ -150,7 +150,7 @@ def environment():
     if ENV is None:
         if not HAVE_OPENCL:
             raise RuntimeError("OpenCL startup failed with ***"
-                            + OPENCL_ERROR + "***; using C compiler instead")
+                               + OPENCL_ERROR + "***; using C compiler instead")
         reset_environment()
         if ENV is None:
             raise RuntimeError("SAS_OPENCL=None in environment")

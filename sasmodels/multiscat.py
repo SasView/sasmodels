@@ -72,7 +72,6 @@ from __future__ import print_function, division
 
 import argparse
 import time
-import os.path
 
 import numpy as np
 from numpy import pi
@@ -80,9 +79,7 @@ from scipy.special import gamma
 
 from sasmodels import core
 from sasmodels import compare
-from sasmodels import resolution2d
 from sasmodels.resolution import Resolution, bin_edges
-from sasmodels.data import empty_data1D, empty_data2D, plot_data
 from sasmodels.direct_model import call_kernel
 import sasmodels.kernelcl
 
@@ -105,11 +102,40 @@ except ImportError:
 PRECISION = np.dtype('f' if HAVE_OPENCL else 'd')  # 'f' or 'd'
 USE_FAST = True  # OpenCL faster, less accurate math
 
-class NumpyCalculator:
+class ICalculator:
+    """
+    Multiple scattering calculator
+    """
+    def fft(self, Iq):
+        """
+        Compute the forward FFT for an image, real -> complex.
+        """
+        raise NotImplementedError()
+
+    def ifft(self, Iq):
+        """
+        Compute the inverse FFT for an image, complex -> complex.
+        """
+        raise NotImplementedError()
+
+    def mulitple_scattering(self, Iq):
+        r"""
+        Compute multiple scattering for I(q) given scattering probability p.
+
+        Given a probability p of scattering with the thickness, the expected
+        number of scattering events, $\lambda$ is $-\log(1 - p)$, giving a
+        Poisson weighted sum of single, double, triple, etc. scattering patterns.
+        The number of patterns used is based on coverage (default 99%).
+        """
+        raise NotImplementedError()
+
+class NumpyCalculator(ICalculator):
+    """
+    Multiple scattering calculator using numpy fft.
+    """
     def __init__(self, dims=None, dtype=PRECISION):
         self.dtype = dtype
         self.complex_dtype = np.dtype('F') if dtype == np.dtype('f') else np.dtype('D')
-        pass
 
     def fft(self, Iq):
         #t0 = time.time()
@@ -126,22 +152,14 @@ class NumpyCalculator:
         return result
 
     def multiple_scattering(self, Iq, p, coverage=0.99):
-        r"""
-        Compute multiple scattering for I(q) given scattering probability p.
-
-        Given a probability p of scattering with the thickness, the expected
-        number of scattering events, $\lambda$ is $-\log(1 - p)$, giving a
-        Poisson weighted sum of single, double, triple, etc. scattering patterns.
-        The number of patterns used is based on coverage (default 99%).
-        """
         #t0 = time.time()
         coeffs = scattering_coeffs(p, coverage)
         poly = np.asarray(coeffs[::-1], dtype=self.dtype)
         scale = np.sum(Iq)
         frame = _forward_shift(Iq/scale, dtype=self.dtype)
-        F = np.fft.fft2(frame)
-        F_convolved = F * np.polyval(poly, F)
-        frame = np.fft.ifft2(F_convolved)
+        fourier_frame = np.fft.fft2(frame)
+        convolved = fourier_frame * np.polyval(poly, fourier_frame)
+        frame = np.fft.ifft2(convolved)
         result = scale * _inverse_shift(frame.real, dtype=self.dtype)
         #print("numpy multiscat time", time.time()-t0)
         return result
@@ -172,30 +190,33 @@ kernel void polyval1(
 }
 """
 
-class OpenclCalculator(NumpyCalculator):
+class OpenclCalculator(ICalculator):
+    """
+    Multiple scattering calculator using OpenCL via pyfft.
+    """
     polyval1f = None
     polyval1d = None
     def __init__(self, dims, dtype=PRECISION):
         env = sasmodels.kernelcl.environment()
         context = env.get_context(dtype)
         if dtype == np.dtype('f'):
-            if self.polyval1f is None:
+            if OpenclCalculator.polyval1f is None:
                 program = sasmodels.kernelcl.compile_model(
                     context, POLYVAL1_KERNEL, dtype, fast=USE_FAST)
                 # Assume context is always the same for a given dtype
                 OpenclCalculator.polyval1f = program.polyval1
             self.dtype = dtype
             self.complex_dtype = np.dtype('F')
-            self.polyval1 = self.polyval1f
+            self.polyval1 = OpenclCalculator.polyval1f
         else:
-            if self.polyval1d is None:
+            if OpenclCalculator.polyval1d is None:
                 program = sasmodels.kernelcl.compile_model(
                     context, POLYVAL1_KERNEL, dtype, fast=False)
                 # Assume context is always the same for a given dtype
                 OpenclCalculator.polyval1d = program.polyval1
             self.dtype = dtype
             self.complex_type = np.dtype('D')
-            self.polyval1 = self.polyval1d
+            self.polyval1 = OpenclCalculator.polyval1d
         self.queue = env.get_queue(dtype)
         self.plan = pyfft.cl.Plan(dims, queue=self.queue)
 
@@ -228,10 +249,10 @@ class OpenclCalculator(NumpyCalculator):
         gpu_data = cl_array.to_device(self.queue, frame)
         gpu_poly = cl_array.to_device(self.queue, poly)
         self.plan.execute(gpu_data.data)
-        degree, n = poly.shape[0], frame.shape[0]*frame.shape[1]
+        degree, data_size= poly.shape[0], frame.shape[0]*frame.shape[1]
         self.polyval1(
-            self.queue, [n], None,
-            np.int32(degree), gpu_poly.data, np.int32(n), gpu_data.data)
+            self.queue, [data_size], None,
+            np.int32(degree), gpu_poly.data, np.int32(data_size), gpu_data.data)
         self.plan.execute(gpu_data.data, inverse=True)
         frame = gpu_data.get()
         #result = scale * _inverse_shift(frame.real, dtype=self.dtype)
@@ -250,8 +271,8 @@ def scattering_powers(Iq, n, dtype='f', transform=None):
     The frames are unweighted; to weight scale by $\lambda^k e^{-\lambda}/k!$.
     """
     if transform is None:
-        nx, ny = Iq.shape
-        transform = Calculator(dims=(nx*2, ny*2), dtype=dtype)
+        n_x, n_y = Iq.shape
+        transform = Calculator(dims=(n_x*2, n_y*2), dtype=dtype)
     scale = np.sum(Iq)
     frame = _forward_shift(Iq/scale, dtype=dtype)
     F = transform.fft(frame)
@@ -260,21 +281,27 @@ def scattering_powers(Iq, n, dtype='f', transform=None):
     return powers
 
 def scattering_coeffs(p, coverage=0.99):
+    r"""
+    Return the coefficients of the scattering powers for transmission
+    probability *p*.  This is just the corresponding values for the
+    Poisson distribution for $\lambda = -\ln(1-p)$ such that
+    $\sum_{k = 0 \ldots n} P(k; \lambda)$ is larger than *coverage*.
+    """
     L = -np.log(1-p)
     num_scatter = truncated_poisson_invcdf(coverage, L)
     coeffs = [L**k/gamma(k+2) for k in range(num_scatter)]
     return coeffs
 
-def truncated_poisson_invcdf(p, L):
+def truncated_poisson_invcdf(coverage, L):
     r"""
-    Return smallest k such that cdf(k; L) > p from the truncated Poisson
+    Return smallest k such that cdf(k; L) > coverage from the truncated Poisson
     probability excluding k=0
     """
     # pmf(k; L) = L**k * exp(-L) / (k! * (1-exp(-L))
     cdf = 0
     pmf = -np.exp(-L) / np.expm1(-L)
     k = 0
-    while cdf < p:
+    while cdf < coverage:
         k += 1
         pmf *= L/k
         cdf += pmf
@@ -304,34 +331,34 @@ def _inverse_shift(frame, dtype=PRECISION):
 
 
 class MultipleScattering(Resolution):
+    r"""
+    Compute multiple scattering using Fourier convolution.
+
+    The fourier steps are determined by *qmax*, the maximum $q$ value
+    desired, *nq* the number of $q$ steps and *window*, the amount
+    of padding around the circular convolution.  The $q$ spacing
+    will be $\Delta q = 2 q_\mathrm{max} w / n_q$.  If *nq* is not
+    given it will use $n_q = 2^k$ such that $\Delta q < q_\mathrm{min}$.
+
+    *probability* is related to the expected number of scattering
+    events in the sample $\lambda$ as $p = 1 = e^{-\lambda}$.  As a
+    hack to allow probability to be a fitted parameter, the "value"
+    can be a function that takes no parameters and returns the current
+    value of the probability.  *coverage* determines how many scattering
+    steps to consider.  The default is 0.99, which sets $n$ such that
+    $1 \ldots n$ covers 99% of the Poisson probability mass function.
+
+    *is2d* is True then 2D scattering is used, otherwise it accepts
+    and returns 1D scattering.
+
+    *resolution* is the resolution function to apply after multiple
+    scattering.  If present, then the resolution $q$ vectors will provide
+    default values for *qmin*, *qmax* and *nq*.
+    """
     def __init__(self, qmin=None, qmax=None, nq=None, window=2,
                  probability=None, coverage=0.99,
                  is2d=False, resolution=None,
                  dtype=PRECISION):
-        r"""
-        Compute multiple scattering using Fourier convolution.
-
-        The fourier steps are determined by *qmax*, the maximum $q$ value
-        desired, *nq* the number of $q$ steps and *window*, the amount
-        of padding around the circular convolution.  The $q$ spacing
-        will be $\Delta q = 2 q_\mathrm{max} w / n_q$.  If *nq* is not
-        given it will use $n_q = 2^k$ such that $\Delta q < q_\mathrm{min}$.
-
-        *probability* is related to the expected number of scattering
-        events in the sample $\lambda$ as $p = 1 = e^{-\lambda}$.  As a
-        hack to allow probability to be a fitted parameter, the "value"
-        can be a function that takes no parameters and returns the current
-        value of the probability.  *coverage* determines how many scattering
-        steps to consider.  The default is 0.99, which sets $n$ such that
-        $1 \ldots n$ covers 99% of the Poisson probability mass function.
-
-        *is2d* is True then 2D scattering is used, otherwise it accepts
-        and returns 1D scattering.
-
-        *resolution* is the resolution function to apply after multiple
-        scattering.  If present, then the resolution $q$ vectors will provide
-        default values for *qmin*, *qmax* and *nq*.
-        """
         # Infer qmin, qmax from instrument resolution calculator, if present
         if resolution is not None:
             is2d = hasattr(resolution, 'qx_data')
@@ -424,6 +451,10 @@ class MultipleScattering(Resolution):
         # Prepare the multiple scattering calculator (either numpy or OpenCL)
         self.transform = Calculator((2*nq, 2*nq), dtype=dtype)
 
+        # Iq and Iqxy will be set during apply
+        self.Iq = None # type: np.ndarray
+        self.Iqxy = None # type: np.ndarray
+
     def apply(self, theory):
         if self.is2d:
             Iq_calc = theory
@@ -470,6 +501,10 @@ class MultipleScattering(Resolution):
             return Iq
 
     def radial_profile(self, Iqxy):
+        """
+        Compute that radial profile for the given Iqxy grid.  The grid should
+        be defined as for
+        """
         # circular average, no anti-aliasing
         Iq = np.histogram(self._radius, bins=self._edges, weights=Iqxy)[0]/self._norm
         return Iq
@@ -477,7 +512,8 @@ class MultipleScattering(Resolution):
 
 def annular_average(qxy, Iqxy, qbins):
     """
-    Compute annular average of points at
+    Compute annular average of points in *Iqxy* at *qbins*.  The $q_x$, $q_y$
+    coordinates for *Iqxy* are given in *qxy*.
     """
     qxy, Iqxy = qxy.flatten(), Iqxy.flatten()
     index = np.argsort(qxy)
@@ -512,6 +548,9 @@ def rebin(x, I, xo):
 
 def parse_pars(model, opts):
     # type: (ModelInfo, argparse.Namespace) -> Dict[str, float]
+    """
+    Parse par=val arguments from the command line.
+    """
 
     seed = np.random.randint(1000000) if opts.random and opts.seed < 0 else opts.seed
     compare_opts = {
@@ -525,7 +564,8 @@ def parse_pars(model, opts):
         'show_pars': False,
         'is2d': opts.is2d,
     }
-    pars, pars2 = compare.parse_pars(compare_opts)
+    # Note: sascomp allows comparison on a pair of models, so ignore the second.
+    pars, _ = compare.parse_pars(compare_opts)
     return pars
 
 
@@ -534,16 +574,26 @@ def main():
         description="Compute multiple scattering",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         )
-    parser.add_argument('-p', '--probability', type=float, default=0.1, help="scattering probability")
-    parser.add_argument('-n', '--nq', type=int, default=1024, help='number of mesh points')
-    parser.add_argument('-q', '--qmax', type=float, default=0.5, help='max q')
-    parser.add_argument('-w', '--window', type=float, default=2.0, help='q calc = q max * window')
-    parser.add_argument('-2', '--2d', dest='is2d', action='store_true', help='oriented sample')
-    parser.add_argument('-s', '--seed', default=-1, help='random pars with given seed')
-    parser.add_argument('-r', '--random', action='store_true', help='random pars with random seed')
-    parser.add_argument('-o', '--outfile', type=str, default="", help='random pars with random seed')
-    parser.add_argument('model', type=str, help='sas model name such as cylinder')
-    parser.add_argument('pars', type=str, nargs='*', help='model parameters such as radius=30')
+    parser.add_argument('-p', '--probability', type=float, default=0.1,
+                        help="scattering probability")
+    parser.add_argument('-n', '--nq', type=int, default=1024,
+                        help='number of mesh points')
+    parser.add_argument('-q', '--qmax', type=float, default=0.5,
+                        help='max q')
+    parser.add_argument('-w', '--window', type=float, default=2.0,
+                        help='q calc = q max * window')
+    parser.add_argument('-2', '--2d', dest='is2d', action='store_true',
+                        help='oriented sample')
+    parser.add_argument('-s', '--seed', default=-1,
+                        help='random pars with given seed')
+    parser.add_argument('-r', '--random', action='store_true',
+                        help='random pars with random seed')
+    parser.add_argument('-o', '--outfile', type=str, default="",
+                        help='random pars with random seed')
+    parser.add_argument('model', type=str,
+                        help='sas model name such as cylinder')
+    parser.add_argument('pars', type=str, nargs='*',
+                        help='model parameters such as radius=30')
     opts = parser.parse_args()
     assert opts.nq%2 == 0, "require even # points"
 
@@ -591,6 +641,10 @@ def plot_and_save_powers(res, theory, result, plot=True, outfile="", background=
             pylab.figure()
             plotxy((res._q_steps, res._q_steps), res.Iqxy+background)
             pylab.title("total scattering for p=%g" % probability)
+            if res.resolution is not None:
+                pylab.figure()
+                plotxy((res._q_steps, res._q_steps), result)
+                pylab.title("total scattering with resolution")
     else:
         q = res._q
         Iq_powers = [res.radial_profile(Iqxy) for Iqxy in powers]
@@ -608,6 +662,8 @@ def plot_and_save_powers(res, theory, result, plot=True, outfile="", background=
 
             # Plot 1D pattern for partial scattering
             pylab.loglog(q, res.Iq+background, label="total for p=%g"%probability)
+            if res.resolution is not None:
+                pylab.loglog(q, result, label="total with dQ")
             #new_annulus = annular_average(res._radius, res.Iqxy, res._edges)
             #pylab.loglog(q, new_annulus+background, label="new total for p=%g"%probability)
             for n, (w, Ipower) in enumerate(zip(weights, Iq_powers)):
