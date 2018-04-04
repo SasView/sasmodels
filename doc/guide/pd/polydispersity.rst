@@ -27,11 +27,15 @@ $x_\text{med}$, a width parameter $\sigma$ (note this is *not necessarily*
 the standard deviation, so read the description carefully), the number of
 sigmas $N_\sigma$ to include from the tails of the distribution, and the
 number of points used to compute the average. The center of the distribution
-is set by the value of the model parameter.
+is set by the value of the model parameter. The meaning of a polydispersity 
+parameter *PD* (not to be confused with a molecular weight distributions 
+in polymer science) in a model depends on the type of parameter it is being 
+applied too.
 
-Volume parameters have polydispersity *PD* (not to be confused with a
-molecular weight distributions in polymer science), but orientation parameters
-use angular distributions of width $\sigma$.
+The distribution width applied to *volume* (ie, shape-describing) parameters 
+is relative to the center value such that $\sigma = \mathrm{PD} \cdot \bar x$. 
+However, the distribution width applied to *orientation* (ie, angle-describing) 
+parameters is just $\sigma = \mathrm{PD}$.
 
 $N_\sigma$ determines how far into the tails to evaluate the distribution,
 with larger values of $N_\sigma$ required for heavier tailed distributions.
@@ -67,6 +71,10 @@ the Lognormal or Schulz distributions.
 
 If applying polydispersion to parameters describing interfacial thicknesses
 or angular orientations, use the Gaussian or Boltzmann distributions.
+
+If applying polydispersion to parameters describing angles, use the Uniform 
+distribution. Beware of using distributions that are always positive (eg, the 
+Lognormal) because angles can be negative!
 
 The array distribution allows a user-defined distribution to be applied.
 
@@ -214,10 +222,10 @@ in sasmodels, for example, *radius=60*.
 
 The polydispersity in sasmodels is given by
 
-.. math:: \text{PD} = p = \sigma / x_\text{med}
+.. math:: \text{PD} = \sigma = p / x_\text{med}
 
-The mean value of the distribution is given by $\bar x = \exp(\mu+ p^2/2)$
-and the peak value by $\max x = \exp(\mu - p^2)$.
+The mean value of the distribution is given by $\bar x = \exp(\mu+ \sigma^2/2)$
+and the peak value by $\max x = \exp(\mu - \sigma^2)$.
 
 The variance (the square of the standard deviation) of the *lognormal*
 distribution is given by
@@ -231,7 +239,7 @@ and $N_\sigma$.
 
 .. figure:: pd_lognormal.jpg
 
-    Lognormal distribution.
+    Lognormal distribution for PD=0.1.
 
 For further information on the Lognormal distribution see:
 http://en.wikipedia.org/wiki/Log-normal_distribution and
@@ -333,3 +341,4 @@ S King, C Washington & R Heenan, *Phys Chem Chem Phys*, (2005), 7, 143
 | 2015-05-01 Steve King
 | 2017-05-08 Paul Kienzle
 | 2018-03-20 Steve King
+| 2018-04-04 Steve King
