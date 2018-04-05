@@ -1328,18 +1328,21 @@ def parse_pars(opts, maxdim=np.inf):
             presets2.setdefault(k+'_n', 35.)
 
     # Evaluate preset parameter expressions
+    # Note: need to replace ':' with '_' in parameter names and expressions
+    # in order to support math on magnetic parameters.
     context = MATH.copy()
     context['np'] = np
-    context.update(pars)
+    context.update((k.replace(':', '_'), v) for k, v in pars.items())
     context.update((k, v) for k, v in presets.items() if isinstance(v, float))
+    #for k,v in sorted(context.items()): print(k, v)
     for k, v in presets.items():
         if not isinstance(v, float) and not k.endswith('_type'):
-            presets[k] = eval(v, context)
+            presets[k] = eval(v.replace(':', '_'), context)
     context.update(presets)
-    context.update((k, v) for k, v in presets2.items() if isinstance(v, float))
+    context.update((k.replace(':', '_'), v) for k, v in presets2.items() if isinstance(v, float))
     for k, v in presets2.items():
         if not isinstance(v, float) and not k.endswith('_type'):
-            presets2[k] = eval(v, context)
+            presets2[k] = eval(v.replace(':', '_'), context)
 
     # update parameters with presets
     pars.update(presets)  # set value after random to control value
