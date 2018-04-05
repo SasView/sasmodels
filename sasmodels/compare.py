@@ -756,6 +756,9 @@ def compare(opts, limits=None, maxdim=np.inf):
             new_seed = np.random.randint(1000000)
             print("Set %d uses -random=%i"%(k+1, new_seed))
             np.random.seed(new_seed)
+            if opts['plot'] and opts['is2d']:
+                import matplotlib.pyplot as plt
+                plt.figure()
         opts['pars'] = parse_pars(opts, maxdim=maxdim)
         if opts['pars'] is None:
             return
