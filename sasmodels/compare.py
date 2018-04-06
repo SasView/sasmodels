@@ -751,19 +751,19 @@ def compare(opts, limits=None, maxdim=np.inf):
     *maxdim* is the maximum value for any parameter with units of Angstrom.
     """
     for k in range(opts['sets']):
-        if k > 1:
+        if k > 0:
             # print a separate seed for each dataset for better reproducibility
             new_seed = np.random.randint(1000000)
-            print("Set %d uses -random=%i"%(k+1, new_seed))
+            print("=== Set %d uses -random=%i ==="%(k+1, new_seed))
             np.random.seed(new_seed)
-            if opts['plot'] and opts['is2d']:
-                import matplotlib.pyplot as plt
-                plt.figure()
         opts['pars'] = parse_pars(opts, maxdim=maxdim)
         if opts['pars'] is None:
             return
         result = run_models(opts, verbose=True)
         if opts['plot']:
+            if opts['is2d'] and k > 0:
+                import matplotlib.pyplot as plt
+                plt.figure()
             limits = plot_models(opts, result, limits=limits, setnum=k)
         if opts['show_weights']:
             base, _ = opts['engines']
