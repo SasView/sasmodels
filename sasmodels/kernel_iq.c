@@ -85,10 +85,10 @@ static void set_spin_weights(double in_spin, double out_spin, double weight[6])
   // Note: sasview 3.1 scaled all slds by sqrt(weight) and assumed that
   //     w*I(q, rho1, rho2, ...) = I(q, sqrt(w)*rho1, sqrt(w)*rho2, ...)
   // which is likely to be the case for simple models.
-  weight[0] = ((1.0-in_spin) * (1.0-out_spin)); // dd
-  weight[1] = ((1.0-in_spin) * out_spin);       // du.real
-  weight[2] = (in_spin * (1.0-out_spin));       // ud.real
-  weight[3] = (in_spin * out_spin);             // uu
+  weight[0] = sqrt((1.0-in_spin) * (1.0-out_spin)); // dd
+  weight[1] = sqrt((1.0-in_spin) * out_spin);       // du.real
+  weight[2] = sqrt(in_spin * (1.0-out_spin));       // ud.real
+  weight[3] = sqrt(in_spin * out_spin);             // uu
   weight[4] = weight[1]; // du.imag
   weight[5] = weight[2]; // ud.imag
 }
@@ -677,7 +677,7 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
                   local_values.vector[sld_index] =
                     mag_sld(xs, qx, qy, px, py, values[sld_index+2], mx, my, mz);
 //if (q_index==0) printf("%d: (qx,qy)=(%g,%g) xs=%d sld%d=%g p=(%g,%g) m=(%g,%g,%g)\n",
-//q_index, qx, qy, xs, sk, local_values.vector[sld_index], px, py, mx, my, mz);
+//  q_index, qx, qy, xs, sk, local_values.vector[sld_index], px, py, mx, my, mz);
                 }
                 scattering += xs_weight * CALL_KERNEL();
               }
