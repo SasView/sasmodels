@@ -78,21 +78,24 @@ static double clip(double value, double low, double high)
 //     ud * (m_sigma_y - 1j*m_sigma_z);
 //     du * (m_sigma_y + 1j*m_sigma_z);
 // weights for spin crosssections: dd du real, ud real, uu, du imag, ud imag
-static void set_spin_weights(double in_spin, double out_spin, double spins[4])
+static void set_spin_weights(double in_spin, double out_spin, double weight[6])
 {
   in_spin = clip(in_spin, 0.0, 1.0);
   out_spin = clip(out_spin, 0.0, 1.0);
-  spins[0] = sqrt(sqrt((1.0-in_spin) * (1.0-out_spin))); // dd
-  spins[1] = sqrt(sqrt((1.0-in_spin) * out_spin));       // du real
-  spins[2] = sqrt(sqrt(in_spin * (1.0-out_spin)));       // ud real
-  spins[3] = sqrt(sqrt(in_spin * out_spin));             // uu
-  spins[4] = spins[1]; // du imag
-  spins[5] = spins[2]; // ud imag
+  // Note: sasview 3.1 scaled all slds by sqrt(weight) and assumed that
+  //     w*I(q, rho1, rho2, ...) = I(q, sqrt(w)*rho1, sqrt(w)*rho2, ...)
+  // which is likely to be the case for simple models.
+  weight[0] = ((1.0-in_spin) * (1.0-out_spin)); // dd
+  weight[1] = ((1.0-in_spin) * out_spin);       // du.real
+  weight[2] = (in_spin * (1.0-out_spin));       // ud.real
+  weight[3] = (in_spin * out_spin);             // uu
+  weight[4] = weight[1]; // du.imag
+  weight[5] = weight[2]; // ud.imag
 }
 
 // Compute the magnetic sld
 static double mag_sld(
-  const unsigned int xs, // 0=dd, 1=du real, 2=ud real, 3=uu, 4=du imag, 5=up imag
+  const unsigned int xs, // 0=dd, 1=du.real, 2=ud.real, 3=uu, 4=du.imag, 5=ud.imag
   const double qx, const double qy,
   const double px, const double py,
   const double sld,
@@ -105,18 +108,18 @@ static double mag_sld(
       default: // keep compiler happy; condition ensures xs in [0,1,2,3]
       case 0: // uu => sld - D M_perpx
           return sld - px*perp;
-      case 1: // ud real => -D M_perpy
+      case 1: // ud.real => -D M_perpy
           return py*perp;
-      case 2: // du real => -D M_perpy
+      case 2: // du.real => -D M_perpy
           return py*perp;
-      case 3: // dd real => sld + D M_perpx
+      case 3: // dd => sld + D M_perpx
           return sld + px*perp;
     }
   } else {
     if (xs== 4) {
-      return -mz;  // ud imag => -D M_perpz
+      return -mz;  // du.imag => +D M_perpz
     } else { // index == 5
-      return mz;   // du imag => D M_perpz
+      return +mz;  // ud.imag => -D M_perpz
     }
   }
 }
@@ -311,9 +314,9 @@ void KERNEL_NAME(
   //     up_frac_f = values[NUM_PARS+3];
   //     up_angle = values[NUM_PARS+4];
   // TODO: could precompute more magnetism parameters before calling the kernel.
-  double spins[8];  // uu, ud real, du real, dd, ud imag, du imag, fill, fill
+  double xs_weights[8];  // uu, ud real, du real, dd, ud imag, du imag, fill, fill
   double cos_mspin, sin_mspin;
-  set_spin_weights(values[NUM_PARS+2], values[NUM_PARS+3], spins);
+  set_spin_weights(values[NUM_PARS+2], values[NUM_PARS+3], xs_weights);
   SINCOS(-values[NUM_PARS+4]*M_PI_180, sin_mspin, cos_mspin);
 #endif // MAGNETIC
 
@@ -660,7 +663,7 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
 
             // loop over uu, ud real, du real, dd, ud imag, du imag
             for (unsigned int xs=0; xs<6; xs++) {
-              const double xs_weight = spins[xs];
+              const double xs_weight = xs_weights[xs];
               if (xs_weight > 1.e-8) {
                 // Since the cross section weight is significant, set the slds
                 // to the effective slds for this cross section, call the
@@ -673,6 +676,8 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
                   const double mz = values[mag_index+2];
                   local_values.vector[sld_index] =
                     mag_sld(xs, qx, qy, px, py, values[sld_index+2], mx, my, mz);
+//if (q_index==0) printf("%d: (qx,qy)=(%g,%g) xs=%d sld%d=%g p=(%g,%g) m=(%g,%g,%g)\n",
+//q_index, qx, qy, xs, sk, local_values.vector[sld_index], px, py, mx, my, mz);
                 }
                 scattering += xs_weight * CALL_KERNEL();
               }
