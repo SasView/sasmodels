@@ -26,7 +26,8 @@ References
 None.
 """
 
-from numpy import inf, sqrt
+import numpy as np
+from numpy import inf, errstate
 
 name = "power_law"
 title = "Simple power law with a flat background"
@@ -44,18 +45,20 @@ parameters = [["power", "", 4.0, [-inf, inf], "", "Power law exponent"]]
 # NB: Scale and Background are implicit parameters on every model
 def Iq(q, power):
     # pylint: disable=missing-docstring
-    inten = (q**-power)
-    return inten
+    with errstate(divide='ignore'):
+        result = q**-power
+    return result
 Iq.vectorized = True  # Iq accepts an array of q values
 
-def Iqxy(qx, qy, *args):
-    # pylint: disable=missing-docstring
-    return Iq(sqrt(qx ** 2 + qy ** 2), *args)
-Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
+def random():
+    power = np.random.uniform(1, 6)
+    pars = dict(
+        scale=0.1**power*10**np.random.uniform(-4, 2),
+        power=power,
+    )
+    return pars
 
-demo = dict(scale=1.0,
-            power=4.0,
-            background=0.0)
+demo = dict(scale=1.0, power=4.0, background=0.0)
 
 tests = [
     [{'scale': 1.0, 'power': 4.0, 'background' : 0.0},

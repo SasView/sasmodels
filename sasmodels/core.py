@@ -1,41 +1,43 @@
 """
 Core model handling routines.
 """
+from __future__ import print_function
+
 __all__ = [
-    "list_models", "load_model_info", "precompile_dll",
-    "build_model", "make_kernel", "call_kernel", "call_ER_VR",
+    "list_models", "load_model", "load_model_info",
+    "build_model", "precompile_dlls",
     ]
 
-from os.path import basename, dirname, join as joinpath, splitext
+import os
+from os.path import basename, join as joinpath
 from glob import glob
+import re
 
-import numpy as np
+import numpy as np # type: ignore
 
-from . import models
-from . import weights
 from . import generate
-# TODO: remove circular references between product and core
-# product uses call_ER/call_VR, core uses make_product_info/ProductModel
-#from . import product
+from . import modelinfo
+from . import product
 from . import mixture
 from . import kernelpy
+from . import kernelcl
 from . import kerneldll
-try:
-    from . import kernelcl
-    HAVE_OPENCL = True
-except:
-    HAVE_OPENCL = False
+from . import custom
 
+# pylint: disable=unused-import
 try:
-    np.meshgrid([])
-    meshgrid = np.meshgrid
-except ValueError:
-    # CRUFT: np.meshgrid requires multiple vectors
-    def meshgrid(*args):
-        if len(args) > 1:
-            return np.meshgrid(*args)
-        else:
-            return [np.asarray(v) for v in args]
+    from typing import List, Union, Optional, Any
+    from .kernel import KernelModel
+    from .modelinfo import ModelInfo
+except ImportError:
+    pass
+# pylint: enable=unused-import
+
+CUSTOM_MODEL_PATH = os.environ.get('SAS_MODELPATH', "")
+if CUSTOM_MODEL_PATH == "":
+    CUSTOM_MODEL_PATH = joinpath(os.path.expanduser("~"), ".sasmodels", "custom_models")
+    if not os.path.isdir(CUSTOM_MODEL_PATH):
+        os.makedirs(CUSTOM_MODEL_PATH)
 
 # TODO: refactor composite model support
 # The current load_model_info/build_model does not reuse existing model
@@ -49,56 +51,125 @@ except ValueError:
 #    load_model_info
 #    build_model
 
-def list_models():
+KINDS = ("all", "py", "c", "double", "single", "opencl", "1d", "2d",
+         "nonmagnetic", "magnetic")
+def list_models(kind=None):
+    # type: (str) -> List[str]
     """
     Return the list of available models on the model path.
+
+    *kind* can be one of the following:
+
+        * all: all models
+        * py: python models only
+        * c: compiled models only
+        * single: models which support single precision
+        * double: models which require double precision
+        * opencl: controls if OpenCL is supperessed
+        * 1d: models which are 1D only, or 2D using abs(q)
+        * 2d: models which can be 2D
+        * magnetic: models with an sld
+        * nommagnetic: models without an sld
+
+    For multiple conditions, combine with plus.  For example, *c+single+2d*
+    would return all oriented models implemented in C which can be computed
+    accurately with single precision arithmetic.
     """
-    root = dirname(__file__)
-    files = sorted(glob(joinpath(root, 'models', "[a-zA-Z]*.py")))
+    if kind and any(k not in KINDS for k in kind.split('+')):
+        raise ValueError("kind not in " + ", ".join(KINDS))
+    files = sorted(glob(joinpath(generate.MODEL_PATH, "[a-zA-Z]*.py")))
     available_models = [basename(f)[:-3] for f in files]
-    return available_models
+    if kind and '+' in kind:
+        all_kinds = kind.split('+')
+        condition = lambda name: all(_matches(name, k) for k in all_kinds)
+    else:
+        condition = lambda name: _matches(name, kind)
+    selected = [name for name in available_models if condition(name)]
 
-def isstr(s):
-    """
-    Return True if *s* is a string-like object.
-    """
-    try: s + ''
-    except: return False
-    return True
+    return selected
 
-def load_model(model_name, **kw):
+def _matches(name, kind):
+    if kind is None or kind == "all":
+        return True
+    info = load_model_info(name)
+    pars = info.parameters.kernel_parameters
+    if kind == "py" and callable(info.Iq):
+        return True
+    elif kind == "c" and not callable(info.Iq):
+        return True
+    elif kind == "double" and not info.single:
+        return True
+    elif kind == "single" and info.single:
+        return True
+    elif kind == "opencl" and info.opencl:
+        return True
+    elif kind == "2d" and any(p.type == 'orientation' for p in pars):
+        return True
+    elif kind == "1d" and all(p.type != 'orientation' for p in pars):
+        return True
+    elif kind == "magnetic" and any(p.type == 'sld' for p in pars):
+        return True
+    elif kind == "nonmagnetic" and any(p.type != 'sld' for p in pars):
+        return True
+    return False
+
+def load_model(model_name, dtype=None, platform='ocl'):
+    # type: (str, str, str) -> KernelModel
     """
     Load model info and build model.
+
+    *model_name* is the name of the model, or perhaps a model expression
+    such as sphere*hardsphere or sphere+cylinder.
+
+    *dtype* and *platform* are given by :func:`build_model`.
     """
-    return build_model(load_model_info(model_name), **kw)
+    return build_model(load_model_info(model_name),
+                       dtype=dtype, platform=platform)
 
-
-def load_model_info(model_name):
+def load_model_info(model_string):
+    # type: (str) -> modelinfo.ModelInfo
     """
     Load a model definition given the model name.
+
+    *model_string* is the name of the model, or perhaps a model expression
+    such as sphere*cylinder or sphere+cylinder. Use '@' for a structure
+    factor product, e.g. sphere@hardsphere. Custom models can be specified by
+    prefixing the model name with 'custom.', e.g. 'custom.MyModel+sphere'.
 
     This returns a handle to the module defining the model.  This can be
     used with functions in generate to build the docs or extract model info.
     """
-    parts = model_name.split('+')
-    if len(parts) > 1:
-        model_info_list = [load_model_info(p) for p in parts]
-        return mixture.make_mixture_info(model_info_list)
-
-    parts = model_name.split('*')
-    if len(parts) > 1:
-        from . import product
-        # Note: currently have circular reference
-        if len(parts) > 2:
-            raise ValueError("use P*S to apply structure factor S to model P")
-        P_info, Q_info = [load_model_info(p) for p in parts]
-        return product.make_product_info(P_info, Q_info)
-
-    kernel_module = generate.load_kernel_module(model_name)
-    return generate.make_model_info(kernel_module)
+    if "+" in model_string:
+        parts = [load_model_info(part)
+                 for part in model_string.split("+")]
+        return mixture.make_mixture_info(parts, operation='+')
+    elif "*" in model_string:
+        parts = [load_model_info(part)
+                 for part in model_string.split("*")]
+        return mixture.make_mixture_info(parts, operation='*')
+    elif "@" in model_string:
+        p_info, q_info = [load_model_info(part)
+                          for part in model_string.split("@")]
+        return product.make_product_info(p_info, q_info)
+    # We are now dealing with a pure model
+    elif "custom." in model_string:
+        pattern = "custom.([A-Za-z0-9_-]+)"
+        result = re.match(pattern, model_string)
+        if result is None:
+            raise ValueError("Model name in invalid format: " + model_string)
+        model_name = result.group(1)
+        # Use ModelName to find the path to the custom model file
+        model_path = joinpath(CUSTOM_MODEL_PATH, model_name + ".py")
+        if not os.path.isfile(model_path):
+            raise ValueError("The model file {} doesn't exist".format(model_path))
+        kernel_module = custom.load_custom_kernel_module(model_path)
+        return modelinfo.make_model_info(kernel_module)
+    kernel_module = generate.load_kernel_module(model_string)
+    return modelinfo.make_model_info(kernel_module)
 
 
 def build_model(model_info, dtype=None, platform="ocl"):
+    # type: (modelinfo.ModelInfo, str, str) -> KernelModel
     """
     Prepare the model for the default execution platform.
 
@@ -109,174 +180,193 @@ def build_model(model_info, dtype=None, platform="ocl"):
     :func:`load_model_info`.
 
     *dtype* indicates whether the model should use single or double precision
-    for the calculation. Any valid numpy single or double precision identifier
-    is valid, such as 'single', 'f', 'f32', or np.float32 for single, or
-    'double', 'd', 'f64'  and np.float64 for double.  If *None*, then use
-    'single' unless the model defines single=False.
+    for the calculation.  Choices are 'single', 'double', 'quad', 'half',
+    or 'fast'.  If *dtype* ends with '!', then force the use of the DLL rather
+    than OpenCL for the calculation.
 
     *platform* should be "dll" to force the dll to be used for C models,
     otherwise it uses the default "ocl".
     """
-    composition = model_info.get('composition', None)
+    composition = model_info.composition
     if composition is not None:
         composition_type, parts = composition
         models = [build_model(p, dtype=dtype, platform=platform) for p in parts]
         if composition_type == 'mixture':
             return mixture.MixtureModel(model_info, models)
         elif composition_type == 'product':
-            from . import product
             P, S = models
             return product.ProductModel(model_info, P, S)
         else:
             raise ValueError('unknown mixture type %s'%composition_type)
 
-    ## for debugging:
-    ##  1. uncomment open().write so that the source will be saved next time
-    ##  2. run "python -m sasmodels.direct_model $MODELNAME" to save the source
-    ##  3. recomment the open.write() and uncomment open().read()
-    ##  4. rerun "python -m sasmodels.direct_model $MODELNAME"
-    ##  5. uncomment open().read() so that source will be regenerated from model
-    # open(model_info['name']+'.c','w').write(source)
-    # source = open(model_info['name']+'.cl','r').read()
-    source = generate.make_source(model_info)
-    if dtype is None:
-        dtype = 'single' if model_info['single'] else 'double'
-    if callable(model_info.get('Iq', None)):
+    # If it is a python model, return it immediately
+    if callable(model_info.Iq):
         return kernelpy.PyModel(model_info)
-    if (platform == "dll"
-            or not HAVE_OPENCL
-            or not kernelcl.environment().has_type(dtype)):
-        return kerneldll.load_dll(source, model_info, dtype)
+
+    numpy_dtype, fast, platform = parse_dtype(model_info, dtype, platform)
+
+    source = generate.make_source(model_info)
+    if platform == "dll":
+        #print("building dll", numpy_dtype)
+        return kerneldll.load_dll(source['dll'], model_info, numpy_dtype)
     else:
-        return kernelcl.GpuModel(source, model_info, dtype)
+        #print("building ocl", numpy_dtype)
+        return kernelcl.GpuModel(source, model_info, numpy_dtype, fast=fast)
 
-def precompile_dll(model_name, dtype="double"):
+def precompile_dlls(path, dtype="double"):
+    # type: (str, str) -> List[str]
     """
-    Precompile the dll for a model.
+    Precompile the dlls for all builtin models, returning a list of dll paths.
 
-    Returns the path to the compiled model, or None if the model is a pure
-    python model.
+    *path* is the directory in which to save the dlls.  It will be created if
+    it does not already exist.
 
     This can be used when build the windows distribution of sasmodels
-    (which may be missing the OpenCL driver and the dll compiler), or
-    otherwise sharing models with windows users who do not have a compiler.
-
-    See :func:`sasmodels.kerneldll.make_dll` for details on controlling the
-    dll path and the allowed floating point precision.
+    which may be missing the OpenCL driver and the dll compiler.
     """
-    model_info = load_model_info(model_name)
-    source = generate.make_source(model_info)
-    return kerneldll.make_dll(source, model_info, dtype=dtype) if source else None
+    numpy_dtype = np.dtype(dtype)
+    if not os.path.exists(path):
+        os.makedirs(path)
+    compiled_dlls = []
+    for model_name in list_models():
+        model_info = load_model_info(model_name)
+        if not callable(model_info.Iq):
+            source = generate.make_source(model_info)['dll']
+            old_path = kerneldll.DLL_PATH
+            try:
+                kerneldll.DLL_PATH = path
+                dll = kerneldll.make_dll(source, model_info, dtype=numpy_dtype)
+            finally:
+                kerneldll.DLL_PATH = old_path
+            compiled_dlls.append(dll)
+    return compiled_dlls
 
-
-def get_weights(model_info, pars, name):
+def parse_dtype(model_info, dtype=None, platform=None):
+    # type: (ModelInfo, str, str) -> (np.dtype, bool, str)
     """
-    Generate the distribution for parameter *name* given the parameter values
-    in *pars*.
+    Interpret dtype string, returning np.dtype and fast flag.
 
-    Uses "name", "name_pd", "name_pd_type", "name_pd_n", "name_pd_sigma"
-    from the *pars* dictionary for parameter value and parameter dispersion.
+    Possible types include 'half', 'single', 'double' and 'quad'.  If the
+    type is 'fast', then this is equivalent to dtype 'single' but using
+    fast native functions rather than those with the precision level
+    guaranteed by the OpenCL standard.  'default' will choose the appropriate
+    default for the model and platform.
+
+    Platform preference can be specfied ("ocl" vs "dll"), with the default
+    being OpenCL if it is availabe.  If the dtype name ends with '!' then
+    platform is forced to be DLL rather than OpenCL.
+
+    This routine ignores the preferences within the model definition.  This
+    is by design.  It allows us to test models in single precision even when
+    we have flagged them as requiring double precision so we can easily check
+    the performance on different platforms without having to change the model
+    definition.
     """
-    relative = name in model_info['partype']['pd-rel']
-    limits = model_info['limits'][name]
-    disperser = pars.get(name+'_pd_type', 'gaussian')
-    value = pars.get(name, model_info['defaults'][name])
-    npts = pars.get(name+'_pd_n', 0)
-    width = pars.get(name+'_pd', 0.0)
-    nsigma = pars.get(name+'_pd_nsigma', 3.0)
-    value, weight = weights.get_weights(
-        disperser, npts, width, nsigma, value, limits, relative)
-    return value, weight / np.sum(weight)
+    # Assign default platform, overriding ocl with dll if OpenCL is unavailable
+    # If opencl=False OpenCL is switched off
 
-def dispersion_mesh(pars):
-    """
-    Create a mesh grid of dispersion parameters and weights.
+    if platform is None:
+        platform = "ocl"
+    if not kernelcl.use_opencl() or not model_info.opencl:
+        platform = "dll"
 
-    Returns [p1,p2,...],w where pj is a vector of values for parameter j
-    and w is a vector containing the products for weights for each
-    parameter set in the vector.
-    """
-    value, weight = zip(*pars)
-    value = [v.flatten() for v in meshgrid(*value)]
-    weight = np.vstack([v.flatten() for v in meshgrid(*weight)])
-    weight = np.prod(weight, axis=0)
-    return value, weight
+    # Check if type indicates dll regardless of which platform is given
+    if dtype is not None and dtype.endswith('!'):
+        platform = "dll"
+        dtype = dtype[:-1]
 
-def call_kernel(kernel, pars, cutoff=0, mono=False):
-    """
-    Call *kernel* returned from *model.make_kernel* with parameters *pars*.
+    # Convert special type names "half", "fast", and "quad"
+    fast = (dtype == "fast")
+    if fast:
+        dtype = "single"
+    elif dtype == "quad":
+        dtype = "longdouble"
+    elif dtype == "half":
+        dtype = "float16"
 
-    *cutoff* is the limiting value for the product of dispersion weights used
-    to perform the multidimensional dispersion calculation more quickly at a
-    slight cost to accuracy. The default value of *cutoff=0* integrates over
-    the entire dispersion cube.  Using *cutoff=1e-5* can be 50% faster, but
-    with an error of about 1%, which is usually less than the measurement
-    uncertainty.
-
-    *mono* is True if polydispersity should be set to none on all parameters.
-    """
-    fixed_pars = [pars.get(name, kernel.info['defaults'][name])
-                  for name in kernel.fixed_pars]
-    if mono:
-        pd_pars = [( np.array([pars[name]]), np.array([1.0]) )
-                   for name in kernel.pd_pars]
+    # Convert dtype string to numpy dtype.
+    if dtype is None or dtype == "default":
+        numpy_dtype = (generate.F32 if platform == "ocl" and model_info.single
+                       else generate.F64)
     else:
-        pd_pars = [get_weights(kernel.info, pars, name) for name in kernel.pd_pars]
-    return kernel(fixed_pars, pd_pars, cutoff=cutoff)
+        numpy_dtype = np.dtype(dtype)
 
-def call_ER_VR(model_info, vol_pars):
+    # Make sure that the type is supported by opencl, otherwise use dll
+    if platform == "ocl":
+        env = kernelcl.environment()
+        if not env.has_type(numpy_dtype):
+            platform = "dll"
+            if dtype is None:
+                numpy_dtype = generate.F64
+
+    return numpy_dtype, fast, platform
+
+def list_models_main():
+    # type: () -> None
     """
-    Return effect radius and volume ratio for the model.
-
-    *info* is either *kernel.info* for *kernel=make_kernel(model,q)*
-    or *model.info*.
-
-    *pars* are the parameters as expected by :func:`call_kernel`.
+    Run list_models as a main program.  See :func:`list_models` for the
+    kinds of models that can be requested on the command line.
     """
-    ER = model_info.get('ER', None)
-    VR = model_info.get('VR', None)
-    value, weight = dispersion_mesh(vol_pars)
+    import sys
+    kind = sys.argv[1] if len(sys.argv) > 1 else "all"
+    print("\n".join(list_models(kind)))
 
-    individual_radii = ER(*value) if ER else 1.0
-    whole, part = VR(*value) if VR else (1.0, 1.0)
+def test_composite_order():
+    def test_models(fst, snd):
+        """Confirm that two models produce the same parameters"""
+        fst = load_model(fst)
+        snd = load_model(snd)
+        # Un-disambiguate parameter names so that we can check if the same
+        # parameters are in a pair of composite models. Since each parameter in
+        # the mixture model is tagged as e.g., A_sld, we ought to use a
+        # regex subsitution s/^[A-Z]+_/_/, but removing all uppercase letters
+        # is good enough.
+        fst = [[x for x in p.name if x == x.lower()] for p in fst.info.parameters.kernel_parameters]
+        snd = [[x for x in p.name if x == x.lower()] for p in snd.info.parameters.kernel_parameters]
+        assert sorted(fst) == sorted(snd), "{} != {}".format(fst, snd)
 
-    effect_radius = np.sum(weight*individual_radii) / np.sum(weight)
-    volume_ratio = np.sum(weight*part)/np.sum(weight*whole)
-    return effect_radius, volume_ratio
+    def build_test(first, second):
+        test = lambda description: test_models(first, second)
+        description = first + " vs. " + second
+        return test, description
 
+    yield build_test(
+        "cylinder+sphere",
+        "sphere+cylinder")
+    yield build_test(
+        "cylinder*sphere",
+        "sphere*cylinder")
+    yield build_test(
+        "cylinder@hardsphere*sphere",
+        "sphere*cylinder@hardsphere")
+    yield build_test(
+        "barbell+sphere*cylinder@hardsphere",
+        "sphere*cylinder@hardsphere+barbell")
+    yield build_test(
+        "barbell+cylinder@hardsphere*sphere",
+        "cylinder@hardsphere*sphere+barbell")
+    yield build_test(
+        "barbell+sphere*cylinder@hardsphere",
+        "barbell+cylinder@hardsphere*sphere")
+    yield build_test(
+        "sphere*cylinder@hardsphere+barbell",
+        "cylinder@hardsphere*sphere+barbell")
+    yield build_test(
+        "barbell+sphere*cylinder@hardsphere",
+        "cylinder@hardsphere*sphere+barbell")
+    yield build_test(
+        "barbell+cylinder@hardsphere*sphere",
+        "sphere*cylinder@hardsphere+barbell")
 
-def call_ER(model_info, values):
-    """
-    Call the model ER function using *values*. *model_info* is either
-    *model.info* if you have a loaded model, or *kernel.info* if you
-    have a model kernel prepared for evaluation.
-    """
-    ER = model_info.get('ER', None)
-    if ER is None:
-        return 1.0
-    else:
-        vol_pars = [get_weights(model_info, values, name)
-                    for name in model_info['partype']['volume']]
-        value, weight = dispersion_mesh(vol_pars)
-        individual_radii = ER(*value)
-        #print(values[0].shape, weights.shape, fv.shape)
-        return np.sum(weight*individual_radii) / np.sum(weight)
+def test_composite():
+    # type: () -> None
+    """Check that model load works"""
+    #Test the the model produces the parameters that we would expect
+    model = load_model("cylinder@hardsphere*sphere")
+    actual = [p.name for p in model.info.parameters.kernel_parameters]
+    target = ("sld sld_solvent radius length theta phi volfraction"
+              " A_sld A_sld_solvent A_radius").split()
+    assert target == actual, "%s != %s"%(target, actual)
 
-def call_VR(model_info, values):
-    """
-    Call the model VR function using *pars*.
-    *info* is either *model.info* if you have a loaded model, or *kernel.info*
-    if you have a model kernel prepared for evaluation.
-    """
-    VR = model_info.get('VR', None)
-    if VR is None:
-        return 1.0
-    else:
-        vol_pars = [get_weights(model_info, values, name)
-                    for name in model_info['partype']['volume']]
-        value, weight = dispersion_mesh(vol_pars)
-        whole, part = VR(*value)
-        return np.sum(weight*part)/np.sum(weight*whole)
-
-# TODO: remove call_ER, call_VR
-
+if __name__ == "__main__":
+    list_models_main()

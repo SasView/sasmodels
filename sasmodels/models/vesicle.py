@@ -55,13 +55,12 @@ References
 A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*, John Wiley and
 Sons, New York, (1955)
 
-**Author:** NIST IGOR/DANSE **on:** pre 2010
-
-**Last Modified by:** Paul Butler **on:** March 20, 2016
-
-**Last Reviewed by:** Paul Butler **on:** March 20, 2016
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Paul Butler **Date:** March 20, 2016
+* **Last Reviewed by:** Paul Butler **Date:** March 20, 2016
 """
 
+import numpy as np
 from numpy import pi, inf
 
 name = "vesicle"
@@ -74,16 +73,16 @@ description = """
         radius : the core radius of the vesicle
         thickness: the shell thickness
         sld: the shell SLD
-        sld_slovent: the solvent (and core) SLD
+        sld_solvent: the solvent (and core) SLD
         background: incoherent background
         volfraction: shell volume fraction
         scale : scale factor = 1 if on absolute scale"""
 category = "shape:sphere"
 
 #             [ "name", "units", default, [lower, upper], "type", "description"],
-parameters = [["sld", "1e-6/Ang^2", 0.5, [-inf, inf], "",
+parameters = [["sld", "1e-6/Ang^2", 0.5, [-inf, inf], "sld",
                "vesicle shell scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2", 6.36, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 6.36, [-inf, inf], "sld",
                "solvent scattering length density"],
               ["volfraction", "", 0.05, [0, 1.0], "",
                "volume fraction of shell"],
@@ -93,7 +92,7 @@ parameters = [["sld", "1e-6/Ang^2", 0.5, [-inf, inf], "",
                "vesicle shell thickness"],
              ]
 
-source = ["lib/sph_j1c.c", "vesicle.c"]
+source = ["lib/sas_3j1x_x.c", "vesicle.c"]
 
 def ER(radius, thickness):
     '''
@@ -115,10 +114,23 @@ def VR(radius, thickness):
     :return whole-core: volume of the shell
     '''
 
-    whole = 4. * pi * (radius + thickness) ** 3. / 3.
-    core = 4. * pi * radius ** 3. / 3.
+    whole = 4./3. * pi * (radius + thickness)**3
+    core = 4./3. * pi * radius**3
     return whole, whole - core
 
+def random():
+    total_radius = 10**np.random.uniform(1.3, 5)
+    radius = total_radius * np.random.uniform(0, 1)
+    thickness = total_radius - radius
+    volfraction = 10**np.random.uniform(-3, -1)
+    pars = dict(
+        #background=0,
+        scale=1,  # volfraction is part of the model, so scale=1
+        radius=radius,
+        thickness=thickness,
+        volfraction=volfraction,
+    )
+    return pars
 
 # parameters for demo
 demo = dict(sld=0.5, sld_solvent=6.36,

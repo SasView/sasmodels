@@ -2,9 +2,9 @@
 # Note: model title and parameter table are inserted automatically
 r"""
 
-This model provides the form factor, *P(q)*, for a hollow rectangular
-parallelepiped with a wall of thickness |bigdelta|.
-It computes only the 1D scattering, not the 2D.
+This model provides the form factor, $P(q)$, for a hollow rectangular
+parallelepiped with a wall of thickness $\Delta$.
+
 
 Definition
 ----------
@@ -12,7 +12,7 @@ Definition
 The 1D scattering intensity for this model is calculated by forming
 the difference of the amplitudes of two massive parallelepipeds
 differing in their outermost dimensions in each direction by the
-same length increment :math:`2\Delta` (Nayuk, 2012).
+same length increment $2\Delta$ (Nayuk, 2012).
 
 As in the case of the massive parallelepiped model (:ref:`rectangular-prism`),
 the scattering amplitude is computed for a particular orientation of the
@@ -23,14 +23,14 @@ possible orientations, giving
   P(q) =  \frac{1}{V^2} \frac{2}{\pi} \times \, \int_0^{\frac{\pi}{2}} \,
   \int_0^{\frac{\pi}{2}} A_{P\Delta}^2(q) \, \sin\theta \, d\theta \, d\phi
 
-where |theta| is the angle between the *z* axis and the longest axis
-of the parallelepiped, |phi| is the angle between the scattering vector
-(lying in the *xy* plane) and the *y* axis, and
+where $\theta$ is the angle between the $z$ axis and the longest axis
+of the parallelepiped, $\phi$ is the angle between the scattering vector
+(lying in the $xy$ plane) and the $y$ axis, and
 
 .. math::
   :nowrap:
 
-  \begin{align}
+  \begin{align*}
   A_{P\Delta}(q) & =  A B C
     \left[\frac{\sin \bigl( q \frac{C}{2} \cos\theta \bigr)}
     {\left( q \frac{C}{2} \cos\theta \right)} \right]
@@ -46,10 +46,10 @@ of the parallelepiped, |phi| is the angle between the scattering vector
     {q \bigl(\frac{A}{2}-\Delta\bigr) \sin\theta \sin\phi} \right]
     \left[ \frac{\sin \bigl[ q \bigl(\frac{B}{2}-\Delta\bigr) \sin\theta \cos\phi \bigr]}
     {q \bigl(\frac{B}{2}-\Delta\bigr) \sin\theta \cos\phi} \right]
-  \end{align}
+  \end{align*}
 
-where *A*, *B* and *C* are the external sides of the parallelepiped fulfilling
-:math:`A \le B \le C`, and the volume *V* of the parallelepiped is
+where $A$, $B$ and $C$ are the external sides of the parallelepiped fulfilling
+$A \le B \le C$, and the volume $V$ of the parallelepiped is
 
 .. math::
   V = A B C \, - \, (A - 2\Delta) (B - 2\Delta) (C - 2\Delta)
@@ -57,15 +57,35 @@ where *A*, *B* and *C* are the external sides of the parallelepiped fulfilling
 The 1D scattering intensity is then calculated as
 
 .. math::
-  I(q) = \mbox{scale} \times V \times (\rho_{\mbox{p}} -
-  \rho_{\mbox{solvent}})^2 \times P(q)
+  I(q) = \text{scale} \times V \times (\rho_\text{p} -
+  \rho_\text{solvent})^2 \times P(q) + \text{background}
 
-where :math:`\rho_{\mbox{p}}` is the scattering length of the parallelepiped,
-:math:`\rho_{\mbox{solvent}}` is the scattering length of the solvent,
+where $\rho_\text{p}$ is the scattering length of the parallelepiped,
+$\rho_\text{solvent}$ is the scattering length of the solvent,
 and (if the data are in absolute units) *scale* represents the volume fraction
 (which is unitless).
 
-**The 2D scattering intensity is not computed by this model.**
+For 2d data the orientation of the particle is required, described using
+angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further details
+of the calculation and angular dispersions see :ref:`orientation` .
+The angle $\Psi$ is the rotational angle around the long *C* axis. For example,
+$\Psi = 0$ when the *B* axis is parallel to the *x*-axis of the detector.
+
+For 2d, constraints must be applied during fitting to ensure that the inequality
+$A < B < C$ is not violated, and hence the correct definition of angles is preserved. The calculation will not report an error,
+but the results may be not correct.
+
+.. figure:: img/parallelepiped_angle_definition.png
+
+    Definition of the angles for oriented hollow rectangular prism.
+    Note that rotation $\theta$, initially in the $xz$ plane, is carried out first, then
+    rotation $\phi$ about the $z$ axis, finally rotation $\Psi$ is now around the axis of the prism.
+    The neutron or X-ray beam is along the $z$ axis.
+
+.. figure:: img/parallelepiped_angle_projection.png
+
+    Examples of the angles for oriented hollow rectangular prisms against the
+    detector plane.
 
 
 Validation
@@ -79,9 +99,9 @@ References
 ----------
 
 R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
-
 """
 
+import numpy as np
 from numpy import pi, inf, sqrt
 
 name = "hollow_rectangular_prism"
@@ -100,11 +120,11 @@ description = """
 category = "shape:parallelepiped"
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "",
+parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
                "Parallelepiped scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Solvent scattering length density"],
-              ["a_side", "Ang", 35, [0, inf], "volume",
+              ["length_a", "Ang", 35, [0, inf], "volume",
                "Shorter side of the parallelepiped"],
               ["b2a_ratio", "Ang", 1, [0, inf], "volume",
                "Ratio sides b/a"],
@@ -112,48 +132,70 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "",
                "Ratio sides c/a"],
               ["thickness", "Ang", 1, [0, inf], "volume",
                "Thickness of parallelepiped"],
+              ["theta", "degrees", 0, [-360, 360], "orientation",
+               "c axis to beam angle"],
+              ["phi", "degrees", 0, [-360, 360], "orientation",
+               "rotation about beam"],
+              ["psi", "degrees", 0, [-360, 360], "orientation",
+               "rotation about c axis"],
              ]
 
-source = [ "lib/gauss76.c", "hollow_rectangular_prism.c"]
+source = ["lib/gauss76.c", "hollow_rectangular_prism.c"]
 
-def ER(a_side, b2a_ratio, c2a_ratio, thickness):
+def ER(length_a, b2a_ratio, c2a_ratio, thickness):
     """
-        Return equivalent radius (ER)
-        thickness parameter not used
+    Return equivalent radius (ER)
+    thickness parameter not used
     """
-    b_side = a_side * b2a_ratio
-    c_side = a_side * c2a_ratio
+    b_side = length_a * b2a_ratio
+    c_side = length_a * c2a_ratio
 
     # surface average radius (rough approximation)
-    surf_rad = sqrt(a_side * b_side / pi)
+    surf_rad = sqrt(length_a * b_side / pi)
 
     ddd = 0.75 * surf_rad * (2 * surf_rad * c_side + (c_side + surf_rad) * (c_side + pi * surf_rad))
     return 0.5 * (ddd) ** (1. / 3.)
 
-def VR(a_side, b2a_ratio, c2a_ratio, thickness):
+def VR(length_a, b2a_ratio, c2a_ratio, thickness):
     """
-        Return shell volume and total volume
+    Return shell volume and total volume
     """
-    b_side = a_side * b2a_ratio
-    c_side = a_side * c2a_ratio
-    a_core = a_side - 2.0*thickness
+    b_side = length_a * b2a_ratio
+    c_side = length_a * c2a_ratio
+    a_core = length_a - 2.0*thickness
     b_core = b_side - 2.0*thickness
     c_core = c_side - 2.0*thickness
     vol_core = a_core * b_core * c_core
-    vol_total = a_side * b_side * c_side
+    vol_total = length_a * b_side * c_side
     vol_shell = vol_total - vol_core
     return vol_total, vol_shell
 
 
+def random():
+    a, b, c = 10**np.random.uniform(1, 4.7, size=3)
+    # Thickness is limited to 1/2 the smallest dimension
+    # Use a distribution with a preference for thin shell or thin core
+    # Avoid core,shell radii < 1
+    min_dim = 0.5*min(a, b, c)
+    thickness = np.random.beta(0.5, 0.5)*(min_dim-2) + 1
+    #print(a, b, c, thickness, thickness/min_dim)
+    pars = dict(
+        length_a=a,
+        b2a_ratio=b/a,
+        c2a_ratio=c/a,
+        thickness=thickness,
+    )
+    return pars
+
+
 # parameters for demo
 demo = dict(scale=1, background=0,
-            sld=6.3e-6, sld_solvent=1.0e-6,
-            a_side=35, b2a_ratio=1, c2a_ratio=1, thickness=1,
-            a_side_pd=0.1, a_side_pd_n=10,
+            sld=6.3, sld_solvent=1.0,
+            length_a=35, b2a_ratio=1, c2a_ratio=1, thickness=1,
+            length_a_pd=0.1, length_a_pd_n=10,
             b2a_ratio_pd=0.1, b2a_ratio_pd_n=1,
             c2a_ratio_pd=0.1, c2a_ratio_pd_n=1)
 
 tests = [[{}, 0.2, 0.76687283098],
          [{}, [0.2], [0.76687283098]],
         ]
-

@@ -82,6 +82,8 @@ W R Chen, P D Butler and L J Magid, *Incorporating Intermicellar Interactions in
 the Fitting of SANS Data from Cationic Wormlike Micelles.* Langmuir,
 22(15) 2006 6539-6548
 """
+
+import numpy as np
 from numpy import inf
 
 name = "flexible_cylinder_elliptical"
@@ -103,20 +105,26 @@ parameters = [
     ["kuhn_length", "Ang",        100.0, [0, inf],    "volume", "Kuhn length of the flexible cylinder"],
     ["radius",      "Ang",         20.0, [1, inf],    "volume", "Radius of the flexible cylinder"],
     ["axis_ratio",  "",             1.5, [0, inf],    "",       "Axis_ratio (major_radius/minor_radius"],
-    ["sld",         "1e-6/Ang^2",   1.0, [-inf, inf], "",       "Cylinder scattering length density"],
-    ["sld_solvent", "1e-6/Ang^2",   6.3, [-inf, inf], "",       "Solvent scattering length density"],
+    ["sld",         "1e-6/Ang^2",   1.0, [-inf, inf], "sld",    "Cylinder scattering length density"],
+    ["sld_solvent", "1e-6/Ang^2",   6.3, [-inf, inf], "sld",    "Solvent scattering length density"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/polevl.c","lib/sas_J1.c", "lib/gauss76.c", "lib/wrc_cyl.c", "flexible_cylinder_elliptical.c"]
+source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "lib/wrc_cyl.c",
+          "flexible_cylinder_elliptical.c"]
 
-demo = dict(scale=1.0, background=0.0001,
-            length=1000.0,
-            kuhn_length=100.0,
-            radius=20.0,
-            axis_ratio=1.5,
-            sld=1.0,
-            sld_solvent=6.3)
+def random():
+    length = 10**np.random.uniform(2, 6)
+    radius = 10**np.random.uniform(1, 3)
+    axis_ratio = 10**np.random.uniform(-1, 1)
+    kuhn_length = 10**np.random.uniform(-2, -0.7)*length  # at least 10 segments
+    pars = dict(
+        length=length,
+        radius=radius,
+        axis_ratio=axis_ratio,
+        kuhn_length=kuhn_length,
+    )
+    return pars
 
 tests = [
     # Accuracy tests based on content in test/utest_other_models.py
@@ -156,4 +164,3 @@ tests = [
       'background':    0.0,
      }, 1.0, 0.0016338264790]
     ]
-

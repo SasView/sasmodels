@@ -2,7 +2,7 @@
 # Note: model title and parameter table are inserted automatically
 r"""
 
-This model provides the form factor, *P(q)*, for a hollow rectangular
+This model provides the form factor, $P(q)$, for a hollow rectangular
 prism with infinitely thin walls. It computes only the 1D scattering, not the 2D.
 
 
@@ -13,47 +13,49 @@ The 1D scattering intensity for this model is calculated according to the
 equations given by Nayuk and Huber (Nayuk, 2012).
 
 Assuming a hollow parallelepiped with infinitely thin walls, edge lengths
-:math:`A \le B \le C` and presenting an orientation with respect to the
-scattering vector given by |theta| and |phi|, where |theta| is the angle
-between the *z* axis and the longest axis of the parallelepiped *C*, and
-|phi| is the angle between the scattering vector (lying in the *xy* plane)
-and the *y* axis, the form factor is given by
+$A \le B \le C$ and presenting an orientation with respect to the
+scattering vector given by $\theta$ and $\phi$, where $\theta$ is the angle
+between the $z$ axis and the longest axis of the parallelepiped $C$, and
+$\phi$ is the angle between the scattering vector (lying in the $xy$ plane)
+and the $y$ axis, the form factor is given by
 
 .. math::
-  P(q) =  \frac{1}{V^2} \frac{2}{\pi} \int_0^{\frac{\pi}{2}}
-  \int_0^{\frac{\pi}{2}} [A_L(q)+A_T(q)]^2 \sin\theta d\theta d\phi
+
+    P(q) = \frac{1}{V^2} \frac{2}{\pi} \int_0^{\frac{\pi}{2}}
+           \int_0^{\frac{\pi}{2}} [A_L(q)+A_T(q)]^2 \sin\theta\,d\theta\,d\phi
 
 where
 
 .. math::
-  V = 2AB + 2AC + 2BC
 
-.. math::
-  A_L(q) =  8 \times \frac{ \sin \bigl( q \frac{A}{2} \sin\phi \sin\theta \bigr)
-                              \sin \bigl( q \frac{B}{2} \cos\phi \sin\theta \bigr)
-                              \cos \bigl( q \frac{C}{2} \cos\theta \bigr) }
-                            {q^2 \, \sin^2\theta \, \sin\phi \cos\phi}
-
-.. math::
-  A_T(q) =  A_F(q) \times \frac{2 \, \sin \bigl( q \frac{C}{2} \cos\theta \bigr)}{q \, \cos\theta}
+    V &= 2AB + 2AC + 2BC \\
+    A_L(q) &=  8 \times \frac{
+            \sin \left( \tfrac{1}{2} q A \sin\phi \sin\theta \right)
+            \sin \left( \tfrac{1}{2} q B \cos\phi \sin\theta \right)
+            \cos \left( \tfrac{1}{2} q C \cos\theta \right)
+        }{q^2 \, \sin^2\theta \, \sin\phi \cos\phi} \\
+    A_T(q) &=  A_F(q) \times
+      \frac{2\,\sin \left( \tfrac{1}{2} q C \cos\theta \right)}{q\,\cos\theta}
 
 and
 
 .. math::
-  A_F(q) =  4 \frac{ \cos \bigl( q \frac{A}{2} \sin\phi \sin\theta \bigr)
-                       \sin \bigl( q \frac{B}{2} \cos\phi \sin\theta \bigr) }
+
+  A_F(q) =  4 \frac{ \cos \left( \tfrac{1}{2} q A \sin\phi \sin\theta \right)
+                       \sin \left( \tfrac{1}{2} q B \cos\phi \sin\theta \right) }
                      {q \, \cos\phi \, \sin\theta} +
-              4 \frac{ \sin \bigl( q \frac{A}{2} \sin\phi \sin\theta \bigr)
-                       \cos \bigl( q \frac{B}{2} \cos\phi \sin\theta \bigr) }
+              4 \frac{ \sin \left( \tfrac{1}{2} q A \sin\phi \sin\theta \right)
+                       \cos \left( \tfrac{1}{2} q B \cos\phi \sin\theta \right) }
                      {q \, \sin\phi \, \sin\theta}
 
 The 1D scattering intensity is then calculated as
 
 .. math::
-  I(q) = \mbox{scale} \times V \times (\rho_{\mbox{p}} - \rho_{\mbox{solvent}})^2 \times P(q)
 
-where *V* is the volume of the rectangular prism, :math:`\rho_{\mbox{p}}`
-is the scattering length of the parallelepiped, :math:`\rho_{\mbox{solvent}}`
+  I(q) = \text{scale} \times V \times (\rho_\text{p} - \rho_\text{solvent})^2 \times P(q)
+
+where $V$ is the volume of the rectangular prism, $\rho_\text{p}$
+is the scattering length of the parallelepiped, $\rho_\text{solvent}$
 is the scattering length of the solvent, and (if the data are in absolute
 units) *scale* represents the volume fraction (which is unitless).
 
@@ -71,9 +73,9 @@ References
 ----------
 
 R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
-
 """
 
+import numpy as np
 from numpy import pi, inf, sqrt
 
 name = "hollow_rectangular_prism_thin_walls"
@@ -86,11 +88,11 @@ description = """
 category = "shape:parallelepiped"
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "",
+parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
                "Parallelepiped scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Solvent scattering length density"],
-              ["a_side", "Ang", 35, [0, inf], "volume",
+              ["length_a", "Ang", 35, [0, inf], "volume",
                "Shorter side of the parallelepiped"],
               ["b2a_ratio", "Ang", 1, [0, inf], "volume",
                "Ratio sides b/a"],
@@ -100,40 +102,48 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "",
 
 source = ["lib/gauss76.c", "hollow_rectangular_prism_thin_walls.c"]
 
-def ER(a_side, b2a_ratio, c2a_ratio):
+def ER(length_a, b2a_ratio, c2a_ratio):
     """
         Return equivalent radius (ER)
     """
-    b_side = a_side * b2a_ratio
-    c_side = a_side * c2a_ratio
+    b_side = length_a * b2a_ratio
+    c_side = length_a * c2a_ratio
 
     # surface average radius (rough approximation)
-    surf_rad = sqrt(a_side * b_side / pi)
+    surf_rad = sqrt(length_a * b_side / pi)
 
     ddd = 0.75 * surf_rad * (2 * surf_rad * c_side + (c_side + surf_rad) * (c_side + pi * surf_rad))
     return 0.5 * (ddd) ** (1. / 3.)
 
-def VR(a_side, b2a_ratio, c2a_ratio):
+def VR(length_a, b2a_ratio, c2a_ratio):
     """
         Return shell volume and total volume
     """
-    b_side = a_side * b2a_ratio
-    c_side = a_side * c2a_ratio
-    vol_total = a_side * b_side * c_side
-    vol_shell = 2.0 * (a_side*b_side + a_side*c_side + b_side*c_side)
+    b_side = length_a * b2a_ratio
+    c_side = length_a * c2a_ratio
+    vol_total = length_a * b_side * c_side
+    vol_shell = 2.0 * (length_a*b_side + length_a*c_side + b_side*c_side)
     return vol_shell, vol_total
+
+
+def random():
+    a, b, c = 10**np.random.uniform(1, 4.7, size=3)
+    pars = dict(
+        length_a=a,
+        b2a_ratio=b/a,
+        c2a_ratio=c/a,
+    )
+    return pars
 
 
 # parameters for demo
 demo = dict(scale=1, background=0,
-            sld=6.3e-6, sld_solvent=1.0e-6,
-            a_side=35, b2a_ratio=1, c2a_ratio=1,
-            a_side_pd=0.1, a_side_pd_n=10,
+            sld=6.3, sld_solvent=1.0,
+            length_a=35, b2a_ratio=1, c2a_ratio=1,
+            length_a_pd=0.1, length_a_pd_n=10,
             b2a_ratio_pd=0.1, b2a_ratio_pd_n=1,
             c2a_ratio_pd=0.1, c2a_ratio_pd_n=1)
 
 tests = [[{}, 0.2, 0.837719188592],
          [{}, [0.2], [0.837719188592]],
         ]
-
-

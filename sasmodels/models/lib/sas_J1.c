@@ -39,6 +39,10 @@ Cephes Math Library Release 2.8:  June, 2000
 Copyright 1984, 1987, 1989, 2000 by Stephen L. Moshier
 */
 
+#if FLOAT_SIZE>4
+//Cephes double pression function
+double cephes_j1(double x);
+
 constant double RPJ1[8] = {
     -8.99971225705559398224E8,
     4.52228297998194034323E11,
@@ -101,7 +105,58 @@ constant double QQJ1[8] = {
     3.36093607810698293419E2,
     0.0 };
 
-constant double JPJ1[8] = {
+double cephes_j1(double x)
+{
+
+    double w, z, p, q, abs_x, sign_x;
+
+    const double Z1 = 1.46819706421238932572E1;
+    const double Z2 = 4.92184563216946036703E1;
+
+    // 2017-05-18 PAK - mathematica and mpmath use J1(-x) = -J1(x)
+    if (x < 0) {
+        abs_x = -x;
+        sign_x = -1.0;
+    } else {
+        abs_x = x;
+        sign_x = 1.0;
+    }
+
+    if( abs_x <= 5.0 ) {
+        z = abs_x * abs_x;
+        w = polevl( z, RPJ1, 3 ) / p1evl( z, RQJ1, 8 );
+        w = w * abs_x * (z - Z1) * (z - Z2);
+        return( sign_x * w );
+    }
+
+    w = 5.0/abs_x;
+    z = w * w;
+    p = polevl( z, PPJ1, 6)/polevl( z, PQJ1, 6 );
+    q = polevl( z, QPJ1, 7)/p1evl( z, QQJ1, 7 );
+
+    // 2017-05-19 PAK improve accuracy using trig identies
+    // original:
+    //    const double THPIO4 =  2.35619449019234492885;
+    //    const double SQ2OPI = 0.79788456080286535588;
+    //    double sin_xn, cos_xn;
+    //    SINCOS(abs_x - THPIO4, sin_xn, cos_xn);
+    //    p = p * cos_xn - w * q * sin_xn;
+    //    return( sign_x * p * SQ2OPI / sqrt(abs_x) );
+    // expanding p*cos(a - 3 pi/4) - wq sin(a - 3 pi/4)
+    //    [ p(sin(a) - cos(a)) + wq(sin(a) + cos(a)) / sqrt(2)
+    // note that sqrt(1/2) * sqrt(2/pi) = sqrt(1/pi)
+    const double SQRT1_PI = 0.56418958354775628;
+    double sin_x, cos_x;
+    SINCOS(abs_x, sin_x, cos_x);
+    p = p*(sin_x - cos_x) + w*q*(sin_x + cos_x);
+    return( sign_x * p * SQRT1_PI / sqrt(abs_x) );
+}
+
+#else
+//Single precission version of cephes
+float cephes_j1f(float x);
+
+constant float JPJ1[8] = {
     -4.878788132172128E-009,
     6.009061827883699E-007,
     -4.541343896997497E-005,
@@ -112,7 +167,7 @@ constant double JPJ1[8] = {
     0.0
     };
 
-constant double MO1J1[8] = {
+constant float MO1J1[8] = {
     6.913942741265801E-002,
     -2.284801500053359E-001,
     3.138238455499697E-001,
@@ -123,7 +178,7 @@ constant double MO1J1[8] = {
     7.978845453073848E-001
     };
 
-constant double PH1J1[8] = {
+constant float PH1J1[8] = {
     -4.497014141919556E+001,
     5.073465654089319E+001,
     -2.485774108720340E+001,
@@ -134,81 +189,58 @@ constant double PH1J1[8] = {
     3.749989509080821E-001
     };
 
-double sas_J1(double x);
-double sas_J1(double x)
+float cephes_j1f(float xx)
 {
 
-//Cephes double pression function
-#if FLOAT_SIZE>4
+    float x, w, z, p, q, xn;
 
-    double w, z, p, q, xn;
+    const float Z1 = 1.46819706421238932572E1;
 
-    const double Z1 = 1.46819706421238932572E1;
-    const double Z2 = 4.92184563216946036703E1;
-    const double THPIO4 =  2.35619449019234492885;
-    const double SQ2OPI = 0.79788456080286535588;
 
-    w = x;
+    // 2017-05-18 PAK - mathematica and mpmath use J1(-x) = -J1(x)
+    x = xx;
     if( x < 0 )
-	    w = -x;
+        x = -xx;
 
-    if( w <= 5.0 )
-	{
-	    z = x * x;
-	    w = polevl( z, RPJ1, 3 ) / p1evl( z, RQJ1, 8 );
-	    w = w * x * (z - Z1) * (z - Z2);
-	    return( w );
-	}
-
-    w = 5.0/x;
-    z = w * w;
-
-    p = polevl( z, PPJ1, 6)/polevl( z, PQJ1, 6 );
-    q = polevl( z, QPJ1, 7)/p1evl( z, QQJ1, 7 );
-
-    xn = x - THPIO4;
-
-    double sn, cn;
-    SINCOS(xn, sn, cn);
-    p = p * cn - w * q * sn;
-
-    return( p * SQ2OPI / sqrt(x) );
-
-
-//Single precission version of cephes
-#else
-    double xx, w, z, p, q, xn;
-
-    const double Z1 = 1.46819706421238932572E1;
-    const double THPIO4F =  2.35619449019234492885;    /* 3*pi/4 */
-
-
-    xx = x;
-    if( xx < 0 )
-	    xx = -x;
-
-    if( xx <= 2.0 )
-	{
-	    z = xx * xx;
-	    p = (z-Z1) * xx * polevl( z, JPJ1, 4 );
-	    return( p );
-	}
+    if( x <= 2.0 ) {
+        z = x * x;
+        p = (z-Z1) * x * polevl( z, JPJ1, 4 );
+        return( xx < 0. ? -p : p );
+    }
 
     q = 1.0/x;
     w = sqrt(q);
 
     p = w * polevl( q, MO1J1, 7);
     w = q*q;
-    xn = q * polevl( w, PH1J1, 7) - THPIO4F;
-    p = p * cos(xn + xx);
+    // 2017-05-19 PAK improve accuracy using trig identies
+    // original:
+    //    const float THPIO4F =  2.35619449019234492885;    /* 3*pi/4 */
+    //    xn = q * polevl( w, PH1J1, 7) - THPIO4F;
+    //    p = p * cos(xn + x);
+    //    return( xx < 0. ? -p : p );
+    // expanding cos(a + b - 3 pi/4) is
+    //    [sin(a)sin(b) + sin(a)cos(b) + cos(a)sin(b)-cos(a)cos(b)] / sqrt(2)
+    xn = q * polevl( w, PH1J1, 7);
+    float cos_xn, sin_xn;
+    float cos_x, sin_x;
+    SINCOS(xn, sin_xn, cos_xn);  // about xn and 1
+    SINCOS(x, sin_x, cos_x);
+    p *= M_SQRT1_2*(sin_xn*(sin_x+cos_x) + cos_xn*(sin_x-cos_x));
 
-    return(p);
-#endif
+    return( xx < 0. ? -p : p );
 }
+#endif
+
+#if FLOAT_SIZE>4
+#define sas_J1 cephes_j1
+#else
+#define sas_J1 cephes_j1f
+#endif
 
 //Finally J1c function that equals 2*J1(x)/x
-double sas_J1c(double x);
-double sas_J1c(double x)
+double sas_2J1x_x(double x);
+double sas_2J1x_x(double x)
 {
     return (x != 0.0 ) ? 2.0*sas_J1(x)/x : 1.0;
 }

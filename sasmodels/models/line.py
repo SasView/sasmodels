@@ -14,14 +14,16 @@ The scattering intensity $I(q)$ is calculated as
     For 2D plots intensity has different definition than other shape independent models
 
 .. math::
+
     I(q) = \text{scale} (I(qx) \cdot I(qy)) + \text{background}
 
 References
 ----------
 
 None.
-
 """
+
+import numpy as np
 from numpy import inf
 
 name = "line"
@@ -54,6 +56,7 @@ def Iq(q, intercept, slope):
 
 Iq.vectorized = True # Iq accepts an array of q values
 
+
 def Iqxy(qx, qy, *args):
     """
     :param qx:   Input q_x-value
@@ -65,7 +68,28 @@ def Iqxy(qx, qy, *args):
     # Note: SasView.run([r, theta]) does return Iq(qx)*Iq(qy)
     return Iq(qx, *args)*Iq(qy, *args)
 
-Iqxy.vectorized = True  # Iqxy accepts an array of qx, qy values
+Iqxy.vectorized = True  # Iqxy accepts an array of qx qy values
+
+# uncomment the following to test Iqxy in C models
+#del Iq, Iqxy
+#c_code = """
+#static double Iq(double q, double b, double m) { return m*q+b; }
+#static double Iqxy(double qx, double qy, double b, double m)
+#{ return (m*qx+b)*(m*qy+b); }
+#"""
+
+def random():
+    scale = 10**np.random.uniform(0, 3)
+    slope = np.random.uniform(-1, 1)*1e2
+    offset = 1e-5 + (0 if slope > 0 else -slope)
+    intercept = 10**np.random.uniform(0, 1) + offset
+    pars = dict(
+        #background=0,
+        scale=scale,
+        slope=slope,
+        intercept=intercept,
+    )
+    return pars
 
 tests = [
     [{'intercept': 1.0, 'slope': 1.0, }, 1.0, 2.001],

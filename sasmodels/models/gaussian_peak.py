@@ -27,42 +27,38 @@ References
 None.
 """
 
+import numpy as np
 from numpy import inf
 
 name = "gaussian_peak"
 title = "Gaussian shaped peak"
 description = """
     Model describes a Gaussian shaped peak including a flat background
-    Provide F(q) = scale*exp( -1/2 *[(q-q0)/sigma]^2 )+ background
+    Provide F(q) = scale*exp( -1/2 *[(q-peak_pos)/sigma]^2 )+ background
 """
 category = "shape-independent"
 
-single = False
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["q0", "1/Ang", 0.05, [-inf, inf], "", "Peak position"],
+parameters = [["peak_pos", "1/Ang", 0.05, [-inf, inf], "", "Peak position"],
               ["sigma", "1/Ang", 0.005, [0, inf], "",
                "Peak width (standard deviation)"],
              ]
 
-# No volume normalization despite having a volume parameter
-# This should perhaps be volume normalized?
-form_volume = """
-    return 1.0;
-    """
-
 Iq = """
-    double scaled_dq = (q - q0)/sigma;
+    double scaled_dq = (q - peak_pos)/sigma;
     return exp(-0.5*scaled_dq*scaled_dq); //sqrt(2*M_PI*sigma*sigma);
     """
 
-
-Iqxy = """
-    // never called since no orientation or magnetic parameters.
-    //return -1.0;
-    return Iq(sqrt(qx*qx + qy*qy), q0, sigma);
-    """
-
-
 # VR defaults to 1.0
 
-demo = dict(scale=1, background=0, q0=0.05, sigma=0.005)
+def random():
+    peak_pos = 10**np.random.uniform(-3, -1)
+    sigma = 10**np.random.uniform(-1.3, -0.3)*peak_pos
+    scale = 10**np.random.uniform(0, 4)
+    pars = dict(
+        #background=1e-8,
+        scale=scale,
+        peak_pos=peak_pos,
+        sigam=sigma,
+    )
+    return pars

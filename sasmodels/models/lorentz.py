@@ -23,19 +23,20 @@ L.S. Qrnstein and F. Zernike, *Proc. Acad. Sci. Amsterdam* 17, 793 (1914), and
 *Z. Phys.* 19, 134 (1918), and 27, 761 {1926); referred to as QZ.
 """
 
+import numpy as np
 from numpy import inf
 
 name = "lorentz"
 title = "Ornstein-Zernicke correlation length model"
 description = """
 Model that evaluates a Lorentz (Ornstein-Zernicke) model.
-        
+
 I(q) = scale/( 1 + (q*L)^2 ) + bkd
-        
-The model has three parameters: 
-    length     =  screening Length
-    scale  =  scale factor
-    background    =  incoherent background
+
+The model has three parameters:
+    length = screening Length
+    scale = scale factor
+    background = incoherent background
 """
 category = "shape-independent"
 
@@ -47,9 +48,13 @@ Iq = """
     return 1/denominator;
 """
 
-Iqxy = """
-    return Iq(sqrt(qx*qx + qy*qy), cor_length);
-    """
+def random():
+    pars = dict(
+        #background=0,
+        scale=10**np.random.uniform(1, 4),
+        cor_length=10**np.random.uniform(0, 3),
+    )
+    return pars
 
 # parameters for demo
 demo = dict(scale=1.0, background=0.0, cor_length=50.0)

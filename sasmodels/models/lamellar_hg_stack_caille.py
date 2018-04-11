@@ -41,8 +41,8 @@ where
     \end{align*}
 
 
-$\delta_T$ is the tail length (or *tail_length*), $\delta_H$ is the head
-thickness (or *head_length*), $\Delta\rho_H$ is SLD(headgroup) - SLD(solvent),
+$\delta_T$ is the tail length (or *length_tail*), $\delta_H$ is the head
+thickness (or *length_head*), $\Delta\rho_H$ is SLD(headgroup) - SLD(solvent),
 and $\Delta\rho_T$ is SLD(tail) - SLD(headgroup). Here $d$ is (repeat) spacing,
 $K$ is smectic bending elasticity, $B$ is compression modulus, and $N$ is the
 number of lamellar plates (*Nlayers*).
@@ -72,6 +72,8 @@ F Nallet, R Laversanne, and D Roux, J. Phys. II France, 3, (1993) 487-502
 
 also in J. Phys. Chem. B, 105, (2001) 11081-11088
 """
+
+import numpy as np
 from numpy import inf
 
 name = "lamellar_hg_stack_caille"
@@ -89,29 +91,29 @@ description = """\
 """
 category = "shape:lamellae"
 
-single = False
+single = False  # TODO: check
 parameters = [
     #   [ "name", "units", default, [lower, upper], "type",
     #     "description" ],
-    ["tail_length", "Ang", 10, [0, inf], "volume",
+    ["length_tail", "Ang", 10, [0, inf], "volume",
      "Tail thickness"],
-    ["head_length", "Ang", 2, [0, inf], "volume",
+    ["length_head", "Ang", 2, [0, inf], "volume",
      "head thickness"],
-    ["Nlayers", "", 30, [0, inf], "",
+    ["Nlayers", "", 30, [1, inf], "",
      "Number of layers"],
-    ["spacing", "Ang", 40., [0.0, inf], "volume",
-     "d-spacing of Caille S(Q)"],
+    ["d_spacing", "Ang", 40., [0.0, inf], "volume",
+     "lamellar d-spacing of Caille S(Q)"],
     ["Caille_parameter", "", 0.001, [0.0, 0.8], "",
      "Caille parameter"],
-    ["sld", "1e-6/Ang^2", 0.4, [-inf, inf], "",
+    ["sld", "1e-6/Ang^2", 0.4, [-inf, inf], "sld",
      "Tail scattering length density"],
-    ["sld_head", "1e-6/Ang^2", 2.0, [-inf, inf], "",
+    ["sld_head", "1e-6/Ang^2", 2.0, [-inf, inf], "sld",
      "Head scattering length density"],
-    ["sld_solvent", "1e-6/Ang^2", 6, [-inf, inf], "",
+    ["sld_solvent", "1e-6/Ang^2", 6, [-inf, inf], "sld",
      "Solvent scattering length density"],
     ]
 
-source = ["lamellar_hg_stack_caille_kernel.c"]
+source = ["lamellar_hg_stack_caille.c"]
 
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
@@ -119,27 +121,40 @@ form_volume = """
     return 1.0;
     """
 
-Iqxy = """
-    return Iq(sqrt(qx*qx+qy*qy), IQ_PARAMETERS);
-    """
-
 # ER defaults to 0.0
 # VR defaults to 1.0
 
+def random():
+    total_thickness = 10**np.random.uniform(2, 4.7)
+    Nlayers = np.random.randint(2, 200)
+    d_spacing = total_thickness / Nlayers
+    thickness = d_spacing * np.random.uniform(0, 1)
+    length_head = thickness * np.random.uniform(0, 1)
+    length_tail = thickness - length_head
+    Caille_parameter = np.random.uniform(0, 0.8)
+    pars = dict(
+        length_head=length_head,
+        length_tail=length_tail,
+        Nlayers=Nlayers,
+        d_spacing=d_spacing,
+        Caille_parameter=Caille_parameter,
+    )
+    return pars
+
 demo = dict(
     scale=1, background=0,
-    Nlayers=20, spacing=200., Caille_parameter=0.05,
-    tail_length=15, head_length=10,
+    Nlayers=20, d_spacing=200., Caille_parameter=0.05,
+    length_tail=15, length_head=10,
     #sld=-1, sld_head=4.0, sld_solvent=6.0,
     sld=-1, sld_head=4.1, sld_solvent=6.0,
-    tail_length_pd=0.1, tail_length_pd_n=20,
-    head_length_pd=0.05, head_length_pd_n=30,
-    spacing_pd=0.2, spacing_pd_n=40,
+    length_tail_pd=0.1, length_tail_pd_n=20,
+    length_head_pd=0.05, length_head_pd_n=30,
+    d_spacing_pd=0.2, d_spacing_pd_n=40,
     )
 
 #
-tests = [[{'scale': 1.0, 'background': 0.0, 'tail_length': 10.0, 'head_length': 2.0,
-           'Nlayers': 30.0, 'spacing': 40., 'Caille_parameter': 0.001, 'sld': 0.4,
-           'sld_head': 2.0, 'sld_solvent': 6.0, 'tail_length_pd': 0.0,
-           'head_length_pd': 0.0, 'spacing_pd': 0.0}, [0.001], [6838238.571488]]]
+tests = [[{'scale': 1.0, 'background': 0.0, 'length_tail': 10.0, 'length_head': 2.0,
+           'Nlayers': 30.0, 'd_spacing': 40., 'Caille_parameter': 0.001, 'sld': 0.4,
+           'sld_head': 2.0, 'sld_solvent': 6.0, 'length_tail_pd': 0.0,
+           'length_head_pd': 0.0, 'd_spacing_pd': 0.0}, [0.001], [6838238.571488]]]
 # ADDED by: RKH  ON: 18Mar2016  converted from sasview previously, now renaming everything & sorting the docs

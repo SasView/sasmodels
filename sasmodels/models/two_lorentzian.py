@@ -26,14 +26,13 @@ References
 
 None.
 
-**Author:** NIST IGOR/DANSE **on:** pre 2010
-
-**Last Modified by:** Piotr rozyczko **on:** January 29, 2016
-
-**Last Reviewed by:** Paul Butler **on:** March 21, 2016
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Piotr rozyczko **Date:** January 29, 2016
+* **Last Reviewed by:** Paul Butler **Date:** March 21, 2016
 """
 
-from numpy import inf, power, sqrt
+import numpy as np
+from numpy import inf, power
 
 name = "two_lorentzian"
 title = "This model calculates an empirical functional form for SAS data \
@@ -92,18 +91,22 @@ def Iq(q,
 
 Iq.vectorized = True  # Iq accepts an array of q values
 
+def random():
+    scale = 10**np.random.uniform(0, 4, 2)
+    length = 10**np.random.uniform(1, 4, 2)
+    expon = np.random.uniform(1, 6, 2)
 
-def Iqxy(qx, qy, *args):
-    """
-    :param qx:   Input q_x-value
-    :param qy:   Input q_y-value
-    :param args: Remaining arguments
-    :return:     2D-Intensity
-    """
-
-    return Iq(sqrt(qx**2 + qy**2), *args)
-
-Iqxy.vectorized = True  # Iqxy accepts an array of qx, qy values
+    pars = dict(
+        #background=0,
+        scale=1, # scale provided in model
+        lorentz_scale_1=scale[0],
+        lorentz_length_1=length[0],
+        lorentz_exp_1=expon[0],
+        lorentz_scale_2=scale[1],
+        lorentz_length_2=length[1],
+        lorentz_exp_2=expon[1],
+    )
+    return pars
 
 
 demo = dict(scale=1, background=0.1,

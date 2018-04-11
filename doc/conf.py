@@ -41,6 +41,9 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest',
               'numfig',
              ]
 
+# Redirect mathjax to a different CDN
+mathjax_path = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -207,6 +210,8 @@ latex_documents = [
 # Additional stuff for the LaTeX preamble.
 #latex_preamble = ''
 LATEX_PREAMBLE=r"""
+\newcommand{\lt}{<}
+\newcommand{\gt}{>}
 \renewcommand{\AA}{\text{\r{A}}} % Allow \AA in math mode
 \usepackage[utf8]{inputenc}      % Allow unicode symbols in text
 \DeclareUnicodeCharacter {00B7} {\ensuremath{\cdot}}   % cdot

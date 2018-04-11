@@ -1,14 +1,11 @@
-#bcc paracrystal model
-#note model title and parameter table are automatically inserted
-#note - calculation requires double precision
 r"""
+Definition
+----------
+
 Calculates the scattering from a **body-centered cubic lattice** with
 paracrystalline distortion. Thermal vibrations are considered to be negligible,
 and the size of the paracrystal is infinitely large. Paracrystalline distortion
 is assumed to be isotropic and characterized by a Gaussian distribution.
-
-Definition
-----------
 
 The scattering intensity $I(q)$ is calculated as
 
@@ -22,8 +19,9 @@ primary particle, $V_\text{lattice}$ is a volume correction for the crystal
 structure, $P(q)$ is the form factor of the sphere (normalized), and $Z(q)$
 is the paracrystalline structure factor for a body-centered cubic structure.
 
-Equation (1) of the 1990 reference is used to calculate $Z(q)$, using
-equations (29)-(31) from the 1987 paper for $Z1$, $Z2$, and $Z3$.
+Equation (1) of the 1990 reference\ [#CIT1990]_ is used to calculate $Z(q)$,
+using equations (29)-(31) from the 1987 paper\ [#CIT1987]_ for $Z1$, $Z2$, and
+$Z3$.
 
 The lattice correction (the occupied volume of the lattice) for a
 body-centered cubic structure of particles of radius $R$ and nearest neighbor
@@ -66,36 +64,47 @@ correspond to (just the first 5)
     \text{Indices} & (110) &    (200) & (211)    & (220)    & (310)    \\
     \end{array}
 
-**NB**: The calculation of $Z(q)$ is a double numerical integral that must
-be carried out with a high density of points to properly capture the sharp
-peaks of the paracrystalline scattering. So be warned that the calculation
-is SLOW. Go get some coffee. Fitting of any experimental data must be
-resolution smeared for any meaningful fit. This makes a triple integral.
-Very, very slow. Go get lunch!
+.. note::
+
+  The calculation of $Z(q)$ is a double numerical integral that
+  must be carried out with a high density of points to properly capture
+  the sharp peaks of the paracrystalline scattering.
+  So be warned that the calculation is slow. Fitting of any experimental data
+  must be resolution smeared for any meaningful fit. This makes a triple integral
+  which may be very slow.
 
 This example dataset is produced using 200 data points,
 *qmin* = 0.001 |Ang^-1|, *qmax* = 0.1 |Ang^-1| and the above default values.
 
 The 2D (Anisotropic model) is based on the reference below where $I(q)$ is
 approximated for 1d scattering. Thus the scattering pattern for 2D may not
-be accurate. Note that we are not responsible for any incorrectness of the 2D
-model computation.
+be accurate, particularly at low $q$. For general details of the calculation and angular
+dispersions for oriented particles see :ref:`orientation` .
+Note that we are not responsible for any incorrectness of the 2D model computation.
 
-.. figure:: img/bcc_angle_definition.png
+.. figure:: img/parallelepiped_angle_definition.png
 
-    Orientation of the crystal with respect to the scattering plane.
+    Orientation of the crystal with respect to the scattering plane, when
+    $\theta = \phi = 0$ the $c$ axis is along the beam direction (the $z$ axis).
 
 References
 ----------
 
-Hideki Matsuoka et. al. *Physical Review B*, 36 (1987) 1754-1765
-(Original Paper)
+.. [#CIT1987] Hideki Matsuoka et. al. *Physical Review B*, 36 (1987) 1754-1765
+   (Original Paper)
+.. [#CIT1990] Hideki Matsuoka et. al. *Physical Review B*, 41 (1990) 3854 -3856
+   (Corrections to FCC and BCC lattice structure calculation)
 
-Hideki Matsuoka et. al. *Physical Review B*, 41 (1990) 3854 -3856
-(Corrections to FCC and BCC lattice structure calculation)
+Authorship and Verification
+----------------------------
+
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Paul Butler **Date:** September 29, 2016
+* **Last Reviewed by:** Richard Heenan **Date:** March 21, 2016
 """
 
-from numpy import inf
+import numpy as np
+from numpy import inf, pi
 
 name = "bcc_paracrystal"
 title = "Body-centred cubic lattic with paracrystalline distortion"
@@ -108,6 +117,7 @@ description = """
     """
 category = "shape:paracrystal"
 
+#note - calculation requires double precision
 single = False
 
 # pylint: disable=bad-whitespace, line-too-long
@@ -115,24 +125,42 @@ single = False
 parameters = [["dnn",         "Ang",       220,    [-inf, inf], "",            "Nearest neighbour distance"],
               ["d_factor",    "",            0.06, [-inf, inf], "",            "Paracrystal distortion factor"],
               ["radius",      "Ang",        40,    [0, inf],    "volume",      "Particle radius"],
-              ["sld",         "1e-6/Ang^2",  4,    [-inf, inf], "",            "Particle scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2",  1,    [-inf, inf], "",            "Solvent scattering length density"],
-              ["theta",       "degrees",    60,    [-inf, inf], "orientation", "In plane angle"],
-              ["phi",         "degrees",    60,    [-inf, inf], "orientation", "Out of plane angle"],
-              ["psi",         "degrees",    60,    [-inf, inf], "orientation", "Out of plane angle"]
+              ["sld",         "1e-6/Ang^2",  4,    [-inf, inf], "sld",         "Particle scattering length density"],
+              ["sld_solvent", "1e-6/Ang^2",  1,    [-inf, inf], "sld",         "Solvent scattering length density"],
+              ["theta",       "degrees",    60,    [-360, 360], "orientation", "c axis to beam angle"],
+              ["phi",         "degrees",    60,    [-360, 360], "orientation", "rotation about beam"],
+              ["psi",         "degrees",    60,    [-360, 360], "orientation", "rotation about c axis"]
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sph_j1c.c", "lib/gauss150.c", "lib/sphere_form.c", "bcc_paracrystal_kernel.c"]
+source = ["lib/sas_3j1x_x.c", "lib/gauss150.c", "lib/sphere_form.c", "bcc_paracrystal.c"]
 
-# parameters for demo
-demo = dict(
-    scale=1, background=0,
-    dnn=220, d_factor=0.06, sld=4, sld_solvent=1,
-    radius=40,
-    theta=60, phi=60, psi=60,
-    radius_pd=.2, radius_pd_n=2,
-    theta_pd=15, theta_pd_n=0,
-    phi_pd=15, phi_pd_n=0,
-    psi_pd=15, psi_pd_n=0,
+def random():
+    # Define lattice spacing as a multiple of the particle radius
+    # using the formulat a = 4 r/sqrt(3).  Systems which are ordered
+    # are probably mostly filled, so use a distribution which goes from
+    # zero to one, but leaving 90% of them within 80% of the
+    # maximum bcc packing.  Lattice distortion values are empirically
+    # useful between 0.01 and 0.7.  Use an exponential distribution
+    # in this range 'cuz its easy.
+    radius = 10**np.random.uniform(1.3, 4)
+    d_factor = 10**np.random.uniform(-2, -0.7)  # sigma_d in 0.01-0.7
+    dnn_fraction = np.random.beta(a=10, b=1)
+    dnn = radius*4/np.sqrt(3)/dnn_fraction
+    pars = dict(
+        #sld=1, sld_solvent=0, scale=1, background=1e-32,
+        dnn=dnn,
+        d_factor=d_factor,
+        radius=radius,
     )
+    return pars
+
+# april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
+# add 2d test later
+# TODO: fix the 2d tests
+q = 4.*pi/220.
+tests = [
+    [{}, [0.001, q, 0.215268], [1.46601394721, 2.85851284174, 0.00866710287078]],
+    #[{'theta': 20.0, 'phi': 30, 'psi': 40.0}, (-0.017, 0.035), 2082.20264399],
+    #[{'theta': 20.0, 'phi': 30, 'psi': 40.0}, (-0.081, 0.011), 0.436323144781],
+    ]

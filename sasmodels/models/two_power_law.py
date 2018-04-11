@@ -13,7 +13,7 @@ The scattering intensity $I(q)$ is calculated as
 
 where $q_c$ = the location of the crossover from one slope to the other,
 $A$ = the scaling coefficent that sets the overall intensity of the lower Q
-power law region, $m1$ = power law exponent at low Q, and $m2$ = power law 
+power law region, $m1$ = power law exponent at low Q, and $m2$ = power law
 exponent at high Q.  The scaling of the second power law region (coefficent C)
 is then automatically scaled to match the first by following formula:
 
@@ -36,17 +36,13 @@ References
 
 None.
 
-**Author:** NIST IGOR/DANSE **on:** pre 2010
-
-**Last Modified by:** Wojciech Wpotrzebowski **on:** February 18, 2016
-
-**Last Reviewed by:** Paul Butler **on:** March 21, 2016
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Wojciech Wpotrzebowski **Date:** February 18, 2016
+* **Last Reviewed by:** Paul Butler **Date:** March 21, 2016
 """
 
-from numpy import power
-from numpy import sqrt
-from numpy import inf
-from numpy import concatenate
+import numpy as np
+from numpy import inf, power, empty, errstate
 
 name = "two_power_law"
 title = "This model calculates an empirical functional form for SAS data \
@@ -64,16 +60,15 @@ description = """
         """
 category = "shape-independent"
 
-#            ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["coefficent_1",  "",         1.0, [-inf, inf], "",
-               "coefficent A in low Q region"],
-              ["crossover",     "1/Ang",    0.04,[0, inf],    "",
-               "crossover location"],
-              ["power_1",       "",         1.0, [0, inf],    "",
-               "power law exponent at low Q"],
-              ["power_2",       "",         4.0, [0, inf],    "",
-               "power law exponent at high Q"],
-             ]
+# pylint: disable=bad-whitespace, line-too-long
+#   ["name", "units", default, [lower, upper], "type", "description"],
+parameters = [
+    ["coefficent_1", "",       1.0, [-inf, inf], "", "coefficent A in low Q region"],
+    ["crossover",    "1/Ang",  0.04,[0, inf],    "", "crossover location"],
+    ["power_1",      "",       1.0, [0, inf],    "", "power law exponent at low Q"],
+    ["power_2",      "",       4.0, [0, inf],    "", "power law exponent at high Q"],
+    ]
+# pylint: enable=bad-whitespace, line-too-long
 
 
 def Iq(q,
@@ -91,30 +86,29 @@ def Iq(q,
     :param power_2:             Exponent of power law function at high Q
     :return:                    Calculated intensity
     """
-
-    #Two sub vectors are created to treat crossover values
-    q_lower = q[q <= crossover]
-    q_upper = q[q > crossover]
-    coefficent_2 = coefficent_1*power(crossover, -1.0*power_1)/power(crossover, -1.0*power_2)
-    intensity_lower = coefficent_1*power(q_lower, -1.0*power_1)
-    intensity_upper = coefficent_2*power(q_upper, -1.0*power_2)
-    intensity = concatenate((intensity_lower, intensity_upper), axis=0)
-
-    return intensity
+    result = empty(q.shape, 'd')
+    index = (q <= crossover)
+    with errstate(divide='ignore'):
+        coefficent_2 = coefficent_1 * power(crossover, power_2 - power_1)
+        result[index] = coefficent_1 * power(q[index], -power_1)
+        result[~index] = coefficent_2 * power(q[~index], -power_2)
+    return result
 
 Iq.vectorized = True  # Iq accepts an array of q values
 
-def Iqxy(qx, qy, *args):
-    """
-    :param qx:   Input q_x-value
-    :param qy:   Input q_y-value
-    :param args: Remaining arguments
-    :return:     2D-Intensity
-    """
-
-    return Iq(sqrt(qx**2 + qy**2), *args)
-
-Iqxy.vectorized = True  # Iqxy accepts an array of qx, qy values
+def random():
+    coefficient_1 = 1
+    crossover = 10**np.random.uniform(-3, -1)
+    power_1 = np.random.uniform(1, 6)
+    power_2 = np.random.uniform(1, 6)
+    pars = dict(
+        scale=1, #background=0,
+        coefficient_1=coefficient_1,
+        crossover=crossover,
+        power_1=power_1,
+        power_2=power_2,
+    )
+    return pars
 
 demo = dict(scale=1, background=0.0,
             coefficent_1=1.0,
@@ -138,14 +132,14 @@ tests = [
       'background': 0.0,
      }, 0.150141, 0.125945],
 
-    [{'coeffcent_1':    1.0,
+    [{'coefficent_1':    1.0,
       'crossover':  0.04,
       'power_1':    1.0,
       'power_2':    4.0,
       'background': 0.0,
      }, 0.442528, 0.00166884],
 
-    [{'coeffcent_1':    1.0,
+    [{'coefficent_1':    1.0,
       'crossover':  0.04,
       'power_1':    1.0,
       'power_2':    4.0,

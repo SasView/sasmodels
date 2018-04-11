@@ -1,23 +1,20 @@
-# core shell cylinder model
-# Note: model title and parameter table are inserted automatically
 r"""
-The form factor is normalized by the particle volume.
-
 Definition
 ----------
 
 The output of the 2D scattering intensity function for oriented core-shell
-cylinders is given by (Kline, 2006)
+cylinders is given by (Kline, 2006 [#kline]_). The form factor is normalized
+by the particle volume.
 
 .. math::
 
-    I(q,\alpha) = \frac{\text{scale}}{V_s} F^2(q) + \text{background}
+    I(q,\alpha) = \frac{\text{scale}}{V_s} F^2(q,\alpha).sin(\alpha) + \text{background}
 
 where
 
 .. math::
 
-    F(q) = &\ (\rho_c - \rho_s) V_c
+    F(q,\alpha) = &\ (\rho_c - \rho_s) V_c
            \frac{\sin \left( q \tfrac12 L\cos\alpha \right)}
                 {q \tfrac12 L\cos\alpha}
            \frac{2 J_1 \left( qR\sin\alpha \right)}
@@ -51,7 +48,7 @@ shell is given by $L+2T$. $J1$ is the first order Bessel function.
     Core shell cylinder schematic.
 
 To provide easy access to the orientation of the core-shell cylinder, we
-define the axis of the cylinder using two angles $\theta$ and $\phi$. 
+define the axis of the cylinder using two angles $\theta$ and $\phi$.
 (see :ref:`cylinder model <cylinder-angle-definition>`)
 
 NB: The 2nd virial coefficient of the cylinder is calculated based on
@@ -60,26 +57,23 @@ $S(q)$ when $P(q) \cdot S(q)$ is applied.
 
 The $\theta$ and $\phi$ parameters are not used for the 1D output.
 
-Validation
-----------
-
-Validation of our code was done by comparing the output of the 1D model to
-the output of the software provided by the NIST (Kline, 2006).
-
-Averaging over a distribution of orientation is done by evaluating the
-equation above. Since we have no other software to compare the
-implementation of the intensity for fully oriented cylinders, we
-compared the result of averaging our 2D output using a uniform
-distribution $p(\theta,\phi) = 1.0$.
-
 Reference
 ---------
-see, for example, Ian Livsey  J. Chem. Soc., Faraday Trans. 2, 1987,83, 1445-1452
 
-2016/03/18 - Description reviewed by RKH
+.. [#] see, for example, Ian Livsey  J. Chem. Soc., Faraday Trans. 2, 1987,83,
+   1445-1452
+.. [#kline] S R Kline, *J Appl. Cryst.*, 39 (2006) 895
+
+Authorship and Verification
+----------------------------
+
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Paul Kienzle **Date:** Aug 8, 2016
+* **Last Reviewed by:** Richard Heenan **Date:** March 18, 2016
 """
 
-from numpy import pi, inf
+import numpy as np
+from numpy import pi, inf, sin, cos
 
 name = "core_shell_cylinder"
 title = "Right circular cylinder with a core-shell scattering length density profile."
@@ -111,11 +105,11 @@ P(q,alpha)= scale/Vs*f(q)^(2) + background,
 category = "shape:cylinder"
 
 #             ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["sld_core", "1e-6/Ang^2", 4, [-inf, inf], "",
+parameters = [["sld_core", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Cylinder core scattering length density"],
-              ["sld_shell", "1e-6/Ang^2", 4, [-inf, inf], "",
+              ["sld_shell", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Cylinder shell scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Solvent scattering length density"],
               ["radius", "Ang", 20, [0, inf], "volume",
                "Cylinder core radius"],
@@ -123,17 +117,17 @@ parameters = [["sld_core", "1e-6/Ang^2", 4, [-inf, inf], "",
                "Cylinder shell thickness"],
               ["length", "Ang", 400, [0, inf], "volume",
                "Cylinder length"],
-              ["theta", "degrees", 60, [-inf, inf], "orientation",
-               "In plane angle"],
-              ["phi", "degrees", 60, [-inf, inf], "orientation",
-               "Out of plane angle"],
+              ["theta", "degrees", 60, [-360, 360], "orientation",
+               "cylinder axis to beam angle"],
+              ["phi", "degrees", 60, [-360, 360], "orientation",
+               "rotation about beam"],
              ]
 
-source = ["lib/polevl.c","lib/sas_J1.c", "lib/gauss76.c", "core_shell_cylinder.c"]
+source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "core_shell_cylinder.c"]
 
 def ER(radius, thickness, length):
     """
-        Returns the effective radius used in the S*P calculation
+    Returns the effective radius used in the S*P calculation
     """
     radius = radius + thickness
     length = length + 2 * thickness
@@ -142,11 +136,25 @@ def ER(radius, thickness, length):
 
 def VR(radius, thickness, length):
     """
-        Returns volume ratio
+    Returns volume ratio
     """
     whole = pi * (radius + thickness) ** 2 * (length + 2 * thickness)
     core = pi * radius ** 2 * length
     return whole, whole - core
+
+def random():
+    outer_radius = 10**np.random.uniform(1, 4.7)
+    # Use a distribution with a preference for thin shell or thin core
+    # Avoid core,shell radii < 1
+    radius = np.random.beta(0.5, 0.5)*(outer_radius-2) + 1
+    thickness = outer_radius - radius
+    length = np.random.uniform(1, 4.7)
+    pars = dict(
+        radius=radius,
+        thickness=thickness,
+        length=length,
+    )
+    return pars
 
 demo = dict(scale=1, background=0,
             sld_core=6, sld_shell=8, sld_solvent=1,
@@ -157,4 +165,12 @@ demo = dict(scale=1, background=0,
             thickness_pd=.2, thickness_pd_n=10,
             theta_pd=15, theta_pd_n=45,
             phi_pd=15, phi_pd_n=1)
-# ADDED by:  RKH  ON: 18Mar2016 renamed sld's etc
+q = 0.1
+# april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
+qx = q*cos(pi/6.0)
+qy = q*sin(pi/6.0)
+tests = [
+    [{}, 0.075, 10.8552692237],
+    [{}, (qx, qy), 0.444618752741],
+]
+del qx, qy  # not necessary to delete, but cleaner

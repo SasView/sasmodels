@@ -1,3 +1,4 @@
+#line 1 "kernel_template.c"
 // GENERATED CODE --- DO NOT EDIT ---
 // Code is produced by sasmodels.gen from sasmodels/models/MODEL.c
 
@@ -10,6 +11,8 @@
 // If opencl is not available, then we are compiling a C function
 // Note: if using a C++ compiler, then define kernel as extern "C"
 #ifndef USE_OPENCL
+// Use SAS_DOUBLE to force the use of double even for float kernels
+#  define SAS_DOUBLE dou ## ble
 #  ifdef __cplusplus
       #include <cstdio>
       #include <cmath>
@@ -21,39 +24,36 @@
          inline double trunc(double x) { return x>=0?floor(x):-floor(-x); }
          inline double fmin(double x, double y) { return x>y ? y : x; }
          inline double fmax(double x, double y) { return x<y ? y : x; }
-         inline double isnan(double x) { return _isnan(x); }
+         #define isnan(x) _isnan(x)
+         #define isinf(x) (!_finite(x))
+         #define isfinite(x) _finite(x)
          #define NAN (std::numeric_limits<double>::quiet_NaN()) // non-signalling NaN
-         static double cephes_expm1(double x) {
-            // Adapted from the cephes math library.
-            // Copyright 1984 - 1992 by Stephen L. Moshier
-            if (x != x || x == 0.0) {
-               return x; // NaN and +/- 0
-            } else if (x < -0.5 || x > 0.5) {
-               return exp(x) - 1.0;
-            } else {
-               const double xsq = x*x;
-               const double p = (((
-                  +1.2617719307481059087798E-4)*xsq
-                  +3.0299440770744196129956E-2)*xsq
-                  +9.9999999999999999991025E-1);
-               const double q = ((((
-                  +3.0019850513866445504159E-6)*xsq
-                  +2.5244834034968410419224E-3)*xsq
-                  +2.2726554820815502876593E-1)*xsq
-                  +2.0000000000000000000897E0);
-               double r = x * p;
-               r =  r / (q - r);
-               return r+r;
-             }
-         }
-         #define expm1 cephes_expm1
+         #define INFINITY (std::numeric_limits<double>::infinity())
+         #define NEED_EXPM1
+         #define NEED_TGAMMA
+         #define NEED_ERF
      #else
          #define kernel extern "C"
      #endif
      inline void SINCOS(double angle, double &svar, double &cvar) { svar=sin(angle); cvar=cos(angle); }
 #  else
      #include <stdio.h>
-     #include <tgmath.h> // C99 type-generic math, so sin(float) => sinf
+     #if defined(__TINYC__)
+         #include <math.h>
+         // TODO: test isnan
+         inline double _isnan(double x) { return x != x; } // hope this doesn't optimize away!
+         #undef isnan
+         #define isnan(x) _isnan(x)
+         // Defeat the double->float conversion since we don't have tgmath
+         inline SAS_DOUBLE trunc(SAS_DOUBLE x) { return x>=0?floor(x):-floor(-x); }
+         inline SAS_DOUBLE fmin(SAS_DOUBLE x, SAS_DOUBLE y) { return x>y ? y : x; }
+         inline SAS_DOUBLE fmax(SAS_DOUBLE x, SAS_DOUBLE y) { return x<y ? y : x; }
+         #define NEED_EXPM1
+         #define NEED_TGAMMA
+         #define NEED_ERF
+     #else
+         #include <tgmath.h> // C99 type-generic math, so sin(float) => sinf
+     #endif
      // MSVC doesn't support C99, so no need for dllexport on C99 branch
      #define kernel
      #define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
@@ -71,6 +71,33 @@
 #  else
 #    define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
 #  endif
+#endif
+
+#if defined(NEED_EXPM1)
+   static SAS_DOUBLE expm1(SAS_DOUBLE x_in) {
+      double x = (double)x_in;  // go back to float for single precision kernels
+      // Adapted from the cephes math library.
+      // Copyright 1984 - 1992 by Stephen L. Moshier
+      if (x != x || x == 0.0) {
+         return x; // NaN and +/- 0
+      } else if (x < -0.5 || x > 0.5) {
+         return exp(x) - 1.0;
+      } else {
+         const double xsq = x*x;
+         const double p = (((
+            +1.2617719307481059087798E-4)*xsq
+            +3.0299440770744196129956E-2)*xsq
+            +9.9999999999999999991025E-1);
+         const double q = ((((
+            +3.0019850513866445504159E-6)*xsq
+            +2.5244834034968410419224E-3)*xsq
+            +2.2726554820815502876593E-1)*xsq
+            +2.0000000000000000000897E0);
+         double r = x * p;
+         r =  r / (q - r);
+         return r+r;
+       }
+   }
 #endif
 
 // Standard mathematical constants:
@@ -105,7 +132,7 @@
 //inline double square(double x) { return pown(x,2); }
 inline double square(double x) { return x*x; }
 inline double cube(double x) { return x*x*x; }
-inline double sinc(double x) { return x==0 ? 1.0 : sin(x)/x; }
+inline double sas_sinx_x(double x) { return x==0 ? 1.0 : sin(x)/x; }
 
 
 %(DEFINES)s
@@ -236,8 +263,8 @@ kernel void IQXY_KERNEL_NAME(
       if (!isnan(scattering)) { // if scattering is bad, exclude it from sum
       #if defined(IQXY_HAS_THETA)
         // Force a nominal value for the spherical correction even when
-        // theta is +90/-90 so that there are no divide by zero problems.
-        // For cos(theta) fixed at 90, we effectively multiply top and bottom
+        // theta is +0/180 so that there are no divide by zero problems.
+        // For sin(theta) fixed at 0 and 180, we effectively multiply top and bottom
         // by 1e-6, so the effect cancels.
         const double spherical_correction = fmax(fabs(cos(M_PI_180*theta)), 1.e-6);
         weight *= spherical_correction;

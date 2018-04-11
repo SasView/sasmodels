@@ -16,13 +16,14 @@ from __future__ import print_function
 import sys
 import traceback
 
-import numpy as np
+import numpy as np  # type: ignore
 
 from . import core
-from . import generate
-from .compare import (MODELS, randomize_pars, suppress_pd, make_data,
+from .compare import (randomize_pars, suppress_pd, make_data,
                       make_engine, get_pars, columnize,
-                      constrain_pars, constrain_new_to_old)
+                      constrain_pars)
+
+MODELS = core.list_models()
 
 def calc_stats(target, value, index):
     """
@@ -78,10 +79,9 @@ PRECISION = {
     'single!': 5e-5,
     'double!': 5e-14,
     'quad!': 5e-18,
-    'sasview': 5e-14,
 }
 def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
-                     base='sasview', comp='double'):
+                     base='single', comp='double'):
     r"""
     Compare the model under different calculation engines.
 
@@ -104,11 +104,12 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
     pars = get_pars(model_info, use_demo=True)
     header = ('\n"Model","%s","Count","%d","Dimension","%s"'
               % (name, N, "2D" if is_2d else "1D"))
-    if not mono: header += ',"Cutoff",%g'%(cutoff,)
+    if not mono:
+        header += ',"Cutoff",%g'%(cutoff,)
     print(header)
 
     if is_2d:
-        if not model_info['has_2d']:
+        if not model_info.parameters.has_2d:
             print(',"1-D only"')
             return
 
@@ -124,9 +125,7 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
         """
         try:
             result = fn(**pars)
-        except KeyboardInterrupt:
-            raise
-        except:
+        except Exception:
             traceback.print_exc()
             print("when comparing %s for %d"%(name, seed))
             if hasattr(data, 'qx_data'):
@@ -147,19 +146,25 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
         return list(stats)
 
 
-    calc_base = make_engine(model_info, data, base, cutoff)
-    calc_comp = make_engine(model_info, data, comp, cutoff)
+    try:
+        calc_base = make_engine(model_info, data, base, cutoff)
+        calc_comp = make_engine(model_info, data, comp, cutoff)
+    except Exception as exc:
+        #raise
+        print('"Error: %s"'%str(exc).replace('"', "'"))
+        print('"good","%d of %d","max diff",%g' % (0, N, np.NaN))
+        return
     expected = max(PRECISION[base], PRECISION[comp])
 
     num_good = 0
     first = True
     max_diff = [0]
     for k in range(N):
-        print("%s %d"%(name, k), file=sys.stderr)
+        print("Model %s %d"%(name, k+1), file=sys.stderr)
         seed = np.random.randint(1e6)
-        pars_i = randomize_pars(pars, seed)
+        np.random.seed(seed)
+        pars_i = randomize_pars(model_info, pars)
         constrain_pars(model_info, pars_i)
-        constrain_new_to_old(model_info, pars_i)
         if mono:
             pars_i = suppress_pd(pars_i)
 
@@ -174,14 +179,15 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
             num_good += 1
         else:
             print(("%d,"%seed)+','.join("%s"%v for v in columns))
-    print('"good","%d/%d","max diff",%g'%(num_good, N, max_diff[0]))
+    print('"good","%d of %d","max diff",%g'%(num_good, N, max_diff[0]))
 
 
 def print_usage():
     """
     Print the command usage string.
     """
-    print("usage: compare_many.py MODEL COUNT (1dNQ|2dNQ) (CUTOFF|mono) (single|double|quad)")
+    print("usage: compare_many.py MODEL COUNT (1dNQ|2dNQ) (CUTOFF|mono) (single|double|quad)",
+          file=sys.stderr)
 
 
 def print_models():
@@ -198,8 +204,9 @@ def print_help():
     print_usage()
     print("""\
 
-MODEL is the model name of the model or "all" for all the models
-in alphabetical order.
+MODEL is the model name of the model or one of the model types listed in
+sasmodels.core.list_models (all, py, c, double, single, opencl, 1d, 2d,
+nonmagnetic, magnetic).  Model types can be combined, such as 2d+single.
 
 COUNT is the number of randomly generated parameter sets to try. A value
 of "10000" is a reasonable check for monodisperse models, or "100" for
@@ -214,50 +221,57 @@ values are "1d100" for 1-D and "2d32" for 2-D.
 CUTOFF is the cutoff value to use for the polydisperse distribution. Weights
 below the cutoff will be ignored.  Use "mono" for monodisperse models.  The
 choice of polydisperse parameters, and the number of points in the distribution
-is set in compare.py defaults for each model.
+is set in compare.py defaults for each model.  Polydispersity is given in the
+"demo" attribute of each model.
 
 PRECISION is the floating point precision to use for comparisons.  If two
-precisions are given, then compare one to the other, ignoring sasview.
+precisions are given, then compare one to the other.  Precision is one of
+fast, single, double for GPU or single!, double!, quad! for DLL.  If no
+precision is given, then use single and double! respectively.
 
 Available models:
 """)
     print_models()
 
-def main():
+def main(argv):
     """
     Main program.
     """
-    if len(sys.argv) not in (6, 7):
+    if len(argv) not in (3, 4, 5, 6):
         print_help()
-        sys.exit(1)
+        return
 
-    model = sys.argv[1]
-    if not (model in MODELS) and (model != "all"):
-        print('Bad model %s.  Use "all" or one of:'%model)
-        print_models()
-        sys.exit(1)
+    target = argv[0]
     try:
-        count = int(sys.argv[2])
-        is2D = sys.argv[3].startswith('2d')
-        assert sys.argv[3][1] == 'd'
-        Nq = int(sys.argv[3][2:])
-        mono = sys.argv[4] == 'mono'
-        cutoff = float(sys.argv[4]) if not mono else 0
-        base = sys.argv[5]
-        comp = sys.argv[6] if len(sys.argv) > 6 else "sasview"
-    except:
+        model_list = [target] if target in MODELS else core.list_models(target)
+    except ValueError:
+        print('Bad model %s.  Use model type or one of:' % target, file=sys.stderr)
+        print_models()
+        print('model types: all, py, c, double, single, opencl, 1d, 2d, nonmagnetic, magnetic')
+        return
+    try:
+        count = int(argv[1])
+        is2D = argv[2].startswith('2d')
+        assert argv[2][1] == 'd'
+        Nq = int(argv[2][2:])
+        mono = len(argv) <= 3 or argv[3] == 'mono'
+        cutoff = float(argv[3]) if not mono else 0
+        base = argv[4] if len(argv) > 4 else "single"
+        comp = argv[5] if len(argv) > 5 else "double!"
+    except Exception:
         traceback.print_exc()
         print_usage()
-        sys.exit(1)
+        return
 
-    data, index = make_data({'qmax':1.0, 'is2d':is2D, 'nq':Nq, 'res':0.,
-                             'accuracy': 'Low', 'view':'log'})
-    model_list = [model] if model != "all" else MODELS
+    data, index = make_data({
+        'qmin': 0.001, 'qmax': 1.0, 'is2d': is2D, 'nq': Nq, 'res': 0.,
+        'accuracy': 'Low', 'view':'log', 'zero': False
+        })
     for model in model_list:
         compare_instance(model, data, index, N=count, mono=mono,
                          cutoff=cutoff, base=base, comp=comp)
 
 if __name__ == "__main__":
     #from .compare import push_seed
-    #with push_seed(1): main()
-    main()
+    #with push_seed(1): main(sys.argv[1:])
+    main(sys.argv[1:])

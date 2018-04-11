@@ -39,7 +39,7 @@ where
               && \text{Caille constant}
     \end{align*}
 
-Here $d$ = (repeat) spacing, $\delta$ = bilayer thickness,
+Here $d$ = (repeat) d_spacing, $\delta$ = bilayer thickness,
 the contrast $\Delta\rho$ = SLD(headgroup) - SLD(solvent),
 $K$ = smectic bending elasticity, $B$ = compression modulus, and
 $N$ = number of lamellar plates (*n_plates*).
@@ -67,6 +67,8 @@ F Nallet, R Laversanne, and D Roux, J. Phys. II France, 3, (1993) 487-502
 
 also in J. Phys. Chem. B, 105, (2001) 11081-11088
 """
+
+import numpy as np
 from numpy import inf
 
 name = "lamellar_stack_caille"
@@ -82,20 +84,34 @@ description = """\
 """
 category = "shape:lamellae"
 
-single = False
+single = False  # TODO: check
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [
     ["thickness",        "Ang",      30.0,  [0, inf],   "volume", "sheet thickness"],
-    ["Nlayers",          "",          20,   [0, inf],   "",       "Number of layers"],
-    ["spacing",          "Ang",      400.,  [0.0,inf],  "volume", "d-spacing of Caille S(Q)"],
+    ["Nlayers",          "",          20,   [1, inf],   "",       "Number of layers"],
+    ["d_spacing",        "Ang",      400.,  [0.0,inf],  "volume", "lamellar d-spacing of Caille S(Q)"],
     ["Caille_parameter", "1/Ang^2",    0.1, [0.0,0.8],  "",       "Caille parameter"],
-    ["sld",              "1e-6/Ang^2", 6.3, [-inf,inf], "",       "layer scattering length density"],
-    ["sld_solvent",      "1e-6/Ang^2", 1.0, [-inf,inf], "",       "Solvent scattering length density"],
+    ["sld",              "1e-6/Ang^2", 6.3, [-inf,inf], "sld",    "layer scattering length density"],
+    ["sld_solvent",      "1e-6/Ang^2", 1.0, [-inf,inf], "sld",    "Solvent scattering length density"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lamellar_stack_caille_kernel.c"]
+source = ["lamellar_stack_caille.c"]
+
+def random():
+    total_thickness = 10**np.random.uniform(2, 4.7)
+    Nlayers = np.random.randint(2, 200)
+    d_spacing = total_thickness / Nlayers
+    thickness = d_spacing * np.random.uniform(0, 1)
+    Caille_parameter = np.random.uniform(0, 0.8)
+    pars = dict(
+        thickness=thickness,
+        Nlayers=Nlayers,
+        d_spacing=d_spacing,
+        Caille_parameter=Caille_parameter,
+    )
+    return pars
 
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
@@ -103,24 +119,20 @@ form_volume = """
     return 1.0;
     """
 
-Iqxy = """
-    return Iq(sqrt(qx*qx+qy*qy), IQ_PARAMETERS);
-    """
-
 # ER defaults to 0.0
 # VR defaults to 1.0
 
 demo = dict(scale=1, background=0,
-            thickness=67., Nlayers=3.75, spacing=200.,
+            thickness=67., Nlayers=3.75, d_spacing=200.,
             Caille_parameter=0.268, sld=1.0, sld_solvent=6.34,
             thickness_pd=0.1, thickness_pd_n=100,
-            spacing_pd=0.05, spacing_pd_n=40)
+            d_spacing_pd=0.05, d_spacing_pd_n=40)
 
 #
 tests = [
     [{'scale': 1.0, 'background': 0.0, 'thickness': 30., 'Nlayers': 20.0,
-      'spacing': 400., 'Caille_parameter': 0.1, 'sld': 6.3,
-      'sld_solvent': 1.0, 'thickness_pd': 0.0, 'spacing_pd': 0.0},
+      'd_spacing': 400., 'Caille_parameter': 0.1, 'sld': 6.3,
+      'sld_solvent': 1.0, 'thickness_pd': 0.0, 'd_spacing_pd': 0.0},
      [0.001], [28895.13397]]
     ]
 # ADDED by: RKH  ON: 18Mar2016  converted from sasview previously, now renaming everything & sorting the docs

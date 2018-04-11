@@ -59,6 +59,8 @@ W R Chen, P D Butler and L J Magid, *Incorporating Intermicellar Interactions
 in the Fitting of SANS Data from Cationic Wormlike Micelles.* Langmuir,
 22(15) 2006 6539-6548
 """
+
+import numpy as np
 from numpy import inf
 
 name = "flexible_cylinder"
@@ -79,46 +81,49 @@ parameters = [
     ["length",      "Ang",       1000.0, [0, inf],    "volume", "Length of the flexible cylinder"],
     ["kuhn_length", "Ang",        100.0, [0, inf],    "volume", "Kuhn length of the flexible cylinder"],
     ["radius",      "Ang",         20.0, [0, inf],    "volume", "Radius of the flexible cylinder"],
-    ["sld",         "1e-6/Ang^2",   1.0, [-inf, inf], "",       "Cylinder scattering length density"],
-    ["sld_solvent", "1e-6/Ang^2",   6.3, [-inf, inf], "",       "Solvent scattering length density"],
+    ["sld",         "1e-6/Ang^2",   1.0, [-inf, inf], "sld",    "Cylinder scattering length density"],
+    ["sld_solvent", "1e-6/Ang^2",   6.3, [-inf, inf], "sld",    "Solvent scattering length density"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/wrc_cyl.c", "flexible_cylinder.c"]
 
-demo = dict(scale=1.0, background=0.0001,
-            length=1000.0,
-            kuhn_length=100.0,
-            radius=20.0,
-            sld=1.0,
-            sld_solvent=6.3)
+def random():
+    length = 10**np.random.uniform(2, 6)
+    radius = 10**np.random.uniform(1, 3)
+    kuhn_length = 10**np.random.uniform(-2, 0)*length
+    pars = dict(
+        length=length,
+        radius=radius,
+        kuhn_length=kuhn_length,
+    )
+    return pars
 
 tests = [
     # Accuracy tests based on content in test/utest_other_models.py
-    # Currently fails in OCL
-    # [{'length':     1000.0,
-    #  'kuhn_length': 100.0,
-    #  'radius':       20.0,
-    #  'sld':           1.0,
-    #  'sld_solvent':   6.3,
-    #  'background':    0.0001,
-    #  }, 0.001, 3509.2187],
+    [{'length':     1000.0,  # test T1
+      'kuhn_length': 100.0,
+      'radius':       20.0,
+      'sld':           1.0,
+      'sld_solvent':   6.3,
+      'background':    0.0001,
+     }, 0.001, 3509.2187],
 
     # Additional tests with larger range of parameters
-    [{'length':    1000.0,
+    [{'length':    1000.0,  # test T2
       'kuhn_length': 100.0,
       'radius':       20.0,
       'sld':           1.0,
       'sld_solvent':   6.3,
       'background':    0.0001,
      }, 1.0, 0.000595345],
-    [{'length':        10.0,
+    [{'length':        10.0,  # test T3
       'kuhn_length': 800.0,
       'radius':        2.0,
       'sld':           6.0,
       'sld_solvent':  12.3,
       'background':    0.001,
      }, 0.1, 1.55228],
-    [{'length':        100.0,
+    [{'length':        100.0,  # test T4
       'kuhn_length': 800.0,
       'radius':       50.0,
       'sld':           0.1,
@@ -127,3 +132,28 @@ tests = [
      }, 1.0, 0.000938456]
     ]
 
+# There are a few branches in the code that ought to have test values:
+#
+# For length > 4 * kuhn_length
+#        if length > 10 * kuhn_length then C is scaled by 3.06 (L/b)^(-0.44)
+#        q*kuhn_length <= 3.1  => Sexv_new
+#           dS/dQ < 0 has different behaviour from dS/dQ >= 0
+#  T2    q*kuhn_length > 3.1   => a_long
+#
+# For length <= 4 * kuhn_length
+#        q*kuhn_length <= max(1.9/Rg_short, 3.0)  => Sdebye((q*Rg)^2)
+#           q*Rg < 0.5 uses Pade approx, q*Rg > 1.0 uses math lib
+#  T3,T4 q*kuhn_length > max(1.9/Rg_short, 3.0)   => a_short
+#
+# Note that the transitions between branches may be abrupt.  You can see a
+# several percent change around length=10*kuhn_length and length=4*kuhn_length
+# using the following:
+#
+#    sascomp flexible_cylinder -calc=double -sets=10 length=10*kuhn_length,10.000001*kuhn_length
+#    sascomp flexible_cylinder -calc=double -sets=10 length=4*kuhn_length,4.000001*kuhn_length
+#
+# The transition between low q and high q around q*kuhn_length = 3 seems
+# to be good to 4 digits or better.  This was tested by computing the value
+# on each branches near the transition point and reporting the relative error
+# for kuhn lengths of 10, 100 and 1000 and a variety of length:kuhn_length
+# ratios.

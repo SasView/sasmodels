@@ -37,9 +37,9 @@ P Debye, A M Bueche, *Scattering by an Inhomogeneous Solid*, *J. Appl. Phys.*,
 20 (1949) 518
 
 *2013/09/09 - Description reviewed by King, S and Parker, P.*
-
 """
 
+import numpy as np
 from numpy import inf
 
 name = "dab"
@@ -54,24 +54,27 @@ L: the correlation length
 category = "shape-independent"
 
 #             ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["length", "Ang", 50.0, [0, inf], "", "correlation length"],
+parameters = [["cor_length", "Ang", 50.0, [0, inf], "", "correlation length"],
              ]
 
 Iq = """
-    double numerator   = pow(length, 3);
-    double denominator = pow(1 + pow(q*length,2), 2);
-    
+    double numerator   = cube(cor_length);
+    double denominator = square(1 + square(q*cor_length));
+
     return numerator / denominator ;
     """
 
-Iqxy = """
-    // never called since no orientation or magnetic parameters.
-    //return -1.0;
-    return Iq(sqrt(qx*qx + qy*qy), length);
-    """
+def random():
+    pars = dict(
+        scale=10**np.random.uniform(1, 4),
+        cor_length=10**np.random.uniform(0.3, 3),
+        #background = 0,
+    )
+    pars['scale'] /= pars['cor_length']**3
+    return pars
 
 # ER defaults to 1.0
 
 # VR defaults to 1.0
 
-demo = dict(scale=1, background=0, length=50)
+demo = dict(scale=1, background=0, cor_length=50)

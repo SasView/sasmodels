@@ -6,8 +6,8 @@
 """
 from __future__ import division
 
-import numpy as np
-from numpy import pi, cos, sin, sqrt
+import numpy as np  # type: ignore
+from numpy import pi, cos, sin, sqrt  # type: ignore
 
 from . import resolution
 from .resolution import Resolution
@@ -23,8 +23,9 @@ NPHI = {'xhigh':20, 'high':12, 'med':6, 'low':4}
 
 ## Defaults
 N_SLIT_PERP = {'xhigh':1000, 'high':500, 'med':200, 'low':50}
-N_SLIT_PERP_DOC = ", ".join("%s=%d"%(name,value) for value,name in
-                            sorted((2*v+1,k) for k,v in N_SLIT_PERP.items()))
+N_SLIT_PERP_DOC = ", ".join("%s=%d"%(name, value)
+                            for value, name in
+                            sorted((2*v+1, k) for k, v in N_SLIT_PERP.items()))
 
 class Pinhole2D(Resolution):
     """
@@ -62,18 +63,18 @@ class Pinhole2D(Resolution):
         # TODO: maybe don't need to hold copy of qx,qy,dqx,dqy,data,index
         # just need q_calc and weights
         self.data = data
-        self.index = index
+        self.index = index if index is not None else slice(None)
 
-        self.qx_data = data.qx_data[index]
-        self.qy_data = data.qy_data[index]
-        self.q_data = data.q_data[index]
+        self.qx_data = data.qx_data[self.index]
+        self.qy_data = data.qy_data[self.index]
+        self.q_data = data.q_data[self.index]
 
         dqx = getattr(data, 'dqx_data', None)
         dqy = getattr(data, 'dqy_data', None)
         if dqx is not None and dqy is not None:
             # Here dqx and dqy mean dq_parr and dq_perp
-            self.dqx_data = dqx[index]
-            self.dqy_data = dqy[index]
+            self.dqx_data = dqx[self.index]
+            self.dqy_data = dqy[self.index]
             ## Remove singular points if exists
             self.dqx_data[self.dqx_data < SIGMA_ZERO] = SIGMA_ZERO
             self.dqy_data[self.dqy_data < SIGMA_ZERO] = SIGMA_ZERO
@@ -124,7 +125,7 @@ class Pinhole2D(Resolution):
 
         # The angle (phi) of the original q point
         q_phi = np.arctan(q_phi).repeat(nbins)\
-            .reshape(nq, nbins).transpose().flatten()
+            .reshape([nq, nbins]).transpose().flatten()
         ## Find Gaussian weight for each dq bins: The weight depends only
         #  on r-direction (The integration may not need)
         weight_res = (np.exp(-0.5 * (r - bin_size / 2.0)**2)  -
@@ -222,9 +223,9 @@ class Slit2D(Resolution):
 
         # Build weight matrix for resolution integration
         if np.any(qx_width > 0):
-            self.weights = resolution.pinhole_resolution(qx_calc, q,
-                    np.maximum(qx_width, resolution.MINIMUM_RESOLUTION))
-        elif len(qx_calc)==len(q) and np.all(qx_calc == q):
+            self.weights = resolution.pinhole_resolution(
+                qx_calc, q, np.maximum(qx_width, resolution.MINIMUM_RESOLUTION))
+        elif len(qx_calc) == len(q) and np.all(qx_calc == q):
             self.weights = None
         else:
             raise ValueError("Slit2D fails with q_calc != q")
@@ -234,4 +235,3 @@ class Slit2D(Resolution):
         if self.weights is not None:
             Iq = resolution.apply_resolution_matrix(self.weights, Iq)
         return Iq
-

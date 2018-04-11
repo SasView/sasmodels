@@ -1,207 +1,119 @@
-double form_volume(double radius,
-          double thickness);
+double form_volume(double radius, double thickness, double alpha, double beta);
 
 double Iq(double q,
           double radius,
           double thickness,
           double alpha,
           double beta,
-          double sld_pringle,
+          double sld,
           double sld_solvent);
 
-double Iqxy(double qx, double qy,
-          double radius,
-          double thickness,
-          double alpha,
-          double beta,
-          double sld_pringle,
-          double sld_solvent);
 
 static
-double pringleC(double radius,
-                double alpha,
-                double beta,
-                double q,
-                double phi,
-                double n) {
-
-    double va, vb;
-    double bessargs, cosarg, bessargcb;
-    double r, retval, yyy;
-
-
-    va = 0;
-    vb = radius;
+void _integrate_bessel(
+    double radius,
+    double alpha,
+    double beta,
+    double q_sin_psi,
+    double q_cos_psi,
+    double n,
+    double *Sn,
+    double *Cn)
+{
+    // translate gauss point z in [-1,1] to a point in [0, radius]
+    const double zm = 0.5*radius;
+    const double zb = 0.5*radius;
 
     // evaluate at Gauss points
-    // remember to index from 0,size-1
+    double sumS = 0.0;		// initialize integral
+    double sumC = 0.0;		// initialize integral
+    double r;
+    for (int i=0; i < GAUSS_N; i++) {
+        r = GAUSS_Z[i]*zm + zb;
 
-    double summ = 0.0;		// initialize integral
-    int ii = 0;
-    do {
-        // Using 76 Gauss points
-        r = (Gauss76Z[ii] * (vb - va) + vb + va) / 2.0;
+        const double qrs = r*q_sin_psi;
+        const double qrrc = r*r*q_cos_psi;
 
-        bessargs = q*r*sin(phi);
-        cosarg = q*r*r*alpha*cos(phi);
-        bessargcb = q*r*r*beta*cos(phi);
+        double y = GAUSS_W[i] * r * sas_JN(n, beta*qrrc) * sas_JN(2*n, qrs);
+        double S, C;
+        SINCOS(alpha*qrrc, S, C);
+        sumS += y*S;
+        sumC += y*C;
+    }
 
-        yyy = Gauss76Wt[ii]*r*cos(cosarg)
-                *sas_JN(n, bessargcb)
-                *sas_JN(2*n, bessargs);
-        summ += yyy;
-
-        ii += 1;
-    } while (ii < N_POINTS_76);			// end of loop over quadrature points
-    //
-    // calculate value of integral to return
-
-    retval = (vb - va) / 2.0 * summ;
-    retval = retval / pow(r, 2.0);
-
-    return retval;
+    *Sn = zm*sumS / (radius*radius);
+    *Cn = zm*sumC / (radius*radius);
 }
 
 static
-double pringleS(double radius,
-                double alpha,
-                double beta,
-                double q,
-                double phi,
-                double n) {
-
-    double va, vb, summ;
-    double bessargs, sinarg, bessargcb;
-    double r, retval, yyy;
-    // set up the integration
-    // end points and weights
-
-    va = 0;
-    vb = radius;
-
-    // evaluate at Gauss points
-    // remember to index from 0,size-1
-
-    summ = 0.0;		// initialize integral
-    int ii = 0;
-    do {
-        // Using 76 Gauss points
-        r = (Gauss76Z[ii] * (vb - va) + vb + va) / 2.0;
-
-        bessargs = q*r*sin(phi);
-        sinarg = q*r*r*alpha*cos(phi);
-        bessargcb = q*r*r*beta*cos(phi);
-
-        yyy = Gauss76Wt[ii]*r*sin(sinarg)
-                    *sas_JN(n, bessargcb)
-                    *sas_JN(2*n, bessargs);
-        summ += yyy;
-
-        ii += 1;
-    } while (ii < N_POINTS_76);
-
-    // end of loop over quadrature points
-    //
-    // calculate value of integral to return
-
-    retval = (vb-va)/2.0*summ;
-    retval = retval/pow(r, 2.0);
-
-    return retval;
-}
-
-static
-double _kernel(double thickness,
-               double radius,
-               double alpha,
-               double beta,
-               double q,
-               double phi) {
-
-    const double sincarg = q * thickness * cos(phi) / 2.0;
-    const double sincterm = pow(sin(sincarg) / sincarg, 2.0);
-
+double _sum_bessel_orders(
+    double radius,
+    double alpha,
+    double beta,
+    double q_sin_psi,
+    double q_cos_psi)
+{
     //calculate sum term from n = -3 to 3
-    double sumterm = 0.0;
-    for (int nn = -3; nn <= 3; nn++) {
-        double powc = pringleC(radius, alpha, beta, q, phi, nn);
-        double pows = pringleS(radius, alpha, beta, q, phi, nn);
-        sumterm += pow(powc, 2.0) + pow(pows, 2.0);
+    //Note 1:
+    //    S_n(-x) = (-1)^S_n(x)
+    //    => S_n^2(-x) = S_n^2(x),
+    //    => sum_-k^k Sk = S_0^2 + 2*sum_1^kSk^2
+    //Note 2:
+    //    better precision to sum terms from smaller to larger
+    //    though it doesn't seem to make a difference in this case.
+    double Sn, Cn, sum;
+    sum = 0.0;
+    for (int n=3; n>0; n--) {
+      _integrate_bessel(radius, alpha, beta, q_sin_psi, q_cos_psi, n, &Sn, &Cn);
+      sum += 2.0*(Sn*Sn + Cn*Cn);
     }
-    double retval = 4.0 * sin(phi) * sumterm * sincterm;
-
-    return retval;
-
+    _integrate_bessel(radius, alpha, beta, q_sin_psi, q_cos_psi, 0, &Sn, &Cn);
+    sum += Sn*Sn+ Cn*Cn;
+    return sum;
 }
 
-static double pringles_kernel(double q,
-          double radius,
-          double thickness,
-          double alpha,
-          double beta,
-          double sld_pringle,
-          double sld_solvent)
+static
+double _integrate_psi(
+    double q,
+    double radius,
+    double thickness,
+    double alpha,
+    double beta)
 {
+    // translate gauss point z in [-1,1] to a point in [0, pi/2]
+    const double zm = M_PI_4;
+    const double zb = M_PI_4;
 
-    //upper and lower integration limits
-    const double lolim = 0.0;
-    const double uplim = M_PI / 2.0;
-
-    double summ = 0.0;			//initialize integral
-
-    double delrho = sld_pringle - sld_solvent; //make contrast term
-
-    for (int i = 0; i < N_POINTS_76; i++) {
-        double phi = (Gauss76Z[i] * (uplim - lolim) + uplim + lolim) / 2.0;
-        summ += Gauss76Wt[i] * _kernel(thickness, radius, alpha, beta, q, phi);
+    double sum = 0.0;
+    for (int i = 0; i < GAUSS_N; i++) {
+        double psi = GAUSS_Z[i]*zm + zb;
+        double sin_psi, cos_psi;
+        SINCOS(psi, sin_psi, cos_psi);
+        double bessel_term = _sum_bessel_orders(radius, alpha, beta, q*sin_psi, q*cos_psi);
+        double sinc_term = square(sas_sinx_x(q * thickness * cos_psi / 2.0));
+        double pringle_kernel = 4.0 * sin_psi * bessel_term * sinc_term;
+        sum += GAUSS_W[i] * pringle_kernel;
     }
 
-    double answer = (uplim - lolim) / 2.0 * summ;
-    answer *= delrho*delrho;
-
-    return answer;
+    return zm * sum;
 }
 
-double form_volume(double radius,
-        double thickness){
-
-        return 1.0;
-}
-
-double Iq(double q,
-          double radius,
-          double thickness,
-          double alpha,
-          double beta,
-          double sld_pringle,
-          double sld_solvent)
+double form_volume(double radius, double thickness, double alpha, double beta)
 {
-    const double form = pringles_kernel(q,
-                  radius,
-                  thickness,
-                  alpha,
-                  beta,
-                  sld_pringle,
-                  sld_solvent);
-
-    return 1.0e-4*form*M_PI*radius*radius*thickness;
+    return M_PI*radius*radius*thickness;
 }
 
-double Iqxy(double qx, double qy,
-            double radius,
-            double thickness,
-            double alpha,
-            double beta,
-            double sld_pringle,
-            double sld_solvent)
+double Iq(
+    double q,
+    double radius,
+    double thickness,
+    double alpha,
+    double beta,
+    double sld,
+    double sld_solvent)
 {
-    double q = sqrt(qx*qx + qy*qy);
-    return Iq(q,
-            radius,
-            thickness,
-            alpha,
-            beta,
-            sld_pringle,
-            sld_solvent);
+    double form = _integrate_psi(q, radius, thickness, alpha, beta);
+    double contrast = sld - sld_solvent;
+    double volume = M_PI*radius*radius*thickness;
+    return 1.0e-4*form * square(contrast * volume);
 }
-

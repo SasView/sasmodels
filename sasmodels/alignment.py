@@ -17,7 +17,7 @@ improvement from forcing correct alignment.  The tests should
 be repeated with arrays forced away from the target boundaries
 to decide whether it is really required.
 """
-import numpy as np
+import numpy as np  # type: ignore
 
 def align_empty(shape, dtype, alignment=128):
     """
@@ -41,4 +41,3 @@ def align_data(x, dtype, alignment=128):
     view = align_empty(x.shape, dtype, alignment=alignment)
     view[:] = x
     return view
-

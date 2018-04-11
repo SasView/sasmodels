@@ -12,22 +12,22 @@ The scattering intensity $I(q)$ is calculated as
 
 .. math::
 
-    I(q) = \frac{scale}{V_p}V_{lattice}P(q)Z(q)
+    I(q) = \text{scale}\frac{V_\text{lattice}P(q)Z(q)}{V_p} + \text{background}
 
 where scale is the volume fraction of spheres, $V_p$ is the volume of
-the primary particle, $V_{lattice}$ is a volume correction for the crystal
+the primary particle, $V_\text{lattice}$ is a volume correction for the crystal
 structure, $P(q)$ is the form factor of the sphere (normalized), and
 $Z(q)$ is the paracrystalline structure factor for a simple cubic structure.
 
 Equation (16) of the 1987 reference is used to calculate $Z(q)$, using
 equations (13)-(15) from the 1987 paper for Z1, Z2, and Z3.
 
-The lattice correction (the occupied volume of the lattice) for a simple
-cubic structure of particles of radius *R* and nearest neighbor separation *D* is
+The lattice correction (the occupied volume of the lattice) for a simple cubic
+structure of particles of radius *R* and nearest neighbor separation *D* is
 
 .. math::
 
-    V_{lattice}=\frac{4\pi}{3}\frac{R^3}{D^3}
+    V_\text{lattice}=\frac{4\pi}{3}\frac{R^3}{D^3}
 
 The distortion factor (one standard deviation) of the paracrystal is included
 in the calculation of $Z(q)$
@@ -72,17 +72,21 @@ forbidden. Thus the peak positions correspond to (just the first 5)
     The calculation of *Z(q)* is a double numerical integral that must be
     carried out with a high density of points to properly capture the sharp
     peaks of the paracrystalline scattering.
-    So be warned that the calculation is SLOW. Go get some coffee.
-    Fitting of any experimental data must be resolution smeared for any
-    meaningful fit. This makes a triple integral. Very, very slow.
-    Go get lunch!
+    So be warned that the calculation is slow. Fitting of any experimental data
+    must be resolution smeared for any meaningful fit. This makes a triple
+    integral which may be very slow.
 
 The 2D (Anisotropic model) is based on the reference below where *I(q)* is
 approximated for 1d scattering. Thus the scattering pattern for 2D may not
-be accurate. Note that we are not responsible for any incorrectness of the 2D
-model computation.
+be accurate particularly at low $q$. For general details of the calculation
+and angular dispersions for oriented particles see :ref:`orientation` .
+Note that we are not responsible for any incorrectness of the
+2D model computation.
 
-.. figure:: img/sc_crystal_angle_definition.jpg
+.. figure:: img/parallelepiped_angle_definition.png
+
+    Orientation of the crystal with respect to the scattering plane, when
+    $\theta = \phi = 0$ the $c$ axis is along the beam direction (the $z$ axis).
 
 Reference
 ---------
@@ -91,9 +95,9 @@ Hideki Matsuoka et. al. *Physical Review B,* 36 (1987) 1754-1765
 
 Hideki Matsuoka et. al. *Physical Review B,* 41 (1990) 3854 -3856
 (Corrections to FCC and BCC lattice structure calculation)
-
 """
 
+import numpy as np
 from numpy import inf
 
 name = "sc_paracrystal"
@@ -121,34 +125,38 @@ category = "shape:paracrystal"
 single = False
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["dnn",         "Ang",       220.0,  [0.0, inf],  "",            "Nearest neighbor distance"],
-              ["d_factor",    "",            0.06, [-inf, inf], "",            "Paracrystal distortion factor"],
-              ["radius",      "Ang",        40.0,  [0.0, inf],  "volume",      "Radius of sphere"],
-              ["sld",  "1e-6/Ang^2",  3.0,  [0.0, inf],  "",            "Sphere scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2",  6.3,  [0.0, inf],  "",            "Solvent scattering length density"],
-              ["theta",       "degrees",     0.0,  [-inf, inf], "orientation", "Orientation of the a1 axis w/respect incoming beam"],
-              ["phi",         "degrees",     0.0,  [-inf, inf], "orientation", "Orientation of the a2 in the plane of the detector"],
-              ["psi",         "degrees",     0.0,  [-inf, inf], "orientation", "Orientation of the a3 in the plane of the detector"],
+parameters = [["dnn",         "Ang",       220.0, [0.0, inf],  "",            "Nearest neighbor distance"],
+              ["d_factor",    "",           0.06, [-inf, inf], "",            "Paracrystal distortion factor"],
+              ["radius",      "Ang",        40.0, [0.0, inf],  "volume",      "Radius of sphere"],
+              ["sld",  "1e-6/Ang^2",         3.0, [0.0, inf],  "sld",         "Sphere scattering length density"],
+              ["sld_solvent", "1e-6/Ang^2",  6.3, [0.0, inf],  "sld",         "Solvent scattering length density"],
+              ["theta",       "degrees",    0,    [-360, 360], "orientation", "c axis to beam angle"],
+              ["phi",         "degrees",    0,    [-360, 360], "orientation", "rotation about beam"],
+              ["psi",         "degrees",    0,    [-360, 360], "orientation", "rotation about c axis"]
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sph_j1c.c", "lib/sphere_form.c", "lib/gauss150.c", "sc_paracrystal_kernel.c"]
+source = ["lib/sas_3j1x_x.c", "lib/sphere_form.c", "lib/gauss150.c", "sc_paracrystal.c"]
 
-demo = dict(scale=1, background=0,
-            dnn=220.0,
-            d_factor=0.06,
-            radius=40.0,
-            sld=3.0,
-            sld_solvent=6.3,
-            theta=0.0,
-            phi=0.0,
-            psi=0.0)
+def random():
+    # copied from bcc_paracrystal
+    radius = 10**np.random.uniform(1.3, 4)
+    d_factor = 10**np.random.uniform(-2, -0.7)  # sigma_d in 0.01-0.7
+    dnn_fraction = np.random.beta(a=10, b=1)
+    dnn = radius*4/np.sqrt(4)/dnn_fraction
+    pars = dict(
+        #sld=1, sld_solvent=0, scale=1, background=1e-32,
+        dnn=dnn,
+        d_factor=d_factor,
+        radius=radius,
+    )
+    return pars
 
 tests = [
-    # Accuracy tests based on content in test/utest_extra_models.py
+    # Accuracy tests based on content in test/utest_extra_models.py, 2d tests added April 10, 2017
     [{}, 0.001, 10.3048],
     [{}, 0.215268, 0.00814889],
-    [{}, (0.414467), 0.001313289]
+    [{}, 0.414467, 0.001313289],
+    [{'theta': 10.0, 'phi': 20, 'psi': 30.0}, (0.045, -0.035), 18.0397138402],
+    [{'theta': 10.0, 'phi': 20, 'psi': 30.0}, (0.023, 0.045), 0.0177333171285],
     ]
-
-

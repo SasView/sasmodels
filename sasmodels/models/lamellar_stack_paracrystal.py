@@ -21,10 +21,10 @@ In the equations below,
 
 - *Nlayers* is the number of layers $N$,
 
-- *spacing* is the average distance between adjacent layers
+- *d_spacing* is the average distance between adjacent layers
   $\langle D \rangle$, and
 
-- *spacing_polydisp* is the relative standard deviation of the Gaussian
+- *sigma_d* is the relative standard deviation of the Gaussian
   layer distance distribution $\sigma_D / \langle D \rangle$.
 
 
@@ -89,9 +89,9 @@ Reference
 
 M Bergstrom, J S Pedersen, P Schurtenberger, S U Egelhaaf,
 *J. Phys. Chem. B*, 103 (1999) 9888-9897
-
 """
 
+import numpy as np
 from numpy import inf
 
 name = "lamellar_stack_paracrystal"
@@ -112,41 +112,54 @@ single = False
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["thickness", "Ang", 33.0, [0, inf], "volume",
                "sheet thickness"],
-              ["Nlayers", "", 20, [0, inf], "",
+              ["Nlayers", "", 20, [1, inf], "",
                "Number of layers"],
-              ["spacing", "Ang", 250., [0.0, inf], "",
-               "d-spacing of paracrystal stack"],
-              ["spacing_polydisp", "Ang", 0.0, [0.0, inf], "",
-               "d-spacing polydispersity"],
-              ["sld", "1e-6/Ang^2", 1.0, [-inf, inf], "",
+              ["d_spacing", "Ang", 250., [0.0, inf], "",
+               "lamellar spacing of paracrystal stack"],
+              ["sigma_d", "Ang", 0.0, [0.0, inf], "",
+               "Sigma (polydispersity) of the lamellar spacing"],
+              ["sld", "1e-6/Ang^2", 1.0, [-inf, inf], "sld",
                "layer scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2", 6.34, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 6.34, [-inf, inf], "sld",
                "Solvent scattering length density"],
              ]
 
 
-source = ["lamellar_stack_paracrystal_kernel.c"]
+source = ["lamellar_stack_paracrystal.c"]
 
 form_volume = """
     return 1.0;
-    """
+"""
 
-Iqxy = """
-    return Iq(sqrt(qx*qx+qy*qy), IQ_PARAMETERS);
-    """
+def random():
+    total_thickness = 10**np.random.uniform(2, 4.7)
+    Nlayers = np.random.randint(2, 200)
+    d_spacing = total_thickness / Nlayers
+    thickness = d_spacing * np.random.uniform(0, 1)
+    # Let polydispersity peak around 15%; 95% < 0.4; max=100%
+    sigma_d = np.random.beta(1.5, 7)
+    pars = dict(
+        thickness=thickness,
+        Nlayers=Nlayers,
+        d_spacing=d_spacing,
+        sigma_d=sigma_d,
+    )
+    return pars
 
 # ER defaults to 0.0
 # VR defaults to 1.0
 
 demo = dict(scale=1, background=0,
-            thickness=33, Nlayers=20, spacing=250, spacing_polydisp=0.2,
+            thickness=33, Nlayers=20, d_spacing=250, sigma_d=0.2,
             sld=1.0, sld_solvent=6.34,
             thickness_pd=0.2, thickness_pd_n=40)
 
 #
 tests = [
-        [ {'scale': 1.0, 'background' : 0.0, 'thickness' : 33.,'Nlayers' : 20.0, 'spacing' : 250., 'spacing_polydisp' : 0.2,
-            'sld' : 1.0, 'sld_solvent' : 6.34,
-            'thickness_pd' : 0.0, 'thickness_pd_n' : 40 }, [0.001, 0.215268], [21829.3, 0.00487686]]
-        ]
-# ADDED by: RKH  ON: 18Mar2016  converted from sasview previously, now renaming everything & sorting the docs
+    [{'scale': 1.0, 'background': 0.0, 'thickness': 33., 'Nlayers': 20.0,
+      'd_spacing': 250., 'sigma_d': 0.2, 'sld': 1.0,
+      'sld_solvent': 6.34, 'thickness_pd': 0.0, 'thickness_pd_n': 40},
+     [0.001, 0.215268], [21829.3, 0.00487686]],
+]
+# ADDED by: RKH  ON: 18Mar2016  converted from sasview previously,
+# now renaming everything & sorting the docs

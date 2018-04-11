@@ -1,13 +1,14 @@
-inline double
-sphere_volume(double radius)
+double sphere_volume(double radius);
+double sphere_form(double q, double radius, double sld, double solvent_sld);
+
+double sphere_volume(double radius)
 {
     return M_4PI_3*cube(radius);
 }
 
-inline double
-sphere_form(double q, double radius, double sld, double solvent_sld)
+double sphere_form(double q, double radius, double sld, double solvent_sld)
 {
-    const double fq = sphere_volume(radius) * sph_j1c(q*radius);
+    const double fq = sphere_volume(radius) * sas_3j1x_x(q*radius);
     const double contrast = (sld - solvent_sld);
     return 1.0e-4*square(contrast * fq);
 }

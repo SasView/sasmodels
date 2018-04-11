@@ -67,6 +67,7 @@ S V G Menon, C Manohar, and K S Rao, *J. Chem. Phys.*, 95(12) (1991) 9186-9190
 
 # TODO: refactor so that we pull in the old sansmodels.c_extensions
 
+import numpy as np
 from numpy import inf
 
 name = "stickyhardsphere"
@@ -96,6 +97,16 @@ parameters = [
     ["stickiness", "", 0.20, [-inf, inf], "",
      "stickiness, tau"],
     ]
+
+def random():
+    pars = dict(
+        scale=1, background=0,
+        radius_effective=10**np.random.uniform(1, 4.7),
+        volfraction=np.random.uniform(0.00001, 0.74),
+        perturb=10**np.random.uniform(-2, -1),
+        stickiness=np.random.uniform(0, 1),
+    )
+    return pars
 
 # No volume normalization despite having a volume parameter
 # This should perhaps be volume normalized?
@@ -170,10 +181,6 @@ Iq = """
     return(sq);
 """
 
-Iqxy = """
-    return Iq(sqrt(qx*qx+qy*qy), IQ_PARAMETERS);
-    """
-
 # ER defaults to 0.0
 # VR defaults to 1.0
 
@@ -181,8 +188,8 @@ demo = dict(radius_effective=200, volfraction=0.2, perturb=0.05,
             stickiness=0.2, radius_effective_pd=0.1, radius_effective_pd_n=40)
 #
 tests = [
-        [ {'scale': 1.0, 'background' : 0.0, 'radius_effective' : 50.0, 'perturb' : 0.05, 'stickiness' : 0.2, 'volfraction' : 0.1,
-           'radius_effective_pd' : 0}, [0.001, 0.003], [1.09718, 1.087830]]
-        ]
-
-
+    [{'scale': 1.0, 'background': 0.0, 'radius_effective': 50.0,
+      'perturb': 0.05, 'stickiness': 0.2, 'volfraction': 0.1,
+      'radius_effective_pd': 0},
+     [0.001, 0.003], [1.09718, 1.087830]],
+    ]

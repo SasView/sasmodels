@@ -4,12 +4,13 @@
 /*.csv
 *.pyc
 *.cl
+*.def
 *.so
 *.obj
 /doc/_build/
 /doc/api/
 /doc/model/
-/doc/ref/models
+/doc/guide/models
 .mplconfig
 /pylint_violations.txt
 /coverage.xml
@@ -18,3 +19,8 @@
 /.pydevproject
 /.idea
 /sasmodels.egg-info/
+/example/Fit_*/
+/example/batch_fit.csv
+# Note: changes to gauss20, gauss76 and gauss150 are still tracked since they
+# are part of the repo and required by some models.
+/sasmodels/models/lib/gauss*.c

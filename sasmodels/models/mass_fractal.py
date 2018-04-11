@@ -27,21 +27,21 @@ The scattering intensity $I(q)$ is calculated as
 
 .. math::
 
-    scale = scale\_factor \times NV^2(\rho_{particle} - \rho_{solvent})^2
+    scale = scale\_factor \times NV^2(\rho_\text{particle} - \rho_\text{solvent})^2
 
 .. math::
 
     V = \frac{4}{3}\pi R^3
 
 where $R$ is the radius of the building block, $D_m$ is the **mass** fractal
-dimension, | \zeta\|  is the cut-off length, $\rho_{solvent}$ is the scattering
-length density of the solvent,
-and $\rho_{particle}$ is the scattering length density of particles.
+dimension, $\zeta$  is the cut-off length, $\rho_\text{solvent}$ is the scattering
+length density of the solvent, and $\rho_\text{particle}$ is the scattering
+length density of particles.
 
 .. note::
 
     The mass fractal dimension ( $D_m$ ) is only
-    valid if $0 < mass\_dim < 6$. It is also only valid over a limited
+    valid if $1 < mass\_dim < 6$. It is also only valid over a limited
     $q$ range (see the reference for details).
 
 
@@ -50,10 +50,9 @@ References
 
 D Mildner and P Hall, *J. Phys. D: Appl. Phys.*,
 19 (1986) 1535-1545 Equation(9)
-
-
 """
 
+import numpy as np
 from numpy import inf
 
 name = "mass_fractal"
@@ -67,52 +66,68 @@ description = """
         * sin[(Dm-1)*arctan(x*colength)])/x]
         where delta = sldParticle -sldSolv.
         radius       =  Particle radius
-        mass_dim  =  Mass fractal dimension
+        fractal_dim_mass  =  Mass fractal dimension
         cutoff_length  =  Cut-off length
         background   =  background
         Ref.:Mildner, Hall,J Phys D Appl Phys(1986), 9, 1535-1545
-        Note I: This model is valid for 1<mass_dim<6.
+        Note I: This model is valid for 1<fractal_dim_mass<6.
         Note II: This model is not in absolute scale.
         """
 category = "shape-independent"
 
 # pylint: disable=bad-whitespace, line-too-long
-#             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["radius",        "Ang",  10.0, [0.0, inf], "", "Particle radius"],
-              ["mass_dim",      "",      1.9, [1.0, 6.0], "", "Mass fractal dimension"],
-              ["cutoff_length", "Ang", 100.0, [0.0, inf], "", "Cut-off length"],
-             ]
+#   ["name", "units", default, [lower, upper], "type","description"],
+parameters = [
+    ["radius",           "Ang",  10.0, [0.0, inf], "", "Particle radius"],
+    ["fractal_dim_mass", "",      1.9, [1.0, 6.0], "", "Mass fractal dimension"],
+    ["cutoff_length",    "Ang", 100.0, [0.0, inf], "", "Cut-off length"],
+]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sph_j1c.c", "lib/sas_gamma.c", "mass_fractal.c"]
+source = ["lib/sas_3j1x_x.c", "lib/sas_gamma.c", "mass_fractal.c"]
+
+def random():
+    radius = 10**np.random.uniform(0.7, 4)
+    cutoff_length = 10**np.random.uniform(0.7, 2)*radius
+    # TODO: fractal dimension should range from 1 to 6
+    fractal_dim_mass = 2*np.random.beta(3, 4) + 1
+    #volfrac = 10**np.random.uniform(-4, -1)
+    pars = dict(
+        #background=0,
+        scale=1, #1e5*volfrac/radius**(fractal_dim_mass),
+        radius=radius,
+        cutoff_length=cutoff_length,
+        fractal_dim_mass=fractal_dim_mass,
+    )
+    return pars
 
 demo = dict(scale=1, background=0,
             radius=10.0,
-            mass_dim=1.9,
+            fractal_dim_mass=1.9,
             cutoff_length=100.0)
 
 tests = [
 
     # Accuracy tests based on content in test/utest_other_models.py
     [{'radius':         10.0,
-      'mass_dim':        1.9,
+      'fractal_dim_mass':        1.9,
       'cutoff_length': 100.0,
      }, 0.05, 279.59422],
 
     # Additional tests with larger range of parameters
     [{'radius':        2.0,
-      'mass_dim':      3.3,
+      'fractal_dim_mass':      3.3,
       'cutoff_length': 1.0,
      }, 0.5, 1.29116774904],
 
     [{'radius':        1.0,
-      'mass_dim':      1.3,
+      'fractal_dim_mass':      1.3,
       'cutoff_length': 1.0,
       'background':    0.8,
      }, 0.001, 1.69747015932],
 
     [{'radius':        1.0,
-      'mass_dim':      2.3,
+      'fractal_dim_mass':      2.3,
       'cutoff_length': 1.0,
       'scale':        10.0,
      }, 0.051, 11.6237966145],

@@ -1,97 +1,82 @@
-double form_volume(double a_side, double b2a_ratio, double c2a_ratio);
-double Iq(double q, double sld, double solvent_sld, double a_side, 
-          double b2a_ratio, double c2a_ratio);
-double Iqxy(double qx, double qy, double sld, double solvent_sld, 
-            double a_side, double b2a_ratio, double c2a_ratio);
-
-double form_volume(double a_side, double b2a_ratio, double c2a_ratio)
+static double
+form_volume(double length_a, double b2a_ratio, double c2a_ratio)
 {
-    double b_side = a_side * b2a_ratio;
-    double c_side = a_side * c2a_ratio;
-    double vol_shell = 2.0 * (a_side*b_side + a_side*c_side + b_side*c_side);
+    double length_b = length_a * b2a_ratio;
+    double length_c = length_a * c2a_ratio;
+    double vol_shell = 2.0 * (length_a*length_b + length_a*length_c + length_b*length_c);
     return vol_shell;
 }
 
-double Iq(double q,
+static double
+Iq(double q,
     double sld,
     double solvent_sld,
-    double a_side,
+    double length_a,
     double b2a_ratio,
     double c2a_ratio)
 {
-    double b_side = a_side * b2a_ratio;
-    double c_side = a_side * c2a_ratio;
-    double a_half = 0.5 * a_side;
-    double b_half = 0.5 * b_side;
-    double c_half = 0.5 * c_side;
+    const double length_b = length_a * b2a_ratio;
+    const double length_c = length_a * c2a_ratio;
+    const double a_half = 0.5 * length_a;
+    const double b_half = 0.5 * length_b;
+    const double c_half = 0.5 * length_c;
 
    //Integration limits to use in Gaussian quadrature
-    double v1a = 0.0;
-    double v1b = 0.5 * M_PI;  //theta integration limits
-    double v2a = 0.0;
-    double v2b = 0.5 * M_PI;  //phi integration limits
-    
-    //Order of integration
-    int nordi=76;			        
-    int nordj=76;
+    const double v1a = 0.0;
+    const double v1b = M_PI_2;  //theta integration limits
+    const double v2a = 0.0;
+    const double v2b = M_PI_2;  //phi integration limits
 
-    double sumi = 0.0;
-    
-    for(int i=0; i<nordi; i++) {
+    double outer_sum = 0.0;
+    for(int i=0; i<GAUSS_N; i++) {
+        const double theta = 0.5 * ( GAUSS_Z[i]*(v1b-v1a) + v1a + v1b );
 
-	    double theta = 0.5 * ( Gauss76Z[i]*(v1b-v1a) + v1a + v1b );	
-        
+        double sin_theta, cos_theta;
+        double sin_c, cos_c;
+        SINCOS(theta, sin_theta, cos_theta);
+        SINCOS(q*c_half*cos_theta, sin_c, cos_c);
+
         // To check potential problems if denominator goes to zero here !!!
-        double termAL_theta = 8.0*cos(q*c_half*cos(theta)) / (q*q*sin(theta)*sin(theta));
-        double termAT_theta = 8.0*sin(q*c_half*cos(theta)) / (q*q*sin(theta)*cos(theta));
+        const double termAL_theta = 8.0 * cos_c / (q*q*sin_theta*sin_theta);
+        const double termAT_theta = 8.0 * sin_c / (q*q*sin_theta*cos_theta);
 
-	    double sumj = 0.0;
-        
-	    for(int j=0; j<nordj; j++) {
+        double inner_sum = 0.0;
+        for(int j=0; j<GAUSS_N; j++) {
+            const double phi = 0.5 * ( GAUSS_Z[j]*(v2b-v2a) + v2a + v2b );
 
-            double phi = 0.5 * ( Gauss76Z[j]*(v2b-v2a) + v2a + v2b ); 
-            
+            double sin_phi, cos_phi;
+            double sin_a, cos_a;
+            double sin_b, cos_b;
+            SINCOS(phi, sin_phi, cos_phi);
+            SINCOS(q*a_half*sin_theta*sin_phi, sin_a, cos_a);
+            SINCOS(q*b_half*sin_theta*cos_phi, sin_b, cos_b);
+
             // Amplitude AL from eqn. (7c)
-            double AL = termAL_theta * sin(q*a_half*sin(theta)*sin(phi)) * 
-                sin(q*b_half*sin(theta)*cos(phi)) / (sin(phi)*cos(phi));
+            const double AL = termAL_theta
+                * sin_a*sin_b / (sin_phi*cos_phi);
 
             // Amplitude AT from eqn. (9)
-            double AT = termAT_theta * (  (cos(q*a_half*sin(theta)*sin(phi))*sin(q*b_half*sin(theta)*cos(phi))/cos(phi)) 
-                + (cos(q*b_half*sin(theta)*cos(phi))*sin(q*a_half*sin(theta)*sin(phi))/sin(phi)) );
+            const double AT = termAT_theta
+                * ( cos_a*sin_b/cos_phi + cos_b*sin_a/sin_phi );
 
-            sumj += Gauss76Wt[j] * (AL+AT)*(AL+AT);
+            inner_sum += GAUSS_W[j] * square(AL+AT);
+        }
 
-	    }
-
-	    sumj = 0.5 * (v2b-v2a) * sumj;
-	    sumi += Gauss76Wt[i] * sumj * sin(theta);
-
+        inner_sum *= 0.5 * (v2b-v2a);
+        outer_sum += GAUSS_W[i] * inner_sum * sin_theta;
     }
 
-    double answer = 0.5*(v1b-v1a)*sumi;
+    outer_sum *= 0.5*(v1b-v1a);
 
     // Normalize as in Eqn. (15) without the volume factor (as cancels with (V*DelRho)^2 normalization)
     // The factor 2 is due to the different theta integration limit (pi/2 instead of pi)
-    answer *= (2.0/M_PI);
+    double answer = outer_sum/M_PI_2;
 
     // Multiply by contrast^2. Factor corresponding to volume^2 cancels with previous normalization.
-    answer *= (sld-solvent_sld)*(sld-solvent_sld);
+    answer *= square(sld-solvent_sld);
 
     // Convert from [1e-12 A-1] to [cm-1]
     answer *= 1.0e-4;
 
     return answer;
-    
-}
-
-double Iqxy(double qx, double qy,
-    double sld,
-    double solvent_sld,
-    double a_side,
-    double b2a_ratio,
-    double c2a_ratio)
-{
-    double q = sqrt(qx*qx + qy*qy);
-    double intensity = Iq(q, sld, solvent_sld, a_side, b2a_ratio, c2a_ratio); 
-    return intensity;    
 }

@@ -45,7 +45,7 @@ orientation of the *q* vector.
 The returned value is scaled to units of |cm^-1| and the parameters of the
 pearl_necklace model are the following
 
-NB: *number_of_pearls* must be an integer.
+NB: *num_pearls* must be an integer.
 
 References
 ----------
@@ -54,6 +54,7 @@ R Schweins and K Huber, *Particle Scattering Factor of Pearl Necklace Chains*,
 *Macromol. Symp.* 211 (2004) 25-42 2004
 """
 
+import numpy as np
 from numpy import inf, pi
 
 name = "pearl_necklace"
@@ -67,61 +68,76 @@ scale: scale factor
 sld: the SLD of the pearl spheres
 sld_string: the SLD of the strings
 sld_solvent: the SLD of the solvent
-number_of_pearls: number of the pearls
+num_pearls: number of the pearls
 radius: the radius of a pearl
-edge_separation: the length of string segment; surface to surface
-string_thickness: thickness (ie, diameter) of the string
+edge_sep: the length of string segment; surface to surface
+thick_string: thickness (ie, diameter) of the string
 """
 category = "shape:cylinder"
 
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["radius", "Ang", 80.0, [0, inf], "volume",
                "Mean radius of the chained spheres"],
-              ["edge_separation", "Ang", 350.0, [0, inf], "volume",
+              ["edge_sep", "Ang", 350.0, [0, inf], "volume",
                "Mean separation of chained particles"],
-              ["string_thickness", "Ang", 2.5, [0, inf], "volume",
+              ["thick_string", "Ang", 2.5, [0, inf], "volume",
                "Thickness of the chain linkage"],
-              ["number_of_pearls", "none", 3, [0, inf], "volume",
+              ["num_pearls", "none", 3, [1, inf], "volume",
                "Number of pearls in the necklace (must be integer)"],
-              ["sld", "1e-6/Ang^2", 1.0, [-inf, inf], "",
+              ["sld", "1e-6/Ang^2", 1.0, [-inf, inf], "sld",
                "Scattering length density of the chained spheres"],
-              ["sld_string", "1e-6/Ang^2", 1.0, [-inf, inf], "",
+              ["sld_string", "1e-6/Ang^2", 1.0, [-inf, inf], "sld",
                "Scattering length density of the chain linkage"],
-              ["sld_solvent", "1e-6/Ang^2", 6.3, [-inf, inf], "",
+              ["sld_solvent", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
                "Scattering length density of the solvent"],
              ]
 
-source = ["lib/Si.c", "pearl_necklace.c"]
+source = ["lib/sas_Si.c", "lib/sas_3j1x_x.c", "pearl_necklace.c"]
 single = False  # use double precision unless told otherwise
 
-def volume(radius, edge_separation, string_thickness, number_of_pearls):
+def volume(radius, edge_sep, thick_string, num_pearls):
     """
     Calculates the total particle volume of the necklace.
     Redundant with form_volume.
     """
-    number_of_strings = number_of_pearls - 1.0
-    string_vol = edge_separation * pi * pow((string_thickness / 2.0), 2.0)
+    num_pearls = int(num_pearls + 0.5)
+    number_of_strings = num_pearls - 1.0
+    string_vol = edge_sep * pi * pow((thick_string / 2.0), 2.0)
     pearl_vol = 4.0 /3.0 * pi * pow(radius, 3.0)
     total_vol = number_of_strings * string_vol
-    total_vol += number_of_pearls * pearl_vol
+    total_vol += num_pearls * pearl_vol
     return total_vol
 
-def ER(radius, edge_separation, string_thickness, number_of_pearls):
+def ER(radius, edge_sep, thick_string, num_pearls):
     """
     Calculation for effective radius.
     """
-    tot_vol = volume(radius, edge_separation, string_thickness, number_of_pearls)
-    rad_out = pow((3.0*tot_vol/4.0/pi), 0.33333)
+    num_pearls = int(num_pearls + 0.5)
+    tot_vol = volume(radius, edge_sep, thick_string, num_pearls)
+    rad_out = (tot_vol/(4.0/3.0*pi)) ** (1./3.)
     return rad_out
 
+def random():
+    radius = 10**np.random.uniform(1, 3) # 1 - 1000
+    thick_string = 10**np.random.uniform(0, np.log10(radius)-1) # 1 - radius/10
+    edge_sep = 10**np.random.uniform(0, 3)  # 1 - 1000
+    num_pearls = np.round(10**np.random.uniform(0.3, 3)) # 2 - 1000
+    pars = dict(
+        radius=radius,
+        edge_sep=edge_sep,
+        thick_string=thick_string,
+        num_pearls=num_pearls,
+    )
+    return pars
+
 # parameters for demo
-demo = dict(scale=1, background=0, radius=80.0, edge_separation=350.0,
-            number_of_pearls=3, sld=1, sld_solvent=6.3, sld_string=1,
-            string_thickness=2.5,
+demo = dict(scale=1, background=0, radius=80.0, edge_sep=350.0,
+            num_pearls=3, sld=1, sld_solvent=6.3, sld_string=1,
+            thick_string=2.5,
             radius_pd=.2, radius_pd_n=5,
-            edge_separation_pd=25.0, edge_separation_pd_n=5,
-            number_of_pearls_pd=0, number_of_pearls_pd_n=0,
-            string_thickness_pd=0.2, string_thickness_pd_n=5,
+            edge_sep_pd=25.0, edge_sep_pd_n=5,
+            num_pearls_pd=0, num_pearls_pd_n=0,
+            thick_string_pd=0.2, thick_string_pd_n=5,
            )
 
 tests = [[{}, 0.001, 17380.245], [{}, 'ER', 115.39502]]

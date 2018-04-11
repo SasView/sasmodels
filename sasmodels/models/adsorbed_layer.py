@@ -1,8 +1,7 @@
-#adsorbed_layer model
-#conversion of Core2ndMomentModel.py
-#converted by Steve King, Mar 2016
-
 r"""
+Definition
+----------
+
 This model describes the scattering from a layer of surfactant or polymer
 adsorbed on large, smooth, notionally spherical particles under the conditions
 that (i) the particles (cores) are contrast-matched to the dispersion medium,
@@ -18,9 +17,6 @@ homogeneous step-function). For comparison, if the thickness of a (traditional
 core-shell like) step function distribution is $t$, the second moment about
 the mean of the density distribution (ie, the distance of the centre-of-mass
 of the distribution from the interface), $\sigma = \sqrt{t^2/12}$.
-
-Definition
-----------
 
 .. math::
 
@@ -43,14 +39,25 @@ than one of these parameters will generally fail. Also note that unlike
 other shape models, no volume normalization is applied to this model (the
 calculation is exact).
 
+The code for this model is based originally on a a fortran implementation by
+Steve King at ISIS in the SANDRA package c. 1990.
+
 References
 ----------
 
-S King, P Griffiths, J Hone, and T Cosgrove,
-*SANS from Adsorbed Polymer Layers*, *Macromol. Symp.*, 190 (2002) 33-42.
+.. [#] S King, P Griffiths, J Hone, and T Cosgrove, *SANS from Adsorbed Polymer
+   Layers*, *Macromol. Symp.*, 190 (2002) 33-42.
+
+Authorship and Verification
+----------------------------
+
+* **Author:** Jae-Hi Cho **Date:** pre 2010
+* **Last Modified by:** Paul Kienzle **Date:** April 14, 2016
+* **Last Reviewed by:** Steve King **Date:** March 18, 2016
 """
 
-from numpy import inf, sqrt, pi, exp
+import numpy as np
+from numpy import inf, pi, exp, errstate
 
 name = "adsorbed_layer"
 title = "Scattering from an adsorbed layer on particles"
@@ -67,8 +74,8 @@ category = "shape:sphere"
 #   ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [
     ["second_moment", "Ang", 23.0, [0.0, inf], "", "Second moment of polymer distribution"],
-    ["adsorbed_amount", "mg/m2", 1.9, [0.0, inf], "", "Adsorbed amount of polymer"],
-    ["density_shell", "g/cm3", 0.7, [0.0, inf], "", "Bulk density of polymer in the shell"],
+    ["adsorbed_amount", "mg/m^2", 1.9, [0.0, inf], "", "Adsorbed amount of polymer"],
+    ["density_shell", "g/cm^3", 0.7, [0.0, inf], "", "Bulk density of polymer in the shell"],
     ["radius", "Ang", 500.0, [0.0, inf], "", "Core particle radius"],
     ["volfraction", "None", 0.14, [0.0, inf], "", "Core particle volume fraction"],
     ["sld_shell", "1e-6/Ang^2", 1.5, [-inf, inf], "sld", "Polymer shell SLD"],
@@ -79,27 +86,28 @@ parameters = [
 # NB: Scale and Background are implicit parameters on every model
 def Iq(q, second_moment, adsorbed_amount, density_shell, radius,
        volfraction, sld_shell, sld_solvent):
-    # pylint: disable = missing-docstring
-    #deltarhosqrd =  (sld_shell - sld_solvent) * (sld_shell - sld_solvent)
-    #numerator =  6.0 * pi * volfraction * (adsorbed_amount * adsorbed_amount)
-    #denominator =  (q * q) * (density_shell * density_shell) * radius
-    #eterm =  exp(-1.0 * (q * q) * (second_moment * second_moment))
-    ##scale by 10^-2 for units conversion to cm^-1
-    #inten =  1.0e-02 * deltarhosqrd * ((numerator / denominator) * eterm)
-    aa = (sld_shell - sld_solvent) * adsorbed_amount / q / density_shell
+    with errstate(divide='ignore'):
+        aa = ((sld_shell - sld_solvent)/density_shell * adsorbed_amount) / q
     bb = q * second_moment
     #scale by 10^-2 for units conversion to cm^-1
-    inten = 6.0e-02 * pi * volfraction * aa * aa * exp(-bb * bb) / radius
+    inten = 6.0e-02 * pi * volfraction * aa**2 * exp(-bb**2) / radius
     return inten
-Iq.vectorized =  True  # Iq accepts an array of q values
+Iq.vectorized = True  # Iq accepts an array of q values
 
-def Iqxy(qx, qy, *args):
-    # pylint: disable = missing-docstring
-    return Iq(sqrt(qx ** 2 + qy ** 2), *args)
-Iqxy.vectorized = True # Iqxy accepts an array of qx, qy values
+def random():
+    # only care about the value of second_moment:
+    #    curve = scale * e**(-second_moment^2 q^2)/q^2
+    #    scale = 6 pi/100 (contrast/density*absorbed_amount)^2 * Vf/radius
+    # the remaining parameters can be randomly generated from zero to
+    # twice the default value as done by default in compare.py
+    pars = dict(
+        scale=1,
+        second_moment=10**np.random.uniform(1, 3),
+    )
+    return pars
 
 # unit test values taken from SasView 3.1.2
-tests =  [
+tests = [
     [{'scale': 1.0, 'second_moment': 23.0, 'adsorbed_amount': 1.9,
       'density_shell': 0.7, 'radius': 500.0, 'volfraction': 0.14,
       'sld_shell': 1.5, 'sld_solvent': 6.3, 'background': 0.0},

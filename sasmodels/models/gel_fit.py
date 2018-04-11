@@ -7,7 +7,7 @@ a shorter correlation length ( $a1$ ) to describe the rapid fluctuations
 in the position of the polymer chains that ensure thermodynamic equilibrium,
 and a longer distance (denoted here as $a2$ ) needed to account for the static
 accumulations of polymer pinned down by junction points or clusters of such
-points. The latter is derived from a simple Guinier function. Compare also the 
+points. The latter is derived from a simple Guinier function. Compare also the
 gauss_lorentz_gel model.
 
 
@@ -41,9 +41,9 @@ Mitsuhiro Shibayama, Toyoichi Tanaka, Charles C Han,
 
 Simon Mallam, Ferenc Horkay, Anne-Marie Hecht, Adrian R Rennie, Erik Geissler,
 *Macromolecules* 1991, 24, 543-548
-
 """
 
+import numpy as np
 from numpy import inf
 
 name = "gel_fit"
@@ -61,34 +61,51 @@ category = "shape-independent"
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["guinier_scale",    "cm^-1",   1.7, [-inf, inf], "", "Guinier length scale"],
-              ["lorentzian_scale", "cm^-1",   3.5, [-inf, inf], "", "Lorentzian length scale"],
-              ["gyration_radius",  "Ang",     104.0, [2, inf],    "", "Radius of gyration"],
-              ["fractal_exp",      "",          2.0, [0, inf],    "", "Fractal exponent"],
+              ["lorentz_scale", "cm^-1",   3.5, [-inf, inf], "", "Lorentzian length scale"],
+              ["rg",  "Ang",     104.0, [2, inf],    "", "Radius of gyration"],
+              ["fractal_dim",      "",          2.0, [0, inf],    "", "Fractal exponent"],
               ["cor_length",       "Ang",      16.0, [0, inf],    "", "Correlation length"]
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["gel_fit.c"]
 
+def random():
+    guinier_scale = 10**np.random.uniform(1, 3)
+    lorentz_scale = 10**np.random.uniform(1, 3)
+    rg = 10**np.random.uniform(1, 5)
+    fractal_dim = np.random.uniform(0, 6)
+    cor_length = 10**np.random.uniform(0, 3)
+    pars = dict(
+        #background=0,
+        scale=1,
+        guinier_scale=guinier_scale,
+        lorentz_scale=lorentz_scale,
+        rg=rg,
+        fractal_dim=fractal_dim,
+        cor_length=cor_length
+    )
+    return pars
+
 demo = dict(background=0.01,
             guinier_scale=1.7,
-            lorentzian_scale=3.5,
-            gyration_radius=104,
-            fractal_exp=2.0,
+            lorentz_scale=3.5,
+            rg=104,
+            fractal_dim=2.0,
             cor_length=16.0)
 
 tests = [[{'guinier_scale': 1.0,
-           'lorentzian_scale': 1.0,
-           'gyration_radius': 10.0,
-           'fractal_exp': 10.0,
+           'lorentz_scale': 1.0,
+           'rg': 10.0,
+           'fractal_dim': 10.0,
            'cor_length': 20.0,
            'background': 0.0,
           }, 0.1, 0.716532],
 
          [{'guinier_scale': 4.0,
-           'lorentzian_scale': 10.0,
-           'gyration_radius': 500.0,
-           'fractal_exp': 1.0,
+           'lorentz_scale': 10.0,
+           'rg': 500.0,
+           'fractal_dim': 1.0,
            'cor_length': 20.0,
            'background': 20.0,
           }, 5.0, 20.1224653026],

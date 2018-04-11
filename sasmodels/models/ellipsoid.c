@@ -1,62 +1,52 @@
-double form_volume(double rpolar, double requatorial);
-double Iq(double q, double sld, double solvent_sld, double rpolar, double requatorial);
-double Iqxy(double qx, double qy, double sld, double solvent_sld,
-    double rpolar, double requatorial, double theta, double phi);
-
-double _ellipsoid_kernel(double q, double rpolar, double requatorial, double sin_alpha);
-double _ellipsoid_kernel(double q, double rpolar, double requatorial, double sin_alpha)
+static double
+form_volume(double radius_polar, double radius_equatorial)
 {
-    double ratio = rpolar/requatorial;
-    const double u = q*requatorial*sqrt(1.0
-                   + sin_alpha*sin_alpha*(ratio*ratio - 1.0));
-    const double f = sph_j1c(u);
-
-    return f*f;
+    return M_4PI_3*radius_polar*radius_equatorial*radius_equatorial;
 }
 
-double form_volume(double rpolar, double requatorial)
-{
-    return M_4PI_3*rpolar*requatorial*requatorial;
-}
-
-double Iq(double q,
+static  double
+Iq(double q,
     double sld,
-    double solvent_sld,
-    double rpolar,
-    double requatorial)
+    double sld_solvent,
+    double radius_polar,
+    double radius_equatorial)
 {
+    // Using ratio v = Rp/Re, we can implement the form given in Guinier (1955)
+    //     i(h) = int_0^pi/2 Phi^2(h a sqrt(cos^2 + v^2 sin^2) cos dT
+    //          = int_0^pi/2 Phi^2(h a sqrt((1-sin^2) + v^2 sin^2) cos dT
+    //          = int_0^pi/2 Phi^2(h a sqrt(1 + sin^2(v^2-1)) cos dT
+    // u-substitution of
+    //     u = sin, du = cos dT
+    //     i(h) = int_0^1 Phi^2(h a sqrt(1 + u^2(v^2-1)) du
+    const double v_square_minus_one = square(radius_polar/radius_equatorial) - 1.0;
+
     // translate a point in [-1,1] to a point in [0, 1]
+    // const double u = GAUSS_Z[i]*(upper-lower)/2 + (upper+lower)/2;
     const double zm = 0.5;
     const double zb = 0.5;
     double total = 0.0;
-    for (int i=0;i<76;i++) {
-        //const double sin_alpha = (Gauss76Z[i]*(upper-lower) + upper + lower)/2;
-        const double sin_alpha = Gauss76Z[i]*zm + zb;
-        total += Gauss76Wt[i] * _ellipsoid_kernel(q, rpolar, requatorial, sin_alpha);
+    for (int i=0;i<GAUSS_N;i++) {
+        const double u = GAUSS_Z[i]*zm + zb;
+        const double r = radius_equatorial*sqrt(1.0 + u*u*v_square_minus_one);
+        const double f = sas_3j1x_x(q*r);
+        total += GAUSS_W[i] * f * f;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     const double form = total*zm;
-    const double s = (sld - solvent_sld) * form_volume(rpolar, requatorial);
+    const double s = (sld - sld_solvent) * form_volume(radius_polar, radius_equatorial);
     return 1.0e-4 * s * s * form;
 }
 
-double Iqxy(double qx, double qy,
+static double
+Iqac(double qab, double qc,
     double sld,
-    double solvent_sld,
-    double rpolar,
-    double requatorial,
-    double theta,
-    double phi)
+    double sld_solvent,
+    double radius_polar,
+    double radius_equatorial)
 {
-    double sn, cn;
+    const double qr = sqrt(square(radius_equatorial*qab) + square(radius_polar*qc));
+    const double f = sas_3j1x_x(qr);
+    const double s = (sld - sld_solvent) * form_volume(radius_polar, radius_equatorial);
 
-    const double q = sqrt(qx*qx + qy*qy);
-    SINCOS(theta*M_PI_180, sn, cn);
-    // TODO: check if this is actually sin(alpha), not cos(alpha)
-    const double cos_alpha = cn*cos(phi*M_PI_180)*(qx/q) + sn*(qy/q);
-    const double form = _ellipsoid_kernel(q, rpolar, requatorial, cos_alpha);
-    const double s = (sld - solvent_sld) * form_volume(rpolar, requatorial);
-
-    return 1.0e-4 * form * s * s;
+    return 1.0e-4 * square(f * s);
 }
-

@@ -1,115 +1,121 @@
-double form_volume(double a_side, double b2a_ratio, double c2a_ratio, double thickness);
-double Iq(double q, double sld, double solvent_sld, double a_side, 
-          double b2a_ratio, double c2a_ratio, double thickness);
-double Iqxy(double qx, double qy, double sld, double solvent_sld, 
-            double a_side, double b2a_ratio, double c2a_ratio, double thickness);
-
-double form_volume(double a_side, double b2a_ratio, double c2a_ratio, double thickness)
+static double
+form_volume(double length_a, double b2a_ratio, double c2a_ratio, double thickness)
 {
-    double b_side = a_side * b2a_ratio;
-    double c_side = a_side * c2a_ratio;
-    double a_core = a_side - 2.0*thickness;
-    double b_core = b_side - 2.0*thickness;
-    double c_core = c_side - 2.0*thickness;
+    double length_b = length_a * b2a_ratio;
+    double length_c = length_a * c2a_ratio;
+    double a_core = length_a - 2.0*thickness;
+    double b_core = length_b - 2.0*thickness;
+    double c_core = length_c - 2.0*thickness;
     double vol_core = a_core * b_core * c_core;
-    double vol_total = a_side * b_side * c_side;
+    double vol_total = length_a * length_b * length_c;
     double vol_shell = vol_total - vol_core;
     return vol_shell;
 }
 
-double Iq(double q,
+static double
+Iq(double q,
     double sld,
     double solvent_sld,
-    double a_side,
+    double length_a,
     double b2a_ratio,
     double c2a_ratio,
     double thickness)
 {
-    double termA1, termA2, termB1, termB2, termC1, termC2;
-    
-    double b_side = a_side * b2a_ratio;
-    double c_side = a_side * c2a_ratio;
-    double a_half = 0.5 * a_side;
-    double b_half = 0.5 * b_side;
-    double c_half = 0.5 * c_side;
+    const double length_b = length_a * b2a_ratio;
+    const double length_c = length_a * c2a_ratio;
+    const double a_half = 0.5 * length_a;
+    const double b_half = 0.5 * length_b;
+    const double c_half = 0.5 * length_c;
+    const double vol_total = length_a * length_b * length_c;
+    const double vol_core = 8.0 * (a_half-thickness) * (b_half-thickness) * (c_half-thickness);
 
-   //Integration limits to use in Gaussian quadrature
-    double v1a = 0.0;
-    double v1b = 0.5 * M_PI;  //theta integration limits
-    double v2a = 0.0;
-    double v2b = 0.5 * M_PI;  //phi integration limits
-    
-    //Order of integration
-    int nordi=76;			        
-    int nordj=76;
+    //Integration limits to use in Gaussian quadrature
+    const double v1a = 0.0;
+    const double v1b = M_PI_2;  //theta integration limits
+    const double v2a = 0.0;
+    const double v2b = M_PI_2;  //phi integration limits
 
-    double sumi = 0.0;
-    
-    for(int i=0; i<nordi; i++) {
+    double outer_sum = 0.0;
+    for(int i=0; i<GAUSS_N; i++) {
 
-	    double theta = 0.5 * ( Gauss76Z[i]*(v1b-v1a) + v1a + v1b );	
+        const double theta = 0.5 * ( GAUSS_Z[i]*(v1b-v1a) + v1a + v1b );
+        double sin_theta, cos_theta;
+        SINCOS(theta, sin_theta, cos_theta);
 
-	    double arg = q * c_half * cos(theta);
-	    if (fabs(arg) > 1.e-16) {termC1 = sin(arg)/arg;} else {termC1 = 1.0;}
-	    arg = q * (c_half-thickness)*cos(theta);
-	    if (fabs(arg) > 1.e-16) {termC2 = sin(arg)/arg;} else {termC2 = 1.0;}
+        const double termC1 = sas_sinx_x(q * c_half * cos(theta));
+        const double termC2 = sas_sinx_x(q * (c_half-thickness)*cos(theta));
 
-	    double sumj = 0.0;
-        
-	    for(int j=0; j<nordj; j++) {
+        double inner_sum = 0.0;
+        for(int j=0; j<GAUSS_N; j++) {
 
-            double phi = 0.5 * ( Gauss76Z[j]*(v2b-v2a) + v2a + v2b ); 
+            const double phi = 0.5 * ( GAUSS_Z[j]*(v2b-v2a) + v2a + v2b );
+            double sin_phi, cos_phi;
+            SINCOS(phi, sin_phi, cos_phi);
 
             // Amplitude AP from eqn. (13), rewritten to avoid round-off effects when arg=0
 
-	        arg = q * a_half * sin(theta) * sin(phi);
-	        if (fabs(arg) > 1.e-16) {termA1 = sin(arg)/arg;} else {termA1 = 1.0;}
-	        arg = q * (a_half-thickness) * sin(theta) * sin(phi);
-	        if (fabs(arg) > 1.e-16) {termA2 = sin(arg)/arg;} else {termA2 = 1.0;}
+            const double termA1 = sas_sinx_x(q * a_half * sin_theta * sin_phi);
+            const double termA2 = sas_sinx_x(q * (a_half-thickness) * sin_theta * sin_phi);
 
-	        arg = q * b_half * sin(theta) * cos(phi);
-	        if (fabs(arg) > 1.e-16) {termB1 = sin(arg)/arg;} else {termB1 = 1.0;}
-	        arg = q * (b_half-thickness) * sin(theta) * cos(phi);
-	        if (fabs(arg) > 1.e-16) {termB2 = sin(arg)/arg;} else {termB2 = 1.0;}
+            const double termB1 = sas_sinx_x(q * b_half * sin_theta * cos_phi);
+            const double termB2 = sas_sinx_x(q * (b_half-thickness) * sin_theta * cos_phi);
 
-            double AP1 = (a_side*b_side*c_side) * termA1 * termB1 * termC1;
-            double AP2 = 8.0 * (a_half-thickness) * (b_half-thickness) * (c_half-thickness) * termA2 * termB2 * termC2;
-            double AP = AP1 - AP2;
+            const double AP1 = vol_total * termA1 * termB1 * termC1;
+            const double AP2 = vol_core * termA2 * termB2 * termC2;
 
-	        sumj += Gauss76Wt[j] * (AP*AP);
+            inner_sum += GAUSS_W[j] * square(AP1-AP2);
+        }
+        inner_sum *= 0.5 * (v2b-v2a);
 
-	    }
-
-	    sumj = 0.5 * (v2b-v2a) * sumj;
-	    sumi += Gauss76Wt[i] * sumj * sin(theta);
-
+        outer_sum += GAUSS_W[i] * inner_sum * sin(theta);
     }
-
-    double answer = 0.5*(v1b-v1a)*sumi;
+    outer_sum *= 0.5*(v1b-v1a);
 
     // Normalize as in Eqn. (15) without the volume factor (as cancels with (V*DelRho)^2 normalization)
     // The factor 2 is due to the different theta integration limit (pi/2 instead of pi)
-    answer *= (2.0/M_PI);
+    const double form = outer_sum/M_PI_2;
 
     // Multiply by contrast^2. Factor corresponding to volume^2 cancels with previous normalization.
-    answer *= (sld-solvent_sld)*(sld-solvent_sld);
+    const double delrho = sld - solvent_sld;
 
     // Convert from [1e-12 A-1] to [cm-1]
-    answer *= 1.0e-4;
-
-    return answer;
-    
+    return 1.0e-4 * delrho * delrho * form;
 }
 
-double Iqxy(double qx, double qy,
+static double
+Iqabc(double qa, double qb, double qc,
     double sld,
     double solvent_sld,
-    double a_side,
+    double length_a,
     double b2a_ratio,
     double c2a_ratio,
     double thickness)
 {
-    double q = sqrt(qx*qx + qy*qy);
-    double intensity = Iq(q, sld, solvent_sld, a_side, b2a_ratio, c2a_ratio, thickness); 
-    return intensity;    
+    const double length_b = length_a * b2a_ratio;
+    const double length_c = length_a * c2a_ratio;
+    const double a_half = 0.5 * length_a;
+    const double b_half = 0.5 * length_b;
+    const double c_half = 0.5 * length_c;
+    const double vol_total = length_a * length_b * length_c;
+    const double vol_core = 8.0 * (a_half-thickness) * (b_half-thickness) * (c_half-thickness);
+
+    // Amplitude AP from eqn. (13)
+
+    const double termA1 = sas_sinx_x(qa * a_half);
+    const double termA2 = sas_sinx_x(qa * (a_half-thickness));
+
+    const double termB1 = sas_sinx_x(qb * b_half);
+    const double termB2 = sas_sinx_x(qb * (b_half-thickness));
+
+    const double termC1 = sas_sinx_x(qc * c_half);
+    const double termC2 = sas_sinx_x(qc * (c_half-thickness));
+
+    const double AP1 = vol_total * termA1 * termB1 * termC1;
+    const double AP2 = vol_core * termA2 * termB2 * termC2;
+
+    // Multiply by contrast^2. Factor corresponding to volume^2 cancels with previous normalization.
+    const double delrho = sld - solvent_sld;
+
+    // Convert from [1e-12 A-1] to [cm-1]
+    return 1.0e-4 * square(delrho * (AP1-AP2));
 }
