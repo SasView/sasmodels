@@ -4,10 +4,10 @@ r"""
 Definition
 ----------
 
- This model calculates the scattering from a rectangular parallelepiped
- (:numref:`parallelepiped-image`).
- If you need to apply polydispersity, see also :ref:`rectangular-prism`. For
- information about polarised and magnetic scattering, see
+This model calculates the scattering from a rectangular parallelepiped
+(:numref:`parallelepiped-image`).
+If you need to apply polydispersity, see also :ref:`rectangular-prism`. For
+information about polarised and magnetic scattering, see
 the :ref:`magnetism` documentation.
 
 .. _parallelepiped-image:
@@ -43,7 +43,7 @@ where the volume $V = A B C$, the contrast is defined as
 $\Delta\rho = \rho_\text{p} - \rho_\text{solvent}$, $P(q, \alpha, \beta)$
 is the form factor corresponding to a parallelepiped oriented
 at an angle $\alpha$ (angle between the long axis C and $\vec q$), and $\beta$
-( the angle between the projection of the particle in the $xy$ detector plane
+(the angle between the projection of the particle in the $xy$ detector plane
 and the $y$ axis) and the averaging $\left<\ldots\right>$ is applied over all
 orientations.
 
