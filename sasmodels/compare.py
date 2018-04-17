@@ -1375,7 +1375,7 @@ def show_docs(opts):
     html = make_html(info)
     path = os.path.dirname(info.filename)
     url = "file://" + path.replace("\\", "/")[2:] + "/"
-    rst2html.view_html_qtapp(html, url)
+    rst2html.view_html_wxapp(html, url)
 
 def explore(opts):
     # type: (Dict[str, Any]) -> None
