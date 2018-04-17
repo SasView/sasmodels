@@ -751,16 +751,19 @@ def compare(opts, limits=None, maxdim=np.inf):
     *maxdim* is the maximum value for any parameter with units of Angstrom.
     """
     for k in range(opts['sets']):
-        if k > 1:
+        if k > 0:
             # print a separate seed for each dataset for better reproducibility
             new_seed = np.random.randint(1000000)
-            print("Set %d uses -random=%i"%(k+1, new_seed))
+            print("=== Set %d uses -random=%i ==="%(k+1, new_seed))
             np.random.seed(new_seed)
         opts['pars'] = parse_pars(opts, maxdim=maxdim)
         if opts['pars'] is None:
             return
         result = run_models(opts, verbose=True)
         if opts['plot']:
+            if opts['is2d'] and k > 0:
+                import matplotlib.pyplot as plt
+                plt.figure()
             limits = plot_models(opts, result, limits=limits, setnum=k)
         if opts['show_weights']:
             base, _ = opts['engines']
@@ -1328,18 +1331,21 @@ def parse_pars(opts, maxdim=np.inf):
             presets2.setdefault(k+'_n', 35.)
 
     # Evaluate preset parameter expressions
+    # Note: need to replace ':' with '_' in parameter names and expressions
+    # in order to support math on magnetic parameters.
     context = MATH.copy()
     context['np'] = np
-    context.update(pars)
+    context.update((k.replace(':', '_'), v) for k, v in pars.items())
     context.update((k, v) for k, v in presets.items() if isinstance(v, float))
+    #for k,v in sorted(context.items()): print(k, v)
     for k, v in presets.items():
         if not isinstance(v, float) and not k.endswith('_type'):
-            presets[k] = eval(v, context)
+            presets[k] = eval(v.replace(':', '_'), context)
     context.update(presets)
-    context.update((k, v) for k, v in presets2.items() if isinstance(v, float))
+    context.update((k.replace(':', '_'), v) for k, v in presets2.items() if isinstance(v, float))
     for k, v in presets2.items():
         if not isinstance(v, float) and not k.endswith('_type'):
-            presets2[k] = eval(v, context)
+            presets2[k] = eval(v.replace(':', '_'), context)
 
     # update parameters with presets
     pars.update(presets)  # set value after random to control value

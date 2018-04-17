@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 import numpy as np
 import mpmath as mp
-from numpy import pi, sin, cos, sqrt, exp, expm1, degrees, log10
+from numpy import pi, sin, cos, sqrt, exp, expm1, degrees, log10, arccos
 from numpy.polynomial.legendre import leggauss
 from scipy.integrate import dblquad, simps, romb, romberg
 import pylab
@@ -40,6 +40,8 @@ import sasmodels.special as sp
 # that will be used for the various integrators
 shape = 'parallelepiped' if len(sys.argv) < 2 else sys.argv[1]
 Qstr = '0.005' if len(sys.argv) < 3 else sys.argv[2]
+
+DTYPE = 'd'
 
 class MPenv:
     sqrt = staticmethod(mp.sqrt)
@@ -71,7 +73,8 @@ class NPenv:
     sas_2J1x_x = staticmethod(sp.sas_2J1x_x)
     sas_sinx_x = staticmethod(sp.sas_sinx_x)
     pi = np.pi
-    mpf = staticmethod(float)
+    #mpf = staticmethod(float)
+    mpf = staticmethod(lambda x: np.array(x, DTYPE))
 
 SLD = 3
 SLD_SOLVENT = 6
@@ -219,9 +222,13 @@ elif shape == 'parallelepiped':
 elif shape == 'core_shell_parallelepiped':
     #A, B, C = 4450, 14000, 47
     #A, B, C = 445, 140, 47  # integer for the sake of mpf
-    A, B, C = 6800, 114, 1380
-    DA, DB, DC = 2300, 21, 58
+    A, B, C = 114, 1380, 6800
+    DA, DB, DC = 21, 58, 2300
     SLDA, SLDB, SLDC = "5", "-0.3", "11.5"
+    ## default parameters from sasmodels
+    #A,B,C,DA,DB,DC,SLDA,SLDB,SLDC = 400,75,35,10,10,10,2,4,2
+    ## swap A-B-C to C-B-A
+    #A, B, C, DA, DB, DC, SLDA, SLDB, SLDC = C, B, A, DC, DB, DA, SLDC, SLDB, SLDA
     #A,B,C,DA,DB,DC,SLDA,SLDB,SLDC = 10,20,30,100,200,300,1,2,3
     #SLD_SOLVENT,CONTRAST = 0, 4
     if 1: # C shortest
@@ -232,6 +239,7 @@ elif shape == 'core_shell_parallelepiped':
         A, C = C, A
         DA, DC = DC, DA
         SLDA, SLDC = SLDC, SLDA
+    #NORM, KERNEL = make_core_shell_parallelepiped(A, B, C, DA, DB, DC, SLDA, SLDB, SLDC)
     NORM, KERNEL = make_core_shell_parallelepiped(A, B, C, DA, DB, DC, SLDA, SLDB, SLDC)
     NORM_MP, KERNEL_MP = make_core_shell_parallelepiped(A, B, C, DA, DB, DC, SLDA, SLDB, SLDC, env=MPenv)
 elif shape == 'paracrystal':
@@ -347,6 +355,27 @@ def gauss_quad_2d(q, n=150):
     Iq = np.sum(Zq*Aw*sin_theta)*SCALE/(4*pi) * dxdy_stretch
     return n**2, Iq
 
+def gauss_quad_usub(q, n=150, dtype=DTYPE):
+    """
+    Compute the integral using gaussian quadrature for n = 20, 76 or 150.
+
+    Use *u = sin theta* substitution, and restrict integration over a single
+    quadrant for shapes that are mirror symmetric about AB, AC and BC planes.
+
+    Note that this doesn't work for fcc/bcc paracrystals, which instead step
+    over the entire 4 pi surface uniformly in theta-phi.
+    """
+    z, w = leggauss(n)
+    cos_theta = 0.5 * (z + 1)
+    theta = arccos(cos_theta)
+    phi = pi/2*(0.5 * (z + 1))
+    Atheta, Aphi = np.meshgrid(theta, phi)
+    Aw = w[None, :] * w[:, None]
+    q, Atheta, Aphi, Aw = [np.asarray(v, dtype=dtype) for v in (q, Atheta, Aphi, Aw)]
+    Zq = kernel_2d(q=q, theta=Atheta, phi=Aphi)
+    Iq = np.sum(Zq*Aw)*0.25
+    return n**2, Iq
+
 def gridded_2d(q, n=300):
     """
     Compute the integral on a regular grid using rectangular, trapezoidal,
@@ -394,6 +423,9 @@ def main(Qstr):
     print("gauss-500", *gauss_quad_2d(Q, n=500))
     print("gauss-1025", *gauss_quad_2d(Q, n=1025))
     print("gauss-2049", *gauss_quad_2d(Q, n=2049))
+    print("gauss-20 usub", *gauss_quad_usub(Q, n=20))
+    print("gauss-76 usub", *gauss_quad_usub(Q, n=76))
+    print("gauss-150 usub", *gauss_quad_usub(Q, n=150))
     #gridded_2d(Q, n=2**8+1)
     gridded_2d(Q, n=2**10+1)
     #gridded_2d(Q, n=2**12+1)

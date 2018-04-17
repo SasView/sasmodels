@@ -592,10 +592,7 @@ class SasviewModel(object):
         if isinstance(qdist, (list, tuple)):
             # Check whether we have a list of ndarrays [qx,qy]
             qx, qy = qdist
-            if not self._model_info.parameters.has_2d:
-                return self.calculate_Iq(np.sqrt(qx ** 2 + qy ** 2))
-            else:
-                return self.calculate_Iq(qx, qy)
+            return self.calculate_Iq(qx, qy)
 
         elif isinstance(qdist, np.ndarray):
             # We have a simple 1D distribution of q-values
@@ -676,7 +673,8 @@ class SasviewModel(object):
         #weights.plot_weights(self._model_info, pairs)
         call_details, values, is_magnetic = make_kernel_args(calculator, pairs)
         #call_details.show()
-        #print("pairs", pairs)
+        #print("================ parameters ==================")
+        #for p, v in zip(parameters.call_parameters, pairs): print(p.name, v[0])
         #for k, p in enumerate(self._model_info.parameters.call_parameters):
         #    print(k, p.name, *pairs[k])
         #print("params", self.params)
@@ -720,7 +718,7 @@ class SasviewModel(object):
             return np.sum(weight * part) / np.sum(weight * whole)
 
     def set_dispersion(self, parameter, dispersion):
-        # type: (str, weights.Dispersion) -> Dict[str, Any]
+        # type: (str, weights.Dispersion) -> None
         """
         Set the dispersion object for a model parameter
 
@@ -743,7 +741,8 @@ class SasviewModel(object):
             # one instead of trying to assign parameters.
             self.dispersion[parameter] = dispersion.get_pars()
         else:
-            raise ValueError("%r is not a dispersity or orientation parameter")
+            raise ValueError("%r is not a dispersity or orientation parameter"
+                             % parameter)
 
     def _dispersion_mesh(self):
         # type: () -> List[Tuple[np.ndarray, np.ndarray]]
@@ -870,8 +869,22 @@ def test_old_name():
     from sas.models.CylinderModel import CylinderModel
     CylinderModel().evalDistribution([0.1, 0.1])
 
+def magnetic_demo():
+    Model = _make_standard_model('sphere')
+    model = Model()
+    model.setParam('M0:sld', 8)
+    q = np.linspace(-0.35, 0.35, 500)
+    qx, qy = np.meshgrid(q, q)
+    result = model.calculate_Iq(qx.flatten(), qy.flatten())
+    result = result.reshape(qx.shape)
+
+    import pylab
+    pylab.imshow(np.log(result + 0.001))
+    pylab.show()
+
 if __name__ == "__main__":
     print("cylinder(0.1,0.1)=%g"%test_cylinder())
+    #magnetic_demo()
     #test_product()
     #test_structure_factor()
     #print("rpa:", test_rpa())
