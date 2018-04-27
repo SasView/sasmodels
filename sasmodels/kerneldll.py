@@ -122,7 +122,10 @@ if COMPILER == "unix":
     CC = "cc -shared -fPIC -std=c99 -O2 -Wall".split()
     # add openmp support if not running on a mac
     if sys.platform != "darwin":
-        CC.append("-fopenmp")
+        # OpenMP seems to be broken on gcc 5.4.0 (ubuntu 16.04.9)
+        # Shut it off for all unix until we can investigate.
+        #CC.append("-fopenmp")
+        pass
     def compile_command(source, output):
         """unix compiler command"""
         return CC + [source, "-o", output, "-lm"]
