@@ -685,7 +685,7 @@ class SasviewModel(object):
         #print("result", result)
         self._intermediate_results = getattr(calculator, 'results', None)
         calculator.release()
-        self._model.release()
+        #self._model.release()
         return result
 
     def calculate_ER(self):
