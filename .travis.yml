@@ -36,13 +36,15 @@ before_install:
 - hash -r
 - conda update --yes conda
 - conda info -a
-- conda install --yes python=$PY numpy scipy cython mako cffi
+- conda install --yes python=$PY numpy scipy matplotlib docutils setuptools pytest
 install:
 - pip install bumps
-- pip install unittest-xml-reporting
+- pip install unittest-xml-reporting tinycc
 script:
 - python --version
-- python -m sasmodels.model_test -v dll all
+#- python -m sasmodels.model_test -v dll all
+#- python -m pytest -v --cache-clear
+- python setup.py test --pytest-args -v
 before_deploy:
 - echo -e "Host danse.chem.utk.edu\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 deploy:

@@ -2,13 +2,22 @@ from __future__ import division, print_function
 
 import time
 from copy import copy
+import os
+import argparse
+from collections import OrderedDict
 
 import numpy as np
 from numpy import pi, radians, sin, cos, sqrt
-from numpy.random import poisson, uniform
+from numpy.random import poisson, uniform, randn, rand
 from numpy.polynomial.legendre import leggauss
 from scipy.integrate import simps
 from scipy.special import j1 as J1
+
+try:
+    import numba
+    USE_NUMBA = True
+except ImportError:
+    USE_NUMBA = False
 
 # Definition of rotation matrices comes from wikipedia:
 #    https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
@@ -81,6 +90,10 @@ class Shape:
         # type: (float) -> np.ndarray[N], np.ndarray[N, 3]
         raise NotImplementedError()
 
+    def dims(self):
+        # type: () -> float, float, float
+        raise NotImplementedError()
+
     def rotate(self, theta, phi, psi):
         self.rotation = rotation(theta, phi, psi) * self.rotation
         return self
@@ -115,9 +128,7 @@ class Composite(Shape):
                      for s1 in shapes
                      for s2 in shapes]
         self.r_max = max(distances + [s.r_max for s in shapes])
-
-    def volume(self):
-        return sum(shape.volume() for shape in self.shapes)
+        self.volume = sum(shape.volume for shape in self.shapes)
 
     def sample(self, density):
         values, points = zip(*(shape.sample(density) for shape in self.shapes))
@@ -132,12 +143,11 @@ class Box(Shape):
         self.a, self.b, self.c = a, b, c
         self._scale = np.array([a/2, b/2, c/2])[None, :]
         self.r_max = sqrt(a**2 + b**2 + c**2)
-
-    def volume(self):
-        return self.a*self.b*self.c
+        self.dims = a, b, c
+        self.volume = a*b*c
 
     def sample(self, density):
-        num_points = poisson(density*self.a*self.b*self.c)
+        num_points = poisson(density*self.volume)
         points = self._scale*uniform(-1, 1, size=(num_points, 3))
         values = self.value.repeat(points.shape[0])
         return values, self._adjust(points)
@@ -151,18 +161,59 @@ class EllipticalCylinder(Shape):
         self.ra, self.rb, self.length = ra, rb, length
         self._scale = np.array([ra, rb, length/2])[None, :]
         self.r_max = sqrt(4*max(ra, rb)**2 + length**2)
-
-    def volume(self):
-        return pi*self.ra*self.rb*self.length
+        self.dims = 2*ra, 2*rb, length
+        self.volume = pi*ra*rb*length
 
     def sample(self, density):
-        # density of the bounding box
+        # randomly sample from a box of side length 2*r, excluding anything
+        # not in the cylinder
         num_points = poisson(density*4*self.ra*self.rb*self.length)
         points = uniform(-1, 1, size=(num_points, 3))
         radius = points[:, 0]**2 + points[:, 1]**2
-        points = self._scale*points[radius <= 1]
+        points = points[radius <= 1]
         values = self.value.repeat(points.shape[0])
-        return values, self._adjust(points)
+        return values, self._adjust(self._scale*points)
+
+class EllipticalBicelle(Shape):
+    def __init__(self, ra, rb, length,
+                 thick_rim, thick_face,
+                 value_core, value_rim, value_face,
+                 center=(0, 0, 0), orientation=(0, 0, 0)):
+        self.rotate(*orientation)
+        self.shift(*center)
+        self.value = value_core
+        self.ra, self.rb, self.length = ra, rb, length
+        self.thick_rim, self.thick_face = thick_rim, thick_face
+        self.value_rim, self.value_face = value_rim, value_face
+
+        # reset cylinder to outer dimensions for calculating scale, etc.
+        ra = self.ra + self.thick_rim
+        rb = self.rb + self.thick_rim
+        length = self.length + 2*self.thick_face
+        self._scale = np.array([ra, rb, length/2])[None, :]
+        self.r_max = sqrt(4*max(ra, rb)**2 + length**2)
+        self.dims = 2*ra, 2*rb, length
+        self.volume = pi*ra*rb*length
+
+    def sample(self, density):
+        # randomly sample from a box of side length 2*r, excluding anything
+        # not in the cylinder
+        ra = self.ra + self.thick_rim
+        rb = self.rb + self.thick_rim
+        length = self.length + 2*self.thick_face
+        num_points = poisson(density*4*ra*rb*length)
+        points = uniform(-1, 1, size=(num_points, 3))
+        radius = points[:, 0]**2 + points[:, 1]**2
+        points = points[radius <= 1]
+        # set all to core value first
+        values = np.ones_like(points[:, 0])*self.value
+        # then set value to face value if |z| > face/(length/2))
+        values[abs(points[:, 2]) > self.length/(self.length + 2*self.thick_face)] = self.value_face
+        # finally set value to rim value if outside the core ellipse
+        radius = (points[:, 0]**2*(1 + self.thick_rim/self.ra)**2
+                  + points[:, 1]**2*(1 + self.thick_rim/self.rb)**2)
+        values[radius>1] = self.value_rim
+        return values, self._adjust(self._scale*points)
 
 class TriaxialEllipsoid(Shape):
     def __init__(self, ra, rb, rc,
@@ -173,9 +224,8 @@ class TriaxialEllipsoid(Shape):
         self.ra, self.rb, self.rc = ra, rb, rc
         self._scale = np.array([ra, rb, rc])[None, :]
         self.r_max = 2*max(ra, rb, rc)
-
-    def volume(self):
-        return 4*pi/3 * self.ra * self.rb * self.rc
+        self.dims = 2*ra, 2*rb, 2*rc
+        self.volume = 4*pi/3 * ra * rb * rc
 
     def sample(self, density):
         # randomly sample from a box of side length 2*r, excluding anything
@@ -193,17 +243,16 @@ class Helix(Shape):
         self.value = np.asarray(value)
         self.rotate(*orientation)
         self.shift(*center)
+        helix_length = helix_pitch * tube_length/sqrt(helix_radius**2 + helix_pitch**2)
+        total_radius = self.helix_radius + self.tube_radius
         self.helix_radius, self.helix_pitch = helix_radius, helix_pitch
         self.tube_radius, self.tube_length = tube_radius, tube_length
-        helix_length = helix_pitch * tube_length/sqrt(helix_radius**2 + helix_pitch**2)
-        self.r_max = sqrt((2*helix_radius + 2*tube_radius)*2
-                          + (helix_length + 2*tube_radius)**2)
-
-    def volume(self):
+        self.r_max = sqrt(4*total_radius + (helix_length + 2*tube_radius)**2)
+        self.dims = 2*total_radius, 2*total_radius, helix_length
         # small tube radius approximation; for larger tubes need to account
         # for the fact that the inner length is much shorter than the outer
         # length
-        return pi*self.tube_radius**2*self.tube_length
+        self.volume = pi*self.tube_radius**2*self.tube_length
 
     def points(self, density):
         num_points = poisson(density*4*self.tube_radius**2*self.tube_length)
@@ -243,15 +292,33 @@ class Helix(Shape):
         values = self.value.repeat(points.shape[0])
         return values, self._adjust(points)
 
-NUMBA = False
-if NUMBA:
+def csbox(a=10, b=20, c=30, da=1, db=2, dc=3, slda=1, sldb=2, sldc=3, sld_core=4):
+    core = Box(a, b, c, sld_core)
+    side_a = Box(da, b, c, slda, center=((a+da)/2, 0, 0))
+    side_b = Box(a, db, c, sldb, center=(0, (b+db)/2, 0))
+    side_c = Box(a, b, dc, sldc, center=(0, 0, (c+dc)/2))
+    side_a2 = copy(side_a).shift(-a-da, 0, 0)
+    side_b2 = copy(side_b).shift(0, -b-db, 0)
+    side_c2 = copy(side_c).shift(0, 0, -c-dc)
+    shape = Composite((core, side_a, side_b, side_c, side_a2, side_b2, side_c2))
+    shape.dims = 2*da+a, 2*db+b, 2*dc+c
+    return shape
+
+def _Iqxy(values, x, y, z, qa, qb, qc):
+    """I(q) = |sum V(r) rho(r) e^(1j q.r)|^2 / sum V(r)"""
+    Iq = [abs(np.sum(values*np.exp(1j*(qa_k*x + qb_k*y + qc_k*z))))**2
+            for qa_k, qb_k, qc_k in zip(qa.flat, qb.flat, qc.flat)]
+    return Iq
+
+if USE_NUMBA:
+    # Override simple numpy solution with numba if available
     from numba import njit
     @njit("f8[:](f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:])")
     def _Iqxy(values, x, y, z, qa, qb, qc):
         Iq = np.zeros_like(qa)
         for j in range(len(Iq)):
             total = 0. + 0j
-            for k in range(len(Iq)):
+            for k in range(len(values)):
                 total += values[k]*np.exp(1j*(qa[j]*x[k] + qb[j]*y[k] + qc[j]*z[k]))
             Iq[j] = abs(total)**2
         return Iq
@@ -262,13 +329,11 @@ def calc_Iqxy(qx, qy, rho, points, volume=1.0, view=(0, 0, 0)):
     rho, volume = np.broadcast_arrays(rho, volume)
     values = rho*volume
     x, y, z = points.T
+    values, x, y, z, qa, qb, qc = [np.asarray(v, 'd')
+                                   for v in (values, x, y, z, qa, qb, qc)]
 
     # I(q) = |sum V(r) rho(r) e^(1j q.r)|^2 / sum V(r)
-    if NUMBA:
-        Iq = _Iqxy(values, x, y, z, qa.flatten(), qb.flatten(), qc.flatten())
-    else:
-        Iq = [abs(np.sum(values*np.exp(1j*(qa_k*x + qb_k*y + qc_k*z))))**2
-              for qa_k, qb_k, qc_k in zip(qa.flat, qb.flat, qc.flat)]
+    Iq = _Iqxy(values, x, y, z, qa.flatten(), qb.flatten(), qc.flatten())
     return np.asarray(Iq).reshape(qx.shape) / np.sum(volume)
 
 def _calc_Pr_nonuniform(r, rho, points):
@@ -337,9 +402,10 @@ void pdfcalc(int n, const double *pts, const double *rho,
 }
 """
 
-if NUMBA:
+if USE_NUMBA:
+    # Override simple numpy solution with numba if available
     @njit("f8[:](f8[:], f8[:], f8[:,:])")
-    def _calc_Pr_uniform_jit(r, rho, points):
+    def _calc_Pr_uniform(r, rho, points):
         dr = r[0]
         n_max = len(r)
         Pr = np.zeros_like(r)
@@ -361,13 +427,11 @@ if NUMBA:
 def calc_Pr(r, rho, points):
     # P(r) with uniform steps in r is 3x faster; check if we are uniform
     # before continuing
+    r, rho, points = [np.asarray(v, 'd') for v in (r, rho, points)]
     if np.max(np.abs(np.diff(r) - r[0])) > r[0]*0.01:
         Pr = _calc_Pr_nonuniform(r, rho, points)
     else:
-        if NUMBA:
-            Pr = _calc_Pr_uniform_jit(r, rho, points)
-        else:
-            Pr = _calc_Pr_uniform(r, rho, points)
+        Pr = _calc_Pr_uniform(r, rho, points)
     return Pr / Pr.max()
 
 
@@ -398,32 +462,46 @@ def bin_edges(x):
         ])
     return edges
 
-def plot_calc(r, Pr, q, Iq, theory=None):
+# -------------- plotters ----------------
+def plot_calc(r, Pr, q, Iq, theory=None, title=None):
     import matplotlib.pyplot as plt
     plt.subplot(211)
     plt.plot(r, Pr, '-', label="Pr")
     plt.xlabel('r (A)')
     plt.ylabel('Pr (1/A^2)')
+    if title is not None:
+        plt.title(title)
     plt.subplot(212)
     plt.loglog(q, Iq, '-', label='from Pr')
     plt.xlabel('q (1/A')
     plt.ylabel('Iq')
     if theory is not None:
-        plt.loglog(theory[0], theory[1], '-', label='analytic')
+        plt.loglog(theory[0], theory[1]/theory[1][0], '-', label='analytic')
         plt.legend()
 
-def plot_calc_2d(qx, qy, Iqxy, theory=None):
+def plot_calc_2d(qx, qy, Iqxy, theory=None, title=None):
     import matplotlib.pyplot as plt
     qx, qy = bin_edges(qx), bin_edges(qy)
     #qx, qy = np.meshgrid(qx, qy)
     if theory is not None:
         plt.subplot(121)
-    plt.pcolormesh(qx, qy, np.log10(Iqxy))
+    #plt.pcolor(qx, qy, np.log10(Iqxy))
+    extent = [qx[0], qx[-1], qy[0], qy[-1]]
+    plt.imshow(np.log10(Iqxy), extent=extent, interpolation="nearest",
+               origin='lower')
     plt.xlabel('qx (1/A)')
     plt.ylabel('qy (1/A)')
+    plt.axis('equal')
+    plt.axis(extent)
+    #plt.grid(True)
+    if title is not None:
+        plt.title(title)
     if theory is not None:
         plt.subplot(122)
-        plt.pcolormesh(qx, qy, np.log10(theory))
+        plt.imshow(np.log10(theory), extent=extent, interpolation="nearest",
+                   origin='lower')
+        plt.axis('equal')
+        plt.axis(extent)
         plt.xlabel('qx (1/A)')
 
 def plot_points(rho, points):
@@ -439,50 +517,17 @@ def plot_points(rho, points):
     #print("len points", n)
     index = np.random.choice(n, size=500) if n > 500 else slice(None, None)
     ax.scatter(points[index, 0], points[index, 1], points[index, 2], c=rho[index])
+    # make square axes
+    minmax = np.array([points.min(), points.max()])
+    ax.scatter(minmax, minmax, minmax, c='w')
     #low, high = points.min(axis=0), points.max(axis=0)
     #ax.axis([low[0], high[0], low[1], high[1], low[2], high[2]])
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_zlabel("z")
     ax.autoscale(True)
 
-def check_shape(shape, fn=None):
-    rho_solvent = 0
-    q = np.logspace(-3, 0, 200)
-    r = shape.r_bins(q, r_step=0.01)
-    sampling_density = 6*5000 / shape.volume()
-    rho, points = shape.sample(sampling_density)
-    t0 = time.time()
-    Pr = calc_Pr(r, rho-rho_solvent, points)
-    print("calc Pr time", time.time() - t0)
-    Iq = calc_Iq(q, r, Pr)
-    theory = (q, fn(q)) if fn is not None else None
-
-    import pylab
-    #plot_points(rho, points); pylab.figure()
-    plot_calc(r, Pr, q, Iq, theory=theory)
-    pylab.show()
-
-def check_shape_2d(shape, fn=None, view=(0, 0, 0)):
-    rho_solvent = 0
-    nq, qmax = 100, 1.0
-    qx = np.linspace(0.0, qmax, nq)
-    qy = np.linspace(0.0, qmax, nq)
-    Qx, Qy = np.meshgrid(qx, qy)
-    sampling_density = 50000 / shape.volume()
-    #t0 = time.time()
-    rho, points = shape.sample(sampling_density)
-    #print("sample time", time.time() - t0)
-    t0 = time.time()
-    Iqxy = calc_Iqxy(Qx, Qy, rho, points, view=view)
-    print("calc time", time.time() - t0)
-    theory = fn(Qx, Qy) if fn is not None else None
-    Iqxy += 0.001 * Iqxy.max()
-    if theory is not None:
-        theory += 0.001 * theory.max()
-
-    import pylab
-    #plot_points(rho, points); pylab.figure()
-    plot_calc_2d(qx, qy, Iqxy, theory=theory)
-    pylab.show()
-
+# ----------- Analytic models --------------
 def sas_sinx_x(x):
     with np.errstate(all='ignore'):
         retvalue = sin(x)/x
@@ -509,21 +554,48 @@ def cylinder_Iq(q, radius, length):
     Iq = np.empty_like(q)
     for k, qk in enumerate(q):
         qab, qc = qk*sin_alpha, qk*cos_alpha
-        Fq = sas_2J1x_x(qab*radius) * j0(qc*length/2)
+        Fq = sas_2J1x_x(qab*radius) * sas_sinx_x(qc*length/2)
         Iq[k] = np.sum(w*Fq**2)
-    Iq = Iq/Iq[0]
+    Iq = Iq
     return Iq
 
 def cylinder_Iqxy(qx, qy, radius, length, view=(0, 0, 0)):
     qa, qb, qc = invert_view(qx, qy, view)
-    qab = np.sqrt(qa**2 + qb**2)
-    Fq = sas_2J1x_x(qab*radius) * j0(qc*length/2)
+    qab = sqrt(qa**2 + qb**2)
+    Fq = sas_2J1x_x(qab*radius) * sas_sinx_x(qc*length/2)
     Iq = Fq**2
     return Iq.reshape(qx.shape)
 
 def sphere_Iq(q, radius):
     Iq = sas_3j1x_x(q*radius)**2
-    return Iq/Iq[0]
+    return Iq
+
+def box_Iq(q, a, b, c):
+    z, w = leggauss(76)
+    outer_sum = np.zeros_like(q)
+    for cos_alpha, outer_w in zip((z+1)/2, w):
+        sin_alpha = sqrt(1.0-cos_alpha*cos_alpha)
+        qc = q*cos_alpha
+        siC = c*sas_sinx_x(c*qc/2)
+        inner_sum = np.zeros_like(q)
+        for beta, inner_w in zip((z + 1)*pi/4, w):
+            qa, qb = q*sin_alpha*sin(beta), q*sin_alpha*cos(beta)
+            siA = a*sas_sinx_x(a*qa/2)
+            siB = b*sas_sinx_x(b*qb/2)
+            Fq = siA*siB*siC
+            inner_sum += inner_w * Fq**2
+        outer_sum += outer_w * inner_sum
+    Iq = outer_sum / 4  # = outer*um*zm*8.0/(4.0*M_PI)
+    return Iq
+
+def box_Iqxy(qx, qy, a, b, c, view=(0, 0, 0)):
+    qa, qb, qc = invert_view(qx, qy, view)
+    sia = sas_sinx_x(qa*a/2)
+    sib = sas_sinx_x(qb*b/2)
+    sic = sas_sinx_x(qc*c/2)
+    Fq = sia*sib*sic
+    Iq = Fq**2
+    return Iq.reshape(qx.shape)
 
 def csbox_Iq(q, a, b, c, da, db, dc, slda, sldb, sldc, sld_core):
     z, w = leggauss(76)
@@ -538,15 +610,15 @@ def csbox_Iq(q, a, b, c, da, db, dc, slda, sldb, sldc, sld_core):
     for cos_alpha, outer_w in zip((z+1)/2, w):
         sin_alpha = sqrt(1.0-cos_alpha*cos_alpha)
         qc = q*cos_alpha
-        siC = c*j0(c*qc/2)
-        siCt = tC*j0(tC*qc/2)
+        siC = c*sas_sinx_x(c*qc/2)
+        siCt = tC*sas_sinx_x(tC*qc/2)
         inner_sum = np.zeros_like(q)
         for beta, inner_w in zip((z + 1)*pi/4, w):
             qa, qb = q*sin_alpha*sin(beta), q*sin_alpha*cos(beta)
-            siA = a*j0(a*qa/2)
-            siB = b*j0(b*qb/2)
-            siAt = tA*j0(tA*qa/2)
-            siBt = tB*j0(tB*qb/2)
+            siA = a*sas_sinx_x(a*qa/2)
+            siB = b*sas_sinx_x(b*qb/2)
+            siAt = tA*sas_sinx_x(tA*qa/2)
+            siBt = tB*sas_sinx_x(tB*qb/2)
             if overlapping:
                 Fq = (dr0*siA*siB*siC
                       + drA*(siAt-siA)*siB*siC
@@ -583,66 +655,221 @@ def csbox_Iqxy(qx, qy, a, b, c, da, db, dc, slda, sldb, sldc, sld_core, view=(0,
     Iq = Fq**2
     return Iq.reshape(qx.shape)
 
-def check_cylinder(radius=25, length=125, rho=2.):
-    shape = EllipticalCylinder(radius, radius, length, rho)
-    fn = lambda q: cylinder_Iq(q, radius, length)
-    check_shape(shape, fn)
+def sasmodels_Iq(kernel, q, pars):
+    from sasmodels.data import empty_data1D
+    from sasmodels.direct_model import DirectModel
+    data = empty_data1D(q)
+    calculator = DirectModel(data, kernel)
+    Iq = calculator(**pars)
+    return Iq
 
-def check_cylinder_2d(radius=25, length=125, rho=2., view=(0, 0, 0)):
-    shape = EllipticalCylinder(radius, radius, length, rho)
-    fn = lambda qx, qy, view=view: cylinder_Iqxy(qx, qy, radius, length, view=view)
-    check_shape_2d(shape, fn, view=view)
+def sasmodels_Iqxy(kernel, qx, qy, pars, view):
+    from sasmodels.data import Data2D
+    from sasmodels.direct_model import DirectModel
+    Iq = 100 * np.ones_like(qx)
+    data = Data2D(x=qx, y=qy, z=Iq, dx=None, dy=None, dz=np.sqrt(Iq))
+    data.x_bins = qx[0,:]
+    data.y_bins = qy[:,0]
+    data.filename = "fake data"
 
-def check_cylinder_2d_lattice(radius=25, length=125, rho=2.,
-                              view=(0, 0, 0)):
-    nx, dx = 1, 2*radius
-    ny, dy = 30, 2*radius
-    nz, dz = 30, length
-    dx, dy, dz = 2*dx, 2*dy, 2*dz
-    def center(*args):
-        sigma = 0.333
-        space = 2
-        return [(space*n+np.random.randn()*sigma)*x for n, x in args]
-    shapes = [EllipticalCylinder(radius, radius, length, rho,
-                                 #center=(ix*dx, iy*dy, iz*dz)
-                                 orientation=np.random.randn(3)*0,
-                                 center=center((ix, dx), (iy, dy), (iz, dz))
-                                )
+    calculator = DirectModel(data, kernel)
+    pars_plus_view = pars.copy()
+    pars_plus_view.update(theta=view[0], phi=view[1], psi=view[2])
+    Iqxy = calculator(**pars_plus_view)
+    return Iqxy.reshape(qx.shape)
+
+def wrap_sasmodel(name, **pars):
+    from sasmodels.core import load_model
+    kernel = load_model(name)
+    fn = lambda q: sasmodels_Iq(kernel, q, pars)
+    fn_xy = lambda qx, qy, view: sasmodels_Iqxy(kernel, qx, qy, pars, view)
+    return fn, fn_xy
+
+
+# --------- Test cases -----------
+
+def build_cylinder(radius=25, length=125, rho=2.):
+    shape = EllipticalCylinder(radius, radius, length, rho)
+    fn = lambda q: cylinder_Iq(q, radius, length)*rho**2
+    fn_xy = lambda qx, qy, view: cylinder_Iqxy(qx, qy, radius, length, view=view)*rho**2
+    return shape, fn, fn_xy
+
+def build_sphere(radius=125, rho=2):
+    shape = TriaxialEllipsoid(radius, radius, radius, rho)
+    fn = lambda q: sphere_Iq(q, radius)*rho**2
+    fn_xy = lambda qx, qy, view: sphere_Iq(np.sqrt(qx**2+qy**2), radius)*rho**2
+    return shape, fn, fn_xy
+
+def build_box(a=10, b=20, c=30, rho=2.):
+    shape = Box(a, b, c, rho)
+    fn = lambda q: box_Iq(q, a, b, c)*rho**2
+    fn_xy = lambda qx, qy, view: box_Iqxy(qx, qy, a, b, c, view=view)*rho**2
+    return shape, fn, fn_xy
+
+def build_csbox(a=10, b=20, c=30, da=1, db=2, dc=3, slda=1, sldb=2, sldc=3, sld_core=4):
+    shape = csbox(a, b, c, da, db, dc, slda, sldb, sldc, sld_core)
+    fn = lambda q: csbox_Iq(q, a, b, c, da, db, dc, slda, sldb, sldc, sld_core)
+    fn_xy = lambda qx, qy, view: csbox_Iqxy(qx, qy, a, b, c, da, db, dc,
+                                            slda, sldb, sldc, sld_core, view=view)
+    return shape, fn, fn_xy
+
+def build_ellcyl(ra=25, rb=50, length=125, rho=2.):
+    shape = EllipticalCylinder(ra, rb, length, rho)
+    fn, fn_xy = wrap_sasmodel(
+        'elliptical_cylinder',
+        scale=1,
+        background=0,
+        radius_minor=ra,
+        axis_ratio=rb/ra,
+        length=length,
+        sld=rho,
+        sld_solvent=0,
+    )
+    return shape, fn, fn_xy
+
+def build_cscyl(ra=30, rb=90, length=30, thick_rim=8, thick_face=14,
+                sld_core=4, sld_rim=1, sld_face=7):
+    shape = EllipticalBicelle(
+        ra=ra, rb=rb, length=length,
+        thick_rim=thick_rim, thick_face=thick_face,
+        value_core=sld_core, value_rim=sld_rim, value_face=sld_face,
+        )
+    fn, fn_xy = wrap_sasmodel(
+        'core_shell_bicelle_elliptical',
+        scale=1,
+        background=0,
+        radius=ra,
+        x_core=rb/ra,
+        length=length,
+        thick_rim=thick_rim,
+        thick_face=thick_face,
+        sld_core=sld_core,
+        sld_face=sld_face,
+        sld_rim=sld_rim,
+        sld_solvent=0,
+    )
+    return shape, fn, fn_xy
+
+def build_cubic_lattice(shape, nx=1, ny=1, nz=1, dx=2, dy=2, dz=2,
+                  shuffle=0, rotate=0):
+    a, b, c = shape.dims
+    shapes = [copy(shape)
+              .shift((ix+(randn() if shuffle < 0.3 else rand())*shuffle)*dx*a,
+                     (iy+(randn() if shuffle < 0.3 else rand())*shuffle)*dy*b,
+                     (iz+(randn() if shuffle < 0.3 else rand())*shuffle)*dz*c)
+              .rotate(*((randn(3) if rotate < 30 else rand(3))*rotate))
               for ix in range(nx)
               for iy in range(ny)
               for iz in range(nz)]
-    shape = Composite(shapes)
-    fn = lambda qx, qy, view=view: cylinder_Iqxy(qx, qy, radius, length, view=view)
-    check_shape_2d(shape, fn, view=view)
+    lattice = Composite(shapes)
+    return lattice
 
-def check_sphere(radius=125, rho=2):
-    shape = TriaxialEllipsoid(radius, radius, radius, rho)
-    fn = lambda q: sphere_Iq(q, radius)
-    check_shape(shape, fn)
 
-def check_csbox(a=10, b=20, c=30, da=1, db=2, dc=3, slda=1, sldb=2, sldc=3, sld_core=4):
-    core = Box(a, b, c, sld_core)
-    side_a = Box(da, b, c, slda, center=((a+da)/2, 0, 0))
-    side_b = Box(a, db, c, sldb, center=(0, (b+db)/2, 0))
-    side_c = Box(a, b, dc, sldc, center=(0, 0, (c+dc)/2))
-    side_a2 = copy(side_a).shift(-a-da, 0, 0)
-    side_b2 = copy(side_b).shift(0, -b-db, 0)
-    side_c2 = copy(side_c).shift(0, 0, -c-dc)
-    shape = Composite((core, side_a, side_b, side_c, side_a2, side_b2, side_c2))
-    def fn(q):
-        return csbox_Iq(q, a, b, c, da, db, dc, slda, sldb, sldc, sld_core)
-    #check_shape(shape, fn)
+SHAPE_FUNCTIONS = OrderedDict([
+    ("cyl", build_cylinder),
+    ("ellcyl", build_ellcyl),
+    ("sphere", build_sphere),
+    ("box", build_box),
+    ("csbox", build_csbox),
+    ("cscyl", build_cscyl),
+])
+SHAPES = list(SHAPE_FUNCTIONS.keys())
 
-    view = (20, 30, 40)
-    def fn_xy(qx, qy):
-        return csbox_Iqxy(qx, qy, a, b, c, da, db, dc,
-                          slda, sldb, sldc, sld_core, view=view)
-    check_shape_2d(shape, fn_xy, view=view)
+def check_shape(title, shape, fn=None, show_points=False,
+                mesh=100, qmax=1.0, r_step=0.01, samples=5000):
+    rho_solvent = 0
+    qmin = qmax/100.
+    q = np.logspace(np.log10(qmin), np.log10(qmax), mesh)
+    r = shape.r_bins(q, r_step=r_step)
+    sampling_density = samples / shape.volume
+    rho, points = shape.sample(sampling_density)
+    t0 = time.time()
+    Pr = calc_Pr(r, rho-rho_solvent, points)
+    print("calc Pr time", time.time() - t0)
+    Iq = calc_Iq(q, r, Pr)
+    theory = (q, fn(q)) if fn is not None else None
+
+    import pylab
+    if show_points:
+         plot_points(rho, points); pylab.figure()
+    plot_calc(r, Pr, q, Iq, theory=theory, title=title)
+    pylab.gcf().canvas.set_window_title(title)
+    pylab.show()
+
+def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
+                   mesh=100, qmax=1.0, samples=5000):
+    rho_solvent = 0
+    #qx = np.linspace(0.0, qmax, mesh)
+    #qy = np.linspace(0.0, qmax, mesh)
+    qx = np.linspace(-qmax, qmax, mesh)
+    qy = np.linspace(-qmax, qmax, mesh)
+    Qx, Qy = np.meshgrid(qx, qy)
+    sampling_density = samples / shape.volume
+    t0 = time.time()
+    rho, points = shape.sample(sampling_density)
+    print("point generation time", time.time() - t0)
+    t0 = time.time()
+    Iqxy = calc_Iqxy(Qx, Qy, rho, points, view=view)
+    print("calc Iqxy time", time.time() - t0)
+    t0 = time.time()
+    theory = fn(Qx, Qy, view) if fn is not None else None
+    print("calc theory time", time.time() - t0)
+    Iqxy += 0.001 * Iqxy.max()
+    if theory is not None:
+        theory += 0.001 * theory.max()
+
+    import pylab
+    if show_points:
+        plot_points(rho, points); pylab.figure()
+    plot_calc_2d(qx, qy, Iqxy, theory=theory, title=title)
+    pylab.gcf().canvas.set_window_title(title)
+    pylab.show()
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Compute scattering from realspace sampling",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        )
+    parser.add_argument('-d', '--dim', type=int, default=1,
+                        help='dimension 1 or 2')
+    parser.add_argument('-m', '--mesh', type=int, default=100,
+                        help='number of mesh points')
+    parser.add_argument('-s', '--samples', type=int, default=5000,
+                        help="number of sample points")
+    parser.add_argument('-q', '--qmax', type=float, default=0.5,
+                        help='max q')
+    parser.add_argument('-v', '--view', type=str, default='0,0,0',
+                        help='theta,phi,psi angles')
+    parser.add_argument('-n', '--lattice', type=str, default='1,1,1',
+                        help='lattice size')
+    parser.add_argument('-z', '--spacing', type=str, default='2,2,2',
+                        help='lattice spacing')
+    parser.add_argument('-r', '--rotate', type=float, default=0.,
+                        help="rotation relative to lattice, gaussian < 30 degrees, uniform otherwise")
+    parser.add_argument('-w', '--shuffle', type=float, default=0.,
+                        help="position relative to lattice, gaussian < 0.3, uniform otherwise")
+    parser.add_argument('-p', '--plot', action='store_true',
+                        help='plot points')
+    parser.add_argument('shape', choices=SHAPES, nargs='?', default=SHAPES[0],
+                        help='oriented shape')
+    parser.add_argument('pars', type=str, nargs='*', help='shape parameters')
+    opts = parser.parse_args()
+    pars = {key: float(value) for p in opts.pars for key, value in [p.split('=')]}
+    nx, ny, nz = [int(v) for v in opts.lattice.split(',')]
+    dx, dy, dz = [float(v) for v in opts.spacing.split(',')]
+    shuffle, rotate = opts.shuffle, opts.rotate
+    shape, fn, fn_xy = SHAPE_FUNCTIONS[opts.shape](**pars)
+    if nx > 1 or ny > 1 or nz > 1:
+        shape = build_cubic_lattice(shape, nx, ny, nz, dx, dy, dz, shuffle, rotate)
+    title = "%s(%s)" % (opts.shape, " ".join(opts.pars))
+    if opts.dim == 1:
+        check_shape(title, shape, fn, show_points=opts.plot,
+                    mesh=opts.mesh, qmax=opts.qmax, samples=opts.samples)
+    else:
+        view = tuple(float(v) for v in opts.view.split(','))
+        check_shape_2d(title, shape, fn_xy, view=view, show_points=opts.plot,
+                       mesh=opts.mesh, qmax=opts.qmax, samples=opts.samples)
+
 
 if __name__ == "__main__":
-    check_cylinder(radius=10, length=40)
-    #check_cylinder_2d(radius=10, length=40, view=(90,30,0))
-    #check_cylinder_2d_lattice(radius=10, length=50, view=(90,30,0))
-    #check_sphere()
-    #check_csbox()
-    #check_csbox(da=100, db=200, dc=300)
+    main()

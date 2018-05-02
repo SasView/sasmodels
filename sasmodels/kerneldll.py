@@ -122,7 +122,10 @@ if COMPILER == "unix":
     CC = "cc -shared -fPIC -std=c99 -O2 -Wall".split()
     # add openmp support if not running on a mac
     if sys.platform != "darwin":
-        CC.append("-fopenmp")
+        # OpenMP seems to be broken on gcc 5.4.0 (ubuntu 16.04.9)
+        # Shut it off for all unix until we can investigate.
+        #CC.append("-fopenmp")
+        pass
     def compile_command(source, output):
         """unix compiler command"""
         return CC + [source, "-o", output, "-lm"]
@@ -157,15 +160,8 @@ elif COMPILER == "mingw":
         """mingw compiler command"""
         return CC + [source, "-o", output, "-lm"]
 
-# Windows-specific solution
-if os.name == 'nt':
-    # Assume the default location of module DLLs is in .sasmodels/compiled_models.
-    DLL_PATH = os.path.join(os.path.expanduser("~"), ".sasmodels", "compiled_models")
-    if not os.path.exists(DLL_PATH):
-        os.makedirs(DLL_PATH)
-else:
-    # Set up the default path for compiled modules.
-    DLL_PATH = tempfile.gettempdir()
+# Assume the default location of module DLLs is in .sasmodels/compiled_models.
+DLL_PATH = os.path.join(os.path.expanduser("~"), ".sasmodels", "compiled_models")
 
 ALLOW_SINGLE_PRECISION_DLLS = True
 
@@ -233,7 +229,7 @@ def make_dll(source, model_info, dtype=F64):
     models are not allowed as DLLs.
 
     Set *sasmodels.kerneldll.DLL_PATH* to the compiled dll output path.
-    The default is the system temporary directory.
+    The default is in ~/.sasmodels/compiled_models.
     """
     if dtype == F16:
         raise ValueError("16 bit floats not supported")
@@ -250,6 +246,9 @@ def make_dll(source, model_info, dtype=F64):
         newest_source = generate.dll_timestamp(model_info)
         need_recompile = dll_time < newest_source
     if need_recompile:
+        # Make sure the DLL path exists
+        if not os.path.exists(DLL_PATH):
+            os.makedirs(DLL_PATH)
         basename = splitext(os.path.basename(dll))[0] + "_"
         system_fd, filename = tempfile.mkstemp(suffix=".c", prefix=basename)
         source = generate.convert_type(source, dtype)

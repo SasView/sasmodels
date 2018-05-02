@@ -1,8 +1,5 @@
-double form_volume(double length_a, double b2a_ratio, double c2a_ratio, double thickness);
-double Iq(double q, double sld, double solvent_sld, double length_a,
-          double b2a_ratio, double c2a_ratio, double thickness);
-
-double form_volume(double length_a, double b2a_ratio, double c2a_ratio, double thickness)
+static double
+form_volume(double length_a, double b2a_ratio, double c2a_ratio, double thickness)
 {
     double length_b = length_a * b2a_ratio;
     double length_c = length_a * c2a_ratio;
@@ -15,7 +12,8 @@ double form_volume(double length_a, double b2a_ratio, double c2a_ratio, double t
     return vol_shell;
 }
 
-double Iq(double q,
+static double
+Iq(double q,
     double sld,
     double solvent_sld,
     double length_a,
@@ -84,7 +82,8 @@ double Iq(double q,
     return 1.0e-4 * delrho * delrho * form;
 }
 
-double Iqabc(double qa, double qb, double qc,
+static double
+Iqabc(double qa, double qb, double qc,
     double sld,
     double solvent_sld,
     double length_a,

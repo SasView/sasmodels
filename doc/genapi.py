@@ -68,6 +68,8 @@ modules = [
     ('direct_model', 'Simple interface'),
     ('exception', 'Annotate exceptions'),
     ('generate', 'Model parser'),
+    ('jitter', 'Orientation explorer'),
+    ('guyou', 'Guyou map projection'),
     ('kernel', 'Evaluator type definitions'),
     ('kernelcl', 'OpenCL model evaluator'),
     ('kerneldll', 'Ctypes model evaluator'),

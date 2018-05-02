@@ -93,10 +93,10 @@ def make_mixture_info(parts, operation='+'):
         if operation == '+':
             # If model is a sum model, each constituent model gets its own scale parameter
             scale_prefix = prefix
-            if prefix == '' and part.operation == '*':
+            if prefix == '' and getattr(part, "operation", '') == '*':
                 # `part` is a composition product model. Find the prefixes of
-                # it's parameters to form a new prefix for the scale, eg:
-                # a model with A*B*C will have ABC_scale
+                # it's parameters to form a new prefix for the scale.
+                # For example, a model with A*B*C will have ABC_scale.
                 sub_prefixes = []
                 for param in part.parameters.kernel_parameters:
                     # Prefix of constituent model
@@ -232,7 +232,7 @@ class MixtureParts(object):
         self.mag_index = self.spin_index + 3
         return self
 
-    def next(self):
+    def __next__(self):
         # type: () -> Tuple[List[Callable], CallDetails, np.ndarray]
         if self.part_num >= len(self.parts):
             raise StopIteration()
@@ -250,6 +250,9 @@ class MixtureParts(object):
         self.mag_index += 3 * len(info.parameters.magnetism_index)
 
         return kernel, call_details, values
+
+    # CRUFT: py2 support
+    next = __next__
 
     def _part_details(self, info, par_index):
         # type: (ModelInfo, int) -> CallDetails

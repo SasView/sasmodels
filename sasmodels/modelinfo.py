@@ -73,6 +73,7 @@ def make_parameter_table(pars):
                              %str(p))
         processed.append(parse_parameter(*p))
     partable = ParameterTable(processed)
+    partable.check_angles()
     return partable
 
 def parse_parameter(name, units='', default=np.NaN,
@@ -425,7 +426,6 @@ class ParameterTable(object):
     def __init__(self, parameters):
         # type: (List[Parameter]) -> None
         self.kernel_parameters = parameters
-        self._check_angles()
         self._set_vector_lengths()
 
         self.npars = sum(p.length for p in self.kernel_parameters)
@@ -475,7 +475,10 @@ class ParameterTable(object):
                          if p.polydisperse and p.type not in ('orientation', 'magnetic'))
         self.pd_2d = set(p.name for p in self.call_parameters if p.polydisperse)
 
-    def _check_angles(self):
+    def check_angles(self):
+        """
+        Check that orientation angles are theta, phi and possibly psi.
+        """
         theta = phi = psi = -1
         for k, p in enumerate(self.kernel_parameters):
             if p.name == 'theta':
@@ -498,9 +501,9 @@ class ParameterTable(object):
                 raise TypeError("phi must follow theta")
             if psi >= 0 and psi != phi+1:
                 raise TypeError("psi must follow phi")
-            #if (psi >= 0 and psi != last_par) or (psi < 0 and phi != last_par):
-            #    raise TypeError("orientation parameters must appear at the "
-            #                    "end of the parameter table")
+            if (psi >= 0 and psi != last_par) or (psi < 0 and phi != last_par):
+                raise TypeError("orientation parameters must appear at the "
+                                "end of the parameter table")
         elif theta >= 0 or phi >= 0 or psi >= 0:
             raise TypeError("oriented shapes must have both theta and phi and maybe psi")
 

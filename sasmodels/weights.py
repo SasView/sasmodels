@@ -96,6 +96,20 @@ class GaussianDispersion(Dispersion):
         px = np.exp((x-center)**2 / (-2.0 * sigma * sigma))
         return x, px
 
+class UniformDispersion(Dispersion):
+    r"""
+    Uniform dispersion, with width $\sigma$.
+
+    .. math::
+
+        w = 1
+    """
+    type = "uniform"
+    default = dict(npts=35, width=0, nsigmas=None)
+    def _weights(self, center, sigma, lb, ub):
+        x = np.linspace(center-sigma, center+sigma, self.npts)
+        x = x[(x >= lb) & (x <= ub)]
+        return x, np.ones_like(x)
 
 class RectangleDispersion(Dispersion):
     r"""
@@ -106,12 +120,11 @@ class RectangleDispersion(Dispersion):
         w = 1
     """
     type = "rectangle"
-    default = dict(npts=35, width=0, nsigmas=1.70325)
+    default = dict(npts=35, width=0, nsigmas=1.73205)
     def _weights(self, center, sigma, lb, ub):
-        x = self._linspace(center, sigma, lb, ub)
-        x = x[np.fabs(x-center) <= np.fabs(sigma)*sqrt(3.0)]
-        return x, np.ones_like(x)
-
+         x = self._linspace(center, sigma, lb, ub)
+         x = x[np.fabs(x-center) <= np.fabs(sigma)*sqrt(3.0)]
+         return x, np.ones_like(x)
 
 class LogNormalDispersion(Dispersion):
     r"""
@@ -189,16 +202,32 @@ class ArrayDispersion(Dispersion):
         px = self.weights[idx]
         return x, px
 
+class BoltzmannDispersion(Dispersion):
+    r"""
+    Boltzmann dispersion, with $\sigma=k T/E$.
+
+    .. math::
+
+        w = \exp\left( -|x - c|/\sigma\right)
+    """
+    type = "boltzmann"
+    default = dict(npts=35, width=0, nsigmas=3)
+    def _weights(self, center, sigma, lb, ub):
+        x = self._linspace(center, sigma, lb, ub)
+        px = np.exp(-np.abs(x-center) / np.abs(sigma))
+        return x, px
 
 # dispersion name -> disperser lookup table.
 # Maintain order since this is used by sasview GUI to order the options in
 # the dispersion type combobox.
 MODELS = OrderedDict((d.type, d) for d in (
     RectangleDispersion,
+    UniformDispersion,
     ArrayDispersion,
     LogNormalDispersion,
     GaussianDispersion,
     SchulzDispersion,
+    BoltzmannDispersion
 ))
 
 
