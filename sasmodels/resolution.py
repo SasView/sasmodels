@@ -105,9 +105,9 @@ class Slit1D(Resolution):
 
     *q* points at which the data is measured.
 
-    *dqx* slit width in qx
+    *qx_width* slit width in qx
 
-    *dqy* slit height in qy
+    *qy_width* slit height in qy
 
     *q_calc* is the list of points to calculate, or None if this should
     be estimated from the *q* and *q_width*.
@@ -512,13 +512,16 @@ def eval_form(q, form, pars):
     return theory
 
 
-def gaussian(q, q0, dq):
+def gaussian(q, q0, dq, nsigma=2.5):
     """
-    Return the Gaussian resolution function.
+    Return the truncated Gaussian resolution function.
 
     *q0* is the center, *dq* is the width and *q* are the points to evaluate.
     """
-    return exp(-0.5*((q-q0)/dq)**2)/(sqrt(2*pi)*dq)
+    # Calculate the density of the tails; the resulting gaussian needs to be
+    # scaled by this amount in ordere to integrate to 1.0
+    two_tail_density = 2 * (1 + erf(-nsigma/sqrt(2)))/2
+    return exp(-0.5*((q-q0)/dq)**2)/(sqrt(2*pi)*dq)/(1-two_tail_density)
 
 
 def romberg_slit_1d(q, width, height, form, pars):
@@ -695,6 +698,8 @@ class ResolutionTest(unittest.TestCase):
         theory = self.Iq(resolution.q_calc)
         output = resolution.apply(theory)
         np.testing.assert_equal(output, self.y)
+
+    # TODO: turn pinhole/slit demos into tests
 
     def test_pinhole(self):
         """
@@ -1103,7 +1108,7 @@ def _eval_demo_1d(resolution, title):
     Iq = resolution.apply(theory)
 
     if isinstance(resolution, Slit1D):
-        width, height = resolution.dqx, resolution.dqy
+        width, height = resolution.qx_width, resolution.qy_width
         Iq_romb = romberg_slit_1d(resolution.q, width, height, model, pars)
     else:
         dq = resolution.q_width
