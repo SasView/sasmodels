@@ -19,6 +19,7 @@ __all__ = ["Resolution", "Perfect1D", "Pinhole1D", "Slit1D",
 
 MINIMUM_RESOLUTION = 1e-8
 MINIMUM_ABSOLUTE_Q = 0.02  # relative to the minimum q in the data
+PINHOLE_N_SIGMA = 2.5 # From: Barker & Pedersen 1995 JAC
 
 class Resolution(object):
     """
@@ -64,8 +65,11 @@ class Pinhole1D(Resolution):
 
     *q_calc* is the list of points to calculate, or None if this should
     be estimated from the *q* and *q_width*.
+
+    *nsigma* is the width of the resolution function.  Should be 2.5.
+    See :func:`pinhole_resolution` for details.
     """
-    def __init__(self, q, q_width, q_calc=None, nsigma=3):
+    def __init__(self, q, q_width, q_calc=None, nsigma=PINHOLE_N_SIGMA):
         #*min_step* is the minimum point spacing to use when computing the
         #underlying model.  It should be on the order of
         #$\tfrac{1}{10}\tfrac{2\pi}{d_\text{max}}$ to make sure that fringes
@@ -87,7 +91,8 @@ class Pinhole1D(Resolution):
 
         # Build weight matrix from calculated q values
         self.weight_matrix = pinhole_resolution(
-            self.q_calc, self.q, np.maximum(q_width, MINIMUM_RESOLUTION))
+            self.q_calc, self.q, np.maximum(q_width, MINIMUM_RESOLUTION),
+            nsigma=nsigma)
         self.q_calc = abs(self.q_calc)
 
     def apply(self, theory):
@@ -153,15 +158,26 @@ def apply_resolution_matrix(weight_matrix, theory):
     return Iq.flatten()
 
 
-def pinhole_resolution(q_calc, q, q_width):
-    """
+def pinhole_resolution(q_calc, q, q_width, nsigma=PINHOLE_N_SIGMA):
+    r"""
     Compute the convolution matrix *W* for pinhole resolution 1-D data.
 
     Each row *W[i]* determines the normalized weight that the corresponding
     points *q_calc* contribute to the resolution smeared point *q[i]*.  Given
     *W*, the resolution smearing can be computed using *dot(W,q)*.
 
+    Note that resolution is limited to $\pm 2.5 \sigma$.[1]  The true resolution
+    function is a broadened triangle, and does not extend over the entire
+    range $(-\infty, +\infty)$.  It is important to impose this limitation
+    since some models fall so steeply that the weighted value in gaussian
+    tails would otherwise dominate the integral.
+
     *q_calc* must be increasing.  *q_width* must be greater than zero.
+
+    [1] Barker, J. G., and J. S. Pedersen. 1995. Instrumental Smearing Effects
+    in Radially Symmetric Small-Angle Neutron Scattering by Numerical and
+    Analytical Methods. Journal of Applied Crystallography 28 (2): 105--14.
+    https://doi.org/10.1107/S0021889894010095.
     """
     # The current algorithm is a midpoint rectangle rule.  In the test case,
     # neither trapezoid nor Simpson's rule improved the accuracy.
@@ -169,6 +185,9 @@ def pinhole_resolution(q_calc, q, q_width):
     #edges[edges < 0.0] = 0.0 # clip edges below zero
     cdf = erf((edges[:, None] - q[None, :]) / (sqrt(2.0)*q_width)[None, :])
     weights = cdf[1:] - cdf[:-1]
+    # Limit q range to +/- 2.5 sigma
+    weights[q_calc[:, None] < (q - nsigma*q_width)[None, :]] = 0.
+    weights[q_calc[:, None] > (q + nsigma*q_width)[None, :]] = 0.
     weights /= np.sum(weights, axis=0)[None, :]
     return weights
 
