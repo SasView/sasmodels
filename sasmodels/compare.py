@@ -666,7 +666,10 @@ def make_data(opts):
             q = np.linspace(qmin, qmax, nq)
         if opts['zero']:
             q = np.hstack((0, q))
-        data = empty_data1D(q, resolution=res)
+        # TODO: provide command line control of lambda and Delta lambda/lambda
+        #L, dLoL = 5, 0.14/np.sqrt(6)  # wavelength and 14% triangular FWHM
+        L, dLoL = 0, 0
+        data = empty_data1D(q, resolution=res, L=L, dL=L*dLoL)
         index = slice(None, None)
     return data, index
 
@@ -870,6 +873,7 @@ def plot_models(opts, result, limits=None, setnum=0):
 
     # Plot if requested
     view = opts['view']
+    #view = 'log'
     if limits is None:
         vmin, vmax = np.inf, -np.inf
         if have_base:
