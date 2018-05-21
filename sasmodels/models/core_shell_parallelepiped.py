@@ -3,8 +3,14 @@ Definition
 ----------
 
 Calculates the form factor for a rectangular solid with a core-shell structure.
-The thickness and the scattering length density of the shell or
-"rim" can be different on each (pair) of faces.
+The thickness and the scattering length density of the shell or "rim" can be
+different on each (pair) of faces. The three dimensions of the core of the
+parallelepiped (strictly here a cuboid) may be given in *any* size order as
+long as the particles are randomly oriented (i.e. take on all possible
+orientations see notes on 2D below). To avoid multiple fit solutions, e
+specially with Monte-Carlo fit methods, it may be advisable to restrict their
+ranges. There may be a number of closely similar "best fits", so some trial and
+error, or fixing of some dimensions at expected values, may help.
 
 The form factor is normalized by the particle volume $V$ such that
 
@@ -17,8 +23,8 @@ where $\langle \ldots \rangle$ is an average over all possible orientations
 of the rectangular solid, and the usual $\Delta \rho^2 \ V^2$ term cannot be
 pulled out of the form factor term due to the multiple slds in the model.
 
-The core of the solid is defined by the dimensions $A$, $B$, $C$ such that
-$A < B < C$.
+The core of the solid is defined by the dimensions $A$, $B$, $C$ here shown
+such that $A < B < C$.
 
 .. figure:: img/parallelepiped_geometry.jpg
 
@@ -103,14 +109,9 @@ is the scattering length of the solvent.
 FITTING NOTES
 ~~~~~~~~~~~~~
 
-If the scale is set equal to the particle volume fraction, $\phi$, the returned
-value is the scattered intensity per unit volume, $I(q) = \phi P(q)$. However,
-**no interparticle interference effects are included in this calculation.**
-
 There are many parameters in this model. Hold as many fixed as possible with
 known values, or you will certainly end up at a solution that is unphysical.
 
-The returned value is in units of |cm^-1|, on absolute scale.
 
 NB: The 2nd virial coefficient of the core_shell_parallelepiped is calculated
 based on the the averaged effective radius $(=\sqrt{(A+2t_A)(B+2t_B)/\pi})$
@@ -119,10 +120,16 @@ to give an oblate or prolate particle, to give an effective radius
 for $S(q)$ when $P(q) * S(q)$ is applied.
 
 For 2d data the orientation of the particle is required, described using
-angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below. For further
-details of the calculation and angular dispersions see :ref:`orientation`.
-The angle $\Psi$ is the rotational angle around the *long_c* axis. For example,
-$\Psi = 0$ when the *short_b* axis is parallel to the *x*-axis of the detector.
+angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further details
+of the calculation and angular dispersions see :ref:`orientation` .
+
+The angle $\Psi$ is the rotational angle around the $C$ axis.
+For $\theta = 0$ and $\phi = 0$, $\Psi = 0$ corresponds to the $B$ axis
+oriented parallel to the y-axis of the detector with $A$ along the x-axis.
+For other $\theta$, $\phi$ values, the parallelepiped has to be first rotated
+$\theta$ degrees in the $z-x$ plane and then $\phi$ degrees around the $z$ axis,
+before doing a final rotation of $\Psi$ degrees around the resulting $C$ axis
+of the particle to obtain the final orientation of the parallelepiped.
 
 .. note:: For 2d, constraints must be applied during fitting to ensure that the
    inequality $A < B < C$ is not violated, and hence the correct definition

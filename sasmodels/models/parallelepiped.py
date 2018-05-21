@@ -18,10 +18,12 @@ the :ref:`magnetism` documentation.
    Parallelepiped with the corresponding definition of sides.
 
 The three dimensions of the parallelepiped (strictly here a cuboid) may be
-given in *any* size order. To avoid multiple fit solutions, especially
-with Monte-Carlo fit methods, it may be advisable to restrict their ranges.
-There may be a number of closely similar "best fits", so some trial and
-error, or fixing of some dimensions at expected values, may help.
+given in *any* size order as long as the particles are randomly oriented (i.e.
+take on all possible orientations see notes on 2D below). To avoid multiple fit
+solutions, especially with Monte-Carlo fit methods, it may be advisable to
+restrict their ranges. There may be a number of closely similar "best fits", so
+some trial and error, or fixing of some dimensions at expected values, may
+help.
 
 The form factor is normalized by the particle volume and the 1D scattering
 intensity $I(q)$ is then calculated as:
@@ -79,15 +81,6 @@ For 2d data the orientation of the particle is required, described using
 angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further details
 of the calculation and angular dispersions see :ref:`orientation` .
 
-.. Comment by Miguel Gonzalez:
-   The following text has been commented because I think there are two
-   mistakes. Psi is the rotational angle around C (but I cannot understand
-   what it means against the q plane) and psi=0 corresponds to a||x and b||y.
-
-   The angle $\Psi$ is the rotational angle around the $C$ axis against
-   the $q$ plane. For example, $\Psi = 0$ when the $B$ axis is parallel
-   to the $x$-axis of the detector.
-
 The angle $\Psi$ is the rotational angle around the $C$ axis.
 For $\theta = 0$ and $\phi = 0$, $\Psi = 0$ corresponds to the $B$ axis
 oriented parallel to the y-axis of the detector with $A$ along the x-axis.
@@ -96,6 +89,11 @@ $\theta$ degrees in the $z-x$ plane and then $\phi$ degrees around the $z$ axis,
 before doing a final rotation of $\Psi$ degrees around the resulting $C$ axis
 of the particle to obtain the final orientation of the parallelepiped.
 
+.. note:: For 2d, constraints must be applied during fitting to ensure that the
+   inequality $A < B < C$ is not violated, and hence the correct definition
+   of angles is preserved. The calculation will not report an error,
+   but the results may be not correct.
+   
 .. _parallelepiped-orientation:
 
 .. figure:: img/parallelepiped_angle_definition.png
