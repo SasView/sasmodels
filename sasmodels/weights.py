@@ -230,6 +230,27 @@ MODELS = OrderedDict((d.type, d) for d in (
     BoltzmannDispersion
 ))
 
+SASMODELS_WEIGHTS = "~/.sasview/weights/*.py"
+def load_weights(pattern=None):
+    # type: (str) -> None
+    """
+    Load dispersion distributions matching the given pattern
+    """
+    import logging
+    import os
+    import os.path
+    import glob
+    import traceback
+    from .custom import load_custom_kernel_module
+    if pattern is None:
+        pattern = os.environ.get("SASMODELS_WEIGHTS", SASMODELS_WEIGHTS)
+    for filename in sorted(glob.glob(os.path.expanduser(pattern))):
+        try:
+            print("loading weights from", filename)
+            module = load_custom_kernel_module(filename)
+            MODELS[module.Dispersion.type] = module.Dispersion
+        except Exception as exc:
+            logging.error(traceback.format_exc(exc))
 
 def get_weights(disperser, n, width, nsigmas, value, limits, relative):
     """

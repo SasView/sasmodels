@@ -27,14 +27,14 @@ $x_\text{med}$, a width parameter $\sigma$ (note this is *not necessarily*
 the standard deviation, so read the description carefully), the number of
 sigmas $N_\sigma$ to include from the tails of the distribution, and the
 number of points used to compute the average. The center of the distribution
-is set by the value of the model parameter. The meaning of a polydispersity 
-parameter *PD* (not to be confused with a molecular weight distributions 
-in polymer science) in a model depends on the type of parameter it is being 
+is set by the value of the model parameter. The meaning of a polydispersity
+parameter *PD* (not to be confused with a molecular weight distributions
+in polymer science) in a model depends on the type of parameter it is being
 applied too.
 
-The distribution width applied to *volume* (ie, shape-describing) parameters 
-is relative to the center value such that $\sigma = \mathrm{PD} \cdot \bar x$. 
-However, the distribution width applied to *orientation* (ie, angle-describing) 
+The distribution width applied to *volume* (ie, shape-describing) parameters
+is relative to the center value such that $\sigma = \mathrm{PD} \cdot \bar x$.
+However, the distribution width applied to *orientation* (ie, angle-describing)
 parameters is just $\sigma = \mathrm{PD}$.
 
 $N_\sigma$ determines how far into the tails to evaluate the distribution,
@@ -72,8 +72,8 @@ the Lognormal or Schulz distributions.
 If applying polydispersion to parameters describing interfacial thicknesses
 or angular orientations, use the Gaussian or Boltzmann distributions.
 
-If applying polydispersion to parameters describing angles, use the Uniform 
-distribution. Beware of using distributions that are always positive (eg, the 
+If applying polydispersion to parameters describing angles, use the Uniform
+distribution. Beware of using distributions that are always positive (eg, the
 Lognormal) because angles can be negative!
 
 The array distribution allows a user-defined distribution to be applied.
@@ -311,6 +311,67 @@ Only these array values are used computation, therefore the parameter value
 given for the model will have no affect, and will be ignored when computing
 the average.  This means that any parameter with an array distribution will
 not be fitable.
+
+.. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
+
+User-defined Distributions
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can define your own distribution by creating a python file defining a
+*Distribution* object.  The distribution is parameterized by *center*
+(which is always zero for orientation dispersity, or parameter value for
+size dispersity), *sigma* (which is the distribution width in degrees for
+orientation parameters, or center times width for size dispersity), and
+bounds *lb* and *ub* (which are the bounds on the possible values of the
+parameter given in the model definition).
+
+For example, the following wraps the Laplace distribution from scipy stats::
+
+    import numpy as np
+    from scipy.stats import laplace
+
+    from sasmodels import weights
+
+    class Dispersion(weights.Dispersion):
+        r"""
+        Laplace distribution
+
+        .. math::
+
+            w(x) = e^{-\sigma |x - \mu|}
+        """
+        type = "laplace"
+        default = dict(npts=35, width=0, nsigmas=3)  # default values
+        def _weights(self, center, sigma, lb, ub):
+            x = self._linspace(center, sigma, lb, ub)
+            wx = laplace.pdf(x, center, sigma)
+            return x, wx
+
+To see that the distribution is correct use the following::
+
+    from numpy import inf
+    from matplotlib import pyplot as plt
+    from sasmodels import weights
+
+    # reload the user-defined weights
+    weights.load_weights()
+    x, wx = weights.get_weights('laplace', n=35, width=0.1, nsigmas=3, value=50,
+                                limits=[0, inf], relative=True)
+
+    # plot the weights
+    plt.interactive(True)
+    plt.plot(x, wx, 'x')
+
+Any python code can be used to define the distribution.  The distribution
+parameters are available as *self.npts*, *self.width* and *self.nsigmas*.
+Try to follow the convention of gaussian width, npts and number of sigmas
+in the tail, but if your distribution requires more parameters you are free
+to interpret them as something else.  In particular, npts allows you to
+trade accuracy against running time when evaluating your models.  The
+*self._linspace* function uses *self.npts* and *self.nsigmas* to define
+the set of *x* values to use for the distribution (along with the *center*,
+*sigma*, *lb*, and *ub* passed as parameters).  You can use an arbitrary
+set of *x* points.
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 

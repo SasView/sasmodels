@@ -40,10 +40,10 @@ import numpy as np  # type: ignore
 from . import core
 from . import kerneldll
 from . import kernelcl
+from . import weights
 from .data import plot_theory, empty_data1D, empty_data2D, load_data
 from .direct_model import DirectModel, get_mesh
 from .generate import FLOAT_RE, set_integration_size
-from .weights import plot_weights
 
 # pylint: disable=unused-import
 try:
@@ -770,7 +770,7 @@ def compare(opts, limits=None, maxdim=np.inf):
             base_pars, _ = opts['pars']
             model_info = base._kernel.info
             dim = base._kernel.dim
-            plot_weights(model_info, get_mesh(model_info, base_pars, dim=dim))
+            weights.plot_weights(model_info, get_mesh(model_info, base_pars, dim=dim))
     if opts['plot']:
         import matplotlib.pyplot as plt
         plt.show()
@@ -1351,6 +1351,14 @@ def parse_pars(opts, maxdim=np.inf):
     pars.update(presets)  # set value after random to control value
     pars2.update(presets2)  # set value after random to control value
     #import pprint; pprint.pprint(model_info)
+
+    # Hack to load user-defined distributions; run through all parameters
+    # and make sure any pd_type parameter is a defined distribution.
+    if (any(p.endswith('pd_type') and v not in weights.MODELS
+            for p, v in pars.items()) or
+        any(p.endswith('pd_type') and v not in weights.MODELS
+            for p, v in pars2.items())):
+       weights.load_weights()
 
     if opts['show_pars']:
         if model_info.name != model_info2.name or pars != pars2:
