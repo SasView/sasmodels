@@ -36,7 +36,6 @@ class Dispersion(BaseDispersion):
         # pattern at +90 is the same as that at -90.
         width = min(self.nsigmas*sigma, pi/2)
         x = np.linspace(-width, width, self.npts+2)[1:-1]
-        wx = P(x, a)
 
         # Return orientation in degrees with Maier-Saupe weights
         return degrees(x), exp(a*sin(x)**2)

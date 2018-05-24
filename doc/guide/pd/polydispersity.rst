@@ -318,14 +318,32 @@ User-defined Distributions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can define your own distribution by creating a python file defining a
-*Distribution* object.  The distribution is parameterized by *center*
-(which is always zero for orientation dispersity, or parameter value for
-size dispersity), *sigma* (which is the distribution width in degrees for
-orientation parameters, or center times width for size dispersity), and
-bounds *lb* and *ub* (which are the bounds on the possible values of the
-parameter given in the model definition).
+*Distribution* object with a *_weights* method.  The *_weights* method takes
+*center*, *sigma*, *lb* and *ub* as arguments, and can access *self.npts*
+and *self.nsigmas* from the distribution.  They are interpreted as follows:
 
-For example, the following wraps the Laplace distribution from scipy stats::
+* *center* the value of the shape parameter (for size dispersity) or zero
+  if it is an angular dispersity.  This parameter may be fitted.
+
+* *sigma* the width of the distribution, with is the polydispersity parameter
+  times the center for size dispersity, or the polydispersity parameter alone
+  for angular dispersity.  This parameter may be fitted.
+
+* *lb*, *ub* are the parameter limits given in the model definition file.  For
+  example, a radius parameter has *lb* equal to zero.  A volume fraction
+  parameter would have *lb* equal to zero and *ub* equal to one.
+
+* *self.nsigmas* the distance to go into the tails when evaluating the
+  distribution.  For a two parameter distribution, this value could be
+  co-opted to use for the second parameter, though it will not be available
+  for fitting.
+
+* *self.npts* the number of points to use when evaluating the distribution.
+  The user will adjust this to trade calculation time for accuracy, but the
+  distribution code is free to return more or fewer, or use it for the third
+  parameter in a three parameter distribution.
+
+The code following wraps the Laplace distribution from scipy stats::
 
     import numpy as np
     from scipy.stats import laplace
@@ -347,7 +365,7 @@ For example, the following wraps the Laplace distribution from scipy stats::
             wx = laplace.pdf(x, center, sigma)
             return x, wx
 
-To see that the distribution is correct use the following::
+You can plot the weights for a given value and width using the following::
 
     from numpy import inf
     from matplotlib import pyplot as plt
@@ -362,16 +380,13 @@ To see that the distribution is correct use the following::
     plt.interactive(True)
     plt.plot(x, wx, 'x')
 
-Any python code can be used to define the distribution.  The distribution
-parameters are available as *self.npts*, *self.width* and *self.nsigmas*.
-Try to follow the convention of gaussian width, npts and number of sigmas
-in the tail, but if your distribution requires more parameters you are free
-to interpret them as something else.  In particular, npts allows you to
-trade accuracy against running time when evaluating your models.  The
-*self._linspace* function uses *self.npts* and *self.nsigmas* to define
-the set of *x* values to use for the distribution (along with the *center*,
-*sigma*, *lb*, and *ub* passed as parameters).  You can use an arbitrary
-set of *x* points.
+The *self.nsigmas* and *self.npts* parameters are normally used to control
+the accuracy of the distribution integral. The *self._linspace* function
+uses them to define the *x* values (along with the *center*, *sigma*,
+*lb*, and *ub* which are passed as parameters).  If you repurpose npts or
+nsigmas you will need to generate your own *x*.  Be sure to honour the
+limits *lb* and *ub*, for example to disallow a negative radius or constrain
+the volume fraction to lie between zero and one.
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
