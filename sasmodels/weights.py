@@ -246,7 +246,7 @@ def load_weights(pattern=None):
         pattern = os.environ.get("SASMODELS_WEIGHTS", SASMODELS_WEIGHTS)
     for filename in sorted(glob.glob(os.path.expanduser(pattern))):
         try:
-            print("loading weights from", filename)
+            #print("loading weights from", filename)
             module = load_custom_kernel_module(filename)
             MODELS[module.Dispersion.type] = module.Dispersion
         except Exception as exc:
