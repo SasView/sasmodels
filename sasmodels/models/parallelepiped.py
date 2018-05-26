@@ -4,7 +4,7 @@ r"""
 Definition
 ----------
 
-This model calculates the scattering from a rectangular parallelepiped
+This model calculates the scattering from a rectangular solid
 (:numref:`parallelepiped-image`).
 If you need to apply polydispersity, see also :ref:`rectangular-prism`. For
 information about polarised and magnetic scattering, see
@@ -71,51 +71,24 @@ with
 where substitution of $\sigma = cos\alpha$ and $\beta = \pi/2 \ u$ have been
 applied.
 
-NB: The 2nd virial coefficient of the parallelepiped is calculated based on
-the averaged effective radius, after appropriately sorting the three
-dimensions, to give an oblate or prolate particle, $(=\sqrt{AB/\pi})$ and
-length $(= C)$ values, and used as the effective radius for
-$S(q)$ when $P(q) \cdot S(q)$ is applied.
+For **oriented** particles, the 2D scattering intensity, $I(q_x, q_y)$, is
+given as:
 
-For 2d data the orientation of the particle is required, described using
-angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further details
-of the calculation and angular dispersions see :ref:`orientation` .
+.. math::
 
-The angle $\Psi$ is the rotational angle around the $C$ axis.
-For $\theta = 0$ and $\phi = 0$, $\Psi = 0$ corresponds to the $B$ axis
-oriented parallel to the y-axis of the detector with $A$ along the x-axis.
-For other $\theta$, $\phi$ values, the parallelepiped has to be first rotated
-$\theta$ degrees in the $z-x$ plane and then $\phi$ degrees around the $z$ axis,
-before doing a final rotation of $\Psi$ degrees around the resulting $C$ axis
-of the particle to obtain the final orientation of the parallelepiped.
+    I(q_x, q_y) = \frac{\text{scale}}{V} (\Delta\rho \cdot V)^2 P(q_x, q_y)
+            + \text{background}
 
-.. note:: For 2d, constraints must be applied during fitting to ensure that the
-   inequality $A < B < C$ is not violated, and hence the correct definition
-   of angles is preserved. The calculation will not report an error,
-   but the results may be not correct.
-   
-.. _parallelepiped-orientation:
+.. Comment by Miguel Gonzalez:
+   This reflects the logic of the code, as in parallelepiped.c the call
+   to _pkernel returns $P(q_x, q_y)$ and then this is multiplied by
+   $V^2 * (\Delta \rho)^2$. And finally outside parallelepiped.c it will be
+   multiplied by scale, normalized by $V$ and the background added. But
+   mathematically it makes more sense to write
+   $I(q_x, q_y) = \text{scale} V \Delta\rho^2 P(q_x, q_y) + \text{background}$,
+   with scale being the volume fraction.
 
-.. figure:: img/parallelepiped_angle_definition.png
-
-    Definition of the angles for oriented parallelepiped, shown with $A<B<C$.
-
-.. figure:: img/parallelepiped_angle_projection.png
-
-    Examples of the angles for an oriented parallelepiped against the
-    detector plane.
-
-On introducing "Orientational Distribution" in the angles, "distribution of
-theta" and "distribution of phi" parameters will appear. These are actually
-rotations about axes $\delta_1$ and $\delta_2$ of the parallelepiped,
-perpendicular to the $a$ x $c$ and $b$ x $c$ faces. (When $\theta = \phi = 0$
-these are parallel to the $Y$ and $X$ axes of the instrument.) The third
-orientation distribution, in $\psi$, is about the $c$ axis of the particle,
-perpendicular to the $a$ x $b$ face. Some experimentation may be required to
-understand the 2d patterns fully as discussed in :ref:`orientation` .
-
-For a given orientation of the parallelepiped, the 2D form factor is
-calculated as
+Where $P(q_x, q_y)$ for a given orientation of the form factor is calculated as
 
 .. math::
 
@@ -134,21 +107,63 @@ with
     \cos\beta  &= \hat B \cdot \hat q, \\
     \cos\gamma &= \hat C \cdot \hat q
 
-and the scattering intensity as:
 
-.. math::
+FITTING NOTES
+~~~~~~~~~~~~~
 
-    I(q_x, q_y) = \frac{\text{scale}}{V} V^2 \Delta\rho^2 P(q_x, q_y)
-            + \text{background}
+#. The 2nd virial coefficient of the parallelepiped is calculated based on
+   the averaged effective radius, after appropriately sorting the three
+   dimensions, to give an oblate or prolate particle, $(=\sqrt{AB/\pi})$ and
+   length $(= C)$ values, and used as the effective radius for
+   $S(q)$ when $P(q) \cdot S(q)$ is applied.
 
-.. Comment by Miguel Gonzalez:
-   This reflects the logic of the code, as in parallelepiped.c the call
-   to _pkernel returns $P(q_x, q_y)$ and then this is multiplied by
-   $V^2 * (\Delta \rho)^2$. And finally outside parallelepiped.c it will be
-   multiplied by scale, normalized by $V$ and the background added. But
-   mathematically it makes more sense to write
-   $I(q_x, q_y) = \text{scale} V \Delta\rho^2 P(q_x, q_y) + \text{background}$,
-   with scale being the volume fraction.
+#. For 2d data the orientation of the particle is required, described using
+   angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, where $\theta$
+   and $\phi$ define the orientation of the director in the laboratry reference
+   frame of the beam direction ($z$) and detector plane ($x-y$ plane), while
+   the angle $\Psi$ is effectively the rotational angle around the particle
+   $C$ axis. For $\theta = 0$ and $\phi = 0$, $\Psi = 0$ corresponds to the
+   $B$ axis oriented parallel to the y-axis of the detector with $A$ along
+   the x-axis. For other $\theta$, $\phi$ values, the order of rotations
+   matters. In particular, the parallelepiped must first be rotated $\theta$
+   degrees in the $x-z$ plane before rotating $\phi$ degrees around the $z$
+   axis (in the $x-y$ plane). Applying orientational distribution to the
+   particle orientation (i.e  `jitter` to one or more of these angles) can get
+   more confusing as `jitter` is defined **NOT** with respect to the laboratory
+   frame but the particle reference frame. It is thus highly recmmended to
+   read :ref:`orientation` for further details of the calculation and angular
+   dispersions.
+
+.. note:: For 2d, constraints must be applied during fitting to ensure that the
+   order of sides chosen is not altered, and hence that the correct definition
+   of angles is preserved. For the default choice shown here, that means
+   ensuring that the inequality $A < B < C$ is not violated,  The calculation
+   will not report an error, but the results may be not correct.
+   
+.. _parallelepiped-orientation:
+
+.. figure:: img/parallelepiped_angle_definition.png
+
+    Definition of the angles for oriented parallelepiped, shown with $A<B<C$.
+
+.. figure:: img/parallelepiped_angle_projection.png
+
+    Examples of the angles for an oriented parallelepiped against the
+    detector plane.
+
+.. Comment by Paul Butler
+   I am commenting this section out as we are trying to minimize the amount of
+   oritentational detail here and encourage the user to go to the full
+   orientation documentation so that changes can be made in just one place.
+   below is the commented paragrah:
+   On introducing "Orientational Distribution" in the angles, "distribution of
+   theta" and "distribution of phi" parameters will appear. These are actually
+   rotations about axes $\delta_1$ and $\delta_2$ of the parallelepiped,
+   perpendicular to the $a$ x $c$ and $b$ x $c$ faces. (When $\theta = \phi = 0$
+   these are parallel to the $Y$ and $X$ axes of the instrument.) The third
+   orientation distribution, in $\psi$, is about the $c$ axis of the particle,
+   perpendicular to the $a$ x $b$ face. Some experimentation may be required to
+   understand the 2d patterns fully as discussed in :ref:`orientation` .
 
 
 Validation
@@ -157,7 +172,6 @@ Validation
 Validation of the code was done by comparing the output of the 1D calculation
 to the angular average of the output of a 2D calculation over all possible
 angles.
-
 
 References
 ----------

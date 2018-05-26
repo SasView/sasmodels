@@ -7,8 +7,8 @@ The thickness and the scattering length density of the shell or "rim" can be
 different on each (pair) of faces. The three dimensions of the core of the
 parallelepiped (strictly here a cuboid) may be given in *any* size order as
 long as the particles are randomly oriented (i.e. take on all possible
-orientations see notes on 2D below). To avoid multiple fit solutions, e
-specially with Monte-Carlo fit methods, it may be advisable to restrict their
+orientations see notes on 2D below). To avoid multiple fit solutions,
+especially with Monte-Carlo fit methods, it may be advisable to restrict their
 ranges. There may be a number of closely similar "best fits", so some trial and
 error, or fixing of some dimensions at expected values, may help.
 
@@ -16,7 +16,7 @@ The form factor is normalized by the particle volume $V$ such that
 
 .. math::
 
-    I(q) = \frac{\text{scale}}{V} \langle P(q,\alpha,\beta) \rangle 
+    I(q) = \frac{\text{scale}}{V} \langle P(q,\alpha,\beta) \rangle
     + \text{background}
 
 where $\langle \ldots \rangle$ is an average over all possible orientations
@@ -109,40 +109,45 @@ is the scattering length of the solvent.
 FITTING NOTES
 ~~~~~~~~~~~~~
 
-There are many parameters in this model. Hold as many fixed as possible with
-known values, or you will certainly end up at a solution that is unphysical.
+#. There are many parameters in this model. Hold as many fixed as possible with
+   known values, or you will certainly end up at a solution that is unphysical.
 
+#. The 2nd virial coefficient of the core_shell_parallelepiped is calculated
+   based on the the averaged effective radius $(=\sqrt{(A+2t_A)(B+2t_B)/\pi})$
+   and length $(C+2t_C)$ values, after appropriately sorting the three
+   dimensions to give an oblate or prolate particle, to give an effective radius
+   for $S(q)$ when $P(q) * S(q)$ is applied.
 
-NB: The 2nd virial coefficient of the core_shell_parallelepiped is calculated
-based on the the averaged effective radius $(=\sqrt{(A+2t_A)(B+2t_B)/\pi})$
-and length $(C+2t_C)$ values, after appropriately sorting the three dimensions
-to give an oblate or prolate particle, to give an effective radius
-for $S(q)$ when $P(q) * S(q)$ is applied.
-
-For 2d data the orientation of the particle is required, described using
-angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further details
-of the calculation and angular dispersions see :ref:`orientation` .
-
-The angle $\Psi$ is the rotational angle around the $C$ axis.
-For $\theta = 0$ and $\phi = 0$, $\Psi = 0$ corresponds to the $B$ axis
-oriented parallel to the y-axis of the detector with $A$ along the x-axis.
-For other $\theta$, $\phi$ values, the parallelepiped has to be first rotated
-$\theta$ degrees in the $z-x$ plane and then $\phi$ degrees around the $z$ axis,
-before doing a final rotation of $\Psi$ degrees around the resulting $C$ axis
-of the particle to obtain the final orientation of the parallelepiped.
+#. For 2d data the orientation of the particle is required, described using
+   angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, where $\theta$
+   and $\phi$ define the orientation of the director in the laboratry reference
+   frame of the beam direction ($z$) and detector plane ($x-y$ plane), while
+   the angle $\Psi$ is effectively the rotational angle around the particle
+   $C$ axis. For $\theta = 0$ and $\phi = 0$, $\Psi = 0$ corresponds to the
+   $B$ axis oriented parallel to the y-axis of the detector with $A$ along
+   the x-axis. For other $\theta$, $\phi$ values, the order of rotations
+   matters. In particular, the parallelepiped must first be rotated $\theta$
+   degrees in the $x-z$ plane before rotating $\phi$ degrees around the $z$
+   axis (in the $x-y$ plane). Applying orientational distribution to the
+   particle orientation (i.e  `jitter` to one or more of these angles) can get
+   more confusing as `jitter` is defined **NOT** with respect to the laboratory
+   frame but the particle reference frame. It is thus highly recmmended to
+   read :ref:`orientation` for further details of the calculation and angular
+   dispersions.
 
 .. note:: For 2d, constraints must be applied during fitting to ensure that the
-   inequality $A < B < C$ is not violated, and hence the correct definition
-   of angles is preserved. The calculation will not report an error,
-   but the results may be not correct.
+   order of sides chosen is not altered, and hence that the correct definition
+   of angles is preserved. For the default choice shown here, that means
+   ensuring that the inequality $A < B < C$ is not violated,  The calculation
+   will not report an error, but the results may be not correct.
 
 .. figure:: img/parallelepiped_angle_definition.png
 
     Definition of the angles for oriented core-shell parallelepipeds.
-    Note that rotation $\theta$, initially in the $xz$ plane, is carried
+    Note that rotation $\theta$, initially in the $x-z$ plane, is carried
     out first, then rotation $\phi$ about the $z$ axis, finally rotation
-    $\Psi$ is now around the axis of the particle. The neutron or X-ray
-    beam is along the $z$ axis.
+    $\Psi$ is now around the $C$ axis of the particle. The neutron or X-ray
+    beam is along the $z$ axis and the detecotr defines the $x-y$ plane.
 
 .. figure:: img/parallelepiped_angle_projection.png
 
