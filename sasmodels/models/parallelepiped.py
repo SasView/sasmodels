@@ -185,7 +185,8 @@ Authorship and Verification
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:**  Paul Kienzle **Date:** April 05, 2017
-* **Last Reviewed by:**  Richard Heenan **Date:** April 06, 2017
+* **Last Reviewed by:**  Miguel Gonzales and Paul Butler **Date:** May 24,
+  2018 - documentation updated
 """
 
 import numpy as np

@@ -179,6 +179,8 @@ Authorship and Verification
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Converted to sasmodels by:** Miguel Gonzalez **Date:** February 26, 2016
 * **Last Modified by:** Paul Kienzle **Date:** October 17, 2017
+* **Last Reviewed by:** Paul Butler **Date:** May 24, 2018 - documentation
+  updated
 """
 
 import numpy as np
