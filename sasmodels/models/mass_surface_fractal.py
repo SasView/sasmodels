@@ -38,8 +38,14 @@ and $\rho_{particle}$ is the scattering length density of particles.
 
     The surface ( $D_s$ ) and mass ( $D_m$ ) fractal dimensions are only
     valid if $0 < surface\_dim < 6$ , $0 < mass\_dim < 6$ , and
-    $(surface\_dim + mass\_dim ) < 6$ .
-
+    $(surface\_dim + mass\_dim ) < 6$ . 
+    Older versions of sasview may have the default primary particle radius
+    larger than the cluster radius, this was an error, also present in the 
+    Schmidt review paper below. The primary particle should be the smaller 
+    as described in the original Hurd et.al. who also point out that 
+    polydispersity in the primary particle sizes may affect their 
+    apparent surface fractal dimension.
+    
 
 References
 ----------
@@ -48,6 +54,9 @@ P Schmidt, *J Appl. Cryst.*, 24 (1991) 414-435 Equation(19)
 
 A J Hurd, D W Schaefer, J E Martin, *Phys. Rev. A*,
 35 (1987) 2361-2364 Equation(2)
+
+* **Last Reviewed by:** Richard Heenan **Date:** May 30, 2018
+
 """
 
 import numpy as np
@@ -66,7 +75,6 @@ description = """
         rg_cluster  =  Rg
         rg_primary    =  rg
         background   =  background
-        Ref: Schmidt, J Appl Cryst, eq(19), (1991), 24, 414-435
         Hurd, Schaefer, Martin, Phys Rev A, eq(2),(1987),35, 2361-2364
         Note that 0 < Ds< 6 and 0 < Dm < 6.
         """
@@ -77,8 +85,8 @@ category = "shape-independent"
 parameters = [
     ["fractal_dim_mass", "",      1.8, [0.0, 6.0], "", "Mass fractal dimension"],
     ["fractal_dim_surf", "",      2.3, [0.0, 6.0], "", "Surface fractal dimension"],
-    ["rg_cluster",       "Ang",  86.7, [0.0, inf], "", "Cluster radius of gyration"],
-    ["rg_primary",       "Ang", 4000., [0.0, inf], "", "Primary particle radius of gyration"],
+    ["rg_cluster",       "Ang", 4000., [0.0, inf], "", "Cluster radius of gyration"],
+    ["rg_primary",       "Ang",  86.7, [0.0, inf], "", "Primary particle radius of gyration"],
 ]
 # pylint: enable=bad-whitespace, line-too-long
 
@@ -106,13 +114,13 @@ def random():
 demo = dict(scale=1, background=0,
             fractal_dim_mass=1.8,
             fractal_dim_surf=2.3,
-            rg_cluster=86.7,
-            rg_primary=4000.0)
+            rg_cluster=4000.0,
+            rg_primary=86.7)
 
 tests = [
 
-    # Accuracy tests based on content in test/utest_other_models.py
-    [{'fractal_dim_mass':      1.8,
+    # Accuracy tests based on content in test/utest_other_models.py  All except first, changed so rg_cluster is the larger, RKH 30 May 2018
+    [{'fractal_dim_mass':   1.8,
       'fractal_dim_surf':   2.3,
       'rg_cluster':   86.7,
       'rg_primary': 4000.0,
@@ -122,22 +130,22 @@ tests = [
     # Additional tests with larger range of parameters
     [{'fractal_dim_mass':      3.3,
       'fractal_dim_surf':   1.0,
-      'rg_cluster':   90.0,
-      'rg_primary': 4000.0,
-     }, 0.001, 0.18562699016],
+      'rg_cluster': 4000.0,
+      'rg_primary':   90.0,
+     }, 0.001, 0.0932516614456],
 
     [{'fractal_dim_mass':      1.3,
-      'fractal_dim_surf':   1.0,
-      'rg_cluster':   90.0,
-      'rg_primary': 2000.0,
+      'fractal_dim_surf':   2.0,
+      'rg_cluster': 2000.0,
+      'rg_primary':   90.0,
       'background':    0.8,
-     }, 0.001, 1.16539753641],
+     }, 0.001, 1.28296431786],
 
     [{'fractal_dim_mass':      2.3,
-      'fractal_dim_surf':   1.0,
-      'rg_cluster':   90.0,
-      'rg_primary': 1000.0,
+      'fractal_dim_surf':   3.1,
+      'rg_cluster':  1000.0,
+      'rg_primary':  30.0,
       'scale':        10.0,
       'background':    0.0,
-     }, 0.051, 0.000169548800377],
+     }, 0.051, 0.00333804044899],
     ]
