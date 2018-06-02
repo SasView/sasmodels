@@ -82,13 +82,21 @@ static void set_spin_weights(double in_spin, double out_spin, double weight[6])
 {
   in_spin = clip(in_spin, 0.0, 1.0);
   out_spin = clip(out_spin, 0.0, 1.0);
-  // Note: sasview 3.1 scaled all slds by sqrt(weight) and assumed that
+  // Previous version of this function took the square root of the weights,
+  // under the assumption that 
+  //
   //     w*I(q, rho1, rho2, ...) = I(q, sqrt(w)*rho1, sqrt(w)*rho2, ...)
-  // which is likely to be the case for simple models.
-  weight[0] = sqrt((1.0-in_spin) * (1.0-out_spin)); // dd
-  weight[1] = sqrt((1.0-in_spin) * out_spin);       // du.real
-  weight[2] = sqrt(in_spin * (1.0-out_spin));       // ud.real
-  weight[3] = sqrt(in_spin * out_spin);             // uu
+  //
+  // However, since the weights are applied to the final intensity and
+  // are not interned inside the I(q) function, we want the full
+  // weight and not the square root.  Any function using
+  // set_spin_weights as part of calculating an amplitude will need to
+  // manually take that square root, but there is currently no such
+  // function.
+  weight[0] = (1.0-in_spin) * (1.0-out_spin); // dd
+  weight[1] = (1.0-in_spin) * out_spin;       // du
+  weight[2] = in_spin * (1.0-out_spin);       // ud
+  weight[3] = in_spin * out_spin;             // uu
   weight[4] = weight[1]; // du.imag
   weight[5] = weight[2]; // ud.imag
 }
