@@ -188,8 +188,11 @@ def pinhole_resolution(q_calc, q, q_width, nsigma=PINHOLE_N_SIGMA):
     cdf = erf((edges[:, None] - q[None, :]) / (sqrt(2.0)*q_width)[None, :])
     weights = cdf[1:] - cdf[:-1]
     # Limit q range to +/- 2.5 sigma
-    weights[q_calc[:, None] < (q - nsigma*q_width)[None, :]] = 0.
-    weights[q_calc[:, None] > (q + nsigma*q_width)[None, :]] = 0.
+    qhigh = q + nsigma*q_width
+    #qlow = q - nsigma*q_width  # linear limits
+    qlow = q*q/qhigh  # log limits
+    weights[q_calc[:, None] < qlow[None, :]] = 0.
+    weights[q_calc[:, None] > qhigh[None, :]] = 0.
     weights /= np.sum(weights, axis=0)[None, :]
     return weights
 
