@@ -706,6 +706,7 @@ class ResolutionTest(unittest.TestCase):
 
     # TODO: turn pinhole/slit demos into tests
 
+    @unittest.skip("suppress comparison with old version; pinhole calc changed")
     def test_pinhole(self):
         """
         Pinhole smearing with dQ = 0.001 [Note: not dQ/Q = 0.001]
