@@ -19,6 +19,7 @@ __all__ = ["Resolution", "Perfect1D", "Pinhole1D", "Slit1D",
 
 MINIMUM_RESOLUTION = 1e-8
 MINIMUM_ABSOLUTE_Q = 0.02  # relative to the minimum q in the data
+PINHOLE_N_SIGMA = 2.5 # From: Barker & Pedersen 1995 JAC
 
 class Resolution(object):
     """
@@ -64,8 +65,11 @@ class Pinhole1D(Resolution):
 
     *q_calc* is the list of points to calculate, or None if this should
     be estimated from the *q* and *q_width*.
+
+    *nsigma* is the width of the resolution function.  Should be 2.5.
+    See :func:`pinhole_resolution` for details.
     """
-    def __init__(self, q, q_width, q_calc=None, nsigma=3):
+    def __init__(self, q, q_width, q_calc=None, nsigma=PINHOLE_N_SIGMA):
         #*min_step* is the minimum point spacing to use when computing the
         #underlying model.  It should be on the order of
         #$\tfrac{1}{10}\tfrac{2\pi}{d_\text{max}}$ to make sure that fringes
@@ -81,14 +85,17 @@ class Pinhole1D(Resolution):
                        if q_calc is None else np.sort(q_calc))
 
         # Protect against models which are not defined for very low q.  Limit
-        # the smallest q value evaluated (in absolute) to 0.02*min
+        # the smallest q value evaluated to 0.02*min.  Note that negative q
+        # values are trimmed even for broad resolution.  Although not possible
+        # from the geometry, they may appear since we are using a truncated
+        # gaussian to represent resolution rather than a skew distribution.
         cutoff = MINIMUM_ABSOLUTE_Q*np.min(self.q)
-        self.q_calc = self.q_calc[abs(self.q_calc) >= cutoff]
+        self.q_calc = self.q_calc[self.q_calc >= cutoff]
 
         # Build weight matrix from calculated q values
         self.weight_matrix = pinhole_resolution(
-            self.q_calc, self.q, np.maximum(q_width, MINIMUM_RESOLUTION))
-        self.q_calc = abs(self.q_calc)
+            self.q_calc, self.q, np.maximum(q_width, MINIMUM_RESOLUTION),
+            nsigma=nsigma)
 
     def apply(self, theory):
         return apply_resolution_matrix(self.weight_matrix, theory)
@@ -100,9 +107,9 @@ class Slit1D(Resolution):
 
     *q* points at which the data is measured.
 
-    *dqx* slit width in qx
+    *qx_width* slit width in qx
 
-    *dqy* slit height in qy
+    *qy_width* slit height in qy
 
     *q_calc* is the list of points to calculate, or None if this should
     be estimated from the *q* and *q_width*.
@@ -153,15 +160,26 @@ def apply_resolution_matrix(weight_matrix, theory):
     return Iq.flatten()
 
 
-def pinhole_resolution(q_calc, q, q_width):
-    """
+def pinhole_resolution(q_calc, q, q_width, nsigma=PINHOLE_N_SIGMA):
+    r"""
     Compute the convolution matrix *W* for pinhole resolution 1-D data.
 
     Each row *W[i]* determines the normalized weight that the corresponding
     points *q_calc* contribute to the resolution smeared point *q[i]*.  Given
     *W*, the resolution smearing can be computed using *dot(W,q)*.
 
+    Note that resolution is limited to $\pm 2.5 \sigma$.[1]  The true resolution
+    function is a broadened triangle, and does not extend over the entire
+    range $(-\infty, +\infty)$.  It is important to impose this limitation
+    since some models fall so steeply that the weighted value in gaussian
+    tails would otherwise dominate the integral.
+
     *q_calc* must be increasing.  *q_width* must be greater than zero.
+
+    [1] Barker, J. G., and J. S. Pedersen. 1995. Instrumental Smearing Effects
+    in Radially Symmetric Small-Angle Neutron Scattering by Numerical and
+    Analytical Methods. Journal of Applied Crystallography 28 (2): 105--14.
+    https://doi.org/10.1107/S0021889894010095.
     """
     # The current algorithm is a midpoint rectangle rule.  In the test case,
     # neither trapezoid nor Simpson's rule improved the accuracy.
@@ -169,6 +187,12 @@ def pinhole_resolution(q_calc, q, q_width):
     #edges[edges < 0.0] = 0.0 # clip edges below zero
     cdf = erf((edges[:, None] - q[None, :]) / (sqrt(2.0)*q_width)[None, :])
     weights = cdf[1:] - cdf[:-1]
+    # Limit q range to +/- 2.5 sigma
+    qhigh = q + nsigma*q_width
+    #qlow = q - nsigma*q_width  # linear limits
+    qlow = q*q/qhigh  # log limits
+    weights[q_calc[:, None] < qlow[None, :]] = 0.
+    weights[q_calc[:, None] > qhigh[None, :]] = 0.
     weights /= np.sum(weights, axis=0)[None, :]
     return weights
 
@@ -493,13 +517,16 @@ def eval_form(q, form, pars):
     return theory
 
 
-def gaussian(q, q0, dq):
+def gaussian(q, q0, dq, nsigma=2.5):
     """
-    Return the Gaussian resolution function.
+    Return the truncated Gaussian resolution function.
 
     *q0* is the center, *dq* is the width and *q* are the points to evaluate.
     """
-    return exp(-0.5*((q-q0)/dq)**2)/(sqrt(2*pi)*dq)
+    # Calculate the density of the tails; the resulting gaussian needs to be
+    # scaled by this amount in ordere to integrate to 1.0
+    two_tail_density = 2 * (1 + erf(-nsigma/sqrt(2)))/2
+    return exp(-0.5*((q-q0)/dq)**2)/(sqrt(2*pi)*dq)/(1-two_tail_density)
 
 
 def romberg_slit_1d(q, width, height, form, pars):
@@ -557,7 +584,7 @@ def romberg_slit_1d(q, width, height, form, pars):
     return result
 
 
-def romberg_pinhole_1d(q, q_width, form, pars, nsigma=5):
+def romberg_pinhole_1d(q, q_width, form, pars, nsigma=2.5):
     """
     Romberg integration for pinhole resolution.
 
@@ -677,6 +704,8 @@ class ResolutionTest(unittest.TestCase):
         output = resolution.apply(theory)
         np.testing.assert_equal(output, self.y)
 
+    # TODO: turn pinhole/slit demos into tests
+
     def test_pinhole(self):
         """
         Pinhole smearing with dQ = 0.001 [Note: not dQ/Q = 0.001]
@@ -685,10 +714,13 @@ class ResolutionTest(unittest.TestCase):
                                q_calc=self.x)
         theory = 12.0-1000.0*resolution.q_calc
         output = resolution.apply(theory)
+        # Note: answer came from output of previous run.  Non-integer
+        # values at ends come from the fact that q_calc does not
+        # extend beyond q, and so the weights don't balance.
         answer = [
-            10.44785079, 9.84991299, 8.98101708,
-            7.99906585, 6.99998311, 6.00001689,
-            5.00093415, 4.01898292, 3.15008701, 2.55214921,
+            10.47037734, 9.86925860,
+            9., 8., 7., 6., 5., 4.,
+            3.13074140, 2.52962266,
             ]
         np.testing.assert_allclose(output, answer, atol=1e-8)
 
@@ -731,6 +763,7 @@ class IgorComparisonTest(unittest.TestCase):
         output = self._eval_sphere(pars, resolution)
         self._compare(q, output, answer, 1e-6)
 
+    @unittest.skip("suppress comparison with old version; pinhole calc changed")
     def test_pinhole(self):
         """
         Compare pinhole resolution smearing with NIST Igor SANS
@@ -745,6 +778,7 @@ class IgorComparisonTest(unittest.TestCase):
         # TODO: relative error should be lower
         self._compare(q, output, answer, 3e-4)
 
+    @unittest.skip("suppress comparison with old version; pinhole calc changed")
     def test_pinhole_romberg(self):
         """
         Compare pinhole resolution smearing with romberg integration result.
@@ -760,7 +794,7 @@ class IgorComparisonTest(unittest.TestCase):
         #q_calc = interpolate(pinhole_extend_q(q, q_width, nsigma=5),
         #                     2*np.pi/pars['radius']/200)
         #tol = 0.001
-        ## The default 3 sigma and no extra points gets 1%
+        ## The default 2.5 sigma and no extra points gets 1%
         q_calc = None  # type: np.ndarray
         tol = 0.01
         resolution = Pinhole1D(q, q_width, q_calc=q_calc)
@@ -1079,7 +1113,7 @@ def _eval_demo_1d(resolution, title):
     Iq = resolution.apply(theory)
 
     if isinstance(resolution, Slit1D):
-        width, height = resolution.dqx, resolution.dqy
+        width, height = resolution.qx_width, resolution.qy_width
         Iq_romb = romberg_slit_1d(resolution.q, width, height, model, pars)
     else:
         dq = resolution.q_width

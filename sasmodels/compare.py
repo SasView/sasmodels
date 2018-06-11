@@ -644,7 +644,7 @@ def time_calculation(calculator, pars, evals=1):
     return value, average_time
 
 def make_data(opts):
-    # type: (Dict[str, Any]) -> Tuple[Data, np.ndarray]
+    # type: (Dict[str, Any], float) -> Tuple[Data, np.ndarray]
     """
     Generate an empty dataset, used with the model to set Q points
     and resolution.
@@ -666,7 +666,10 @@ def make_data(opts):
             q = np.linspace(qmin, qmax, nq)
         if opts['zero']:
             q = np.hstack((0, q))
-        data = empty_data1D(q, resolution=res)
+        # TODO: provide command line control of lambda and Delta lambda/lambda
+        #L, dLoL = 5, 0.14/np.sqrt(6)  # wavelength and 14% triangular FWHM
+        L, dLoL = 0, 0
+        data = empty_data1D(q, resolution=res, L=L, dL=L*dLoL)
         index = slice(None, None)
     return data, index
 
@@ -785,7 +788,7 @@ def run_models(opts, verbose=False):
     base, comp = opts['engines']
     base_n, comp_n = opts['count']
     base_pars, comp_pars = opts['pars']
-    data = opts['data']
+    base_data, comp_data = opts['data']
 
     comparison = comp is not None
 
@@ -799,7 +802,7 @@ def run_models(opts, verbose=False):
         if verbose:
             print("%s t=%.2f ms, intensity=%.0f"
                   % (base.engine, base_time, base_value.sum()))
-        _show_invalid(data, base_value)
+        _show_invalid(base_data, base_value)
     except ImportError:
         traceback.print_exc()
 
@@ -811,7 +814,7 @@ def run_models(opts, verbose=False):
             if verbose:
                 print("%s t=%.2f ms, intensity=%.0f"
                       % (comp.engine, comp_time, comp_value.sum()))
-            _show_invalid(data, comp_value)
+            _show_invalid(base_data, comp_value)
         except ImportError:
             traceback.print_exc()
 
@@ -865,11 +868,12 @@ def plot_models(opts, result, limits=None, setnum=0):
 
     have_base, have_comp = (base_value is not None), (comp_value is not None)
     base, comp = opts['engines']
-    data = opts['data']
+    base_data, comp_data = opts['data']
     use_data = (opts['datafile'] is not None) and (have_base ^ have_comp)
 
     # Plot if requested
     view = opts['view']
+    #view = 'log'
     if limits is None:
         vmin, vmax = np.inf, -np.inf
         if have_base:
@@ -883,15 +887,15 @@ def plot_models(opts, result, limits=None, setnum=0):
     if have_base:
         if have_comp:
             plt.subplot(131)
-        plot_theory(data, base_value, view=view, use_data=use_data, limits=limits)
+        plot_theory(base_data, base_value, view=view, use_data=use_data, limits=limits)
         plt.title("%s t=%.2f ms"%(base.engine, base_time))
         #cbar_title = "log I"
     if have_comp:
         if have_base:
             plt.subplot(132)
         if not opts['is2d'] and have_base:
-            plot_theory(data, base_value, view=view, use_data=use_data, limits=limits)
-        plot_theory(data, comp_value, view=view, use_data=use_data, limits=limits)
+            plot_theory(comp_data, base_value, view=view, use_data=use_data, limits=limits)
+        plot_theory(comp_data, comp_value, view=view, use_data=use_data, limits=limits)
         plt.title("%s t=%.2f ms"%(comp.engine, comp_time))
         #cbar_title = "log I"
     if have_base and have_comp:
@@ -907,7 +911,10 @@ def plot_models(opts, result, limits=None, setnum=0):
             cutoff = sorted_err[int(sorted_err.size*0.95)]
             err[err > cutoff] = cutoff
         #err,errstr = base/comp,"ratio"
-        plot_theory(data, None, resid=err, view=errview, use_data=use_data)
+        # Note: base_data only since base and comp have same q values (though
+        # perhaps different resolution), and we are plotting the difference
+        # at each q
+        plot_theory(base_data, None, resid=err, view=errview, use_data=use_data)
         plt.xscale('log' if view == 'log' and not opts['is2d'] else 'linear')
         plt.legend(['P%d'%(k+1) for k in range(setnum+1)], loc='best')
         plt.title("max %s = %.3g"%(errstr, abs(err).max()))
@@ -1074,7 +1081,7 @@ def parse_opts(argv):
         'qmin'      : None,
         'qmax'      : 0.05,
         'nq'        : 128,
-        'res'       : 0.0,
+        'res'       : '0.0',
         'noise'     : 0.0,
         'accuracy'  : 'Low',
         'cutoff'    : '0.0',
@@ -1114,7 +1121,7 @@ def parse_opts(argv):
         elif arg.startswith('-nq='):       opts['nq'] = int(arg[4:])
         elif arg.startswith('-q='):
             opts['qmin'], opts['qmax'] = [float(v) for v in arg[3:].split(':')]
-        elif arg.startswith('-res='):      opts['res'] = float(arg[5:])
+        elif arg.startswith('-res='):      opts['res'] = arg[5:]
         elif arg.startswith('-noise='):    opts['noise'] = float(arg[7:])
         elif arg.startswith('-sets='):     opts['sets'] = int(arg[6:])
         elif arg.startswith('-accuracy='): opts['accuracy'] = arg[10:]
@@ -1172,10 +1179,6 @@ def parse_opts(argv):
     # Create the computational engines
     if opts['qmin'] is None:
         opts['qmin'] = 0.001*opts['qmax']
-    if opts['datafile'] is not None:
-        data = load_data(os.path.expanduser(opts['datafile']))
-    else:
-        data, _ = make_data(opts)
 
     comparison = any(PAR_SPLIT in v for v in values)
 
@@ -1215,10 +1218,31 @@ def parse_opts(argv):
     else:
         opts['cutoff'] = [float(opts['cutoff'])]*2
 
-    base = make_engine(model_info[0], data, opts['engine'][0],
+    if PAR_SPLIT in opts['res']:
+        opts['res'] = [float(k) for k in opts['res'].split(PAR_SPLIT, 2)]
+        comparison = True
+    else:
+        opts['res'] = [float(opts['res'])]*2
+
+    if opts['datafile'] is not None:
+        data = load_data(os.path.expanduser(opts['datafile']))
+    else:
+        # Hack around the fact that make_data doesn't take a pair of resolutions
+        res = opts['res']
+        opts['res'] = res[0]
+        data0, _ = make_data(opts)
+        if res[0] != res[1]:
+            opts['res'] = res[1]
+            data1, _ = make_data(opts)
+        else:
+            data1 = data0
+        opts['res'] = res
+        data = data0, data1
+
+    base = make_engine(model_info[0], data[0], opts['engine'][0],
                        opts['cutoff'][0], opts['ngauss'][0])
     if comparison:
-        comp = make_engine(model_info[1], data, opts['engine'][1],
+        comp = make_engine(model_info[1], data[1], opts['engine'][1],
                            opts['cutoff'][1], opts['ngauss'][1])
     else:
         comp = None

@@ -773,7 +773,7 @@ def run(model_name='parallelepiped', size=(10, 40, 100),
         jitter = sdtheta.val, sdphi.val, sdpsi.val
         # set small jitter as 0 if multiple pd dims
         dims = sum(v > 0 for v in jitter)
-        limit = [0, 0, 0.5, 5][dims]
+        limit = [0, 0.5, 5][dims]
         jitter = [0 if v < limit else v for v in jitter]
         axes.cla()
         draw_beam(axes, (0, 0))
