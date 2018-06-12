@@ -51,10 +51,10 @@ approximation might be
 
 .. math:: G(\delta) \approx
 	  \sum_{n=0} 2 \pi \frac{d \Sigma}{d \Omega} (q_n)
-	  \int_{q_n}^{q_{n+1}} J_0(Q \delta) Q dQ
+	  \int_{q_{n-1}}^{q_n} J_0(Q \delta) Q dQ
 	  =
 	  \sum_{n=0} \frac{2 \pi}{\delta} \frac{d \Sigma}{d \Omega} (q_n)
-	  (q_{n+1}J_1(q_{n+1} \delta) - q_{n}J_1(q_{n} \delta))\!,
+	  (q_n J_1(q_n \delta) - q_{n-1}J_1(q_{n-1} \delta))\!,
 
 Assume that vectors :math:`q_n` and :math:`I_n` represent the q points
 and corresponding intensity data, respectively.  Further assume that
@@ -66,4 +66,4 @@ corresponding Hankel transform value.
 where
 
 .. math:: H_{nm} = \frac{2 \pi}{\delta_m}
-	  (q_{n+1} J_1(q_{n+1} \delta_m) - q_n J_1(q_n \delta_m))
+	  (q_n J_1(q_n \delta_m) - q_{n-1} J_1(q_{n-1} \delta_m))
