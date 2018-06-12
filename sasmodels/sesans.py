@@ -50,7 +50,6 @@ class SesansTransform(object):
         # tye: (np.ndarray) -> np.ndarray
         G0 = np.dot(self._H0, Iq)
         G = np.dot(self._H.T, Iq)
-        G0 = G[0]  # FIXME: This is a kludge
         P = G - G0
         return P
 
@@ -70,7 +69,7 @@ class SesansTransform(object):
                                dtype=np.float32))
         q = np.hstack([[0], q])
 
-        H0 = np.pi * (q[1:]**2 - q[:-1]**2) * (q[1:] - q[:-1])
+        H0 = np.pi * (q[1:]**2 - q[:-1]**2)
 
         # repq = np.tile(q, (SElength.size, 1)).T
         H = np.outer(q, SElength)
