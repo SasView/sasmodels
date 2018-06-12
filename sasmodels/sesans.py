@@ -13,7 +13,8 @@ from __future__ import division
 
 import numpy as np  # type: ignore
 from numpy import pi  # type: ignore
-from scipy.special import j0
+from scipy.special import j0, j1
+
 
 class SesansTransform(object):
     """
@@ -58,19 +59,22 @@ class SesansTransform(object):
         # Force float32 arrays, otherwise run into memory problems on some machines
         SElength = np.asarray(SElength, dtype='float32')
 
-        #Rmax = #value in text box somewhere in FitPage?
+        # Rmax = #value in text box somewhere in FitPage?
         q_max = 2*pi / (SElength[1] - SElength[0])
         q_min = 0.1 * 2*pi / (np.size(SElength) * SElength[-1])
-        q = np.arange(q_min, q_max, q_min, dtype='float32')
-        dq = q_min
+        # q = np.arange(q_min, q_max, q_min, dtype='float32')
+        q = np.exp(np.arange(np.log(q_min), np.log(q_max), np.log(2),
+                             dtype=np.float32))
+        q = np.hstack([0], q)
 
-        H0 = np.float32(dq/(2*pi)) * q
+        H0 = np.pi * (q[1:]**2 - q[-1]**2)
 
         # repq = np.tile(q, (SElength.size, 1)).T
         H = np.outer(q, SElength)
-        j0(H, out=H)
-        H *= np.float32(dq/(2*pi))
-        H *= q.reshape((-1, 1))
+        j1(H, out=H)
+        H *= q
+        H = H[1:] - H[:-1]
+        H *= 2 * np.pi / SElength
 
         lam = np.asarray(lam, dtype=np.float32)
         reptheta = np.outer(q, lam)

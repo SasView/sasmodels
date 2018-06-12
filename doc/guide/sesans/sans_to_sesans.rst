@@ -67,3 +67,9 @@ where
 
 .. math:: H_{nm} = \frac{2 \pi}{\delta_m}
 	  (q_n J_1(q_n \delta_m) - q_{n-1} J_1(q_{n-1} \delta_m))
+
+Also not that, for the limit as :math:`\delta_m` approaches zero,
+
+.. math:: G(0)
+	  =
+	  \sum_{n=0} \pi \frac{d \Sigma}{d \Omega} (q_n) (q_n^2 - q_{n-1}^2)
