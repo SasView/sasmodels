@@ -66,14 +66,23 @@ class SesansTransform(object):
 
         H0 = np.float32(dq/(2*pi)) * q
 
-        repq = np.tile(q, (SElength.size, 1)).T
-        repSE = np.tile(SElength, (q.size, 1))
-        H = np.float32(dq/(2*pi)) * j0(repSE*repq) * repq
+        # repq = np.tile(q, (SElength.size, 1)).T
+        H = np.outer(q, SElength)
+        j0(H, out=H)
+        H *= np.float32(dq/(2*pi))
+        H *= q.reshape((-1, 1))
 
-        replam = np.tile(lam, (q.size, 1))
-        reptheta = np.arcsin(repq*replam/2*np.pi)
+        lam = np.asarray(lam, dtype=np.float32)
+        reptheta = np.outer(q, lam)
+        reptheta /= np.float32(2*np.pi)
+        np.arcsin(reptheta, out=reptheta)
+        # reptheta = np.arcsin(repq*replam/2*np.pi)
         mask = reptheta > zaccept
         H[mask] = 0
+
+        # H = np.zeros((q.size, SElength.size), dtype=np.float32)
+        # H0 = q * 0
+        assert(H.shape == (q.size, SElength.size))
 
         self.q_calc = q
         self._H, self._H0 = H, H0
