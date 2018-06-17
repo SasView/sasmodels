@@ -13,7 +13,8 @@ from __future__ import division
 
 import numpy as np  # type: ignore
 from numpy import pi  # type: ignore
-from scipy.special import j0
+from scipy.special import j1
+
 
 class SesansTransform(object):
     """
@@ -37,12 +38,11 @@ class SesansTransform(object):
     q_calc = None  # type: np.ndarray
 
     # transform arrays
-    _H = None  # type: np.ndarray
-    _H0 = None # type: np.ndarray
+    _H = None   # type: np.ndarray
+    _H0 = None  # type: np.ndarray
 
     def __init__(self, z, SElength, lam, zaccept, Rmax):
         # type: (np.ndarray, float, float) -> None
-        #import logging; logging.info("creating SESANS transform")
         self.q = z
         self._set_hankel(SElength, lam, zaccept, Rmax)
 
@@ -55,25 +55,40 @@ class SesansTransform(object):
 
     def _set_hankel(self, SElength, lam, zaccept, Rmax):
         # type: (np.ndarray, float, float) -> None
-        # Force float32 arrays, otherwise run into memory problems on some machines
+        # Force float32 arrays, otherwise run into memory problems on
+        # some machines
         SElength = np.asarray(SElength, dtype='float32')
 
-        #Rmax = #value in text box somewhere in FitPage?
+        # Rmax = #value in text box somewhere in FitPage?
         q_max = 2*pi / (SElength[1] - SElength[0])
         q_min = 0.1 * 2*pi / (np.size(SElength) * SElength[-1])
-        q = np.arange(q_min, q_max, q_min, dtype='float32')
-        dq = q_min
+        # q = np.arange(q_min, q_max, q_min, dtype='float32')
+        # q = np.exp(np.arange(np.log(q_min), np.log(q_max), np.log(2),
+        #                      dtype=np.float32))
+        q = np.exp(np.linspace(np.log(q_min), np.log(q_max), 10*SElength.size,
+                               dtype=np.float32))
+        q = np.hstack([[0], q])
 
-        H0 = np.float32(dq/(2*pi)) * q
+        H0 = np.pi * (q[1:]**2 - q[:-1]**2)
 
-        repq = np.tile(q, (SElength.size, 1)).T
-        repSE = np.tile(SElength, (q.size, 1))
-        H = np.float32(dq/(2*pi)) * j0(repSE*repq) * repq
+        # repq = np.tile(q, (SElength.size, 1)).T
+        H = np.outer(q, SElength)
+        j1(H, out=H)
+        H *= q.reshape((-1, 1))
+        H = H[1:] - H[:-1]
+        H *= 2 * np.pi / SElength
 
-        replam = np.tile(lam, (q.size, 1))
-        reptheta = np.arcsin(repq*replam/2*np.pi)
+        lam = np.asarray(lam, dtype=np.float32)
+        reptheta = np.outer(q[1:], lam)
+        reptheta /= np.float32(2*np.pi)
+        np.arcsin(reptheta, out=reptheta)
+        # reptheta = np.arcsin(repq*replam/2*np.pi)
         mask = reptheta > zaccept
-        H[mask] = 0
+        # H[mask] = 0
 
-        self.q_calc = q
+        # H = np.zeros((q.size, SElength.size), dtype=np.float32)
+        # H0 = q * 0
+        assert(H.shape == (q.size-1, SElength.size))
+
+        self.q_calc = q[1:]
         self._H, self._H0 = H, H0

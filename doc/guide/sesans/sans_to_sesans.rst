@@ -30,3 +30,46 @@ From the equation above we can calculate the polarisation that we measure in a S
 .. math:: P(\delta) = e^{t \left( \frac{ \lambda}{2 \pi} \right)^2 \left(G(\delta) - G(0) \right)} \!,
 
 in which :math:`t` is the thickness of the sample and :math:`\lambda` is the wavelength of the neutrons.
+
+Log Spaced SESANS
+-----------------
+
+For computational efficiency, the integral in the Hankel transform is
+converted into a Reimann sum
+
+
+.. math:: G(\delta) \approx
+	  2 \pi
+	  \sum_{Q=q_{min}}^{q_{max}} J_0(Q \delta)
+	  \frac{d \Sigma}{d \Omega} (Q)
+	  Q \Delta Q \!
+
+However, this model approximates more than is strictly necessary.
+Specifically, it is approximating the entire integral, when it is only
+the scattering function that cannot be handled analytically.  A better
+approximation might be
+
+.. math:: G(\delta) \approx
+	  \sum_{n=0} 2 \pi \frac{d \Sigma}{d \Omega} (q_n)
+	  \int_{q_{n-1}}^{q_n} J_0(Q \delta) Q dQ
+	  =
+	  \sum_{n=0} \frac{2 \pi}{\delta} \frac{d \Sigma}{d \Omega} (q_n)
+	  (q_n J_1(q_n \delta) - q_{n-1}J_1(q_{n-1} \delta))\!,
+
+Assume that vectors :math:`q_n` and :math:`I_n` represent the q points
+and corresponding intensity data, respectively.  Further assume that
+:math:`\delta_m` and :math:`G_m` are the spin echo lengths and
+corresponding Hankel transform value.
+
+.. math:: G_m = H_{nm} I_n
+
+where
+
+.. math:: H_{nm} = \frac{2 \pi}{\delta_m}
+	  (q_n J_1(q_n \delta_m) - q_{n-1} J_1(q_{n-1} \delta_m))
+
+Also not that, for the limit as :math:`\delta_m` approaches zero,
+
+.. math:: G(0)
+	  =
+	  \sum_{n=0} \pi \frac{d \Sigma}{d \Omega} (q_n) (q_n^2 - q_{n-1}^2)
