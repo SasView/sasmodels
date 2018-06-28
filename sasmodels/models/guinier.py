@@ -20,19 +20,18 @@ where the $q$ vector is defined as
 .. math:: q = \sqrt{q_x^2 + q_y^2}
 
 Note that $R_g^2$ may be negative, which happens when a form factor $P(Q)$ is
-increasing with $Q$ rather than decreasing. This can occur for core or shell
+increasing with $Q$ rather than decreasing. This can occur for core/shell
 particles, hollow particles, or for composite particles with domains of
 different SLDs in a solvent with an SLD close to the average match point.
-(Alternatively, it might be regarded as there being an internal inter-domain
+(Alternatively, this might be regarded as there being an internal inter-domain
 "structure factor" within a single particle which gives rise to a peak in the
 scattering).
 
 To specify a negative value of $R_g^2$ in SasView, simply give $R_g$ a negative
-value ($R_g^2$ will be evaluated as $R_g |R_g|$).
-
-Note that the physical radius of gyration, of the exterior of the particle,
-will still be large and positive. It is only the apparent size from the small
-$Q$ data that will give a small or negative value of $R_g^2$.
+value ($R_g^2$ will be evaluated as $R_g |R_g|$). Note that the physical radius 
+of gyration, of the exterior of the particle, will still be large and positive. 
+It is only the apparent size from the small $Q$ data that will give a small or 
+negative value of $R_g^2$.
 
 References
 ----------
@@ -80,7 +79,7 @@ def random():
     return pars
 
 # parameters for demo
-demo = dict(scale=1.0, rg=60.0)
+demo = dict(scale=1.0,  background=0.001, rg=60.0 )
 
 # parameters for unit tests
 tests = [[{'rg' : 31.5}, 0.005, 0.992756]]
