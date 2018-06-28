@@ -106,6 +106,7 @@ Options (* for default):
     -abs/-rel* plot relative or absolute error
     -title="note" adds note to the plot title, after the model name
     -weights shows weights plots for the polydisperse parameters
+    -profile shows the sld profile if the model has a plottable sld profile
 
     === output options ===
     -edit starts the parameter explorer
@@ -774,10 +775,56 @@ def compare(opts, limits=None, maxdim=np.inf):
             model_info = base._kernel.info
             dim = base._kernel.dim
             plot_weights(model_info, get_mesh(model_info, base_pars, dim=dim))
+        if opts['show_profile']:
+            import pylab
+            base, comp = opts['engines']
+            base_pars, comp_pars = opts['pars']
+            have_base = base._kernel.info.profile is not None
+            have_comp = (
+                comp is not None
+                and comp._kernel.info.profile is not None
+                and base_pars != comp_pars
+            )
+            if have_base or have_comp:
+                pylab.figure()
+            if have_base:
+                plot_profile(base._kernel.info, **base_pars)
+            if have_comp:
+                plot_profile(comp._kernel.info, label='comp', **comp_pars)
+                pylab.legend()
     if opts['plot']:
         import matplotlib.pyplot as plt
         plt.show()
     return limits
+
+def plot_profile(model_info, label='base', **args):
+    # type: (ModelInfo, List[Tuple[float, np.ndarray, np.ndarray]]) -> None
+    """
+    Plot the profile returned by the model profile method.
+
+    *model_info* defines model parameters, etc.
+
+    *mesh* is a list of tuples containing (*value*, *dispersity*, *weights*)
+    for each parameter, where (*dispersity*, *weights*) pairs are the
+    distributions to be plotted.
+    """
+    import pylab
+
+    args = dict((k, v) for k, v in args.items()
+                if "_pd" not in k
+                   and ":" not in k
+                   and k not in ("background", "scale", "theta", "phi", "psi"))
+    args = args.copy()
+
+    args.pop('scale', 1.)
+    args.pop('background', 0.)
+    z, rho = model_info.profile(**args)
+    #pylab.interactive(True)
+    pylab.plot(z, rho, '-', label=label)
+    pylab.grid(True)
+    #pylab.show()
+
+
 
 def run_models(opts, verbose=False):
     # type: (Dict[str, Any]) -> Dict[str, Any]
@@ -948,7 +995,8 @@ def plot_models(opts, result, limits=None, setnum=0):
 #
 OPTIONS = [
     # Plotting
-    'plot', 'noplot', 'weights',
+    'plot', 'noplot',
+    'weights', 'profile',
     'linear', 'log', 'q4',
     'rel', 'abs',
     'hist', 'nohist',
@@ -1102,6 +1150,7 @@ def parse_opts(argv):
         'engine'    : 'default',
         'count'     : '1',
         'show_weights' : False,
+        'show_profile' : False,
         'sphere'    : 0,
         'ngauss'    : '0',
     }
@@ -1162,6 +1211,7 @@ def parse_opts(argv):
         elif arg == '-demo':    opts['use_demo'] = True
         elif arg == '-default': opts['use_demo'] = False
         elif arg == '-weights': opts['show_weights'] = True
+        elif arg == '-profile': opts['show_profile'] = True
         elif arg == '-html':    opts['html'] = True
         elif arg == '-help':    opts['html'] = True
     # pylint: enable=bad-whitespace,C0321
