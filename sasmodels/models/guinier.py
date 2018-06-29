@@ -58,7 +58,7 @@ category = "shape-independent"
 parameters = [["rg", "Ang", 60.0, [-inf, inf], "", "Radius of Gyration"]]
 
 Iq = """
-    double exponent = abs(rg)*rg*q*q/3.0;
+    double exponent = fabs(rg)*rg*q*q/3.0;
     double value = exp(-exponent);
     return value;
 """
