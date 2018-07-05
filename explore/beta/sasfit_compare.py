@@ -169,10 +169,9 @@ def ellipsoid_theta(q, radius_polar, radius_equatorial, sld, sld_solvent,
     #legendre-gauss quadrature
     for k, qk in enumerate(q):
         r = sqrt(radius_equatorial**2*(1-((z+1)/2)**2)+radius_polar**2*((z+1)/2)**2)
-        F2i = ((sld-sld_solvent)*volume*sas_3j1x_x(qk*r))**2
-        F2[k] = np.sum(w*F2i)
-        F1i = (sld-sld_solvent)*volume*sas_3j1x_x(qk*r)
-        F1[k] = np.sum(w*F1i)
+        form = (sld-sld_solvent)*volume*sas_3j1x_x(qk*r)
+        F2[k] = np.sum(w*form**2)
+        F1[k] = np.sum(w*form)
     #the 1/2 comes from the change of variables mentioned above
     F2 = F2/2.0
     F1 = F1/2.0
@@ -204,40 +203,49 @@ def ellipsoid_pe(q, radius_polar, radius_equatorial, sld, sld_solvent,
         Re_val, Re_prob = gaussian_distribution(radius_equatorial, radius_equatorial_pd*radius_equatorial, 0, inf)
     elif radius_equatorial_pd_type == 'schulz':
         Re_val, Re_prob = schulz_distribution(radius_equatorial, radius_equatorial_pd*radius_equatorial, 0, inf)
-    Normalization = 0
-    F1,F2 = np.zeros_like(q), np.zeros_like(q)
-    radius_eff = total_weight = 0
+    total_weight = total_volume = 0
+    radius_eff = 0
+    F1, F2 = np.zeros_like(q), np.zeros_like(q)
     for k, Rpk in enumerate(Rp_val):
         for i, Rei in enumerate(Re_val):
             theory = ellipsoid_theta(q,Rpk,Rei,sld,sld_solvent)
             volume = ellipsoid_volume(Rpk, Rei)
-            if norm == 'sasfit':
-                Normalization += Rp_prob[k]*Re_prob[i]
-            elif norm == 'sasview' or norm == 'yun':
-                Normalization += Rp_prob[k]*Re_prob[i]*volume
-            F1 += theory.F1*Rp_prob[k]*Re_prob[i]
-            F2 += theory.F2*Rp_prob[k]*Re_prob[i]
-            radius_eff += Rp_prob[k]*Re_prob[i]*ER_ellipsoid(Rpk,Rei)
-            total_weight += Rp_prob[k]*Re_prob[i]
-    F1 = F1/Normalization
-    F2 = F2/Normalization
+            weight = Rp_prob[k]*Re_prob[i]
+            total_weight += weight
+            total_volume += weight*volume
+            F1 += theory.F1*weight
+            F2 += theory.F2*weight
+            radius_eff += weight*ER_ellipsoid(Rpk,Rei)
+    F1 /= total_weight
+    F2 /= total_weight
+    average_volume = total_volume/total_weight
     if radius_effective is None:
         radius_effective = radius_eff/total_weight
     SQ = hardsphere_simple(q, radius_effective, volfraction)
-    SQ_EFF = 1 + F1**2/F2*(SQ - 1)
-    volume = ellipsoid_volume(radius_polar, radius_equatorial)
     if norm == 'sasfit':
+        beta = F1**2/F2
+        SQ_EFF = 1 + beta*(SQ - 1)
         IQD = F2
         IQSD = IQD*SQ
         IQBD = IQD*SQ_EFF
     elif norm == 'sasview':
-        IQD = F2*1e-4*volfraction
+        SQ_EFF = None
+        # Note: internally, sasview uses F2/total_volume because:
+        #   average_volume = total_volume/total_weight
+        #   F2/total_weight / average_volume
+        #     = F2/total_weight / total_volume/total_weight
+        #     = F2/total_volume
+        IQD = F2/average_volume*1e-4*volfraction
         IQSD = IQD*SQ
-        IQBD = IQD*SQ_EFF
+        IQBD = None
     elif norm == 'yun':
-        SQ_EFF = 1 + Normalization*F1**2/F2*(SQ - 1)
-        F2 = F2/volume
-        IQD = F2
+        #F1 /= average_volume
+        #F2 /= average_volume**2
+        F1 *= 1e-6  # Yun is using sld in 1/A^2, not 1e-6/A^2
+        F2 *= 1e-12
+        beta = F1**2/F2
+        SQ_EFF = 1 + beta*(SQ - 1)
+        IQD = F2/average_volume*1e8*volfraction
         IQSD = IQD*SQ
         IQBD = IQD*SQ_EFF
     return Theory(Q=q, F1=F1, F2=F2, P=IQD, S=SQ, I=IQSD, Seff=SQ_EFF, Ibeta=IQBD)
@@ -254,39 +262,44 @@ def sphere_r(q,radius,sld,sld_solvent,
         radius_val, radius_prob = gaussian_distribution(radius, radius_pd*radius, 0, inf)
     elif radius_pd_type == 'schulz':
         radius_val, radius_prob = schulz_distribution(radius, radius_pd*radius, 0, inf)
-    Normalization=0
+    total_weight = total_volume = 0
     F1 = np.zeros_like(q)
     F2 = np.zeros_like(q)
     for k, rk in enumerate(radius_val):
         volume = 4./3.*pi*rk**3
-        if norm == 'sasfit':
-            Normalization += radius_prob[k]
-        elif norm == 'sasview' or norm == 'yun':
-            Normalization += radius_prob[k]*volume
-        F2k = ((sld-sld_solvent)*volume*sas_3j1x_x(q*rk))**2
-        F1k = (sld-sld_solvent)*volume*sas_3j1x_x(q*rk)
-        F2 += radius_prob[k]*F2k
-        F1 += radius_prob[k]*F1k
+        total_weight += radius_prob[k]
+        total_volume += radius_prob[k]*volume
+        form = (sld-sld_solvent)*volume*sas_3j1x_x(q*rk)
+        F2 += radius_prob[k]*form**2
+        F1 += radius_prob[k]*form
+    F1 /= total_weight
+    F2 /= total_weight
+    average_volume = total_volume/total_weight
 
-    F2 = F2/Normalization
-    F1 = F1/Normalization
     if radius_effective is None:
         radius_effective = radius
     SQ = hardsphere_simple(q, radius_effective, volfraction)
-    SQ_EFF = 1 + F1**2/F2*(SQ - 1)
     volume = 4./3.*pi*radius**3
+    average_volume = total_volume/total_weight
     if norm == 'sasfit':
+        beta = F1**2/F2
+        SQ_EFF = 1 + beta*(SQ - 1)
         IQD = F2
         IQSD = IQD*SQ
         IQBD = IQD*SQ_EFF
     elif norm == 'sasview':
-        IQD = F2*1e-4*volfraction
+        SQ_EFF = None
+        IQD = F2/average_volume*1e-4*volfraction
         IQSD = IQD*SQ
-        IQBD = IQD*SQ_EFF
+        IQBD = None
     elif norm == 'yun':
-        SQ_EFF = 1 + Normalization*F1**2/F2*(SQ - 1)
-        F2 = F2/volume
-        IQD = F2
+        # Note: yun uses gauss limits from R0/10 to R0 + 5 sigma steps sigma/100
+        # With pd = 0.1, that's 14 sigma, or 1400 points.
+        F1 *= 1e-6  # Yun is using sld in 1/A^2, not 1e-6/A^2
+        F2 *= 1e-12
+        beta = F1**2/F2
+        SQ_EFF = 1 + beta*(SQ - 1)
+        IQD = F2/average_volume*1e8*volfraction
         IQSD = IQD*SQ
         IQBD = IQD*SQ_EFF
     return Theory(Q=q, F1=F1, F2=F2, P=IQD, S=SQ, I=IQSD, Seff=SQ_EFF, Ibeta=IQBD)
@@ -363,8 +376,8 @@ def compare(title, target, actual, fields='F1 F2 P S I Seff Ibeta'):
         #plt.legend(loc="upper left", bbox_to_anchor=(1,1))
         plt.legend(loc='lower left')
         plt.subplot(rows, 2, 2*row+2)
-        #plt.semilogx(Q, I2/I1 - 1, label="relative error")
-        plt.semilogx(Q, I1/I2 - 1, label="relative error")
+        plt.semilogx(Q, I2/I1 - 1, label="relative error")
+        #plt.semilogx(Q, I1/I2 - 1, label="relative error")
     plt.tight_layout()
     plt.suptitle(title)
     plt.show()
@@ -411,8 +424,8 @@ def compare_sasview_ellipsoid(pd_type='gaussian'):
     actual = ellipsoid_pe(q, norm='sasview', **pars)
     title = " ".join(("sasmodels", model, pd_type))
     compare(title, target, actual)
-COMPARISON[('sasview','ellipsoid','gaussian')] = lambda: compare_sasview_sphere(pd_type='gaussian')
-COMPARISON[('sasview','ellipsoid','schulz')] = lambda: compare_sasview_sphere(pd_type='schulz')
+COMPARISON[('sasview','ellipsoid','gaussian')] = lambda: compare_sasview_ellipsoid(pd_type='gaussian')
+COMPARISON[('sasview','ellipsoid','schulz')] = lambda: compare_sasview_ellipsoid(pd_type='schulz')
 
 def compare_yun_ellipsoid_mono():
     pars = {
@@ -424,25 +437,51 @@ def compare_yun_ellipsoid_mono():
         # whereas sasview uses the average curvature.
         'radius_effective': 12.59921049894873,
     }
-    volume = ellipsoid_volume(pars['radius_polar'], pars['radius_equatorial'])
 
     data = np.loadtxt(data_file('yun_ellipsoid.dat'),skiprows=2).T
     Q = data[0]
     F1 = data[1]
-    F2 = data[3]
+    P = data[3]*pars['volfraction']
     S = data[5]
     Seff = data[6]
-    P = F2
-    I = P*S
-    Ibeta = P*Seff
-    P = I = Ibeta = None
-    target = Theory(Q=Q, F1=F1, F2=F2, P=P, S=S, I=I, Seff=Seff, Ibeta=Ibeta)
+    target = Theory(Q=Q, F1=F1, P=P, S=S, Seff=Seff)
     actual = ellipsoid_pe(Q, norm='yun', **pars)
     title = " ".join(("yun", "ellipsoid", "no pd"))
     #compare(title, target, actual, fields="P S I Seff Ibeta")
     compare(title, target, actual)
 COMPARISON[('yun','ellipsoid','gaussian')] = compare_yun_ellipsoid_mono
 COMPARISON[('yun','ellipsoid','schulz')] = compare_yun_ellipsoid_mono
+
+def compare_yun_sphere_gauss():
+    pars = {
+        'radius': 20, 'radius_pd': 0.1, 'radius_pd_type': 'gaussian',
+        'sld': 6, 'sld_solvent': 0,
+        'volfraction': 0.1,
+    }
+
+    data = np.loadtxt(data_file('testPolydisperseGaussianSphere.dat'),skiprows=2).T
+    Q = data[0]
+    F1 = data[1]
+    P = data[3]
+    S = data[5]
+    Seff = data[6]
+    target = Theory(Q=Q, F1=F1, P=P, S=S, Seff=Seff)
+    actual = sphere_r(Q, norm='yun', **pars)
+    title = " ".join(("yun", "sphere", "10% dispersion 10% Vf"))
+    compare(title, target, actual)
+    data = np.loadtxt(data_file('testPolydisperseGaussianSphere2.dat'),skiprows=2).T
+    pars.update(radius_pd=0.15)
+    Q = data[0]
+    F1 = data[1]
+    P = data[3]
+    S = data[5]
+    Seff = data[6]
+    target = Theory(Q=Q, F1=F1, P=P, S=S, Seff=Seff)
+    actual = sphere_r(Q, norm='yun', **pars)
+    title = " ".join(("yun", "sphere", "15% dispersion 10% Vf"))
+    compare(title, target, actual)
+COMPARISON[('yun','sphere','gaussian')] = compare_yun_sphere_gauss
+
 
 def compare_sasfit_sphere_gauss():
     #N=1,s=2,X0=20,distr radius R=20,eta_core=4,eta_solv=1,.3
@@ -451,7 +490,7 @@ def compare_sasfit_sphere_gauss():
         'sld': 4, 'sld_solvent': 1,
         'volfraction': 0.3,
     }
-    volume = 4./3.*pi*pars['radius']**3
+
     Q, IQ = load_sasfit(data_file('sasfit_sphere_IQD.txt'))
     Q, IQSD = load_sasfit(data_file('sasfit_sphere_IQSD.txt'))
     Q, IQBD = load_sasfit(data_file('sasfit_sphere_IQBD.txt'))
@@ -473,7 +512,6 @@ def compare_sasfit_sphere_schulz():
         'sld': 4, 'sld_solvent': 1,
         'volfraction': 0.3,
     }
-    volume = 4./3.*pi*pars['radius']**3
 
     Q, IQ = load_sasfit(data_file('richard_test.txt'))
     Q, IQSD = load_sasfit(data_file('richard_test2.txt'))
@@ -495,7 +533,7 @@ def compare_sasfit_ellipsoid_schulz():
         'sld': 4, 'sld_solvent': 1,
         'volfraction': 0.3, 'radius_effective': 13.1353356684,
     }
-    volume = ellipsoid_volume(pars['radius_polar'], pars['radius_equatorial'])
+
     Q, IQ = load_sasfit(data_file('richard_test4.txt'))
     Q, IQSD = load_sasfit(data_file('richard_test5.txt'))
     Q, IQBD = load_sasfit(data_file('richard_test6.txt'))
