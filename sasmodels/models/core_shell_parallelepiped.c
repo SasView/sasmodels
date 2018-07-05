@@ -58,19 +58,21 @@ Iq(double q,
     const double drC = (crim_sld-solvent_sld);
 
     // outer integral (with gauss points), integration limits = 0, 1
+    // substitute d_cos_alpha for sin_alpha d_alpha
     double outer_sum = 0; //initialize integral
     for( int i=0; i<GAUSS_N; i++) {
         const double cos_alpha = 0.5 * ( GAUSS_Z[i] + 1.0 );
         const double mu = half_q * sqrt(1.0-cos_alpha*cos_alpha);
-
-        // inner integral (with gauss points), integration limits = 0, pi/2
         const double siC = length_c * sas_sinx_x(length_c * cos_alpha * half_q);
         const double siCt = tC * sas_sinx_x(tC * cos_alpha * half_q);
+
+        // inner integral (with gauss points), integration limits = 0, 1
+        // substitute beta = PI/2 u (so 2/PI * d_(PI/2 * beta) = d_beta)
         double inner_sum = 0.0;
         for(int j=0; j<GAUSS_N; j++) {
-            const double beta = 0.5 * ( GAUSS_Z[j] + 1.0 );
+            const double u = 0.5 * ( GAUSS_Z[j] + 1.0 );
             double sin_beta, cos_beta;
-            SINCOS(M_PI_2*beta, sin_beta, cos_beta);
+            SINCOS(M_PI_2*u, sin_beta, cos_beta);
             const double siA = length_a * sas_sinx_x(length_a * mu * sin_beta);
             const double siB = length_b * sas_sinx_x(length_b * mu * cos_beta);
             const double siAt = tA * sas_sinx_x(tA * mu * sin_beta);
@@ -90,10 +92,12 @@ Iq(double q,
 
             inner_sum += GAUSS_W[j] * f * f;
         }
+        // now complete change of inner integration variable (1-0)/(1-(-1))= 0.5
         inner_sum *= 0.5;
         // now sum up the outer integral
         outer_sum += GAUSS_W[i] * inner_sum;
     }
+    // now complete change of outer integration variable (1-0)/(1-(-1))= 0.5
     outer_sum *= 0.5;
 
     //convert from [1e-12 A-1] to [cm-1]

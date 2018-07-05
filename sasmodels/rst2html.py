@@ -55,7 +55,9 @@ def rst2html(rst, part="whole", math_output="mathjax"):
     # Ick! mathjax doesn't work properly with math-output, and the
     # others don't work properly with math_output!
     if math_output == "mathjax":
-        settings = {"math_output": math_output}
+        # TODO: this is copied from docs/conf.py; there should be only one
+        mathjax_path = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"
+        settings = {"math_output": math_output + " " + mathjax_path}
     else:
         settings = {"math-output": math_output}
 

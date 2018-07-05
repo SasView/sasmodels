@@ -35,6 +35,7 @@ also use these for your own data loader.
 import traceback
 
 import numpy as np  # type: ignore
+from numpy import sqrt, sin, cos, pi
 
 # pylint: disable=unused-import
 try:
@@ -300,19 +301,35 @@ class Source(object):
         self.wavelength_unit = "A"
 
 
-def empty_data1D(q, resolution=0.0):
+def empty_data1D(q, resolution=0.0, L=0., dL=0.):
     # type: (np.ndarray, float) -> Data1D
-    """
+    r"""
     Create empty 1D data using the given *q* as the x value.
 
-    *resolution* dq/q defaults to 5%.
+    rms *resolution* $\Delta q/q$ defaults to 0%.  If wavelength *L* and rms
+    wavelength divergence *dL* are defined, then *resolution* defines
+    rms $\Delta \theta/\theta$ for the lowest *q*, with $\theta$ derived from
+    $q = 4\pi/\lambda \sin(\theta)$.
     """
 
     #Iq = 100 * np.ones_like(q)
     #dIq = np.sqrt(Iq)
     Iq, dIq = None, None
     q = np.asarray(q)
-    data = Data1D(q, Iq, dx=resolution * q, dy=dIq)
+    if L != 0 and resolution != 0:
+        theta = np.arcsin(q*L/(4*pi))
+        dtheta = theta[0]*resolution
+        ## Solving Gaussian error propagation from
+        ##   Dq^2 = (dq/dL)^2 DL^2 + (dq/dtheta)^2 Dtheta^2
+        ## gives
+        ##   (Dq/q)^2 = (DL/L)**2 + (Dtheta/tan(theta))**2
+        ## Take the square root and multiply by q, giving
+        ##   Dq = (4*pi/L) * sqrt((sin(theta)*dL/L)**2 + (cos(theta)*dtheta)**2)
+        dq = (4*pi/L) * sqrt((sin(theta)*dL/L)**2 + (cos(theta)*dtheta)**2)
+    else:
+        dq = resolution * q
+
+    data = Data1D(q, Iq, dx=dq, dy=dIq)
     data.filename = "fake data"
     return data
 

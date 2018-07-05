@@ -685,7 +685,7 @@ class SasviewModel(object):
         #print("result", result)
         self._intermediate_results = getattr(calculator, 'results', None)
         calculator.release()
-        self._model.release()
+        #self._model.release()
         return result
 
     def calculate_ER(self):
@@ -718,7 +718,7 @@ class SasviewModel(object):
             return np.sum(weight * part) / np.sum(weight * whole)
 
     def set_dispersion(self, parameter, dispersion):
-        # type: (str, weights.Dispersion) -> Dict[str, Any]
+        # type: (str, weights.Dispersion) -> None
         """
         Set the dispersion object for a model parameter
 
@@ -741,7 +741,8 @@ class SasviewModel(object):
             # one instead of trying to assign parameters.
             self.dispersion[parameter] = dispersion.get_pars()
         else:
-            raise ValueError("%r is not a dispersity or orientation parameter")
+            raise ValueError("%r is not a dispersity or orientation parameter"
+                             % parameter)
 
     def _dispersion_mesh(self):
         # type: () -> List[Tuple[np.ndarray, np.ndarray]]

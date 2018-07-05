@@ -106,6 +106,7 @@ Options (* for default):
     -abs/-rel* plot relative or absolute error
     -title="note" adds note to the plot title, after the model name
     -weights shows weights plots for the polydisperse parameters
+    -profile shows the sld profile if the model has a plottable sld profile
 
     === output options ===
     -edit starts the parameter explorer
@@ -644,7 +645,7 @@ def time_calculation(calculator, pars, evals=1):
     return value, average_time
 
 def make_data(opts):
-    # type: (Dict[str, Any]) -> Tuple[Data, np.ndarray]
+    # type: (Dict[str, Any], float) -> Tuple[Data, np.ndarray]
     """
     Generate an empty dataset, used with the model to set Q points
     and resolution.
@@ -666,7 +667,10 @@ def make_data(opts):
             q = np.linspace(qmin, qmax, nq)
         if opts['zero']:
             q = np.hstack((0, q))
-        data = empty_data1D(q, resolution=res)
+        # TODO: provide command line control of lambda and Delta lambda/lambda
+        #L, dLoL = 5, 0.14/np.sqrt(6)  # wavelength and 14% triangular FWHM
+        L, dLoL = 0, 0
+        data = empty_data1D(q, resolution=res, L=L, dL=L*dLoL)
         index = slice(None, None)
     return data, index
 
@@ -751,16 +755,19 @@ def compare(opts, limits=None, maxdim=np.inf):
     *maxdim* is the maximum value for any parameter with units of Angstrom.
     """
     for k in range(opts['sets']):
-        if k > 1:
+        if k > 0:
             # print a separate seed for each dataset for better reproducibility
             new_seed = np.random.randint(1000000)
-            print("Set %d uses -random=%i"%(k+1, new_seed))
+            print("=== Set %d uses -random=%i ==="%(k+1, new_seed))
             np.random.seed(new_seed)
         opts['pars'] = parse_pars(opts, maxdim=maxdim)
         if opts['pars'] is None:
             return
         result = run_models(opts, verbose=True)
         if opts['plot']:
+            if opts['is2d'] and k > 0:
+                import matplotlib.pyplot as plt
+                plt.figure()
             limits = plot_models(opts, result, limits=limits, setnum=k)
         if opts['show_weights']:
             base, _ = opts['engines']
@@ -768,10 +775,56 @@ def compare(opts, limits=None, maxdim=np.inf):
             model_info = base._kernel.info
             dim = base._kernel.dim
             plot_weights(model_info, get_mesh(model_info, base_pars, dim=dim))
+        if opts['show_profile']:
+            import pylab
+            base, comp = opts['engines']
+            base_pars, comp_pars = opts['pars']
+            have_base = base._kernel.info.profile is not None
+            have_comp = (
+                comp is not None
+                and comp._kernel.info.profile is not None
+                and base_pars != comp_pars
+            )
+            if have_base or have_comp:
+                pylab.figure()
+            if have_base:
+                plot_profile(base._kernel.info, **base_pars)
+            if have_comp:
+                plot_profile(comp._kernel.info, label='comp', **comp_pars)
+                pylab.legend()
     if opts['plot']:
         import matplotlib.pyplot as plt
         plt.show()
     return limits
+
+def plot_profile(model_info, label='base', **args):
+    # type: (ModelInfo, List[Tuple[float, np.ndarray, np.ndarray]]) -> None
+    """
+    Plot the profile returned by the model profile method.
+
+    *model_info* defines model parameters, etc.
+
+    *mesh* is a list of tuples containing (*value*, *dispersity*, *weights*)
+    for each parameter, where (*dispersity*, *weights*) pairs are the
+    distributions to be plotted.
+    """
+    import pylab
+
+    args = dict((k, v) for k, v in args.items()
+                if "_pd" not in k
+                   and ":" not in k
+                   and k not in ("background", "scale", "theta", "phi", "psi"))
+    args = args.copy()
+
+    args.pop('scale', 1.)
+    args.pop('background', 0.)
+    z, rho = model_info.profile(**args)
+    #pylab.interactive(True)
+    pylab.plot(z, rho, '-', label=label)
+    pylab.grid(True)
+    #pylab.show()
+
+
 
 def run_models(opts, verbose=False):
     # type: (Dict[str, Any]) -> Dict[str, Any]
@@ -782,7 +835,7 @@ def run_models(opts, verbose=False):
     base, comp = opts['engines']
     base_n, comp_n = opts['count']
     base_pars, comp_pars = opts['pars']
-    data = opts['data']
+    base_data, comp_data = opts['data']
 
     comparison = comp is not None
 
@@ -796,7 +849,7 @@ def run_models(opts, verbose=False):
         if verbose:
             print("%s t=%.2f ms, intensity=%.0f"
                   % (base.engine, base_time, base_value.sum()))
-        _show_invalid(data, base_value)
+        _show_invalid(base_data, base_value)
     except ImportError:
         traceback.print_exc()
 
@@ -808,7 +861,7 @@ def run_models(opts, verbose=False):
             if verbose:
                 print("%s t=%.2f ms, intensity=%.0f"
                       % (comp.engine, comp_time, comp_value.sum()))
-            _show_invalid(data, comp_value)
+            _show_invalid(base_data, comp_value)
         except ImportError:
             traceback.print_exc()
 
@@ -862,11 +915,12 @@ def plot_models(opts, result, limits=None, setnum=0):
 
     have_base, have_comp = (base_value is not None), (comp_value is not None)
     base, comp = opts['engines']
-    data = opts['data']
+    base_data, comp_data = opts['data']
     use_data = (opts['datafile'] is not None) and (have_base ^ have_comp)
 
     # Plot if requested
     view = opts['view']
+    #view = 'log'
     if limits is None:
         vmin, vmax = np.inf, -np.inf
         if have_base:
@@ -880,15 +934,15 @@ def plot_models(opts, result, limits=None, setnum=0):
     if have_base:
         if have_comp:
             plt.subplot(131)
-        plot_theory(data, base_value, view=view, use_data=use_data, limits=limits)
+        plot_theory(base_data, base_value, view=view, use_data=use_data, limits=limits)
         plt.title("%s t=%.2f ms"%(base.engine, base_time))
         #cbar_title = "log I"
     if have_comp:
         if have_base:
             plt.subplot(132)
         if not opts['is2d'] and have_base:
-            plot_theory(data, base_value, view=view, use_data=use_data, limits=limits)
-        plot_theory(data, comp_value, view=view, use_data=use_data, limits=limits)
+            plot_theory(comp_data, base_value, view=view, use_data=use_data, limits=limits)
+        plot_theory(comp_data, comp_value, view=view, use_data=use_data, limits=limits)
         plt.title("%s t=%.2f ms"%(comp.engine, comp_time))
         #cbar_title = "log I"
     if have_base and have_comp:
@@ -904,7 +958,10 @@ def plot_models(opts, result, limits=None, setnum=0):
             cutoff = sorted_err[int(sorted_err.size*0.95)]
             err[err > cutoff] = cutoff
         #err,errstr = base/comp,"ratio"
-        plot_theory(data, None, resid=err, view=errview, use_data=use_data)
+        # Note: base_data only since base and comp have same q values (though
+        # perhaps different resolution), and we are plotting the difference
+        # at each q
+        plot_theory(base_data, None, resid=err, view=errview, use_data=use_data)
         plt.xscale('log' if view == 'log' and not opts['is2d'] else 'linear')
         plt.legend(['P%d'%(k+1) for k in range(setnum+1)], loc='best')
         plt.title("max %s = %.3g"%(errstr, abs(err).max()))
@@ -938,7 +995,8 @@ def plot_models(opts, result, limits=None, setnum=0):
 #
 OPTIONS = [
     # Plotting
-    'plot', 'noplot', 'weights',
+    'plot', 'noplot',
+    'weights', 'profile',
     'linear', 'log', 'q4',
     'rel', 'abs',
     'hist', 'nohist',
@@ -1071,7 +1129,7 @@ def parse_opts(argv):
         'qmin'      : None,
         'qmax'      : 0.05,
         'nq'        : 128,
-        'res'       : 0.0,
+        'res'       : '0.0',
         'noise'     : 0.0,
         'accuracy'  : 'Low',
         'cutoff'    : '0.0',
@@ -1092,6 +1150,7 @@ def parse_opts(argv):
         'engine'    : 'default',
         'count'     : '1',
         'show_weights' : False,
+        'show_profile' : False,
         'sphere'    : 0,
         'ngauss'    : '0',
     }
@@ -1111,7 +1170,7 @@ def parse_opts(argv):
         elif arg.startswith('-nq='):       opts['nq'] = int(arg[4:])
         elif arg.startswith('-q='):
             opts['qmin'], opts['qmax'] = [float(v) for v in arg[3:].split(':')]
-        elif arg.startswith('-res='):      opts['res'] = float(arg[5:])
+        elif arg.startswith('-res='):      opts['res'] = arg[5:]
         elif arg.startswith('-noise='):    opts['noise'] = float(arg[7:])
         elif arg.startswith('-sets='):     opts['sets'] = int(arg[6:])
         elif arg.startswith('-accuracy='): opts['accuracy'] = arg[10:]
@@ -1152,6 +1211,7 @@ def parse_opts(argv):
         elif arg == '-demo':    opts['use_demo'] = True
         elif arg == '-default': opts['use_demo'] = False
         elif arg == '-weights': opts['show_weights'] = True
+        elif arg == '-profile': opts['show_profile'] = True
         elif arg == '-html':    opts['html'] = True
         elif arg == '-help':    opts['html'] = True
     # pylint: enable=bad-whitespace,C0321
@@ -1169,10 +1229,6 @@ def parse_opts(argv):
     # Create the computational engines
     if opts['qmin'] is None:
         opts['qmin'] = 0.001*opts['qmax']
-    if opts['datafile'] is not None:
-        data = load_data(os.path.expanduser(opts['datafile']))
-    else:
-        data, _ = make_data(opts)
 
     comparison = any(PAR_SPLIT in v for v in values)
 
@@ -1212,10 +1268,31 @@ def parse_opts(argv):
     else:
         opts['cutoff'] = [float(opts['cutoff'])]*2
 
-    base = make_engine(model_info[0], data, opts['engine'][0],
+    if PAR_SPLIT in opts['res']:
+        opts['res'] = [float(k) for k in opts['res'].split(PAR_SPLIT, 2)]
+        comparison = True
+    else:
+        opts['res'] = [float(opts['res'])]*2
+
+    if opts['datafile'] is not None:
+        data = load_data(os.path.expanduser(opts['datafile']))
+    else:
+        # Hack around the fact that make_data doesn't take a pair of resolutions
+        res = opts['res']
+        opts['res'] = res[0]
+        data0, _ = make_data(opts)
+        if res[0] != res[1]:
+            opts['res'] = res[1]
+            data1, _ = make_data(opts)
+        else:
+            data1 = data0
+        opts['res'] = res
+        data = data0, data1
+
+    base = make_engine(model_info[0], data[0], opts['engine'][0],
                        opts['cutoff'][0], opts['ngauss'][0])
     if comparison:
-        comp = make_engine(model_info[1], data, opts['engine'][1],
+        comp = make_engine(model_info[1], data[1], opts['engine'][1],
                            opts['cutoff'][1], opts['ngauss'][1])
     else:
         comp = None
@@ -1328,18 +1405,21 @@ def parse_pars(opts, maxdim=np.inf):
             presets2.setdefault(k+'_n', 35.)
 
     # Evaluate preset parameter expressions
+    # Note: need to replace ':' with '_' in parameter names and expressions
+    # in order to support math on magnetic parameters.
     context = MATH.copy()
     context['np'] = np
-    context.update(pars)
+    context.update((k.replace(':', '_'), v) for k, v in pars.items())
     context.update((k, v) for k, v in presets.items() if isinstance(v, float))
+    #for k,v in sorted(context.items()): print(k, v)
     for k, v in presets.items():
         if not isinstance(v, float) and not k.endswith('_type'):
-            presets[k] = eval(v, context)
+            presets[k] = eval(v.replace(':', '_'), context)
     context.update(presets)
-    context.update((k, v) for k, v in presets2.items() if isinstance(v, float))
+    context.update((k.replace(':', '_'), v) for k, v in presets2.items() if isinstance(v, float))
     for k, v in presets2.items():
         if not isinstance(v, float) and not k.endswith('_type'):
-            presets2[k] = eval(v, context)
+            presets2[k] = eval(v.replace(':', '_'), context)
 
     # update parameters with presets
     pars.update(presets)  # set value after random to control value
@@ -1369,7 +1449,7 @@ def show_docs(opts):
     html = make_html(info)
     path = os.path.dirname(info.filename)
     url = "file://" + path.replace("\\", "/")[2:] + "/"
-    rst2html.view_html_qtapp(html, url)
+    rst2html.view_html_wxapp(html, url)
 
 def explore(opts):
     # type: (Dict[str, Any]) -> None

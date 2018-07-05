@@ -242,13 +242,14 @@ def make_kernel_args(kernel, # type: Kernel
     length = np.array([len(w) for w in weights])
     offset = np.cumsum(np.hstack((0, length)))
     call_details = make_details(kernel.info, length, offset[:-1], offset[-1])
-    # Pad value array to a 32 value boundaryd
+    # Pad value array to a 32 value boundary
     data_len = nvalues + 2*sum(len(v) for v in dispersity)
     extra = (32 - data_len%32)%32
     data = np.hstack((scalars,) + dispersity + weights + ZEROS[:extra])
     data = data.astype(kernel.dtype)
     is_magnetic = convert_magnetism(kernel.info.parameters, data)
     #call_details.show()
+    #print("data", data)
     return call_details, data, is_magnetic
 
 def correct_theta_weights(parameters, # type: ParameterTable
@@ -295,13 +296,12 @@ def convert_magnetism(parameters, values):
     """
     mag = values[parameters.nvalues-3*parameters.nmagnetic:parameters.nvalues]
     mag = mag.reshape(-1, 3)
-    scale = mag[:, 0]
-    if np.any(scale):
+    if np.any(mag[:, 0] != 0.0):
+        M0 = mag[:, 0].copy()
         theta, phi = radians(mag[:, 1]), radians(mag[:, 2])
-        cos_theta = cos(theta)
-        mag[:, 0] = scale*cos_theta*cos(phi)  # mx
-        mag[:, 1] = scale*sin(theta)  # my
-        mag[:, 2] = -scale*cos_theta*sin(phi)  # mz
+        mag[:, 0] = +M0*cos(theta)*cos(phi)  # mx
+        mag[:, 1] = +M0*sin(theta) # my
+        mag[:, 2] = -M0*cos(theta)*sin(phi)  # mz
         return True
     else:
         return False

@@ -37,11 +37,13 @@ Iq(double q,
             const double si2 = sas_sinx_x(mu_proj * cos_uu);
             inner_total += GAUSS_W[j] * square(si1 * si2);
         }
+        // now complete change of inner integration variable (1-0)/(1-(-1))= 0.5
         inner_total *= 0.5;
 
         const double si = sas_sinx_x(mu * c_scaled * sigma);
         outer_total += GAUSS_W[i] * inner_total * si * si;
     }
+    // now complete change of outer integration variable (1-0)/(1-(-1))= 0.5
     outer_total *= 0.5;
 
     // Multiply by contrast^2 and convert from [1e-12 A-1] to [cm-1]
