@@ -623,7 +623,7 @@ def compare_sasfit_ellipsoid_gaussian():
     actual = ellipsoid_pe(Q, norm='sasfit', **pars)
     target = Theory(Q=Q, S=SQ, Seff=SQ_EFF)
     compare("sasfit ellipsoid P(Q) 60% Rp 60% Vf", target, actual); plt.show()
-COMPARISON[('sasfit','ellipsoid','gaussian')] = compare_sasfit_ellipsoid_schulz
+COMPARISON[('sasfit','ellipsoid','gaussian')] = compare_sasfit_ellipsoid_gaussian
 
 def main():
     key = tuple(sys.argv[1:])
