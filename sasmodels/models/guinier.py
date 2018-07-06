@@ -17,7 +17,7 @@ applies. See also the guinier_porod model.
 For 2D data the scattering intensity is calculated in the same way as 1D,
 where the $q$ vector is defined as
 
-.. math:: q = \sqrt{q_x^2 + q_y^2}\,\.
+.. math:: q = \sqrt{q_x^2 + q_y^2}
 
 In scattering, the radius of gyration $R_g$ quantifies the objects's
 distribution of SLD (not mass density, as in mechanics) from the objects's
