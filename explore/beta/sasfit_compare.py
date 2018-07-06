@@ -221,33 +221,24 @@ def ellipsoid_pe(q, radius_polar, radius_equatorial, sld, sld_solvent,
     average_volume = total_volume/total_weight
     if radius_effective is None:
         radius_effective = radius_eff/total_weight
-    SQ = hardsphere_simple(q, radius_effective, volfraction)
     if norm == 'sasfit':
-        beta = F1**2/F2
-        SQ_EFF = 1 + beta*(SQ - 1)
         IQD = F2
-        IQSD = IQD*SQ
-        IQBD = IQD*SQ_EFF
     elif norm == 'sasview':
-        SQ_EFF = None
         # Note: internally, sasview uses F2/total_volume because:
         #   average_volume = total_volume/total_weight
         #   F2/total_weight / average_volume
         #     = F2/total_weight / total_volume/total_weight
         #     = F2/total_volume
         IQD = F2/average_volume*1e-4*volfraction
-        IQSD = IQD*SQ
-        IQBD = None
     elif norm == 'yun':
-        #F1 /= average_volume
-        #F2 /= average_volume**2
         F1 *= 1e-6  # Yun is using sld in 1/A^2, not 1e-6/A^2
         F2 *= 1e-12
-        beta = F1**2/F2
-        SQ_EFF = 1 + beta*(SQ - 1)
         IQD = F2/average_volume*1e8*volfraction
-        IQSD = IQD*SQ
-        IQBD = IQD*SQ_EFF
+    SQ = hardsphere_simple(q, radius_effective, volfraction)
+    beta = F1**2/F2
+    SQ_EFF = 1 + beta*(SQ - 1)
+    IQSD = IQD*SQ
+    IQBD = IQD*SQ_EFF
     return Theory(Q=q, F1=F1, F2=F2, P=IQD, S=SQ, I=IQSD, Seff=SQ_EFF, Ibeta=IQBD)
 
 #polydispersity for sphere
@@ -278,30 +269,20 @@ def sphere_r(q,radius,sld,sld_solvent,
 
     if radius_effective is None:
         radius_effective = radius
-    SQ = hardsphere_simple(q, radius_effective, volfraction)
-    volume = 4./3.*pi*radius**3
     average_volume = total_volume/total_weight
     if norm == 'sasfit':
-        beta = F1**2/F2
-        SQ_EFF = 1 + beta*(SQ - 1)
         IQD = F2
-        IQSD = IQD*SQ
-        IQBD = IQD*SQ_EFF
     elif norm == 'sasview':
-        SQ_EFF = None
         IQD = F2/average_volume*1e-4*volfraction
-        IQSD = IQD*SQ
-        IQBD = None
     elif norm == 'yun':
-        # Note: yun uses gauss limits from R0/10 to R0 + 5 sigma steps sigma/100
-        # With pd = 0.1, that's 14 sigma, or 1400 points.
         F1 *= 1e-6  # Yun is using sld in 1/A^2, not 1e-6/A^2
         F2 *= 1e-12
-        beta = F1**2/F2
-        SQ_EFF = 1 + beta*(SQ - 1)
         IQD = F2/average_volume*1e8*volfraction
-        IQSD = IQD*SQ
-        IQBD = IQD*SQ_EFF
+    SQ = hardsphere_simple(q, radius_effective, volfraction)
+    beta = F1**2/F2
+    SQ_EFF = 1 + beta*(SQ - 1)
+    IQSD = IQD*SQ
+    IQBD = IQD*SQ_EFF
     return Theory(Q=q, F1=F1, F2=F2, P=IQD, S=SQ, I=IQSD, Seff=SQ_EFF, Ibeta=IQBD)
 
 ###############################################################################
@@ -453,6 +434,8 @@ COMPARISON[('yun','ellipsoid','gaussian')] = compare_yun_ellipsoid_mono
 COMPARISON[('yun','ellipsoid','schulz')] = compare_yun_ellipsoid_mono
 
 def compare_yun_sphere_gauss():
+    # Note: yun uses gauss limits from R0/10 to R0 + 5 sigma steps sigma/100
+    # With pd = 0.1, that's 14 sigma and 1400 points.
     pars = {
         'radius': 20, 'radius_pd': 0.1, 'radius_pd_type': 'gaussian',
         'sld': 6, 'sld_solvent': 0,
