@@ -20,7 +20,7 @@ where
 
 .. math::
 
-    F^2(q) = \frac{3}{V_s}\left[
+    F(q) = \frac{3}{V_s}\left[
        V_c(\rho_c-\rho_s)\frac{\sin(qr_c)-qr_c\cos(qr_c)}{(qr_c)^3} +
        V_s(\rho_s-\rho_\text{solv})\frac{\sin(qr_s)-qr_s\cos(qr_s)}{(qr_s)^3}
        \right]
