@@ -21,12 +21,12 @@ where the $q$ vector is defined as
 
 In scattering, the radius of gyration $R_g$ quantifies the objects's
 distribution of SLD (not mass density, as in mechanics) from the objects's
-centre of mass. It is defined by
+SLD centre of mass. It is defined by
 
-.. math:: R_g^2 = \sum_i^\text{all points}\rho_i\left(r_i-r_0\right)^2
+.. math:: R_g^2 = \frac{\sum_i\rho_i\left(r_i-r_0\right)^2}{\sum_i\rho_i}
 
-where $r_0$ denotes the object's centre of mass and $\rho_i$ is the SLD at a
-point $i$.
+where $r_0$ denotes the object's SLD centre of mass and $\rho_i$ is the SLD at
+a point $i$.
 
 Notice that $R_g^2$ may be negative (since SLD can be negative), which happens
 when a form factor $P(Q)$ is increasing with $Q$ rather than decreasing. This
