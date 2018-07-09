@@ -445,10 +445,11 @@ def compare_yun_sphere_gauss():
     data = np.loadtxt(data_file('testPolydisperseGaussianSphere.dat'),skiprows=2).T
     Q = data[0]
     F1 = data[1]
+    F2 = data[2]
     P = data[3]
     S = data[5]
     Seff = data[6]
-    target = Theory(Q=Q, F1=F1, P=P, S=S, Seff=Seff)
+    target = Theory(Q=Q, F1=F1, F2=F2, P=P, S=S, Seff=Seff)
     actual = sphere_r(Q, norm='yun', **pars)
     title = " ".join(("yun", "sphere", "10% dispersion 10% Vf"))
     compare(title, target, actual)
@@ -456,10 +457,11 @@ def compare_yun_sphere_gauss():
     pars.update(radius_pd=0.15)
     Q = data[0]
     F1 = data[1]
+    F2 = data[2]
     P = data[3]
     S = data[5]
     Seff = data[6]
-    target = Theory(Q=Q, F1=F1, P=P, S=S, Seff=Seff)
+    target = Theory(Q=Q, F1=F1, F2=F2, P=P, S=S, Seff=Seff)
     actual = sphere_r(Q, norm='yun', **pars)
     title = " ".join(("yun", "sphere", "15% dispersion 10% Vf"))
     compare(title, target, actual)

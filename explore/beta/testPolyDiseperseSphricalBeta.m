@@ -2,11 +2,11 @@ close all
 clear all
 
 R0=20;       %mean radius. unit: Angstroms
-PDI=0.15;       %unit: relative polydispersity
+PDI=0.1;       %unit: relative polydispersity
 volF=0.1;
 contrast=6e-6;    %contrast,angstrom^-1, scattering length density difference
 
-Filename='testPolydisperseGaussianSphere2.dat';
+Filename='testPolydisperseGaussianSphere.dat';
 
 Q=[0.001:0.001:0.8];
 
@@ -56,10 +56,6 @@ semilogx(Q,beta,'g*-');
 
 NormIQN=IQN/IQN(1);
 
-FileString=strcat('Filename:',Filename, '**R0=', num2str(R0),'**PDI=', num2str(PDI),...
-    '**contrast',num2str(contrast), '**volF=',num2str(volF));
-Outputformat='File format : Q, <FQ>, <FQ>^2, <FQ^2>, betaQ, SQ, SQ_Eff';
-
 FQ2=beta.*IQ;
 
 normQ=Q*R0*2;
@@ -76,12 +72,16 @@ Sq_eff=1+beta.*(Sq-1);
 plot(Q,Sq_eff,'gd-');
 
 fileID=fopen(Filename,'w');
-fprintf(fileID,'%s\n\r', FileString);
-fprintf(fileID,'%s\n\r', Outputformat);
+
+FileString=strcat('Filename:',Filename, '**R0=', num2str(R0),'**PDI=', num2str(PDI),...
+    '**contrast',num2str(contrast), '**volF=',num2str(volF));
+Outputformat='File format : Q, <FQ>, <FQ^2>, PQ, betaQ, SQ, SQ_Eff';
+fprintf(fileID,'%s\n', FileString);
+fprintf(fileID,'%s\n', Outputformat);
 for i=1:length(Q)
-    %file format : Q, <FQ>, <FQ>^2, <FQ^2>, betaQ, SQ, SQ_Eff
-    fprintf(fileID,'%e\t%e\t%e\t%e\t%e\t%e\t%e\n\r',...
-        Q(i),FQ(i),FQ2(i),IQ(i),beta(i),Sq(i),Sq_eff(i));
+    %file format : Q, <FQ>, <FQ^2>, PQ, betaQ, SQ, SQ_Eff
+    fprintf(fileID,'%e\t%e\t%e\t%e\t%e\t%e\t%e\n',...
+        Q(i),FQ(i),IQN(i),IQ(i),beta(i),Sq(i),Sq_eff(i));
 end
 
 fclose(fileID)
