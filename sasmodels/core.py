@@ -36,8 +36,8 @@ except ImportError:
 CUSTOM_MODEL_PATH = os.environ.get('SAS_MODELPATH', "")
 if CUSTOM_MODEL_PATH == "":
     CUSTOM_MODEL_PATH = joinpath(os.path.expanduser("~"), ".sasmodels", "custom_models")
-    if not os.path.isdir(CUSTOM_MODEL_PATH):
-        os.makedirs(CUSTOM_MODEL_PATH)
+    #if not os.path.isdir(CUSTOM_MODEL_PATH):
+    #    os.makedirs(CUSTOM_MODEL_PATH)
 
 # TODO: refactor composite model support
 # The current load_model_info/build_model does not reuse existing model
