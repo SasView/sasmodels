@@ -5,12 +5,16 @@ Submit a batch fit job to the slurm cluster.
 Given a model.py file defining a Bumps problem defined on a single data
 file, with the data file specified as a command line argument, run the
 bumps fit as a batch over a set of different datafiles independently.
-An example model is given in example/model_ellipsoid_hayter_msa.py,
-which fits the data in example/09319*.dat.
+An example model is given in model_ellipsoid_hayter_msa.py, which fits 
+the data in 09319*.dat.
 
-To run the fit, use:
+To run the fit, use::
 
     slurm_batch.py [--slurm_opts] model.py *.dat --store=T1 [--bumps_opt ...]
+
+For example::
+
+    slurm_batch.py model_ellipsoid_hayter_msa.py 09319*.dat --store=T1
 
 This creates the T1 subdirectory to hold the fit results and 
 prints the real command that is submitted, as well as the job id.
@@ -19,24 +23,36 @@ The store directory T1 contains a copy of the model file and
 all the data files.  The fit results for each file will be 
 in T1/##/*.  The file T1/files.dat contains the list 
 of "subdirectory filename" pairs indicating which ## directory 
-contains the resuls for which file.  Check for errors using
+contains the resuls for which file.  Check for errors using::
 
     cat T1/slurm*_1.out
 
-Bumps options are described at bumps.readthedocs.org, with
-running time (--time=T) defaulting to 2 hours maximum.  The
-following slurm options are used::
+The following slurm options are used::
 
     --array=1-#files     batch size comes from the file list
     --gres=gpu:1         request a gpu for each fit
     --job-name=model.py  use model file name for job name
     --output=...         log into T1/slurm-job_##.out
     --chdir=...          run fit from store directory
+    --time=2             time as number of hours (can override)
 
 To receive an email on job completion or failure, add the following
 slurm options before the model file::
 
     --mail-type=END,FAIL --mail-user=user@mail.domain
+
+Bumps options are described at bumps.readthedocs.org, with the
+following set automatically::
+
+    --batch              run in batch mode, without output to .mon
+    --view=log           SAS fits want log plots
+    --time=2-0.1         slurm time minus 6 minutes for cleanup
+
+The --store and --resume options indicate the parent directory for
+the output.  These are modified to store the results in a separate
+subdirectory for each file.  Keep in mind that the fit is run from
+the store directory, so any files or modules referenced from the
+model file will need to use a full path to the original location.
 
 After submitting the job a job id will be printed to the console.
 You can check the status of the job using the usual slurm commands
