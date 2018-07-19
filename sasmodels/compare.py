@@ -113,13 +113,13 @@ Options (* for default):
     -help/-html shows the model docs instead of running the model
 
     === environment variables ===
-    -DSAS_MODELPATH=path sets directory containing custom models
-    -DSAS_WEIGHTS_PATH=path sets directory containing custom distributions
+    -DSAS_MODELPATH=~/.sasmodels/custom_models sets path to custom models
+    -DSAS_WEIGHTS_PATH=~/.sasview/weights sets path to custom distributions
     -DSAS_OPENCL=vendor:device|none sets the target OpenCL device
     -DXDG_CACHE_HOME=~/.cache sets the pyopencl cache root (linux only)
     -DSAS_COMPILER=tinycc|msvc|mingw|unix sets the DLL compiler
-    -DSAS_OPENMP=1 turns on OpenMP for the DLLs
-    -DSAS_DLL_PATH=path sets the path to the compiled modules
+    -DSAS_OPENMP=0 set to 1 to turn on OpenMP for the DLLs
+    -DSAS_DLL_PATH=~/.sasmodels/compiled_models sets the DLL cache
 
 The interpretation of quad precision depends on architecture, and may
 vary from 64-bit to 128-bit, with 80-bit floats being common (1e-19 precision).
