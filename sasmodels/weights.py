@@ -230,11 +230,11 @@ MODELS = OrderedDict((d.type, d) for d in (
     BoltzmannDispersion
 ))
 
-SASMODELS_WEIGHTS = "~/.sasview/weights/*.py"
+SAS_WEIGHTS_PATH = "~/.sasview/weights"
 def load_weights(pattern=None):
     # type: (str) -> None
     """
-    Load dispersion distributions matching the given pattern
+    Load dispersion distributions matching the given glob pattern
     """
     import logging
     import os
@@ -243,7 +243,8 @@ def load_weights(pattern=None):
     import traceback
     from .custom import load_custom_kernel_module
     if pattern is None:
-        pattern = os.environ.get("SASMODELS_WEIGHTS", SASMODELS_WEIGHTS)
+        path = os.environ.get("SAS_WEIGHTS_PATH", SAS_WEIGHTS_PATH)
+        pattern = os.path.join(path, "*.py")
     for filename in sorted(glob.glob(os.path.expanduser(pattern))):
         try:
             #print("loading weights from", filename)

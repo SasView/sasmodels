@@ -114,6 +114,7 @@ Options (* for default):
 
     === environment variables ===
     -DSAS_MODELPATH=path sets directory containing custom models
+    -DSAS_WEIGHTS_PATH=path sets directory containing custom distributions
     -DSAS_OPENCL=vendor:device|none sets the target OpenCL device
     -DXDG_CACHE_HOME=~/.cache sets the pyopencl cache root (linux only)
     -DSAS_COMPILER=tinycc|msvc|mingw|unix sets the DLL compiler

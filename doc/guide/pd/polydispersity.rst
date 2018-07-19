@@ -404,9 +404,17 @@ nsigmas you will need to generate your own *x*.  Be sure to honour the
 limits *lb* and *ub*, for example to disallow a negative radius or constrain
 the volume fraction to lie between zero and one.
 
-To activate a user-defined distribution, set the following environment variable:
+To activate a user-defined distribution, put it in a file such as *distname.py*
+in the *SAS_WEIGHTS_PATH* folder.  This is defined with an environment
+variable, defaulting to::
 
-    SASMODELS_WEIGHTS=path/to/folder/name_of_distribution.py
+    SAS_WEIGHTS_PATH=~/.sasview/weights
+
+The weights path is loaded on startup.  To update the distribution definition
+in a running application you will need to enter the following python commands::
+
+    import sasmodels.weights
+    sasmodels.weights.load_weights('path/to/distname.py')
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
