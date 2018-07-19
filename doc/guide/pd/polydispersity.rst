@@ -58,10 +58,10 @@ The following distribution functions are provided:
 *  *Lognormal Distribution*
 *  *Schulz Distribution*
 *  *Array Distribution*
+*  *User-defined Distributions*
 
 These are all implemented as *number-average* distributions.
 
-Additional distributions are under consideration.
 
 Suggested Applications
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -76,7 +76,9 @@ If applying polydispersion to parameters describing angles, use the Uniform
 distribution. Beware of using distributions that are always positive (eg, the
 Lognormal) because angles can be negative!
 
-The array distribution allows a user-defined distribution to be applied.
+The array distribution provides a very simple means of implementing a user-
+defined distribution, but without any fittable parameters. Greater flexibility
+is conferred by the user-defined distribution. 
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
@@ -317,7 +319,7 @@ not be fitable.
 User-defined Distributions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can define your own distribution by creating a python file defining a
+You can also define your own distribution by creating a python file defining a
 *Distribution* object with a *_weights* method.  The *_weights* method takes
 *center*, *sigma*, *lb* and *ub* as arguments, and can access *self.npts*
 and *self.nsigmas* from the distribution.  They are interpreted as follows:
@@ -325,13 +327,13 @@ and *self.nsigmas* from the distribution.  They are interpreted as follows:
 * *center* the value of the shape parameter (for size dispersity) or zero
   if it is an angular dispersity.  This parameter may be fitted.
 
-* *sigma* the width of the distribution, with is the polydispersity parameter
+* *sigma* the width of the distribution, which is the polydispersity parameter
   times the center for size dispersity, or the polydispersity parameter alone
   for angular dispersity.  This parameter may be fitted.
 
-* *lb*, *ub* are the parameter limits given in the model definition file.  For
-  example, a radius parameter has *lb* equal to zero.  A volume fraction
-  parameter would have *lb* equal to zero and *ub* equal to one.
+* *lb*, *ub* are the parameter limits (lower & upper bounds) given in the model
+  definition file.  For example, a radius parameter has *lb* equal to zero.  A
+  volume fraction parameter would have *lb* equal to zero and *ub* equal to one.
 
 * *self.nsigmas* the distance to go into the tails when evaluating the
   distribution.  For a two parameter distribution, this value could be
@@ -343,7 +345,7 @@ and *self.nsigmas* from the distribution.  They are interpreted as follows:
   distribution code is free to return more or fewer, or use it for the third
   parameter in a three parameter distribution.
 
-The code following wraps the Laplace distribution from scipy stats::
+As an example, the code following wraps the Laplace distribution from scipy stats::
 
     import numpy as np
     from scipy.stats import laplace
