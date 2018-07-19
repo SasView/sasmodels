@@ -390,6 +390,10 @@ nsigmas you will need to generate your own *x*.  Be sure to honour the
 limits *lb* and *ub*, for example to disallow a negative radius or constrain
 the volume fraction to lie between zero and one.
 
+To activate a user-defined distribution, set the following environment variable:
+
+    SASMODELS_WEIGHTS=path/to/folder/name_of_distribution.py
+
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
 Note about DLS polydispersity
