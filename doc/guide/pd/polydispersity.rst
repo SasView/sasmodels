@@ -19,8 +19,13 @@ particle volume such that
 
   P(q) = \text{scale} \langle F^* F \rangle / V + \text{background}
 
-where $F$ is the scattering amplitude and $\langle\cdot\rangle$ denotes an
-average over the size distribution.
+where $F$ is the scattering amplitude and $\langle\cdot\rangle$ denotes an 
+average over the size distribution $f(x; \bar x, \sigma)$, giving
+
+.. math::
+
+  P(q) = \frac{\text{scale}}{V} \int_\mathbb{R} 
+  f(x; \bar x, \sigma) F^2(q, x)\, dx + \text{background}
 
 Each distribution is characterized by a center value $\bar x$ or
 $x_\text{med}$, a width parameter $\sigma$ (note this is *not necessarily*
@@ -40,7 +45,7 @@ parameters is just $\sigma = \mathrm{PD}$.
 $N_\sigma$ determines how far into the tails to evaluate the distribution,
 with larger values of $N_\sigma$ required for heavier tailed distributions.
 The scattering in general falls rapidly with $qr$ so the usual assumption
-that $G(r - 3\sigma_r)$ is tiny and therefore $f(r - 3\sigma_r)G(r - 3\sigma_r)$
+that $f(r - 3\sigma_r)$ is tiny and therefore $f(r - 3\sigma_r)f(r - 3\sigma_r)$
 will not contribute much to the average may not hold when particles are large.
 This, too, will require increasing $N_\sigma$.
 
@@ -62,6 +67,15 @@ The following distribution functions are provided:
 
 These are all implemented as *number-average* distributions.
 
+
+.. note:: In 2009 IUPAC decided to introduce the new term 'dispersity' to replace 
+           the term 'polydispersity' (see `Pure Appl. Chem., (2009), 81(2), 
+           351-353 <http://media.iupac.org/publications/pac/2009/pdf/8102x0351.pdf>`_ 
+           in order to make the terminology describing distributions of properties 
+           unambiguous. Throughout the SasView documentation we continue to use the 
+           term polydispersity because one of the consequences of the IUPAC change is 
+           that orientational polydispersity would not meet their new criteria (which 
+           requires dispersity to be dimensionless).
 
 Suggested Applications
 ^^^^^^^^^^^^^^^^^^^^^^

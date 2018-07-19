@@ -38,10 +38,10 @@ fraction of $+$ neutrons before ($u_i$) and after ($u_f$) the sample,
 with weighting:
 
 .. math::
-    -- &= ((1-u_i)(1-u_f))^{1/4} \\
-    -+ &= ((1-u_i)(u_f))^{1/4} \\
-    +- &= ((u_i)(1-u_f))^{1/4} \\
-    ++ &= ((u_i)(u_f))^{1/4}
+    -- &= (1-u_i)(1-u_f) \\
+    -+ &= (1-u_i)(u_f) \\
+    +- &= (u_i)(1-u_f) \\
+    ++ &= (u_i)(u_f)
 
 Ideally the experiment would measure the pure spin states independently and
 perform a simultaneous analysis of the four states, tying all the model
@@ -103,3 +103,4 @@ The user input parameters are:
 
 | 2015-05-02 Steve King
 | 2017-11-15 Paul Kienzle
+| 2018-06-02 Adam Washington

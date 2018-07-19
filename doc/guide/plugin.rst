@@ -821,7 +821,7 @@ file in the order given, otherwise these functions will not be available.
            + \frac{x^9}{9\times 9!} - \frac{x^{11}}{11\times 11!}
 
         :code:`source = ["lib/Si.c", ...]`
-        (`Si.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/Si.c>`_)
+        (`Si.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_Si.c>`_)
 
     sas_3j1x_x(x):
         Spherical Bessel form
