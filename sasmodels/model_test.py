@@ -375,14 +375,6 @@ def run_one(model):
         import traceback
         stream.writeln(traceback.format_exc())
         return
-    # Run the test suite
-    suite.run(result)
-
-    # Print the failures and errors
-    for _, tb in result.errors:
-        stream.writeln(tb)
-    for _, tb in result.failures:
-        stream.writeln(tb)
 
     # Warn if there are no user defined tests.
     # Note: the test suite constructed above only has one test in it, which
@@ -392,12 +384,24 @@ def run_one(model):
     # they are in the first test of the test suite.  We do this with an
     # iterator since we don't have direct access to the list of tests in the
     # test suite.
+    # In Qt5 suite.run() will clear all tests in the suite after running
+    # with no way of retaining them for the test below, so let's check
+    # for user tests before running the suite.
     for test in suite:
         if not test.info.tests:
             stream.writeln("Note: %s has no user defined tests."%model)
         break
     else:
         stream.writeln("Note: no test suite created --- this should never happen")
+
+    # Run the test suite
+    suite.run(result)
+
+    # Print the failures and errors
+    for _, tb in result.errors:
+        stream.writeln(tb)
+    for _, tb in result.failures:
+        stream.writeln(tb)
 
     output = stream.getvalue()
     stream.close()
