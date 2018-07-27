@@ -503,7 +503,7 @@ def _plot_result1D(data,         # type: Data1D
             # Note: masks merge, so any masked theory points will stay masked,
             # and the data mask will be added to it.
             #mtheory = masked_array(theory, data.mask.copy())
-            theory_x = data.x[~data.mask]
+            theory_x = data.x[data.mask == 0]
             mtheory = masked_array(theory)
             mtheory[~np.isfinite(mtheory)] = masked
             if view is 'log':
@@ -544,7 +544,7 @@ def _plot_result1D(data,         # type: Data1D
         #plt.axis('equal')
 
     if use_resid:
-        theory_x = data.x[~data.mask]
+        theory_x = data.x[data.mask == 0]
         mresid = masked_array(resid)
         mresid[~np.isfinite(mresid)] = masked
         some_present = (mresid.count() > 0)
