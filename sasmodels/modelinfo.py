@@ -588,7 +588,7 @@ class ParameterTable(object):
                           'magnetic', 'fraction of spin up incident'),
                 Parameter('up:frac_f', '', 0., [0., 1.],
                           'magnetic', 'fraction of spin up final'),
-                Parameter('up:angle', 'degress', 0., [0., 360.],
+                Parameter('up:angle', 'degrees', 0., [0., 360.],
                           'magnetic', 'spin up angle'),
             ])
             slds = [p for p in full_list if p.type == 'sld']
