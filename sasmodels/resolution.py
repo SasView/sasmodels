@@ -19,7 +19,10 @@ __all__ = ["Resolution", "Perfect1D", "Pinhole1D", "Slit1D",
 
 MINIMUM_RESOLUTION = 1e-8
 MINIMUM_ABSOLUTE_Q = 0.02  # relative to the minimum q in the data
-PINHOLE_N_SIGMA = 2.5 # From: Barker & Pedersen 1995 JAC
+# According to (Barker & Pedersen 1995 JAC), 2.5 sigma is a good limit.
+# According to simulations with github.com:scattering/sansresolution.git
+# it is better to use asymmetric bounds (2.5, 3.0)
+PINHOLE_N_SIGMA = (2.5, 3.0)
 
 class Resolution(object):
     """
@@ -89,8 +92,8 @@ class Pinhole1D(Resolution):
         # values are trimmed even for broad resolution.  Although not possible
         # from the geometry, they may appear since we are using a truncated
         # gaussian to represent resolution rather than a skew distribution.
-        cutoff = MINIMUM_ABSOLUTE_Q*np.min(self.q)
-        self.q_calc = self.q_calc[self.q_calc >= cutoff]
+        #cutoff = MINIMUM_ABSOLUTE_Q*np.min(self.q)
+        #self.q_calc = self.q_calc[self.q_calc >= cutoff]
 
         # Build weight matrix from calculated q values
         self.weight_matrix = pinhole_resolution(
@@ -187,10 +190,14 @@ def pinhole_resolution(q_calc, q, q_width, nsigma=PINHOLE_N_SIGMA):
     #edges[edges < 0.0] = 0.0 # clip edges below zero
     cdf = erf((edges[:, None] - q[None, :]) / (sqrt(2.0)*q_width)[None, :])
     weights = cdf[1:] - cdf[:-1]
-    # Limit q range to +/- 2.5 sigma
-    qhigh = q + nsigma*q_width
-    #qlow = q - nsigma*q_width  # linear limits
-    qlow = q*q/qhigh  # log limits
+    # Limit q range to (-2.5,+3) sigma
+    try:
+        nsigma_low, nsigma_high = nsigma
+    except TypeError:
+        nsigma_low = nsigma_high = nsigma
+    qhigh = q + nsigma_high*q_width
+    qlow = q - nsigma_low*q_width  # linear limits
+    ##qlow = q*q/qhigh  # log limits
     weights[q_calc[:, None] < qlow[None, :]] = 0.
     weights[q_calc[:, None] > qhigh[None, :]] = 0.
     weights /= np.sum(weights, axis=0)[None, :]
@@ -364,13 +371,17 @@ def _q_perp_weights(q_edges, qi, w):
     return weights
 
 
-def pinhole_extend_q(q, q_width, nsigma=3):
+def pinhole_extend_q(q, q_width, nsigma=PINHOLE_N_SIGMA):
     """
     Given *q* and *q_width*, find a set of sampling points *q_calc* so
     that each point $I(q)$ has sufficient support from the underlying
     function.
     """
-    q_min, q_max = np.min(q - nsigma*q_width), np.max(q + nsigma*q_width)
+    try:
+        nsigma_low, nsigma_high = nsigma
+    except TypeError:
+        nsigma_low = nsigma_high = nsigma
+    q_min, q_max = np.min(q - nsigma_low*q_width), np.max(q + nsigma_high*q_width)
     return linear_extrapolation(q, q_min, q_max)
 
 
