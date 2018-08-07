@@ -36,6 +36,7 @@
 //  PROJECTION : equirectangular=1, sinusoidal=2
 //      see explore/jitter.py for definitions.
 
+
 #ifndef _PAR_BLOCK_ // protected block so we can include this code twice.
 #define _PAR_BLOCK_
 
@@ -269,9 +270,7 @@ qabc_apply(
 
 #endif // _QABC_SECTION
 
-
 // ==================== KERNEL CODE ========================
-
 kernel
 void KERNEL_NAME(
     int32_t nq,                 // number of q values
@@ -338,20 +337,32 @@ void KERNEL_NAME(
   //
   // The code differs slightly between opencl and dll since opencl is only
   // seeing one q value (stored in the variable "this_result") while the dll
-  // version must loop over all q.
+  // version must loop over all q
+  #if BETA
+  double *beta_result = &(result[nq+1]); // = result + nq + 1
+  double weight_norm = (pd_start == 0 ? 0.0 : result[2*nq+1]);
+  #endif
   #ifdef USE_OPENCL
     double pd_norm = (pd_start == 0 ? 0.0 : result[nq]);
     double this_result = (pd_start == 0 ? 0.0 : result[q_index]);
+    #if BETA
+      double this_beta_result = (pd_start == 0 ? 0.0 : result[nq + q_index];
   #else // !USE_OPENCL
-    double pd_norm = (pd_start == 0 ? 0.0 : result[nq]);
+    double pd_norm = (pd_start == 0 ? 0.0 : result[nq]); 
     if (pd_start == 0) {
       #ifdef USE_OPENMP
       #pragma omp parallel for
       #endif
       for (int q_index=0; q_index < nq; q_index++) result[q_index] = 0.0;
+      #if BETA
+      for (int q_index=0; q_index < nq; q_index++) beta_result[q_index] = 0.0;
+      #endif
     }
     //if (q_index==0) printf("start %d %g %g\n", pd_start, pd_norm, result[0]);
 #endif // !USE_OPENCL
+
+
+
 
 
 // ====== macros to set up the parts of the loop =======
@@ -441,13 +452,24 @@ After expansion, the loop struction will look like the following:
 // is easier to read. The code below both declares variables for the
 // inner loop and defines the macros that use them.
 
+
 #if defined(CALL_IQ)
   // unoriented 1D
   double qk;
-  #define FETCH_Q() do { qk = q[q_index]; } while (0)
-  #define BUILD_ROTATION() do {} while(0)
-  #define APPLY_ROTATION() do {} while(0)
-  #define CALL_KERNEL() CALL_IQ(qk, local_values.table)
+  #if BETA == 0
+    #define FETCH_Q() do { qk = q[q_index]; } while (0)
+    #define BUILD_ROTATION() do {} while(0)
+    #define APPLY_ROTATION() do {} while(0)
+    #define CALL_KERNEL() CALL_IQ(qk,local_values.table)
+
+  // unoriented 1D Beta
+  #elif BETA == 1
+    double F1, F2;
+    #define FETCH_Q() do { qk = q[q_index]; } while (0)
+    #define BUILD_ROTATION() do {} while(0)
+    #define APPLY_ROTATION() do {} while(0)
+    #define CALL_KERNEL() CALL_IQ(qk,F1,F2,local_values.table)
+  #endif
 
 #elif defined(CALL_IQ_A)
   // unoriented 2D
@@ -646,7 +668,10 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
     if (weight > cutoff) {
       pd_norm += weight * CALL_VOLUME(local_values.table);
       BUILD_ROTATION();
-
+#if BETA
+    if (weight > cutoff) {
+      weight_norm += weight;}
+#endif
 #ifndef USE_OPENCL
       // DLL needs to explicitly loop over the q values.
       #ifdef USE_OPENMP
@@ -692,19 +717,35 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
             }
           }
         #else  // !MAGNETIC
-          const double scattering = CALL_KERNEL();
+          #if defined(CALL_IQ) && BETA == 1
+            CALL_KERNEL();
+            const double scatteringF1 = F1;
+            const double scatteringF2 = F2;
+          #else
+            const double scattering = CALL_KERNEL();
+          #endif
         #endif // !MAGNETIC
 //printf("q_index:%d %g %g %g %g\n", q_index, scattering, weight0);
 
         #ifdef USE_OPENCL
-          this_result += weight * scattering;
+          #if defined(CALL_IQ)&& BETA == 1
+             this_result += weight * scatteringF2;
+             this_beta_result += weight * scatteringF1;
+            #else
+              this_result += weight * scattering;
+          #endif
         #else // !USE_OPENCL
-          result[q_index] += weight * scattering;
+          #if defined(CALL_IQ)&& BETA == 1
+            result[q_index] += weight * scatteringF2;
+            beta_result[q_index] += weight * scatteringF1;
+            #endif
+            #else
+            result[q_index] += weight * scattering;
+          #endif
         #endif // !USE_OPENCL
       }
     }
   }
-
 // close nested loops
 ++step;
 #if MAX_PD>0
@@ -727,9 +768,17 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
 #ifdef USE_OPENCL
   result[q_index] = this_result;
   if (q_index == 0) result[nq] = pd_norm;
+  #if BETA
+  beta_result[q_index] = this_beta_result;
+  #endif
+  if (q_index == 0) result[nq] = pd_norm;
+
 //if (q_index == 0) printf("res: %g/%g\n", result[0], pd_norm);
 #else // !USE_OPENCL
   result[nq] = pd_norm;
+  #if BETA
+  result[2*nq+1] = weight_norm;
+  #endif
 //printf("res: %g/%g\n", result[0], pd_norm);
 #endif // !USE_OPENCL
 

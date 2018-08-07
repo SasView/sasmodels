@@ -671,7 +671,7 @@ def _call_pars(prefix, pars):
 
 
 # type in IQXY pattern could be single, float, double, long double, ...
-_IQXY_PATTERN = re.compile(r"(^|\s)double\s+I(?P<mode>q(ab?c|xy))\s*[(]",
+_IQXY_PATTERN = re.compile(r"(^|\s)double\s+I(?P<mode>q(ac|abc|xy))\s*[(]",
                            flags=re.MULTILINE)
 def find_xy_mode(source):
     # type: (List[str]) -> bool
@@ -700,6 +700,14 @@ def find_xy_mode(source):
             return m.group('mode')
     return 'qa'
 
+# type in IQXY pattern could be single, float, double, long double, ...
+_FQ_PATTERN = re.compile(r"(^|\s)void\s+Fq[(]", flags=re.MULTILINE)
+def has_Fq(source):
+    for code in source:
+        m = _FQ_PATTERN.search(code)
+        if m is not None:
+            return True
+    return False
 
 def _add_source(source, code, path, lineno=1):
     """
@@ -729,20 +737,16 @@ def make_source(model_info):
     # for the distribution rather than the absolute values used by angular
     # dispersion.  Need to be careful that necessary parameters are available
     # for computing volume even if we allow non-disperse volume parameters.
-
     partable = model_info.parameters
-
     # Load templates and user code
     kernel_header = load_template('kernel_header.c')
     kernel_code = load_template('kernel_iq.c')
     user_code = [(f, open(f).read()) for f in model_sources(model_info)]
-
     # Build initial sources
     source = []
     _add_source(source, *kernel_header)
     for path, code in user_code:
         _add_source(source, code, path)
-
     if model_info.c_code:
         _add_source(source, model_info.c_code, model_info.filename,
                     lineno=model_info.lineno.get('c_code', 1))
@@ -788,7 +792,6 @@ def make_source(model_info):
     source.append("#define PARAMETER_TABLE \\")
     source.append("\\\n".join(p.as_definition()
                               for p in partable.kernel_parameters))
-
     # Define the function calls
     if partable.form_volume_parameters:
         refs = _call_pars("_v.", partable.form_volume_parameters)
@@ -799,10 +802,15 @@ def make_source(model_info):
         # the ifdef's reduce readability more than is worthwhile.
         call_volume = "#define CALL_VOLUME(v) 1.0"
     source.append(call_volume)
-
     model_refs = _call_pars("_v.", partable.iq_parameters)
-    pars = ",".join(["_q"] + model_refs)
-    call_iq = "#define CALL_IQ(_q, _v) Iq(%s)" % pars
+    #create varaible BETA to turn on and off beta approximation
+    BETA = has_Fq(source)
+    if not BETA:
+        pars = ",".join(["_q"] + model_refs)
+        call_iq = "#define CALL_IQ(_q, _v) Iq(%s)" % pars
+    else:
+        pars = ",".join(["_q", "&_F1", "&_F2",] + model_refs)
+        call_iq = "#define CALL_IQ(_q, _F1, _F2, _v) Fq(%s)" % pars
     if xy_mode == 'qabc':
         pars = ",".join(["_qa", "_qb", "_qc"] + model_refs)
         call_iqxy = "#define CALL_IQ_ABC(_qa,_qb,_qc,_v) Iqabc(%s)" % pars
@@ -830,24 +838,23 @@ def make_source(model_info):
 
     magpars = [k-2 for k, p in enumerate(partable.call_parameters)
                if p.type == 'sld']
-
     # Fill in definitions for numbers of parameters
+    source.append("#define BETA %d" %(1 if BETA else 0))
     source.append("#define MAX_PD %s"%partable.max_pd)
     source.append("#define NUM_PARS %d"%partable.npars)
     source.append("#define NUM_VALUES %d" % partable.nvalues)
     source.append("#define NUM_MAGNETIC %d" % partable.nmagnetic)
     source.append("#define MAGNETIC_PARS %s"%",".join(str(k) for k in magpars))
     source.append("#define PROJECTION %d"%PROJECTION)
-
     # TODO: allow mixed python/opencl kernels?
-
     ocl = _kernels(kernel_code, call_iq, call_iqxy, clear_iqxy, model_info.name)
     dll = _kernels(kernel_code, call_iq, call_iqxy, clear_iqxy, model_info.name)
+
     result = {
         'dll': '\n'.join(source+dll[0]+dll[1]+dll[2]),
         'opencl': '\n'.join(source+ocl[0]+ocl[1]+ocl[2]),
     }
-
+    #print(result['dll'])
     return result
 
 
@@ -1067,7 +1074,7 @@ def main():
         kernel_module = load_kernel_module(name)
         model_info = make_model_info(kernel_module)
         source = make_source(model_info)
-        print(source['dll'])
+        #print(source['dll'])
 
 
 if __name__ == "__main__":

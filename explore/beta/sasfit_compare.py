@@ -2,9 +2,12 @@ from __future__ import division, print_function
 # Make sasmodels available on the path
 import sys,os
 BETA_DIR = os.path.dirname(os.path.realpath(__file__))
-SASMODELS_DIR = os.path.dirname(os.path.dirname(BETA_DIR))
+#SASMODELS_DIR = os.path.dirname(os.path.dirname(BETA_DIR))
+SASMODELS_DIR = r"C:\Source\sasmodels"
 sys.path.insert(0, SASMODELS_DIR)
 import os
+from collections import namedtuple
+
 from matplotlib import pyplot as plt
 import numpy as np
 from numpy import pi, sin, cos, sqrt, fabs
@@ -13,20 +16,8 @@ from scipy.special import j1 as J1
 from numpy import inf
 from scipy.special import gammaln  # type: ignore
 
-# THE FOLLOWING 7 BOOLEANS TAILOR WHICH GRAPHS ARE PRINTED WHEN THE PROGRAM RUNS
-#RICHARD, YOU WILL WANT SASVIEW, SASFIT, SCHULZ, ELLIPSOID, AND SPHERE ALL TRUE.
-ELLIPSOID = False
-SPHERE = True
-
-GAUSSIAN = True
-SCHULZ = False
-
-SASVIEW=True
-SASFIT=True
-YUN = True
-
-def data_file(name):
-    return os.path.join(BETA_DIR + '\\data_files', name)
+Theory = namedtuple('Theory', 'Q F1 F2 P S I Seff Ibeta')
+Theory.__new__.__defaults__ = (None,) * len(Theory._fields)
 
 #Used to calculate F(q) for the cylinder, sphere, ellipsoid models
 def sas_sinx_x(x):
@@ -46,7 +37,7 @@ def sas_3j1x_x(x):
     retvalue = np.empty_like(x)
     with np.errstate(all='ignore'):
         # GSL bessel_j1 taylor expansion
-        index = (x < 0.25)  
+        index = (x < 0.25)
         y = x[index]**2
         c1 = -1.0/10.0
         c2 =  1.0/280.0
@@ -70,12 +61,12 @@ def build_model(model_name, q, **pars):
     data = empty_data1D(q)
     calculator = DirectModel(data, model,cutoff=0)
     calculator.pars = pars.copy()
-    calculator.pars.setdefault('background', 1e-3)
+    calculator.pars.setdefault('background', 0)
     return calculator
 
 #gives the hardsphere structure factor that sasview uses
-def hardsphere_simple(q, radius_effective, volfraction): 
-    CUTOFFHS=0.05 
+def _hardsphere_simple(q, radius_effective, volfraction):
+    CUTOFFHS=0.05
     if fabs(radius_effective) < 1.E-12:
         HARDSPH=1.0
         return HARDSPH
@@ -95,30 +86,38 @@ def hardsphere_simple(q, radius_effective, volfraction):
     if X < CUTOFFHS:
         FF = 8.0*A +6.0*B + 4.0*G + ( -0.8*A -B/1.5 -0.5*G +(A/35. +0.0125*B +0.02*G)*X2)*X2
         HARDSPH= 1./(1. + volfraction*FF )
-        return HARDSPH   
+        return HARDSPH
     X4=X2*X2
     S, C = sin(X), cos(X)
-    FF=  (( G*( (4.*X2 -24.)*X*S -(X4 -12.*X2 +24.)*C +24. )/X2 + B*(2.*X*S -(X2-2.)*C -2.) )/X + A*(S-X*C))/X ;
-    HARDSPH= 1./(1. + 24.*volfraction*FF/X2 );
+    FF=  (( G*( (4.*X2 -24.)*X*S -(X4 -12.*X2 +24.)*C +24. )/X2 + B*(2.*X*S -(X2-2.)*C -2.) )/X + A*(S-X*C))/X
+    HARDSPH= 1./(1. + 24.*volfraction*FF/X2 )
     return HARDSPH
+
+def hardsphere_simple(q, radius_effective, volfraction):
+    SQ = [_hardsphere_simple(qk, radius_effective, volfraction) for qk in q]
+    return np.array(SQ)
 
 #Used in gaussian quadrature for polydispersity
 #returns values and the probability of those values based on gaussian distribution
-def gaussian_distribution(center, sigma,lb,ub):
-    #3 standard deviations covers approx. 99.7% 
+N_GAUSS = 35
+NSIGMA_GAUSS = 3
+def gaussian_distribution(center, sigma, lb, ub):
+    #3 standard deviations covers approx. 99.7%
     if sigma != 0:
-        nsigmas=3
-        x = np.linspace(center-sigma*nsigmas, center+sigma*nsigmas, num=35)
+        nsigmas = NSIGMA_GAUSS
+        x = np.linspace(center-sigma*nsigmas, center+sigma*nsigmas, num=N_GAUSS)
         x= x[(x >= lb) & (x <= ub)]
         px = np.exp((x-center)**2 / (-2.0 * sigma * sigma))
         return x, px
     else:
         return np.array([center]), np.array([1])
 
+N_SCHULZ = 80
+NSIGMA_SCHULZ = 8
 def schulz_distribution(center, sigma, lb, ub):
     if sigma != 0:
-        nsigmas=8
-        x = np.linspace(center-sigma*nsigmas, center+sigma*nsigmas, num=80)
+        nsigmas = NSIGMA_SCHULZ
+        x = np.linspace(center-sigma*nsigmas, center+sigma*nsigmas, num=N_SCHULZ)
         x= x[(x >= lb) & (x <= ub)]
         R = x/center
         z = (center/sigma)**2
@@ -159,112 +158,141 @@ def ellipsoid_volume(radius_polar,radius_equatorial):
 #IQBM is I(q) with Beta Approximation and monodispersity
 #SQ is monodisperse approach for structure factor
 #SQ_EFF is the effective structure factor from beta approx
-def ellipsoid_Theta(q, radius_polar, radius_equatorial, sld, sld_solvent,volfraction=0,effective_radius=0):
+def ellipsoid_theta(q, radius_polar, radius_equatorial, sld, sld_solvent,
+                    volfraction=0, radius_effective=None):
     #creates values z and corresponding probabilities w from legendre-gauss quadrature
+    volume = ellipsoid_volume(radius_polar, radius_equatorial)
     z, w = leggauss(76)
     F1 = np.zeros_like(q)
     F2 = np.zeros_like(q)
     #use a u subsition(u=cos) and then u=(z+1)/2 to change integration from
-    #0->2pi with respect to alpha to -1->1 with respect to z, allowing us to use 
+    #0->2pi with respect to alpha to -1->1 with respect to z, allowing us to use
     #legendre-gauss quadrature
     for k, qk in enumerate(q):
         r = sqrt(radius_equatorial**2*(1-((z+1)/2)**2)+radius_polar**2*((z+1)/2)**2)
-        F2i = ((sld-sld_solvent)*ellipsoid_volume(radius_polar,radius_equatorial)*sas_3j1x_x(qk*r))**2
-        F2[k] = np.sum(w*F2i)
-        F1i = (sld-sld_solvent)*ellipsoid_volume(radius_polar,radius_equatorial)*sas_3j1x_x(qk*r)
-        F1[k] = np.sum(w*F1i)
+        form = (sld-sld_solvent)*volume*sas_3j1x_x(qk*r)
+        F2[k] = np.sum(w*form**2)
+        F1[k] = np.sum(w*form)
     #the 1/2 comes from the change of variables mentioned above
     F2 = F2/2.0
     F1 = F1/2.0
-    if effective_radius == 0:
-        effective_radius = ER_ellipsoid(radius_polar,radius_equatorial)
-    else:
-        effective_radius = effective_radius
-    SQ = np.array([hardsphere_simple(qk, effective_radius, volfraction) for qk in q])   
-    SQ_EFF = 1 + F1**2/F2*(SQ - 1) 
-    IQM = 1e-4/ellipsoid_volume(radius_polar,radius_equatorial)*F2
+    if radius_effective is None:
+        radius_effective = ER_ellipsoid(radius_polar,radius_equatorial)
+    SQ = hardsphere_simple(q, radius_effective, volfraction)
+    SQ_EFF = 1 + F1**2/F2*(SQ - 1)
+    IQM = 1e-4*F2/volume
     IQSM = volfraction*IQM*SQ
     IQBM = volfraction*IQM*SQ_EFF
-    return F1, F2, IQM, IQSM, IQBM, SQ, SQ_EFF
+    return Theory(Q=q, F1=F1, F2=F2, P=IQM, S=SQ, I=IQSM, Seff=SQ_EFF, Ibeta=IQBM)
 
-#IQD is I(q) polydispursed, IQSD is I(q)S(q) polydispursed, etc. 
+#IQD is I(q) polydispursed, IQSD is I(q)S(q) polydispursed, etc.
 #IQBD HAS NOT BEEN CROSS CHECKED AT ALL
-def ellipsoid_pe(q, Rp, Re, sld, sld_solvent, volfraction=0,effective_radius=0,radius_polar_pd=0.1,radius_equatorial_pd=0.1,distribution='gaussian'):
-    if distribution == 'gaussian':
-        Rp_val, Rp_prob = gaussian_distribution(Rp, radius_polar_pd*Rp, 0, inf)
-        Re_val, Re_prob = gaussian_distribution(Re, radius_equatorial_pd*Re, 0, inf)
-    elif distribution == 'schulz':
-        Rp_val, Rp_prob = schulz_distribution(Rp, radius_polar_pd*Rp, 0, inf)
-        Re_val, Re_prob = schulz_distribution(Re, radius_equatorial_pd*Re, 0, inf)
-    Normalization = 0
-    total_weight = 0
-    PQ = np.zeros_like(q)
-    F12,F21 = np.zeros_like(q), np.zeros_like(q)
+def ellipsoid_pe(q, radius_polar, radius_equatorial, sld, sld_solvent,
+                 radius_polar_pd=0.1, radius_equatorial_pd=0.1,
+                 radius_polar_pd_type='gaussian',
+                 radius_equatorial_pd_type='gaussian',
+                 volfraction=0, radius_effective=None,
+                 background=0, scale=1,
+                 norm='sasview'):
+    if norm not in ['sasview', 'sasfit', 'yun']:
+        raise TypeError("unknown norm "+norm)
+    if radius_polar_pd_type == 'gaussian':
+        Rp_val, Rp_prob = gaussian_distribution(radius_polar, radius_polar_pd*radius_polar, 0, inf)
+    elif radius_polar_pd_type == 'schulz':
+        Rp_val, Rp_prob = schulz_distribution(radius_polar, radius_polar_pd*radius_polar, 0, inf)
+    if radius_equatorial_pd_type == 'gaussian':
+        Re_val, Re_prob = gaussian_distribution(radius_equatorial, radius_equatorial_pd*radius_equatorial, 0, inf)
+    elif radius_equatorial_pd_type == 'schulz':
+        Re_val, Re_prob = schulz_distribution(radius_equatorial, radius_equatorial_pd*radius_equatorial, 0, inf)
+    total_weight = total_volume = 0
     radius_eff = 0
+    F1, F2 = np.zeros_like(q), np.zeros_like(q)
     for k, Rpk in enumerate(Rp_val):
         for i, Rei in enumerate(Re_val):
-            F1i, F2i, PQi, IQSM, IQBM, SQ, SQ_EFF = ellipsoid_Theta(q,Rpk,Rei,sld,sld_solvent)
-            radius_eff += Rp_prob[k]*Re_prob[i]*ER_ellipsoid(Rpk,Rei)
-            total_weight +=  Rp_prob[k]*Re_prob[i]
-            Normalization += Rp_prob[k]*Re_prob[i]*ellipsoid_volume(Rpk, Rei)
-            PQ += PQi*Rp_prob[k]*Re_prob[i]*ellipsoid_volume(Rpk, Rei)
-            F12 += F1i*Rp_prob[k]*Re_prob[i]*ellipsoid_volume(Rpk, Rei)
-            F21 += F2i*Rp_prob[k]*Re_prob[i]*ellipsoid_volume(Rpk, Rei)
-    F12 = (F12/Normalization)**2
-    F21 = F21/Normalization
-    if effective_radius == 0:
-        effective_radius = radius_eff/total_weight
-    else:
-        effective_radius = effective_radius
-    SQ = np.array([hardsphere_simple(qk, effective_radius, volfraction) for qk in q])   
-    SQ_EFF = 1 + F12/F21*(SQ - 1)     
-    IQD = PQ/Normalization
-    IQSD = volfraction*IQD*SQ
-    IQBD = volfraction*IQD*SQ_EFF
-    return IQD, IQSD, IQBD, SQ, SQ_EFF
+            theory = ellipsoid_theta(q,Rpk,Rei,sld,sld_solvent)
+            volume = ellipsoid_volume(Rpk, Rei)
+            weight = Rp_prob[k]*Re_prob[i]
+            total_weight += weight
+            total_volume += weight*volume
+            F1 += theory.F1*weight
+            F2 += theory.F2*weight
+            radius_eff += weight*ER_ellipsoid(Rpk,Rei)
+    F1 /= total_weight
+    F2 /= total_weight
+    average_volume = total_volume/total_weight
+    if radius_effective is None:
+        radius_effective = radius_eff/total_weight
+    print("this is the effective radius for pure python",radius_effective)
+    if norm == 'sasfit':
+        IQD = F2
+    elif norm == 'sasview':
+        # Note: internally, sasview uses F2/total_volume because:
+        #   average_volume = total_volume/total_weight
+        #   F2/total_weight / average_volume
+        #     = F2/total_weight / total_volume/total_weight
+        #     = F2/total_volume
+        
+        IQD = F2/average_volume*1e-4*volfraction
+        F1 *= 1e-2  # Yun is using sld in 1/A^2, not 1e-6/A^2
+        F2 *= 1e-4
+    elif norm == 'yun':
+        F1 *= 1e-6  # Yun is using sld in 1/A^2, not 1e-6/A^2
+        F2 *= 1e-12
+        IQD = F2/average_volume*1e8*volfraction
+    SQ = hardsphere_simple(q, radius_effective, volfraction)
+    beta = F1**2/F2
+    SQ_EFF = 1 + beta*(SQ - 1)
+    IQSD = IQD*SQ
+    IQBD = IQD*SQ_EFF
+    print("\n\n\n\n\n this is F1" + str(F1))
+
+    print("\n\n\n\n\n this is F2" + str(F2))
+    print("\n\n\n\n\n this is SQ" + str(SQ))   
+    return Theory(Q=q, F1=F1, F2=F2, P=IQD, S=SQ, I=IQSD, Seff=SQ_EFF, Ibeta=IQBD)
 
 #polydispersity for sphere
-def sphere_r(q,radius,sld,sld_solvent,volfraction=0,radius_pd=0.1,distribution='gaussian',norm_type='volfraction'):
-    if distribution == 'gaussian':    
+def sphere_r(q,radius,sld,sld_solvent,
+             radius_pd=0.1, radius_pd_type='gaussian',
+             volfraction=0, radius_effective=None,
+             background=0, scale=1,
+             norm='sasview'):
+    if norm not in ['sasview', 'sasfit', 'yun']:
+        raise TypeError("unknown norm "+norm)
+    if radius_pd_type == 'gaussian':
         radius_val, radius_prob = gaussian_distribution(radius, radius_pd*radius, 0, inf)
-    elif distribution == 'schulz':
+    elif radius_pd_type == 'schulz':
         radius_val, radius_prob = schulz_distribution(radius, radius_pd*radius, 0, inf)
-    Normalization=0
-    F2 = np.zeros_like(q)
+    total_weight = total_volume = 0
     F1 = np.zeros_like(q)
-    if norm_type == 'numdensity':
-        for k, rk in enumerate(radius_val):
-            volume = 4./3.*pi*rk**3
-            Normalization += radius_prob[k]*volume
-            F2i = ((sld-sld_solvent)*volume*sas_3j1x_x(q*rk))**2/volume
-            F1i = (sld-sld_solvent)*volume*sas_3j1x_x(q*rk)/volume
-            
-            F2 += radius_prob[k]*volume*F2i
-            F1 += radius_prob[k]*volume*F1i
-        F21 = F2/Normalization
-        F12 = (F1/Normalization)**2
-        SQ = np.array([hardsphere_simple(qk, radius, volfraction) for qk in q])
-        SQ_EFF = 1 + F12/F21*(SQ - 1) 
-        IQD = 1e-4*F21
-        IQSD = volfraction*IQD*SQ
-        IQBD = volfraction*IQD*SQ_EFF
-    elif norm_type == 'volfraction':
-        for k, rk in enumerate(radius_val):
-            volume = 4./3.*pi*rk**3
-            Normalization += radius_prob[k]
-            F2i = ((sld-sld_solvent)*volume*sas_3j1x_x(q*rk))**2
-            F1i = (sld-sld_solvent)*volume*sas_3j1x_x(q*rk)
-            F2 += radius_prob[k]*F2i
-            F1 += radius_prob[k]*F1i
-    
-        F21 = F2/Normalization
-        F12 = (F1/Normalization)**2
-        SQ = np.array([hardsphere_simple(qk, radius, volfraction) for qk in q])
-        SQ_EFF = 1 + F12/F21*(SQ - 1) 
-        IQD = 1e-4/(4./3.*pi*radius**3)*F21
-        IQSD = volfraction*IQD*SQ
-        IQBD = volfraction*IQD*SQ_EFF
-    return IQD, IQSD, IQBD, SQ, SQ_EFF
+    F2 = np.zeros_like(q)
+    for k, rk in enumerate(radius_val):
+        volume = 4./3.*pi*rk**3
+        total_weight += radius_prob[k]
+        total_volume += radius_prob[k]*volume
+        form = (sld-sld_solvent)*volume*sas_3j1x_x(q*rk)
+        F2 += radius_prob[k]*form**2
+        F1 += radius_prob[k]*form
+    F1 /= total_weight
+    F2 /= total_weight
+    average_volume = total_volume/total_weight
+
+    if radius_effective is None:
+        radius_effective = radius
+    average_volume = total_volume/total_weight
+    if norm == 'sasfit':
+        IQD = F2
+    elif norm == 'sasview':
+        IQD = F2/average_volume*1e-4*volfraction
+    elif norm == 'yun':
+        F1 *= 1e-6  # Yun is using sld in 1/A^2, not 1e-6/A^2
+        F2 *= 1e-12
+        IQD = F2/average_volume*1e8*volfraction
+    SQ = hardsphere_simple(q, radius_effective, volfraction)
+    beta = F1**2/F2
+    SQ_EFF = 1 + beta*(SQ - 1)
+    IQSD = IQD*SQ
+    IQBD = IQD*SQ_EFF
+    return Theory(Q=q, F1=F1, F2=F2, P=IQD, S=SQ, I=IQSD, Seff=SQ_EFF, Ibeta=IQBD)
 
 ###############################################################################
 ###############################################################################
@@ -275,606 +303,370 @@ def sphere_r(q,radius,sld,sld_solvent,volfraction=0,radius_pd=0.1,distribution='
 ###############################################################################
 ###############################################################################
 ###############################################################################
-# SASVIEW    
-if (ELLIPSOID == True) & (GAUSSIAN == True) & (SASVIEW == True):
+
+def popn(d, keys):
+    """
+    Splits a dict into two, with any key of *d* which is in *keys* removed
+    from *d* and added to *b*. Returns *b*.
+    """
+    b = {}
+    for k in keys:
+        try:
+            b[k] = d.pop(k)
+        except KeyError:
+            pass
+    return b
+
+def sasmodels_theory(q, Pname, **pars):
+    """
+    Call sasmodels to compute the model with and without a hard sphere
+    structure factor.
+    """
+    #mono_pars = {k: (0 if k.endswith('_pd') else v) for k, v in pars.items()}
+    Ppars = pars.copy()
+    Spars = popn(Ppars, ['radius_effective', 'volfraction'])
+    Ipars = pars.copy()
+
+    # Autofill npts and nsigmas for the given pd type
+    for k, v in pars.items():
+        if k.endswith("_pd_type"):
+            if v == "gaussian":
+                n, nsigmas = N_GAUSS, NSIGMA_GAUSS
+            elif v == "schulz":
+                n, nsigmas = N_SCHULZ, NSIGMA_SCHULZ
+            Ppars.setdefault(k.replace("_pd_type", "_pd_n"), n)
+            Ppars.setdefault(k.replace("_pd_type", "_pd_nsigma"), nsigmas)
+            Ipars.setdefault(k.replace("_pd_type", "_pd_n"), n)
+            Ipars.setdefault(k.replace("_pd_type", "_pd_nsigma"), nsigmas)
+
+    
+    #Ppars['scale'] = Spars.get('volfraction', 1)
+    P = build_model(Pname, q)
+    S = build_model("hardsphere", q)
+    I = build_model(Pname+"@hardsphere", q)
+    Pq = P(**Ppars)*pars.get('volfraction', 1)
+    Sq = S(**Spars)
+    Iq = I(**Ipars)
+    #Iq = Pq*Sq*pars.get('volfraction', 1)
+    #Sq = Iq/Pq
+    #Iq = None#= Sq = None
+    r=I._kernel.results
+    return Theory(Q=q, F1=None, F2=None, P=Pq, S=None, I=None, Seff=r[1], Ibeta=Iq)
+
+def compare(title, target, actual, fields='F1 F2 P S I Seff Ibeta'):
+    """
+    Plot fields in common between target and actual, along with relative error.
+    """
+    available = [s for s in fields.split()
+                 if getattr(target, s) is not None and getattr(actual, s) is not None]
+    rows = len(available)
+    for row, field in enumerate(available):
+        Q = target.Q
+        I1, I2 = getattr(target, field), getattr(actual, field)
+        plt.subplot(rows, 2, 2*row+1)
+        plt.loglog(Q, abs(I1), label="target "+field)
+        plt.loglog(Q, abs(I2), label="value "+field)
+        #plt.legend(loc="upper left", bbox_to_anchor=(1,1))
+        plt.legend(loc='lower left')
+        plt.subplot(rows, 2, 2*row+2)
+        plt.semilogx(Q, I2/I1 - 1, label="relative error")
+        #plt.semilogx(Q, I1/I2 - 1, label="relative error")
+    plt.tight_layout()
+    plt.suptitle(title)
+    plt.show()
+
+def data_file(name):
+    return os.path.join(BETA_DIR, 'data_files', name)
+
+def load_sasfit(path):
+    data = np.loadtxt(path, dtype=str, delimiter=';').T
+    data = np.vstack((map(float, v) for v in data[0:2]))
+    return data
+
+COMPARISON = {}  # Type: Dict[(str,str,str)] -> Callable[(), None]
+
+def compare_sasview_sphere(pd_type='schulz'):
+    q = np.logspace(-5, 0, 250)
+    model = 'sphere'
+    pars = dict(
+        radius=20,sld=4,sld_solvent=1,
+        background=0,
+        radius_pd=.1, radius_pd_type=pd_type,
+        volfraction=0.15,
+        #radius_effective=12.59921049894873,  # equivalent average sphere radius
+        )
+    target = sasmodels_theory(q, model, **pars)
+    actual = sphere_r(q, norm='sasview', **pars)
+    title = " ".join(("sasmodels", model, pd_type))
+    compare(title, target, actual)
+COMPARISON[('sasview','sphere','gaussian')] = lambda: compare_sasview_sphere(pd_type='gaussian')
+COMPARISON[('sasview','sphere','schulz')] = lambda: compare_sasview_sphere(pd_type='schulz')
+
+def compare_sasview_ellipsoid(pd_type='gaussian'):
     q = np.logspace(-5, 0, 50)
-    volfraction = 0.2
-    model = build_model("ellipsoid",q)
-    Sq = model(radius_polar=20,radius_equatorial=400,sld=4,sld_solvent=1,\
-               background=0,radius_polar_pd=.1,radius_polar_pd_n=35,radius_equatorial_pd=.1,radius_equatorial_pd_n=35)
-    IQD, IQSD, IQBD, SQ, SQ_EFF = ellipsoid_pe(q,20,400,4,1,volfraction)
-    Sq2 = model(radius_polar=20,radius_equatorial=10,sld=2,sld_solvent=1,background=0)
-    IQM = ellipsoid_Theta(q,20,10,2,1)[2]
-    model2 = build_model("ellipsoid@hardsphere", q)
-    Sq3 = model2(radius_polar=20,radius_equatorial=400,sld=4,sld_solvent=1,background=0,radius_polar_pd=.1,\
-                 radius_polar_pd_n=35,radius_equatorial_pd=.1,radius_equatorial_pd_n=35)
-    Sqp = model(radius_polar=20,radius_equatorial=10,sld=4,sld_solvent=1,\
-                   background=0,radius_polar_pd=0.1,radius_polar_pd_n=35,radius_equatorial_pd=0,radius_equatorial_pd_n=35)
-    IQDp = ellipsoid_pe(q,20,10,4,1,radius_polar_pd=0.1,radius_equatorial_pd=0)[0]  
-    Sqp2 = model(radius_polar=20,radius_equatorial=10,sld=4,sld_solvent=1,\
-                   background=0,radius_polar_pd=0,radius_polar_pd_n=35,radius_equatorial_pd=0.1,radius_equatorial_pd_n=35)
-    IQDe = ellipsoid_pe(q,20,10,4,1,radius_polar_pd=0,radius_equatorial_pd=0.1)[0]
-    print('\n\n\n\n ELLIPSOID COMPARISON WITH SASVIEW WITHOUT V')
-    plt.subplot(323)
-    plt.loglog(q, Sq,'r')
-    plt.loglog(q,IQD,'b')
-    plt.title('IQD')
-    plt.subplot(324)
-    plt.semilogx(q,Sq/IQD-1)
-    plt.subplot(321)
-    plt.title('IQM')
-    plt.loglog(q, Sq2,'r')
-    plt.loglog(q,IQM,'b')
-    plt.subplot(322)
-    plt.semilogx(q,IQM/Sq2-1)
-    plt.subplot(325)
-    plt.title('IQSD')
-    plt.loglog(q, Sq3, '-b')
-    plt.loglog(q, IQSD, '-r')
-    plt.subplot(326)
-    plt.semilogx(q, Sq3/IQSD-1, 'b')
-    plt.tight_layout()
-    plt.show()
-    plt.subplot(221)
-    plt.loglog(q,IQDp,'r')
-    plt.loglog(q,Sqp,'b')
-    plt.title('IQD Polar')
-    plt.subplot(222)
-    plt.plot(q,IQDp/Sqp-1)
-    plt.subplot(223)
-    plt.loglog(q,IQDe,'r')
-    plt.loglog(q,Sqp2,'b')
-    plt.title('IQD Equatorial')
-    plt.subplot(224)
-    plt.plot(q,IQDe/Sqp2-1)
-    plt.tight_layout()
-    plt.show()
-#comparing monodisperse Beta approximation to version without
-    q=np.linspace(1e-5,1)
-    F1, F2, IQM, IQSM, IQBM, SQ, SQ_EFF = ellipsoid_Theta(q,20,10,2,1,0.15,12.59921049894873)
-    plt.subplot(321)
-    plt.loglog(q,IQBM,'g',label='IQBM')
-    plt.loglog(q,IQSM,'r',label= 'IQSM')
-    plt.legend(loc="upper left", bbox_to_anchor=(1,1))
-    plt.subplot(323)
-    plt.plot(q,IQBM,'g',label='IQBM')
-    plt.plot(q,IQSM,'r',label= 'IQSM')
-    plt.legend(loc="upper left", bbox_to_anchor=(1,1))
-    plt.subplot(325)
-    plt.plot(q,IQBM/IQSM,'r',label= 'IQBM/IQSM')
-    plt.legend(loc="upper left", bbox_to_anchor=(1,1))
-    plt.tight_layout()
-    plt.show()
-#comparing polydispersed Beta approximation to version without
-    IQD, IQSD, IQBD, SQ, SQ_EFF = ellipsoid_pe(q, 20,10, 2,1, 0.15,12.59921049894873)
-    plt.subplot(321)
-    plt.loglog(q, SQ)
-    plt.loglog(q, SQ_EFF,label='SQ, SQ_EFF')
-    plt.legend(loc="upper left", bbox_to_anchor=(1,1))
-    plt.subplot(323)
-    plt.loglog(q,IQBD)
-    plt.loglog(q,IQSD,label='IQBD,IQSD')
-    plt.legend(loc="upper left", bbox_to_anchor=(1,1))
-    plt.subplot(325)
-    plt.plot(q,IQBD)
-    plt.plot(q,IQSD,label='IQBD,IQSD')
-    plt.legend(loc="upper left", bbox_to_anchor=(1,1))
-    plt.tight_layout()
-    plt.show()
+    model = 'ellipsoid'
+    pars = dict(
+        radius_polar=20,radius_equatorial=400,sld=4,sld_solvent=1,
+        background=0,
+        radius_polar_pd=.1, radius_polar_pd_type=pd_type,
+        radius_equatorial_pd=.1, radius_equatorial_pd_type=pd_type,
+        volfraction=0.15,
+        radius_effective=270.7543927018,
+        #radius_effective=12.59921049894873,
+        )
+    target = sasmodels_theory(q, model, beta_mode=1, **pars)
+    actual = ellipsoid_pe(q, norm='sasview', **pars)
+    print(actual)
+    title = " ".join(("sasmodels", model, pd_type))
+    compare(title, target, actual)
+COMPARISON[('sasview','ellipsoid','gaussian')] = lambda: compare_sasview_ellipsoid(pd_type='gaussian')
+COMPARISON[('sasview','ellipsoid','schulz')] = lambda: compare_sasview_ellipsoid(pd_type='schulz')
 
-# YUN
-if (ELLIPSOID == True) & (GAUSSIAN == True) & (YUN == True):
-    #Yun's data for Beta Approximation
-    data = np.loadtxt(data_file('yun_ellipsoid.dat'),skiprows=2).T   
-    print('\n\n ELLIPSOID COMPARISON WITH YUN WITHOUT V')
-    Q=data[0]
-    F1,F2,IQM,IQSM,IQBM,SQ,SQ_EFF = ellipsoid_Theta(Q,20,10,2,1,0.15,12.59921049894873)
-    plt.subplot(211)
-    plt.loglog(Q,0.15*data[3]*data[5]*ellipsoid_volume(20,10)*1e-4)
-    plt.loglog(Q,IQSM,'-g',label='IQSM')
-    plt.loglog(data[0], data[3]*ellipsoid_volume(20,10)*1e-4,'-k')
-    plt.loglog(Q,IQM,'r',label = 'IQM')
-    plt.ylim(1e-5,4)
-    plt.legend(loc="upper left", bbox_to_anchor=(1,1))
-    plt.show()
-    plt.subplot(221)
-    plt.loglog(data[0],SQ)
-    plt.loglog(data[0],data[5])
-    plt.title('SQ')
-    plt.subplot(222)
-    plt.semilogx(data[0],SQ/data[5]-1)
-    plt.subplot(223)
-    plt.title('SQ_EFF')
-    plt.loglog(data[0],SQ_EFF)
-    plt.loglog(data[0],data[6])
-    plt.subplot(224)
-    plt.semilogx(data[0],(SQ_EFF/data[6])-1,label='Sq effective ratio')
-    plt.tight_layout()
-    plt.show()
+def compare_yun_ellipsoid_mono():
+    pars = {
+        'radius_polar': 20, 'radius_polar_pd': 0, 'radius_polar_pd_type': 'gaussian',
+        'radius_equatorial': 10, 'radius_equatorial_pd': 0, 'radius_equatorial_pd_type': 'gaussian',
+        'sld': 2, 'sld_solvent': 1,
+        'volfraction': 0.15,
+        # Yun uses radius for same volume sphere for effective radius
+        # whereas sasview uses the average curvature.
+        'radius_effective': 12.59921049894873,
+    }
 
-#SASFIT
-if ELLIPSOID and GAUSSIAN and SASFIT:
-    print('\n\n ELLIPSOID COMPARISON WITH SASFIT WITHOUT V')
-    #Rp=20,Re=10,eta_core=4,eta_solv=1
-    sasdata = np.loadtxt(data_file('sasfit_ellipsoid_IQM.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(321)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,radius_polar_pd=0,radius_equatorial_pd=0)[0],'b')
-    plt.loglog(sasqdata,1e-4/ellipsoid_volume(20,10)*np.array(sasvaluedata),'g')
-    plt.title('IQM')
-    plt.subplot(322)
-    plt.plot(sasqdata,1e-4/ellipsoid_volume(20,10)*np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,radius_polar_pd=0,radius_equatorial_pd=0)[0]-1)
-    plt.tight_layout()
-    plt.show()
-    print('========================================================================================')
-    print('========================================================================================')
-#N=1,s=2,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.1354236254,.15
-    sasdata = np.loadtxt(data_file('sasfit_polydisperse_ellipsoid_sq.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(321)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,.15,radius_polar_pd=0.1,radius_equatorial_pd=0)[3])
-    plt.loglog(sasqdata,np.array(sasvaluedata))
-    plt.title('SQ poly 10% 0.15')
-    plt.subplot(322)
-    plt.plot(sasqdata,np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,.15,radius_polar_pd=0.1,radius_equatorial_pd=0)[3]-1)
-#N=1,s=6,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.0901197149,.15
-    sasdata = np.loadtxt(data_file('sasfit_polydisperse_ellipsoid_sq2.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(323)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,.15,radius_polar_pd=0.3,radius_equatorial_pd=0)[3])
-    plt.loglog(sasqdata,np.array(sasvaluedata))
-    plt.title('SQ poly 30% .15')
-    plt.subplot(324)
-    plt.plot(sasqdata,np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,.15,radius_polar_pd=0.3,radius_equatorial_pd=0)[3]-1)
-#N=1,s=12,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.336060917,.15
-    sasdata = np.loadtxt(data_file('sasfit_polydisperse_ellipsoid_sq3.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(325)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,.15,radius_polar_pd=0.6,radius_equatorial_pd=0)[3])
-    plt.loglog(sasqdata,np.array(sasvaluedata))
-    plt.title('SQ poly 60% .15')
-    plt.subplot(326)
-    plt.plot(sasqdata,np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,.15,radius_polar_pd=0.6,radius_equatorial_pd=0)[3]-1)
-    plt.tight_layout()
-    plt.show() 
-    print('========================================================================================')
-    print('========================================================================================')
-#N=1,s=2,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.1354236254,.3
-    sasdata = np.loadtxt(data_file('sasfit_polydisperse_ellipsoid_sq4.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(321)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,0.3,radius_polar_pd=0.1,radius_equatorial_pd=0)[3])
-    plt.loglog(sasqdata,np.array(sasvaluedata))
-    plt.title('SQ poly 10% .3')
-    plt.subplot(322)
-    plt.plot(sasqdata,np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,0.3,radius_polar_pd=0.1,radius_equatorial_pd=0)[3]-1)
-#N=1,s=6,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.0901197149,.3
-    sasdata = np.loadtxt(data_file('sasfit_polydisperse_ellipsoid_sq5.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(323)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,0.3,radius_polar_pd=0.3,radius_equatorial_pd=0)[3])
-    plt.loglog(sasqdata,np.array(sasvaluedata))
-    plt.title('SQ poly 30% .3')
-    plt.subplot(324)
-    plt.plot(sasqdata,np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,0.3,radius_polar_pd=0.3,radius_equatorial_pd=0)[3]-1)
-#N=1,s=12,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.336060917,.3
-    sasdata = np.loadtxt(data_file('sasfit_polydisperse_ellipsoid_sq6.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(325)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,0.3,radius_polar_pd=0.6,radius_equatorial_pd=0)[3])
-    plt.loglog(sasqdata,np.array(sasvaluedata))
-    plt.title('SQ poly 60% .3')
-    plt.subplot(326)
-    plt.plot(sasqdata,np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,0.3,radius_polar_pd=0.6,radius_equatorial_pd=0)[3]-1)
-    plt.tight_layout()
-    plt.show()
-    print('========================================================================================')
-    print('========================================================================================')
-#N=1,s=2,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.1354236254,.6
-    sasdata = np.loadtxt(data_file('sasfit_polydisperse_ellipsoid_sq7.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(321)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,0.6,radius_polar_pd=0.1,radius_equatorial_pd=0)[3])
-    plt.loglog(sasqdata,np.array(sasvaluedata))
-    plt.title('SQ poly 10% .6')
-    plt.subplot(322)
-    plt.plot(sasqdata,np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,0.6,radius_polar_pd=0.1,radius_equatorial_pd=0)[3]-1)
-#N=1,s=6,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.0901197149,.6
-    sasdata = np.loadtxt(data_file('sasfit_polydisperse_ellipsoid_sq8.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(323)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,0.6,radius_polar_pd=0.3,radius_equatorial_pd=0)[3])
-    plt.loglog(sasqdata,np.array(sasvaluedata))
-    plt.title('SQ poly 30% .6')
-    plt.subplot(324)
-    plt.plot(sasqdata,np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,0.6,radius_polar_pd=0.3,radius_equatorial_pd=0)[3]-1)
-#N=1,s=12,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.336060917,.6
-    sasdata = np.loadtxt(data_file('sasfit_polydisperse_ellipsoid_sq9.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(325)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,0.6,radius_polar_pd=0.6,radius_equatorial_pd=0)[3])
-    plt.loglog(sasqdata,np.array(sasvaluedata))
-    plt.title('SQ poly 60% .6')
-    plt.subplot(326)
-    plt.plot(sasqdata,np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,0.6,radius_polar_pd=0.6,radius_equatorial_pd=0)[3]-1)
-    plt.tight_layout()
-    plt.show()
-    print('========================================================================================')
-    print('========================================================================================')
-#checks beta structre factor
-#N=1,s=2,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.1354236254,.15
-    sasdata = np.loadtxt(data_file('sasfit_polydisperse_ellipsoid_sqeff.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(321)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,.15,radius_polar_pd=0.1,radius_equatorial_pd=0)[4])
-    plt.loglog(sasqdata,np.array(sasvaluedata))
-    plt.title('SQ_EFF poly 10% 0.15')
-    plt.subplot(322)
-    plt.plot(sasqdata,np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,.15,radius_polar_pd=0.1,radius_equatorial_pd=0)[4]-1)
-#N=1,s=6,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.0901197149,.15
-    sasdata = np.loadtxt(data_file('sasfit_polydisperse_ellipsoid_sqeff2.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(323)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,.15,radius_polar_pd=0.3,radius_equatorial_pd=0)[4])
-    plt.loglog(sasqdata,np.array(sasvaluedata))
-    plt.title('SQ_EFF poly 30% .15')
-    plt.subplot(324)
-    plt.plot(sasqdata,np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,.15,radius_polar_pd=0.3,radius_equatorial_pd=0)[4]-1)
-#N=1,s=12,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.336060917,.15
-    sasdata = np.loadtxt(data_file('sasfit_polydisperse_ellipsoid_sqeff3.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(325)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,.15,radius_polar_pd=0.6,radius_equatorial_pd=0)[4])
-    plt.loglog(sasqdata,np.array(sasvaluedata))
-    plt.title('SQ_EFF poly 60% .15')
-    plt.subplot(326)
-    plt.plot(sasqdata,np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,.15,radius_polar_pd=0.6,radius_equatorial_pd=0)[4]-1)
-    plt.tight_layout()
-    plt.show() 
-    print('========================================================================================')
-    print('========================================================================================')
-#N=1,s=2,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.1354236254,.3
-    sasdata = np.loadtxt(data_file('sasfit_polydisperse_ellipsoid_sqeff4.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(321)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,0.3,radius_polar_pd=0.1,radius_equatorial_pd=0)[4])
-    plt.loglog(sasqdata,np.array(sasvaluedata))
-    plt.title('SQ_EFF poly 10% .3')
-    plt.subplot(322)
-    plt.plot(sasqdata,np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,0.3,radius_polar_pd=0.1,radius_equatorial_pd=0)[4]-1)
-#N=1,s=6,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.0901197149,.3
-    sasdata = np.loadtxt(data_file('sasfit_polydisperse_ellipsoid_sqeff5.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(323)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,0.3,radius_polar_pd=0.3,radius_equatorial_pd=0)[4])
-    plt.loglog(sasqdata,np.array(sasvaluedata))
-    plt.title('SQ_EFF poly 30% .3')
-    plt.subplot(324)
-    plt.plot(sasqdata,np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,0.3,radius_polar_pd=0.3,radius_equatorial_pd=0)[4]-1)
-#N=1,s=12,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.336060917,.3
-    sasdata = np.loadtxt(data_file('sasfit_polydisperse_ellipsoid_sqeff6.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(325)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,0.3,radius_polar_pd=0.6,radius_equatorial_pd=0)[4])
-    plt.loglog(sasqdata,np.array(sasvaluedata))
-    plt.title('SQ_EFF poly 60% .3')
-    plt.subplot(326)
-    plt.plot(sasqdata,np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,0.3,radius_polar_pd=0.6,radius_equatorial_pd=0)[4]-1)
-    plt.tight_layout()
-    plt.show()
-    print('========================================================================================')
-    print('========================================================================================')
-#N=1,s=2,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.1354236254,.6
-    sasdata = np.loadtxt(data_file('sasfit_polydisperse_ellipsoid_sqeff7.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(321)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,0.6,radius_polar_pd=0.1,radius_equatorial_pd=0)[4])
-    plt.loglog(sasqdata,np.array(sasvaluedata))
-    plt.title('SQ_EFF poly 10% .6')
-    plt.subplot(322)
-    plt.plot(sasqdata,np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,0.6,radius_polar_pd=0.1,radius_equatorial_pd=0)[4]-1)
-#N=1,s=6,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.0901197149,.6
-    sasdata = np.loadtxt(data_file('sasfit_polydisperse_ellipsoid_sqeff8.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(323)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,0.6,radius_polar_pd=0.3,radius_equatorial_pd=0)[4])
-    plt.loglog(sasqdata,np.array(sasvaluedata))
-    plt.title('SQ_EFF poly 30% .6')
-    plt.subplot(324)
-    plt.plot(sasqdata,np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,0.6,radius_polar_pd=0.3,radius_equatorial_pd=0)[4]-1)
-#N=1,s=12,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.336060917,.6
-    sasdata = np.loadtxt(data_file('sasfit_polydisperse_ellipsoid_sqeff9.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(325)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,0.6,radius_polar_pd=0.6,radius_equatorial_pd=0)[4])
-    plt.loglog(sasqdata,np.array(sasvaluedata))
-    plt.title('SQ_EFF poly 60% .6')
-    plt.subplot(326)
-    plt.plot(sasqdata,np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,0.6,radius_polar_pd=0.6,radius_equatorial_pd=0)[4]-1)
-    plt.tight_layout()
-    plt.show()
-    print('========================================================================================')
-    print('========================================================================================')
-#checks polydispersion for single parameter and varying pd with sasfit
-#N=1,s=2,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, no structure poly
-    sasdata = np.loadtxt(data_file('sasfit_ellipsoid_IQD.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(221)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,radius_polar_pd=0.1,radius_equatorial_pd=0)[0])
-    plt.loglog(sasqdata,1e-4/ellipsoid_volume(20,10)*np.array(sasvaluedata))
-    plt.title('IQD polar 10%')
-    plt.subplot(222)
-    plt.plot(sasqdata,1e-4/ellipsoid_volume(20,10)*np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,radius_polar_pd=0.1,radius_equatorial_pd=0)[0]-1)
-#N=1,s=1,X0=10,distr equatorial Rp=20,Re=10,eta_core=4,eta_solv=1, no structure poly
-    sasdata = np.loadtxt(data_file('sasfit_ellipsoid_IQD2.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(223)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,radius_polar_pd=0,radius_equatorial_pd=0.1)[0])
-    plt.loglog(sasqdata,1e-4/ellipsoid_volume(20,10)*np.array(sasvaluedata))
-    plt.title('IQD equatorial 10%')
-    plt.subplot(224)
-    plt.plot(sasqdata,1e-4/ellipsoid_volume(20,10)*np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,radius_polar_pd=0,radius_equatorial_pd=0.1)[0]-1)
-    plt.tight_layout()
-    plt.show()
-    print('========================================================================================')
-    print('========================================================================================')
-    #N=1,s=6,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, no structure poly
-    sasdata = np.loadtxt(data_file('sasfit_ellipsoid_IQD3.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(221)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,radius_polar_pd=0.3,radius_equatorial_pd=0)[0])
-    plt.loglog(sasqdata,1e-4/ellipsoid_volume(20,10)*np.array(sasvaluedata))
-    plt.title('IQD polar 30%')
-    plt.subplot(222)
-    plt.plot(sasqdata,1e-4/ellipsoid_volume(20,10)*np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,radius_polar_pd=0.3,radius_equatorial_pd=0)[0]-1)
-#N=1,s=3,X0=10,distr equatorial Rp=20,Re=10,eta_core=4,eta_solv=1, no structure poly
-    sasdata = np.loadtxt(data_file('sasfit_ellipsoid_IQD4.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(223)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,radius_polar_pd=0,radius_equatorial_pd=0.3)[0])
-    plt.loglog(sasqdata,1e-4/ellipsoid_volume(20,10)*np.array(sasvaluedata))
-    plt.title('IQD equatorial 30%')
-    plt.subplot(224)
-    plt.plot(sasqdata,1e-4/ellipsoid_volume(20,10)*np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,radius_polar_pd=0,radius_equatorial_pd=0.3)[0]-1)
-    plt.tight_layout()
-    plt.show()
-    print('========================================================================================')
-    print('========================================================================================')
-    #N=1,s=12,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, no structure poly
-    sasdata = np.loadtxt(data_file('sasfit_ellipsoid_IQD5.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(221)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,radius_polar_pd=0.6,radius_equatorial_pd=0)[0])
-    plt.loglog(sasqdata,1e-4/ellipsoid_volume(20,10)*np.array(sasvaluedata))
-    plt.title('IQD polar 60%')
-    plt.subplot(222)
-    plt.plot(sasqdata,1e-4/ellipsoid_volume(20,10)*np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,radius_polar_pd=0.6,radius_equatorial_pd=0)[0]-1)
-#N=1,s=6,X0=10,distr equatorial Rp=20,Re=10,eta_core=4,eta_solv=1, no structure poly
-    sasdata = np.loadtxt(data_file('sasfit_ellipsoid_IQD6.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(223)
-    plt.loglog(sasqdata, ellipsoid_pe(sasqdata,20,10,4,1,radius_polar_pd=0,radius_equatorial_pd=0.6)[0])
-    plt.loglog(sasqdata,1e-4/ellipsoid_volume(20,10)*np.array(sasvaluedata))
-    plt.title('IQD equatorial 60%')
-    plt.subplot(224)
-    plt.plot(sasqdata,1e-4/ellipsoid_volume(20,10)*np.array(sasvaluedata)/ellipsoid_pe(sasqdata,20,10,4,1,radius_polar_pd=0,radius_equatorial_pd=0.6)[0]-1)
-    plt.tight_layout()
-    plt.show()
-    print('========================================================================================')
-    print('========================================================================================')
+    data = np.loadtxt(data_file('yun_ellipsoid.dat'),skiprows=2).T
+    Q = data[0]
+    F1 = data[1]
+    P = data[3]*pars['volfraction']
+    S = data[5]
+    Seff = data[6]
+    target = Theory(Q=Q, F1=F1, P=P, S=S, Seff=Seff)
+    actual = ellipsoid_pe(Q, norm='yun', **pars)
+    title = " ".join(("yun", "ellipsoid", "no pd"))
+    #compare(title, target, actual, fields="P S I Seff Ibeta")
+    compare(title, target, actual)
+COMPARISON[('yun','ellipsoid','gaussian')] = compare_yun_ellipsoid_mono
+COMPARISON[('yun','ellipsoid','schulz')] = compare_yun_ellipsoid_mono
 
-# TEST FOR RICHARD
+def compare_yun_sphere_gauss():
+    # Note: yun uses gauss limits from R0/10 to R0 + 5 sigma steps sigma/100
+    # With pd = 0.1, that's 14 sigma and 1400 points.
+    pars = {
+        'radius': 20, 'radius_pd': 0.1, 'radius_pd_type': 'gaussian',
+        'sld': 6, 'sld_solvent': 0,
+        'volfraction': 0.1,
+    }
+
+    data = np.loadtxt(data_file('testPolydisperseGaussianSphere.dat'),skiprows=2).T
+    Q = data[0]
+    F1 = data[1]
+    P = data[3]
+    S = data[5]
+    Seff = data[6]
+    target = Theory(Q=Q, F1=F1, P=P, S=S, Seff=Seff)
+    actual = sphere_r(Q, norm='yun', **pars)
+    title = " ".join(("yun", "sphere", "10% dispersion 10% Vf"))
+    compare(title, target, actual)
+    data = np.loadtxt(data_file('testPolydisperseGaussianSphere2.dat'),skiprows=2).T
+    pars.update(radius_pd=0.15)
+    Q = data[0]
+    F1 = data[1]
+    P = data[3]
+    S = data[5]
+    Seff = data[6]
+    target = Theory(Q=Q, F1=F1, P=P, S=S, Seff=Seff)
+    actual = sphere_r(Q, norm='yun', **pars)
+    title = " ".join(("yun", "sphere", "15% dispersion 10% Vf"))
+    compare(title, target, actual)
+COMPARISON[('yun','sphere','gaussian')] = compare_yun_sphere_gauss
+
+
+def compare_sasfit_sphere_gauss():
+    #N=1,s=2,X0=20,distr radius R=20,eta_core=4,eta_solv=1,.3
+    pars = {
+        'radius': 20, 'radius_pd': 0.1, 'radius_pd_type': 'gaussian',
+        'sld': 4, 'sld_solvent': 1,
+        'volfraction': 0.3,
+    }
+
+    Q, IQ = load_sasfit(data_file('sasfit_sphere_IQD.txt'))
+    Q, IQSD = load_sasfit(data_file('sasfit_sphere_IQSD.txt'))
+    Q, IQBD = load_sasfit(data_file('sasfit_sphere_IQBD.txt'))
+    Q, SQ = load_sasfit(data_file('sasfit_polydisperse_sphere_sq.txt'))
+    Q, SQ_EFF = load_sasfit(data_file('sasfit_polydisperse_sphere_sqeff.txt'))
+    target = Theory(Q=Q, F1=None, F2=None, P=IQ, S=SQ, I=IQSD, Seff=SQ_EFF, Ibeta=IQBD)
+    actual = sphere_r(Q, norm="sasfit", **pars)
+    title = " ".join(("sasfit", "sphere", "pd=10% gaussian"))
+    compare(title, target, actual)
+    #compare(title, target, actual, fields="P")
+COMPARISON[('sasfit','sphere','gaussian')] = compare_sasfit_sphere_gauss
+
+def compare_sasfit_sphere_schulz():
     #radius=20,sld=4,sld_solvent=1,volfraction=0.3,radius_pd=0.1
     #We have scaled the output from sasfit by 1e-4*volume*volfraction
     #0.10050378152592121
-if (SPHERE == True) & (SCHULZ == True) & (SASVIEW == True) & (SASFIT == True):
-    print('                   *****SPHERE MODEL*****')
-    sasdata = np.loadtxt(data_file('richard_test.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    model=build_model('sphere',sasqdata)
-    Iq = model(radius=20,radius_pd=0.1,radius_pd_n=80,sld=4,sld_solvent=1,background=0,radius_pd_type='schulz',radius_pd_nsigma=8)
-    model2=build_model('sphere@hardsphere',sasqdata)
-    IQS = model2(radius=20,radius_pd=0.1,radius_pd_n=80,sld=4,sld_solvent=1,background=0,radius_pd_type='schulz',radius_pd_nsigma=8,volfraction=0.3)
-    
-    sasvaluedata=map(float,sasdata[1])
-    sasdata2 = np.loadtxt(data_file('richard_test2.txt'),dtype=str,delimiter=';').T
-    sasqdata2=map(float,sasdata2[0])
-    sasvaluedata2=map(float,sasdata2[1])
-    sasdata3 = np.loadtxt(data_file('richard_test3.txt'),dtype=str,delimiter=';').T
-    sasqdata3=map(float,sasdata3[0])
-    sasvaluedata3=map(float,sasdata3[1])
-    IQD, IQSD, IQBD, SQ, SQ_EFF = sphere_r(np.array(sasqdata),20,4,1,.3,0.1,distribution='schulz')
-    plt.grid(True)
-    plt.title('IQD(blue) vs. SASVIEW(red) vs. SASFIT(green)')
-    plt.loglog(sasqdata,Iq,'b')
-    plt.loglog(sasqdata,IQD,'r')
-    plt.loglog(sasqdata,1e-4/(4./3.*pi*20**3)*np.array(sasvaluedata),'g')
-    plt.show()
-    plt.grid(True)
-    plt.title('IQSD(blue) vs. SASVIEW(red) vs. SASFIT(green)')
-    plt.loglog(sasqdata,IQSD,'b')
-    plt.loglog(sasqdata,IQS,'r')
-    plt.loglog(sasqdata,1e-4/(4./3.*pi*20**3)*0.3*np.array(sasvaluedata2),'g')
-    plt.show()
-    plt.grid(True)
-    plt.title('IQBD(blue) vs. SASFIT(green)')
-    plt.loglog(sasqdata,IQBD,'b')
-    plt.loglog(sasqdata,1e-4/(4./3.*pi*20**3)*0.3*np.array(sasvaluedata3),'g')
-    plt.show()
+    pars = {
+        'radius': 20, 'radius_pd': 0.1, 'radius_pd_type': 'schulz',
+        'sld': 4, 'sld_solvent': 1,
+        'volfraction': 0.3,
+    }
 
-# TEST FOR RICHARD
-if (ELLIPSOID == True) & (SCHULZ == True) & (SASVIEW == True) & (SASFIT == True):   
+    Q, IQ = load_sasfit(data_file('richard_test.txt'))
+    Q, IQSD = load_sasfit(data_file('richard_test2.txt'))
+    Q, IQBD = load_sasfit(data_file('richard_test3.txt'))
+    target = Theory(Q=Q, F1=None, F2=None, P=IQ, S=None, I=IQSD, Seff=None, Ibeta=IQBD)
+    actual = sphere_r(Q, norm="sasfit", **pars)
+    title = " ".join(("sasfit", "sphere", "pd=10% schulz"))
+    compare(title, target, actual)
+COMPARISON[('sasfit','sphere','schulz')] = compare_sasfit_sphere_schulz
+
+def compare_sasfit_ellipsoid_schulz():
     #polarradius=20, equatorialradius=10, sld=4,sld_solvent=1,volfraction=0.3,radius_polar_pd=0.1
-         #Effective radius =13.1353356684
-        #We have scaled the output from sasfit by 1e-4*volume*volfraction
-        #0.10050378152592121
-    print('                   *****ELLIPSOID MODEL*****')
-    sasdata = np.loadtxt(data_file('richard_test4.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    model=build_model('ellipsoid',sasqdata)
-    Iq = model(radius_polar=20,radius_polar_pd=0.1,radius_polar_pd_n=80, radius_equatorial=10, radius_equatorial_pd=0, sld=4,sld_solvent=1,background=0,radius_polar_pd_type='schulz',radius_polar_pd_nsigma=8)
-    model2=build_model('ellipsoid@hardsphere',sasqdata)
-    IQS =  model2(radius_polar=20,radius_equatorial=10,sld=4,sld_solvent=1,background=0,radius_polar_pd=.1,\
-                     radius_polar_pd_n=80,radius_equatorial_pd=0,radius_polar_pd_type='schulz',radius_polar_pd_nsigma=8,volfraction=0.3)
-    sasvaluedata=map(float,sasdata[1])
-    sasdata2 = np.loadtxt(data_file('richard_test5.txt'),dtype=str,delimiter=';').T
-    sasqdata2=map(float,sasdata2[0])
-    sasvaluedata2=map(float,sasdata2[1])
-    sasdata3 = np.loadtxt(data_file('richard_test6.txt'),dtype=str,delimiter=';').T
-    sasqdata3=map(float,sasdata3[0])
-    sasvaluedata3=map(float,sasdata3[1])
-    IQD, IQSD, IQBD, SQ, SQ_EFF = ellipsoid_pe(np.array(sasqdata),20,10,4,1,.3,radius_polar_pd=0.1,radius_equatorial_pd=0,distribution='schulz')    
-    plt.grid(True)
-    plt.title('IQD(blue) vs. SASVIEW(red) vs. SASFIT(green)')
-    plt.loglog(sasqdata,Iq,'b')
-    plt.loglog(sasqdata,IQD,'r')
-    plt.loglog(sasqdata,1e-4/(4./3.*pi*20*10**2)*np.array(sasvaluedata),'g')
-    plt.show()
-    plt.grid(True)
-    plt.title('IQSD(blue) vs. SASVIEW(red) vs. SASFIT(green)')
-    plt.loglog(sasqdata,IQSD,'b')
-    plt.loglog(sasqdata,IQS,'r')
-    plt.loglog(sasqdata,1e-4/(4./3.*pi*20*10**2)*0.3*np.array(sasvaluedata2),'g')
-    plt.show()
-    plt.grid(True)
-    plt.title('IQBD(blue) vs. SASFIT(green)')
-    plt.loglog(sasqdata,IQBD,'b')
-    plt.loglog(sasqdata,1e-4/(4./3.*pi*20*10**2)*0.3*np.array(sasvaluedata3),'g')
-    plt.show()    
-    
-# SASVIEW GAUSS
-if (SPHERE == True) & (GAUSSIAN == True) & (SASVIEW == True):
-    q = np.logspace(-5, 0, 200)
-    IQD, IQSD, IQBD, SQ, SQ_EFF = sphere_r(q,20,4,1,.3)
-    model = build_model("sphere", q)
-    Sq = model(radius=20,radius_pd=0.1,radius_pd_n=35,sld=4,sld_solvent=1,background=0)
-    model2 = build_model("sphere@hardsphere", q)
-    S=build_model("hardsphere",q)(radius_effective=20,volfraction=.3,background=0)
-    Sq2 = model2(radius=20,radius_pd=0.1,radius_pd_n=35,sld=4,sld_solvent=1,background=0,volfraction=.3)
-    print('\n\n SPHERE COMPARISON WITH SASVIEW WITHOUT V')
-    plt.subplot(221)
-    plt.title('IQD')
-    plt.loglog(q, IQD, '-b')
-    plt.loglog(q, Sq, '-r')
-    plt.subplot(222)
-    plt.semilogx(q, Sq/IQD-1, '-g')
-    plt.tight_layout()
-    plt.show()
-    plt.subplot(221)
-    plt.title('SQ')
-    plt.plot(q, SQ, '-r')
-    plt.plot(q,S,'-k')
-    plt.subplot(222)
-    plt.plot(SQ/S-1)
-    plt.tight_layout()
-    plt.show()
-    plt.subplot(221)
-    plt.title('IQSD')
-    plt.loglog(q, IQSD, '-b')
-    plt.loglog(q, Sq2, '-r',label='IQSD')
-    plt.subplot(222)
-    plt.semilogx(q, Sq2/IQSD-1, '-g',label='IQSD ratio')
-    plt.tight_layout()
-    plt.show()
-    IQD, IQSD, IQBD, SQ, SQ_EFF = sphere_r(q,20,4,1,0.15)
-    plt.subplot(211)
-    plt.title('SQ vs SQ_EFF')
-    plt.plot(q, SQ)
-    plt.plot(q, SQ_EFF)
-    plt.tight_layout()
-    plt.show() 
-    plt.subplot(221)
-    plt.title('IQSD vs IQBD')
-    plt.loglog(q,IQBD)
-    plt.loglog(q,IQSD,label='IQBD,IQSD')
-    plt.subplot(222)
-    plt.plot(q,IQBD)
-    plt.plot(q,IQSD,)
-    plt.tight_layout()
-    plt.show() 
+    #Effective radius =13.1353356684
+    #We have scaled the output from sasfit by 1e-4*volume*volfraction
+    #0.10050378152592121
+    pars = {
+        'radius_polar': 20, 'radius_polar_pd': 0.1, 'radius_polar_pd_type': 'schulz',
+        'radius_equatorial': 10, 'radius_equatorial_pd': 0., 'radius_equatorial_pd_type': 'schulz',
+        'sld': 4, 'sld_solvent': 1,
+        'volfraction': 0.3, 'radius_effective': 13.1353356684,
+    }
 
-# SASFIT GAUSS
-if (SPHERE == True) & (GAUSSIAN == True) & (SASFIT == True):
-    print('\n\n SPHERE COMPARISON WITH SASFIT WITHOUT V')
-#N=1,s=2,X0=20,distr radius R=20,eta_core=4,eta_solv=1,.3
-    sasdata = np.loadtxt(data_file('sasfit_sphere_IQD.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    IQD, IQSD, IQBD, SQ, SQ_EFF = sphere_r(np.array(sasqdata),20,4,1,.3)
-    plt.subplot(221)
-    plt.title('IQD')
-    plt.loglog(sasqdata,IQD )
-    plt.loglog(sasqdata,1e-4/(4./3*pi*20**3)*np.array(sasvaluedata))
-    plt.subplot(222)
-    plt.semilogx(sasqdata,1e-4/(4./3*pi*20**3)*np.array(sasvaluedata)/IQD-1)
-    plt.tight_layout()
-    plt.show()
-    sasdata = np.loadtxt(data_file('sasfit_sphere_IQSD.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(221)
-    plt.title('IQSD')
-    plt.loglog(sasqdata, IQSD)
-    plt.loglog(sasqdata,1e-4/(4./3*pi*20**3)*0.3*np.array(sasvaluedata))
-    plt.subplot(222)
-    plt.semilogx(sasqdata,1e-4/(4./3*pi*20**3)*0.3*np.array(sasvaluedata)/IQSD-1)
-    plt.tight_layout()
-    plt.show()
-    sasdata = np.loadtxt(data_file('sasfit_sphere_IQBD.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(221)
-    plt.title('IQBD')
-    plt.loglog(sasqdata,IQBD)
-    plt.loglog(sasqdata,1e-4/(4./3*pi*20**3)*0.3*np.array(sasvaluedata))
-    plt.subplot(222)
-    plt.semilogx(sasqdata,1e-4/(4./3*pi*20**3)*0.3*np.array(sasvaluedata)/IQBD-1)
-    plt.tight_layout()
-    plt.show()
-    sasdata = np.loadtxt(data_file('sasfit_polydisperse_sphere_sq.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(221)
-    plt.title('SQ')
-    plt.loglog(sasqdata, SQ)
-    plt.loglog(sasqdata,np.array(sasvaluedata))
-    plt.subplot(222)
-    plt.semilogx(sasqdata,np.array(sasvaluedata)/SQ-1)
-    plt.tight_layout()
-    plt.show()
-    sasdata = np.loadtxt(data_file('sasfit_polydisperse_sphere_sqeff.txt'),dtype=str,delimiter=';').T
-    sasqdata=map(float,sasdata[0])
-    sasvaluedata=map(float,sasdata[1])
-    plt.subplot(221)
-    plt.title('SQ_EFF')
-    plt.loglog(sasqdata,SQ_EFF)
-    plt.loglog(sasqdata,np.array(sasvaluedata))
-    plt.subplot(222)
-    plt.semilogx(sasqdata,np.array(sasvaluedata)/SQ_EFF-1)
-    plt.tight_layout()
-    plt.show()
+    Q, IQ = load_sasfit(data_file('richard_test4.txt'))
+    Q, IQSD = load_sasfit(data_file('richard_test5.txt'))
+    Q, IQBD = load_sasfit(data_file('richard_test6.txt'))
+    target = Theory(Q=Q, F1=None, F2=None, P=IQ, S=None, I=IQSD, Seff=None, Ibeta=IQBD)
+    actual = ellipsoid_pe(Q, norm="sasfit", **pars)
+    title = " ".join(("sasfit", "ellipsoid", "pd=10% schulz"))
+    compare(title, target, actual)
+COMPARISON[('sasfit','ellipsoid','schulz')] = compare_sasfit_ellipsoid_schulz
+
+
+def compare_sasfit_ellipsoid_gaussian():
+    pars = {
+        'radius_polar': 20, 'radius_polar_pd': 0, 'radius_polar_pd_type': 'gaussian',
+        'radius_equatorial': 10, 'radius_equatorial_pd': 0, 'radius_equatorial_pd_type': 'gaussian',
+        'sld': 4, 'sld_solvent': 1,
+        'volfraction': 0, 'radius_effective': None,
+    }
+
+    #Rp=20,Re=10,eta_core=4,eta_solv=1
+    Q, PQ0 = load_sasfit(data_file('sasfit_ellipsoid_IQM.txt'))
+    pars.update(volfraction=0, radius_polar_pd=0.0, radius_equatorial_pd=0, radius_effective=None)
+    actual = ellipsoid_pe(Q, norm='sasfit', **pars)
+    target = Theory(Q=Q, P=PQ0)
+    compare("sasfit ellipsoid no poly", target, actual); plt.show()
+
+    #N=1,s=2,X0=20,distr 10% polar Rp=20,Re=10,eta_core=4,eta_solv=1, no structure poly
+    Q, PQ_Rp10 = load_sasfit(data_file('sasfit_ellipsoid_IQD.txt'))
+    pars.update(volfraction=0, radius_polar_pd=0.1, radius_equatorial_pd=0.0, radius_effective=None)
+    actual = ellipsoid_pe(Q, norm='sasfit', **pars)
+    target = Theory(Q=Q, P=PQ_Rp10)
+    compare("sasfit ellipsoid P(Q) 10% Rp", target, actual); plt.show()
+    #N=1,s=1,X0=10,distr 10% equatorial Rp=20,Re=10,eta_core=4,eta_solv=1, no structure poly
+    Q, PQ_Re10 = load_sasfit(data_file('sasfit_ellipsoid_IQD2.txt'))
+    pars.update(volfraction=0, radius_polar_pd=0.0, radius_equatorial_pd=0.1, radius_effective=None)
+    actual = ellipsoid_pe(Q, norm='sasfit', **pars)
+    target = Theory(Q=Q, P=PQ_Re10)
+    compare("sasfit ellipsoid P(Q) 10% Re", target, actual); plt.show()
+    #N=1,s=6,X0=20,distr 30% polar Rp=20,Re=10,eta_core=4,eta_solv=1, no structure poly
+    Q, PQ_Rp30 = load_sasfit(data_file('sasfit_ellipsoid_IQD3.txt'))
+    pars.update(volfraction=0, radius_polar_pd=0.3, radius_equatorial_pd=0.0, radius_effective=None)
+    actual = ellipsoid_pe(Q, norm='sasfit', **pars)
+    target = Theory(Q=Q, P=PQ_Rp30)
+    compare("sasfit ellipsoid P(Q) 30% Rp", target, actual); plt.show()
+    #N=1,s=3,X0=10,distr 30% equatorial Rp=20,Re=10,eta_core=4,eta_solv=1, no structure poly
+    Q, PQ_Re30 = load_sasfit(data_file('sasfit_ellipsoid_IQD4.txt'))
+    pars.update(volfraction=0, radius_polar_pd=0.0, radius_equatorial_pd=0.3, radius_effective=None)
+    actual = ellipsoid_pe(Q, norm='sasfit', **pars)
+    target = Theory(Q=Q, P=PQ_Re30)
+    compare("sasfit ellipsoid P(Q) 30% Re", target, actual); plt.show()
+    #N=1,s=12,X0=20,distr 60% polar Rp=20,Re=10,eta_core=4,eta_solv=1, no structure poly
+    Q, PQ_Rp60 = load_sasfit(data_file('sasfit_ellipsoid_IQD5.txt'))
+    pars.update(volfraction=0, radius_polar_pd=0.6, radius_equatorial_pd=0.0, radius_effective=None)
+    actual = ellipsoid_pe(Q, norm='sasfit', **pars)
+    target = Theory(Q=Q, P=PQ_Rp60)
+    compare("sasfit ellipsoid P(Q) 60% Rp", target, actual); plt.show()
+    #N=1,s=6,X0=10,distr 60% equatorial Rp=20,Re=10,eta_core=4,eta_solv=1, no structure poly
+    Q, PQ_Re60 = load_sasfit(data_file('sasfit_ellipsoid_IQD6.txt'))
+    pars.update(volfraction=0, radius_polar_pd=0.0, radius_equatorial_pd=0.6, radius_effective=None)
+    actual = ellipsoid_pe(Q, norm='sasfit', **pars)
+    target = Theory(Q=Q, P=PQ_Re60)
+    compare("sasfit ellipsoid P(Q) 60% Re", target, actual); plt.show()
+
+    #N=1,s=2,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.1354236254,.15
+    Q, SQ = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sq.txt'))
+    Q, SQ_EFF = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sqeff.txt'))
+    pars.update(volfraction=0.15, radius_polar_pd=0.1, radius_equatorial_pd=0, radius_effective=13.1354236254)
+    actual = ellipsoid_pe(Q, norm='sasfit', **pars)
+    target = Theory(Q=Q, S=SQ, Seff=SQ_EFF)
+    compare("sasfit ellipsoid P(Q) 10% Rp 15% Vf", target, actual); plt.show()
+    #N=1,s=6,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.0901197149,.15
+    Q, SQ = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sq2.txt'))
+    Q, SQ_EFF = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sqeff2.txt'))
+    pars.update(volfraction=0.15, radius_polar_pd=0.3, radius_equatorial_pd=0, radius_effective=13.0901197149)
+    actual = ellipsoid_pe(Q, norm='sasfit', **pars)
+    target = Theory(Q=Q, S=SQ, Seff=SQ_EFF)
+    compare("sasfit ellipsoid P(Q) 30% Rp 15% Vf", target, actual); plt.show()
+    #N=1,s=12,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.336060917,.15
+    Q, SQ = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sq3.txt'))
+    Q, SQ_EFF = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sqeff3.txt'))
+    pars.update(volfraction=0.15, radius_polar_pd=0.6, radius_equatorial_pd=0, radius_effective=13.336060917)
+    actual = ellipsoid_pe(Q, norm='sasfit', **pars)
+    target = Theory(Q=Q, S=SQ, Seff=SQ_EFF)
+    compare("sasfit ellipsoid P(Q) 60% Rp 15% Vf", target, actual); plt.show()
+
+    #N=1,s=2,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.1354236254,.3
+    Q, SQ = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sq4.txt'))
+    Q, SQ_EFF = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sqeff4.txt'))
+    pars.update(volfraction=0.3, radius_polar_pd=0.1, radius_equatorial_pd=0, radius_effective=13.1354236254)
+    actual = ellipsoid_pe(Q, norm='sasfit', **pars)
+    target = Theory(Q=Q, S=SQ, Seff=SQ_EFF)
+    compare("sasfit ellipsoid P(Q) 10% Rp 30% Vf", target, actual); plt.show()
+    #N=1,s=6,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.0901197149,.3
+    Q, SQ = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sq5.txt'))
+    Q, SQ_EFF = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sqeff5.txt'))
+    pars.update(volfraction=0.3, radius_polar_pd=0.3, radius_equatorial_pd=0, radius_effective=13.0901197149)
+    actual = ellipsoid_pe(Q, norm='sasfit', **pars)
+    target = Theory(Q=Q, S=SQ, Seff=SQ_EFF)
+    compare("sasfit ellipsoid P(Q) 30% Rp 30% Vf", target, actual); plt.show()
+    #N=1,s=12,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.336060917,.3
+    Q, SQ = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sq6.txt'))
+    Q, SQ_EFF = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sqeff6.txt'))
+    pars.update(volfraction=0.3, radius_polar_pd=0.6, radius_equatorial_pd=0, radius_effective=13.336060917)
+    actual = ellipsoid_pe(Q, norm='sasfit', **pars)
+    target = Theory(Q=Q, S=SQ, Seff=SQ_EFF)
+    compare("sasfit ellipsoid P(Q) 60% Rp 30% Vf", target, actual); plt.show()
+
+    #N=1,s=2,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.1354236254,.6
+    Q, SQ = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sq7.txt'))
+    Q, SQ_EFF = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sqeff7.txt'))
+    pars.update(volfraction=0.6, radius_polar_pd=0.1, radius_equatorial_pd=0, radius_effective=13.1354236254)
+    actual = ellipsoid_pe(Q, norm='sasfit', **pars)
+    target = Theory(Q=Q, S=SQ, Seff=SQ_EFF)
+    compare("sasfit ellipsoid P(Q) 10% Rp 60% Vf", target, actual); plt.show()
+    #N=1,s=6,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.0901197149,.6
+    Q, SQ = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sq8.txt'))
+    Q, SQ_EFF = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sqeff8.txt'))
+    pars.update(volfraction=0.6, radius_polar_pd=0.3, radius_equatorial_pd=0, radius_effective=13.0901197149)
+    actual = ellipsoid_pe(Q, norm='sasfit', **pars)
+    target = Theory(Q=Q, S=SQ, Seff=SQ_EFF)
+    compare("sasfit ellipsoid P(Q) 30% Rp 60% Vf", target, actual); plt.show()
+    #N=1,s=12,X0=20,distr polar Rp=20,Re=10,eta_core=4,eta_solv=1, hardsphere ,13.336060917,.6
+    Q, SQ = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sq9.txt'))
+    Q, SQ_EFF = load_sasfit(data_file('sasfit_polydisperse_ellipsoid_sqeff9.txt'))
+    pars.update(volfraction=0.6, radius_polar_pd=0.6, radius_equatorial_pd=0, radius_effective=13.336060917)
+    actual = ellipsoid_pe(Q, norm='sasfit', **pars)
+    target = Theory(Q=Q, S=SQ, Seff=SQ_EFF)
+    compare("sasfit ellipsoid P(Q) 60% Rp 60% Vf", target, actual); plt.show()
+COMPARISON[('sasfit','ellipsoid','gaussian')] = compare_sasfit_ellipsoid_gaussian
+
+def main():
+    key = tuple(sys.argv[1:])
+    if key not in COMPARISON:
+        print("usage: sasfit_compare.py [sasview|sasfit|yun] [sphere|ellipsoid] [gaussian|schulz]")
+        return
+    comparison = COMPARISON[key]
+    comparison()
+
+if __name__ == "__main__":
+    main()

@@ -257,8 +257,8 @@ def make_dll(source, model_info, dtype=F64):
         # comment the following to keep the generated c file
         # Note: if there is a syntax error then compile raises an error
         # and the source file will not be deleted.
-        os.unlink(filename)
-        #print("saving compiled file in %r"%filename)
+        #os.unlink(filename)
+        print("saving compiled file in %r"%filename)
     return dll
 
 
@@ -370,44 +370,61 @@ class DllKernel(Kernel):
     """
     def __init__(self, kernel, model_info, q_input):
         # type: (Callable[[], np.ndarray], ModelInfo, PyInput) -> None
+        #,model_info,q_input)
         self.kernel = kernel
         self.info = model_info
         self.q_input = q_input
         self.dtype = q_input.dtype
         self.dim = '2d' if q_input.is_2d else '1d'
-        self.result = np.empty(q_input.nq+1, q_input.dtype)
+        self.result = np.empty(2*q_input.nq+2, q_input.dtype)
         self.real = (np.float32 if self.q_input.dtype == generate.F32
                      else np.float64 if self.q_input.dtype == generate.F64
                      else np.float128)
 
-    def __call__(self, call_details, values, cutoff, magnetic):
+    def Iq(self, call_details, values, cutoff, magnetic):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
-
-        kernel = self.kernel[1 if magnetic else 0]
-        args = [
-            self.q_input.nq, # nq
-            None, # pd_start
-            None, # pd_stop pd_stride[MAX_PD]
-            call_details.buffer.ctypes.data, # problem
-            values.ctypes.data,  #pars
-            self.q_input.q.ctypes.data, #q
-            self.result.ctypes.data,   # results
-            self.real(cutoff), # cutoff
-        ]
-        #print("Calling DLL")
-        #call_details.show(values)
-        step = 100
-        for start in range(0, call_details.num_eval, step):
-            stop = min(start + step, call_details.num_eval)
-            args[1:3] = [start, stop]
-            kernel(*args) # type: ignore
-
+        self._call_kernel(call_details, values, cutoff, magnetic)
         #print("returned",self.q_input.q, self.result)
         pd_norm = self.result[self.q_input.nq]
         scale = values[0]/(pd_norm if pd_norm != 0.0 else 1.0)
         background = values[1]
         #print("scale",scale,background)
         return scale*self.result[:self.q_input.nq] + background
+    __call__ = Iq
+
+    def beta(self, call_details, values, cutoff, magnetic):
+        # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
+        self._call_kernel(call_details, values, cutoff, magnetic)
+        w_norm = self.result[2*self.q_input.nq + 1]
+        pd_norm = self.result[self.q_input.nq]
+        if w_norm == 0.:
+            w_norm = 1.
+        F2 = self.result[:self.q_input.nq]/w_norm
+        F1 = self.result[self.q_input.nq+1:2*self.q_input.nq+1]/w_norm
+        volume_avg = pd_norm/w_norm
+        return F1, F2, volume_avg
+
+    def _call_kernel(self, call_details, values, cutoff, magnetic):
+        kernel = self.kernel[1 if magnetic else 0]
+        args = [
+            self.q_input.nq, # nq
+            None, # pd_start
+            None, # pd_stop pd_stride[MAX_PD]
+            call_details.buffer.ctypes.data, # problem
+            values.ctypes.data,  # pars
+            self.q_input.q.ctypes.data, # q
+            self.result.ctypes.data,   # results
+            self.real(cutoff), # cutoff
+        ]
+        #print(self.beta_result.ctypes.data)
+#        print("Calling DLL line 397")
+#        print("values", values)
+        #call_details.show(values)
+        step = 100
+        for start in range(0, call_details.num_eval, step):
+            stop = min(start + step, call_details.num_eval)
+            args[1:3] = [start, stop]
+            kernel(*args) # type: ignore
 
     def release(self):
         # type: () -> None

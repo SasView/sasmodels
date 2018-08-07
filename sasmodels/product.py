@@ -15,7 +15,7 @@ from __future__ import print_function, division
 from copy import copy
 import numpy as np  # type: ignore
 
-from .modelinfo import ParameterTable, ModelInfo
+from .modelinfo import ParameterTable, ModelInfo, Parameter
 from .kernel import KernelModel, Kernel
 from .details import make_details, dispersion_mesh
 
@@ -73,7 +73,8 @@ def make_product_info(p_info, s_info):
 
     translate_name = dict((old.id, new.id) for old, new
                           in zip(s_pars.kernel_parameters[1:], s_list))
-    combined_pars = p_pars.kernel_parameters + s_list
+    beta_parameter = Parameter("beta_mode", "", 0, [["P*S"],["P*(1+beta*(S-1))"], "", "Structure factor dispersion calculation mode"])
+    combined_pars = p_pars.kernel_parameters + s_list + [beta_parameter]
     parameters = ParameterTable(combined_pars)
     parameters.max_pd = p_pars.max_pd + s_pars.max_pd
     def random():
@@ -150,6 +151,7 @@ class ProductModel(KernelModel):
         self.P = P
         #: Structure factor modelling interaction between particles.
         self.S = S
+        
         #: Model precision. This is not really relevant, since it is the
         #: individual P and S models that control the effective dtype,
         #: converting the q-vectors to the correct type when the kernels
@@ -167,6 +169,7 @@ class ProductModel(KernelModel):
         # separate q vectors are needed (e.g., form in python and structure
         # in opencl; or both in opencl, but one in single precision and the
         # other in double precision).
+        
         p_kernel = self.P.make_kernel(q_vectors)
         s_kernel = self.S.make_kernel(q_vectors)
         return ProductKernel(self.info, p_kernel, s_kernel)
@@ -192,7 +195,6 @@ class ProductKernel(Kernel):
     def __call__(self, call_details, values, cutoff, magnetic):
         # type: (CallDetails, np.ndarray, float, bool) -> np.ndarray
         p_info, s_info = self.info.composition[1]
-
         # if there are magnetic parameters, they will only be on the
         # form factor P, not the structure factor S.
         nmagnetic = len(self.info.parameters.magnetism_index)
@@ -204,7 +206,6 @@ class ProductKernel(Kernel):
         nvalues = self.info.parameters.nvalues
         nweights = call_details.num_weights
         weights = values[nvalues:nvalues + 2*nweights]
-
         # Construct the calling parameters for P.
         p_npars = p_info.parameters.npars
         p_length = call_details.length[:p_npars]
@@ -217,12 +218,10 @@ class ProductKernel(Kernel):
         spacer = (32 - sum(len(v) for v in p_values)%32)%32
         p_values.append([0.]*spacer)
         p_values = np.hstack(p_values).astype(self.p_kernel.dtype)
-
         # Call ER and VR for P since these are needed for S.
         p_er, p_vr = calc_er_vr(p_info, p_details, p_values)
         s_vr = (volfrac/p_vr if p_vr != 0. else volfrac)
         #print("volfrac:%g p_er:%g p_vr:%g s_vr:%g"%(volfrac,p_er,p_vr,s_vr))
-
         # Construct the calling parameters for S.
         # The  effective radius is not in the combined parameter list, so
         # the number of 'S' parameters is one less than expected.  The
@@ -252,11 +251,15 @@ class ProductKernel(Kernel):
         spacer = (32 - sum(len(v) for v in s_values)%32)%32
         s_values.append([0.]*spacer)
         s_values = np.hstack(s_values).astype(self.s_kernel.dtype)
-
+        # beta mode is the first parameter after the structure factor pars
+        beta_index = 2+p_npars+s_npars
+        beta_mode = values[beta_index]
         # Call the kernels
-        p_result = self.p_kernel(p_details, p_values, cutoff, magnetic)
-        s_result = self.s_kernel(s_details, s_values, cutoff, False)
-
+        if beta_mode: # beta:
+            F1, F2, volume_avg = self.p_kernel.beta(p_details, p_values, cutoff, magnetic)
+        else:
+            p_result = self.p_kernel.Iq(p_details, p_values, cutoff, magnetic)
+        s_result = self.s_kernel.Iq(s_details, s_values, cutoff, False)
         #print("p_npars",p_npars,s_npars,p_er,s_vr,values[2+p_npars+1:2+p_npars+s_npars])
         #call_details.show(values)
         #print("values", values)
@@ -264,16 +267,21 @@ class ProductKernel(Kernel):
         #print("=>", p_result)
         #s_details.show(s_values)
         #print("=>", s_result)
-
-        # remember the parts for plotting later
-        self.results = [p_result, s_result]
-
         #import pylab as plt
         #plt.subplot(211); plt.loglog(self.p_kernel.q_input.q, p_result, '-')
         #plt.subplot(212); plt.loglog(self.s_kernel.q_input.q, s_result, '-')
         #plt.figure()
-
-        return values[0]*(p_result*s_result) + values[1]
+        if beta_mode:#beta
+            beta_factor = F1**2/F2
+            Sq_eff = 1+beta_factor*(s_result - 1)
+            self.results = [F2, Sq_eff,F1,s_result]
+            final_result = volfrac*values[0]*(F2 + (F1**2)*(s_result - 1))/volume_avg+values[1]
+            #final_result =  volfrac * values[0] * F2 * Sq_eff / volume_avg + values[1]
+        else:
+            # remember the parts for plotting later
+            self.results = [p_result, s_result]
+            final_result = values[0]*(p_result*s_result) + values[1]
+        return final_result
 
     def release(self):
         # type: () -> None
