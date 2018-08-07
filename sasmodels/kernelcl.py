@@ -419,6 +419,8 @@ class GpuModel(KernelModel):
         # type: (List[np.ndarray]) -> "GpuKernel"
         if self.program is None:
             compile_program = environment().compile_program
+            with open('model.c','w') as fid:
+                print(self.source['opencl'], file=fid)
             timestamp = generate.ocl_timestamp(self.info)
             self.program = compile_program(
                 self.info.name,
@@ -538,7 +540,7 @@ class GpuKernel(Kernel):
         self.dtype = dtype
         self.dim = '2d' if q_input.is_2d else '1d'
         # plus three for the normalization values
-        self.result = np.empty(q_input.nq+1, dtype)
+        self.result = np.empty(2*q_input.nq+2,dtype)
 
         # Inputs and outputs for each kernel call
         # Note: res may be shorter than res_b if global_size != nq
@@ -554,8 +556,9 @@ class GpuKernel(Kernel):
                      else np.float64 if dtype == generate.F64
                      else np.float16 if dtype == generate.F16
                      else np.float32)  # will never get here, so use np.float32
+    __call__= Iq
 
-    def __call__(self, call_details, values, cutoff, magnetic):
+    def Iq(self, call_details, values, cutoff, magnetic):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
         context = self.queue.context
         # Arrange data transfer to card
@@ -571,8 +574,8 @@ class GpuKernel(Kernel):
             self.real(cutoff),
         ]
         #print("Calling OpenCL")
-        #call_details.show(values)
-        # Call kernel and retrieve results
+        call_details.show(values)
+        #Call kernel and retrieve results
         wait_for = None
         last_nap = time.clock()
         step = 1000000//self.q_input.nq + 1
@@ -603,6 +606,9 @@ class GpuKernel(Kernel):
         #print("scale",scale,values[0],self.result[self.q_input.nq],background)
         return scale*self.result[:self.q_input.nq] + background
         # return self.result[:self.q_input.nq]
+     #NEEDS TO BE FINISHED FOR OPENCL
+     def beta():
+         return 0
 
     def release(self):
         # type: () -> None

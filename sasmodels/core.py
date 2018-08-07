@@ -139,6 +139,7 @@ def load_model_info(model_string):
     This returns a handle to the module defining the model.  This can be
     used with functions in generate to build the docs or extract model info.
     """
+
     if "+" in model_string:
         parts = [load_model_info(part)
                  for part in model_string.split("+")]
@@ -204,7 +205,6 @@ def build_model(model_info, dtype=None, platform="ocl"):
         return kernelpy.PyModel(model_info)
 
     numpy_dtype, fast, platform = parse_dtype(model_info, dtype, platform)
-
     source = generate.make_source(model_info)
     if platform == "dll":
         #print("building dll", numpy_dtype)
@@ -264,7 +264,6 @@ def parse_dtype(model_info, dtype=None, platform=None):
     """
     # Assign default platform, overriding ocl with dll if OpenCL is unavailable
     # If opencl=False OpenCL is switched off
-
     if platform is None:
         platform = "ocl"
     if not kernelcl.use_opencl() or not model_info.opencl:
@@ -290,7 +289,6 @@ def parse_dtype(model_info, dtype=None, platform=None):
                        else generate.F64)
     else:
         numpy_dtype = np.dtype(dtype)
-
     # Make sure that the type is supported by opencl, otherwise use dll
     if platform == "ocl":
         env = kernelcl.environment()

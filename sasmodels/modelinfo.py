@@ -162,7 +162,6 @@ def parse_parameter(name, units='', default=np.NaN,
     parameter.choices = choices
     parameter.length = length
     parameter.length_control = control
-
     return parameter
 
 
@@ -417,19 +416,16 @@ class ParameterTable(object):
     """
     # scale and background are implicit parameters
     COMMON = [Parameter(*p) for p in COMMON_PARAMETERS]
-
     def __init__(self, parameters):
         # type: (List[Parameter]) -> None
         self.kernel_parameters = parameters
         self._set_vector_lengths()
-
         self.npars = sum(p.length for p in self.kernel_parameters)
         self.nmagnetic = sum(p.length for p in self.kernel_parameters
                              if p.type == 'sld')
         self.nvalues = 2 + self.npars
         if self.nmagnetic:
             self.nvalues += 3 + 3*self.nmagnetic
-
         self.call_parameters = self._get_call_parameters()
         self.defaults = self._get_defaults()
         #self._name_table= dict((p.id, p) for p in parameters)
@@ -443,7 +439,6 @@ class ParameterTable(object):
                                        if p.type == 'orientation']
         self.form_volume_parameters = [p for p in self.kernel_parameters
                                        if p.type == 'volume']
-
         # Theta offset
         offset = 0
         for p in self.kernel_parameters:
@@ -465,7 +460,6 @@ class ParameterTable(object):
         self.is_asymmetric = any(p.name == 'psi' for p in self.kernel_parameters)
         self.magnetism_index = [k for k, p in enumerate(self.call_parameters)
                                 if p.id.startswith('M0:')]
-
         self.pd_1d = set(p.name for p in self.call_parameters
                          if p.polydisperse and p.type not in ('orientation', 'magnetic'))
         self.pd_2d = set(p.name for p in self.call_parameters if p.polydisperse)
@@ -769,6 +763,7 @@ def make_model_info(kernel_module):
     if hasattr(kernel_module, "model_info"):
         # Custom sum/multi models
         return kernel_module.model_info
+
     info = ModelInfo()
     #print("make parameter table", kernel_module.parameters)
     parameters = make_parameter_table(getattr(kernel_module, 'parameters', []))
@@ -821,7 +816,6 @@ def make_model_info(kernel_module):
 
     info.lineno = {}
     _find_source_lines(info, kernel_module)
-
     return info
 
 class ModelInfo(object):

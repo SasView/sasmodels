@@ -66,17 +66,8 @@ parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Sphere radius"],
              ]
 
-source = ["lib/sas_3j1x_x.c", "lib/sphere_form.c"]
+source = ["lib/sas_3j1x_x.c", "lib/sphere_form.c", "sphere.c"]
 
-# No volume normalization despite having a volume parameter
-# This should perhaps be volume normalized?
-form_volume = """
-    return sphere_volume(radius);
-    """
-
-Iq = """
-    return sphere_form(q, radius, sld, sld_solvent);
-    """
 
 def ER(radius):
     """

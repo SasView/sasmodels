@@ -2,7 +2,8 @@ from __future__ import division, print_function
 # Make sasmodels available on the path
 import sys, os
 BETA_DIR = os.path.dirname(os.path.realpath(__file__))
-SASMODELS_DIR = os.path.dirname(os.path.dirname(BETA_DIR))
+#SASMODELS_DIR = os.path.dirname(os.path.dirname(BETA_DIR))
+SASMODELS_DIR = r"C:\Source\sasmodels"
 sys.path.insert(0, SASMODELS_DIR)
 
 from collections import namedtuple
@@ -60,7 +61,7 @@ def build_model(model_name, q, **pars):
     data = empty_data1D(q)
     calculator = DirectModel(data, model,cutoff=0)
     calculator.pars = pars.copy()
-    calculator.pars.setdefault('background', 1e-3)
+    calculator.pars.setdefault('background', 0)
     return calculator
 
 #gives the hardsphere structure factor that sasview uses
@@ -230,6 +231,8 @@ def ellipsoid_pe(q, radius_polar, radius_equatorial, sld, sld_solvent,
         #     = F2/total_weight / total_volume/total_weight
         #     = F2/total_volume
         IQD = F2/average_volume*1e-4*volfraction
+        F1 *= 1e-2  # Yun is using sld in 1/A^2, not 1e-6/A^2
+        F2 *= 1e-4
     elif norm == 'yun':
         F1 *= 1e-6  # Yun is using sld in 1/A^2, not 1e-6/A^2
         F2 *= 1e-12
@@ -335,11 +338,13 @@ def sasmodels_theory(q, Pname, **pars):
     S = build_model("hardsphere", q)
     I = build_model(Pname+"@hardsphere", q)
     Pq = P(**Ppars)*pars.get('volfraction', 1)
-    #Sq = S(**Spars)
+    Sq = S(**Spars)
     Iq = I(**Ipars)
     #Iq = Pq*Sq*pars.get('volfraction', 1)
-    Sq = Iq/Pq
-    return Theory(Q=q, F1=None, F2=None, P=Pq, S=Sq, I=Iq, Seff=None, Ibeta=None)
+    #Sq = Iq/Pq
+    #Iq = None#= Sq = None
+    r=I._kernel.results
+    return Theory(Q=q, F1=None, F2=None, P=Pq, S=None, I=None, Seff=r[1], Ibeta=Iq)
 
 def compare(title, target, actual, fields='F1 F2 P S I Seff Ibeta'):
     """
@@ -399,9 +404,10 @@ def compare_sasview_ellipsoid(pd_type='gaussian'):
         radius_polar_pd=.1, radius_polar_pd_type=pd_type,
         radius_equatorial_pd=.1, radius_equatorial_pd_type=pd_type,
         volfraction=0.15,
+        radius_effective=270.7543927018,
         #radius_effective=12.59921049894873,
         )
-    target = sasmodels_theory(q, model, **pars)
+    target = sasmodels_theory(q, model, beta_mode=1, **pars)
     actual = ellipsoid_pe(q, norm='sasview', **pars)
     title = " ".join(("sasmodels", model, pd_type))
     compare(title, target, actual)
@@ -449,7 +455,7 @@ def compare_yun_sphere_gauss():
     P = data[3]
     S = data[5]
     Seff = data[6]
-    target = Theory(Q=Q, F1=F1, F2=F2, P=P, S=S, Seff=Seff)
+    target = Theory(Q=Q, F1=F1, P=P, S=S, Seff=Seff)
     actual = sphere_r(Q, norm='yun', **pars)
     title = " ".join(("yun", "sphere", "10% dispersion 10% Vf"))
     compare(title, target, actual)
@@ -461,7 +467,7 @@ def compare_yun_sphere_gauss():
     P = data[3]
     S = data[5]
     Seff = data[6]
-    target = Theory(Q=Q, F1=F1, F2=F2, P=P, S=S, Seff=Seff)
+    target = Theory(Q=Q, F1=F1, P=P, S=S, Seff=Seff)
     actual = sphere_r(Q, norm='yun', **pars)
     title = " ".join(("yun", "sphere", "15% dispersion 10% Vf"))
     compare(title, target, actual)
