@@ -401,6 +401,8 @@ class DllKernel(Kernel):
 
     def beta(self, call_details, values, cutoff, magnetic):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
+        if self.dim == '2d':
+            raise NotImplementedError("beta not yet supported for 2D")
         self._call_kernel(call_details, values, cutoff, magnetic)
         w_norm = self.result[2*self.q_input.nq + 1]
         pd_norm = self.result[self.q_input.nq]
