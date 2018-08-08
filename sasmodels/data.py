@@ -501,11 +501,13 @@ def _plot_result1D(data,         # type: Data1D
         if use_theory:
             # Note: masks merge, so any masked theory points will stay masked,
             # and the data mask will be added to it.
-            mtheory = masked_array(theory, data.mask.copy())
+            #mtheory = masked_array(theory, data.mask.copy())
+            theory_x = data.x[data.mask == 0]
+            mtheory = masked_array(theory)
             mtheory[~np.isfinite(mtheory)] = masked
             if view is 'log':
                 mtheory[mtheory <= 0] = masked
-            plt.plot(data.x, scale*mtheory, '-')
+            plt.plot(theory_x, scale*mtheory, '-')
             all_positive = all_positive and (mtheory > 0).all()
             some_present = some_present or (mtheory.count() > 0)
 
@@ -541,13 +543,14 @@ def _plot_result1D(data,         # type: Data1D
         #plt.axis('equal')
 
     if use_resid:
-        mresid = masked_array(resid, data.mask.copy())
+        theory_x = data.x[data.mask == 0]
+        mresid = masked_array(resid)
         mresid[~np.isfinite(mresid)] = masked
         some_present = (mresid.count() > 0)
 
         if num_plots > 1:
             plt.subplot(1, num_plots, use_calc + 2)
-        plt.plot(data.x, mresid, '.')
+        plt.plot(theory_x, mresid, '.')
         plt.xlabel("$q$/A$^{-1}$")
         plt.ylabel('residuals')
         plt.title('(model - Iq)/dIq')

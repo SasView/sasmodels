@@ -249,7 +249,7 @@ class DataMixin(object):
             qmin = getattr(data, 'qmin', 1e-16)
             qmax = getattr(data, 'qmax', np.inf)
             accuracy = getattr(data, 'accuracy', 'Low')
-            index = ~data.mask & (q >= qmin) & (q <= qmax)
+            index = (data.mask == 0) & (q >= qmin) & (q <= qmax)
             if data.data is not None:
                 index &= ~np.isnan(data.data)
                 Iq = data.data[index]
@@ -262,6 +262,9 @@ class DataMixin(object):
             q_vectors = res.q_calc
         elif self.data_type == 'Iq':
             index = (data.x >= data.qmin) & (data.x <= data.qmax)
+            mask = getattr(data, 'mask', None)
+            if mask is not None:
+                index &= (mask == 0)
             if data.y is not None:
                 index &= ~np.isnan(data.y)
                 Iq = data.y[index]

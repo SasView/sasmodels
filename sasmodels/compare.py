@@ -112,6 +112,14 @@ Options (* for default):
     -edit starts the parameter explorer
     -help/-html shows the model docs instead of running the model
 
+    === environment variables ===
+    -DSAS_MODELPATH=path sets directory containing custom models
+    -DSAS_OPENCL=vendor:device|none sets the target OpenCL device
+    -DXDG_CACHE_HOME=~/.cache sets the pyopencl cache root (linux only)
+    -DSAS_COMPILER=tinycc|msvc|mingw|unix sets the DLL compiler
+    -DSAS_OPENMP=1 turns on OpenMP for the DLLs
+    -DSAS_DLL_PATH=path sets the path to the compiled modules
+
 The interpretation of quad precision depends on architecture, and may
 vary from 64-bit to 128-bit, with 80-bit floats being common (1e-19 precision).
 On unix and mac you may need single quotes around the DLL computation
@@ -1112,8 +1120,9 @@ def parse_opts(argv):
         return None
 
     invalid = [o[1:] for o in flags
-               if o[1:] not in NAME_OPTIONS
-               and not any(o.startswith('-%s='%t) for t in VALUE_OPTIONS)]
+               if not (o[1:] in NAME_OPTIONS
+                       or any(o.startswith('-%s='%t) for t in VALUE_OPTIONS)
+                       or o.startswith('-D'))]
     if invalid:
         print("Invalid options: %s"%(", ".join(invalid)))
         return None
@@ -1214,6 +1223,9 @@ def parse_opts(argv):
         elif arg == '-profile': opts['show_profile'] = True
         elif arg == '-html':    opts['html'] = True
         elif arg == '-help':    opts['html'] = True
+        elif arg.startswith('-D'):
+            var, val = arg[2:].split('=')
+            os.environ[var] = val
     # pylint: enable=bad-whitespace,C0321
 
     # Magnetism forces 2D for now
