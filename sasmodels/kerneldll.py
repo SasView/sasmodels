@@ -257,8 +257,8 @@ def make_dll(source, model_info, dtype=F64):
         # comment the following to keep the generated c file
         # Note: if there is a syntax error then compile raises an error
         # and the source file will not be deleted.
-        #os.unlink(filename)
-        print("saving compiled file in %r"%filename)
+        os.unlink(filename)
+        #print("saving compiled file in %r"%filename)
     return dll
 
 
@@ -376,7 +376,10 @@ class DllKernel(Kernel):
         self.q_input = q_input
         self.dtype = q_input.dtype
         self.dim = '2d' if q_input.is_2d else '1d'
-        self.result = np.empty(2*q_input.nq+2, q_input.dtype)
+        # leave room for f1/f2 results in case we need to compute beta for 1d models
+        num_returns = 1 if self.dim == '2d' else 2  #
+        # plus 1 for the normalization value
+        self.result = np.empty((q_input.nq+1)*num_returns, self.dtype)
         self.real = (np.float32 if self.q_input.dtype == generate.F32
                      else np.float64 if self.q_input.dtype == generate.F64
                      else np.float128)
@@ -416,9 +419,7 @@ class DllKernel(Kernel):
             self.result.ctypes.data,   # results
             self.real(cutoff), # cutoff
         ]
-        #print(self.beta_result.ctypes.data)
-#        print("Calling DLL line 397")
-#        print("values", values)
+        #print("Calling DLL")
         #call_details.show(values)
         step = 100
         for start in range(0, call_details.num_eval, step):

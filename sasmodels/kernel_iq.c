@@ -28,6 +28,8 @@
 //  CALL_VOLUME(table) : call the form volume function
 //  CALL_IQ(q, table) : call the Iq function for 1D calcs.
 //  CALL_IQ_A(q, table) : call the Iq function with |q| for 2D data.
+//  CALL_FQ(q, F1, F2, table) : call the Fq function for 1D calcs.
+//  CALL_FQ_A(q, F1, F2, table) : call the Iq function with |q| for 2D data.
 //  CALL_IQ_AC(qa, qc, table) : call the Iqxy function for symmetric shapes
 //  CALL_IQ_ABC(qa, qc, table) : call the Iqxy function for asymmetric shapes
 //  CALL_IQ_XY(qx, qy, table) : call the Iqxy function for arbitrary models
@@ -84,7 +86,7 @@ static void set_spin_weights(double in_spin, double out_spin, double weight[6])
   in_spin = clip(in_spin, 0.0, 1.0);
   out_spin = clip(out_spin, 0.0, 1.0);
   // Previous version of this function took the square root of the weights,
-  // under the assumption that 
+  // under the assumption that
   //
   //     w*I(q, rho1, rho2, ...) = I(q, sqrt(w)*rho1, sqrt(w)*rho2, ...)
   //
@@ -271,6 +273,7 @@ qabc_apply(
 #endif // _QABC_SECTION
 
 // ==================== KERNEL CODE ========================
+#define COMPUTE_F1_F2 defined(CALL_FQ)
 kernel
 void KERNEL_NAME(
     int32_t nq,                 // number of q values
@@ -337,32 +340,36 @@ void KERNEL_NAME(
   //
   // The code differs slightly between opencl and dll since opencl is only
   // seeing one q value (stored in the variable "this_result") while the dll
-  // version must loop over all q
-  #if BETA
-  double *beta_result = &(result[nq+1]); // = result + nq + 1
-  double weight_norm = (pd_start == 0 ? 0.0 : result[2*nq+1]);
-  #endif
+  // version must loop over all q.
   #ifdef USE_OPENCL
-    double pd_norm = (pd_start == 0 ? 0.0 : result[nq]);
-    double this_result = (pd_start == 0 ? 0.0 : result[q_index]);
-    #if BETA
-      double this_beta_result = (pd_start == 0 ? 0.0 : result[nq + q_index];
+    #if COMPUTE_F1_F2
+      double pd_norm = (pd_start == 0 ? 0.0 : result[nq]);
+      double weight_norm = (pd_start == 0 ? 0.0 : result[2*nq+1]);
+      double this_F2 = (pd_start == 0 ? 0.0 : result[q_index]);
+      double this_F1 = (pd_start == 0 ? 0.0 : result[q_index+nq+1]);
+    #else
+      double pd_norm = (pd_start == 0 ? 0.0 : result[nq]);
+      double this_result = (pd_start == 0 ? 0.0 : result[q_index]);
+    #endif
   #else // !USE_OPENCL
-    double pd_norm = (pd_start == 0 ? 0.0 : result[nq]); 
+    #if COMPUTE_F1_F2
+      double pd_norm = (pd_start == 0 ? 0.0 : result[nq]);
+      double weight_norm = (pd_start == 0 ? 0.0 : result[2*nq+1]);
+    #else
+      double pd_norm = (pd_start == 0 ? 0.0 : result[nq]);
+    #endif
     if (pd_start == 0) {
       #ifdef USE_OPENMP
       #pragma omp parallel for
       #endif
-      for (int q_index=0; q_index < nq; q_index++) result[q_index] = 0.0;
-      #if BETA
-      for (int q_index=0; q_index < nq; q_index++) beta_result[q_index] = 0.0;
+      #if COMPUTE_F1_F2
+          for (int q_index=0; q_index < 2*nq+2; q_index++) result[q_index] = 0.0;
+      #else
+          for (int q_index=0; q_index < nq; q_index++) result[q_index] = 0.0;
       #endif
     }
     //if (q_index==0) printf("start %d %g %g\n", pd_start, pd_norm, result[0]);
 #endif // !USE_OPENCL
-
-
-
 
 
 // ====== macros to set up the parts of the loop =======
@@ -453,23 +460,31 @@ After expansion, the loop struction will look like the following:
 // inner loop and defines the macros that use them.
 
 
-#if defined(CALL_IQ)
-  // unoriented 1D
+#if defined(CALL_FQ) // COMPUTE_F1_F2 is true
+  // unoriented 1D returning <F> and <F^2>
   double qk;
-  #if BETA == 0
-    #define FETCH_Q() do { qk = q[q_index]; } while (0)
-    #define BUILD_ROTATION() do {} while(0)
-    #define APPLY_ROTATION() do {} while(0)
-    #define CALL_KERNEL() CALL_IQ(qk,local_values.table)
+  double F1, F2;
+  #define FETCH_Q() do { qk = q[q_index]; } while (0)
+  #define BUILD_ROTATION() do {} while(0)
+  #define APPLY_ROTATION() do {} while(0)
+  #define CALL_KERNEL() CALL_FQ(qk,F1,F2,local_values.table)
 
-  // unoriented 1D Beta
-  #elif BETA == 1
-    double F1, F2;
-    #define FETCH_Q() do { qk = q[q_index]; } while (0)
-    #define BUILD_ROTATION() do {} while(0)
-    #define APPLY_ROTATION() do {} while(0)
-    #define CALL_KERNEL() CALL_IQ(qk,F1,F2,local_values.table)
-  #endif
+#elif defined(CALL_FQ_A)
+  // unoriented 2D return <F> and <F^2>
+  double qx, qy;
+  double F1, F2;
+  #define FETCH_Q() do { qx = q[2*q_index]; qy = q[2*q_index+1]; } while (0)
+  #define BUILD_ROTATION() do {} while(0)
+  #define APPLY_ROTATION() do {} while(0)
+  #define CALL_KERNEL() CALL_FQ_A(sqrt(qx*qx+qy*qy),F1,F2,local_values.table)
+
+#elif defined(CALL_IQ)
+  // unoriented 1D return <F^2>
+  double qk;
+  #define FETCH_Q() do { qk = q[q_index]; } while (0)
+  #define BUILD_ROTATION() do {} while(0)
+  #define APPLY_ROTATION() do {} while(0)
+  #define CALL_KERNEL() CALL_IQ(qk,local_values.table)
 
 #elif defined(CALL_IQ_A)
   // unoriented 2D
@@ -503,6 +518,7 @@ After expansion, the loop struction will look like the following:
   #define BUILD_ROTATION() qabc_rotation(&rotation, theta, phi, psi, dtheta, dphi, local_values.table.psi)
   #define APPLY_ROTATION() qabc_apply(&rotation, qx, qy, &qa, &qb, &qc)
   #define CALL_KERNEL() CALL_IQ_ABC(qa, qb, qc, local_values.table)
+
 #elif defined(CALL_IQ_XY)
   // direct call to qx,qy calculator
   double qx, qy;
@@ -516,7 +532,8 @@ After expansion, the loop struction will look like the following:
 // the previous if block so that we don't need to repeat the identical
 // logic in the IQ_AC and IQ_ABC branches.  This will become more important
 // if we implement more projections, or more complicated projections.
-#if defined(CALL_IQ) || defined(CALL_IQ_A)  // no orientation
+#if defined(CALL_IQ) || defined(CALL_IQ_A) || defined(CALL_FQ) || defined(CALL_FQ_A)
+  // no orientation
   #define APPLY_PROJECTION() const double weight=weight0
 #elif defined(CALL_IQ_XY) // pass orientation to the model
   // CRUFT: support oriented model which define Iqxy rather than Iqac or Iqabc
@@ -667,11 +684,11 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
     // Note: weight==0 must always be excluded
     if (weight > cutoff) {
       pd_norm += weight * CALL_VOLUME(local_values.table);
+      #if COMPUTE_F1_F2
+      weight_norm += weight;
+      #endif
       BUILD_ROTATION();
-#if BETA
-    if (weight > cutoff) {
-      weight_norm += weight;}
-#endif
+
 #ifndef USE_OPENCL
       // DLL needs to explicitly loop over the q values.
       #ifdef USE_OPENMP
@@ -717,10 +734,8 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
             }
           }
         #else  // !MAGNETIC
-          #if defined(CALL_IQ) && BETA == 1
-            CALL_KERNEL();
-            const double scatteringF1 = F1;
-            const double scatteringF2 = F2;
+          #if COMPUTE_F1_F2
+            CALL_KERNEL(); // sets F1 and F2 by reference
           #else
             const double scattering = CALL_KERNEL();
           #endif
@@ -728,18 +743,17 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
 //printf("q_index:%d %g %g %g %g\n", q_index, scattering, weight0);
 
         #ifdef USE_OPENCL
-          #if defined(CALL_IQ)&& BETA == 1
-             this_result += weight * scatteringF2;
-             this_beta_result += weight * scatteringF1;
-            #else
-              this_result += weight * scattering;
+          #if COMPUTE_F1_F2
+            this_F1 += weight * F1;
+            this_F2 += weight * F2;
+          #else
+            this_result += weight * scattering;
           #endif
         #else // !USE_OPENCL
-          #if defined(CALL_IQ)&& BETA == 1
-            result[q_index] += weight * scatteringF2;
-            beta_result[q_index] += weight * scatteringF1;
-            #endif
-            #else
+          #if COMPUTE_F1_F2
+            result[q_index] += weight * F2;
+            result[q_index+nq+1] += weight * F1;
+          #else
             result[q_index] += weight * scattering;
           #endif
         #endif // !USE_OPENCL
@@ -766,23 +780,31 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
 
 // Remember the current result and the updated norm.
 #ifdef USE_OPENCL
-  result[q_index] = this_result;
-  if (q_index == 0) result[nq] = pd_norm;
-  #if BETA
-  beta_result[q_index] = this_beta_result;
+  #if COMPUTE_F1_F2
+    result[q_index] = this_F2;
+    result[q_index+nq+1] = this_F1;
+    if (q_index == 0) {
+      result[nq] = pd_norm;
+      result[2*nq+1] = weight_norm;
+    }
+  #else
+    result[q_index] = this_result;
+    if (q_index == 0) result[nq] = pd_norm;
   #endif
-  if (q_index == 0) result[nq] = pd_norm;
 
 //if (q_index == 0) printf("res: %g/%g\n", result[0], pd_norm);
 #else // !USE_OPENCL
-  result[nq] = pd_norm;
-  #if BETA
-  result[2*nq+1] = weight_norm;
+  #if COMPUTE_F1_F2
+    result[nq] = pd_norm;
+    result[2*nq+1] = weight_norm;
+  #else
+    result[nq] = pd_norm;
   #endif
 //printf("res: %g/%g\n", result[0], pd_norm);
 #endif // !USE_OPENCL
 
 // ** clear the macros in preparation for the next kernel **
+#undef COMPUTE_F1_F2
 #undef PD_INIT
 #undef PD_OPEN
 #undef PD_CLOSE

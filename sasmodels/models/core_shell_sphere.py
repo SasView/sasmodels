@@ -57,8 +57,8 @@ from numpy import pi, inf
 name = "core_shell_sphere"
 title = "Form factor for a monodisperse spherical particle with particle with a core-shell structure."
 description = """
-    F^2(q) = 3/V_s [V_c (sld_core-sld_shell) (sin(q*radius)-q*radius*cos(q*radius))/(q*radius)^3
-                   + V_s (sld_shell-sld_solvent) (sin(q*r_s)-q*r_s*cos(q*r_s))/(q*r_s)^3]
+    F(q) = [V_c (sld_core-sld_shell) 3 (sin(q*radius)-q*radius*cos(q*radius))/(q*radius)^3
+            + V_s (sld_shell-sld_solvent) 3 (sin(q*r_s)-q*r_s*cos(q*r_s))/(q*r_s)^3]
 
             V_s: Volume of the sphere shell
             V_c: Volume of the sphere core

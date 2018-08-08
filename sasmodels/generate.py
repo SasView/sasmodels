@@ -670,7 +670,6 @@ def _call_pars(prefix, pars):
     return [p.as_call_reference(prefix) for p in pars]
 
 
-# type in IQXY pattern could be single, float, double, long double, ...
 _IQXY_PATTERN = re.compile(r"(^|\s)double\s+I(?P<mode>q(ac|abc|xy))\s*[(]",
                            flags=re.MULTILINE)
 def find_xy_mode(source):
@@ -700,9 +699,15 @@ def find_xy_mode(source):
             return m.group('mode')
     return 'qa'
 
-# type in IQXY pattern could be single, float, double, long double, ...
+# Note: not presently used.  Need to know whether Fq is available before
+# trying to compile the source.  Leave the code here in case we decide that
+# define have_Fq for each form factor is too tedious and error prone.
 _FQ_PATTERN = re.compile(r"(^|\s)void\s+Fq[(]", flags=re.MULTILINE)
-def has_Fq(source):
+def contains_Fq(source):
+    # type: (List[str]) -> bool
+    """
+    Return True if C source defines "void Fq(".
+    """
     for code in source:
         m = _FQ_PATTERN.search(code)
         if m is not None:
@@ -738,10 +743,12 @@ def make_source(model_info):
     # dispersion.  Need to be careful that necessary parameters are available
     # for computing volume even if we allow non-disperse volume parameters.
     partable = model_info.parameters
+
     # Load templates and user code
     kernel_header = load_template('kernel_header.c')
     kernel_code = load_template('kernel_iq.c')
     user_code = [(f, open(f).read()) for f in model_sources(model_info)]
+
     # Build initial sources
     source = []
     _add_source(source, *kernel_header)
@@ -754,6 +761,7 @@ def make_source(model_info):
     # Make parameters for q, qx, qy so that we can use them in declarations
     q, qx, qy, qab, qa, qb, qc \
         = [Parameter(name=v) for v in 'q qx qy qab qa qb qc'.split()]
+
     # Generate form_volume function, etc. from body only
     if isinstance(model_info.form_volume, str):
         pars = partable.form_volume_parameters
@@ -803,14 +811,15 @@ def make_source(model_info):
         call_volume = "#define CALL_VOLUME(v) 1.0"
     source.append(call_volume)
     model_refs = _call_pars("_v.", partable.iq_parameters)
-    #create varaible BETA to turn on and off beta approximation
-    BETA = has_Fq(source)
-    if not BETA:
+
+    if model_info.have_Fq:
+        pars = ",".join(["_q", "&_F1", "&_F2",] + model_refs)
+        call_iq = "#define CALL_FQ(_q, _F1, _F2, _v) Fq(%s)" % pars
+        clear_iq = "#undef CALL_FQ"
+    else:
         pars = ",".join(["_q"] + model_refs)
         call_iq = "#define CALL_IQ(_q, _v) Iq(%s)" % pars
-    else:
-        pars = ",".join(["_q", "&_F1", "&_F2",] + model_refs)
-        call_iq = "#define CALL_IQ(_q, _F1, _F2, _v) Fq(%s)" % pars
+        clear_iq = "#undef CALL_IQ"
     if xy_mode == 'qabc':
         pars = ",".join(["_qa", "_qb", "_qc"] + model_refs)
         call_iqxy = "#define CALL_IQ_ABC(_qa,_qb,_qc,_v) Iqabc(%s)" % pars
@@ -819,10 +828,18 @@ def make_source(model_info):
         pars = ",".join(["_qa", "_qc"] + model_refs)
         call_iqxy = "#define CALL_IQ_AC(_qa,_qc,_v) Iqac(%s)" % pars
         clear_iqxy = "#undef CALL_IQ_AC"
-    elif xy_mode == 'qa':
+    elif xy_mode == 'qa' and not model_info.have_Fq:
         pars = ",".join(["_qa"] + model_refs)
         call_iqxy = "#define CALL_IQ_A(_qa,_v) Iq(%s)" % pars
         clear_iqxy = "#undef CALL_IQ_A"
+    elif xy_mode == 'qa' and model_info.have_Fq:
+        pars = ",".join(["_qa", "&_F1", "&_F2",] + model_refs)
+        # Note: uses rare C construction (expr1, expr2) which computes
+        # expr1 then expr2 and evaluates to expr2.  This allows us to
+        # leave it looking like a function even though it is returning
+        # its values by reference.
+        call_iqxy = "#define CALL_FQ_A(_qa,_F1,_F2,_v) (Fq(%s),_F2)" % pars
+        clear_iqxy = "#undef CALL_FQ_A"
     elif xy_mode == 'qxy':
         orientation_refs = _call_pars("_v.", partable.orientation_parameters)
         pars = ",".join(["_qx", "_qy"] + model_refs + orientation_refs)
@@ -839,7 +856,6 @@ def make_source(model_info):
     magpars = [k-2 for k, p in enumerate(partable.call_parameters)
                if p.type == 'sld']
     # Fill in definitions for numbers of parameters
-    source.append("#define BETA %d" %(1 if BETA else 0))
     source.append("#define MAX_PD %s"%partable.max_pd)
     source.append("#define NUM_PARS %d"%partable.npars)
     source.append("#define NUM_VALUES %d" % partable.nvalues)
@@ -847,18 +863,17 @@ def make_source(model_info):
     source.append("#define MAGNETIC_PARS %s"%",".join(str(k) for k in magpars))
     source.append("#define PROJECTION %d"%PROJECTION)
     # TODO: allow mixed python/opencl kernels?
-    ocl = _kernels(kernel_code, call_iq, call_iqxy, clear_iqxy, model_info.name)
-    dll = _kernels(kernel_code, call_iq, call_iqxy, clear_iqxy, model_info.name)
+    ocl = _kernels(kernel_code, call_iq, clear_iq, call_iqxy, clear_iqxy, model_info.name)
+    dll = _kernels(kernel_code, call_iq, clear_iq, call_iqxy, clear_iqxy, model_info.name)
 
     result = {
         'dll': '\n'.join(source+dll[0]+dll[1]+dll[2]),
         'opencl': '\n'.join(source+ocl[0]+ocl[1]+ocl[2]),
     }
-    #print(result['dll'])
     return result
 
 
-def _kernels(kernel, call_iq, call_iqxy, clear_iqxy, name):
+def _kernels(kernel, call_iq, clear_iq, call_iqxy, clear_iqxy, name):
     # type: ([str,str], str, str, str) -> List[str]
     code = kernel[0]
     path = kernel[1].replace('\\', '\\\\')
@@ -868,7 +883,7 @@ def _kernels(kernel, call_iq, call_iqxy, clear_iqxy, name):
         call_iq,
         '#line 1 "%s Iq"' % path,
         code,
-        "#undef CALL_IQ",
+        clear_iq,
         "#undef KERNEL_NAME",
         ]
 
@@ -1074,7 +1089,7 @@ def main():
         kernel_module = load_kernel_module(name)
         model_info = make_model_info(kernel_module)
         source = make_source(model_info)
-        #print(source['dll'])
+        print(source['dll'])
 
 
 if __name__ == "__main__":

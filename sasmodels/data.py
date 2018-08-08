@@ -521,7 +521,6 @@ def _plot_result1D(data,         # type: Data1D
                   else view if view is not None
                   else 'log')
         plt.xscale(xscale)
-        
         plt.xlabel("$q$/A$^{-1}$")
         plt.yscale(yscale)
         plt.ylabel('$I(q)$')

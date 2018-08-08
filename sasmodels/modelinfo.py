@@ -416,6 +416,7 @@ class ParameterTable(object):
     """
     # scale and background are implicit parameters
     COMMON = [Parameter(*p) for p in COMMON_PARAMETERS]
+
     def __init__(self, parameters):
         # type: (List[Parameter]) -> None
         self.kernel_parameters = parameters
@@ -439,6 +440,7 @@ class ParameterTable(object):
                                        if p.type == 'orientation']
         self.form_volume_parameters = [p for p in self.kernel_parameters
                                        if p.type == 'volume']
+
         # Theta offset
         offset = 0
         for p in self.kernel_parameters:
@@ -785,6 +787,8 @@ def make_model_info(kernel_module):
     info.docs = kernel_module.__doc__
     info.category = getattr(kernel_module, 'category', None)
     info.structure_factor = getattr(kernel_module, 'structure_factor', False)
+    # TODO: find Fq by inspection
+    info.have_Fq = getattr(kernel_module, 'have_Fq', False)
     info.profile_axes = getattr(kernel_module, 'profile_axes', ['x', 'y'])
     info.source = getattr(kernel_module, 'source', [])
     info.c_code = getattr(kernel_module, 'c_code', None)
@@ -908,6 +912,9 @@ class ModelInfo(object):
     #: between form factor models.  This will default to False if it is not
     #: provided in the file.
     structure_factor = None # type: bool
+    #: True if the model defines an Fq function with signature
+    #: void Fq(double q, double *F1, double *F2, ...)
+    have_Fq = False
     #: List of C source files used to define the model.  The source files
     #: should define the *Iq* function, and possibly *Iqac* or *Iqabc* if the
     #: model defines orientation parameters. Files containing the most basic

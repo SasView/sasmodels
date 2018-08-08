@@ -4,6 +4,7 @@ form_volume(double radius_polar, double radius_equatorial)
     return M_4PI_3*radius_polar*radius_equatorial*radius_equatorial;
 }
 
+/* Fq overrides Iq
 static  double
 Iq(double q,
     double sld,
@@ -19,7 +20,7 @@ Iq(double q,
     //     u = sin, du = cos dT
     //     i(h) = int_0^1 Phi^2(h a sqrt(1 + u^2(v^2-1)) du
     const double v_square_minus_one = square(radius_polar/radius_equatorial) - 1.0;
-  
+
     // translate a point in [-1,1] to a point in [0, 1]
     // const double u = GAUSS_Z[i]*(upper-lower)/2 + (upper+lower)/2;
     const double zm = 0.5;
@@ -35,7 +36,8 @@ Iq(double q,
     const double form = total*zm;
     const double s = (sld - sld_solvent) * form_volume(radius_polar, radius_equatorial);
     return 1.0e-4 * s * s * form;
-} 
+}
+*/
 
 static void
 Fq(double q,
@@ -71,14 +73,9 @@ Fq(double q,
     const double form_squared_avg = total_F2*zm;
     const double form_avg = total_F1*zm;
     const double s = (sld - sld_solvent) * form_volume(radius_polar, radius_equatorial);
-    *F2 = 1e-4 * s * s * form_squared_avg;
     *F1 = 1e-2 * s * form_avg;
+    *F2 = 1e-4 * s * s * form_squared_avg;
 }
-
-
-
-
-
 
 static double
 Iqac(double qab, double qc,
