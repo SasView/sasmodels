@@ -2,8 +2,7 @@ from __future__ import division, print_function
 # Make sasmodels available on the path
 import sys, os
 BETA_DIR = os.path.dirname(os.path.realpath(__file__))
-#SASMODELS_DIR = os.path.dirname(os.path.dirname(BETA_DIR))
-SASMODELS_DIR = r"C:\Source\sasmodels"
+SASMODELS_DIR = os.path.dirname(os.path.dirname(BETA_DIR))
 sys.path.insert(0, SASMODELS_DIR)
 
 from collections import namedtuple
@@ -40,9 +39,9 @@ def sas_3j1x_x(x):
         index = (x < 0.25)
         y = x[index]**2
         c1 = -1.0/10.0
-        c2 =  1.0/280.0
+        c2 = +1.0/280.0
         c3 = -1.0/15120.0
-        c4 =  1.0/1330560.0
+        c4 = +1.0/1330560.0
         c5 = -1.0/172972800.0
         retvalue[index] = 1.0 + y*(c1 + y*(c2 + y*(c3 + y*(c4 + y*c5))))
         index = ~index
@@ -66,31 +65,31 @@ def build_model(model_name, q, **pars):
 
 #gives the hardsphere structure factor that sasview uses
 def _hardsphere_simple(q, radius_effective, volfraction):
-    CUTOFFHS=0.05
+    CUTOFFHS = 0.05
     if fabs(radius_effective) < 1.E-12:
-        HARDSPH=1.0
+        HARDSPH = 1.0
         return HARDSPH
-    X = 1.0/( 1.0 -volfraction)
-    D= X*X
-    A= (1.+2.*volfraction)*D
-    A *=A
-    X=fabs(q*radius_effective*2.0)
+    X = 1.0/(1.0 -volfraction)
+    D = X*X
+    A = (1.+2.*volfraction)*D
+    A *= A
+    X = fabs(q*radius_effective*2.0)
     if X < 5.E-06:
-        HARDSPH=1./A
+        HARDSPH = 1./A
         return HARDSPH
-    X2 =X*X
+    X2 = X*X
     B = (1.0 +0.5*volfraction)*D
     B *= B
     B *= -6.*volfraction
-    G=0.5*volfraction*A
+    G = 0.5*volfraction*A
     if X < CUTOFFHS:
         FF = 8.0*A +6.0*B + 4.0*G + ( -0.8*A -B/1.5 -0.5*G +(A/35. +0.0125*B +0.02*G)*X2)*X2
-        HARDSPH= 1./(1. + volfraction*FF )
+        HARDSPH = 1./(1. + volfraction*FF )
         return HARDSPH
-    X4=X2*X2
+    X4 = X2*X2
     S, C = sin(X), cos(X)
-    FF=  (( G*( (4.*X2 -24.)*X*S -(X4 -12.*X2 +24.)*C +24. )/X2 + B*(2.*X*S -(X2-2.)*C -2.) )/X + A*(S-X*C))/X
-    HARDSPH= 1./(1. + 24.*volfraction*FF/X2 )
+    FF =  ((G*( (4.*X2 -24.)*X*S -(X4 -12.*X2 +24.)*C +24. )/X2 + B*(2.*X*S -(X2-2.)*C -2.) )/X + A*(S-X*C))/X
+    HARDSPH = 1./(1. + 24.*volfraction*FF/X2)
     return HARDSPH
 
 def hardsphere_simple(q, radius_effective, volfraction):
@@ -106,7 +105,7 @@ def gaussian_distribution(center, sigma, lb, ub):
     if sigma != 0:
         nsigmas = NSIGMA_GAUSS
         x = np.linspace(center-sigma*nsigmas, center+sigma*nsigmas, num=N_GAUSS)
-        x= x[(x >= lb) & (x <= ub)]
+        x = x[(x >= lb) & (x <= ub)]
         px = np.exp((x-center)**2 / (-2.0 * sigma * sigma))
         return x, px
     else:
@@ -118,7 +117,7 @@ def schulz_distribution(center, sigma, lb, ub):
     if sigma != 0:
         nsigmas = NSIGMA_SCHULZ
         x = np.linspace(center-sigma*nsigmas, center+sigma*nsigmas, num=N_SCHULZ)
-        x= x[(x >= lb) & (x <= ub)]
+        x = x[(x >= lb) & (x <= ub)]
         R = x/center
         z = (center/sigma)**2
         arg = z*np.log(z) + (z-1)*np.log(R) - R*z - np.log(center) - gammaln(z)
@@ -136,7 +135,7 @@ def ER_ellipsoid(radius_polar, radius_equatorial):
         ee = (radius_equatorial**2 - radius_polar**2) / radius_equatorial**2
     else:
         ee = 2*radius_polar
-    if (radius_polar * radius_equatorial != 0):
+    if radius_polar * radius_equatorial != 0:
         bd = 1.0 - ee
         e1 = np.sqrt(ee)
         b1 = 1.0 + np.arcsin(e1) / (e1*np.sqrt(bd))
@@ -147,7 +146,7 @@ def ER_ellipsoid(radius_polar, radius_equatorial):
     ddd = 2.0*(delta + 1.0)*radius_polar*radius_equatorial**2
     return 0.5*ddd**(1.0 / 3.0)
 
-def ellipsoid_volume(radius_polar,radius_equatorial):
+def ellipsoid_volume(radius_polar, radius_equatorial):
     volume = (4./3.)*pi*radius_polar*radius_equatorial**2
     return volume
 
@@ -209,14 +208,14 @@ def ellipsoid_pe(q, radius_polar, radius_equatorial, sld, sld_solvent,
     F1, F2 = np.zeros_like(q), np.zeros_like(q)
     for k, Rpk in enumerate(Rp_val):
         for i, Rei in enumerate(Re_val):
-            theory = ellipsoid_theta(q,Rpk,Rei,sld,sld_solvent)
+            theory = ellipsoid_theta(q, Rpk, Rei, sld, sld_solvent)
             volume = ellipsoid_volume(Rpk, Rei)
             weight = Rp_prob[k]*Re_prob[i]
             total_weight += weight
             total_volume += weight*volume
             F1 += theory.F1*weight
             F2 += theory.F2*weight
-            radius_eff += weight*ER_ellipsoid(Rpk,Rei)
+            radius_eff += weight*ER_ellipsoid(Rpk, Rei)
     F1 /= total_weight
     F2 /= total_weight
     average_volume = total_volume/total_weight
@@ -343,7 +342,7 @@ def sasmodels_theory(q, Pname, **pars):
     #Iq = Pq*Sq*pars.get('volfraction', 1)
     #Sq = Iq/Pq
     #Iq = None#= Sq = None
-    r=I._kernel.results
+    r = I._kernel.results
     return Theory(Q=q, F1=None, F2=None, P=Pq, S=None, I=None, Seff=r[1], Ibeta=Iq)
 
 def compare(title, target, actual, fields='F1 F2 P S I Seff Ibeta'):
@@ -382,7 +381,7 @@ def compare_sasview_sphere(pd_type='schulz'):
     q = np.logspace(-5, 0, 250)
     model = 'sphere'
     pars = dict(
-        radius=20,sld=4,sld_solvent=1,
+        radius=20, sld=4, sld_solvent=1,
         background=0,
         radius_pd=.1, radius_pd_type=pd_type,
         volfraction=0.15,
@@ -392,14 +391,14 @@ def compare_sasview_sphere(pd_type='schulz'):
     actual = sphere_r(q, norm='sasview', **pars)
     title = " ".join(("sasmodels", model, pd_type))
     compare(title, target, actual)
-COMPARISON[('sasview','sphere','gaussian')] = lambda: compare_sasview_sphere(pd_type='gaussian')
-COMPARISON[('sasview','sphere','schulz')] = lambda: compare_sasview_sphere(pd_type='schulz')
+COMPARISON[('sasview', 'sphere', 'gaussian')] = lambda: compare_sasview_sphere(pd_type='gaussian')
+COMPARISON[('sasview', 'sphere', 'schulz')] = lambda: compare_sasview_sphere(pd_type='schulz')
 
 def compare_sasview_ellipsoid(pd_type='gaussian'):
     q = np.logspace(-5, 0, 50)
     model = 'ellipsoid'
     pars = dict(
-        radius_polar=20,radius_equatorial=400,sld=4,sld_solvent=1,
+        radius_polar=20, radius_equatorial=400, sld=4, sld_solvent=1,
         background=0,
         radius_polar_pd=.1, radius_polar_pd_type=pd_type,
         radius_equatorial_pd=.1, radius_equatorial_pd_type=pd_type,
@@ -411,8 +410,8 @@ def compare_sasview_ellipsoid(pd_type='gaussian'):
     actual = ellipsoid_pe(q, norm='sasview', **pars)
     title = " ".join(("sasmodels", model, pd_type))
     compare(title, target, actual)
-COMPARISON[('sasview','ellipsoid','gaussian')] = lambda: compare_sasview_ellipsoid(pd_type='gaussian')
-COMPARISON[('sasview','ellipsoid','schulz')] = lambda: compare_sasview_ellipsoid(pd_type='schulz')
+COMPARISON[('sasview', 'ellipsoid', 'gaussian')] = lambda: compare_sasview_ellipsoid(pd_type='gaussian')
+COMPARISON[('sasview', 'ellipsoid', 'schulz')] = lambda: compare_sasview_ellipsoid(pd_type='schulz')
 
 def compare_yun_ellipsoid_mono():
     pars = {
@@ -436,8 +435,8 @@ def compare_yun_ellipsoid_mono():
     title = " ".join(("yun", "ellipsoid", "no pd"))
     #compare(title, target, actual, fields="P S I Seff Ibeta")
     compare(title, target, actual)
-COMPARISON[('yun','ellipsoid','gaussian')] = compare_yun_ellipsoid_mono
-COMPARISON[('yun','ellipsoid','schulz')] = compare_yun_ellipsoid_mono
+COMPARISON[('yun', 'ellipsoid', 'gaussian')] = compare_yun_ellipsoid_mono
+COMPARISON[('yun', 'ellipsoid', 'schulz')] = compare_yun_ellipsoid_mono
 
 def compare_yun_sphere_gauss():
     # Note: yun uses gauss limits from R0/10 to R0 + 5 sigma steps sigma/100
@@ -448,7 +447,7 @@ def compare_yun_sphere_gauss():
         'volfraction': 0.1,
     }
 
-    data = np.loadtxt(data_file('testPolydisperseGaussianSphere.dat'),skiprows=2).T
+    data = np.loadtxt(data_file('testPolydisperseGaussianSphere.dat'), skiprows=2).T
     Q = data[0]
     F1 = data[1]
     F2 = data[2]
@@ -459,7 +458,7 @@ def compare_yun_sphere_gauss():
     actual = sphere_r(Q, norm='yun', **pars)
     title = " ".join(("yun", "sphere", "10% dispersion 10% Vf"))
     compare(title, target, actual)
-    data = np.loadtxt(data_file('testPolydisperseGaussianSphere2.dat'),skiprows=2).T
+    data = np.loadtxt(data_file('testPolydisperseGaussianSphere2.dat'), skiprows=2).T
     pars.update(radius_pd=0.15)
     Q = data[0]
     F1 = data[1]
@@ -471,7 +470,7 @@ def compare_yun_sphere_gauss():
     actual = sphere_r(Q, norm='yun', **pars)
     title = " ".join(("yun", "sphere", "15% dispersion 10% Vf"))
     compare(title, target, actual)
-COMPARISON[('yun','sphere','gaussian')] = compare_yun_sphere_gauss
+COMPARISON[('yun', 'sphere', 'gaussian')] = compare_yun_sphere_gauss
 
 
 def compare_sasfit_sphere_gauss():
@@ -492,7 +491,7 @@ def compare_sasfit_sphere_gauss():
     title = " ".join(("sasfit", "sphere", "pd=10% gaussian"))
     compare(title, target, actual)
     #compare(title, target, actual, fields="P")
-COMPARISON[('sasfit','sphere','gaussian')] = compare_sasfit_sphere_gauss
+COMPARISON[('sasfit', 'sphere', 'gaussian')] = compare_sasfit_sphere_gauss
 
 def compare_sasfit_sphere_schulz():
     #radius=20,sld=4,sld_solvent=1,volfraction=0.3,radius_pd=0.1
@@ -511,7 +510,7 @@ def compare_sasfit_sphere_schulz():
     actual = sphere_r(Q, norm="sasfit", **pars)
     title = " ".join(("sasfit", "sphere", "pd=10% schulz"))
     compare(title, target, actual)
-COMPARISON[('sasfit','sphere','schulz')] = compare_sasfit_sphere_schulz
+COMPARISON[('sasfit', 'sphere', 'schulz')] = compare_sasfit_sphere_schulz
 
 def compare_sasfit_ellipsoid_schulz():
     #polarradius=20, equatorialradius=10, sld=4,sld_solvent=1,volfraction=0.3,radius_polar_pd=0.1
@@ -532,7 +531,7 @@ def compare_sasfit_ellipsoid_schulz():
     actual = ellipsoid_pe(Q, norm="sasfit", **pars)
     title = " ".join(("sasfit", "ellipsoid", "pd=10% schulz"))
     compare(title, target, actual)
-COMPARISON[('sasfit','ellipsoid','schulz')] = compare_sasfit_ellipsoid_schulz
+COMPARISON[('sasfit', 'ellipsoid', 'schulz')] = compare_sasfit_ellipsoid_schulz
 
 
 def compare_sasfit_ellipsoid_gaussian():
@@ -652,7 +651,7 @@ def compare_sasfit_ellipsoid_gaussian():
     actual = ellipsoid_pe(Q, norm='sasfit', **pars)
     target = Theory(Q=Q, S=SQ, Seff=SQ_EFF)
     compare("sasfit ellipsoid P(Q) 60% Rp 60% Vf", target, actual); plt.show()
-COMPARISON[('sasfit','ellipsoid','gaussian')] = compare_sasfit_ellipsoid_gaussian
+COMPARISON[('sasfit', 'ellipsoid', 'gaussian')] = compare_sasfit_ellipsoid_gaussian
 
 def main():
     key = tuple(sys.argv[1:])
