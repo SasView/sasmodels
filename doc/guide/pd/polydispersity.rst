@@ -7,20 +7,24 @@
 
 .. _polydispersityhelp:
 
-Polydispersity Distributions
-----------------------------
+Polydispersity & Orientational Distributions
+--------------------------------------------
 
-With some models in sasmodels we can calculate the average intensity for a
-population of particles that exhibit size and/or orientational
-polydispersity. The resultant intensity is normalized by the average
-particle volume such that
+For some models we can calculate the average intensity for a population of 
+particles that possess size and/or orientational (ie, angular) distributions. 
+In SasView we call the former *polydispersity* but use the parameter *PD* to 
+parameterise both. In other words, the meaning of *PD* in a model depends on 
+the actual parameter it is being applied too.
+
+The resultant intensity is then normalized by the average particle volume such 
+that
 
 .. math::
 
   P(q) = \text{scale} \langle F^* F \rangle / V + \text{background}
 
 where $F$ is the scattering amplitude and $\langle\cdot\rangle$ denotes an 
-average over the size distribution $f(x; \bar x, \sigma)$, giving
+average over the distribution $f(x; \bar x, \sigma)$, giving
 
 .. math::
 
@@ -29,18 +33,15 @@ average over the size distribution $f(x; \bar x, \sigma)$, giving
 
 Each distribution is characterized by a center value $\bar x$ or
 $x_\text{med}$, a width parameter $\sigma$ (note this is *not necessarily*
-the standard deviation, so read the description carefully), the number of
-sigmas $N_\sigma$ to include from the tails of the distribution, and the
-number of points used to compute the average. The center of the distribution
-is set by the value of the model parameter. The meaning of a polydispersity 
-parameter *PD* (not to be confused with a molecular weight distributions 
-in polymer science) in a model depends on the type of parameter it is being 
-applied too.
+the standard deviation, so read the description of the distribution carefully), 
+the number of sigmas $N_\sigma$ to include from the tails of the distribution, 
+and the number of points used to compute the average. The center of the 
+distribution is set by the value of the model parameter.
 
 The distribution width applied to *volume* (ie, shape-describing) parameters 
 is relative to the center value such that $\sigma = \mathrm{PD} \cdot \bar x$. 
-However, the distribution width applied to *orientation* (ie, angle-describing) 
-parameters is just $\sigma = \mathrm{PD}$.
+However, the distribution width applied to *orientation* parameters is just 
+$\sigma = \mathrm{PD}$.
 
 $N_\sigma$ determines how far into the tails to evaluate the distribution,
 with larger values of $N_\sigma$ required for heavier tailed distributions.
@@ -50,9 +51,10 @@ will not contribute much to the average may not hold when particles are large.
 This, too, will require increasing $N_\sigma$.
 
 Users should note that the averaging computation is very intensive. Applying
-polydispersion to multiple parameters at the same time or increasing the
-number of points in the distribution will require patience! However, the
-calculations are generally more robust with more data points or more angles.
+polydispersion and/or orientational distributions to multiple parameters at 
+the same time, or increasing the number of points in the distribution, will 
+require patience! However, the calculations are generally more robust with 
+more data points or more angles.
 
 The following distribution functions are provided:
 
@@ -71,20 +73,19 @@ Additional distributions are under consideration.
 .. note:: In 2009 IUPAC decided to introduce the new term 'dispersity' to replace 
            the term 'polydispersity' (see `Pure Appl. Chem., (2009), 81(2), 
            351-353 <http://media.iupac.org/publications/pac/2009/pdf/8102x0351.pdf>`_ 
-           in order to make the terminology describing distributions of properties 
-           unambiguous. Throughout the SasView documentation we continue to use the 
-           term polydispersity because one of the consequences of the IUPAC change is 
-           that orientational polydispersity would not meet their new criteria (which 
-           requires dispersity to be dimensionless).
+           in order to make the terminology describing distributions of chemical 
+           properties unambiguous. However, these terms are unrelated to the 
+           proportional size distributions and orientational distributions used in 
+           SasView models.
 
 Suggested Applications
 ^^^^^^^^^^^^^^^^^^^^^^
 
-If applying polydispersion to parameters describing particle sizes, use
+If applying polydispersion to parameters describing particle sizes, consider using
 the Lognormal or Schulz distributions.
 
 If applying polydispersion to parameters describing interfacial thicknesses
-or angular orientations, use the Gaussian or Boltzmann distributions.
+or angular orientations, consider using the Gaussian or Boltzmann distributions.
 
 If applying polydispersion to parameters describing angles, use the Uniform 
 distribution. Beware of using distributions that are always positive (eg, the 
@@ -331,22 +332,57 @@ not be fitable.
 Note about DLS polydispersity
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Many commercial Dynamic Light Scattering (DLS) instruments produce a size
-polydispersity parameter, sometimes even given the symbol $p$\ ! This
-parameter is defined as the relative standard deviation coefficient of
-variation of the size distribution and is NOT the same as the polydispersity
-parameters in the Lognormal and Schulz distributions above (though they all
-related) except when the DLS polydispersity parameter is <0.13.
+Several measures of polydispersity abound in Dynamic Light Scattering (DLS) and 
+it should not be assumed that any of the following can be simply equated with 
+the polydispersity *PD* parameter used in SasView.
+
+The dimensionless *Polydispersity Index (PI)* is a measure of the width of the 
+distribution of autocorrelation function decay rates (*not* the distribution of 
+particle sizes itself, though the two are inversely related) and is defined by 
+ISO 22412:2017 as
 
 .. math::
 
-    p_{DLS} = \sqrt(\nu / \bar x^2)
+    PI = \mu_{2} / \bar \Gamma^2
 
-where $\nu$ is the variance of the distribution and $\bar x$ is the mean
-value of $x$.
+where $\mu_\text{2}$ is the second cumulant, and $\bar \Gamma^2$ is the 
+intensity-weighted average value, of the distribution of decay rates.
+
+*If the distribution of decay rates is Gaussian* then
+
+.. math::
+
+    PI = \sigma^2 / 2\bar \Gamma^2
+
+where $\sigma$ is the standard deviation, allowing a *Relative Polydispersity (RP)* 
+to be defined as
+
+.. math::
+
+    RP = \sigma / \bar \Gamma = \sqrt{2.PI}
+
+PI values smaller than 0.05 indicate a highly monodisperse system. Values 
+greater than 0.7 indicate significant polydispersity.
+
+The *size polydispersity P-parameter* is defined as the relative standard 
+deviation coefficient of variation  
+
+.. math::
+
+    P = \sqrt\nu / \bar R
+
+where $\nu$ is the variance of the distribution and $\bar R$ is the mean
+value of $R$. Here, the product $P \bar R$ is *equal* to the standard 
+deviation of the Lognormal distribution.
+
+P values smaller than 0.13 indicate a monodisperse system.
 
 For more information see:
-S King, C Washington & R Heenan, *Phys Chem Chem Phys*, (2005), 7, 143
+`ISO 22412:2017, International Standards Organisation (2017) <https://www.iso.org/standard/65410.html>`_. 
+`Polydispersity: What does it mean for DLS and Chromatography <http://www.materials-talks.com/blog/2014/10/23/polydispersity-what-does-it-mean-for-dls-and-chromatography/>`_. 
+`Dynamic Light Scattering: Common Terms Defined, Whitepaper WP111214. Malvern Instruments (2011) <http://www.biophysics.bioc.cam.ac.uk/wp-content/uploads/2011/02/DLS_Terms_defined_Malvern.pdf>`_. 
+S King, C Washington & R Heenan, *Phys Chem Chem Phys*, (2005), 7, 143. 
+T Allen, in *Particle Size Measurement*, 4th Edition, Chapman & Hall, London (1990).
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
@@ -356,3 +392,4 @@ S King, C Washington & R Heenan, *Phys Chem Chem Phys*, (2005), 7, 143
 | 2017-05-08 Paul Kienzle
 | 2018-03-20 Steve King
 | 2018-04-04 Steve King
+| 2018-08-09 Steve King
