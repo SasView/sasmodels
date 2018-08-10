@@ -70,6 +70,10 @@ These are all implemented as *number-average* distributions.
 
 Additional distributions are under consideration.
 
+**Beware: when the Polydispersity & Orientational Distribution panel in SasView is**
+**first opened, the default distribution for all parameters is the Gaussian Distribution.**
+**This may not be suitable. See Suggested Applications below.**
+
 .. note:: In 2009 IUPAC decided to introduce the new term 'dispersity' to replace 
            the term 'polydispersity' (see `Pure Appl. Chem., (2009), 81(2), 
            351-353 <http://media.iupac.org/publications/pac/2009/pdf/8102x0351.pdf>`_ 
@@ -359,7 +363,7 @@ to be defined as
 
 .. math::
 
-    RP = \sigma / \bar \Gamma = \sqrt{2.PI}
+    RP = \sigma / \bar \Gamma = \sqrt{2 \cdot PI}
 
 PI values smaller than 0.05 indicate a highly monodisperse system. Values 
 greater than 0.7 indicate significant polydispersity.
