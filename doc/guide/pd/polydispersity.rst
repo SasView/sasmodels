@@ -340,7 +340,7 @@ Several measures of polydispersity abound in Dynamic Light Scattering (DLS) and
 it should not be assumed that any of the following can be simply equated with 
 the polydispersity *PD* parameter used in SasView.
 
-The dimensionless *Polydispersity Index (PI)* is a measure of the width of the 
+The dimensionless **Polydispersity Index (PI)** is a measure of the width of the 
 distribution of autocorrelation function decay rates (*not* the distribution of 
 particle sizes itself, though the two are inversely related) and is defined by 
 ISO 22412:2017 as
@@ -358,7 +358,7 @@ intensity-weighted average value, of the distribution of decay rates.
 
     PI = \sigma^2 / 2\bar \Gamma^2
 
-where $\sigma$ is the standard deviation, allowing a *Relative Polydispersity (RP)* 
+where $\sigma$ is the standard deviation, allowing a **Relative Polydispersity (RP)** 
 to be defined as
 
 .. math::
@@ -368,7 +368,7 @@ to be defined as
 PI values smaller than 0.05 indicate a highly monodisperse system. Values 
 greater than 0.7 indicate significant polydispersity.
 
-The *size polydispersity P-parameter* is defined as the relative standard 
+The **size polydispersity P-parameter** is defined as the relative standard 
 deviation coefficient of variation  
 
 .. math::
@@ -382,10 +382,15 @@ deviation of the Lognormal distribution.
 P values smaller than 0.13 indicate a monodisperse system.
 
 For more information see:
-`ISO 22412:2017, International Standards Organisation (2017) <https://www.iso.org/standard/65410.html>`_. 
-`Polydispersity: What does it mean for DLS and Chromatography <http://www.materials-talks.com/blog/2014/10/23/polydispersity-what-does-it-mean-for-dls-and-chromatography/>`_. 
-`Dynamic Light Scattering: Common Terms Defined, Whitepaper WP111214. Malvern Instruments (2011) <http://www.biophysics.bioc.cam.ac.uk/wp-content/uploads/2011/02/DLS_Terms_defined_Malvern.pdf>`_. 
-S King, C Washington & R Heenan, *Phys Chem Chem Phys*, (2005), 7, 143. 
+
+`ISO 22412:2017, International Standards Organisation (2017) <https://www.iso.org/standard/65410.html>`_.
+
+`Polydispersity: What does it mean for DLS and Chromatography <http://www.materials-talks.com/blog/2014/10/23/polydispersity-what-does-it-mean-for-dls-and-chromatography/>`_.
+
+`Dynamic Light Scattering: Common Terms Defined, Whitepaper WP111214. Malvern Instruments (2011) <http://www.biophysics.bioc.cam.ac.uk/wp-content/uploads/2011/02/DLS_Terms_defined_Malvern.pdf>`_.
+
+S King, C Washington & R Heenan, *Phys Chem Chem Phys*, (2005), 7, 143.
+
 T Allen, in *Particle Size Measurement*, 4th Edition, Chapman & Hall, London (1990).
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
