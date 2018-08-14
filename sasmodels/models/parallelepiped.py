@@ -229,6 +229,7 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
              ]
 
 source = ["lib/gauss76.c", "parallelepiped.c"]
+have_Fq = True
 
 def ER(length_a, length_b, length_c):
     """

@@ -145,6 +145,7 @@ parameters = [
 
 source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
           "core_shell_bicelle_elliptical.c"]
+have_Fq = True
 
 def random():
     outer_major = 10**np.random.uniform(1, 4.7)

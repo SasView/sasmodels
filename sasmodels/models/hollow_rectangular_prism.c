@@ -12,8 +12,10 @@ form_volume(double length_a, double b2a_ratio, double c2a_ratio, double thicknes
     return vol_shell;
 }
 
-static double
-Iq(double q,
+static void
+Fq(double q,
+    double *F1,
+    double *F2,
     double sld,
     double solvent_sld,
     double length_a,
@@ -35,7 +37,8 @@ Iq(double q,
     const double v2a = 0.0;
     const double v2b = M_PI_2;  //phi integration limits
 
-    double outer_sum = 0.0;
+    double outer_sum_F1 = 0.0;
+    double outer_sum_F2 = 0.0;
     for(int i=0; i<GAUSS_N; i++) {
 
         const double theta = 0.5 * ( GAUSS_Z[i]*(v1b-v1a) + v1a + v1b );
@@ -45,7 +48,8 @@ Iq(double q,
         const double termC1 = sas_sinx_x(q * c_half * cos(theta));
         const double termC2 = sas_sinx_x(q * (c_half-thickness)*cos(theta));
 
-        double inner_sum = 0.0;
+        double inner_sum_F1 = 0.0;
+        double inner_sum_F2 = 0.0;
         for(int j=0; j<GAUSS_N; j++) {
 
             const double phi = 0.5 * ( GAUSS_Z[j]*(v2b-v2a) + v2a + v2b );
@@ -63,23 +67,29 @@ Iq(double q,
             const double AP1 = vol_total * termA1 * termB1 * termC1;
             const double AP2 = vol_core * termA2 * termB2 * termC2;
 
-            inner_sum += GAUSS_W[j] * square(AP1-AP2);
+            inner_sum_F1 += GAUSS_W[j] * (AP1-AP2);
+            inner_sum_F2 += GAUSS_W[j] * square(AP1-AP2);
         }
-        inner_sum *= 0.5 * (v2b-v2a);
+        inner_sum_F1 *= 0.5 * (v2b-v2a);
+        inner_sum_F2 *= 0.5 * (v2b-v2a);
 
-        outer_sum += GAUSS_W[i] * inner_sum * sin(theta);
+        outer_sum_F1 += GAUSS_W[i] * inner_sum_F1 * sin(theta);
+        outer_sum_F2 += GAUSS_W[i] * inner_sum_F2 * sin(theta);
     }
-    outer_sum *= 0.5*(v1b-v1a);
+    outer_sum_F1 *= 0.5*(v1b-v1a);
+    outer_sum_F2 *= 0.5*(v1b-v1a);
 
     // Normalize as in Eqn. (15) without the volume factor (as cancels with (V*DelRho)^2 normalization)
     // The factor 2 is due to the different theta integration limit (pi/2 instead of pi)
-    const double form = outer_sum/M_PI_2;
+    const double form_avg = outer_sum_F1/M_PI_2;
+    const double form_squared_avg = outer_sum_F2/M_PI_2;
 
     // Multiply by contrast^2. Factor corresponding to volume^2 cancels with previous normalization.
-    const double delrho = sld - solvent_sld;
+    const double contrast = sld - solvent_sld;
 
     // Convert from [1e-12 A-1] to [cm-1]
-    return 1.0e-4 * delrho * delrho * form;
+    *F1 = 1.0e-2 * contrast * form_avg;
+    *F2 = 1.0e-4 * contrast * contrast * form_squared_avg;
 }
 
 static double

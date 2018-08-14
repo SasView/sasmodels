@@ -363,7 +363,7 @@ def test_composite():
     model = load_model("cylinder@hardsphere*sphere")
     actual = [p.name for p in model.info.parameters.kernel_parameters]
     target = ("sld sld_solvent radius length theta phi volfraction"
-              " A_sld A_sld_solvent A_radius").split()
+              " beta_mode A_sld A_sld_solvent A_radius").split()
     assert target == actual, "%s != %s"%(target, actual)
 
 if __name__ == "__main__":

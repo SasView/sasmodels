@@ -153,6 +153,7 @@ parameters = [
 
 source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
           "core_shell_bicelle.c"]
+have_Fq = True
 
 def random():
     pars = dict(

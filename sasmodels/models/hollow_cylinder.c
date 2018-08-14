@@ -1,12 +1,5 @@
 //#define INVALID(v) (v.radius_core >= v.radius)
 
-// From Igor library
-static double
-_hollow_cylinder_scaling(double integrand, double delrho, double volume)
-{
-    return 1.0e-4 * square(volume * delrho) * integrand;
-}
-
 static double
 _fq(double qab, double qc,
     double radius, double thickness, double length)
@@ -29,26 +22,30 @@ form_volume(double radius, double thickness, double length)
 }
 
 
-static double
-Iq(double q, double radius, double thickness, double length,
+static void
+Fq(double q, double *F1, double *F2, double radius, double thickness, double length,
     double sld, double solvent_sld)
 {
     const double lower = 0.0;
     const double upper = 1.0;        //limits of numerical integral
 
-    double summ = 0.0;            //initialize intergral
+    double total_F1 = 0.0;            //initialize intergral
+    double total_F2 = 0.0;
     for (int i=0;i<GAUSS_N;i++) {
         const double cos_theta = 0.5*( GAUSS_Z[i] * (upper-lower) + lower + upper );
         const double sin_theta = sqrt(1.0 - cos_theta*cos_theta);
         const double form = _fq(q*sin_theta, q*cos_theta,
                                 radius, thickness, length);
-        summ += GAUSS_W[i] * form * form;
+        total_F1 += GAUSS_W[i] * form;
+        total_F2 += GAUSS_W[i] * form * form;
     }
-
-    const double Aq = 0.5*summ*(upper-lower);
-    const double volume = form_volume(radius, thickness, length);
-    return _hollow_cylinder_scaling(Aq, solvent_sld - sld, volume);
+    total_F1 *= 0.5*(upper-lower);
+    total_F2 *= 0.5*(upper-lower);
+    const double s = (sld - solvent_sld) * form_volume(radius, thickness, length);
+    *F1 = 1e-2 * s * total_F1;
+    *F2 = 1e-4 * s*s * total_F2;
 }
+
 
 static double
 Iqac(double qab, double qc,
@@ -56,7 +53,6 @@ Iqac(double qab, double qc,
     double sld, double solvent_sld)
 {
     const double form = _fq(qab, qc, radius, thickness, length);
-
-    const double vol = form_volume(radius, thickness, length);
-    return _hollow_cylinder_scaling(form*form, solvent_sld-sld, vol);
+    const double s = (sld - solvent_sld) * form_volume(radius, thickness, length);
+    return 1.0e-4*square(s * form);
 }

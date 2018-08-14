@@ -144,6 +144,7 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "core_shell_ellipsoid.c"]
+have_Fq = True
 
 def ER(radius_equat_core, x_core, thick_shell, x_polar_shell):
     """

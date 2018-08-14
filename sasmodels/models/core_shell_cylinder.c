@@ -12,8 +12,10 @@ form_volume(double radius, double thickness, double length)
     return M_PI*square(radius+thickness)*(length+2.0*thickness);
 }
 
-static double
-Iq(double q,
+static void
+Fq(double q,
+    double *F1,
+    double *F2,
     double core_sld,
     double shell_sld,
     double solvent_sld,
@@ -28,7 +30,8 @@ Iq(double q,
     const double shell_r = (radius + thickness);
     const double shell_h = (0.5*length + thickness);
     const double shell_vd = form_volume(radius,thickness,length) * (shell_sld-solvent_sld);
-    double total = 0.0;
+    double total_F1 = 0.0;
+    double total_F2 = 0.0;
     for (int i=0; i<GAUSS_N ;i++) {
         // translate a point in [-1,1] to a point in [0, pi/2]
         //const double theta = ( GAUSS_Z[i]*(upper-lower) + upper + lower )/2.0;
@@ -39,13 +42,14 @@ Iq(double q,
         const double qc = q*cos_theta;
         const double fq = _cyl(core_vd, core_r*qab, core_h*qc)
             + _cyl(shell_vd, shell_r*qab, shell_h*qc);
-        total += GAUSS_W[i] * fq * fq * sin_theta;
+        total_F1 += GAUSS_W[i] * fq * sin_theta;
+        total_F2 += GAUSS_W[i] * fq * fq * sin_theta;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
     //const double form = (upper-lower)/2.0*total;
-    return 1.0e-4 * total * M_PI_4;
+    *F1 = 1.0e-2 * total_F1 * M_PI_4;
+    *F2 = 1.0e-4 * total_F2 * M_PI_4;
 }
-
 
 static double
 Iqac(double qab, double qc,

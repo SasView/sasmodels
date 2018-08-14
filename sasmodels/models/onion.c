@@ -39,8 +39,8 @@ form_volume(double radius_core, double n_shells, double thickness[])
   return M_4PI_3*cube(r);
 }
 
-static double
-Iq(double q, double sld_core, double radius_core, double sld_solvent,
+static void
+Fq(double q, double *F1, double *F2, double sld_core, double radius_core, double sld_solvent,
     double n_shells, double sld_in[], double sld_out[], double thickness[],
     double A[])
 {
@@ -54,7 +54,7 @@ Iq(double q, double sld_core, double radius_core, double sld_solvent,
     f += f_exp(q, r_out, sld_in[i], sld_out[i], thickness[i], A[i], 1.0);
   }
   f -= f_exp(q, r_out, sld_solvent, 0.0, 0.0, 0.0, 0.0);
-  const double f2 = f * f * 1.0e-4;
 
-  return f2;
+  *F1 = 1e-2 * f;
+  *F2 = 1e-4 * f * f;
 }

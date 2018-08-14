@@ -124,6 +124,7 @@ parameters = [["sld_core", "1e-6/Ang^2", 4, [-inf, inf], "sld",
              ]
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "core_shell_cylinder.c"]
+have_Fq = True
 
 def ER(radius, thickness, length):
     """

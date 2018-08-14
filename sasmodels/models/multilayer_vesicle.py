@@ -144,6 +144,7 @@ parameters = [
 #polydispersity = ["radius", "thick_shell"]
 
 source = ["lib/sas_3j1x_x.c", "multilayer_vesicle.c"]
+have_Fq = True
 
 def ER(radius, thick_shell, thick_solvent, n_shells):
     n_shells = int(n_shells+0.5)

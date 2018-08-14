@@ -37,8 +37,10 @@ form_volume(double radius_equat_core,
     return vol;
 }
 
-static double
-Iq(double q,
+static void
+Fq(double q,
+    double *F1,
+    double *F2,
     double radius_equat_core,
     double x_core,
     double thick_shell,
@@ -57,7 +59,8 @@ Iq(double q,
     // translate from [-1, 1] => [0, 1]
     const double m = 0.5;
     const double b = 0.5;
-    double total = 0.0;     //initialize intergral
+    double total_F1 = 0.0;     //initialize intergral
+    double total_F2 = 0.0;     //initialize intergral
     for(int i=0;i<GAUSS_N;i++) {
         const double cos_theta = GAUSS_Z[i]*m + b;
         const double sin_theta = sqrt(1.0 - cos_theta*cos_theta);
@@ -65,13 +68,17 @@ Iq(double q,
             radius_equat_core, polar_core,
             equat_shell, polar_shell,
             sld_core_shell, sld_shell_solvent);
-        total += GAUSS_W[i] * fq * fq;
+        total_F1 += GAUSS_W[i] * fq;
+        total_F2 += GAUSS_W[i] * fq * fq;
     }
-    total *= m;
+    total_F1 *= m;
+    total_F2 *= m;
 
     // convert to [cm-1]
-    return 1.0e-4 * total;
+    *F1 = 1.0e-2 * total_F1;
+    *F2 = 1.0e-4 * total_F2;
 }
+
 
 static double
 Iqac(double qab, double qc,

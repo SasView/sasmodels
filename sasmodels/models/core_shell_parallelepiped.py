@@ -225,6 +225,7 @@ parameters = [["sld_core", "1e-6/Ang^2", 1, [-inf, inf], "sld",
              ]
 
 source = ["lib/gauss76.c", "core_shell_parallelepiped.c"]
+have_Fq = True
 
 
 def ER(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c):

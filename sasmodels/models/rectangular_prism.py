@@ -134,6 +134,7 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
              ]
 
 source = ["lib/gauss76.c", "rectangular_prism.c"]
+have_Fq = True
 
 def ER(length_a, b2a_ratio, c2a_ratio):
     """

@@ -66,26 +66,24 @@ parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Sphere radius"],
              ]
 
-source = ["lib/sas_3j1x_x.c", "lib/sphere_form.c"]
+source = ["lib/sas_3j1x_x.c"]
+have_Fq = True
 
 c_code = """
 static double form_volume(double radius)
 {
-    return sphere_volume(radius);
+    return M_4PI_3*cube(radius);
 }
 
-static void Fq(double q, double *F1,double *F2, double sld, double solvent_sld, double radius)
+static void Fq(double q, double *f1, double *f2, double sld, double sld_solvent, double radius)
 {
-    const double fq = sas_3j1x_x(q*radius);
-    const double contrast = (sld - solvent_sld);
-    const double form = 1e-2 * contrast * sphere_volume(radius) * fq;
-    *F1 = form;
-    *F2 = form*form;
+    const double bes = sas_3j1x_x(q*radius);
+    const double contrast = (sld - sld_solvent);
+    const double form = contrast * form_volume(radius) * bes;
+    *f1 = 1.0e-2*form;
+    *f2 = 1.0e-4*form*form;
 }
 """
-
-# TODO: figure this out by inspection
-have_Fq = True
 
 def ER(radius):
     """

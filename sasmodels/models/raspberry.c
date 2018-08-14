@@ -1,6 +1,6 @@
 double form_volume(double radius_lg);
 
-double Iq(double q, 
+double Iq(double q,
           double sld_lg, double sld_sm, double sld_solvent,
           double volfraction_lg, double volfraction_sm, double surf_fraction,
           double radius_lg, double radius_sm, double penetration);
@@ -26,7 +26,7 @@ double Iq(double q,
     double psiL,psiS;
     double sfLS,sfSS;
     double slT;
- 
+
     vfL = volfraction_lg;
     rL = radius_lg;
     sldL = sld_lg;
@@ -36,10 +36,10 @@ double Iq(double q,
     sldS = sld_sm;
     deltaS = penetration;
     sldSolv = sld_solvent;
-    
+
     delrhoL = fabs(sldL - sldSolv);
-    delrhoS = fabs(sldS - sldSolv); 
-     
+    delrhoS = fabs(sldS - sldSolv);
+
     VL = M_4PI_3*rL*rL*rL;
     VS = M_4PI_3*rS*rS*rS;
 
@@ -75,10 +75,10 @@ double Iq(double q,
     f2 = f2*(vfL*delrhoL*delrhoL*VL + vfS*fSs*Np*delrhoS*delrhoS*VS);
     //I(q) for free small particles
     f2+= vfS*(1.0-fSs)*delrhoS*delrhoS*VS*psiS*psiS;
-    
+
     // normalize to single particle volume and convert to 1/cm
     f2 *= 1.0e8;        // [=] 1/cm
     f2 *= 1.0e-12;      // convert for (1/A^-6)^2 to (1/A)^2
-    
+
     return f2;
 }

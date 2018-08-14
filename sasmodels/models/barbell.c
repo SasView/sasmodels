@@ -61,8 +61,8 @@ form_volume(double radius_bell,
     return M_PI*square(radius)*length + 2.0*M_PI*(p1+p2-p3);
 }
 
-static double
-Iq(double q, double sld, double solvent_sld,
+static void
+Fq(double q,double *F1, double *F2, double sld, double solvent_sld,
     double radius_bell, double radius, double length)
 {
     const double h = -sqrt(radius_bell*radius_bell - radius*radius);
@@ -71,22 +71,25 @@ Iq(double q, double sld, double solvent_sld,
     // translate a point in [-1,1] to a point in [0, pi/2]
     const double zm = M_PI_4;
     const double zb = M_PI_4;
-    double total = 0.0;
+    double total_F1 = 0.0;
+    double total_F2 = 0.0;
     for (int i = 0; i < GAUSS_N; i++){
         const double alpha= GAUSS_Z[i]*zm + zb;
         double sin_alpha, cos_alpha; // slots to hold sincos function output
         SINCOS(alpha, sin_alpha, cos_alpha);
         const double Aq = _fq(q*sin_alpha, q*cos_alpha, h, radius_bell, radius, half_length);
-        total += GAUSS_W[i] * Aq * Aq * sin_alpha;
+        total_F1 += GAUSS_W[i] * Aq * sin_alpha;
+        total_F2 += GAUSS_W[i] * Aq * Aq * sin_alpha;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
-    const double form = total*zm;
+    const double form_avg = total_F1*zm;
+    const double form_squared_avg = total_F2*zm;
 
     //Contrast
     const double s = (sld - solvent_sld);
-    return 1.0e-4 * s * s * form;
+    *F1 = 1.0e-2 * s * form_avg;
+    *F2 = 1.0e-4 * s * s * form_squared_avg;
 }
-
 
 static double
 Iqac(double qab, double qc,

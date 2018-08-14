@@ -314,6 +314,7 @@ parameters = [
 
 source = ["lib/sas_3j1x_x.c", "onion.c"]
 single = False
+have_Fq = True
 
 profile_axes = ['Radius (A)', 'SLD (1e-6/A^2)']
 def profile(sld_core, radius_core, sld_solvent, n_shells,

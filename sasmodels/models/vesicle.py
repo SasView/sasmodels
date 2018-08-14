@@ -93,6 +93,7 @@ parameters = [["sld", "1e-6/Ang^2", 0.5, [-inf, inf], "sld",
              ]
 
 source = ["lib/sas_3j1x_x.c", "vesicle.c"]
+have_Fq = True
 
 def ER(radius, thickness):
     '''

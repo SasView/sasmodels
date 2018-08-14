@@ -26,8 +26,10 @@ form_volume(double length_a, double length_b, double length_c,
 #endif
 }
 
-static double
-Iq(double q,
+static void
+Fq(double q,
+    double *F1,
+    double *F2,
     double core_sld,
     double arim_sld,
     double brim_sld,
@@ -59,7 +61,8 @@ Iq(double q,
 
     // outer integral (with gauss points), integration limits = 0, 1
     // substitute d_cos_alpha for sin_alpha d_alpha
-    double outer_sum = 0; //initialize integral
+    double outer_sum_F1 = 0; //initialize integral
+    double outer_sum_F2 = 0; //initialize integral
     for( int i=0; i<GAUSS_N; i++) {
         const double cos_alpha = 0.5 * ( GAUSS_Z[i] + 1.0 );
         const double mu = half_q * sqrt(1.0-cos_alpha*cos_alpha);
@@ -68,7 +71,8 @@ Iq(double q,
 
         // inner integral (with gauss points), integration limits = 0, 1
         // substitute beta = PI/2 u (so 2/PI * d_(PI/2 * beta) = d_beta)
-        double inner_sum = 0.0;
+        double inner_sum_F1 = 0.0;
+        double inner_sum_F2 = 0.0;
         for(int j=0; j<GAUSS_N; j++) {
             const double u = 0.5 * ( GAUSS_Z[j] + 1.0 );
             double sin_beta, cos_beta;
@@ -90,18 +94,21 @@ Iq(double q,
                 + drC*siA*siB*(siCt-siC);
 #endif
 
-            inner_sum += GAUSS_W[j] * f * f;
+            inner_sum_F1 += GAUSS_W[j] * f;
+            inner_sum_F2 += GAUSS_W[j] * f * f;
         }
         // now complete change of inner integration variable (1-0)/(1-(-1))= 0.5
-        inner_sum *= 0.5;
-        // now sum up the outer integral
-        outer_sum += GAUSS_W[i] * inner_sum;
+        // and sum up the outer integral
+        outer_sum_F1 += GAUSS_W[i] * inner_sum_F1 * 0.5;
+        outer_sum_F2 += GAUSS_W[i] * inner_sum_F2 * 0.5;
     }
     // now complete change of outer integration variable (1-0)/(1-(-1))= 0.5
-    outer_sum *= 0.5;
+    outer_sum_F1 *= 0.5;
+    outer_sum_F2 *= 0.5;
 
     //convert from [1e-12 A-1] to [cm-1]
-    return 1.0e-4 * outer_sum;
+    *F1 = 1.0e-2 * outer_sum_F1;
+    *F2 = 1.0e-4 * outer_sum_F2;
 }
 
 static double

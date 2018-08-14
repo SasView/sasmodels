@@ -121,6 +121,7 @@ parameters = [["radius_minor",     "Ang",        20.0,  [0, inf],    "volume",  
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "elliptical_cylinder.c"]
+have_Fq = True
 
 demo = dict(scale=1, background=0, radius_minor=100, axis_ratio=1.5, length=400.0,
             sld=4.0, sld_solvent=1.0, theta=10.0, phi=20, psi=30,

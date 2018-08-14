@@ -61,17 +61,11 @@ structure_factor = True
 single = False # TODO: check
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["radius_effective", "Ang", 50.0, [0, inf], "volume",
+parameters = [["radius_effective", "Ang", 50.0, [0, inf], "",
                "effective radius of hard sphere"],
               ["volfraction", "", 0.2, [0, 0.74], "",
                "volume fraction of hard spheres"],
              ]
-
-# No volume normalization despite having a volume parameter
-# This should perhaps be volume normalized?
-form_volume = """
-    return 1.0;
-    """
 
 Iq = r"""
       double D,A,B,G,X,X2,X4,S,C,FF,HARDSPH;
