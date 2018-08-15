@@ -30,6 +30,7 @@ from . import weights
 from . import resolution
 from . import resolution2d
 from .details import make_kernel_args, dispersion_mesh
+from .modelinfo import DEFAULT_BACKGROUND
 
 # pylint: disable=unused-import
 try:
@@ -348,7 +349,7 @@ class DataMixin(object):
             self._kernel = self._model.make_kernel(self._kernel_inputs)
 
         # Need to pull background out of resolution for multiple scattering
-        background = pars.get('background', 0.)
+        background = pars.get('background', DEFAULT_BACKGROUND)
         pars = pars.copy()
         pars['background'] = 0.
 
