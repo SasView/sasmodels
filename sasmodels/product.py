@@ -293,7 +293,7 @@ class ProductKernel(Kernel):
             #        'I' : Data1D(Q, scale*(F2 + (F1**2)*(S-1)) + background),
             #    }
             #lazy_pars = s_result, F1, F2, combined_scale
-            self.results = [F2, s_result]
+            self.results = [F2*volfrac/volume_avg, s_result]
             final_result = combined_scale*(F2 + (F1**2)*(s_result - 1)) + background
         else:
             p_result = self.p_kernel.Iq(p_details, p_values, cutoff, magnetic)
