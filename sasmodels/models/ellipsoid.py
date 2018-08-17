@@ -169,19 +169,20 @@ def ER(radius_polar, radius_equatorial):
     ee[idx] = (radius_polar[idx] ** 2 - radius_equatorial[idx] ** 2) / radius_polar[idx] ** 2
     idx = radius_polar < radius_equatorial
     ee[idx] = (radius_equatorial[idx] ** 2 - radius_polar[idx] ** 2) / radius_equatorial[idx] ** 2
-    idx = radius_polar == radius_equatorial
-    ee[idx] = 2 * radius_polar[idx]
-    valid = (radius_polar * radius_equatorial != 0)
+    valid = (radius_polar * radius_equatorial != 0) & (radius_polar != radius_equatorial)
     bd = 1.0 - ee[valid]
     e1 = np.sqrt(ee[valid])
     b1 = 1.0 + np.arcsin(e1) / (e1 * np.sqrt(bd))
     bL = (1.0 + e1) / (1.0 - e1)
     b2 = 1.0 + bd / 2 / e1 * np.log(bL)
     delta = 0.75 * b1 * b2
+    ddd = 2.0 * (delta + 1.0) * (radius_polar * radius_equatorial**2)[valid]
 
-    ddd = np.zeros_like(radius_polar)
-    ddd[valid] = 2.0 * (delta + 1.0) * radius_polar * radius_equatorial ** 2
-    return 0.5 * ddd ** (1.0 / 3.0)
+    r = np.zeros_like(radius_polar)
+    r[valid] = 0.5 * np.cbrt(ddd)
+    idx = radius_polar == radius_equatorial
+    r[idx] = radius_polar[idx]
+    return r
 
 def random():
     volume = 10**np.random.uniform(5, 12)
