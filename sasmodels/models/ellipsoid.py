@@ -125,6 +125,11 @@ from __future__ import division
 import numpy as np
 from numpy import inf, sin, cos, pi
 
+try:
+    from numpy import cbrt
+except ImportError:
+    def cbrt(x): return x ** (1.0/3.0)
+
 name = "ellipsoid"
 title = "Ellipsoid of revolution with uniform scattering length density."
 
@@ -179,7 +184,7 @@ def ER(radius_polar, radius_equatorial):
     ddd = 2.0 * (delta + 1.0) * (radius_polar * radius_equatorial**2)[valid]
 
     r = np.zeros_like(radius_polar)
-    r[valid] = 0.5 * np.cbrt(ddd)
+    r[valid] = 0.5 * cbrt(ddd)
     idx = radius_polar == radius_equatorial
     r[idx] = radius_polar[idx]
     return r
