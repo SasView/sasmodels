@@ -22,6 +22,5 @@ Iq(double q,
     const double fq = core_shell_fq(q, radius, thickness,
                                     core_sld, shell_sld, solvent_sld);
 
-    // Note: core_shell_kernel already performs the 1e-4 unit conversion
     return 1.0e-4 * volfraction * sq * fq * fq;
 }
