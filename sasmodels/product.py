@@ -36,7 +36,7 @@ else:
 
 ER_ID = "radius_effective"
 VF_ID = "volfraction"
-BETA_DEFINITION = ("beta_mode", "", 0, [["P*S"],["P*(1+beta*(S-1))"]], "",
+BETA_DEFINITION = ("beta_mode", ["P*S", "P*(1+beta*(S-1))"], 0, (None, None), "",
                    "Structure factor dispersion calculation mode")
 
 # TODO: core_shell_sphere model has suppressed the volume ratio calculation
@@ -293,13 +293,37 @@ class ProductKernel(Kernel):
             #        'I' : Data1D(Q, scale*(F2 + (F1**2)*(S-1)) + background),
             #    }
             #lazy_pars = s_result, F1, F2, combined_scale
-            self.results = [F2*volfrac/volume_avg, s_result]
+
+            # self.results = [F2*volfrac/volume_avg, s_result]
             final_result = combined_scale*(F2 + (F1**2)*(s_result - 1)) + background
+
+            # TODO: 1. include calculated Q vector
+            # TODO: 2. consider implications if there are intermediate results in P(Q)
+            # def lazy(F1, F2, S, scale, bg):
+            def lazy(F1, F2, S, scale):
+                return {
+                    "P(Q)": lambda: scale*F2,
+                    "S(Q)": lambda: S,
+                    "beta(Q)": lambda: F1**2 / F2,
+                    "S_eff(Q)": lambda: 1 + (F1**2 / F2)*(S-1),
+                    # "I(Q)":  lambda: scale*(F2 + (F1**2)*(S-1)) + bg,
+                }
+
+            self.results = lazy(F1, F2, s_result, volfrac/volume_avg)
+
         else:
             p_result = self.p_kernel.Iq(p_details, p_values, cutoff, magnetic)
             # remember the parts for plotting later
-            self.results = [p_result, s_result]
+            # self.results = [p_result, s_result]
             final_result = scale*(p_result*s_result) + background
+
+            def lazy(P, S):
+                return {
+                    "P(Q)": lambda: P,
+                    "S(Q)": lambda: S,
+                }
+
+            self.results = lazy(p_result, s_result)
 
         #call_details.show(values)
         #print("values", values)
