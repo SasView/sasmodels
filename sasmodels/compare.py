@@ -1287,7 +1287,8 @@ def parse_opts(argv):
         opts['res'] = [float(opts['res'])]*2
 
     if opts['datafile'] is not None:
-        data = load_data(os.path.expanduser(opts['datafile']))
+        data0 = load_data(os.path.expanduser(opts['datafile']))
+        data = data0, data0
     else:
         # Hack around the fact that make_data doesn't take a pair of resolutions
         res = opts['res']
