@@ -788,14 +788,15 @@ def make_model_info(kernel_module):
     info.category = getattr(kernel_module, 'category', None)
     info.structure_factor = getattr(kernel_module, 'structure_factor', False)
     # TODO: find Fq by inspection
+    info.effective_radius_type = getattr(kernel_module, 'effective_radius_type', None)
     info.have_Fq = getattr(kernel_module, 'have_Fq', False)
     info.profile_axes = getattr(kernel_module, 'profile_axes', ['x', 'y'])
     info.source = getattr(kernel_module, 'source', [])
     info.c_code = getattr(kernel_module, 'c_code', None)
+    info.ER = None  # CRUFT
+    info.VR = None  # CRUFT
     # TODO: check the structure of the tests
     info.tests = getattr(kernel_module, 'tests', [])
-    info.ER = getattr(kernel_module, 'ER', None) # type: ignore
-    info.VR = getattr(kernel_module, 'VR', None) # type: ignore
     info.form_volume = getattr(kernel_module, 'form_volume', None) # type: ignore
     info.Iq = getattr(kernel_module, 'Iq', None) # type: ignore
     info.Iqxy = getattr(kernel_module, 'Iqxy', None) # type: ignore
@@ -921,6 +922,9 @@ class ModelInfo(object):
     #: functions must appear first in the list, followed by the files that
     #: use those functions.  Form factors are indicated by providing
     #: an :attr:`ER` function.
+    effective_radius_type = None   # type: List[str]
+    #: Returns the occupied volume and the total volume for each parameter set.
+    #: See :attr:`ER` for details on the parameters.
     source = None           # type: List[str]
     #: The set of tests that must pass.  The format of the tests is described
     #: in :mod:`model_test`.
@@ -941,13 +945,6 @@ class ModelInfo(object):
     #: *radius*.  The *ER* function should return one effective radius for
     #: each parameter set.  Multiplicity parameters will be received as
     #: arrays, with one row per polydispersity condition.
-    ER = None               # type: Optional[Callable[[np.ndarray], np.ndarray]]
-    #: Returns the occupied volume and the total volume for each parameter set.
-    #: See :attr:`ER` for details on the parameters.
-    VR = None               # type: Optional[Callable[[np.ndarray], Tuple[np.ndarray, np.ndarray]]]
-    #: Arbitrary C code containing supporting functions, etc., to be inserted
-    #: after everything in source.  This can include Iq and Iqxy functions with
-    #: the full function signature, including all parameters.
     c_code = None
     #: Returns the form volume for python-based models.  Form volume is needed
     #: for volume normalization in the polydispersity integral.  If no

@@ -11,6 +11,11 @@ from __future__ import division, print_function
 import logging
 
 import numpy as np  # type: ignore
+from numpy import pi
+try:
+    from numpy import cbrt
+except ImportError:
+    def cbrt(x): return x ** (1.0/3.0)
 
 from .generate import F64
 from .kernel import KernelModel, Kernel
@@ -157,17 +162,26 @@ class PyKernel(Kernel):
             self._form = lambda: form(q, *kernel_args)
 
         # Generate a closure which calls the form_volume if it exists.
-        form_volume = model_info.form_volume
-        self._volume = ((lambda: form_volume(*volume_args)) if form_volume else
-                        (lambda: 1.0))
+        self._volume_args = volume_args
+        volume = model_info.form_volume
+        radius = model_info.effective_radius
+        self._volume = ((lambda: volume(*volume_args)) if volume
+                        else (lambda: 1.0))
+        self._radius = ((lambda mode: radius(mode, *volume_args)) if radius
+                        else (lambda mode: cbrt(0.75/pi*volume(*volume_args))) if volume
+                        else (lambda mode: 1.0))
 
-    def __call__(self, call_details, values, cutoff, magnetic):
+
+
+    def _call_kernel(self, call_details, values, cutoff, magnetic, effective_radius_type):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
         if magnetic:
             raise NotImplementedError("Magnetism not implemented for pure python models")
         #print("Calling python kernel")
         #call_details.show(values)
-        res = _loops(self._parameter_vector, self._form, self._volume,
+        radius = ((lambda: 0.0) if effective_radius_type == 0
+                  else (lambda: self._radius(effective_radius_type)))
+        res = _loops(self._parameter_vector, self._form, self._volume, radius,
                      self.q_input.nq, call_details, values, cutoff)
         return res
 
@@ -182,10 +196,11 @@ class PyKernel(Kernel):
 def _loops(parameters,    # type: np.ndarray
            form,          # type: Callable[[], np.ndarray]
            form_volume,   # type: Callable[[], float]
+           form_radius,   # type: Callable[[], float]
            nq,            # type: int
            call_details,  # type: details.CallDetails
            values,        # type: np.ndarray
-           cutoff         # type: float
+           cutoff,        # type: float
           ):
     # type: (...) -> None
     ################################################################
@@ -208,7 +223,9 @@ def _loops(parameters,    # type: np.ndarray
     pd_value = values[2+n_pars:2+n_pars + call_details.num_weights]
     pd_weight = values[2+n_pars + call_details.num_weights:]
 
-    pd_norm = 0.0
+    weight_norm = 0.0
+    weighted_volume = 0.0
+    weighted_radius = 0.0
     partial_weight = np.NaN
     weight = np.NaN
 
@@ -245,11 +262,12 @@ def _loops(parameters,    # type: np.ndarray
 
             # update value and norm
             total += weight * Iq
-            pd_norm += weight * form_volume()
+            weight_norm += weight
+            weighted_volume += weight * form_volume()
+            weighted_radius += weight * form_radius()
 
-    scale = values[0]/(pd_norm if pd_norm != 0.0 else 1.0)
-    background = values[1]
-    return scale*total + background
+    result = np.hstack((total, weight_norm, weighted_volume, weighted_radius))
+    return result
 
 
 def _create_default_functions(model_info):

@@ -804,12 +804,15 @@ def make_source(model_info):
     if partable.form_volume_parameters:
         refs = _call_pars("_v.", partable.form_volume_parameters)
         call_volume = "#define CALL_VOLUME(_v) form_volume(%s)"%(",".join(refs))
+        call_effective_radius = "#define CALL_EFFECTIVE_RADIUS(mode, _v) effective_radius(mode, %s)"%(",".join(refs))
     else:
         # Model doesn't have volume.  We could make the kernel run a little
         # faster by not using/transferring the volume normalizations, but
         # the ifdef's reduce readability more than is worthwhile.
         call_volume = "#define CALL_VOLUME(v) 1.0"
+        call_effective_radius = "#define CALL_EFFECTIVE_RADIUS(mode, v) 0.0"
     source.append(call_volume)
+    source.append(call_effective_radius)
     model_refs = _call_pars("_v.", partable.iq_parameters)
 
     if model_info.have_Fq:
