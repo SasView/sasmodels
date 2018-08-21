@@ -793,6 +793,7 @@ def make_model_info(kernel_module):
     info.profile_axes = getattr(kernel_module, 'profile_axes', ['x', 'y'])
     info.source = getattr(kernel_module, 'source', [])
     info.c_code = getattr(kernel_module, 'c_code', None)
+    info.effective_radius = getattr(kernel_module, 'effective_radius', None)
     info.ER = None  # CRUFT
     info.VR = None  # CRUFT
     # TODO: check the structure of the tests

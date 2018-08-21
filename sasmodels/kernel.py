@@ -43,16 +43,14 @@ class Kernel(object):
     def Iq(self, call_details, values, cutoff, magnetic):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
         Pq, Reff = self.Pq_Reff(call_details, values, cutoff, magnetic, effective_radius_type=0)
-        scale = values[0]
-        background = values[1]
-        return scale*Pq + background
+        return Pq
     __call__ = Iq
 
     def Pq_Reff(self, call_details, values, cutoff, magnetic, effective_radius_type):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool, int) -> np.ndarray
         self._call_kernel(call_details, values, cutoff, magnetic, effective_radius_type)
         #print("returned",self.q_input.q, self.result)
-        nout = 2 if self.info.have_Fq else 1
+        nout = 2 if self.info.have_Fq and self.dim == '1d' else 1
         total_weight = self.result[nout*self.q_input.nq + 0]
         if total_weight == 0.:
             total_weight = 1.
@@ -62,10 +60,12 @@ class Kernel(object):
         # compute I = scale*P + background
         #           = scale*(sum(w*F^2)/sum w)/(sum (w*V)/sum w) + background
         #           = scale/sum (w*V) * sum(w*F^2) + background
+        F2 = self.result[0:nout*self.q_input.nq:nout]
         scale = values[0]/(weighted_volume if weighted_volume != 0.0 else 1.0)
         background = values[1]
+        Pq = scale*F2 + background
         #print("scale",scale,background)
-        return self.result[0:nout*self.q_input.nq:nout], effective_radius
+        return Pq, effective_radius
 
     def beta(self, call_details, values, cutoff, magnetic, effective_radius_type):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool, int) -> np.ndarray

@@ -300,6 +300,7 @@ class ProductKernel(Kernel):
             F1, F2, volume_avg, effective_radius = self.p_kernel.beta(
                 p_details, p_values, cutoff, magnetic, effective_radius_type)
             if effective_radius_type > 0:
+                # Plug R_eff from p into S model (initial value and pd value)
                 s_values[2] = s_values[2+s_npars+s_offset[0]] = effective_radius
             s_result = self.s_kernel.Iq(s_details, s_values, cutoff, False)
             combined_scale = scale*volfrac/volume_avg
@@ -311,6 +312,7 @@ class ProductKernel(Kernel):
             p_result, effective_radius = self.p_kernel.Pq_Reff(
                 p_details, p_values, cutoff, magnetic, effective_radius_type)
             if effective_radius_type > 0:
+                # Plug R_eff from p into S model (initial value and pd value)
                 s_values[2] = s_values[2+s_npars+s_offset[0]] = effective_radius
             s_result = self.s_kernel.Iq(s_details, s_values, cutoff, False)
             # remember the parts for plotting later

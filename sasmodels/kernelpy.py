@@ -181,9 +181,9 @@ class PyKernel(Kernel):
         #call_details.show(values)
         radius = ((lambda: 0.0) if effective_radius_type == 0
                   else (lambda: self._radius(effective_radius_type)))
-        res = _loops(self._parameter_vector, self._form, self._volume, radius,
-                     self.q_input.nq, call_details, values, cutoff)
-        return res
+        self.result = _loops(
+            self._parameter_vector, self._form, self._volume, radius,
+            self.q_input.nq, call_details, values, cutoff)
 
     def release(self):
         # type: () -> None
@@ -212,59 +212,68 @@ def _loops(parameters,    # type: np.ndarray
     #   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #
     #                                                              #
     ################################################################
+
+    # WARNING: Trickery ahead
+    # The parameters[] vector is embedded in the closures for form(),
+    # form_volume() and form_radius().  We set the initial vector from
+    # the values for the model parameters. As we loop through the polydispesity
+    # mesh, we update the components with the polydispersity values before
+    # calling the respective functions.
     n_pars = len(parameters)
     parameters[:] = values[2:n_pars+2]
+
     if call_details.num_active == 0:
-        pd_norm = float(form_volume())
-        scale = values[0]/(pd_norm if pd_norm != 0.0 else 1.0)
-        background = values[1]
-        return scale*form() + background
+        total = form()
+        weight_norm = 1.0
+        weighted_volume = form_volume()
+        weighted_radius = form_radius()
 
-    pd_value = values[2+n_pars:2+n_pars + call_details.num_weights]
-    pd_weight = values[2+n_pars + call_details.num_weights:]
+    else:
+        pd_value = values[2+n_pars:2+n_pars + call_details.num_weights]
+        pd_weight = values[2+n_pars + call_details.num_weights:]
 
-    weight_norm = 0.0
-    weighted_volume = 0.0
-    weighted_radius = 0.0
-    partial_weight = np.NaN
-    weight = np.NaN
+        weight_norm = 0.0
+        weighted_volume = 0.0
+        weighted_radius = 0.0
+        partial_weight = np.NaN
+        weight = np.NaN
 
-    p0_par = call_details.pd_par[0]
-    p0_length = call_details.pd_length[0]
-    p0_index = p0_length
-    p0_offset = call_details.pd_offset[0]
+        p0_par = call_details.pd_par[0]
+        p0_length = call_details.pd_length[0]
+        p0_index = p0_length
+        p0_offset = call_details.pd_offset[0]
 
-    pd_par = call_details.pd_par[:call_details.num_active]
-    pd_offset = call_details.pd_offset[:call_details.num_active]
-    pd_stride = call_details.pd_stride[:call_details.num_active]
-    pd_length = call_details.pd_length[:call_details.num_active]
+        pd_par = call_details.pd_par[:call_details.num_active]
+        pd_offset = call_details.pd_offset[:call_details.num_active]
+        pd_stride = call_details.pd_stride[:call_details.num_active]
+        pd_length = call_details.pd_length[:call_details.num_active]
 
-    total = np.zeros(nq, 'd')
-    for loop_index in range(call_details.num_eval):
-        # update polydispersity parameter values
-        if p0_index == p0_length:
-            pd_index = (loop_index//pd_stride)%pd_length
-            parameters[pd_par] = pd_value[pd_offset+pd_index]
-            partial_weight = np.prod(pd_weight[pd_offset+pd_index][1:])
-            p0_index = loop_index%p0_length
+        total = np.zeros(nq, 'd')
+        for loop_index in range(call_details.num_eval):
+            # update polydispersity parameter values
+            if p0_index == p0_length:
+                pd_index = (loop_index//pd_stride)%pd_length
+                parameters[pd_par] = pd_value[pd_offset+pd_index]
+                partial_weight = np.prod(pd_weight[pd_offset+pd_index][1:])
+                p0_index = loop_index%p0_length
 
-        weight = partial_weight * pd_weight[p0_offset + p0_index]
-        parameters[p0_par] = pd_value[p0_offset + p0_index]
-        p0_index += 1
-        if weight > cutoff:
-            # Call the scattering function
-            # Assume that NaNs are only generated if the parameters are bad;
-            # exclude all q for that NaN.  Even better would be to have an
-            # INVALID expression like the C models, but that is too expensive.
-            Iq = np.asarray(form(), 'd')
-            if np.isnan(Iq).any():
-                continue
+            weight = partial_weight * pd_weight[p0_offset + p0_index]
+            parameters[p0_par] = pd_value[p0_offset + p0_index]
+            p0_index += 1
+            if weight > cutoff:
+                # Call the scattering function
+                # Assume that NaNs are only generated if the parameters are bad;
+                # exclude all q for that NaN.  Even better would be to have an
+                # INVALID expression like the C models, but that is expensive.
+                Iq = np.asarray(form(), 'd')
+                if np.isnan(Iq).any():
+                    continue
 
-            # update value and norm
-            total += weight * Iq
-            weight_norm += weight
-            weighted_volume += weight * form_volume()
-            weighted_radius += weight * form_radius()
+                # update value and norm
+                total += weight * Iq
+                weight_norm += weight
+                weighted_volume += weight * form_volume()
+                weighted_radius += weight * form_radius()
 
     result = np.hstack((total, weight_norm, weighted_volume, weighted_radius))
     return result

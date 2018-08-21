@@ -480,15 +480,14 @@ class GpuInput(object):
         # not doing it now since warp depends on kernel, which is not known
         # at this point, so instead using 32, which is good on the set of
         # architectures tested so far.
+        extra_q = 3  # total weight, weighted volume and weighted radius
         if self.is_2d:
-            # Note: 16 rather than 15 because result is 1 longer than input.
-            width = ((self.nq+16)//16)*16
+            width = ((self.nq+15+extra_q)//16)*16
             self.q = np.empty((width, 2), dtype=dtype)
             self.q[:self.nq, 0] = q_vectors[0]
             self.q[:self.nq, 1] = q_vectors[1]
         else:
-            # Note: 32 rather than 31 because result is 1 longer than input.
-            width = ((self.nq+32)//32)*32
+            width = ((self.nq+31+extra_q)//32)*32
             self.q = np.empty(width, dtype=dtype)
             self.q[:self.nq] = q_vectors[0]
         self.global_size = [self.q.shape[0]]
@@ -538,9 +537,9 @@ class GpuKernel(Kernel):
         self.dtype = dtype
         self.dim = '2d' if q_input.is_2d else '1d'
         # leave room for f1/f2 results in case we need to compute beta for 1d models
-        num_returns = 1 if self.dim == '2d' else 2  #
-        # plus 1 for the normalization value, plus another for R_eff
-        self.result = np.empty((q_input.nq+2)*num_returns, dtype)
+        nout = 2 if self.info.have_Fq and self.dim == '1d' else 1
+        # plus 3 weight, volume, radius
+        self.result = np.empty(q_input.nq*nout + 3, self.dtype)
 
         # Inputs and outputs for each kernel call
         # Note: res may be shorter than res_b if global_size != nq
@@ -548,7 +547,7 @@ class GpuKernel(Kernel):
         self.queue = env.get_queue(dtype)
 
         self.result_b = cl.Buffer(self.queue.context, mf.READ_WRITE,
-                                  q_input.global_size[0] * num_returns * dtype.itemsize)
+                                  q_input.global_size[0] * nout * dtype.itemsize)
         self.q_input = q_input # allocated by GpuInput above
 
         self._need_release = [self.result_b, self.q_input]
