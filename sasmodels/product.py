@@ -289,7 +289,7 @@ class ProductKernel(Kernel):
         else:
             beta_mode = 0
         if p_info.effective_radius_type is not None:
-            effective_radius_type = values[extra_offset]
+            effective_radius_type = int(values[extra_offset])
             extra_offset += 1
         else:
             effective_radius_type = 0

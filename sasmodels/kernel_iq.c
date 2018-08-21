@@ -285,7 +285,7 @@ void KERNEL_NAME(
     global const double *q, // nq q values, with padding to boundary
     global double *result,  // nq+1 return values, again with padding
     const double cutoff,     // cutoff in the dispersity weight product
-    int effective_radius_type // which effective radius to compute
+    int32_t effective_radius_type // which effective radius to compute
     )
 {
 #ifdef USE_OPENCL
