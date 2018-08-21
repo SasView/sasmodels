@@ -87,7 +87,7 @@
 #endif // !USE_OPENCL
 
 #if defined(NEED_CBRT)
-   #define cbrt(_x) (pow(_x, 0.33333333333333333333333))
+   #define cbrt(_x) pow(_x, 0.33333333333333333333333)
 #endif
 
 #if defined(NEED_EXPM1)
