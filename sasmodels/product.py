@@ -12,6 +12,8 @@ To use it, first load form factor P and structure factor S, then create
 """
 from __future__ import print_function, division
 
+from collections import OrderedDict
+
 from copy import copy
 import numpy as np  # type: ignore
 
@@ -21,7 +23,7 @@ from .details import make_details, dispersion_mesh
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple
+    from typing import Tuple, Callable
 except ImportError:
     pass
 else:
@@ -143,6 +145,31 @@ def _tag_parameter(par):
     par.id = par.id + "_S"
     par.name = par.id + vector_length
     return par
+
+def _intermediates(P, S):
+    # type: (np.ndarray, np.ndarray) -> OrderedDict[str, np.ndarray]
+    """
+    Returns intermediate results for standard product (P(Q)*S(Q))
+    """
+    return OrderedDict((
+        ("P(Q)", P),
+        ("S(Q)", S),
+    ))
+
+def _intermediates_beta(F1, F2, S, scale, bg):
+    # type: (np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray) -> OrderedDict[str, np.ndarray]
+    """
+    Returns intermediate results for beta approximation-enabled product
+    """
+    # TODO: 1. include calculated Q vector
+    # TODO: 2. consider implications if there are intermediate results in P(Q)
+    return OrderedDict((
+        ("P(Q)", scale*F2),
+        ("S(Q)", S),
+        ("beta(Q)", F1**2 / F2),
+        ("S_eff(Q)", 1 + (F1**2 / F2)*(S-1)),
+        # ("I(Q)", scale*(F2 + (F1**2)*(S-1)) + bg),
+    ))
 
 class ProductModel(KernelModel):
     def __init__(self, model_info, P, S):
@@ -269,61 +296,15 @@ class ProductKernel(Kernel):
         if beta_mode:
             F1, F2, volume_avg = self.p_kernel.beta(p_details, p_values, cutoff, magnetic)
             combined_scale = scale*volfrac/volume_avg
-            # Define lazy results based on intermediate values.
-            # The return value for the calculation should be an ordered
-            # dictionary containing any result the user might want to see
-            # at the end of the calculation, including scalars, strings,
-            # and plottable data.  Don't want to build this structure during
-            # fits, only when displaying the final result (or a one-off
-            # computation which asks for it).
-            # Do not use the current hack of storing the intermediate values
-            # in self.results since that leads to awkward threading issues.
-            # Instead return the function along with the bundle of inputs.
-            # P and Q may themselves have intermediate results they want to
-            # include, such as A and B if P = A + B.  Might use this mechanism
-            # to return the computed effective radius as well.
-            #def lazy_results(Q, S, F1, F2, scale):
-            #    """
-            #    beta = F1**2 / F2  # what about divide by zero errors?
-            #    return {
-            #        'P' : Data1D(Q, scale*F2),
-            #        'beta': Data1D(Q, beta),
-            #        'S' : Data1D(Q, S),
-            #        'Seff': Data1D(Q, 1 + beta*(S-1)),
-            #        'I' : Data1D(Q, scale*(F2 + (F1**2)*(S-1)) + background),
-            #    }
-            #lazy_pars = s_result, F1, F2, combined_scale
 
-            # self.results = [F2*volfrac/volume_avg, s_result]
+            self.results = lambda: _intermediates_beta(F1, F2, s_result, volfrac/volume_avg, background)
             final_result = combined_scale*(F2 + (F1**2)*(s_result - 1)) + background
-
-            # TODO: 1. include calculated Q vector
-            # TODO: 2. consider implications if there are intermediate results in P(Q)
-            # def lazy(F1, F2, S, scale, bg):
-            def lazy(F1, F2, S, scale):
-                return {
-                    "P(Q)": lambda: scale*F2,
-                    "S(Q)": lambda: S,
-                    "beta(Q)": lambda: F1**2 / F2,
-                    "S_eff(Q)": lambda: 1 + (F1**2 / F2)*(S-1),
-                    # "I(Q)":  lambda: scale*(F2 + (F1**2)*(S-1)) + bg,
-                }
-
-            self.results = lazy(F1, F2, s_result, volfrac/volume_avg)
 
         else:
             p_result = self.p_kernel.Iq(p_details, p_values, cutoff, magnetic)
-            # remember the parts for plotting later
-            # self.results = [p_result, s_result]
+
+            self.results = lambda: _intermediates(p_result, s_result)
             final_result = scale*(p_result*s_result) + background
-
-            def lazy(P, S):
-                return {
-                    "P(Q)": lambda: P,
-                    "S(Q)": lambda: S,
-                }
-
-            self.results = lazy(p_result, s_result)
 
         #call_details.show(values)
         #print("values", values)
