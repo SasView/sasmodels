@@ -380,7 +380,10 @@ class SasviewModel(object):
             if p.name in hidden:
                 continue
             self.params[p.name] = p.default
-            self.details[p.id] = [p.units, p.limits[0], p.limits[1]]
+            if p.limits and type(p.limits) is list and len(p.limits) > 1:
+                self.details[p.id] = [p.units if not p.choices else p.choices, p.limits[0], p.limits[1]]
+            else:
+                self.details[p.id] = [p.units if not p.choices else p.choices, None, None]
             if p.polydisperse:
                 self.details[p.id+".width"] = [
                     "", 0.0, 1.0 if p.relative_pd else np.inf
@@ -615,7 +618,7 @@ class SasviewModel(object):
         # Long term, the solution is to change the interface to calculate_Iq
         # so that it returns a results object containing all the bits:
         #     the A, B, C, ... of the composition model (and any subcomponents?)
-        #     the P and S of the product model,
+        #     the P and S of the product model
         #     the combined model before resolution smearing,
         #     the sasmodel before sesans conversion,
         #     the oriented 2D model used to fit oriented usans data,
@@ -637,7 +640,9 @@ class SasviewModel(object):
         if composition and composition[0] == 'product': # only P*S for now
             with calculation_lock:
                 self._calculate_Iq(qx)
-                return self._intermediate_results
+                # for compatibility with sasview 4.3
+                results = self._intermediate_results()
+                return results["P(Q)"], results["S(Q)"]
         else:
             return None
 

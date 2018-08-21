@@ -12,6 +12,8 @@ To use it, first load form factor P and structure factor S, then create
 """
 from __future__ import print_function, division
 
+from collections import OrderedDict
+
 from copy import copy
 import numpy as np  # type: ignore
 
@@ -21,7 +23,7 @@ from .details import make_details, dispersion_mesh
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple
+    from typing import Tuple, Callable, Union
 except ImportError:
     pass
 else:
@@ -39,13 +41,12 @@ VOLFRAC_ID = "volfraction"
 def make_extra_pars(p_info):
     pars = []
     if p_info.have_Fq:
-        par = Parameter("structure_factor_mode", "", 0, [["P*S","P*(1+beta*(S-1))"]], "",
+        par = Parameter("structure_factor_mode", ["P*S","P*(1+beta*(S-1))"], 0, None, "",
                         "Structure factor calculation")
         pars.append(par)
     if p_info.effective_radius_type is not None:
-        par = Parameter("radius_effective_mode", "", 0,
-                        [["unconstrained"] + p_info.effective_radius_type],
-                        "", "Effective radius calculation")
+        par = Parameter("radius_effective_mode", ["unconstrained"] + p_info.effective_radius_type, 0, None, "",
+                        "Effective radius calculation")
         pars.append(par)
     return pars
 
@@ -155,6 +156,33 @@ def _tag_parameter(par):
     par.id = par.id + "_S"
     par.name = par.id + vector_length
     return par
+
+def _intermediates(P, S, effective_radius):
+    # type: (np.ndarray, np.ndarray, float) -> OrderedDict[str, np.ndarray]
+    """
+    Returns intermediate results for standard product (P(Q)*S(Q))
+    """
+    return OrderedDict((
+        ("P(Q)", P),
+        ("S(Q)", S),
+        ("effective_radius", effective_radius),
+    ))
+
+def _intermediates_beta(F1, F2, S, scale, bg, effective_radius):
+    # type: (np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, float) -> OrderedDict[str, Union[np.ndarray, float]]
+    """
+    Returns intermediate results for beta approximation-enabled product. The result may be an array or a float.
+    """
+    # TODO: 1. include calculated Q vector
+    # TODO: 2. consider implications if there are intermediate results in P(Q)
+    return OrderedDict((
+        ("P(Q)", scale*F2),
+        ("S(Q)", S),
+        ("beta(Q)", F1**2 / F2),
+        ("S_eff(Q)", 1 + (F1**2 / F2)*(S-1)),
+        ("effective_radius", effective_radius),
+        # ("I(Q)", scale*(F2 + (F1**2)*(S-1)) + bg),
+    ))
 
 class ProductModel(KernelModel):
     def __init__(self, model_info, P, S):
@@ -275,32 +303,10 @@ class ProductKernel(Kernel):
                 s_values[2] = s_values[2+s_npars+s_offset[0]] = effective_radius
             s_result = self.s_kernel.Iq(s_details, s_values, cutoff, False)
             combined_scale = scale*volfrac/volume_avg
-            # Define lazy results based on intermediate values.
-            # The return value for the calculation should be an ordered
-            # dictionary containing any result the user might want to see
-            # at the end of the calculation, including scalars, strings,
-            # and plottable data.  Don't want to build this structure during
-            # fits, only when displaying the final result (or a one-off
-            # computation which asks for it).
-            # Do not use the current hack of storing the intermediate values
-            # in self.results since that leads to awkward threading issues.
-            # Instead return the function along with the bundle of inputs.
-            # P and Q may themselves have intermediate results they want to
-            # include, such as A and B if P = A + B.  Might use this mechanism
-            # to return the computed effective radius as well.
-            #def lazy_results(Q, S, F1, F2, scale):
-            #    """
-            #    beta = F1**2 / F2  # what about divide by zero errors?
-            #    return {
-            #        'P' : Data1D(Q, scale*F2),
-            #        'beta': Data1D(Q, beta),
-            #        'S' : Data1D(Q, S),
-            #        'Seff': Data1D(Q, 1 + beta*(S-1)),
-            #        'I' : Data1D(Q, scale*(F2 + (F1**2)*(S-1)) + background),
-            #    }
-            #lazy_pars = s_result, F1, F2, combined_scale
-            self.results = [F2*volfrac/volume_avg, s_result]
+
+            self.results = lambda: _intermediates_beta(F1, F2, s_result, volfrac/volume_avg, background, effective_radius)
             final_result = combined_scale*(F2 + (F1**2)*(s_result - 1)) + background
+
         else:
             p_result, effective_radius = self.p_kernel.Pq_Reff(
                 p_details, p_values, cutoff, magnetic, effective_radius_type)
@@ -308,7 +314,7 @@ class ProductKernel(Kernel):
                 s_values[2] = s_values[2+s_npars+s_offset[0]] = effective_radius
             s_result = self.s_kernel.Iq(s_details, s_values, cutoff, False)
             # remember the parts for plotting later
-            self.results = [p_result, s_result]
+            self.results = lambda: _intermediates(p_result, s_result, effective_radius)
             final_result = scale*(p_result*s_result) + background
 
         #call_details.show(values)
