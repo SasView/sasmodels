@@ -67,6 +67,7 @@
          #define NEED_ERF
          #define NEED_EXPM1
          #define NEED_TGAMMA
+         #define NEED_CBRT
          // expf missing from windows?
          #define expf exp
      #else
@@ -84,6 +85,10 @@
 #  define powr(a,b) pow(a,b)
 #  define pown(a,b) pow(a,b)
 #endif // !USE_OPENCL
+
+#if defined(NEED_CBRT)
+   #define cbrt(_x) (pow(_x, 0.33333333333333333333333))
+#endif
 
 #if defined(NEED_EXPM1)
    // TODO: precision is a half digit lower than numpy on mac in [1e-7, 0.5]
