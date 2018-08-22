@@ -207,6 +207,7 @@ def ellipsoid_pe(q, radius_polar, radius_equatorial, sld, sld_solvent,
     radius_eff = 0
     F1, F2 = np.zeros_like(q), np.zeros_like(q)
     for k, Rpk in enumerate(Rp_val):
+        print("ellipsoid cycle", k, "of", len(Rp_val))
         for i, Rei in enumerate(Re_val):
             theory = ellipsoid_theta(q, Rpk, Rei, sld, sld_solvent)
             volume = ellipsoid_volume(Rpk, Rei)
@@ -342,8 +343,8 @@ def sasmodels_theory(q, Pname, **pars):
     #Iq = Pq*Sq*pars.get('volfraction', 1)
     #Sq = Iq/Pq
     #Iq = None#= Sq = None
-    r = I._kernel.results
-    return Theory(Q=q, F1=None, F2=None, P=Pq, S=None, I=None, Seff=r[1], Ibeta=Iq)
+    r = dict(I._kernel.results())
+    return Theory(Q=q, F1=None, F2=None, P=Pq, S=None, I=None, Seff=r["S_eff(Q)"], Ibeta=Iq)
 
 def compare(title, target, actual, fields='F1 F2 P S I Seff Ibeta'):
     """
@@ -400,13 +401,13 @@ def compare_sasview_ellipsoid(pd_type='gaussian'):
     pars = dict(
         radius_polar=20, radius_equatorial=400, sld=4, sld_solvent=1,
         background=0,
-        radius_polar_pd=.1, radius_polar_pd_type=pd_type,
-        radius_equatorial_pd=.1, radius_equatorial_pd_type=pd_type,
+        radius_polar_pd=0.1, radius_polar_pd_type=pd_type,
+        radius_equatorial_pd=0.1, radius_equatorial_pd_type=pd_type,
         volfraction=0.15,
         radius_effective=270.7543927018,
         #radius_effective=12.59921049894873,
         )
-    target = sasmodels_theory(q, model, beta_mode=1, **pars)
+    target = sasmodels_theory(q, model, effective_radius_mode=0, structure_factor_mode=1, **pars)
     actual = ellipsoid_pe(q, norm='sasview', **pars)
     title = " ".join(("sasmodels", model, pd_type))
     compare(title, target, actual)
