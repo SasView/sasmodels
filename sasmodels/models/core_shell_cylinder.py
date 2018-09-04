@@ -129,18 +129,11 @@ def ER(radius, thickness, length):
     """
     Returns the effective radius used in the S*P calculation
     """
+    print("radius")
     radius = radius + thickness
     length = length + 2 * thickness
     ddd = 0.75 * radius * (2 * radius * length + (length + radius) * (length + pi * radius))
     return 0.5 * (ddd) ** (1. / 3.)
-
-def VR(radius, thickness, length):
-    """
-    Returns volume ratio
-    """
-    whole = pi * (radius + thickness) ** 2 * (length + 2 * thickness)
-    core = pi * radius ** 2 * length
-    return whole, whole - core
 
 def random():
     outer_radius = 10**np.random.uniform(1, 4.7)
