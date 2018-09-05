@@ -119,7 +119,7 @@ def VR(radius, thickness, length):
     vol_core = pi*radius*radius*length
     vol_total = pi*router*router*length
     vol_shell = vol_total - vol_core
-    return vol_shell, vol_total
+    return vol_total, vol_shell
 
 def random():
     length = 10**np.random.uniform(1, 4.7)
@@ -150,7 +150,7 @@ qy = q*sin(pi/6.0)
 # Parameters for unit tests
 tests = [
     [{}, 0.00005, 1764.926],
-    [{}, 'VR', 1.8],
+    [{}, 'VR', 0.55555556],
     [{}, 0.001, 1756.76],
     [{}, (qx, qy), 2.36885476192],
 ]
