@@ -129,7 +129,6 @@ def ER(radius, thickness, length):
     """
     Returns the effective radius used in the S*P calculation
     """
-    print("radius")
     radius = radius + thickness
     length = length + 2 * thickness
     ddd = 0.75 * radius * (2 * radius * length + (length + radius) * (length + pi * radius))
