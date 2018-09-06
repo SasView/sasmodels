@@ -17,7 +17,7 @@ from collections import OrderedDict
 from copy import copy
 import numpy as np  # type: ignore
 
-from .modelinfo import ParameterTable, ModelInfo, Parameter
+from .modelinfo import ParameterTable, ModelInfo, Parameter, parse_parameter
 from .kernel import KernelModel, Kernel
 from .details import make_details, dispersion_mesh
 
@@ -38,13 +38,17 @@ else:
 
 ER_ID = "radius_effective"
 VF_ID = "volfraction"
-BETA_DEFINITION = ("beta_mode", ["P*S", "P*(1+beta*(S-1))"], 0, (None, None), "",
-                   "Structure factor dispersion calculation mode")
+
 def make_extra_pars(p_info):
     pars = []
     if p_info.have_Fq:
-        par = Parameter("structure_factor_mode", ["P*S","P*(1+beta*(S-1))"], 0, (None, None), "",
-                        "Structure factor calculation")
+        par = parse_parameter(
+                "structure_factor_mode",
+                "",
+                0,
+                [["P*S","P*(1+beta*(S-1))"]],
+                "",
+                "Structure factor calculation")
         pars.append(par)
     return pars
 
