@@ -12,6 +12,36 @@ _fq(double qab, double qc, double radius, double length)
     return sas_2J1x_x(qab*radius) * sas_sinx_x(qc*0.5*length);
 }
 
+static double
+radius_from_volume(double radius, double length)
+{
+    return cbrt(0.75*radius*radius*length);
+}
+
+static double
+radius_from_diagonal(double radius, double length)
+{
+    return sqrt(radius*radius + 0.25*length*length);
+}
+
+static double
+effective_radius(int mode, double radius, double length)
+{
+    if (mode == 1) {
+        return radius_from_volume(radius, length);
+    } else if (mode == 2) {
+        return radius;
+    } else if (mode == 3) {
+        return 0.5*length;
+    } else if (mode == 4) {
+        return (radius < 0.5*length ? radius : 0.5*length);
+    } else if (mode == 5) {
+        return (radius > 0.5*length ? radius : 0.5*length);
+    } else {
+        return radius_from_diagonal(radius,length);
+    }
+}
+
 static void
 Fq(double q,
     double *F1,

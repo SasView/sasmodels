@@ -89,25 +89,27 @@ parameters = [
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "hollow_cylinder.c"]
 have_Fq = True
+effective_radius_type = ["equivalent sphere","outer radius","half length",
+                         "half outer min dimension","half outer max dimension","half outer diagonal"]
 
 # pylint: disable=W0613
-def ER(radius, thickness, length):
-    """
-    :param radius:      Cylinder core radius
-    :param thickness:   Cylinder wall thickness
-    :param length:      Cylinder length
-    :return:            Effective radius
-    """
-    router = radius + thickness
-    if router == 0 or length == 0:
-        return 0.0
-    len1 = router
-    len2 = length/2.0
-    term1 = len1*len1*2.0*len2/2.0
-    term2 = 1.0 + (len2/len1)*(1.0 + 1/len2/2.0)*(1.0 + pi*len1/len2/2.0)
-    ddd = 3.0*term1*term2
-    diam = pow(ddd, (1.0/3.0))
-    return diam
+#def ER(radius, thickness, length):
+#    """
+#    :param radius:      Cylinder core radius
+#    :param thickness:   Cylinder wall thickness
+#    :param length:      Cylinder length
+#    :return:            Effective radius
+#    """
+#    router = radius + thickness
+#    if router == 0 or length == 0:
+#        return 0.0
+#    len1 = router
+#    len2 = length/2.0
+#    term1 = len1*len1*2.0*len2/2.0
+#    term2 = 1.0 + (len2/len1)*(1.0 + 1/len2/2.0)*(1.0 + pi*len1/len2/2.0)
+#    ddd = 3.0*term1*term2
+#    diam = pow(ddd, (1.0/3.0))
+#    return diam
 
 def VR(radius, thickness, length):
     """

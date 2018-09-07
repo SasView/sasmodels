@@ -39,6 +39,17 @@ form_volume(double radius_core, double n_shells, double thickness[])
   return M_4PI_3*cube(r);
 }
 
+static double
+effective_radius(int mode, double radius_core, double n_shells, double thickness[])
+{
+  int n = (int)(n_shells+0.5);
+  double r = radius_core;
+  for (int i=0; i < n; i++) {
+    r += thickness[i];
+  }
+  return r;
+}
+
 static void
 Fq(double q, double *F1, double *F2, double sld_core, double radius_core, double sld_solvent,
     double n_shells, double sld_in[], double sld_out[], double thickness[],

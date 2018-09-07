@@ -4,7 +4,6 @@ form_volume(double radius_polar, double radius_equatorial)
     return M_4PI_3*radius_polar*radius_equatorial*radius_equatorial;
 }
 
-
 static double
 radius_from_volume(double radius_polar, double radius_equatorial)
 {
@@ -19,7 +18,7 @@ radius_from_curvature(double radius_polar, double radius_equatorial)
     if (radius_polar * radius_equatorial == 0.)  return 0.;
 
     // see equation (26) in A.Isihara, J.Chem.Phys. 18(1950)1446-1449
-    const double ratio = (radius_polar < radius_equatorial 
+    const double ratio = (radius_polar < radius_equatorial
                           ? radius_polar / radius_equatorial
                           : radius_equatorial / radius_polar);
     const double e1 = sqrt(1.0 - ratio*ratio);
@@ -35,9 +34,9 @@ static double
 effective_radius(int mode, double radius_polar, double radius_equatorial)
 {
     if (mode == 1) {
-        return radius_from_curvature(radius_polar, radius_equatorial);
-    } else if (mode == 2) {
         return radius_from_volume(radius_polar, radius_equatorial);
+    } else if (mode == 2) {
+        return radius_from_curvature(radius_polar, radius_equatorial);
     } else if (mode == 3) {
         return (radius_polar < radius_equatorial ? radius_polar : radius_equatorial);
     } else {

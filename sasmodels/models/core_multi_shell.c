@@ -18,6 +18,33 @@ form_volume(double core_radius, double fp_n, double thickness[])
   return M_4PI_3 * cube(r);
 }
 
+static double
+outer_radius(double core_radius, double fp_n, double thickness[])
+{
+  double r = core_radius;
+  int n = (int)(fp_n+0.5);
+  for (int i=0; i < n; i++) {
+    r += thickness[i];
+  }
+  return r;
+}
+
+static double
+effective_radius(int mode, double core_radius, double fp_n, double thickness[])
+{
+    if (mode == 1) {
+        double r = core_radius;
+        int n = (int)(fp_n+0.5);
+        for (int i=0; i < n; i++) {
+            r += thickness[i];
+        }
+        return r;
+        //return outer_radius(core_radius,fp_n,thickness);
+    } else {
+        return core_radius;
+    }
+}
+
 static void
 Fq(double q, double *F1, double *F2, double core_sld, double core_radius,
    double solvent_sld, double fp_n, double sld[], double thickness[])

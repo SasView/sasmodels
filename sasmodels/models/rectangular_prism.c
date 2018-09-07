@@ -5,6 +5,26 @@ form_volume(double length_a, double b2a_ratio, double c2a_ratio)
 }
 
 static double
+effective_radius(int mode, double length_a, double b2a_ratio, double c2a_ratio)
+{
+    if (mode == 1) {
+        return cbrt(0.75*cube(length_a)*b2a_ratio*c2a_ratio/M_PI);
+    } else if (mode == 2) {
+        return 0.5 * length_a;
+    } else if (mode == 3) {
+        return 0.5 * length_a*b2a_ratio;
+    } else if (mode == 4) {
+        return 0.5 * length_a*c2a_ratio;
+    } else if (mode == 5) {
+        return length_a*sqrt(b2a_ratio/M_PI);
+    } else if (mode == 6) {
+        return 0.5*sqrt(square(length_a) * (1.0 + square(b2a_ratio)));
+    } else {
+        return 0.5*sqrt(square(length_a) * (1.0 + square(b2a_ratio) + square(c2a_ratio)));
+    }
+}
+
+static double
 Iq(double q,
     double sld,
     double solvent_sld,

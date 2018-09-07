@@ -209,6 +209,7 @@ parameters = [["n_shells",             "",           1,      [1, 10],        "vo
 source = ["lib/polevl.c", "lib/sas_erf.c", "lib/sas_3j1x_x.c", "spherical_sld.c"]
 single = False  # TODO: fix low q behaviour
 have_Fq = True
+effective_radius_type = ["outer radius"]
 
 profile_axes = ['Radius (A)', 'SLD (1e-6/A^2)']
 
@@ -254,12 +255,12 @@ def profile(n_shells, sld_solvent, sld, thickness,
     return np.asarray(z), np.asarray(rho)
 
 
-def ER(n_shells, thickness, interface):
-    """Effective radius"""
-    n_shells = int(n_shells + 0.5)
-    total = (np.sum(thickness[:n_shells], axis=1)
-             + np.sum(interface[:n_shells], axis=1))
-    return total
+#def ER(n_shells, thickness, interface):
+#    """Effective radius"""
+#    n_shells = int(n_shells + 0.5)
+#    total = (np.sum(thickness[:n_shells], axis=1)
+#             + np.sum(interface[:n_shells], axis=1))
+#    return total
 
 
 demo = {

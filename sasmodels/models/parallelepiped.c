@@ -4,6 +4,26 @@ form_volume(double length_a, double length_b, double length_c)
     return length_a * length_b * length_c;
 }
 
+static double
+effective_radius(int mode, double length_a, double length_b, double length_c)
+{
+    if (mode == 1) {
+        return cbrt(0.75*length_a*length_b*length_c/M_PI);
+    } else if (mode == 2) {
+        return 0.5 * length_a;
+    } else if (mode == 3) {
+        return 0.5 * length_b;
+    } else if (mode == 4) {
+        return 0.5 * length_c;
+    } else if (mode == 5) {
+        return sqrt(length_a*length_b/M_PI);
+    } else if (mode == 6) {
+        return 0.5*sqrt(length_a*length_a + length_b*length_b);
+    } else {
+        return 0.5*sqrt(length_a*length_a + length_b*length_b + length_c*length_c);
+    }
+}
+
 
 static void
 Fq(double q,

@@ -116,6 +116,7 @@ parameters = [["sld",         "1e-6/Ang^2",   4, [-inf, inf], "sld",         "Ba
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "barbell.c"]
 have_Fq = True
+effective_radius_type = ["equivalent sphere","radius","half length","half total length"]
 
 def random():
     # TODO: increase volume range once problem with bell radius is fixed

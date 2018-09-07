@@ -11,6 +11,17 @@ static double form_volume(
     return M_4PI_3*cube(r);
 }
 
+static double
+effective_radius(int mode, double fp_n_shells, double thickness[], double interface[])
+{
+    int n_shells= (int)(fp_n_shells + 0.5);
+    double r = 0.0;
+    for (int i=0; i < n_shells; i++) {
+        r += thickness[i] + interface[i];
+    }
+    return r;
+}
+
 static double blend(int shape, double nu, double z)
 {
     if (shape==0) {

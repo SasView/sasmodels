@@ -125,15 +125,17 @@ parameters = [["sld_core", "1e-6/Ang^2", 4, [-inf, inf], "sld",
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "core_shell_cylinder.c"]
 have_Fq = True
+effective_radius_type = ["equivalent sphere","outer radius","half outer length","half min outer dimension",
+                         "half max outer dimension","half outer diagonal"]
 
-def ER(radius, thickness, length):
-    """
-    Returns the effective radius used in the S*P calculation
-    """
-    radius = radius + thickness
-    length = length + 2 * thickness
-    ddd = 0.75 * radius * (2 * radius * length + (length + radius) * (length + pi * radius))
-    return 0.5 * (ddd) ** (1. / 3.)
+#def ER(radius, thickness, length):
+#    """
+#    Returns the effective radius used in the S*P calculation
+#    """
+#    radius = radius + thickness
+#    length = length + 2 * thickness
+#    ddd = 0.75 * radius * (2 * radius * length + (length + radius) * (length + pi * radius))
+#    return 0.5 * (ddd) ** (1. / 3.)
 
 def VR(radius, thickness, length):
     """

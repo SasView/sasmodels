@@ -94,15 +94,16 @@ parameters = [["sld", "1e-6/Ang^2", 0.5, [-inf, inf], "sld",
 
 source = ["lib/sas_3j1x_x.c", "vesicle.c"]
 have_Fq = True
+effective_radius_type = ["outer radius"]
 
-def ER(radius, thickness):
-    '''
-    returns the effective radius used in the S*P calculation
-
-    :param radius: core radius
-    :param thickness: shell thickness
-    '''
-    return radius + thickness
+#def ER(radius, thickness):
+#    '''
+#    returns the effective radius used in the S*P calculation
+#
+#    :param radius: core radius
+#    :param thickness: shell thickness
+#    '''
+#    return radius + thickness
 
 def VR(radius, thickness):
     '''
