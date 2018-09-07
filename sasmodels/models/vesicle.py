@@ -2,7 +2,11 @@ r"""
 Definition
 ----------
 
-The 1D scattering intensity is calculated in the following way (Guinier, 1955)
+TThis model provides the form factor, *P(q)*, for an unilamellar vesicle. This 
+s model is effectively identical to the hollow sphere reparameterized to be
+more intuitive for a vesicle and normalizing the form factor by the volume of
+the shell. The 1D scattering intensity is calculated in the following way
+(Guinier,1955\ [#Guinier1955]_)
 
 .. math::
 
@@ -52,22 +56,23 @@ radius for *S(Q)* when *P(Q)* \* *S(Q)* is applied.
 References
 ----------
 
-A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*, John Wiley and
-Sons, New York, (1955)
+.. [#Guinier1955] A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*, John Wiley and
+   Sons, New York, (1955)
+
+
+Authorship and Verification
+----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Butler **Date:** March 20, 2016
-* **Last Reviewed by:** Paul Butler **Date:** March 20, 2016
+* **Last Reviewed by:** Paul Butler **Date:** September 7, 2018
 """
 
 import numpy as np
 from numpy import pi, inf
 
 name = "vesicle"
-title = "This model provides the form factor, *P(q)*, for an unilamellar \
-    vesicle. This is model is effectively identical to the hollow sphere \
-    reparameterized to be more intuitive for a vesicle and normalizing the \
-    form factor by the volume of the shell."
+title = "Vesicle model representing a hollow sphere"
 description = """
     Model parameters:
         radius : the core radius of the vesicle
