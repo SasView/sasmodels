@@ -26,6 +26,42 @@ form_volume(double length_a, double length_b, double length_c,
 #endif
 }
 
+static double
+radius_from_volume(double length_a, double length_b, double length_c,
+                   double thick_rim_a, double thick_rim_b, double thick_rim_c)
+{
+    const double volume_paral = form_volume(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c);
+    return cbrt(0.75*volume_paral/M_PI);
+}
+
+static double
+radius_from_crosssection(double length_a, double length_b, double thick_rim_a, double thick_rim_b)
+{
+    const double area_xsec_paral = length_a*length_b + 2.0*thick_rim_a*length_b + 2.0*thick_rim_b*length_a;
+    return sqrt(area_xsec_paral/M_PI);
+}
+
+static double
+effective_radius(int mode, double length_a, double length_b, double length_c,
+                 double thick_rim_a, double thick_rim_b, double thick_rim_c)
+{
+    if (mode == 1) {
+        return radius_from_volume(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c);
+    } else if (mode == 2) {
+        return 0.5 * (length_a + thick_rim_a);
+    } else if (mode == 3) {
+        return 0.5 * (length_b + thick_rim_b);
+    } else if (mode == 4) {
+        return 0.5 * (length_c + thick_rim_c);
+    } else if (mode == 5) {
+        return radius_from_crosssection(length_a, length_b, thick_rim_a, thick_rim_b);
+    } else if (mode == 6) {
+        return 0.5*sqrt(square(length_a+thick_rim_a) + square(length_b+thick_rim_b));
+    } else {
+        return 0.5*sqrt(square(length_a+thick_rim_a) + square(length_b+thick_rim_b) + square(length_c+thick_rim_c));
+    }
+}
+
 static void
 Fq(double q,
     double *F1,

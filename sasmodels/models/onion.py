@@ -315,6 +315,7 @@ parameters = [
 source = ["lib/sas_3j1x_x.c", "onion.c"]
 single = False
 have_Fq = True
+effective_radius_type = ["outer radius"]
 
 profile_axes = ['Radius (A)', 'SLD (1e-6/A^2)']
 def profile(sld_core, radius_core, sld_solvent, n_shells,
@@ -365,10 +366,10 @@ def profile(sld_core, radius_core, sld_solvent, n_shells,
 
     return np.asarray(z), np.asarray(rho)
 
-def ER(radius_core, n_shells, thickness):
-    """Effective radius"""
-    n = int(n_shells[0]+0.5)
-    return np.sum(thickness[:n], axis=0) + radius_core
+#def ER(radius_core, n_shells, thickness):
+#    """Effective radius"""
+#    n = int(n_shells[0]+0.5)
+#    return np.sum(thickness[:n], axis=0) + radius_core
 
 demo = {
     "sld_solvent": 2.2,

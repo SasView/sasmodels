@@ -53,7 +53,7 @@ http://www.ncnr.nist.gov/staff/hammouda/distance_learning/chapter_28.pdf
 """
 
 import numpy as np
-from numpy import inf, exp, errstate
+from numpy import inf
 
 name = "mono_gauss_coil"
 title = "Scattering from monodisperse polymer coils"
@@ -68,20 +68,26 @@ category = "shape-independent"
 #   ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [
     ["i_zero", "1/cm", 70.0, [0.0, inf], "", "Intensity at q=0"],
-    ["rg", "Ang", 75.0, [0.0, inf], "", "Radius of gyration"],
+    ["rg", "Ang", 75.0, [0.0, inf], "volume", "Radius of gyration"],
     ]
+
+source = ["mono_gauss_coil.c"]
+have_Fq = False
+effective_radius_type = ["R_g","2R_g","3R_g","(5/3)^0.5*R_g"]
+
+
 # pylint: enable=bad-whitespace, line-too-long
 
-# NB: Scale and Background are implicit parameters on every model
-def Iq(q, i_zero, rg):
-    # pylint: disable = missing-docstring
-    z = (q * rg)**2
-
-    with errstate(invalid='ignore'):
-        inten = (i_zero * 2.0) * (exp(-z) + z - 1.0)/z**2
-        inten[q == 0] = i_zero
-    return inten
-Iq.vectorized = True # Iq accepts an array of q values
+## NB: Scale and Background are implicit parameters on every model
+#def Iq(q, i_zero, rg):
+#    # pylint: disable = missing-docstring
+#    z = (q * rg)**2
+#
+#    with errstate(invalid='ignore'):
+#        inten = (i_zero * 2.0) * (exp(-z) + z - 1.0)/z**2
+#        inten[q == 0] = i_zero
+#    return inten
+#Iq.vectorized = True # Iq accepts an array of q values
 
 def random():
     rg = 10**np.random.uniform(0, 4)

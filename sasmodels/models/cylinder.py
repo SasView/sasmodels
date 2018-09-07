@@ -138,13 +138,14 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "cylinder.c"]
 have_Fq = True
+effective_radius_type = ["equivalent sphere","radius","half length","half min dimension","half max dimension","half diagonal"]
 
-def ER(radius, length):
-    """
-        Return equivalent radius (ER)
-    """
-    ddd = 0.75 * radius * (2 * radius * length + (length + radius) * (length + pi * radius))
-    return 0.5 * (ddd) ** (1. / 3.)
+#def ER(radius, length):
+#    """
+#        Return equivalent radius (ER)
+#    """
+#    ddd = 0.75 * radius * (2 * radius * length + (length + radius) * (length + pi * radius))
+#    return 0.5 * (ddd) ** (1. / 3.)
 
 def random():
     volume = 10**np.random.uniform(5, 12)

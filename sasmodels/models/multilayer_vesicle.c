@@ -46,6 +46,12 @@ multilayer_vesicle_kernel(double q,
     return fval;  // Volume normalization happens in caller
 }
 
+static double
+effective_radius(int mode, double radius, double thick_shell, double thick_solvent, double fp_n_shells)
+{
+    return radius + fp_n_shells*thick_shell + (fp_n_shells - 1.0)*thick_solvent;
+}
+
 static void
 Fq(double q,
           double *F1,

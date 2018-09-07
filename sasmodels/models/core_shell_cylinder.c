@@ -12,6 +12,39 @@ form_volume(double radius, double thickness, double length)
     return M_PI*square(radius+thickness)*(length+2.0*thickness);
 }
 
+static double
+radius_from_volume(double radius, double thickness, double length)
+{
+    const double volume_outer_cyl = form_volume(radius,thickness,length);
+    return cbrt(0.75*volume_outer_cyl/M_PI);
+}
+
+static double
+radius_from_diagonal(double radius, double thickness, double length)
+{
+    const double radius_outer = radius + thickness;
+    const double length_outer = length + thickness;
+    return sqrt(radius_outer*radius_outer + 0.25*length_outer*length_outer);
+}
+
+static double
+effective_radius(int mode, double radius, double thickness, double length)
+{
+    if (mode == 1) {
+        return radius_from_volume(radius, thickness, length);
+    } else if (mode == 2) {
+        return radius + thickness;
+    } else if (mode == 3) {
+        return 0.5*length + thickness;
+    } else if (mode == 4) {
+        return (radius < 0.5*length ? radius + thickness : 0.5*length + thickness);
+    } else if (mode == 5) {
+        return (radius > 0.5*length ? radius + thickness : 0.5*length + thickness);
+    } else {
+        return radius_from_diagonal(radius,thickness,length);
+    }
+}
+
 static void
 Fq(double q,
     double *F1,

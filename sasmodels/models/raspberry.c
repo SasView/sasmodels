@@ -1,16 +1,26 @@
-double form_volume(double radius_lg);
+double form_volume(double radius_lg, double radius_sm, double penetration);
 
 double Iq(double q,
           double sld_lg, double sld_sm, double sld_solvent,
           double volfraction_lg, double volfraction_sm, double surf_fraction,
           double radius_lg, double radius_sm, double penetration);
 
-double form_volume(double radius_lg)
+double form_volume(double radius_lg, double radius_sm, double penetration)
 {
     //Because of the complex structure, volume normalization must
     //happen in the Iq code below.  Thus the form volume is set to 1.0 here
     double volume=1.0;
     return volume;
+}
+
+static double
+effective_radius(int mode, double radius_lg, double radius_sm, double penetration)
+{
+    if (mode == 1) {
+        return radius_lg;
+    } else {
+        return radius_lg + 2.0*radius_sm - penetration;
+    }
 }
 
 double Iq(double q,

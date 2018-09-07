@@ -4,6 +4,58 @@ form_volume(double radius_minor, double r_ratio, double length)
     return M_PI * radius_minor * radius_minor * r_ratio * length;
 }
 
+static double
+radius_from_volume(double radius_minor, double r_ratio, double length)
+{
+    const double volume_ellcyl = form_volume(radius_minor,r_ratio,length);
+    return cbrt(0.75*volume_ellcyl/M_PI);
+}
+
+static double
+radius_from_min_dimension(double radius_minor, double r_ratio, double length)
+{
+    const double rad_min = (r_ratio > 1.0 ? radius_minor : r_ratio*radius_minor);
+    return (rad_min < length ? rad_min : length);
+}
+
+static double
+radius_from_max_dimension(double radius_minor, double r_ratio, double length)
+{
+    const double rad_max = (r_ratio < 1.0 ? radius_minor : r_ratio*radius_minor);
+    return (rad_max > length ? rad_max : length);
+}
+
+static double
+radius_from_diagonal(double radius_minor, double r_ratio, double length)
+{
+    const double radius_max = (r_ratio > 1.0 ? radius_minor*r_ratio : radius_minor);
+    return sqrt(radius_max*radius_max + 0.25*length*length);
+}
+
+static double
+effective_radius(int mode, double radius_minor, double r_ratio, double length)
+{
+    if (mode == 1) {
+        return radius_from_volume(radius_minor, r_ratio, length);
+    } else if (mode == 2) {
+        return 0.5*radius_minor*(1.0 + r_ratio);
+    } else if (mode == 3) {
+        return (r_ratio > 1.0 ? radius_minor : r_ratio*radius_minor);
+    } else if (mode == 4) {
+        return (r_ratio < 1.0 ? radius_minor : r_ratio*radius_minor);
+    } else if (mode == 5) {
+        return sqrt(radius_minor*radius_minor*r_ratio);
+    } else if (mode == 6) {
+        return 0.5*length;
+    } else if (mode == 7) {
+        return radius_from_min_dimension(radius_minor,r_ratio,length);
+    } else if (mode == 8) {
+        return radius_from_max_dimension(radius_minor,r_ratio,length);
+    } else {
+        return radius_from_diagonal(radius_minor,r_ratio,length);
+    }
+}
+
 static void
 Fq(double q, double *F1, double *F2, double radius_minor, double r_ratio, double length,
    double sld, double solvent_sld)

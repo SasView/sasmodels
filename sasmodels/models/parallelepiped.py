@@ -230,22 +230,24 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
 
 source = ["lib/gauss76.c", "parallelepiped.c"]
 have_Fq = True
+effective_radius_type = ["equivalent sphere","half length_a", "half length_b", "half length_c",
+                         "equivalent circular cross-section","half ab diagonal","half diagonal"]
 
-def ER(length_a, length_b, length_c):
-    """
-    Return effective radius (ER) for P(q)*S(q)
-    """
-    # now that axes can be in any size order, need to sort a,b,c
-    # where a~b and c is either much smaller or much larger
-    abc = np.vstack((length_a, length_b, length_c))
-    abc = np.sort(abc, axis=0)
-    selector = (abc[1] - abc[0]) > (abc[2] - abc[1])
-    length = np.where(selector, abc[0], abc[2])
-    # surface average radius (rough approximation)
-    radius = sqrt(np.where(~selector, abc[0]*abc[1], abc[1]*abc[2]) / pi)
-
-    ddd = 0.75 * radius * (2*radius*length + (length + radius)*(length + pi*radius))
-    return 0.5 * (ddd) ** (1. / 3.)
+#def ER(length_a, length_b, length_c):
+#    """
+#    Return effective radius (ER) for P(q)*S(q)
+#    """
+#    # now that axes can be in any size order, need to sort a,b,c
+#    # where a~b and c is either much smaller or much larger
+#    abc = np.vstack((length_a, length_b, length_c))
+#    abc = np.sort(abc, axis=0)
+#    selector = (abc[1] - abc[0]) > (abc[2] - abc[1])
+#    length = np.where(selector, abc[0], abc[2])
+#    # surface average radius (rough approximation)
+#    radius = sqrt(np.where(~selector, abc[0]*abc[1], abc[1]*abc[2]) / pi)
+#
+#    ddd = 0.75 * radius * (2*radius*length + (length + radius)*(length + pi*radius))
+#    return 0.5 * (ddd) ** (1. / 3.)
 
 # VR defaults to 1.0
 

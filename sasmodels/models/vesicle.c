@@ -5,6 +5,11 @@ form_volume(double radius, double thickness)
     return M_4PI_3*(cube(radius+thickness) - cube(radius));
 }
 
+static double
+effective_radius(int mode, double radius, double thickness)
+{
+    return radius + thickness;
+}
 
 static void
 Fq(double q,

@@ -157,6 +157,7 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
 
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "triaxial_ellipsoid.c"]
 have_Fq = True
+effective_radius_type = ["equivalent sphere","min radius", "max radius"]
 
 def ER(radius_equat_minor, radius_equat_major, radius_polar):
     """

@@ -61,6 +61,34 @@ form_volume(double radius_bell,
     return M_PI*square(radius)*length + 2.0*M_PI*(p1+p2-p3);
 }
 
+static double
+radius_from_volume(double radius_bell, double radius, double length)
+{
+    const double vol_barbell = form_volume(radius_bell,radius,length);
+    return cbrt(0.75*vol_barbell/M_PI);
+}
+
+static double
+radius_from_totallength(double radius_bell, double radius, double length)
+{
+    const double hdist = sqrt(square(radius_bell) - square(radius));
+    return 0.5*length + hdist + radius_bell;
+}
+
+static double
+effective_radius(int mode, double radius_bell, double radius, double length)
+{
+    if (mode == 1) {
+        return radius_from_volume(radius_bell, radius , length);
+    } else if (mode == 2) {
+        return radius;
+    } else if (mode == 3) {
+        return 0.5*length;
+    } else {
+        return radius_from_totallength(radius_bell,radius,length);
+    }
+}
+
 static void
 Fq(double q,double *F1, double *F2, double sld, double solvent_sld,
     double radius_bell, double radius, double length)
