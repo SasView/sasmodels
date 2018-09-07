@@ -48,7 +48,7 @@ static double
 radius_from_curvature(double radius_equat_core, double x_core, double thick_shell, double x_polar_shell)
 {
     // Trivial cases
-    if (x_core == x_polar_shell == 1.0) return radius_equat_core + thick_shell;
+    if (1.0 == x_core && 1.0 == x_polar_shell) return radius_equat_core + thick_shell;
     if ((radius_equat_core + thick_shell)*(radius_equat_core*x_core + thick_shell*x_polar_shell) == 0.)  return 0.;
 
     // see equation (26) in A.Isihara, J.Chem.Phys. 18(1950)1446-1449
@@ -69,17 +69,16 @@ radius_from_curvature(double radius_equat_core, double x_core, double thick_shel
 static double
 effective_radius(int mode, double radius_equat_core, double x_core, double thick_shell, double x_polar_shell)
 {
+    const double radius_equat_tot = radius_equat_core + thick_shell;
+    const double radius_polar_tot = radius_equat_core*x_core + thick_shell*x_polar_shell;
+
     if (mode == 1) {
         return radius_from_volume(radius_equat_core, x_core, thick_shell, x_polar_shell);
     } else if (mode == 2) {
         return radius_from_curvature(radius_equat_core, x_core, thick_shell, x_polar_shell);
     } else if (mode == 3) {
-        const double radius_equat_tot = radius_equat_core + thick_shell;
-        const double radius_polar_tot = radius_equat_core*x_core + thick_shell*x_polar_shell;
         return (radius_polar_tot < radius_equat_tot ? radius_polar_tot : radius_equat_tot);
     } else {
-        const double radius_equat_tot = radius_equat_core + thick_shell;
-        const double radius_polar_tot = radius_equat_core*x_core + thick_shell*x_polar_shell;
         return (radius_polar_tot > radius_equat_tot ? radius_polar_tot : radius_equat_tot);
     }
 }
