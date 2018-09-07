@@ -17,7 +17,7 @@ from collections import OrderedDict
 from copy import copy
 import numpy as np  # type: ignore
 
-from .modelinfo import ParameterTable, ModelInfo, Parameter
+from .modelinfo import ParameterTable, ModelInfo, Parameter, parse_parameter
 from .kernel import KernelModel, Kernel
 from .details import make_details, dispersion_mesh
 
@@ -41,11 +41,11 @@ VOLFRAC_ID = "volfraction"
 def make_extra_pars(p_info):
     pars = []
     if p_info.have_Fq:
-        par = Parameter("structure_factor_mode", ["P*S","P*(1+beta*(S-1))"], 0, None, "",
+        par = parse_parameter("structure_factor_mode", "", 0, [["P*S","P*(1+beta*(S-1))"]], "",
                         "Structure factor calculation")
         pars.append(par)
     if p_info.effective_radius_type is not None:
-        par = Parameter("radius_effective_mode", ["unconstrained"] + p_info.effective_radius_type, 0, None, "",
+        par = parse_parameter("radius_effective_mode", "", 0, [["unconstrained"] + p_info.effective_radius_type], "",
                         "Effective radius calculation")
         pars.append(par)
     return pars
