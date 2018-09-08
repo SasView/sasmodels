@@ -23,12 +23,14 @@ static double
 radius_from_diagonal(double radius, double thickness, double length)
 {
     const double radius_outer = radius + thickness;
-    const double length_outer = length + thickness;
+    const double length_outer = length + 2.0*thickness;
     return sqrt(radius_outer*radius_outer + 0.25*length_outer*length_outer);
 }
 
 static double
 effective_radius(int mode, double radius, double thickness, double length)
+//effective_radius_type = ["equivalent sphere","outer radius","half outer length","half min outer dimension",
+//                         "half max outer dimension","half outer diagonal"]
 {
     if (mode == 1) {
         return radius_from_volume(radius, thickness, length);

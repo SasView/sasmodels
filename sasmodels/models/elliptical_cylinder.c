@@ -12,17 +12,17 @@ radius_from_volume(double radius_minor, double r_ratio, double length)
 }
 
 static double
-radius_from_min_dimension(double radius_minor, double r_ratio, double length)
+radius_from_min_dimension(double radius_minor, double r_ratio, double hlength)
 {
     const double rad_min = (r_ratio > 1.0 ? radius_minor : r_ratio*radius_minor);
-    return (rad_min < length ? rad_min : length);
+    return (rad_min < length ? rad_min : hlength);
 }
 
 static double
-radius_from_max_dimension(double radius_minor, double r_ratio, double length)
+radius_from_max_dimension(double radius_minor, double r_ratio, double hlength)
 {
     const double rad_max = (r_ratio < 1.0 ? radius_minor : r_ratio*radius_minor);
-    return (rad_max > length ? rad_max : length);
+    return (rad_max > length ? rad_max : hlength);
 }
 
 static double
@@ -34,6 +34,8 @@ radius_from_diagonal(double radius_minor, double r_ratio, double length)
 
 static double
 effective_radius(int mode, double radius_minor, double r_ratio, double length)
+//effective_radius_type = ["equivalent sphere","average radius","min radius","max radius",
+//                         "equivalent circular cross-section","half length","half min dimension","half max dimension","half diagonal"]
 {
     if (mode == 1) {
         return radius_from_volume(radius_minor, r_ratio, length);
@@ -48,9 +50,9 @@ effective_radius(int mode, double radius_minor, double r_ratio, double length)
     } else if (mode == 6) {
         return 0.5*length;
     } else if (mode == 7) {
-        return radius_from_min_dimension(radius_minor,r_ratio,length);
+        return radius_from_min_dimension(radius_minor,r_ratio,0.5*length);
     } else if (mode == 8) {
-        return radius_from_max_dimension(radius_minor,r_ratio,length);
+        return radius_from_max_dimension(radius_minor,r_ratio,0.5*length);
     } else {
         return radius_from_diagonal(radius_minor,r_ratio,length);
     }

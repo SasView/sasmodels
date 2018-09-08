@@ -44,21 +44,25 @@ radius_from_crosssection(double length_a, double length_b, double thick_rim_a, d
 static double
 effective_radius(int mode, double length_a, double length_b, double length_c,
                  double thick_rim_a, double thick_rim_b, double thick_rim_c)
+//effective_radius_type = ["equivalent sphere","half outer length_a", "half outer length_b", "half outer length_c",
+//                         "equivalent circular cross-section","half outer ab diagonal","half outer diagonal"]
+// note the core box is A*B*C with slabs ta, tb & tc on each face but missing the corners, though that fact is ignored here
+// in the equvalent sphere option
 {
     if (mode == 1) {
         return radius_from_volume(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c);
     } else if (mode == 2) {
-        return 0.5 * (length_a + thick_rim_a);
+        return 0.5 * length_a + thick_rim_a;
     } else if (mode == 3) {
-        return 0.5 * (length_b + thick_rim_b);
+        return 0.5 * length_b + thick_rim_b;
     } else if (mode == 4) {
-        return 0.5 * (length_c + thick_rim_c);
+        return 0.5 * length_c + thick_rim_c;
     } else if (mode == 5) {
         return radius_from_crosssection(length_a, length_b, thick_rim_a, thick_rim_b);
     } else if (mode == 6) {
-        return 0.5*sqrt(square(length_a+thick_rim_a) + square(length_b+thick_rim_b));
+        return 0.5*sqrt(square(length_a+ 2.0*thick_rim_a) + square(length_b+ 2.0*thick_rim_b));
     } else {
-        return 0.5*sqrt(square(length_a+thick_rim_a) + square(length_b+thick_rim_b) + square(length_c+thick_rim_c));
+        return 0.5*sqrt(square(length_a+ 2.0*thick_rim_a) + square(length_b+ 2.0*thick_rim_b) + square(length_c+ 2.0*thick_rim_c));
     }
 }
 

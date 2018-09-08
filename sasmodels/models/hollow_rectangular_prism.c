@@ -14,6 +14,9 @@ form_volume(double length_a, double b2a_ratio, double c2a_ratio, double thicknes
 
 static double
 effective_radius(int mode, double length_a, double b2a_ratio, double c2a_ratio, double thickness)
+//effective_radius_type = ["equivalent sphere","half length_a", "half length_b", "half length_c",
+//                         "equivalent outer circular cross-section","half ab diagonal","half diagonal"]
+// NOTE length_a is external dimension!
 {
     if (mode == 1) {
         return cbrt(0.75*cube(length_a)*b2a_ratio*c2a_ratio/M_PI);

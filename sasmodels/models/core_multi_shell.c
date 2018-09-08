@@ -31,12 +31,17 @@ outer_radius(double core_radius, double fp_n, double thickness[])
 
 static double
 effective_radius(int mode, double core_radius, double fp_n, double thickness[])
+// this seems regardless to always give the result for outer radius for n=1 shells; why??
+// printf shows fp_n is always 1, not 0,1,2
 {
-    if (mode == 1) {
+//        printf("fp_n =%g \n",fp_n);
+        if (mode == 1) {
         double r = core_radius;
         int n = (int)(fp_n+0.5);
-        for (int i=0; i < n; i++) {
-            r += thickness[i];
+        if ( n > 0) {
+            for (int i=0; i < n; i++) {
+                r += thickness[i];
+            }
         }
         return r;
         //return outer_radius(core_radius,fp_n,thickness);
