@@ -103,7 +103,7 @@ def random():
     return pars
 
 tests = [
-    [{'radius': 20.0, 'thickness': 10.0}, 'ER', 30.0],
+#    [{'radius': 20.0, 'thickness': 10.0}, 'ER', 30.0],
 
     # The SasView test result was 0.00169, with a background of 0.001
     [{'radius': 60.0, 'thickness': 10.0, 'sld_core': 1.0, 'sld_shell': 2.0,

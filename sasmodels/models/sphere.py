@@ -90,6 +90,6 @@ tests = [
     [{"scale": 1., "background": 0., "sld": 6., "sld_solvent": 1.,
       "radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
      0.2, 0.228843],
-    [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45}, "ER", 120.],
-    [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45}, "VR", 1.],
+#    [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45}, "ER", 120.],
+#    [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45}, "VR", 1.],
 ]
