@@ -182,6 +182,7 @@ class SesansData(Data1D):
 
     *x* is spin echo length and *y* is polarization (P/P0).
     """
+    isSesans = True
     def __init__(self, **kw):
         Data1D.__init__(self, **kw)
         self.lam = None # type: Optional[np.ndarray]
@@ -300,6 +301,13 @@ class Source(object):
         self.wavelength = np.NaN
         self.wavelength_unit = "A"
 
+class Sample(object):
+    """
+    Sample attributes.
+    """
+    def __init__(self):
+        # type: () -> None
+        pass
 
 def empty_data1D(q, resolution=0.0, L=0., dL=0.):
     # type: (np.ndarray, float) -> Data1D

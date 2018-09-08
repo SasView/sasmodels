@@ -190,13 +190,13 @@ static void
 qac_apply(
     QACRotation *rotation,
     double qx, double qy,
-    double *qa_out, double *qc_out)
+    double *qab_out, double *qc_out)
 {
-    const double dqc = rotation->R31*qx + rotation->R32*qy;
     // Indirect calculation of qab, from qab^2 = |q|^2 - qc^2
-    const double dqa = sqrt(-dqc*dqc + qx*qx + qy*qy);
-
-    *qa_out = dqa;
+    const double dqc = rotation->R31*qx + rotation->R32*qy;
+    const double dqab_sq = -dqc*dqc + qx*qx + qy*qy;
+    //*qab_out = sqrt(fabs(dqab_sq));
+    *qab_out = dqab_sq > 0.0 ? sqrt(dqab_sq) : 0.0;
     *qc_out = dqc;
 }
 #endif // _QAC_SECTION
