@@ -15,14 +15,14 @@ static double
 radius_from_min_dimension(double radius_minor, double r_ratio, double hlength)
 {
     const double rad_min = (r_ratio > 1.0 ? radius_minor : r_ratio*radius_minor);
-    return (rad_min < length ? rad_min : hlength);
+    return (rad_min < hlength ? rad_min : hlength);
 }
 
 static double
 radius_from_max_dimension(double radius_minor, double r_ratio, double hlength)
 {
     const double rad_max = (r_ratio < 1.0 ? radius_minor : r_ratio*radius_minor);
-    return (rad_max > length ? rad_max : hlength);
+    return (rad_max > hlength ? rad_max : hlength);
 }
 
 static double
