@@ -190,7 +190,7 @@ Authorship and Verification
 
 * **Author:** Jae-Hie Cho **Date:** Nov 1, 2010
 * **Last Modified by:** Paul Kienzle **Date:** Dec 20, 2016
-* **Last Reviewed by:** Richard Heenan **Date:** September 8, 2018
+* **Last Reviewed by:** Paul Butler **Date:** September 8, 2018
 """
 
 import numpy as np
