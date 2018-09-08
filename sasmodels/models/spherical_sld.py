@@ -1,4 +1,7 @@
 r"""
+Definition
+----------
+
 Similarly to the onion, this model provides the form factor, $P(q)$, for
 a multi-shell sphere, where the interface between the each neighboring
 shells can be described by the error function, power-law, or exponential
@@ -15,16 +18,17 @@ shells here are sub-divided and numerically integrated assuming each
 sub-shell is described by a line function, with *n_steps* sub-shells per
 interface. The form factor is normalized by the total volume of the sphere.
 
-Interface shapes are as follows::
+Interface shapes are as follows:
 
     0: erf($\nu z$)
+    
     1: Rpow($z^\nu$)
+    
     2: Lpow($z^\nu$)
+    
     3: Rexp($-\nu z$)
+    
     4: Lexp($-\nu z$)
-
-Definition
-----------
 
 The form factor $P(q)$ in 1D is calculated by:
 
@@ -173,10 +177,20 @@ where the $q$ vector is defined as
     The outer most radius is used as the effective radius for $S(Q)$
     when $P(Q) * S(Q)$ is applied.
 
+
 References
 ----------
-L A Feigin and D I Svergun, Structure Analysis by Small-Angle X-Ray
-and Neutron Scattering, Plenum Press, New York, (1987)
+
+.. [#] L A Feigin and D I Svergun, Structure Analysis by Small-Angle X-Ray
+   and Neutron Scattering, Plenum Press, New York, (1987)
+
+
+Authorship and Verification
+----------------------------
+
+* **Author:** Jae-Hie Cho **Date:** Nov 1, 2010
+* **Last Modified by:** Paul Kienzle **Date:** Dec 20, 2016
+* **Last Reviewed by:** Richard Heenan **Date:** September 8, 2018
 """
 
 import numpy as np
