@@ -542,9 +542,11 @@ class SasviewModel(object):
         if isinstance(x, (list, tuple)):
             # pylint: disable=unpacking-non-sequence
             q, phi = x
-            return self.calculate_Iq([q*math.cos(phi)], [q*math.sin(phi)])[0]
+            result, _ = self.calculate_Iq([q*math.cos(phi)], [q*math.sin(phi)])
+            return result[0]
         else:
-            return self.calculate_Iq([x])[0]
+            result, _ = self.calculate_Iq([x])
+            return result[0]
 
 
     def runXY(self, x=0.0):
@@ -559,9 +561,11 @@ class SasviewModel(object):
         **DEPRECATED**: use calculate_Iq instead
         """
         if isinstance(x, (list, tuple)):
-            return self.calculate_Iq([x[0]], [x[1]])[0]
+            result, _ = self.calculate_Iq([x[0]], [x[1]])
+            return result[0]
         else:
-            return self.calculate_Iq([x])[0]
+            result, _ = self.calculate_Iq([x])
+            return result[0]
 
     def evalDistribution(self, qdist):
         # type: (Union[np.ndarray, Tuple[np.ndarray, np.ndarray], List[np.ndarray]]) -> np.ndarray
@@ -595,11 +599,13 @@ class SasviewModel(object):
         if isinstance(qdist, (list, tuple)):
             # Check whether we have a list of ndarrays [qx,qy]
             qx, qy = qdist
-            return self.calculate_Iq(qx, qy)
+            result, _ = self.calculate_Iq(qx, qy)
+            return result
 
         elif isinstance(qdist, np.ndarray):
             # We have a simple 1D distribution of q-values
-            return self.calculate_Iq(qdist)
+            result, _ = self.calculate_Iq(qdist)
+            return result
 
         else:
             raise TypeError("evalDistribution expects q or [qx, qy], not %r"
@@ -639,15 +645,20 @@ class SasviewModel(object):
         composition = self._model_info.composition
         if composition and composition[0] == 'product': # only P*S for now
             with calculation_lock:
-                self._calculate_Iq(qx)
-                # for compatibility with sasview 4.3
-                results = self._intermediate_results()
-                return results["P(Q)"], results["S(Q)"]
+                _, lazy_results = self._calculate_Iq(qx)
+                # for compatibility with sasview 4.x
+                results = lazy_results()
+                pq_data = results.get("P(Q)")
+                sq_data = results.get("S(Q)")
+                return pq_data, sq_data
         else:
             return None
 
-    def calculate_Iq(self, qx, qy=None):
-        # type: (Sequence[float], Optional[Sequence[float]]) -> np.ndarray
+    def calculate_Iq(self,
+                     qx,     # type: Sequence[float]
+                     qy=None # type: Optional[Sequence[float]]
+                     ):
+        # type: (...) -> Tuple[np.ndarray, Callable[[], collections.OrderedDict[str, np.ndarray]]]
         """
         Calculate Iq for one set of q with the current parameters.
 
@@ -655,6 +666,10 @@ class SasviewModel(object):
 
         This should NOT be used for fitting since it copies the *q* vectors
         to the card for each evaluation.
+
+        The returned tuple contains the scattering intensity followed by a
+        callable which returns a dictionary of intermediate data from
+        ProductKernel.
         """
         ## uncomment the following when trying to debug the uncoordinated calls
         ## to calculate_Iq
@@ -687,11 +702,14 @@ class SasviewModel(object):
         #print("is_mag", is_magnetic)
         result = calculator(call_details, values, cutoff=self.cutoff,
                             magnetic=is_magnetic)
+        lazy_results = getattr(calculator, 'results',
+                               lambda: collections.OrderedDict())
         #print("result", result)
-        self._intermediate_results = getattr(calculator, 'results', None)
+
         calculator.release()
         #self._model.release()
-        return result
+
+        return result, lazy_results
 
     def calculate_ER(self):
         # type: () -> float
@@ -880,7 +898,7 @@ def magnetic_demo():
     model.setParam('M0:sld', 8)
     q = np.linspace(-0.35, 0.35, 500)
     qx, qy = np.meshgrid(q, q)
-    result = model.calculate_Iq(qx.flatten(), qy.flatten())
+    result, _ = model.calculate_Iq(qx.flatten(), qy.flatten())
     result = result.reshape(qx.shape)
 
     import pylab

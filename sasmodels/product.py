@@ -41,12 +41,22 @@ VOLFRAC_ID = "volfraction"
 def make_extra_pars(p_info):
     pars = []
     if p_info.have_Fq:
-        par = parse_parameter("structure_factor_mode", "", 0, [["P*S","P*(1+beta*(S-1))"]], "",
-                        "Structure factor calculation")
+        par = parse_parameter(
+                "structure_factor_mode",
+                "",
+                0,
+                [["P*S","P*(1+beta*(S-1))"]],
+                "",
+                "Structure factor calculation")
         pars.append(par)
     if p_info.effective_radius_type is not None:
-        par = parse_parameter("radius_effective_mode", "", 0, [["unconstrained"] + p_info.effective_radius_type], "",
-                        "Effective radius calculation")
+        par = parse_parameter(
+                "radius_effective_mode",
+                "",
+                0,
+                [["unconstrained"] + p_info.effective_radius_type],
+                "",
+                "Effective radius calculation")
         pars.append(par)
     return pars
 
@@ -168,8 +178,14 @@ def _intermediates(P, S, effective_radius):
         ("effective_radius", effective_radius),
     ))
 
-def _intermediates_beta(F1, F2, S, scale, bg, effective_radius):
-    # type: (np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, float) -> OrderedDict[str, Union[np.ndarray, float]]
+def _intermediates_beta(F1,              # type: np.ndarray
+                        F2,              # type: np.ndarray
+                        S,               # type: np.ndarray
+                        scale,           # type: np.ndarray
+                        bg,              # type: np.ndarray
+                        effective_radius # type: float
+                        ):
+    # type: (...) -> OrderedDict[str, Union[np.ndarray, float]]
     """
     Returns intermediate results for beta approximation-enabled product. The result may be an array or a float.
     """

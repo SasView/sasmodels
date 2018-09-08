@@ -990,12 +990,15 @@ def make_doc(model_info):
     Sq_units = "The returned value is a dimensionless structure factor, $S(q)$."
     docs = model_info.docs if model_info.docs is not None else ""
     docs = convert_section_titles_to_boldface(docs)
-    pars = make_partable(model_info.parameters.COMMON
-                         + model_info.parameters.kernel_parameters)
+    if model_info.structure_factor:
+        pars = model_info.parameters.kernel_parameters
+    else:
+        pars = model_info.parameters.COMMON + model_info.parameters.kernel_parameters
+    partable = make_partable(pars)
     subst = dict(id=model_info.id.replace('_', '-'),
                  name=model_info.name,
                  title=model_info.title,
-                 parameters=pars,
+                 parameters=partable,
                  returns=Sq_units if model_info.structure_factor else Iq_units,
                  docs=docs)
     return DOC_HEADER % subst

@@ -125,6 +125,11 @@ from __future__ import division
 import numpy as np
 from numpy import inf, sin, cos, pi
 
+try:
+    from numpy import cbrt
+except ImportError:
+    def cbrt(x): return x ** (1.0/3.0)
+
 name = "ellipsoid"
 title = "Ellipsoid of revolution with uniform scattering length density."
 
