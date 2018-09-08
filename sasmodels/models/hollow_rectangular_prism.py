@@ -1,18 +1,14 @@
 # rectangular_prism model
 # Note: model title and parameter table are inserted automatically
 r"""
-
-This model provides the form factor, $P(q)$, for a hollow rectangular
-parallelepiped with a wall of thickness $\Delta$.
-
-
 Definition
 ----------
 
-The 1D scattering intensity for this model is calculated by forming
-the difference of the amplitudes of two massive parallelepipeds
-differing in their outermost dimensions in each direction by the
-same length increment $2\Delta$ (Nayuk, 2012).
+This model provides the form factor, $P(q)$, for a hollow rectangular
+parallelepiped with a wall of thickness $\Delta$. The 1D scattering intensity
+for this model is calculated by forming the difference of the amplitudes of two
+massive parallelepipeds differing in their outermost dimensions in each
+direction by the same length increment $2\Delta$ (\ [#Nayuk2012]_ Nayuk, 2012).
 
 As in the case of the massive parallelepiped model (:ref:`rectangular-prism`),
 the scattering amplitude is computed for a particular orientation of the
@@ -60,10 +56,11 @@ The 1D scattering intensity is then calculated as
   I(q) = \text{scale} \times V \times (\rho_\text{p} -
   \rho_\text{solvent})^2 \times P(q) + \text{background}
 
-where $\rho_\text{p}$ is the scattering length of the parallelepiped,
-$\rho_\text{solvent}$ is the scattering length of the solvent,
+where $\rho_\text{p}$ is the scattering length density of the parallelepiped,
+$\rho_\text{solvent}$ is the scattering length density of the solvent,
 and (if the data are in absolute units) *scale* represents the volume fraction
-(which is unitless).
+(which is unitless) of the rectangular shell of material (i.e. not including
+the volume of the solvent filled core).
 
 For 2d data the orientation of the particle is required, described using
 angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further details
@@ -72,8 +69,9 @@ The angle $\Psi$ is the rotational angle around the long *C* axis. For example,
 $\Psi = 0$ when the *B* axis is parallel to the *x*-axis of the detector.
 
 For 2d, constraints must be applied during fitting to ensure that the inequality
-$A < B < C$ is not violated, and hence the correct definition of angles is preserved. The calculation will not report an error,
-but the results may be not correct.
+$A < B < C$ is not violated, and hence the correct definition of angles is
+preserved. The calculation will not report an error if the inequality is *not*
+preserved, but the results may be not correct.
 
 .. figure:: img/parallelepiped_angle_definition.png
 
@@ -98,7 +96,15 @@ of the 1D model to the curves shown in (Nayuk, 2012).
 References
 ----------
 
-R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+.. [#Nayuk2012] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+
+
+Authorship and Verification
+----------------------------
+
+* **Author:** Miguel Gonzales **Date:** February 26, 2016
+* **Last Modified by:** Paul Kienzle **Date:** December 14, 2017
+* **Last Reviewed by:** Paul Butler **Date:** September 06, 2018
 """
 
 import numpy as np

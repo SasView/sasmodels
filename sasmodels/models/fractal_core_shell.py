@@ -87,7 +87,7 @@ parameters = [
     ["sld_core",    "1e-6/Ang^2", 1.0,  [-inf, inf], "sld",    "Sphere core scattering length density"],
     ["sld_shell",   "1e-6/Ang^2", 2.0,  [-inf, inf], "sld",    "Sphere shell scattering length density"],
     ["sld_solvent", "1e-6/Ang^2", 3.0,  [-inf, inf], "sld",    "Solvent scattering length density"],
-    ["volfraction", "",           1.0,  [0.0, inf],  "",       "Volume fraction of building block spheres"],
+    ["volfraction", "",           0.05,  [0.0, inf],  "",       "Volume fraction of building block spheres"],
     ["fractal_dim",    "",        2.0,  [0.0, 6.0],  "",       "Fractal dimension"],
     ["cor_length",  "Ang",      100.0,  [0.0, inf],  "",       "Correlation length of fractal-like aggregates"],
 ]
@@ -133,28 +133,22 @@ def ER(radius, thickness):
     """
     return radius + thickness
 
-def VR(radius, thickness):
-    """
-        Volume ratio
-        @param radius: core radius
-        @param thickness: shell thickness
-    """
-    whole = 4.0/3.0 * pi * (radius + thickness)**3
-    core = 4.0/3.0 * pi * radius**3
-    return whole, whole-core
-
 tests = [[{'radius': 20.0, 'thickness': 10.0}, 'ER', 30.0],
-         [{'radius': 20.0, 'thickness': 10.0}, 'VR', 0.703703704]]
 
-#         # The SasView test result was 0.00169, with a background of 0.001
-#         # They are however wrong as we now know.  IGOR might be a more
-#         # appropriate source. Otherwise will just have to assume this is now
-#         # correct and self generate a correct answer for the future. Until we
-#         # figure it out leave the tests commented out
-#         [{'radius': 60.0,
-#           'thickness': 10.0,
-#           'sld_core': 1.0,
-#           'sld_shell': 2.0,
-#           'sld_solvent': 3.0,
-#           'background': 0.0
-#          }, 0.015211, 692.84]]
+#         # At some point the SasView 3.x test result was deemed incorrect. The
+          #following tests were verified against NIST IGOR macros ver 7.850.
+          #NOTE: NIST macros do only provide for a polydispers core (no option
+          #for a poly shell or for a monodisperse core.  The results seemed
+          #extremely sensitive to the core PD, varying non monotonically all
+          #the way to a PD of 1e-6. From 1e-6 to 1e-9 no changes in the
+          #results were observed and the values below were taken using PD=1e-9.
+          #Non-monotonically = I(0.001)=188 to 140 to 177 back to 160 etc.
+         [{'radius': 20.0,
+           'thickness': 5.0,
+           'sld_core': 3.5,
+           'sld_shell': 1.0,
+           'sld_solvent': 6.35,
+           'volfraction': 0.05,
+           'background': 0.0},
+           [0.001,0.00291,0.0107944,0.029923,0.100726,0.476304],
+           [177.146,165.151,84.1596,20.1466,1.40906,0.00622666]]]
