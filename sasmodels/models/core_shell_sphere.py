@@ -89,17 +89,6 @@ def ER(radius, thickness):
     """
     return radius + thickness
 
-def VR(radius, thickness):
-    """
-        Volume ratio
-        @param radius: core radius
-        @param thickness: shell thickness
-    """
-    return (1, 1)
-    whole = 4.0/3.0 * pi * (radius + thickness)**3
-    core = 4.0/3.0 * pi * radius**3
-    return whole, whole - core
-
 def random():
     outer_radius = 10**np.random.uniform(1.3, 4.3)
     # Use a distribution with a preference for thin shell or thin core
@@ -114,9 +103,6 @@ def random():
 
 tests = [
     [{'radius': 20.0, 'thickness': 10.0}, 'ER', 30.0],
-    # TODO: VR test suppressed until we sort out new product model
-    # and determine what to do with volume ratio.
-    #[{'radius': 20.0, 'thickness': 10.0}, 'VR', 0.703703704],
 
     # The SasView test result was 0.00169, with a background of 0.001
     [{'radius': 60.0, 'thickness': 10.0, 'sld_core': 1.0, 'sld_shell': 2.0,

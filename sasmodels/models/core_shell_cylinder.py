@@ -4,7 +4,13 @@ Definition
 
 The output of the 2D scattering intensity function for oriented core-shell
 cylinders is given by (Kline, 2006 [#kline]_). The form factor is normalized
-by the particle volume.
+by the particle volume. Note that in this model the shell envelops the entire
+core so that besides a "sleeve" around the core, the shell also provides two
+flat end caps of thickness = shell thickness. In other words the length of the
+total cyclinder is the length of the core cylinder plus twice the thickness of
+the shell. If no end caps are desired one should use the
+:ref:`core-shell-bicelle` and set the thickness of the end caps (in this case
+the "thick_face") to zero.
 
 .. math::
 
@@ -32,8 +38,8 @@ and
     V_s = \pi (R + T)^2 (L + 2T)
 
 and $\alpha$ is the angle between the axis of the cylinder and $\vec q$,
-$V_s$ is the volume of the outer shell (i.e. the total volume, including
-the shell), $V_c$ is the volume of the core, $L$ is the length of the core,
+$V_s$ is the total volume (i.e. including both the core and the outer shell),
+$V_c$ is the volume of the core, $L$ is the length of the core,
 $R$ is the radius of the core, $T$ is the thickness of the shell, $\rho_c$
 is the scattering length density of the core, $\rho_s$ is the scattering
 length density of the shell, $\rho_\text{solv}$ is the scattering length
@@ -134,14 +140,6 @@ def ER(radius, thickness, length):
     length = length + 2 * thickness
     ddd = 0.75 * radius * (2 * radius * length + (length + radius) * (length + pi * radius))
     return 0.5 * (ddd) ** (1. / 3.)
-
-def VR(radius, thickness, length):
-    """
-    Returns volume ratio
-    """
-    whole = pi * (radius + thickness) ** 2 * (length + 2 * thickness)
-    core = pi * radius ** 2 * length
-    return whole, whole - core
 
 def random():
     outer_radius = 10**np.random.uniform(1, 4.7)
