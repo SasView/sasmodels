@@ -1,18 +1,28 @@
 r"""
+Definition
+----------
+
 This model provides the form factor, $P(q)$, for a monodisperse hollow right
-angle circular cylinder (rigid tube) where the form factor is normalized by the
-volume of the tube (i.e. not by the external volume).
+angle circular cylinder (rigid tube) where the The inside and outside of the
+hollow cylinder are assumed to have the same SLD and the form factor is thus
+normalized by the volume of the tube (i.e. not by the total cylinder volume).
 
 .. math::
 
     P(q) = \text{scale} \left<F^2\right>/V_\text{shell} + \text{background}
 
-where the averaging $\left<\ldots\right>$ is applied only for the 1D calculation.
+where the averaging $\left<\ldots\right>$ is applied only for the 1D
+calculation. If Intensity is given on an absolute scale, the scale factor here
+is the volume fraction of the shell.  This differs from
+the :ref:`core-shell-cylinder` in that, in that case, scale is the volume
+fraction of the entire cylinder (core+shell). The application might be for a
+bilayer which wraps into a hollow tube and the volume fraction of material is
+all in the shell, whereas the :ref:`core-shell-cylinder` model might be used for
+a cylindrical micelle where the tails in the core have a different SLD than the
+headgroups (in the shell) and the volume fraction of material comes fromm the
+whole cyclinder.  NOTE: the hollow_cylinder represents a tube whereas the
+core_shell_cylinder includes a shell layer covering the ends (end caps) as well.
 
-The inside and outside of the hollow cylinder are assumed have the same SLD.
-
-Definition
-----------
 
 The 1D scattering intensity is calculated in the following way (Guinier, 1955)
 
@@ -47,16 +57,16 @@ the axis of the cylinder using two angles $\theta$ and $\phi$
 References
 ----------
 
-L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and
-Neutron Scattering*, Plenum Press, New York, (1987)
+.. [#] L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and
+   Neutron Scattering*, Plenum Press, New York, (1987)
 
 Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
-* **Last Modified by:** Richard Heenan **Date:** October 06, 2016
-   (reparametrised to use thickness, not outer radius)
-* **Last Reviewed by:** Richard Heenan **Date:** October 06, 2016
+* **Last Modified by:** Paul Butler **Date:** September 06, 2018
+   (corrected VR calculation)
+* **Last Reviewed by:** Paul Butler **Date:** September 06, 2018
 """
 
 import numpy as np
@@ -122,7 +132,7 @@ def VR(radius, thickness, length):
     vol_core = pi*radius*radius*length
     vol_total = pi*router*router*length
     vol_shell = vol_total - vol_core
-    return vol_shell, vol_total
+    return vol_total, vol_shell
 
 def random():
     length = 10**np.random.uniform(1, 4.7)
@@ -153,7 +163,7 @@ qy = q*sin(pi/6.0)
 # Parameters for unit tests
 tests = [
     [{}, 0.00005, 1764.926],
-    [{}, 'VR', 1.8],
+    [{}, 'VR', 0.55555556],
     [{}, 0.001, 1756.76],
     [{}, (qx, qy), 2.36885476192],
 ]
