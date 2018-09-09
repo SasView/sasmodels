@@ -1,5 +1,5 @@
 static double
-sc_Zq(double qa, double qb, double qc, double dnn, double d_factor)
+sc_Zq(double qa, double qb, double qc, double lattice_spacing, double lattice_distortion)
 {
     // Equations from Matsuoka 9-10-11, multiplied by |q|
     const double a1 = qa;
@@ -15,21 +15,21 @@ sc_Zq(double qa, double qb, double qc, double dnn, double d_factor)
     // Rewriting denominator
     //         => exp(a)^2 - 2 cos(d ak) exp(a) + 1)
     //         => (exp(a) - 2 cos(d ak)) * exp(a) + 1
-    const double arg = -0.5*square(dnn*d_factor)*(a1*a1 + a2*a2 + a3*a3);
+    const double arg = -0.5*square(lattice_spacing*lattice_distortion)*(a1*a1 + a2*a2 + a3*a3);
     const double exp_arg = exp(arg);
     const double Zq = -cube(expm1(2.0*arg))
-        / ( ((exp_arg - 2.0*cos(dnn*a1))*exp_arg + 1.0)
-          * ((exp_arg - 2.0*cos(dnn*a2))*exp_arg + 1.0)
-          * ((exp_arg - 2.0*cos(dnn*a3))*exp_arg + 1.0));
+        / ( ((exp_arg - 2.0*cos(lattice_spacing*a1))*exp_arg + 1.0)
+          * ((exp_arg - 2.0*cos(lattice_spacing*a2))*exp_arg + 1.0)
+          * ((exp_arg - 2.0*cos(lattice_spacing*a3))*exp_arg + 1.0));
 
     return Zq;
 }
 
 // occupied volume fraction calculated from lattice symmetry and sphere radius
 static double
-sc_volume_fraction(double radius, double dnn)
+sc_volume_fraction(double radius, double lattice_spacing)
 {
-    return sphere_volume(radius/dnn);
+    return sphere_volume(radius/lattice_spacing);
 }
 
 static double
@@ -40,8 +40,8 @@ form_volume(double radius)
 
 
 static double
-Iq(double q, double dnn,
-    double d_factor, double radius,
+Iq(double q, double lattice_spacing,
+    double lattice_distortion, double radius,
     double sld, double solvent_sld)
 {
     // translate a point in [-1,1] to a point in [0, 2 pi]
@@ -66,7 +66,7 @@ Iq(double q, double dnn,
             SINCOS(phi, sin_phi, cos_phi);
             const double qa = qab*cos_phi;
             const double qb = qab*sin_phi;
-            const double form = sc_Zq(qa, qb, qc, dnn, d_factor);
+            const double form = sc_Zq(qa, qb, qc, lattice_spacing, lattice_distortion);
             inner_sum += GAUSS_W[j] * form;
         }
         inner_sum *= phi_m;  // sum(f(x)dx) = sum(f(x)) dx
@@ -76,17 +76,17 @@ Iq(double q, double dnn,
     const double Zq = outer_sum/M_PI_2;
     const double Pq = sphere_form(q, radius, sld, solvent_sld);
 
-    return sc_volume_fraction(radius, dnn) * Pq * Zq;
+    return sc_volume_fraction(radius, lattice_spacing) * Pq * Zq;
 }
 
 
 static double
 Iqabc(double qa, double qb, double qc,
-    double dnn, double d_factor, double radius,
+    double lattice_spacing, double lattice_distortion, double radius,
     double sld, double solvent_sld)
 {
     const double q = sqrt(qa*qa + qb*qb + qc*qc);
     const double Pq = sphere_form(q, radius, sld, solvent_sld);
-    const double Zq = sc_Zq(qa, qb, qc, dnn, d_factor);
-    return sc_volume_fraction(radius, dnn) * Pq * Zq;
+    const double Zq = sc_Zq(qa, qb, qc, lattice_spacing, lattice_distortion);
+    return sc_volume_fraction(radius, lattice_spacing) * Pq * Zq;
 }

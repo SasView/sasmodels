@@ -122,8 +122,8 @@ single = False
 
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description" ],
-parameters = [["dnn",         "Ang",       220,    [-inf, inf], "",            "Nearest neighbour distance"],
-              ["d_factor",    "",            0.06, [-inf, inf], "",            "Paracrystal distortion factor"],
+parameters = [["lattice_spacing",         "Ang",       220,    [-inf, inf], "",            "Lattice spacing"],
+              ["lattice_distortion",    "",            0.06, [-inf, inf], "",            "Paracrystal distortion factor"],
               ["radius",      "Ang",        40,    [0, inf],    "volume",      "Particle radius"],
               ["sld",         "1e-6/Ang^2",  4,    [-inf, inf], "sld",         "Particle scattering length density"],
               ["sld_solvent", "1e-6/Ang^2",  1,    [-inf, inf], "sld",         "Solvent scattering length density"],
@@ -144,13 +144,13 @@ def random():
     # useful between 0.01 and 0.7.  Use an exponential distribution
     # in this range 'cuz its easy.
     radius = 10**np.random.uniform(1.3, 4)
-    d_factor = 10**np.random.uniform(-2, -0.7)  # sigma_d in 0.01-0.7
-    dnn_fraction = np.random.beta(a=10, b=1)
-    dnn = radius*4/np.sqrt(3)/dnn_fraction
+    lattice_distortion = 10**np.random.uniform(-2, -0.7)  # sigma_d in 0.01-0.7
+    lattice_spacing_fraction = np.random.beta(a=10, b=1)
+    lattice_spacing = radius*4/np.sqrt(3)/lattice_spacing_fraction
     pars = dict(
         #sld=1, sld_solvent=0, scale=1, background=1e-32,
-        dnn=dnn,
-        d_factor=d_factor,
+        lattice_spacing=lattice_spacing,
+        lattice_distortion=lattice_distortion,
         radius=radius,
     )
     return pars

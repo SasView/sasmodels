@@ -115,8 +115,8 @@ description = """
         Parameters;
         scale: volume fraction of spheres
         bkg:background, R: radius of sphere
-        dnn: Nearest neighbor distance
-        d_factor: Paracrystal distortion factor
+        lattice_spacing: Nearest neighbor distance
+        lattice_distortion: Paracrystal distortion factor
         radius: radius of the spheres
         sldSph: SLD of the sphere
         sldSolv: SLD of the solvent
@@ -125,8 +125,8 @@ category = "shape:paracrystal"
 single = False
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["dnn",         "Ang",       220.0, [0.0, inf],  "",            "Nearest neighbor distance"],
-              ["d_factor",    "",           0.06, [-inf, inf], "",            "Paracrystal distortion factor"],
+parameters = [["lattice_spacing",         "Ang",       220.0, [0.0, inf],  "",  "Lattice spacing"],
+              ["lattice_distortion",    "",           0.06, [-inf, inf], "",   "Paracrystal distortion factor"],
               ["radius",      "Ang",        40.0, [0.0, inf],  "volume",      "Radius of sphere"],
               ["sld",  "1e-6/Ang^2",         3.0, [0.0, inf],  "sld",         "Sphere scattering length density"],
               ["sld_solvent", "1e-6/Ang^2",  6.3, [0.0, inf],  "sld",         "Solvent scattering length density"],
@@ -141,13 +141,13 @@ source = ["lib/sas_3j1x_x.c", "lib/sphere_form.c", "lib/gauss150.c", "sc_paracry
 def random():
     # copied from bcc_paracrystal
     radius = 10**np.random.uniform(1.3, 4)
-    d_factor = 10**np.random.uniform(-2, -0.7)  # sigma_d in 0.01-0.7
-    dnn_fraction = np.random.beta(a=10, b=1)
-    dnn = radius*4/np.sqrt(4)/dnn_fraction
+    lattice_distortion = 10**np.random.uniform(-2, -0.7)  # sigma_d in 0.01-0.7
+    lattice_spacing_fraction = np.random.beta(a=10, b=1)
+    lattice_spacing = radius*4/np.sqrt(4)/lattice_spacing_fraction
     pars = dict(
         #sld=1, sld_solvent=0, scale=1, background=1e-32,
-        dnn=dnn,
-        d_factor=d_factor,
+        lattice_spacing=lattice_spacing,
+        lattice_distortion=lattice_distortion,
         radius=radius,
     )
     return pars

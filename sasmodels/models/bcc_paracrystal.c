@@ -1,5 +1,5 @@
 static double
-bcc_Zq(double qa, double qb, double qc, double dnn, double d_factor)
+bcc_Zq(double qa, double qb, double qc, double lattice_spacing, double lattice_distortion)
 {
     // Equations from Matsuoka 26-27-28, multiplied by |q|
     const double a1 = (-qa + qb + qc)/2.0;
@@ -16,12 +16,12 @@ bcc_Zq(double qa, double qb, double qc, double dnn, double d_factor)
     // Rewriting denominator
     //         => exp(a)^2 - 2 cos(d ak) exp(a) + 1)
     //         => (exp(a) - 2 cos(d ak)) * exp(a) + 1
-    const double arg = -0.5*square(dnn*d_factor)*(a1*a1 + a2*a2 + a3*a3);
+    const double arg = -0.5*square(lattice_spacing*lattice_distortion)*(a1*a1 + a2*a2 + a3*a3);
     const double exp_arg = exp(arg);
     const double Zq = -cube(expm1(2.0*arg))
-        / ( ((exp_arg - 2.0*cos(dnn*a1))*exp_arg + 1.0)
-          * ((exp_arg - 2.0*cos(dnn*a2))*exp_arg + 1.0)
-          * ((exp_arg - 2.0*cos(dnn*a3))*exp_arg + 1.0));
+        / ( ((exp_arg - 2.0*cos(lattice_spacing*a1))*exp_arg + 1.0)
+          * ((exp_arg - 2.0*cos(lattice_spacing*a2))*exp_arg + 1.0)
+          * ((exp_arg - 2.0*cos(lattice_spacing*a3))*exp_arg + 1.0));
 
 #elif 0
     // ** Alternate form, which perhaps is more approachable
@@ -35,19 +35,19 @@ bcc_Zq(double qa, double qb, double qc, double dnn, double d_factor)
     // One more step leads to the form in sasview 3.x for 2d models
     //            = tanh(-a) / [1 - cos(d a_k)/cosh(-a)]
     //
-    const double arg = 0.5*square(dnn*d_factor)*(a1*a1 + a2*a2 + a3*a3);
+    const double arg = 0.5*square(lattice_spacing*lattice_distortion)*(a1*a1 + a2*a2 + a3*a3);
     const double sinh_qd = sinh(arg);
     const double cosh_qd = cosh(arg);
-    const double Zq = sinh_qd/(cosh_qd - cos(dnn*a1))
-                    * sinh_qd/(cosh_qd - cos(dnn*a2))
-                    * sinh_qd/(cosh_qd - cos(dnn*a3));
+    const double Zq = sinh_qd/(cosh_qd - cos(lattice_spacing*a1))
+                    * sinh_qd/(cosh_qd - cos(lattice_spacing*a2))
+                    * sinh_qd/(cosh_qd - cos(lattice_spacing*a3));
 #else
-    const double arg = 0.5*square(dnn*d_factor)*(a1*a1 + a2*a2 + a3*a3);
+    const double arg = 0.5*square(lattice_spacing*lattice_distortion)*(a1*a1 + a2*a2 + a3*a3);
     const double tanh_qd = tanh(arg);
     const double cosh_qd = cosh(arg);
-    const double Zq = tanh_qd/(1.0 - cos(dnn*a1)/cosh_qd)
-                    * tanh_qd/(1.0 - cos(dnn*a2)/cosh_qd)
-                    * tanh_qd/(1.0 - cos(dnn*a3)/cosh_qd);
+    const double Zq = tanh_qd/(1.0 - cos(lattice_spacing*a1)/cosh_qd)
+                    * tanh_qd/(1.0 - cos(lattice_spacing*a2)/cosh_qd)
+                    * tanh_qd/(1.0 - cos(lattice_spacing*a3)/cosh_qd);
 #endif
 
     return Zq;
@@ -56,9 +56,9 @@ bcc_Zq(double qa, double qb, double qc, double dnn, double d_factor)
 
 // occupied volume fraction calculated from lattice symmetry and sphere radius
 static double
-bcc_volume_fraction(double radius, double dnn)
+bcc_volume_fraction(double radius, double lattice_spacing)
 {
-    return 2.0*sphere_volume(sqrt(0.75)*radius/dnn);
+    return 2.0*sphere_volume(sqrt(0.75)*radius/lattice_spacing);
 }
 
 static double
@@ -68,8 +68,8 @@ form_volume(double radius)
 }
 
 
-static double Iq(double q, double dnn,
-    double d_factor, double radius,
+static double Iq(double q, double lattice_spacing,
+    double lattice_distortion, double radius,
     double sld, double solvent_sld)
 {
     // translate a point in [-1,1] to a point in [0, 2 pi]
@@ -93,7 +93,7 @@ static double Iq(double q, double dnn,
             SINCOS(phi, sin_phi, cos_phi);
             const double qa = qab*cos_phi;
             const double qb = qab*sin_phi;
-            const double form = bcc_Zq(qa, qb, qc, dnn, d_factor);
+            const double form = bcc_Zq(qa, qb, qc, lattice_spacing, lattice_distortion);
             inner_sum += GAUSS_W[j] * form;
         }
         inner_sum *= phi_m;  // sum(f(x)dx) = sum(f(x)) dx
@@ -102,16 +102,16 @@ static double Iq(double q, double dnn,
     outer_sum *= theta_m;
     const double Zq = outer_sum/(4.0*M_PI);
     const double Pq = sphere_form(q, radius, sld, solvent_sld);
-    return bcc_volume_fraction(radius, dnn) * Pq * Zq;
+    return bcc_volume_fraction(radius, lattice_spacing) * Pq * Zq;
 }
 
 
 static double Iqabc(double qa, double qb, double qc,
-    double dnn, double d_factor, double radius,
+    double lattice_spacing, double lattice_distortion, double radius,
     double sld, double solvent_sld)
 {
     const double q = sqrt(qa*qa + qb*qb + qc*qc);
-    const double Zq = bcc_Zq(qa, qb, qc, dnn, d_factor);
+    const double Zq = bcc_Zq(qa, qb, qc, lattice_spacing, lattice_distortion);
     const double Pq = sphere_form(q, radius, sld, solvent_sld);
-    return bcc_volume_fraction(radius, dnn) * Pq * Zq;
+    return bcc_volume_fraction(radius, lattice_spacing) * Pq * Zq;
 }
