@@ -216,7 +216,7 @@ parameters = [["n_shells",             "",           1,      [1, 10],        "vo
               ["thickness[n_shells]",  "Ang",        100.0,  [0, inf],       "volume", "thickness shell"],
               ["interface[n_shells]",  "Ang",        50.0,   [0, inf],       "volume", "thickness of the interface"],
               ["shape[n_shells]",      "",           0,      [SHAPES],       "", "interface shape"],
-              ["nu[n_shells]",         "",           2.5,    [0, inf],       "", "interface shape exponent"],
+              ["nu[n_shells]",         "",           2.5,    [1, inf],       "", "interface shape exponent"],
               ["n_steps",              "",           35,     [0, inf],       "", "number of steps in each interface (must be an odd integer)"],
              ]
 # pylint: enable=bad-whitespace, line-too-long
