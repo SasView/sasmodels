@@ -380,10 +380,7 @@ class SasviewModel(object):
             if p.name in hidden:
                 continue
             self.params[p.name] = p.default
-            if p.limits and type(p.limits) is list and len(p.limits) > 1:
-                self.details[p.id] = [p.units if not p.choices else p.choices, p.limits[0], p.limits[1]]
-            else:
-                self.details[p.id] = [p.units if not p.choices else p.choices, None, None]
+            self.details[p.id] = [p.units, p.limits[0], p.limits[1]]
             if p.polydisperse:
                 self.details[p.id+".width"] = [
                     "", 0.0, 1.0 if p.relative_pd else np.inf
