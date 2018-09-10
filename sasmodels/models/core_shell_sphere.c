@@ -7,9 +7,10 @@ form_volume(double radius, double thickness)
 static double
 effective_radius(int mode, double radius, double thickness)
 {
-    if (mode == 1) {
+    switch (mode) {
+    case 1: // outer radius
         return radius + thickness;
-    } else {
+    case 2: // core radius
         return radius;
     }
 }

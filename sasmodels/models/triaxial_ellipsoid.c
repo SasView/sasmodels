@@ -29,11 +29,12 @@ radius_from_max_dimension(double radius_equat_minor, double radius_equat_major, 
 static double
 effective_radius(int mode, double radius_equat_minor, double radius_equat_major, double radius_polar)
 {
-    if (mode == 1) {
+    switch (mode) {
+    case 1: // equivalent sphere
         return radius_from_volume(radius_equat_minor,radius_equat_major, radius_polar);
-    } else if (mode == 2) {
+    case 2: // min radius
         return radius_from_min_dimension(radius_equat_minor,radius_equat_major, radius_polar);
-    } else {
+    case 3: // max radius
         return radius_from_max_dimension(radius_equat_minor,radius_equat_major, radius_polar);
     }
 }

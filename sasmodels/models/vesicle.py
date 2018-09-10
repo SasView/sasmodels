@@ -101,30 +101,6 @@ source = ["lib/sas_3j1x_x.c", "vesicle.c"]
 have_Fq = True
 effective_radius_type = ["outer radius"]
 
-#def ER(radius, thickness):
-#    '''
-#    returns the effective radius used in the S*P calculation
-#
-#    :param radius: core radius
-#    :param thickness: shell thickness
-#    '''
-#    return radius + thickness
-
-def VR(radius, thickness):
-    '''
-    returns the volumes of the shell and of the whole sphere including the
-    core plus shell - is used to normalize when including polydispersity.
-
-    :param radius: core radius
-    :param thickness: shell thickness
-    :return whole: volume of core and shell
-    :return whole-core: volume of the shell
-    '''
-
-    whole = 4./3. * pi * (radius + thickness)**3
-    core = 4./3. * pi * radius**3
-    return whole, whole - core
-
 def random():
     total_radius = 10**np.random.uniform(1.3, 5)
     radius = total_radius * np.random.uniform(0, 1)

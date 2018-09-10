@@ -27,17 +27,18 @@ radius_from_diagonal(double radius, double length)
 static double
 effective_radius(int mode, double radius, double length)
 {
-    if (mode == 1) {
+    switch (mode) {
+    case 1:
         return radius_from_volume(radius, length);
-    } else if (mode == 2) {
+    case 2:
         return radius;
-    } else if (mode == 3) {
+    case 3:
         return 0.5*length;
-    } else if (mode == 4) {
+    case 4:
         return (radius < 0.5*length ? radius : 0.5*length);
-    } else if (mode == 5) {
+    case 5:
         return (radius > 0.5*length ? radius : 0.5*length);
-    } else {
+    case 6:
         return radius_from_diagonal(radius,length);
     }
 }

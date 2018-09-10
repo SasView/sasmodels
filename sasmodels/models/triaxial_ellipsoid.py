@@ -157,22 +157,7 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
 
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "triaxial_ellipsoid.c"]
 have_Fq = True
-effective_radius_type = ["equivalent sphere","min radius", "max radius"]
-
-def ER(radius_equat_minor, radius_equat_major, radius_polar):
-    """
-    Returns the effective radius used in the S*P calculation
-    """
-    from .ellipsoid import ER as ellipsoid_ER
-
-    # now that radii can be in any size order, radii need sorting a,b,c
-    # where a~b and c is either much smaller or much larger
-    radii = np.vstack((radius_equat_major, radius_equat_minor, radius_polar))
-    radii = np.sort(radii, axis=0)
-    selector = (radii[1] - radii[0]) > (radii[2] - radii[1])
-    polar = np.where(selector, radii[0], radii[2])
-    equatorial = np.sqrt(np.where(~selector, radii[0]*radii[1], radii[1]*radii[2]))
-    return ellipsoid_ER(polar, equatorial)
+effective_radius_type = ["equivalent sphere", "min radius", "max radius"]
 
 def random():
     a, b, c = 10**np.random.uniform(1, 4.7, size=3)

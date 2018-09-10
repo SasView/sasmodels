@@ -8,17 +8,6 @@ f_constant(double q, double r, double sld)
 }
 
 static double
-form_volume(double core_radius, double fp_n, double thickness[])
-{
-  double r = core_radius;
-  int n = (int)(fp_n+0.5);
-  for (int i=0; i < n; i++) {
-    r += thickness[i];
-  }
-  return M_4PI_3 * cube(r);
-}
-
-static double
 outer_radius(double core_radius, double fp_n, double thickness[])
 {
   double r = core_radius;
@@ -30,24 +19,20 @@ outer_radius(double core_radius, double fp_n, double thickness[])
 }
 
 static double
-effective_radius(int mode, double core_radius, double fp_n, double thickness[])
-// this seems regardless to always give the result for outer radius for n=1 shells; why??
-// printf shows fp_n is always 1, not 0,1,2
+form_volume(double core_radius, double fp_n, double thickness[])
 {
-//        printf("fp_n =%g \n",fp_n);
-        if (mode == 1) {
-        double r = core_radius;
-        int n = (int)(fp_n+0.5);
-        if ( n > 0) {
-            for (int i=0; i < n; i++) {
-                r += thickness[i];
-            }
-        }
-        return r;
-        //return outer_radius(core_radius,fp_n,thickness);
-    } else {
-        return core_radius;
-    }
+  return M_4PI_3 * cube(outer_radius(core_radius, fp_n, thickness));
+}
+
+static double
+effective_radius(int mode, double core_radius, double fp_n, double thickness[])
+{
+  switch (mode) {
+  case 1: // outer radius
+    return outer_radius(core_radius, fp_n, thickness);
+  case 2: // core radius
+    return core_radius;
+  }
 }
 
 static void

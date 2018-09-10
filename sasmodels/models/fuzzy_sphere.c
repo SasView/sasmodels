@@ -6,9 +6,10 @@ static double form_volume(double radius, double fuzziness)
 static double
 effective_radius(int mode, double radius, double fuzziness)
 {
-    if (mode == 1) {
+    switch (mode) {
+    case 1: // radius
         return radius;
-    } else {
+    case 2: // radius + fuzziness
         return radius + fuzziness;
     }
 }

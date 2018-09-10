@@ -34,26 +34,25 @@ radius_from_diagonal(double radius_minor, double r_ratio, double length)
 
 static double
 effective_radius(int mode, double radius_minor, double r_ratio, double length)
-//effective_radius_type = ["equivalent sphere","average radius","min radius","max radius",
-//                         "equivalent circular cross-section","half length","half min dimension","half max dimension","half diagonal"]
 {
-    if (mode == 1) {
+    switch (mode) {
+    case 1: // equivalent sphere
         return radius_from_volume(radius_minor, r_ratio, length);
-    } else if (mode == 2) {
+    case 2: // average radius
         return 0.5*radius_minor*(1.0 + r_ratio);
-    } else if (mode == 3) {
+    case 3: // min radius
         return (r_ratio > 1.0 ? radius_minor : r_ratio*radius_minor);
-    } else if (mode == 4) {
+    case 4: // max radius
         return (r_ratio < 1.0 ? radius_minor : r_ratio*radius_minor);
-    } else if (mode == 5) {
+    case 5: // equivalent circular cross-section
         return sqrt(radius_minor*radius_minor*r_ratio);
-    } else if (mode == 6) {
+    case 6: // half length
         return 0.5*length;
-    } else if (mode == 7) {
+    case 7: // half min dimension
         return radius_from_min_dimension(radius_minor,r_ratio,0.5*length);
-    } else if (mode == 8) {
+    case 8: // half max dimension
         return radius_from_max_dimension(radius_minor,r_ratio,0.5*length);
-    } else {
+    case 9: // half diagonal
         return radius_from_diagonal(radius_minor,r_ratio,length);
     }
 }

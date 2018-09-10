@@ -1,28 +1,39 @@
+// TODO: interface to form_volume/shell_volume not yet settled
 static double
-form_volume(double length_a, double b2a_ratio, double c2a_ratio)
+shell_volume(double *total, double length_a, double b2a_ratio, double c2a_ratio)
 {
     double length_b = length_a * b2a_ratio;
     double length_c = length_a * c2a_ratio;
     double vol_shell = 2.0 * (length_a*length_b + length_a*length_c + length_b*length_c);
+    *total = length_a * length_b * length_c;
     return vol_shell;
 }
 
 static double
+form_volume(double length_a, double b2a_ratio, double c2a_ratio)
+{
+    double total;
+    return shell_volume(&total, length_a, b2a_ratio, c2a_ratio);
+}
+
+
+static double
 effective_radius(int mode, double length_a, double b2a_ratio, double c2a_ratio)
 {
-    if (mode == 1) {
+    switch (mode) {
+    case 1: // equivalent sphere
         return cbrt(0.75*cube(length_a)*b2a_ratio*c2a_ratio/M_PI);
-    } else if (mode == 2) {
+    case 2: // half length_a
         return 0.5 * length_a;
-    } else if (mode == 3) {
+    case 3: // half length_b
         return 0.5 * length_a*b2a_ratio;
-    } else if (mode == 4) {
+    case 4: // half length_c
         return 0.5 * length_a*c2a_ratio;
-    } else if (mode == 5) {
+    case 5: // equivalent outer circular cross-section
         return length_a*sqrt(b2a_ratio/M_PI);
-    } else if (mode == 6) {
+    case 6: // half ab diagonal
         return 0.5*sqrt(square(length_a) * (1.0 + square(b2a_ratio)));
-    } else {
+    case 7: // half diagonal
         return 0.5*sqrt(square(length_a) * (1.0 + square(b2a_ratio) + square(c2a_ratio)));
     }
 }

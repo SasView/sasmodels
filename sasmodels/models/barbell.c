@@ -78,13 +78,14 @@ radius_from_totallength(double radius_bell, double radius, double length)
 static double
 effective_radius(int mode, double radius_bell, double radius, double length)
 {
-    if (mode == 1) {
+    switch (mode) {
+    case 1: // equivalent sphere
         return radius_from_volume(radius_bell, radius , length);
-    } else if (mode == 2) {
+    case 2: // radius
         return radius;
-    } else if (mode == 3) {
+    case 3: // half length
         return 0.5*length;
-    } else {
+    case 4: // half total length
         return radius_from_totallength(radius_bell,radius,length);
     }
 }

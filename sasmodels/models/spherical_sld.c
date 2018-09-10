@@ -1,18 +1,5 @@
-static double form_volume(
-    double fp_n_shells,
-    double thickness[],
-    double interface[])
-{
-    int n_shells= (int)(fp_n_shells + 0.5);
-    double r = 0.0;
-    for (int i=0; i < n_shells; i++) {
-        r += thickness[i] + interface[i];
-    }
-    return M_4PI_3*cube(r);
-}
-
 static double
-effective_radius(int mode, double fp_n_shells, double thickness[], double interface[])
+outer_radius(double fp_n_shells, double thickness[], double interface[])
 {
     int n_shells= (int)(fp_n_shells + 0.5);
     double r = 0.0;
@@ -20,6 +7,21 @@ effective_radius(int mode, double fp_n_shells, double thickness[], double interf
         r += thickness[i] + interface[i];
     }
     return r;
+}
+
+static double form_volume(
+    double fp_n_shells,
+    double thickness[],
+    double interface[])
+{
+    return M_4PI_3*cube(outer_radius(fp_n_shells, thickness, interface));
+}
+
+static double
+effective_radius(int mode, double fp_n_shells, double thickness[], double interface[])
+{
+    // case 1: outer radius
+    return outer_radius(fp_n_shells, thickness, interface);
 }
 
 static double blend(int shape, double nu, double z)

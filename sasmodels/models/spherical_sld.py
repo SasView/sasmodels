@@ -21,13 +21,13 @@ interface. The form factor is normalized by the total volume of the sphere.
 Interface shapes are as follows:
 
     0: erf($\nu z$)
-    
+
     1: Rpow($z^\nu$)
-    
+
     2: Lpow($z^\nu$)
-    
+
     3: Rexp($-\nu z$)
-    
+
     4: Lexp($-\nu z$)
 
 The form factor $P(q)$ in 1D is calculated by:
@@ -267,14 +267,6 @@ def profile(n_shells, sld_solvent, sld, thickness,
     rho.append(sld_solvent)
     # return sld profile (r, beta)
     return np.asarray(z), np.asarray(rho)
-
-
-#def ER(n_shells, thickness, interface):
-#    """Effective radius"""
-#    n_shells = int(n_shells + 0.5)
-#    total = (np.sum(thickness[:n_shells], axis=1)
-#             + np.sum(interface[:n_shells], axis=1))
-#    return total
 
 
 demo = {

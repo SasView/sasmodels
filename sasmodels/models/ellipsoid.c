@@ -33,13 +33,14 @@ radius_from_curvature(double radius_polar, double radius_equatorial)
 static double
 effective_radius(int mode, double radius_polar, double radius_equatorial)
 {
-    if (mode == 1) {
+    switch (mode) {
+    case 1: // equivalent sphere
         return radius_from_volume(radius_polar, radius_equatorial);
-    } else if (mode == 2) {
+    case 2: // average curvature
         return radius_from_curvature(radius_polar, radius_equatorial);
-    } else if (mode == 3) {
+    case 3: // min radius
         return (radius_polar < radius_equatorial ? radius_polar : radius_equatorial);
-    } else {
+    case 4: // max radius
         return (radius_polar > radius_equatorial ? radius_polar : radius_equatorial);
     }
 }

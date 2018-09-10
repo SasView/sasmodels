@@ -53,13 +53,14 @@ radius_from_diagonal(double radius, double thick_rim, double thick_face, double 
 static double
 effective_radius(int mode, double radius, double thick_rim, double thick_face, double length)
 {
-    if (mode == 1) {
+    switch (mode) {
+    case 1: // equivalent sphere
         return radius_from_volume(radius, thick_rim, thick_face, length);
-    } else if (mode == 2) {
+    case 2: // outer rim radius
         return radius + thick_rim;
-    } else if (mode == 3) {
+    case 3: // half outer thickness
         return 0.5*length + thick_face;
-    } else {
+    case 4: // half diagonal
         return radius_from_diagonal(radius,thick_rim,thick_face,length);
     }
 }

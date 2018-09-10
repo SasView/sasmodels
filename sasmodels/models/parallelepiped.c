@@ -7,23 +7,23 @@ form_volume(double length_a, double length_b, double length_c)
 static double
 effective_radius(int mode, double length_a, double length_b, double length_c)
 {
-    if (mode == 1) {
+    switch (mode) {
+    case 1: // equivalent sphere
         return cbrt(0.75*length_a*length_b*length_c/M_PI);
-    } else if (mode == 2) {
+    case 2: // half length_a
         return 0.5 * length_a;
-    } else if (mode == 3) {
+    case 3: // half length_b
         return 0.5 * length_b;
-    } else if (mode == 4) {
+    case 4: // half length_c
         return 0.5 * length_c;
-    } else if (mode == 5) {
+    case 5: // equivalent circular cross-section
         return sqrt(length_a*length_b/M_PI);
-    } else if (mode == 6) {
+    case 6: // half ab diagonal
         return 0.5*sqrt(length_a*length_a + length_b*length_b);
-    } else {
+    case 7: // half diagonal
         return 0.5*sqrt(length_a*length_a + length_b*length_b + length_c*length_c);
     }
 }
-
 
 static void
 Fq(double q,

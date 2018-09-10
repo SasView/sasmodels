@@ -6,6 +6,7 @@ static double form_volume(double radius)
 static double
 effective_radius(int mode, double radius)
 {
+    // case 1: radius
     return radius;
 }
 

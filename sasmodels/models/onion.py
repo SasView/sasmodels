@@ -366,11 +366,6 @@ def profile(sld_core, radius_core, sld_solvent, n_shells,
 
     return np.asarray(z), np.asarray(rho)
 
-#def ER(radius_core, n_shells, thickness):
-#    """Effective radius"""
-#    n = int(n_shells[0]+0.5)
-#    return np.sum(thickness[:n], axis=0) + radius_core
-
 demo = {
     "sld_solvent": 2.2,
     "sld_core": 1.0,

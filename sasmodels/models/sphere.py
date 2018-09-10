@@ -70,14 +70,6 @@ source = ["lib/sas_3j1x_x.c","sphere.c"]
 have_Fq = True
 effective_radius_type = ["radius"]
 
-#def ER(radius):
-#    """
-#    Return equivalent radius (ER)
-#    """
-#    return radius
-
-# VR defaults to 1.0
-
 def random():
     radius = 10**np.random.uniform(1.3, 4)
     pars = dict(

@@ -148,37 +148,11 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
 
 source = ["lib/gauss76.c", "hollow_rectangular_prism.c"]
 have_Fq = True
-effective_radius_type = ["equivalent sphere","half length_a", "half length_b", "half length_c",
-                         "equivalent outer circular cross-section","half ab diagonal","half diagonal"]
-
-#def ER(length_a, b2a_ratio, c2a_ratio, thickness):
-#    """
-#    Return equivalent radius (ER)
-#    thickness parameter not used
-#    """
-#    b_side = length_a * b2a_ratio
-#    c_side = length_a * c2a_ratio
-#
-#    # surface average radius (rough approximation)
-#    surf_rad = sqrt(length_a * b_side / pi)
-#
-#    ddd = 0.75 * surf_rad * (2 * surf_rad * c_side + (c_side + surf_rad) * (c_side + pi * surf_rad))
-#    return 0.5 * (ddd) ** (1. / 3.)
-
-def VR(length_a, b2a_ratio, c2a_ratio, thickness):
-    """
-    Return shell volume and total volume
-    """
-    b_side = length_a * b2a_ratio
-    c_side = length_a * c2a_ratio
-    a_core = length_a - 2.0*thickness
-    b_core = b_side - 2.0*thickness
-    c_core = c_side - 2.0*thickness
-    vol_core = a_core * b_core * c_core
-    vol_total = length_a * b_side * c_side
-    vol_shell = vol_total - vol_core
-    return vol_total, vol_shell
-
+effective_radius_type = [
+    "equivalent sphere", "half length_a", "half length_b", "half length_c",
+    "equivalent outer circular cross-section",
+    "half ab diagonal", "half diagonal",
+    ]
 
 def random():
     a, b, c = 10**np.random.uniform(1, 4.7, size=3)

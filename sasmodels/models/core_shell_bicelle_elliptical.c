@@ -28,17 +28,18 @@ radius_from_diagonal(double r_minor, double x_core, double thick_rim, double thi
 static double
 effective_radius(int mode, double r_minor, double x_core, double thick_rim, double thick_face, double length)
 {
-    if (mode == 1) {
+    switch (mode) {
+    case 1: // equivalent sphere
         return radius_from_volume(r_minor, x_core, thick_rim, thick_face, length);
-    } else if (mode == 2) {
+    case 2: // outer rim average radius
         return 0.5*r_minor*(1.0 + x_core) + thick_rim;
-    } else if (mode == 3) {
+    case 3: // outer rim min radius
         return (x_core < 1.0 ? x_core*r_minor+thick_rim : r_minor+thick_rim);
-    } else if (mode == 4) {
+    case 4: // outer max radius
         return (x_core > 1.0 ? x_core*r_minor+thick_rim : r_minor+thick_rim);
-    } else if (mode ==5) {
+    case 5: // half outer thickness
         return 0.5*length + thick_face;
-    } else {
+    case 6: // half diagonal
         return radius_from_diagonal(r_minor,x_core,thick_rim,thick_face,length);
     }
 }

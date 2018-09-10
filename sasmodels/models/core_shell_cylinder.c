@@ -29,20 +29,19 @@ radius_from_diagonal(double radius, double thickness, double length)
 
 static double
 effective_radius(int mode, double radius, double thickness, double length)
-//effective_radius_type = ["equivalent sphere","outer radius","half outer length","half min outer dimension",
-//                         "half max outer dimension","half outer diagonal"]
 {
-    if (mode == 1) {
+    switch (mode) {
+    case 1: // equivalent sphere
         return radius_from_volume(radius, thickness, length);
-    } else if (mode == 2) {
+    case 2: // outer radius
         return radius + thickness;
-    } else if (mode == 3) {
+    case 3: // half outer length
         return 0.5*length + thickness;
-    } else if (mode == 4) {
+    case 4: // half min outer length
         return (radius < 0.5*length ? radius + thickness : 0.5*length + thickness);
-    } else if (mode == 5) {
+    case 5: // half max outer length
         return (radius > 0.5*length ? radius + thickness : 0.5*length + thickness);
-    } else {
+    case 6: // half outer diagonal
         return radius_from_diagonal(radius,thickness,length);
     }
 }

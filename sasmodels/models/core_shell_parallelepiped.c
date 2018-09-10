@@ -30,8 +30,8 @@ static double
 radius_from_volume(double length_a, double length_b, double length_c,
                    double thick_rim_a, double thick_rim_b, double thick_rim_c)
 {
-    const double volume_paral = form_volume(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c);
-    return cbrt(0.75*volume_paral/M_PI);
+    const double volume = form_volume(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c);
+    return cbrt(volume/M_4PI_3);
 }
 
 static double
@@ -44,24 +44,21 @@ radius_from_crosssection(double length_a, double length_b, double thick_rim_a, d
 static double
 effective_radius(int mode, double length_a, double length_b, double length_c,
                  double thick_rim_a, double thick_rim_b, double thick_rim_c)
-//effective_radius_type = ["equivalent sphere","half outer length_a", "half outer length_b", "half outer length_c",
-//                         "equivalent circular cross-section","half outer ab diagonal","half outer diagonal"]
-// note the core box is A*B*C with slabs ta, tb & tc on each face but missing the corners, though that fact is ignored here
-// in the equvalent sphere option
 {
-    if (mode == 1) {
+    switch (mode) {
+    case 1: // equivalent sphere
         return radius_from_volume(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c);
-    } else if (mode == 2) {
+    case 2: // half outer length a
         return 0.5 * length_a + thick_rim_a;
-    } else if (mode == 3) {
+    case 3: // half outer length b
         return 0.5 * length_b + thick_rim_b;
-    } else if (mode == 4) {
+    case 4: // half outer length c
         return 0.5 * length_c + thick_rim_c;
-    } else if (mode == 5) {
+    case 5: // equivalent circular cross-section
         return radius_from_crosssection(length_a, length_b, thick_rim_a, thick_rim_b);
-    } else if (mode == 6) {
+    case 6: // half outer ab diagonal
         return 0.5*sqrt(square(length_a+ 2.0*thick_rim_a) + square(length_b+ 2.0*thick_rim_b));
-    } else {
+    case 7: // half outer diagonal
         return 0.5*sqrt(square(length_a+ 2.0*thick_rim_a) + square(length_b+ 2.0*thick_rim_b) + square(length_c+ 2.0*thick_rim_c));
     }
 }

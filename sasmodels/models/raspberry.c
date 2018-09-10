@@ -16,9 +16,10 @@ double form_volume(double radius_lg, double radius_sm, double penetration)
 static double
 effective_radius(int mode, double radius_lg, double radius_sm, double penetration)
 {
-    if (mode == 1) {
+    switch (mode) {
+    case 1: // radius_large
         return radius_lg;
-    } else {
+    case 2: // radius_outer
         return radius_lg + 2.0*radius_sm - penetration;
     }
 }

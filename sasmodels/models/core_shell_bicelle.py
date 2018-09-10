@@ -154,7 +154,10 @@ parameters = [
 source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
           "core_shell_bicelle.c"]
 have_Fq = True
-effective_radius_type = ["equivalent sphere","outer rim radius", "half outer thickness","half diagonal"]
+effective_radius_type = [
+    "equivalent sphere", "outer rim radius",
+    "half outer thickness", "half diagonal",
+    ]
 
 def random():
     pars = dict(

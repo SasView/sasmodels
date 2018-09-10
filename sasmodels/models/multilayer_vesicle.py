@@ -147,10 +147,6 @@ source = ["lib/sas_3j1x_x.c", "multilayer_vesicle.c"]
 have_Fq = True
 effective_radius_type = ["outer radius"]
 
-#def ER(radius, thick_shell, thick_solvent, n_shells):
-#    n_shells = int(n_shells+0.5)
-#    return radius + n_shells * (thick_shell + thick_solvent) - thick_solvent
-
 def random():
     volfraction = 10**np.random.uniform(-3, -0.5)  # scale from 0.1% to 30%
     radius = 10**np.random.uniform(0, 2.5) # core less than 300 A

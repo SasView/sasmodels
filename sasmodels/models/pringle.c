@@ -106,9 +106,10 @@ double form_volume(double radius, double thickness, double alpha, double beta)
 static double
 effective_radius(int mode, double radius, double thickness, double alpha, double beta)
 {
-    if (mode == 1) {
+    switch (mode) {
+    case 1: // equivalent sphere
         return cbrt(0.75*radius*radius*thickness);
-    } else {
+    case 2: // radius
         return radius;
     }
 }

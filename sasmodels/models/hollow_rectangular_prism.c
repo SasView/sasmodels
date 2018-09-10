@@ -1,5 +1,6 @@
+// TODO: interface to form_volume/shell_volume not yet settled
 static double
-form_volume(double length_a, double b2a_ratio, double c2a_ratio, double thickness)
+shell_volume(double *total, double length_a, double b2a_ratio, double c2a_ratio, double thickness)
 {
     double length_b = length_a * b2a_ratio;
     double length_c = length_a * c2a_ratio;
@@ -7,9 +8,15 @@ form_volume(double length_a, double b2a_ratio, double c2a_ratio, double thicknes
     double b_core = length_b - 2.0*thickness;
     double c_core = length_c - 2.0*thickness;
     double vol_core = a_core * b_core * c_core;
-    double vol_total = length_a * length_b * length_c;
-    double vol_shell = vol_total - vol_core;
-    return vol_shell;
+    *total = length_a * length_b * length_c;
+    return *total - vol_core;
+}
+
+static double
+form_volume(double length_a, double b2a_ratio, double c2a_ratio, double thickness)
+{
+    double total;
+    return shell_volume(&total, length_a, b2a_ratio, c2a_ratio, thickness);
 }
 
 static double
@@ -18,19 +25,20 @@ effective_radius(int mode, double length_a, double b2a_ratio, double c2a_ratio, 
 //                         "equivalent outer circular cross-section","half ab diagonal","half diagonal"]
 // NOTE length_a is external dimension!
 {
-    if (mode == 1) {
+    switch (mode) {
+    case 1: // equivalent sphere
         return cbrt(0.75*cube(length_a)*b2a_ratio*c2a_ratio/M_PI);
-    } else if (mode == 2) {
+    case 2: // half length_a
         return 0.5 * length_a;
-    } else if (mode == 3) {
+    case 3: // half length_b
         return 0.5 * length_a*b2a_ratio;
-    } else if (mode == 4) {
+    case 4: // half length_c
         return 0.5 * length_a*c2a_ratio;
-    } else if (mode == 5) {
+    case 5: // equivalent outer circular cross-section
         return length_a*sqrt(b2a_ratio/M_PI);
-    } else if (mode == 6) {
+    case 6: // half ab diagonal
         return 0.5*sqrt(square(length_a) * (1.0 + square(b2a_ratio)));
-    } else {
+    case 7: // half diagonal
         return 0.5*sqrt(square(length_a) * (1.0 + square(b2a_ratio) + square(c2a_ratio)));
     }
 }

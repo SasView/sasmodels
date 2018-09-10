@@ -83,15 +83,7 @@ parameters = [["sld",         "1e-6/Ang^2",  1, [-inf, inf], "sld",    "Particle
 
 source = ["lib/sas_3j1x_x.c","fuzzy_sphere.c"]
 have_Fq = True
-effective_radius_type = ["radius","radius + fuzziness"]
-
-#def ER(radius):
-#    """
-#    Return radius
-#    """
-#    return radius
-
-# VR defaults to 1.0
+effective_radius_type = ["radius", "radius + fuzziness"]
 
 def random():
     radius = 10**np.random.uniform(1, 4.7)

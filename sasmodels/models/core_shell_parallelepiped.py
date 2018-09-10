@@ -97,7 +97,7 @@ are the scattering lengths of the parallelepiped core, and the rectangular
 slabs of thickness $t_A$, $t_B$ and $t_C$, respectively. $\rho_\text{solvent}$
 is the scattering length of the solvent.
 
-.. note:: 
+.. note::
 
    the code actually implements two substitutions: $d(cos\alpha)$ is
    substituted for -$sin\alpha \ d\alpha$ (note that in the
@@ -226,21 +226,12 @@ parameters = [["sld_core", "1e-6/Ang^2", 1, [-inf, inf], "sld",
 
 source = ["lib/gauss76.c", "core_shell_parallelepiped.c"]
 have_Fq = True
-effective_radius_type = ["equivalent sphere","half outer length_a", "half outer length_b", "half outer length_c",
-                         "equivalent circular cross-section","half outer ab diagonal","half outer diagonal"]
-
-#def ER(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c):
-#    """
-#        Return equivalent radius (ER)
-#    """
-#    from .parallelepiped import ER as ER_p
-#
-#    a = length_a + 2*thick_rim_a
-#    b = length_b + 2*thick_rim_b
-#    c = length_c + 2*thick_rim_c
-#    return ER_p(a, b, c)
-
-# VR defaults to 1.0
+effective_radius_type = [
+    "equivalent sphere",
+    "half outer length_a", "half outer length_b", "half outer length_c",
+    "equivalent circular cross-section",
+    "half outer ab diagonal", "half outer diagonal",
+    ]
 
 def random():
     outer = 10**np.random.uniform(1, 4.7, size=3)

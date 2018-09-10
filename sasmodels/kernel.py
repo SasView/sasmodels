@@ -91,4 +91,4 @@ class Kernel(object):
 
     def _call_kernel(self, call_details, values, cutoff, magnetic, effective_radius_type):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool, int) -> np.ndarray
-        raise NotImpmentedError()
+        raise NotImplementedError()
