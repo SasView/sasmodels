@@ -1150,7 +1150,7 @@ def parse_opts(argv):
         'show_hist' : False,
         'rel_err'   : True,
         'explore'   : False,
-        'use_demo'  : True,
+        'use_demo'  : False,
         'zero'      : False,
         'html'      : False,
         'title'     : None,

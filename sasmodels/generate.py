@@ -967,7 +967,8 @@ def make_doc(model_info):
     if model_info.structure_factor:
         pars = model_info.parameters.kernel_parameters
     else:
-        pars = model_info.parameters.COMMON + model_info.parameters.kernel_parameters
+        pars = (model_info.parameters.common_parameters
+                + model_info.parameters.kernel_parameters)
     partable = make_partable(pars)
     subst = dict(id=model_info.id.replace('_', '-'),
                  name=model_info.name,
