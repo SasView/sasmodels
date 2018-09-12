@@ -182,6 +182,7 @@ class SesansData(Data1D):
 
     *x* is spin echo length and *y* is polarization (P/P0).
     """
+    isSesans = True
     def __init__(self, **kw):
         Data1D.__init__(self, **kw)
         self.lam = None # type: Optional[np.ndarray]
@@ -300,6 +301,13 @@ class Source(object):
         self.wavelength = np.NaN
         self.wavelength_unit = "A"
 
+class Sample(object):
+    """
+    Sample attributes.
+    """
+    def __init__(self):
+        # type: () -> None
+        pass
 
 def empty_data1D(q, resolution=0.0, L=0., dL=0.):
     # type: (np.ndarray, float) -> Data1D
@@ -503,7 +511,7 @@ def _plot_result1D(data,         # type: Data1D
             # Note: masks merge, so any masked theory points will stay masked,
             # and the data mask will be added to it.
             #mtheory = masked_array(theory, data.mask.copy())
-            theory_x = data.x[~data.mask]
+            theory_x = data.x[data.mask == 0]
             mtheory = masked_array(theory)
             mtheory[~np.isfinite(mtheory)] = masked
             if view is 'log':
@@ -544,7 +552,7 @@ def _plot_result1D(data,         # type: Data1D
         #plt.axis('equal')
 
     if use_resid:
-        theory_x = data.x[~data.mask]
+        theory_x = data.x[data.mask == 0]
         mresid = masked_array(resid)
         mresid[~np.isfinite(mresid)] = masked
         some_present = (mresid.count() > 0)
