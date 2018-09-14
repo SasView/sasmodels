@@ -786,8 +786,8 @@ def make_model_info(kernel_module):
     # background defaults to zero for structure factor models
     structure_factor = getattr(kernel_module, 'structure_factor', False)
     if structure_factor:
-        # Make sure background is the second common parameter
-        assert COMMON_PARAMETERS[1][0] == "background"
+        # Make sure background is the second common parameter.
+        assert parameters.common_parameters[1].id == "background"
         parameters.common_parameters[1].default = 0.0
 
     # TODO: remove demo parameters
