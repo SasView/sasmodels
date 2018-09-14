@@ -58,6 +58,14 @@ class Dispersion(BaseDispersion):
                 r = 1/((((6.5525/a + 1.875)/a + 0.75)/a + 0.5)/a + 1)
             return 1.5*r - 0.75/a - 0.5
 
+    Given an order parameter $S = P_2(a)$, one can also solve for the
+    equivalent $a$:
+
+        from scipy.optimize import fsolve
+
+        def P_2_inv(S):
+            return fsolve(lambda x: P_2(x) - S, 1.0)[0]
+
     References
     ----------
 
@@ -102,6 +110,10 @@ def P_2(a):
         r = 1/((((6.5525/a + 1.875)/a + 0.75)/a + 0.5)/a + 1)
     return 1.5*r - 0.75/a - 0.5
 
+def P_2_inv(S):
+    from scipy.optimize import fsolve
+    return fsolve(lambda x: P_2(x) - S, 1.0)[0]
+
 def P_2_numerical(a):
     from scipy.integrate import romberg
     from numpy import cos, sin, pi, exp
@@ -115,4 +127,4 @@ if __name__ == "__main__":
     import sys
     a = float(sys.argv[1])
     #print("P_2", P_2(a), "difference from integral", P_2(a) - P_2_numerical(a))
-    print("P_2", P_2(a))
+    print("P_2, P_2_inv", P_2(a), P_2_inv(P_2(a)))
