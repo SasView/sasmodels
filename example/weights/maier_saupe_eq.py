@@ -9,10 +9,10 @@ class Dispersion(BaseDispersion):
 
     .. math:
 
-        w(\theta) = e^{P_2{\cos^2 \theta}}
+        w(\theta) = e^{a{\cos^2 \theta}}
 
     This provides a close match to the gaussian distribution for
-    low angles, but the tails are limited to $\pm 90^\circ$.  For $P_2 \ll 1$
+    low angles, but the tails are limited to $\pm 90^\circ$.  For $a \ll 1$
     the distribution is approximately uniform.  The usual polar coordinate
     projection applies, with $\theta$ weights scaled by $\cos \theta$
     and $\phi$ weights unscaled.
@@ -35,9 +35,9 @@ class Dispersion(BaseDispersion):
 
     # Note: center is always zero for orientation distributions
     def _weights(self, center, sigma, lb, ub):
-        # use the width parameter as the value for Maier-Saupe P_2
-        P2 = sigma
-        sigma = 1./sqrt(2.*P2)
+        # use the width parameter as the value for Maier-Saupe "a"
+        a = sigma
+        sigma = 1./sqrt(2.*a)
 
         # Create a lookup table for finding n points equally spaced
         # in the cumulative density function.
@@ -48,7 +48,7 @@ class Dispersion(BaseDispersion):
         # Compute CDF. Since we normalized the sum of the weights to 1,
         # we can scale by an arbitrary scale factor c = exp(m) to get:
         #     w = exp(m*cos(x)**2)/c = exp(-m*sin(x)**2)
-        yp = np.cumsum(exp(-P2*sin(xp)**2))
+        yp = np.cumsum(exp(-a*sin(xp)**2))
         yp /= yp[-1]
 
         # Find the mid-points of the equal-weighted intervals in the CDF

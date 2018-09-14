@@ -18,7 +18,7 @@ class Dispersion(BaseDispersion):
     and $\phi$ weights unscaled.
 
     This is eqivalent to a Maier-Saupe distribution with order
-    parameter $P_2 = 1/(2 \sigma^2)$, with $\sigma$ in radians.
+    parameter $a = 1/(2 \sigma^2)$, with $\sigma$ in radians.
     """
     type = "cyclic_gaussian"
     default = dict(npts=35, width=1, nsigmas=3)
