@@ -126,5 +126,7 @@ def P_2_numerical(a):
 if __name__ == "__main__":
     import sys
     a = float(sys.argv[1])
+    sigma = 1/(2*radians(a)**2)
     #print("P_2", P_2(a), "difference from integral", P_2(a) - P_2_numerical(a))
-    print("P_2, P_2_inv", P_2(a), P_2_inv(P_2(a)))
+    print("a=%g, sigma=%g, P_2=%g, P_2_inv(P_2(a))-a=%g"
+          % (a, sigma, P_2(a), P_2_inv(P_2(a))-a))
