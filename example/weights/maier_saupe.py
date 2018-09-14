@@ -21,6 +21,12 @@ class Dispersion(BaseDispersion):
     This is equivalent to a cyclic gaussian distribution
     $w(\theta) = e^{-sin^2(\theta)/(2\a^2)}.
 
+    Note that the incorrect distribution is used for $a=0$.  With the
+    distribution parameter labelled as *width*, the value *width=0* is
+    is assumed to be completely oriented and no polydispersity distribution
+    is generated.  However a value of $a=0$ should be completely unoriented.
+    Any small value (e.g., 0.01 or lower) should suffice.
+
     The order parameter $P_2$ is defined as
 
     .. math:
@@ -56,7 +62,7 @@ class Dispersion(BaseDispersion):
     ----------
 
     [1] Hardouin, et al., 1995. SANS study of a semiflexible main chain
-    liquid crystalline polyether. *Macromolecules* 28, 5427–5433.
+    liquid crystalline polyether. *Macromolecules* 28, 5427-5433.
     """
     type = "maier_saupe"
     default = dict(npts=35, width=1, nsigmas=None)
