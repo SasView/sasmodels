@@ -164,6 +164,14 @@ def _conversion_target(model_name, version=(3, 1, 2)):
 def _hand_convert(name, oldpars, version=(3, 1, 2)):
     if version == (3, 1, 2):
         oldpars = _hand_convert_3_1_2_to_4_1(name, oldpars)
+    if version < (4, 2, 0):
+        oldpars = _hand_convert_4_1_to_4_2(name, oldpars)
+    return oldpars
+
+def _hand_convert_4_1_to_4_2(name, oldpars):
+    if name in ('bcc_paracrystal', 'fcc_paracrystal', 'sc_paracrystal'):
+        oldpars['lattice_spacing'] = oldpars.pop('dnn')
+        oldpars['lattice_distortion'] = oldpars.pop('d_factor')
     return oldpars
 
 def _hand_convert_3_1_2_to_4_1(name, oldpars):
