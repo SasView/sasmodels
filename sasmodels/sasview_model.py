@@ -61,6 +61,7 @@ MultiplicityInfo = collections.namedtuple(
 
 #: set of defined models (standard and custom)
 MODELS = {}  # type: Dict[str, SasviewModelType]
+# TODO: remove unused MODEL_BY_PATH cache once sasview no longer references it
 #: custom model {path: model} mapping so we can check timestamps
 MODEL_BY_PATH = {}  # type: Dict[str, SasviewModelType]
 
@@ -105,11 +106,6 @@ def load_custom_model(path):
     """
     Load a custom model given the model path.
     """
-    model = MODEL_BY_PATH.get(path, None)
-    if model is not None and model.timestamp == getmtime(path):
-        #logger.info("Model already loaded %s", path)
-        return model
-
     #logger.info("Loading model %s", path)
     kernel_module = custom.load_custom_kernel_module(path)
     if hasattr(kernel_module, 'Model'):
@@ -126,7 +122,6 @@ def load_custom_model(path):
     else:
         model_info = modelinfo.make_model_info(kernel_module)
         model = make_model_from_info(model_info)
-    model.timestamp = getmtime(path)
 
     # If a model name already exists and we are loading a different model,
     # use the model file name as the model name.
@@ -143,7 +138,6 @@ def load_custom_model(path):
                     _previous_name, model.name, model.filename)
 
     MODELS[model.name] = model
-    MODEL_BY_PATH[path] = model
     return model
 
 

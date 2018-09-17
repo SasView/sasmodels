@@ -36,11 +36,17 @@ except ImportError:
         module = imp.load_source(fullname, os.path.expanduser(path))
         return module
 
+_MODULE_CACHE = {}
 def load_custom_kernel_module(path):
     """load SAS kernel from *path* as *sasmodels.custom.modelname*"""
     # Pull off the last .ext if it exists; there may be others
     name = basename(splitext(path)[0])
-    # Placing the model in the 'sasmodels.custom' name space.
-    kernel_module = load_module_from_path('sasmodels.custom.'+name,
-                                          os.path.expanduser(path))
-    return kernel_module
+    path = os.path.expanduser(path)
+    timestamp = os.path.getmtime(path)
+    module, cache_time = _MODULE_CACHE.get(path, (None, -1))
+    if cache_time < timestamp:
+        # Placing the model in the 'sasmodels.custom' name space.
+        module = load_module_from_path('sasmodels.custom.'+name, path)
+        _MODULE_CACHE[path] = module, timestamp
+
+    return module
