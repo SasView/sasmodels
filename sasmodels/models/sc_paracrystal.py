@@ -2,7 +2,7 @@ r"""
 Definition
 ----------
 
-TCalculates the scattering from a **simple cubic lattice** with
+Calculates the scattering from a **simple cubic lattice** with
 paracrystalline distortion. Thermal vibrations are considered to be
 negligible, and the size of the paracrystal is infinitely large.
 Paracrystalline distortion is assumed to be isotropic and characterized
