@@ -40,7 +40,8 @@ effective_radius(int mode, double r_minor, double x_core, double thick_rim, doub
         return (x_core > 1.0 ? x_core*r_minor+thick_rim : r_minor+thick_rim);
     case 5: // half outer thickness
         return 0.5*length + thick_face;
-    case 6: // half diagonal
+    case 6: // half diagonal (this ignores the missing "corners", so may give unexpected answer if thick_face
+            //  or thick_rim is extremely large)
         return radius_from_diagonal(r_minor,x_core,thick_rim,thick_face,length);
     }
 }
