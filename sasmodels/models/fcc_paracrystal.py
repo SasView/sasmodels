@@ -2,14 +2,14 @@
 #note model title and parameter table are automatically inserted
 #note - calculation requires double precision
 r"""
+Definition
+----------
+
 Calculates the scattering from a **face-centered cubic lattice** with
 paracrystalline distortion. Thermal vibrations are considered to be
 negligible, and the size of the paracrystal is infinitely large.
 Paracrystalline distortion is assumed to be isotropic and characterized by
-a Gaussian distribution.
-
-Definition
-----------
+a Gaussian distribution. 
 
 The scattering intensity $I(q)$ is calculated as
 
@@ -22,8 +22,9 @@ the primary particle, $V_\text{lattice}$ is a volume correction for the crystal
 structure, $P(q)$ is the form factor of the sphere (normalized), and $Z(q)$
 is the paracrystalline structure factor for a face-centered cubic structure.
 
-Equation (1) of the 1990 reference is used to calculate $Z(q)$, using
-equations (23)-(25) from the 1987 paper for $Z1$, $Z2$, and $Z3$.
+Equation (1) of the 1990 reference\ [#CIT1990]_ is used to calculate $Z(q)$,
+using equations (23)-(25) from the 1987 paper\ [#CIT1987]_ for $Z1$, $Z2$, and
+$Z3$.
 
 The lattice correction (the occupied volume of the lattice) for a
 face-centered cubic structure of particles of radius $R$ and nearest
@@ -87,11 +88,17 @@ Note that we are not responsible for any incorrectness of the
 References
 ----------
 
-Hideki Matsuoka et. al. *Physical Review B*, 36 (1987) 1754-1765
-(Original Paper)
+.. [#CIT1987] Hideki Matsuoka et. al. *Physical Review B*, 36 (1987) 1754-1765
+   (Original Paper)
+.. [#CIT1990] Hideki Matsuoka et. al. *Physical Review B*, 41 (1990) 3854 -3856
+   (Corrections to FCC and BCC lattice structure calculation)
 
-Hideki Matsuoka et. al. *Physical Review B*, 41 (1990) 3854 -3856
-(Corrections to FCC and BCC lattice structure calculation)
+Authorship and Verification
+----------------------------
+
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Paul Butler **Date:** September 16, 2018
+* **Last Reviewed by:** Paul Butler **Date:** September 16, 2018
 """
 
 import numpy as np

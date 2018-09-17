@@ -29,7 +29,7 @@ separation $D$ is
 
 .. math::
 
-    V_\text{lattice} = \frac{16\pi}{3} \frac{R^3}{\left(D\sqrt{2}\right)^3}
+    V_\text{lattice} = \frac{8\pi}{3} \frac{R^3}{\left(2D/\sqrt{3}\right)^3}
 
 
 The distortion factor (one standard deviation) of the paracrystal is included
@@ -99,8 +99,8 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
-* **Last Modified by:** Paul Butler **Date:** September 29, 2016
-* **Last Reviewed by:** Richard Heenan **Date:** March 21, 2016
+* **Last Modified by:** Paul Butler **Date:** September 16, 2018
+* **Last Reviewed by:** Paul Butler **Date:** September 16, 2018
 """
 
 import numpy as np
