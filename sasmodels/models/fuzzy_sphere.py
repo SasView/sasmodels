@@ -77,39 +77,13 @@ category = "shape:sphere"
 parameters = [["sld",         "1e-6/Ang^2",  1, [-inf, inf], "sld",    "Particle scattering length density"],
               ["sld_solvent", "1e-6/Ang^2",  3, [-inf, inf], "sld",    "Solvent scattering length density"],
               ["radius",      "Ang",        60, [0, inf],    "volume", "Sphere radius"],
-              ["fuzziness",   "Ang",        10, [0, inf],    "",       "std deviation of Gaussian convolution for interface (must be << radius)"],
+              ["fuzziness",   "Ang",        10, [0, inf],    "volume",       "std deviation of Gaussian convolution for interface (must be << radius)"],
              ]
 # pylint: enable=bad-whitespace,line-too-long
 
-source = ["lib/sas_3j1x_x.c"]
+source = ["lib/sas_3j1x_x.c","fuzzy_sphere.c"]
 have_Fq = True
-
-c_code = """
-static double form_volume(double radius)
-{
-    return M_4PI_3*cube(radius);
-}
-
-static void Fq(double q, double *F1, double *F2, double sld, double sld_solvent,
-               double radius, double fuzziness)
-{
-    const double qr = q*radius;
-    const double bes = sas_3j1x_x(qr);
-    const double qf = exp(-0.5*square(q*fuzziness));
-    const double contrast = (sld - sld_solvent);
-    const double form = contrast * form_volume(radius) * bes * qf;
-    *F1 = 1.0e-2*form;
-    *F2 = 1.0e-4*form*form;
-}
-"""
-
-def ER(radius):
-    """
-    Return radius
-    """
-    return radius
-
-# VR defaults to 1.0
+effective_radius_type = ["radius", "radius + fuzziness"]
 
 def random():
     radius = 10**np.random.uniform(1, 4.7)

@@ -26,6 +26,7 @@
 //  MAGNETIC_PARS : a comma-separated list of indices to the sld
 //      parameters in the parameter table.
 //  CALL_VOLUME(table) : call the form volume function
+//  CALL_EFFECTIVE_RADIUS(type, table) : call the R_eff function
 //  CALL_IQ(q, table) : call the Iq function for 1D calcs.
 //  CALL_IQ_A(q, table) : call the Iq function with |q| for 2D data.
 //  CALL_FQ(q, F1, F2, table) : call the Fq function for 1D calcs.
@@ -283,7 +284,8 @@ void KERNEL_NAME(
     global const double *values,
     global const double *q, // nq q values, with padding to boundary
     global double *result,  // nq+1 return values, again with padding
-    const double cutoff     // cutoff in the dispersity weight product
+    const double cutoff,     // cutoff in the dispersity weight product
+    int32_t effective_radius_type // which effective radius to compute
     )
 {
 #ifdef USE_OPENCL
@@ -343,32 +345,39 @@ void KERNEL_NAME(
   // version must loop over all q.
   #ifdef USE_OPENCL
     #if COMPUTE_F1_F2
-      double pd_norm = (pd_start == 0 ? 0.0 : result[nq]);
-      double weight_norm = (pd_start == 0 ? 0.0 : result[2*nq+1]);
-      double this_F2 = (pd_start == 0 ? 0.0 : result[q_index]);
-      double this_F1 = (pd_start == 0 ? 0.0 : result[q_index+nq+1]);
+      double weight_norm = (pd_start == 0 ? 0.0 : result[2*nq]);
+      double weighted_volume = (pd_start == 0 ? 0.0 : result[2*nq+1]);
+      double weighted_radius = (pd_start == 0 ? 0.0 : result[2*nq+2]);
+      double this_F2 = (pd_start == 0 ? 0.0 : result[2*q_index+0]);
+      double this_F1 = (pd_start == 0 ? 0.0 : result[2*q_index+1]);
     #else
-      double pd_norm = (pd_start == 0 ? 0.0 : result[nq]);
+      double weight_norm = (pd_start == 0 ? 0.0 : result[nq]);
+      double weighted_volume = (pd_start == 0 ? 0.0 : result[nq+1]);
+      double weighted_radius = (pd_start == 0 ? 0.0 : result[nq+2]);
       double this_result = (pd_start == 0 ? 0.0 : result[q_index]);
     #endif
   #else // !USE_OPENCL
     #if COMPUTE_F1_F2
-      double pd_norm = (pd_start == 0 ? 0.0 : result[nq]);
-      double weight_norm = (pd_start == 0 ? 0.0 : result[2*nq+1]);
+      double weight_norm = (pd_start == 0 ? 0.0 : result[2*nq]);
+      double weighted_volume = (pd_start == 0 ? 0.0 : result[2*nq+1]);
+      double weighted_radius = (pd_start == 0 ? 0.0 : result[2*nq+2]);
     #else
-      double pd_norm = (pd_start == 0 ? 0.0 : result[nq]);
+      double weight_norm = (pd_start == 0 ? 0.0 : result[nq]);
+      double weighted_volume = (pd_start == 0 ? 0.0 : result[nq+1]);
+      double weighted_radius = (pd_start == 0 ? 0.0 : result[nq+2]);
     #endif
     if (pd_start == 0) {
       #ifdef USE_OPENMP
       #pragma omp parallel for
       #endif
       #if COMPUTE_F1_F2
-          for (int q_index=0; q_index < 2*nq+2; q_index++) result[q_index] = 0.0;
+          // 2*nq for F^2,F pairs
+          for (int q_index=0; q_index < 2*nq; q_index++) result[q_index] = 0.0;
       #else
           for (int q_index=0; q_index < nq; q_index++) result[q_index] = 0.0;
       #endif
     }
-    //if (q_index==0) printf("start %d %g %g\n", pd_start, pd_norm, result[0]);
+    //if (q_index==0) printf("start %d %g %g\n", pd_start, weighted_volume, result[0]);
 #endif // !USE_OPENCL
 
 
@@ -683,10 +692,13 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
     // Accumulate I(q)
     // Note: weight==0 must always be excluded
     if (weight > cutoff) {
-      pd_norm += weight * CALL_VOLUME(local_values.table);
+      weighted_volume += weight * CALL_VOLUME(local_values.table);
       #if COMPUTE_F1_F2
       weight_norm += weight;
       #endif
+      if (effective_radius_type != 0) {
+        weighted_radius += weight * CALL_EFFECTIVE_RADIUS(effective_radius_type, local_values.table);
+      }
       BUILD_ROTATION();
 
 #ifndef USE_OPENCL
@@ -744,15 +756,15 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
 
         #ifdef USE_OPENCL
           #if COMPUTE_F1_F2
-            this_F1 += weight * F1;
             this_F2 += weight * F2;
+            this_F1 += weight * F1;
           #else
             this_result += weight * scattering;
           #endif
         #else // !USE_OPENCL
           #if COMPUTE_F1_F2
-            result[q_index] += weight * F2;
-            result[q_index+nq+1] += weight * F1;
+            result[2*q_index+0] += weight * F2;
+            result[2*q_index+1] += weight * F1;
           #else
             result[q_index] += weight * scattering;
           #endif
@@ -781,26 +793,34 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
 // Remember the current result and the updated norm.
 #ifdef USE_OPENCL
   #if COMPUTE_F1_F2
-    result[q_index] = this_F2;
-    result[q_index+nq+1] = this_F1;
+    result[2*q_index+0] = this_F2;
+    result[2*q_index+1] = this_F1;
     if (q_index == 0) {
-      result[nq] = pd_norm;
-      result[2*nq+1] = weight_norm;
+      result[2*nq+0] = weight_norm;
+      result[2*nq+1] = weighted_volume;
+      result[2*nq+2] = weighted_radius;
     }
   #else
     result[q_index] = this_result;
-    if (q_index == 0) result[nq] = pd_norm;
+    if (q_index == 0) {
+      result[nq+0] = weight_norm;
+      result[nq+1] = weighted_volume;
+      result[nq+2] = weighted_radius;
+    }
   #endif
 
-//if (q_index == 0) printf("res: %g/%g\n", result[0], pd_norm);
+//if (q_index == 0) printf("res: %g/%g\n", result[0], weigthed_volume);
 #else // !USE_OPENCL
   #if COMPUTE_F1_F2
-    result[nq] = pd_norm;
-    result[2*nq+1] = weight_norm;
+    result[2*nq] = weight_norm;
+    result[2*nq+1] = weighted_volume;
+    result[2*nq+2] = weighted_radius;
   #else
-    result[nq] = pd_norm;
+    result[nq] = weight_norm;
+    result[nq+1] = weighted_volume;
+    result[nq+2] = weighted_radius;
   #endif
-//printf("res: %g/%g\n", result[0], pd_norm);
+//printf("res: %g/%g\n", result[0], weighted_volume);
 #endif // !USE_OPENCL
 
 // ** clear the macros in preparation for the next kernel **

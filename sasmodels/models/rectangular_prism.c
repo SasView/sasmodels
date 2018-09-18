@@ -5,6 +5,27 @@ form_volume(double length_a, double b2a_ratio, double c2a_ratio)
 }
 
 static double
+effective_radius(int mode, double length_a, double b2a_ratio, double c2a_ratio)
+{
+    switch (mode) {
+    case 1: // equivalent sphere
+        return cbrt(0.75*cube(length_a)*b2a_ratio*c2a_ratio/M_PI);
+    case 2: // half length_a
+        return 0.5 * length_a;
+    case 3: // half length_b
+        return 0.5 * length_a*b2a_ratio;
+    case 4: // half length_c
+        return 0.5 * length_a*c2a_ratio;
+    case 5: // equivalent circular cross-section
+        return length_a*sqrt(b2a_ratio/M_PI);
+    case 6: // half ab diagonal
+        return 0.5*sqrt(square(length_a) * (1.0 + square(b2a_ratio)));
+    case 7: // half diagonal
+        return 0.5*sqrt(square(length_a) * (1.0 + square(b2a_ratio) + square(c2a_ratio)));
+    }
+}
+
+static double
 Iq(double q,
     double sld,
     double solvent_sld,

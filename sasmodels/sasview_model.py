@@ -271,7 +271,7 @@ def _generate_model_attributes(model_info):
     attrs['description'] = model_info.description
     attrs['category'] = model_info.category
     attrs['is_structure_factor'] = model_info.structure_factor
-    attrs['is_form_factor'] = model_info.ER is not None
+    attrs['is_form_factor'] = model_info.effective_radius_type is not None
     attrs['is_multiplicity_model'] = variants[0] > 1
     attrs['multiplicity_info'] = variants
     attrs['orientation_params'] = tuple(orientation_params)

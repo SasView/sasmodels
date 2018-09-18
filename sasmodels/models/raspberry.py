@@ -144,13 +144,14 @@ parameters = [["sld_lg", "1e-6/Ang^2", -0.4, [-inf, inf], "sld",
                "fraction of small spheres at surface"],
               ["radius_lg", "Ang", 5000, [0, inf], "volume",
                "radius of large spheres"],
-              ["radius_sm", "Ang", 100, [0, inf], "",
+              ["radius_sm", "Ang", 100, [0, inf], "volume",
                "radius of small spheres"],
-              ["penetration", "Ang", 0, [-1, 1], "",
+              ["penetration", "Ang", 0, [-1, 1], "volume",
                "fractional penetration depth of small spheres into large sphere"],
              ]
 
 source = ["lib/sas_3j1x_x.c", "raspberry.c"]
+effective_radius_type = ["radius_large", "radius_outer"]
 
 def random():
     # Limit volume fraction to 20% each

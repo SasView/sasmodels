@@ -35,6 +35,36 @@ bicelle_kernel(double qab,
     return t;
 }
 
+static double
+radius_from_volume(double radius, double thick_rim, double thick_face, double length)
+{
+    const double volume_bicelle = form_volume(radius,thick_rim,thick_face,length);
+    return cbrt(0.75*volume_bicelle/M_PI);
+}
+
+static double
+radius_from_diagonal(double radius, double thick_rim, double thick_face, double length)
+{
+    const double radius_tot = radius + thick_rim;
+    const double length_tot = length + 2.0*thick_face;
+    return sqrt(radius_tot*radius_tot + 0.25*length_tot*length_tot);
+}
+
+static double
+effective_radius(int mode, double radius, double thick_rim, double thick_face, double length)
+{
+    switch (mode) {
+    case 1: // equivalent sphere
+        return radius_from_volume(radius, thick_rim, thick_face, length);
+    case 2: // outer rim radius
+        return radius + thick_rim;
+    case 3: // half outer thickness
+        return 0.5*length + thick_face;
+    case 4: // half diagonal
+        return radius_from_diagonal(radius,thick_rim,thick_face,length);
+    }
+}
+
 static void
 Fq(double q,
     double *F1,

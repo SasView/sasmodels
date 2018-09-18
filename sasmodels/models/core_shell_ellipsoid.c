@@ -37,6 +37,53 @@ form_volume(double radius_equat_core,
     return vol;
 }
 
+static double
+radius_from_volume(double radius_equat_core, double x_core, double thick_shell, double x_polar_shell)
+{
+    const double volume_ellipsoid = form_volume(radius_equat_core, x_core, thick_shell, x_polar_shell);
+    return cbrt(0.75*volume_ellipsoid/M_PI);
+}
+
+static double
+radius_from_curvature(double radius_equat_core, double x_core, double thick_shell, double x_polar_shell)
+{
+    // Trivial cases
+    if (1.0 == x_core && 1.0 == x_polar_shell) return radius_equat_core + thick_shell;
+    if ((radius_equat_core + thick_shell)*(radius_equat_core*x_core + thick_shell*x_polar_shell) == 0.)  return 0.;
+
+    // see equation (26) in A.Isihara, J.Chem.Phys. 18(1950)1446-1449
+    const double radius_equat_tot = radius_equat_core + thick_shell;
+    const double radius_polar_tot = radius_equat_core*x_core + thick_shell*x_polar_shell;
+    const double ratio = (radius_polar_tot < radius_equat_tot
+                          ? radius_polar_tot / radius_equat_tot
+                          : radius_equat_tot / radius_polar_tot);
+    const double e1 = sqrt(1.0 - ratio*ratio);
+    const double b1 = 1.0 + asin(e1) / (e1 * ratio);
+    const double bL = (1.0 + e1) / (1.0 - e1);
+    const double b2 = 1.0 + 0.5 * ratio * ratio / e1 * log(bL);
+    const double delta = 0.75 * b1 * b2;
+    const double ddd = 2.0 * (delta + 1.0) * radius_polar_tot * radius_equat_tot * radius_equat_tot;
+    return 0.5 * cbrt(ddd);
+}
+
+static double
+effective_radius(int mode, double radius_equat_core, double x_core, double thick_shell, double x_polar_shell)
+{
+    const double radius_equat_tot = radius_equat_core + thick_shell;
+    const double radius_polar_tot = radius_equat_core*x_core + thick_shell*x_polar_shell;
+
+    switch (mode) {
+    case 1: // equivalent sphere
+        return radius_from_volume(radius_equat_core, x_core, thick_shell, x_polar_shell);
+    case 2: // average outer curvature
+        return radius_from_curvature(radius_equat_core, x_core, thick_shell, x_polar_shell);
+    case 3: // min outer radius
+        return (radius_polar_tot < radius_equat_tot ? radius_polar_tot : radius_equat_tot);
+    case 4: // max outer radius
+        return (radius_polar_tot > radius_equat_tot ? radius_polar_tot : radius_equat_tot);
+    }
+}
+
 static void
 Fq(double q,
     double *F1,

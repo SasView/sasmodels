@@ -4,6 +4,48 @@ form_volume(double radius_polar, double radius_equatorial)
     return M_4PI_3*radius_polar*radius_equatorial*radius_equatorial;
 }
 
+static double
+radius_from_volume(double radius_polar, double radius_equatorial)
+{
+    return cbrt(radius_polar*radius_equatorial*radius_equatorial);
+}
+
+static double
+radius_from_curvature(double radius_polar, double radius_equatorial)
+{
+    // Trivial cases
+    if (radius_polar == radius_equatorial) return radius_polar;
+    if (radius_polar * radius_equatorial == 0.)  return 0.;
+
+    // see equation (26) in A.Isihara, J.Chem.Phys. 18(1950)1446-1449
+    const double ratio = (radius_polar < radius_equatorial
+                          ? radius_polar / radius_equatorial
+                          : radius_equatorial / radius_polar);
+    const double e1 = sqrt(1.0 - ratio*ratio);
+    const double b1 = 1.0 + asin(e1) / (e1 * ratio);
+    const double bL = (1.0 + e1) / (1.0 - e1);
+    const double b2 = 1.0 + 0.5 * ratio * ratio / e1 * log(bL);
+    const double delta = 0.75 * b1 * b2;
+    const double ddd = 2.0 * (delta + 1.0) * radius_polar * radius_equatorial * radius_equatorial;
+    return 0.5 * cbrt(ddd);
+}
+
+static double
+effective_radius(int mode, double radius_polar, double radius_equatorial)
+{
+    switch (mode) {
+    case 1: // equivalent sphere
+        return radius_from_volume(radius_polar, radius_equatorial);
+    case 2: // average curvature
+        return radius_from_curvature(radius_polar, radius_equatorial);
+    case 3: // min radius
+        return (radius_polar < radius_equatorial ? radius_polar : radius_equatorial);
+    case 4: // max radius
+        return (radius_polar > radius_equatorial ? radius_polar : radius_equatorial);
+    }
+}
+
+
 static void
 Fq(double q,
     double *F1,

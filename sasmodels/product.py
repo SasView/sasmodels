@@ -23,7 +23,7 @@ from .details import make_details, dispersion_mesh
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, Callable
+    from typing import Tuple, Callable, Union
 except ImportError:
     pass
 else:
@@ -36,9 +36,8 @@ else:
 #    ["est_volume_ratio", "", 1.0, [0, np.inf], "", "Estimated volume ratio"],
 #]
 
-ER_ID = "radius_effective"
-VF_ID = "volfraction"
-
+RADIUS_ID = "radius_effective"
+VOLFRAC_ID = "volfraction"
 def make_extra_pars(p_info):
     pars = []
     if p_info.have_Fq:
@@ -49,6 +48,15 @@ def make_extra_pars(p_info):
                 [["P*S","P*(1+beta*(S-1))"]],
                 "",
                 "Structure factor calculation")
+        pars.append(par)
+    if p_info.effective_radius_type is not None:
+        par = parse_parameter(
+                "radius_effective_mode",
+                "",
+                0,
+                [["unconstrained"] + p_info.effective_radius_type],
+                "",
+                "Effective radius calculation")
         pars.append(par)
     return pars
 
@@ -64,36 +72,39 @@ def make_product_info(p_info, s_info):
     # structure factor calculator.  Structure factors should not
     # have any magnetic parameters
     if not len(s_info.parameters.kernel_parameters) >= 2:
-        raise TypeError("S needs {} and {} as its first parameters".format(ER_ID, VF_ID))
-    if not s_info.parameters.kernel_parameters[0].id == ER_ID:
-        raise TypeError("S needs {} as first parameter".format(ER_ID))
-    if not s_info.parameters.kernel_parameters[1].id == VF_ID:
-        raise TypeError("S needs {} as second parameter".format(VF_ID))
+        raise TypeError("S needs {} and {} as its first parameters".format(RADIUS_ID, VOLFRAC_ID))
+    if not s_info.parameters.kernel_parameters[0].id == RADIUS_ID:
+        raise TypeError("S needs {} as first parameter".format(RADIUS_ID))
+    if not s_info.parameters.kernel_parameters[1].id == VOLFRAC_ID:
+        raise TypeError("S needs {} as second parameter".format(VOLFRAC_ID))
     if not s_info.parameters.magnetism_index == []:
         raise TypeError("S should not have SLD parameters")
     p_id, p_name, p_pars = p_info.id, p_info.name, p_info.parameters
     s_id, s_name, s_pars = s_info.id, s_info.name, s_info.parameters
 
-    # Create list of parameters for the combined model.  Skip the first
-    # parameter of S, which we verified above is effective radius.  If there
+    # Create list of parameters for the combined model.  If there
     # are any names in P that overlap with those in S, modify the name in S
     # to distinguish it.
     p_set = set(p.id for p in p_pars.kernel_parameters)
     s_list = [(_tag_parameter(par) if par.id in p_set else par)
-              for par in s_pars.kernel_parameters[1:]]
+              for par in s_pars.kernel_parameters]
     # Check if still a collision after renaming.  This could happen if for
     # example S has volfrac and P has both volfrac and volfrac_S.
     if any(p.id in p_set for p in s_list):
         raise TypeError("name collision: P has P.name and P.name_S while S has S.name")
 
+    # make sure effective radius is not a polydisperse parameter in product
+    s_list[0] = copy(s_list[0])
+    s_list[0].polydisperse = False
+
     translate_name = dict((old.id, new.id) for old, new
-                          in zip(s_pars.kernel_parameters[1:], s_list))
+                          in zip(s_pars.kernel_parameters, s_list))
     combined_pars = p_pars.kernel_parameters + s_list + make_extra_pars(p_info)
     parameters = ParameterTable(combined_pars)
     parameters.max_pd = p_pars.max_pd + s_pars.max_pd
     def random():
         combined_pars = p_info.random()
-        s_names = set(par.id for par in s_pars.kernel_parameters[1:])
+        s_names = set(par.id for par in s_pars.kernel_parameters)
         combined_pars.update((translate_name[k], v)
                              for k, v in s_info.random().items()
                              if k in s_names)
@@ -156,20 +167,27 @@ def _tag_parameter(par):
     par.name = par.id + vector_length
     return par
 
-def _intermediates(P, S):
-    # type: (np.ndarray, np.ndarray) -> OrderedDict[str, np.ndarray]
+def _intermediates(P, S, effective_radius):
+    # type: (np.ndarray, np.ndarray, float) -> OrderedDict[str, np.ndarray]
     """
     Returns intermediate results for standard product (P(Q)*S(Q))
     """
     return OrderedDict((
         ("P(Q)", P),
         ("S(Q)", S),
+        ("effective_radius", effective_radius),
     ))
 
-def _intermediates_beta(F1, F2, S, scale, bg):
-    # type: (np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray) -> OrderedDict[str, np.ndarray]
+def _intermediates_beta(F1,              # type: np.ndarray
+                        F2,              # type: np.ndarray
+                        S,               # type: np.ndarray
+                        scale,           # type: np.ndarray
+                        bg,              # type: np.ndarray
+                        effective_radius # type: float
+                        ):
+    # type: (...) -> OrderedDict[str, Union[np.ndarray, float]]
     """
-    Returns intermediate results for beta approximation-enabled product
+    Returns intermediate results for beta approximation-enabled product. The result may be an array or a float.
     """
     # TODO: 1. include calculated Q vector
     # TODO: 2. consider implications if there are intermediate results in P(Q)
@@ -178,6 +196,7 @@ def _intermediates_beta(F1, F2, S, scale, bg):
         ("S(Q)", S),
         ("beta(Q)", F1**2 / F2),
         ("S_eff(Q)", 1 + (F1**2 / F2)*(S-1)),
+        ("effective_radius", effective_radius),
         # ("I(Q)", scale*(F2 + (F1**2)*(S-1)) + bg),
     ))
 
@@ -261,59 +280,59 @@ class ProductKernel(Kernel):
         p_values.append([0.]*spacer)
         p_values = np.hstack(p_values).astype(self.p_kernel.dtype)
 
-        # Call ER and VR for P since these are needed for S.
-        p_er, p_vr = calc_er_vr(p_info, p_details, p_values)
-        s_vr = (volfrac/p_vr if p_vr != 0. else volfrac)
-        #print("volfrac:%g p_er:%g p_vr:%g s_vr:%g"%(volfrac,p_er,p_vr,s_vr))
-
         # Construct the calling parameters for S.
-        # The  effective radius is not in the combined parameter list, so
-        # the number of 'S' parameters is one less than expected.  The
-        # computed effective radius needs to be added into the weights
-        # vector, especially since it is a polydisperse parameter in the
-        # stand-alone structure factor models.  We will added it at the
-        # end so the remaining offsets don't need to change.
-        s_npars = s_info.parameters.npars-1
+        s_npars = s_info.parameters.npars
         s_length = call_details.length[p_npars:p_npars+s_npars]
         s_offset = call_details.offset[p_npars:p_npars+s_npars]
         s_length = np.hstack((1, s_length))
         s_offset = np.hstack((nweights, s_offset))
         s_details = make_details(s_info, s_length, s_offset, nweights+1)
-        v, w = weights[:nweights], weights[nweights:]
         s_values = [
-            # scale=1, background=0, radius_effective=p_er, volfraction=s_vr
-            [1., 0., p_er, s_vr],
-            # structure factor parameters start after scale, background and
-            # all the form factor parameters.  Skip the volfraction parameter
-            # as well, since it is computed elsewhere, and go to the end of the
-            # parameter list.
-            values[2+p_npars+1:2+p_npars+s_npars],
-            # no magnetism parameters to include for S
-            # add er into the (value, weights) pairs
-            v, [p_er], w, [1.0]
+            # scale=1, background=0,
+            [1., 0.],
+            values[2+p_npars:2+p_npars+s_npars],
+            weights,
         ]
         spacer = (32 - sum(len(v) for v in s_values)%32)%32
         s_values.append([0.]*spacer)
         s_values = np.hstack(s_values).astype(self.s_kernel.dtype)
 
         # beta mode is the first parameter after the structure factor pars
-        beta_index = 2+p_npars+s_npars
-        beta_mode = values[beta_index]
+        extra_offset = 2+p_npars+s_npars
+        if p_info.have_Fq:
+            beta_mode = values[extra_offset]
+            extra_offset += 1
+        else:
+            beta_mode = 0
+        if p_info.effective_radius_type is not None:
+            effective_radius_type = int(values[extra_offset])
+            extra_offset += 1
+        else:
+            effective_radius_type = 0
 
         # Call the kernels
-        s_result = self.s_kernel.Iq(s_details, s_values, cutoff, False)
         scale, background = values[0], values[1]
         if beta_mode:
-            F1, F2, volume_avg = self.p_kernel.beta(p_details, p_values, cutoff, magnetic)
+            F1, F2, volume_avg, effective_radius = self.p_kernel.beta(
+                p_details, p_values, cutoff, magnetic, effective_radius_type)
+            if effective_radius_type > 0:
+                # Plug R_eff from p into S model (initial value and pd value)
+                s_values[2] = s_values[2+s_npars+s_offset[0]] = effective_radius
+            s_result = self.s_kernel.Iq(s_details, s_values, cutoff, False)
             combined_scale = scale*volfrac/volume_avg
 
-            self.results = lambda: _intermediates_beta(F1, F2, s_result, volfrac/volume_avg, background)
+            self.results = lambda: _intermediates_beta(F1, F2, s_result, volfrac/volume_avg, background, effective_radius)
             final_result = combined_scale*(F2 + (F1**2)*(s_result - 1)) + background
 
         else:
-            p_result = self.p_kernel.Iq(p_details, p_values, cutoff, magnetic)
-
-            self.results = lambda: _intermediates(p_result, s_result)
+            p_result, effective_radius = self.p_kernel.Pq_Reff(
+                p_details, p_values, cutoff, magnetic, effective_radius_type)
+            if effective_radius_type > 0:
+                # Plug R_eff from p into S model (initial value and pd value)
+                s_values[2] = s_values[2+s_npars+s_offset[0]] = effective_radius
+            s_result = self.s_kernel.Iq(s_details, s_values, cutoff, False)
+            # remember the parts for plotting later
+            self.results = lambda: _intermediates(p_result, s_result, effective_radius)
             final_result = scale*(p_result*s_result) + background
 
         #call_details.show(values)

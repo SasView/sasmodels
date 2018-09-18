@@ -6,6 +6,38 @@ form_volume(double radius_equat_minor, double radius_equat_major, double radius_
     return M_4PI_3*radius_equat_minor*radius_equat_major*radius_polar;
 }
 
+static double
+radius_from_volume(double radius_equat_minor, double radius_equat_major, double radius_polar)
+{
+    return cbrt(radius_equat_minor*radius_equat_major*radius_polar);
+}
+
+static double
+radius_from_min_dimension(double radius_equat_minor, double radius_equat_major, double radius_polar)
+{
+    const double rad_equat_min = (radius_equat_minor < radius_equat_major ? radius_equat_minor : radius_equat_major);
+    return (rad_equat_min < radius_polar ? rad_equat_min : radius_polar);
+}
+
+static double
+radius_from_max_dimension(double radius_equat_minor, double radius_equat_major, double radius_polar)
+{
+    const double rad_equat_max = (radius_equat_minor < radius_equat_major ? radius_equat_major : radius_equat_minor);
+    return (rad_equat_max > radius_polar ? rad_equat_max : radius_polar);
+}
+
+static double
+effective_radius(int mode, double radius_equat_minor, double radius_equat_major, double radius_polar)
+{
+    switch (mode) {
+    case 1: // equivalent sphere
+        return radius_from_volume(radius_equat_minor,radius_equat_major, radius_polar);
+    case 2: // min radius
+        return radius_from_min_dimension(radius_equat_minor,radius_equat_major, radius_polar);
+    case 3: // max radius
+        return radius_from_max_dimension(radius_equat_minor,radius_equat_major, radius_polar);
+    }
+}
 
 static void
 Fq(double q,

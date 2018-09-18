@@ -133,8 +133,8 @@ def ER(radius, thickness):
     """
     return radius + thickness
 
-tests = [[{'radius': 20.0, 'thickness': 10.0}, 'ER', 30.0],
-
+#tests = [[{'radius': 20.0, 'thickness': 10.0}, 'ER', 30.0],
+tests = [
 #         # At some point the SasView 3.x test result was deemed incorrect. The
           #following tests were verified against NIST IGOR macros ver 7.850.
           #NOTE: NIST macros do only provide for a polydispers core (no option

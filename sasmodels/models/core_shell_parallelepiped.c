@@ -26,6 +26,43 @@ form_volume(double length_a, double length_b, double length_c,
 #endif
 }
 
+static double
+radius_from_volume(double length_a, double length_b, double length_c,
+                   double thick_rim_a, double thick_rim_b, double thick_rim_c)
+{
+    const double volume = form_volume(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c);
+    return cbrt(volume/M_4PI_3);
+}
+
+static double
+radius_from_crosssection(double length_a, double length_b, double thick_rim_a, double thick_rim_b)
+{
+    const double area_xsec_paral = length_a*length_b + 2.0*thick_rim_a*length_b + 2.0*thick_rim_b*length_a;
+    return sqrt(area_xsec_paral/M_PI);
+}
+
+static double
+effective_radius(int mode, double length_a, double length_b, double length_c,
+                 double thick_rim_a, double thick_rim_b, double thick_rim_c)
+{
+    switch (mode) {
+    case 1: // equivalent sphere
+        return radius_from_volume(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c);
+    case 2: // half outer length a
+        return 0.5 * length_a + thick_rim_a;
+    case 3: // half outer length b
+        return 0.5 * length_b + thick_rim_b;
+    case 4: // half outer length c
+        return 0.5 * length_c + thick_rim_c;
+    case 5: // equivalent circular cross-section
+        return radius_from_crosssection(length_a, length_b, thick_rim_a, thick_rim_b);
+    case 6: // half outer ab diagonal
+        return 0.5*sqrt(square(length_a+ 2.0*thick_rim_a) + square(length_b+ 2.0*thick_rim_b));
+    case 7: // half outer diagonal
+        return 0.5*sqrt(square(length_a+ 2.0*thick_rim_a) + square(length_b+ 2.0*thick_rim_b) + square(length_c+ 2.0*thick_rim_c));
+    }
+}
+
 static void
 Fq(double q,
     double *F1,

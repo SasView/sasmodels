@@ -83,6 +83,35 @@ form_volume(double radius, double radius_cap, double length)
     return M_PI*(radius*radius*(length+hc) + hc*hc*hc/3.0);
 }
 
+static double
+radius_from_volume(double radius, double radius_cap, double length)
+{
+    const double vol_cappedcyl = form_volume(radius,radius_cap,length);
+    return cbrt(0.75*vol_cappedcyl/M_PI);
+}
+
+static double
+radius_from_totallength(double radius, double radius_cap, double length)
+{
+    const double hc = radius_cap - sqrt(radius_cap*radius_cap - radius*radius);
+    return 0.5*length + hc;
+}
+
+static double
+effective_radius(int mode, double radius, double radius_cap, double length)
+{
+    switch (mode) {
+    case 1: // equivalent sphere
+        return radius_from_volume(radius, radius_cap, length);
+    case 2: // radius
+        return radius;
+    case 3: // half length
+        return 0.5*length;
+    case 4: // half total length
+        return radius_from_totallength(radius, radius_cap,length);
+    }
+}
+
 static void
 Fq(double q,double *F1, double *F2, double sld, double solvent_sld,
     double radius, double radius_cap, double length)

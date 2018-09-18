@@ -14,13 +14,52 @@ _fq(double qab, double qc,
     return psi*t2;
 }
 
+// TODO: interface to form_volume/shell_volume not yet settled
+static double
+shell_volume(double *total, double radius, double thickness, double length)
+{
+    *total = M_PI*length*square(radius+thickness);
+    return *total - M_PI*length*radius*radius;
+}
+
 static double
 form_volume(double radius, double thickness, double length)
 {
-    double v_shell = M_PI*length*(square(radius+thickness) - radius*radius);
-    return v_shell;
+    double total;
+    return shell_volume(&total, radius, thickness, length);
 }
 
+static double
+radius_from_volume(double radius, double thickness, double length)
+{
+    const double volume_outer_cyl = M_PI*square(radius + thickness)*length;
+    return cbrt(0.75*volume_outer_cyl/M_PI);
+}
+
+static double
+radius_from_diagonal(double radius, double thickness, double length)
+{
+    return sqrt(square(radius + thickness) + 0.25*square(length));
+}
+
+static double
+effective_radius(int mode, double radius, double thickness, double length)
+{
+    switch (mode) {
+    case 1: // equivalent sphere
+        return radius_from_volume(radius, thickness, length);
+    case 2: // outer radius
+        return radius + thickness;
+    case 3: // half length
+        return 0.5*length;
+    case 4: // half outer min dimension
+        return (radius + thickness < 0.5*length ? radius + thickness : 0.5*length);
+    case 5: // half outer max dimension
+        return (radius + thickness > 0.5*length ? radius + thickness : 0.5*length);
+    case 6: // half outer diagonal
+        return radius_from_diagonal(radius,thickness,length);
+    }
+}
 
 static void
 Fq(double q, double *F1, double *F2, double radius, double thickness, double length,

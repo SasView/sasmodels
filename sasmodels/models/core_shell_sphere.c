@@ -4,6 +4,17 @@ form_volume(double radius, double thickness)
     return M_4PI_3 * cube(radius + thickness);
 }
 
+static double
+effective_radius(int mode, double radius, double thickness)
+{
+    switch (mode) {
+    case 1: // outer radius
+        return radius + thickness;
+    case 2: // core radius
+        return radius;
+    }
+}
+
 static void
 Fq(double q, double *F1, double *F2, double radius,
    double thickness, double core_sld, double shell_sld, double solvent_sld) {

@@ -480,15 +480,14 @@ class GpuInput(object):
         # not doing it now since warp depends on kernel, which is not known
         # at this point, so instead using 32, which is good on the set of
         # architectures tested so far.
+        extra_q = 3  # total weight, weighted volume and weighted radius
         if self.is_2d:
-            # Note: 16 rather than 15 because result is 1 longer than input.
-            width = ((self.nq+16)//16)*16
+            width = ((self.nq+15+extra_q)//16)*16
             self.q = np.empty((width, 2), dtype=dtype)
             self.q[:self.nq, 0] = q_vectors[0]
             self.q[:self.nq, 1] = q_vectors[1]
         else:
-            # Note: 32 rather than 31 because result is 1 longer than input.
-            width = ((self.nq+32)//32)*32
+            width = ((self.nq+31+extra_q)//32)*32
             self.q = np.empty(width, dtype=dtype)
             self.q[:self.nq] = q_vectors[0]
         self.global_size = [self.q.shape[0]]
@@ -538,9 +537,9 @@ class GpuKernel(Kernel):
         self.dtype = dtype
         self.dim = '2d' if q_input.is_2d else '1d'
         # leave room for f1/f2 results in case we need to compute beta for 1d models
-        num_returns = 1 if self.dim == '2d' else 2  #
-        # plus 1 for the normalization value
-        self.result = np.empty((q_input.nq+1)*num_returns, dtype)
+        nout = 2 if self.info.have_Fq and self.dim == '1d' else 1
+        # plus 3 weight, volume, radius
+        self.result = np.empty(q_input.nq*nout + 3, self.dtype)
 
         # Inputs and outputs for each kernel call
         # Note: res may be shorter than res_b if global_size != nq
@@ -548,7 +547,7 @@ class GpuKernel(Kernel):
         self.queue = env.get_queue(dtype)
 
         self.result_b = cl.Buffer(self.queue.context, mf.READ_WRITE,
-                                  q_input.global_size[0] * num_returns * dtype.itemsize)
+                                  q_input.global_size[0] * nout * dtype.itemsize)
         self.q_input = q_input # allocated by GpuInput above
 
         self._need_release = [self.result_b, self.q_input]
@@ -557,32 +556,7 @@ class GpuKernel(Kernel):
                      else np.float16 if dtype == generate.F16
                      else np.float32)  # will never get here, so use np.float32
 
-    def Iq(self, call_details, values, cutoff, magnetic):
-        # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
-        self._call_kernel(call_details, values, cutoff, magnetic)
-        #print("returned",self.q_input.q, self.result)
-        pd_norm = self.result[self.q_input.nq]
-        scale = values[0]/(pd_norm if pd_norm != 0.0 else 1.0)
-        background = values[1]
-        #print("scale",scale,background)
-        return scale*self.result[:self.q_input.nq] + background
-    __call__ = Iq
-
-    def beta(self, call_details, values, cutoff, magnetic):
-        # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
-        if self.dim == '2d':
-            raise NotImplementedError("beta not yet supported for 2D")
-        self._call_kernel(call_details, values, cutoff, magnetic)
-        w_norm = self.result[2*self.q_input.nq + 1]
-        pd_norm = self.result[self.q_input.nq]
-        if w_norm == 0.:
-            w_norm = 1.
-        F2 = self.result[:self.q_input.nq]/w_norm
-        F1 = self.result[self.q_input.nq+1:2*self.q_input.nq+1]/w_norm
-        volume_avg = pd_norm/w_norm
-        return F1, F2, volume_avg
-
-    def _call_kernel(self, call_details, values, cutoff, magnetic):
+    def _call_kernel(self, call_details, values, cutoff, magnetic, effective_radius_type):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
         context = self.queue.context
         # Arrange data transfer to card
@@ -596,6 +570,7 @@ class GpuKernel(Kernel):
             np.uint32(self.q_input.nq), None, None,
             details_b, values_b, self.q_input.q_b, self.result_b,
             self.real(cutoff),
+            np.uint32(effective_radius_type),
         ]
         #print("Calling OpenCL")
         #call_details.show(values)

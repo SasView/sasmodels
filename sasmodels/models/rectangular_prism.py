@@ -135,19 +135,10 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
 
 source = ["lib/gauss76.c", "rectangular_prism.c"]
 have_Fq = True
-
-def ER(length_a, b2a_ratio, c2a_ratio):
-    """
-        Return equivalent radius (ER)
-    """
-    b_side = length_a * b2a_ratio
-    c_side = length_a * c2a_ratio
-
-    # surface average radius (rough approximation)
-    surf_rad = sqrt(length_a * b_side / pi)
-
-    ddd = 0.75 * surf_rad * (2 * surf_rad * c_side + (c_side + surf_rad) * (c_side + pi * surf_rad))
-    return 0.5 * (ddd) ** (1. / 3.)
+effective_radius_type = [
+    "equivalent sphere", "half length_a", "half length_b", "half length_c",
+    "equivalent circular cross-section", "half ab diagonal", "half diagonal",
+    ]
 
 def random():
     a, b, c = 10**np.random.uniform(1, 4.7, size=3)

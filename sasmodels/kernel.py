@@ -40,10 +40,55 @@ class Kernel(object):
     results = None # type: List[np.ndarray]
     dtype = None  # type: np.dtype
 
-    def __call__(self, call_details, values, cutoff, magnetic):
+    def Iq(self, call_details, values, cutoff, magnetic):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
-        raise NotImplementedError("need to implement __call__")
+        Pq, Reff = self.Pq_Reff(call_details, values, cutoff, magnetic, effective_radius_type=0)
+        return Pq
+    __call__ = Iq
+
+    def Pq_Reff(self, call_details, values, cutoff, magnetic, effective_radius_type):
+        # type: (CallDetails, np.ndarray, np.ndarray, float, bool, int) -> np.ndarray
+        self._call_kernel(call_details, values, cutoff, magnetic, effective_radius_type)
+        #print("returned",self.q_input.q, self.result)
+        nout = 2 if self.info.have_Fq and self.dim == '1d' else 1
+        total_weight = self.result[nout*self.q_input.nq + 0]
+        if total_weight == 0.:
+            total_weight = 1.
+        weighted_volume = self.result[nout*self.q_input.nq + 1]
+        weighted_radius = self.result[nout*self.q_input.nq + 2]
+        effective_radius = weighted_radius/total_weight
+        # compute I = scale*P + background
+        #           = scale*(sum(w*F^2)/sum w)/(sum (w*V)/sum w) + background
+        #           = scale/sum (w*V) * sum(w*F^2) + background
+        F2 = self.result[0:nout*self.q_input.nq:nout]
+        scale = values[0]/(weighted_volume if weighted_volume != 0.0 else 1.0)
+        background = values[1]
+        Pq = scale*F2 + background
+        #print("scale",scale,background)
+        return Pq, effective_radius
+
+    def beta(self, call_details, values, cutoff, magnetic, effective_radius_type):
+        # type: (CallDetails, np.ndarray, np.ndarray, float, bool, int) -> np.ndarray
+        if self.dim == '2d':
+            raise NotImplementedError("beta not yet supported for 2D")
+        if not self.info.have_Fq:
+            raise NotImplementedError("beta not yet supported for "+self.info.id)
+        self._call_kernel(call_details, values, cutoff, magnetic, effective_radius_type)
+        total_weight = self.result[2*self.q_input.nq + 0]
+        if total_weight == 0.:
+            total_weight = 1.
+        weighted_volume = self.result[2*self.q_input.nq + 1]
+        weighted_radius = self.result[2*self.q_input.nq + 2]
+        volume_average = weighted_volume/total_weight
+        effective_radius = weighted_radius/total_weight
+        F2 = self.result[0:2*self.q_input.nq:2]/total_weight
+        F1 = self.result[1:2*self.q_input.nq:2]/total_weight
+        return F1, F2, volume_average, effective_radius
 
     def release(self):
         # type: () -> None
         pass
+
+    def _call_kernel(self, call_details, values, cutoff, magnetic, effective_radius_type):
+        # type: (CallDetails, np.ndarray, np.ndarray, float, bool, int) -> np.ndarray
+        raise NotImplementedError()

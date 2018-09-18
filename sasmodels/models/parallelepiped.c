@@ -4,6 +4,26 @@ form_volume(double length_a, double length_b, double length_c)
     return length_a * length_b * length_c;
 }
 
+static double
+effective_radius(int mode, double length_a, double length_b, double length_c)
+{
+    switch (mode) {
+    case 1: // equivalent sphere
+        return cbrt(0.75*length_a*length_b*length_c/M_PI);
+    case 2: // half length_a
+        return 0.5 * length_a;
+    case 3: // half length_b
+        return 0.5 * length_b;
+    case 4: // half length_c
+        return 0.5 * length_c;
+    case 5: // equivalent circular cross-section
+        return sqrt(length_a*length_b/M_PI);
+    case 6: // half ab diagonal
+        return 0.5*sqrt(length_a*length_a + length_b*length_b);
+    case 7: // half diagonal
+        return 0.5*sqrt(length_a*length_a + length_b*length_b + length_c*length_c);
+    }
+}
 
 static void
 Fq(double q,

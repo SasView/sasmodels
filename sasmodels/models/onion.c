@@ -29,14 +29,27 @@ f_exp(double q, double r, double sld_in, double sld_out,
 }
 
 static double
-form_volume(double radius_core, double n_shells, double thickness[])
+outer_radius(double radius_core, double n_shells, double thickness[])
 {
   int n = (int)(n_shells+0.5);
   double r = radius_core;
   for (int i=0; i < n; i++) {
     r += thickness[i];
   }
-  return M_4PI_3*cube(r);
+  return r;
+}
+
+static double
+form_volume(double radius_core, double n_shells, double thickness[])
+{
+  return M_4PI_3*cube(outer_radius(radius_core, n_shells, thickness));
+}
+
+static double
+effective_radius(int mode, double radius_core, double n_shells, double thickness[])
+{
+  // case 1: outer radius
+  return outer_radius(radius_core, n_shells, thickness);
 }
 
 static void

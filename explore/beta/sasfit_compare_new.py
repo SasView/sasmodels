@@ -19,6 +19,7 @@ Theory = namedtuple('Theory', 'Q F1 F2 P S I Seff Ibeta')
 Theory.__new__.__defaults__ = (None,) * len(Theory._fields)
 
 #Used to calculate F(q) for the cylinder, sphere, ellipsoid models
+# RKH adding vesicle and hollow_cylinder to test sasview special cases of ER and VR
 def sas_sinx_x(x):
     with np.errstate(all='ignore'):
         retvalue = sin(x)/x
@@ -272,7 +273,8 @@ def sphere_r(q,radius,sld,sld_solvent,
 
     if radius_effective is None:
         radius_effective = radius
-    average_volume = total_volume/total_weight
+        print("radius_effective  ",radius_effective)
+        average_volume = total_volume/total_weight
     if norm == 'sasfit':
         IQD = F2
     elif norm == 'sasview':
@@ -287,6 +289,206 @@ def sphere_r(q,radius,sld,sld_solvent,
     IQSD = IQD*SQ
     IQBD = IQD*SQ_EFF
     return Theory(Q=q, F1=F1, F2=F2, P=IQD, S=SQ, I=IQSD, Seff=SQ_EFF, Ibeta=IQBD)
+
+#polydispersity for vesicle
+def vesicle_pe(q,radius=20, thickness=10, sld=4, sld_solvent=1, volfraction=0.03,
+        radius_pd=0.1, thickness_pd=0.2, radius_pd_type="gaussian", thickness_pd_type="gaussian",
+        radius_effective=None, background=0, scale=1,
+                 norm='sasview'):
+    if norm not in ['sasview', 'sasfit', 'yun']:
+        raise TypeError("unknown norm "+norm)
+    if radius_pd_type == 'gaussian':
+        R_val, R_prob = gaussian_distribution(radius, radius_pd*radius, 0, inf)
+    elif radius_pd_type == 'schulz':
+        R_val, R_prob = schulz_distribution(radius, radius_pd*radius, 0, inf)
+    if thickness_pd_type == 'gaussian':
+        T_val, T_prob = gaussian_distribution(thickness, thickness_pd*thickness, 0, inf)
+    elif thickness_pd_type == 'schulz':
+        T_val, T_prob = schulz_distribution(thickness, thickness_pd*thickness, 0, inf)
+    total_weight = total_volume = total_shell = 0
+    radius_eff = 0
+    F1, F2 = np.zeros_like(q), np.zeros_like(q)
+    for k, Rk in enumerate(R_val):
+        print("vesicle cycle", k, "of", len(R_val)," Rk ",Rk)
+        volume_in = 4./3.*pi*Rk**3
+        form_in = (sld-sld_solvent)*volume_in*sas_3j1x_x(q*Rk)
+        for i, Ti in enumerate(T_val):
+            Rout = Rk + Ti
+            volume_out = 4./3.*pi*Rout**3
+            form_out = (sld-sld_solvent)*volume_out*sas_3j1x_x(q*Rout)
+            form = form_out - form_in
+            volume = volume_out - volume_in
+            weight = R_prob[k]*T_prob[i]
+            total_weight += weight
+            total_shell += weight*volume
+            total_volume += weight*volume_out
+            F1 += form*weight
+            F2 += form**2*weight
+            radius_eff += weight*Rout
+    F1 /= total_weight
+    F2 /= total_weight
+    average_volume = total_volume/total_weight
+    if radius_effective is None:
+        radius_effective = radius_eff/total_weight
+        print("radius_effective  ",radius_effective)
+    if norm == 'sasfit':
+        IQD = F2
+    elif norm == 'sasview':
+        # Note: internally, sasview uses F2/total_volume because:
+        #   average_volume = total_volume/total_weight
+        #   F2/total_weight / average_volume
+        #     = F2/total_weight / total_volume/total_weight
+        #     = F2/total_volume
+        IQD = F2/average_volume*1e-4*volfraction
+        F1 *= 1e-2  # Yun is using sld in 1/A^2, not 1e-6/A^2
+        F2 *= 1e-4
+    elif norm == 'yun':
+        F1 *= 1e-6  # Yun is using sld in 1/A^2, not 1e-6/A^2
+        F2 *= 1e-12
+        IQD = F2/average_volume*1e8*volfraction
+    # RKH SORT THIS OUT WHEN HAVE NEW MODEL
+    vfff=volfraction*(30./20.)**3
+    print("radius_effective, fudged volfaction for S(Q) ",radius_effective,vfff)
+    SQ = hardsphere_simple(q, radius_effective, vfff)
+    beta = F1**2/F2
+    SQ_EFF = 1 + beta*(SQ - 1)
+    IQSD = IQD*SQ
+    IQBD = IQD*SQ_EFF
+    return Theory(Q=q, F1=F1, F2=F2, P=IQD, S=SQ, I=IQSD, Seff=SQ_EFF, Ibeta=IQBD)
+#
+#polydispersity for hollow_cylinder
+def hollow_cylinder_pe(q,radius=20, thickness=10, sld=4, sld_solvent=1, volfraction=0.15,
+        radius_pd=0.1, thickness_pd=0.2, length_pd=0.05, radius_pd_type="gaussian", thickness_pd_type="gaussian",
+        radius_effective=None, background=0, scale=1,
+                 norm='sasview'):
+    if norm not in ['sasview', 'sasfit', 'yun']:
+        raise TypeError("unknown norm "+norm)
+    if radius_pd_type == 'gaussian':
+        R_val, R_prob = gaussian_distribution(radius, radius_pd*radius, 0, inf)
+    elif radius_pd_type == 'schulz':
+        R_val, R_prob = schulz_distribution(radius, radius_pd*radius, 0, inf)
+    if thickness_pd_type == 'gaussian':
+        T_val, T_prob = gaussian_distribution(thickness, thickness_pd*thickness, 0, inf)
+    elif thickness_pd_type == 'schulz':
+        T_val, T_prob = schulz_distribution(thickness, thickness_pd*thickness, 0, inf)
+    if length_pd_type == 'gaussian':
+        T_val, T_prob = gaussian_distribution(length, length_pd*length, 0, inf)
+    elif length_pd_type == 'schulz':
+        L_val, L_prob = schulz_distribution(length, length_pd*length, 0, inf)
+    total_weight = total_volume = total_shell = 0
+    radius_eff = 0
+    F1, F2 = np.zeros_like(q), np.zeros_like(q)
+    for k, Rk in enumerate(R_val):
+        print("hollow_cylinder cycle", k, "of", len(R_val)," Rk ",Rk)
+        for i, Ti in enumerate(T_val):
+            for j, Lj in enumerate(L_val):
+                Rout = Rk + Ti
+                volume_out = pi*Rout**2*Lj
+                volume_in = pi*Rk**2*Lj
+                volume = volume_out - volume_in
+                theory = hollow_cylinder_theta(q, Rk, Ti, Lj, sld, sld_solvent,
+                    volfraction=0, radius_effective=None)
+                weight = R_prob[k]*T_prob[i]*L_prob[j]
+                total_weight += weight
+                total_shell += weight*volume
+                total_volume += weight*volume_out
+                F1 += theory.F1*weight
+                F2 += theory.F2*weight
+                radius_eff += weight*ER_hollow_cylinder(radius, thickness, length)
+    F1 /= total_weight
+    F2 /= total_weight
+    average_volume = total_volume/total_weight
+    if radius_effective is None:
+        radius_effective = radius_eff/total_weight
+        print("radius_effective  ",radius_effective)
+    if norm == 'sasfit':
+        IQD = F2
+    elif norm == 'sasview':
+        # Note: internally, sasview uses F2/total_volume because:
+        #   average_volume = total_volume/total_weight
+        #   F2/total_weight / average_volume
+        #     = F2/total_weight / total_volume/total_weight
+        #     = F2/total_volume
+        IQD = F2/average_volume*1e-4*volfraction
+        F1 *= 1e-2  # Yun is using sld in 1/A^2, not 1e-6/A^2
+        F2 *= 1e-4
+    elif norm == 'yun':
+        F1 *= 1e-6  # Yun is using sld in 1/A^2, not 1e-6/A^2
+        F2 *= 1e-12
+        IQD = F2/average_volume*1e8*volfraction
+# RKH SORT THIS OUT WHEN HAVE NEW MODEL
+    vfff=volfraction
+    print("radius_effective, volfaction for S(Q) ",radius_effective,vfff)
+    SQ = hardsphere_simple(q, radius_effective, vfff)
+    beta = F1**2/F2
+    SQ_EFF = 1 + beta*(SQ - 1)
+    IQSD = IQD*SQ
+    IQBD = IQD*SQ_EFF
+    return Theory(Q=q, F1=F1, F2=F2, P=IQD, S=SQ, I=IQSD, Seff=SQ_EFF, Ibeta=IQBD)
+
+# RKH copying Paul K's ellipsoid here, this computes everything for monodisperse case
+# and supplies partial results for polydisperse case.
+def hollow_cylinder_theta(q, radius, thickness, length, sld, sld_solvent,
+                    volfraction=0, radius_effective=None):
+    #creates values z and corresponding probabilities w from legendre-gauss quadrature
+    z, w = leggauss(76)
+    F1 = np.zeros_like(q)
+    F2 = np.zeros_like(q)
+    #use a u subsition(u=cos) and then u=(z+1)/2 to change integration from
+    #0->2pi with respect to alpha to -1->1 with respect to z, allowing us to use
+    #legendre-gauss quadrature
+    lower = 0.0
+    upper = 1.0
+    gamma_sq = (radius/(radius+thickness))**2
+    for k, qk in enumerate(q):
+        for i, zt in enumerate(z):
+            # quadrature loop
+            cos_theta = 0.5*( zt* (upper-lower) + lower + upper  )
+            sin_theta = sqrt(1.0 - cos_theta*cos_theta)
+            aaa=(radius+thickness)*qk*sin_theta
+            ## sas_J1 expects an array, so try direct use of J1
+            lam1 = J1(aaa)/aaa
+            aaa=radius*qk*sin_theta
+            lam2 = J1(aaa)/aaa
+            psi = (lam1 - gamma_sq*lam2)/(1.0 - gamma_sq)
+            #Note: lim_{thickness -> 0} psi = sas_J0(radius*qab)
+            #Note: lim_{radius -> 0} psi = sas_2J1x_x(thickness*qab)
+            aaa=0.5*length*qk*cos_theta
+            t2 = sin(aaa)/aaa
+#            t2 = sas_sinx_x(0.5*length*qk*cos_theta)
+            form = psi*t2
+            F1[i] += w[i] * form
+            F2[i] += w[i] * form * form
+    volume = pi*((radius + thickness)**2 - radius**2)*length
+    s = (sld - sld_solvent) * volume
+    F2 = F2*s*(upper - lower)/2.0
+    F1 = F1*s*s*(upper - lower)/2.0
+    if radius_effective is None:
+        radius_effective = ER_hollow_cylinder(radius, thickness, length)
+    SQ = hardsphere_simple(q, radius_effective, volfraction)
+    SQ_EFF = 1 + F1**2/F2*(SQ - 1)
+    IQM = 1e-4*F2/volume
+    IQSM = volfraction*IQM*SQ
+    IQBM = volfraction*IQM*SQ_EFF
+    return Theory(Q=q, F1=F1, F2=F2, P=IQM, S=SQ, I=IQSM, Seff=SQ_EFF, Ibeta=IQBM)
+#
+def ER_hollow_cylinder(radius, thickness, length):
+    """
+    :param radius:      Cylinder core radius
+    :param thickness:   Cylinder wall thickness
+    :param length:      Cylinder length
+    :return:            Effective radius
+    """
+    router = radius + thickness
+    if router == 0 or length == 0:
+        return 0.0
+    len1 = router
+    len2 = length/2.0
+    term1 = len1*len1*2.0*len2/2.0
+    term2 = 1.0 + (len2/len1)*(1.0 + 1/len2/2.0)*(1.0 + pi*len1/len2/2.0)
+    ddd = 3.0*term1*term2
+    diam = pow(ddd, (1.0/3.0))
+    return diam
 
 ###############################################################################
 ###############################################################################
@@ -344,6 +546,7 @@ def sasmodels_theory(q, Pname, **pars):
     #Sq = Iq/Pq
     #Iq = None#= Sq = None
     r = dict(I._kernel.results())
+    #print(r)
     return Theory(Q=q, F1=None, F2=None, P=Pq, S=None, I=None, Seff=r["S_eff(Q)"], Ibeta=Iq)
 
 def compare(title, target, actual, fields='F1 F2 P S I Seff Ibeta'):
@@ -386,14 +589,55 @@ def compare_sasview_sphere(pd_type='schulz'):
         background=0,
         radius_pd=.1, radius_pd_type=pd_type,
         volfraction=0.15,
-        #radius_effective=12.59921049894873,  # equivalent average sphere radius
+        radius_effective=12.59921049894873,  # equivalent average sphere radius
         )
-    target = sasmodels_theory(q, model, **pars)
+    target = sasmodels_theory(q, model, effective_radius_mode=0, structure_factor_mode=1, **pars)
     actual = sphere_r(q, norm='sasview', **pars)
     title = " ".join(("sasmodels", model, pd_type))
     compare(title, target, actual)
 COMPARISON[('sasview', 'sphere', 'gaussian')] = lambda: compare_sasview_sphere(pd_type='gaussian')
 COMPARISON[('sasview', 'sphere', 'schulz')] = lambda: compare_sasview_sphere(pd_type='schulz')
+
+
+def compare_sasview_vesicle(pd_type='gaussian'):
+    q = np.logspace(-5, 0, 250)
+    model = 'vesicle'
+    print("F2 seems OK, but big issues with S(Q), wo work in progress")
+# NOTE parameers for vesicle model are soon to be changed to remove "volfraction"
+    pars = dict(
+        radius=20, thickness=10, sld=4, sld_solvent=1, volfraction=0.03,
+        background=0,
+        radius_pd=0.1, thickness_pd=0.0, radius_pd_type=pd_type, thickness_pd_type=pd_type
+        #,radius_effective=12.59921049894873,  # equivalent average sphere radius
+        )
+    target = sasmodels_theory(q, model, effective_radius_mode=0, structure_factor_mode=1, **pars)
+    actual = vesicle_pe(q, norm='sasview', **pars)
+    title = " ".join(("sasmodels", model, pd_type))
+    compare(title, target, actual)
+COMPARISON[('sasview', 'vesicle', 'gaussian')] = lambda: compare_sasview_vesicle(pd_type='gaussian')
+COMPARISON[('sasview', 'vesicle', 'schulz')] = lambda: compare_sasview_vesicle(pd_type='schulz')
+
+def compare_sasview_hollow_cylinder(pd_type='gaussian'):
+    q = np.logspace(-5, 0, 250)
+    model = 'hollow_cylinder'
+    print(model)
+    print("just about works for monodisperse, polydisperse needs work")
+# NOTE parameters for hollow_cylinder model are soon to be changed to remove "volfraction"
+# setting all three pd to zero is OK
+    pars = dict(
+        radius=20, thickness=10, length=80, sld=4, sld_solvent=1,
+        background=0,
+        radius_pd=0.1, thickness_pd=0.0, length_pd=0.0, radius_pd_type=pd_type, thickness_pd_type=pd_type, length_pd_type=pd_type
+        #,radius_effective=12.59921049894873,  # equivalent average sphere radius
+        )
+    target = sasmodels_theory(q, model, effective_radius_mode=0, structure_factor_mode=1, **pars)
+    actual = hollow_cylinder_pe(q, norm='sasview', **pars)
+# RKH monodisp was OK,    actual = hollow_cylinder_theta(q,radius=20, thickness=10, length=80, sld=4, sld_solvent=1 )
+    title = " ".join(("sasmodels", model, pd_type))
+    compare(title, target, actual)
+COMPARISON[('sasview', 'hollow_cylinder', 'gaussian')] = lambda: compare_sasview_hollow_cylinder(pd_type='gaussian')
+COMPARISON[('sasview', 'hollow_cylinder', 'schulz')] = lambda: compare_sasview_hollow_cylinder(pd_type='schulz')
+
 
 def compare_sasview_ellipsoid(pd_type='gaussian'):
     q = np.logspace(-5, 0, 50)
@@ -409,6 +653,7 @@ def compare_sasview_ellipsoid(pd_type='gaussian'):
         )
     target = sasmodels_theory(q, model, effective_radius_mode=0, structure_factor_mode=1, **pars)
     actual = ellipsoid_pe(q, norm='sasview', **pars)
+# RKH test       actual = ellipsoid_theta(q, radius_polar=20, radius_equatorial=400, sld=4, sld_solvent=1, volfraction=0.15, radius_effective=270.)
     title = " ".join(("sasmodels", model, pd_type))
     compare(title, target, actual)
 COMPARISON[('sasview', 'ellipsoid', 'gaussian')] = lambda: compare_sasview_ellipsoid(pd_type='gaussian')
@@ -657,7 +902,9 @@ COMPARISON[('sasfit', 'ellipsoid', 'gaussian')] = compare_sasfit_ellipsoid_gauss
 def main():
     key = tuple(sys.argv[1:])
     if key not in COMPARISON:
-        print("usage: sasfit_compare.py [sasview|sasfit|yun] [sphere|ellipsoid] [gaussian|schulz]")
+        print("Usage: python sasfit_compare.py [sasview|sasfit|yun] [sphere|ellipsoid|vesicle|hollow_cylinder] [gaussian|schulz]")
+        print("But not for [yun sphere schulz], and vesicle & hollow_cylinder only with sasview.")
+        print("Note this compares chosen source against internal python code here, with adjustment for known scale etc issues.")
         return
     comparison = COMPARISON[key]
     comparison()

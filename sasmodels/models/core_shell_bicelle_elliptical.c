@@ -9,6 +9,41 @@ form_volume(double r_minor,
     return M_PI*(r_minor+thick_rim)*(r_minor*x_core+thick_rim)*(length+2.0*thick_face);
 }
 
+static double
+radius_from_volume(double r_minor, double x_core, double thick_rim, double thick_face, double length)
+{
+    const double volume_bicelle = form_volume(r_minor, x_core, thick_rim,thick_face,length);
+    return cbrt(0.75*volume_bicelle/M_PI);
+}
+
+static double
+radius_from_diagonal(double r_minor, double x_core, double thick_rim, double thick_face, double length)
+{
+    const double radius_max = (x_core < 1.0 ? r_minor : x_core*r_minor);
+    const double radius_max_tot = radius_max + thick_rim;
+    const double length_tot = length + 2.0*thick_face;
+    return sqrt(radius_max_tot*radius_max_tot + 0.25*length_tot*length_tot);
+}
+
+static double
+effective_radius(int mode, double r_minor, double x_core, double thick_rim, double thick_face, double length)
+{
+    switch (mode) {
+    case 1: // equivalent sphere
+        return radius_from_volume(r_minor, x_core, thick_rim, thick_face, length);
+    case 2: // outer rim average radius
+        return 0.5*r_minor*(1.0 + x_core) + thick_rim;
+    case 3: // outer rim min radius
+        return (x_core < 1.0 ? x_core*r_minor+thick_rim : r_minor+thick_rim);
+    case 4: // outer max radius
+        return (x_core > 1.0 ? x_core*r_minor+thick_rim : r_minor+thick_rim);
+    case 5: // half outer thickness
+        return 0.5*length + thick_face;
+    case 6: // half diagonal
+        return radius_from_diagonal(r_minor,x_core,thick_rim,thick_face,length);
+    }
+}
+
 static void
 Fq(double q,
     double *F1,

@@ -77,17 +77,10 @@ parameters = [["radius",      "Ang",        60.0, [0, inf],    "volume", "Sphere
 
 source = ["lib/sas_3j1x_x.c", "lib/core_shell.c", "core_shell_sphere.c"]
 have_Fq = True
+effective_radius_type = ["outer radius", "core radius"]
 
 demo = dict(scale=1, background=0, radius=60, thickness=10,
             sld_core=1.0, sld_shell=2.0, sld_solvent=0.0)
-
-def ER(radius, thickness):
-    """
-        Equivalent radius
-        @param radius: core radius
-        @param thickness: shell thickness
-    """
-    return radius + thickness
 
 def random():
     outer_radius = 10**np.random.uniform(1.3, 4.3)
@@ -102,7 +95,7 @@ def random():
     return pars
 
 tests = [
-    [{'radius': 20.0, 'thickness': 10.0}, 'ER', 30.0],
+#    [{'radius': 20.0, 'thickness': 10.0}, 'ER', 30.0],
 
     # The SasView test result was 0.00169, with a background of 0.001
     [{'radius': 60.0, 'thickness': 10.0, 'sld_core': 1.0, 'sld_shell': 2.0,

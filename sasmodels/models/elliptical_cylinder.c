@@ -4,6 +4,59 @@ form_volume(double radius_minor, double r_ratio, double length)
     return M_PI * radius_minor * radius_minor * r_ratio * length;
 }
 
+static double
+radius_from_volume(double radius_minor, double r_ratio, double length)
+{
+    const double volume_ellcyl = form_volume(radius_minor,r_ratio,length);
+    return cbrt(0.75*volume_ellcyl/M_PI);
+}
+
+static double
+radius_from_min_dimension(double radius_minor, double r_ratio, double hlength)
+{
+    const double rad_min = (r_ratio > 1.0 ? radius_minor : r_ratio*radius_minor);
+    return (rad_min < hlength ? rad_min : hlength);
+}
+
+static double
+radius_from_max_dimension(double radius_minor, double r_ratio, double hlength)
+{
+    const double rad_max = (r_ratio < 1.0 ? radius_minor : r_ratio*radius_minor);
+    return (rad_max > hlength ? rad_max : hlength);
+}
+
+static double
+radius_from_diagonal(double radius_minor, double r_ratio, double length)
+{
+    const double radius_max = (r_ratio > 1.0 ? radius_minor*r_ratio : radius_minor);
+    return sqrt(radius_max*radius_max + 0.25*length*length);
+}
+
+static double
+effective_radius(int mode, double radius_minor, double r_ratio, double length)
+{
+    switch (mode) {
+    case 1: // equivalent sphere
+        return radius_from_volume(radius_minor, r_ratio, length);
+    case 2: // average radius
+        return 0.5*radius_minor*(1.0 + r_ratio);
+    case 3: // min radius
+        return (r_ratio > 1.0 ? radius_minor : r_ratio*radius_minor);
+    case 4: // max radius
+        return (r_ratio < 1.0 ? radius_minor : r_ratio*radius_minor);
+    case 5: // equivalent circular cross-section
+        return sqrt(radius_minor*radius_minor*r_ratio);
+    case 6: // half length
+        return 0.5*length;
+    case 7: // half min dimension
+        return radius_from_min_dimension(radius_minor,r_ratio,0.5*length);
+    case 8: // half max dimension
+        return radius_from_max_dimension(radius_minor,r_ratio,0.5*length);
+    case 9: // half diagonal
+        return radius_from_diagonal(radius_minor,r_ratio,length);
+    }
+}
+
 static void
 Fq(double q, double *F1, double *F2, double radius_minor, double r_ratio, double length,
    double sld, double solvent_sld)

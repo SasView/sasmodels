@@ -159,6 +159,10 @@ parameters = [
 source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
           "core_shell_bicelle_elliptical_belt_rough.c"]
 have_Fq = True
+effective_radius_type = [
+    "equivalent sphere", "outer rim average radius", "outer rim min radius",
+    "outer max radius", "half outer thickness", "half diagonal",
+    ]
 
 demo = dict(scale=1, background=0,
             radius=30.0,
