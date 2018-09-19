@@ -351,10 +351,9 @@ def _randomize_one(model_info, name, value):
         return 10**np.random.uniform(-3, -0.5)
 
     # If it is a list of choices, pick one at random with equal probability
-    # In practice, the model specific random generator will override.
     par = model_info.parameters[name]
-    if len(par.limits) > 2:  # choice list
-        return np.random.randint(len(par.limits))
+    if par.choices:  # choice list
+        return np.random.randint(len(par.choices))
 
     # If it is a fixed range, pick from it with equal probability.
     # For logarithmic ranges, the model will have to override.
