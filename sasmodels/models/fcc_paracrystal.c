@@ -30,7 +30,7 @@ fcc_Zq(double qa, double qb, double qc, double lattice_spacing, double lattice_d
 static double
 fcc_volume_fraction(double radius, double lattice_spacing)
 {
-    return 4.0*sphere_volume(M_SQRT1_2*radius/lattice_spacing);
+    return 4.0*sphere_volume(radius/lattice_spacing);
 }
 
 static double

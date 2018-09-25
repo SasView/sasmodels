@@ -58,7 +58,7 @@ bcc_Zq(double qa, double qb, double qc, double lattice_spacing, double lattice_d
 static double
 bcc_volume_fraction(double radius, double lattice_spacing)
 {
-    return 2.0*sphere_volume(sqrt(0.75)*radius/lattice_spacing);
+    return 2.0*sphere_volume(radius/lattice_spacing);
 }
 
 static double
