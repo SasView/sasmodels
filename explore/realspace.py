@@ -8,7 +8,7 @@ from collections import OrderedDict
 
 import numpy as np
 from numpy import pi, radians, sin, cos, sqrt
-from numpy.random import poisson, uniform, randn, rand
+from numpy.random import poisson, uniform, randn, rand, randint
 from numpy.polynomial.legendre import leggauss
 from scipy.integrate import simps
 from scipy.special import j1 as J1
@@ -83,6 +83,11 @@ class Shape:
     rotation = I3
     center = np.array([0., 0., 0.])[:, None]
     r_max = None
+    lattice_size = np.array((1, 1, 1))
+    lattice_spacing = np.array((1., 1., 1.))
+    lattice_distortion = 0.0
+    lattice_rotation = 0.0
+    lattice_type = ""
 
     def volume(self):
         # type: () -> float
@@ -105,19 +110,81 @@ class Shape:
         self.center = self.center + np.array([x, y, z])[:, None]
         return self
 
+    def lattice(self, size=(1, 1, 1), spacing=(2, 2, 2), type="sc",
+                distortion=0.0, rotation=0.0):
+        self.lattice_size = np.asarray(size, 'i')
+        self.lattice_spacing = np.asarray(spacing, 'd')
+        self.lattice_type = type
+        self.lattice_distortion = distortion
+        self.lattice_rotation = rotation
+
     def _adjust(self, points):
         if self.rotation is I3:
             points = points.T + self.center
         else:
             points = np.asarray(self.rotation * np.matrix(points.T)) + self.center
+        if self.lattice_type:
+            points = self._apply_lattice(points)
         return points.T
 
-    def r_bins(self, q, over_sampling=1, r_step=0.):
-        r_max = min(2 * pi / q[0], self.r_max)
+    def r_bins(self, q, over_sampling=10, r_step=0.):
+        if self.lattice_type:
+            r_max = np.sqrt(np.sum(self.lattice_size*self.lattice_spacing*self.dims)**2)/2
+        else:
+            r_max = self.r_max
+        #r_max = min(2 * pi / q[0], r_max)
         if r_step == 0.:
             r_step = 2 * pi / q[-1] / over_sampling
         #r_step = 0.01
         return np.arange(r_step, r_max, r_step)
+
+    def _apply_lattice(self, points):
+        """Spread points to different lattice positions"""
+        size = self.lattice_size
+        spacing = self.lattice_spacing
+        shuffle = self.lattice_distortion
+        rotate = self.lattice_rotation
+        lattice = self.lattice_type
+
+        if rotate != 0:
+            # To vectorize the rotations we will need to unwrap the matrix multiply
+            raise NotImplementedError("don't handle rotations yet")
+
+        # Determine the number of lattice points in the lattice
+        shapes_per_cell = 2 if lattice == "bcc" else 4 if lattice == "fcc" else 1
+        number_of_lattice_points = np.prod(size) * shapes_per_cell
+
+        # For each point in the original shape, figure out which lattice point
+        # to translate it to.  This is both cell index (i*ny*nz + j*nz  + k) as
+        # well as the point in the cell (corner, body center or face center).
+        nsamples = points.shape[1]
+        lattice_point = randint(number_of_lattice_points, size=nsamples)
+
+        # Translate the cell index into the i,j,k coordinates of the senter
+        cell_index = lattice_point // shapes_per_cell
+        center = np.vstack((cell_index//(size[1]*size[2]),
+                            (cell_index%(size[1]*size[2]))//size[2],
+                            cell_index%size[2]))
+        center = np.asarray(center, dtype='d')
+        if lattice == "bcc":
+            center[:, lattice_point % shapes_per_cell == 1] += [[0.5], [0.5], [0.5]]
+        elif lattice == "fcc":
+            center[:, lattice_point % shapes_per_cell == 1] += [[0.0], [0.5], [0.5]]
+            center[:, lattice_point % shapes_per_cell == 2] += [[0.5], [0.0], [0.5]]
+            center[:, lattice_point % shapes_per_cell == 3] += [[0.5], [0.5], [0.0]]
+
+        # Each lattice point has its own displacement from the ideal position.
+        # Not checking that shapes do not overlap if displacement is too large.
+        offset = shuffle*(randn(3, number_of_lattice_points) if shuffle < 0.3
+                          else rand(3, number_of_lattice_points))
+        center += offset[:, cell_index]
+
+        # Each lattice point has its own rotation.  Rotate the point prior to
+        # applying any displacement.
+        # rotation = rotate*(randn(size=(shapes, 3)) if shuffle < 30 else rand(size=(nsamples, 3)))
+        # for k in shapes: points[k] = rotation[k]*points[k]
+        points += center*(np.array([spacing])*np.array(self.dims)).T
+        return points
 
 class Composite(Shape):
     def __init__(self, shapes, center=(0, 0, 0), orientation=(0, 0, 0)):
@@ -866,7 +933,7 @@ def check_shape(title, shape, fn=None, show_points=False,
 
     import pylab
     if show_points:
-         plot_points(rho, points); pylab.figure()
+        plot_points(rho, points); pylab.figure()
     plot_calc(r, Pr, q, Iq, theory=theory, title=title)
     pylab.gcf().canvas.set_window_title(title)
     pylab.show()
@@ -936,31 +1003,38 @@ def main():
     pars = {key: float(value) for p in opts.pars for key, value in [p.split('=')]}
     nx, ny, nz = [int(v) for v in opts.lattice.split(',')]
     dx, dy, dz = [float(v) for v in opts.spacing.split(',')]
-    shuffle, rotate = opts.shuffle, opts.rotate
+    distortion, rotation = opts.shuffle, opts.rotate
     shape, fn, fn_xy = SHAPE_FUNCTIONS[opts.shape](**pars)
     view = tuple(float(v) for v in opts.view.split(','))
-    if nx > 1 or ny > 1 or nz > 1:
-        print("building %s lattice"%opts.type)
-        lattice = LATTICE_FUNCTIONS[opts.type]
-        shape = lattice(shape, nx, ny, nz, dx, dy, dz, shuffle, rotate)
-        # If comparing a sphere in a cubic lattice, compare against the
-        # corresponding paracrystalline model.
-        if opts.shape == "sphere" and dx == dy == dz:
-            radius = pars.get('radius', DEFAULT_SPHERE_RADIUS)
-            model_name = opts.type + "_paracrystal"
-            model_pars = {
-                "scale": 1.,
-                "background": 0.,
-                "lattice_spacing": 2*radius*dx,
-                "lattice_distortion": shuffle,
-                "radius": radius,
-                "sld": pars.get('rho', DEFAULT_SPHERE_CONTRAST),
-                "sld_solvent": 0.,
-                "theta": view[0],
-                "phi": view[1],
-                "psi": view[2],
-            }
-            fn, fn_xy = wrap_sasmodel(model_name, **model_pars)
+    # If comparing a sphere in a cubic lattice, compare against the
+    # corresponding paracrystalline model.
+    if opts.shape == "sphere" and dx == dy == dz and nx*ny*nz > 1:
+        radius = pars.get('radius', DEFAULT_SPHERE_RADIUS)
+        model_name = opts.type + "_paracrystal"
+        model_pars = {
+            "scale": 1.,
+            "background": 0.,
+            "lattice_spacing": 2*radius*dx,
+            "lattice_distortion": distortion,
+            "radius": radius,
+            "sld": pars.get('rho', DEFAULT_SPHERE_CONTRAST),
+            "sld_solvent": 0.,
+            "theta": view[0],
+            "phi": view[1],
+            "psi": view[2],
+        }
+        fn, fn_xy = wrap_sasmodel(model_name, **model_pars)
+    if nx*ny*nz > 1:
+        if rotation != 0:
+            print("building %s lattice"%opts.type)
+            build_lattice = LATTICE_FUNCTIONS[opts.type]
+            shape = build_lattice(shape, nx, ny, nz, dx, dy, dz,
+                                  distortion, rotation)
+        else:
+            shape.lattice(size=(nx, ny, nz), spacing=(dx, dy, dz),
+                          type=opts.type,
+                          rotation=rotation, distortion=distortion)
+
     title = "%s(%s)" % (opts.shape, " ".join(opts.pars))
     if opts.dim == 1:
         check_shape(title, shape, fn, show_points=opts.plot,
