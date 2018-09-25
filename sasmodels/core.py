@@ -232,12 +232,12 @@ def precompile_dlls(path, dtype="double"):
         model_info = load_model_info(model_name)
         if not callable(model_info.Iq):
             source = generate.make_source(model_info)['dll']
-            old_path = kerneldll.DLL_PATH
+            old_path = kerneldll.SAS_DLL_PATH
             try:
-                kerneldll.DLL_PATH = path
+                kerneldll.SAS_DLL_PATH = path
                 dll = kerneldll.make_dll(source, model_info, dtype=numpy_dtype)
             finally:
-                kerneldll.DLL_PATH = old_path
+                kerneldll.SAS_DLL_PATH = old_path
             compiled_dlls.append(dll)
     return compiled_dlls
 

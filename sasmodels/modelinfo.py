@@ -44,9 +44,10 @@ MAX_PD = 5 #: Maximum number of simultaneously polydisperse parameters
 # and maybe other places.
 # Note that scale and background cannot be coordinated parameters whose value
 # depends on the some polydisperse parameter with the current implementation
+DEFAULT_BACKGROUND = 1e-3
 COMMON_PARAMETERS = [
     ("scale", "", 1, (0.0, np.inf), "", "Source intensity"),
-    ("background", "1/cm", 1e-3, (-np.inf, np.inf), "", "Source background"),
+    ("background", "1/cm", DEFAULT_BACKGROUND, (-np.inf, np.inf), "", "Source background"),
 ]
 assert (len(COMMON_PARAMETERS) == 2
         and COMMON_PARAMETERS[0][0] == "scale"
@@ -588,7 +589,7 @@ class ParameterTable(object):
                           'magnetic', 'fraction of spin up incident'),
                 Parameter('up:frac_f', '', 0., [0., 1.],
                           'magnetic', 'fraction of spin up final'),
-                Parameter('up:angle', 'degress', 0., [0., 360.],
+                Parameter('up:angle', 'degrees', 0., [0., 360.],
                           'magnetic', 'spin up angle'),
             ])
             slds = [p for p in full_list if p.type == 'sld']
