@@ -77,8 +77,10 @@ def invert_view(qx, qy, view):
     return np.asarray((Rz(-psi)*Ry(-theta)*Rz(-phi))*np.matrix(q))
 
 
+I3 = np.matrix([[1., 0, 0], [0, 1, 0], [0, 0, 1]])
+
 class Shape:
-    rotation = np.matrix([[1., 0, 0], [0, 1, 0], [0, 0, 1]])
+    rotation = I3
     center = np.array([0., 0., 0.])[:, None]
     r_max = None
 
@@ -95,7 +97,8 @@ class Shape:
         raise NotImplementedError()
 
     def rotate(self, theta, phi, psi):
-        self.rotation = rotation(theta, phi, psi) * self.rotation
+        if theta != 0. or phi != 0. or psi != 0.:
+            self.rotation = rotation(theta, phi, psi) * self.rotation
         return self
 
     def shift(self, x, y, z):
@@ -103,7 +106,10 @@ class Shape:
         return self
 
     def _adjust(self, points):
-        points = np.asarray(self.rotation * np.matrix(points.T)) + self.center
+        if self.rotation is I3:
+            points = points.T + self.center
+        else:
+            points = np.asarray(self.rotation * np.matrix(points.T)) + self.center
         return points.T
 
     def r_bins(self, q, over_sampling=1, r_step=0.):
@@ -668,8 +674,8 @@ def sasmodels_Iqxy(kernel, qx, qy, pars, view):
     from sasmodels.direct_model import DirectModel
     Iq = 100 * np.ones_like(qx)
     data = Data2D(x=qx, y=qy, z=Iq, dx=None, dy=None, dz=np.sqrt(Iq))
-    data.x_bins = qx[0,:]
-    data.y_bins = qy[:,0]
+    data.x_bins = qx[0, :]
+    data.y_bins = qy[:, 0]
     data.filename = "fake data"
 
     calculator = DirectModel(data, kernel)
@@ -694,7 +700,9 @@ def build_cylinder(radius=25, length=125, rho=2.):
     fn_xy = lambda qx, qy, view: cylinder_Iqxy(qx, qy, radius, length, view=view)*rho**2
     return shape, fn, fn_xy
 
-def build_sphere(radius=125, rho=2):
+DEFAULT_SPHERE_RADIUS = 125
+DEFAULT_SPHERE_CONTRAST = 2
+def build_sphere(radius=DEFAULT_SPHERE_RADIUS, rho=DEFAULT_SPHERE_CONTRAST):
     shape = TriaxialEllipsoid(radius, radius, radius, rho)
     fn = lambda q: sphere_Iq(q, radius)*rho**2
     fn_xy = lambda qx, qy, view: sphere_Iq(np.sqrt(qx**2+qy**2), radius)*rho**2
@@ -750,10 +758,10 @@ def build_cscyl(ra=30, rb=90, length=30, thick_rim=8, thick_face=14,
     )
     return shape, fn, fn_xy
 
-def build_cubic_lattice(shape, nx=1, ny=1, nz=1, dx=2, dy=2, dz=2,
-                  shuffle=0, rotate=0):
+def build_sc_lattice(shape, nx=1, ny=1, nz=1, dx=2, dy=2, dz=2,
+                        shuffle=0, rotate=0):
     a, b, c = shape.dims
-    shapes = [copy(shape)
+    corners= [copy(shape)
               .shift((ix+(randn() if shuffle < 0.3 else rand())*shuffle)*dx*a,
                      (iy+(randn() if shuffle < 0.3 else rand())*shuffle)*dy*b,
                      (iz+(randn() if shuffle < 0.3 else rand())*shuffle)*dz*c)
@@ -761,9 +769,68 @@ def build_cubic_lattice(shape, nx=1, ny=1, nz=1, dx=2, dy=2, dz=2,
               for ix in range(nx)
               for iy in range(ny)
               for iz in range(nz)]
-    lattice = Composite(shapes)
+    lattice = Composite(corners)
     return lattice
 
+def build_bcc_lattice(shape, nx=1, ny=1, nz=1, dx=2, dy=2, dz=2,
+                      shuffle=0, rotate=0):
+    a, b, c = shape.dims
+    corners = [copy(shape)
+               .shift((ix+(randn() if shuffle < 0.3 else rand())*shuffle)*dx*a,
+                      (iy+(randn() if shuffle < 0.3 else rand())*shuffle)*dy*b,
+                      (iz+(randn() if shuffle < 0.3 else rand())*shuffle)*dz*c)
+               .rotate(*((randn(3) if rotate < 30 else rand(3))*rotate))
+               for ix in range(nx)
+               for iy in range(ny)
+               for iz in range(nz)]
+    centers = [copy(shape)
+               .shift((ix+0.5+(randn() if shuffle < 0.3 else rand())*shuffle)*dx*a,
+                      (iy+0.5+(randn() if shuffle < 0.3 else rand())*shuffle)*dy*b,
+                      (iz+0.5+(randn() if shuffle < 0.3 else rand())*shuffle)*dz*c)
+               .rotate(*((randn(3) if rotate < 30 else rand(3))*rotate))
+               for ix in range(nx)
+               for iy in range(ny)
+               for iz in range(nz)]
+    lattice = Composite(corners + centers)
+    return lattice
+
+def build_fcc_lattice(shape, nx=1, ny=1, nz=1, dx=2, dy=2, dz=2,
+                      shuffle=0, rotate=0):
+    a, b, c = shape.dims
+    corners = [copy(shape)
+               .shift((ix+(randn() if shuffle < 0.3 else rand())*shuffle)*dx*a,
+                      (iy+(randn() if shuffle < 0.3 else rand())*shuffle)*dy*b,
+                      (iz+(randn() if shuffle < 0.3 else rand())*shuffle)*dz*c)
+               .rotate(*((randn(3) if rotate < 30 else rand(3))*rotate))
+               for ix in range(nx)
+               for iy in range(ny)
+               for iz in range(nz)]
+    faces_a = [copy(shape)
+               .shift((ix+0.0+(randn() if shuffle < 0.3 else rand())*shuffle)*dx*a,
+                      (iy+0.5+(randn() if shuffle < 0.3 else rand())*shuffle)*dy*b,
+                      (iz+0.5+(randn() if shuffle < 0.3 else rand())*shuffle)*dz*c)
+               .rotate(*((randn(3) if rotate < 30 else rand(3))*rotate))
+               for ix in range(nx)
+               for iy in range(ny)
+               for iz in range(nz)]
+    faces_b = [copy(shape)
+               .shift((ix+0.5+(randn() if shuffle < 0.3 else rand())*shuffle)*dx*a,
+                      (iy+0.0+(randn() if shuffle < 0.3 else rand())*shuffle)*dy*b,
+                      (iz+0.5+(randn() if shuffle < 0.3 else rand())*shuffle)*dz*c)
+               .rotate(*((randn(3) if rotate < 30 else rand(3))*rotate))
+               for ix in range(nx)
+               for iy in range(ny)
+               for iz in range(nz)]
+    faces_c = [copy(shape)
+               .shift((ix+0.5+(randn() if shuffle < 0.3 else rand())*shuffle)*dx*a,
+                      (iy+0.5+(randn() if shuffle < 0.3 else rand())*shuffle)*dy*b,
+                      (iz+0.0+(randn() if shuffle < 0.3 else rand())*shuffle)*dz*c)
+               .rotate(*((randn(3) if rotate < 30 else rand(3))*rotate))
+               for ix in range(nx)
+               for iy in range(ny)
+               for iz in range(nz)]
+    lattice = Composite(corners + faces_a + faces_b + faces_c)
+    return lattice
 
 SHAPE_FUNCTIONS = OrderedDict([
     ("cyl", build_cylinder),
@@ -774,6 +841,12 @@ SHAPE_FUNCTIONS = OrderedDict([
     ("cscyl", build_cscyl),
 ])
 SHAPES = list(SHAPE_FUNCTIONS.keys())
+LATTICE_FUNCTIONS = OrderedDict([
+    ("sc", build_sc_lattice),
+    ("bcc", build_bcc_lattice),
+    ("fcc", build_fcc_lattice),
+])
+LATTICE_TYPES = list(LATTICE_FUNCTIONS.keys())
 
 def check_shape(title, shape, fn=None, show_points=False,
                 mesh=100, qmax=1.0, r_step=0.01, samples=5000):
@@ -782,7 +855,9 @@ def check_shape(title, shape, fn=None, show_points=False,
     q = np.logspace(np.log10(qmin), np.log10(qmax), mesh)
     r = shape.r_bins(q, r_step=r_step)
     sampling_density = samples / shape.volume
+    print("sampling points")
     rho, points = shape.sample(sampling_density)
+    print("calculating Pr")
     t0 = time.time()
     Pr = calc_Pr(r, rho-rho_solvent, points)
     print("calc Pr time", time.time() - t0)
@@ -805,6 +880,7 @@ def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
     qy = np.linspace(-qmax, qmax, mesh)
     Qx, Qy = np.meshgrid(qx, qy)
     sampling_density = samples / shape.volume
+    print("sampling points")
     t0 = time.time()
     rho, points = shape.sample(sampling_density)
     print("point generation time", time.time() - t0)
@@ -843,7 +919,10 @@ def main():
     parser.add_argument('-n', '--lattice', type=str, default='1,1,1',
                         help='lattice size')
     parser.add_argument('-z', '--spacing', type=str, default='2,2,2',
-                        help='lattice spacing')
+                        help='lattice spacing (relative to shape)')
+    parser.add_argument('-t', '--type', choices=LATTICE_TYPES,
+                        default=LATTICE_TYPES[0],
+                        help='lattice type')
     parser.add_argument('-r', '--rotate', type=float, default=0.,
                         help="rotation relative to lattice, gaussian < 30 degrees, uniform otherwise")
     parser.add_argument('-w', '--shuffle', type=float, default=0.,
@@ -859,14 +938,34 @@ def main():
     dx, dy, dz = [float(v) for v in opts.spacing.split(',')]
     shuffle, rotate = opts.shuffle, opts.rotate
     shape, fn, fn_xy = SHAPE_FUNCTIONS[opts.shape](**pars)
+    view = tuple(float(v) for v in opts.view.split(','))
     if nx > 1 or ny > 1 or nz > 1:
-        shape = build_cubic_lattice(shape, nx, ny, nz, dx, dy, dz, shuffle, rotate)
+        print("building %s lattice"%opts.type)
+        lattice = LATTICE_FUNCTIONS[opts.type]
+        shape = lattice(shape, nx, ny, nz, dx, dy, dz, shuffle, rotate)
+        # If comparing a sphere in a cubic lattice, compare against the
+        # corresponding paracrystalline model.
+        if opts.shape == "sphere" and dx == dy == dz:
+            radius = pars.get('radius', DEFAULT_SPHERE_RADIUS)
+            model_name = opts.type + "_paracrystal"
+            model_pars = {
+                "scale": 1.,
+                "background": 0.,
+                "lattice_spacing": 2*radius*dx,
+                "lattice_distortion": shuffle,
+                "radius": radius,
+                "sld": pars.get('rho', DEFAULT_SPHERE_CONTRAST),
+                "sld_solvent": 0.,
+                "theta": view[0],
+                "phi": view[1],
+                "psi": view[2],
+            }
+            fn, fn_xy = wrap_sasmodel(model_name, **model_pars)
     title = "%s(%s)" % (opts.shape, " ".join(opts.pars))
     if opts.dim == 1:
         check_shape(title, shape, fn, show_points=opts.plot,
                     mesh=opts.mesh, qmax=opts.qmax, samples=opts.samples)
     else:
-        view = tuple(float(v) for v in opts.view.split(','))
         check_shape_2d(title, shape, fn_xy, view=view, show_points=opts.plot,
                        mesh=opts.mesh, qmax=opts.qmax, samples=opts.samples)
 
