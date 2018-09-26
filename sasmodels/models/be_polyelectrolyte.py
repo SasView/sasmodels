@@ -61,7 +61,7 @@ needs further validation and should be used with caution at this time.  The
 history of this code goes back to a 1998 implementation. It was recently noted
 that in that implementation, while both the polymer concentration and salt
 concentration were converted to units of 1/|Ang|, only the converted polymer
-concentraion was used in the calculation while the unconverted salt
+concentration was used in the calculation while the unconverted salt
 concentration was used.  This was carried through to sasmodles today (except
 that the conversion equation for the salt concentration was dropped somewhere
 along the line). Simple dimensional analysis of the calculation shows that the
