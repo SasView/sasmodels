@@ -10,11 +10,11 @@ is calculated as
 .. math::
 
     I(q) = K\frac{q^2+k^2}{4\pi L_b\alpha ^2}
-    \frac{1}{1+r_{0}^2(q^2+k^2)(q^2-12hC_a/b^2)} + background
+    \frac{1}{1+r_{0}^4(q^2+k^2)(q^2-12hC_a/b^2)} + background
 
     k^2 = 4\pi L_b(2C_s + \alpha C_a)
 
-    r_{0}^2 = \frac{1}{\alpha \sqrt{C_a} \left( b/\sqrt{48\pi L_b}\right)}
+    r_{0}^2 = \frac{b}{\alpha \sqrt{C_a 48\pi L_b}}
 
 where
 
@@ -36,14 +36,15 @@ $v_s$ are the partial molar volume of the polymer and the solvent respectively
 $L_b$ is the Bjerrum length(|Ang|) - **Note:** This parameter needs to be
 kept constant for a given solvent and temperature!
 
-$h$ is the virial parameter (|Ang^3|/mol) - **Note:** See [#Borue]_ for the
+$h$ is the virial parameter (|Ang^3|) - **Note:** See [#Borue]_ for the
 correct interpretation of this parameter.  It incorporates second and third
 virial coefficients and can be Negative.
 
 $b$ is the monomer length(|Ang|), $C_s$ is the concentration of monovalent
-salt(mol/L), $\alpha$ is the ionization degree (ionization degree : ratio of
-charged monomers  to total number of monomers), $C_a$ is the polymer molar
-concentration(mol/L), and $background$ is the incoherent background.
+salt(1/|Ang|- converted from mol/L), $\alpha$ is the ionization degree
+(ionization degree : ratio of charged monomers  to total number of monomers),
+$C_a$ is the polymer molar concentration(1/|Ang|- converted from mol/L),
+and $background$ is the incoherent background.
 
 For 2D data the scattering intensity is calculated in the same way as 1D,
 where the $\vec q$ vector is defined as
@@ -51,6 +52,22 @@ where the $\vec q$ vector is defined as
 .. math::
 
     q = \sqrt{q_x^2 + q_y^2}
+
+Validation
+----------
+
+As of the last revision, this code is believed to be correct.  However it
+needs further validation and should be used with caution at this time.  The
+history of this code goes back to a 1998 implementation. It was recently noted
+that in that implementation, while both the polymer concentration and salt
+concentration were converted to units of 1/|Ang|, only the converted polymer
+concentraion was used in the calculation while the unconverted salt
+concentration was used.  This was carried through to sasmodles today (except
+that the conversion equation for the salt concentration was dropped somewhere
+along the line). Simple dimensional analysis of the calculation shows that the
+converted salt concentration must be used and the original code suggests that
+was the intention.  We therefore believe this is now correct.  Once better
+validation has been performed this note will be removed.
 
 References
 ----------
@@ -65,8 +82,8 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
-* **Last Modified by:** Paul Kienzle **Date:** July 24, 2016
-* **Last Reviewed by:** Paul Butler and Richard Heenan **Date:** October 07, 2016
+* **Last Modified by:** Paul Butler **Date:** September 25, 2018
+* **Last Reviewed by:** Paul Butler **Date:** September 25, 2018
 """
 
 import numpy as np
@@ -91,7 +108,7 @@ category = "shape-independent"
 parameters = [
     ["contrast_factor",       "barns",   10.0,  [-inf, inf], "", "Contrast factor of the polymer"],
     ["bjerrum_length",        "Ang",      7.1,  [0, inf],    "", "Bjerrum length"],
-    ["virial_param",          "Ang^3/mol", 12.0,  [-inf, inf], "", "Virial parameter"],
+    ["virial_param",          "Ang^3", 12.0,  [-inf, inf], "", "Virial parameter"],
     ["monomer_length",        "Ang",     10.0,  [0, inf],    "", "Monomer length"],
     ["salt_concentration",    "mol/L",    0.0,  [-inf, inf], "", "Concentration of monovalent salt"],
     ["ionization_degree",     "",         0.05, [0, inf],    "", "Degree of ionization"],
@@ -120,19 +137,20 @@ def Iq(q,
     :return:                      1-D intensity
     """
 
-    concentration = polymer_concentration * 6.022136e-4
+    concentration_pol = polymer_concentration * 6.022136e-4
+    concentration_salt = salt_concentration * 6.022136e-4
 
-    k_square = 4.0 * pi * bjerrum_length * (2*salt_concentration +
-                                            ionization_degree * concentration)
+    k_square = 4.0 * pi * bjerrum_length * (2*concentration_salt +
+                                            ionization_degree * concentration_pol)
 
-    r0_square = 1.0/ionization_degree/sqrt(concentration) * \
+    r0_square = 1.0/ionization_degree/sqrt(concentration_pol) * \
                 (monomer_length/sqrt((48.0*pi*bjerrum_length)))
 
     term1 = contrast_factor/(4.0 * pi * bjerrum_length *
                              ionization_degree**2) * (q**2 + k_square)
 
     term2 = 1.0 + r0_square**2 * (q**2 + k_square) * \
-        (q**2 - (12.0 * virial_param * concentration/(monomer_length**2)))
+        (q**2 - (12.0 * virial_param * concentration_pol/(monomer_length**2)))
 
     return term1/term2
 
@@ -183,34 +201,39 @@ tests = [
       'background':             0.001,
      }, 0.001, 0.0948379],
 
-    # Additional tests with larger range of parameters
-    [{'contrast_factor':       10.0,
-      'bjerrum_length':       100.0,
-      'virial_param':           3.0,
-      'monomer_length':         1.0,
-      'salt_concentration':    10.0,
-      'ionization_degree':      2.0,
-      'polymer_concentration': 10.0,
-      'background':             0.0,
-     }, 0.1, -3.75693800588],
+    #Comment out rest of tests as they use non zero salt concentrations. With
+    #the new code the results will change. We can just take the answer the code
+    #gives and call it correct but not sure that is appropriate.  May however
+    #be the best we can do? How were these generated in the first place?
+    #In the meantime comment them out. 
+    #Additional tests with larger range of parameters
+#    [{'contrast_factor':       10.0,
+#      'bjerrum_length':       100.0,
+#      'virial_param':           3.0,
+#      'monomer_length':         1.0,
+#      'salt_concentration':    10.0,
+#      'ionization_degree':      2.0,
+#      'polymer_concentration': 10.0,
+#      'background':             0.0,
+#     }, 0.1, -3.75693800588],
 
-    [{'contrast_factor':       10.0,
-      'bjerrum_length':       100.0,
-      'virial_param':           3.0,
-      'monomer_length':         1.0,
-      'salt_concentration':    10.0,
-      'ionization_degree':      2.0,
-      'polymer_concentration': 10.0,
-      'background':           100.0
-     }, 5.0, 100.029142149],
-
-    [{'contrast_factor':     100.0,
-      'bjerrum_length':       10.0,
-      'virial_param':        180.0,
-      'monomer_length':        1.0,
-      'salt_concentration':    0.1,
-      'ionization_degree':     0.5,
-      'polymer_concentration': 0.1,
-      'background':             0.0,
-     }, 200., 1.80664667511e-06],
+#    [{'contrast_factor':       10.0,
+#      'bjerrum_length':       100.0,
+#      'virial_param':           3.0,
+#      'monomer_length':         1.0,
+#      'salt_concentration':    10.0,
+#      'ionization_degree':      2.0,
+#      'polymer_concentration': 10.0,
+#      'background':           100.0
+#     }, 5.0, 100.029142149],
+#
+#    [{'contrast_factor':     100.0,
+#      'bjerrum_length':       10.0,
+#      'virial_param':        180.0,
+#      'monomer_length':        1.0,
+#      'salt_concentration':    0.1,
+#      'ionization_degree':     0.5,
+#      'polymer_concentration': 0.1,
+#      'background':             0.0,
+#     }, 200., 1.80664667511e-06],
     ]
