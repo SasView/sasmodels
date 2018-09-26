@@ -60,11 +60,13 @@ As of the last revision, this code is believed to be correct.  However it
 needs further validation and should be used with caution at this time.  The
 history of this code goes back to a 1998 implementation. It was recently noted
 that in that implementation, while both the polymer concentration and salt
-concentration were converted to units of 1/|Ang|, only the converted polymer
-concentration was used in the calculation while the unconverted salt
-concentration was used.  This was carried through to sasmodles today (except
-that the conversion equation for the salt concentration was dropped somewhere
-along the line). Simple dimensional analysis of the calculation shows that the
+concentration were converted from experimental units of mol/L to more
+dimensionally useful units of 1/|Ang|^3, only the converted version of the
+polymer concentration was actually being used in the calculation while the
+unconverted salt concentration (still in units of mol/L) was being used.  This
+was carried through to sasmodels today (except that the line of code converting
+the salt concentration to the new units was dropped somewhere along the line).
+Simple dimensional analysis of the calculation shows that it is in fact the
 converted salt concentration must be used and the original code suggests that
 was the intention.  We therefore believe this is now correct.  Once better
 validation has been performed this note will be removed.
@@ -118,23 +120,20 @@ parameters = [
 
 
 def Iq(q,
-       contrast_factor=10.0,
-       bjerrum_length=7.1,
-       virial_param=12.0,
-       monomer_length=10.0,
-       salt_concentration=0.0,
-       ionization_degree=0.05,
-       polymer_concentration=0.7):
+       contrast_factor,
+       bjerrum_length,
+       virial_param,
+       monomer_length,
+       salt_concentration,
+       ionization_degree,
+       polymer_concentration):
     """
-    :param q:                     Input q-value
-    :param contrast_factor:       Contrast factor of the polymer
-    :param bjerrum_length:        Bjerrum length
-    :param virial_param:          Virial parameter
-    :param monomer_length:        Monomer length
-    :param salt_concentration:    Concentration of monovalent salt
-    :param ionization_degree:     Degree of ionization
-    :param polymer_concentration: Polymer molar concentration
-    :return:                      1-D intensity
+    :params: see parameter table
+    :return: 1-D form factor for polyelectrolytes in low salt
+    
+    parameter names, units, default values, and behavior (volume, sld etc) are
+    defined in the parameter table.  The concentrations are converted from
+    experimental mol/L to dimensionaly useful 1/A3 in first two lines
     """
 
     concentration_pol = polymer_concentration * 6.022136e-4
@@ -191,6 +190,11 @@ demo = dict(scale=1, background=0.1,
 tests = [
 
     # Accuracy tests based on content in test/utest_other_models.py
+    # Note that these should some day be validated beyond this self validation
+    # (circular reasoning). -- i.e. the "good value," at least for those with
+    # non zero salt concentrations, were obtained by running the current
+    # model in SasView and copying the appropriate result here.
+    #    PDB -- Sep 26, 2018
     [{'contrast_factor':       10.0,
       'bjerrum_length':         7.1,
       'virial_param':          12.0,
@@ -201,39 +205,33 @@ tests = [
       'background':             0.001,
      }, 0.001, 0.0948379],
 
-    #Comment out rest of tests as they use non zero salt concentrations. With
-    #the new code the results will change. We can just take the answer the code
-    #gives and call it correct but not sure that is appropriate.  May however
-    #be the best we can do? How were these generated in the first place?
-    #In the meantime comment them out. 
-    #Additional tests with larger range of parameters
-#    [{'contrast_factor':       10.0,
-#      'bjerrum_length':       100.0,
-#      'virial_param':           3.0,
-#      'monomer_length':         1.0,
-#      'salt_concentration':    10.0,
-#      'ionization_degree':      2.0,
-#      'polymer_concentration': 10.0,
-#      'background':             0.0,
-#     }, 0.1, -3.75693800588],
+    [{'contrast_factor':       10.0,
+      'bjerrum_length':       100.0,
+      'virial_param':           3.0,
+      'monomer_length':         5.0,
+      'salt_concentration':     1.0,
+      'ionization_degree':      0.1,
+      'polymer_concentration':  1.0,
+      'background':             0.0,
+     }, 0.1, 0.253469484],
 
-#    [{'contrast_factor':       10.0,
-#      'bjerrum_length':       100.0,
-#      'virial_param':           3.0,
-#      'monomer_length':         1.0,
-#      'salt_concentration':    10.0,
-#      'ionization_degree':      2.0,
-#      'polymer_concentration': 10.0,
-#      'background':           100.0
-#     }, 5.0, 100.029142149],
-#
-#    [{'contrast_factor':     100.0,
-#      'bjerrum_length':       10.0,
-#      'virial_param':        180.0,
-#      'monomer_length':        1.0,
-#      'salt_concentration':    0.1,
-#      'ionization_degree':     0.5,
-#      'polymer_concentration': 0.1,
-#      'background':             0.0,
-#     }, 200., 1.80664667511e-06],
+    [{'contrast_factor':       10.0,
+      'bjerrum_length':       100.0,
+      'virial_param':           3.0,
+      'monomer_length':         5.0,
+      'salt_concentration':     1.0,
+      'ionization_degree':      0.1,
+      'polymer_concentration':  1.0,
+      'background':             1.0,
+     }, 0.05, 1.738358122],
+
+    [{'contrast_factor':     100.0,
+      'bjerrum_length':       10.0,
+      'virial_param':         12.0,
+      'monomer_length':       10.0,
+      'salt_concentration':    0.1,
+      'ionization_degree':     0.5,
+      'polymer_concentration': 0.1,
+      'background':           0.01,
+     }, 0.5, 0.012881893],
     ]
