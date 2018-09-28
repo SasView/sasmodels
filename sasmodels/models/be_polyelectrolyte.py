@@ -47,12 +47,12 @@ where:
 
 - $b$ is the monomer length (|Ang|).
 
-- $C_s$ is the concentration of monovalent salt(1/|Ang| - converted from mol/L).
+- $C_s$ is the concentration of monovalent salt(1/|Ang^3| - converted from mol/L).
 
 - $\alpha$ is the degree of ionization (the ratio of charged monomers to the total 
   number of monomers)
 
-- $C_a$ is the polymer molar concentration (1/|Ang| - converted from mol/L)
+- $C_a$ is the polymer molar concentration (1/|Ang^3| - converted from mol/L)
 
 - $background$ is the incoherent background.
 
