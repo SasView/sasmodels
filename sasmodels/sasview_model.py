@@ -869,6 +869,34 @@ def test_old_name():
     from sas.models.CylinderModel import CylinderModel
     CylinderModel().evalDistribution([0.1, 0.1])
 
+def test_structure_factor_background():
+    # type: () -> None
+    """
+    Check that sasview model and direct model match, with background=0.
+    """
+    from .data import empty_data1D
+    from .core import load_model_info, build_model
+    from .direct_model import DirectModel
+
+    model_name = "hardsphere"
+    q = [0.0]
+
+    sasview_model = _make_standard_model(model_name)()
+    sasview_value = sasview_model.evalDistribution(np.array(q))[0]
+
+    data = empty_data1D(q)
+    model_info = load_model_info(model_name)
+    model = build_model(model_info)
+    direct_model = DirectModel(data, model)
+    direct_value_zero_background = direct_model(background=0.0)
+
+    assert sasview_value == direct_value_zero_background
+
+    # Additionally check that direct value background defaults to zero
+    direct_value_default = direct_model()
+    assert sasview_value == direct_value_default
+
+
 def magnetic_demo():
     Model = _make_standard_model('sphere')
     model = Model()
@@ -889,3 +917,4 @@ if __name__ == "__main__":
     #test_structure_factor()
     #print("rpa:", test_rpa())
     #test_empty_distribution()
+    #test_structure_factor_background()
