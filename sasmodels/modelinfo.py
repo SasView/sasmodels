@@ -478,6 +478,17 @@ class ParameterTable(object):
                          if p.polydisperse and p.type not in ('orientation', 'magnetic'))
         self.pd_2d = set(p.name for p in self.call_parameters if p.polydisperse)
 
+    def set_zero_background(self):
+        """
+        Set the default background to zero for this model.  This is done for
+        structure factor models.
+        """
+        # type: () -> None
+        # Make sure background is the second common parameter.
+        assert self.common_parameters[1].id == "background"
+        self.common_parameters[1].default = 0.0
+        self.defaults = self._get_defaults()
+
     def check_angles(self):
         """
         Check that orientation angles are theta, phi and possibly psi.
@@ -786,9 +797,7 @@ def make_model_info(kernel_module):
     # background defaults to zero for structure factor models
     structure_factor = getattr(kernel_module, 'structure_factor', False)
     if structure_factor:
-        # Make sure background is the second common parameter.
-        assert parameters.common_parameters[1].id == "background"
-        parameters.common_parameters[1].default = 0.0
+        parameters.set_zero_background()
 
     # TODO: remove demo parameters
     # The plots in the docs are generated from the model default values.

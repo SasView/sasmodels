@@ -370,7 +370,6 @@ class SasviewModel(object):
         if self._model_info.structure_factor:
             hidden.add('scale')
             hidden.add('background')
-            self._model_info.parameters.defaults['background'] = 0.
 
         self._persistency_dict = {}
         self.params = collections.OrderedDict()
