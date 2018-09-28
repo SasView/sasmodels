@@ -63,12 +63,12 @@ that in that implementation, while both the polymer concentration and salt
 concentration were converted from experimental units of mol/L to more
 dimensionally useful units of 1/|Ang|^3, only the converted version of the
 polymer concentration was actually being used in the calculation while the
-unconverted salt concentration (still in units of mol/L) was being used.  This
-was carried through to sasmodels today (except that the line of code converting
-the salt concentration to the new units was dropped somewhere along the line).
-Simple dimensional analysis of the calculation shows that it is in fact the
-converted salt concentration must be used and the original code suggests that
-was the intention.  We therefore believe this is now correct.  Once better
+unconverted salt concentration (still in apparent units of mol/L) was being used.  This
+was carried through to sasmodels as used for sasview 4.1(though the line of code converting
+the salt concentration to the new units was removed somewhere along the line).
+Simple dimensional analysis of the calculation shows that the
+converted salt concentration should be used, which the original code suggests
+was the intention, so this has now been corrected (for sasview 4.2). Once better
 validation has been performed this note will be removed.
 
 References
