@@ -1,4 +1,6 @@
 r"""
+.. note:: Please read the Validation section below.
+
 Definition
 ----------
 This model calculates the structure factor of a polyelectrolyte solution with
@@ -19,7 +21,7 @@ is calculated as
 where
 
 $K$ is the contrast factor for the polymer which is defined differently than in
-other models and is given in barns where $1 barn = 10^{-24} cm^2$.  $K$ is
+other models and is given in barns where 1 $barn = 10^{-24}$ $cm^2$.  $K$ is
 defined as:
 
 .. math::
@@ -28,23 +30,31 @@ defined as:
 
     a = b_p - (v_p/v_s) b_s
 
-where $b_p$ and $b_s$ are sum of the scattering lengths of the atoms
-constituting the monomer of the polymer and the sum of the scattering lengths
-of the atoms constituting the solvent molecules respectively, and $v_p$ and
-$v_s$ are the partial molar volume of the polymer and the solvent respectively
+where:
 
-$L_b$ is the Bjerrum length(|Ang|) - **Note:** This parameter needs to be
-kept constant for a given solvent and temperature!
+- $b_p$ and $b_s$ are **sum of the scattering lengths of the atoms**
+  constituting the polymer monomer and the solvent molecules, respectively.
 
-$h$ is the virial parameter (|Ang^3|) - **Note:** See [#Borue]_ for the
-correct interpretation of this parameter.  It incorporates second and third
-virial coefficients and can be Negative.
+- $v_p$ and $v_s$ are the partial molar volume of the polymer and the 
+  solvent, respectively.
 
-$b$ is the monomer length(|Ang|), $C_s$ is the concentration of monovalent
-salt(1/|Ang|- converted from mol/L), $\alpha$ is the ionization degree
-(ionization degree : ratio of charged monomers  to total number of monomers),
-$C_a$ is the polymer molar concentration(1/|Ang|- converted from mol/L),
-and $background$ is the incoherent background.
+- $L_b$ is the Bjerrum length (|Ang|) - **Note:** This parameter needs to be
+  kept constant for a given solvent and temperature!
+
+- $h$ is the virial parameter (|Ang^3|) - **Note:** See [#Borue]_ for the
+  correct interpretation of this parameter.  It incorporates second and third
+  virial coefficients and can be *negative*.
+
+- $b$ is the monomer length (|Ang|).
+
+- $C_s$ is the concentration of monovalent salt(1/|Ang| - converted from mol/L).
+
+- $\alpha$ is the degree of ionization (the ratio of charged monomers to the total 
+  number of monomers)
+
+- $C_a$ is the polymer molar concentration (1/|Ang| - converted from mol/L)
+
+- $background$ is the incoherent background.
 
 For 2D data the scattering intensity is calculated in the same way as 1D,
 where the $\vec q$ vector is defined as
@@ -61,15 +71,15 @@ needs further validation and should be used with caution at this time.  The
 history of this code goes back to a 1998 implementation. It was recently noted
 that in that implementation, while both the polymer concentration and salt
 concentration were converted from experimental units of mol/L to more
-dimensionally useful units of 1/|Ang|^3, only the converted version of the
+dimensionally useful units of 1/|Ang^3|, only the converted version of the
 polymer concentration was actually being used in the calculation while the
-unconverted salt concentration (still in apparent units of mol/L) was being used.  This
-was carried through to sasmodels as used for sasview 4.1(though the line of code converting
-the salt concentration to the new units was removed somewhere along the line).
-Simple dimensional analysis of the calculation shows that the
-converted salt concentration should be used, which the original code suggests
-was the intention, so this has now been corrected (for sasview 4.2). Once better
-validation has been performed this note will be removed.
+unconverted salt concentration (still in apparent units of mol/L) was being 
+used.  This was carried through to Sasmodels as used for SasView 4.1 (though 
+the line of code converting the salt concentration to the new units was removed 
+somewhere along the line). Simple dimensional analysis of the calculation shows 
+that the converted salt concentration should be used, which the original code 
+suggests was the intention, so this has now been corrected (for SasView 4.2). 
+Once better validation has been performed this note will be removed.
 
 References
 ----------
