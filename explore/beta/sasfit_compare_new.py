@@ -20,6 +20,7 @@ Theory.__new__.__defaults__ = (None,) * len(Theory._fields)
 
 #Used to calculate F(q) for the cylinder, sphere, ellipsoid models
 # RKH adding vesicle and hollow_cylinder to test sasview special cases of ER and VR
+# BEWARE there are issues here if you run this from python3 (i.e. qt5 version of sasview), so do "source activate sasview"
 def sas_sinx_x(x):
     with np.errstate(all='ignore'):
         retvalue = sin(x)/x
