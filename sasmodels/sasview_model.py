@@ -64,6 +64,9 @@ MODELS = {}  # type: Dict[str, SasviewModelType]
 # TODO: remove unused MODEL_BY_PATH cache once sasview no longer references it
 #: custom model {path: model} mapping so we can check timestamps
 MODEL_BY_PATH = {}  # type: Dict[str, SasviewModelType]
+#: Track modules that we have loaded so we can determine whether the model
+#: has changed since we last reloaded.
+_CACHED_MODULE = {}  # type: Dict[str, "module"]
 
 def find_model(modelname):
     # type: (str) -> SasviewModelType
@@ -107,9 +110,20 @@ def load_custom_model(path):
     Load a custom model given the model path.
     """
     #logger.info("Loading model %s", path)
+
+    # Load the kernel module.  This may already be cached by the loader, so
+    # only requires checking the timestamps of the dependents.
     kernel_module = custom.load_custom_kernel_module(path)
-    if hasattr(kernel_module, 'Model'):
-        model = kernel_module.Model
+
+    # Check if the module has changed since we last looked.
+    reloaded = kernel_module != _CACHED_MODULE.get(path, None)
+    _CACHED_MODULE[path] = kernel_module
+
+    # Turn the module into a model.  We need to do this in even if the
+    # model has already been loaded so that we can determine the model
+    # name and retrieve it from the MODELS cache.
+    model = getattr(kernel_module, 'Model', None)
+    if model is not None:
         # Old style models do not set the name in the class attributes, so
         # set it here; this name will be overridden when the object is created
         # with an instance variable that has the same value.
@@ -137,8 +151,11 @@ def load_custom_model(path):
         logger.info("Model %s already exists: using %s [%s]",
                     _previous_name, model.name, model.filename)
 
-    MODELS[model.name] = model
-    return model
+    # Only update the model if the module has changed
+    if reloaded or model.name not in MODELS:
+        MODELS[model.name] = model
+
+    return MODELS[model.name]
 
 
 def make_model_from_info(model_info):
