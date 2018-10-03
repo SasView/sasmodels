@@ -883,7 +883,7 @@ def test_old_name():
 def magnetic_demo():
     Model = _make_standard_model('sphere')
     model = Model()
-    model.setParam('M0:sld', 8)
+    model.setParam('sld_M0', 8)
     q = np.linspace(-0.35, 0.35, 500)
     qx, qy = np.meshgrid(q, q)
     result = model.calculate_Iq(qx.flatten(), qy.flatten())

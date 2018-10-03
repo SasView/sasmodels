@@ -164,7 +164,25 @@ def _conversion_target(model_name, version=(3, 1, 2)):
 def _hand_convert(name, oldpars, version=(3, 1, 2)):
     if version == (3, 1, 2):
         oldpars = _hand_convert_3_1_2_to_4_1(name, oldpars)
+    if version < (4, 2, 0):
+        oldpars = _rename_magnetic_pars(oldpars)
     return oldpars
+
+def _rename_magnetic_pars(pars):
+    """
+    Change from M0:par to par_M0, etc.
+    """
+    keys = list(pars.items())
+    for k in keys:
+        if k.startswith('M0:'):
+            pars[k[3:]+'_M0'] = pars.pop(k)
+        elif k.startswith('mtheta:'):
+            pars[k[7:]+'_mtheta'] = pars.pop(k)
+        elif k.startswith('mphi:'):
+            pars[k[5:]+'_mphi'] = pars.pop(k)
+        elif k.startswith('up:'):
+            pars['up_'+k[3:]] = pars.pop(k)
+    return pars
 
 def _hand_convert_3_1_2_to_4_1(name, oldpars):
     if name == 'core_shell_parallelepiped':
