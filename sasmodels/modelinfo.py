@@ -792,6 +792,8 @@ def make_model_info(kernel_module):
     info.category = getattr(kernel_module, 'category', None)
     info.structure_factor = getattr(kernel_module, 'structure_factor', False)
     info.profile_axes = getattr(kernel_module, 'profile_axes', ['x', 'y'])
+    # Note: custom.load_custom_kernel_module assumes the C sources are defined
+    # by this attribute.
     info.source = getattr(kernel_module, 'source', [])
     info.c_code = getattr(kernel_module, 'c_code', None)
     # TODO: check the structure of the tests
