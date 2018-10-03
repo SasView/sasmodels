@@ -1015,4 +1015,9 @@ class ModelInfo(object):
                          for p in self.parameters.kernel_parameters
                          for k in range(control+1, p.length+1)
                          if p.length > 1)
+            for p in self.parameters.kernel_parameters:
+                if p.length > 1 and p.type == "sld":
+                    for k in range(control+1, p.length+1):
+                        base = p.id+str(k)
+                        hidden.update((base+"_M0", base+"_mtheta", base+"_mphi"))
         return hidden
