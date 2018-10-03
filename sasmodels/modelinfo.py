@@ -792,6 +792,8 @@ def make_model_info(kernel_module):
     info.effective_radius_type = getattr(kernel_module, 'effective_radius_type', None)
     info.have_Fq = getattr(kernel_module, 'have_Fq', False)
     info.profile_axes = getattr(kernel_module, 'profile_axes', ['x', 'y'])
+    # Note: custom.load_custom_kernel_module assumes the C sources are defined
+    # by this attribute.
     info.source = getattr(kernel_module, 'source', [])
     info.c_code = getattr(kernel_module, 'c_code', None)
     info.effective_radius = getattr(kernel_module, 'effective_radius', None)
