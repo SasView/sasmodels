@@ -383,6 +383,12 @@ class SasviewModel(object):
             hidden.add('background')
             self._model_info.parameters.defaults['background'] = 0.
 
+        # Update the parameter lists to exclude any hidden parameters
+        self.magnetic_params = tuple(pname for pname in self.magnetic_params
+                                     if pname not in hidden)
+        self.orientation_params = tuple(pname for pname in self.orientation_params
+                                        if pname not in hidden)
+
         self._persistency_dict = {}
         self.params = collections.OrderedDict()
         self.dispersion = collections.OrderedDict()
@@ -883,7 +889,7 @@ def test_old_name():
 def magnetic_demo():
     Model = _make_standard_model('sphere')
     model = Model()
-    model.setParam('M0:sld', 8)
+    model.setParam('sld_M0', 8)
     q = np.linspace(-0.35, 0.35, 500)
     qx, qy = np.meshgrid(q, q)
     result = model.calculate_Iq(qx.flatten(), qy.flatten())
