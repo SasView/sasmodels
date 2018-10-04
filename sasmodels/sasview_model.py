@@ -383,6 +383,12 @@ class SasviewModel(object):
             hidden.add('background')
             self._model_info.parameters.defaults['background'] = 0.
 
+        # Update the parameter lists to exclude any hidden parameters
+        self.magnetic_params = tuple(pname for pname in self.magnetic_params
+                                     if pname not in hidden)
+        self.orientation_params = tuple(pname for pname in self.orientation_params
+                                        if pname not in hidden)
+
         self._persistency_dict = {}
         self.params = collections.OrderedDict()
         self.dispersion = collections.OrderedDict()
