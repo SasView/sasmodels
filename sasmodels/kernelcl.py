@@ -58,6 +58,7 @@ import time
 try:
     from time import perf_counter as clock
 except ImportError: # CRUFT: python < 3.3
+    import sys
     if sys.platform.count("darwin") > 0:
         from time import time as clock
     else:
