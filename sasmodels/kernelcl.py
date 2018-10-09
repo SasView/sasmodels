@@ -55,8 +55,15 @@ import warnings
 import logging
 import time
 
-import numpy as np  # type: ignore
+try:
+    from time import perf_counter as clock
+except ImportError: # CRUFT: python < 3.3
+    if sys.platform.count("darwin") > 0:
+        from time import time as clock
+    else:
+        from time import clock
 
+import numpy as np  # type: ignore
 
 # Attempt to setup opencl. This may fail if the opencl package is not
 # installed or if it is installed but there are no devices available.
@@ -574,7 +581,7 @@ class GpuKernel(Kernel):
         #call_details.show(values)
         # Call kernel and retrieve results
         wait_for = None
-        last_nap = time.clock()
+        last_nap = clock()
         step = 1000000//self.q_input.nq + 1
         for start in range(0, call_details.num_eval, step):
             stop = min(start + step, call_details.num_eval)
@@ -585,7 +592,7 @@ class GpuKernel(Kernel):
             if stop < call_details.num_eval:
                 # Allow other processes to run
                 wait_for[0].wait()
-                current_time = time.clock()
+                current_time = clock()
                 if current_time - last_nap > 0.5:
                     time.sleep(0.05)
                     last_nap = current_time
