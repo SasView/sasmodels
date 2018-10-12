@@ -828,6 +828,8 @@ file in the order given, otherwise these functions will not be available.
         $J_n(x) = \frac{1}{\pi}\int_0^\pi \cos(n\tau - x\sin(\tau))\,d\tau$.
         If $n$ = 0 or 1, it uses sas_J0($x$) or sas_J1($x$), respectively.
 
+        Warning: JN(n,x) can be very inaccurate (0.1%) for x not in [0.1, 100].
+
         The standard math function jn(n, x) is not available on all platforms.
 
         :code:`source = ["lib/polevl.c", "lib/sas_J0.c", "lib/sas_J1.c", "lib/sas_JN.c", ...]`
@@ -836,9 +838,11 @@ file in the order given, otherwise these functions will not be available.
     sas_Si(x):
         Sine integral Si\ $(x) = \int_0^x \tfrac{\sin t}{t}\,dt$.
 
+        Warning: Si(x) can be very inaccurate (0.1%) for x in [0.1, 100].
+
         This function uses Taylor series for small and large arguments:
 
-        For large arguments,
+        For large arguments use the following Taylor series,
 
         .. math::
 
@@ -846,7 +850,7 @@ file in the order given, otherwise these functions will not be available.
              - \frac{\cos(x)}{x}\left(1 - \frac{2!}{x^2} + \frac{4!}{x^4} - \frac{6!}{x^6} \right)
              - \frac{\sin(x)}{x}\left(\frac{1}{x} - \frac{3!}{x^3} + \frac{5!}{x^5} - \frac{7!}{x^7}\right)
 
-        For small arguments,
+        For small arguments ,
 
         .. math::
 
