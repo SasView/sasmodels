@@ -150,7 +150,7 @@ def environment():
     if ENV is None:
         if not HAVE_OPENCL:
             raise RuntimeError("OpenCL startup failed with ***"
-                            + OPENCL_ERROR + "***; using C compiler instead")
+                               + OPENCL_ERROR + "***; using C compiler instead")
         reset_environment()
         if ENV is None:
             raise RuntimeError("SAS_OPENCL=None in environment")
@@ -207,9 +207,9 @@ def compile_model(context, source, dtype, fast=False):
     """
     Build a model to run on the gpu.
 
-    Returns the compiled program and its type.  The returned type will
-    be float32 even if the desired type is float64 if any of the
-    devices in the context do not support the cl_khr_fp64 extension.
+    Returns the compiled program and its type.
+
+    Raises an error if the desired precision is not available.
     """
     dtype = np.dtype(dtype)
     if not all(has_type(d, dtype) for d in context.devices):

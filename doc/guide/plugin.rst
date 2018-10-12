@@ -423,6 +423,22 @@ That is, the individual models do not need to include polydispersity
 calculations, but instead rely on numerical integration to compute the
 appropriately smeared pattern.
 
+Each .py file also contains a function::
+
+	def random():
+	...
+	
+This function provides a model-specific random parameter set which shows model 
+features in the USANS to SANS range.  For example, core-shell sphere sets the 
+outer radius of the sphere logarithmically in `[20, 20,000]`, which sets the Q 
+value for the transition from flat to falling.  It then uses a beta distribution 
+to set the percentage of the shape which is shell, giving a preference for very 
+thin or very thick shells (but never 0% or 100%).  Using `-sets=10` in sascomp 
+should show a reasonable variety of curves over the default sascomp q range.  
+The parameter set is returned as a dictionary of `{parameter: value, ...}`.  
+Any model parameters not included in the dictionary will default according to 
+the code in the `_randomize_one()` function from sasmodels/compare.py.
+
 Python Models
 .............
 
@@ -821,7 +837,7 @@ file in the order given, otherwise these functions will not be available.
            + \frac{x^9}{9\times 9!} - \frac{x^{11}}{11\times 11!}
 
         :code:`source = ["lib/Si.c", ...]`
-        (`Si.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/Si.c>`_)
+        (`Si.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_Si.c>`_)
 
     sas_3j1x_x(x):
         Spherical Bessel form

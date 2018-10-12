@@ -1,16 +1,14 @@
 # rectangular_prism model
 # Note: model title and parameter table are inserted automatically
 r"""
-
-This model provides the form factor, $P(q)$, for a hollow rectangular
-prism with infinitely thin walls. It computes only the 1D scattering, not the 2D.
-
-
 Definition
 ----------
 
+
+This model provides the form factor, $P(q)$, for a hollow rectangular
+prism with infinitely thin walls. It computes only the 1D scattering, not the 2D.
 The 1D scattering intensity for this model is calculated according to the
-equations given by Nayuk and Huber (Nayuk, 2012).
+equations given by Nayuk and Huber\ [#Nayuk2012]_.
 
 Assuming a hollow parallelepiped with infinitely thin walls, edge lengths
 $A \le B \le C$ and presenting an orientation with respect to the
@@ -54,10 +52,10 @@ The 1D scattering intensity is then calculated as
 
   I(q) = \text{scale} \times V \times (\rho_\text{p} - \rho_\text{solvent})^2 \times P(q)
 
-where $V$ is the volume of the rectangular prism, $\rho_\text{p}$
-is the scattering length of the parallelepiped, $\rho_\text{solvent}$
-is the scattering length of the solvent, and (if the data are in absolute
-units) *scale* represents the volume fraction (which is unitless).
+where $V$ is the surface area of the rectangular prism, $\rho_\text{p}$
+is the scattering length density of the parallelepiped, $\rho_\text{solvent}$
+is the scattering length density of the solvent, and (if the data are in
+absolute units) *scale* is related to the total surface area.
 
 **The 2D scattering intensity is not computed by this model.**
 
@@ -66,13 +64,21 @@ Validation
 ----------
 
 Validation of the code was conducted  by qualitatively comparing the output
-of the 1D model to the curves shown in (Nayuk, 2012).
+of the 1D model to the curves shown in (Nayuk, 2012\ [#Nayuk2012]_).
 
 
 References
 ----------
 
-R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+.. [#Nayuk2012] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+
+
+Authorship and Verification
+----------------------------
+
+* **Author:** Miguel Gonzales **Date:** February 26, 2016
+* **Last Modified by:** Paul Kienzle **Date:** October 15, 2016
+* **Last Reviewed by:** Paul Butler **Date:** September 07, 2018
 """
 
 import numpy as np

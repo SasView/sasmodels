@@ -138,9 +138,9 @@ This is done using the *SAS_COMPILER* environment variable, and the
 *SAS_OPENMP* environment variable if OpenMP support is available for
 the compiler.
 
-On Windows, set *SASCOMPILER=tinycc* for the tinycc compiler,
-*SASCOMPILER=msvc* for the Microsoft Visual C compiler,
-or *SASCOMPILER=mingw* for the MinGW compiler. If TinyCC is available
+On Windows, set *SAS_COMPILER=tinycc* for the tinycc compiler,
+*SAS_COMPILER=msvc* for the Microsoft Visual C compiler,
+or *SAS_COMPILER=mingw* for the MinGW compiler. If TinyCC is available
 on the python path (it is provided with SasView), that will be the
 default. If you want one of the other compilers, be sure to have it
 available in your *PATH* so we can find it!

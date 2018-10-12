@@ -61,8 +61,12 @@ MultiplicityInfo = collections.namedtuple(
 
 #: set of defined models (standard and custom)
 MODELS = {}  # type: Dict[str, SasviewModelType]
+# TODO: remove unused MODEL_BY_PATH cache once sasview no longer references it
 #: custom model {path: model} mapping so we can check timestamps
 MODEL_BY_PATH = {}  # type: Dict[str, SasviewModelType]
+#: Track modules that we have loaded so we can determine whether the model
+#: has changed since we last reloaded.
+_CACHED_MODULE = {}  # type: Dict[str, "module"]
 
 def find_model(modelname):
     # type: (str) -> SasviewModelType
@@ -105,15 +109,21 @@ def load_custom_model(path):
     """
     Load a custom model given the model path.
     """
-    model = MODEL_BY_PATH.get(path, None)
-    if model is not None and model.timestamp == getmtime(path):
-        #logger.info("Model already loaded %s", path)
-        return model
-
     #logger.info("Loading model %s", path)
+
+    # Load the kernel module.  This may already be cached by the loader, so
+    # only requires checking the timestamps of the dependents.
     kernel_module = custom.load_custom_kernel_module(path)
-    if hasattr(kernel_module, 'Model'):
-        model = kernel_module.Model
+
+    # Check if the module has changed since we last looked.
+    reloaded = kernel_module != _CACHED_MODULE.get(path, None)
+    _CACHED_MODULE[path] = kernel_module
+
+    # Turn the module into a model.  We need to do this in even if the
+    # model has already been loaded so that we can determine the model
+    # name and retrieve it from the MODELS cache.
+    model = getattr(kernel_module, 'Model', None)
+    if model is not None:
         # Old style models do not set the name in the class attributes, so
         # set it here; this name will be overridden when the object is created
         # with an instance variable that has the same value.
@@ -126,7 +136,6 @@ def load_custom_model(path):
     else:
         model_info = modelinfo.make_model_info(kernel_module)
         model = make_model_from_info(model_info)
-    model.timestamp = getmtime(path)
 
     # If a model name already exists and we are loading a different model,
     # use the model file name as the model name.
@@ -142,9 +151,11 @@ def load_custom_model(path):
         logger.info("Model %s already exists: using %s [%s]",
                     _previous_name, model.name, model.filename)
 
-    MODELS[model.name] = model
-    MODEL_BY_PATH[path] = model
-    return model
+    # Only update the model if the module has changed
+    if reloaded or model.name not in MODELS:
+        MODELS[model.name] = model
+
+    return MODELS[model.name]
 
 
 def make_model_from_info(model_info):
@@ -372,6 +383,12 @@ class SasviewModel(object):
             hidden.add('background')
             self._model_info.parameters.defaults['background'] = 0.
 
+        # Update the parameter lists to exclude any hidden parameters
+        self.magnetic_params = tuple(pname for pname in self.magnetic_params
+                                     if pname not in hidden)
+        self.orientation_params = tuple(pname for pname in self.orientation_params
+                                        if pname not in hidden)
+
         self._persistency_dict = {}
         self.params = collections.OrderedDict()
         self.dispersion = collections.OrderedDict()
@@ -592,10 +609,7 @@ class SasviewModel(object):
         if isinstance(qdist, (list, tuple)):
             # Check whether we have a list of ndarrays [qx,qy]
             qx, qy = qdist
-            if not self._model_info.parameters.has_2d:
-                return self.calculate_Iq(np.sqrt(qx ** 2 + qy ** 2))
-            else:
-                return self.calculate_Iq(qx, qy)
+            return self.calculate_Iq(qx, qy)
 
         elif isinstance(qdist, np.ndarray):
             # We have a simple 1D distribution of q-values
@@ -676,7 +690,8 @@ class SasviewModel(object):
         #weights.plot_weights(self._model_info, pairs)
         call_details, values, is_magnetic = make_kernel_args(calculator, pairs)
         #call_details.show()
-        #print("pairs", pairs)
+        #print("================ parameters ==================")
+        #for p, v in zip(parameters.call_parameters, pairs): print(p.name, v[0])
         #for k, p in enumerate(self._model_info.parameters.call_parameters):
         #    print(k, p.name, *pairs[k])
         #print("params", self.params)
@@ -687,7 +702,7 @@ class SasviewModel(object):
         #print("result", result)
         self._intermediate_results = getattr(calculator, 'results', None)
         calculator.release()
-        self._model.release()
+        #self._model.release()
         return result
 
     def calculate_ER(self):
@@ -720,7 +735,7 @@ class SasviewModel(object):
             return np.sum(weight * part) / np.sum(weight * whole)
 
     def set_dispersion(self, parameter, dispersion):
-        # type: (str, weights.Dispersion) -> Dict[str, Any]
+        # type: (str, weights.Dispersion) -> None
         """
         Set the dispersion object for a model parameter
 
@@ -743,7 +758,8 @@ class SasviewModel(object):
             # one instead of trying to assign parameters.
             self.dispersion[parameter] = dispersion.get_pars()
         else:
-            raise ValueError("%r is not a dispersity or orientation parameter")
+            raise ValueError("%r is not a dispersity or orientation parameter"
+                             % parameter)
 
     def _dispersion_mesh(self):
         # type: () -> List[Tuple[np.ndarray, np.ndarray]]
@@ -870,8 +886,22 @@ def test_old_name():
     from sas.models.CylinderModel import CylinderModel
     CylinderModel().evalDistribution([0.1, 0.1])
 
+def magnetic_demo():
+    Model = _make_standard_model('sphere')
+    model = Model()
+    model.setParam('sld_M0', 8)
+    q = np.linspace(-0.35, 0.35, 500)
+    qx, qy = np.meshgrid(q, q)
+    result = model.calculate_Iq(qx.flatten(), qy.flatten())
+    result = result.reshape(qx.shape)
+
+    import pylab
+    pylab.imshow(np.log(result + 0.001))
+    pylab.show()
+
 if __name__ == "__main__":
     print("cylinder(0.1,0.1)=%g"%test_cylinder())
+    #magnetic_demo()
     #test_product()
     #test_structure_factor()
     #print("rpa:", test_rpa())

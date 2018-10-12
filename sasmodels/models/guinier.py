@@ -6,7 +6,7 @@ This model fits the Guinier function
 
 .. math::
 
-    I(q) = \text{scale} \cdot \exp{\left[ \frac{-Q^2R_g^2}{3} \right]}
+    I(q) = \text{scale} \cdot \exp{\left[ \frac{-Q^2 R_g^2 }{3} \right]}
             + \text{background}
 
 to the data directly without any need for linearisation (*cf*. the usual
@@ -18,6 +18,29 @@ For 2D data the scattering intensity is calculated in the same way as 1D,
 where the $q$ vector is defined as
 
 .. math:: q = \sqrt{q_x^2 + q_y^2}
+
+In scattering, the radius of gyration $R_g$ quantifies the objects's
+distribution of SLD (not mass density, as in mechanics) from the objects's
+SLD centre of mass. It is defined by
+
+.. math:: R_g^2 = \frac{\sum_i\rho_i\left(r_i-r_0\right)^2}{\sum_i\rho_i}
+
+where $r_0$ denotes the object's SLD centre of mass and $\rho_i$ is the SLD at
+a point $i$.
+
+Notice that $R_g^2$ may be negative (since SLD can be negative), which happens
+when a form factor $P(Q)$ is increasing with $Q$ rather than decreasing. This
+can occur for core/shell particles, hollow particles, or for composite
+particles with domains of different SLDs in a solvent with an SLD close to the
+average match point. (Alternatively, this might be regarded as there being an
+internal inter-domain "structure factor" within a single particle which gives
+rise to a peak in the scattering).
+
+To specify a negative value of $R_g^2$ in SasView, simply give $R_g$ a negative
+value ($R_g^2$ will be evaluated as $R_g |R_g|$). Note that the physical radius 
+of gyration, of the exterior of the particle, will still be large and positive. 
+It is only the apparent size from the small $Q$ data that will give a small or 
+negative value of $R_g^2$.
 
 References
 ----------
@@ -41,10 +64,10 @@ description = """
 category = "shape-independent"
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["rg", "Ang", 60.0, [0, inf], "", "Radius of Gyration"]]
+parameters = [["rg", "Ang", 60.0, [-inf, inf], "", "Radius of Gyration"]]
 
 Iq = """
-    double exponent = rg*rg*q*q/3.0;
+    double exponent = fabs(rg)*rg*q*q/3.0;
     double value = exp(-exponent);
     return value;
 """
@@ -65,7 +88,7 @@ def random():
     return pars
 
 # parameters for demo
-demo = dict(scale=1.0, rg=60.0)
+demo = dict(scale=1.0,  background=0.001, rg=60.0 )
 
 # parameters for unit tests
 tests = [[{'rg' : 31.5}, 0.005, 0.992756]]

@@ -30,6 +30,7 @@ from . import weights
 from . import resolution
 from . import resolution2d
 from .details import make_kernel_args, dispersion_mesh
+from .modelinfo import DEFAULT_BACKGROUND
 
 # pylint: disable=unused-import
 try:
@@ -249,7 +250,7 @@ class DataMixin(object):
             qmin = getattr(data, 'qmin', 1e-16)
             qmax = getattr(data, 'qmax', np.inf)
             accuracy = getattr(data, 'accuracy', 'Low')
-            index = ~data.mask & (q >= qmin) & (q <= qmax)
+            index = (data.mask == 0) & (q >= qmin) & (q <= qmax)
             if data.data is not None:
                 index &= ~np.isnan(data.data)
                 Iq = data.data[index]
@@ -262,6 +263,9 @@ class DataMixin(object):
             q_vectors = res.q_calc
         elif self.data_type == 'Iq':
             index = (data.x >= data.qmin) & (data.x <= data.qmax)
+            mask = getattr(data, 'mask', None)
+            if mask is not None:
+                index &= (mask == 0)
             if data.y is not None:
                 index &= ~np.isnan(data.y)
                 Iq = data.y[index]
@@ -344,6 +348,11 @@ class DataMixin(object):
         if self._kernel is None:
             self._kernel = self._model.make_kernel(self._kernel_inputs)
 
+        # Need to pull background out of resolution for multiple scattering
+        background = pars.get('background', DEFAULT_BACKGROUND)
+        pars = pars.copy()
+        pars['background'] = 0.
+
         Iq_calc = call_kernel(self._kernel, pars, cutoff=cutoff)
         # Storing the calculated Iq values so that they can be plotted.
         # Only applies to oriented USANS data for now.
@@ -356,7 +365,7 @@ class DataMixin(object):
                 self.resolution.qx_calc, self.resolution.qy_calc,
                 np.reshape(Iq_calc, (self.resolution.ny, self.resolution.nx))
             )
-        return result
+        return result + background
 
 
 class DirectModel(DataMixin):

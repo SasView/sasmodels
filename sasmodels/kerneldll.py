@@ -99,6 +99,12 @@ except ImportError:
     pass
 # pylint: enable=unused-import
 
+if "SAS_DLL_PATH" in os.environ:
+    SAS_DLL_PATH = os.environ["SAS_DLL_PATH"]
+else:
+    # Assume the default location of module DLLs is in .sasmodels/compiled_models.
+    SAS_DLL_PATH = os.path.join(os.path.expanduser("~"), ".sasmodels", "compiled_models")
+
 if "SAS_COMPILER" in os.environ:
     COMPILER = os.environ["SAS_COMPILER"]
 elif os.name == 'nt':
@@ -122,7 +128,10 @@ if COMPILER == "unix":
     CC = "cc -shared -fPIC -std=c99 -O2 -Wall".split()
     # add openmp support if not running on a mac
     if sys.platform != "darwin":
-        CC.append("-fopenmp")
+        # OpenMP seems to be broken on gcc 5.4.0 (ubuntu 16.04.9)
+        # Shut it off for all unix until we can investigate.
+        #CC.append("-fopenmp")
+        pass
     def compile_command(source, output):
         """unix compiler command"""
         return CC + [source, "-o", output, "-lm"]
@@ -156,16 +165,6 @@ elif COMPILER == "mingw":
     def compile_command(source, output):
         """mingw compiler command"""
         return CC + [source, "-o", output, "-lm"]
-
-# Windows-specific solution
-if os.name == 'nt':
-    # Assume the default location of module DLLs is in .sasmodels/compiled_models.
-    DLL_PATH = os.path.join(os.path.expanduser("~"), ".sasmodels", "compiled_models")
-    if not os.path.exists(DLL_PATH):
-        os.makedirs(DLL_PATH)
-else:
-    # Set up the default path for compiled modules.
-    DLL_PATH = tempfile.gettempdir()
 
 ALLOW_SINGLE_PRECISION_DLLS = True
 
@@ -203,7 +202,7 @@ def dll_name(model_info, dtype):
     if os.path.exists(path):
         return path
 
-    return joinpath(DLL_PATH, basename)
+    return joinpath(SAS_DLL_PATH, basename)
 
 
 def dll_path(model_info, dtype):
@@ -212,7 +211,7 @@ def dll_path(model_info, dtype):
     Complete path to the dll for the model.  Note that the dll may not
     exist yet if it hasn't been compiled.
     """
-    return os.path.join(DLL_PATH, dll_name(model_info, dtype))
+    return os.path.join(SAS_DLL_PATH, dll_name(model_info, dtype))
 
 
 def make_dll(source, model_info, dtype=F64):
@@ -231,8 +230,9 @@ def make_dll(source, model_info, dtype=F64):
     Set *sasmodels.ALLOW_SINGLE_PRECISION_DLLS* to False if single precision
     models are not allowed as DLLs.
 
-    Set *sasmodels.kerneldll.DLL_PATH* to the compiled dll output path.
-    The default is the system temporary directory.
+    Set *sasmodels.kerneldll.SAS_DLL_PATH* to the compiled dll output path.
+    Alternatively, set the environment variable *SAS_DLL_PATH*.
+    The default is in ~/.sasmodels/compiled_models.
     """
     if dtype == F16:
         raise ValueError("16 bit floats not supported")
@@ -249,6 +249,9 @@ def make_dll(source, model_info, dtype=F64):
         newest_source = generate.dll_timestamp(model_info)
         need_recompile = dll_time < newest_source
     if need_recompile:
+        # Make sure the DLL path exists
+        if not os.path.exists(SAS_DLL_PATH):
+            os.makedirs(SAS_DLL_PATH)
         basename = splitext(os.path.basename(dll))[0] + "_"
         system_fd, filename = tempfile.mkstemp(suffix=".c", prefix=basename)
         source = generate.convert_type(source, dtype)

@@ -168,7 +168,8 @@ from __future__ import print_function
 #__all__ = ["model_info", "make_doc", "make_source", "convert_type"]
 
 import sys
-from os.path import abspath, dirname, join as joinpath, exists, getmtime
+from os import environ
+from os.path import abspath, dirname, join as joinpath, exists, getmtime, sep
 import re
 import string
 from zlib import crc32
@@ -213,7 +214,7 @@ def get_data_path(external_dir, target_file):
     raise RuntimeError('Could not find '+joinpath(external_dir, target_file))
 
 EXTERNAL_DIR = 'sasmodels-data'
-DATA_PATH = get_data_path(EXTERNAL_DIR, 'kernel_template.c')
+DATA_PATH = get_data_path(EXTERNAL_DIR, 'kernel_iq.c')
 MODEL_PATH = joinpath(DATA_PATH, 'models')
 
 F16 = np.dtype('float16')
@@ -288,14 +289,13 @@ def set_integration_size(info, n):
     Note: this really ought to be a method in modelinfo, but that leads to
     import loops.
     """
-    if (info.source and any(lib.startswith('lib/gauss') for lib in info.source)):
-        import os.path
+    if info.source and any(lib.startswith('lib/gauss') for lib in info.source):
         from .gengauss import gengauss
-        path = os.path.join(MODEL_PATH, "lib", "gauss%d.c"%n)
-        if not os.path.exists(path):
+        path = joinpath(MODEL_PATH, "lib", "gauss%d.c"%n)
+        if not exists(path):
             gengauss(n, path)
         info.source = ["lib/gauss%d.c"%n if lib.startswith('lib/gauss')
-                        else lib for lib in info.source]
+                       else lib for lib in info.source]
 
 def format_units(units):
     # type: (str) -> str
@@ -319,12 +319,12 @@ def make_partable(pars):
     column_widths = [max(w, len(h))
                      for w, h in zip(column_widths, PARTABLE_HEADERS)]
 
-    sep = " ".join("="*w for w in column_widths)
+    underbar = " ".join("="*w for w in column_widths)
     lines = [
-        sep,
+        underbar,
         " ".join("%-*s" % (w, h)
                  for w, h in zip(column_widths, PARTABLE_HEADERS)),
-        sep,
+        underbar,
         ]
     for p in pars:
         lines.append(" ".join([
@@ -333,7 +333,7 @@ def make_partable(pars):
             "%-*s" % (column_widths[2], format_units(p.units)),
             "%*g" % (column_widths[3], p.default),
             ]))
-    lines.append(sep)
+    lines.append(underbar)
     return "\n".join(lines)
 
 
@@ -388,7 +388,7 @@ def ocl_timestamp(model_info):
     """
     # TODO: fails DRY; templates appear two places.
     model_templates = [joinpath(DATA_PATH, filename)
-                       for filename in ('kernel_header.c', 'kernel_iq.cl')]
+                       for filename in ('kernel_header.c', 'kernel_iq.c')]
     source_files = (model_sources(model_info)
                     + model_templates
                     + [model_info.filename])
@@ -611,13 +611,16 @@ def indent(s, depth):
     Indent a string of text with *depth* additional spaces on each line.
     """
     spaces = " "*depth
-    sep = "\n" + spaces
-    return spaces + sep.join(s.split("\n"))
+    interline_separator = "\n" + spaces
+    return spaces + interline_separator.join(s.split("\n"))
 
 
 _template_cache = {}  # type: Dict[str, Tuple[int, str, str]]
 def load_template(filename):
     # type: (str) -> str
+    """
+    Load template file from sasmodels resource directory.
+    """
     path = joinpath(DATA_PATH, filename)
     mtime = getmtime(path)
     if filename not in _template_cache or mtime > _template_cache[filename][0]:
@@ -899,9 +902,19 @@ def load_kernel_module(model_name):
     if model_name.endswith('.py'):
         kernel_module = load_custom_kernel_module(model_name)
     else:
-        from sasmodels import models
-        __import__('sasmodels.models.'+model_name)
-        kernel_module = getattr(models, model_name, None)
+        try:
+            from sasmodels import models
+            __import__('sasmodels.models.'+model_name)
+            kernel_module = getattr(models, model_name, None)
+        except ImportError:
+            # If the model isn't a built in model, try the plugin directory
+            plugin_path = environ.get('SAS_MODELPATH', None)
+            if plugin_path is not None:
+                file_name = model_name.split(sep)[-1]
+                model_name = plugin_path + sep + file_name + ".py"
+                kernel_module = load_custom_kernel_module(model_name)
+            else:
+                raise
     return kernel_module
 
 
@@ -951,12 +964,15 @@ def make_doc(model_info):
     Sq_units = "The returned value is a dimensionless structure factor, $S(q)$."
     docs = model_info.docs if model_info.docs is not None else ""
     docs = convert_section_titles_to_boldface(docs)
-    pars = make_partable(model_info.parameters.COMMON
-                         + model_info.parameters.kernel_parameters)
+    if model_info.structure_factor:
+        pars = model_info.parameters.kernel_parameters
+    else:
+        pars = model_info.parameters.COMMON + model_info.parameters.kernel_parameters
+    partable = make_partable(pars)
     subst = dict(id=model_info.id.replace('_', '-'),
                  name=model_info.name,
                  title=model_info.title,
-                 parameters=pars,
+                 parameters=partable,
                  returns=Sq_units if model_info.structure_factor else Iq_units,
                  docs=docs)
     return DOC_HEADER % subst
