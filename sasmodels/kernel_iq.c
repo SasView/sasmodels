@@ -79,6 +79,7 @@ static double clip(double value, double low, double high)
 //     ud * (m_sigma_y - 1j*m_sigma_z);
 //     du * (m_sigma_y + 1j*m_sigma_z);
 // weights for spin crosssections: dd du real, ud real, uu, du imag, ud imag
+__device__
 static void set_spin_weights(double in_spin, double out_spin, double weight[6])
 {
   in_spin = clip(in_spin, 0.0, 1.0);

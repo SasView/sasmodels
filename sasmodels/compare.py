@@ -114,7 +114,7 @@ Options (* for default):
 
     === environment variables ===
     -DSAS_MODELPATH=path sets directory containing custom models
-    -DSAS_OPENCL=vendor:device|none sets the target OpenCL device
+    -DSAS_OPENCL=vendor:device|cuda:device|none sets the target GPU device
     -DXDG_CACHE_HOME=~/.cache sets the pyopencl cache root (linux only)
     -DSAS_COMPILER=tinycc|msvc|mingw|unix sets the DLL compiler
     -DSAS_OPENMP=1 turns on OpenMP for the DLLs

@@ -1,5 +1,12 @@
 """
-GPU driver for C kernels
+GPU driver for C kernels (with CUDA)
+
+To select cuda, use SAS_OPENCL=cuda, or SAS_OPENCL=cuda:n for a particular
+device number.  If no device number is specified, then look for CUDA_DEVICE=n
+or a file ~/.cuda-device containing n for the device number.  Otherwise, try
+all available device numbers.
+
+TODO: docs are out of date
 
 There should be a single GPU environment running on the system.  This
 environment is constructed on the first call to :func:`env`, and the
@@ -58,12 +65,20 @@ import time
 import numpy as np  # type: ignore
 
 
-# Attempt to setup opencl. This may fail if the opencl package is not
+# Attempt to setup cuda. This may fail if the pycuda package is not
 # installed or if it is installed but there are no devices available.
 try:
-    import pycuda.autoinit
     import pycuda.driver as cuda  # type: ignore
     from pycuda.compiler import SourceModule
+    from pycuda.tools import make_default_context, clear_context_caches
+    # Ask CUDA for the default context (so that we know that one exists)
+    # then immediately throw it away in case the user doesn't want it.
+    # Note: cribbed from pycuda.autoinit
+    cuda.init()
+    context = make_default_context()
+    context.pop()
+    clear_context_caches()
+    del context
     HAVE_CUDA = True
     CUDA_ERROR = ""
 except Exception as exc:
@@ -90,23 +105,9 @@ except ImportError:
 # of polydisperse parameters.
 MAX_LOOPS = 2048
 
-
-# Pragmas for enable OpenCL features.  Be sure to protect them so that they
-# still compile even if OpenCL is not present.
-_F16_PRAGMA = """\
-#if defined(__OPENCL_VERSION__) // && !defined(cl_khr_fp16)
-#  pragma OPENCL EXTENSION cl_khr_fp16: enable
-#endif
-"""
-
-_F64_PRAGMA = """\
-#if defined(__OPENCL_VERSION__) // && !defined(cl_khr_fp64)
-#  pragma OPENCL EXTENSION cl_khr_fp64: enable
-#endif
-"""
-
 def use_cuda():
-    return HAVE_CUDA
+    env = os.environ.get("SAS_OPENCL", "").lower()
+    return HAVE_CUDA and (env == "" or env.startswith("cuda"))
 
 ENV = None
 def reset_environment():
@@ -114,6 +115,9 @@ def reset_environment():
     Call to create a new OpenCL context, such as after a change to SAS_OPENCL.
     """
     global ENV
+    # Free any previous allocated context.
+    if ENV is not None and ENV.context is not None:
+        ENV.release()
     ENV = GpuEnvironment() if use_cuda() else None
 
 def environment():
@@ -125,38 +129,24 @@ def environment():
     """
     if ENV is None:
         if not HAVE_CUDA:
-            raise RuntimeError("OpenCL startup failed with ***"
+            raise RuntimeError("CUDA startup failed with ***"
                             + CUDA_ERROR + "***; using C compiler instead")
         reset_environment()
         if ENV is None:
             raise RuntimeError("SAS_OPENCL=None in environment")
     return ENV
 
-def _stretch_input(vector, dtype, extra=1e-3, boundary=32):
-    # type: (np.ndarray, np.dtype, float, int) -> np.ndarray
+def has_type(dtype):
+    # type: (np.dtype) -> bool
     """
-    Stretch an input vector to the correct boundary.
-
-    Performance on the kernels can drop by a factor of two or more if the
-    number of values to compute does not fall on a nice power of two
-    boundary.   The trailing additional vector elements are given a
-    value of *extra*, and so f(*extra*) will be computed for each of
-    them.  The returned array will thus be a subset of the computed array.
-
-    *boundary* should be a power of 2 which is at least 32 for good
-    performance on current platforms (as of Jan 2015).  It should
-    probably be the max of get_warp(kernel,queue) and
-    device.min_data_type_align_size//4.
+    Return true if device supports the requested precision.
     """
-    remainder = vector.size % boundary
-    if remainder != 0:
-        size = vector.size + (boundary - remainder)
-        vector = np.hstack((vector, [extra] * (size - vector.size)))
-    return np.ascontiguousarray(vector, dtype=dtype)
-
+    # Assume the nvidia card supports 32-bit and 64-bit floats.
+    # TODO: check if pycuda support F16
+    return dtype in (generate.F32, generate.F64)
 
 def compile_model(source, dtype, fast=False):
-    # type: (str, np.dtype, bool) -> cl.Program
+    # type: (str, np.dtype, bool) -> SourceModule
     """
     Build a model to run on the gpu.
 
@@ -164,16 +154,17 @@ def compile_model(source, dtype, fast=False):
     be float32 even if the desired type is float64 if any of the
     devices in the context do not support the cl_khr_fp64 extension.
     """
-    source_list = [generate.convert_type(source, dtype)]
+    dtype = np.dtype(dtype)
+    if not has_type(dtype):
+        raise RuntimeError("%s not supported for devices"%dtype)
 
-    if dtype == generate.F16:
-        source_list.insert(0, _F16_PRAGMA)
-    elif dtype == generate.F64:
-        source_list.insert(0, _F64_PRAGMA)
+    source_list = [generate.convert_type(source, dtype)]
 
     source_list.insert(0, "#define USE_SINCOS\n")
     source = "\n".join(source_list)
-    program = SourceModule(source) # no_extern_c=True, include_dirs=[...]
+    options = '-use_fast_math' if fast else None
+    program = SourceModule(source, no_extern_c=True, options=options) # include_dirs=[...]
+    #print("done with "+program)
     return program
 
 
@@ -183,21 +174,38 @@ class GpuEnvironment(object):
     """
     GPU context, with possibly many devices, and one queue per device.
     """
-    def __init__(self, devnum=0):
-        # type: () -> None
+    context = None # type: cuda.Context
+    def __init__(self, devnum=None):
+        # type: (int) -> None
         # Byte boundary for data alignment
         #self.data_boundary = max(d.min_data_type_align_size
         #                         for d in self.context.devices)
         self.compiled = {}
-        #self.device = cuda.Device(devnum)
-        #self.context = self.device.make_context()
+        env = os.environ.get("SAS_OPENCL", "").lower()
+        if devnum is None and env.startswith("cuda:"):
+            devnum = int(env[5:])
+        # Set the global context to the particular device number if one is
+        # given, otherwise use the default context.  Perhaps this will be set
+        # by an environment variable within autoinit.
+        if devnum is not None:
+            self.context = cuda.Device(devnum).make_context()
+        else:
+            self.context = make_default_context()
+
+    def release(self):
+        if self.context is not None:
+            self.context.pop()
+            self.context = None
+
+    def __del__(self):
+        self.release()
 
     def has_type(self, dtype):
         # type: (np.dtype) -> bool
         """
         Return True if all devices support a given type.
         """
-        return True
+        return has_type(dtype)
 
     def compile_program(self, name, source, dtype, fast, timestamp):
         # type: (str, str, np.dtype, bool, float) -> cl.Program
@@ -234,6 +242,13 @@ class GpuModel(KernelModel):
     Fast precision ('fast') is a loose version of single precision, indicating
     that the compiler is allowed to take shortcuts.
     """
+    info = None # type: ModelInfo
+    source = "" # type: str
+    dtype = None # type: np.dtype
+    fast = False # type: bool
+    program = None # type: SourceModule
+    _kernels = None # type: List[cuda.Function]
+
     def __init__(self, source, model_info, dtype=generate.F32, fast=False):
         # type: (Dict[str,str], ModelInfo, np.dtype, bool) -> None
         self.info = model_info
@@ -417,10 +432,11 @@ class GpuKernel(Kernel):
                     time.sleep(0.05)
                     last_nap = current_time
         sync()
-        details_b.free()
-        values_b.free()
         cuda.memcpy_dtoh(self.result, self.result_b)
         #print("result", self.result)
+
+        details_b.free()
+        values_b.free()
 
         pd_norm = self.result[self.q_input.nq]
         scale = values[0]/(pd_norm if pd_norm != 0.0 else 1.0)
@@ -458,7 +474,8 @@ def sync():
     done.record()
 
     #line added to not hog resources
-    while not done.query(): time.sleep(0.01)
+    while not done.query():
+        time.sleep(0.01)
 
     # Block until the GPU executes the kernel.
     done.synchronize()
@@ -472,20 +489,20 @@ def partition(n):
         Auto grids the thread blocks to achieve some level of calculation
     efficiency.
     '''
-    max_gx,max_gy = 65535,65535
+    max_gx, max_gy = 65535, 65535
     blocksize = 32
-    #max_gx,max_gy = 5,65536
+    #max_gx, max_gy = 5, 65536
     #blocksize = 3
-    block = (blocksize,1,1)
+    block = (blocksize, 1, 1)
     num_blocks = int((n+blocksize-1)/blocksize)
     if num_blocks < max_gx:
-        grid = (num_blocks,1)
+        grid = (num_blocks, 1)
     else:
         gx = max_gx
         gy = (num_blocks + max_gx - 1) / max_gx
-        if gy >= max_gy: raise ValueError("vector is too large")
-        grid = (gx,gy)
-    #print "block",block,"grid",grid
-    #print "waste",block[0]*block[1]*block[2]*grid[0]*grid[1] - n
-    return dict(block=block,grid=grid)
-
+        if gy >= max_gy:
+            raise ValueError("vector is too large")
+        grid = (gx, gy)
+    #print("block", block, "grid", grid)
+    #print("waste", block[0]*block[1]*block[2]*grid[0]*grid[1] - n)
+    return dict(block=block, grid=grid)

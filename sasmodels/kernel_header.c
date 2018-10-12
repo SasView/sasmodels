@@ -4,7 +4,12 @@
 # define USE_CUDA
 #elif defined(_OPENMP)
 # define USE_OPENMP
+#elif defined(__CUDACC__)
+# define USE_CUDA
 #endif
+
+// Use SAS_DOUBLE to force the use of double even for float kernels
+#define SAS_DOUBLE dou ## ble
 
 // If opencl is not available, then we are compiling a C function
 // Note: if using a C++ compiler, then define kernel as extern "C"
@@ -125,9 +130,6 @@
    #define pown(a,b) pow(a,b)
 
 #endif // !USE_OPENCL
-
-// Use SAS_DOUBLE to force the use of double even for float kernels
-#define SAS_DOUBLE dou ## ble
 
 #if defined(NEED_EXPM1)
    // TODO: precision is a half digit lower than numpy on mac in [1e-7, 0.5]

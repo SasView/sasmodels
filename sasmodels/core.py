@@ -13,9 +13,6 @@ from os.path import basename, join as joinpath
 from glob import glob
 import re
 
-# Set "SAS_OPENCL=cuda" in the environment to use the CUDA rather than OpenCL
-USE_CUDA = os.environ.get("SAS_OPENCL", "") == "cuda"
-
 import numpy as np # type: ignore
 
 from . import generate
@@ -23,10 +20,8 @@ from . import modelinfo
 from . import product
 from . import mixture
 from . import kernelpy
-if USE_CUDA:
-    from . import kernelcuda
-else:
-    from . import kernelcl
+from . import kernelcuda
+from . import kernelcl
 from . import kerneldll
 from . import custom
 
@@ -215,8 +210,7 @@ def build_model(model_info, dtype=None, platform="ocl"):
     if platform == "dll":
         #print("building dll", numpy_dtype)
         return kerneldll.load_dll(source['dll'], model_info, numpy_dtype)
-    elif USE_CUDA:
-        #print("building cuda", numpy_dtype)
+    elif platform == "cuda":
         return kernelcuda.GpuModel(source, model_info, numpy_dtype, fast=fast)
     else:
         #print("building ocl", numpy_dtype)
@@ -253,7 +247,7 @@ def precompile_dlls(path, dtype="double"):
 def parse_dtype(model_info, dtype=None, platform=None):
     # type: (ModelInfo, str, str) -> (np.dtype, bool, str)
     """
-    Interpret dtype string, returning np.dtype and fast flag.
+    Interpret dtype string, returning np.dtype, fast flag and platform.
 
     Possible types include 'half', 'single', 'double' and 'quad'.  If the
     type is 'fast', then this is equivalent to dtype 'single' but using
@@ -261,9 +255,12 @@ def parse_dtype(model_info, dtype=None, platform=None):
     guaranteed by the OpenCL standard.  'default' will choose the appropriate
     default for the model and platform.
 
-    Platform preference can be specfied ("ocl" vs "dll"), with the default
-    being OpenCL if it is availabe.  If the dtype name ends with '!' then
-    platform is forced to be DLL rather than OpenCL.
+    Platform preference can be specfied ("ocl", "cuda", "dll"), with the
+    default being OpenCL or CUDA if available, otherwise DLL.  If the dtype
+    name ends with '!' then platform is forced to be DLL rather than GPU.
+    The default platform is set by the environment variable SAS_OPENCL,
+    SAS_OPENCL=driver:device for OpenCL, SAS_OPENCL=cuda:device for CUDA
+    or SAS_OPENCL=none for DLL.
 
     This routine ignores the preferences within the model definition.  This
     is by design.  It allows us to test models in single precision even when
@@ -276,19 +273,19 @@ def parse_dtype(model_info, dtype=None, platform=None):
 
     if platform is None:
         platform = "ocl"
-    if not model_info.opencl:
-        platform = "dll"
-    elif USE_CUDA:
-        if not kernelcuda.use_cuda():
-            platform = "dll"
-    else:
-        if not kernelcl.use_opencl():
-            platform = "dll"
 
     # Check if type indicates dll regardless of which platform is given
     if dtype is not None and dtype.endswith('!'):
         platform = "dll"
         dtype = dtype[:-1]
+
+    # Make sure model allows opencl/gpu
+    if not model_info.opencl:
+        platform = "dll"
+
+    # Make sure opencl is available, or fallback to cuda then to dll
+    if platform == "ocl" and not kernelcl.use_opencl():
+        platform = "cuda" if kernelcuda.use_cuda() else "dll"
 
     # Convert special type names "half", "fast", and "quad"
     fast = (dtype == "fast")
@@ -299,23 +296,25 @@ def parse_dtype(model_info, dtype=None, platform=None):
     elif dtype == "half":
         dtype = "float16"
 
-    # Convert dtype string to numpy dtype.
+    # Convert dtype string to numpy dtype.  Use single precision for GPU
+    # if model allows it, otherwise use double precision.
     if dtype is None or dtype == "default":
-        numpy_dtype = (generate.F32 if platform == "ocl" and model_info.single
+        numpy_dtype = (generate.F32 if model_info.single and platform in ("ocl", "cuda")
                        else generate.F64)
     else:
         numpy_dtype = np.dtype(dtype)
 
-    # Make sure that the type is supported by opencl, otherwise use dll
+    # Make sure that the type is supported by GPU, otherwise use dll
     if platform == "ocl":
-        if USE_CUDA:
-            env = kernelcuda.environment()
-        else:
-            env = kernelcl.environment()
-        if not env.has_type(numpy_dtype):
-            platform = "dll"
-            if dtype is None:
-                numpy_dtype = generate.F64
+        env = kernelcl.environment()
+    elif platform == "cuda":
+        env = kernelcuda.environment()
+    else:
+        env = None
+    if env is not None and not env.has_type(numpy_dtype):
+        platform = "dll"
+        if dtype is None:
+            numpy_dtype = generate.F64
 
     return numpy_dtype, fast, platform
 

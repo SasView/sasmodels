@@ -1,6 +1,8 @@
 """
 GPU driver for C kernels
 
+TODO: docs are out of date
+
 There should be a single GPU environment running on the system.  This
 environment is constructed on the first call to :func:`env`, and the
 same environment is returned on each call.
@@ -58,7 +60,7 @@ import time
 import numpy as np  # type: ignore
 
 
-# Attempt to setup opencl. This may fail if the opencl package is not
+# Attempt to setup opencl. This may fail if the pyopencl package is not
 # installed or if it is installed but there are no devices available.
 try:
     import pyopencl as cl  # type: ignore
@@ -130,7 +132,8 @@ _F64_PRAGMA = """\
 """
 
 def use_opencl():
-    return HAVE_OPENCL and os.environ.get("SAS_OPENCL", "").lower() != "none"
+    env = os.environ.get("SAS_OPENCL", "").lower()
+    return HAVE_OPENCL and env != "none" and not env.startswith("cuda")
 
 ENV = None
 def reset_environment():
@@ -178,29 +181,6 @@ def get_warp(kernel, queue):
     return kernel.get_work_group_info(
         cl.kernel_work_group_info.PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
         queue.device)
-
-def _stretch_input(vector, dtype, extra=1e-3, boundary=32):
-    # type: (np.ndarray, np.dtype, float, int) -> np.ndarray
-    """
-    Stretch an input vector to the correct boundary.
-
-    Performance on the kernels can drop by a factor of two or more if the
-    number of values to compute does not fall on a nice power of two
-    boundary.   The trailing additional vector elements are given a
-    value of *extra*, and so f(*extra*) will be computed for each of
-    them.  The returned array will thus be a subset of the computed array.
-
-    *boundary* should be a power of 2 which is at least 32 for good
-    performance on current platforms (as of Jan 2015).  It should
-    probably be the max of get_warp(kernel,queue) and
-    device.min_data_type_align_size//4.
-    """
-    remainder = vector.size % boundary
-    if remainder != 0:
-        size = vector.size + (boundary - remainder)
-        vector = np.hstack((vector, [extra] * (size - vector.size)))
-    return np.ascontiguousarray(vector, dtype=dtype)
-
 
 def compile_model(context, source, dtype, fast=False):
     # type: (cl.Context, str, np.dtype, bool) -> cl.Program
