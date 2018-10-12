@@ -427,16 +427,16 @@ Each .py file also contains a function::
 
 	def random():
 	...
-	
-This function provides a model-specific random parameter set which shows model 
-features in the USANS to SANS range.  For example, core-shell sphere sets the 
-outer radius of the sphere logarithmically in `[20, 20,000]`, which sets the Q 
-value for the transition from flat to falling.  It then uses a beta distribution 
-to set the percentage of the shape which is shell, giving a preference for very 
-thin or very thick shells (but never 0% or 100%).  Using `-sets=10` in sascomp 
-should show a reasonable variety of curves over the default sascomp q range.  
-The parameter set is returned as a dictionary of `{parameter: value, ...}`.  
-Any model parameters not included in the dictionary will default according to 
+
+This function provides a model-specific random parameter set which shows model
+features in the USANS to SANS range.  For example, core-shell sphere sets the
+outer radius of the sphere logarithmically in `[20, 20,000]`, which sets the Q
+value for the transition from flat to falling.  It then uses a beta distribution
+to set the percentage of the shape which is shell, giving a preference for very
+thin or very thick shells (but never 0% or 100%).  Using `-sets=10` in sascomp
+should show a reasonable variety of curves over the default sascomp q range.
+The parameter set is returned as a dictionary of `{parameter: value, ...}`.
+Any model parameters not included in the dictionary will default according to
 the code in the `_randomize_one()` function from sasmodels/compare.py.
 
 Python Models
@@ -700,8 +700,8 @@ This includes the following:
         to test for finite and not NaN.
     erf, erfc, tgamma, lgamma:  **do not use**
         Special functions that should be part of the standard, but are missing
-        or inaccurate on some platforms. Use sas_erf, sas_erfc and sas_gamma
-        instead (see below). Note: lgamma(x) has not yet been tested.
+        or inaccurate on some platforms. Use sas_erf, sas_erfc, sas_gamma
+        and sas_lgamma instead (see below).
 
 Some non-standard constants and functions are also provided:
 
@@ -768,11 +768,29 @@ file in the order given, otherwise these functions will not be available.
     sas_gamma(x):
         Gamma function sas_gamma\ $(x) = \Gamma(x)$.
 
-        The standard math function, tgamma(x) is unstable for $x < 1$
+        The standard math function, tgamma(x), is unstable for $x < 1$
         on some platforms.
 
         :code:`source = ["lib/sas_gamma.c", ...]`
         (`sas_gamma.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_gamma.c>`_)
+
+    sas_gammaln(x):
+        log gamma function sas_gammaln\ $(x) = \log \Gamma(|x|)$.
+
+        The standard math function, lgamma(x), is incorrect for single
+        precision on some platforms.
+
+        :code:`source = ["lib/sas_gammainc.c", ...]`
+        (`sas_gammainc.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_gammainc.c>`_)
+
+    sas_gammainc(a, x), sas_gammaincc(a, x):
+        Incomplete gamma function
+        sas_gammainc\ $(a, x) = \int_0^x t^{a-1}e^{-t}\,dt / \Gamma(a)$
+        and complementary incomplete gamma function
+        sas_gammaincc\ $(a, x) = \int_x^\infty t^{a-1}e^{-t}\,dt / \Gamma(a)$
+
+        :code:`source = ["lib/sas_gammainc.c", ...]`
+        (`sas_gammainc.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_gammainc.c>`_)
 
     sas_erf(x), sas_erfc(x):
         Error function
