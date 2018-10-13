@@ -61,6 +61,7 @@ import os
 import warnings
 import logging
 import time
+import re
 
 import numpy as np  # type: ignore
 
@@ -145,6 +146,48 @@ def has_type(dtype):
     # TODO: check if pycuda support F16
     return dtype in (generate.F32, generate.F64)
 
+
+FUNCTION_PATTERN = re.compile(r"""^
+  (?P<space>\s*)                   # initial space
+  (?P<qualifiers>^(?:\s*\b\w+\b\s*)+) # one or more qualifiers before function
+  (?P<function>\s*\b\w+\b\s*[(])      # function name plus open parens
+  """, re.VERBOSE|re.MULTILINE)
+
+MARKED_PATTERN = re.compile(r"""
+  \b(return|else|kernel|device|__device__)\b
+  """, re.VERBOSE|re.MULTILINE)
+
+def _add_device_tag(match):
+    # type: (None) -> str
+    # Note: should be re.Match, but that isn't a simple type
+    """
+    replace qualifiers with __device__ qualifiers if needed
+    """
+    qualifiers = match.group("qualifiers")
+    if MARKED_PATTERN.search(qualifiers):
+        start, end = match.span()
+        return match.string[start:end]
+    else:
+        function = match.group("function")
+        space = match.group("space")
+        return "".join((space, "__device__ ", qualifiers, function))
+
+def mark_device_functions(source):
+    # type: (str) -> str
+    """
+    Mark all function declarations as __device__ functions (except kernel).
+    """
+    return FUNCTION_PATTERN.sub(_add_device_tag, source)
+
+def show_device_functions(source):
+    # type: (str) -> str
+    """
+    Show all discovered function declarations, but don't change any.
+    """
+    for match in FUNCTION_PATTERN.finditer(source):
+        print(match.group('qualifiers').replace('\n',r'\n'), match.group('function'), '(')
+    return source
+
 def compile_model(source, dtype, fast=False):
     # type: (str, np.dtype, bool) -> SourceModule
     """
@@ -162,8 +205,14 @@ def compile_model(source, dtype, fast=False):
 
     source_list.insert(0, "#define USE_SINCOS\n")
     source = "\n".join(source_list)
-    options = '-use_fast_math' if fast else None
+    #source = show_device_functions(source)
+    source = mark_device_functions(source)
+    #with open('/tmp/kernel.cu', 'w') as fd: fd.write(source)
+    #print(source)
+    #options = ['--verbose', '-E']
+    options = ['--use_fast_math'] if fast else None
     program = SourceModule(source, no_extern_c=True, options=options) # include_dirs=[...]
+
     #print("done with "+program)
     return program
 

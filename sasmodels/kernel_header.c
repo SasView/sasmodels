@@ -4,8 +4,6 @@
 # define USE_CUDA
 #elif defined(_OPENMP)
 # define USE_OPENMP
-#elif defined(__CUDACC__)
-# define USE_CUDA
 #endif
 
 // Use SAS_DOUBLE to force the use of double even for float kernels
@@ -16,14 +14,10 @@
 #ifdef USE_OPENCL
 
    #define USE_GPU
+   #define pglobal global
+   #define pconstant constant
+
    typedef int int32_t;
-   #define global_par global
-   #define local_par local
-   #define constant_par constant
-   #define global_var global
-   #define local_var local
-   #define constant_var constant
-   #define __device__
 
    #if defined(USE_SINCOS)
    #  define SINCOS(angle,svar,cvar) svar=sincos(angle,&cvar)
@@ -44,13 +38,10 @@
 #elif defined(USE_CUDA)
 
    #define USE_GPU
-   #define global_par
-   #define local_par
-   #define constant_par const
-   #define global_var
-   #define local_var __shared__
-   #define constant_var __constant__
-
+   #define local __shared__
+   #define pglobal
+   #define constant __constant__
+   #define pconstant const
    #define kernel extern "C" __global__
 
    // OpenCL powr(a,b) = C99 pow(a,b), b >= 0
@@ -66,13 +57,10 @@
 
 #else // !USE_OPENCL && !USE_CUDA
 
-   #define global_par
-   #define local_par
-   #define constant_par const
-   #define global_var
-   #define local_var
-   #define constant_var const
-   #define __device__
+   #define local
+   #define pglobal
+   #define constant const
+   #define pconstant const
 
    #ifdef __cplusplus
       #include <cstdio>
@@ -192,11 +180,8 @@
 #ifndef M_4PI_3
 #  define M_4PI_3 4.18879020478639
 #endif
-__device__
 inline double square(double x) { return x*x; }
-__device__
 inline double cube(double x) { return x*x*x; }
-__device__
 inline double sas_sinx_x(double x) { return x==0 ? 1.0 : sin(x)/x; }
 
 // CRUFT: support old style models with orientation received qx, qy and angles

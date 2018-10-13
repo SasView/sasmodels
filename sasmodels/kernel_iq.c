@@ -66,7 +66,6 @@ typedef union {
 // ===== Helper functions for magnetism =====
 
 // Return value restricted between low and high
-__device__
 static double clip(double value, double low, double high)
 {
   return (value < low ? low : (value > high ? high : value));
@@ -79,7 +78,6 @@ static double clip(double value, double low, double high)
 //     ud * (m_sigma_y - 1j*m_sigma_z);
 //     du * (m_sigma_y + 1j*m_sigma_z);
 // weights for spin crosssections: dd du real, ud real, uu, du imag, ud imag
-__device__
 static void set_spin_weights(double in_spin, double out_spin, double weight[6])
 {
   in_spin = clip(in_spin, 0.0, 1.0);
@@ -104,7 +102,6 @@ static void set_spin_weights(double in_spin, double out_spin, double weight[6])
 }
 
 // Compute the magnetic sld
-__device__
 static double mag_sld(
   const unsigned int xs, // 0=dd, 1=du.real, 2=ud.real, 3=uu, 4=du.imag, 5=ud.imag
   const double qx, const double qy,
@@ -153,7 +150,6 @@ typedef struct {
 // Fill in the rotation matrix R from the view angles (theta, phi) and the
 // jitter angles (dtheta, dphi).  This matrix can be applied to all of the
 // (qx, qy) points in the image to produce R*[qx,qy]' = [qa,qc]'
-__device__
 static void
 qac_rotation(
     QACRotation *rotation,
@@ -187,7 +183,6 @@ qac_rotation(
 
 // Apply the rotation matrix returned from qac_rotation to the point (qx,qy),
 // returning R*[qx,qy]' = [qa,qc]'
-__device__
 static void
 qac_apply(
     QACRotation *rotation,
@@ -215,7 +210,6 @@ typedef struct {
 // Fill in the rotation matrix R from the view angles (theta, phi, psi) and the
 // jitter angles (dtheta, dphi, dpsi).  This matrix can be applied to all of the
 // (qx, qy) points in the image to produce R*[qx,qy]' = [qa,qb,qc]'
-__device__
 static void
 qabc_rotation(
     QABCRotation *rotation,
@@ -262,7 +256,6 @@ qabc_rotation(
 
 // Apply the rotation matrix returned from qabc_rotation to the point (qx,qy),
 // returning R*[qx,qy]' = [qa,qb,qc]'
-__device__
 static void
 qabc_apply(
     QABCRotation *rotation,
@@ -284,10 +277,10 @@ void KERNEL_NAME(
     int32_t nq,                 // number of q values
     const int32_t pd_start,     // where we are in the dispersity loop
     const int32_t pd_stop,      // where we are stopping in the dispersity loop
-    global_par const ProblemDetails *details,
-    global_par const double *values,
-    global_par const double *q, // nq q values, with padding to boundary
-    global_par double *result,  // nq+1 return values, again with padding
+    pglobal const ProblemDetails *details,
+    pglobal const double *values,
+    pglobal const double *q, // nq q values, with padding to boundary
+    pglobal double *result,  // nq+1 return values, again with padding
     const double cutoff     // cutoff in the dispersity weight product
     )
 {
@@ -385,8 +378,8 @@ After expansion, the loop struction will look like the following:
   // --- PD_INIT(4) ---
   const int n4 = pd_length[4];
   const int p4 = pd_par[4];
-  global_var const double *v4 = pd_value + pd_offset[4];
-  global_var const double *w4 = pd_weight + pd_offset[4];
+  pglobal const double *v4 = pd_value + pd_offset[4];
+  pglobal const double *w4 = pd_weight + pd_offset[4];
   int i4 = (pd_start/pd_stride[4])%n4;  // position in level 4 at pd_start
 
   // --- PD_INIT(3) ---
@@ -572,8 +565,8 @@ After expansion, the loop struction will look like the following:
 #define PD_INIT(_LOOP) \
   const int n##_LOOP = details->pd_length[_LOOP]; \
   const int p##_LOOP = details->pd_par[_LOOP]; \
-  global_var const double *v##_LOOP = pd_value + details->pd_offset[_LOOP]; \
-  global_var const double *w##_LOOP = pd_weight + details->pd_offset[_LOOP]; \
+  pglobal const double *v##_LOOP = pd_value + details->pd_offset[_LOOP]; \
+  pglobal const double *w##_LOOP = pd_weight + details->pd_offset[_LOOP]; \
   int i##_LOOP = (pd_start/details->pd_stride[_LOOP])%n##_LOOP;
 
 // Jump into the middle of the dispersity loop
@@ -597,8 +590,8 @@ After expansion, the loop struction will look like the following:
 
 // Pointers to the start of the dispersity and weight vectors, if needed.
 #if MAX_PD>0
-  global_var const double *pd_value = values + NUM_VALUES;
-  global_var const double *pd_weight = pd_value + details->num_weights;
+  pglobal const double *pd_value = values + NUM_VALUES;
+  pglobal const double *pd_weight = pd_value + details->num_weights;
 #endif
 
 // The variable "step" is the current position in the dispersity loop.

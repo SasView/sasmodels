@@ -49,8 +49,8 @@ Copyright 1984, 1987, 1988 by Stephen L. Moshier
 Direct inquiries to 30 Frost Street, Cambridge, MA 02140
 */
 
-__device__ static
-double polevl( double x, constant_par double *coef, int N )
+static
+double polevl( double x, pconstant double *coef, int N )
 {
 
     int i = 0;
@@ -70,8 +70,8 @@ double polevl( double x, constant_par double *coef, int N )
  * Otherwise same as polevl.
  */
 
-__device__ static
-double p1evl( double x, constant_par double *coef, int N )
+static
+double p1evl( double x, pconstant double *coef, int N )
 {
     int i=0;
     double ans = x+coef[i];
