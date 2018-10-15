@@ -443,7 +443,7 @@ class GpuKernel(Kernel):
         self.result_b = cuda.mem_alloc(q_input.global_size[0] * dtype.itemsize)
         self.q_input = q_input # allocated by GpuInput above
 
-        self._need_release = [self.result_b, self.q_input]
+        self._need_release = [self.result_b]
         self.real = (np.float32 if dtype == generate.F32
                      else np.float64 if dtype == generate.F64
                      else np.float16 if dtype == generate.F16
@@ -466,7 +466,7 @@ class GpuKernel(Kernel):
         #call_details.show(values)
         # Call kernel and retrieve results
         last_nap = time.clock()
-        step = 1000000//self.q_input.nq + 1
+        step = 100000000//self.q_input.nq + 1
         #step = 1000000000
         for start in range(0, call_details.num_eval, step):
             stop = min(start + step, call_details.num_eval)
@@ -478,7 +478,7 @@ class GpuKernel(Kernel):
                 # Allow other processes to run
                 current_time = time.clock()
                 if current_time - last_nap > 0.5:
-                    time.sleep(0.05)
+                    time.sleep(0.001)
                     last_nap = current_time
         sync()
         cuda.memcpy_dtoh(self.result, self.result_b)
@@ -499,9 +499,9 @@ class GpuKernel(Kernel):
         """
         Release resources associated with the kernel.
         """
-        if self.result_b is not None:
-            self.result_b.free()
-            self.result_b = None
+        for p in self._need_release:
+            p.free()
+        self._need_release = []
 
     def __del__(self):
         # type: () -> None

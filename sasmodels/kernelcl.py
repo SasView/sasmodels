@@ -226,8 +226,16 @@ class GpuEnvironment(object):
 
         self.context = None
         if 'SAS_OPENCL' in os.environ:
-            #Setting PYOPENCL_CTX as a SAS_OPENCL to create cl context
-            os.environ["PYOPENCL_CTX"] = os.environ["SAS_OPENCL"]
+            # Set the PyOpenCL environment variable PYOPENCL_CTX 
+            # from SAS_OPENCL=driver:device.  Ignore the generic
+            # SAS_OPENCL=opencl, which is used to select the default 
+            # OpenCL device.  Don't need to check for "none" or
+            # "cuda" since use_opencl() would return False if they
+            # were defined, and we wouldn't get here.
+            dev_str = os.environ["SAS_OPENCL"]
+            if dev_str and dev_str.lower() != "opencl":
+                os.environ["PYOPENCL_CTX"] = dev_str
+
         if 'PYOPENCL_CTX' in os.environ:
             self._create_some_context()
 
@@ -567,7 +575,7 @@ class GpuKernel(Kernel):
                 wait_for[0].wait()
                 current_time = time.clock()
                 if current_time - last_nap > 0.5:
-                    time.sleep(0.05)
+                    time.sleep(0.001)
                     last_nap = current_time
         cl.enqueue_copy(self.queue, self.result, self.result_b)
         #print("result", self.result)
