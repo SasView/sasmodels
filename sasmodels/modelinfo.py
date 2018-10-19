@@ -462,7 +462,8 @@ class ParameterTable(object):
                           for p in self.kernel_parameters)
         self.is_asymmetric = any(p.name == 'psi' for p in self.kernel_parameters)
         self.magnetism_index = [k for k, p in enumerate(self.call_parameters)
-                                if p.id.startswith('M0:')]
+                                if p.id.endswith('_M0')]
+
         self.pd_1d = set(p.name for p in self.call_parameters
                          if p.polydisperse and p.type not in ('orientation', 'magnetic'))
         self.pd_2d = set(p.name for p in self.call_parameters if p.polydisperse)
@@ -581,21 +582,21 @@ class ParameterTable(object):
         # Add the magnetic parameters to the end of the call parameter list.
         if self.nmagnetic > 0:
             full_list.extend([
-                Parameter('up:frac_i', '', 0., [0., 1.],
+                Parameter('up_frac_i', '', 0., [0., 1.],
                           'magnetic', 'fraction of spin up incident'),
-                Parameter('up:frac_f', '', 0., [0., 1.],
+                Parameter('up_frac_f', '', 0., [0., 1.],
                           'magnetic', 'fraction of spin up final'),
-                Parameter('up:angle', 'degrees', 0., [0., 360.],
+                Parameter('up_angle', 'degrees', 0., [0., 360.],
                           'magnetic', 'spin up angle'),
             ])
             slds = [p for p in full_list if p.type == 'sld']
             for p in slds:
                 full_list.extend([
-                    Parameter('M0:'+p.id, '1e-6/Ang^2', 0., [-np.inf, np.inf],
+                    Parameter(p.id+'_M0', '1e-6/Ang^2', 0., [-np.inf, np.inf],
                               'magnetic', 'magnetic amplitude for '+p.description),
-                    Parameter('mtheta:'+p.id, 'degrees', 0., [-90., 90.],
+                    Parameter(p.id+'_mtheta', 'degrees', 0., [-90., 90.],
                               'magnetic', 'magnetic latitude for '+p.description),
-                    Parameter('mphi:'+p.id, 'degrees', 0., [-180., 180.],
+                    Parameter(p.id+'_mphi', 'degrees', 0., [-180., 180.],
                               'magnetic', 'magnetic longitude for '+p.description),
                 ])
         #print("call parameters", full_list)
@@ -635,8 +636,8 @@ class ParameterTable(object):
         early, and rerender the table when it is changed.
 
         Parameters marked as sld will automatically have a set of associated
-        magnetic parameters (m0:p, mtheta:p, mphi:p), as well as polarization
-        information (up:theta, up:frac_i, up:frac_f).
+        magnetic parameters (p_M0, p_mtheta, p_mphi), as well as polarization
+        information (up_theta, up_frac_i, up_frac_f).
         """
         # control parameters go first
         control = [p for p in self.kernel_parameters if p.is_control]
@@ -663,9 +664,9 @@ class ParameterTable(object):
             """add the named parameter, and related magnetic parameters if any"""
             result.append(expanded_pars[name])
             if is2d:
-                for tag in 'M0:', 'mtheta:', 'mphi:':
-                    if tag+name in expanded_pars:
-                        result.append(expanded_pars[tag+name])
+                for tag in '_M0', '_mtheta', '_mphi':
+                    if name+tag in expanded_pars:
+                        result.append(expanded_pars[name+tag])
 
         # Gather the user parameters in order
         result = control + self.COMMON
@@ -698,11 +699,11 @@ class ParameterTable(object):
             else:
                 append_group(p.id)
 
-        if is2d and 'up:angle' in expanded_pars:
+        if is2d and 'up_angle' in expanded_pars:
             result.extend([
-                expanded_pars['up:frac_i'],
-                expanded_pars['up:frac_f'],
-                expanded_pars['up:angle'],
+                expanded_pars['up_frac_i'],
+                expanded_pars['up_frac_f'],
+                expanded_pars['up_angle'],
             ])
 
         return result
@@ -1022,4 +1023,9 @@ class ModelInfo(object):
                          for p in self.parameters.kernel_parameters
                          for k in range(control+1, p.length+1)
                          if p.length > 1)
+            for p in self.parameters.kernel_parameters:
+                if p.length > 1 and p.type == "sld":
+                    for k in range(control+1, p.length+1):
+                        base = p.id+str(k)
+                        hidden.update((base+"_M0", base+"_mtheta", base+"_mphi"))
         return hidden
