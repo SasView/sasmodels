@@ -163,9 +163,11 @@ class PyKernel(Kernel):
         # Generate a closure which calls the form_volume if it exists.
         self._volume_args = volume_args
         volume = model_info.form_volume
+        shell = model_info.shell_volume
         radius = model_info.effective_radius
-        self._volume = ((lambda: volume(*volume_args)) if volume
-                        else (lambda: 1.0))
+        self._volume = ((lambda: (shell(*volume_args), volume(*volume_args))) if shell and volume
+                        else (lambda: [volume(*volume_args)]*2) if volume
+                        else (lambda: (1.0, 1.0)))
         self._radius = ((lambda mode: radius(mode, *volume_args)) if radius
                         else (lambda mode: cbrt(0.75/pi*volume(*volume_args))) if volume
                         else (lambda mode: 1.0))
@@ -224,7 +226,7 @@ def _loops(parameters,    # type: np.ndarray
     if call_details.num_active == 0:
         total = form()
         weight_norm = 1.0
-        weighted_volume = form_volume()
+        weighted_shell, weighted_form = form_volume()
         weighted_radius = form_radius()
 
     else:
@@ -232,7 +234,8 @@ def _loops(parameters,    # type: np.ndarray
         pd_weight = values[2+n_pars + call_details.num_weights:]
 
         weight_norm = 0.0
-        weighted_volume = 0.0
+        weighted_form = 0.0
+        weighted_shell = 0.0
         weighted_radius = 0.0
         partial_weight = np.NaN
         weight = np.NaN
@@ -271,10 +274,12 @@ def _loops(parameters,    # type: np.ndarray
                 # update value and norm
                 total += weight * Iq
                 weight_norm += weight
-                weighted_volume += weight * form_volume()
+                shell, form = form_volume()
+                weighted_form += weight * form
+                weighted_shell += weight * shell
                 weighted_radius += weight * form_radius()
 
-    result = np.hstack((total, weight_norm, weighted_volume, weighted_radius))
+    result = np.hstack((total, weight_norm, weighted_form, weighted_shell, weighted_radius))
     return result
 
 

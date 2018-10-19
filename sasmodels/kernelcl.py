@@ -538,8 +538,8 @@ class GpuKernel(Kernel):
         self.dim = '2d' if q_input.is_2d else '1d'
         # leave room for f1/f2 results in case we need to compute beta for 1d models
         nout = 2 if self.info.have_Fq and self.dim == '1d' else 1
-        # plus 3 weight, volume, radius
-        self.result = np.empty(q_input.nq*nout + 3, self.dtype)
+        # +4 for total weight, shell volume, effective radius, form volume
+        self.result = np.empty(q_input.nq*nout + 4, self.dtype)
 
         # Inputs and outputs for each kernel call
         # Note: res may be shorter than res_b if global_size != nq

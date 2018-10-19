@@ -25,7 +25,7 @@
 //  NUM_MAGNETIC : the number of magnetic parameters
 //  MAGNETIC_PARS : a comma-separated list of indices to the sld
 //      parameters in the parameter table.
-//  CALL_VOLUME(table) : call the form volume function
+//  CALL_VOLUME(form, shell, table) : assign form and shell values
 //  CALL_EFFECTIVE_RADIUS(type, table) : call the R_eff function
 //  CALL_IQ(q, table) : call the Iq function for 1D calcs.
 //  CALL_IQ_A(q, table) : call the Iq function with |q| for 2D data.
@@ -274,7 +274,6 @@ qabc_apply(
 #endif // _QABC_SECTION
 
 // ==================== KERNEL CODE ========================
-#define COMPUTE_F1_F2 defined(CALL_FQ)
 kernel
 void KERNEL_NAME(
     int32_t nq,                 // number of q values
@@ -344,40 +343,44 @@ void KERNEL_NAME(
   // seeing one q value (stored in the variable "this_result") while the dll
   // version must loop over all q.
   #ifdef USE_OPENCL
-    #if COMPUTE_F1_F2
+    #if defined(CALL_FQ)
       double weight_norm = (pd_start == 0 ? 0.0 : result[2*nq]);
-      double weighted_volume = (pd_start == 0 ? 0.0 : result[2*nq+1]);
-      double weighted_radius = (pd_start == 0 ? 0.0 : result[2*nq+2]);
+      double weighted_form = (pd_start == 0 ? 0.0 : result[2*nq+1]);
+      double weighted_shell = (pd_start == 0 ? 0.0 : result[2*nq+2]);
+      double weighted_radius = (pd_start == 0 ? 0.0 : result[2*nq+3]);
       double this_F2 = (pd_start == 0 ? 0.0 : result[2*q_index+0]);
       double this_F1 = (pd_start == 0 ? 0.0 : result[2*q_index+1]);
     #else
       double weight_norm = (pd_start == 0 ? 0.0 : result[nq]);
-      double weighted_volume = (pd_start == 0 ? 0.0 : result[nq+1]);
-      double weighted_radius = (pd_start == 0 ? 0.0 : result[nq+2]);
+      double weighted_form = (pd_start == 0 ? 0.0 : result[nq+1]);
+      double weighted_shell = (pd_start == 0 ? 0.0 : result[nq+2]);
+      double weighted_radius = (pd_start == 0 ? 0.0 : result[nq+3]);
       double this_result = (pd_start == 0 ? 0.0 : result[q_index]);
     #endif
   #else // !USE_OPENCL
-    #if COMPUTE_F1_F2
+    #if defined(CALL_FQ)
       double weight_norm = (pd_start == 0 ? 0.0 : result[2*nq]);
-      double weighted_volume = (pd_start == 0 ? 0.0 : result[2*nq+1]);
-      double weighted_radius = (pd_start == 0 ? 0.0 : result[2*nq+2]);
+      double weighted_form = (pd_start == 0 ? 0.0 : result[2*nq+1]);
+      double weighted_shell = (pd_start == 0 ? 0.0 : result[2*nq+2]);
+      double weighted_radius = (pd_start == 0 ? 0.0 : result[2*nq+3]);
     #else
       double weight_norm = (pd_start == 0 ? 0.0 : result[nq]);
-      double weighted_volume = (pd_start == 0 ? 0.0 : result[nq+1]);
-      double weighted_radius = (pd_start == 0 ? 0.0 : result[nq+2]);
+      double weighted_form = (pd_start == 0 ? 0.0 : result[nq+1]);
+      double weighted_shell = (pd_start == 0 ? 0.0 : result[nq+2]);
+      double weighted_radius = (pd_start == 0 ? 0.0 : result[nq+3]);
     #endif
     if (pd_start == 0) {
       #ifdef USE_OPENMP
       #pragma omp parallel for
       #endif
-      #if COMPUTE_F1_F2
+      #if defined(CALL_FQ)
           // 2*nq for F^2,F pairs
           for (int q_index=0; q_index < 2*nq; q_index++) result[q_index] = 0.0;
       #else
           for (int q_index=0; q_index < nq; q_index++) result[q_index] = 0.0;
       #endif
     }
-    //if (q_index==0) printf("start %d %g %g\n", pd_start, weighted_volume, result[0]);
+    //if (q_index==0) printf("start %d %g %g\n", pd_start, weighted_shell, result[0]);
 #endif // !USE_OPENCL
 
 
@@ -692,10 +695,11 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
     // Accumulate I(q)
     // Note: weight==0 must always be excluded
     if (weight > cutoff) {
-      weighted_volume += weight * CALL_VOLUME(local_values.table);
-      #if COMPUTE_F1_F2
+      double form, shell;
+      CALL_VOLUME(form, shell, local_values.table);
       weight_norm += weight;
-      #endif
+      weighted_form += weight * form;
+      weighted_shell += weight * shell;
       if (effective_radius_type != 0) {
         weighted_radius += weight * CALL_EFFECTIVE_RADIUS(effective_radius_type, local_values.table);
       }
@@ -746,7 +750,7 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
             }
           }
         #else  // !MAGNETIC
-          #if COMPUTE_F1_F2
+          #if defined(CALL_FQ)
             CALL_KERNEL(); // sets F1 and F2 by reference
           #else
             const double scattering = CALL_KERNEL();
@@ -755,14 +759,14 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
 //printf("q_index:%d %g %g %g %g\n", q_index, scattering, weight0);
 
         #ifdef USE_OPENCL
-          #if COMPUTE_F1_F2
+          #if defined(CALL_FQ)
             this_F2 += weight * F2;
             this_F1 += weight * F1;
           #else
             this_result += weight * scattering;
           #endif
         #else // !USE_OPENCL
-          #if COMPUTE_F1_F2
+          #if defined(CALL_FQ)
             result[2*q_index+0] += weight * F2;
             result[2*q_index+1] += weight * F1;
           #else
@@ -792,39 +796,42 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
 
 // Remember the current result and the updated norm.
 #ifdef USE_OPENCL
-  #if COMPUTE_F1_F2
+  #if defined(CALL_FQ)
     result[2*q_index+0] = this_F2;
     result[2*q_index+1] = this_F1;
     if (q_index == 0) {
       result[2*nq+0] = weight_norm;
-      result[2*nq+1] = weighted_volume;
-      result[2*nq+2] = weighted_radius;
+      result[2*nq+1] = weighted_form;
+      result[2*nq+3] = weighted_shell;
+      result[2*nq+3] = weighted_radius;
     }
   #else
     result[q_index] = this_result;
     if (q_index == 0) {
       result[nq+0] = weight_norm;
-      result[nq+1] = weighted_volume;
-      result[nq+2] = weighted_radius;
+      result[nq+1] = weighted_form;
+      result[nq+2] = weighted_shell;
+      result[nq+3] = weighted_radius;
     }
   #endif
 
-//if (q_index == 0) printf("res: %g/%g\n", result[0], weigthed_volume);
+//if (q_index == 0) printf("res: %g/%g\n", result[0], weighted_shell);
 #else // !USE_OPENCL
-  #if COMPUTE_F1_F2
+  #if defined(CALL_FQ)
     result[2*nq] = weight_norm;
-    result[2*nq+1] = weighted_volume;
-    result[2*nq+2] = weighted_radius;
+    result[2*nq+1] = weighted_form;
+    result[2*nq+2] = weighted_shell;
+    result[2*nq+3] = weighted_radius;
   #else
     result[nq] = weight_norm;
-    result[nq+1] = weighted_volume;
-    result[nq+2] = weighted_radius;
+    result[nq+1] = weighted_form;
+    result[nq+2] = weighted_shell;
+    result[nq+3] = weighted_radius;
   #endif
-//printf("res: %g/%g\n", result[0], weighted_volume);
+//printf("res: %g/%g\n", result[0], weighted_shell);
 #endif // !USE_OPENCL
 
 // ** clear the macros in preparation for the next kernel **
-#undef COMPUTE_F1_F2
 #undef PD_INIT
 #undef PD_OPEN
 #undef PD_CLOSE

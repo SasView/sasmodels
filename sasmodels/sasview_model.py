@@ -846,6 +846,7 @@ def test_product():
     S = _make_standard_model('hayter_msa')()
     P = _make_standard_model('cylinder')()
     model = MultiplicationModel(P, S)
+    model.setParam('radius_effective_mode', 1.0)
     value = model.evalDistribution([0.1, 0.1])
     if np.isnan(value):
         raise ValueError("cylinder*hatyer_msa returns null")

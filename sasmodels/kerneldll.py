@@ -99,6 +99,9 @@ except ImportError:
     pass
 # pylint: enable=unused-import
 
+# Compiler output is a byte stream that needs to be decode in python 3
+decode = (lambda s: s) if sys.version_info[0] < 3 else (lambda s: s.decode('utf8'))
+
 if "SAS_DLL_PATH" in os.environ:
     SAS_DLL_PATH = os.environ["SAS_DLL_PATH"]
 else:
@@ -183,7 +186,8 @@ def compile(source, output):
         shell = (os.name == 'nt')
         subprocess.check_output(command, shell=shell, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as exc:
-        raise RuntimeError("compile failed.\n%s\n%s"%(command_str, exc.output))
+        output = decode(exc.output)
+        raise RuntimeError("compile failed.\n%s\n%s"%(command_str, output))
     if not os.path.exists(output):
         raise RuntimeError("compile failed.  File is in %r"%source)
 
@@ -382,8 +386,8 @@ class DllKernel(Kernel):
         self.dim = '2d' if q_input.is_2d else '1d'
         # leave room for f1/f2 results in case we need to compute beta for 1d models
         nout = 2 if self.info.have_Fq else 1
-        # plus 3 weight, volume, radius
-        self.result = np.empty(q_input.nq*nout + 3, self.dtype)
+        # +4 for total weight, shell volume, effective radius, form volume
+        self.result = np.empty(q_input.nq*nout + 4, self.dtype)
         self.real = (np.float32 if self.q_input.dtype == generate.F32
                      else np.float64 if self.q_input.dtype == generate.F64
                      else np.float128)

@@ -1,21 +1,20 @@
-// TODO: interface to form_volume/shell_volume not yet settled
 static double
-shell_volume(double *total, double length_a, double b2a_ratio, double c2a_ratio)
+shell_volume(double length_a, double b2a_ratio, double c2a_ratio)
 {
-    double length_b = length_a * b2a_ratio;
-    double length_c = length_a * c2a_ratio;
-    double vol_shell = 2.0 * (length_a*length_b + length_a*length_c + length_b*length_c);
-    *total = length_a * length_b * length_c;
-    return vol_shell;
+    const double length_b = length_a * b2a_ratio;
+    const double length_c = length_a * c2a_ratio;
+    const double shell_volume = 2.0 * (length_a*length_b + length_a*length_c + length_b*length_c);
+    return shell_volume;
 }
 
 static double
 form_volume(double length_a, double b2a_ratio, double c2a_ratio)
 {
-    double total;
-    return shell_volume(&total, length_a, b2a_ratio, c2a_ratio);
+    const double length_b = length_a * b2a_ratio;
+    const double length_c = length_a * c2a_ratio;
+    const double form_volume = length_a * length_b * length_c;
+    return form_volume;
 }
-
 
 static double
 effective_radius(int mode, double length_a, double b2a_ratio, double c2a_ratio)

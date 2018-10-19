@@ -167,38 +167,37 @@ def _tag_parameter(par):
     par.name = par.id + vector_length
     return par
 
-def _intermediates(P, S, effective_radius):
-    # type: (np.ndarray, np.ndarray, float) -> OrderedDict[str, np.ndarray]
-    """
-    Returns intermediate results for standard product (P(Q)*S(Q))
-    """
-    return OrderedDict((
-        ("P(Q)", P),
-        ("S(Q)", S),
-        ("effective_radius", effective_radius),
-    ))
-
-def _intermediates_beta(F1,              # type: np.ndarray
-                        F2,              # type: np.ndarray
-                        S,               # type: np.ndarray
-                        scale,           # type: np.ndarray
-                        bg,              # type: np.ndarray
-                        effective_radius # type: float
-                        ):
+def _intermediates(
+        F1,               # type: np.ndarray
+        F2,               # type: np.ndarray
+        S,                # type: np.ndarray
+        scale,            # type: float
+        effective_radius, # type: float
+        beta_mode,        # type: bool
+        ):
     # type: (...) -> OrderedDict[str, Union[np.ndarray, float]]
     """
-    Returns intermediate results for beta approximation-enabled product. The result may be an array or a float.
+    Returns intermediate results for beta approximation-enabled product.
+    The result may be an array or a float.
     """
-    # TODO: 1. include calculated Q vector
-    # TODO: 2. consider implications if there are intermediate results in P(Q)
-    return OrderedDict((
-        ("P(Q)", scale*F2),
-        ("S(Q)", S),
-        ("beta(Q)", F1**2 / F2),
-        ("S_eff(Q)", 1 + (F1**2 / F2)*(S-1)),
-        ("effective_radius", effective_radius),
-        # ("I(Q)", scale*(F2 + (F1**2)*(S-1)) + bg),
-    ))
+    if beta_mode:
+        # TODO: 1. include calculated Q vector
+        # TODO: 2. consider implications if there are intermediate results in P(Q)
+        parts = OrderedDict((
+            ("P(Q)", scale*F2),
+            ("S(Q)", S),
+            ("beta(Q)", F1**2 / F2),
+            ("S_eff(Q)", 1 + (F1**2 / F2)*(S-1)),
+            ("effective_radius", effective_radius),
+            # ("I(Q)", scale*(F2 + (F1**2)*(S-1)) + bg),
+        ))
+    else:
+        parts = OrderedDict((
+            ("P(Q)", scale*F2),
+            ("S(Q)", S),
+            ("effective_radius", effective_radius),
+        ))
+    return parts
 
 class ProductModel(KernelModel):
     def __init__(self, model_info, P, S):
@@ -252,7 +251,33 @@ class ProductKernel(Kernel):
 
     def __call__(self, call_details, values, cutoff, magnetic):
         # type: (CallDetails, np.ndarray, float, bool) -> np.ndarray
+
         p_info, s_info = self.info.composition[1]
+        p_npars = p_info.parameters.npars
+        p_length = call_details.length[:p_npars]
+        p_offset = call_details.offset[:p_npars]
+        s_npars = s_info.parameters.npars
+        s_length = call_details.length[p_npars:p_npars+s_npars]
+        s_offset = call_details.offset[p_npars:p_npars+s_npars]
+
+        # Beta mode parameter is the first parameter after P and S parameters
+        have_beta_mode = p_info.have_Fq
+        beta_mode_offset = 2+p_npars+s_npars
+        beta_mode = (values[beta_mode_offset] > 0) if have_beta_mode else False
+        if beta_mode and self.p_kernel.dim== '2d':
+            raise NotImplementedError("beta not yet supported for 2D")
+
+        # R_eff type parameter is the second parameter after P and S parameters
+        # unless the model doesn't support beta mode, in which case it is first
+        have_radius_type = p_info.effective_radius_type is not None
+        radius_type_offset = 2+p_npars+s_npars + (1 if have_beta_mode else 0)
+        radius_type = int(values[radius_type_offset]) if have_radius_type else 0
+
+        # Retrieve the volume fraction, which is the second of the
+        # 'S' parameters in the parameter list, or 2+np in 0-origin,
+        # as well as the scale and background.
+        volfrac = values[3+p_npars]
+        scale, background = values[0], values[1]
 
         # if there are magnetic parameters, they will only be on the
         # form factor P, not the structure factor S.
@@ -267,29 +292,24 @@ class ProductKernel(Kernel):
         weights = values[nvalues:nvalues + 2*nweights]
 
         # Construct the calling parameters for P.
-        p_npars = p_info.parameters.npars
-        p_length = call_details.length[:p_npars]
-        p_offset = call_details.offset[:p_npars]
         p_details = make_details(p_info, p_length, p_offset, nweights)
-
-        # Set p scale to the volume fraction in s, which is the first of the
-        # 'S' parameters in the parameter list, or 2+np in 0-origin.
-        volfrac = values[2+p_npars]
-        p_values = [[volfrac, 0.0], values[2:2+p_npars], magnetism, weights]
+        p_values = [
+            [1., 0.], # scale=1, background=0,
+            values[2:2+p_npars],
+            magnetism,
+            weights]
         spacer = (32 - sum(len(v) for v in p_values)%32)%32
         p_values.append([0.]*spacer)
         p_values = np.hstack(p_values).astype(self.p_kernel.dtype)
 
         # Construct the calling parameters for S.
-        s_npars = s_info.parameters.npars
-        s_length = call_details.length[p_npars:p_npars+s_npars]
-        s_offset = call_details.offset[p_npars:p_npars+s_npars]
-        s_length = np.hstack((1, s_length))
-        s_offset = np.hstack((nweights, s_offset))
-        s_details = make_details(s_info, s_length, s_offset, nweights+1)
+        if radius_type > 0:
+            # If R_eff comes from form factor, make sure it is monodisperse.
+            # weight is set to 1 later, after the value array is created
+            s_length[0] = 1
+        s_details = make_details(s_info, s_length, s_offset, nweights)
         s_values = [
-            # scale=1, background=0,
-            [1., 0.],
+            [1., 0.], # scale=1, background=0,
             values[2+p_npars:2+p_npars+s_npars],
             weights,
         ]
@@ -297,54 +317,48 @@ class ProductKernel(Kernel):
         s_values.append([0.]*spacer)
         s_values = np.hstack(s_values).astype(self.s_kernel.dtype)
 
-        # beta mode is the first parameter after the structure factor pars
-        extra_offset = 2+p_npars+s_npars
-        if p_info.have_Fq:
-            beta_mode = values[extra_offset]
-            extra_offset += 1
-        else:
-            beta_mode = 0
-        if p_info.effective_radius_type is not None:
-            effective_radius_type = int(values[extra_offset])
-            extra_offset += 1
-        else:
-            effective_radius_type = 0
+        # Call the form factor kernel to compute <F> and <F^2>.
+        # If the model doesn't support Fq the returned <F> will be None.
+        F1, F2, effective_radius, shell_volume, volume_ratio = self.p_kernel.Fq(
+            p_details, p_values, cutoff, magnetic, radius_type)
 
-        # Call the kernels
-        scale, background = values[0], values[1]
-        if beta_mode:
-            F1, F2, volume_avg, effective_radius = self.p_kernel.beta(
-                p_details, p_values, cutoff, magnetic, effective_radius_type)
-            if effective_radius_type > 0:
-                # Plug R_eff from p into S model (initial value and pd value)
-                s_values[2] = s_values[2+s_npars+s_offset[0]] = effective_radius
-            s_result = self.s_kernel.Iq(s_details, s_values, cutoff, False)
-            combined_scale = scale*volfrac/volume_avg
+        # Call the structure factor kernel to compute S.
+        # Plug R_eff from the form factor into structure factor parameters
+        # and scale volume fraction by form:shell volume ratio. These changes
+        # needs to be both in the initial value slot as well as the
+        # polydispersity distribution slot in the values array due to
+        # implementation details in kernel_iq.c.
+        #print("R_eff=%d:%g, volfrac=%g, volume ratio=%g"%(radius_type, effective_radius, volfrac, volume_ratio))
+        if radius_type > 0:
+            # set the value to the model ER and set the weight to 1
+            s_values[2] = s_values[2+s_npars+s_offset[0]] = effective_radius
+            s_values[2+s_npars+s_offset[0]+nweights] = 1.0
+        s_values[3] = s_values[2+s_npars+s_offset[1]] = volfrac*volume_ratio
+        S = self.s_kernel.Iq(s_details, s_values, cutoff, False)
 
-            self.results = lambda: _intermediates_beta(F1, F2, s_result, volfrac/volume_avg, background, effective_radius)
-            final_result = combined_scale*(F2 + (F1**2)*(s_result - 1)) + background
+        # Determine overall scale factor. Hollow shapes are weighted by
+        # shell_volume, so that is needed for volume normalization.  For
+        # solid shapes we can use shell_volume as well since it is equal
+        # to form volume.
+        combined_scale = scale*volfrac/shell_volume
 
-        else:
-            p_result, effective_radius = self.p_kernel.Pq_Reff(
-                p_details, p_values, cutoff, magnetic, effective_radius_type)
-            if effective_radius_type > 0:
-                # Plug R_eff from p into S model (initial value and pd value)
-                s_values[2] = s_values[2+s_npars+s_offset[0]] = effective_radius
-            s_result = self.s_kernel.Iq(s_details, s_values, cutoff, False)
-            # remember the parts for plotting later
-            self.results = lambda: _intermediates(p_result, s_result, effective_radius)
-            final_result = scale*(p_result*s_result) + background
+        # Combine form factor and structure factor
+        #print("beta", beta_mode, F1, F2, S)
+        PS = F2 + F1**2*(S-1) if beta_mode else F2*S
+        final_result = combined_scale*PS + background
 
-        #call_details.show(values)
-        #print("values", values)
-        #p_details.show(p_values)
-        #print("=>", p_result)
-        #s_details.show(s_values)
-        #print("=>", s_result)
-        #import pylab as plt
-        #plt.subplot(211); plt.loglog(self.p_kernel.q_input.q, p_result, '-')
-        #plt.subplot(212); plt.loglog(self.s_kernel.q_input.q, s_result, '-')
-        #plt.figure()
+        # Capture intermediate values so user can see them.  These are
+        # returned as a lazy evaluator since they are only needed in the
+        # GUI, and not for each evaluation during a fit.
+        # TODO: return the results structure with the final results
+        # That way the model calcs are idempotent. Further, we can
+        # generalize intermediates to various other model types if we put it
+        # kernel calling interface.  Could do this as an "optional"
+        # return value in the caller, though in that case we could return
+        # the results directly rather than through a lazy evaluator.
+        self.results = lambda: _intermediates(
+            F1, F2, S, combined_scale, effective_radius, beta_mode)
+
         return final_result
 
     def release(self):

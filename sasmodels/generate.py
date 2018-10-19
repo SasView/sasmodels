@@ -714,6 +714,18 @@ def contains_Fq(source):
             return True
     return False
 
+_SHELL_VOLUME_PATTERN = re.compile(r"(^|\s)double\s+shell_volume[(]", flags=re.MULTILINE)
+def contains_shell_volume(source):
+    # type: (List[str]) -> bool
+    """
+    Return True if C source defines "void Fq(".
+    """
+    for code in source:
+        m = _SHELL_VOLUME_PATTERN.search(code)
+        if m is not None:
+            return True
+    return False
+
 def _add_source(source, code, path, lineno=1):
     """
     Add a file to the list of source code chunks, tagged with path and line.
@@ -766,6 +778,9 @@ def make_source(model_info):
     if isinstance(model_info.form_volume, str):
         pars = partable.form_volume_parameters
         source.append(_gen_fn(model_info, 'form_volume', pars))
+    if isinstance(model_info.shell_volume, str):
+        pars = partable.form_volume_parameters
+        source.append(_gen_fn(model_info, 'shell_volume', pars))
     if isinstance(model_info.Iq, str):
         pars = [q] + partable.iq_parameters
         source.append(_gen_fn(model_info, 'Iq', pars))
@@ -778,6 +793,9 @@ def make_source(model_info):
     if isinstance(model_info.Iqabc, str):
         pars = [qa, qb, qc] + partable.iq_parameters
         source.append(_gen_fn(model_info, 'Iqabc', pars))
+
+    # Check for shell_volume in source
+    is_hollow = contains_shell_volume(source)
 
     # What kind of 2D model do we need?  Is it consistent with the parameters?
     xy_mode = find_xy_mode(source)
@@ -801,17 +819,20 @@ def make_source(model_info):
     source.append("\\\n".join(p.as_definition()
                               for p in partable.kernel_parameters))
     # Define the function calls
-    call_effective_radius = "#define CALL_EFFECTIVE_RADIUS(mode, v) 0.0"
+    call_effective_radius = "#define CALL_EFFECTIVE_RADIUS(_mode, _v) 0.0"
     if partable.form_volume_parameters:
         refs = _call_pars("_v.", partable.form_volume_parameters)
-        call_volume = "#define CALL_VOLUME(_v) form_volume(%s)"%(",".join(refs))
+        if is_hollow:
+            call_volume = "#define CALL_VOLUME(_form, _shell, _v) do { _form = form_volume(%s); _shell = shell_volume(%s); } while (0)"%((",".join(refs),)*2)
+        else:
+            call_volume = "#define CALL_VOLUME(_form, _shell, _v) do { _form = _shell = form_volume(%s); } while (0)"%(",".join(refs))
         if model_info.effective_radius_type:
-            call_effective_radius = "#define CALL_EFFECTIVE_RADIUS(mode, _v) effective_radius(mode, %s)"%(",".join(refs))
+            call_effective_radius = "#define CALL_EFFECTIVE_RADIUS(_mode, _v) effective_radius(_mode, %s)"%(",".join(refs))
     else:
         # Model doesn't have volume.  We could make the kernel run a little
         # faster by not using/transferring the volume normalizations, but
         # the ifdef's reduce readability more than is worthwhile.
-        call_volume = "#define CALL_VOLUME(v) 1.0"
+        call_volume = "#define CALL_VOLUME(_form, _shell, _v) do { _form = _shell = 1.0; } while (0)"
     source.append(call_volume)
     source.append(call_effective_radius)
     model_refs = _call_pars("_v.", partable.iq_parameters)

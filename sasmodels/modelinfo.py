@@ -717,7 +717,7 @@ def isstr(x):
 
 
 #: Set of variables defined in the model that might contain C code
-C_SYMBOLS = ['Imagnetic', 'Iq', 'Iqxy', 'Iqac', 'Iqabc', 'form_volume', 'c_code']
+C_SYMBOLS = ['Imagnetic', 'Iq', 'Iqxy', 'Iqac', 'Iqabc', 'form_volume', 'shell_volume', 'c_code']
 
 def _find_source_lines(model_info, kernel_module):
     # type: (ModelInfo, ModuleType) -> None
@@ -802,6 +802,7 @@ def make_model_info(kernel_module):
     # TODO: check the structure of the tests
     info.tests = getattr(kernel_module, 'tests', [])
     info.form_volume = getattr(kernel_module, 'form_volume', None) # type: ignore
+    info.shell_volume = getattr(kernel_module, 'shell_volume', None) # type: ignore
     info.Iq = getattr(kernel_module, 'Iq', None) # type: ignore
     info.Iqxy = getattr(kernel_module, 'Iqxy', None) # type: ignore
     info.Iqac = getattr(kernel_module, 'Iqac', None) # type: ignore
@@ -920,15 +921,14 @@ class ModelInfo(object):
     #: True if the model defines an Fq function with signature
     #: void Fq(double q, double *F1, double *F2, ...)
     have_Fq = False
+    #: List of options for computing the effective radius of the shape,
+    #: or None if the model is not usable as a form factor model.
+    effective_radius_type = None   # type: List[str]
     #: List of C source files used to define the model.  The source files
     #: should define the *Iq* function, and possibly *Iqac* or *Iqabc* if the
     #: model defines orientation parameters. Files containing the most basic
     #: functions must appear first in the list, followed by the files that
-    #: use those functions.  Form factors are indicated by providing
-    #: an :attr:`ER` function.
-    effective_radius_type = None   # type: List[str]
-    #: Returns the occupied volume and the total volume for each parameter set.
-    #: See :attr:`ER` for details on the parameters.
+    #: use those functions.
     source = None           # type: List[str]
     #: The set of tests that must pass.  The format of the tests is described
     #: in :mod:`model_test`.
@@ -957,6 +957,14 @@ class ModelInfo(object):
     #: defined using a string containing C code), form_volume must also be
     #: C code, either defined as a string, or in the sources.
     form_volume = None      # type: Union[None, str, Callable[[np.ndarray], float]]
+    #: Returns the shell volume for python-based models.  Form volume and
+    #: shell volume are needed for volume normalization in the polydispersity
+    #: integral and structure interactions for hollow shapes.  If no
+    #: parameters are *volume* parameters, then shell volume is not needed.
+    #: For C-based models, (with :attr:`sources` defined, or with :attr:`Iq`
+    #: defined using a string containing C code), shell_volume must also be
+    #: C code, either defined as a string, or in the sources.
+    shell_volume = None      # type: Union[None, str, Callable[[np.ndarray], float]]
     #: Returns *I(q, a, b, ...)* for parameters *a*, *b*, etc. defined
     #: by the parameter table.  *Iq* can be defined as a python function, or
     #: as a C function.  If it is defined in C, then set *Iq* to the body of

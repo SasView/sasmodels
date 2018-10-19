@@ -1,19 +1,15 @@
-// TODO: interface to form_volume/shell_volume not yet settled
 static double
-shell_volume(double *total, double radius, double thickness)
+shell_volume(double radius, double thickness)
 {
-    //note that for the vesicle model, the volume is ONLY the shell volume
-    *total = M_4PI_3 * cube(radius+thickness);
-    return *total - M_4PI_3*cube(radius);
+    return M_4PI_3 * (cube(radius+thickness) - cube(radius));
 }
 
 static double
 form_volume(double radius, double thickness)
 {
-    //note that for the vesicle model, the volume is ONLY the shell volume
-    double total;
-    return shell_volume(&total, radius, thickness);
+    return M_4PI_3 * cube(radius+thickness);
 }
+
 
 static double
 effective_radius(int mode, double radius, double thickness)

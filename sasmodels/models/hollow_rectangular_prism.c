@@ -1,28 +1,27 @@
-// TODO: interface to form_volume/shell_volume not yet settled
 static double
-shell_volume(double *total, double length_a, double b2a_ratio, double c2a_ratio, double thickness)
+shell_volume(double length_a, double b2a_ratio, double c2a_ratio, double thickness)
 {
-    double length_b = length_a * b2a_ratio;
-    double length_c = length_a * c2a_ratio;
-    double a_core = length_a - 2.0*thickness;
-    double b_core = length_b - 2.0*thickness;
-    double c_core = length_c - 2.0*thickness;
-    double vol_core = a_core * b_core * c_core;
-    *total = length_a * length_b * length_c;
-    return *total - vol_core;
+    const double length_b = length_a * b2a_ratio;
+    const double length_c = length_a * c2a_ratio;
+    const double form_volume = length_a * length_b * length_c;
+    const double a_core = length_a - 2.0*thickness;
+    const double b_core = length_b - 2.0*thickness;
+    const double c_core = length_c - 2.0*thickness;
+    const double core_volume = a_core * b_core * c_core;
+    return form_volume - core_volume;
 }
 
 static double
 form_volume(double length_a, double b2a_ratio, double c2a_ratio, double thickness)
 {
-    double total;
-    return shell_volume(&total, length_a, b2a_ratio, c2a_ratio, thickness);
+    const double length_b = length_a * b2a_ratio;
+    const double length_c = length_a * c2a_ratio;
+    const double form_volume = length_a * length_b * length_c;
+    return form_volume;
 }
 
 static double
 effective_radius(int mode, double length_a, double b2a_ratio, double c2a_ratio, double thickness)
-//effective_radius_type = ["equivalent sphere","half length_a", "half length_b", "half length_c",
-//                         "equivalent outer circular cross-section","half ab diagonal","half diagonal"]
 // NOTE length_a is external dimension!
 {
     switch (mode) {
