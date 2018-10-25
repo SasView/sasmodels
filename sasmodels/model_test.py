@@ -58,7 +58,7 @@ import numpy as np  # type: ignore
 
 from . import core
 from .core import list_models, load_model_info, build_model
-from .direct_model import call_kernel, call_ER, call_VR
+from .direct_model import call_kernel, call_Fq
 from .exception import annotate_exception
 from .modelinfo import expand_pars
 from .kernelcl import use_opencl
@@ -214,8 +214,7 @@ def _hide_model_case_from_nose():
                 ({}, [0.001, 0.01, 0.1], [None]*3),
                 ({}, [(0.1, 0.1)]*2, [None]*2),
                 # test that ER/VR will run if they exist
-                ({}, 'ER', None),
-                ({}, 'VR', None),
+                ({}, 0.1, None, None, None, None, None),
                 ]
             tests = smoke_tests
             #tests = []
@@ -287,7 +286,7 @@ def _hide_model_case_from_nose():
         def run_one(self, model, test):
             # type: (KernelModel, TestCondition) -> None
             """Run a single test case."""
-            user_pars, x, y = test
+            user_pars, x, y = test[:3]
             pars = expand_pars(self.info.parameters, user_pars)
             invalid = invalid_pars(self.info.parameters, pars)
             if invalid:
@@ -300,39 +299,69 @@ def _hide_model_case_from_nose():
 
             self.assertEqual(len(y), len(x))
 
-            if x[0] == 'ER':
-                actual = np.array([call_ER(model.info, pars)])
-            elif x[0] == 'VR':
-                actual = np.array([call_VR(model.info, pars)])
-            elif isinstance(x[0], tuple):
+            if isinstance(x[0], tuple):
                 qx, qy = zip(*x)
                 q_vectors = [np.array(qx), np.array(qy)]
-                kernel = model.make_kernel(q_vectors)
-                actual = call_kernel(kernel, pars)
             else:
                 q_vectors = [np.array(x)]
-                kernel = model.make_kernel(q_vectors)
+
+            kernel = model.make_kernel(q_vectors)
+            if len(test) == 3:
                 actual = call_kernel(kernel, pars)
+                self._check_vectors(x, y, actual, 'I')
+                return actual
+            else:
+                y1 = y
+                y2 = test[3] if not isinstance(test[3], list) else [test[3]]
+                F1, F2, R_eff, volume, volume_ratio = call_Fq(kernel, pars)
+                if F1 is not None:  # F1 is none for models with Iq instead of Fq
+                    self._check_vectors(x, y1, F1, 'F')
+                self._check_vectors(x, y2, F2, 'F^2')
+                self._check_scalar(test[4], R_eff, 'R_eff')
+                self._check_scalar(test[5], volume, 'volume')
+                self._check_scalar(test[6], volume_ratio, 'form:shell ratio')
+                return F2
 
-            self.assertTrue(len(actual) > 0)
-            self.assertEqual(len(y), len(actual))
+        def _check_scalar(self, target, actual, name):
+            if target is None:
+                # smoke test --- make sure it runs and produces a value
+                self.assertTrue(not np.isnan(actual),
+                                'invalid %s: %s' % (name, actual))
+            elif np.isnan(target):
+                # make sure nans match
+                self.assertTrue(np.isnan(actual),
+                                '%s: expected:%s; actual:%s'
+                                % (name, target, actual))
+            else:
+                # is_near does not work for infinite values, so also test
+                # for exact values.
+                self.assertTrue(target == actual or is_near(target, actual, 5),
+                                '%s: expected:%s; actual:%s'
+                                % (name, target, actual))
 
-            for xi, yi, actual_yi in zip(x, y, actual):
+        def _check_vectors(self, x, target, actual, name='I'):
+            self.assertTrue(len(actual) > 0,
+                            '%s(...) expected return'%name)
+            if target is None:
+                return
+            self.assertEqual(len(target), len(actual),
+                             '%s(...) returned wrong length'%name)
+            for xi, yi, actual_yi in zip(x, target, actual):
                 if yi is None:
                     # smoke test --- make sure it runs and produces a value
                     self.assertTrue(not np.isnan(actual_yi),
-                                    'invalid f(%s): %s' % (xi, actual_yi))
+                                    'invalid %s(%s): %s' % (name, xi, actual_yi))
                 elif np.isnan(yi):
+                    # make sure nans match
                     self.assertTrue(np.isnan(actual_yi),
-                                    'f(%s): expected:%s; actual:%s'
-                                    % (xi, yi, actual_yi))
+                                    '%s(%s): expected:%s; actual:%s'
+                                    % (name, xi, yi, actual_yi))
                 else:
                     # is_near does not work for infinite values, so also test
-                    # for exact values.  Note that this will not
+                    # for exact values.
                     self.assertTrue(yi == actual_yi or is_near(yi, actual_yi, 5),
-                                    'f(%s); expected:%s; actual:%s'
-                                    % (xi, yi, actual_yi))
-            return actual
+                                    '%s(%s); expected:%s; actual:%s'
+                                    % (name, xi, yi, actual_yi))
 
     return ModelTestCase
 
@@ -344,6 +373,9 @@ def invalid_pars(partable, pars):
     names = set(p.id for p in partable.call_parameters)
     invalid = []
     for par in sorted(pars.keys()):
+        # special handling of R_eff mode, which is not a usual parameter
+        if par == 'radius_effective_type':
+            continue
         parts = par.split('_pd')
         if len(parts) > 1 and parts[1] not in ("", "_n", "nsigma", "type"):
             invalid.append(par)

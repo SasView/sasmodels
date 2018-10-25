@@ -68,6 +68,7 @@ Authorship and Verification
    (corrected VR calculation)
 * **Last Reviewed by:** Paul Butler **Date:** September 06, 2018
 """
+from __future__ import division
 
 import numpy as np
 from numpy import pi, inf, sin, cos
@@ -131,10 +132,17 @@ q = 0.1
 # april 6 2017, rkh added a 2d unit test, assume correct!
 qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
+radius = parameters[0][2]
+thickness = parameters[1][2]
+length = parameters[2][2]
 # Parameters for unit tests
 tests = [
     [{}, 0.00005, 1764.926],
-#    [{}, 'VR', 0.55555556],
+    [{}, 0.1, None, None,
+     (3./4*(radius+thickness)**2*length)**(1./3),  # R_eff from volume
+     pi*((radius+thickness)**2-radius**2)*length,  # shell volume
+     (radius+thickness)**2/((radius+thickness)**2 - radius**2), # form:shell ratio
+    ],
     [{}, 0.001, 1756.76],
     [{}, (qx, qy), 2.36885476192],
 ]

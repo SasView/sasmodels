@@ -161,9 +161,6 @@ def random():
     )
     return pars
 
-# ER defaults to 0.0
-# VR defaults to 1.0
-
 demo = dict(radius_effective=200, volfraction=0.2,
             radius_effective_pd=0.1, radius_effective_pd_n=40)
 # Q=0.001 is in the Taylor series, low Q part, so add Q=0.1,

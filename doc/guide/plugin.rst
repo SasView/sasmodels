@@ -1032,12 +1032,12 @@ PLEASE make sure that the answer value is correct (i.e. not a random number).
         [{"scale": 1., "background": 0., "sld": 6., "sld_solvent": 1.,
           "radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
          0.2, 0.228843],
-        [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45}, "ER", 120.],
-        [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45}, "VR", 1.],
+        [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
+         0.1, None, None, 120., None, 1.],  # q, F, F^2, R_eff, V, form:shell
     ]
 
 
-**tests=[[{parameters}, q, result], ...]** is a list of lists.
+**tests=[[{parameters}, q, Iq], ...]** is a list of lists.
 Each list is one test and contains, in order:
 
 - a dictionary of parameter values. This can be *{}* using the default
@@ -1049,9 +1049,12 @@ Each list is one test and contains, in order:
   and input value given.
 - input and output values can themselves be lists if you have several
   $q$ values to test for the same model parameters.
-- for testing *ER* and *VR*, give the inputs as "ER" and "VR" respectively;
-  the output for *VR* should be the sphere/shell ratio, not the individual
-  sphere and shell values.
+- for testing effective radius, volume and form:shell volume ratio, use the
+  extended form of the tests results, with *None, None, R_eff, V, V_r*
+  instead of *Iq*.  This calls the kernel *Fq* function instead of *Iq*.
+- for testing F and F^2 (used for beta approximation) do the same as the
+  effective radius test, but include values for the first two elements,
+  $<F(q)>$ and $<F^2(q)>$.
 
 .. _Test_Your_New_Model:
 
