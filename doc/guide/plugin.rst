@@ -1034,6 +1034,7 @@ PLEASE make sure that the answer value is correct (i.e. not a random number).
          0.2, 0.228843],
         [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
          0.1, None, None, 120., None, 1.],  # q, F, F^2, R_eff, V, form:shell
+        [{"@S": "hardsphere"}, 0.1, None],
     ]
 
 
@@ -1055,6 +1056,9 @@ Each list is one test and contains, in order:
 - for testing F and F^2 (used for beta approximation) do the same as the
   effective radius test, but include values for the first two elements,
   $<F(q)>$ and $<F^2(q)>$.
+- for testing interaction between form factor and structure factor, specify
+  the structure factor name in the parameters as *{"@S": "name", ...}* with
+  the remaining list of parameters defined by the *P@S* product model.
 
 .. _Test_Your_New_Model:
 

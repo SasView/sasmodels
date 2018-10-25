@@ -84,4 +84,5 @@ tests = [
      0.2, 0.228843],
     [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
      0.1, None, None, 120., None, 1.0],
+    [{"@S": "hardsphere"}, 0.1, None],
 ]

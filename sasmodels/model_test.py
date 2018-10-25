@@ -63,6 +63,7 @@ from .exception import annotate_exception
 from .modelinfo import expand_pars
 from .kernelcl import use_opencl
 from .kernelcuda import use_cuda
+from . import product
 
 # pylint: disable=unused-import
 try:
@@ -213,17 +214,32 @@ def _hide_model_case_from_nose():
                 # test vector form
                 ({}, [0.001, 0.01, 0.1], [None]*3),
                 ({}, [(0.1, 0.1)]*2, [None]*2),
-                # test that Fq will run
+                # test that Fq will run, and return R_eff, V, V_r
                 ({}, 0.1, None, None, None, None, None),
                 ]
             tests = smoke_tests
             #tests = []
             if self.info.tests is not None:
                 tests += self.info.tests
+            S_tests = [test for test in tests if '@S' in test[0]]
+            P_tests = [test for test in tests if '@S' not in test[0]]
             try:
                 model = build_model(self.info, dtype=self.dtype,
                                     platform=self.platform)
-                results = [self.run_one(model, test) for test in tests]
+                results = [self.run_one(model, test) for test in P_tests]
+                for test in S_tests:
+                    # pull the S model name out of the test defn
+                    pars = test[0].copy()
+                    s_name = pars.pop('@S')
+                    ps_test = [pars] + list(test[1:])
+                    # build the P@S model
+                    s_info = load_model_info(s_name)
+                    ps_info = product.make_product_info(self.info, s_info)
+                    ps_model = build_model(ps_info, dtype=self.dtype,
+                                           platform=self.platform)
+                    # run the tests
+                    results.append(self.run_one(ps_model, ps_test))
+
                 if self.stash:
                     for test, target, actual in zip(tests, self.stash[0], results):
                         assert np.all(abs(target-actual) < 5e-5*abs(actual)), \
