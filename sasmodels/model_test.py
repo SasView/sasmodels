@@ -4,7 +4,7 @@ Run model unit tests.
 
 Usage::
 
-    python -m sasmodels.model_test [opencl|dll|opencl_and_dll] model1 model2 ...
+    python -m sasmodels.model_test [opencl|cuda|dll] model1 model2 ...
 
     if model1 is 'all', then all except the remaining models will be tested
 
@@ -62,6 +62,7 @@ from .direct_model import call_kernel, call_ER, call_VR
 from .exception import annotate_exception
 from .modelinfo import expand_pars
 from .kernelcl import use_opencl
+from .kernelcuda import use_cuda
 
 # pylint: disable=unused-import
 try:
@@ -79,9 +80,8 @@ def make_suite(loaders, models):
     """
     Construct the pyunit test suite.
 
-    *loaders* is the list of kernel drivers to use, which is one of
-    *["dll", "opencl"]*, *["dll"]* or *["opencl"]*.  For python models,
-    the python driver is always used.
+    *loaders* is the list of kernel drivers to use (dll, opencl or cuda).
+    For python model the python driver is always used.
 
     *models* is the list of models to test, or *["all"]* to test all models.
     """
@@ -134,7 +134,7 @@ def make_suite(loaders, models):
         else:   # kernel implemented in C
 
             # test using dll if desired
-            if 'dll' in loaders or not use_opencl():
+            if 'dll' in loaders:
                 test_name = "%s-dll"%model_name
                 test_method_name = "test_%s_dll" % model_info.id
                 test = ModelTestCase(test_name, model_info,
@@ -155,6 +155,21 @@ def make_suite(loaders, models):
                 test = ModelTestCase(test_name, model_info,
                                      test_method_name,
                                      platform="ocl", dtype=None,
+                                     stash=stash)
+                #print("defining", test_name)
+                suite.addTest(test)
+
+            # test using cuda if desired and available
+            if 'cuda' in loaders and use_cuda():
+                test_name = "%s-cuda"%model_name
+                test_method_name = "test_%s_cuda" % model_info.id
+                # Using dtype=None so that the models that are only
+                # correct for double precision are not tested using
+                # single precision.  The choice is determined by the
+                # presence of *single=False* in the model file.
+                test = ModelTestCase(test_name, model_info,
+                                     test_method_name,
+                                     platform="cuda", dtype=None,
                                      stash=stash)
                 #print("defining", test_name)
                 suite.addTest(test)
@@ -219,7 +234,7 @@ def _hide_model_case_from_nose():
                     self.stash.append(results)
 
                 # Check for missing tests.  Only do so for the "dll" tests
-                # to reduce noise from both opencl and dll, and because
+                # to reduce noise from both opencl and cuda, and because
                 # python kernels use platform="dll".
                 if self.platform == "dll":
                     missing = []
@@ -367,10 +382,10 @@ def run_one(model):
     result = TextTestResult(stream, descriptions, verbosity)
 
     # Build a test suite containing just the model
-    loaders = ['opencl'] if use_opencl() else ['dll']
+    loader = 'opencl' if use_opencl() else 'cuda' if use_cuda() else 'dll'
     models = [model]
     try:
-        suite = make_suite(loaders, models)
+        suite = make_suite([loader], models)
     except Exception:
         import traceback
         stream.writeln(traceback.format_exc())
@@ -433,24 +448,31 @@ def main(*models):
             return 1
         loaders = ['opencl']
         models = models[1:]
+    elif models and models[0] == 'cuda':
+        if not use_cuda():
+            print("cuda is not available")
+            return 1
+        loaders = ['cuda']
+        models = models[1:]
     elif models and models[0] == 'dll':
         # TODO: test if compiler is available?
         loaders = ['dll']
         models = models[1:]
-    elif models and models[0] == 'opencl_and_dll':
-        loaders = ['opencl', 'dll'] if use_opencl() else ['dll']
-        models = models[1:]
     else:
-        loaders = ['opencl', 'dll'] if use_opencl() else ['dll']
+        loaders = ['dll']
+        if use_opencl():
+            loaders.append('opencl')
+        if use_cuda():
+            loaders.append('cuda')
     if not models:
         print("""\
 usage:
-  python -m sasmodels.model_test [-v] [opencl|dll] model1 model2 ...
+  python -m sasmodels.model_test [-v] [opencl|cuda|dll] model1 model2 ...
 
 If -v is included on the command line, then use verbose output.
 
-If neither opencl nor dll is specified, then models will be tested with
-both OpenCL and dll; the compute target is ignored for pure python models.
+If no platform is specified, then models will be tested with dll, and
+if available, OpenCL and CUDA; the compute target is ignored for pure python models.
 
 If model1 is 'all', then all except the remaining models will be tested.
 
@@ -470,7 +492,11 @@ def model_tests():
 
     Run "nosetests sasmodels" on the command line to invoke it.
     """
-    loaders = ['opencl', 'dll'] if use_opencl() else ['dll']
+    loaders = ['dll']
+    if use_opencl():
+        loaders.append('opencl')
+    if use_cuda():
+        loaders.append('cuda')
     tests = make_suite(loaders, ['all'])
     def build_test(test):
         # In order for nosetest to show the test name, wrap the test.run_all

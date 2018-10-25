@@ -40,6 +40,7 @@ import numpy as np  # type: ignore
 from . import core
 from . import kerneldll
 from . import kernelcl
+from . import kernelcuda
 from .data import plot_theory, empty_data1D, empty_data2D, load_data
 from .direct_model import DirectModel, get_mesh
 from .generate import FLOAT_RE, set_integration_size
@@ -114,7 +115,7 @@ Options (* for default):
 
     === environment variables ===
     -DSAS_MODELPATH=path sets directory containing custom models
-    -DSAS_OPENCL=vendor:device|none sets the target OpenCL device
+    -DSAS_OPENCL=vendor:device|cuda:device|none sets the target GPU device
     -DXDG_CACHE_HOME=~/.cache sets the pyopencl cache root (linux only)
     -DSAS_COMPILER=tinycc|msvc|mingw|unix sets the DLL compiler
     -DSAS_OPENMP=1 turns on OpenMP for the DLLs
@@ -723,7 +724,8 @@ def make_engine(model_info, data, dtype, cutoff, ngauss=0):
     if ngauss:
         set_integration_size(model_info, ngauss)
 
-    if dtype != "default" and not dtype.endswith('!') and not kernelcl.use_opencl():
+    if (dtype != "default" and not dtype.endswith('!') 
+            and not (kernelcl.use_opencl() or kernelcuda.use_cuda())):
         raise RuntimeError("OpenCL not available " + kernelcl.OPENCL_ERROR)
 
     model = core.build_model(model_info, dtype=dtype, platform="ocl")

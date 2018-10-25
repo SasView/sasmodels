@@ -1,18 +1,29 @@
 #ifdef __OPENCL_VERSION__
 # define USE_OPENCL
+#elif defined(__CUDACC__)
+# define USE_CUDA
 #elif defined(_OPENMP)
 # define USE_OPENMP
 #endif
 
+// Use SAS_DOUBLE to force the use of double even for float kernels
+#define SAS_DOUBLE dou ## ble
+
 // If opencl is not available, then we are compiling a C function
 // Note: if using a C++ compiler, then define kernel as extern "C"
 #ifdef USE_OPENCL
+
+   #define USE_GPU
+   #define pglobal global
+   #define pconstant constant
+
    typedef int int32_t;
-#  if defined(USE_SINCOS)
-#    define SINCOS(angle,svar,cvar) svar=sincos(angle,&cvar)
-#  else
-#    define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
-#  endif
+
+   #if defined(USE_SINCOS)
+   #  define SINCOS(angle,svar,cvar) svar=sincos(angle,&cvar)
+   #else
+   #  define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
+   #endif
    // Intel CPU on Mac gives strange values for erf(); on the verified
    // platforms (intel, nvidia, amd), the cephes erf() is significantly
    // faster than that available in the native OpenCL.
@@ -23,10 +34,35 @@
    #  define erff erf
    #  define erfcf erfc
    #endif
-#else // !USE_OPENCL
-// Use SAS_DOUBLE to force the use of double even for float kernels
-#  define SAS_DOUBLE dou ## ble
-#  ifdef __cplusplus
+
+#elif defined(USE_CUDA)
+
+   #define USE_GPU
+   #define local __shared__
+   #define pglobal
+   #define constant __constant__
+   #define pconstant const
+   #define kernel extern "C" __global__
+
+   // OpenCL powr(a,b) = C99 pow(a,b), b >= 0
+   // OpenCL pown(a,b) = C99 pow(a,b), b integer
+   #define powr(a,b) pow(a,b)
+   #define pown(a,b) pow(a,b)
+   //typedef int int32_t;
+   #if defined(USE_SINCOS)
+   #  define SINCOS(angle,svar,cvar) sincos(angle,&svar,&cvar)
+   #else
+   #  define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
+   #endif
+
+#else // !USE_OPENCL && !USE_CUDA
+
+   #define local
+   #define pglobal
+   #define constant const
+   #define pconstant const
+
+   #ifdef __cplusplus
       #include <cstdio>
       #include <cmath>
       using namespace std;
@@ -50,7 +86,7 @@
          #include <cstdint>
      #endif
      inline void SINCOS(double angle, double &svar, double &cvar) { svar=sin(angle); cvar=cos(angle); }
-#  else // !__cplusplus
+   #else // !__cplusplus
      #include <inttypes.h>  // C99 guarantees that int32_t types is here
      #include <stdio.h>
      #if defined(__TINYC__)
@@ -76,14 +112,12 @@
      // MSVC doesn't support C99, so no need for dllexport on C99 branch
      #define kernel
      #define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
-#  endif  // !__cplusplus
-#  define global
-#  define local
-#  define constant const
-// OpenCL powr(a,b) = C99 pow(a,b), b >= 0
-// OpenCL pown(a,b) = C99 pow(a,b), b integer
-#  define powr(a,b) pow(a,b)
-#  define pown(a,b) pow(a,b)
+   #endif  // !__cplusplus
+   // OpenCL powr(a,b) = C99 pow(a,b), b >= 0
+   // OpenCL pown(a,b) = C99 pow(a,b), b integer
+   #define powr(a,b) pow(a,b)
+   #define pown(a,b) pow(a,b)
+
 #endif // !USE_OPENCL
 
 #if defined(NEED_CBRT)
