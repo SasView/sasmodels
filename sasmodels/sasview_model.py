@@ -694,7 +694,7 @@ class SasviewModel(object):
         with calculation_lock:
             return self._calculate_Iq(qx, qy)
 
-    def _calculate_Iq(self, qx, qy=None):
+    def _calculate_Iq(self, qx, qy=None, Fq=False, effective_radius_type=1):
         if self._model is None:
             self._model = core.build_model(self._model_info)
         if qy is not None:
@@ -714,6 +714,10 @@ class SasviewModel(object):
         #print("params", self.params)
         #print("values", values)
         #print("is_mag", is_magnetic)
+        if Fq:
+            result = calculator.Fq(call_details, values, cutoff=self.cutoff,
+                                   magnetic=is_magnetic,
+                                   effective_radius_type=effective_radius_type)
         result = calculator(call_details, values, cutoff=self.cutoff,
                             magnetic=is_magnetic)
         lazy_results = getattr(calculator, 'results',
@@ -725,34 +729,26 @@ class SasviewModel(object):
 
         return result, lazy_results
 
-    def calculate_ER(self):
+
+    def calculate_ER(self, mode=1):
         # type: () -> float
         """
         Calculate the effective radius for P(q)*S(q)
 
         :return: the value of the effective radius
         """
-        if self._model_info.ER is None:
-            return 1.0
-        else:
-            value, weight = self._dispersion_mesh()
-            fv = self._model_info.ER(*value)
-            #print(values[0].shape, weights.shape, fv.shape)
-            return np.sum(weight * fv) / np.sum(weight)
+        Fq = self._calculate_Iq([0.1], True, mode)
+        return Fq[2]
 
     def calculate_VR(self):
         # type: () -> float
         """
         Calculate the volf ratio for P(q)*S(q)
 
-        :return: the value of the volf ratio
+        :return: the value of the form:shell volume ratio
         """
-        if self._model_info.VR is None:
-            return 1.0
-        else:
-            value, weight = self._dispersion_mesh()
-            whole, part = self._model_info.VR(*value)
-            return np.sum(weight * part) / np.sum(weight * whole)
+        Fq = self._calculate_Iq([0.1], True, mode)
+        return Fq[4]
 
     def set_dispersion(self, parameter, dispersion):
         # type: (str, weights.Dispersion) -> None

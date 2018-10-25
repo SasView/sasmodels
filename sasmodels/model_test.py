@@ -9,16 +9,17 @@ Usage::
     if model1 is 'all', then all except the remaining models will be tested
 
 Each model is tested using the default parameters at q=0.1, (qx, qy)=(0.1, 0.1),
-and the ER and VR are computed.  The return values at these points are not
-considered.  The test is only to verify that the models run to completion,
-and do not produce inf or NaN.
+and Fq is called to make sure R_eff, volume and volume ratio are computed.
+The return values at these points are not considered.  The test is only to
+verify that the models run to completion, and do not produce inf or NaN.
 
 Tests are defined with the *tests* attribute in the model.py file.  *tests*
 is a list of individual tests to run, where each test consists of the
 parameter values for the test, the q-values and the expected results.  For
-the effective radius test, the q-value should be 'ER'.  For the VR test,
-the q-value should be 'VR'.  For 1-D tests, either specify the q value or
-a list of q-values, and the corresponding I(q) value, or list of I(q) values.
+the effective radius test and volume ratio tests, use the extended output
+form, which checks each output of kernel.Fq. For 1-D tests, either specify
+the q value or a list of q-values, and the corresponding I(q) value, or
+list of I(q) values.
 
 That is::
 
@@ -31,8 +32,7 @@ That is::
         [ {parameters}, [(qx1, qy1), (qx2, qy2), ...],
                         [I(qx1, qy1), I(qx2, qy2), ...]],
 
-        [ {parameters}, 'ER', ER(pars) ],
-        [ {parameters}, 'VR', VR(pars) ],
+        [ {parameters}, q, F(q), F^2(q), R_eff, V, V_r ],
         ...
     ]
 
@@ -213,7 +213,7 @@ def _hide_model_case_from_nose():
                 # test vector form
                 ({}, [0.001, 0.01, 0.1], [None]*3),
                 ({}, [(0.1, 0.1)]*2, [None]*2),
-                # test that ER/VR will run if they exist
+                # test that Fq will run
                 ({}, 0.1, None, None, None, None, None),
                 ]
             tests = smoke_tests
@@ -248,9 +248,7 @@ def _hide_model_case_from_nose():
 
         def _find_missing_tests(self):
             # type: () -> None
-            """make sure there are 1D, 2D, ER and VR tests as appropriate"""
-            model_has_VR = callable(self.info.VR)
-            model_has_ER = callable(self.info.ER)
+            """make sure there are 1D and 2D tests as appropriate"""
             model_has_1D = True
             model_has_2D = any(p.type == 'orientation'
                                for p in self.info.parameters.kernel_parameters)
@@ -258,8 +256,6 @@ def _hide_model_case_from_nose():
             # Lists of tests that have a result that is not None
             single = [test for test in self.info.tests
                       if not isinstance(test[2], list) and test[2] is not None]
-            tests_has_VR = any(test[1] == 'VR' for test in single)
-            tests_has_ER = any(test[1] == 'ER' for test in single)
             tests_has_1D_single = any(isinstance(test[1], float) for test in single)
             tests_has_2D_single = any(isinstance(test[1], tuple) for test in single)
 
@@ -272,10 +268,6 @@ def _hide_model_case_from_nose():
                                         for test in multiple)
 
             missing = []
-            if model_has_VR and not tests_has_VR:
-                missing.append("VR")
-            if model_has_ER and not tests_has_ER:
-                missing.append("ER")
             if model_has_1D and not (tests_has_1D_single or tests_has_1D_multiple):
                 missing.append("1D")
             if model_has_2D and not (tests_has_2D_single or tests_has_2D_multiple):

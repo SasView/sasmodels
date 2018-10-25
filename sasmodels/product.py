@@ -60,8 +60,6 @@ def make_extra_pars(p_info):
         pars.append(par)
     return pars
 
-# TODO: core_shell_sphere model has suppressed the volume ratio calculation
-# revert it after making VR and ER available at run time as constraints.
 def make_product_info(p_info, s_info):
     # type: (ModelInfo, ModelInfo) -> ModelInfo
     """
@@ -125,7 +123,6 @@ def make_product_info(p_info, s_info):
     model_info.variant_info = None
     #model_info.tests = []
     #model_info.source = []
-    # Iq, Iqxy, form_volume, ER, VR and sesans
     # Remember the component info blocks so we can build the model
     model_info.composition = ('product', [p_info, s_info])
     model_info.control = p_info.control
@@ -330,7 +327,7 @@ class ProductKernel(Kernel):
         # implementation details in kernel_iq.c.
         #print("R_eff=%d:%g, volfrac=%g, volume ratio=%g"%(radius_type, effective_radius, volfrac, volume_ratio))
         if radius_type > 0:
-            # set the value to the model ER and set the weight to 1
+            # set the value to the model R_eff and set the weight to 1
             s_values[2] = s_values[2+s_npars+s_offset[0]] = effective_radius
             s_values[2+s_npars+s_offset[0]+nweights] = 1.0
         s_values[3] = s_values[2+s_npars+s_offset[1]] = volfrac*volume_ratio
@@ -365,39 +362,3 @@ class ProductKernel(Kernel):
         # type: () -> None
         self.p_kernel.release()
         self.s_kernel.release()
-
-
-def calc_er_vr(model_info, call_details, values):
-    # type: (ModelInfo, ParameterSet) -> Tuple[float, float]
-
-    if model_info.ER is None and model_info.VR is None:
-        return 1.0, 1.0
-
-    nvalues = model_info.parameters.nvalues
-    value = values[nvalues:nvalues + call_details.num_weights]
-    weight = values[nvalues + call_details.num_weights: nvalues + 2*call_details.num_weights]
-    npars = model_info.parameters.npars
-    # Note: changed from pairs ([v], [w]) to triples (p, [v], [w]), but the
-    # dispersion mesh code doesn't actually care about the nominal parameter
-    # value, p, so set it to None.
-    pairs = [(None, value[offset:offset+length], weight[offset:offset+length])
-             for p, offset, length
-             in zip(model_info.parameters.call_parameters[2:2+npars],
-                    call_details.offset,
-                    call_details.length)
-             if p.type == 'volume']
-    value, weight = dispersion_mesh(model_info, pairs)
-
-    if model_info.ER is not None:
-        individual_radii = model_info.ER(*value)
-        radius_effective = np.sum(weight*individual_radii) / np.sum(weight)
-    else:
-        radius_effective = 1.0
-
-    if model_info.VR is not None:
-        whole, part = model_info.VR(*value)
-        volume_ratio = np.sum(weight*part)/np.sum(weight*whole)
-    else:
-        volume_ratio = 1.0
-
-    return radius_effective, volume_ratio

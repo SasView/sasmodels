@@ -263,9 +263,9 @@ class Parameter(object):
     can automatically be promoted to magnetic parameters, each of which
     will have a magnitude and a direction, which may be different from
     other sld parameters. The volume parameters are used for calls
-    to form_volume within the kernel (required for volume normalization)
-    and for calls to ER and VR for effective radius and volume ratio
-    respectively.
+    to form_volume within the kernel (required for volume normalization),
+    to shell_volume (for hollow shapes), and to effective_radius (for
+    structure factor interactions) respectively.
 
     *description* is a short description of the parameter.  This will
     be displayed in the parameter table and used as a tool tip for the
@@ -798,8 +798,6 @@ def make_model_info(kernel_module):
     info.source = getattr(kernel_module, 'source', [])
     info.c_code = getattr(kernel_module, 'c_code', None)
     info.effective_radius = getattr(kernel_module, 'effective_radius', None)
-    info.ER = None  # CRUFT
-    info.VR = None  # CRUFT
     # TODO: check the structure of the tests
     info.tests = getattr(kernel_module, 'tests', [])
     info.form_volume = getattr(kernel_module, 'form_volume', None) # type: ignore
@@ -931,26 +929,8 @@ class ModelInfo(object):
     #: functions must appear first in the list, followed by the files that
     #: use those functions.
     source = None           # type: List[str]
-    #: The set of tests that must pass.  The format of the tests is described
-    #: in :mod:`model_test`.
-    tests = None            # type: List[TestCondition]
-    #: Returns the effective radius of the model given its volume parameters.
-    #: The presence of *ER* indicates that the model is a form factor model
-    #: that may be used together with a structure factor to form an implicit
-    #: multiplication model.
-    #:
-    #: The parameters to the *ER* function must be marked with type *volume*.
-    #: in the parameter table.  They will appear in the same order as they
-    #: do in the table.  The values passed to *ER* will be vectors, with one
-    #: value for each polydispersity condition.  For example, if the model
-    #: is polydisperse over both length and radius, then both length and
-    #: radius will have the same number of values in the vector, with one
-    #: value for each *length X radius*.  If only *radius* is polydisperse,
-    #: then the value for *length* will be repeated once for each value of
-    #: *radius*.  The *ER* function should return one effective radius for
-    #: each parameter set.  Multiplicity parameters will be received as
-    #: arrays, with one row per polydispersity condition.
-    c_code = None
+    #: inline source code, added after all elements of source
+    c_code = None           # type: Optional[str]
     #: Returns the form volume for python-based models.  Form volume is needed
     #: for volume normalization in the polydispersity integral.  If no
     #: parameters are *volume* parameters, then form volume is not needed.
@@ -1000,6 +980,9 @@ class ModelInfo(object):
     random = None           # type: Optional[Callable[[], Dict[str, float]]]
     #: Line numbers for symbols defining C code
     lineno = None           # type: Dict[str, int]
+    #: The set of tests that must pass.  The format of the tests is described
+    #: in :mod:`model_test`.
+    tests = None            # type: List[TestCondition]
 
     def __init__(self):
         # type: () -> None

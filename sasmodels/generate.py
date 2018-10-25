@@ -23,10 +23,12 @@ Small angle scattering models are defined by a set of kernel functions:
     *form_volume(p1, p2, ...)* returns the volume of the form with particular
     dimension, or 1.0 if no volume normalization is required.
 
-    *ER(p1, p2, ...)* returns the effective radius of the form with
-    particular dimensions.
+    *shell_volume(p1, p2, ...)* returns the volume of the shell for forms
+    which are hollow.
 
-    *VR(p1, p2, ...)* returns the volume ratio for core-shell style forms.
+    *effective_radius(mode, p1, p2, ...)* returns the effective radius of
+    the form with particular dimensions.  Mode determines the type of
+    effective radius returned, with mode=1 for equivalent volume.
 
     #define INVALID(v) (expr)  returns False if v.parameter is invalid
     for some parameter or other (e.g., v.bell_radius < v.radius).  If
@@ -71,9 +73,6 @@ effectively chopping the parameter weight distributions at the boundary
 of the infeasible region.  The resulting scattering will be set to
 background.  This will work correctly even when polydispersity is off.
 
-*ER* and *VR* are python functions which operate on parameter vectors.
-The constructor code will generate the necessary vectors for computing
-them with the desired polydispersity.
 The kernel module must set variables defining the kernel meta data:
 
     *id* is an implicit variable formed from the filename.  It will be
@@ -105,12 +104,6 @@ The kernel module must set variables defining the kernel meta data:
     *source* is the list of C-99 source files that must be joined to
     create the OpenCL kernel functions.  The files defining the functions
     need to be listed before the files which use the functions.
-
-    *ER* is a python function defining the effective radius.  If it is
-    not present, the effective radius is 0.
-
-    *VR* is a python function defining the volume ratio.  If it is not
-    present, the volume ratio is 1.
 
     *form_volume*, *Iq*, *Iqac*, *Iqabc* are strings containing
     the C source code for the body of the volume, Iq, and Iqac functions
