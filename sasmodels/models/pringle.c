@@ -108,7 +108,7 @@ effective_radius(int mode, double radius, double thickness, double alpha, double
 {
     switch (mode) {
     case 1: // equivalent sphere
-        return cbrt(0.75*radius*radius*thickness);
+        return cbrt(M_PI*radius*radius*thickness/M_4PI_3);
     case 2: // radius
         return radius;
     }

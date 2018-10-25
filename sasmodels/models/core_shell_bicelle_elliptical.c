@@ -13,7 +13,7 @@ static double
 radius_from_volume(double r_minor, double x_core, double thick_rim, double thick_face, double length)
 {
     const double volume_bicelle = form_volume(r_minor, x_core, thick_rim,thick_face,length);
-    return cbrt(0.75*volume_bicelle/M_PI);
+    return cbrt(volume_bicelle/M_4PI_3);
 }
 
 static double

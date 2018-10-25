@@ -16,7 +16,7 @@ static double
 radius_from_volume(double radius, double thickness, double length)
 {
     const double volume_outer_cyl = form_volume(radius,thickness,length);
-    return cbrt(0.75*volume_outer_cyl/M_PI);
+    return cbrt(volume_outer_cyl/M_4PI_3);
 }
 
 static double

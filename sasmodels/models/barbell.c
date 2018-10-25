@@ -65,7 +65,7 @@ static double
 radius_from_volume(double radius_bell, double radius, double length)
 {
     const double vol_barbell = form_volume(radius_bell,radius,length);
-    return cbrt(0.75*vol_barbell/M_PI);
+    return cbrt(vol_barbell/M_4PI_3);
 }
 
 static double

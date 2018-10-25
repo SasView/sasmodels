@@ -15,7 +15,7 @@ _fq(double qab, double qc, double radius, double length)
 static double
 radius_from_volume(double radius, double length)
 {
-    return cbrt(0.75*radius*radius*length);
+    return cbrt(M_PI*radius*radius*length/M_4PI_3);
 }
 
 static double

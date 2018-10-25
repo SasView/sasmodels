@@ -9,7 +9,7 @@ effective_radius(int mode, double length_a, double length_b, double length_c)
 {
     switch (mode) {
     case 1: // equivalent sphere
-        return cbrt(0.75*length_a*length_b*length_c/M_PI);
+        return cbrt(length_a*length_b*length_c/M_4PI_3);
     case 2: // half length_a
         return 0.5 * length_a;
     case 3: // half length_b

@@ -41,7 +41,7 @@ static double
 radius_from_volume(double radius_equat_core, double x_core, double thick_shell, double x_polar_shell)
 {
     const double volume_ellipsoid = form_volume(radius_equat_core, x_core, thick_shell, x_polar_shell);
-    return cbrt(0.75*volume_ellipsoid/M_PI);
+    return cbrt(volume_ellipsoid/M_4PI_3);
 }
 
 static double

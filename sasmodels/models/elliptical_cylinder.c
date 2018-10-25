@@ -8,7 +8,7 @@ static double
 radius_from_volume(double radius_minor, double r_ratio, double length)
 {
     const double volume_ellcyl = form_volume(radius_minor,r_ratio,length);
-    return cbrt(0.75*volume_ellcyl/M_PI);
+    return cbrt(volume_ellcyl/M_4PI_3);
 }
 
 static double

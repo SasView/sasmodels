@@ -87,7 +87,7 @@ static double
 radius_from_volume(double radius, double radius_cap, double length)
 {
     const double vol_cappedcyl = form_volume(radius,radius_cap,length);
-    return cbrt(0.75*vol_cappedcyl/M_PI);
+    return cbrt(vol_cappedcyl/M_4PI_3);
 }
 
 static double
