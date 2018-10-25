@@ -75,6 +75,7 @@ except Exception as exc:
     OPENCL_ERROR = str(exc)
 
 from . import generate
+from .generate import F32, F64
 from .kernel import KernelModel, Kernel
 
 # pylint: disable=unused-import
@@ -164,7 +165,7 @@ def has_type(device, dtype):
     """
     Return true if device supports the requested precision.
     """
-    if dtype == generate.F32:
+    if dtype == F32:
         return True
     elif dtype == generate.F64:
         return "cl_khr_fp64" in device.extensions
@@ -218,77 +219,60 @@ def compile_model(context, source, dtype, fast=False):
 class GpuEnvironment(object):
     """
     GPU context, with possibly many devices, and one queue per device.
+
+    Because the environment can be reset during a live program (e.g., if the
+    user changes the active GPU device in the GUI), everything associated
+    with the device context must be cached in the environment and recreated
+    if the environment changes.  The *cache* attribute is a simple dictionary
+    which holds keys and references to objects, such as compiled kernels and
+    allocated buffers.  The running program should check in the cache for
+    long lived objects and create them if they are not there.  The program
+    should not hold onto cached objects, but instead only keep them active
+    for the duration of a function call.  When the environment is destroyed
+    then the *release* method for each active cache item is called before
+    the environment is freed.  This means that each cl buffer should be
+    in its own cache entry.
     """
     def __init__(self):
         # type: () -> None
         # find gpu context
-        #self.context = cl.create_some_context()
+        context_list = _create_some_context()
 
-        self.context = None
-        if 'SAS_OPENCL' in os.environ:
-            # Set the PyOpenCL environment variable PYOPENCL_CTX 
-            # from SAS_OPENCL=driver:device.  Ignore the generic
-            # SAS_OPENCL=opencl, which is used to select the default 
-            # OpenCL device.  Don't need to check for "none" or
-            # "cuda" since use_opencl() would return False if they
-            # were defined, and we wouldn't get here.
-            dev_str = os.environ["SAS_OPENCL"]
-            if dev_str and dev_str.lower() != "opencl":
-                os.environ["PYOPENCL_CTX"] = dev_str
+        # Find a context for F32 and for F64 (maybe the same one).
+        # F16 isn't good enough.
+        self.context = {}
+        for dtype in (F32, F64):
+            for context in context_list:
+                if has_type(context.devices[0], dtype):
+                    self.context[dtype] = context
+                    break
+            else:
+                self.context[dtype] = None
 
-        if 'PYOPENCL_CTX' in os.environ:
-            self._create_some_context()
-
-        if not self.context:
-            self.context = _get_default_context()
+        # Build a queue for each context
+        self.queue = {}
+        context = self.context[F32]
+        self.queue[F32] = cl.CommandQueue(context, context.devices[0])
+        if self.context[F64] == self.context[F32]:
+            self.queue[F64] = self.queue[F32]
+        else:
+            context = self.context[F64]
+            self.queue[F64] = cl.CommandQueue(context, context.devices[0])
 
         # Byte boundary for data alignment
-        #self.data_boundary = max(d.min_data_type_align_size
-        #                         for d in self.context.devices)
-        self.queues = [cl.CommandQueue(context, context.devices[0])
-                       for context in self.context]
+        #self.data_boundary = max(context.devices[0].min_data_type_align_size
+        #                         for context in self.context.values())
+
+        # Cache for compiled programs, and for items in context
         self.compiled = {}
+        self.cache = {}
 
     def has_type(self, dtype):
         # type: (np.dtype) -> bool
         """
         Return True if all devices support a given type.
         """
-        return any(has_type(d, dtype)
-                   for context in self.context
-                   for d in context.devices)
-
-    def get_queue(self, dtype):
-        # type: (np.dtype) -> cl.CommandQueue
-        """
-        Return a command queue for the kernels of type dtype.
-        """
-        for context, queue in zip(self.context, self.queues):
-            if all(has_type(d, dtype) for d in context.devices):
-                return queue
-
-    def get_context(self, dtype):
-        # type: (np.dtype) -> cl.Context
-        """
-        Return a OpenCL context for the kernels of type dtype.
-        """
-        for context in self.context:
-            if all(has_type(d, dtype) for d in context.devices):
-                return context
-
-    def _create_some_context(self):
-        # type: () -> cl.Context
-        """
-        Protected call to cl.create_some_context without interactivity.  Use
-        this if SAS_OPENCL is set in the environment.  Sets the *context*
-        attribute.
-        """
-        try:
-            self.context = [cl.create_some_context(interactive=False)]
-        except Exception as exc:
-            warnings.warn(str(exc))
-            warnings.warn("pyopencl.create_some_context() failed")
-            warnings.warn("the environment variable 'SAS_OPENCL' might not be set correctly")
+        return self.context.get(dtype, None) is not None
 
     def compile_program(self, name, source, dtype, fast, timestamp):
         # type: (str, str, np.dtype, bool, float) -> cl.Program
@@ -305,13 +289,56 @@ class GpuEnvironment(object):
         if program_timestamp < timestamp:
             del self.compiled[key]
         if key not in self.compiled:
-            context = self.get_context(dtype)
+            context = self.context[dtype]
             logging.info("building %s for OpenCL %s", key,
                          context.devices[0].name.strip())
-            program = compile_model(self.get_context(dtype),
+            program = compile_model(self.context[dtype],
                                     str(source), dtype, fast)
             self.compiled[key] = (program, timestamp)
         return program
+
+    def free_buffer(self, key):
+        if key in self.cache:
+            self.cache[key].release()
+            del self.cache[key]
+
+    def __del__(self):
+        for v in self.cache.values():
+            release = getattr(v, 'release', lambda: None)
+            release()
+        self.cache = {}
+
+_CURRENT_ID = 0
+def unique_id():
+    global _CURRENT_ID
+    _CURRENT_ID += 1
+    return _CURRENT_ID
+
+def _create_some_context():
+    # type: () -> cl.Context
+    """
+    Protected call to cl.create_some_context without interactivity.
+
+    Uses SAS_OPENCL or PYOPENCL_CTX if they are set in the environment,
+    otherwise scans for the most appropriate device using
+    :func:`_get_default_context`.  Ignore *SAS_OPENCL=OpenCL*, which
+    indicates that an OpenCL device should be used without specifying
+    which one (and not a CUDA device, or no GPU).
+    """
+    dev_str = os.environ["SAS_OPENCL"]
+    if dev_str and dev_str.lower() != "opencl":
+        #Setting PYOPENCL_CTX as a SAS_OPENCL to create cl context
+        os.environ["PYOPENCL_CTX"] = dev_str
+
+    if 'PYOPENCL_CTX' in os.environ:
+        try:
+            return [cl.create_some_context(interactive=False)]
+        except Exception as exc:
+            warnings.warn(str(exc))
+            warnings.warn("pyopencl.create_some_context() failed")
+            warnings.warn("the environment variable 'SAS_OPENCL' or 'PYOPENCL_CTX' might not be set correctly")
+
+    return _get_default_context()
 
 def _get_default_context():
     # type: () -> List[cl.Context]
@@ -391,8 +418,8 @@ class GpuModel(KernelModel):
         self.source = source
         self.dtype = dtype
         self.fast = fast
-        self.program = None # delay program creation
-        self._kernels = None
+        self.timestamp = generate.ocl_timestamp(self.info)
+        self._cache_key = unique_id()
 
     def __getstate__(self):
         # type: () -> Tuple[ModelInfo, str, np.dtype, bool]
@@ -401,41 +428,40 @@ class GpuModel(KernelModel):
     def __setstate__(self, state):
         # type: (Tuple[ModelInfo, str, np.dtype, bool]) -> None
         self.info, self.source, self.dtype, self.fast = state
-        self.program = None
 
     def make_kernel(self, q_vectors):
         # type: (List[np.ndarray]) -> "GpuKernel"
-        if self.program is None:
-            compile_program = environment().compile_program
-            timestamp = generate.ocl_timestamp(self.info)
-            self.program = compile_program(
+        return GpuKernel(self, q_vectors)
+
+    @property
+    def Iq(self):
+        return self._fetch_kernel('Iq')
+
+    def fetch_kernel(self, name):
+        # type: (str) -> cl.Kernel
+        """
+        Fetch the kernel from the environment by name, compiling it if it
+        does not already exist.
+        """
+        gpu = environment()
+        key = self._cache_key
+        if key not in gpu.cache:
+            program = gpu.compile_program(
                 self.info.name,
                 self.source['opencl'],
                 self.dtype,
                 self.fast,
-                timestamp)
+                self.timestamp)
             variants = ['Iq', 'Iqxy', 'Imagnetic']
             names = [generate.kernel_name(self.info, k) for k in variants]
-            kernels = [getattr(self.program, k) for k in names]
-            self._kernels = dict((k, v) for k, v in zip(variants, kernels))
-        is_2d = len(q_vectors) == 2
-        if is_2d:
-            kernel = [self._kernels['Iqxy'], self._kernels['Imagnetic']]
+            kernels = [getattr(program, k) for k in names]
+            data = dict((k, v) for k, v in zip(variants, kernels))
+            # keep a handle to program so GC doesn't collect
+            data['program'] = program
+            gpu.cache[key] = data
         else:
-            kernel = [self._kernels['Iq']]*2
-        return GpuKernel(kernel, self.dtype, self.info, q_vectors)
-
-    def release(self):
-        # type: () -> None
-        """
-        Free the resources associated with the model.
-        """
-        if self.program is not None:
-            self.program = None
-
-    def __del__(self):
-        # type: () -> None
-        self.release()
+            data = gpu.cache[key]
+        return data[name]
 
 # TODO: check that we don't need a destructor for buffers which go out of scope
 class GpuInput(object):
@@ -460,7 +486,6 @@ class GpuInput(object):
     def __init__(self, q_vectors, dtype=generate.F32):
         # type: (List[np.ndarray], np.dtype) -> None
         # TODO: do we ever need double precision q?
-        env = environment()
         self.nq = q_vectors[0].size
         self.dtype = np.dtype(dtype)
         self.is_2d = (len(q_vectors) == 2)
@@ -480,19 +505,27 @@ class GpuInput(object):
             self.q = np.empty(width, dtype=dtype)
             self.q[:self.nq] = q_vectors[0]
         self.global_size = [self.q.shape[0]]
-        context = env.get_context(self.dtype)
-        #print("creating inputs of size", self.global_size)
-        self.q_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
-                             hostbuf=self.q)
+        self._cache_key = unique_id()
+
+    @property
+    def q_b(self):
+        """Lazy creation of q buffer so it can survive context reset"""
+        env = environment()
+        key = self._cache_key
+        if key not in env.cache:
+            context = env.context[self.dtype]
+            #print("creating inputs of size", self.global_size)
+            buffer = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
+                               hostbuf=self.q)
+            env.cache[key] = buffer
+        return env.cache[key]
 
     def release(self):
         # type: () -> None
         """
-        Free the memory.
+        Free the buffer associated with the q value
         """
-        if self.q_b is not None:
-            self.q_b.release()
-            self.q_b = None
+        environment().free_buffer(id(self))
 
     def __del__(self):
         # type: () -> None
@@ -502,13 +535,17 @@ class GpuKernel(Kernel):
     """
     Callable SAS kernel.
 
-    *kernel* is the GpuKernel object to call
+    *model* is the GpuModel object to call
 
-    *model_info* is the module information
+    The following attributes are defined:
 
-    *q_vectors* is the q vectors at which the kernel should be evaluated
+    *info* is the module information
 
     *dtype* is the kernel precision
+
+    *dim* is '1d' or '2d'
+
+    *result* is a vector to contain the results of the call
 
     The resulting call method takes the *pars*, a list of values for
     the fixed parameters to the kernel, and *pd_pars*, a list of (value,weight)
@@ -518,45 +555,59 @@ class GpuKernel(Kernel):
 
     Call :meth:`release` when done with the kernel instance.
     """
-    def __init__(self, kernel, dtype, model_info, q_vectors):
+    def __init__(self, model, q_vectors):
         # type: (cl.Kernel, np.dtype, ModelInfo, List[np.ndarray]) -> None
-        q_input = GpuInput(q_vectors, dtype)
-        self.kernel = kernel
-        self.info = model_info
-        self.dtype = dtype
-        self.dim = '2d' if q_input.is_2d else '1d'
-        # plus three for the normalization values
-        self.result = np.empty(q_input.nq+1, dtype)
+        dtype = model.dtype
+        self.q_input = GpuInput(q_vectors, dtype)
+        self._model = model
+        self._as_dtype = (np.float32 if dtype == generate.F32
+                          else np.float64 if dtype == generate.F64
+                          else np.float16 if dtype == generate.F16
+                          else np.float32)  # will never get here, so use np.float32
+        self._cache_key = unique_id()
 
-        # Inputs and outputs for each kernel call
-        # Note: res may be shorter than res_b if global_size != nq
+        # attributes accessed from the outside
+        self.dim = '2d' if self.q_input.is_2d else '1d'
+        self.info = model.info
+        self.dtype = model.dtype
+
+        # holding place for the returned value
+        # plus one for the normalization values
+        self.result = np.empty(self.q_input.nq+1, dtype)
+
+    @property
+    def _result_b(self):
+        """Lazy creation of result buffer so it can survive context reset"""
         env = environment()
-        self.queue = env.get_queue(dtype)
-
-        self.result_b = cl.Buffer(self.queue.context, mf.READ_WRITE,
-                                  q_input.global_size[0] * dtype.itemsize)
-        self.q_input = q_input # allocated by GpuInput above
-
-        self._need_release = [self.result_b, self.q_input]
-        self.real = (np.float32 if dtype == generate.F32
-                     else np.float64 if dtype == generate.F64
-                     else np.float16 if dtype == generate.F16
-                     else np.float32)  # will never get here, so use np.float32
+        key = self._cache_key
+        if key not in env.cache:
+            context = env.context[self.dtype]
+            #print("creating inputs of size", self.global_size)
+            buffer = cl.Buffer(context, mf.READ_WRITE,
+                               self.q_input.global_size[0] * self.dtype.itemsize)
+            env.cache[key] = buffer
+        return env.cache[key]
 
     def __call__(self, call_details, values, cutoff, magnetic):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
-        context = self.queue.context
-        # Arrange data transfer to card
+        env = environment()
+        queue = env.queue[self._model.dtype]
+        context = queue.context
+
+        # Arrange data transfer to/from card
+        q_b = self.q_input.q_b
+        result_b = self._result_b
         details_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
                               hostbuf=call_details.buffer)
         values_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
                              hostbuf=values)
 
-        kernel = self.kernel[1 if magnetic else 0]
-        args = [
+        name = 'Iq' if self.dim == '1d' else 'Imagnetic' if magnetic else 'Iqxy'
+        kernel = self._model.fetch_kernel(name)
+        kernel_args = [
             np.uint32(self.q_input.nq), None, None,
-            details_b, values_b, self.q_input.q_b, self.result_b,
-            self.real(cutoff),
+            details_b, values_b, q_b, result_b,
+            self._as_dtype(cutoff),
         ]
         #print("Calling OpenCL")
         #call_details.show(values)
@@ -567,9 +618,9 @@ class GpuKernel(Kernel):
         for start in range(0, call_details.num_eval, step):
             stop = min(start + step, call_details.num_eval)
             #print("queuing",start,stop)
-            args[1:3] = [np.int32(start), np.int32(stop)]
-            wait_for = [kernel(self.queue, self.q_input.global_size, None,
-                               *args, wait_for=wait_for)]
+            kernel_args[1:3] = [np.int32(start), np.int32(stop)]
+            wait_for = [kernel(queue, self.q_input.global_size, None,
+                               *kernel_args, wait_for=wait_for)]
             if stop < call_details.num_eval:
                 # Allow other processes to run
                 wait_for[0].wait()
@@ -577,7 +628,7 @@ class GpuKernel(Kernel):
                 if current_time - last_nap > 0.5:
                     time.sleep(0.001)
                     last_nap = current_time
-        cl.enqueue_copy(self.queue, self.result, self.result_b)
+        cl.enqueue_copy(queue, self.result, result_b, wait_for=wait_for)
         #print("result", self.result)
 
         # Free buffers
@@ -597,9 +648,8 @@ class GpuKernel(Kernel):
         """
         Release resources associated with the kernel.
         """
-        for v in self._need_release:
-            v.release()
-        self._need_release = []
+        environment().free_buffer(id(self))
+        self.q_input.release()
 
     def __del__(self):
         # type: () -> None
