@@ -44,6 +44,7 @@ Precision defaults to 5 digits (relative).
 """
 from __future__ import print_function
 
+import argparse
 import sys
 import unittest
 
@@ -408,7 +409,7 @@ def run_one(model):
     return output
 
 
-def main(*models):
+def main():
     # type: (*str) -> int
     """
     Run tests given is models.
@@ -422,44 +423,35 @@ def main(*models):
         from unittest import TextTestRunner as TestRunner
         test_args = {}
 
-    if models and models[0] == '-v':
-        verbosity = 2
-        models = models[1:]
-    else:
-        verbosity = 1
-    if models and models[0] == 'opencl':
+    parser = argparse.ArgumentParser(description="Test SasModels Models")
+    parser.add_argument("-v", "--verbose", action="store_const",
+                        default=1, const=2, help="Use verbose output")
+    parser.add_argument("engine", metavar="[engine]",
+                        help="Engines on which to run the test.  "
+                        "Valid values are opencl, dll, and opencl_and_dll. "
+                        "Defaults to opencl_and_dll if no value is given")
+    parser.add_argument("models", nargs="*",
+                        help='The names of the models to be tested.  '
+                        'If the first model is "all", then all except the '
+                        'remaining models will be tested.')
+    args, models = parser.parse_known_args()
+
+    if args.engine == "opencl":
         if not use_opencl():
             print("opencl is not available")
             return 1
         loaders = ['opencl']
-        models = models[1:]
-    elif models and models[0] == 'dll':
-        # TODO: test if compiler is available?
-        loaders = ['dll']
-        models = models[1:]
-    elif models and models[0] == 'opencl_and_dll':
+    elif args.engine == "dll":
+        loaders = ["dll"]
+    elif args.engine == "opencl_and_dll":
         loaders = ['opencl', 'dll'] if use_opencl() else ['dll']
-        models = models[1:]
     else:
+        # Default to running both engines
         loaders = ['opencl', 'dll'] if use_opencl() else ['dll']
-    if not models:
-        print("""\
-usage:
-  python -m sasmodels.model_test [-v] [opencl|dll] model1 model2 ...
+        args.models.insert(0, args.engine)
 
-If -v is included on the command line, then use verbose output.
-
-If neither opencl nor dll is specified, then models will be tested with
-both OpenCL and dll; the compute target is ignored for pure python models.
-
-If model1 is 'all', then all except the remaining models will be tested.
-
-""")
-
-        return 1
-
-    runner = TestRunner(verbosity=verbosity, **test_args)
-    result = runner.run(make_suite(loaders, models))
+    runner = TestRunner(verbosity=args.verbose, **test_args)
+    result = runner.run(make_suite(loaders, args.models))
     return 1 if result.failures or result.errors else 0
 
 
@@ -494,4 +486,4 @@ def model_tests():
 
 
 if __name__ == "__main__":
-    sys.exit(main(*sys.argv[1:]))
+    sys.exit(main())
