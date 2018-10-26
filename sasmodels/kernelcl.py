@@ -167,11 +167,10 @@ def has_type(device, dtype):
     """
     if dtype == F32:
         return True
-    elif dtype == generate.F64:
+    elif dtype == F64:
         return "cl_khr_fp64" in device.extensions
-    elif dtype == generate.F16:
-        return "cl_khr_fp16" in device.extensions
     else:
+        # Not supporting F16 type since it isn't accurate enough
         return False
 
 def get_warp(kernel, queue):
@@ -559,10 +558,8 @@ class GpuKernel(Kernel):
         dtype = model.dtype
         self.q_input = GpuInput(q_vectors, dtype)
         self._model = model
-        self._as_dtype = (np.float32 if dtype == generate.F32
-                          else np.float64 if dtype == generate.F64
-                          else np.float16 if dtype == generate.F16
-                          else np.float32)  # will never get here, so use np.float32
+        # F16 isn't sufficient, so don't support it
+        self._as_dtype = np.float64 if dtype == generate.F64 else np.float32
         self._cache_key = unique_id()
 
         # attributes accessed from the outside

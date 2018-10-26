@@ -432,10 +432,8 @@ class GpuKernel(Kernel):
         # type: (cl.Kernel, np.dtype, ModelInfo, List[np.ndarray]) -> None
         self.q_input = GpuInput(q_vectors, dtype)
         self.kernel = kernel
-        self._as_dtype = (np.float32 if dtype == generate.F32
-                          else np.float64 if dtype == generate.F64
-                          else np.float16 if dtype == generate.F16
-                          else np.float32)  # will never get here, so use np.float32
+        # F16 isn't sufficient, so don't support it
+        self._as_dtype = np.float64 if dtype == generate.F64 else np.float32
 
         # attributes accessed from the outside
         self.dim = '2d' if self.q_input.is_2d else '1d'
