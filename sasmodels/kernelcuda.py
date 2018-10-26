@@ -430,26 +430,30 @@ class GpuKernel(Kernel):
     """
     def __init__(self, kernel, dtype, model_info, q_vectors):
         # type: (cl.Kernel, np.dtype, ModelInfo, List[np.ndarray]) -> None
-        q_input = GpuInput(q_vectors, dtype)
+        self.q_input = GpuInput(q_vectors, dtype)
         self.kernel = kernel
+        self._as_dtype = (np.float32 if dtype == generate.F32
+                          else np.float64 if dtype == generate.F64
+                          else np.float16 if dtype == generate.F16
+                          else np.float32)  # will never get here, so use np.float32
+
+        # attributes accessed from the outside
+        self.dim = '2d' if self.q_input.is_2d else '1d'
         self.info = model_info
         self.dtype = dtype
-        self.dim = '2d' if q_input.is_2d else '1d'
-        # plus three for the normalization values
-        self.result = np.empty(q_input.nq+1, dtype)
+
+        # holding place for the returned value
+        nout = 2 if self.info.have_Fq and self.dim == '1d' else 1
+        extra_q = 4  # total weight, form volume, shell volume and R_eff
+        self.result = np.empty(self.q_input.nq*nout+extra_q, dtype)
 
         # Inputs and outputs for each kernel call
         # Note: res may be shorter than res_b if global_size != nq
-        self.result_b = cuda.mem_alloc(q_input.global_size[0] * dtype.itemsize)
-        self.q_input = q_input # allocated by GpuInput above
-
+        width = ((self.result.size+31)//32)*32 * self.dtype.itemsize
+        self.result_b = cuda.mem_alloc(width)
         self._need_release = [self.result_b]
-        self.real = (np.float32 if dtype == generate.F32
-                     else np.float64 if dtype == generate.F64
-                     else np.float16 if dtype == generate.F16
-                     else np.float32)  # will never get here, so use np.float32
 
-    def __call__(self, call_details, values, cutoff, magnetic):
+    def _call_kernel(self, call_details, values, cutoff, magnetic, effective_radius_type):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
         # Arrange data transfer to card
         details_b = cuda.to_device(call_details.buffer)
@@ -459,7 +463,8 @@ class GpuKernel(Kernel):
         args = [
             np.uint32(self.q_input.nq), None, None,
             details_b, values_b, self.q_input.q_b, self.result_b,
-            self.real(cutoff),
+            self._as_dtype(cutoff),
+            np.uint32(effective_radius_type),
         ]
         grid = partition(self.q_input.nq)
         #print("Calling OpenCL")
@@ -486,13 +491,6 @@ class GpuKernel(Kernel):
 
         details_b.free()
         values_b.free()
-
-        pd_norm = self.result[self.q_input.nq]
-        scale = values[0]/(pd_norm if pd_norm != 0.0 else 1.0)
-        background = values[1]
-        #print("scale",scale,values[0],self.result[self.q_input.nq],background)
-        return scale*self.result[:self.q_input.nq] + background
-        # return self.result[:self.q_input.nq]
 
     def release(self):
         # type: () -> None
