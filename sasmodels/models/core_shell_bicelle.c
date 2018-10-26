@@ -54,6 +54,7 @@ static double
 effective_radius(int mode, double radius, double thick_rim, double thick_face, double length)
 {
     switch (mode) {
+    default:
     case 1: // equivalent sphere
         return radius_from_volume(radius, thick_rim, thick_face, length);
     case 2: // outer rim radius

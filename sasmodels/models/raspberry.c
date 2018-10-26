@@ -17,6 +17,7 @@ static double
 effective_radius(int mode, double radius_lg, double radius_sm, double penetration)
 {
     switch (mode) {
+    default:
     case 1: // radius_large
         return radius_lg;
     case 2: // radius_outer

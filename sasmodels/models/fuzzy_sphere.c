@@ -7,6 +7,7 @@ static double
 effective_radius(int mode, double radius, double fuzziness)
 {
     switch (mode) {
+    default:
     case 1: // radius
         return radius;
     case 2: // radius + fuzziness

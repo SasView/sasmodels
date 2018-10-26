@@ -28,6 +28,7 @@ static double
 effective_radius(int mode, double core_radius, double fp_n, double thickness[])
 {
   switch (mode) {
+  default:
   case 1: // outer radius
     return outer_radius(core_radius, fp_n, thickness);
   case 2: // core radius

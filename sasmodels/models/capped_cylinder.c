@@ -101,6 +101,7 @@ static double
 effective_radius(int mode, double radius, double radius_cap, double length)
 {
     switch (mode) {
+    default:
     case 1: // equivalent sphere
         return radius_from_volume(radius, radius_cap, length);
     case 2: // radius

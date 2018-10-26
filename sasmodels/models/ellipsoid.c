@@ -34,6 +34,7 @@ static double
 effective_radius(int mode, double radius_polar, double radius_equatorial)
 {
     switch (mode) {
+    default:
     case 1: // equivalent sphere
         return radius_from_volume(radius_polar, radius_equatorial);
     case 2: // average curvature

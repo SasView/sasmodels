@@ -7,6 +7,7 @@ static double
 effective_radius(int mode, double rg)
 {
     switch (mode) {
+    default:
     case 1: // R_g
         return rg;
     case 2: // 2R_g

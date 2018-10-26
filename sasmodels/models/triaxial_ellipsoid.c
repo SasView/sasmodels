@@ -30,6 +30,7 @@ static double
 effective_radius(int mode, double radius_equat_minor, double radius_equat_major, double radius_polar)
 {
     switch (mode) {
+    default:
     case 1: // equivalent sphere
         return radius_from_volume(radius_equat_minor,radius_equat_major, radius_polar);
     case 2: // min radius

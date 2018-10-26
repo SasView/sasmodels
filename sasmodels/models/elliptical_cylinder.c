@@ -36,6 +36,7 @@ static double
 effective_radius(int mode, double radius_minor, double r_ratio, double length)
 {
     switch (mode) {
+    default:
     case 1: // equivalent sphere
         return radius_from_volume(radius_minor, r_ratio, length);
     case 2: // average radius

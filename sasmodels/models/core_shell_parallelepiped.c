@@ -46,6 +46,7 @@ effective_radius(int mode, double length_a, double length_b, double length_c,
                  double thick_rim_a, double thick_rim_b, double thick_rim_c)
 {
     switch (mode) {
+    default:
     case 1: // equivalent sphere
         return radius_from_volume(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c);
     case 2: // half outer length a

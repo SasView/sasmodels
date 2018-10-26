@@ -73,6 +73,7 @@ effective_radius(int mode, double radius_equat_core, double x_core, double thick
     const double radius_polar_tot = radius_equat_core*x_core + thick_shell*x_polar_shell;
 
     switch (mode) {
+    default:
     case 1: // equivalent sphere
         return radius_from_volume(radius_equat_core, x_core, thick_shell, x_polar_shell);
     case 2: // average outer curvature

@@ -28,6 +28,7 @@ static double
 effective_radius(int mode, double radius, double length)
 {
     switch (mode) {
+    default:
     case 1:
         return radius_from_volume(radius, length);
     case 2:
