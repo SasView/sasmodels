@@ -470,6 +470,8 @@ After expansion, the loop struction will look like the following:
 
 #if defined(CALL_FQ) // COMPUTE_F1_F2 is true
   // unoriented 1D returning <F> and <F^2>
+  // Note that F1 and F2 are returned from CALL_FQ by reference, and the
+  // user of the CALL_KERNEL macro below is assuming that F1 and F2 are defined.
   double qk;
   double F1, F2;
   #define FETCH_Q() do { qk = q[q_index]; } while (0)
@@ -479,12 +481,16 @@ After expansion, the loop struction will look like the following:
 
 #elif defined(CALL_FQ_A)
   // unoriented 2D return <F> and <F^2>
+  // Note that the CALL_FQ_A macro is computing _F1_slot and _F2_slot by
+  // reference then returning _F2_slot.  We are calling them _F1_slot and
+  // _F2_slot here so they don't conflict with _F1 and _F2 in the macro
+  // expansion, or with the use of F2 = CALL_KERNEL() when it is used below.
   double qx, qy;
-  double F1, F2;
+  double _F1_slot, _F2_slot;
   #define FETCH_Q() do { qx = q[2*q_index]; qy = q[2*q_index+1]; } while (0)
   #define BUILD_ROTATION() do {} while(0)
   #define APPLY_ROTATION() do {} while(0)
-  #define CALL_KERNEL() CALL_FQ_A(sqrt(qx*qx+qy*qy),F1,F2,local_values.table)
+  #define CALL_KERNEL() CALL_FQ_A(sqrt(qx*qx+qy*qy),_F1_slot,_F2_slot,local_values.table)
 
 #elif defined(CALL_IQ)
   // unoriented 1D return <F^2>

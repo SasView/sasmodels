@@ -35,7 +35,7 @@ Fq(double q,
 */
 
 {
-    double vol,contrast,f,f2;
+    double vol,contrast,f;
 
     // core first, then add in shell
     contrast = sld_solvent-sld;
