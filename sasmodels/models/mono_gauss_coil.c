@@ -1,4 +1,5 @@
-static double form_volume(double rg)
+static double
+form_volume(double rg)
 {
     return 1.0;
 }
@@ -55,7 +56,8 @@ gauss_coil(double qr)
     return 2.0 * (expm1(-x) + x)/(x*x);
 }
 
-double Iq(double q, double i_zero, double rg)
+static double
+Iq(double q, double i_zero, double rg)
 {
     return i_zero * gauss_coil(q*rg);
 }
