@@ -158,6 +158,11 @@ parameters = [
 
 source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
           "core_shell_bicelle_elliptical_belt_rough.c"]
+have_Fq = True
+effective_radius_type = [
+    "equivalent sphere", "outer rim average radius", "outer rim min radius",
+    "outer max radius", "half outer thickness", "half diagonal",
+    ]
 
 demo = dict(scale=1, background=0,
             radius=30.0,
@@ -180,8 +185,8 @@ qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
 
 tests = [
-    [{'radius': 30.0, 'x_core': 3.0, 'thick_rim':8.0, 'thick_face':14.0, 'length':50.0}, 'ER', 1],
-    [{'radius': 30.0, 'x_core': 3.0, 'thick_rim':8.0, 'thick_face':14.0, 'length':50.0}, 'VR', 1],
+    #[{'radius': 30.0, 'x_core': 3.0, 'thick_rim':8.0, 'thick_face':14.0, 'length':50.0}, 'ER', 1],
+    #[{'radius': 30.0, 'x_core': 3.0, 'thick_rim':8.0, 'thick_face':14.0, 'length':50.0}, 'VR', 1],
 
     [{'radius': 30.0, 'x_core': 3.0, 'thick_rim':8.0, 'thick_face':14.0, 'length':50.0,
       'sld_core':4.0, 'sld_face':7.0, 'sld_rim':1.0, 'sld_solvent':6.0, 'background':0.0},

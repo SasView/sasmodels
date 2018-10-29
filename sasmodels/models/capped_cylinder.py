@@ -135,6 +135,10 @@ parameters = [["sld",         "1e-6/Ang^2", 4, [-inf, inf], "sld",    "Cylinder 
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "capped_cylinder.c"]
+have_Fq = True
+effective_radius_type = [
+    "equivalent sphere", "radius", "half length", "half total length",
+    ]
 
 def random():
     # TODO: increase volume range once problem with bell radius is fixed

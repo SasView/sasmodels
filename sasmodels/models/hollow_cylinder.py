@@ -68,6 +68,7 @@ Authorship and Verification
    (corrected VR calculation)
 * **Last Reviewed by:** Paul Butler **Date:** September 06, 2018
 """
+from __future__ import division
 
 import numpy as np
 from numpy import pi, inf, sin, cos
@@ -98,38 +99,12 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "hollow_cylinder.c"]
-
-# pylint: disable=W0613
-def ER(radius, thickness, length):
-    """
-    :param radius:      Cylinder core radius
-    :param thickness:   Cylinder wall thickness
-    :param length:      Cylinder length
-    :return:            Effective radius
-    """
-    router = radius + thickness
-    if router == 0 or length == 0:
-        return 0.0
-    len1 = router
-    len2 = length/2.0
-    term1 = len1*len1*2.0*len2/2.0
-    term2 = 1.0 + (len2/len1)*(1.0 + 1/len2/2.0)*(1.0 + pi*len1/len2/2.0)
-    ddd = 3.0*term1*term2
-    diam = pow(ddd, (1.0/3.0))
-    return diam
-
-def VR(radius, thickness, length):
-    """
-    :param radius:      Cylinder radius
-    :param thickness:   Cylinder wall thickness
-    :param length:      Cylinder length
-    :return:            Volf ratio for P(q)*S(q)
-    """
-    router = radius + thickness
-    vol_core = pi*radius*radius*length
-    vol_total = pi*router*router*length
-    vol_shell = vol_total - vol_core
-    return vol_total, vol_shell
+have_Fq = True
+effective_radius_type = [
+    "equivalent sphere", "outer radius", "half length",
+    "half outer min dimension", "half outer max dimension",
+    "half outer diagonal",
+    ]
 
 def random():
     length = 10**np.random.uniform(1, 4.7)
@@ -157,10 +132,17 @@ q = 0.1
 # april 6 2017, rkh added a 2d unit test, assume correct!
 qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
+radius = parameters[0][2]
+thickness = parameters[1][2]
+length = parameters[2][2]
 # Parameters for unit tests
 tests = [
     [{}, 0.00005, 1764.926],
-    [{}, 'VR', 0.55555556],
+    [{}, 0.1, None, None,
+     (3./4*(radius+thickness)**2*length)**(1./3),  # R_eff from volume
+     pi*((radius+thickness)**2-radius**2)*length,  # shell volume
+     (radius+thickness)**2/((radius+thickness)**2 - radius**2), # form:shell ratio
+    ],
     [{}, 0.001, 1756.76],
     [{}, (qx, qy), 2.36885476192],
 ]

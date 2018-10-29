@@ -25,9 +25,12 @@
 //  NUM_MAGNETIC : the number of magnetic parameters
 //  MAGNETIC_PARS : a comma-separated list of indices to the sld
 //      parameters in the parameter table.
-//  CALL_VOLUME(table) : call the form volume function
+//  CALL_VOLUME(form, shell, table) : assign form and shell values
+//  CALL_EFFECTIVE_RADIUS(type, table) : call the R_eff function
 //  CALL_IQ(q, table) : call the Iq function for 1D calcs.
 //  CALL_IQ_A(q, table) : call the Iq function with |q| for 2D data.
+//  CALL_FQ(q, F1, F2, table) : call the Fq function for 1D calcs.
+//  CALL_FQ_A(q, F1, F2, table) : call the Iq function with |q| for 2D data.
 //  CALL_IQ_AC(qa, qc, table) : call the Iqxy function for symmetric shapes
 //  CALL_IQ_ABC(qa, qc, table) : call the Iqxy function for asymmetric shapes
 //  CALL_IQ_XY(qx, qy, table) : call the Iqxy function for arbitrary models
@@ -35,6 +38,7 @@
 //      will be defined in the kernel definition file.
 //  PROJECTION : equirectangular=1, sinusoidal=2
 //      see explore/jitter.py for definitions.
+
 
 #ifndef _PAR_BLOCK_ // protected block so we can include this code twice.
 #define _PAR_BLOCK_
@@ -269,24 +273,27 @@ qabc_apply(
 
 #endif // _QABC_SECTION
 
-
 // ==================== KERNEL CODE ========================
-
 kernel
 void KERNEL_NAME(
-    int32_t nq,                 // number of q values
-    const int32_t pd_start,     // where we are in the dispersity loop
-    const int32_t pd_stop,      // where we are stopping in the dispersity loop
-    global const ProblemDetails *details,
-    global const double *values,
-    global const double *q, // nq q values, with padding to boundary
-    global double *result,  // nq+1 return values, again with padding
-    const double cutoff     // cutoff in the dispersity weight product
+    int32_t nq,                   // number of q values
+    const int32_t pd_start,       // where we are in the dispersity loop
+    const int32_t pd_stop,        // where we are stopping in the dispersity loop
+    pglobal const ProblemDetails *details,
+    pglobal const double *values, // parameter values and distributions
+    pglobal const double *q,      // nq q values, with padding to boundary
+    pglobal double *result,       // nq+1 return values, again with padding
+    const double cutoff,          // cutoff in the dispersity weight product
+    int32_t effective_radius_type // which effective radius to compute
     )
 {
-#ifdef USE_OPENCL
+#if defined(USE_GPU)
   // who we are and what element we are working with
+  #if defined(USE_OPENCL)
   const int q_index = get_global_id(0);
+  #else // USE_CUDA
+  const int q_index = threadIdx.x + blockIdx.x * blockDim.x;
+  #endif
   if (q_index >= nq) return;
 #else
   // Define q_index here so that debugging statements can be written to work
@@ -337,21 +344,40 @@ void KERNEL_NAME(
   // results vector (one past the number of q values).
   //
   // The code differs slightly between opencl and dll since opencl is only
-  // seeing one q value (stored in the variable "this_result") while the dll
+  // seeing one q value (stored in the variable "this_F2") while the dll
   // version must loop over all q.
-  #ifdef USE_OPENCL
-    double pd_norm = (pd_start == 0 ? 0.0 : result[nq]);
-    double this_result = (pd_start == 0 ? 0.0 : result[q_index]);
-  #else // !USE_OPENCL
-    double pd_norm = (pd_start == 0 ? 0.0 : result[nq]);
+  #if defined(CALL_FQ)
+    double weight_norm = (pd_start == 0 ? 0.0 : result[2*nq]);
+    double weighted_form = (pd_start == 0 ? 0.0 : result[2*nq+1]);
+    double weighted_shell = (pd_start == 0 ? 0.0 : result[2*nq+2]);
+    double weighted_radius = (pd_start == 0 ? 0.0 : result[2*nq+3]);
+  #else
+    double weight_norm = (pd_start == 0 ? 0.0 : result[nq]);
+    double weighted_form = (pd_start == 0 ? 0.0 : result[nq+1]);
+    double weighted_shell = (pd_start == 0 ? 0.0 : result[nq+2]);
+    double weighted_radius = (pd_start == 0 ? 0.0 : result[nq+3]);
+  #endif
+  #if defined(USE_GPU)
+    #if defined(CALL_FQ)
+      double this_F2 = (pd_start == 0 ? 0.0 : result[2*q_index+0]);
+      double this_F1 = (pd_start == 0 ? 0.0 : result[2*q_index+1]);
+    #else
+      double this_F2 = (pd_start == 0 ? 0.0 : result[q_index]);
+    #endif
+  #else // !USE_GPU
     if (pd_start == 0) {
       #ifdef USE_OPENMP
       #pragma omp parallel for
       #endif
-      for (int q_index=0; q_index < nq; q_index++) result[q_index] = 0.0;
+      #if defined(CALL_FQ)
+          // 2*nq for F^2,F pairs
+          for (int q_index=0; q_index < 2*nq; q_index++) result[q_index] = 0.0;
+      #else
+          for (int q_index=0; q_index < nq; q_index++) result[q_index] = 0.0;
+      #endif
     }
     //if (q_index==0) printf("start %d %g %g\n", pd_start, pd_norm, result[0]);
-#endif // !USE_OPENCL
+#endif // !USE_GPU
 
 
 // ====== macros to set up the parts of the loop =======
@@ -374,8 +400,8 @@ After expansion, the loop struction will look like the following:
   // --- PD_INIT(4) ---
   const int n4 = pd_length[4];
   const int p4 = pd_par[4];
-  global const double *v4 = pd_value + pd_offset[4];
-  global const double *w4 = pd_weight + pd_offset[4];
+  pglobal const double *v4 = pd_value + pd_offset[4];
+  pglobal const double *w4 = pd_weight + pd_offset[4];
   int i4 = (pd_start/pd_stride[4])%n4;  // position in level 4 at pd_start
 
   // --- PD_INIT(3) ---
@@ -410,7 +436,7 @@ After expansion, the loop struction will look like the following:
       for each q
           FETCH_Q         // set qx,qy from the q input vector
           APPLY_ROTATION  // convert qx,qy to qa,qb,qc
-          CALL_KERNEL     // scattering = Iqxy(qa, qb, qc, p1, p2, ...)
+          CALL_KERNEL     // F2 = Iqxy(qa, qb, qc, p1, p2, ...)
 
       ++step;  // increment counter representing position in dispersity mesh
 
@@ -441,13 +467,38 @@ After expansion, the loop struction will look like the following:
 // is easier to read. The code below both declares variables for the
 // inner loop and defines the macros that use them.
 
-#if defined(CALL_IQ)
-  // unoriented 1D
+
+#if defined(CALL_FQ) // COMPUTE_F1_F2 is true
+  // unoriented 1D returning <F> and <F^2>
+  // Note that F1 and F2 are returned from CALL_FQ by reference, and the
+  // user of the CALL_KERNEL macro below is assuming that F1 and F2 are defined.
+  double qk;
+  double F1, F2;
+  #define FETCH_Q() do { qk = q[q_index]; } while (0)
+  #define BUILD_ROTATION() do {} while(0)
+  #define APPLY_ROTATION() do {} while(0)
+  #define CALL_KERNEL() CALL_FQ(qk,F1,F2,local_values.table)
+
+#elif defined(CALL_FQ_A)
+  // unoriented 2D return <F> and <F^2>
+  // Note that the CALL_FQ_A macro is computing _F1_slot and _F2_slot by
+  // reference then returning _F2_slot.  We are calling them _F1_slot and
+  // _F2_slot here so they don't conflict with _F1 and _F2 in the macro
+  // expansion, or with the use of F2 = CALL_KERNEL() when it is used below.
+  double qx, qy;
+  double _F1_slot, _F2_slot;
+  #define FETCH_Q() do { qx = q[2*q_index]; qy = q[2*q_index+1]; } while (0)
+  #define BUILD_ROTATION() do {} while(0)
+  #define APPLY_ROTATION() do {} while(0)
+  #define CALL_KERNEL() CALL_FQ_A(sqrt(qx*qx+qy*qy),_F1_slot,_F2_slot,local_values.table)
+
+#elif defined(CALL_IQ)
+  // unoriented 1D return <F^2>
   double qk;
   #define FETCH_Q() do { qk = q[q_index]; } while (0)
   #define BUILD_ROTATION() do {} while(0)
   #define APPLY_ROTATION() do {} while(0)
-  #define CALL_KERNEL() CALL_IQ(qk, local_values.table)
+  #define CALL_KERNEL() CALL_IQ(qk,local_values.table)
 
 #elif defined(CALL_IQ_A)
   // unoriented 2D
@@ -481,6 +532,7 @@ After expansion, the loop struction will look like the following:
   #define BUILD_ROTATION() qabc_rotation(&rotation, theta, phi, psi, dtheta, dphi, local_values.table.psi)
   #define APPLY_ROTATION() qabc_apply(&rotation, qx, qy, &qa, &qb, &qc)
   #define CALL_KERNEL() CALL_IQ_ABC(qa, qb, qc, local_values.table)
+
 #elif defined(CALL_IQ_XY)
   // direct call to qx,qy calculator
   double qx, qy;
@@ -494,7 +546,8 @@ After expansion, the loop struction will look like the following:
 // the previous if block so that we don't need to repeat the identical
 // logic in the IQ_AC and IQ_ABC branches.  This will become more important
 // if we implement more projections, or more complicated projections.
-#if defined(CALL_IQ) || defined(CALL_IQ_A)  // no orientation
+#if defined(CALL_IQ) || defined(CALL_IQ_A) || defined(CALL_FQ) || defined(CALL_FQ_A)
+  // no orientation
   #define APPLY_PROJECTION() const double weight=weight0
 #elif defined(CALL_IQ_XY) // pass orientation to the model
   // CRUFT: support oriented model which define Iqxy rather than Iqac or Iqabc
@@ -561,8 +614,8 @@ After expansion, the loop struction will look like the following:
 #define PD_INIT(_LOOP) \
   const int n##_LOOP = details->pd_length[_LOOP]; \
   const int p##_LOOP = details->pd_par[_LOOP]; \
-  global const double *v##_LOOP = pd_value + details->pd_offset[_LOOP]; \
-  global const double *w##_LOOP = pd_weight + details->pd_offset[_LOOP]; \
+  pglobal const double *v##_LOOP = pd_value + details->pd_offset[_LOOP]; \
+  pglobal const double *w##_LOOP = pd_weight + details->pd_offset[_LOOP]; \
   int i##_LOOP = (pd_start/details->pd_stride[_LOOP])%n##_LOOP;
 
 // Jump into the middle of the dispersity loop
@@ -586,8 +639,8 @@ After expansion, the loop struction will look like the following:
 
 // Pointers to the start of the dispersity and weight vectors, if needed.
 #if MAX_PD>0
-  global const double *pd_value = values + NUM_VALUES;
-  global const double *pd_weight = pd_value + details->num_weights;
+  pglobal const double *pd_value = values + NUM_VALUES;
+  pglobal const double *pd_weight = pd_value + details->num_weights;
 #endif
 
 // The variable "step" is the current position in the dispersity loop.
@@ -644,16 +697,23 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
     // Accumulate I(q)
     // Note: weight==0 must always be excluded
     if (weight > cutoff) {
-      pd_norm += weight * CALL_VOLUME(local_values.table);
+      double form, shell;
+      CALL_VOLUME(form, shell, local_values.table);
+      weight_norm += weight;
+      weighted_form += weight * form;
+      weighted_shell += weight * shell;
+      if (effective_radius_type != 0) {
+        weighted_radius += weight * CALL_EFFECTIVE_RADIUS(effective_radius_type, local_values.table);
+      }
       BUILD_ROTATION();
 
-#ifndef USE_OPENCL
+#if !defined(USE_GPU)
       // DLL needs to explicitly loop over the q values.
       #ifdef USE_OPENMP
       #pragma omp parallel for
       #endif
       for (q_index=0; q_index<nq; q_index++)
-#endif // !USE_OPENCL
+#endif // !USE_GPU
       {
 
         FETCH_Q();
@@ -662,7 +722,7 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
         // ======= COMPUTE SCATTERING ==========
         #if defined(MAGNETIC) && NUM_MAGNETIC > 0
           // Compute the scattering from the magnetic cross sections.
-          double scattering = 0.0;
+          double F2 = 0.0;
           const double qsq = qx*qx + qy*qy;
           if (qsq > 1.e-16) {
             // TODO: what is the magnetic scattering at q=0
@@ -687,24 +747,37 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
 //if (q_index==0) printf("%d: (qx,qy)=(%g,%g) xs=%d sld%d=%g p=(%g,%g) m=(%g,%g,%g)\n",
 //  q_index, qx, qy, xs, sk, local_values.vector[sld_index], px, py, mx, my, mz);
                 }
-                scattering += xs_weight * CALL_KERNEL();
+                F2 += xs_weight * CALL_KERNEL();
               }
             }
           }
         #else  // !MAGNETIC
-          const double scattering = CALL_KERNEL();
+          #if defined(CALL_FQ)
+            CALL_KERNEL(); // sets F1 and F2 by reference
+          #else
+            const double F2 = CALL_KERNEL();
+          #endif
         #endif // !MAGNETIC
-//printf("q_index:%d %g %g %g %g\n", q_index, scattering, weight0);
+//printf("q_index:%d %g %g %g %g\n", q_index, F2, weight0);
 
-        #ifdef USE_OPENCL
-          this_result += weight * scattering;
+        #if defined(USE_GPU)
+          #if defined(CALL_FQ)
+            this_F2 += weight * F2;
+            this_F1 += weight * F1;
+          #else
+            this_F2 += weight * F2;
+          #endif
         #else // !USE_OPENCL
-          result[q_index] += weight * scattering;
+          #if defined(CALL_FQ)
+            result[2*q_index+0] += weight * F2;
+            result[2*q_index+1] += weight * F1;
+          #else
+            result[q_index] += weight * F2;
+          #endif
         #endif // !USE_OPENCL
       }
     }
   }
-
 // close nested loops
 ++step;
 #if MAX_PD>0
@@ -723,15 +796,29 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
   PD_CLOSE(4)
 #endif
 
-// Remember the current result and the updated norm.
-#ifdef USE_OPENCL
-  result[q_index] = this_result;
-  if (q_index == 0) result[nq] = pd_norm;
-//if (q_index == 0) printf("res: %g/%g\n", result[0], pd_norm);
-#else // !USE_OPENCL
-  result[nq] = pd_norm;
-//printf("res: %g/%g\n", result[0], pd_norm);
-#endif // !USE_OPENCL
+// Remember the results and the updated norm.
+#if defined(USE_GPU)
+  #if defined(CALL_FQ)
+  result[2*q_index+0] = this_F2;
+  result[2*q_index+1] = this_F1;
+  #else
+  result[q_index] = this_F2;
+  #endif
+  if (q_index == 0)
+#endif
+  {
+#if defined(CALL_FQ)
+    result[2*nq] = weight_norm;
+    result[2*nq+1] = weighted_form;
+    result[2*nq+2] = weighted_shell;
+    result[2*nq+3] = weighted_radius;
+#else
+    result[nq] = weight_norm;
+    result[nq+1] = weighted_form;
+    result[nq+2] = weighted_shell;
+    result[nq+3] = weighted_radius;
+#endif
+  }
 
 // ** clear the macros in preparation for the next kernel **
 #undef PD_INIT

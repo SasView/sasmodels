@@ -57,8 +57,8 @@ from numpy import pi, inf
 name = "core_shell_sphere"
 title = "Form factor for a monodisperse spherical particle with particle with a core-shell structure."
 description = """
-    F^2(q) = 3/V_s [V_c (sld_core-sld_shell) (sin(q*radius)-q*radius*cos(q*radius))/(q*radius)^3
-                   + V_s (sld_shell-sld_solvent) (sin(q*r_s)-q*r_s*cos(q*r_s))/(q*r_s)^3]
+    F(q) = [V_c (sld_core-sld_shell) 3 (sin(q*radius)-q*radius*cos(q*radius))/(q*radius)^3
+            + V_s (sld_shell-sld_solvent) 3 (sin(q*r_s)-q*r_s*cos(q*r_s))/(q*r_s)^3]
 
             V_s: Volume of the sphere shell
             V_c: Volume of the sphere core
@@ -76,17 +76,11 @@ parameters = [["radius",      "Ang",        60.0, [0, inf],    "volume", "Sphere
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sas_3j1x_x.c", "lib/core_shell.c", "core_shell_sphere.c"]
+have_Fq = True
+effective_radius_type = ["outer radius", "core radius"]
 
 demo = dict(scale=1, background=0, radius=60, thickness=10,
             sld_core=1.0, sld_shell=2.0, sld_solvent=0.0)
-
-def ER(radius, thickness):
-    """
-        Equivalent radius
-        @param radius: core radius
-        @param thickness: shell thickness
-    """
-    return radius + thickness
 
 def random():
     outer_radius = 10**np.random.uniform(1.3, 4.3)
@@ -101,7 +95,7 @@ def random():
     return pars
 
 tests = [
-    [{'radius': 20.0, 'thickness': 10.0}, 'ER', 30.0],
+    [{'radius': 20.0, 'thickness': 10.0}, 0.1, None, None, 30.0, 4.*pi/3*30**3, 1.0],
 
     # The SasView test result was 0.00169, with a background of 0.001
     [{'radius': 60.0, 'thickness': 10.0, 'sld_core': 1.0, 'sld_shell': 2.0,

@@ -4,9 +4,32 @@ form_volume(double length_a, double length_b, double length_c)
     return length_a * length_b * length_c;
 }
 
-
 static double
-Iq(double q,
+effective_radius(int mode, double length_a, double length_b, double length_c)
+{
+    switch (mode) {
+    default:
+    case 1: // equivalent sphere
+        return cbrt(length_a*length_b*length_c/M_4PI_3);
+    case 2: // half length_a
+        return 0.5 * length_a;
+    case 3: // half length_b
+        return 0.5 * length_b;
+    case 4: // half length_c
+        return 0.5 * length_c;
+    case 5: // equivalent circular cross-section
+        return sqrt(length_a*length_b/M_PI);
+    case 6: // half ab diagonal
+        return 0.5*sqrt(length_a*length_a + length_b*length_b);
+    case 7: // half diagonal
+        return 0.5*sqrt(length_a*length_a + length_b*length_b + length_c*length_c);
+    }
+}
+
+static void
+Fq(double q,
+    double *F1,
+    double *F2,
     double sld,
     double solvent_sld,
     double length_a,
@@ -20,38 +43,45 @@ Iq(double q,
     const double c_scaled = length_c / length_b;
 
     // outer integral (with gauss points), integration limits = 0, 1
-    double outer_total = 0; //initialize integral
-
+    double outer_total_F1 = 0.0; //initialize integral
+    double outer_total_F2 = 0.0; //initialize integral
     for( int i=0; i<GAUSS_N; i++) {
         const double sigma = 0.5 * ( GAUSS_Z[i] + 1.0 );
         const double mu_proj = mu * sqrt(1.0-sigma*sigma);
 
         // inner integral (with gauss points), integration limits = 0, 1
         // corresponding to angles from 0 to pi/2.
-        double inner_total = 0.0;
+        double inner_total_F1 = 0.0;
+        double inner_total_F2 = 0.0;
         for(int j=0; j<GAUSS_N; j++) {
             const double uu = 0.5 * ( GAUSS_Z[j] + 1.0 );
             double sin_uu, cos_uu;
             SINCOS(M_PI_2*uu, sin_uu, cos_uu);
             const double si1 = sas_sinx_x(mu_proj * sin_uu * a_scaled);
             const double si2 = sas_sinx_x(mu_proj * cos_uu);
-            inner_total += GAUSS_W[j] * square(si1 * si2);
+            const double fq = si1 * si2;
+            inner_total_F1 += GAUSS_W[j] * fq;
+            inner_total_F2 += GAUSS_W[j] * fq * fq;
         }
         // now complete change of inner integration variable (1-0)/(1-(-1))= 0.5
-        inner_total *= 0.5;
+        inner_total_F1 *= 0.5;
+        inner_total_F2 *= 0.5;
 
         const double si = sas_sinx_x(mu * c_scaled * sigma);
-        outer_total += GAUSS_W[i] * inner_total * si * si;
+        outer_total_F1 += GAUSS_W[i] * inner_total_F1 * si;
+        outer_total_F2 += GAUSS_W[i] * inner_total_F2 * si * si;
     }
     // now complete change of outer integration variable (1-0)/(1-(-1))= 0.5
-    outer_total *= 0.5;
+    outer_total_F1 *= 0.5;
+    outer_total_F2 *= 0.5;
 
     // Multiply by contrast^2 and convert from [1e-12 A-1] to [cm-1]
     const double V = form_volume(length_a, length_b, length_c);
-    const double drho = (sld-solvent_sld);
-    return 1.0e-4 * square(drho * V) * outer_total;
+    const double contrast = (sld-solvent_sld);
+    const double s = contrast * V;
+    *F1 = 1.0e-2 * s * outer_total_F1;
+    *F2 = 1.0e-4 * s * s * outer_total_F2;
 }
-
 
 static double
 Iqabc(double qa, double qb, double qc,

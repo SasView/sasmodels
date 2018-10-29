@@ -36,7 +36,40 @@ bicelle_kernel(double qab,
 }
 
 static double
-Iq(double q,
+radius_from_volume(double radius, double thick_rim, double thick_face, double length)
+{
+    const double volume_bicelle = form_volume(radius,thick_rim,thick_face,length);
+    return cbrt(volume_bicelle/M_4PI_3);
+}
+
+static double
+radius_from_diagonal(double radius, double thick_rim, double thick_face, double length)
+{
+    const double radius_tot = radius + thick_rim;
+    const double length_tot = length + 2.0*thick_face;
+    return sqrt(radius_tot*radius_tot + 0.25*length_tot*length_tot);
+}
+
+static double
+effective_radius(int mode, double radius, double thick_rim, double thick_face, double length)
+{
+    switch (mode) {
+    default:
+    case 1: // equivalent sphere
+        return radius_from_volume(radius, thick_rim, thick_face, length);
+    case 2: // outer rim radius
+        return radius + thick_rim;
+    case 3: // half outer thickness
+        return 0.5*length + thick_face;
+    case 4: // half diagonal
+        return radius_from_diagonal(radius,thick_rim,thick_face,length);
+    }
+}
+
+static void
+Fq(double q,
+    double *F1,
+    double *F2,
     double radius,
     double thick_radius,
     double thick_face,
@@ -50,19 +83,23 @@ Iq(double q,
     const double uplim = M_PI_4;
     const double halflength = 0.5*length;
 
-    double total = 0.0;
+    double total_F1 = 0.0;
+    double total_F2 = 0.0;
     for(int i=0;i<GAUSS_N;i++) {
         double theta = (GAUSS_Z[i] + 1.0)*uplim;
         double sin_theta, cos_theta; // slots to hold sincos function output
         SINCOS(theta, sin_theta, cos_theta);
-        double fq = bicelle_kernel(q*sin_theta, q*cos_theta, radius, thick_radius, thick_face,
+        double form = bicelle_kernel(q*sin_theta, q*cos_theta, radius, thick_radius, thick_face,
                                    halflength, sld_core, sld_face, sld_rim, sld_solvent);
-        total += GAUSS_W[i]*fq*fq*sin_theta;
+        total_F1 += GAUSS_W[i]*form*sin_theta;
+        total_F2 += GAUSS_W[i]*form*form*sin_theta;
     }
+    // Correct for integration range
+    total_F1 *= uplim;
+    total_F2 *= uplim;
 
-    // calculate value of integral to return
-    double answer = total*uplim;
-    return 1.0e-4*answer;
+    *F1 = 1.0e-2*total_F1;
+    *F2 = 1.0e-4*total_F2;
 }
 
 static double

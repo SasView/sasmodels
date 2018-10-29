@@ -290,10 +290,10 @@ Next comes the parameter table.  For example::
 defines the parameters that form the model.
 
 **Note: The order of the parameters in the definition will be the order of the
-parameters in the user interface and the order of the parameters in Iq(),
-Iqac(), Iqabc() and form_volume(). And** *scale* **and** *background*
-**parameters are implicit to all models, so they do not need to be included
-in the parameter table.**
+parameters in the user interface and the order of the parameters in Fq(), Iq(),
+Iqac(), Iqabc(), form_volume() and shell_volume().
+And** *scale* **and** *background* **parameters are implicit to all models,
+so they do not need to be included in the parameter table.**
 
 - **"name"** is the name of the parameter shown on the FitPage.
 
@@ -362,8 +362,8 @@ in the parameter table.**
     examined, the effective sld for that material will be used to compute the
     scattered intensity.
 
-  - "volume" parameters are passed to Iq(), Iqac(), Iqabc() and form_volume(),
-    and have polydispersity loops generated automatically.
+  - "volume" parameters are passed to Fq(), Iq(), Iqac(), Iqabc(), form_volume()
+    and shell_volume(), and have polydispersity loops generated automatically.
 
   - "orientation" parameters are not passed, but instead are combined with
     orientation dispersity to translate *qx* and *qy* to *qa*, *qb* and *qc*.
@@ -427,16 +427,16 @@ Each .py file also contains a function::
 
 	def random():
 	...
-	
-This function provides a model-specific random parameter set which shows model 
-features in the USANS to SANS range.  For example, core-shell sphere sets the 
-outer radius of the sphere logarithmically in `[20, 20,000]`, which sets the Q 
-value for the transition from flat to falling.  It then uses a beta distribution 
-to set the percentage of the shape which is shell, giving a preference for very 
-thin or very thick shells (but never 0% or 100%).  Using `-sets=10` in sascomp 
-should show a reasonable variety of curves over the default sascomp q range.  
-The parameter set is returned as a dictionary of `{parameter: value, ...}`.  
-Any model parameters not included in the dictionary will default according to 
+
+This function provides a model-specific random parameter set which shows model
+features in the USANS to SANS range.  For example, core-shell sphere sets the
+outer radius of the sphere logarithmically in `[20, 20,000]`, which sets the Q
+value for the transition from flat to falling.  It then uses a beta distribution
+to set the percentage of the shape which is shell, giving a preference for very
+thin or very thick shells (but never 0% or 100%).  Using `-sets=10` in sascomp
+should show a reasonable variety of curves over the default sascomp q range.
+The parameter set is returned as a dictionary of `{parameter: value, ...}`.
+Any model parameters not included in the dictionary will default according to
 the code in the `_randomize_one()` function from sasmodels/compare.py.
 
 Python Models
@@ -491,6 +491,18 @@ volume normalization so that scattering is on an absolute scale.  If
 *form_volume* is not defined, then the default *form_volume = 1.0* will be
 used.
 
+Hollow shapes, where the volume fraction of particle corresponds to the
+material in the shell rather than the volume enclosed by the shape, must
+also define a *shell_volume(par1, par2, ...)* function.  The parameters
+are the same as for *form_volume*.  The *I(q)* calculation should use
+*shell_volume* squared as its scale factor for the volume normalization.
+The structure factor calculation needs *form_volume* in order to properly
+scale the volume fraction parameter, so both functions are required for
+hollow shapes.
+
+Note: Pure python models do not yet support direct computation of the
+average of $F(q)$ and $F^2(q)$.
+
 Embedded C Models
 .................
 
@@ -502,7 +514,6 @@ Like pure python models, inline C models need to define an *Iq* function::
 
 This expands into the equivalent C code::
 
-    #include <math.h>
     double Iq(double q, double par1, double par2, ...);
     double Iq(double q, double par1, double par2, ...)
     {
@@ -511,6 +522,9 @@ This expands into the equivalent C code::
 
 *form_volume* defines the volume of the shape. As in python models, it
 includes only the volume parameters.
+
+*form_volume* defines the volume of the shell for hollow shapes. As in
+python models, it includes only the volume parameters.
 
 **source=['fn.c', ...]** includes the listed C source files in the
 program before *Iq* and *form_volume* are defined. This allows you to
@@ -547,6 +561,35 @@ Rather than returning NAN from Iq, you must define the *INVALID(v)*.  The
 
 The INVALID define can go into *Iq*, or *c_code*, or an external C file
 listed in *source*.
+
+Structure Factors
+.................
+
+Structure factor calculations may need the underlying $<F(q)>$ and $<F^2(q)>$
+rather than $I(q)$.  This is used to compute $\beta = <F(q)>^2/<F^2(q)>$ in
+the decoupling approximation to the structure factor.
+
+Instead of defining the *Iq* function, models can define *Fq* as
+something like::
+
+    double Fq(double q, double *F1, double *F2, double par1, double par2, ...);
+    double Fq(double q, double *F1, double *F2, double par1, double par2, ...)
+    {
+        // Polar integration loop over all orientations.
+        ...
+        *F1 = 1e-2 * total_F1 * contrast * volume;
+        *F2 = 1e-4 * total_F2 * square(contrast * volume);
+        return I(q, par1, par2, ...);
+    }
+
+If the volume fraction scale factor is built into the model (as occurs for
+the vesicle model, for example), then scale *F1* by $\surd V_f$ so that
+$\beta$ is computed correctly.
+
+Structure factor calculations are not yet supported for oriented shapes.
+
+Note: only available as a separate C file listed in *source*, or within
+a *c_code* block within the python model definition file.
 
 Oriented Shapes
 ...............
@@ -989,12 +1032,13 @@ PLEASE make sure that the answer value is correct (i.e. not a random number).
         [{"scale": 1., "background": 0., "sld": 6., "sld_solvent": 1.,
           "radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
          0.2, 0.228843],
-        [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45}, "ER", 120.],
-        [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45}, "VR", 1.],
+        [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
+         0.1, None, None, 120., None, 1.],  # q, F, F^2, R_eff, V, form:shell
+        [{"@S": "hardsphere"}, 0.1, None],
     ]
 
 
-**tests=[[{parameters}, q, result], ...]** is a list of lists.
+**tests=[[{parameters}, q, Iq], ...]** is a list of lists.
 Each list is one test and contains, in order:
 
 - a dictionary of parameter values. This can be *{}* using the default
@@ -1006,9 +1050,15 @@ Each list is one test and contains, in order:
   and input value given.
 - input and output values can themselves be lists if you have several
   $q$ values to test for the same model parameters.
-- for testing *ER* and *VR*, give the inputs as "ER" and "VR" respectively;
-  the output for *VR* should be the sphere/shell ratio, not the individual
-  sphere and shell values.
+- for testing effective radius, volume and form:shell volume ratio, use the
+  extended form of the tests results, with *None, None, R_eff, V, V_r*
+  instead of *Iq*.  This calls the kernel *Fq* function instead of *Iq*.
+- for testing F and F^2 (used for beta approximation) do the same as the
+  effective radius test, but include values for the first two elements,
+  $<F(q)>$ and $<F^2(q)>$.
+- for testing interaction between form factor and structure factor, specify
+  the structure factor name in the parameters as *{"@S": "name", ...}* with
+  the remaining list of parameters defined by the *P@S* product model.
 
 .. _Test_Your_New_Model:
 

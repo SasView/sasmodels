@@ -103,6 +103,18 @@ double form_volume(double radius, double thickness, double alpha, double beta)
     return M_PI*radius*radius*thickness;
 }
 
+static double
+effective_radius(int mode, double radius, double thickness, double alpha, double beta)
+{
+    switch (mode) {
+    default:
+    case 1: // equivalent sphere
+        return cbrt(M_PI*radius*radius*thickness/M_4PI_3);
+    case 2: // radius
+        return radius;
+    }
+}
+
 double Iq(
     double q,
     double radius,

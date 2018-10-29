@@ -55,4 +55,3 @@ Iq(double qval,
   inten *= 1.0e-04;   // 1/A to 1/cm
   return inten;
 }
-
