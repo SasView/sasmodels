@@ -94,6 +94,9 @@ class Comparator(object):
             zoom:   [1000,1010]
             neg:    [-100,100]
 
+        For arbitrary range use "start:stop:steps:scale" where scale is
+        one of log, lin, or linear.
+
         *diff* is "relative", "absolute" or "none"
 
         *x_bits* is the precision with which the x values are specified.  The
@@ -101,16 +104,23 @@ class Comparator(object):
         """
         linear = not xrange.startswith("log")
         if xrange == "zoom":
-            lin_min, lin_max, lin_steps = 1000, 1010, 2000
+            start, stop, steps = 1000, 1010, 2000
         elif xrange == "neg":
-            lin_min, lin_max, lin_steps = -100.1, 100.1, 2000
+            start, stop, steps = -100.1, 100.1, 2000
         elif xrange == "linear":
-            lin_min, lin_max, lin_steps = 1, 1000, 2000
-            lin_min, lin_max, lin_steps = 0.001, 2, 2000
+            start, stop, steps = 1, 1000, 2000
+            start, stop, steps = 0.001, 2, 2000
         elif xrange == "log":
-            log_min, log_max, log_steps = -3, 5, 400
+            start, stop, steps = -3, 5, 400
         elif xrange == "logq":
-            log_min, log_max, log_steps = -4, 1, 400
+            start, stop, steps = -4, 1, 400
+        elif ':' in xrange:
+            parts = xrange.split(':')
+            linear = parts[3] != "log" if len(parts) == 4 else True
+            steps = int(parts[2]) if len(parts) > 2 else 400
+            start = float(parts[0])
+            stop = float(parts[1])
+
         else:
             raise ValueError("unknown range "+xrange)
         with mp.workprec(500):
@@ -120,19 +130,19 @@ class Comparator(object):
             # rather than x to f(nearest(x)) where nearest(x) is the nearest
             # value to x in the given precision.
             if linear:
-                lin_min = max(lin_min, self.limits[0])
-                lin_max = min(lin_max, self.limits[1])
-                qrf = np.linspace(lin_min, lin_max, lin_steps, dtype='single')
-                #qrf = np.linspace(lin_min, lin_max, lin_steps, dtype='double')
+                start = max(start, self.limits[0])
+                stop = min(stop, self.limits[1])
+                qrf = np.linspace(start, stop, steps, dtype='single')
+                #qrf = np.linspace(start, stop, steps, dtype='double')
                 qr = [mp.mpf(float(v)) for v in qrf]
-                #qr = mp.linspace(lin_min, lin_max, lin_steps)
+                #qr = mp.linspace(start, stop, steps)
             else:
-                log_min = np.log10(max(10**log_min, self.limits[0]))
-                log_max = np.log10(min(10**log_max, self.limits[1]))
-                qrf = np.logspace(log_min, log_max, log_steps, dtype='single')
-                #qrf = np.logspace(log_min, log_max, log_steps, dtype='double')
+                start = np.log10(max(10**start, self.limits[0]))
+                stop = np.log10(min(10**stop, self.limits[1]))
+                qrf = np.logspace(start, stop, steps, dtype='single')
+                #qrf = np.logspace(start, stop, steps, dtype='double')
                 qr = [mp.mpf(float(v)) for v in qrf]
-                #qr = [10**v for v in mp.linspace(log_min, log_max, log_steps)]
+                #qr = [10**v for v in mp.linspace(start, stop, steps)]
 
         target = self.call_mpmath(qr, bits=500)
         pylab.subplot(121)
@@ -175,7 +185,7 @@ def plotdiff(x, target, actual, label, diff):
     Use relative error if SHOW_DIFF, otherwise just plot the value directly.
     """
     if diff == "relative":
-        err = np.array([abs((t-a)/t) for t, a in zip(target, actual)], 'd')
+        err = np.array([(abs((t-a)/t) if t != 0 else a) for t, a in zip(target, actual)], 'd')
         #err = np.clip(err, 0, 1)
         pylab.loglog(x, err, '-', label=label)
     elif diff == "absolute":
@@ -195,6 +205,23 @@ def make_ocl(function, name, source=[]):
     Kernel.Iq = function
     model_info = modelinfo.make_model_info(Kernel)
     return model_info
+
+# Hack to allow second parameter A in two parameter functions
+A = 1
+def parse_extra_pars():
+    global A
+
+    A_str = str(A)
+    pop = []
+    for k, v in enumerate(sys.argv[1:]):
+        if v.startswith("A="):
+            A_str = v[2:]
+            pop.append(k+1)
+    if pop:
+        sys.argv = [v for k, v in enumerate(sys.argv) if k not in pop]
+        A = float(A_str)
+
+parse_extra_pars()
 
 
 # =============== FUNCTION DEFINITIONS ================
@@ -296,6 +323,25 @@ add_function(
     np_function=scipy.special.gamma,
     ocl_function=make_ocl("return sas_gamma(q);", "sas_gamma", ["lib/sas_gamma.c"]),
     limits=(-3.1, 10),
+)
+add_function(
+    name="gammaln(x)",
+    mp_function=mp.loggamma,
+    np_function=scipy.special.gammaln,
+    ocl_function=make_ocl("return sas_gammaln(q);", "sas_gammaln", ["lib/sas_gammainc.c"]),
+    #ocl_function=make_ocl("return lgamma(q);", "sas_gammaln"),
+)
+add_function(
+    name="gammainc(x)",
+    mp_function=lambda x, a=A: mp.gammainc(a, a=0, b=x)/mp.gamma(a),
+    np_function=lambda x, a=A: scipy.special.gammainc(a, x),
+    ocl_function=make_ocl("return sas_gammainc(%.15g,q);"%A, "sas_gammainc", ["lib/sas_gammainc.c"]),
+)
+add_function(
+    name="gammaincc(x)",
+    mp_function=lambda x, a=A: mp.gammainc(a, a=x, b=mp.inf)/mp.gamma(a),
+    np_function=lambda x, a=A: scipy.special.gammaincc(a, x),
+    ocl_function=make_ocl("return sas_gammaincc(%.15g,q);"%A, "sas_gammaincc", ["lib/sas_gammainc.c"]),
 )
 add_function(
     name="erf(x)",
@@ -462,8 +508,8 @@ add_function(
 
 lanczos_gamma = """\
     const double coeff[] = {
-            76.18009172947146,     -86.50532032941677,
-            24.01409824083091,     -1.231739572450155,
+            76.18009172947146, -86.50532032941677,
+            24.01409824083091, -1.231739572450155,
             0.1208650973866179e-2,-0.5395239384953e-5
             };
     const double x = q;
@@ -474,7 +520,7 @@ lanczos_gamma = """\
     return -tmp + log(2.5066282746310005*ser/x);
 """
 add_function(
-    name="log gamma(x)",
+    name="loggamma(x)",
     mp_function=mp.loggamma,
     np_function=scipy.special.gammaln,
     ocl_function=make_ocl(lanczos_gamma, "lgamma"),
@@ -598,7 +644,7 @@ add_function(
 )
 
 ALL_FUNCTIONS = set(FUNCTIONS.keys())
-ALL_FUNCTIONS.discard("loggamma")  # OCL version not ready yet
+ALL_FUNCTIONS.discard("loggamma")  # use cephes-based gammaln instead
 ALL_FUNCTIONS.discard("3j1/x:taylor")
 ALL_FUNCTIONS.discard("3j1/x:trig")
 ALL_FUNCTIONS.discard("2J1/x:alt")
@@ -614,12 +660,17 @@ where
     -a indicates that the absolute error should be plotted,
     -r indicates that the relative error should be plotted (default),
     -x<range> indicates the steps in x, where <range> is one of the following
-      log indicates log stepping in [10^-3, 10^5] (default)
-      logq indicates log stepping in [10^-4, 10^1]
-      linear indicates linear stepping in [1, 1000]
-      zoom indicates linear stepping in [1000, 1010]
-      neg indicates linear stepping in [-100.1, 100.1]
-and name is "all" or one of:
+        log indicates log stepping in [10^-3, 10^5] (default)
+        logq indicates log stepping in [10^-4, 10^1]
+        linear indicates linear stepping in [1, 1000]
+        zoom indicates linear stepping in [1000, 1010]
+        neg indicates linear stepping in [-100.1, 100.1]
+        start:stop:n[:stepping] indicates an n-step plot in [start, stop]
+            or [10^start, 10^stop] if stepping is "log" (default n=400)
+Some functions (notably gammainc/gammaincc) have an additional parameter A
+which can be set from the command line as A=value.  Default is A=1.
+
+Name is one of:
     """+names)
     sys.exit(1)
 

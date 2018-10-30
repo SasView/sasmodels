@@ -113,6 +113,18 @@ file in the order given, otherwise these functions will not be available.
         The standard math function, tgamma(x) is unstable for $x < 1$
         on some platforms.
 
+    sas_gammaln(x):
+        log gamma function sas_gammaln\ $(x) = \log \Gamma(|x|)$.
+
+        The standard math function, lgamma(x), is incorrect for single
+        precision on some platforms.
+
+    sas_gammainc(a, x), sas_gammaincc(a, x):
+        Incomplete gamma function
+        sas_gammainc\ $(a, x) = \int_0^x t^{a-1}e^{-t}\,dt / \Gamma(a)$
+        and complementary incomplete gamma function
+        sas_gammaincc\ $(a, x) = \int_x^\infty t^{a-1}e^{-t}\,dt / \Gamma(a)$
+
     sas_erf(x), sas_erfc(x):
         Error function
         $\text{sas_erf}(x) = \frac{2}{\sqrt\pi}\int_0^x e^{-t^2}\,dt$
@@ -206,6 +218,9 @@ from numpy import arctan2 as atan2
 from numpy import fabs, fmin, fmax, trunc, rint
 from numpy import pi, nan, inf
 from scipy.special import gamma as sas_gamma
+from scipy.special import gammaln as sas_gammaln
+from scipy.special import gammainc as sas_gammainc
+from scipy.special import gammaincc as sas_gammaincc
 from scipy.special import erf as sas_erf
 from scipy.special import erfc as sas_erfc
 from scipy.special import j0 as sas_J0
