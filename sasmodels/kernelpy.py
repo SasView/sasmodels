@@ -36,6 +36,7 @@ class PyModel(KernelModel):
         _create_default_functions(model_info)
         self.info = model_info
         self.dtype = np.dtype('d')
+        logger.info("make python model " + self.info.name)
 
     def make_kernel(self, q_vectors):
         q_input = PyInput(q_vectors, dtype=F64)
