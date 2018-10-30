@@ -46,6 +46,7 @@ from __future__ import print_function
 
 import sys
 import unittest
+import traceback
 
 try:
     from StringIO import StringIO
@@ -75,7 +76,6 @@ else:
     from .kernel import KernelModel
 # pylint: enable=unused-import
 
-
 def make_suite(loaders, models):
     # type: (List[str], List[str]) -> unittest.TestSuite
     """
@@ -86,7 +86,6 @@ def make_suite(loaders, models):
 
     *models* is the list of models to test, or *["all"]* to test all models.
     """
-    ModelTestCase = _hide_model_case_from_nose()
     suite = unittest.TestSuite()
 
     if models[0] in core.KINDS:
@@ -95,87 +94,91 @@ def make_suite(loaders, models):
     else:
         skip = []
     for model_name in models:
-        if model_name in skip:
-            continue
-        model_info = load_model_info(model_name)
-
-        #print('------')
-        #print('found tests in', model_name)
-        #print('------')
-
-        # if ispy then use the dll loader to call pykernel
-        # don't try to call cl kernel since it will not be
-        # available in some environmentes.
-        is_py = callable(model_info.Iq)
-
-        # Some OpenCL drivers seem to be flaky, and are not producing the
-        # expected result.  Since we don't have known test values yet for
-        # all of our models, we are instead going to compare the results
-        # for the 'smoke test' (that is, evaluation at q=0.1 for the default
-        # parameters just to see that the model runs to completion) between
-        # the OpenCL and the DLL.  To do this, we define a 'stash' which is
-        # shared between OpenCL and DLL tests.  This is just a list.  If the
-        # list is empty (which it will be when DLL runs, if the DLL runs
-        # first), then the results are appended to the list.  If the list
-        # is not empty (which it will be when OpenCL runs second), the results
-        # are compared to the results stored in the first element of the list.
-        # This is a horrible stateful hack which only makes sense because the
-        # test suite is thrown away after being run once.
-        stash = []
-
-        if is_py:  # kernel implemented in python
-            test_name = "%s-python"%model_name
-            test_method_name = "test_%s_python" % model_info.id
-            test = ModelTestCase(test_name, model_info,
-                                 test_method_name,
-                                 platform="dll",  # so that
-                                 dtype="double",
-                                 stash=stash)
-            suite.addTest(test)
-        else:   # kernel implemented in C
-
-            # test using dll if desired
-            if 'dll' in loaders:
-                test_name = "%s-dll"%model_name
-                test_method_name = "test_%s_dll" % model_info.id
-                test = ModelTestCase(test_name, model_info,
-                                     test_method_name,
-                                     platform="dll",
-                                     dtype="double",
-                                     stash=stash)
-                suite.addTest(test)
-
-            # test using opencl if desired and available
-            if 'opencl' in loaders and use_opencl():
-                test_name = "%s-opencl"%model_name
-                test_method_name = "test_%s_opencl" % model_info.id
-                # Using dtype=None so that the models that are only
-                # correct for double precision are not tested using
-                # single precision.  The choice is determined by the
-                # presence of *single=False* in the model file.
-                test = ModelTestCase(test_name, model_info,
-                                     test_method_name,
-                                     platform="ocl", dtype=None,
-                                     stash=stash)
-                #print("defining", test_name)
-                suite.addTest(test)
-
-            # test using cuda if desired and available
-            if 'cuda' in loaders and use_cuda():
-                test_name = "%s-cuda"%model_name
-                test_method_name = "test_%s_cuda" % model_info.id
-                # Using dtype=None so that the models that are only
-                # correct for double precision are not tested using
-                # single precision.  The choice is determined by the
-                # presence of *single=False* in the model file.
-                test = ModelTestCase(test_name, model_info,
-                                     test_method_name,
-                                     platform="cuda", dtype=None,
-                                     stash=stash)
-                #print("defining", test_name)
-                suite.addTest(test)
+        if model_name not in skip:
+            model_info = load_model_info(model_name)
+            _add_model_to_suite(loaders, suite, model_info)
 
     return suite
+
+def _add_model_to_suite(loaders, suite, model_info):
+    ModelTestCase = _hide_model_case_from_nose()
+
+    #print('------')
+    #print('found tests in', model_name)
+    #print('------')
+
+    # if ispy then use the dll loader to call pykernel
+    # don't try to call cl kernel since it will not be
+    # available in some environmentes.
+    is_py = callable(model_info.Iq)
+
+    # Some OpenCL drivers seem to be flaky, and are not producing the
+    # expected result.  Since we don't have known test values yet for
+    # all of our models, we are instead going to compare the results
+    # for the 'smoke test' (that is, evaluation at q=0.1 for the default
+    # parameters just to see that the model runs to completion) between
+    # the OpenCL and the DLL.  To do this, we define a 'stash' which is
+    # shared between OpenCL and DLL tests.  This is just a list.  If the
+    # list is empty (which it will be when DLL runs, if the DLL runs
+    # first), then the results are appended to the list.  If the list
+    # is not empty (which it will be when OpenCL runs second), the results
+    # are compared to the results stored in the first element of the list.
+    # This is a horrible stateful hack which only makes sense because the
+    # test suite is thrown away after being run once.
+    stash = []
+
+    if is_py:  # kernel implemented in python
+        test_name = "%s-python"%model_info.name
+        test_method_name = "test_%s_python" % model_info.id
+        test = ModelTestCase(test_name, model_info,
+                                test_method_name,
+                                platform="dll",  # so that
+                                dtype="double",
+                                stash=stash)
+        suite.addTest(test)
+    else:   # kernel implemented in C
+
+        # test using dll if desired
+        if 'dll' in loaders or not use_opencl():
+            test_name = "%s-dll"%model_info.name
+            test_method_name = "test_%s_dll" % model_info.id
+            test = ModelTestCase(test_name, model_info,
+                                    test_method_name,
+                                    platform="dll",
+                                    dtype="double",
+                                    stash=stash)
+            suite.addTest(test)
+
+        # test using opencl if desired and available
+        if 'opencl' in loaders and use_opencl():
+            test_name = "%s-opencl"%model_info.name
+            test_method_name = "test_%s_opencl" % model_info.id
+            # Using dtype=None so that the models that are only
+            # correct for double precision are not tested using
+            # single precision.  The choice is determined by the
+            # presence of *single=False* in the model file.
+            test = ModelTestCase(test_name, model_info,
+                                    test_method_name,
+                                    platform="ocl", dtype=None,
+                                    stash=stash)
+            #print("defining", test_name)
+            suite.addTest(test)
+
+        # test using cuda if desired and available
+        if 'cuda' in loaders and use_cuda():
+            test_name = "%s-cuda"%model_name
+            test_method_name = "test_%s_cuda" % model_info.id
+            # Using dtype=None so that the models that are only
+            # correct for double precision are not tested using
+            # single precision.  The choice is determined by the
+            # presence of *single=False* in the model file.
+            test = ModelTestCase(test_name, model_info,
+                                    test_method_name,
+                                    platform="cuda", dtype=None,
+                                    stash=stash)
+            #print("defining", test_name)
+            suite.addTest(test)
+
 
 def _hide_model_case_from_nose():
     # type: () -> type
@@ -402,13 +405,25 @@ def is_near(target, actual, digits=5):
     shift = 10**math.ceil(math.log10(abs(target)))
     return abs(target-actual)/shift < 1.5*10**-digits
 
-def run_one(model):
-    # type: (str) -> str
-    """
-    Run the tests for a single model, printing the results to stdout.
+# CRUFT: old interface; should be deprecated and removed
+def run_one(model_name):
+    # msg = "use check_model(model_info) rather than run_one(model_name)"
+    # warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
+    try:
+        model_info = load_model_info(model_name)
+    except Exception:
+        output = traceback.format_exc()
+        return output
 
-    *model* can by a python file, which is handy for checking user defined
-    plugin models.
+    success, output = check_model(model_info)
+    return output
+
+def check_model(model_info):
+    # type: (ModelInfo) -> str
+    """
+    Run the tests for a single model, capturing the output.
+
+    Returns success status and the output string.
     """
     # Note that running main() directly did not work from within the
     # wxPython pycrust console.  Instead of the results appearing in the
@@ -422,14 +437,9 @@ def run_one(model):
     result = TextTestResult(stream, descriptions, verbosity)
 
     # Build a test suite containing just the model
-    loader = 'opencl' if use_opencl() else 'cuda' if use_cuda() else 'dll'
-    models = [model]
-    try:
-        suite = make_suite([loader], models)
-    except Exception:
-        import traceback
-        stream.writeln(traceback.format_exc())
-        return
+    loaders = ['opencl' if use_opencl() else 'cuda' if use_cuda() else 'dll']
+    suite = unittest.TestSuite()
+    _add_model_to_suite(loaders, suite, model_info)
 
     # Warn if there are no user defined tests.
     # Note: the test suite constructed above only has one test in it, which
@@ -444,7 +454,7 @@ def run_one(model):
     # for user tests before running the suite.
     for test in suite:
         if not test.info.tests:
-            stream.writeln("Note: %s has no user defined tests."%model)
+            stream.writeln("Note: %s has no user defined tests."%model_info.name)
         break
     else:
         stream.writeln("Note: no test suite created --- this should never happen")
@@ -460,7 +470,7 @@ def run_one(model):
 
     output = stream.getvalue()
     stream.close()
-    return output
+    return result.wasSuccessful(), output
 
 
 def main(*models):

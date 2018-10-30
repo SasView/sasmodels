@@ -818,6 +818,16 @@ class SasviewModel(object):
             value = self.params[par.name]
             return value, [value], [1.0]
 
+    @classmethod
+    def runTests(cls):
+        """
+        Run any tests built into the model and captures the test output.
+
+        Returns success flag and output
+        """
+        from .model_test import check_model
+        return check_model(cls._model_info)
+
 def test_cylinder():
     # type: () -> float
     """

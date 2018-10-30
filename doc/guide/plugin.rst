@@ -743,8 +743,8 @@ This includes the following:
         to test for finite and not NaN.
     erf, erfc, tgamma, lgamma:  **do not use**
         Special functions that should be part of the standard, but are missing
-        or inaccurate on some platforms. Use sas_erf, sas_erfc and sas_gamma
-        instead (see below). Note: lgamma(x) has not yet been tested.
+        or inaccurate on some platforms. Use sas_erf, sas_erfc, sas_gamma
+        and sas_lgamma instead (see below).
 
 Some non-standard constants and functions are also provided:
 
@@ -811,11 +811,29 @@ file in the order given, otherwise these functions will not be available.
     sas_gamma(x):
         Gamma function sas_gamma\ $(x) = \Gamma(x)$.
 
-        The standard math function, tgamma(x) is unstable for $x < 1$
+        The standard math function, tgamma(x), is unstable for $x < 1$
         on some platforms.
 
         :code:`source = ["lib/sas_gamma.c", ...]`
         (`sas_gamma.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_gamma.c>`_)
+
+    sas_gammaln(x):
+        log gamma function sas_gammaln\ $(x) = \log \Gamma(|x|)$.
+
+        The standard math function, lgamma(x), is incorrect for single
+        precision on some platforms.
+
+        :code:`source = ["lib/sas_gammainc.c", ...]`
+        (`sas_gammainc.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_gammainc.c>`_)
+
+    sas_gammainc(a, x), sas_gammaincc(a, x):
+        Incomplete gamma function
+        sas_gammainc\ $(a, x) = \int_0^x t^{a-1}e^{-t}\,dt / \Gamma(a)$
+        and complementary incomplete gamma function
+        sas_gammaincc\ $(a, x) = \int_x^\infty t^{a-1}e^{-t}\,dt / \Gamma(a)$
+
+        :code:`source = ["lib/sas_gammainc.c", ...]`
+        (`sas_gammainc.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/sas_gammainc.c>`_)
 
     sas_erf(x), sas_erfc(x):
         Error function
@@ -853,6 +871,8 @@ file in the order given, otherwise these functions will not be available.
         $J_n(x) = \frac{1}{\pi}\int_0^\pi \cos(n\tau - x\sin(\tau))\,d\tau$.
         If $n$ = 0 or 1, it uses sas_J0($x$) or sas_J1($x$), respectively.
 
+        Warning: JN(n,x) can be very inaccurate (0.1%) for x not in [0.1, 100].
+
         The standard math function jn(n, x) is not available on all platforms.
 
         :code:`source = ["lib/polevl.c", "lib/sas_J0.c", "lib/sas_J1.c", "lib/sas_JN.c", ...]`
@@ -861,9 +881,11 @@ file in the order given, otherwise these functions will not be available.
     sas_Si(x):
         Sine integral Si\ $(x) = \int_0^x \tfrac{\sin t}{t}\,dt$.
 
+        Warning: Si(x) can be very inaccurate (0.1%) for x in [0.1, 100].
+
         This function uses Taylor series for small and large arguments:
 
-        For large arguments,
+        For large arguments use the following Taylor series,
 
         .. math::
 
@@ -871,7 +893,7 @@ file in the order given, otherwise these functions will not be available.
              - \frac{\cos(x)}{x}\left(1 - \frac{2!}{x^2} + \frac{4!}{x^4} - \frac{6!}{x^6} \right)
              - \frac{\sin(x)}{x}\left(\frac{1}{x} - \frac{3!}{x^3} + \frac{5!}{x^5} - \frac{7!}{x^7}\right)
 
-        For small arguments,
+        For small arguments ,
 
         .. math::
 
