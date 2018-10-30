@@ -31,6 +31,7 @@ from . import resolution
 from . import resolution2d
 from .details import make_kernel_args, dispersion_mesh
 from .modelinfo import DEFAULT_BACKGROUND
+from .product import RADIUS_MODE_ID
 
 # pylint: disable=unused-import
 try:
@@ -69,8 +70,11 @@ def call_Fq(calculator, pars, cutoff=0., mono=False):
     Like :func:`call_kernel`, but returning F, F^2, R_eff, V_shell, V_form/V_shell.
 
     For solid objects V_shell is equal to V_form and the volume ratio is 1.
+
+    Use parameter *radius_effective_mode* to select the effective radius
+    calculation.
     """
-    R_eff_type = int(pars.pop('radius_effective_type', 1.0))
+    R_eff_type = int(pars.pop(RADIUS_MODE_ID, 1.0))
     mesh = get_mesh(calculator.info, pars, dim=calculator.dim, mono=mono)
     #print("pars", list(zip(*mesh))[0])
     call_details, values, is_magnetic = make_kernel_args(calculator, mesh)

@@ -385,7 +385,7 @@ def invalid_pars(partable, pars):
     invalid = []
     for par in sorted(pars.keys()):
         # special handling of R_eff mode, which is not a usual parameter
-        if par == 'radius_effective_type':
+        if par == product.RADIUS_MODE_ID:
             continue
         parts = par.split('_pd')
         if len(parts) > 1 and parts[1] not in ("", "_n", "nsigma", "type"):
