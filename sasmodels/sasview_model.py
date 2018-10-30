@@ -382,6 +382,12 @@ class SasviewModel(object):
             hidden.add('scale')
             hidden.add('background')
 
+        # Update the parameter lists to exclude any hidden parameters
+        self.magnetic_params = tuple(pname for pname in self.magnetic_params
+                                     if pname not in hidden)
+        self.orientation_params = tuple(pname for pname in self.orientation_params
+                                        if pname not in hidden)
+
         self._persistency_dict = {}
         self.params = collections.OrderedDict()
         self.dispersion = collections.OrderedDict()
@@ -795,6 +801,16 @@ class SasviewModel(object):
             value = self.params[par.name]
             return value, [value], [1.0]
 
+    @classmethod
+    def runTests(cls):
+        """
+        Run any tests built into the model and captures the test output.
+
+        Returns success flag and output
+        """
+        from .model_test import check_model
+        return check_model(cls._model_info)
+
 def test_cylinder():
     # type: () -> float
     """
@@ -910,7 +926,7 @@ def test_structure_factor_background():
 def magnetic_demo():
     Model = _make_standard_model('sphere')
     model = Model()
-    model.setParam('M0:sld', 8)
+    model.setParam('sld_M0', 8)
     q = np.linspace(-0.35, 0.35, 500)
     qx, qy = np.meshgrid(q, q)
     result = model.calculate_Iq(qx.flatten(), qy.flatten())
