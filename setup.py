@@ -29,6 +29,11 @@ def find_version(package):
                 return version[1:-1]
     raise RuntimeError("Could not read version from %s/__init__.py"%package)
 
+install_requires = ['numpy', 'scipy']
+
+if sys.platform=='win32' or sys.platform=='cygwin':
+    install_requires.append('tinycc')
+
 setup(
     name='sasmodels',
     version=find_version('sasmodels'),
@@ -60,12 +65,11 @@ setup(
         'sasmodels.models': ['*.c', 'lib/*.c'],
         'sasmodels': ['*.c', '*.cl'],
     },
-    install_requires=[
-    ],
+    install_requires=install_requires,
     extras_require={
+        'full': ['docutils', 'bumps', 'matplotlib'],
+        'server': ['bumps'],
         'OpenCL': ["pyopencl"],
-        'Bumps': ["bumps"],
-        'TinyCC': ["tinycc"],
     },
     build_requires=['setuptools'],
     test_requires=['pytest'],

@@ -2,6 +2,11 @@
 #note model title and parameter table are automatically inserted
 #note - calculation requires double precision
 r"""
+.. warning:: This model and this model description are under review following
+             concerns raised by SasView users. If you need to use this model,
+             please email help@sasview.org for the latest situation. *The
+             SasView Developers. September 2018.*
+
 Definition
 ----------
 
@@ -9,7 +14,7 @@ Calculates the scattering from a **face-centered cubic lattice** with
 paracrystalline distortion. Thermal vibrations are considered to be
 negligible, and the size of the paracrystal is infinitely large.
 Paracrystalline distortion is assumed to be isotropic and characterized by
-a Gaussian distribution. 
+a Gaussian distribution.
 
 The scattering intensity $I(q)$ is calculated as
 

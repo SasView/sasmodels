@@ -1,4 +1,9 @@
 r"""
+.. warning:: This model and this model description are under review following 
+             concerns raised by SasView users. If you need to use this model, 
+             please email help@sasview.org for the latest situation. *The 
+             SasView Developers. September 2018.*
+
 Definition
 ----------
 
@@ -12,7 +17,6 @@ The scattering intensity $I(q)$ is calculated as
 .. math::
 
     I(q) = \frac{\text{scale}}{V_p} V_\text{lattice} P(q) Z(q)
-
 
 where *scale* is the volume fraction of spheres, $V_p$ is the volume of the
 primary particle, $V_\text{lattice}$ is a volume correction for the crystal
@@ -96,7 +100,7 @@ References
    (Corrections to FCC and BCC lattice structure calculation)
 
 Authorship and Verification
-----------------------------
+---------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Butler **Date:** September 16, 2018

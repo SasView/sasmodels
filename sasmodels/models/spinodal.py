@@ -11,7 +11,20 @@ as
 
 where $x=q/q_0$, $q_0$ is the peak position, $I_{max}$ is the intensity 
 at $q_0$ (parameterised as the $scale$ parameter), and $B$ is a flat 
-background. The spinodal wavelength is given by $2\pi/q_0$. 
+background. The spinodal wavelength, $\Lambda$, is given by $2\pi/q_0$. 
+
+The definition of $I_{max}$ in the literature varies. Hashimoto *et al* (1991) 
+define it as 
+
+.. math::
+    I_{max} = \Lambda^3\Delta\rho^2
+    
+whereas Meier & Strobl (1987) give 
+
+.. math::
+    I_{max} = V_z\Delta\rho^2
+    
+where $V_z$ is the volume per monomer unit.
 
 The exponent $\gamma$ is equal to $d+1$ for off-critical concentration 
 mixtures (smooth interfaces) and $2d$ for critical concentration mixtures 
@@ -27,14 +40,22 @@ References
 ----------
 
 H. Furukawa. Dynamics-scaling theory for phase-separating unmixing mixtures:
-Growth rates of droplets and scaling properties of autocorrelation functions.
-Physica A 123,497 (1984).
+Growth rates of droplets and scaling properties of autocorrelation functions. 
+Physica A 123, 497 (1984).
+
+H. Meier & G. Strobl. Small-Angle X-ray Scattering Study of Spinodal 
+Decomposition in Polystyrene/Poly(styrene-co-bromostyrene) Blends. 
+Macromolecules 20, 649-654 (1987).
+
+T. Hashimoto, M. Takenaka & H. Jinnai. Scattering Studies of Self-Assembling 
+Processes of Polymer Blends in Spinodal Decomposition. 
+J. Appl. Cryst. 24, 457-466 (1991).
 
 Revision History
 ----------------
 
 * **Author:**  Dirk Honecker **Date:** Oct 7, 2016
-* **Revised:** Steve King    **Date:** Sep 7, 2018
+* **Revised:** Steve King    **Date:** Oct 25, 2018
 """
 
 import numpy as np
