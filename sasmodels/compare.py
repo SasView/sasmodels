@@ -368,7 +368,7 @@ def _randomize_one(model_info, name, value):
         return np.random.uniform(-0.5, 12)
 
     # Limit magnetic SLDs to a smaller range, from zero to iron=5/A^2
-    if par.name.startswith('M0:'):
+    if par.name.endswith('_M0'):
         return np.random.uniform(0, 5)
 
     # Guess at the random length/radius/thickness.  In practice, all models
@@ -538,7 +538,7 @@ def parlist(model_info, pars, is2d):
     magnetic = False
     magnetic_pars = []
     for p in parameters.user_parameters(pars, is2d):
-        if any(p.id.startswith(x) for x in ('M0:', 'mtheta:', 'mphi:')):
+        if any(p.id.endswith(x) for x in ('_M0', '_mtheta', '_mphi')):
             continue
         if p.id.startswith('up:'):
             magnetic_pars.append("%s=%s"%(p.id, pars.get(p.id, p.default)))
@@ -550,9 +550,9 @@ def parlist(model_info, pars, is2d):
             nsigma=pars.get(p.id+"_pd_nsgima", 3.),
             pdtype=pars.get(p.id+"_pd_type", 'gaussian'),
             relative_pd=p.relative_pd,
-            M0=pars.get('M0:'+p.id, 0.),
-            mphi=pars.get('mphi:'+p.id, 0.),
-            mtheta=pars.get('mtheta:'+p.id, 0.),
+            M0=pars.get(p.id+'_M0', 0.),
+            mphi=pars.get(p.id+'_mphi', 0.),
+            mtheta=pars.get(p.id+'_mtheta', 0.),
         )
         lines.append(_format_par(p.name, **fields))
         magnetic = magnetic or fields['M0'] != 0.
@@ -618,13 +618,13 @@ def suppress_magnetism(pars, suppress=True):
     pars = pars.copy()
     if suppress:
         for p in pars:
-            if p.startswith("M0:"):
+            if p.endswith("_M0"):
                 pars[p] = 0
     else:
         any_mag = False
         first_mag = None
         for p in pars:
-            if p.startswith("M0:"):
+            if p.endswith("_M0"):
                 any_mag |= (pars[p] != 0)
                 if first_mag is None:
                     first_mag = p
