@@ -66,7 +66,9 @@ def call_kernel(calculator, pars, cutoff=0., mono=False):
 def call_Fq(calculator, pars, cutoff=0., mono=False):
     # type: (Kernel, ParameterSet, float, bool) -> np.ndarray
     """
-    Like :func:`call_kernel`, but returning F, F^2, R_eff, V, V_form/V_shell.
+    Like :func:`call_kernel`, but returning F, F^2, R_eff, V_shell, V_form/V_shell.
+
+    For solid objects V_shell is equal to V_form and the volume ratio is 1.
     """
     R_eff_type = int(pars.pop('radius_effective_type', 1.0))
     mesh = get_mesh(calculator.info, pars, dim=calculator.dim, mono=mono)
@@ -75,11 +77,13 @@ def call_Fq(calculator, pars, cutoff=0., mono=False):
     #print("values:", values)
     return calculator.Fq(call_details, values, cutoff, is_magnetic, R_eff_type)
 
-def call_profile(model_info, **pars):
-    # type: (ModelInfo, ...) -> Tuple[np.ndarray, np.ndarray, Tuple[str, str]]
+def call_profile(model_info, pars=None):
+    # type: (ModelInfo, ParameterSet) -> Tuple[np.ndarray, np.ndarray, Tuple[str, str]]
     """
     Returns the profile *x, y, (xlabel, ylabel)* representing the model.
     """
+    if pars is None:
+        pars = {}
     args = {}
     for p in model_info.parameters.kernel_parameters:
         if p.length > 1:
@@ -376,7 +380,7 @@ class DirectModel(DataMixin):
         """
         Generate a plottable profile.
         """
-        return call_profile(self.model.info, **pars)
+        return call_profile(self.model.info, pars)
 
 def main():
     # type: () -> None
