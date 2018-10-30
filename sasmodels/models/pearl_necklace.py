@@ -139,5 +139,8 @@ demo = dict(scale=1, background=0, radius=80.0, edge_sep=350.0,
             num_pearls_pd=0, num_pearls_pd_n=0,
             thick_string_pd=0.2, thick_string_pd_n=5,
            )
-
-tests = [[{}, 0.001, 17380.245], [{}, 'ER', 115.39502]]
+# ER function is not being used here, not that it is likely very sensible to 
+# include an S(Q) with this model, the default in sasview 5.0 would be to the 
+# "unconstrained" radius_effective.
+#tests = [[{}, 0.001, 17380.245], [{}, 'ER', 115.39502]]
+tests = [[{}, 0.001, 17380.245]]

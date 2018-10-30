@@ -38,10 +38,10 @@ fraction of $+$ neutrons before ($u_i$) and after ($u_f$) the sample,
 with weighting:
 
 .. math::
-    -- &= ((1-u_i)(1-u_f))^{1/4} \\
-    -+ &= ((1-u_i)(u_f))^{1/4} \\
-    +- &= ((u_i)(1-u_f))^{1/4} \\
-    ++ &= ((u_i)(u_f))^{1/4}
+    -- &= (1-u_i)(1-u_f) \\
+    -+ &= (1-u_i)(u_f) \\
+    +- &= (u_i)(1-u_f) \\
+    ++ &= (u_i)(u_f)
 
 Ideally the experiment would measure the pure spin states independently and
 perform a simultaneous analysis of the four states, tying all the model
@@ -88,18 +88,19 @@ the figure above.
 The user input parameters are:
 
 ===========   ================================================================
- M0:sld       $D_M M_0$
- mtheta:sld   $\theta_M$
- mphi:sld     $\phi_M$
- up:angle     $\theta_\mathrm{up}$
- up:frac_i    $u_i$ = (spin up)/(spin up + spin down) *before* the sample
- up:frac_f    $u_f$ = (spin up)/(spin up + spin down) *after* the sample
+ sld_M0       $D_M M_0$
+ sld_mtheta   $\theta_M$
+ sld_mphi     $\phi_M$
+ up_frac_i    $u_i$ = (spin up)/(spin up + spin down) *before* the sample
+ up_frac_f    $u_f$ = (spin up)/(spin up + spin down) *after* the sample
+ up_angle     $\theta_\mathrm{up}$
 ===========   ================================================================
 
 .. note::
-    The values of the 'up:frac_i' and 'up:frac_f' must be in the range 0 to 1.
+    The values of the 'up_frac_i' and 'up_frac_f' must be in the range 0 to 1.
 
 *Document History*
 
 | 2015-05-02 Steve King
 | 2017-11-15 Paul Kienzle
+| 2018-06-02 Adam Washington

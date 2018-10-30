@@ -99,6 +99,15 @@ except ImportError:
     pass
 # pylint: enable=unused-import
 
+# Compiler output is a byte stream that needs to be decode in python 3
+decode = (lambda s: s) if sys.version_info[0] < 3 else (lambda s: s.decode('utf8'))
+
+if "SAS_DLL_PATH" in os.environ:
+    SAS_DLL_PATH = os.environ["SAS_DLL_PATH"]
+else:
+    # Assume the default location of module DLLs is in .sasmodels/compiled_models.
+    SAS_DLL_PATH = os.path.join(os.path.expanduser("~"), ".sasmodels", "compiled_models")
+
 if "SAS_COMPILER" in os.environ:
     COMPILER = os.environ["SAS_COMPILER"]
 elif os.name == 'nt':
@@ -160,9 +169,6 @@ elif COMPILER == "mingw":
         """mingw compiler command"""
         return CC + [source, "-o", output, "-lm"]
 
-# Assume the default location of module DLLs is in .sasmodels/compiled_models.
-DLL_PATH = os.path.join(os.path.expanduser("~"), ".sasmodels", "compiled_models")
-
 ALLOW_SINGLE_PRECISION_DLLS = True
 
 def compile(source, output):
@@ -180,8 +186,8 @@ def compile(source, output):
         shell = (os.name == 'nt')
         subprocess.check_output(command, shell=shell, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as exc:
-        raise RuntimeError("compile failed.\n%s\n%s"
-                           % (command_str, exc.output.decode()))
+        output = decode(exc.output)
+        raise RuntimeError("compile failed.\n%s\n%s"%(command_str, output))
     if not os.path.exists(output):
         raise RuntimeError("compile failed.  File is in %r"%source)
 
@@ -200,7 +206,7 @@ def dll_name(model_info, dtype):
     if os.path.exists(path):
         return path
 
-    return joinpath(DLL_PATH, basename)
+    return joinpath(SAS_DLL_PATH, basename)
 
 
 def dll_path(model_info, dtype):
@@ -209,7 +215,7 @@ def dll_path(model_info, dtype):
     Complete path to the dll for the model.  Note that the dll may not
     exist yet if it hasn't been compiled.
     """
-    return os.path.join(DLL_PATH, dll_name(model_info, dtype))
+    return os.path.join(SAS_DLL_PATH, dll_name(model_info, dtype))
 
 
 def make_dll(source, model_info, dtype=F64):
@@ -228,7 +234,8 @@ def make_dll(source, model_info, dtype=F64):
     Set *sasmodels.ALLOW_SINGLE_PRECISION_DLLS* to False if single precision
     models are not allowed as DLLs.
 
-    Set *sasmodels.kerneldll.DLL_PATH* to the compiled dll output path.
+    Set *sasmodels.kerneldll.SAS_DLL_PATH* to the compiled dll output path.
+    Alternatively, set the environment variable *SAS_DLL_PATH*.
     The default is in ~/.sasmodels/compiled_models.
     """
     if dtype == F16:
@@ -247,8 +254,8 @@ def make_dll(source, model_info, dtype=F64):
         need_recompile = dll_time < newest_source
     if need_recompile:
         # Make sure the DLL path exists
-        if not os.path.exists(DLL_PATH):
-            os.makedirs(DLL_PATH)
+        if not os.path.exists(SAS_DLL_PATH):
+            os.makedirs(SAS_DLL_PATH)
         basename = splitext(os.path.basename(dll))[0] + "_"
         system_fd, filename = tempfile.mkstemp(suffix=".c", prefix=basename)
         source = generate.convert_type(source, dtype)
@@ -311,7 +318,7 @@ class DllModel(KernelModel):
                       else ct.c_longdouble)
 
         # int, int, int, int*, double*, double*, double*, double*, double
-        argtypes = [ct.c_int32]*3 + [ct.c_void_p]*4 + [float_type]
+        argtypes = [ct.c_int32]*3 + [ct.c_void_p]*4 + [float_type, ct.c_int32]
         names = [generate.kernel_name(self.info, variant)
                  for variant in ("Iq", "Iqxy", "Imagnetic")]
         self._kernels = [self._dll[name] for name in names]
@@ -371,29 +378,33 @@ class DllKernel(Kernel):
     """
     def __init__(self, kernel, model_info, q_input):
         # type: (Callable[[], np.ndarray], ModelInfo, PyInput) -> None
+        #,model_info,q_input)
         self.kernel = kernel
         self.info = model_info
         self.q_input = q_input
         self.dtype = q_input.dtype
         self.dim = '2d' if q_input.is_2d else '1d'
-        self.result = np.empty(q_input.nq+1, q_input.dtype)
+        # leave room for f1/f2 results in case we need to compute beta for 1d models
+        nout = 2 if self.info.have_Fq else 1
+        # +4 for total weight, shell volume, effective radius, form volume
+        self.result = np.empty(q_input.nq*nout + 4, self.dtype)
         self.real = (np.float32 if self.q_input.dtype == generate.F32
                      else np.float64 if self.q_input.dtype == generate.F64
                      else np.float128)
 
-    def __call__(self, call_details, values, cutoff, magnetic):
-        # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
-
+    def _call_kernel(self, call_details, values, cutoff, magnetic, effective_radius_type):
+        # type: (CallDetails, np.ndarray, np.ndarray, float, bool, int) -> np.ndarray
         kernel = self.kernel[1 if magnetic else 0]
         args = [
             self.q_input.nq, # nq
             None, # pd_start
             None, # pd_stop pd_stride[MAX_PD]
             call_details.buffer.ctypes.data, # problem
-            values.ctypes.data,  #pars
-            self.q_input.q.ctypes.data, #q
+            values.ctypes.data,  # pars
+            self.q_input.q.ctypes.data, # q
             self.result.ctypes.data,   # results
             self.real(cutoff), # cutoff
+            effective_radius_type, # cutoff
         ]
         #print("Calling DLL")
         #call_details.show(values)
@@ -402,13 +413,6 @@ class DllKernel(Kernel):
             stop = min(start + step, call_details.num_eval)
             args[1:3] = [start, stop]
             kernel(*args) # type: ignore
-
-        #print("returned",self.q_input.q, self.result)
-        pd_norm = self.result[self.q_input.nq]
-        scale = values[0]/(pd_norm if pd_norm != 0.0 else 1.0)
-        background = values[1]
-        #print("scale",scale,background)
-        return scale*self.result[:self.q_input.nq] + background
 
     def release(self):
         # type: () -> None

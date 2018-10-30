@@ -181,9 +181,6 @@ Iq = """
     return(sq);
 """
 
-# ER defaults to 0.0
-# VR defaults to 1.0
-
 demo = dict(radius_effective=200, volfraction=0.2, perturb=0.05,
             stickiness=0.2, radius_effective_pd=0.1, radius_effective_pd_n=40)
 #

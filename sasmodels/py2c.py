@@ -98,6 +98,7 @@ The following constructs may cause problems:
 * line number skew: each statement should be tagged with its own #line
   to avoid skew as comments are skipped and loop bodies are wrapped with
   braces, etc.
+* doesn't support docstrings
 
 References
 ----------

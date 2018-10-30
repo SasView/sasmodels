@@ -129,9 +129,6 @@ Iq = """
 	return(struc);
 """
 
-# ER defaults to 0.0
-# VR defaults to 1.0
-
 def random():
     pars = dict(
         scale=1, background=0,

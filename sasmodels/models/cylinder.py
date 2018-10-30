@@ -137,13 +137,11 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
              ]
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "cylinder.c"]
-
-def ER(radius, length):
-    """
-        Return equivalent radius (ER)
-    """
-    ddd = 0.75 * radius * (2 * radius * length + (length + radius) * (length + pi * radius))
-    return 0.5 * (ddd) ** (1. / 3.)
+have_Fq = True
+effective_radius_type = [
+    "equivalent sphere", "radius",
+    "half length", "half min dimension", "half max dimension", "half diagonal",
+    ]
 
 def random():
     volume = 10**np.random.uniform(5, 12)
@@ -168,6 +166,7 @@ demo = dict(scale=1, background=0,
             theta_pd=10, theta_pd_n=5,
             phi_pd=10, phi_pd_n=5)
 
+# pylint: disable=bad-whitespace, line-too-long
 qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
 # After redefinition of angles, find new tests values.  Was 10 10 in old coords
 tests = [
@@ -181,4 +180,19 @@ tests = [
     #[{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.03514647218513852]],
 ]
 del qx, qy  # not necessary to delete, but cleaner
+
+# Default radius and length
+radius, length = parameters[2][2], parameters[3][2]
+tests.extend([
+    ({'radius_effective_type': 0}, 0.1, None, None, 0., pi*radius**2*length, 1.0),
+    ({'radius_effective_type': 1}, 0.1, None, None, (0.75*radius**2*length)**(1./3.), None, None),
+    ({'radius_effective_type': 2}, 0.1, None, None, radius, None, None),
+    ({'radius_effective_type': 3}, 0.1, None, None, length/2., None, None),
+    ({'radius_effective_type': 4}, 0.1, None, None, min(radius, length/2.), None, None),
+    ({'radius_effective_type': 5}, 0.1, None, None, max(radius, length/2.), None, None),
+    ({'radius_effective_type': 6}, 0.1, None, None, np.sqrt(4*radius**2 + length**2)/2., None, None),
+])
+del radius, length
+# pylint: enable=bad-whitespace, line-too-long
+
 # ADDED by:  RKH  ON: 18Mar2016 renamed sld's etc

@@ -61,8 +61,12 @@ MultiplicityInfo = collections.namedtuple(
 
 #: set of defined models (standard and custom)
 MODELS = {}  # type: Dict[str, SasviewModelType]
+# TODO: remove unused MODEL_BY_PATH cache once sasview no longer references it
 #: custom model {path: model} mapping so we can check timestamps
 MODEL_BY_PATH = {}  # type: Dict[str, SasviewModelType]
+#: Track modules that we have loaded so we can determine whether the model
+#: has changed since we last reloaded.
+_CACHED_MODULE = {}  # type: Dict[str, "module"]
 
 def find_model(modelname):
     # type: (str) -> SasviewModelType
@@ -105,15 +109,21 @@ def load_custom_model(path):
     """
     Load a custom model given the model path.
     """
-    model = MODEL_BY_PATH.get(path, None)
-    if model is not None and model.timestamp == getmtime(path):
-        #logger.info("Model already loaded %s", path)
-        return model
-
     #logger.info("Loading model %s", path)
+
+    # Load the kernel module.  This may already be cached by the loader, so
+    # only requires checking the timestamps of the dependents.
     kernel_module = custom.load_custom_kernel_module(path)
-    if hasattr(kernel_module, 'Model'):
-        model = kernel_module.Model
+
+    # Check if the module has changed since we last looked.
+    reloaded = kernel_module != _CACHED_MODULE.get(path, None)
+    _CACHED_MODULE[path] = kernel_module
+
+    # Turn the module into a model.  We need to do this in even if the
+    # model has already been loaded so that we can determine the model
+    # name and retrieve it from the MODELS cache.
+    model = getattr(kernel_module, 'Model', None)
+    if model is not None:
         # Old style models do not set the name in the class attributes, so
         # set it here; this name will be overridden when the object is created
         # with an instance variable that has the same value.
@@ -126,7 +136,6 @@ def load_custom_model(path):
     else:
         model_info = modelinfo.make_model_info(kernel_module)
         model = make_model_from_info(model_info)
-    model.timestamp = getmtime(path)
 
     # If a model name already exists and we are loading a different model,
     # use the model file name as the model name.
@@ -142,9 +151,11 @@ def load_custom_model(path):
         logger.info("Model %s already exists: using %s [%s]",
                     _previous_name, model.name, model.filename)
 
-    MODELS[model.name] = model
-    MODEL_BY_PATH[path] = model
-    return model
+    # Only update the model if the module has changed
+    if reloaded or model.name not in MODELS:
+        MODELS[model.name] = model
+
+    return MODELS[model.name]
 
 
 def make_model_from_info(model_info):
@@ -271,7 +282,7 @@ def _generate_model_attributes(model_info):
     attrs['description'] = model_info.description
     attrs['category'] = model_info.category
     attrs['is_structure_factor'] = model_info.structure_factor
-    attrs['is_form_factor'] = model_info.ER is not None
+    attrs['is_form_factor'] = model_info.effective_radius_type is not None
     attrs['is_multiplicity_model'] = variants[0] > 1
     attrs['multiplicity_info'] = variants
     attrs['orientation_params'] = tuple(orientation_params)
@@ -371,6 +382,12 @@ class SasviewModel(object):
             hidden.add('scale')
             hidden.add('background')
             self._model_info.parameters.defaults['background'] = 0.
+
+        # Update the parameter lists to exclude any hidden parameters
+        self.magnetic_params = tuple(pname for pname in self.magnetic_params
+                                     if pname not in hidden)
+        self.orientation_params = tuple(pname for pname in self.orientation_params
+                                        if pname not in hidden)
 
         self._persistency_dict = {}
         self.params = collections.OrderedDict()
@@ -539,9 +556,11 @@ class SasviewModel(object):
         if isinstance(x, (list, tuple)):
             # pylint: disable=unpacking-non-sequence
             q, phi = x
-            return self.calculate_Iq([q*math.cos(phi)], [q*math.sin(phi)])[0]
+            result, _ = self.calculate_Iq([q*math.cos(phi)], [q*math.sin(phi)])
+            return result[0]
         else:
-            return self.calculate_Iq([x])[0]
+            result, _ = self.calculate_Iq([x])
+            return result[0]
 
 
     def runXY(self, x=0.0):
@@ -556,9 +575,11 @@ class SasviewModel(object):
         **DEPRECATED**: use calculate_Iq instead
         """
         if isinstance(x, (list, tuple)):
-            return self.calculate_Iq([x[0]], [x[1]])[0]
+            result, _ = self.calculate_Iq([x[0]], [x[1]])
+            return result[0]
         else:
-            return self.calculate_Iq([x])[0]
+            result, _ = self.calculate_Iq([x])
+            return result[0]
 
     def evalDistribution(self, qdist):
         # type: (Union[np.ndarray, Tuple[np.ndarray, np.ndarray], List[np.ndarray]]) -> np.ndarray
@@ -592,11 +613,13 @@ class SasviewModel(object):
         if isinstance(qdist, (list, tuple)):
             # Check whether we have a list of ndarrays [qx,qy]
             qx, qy = qdist
-            return self.calculate_Iq(qx, qy)
+            result, _ = self.calculate_Iq(qx, qy)
+            return result
 
         elif isinstance(qdist, np.ndarray):
             # We have a simple 1D distribution of q-values
-            return self.calculate_Iq(qdist)
+            result, _ = self.calculate_Iq(qdist)
+            return result
 
         else:
             raise TypeError("evalDistribution expects q or [qx, qy], not %r"
@@ -615,7 +638,7 @@ class SasviewModel(object):
         # Long term, the solution is to change the interface to calculate_Iq
         # so that it returns a results object containing all the bits:
         #     the A, B, C, ... of the composition model (and any subcomponents?)
-        #     the P and S of the product model,
+        #     the P and S of the product model
         #     the combined model before resolution smearing,
         #     the sasmodel before sesans conversion,
         #     the oriented 2D model used to fit oriented usans data,
@@ -636,13 +659,20 @@ class SasviewModel(object):
         composition = self._model_info.composition
         if composition and composition[0] == 'product': # only P*S for now
             with calculation_lock:
-                self._calculate_Iq(qx)
-                return self._intermediate_results
+                _, lazy_results = self._calculate_Iq(qx)
+                # for compatibility with sasview 4.x
+                results = lazy_results()
+                pq_data = results.get("P(Q)")
+                sq_data = results.get("S(Q)")
+                return pq_data, sq_data
         else:
             return None
 
-    def calculate_Iq(self, qx, qy=None):
-        # type: (Sequence[float], Optional[Sequence[float]]) -> np.ndarray
+    def calculate_Iq(self,
+                     qx,     # type: Sequence[float]
+                     qy=None # type: Optional[Sequence[float]]
+                     ):
+        # type: (...) -> Tuple[np.ndarray, Callable[[], collections.OrderedDict[str, np.ndarray]]]
         """
         Calculate Iq for one set of q with the current parameters.
 
@@ -650,6 +680,10 @@ class SasviewModel(object):
 
         This should NOT be used for fitting since it copies the *q* vectors
         to the card for each evaluation.
+
+        The returned tuple contains the scattering intensity followed by a
+        callable which returns a dictionary of intermediate data from
+        ProductKernel.
         """
         ## uncomment the following when trying to debug the uncoordinated calls
         ## to calculate_Iq
@@ -660,7 +694,7 @@ class SasviewModel(object):
         with calculation_lock:
             return self._calculate_Iq(qx, qy)
 
-    def _calculate_Iq(self, qx, qy=None):
+    def _calculate_Iq(self, qx, qy=None, Fq=False, effective_radius_type=1):
         if self._model is None:
             self._model = core.build_model(self._model_info)
         if qy is not None:
@@ -680,42 +714,41 @@ class SasviewModel(object):
         #print("params", self.params)
         #print("values", values)
         #print("is_mag", is_magnetic)
+        if Fq:
+            result = calculator.Fq(call_details, values, cutoff=self.cutoff,
+                                   magnetic=is_magnetic,
+                                   effective_radius_type=effective_radius_type)
         result = calculator(call_details, values, cutoff=self.cutoff,
                             magnetic=is_magnetic)
+        lazy_results = getattr(calculator, 'results',
+                               lambda: collections.OrderedDict())
         #print("result", result)
-        self._intermediate_results = getattr(calculator, 'results', None)
+
         calculator.release()
         #self._model.release()
-        return result
 
-    def calculate_ER(self):
+        return result, lazy_results
+
+
+    def calculate_ER(self, mode=1):
         # type: () -> float
         """
         Calculate the effective radius for P(q)*S(q)
 
         :return: the value of the effective radius
         """
-        if self._model_info.ER is None:
-            return 1.0
-        else:
-            value, weight = self._dispersion_mesh()
-            fv = self._model_info.ER(*value)
-            #print(values[0].shape, weights.shape, fv.shape)
-            return np.sum(weight * fv) / np.sum(weight)
+        Fq = self._calculate_Iq([0.1], True, mode)
+        return Fq[2]
 
     def calculate_VR(self):
         # type: () -> float
         """
         Calculate the volf ratio for P(q)*S(q)
 
-        :return: the value of the volf ratio
+        :return: the value of the form:shell volume ratio
         """
-        if self._model_info.VR is None:
-            return 1.0
-        else:
-            value, weight = self._dispersion_mesh()
-            whole, part = self._model_info.VR(*value)
-            return np.sum(weight * part) / np.sum(weight * whole)
+        Fq = self._calculate_Iq([0.1], True, mode)
+        return Fq[4]
 
     def set_dispersion(self, parameter, dispersion):
         # type: (str, weights.Dispersion) -> None
@@ -785,6 +818,16 @@ class SasviewModel(object):
             value = self.params[par.name]
             return value, [value], [1.0]
 
+    @classmethod
+    def runTests(cls):
+        """
+        Run any tests built into the model and captures the test output.
+
+        Returns success flag and output
+        """
+        from .model_test import check_model
+        return check_model(cls._model_info)
+
 def test_cylinder():
     # type: () -> float
     """
@@ -815,6 +858,7 @@ def test_product():
     S = _make_standard_model('hayter_msa')()
     P = _make_standard_model('cylinder')()
     model = MultiplicationModel(P, S)
+    model.setParam('radius_effective_mode', 1.0)
     value = model.evalDistribution([0.1, 0.1])
     if np.isnan(value):
         raise ValueError("cylinder*hatyer_msa returns null")
@@ -872,10 +916,10 @@ def test_old_name():
 def magnetic_demo():
     Model = _make_standard_model('sphere')
     model = Model()
-    model.setParam('M0:sld', 8)
+    model.setParam('sld_M0', 8)
     q = np.linspace(-0.35, 0.35, 500)
     qx, qy = np.meshgrid(q, q)
-    result = model.calculate_Iq(qx.flatten(), qy.flatten())
+    result, _ = model.calculate_Iq(qx.flatten(), qy.flatten())
     result = result.reshape(qx.shape)
 
     import pylab

@@ -121,22 +121,16 @@ parameters = [["radius_minor",     "Ang",        20.0,  [0, inf],    "volume",  
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "elliptical_cylinder.c"]
+have_Fq = True
+effective_radius_type = [
+    "equivalent sphere", "average radius", "min radius", "max radius",
+    "equivalent circular cross-section",
+    "half length", "half min dimension", "half max dimension", "half diagonal",
+    ]
 
 demo = dict(scale=1, background=0, radius_minor=100, axis_ratio=1.5, length=400.0,
             sld=4.0, sld_solvent=1.0, theta=10.0, phi=20, psi=30,
             theta_pd=10, phi_pd=2, psi_pd=3)
-
-def ER(radius_minor, axis_ratio, length):
-    """
-        Equivalent radius
-        @param radius_minor: Ellipse minor radius
-        @param axis_ratio: Ratio of major radius over minor radius
-        @param length: Length of the cylinder
-    """
-    radius = sqrt(radius_minor * radius_minor * axis_ratio)
-    ddd = 0.75 * radius * (2 * radius * length
-                           + (length + radius) * (length + pi * radius))
-    return 0.5 * (ddd) ** (1. / 3.)
 
 def random():
     # V = pi * radius_major * radius_minor * length;
@@ -160,8 +154,8 @@ qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
 
 tests = [
-    [{'radius_minor': 20.0, 'axis_ratio': 1.5, 'length':400.0}, 'ER', 79.89245454155024],
-    [{'radius_minor': 20.0, 'axis_ratio': 1.2, 'length':300.0}, 'VR', 1],
+#    [{'radius_minor': 20.0, 'axis_ratio': 1.5, 'length':400.0}, 'ER', 79.89245454155024],
+#    [{'radius_minor': 20.0, 'axis_ratio': 1.2, 'length':300.0}, 'VR', 1],
 
     # The SasView test result was 0.00169, with a background of 0.001
     [{'radius_minor': 20.0, 'axis_ratio': 1.5, 'sld': 4.0, 'length':400.0,

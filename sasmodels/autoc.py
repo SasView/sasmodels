@@ -29,6 +29,9 @@ DEPENDENCY = {
     'sas_erf': ['lib/polevl.c', 'lib/sas_erf.c'],
     'sas_erfc': ['lib/polevl.c', 'lib/sas_erf.c'],
     'sas_gamma': ['lib/sas_gamma.c'],
+    'sas_gammaln': ['lib/sas_gammainc.c'],
+    'sas_gammainc': ['lib/sas_gammainc.c'],
+    'sas_gammaincc': ['lib/sas_gammainc.c'],
     'sas_J0': ['lib/polevl.c', 'lib/sas_J0.c'],
     'sas_J1': ['lib/polevl.c', 'lib/sas_J1.c'],
     'sas_JN': ['lib/polevl.c', 'lib/sas_J0.c', 'lib/sas_J1.c', 'lib/sas_JN.c'],
@@ -40,13 +43,16 @@ DEFINES = frozenset("M_PI M_PI_2 M_PI_4 M_SQRT1_2 M_E NAN INFINITY M_PI_180 M_4P
 def convert(info, module):
     # type: ("ModelInfo", ModuleType) -> bool
     """
-    convert Iq, Iqxy and form_volume to c
+    Convert Iq, Iqxy, form_volume, etc. to c
+
+    Returns list of warnings
     """
     # Check if there is already C code
     if info.source or info.c_code is not None:
         return
 
-    public_methods = "Iq", "Iqac", "Iqabc", "Iqxy", "form_volume"
+    public_methods = ("Iq", "Iqac", "Iqabc", "Iqxy", 
+            "form_volume", "shell_volume", "effective_radius")
 
     tagged = [] # type: List[str]
     translate = [] # type: List[Callable]
@@ -119,10 +125,13 @@ def convert(info, module):
 
     # translate source
     ordered_code = [code[name] for name in py2c.ordered_dag(depends) if name in code]
-    functions = py2c.translate(ordered_code, constants)
+    functions, warnings = py2c.translate(ordered_code, constants)
     snippets.extend(functions)
 
     # update model info
     info.source = unique_libs
     info.c_code = "".join(snippets)
     info.Iq = info.Iqac = info.Iqabc = info.Iqxy = info.form_volume = None
+
+    return warnings
+

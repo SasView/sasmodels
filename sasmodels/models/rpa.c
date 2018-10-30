@@ -38,7 +38,7 @@ double Iq(double q, double fp_case_num,
   double S11,S12,S13,S14,S21,S22,S23,S24;
   double S31,S32,S33,S34,S41,S42,S43,S44;
   double Lad,Lbd,Lcd,Nav,Intg;
-  
+
   // Set values for non existent parameters (eg. no A or B in case 0 and 1 etc)
   //icase was shifted to N-1 from the original code
   if (icase <= 1){
@@ -57,7 +57,7 @@ double Iq(double q, double fp_case_num,
     b[0] = 5.0;
     Kab = Kac = Kad = -0.0004;
   }
- 
+
   // Set volume fraction of component D based on constraint that sum of vol frac =1
   Phi[3]=1.0-Phi[0]-Phi[1]-Phi[2];
 
@@ -83,7 +83,7 @@ double Iq(double q, double fp_case_num,
   Phibd=sqrt(Phi[1]*Phi[3]);
   Phicd=sqrt(Phi[2]*Phi[3]);
 
-  // Calculate Q^2 * Rg^2 for each homopolymer assuming random walk 
+  // Calculate Q^2 * Rg^2 for each homopolymer assuming random walk
   Xa=q*q*b[0]*b[0]*N[0]/6.0;
   Xb=q*q*b[1]*b[1]*N[1]/6.0;
   Xc=q*q*b[2]*b[2]*N[2]/6.0;
@@ -310,7 +310,7 @@ double Iq(double q, double fp_case_num,
   //calculate contrast where L[i] is the scattering length of i and D is the matrix
   //Note that should multiply by Nav to get units of SLD which will become
   // Nav*2 in the next line (SLD^2) but then normalization in that line would
-  //need to divide by Nav leaving only Nav or sqrt(Nav) before squaring. 
+  //need to divide by Nav leaving only Nav or sqrt(Nav) before squaring.
   Nav=6.022045e+23;
   Lad=(L[0]/v[0]-L[3]/v[3])*sqrt(Nav);
   Lbd=(L[1]/v[1]-L[3]/v[3])*sqrt(Nav);
@@ -319,7 +319,7 @@ double Iq(double q, double fp_case_num,
   Intg=Lad*Lad*S11+Lbd*Lbd*S22+Lcd*Lcd*S33+2.0*Lad*Lbd*S12+2.0*Lbd*Lcd*S23+2.0*Lad*Lcd*S13;
 
   //rescale for units of Lij^2 (fm^2 to cm^2)
-  Intg *= 1.0e-26;    
+  Intg *= 1.0e-26;
 
   return Intg;
 

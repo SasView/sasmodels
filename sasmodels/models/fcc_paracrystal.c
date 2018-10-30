@@ -78,7 +78,6 @@ static double Iq(double q, double dnn,
     return fcc_volume_fraction(radius, dnn) * Pq * Zq;
 }
 
-
 static double Iqabc(double qa, double qb, double qc,
     double dnn, double d_factor, double radius,
     double sld, double solvent_sld)

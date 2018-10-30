@@ -1,6 +1,6 @@
 r"""
 For information about polarised and magnetic scattering, see
-the :doc:`magnetic help <../sasgui/perspectives/fitting/mag_help>` documentation.
+the :ref:`magnetism` documentation.
 
 Definition
 ----------
@@ -70,6 +70,9 @@ parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "",
 def form_volume(radius):
     return 1.333333333333333 * pi * radius ** 3
 
+def effective_radius(mode, radius):
+    return radius
+
 def Iq(q, sld, sld_solvent, radius):
     #print "q",q
     #print "sld,r",sld,sld_solvent,radius
@@ -103,11 +106,6 @@ def sesans(z, sld, sld_solvent, radius):
               + dlow2/2.*(1 - dlow2/16.) * log(dlow / (2. + sqrt(4. - dlow2))))
     return g
 sesans.vectorized = True  # sesans accepts an array of z values
-
-def ER(radius):
-    return radius
-
-# VR defaults to 1.0
 
 demo = dict(scale=1, background=0,
             sld=6, sld_solvent=1,

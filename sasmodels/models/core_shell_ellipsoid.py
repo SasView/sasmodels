@@ -144,15 +144,11 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "core_shell_ellipsoid.c"]
-
-def ER(radius_equat_core, x_core, thick_shell, x_polar_shell):
-    """
-        Returns the effective radius used in the S*P calculation
-    """
-    from .ellipsoid import ER as ellipsoid_ER
-    polar_outer = radius_equat_core*x_core + thick_shell*x_polar_shell
-    equat_outer = radius_equat_core + thick_shell
-    return ellipsoid_ER(polar_outer, equat_outer)
+have_Fq = True
+effective_radius_type = [
+    "equivalent sphere", "average outer curvature",
+    "min outer radius", "max outer radius",
+    ]
 
 def random():
     volume = 10**np.random.uniform(5, 12)

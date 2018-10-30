@@ -45,7 +45,7 @@ double linear_pearls_kernel(double q,
     //sine functions of a pearl
     double psi = sas_3j1x_x(q * radius);
 
-    // N pearls interaction terms 
+    // N pearls interaction terms
     double structure_factor = (double)num_pearls;
     for(int num=1; num<num_pearls; num++) {
         structure_factor += 2.0*(num_pearls-num)*sas_sinx_x(q*separation*num);

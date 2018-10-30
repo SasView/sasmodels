@@ -2,7 +2,11 @@ r"""
 Definition
 ----------
 
-The 1D scattering intensity is calculated in the following way (Guinier, 1955)
+This model provides the form factor, *P(q)*, for an unilamellar vesicle and is
+effectively identical to the hollow sphere reparameterized to be
+more intuitive for a vesicle and normalizing the form factor by the volume of
+the shell. The 1D scattering intensity is calculated in the following way
+(Guinier,1955\ [#Guinier1955]_)
 
 .. math::
 
@@ -52,22 +56,23 @@ radius for *S(Q)* when *P(Q)* \* *S(Q)* is applied.
 References
 ----------
 
-A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*, John Wiley and
-Sons, New York, (1955)
+.. [#Guinier1955] A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*, John Wiley and
+   Sons, New York, (1955)
+
+
+Authorship and Verification
+----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Butler **Date:** March 20, 2016
-* **Last Reviewed by:** Paul Butler **Date:** March 20, 2016
+* **Last Reviewed by:** Paul Butler **Date:** September 7, 2018
 """
 
 import numpy as np
 from numpy import pi, inf
 
 name = "vesicle"
-title = "This model provides the form factor, *P(q)*, for an unilamellar \
-    vesicle. This is model is effectively identical to the hollow sphere \
-    reparameterized to be more intuitive for a vesicle and normalizing the \
-    form factor by the volume of the shell."
+title = "Vesicle model representing a hollow sphere"
 description = """
     Model parameters:
         radius : the core radius of the vesicle
@@ -93,30 +98,8 @@ parameters = [["sld", "1e-6/Ang^2", 0.5, [-inf, inf], "sld",
              ]
 
 source = ["lib/sas_3j1x_x.c", "vesicle.c"]
-
-def ER(radius, thickness):
-    '''
-    returns the effective radius used in the S*P calculation
-
-    :param radius: core radius
-    :param thickness: shell thickness
-    '''
-    return radius + thickness
-
-def VR(radius, thickness):
-    '''
-    returns the volumes of the shell and of the whole sphere including the
-    core plus shell - is used to normalize when including polydispersity.
-
-    :param radius: core radius
-    :param thickness: shell thickness
-    :return whole: volume of core and shell
-    :return whole-core: volume of the shell
-    '''
-
-    whole = 4./3. * pi * (radius + thickness)**3
-    core = 4./3. * pi * radius**3
-    return whole, whole - core
+have_Fq = True
+effective_radius_type = ["outer radius"]
 
 def random():
     total_radius = 10**np.random.uniform(1.3, 5)
@@ -144,6 +127,5 @@ demo = dict(sld=0.5, sld_solvent=6.36,
 tests = [[{}, 0.0005, 859.916526646],
          [{}, 0.100600200401, 1.77063682331],
          [{}, 0.5, 0.00355351388906],
-         [{}, 'ER', 130.],
-         [{}, 'VR', 0.54483386436],
+         [{}, 0.1, None, None, 130., None, 1./0.54483386436],  # R_eff, form:shell
         ]

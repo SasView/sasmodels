@@ -12,3 +12,4 @@ double sphere_form(double q, double radius, double sld, double solvent_sld)
     const double contrast = (sld - solvent_sld);
     return 1.0e-4*square(contrast * fq);
 }
+

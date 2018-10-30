@@ -176,12 +176,13 @@ def Iqac(qab, qc, sld, solvent_sld, radius, length):
     form = fq(qab, qc, radius, length)
     return 1.0e-4 * square(s * form)
 
-def ER(radius, length):
-    """
-    Return equivalent radius (ER)
-    """
-    ddd = 0.75 * radius * (2 * radius * length + (length + radius) * (length + pi * radius))
-    return 0.5 * (ddd) ** (1. / 3.)
+def effective_radius(mode, radius, length):
+    mode = int(mode)
+    if mode == 1:
+        ddd = 0.75 * radius * (2 * radius * length + (length + radius) * (length + pi * radius))
+        return 0.5 * (ddd) ** (1. / 3.)
+    else:
+        return 0.
 
 def random():
     volume = 10**np.random.uniform(5, 12)

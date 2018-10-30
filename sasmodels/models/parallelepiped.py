@@ -1,16 +1,14 @@
 # parallelepiped model
 # Note: model title and parameter table are inserted automatically
 r"""
-The form factor is normalized by the particle volume.
-For information about polarised and magnetic scattering, see
-the :ref:`magnetism` documentation.
-
 Definition
 ----------
 
- This model calculates the scattering from a rectangular parallelepiped
- (\:numref:`parallelepiped-image`\).
- If you need to apply polydispersity, see also :ref:`rectangular-prism`.
+This model calculates the scattering from a rectangular solid
+(:numref:`parallelepiped-image`).
+If you need to apply polydispersity, see also :ref:`rectangular-prism`. For
+information about polarised and magnetic scattering, see
+the :ref:`magnetism` documentation.
 
 .. _parallelepiped-image:
 
@@ -20,12 +18,15 @@ Definition
    Parallelepiped with the corresponding definition of sides.
 
 The three dimensions of the parallelepiped (strictly here a cuboid) may be
-given in *any* size order. To avoid multiple fit solutions, especially
-with Monte-Carlo fit methods, it may be advisable to restrict their ranges.
-There may be a number of closely similar "best fits", so some trial and
-error, or fixing of some dimensions at expected values, may help.
+given in *any* size order as long as the particles are randomly oriented (i.e.
+take on all possible orientations see notes on 2D below). To avoid multiple fit
+solutions, especially with Monte-Carlo fit methods, it may be advisable to
+restrict their ranges. There may be a number of closely similar "best fits", so
+some trial and error, or fixing of some dimensions at expected values, may
+help.
 
-The 1D scattering intensity $I(q)$ is calculated as:
+The form factor is normalized by the particle volume and the 1D scattering
+intensity $I(q)$ is then calculated as:
 
 .. Comment by Miguel Gonzalez:
    I am modifying the original text because I find the notation a little bit
@@ -38,16 +39,18 @@ The 1D scattering intensity $I(q)$ is calculated as:
 .. math::
 
     I(q) = \frac{\text{scale}}{V} (\Delta\rho \cdot V)^2
-           \left< P(q, \alpha) \right> + \text{background}
+           \left< P(q, \alpha, \beta) \right> + \text{background}
 
 where the volume $V = A B C$, the contrast is defined as
-$\Delta\rho = \rho_\text{p} - \rho_\text{solvent}$,
-$P(q, \alpha)$ is the form factor corresponding to a parallelepiped oriented
-at an angle $\alpha$ (angle between the long axis C and $\vec q$),
-and the averaging $\left<\ldots\right>$ is applied over all orientations.
+$\Delta\rho = \rho_\text{p} - \rho_\text{solvent}$, $P(q, \alpha, \beta)$
+is the form factor corresponding to a parallelepiped oriented
+at an angle $\alpha$ (angle between the long axis C and $\vec q$), and $\beta$
+(the angle between the projection of the particle in the $xy$ detector plane
+and the $y$ axis) and the averaging $\left<\ldots\right>$ is applied over all
+orientations.
 
 Assuming $a = A/B < 1$, $b = B /B = 1$, and $c = C/B > 1$, the
-form factor is given by (Mittelbach and Porod, 1961)
+form factor is given by (Mittelbach and Porod, 1961 [#Mittelbach]_)
 
 .. math::
 
@@ -65,34 +68,77 @@ with
     S(x) &= \frac{\sin x}{x} \\
     \mu &= qB
 
-The scattering intensity per unit volume is returned in units of |cm^-1|.
+where substitution of $\sigma = cos\alpha$ and $\beta = \pi/2 \ u$ have been
+applied.
 
-NB: The 2nd virial coefficient of the parallelepiped is calculated based on
-the averaged effective radius, after appropriately sorting the three
-dimensions, to give an oblate or prolate particle, $(=\sqrt{AB/\pi})$ and
-length $(= C)$ values, and used as the effective radius for
-$S(q)$ when $P(q) \cdot S(q)$ is applied.
+For **oriented** particles, the 2D scattering intensity, $I(q_x, q_y)$, is
+given as:
 
-For 2d data the orientation of the particle is required, described using
-angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further details
-of the calculation and angular dispersions see :ref:`orientation` .
+.. math::
+
+    I(q_x, q_y) = \frac{\text{scale}}{V} (\Delta\rho \cdot V)^2 P(q_x, q_y)
+            + \text{background}
 
 .. Comment by Miguel Gonzalez:
-   The following text has been commented because I think there are two
-   mistakes. Psi is the rotational angle around C (but I cannot understand
-   what it means against the q plane) and psi=0 corresponds to a||x and b||y.
+   This reflects the logic of the code, as in parallelepiped.c the call
+   to _pkernel returns $P(q_x, q_y)$ and then this is multiplied by
+   $V^2 * (\Delta \rho)^2$. And finally outside parallelepiped.c it will be
+   multiplied by scale, normalized by $V$ and the background added. But
+   mathematically it makes more sense to write
+   $I(q_x, q_y) = \text{scale} V \Delta\rho^2 P(q_x, q_y) + \text{background}$,
+   with scale being the volume fraction.
 
-   The angle $\Psi$ is the rotational angle around the $C$ axis against
-   the $q$ plane. For example, $\Psi = 0$ when the $B$ axis is parallel
-   to the $x$-axis of the detector.
+Where $P(q_x, q_y)$ for a given orientation of the form factor is calculated as
 
-The angle $\Psi$ is the rotational angle around the $C$ axis.
-For $\theta = 0$ and $\phi = 0$, $\Psi = 0$ corresponds to the $B$ axis
-oriented parallel to the y-axis of the detector with $A$ along the x-axis.
-For other $\theta$, $\phi$ values, the parallelepiped has to be first rotated
-$\theta$ degrees in the $z-x$ plane and then $\phi$ degrees around the $z$ axis,
-before doing a final rotation of $\Psi$ degrees around the resulting $C$ axis
-of the particle to obtain the final orientation of the parallelepiped.
+.. math::
+
+    P(q_x, q_y) = \left[\frac{\sin(\tfrac{1}{2}qA\cos\alpha)}{(\tfrac{1}
+                   {2}qA\cos\alpha)}\right]^2
+                  \left[\frac{\sin(\tfrac{1}{2}qB\cos\beta)}{(\tfrac{1}
+                   {2}qB\cos\beta)}\right]^2
+                  \left[\frac{\sin(\tfrac{1}{2}qC\cos\gamma)}{(\tfrac{1}
+                   {2}qC\cos\gamma)}\right]^2
+
+with
+
+.. math::
+
+    \cos\alpha &= \hat A \cdot \hat q, \\
+    \cos\beta  &= \hat B \cdot \hat q, \\
+    \cos\gamma &= \hat C \cdot \hat q
+
+
+FITTING NOTES
+~~~~~~~~~~~~~
+
+#. The 2nd virial coefficient of the parallelepiped is calculated based on
+   the averaged effective radius, after appropriately sorting the three
+   dimensions, to give an oblate or prolate particle, $(=\sqrt{AB/\pi})$ and
+   length $(= C)$ values, and used as the effective radius for
+   $S(q)$ when $P(q) \cdot S(q)$ is applied.
+
+#. For 2d data the orientation of the particle is required, described using
+   angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, where $\theta$
+   and $\phi$ define the orientation of the director in the laboratry reference
+   frame of the beam direction ($z$) and detector plane ($x-y$ plane), while
+   the angle $\Psi$ is effectively the rotational angle around the particle
+   $C$ axis. For $\theta = 0$ and $\phi = 0$, $\Psi = 0$ corresponds to the
+   $B$ axis oriented parallel to the y-axis of the detector with $A$ along
+   the x-axis. For other $\theta$, $\phi$ values, the order of rotations
+   matters. In particular, the parallelepiped must first be rotated $\theta$
+   degrees in the $x-z$ plane before rotating $\phi$ degrees around the $z$
+   axis (in the $x-y$ plane). Applying orientational distribution to the
+   particle orientation (i.e  `jitter` to one or more of these angles) can get
+   more confusing as `jitter` is defined **NOT** with respect to the laboratory
+   frame but the particle reference frame. It is thus highly recmmended to
+   read :ref:`orientation` for further details of the calculation and angular
+   dispersions.
+
+.. note:: For 2d, constraints must be applied during fitting to ensure that the
+   order of sides chosen is not altered, and hence that the correct definition
+   of angles is preserved. For the default choice shown here, that means
+   ensuring that the inequality $A < B < C$ is not violated,  The calculation
+   will not report an error, but the results may be not correct.
 
 .. _parallelepiped-orientation:
 
@@ -105,47 +151,19 @@ of the particle to obtain the final orientation of the parallelepiped.
     Examples of the angles for an oriented parallelepiped against the
     detector plane.
 
-On introducing "Orientational Distribution" in the angles, "distribution of
-theta" and "distribution of phi" parameters will appear. These are actually
-rotations about axes $\delta_1$ and $\delta_2$ of the parallelepiped,
-perpendicular to the $a$ x $c$ and $b$ x $c$ faces. (When $\theta = \phi = 0$
-these are parallel to the $Y$ and $X$ axes of the instrument.) The third
-orientation distribution, in $\psi$, is about the $c$ axis of the particle,
-perpendicular to the $a$ x $b$ face. Some experimentation may be required to
-understand the 2d patterns fully as discussed in :ref:`orientation` .
-
-For a given orientation of the parallelepiped, the 2D form factor is
-calculated as
-
-.. math::
-
-    P(q_x, q_y) = \left[\frac{\sin(\tfrac{1}{2}qA\cos\alpha)}{(\tfrac{1}{2}qA\cos\alpha)}\right]^2
-                  \left[\frac{\sin(\tfrac{1}{2}qB\cos\beta)}{(\tfrac{1}{2}qB\cos\beta)}\right]^2
-                  \left[\frac{\sin(\tfrac{1}{2}qC\cos\gamma)}{(\tfrac{1}{2}qC\cos\gamma)}\right]^2
-
-with
-
-.. math::
-
-    \cos\alpha &= \hat A \cdot \hat q, \\
-    \cos\beta  &= \hat B \cdot \hat q, \\
-    \cos\gamma &= \hat C \cdot \hat q
-
-and the scattering intensity as:
-
-.. math::
-
-    I(q_x, q_y) = \frac{\text{scale}}{V} V^2 \Delta\rho^2 P(q_x, q_y)
-            + \text{background}
-
-.. Comment by Miguel Gonzalez:
-   This reflects the logic of the code, as in parallelepiped.c the call
-   to _pkernel returns $P(q_x, q_y)$ and then this is multiplied by
-   $V^2 * (\Delta \rho)^2$. And finally outside parallelepiped.c it will be
-   multiplied by scale, normalized by $V$ and the background added. But
-   mathematically it makes more sense to write
-   $I(q_x, q_y) = \text{scale} V \Delta\rho^2 P(q_x, q_y) + \text{background}$,
-   with scale being the volume fraction.
+.. Comment by Paul Butler
+   I am commenting this section out as we are trying to minimize the amount of
+   oritentational detail here and encourage the user to go to the full
+   orientation documentation so that changes can be made in just one place.
+   below is the commented paragrah:
+   On introducing "Orientational Distribution" in the angles, "distribution of
+   theta" and "distribution of phi" parameters will appear. These are actually
+   rotations about axes $\delta_1$ and $\delta_2$ of the parallelepiped,
+   perpendicular to the $a$ x $c$ and $b$ x $c$ faces. (When $\theta = \phi = 0$
+   these are parallel to the $Y$ and $X$ axes of the instrument.) The third
+   orientation distribution, in $\psi$, is about the $c$ axis of the particle,
+   perpendicular to the $a$ x $b$ face. Some experimentation may be required to
+   understand the 2d patterns fully as discussed in :ref:`orientation` .
 
 
 Validation
@@ -155,20 +173,20 @@ Validation of the code was done by comparing the output of the 1D calculation
 to the angular average of the output of a 2D calculation over all possible
 angles.
 
-
 References
 ----------
 
-P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
-
-R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+.. [#Mittelbach] P Mittelbach and G Porod, *Acta Physica Austriaca*,
+   14 (1961) 185-211
+.. [#] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
 
 Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:**  Paul Kienzle **Date:** April 05, 2017
-* **Last Reviewed by:**  Richard Heenan **Date:** April 06, 2017
+* **Last Reviewed by:**  Miguel Gonzales and Paul Butler **Date:** May 24,
+  2018 - documentation updated
 """
 
 import numpy as np
@@ -211,25 +229,11 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
              ]
 
 source = ["lib/gauss76.c", "parallelepiped.c"]
-
-def ER(length_a, length_b, length_c):
-    """
-    Return effective radius (ER) for P(q)*S(q)
-    """
-    # now that axes can be in any size order, need to sort a,b,c
-    # where a~b and c is either much smaller or much larger
-    abc = np.vstack((length_a, length_b, length_c))
-    abc = np.sort(abc, axis=0)
-    selector = (abc[1] - abc[0]) > (abc[2] - abc[1])
-    length = np.where(selector, abc[0], abc[2])
-    # surface average radius (rough approximation)
-    radius = sqrt(np.where(~selector, abc[0]*abc[1], abc[1]*abc[2]) / pi)
-
-    ddd = 0.75 * radius * (2*radius*length + (length + radius)*(length + pi*radius))
-    return 0.5 * (ddd) ** (1. / 3.)
-
-# VR defaults to 1.0
-
+have_Fq = True
+effective_radius_type = [
+    "equivalent sphere", "half length_a", "half length_b", "half length_c",
+    "equivalent circular cross-section", "half ab diagonal", "half diagonal",
+    ]
 
 def random():
     length = 10**np.random.uniform(1, 4.7, size=3)
