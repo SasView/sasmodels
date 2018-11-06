@@ -169,7 +169,7 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "ellipsoid.c"]
 have_Fq = True
 effective_radius_type = [
-    "equivalent sphere", "average curvature", "min radius", "max radius",
+    "average curvature", "equivalent volume sphere", "min radius", "max radius",
     ]
 
 def random():

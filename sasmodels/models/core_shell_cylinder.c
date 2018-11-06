@@ -13,6 +13,14 @@ form_volume(double radius, double thickness, double length)
 }
 
 static double
+radius_from_excluded_volume(double radius, double thickness, double length)
+{
+    const double radius_tot = radius + thickness;
+    const double length_tot = length + 2.0*thickness;
+    return 0.5*cbrt(0.75*radius_tot*(2.0*radius_tot*length_tot + (radius_tot + length_tot)*(M_PI*radius_tot + length_tot)));
+}
+
+static double
 radius_from_volume(double radius, double thickness, double length)
 {
     const double volume_outer_cyl = form_volume(radius,thickness,length);
@@ -32,17 +40,19 @@ effective_radius(int mode, double radius, double thickness, double length)
 {
     switch (mode) {
     default:
-    case 1: // equivalent sphere
+    case 1: //cylinder excluded volume
+        return radius_from_excluded_volume(radius, thickness, length);
+    case 2: // equivalent volume sphere
         return radius_from_volume(radius, thickness, length);
-    case 2: // outer radius
+    case 3: // outer radius
         return radius + thickness;
-    case 3: // half outer length
+    case 4: // half outer length
         return 0.5*length + thickness;
-    case 4: // half min outer length
+    case 5: // half min outer length
         return (radius < 0.5*length ? radius + thickness : 0.5*length + thickness);
-    case 5: // half max outer length
+    case 6: // half max outer length
         return (radius > 0.5*length ? radius + thickness : 0.5*length + thickness);
-    case 6: // half outer diagonal
+    case 7: // half outer diagonal
         return radius_from_diagonal(radius,thickness,length);
     }
 }

@@ -7,6 +7,54 @@ form_volume(double radius_equat_minor, double radius_equat_major, double radius_
 }
 
 static double
+radius_from_curvature(double radius_equat_minor, double radius_equat_major, double radius_polar)
+{
+    // Trivial cases
+    if (radius_equat_minor == radius_equat_major == radius_polar) return radius_polar;
+    if (radius_equat_minor * radius_equat_major * radius_polar == 0.)  return 0.;
+
+
+    double r_equat_equiv, r_polar_equiv;
+    double radii[3] = {radius_equat_minor, radius_equat_major, radius_polar};
+    double radmax = fmax(radii[0],fmax(radii[1],radii[2]));
+
+    double radius_1 = radmax;
+    double radius_2 = radmax;
+    double radius_3 = radmax;
+
+    for(int irad=0; irad<3; irad++) {
+        if (radii[irad] < radius_1) {
+            radius_3 = radius_2;
+            radius_2 = radius_1;
+            radius_1 = radii[irad];
+            } else {
+                if (radii[irad] < radius_2) {
+                        radius_2 = radii[irad];
+                }
+            }
+    }
+    if(radius_2-radius_1 > radius_3-radius_2) {
+        r_equat_equiv = sqrt(radius_2*radius_3);
+        r_polar_equiv = radius_1;
+    } else  {
+        r_equat_equiv = sqrt(radius_1*radius_2);
+        r_polar_equiv = radius_3;
+    }
+
+    // see equation (26) in A.Isihara, J.Chem.Phys. 18(1950)1446-1449
+    const double ratio = (r_polar_equiv < r_equat_equiv
+                          ? r_polar_equiv / r_equat_equiv
+                          : r_equat_equiv / r_polar_equiv);
+    const double e1 = sqrt(1.0 - ratio*ratio);
+    const double b1 = 1.0 + asin(e1) / (e1 * ratio);
+    const double bL = (1.0 + e1) / (1.0 - e1);
+    const double b2 = 1.0 + 0.5 * ratio * ratio / e1 * log(bL);
+    const double delta = 0.75 * b1 * b2;
+    const double ddd = 2.0 * (delta + 1.0) * r_polar_equiv * r_equat_equiv * r_equat_equiv;
+    return 0.5 * cbrt(ddd);
+}
+
+static double
 radius_from_volume(double radius_equat_minor, double radius_equat_major, double radius_polar)
 {
     return cbrt(radius_equat_minor*radius_equat_major*radius_polar);
@@ -31,11 +79,13 @@ effective_radius(int mode, double radius_equat_minor, double radius_equat_major,
 {
     switch (mode) {
     default:
-    case 1: // equivalent sphere
+    case 1: // equivalent biaxial ellipsoid average curvature
+        return radius_from_curvature(radius_equat_minor,radius_equat_major, radius_polar);
+    case 2: // equivalent volume sphere
         return radius_from_volume(radius_equat_minor,radius_equat_major, radius_polar);
-    case 2: // min radius
+    case 3: // min radius
         return radius_from_min_dimension(radius_equat_minor,radius_equat_major, radius_polar);
-    case 3: // max radius
+    case 4: // max radius
         return radius_from_max_dimension(radius_equat_minor,radius_equat_major, radius_polar);
     }
 }

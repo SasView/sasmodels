@@ -55,7 +55,7 @@ def make_extra_pars(p_info):
         par = parse_parameter(
                 RADIUS_MODE_ID,
                 "",
-                0,
+                1,
                 [["unconstrained"] + p_info.effective_radius_type],
                 "",
                 "Effective radius calculation")

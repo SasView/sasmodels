@@ -35,10 +35,10 @@ effective_radius(int mode, double radius_polar, double radius_equatorial)
 {
     switch (mode) {
     default:
-    case 1: // equivalent sphere
-        return radius_from_volume(radius_polar, radius_equatorial);
-    case 2: // average curvature
+    case 1: // average curvature
         return radius_from_curvature(radius_polar, radius_equatorial);
+    case 2: // equivalent volume sphere
+        return radius_from_volume(radius_polar, radius_equatorial);
     case 3: // min radius
         return (radius_polar < radius_equatorial ? radius_polar : radius_equatorial);
     case 4: // max radius

@@ -59,6 +59,7 @@ References
 
 .. [#] L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and
    Neutron Scattering*, Plenum Press, New York, (1987)
+L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949). 
 
 Authorship and Verification
 ----------------------------
@@ -101,7 +102,7 @@ parameters = [
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "hollow_cylinder.c"]
 have_Fq = True
 effective_radius_type = [
-    "equivalent sphere", "outer radius", "half length",
+    "excluded volume", "equivalent outer volume sphere", "outer radius", "half length",
     "half outer min dimension", "half outer max dimension",
     "half outer diagonal",
     ]
@@ -139,7 +140,7 @@ length = parameters[2][2]
 tests = [
     [{}, 0.00005, 1764.926],
     [{}, 0.1, None, None,
-     (3./4*(radius+thickness)**2*length)**(1./3),  # R_eff from volume
+     0.5*(0.75*(radius+thickness)*(2.0*(radius+thickness)*length + ((radius+thickness) + length)*(pi*(radius+thickness) + length)))**(1./3.),  # R_eff from excluded volume
      pi*((radius+thickness)**2-radius**2)*length,  # shell volume
      (radius+thickness)**2/((radius+thickness)**2 - radius**2), # form:shell ratio
     ],

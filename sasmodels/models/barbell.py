@@ -78,6 +78,7 @@ References
 .. [#] H Kaya, *J. Appl. Cryst.*, 37 (2004) 37 223-230
 .. [#] H Kaya and N R deSouza, *J. Appl. Cryst.*, 37 (2004) 508-509 (addenda
    and errata)
+L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949). 
 
 Authorship and Verification
 ----------------------------
@@ -115,9 +116,9 @@ parameters = [["sld",         "1e-6/Ang^2",   4, [-inf, inf], "sld",         "Ba
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "barbell.c"]
-have_Fq = True
+have_Fq = True 
 effective_radius_type = [
-    "equivalent sphere", "radius", "half length", "half total length",
+    "equivalent cylinder excluded volume","equivalent volume sphere", "radius", "half length", "half total length",
     ]
 
 def random():

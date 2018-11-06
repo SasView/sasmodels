@@ -13,6 +13,12 @@ _fq(double qab, double qc, double radius, double length)
 }
 
 static double
+radius_from_excluded_volume(double radius, double length)
+{
+    return 0.5*cbrt(0.75*radius*(2.0*radius*length + (radius + length)*(M_PI*radius + length)));
+}
+
+static double
 radius_from_volume(double radius, double length)
 {
     return cbrt(M_PI*radius*radius*length/M_4PI_3);
@@ -30,16 +36,18 @@ effective_radius(int mode, double radius, double length)
     switch (mode) {
     default:
     case 1:
-        return radius_from_volume(radius, length);
+        return radius_from_excluded_volume(radius, length);
     case 2:
-        return radius;
+        return radius_from_volume(radius, length);
     case 3:
-        return 0.5*length;
+        return radius;
     case 4:
-        return (radius < 0.5*length ? radius : 0.5*length);
+        return 0.5*length;
     case 5:
-        return (radius > 0.5*length ? radius : 0.5*length);
+        return (radius < 0.5*length ? radius : 0.5*length);
     case 6:
+        return (radius > 0.5*length ? radius : 0.5*length);
+    case 7:
         return radius_from_diagonal(radius,length);
     }
 }

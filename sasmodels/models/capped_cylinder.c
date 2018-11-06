@@ -84,6 +84,14 @@ form_volume(double radius, double radius_cap, double length)
 }
 
 static double
+radius_from_excluded_volume(double radius, double radius_cap, double length)
+{
+    const double hc = radius_cap - sqrt(radius_cap*radius_cap - radius*radius);
+    const double length_tot = length + 2.0*hc;
+    return 0.5*cbrt(0.75*radius*(2.0*radius*length_tot + (radius + length_tot)*(M_PI*radius + length_tot)));
+}
+
+static double
 radius_from_volume(double radius, double radius_cap, double length)
 {
     const double vol_cappedcyl = form_volume(radius,radius_cap,length);
@@ -102,13 +110,15 @@ effective_radius(int mode, double radius, double radius_cap, double length)
 {
     switch (mode) {
     default:
-    case 1: // equivalent sphere
+    case 1: // equivalent cylinder excluded volume
+        return radius_from_excluded_volume(radius, radius_cap, length);
+    case 2: // equivalent volume sphere
         return radius_from_volume(radius, radius_cap, length);
-    case 2: // radius
+    case 3: // radius
         return radius;
-    case 3: // half length
+    case 4: // half length
         return 0.5*length;
-    case 4: // half total length
+    case 5: // half total length
         return radius_from_totallength(radius, radius_cap,length);
     }
 }
