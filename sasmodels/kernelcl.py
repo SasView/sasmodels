@@ -295,7 +295,6 @@ class GpuEnvironment(object):
             self.compiled[key] = (program, timestamp)
         return program
 
-_CURRENT_ID = 0
 def _create_some_context():
     # type: () -> cl.Context
     """
