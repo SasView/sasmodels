@@ -165,29 +165,12 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "rotation about beam"],
              ]
 
+
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "ellipsoid.c"]
-
-def ER(radius_polar, radius_equatorial):
-    # see equation (26) in A.Isihara, J.Chem.Phys. 18(1950)1446-1449
-    ee = np.empty_like(radius_polar)
-    idx = radius_polar > radius_equatorial
-    ee[idx] = (radius_polar[idx] ** 2 - radius_equatorial[idx] ** 2) / radius_polar[idx] ** 2
-    idx = radius_polar < radius_equatorial
-    ee[idx] = (radius_equatorial[idx] ** 2 - radius_polar[idx] ** 2) / radius_equatorial[idx] ** 2
-    valid = (radius_polar * radius_equatorial != 0) & (radius_polar != radius_equatorial)
-    bd = 1.0 - ee[valid]
-    e1 = np.sqrt(ee[valid])
-    b1 = 1.0 + np.arcsin(e1) / (e1 * np.sqrt(bd))
-    bL = (1.0 + e1) / (1.0 - e1)
-    b2 = 1.0 + bd / 2 / e1 * np.log(bL)
-    delta = 0.75 * b1 * b2
-    ddd = 2.0 * (delta + 1.0) * (radius_polar * radius_equatorial**2)[valid]
-
-    r = np.zeros_like(radius_polar)
-    r[valid] = 0.5 * cbrt(ddd)
-    idx = radius_polar == radius_equatorial
-    r[idx] = radius_polar[idx]
-    return r
+have_Fq = True
+effective_radius_type = [
+    "average curvature", "equivalent volume sphere", "min radius", "max radius",
+    ]
 
 def random():
     volume = 10**np.random.uniform(5, 12)

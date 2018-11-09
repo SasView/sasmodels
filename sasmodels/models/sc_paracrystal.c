@@ -79,7 +79,6 @@ Iq(double q, double lattice_spacing,
     return sc_volume_fraction(radius, lattice_spacing) * Pq * Zq;
 }
 
-
 static double
 Iqabc(double qa, double qb, double qc,
     double lattice_spacing, double lattice_distortion, double radius,

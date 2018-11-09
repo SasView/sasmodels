@@ -4,21 +4,22 @@ Run model unit tests.
 
 Usage::
 
-    python -m sasmodels.model_test [opencl|dll|opencl_and_dll] model1 model2 ...
+    python -m sasmodels.model_test [opencl|cuda|dll] model1 model2 ...
 
     if model1 is 'all', then all except the remaining models will be tested
 
 Each model is tested using the default parameters at q=0.1, (qx, qy)=(0.1, 0.1),
-and the ER and VR are computed.  The return values at these points are not
-considered.  The test is only to verify that the models run to completion,
-and do not produce inf or NaN.
+and Fq is called to make sure R_eff, volume and volume ratio are computed.
+The return values at these points are not considered.  The test is only to
+verify that the models run to completion, and do not produce inf or NaN.
 
 Tests are defined with the *tests* attribute in the model.py file.  *tests*
 is a list of individual tests to run, where each test consists of the
 parameter values for the test, the q-values and the expected results.  For
-the effective radius test, the q-value should be 'ER'.  For the VR test,
-the q-value should be 'VR'.  For 1-D tests, either specify the q value or
-a list of q-values, and the corresponding I(q) value, or list of I(q) values.
+the effective radius test and volume ratio tests, use the extended output
+form, which checks each output of kernel.Fq. For 1-D tests, either specify
+the q value or a list of q-values, and the corresponding I(q) value, or
+list of I(q) values.
 
 That is::
 
@@ -31,8 +32,7 @@ That is::
         [ {parameters}, [(qx1, qy1), (qx2, qy2), ...],
                         [I(qx1, qy1), I(qx2, qy2), ...]],
 
-        [ {parameters}, 'ER', ER(pars) ],
-        [ {parameters}, 'VR', VR(pars) ],
+        [ {parameters}, q, F(q), F^2(q), R_eff, V, V_r ],
         ...
     ]
 
@@ -59,10 +59,12 @@ import numpy as np  # type: ignore
 
 from . import core
 from .core import list_models, load_model_info, build_model
-from .direct_model import call_kernel, call_ER, call_VR
+from .direct_model import call_kernel, call_Fq
 from .exception import annotate_exception
 from .modelinfo import expand_pars
 from .kernelcl import use_opencl
+from .kernelcuda import use_cuda
+from . import product
 
 # pylint: disable=unused-import
 try:
@@ -79,9 +81,8 @@ def make_suite(loaders, models):
     """
     Construct the pyunit test suite.
 
-    *loaders* is the list of kernel drivers to use, which is one of
-    *["dll", "opencl"]*, *["dll"]* or *["opencl"]*.  For python models,
-    the python driver is always used.
+    *loaders* is the list of kernel drivers to use (dll, opencl or cuda).
+    For python model the python driver is always used.
 
     *models* is the list of models to test, or *["all"]* to test all models.
     """
@@ -163,6 +164,21 @@ def _add_model_to_suite(loaders, suite, model_info):
             #print("defining", test_name)
             suite.addTest(test)
 
+        # test using cuda if desired and available
+        if 'cuda' in loaders and use_cuda():
+            test_name = "%s-cuda"%model_name
+            test_method_name = "test_%s_cuda" % model_info.id
+            # Using dtype=None so that the models that are only
+            # correct for double precision are not tested using
+            # single precision.  The choice is determined by the
+            # presence of *single=False* in the model file.
+            test = ModelTestCase(test_name, model_info,
+                                    test_method_name,
+                                    platform="cuda", dtype=None,
+                                    stash=stash)
+            #print("defining", test_name)
+            suite.addTest(test)
+
 
 def _hide_model_case_from_nose():
     # type: () -> type
@@ -201,18 +217,32 @@ def _hide_model_case_from_nose():
                 # test vector form
                 ({}, [0.001, 0.01, 0.1], [None]*3),
                 ({}, [(0.1, 0.1)]*2, [None]*2),
-                # test that ER/VR will run if they exist
-                ({}, 'ER', None),
-                ({}, 'VR', None),
+                # test that Fq will run, and return R_eff, V, V_r
+                ({}, 0.1, None, None, None, None, None),
                 ]
             tests = smoke_tests
             #tests = []
             if self.info.tests is not None:
                 tests += self.info.tests
+            S_tests = [test for test in tests if '@S' in test[0]]
+            P_tests = [test for test in tests if '@S' not in test[0]]
             try:
                 model = build_model(self.info, dtype=self.dtype,
                                     platform=self.platform)
-                results = [self.run_one(model, test) for test in tests]
+                results = [self.run_one(model, test) for test in P_tests]
+                for test in S_tests:
+                    # pull the S model name out of the test defn
+                    pars = test[0].copy()
+                    s_name = pars.pop('@S')
+                    ps_test = [pars] + list(test[1:])
+                    # build the P@S model
+                    s_info = load_model_info(s_name)
+                    ps_info = product.make_product_info(self.info, s_info)
+                    ps_model = build_model(ps_info, dtype=self.dtype,
+                                           platform=self.platform)
+                    # run the tests
+                    results.append(self.run_one(ps_model, ps_test))
+
                 if self.stash:
                     for test, target, actual in zip(tests, self.stash[0], results):
                         assert np.all(abs(target-actual) < 5e-5*abs(actual)), \
@@ -222,7 +252,7 @@ def _hide_model_case_from_nose():
                     self.stash.append(results)
 
                 # Check for missing tests.  Only do so for the "dll" tests
-                # to reduce noise from both opencl and dll, and because
+                # to reduce noise from both opencl and cuda, and because
                 # python kernels use platform="dll".
                 if self.platform == "dll":
                     missing = []
@@ -237,9 +267,7 @@ def _hide_model_case_from_nose():
 
         def _find_missing_tests(self):
             # type: () -> None
-            """make sure there are 1D, 2D, ER and VR tests as appropriate"""
-            model_has_VR = callable(self.info.VR)
-            model_has_ER = callable(self.info.ER)
+            """make sure there are 1D and 2D tests as appropriate"""
             model_has_1D = True
             model_has_2D = any(p.type == 'orientation'
                                for p in self.info.parameters.kernel_parameters)
@@ -247,8 +275,6 @@ def _hide_model_case_from_nose():
             # Lists of tests that have a result that is not None
             single = [test for test in self.info.tests
                       if not isinstance(test[2], list) and test[2] is not None]
-            tests_has_VR = any(test[1] == 'VR' for test in single)
-            tests_has_ER = any(test[1] == 'ER' for test in single)
             tests_has_1D_single = any(isinstance(test[1], float) for test in single)
             tests_has_2D_single = any(isinstance(test[1], tuple) for test in single)
 
@@ -261,10 +287,6 @@ def _hide_model_case_from_nose():
                                         for test in multiple)
 
             missing = []
-            if model_has_VR and not tests_has_VR:
-                missing.append("VR")
-            if model_has_ER and not tests_has_ER:
-                missing.append("ER")
             if model_has_1D and not (tests_has_1D_single or tests_has_1D_multiple):
                 missing.append("1D")
             if model_has_2D and not (tests_has_2D_single or tests_has_2D_multiple):
@@ -275,7 +297,7 @@ def _hide_model_case_from_nose():
         def run_one(self, model, test):
             # type: (KernelModel, TestCondition) -> None
             """Run a single test case."""
-            user_pars, x, y = test
+            user_pars, x, y = test[:3]
             pars = expand_pars(self.info.parameters, user_pars)
             invalid = invalid_pars(self.info.parameters, pars)
             if invalid:
@@ -288,39 +310,69 @@ def _hide_model_case_from_nose():
 
             self.assertEqual(len(y), len(x))
 
-            if x[0] == 'ER':
-                actual = np.array([call_ER(model.info, pars)])
-            elif x[0] == 'VR':
-                actual = np.array([call_VR(model.info, pars)])
-            elif isinstance(x[0], tuple):
+            if isinstance(x[0], tuple):
                 qx, qy = zip(*x)
                 q_vectors = [np.array(qx), np.array(qy)]
-                kernel = model.make_kernel(q_vectors)
-                actual = call_kernel(kernel, pars)
             else:
                 q_vectors = [np.array(x)]
-                kernel = model.make_kernel(q_vectors)
+
+            kernel = model.make_kernel(q_vectors)
+            if len(test) == 3:
                 actual = call_kernel(kernel, pars)
+                self._check_vectors(x, y, actual, 'I')
+                return actual
+            else:
+                y1 = y
+                y2 = test[3] if not isinstance(test[3], list) else [test[3]]
+                F1, F2, R_eff, volume, volume_ratio = call_Fq(kernel, pars)
+                if F1 is not None:  # F1 is none for models with Iq instead of Fq
+                    self._check_vectors(x, y1, F1, 'F')
+                self._check_vectors(x, y2, F2, 'F^2')
+                self._check_scalar(test[4], R_eff, 'R_eff')
+                self._check_scalar(test[5], volume, 'volume')
+                self._check_scalar(test[6], volume_ratio, 'form:shell ratio')
+                return F2
 
-            self.assertTrue(len(actual) > 0)
-            self.assertEqual(len(y), len(actual))
+        def _check_scalar(self, target, actual, name):
+            if target is None:
+                # smoke test --- make sure it runs and produces a value
+                self.assertTrue(not np.isnan(actual),
+                                'invalid %s: %s' % (name, actual))
+            elif np.isnan(target):
+                # make sure nans match
+                self.assertTrue(np.isnan(actual),
+                                '%s: expected:%s; actual:%s'
+                                % (name, target, actual))
+            else:
+                # is_near does not work for infinite values, so also test
+                # for exact values.
+                self.assertTrue(target == actual or is_near(target, actual, 5),
+                                '%s: expected:%s; actual:%s'
+                                % (name, target, actual))
 
-            for xi, yi, actual_yi in zip(x, y, actual):
+        def _check_vectors(self, x, target, actual, name='I'):
+            self.assertTrue(len(actual) > 0,
+                            '%s(...) expected return'%name)
+            if target is None:
+                return
+            self.assertEqual(len(target), len(actual),
+                             '%s(...) returned wrong length'%name)
+            for xi, yi, actual_yi in zip(x, target, actual):
                 if yi is None:
                     # smoke test --- make sure it runs and produces a value
                     self.assertTrue(not np.isnan(actual_yi),
-                                    'invalid f(%s): %s' % (xi, actual_yi))
+                                    'invalid %s(%s): %s' % (name, xi, actual_yi))
                 elif np.isnan(yi):
+                    # make sure nans match
                     self.assertTrue(np.isnan(actual_yi),
-                                    'f(%s): expected:%s; actual:%s'
-                                    % (xi, yi, actual_yi))
+                                    '%s(%s): expected:%s; actual:%s'
+                                    % (name, xi, yi, actual_yi))
                 else:
                     # is_near does not work for infinite values, so also test
-                    # for exact values.  Note that this will not
+                    # for exact values.
                     self.assertTrue(yi == actual_yi or is_near(yi, actual_yi, 5),
-                                    'f(%s); expected:%s; actual:%s'
-                                    % (xi, yi, actual_yi))
-            return actual
+                                    '%s(%s); expected:%s; actual:%s'
+                                    % (name, xi, yi, actual_yi))
 
     return ModelTestCase
 
@@ -332,6 +384,9 @@ def invalid_pars(partable, pars):
     names = set(p.id for p in partable.call_parameters)
     invalid = []
     for par in sorted(pars.keys()):
+        # special handling of R_eff mode, which is not a usual parameter
+        if par == product.RADIUS_MODE_ID:
+            continue
         parts = par.split('_pd')
         if len(parts) > 1 and parts[1] not in ("", "_n", "nsigma", "type"):
             invalid.append(par)
@@ -382,7 +437,7 @@ def check_model(model_info):
     result = TextTestResult(stream, descriptions, verbosity)
 
     # Build a test suite containing just the model
-    loaders = ['opencl'] if use_opencl() else ['dll']
+    loaders = ['opencl' if use_opencl() else 'cuda' if use_cuda() else 'dll']
     suite = unittest.TestSuite()
     _add_model_to_suite(loaders, suite, model_info)
 
@@ -443,24 +498,31 @@ def main(*models):
             return 1
         loaders = ['opencl']
         models = models[1:]
+    elif models and models[0] == 'cuda':
+        if not use_cuda():
+            print("cuda is not available")
+            return 1
+        loaders = ['cuda']
+        models = models[1:]
     elif models and models[0] == 'dll':
         # TODO: test if compiler is available?
         loaders = ['dll']
         models = models[1:]
-    elif models and models[0] == 'opencl_and_dll':
-        loaders = ['opencl', 'dll'] if use_opencl() else ['dll']
-        models = models[1:]
     else:
-        loaders = ['opencl', 'dll'] if use_opencl() else ['dll']
+        loaders = ['dll']
+        if use_opencl():
+            loaders.append('opencl')
+        if use_cuda():
+            loaders.append('cuda')
     if not models:
         print("""\
 usage:
-  python -m sasmodels.model_test [-v] [opencl|dll] model1 model2 ...
+  python -m sasmodels.model_test [-v] [opencl|cuda|dll] model1 model2 ...
 
 If -v is included on the command line, then use verbose output.
 
-If neither opencl nor dll is specified, then models will be tested with
-both OpenCL and dll; the compute target is ignored for pure python models.
+If no platform is specified, then models will be tested with dll, and
+if available, OpenCL and CUDA; the compute target is ignored for pure python models.
 
 If model1 is 'all', then all except the remaining models will be tested.
 
@@ -480,7 +542,11 @@ def model_tests():
 
     Run "nosetests sasmodels" on the command line to invoke it.
     """
-    loaders = ['opencl', 'dll'] if use_opencl() else ['dll']
+    loaders = ['dll']
+    if use_opencl():
+        loaders.append('opencl')
+    if use_cuda():
+        loaders.append('cuda')
     tests = make_suite(loaders, ['all'])
     def build_test(test):
         # In order for nosetest to show the test name, wrap the test.run_all

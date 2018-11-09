@@ -187,21 +187,48 @@ object from the :class:`sasmodels.kernel.KernelModel` returned from
 does depends on whether it is running as a DLL, as OpenCL or as a pure
 python kernel.  Once the kernel is in hand, we can then marshal a set of
 parameters into a :class:`sasmodels.details.CallDetails` object and ship it to
-the kernel using the :func:`sansmodels.direct_model.call_kernel` function.  An
-example should help, *example/cylinder_eval.py*::
+the kernel using the :func:`sansmodels.direct_model.call_kernel` function.  To
+accesses the underlying $<F(q)>$ and $<F^2(q)>$, use
+:func:`sasmodels.direct_model.call_Fq` instead.
 
-    from numpy import logspace
+The following example should
+help, *example/cylinder_eval.py*::
+
+    from numpy import logspace, sqrt
     from matplotlib import pyplot as plt
     from sasmodels.core import load_model
-    from sasmodels.direct_model import call_kernel
+    from sasmodels.direct_model import call_kernel, call_Fq
 
     model = load_model('cylinder')
     q = logspace(-3, -1, 200)
     kernel = model.make_kernel([q])
-    Iq = call_kernel(kernel, dict(radius=200.))
-    plt.loglog(q, Iq)
+    pars = {'radius': 200, 'radius_pd': 0.1, 'scale': 2}
+    Iq = call_kernel(kernel, pars)
+    F, Fsq, Reff, V, Vratio = call_Fq(kernel, pars)
+
+    plt.loglog(q, Iq, label='2 I(q)')
+    plt.loglog(q, F**2/V, label='<F(q)>^2/V')
+    plt.loglog(q, Fsq/V, label='<F^2(q)>/V')
+    plt.xlabel('q (1/A)')
+    plt.ylabel('I(q) (1/cm)')
+    plt.title('Cylinder with radius 200.')
+    plt.legend()
     plt.show()
 
-On windows, this can be called from the cmd prompt using sasview as::
+.. figure:: direct_call.png
+
+    Comparison between $I(q)$, $<F(q)>$ and $<F^2(q)>$ for cylinder model.
+
+This compares $I(q)$ with $<F(q)>$ and $<F^2(q)>$ for a cylinder
+with *radius=200 +/- 20* and *scale=2*. Note that *call_Fq* does not
+include scale and background, nor does it normalize by the average volume.
+The definition of $F = \rho V \hat F$ scaled by the contrast and
+volume, compared to the canonical cylinder $\hat F$, with $\hat F(0) = 1$.
+Integrating over polydispersity and orientation, the returned values are
+$\sum_{r,w\in N(r_o, r_o/10)} \sum_\theta w F(q,r_o,\theta)\sin\theta$ and
+$\sum_{r,w\in N(r_o, r_o/10)} \sum_\theta w F^2(q,r_o,\theta)\sin\theta$.
+
+On windows, this example can be called from the cmd prompt using sasview as
+as the python interpreter::
 
     SasViewCom example/cylinder_eval.py

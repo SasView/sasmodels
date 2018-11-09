@@ -78,7 +78,6 @@ static double Iq(double q, double lattice_spacing,
     return fcc_volume_fraction(radius, lattice_spacing) * Pq * Zq;
 }
 
-
 static double Iqabc(double qa, double qb, double qc,
     double lattice_spacing, double lattice_distortion, double radius,
     double sld, double solvent_sld)

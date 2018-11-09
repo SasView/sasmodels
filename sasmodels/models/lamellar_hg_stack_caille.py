@@ -121,9 +121,6 @@ form_volume = """
     return 1.0;
     """
 
-# ER defaults to 0.0
-# VR defaults to 1.0
-
 def random():
     total_thickness = 10**np.random.uniform(2, 4.7)
     Nlayers = np.random.randint(2, 200)
