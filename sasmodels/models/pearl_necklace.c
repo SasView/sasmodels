@@ -39,7 +39,7 @@ pearl_necklace_kernel(double q, double radius, double edge_sep, double thick_str
     // Precomputed sinc terms
     const double si = sas_sinx_x(q*A_s);
     const double omsi = 1.0 - si;
-    const double pow_si = pow(si, num_pearls);
+    const double pow_si = pown(si, num_pearls);
 
     // form factor for num_pearls
     const double sss = 2.0*square(m_pearl*psi) * (
@@ -80,7 +80,6 @@ double form_volume(double radius, double edge_sep, double thick_string, double f
 static double
 radius_from_volume(double radius, double edge_sep, double thick_string, double fp_num_pearls)
 {
-    const int num_pearls = (int) fp_num_pearls +0.5;
     const double vol_tot = form_volume(radius, edge_sep, thick_string, fp_num_pearls);
     return cbrt(vol_tot/M_4PI_3);
 }
