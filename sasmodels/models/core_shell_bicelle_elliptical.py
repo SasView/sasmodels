@@ -99,6 +99,7 @@ References
 ----------
 
 .. [#]
+L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949). 
 
 Authorship and Verification
 ----------------------------
@@ -145,6 +146,11 @@ parameters = [
 
 source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
           "core_shell_bicelle_elliptical.c"]
+have_Fq = True
+effective_radius_type = [
+    "equivalent cylinder excluded volume", "equivalent volume sphere", "outer rim average radius", "outer rim min radius",
+    "outer max radius", "half outer thickness", "half diagonal",
+    ]
 
 def random():
     outer_major = 10**np.random.uniform(1, 4.7)
@@ -178,10 +184,10 @@ qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
 
 tests = [
-    [{'radius': 30.0, 'x_core': 3.0,
-      'thick_rim': 8.0, 'thick_face': 14.0, 'length': 50.0}, 'ER', 1],
-    [{'radius': 30.0, 'x_core': 3.0,
-      'thick_rim': 8.0, 'thick_face': 14.0, 'length': 50.0}, 'VR', 1],
+    #[{'radius': 30.0, 'x_core': 3.0,
+    #  'thick_rim': 8.0, 'thick_face': 14.0, 'length': 50.0}, 'ER', 1],
+    #[{'radius': 30.0, 'x_core': 3.0,
+    #  'thick_rim': 8.0, 'thick_face': 14.0, 'length': 50.0}, 'VR', 1],
 
     [{'radius': 30.0, 'x_core': 3.0,
       'thick_rim': 8.0, 'thick_face': 14.0, 'length': 50.0,

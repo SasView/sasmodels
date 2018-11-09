@@ -92,7 +92,6 @@ def Iq(q,
     :param q_0:            Correlation peak position
     :return:               Calculated intensity
     """
-
     with errstate(divide='ignore'):
         x = q/q_0
         inten = ((1 + gamma / 2) * x ** 2) / (gamma / 2 + x ** (2 + gamma))

@@ -146,9 +146,6 @@ def random():
     )
     return pars
 
-# ER defaults to 0.0
-# VR defaults to 1.0
-
 demo = dict(scale=1, background=0,
             thickness=33, Nlayers=20, d_spacing=250, sigma_d=0.2,
             sld=1.0, sld_solvent=6.34,

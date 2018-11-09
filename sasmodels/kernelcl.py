@@ -1,6 +1,8 @@
 """
 GPU driver for C kernels
 
+TODO: docs are out of date
+
 There should be a single GPU environment running on the system.  This
 environment is constructed on the first call to :func:`env`, and the
 same environment is returned on each call.
@@ -58,7 +60,7 @@ import time
 import numpy as np  # type: ignore
 
 
-# Attempt to setup opencl. This may fail if the opencl package is not
+# Attempt to setup opencl. This may fail if the pyopencl package is not
 # installed or if it is installed but there are no devices available.
 try:
     import pyopencl as cl  # type: ignore
@@ -131,7 +133,8 @@ _F64_PRAGMA = """\
 """
 
 def use_opencl():
-    return HAVE_OPENCL and os.environ.get("SAS_OPENCL", "").lower() != "none"
+    sas_opencl = os.environ.get("SAS_OPENCL", "OpenCL").lower()
+    return HAVE_OPENCL and sas_opencl != "none" and not sas_opencl.startswith("cuda")
 
 ENV = None
 def reset_environment():
@@ -164,11 +167,10 @@ def has_type(device, dtype):
     """
     if dtype == F32:
         return True
-    elif dtype == generate.F64:
+    elif dtype == F64:
         return "cl_khr_fp64" in device.extensions
-    elif dtype == generate.F16:
-        return "cl_khr_fp16" in device.extensions
     else:
+        # Not supporting F16 type since it isn't accurate enough
         return False
 
 def get_warp(kernel, queue):
@@ -179,29 +181,6 @@ def get_warp(kernel, queue):
     return kernel.get_work_group_info(
         cl.kernel_work_group_info.PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
         queue.device)
-
-def _stretch_input(vector, dtype, extra=1e-3, boundary=32):
-    # type: (np.ndarray, np.dtype, float, int) -> np.ndarray
-    """
-    Stretch an input vector to the correct boundary.
-
-    Performance on the kernels can drop by a factor of two or more if the
-    number of values to compute does not fall on a nice power of two
-    boundary.   The trailing additional vector elements are given a
-    value of *extra*, and so f(*extra*) will be computed for each of
-    them.  The returned array will thus be a subset of the computed array.
-
-    *boundary* should be a power of 2 which is at least 32 for good
-    performance on current platforms (as of Jan 2015).  It should
-    probably be the max of get_warp(kernel,queue) and
-    device.min_data_type_align_size//4.
-    """
-    remainder = vector.size % boundary
-    if remainder != 0:
-        size = vector.size + (boundary - remainder)
-        vector = np.hstack((vector, [extra] * (size - vector.size)))
-    return np.ascontiguousarray(vector, dtype=dtype)
-
 
 def compile_model(context, source, dtype, fast=False):
     # type: (cl.Context, str, np.dtype, bool) -> cl.Program
@@ -341,11 +320,15 @@ def _create_some_context():
 
     Uses SAS_OPENCL or PYOPENCL_CTX if they are set in the environment,
     otherwise scans for the most appropriate device using
-    :func:`_get_default_context`
+    :func:`_get_default_context`.  Ignore *SAS_OPENCL=OpenCL*, which
+    indicates that an OpenCL device should be used without specifying
+    which one (and not a CUDA device, or no GPU).
     """
-    if 'SAS_OPENCL' in os.environ:
-        #Setting PYOPENCL_CTX as a SAS_OPENCL to create cl context
-        os.environ["PYOPENCL_CTX"] = os.environ["SAS_OPENCL"]
+    # Assume we do not get here if SAS_OPENCL is None or CUDA
+    sas_opencl = os.environ.get('SAS_OPENCL', 'opencl')
+    if sas_opencl.lower() != 'opencl':
+        # Setting PYOPENCL_CTX as a SAS_OPENCL to create cl context
+        os.environ["PYOPENCL_CTX"] = sas_opencl
 
     if 'PYOPENCL_CTX' in os.environ:
         try:
@@ -511,14 +494,12 @@ class GpuInput(object):
         # at this point, so instead using 32, which is good on the set of
         # architectures tested so far.
         if self.is_2d:
-            # Note: 16 rather than 15 because result is 1 longer than input.
-            width = ((self.nq+16)//16)*16
+            width = ((self.nq+15)//16)*16
             self.q = np.empty((width, 2), dtype=dtype)
             self.q[:self.nq, 0] = q_vectors[0]
             self.q[:self.nq, 1] = q_vectors[1]
         else:
-            # Note: 32 rather than 31 because result is 1 longer than input.
-            width = ((self.nq+32)//32)*32
+            width = ((self.nq+31)//32)*32
             self.q = np.empty(width, dtype=dtype)
             self.q[:self.nq] = q_vectors[0]
         self.global_size = [self.q.shape[0]]
@@ -577,10 +558,8 @@ class GpuKernel(Kernel):
         dtype = model.dtype
         self.q_input = GpuInput(q_vectors, dtype)
         self._model = model
-        self._as_dtype = (np.float32 if dtype == generate.F32
-                          else np.float64 if dtype == generate.F64
-                          else np.float16 if dtype == generate.F16
-                          else np.float32)  # will never get here, so use np.float32
+        # F16 isn't sufficient, so don't support it
+        self._as_dtype = np.float64 if dtype == generate.F64 else np.float32
         self._cache_key = unique_id()
 
         # attributes accessed from the outside
@@ -589,8 +568,9 @@ class GpuKernel(Kernel):
         self.dtype = model.dtype
 
         # holding place for the returned value
-        # plus one for the normalization values
-        self.result = np.empty(self.q_input.nq+1, dtype)
+        nout = 2 if self.info.have_Fq and self.dim == '1d' else 1
+        extra_q = 4  # total weight, form volume, shell volume and R_eff
+        self.result = np.empty(self.q_input.nq*nout+extra_q, dtype)
 
     @property
     def _result_b(self):
@@ -599,13 +579,12 @@ class GpuKernel(Kernel):
         key = self._cache_key
         if key not in env.cache:
             context = env.context[self.dtype]
-            #print("creating inputs of size", self.global_size)
-            buffer = cl.Buffer(context, mf.READ_WRITE,
-                               self.q_input.global_size[0] * self.dtype.itemsize)
+            width = ((self.result.size+31)//32)*32 * self.dtype.itemsize
+            buffer = cl.Buffer(context, mf.READ_WRITE, width)
             env.cache[key] = buffer
         return env.cache[key]
 
-    def __call__(self, call_details, values, cutoff, magnetic):
+    def _call_kernel(self, call_details, values, cutoff, magnetic, effective_radius_type):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
         env = environment()
         queue = env.queue[self._model.dtype]
@@ -625,10 +604,11 @@ class GpuKernel(Kernel):
             np.uint32(self.q_input.nq), None, None,
             details_b, values_b, q_b, result_b,
             self._as_dtype(cutoff),
+            np.uint32(effective_radius_type),
         ]
         #print("Calling OpenCL")
         #call_details.show(values)
-        # Call kernel and retrieve results
+        #Call kernel and retrieve results
         wait_for = None
         last_nap = time.clock()
         step = 1000000//self.q_input.nq + 1
@@ -643,7 +623,7 @@ class GpuKernel(Kernel):
                 wait_for[0].wait()
                 current_time = time.clock()
                 if current_time - last_nap > 0.5:
-                    time.sleep(0.05)
+                    time.sleep(0.001)
                     last_nap = current_time
         cl.enqueue_copy(queue, self.result, result_b, wait_for=wait_for)
         #print("result", self.result)
@@ -652,13 +632,6 @@ class GpuKernel(Kernel):
         for v in (details_b, values_b):
             if v is not None:
                 v.release()
-
-        pd_norm = self.result[self.q_input.nq]
-        scale = values[0]/(pd_norm if pd_norm != 0.0 else 1.0)
-        background = values[1]
-        #print("scale",scale,values[0],self.result[self.q_input.nq],background)
-        return scale*self.result[:self.q_input.nq] + background
-        # return self.result[:self.q_input.nq]
 
     def release(self):
         # type: () -> None

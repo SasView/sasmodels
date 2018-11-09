@@ -86,7 +86,6 @@ def Iq(q,
     intensity += lorentz_scale_2/(1.0 +
                                   power(q*lorentz_length_2, lorentz_exp_2))
 # pylint: enable=bad-whitespace
-
     return intensity
 
 Iq.vectorized = True  # Iq accepts an array of q values

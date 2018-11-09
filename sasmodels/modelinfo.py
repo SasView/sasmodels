@@ -163,7 +163,6 @@ def parse_parameter(name, units='', default=np.NaN,
     parameter.choices = choices
     parameter.length = length
     parameter.length_control = control
-
     return parameter
 
 
@@ -264,9 +263,9 @@ class Parameter(object):
     can automatically be promoted to magnetic parameters, each of which
     will have a magnitude and a direction, which may be different from
     other sld parameters. The volume parameters are used for calls
-    to form_volume within the kernel (required for volume normalization)
-    and for calls to ER and VR for effective radius and volume ratio
-    respectively.
+    to form_volume within the kernel (required for volume normalization),
+    to shell_volume (for hollow shapes), and to effective_radius (for
+    structure factor interactions) respectively.
 
     *description* is a short description of the parameter.  This will
     be displayed in the parameter table and used as a tool tip for the
@@ -423,14 +422,12 @@ class ParameterTable(object):
         # type: (List[Parameter]) -> None
         self.kernel_parameters = parameters
         self._set_vector_lengths()
-
         self.npars = sum(p.length for p in self.kernel_parameters)
         self.nmagnetic = sum(p.length for p in self.kernel_parameters
                              if p.type == 'sld')
         self.nvalues = 2 + self.npars
         if self.nmagnetic:
             self.nvalues += 3 + 3*self.nmagnetic
-
         self.call_parameters = self._get_call_parameters()
         self.defaults = self._get_defaults()
         #self._name_table= dict((p.id, p) for p in parameters)
@@ -721,7 +718,7 @@ def isstr(x):
 
 
 #: Set of variables defined in the model that might contain C code
-C_SYMBOLS = ['Imagnetic', 'Iq', 'Iqxy', 'Iqac', 'Iqabc', 'form_volume', 'c_code']
+C_SYMBOLS = ['Imagnetic', 'Iq', 'Iqxy', 'Iqac', 'Iqabc', 'form_volume', 'shell_volume', 'c_code']
 
 def _find_source_lines(model_info, kernel_module):
     # type: (ModelInfo, ModuleType) -> None
@@ -770,6 +767,7 @@ def make_model_info(kernel_module):
     if hasattr(kernel_module, "model_info"):
         # Custom sum/multi models
         return kernel_module.model_info
+
     info = ModelInfo()
     #print("make parameter table", kernel_module.parameters)
     parameters = make_parameter_table(getattr(kernel_module, 'parameters', []))
@@ -791,16 +789,19 @@ def make_model_info(kernel_module):
     info.docs = kernel_module.__doc__
     info.category = getattr(kernel_module, 'category', None)
     info.structure_factor = getattr(kernel_module, 'structure_factor', False)
+    # TODO: find Fq by inspection
+    info.effective_radius_type = getattr(kernel_module, 'effective_radius_type', None)
+    info.have_Fq = getattr(kernel_module, 'have_Fq', False)
     info.profile_axes = getattr(kernel_module, 'profile_axes', ['x', 'y'])
     # Note: custom.load_custom_kernel_module assumes the C sources are defined
     # by this attribute.
     info.source = getattr(kernel_module, 'source', [])
     info.c_code = getattr(kernel_module, 'c_code', None)
+    info.effective_radius = getattr(kernel_module, 'effective_radius', None)
     # TODO: check the structure of the tests
     info.tests = getattr(kernel_module, 'tests', [])
-    info.ER = getattr(kernel_module, 'ER', None) # type: ignore
-    info.VR = getattr(kernel_module, 'VR', None) # type: ignore
     info.form_volume = getattr(kernel_module, 'form_volume', None) # type: ignore
+    info.shell_volume = getattr(kernel_module, 'shell_volume', None) # type: ignore
     info.Iq = getattr(kernel_module, 'Iq', None) # type: ignore
     info.Iqxy = getattr(kernel_module, 'Iqxy', None) # type: ignore
     info.Iqac = getattr(kernel_module, 'Iqac', None) # type: ignore
@@ -824,7 +825,6 @@ def make_model_info(kernel_module):
 
     info.lineno = {}
     _find_source_lines(info, kernel_module)
-
     return info
 
 class ModelInfo(object):
@@ -917,40 +917,20 @@ class ModelInfo(object):
     #: between form factor models.  This will default to False if it is not
     #: provided in the file.
     structure_factor = None # type: bool
+    #: True if the model defines an Fq function with signature
+    #: void Fq(double q, double *F1, double *F2, ...)
+    have_Fq = False
+    #: List of options for computing the effective radius of the shape,
+    #: or None if the model is not usable as a form factor model.
+    effective_radius_type = None   # type: List[str]
     #: List of C source files used to define the model.  The source files
     #: should define the *Iq* function, and possibly *Iqac* or *Iqabc* if the
     #: model defines orientation parameters. Files containing the most basic
     #: functions must appear first in the list, followed by the files that
-    #: use those functions.  Form factors are indicated by providing
-    #: an :attr:`ER` function.
+    #: use those functions.
     source = None           # type: List[str]
-    #: The set of tests that must pass.  The format of the tests is described
-    #: in :mod:`model_test`.
-    tests = None            # type: List[TestCondition]
-    #: Returns the effective radius of the model given its volume parameters.
-    #: The presence of *ER* indicates that the model is a form factor model
-    #: that may be used together with a structure factor to form an implicit
-    #: multiplication model.
-    #:
-    #: The parameters to the *ER* function must be marked with type *volume*.
-    #: in the parameter table.  They will appear in the same order as they
-    #: do in the table.  The values passed to *ER* will be vectors, with one
-    #: value for each polydispersity condition.  For example, if the model
-    #: is polydisperse over both length and radius, then both length and
-    #: radius will have the same number of values in the vector, with one
-    #: value for each *length X radius*.  If only *radius* is polydisperse,
-    #: then the value for *length* will be repeated once for each value of
-    #: *radius*.  The *ER* function should return one effective radius for
-    #: each parameter set.  Multiplicity parameters will be received as
-    #: arrays, with one row per polydispersity condition.
-    ER = None               # type: Optional[Callable[[np.ndarray], np.ndarray]]
-    #: Returns the occupied volume and the total volume for each parameter set.
-    #: See :attr:`ER` for details on the parameters.
-    VR = None               # type: Optional[Callable[[np.ndarray], Tuple[np.ndarray, np.ndarray]]]
-    #: Arbitrary C code containing supporting functions, etc., to be inserted
-    #: after everything in source.  This can include Iq and Iqxy functions with
-    #: the full function signature, including all parameters.
-    c_code = None
+    #: inline source code, added after all elements of source
+    c_code = None           # type: Optional[str]
     #: Returns the form volume for python-based models.  Form volume is needed
     #: for volume normalization in the polydispersity integral.  If no
     #: parameters are *volume* parameters, then form volume is not needed.
@@ -958,6 +938,14 @@ class ModelInfo(object):
     #: defined using a string containing C code), form_volume must also be
     #: C code, either defined as a string, or in the sources.
     form_volume = None      # type: Union[None, str, Callable[[np.ndarray], float]]
+    #: Returns the shell volume for python-based models.  Form volume and
+    #: shell volume are needed for volume normalization in the polydispersity
+    #: integral and structure interactions for hollow shapes.  If no
+    #: parameters are *volume* parameters, then shell volume is not needed.
+    #: For C-based models, (with :attr:`sources` defined, or with :attr:`Iq`
+    #: defined using a string containing C code), shell_volume must also be
+    #: C code, either defined as a string, or in the sources.
+    shell_volume = None      # type: Union[None, str, Callable[[np.ndarray], float]]
     #: Returns *I(q, a, b, ...)* for parameters *a*, *b*, etc. defined
     #: by the parameter table.  *Iq* can be defined as a python function, or
     #: as a C function.  If it is defined in C, then set *Iq* to the body of
@@ -992,6 +980,9 @@ class ModelInfo(object):
     random = None           # type: Optional[Callable[[], Dict[str, float]]]
     #: Line numbers for symbols defining C code
     lineno = None           # type: Dict[str, int]
+    #: The set of tests that must pass.  The format of the tests is described
+    #: in :mod:`model_test`.
+    tests = None            # type: List[TestCondition]
 
     def __init__(self):
         # type: () -> None

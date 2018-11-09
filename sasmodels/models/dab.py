@@ -73,8 +73,4 @@ def random():
     pars['scale'] /= pars['cor_length']**3
     return pars
 
-# ER defaults to 1.0
-
-# VR defaults to 1.0
-
 demo = dict(scale=1, background=0, cor_length=50)
