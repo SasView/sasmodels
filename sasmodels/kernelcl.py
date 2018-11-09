@@ -264,7 +264,6 @@ class GpuEnvironment(object):
 
         # Cache for compiled programs, and for items in context
         self.compiled = {}
-        self.cache = {}
 
     def has_type(self, dtype):
         # type: (np.dtype) -> bool
@@ -296,23 +295,7 @@ class GpuEnvironment(object):
             self.compiled[key] = (program, timestamp)
         return program
 
-    def free_buffer(self, key):
-        if key in self.cache:
-            self.cache[key].release()
-            del self.cache[key]
-
-    def __del__(self):
-        for v in self.cache.values():
-            release = getattr(v, 'release', lambda: None)
-            release()
-        self.cache = {}
-
 _CURRENT_ID = 0
-def unique_id():
-    global _CURRENT_ID
-    _CURRENT_ID += 1
-    return _CURRENT_ID
-
 def _create_some_context():
     # type: () -> cl.Context
     """
@@ -412,14 +395,19 @@ class GpuModel(KernelModel):
     Fast precision ('fast') is a loose version of single precision, indicating
     that the compiler is allowed to take shortcuts.
     """
+    info = None # type: ModelInfo
+    source = "" # type: str
+    dtype = None # type: np.dtype
+    fast = False # type: bool
+    _program = None # type: cl.Program
+    _kernels = None # type: Dict[str, cl.Kernel]
+
     def __init__(self, source, model_info, dtype=generate.F32, fast=False):
         # type: (Dict[str,str], ModelInfo, np.dtype, bool) -> None
         self.info = model_info
         self.source = source
         self.dtype = dtype
         self.fast = fast
-        self.timestamp = generate.ocl_timestamp(self.info)
-        self._cache_key = unique_id()
 
     def __getstate__(self):
         # type: () -> Tuple[ModelInfo, str, np.dtype, bool]
@@ -428,40 +416,38 @@ class GpuModel(KernelModel):
     def __setstate__(self, state):
         # type: (Tuple[ModelInfo, str, np.dtype, bool]) -> None
         self.info, self.source, self.dtype, self.fast = state
+        self._program = self._kernels = None
 
     def make_kernel(self, q_vectors):
         # type: (List[np.ndarray]) -> "GpuKernel"
         return GpuKernel(self, q_vectors)
 
-    @property
-    def Iq(self):
-        return self._fetch_kernel('Iq')
-
-    def fetch_kernel(self, name):
+    def get_function(self, name):
         # type: (str) -> cl.Kernel
         """
         Fetch the kernel from the environment by name, compiling it if it
         does not already exist.
         """
-        gpu = environment()
-        key = self._cache_key
-        if key not in gpu.cache:
-            program = gpu.compile_program(
-                self.info.name,
-                self.source['opencl'],
-                self.dtype,
-                self.fast,
-                self.timestamp)
-            variants = ['Iq', 'Iqxy', 'Imagnetic']
-            names = [generate.kernel_name(self.info, k) for k in variants]
-            kernels = [getattr(program, k) for k in names]
-            data = dict((k, v) for k, v in zip(variants, kernels))
-            # keep a handle to program so GC doesn't collect
-            data['program'] = program
-            gpu.cache[key] = data
-        else:
-            data = gpu.cache[key]
-        return data[name]
+        if self._program is None:
+            self._prepare_program()
+        return self._kernels[name]
+
+    def _prepare_program(self):
+        # type: (str) -> None
+        env = environment()
+        timestamp = generate.ocl_timestamp(self.info)
+        program = env.compile_program(
+            self.info.name,
+            self.source['opencl'],
+            self.dtype,
+            self.fast,
+            timestamp)
+        variants = ['Iq', 'Iqxy', 'Imagnetic']
+        names = [generate.kernel_name(self.info, k) for k in variants]
+        handles = [getattr(program, k) for k in names]
+        self._kernels = {k: v for k, v in zip(variants, handles)}
+        # keep a handle to program so GC doesn't collect
+        self._program = program
 
 # TODO: check that we don't need a destructor for buffers which go out of scope
 class GpuInput(object):
@@ -503,27 +489,22 @@ class GpuInput(object):
             self.q = np.empty(width, dtype=dtype)
             self.q[:self.nq] = q_vectors[0]
         self.global_size = [self.q.shape[0]]
-        self._cache_key = unique_id()
+        #print("creating inputs of size", self.global_size)
 
-    @property
-    def q_b(self):
-        """Lazy creation of q buffer so it can survive context reset"""
+        # transfer input value to gpu
         env = environment()
-        key = self._cache_key
-        if key not in env.cache:
-            context = env.context[self.dtype]
-            #print("creating inputs of size", self.global_size)
-            buffer = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
-                               hostbuf=self.q)
-            env.cache[key] = buffer
-        return env.cache[key]
+        context = env.context[self.dtype]
+        self.q_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
+                             hostbuf=self.q)
 
     def release(self):
         # type: () -> None
         """
         Free the buffer associated with the q value
         """
-        environment().free_buffer(id(self))
+        if self.q_b is not None:
+            self.q_b.release()
+            self.q_b = None
 
     def __del__(self):
         # type: () -> None
@@ -535,32 +516,30 @@ class GpuKernel(Kernel):
 
     *model* is the GpuModel object to call
 
-    The following attributes are defined:
-
-    *info* is the module information
-
-    *dtype* is the kernel precision
-
-    *dim* is '1d' or '2d'
-
-    *result* is a vector to contain the results of the call
-
-    The resulting call method takes the *pars*, a list of values for
-    the fixed parameters to the kernel, and *pd_pars*, a list of (value,weight)
-    vectors for the polydisperse parameters.  *cutoff* determines the
-    integration limits: any points with combined weight less than *cutoff*
-    will not be calculated.
+    The kernel is derived from :class:`Kernel`, providing the
+    :meth:`call_kernel` method to evaluate the kernel for a given set of
+    parameters.  Because of the need to move the q values to the GPU before
+    evaluation, the kernel is instantiated for a particular set of q vectors,
+    and can be called many times without transfering q each time.
 
     Call :meth:`release` when done with the kernel instance.
     """
+    #: SAS model information structure
+    info = None # type: ModelInfo
+    #: kernel precision
+    dtype = None # type: np.dtype
+    #: kernel dimensions (1d or 2d)
+    dim = "" # type: str
+    #: calculation results, updated after each call to :meth:`_call_kernel`
+    result = None # type: np.ndarray
+
     def __init__(self, model, q_vectors):
-        # type: (cl.Kernel, np.dtype, ModelInfo, List[np.ndarray]) -> None
+        # type: (GpuModel, List[np.ndarray]) -> None
         dtype = model.dtype
         self.q_input = GpuInput(q_vectors, dtype)
         self._model = model
         # F16 isn't sufficient, so don't support it
         self._as_dtype = np.float64 if dtype == generate.F64 else np.float32
-        self._cache_key = unique_id()
 
         # attributes accessed from the outside
         self.dim = '2d' if self.q_input.is_2d else '1d'
@@ -572,17 +551,11 @@ class GpuKernel(Kernel):
         extra_q = 4  # total weight, form volume, shell volume and R_eff
         self.result = np.empty(self.q_input.nq*nout+extra_q, dtype)
 
-    @property
-    def _result_b(self):
-        """Lazy creation of result buffer so it can survive context reset"""
+        # allocate result value on gpu
         env = environment()
-        key = self._cache_key
-        if key not in env.cache:
-            context = env.context[self.dtype]
-            width = ((self.result.size+31)//32)*32 * self.dtype.itemsize
-            buffer = cl.Buffer(context, mf.READ_WRITE, width)
-            env.cache[key] = buffer
-        return env.cache[key]
+        context = env.context[self.dtype]
+        width = ((self.result.size+31)//32)*32 * self.dtype.itemsize
+        self._result_b = cl.Buffer(context, mf.READ_WRITE, width)
 
     def _call_kernel(self, call_details, values, cutoff, magnetic, effective_radius_type):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
@@ -591,18 +564,16 @@ class GpuKernel(Kernel):
         context = queue.context
 
         # Arrange data transfer to/from card
-        q_b = self.q_input.q_b
-        result_b = self._result_b
         details_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
                               hostbuf=call_details.buffer)
         values_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
                              hostbuf=values)
 
         name = 'Iq' if self.dim == '1d' else 'Imagnetic' if magnetic else 'Iqxy'
-        kernel = self._model.fetch_kernel(name)
+        kernel = self._model.get_function(name)
         kernel_args = [
             np.uint32(self.q_input.nq), None, None,
-            details_b, values_b, q_b, result_b,
+            details_b, values_b, self.q_input.q_b, self._result_b,
             self._as_dtype(cutoff),
             np.uint32(effective_radius_type),
         ]
@@ -625,21 +596,22 @@ class GpuKernel(Kernel):
                 if current_time - last_nap > 0.5:
                     time.sleep(0.001)
                     last_nap = current_time
-        cl.enqueue_copy(queue, self.result, result_b, wait_for=wait_for)
+        cl.enqueue_copy(queue, self.result, self._result_b, wait_for=wait_for)
         #print("result", self.result)
 
         # Free buffers
-        for v in (details_b, values_b):
-            if v is not None:
-                v.release()
+        details_b.release()
+        values_b.release()
 
     def release(self):
         # type: () -> None
         """
         Release resources associated with the kernel.
         """
-        environment().free_buffer(id(self))
         self.q_input.release()
+        if self._result_b is not None:
+            self._result_b.release()
+            self._result_b = None
 
     def __del__(self):
         # type: () -> None

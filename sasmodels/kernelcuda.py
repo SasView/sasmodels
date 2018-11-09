@@ -295,8 +295,8 @@ class GpuModel(KernelModel):
     source = "" # type: str
     dtype = None # type: np.dtype
     fast = False # type: bool
-    program = None # type: SourceModule
-    _kernels = None # type: List[cuda.Function]
+    _program = None # type: SourceModule
+    _kernels = None # type: Dict[str, cuda.Function]
 
     def __init__(self, source, model_info, dtype=generate.F32, fast=False):
         # type: (Dict[str,str], ModelInfo, np.dtype, bool) -> None
@@ -304,8 +304,6 @@ class GpuModel(KernelModel):
         self.source = source
         self.dtype = dtype
         self.fast = fast
-        self.program = None # delay program creation
-        self._kernels = None
 
     def __getstate__(self):
         # type: () -> Tuple[ModelInfo, str, np.dtype, bool]
@@ -314,29 +312,38 @@ class GpuModel(KernelModel):
     def __setstate__(self, state):
         # type: (Tuple[ModelInfo, str, np.dtype, bool]) -> None
         self.info, self.source, self.dtype, self.fast = state
-        self.program = None
+        self._program = self._kernels = None
 
     def make_kernel(self, q_vectors):
         # type: (List[np.ndarray]) -> "GpuKernel"
-        if self.program is None:
-            compile_program = environment().compile_program
-            timestamp = generate.ocl_timestamp(self.info)
-            self.program = compile_program(
-                self.info.name,
-                self.source['opencl'],
-                self.dtype,
-                self.fast,
-                timestamp)
-            variants = ['Iq', 'Iqxy', 'Imagnetic']
-            names = [generate.kernel_name(self.info, k) for k in variants]
-            kernels = [self.program.get_function(k) for k in names]
-            self._kernels = dict((k, v) for k, v in zip(variants, kernels))
-        is_2d = len(q_vectors) == 2
-        if is_2d:
-            kernel = [self._kernels['Iqxy'], self._kernels['Imagnetic']]
-        else:
-            kernel = [self._kernels['Iq']]*2
-        return GpuKernel(kernel, self.dtype, self.info, q_vectors)
+        return GpuKernel(self, q_vectors)
+
+    def get_function(self, name):
+        # type: (str) -> cuda.Function
+        """
+        Fetch the kernel from the environment by name, compiling it if it
+        does not already exist.
+        """
+        if self._program is None:
+            self._prepare_program()
+        return self._kernels[name]
+
+    def _prepare_program(self):
+        # type: (str) -> None
+        env = environment()
+        timestamp = generate.ocl_timestamp(self.info)
+        program = env.compile_program(
+            self.info.name,
+            self.source['opencl'],
+            self.dtype,
+            self.fast,
+            timestamp)
+        variants = ['Iq', 'Iqxy', 'Imagnetic']
+        names = [generate.kernel_name(self.info, k) for k in variants]
+        handles = [program.get_function(k) for k in names]
+        self._kernels = {k: v for k, v in zip(variants, kernels)}
+        # keep a handle to program so GC doesn't collect
+        self._program = program
 
     def release(self):
         # type: () -> None
@@ -393,6 +400,8 @@ class GpuInput(object):
             self.q[:self.nq] = q_vectors[0]
         self.global_size = [self.q.shape[0]]
         #print("creating inputs of size", self.global_size)
+
+        # transfer input value to gpu
         self.q_b = cuda.to_device(self.q)
 
     def release(self):
@@ -412,44 +421,46 @@ class GpuKernel(Kernel):
     """
     Callable SAS kernel.
 
-    *kernel* is the GpuKernel object to call
+    *model* is the GpuModel object to call
 
-    *model_info* is the module information
-
-    *q_vectors* is the q vectors at which the kernel should be evaluated
-
-    *dtype* is the kernel precision
-
-    The resulting call method takes the *pars*, a list of values for
-    the fixed parameters to the kernel, and *pd_pars*, a list of (value,weight)
-    vectors for the polydisperse parameters.  *cutoff* determines the
-    integration limits: any points with combined weight less than *cutoff*
-    will not be calculated.
+    The kernel is derived from :class:`Kernel`, providing the
+    :meth:`call_kernel` method to evaluate the kernel for a given set of
+    parameters.  Because of the need to move the q values to the GPU before
+    evaluation, the kernel is instantiated for a particular set of q vectors,
+    and can be called many times without transfering q each time.
 
     Call :meth:`release` when done with the kernel instance.
     """
-    def __init__(self, kernel, dtype, model_info, q_vectors):
-        # type: (cl.Kernel, np.dtype, ModelInfo, List[np.ndarray]) -> None
+    #: SAS model information structure
+    info = None # type: ModelInfo
+    #: kernel precision
+    dtype = None # type: np.dtype
+    #: kernel dimensions (1d or 2d)
+    dim = "" # type: str
+    #: calculation results, updated after each call to :meth:`_call_kernel`
+    result = None # type: np.ndarray
+
+    def __init__(self, model, q_vectors):
+        # type: (GpuModel, List[np.ndarray]) -> None
+        dtype = model.dtype
         self.q_input = GpuInput(q_vectors, dtype)
-        self.kernel = kernel
+        self._model = model
         # F16 isn't sufficient, so don't support it
         self._as_dtype = np.float64 if dtype == generate.F64 else np.float32
 
         # attributes accessed from the outside
         self.dim = '2d' if self.q_input.is_2d else '1d'
-        self.info = model_info
-        self.dtype = dtype
+        self.info = model.info
+        self.dtype = model.dtype
 
         # holding place for the returned value
         nout = 2 if self.info.have_Fq and self.dim == '1d' else 1
         extra_q = 4  # total weight, form volume, shell volume and R_eff
         self.result = np.empty(self.q_input.nq*nout+extra_q, dtype)
 
-        # Inputs and outputs for each kernel call
-        # Note: res may be shorter than res_b if global_size != nq
+        # allocate result value on gpu
         width = ((self.result.size+31)//32)*32 * self.dtype.itemsize
-        self.result_b = cuda.mem_alloc(width)
-        self._need_release = [self.result_b]
+        self._result_b = cuda.mem_alloc(width)
 
     def _call_kernel(self, call_details, values, cutoff, magnetic, effective_radius_type):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
@@ -457,8 +468,9 @@ class GpuKernel(Kernel):
         details_b = cuda.to_device(call_details.buffer)
         values_b = cuda.to_device(values)
 
-        kernel = self.kernel[1 if magnetic else 0]
-        args = [
+        name = 'Iq' if self.dim == '1d' else 'Imagnetic' if magnetic else 'Iqxy'
+        kernel = self._model.get_function(name)
+        kernel_args = [
             np.uint32(self.q_input.nq), None, None,
             details_b, values_b, self.q_input.q_b, self.result_b,
             self._as_dtype(cutoff),
@@ -495,9 +507,10 @@ class GpuKernel(Kernel):
         """
         Release resources associated with the kernel.
         """
-        for p in self._need_release:
-            p.free()
-        self._need_release = []
+        self.q_input.release()
+        if self._result_b is not None:
+            self._result_b.free()
+            self._result_b = None
 
     def __del__(self):
         # type: () -> None
