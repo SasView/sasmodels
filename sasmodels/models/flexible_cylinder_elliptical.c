@@ -71,4 +71,3 @@ double Iq(double q,
 
     return result;
 }
-

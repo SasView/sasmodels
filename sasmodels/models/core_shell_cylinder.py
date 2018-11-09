@@ -69,6 +69,7 @@ Reference
 .. [#] see, for example, Ian Livsey  J. Chem. Soc., Faraday Trans. 2, 1987,83,
    1445-1452
 .. [#kline] S R Kline, *J Appl. Cryst.*, 39 (2006) 895
+L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949). 
 
 Authorship and Verification
 ----------------------------
@@ -130,15 +131,11 @@ parameters = [["sld_core", "1e-6/Ang^2", 4, [-inf, inf], "sld",
              ]
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "core_shell_cylinder.c"]
-
-def ER(radius, thickness, length):
-    """
-    Returns the effective radius used in the S*P calculation
-    """
-    radius = radius + thickness
-    length = length + 2 * thickness
-    ddd = 0.75 * radius * (2 * radius * length + (length + radius) * (length + pi * radius))
-    return 0.5 * (ddd) ** (1. / 3.)
+have_Fq = True
+effective_radius_type = [
+    "excluded volume", "equivalent volume sphere", "outer radius", "half outer length",
+    "half min outer dimension", "half max outer dimension", "half outer diagonal",
+    ]
 
 def random():
     outer_radius = 10**np.random.uniform(1, 4.7)

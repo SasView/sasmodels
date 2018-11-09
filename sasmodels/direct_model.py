@@ -30,6 +30,8 @@ from . import weights
 from . import resolution
 from . import resolution2d
 from .details import make_kernel_args, dispersion_mesh
+from .modelinfo import DEFAULT_BACKGROUND
+from .product import RADIUS_MODE_ID
 
 # pylint: disable=unused-import
 try:
@@ -62,49 +64,30 @@ def call_kernel(calculator, pars, cutoff=0., mono=False):
     #print("values:", values)
     return calculator(call_details, values, cutoff, is_magnetic)
 
-def call_ER(model_info, pars):
-    # type: (ModelInfo, ParameterSet) -> float
+def call_Fq(calculator, pars, cutoff=0., mono=False):
+    # type: (Kernel, ParameterSet, float, bool) -> np.ndarray
     """
-    Call the model ER function using *values*.
+    Like :func:`call_kernel`, but returning F, F^2, R_eff, V_shell, V_form/V_shell.
 
-    *model_info* is either *model.info* if you have a loaded model,
-    or *kernel.info* if you have a model kernel prepared for evaluation.
+    For solid objects V_shell is equal to V_form and the volume ratio is 1.
+
+    Use parameter *radius_effective_mode* to select the effective radius
+    calculation.
     """
-    if model_info.ER is None:
-        return 1.0
-    elif not model_info.parameters.form_volume_parameters:
-        # handle the case where ER is provided but model is not polydisperse
-        return model_info.ER()
-    else:
-        value, weight = _vol_pars(model_info, pars)
-        individual_radii = model_info.ER(*value)
-        return np.sum(weight*individual_radii) / np.sum(weight)
+    R_eff_type = int(pars.pop(RADIUS_MODE_ID, 1.0))
+    mesh = get_mesh(calculator.info, pars, dim=calculator.dim, mono=mono)
+    #print("pars", list(zip(*mesh))[0])
+    call_details, values, is_magnetic = make_kernel_args(calculator, mesh)
+    #print("values:", values)
+    return calculator.Fq(call_details, values, cutoff, is_magnetic, R_eff_type)
 
-
-def call_VR(model_info, pars):
-    # type: (ModelInfo, ParameterSet) -> float
-    """
-    Call the model VR function using *pars*.
-
-    *model_info* is either *model.info* if you have a loaded model,
-    or *kernel.info* if you have a model kernel prepared for evaluation.
-    """
-    if model_info.VR is None:
-        return 1.0
-    elif not model_info.parameters.form_volume_parameters:
-        # handle the case where ER is provided but model is not polydisperse
-        return model_info.VR()
-    else:
-        value, weight = _vol_pars(model_info, pars)
-        whole, part = model_info.VR(*value)
-        return np.sum(weight*part)/np.sum(weight*whole)
-
-
-def call_profile(model_info, **pars):
-    # type: (ModelInfo, ...) -> Tuple[np.ndarray, np.ndarray, Tuple[str, str]]
+def call_profile(model_info, pars=None):
+    # type: (ModelInfo, ParameterSet) -> Tuple[np.ndarray, np.ndarray, Tuple[str, str]]
     """
     Returns the profile *x, y, (xlabel, ylabel)* representing the model.
     """
+    if pars is None:
+        pars = {}
     args = {}
     for p in model_info.parameters.kernel_parameters:
         if p.length > 1:
@@ -402,7 +385,7 @@ class DirectModel(DataMixin):
         """
         Generate a plottable profile.
         """
-        return call_profile(self.model.info, **pars)
+        return call_profile(self.model.info, pars)
 
 def main():
     # type: () -> None
@@ -418,22 +401,19 @@ def main():
         sys.exit(1)
     model_name = sys.argv[1]
     call = sys.argv[2].upper()
-    if call != "ER_VR":
-        try:
-            values = [float(v) for v in call.split(',')]
-        except ValueError:
-            values = []
-        if len(values) == 1:
-            q, = values
-            data = empty_data1D([q])
-        elif len(values) == 2:
-            qx, qy = values
-            data = empty_data2D([qx], [qy])
-        else:
-            print("use q or qx,qy or ER or VR")
-            sys.exit(1)
+    try:
+        values = [float(v) for v in call.split(',')]
+    except ValueError:
+        values = []
+    if len(values) == 1:
+        q, = values
+        data = empty_data1D([q])
+    elif len(values) == 2:
+        qx, qy = values
+        data = empty_data2D([qx], [qy])
     else:
-        data = empty_data1D([0.001])  # Data not used in ER/VR
+        print("use q or qx,qy")
+        sys.exit(1)
 
     model_info = load_model_info(model_name)
     model = build_model(model_info)
@@ -441,13 +421,8 @@ def main():
     pars = dict((k, (float(v) if not k.endswith("_pd_type") else v))
                 for pair in sys.argv[3:]
                 for k, v in [pair.split('=')])
-    if call == "ER_VR":
-        ER = call_ER(model_info, pars)
-        VR = call_VR(model_info, pars)
-        print(ER, VR)
-    else:
-        Iq = calculator(**pars)
-        print(Iq[0])
+    Iq = calculator(**pars)
+    print(Iq[0])
 
 if __name__ == "__main__":
     main()

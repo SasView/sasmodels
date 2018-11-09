@@ -27,7 +27,81 @@ form_volume(double length_a, double length_b, double length_c,
 }
 
 static double
-Iq(double q,
+radius_from_excluded_volume(double length_a, double length_b, double length_c,
+                   double thick_rim_a, double thick_rim_b, double thick_rim_c)
+{
+    double r_equiv, length;
+    double lengths[3] = {length_a+thick_rim_a, length_b+thick_rim_b, length_c+thick_rim_c};
+    double lengthmax = fmax(lengths[0],fmax(lengths[1],lengths[2]));
+    double length_1 = lengthmax;
+    double length_2 = lengthmax;
+    double length_3 = lengthmax;
+
+    for(int ilen=0; ilen<3; ilen++) {
+        if (lengths[ilen] < length_1) {
+            length_2 = length_1;
+            length_1 = lengths[ilen];
+            } else {
+                if (lengths[ilen] < length_2) {
+                        length_2 = lengths[ilen];
+                }
+            }
+    }
+    if(length_2-length_1 > length_3-length_2) {
+        r_equiv = sqrt(length_2*length_3/M_PI);
+        length  = length_1;
+    } else  {
+        r_equiv = sqrt(length_1*length_2/M_PI);
+        length  = length_3;
+    }
+
+    return 0.5*cbrt(0.75*r_equiv*(2.0*r_equiv*length + (r_equiv + length)*(M_PI*r_equiv + length)));
+}
+
+static double
+radius_from_volume(double length_a, double length_b, double length_c,
+                   double thick_rim_a, double thick_rim_b, double thick_rim_c)
+{
+    const double volume = form_volume(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c);
+    return cbrt(volume/M_4PI_3);
+}
+
+static double
+radius_from_crosssection(double length_a, double length_b, double thick_rim_a, double thick_rim_b)
+{
+    const double area_xsec_paral = length_a*length_b + 2.0*thick_rim_a*length_b + 2.0*thick_rim_b*length_a;
+    return sqrt(area_xsec_paral/M_PI);
+}
+
+static double
+effective_radius(int mode, double length_a, double length_b, double length_c,
+                 double thick_rim_a, double thick_rim_b, double thick_rim_c)
+{
+    switch (mode) {
+    default:
+    case 1: // equivalent cylinder excluded volume
+        return radius_from_excluded_volume(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c);
+    case 2: // equivalent volume sphere
+        return radius_from_volume(length_a, length_b, length_c, thick_rim_a, thick_rim_b, thick_rim_c);
+    case 3: // half outer length a
+        return 0.5 * length_a + thick_rim_a;
+    case 4: // half outer length b
+        return 0.5 * length_b + thick_rim_b;
+    case 5: // half outer length c
+        return 0.5 * length_c + thick_rim_c;
+    case 6: // equivalent circular cross-section
+        return radius_from_crosssection(length_a, length_b, thick_rim_a, thick_rim_b);
+    case 7: // half outer ab diagonal
+        return 0.5*sqrt(square(length_a+ 2.0*thick_rim_a) + square(length_b+ 2.0*thick_rim_b));
+    case 8: // half outer diagonal
+        return 0.5*sqrt(square(length_a+ 2.0*thick_rim_a) + square(length_b+ 2.0*thick_rim_b) + square(length_c+ 2.0*thick_rim_c));
+    }
+}
+
+static void
+Fq(double q,
+    double *F1,
+    double *F2,
     double core_sld,
     double arim_sld,
     double brim_sld,
@@ -59,7 +133,8 @@ Iq(double q,
 
     // outer integral (with gauss points), integration limits = 0, 1
     // substitute d_cos_alpha for sin_alpha d_alpha
-    double outer_sum = 0; //initialize integral
+    double outer_sum_F1 = 0; //initialize integral
+    double outer_sum_F2 = 0; //initialize integral
     for( int i=0; i<GAUSS_N; i++) {
         const double cos_alpha = 0.5 * ( GAUSS_Z[i] + 1.0 );
         const double mu = half_q * sqrt(1.0-cos_alpha*cos_alpha);
@@ -68,7 +143,8 @@ Iq(double q,
 
         // inner integral (with gauss points), integration limits = 0, 1
         // substitute beta = PI/2 u (so 2/PI * d_(PI/2 * beta) = d_beta)
-        double inner_sum = 0.0;
+        double inner_sum_F1 = 0.0;
+        double inner_sum_F2 = 0.0;
         for(int j=0; j<GAUSS_N; j++) {
             const double u = 0.5 * ( GAUSS_Z[j] + 1.0 );
             double sin_beta, cos_beta;
@@ -90,18 +166,21 @@ Iq(double q,
                 + drC*siA*siB*(siCt-siC);
 #endif
 
-            inner_sum += GAUSS_W[j] * f * f;
+            inner_sum_F1 += GAUSS_W[j] * f;
+            inner_sum_F2 += GAUSS_W[j] * f * f;
         }
         // now complete change of inner integration variable (1-0)/(1-(-1))= 0.5
-        inner_sum *= 0.5;
-        // now sum up the outer integral
-        outer_sum += GAUSS_W[i] * inner_sum;
+        // and sum up the outer integral
+        outer_sum_F1 += GAUSS_W[i] * inner_sum_F1 * 0.5;
+        outer_sum_F2 += GAUSS_W[i] * inner_sum_F2 * 0.5;
     }
     // now complete change of outer integration variable (1-0)/(1-(-1))= 0.5
-    outer_sum *= 0.5;
+    outer_sum_F1 *= 0.5;
+    outer_sum_F2 *= 0.5;
 
     //convert from [1e-12 A-1] to [cm-1]
-    return 1.0e-4 * outer_sum;
+    *F1 = 1.0e-2 * outer_sum_F1;
+    *F2 = 1.0e-4 * outer_sum_F2;
 }
 
 static double

@@ -11,7 +11,6 @@ form_volume(double radius,
 
 static double
 multilayer_vesicle_kernel(double q,
-          double volfraction,
           double radius,
           double thick_shell,
           double thick_solvent,
@@ -44,11 +43,20 @@ multilayer_vesicle_kernel(double q,
     } while(ii <= n_shells-1);  //change to make 0 < n_shells < 2 correspond to
                                //unilamellar vesicles (C. Glinka, 11/24/03)
 
-    return 1.0e-4*volfraction*fval*fval;  // Volume normalization happens in caller
+    return fval;  // Volume normalization happens in caller
 }
 
 static double
-Iq(double q,
+effective_radius(int mode, double radius, double thick_shell, double thick_solvent, double fp_n_shells)
+{
+    // case 1: outer radius
+    return radius + fp_n_shells*thick_shell + (fp_n_shells - 1.0)*thick_solvent;
+}
+
+static void
+Fq(double q,
+          double *F1,
+          double *F2,
           double volfraction,
           double radius,
           double thick_shell,
@@ -58,13 +66,15 @@ Iq(double q,
           double fp_n_shells)
 {
     int n_shells = (int)(fp_n_shells + 0.5);
-    return multilayer_vesicle_kernel(q,
-           volfraction,
+    const double fq = multilayer_vesicle_kernel(q,
            radius,
            thick_shell,
            thick_solvent,
            sld_solvent,
            sld,
            n_shells);
+    // See comment in vesicle.c regarding volfraction normalization.
+    *F1 = 1.0e-2 * sqrt(volfraction)*fq;
+    *F2 = 1.0e-4 * volfraction*fq*fq;
 }
 

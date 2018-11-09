@@ -336,7 +336,6 @@ def empty_data1D(q, resolution=0.0, L=0., dL=0.):
         dq = (4*pi/L) * sqrt((sin(theta)*dL/L)**2 + (cos(theta)*dtheta)**2)
     else:
         dq = resolution * q
-
     data = Data1D(q, Iq, dx=dq, dy=dIq)
     data.filename = "fake data"
     return data

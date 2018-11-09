@@ -139,7 +139,7 @@ FITTING NOTES
    of angles is preserved. For the default choice shown here, that means
    ensuring that the inequality $A < B < C$ is not violated,  The calculation
    will not report an error, but the results may be not correct.
-   
+
 .. _parallelepiped-orientation:
 
 .. figure:: img/parallelepiped_angle_definition.png
@@ -179,6 +179,7 @@ References
 .. [#Mittelbach] P Mittelbach and G Porod, *Acta Physica Austriaca*,
    14 (1961) 185-211
 .. [#] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949). 
 
 Authorship and Verification
 ----------------------------
@@ -229,25 +230,12 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
              ]
 
 source = ["lib/gauss76.c", "parallelepiped.c"]
-
-def ER(length_a, length_b, length_c):
-    """
-    Return effective radius (ER) for P(q)*S(q)
-    """
-    # now that axes can be in any size order, need to sort a,b,c
-    # where a~b and c is either much smaller or much larger
-    abc = np.vstack((length_a, length_b, length_c))
-    abc = np.sort(abc, axis=0)
-    selector = (abc[1] - abc[0]) > (abc[2] - abc[1])
-    length = np.where(selector, abc[0], abc[2])
-    # surface average radius (rough approximation)
-    radius = sqrt(np.where(~selector, abc[0]*abc[1], abc[1]*abc[2]) / pi)
-
-    ddd = 0.75 * radius * (2*radius*length + (length + radius)*(length + pi*radius))
-    return 0.5 * (ddd) ** (1. / 3.)
-
-# VR defaults to 1.0
-
+have_Fq = True
+effective_radius_type = [
+    "equivalent cylinder excluded volume", "equivalent volume sphere", 
+    "half length_a", "half length_b", "half length_c",
+    "equivalent circular cross-section", "half ab diagonal", "half diagonal",
+    ]
 
 def random():
     length = 10**np.random.uniform(1, 4.7, size=3)

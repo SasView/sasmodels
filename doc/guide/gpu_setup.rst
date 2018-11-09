@@ -93,6 +93,8 @@ only run as a normal program on the CPU. This will not usually be necessary.
 
 Device Selection
 ================
+**OpenCL drivers**
+
 If you have multiple GPU devices you can tell the program which device to use.
 By default, the program looks for one GPU and one CPU device from available
 OpenCL platforms. It prefers AMD or NVIDIA drivers for GPU, and
@@ -103,10 +105,7 @@ The device order is important: GPU is checked before CPU on the assumption that
 it will be faster. By examining ~/sasview.log you can see which device
 was used to run the model.
 
-**If you don't want to use OpenCL, you can set** *SAS_OPENCL=None*
-**in your environment settings, and it will only use normal programs.**
-
-If you want to use one of the other devices, you can run the following
+If you want to use a specific driver and devices, you can run the following
 from the python console::
 
     import pyopencl as cl
@@ -114,7 +113,49 @@ from the python console::
 
 This will provide a menu of different OpenCL drivers available.
 When one is selected, it will say "set PYOPENCL_CTX=..."
-Use that value as the value of *SAS_OPENCL*.
+Use that value as the value of *SAS_OPENCL=driver:device*.
+
+To use the default OpenCL device (rather than CUDA or None),
+set *SAS_OPENCL=opencl*.
+
+In batch queues, you may need to set *XDG_CACHE_HOME=~/.cache* 
+(Linux only) to a different directory, depending on how the filesystem 
+is configured.  You should also set *SAS_DLL_PATH* for CPU-only modules.
+
+    -DSAS_MODELPATH=path sets directory containing custom models
+    -DSAS_OPENCL=vendor:device|cuda:device|none sets the target GPU device
+    -DXDG_CACHE_HOME=~/.cache sets the pyopencl cache root (linux only)
+    -DSAS_COMPILER=tinycc|msvc|mingw|unix sets the DLL compiler
+    -DSAS_OPENMP=1 turns on OpenMP for the DLLs
+    -DSAS_DLL_PATH=path sets the path to the compiled modules
+
+
+**CUDA drivers**
+
+If OpenCL drivers are not available on your system, but NVidia CUDA
+drivers are available, then set *SAS_OPENCL=cuda* or
+*SAS_OPENCL=cuda:n* for a particular device number *n*.  If no device
+number is specified, then the CUDA drivers looks for look for
+*CUDA_DEVICE=n* or a file ~/.cuda-device containing n for the device number.
+
+In batch queues, the SLURM command *sbatch --gres=gpu:1 ...* will set
+*CUDA_VISIBLE_DEVICES=n*, which ought to set the correct device
+number for *SAS_OPENCL=cuda*.  If not, then set
+*CUDA_DEVICE=$CUDA_VISIBLE_DEVICES* within the batch script.  You may
+need to set the CUDA cache directory to a folder accessible across the
+cluster with *PYCUDA_CACHE_DIR* (or *PYCUDA_DISABLE_CACHE* to disable
+caching), and you may need to set environment specific compiler flags
+with *PYCUDA_DEFAULT_NVCC_FLAGS*.  You should also set *SAS_DLL_PATH* 
+for CPU-only modules.
+
+**No GPU support**
+
+If you don't want to use OpenCL or CUDA, you can set *SAS_OPENCL=None*
+in your environment settings, and it will only use normal programs.
+
+In batch queues, you may need to set *SAS_DLL_PATH* to a directory
+accessible on the compute node.
+
 
 Device Testing
 ==============
@@ -153,4 +194,4 @@ package to make the compiler available.
 
 *Document History*
 
-| 2017-09-27 Paul Kienzle
+| 2018-10-15 Paul Kienzle
