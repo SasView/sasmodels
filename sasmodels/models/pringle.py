@@ -41,6 +41,7 @@ Reference
 
 Karen Edler, Universtiy of Bath, Private Communication. 2012.
 Derivation by Stefan Alexandru Rautu.
+L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949).
 
 * **Author:** Andrew Jackson **Date:** 2008
 * **Last Modified by:** Wojciech Wpotrzebowski **Date:** March 20, 2016
@@ -73,7 +74,7 @@ parameters = [
 
 source = ["lib/polevl.c", "lib/sas_J0.c", "lib/sas_J1.c",
           "lib/sas_JN.c", "lib/gauss76.c", "pringle.c"]
-effective_radius_type = ["equivalent sphere", "radius"]
+effective_radius_type = ["equivalent cylinder excluded volume", "equivalent volume sphere", "radius"]
 
 def random():
     alpha, beta = 10**np.random.uniform(-1, 1, size=2)

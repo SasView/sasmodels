@@ -172,6 +172,7 @@ References
    lipid mixtures*, Johns Hopkins University Thesis (2009) 223-225. `Available
    from Proquest <http://search.proquest.com/docview/304915826?accountid
    =26379>`_
+L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949). 
 
 Authorship and Verification
 ----------------------------
@@ -227,7 +228,8 @@ parameters = [["sld_core", "1e-6/Ang^2", 1, [-inf, inf], "sld",
 source = ["lib/gauss76.c", "core_shell_parallelepiped.c"]
 have_Fq = True
 effective_radius_type = [
-    "equivalent sphere",
+    "equivalent cylinder excluded volume", 
+    "equivalent volume sphere",
     "half outer length_a", "half outer length_b", "half outer length_c",
     "equivalent circular cross-section",
     "half outer ab diagonal", "half outer diagonal",

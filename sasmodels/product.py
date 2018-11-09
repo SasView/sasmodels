@@ -36,13 +36,15 @@ else:
 #    ["est_volume_ratio", "", 1.0, [0, np.inf], "", "Estimated volume ratio"],
 #]
 
+STRUCTURE_MODE_ID = "structure_factor_mode"
+RADIUS_MODE_ID = "radius_effective_mode"
 RADIUS_ID = "radius_effective"
 VOLFRAC_ID = "volfraction"
 def make_extra_pars(p_info):
     pars = []
     if p_info.have_Fq:
         par = parse_parameter(
-                "structure_factor_mode",
+                STRUCTURE_MODE_ID,
                 "",
                 0,
                 [["P*S","P*(1+beta*(S-1))"]],
@@ -51,9 +53,9 @@ def make_extra_pars(p_info):
         pars.append(par)
     if p_info.effective_radius_type is not None:
         par = parse_parameter(
-                "radius_effective_mode",
+                RADIUS_MODE_ID,
                 "",
-                0,
+                1,
                 [["unconstrained"] + p_info.effective_radius_type],
                 "",
                 "Effective radius calculation")

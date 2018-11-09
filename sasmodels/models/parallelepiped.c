@@ -5,23 +5,56 @@ form_volume(double length_a, double length_b, double length_c)
 }
 
 static double
+radius_from_excluded_volume(double length_a, double length_b, double length_c)
+{
+    double r_equiv, length;
+    double lengths[3] = {length_a, length_b, length_c};
+    double lengthmax = fmax(lengths[0],fmax(lengths[1],lengths[2]));
+    double length_1 = lengthmax;
+    double length_2 = lengthmax;
+    double length_3 = lengthmax;
+
+    for(int ilen=0; ilen<3; ilen++) {
+        if (lengths[ilen] < length_1) {
+            length_2 = length_1;
+            length_1 = lengths[ilen];
+            } else {
+                if (lengths[ilen] < length_2) {
+                        length_2 = lengths[ilen];
+                }
+            }
+    }
+    if(length_2-length_1 > length_3-length_2) {
+        r_equiv = sqrt(length_2*length_3/M_PI);
+        length  = length_1;
+    } else  {
+        r_equiv = sqrt(length_1*length_2/M_PI);
+        length  = length_3;
+    }
+
+    return 0.5*cbrt(0.75*r_equiv*(2.0*r_equiv*length + (r_equiv + length)*(M_PI*r_equiv + length)));
+}
+
+static double
 effective_radius(int mode, double length_a, double length_b, double length_c)
 {
     switch (mode) {
     default:
-    case 1: // equivalent sphere
+    case 1: // equivalent cylinder excluded volume
+        return radius_from_excluded_volume(length_a,length_b,length_c);
+    case 2: // equivalent volume sphere
         return cbrt(length_a*length_b*length_c/M_4PI_3);
-    case 2: // half length_a
+    case 3: // half length_a
         return 0.5 * length_a;
-    case 3: // half length_b
+    case 4: // half length_b
         return 0.5 * length_b;
-    case 4: // half length_c
+    case 5: // half length_c
         return 0.5 * length_c;
-    case 5: // equivalent circular cross-section
+    case 6: // equivalent circular cross-section
         return sqrt(length_a*length_b/M_PI);
-    case 6: // half ab diagonal
+    case 7: // half ab diagonal
         return 0.5*sqrt(length_a*length_a + length_b*length_b);
-    case 7: // half diagonal
+    case 8: // half diagonal
         return 0.5*sqrt(length_a*length_a + length_b*length_b + length_c*length_c);
     }
 }

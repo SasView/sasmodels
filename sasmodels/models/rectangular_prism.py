@@ -98,6 +98,9 @@ References
 P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
 
 R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+
+L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949). 
+
 """
 
 import numpy as np
@@ -136,7 +139,8 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
 source = ["lib/gauss76.c", "rectangular_prism.c"]
 have_Fq = True
 effective_radius_type = [
-    "equivalent sphere", "half length_a", "half length_b", "half length_c",
+    "equivalent cylinder excluded volume", "equivalent volume sphere", 
+    "half length_a", "half length_b", "half length_c",
     "equivalent circular cross-section", "half ab diagonal", "half diagonal",
     ]
 

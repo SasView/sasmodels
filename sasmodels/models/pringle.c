@@ -104,13 +104,21 @@ double form_volume(double radius, double thickness, double alpha, double beta)
 }
 
 static double
+radius_from_excluded_volume(double radius, double thickness)
+{
+    return 0.5*cbrt(0.75*radius*(2.0*radius*thickness + (radius + thickness)*(M_PI*radius + thickness)));
+}
+
+static double
 effective_radius(int mode, double radius, double thickness, double alpha, double beta)
 {
     switch (mode) {
     default:
-    case 1: // equivalent sphere
+    case 1: // equivalent cylinder excluded volume
+        return radius_from_excluded_volume(radius, thickness);
+    case 2: // equivalent volume sphere
         return cbrt(M_PI*radius*radius*thickness/M_4PI_3);
-    case 2: // radius
+    case 3: // radius
         return radius;
     }
 }
