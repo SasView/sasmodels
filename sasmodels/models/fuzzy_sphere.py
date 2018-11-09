@@ -77,33 +77,13 @@ category = "shape:sphere"
 parameters = [["sld",         "1e-6/Ang^2",  1, [-inf, inf], "sld",    "Particle scattering length density"],
               ["sld_solvent", "1e-6/Ang^2",  3, [-inf, inf], "sld",    "Solvent scattering length density"],
               ["radius",      "Ang",        60, [0, inf],    "volume", "Sphere radius"],
-              ["fuzziness",   "Ang",        10, [0, inf],    "",       "std deviation of Gaussian convolution for interface (must be << radius)"],
+              ["fuzziness",   "Ang",        10, [0, inf],    "volume",       "std deviation of Gaussian convolution for interface (must be << radius)"],
              ]
 # pylint: enable=bad-whitespace,line-too-long
 
-source = ["lib/sas_3j1x_x.c"]
-
-# No volume normalization despite having a volume parameter
-# This should perhaps be volume normalized?
-form_volume = """
-    return M_4PI_3*cube(radius);
-    """
-
-Iq = """
-    const double qr = q*radius;
-    const double bes = sas_3j1x_x(qr);
-    const double qf = q*fuzziness;
-    const double fq = bes * (sld - sld_solvent) * form_volume(radius) * exp(-0.5*qf*qf);
-    return 1.0e-4*fq*fq;
-    """
-
-def ER(radius):
-    """
-    Return radius
-    """
-    return radius
-
-# VR defaults to 1.0
+source = ["lib/sas_3j1x_x.c","fuzzy_sphere.c"]
+have_Fq = True
+effective_radius_type = ["radius", "radius + fuzziness"]
 
 def random():
     radius = 10**np.random.uniform(1, 4.7)

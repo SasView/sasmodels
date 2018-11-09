@@ -119,9 +119,6 @@ form_volume = """
     return 1.0;
     """
 
-# ER defaults to 0.0
-# VR defaults to 1.0
-
 demo = dict(scale=1, background=0,
             thickness=67., Nlayers=3.75, d_spacing=200.,
             Caille_parameter=0.268, sld=1.0, sld_solvent=6.34,

@@ -88,8 +88,6 @@ source = ["hayter_msa.c"]
 form_volume = """
     return 1.0;
     """
-# ER defaults to 0.0
-# VR defaults to 1.0
 
 def random():
     # TODO: too many failures for random hayter_msa parameters
