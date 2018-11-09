@@ -62,6 +62,7 @@ import warnings
 import logging
 import time
 import re
+import atexit
 
 import numpy as np  # type: ignore
 
@@ -136,6 +137,14 @@ def environment():
         if ENV is None:
             raise RuntimeError("SAS_OPENCL=None in environment")
     return ENV
+
+def free_context():
+    global ENV
+    if ENV is not None:
+        ENV.release()
+        ENV = None
+
+atexit.register(free_context)
 
 def has_type(dtype):
     # type: (np.dtype) -> bool
@@ -340,22 +349,10 @@ class GpuModel(KernelModel):
             timestamp)
         variants = ['Iq', 'Iqxy', 'Imagnetic']
         names = [generate.kernel_name(self.info, k) for k in variants]
-        handles = [program.get_function(k) for k in names]
-        self._kernels = {k: v for k, v in zip(variants, kernels)}
+        functions = [program.get_function(k) for k in names]
+        self._kernels = {k: v for k, v in zip(variants, functions)}
         # keep a handle to program so GC doesn't collect
         self._program = program
-
-    def release(self):
-        # type: () -> None
-        """
-        Free the resources associated with the model.
-        """
-        if self.program is not None:
-            self.program = None
-
-    def __del__(self):
-        # type: () -> None
-        self.release()
 
 # TODO: check that we don't need a destructor for buffers which go out of scope
 class GpuInput(object):
@@ -472,7 +469,7 @@ class GpuKernel(Kernel):
         kernel = self._model.get_function(name)
         kernel_args = [
             np.uint32(self.q_input.nq), None, None,
-            details_b, values_b, self.q_input.q_b, self.result_b,
+            details_b, values_b, self.q_input.q_b, self._result_b,
             self._as_dtype(cutoff),
             np.uint32(effective_radius_type),
         ]
@@ -486,8 +483,8 @@ class GpuKernel(Kernel):
         for start in range(0, call_details.num_eval, step):
             stop = min(start + step, call_details.num_eval)
             #print("queuing",start,stop)
-            args[1:3] = [np.int32(start), np.int32(stop)]
-            kernel(*args, **grid)
+            kernel_args[1:3] = [np.int32(start), np.int32(stop)]
+            kernel(*kernel_args, **grid)
             if stop < call_details.num_eval:
                 sync()
                 # Allow other processes to run
@@ -496,7 +493,7 @@ class GpuKernel(Kernel):
                     time.sleep(0.001)
                     last_nap = current_time
         sync()
-        cuda.memcpy_dtoh(self.result, self.result_b)
+        cuda.memcpy_dtoh(self.result, self._result_b)
         #print("result", self.result)
 
         details_b.free()

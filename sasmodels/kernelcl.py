@@ -443,8 +443,8 @@ class GpuModel(KernelModel):
             timestamp)
         variants = ['Iq', 'Iqxy', 'Imagnetic']
         names = [generate.kernel_name(self.info, k) for k in variants]
-        handles = [getattr(program, k) for k in names]
-        self._kernels = {k: v for k, v in zip(variants, handles)}
+        functions = [getattr(program, k) for k in names]
+        self._kernels = {k: v for k, v in zip(variants, functions)}
         # keep a handle to program so GC doesn't collect
         self._program = program
 

@@ -166,7 +166,7 @@ def _add_model_to_suite(loaders, suite, model_info):
 
         # test using cuda if desired and available
         if 'cuda' in loaders and use_cuda():
-            test_name = "%s-cuda"%model_name
+            test_name = "%s-cuda" % model_info.id
             test_method_name = "test_%s_cuda" % model_info.id
             # Using dtype=None so that the models that are only
             # correct for double precision are not tested using
