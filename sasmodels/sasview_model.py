@@ -287,7 +287,7 @@ def _generate_model_attributes(model_info):
     attrs['description'] = model_info.description
     attrs['category'] = model_info.category
     attrs['is_structure_factor'] = model_info.structure_factor
-    attrs['is_form_factor'] = model_info.ER is not None
+    attrs['is_form_factor'] = model_info.effective_radius_type is not None
     attrs['is_multiplicity_model'] = variants[0] > 1
     attrs['multiplicity_info'] = variants
     attrs['orientation_params'] = tuple(orientation_params)
@@ -561,9 +561,11 @@ class SasviewModel(object):
         if isinstance(x, (list, tuple)):
             # pylint: disable=unpacking-non-sequence
             q, phi = x
-            return self.calculate_Iq([q*math.cos(phi)], [q*math.sin(phi)])[0]
+            result, _ = self.calculate_Iq([q*math.cos(phi)], [q*math.sin(phi)])
+            return result[0]
         else:
-            return self.calculate_Iq([x])[0]
+            result, _ = self.calculate_Iq([x])
+            return result[0]
 
 
     def runXY(self, x=0.0):
@@ -578,9 +580,11 @@ class SasviewModel(object):
         **DEPRECATED**: use calculate_Iq instead
         """
         if isinstance(x, (list, tuple)):
-            return self.calculate_Iq([x[0]], [x[1]])[0]
+            result, _ = self.calculate_Iq([x[0]], [x[1]])
+            return result[0]
         else:
-            return self.calculate_Iq([x])[0]
+            result, _ = self.calculate_Iq([x])
+            return result[0]
 
     def evalDistribution(self, qdist):
         # type: (Union[np.ndarray, Tuple[np.ndarray, np.ndarray], List[np.ndarray]]) -> np.ndarray
@@ -614,11 +618,13 @@ class SasviewModel(object):
         if isinstance(qdist, (list, tuple)):
             # Check whether we have a list of ndarrays [qx,qy]
             qx, qy = qdist
-            return self.calculate_Iq(qx, qy)
+            result, _ = self.calculate_Iq(qx, qy)
+            return result
 
         elif isinstance(qdist, np.ndarray):
             # We have a simple 1D distribution of q-values
-            return self.calculate_Iq(qdist)
+            result, _ = self.calculate_Iq(qdist)
+            return result
 
         else:
             raise TypeError("evalDistribution expects q or [qx, qy], not %r"
@@ -637,7 +643,7 @@ class SasviewModel(object):
         # Long term, the solution is to change the interface to calculate_Iq
         # so that it returns a results object containing all the bits:
         #     the A, B, C, ... of the composition model (and any subcomponents?)
-        #     the P and S of the product model,
+        #     the P and S of the product model
         #     the combined model before resolution smearing,
         #     the sasmodel before sesans conversion,
         #     the oriented 2D model used to fit oriented usans data,
@@ -658,13 +664,20 @@ class SasviewModel(object):
         composition = self._model_info.composition
         if composition and composition[0] == 'product': # only P*S for now
             with calculation_lock:
-                self._calculate_Iq(qx)
-                return self._intermediate_results
+                _, lazy_results = self._calculate_Iq(qx)
+                # for compatibility with sasview 4.x
+                results = lazy_results()
+                pq_data = results.get("P(Q)")
+                sq_data = results.get("S(Q)")
+                return pq_data, sq_data
         else:
             return None
 
-    def calculate_Iq(self, qx, qy=None):
-        # type: (Sequence[float], Optional[Sequence[float]]) -> np.ndarray
+    def calculate_Iq(self,
+                     qx,     # type: Sequence[float]
+                     qy=None # type: Optional[Sequence[float]]
+                     ):
+        # type: (...) -> Tuple[np.ndarray, Callable[[], collections.OrderedDict[str, np.ndarray]]]
         """
         Calculate Iq for one set of q with the current parameters.
 
@@ -672,6 +685,10 @@ class SasviewModel(object):
 
         This should NOT be used for fitting since it copies the *q* vectors
         to the card for each evaluation.
+
+        The returned tuple contains the scattering intensity followed by a
+        callable which returns a dictionary of intermediate data from
+        ProductKernel.
         """
         ## uncomment the following when trying to debug the uncoordinated calls
         ## to calculate_Iq
@@ -682,7 +699,7 @@ class SasviewModel(object):
         with calculation_lock:
             return self._calculate_Iq(qx, qy)
 
-    def _calculate_Iq(self, qx, qy=None):
+    def _calculate_Iq(self, qx, qy=None, Fq=False, effective_radius_type=1):
         if self._model is None:
             self._model = core.build_model(self._model_info)
         if qy is not None:
@@ -702,42 +719,41 @@ class SasviewModel(object):
         #print("params", self.params)
         #print("values", values)
         #print("is_mag", is_magnetic)
+        if Fq:
+            result = calculator.Fq(call_details, values, cutoff=self.cutoff,
+                                   magnetic=is_magnetic,
+                                   effective_radius_type=effective_radius_type)
         result = calculator(call_details, values, cutoff=self.cutoff,
                             magnetic=is_magnetic)
+        lazy_results = getattr(calculator, 'results',
+                               lambda: collections.OrderedDict())
         #print("result", result)
-        self._intermediate_results = getattr(calculator, 'results', None)
+
         calculator.release()
         #self._model.release()
-        return result
 
-    def calculate_ER(self):
+        return result, lazy_results
+
+
+    def calculate_ER(self, mode=1):
         # type: () -> float
         """
         Calculate the effective radius for P(q)*S(q)
 
         :return: the value of the effective radius
         """
-        if self._model_info.ER is None:
-            return 1.0
-        else:
-            value, weight = self._dispersion_mesh()
-            fv = self._model_info.ER(*value)
-            #print(values[0].shape, weights.shape, fv.shape)
-            return np.sum(weight * fv) / np.sum(weight)
+        Fq = self._calculate_Iq([0.1], True, mode)
+        return Fq[2]
 
     def calculate_VR(self):
         # type: () -> float
         """
         Calculate the volf ratio for P(q)*S(q)
 
-        :return: the value of the volf ratio
+        :return: the value of the form:shell volume ratio
         """
-        if self._model_info.VR is None:
-            return 1.0
-        else:
-            value, weight = self._dispersion_mesh()
-            whole, part = self._model_info.VR(*value)
-            return np.sum(weight * part) / np.sum(weight * whole)
+        Fq = self._calculate_Iq([0.1], True, mode)
+        return Fq[4]
 
     def set_dispersion(self, parameter, dispersion):
         # type: (str, weights.Dispersion) -> None
@@ -847,6 +863,7 @@ def test_product():
     S = _make_standard_model('hayter_msa')()
     P = _make_standard_model('cylinder')()
     model = MultiplicationModel(P, S)
+    model.setParam(product.RADIUS_MODE_ID, 1.0)
     value = model.evalDistribution([0.1, 0.1])
     if np.isnan(value):
         raise ValueError("cylinder*hatyer_msa returns null")
@@ -907,7 +924,7 @@ def magnetic_demo():
     model.setParam('sld_M0', 8)
     q = np.linspace(-0.35, 0.35, 500)
     qx, qy = np.meshgrid(q, q)
-    result = model.calculate_Iq(qx.flatten(), qy.flatten())
+    result, _ = model.calculate_Iq(qx.flatten(), qy.flatten())
     result = result.reshape(qx.shape)
 
     import pylab

@@ -29,18 +29,31 @@ f_exp(double q, double r, double sld_in, double sld_out,
 }
 
 static double
-form_volume(double radius_core, double n_shells, double thickness[])
+outer_radius(double radius_core, double n_shells, double thickness[])
 {
   int n = (int)(n_shells+0.5);
   double r = radius_core;
   for (int i=0; i < n; i++) {
     r += thickness[i];
   }
-  return M_4PI_3*cube(r);
+  return r;
 }
 
 static double
-Iq(double q, double sld_core, double radius_core, double sld_solvent,
+form_volume(double radius_core, double n_shells, double thickness[])
+{
+  return M_4PI_3*cube(outer_radius(radius_core, n_shells, thickness));
+}
+
+static double
+effective_radius(int mode, double radius_core, double n_shells, double thickness[])
+{
+  // case 1: outer radius
+  return outer_radius(radius_core, n_shells, thickness);
+}
+
+static void
+Fq(double q, double *F1, double *F2, double sld_core, double radius_core, double sld_solvent,
     double n_shells, double sld_in[], double sld_out[], double thickness[],
     double A[])
 {
@@ -54,7 +67,7 @@ Iq(double q, double sld_core, double radius_core, double sld_solvent,
     f += f_exp(q, r_out, sld_in[i], sld_out[i], thickness[i], A[i], 1.0);
   }
   f -= f_exp(q, r_out, sld_solvent, 0.0, 0.0, 0.0, 0.0);
-  const double f2 = f * f * 1.0e-4;
 
-  return f2;
+  *F1 = 1e-2 * f;
+  *F2 = 1e-4 * f * f;
 }

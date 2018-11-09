@@ -1,14 +1,27 @@
-static double form_volume(
-    double fp_n_shells,
-    double thickness[],
-    double interface[])
+static double
+outer_radius(double fp_n_shells, double thickness[], double interface[])
 {
     int n_shells= (int)(fp_n_shells + 0.5);
     double r = 0.0;
     for (int i=0; i < n_shells; i++) {
         r += thickness[i] + interface[i];
     }
-    return M_4PI_3*cube(r);
+    return r;
+}
+
+static double form_volume(
+    double fp_n_shells,
+    double thickness[],
+    double interface[])
+{
+    return M_4PI_3*cube(outer_radius(fp_n_shells, thickness, interface));
+}
+
+static double
+effective_radius(int mode, double fp_n_shells, double thickness[], double interface[])
+{
+    // case 1: outer radius
+    return outer_radius(fp_n_shells, thickness, interface);
 }
 
 static double blend(int shape, double nu, double z)
@@ -100,3 +113,62 @@ static double Iq(
     return f2;
 }
 
+static void Fq(
+    double q,
+    double *F1,
+    double *F2,
+    double fp_n_shells,
+    double sld_solvent,
+    double sld[],
+    double thickness[],
+    double interface[],
+    double shape[],
+    double nu[],
+    double fp_n_steps)
+{
+    // iteration for # of shells + core + solvent
+    int n_shells = (int)(fp_n_shells + 0.5);
+    int n_steps = (int)(fp_n_steps + 0.5);
+    double f=0.0;
+    double r=0.0;
+    for (int shell=0; shell<n_shells; shell++){
+        const double sld_l = sld[shell];
+
+        // uniform shell; r=0 => r^3=0 => f=0, so works for core as well.
+        f -= M_4PI_3 * cube(r) * sld_l * sas_3j1x_x(q*r);
+        r += thickness[shell];
+        f += M_4PI_3 * cube(r) * sld_l * sas_3j1x_x(q*r);
+
+        // iterate over sub_shells in the interface
+        const double dr = interface[shell]/n_steps;
+        const double delta = (shell==n_shells-1 ? sld_solvent : sld[shell+1]) - sld_l;
+        const double nu_shell = fmax(fabs(nu[shell]), 1.e-14);
+        const int shape_shell = (int)(shape[shell]);
+
+        // if there is no interface the equations don't work
+        if (dr == 0.) continue;
+
+        double sld_in = sld_l;
+        for (int step=1; step <= n_steps; step++) {
+            // find sld_i at the outer boundary of sub-shell step
+            //const double z = (double)step/(double)n_steps;
+            const double z = (double)step/(double)n_steps;
+            const double fraction = blend(shape_shell, nu_shell, z);
+            const double sld_out = fraction*delta + sld_l;
+            // calculate slope
+            const double slope = (sld_out - sld_in)/dr;
+            const double contrast = sld_in - slope*r;
+
+            // iteration for the left and right boundary of the shells
+            f -= f_linear(q, r, contrast, slope);
+            r += dr;
+            f += f_linear(q, r, contrast, slope);
+            sld_in = sld_out;
+        }
+    }
+    // add in solvent effect
+    f -= M_4PI_3 * cube(r) * sld_solvent * sas_3j1x_x(q*r);
+
+    *F1 = 1e-2*f;
+    *F2 = 1e-4*f*f;
+}

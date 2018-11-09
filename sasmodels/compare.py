@@ -38,9 +38,10 @@ import re
 import numpy as np  # type: ignore
 
 from . import core
+from . import weights
 from . import kerneldll
 from . import kernelcl
-from . import weights
+from . import kernelcuda
 from .data import plot_theory, empty_data1D, empty_data2D, load_data
 from .direct_model import DirectModel, get_mesh
 from .generate import FLOAT_RE, set_integration_size
@@ -115,7 +116,7 @@ Options (* for default):
     === environment variables ===
     -DSAS_MODELPATH=~/.sasmodels/custom_models sets path to custom models
     -DSAS_WEIGHTS_PATH=~/.sasview/weights sets path to custom distributions
-    -DSAS_OPENCL=vendor:device|none sets the target OpenCL device
+    -DSAS_OPENCL=vendor:device|cuda:device|none sets the target GPU device
     -DXDG_CACHE_HOME=~/.cache sets the pyopencl cache root (linux only)
     -DSAS_COMPILER=tinycc|msvc|mingw|unix sets the DLL compiler
     -DSAS_OPENMP=0 set to 1 to turn on OpenMP for the DLLs
@@ -352,10 +353,9 @@ def _randomize_one(model_info, name, value):
         return 10**np.random.uniform(-3, -0.5)
 
     # If it is a list of choices, pick one at random with equal probability
-    # In practice, the model specific random generator will override.
     par = model_info.parameters[name]
-    if len(par.limits) > 2:  # choice list
-        return np.random.randint(len(par.limits))
+    if par.choices:  # choice list
+        return np.random.randint(len(par.choices))
 
     # If it is a fixed range, pick from it with equal probability.
     # For logarithmic ranges, the model will have to override.
@@ -725,7 +725,8 @@ def make_engine(model_info, data, dtype, cutoff, ngauss=0):
     if ngauss:
         set_integration_size(model_info, ngauss)
 
-    if dtype != "default" and not dtype.endswith('!') and not kernelcl.use_opencl():
+    if (dtype != "default" and not dtype.endswith('!')
+            and not (kernelcl.use_opencl() or kernelcuda.use_cuda())):
         raise RuntimeError("OpenCL not available " + kernelcl.OPENCL_ERROR)
 
     model = core.build_model(model_info, dtype=dtype, platform="ocl")

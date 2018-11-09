@@ -142,7 +142,6 @@ def make_mixture_info(parts, operation='+'):
     model_info.variant_info = None
     #model_info.tests = []
     #model_info.source = []
-    # Iq, Iqxy, form_volume, ER, VR and sesans
     # Remember the component info blocks so we can build the model
     model_info.composition = ('mixture', parts)
     return model_info

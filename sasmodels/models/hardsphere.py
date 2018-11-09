@@ -61,17 +61,11 @@ structure_factor = True
 single = False # TODO: check
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["radius_effective", "Ang", 50.0, [0, inf], "volume",
+parameters = [["radius_effective", "Ang", 50.0, [0, inf], "",
                "effective radius of hard sphere"],
               ["volfraction", "", 0.2, [0, 0.74], "",
                "volume fraction of hard spheres"],
              ]
-
-# No volume normalization despite having a volume parameter
-# This should perhaps be volume normalized?
-form_volume = """
-    return 1.0;
-    """
 
 Iq = r"""
       double D,A,B,G,X,X2,X4,S,C,FF,HARDSPH;
@@ -166,9 +160,6 @@ def random():
         volfraction=10**np.random.uniform(-2, 0),  # high volume fraction
     )
     return pars
-
-# ER defaults to 0.0
-# VR defaults to 1.0
 
 demo = dict(radius_effective=200, volfraction=0.2,
             radius_effective_pd=0.1, radius_effective_pd_n=40)

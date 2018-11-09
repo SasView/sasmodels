@@ -51,4 +51,3 @@ Iq(double qval,
 
   return(inten);
 }
-
