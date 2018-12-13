@@ -272,6 +272,17 @@ streamlined so this flag was not necessary.
 structure factor to account for interactions between particles.  See
 `Form_Factors`_ for more details.
 
+**model_info = ...** lets you define a model directly, for example, by
+loading and modifying existing models.  This is done implicitly by
+:func:`sasmodels.core.load_model_info`, which can create a mixture model
+from a pair of existing models.  For example::
+
+    from sasmodels.core import load_model_info
+    model_info = load_model_info('sphere+cylinder')
+
+See :class:`sasmodels.modelinfo.ModelInfo` for details about the model
+attributes that are defined.
+
 Model Parameters
 ................
 
