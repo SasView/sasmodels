@@ -833,6 +833,11 @@ def make_model_info(kernel_module):
     info.random = getattr(kernel_module, 'random', None)
     info.hidden = getattr(kernel_module, 'hidden', None) # type: ignore
 
+    # Set control flag for explicitly set parameters, e.g., in the RPA model.
+    control = getattr(kernel_module, 'control', None)
+    if control is not None:
+        parameters[control].is_control = True
+
     if callable(info.Iq) and parameters.has_2d:
         raise ValueError("oriented python models not supported")
 
