@@ -33,7 +33,6 @@ def make_mixture_info(parts, operation='+'):
     """
     # Build new parameter list
     combined_pars = []
-    control = None
 
     all_parts = copy(parts)
     is_flat = False
@@ -116,8 +115,6 @@ def make_mixture_info(parts, operation='+'):
             if p.length_control is not None:
                 p.length_control = prefix + p.length_control
             combined_pars.append(p)
-            if p.is_control and control is None:
-                control = p.id
     parameters = ParameterTable(combined_pars)
     parameters.max_pd = sum(part.parameters.max_pd for part in parts)
 
@@ -131,7 +128,6 @@ def make_mixture_info(parts, operation='+'):
 
     model_info = ModelInfo()
     model_info.id = operation.join(part.id for part in parts)
-    model_info.control = control
     model_info.operation = operation
     model_info.name = '(' + operation.join(part.name for part in parts) + ')'
     model_info.filename = None

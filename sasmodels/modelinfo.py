@@ -290,7 +290,26 @@ class Parameter(object):
     *choices* is the option names for a drop down list of options, as for
     example, might be used to set the value of a shape parameter.
 
-    These values are set by :func:`make_parameter_table` and
+    Control parameters are used for variant models such as :ref:`rpa` which
+    have different cases with different parameters, as well as models
+    like :ref:`spherical_sld` with its user defined number of shells.
+    The control parameter should appear in the parameter table along with the
+    parameters it is is controlling.  For variant models, use *[CASES]* in
+    place of the parameter limits Within the parameter definition table,
+    with case names such as::
+
+         CASES = ["diblock copolymer", "triblock copolymer", ...]
+
+    This should give *limits=[[case1, case2, ...]]*, but the model loader
+    translates it to *limits=[0, len(CASES)-1]*, and adds *choices=CASES* to
+    the :class:`Parameter` definition. Note that models can use a list of
+    cases as a parameter without it being a control parameter.  Either way,
+    the parameter is sent to the model evaluator as *float(choice_num)*,
+    where choices are numbered from 0. :meth:`ModelInfo.get_hidden_parameters`
+    will determine which parameers to display.
+
+    The class contructor should not be called directly, but instead the
+    parameter table is built using :func:`make_parameter_table` and
     :func:`parse_parameter` therein.
     """
     def __init__(self, name, units='', default=None, limits=(-np.inf, np.inf),
@@ -812,11 +831,6 @@ def make_model_info(kernel_module):
     info.opencl = getattr(kernel_module, 'opencl', not callable(info.Iq))
     info.single = getattr(kernel_module, 'single', not callable(info.Iq))
     info.random = getattr(kernel_module, 'random', None)
-
-    # multiplicity info
-    control_pars = [p.id for p in parameters.kernel_parameters if p.is_control]
-    default_control = control_pars[0] if control_pars else None
-    info.control = getattr(kernel_module, 'control', default_control)
     info.hidden = getattr(kernel_module, 'hidden', None) # type: ignore
 
     if callable(info.Iq) and parameters.has_2d:
@@ -871,18 +885,6 @@ class ModelInfo(object):
     #: arises when the model is constructed using names such as
     #: *sphere*hardsphere* or *cylinder+sphere*.
     composition = None      # type: Optional[Tuple[str, List[ModelInfo]]]
-    #: Name of the control parameter for a variant model such as :ref:`rpa`.
-    #: The *control* parameter should appear in the parameter table, with
-    #: limits defined as *[CASES]*, for case names such as
-    #: *CASES = ["diblock copolymer", "triblock copolymer", ...]*.
-    #: This should give *limits=[[case1, case2, ...]]*, but the
-    #: model loader translates this to *limits=[0, len(CASES)-1]*, and adds
-    #: *choices=CASES* to the :class:`Parameter` definition. Note that
-    #: models can use a list of cases as a parameter without it being a
-    #: control parameter.  Either way, the parameter is sent to the model
-    #: evaluator as *float(choice_num)*, where choices are numbered from 0.
-    #: See also :attr:`hidden`.
-    control = None          # type: str
     #: Different variants require different parameters.  In order to show
     #: just the parameters needed for the variant selected by :attr:`control`,
     #: you should provide a function *hidden(control) -> set(['a', 'b', ...])*
