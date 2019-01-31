@@ -51,16 +51,15 @@ import argparse
 import numpy as np
 from numpy import pi, cos, sin, sqrt, exp, degrees, radians
 
-def draw_beam(axes, view=(0, 0), alpha=0.5):
+def draw_beam(axes, view=(0, 0), alpha=0.5, steps=6):
     """
     Draw the beam going from source at (0, 0, 1) to detector at (0, 0, -1)
     """
     #axes.plot([0,0],[0,0],[1,-1])
     #axes.scatter([0]*100,[0]*100,np.linspace(1, -1, 100), alpha=alpha)
 
-    steps = [6, 6]
-    u = np.linspace(0, 2 * np.pi, steps[0])
-    v = np.linspace(-1, 1, steps[1])
+    u = np.linspace(0, 2 * np.pi, steps)
+    v = np.linspace(-1, 1, 2)
 
     r = 0.02
     x = r*np.outer(np.cos(u), np.ones_like(v))
@@ -72,8 +71,19 @@ def draw_beam(axes, view=(0, 0), alpha=0.5):
     points = np.matrix([x.flatten(), y.flatten(), z.flatten()])
     points = Rz(phi)*Ry(theta)*points
     x, y, z = [v.reshape(shape) for v in points]
-
     axes.plot_surface(x, y, z, color='yellow', alpha=alpha)
+
+    # TODO: draw endcaps on beam
+    ## Draw tiny balls on the end will work
+    #draw_sphere(axes, radius=0.02, center=(0, 0, 1.3), color='yellow')
+    #draw_sphere(axes, radius=0.02, center=(0, 0, -1.3), color='yellow')
+    ## The following does not work
+    #triangles = [(0, i+1, i+2) for i in range(steps-2)]
+    #x_cap, y_cap = x[:, 0], y[:, 0]
+    #for z_cap in z[:, 0], z[:, -1]:
+    #    axes.plot_trisurf(x_cap, y_cap, z_cap, triangles, 
+    #                      color='yellow', alpha=alpha)
+
 
 def draw_ellipsoid(axes, size, view, jitter, steps=25, alpha=1):
     """Draw an ellipsoid."""
@@ -154,7 +164,23 @@ def _build_sc():
     atoms.insert(0, highlight)
     return atoms
 
-def draw_parallelepiped(axes, size, view, jitter, steps=None, alpha=1):
+def draw_box(axes, size, view):
+    a, b, c = size
+    x = a*np.array([+1, -1, +1, -1, +1, -1, +1, -1])
+    y = b*np.array([+1, +1, -1, -1, +1, +1, -1, -1])
+    z = c*np.array([+1, +1, +1, +1, -1, -1, -1, -1])
+    x, y, z = transform_xyz(view, None, x, y, z)
+    def draw(i, j):
+        axes.plot([x[i],x[j]], [y[i], y[j]], [z[i], z[j]], color='black')
+    draw(0, 1)
+    draw(0, 2)
+    draw(0, 3)
+    draw(7, 4)
+    draw(7, 5)
+    draw(7, 6)
+
+def draw_parallelepiped(axes, size, view, jitter, steps=None, 
+                        color=(0.6, 1.0, 0.6), alpha=1):
     """Draw a parallelepiped."""
     a, b, c = size
     x = a*np.array([+1, -1, +1, -1, +1, -1, +1, -1])
@@ -172,7 +198,6 @@ def draw_parallelepiped(axes, size, view, jitter, steps=None, alpha=1):
     ])
 
     x, y, z = transform_xyz(view, jitter, x, y, z)
-    color = [0.6, 1, 0.6]  # pale green
     axes.plot_trisurf(x, y, triangles=tri, Z=z, color=color, alpha=alpha)
 
     # Colour the c+ face of the box.
@@ -180,7 +205,7 @@ def draw_parallelepiped(axes, size, view, jitter, steps=None, alpha=1):
     # in front of the "c+" face.  Use the c face so that rotations about psi
     # rotate that face.
     if 0:
-        #color = [1, 0.6, 0.6]  # pink
+        color = (1, 0.6, 0.6)  # pink
         x = a*np.array([+1, -1, +1, -1, +1, -1, +1, -1])
         y = b*np.array([+1, +1, -1, -1, +1, +1, -1, -1])
         z = c*np.array([+1, +1, +1, +1, -1, -1, -1, -1])
@@ -196,16 +221,23 @@ def draw_parallelepiped(axes, size, view, jitter, steps=None, alpha=1):
         ('b-', [+0, -b, +0], [-1, +0, +0]),
     ])
 
-def draw_sphere(axes, radius=0.5, steps=25):
+def draw_sphere(axes, radius=0.5, steps=25, center=(0,0,0), color='w'):
     """Draw a sphere"""
     u = np.linspace(0, 2 * np.pi, steps)
     v = np.linspace(0, np.pi, steps)
 
-    x = radius * np.outer(np.cos(u), np.sin(v))
-    y = radius * np.outer(np.sin(u), np.sin(v))
-    z = radius * np.outer(np.ones(np.size(u)), np.cos(v))
-    axes.plot_surface(x, y, z, color='w')
+    x = radius * np.outer(np.cos(u), np.sin(v)) + center[0]
+    y = radius * np.outer(np.sin(u), np.sin(v)) + center[1]
+    z = radius * np.outer(np.ones(np.size(u)), np.cos(v)) + center[2]
+    axes.plot_surface(x, y, z, color=color)
     #axes.plot_wireframe(x, y, z)
+
+def draw_axes(axes, origin=(-1, -1, -1), length=(2, 2, 2)):
+    x, y, z = origin
+    dx, dy, dz = length
+    axes.plot([x, x+dx], [y, y], [z, z], color='black')
+    axes.plot([x, x], [y, y+dy], [z, z], color='black')
+    axes.plot([x, x], [y, y], [z, z+dz], color='black')
 
 def draw_person_on_sphere(axes, view, height=0.5, radius=0.5):
     limb_offset = height * 0.05
@@ -272,7 +304,7 @@ def draw_jitter(axes, view, jitter, dist='gaussian',
     def steps(delta):
         limit = base*delta
         if views is None:
-            n = max(3, min(25, 2*int(base*delta/15)))
+            n = max(3, min(25, 2*int(base*delta/5)))
         else:
             n = views
         s = base*delta*np.linspace(-1, 1, n) if delta > 0 else [0]
@@ -751,10 +783,14 @@ def draw_scattering(calculator, axes, view, jitter, dist='gaussian'):
     #print("range",(vmin,vmax))
     #qx, qy = np.meshgrid(qx, qy)
     if 0:
+        from matplotlib import cm
         level = np.asarray(255*(Iqxy - vmin)/(vmax - vmin), 'i')
         level[level < 0] = 0
         colors = plt.get_cmap()(level)
-        axes.plot_surface(qx, qy, -1.1, facecolors=colors)
+        #colors = cm.coolwarm(level)
+        #colors = cm.gist_yarg(level)
+        x, y = np.meshgrid(qx/qx.max(), qy/qy.max())
+        axes.plot_surface(x, y, -1.1*np.ones_like(x), facecolors=colors)
     elif 1:
         axes.contourf(qx/qx.max(), qy/qy.max(), Iqxy, zdir='z', offset=-1.1,
                       levels=np.linspace(vmin, vmax, 24))
@@ -1080,9 +1116,7 @@ def ipv_fix_color(kw):
         color = _IPV_COLORS.get(color, color)
         kw['color'] = color
 
-
-def ipv_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection):
-    import ipywidgets as widgets
+def ipv_axes():
     import ipyvolume as ipv
 
     class Plotter:
@@ -1091,6 +1125,9 @@ def ipv_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection)
             x, y, z = make_vec(x, y, z)
             ipv.plot(x, y, z, **kw)
         def plot_surface(self, x, y, z, **kw):
+            facecolors = kw.pop('facecolors', None)
+            if facecolors is not None:
+                kw['color'] = facecolors 
             ipv_fix_color(kw)
             x, y, z = make_vec(x, y, z)
             ipv.plot_surface(x, y, z, **kw)
@@ -1132,8 +1169,13 @@ def ipv_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection)
             ipv.style.axis_on()
         def set_axis_off(self):
             ipv.style.axes_off()
-    axes = Plotter()
+    return Plotter()
 
+def ipv_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection):
+    import ipywidgets as widgets
+    import ipyvolume as ipv
+
+    axes = ipv_axes()
 
     def draw(view, jitter):
         camera = ipv.gcf().camera
@@ -1159,11 +1201,12 @@ def ipv_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection)
         draw_beam(axes, (0, 0))
         draw_jitter(axes, view, jitter, dist=dist, size=size, 
                     draw_shape=draw_shape, projection=projection)
-        #draw_mesh(axes, view, jitter, dist=dist, n=mesh, projection=projection)
-        #draw_scattering(calculator, axes, view, jitter, dist=dist)
+        draw_mesh(axes, view, jitter, dist=dist, n=mesh, radius=0.95, projection=projection)
+        draw_scattering(calculator, axes, view, jitter, dist=dist)
     
+        draw_axes(axes, origin=(-1, -1, -1.1))
         ipv.style.box_off()
-        #ipv.style.axes_off()
+        ipv.style.axes_off()
         ipv.xyzlabel(" ", " ", " ")
 
         ipv.gcf().camera = camera
