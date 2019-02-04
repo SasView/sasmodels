@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Jitter Explorer
 ===============
@@ -81,7 +82,7 @@ def draw_beam(axes, view=(0, 0), alpha=0.5, steps=6):
     #triangles = [(0, i+1, i+2) for i in range(steps-2)]
     #x_cap, y_cap = x[:, 0], y[:, 0]
     #for z_cap in z[:, 0], z[:, -1]:
-    #    axes.plot_trisurf(x_cap, y_cap, z_cap, triangles, 
+    #    axes.plot_trisurf(x_cap, y_cap, z_cap, triangles,
     #                      color='yellow', alpha=alpha)
 
 
@@ -179,7 +180,7 @@ def draw_box(axes, size, view):
     draw(7, 5)
     draw(7, 6)
 
-def draw_parallelepiped(axes, size, view, jitter, steps=None, 
+def draw_parallelepiped(axes, size, view, jitter, steps=None,
                         color=(0.6, 1.0, 0.6), alpha=1):
     """Draw a parallelepiped."""
     a, b, c = size
@@ -284,9 +285,9 @@ def draw_person_on_sphere(axes, view, height=0.5, radius=0.5):
     axes.set_zlim(limits)
     axes.set_axis_off()
 
-def draw_jitter(axes, view, jitter, dist='gaussian', 
+def draw_jitter(axes, view, jitter, dist='gaussian',
                 size=(0.1, 0.4, 1.0),
-                draw_shape=draw_parallelepiped, 
+                draw_shape=draw_parallelepiped,
                 projection='equirectangular',
                 alpha=0.8,
                 views=None):
@@ -419,7 +420,7 @@ def get_projection(projection):
             #return Rx(longitude[0])*Ry(latitude[0])
         def _weight(theta_i, phi_j, w_i, w_j):
             return w_i*w_j
-    elif projection == 'azimuthal_equidistance': 
+    elif projection == 'azimuthal_equidistance':
         # Note that calculates angles for Rz Ry rather than Rx Ry
         def _project(theta_i, phi_j, psi):
             latitude = sqrt(theta_i**2 + phi_j**2)
@@ -488,7 +489,7 @@ def R_to_xyz(R):
     Extracting Euler Angles from a Rotation Matrix
     Mike Day, Insomniac Games
     https://d3cw3dd2w32x2b.cloudfront.net/wp-content/uploads/2012/07/euler-angles1.pdf
-    Based on: Shoemake’s “Euler Angle Conversion”, Graphics Gems IV, pp.  222-229
+    Based on: Shoemake’s "Euler Angle Conversion", Graphics Gems IV, pp.  222-229
     """
     phi = np.arctan2(R[1, 2], R[2, 2])
     theta = np.arctan2(-R[0, 2], np.sqrt(R[0, 0]**2 + R[0, 1]**2))
@@ -635,8 +636,8 @@ def orient_relative_to_beam_quaternion(view, points):
     Points are stored in a 3 x n numpy matrix, not a numpy array or tuple.
 
     This variant uses quaternions rather than rotation matrices for the
-    computation.  It works but it is not used because it doesn't solve 
-    any problems.  The challenge of mapping theta/phi/psi to SO(3) does 
+    computation.  It works but it is not used because it doesn't solve
+    any problems.  The challenge of mapping theta/phi/psi to SO(3) does
     not disappear by calculating the transform differently.
     """
     theta, phi, psi = view
@@ -659,7 +660,7 @@ def orient_relative_to_beam_quaternion(view, points):
     #print("axes psi", q.rot(np.matrix([x, y, z]).T))
     return q.rot(points)
 #orient_relative_to_beam = orient_relative_to_beam_quaternion
- 
+
 # Simple stand-alone quaternion class
 import numpy as np
 from copy import copy
@@ -704,7 +705,7 @@ def test_qrot():
     p = [1, -1, 2]
     target = [(10+4*np.sqrt(3))/8, (1+2*np.sqrt(3))/8, (14-3*np.sqrt(3))/8]
     #print(q, q.rot(p) - target)
-    assert max(abs(q.rot(p) - target)) < 1e-14 
+    assert max(abs(q.rot(p) - target)) < 1e-14
 #test_qrot()
 #import sys; sys.exit()
 
@@ -921,7 +922,7 @@ DIST_LIMITS = {
 }
 
 
-def run(model_name='parallelepiped', size=(10, 40, 100), 
+def run(model_name='parallelepiped', size=(10, 40, 100),
         view=(0, 0, 0), jitter=(0, 0, 0),
         dist='gaussian', mesh=30,
         projection='equirectangular'):
@@ -953,7 +954,7 @@ def run(model_name='parallelepiped', size=(10, 40, 100),
         generate.PROJECTION = 2
 
     # set up calculator
-    calculator, size = select_calculator(model_name, n=150, size=size)
+    calculator, size = select_calculator(model_name, n=100, size=size)
     draw_shape = DRAW_SHAPES.get(model_name, draw_parallelepiped)
     #draw_shape = draw_fcc
 
@@ -988,9 +989,9 @@ def mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection)
     axes_theta = plt.axes([0.1, 0.15, 0.45, 0.04], facecolor=axcolor)
     axes_phi = plt.axes([0.1, 0.1, 0.45, 0.04], facecolor=axcolor)
     axes_psi = plt.axes([0.1, 0.05, 0.45, 0.04], facecolor=axcolor)
-    stheta = Slider(axes_theta, 'Theta', -90, 90, valinit=0)
-    sphi = Slider(axes_phi, 'Phi', -180, 180, valinit=0)
-    spsi = Slider(axes_psi, 'Psi', -180, 180, valinit=0)
+    stheta = Slider(axes_theta, u'θ', -90, 90, valinit=0)
+    sphi = Slider(axes_phi, u'φ', -180, 180, valinit=0)
+    spsi = Slider(axes_psi, u'ψ', -180, 180, valinit=0)
 
     axes_dtheta = plt.axes([0.75, 0.15, 0.15, 0.04], facecolor=axcolor)
     axes_dphi = plt.axes([0.75, 0.1, 0.15, 0.04], facecolor=axcolor)
@@ -999,9 +1000,9 @@ def mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection)
     # in sasmodels is sqrt(3) times the given width.  Divide by sqrt(3) to keep
     # the maximum width to 90.
     dlimit = DIST_LIMITS[dist]
-    sdtheta = Slider(axes_dtheta, 'dTheta', 0, 2*dlimit, valinit=0)
-    sdphi = Slider(axes_dphi, 'dPhi', 0, 2*dlimit, valinit=0)
-    sdpsi = Slider(axes_dpsi, 'dPsi', 0, 2*dlimit, valinit=0)
+    sdtheta = Slider(axes_dtheta, u'Δθ', 0, 2*dlimit, valinit=0)
+    sdphi = Slider(axes_dphi, u'Δφ', 0, 2*dlimit, valinit=0)
+    sdpsi = Slider(axes_dpsi, u'Δψ', 0, 2*dlimit, valinit=0)
 
     ## initial view and jitter
     theta, phi, psi = view
@@ -1033,7 +1034,7 @@ def mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection)
 
         ## Move shape and draw scattering
         draw_beam(axes, (0, 0))
-        draw_jitter(axes, view, jitter, dist=dist, size=size, 
+        draw_jitter(axes, view, jitter, dist=dist, size=size,
                     draw_shape=draw_shape, projection=projection, views=3)
         draw_mesh(axes, view, jitter, dist=dist, n=mesh, projection=projection)
         draw_scattering(calculator, axes, view, jitter, dist=dist)
@@ -1076,11 +1077,9 @@ def map_colors(z, kw):
         color[..., 3] = alpha
     kw['color'] = color
 
-def make_vec(*args, flat=False):
-    if flat:
-        return [np.asarray(v, 'd').flatten() for v in args]
-    else:
-        return [np.asarray(v, 'd') for v in args]
+def make_vec(*args):
+    #return [np.asarray(v, 'd').flatten() for v in args]
+    return [np.asarray(v, 'd') for v in args]
 
 def make_image(z, kw):
     import PIL.Image
@@ -1127,7 +1126,7 @@ def ipv_axes():
         def plot_surface(self, x, y, z, **kw):
             facecolors = kw.pop('facecolors', None)
             if facecolors is not None:
-                kw['color'] = facecolors 
+                kw['color'] = facecolors
             ipv_fix_color(kw)
             x, y, z = make_vec(x, y, z)
             ipv.plot_surface(x, y, z, **kw)
@@ -1156,7 +1155,7 @@ def ipv_axes():
             z = x*0 + offset
             u = np.array([[0., 1], [0, 1]])
             v = np.array([[0., 0], [1, 1]])
-            ipv.plot_mesh(x, y, z, u=u, v=v, texture=image, wireframe=False)    
+            ipv.plot_mesh(x, y, z, u=u, v=v, texture=image, wireframe=False)
         def text(self, *args, **kw):
             pass
         def set_xlim(self, limits):
@@ -1199,11 +1198,11 @@ def ipv_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection)
 
         ## Move shape and draw scattering
         draw_beam(axes, (0, 0))
-        draw_jitter(axes, view, jitter, dist=dist, size=size, 
+        draw_jitter(axes, view, jitter, dist=dist, size=size,
                     draw_shape=draw_shape, projection=projection)
         draw_mesh(axes, view, jitter, dist=dist, n=mesh, radius=0.95, projection=projection)
         draw_scattering(calculator, axes, view, jitter, dist=dist)
-    
+
         draw_axes(axes, origin=(-1, -1, -1.1))
         ipv.style.box_off()
         ipv.style.axes_off()
@@ -1240,12 +1239,12 @@ def ipv_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection)
             readout=True,
             readout_format='.1f',
             )
-    theta = slider('θ', trange, view[0])
-    phi = slider('φ', prange, view[1])
-    psi = slider('ψ', prange, view[2])
-    dtheta = slider('Δθ', dtrange, jitter[0])
-    dphi = slider('Δφ', dprange, jitter[1])
-    dpsi = slider('Δψ', dprange, jitter[2])
+    theta = slider(u'θ', trange, view[0])
+    phi = slider(u'φ', prange, view[1])
+    psi = slider(u'ψ', prange, view[2])
+    dtheta = slider(u'Δθ', dtrange, jitter[0])
+    dphi = slider(u'Δφ', dprange, jitter[1])
+    dpsi = slider(u'Δψ', dprange, jitter[2])
     fields = {
         'theta': theta, 'phi': phi, 'psi': psi,
         'dtheta': dtheta, 'dphi': dphi, 'dpsi': dpsi,
