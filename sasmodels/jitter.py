@@ -1109,16 +1109,41 @@ _IPV_COLORS = {
     'b': 'blue',
 }
 def ipv_fix_color(kw):
-    kw.pop('alpha', None)
+    alpha = kw.pop('alpha', None)
     color = kw.get('color', None)
     if isinstance(color, str):
         color = _IPV_COLORS.get(color, color)
         kw['color'] = color
+    if alpha is not None:
+        color = kw['color']
+        #TODO: convert color to [r, g, b, a] if not already
+        if isinstance(color, np.ndarray) and color.shape[-1] == 4:
+            color[..., 3] = alpha
+            kw['color'] = color
+
+def ipv_set_transparency(kw, obj):
+    color = kw.get('color', None)
+    if (isinstance(color, np.ndarray)
+            and color.shape[-1] == 4
+            and (color[..., 3] != 1.0).any()):
+        obj.material.transparent = True
+        obj.material.side = "FrontSide"
 
 def ipv_axes():
     import ipyvolume as ipv
 
     class Plotter:
+        # transparency can be achieved by setting the following:
+        #    mesh.color = [r, g, b, alpha]
+        #    mesh.material.transparent = True
+        #    mesh.material.side = "FrontSide"
+        # smooth(ish) rotation can be achieved by setting:
+        #    slide.continuous_update = True
+        #    figure.animation = 0.
+        #    mesh.material.x = x
+        #    mesh.material.y = y
+        #    mesh.material.z = z
+        # maybe need to synchronize update of x/y/z to avoid shimmy when moving
         def plot(self, x, y, z, **kw):
             ipv_fix_color(kw)
             x, y, z = make_vec(x, y, z)
@@ -1129,19 +1154,25 @@ def ipv_axes():
                 kw['color'] = facecolors
             ipv_fix_color(kw)
             x, y, z = make_vec(x, y, z)
-            ipv.plot_surface(x, y, z, **kw)
+            h = ipv.plot_surface(x, y, z, **kw)
+            ipv_set_transparency(kw, h)
+            return h
         def plot_trisurf(self, x, y, triangles=None, Z=None, **kw):
             ipv_fix_color(kw)
             x, y, z = make_vec(x, y, Z)
             if triangles is not None:
                 triangles = np.asarray(triangles)
-            ipv.plot_trisurf(x, y, z, triangles=triangles, **kw)
+            h = ipv.plot_trisurf(x, y, z, triangles=triangles, **kw)
+            ipv_set_transparency(kw, h)
+            return h
         def scatter(self, x, y, z, **kw):
             x, y, z = make_vec(x, y, z)
             map_colors(z, kw)
             marker = kw.get('marker', None)
             kw['marker'] = _IPV_MARKERS.get(marker, marker)
-            ipv.scatter(x, y, z, **kw)
+            h = ipv.scatter(x, y, z, **kw)
+            ipv_set_transparency(kw, h)
+            return h
         def contourf(self, x, y, v, zdir='z', offset=0, levels=None, **kw):
             # Don't use contour for now (although we might want to later)
             self.pcolor(x, y, v, zdir='z', offset=offset, **kw)
@@ -1155,7 +1186,9 @@ def ipv_axes():
             z = x*0 + offset
             u = np.array([[0., 1], [0, 1]])
             v = np.array([[0., 0], [1, 1]])
-            ipv.plot_mesh(x, y, z, u=u, v=v, texture=image, wireframe=False)
+            h = ipv.plot_mesh(x, y, z, u=u, v=v, texture=image, wireframe=False)
+            ipv_set_transparency(kw, h)
+            return h
         def text(self, *args, **kw):
             pass
         def set_xlim(self, limits):
@@ -1180,7 +1213,7 @@ def ipv_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection)
         camera = ipv.gcf().camera
         #print(ipv.gcf().__dict__.keys())
         #print(dir(ipv.gcf()))
-        ipv.figure()
+        ipv.figure(animation=0.)  # no animation when updating object mesh
 
         # set small jitter as 0 if multiple pd dims
         dims = sum(v > 0 for v in jitter)
@@ -1234,6 +1267,7 @@ def ipv_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection)
             step=slice[2],
             description=name,
             disabled=False,
+            #continuous_update=True,
             continuous_update=False,
             orientation='horizontal',
             readout=True,
