@@ -861,7 +861,7 @@ file in the order given, otherwise these functions will not be available.
              - \frac{\cos(x)}{x}\left(1 - \frac{2!}{x^2} + \frac{4!}{x^4} - \frac{6!}{x^6} \right)
              - \frac{\sin(x)}{x}\left(\frac{1}{x} - \frac{3!}{x^3} + \frac{5!}{x^5} - \frac{7!}{x^7}\right)
 
-        For small arguments ,
+        For small arguments,
 
         .. math::
 
