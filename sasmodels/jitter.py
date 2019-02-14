@@ -52,7 +52,7 @@ import argparse
 import numpy as np
 from numpy import pi, cos, sin, sqrt, exp, degrees, radians
 
-def draw_beam(axes, view=(0, 0), alpha=0.5, steps=6):
+def draw_beam(axes, view=(0, 0), alpha=0.5, steps=25):
     """
     Draw the beam going from source at (0, 0, 1) to detector at (0, 0, -1)
     """
@@ -75,9 +75,9 @@ def draw_beam(axes, view=(0, 0), alpha=0.5, steps=6):
     axes.plot_surface(x, y, z, color='yellow', alpha=alpha)
 
     # TODO: draw endcaps on beam
-    ## Draw tiny balls on the end will work
-    draw_sphere(axes, radius=0.02, center=(0, 0, 1.3), color='yellow')
-    draw_sphere(axes, radius=0.02, center=(0, 0, -1.3), color='yellow')
+    ## Drawing tiny balls on the end will work
+    #draw_sphere(axes, radius=0.02, center=(0, 0, 1.3), color='yellow', alpha=alpha)
+    #draw_sphere(axes, radius=0.02, center=(0, 0, -1.3), color='yellow', alpha=alpha)
     ## The following does not work
     #triangles = [(0, i+1, i+2) for i in range(steps-2)]
     #x_cap, y_cap = x[:, 0], y[:, 0]
@@ -199,7 +199,8 @@ def draw_parallelepiped(axes, size, view, jitter, steps=None,
     ])
 
     x, y, z = transform_xyz(view, jitter, x, y, z)
-    axes.plot_trisurf(x, y, triangles=tri, Z=z, color=color, alpha=alpha)
+    axes.plot_trisurf(x, y, triangles=tri, Z=z, color=color, alpha=alpha,
+                      linewidth=0)
 
     # Colour the c+ face of the box.
     # Since I can't control face color, instead draw a thin box situated just
@@ -222,7 +223,7 @@ def draw_parallelepiped(axes, size, view, jitter, steps=None,
         ('b-', [+0, -b, +0], [-1, +0, +0]),
     ])
 
-def draw_sphere(axes, radius=0.5, steps=25, center=(0,0,0), color='w'):
+def draw_sphere(axes, radius=0.5, steps=25, center=(0,0,0), color='w', alpha=1.):
     """Draw a sphere"""
     u = np.linspace(0, 2 * np.pi, steps)
     v = np.linspace(0, np.pi, steps)
@@ -230,7 +231,7 @@ def draw_sphere(axes, radius=0.5, steps=25, center=(0,0,0), color='w'):
     x = radius * np.outer(np.cos(u), np.sin(v)) + center[0]
     y = radius * np.outer(np.sin(u), np.sin(v)) + center[1]
     z = radius * np.outer(np.ones(np.size(u)), np.cos(v)) + center[2]
-    axes.plot_surface(x, y, z, color=color)
+    axes.plot_surface(x, y, z, color=color, alpha=alpha)
     #axes.plot_wireframe(x, y, z)
 
 def draw_axes(axes, origin=(-1, -1, -1), length=(2, 2, 2)):
@@ -980,19 +981,20 @@ def mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection)
     except Exception:
         pass
 
-    axcolor = 'lightgoldenrodyellow'
+    #axcolor = {'facecolor': 'lightgoldenrodyellow'}
+    axcolor = {}
 
     ## add control widgets to plot
-    axes_theta = plt.axes([0.1, 0.15, 0.45, 0.04], facecolor=axcolor)
-    axes_phi = plt.axes([0.1, 0.1, 0.45, 0.04], facecolor=axcolor)
-    axes_psi = plt.axes([0.1, 0.05, 0.45, 0.04], facecolor=axcolor)
+    axes_theta = plt.axes([0.1, 0.15, 0.45, 0.04], **axcolor)
+    axes_phi = plt.axes([0.1, 0.1, 0.45, 0.04], **axcolor)
+    axes_psi = plt.axes([0.1, 0.05, 0.45, 0.04], **axcolor)
     stheta = Slider(axes_theta, u'θ', -90, 90, valinit=0)
     sphi = Slider(axes_phi, u'φ', -180, 180, valinit=0)
     spsi = Slider(axes_psi, u'ψ', -180, 180, valinit=0)
 
-    axes_dtheta = plt.axes([0.75, 0.15, 0.15, 0.04], facecolor=axcolor)
-    axes_dphi = plt.axes([0.75, 0.1, 0.15, 0.04], facecolor=axcolor)
-    axes_dpsi = plt.axes([0.75, 0.05, 0.15, 0.04], facecolor=axcolor)
+    axes_dtheta = plt.axes([0.75, 0.15, 0.15, 0.04], **axcolor)
+    axes_dphi = plt.axes([0.75, 0.1, 0.15, 0.04], **axcolor)
+    axes_dpsi = plt.axes([0.75, 0.05, 0.15, 0.04], **axcolor)
     # Note: using ridiculous definition of rectangle distribution, whose width
     # in sasmodels is sqrt(3) times the given width.  Divide by sqrt(3) to keep
     # the maximum width to 90.
@@ -1030,8 +1032,8 @@ def mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection)
         #draw_jitter(axes, (0,0,0), (0,0,0), views=3)
 
         ## Move shape and draw scattering
-        draw_beam(axes, (0, 0))
-        draw_jitter(axes, view, jitter, dist=dist, size=size,
+        draw_beam(axes, (0, 0), alpha=1.)
+        draw_jitter(axes, view, jitter, dist=dist, size=size, alpha=1.,
                     draw_shape=draw_shape, projection=projection, views=3)
         draw_mesh(axes, view, jitter, dist=dist, n=mesh, projection=projection)
         draw_scattering(calculator, axes, view, jitter, dist=dist)
@@ -1162,6 +1164,7 @@ def ipv_axes():
             #h.material.side = "DoubleSide"
             return h
         def plot_trisurf(self, x, y, triangles=None, Z=None, **kw):
+            kw.pop('linewidth', None)
             ipv_fix_color(kw)
             x, y, z = make_vec(x, y, Z)
             if triangles is not None:
