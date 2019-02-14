@@ -76,8 +76,8 @@ def draw_beam(axes, view=(0, 0), alpha=0.5, steps=6):
 
     # TODO: draw endcaps on beam
     ## Draw tiny balls on the end will work
-    #draw_sphere(axes, radius=0.02, center=(0, 0, 1.3), color='yellow')
-    #draw_sphere(axes, radius=0.02, center=(0, 0, -1.3), color='yellow')
+    draw_sphere(axes, radius=0.02, center=(0, 0, 1.3), color='yellow')
+    draw_sphere(axes, radius=0.02, center=(0, 0, -1.3), color='yellow')
     ## The following does not work
     #triangles = [(0, i+1, i+2) for i in range(steps-2)]
     #x_cap, y_cap = x[:, 0], y[:, 0]
@@ -294,7 +294,7 @@ def draw_jitter(axes, view, jitter, dist='gaussian',
     """
     Represent jitter as a set of shapes at different orientations.
     """
-    project, weight = get_projection(projection)
+    project, project_weight = get_projection(projection)
 
     # set max diagonal to 0.95
     scale = 0.95/sqrt(sum(v**2 for v in size))
@@ -303,21 +303,15 @@ def draw_jitter(axes, view, jitter, dist='gaussian',
     dtheta, dphi, dpsi = jitter
     base = {'gaussian':3, 'rectangle':sqrt(3), 'uniform':1}[dist]
     def steps(delta):
-        limit = base*delta
         if views is None:
             n = max(3, min(25, 2*int(base*delta/5)))
         else:
             n = views
-        s = base*delta*np.linspace(-1, 1, n) if delta > 0 else [0]
-        return s
-    stheta = steps(dtheta)
-    sphi = steps(dphi)
-    spsi = steps(dpsi)
-    #print(stheta, sphi, spsi)
-    for theta in stheta:
-        for phi in sphi:
-            for psi in spsi:
-                w = weight(theta, phi, 1.0, 1.0)
+        return base*delta*np.linspace(-1, 1, n) if delta > 0 else [0.]
+    for theta in steps(dtheta):
+        for phi in steps(dphi):
+            for psi in steps(dpsi):
+                w = project_weight(theta, phi, 1.0, 1.0)
                 if w > 0:
                     dview = project(theta, phi, psi)
                     draw_shape(axes, size, view, dview, alpha=alpha)
@@ -781,6 +775,7 @@ def draw_scattering(calculator, axes, view, jitter, dist='gaussian'):
         vmax = Iqxy.max()
         vmin = vmax*10**-7
         #vmin, vmax = clipped_range(Iqxy, portion=portion, mode='top')
+    #vmin, vmax = Iqxy.min(), Iqxy.max()
     #print("range",(vmin,vmax))
     #qx, qy = np.meshgrid(qx, qy)
     if 0:
@@ -790,6 +785,8 @@ def draw_scattering(calculator, axes, view, jitter, dist='gaussian'):
         colors = plt.get_cmap()(level)
         #colors = cm.coolwarm(level)
         #colors = cm.gist_yarg(level)
+        #colors = cm.Wistia(level)
+        colors[level<=0, 3] = 0.  # set floor to transparent
         x, y = np.meshgrid(qx/qx.max(), qy/qy.max())
         axes.plot_surface(x, y, -1.1*np.ones_like(x), facecolors=colors)
     elif 1:
@@ -954,7 +951,7 @@ def run(model_name='parallelepiped', size=(10, 40, 100),
         generate.PROJECTION = 2
 
     # set up calculator
-    calculator, size = select_calculator(model_name, n=100, size=size)
+    calculator, size = select_calculator(model_name, n=150, size=size)
     draw_shape = DRAW_SHAPES.get(model_name, draw_parallelepiped)
     #draw_shape = draw_fcc
 
@@ -1117,6 +1114,12 @@ def ipv_fix_color(kw):
     if alpha is not None:
         color = kw['color']
         #TODO: convert color to [r, g, b, a] if not already
+        if isinstance(color, (tuple, list)):
+            if len(color) == 3:
+                color = (color[0], color[1], color[2], alpha)
+            else:
+                color = (color[0], color[1], color[2], alpha*color[3])
+            color = np.array(color)
         if isinstance(color, np.ndarray) and color.shape[-1] == 4:
             color[..., 3] = alpha
             kw['color'] = color
@@ -1156,6 +1159,7 @@ def ipv_axes():
             x, y, z = make_vec(x, y, z)
             h = ipv.plot_surface(x, y, z, **kw)
             ipv_set_transparency(kw, h)
+            #h.material.side = "DoubleSide"
             return h
         def plot_trisurf(self, x, y, triangles=None, Z=None, **kw):
             ipv_fix_color(kw)
@@ -1188,6 +1192,7 @@ def ipv_axes():
             v = np.array([[0., 0], [1, 1]])
             h = ipv.plot_mesh(x, y, z, u=u, v=v, texture=image, wireframe=False)
             ipv_set_transparency(kw, h)
+            h.material.side = "DoubleSide"
             return h
         def text(self, *args, **kw):
             pass
@@ -1230,10 +1235,11 @@ def ipv_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection)
         #draw_jitter(axes, view=(0,0,0), jitter=(0,0,0))
 
         ## Move shape and draw scattering
-        draw_beam(axes, (0, 0))
-        draw_jitter(axes, view, jitter, dist=dist, size=size,
+        draw_beam(axes, (0, 0), steps=25)
+        draw_jitter(axes, view, jitter, dist=dist, size=size, alpha=1.0,
                     draw_shape=draw_shape, projection=projection)
-        draw_mesh(axes, view, jitter, dist=dist, n=mesh, radius=0.95, projection=projection)
+        draw_mesh(axes, view, jitter, dist=dist, n=mesh, radius=0.95,
+                  projection=projection)
         draw_scattering(calculator, axes, view, jitter, dist=dist)
 
         draw_axes(axes, origin=(-1, -1, -1.1))
