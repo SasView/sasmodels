@@ -702,8 +702,7 @@ def contains_Fq(source):
     Return True if C source defines "void Fq(".
     """
     for code in source:
-        m = _FQ_PATTERN.search(code)
-        if m is not None:
+        if _FQ_PATTERN.search(code) is not None:
             return True
     return False
 
@@ -711,11 +710,10 @@ _SHELL_VOLUME_PATTERN = re.compile(r"(^|\s)double\s+shell_volume[(]", flags=re.M
 def contains_shell_volume(source):
     # type: (List[str]) -> bool
     """
-    Return True if C source defines "void Fq(".
+    Return True if C source defines "double shell_volume(".
     """
     for code in source:
-        m = _SHELL_VOLUME_PATTERN.search(code)
-        if m is not None:
+        if _SHELL_VOLUME_PATTERN.search(code) is not None:
             return True
     return False
 
