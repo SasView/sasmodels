@@ -14,15 +14,15 @@ Install
 
 The easiest way to use sasmodels is from `SasView <http://www.sasview.org/>`_.
 
-You can also install sasmodels as a standalone package in python. Using
+You can also install sasmodels as a standalone package in python. Use
 `miniconda <https://docs.conda.io/en/latest/miniconda.html>`_
-(or `anaconda <https://www.anaconda.com/>`_),
-create a python environment with the sasmodels dependencies::
+or `anaconda <https://www.anaconda.com/>`_
+to create a python environment with the sasmodels dependencies::
 
     $ conda create -n sasmodels -c conda-forge numpy scipy matplotlib pyopencl
 
-The option `-n sasmodels` names the environment sasmodels, and the option
-`-c conda-forge` selects the conda-forge package channel because pyopencl
+The option ``-n sasmodels`` names the environment sasmodels, and the option
+``-c conda-forge`` selects the conda-forge package channel because pyopencl
 is not part of the base anaconda distribution.
 
 Activate the environment and install sasmodels::
