@@ -12,11 +12,11 @@ is available.
 Install
 -------
 
-The easiest way to use sasmodels is from `SasView <http://www.sasview.org/>`.
+The easiest way to use sasmodels is from `SasView <http://www.sasview.org/>`_.
 
 You can also install sasmodels as a standalone package in python. Using
-`miniconda <https://docs.conda.io/en/latest/miniconda.html>`
-(or `anaconda <https://www.anaconda.com/>`),
+`miniconda <https://docs.conda.io/en/latest/miniconda.html>`_
+(or `anaconda <https://www.anaconda.com/>`_),
 create a python environment with the sasmodels dependencies::
 
     $ conda create -n sasmodels -c conda-forge numpy scipy matplotlib pyopencl
@@ -30,7 +30,7 @@ Activate the environment and install sasmodels::
     $ conda activate sasmodels
     (sasmodels) $ pip install sasmodels
 
-Install `bumps <https://github.com/bumps/bumps>` if you want to use it to fit
+Install `bumps <https://github.com/bumps/bumps>`_ if you want to use it to fit
 your data::
 
     (sasmodels) $ pip install bumps
