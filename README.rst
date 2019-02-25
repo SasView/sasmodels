@@ -91,7 +91,7 @@ core_shell_cylinder, ellipsoid, triaxial_ellipsoid and lamellar.  The
 second argument is view, which can be radial or tangential.  To fit
 both radial and tangential simultaneously, use the word "both".
 
-See `bumps documentation <https://bumps.readthedocs.io/>` for detailed
+See `bumps documentation <https://bumps.readthedocs.io/>`_ for detailed
 instructions on running the fit.
 
 |TravisStatus|_
