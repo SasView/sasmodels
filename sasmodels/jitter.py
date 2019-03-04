@@ -963,10 +963,13 @@ def run(model_name='parallelepiped', size=(10, 40, 100),
     PLOT_ENGINE(calculator, draw_shape, size, view, jitter, dist, mesh, projection)
 
 def mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection):
+    # Note: travis-ci does not support mpl_toolkits.mplot3d, but this shouldn't be
+    # an issue since we are lazy-loading the package on a path that isn't tested.
     import mpl_toolkits.mplot3d  # Adds projection='3d' option to subplot
+    import matplotlib as mpl
     import matplotlib.pyplot as plt
     from matplotlib.widgets import Slider
-
+    
     ## create the plot window
     #plt.hold(True)
     plt.subplots(num=None, figsize=(5.5, 5.5))
@@ -981,20 +984,23 @@ def mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection)
     except Exception:
         pass
 
-    #axcolor = {'facecolor': 'lightgoldenrodyellow'}
-    axcolor = {}
+
+    # CRUFT: use axisbg instead of facecolor for matplotlib<2
+    facecolor_prop = 'facecolor' if mpl.__version__ > '2' else 'axisbg'
+    props = {facecolor_prop: 'lightgoldenrodyellow'}
 
     ## add control widgets to plot
-    axes_theta = plt.axes([0.1, 0.15, 0.45, 0.04], **axcolor)
-    axes_phi = plt.axes([0.1, 0.1, 0.45, 0.04], **axcolor)
-    axes_psi = plt.axes([0.1, 0.05, 0.45, 0.04], **axcolor)
-    stheta = Slider(axes_theta, u'θ', -90, 90, valinit=0)
-    sphi = Slider(axes_phi, u'φ', -180, 180, valinit=0)
-    spsi = Slider(axes_psi, u'ψ', -180, 180, valinit=0)
+    axes_theta = plt.axes([0.1, 0.15, 0.45, 0.04], **props)
+    axes_phi = plt.axes([0.1, 0.1, 0.45, 0.04], **props)
+    axes_psi = plt.axes([0.1, 0.05, 0.45, 0.04], **props)
+    stheta = Slider(axes_theta, 'Theta', -90, 90, valinit=theta)
+    sphi = Slider(axes_phi, 'Phi', -180, 180, valinit=phi)
+    spsi = Slider(axes_psi, 'Psi', -180, 180, valinit=psi)
 
-    axes_dtheta = plt.axes([0.75, 0.15, 0.15, 0.04], **axcolor)
-    axes_dphi = plt.axes([0.75, 0.1, 0.15, 0.04], **axcolor)
-    axes_dpsi = plt.axes([0.75, 0.05, 0.15, 0.04], **axcolor)
+    axes_dtheta = plt.axes([0.75, 0.15, 0.15, 0.04], **props)
+    axes_dphi = plt.axes([0.75, 0.1, 0.15, 0.04], **props)
+    axes_dpsi = plt.axes([0.75, 0.05, 0.15, 0.04], **props)
+
     # Note: using ridiculous definition of rectangle distribution, whose width
     # in sasmodels is sqrt(3) times the given width.  Divide by sqrt(3) to keep
     # the maximum width to 90.
