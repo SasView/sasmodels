@@ -969,7 +969,7 @@ def mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection)
     import matplotlib as mpl
     import matplotlib.pyplot as plt
     from matplotlib.widgets import Slider
-    
+
     ## create the plot window
     #plt.hold(True)
     plt.subplots(num=None, figsize=(5.5, 5.5))
@@ -984,22 +984,21 @@ def mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection)
     except Exception:
         pass
 
-
     # CRUFT: use axisbg instead of facecolor for matplotlib<2
     facecolor_prop = 'facecolor' if mpl.__version__ > '2' else 'axisbg'
     props = {facecolor_prop: 'lightgoldenrodyellow'}
 
     ## add control widgets to plot
-    axes_theta = plt.axes([0.1, 0.15, 0.45, 0.04], **props)
-    axes_phi = plt.axes([0.1, 0.1, 0.45, 0.04], **props)
-    axes_psi = plt.axes([0.1, 0.05, 0.45, 0.04], **props)
-    stheta = Slider(axes_theta, 'Theta', -90, 90, valinit=theta)
-    sphi = Slider(axes_phi, 'Phi', -180, 180, valinit=phi)
-    spsi = Slider(axes_psi, 'Psi', -180, 180, valinit=psi)
+    axes_theta = plt.axes([0.05, 0.15, 0.50, 0.04], **props)
+    axes_phi = plt.axes([0.05, 0.10, 0.50, 0.04], **props)
+    axes_psi = plt.axes([0.05, 0.05, 0.50, 0.04], **props)
+    stheta = Slider(axes_theta, u'θ', -90, 90, valinit=0)
+    sphi = Slider(axes_phi, u'φ', -180, 180, valinit=0)
+    spsi = Slider(axes_psi, u'ψ', -180, 180, valinit=0)
 
-    axes_dtheta = plt.axes([0.75, 0.15, 0.15, 0.04], **props)
-    axes_dphi = plt.axes([0.75, 0.1, 0.15, 0.04], **props)
-    axes_dpsi = plt.axes([0.75, 0.05, 0.15, 0.04], **props)
+    axes_dtheta = plt.axes([0.70, 0.15, 0.20, 0.04], **props)
+    axes_dphi = plt.axes([0.70, 0.1, 0.20, 0.04], **props)
+    axes_dpsi = plt.axes([0.70, 0.05, 0.20, 0.04], **props)
 
     # Note: using ridiculous definition of rectangle distribution, whose width
     # in sasmodels is sqrt(3) times the given width.  Divide by sqrt(3) to keep
