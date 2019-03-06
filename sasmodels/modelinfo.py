@@ -408,6 +408,10 @@ class ParameterTable(object):
     * *npars* is the total number of parameters to the kernel, with vector
       parameters counted as n individual parameters p1, p2, ...
 
+    * *common_parameters* is the list of common parameters, with a unique
+      copy for each model so that structure factors can have a default
+      background of 0.0.
+
     * *call_parameters* is the complete list of parameters to the kernel,
       including scale and background, with vector parameters recorded as
       individual parameters p1, p2, ...
@@ -420,11 +424,14 @@ class ParameterTable(object):
     the scale and background parameters that the kernel does not see.  User
     parameters don't use vector notation, and instead use p1, p2, ...
     """
-    # scale and background are implicit parameters
-    COMMON = [Parameter(*p) for p in COMMON_PARAMETERS]
-
     def __init__(self, parameters):
         # type: (List[Parameter]) -> None
+
+        # scale and background are implicit parameters
+        # Need them to be unique to each model in case they have different
+        # properties, such as default=0.0 for structure factor backgrounds.
+        self.common_parameters = [Parameter(*p) for p in COMMON_PARAMETERS]
+
         self.kernel_parameters = parameters
         self._set_vector_lengths()
         self.npars = sum(p.length for p in self.kernel_parameters)
@@ -472,6 +479,17 @@ class ParameterTable(object):
         self.pd_1d = set(p.name for p in self.call_parameters
                          if p.polydisperse and p.type not in ('orientation', 'magnetic'))
         self.pd_2d = set(p.name for p in self.call_parameters if p.polydisperse)
+
+    def set_zero_background(self):
+        """
+        Set the default background to zero for this model.  This is done for
+        structure factor models.
+        """
+        # type: () -> None
+        # Make sure background is the second common parameter.
+        assert self.common_parameters[1].id == "background"
+        self.common_parameters[1].default = 0.0
+        self.defaults = self._get_defaults()
 
     def check_angles(self):
         """
@@ -571,7 +589,7 @@ class ParameterTable(object):
 
     def _get_call_parameters(self):
         # type: () -> List[Parameter]
-        full_list = self.COMMON[:]
+        full_list = self.common_parameters[:]
         for p in self.kernel_parameters:
             if p.length == 1:
                 full_list.append(p)
@@ -674,7 +692,7 @@ class ParameterTable(object):
                         result.append(expanded_pars[name+tag])
 
         # Gather the user parameters in order
-        result = control + self.COMMON
+        result = control + self.common_parameters
         for p in self.kernel_parameters:
             if not is2d and p.type in ('orientation', 'magnetic'):
                 pass
@@ -774,9 +792,22 @@ def make_model_info(kernel_module):
         return kernel_module.model_info
 
     info = ModelInfo()
+
+    # Build the parameter table
     #print("make parameter table", kernel_module.parameters)
     parameters = make_parameter_table(getattr(kernel_module, 'parameters', []))
+
+    # background defaults to zero for structure factor models
+    structure_factor = getattr(kernel_module, 'structure_factor', False)
+    if structure_factor:
+        parameters.set_zero_background()
+
+    # TODO: remove demo parameters
+    # The plots in the docs are generated from the model default values.
+    # Sascomp set parameters from the command line, and so doesn't need
+    # demo values for testing.
     demo = expand_pars(parameters, getattr(kernel_module, 'demo', None))
+
     filename = abspath(kernel_module.__file__).replace('.pyc', '.py')
     kernel_id = splitext(basename(filename))[0]
     name = getattr(kernel_module, 'name', None)
