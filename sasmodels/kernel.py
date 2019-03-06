@@ -134,6 +134,9 @@ class Kernel(object):
         #print("returned",self.q_input.q, self.result)
         nout = 2 if self.info.have_Fq and self.dim == '1d' else 1
         total_weight = self.result[nout*self.q_input.nq + 0]
+        # Note: total_weight = sum(weight > cutoff), with cutoff >= 0, so it
+        # is okay to test directly against zero.  If weight is zero then I(q),
+        # etc. must also be zero.
         if total_weight == 0.:
             total_weight = 1.
         # Note: shell_volume == form_volume for solid objects

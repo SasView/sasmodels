@@ -694,7 +694,7 @@ class SasviewModel(object):
         with calculation_lock:
             return self._calculate_Iq(qx, qy)
 
-    def _calculate_Iq(self, qx, qy=None, Fq=False, effective_radius_type=1):
+    def _calculate_Iq(self, qx, qy=None):
         if self._model is None:
             self._model = core.build_model(self._model_info)
         if qy is not None:
@@ -714,10 +714,6 @@ class SasviewModel(object):
         #print("params", self.params)
         #print("values", values)
         #print("is_mag", is_magnetic)
-        if Fq:
-            result = calculator.Fq(call_details, values, cutoff=self.cutoff,
-                                   magnetic=is_magnetic,
-                                   effective_radius_type=effective_radius_type)
         result = calculator(call_details, values, cutoff=self.cutoff,
                             magnetic=is_magnetic)
         lazy_results = getattr(calculator, 'results',
@@ -735,10 +731,31 @@ class SasviewModel(object):
         """
         Calculate the effective radius for P(q)*S(q)
 
+        *mode* is the R_eff type, which defaults to 1 to match the ER
+        calculation for sasview models from version 3.x.
+
         :return: the value of the effective radius
         """
-        Fq = self._calculate_Iq([0.1], True, mode)
-        return Fq[2]
+        # ER and VR are only needed for old multiplication models, based on
+        # sas.sascalc.fit.MultiplicationModel.  Fail for now.  If we want to
+        # continue supporting them then add some test cases so that the code
+        # is exercised.  We can access ER/VR using the kernel Fq function by
+        # extending _calculate_Iq so that it calls:
+        #    if er_mode > 0:
+        #        res = calculator.Fq(call_details, values, cutoff=self.cutoff,
+        #                            magnetic=False, effective_radius_type=mode)
+        #        R_eff, form_shell_ratio = res[2], res[4]
+        #        return R_eff, form_shell_ratio
+        # Then use the following in calculate_ER:
+        #    ER, VR = self._calculate_Iq(q=[0.1], er_mode=mode)
+        #    return ER
+        # Similarly, for calculate_VR:
+        #    ER, VR = self._calculate_Iq(q=[0.1], er_mode=1)
+        #    return VR
+        # Obviously a combined calculate_ER_VR method would be better, but
+        # we only need them to support very old models, so ignore the 2x
+        # performance hit.
+        raise NotImplementedError("ER function is no longer available.")
 
     def calculate_VR(self):
         # type: () -> float
@@ -747,8 +764,8 @@ class SasviewModel(object):
 
         :return: the value of the form:shell volume ratio
         """
-        Fq = self._calculate_Iq([0.1], True, mode)
-        return Fq[4]
+        # See comments in calculate_ER.
+        raise NotImplementedError("VR function is no longer available.")
 
     def set_dispersion(self, parameter, dispersion):
         # type: (str, weights.Dispersion) -> None

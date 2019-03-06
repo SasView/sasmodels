@@ -504,9 +504,9 @@ def compare_sasfit_sphere_schulz():
         'volfraction': 0.3,
     }
 
-    Q, IQ = load_sasfit(data_file('richard_test.txt'))
-    Q, IQSD = load_sasfit(data_file('richard_test2.txt'))
-    Q, IQBD = load_sasfit(data_file('richard_test3.txt'))
+    Q, IQ = load_sasfit(data_file('sasfit_sphere_schulz_IQD.txt'))
+    Q, IQSD = load_sasfit(data_file('sasfit_sphere_schulz_IQSD.txt'))
+    Q, IQBD = load_sasfit(data_file('sasfit_sphere_schulz_IQBD.txt'))
     target = Theory(Q=Q, F1=None, F2=None, P=IQ, S=None, I=IQSD, Seff=None, Ibeta=IQBD)
     actual = sphere_r(Q, norm="sasfit", **pars)
     title = " ".join(("sasfit", "sphere", "pd=10% schulz"))
@@ -525,9 +525,9 @@ def compare_sasfit_ellipsoid_schulz():
         'volfraction': 0.3, 'radius_effective': 13.1353356684,
     }
 
-    Q, IQ = load_sasfit(data_file('richard_test4.txt'))
-    Q, IQSD = load_sasfit(data_file('richard_test5.txt'))
-    Q, IQBD = load_sasfit(data_file('richard_test6.txt'))
+    Q, IQ = load_sasfit(data_file('sasfit_ellipsoid_shulz_IQD.txt'))
+    Q, IQSD = load_sasfit(data_file('sasfit_ellipsoid_shulz_IQSD.txt'))
+    Q, IQBD = load_sasfit(data_file('sasfit_ellipsoid_shulz_IQBD.txt'))
     target = Theory(Q=Q, F1=None, F2=None, P=IQ, S=None, I=IQSD, Seff=None, Ibeta=IQBD)
     actual = ellipsoid_pe(Q, norm="sasfit", **pars)
     title = " ".join(("sasfit", "ellipsoid", "pd=10% schulz"))

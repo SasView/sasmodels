@@ -39,7 +39,7 @@ pearl_necklace_kernel(double q, double radius, double edge_sep, double thick_str
     // Precomputed sinc terms
     const double si = sas_sinx_x(q*A_s);
     const double omsi = 1.0 - si;
-    const double pow_si = pow(si, num_pearls);
+    const double pow_si = pown(si, num_pearls);
 
     // form factor for num_pearls
     const double sss = 2.0*square(m_pearl*psi) * (
