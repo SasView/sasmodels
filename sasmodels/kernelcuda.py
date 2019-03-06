@@ -142,6 +142,10 @@ def environment():
     return ENV
 
 
+# PyTest is not freeing ENV, so make sure it gets freed.
+atexit.register(lambda: ENV.release() if ENV is not None else None)
+
+
 def has_type(dtype):
     # type: (np.dtype) -> bool
     """
