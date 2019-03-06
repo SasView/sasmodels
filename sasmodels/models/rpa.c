@@ -35,8 +35,9 @@ double Iq(double q, double fp_case_num,
   double ZZ,DenQ1,DenQ2,DenQ3,DenQ,Q11,Q12,Q13,Q21,Q22,Q23,Q31,Q32,Q33;
   double N11,N12,N13,N21,N22,N23,N31,N32,N33;
   double M11,M12,M13,M21,M22,M23,M31,M32,M33;
-  double S11,S12,S21,S22,S13,S31,S23,S32,S33;
-  //double S14,S41,S24,S42,S34,S43,S44;
+  double S11,S12,S22,S23,S13,S33;
+  //double S21,S31,S32,S44; 
+  //double S14,S24,S34,S41,S42,S43;
   double Lad,Lbd,Lcd,Nav,Intg;
 
   // Set values for non existent parameters (eg. no A or B in case 0 and 1 etc)
@@ -293,19 +294,19 @@ double Iq(double q, double fp_case_num,
   S11= Q11*S0aa + Q21*S0ab + Q31*S0ac;
   S12= Q12*S0aa + Q22*S0ab + Q32*S0ac;
   S13= Q13*S0aa + Q23*S0ab + Q33*S0ac;
-  S21= Q11*S0ba + Q21*S0bb + Q31*S0bc;
   S22= Q12*S0ba + Q22*S0bb + Q32*S0bc;
   S23= Q13*S0ba + Q23*S0bb + Q33*S0bc;
-  S31= Q11*S0ca + Q21*S0cb + Q31*S0cc;
-  S32= Q12*S0ca + Q22*S0cb + Q32*S0cc;
   S33= Q13*S0ca + Q23*S0cb + Q33*S0cc;
+  //S21= Q11*S0ba + Q21*S0bb + Q31*S0bc;
+  //S31= Q11*S0ca + Q21*S0cb + Q31*S0cc;
+  //S32= Q12*S0ca + Q22*S0cb + Q32*S0cc;
+  //S44=S11+S22+S33+2.0*S12+2.0*S13+2.0*S23;
   //S14=-S11-S12-S13;
   //S24=-S21-S22-S23;
   //S34=-S31-S32-S33;
   //S41=S14;
   //S42=S24;
   //S43=S34;
-  //S44=S11+S22+S33+2.0*S12+2.0*S13+2.0*S23;
 
   //calculate contrast where L[i] is the scattering length of i and D is the matrix
   //Note that should multiply by Nav to get units of SLD which will become
