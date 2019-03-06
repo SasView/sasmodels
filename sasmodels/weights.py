@@ -22,7 +22,7 @@ class Dispersion(object):
     type = "base disperser"
     default = dict(npts=35, width=0, nsigmas=3)
     def __init__(self, npts=None, width=None, nsigmas=None):
-        self.npts = self.default['npts'] if npts is None else npts
+        self.npts = self.default['npts'] if npts is None else int(npts)
         self.width = self.default['width'] if width is None else width
         self.nsigmas = self.default['nsigmas'] if nsigmas is None else nsigmas
 
