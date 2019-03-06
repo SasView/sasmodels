@@ -104,8 +104,11 @@ def _get_translation_table(model_info, version=(3, 1, 2)):
                 if newid+str(k) not in translation:
                     translation[newid+str(k)] = oldid+str(k)
     # Remove control parameter from the result
-    if model_info.control:
-        translation[model_info.control] = "CONTROL"
+    control_pars = [p.id for p in model_info.parameters.kernel_parameters
+                    if p.is_control]
+    if control_pars:
+        control_id = control_pars[0]
+        translation[control_id] = "CONTROL"
     return translation
 
 # ========= FORWARD CONVERSION sasview 3.x => sasmodels ===========
