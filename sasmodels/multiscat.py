@@ -341,12 +341,10 @@ class MultipleScattering(Resolution):
     given it will use $n_q = 2^k$ such that $\Delta q < q_\mathrm{min}$.
 
     *probability* is related to the expected number of scattering
-    events in the sample $\lambda$ as $p = 1 = e^{-\lambda}$.  As a
-    hack to allow probability to be a fitted parameter, the "value"
-    can be a function that takes no parameters and returns the current
-    value of the probability.  *coverage* determines how many scattering
-    steps to consider.  The default is 0.99, which sets $n$ such that
-    $1 \ldots n$ covers 99% of the Poisson probability mass function.
+    events in the sample $\lambda$ as $p = 1 - e^{-\lambda}$.
+    *coverage* determines how many scattering steps to consider.  The
+    default is 0.99, which sets $n$ such that $1 \ldots n$ covers 99%
+    of the Poisson probability mass function.
 
     *is2d* is True then 2D scattering is used, otherwise it accepts
     and returns 1D scattering.
@@ -398,7 +396,7 @@ class MultipleScattering(Resolution):
         self.qmax = qmax
         self.qmin = qmin
         self.nq = nq
-        self.probability = probability
+        self.probability = 0. if probability is None else probability
         self.coverage = coverage
         self.is2d = is2d
         self.window = window
@@ -455,6 +453,11 @@ class MultipleScattering(Resolution):
         self.Iq = None # type: np.ndarray
         self.Iqxy = None # type: np.ndarray
 
+        # Label probability as a fittable parameter, and give its external name
+        # Note that the external name must be a valid python identifier, since
+        # is will be set as an experiment attribute.
+        self.fittable = {'probability': 'scattering_probability'}
+
     def apply(self, theory):
         if self.is2d:
             Iq_calc = theory
@@ -462,6 +465,7 @@ class MultipleScattering(Resolution):
             Iq_calc = np.interp(self._radius, self.q_calc[0], theory)
         Iq_calc = Iq_calc.reshape(self.nq, self.nq)
 
+        # CRUFT: don't need probability as a function anymore
         probability = self.probability() if callable(self.probability) else self.probability
         coverage = self.coverage
         #t0 = time.time()

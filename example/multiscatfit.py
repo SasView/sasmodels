@@ -14,10 +14,10 @@ this example fit file, or by putting sasmdoels/explore on the python path.
 On Unix/Mac running as developer I do::
 
     # Show the model without fitting
-    PYTHONPATH=..:../explore:../../bumps:../../sasview/src python multiscatfit.py
+    PYTHONPATH=..:../../bumps:../../sasview/src python multiscatfit.py
 
     # Run the fit
-    PYTHONPATH=..:../explore:../../bumps:../../sasview/src ../../bumps/run.py \
+    PYTHONPATH=..:../../bumps:../../sasview/src ../../bumps/run.py \
     multiscatfit.py --store=/tmp/t1
 
 You may be able to run multiscatfit.py against the distributed sasview
@@ -54,6 +54,12 @@ model = Model(
     radius_equatorial_pd=.000128, radius_equatorial_pd_n=1, radius_equatorial_pd_nsigma=0,
     )
 
+# Tie the model to the data
+M = Experiment(data=data, model=model)
+
+# Stack mulitple scattering on top of the existing resolution function.
+M.resolution = MultipleScattering(resolution=M.resolution, probability=0.)
+
 # SET THE FITTING PARAMETERS
 model.radius_polar.range(15, 3000)
 model.radius_equatorial.range(15, 3000)
@@ -64,24 +70,11 @@ model.radius_equatorial.range(15, 3000)
 model.background.range(0,1000)
 model.scale.range(0, 0.1)
 
-# Mulitple scattering probability parameter
-# HACK: the probability is stuffed in as an extra parameter to the experiment.
-probability = Parameter(name="probability", value=0.0)
-probability.range(0.0, 0.9)
+# The multiple scattering probability parameter is in the resolution function
+# instead of the scattering function, so access it through M.resolution
+M.scattering_probability.range(0.0, 0.9)
 
-M = Experiment(data=data, model=model, extra_pars={'probability': probability})
-
-# Stack mulitple scattering on top of the existing resolution function.
-# Because resolution functions in sasview don't have fitting parameters,
-# we instead allow the multiple scattering calculator to take a function
-# instead of a probability.  This function returns the current value of
-# the parameter. ** THIS IS TEMPORARY ** when multiple scattering is
-# properly integrated into sasmodels and sasview, its fittable parameter
-# will be treated like the model parameters.
-M.resolution = MultipleScattering(resolution=M.resolution,
-                                  probability=lambda: probability.value,
-                                  )
-M._kernel_inputs = M.resolution.q_calc
+# Let bumps know that we are fitting this experiment
 problem = FitProblem(M)
 
 if __name__ == "__main__":
