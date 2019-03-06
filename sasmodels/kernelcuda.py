@@ -67,7 +67,7 @@ import atexit
 import numpy as np  # type: ignore
 
 
-# Attempt to setup cuda. This may fail if the pycuda package is not
+# Attempt to setup CUDA. This may fail if the pycuda package is not
 # installed or if it is installed but there are no devices available.
 try:
     import pycuda.driver as cuda  # type: ignore
@@ -107,9 +107,11 @@ except ImportError:
 # of polydisperse parameters.
 MAX_LOOPS = 2048
 
+
 def use_cuda():
-    env = os.environ.get("SAS_OPENCL", "").lower()
-    return HAVE_CUDA and (env == "" or env.startswith("cuda"))
+    sas_opencl = os.environ.get("SAS_OPENCL", "CUDA").lower()
+    return HAVE_CUDA and sas_opencl.startswith("cuda")
+
 
 ENV = None
 def reset_environment():
@@ -121,6 +123,7 @@ def reset_environment():
     if ENV is not None and ENV.context is not None:
         ENV.release()
     ENV = GpuEnvironment() if use_cuda() else None
+
 
 def environment():
     # type: () -> "GpuEnvironment"
@@ -138,37 +141,31 @@ def environment():
             raise RuntimeError("SAS_OPENCL=None in environment")
     return ENV
 
-def free_context():
-    global ENV
-    if ENV is not None:
-        ENV.release()
-        ENV = None
-
-atexit.register(free_context)
 
 def has_type(dtype):
     # type: (np.dtype) -> bool
     """
     Return true if device supports the requested precision.
     """
-    # Assume the nvidia card supports 32-bit and 64-bit floats.
-    # TODO: check if pycuda support F16
+    # Assume the NVIDIA card supports 32-bit and 64-bit floats.
+    # TODO: Check if pycuda support F16.
     return dtype in (generate.F32, generate.F64)
 
 
 FUNCTION_PATTERN = re.compile(r"""^
-  (?P<space>\s*)                   # initial space
-  (?P<qualifiers>^(?:\s*\b\w+\b\s*)+) # one or more qualifiers before function
-  (?P<function>\s*\b\w+\b\s*[(])      # function name plus open parens
+  (?P<space>\s*)                       # Initial space.
+  (?P<qualifiers>^(?:\s*\b\w+\b\s*)+)  # One or more qualifiers before function.
+  (?P<function>\s*\b\w+\b\s*[(])       # Function name plus open parens.
   """, re.VERBOSE|re.MULTILINE)
 
 MARKED_PATTERN = re.compile(r"""
   \b(return|else|kernel|device|__device__)\b
   """, re.VERBOSE|re.MULTILINE)
 
+
 def _add_device_tag(match):
     # type: (None) -> str
-    # Note: should be re.Match, but that isn't a simple type
+    # Note: Should be re.Match, but that isn't a simple type.
     """
     replace qualifiers with __device__ qualifiers if needed
     """
@@ -181,12 +178,14 @@ def _add_device_tag(match):
         space = match.group("space")
         return "".join((space, "__device__ ", qualifiers, function))
 
+
 def mark_device_functions(source):
     # type: (str) -> str
     """
     Mark all function declarations as __device__ functions (except kernel).
     """
     return FUNCTION_PATTERN.sub(_add_device_tag, source)
+
 
 def show_device_functions(source):
     # type: (str) -> str
@@ -196,6 +195,7 @@ def show_device_functions(source):
     for match in FUNCTION_PATTERN.finditer(source):
         print(match.group('qualifiers').replace('\n',r'\n'), match.group('function'), '(')
     return source
+
 
 def compile_model(source, dtype, fast=False):
     # type: (str, np.dtype, bool) -> SourceModule
@@ -220,28 +220,25 @@ def compile_model(source, dtype, fast=False):
     #print(source)
     #options = ['--verbose', '-E']
     options = ['--use_fast_math'] if fast else None
-    program = SourceModule(source, no_extern_c=True, options=options) # include_dirs=[...]
+    program = SourceModule(source, no_extern_c=True, options=options) #, include_dirs=[...])
 
     #print("done with "+program)
     return program
 
 
-# for now, this returns one device in the context
-# TODO: create a context that contains all devices on all platforms
+# For now, this returns one device in the context.
+# TODO: Create a context that contains all devices on all platforms.
 class GpuEnvironment(object):
     """
-    GPU context, with possibly many devices, and one queue per device.
+    GPU context for CUDA.
     """
     context = None # type: cuda.Context
     def __init__(self, devnum=None):
         # type: (int) -> None
-        # Byte boundary for data alignment
-        #self.data_boundary = max(d.min_data_type_align_size
-        #                         for d in self.context.devices)
-        self.compiled = {}
         env = os.environ.get("SAS_OPENCL", "").lower()
         if devnum is None and env.startswith("cuda:"):
             devnum = int(env[5:])
+
         # Set the global context to the particular device number if one is
         # given, otherwise use the default context.  Perhaps this will be set
         # by an environment variable within autoinit.
@@ -249,6 +246,13 @@ class GpuEnvironment(object):
             self.context = cuda.Device(devnum).make_context()
         else:
             self.context = make_default_context()
+
+        ## Byte boundary for data alignment.
+        #self.data_boundary = max(d.min_data_type_align_size
+        #                         for d in self.context.devices)
+
+        # Cache for compiled programs, and for items in context.
+        self.compiled = {}
 
     def release(self):
         if self.context is not None:
@@ -270,12 +274,11 @@ class GpuEnvironment(object):
         """
         Compile the program for the device in the given context.
         """
-        # Note: PyOpenCL caches based on md5 hash of source, options and device
-        # so we don't really need to cache things for ourselves.  I'll do so
-        # anyway just to save some data munging time.
+        # Note: PyCuda (probably) caches but I'll do so as well just to
+        # save some data munging time.
         tag = generate.tag_source(source)
         key = "%s-%s-%s%s"%(name, dtype, tag, ("-fast" if fast else ""))
-        # Check timestamp on program
+        # Check timestamp on program.
         program, program_timestamp = self.compiled.get(key, (None, np.inf))
         if program_timestamp < timestamp:
             del self.compiled[key]
@@ -284,6 +287,7 @@ class GpuEnvironment(object):
             program = compile_model(str(source), dtype, fast)
             self.compiled[key] = (program, timestamp)
         return program
+
 
 class GpuModel(KernelModel):
     """
@@ -300,12 +304,12 @@ class GpuModel(KernelModel):
     Fast precision ('fast') is a loose version of single precision, indicating
     that the compiler is allowed to take shortcuts.
     """
-    info = None # type: ModelInfo
-    source = "" # type: str
-    dtype = None # type: np.dtype
-    fast = False # type: bool
-    _program = None # type: SourceModule
-    _kernels = None # type: Dict[str, cuda.Function]
+    info = None  # type: ModelInfo
+    source = ""  # type: str
+    dtype = None  # type: np.dtype
+    fast = False  # type: bool
+    _program = None  # type: SourceModule
+    _kernels = None  # type: Dict[str, cuda.Function]
 
     def __init__(self, source, model_info, dtype=generate.F32, fast=False):
         # type: (Dict[str,str], ModelInfo, np.dtype, bool) -> None
@@ -351,10 +355,11 @@ class GpuModel(KernelModel):
         names = [generate.kernel_name(self.info, k) for k in variants]
         functions = [program.get_function(k) for k in names]
         self._kernels = {k: v for k, v in zip(variants, functions)}
-        # keep a handle to program so GC doesn't collect
+        # Keep a handle to program so GC doesn't collect.
         self._program = program
 
-# TODO: check that we don't need a destructor for buffers which go out of scope
+
+# TODO: Check that we don't need a destructor for buffers which go out of scope.
 class GpuInput(object):
     """
     Make q data available to the gpu.
@@ -376,35 +381,33 @@ class GpuInput(object):
     """
     def __init__(self, q_vectors, dtype=generate.F32):
         # type: (List[np.ndarray], np.dtype) -> None
-        # TODO: do we ever need double precision q?
+        # TODO: Do we ever need double precision q?
         self.nq = q_vectors[0].size
         self.dtype = np.dtype(dtype)
         self.is_2d = (len(q_vectors) == 2)
-        # TODO: stretch input based on get_warp()
-        # not doing it now since warp depends on kernel, which is not known
+        # TODO: Stretch input based on get_warp().
+        # Not doing it now since warp depends on kernel, which is not known
         # at this point, so instead using 32, which is good on the set of
         # architectures tested so far.
         if self.is_2d:
-            # Note: 16 rather than 15 because result is 1 longer than input.
-            width = ((self.nq+16)//16)*16
+            width = ((self.nq+15)//16)*16
             self.q = np.empty((width, 2), dtype=dtype)
             self.q[:self.nq, 0] = q_vectors[0]
             self.q[:self.nq, 1] = q_vectors[1]
         else:
-            # Note: 32 rather than 31 because result is 1 longer than input.
-            width = ((self.nq+32)//32)*32
+            width = ((self.nq+31)//32)*32
             self.q = np.empty(width, dtype=dtype)
             self.q[:self.nq] = q_vectors[0]
         self.global_size = [self.q.shape[0]]
         #print("creating inputs of size", self.global_size)
 
-        # transfer input value to gpu
+        # Transfer input value to GPU.
         self.q_b = cuda.to_device(self.q)
 
     def release(self):
         # type: () -> None
         """
-        Free the memory.
+        Free the buffer associated with the q value.
         """
         if self.q_b is not None:
             self.q_b.free()
@@ -413,6 +416,7 @@ class GpuInput(object):
     def __del__(self):
         # type: () -> None
         self.release()
+
 
 class GpuKernel(Kernel):
     """
@@ -428,55 +432,65 @@ class GpuKernel(Kernel):
 
     Call :meth:`release` when done with the kernel instance.
     """
-    #: SAS model information structure
-    info = None # type: ModelInfo
-    #: kernel precision
-    dtype = None # type: np.dtype
-    #: kernel dimensions (1d or 2d)
-    dim = "" # type: str
-    #: calculation results, updated after each call to :meth:`_call_kernel`
-    result = None # type: np.ndarray
+    #: SAS model information structure.
+    info = None  # type: ModelInfo
+    #: Kernel precision.
+    dtype = None  # type: np.dtype
+    #: Kernel dimensions (1d or 2d).
+    dim = ""  # type: str
+    #: Calculation results, updated after each call to :meth:`_call_kernel`.
+    result = None  # type: np.ndarray
 
     def __init__(self, model, q_vectors):
         # type: (GpuModel, List[np.ndarray]) -> None
         dtype = model.dtype
         self.q_input = GpuInput(q_vectors, dtype)
         self._model = model
-        # F16 isn't sufficient, so don't support it
-        self._as_dtype = np.float64 if dtype == generate.F64 else np.float32
 
-        # attributes accessed from the outside
+        # Attributes accessed from the outside.
         self.dim = '2d' if self.q_input.is_2d else '1d'
         self.info = model.info
-        self.dtype = model.dtype
+        self.dtype = dtype
 
-        # holding place for the returned value
+        # Converter to translate input to target type.
+        self._as_dtype = np.float64 if dtype == generate.F64 else np.float32
+
+        # Holding place for the returned value.
         nout = 2 if self.info.have_Fq and self.dim == '1d' else 1
-        extra_q = 4  # total weight, form volume, shell volume and R_eff
-        self.result = np.empty(self.q_input.nq*nout+extra_q, dtype)
+        extra_q = 4  # Total weight, form volume, shell volume and R_eff.
+        self.result = np.empty(self.q_input.nq*nout + extra_q, dtype)
 
-        # allocate result value on gpu
+        # Allocate result value on GPU.
         width = ((self.result.size+31)//32)*32 * self.dtype.itemsize
         self._result_b = cuda.mem_alloc(width)
 
-    def _call_kernel(self, call_details, values, cutoff, magnetic, effective_radius_type):
-        # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
-        # Arrange data transfer to card
+    def _call_kernel(self, call_details, values, cutoff, magnetic,
+                     effective_radius_type):
+        # type: (CallDetails, np.ndarray, float, bool, int) -> np.ndarray
+
+        # Arrange data transfer to card.
         details_b = cuda.to_device(call_details.buffer)
         values_b = cuda.to_device(values)
 
+        # Setup kernel function and arguments.
         name = 'Iq' if self.dim == '1d' else 'Imagnetic' if magnetic else 'Iqxy'
         kernel = self._model.get_function(name)
         kernel_args = [
-            np.uint32(self.q_input.nq), None, None,
-            details_b, values_b, self.q_input.q_b, self._result_b,
-            self._as_dtype(cutoff),
-            np.uint32(effective_radius_type),
+            np.uint32(self.q_input.nq),  # Number of inputs.
+            None,  # Placeholder for pd_start.
+            None,  # Placeholder for pd_stop.
+            details_b,  # Problem definition.
+            values_b,  # Parameter values.
+            self.q_input.q_b,  # Q values.
+            self._result_b,   # Result storage.
+            self._as_dtype(cutoff),  # Probability cutoff.
+            np.uint32(effective_radius_type),  # R_eff mode.
         ]
         grid = partition(self.q_input.nq)
-        #print("Calling OpenCL")
+
+        # Call kernel and retrieve results.
+        #print("Calling CUDA")
         #call_details.show(values)
-        # Call kernel and retrieve results
         last_nap = time.clock()
         step = 100000000//self.q_input.nq + 1
         #step = 1000000000
@@ -487,7 +501,7 @@ class GpuKernel(Kernel):
             kernel(*kernel_args, **grid)
             if stop < call_details.num_eval:
                 sync()
-                # Allow other processes to run
+                # Allow other processes to run.
                 current_time = time.clock()
                 if current_time - last_nap > 0.5:
                     time.sleep(0.001)
@@ -521,19 +535,19 @@ def sync():
 
     Note: Maybe context.synchronize() is sufficient.
     """
-    #return # The following works in C++; don't know what pycuda is doing
-    # Create an event with which to synchronize
+    # Create an event with which to synchronize.
     done = cuda.Event()
 
     # Schedule an event trigger on the GPU.
     done.record()
 
-    #line added to not hog resources
+    # Make sure we don't hog resource while waiting to sync.
     while not done.query():
         time.sleep(0.01)
 
     # Block until the GPU executes the kernel.
     done.synchronize()
+
     # Clean up the event; I don't think they can be reused.
     del done
 

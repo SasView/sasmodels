@@ -32,12 +32,13 @@ else:
 
 logger = logging.getLogger(__name__)
 
+
 class PyModel(KernelModel):
     """
     Wrapper for pure python models.
     """
     def __init__(self, model_info):
-        # Make sure Iq is available and vectorized
+        # Make sure Iq is available and vectorized.
         _create_default_functions(model_info)
         self.info = model_info
         self.dtype = np.dtype('d')
@@ -52,6 +53,7 @@ class PyModel(KernelModel):
         Free resources associated with the model.
         """
         pass
+
 
 class PyInput(object):
     """
@@ -89,6 +91,7 @@ class PyInput(object):
         Free resources associated with the model inputs.
         """
         self.q = None
+
 
 class PyKernel(Kernel):
     """
@@ -130,7 +133,7 @@ class PyKernel(Kernel):
         # an array of no dimensions acts like a scalar.
         parameter_vector = np.empty(len(partable.call_parameters)-2, 'd')
 
-        # Create views into the array to hold the arguments
+        # Create views into the array to hold the arguments.
         offset = 0
         kernel_args, volume_args = [], []
         for p in partable.kernel_parameters:
@@ -173,8 +176,6 @@ class PyKernel(Kernel):
                         else (lambda mode: cbrt(0.75/pi*volume(*volume_args))) if volume
                         else (lambda mode: 1.0))
 
-
-
     def _call_kernel(self, call_details, values, cutoff, magnetic, effective_radius_type):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
         if magnetic:
@@ -194,6 +195,7 @@ class PyKernel(Kernel):
         """
         self.q_input.release()
         self.q_input = None
+
 
 def _loops(parameters,    # type: np.ndarray
            form,          # type: Callable[[], np.ndarray]
@@ -253,7 +255,7 @@ def _loops(parameters,    # type: np.ndarray
 
         total = np.zeros(nq, 'd')
         for loop_index in range(call_details.num_eval):
-            # update polydispersity parameter values
+            # Update polydispersity parameter values.
             if p0_index == p0_length:
                 pd_index = (loop_index//pd_stride)%pd_length
                 parameters[pd_par] = pd_value[pd_offset+pd_index]
@@ -264,7 +266,7 @@ def _loops(parameters,    # type: np.ndarray
             parameters[p0_par] = pd_value[p0_offset + p0_index]
             p0_index += 1
             if weight > cutoff:
-                # Call the scattering function
+                # Call the scattering function.
                 # Assume that NaNs are only generated if the parameters are bad;
                 # exclude all q for that NaN.  Even better would be to have an
                 # INVALID expression like the C models, but that is expensive.
@@ -272,7 +274,7 @@ def _loops(parameters,    # type: np.ndarray
                 if np.isnan(Iq).any():
                     continue
 
-                # update value and norm
+                # Update value and norm.
                 total += weight * Iq
                 weight_norm += weight
                 shell, form = form_volume()
@@ -292,7 +294,7 @@ def _create_default_functions(model_info):
     performs a similar role for Iq written in C.  This also vectorizes
     any functions that are not already marked as vectorized.
     """
-    # Note: must call create_vector_Iq before create_vector_Iqxy
+    # Note: Must call create_vector_Iq before create_vector_Iqxy.
     _create_vector_Iq(model_info)
     _create_vector_Iqxy(model_info)
 
