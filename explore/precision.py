@@ -206,9 +206,15 @@ def make_ocl(function, name, source=[]):
     model_info = modelinfo.make_model_info(Kernel)
     return model_info
 
-# Hack to allow second parameter A in two parameter functions
+# Hack to allow second parameter A in the gammainc and gammaincc functions.
+# Create a 2-D variant of the precision test if we need to handle other two
+# parameter functions.
 A = 1
 def parse_extra_pars():
+    """
+    Parse the command line looking for the second parameter "A=..." for the
+    gammainc/gammaincc functions.
+    """
     global A
 
     A_str = str(A)
@@ -332,12 +338,14 @@ add_function(
     #ocl_function=make_ocl("return lgamma(q);", "sas_gammaln"),
 )
 add_function(
+    # Note: "a" is given as A=... on the command line via parse_extra_pars
     name="gammainc(x)",
     mp_function=lambda x, a=A: mp.gammainc(a, a=0, b=x)/mp.gamma(a),
     np_function=lambda x, a=A: scipy.special.gammainc(a, x),
     ocl_function=make_ocl("return sas_gammainc(%.15g,q);"%A, "sas_gammainc", ["lib/sas_gammainc.c"]),
 )
 add_function(
+    # Note: "a" is given as A=... on the command line via parse_extra_pars
     name="gammaincc(x)",
     mp_function=lambda x, a=A: mp.gammainc(a, a=x, b=mp.inf)/mp.gamma(a),
     np_function=lambda x, a=A: scipy.special.gammaincc(a, x),
@@ -402,12 +410,14 @@ add_function(
     ocl_function=make_ocl("return fmod(q, 2*M_PI);", "sas_fmod"),
 )
 add_function(
-    name="debye",
+    name="gauss_coil",
     mp_function=lambda x: 2*(mp.exp(-x**2) + x**2 - 1)/x**4,
     np_function=lambda x: 2*(np.expm1(-x**2) + x**2)/x**4,
     ocl_function=make_ocl("""
     const double qsq = q*q;
-    if (qsq < 1.0) { // Pade approximation
+    // For double: use O(5) Pade with 0.5 cutoff (10 mad + 1 divide)
+    // For single: use O(7) Taylor with 0.8 cutoff (7 mad)
+    if (qsq < 0.0) {
         const double x = qsq;
         if (0) { // 0.36 single
             // PadeApproximant[2*Exp[-x^2] + x^2-1)/x^4, {x, 0, 4}]
@@ -417,7 +427,7 @@ add_function(
             const double A1=1./24., A2=1./84, A3=-1./3360;
             const double B1=3./8., B2=3./56., B3=1./336.;
             return (((A3*x + A2)*x + A1)*x + 1.)/(((B3*x + B2)*x + B1)*x + 1.);
-        } else if (1) { // 1.0 for single, 0.25 for double
+        } else if (0) { // 1.0 for single, 0.25 for double
             // PadeApproximant[2*Exp[-x^2] + x^2-1)/x^4, {x, 0, 8}]
             const double A1=1./15., A2=1./60, A3=0., A4=1./75600.;
             const double B1=2./5., B2=1./15., B3=1./180., B4=1./5040.;
@@ -430,7 +440,7 @@ add_function(
             return (((((A5*x + A4)*x + A3)*x + A2)*x + A1)*x + 1.)
                   /(((((B5*x + B4)*x + B3)*x + B2)*x + B1)*x + 1.);
         }
-    } else if (qsq < 1.) { // Taylor series; 0.9 for single, 0.25 for double
+    } else if (qsq < 0.8) {
         const double x = qsq;
         const double C0 = +1.;
         const double C1 = -1./3.;

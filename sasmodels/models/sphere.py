@@ -66,25 +66,9 @@ parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Sphere radius"],
              ]
 
-source = ["lib/sas_3j1x_x.c", "lib/sphere_form.c"]
-
-# No volume normalization despite having a volume parameter
-# This should perhaps be volume normalized?
-form_volume = """
-    return sphere_volume(radius);
-    """
-
-Iq = """
-    return sphere_form(q, radius, sld, sld_solvent);
-    """
-
-def ER(radius):
-    """
-    Return equivalent radius (ER)
-    """
-    return radius
-
-# VR defaults to 1.0
+source = ["lib/sas_3j1x_x.c","sphere.c"]
+have_Fq = True
+effective_radius_type = ["radius"]
 
 def random():
     radius = 10**np.random.uniform(1.3, 4)
@@ -98,6 +82,7 @@ tests = [
     [{"scale": 1., "background": 0., "sld": 6., "sld_solvent": 1.,
       "radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
      0.2, 0.228843],
-    [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45}, "ER", 120.],
-    [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45}, "VR", 1.],
+    [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
+     0.1, None, None, 120., None, 1.0],
+    [{"@S": "hardsphere"}, 0.1, None],
 ]

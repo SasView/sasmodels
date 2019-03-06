@@ -37,15 +37,15 @@ and $\rho_{particle}$ is the scattering length density of particles.
 .. note::
 
     The surface ( $D_s$ ) and mass ( $D_m$ ) fractal dimensions are only
-    valid if $0 < surface\_dim < 6$ , $0 < mass\_dim < 6$ , and
-    $(surface\_dim + mass\_dim ) < 6$ . 
+    valid if $0 < surface\_dim < 6$, $0 < mass\_dim < 6$, and
+    $(surface\_dim + mass\_dim ) < 6$.
     Older versions of sasview may have the default primary particle radius
-    larger than the cluster radius, this was an error, also present in the 
-    Schmidt review paper below. The primary particle should be the smaller 
-    as described in the original Hurd et.al. who also point out that 
-    polydispersity in the primary particle sizes may affect their 
+    larger than the cluster radius, this was an error, also present in the
+    Schmidt review paper below. The primary particle should be the smaller
+    as described in the original Hurd, et al., who also point out that
+    polydispersity in the primary particle sizes may affect their
     apparent surface fractal dimension.
-    
+
 
 References
 ----------

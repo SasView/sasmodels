@@ -144,10 +144,8 @@ parameters = [
 #polydispersity = ["radius", "thick_shell"]
 
 source = ["lib/sas_3j1x_x.c", "multilayer_vesicle.c"]
-
-def ER(radius, thick_shell, thick_solvent, n_shells):
-    n_shells = int(n_shells+0.5)
-    return radius + n_shells * (thick_shell + thick_solvent) - thick_solvent
+have_Fq = True
+effective_radius_type = ["outer radius"]
 
 def random():
     volfraction = 10**np.random.uniform(-3, -0.5)  # scale from 0.1% to 30%
