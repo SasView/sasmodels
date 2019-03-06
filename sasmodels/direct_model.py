@@ -223,8 +223,6 @@ class DataMixin(object):
                 Iq, dIq = data.y, data.dy
             else:
                 Iq, dIq = None, None
-            #self._theory = np.zeros_like(q)
-            q_vectors = [res.q_calc]
         elif self.data_type == 'Iqxy':
             #if not model.info.parameters.has_2d:
             #    raise ValueError("not 2D without orientation or magnetic parameters")
@@ -241,8 +239,6 @@ class DataMixin(object):
                 Iq, dIq = None, None
             res = resolution2d.Pinhole2D(data=data, index=index,
                                          nsigma=3.0, accuracy=accuracy)
-            #self._theory = np.zeros_like(self.Iq)
-            q_vectors = res.q_calc
         elif self.data_type == 'Iq':
             index = (data.x >= data.qmin) & (data.x <= data.qmax)
             mask = getattr(data, 'mask', None)
@@ -267,9 +263,6 @@ class DataMixin(object):
                                         qy_width=data.dxw[index])
             else:
                 res = resolution.Perfect1D(data.x[index])
-
-            #self._theory = np.zeros_like(self.Iq)
-            q_vectors = [res.q_calc]
         elif self.data_type == 'Iq-oriented':
             index = (data.x >= data.qmin) & (data.x <= data.qmax)
             if data.y is not None:
@@ -285,13 +278,11 @@ class DataMixin(object):
             res = resolution2d.Slit2D(data.x[index],
                                       qx_width=data.dxw[index],
                                       qy_width=data.dxl[index])
-            q_vectors = res.q_calc
         else:
             raise ValueError("Unknown data type") # never gets here
 
         # Remember function inputs so we can delay loading the function and
         # so we can save/restore state
-        self._kernel_inputs = q_vectors
         self._kernel = None
         self.Iq, self.dIq, self.index = Iq, dIq, index
         self.resolution = res
@@ -328,7 +319,13 @@ class DataMixin(object):
     def _calc_theory(self, pars, cutoff=0.0):
         # type: (ParameterSet, float) -> np.ndarray
         if self._kernel is None:
-            self._kernel = self._model.make_kernel(self._kernel_inputs)
+            # TODO: change interfaces so that resolution returns kernel inputs
+            # Maybe have resolution always return a tuple, or maybe have
+            # make_kernel accept either an ndarray or a pair of ndarrays.
+            kernel_inputs = self.resolution.q_calc
+            if isinstance(kernel_inputs, np.ndarray):
+                kernel_inputs = (kernel_inputs,)
+            self._kernel = self._model.make_kernel(kernel_inputs)
 
         # Need to pull background out of resolution for multiple scattering
         default_background = self._model.info.parameters.common_parameters[1].default

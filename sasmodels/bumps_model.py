@@ -34,6 +34,7 @@ try:
     # Optional import. This allows the doc builder and nosetests to run even
     # when bumps is not on the path.
     from bumps.names import Parameter # type: ignore
+    from bumps.parameter import Reference # type: ignore
 except ImportError:
     pass
 
@@ -138,12 +139,27 @@ class Experiment(DataMixin):
     _cache = None # type: Dict[str, np.ndarray]
     def __init__(self, data, model, cutoff=1e-5, name=None, extra_pars=None):
         # type: (Data, Model, float) -> None
+        # Allow resolution function to define fittable parameters.  We do this
+        # by creating reference parameters within the resolution object rather
+        # than modifying the object itself to use bumps parameters.  We need
+        # to reset the parameters each time the object has changed.  These
+        # additional parameters need to be returned from the fitting engine.
+        # To make them available to the user, they are added as top-level
+        # attributes to the experiment object.  The only change to the
+        # resolution function is that it needs an optional 'fittable' attribute
+        # which maps the internal name to the user visible name for the
+        # for the parameter.
+        self._resolution = None
+        self._resolution_pars = {}
         # remember inputs so we can inspect from outside
         self.name = data.filename if name is None else name
         self.model = model
         self.cutoff = cutoff
         self._interpret_data(data, model.sasmodel)
         self._cache = {}
+        # CRUFT: no longer need extra parameters
+        # Multiple scattering probability is now retrieved directly from the
+        # multiple scattering resolution function.
         self.extra_pars = extra_pars
 
     def update(self):
@@ -161,14 +177,38 @@ class Experiment(DataMixin):
         """
         return len(self.Iq)
 
+    @property
+    def resolution(self):
+        return self._resolution
+
+    @resolution.setter
+    def resolution(self, value):
+        self._resolution = value
+
+        # Remove old resolution fitting parameters from experiment
+        for name in self._resolution_pars:
+            delattr(self, name)
+
+        # Create new resolution fitting parameters
+        res_pars = getattr(self._resolution, 'fittable', {})
+        self._resolution_pars = {
+            name: Reference(self._resolution, refname, name=name)
+            for refname, name in res_pars.items()
+        }
+
+        # Add new resolution fitting parameters as experiment attributes
+        for name, ref in self._resolution_pars.items():
+            setattr(self, name, ref)
+
     def parameters(self):
         # type: () -> Dict[str, Parameter]
         """
         Return a dictionary of parameters
         """
         pars = self.model.parameters()
-        if self.extra_pars:
+        if self.extra_pars is not None:
             pars.update(self.extra_pars)
+        pars.update(self._resolution_pars)
         return pars
 
     def theory(self):
