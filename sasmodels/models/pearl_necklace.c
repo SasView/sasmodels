@@ -80,7 +80,6 @@ double form_volume(double radius, double edge_sep, double thick_string, double f
 static double
 radius_from_volume(double radius, double edge_sep, double thick_string, double fp_num_pearls)
 {
-    const int num_pearls = (int) fp_num_pearls +0.5;
     const double vol_tot = form_volume(radius, edge_sep, thick_string, fp_num_pearls);
     return cbrt(vol_tot/M_4PI_3);
 }

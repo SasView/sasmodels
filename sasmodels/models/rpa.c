@@ -24,11 +24,11 @@ double Iq(double q, double fp_case_num,
   double Paa,S0aa,Pab,S0ab,Pac,S0ac,Pad,S0ad;
   double S0ba,Pbb,S0bb,Pbc,S0bc,Pbd,S0bd;
   double S0ca,S0cb,Pcc,S0cc,Pcd,S0cd;
-  double S0da,S0db,S0dc;
+  //double S0da,S0db,S0dc;
   double Pdd,S0dd;
   double Kaa,Kbb,Kcc;
   double Kba,Kca,Kcb;
-  double Kda,Kdb,Kdc,Kdd;
+  //double Kda,Kdb,Kdc,Kdd;
   double Zaa,Zab,Zac,Zba,Zbb,Zbc,Zca,Zcb,Zcc;
   double DenT,T11,T12,T13,T21,T22,T23,T31,T32,T33;
   double Y1,Y2,Y3,X11,X12,X13,X21,X22,X23,X31,X32,X33;
@@ -36,7 +36,7 @@ double Iq(double q, double fp_case_num,
   double N11,N12,N13,N21,N22,N23,N31,N32,N33;
   double M11,M12,M13,M21,M22,M23,M31,M32,M33;
   double S11,S12,S13,S14,S21,S22,S23,S24;
-  double S31,S32,S33,S34,S41,S42,S43,S44;
+  double S31,S32,S33,S34; //,S41,S42,S43,S44;
   double Lad,Lbd,Lcd,Nav,Intg;
 
   // Set values for non existent parameters (eg. no A or B in case 0 and 1 etc)
@@ -114,9 +114,9 @@ double Iq(double q, double fp_case_num,
   Pcd=((1.0-exp(-Xc))/Xc)*((1.0-exp(-Xd))/Xd); // CD diblock
   S0cd=(Phicd*vcd*Ncd)*Pcd;
 
-  S0da=S0ad;
-  S0db=S0bd;
-  S0dc=S0cd;
+  //S0da=S0ad;
+  //S0db=S0bd;
+  //S0dc=S0cd;
   Pdd=2.0*(exp(-Xd)-1.0+Xd)/(Xd*Xd); // free D chain
   S0dd=N[3]*Phi[3]*v[3]*Pdd;
 
@@ -197,22 +197,22 @@ double Iq(double q, double fp_case_num,
   S0ba=S0ab;
   S0ca=S0ac;
   S0cb=S0bc;
-  S0da=S0ad;
-  S0db=S0bd;
-  S0dc=S0cd;
+  //S0da=S0ad;
+  //S0db=S0bd;
+  //S0dc=S0cd;
 
   // self chi parameter is 0 ... of course
   Kaa=0.0;
   Kbb=0.0;
   Kcc=0.0;
-  Kdd=0.0;
+  //Kdd=0.0;
 
   Kba=Kab;
   Kca=Kac;
   Kcb=Kbc;
-  Kda=Kad;
-  Kdb=Kbd;
-  Kdc=Kcd;
+  //Kda=Kad;
+  //Kdb=Kbd;
+  //Kdc=Kcd;
 
   Zaa=Kaa-Kad-Kad;
   Zab=Kab-Kad-Kbd;
@@ -302,10 +302,10 @@ double Iq(double q, double fp_case_num,
   S32= Q12*S0ca + Q22*S0cb + Q32*S0cc;
   S33= Q13*S0ca + Q23*S0cb + Q33*S0cc;
   S34=-S31-S32-S33;
-  S41=S14;
-  S42=S24;
-  S43=S34;
-  S44=S11+S22+S33+2.0*S12+2.0*S13+2.0*S23;
+  //S41=S14;
+  //S42=S24;
+  //S43=S34;
+  //S44=S11+S22+S33+2.0*S12+2.0*S13+2.0*S23;
 
   //calculate contrast where L[i] is the scattering length of i and D is the matrix
   //Note that should multiply by Nav to get units of SLD which will become
