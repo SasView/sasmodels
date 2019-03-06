@@ -206,9 +206,15 @@ def make_ocl(function, name, source=[]):
     model_info = modelinfo.make_model_info(Kernel)
     return model_info
 
-# Hack to allow second parameter A in two parameter functions
+# Hack to allow second parameter A in the gammainc and gammaincc functions.
+# Create a 2-D variant of the precision test if we need to handle other two
+# parameter functions.
 A = 1
 def parse_extra_pars():
+    """
+    Parse the command line looking for the second parameter "A=..." for the
+    gammainc/gammaincc functions.
+    """
     global A
 
     A_str = str(A)
@@ -332,12 +338,14 @@ add_function(
     #ocl_function=make_ocl("return lgamma(q);", "sas_gammaln"),
 )
 add_function(
+    # Note: "a" is given as A=... on the command line via parse_extra_pars
     name="gammainc(x)",
     mp_function=lambda x, a=A: mp.gammainc(a, a=0, b=x)/mp.gamma(a),
     np_function=lambda x, a=A: scipy.special.gammainc(a, x),
     ocl_function=make_ocl("return sas_gammainc(%.15g,q);"%A, "sas_gammainc", ["lib/sas_gammainc.c"]),
 )
 add_function(
+    # Note: "a" is given as A=... on the command line via parse_extra_pars
     name="gammaincc(x)",
     mp_function=lambda x, a=A: mp.gammainc(a, a=x, b=mp.inf)/mp.gamma(a),
     np_function=lambda x, a=A: scipy.special.gammaincc(a, x),

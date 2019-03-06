@@ -24,11 +24,13 @@ import numpy as np  # type: ignore
 
 from . import core
 from . import custom
+from . import kernelcl
 from . import product
 from . import generate
 from . import weights
 from . import modelinfo
 from .details import make_kernel_args, dispersion_mesh
+from .kernelcl import reset_environment
 
 # Hack: load in any custom distributions
 # Uses ~/.sasview/weights/*.py unless SASMODELS_WEIGHTS is set in the environ.
@@ -72,6 +74,18 @@ MODEL_BY_PATH = {}  # type: Dict[str, SasviewModelType]
 #: Track modules that we have loaded so we can determine whether the model
 #: has changed since we last reloaded.
 _CACHED_MODULE = {}  # type: Dict[str, "module"]
+
+def reset_environment():
+    # type: () -> None
+    """
+    Clear the compute engine context so that the GUI can change devices.
+
+    This removes all compiled kernels, even those that are active on fit
+    pages, but they will be restored the next time they are needed.
+    """
+    kernelcl.reset_environment()
+    for model in MODELS.values():
+        model._model = None
 
 def find_model(modelname):
     # type: (str) -> SasviewModelType
@@ -386,7 +400,6 @@ class SasviewModel(object):
         if self._model_info.structure_factor:
             hidden.add('scale')
             hidden.add('background')
-            self._model_info.parameters.defaults['background'] = 0.
 
         # Update the parameter lists to exclude any hidden parameters
         self.magnetic_params = tuple(pname for pname in self.magnetic_params
@@ -699,9 +712,13 @@ class SasviewModel(object):
         with calculation_lock:
             return self._calculate_Iq(qx, qy)
 
-    def _calculate_Iq(self, qx, qy=None, Fq=False, effective_radius_type=1):
+    def _calculate_Iq(self, qx, qy=None):
         if self._model is None:
-            self._model = core.build_model(self._model_info)
+            # Only need one copy of the compiled kernel regardless of how many
+            # times it is used, so store it in the class.  Also, to reset the
+            # compute engine, need to clear out all existing compiled kernels,
+            # which is much easier to do if we store them in the class.
+            self.__class__._model = core.build_model(self._model_info)
         if qy is not None:
             q_vectors = [np.asarray(qx), np.asarray(qy)]
         else:
@@ -719,10 +736,6 @@ class SasviewModel(object):
         #print("params", self.params)
         #print("values", values)
         #print("is_mag", is_magnetic)
-        if Fq:
-            result = calculator.Fq(call_details, values, cutoff=self.cutoff,
-                                   magnetic=is_magnetic,
-                                   effective_radius_type=effective_radius_type)
         result = calculator(call_details, values, cutoff=self.cutoff,
                             magnetic=is_magnetic)
         lazy_results = getattr(calculator, 'results',
@@ -740,10 +753,31 @@ class SasviewModel(object):
         """
         Calculate the effective radius for P(q)*S(q)
 
+        *mode* is the R_eff type, which defaults to 1 to match the ER
+        calculation for sasview models from version 3.x.
+
         :return: the value of the effective radius
         """
-        Fq = self._calculate_Iq([0.1], True, mode)
-        return Fq[2]
+        # ER and VR are only needed for old multiplication models, based on
+        # sas.sascalc.fit.MultiplicationModel.  Fail for now.  If we want to
+        # continue supporting them then add some test cases so that the code
+        # is exercised.  We can access ER/VR using the kernel Fq function by
+        # extending _calculate_Iq so that it calls:
+        #    if er_mode > 0:
+        #        res = calculator.Fq(call_details, values, cutoff=self.cutoff,
+        #                            magnetic=False, effective_radius_type=mode)
+        #        R_eff, form_shell_ratio = res[2], res[4]
+        #        return R_eff, form_shell_ratio
+        # Then use the following in calculate_ER:
+        #    ER, VR = self._calculate_Iq(q=[0.1], er_mode=mode)
+        #    return ER
+        # Similarly, for calculate_VR:
+        #    ER, VR = self._calculate_Iq(q=[0.1], er_mode=1)
+        #    return VR
+        # Obviously a combined calculate_ER_VR method would be better, but
+        # we only need them to support very old models, so ignore the 2x
+        # performance hit.
+        raise NotImplementedError("ER function is no longer available.")
 
     def calculate_VR(self):
         # type: () -> float
@@ -752,8 +786,8 @@ class SasviewModel(object):
 
         :return: the value of the form:shell volume ratio
         """
-        Fq = self._calculate_Iq([0.1], True, mode)
-        return Fq[4]
+        # See comments in calculate_ER.
+        raise NotImplementedError("VR function is no longer available.")
 
     def set_dispersion(self, parameter, dispersion):
         # type: (str, weights.Dispersion) -> None
@@ -918,6 +952,34 @@ def test_old_name():
     from sas.models.CylinderModel import CylinderModel
     CylinderModel().evalDistribution([0.1, 0.1])
 
+def test_structure_factor_background():
+    # type: () -> None
+    """
+    Check that sasview model and direct model match, with background=0.
+    """
+    from .data import empty_data1D
+    from .core import load_model_info, build_model
+    from .direct_model import DirectModel
+
+    model_name = "hardsphere"
+    q = [0.0]
+
+    sasview_model = _make_standard_model(model_name)()
+    sasview_value = sasview_model.evalDistribution(np.array(q))[0]
+
+    data = empty_data1D(q)
+    model_info = load_model_info(model_name)
+    model = build_model(model_info)
+    direct_model = DirectModel(data, model)
+    direct_value_zero_background = direct_model(background=0.0)
+
+    assert sasview_value == direct_value_zero_background
+
+    # Additionally check that direct value background defaults to zero
+    direct_value_default = direct_model()
+    assert sasview_value == direct_value_default
+
+
 def magnetic_demo():
     Model = _make_standard_model('sphere')
     model = Model()
@@ -938,3 +1000,4 @@ if __name__ == "__main__":
     #test_structure_factor()
     #print("rpa:", test_rpa())
     #test_empty_distribution()
+    #test_structure_factor_background()
