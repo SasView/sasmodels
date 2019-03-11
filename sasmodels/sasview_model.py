@@ -252,11 +252,14 @@ def _generate_model_attributes(model_info):
     # TODO: allow model to override axis labels input/output name/unit
 
     # Process multiplicity
+    control_pars = [p.id for p in model_info.parameters.kernel_parameters
+                    if p.is_control]
+    control_id = control_pars[0] if control_pars else None
     non_fittable = []  # type: List[str]
     xlabel = model_info.profile_axes[0] if model_info.profile is not None else ""
     variants = MultiplicityInfo(0, "", [], xlabel)
     for p in model_info.parameters.kernel_parameters:
-        if p.name == model_info.control:
+        if p.id == control_id:
             non_fittable.append(p.name)
             variants = MultiplicityInfo(
                 len(p.choices) if p.choices else int(p.limits[1]),
@@ -831,7 +834,7 @@ class SasviewModel(object):
         Return dispersion weights for parameter
         """
         if par.name not in self.params:
-            if par.name == self.multiplicity_info.control:
+            if par.id == self.multiplicity_info.control:
                 return self.multiplicity, [self.multiplicity], [1.0]
             else:
                 # For hidden parameters use default values.  This sets
