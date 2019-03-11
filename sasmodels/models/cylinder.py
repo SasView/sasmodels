@@ -97,6 +97,7 @@ References
 
 J. S. Pedersen, Adv. Colloid Interface Sci. 70, 171-210 (1997).
 G. Fournet, Bull. Soc. Fr. Mineral. Cristallogr. 74, 39-113 (1951).
+L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949). 
 """
 
 import numpy as np  # type: ignore
@@ -139,7 +140,7 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "cylinder.c"]
 have_Fq = True
 effective_radius_type = [
-    "equivalent sphere", "radius",
+    "excluded volume", "equivalent volume sphere", "radius",
     "half length", "half min dimension", "half max dimension", "half diagonal",
     ]
 
@@ -184,13 +185,14 @@ del qx, qy  # not necessary to delete, but cleaner
 # Default radius and length
 radius, length = parameters[2][2], parameters[3][2]
 tests.extend([
-    ({'radius_effective_type': 0}, 0.1, None, None, 0., pi*radius**2*length, 1.0),
-    ({'radius_effective_type': 1}, 0.1, None, None, (0.75*radius**2*length)**(1./3.), None, None),
-    ({'radius_effective_type': 2}, 0.1, None, None, radius, None, None),
-    ({'radius_effective_type': 3}, 0.1, None, None, length/2., None, None),
-    ({'radius_effective_type': 4}, 0.1, None, None, min(radius, length/2.), None, None),
-    ({'radius_effective_type': 5}, 0.1, None, None, max(radius, length/2.), None, None),
-    ({'radius_effective_type': 6}, 0.1, None, None, np.sqrt(4*radius**2 + length**2)/2., None, None),
+    ({'radius_effective_mode': 0}, 0.1, None, None, 0., pi*radius**2*length, 1.0),   
+    ({'radius_effective_mode': 1}, 0.1, None, None, 0.5*(0.75*radius*(2.0*radius*length + (radius + length)*(pi*radius + length)))**(1./3.), None, None),    
+    ({'radius_effective_mode': 2}, 0.1, None, None, (0.75*radius**2*length)**(1./3.), None, None),
+    ({'radius_effective_mode': 3}, 0.1, None, None, radius, None, None),
+    ({'radius_effective_mode': 4}, 0.1, None, None, length/2., None, None),
+    ({'radius_effective_mode': 5}, 0.1, None, None, min(radius, length/2.), None, None),
+    ({'radius_effective_mode': 6}, 0.1, None, None, max(radius, length/2.), None, None),
+    ({'radius_effective_mode': 7}, 0.1, None, None, np.sqrt(4*radius**2 + length**2)/2., None, None),
 ])
 del radius, length
 # pylint: enable=bad-whitespace, line-too-long

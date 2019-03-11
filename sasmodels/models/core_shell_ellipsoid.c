@@ -74,10 +74,10 @@ effective_radius(int mode, double radius_equat_core, double x_core, double thick
 
     switch (mode) {
     default:
-    case 1: // equivalent sphere
-        return radius_from_volume(radius_equat_core, x_core, thick_shell, x_polar_shell);
-    case 2: // average outer curvature
+    case 1: // average outer curvature
         return radius_from_curvature(radius_equat_core, x_core, thick_shell, x_polar_shell);
+    case 2: // equivalent volume sphere
+        return radius_from_volume(radius_equat_core, x_core, thick_shell, x_polar_shell);
     case 3: // min outer radius
         return (radius_polar_tot < radius_equat_tot ? radius_polar_tot : radius_equat_tot);
     case 4: // max outer radius

@@ -62,6 +62,14 @@ form_volume(double radius_bell,
 }
 
 static double
+radius_from_excluded_volume(double radius_bell, double radius, double length)
+{
+    const double hdist = sqrt(square(radius_bell) - square(radius));
+    const double length_tot = length + 2.0*(hdist+ radius);
+    return 0.5*cbrt(0.75*radius_bell*(2.0*radius_bell*length_tot + (radius_bell + length_tot)*(M_PI*radius_bell + length_tot)));
+}
+
+static double
 radius_from_volume(double radius_bell, double radius, double length)
 {
     const double vol_barbell = form_volume(radius_bell,radius,length);
@@ -80,13 +88,15 @@ effective_radius(int mode, double radius_bell, double radius, double length)
 {
     switch (mode) {
     default:
-    case 1: // equivalent sphere
+    case 1: // equivalent cylinder excluded volume
+        return radius_from_excluded_volume(radius_bell, radius , length);
+    case 2: // equivalent volume sphere
         return radius_from_volume(radius_bell, radius , length);
-    case 2: // radius
+    case 3: // radius
         return radius;
-    case 3: // half length
+    case 4: // half length
         return 0.5*length;
-    case 4: // half total length
+    case 5: // half total length
         return radius_from_totallength(radius_bell,radius,length);
     }
 }

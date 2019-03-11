@@ -36,6 +36,14 @@ bicelle_kernel(double qab,
 }
 
 static double
+radius_from_excluded_volume(double radius, double thick_rim, double thick_face, double length)
+{
+    const double radius_tot = radius + thick_rim;
+    const double length_tot = length + 2.0*thick_face;
+    return 0.5*cbrt(0.75*radius_tot*(2.0*radius_tot*length_tot + (radius_tot + length_tot)*(M_PI*radius_tot + length_tot)));
+}
+
+static double
 radius_from_volume(double radius, double thick_rim, double thick_face, double length)
 {
     const double volume_bicelle = form_volume(radius,thick_rim,thick_face,length);
@@ -55,13 +63,15 @@ effective_radius(int mode, double radius, double thick_rim, double thick_face, d
 {
     switch (mode) {
     default:
-    case 1: // equivalent sphere
+    case 1: // equivalent cylinder excluded volume
+        return radius_from_excluded_volume(radius, thick_rim, thick_face, length);
+    case 2: // equivalent sphere
         return radius_from_volume(radius, thick_rim, thick_face, length);
-    case 2: // outer rim radius
+    case 3: // outer rim radius
         return radius + thick_rim;
-    case 3: // half outer thickness
+    case 4: // half outer thickness
         return 0.5*length + thick_face;
-    case 4: // half diagonal
+    case 5: // half diagonal
         return radius_from_diagonal(radius,thick_rim,thick_face,length);
     }
 }

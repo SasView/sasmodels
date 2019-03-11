@@ -14,6 +14,7 @@ try: # CRUFT: travis-ci does not support mpl_toolkits.mplot3d
 except ImportError:
     pass
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 import numpy as np
@@ -745,19 +746,21 @@ def run(model_name='parallelepiped', size=(10, 40, 100),
     except Exception:
         pass
 
-    axcolor = 'lightgoldenrodyellow'
+    # CRUFT: use axisbg instead of facecolor for matplotlib<2
+    facecolor_prop = 'facecolor' if mpl.__version__ > '2' else 'axisbg'
+    props = {facecolor_prop: 'lightgoldenrodyellow'}
 
     ## add control widgets to plot
-    axes_theta = plt.axes([0.1, 0.15, 0.45, 0.04], axisbg=axcolor)
-    axes_phi = plt.axes([0.1, 0.1, 0.45, 0.04], axisbg=axcolor)
-    axes_psi = plt.axes([0.1, 0.05, 0.45, 0.04], axisbg=axcolor)
+    axes_theta = plt.axes([0.1, 0.15, 0.45, 0.04], **props)
+    axes_phi = plt.axes([0.1, 0.1, 0.45, 0.04], **props)
+    axes_psi = plt.axes([0.1, 0.05, 0.45, 0.04], **props)
     stheta = Slider(axes_theta, 'Theta', -90, 90, valinit=theta)
     sphi = Slider(axes_phi, 'Phi', -180, 180, valinit=phi)
     spsi = Slider(axes_psi, 'Psi', -180, 180, valinit=psi)
 
-    axes_dtheta = plt.axes([0.75, 0.15, 0.15, 0.04], axisbg=axcolor)
-    axes_dphi = plt.axes([0.75, 0.1, 0.15, 0.04], axisbg=axcolor)
-    axes_dpsi = plt.axes([0.75, 0.05, 0.15, 0.04], axisbg=axcolor)
+    axes_dtheta = plt.axes([0.75, 0.15, 0.15, 0.04], **props)
+    axes_dphi = plt.axes([0.75, 0.1, 0.15, 0.04], **props)
+    axes_dpsi = plt.axes([0.75, 0.05, 0.15, 0.04], **props)
     # Note: using ridiculous definition of rectangle distribution, whose width
     # in sasmodels is sqrt(3) times the given width.  Divide by sqrt(3) to keep
     # the maximum width to 90.

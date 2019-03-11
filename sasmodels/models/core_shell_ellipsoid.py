@@ -146,7 +146,7 @@ parameters = [
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "core_shell_ellipsoid.c"]
 have_Fq = True
 effective_radius_type = [
-    "equivalent sphere", "average outer curvature",
+    "average outer curvature", "equivalent volume sphere",     
     "min outer radius", "max outer radius",
     ]
 

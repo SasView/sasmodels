@@ -87,6 +87,7 @@ References
 
 L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and
 Neutron Scattering*, Plenum, New York, (1987) [see table 3.4]
+L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949). 
 
 Authorship and Verification
 ----------------------------
@@ -123,7 +124,7 @@ parameters = [["radius_minor",     "Ang",        20.0,  [0, inf],    "volume",  
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "elliptical_cylinder.c"]
 have_Fq = True
 effective_radius_type = [
-    "equivalent sphere", "average radius", "min radius", "max radius",
+    "equivalent cylinder excluded volume", "equivalent volume sphere", "average radius", "min radius", "max radius",
     "equivalent circular cross-section",
     "half length", "half min dimension", "half max dimension", "half diagonal",
     ]

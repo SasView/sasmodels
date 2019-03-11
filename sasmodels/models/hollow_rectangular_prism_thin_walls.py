@@ -71,6 +71,7 @@ References
 ----------
 
 .. [#Nayuk2012] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949). 
 
 
 Authorship and Verification
@@ -109,7 +110,8 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
 source = ["lib/gauss76.c", "hollow_rectangular_prism_thin_walls.c"]
 have_Fq = True
 effective_radius_type = [
-    "equivalent sphere", "half length_a", "half length_b", "half length_c",
+    "equivalent cylinder excluded volume", "equivalent outer volume sphere", 
+    "half length_a", "half length_b", "half length_c",
     "equivalent outer circular cross-section",
     "half ab diagonal", "half diagonal",
     ]

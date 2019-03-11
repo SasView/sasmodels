@@ -21,24 +21,34 @@ form_volume(double length_a, double b2a_ratio, double c2a_ratio, double thicknes
 }
 
 static double
+radius_from_excluded_volume(double length_a, double b2a_ratio, double c2a_ratio)
+{
+    const double r_equiv = sqrt(length_a*length_a*b2a_ratio/M_PI);
+    const double length_c = length_a*c2a_ratio;
+    return 0.5*cbrt(0.75*r_equiv*(2.0*r_equiv*length_c + (r_equiv + length_c)*(M_PI*r_equiv + length_c)));
+}
+
+static double
 effective_radius(int mode, double length_a, double b2a_ratio, double c2a_ratio, double thickness)
 // NOTE length_a is external dimension!
 {
     switch (mode) {
     default:
-    case 1: // equivalent sphere
+    case 1: // equivalent cylinder excluded volume
+        return radius_from_excluded_volume(length_a, b2a_ratio, c2a_ratio);
+    case 2: // equivalent outer volume sphere
         return cbrt(cube(length_a)*b2a_ratio*c2a_ratio/M_4PI_3);
-    case 2: // half length_a
+    case 3: // half length_a
         return 0.5 * length_a;
-    case 3: // half length_b
+    case 4: // half length_b
         return 0.5 * length_a*b2a_ratio;
-    case 4: // half length_c
+    case 5: // half length_c
         return 0.5 * length_a*c2a_ratio;
-    case 5: // equivalent outer circular cross-section
+    case 6: // equivalent outer circular cross-section
         return length_a*sqrt(b2a_ratio/M_PI);
-    case 6: // half ab diagonal
+    case 7: // half ab diagonal
         return 0.5*sqrt(square(length_a) * (1.0 + square(b2a_ratio)));
-    case 7: // half diagonal
+    case 8: // half diagonal
         return 0.5*sqrt(square(length_a) * (1.0 + square(b2a_ratio) + square(c2a_ratio)));
     }
 }

@@ -5,6 +5,13 @@ form_volume(double radius_minor, double r_ratio, double length)
 }
 
 static double
+radius_from_excluded_volume(double radius_minor, double r_ratio, double length)
+{
+    const double r_equiv = sqrt(radius_minor*radius_minor*r_ratio);
+    return 0.5*cbrt(0.75*r_equiv*(2.0*r_equiv*length + (r_equiv + length)*(M_PI*r_equiv + length)));
+}
+
+static double
 radius_from_volume(double radius_minor, double r_ratio, double length)
 {
     const double volume_ellcyl = form_volume(radius_minor,r_ratio,length);
@@ -37,23 +44,25 @@ effective_radius(int mode, double radius_minor, double r_ratio, double length)
 {
     switch (mode) {
     default:
-    case 1: // equivalent sphere
+    case 1: // equivalent cylinder excluded volume
+        return radius_from_excluded_volume(radius_minor, r_ratio, length);
+    case 2: // equivalent volume sphere
         return radius_from_volume(radius_minor, r_ratio, length);
-    case 2: // average radius
+    case 3: // average radius
         return 0.5*radius_minor*(1.0 + r_ratio);
-    case 3: // min radius
+    case 4: // min radius
         return (r_ratio > 1.0 ? radius_minor : r_ratio*radius_minor);
-    case 4: // max radius
+    case 5: // max radius
         return (r_ratio < 1.0 ? radius_minor : r_ratio*radius_minor);
-    case 5: // equivalent circular cross-section
+    case 6: // equivalent circular cross-section
         return sqrt(radius_minor*radius_minor*r_ratio);
-    case 6: // half length
+    case 7: // half length
         return 0.5*length;
-    case 7: // half min dimension
+    case 8: // half min dimension
         return radius_from_min_dimension(radius_minor,r_ratio,0.5*length);
-    case 8: // half max dimension
+    case 9: // half max dimension
         return radius_from_max_dimension(radius_minor,r_ratio,0.5*length);
-    case 9: // half diagonal
+    case 10: // half diagonal
         return radius_from_diagonal(radius_minor,r_ratio,length);
     }
 }
