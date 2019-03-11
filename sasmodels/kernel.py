@@ -22,6 +22,7 @@ else:
     from .modelinfo import ModelInfo
 # pylint: enable=unused-import
 
+
 class KernelModel(object):
     info = None  # type: ModelInfo
     dtype = None # type: np.dtype
@@ -32,6 +33,7 @@ class KernelModel(object):
     def release(self):
         # type: () -> None
         pass
+
 
 class Kernel(object):
     #: kernel dimension, either "1d" or "2d"
