@@ -1001,7 +1001,7 @@ class ModelInfo(object):
     #: will return *I(q, a, b, ...)*.  Multiplicity parameters are sent as
     #: pointers to doubles.  Constants in floating point expressions should
     #: include the decimal point. See :mod:`generate` for more details. If
-    #: *have_Fq* is True, then Iq should return an interleaved array of 
+    #: *have_Fq* is True, then Iq should return an interleaved array of
     #: $[\sum F(q_1), \sum F^2(q_1), \ldots, \sum F(q_n), \sum F^2(q_n)]$.
     Iq = None               # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
     #: Returns *I(qab, qc, a, b, ...)*.  The interface follows :attr:`Iq`.
