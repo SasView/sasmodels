@@ -63,14 +63,15 @@ def list_models(kind=None):
 
         * all: all models
         * py: python models only
-        * c: compiled models only
-        * single: models which support single precision
-        * double: models which require double precision
-        * opencl: controls if OpenCL is supperessed
-        * 1d: models which are 1D only, or 2D using abs(q)
-        * 2d: models which can be 2D
-        * magnetic: models with an sld
-        * nommagnetic: models without an sld
+        * c: c models only
+        * single: c models which support single precision
+        * double: c models which require double precision
+        * opencl: c models which run in opencl
+        * dll: c models which do not run in opencl
+        * 1d: models without orientation
+        * 2d: models with orientation
+        * magnetic: models supporting magnetic sld
+        * nommagnetic: models without magnetic parameter
 
     For multiple conditions, combine with plus.  For example, *c+single+2d*
     would return all oriented models implemented in C which can be computed
@@ -94,24 +95,28 @@ def _matches(name, kind):
         return True
     info = load_model_info(name)
     pars = info.parameters.kernel_parameters
-    if kind == "py" and callable(info.Iq):
-        return True
-    elif kind == "c" and not callable(info.Iq):
-        return True
-    elif kind == "double" and not info.single:
-        return True
-    elif kind == "single" and info.single:
-        return True
-    elif kind == "opencl" and info.opencl:
-        return True
-    elif kind == "2d" and any(p.type == 'orientation' for p in pars):
-        return True
-    elif kind == "1d" and all(p.type != 'orientation' for p in pars):
-        return True
-    elif kind == "magnetic" and any(p.type == 'sld' for p in pars):
-        return True
-    elif kind == "nonmagnetic" and any(p.type != 'sld' for p in pars):
-        return True
+    # TODO: may be adding Fq to the list at some point
+    is_pure_py = callable(info.Iq)
+    if kind == "py":
+        return is_pure_py
+    elif kind == "c":
+        return not is_pure_py
+    elif kind == "double":
+        return not info.single and not is_pure_py
+    elif kind == "single":
+        return info.single and not is_pure_py
+    elif kind == "opencl":
+        return info.opencl
+    elif kind == "dll":
+        return not info.opencl and not is_pure_py
+    elif kind == "2d":
+        return any(p.type == 'orientation' for p in pars)
+    elif kind == "1d":
+        return all(p.type != 'orientation' for p in pars)
+    elif kind == "magnetic":
+        return any(p.type == 'sld' for p in pars)
+    elif kind == "nonmagnetic":
+        return not any(p.type == 'sld' for p in pars)
     return False
 
 def load_model(model_name, dtype=None, platform='ocl'):
@@ -316,16 +321,6 @@ def parse_dtype(model_info, dtype=None, platform=None):
 
     return numpy_dtype, fast, platform
 
-def list_models_main():
-    # type: () -> None
-    """
-    Run list_models as a main program.  See :func:`list_models` for the
-    kinds of models that can be requested on the command line.
-    """
-    import sys
-    kind = sys.argv[1] if len(sys.argv) > 1 else "all"
-    print("\n".join(list_models(kind)))
-
 def test_composite_order():
     def test_models(fst, snd):
         """Confirm that two models produce the same parameters"""
@@ -384,6 +379,22 @@ def test_composite():
               " structure_factor_mode radius_effective_mode"
               " A_sld A_sld_solvent A_radius").split()
     assert target == actual, "%s != %s"%(target, actual)
+
+def list_models_main():
+    # type: () -> None
+    """
+    Run list_models as a main program.  See :func:`list_models` for the
+    kinds of models that can be requested on the command line.
+    """
+    import sys
+    kind = sys.argv[1] if len(sys.argv) > 1 else "all"
+    try:
+        models = list_models(kind)
+    except Exception as exc:
+        print(list_models.__doc__)
+        return 1
+
+    print("\n".join(list_models(kind)))
 
 if __name__ == "__main__":
     list_models_main()

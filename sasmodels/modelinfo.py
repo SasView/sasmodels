@@ -984,6 +984,11 @@ class ModelInfo(object):
     #: defined using a string containing C code), shell_volume must also be
     #: C code, either defined as a string, or in the sources.
     shell_volume = None      # type: Union[None, str, Callable[[np.ndarray], float]]
+    #: Computes the effective radius of the shape given the volume parameters.
+    #: Only needed for models defined in python that can be used for
+    #: monodisperse approximation for non-dilute solutions, P@S.  The first
+    #: argument is the integer effective radius mode, with default 0.
+    effective_radius = None  # type: Union[None, Callable[[int, np.ndarray], float]]
     #: Returns *I(q, a, b, ...)* for parameters *a*, *b*, etc. defined
     #: by the parameter table.  *Iq* can be defined as a python function, or
     #: as a C function.  If it is defined in C, then set *Iq* to the body of
@@ -995,7 +1000,9 @@ class ModelInfo(object):
     #: define *static double Iq(double q, double a, double b, ...)* which
     #: will return *I(q, a, b, ...)*.  Multiplicity parameters are sent as
     #: pointers to doubles.  Constants in floating point expressions should
-    #: include the decimal point. See :mod:`generate` for more details.
+    #: include the decimal point. See :mod:`generate` for more details. If
+    #: *have_Fq* is True, then Iq should return an interleaved array of 
+    #: $[\sum F(q_1), \sum F^2(q_1), \ldots, \sum F(q_n), \sum F^2(q_n)]$.
     Iq = None               # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
     #: Returns *I(qab, qc, a, b, ...)*.  The interface follows :attr:`Iq`.
     Iqac = None             # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
