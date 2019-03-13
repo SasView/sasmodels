@@ -272,6 +272,17 @@ streamlined so this flag was not necessary.
 structure factor to account for interactions between particles.  See
 `Form_Factors`_ for more details.
 
+**model_info = ...** lets you define a model directly, for example, by
+loading and modifying existing models.  This is done implicitly by
+:func:`sasmodels.core.load_model_info`, which can create a mixture model
+from a pair of existing models.  For example::
+
+    from sasmodels.core import load_model_info
+    model_info = load_model_info('sphere+cylinder')
+
+See :class:`sasmodels.modelinfo.ModelInfo` for details about the model
+attributes that are defined.
+
 Model Parameters
 ................
 
@@ -893,7 +904,7 @@ file in the order given, otherwise these functions will not be available.
              - \frac{\cos(x)}{x}\left(1 - \frac{2!}{x^2} + \frac{4!}{x^4} - \frac{6!}{x^6} \right)
              - \frac{\sin(x)}{x}\left(\frac{1}{x} - \frac{3!}{x^3} + \frac{5!}{x^5} - \frac{7!}{x^7}\right)
 
-        For small arguments ,
+        For small arguments,
 
         .. math::
 

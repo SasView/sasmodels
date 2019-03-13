@@ -4,9 +4,11 @@ Run model unit tests.
 
 Usage::
 
-    python -m sasmodels.model_test [opencl|cuda|dll] model1 model2 ...
+    python -m sasmodels.model_test [opencl|cuda|dll|all] model1 model2 ...
 
-    if model1 is 'all', then all except the remaining models will be tested
+If model1 is 'all', then all except the remaining models will be tested.
+Subgroups are also possible, such as 'py', 'single' or '1d'.  See
+:func:`core.list_models` for details.
 
 Each model is tested using the default parameters at q=0.1, (qx, qy)=(0.1, 0.1),
 and Fq is called to make sure R_eff, volume and volume ratio are computed.
@@ -44,6 +46,7 @@ Precision defaults to 5 digits (relative).
 """
 from __future__ import print_function
 
+import argparse
 import sys
 import unittest
 import traceback
@@ -88,10 +91,12 @@ def make_suite(loaders, models):
     """
     suite = unittest.TestSuite()
 
-    if models[0] in core.KINDS:
+    try:
+        # See if the first model parses as a model group
+        group = list_models(models[0])
         skip = models[1:]
-        models = list_models(models[0])
-    else:
+        models = group
+    except Exception:
         skip = []
     for model_name in models:
         if model_name not in skip:
@@ -166,7 +171,7 @@ def _add_model_to_suite(loaders, suite, model_info):
 
         # test using cuda if desired and available
         if 'cuda' in loaders and use_cuda():
-            test_name = "%s-cuda"%model_name
+            test_name = "%s-cuda" % model_info.id
             test_method_name = "test_%s_cuda" % model_info.id
             # Using dtype=None so that the models that are only
             # correct for double precision are not tested using
@@ -473,68 +478,6 @@ def check_model(model_info):
     return result.wasSuccessful(), output
 
 
-def main(*models):
-    # type: (*str) -> int
-    """
-    Run tests given is models.
-
-    Returns 0 if success or 1 if any tests fail.
-    """
-    try:
-        from xmlrunner import XMLTestRunner as TestRunner
-        test_args = {'output': 'logs'}
-    except ImportError:
-        from unittest import TextTestRunner as TestRunner
-        test_args = {}
-
-    if models and models[0] == '-v':
-        verbosity = 2
-        models = models[1:]
-    else:
-        verbosity = 1
-    if models and models[0] == 'opencl':
-        if not use_opencl():
-            print("opencl is not available")
-            return 1
-        loaders = ['opencl']
-        models = models[1:]
-    elif models and models[0] == 'cuda':
-        if not use_cuda():
-            print("cuda is not available")
-            return 1
-        loaders = ['cuda']
-        models = models[1:]
-    elif models and models[0] == 'dll':
-        # TODO: test if compiler is available?
-        loaders = ['dll']
-        models = models[1:]
-    else:
-        loaders = ['dll']
-        if use_opencl():
-            loaders.append('opencl')
-        if use_cuda():
-            loaders.append('cuda')
-    if not models:
-        print("""\
-usage:
-  python -m sasmodels.model_test [-v] [opencl|cuda|dll] model1 model2 ...
-
-If -v is included on the command line, then use verbose output.
-
-If no platform is specified, then models will be tested with dll, and
-if available, OpenCL and CUDA; the compute target is ignored for pure python models.
-
-If model1 is 'all', then all except the remaining models will be tested.
-
-""")
-
-        return 1
-
-    runner = TestRunner(verbosity=verbosity, **test_args)
-    result = runner.run(make_suite(loaders, models))
-    return 1 if result.failures or result.errors else 0
-
-
 def model_tests():
     # type: () -> Iterator[Callable[[], None]]
     """
@@ -569,5 +512,60 @@ def model_tests():
         yield build_test(test)
 
 
+def main():
+    # type: (*str) -> int
+    """
+    Run tests given is models.
+
+    Returns 0 if success or 1 if any tests fail.
+    """
+    try:
+        from xmlrunner import XMLTestRunner as TestRunner
+        test_args = {'output': 'logs'}
+    except ImportError:
+        from unittest import TextTestRunner as TestRunner
+        test_args = {}
+
+    parser = argparse.ArgumentParser(description="Test SasModels Models")
+    parser.add_argument("-v", "--verbose", action="store_const",
+                        default=1, const=2, help="Use verbose output")
+    parser.add_argument("-e", "--engine", default="all",
+                        help="Engines on which to run the test.  "
+                        "Valid values are opencl, cuda, dll, and all. "
+                        "Defaults to all if no value is given")
+    parser.add_argument("models", nargs="*",
+                        help="The names of the models to be tested.  "
+                        "If the first model is 'all', then all but the listed "
+                        "models will be tested.  See core.list_models() for "
+                        "names of other groups, such as 'py' or 'single'.")
+    args, models = parser.parse_known_args()
+
+    if args.engine == "opencl":
+        if not use_opencl():
+            print("opencl is not available")
+            return 1
+        loaders = ['opencl']
+    elif args.engine == "dll":
+        loaders = ["dll"]
+    elif args.engine == "cuda":
+        if not use_cuda():
+            print("cuda is not available")
+            return 1
+        loaders = ['cuda']
+    elif args.engine == "all":
+        loaders = ['dll']
+        if use_opencl():
+            loaders.append('opencl')
+        if use_cuda():
+            loaders.append('cuda')
+    else:
+        print("unknown engine " + args.engine)
+        return 1
+
+    runner = TestRunner(verbosity=args.verbose, **test_args)
+    result = runner.run(make_suite(loaders, args.models))
+    return 1 if result.failures or result.errors else 0
+
+
 if __name__ == "__main__":
-    sys.exit(main(*sys.argv[1:]))
+    sys.exit(main())

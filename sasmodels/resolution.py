@@ -497,13 +497,13 @@ def geometric_extrapolation(q, q_min, q_max, points_per_decade=None):
     if q_min < q[0]:
         if q_min < 0:
             q_min = q[0]*MINIMUM_ABSOLUTE_Q
-        n_low = log_delta_q * (log(q[0])-log(q_min))
-        q_low = np.logspace(log10(q_min), log10(q[0]), int(np.ceil(n_low))+1)[:-1]
+        n_low = int(np.ceil(log_delta_q * (log(q[0])-log(q_min))))
+        q_low = np.logspace(log10(q_min), log10(q[0]), n_low+1)[:-1]
     else:
         q_low = []
     if q_max > q[-1]:
-        n_high = log_delta_q * (log(q_max)-log(q[-1]))
-        q_high = np.logspace(log10(q[-1]), log10(q_max), int(np.ceil(n_high))+1)[1:]
+        n_high = int(np.ceil(log_delta_q * (log(q_max)-log(q[-1]))))
+        q_high = np.logspace(log10(q[-1]), log10(q_max), n_high+1)[1:]
     else:
         q_high = []
     return np.concatenate([q_low, q, q_high])

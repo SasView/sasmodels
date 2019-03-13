@@ -294,7 +294,26 @@ class Parameter(object):
     *choices* is the option names for a drop down list of options, as for
     example, might be used to set the value of a shape parameter.
 
-    These values are set by :func:`make_parameter_table` and
+    Control parameters are used for variant models such as :ref:`rpa` which
+    have different cases with different parameters, as well as models
+    like :ref:`spherical_sld` with its user defined number of shells.
+    The control parameter should appear in the parameter table along with the
+    parameters it is is controlling.  For variant models, use *[CASES]* in
+    place of the parameter limits Within the parameter definition table,
+    with case names such as::
+
+         CASES = ["diblock copolymer", "triblock copolymer", ...]
+
+    This should give *limits=[[case1, case2, ...]]*, but the model loader
+    translates it to *limits=[0, len(CASES)-1]*, and adds *choices=CASES* to
+    the :class:`Parameter` definition. Note that models can use a list of
+    cases as a parameter without it being a control parameter.  Either way,
+    the parameter is sent to the model evaluator as *float(choice_num)*,
+    where choices are numbered from 0. :meth:`ModelInfo.get_hidden_parameters`
+    will determine which parameers to display.
+
+    The class contructor should not be called directly, but instead the
+    parameter table is built using :func:`make_parameter_table` and
     :func:`parse_parameter` therein.
     """
     def __init__(self, name, units='', default=None, limits=(-np.inf, np.inf),
@@ -846,11 +865,6 @@ def make_model_info(kernel_module):
     info.profile = getattr(kernel_module, 'profile', None) # type: ignore
     info.sesans = getattr(kernel_module, 'sesans', None) # type: ignore
     info.random = getattr(kernel_module, 'random', None)
-
-    # multiplicity info
-    control_pars = [p.id for p in parameters.kernel_parameters if p.is_control]
-    default_control = control_pars[0] if control_pars else None
-    info.control = getattr(kernel_module, 'control', default_control)
     info.hidden = getattr(kernel_module, 'hidden', None) # type: ignore
 
     info.lineno = {}
@@ -873,6 +887,11 @@ def make_model_info(kernel_module):
     # converted from python to C
     info.opencl = getattr(kernel_module, 'opencl', not callable(info.Iq))
     info.single = getattr(kernel_module, 'single', not callable(info.Iq))
+    
+    # Set control flag for explicitly set parameters, e.g., in the RPA model.
+    control = getattr(kernel_module, 'control', None)
+    if control is not None:
+        parameters[control].is_control = True
 
     if callable(info.Iq) and parameters.has_2d:
         raise ValueError("oriented python models not supported")
@@ -923,18 +942,6 @@ class ModelInfo(object):
     #: arises when the model is constructed using names such as
     #: *sphere*hardsphere* or *cylinder+sphere*.
     composition = None      # type: Optional[Tuple[str, List[ModelInfo]]]
-    #: Name of the control parameter for a variant model such as :ref:`rpa`.
-    #: The *control* parameter should appear in the parameter table, with
-    #: limits defined as *[CASES]*, for case names such as
-    #: *CASES = ["diblock copolymer", "triblock copolymer", ...]*.
-    #: This should give *limits=[[case1, case2, ...]]*, but the
-    #: model loader translates this to *limits=[0, len(CASES)-1]*, and adds
-    #: *choices=CASES* to the :class:`Parameter` definition. Note that
-    #: models can use a list of cases as a parameter without it being a
-    #: control parameter.  Either way, the parameter is sent to the model
-    #: evaluator as *float(choice_num)*, where choices are numbered from 0.
-    #: See also :attr:`hidden`.
-    control = None          # type: str
     #: Different variants require different parameters.  In order to show
     #: just the parameters needed for the variant selected by :attr:`control`,
     #: you should provide a function *hidden(control) -> set(['a', 'b', ...])*
@@ -998,6 +1005,11 @@ class ModelInfo(object):
     #: defined using a string containing C code), shell_volume must also be
     #: C code, either defined as a string, or in the sources.
     shell_volume = None      # type: Union[None, str, Callable[[np.ndarray], float]]
+    #: Computes the effective radius of the shape given the volume parameters.
+    #: Only needed for models defined in python that can be used for
+    #: monodisperse approximation for non-dilute solutions, P@S.  The first
+    #: argument is the integer effective radius mode, with default 0.
+    effective_radius = None  # type: Union[None, Callable[[int, np.ndarray], float]]
     #: Returns *I(q, a, b, ...)* for parameters *a*, *b*, etc. defined
     #: by the parameter table.  *Iq* can be defined as a python function, or
     #: as a C function.  If it is defined in C, then set *Iq* to the body of
@@ -1009,7 +1021,9 @@ class ModelInfo(object):
     #: define *static double Iq(double q, double a, double b, ...)* which
     #: will return *I(q, a, b, ...)*.  Multiplicity parameters are sent as
     #: pointers to doubles.  Constants in floating point expressions should
-    #: include the decimal point. See :mod:`generate` for more details.
+    #: include the decimal point. See :mod:`generate` for more details. If
+    #: *have_Fq* is True, then Iq should return an interleaved array of
+    #: $[\sum F(q_1), \sum F^2(q_1), \ldots, \sum F(q_n), \sum F^2(q_n)]$.
     Iq = None               # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
     #: Returns *I(qab, qc, a, b, ...)*.  The interface follows :attr:`Iq`.
     Iqac = None             # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]

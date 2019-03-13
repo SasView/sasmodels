@@ -127,7 +127,6 @@ def make_product_info(p_info, s_info):
     #model_info.source = []
     # Remember the component info blocks so we can build the model
     model_info.composition = ('product', [p_info, s_info])
-    model_info.control = p_info.control
     model_info.hidden = p_info.hidden
     if getattr(p_info, 'profile', None) is not None:
         profile_pars = set(p.id for p in p_info.parameters.kernel_parameters)

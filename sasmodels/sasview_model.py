@@ -24,11 +24,13 @@ import numpy as np  # type: ignore
 
 from . import core
 from . import custom
+from . import kernelcl
 from . import product
 from . import generate
 from . import weights
 from . import modelinfo
 from .details import make_kernel_args, dispersion_mesh
+from .kernelcl import reset_environment
 
 # pylint: disable=unused-import
 try:
@@ -67,6 +69,18 @@ MODEL_BY_PATH = {}  # type: Dict[str, SasviewModelType]
 #: Track modules that we have loaded so we can determine whether the model
 #: has changed since we last reloaded.
 _CACHED_MODULE = {}  # type: Dict[str, "module"]
+
+def reset_environment():
+    # type: () -> None
+    """
+    Clear the compute engine context so that the GUI can change devices.
+
+    This removes all compiled kernels, even those that are active on fit
+    pages, but they will be restored the next time they are needed.
+    """
+    kernelcl.reset_environment()
+    for model in MODELS.values():
+        model._model = None
 
 def find_model(modelname):
     # type: (str) -> SasviewModelType
@@ -238,11 +252,14 @@ def _generate_model_attributes(model_info):
     # TODO: allow model to override axis labels input/output name/unit
 
     # Process multiplicity
+    control_pars = [p.id for p in model_info.parameters.kernel_parameters
+                    if p.is_control]
+    control_id = control_pars[0] if control_pars else None
     non_fittable = []  # type: List[str]
     xlabel = model_info.profile_axes[0] if model_info.profile is not None else ""
     variants = MultiplicityInfo(0, "", [], xlabel)
     for p in model_info.parameters.kernel_parameters:
-        if p.name == model_info.control:
+        if p.id == control_id:
             non_fittable.append(p.name)
             variants = MultiplicityInfo(
                 len(p.choices) if p.choices else int(p.limits[1]),
@@ -695,7 +712,11 @@ class SasviewModel(object):
 
     def _calculate_Iq(self, qx, qy=None):
         if self._model is None:
-            self._model = core.build_model(self._model_info)
+            # Only need one copy of the compiled kernel regardless of how many
+            # times it is used, so store it in the class.  Also, to reset the
+            # compute engine, need to clear out all existing compiled kernels,
+            # which is much easier to do if we store them in the class.
+            self.__class__._model = core.build_model(self._model_info)
         if qy is not None:
             q_vectors = [np.asarray(qx), np.asarray(qy)]
         else:
@@ -813,7 +834,7 @@ class SasviewModel(object):
         Return dispersion weights for parameter
         """
         if par.name not in self.params:
-            if par.name == self.multiplicity_info.control:
+            if par.id == self.multiplicity_info.control:
                 return self.multiplicity, [self.multiplicity], [1.0]
             else:
                 # For hidden parameters use default values.  This sets
