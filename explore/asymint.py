@@ -460,7 +460,7 @@ def quadpy_method(q, rule):
     rule_obj = RULES[rule_name](index)
     fn = lambda azimuthal, polar: kernel_2d(q=q, theta=polar, phi=azimuthal)
     Iq = integrate_spherical(fn, rule=rule_obj)/(4*pi)
-    print("%s degree=%d points=%s => %g"
+    print("%s degree=%d points=%s => %.15g"
           % (rule, rule_obj.degree, len(rule_obj.points), Iq))
 
 def plot_2d(q, n=300):
@@ -524,15 +524,15 @@ def main():
     quadpy_method(Q, "McLaren:10")
     quadpy_method(Q, "Stroud:U3 14-1")
 
-    print("gauss-20", *gauss_quad_2d(Q, n=20))
-    print("gauss-76", *gauss_quad_2d(Q, n=76))
-    print("gauss-150", *gauss_quad_2d(Q, n=150))
-    print("gauss-500", *gauss_quad_2d(Q, n=500))
-    print("gauss-1025", *gauss_quad_2d(Q, n=1025))
-    print("gauss-2049", *gauss_quad_2d(Q, n=2049))
-    print("gauss-20 usub", *gauss_quad_usub(Q, n=20))
-    print("gauss-76 usub", *gauss_quad_usub(Q, n=76))
-    print("gauss-150 usub", *gauss_quad_usub(Q, n=150))
+    print("gauss-20 points=%d => %.15g" % gauss_quad_2d(Q, n=20))
+    print("gauss-76 points=%d => %.15g" % gauss_quad_2d(Q, n=76))
+    print("gauss-150 points=%d => %.15g" % gauss_quad_2d(Q, n=150))
+    print("gauss-500 points=%d => %.15g" % gauss_quad_2d(Q, n=500))
+    print("gauss-1025 points=%d => %.15g" % gauss_quad_2d(Q, n=1025))
+    print("gauss-2049 points=%d => %.15g" % gauss_quad_2d(Q, n=2049))
+    print("gauss-20 usub points=%d => %.15g" % gauss_quad_usub(Q, n=20))
+    print("gauss-76 usub points=%d => %.15g" % gauss_quad_usub(Q, n=76))
+    print("gauss-150 usub points=%d => %.15g" % gauss_quad_usub(Q, n=150))
 
     #gridded_2d(Q, n=2**8+1)
     gridded_2d(Q, n=2**10+1)
