@@ -11,6 +11,11 @@ from __future__ import division, print_function
 import logging
 
 import numpy as np  # type: ignore
+from numpy import pi
+try:
+    from numpy import cbrt
+except ImportError:
+    def cbrt(x): return x ** (1.0/3.0)
 
 from .generate import F64
 from .kernel import KernelModel, Kernel
@@ -27,12 +32,13 @@ else:
 
 logger = logging.getLogger(__name__)
 
+
 class PyModel(KernelModel):
     """
     Wrapper for pure python models.
     """
     def __init__(self, model_info):
-        # Make sure Iq is available and vectorized
+        # Make sure Iq is available and vectorized.
         _create_default_functions(model_info)
         self.info = model_info
         self.dtype = np.dtype('d')
@@ -47,6 +53,7 @@ class PyModel(KernelModel):
         Free resources associated with the model.
         """
         pass
+
 
 class PyInput(object):
     """
@@ -84,6 +91,7 @@ class PyInput(object):
         Free resources associated with the model inputs.
         """
         self.q = None
+
 
 class PyKernel(Kernel):
     """
@@ -125,7 +133,7 @@ class PyKernel(Kernel):
         # an array of no dimensions acts like a scalar.
         parameter_vector = np.empty(len(partable.call_parameters)-2, 'd')
 
-        # Create views into the array to hold the arguments
+        # Create views into the array to hold the arguments.
         offset = 0
         kernel_args, volume_args = [], []
         for p in partable.kernel_parameters:
@@ -157,19 +165,28 @@ class PyKernel(Kernel):
             self._form = lambda: form(q, *kernel_args)
 
         # Generate a closure which calls the form_volume if it exists.
-        form_volume = model_info.form_volume
-        self._volume = ((lambda: form_volume(*volume_args)) if form_volume else
-                        (lambda: 1.0))
+        self._volume_args = volume_args
+        volume = model_info.form_volume
+        shell = model_info.shell_volume
+        radius = model_info.effective_radius
+        self._volume = ((lambda: (shell(*volume_args), volume(*volume_args))) if shell and volume
+                        else (lambda: [volume(*volume_args)]*2) if volume
+                        else (lambda: (1.0, 1.0)))
+        self._radius = ((lambda mode: radius(mode, *volume_args)) if radius
+                        else (lambda mode: cbrt(0.75/pi*volume(*volume_args))) if volume
+                        else (lambda mode: 1.0))
 
-    def __call__(self, call_details, values, cutoff, magnetic):
+    def _call_kernel(self, call_details, values, cutoff, magnetic, effective_radius_type):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
         if magnetic:
             raise NotImplementedError("Magnetism not implemented for pure python models")
         #print("Calling python kernel")
         #call_details.show(values)
-        res = _loops(self._parameter_vector, self._form, self._volume,
-                     self.q_input.nq, call_details, values, cutoff)
-        return res
+        radius = ((lambda: 0.0) if effective_radius_type == 0
+                  else (lambda: self._radius(effective_radius_type)))
+        self.result = _loops(
+            self._parameter_vector, self._form, self._volume, radius,
+            self.q_input.nq, call_details, values, cutoff)
 
     def release(self):
         # type: () -> None
@@ -179,13 +196,15 @@ class PyKernel(Kernel):
         self.q_input.release()
         self.q_input = None
 
+
 def _loops(parameters,    # type: np.ndarray
            form,          # type: Callable[[], np.ndarray]
            form_volume,   # type: Callable[[], float]
+           form_radius,   # type: Callable[[], float]
            nq,            # type: int
            call_details,  # type: details.CallDetails
            values,        # type: np.ndarray
-           cutoff         # type: float
+           cutoff,        # type: float
           ):
     # type: (...) -> None
     ################################################################
@@ -197,59 +216,74 @@ def _loops(parameters,    # type: np.ndarray
     #   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #
     #                                                              #
     ################################################################
+
+    # WARNING: Trickery ahead
+    # The parameters[] vector is embedded in the closures for form(),
+    # form_volume() and form_radius().  We set the initial vector from
+    # the values for the model parameters. As we loop through the polydispesity
+    # mesh, we update the components with the polydispersity values before
+    # calling the respective functions.
     n_pars = len(parameters)
     parameters[:] = values[2:n_pars+2]
+
     if call_details.num_active == 0:
-        pd_norm = float(form_volume())
-        scale = values[0]/(pd_norm if pd_norm != 0.0 else 1.0)
-        background = values[1]
-        return scale*form() + background
+        total = form()
+        weight_norm = 1.0
+        weighted_shell, weighted_form = form_volume()
+        weighted_radius = form_radius()
 
-    pd_value = values[2+n_pars:2+n_pars + call_details.num_weights]
-    pd_weight = values[2+n_pars + call_details.num_weights:]
+    else:
+        pd_value = values[2+n_pars:2+n_pars + call_details.num_weights]
+        pd_weight = values[2+n_pars + call_details.num_weights:]
 
-    pd_norm = 0.0
-    partial_weight = np.NaN
-    weight = np.NaN
+        weight_norm = 0.0
+        weighted_form = 0.0
+        weighted_shell = 0.0
+        weighted_radius = 0.0
+        partial_weight = np.NaN
+        weight = np.NaN
 
-    p0_par = call_details.pd_par[0]
-    p0_length = call_details.pd_length[0]
-    p0_index = p0_length
-    p0_offset = call_details.pd_offset[0]
+        p0_par = call_details.pd_par[0]
+        p0_length = call_details.pd_length[0]
+        p0_index = p0_length
+        p0_offset = call_details.pd_offset[0]
 
-    pd_par = call_details.pd_par[:call_details.num_active]
-    pd_offset = call_details.pd_offset[:call_details.num_active]
-    pd_stride = call_details.pd_stride[:call_details.num_active]
-    pd_length = call_details.pd_length[:call_details.num_active]
+        pd_par = call_details.pd_par[:call_details.num_active]
+        pd_offset = call_details.pd_offset[:call_details.num_active]
+        pd_stride = call_details.pd_stride[:call_details.num_active]
+        pd_length = call_details.pd_length[:call_details.num_active]
 
-    total = np.zeros(nq, 'd')
-    for loop_index in range(call_details.num_eval):
-        # update polydispersity parameter values
-        if p0_index == p0_length:
-            pd_index = (loop_index//pd_stride)%pd_length
-            parameters[pd_par] = pd_value[pd_offset+pd_index]
-            partial_weight = np.prod(pd_weight[pd_offset+pd_index][1:])
-            p0_index = loop_index%p0_length
+        total = np.zeros(nq, 'd')
+        for loop_index in range(call_details.num_eval):
+            # Update polydispersity parameter values.
+            if p0_index == p0_length:
+                pd_index = (loop_index//pd_stride)%pd_length
+                parameters[pd_par] = pd_value[pd_offset+pd_index]
+                partial_weight = np.prod(pd_weight[pd_offset+pd_index][1:])
+                p0_index = loop_index%p0_length
 
-        weight = partial_weight * pd_weight[p0_offset + p0_index]
-        parameters[p0_par] = pd_value[p0_offset + p0_index]
-        p0_index += 1
-        if weight > cutoff:
-            # Call the scattering function
-            # Assume that NaNs are only generated if the parameters are bad;
-            # exclude all q for that NaN.  Even better would be to have an
-            # INVALID expression like the C models, but that is too expensive.
-            Iq = np.asarray(form(), 'd')
-            if np.isnan(Iq).any():
-                continue
+            weight = partial_weight * pd_weight[p0_offset + p0_index]
+            parameters[p0_par] = pd_value[p0_offset + p0_index]
+            p0_index += 1
+            if weight > cutoff:
+                # Call the scattering function.
+                # Assume that NaNs are only generated if the parameters are bad;
+                # exclude all q for that NaN.  Even better would be to have an
+                # INVALID expression like the C models, but that is expensive.
+                Iq = np.asarray(form(), 'd')
+                if np.isnan(Iq).any():
+                    continue
 
-            # update value and norm
-            total += weight * Iq
-            pd_norm += weight * form_volume()
+                # Update value and norm.
+                total += weight * Iq
+                weight_norm += weight
+                shell, form = form_volume()
+                weighted_form += weight * form
+                weighted_shell += weight * shell
+                weighted_radius += weight * form_radius()
 
-    scale = values[0]/(pd_norm if pd_norm != 0.0 else 1.0)
-    background = values[1]
-    return scale*total + background
+    result = np.hstack((total, weight_norm, weighted_form, weighted_shell, weighted_radius))
+    return result
 
 
 def _create_default_functions(model_info):
@@ -260,7 +294,7 @@ def _create_default_functions(model_info):
     performs a similar role for Iq written in C.  This also vectorizes
     any functions that are not already marked as vectorized.
     """
-    # Note: must call create_vector_Iq before create_vector_Iqxy
+    # Note: Must call create_vector_Iq before create_vector_Iqxy.
     _create_vector_Iq(model_info)
     _create_vector_Iqxy(model_info)
 

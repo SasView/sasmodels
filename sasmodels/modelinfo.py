@@ -163,7 +163,6 @@ def parse_parameter(name, units='', default=np.NaN,
     parameter.choices = choices
     parameter.length = length
     parameter.length_control = control
-
     return parameter
 
 
@@ -264,9 +263,9 @@ class Parameter(object):
     can automatically be promoted to magnetic parameters, each of which
     will have a magnitude and a direction, which may be different from
     other sld parameters. The volume parameters are used for calls
-    to form_volume within the kernel (required for volume normalization)
-    and for calls to ER and VR for effective radius and volume ratio
-    respectively.
+    to form_volume within the kernel (required for volume normalization),
+    to shell_volume (for hollow shapes), and to effective_radius (for
+    structure factor interactions) respectively.
 
     *description* is a short description of the parameter.  This will
     be displayed in the parameter table and used as a tool tip for the
@@ -290,7 +289,26 @@ class Parameter(object):
     *choices* is the option names for a drop down list of options, as for
     example, might be used to set the value of a shape parameter.
 
-    These values are set by :func:`make_parameter_table` and
+    Control parameters are used for variant models such as :ref:`rpa` which
+    have different cases with different parameters, as well as models
+    like :ref:`spherical_sld` with its user defined number of shells.
+    The control parameter should appear in the parameter table along with the
+    parameters it is is controlling.  For variant models, use *[CASES]* in
+    place of the parameter limits Within the parameter definition table,
+    with case names such as::
+
+         CASES = ["diblock copolymer", "triblock copolymer", ...]
+
+    This should give *limits=[[case1, case2, ...]]*, but the model loader
+    translates it to *limits=[0, len(CASES)-1]*, and adds *choices=CASES* to
+    the :class:`Parameter` definition. Note that models can use a list of
+    cases as a parameter without it being a control parameter.  Either way,
+    the parameter is sent to the model evaluator as *float(choice_num)*,
+    where choices are numbered from 0. :meth:`ModelInfo.get_hidden_parameters`
+    will determine which parameers to display.
+
+    The class contructor should not be called directly, but instead the
+    parameter table is built using :func:`make_parameter_table` and
     :func:`parse_parameter` therein.
     """
     def __init__(self, name, units='', default=None, limits=(-np.inf, np.inf),
@@ -404,6 +422,10 @@ class ParameterTable(object):
     * *npars* is the total number of parameters to the kernel, with vector
       parameters counted as n individual parameters p1, p2, ...
 
+    * *common_parameters* is the list of common parameters, with a unique
+      copy for each model so that structure factors can have a default
+      background of 0.0.
+
     * *call_parameters* is the complete list of parameters to the kernel,
       including scale and background, with vector parameters recorded as
       individual parameters p1, p2, ...
@@ -416,21 +438,22 @@ class ParameterTable(object):
     the scale and background parameters that the kernel does not see.  User
     parameters don't use vector notation, and instead use p1, p2, ...
     """
-    # scale and background are implicit parameters
-    COMMON = [Parameter(*p) for p in COMMON_PARAMETERS]
-
     def __init__(self, parameters):
         # type: (List[Parameter]) -> None
+
+        # scale and background are implicit parameters
+        # Need them to be unique to each model in case they have different
+        # properties, such as default=0.0 for structure factor backgrounds.
+        self.common_parameters = [Parameter(*p) for p in COMMON_PARAMETERS]
+
         self.kernel_parameters = parameters
         self._set_vector_lengths()
-
         self.npars = sum(p.length for p in self.kernel_parameters)
         self.nmagnetic = sum(p.length for p in self.kernel_parameters
                              if p.type == 'sld')
         self.nvalues = 2 + self.npars
         if self.nmagnetic:
             self.nvalues += 3 + 3*self.nmagnetic
-
         self.call_parameters = self._get_call_parameters()
         self.defaults = self._get_defaults()
         #self._name_table= dict((p.id, p) for p in parameters)
@@ -470,6 +493,17 @@ class ParameterTable(object):
         self.pd_1d = set(p.name for p in self.call_parameters
                          if p.polydisperse and p.type not in ('orientation', 'magnetic'))
         self.pd_2d = set(p.name for p in self.call_parameters if p.polydisperse)
+
+    def set_zero_background(self):
+        """
+        Set the default background to zero for this model.  This is done for
+        structure factor models.
+        """
+        # type: () -> None
+        # Make sure background is the second common parameter.
+        assert self.common_parameters[1].id == "background"
+        self.common_parameters[1].default = 0.0
+        self.defaults = self._get_defaults()
 
     def check_angles(self):
         """
@@ -569,7 +603,7 @@ class ParameterTable(object):
 
     def _get_call_parameters(self):
         # type: () -> List[Parameter]
-        full_list = self.COMMON[:]
+        full_list = self.common_parameters[:]
         for p in self.kernel_parameters:
             if p.length == 1:
                 full_list.append(p)
@@ -672,7 +706,7 @@ class ParameterTable(object):
                         result.append(expanded_pars[name+tag])
 
         # Gather the user parameters in order
-        result = control + self.COMMON
+        result = control + self.common_parameters
         for p in self.kernel_parameters:
             if not is2d and p.type in ('orientation', 'magnetic'):
                 pass
@@ -721,7 +755,7 @@ def isstr(x):
 
 
 #: Set of variables defined in the model that might contain C code
-C_SYMBOLS = ['Imagnetic', 'Iq', 'Iqxy', 'Iqac', 'Iqabc', 'form_volume', 'c_code']
+C_SYMBOLS = ['Imagnetic', 'Iq', 'Iqxy', 'Iqac', 'Iqabc', 'form_volume', 'shell_volume', 'c_code']
 
 def _find_source_lines(model_info, kernel_module):
     # type: (ModelInfo, ModuleType) -> None
@@ -770,10 +804,24 @@ def make_model_info(kernel_module):
     if hasattr(kernel_module, "model_info"):
         # Custom sum/multi models
         return kernel_module.model_info
+
     info = ModelInfo()
+
+    # Build the parameter table
     #print("make parameter table", kernel_module.parameters)
     parameters = make_parameter_table(getattr(kernel_module, 'parameters', []))
+
+    # background defaults to zero for structure factor models
+    structure_factor = getattr(kernel_module, 'structure_factor', False)
+    if structure_factor:
+        parameters.set_zero_background()
+
+    # TODO: remove demo parameters
+    # The plots in the docs are generated from the model default values.
+    # Sascomp set parameters from the command line, and so doesn't need
+    # demo values for testing.
     demo = expand_pars(parameters, getattr(kernel_module, 'demo', None))
+
     filename = abspath(kernel_module.__file__).replace('.pyc', '.py')
     kernel_id = splitext(basename(filename))[0]
     name = getattr(kernel_module, 'name', None)
@@ -791,16 +839,19 @@ def make_model_info(kernel_module):
     info.docs = kernel_module.__doc__
     info.category = getattr(kernel_module, 'category', None)
     info.structure_factor = getattr(kernel_module, 'structure_factor', False)
+    # TODO: find Fq by inspection
+    info.effective_radius_type = getattr(kernel_module, 'effective_radius_type', None)
+    info.have_Fq = getattr(kernel_module, 'have_Fq', False)
     info.profile_axes = getattr(kernel_module, 'profile_axes', ['x', 'y'])
     # Note: custom.load_custom_kernel_module assumes the C sources are defined
     # by this attribute.
     info.source = getattr(kernel_module, 'source', [])
     info.c_code = getattr(kernel_module, 'c_code', None)
+    info.effective_radius = getattr(kernel_module, 'effective_radius', None)
     # TODO: check the structure of the tests
     info.tests = getattr(kernel_module, 'tests', [])
-    info.ER = getattr(kernel_module, 'ER', None) # type: ignore
-    info.VR = getattr(kernel_module, 'VR', None) # type: ignore
     info.form_volume = getattr(kernel_module, 'form_volume', None) # type: ignore
+    info.shell_volume = getattr(kernel_module, 'shell_volume', None) # type: ignore
     info.Iq = getattr(kernel_module, 'Iq', None) # type: ignore
     info.Iqxy = getattr(kernel_module, 'Iqxy', None) # type: ignore
     info.Iqac = getattr(kernel_module, 'Iqac', None) # type: ignore
@@ -812,19 +863,18 @@ def make_model_info(kernel_module):
     info.opencl = getattr(kernel_module, 'opencl', not callable(info.Iq))
     info.single = getattr(kernel_module, 'single', not callable(info.Iq))
     info.random = getattr(kernel_module, 'random', None)
-
-    # multiplicity info
-    control_pars = [p.id for p in parameters.kernel_parameters if p.is_control]
-    default_control = control_pars[0] if control_pars else None
-    info.control = getattr(kernel_module, 'control', default_control)
     info.hidden = getattr(kernel_module, 'hidden', None) # type: ignore
+
+    # Set control flag for explicitly set parameters, e.g., in the RPA model.
+    control = getattr(kernel_module, 'control', None)
+    if control is not None:
+        parameters[control].is_control = True
 
     if callable(info.Iq) and parameters.has_2d:
         raise ValueError("oriented python models not supported")
 
     info.lineno = {}
     _find_source_lines(info, kernel_module)
-
     return info
 
 class ModelInfo(object):
@@ -871,18 +921,6 @@ class ModelInfo(object):
     #: arises when the model is constructed using names such as
     #: *sphere*hardsphere* or *cylinder+sphere*.
     composition = None      # type: Optional[Tuple[str, List[ModelInfo]]]
-    #: Name of the control parameter for a variant model such as :ref:`rpa`.
-    #: The *control* parameter should appear in the parameter table, with
-    #: limits defined as *[CASES]*, for case names such as
-    #: *CASES = ["diblock copolymer", "triblock copolymer", ...]*.
-    #: This should give *limits=[[case1, case2, ...]]*, but the
-    #: model loader translates this to *limits=[0, len(CASES)-1]*, and adds
-    #: *choices=CASES* to the :class:`Parameter` definition. Note that
-    #: models can use a list of cases as a parameter without it being a
-    #: control parameter.  Either way, the parameter is sent to the model
-    #: evaluator as *float(choice_num)*, where choices are numbered from 0.
-    #: See also :attr:`hidden`.
-    control = None          # type: str
     #: Different variants require different parameters.  In order to show
     #: just the parameters needed for the variant selected by :attr:`control`,
     #: you should provide a function *hidden(control) -> set(['a', 'b', ...])*
@@ -917,40 +955,20 @@ class ModelInfo(object):
     #: between form factor models.  This will default to False if it is not
     #: provided in the file.
     structure_factor = None # type: bool
+    #: True if the model defines an Fq function with signature
+    #: void Fq(double q, double *F1, double *F2, ...)
+    have_Fq = False
+    #: List of options for computing the effective radius of the shape,
+    #: or None if the model is not usable as a form factor model.
+    effective_radius_type = None   # type: List[str]
     #: List of C source files used to define the model.  The source files
     #: should define the *Iq* function, and possibly *Iqac* or *Iqabc* if the
     #: model defines orientation parameters. Files containing the most basic
     #: functions must appear first in the list, followed by the files that
-    #: use those functions.  Form factors are indicated by providing
-    #: an :attr:`ER` function.
+    #: use those functions.
     source = None           # type: List[str]
-    #: The set of tests that must pass.  The format of the tests is described
-    #: in :mod:`model_test`.
-    tests = None            # type: List[TestCondition]
-    #: Returns the effective radius of the model given its volume parameters.
-    #: The presence of *ER* indicates that the model is a form factor model
-    #: that may be used together with a structure factor to form an implicit
-    #: multiplication model.
-    #:
-    #: The parameters to the *ER* function must be marked with type *volume*.
-    #: in the parameter table.  They will appear in the same order as they
-    #: do in the table.  The values passed to *ER* will be vectors, with one
-    #: value for each polydispersity condition.  For example, if the model
-    #: is polydisperse over both length and radius, then both length and
-    #: radius will have the same number of values in the vector, with one
-    #: value for each *length X radius*.  If only *radius* is polydisperse,
-    #: then the value for *length* will be repeated once for each value of
-    #: *radius*.  The *ER* function should return one effective radius for
-    #: each parameter set.  Multiplicity parameters will be received as
-    #: arrays, with one row per polydispersity condition.
-    ER = None               # type: Optional[Callable[[np.ndarray], np.ndarray]]
-    #: Returns the occupied volume and the total volume for each parameter set.
-    #: See :attr:`ER` for details on the parameters.
-    VR = None               # type: Optional[Callable[[np.ndarray], Tuple[np.ndarray, np.ndarray]]]
-    #: Arbitrary C code containing supporting functions, etc., to be inserted
-    #: after everything in source.  This can include Iq and Iqxy functions with
-    #: the full function signature, including all parameters.
-    c_code = None
+    #: inline source code, added after all elements of source
+    c_code = None           # type: Optional[str]
     #: Returns the form volume for python-based models.  Form volume is needed
     #: for volume normalization in the polydispersity integral.  If no
     #: parameters are *volume* parameters, then form volume is not needed.
@@ -958,6 +976,19 @@ class ModelInfo(object):
     #: defined using a string containing C code), form_volume must also be
     #: C code, either defined as a string, or in the sources.
     form_volume = None      # type: Union[None, str, Callable[[np.ndarray], float]]
+    #: Returns the shell volume for python-based models.  Form volume and
+    #: shell volume are needed for volume normalization in the polydispersity
+    #: integral and structure interactions for hollow shapes.  If no
+    #: parameters are *volume* parameters, then shell volume is not needed.
+    #: For C-based models, (with :attr:`sources` defined, or with :attr:`Iq`
+    #: defined using a string containing C code), shell_volume must also be
+    #: C code, either defined as a string, or in the sources.
+    shell_volume = None      # type: Union[None, str, Callable[[np.ndarray], float]]
+    #: Computes the effective radius of the shape given the volume parameters.
+    #: Only needed for models defined in python that can be used for
+    #: monodisperse approximation for non-dilute solutions, P@S.  The first
+    #: argument is the integer effective radius mode, with default 0.
+    effective_radius = None  # type: Union[None, Callable[[int, np.ndarray], float]]
     #: Returns *I(q, a, b, ...)* for parameters *a*, *b*, etc. defined
     #: by the parameter table.  *Iq* can be defined as a python function, or
     #: as a C function.  If it is defined in C, then set *Iq* to the body of
@@ -969,7 +1000,9 @@ class ModelInfo(object):
     #: define *static double Iq(double q, double a, double b, ...)* which
     #: will return *I(q, a, b, ...)*.  Multiplicity parameters are sent as
     #: pointers to doubles.  Constants in floating point expressions should
-    #: include the decimal point. See :mod:`generate` for more details.
+    #: include the decimal point. See :mod:`generate` for more details. If
+    #: *have_Fq* is True, then Iq should return an interleaved array of
+    #: $[\sum F(q_1), \sum F^2(q_1), \ldots, \sum F(q_n), \sum F^2(q_n)]$.
     Iq = None               # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
     #: Returns *I(qab, qc, a, b, ...)*.  The interface follows :attr:`Iq`.
     Iqac = None             # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
@@ -992,6 +1025,9 @@ class ModelInfo(object):
     random = None           # type: Optional[Callable[[], Dict[str, float]]]
     #: Line numbers for symbols defining C code
     lineno = None           # type: Dict[str, int]
+    #: The set of tests that must pass.  The format of the tests is described
+    #: in :mod:`model_test`.
+    tests = None            # type: List[TestCondition]
 
     def __init__(self):
         # type: () -> None
