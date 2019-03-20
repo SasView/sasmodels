@@ -90,6 +90,7 @@ form_volume = """
     """
 
 def random():
+    """Return a random parameter set for the model."""
     # TODO: too many failures for random hayter_msa parameters
     pars = dict(
         scale=1, background=0,

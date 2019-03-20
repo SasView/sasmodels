@@ -268,6 +268,7 @@ def profile(n_shells, sld_solvent, sld, thickness,
     # return sld profile (r, beta)
     return np.asarray(z), np.asarray(rho)
 
+# TODO: no random parameter generator for spherical SLD.
 
 demo = {
     "n_shells": 5,

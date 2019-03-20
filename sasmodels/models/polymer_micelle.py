@@ -112,6 +112,7 @@ single = False
 source = ["lib/sas_3j1x_x.c", "polymer_micelle.c"]
 
 def random():
+    """Return a random parameter set for the model."""
     radius_core = 10**np.random.uniform(1, 3)
     rg = radius_core * 10**np.random.uniform(-2, -0.3)
     d_penetration = np.random.randn()*0.05 + 1

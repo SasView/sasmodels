@@ -146,11 +146,12 @@ parameters = [
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "core_shell_ellipsoid.c"]
 have_Fq = True
 effective_radius_type = [
-    "average outer curvature", "equivalent volume sphere",     
+    "average outer curvature", "equivalent volume sphere",
     "min outer radius", "max outer radius",
     ]
 
 def random():
+    """Return a random parameter set for the model."""
     volume = 10**np.random.uniform(5, 12)
     outer_polar = 10**np.random.uniform(1.3, 4)
     outer_equatorial = np.sqrt(volume/outer_polar) # ignore 4/3 pi

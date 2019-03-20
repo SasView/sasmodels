@@ -68,12 +68,15 @@ parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "",
 
 
 def form_volume(radius):
+    """Calculate volume for sphere"""
     return 1.333333333333333 * pi * radius ** 3
 
 def effective_radius(mode, radius):
+    """Calculate R_eff for sphere"""
     return radius
 
 def Iq(q, sld, sld_solvent, radius):
+    """Calculate I(q) for sphere"""
     #print "q",q
     #print "sld,r",sld,sld_solvent,radius
     qr = q * radius

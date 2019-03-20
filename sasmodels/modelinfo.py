@@ -1003,13 +1003,15 @@ class ModelInfo(object):
     #: include the decimal point. See :mod:`generate` for more details. If
     #: *have_Fq* is True, then Iq should return an interleaved array of
     #: $[\sum F(q_1), \sum F^2(q_1), \ldots, \sum F(q_n), \sum F^2(q_n)]$.
-    Iq = None               # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
-    #: Returns *I(qab, qc, a, b, ...)*.  The interface follows :attr:`Iq`.
-    Iqac = None             # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
-    #: Returns *I(qa, qb, qc, a, b, ...)*.  The interface follows :attr:`Iq`.
-    Iqabc = None            # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
+    Iq = None               # type: Union[None, str, Callable[[...], np.ndarray]]
     #: Returns *I(qx, qy, a, b, ...)*.  The interface follows :attr:`Iq`.
-    Imagnetic = None        # type: Union[None, str, Callable[[np.ndarray], np.ndarray]]
+    Iqxy = None             # type: Union[None, str, Callable[[...], np.ndarray]]
+    #: Returns *I(qab, qc, a, b, ...)*.  The interface follows :attr:`Iq`.
+    Iqac = None             # type: Union[None, str, Callable[[...], np.ndarray]]
+    #: Returns *I(qa, qb, qc, a, b, ...)*.  The interface follows :attr:`Iq`.
+    Iqabc = None            # type: Union[None, str, Callable[[...], np.ndarray]]
+    #: Returns *I(qx, qy, a, b, ...)*.  The interface follows :attr:`Iq`.
+    Imagnetic = None        # type: Union[None, str, Callable[[...], np.ndarray]]
     #: Returns a model profile curve *x, y*.  If *profile* is defined, this
     #: curve will appear in response to the *Show* button in SasView.  Use
     #: :attr:`profile_axes` to set the axis labels.  Note that *y* values

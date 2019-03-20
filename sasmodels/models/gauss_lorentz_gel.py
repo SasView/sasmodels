@@ -88,6 +88,7 @@ Iq.vectorized = True  # Iq accepts an array of q values
 
 
 def random():
+    """Return a random parameter set for the model."""
     gauss_scale = 10**np.random.uniform(1, 3)
     lorentz_scale = 10**np.random.uniform(1, 3)
     cor_length_static = 10**np.random.uniform(0, 3)

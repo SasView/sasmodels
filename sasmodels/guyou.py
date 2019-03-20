@@ -67,6 +67,7 @@ def ellipticF(phi, m):
 """
 
 def ellipticJi(u, v, m):
+    """Returns [sn, cn, dn](u + iv|m)."""
     scalar = np.isscalar(u) and np.isscalar(v) and np.isscalar(m)
     u, v, m = np.broadcast_arrays(u, v, m)
     result = np.empty_like([u, u, u], 'D')
@@ -99,9 +100,8 @@ def _ellipticJi(u, v, m):
         (a[2] * b[1] * b[2] / c) + 1j*(-m * a[0] * a[1] * b[0] / c),
     ]
 
-# calculate F(phi+ipsi|m).
-# see Abramowitz and Stegun, 17.4.11.
 def ellipticFi(phi, psi, m):
+    """Returns F(phi+ipsi|m). See Abramowitz and Stegun, 17.4.11."""
     if np.any(phi == 0):
         scalar = np.isscalar(phi) and np.isscalar(psi) and np.isscalar(m)
         phi, psi, m = np.broadcast_arrays(phi, psi, m)
@@ -206,8 +206,8 @@ def plot_grid():
         x, y = guyou_invert(scale*lat_line, scale*lat)
         plt.plot(x, y, 'g')
 
-    for long in range(-limit, limit+1, step):
-        x, y = guyou_invert(scale*long, scale*long_line)
+    for longitude in range(-limit, limit+1, step):
+        x, y = guyou_invert(scale*longitude, scale*long_line)
         plt.plot(x, y, 'b')
     plt.xlabel('longitude')
     plt.ylabel('latitude')

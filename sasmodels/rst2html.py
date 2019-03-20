@@ -141,6 +141,8 @@ def test_dollar():
     assert replace_dollar(u"a (again $in parens$) a") == u"a (again :math:`in parens`) a"
 
 def load_rst_as_html(filename):
+    # type: (str) -> str
+    """Load rst from file and convert to html"""
     from os.path import expanduser
     with open(expanduser(filename)) as fid:
         rst = fid.read()
@@ -148,6 +150,8 @@ def load_rst_as_html(filename):
     return html
 
 def wxview(html, url="", size=(850, 540)):
+    # type: (str, str, Tuple[int, int]) -> "wx.Frame"
+    """View HTML in a wx dialog"""
     import wx
     from wx.html2 import WebView
     frame = wx.Frame(None, -1, size=size)
@@ -157,12 +161,16 @@ def wxview(html, url="", size=(850, 540)):
     return frame
 
 def view_html_wxapp(html, url=""):
+    # type: (str, str) -> None
+    """HTML viewer app in wx"""
     import wx  # type: ignore
     app = wx.App()
     frame = wxview(html, url)
     app.MainLoop()
 
 def view_url_wxapp(url):
+    # type: (str) -> None
+    """URL viewer app in wx"""
     import wx  # type: ignore
     from wx.html2 import WebView
     app = wx.App()
@@ -173,6 +181,8 @@ def view_url_wxapp(url):
     app.MainLoop()
 
 def qtview(html, url=""):
+    # type: (str, str) -> "QWebView"
+    """View HTML in a Qt dialog"""
     try:
         from PyQt5.QtWebKitWidgets import QWebView
         from PyQt5.QtCore import QUrl
@@ -185,6 +195,8 @@ def qtview(html, url=""):
     return helpView
 
 def view_html_qtapp(html, url=""):
+    # type: (str, str) -> None
+    """HTML viewer app in Qt"""
     import sys
     try:
         from PyQt5.QtWidgets import QApplication
@@ -195,6 +207,8 @@ def view_html_qtapp(html, url=""):
     sys.exit(app.exec_())
 
 def view_url_qtapp(url):
+    # type: (str) -> None
+    """URL viewer app in Qt"""
     import sys
     try:
         from PyQt5.QtWidgets import QApplication
@@ -216,6 +230,7 @@ def view_url_qtapp(url):
 view_html = view_html_qtapp
 
 def can_use_qt():
+    # type: () -> bool
     """
     Return True if QWebView exists.
 
@@ -232,6 +247,8 @@ def can_use_qt():
             return False
 
 def view_help(filename, qt=False):
+    # type: (str, bool) -> None
+    """View rst or html file.  If *qt* use q viewer, otherwise use wx."""
     import os
 
     if qt:
@@ -251,6 +268,8 @@ def view_help(filename, qt=False):
             view_url_wxapp(url)
 
 def main():
+    # type: () -> None
+    """Command line interface to rst or html viewer."""
     import sys
     view_help(sys.argv[1], qt=False)
 

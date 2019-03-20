@@ -148,6 +148,7 @@ have_Fq = True
 effective_radius_type = ["outer radius"]
 
 def random():
+    """Return a random parameter set for the model."""
     volfraction = 10**np.random.uniform(-3, -0.5)  # scale from 0.1% to 30%
     radius = 10**np.random.uniform(0, 2.5) # core less than 300 A
     total_thick = 10**np.random.uniform(2, 4) # up to 10000 A of shells

@@ -24,23 +24,43 @@ else:
 
 
 class KernelModel(object):
+    """
+    Model definition for the compute engine.
+    """
     info = None  # type: ModelInfo
     dtype = None # type: np.dtype
     def make_kernel(self, q_vectors):
         # type: (List[np.ndarray]) -> "Kernel"
+        """
+        Instantiate a kernel for evaluating the model at *q_vectors*.
+        """
         raise NotImplementedError("need to implement make_kernel")
 
     def release(self):
         # type: () -> None
+        """
+        Free resources associated with the kernel.
+        """
         pass
 
 
 class Kernel(object):
-    #: kernel dimension, either "1d" or "2d"
+    """
+    Instantiated model for the compute engine, applied to a particular *q*.
+
+    Subclasses should define :meth:`_call_kernel` to evaluate the kernel over
+    its inputs.
+    """
+    #: Kernel dimension, either "1d" or "2d".
     dim = None  # type: str
+    #: Model info.
     info = None  # type: ModelInfo
-    results = None # type: List[np.ndarray]
+    #: Numerical precision for the computation.
     dtype = None  # type: np.dtype
+    #: q values at which the kernel is to be evaluated
+    q_input = None  # type: Any
+    #: Place to hold result of :meth:`_call_kernel` for subclass.
+    result = None # type: np.ndarray
 
     def Iq(self, call_details, values, cutoff, magnetic):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
@@ -56,14 +76,15 @@ class Kernel(object):
         absolute scattering.  Some models (e.g., vesicle) have volume fraction
         built into the model, and do not need an additional scale.
         """
-        _, F2, _, shell_volume, _ = self.Fq(call_details, values, cutoff, magnetic,
-                              effective_radius_type=0)
+        _, F2, _, shell_volume, _ = self.Fq(call_details, values, cutoff,
+                                            magnetic, effective_radius_type=0)
         combined_scale = values[0]/shell_volume
         background = values[1]
         return combined_scale*F2 + background
     __call__ = Iq
 
-    def Fq(self, call_details, values, cutoff, magnetic, effective_radius_type=0):
+    def Fq(self, call_details, values, cutoff, magnetic,
+           effective_radius_type=0):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool, int) -> np.ndarray
         r"""
         Returns <F(q)>, <F(q)^2>, effective radius, shell volume and
@@ -80,7 +101,7 @@ class Kernel(object):
 
         .. math::
 
-            I(q) = \text{scale} * P (1 + <F>^2/<F^2> (S - 1)) + \text{background}
+            I(q) = \text{scale} P (1 + <F>^2/<F^2> (S - 1)) + \text{background}
                  = \text{scale}/<V> (<F^2> + <F>^2 (S - 1)) + \text{background}
 
         $<F(q)>$ and $<F^2(q)>$ are averaged by polydispersity in shape
@@ -89,7 +110,7 @@ class Kernel(object):
 
         .. math::
 
-            P(q) = \frac{\sum w_k F^2(q, x_k) / \sum w_k}{\sum w_k V_k / \sum w_k}
+            P(q)=\frac{\sum w_k F^2(q, x_k) / \sum w_k}{\sum w_k V_k / \sum w_k}
 
         The form factor itself is scaled by volume and contrast to compute the
         total scattering.  This is then squared, and the volume weighted
@@ -130,7 +151,8 @@ class Kernel(object):
         this scale factor evaluates to one and so can be used for both
         hollow and solid shapes.
         """
-        self._call_kernel(call_details, values, cutoff, magnetic, effective_radius_type)
+        self._call_kernel(call_details, values, cutoff, magnetic,
+                          effective_radius_type)
         #print("returned",self.q_input.q, self.result)
         nout = 2 if self.info.have_Fq and self.dim == '1d' else 1
         total_weight = self.result[nout*self.q_input.nq + 0]
@@ -145,15 +167,20 @@ class Kernel(object):
         effective_radius = self.result[nout*self.q_input.nq + 3]/total_weight
         if shell_volume == 0.:
             shell_volume = 1.
-        F1 = self.result[1:nout*self.q_input.nq:nout]/total_weight if nout == 2 else None
+        F1 = (self.result[1:nout*self.q_input.nq:nout]/total_weight
+              if nout == 2 else None)
         F2 = self.result[0:nout*self.q_input.nq:nout]/total_weight
         return F1, F2, effective_radius, shell_volume, form_volume/shell_volume
 
     def release(self):
         # type: () -> None
+        """
+        Free resources associated with the kernel instance.
+        """
         pass
 
-    def _call_kernel(self, call_details, values, cutoff, magnetic, effective_radius_type):
+    def _call_kernel(self, call_details, values, cutoff, magnetic,
+                     effective_radius_type):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool, int) -> np.ndarray
         """
         Call the kernel.  Subclasses defining kernels for particular execution

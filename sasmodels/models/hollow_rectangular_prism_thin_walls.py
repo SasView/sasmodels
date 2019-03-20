@@ -71,7 +71,7 @@ References
 ----------
 
 .. [#Nayuk2012] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
-L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949). 
+L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949).
 
 
 Authorship and Verification
@@ -83,7 +83,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import pi, inf, sqrt
+from numpy import inf
 
 name = "hollow_rectangular_prism_thin_walls"
 title = "Hollow rectangular parallelepiped with thin walls."
@@ -110,7 +110,7 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
 source = ["lib/gauss76.c", "hollow_rectangular_prism_thin_walls.c"]
 have_Fq = True
 effective_radius_type = [
-    "equivalent cylinder excluded volume", "equivalent outer volume sphere", 
+    "equivalent cylinder excluded volume", "equivalent outer volume sphere",
     "half length_a", "half length_b", "half length_c",
     "equivalent outer circular cross-section",
     "half ab diagonal", "half diagonal",
@@ -118,6 +118,7 @@ effective_radius_type = [
 
 
 def random():
+    """Return a random parameter set for the model."""
     a, b, c = 10**np.random.uniform(1, 4.7, size=3)
     pars = dict(
         length_a=a,

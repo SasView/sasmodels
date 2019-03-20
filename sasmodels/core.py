@@ -322,6 +322,9 @@ def parse_dtype(model_info, dtype=None, platform=None):
     return numpy_dtype, fast, platform
 
 def test_composite_order():
+    """
+    Check that mixture models produce the same result independent of ordder.
+    """
     def test_models(fst, snd):
         """Confirm that two models produce the same parameters"""
         fst = load_model(fst)
@@ -336,6 +339,7 @@ def test_composite_order():
         assert sorted(fst) == sorted(snd), "{} != {}".format(fst, snd)
 
     def build_test(first, second):
+        """Construct pair model test"""
         test = lambda description: test_models(first, second)
         description = first + " vs. " + second
         return test, description
@@ -381,7 +385,7 @@ def test_composite():
     assert target == actual, "%s != %s"%(target, actual)
 
 def list_models_main():
-    # type: () -> None
+    # type: () -> int
     """
     Run list_models as a main program.  See :func:`list_models` for the
     kinds of models that can be requested on the command line.
@@ -390,11 +394,11 @@ def list_models_main():
     kind = sys.argv[1] if len(sys.argv) > 1 else "all"
     try:
         models = list_models(kind)
-    except Exception as exc:
+        print("\n".join(models))
+    except Exception:
         print(list_models.__doc__)
         return 1
-
-    print("\n".join(list_models(kind)))
+    return 0
 
 if __name__ == "__main__":
     list_models_main()

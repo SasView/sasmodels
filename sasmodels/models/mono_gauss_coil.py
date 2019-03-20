@@ -78,6 +78,7 @@ effective_radius_type = ["R_g", "2R_g", "3R_g", "sqrt(5/3)*R_g"]
 
 
 def random():
+    """Return a random parameter set for the model."""
     rg = 10**np.random.uniform(0, 4)
     #rg = 1e3
     pars = dict(

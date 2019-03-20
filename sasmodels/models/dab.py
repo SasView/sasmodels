@@ -65,6 +65,7 @@ Iq = """
     """
 
 def random():
+    """Return a random parameter set for the model."""
     pars = dict(
         scale=10**np.random.uniform(1, 4),
         cor_length=10**np.random.uniform(0.3, 3),

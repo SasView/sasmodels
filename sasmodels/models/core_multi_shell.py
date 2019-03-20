@@ -102,6 +102,7 @@ have_Fq = True
 effective_radius_type = ["outer radius", "core radius"]
 
 def random():
+    """Return a random parameter set for the model."""
     num_shells = np.minimum(np.random.poisson(3)+1, 10)
     total_radius = 10**np.random.uniform(1.7, 4)
     thickness = np.random.exponential(size=num_shells+1)

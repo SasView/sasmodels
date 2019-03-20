@@ -83,6 +83,7 @@ demo = dict(scale=1, background=0, radius=60, thickness=10,
             sld_core=1.0, sld_shell=2.0, sld_solvent=0.0)
 
 def random():
+    """Return a random parameter set for the model."""
     outer_radius = 10**np.random.uniform(1.3, 4.3)
     # Use a distribution with a preference for thin shell or thin core
     # Avoid core,shell radii < 1

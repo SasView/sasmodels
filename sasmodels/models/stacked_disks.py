@@ -146,6 +146,7 @@ parameters = [
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "stacked_disks.c"]
 
 def random():
+    """Return a random parameter set for the model."""
     radius = 10**np.random.uniform(1, 4.7)
     total_stack = 10**np.random.uniform(1, 4.7)
     n_stacking = int(10**np.random.uniform(0, np.log10(total_stack)-1) + 0.5)

@@ -111,7 +111,7 @@ References
 ----------
 
 .. [#]
-L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949). 
+L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949).
 
 Authorship and Verification
 ----------------------------
@@ -161,9 +161,12 @@ source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
           "core_shell_bicelle_elliptical_belt_rough.c"]
 have_Fq = True
 effective_radius_type = [
-    "equivalent cylinder excluded volume", "equivalent volume sphere", "outer rim average radius", "outer rim min radius",
+    "equivalent cylinder excluded volume", "equivalent volume sphere",
+    "outer rim average radius", "outer rim min radius",
     "outer max radius", "half outer thickness", "half diagonal",
     ]
+
+# TODO: No random() for core-shell bicelle elliptical belt rough
 
 demo = dict(scale=1, background=0,
             radius=30.0,
@@ -189,8 +192,9 @@ tests = [
     #[{'radius': 30.0, 'x_core': 3.0, 'thick_rim':8.0, 'thick_face':14.0, 'length':50.0}, 'ER', 1],
     #[{'radius': 30.0, 'x_core': 3.0, 'thick_rim':8.0, 'thick_face':14.0, 'length':50.0}, 'VR', 1],
 
-    [{'radius': 30.0, 'x_core': 3.0, 'thick_rim':8.0, 'thick_face':14.0, 'length':50.0,
-      'sld_core':4.0, 'sld_face':7.0, 'sld_rim':1.0, 'sld_solvent':6.0, 'background':0.0},
+    [{'radius': 30.0, 'x_core': 3.0, 'thick_rim': 8.0, 'thick_face': 14.0,
+      'length': 50.0, 'sld_core': 4.0, 'sld_face': 7.0, 'sld_rim': 1.0,
+      'sld_solvent': 6.0, 'background': 0.0},
      0.015, 189.328],
     #[{'theta':80., 'phi':10.}, (qx, qy), 7.88866563001 ],
 ]

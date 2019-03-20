@@ -125,11 +125,6 @@ from __future__ import division
 import numpy as np
 from numpy import inf, sin, cos, pi
 
-try:
-    from numpy import cbrt
-except ImportError:
-    def cbrt(x): return x ** (1.0/3.0)
-
 name = "ellipsoid"
 title = "Ellipsoid of revolution with uniform scattering length density."
 
@@ -173,6 +168,7 @@ effective_radius_type = [
     ]
 
 def random():
+    """Return a random parameter set for the model."""
     volume = 10**np.random.uniform(5, 12)
     radius_polar = 10**np.random.uniform(1.3, 4)
     radius_equatorial = np.sqrt(volume/radius_polar) # ignore 4/3 pi

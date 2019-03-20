@@ -60,7 +60,6 @@ except ImportError:
 
 import numpy as np  # type: ignore
 
-from . import core
 from .core import list_models, load_model_info, build_model
 from .direct_model import call_kernel, call_Fq
 from .exception import annotate_exception
@@ -136,10 +135,10 @@ def _add_model_to_suite(loaders, suite, model_info):
         test_name = "%s-python"%model_info.name
         test_method_name = "test_%s_python" % model_info.id
         test = ModelTestCase(test_name, model_info,
-                                test_method_name,
-                                platform="dll",  # so that
-                                dtype="double",
-                                stash=stash)
+                             test_method_name,
+                             platform="dll",  # so that
+                             dtype="double",
+                             stash=stash)
         suite.addTest(test)
     else:   # kernel implemented in C
 
@@ -148,10 +147,10 @@ def _add_model_to_suite(loaders, suite, model_info):
             test_name = "%s-dll"%model_info.name
             test_method_name = "test_%s_dll" % model_info.id
             test = ModelTestCase(test_name, model_info,
-                                    test_method_name,
-                                    platform="dll",
-                                    dtype="double",
-                                    stash=stash)
+                                 test_method_name,
+                                 platform="dll",
+                                 dtype="double",
+                                 stash=stash)
             suite.addTest(test)
 
         # test using opencl if desired and available
@@ -163,9 +162,9 @@ def _add_model_to_suite(loaders, suite, model_info):
             # single precision.  The choice is determined by the
             # presence of *single=False* in the model file.
             test = ModelTestCase(test_name, model_info,
-                                    test_method_name,
-                                    platform="ocl", dtype=None,
-                                    stash=stash)
+                                 test_method_name,
+                                 platform="ocl", dtype=None,
+                                 stash=stash)
             #print("defining", test_name)
             suite.addTest(test)
 
@@ -178,9 +177,9 @@ def _add_model_to_suite(loaders, suite, model_info):
             # single precision.  The choice is determined by the
             # presence of *single=False* in the model file.
             test = ModelTestCase(test_name, model_info,
-                                    test_method_name,
-                                    platform="cuda", dtype=None,
-                                    stash=stash)
+                                 test_method_name,
+                                 platform="cuda", dtype=None,
+                                 stash=stash)
             #print("defining", test_name)
             suite.addTest(test)
 
@@ -412,6 +411,14 @@ def is_near(target, actual, digits=5):
 
 # CRUFT: old interface; should be deprecated and removed
 def run_one(model_name):
+    # type: (str) -> str
+    """
+    [Deprecated] Run the tests associated with *model_name*.
+
+    Use the following instead::
+
+        succss, output = check_model(load_model_info(model_name))
+    """
     # msg = "use check_model(model_info) rather than run_one(model_name)"
     # warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
     try:
@@ -420,11 +427,11 @@ def run_one(model_name):
         output = traceback.format_exc()
         return output
 
-    success, output = check_model(model_info)
+    _, output = check_model(model_info)
     return output
 
 def check_model(model_info):
-    # type: (ModelInfo) -> str
+    # type: (ModelInfo) -> Tuple[bool, str]
     """
     Run the tests for a single model, capturing the output.
 
@@ -491,7 +498,7 @@ def model_tests():
     if use_cuda():
         loaders.append('cuda')
     tests = make_suite(loaders, ['all'])
-    def build_test(test):
+    def _build_test(test):
         # In order for nosetest to show the test name, wrap the test.run_all
         # instance in function that takes the test name as a parameter which
         # will be displayed when the test is run.  Do this as a function so
@@ -509,7 +516,7 @@ def model_tests():
         #     return lambda name: test.run_all(), test.test_name
 
     for test in tests:
-        yield build_test(test)
+        yield _build_test(test)
 
 
 def main():
@@ -538,32 +545,32 @@ def main():
                         "If the first model is 'all', then all but the listed "
                         "models will be tested.  See core.list_models() for "
                         "names of other groups, such as 'py' or 'single'.")
-    args, models = parser.parse_known_args()
+    opts = parser.parse_args()
 
-    if args.engine == "opencl":
+    if opts.engine == "opencl":
         if not use_opencl():
             print("opencl is not available")
             return 1
         loaders = ['opencl']
-    elif args.engine == "dll":
+    elif opts.engine == "dll":
         loaders = ["dll"]
-    elif args.engine == "cuda":
+    elif opts.engine == "cuda":
         if not use_cuda():
             print("cuda is not available")
             return 1
         loaders = ['cuda']
-    elif args.engine == "all":
+    elif opts.engine == "all":
         loaders = ['dll']
         if use_opencl():
             loaders.append('opencl')
         if use_cuda():
             loaders.append('cuda')
     else:
-        print("unknown engine " + args.engine)
+        print("unknown engine " + opts.engine)
         return 1
 
-    runner = TestRunner(verbosity=args.verbose, **test_args)
-    result = runner.run(make_suite(loaders, args.models))
+    runner = TestRunner(verbosity=opts.verbose, **test_args)
+    result = runner.run(make_suite(loaders, opts.models))
     return 1 if result.failures or result.errors else 0
 
 

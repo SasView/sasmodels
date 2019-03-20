@@ -91,6 +91,7 @@ def Iq(q,
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
+    """Return a random parameter set for the model."""
     scale = 10**np.random.uniform(0, 4, 2)
     length = 10**np.random.uniform(1, 4, 2)
     expon = np.random.uniform(1, 6, 2)

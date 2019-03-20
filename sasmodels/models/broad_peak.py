@@ -95,6 +95,7 @@ def Iq(q,
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
+    """Return a random parameter set for the model."""
     pars = dict(
         scale=1,
         porod_scale=10**np.random.uniform(-8, -5),

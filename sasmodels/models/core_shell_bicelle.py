@@ -88,8 +88,8 @@ References
    lipid mixtures*, John's Hopkins University Thesis (2009) 223-225. `Available
    from Proquest <http://search.proquest.com/docview/304915826?accountid
    =26379>`_
-   
-   L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949). 
+
+   L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949).
 
 Authorship and Verification
 ----------------------------
@@ -157,11 +157,12 @@ source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
           "core_shell_bicelle.c"]
 have_Fq = True
 effective_radius_type = [
-    "excluded volume","equivalent volume sphere", "outer rim radius",
+    "excluded volume", "equivalent volume sphere", "outer rim radius",
     "half outer thickness", "half diagonal",
     ]
 
 def random():
+    """Return a random parameter set for the model."""
     pars = dict(
         radius=10**np.random.uniform(1.3, 3),
         length=10**np.random.uniform(1.3, 4),

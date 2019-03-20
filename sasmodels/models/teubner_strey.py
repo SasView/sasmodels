@@ -102,6 +102,7 @@ def Iq(q, volfraction_a, sld_a, sld_b, d, xi):
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
+    """Return a random parameter set for the model."""
     d = 10**np.random.uniform(1, 4)
     xi = 10**np.random.uniform(-0.3, 2)*d
     pars = dict(

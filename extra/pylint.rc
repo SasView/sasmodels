@@ -66,6 +66,16 @@ disable=
     unbalanced-tuple-unpacking,
     locally-enabled,
     locally-disabled,
+    #no-else-return,
+    #invalid-name,
+    #fixme,
+    #too-many-lines,
+    #too-many-locals,
+    #too-many-branches,
+    #too-many-statements,
+    #too-many-instance-attributes,
+    #too-many-return-statements,
+    #no-self-use,
 
 [REPORTS]
 
@@ -108,7 +118,7 @@ bad-functions=map,filter,input
 # Good variable names which should always be accepted, separated by a comma
 good-names=_,
     input, id,
-    h, i, j, k, n, p, v, w, x, y, z,
+    h, i, j, k, n, p, u, v, w, x, y, z,
     q, qx, qy, qz, Q, Qx, Qy, Qz,
     dt, dx, dy, dz, dq,
     Iq, dIq, Iqxy, Iq_calc,

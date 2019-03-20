@@ -157,9 +157,13 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
 
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "triaxial_ellipsoid.c"]
 have_Fq = True
-effective_radius_type = ["equivalent biaxial ellipsoid average curvature", "equivalent volume sphere", "min radius", "max radius"]
+effective_radius_type = [
+    "equivalent biaxial ellipsoid average curvature",
+    "equivalent volume sphere", "min radius", "max radius",
+    ]
 
 def random():
+    """Return a random parameter set for the model."""
     a, b, c = 10**np.random.uniform(1, 4.7, size=3)
     pars = dict(
         radius_equat_minor=a,

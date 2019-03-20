@@ -102,7 +102,7 @@ except ImportError:
 PRECISION = np.dtype('f' if HAVE_OPENCL else 'd')  # 'f' or 'd'
 USE_FAST = True  # OpenCL faster, less accurate math
 
-class ICalculator:
+class ICalculator(object):
     """
     Multiple scattering calculator
     """
@@ -112,13 +112,13 @@ class ICalculator:
         """
         raise NotImplementedError()
 
-    def ifft(self, Iq):
+    def ifft(self, fourier_frame):
         """
         Compute the inverse FFT for an image, complex -> complex.
         """
         raise NotImplementedError()
 
-    def mulitple_scattering(self, Iq):
+    def multiple_scattering(self, Iq, p, coverage=0.99):
         r"""
         Compute multiple scattering for I(q) given scattering probability p.
 
@@ -249,7 +249,7 @@ class OpenclCalculator(ICalculator):
         gpu_data = cl_array.to_device(self.queue, frame)
         gpu_poly = cl_array.to_device(self.queue, poly)
         self.plan.execute(gpu_data.data)
-        degree, data_size= poly.shape[0], frame.shape[0]*frame.shape[1]
+        degree, data_size = poly.shape[0], frame.shape[0]*frame.shape[1]
         self.polyval1(
             self.queue, [data_size], None,
             np.int32(degree), gpu_poly.data, np.int32(data_size), gpu_data.data)
@@ -574,6 +574,7 @@ def parse_pars(model, opts):
 
 
 def main():
+    """Command line interface to multiple scattering calculator."""
     parser = argparse.ArgumentParser(
         description="Compute multiple scattering",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -611,9 +612,10 @@ def main():
     pars['background'] = 0.0
     theory = call_kernel(kernel, pars)
     Iq = res.apply(theory) + bg
-    plot_and_save_powers(res, theory, Iq, outfile=opts.outfile, background=bg)
+    _plot_and_save_powers(res, theory, Iq, outfile=opts.outfile, background=bg)
 
-def plot_and_save_powers(res, theory, result, plot=True, outfile="", background=0.):
+def _plot_and_save_powers(res, theory, result, plot=True,
+                          outfile="", background=0.):
     import pylab
     probability, coverage = res.probability, res.coverage
     weights = scattering_coeffs(probability, coverage)
@@ -677,6 +679,7 @@ def plot_and_save_powers(res, theory, result, plot=True, outfile="", background=
     pylab.show()
 
 def plotxy(q, Iq):
+    """Plot q, Iq or (qx, qy), Iqxy."""
     import pylab
     # q is a tuple of (q,) or (qx, qy)
     if len(q) == 1:

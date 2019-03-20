@@ -114,6 +114,7 @@ source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "lib/wrc_cyl.c",
           "flexible_cylinder_elliptical.c"]
 
 def random():
+    """Return a random parameter set for the model."""
     length = 10**np.random.uniform(2, 6)
     radius = 10**np.random.uniform(1, 3)
     axis_ratio = 10**np.random.uniform(-1, 1)

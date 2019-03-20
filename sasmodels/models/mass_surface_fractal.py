@@ -95,6 +95,7 @@ parameters = [
 source = ["mass_surface_fractal.c"]
 
 def random():
+    """Return a random parameter set for the model."""
     fractal_dim = np.random.uniform(0, 6)
     surface_portion = np.random.uniform(0, 1)
     fractal_dim_surf = fractal_dim*surface_portion
@@ -121,7 +122,8 @@ demo = dict(scale=1, background=0,
 
 tests = [
 
-    # Accuracy tests based on content in test/utest_other_models.py  All except first, changed so rg_cluster is the larger, RKH 30 May 2018
+    # Accuracy tests based on content in test/utest_other_models.py  All
+    # except first, changed so rg_cluster is the larger, RKH 30 May 2018
     [{'fractal_dim_mass':   1.8,
       'fractal_dim_surf':   2.3,
       'rg_cluster':   86.7,

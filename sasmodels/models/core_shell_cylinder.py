@@ -69,7 +69,7 @@ Reference
 .. [#] see, for example, Ian Livsey  J. Chem. Soc., Faraday Trans. 2, 1987,83,
    1445-1452
 .. [#kline] S R Kline, *J Appl. Cryst.*, 39 (2006) 895
-L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949). 
+L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949).
 
 Authorship and Verification
 ----------------------------
@@ -138,6 +138,7 @@ effective_radius_type = [
     ]
 
 def random():
+    """Return a random parameter set for the model."""
     outer_radius = 10**np.random.uniform(1, 4.7)
     # Use a distribution with a preference for thin shell or thin core
     # Avoid core,shell radii < 1

@@ -17,9 +17,9 @@ from collections import OrderedDict
 from copy import copy
 import numpy as np  # type: ignore
 
-from .modelinfo import ParameterTable, ModelInfo, Parameter, parse_parameter
+from .modelinfo import ParameterTable, ModelInfo, parse_parameter
 from .kernel import KernelModel, Kernel
-from .details import make_details, dispersion_mesh
+from .details import make_details
 
 # pylint: disable=unused-import
 try:
@@ -27,7 +27,7 @@ try:
 except ImportError:
     pass
 else:
-    from .modelinfo import ParameterSet
+    from .modelinfo import ParameterSet, Parameter
 # pylint: enable=unused-import
 
 # TODO: make estimates available to constraints
@@ -41,24 +41,28 @@ RADIUS_MODE_ID = "radius_effective_mode"
 RADIUS_ID = "radius_effective"
 VOLFRAC_ID = "volfraction"
 def make_extra_pars(p_info):
+    # type: (ModelInfo) -> List[Parameter]
+    """
+    Create parameters for structure_factor_mode and radius_effective_mode.
+    """
     pars = []
     if p_info.have_Fq:
         par = parse_parameter(
-                STRUCTURE_MODE_ID,
-                "",
-                0,
-                [["P*S","P*(1+beta*(S-1))"]],
-                "",
-                "Structure factor calculation")
+            STRUCTURE_MODE_ID,
+            "",
+            0,
+            [["P*S", "P*(1+beta*(S-1))"]],
+            "",
+            "Structure factor calculation")
         pars.append(par)
     if p_info.effective_radius_type is not None:
         par = parse_parameter(
-                RADIUS_MODE_ID,
-                "",
-                1,
-                [["unconstrained"] + p_info.effective_radius_type],
-                "",
-                "Effective radius calculation")
+            RADIUS_MODE_ID,
+            "",
+            1,
+            [["unconstrained"] + p_info.effective_radius_type],
+            "",
+            "Effective radius calculation")
         pars.append(par)
     return pars
 
@@ -103,6 +107,7 @@ def make_product_info(p_info, s_info):
     parameters = ParameterTable(combined_pars)
     parameters.max_pd = p_pars.max_pd + s_pars.max_pd
     def random():
+        """Random set of model parameters for product model"""
         combined_pars = p_info.random()
         s_names = set(par.id for par in s_pars.kernel_parameters)
         combined_pars.update((translate_name[k], v)
@@ -131,6 +136,7 @@ def make_product_info(p_info, s_info):
     if getattr(p_info, 'profile', None) is not None:
         profile_pars = set(p.id for p in p_info.parameters.kernel_parameters)
         def profile(**kwargs):
+            """Return SLD profile of the form factor as a function of radius."""
             # extract the profile args
             kwargs = dict((k, v) for k, v in kwargs.items() if k in profile_pars)
             return p_info.profile(**kwargs)
@@ -172,7 +178,7 @@ def _intermediates(
         scale,            # type: float
         effective_radius, # type: float
         beta_mode,        # type: bool
-        ):
+    ):
     # type: (...) -> OrderedDict[str, Union[np.ndarray, float]]
     """
     Returns intermediate results for beta approximation-enabled product.
@@ -198,6 +204,9 @@ def _intermediates(
     return parts
 
 class ProductModel(KernelModel):
+    """
+    Model definition for product model.
+    """
     def __init__(self, model_info, P, S):
         # type: (ModelInfo, KernelModel, KernelModel) -> None
         #: Combined info plock for the product model
@@ -228,6 +237,7 @@ class ProductModel(KernelModel):
         p_kernel = self.P.make_kernel(q_vectors)
         s_kernel = self.S.make_kernel(q_vectors)
         return ProductKernel(self.info, p_kernel, s_kernel)
+    make_kernel.__doc__ = KernelModel.make_kernel.__doc__
 
     def release(self):
         # type: (None) -> None
@@ -239,6 +249,9 @@ class ProductModel(KernelModel):
 
 
 class ProductKernel(Kernel):
+    """
+    Instantiated kernel for product model.
+    """
     def __init__(self, model_info, p_kernel, s_kernel):
         # type: (ModelInfo, Kernel, Kernel) -> None
         self.info = model_info
@@ -247,7 +260,7 @@ class ProductKernel(Kernel):
         self.dtype = p_kernel.dtype
         self.results = []  # type: List[np.ndarray]
 
-    def __call__(self, call_details, values, cutoff, magnetic):
+    def Iq(self, call_details, values, cutoff, magnetic):
         # type: (CallDetails, np.ndarray, float, bool) -> np.ndarray
 
         p_info, s_info = self.info.composition[1]
@@ -262,7 +275,7 @@ class ProductKernel(Kernel):
         have_beta_mode = p_info.have_Fq
         beta_mode_offset = 2+p_npars+s_npars
         beta_mode = (values[beta_mode_offset] > 0) if have_beta_mode else False
-        if beta_mode and self.p_kernel.dim== '2d':
+        if beta_mode and self.p_kernel.dim == '2d':
             raise NotImplementedError("beta not yet supported for 2D")
 
         # R_eff type parameter is the second parameter after P and S parameters
@@ -326,7 +339,8 @@ class ProductKernel(Kernel):
         # needs to be both in the initial value slot as well as the
         # polydispersity distribution slot in the values array due to
         # implementation details in kernel_iq.c.
-        #print("R_eff=%d:%g, volfrac=%g, volume ratio=%g"%(radius_type, effective_radius, volfrac, volume_ratio))
+        #print("R_eff=%d:%g, volfrac=%g, volume ratio=%g"
+        #      % (radius_type, effective_radius, volfrac, volume_ratio))
         if radius_type > 0:
             # set the value to the model R_eff and set the weight to 1
             s_values[2] = s_values[2+s_npars+s_offset[0]] = effective_radius
@@ -359,7 +373,11 @@ class ProductKernel(Kernel):
 
         return final_result
 
+    Iq.__doc__ = Kernel.Iq.__doc__
+    __call__ = Iq
+
     def release(self):
         # type: () -> None
+        """Free resources associated with the kernel."""
         self.p_kernel.release()
         self.s_kernel.release()

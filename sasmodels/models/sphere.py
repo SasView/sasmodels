@@ -66,11 +66,12 @@ parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Sphere radius"],
              ]
 
-source = ["lib/sas_3j1x_x.c","sphere.c"]
+source = ["lib/sas_3j1x_x.c", "sphere.c"]
 have_Fq = True
 effective_radius_type = ["radius"]
 
 def random():
+    """Return a random parameter set for the model."""
     radius = 10**np.random.uniform(1.3, 4)
     pars = dict(
         radius=radius,
