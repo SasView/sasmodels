@@ -52,6 +52,7 @@ harmless, albeit annoying.
 """
 from __future__ import print_function
 
+import sys
 import os
 import warnings
 import logging
@@ -60,7 +61,6 @@ import time
 try:
     from time import perf_counter as clock
 except ImportError: # CRUFT: python < 3.3
-    import sys
     if sys.platform.count("darwin") > 0:
         from time import time as clock
     else:
@@ -98,6 +98,7 @@ except ImportError:
 
 # CRUFT: pyopencl < 2017.1 (as of June 2016 needs quotes around include path).
 def quote_path(v):
+    # type: (str) -> str
     """
     Quote the path if it is not already quoted.
 
@@ -109,13 +110,15 @@ def quote_path(v):
 
 
 def fix_pyopencl_include():
+    # type: (None) -> None
     """
     Monkey patch pyopencl to allow spaces in include file path.
     """
-    import pyopencl as cl
-    if hasattr(cl, '_DEFAULT_INCLUDE_OPTIONS'):
-        cl._DEFAULT_INCLUDE_OPTIONS = [
-            quote_path(v) for v in cl._DEFAULT_INCLUDE_OPTIONS
+    # pylint: disable=protected-access
+    import pyopencl
+    if hasattr(pyopencl, '_DEFAULT_INCLUDE_OPTIONS'):
+        pyopencl._DEFAULT_INCLUDE_OPTIONS = [
+            quote_path(v) for v in pyopencl._DEFAULT_INCLUDE_OPTIONS
             ]
 
 
@@ -146,12 +149,15 @@ _F64_PRAGMA = """\
 
 
 def use_opencl():
+    # type: () -> bool
+    """Return True if OpenCL is the default computational engine"""
     sas_opencl = os.environ.get("SAS_OPENCL", "OpenCL").lower()
     return HAVE_OPENCL and sas_opencl != "none" and not sas_opencl.startswith("cuda")
 
 
 ENV = None
 def reset_environment():
+    # type: () -> None
     """
     Call to create a new OpenCL context, such as after a change to SAS_OPENCL.
     """
@@ -322,10 +328,12 @@ def _create_some_context():
         try:
             return [cl.create_some_context(interactive=False)]
         except Exception as exc:
+            # TODO: Should warnings instead be put into logging.warn?
             warnings.warn(str(exc))
-            warnings.warn("pyopencl.create_some_context() failed.  The "
-                "environment variable 'SAS_OPENCL' or 'PYOPENCL_CTX' might "
-                "not be set correctly")
+            warnings.warn(
+                "pyopencl.create_some_context() failed.  The environment "
+                "variable 'SAS_OPENCL' or 'PYOPENCL_CTX' might not be set "
+                "correctly")
 
     return _get_default_context()
 

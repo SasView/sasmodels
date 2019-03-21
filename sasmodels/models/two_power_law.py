@@ -77,7 +77,6 @@ def Iq(q,
        power_1=1.0,
        power_2=4.0,
       ):
-
     """
     :param q:                   Input q-value (float or [float, float])
     :param coefficent_1:        Scaling coefficent at low Q
@@ -97,6 +96,7 @@ def Iq(q,
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
+    """Return a random parameter set for the model."""
     coefficient_1 = 1
     crossover = 10**np.random.uniform(-3, -1)
     power_1 = np.random.uniform(1, 6)

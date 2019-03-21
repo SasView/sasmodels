@@ -69,7 +69,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import pi, inf
+from numpy import inf
 
 name = "vesicle"
 title = "Vesicle model representing a hollow sphere"
@@ -102,6 +102,7 @@ have_Fq = True
 effective_radius_type = ["outer radius"]
 
 def random():
+    """Return a random parameter set for the model."""
     total_radius = 10**np.random.uniform(1.3, 5)
     radius = total_radius * np.random.uniform(0, 1)
     thickness = total_radius - radius

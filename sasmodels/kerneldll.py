@@ -173,7 +173,7 @@ elif COMPILER == "mingw":
 ALLOW_SINGLE_PRECISION_DLLS = True
 
 
-def compile(source, output):
+def compile_model(source, output):
     # type: (str, str) -> None
     """
     Compile *source* producing *output*.
@@ -264,7 +264,7 @@ def make_dll(source, model_info, dtype=F64):
         source = generate.convert_type(source, dtype)
         with os.fdopen(system_fd, "w") as file_handle:
             file_handle.write(source)
-        compile(source=filename, output=dll)
+        compile_model(source=filename, output=dll)
         # Comment the following to keep the generated C file.
         # Note: If there is a syntax error then compile raises an error
         # and the source file will not be deleted.

@@ -383,6 +383,7 @@ def _revert_pars(pars, mapping):
     return newpars
 
 def revert_name(model_info):
+    """Translate model name back to the name used in SasView 3.x"""
     oldname, _ = CONVERSION_TABLE.get(model_info.id, [None, {}])
     return oldname
 
@@ -652,6 +653,9 @@ def _check_one(name, seed=None):
         assert k in pars, "%s: %r not converted"%(name, k)
 
 def test_backward_forward():
+    """
+    Test conversion of model parameters from 4.x to 3.x and back.
+    """
     from .core import list_models
     L = lambda name: _check_one(name, seed=1)
     for name in list_models('all'):

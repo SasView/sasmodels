@@ -99,7 +99,7 @@ References
 ----------
 
 .. [#]
-L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949). 
+L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949).
 
 Authorship and Verification
 ----------------------------
@@ -148,11 +148,13 @@ source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
           "core_shell_bicelle_elliptical.c"]
 have_Fq = True
 effective_radius_type = [
-    "equivalent cylinder excluded volume", "equivalent volume sphere", "outer rim average radius", "outer rim min radius",
+    "equivalent cylinder excluded volume", "equivalent volume sphere",
+    "outer rim average radius", "outer rim min radius",
     "outer max radius", "half outer thickness", "half diagonal",
     ]
 
 def random():
+    """Return a random parameter set for the model."""
     outer_major = 10**np.random.uniform(1, 4.7)
     outer_minor = 10**np.random.uniform(1, 4.7)
     # Use a distribution with a preference for thin shell or thin core,

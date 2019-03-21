@@ -14,7 +14,7 @@ from copy import deepcopy
 import collections
 import traceback
 import logging
-from os.path import basename, splitext, abspath, getmtime
+from os.path import basename, splitext, abspath
 try:
     import _thread as thread
 except ImportError:
@@ -30,7 +30,6 @@ from . import generate
 from . import weights
 from . import modelinfo
 from .details import make_kernel_args, dispersion_mesh
-from .kernelcl import reset_environment
 
 # pylint: disable=unused-import
 try:
@@ -687,7 +686,7 @@ class SasviewModel(object):
     def calculate_Iq(self,
                      qx,     # type: Sequence[float]
                      qy=None # type: Optional[Sequence[float]]
-                     ):
+                    ):
         # type: (...) -> Tuple[np.ndarray, Callable[[], collections.OrderedDict[str, np.ndarray]]]
         """
         Calculate Iq for one set of q with the current parameters.
@@ -937,7 +936,7 @@ def test_model_list():
 def test_old_name():
     # type: () -> None
     """
-    Load and run cylinder model as sas-models-CylinderModel
+    Load and run cylinder model as sas.models.CylinderModel
     """
     if not SUPPORT_OLD_STYLE_PLUGINS:
         return
@@ -979,6 +978,9 @@ def test_structure_factor_background():
 
 
 def magnetic_demo():
+    """
+    Demostrate call to magnetic model.
+    """
     Model = _make_standard_model('sphere')
     model = Model()
     model.setParam('sld_M0', 8)

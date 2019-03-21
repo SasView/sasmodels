@@ -97,7 +97,7 @@ References
 
 J. S. Pedersen, Adv. Colloid Interface Sci. 70, 171-210 (1997).
 G. Fournet, Bull. Soc. Fr. Mineral. Cristallogr. 74, 39-113 (1951).
-L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949). 
+L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949).
 """
 
 import numpy as np  # type: ignore
@@ -145,6 +145,7 @@ effective_radius_type = [
     ]
 
 def random():
+    """Return a random parameter set for the model."""
     volume = 10**np.random.uniform(5, 12)
     length = 10**np.random.uniform(-2, 2)*volume**0.333
     radius = np.sqrt(volume/length/np.pi)
@@ -183,18 +184,35 @@ tests = [
 del qx, qy  # not necessary to delete, but cleaner
 
 # Default radius and length
-radius, length = parameters[2][2], parameters[3][2]
+def calc_volume(radius, length):
+    """Return form volume for cylinder."""
+    return pi*radius**2*length
+def calc_r_effs(radius, length):
+    """Return effective radii for modes 0-7 of cylinder."""
+    return [
+        0.,
+        0.5*(0.75*radius*(2.0*radius*length
+                          + (radius + length)*(pi*radius + length)))**(1./3.),
+        (0.75*radius**2*length)**(1./3.),
+        radius,
+        length/2.,
+        min(radius, length/2.),
+        max(radius, length/2.),
+        np.sqrt(4*radius**2 + length**2)/2.,
+    ]
+r_effs = calc_r_effs(parameters[2][2], parameters[3][2])
+cyl_vol = calc_volume(parameters[2][2], parameters[3][2])
 tests.extend([
-    ({'radius_effective_mode': 0}, 0.1, None, None, 0., pi*radius**2*length, 1.0),   
-    ({'radius_effective_mode': 1}, 0.1, None, None, 0.5*(0.75*radius*(2.0*radius*length + (radius + length)*(pi*radius + length)))**(1./3.), None, None),    
-    ({'radius_effective_mode': 2}, 0.1, None, None, (0.75*radius**2*length)**(1./3.), None, None),
-    ({'radius_effective_mode': 3}, 0.1, None, None, radius, None, None),
-    ({'radius_effective_mode': 4}, 0.1, None, None, length/2., None, None),
-    ({'radius_effective_mode': 5}, 0.1, None, None, min(radius, length/2.), None, None),
-    ({'radius_effective_mode': 6}, 0.1, None, None, max(radius, length/2.), None, None),
-    ({'radius_effective_mode': 7}, 0.1, None, None, np.sqrt(4*radius**2 + length**2)/2., None, None),
+    ({'radius_effective_mode': 0}, 0.1, None, None, r_effs[0], cyl_vol, 1.0),
+    ({'radius_effective_mode': 1}, 0.1, None, None, r_effs[1], None, None),
+    ({'radius_effective_mode': 2}, 0.1, None, None, r_effs[2], None, None),
+    ({'radius_effective_mode': 3}, 0.1, None, None, r_effs[3], None, None),
+    ({'radius_effective_mode': 4}, 0.1, None, None, r_effs[4], None, None),
+    ({'radius_effective_mode': 5}, 0.1, None, None, r_effs[5], None, None),
+    ({'radius_effective_mode': 6}, 0.1, None, None, r_effs[6], None, None),
+    ({'radius_effective_mode': 7}, 0.1, None, None, r_effs[7], None, None),
 ])
-del radius, length
+del r_effs, cyl_vol
 # pylint: enable=bad-whitespace, line-too-long
 
 # ADDED by:  RKH  ON: 18Mar2016 renamed sld's etc

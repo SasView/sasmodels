@@ -179,7 +179,7 @@ References
 .. [#Mittelbach] P Mittelbach and G Porod, *Acta Physica Austriaca*,
    14 (1961) 185-211
 .. [#] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
-L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949). 
+L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949).
 
 Authorship and Verification
 ----------------------------
@@ -191,7 +191,7 @@ Authorship and Verification
 """
 
 import numpy as np
-from numpy import pi, inf, sqrt, sin, cos
+from numpy import inf
 
 name = "parallelepiped"
 title = "Rectangular parallelepiped with uniform scattering length density."
@@ -232,12 +232,13 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
 source = ["lib/gauss76.c", "parallelepiped.c"]
 have_Fq = True
 effective_radius_type = [
-    "equivalent cylinder excluded volume", "equivalent volume sphere", 
+    "equivalent cylinder excluded volume", "equivalent volume sphere",
     "half length_a", "half length_b", "half length_c",
     "equivalent circular cross-section", "half ab diagonal", "half diagonal",
     ]
 
 def random():
+    """Return a random parameter set for the model."""
     length = 10**np.random.uniform(1, 4.7, size=3)
     pars = dict(
         length_a=length[0],
@@ -260,7 +261,7 @@ demo = dict(scale=1, background=0,
             psi_pd=10, psi_pd_n=10)
 # rkh 7/4/17 add random unit test for 2d, note make all params different,
 # 2d values not tested against other codes or models
-qx, qy = 0.2 * cos(pi/6.), 0.2 * sin(pi/6.)
+qx, qy = 0.2 * np.cos(np.pi/6.), 0.2 * np.sin(np.pi/6.)
 tests = [[{}, 0.2, 0.17758004974],
          [{}, [0.2], [0.17758004974]],
          [{'theta':10.0, 'phi':20.0}, (qx, qy), 0.0089517140475],

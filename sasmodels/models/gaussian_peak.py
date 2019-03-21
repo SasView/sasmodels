@@ -50,6 +50,7 @@ Iq = """
     """
 
 def random():
+    """Return a random parameter set for the model."""
     peak_pos = 10**np.random.uniform(-3, -1)
     sigma = 10**np.random.uniform(-1.3, -0.3)*peak_pos
     scale = 10**np.random.uniform(0, 4)

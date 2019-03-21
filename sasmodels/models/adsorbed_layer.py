@@ -86,6 +86,7 @@ parameters = [
 # NB: Scale and Background are implicit parameters on every model
 def Iq(q, second_moment, adsorbed_amount, density_shell, radius,
        volfraction, sld_shell, sld_solvent):
+    """Return I(q) for adsorbed layer model."""
     with errstate(divide='ignore'):
         aa = ((sld_shell - sld_solvent)/density_shell * adsorbed_amount) / q
     bb = q * second_moment
@@ -95,6 +96,7 @@ def Iq(q, second_moment, adsorbed_amount, density_shell, radius,
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
+    """Return a random parameter set for the model."""
     # only care about the value of second_moment:
     #    curve = scale * e**(-second_moment^2 q^2)/q^2
     #    scale = 6 pi/100 (contrast/density*absorbed_amount)^2 * Vf/radius

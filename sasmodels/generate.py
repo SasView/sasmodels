@@ -189,6 +189,14 @@ logger = logging.getLogger(__name__)
 PROJECTION = 1
 
 def get_data_path(external_dir, target_file):
+    """
+    Search for the target file relative in the installed application.
+
+    Search first in the location of the generate module in case we are
+    running directly from the distribution.  Search next to the python
+    executable for windows installs.  Search in the ../Resources directory
+    next to the executable for Mac OS/X installs.
+    """
     path = abspath(dirname(__file__))
     if exists(joinpath(path, target_file)):
         return path
@@ -224,8 +232,8 @@ except TypeError:
 # code.  The macro itself needs to be defined in sasmodels/doc/rst_prolog.
 #
 # NOTE: there is an RST_PROLOG at the end of this file which is NOT
-# used for the bundled documentation. Still as long as we are defining the macros
-# in two places any new addition should define the macro in both places.
+# used for the bundled documentation. Still as long as we are defining the
+# macros in two places any new addition should define the macro in both places.
 RST_UNITS = {
     "Ang": "|Ang|",
     "1/Ang": "|Ang^-1|",
@@ -529,7 +537,7 @@ def _tag_float(source, constant_flag):
     return out
 
 def test_tag_float():
-    """check that floating point constants are properly identified and tagged with 'f'"""
+    """Check that floating point constants are identified and tagged with 'f'"""
 
     cases = """
 ZP  : 0.
@@ -706,7 +714,8 @@ def contains_Fq(source):
             return True
     return False
 
-_SHELL_VOLUME_PATTERN = re.compile(r"(^|\s)double\s+shell_volume[(]", flags=re.MULTILINE)
+_SHELL_VOLUME_PATTERN = re.compile(r"(^|\s)double\s+shell_volume[(]",
+                                   flags=re.MULTILINE)
 def contains_shell_volume(source):
     # type: (List[str]) -> bool
     """
@@ -800,7 +809,7 @@ def make_source(model_info):
         if xy_mode == 'qxy':
             logger.warn("oriented shapes should define Iqac or Iqabc")
         else:
-            raise ValueError("Expected function Iqac or Iqabc for oriented shape")
+            raise ValueError("Expected Iqac or Iqabc for oriented shape")
 
     # Define the parameter table
     lineno = getframeinfo(currentframe()).lineno + 2
@@ -814,16 +823,26 @@ def make_source(model_info):
     if partable.form_volume_parameters:
         refs = _call_pars("_v.", partable.form_volume_parameters)
         if is_hollow:
-            call_volume = "#define CALL_VOLUME(_form, _shell, _v) do { _form = form_volume(%s); _shell = shell_volume(%s); } while (0)"%((",".join(refs),)*2)
+            call_volume = (
+                "#define CALL_VOLUME(_form, _shell, _v) "
+                "do { _form = form_volume(%s); _shell = shell_volume(%s); } "
+                "while (0)") % ((",".join(refs),)*2)
         else:
-            call_volume = "#define CALL_VOLUME(_form, _shell, _v) do { _form = _shell = form_volume(%s); } while (0)"%(",".join(refs))
+            call_volume = (
+                "#define CALL_VOLUME(_form, _shell, _v) "
+                "do { _form = _shell = form_volume(%s); } "
+                "while (0)") % (",".join(refs))
         if model_info.effective_radius_type:
-            call_effective_radius = "#define CALL_EFFECTIVE_RADIUS(_mode, _v) effective_radius(_mode, %s)"%(",".join(refs))
+            call_effective_radius = (
+                "#define CALL_EFFECTIVE_RADIUS(_mode, _v) "
+                "effective_radius(_mode, %s)") % (",".join(refs))
     else:
         # Model doesn't have volume.  We could make the kernel run a little
         # faster by not using/transferring the volume normalizations, but
         # the ifdef's reduce readability more than is worthwhile.
-        call_volume = "#define CALL_VOLUME(_form, _shell, _v) do { _form = _shell = 1.0; } while (0)"
+        call_volume = (
+            "#define CALL_VOLUME(_form, _shell, _v) "
+            "do { _form = _shell = 1.0; } while (0)")
     source.append(call_volume)
     source.append(call_effective_radius)
     model_refs = _call_pars("_v.", partable.iq_parameters)
@@ -878,14 +897,13 @@ def make_source(model_info):
     source.append("#define NUM_MAGNETIC %d" % partable.nmagnetic)
     source.append("#define MAGNETIC_PARS %s"%",".join(str(k) for k in magpars))
     source.append("#define PROJECTION %d"%PROJECTION)
-    # TODO: allow mixed python/opencl kernels?
-    ocl = _kernels(kernel_code, call_iq, clear_iq, call_iqxy, clear_iqxy, model_info.name)
-    dll = _kernels(kernel_code, call_iq, clear_iq, call_iqxy, clear_iqxy, model_info.name)
+    wrappers = _kernels(kernel_code, call_iq, clear_iq,
+                        call_iqxy, clear_iqxy, model_info.name)
+    code = '\n'.join(source + wrappers[0] + wrappers[1] + wrappers[2])
 
-    result = {
-        'dll': '\n'.join(source+dll[0]+dll[1]+dll[2]),
-        'opencl': '\n'.join(source+ocl[0]+ocl[1]+ocl[2]),
-    }
+    # Note: Identical code for dll and opencl.  This may not always be the case
+    # so leave them as separate entries in the returned value.
+    result = {'dll': code, 'opencl': code}
     return result
 
 

@@ -57,7 +57,6 @@ class Dispersion(object):
         if not relative:
             # For orientation, the jitter is relative to 0 not the angle
             center = 0
-            pass
         if sigma == 0 or self.npts < 2:
             if lb <= center <= ub:
                 return np.array([center], 'd'), np.array([1.], 'd')
@@ -122,9 +121,9 @@ class RectangleDispersion(Dispersion):
     type = "rectangle"
     default = dict(npts=35, width=0, nsigmas=1.73205)
     def _weights(self, center, sigma, lb, ub):
-         x = self._linspace(center, sigma, lb, ub)
-         x = x[np.fabs(x-center) <= np.fabs(sigma)*sqrt(3.0)]
-         return x, np.ones_like(x)
+        x = self._linspace(center, sigma, lb, ub)
+        x = x[np.fabs(x-center) <= np.fabs(sigma)*sqrt(3.0)]
+        return x, np.ones_like(x)
 
 class LogNormalDispersion(Dispersion):
     r"""

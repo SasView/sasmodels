@@ -46,6 +46,7 @@ def Iq(q):
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
+    """Return a random parameter set for the model."""
     sld, solvent = np.random.uniform(-0.5, 12, size=2)
     radius = 10**np.random.uniform(1, 4.7)
     Vf = 10**np.random.uniform(-3, -1)

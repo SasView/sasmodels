@@ -99,6 +99,7 @@ parameters = [
     ]
 
 def random():
+    """Return a random parameter set for the model."""
     pars = dict(
         scale=1, background=0,
         radius_effective=10**np.random.uniform(1, 4.7),

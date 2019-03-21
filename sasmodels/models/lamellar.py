@@ -88,6 +88,7 @@ Iq = """
     """
 
 def random():
+    """Return a random parameter set for the model."""
     thickness = 10**np.random.uniform(1, 4)
     pars = dict(
         thickness=thickness,

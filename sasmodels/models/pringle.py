@@ -49,7 +49,7 @@ L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949).
 """
 
 import numpy as np
-from numpy import inf, pi
+from numpy import inf
 
 name = "pringle"
 title = "The Pringle model provides the form factor, $P(q)$, for a 'pringle' \
@@ -74,9 +74,13 @@ parameters = [
 
 source = ["lib/polevl.c", "lib/sas_J0.c", "lib/sas_J1.c",
           "lib/sas_JN.c", "lib/gauss76.c", "pringle.c"]
-effective_radius_type = ["equivalent cylinder excluded volume", "equivalent volume sphere", "radius"]
+effective_radius_type = [
+    "equivalent cylinder excluded volume",
+    "equivalent volume sphere",
+    "radius"]
 
 def random():
+    """Return a random parameter set for the model."""
     alpha, beta = 10**np.random.uniform(-1, 1, size=2)
     radius = 10**np.random.uniform(1, 3)
     thickness = 10**np.random.uniform(0.7, 2)

@@ -119,6 +119,7 @@ def make_mixture_info(parts, operation='+'):
     parameters.max_pd = sum(part.parameters.max_pd for part in parts)
 
     def random():
+        """Random set of model parameters for mixture model"""
         combined_pars = {}
         for k, part in enumerate(parts):
             prefix = chr(ord('A')+k) + '_'
@@ -148,6 +149,9 @@ def make_mixture_info(parts, operation='+'):
 
 
 class MixtureModel(KernelModel):
+    """
+    Model definition for mixture of models.
+    """
     def __init__(self, model_info, parts):
         # type: (ModelInfo, List[KernelModel]) -> None
         self.info = model_info
@@ -164,17 +168,20 @@ class MixtureModel(KernelModel):
         # other in double precision).
         kernels = [part.make_kernel(q_vectors) for part in self.parts]
         return MixtureKernel(self.info, kernels)
+    make_kernel.__doc__ = KernelModel.make_kernel.__doc__
 
     def release(self):
         # type: () -> None
-        """
-        Free resources associated with the model.
-        """
+        """Free resources associated with the model."""
         for part in self.parts:
             part.release()
+    release.__doc__ = KernelModel.release.__doc__
 
 
 class MixtureKernel(Kernel):
+    """
+    Instantiated kernel for mixture of models.
+    """
     def __init__(self, model_info, kernels):
         # type: (ModelInfo, List[Kernel]) -> None
         self.dim = kernels[0].dim
@@ -184,13 +191,13 @@ class MixtureKernel(Kernel):
         self.operation = model_info.operation
         self.results = []  # type: List[np.ndarray]
 
-    def __call__(self, call_details, values, cutoff, magnetic):
+    def Iq(self, call_details, values, cutoff, magnetic):
         # type: (CallDetails, np.ndarray, np.ndarry, float, bool) -> np.ndarray
         scale, background = values[0:2]
         total = 0.0
         # remember the parts for plotting later
         self.results = []  # type: List[np.ndarray]
-        parts = MixtureParts(self.info, self.kernels, call_details, values)
+        parts = _MixtureParts(self.info, self.kernels, call_details, values)
         for kernel, kernel_details, kernel_values in parts:
             #print("calling kernel", kernel.info.name)
             result = kernel(kernel_details, kernel_values, cutoff, magnetic)
@@ -207,13 +214,23 @@ class MixtureKernel(Kernel):
 
         return scale*total + background
 
+    Iq.__doc__ = Kernel.Iq.__doc__
+    __call__ = Iq
+
     def release(self):
         # type: () -> None
+        """Free resources associated with the kernel."""
         for k in self.kernels:
             k.release()
 
 
-class MixtureParts(object):
+# Note: _MixtureParts doesn't implement iteration correctly, and only allows
+# a single iterator to be active at once.  It doesn't matter in this case
+# since _MixtureParts is only used in one place, but it is not clean style.
+class _MixtureParts(object):
+    """
+    Mixture component iterator.
+    """
     def __init__(self, model_info, kernels, call_details, values):
         # type: (ModelInfo, List[Kernel], CallDetails, np.ndarray) -> None
         self.model_info = model_info
@@ -222,6 +239,11 @@ class MixtureParts(object):
         self.call_details = call_details
         self.values = values
         self.spin_index = model_info.parameters.npars + 2
+        # The following are redefined by __iter__, but set them here so that
+        # lint complains a little less.
+        self.part_num = -1
+        self.par_index = -1
+        self.mag_index = -1
         #call_details.show(values)
 
     def __iter__(self):

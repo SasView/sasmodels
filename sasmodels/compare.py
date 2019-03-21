@@ -724,7 +724,7 @@ def make_engine(model_info, data, dtype, cutoff, ngauss=0):
     if ngauss:
         set_integration_size(model_info, ngauss)
 
-    if (dtype != "default" and not dtype.endswith('!') 
+    if (dtype != "default" and not dtype.endswith('!')
             and not (kernelcl.use_opencl() or kernelcuda.use_cuda())):
         raise RuntimeError("OpenCL not available " + kernelcl.OPENCL_ERROR)
 
@@ -771,7 +771,7 @@ def compare(opts, limits=None, maxdim=np.inf):
             np.random.seed(new_seed)
         opts['pars'] = parse_pars(opts, maxdim=maxdim)
         if opts['pars'] is None:
-            return
+            return limits
         result = run_models(opts, verbose=True)
         if opts['plot']:
             if opts['is2d'] and k > 0:
@@ -821,8 +821,8 @@ def plot_profile(model_info, label='base', **args):
 
     args = dict((k, v) for k, v in args.items()
                 if "_pd" not in k
-                   and ":" not in k
-                   and k not in ("background", "scale", "theta", "phi", "psi"))
+                and ":" not in k
+                and k not in ("background", "scale", "theta", "phi", "psi"))
     args = args.copy()
 
     args.pop('scale', 1.)
@@ -895,7 +895,7 @@ def _print_stats(label, err):
     # type: (str, np.ma.ndarray) -> None
     # work with trimmed data, not the full set
     sorted_err = np.sort(abs(err.compressed()))
-    if len(sorted_err) == 0:
+    if sorted_err.size == 0:
         print(label + "  no valid values")
         return
 

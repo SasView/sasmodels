@@ -15,7 +15,9 @@ from numpy import pi
 try:
     from numpy import cbrt
 except ImportError:
-    def cbrt(x): return x ** (1.0/3.0)
+    def cbrt(x):
+        """Return cubed root of x."""
+        return x ** (1.0/3.0)
 
 from .generate import F64
 from .kernel import KernelModel, Kernel
@@ -42,9 +44,10 @@ class PyModel(KernelModel):
         _create_default_functions(model_info)
         self.info = model_info
         self.dtype = np.dtype('d')
-        logger.info("make python model " + self.info.name)
+        logger.info("make python model %s", self.info.name)
 
     def make_kernel(self, q_vectors):
+        """Instantiate the python kernel with input *q_vectors*"""
         q_input = PyInput(q_vectors, dtype=F64)
         return PyKernel(self.info, q_input)
 

@@ -111,6 +111,7 @@ parameters = [["radius_lg", "Ang", 100, [0, inf], "",
 source = ["lib/sas_3j1x_x.c", "binary_hard_sphere.c"]
 
 def random():
+    """Return a random parameter set for the model."""
     # TODO: binary_hard_sphere fails at low qr
     radius_lg = 10**np.random.uniform(2, 4.7)
     radius_sm = 10**np.random.uniform(2, 4.7)

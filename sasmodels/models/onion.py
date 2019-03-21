@@ -366,6 +366,8 @@ def profile(sld_core, radius_core, sld_solvent, n_shells,
 
     return np.asarray(z), np.asarray(rho)
 
+# TODO: no random parameter function for onion model
+
 demo = {
     "sld_solvent": 2.2,
     "sld_core": 1.0,

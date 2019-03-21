@@ -100,6 +100,7 @@ parameters = [
 source = ["lamellar_stack_caille.c"]
 
 def random():
+    """Return a random parameter set for the model."""
     total_thickness = 10**np.random.uniform(2, 4.7)
     Nlayers = np.random.randint(2, 200)
     d_spacing = total_thickness / Nlayers

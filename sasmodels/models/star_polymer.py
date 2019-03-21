@@ -86,6 +86,7 @@ parameters = [["rg_squared", "Ang^2", 100.0, [0.0, inf], "", "Ensemble radius of
 source = ["star_polymer.c"]
 
 def random():
+    """Return a random parameter set for the model."""
     pars = dict(
         #background=0,
         scale=10**np.random.uniform(1, 4),

@@ -2,9 +2,9 @@
 #note model title and parameter table are automatically inserted
 #note - calculation requires double precision
 r"""
-.. warning:: This model and this model description are under review following 
-             concerns raised by SasView users. If you need to use this model, 
-             please email help@sasview.org for the latest situation. *The 
+.. warning:: This model and this model description are under review following
+             concerns raised by SasView users. If you need to use this model,
+             please email help@sasview.org for the latest situation. *The
              SasView Developers. September 2018.*
 
 Definition
@@ -136,6 +136,7 @@ parameters = [["dnn", "Ang", 220, [-inf, inf], "", "Nearest neighbour distance"]
 source = ["lib/sas_3j1x_x.c", "lib/gauss150.c", "lib/sphere_form.c", "fcc_paracrystal.c"]
 
 def random():
+    """Return a random parameter set for the model."""
     # copied from bcc_paracrystal
     radius = 10**np.random.uniform(1.3, 4)
     d_factor = 10**np.random.uniform(-2, -0.7)  # sigma_d in 0.01-0.7

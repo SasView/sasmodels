@@ -154,6 +154,7 @@ source = ["lib/sas_3j1x_x.c", "raspberry.c"]
 effective_radius_type = ["radius_large", "radius_outer"]
 
 def random():
+    """Return a random parameter set for the model."""
     # Limit volume fraction to 20% each
     volfraction_lg = 10**np.random.uniform(-3, -0.3)
     volfraction_sm = 10**np.random.uniform(-3, -0.3)

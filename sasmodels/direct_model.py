@@ -30,7 +30,6 @@ from . import weights
 from . import resolution
 from . import resolution2d
 from .details import make_kernel_args, dispersion_mesh
-from .modelinfo import DEFAULT_BACKGROUND
 from .product import RADIUS_MODE_ID
 
 # pylint: disable=unused-import

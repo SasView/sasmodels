@@ -95,6 +95,7 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 def Iq(q, level, rg, power, B, G):
+    """Return I(q) for unified power Rg model."""
     level = int(level + 0.5)
     if level == 0:
         with errstate(divide='ignore'):
@@ -117,6 +118,7 @@ def Iq(q, level, rg, power, B, G):
 Iq.vectorized = True
 
 def random():
+    """Return a random parameter set for the model."""
     level = np.minimum(np.random.poisson(0.5) + 1, 6)
     n = level
     power = np.random.uniform(1.6, 3, n)

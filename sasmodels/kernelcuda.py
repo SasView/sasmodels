@@ -58,7 +58,6 @@ harmless, albeit annoying.
 from __future__ import print_function
 
 import os
-import warnings
 import logging
 import time
 import re
@@ -109,6 +108,8 @@ MAX_LOOPS = 2048
 
 
 def use_cuda():
+    # type: None -> bool
+    """Returns True if CUDA is the default compute engine."""
     sas_opencl = os.environ.get("SAS_OPENCL", "CUDA").lower()
     return HAVE_CUDA and sas_opencl.startswith("cuda")
 
@@ -135,7 +136,7 @@ def environment():
     if ENV is None:
         if not HAVE_CUDA:
             raise RuntimeError("CUDA startup failed with ***"
-                            + CUDA_ERROR + "***; using C compiler instead")
+                               + CUDA_ERROR + "***; using C compiler instead")
         reset_environment()
         if ENV is None:
             raise RuntimeError("SAS_OPENCL=None in environment")
@@ -197,7 +198,8 @@ def show_device_functions(source):
     Show all discovered function declarations, but don't change any.
     """
     for match in FUNCTION_PATTERN.finditer(source):
-        print(match.group('qualifiers').replace('\n',r'\n'), match.group('function'), '(')
+        print(match.group('qualifiers').replace('\n', r'\n'),
+              match.group('function'), '(')
     return source
 
 
@@ -259,6 +261,7 @@ class GpuEnvironment(object):
         self.compiled = {}
 
     def release(self):
+        """Free the CUDA device associated with this context."""
         if self.context is not None:
             self.context.pop()
             self.context = None

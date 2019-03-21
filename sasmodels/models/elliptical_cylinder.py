@@ -87,7 +87,7 @@ References
 
 L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and
 Neutron Scattering*, Plenum, New York, (1987) [see table 3.4]
-L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949). 
+L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949).
 
 Authorship and Verification
 ----------------------------
@@ -124,7 +124,8 @@ parameters = [["radius_minor",     "Ang",        20.0,  [0, inf],    "volume",  
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "elliptical_cylinder.c"]
 have_Fq = True
 effective_radius_type = [
-    "equivalent cylinder excluded volume", "equivalent volume sphere", "average radius", "min radius", "max radius",
+    "equivalent cylinder excluded volume",
+    "equivalent volume sphere", "average radius", "min radius", "max radius",
     "equivalent circular cross-section",
     "half length", "half min dimension", "half max dimension", "half diagonal",
     ]
@@ -134,11 +135,12 @@ demo = dict(scale=1, background=0, radius_minor=100, axis_ratio=1.5, length=400.
             theta_pd=10, phi_pd=2, psi_pd=3)
 
 def random():
+    """Return a random parameter set for the model."""
     # V = pi * radius_major * radius_minor * length;
     volume = 10**np.random.uniform(3, 9)
     length = 10**np.random.uniform(1, 3)
     axis_ratio = 10**np.random.uniform(0, 2)
-    radius_minor = np.sqrt(volume/length/axis_ratio)
+    radius_minor = sqrt(volume/length/axis_ratio)
     volfrac = 10**np.random.uniform(-4, -2)
     pars = dict(
         #background=0, sld=0, sld_solvent=1,
@@ -155,8 +157,8 @@ qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
 
 tests = [
-#    [{'radius_minor': 20.0, 'axis_ratio': 1.5, 'length':400.0}, 'ER', 79.89245454155024],
-#    [{'radius_minor': 20.0, 'axis_ratio': 1.2, 'length':300.0}, 'VR', 1],
+    #[{'radius_minor': 20.0, 'axis_ratio': 1.5, 'length':400.0}, 'ER', 79.89245454155024],
+    #[{'radius_minor': 20.0, 'axis_ratio': 1.2, 'length':300.0}, 'VR', 1],
 
     # The SasView test result was 0.00169, with a background of 0.001
     [{'radius_minor': 20.0, 'axis_ratio': 1.5, 'sld': 4.0, 'length':400.0,
