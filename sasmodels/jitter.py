@@ -113,11 +113,13 @@ def draw_ellipsoid(axes, size, view, jitter, steps=25, alpha=1):
 
 def draw_sc(axes, size, view, jitter, steps=None, alpha=1):
     """Draw points for simple cubic paracrystal"""
+    # pylint: disable=unused-argument
     atoms = _build_sc()
     _draw_crystal(axes, size, view, jitter, atoms=atoms)
 
 def draw_fcc(axes, size, view, jitter, steps=None, alpha=1):
     """Draw points for face-centered cubic paracrystal"""
+    # pylint: disable=unused-argument
     # Build the simple cubic crystal
     atoms = _build_sc()
     # Define the centers for each face
@@ -133,6 +135,7 @@ def draw_fcc(axes, size, view, jitter, steps=None, alpha=1):
 
 def draw_bcc(axes, size, view, jitter, steps=None, alpha=1):
     """Draw points for body-centered cubic paracrystal"""
+    # pylint: disable=unused-argument
     # Build the simple cubic crystal
     atoms = _build_sc()
     # Define the centers for each octant
@@ -188,6 +191,7 @@ def draw_box(axes, size, view):
 def draw_parallelepiped(axes, size, view, jitter, steps=None,
                         color=(0.6, 1.0, 0.6), alpha=1):
     """Draw a parallelepiped surface, with view and jitter."""
+    # pylint: disable=unused-argument
     a, b, c = size
     x = a*np.array([+1, -1, +1, -1, +1, -1, +1, -1])
     y = b*np.array([+1, +1, -1, -1, +1, +1, -1, -1])
@@ -211,7 +215,7 @@ def draw_parallelepiped(axes, size, view, jitter, steps=None,
     # Since I can't control face color, instead draw a thin box situated just
     # in front of the "c+" face.  Use the c face so that rotations about psi
     # rotate that face.
-    if 0:
+    if 0: # pylint: disable=using-constant-test
         color = (1, 0.6, 0.6)  # pink
         x = a*np.array([+1, -1, +1, -1, +1, -1, +1, -1])
         y = b*np.array([+1, +1, -1, -1, +1, +1, -1, -1])
@@ -228,7 +232,7 @@ def draw_parallelepiped(axes, size, view, jitter, steps=None,
         ('b-', [+0, -b, +0], [-1, +0, +0]),
     ])
 
-def draw_sphere(axes, radius=0.5, steps=25,
+def draw_sphere(axes, radius=1.0, steps=25,
                 center=(0, 0, 0), color='w', alpha=1.):
     """Draw a sphere"""
     u = np.linspace(0, 2 * pi, steps)
@@ -248,7 +252,7 @@ def draw_axes(axes, origin=(-1, -1, -1), length=(2, 2, 2)):
     axes.plot([x, x], [y, y+dy], [z, z], color='black')
     axes.plot([x, x], [y, y], [z, z+dz], color='black')
 
-def draw_person_on_sphere(axes, view, height=0.5, radius=0.5):
+def draw_person_on_sphere(axes, view, height=0.5, radius=1.0):
     """
     Draw a person on the surface of a sphere.
 
@@ -264,33 +268,33 @@ def draw_person_on_sphere(axes, view, height=0.5, radius=0.5):
     leg_length = shoulder_height - torso_length
     arm_length = torso_length * 0.90
 
-    def _draw_part(x, z):
-        y = np.zeros_like(x)
+    def _draw_part(y, z):
+        x = np.zeros_like(y)
         xp, yp, zp = transform_xyz(view, None, x, y, z + radius)
         axes.plot(xp, yp, zp, color='k')
 
     # circle for head
     u = np.linspace(0, 2 * pi, 40)
-    x = head_radius * cos(u)
+    y = head_radius * cos(u)
     z = head_radius * sin(u) + head_height
-    _draw_part(x, z)
+    _draw_part(y, z)
 
     # rectangle for body
-    x = np.array([-torso_radius, torso_radius, torso_radius, -torso_radius, -torso_radius])
+    y = np.array([-torso_radius, torso_radius, torso_radius, -torso_radius, -torso_radius])
     z = np.array([0., 0, torso_length, torso_length, 0]) + leg_length
-    _draw_part(x, z)
+    _draw_part(y, z)
 
     # arms
-    x = np.array([-torso_radius - limb_offset, -torso_radius - limb_offset, -torso_radius])
+    y = np.array([-torso_radius - limb_offset, -torso_radius - limb_offset, -torso_radius])
     z = np.array([shoulder_height - arm_length, shoulder_height, shoulder_height])
-    _draw_part(x, z)
-    _draw_part(-x, z)
+    _draw_part(y, z)
+    _draw_part(-y, z)  # pylint: disable=invalid-unary-operand-type
 
     # legs
-    x = np.array([-torso_radius + limb_offset, -torso_radius + limb_offset])
+    y = np.array([-torso_radius + limb_offset, -torso_radius + limb_offset])
     z = np.array([0, leg_length])
-    _draw_part(x, z)
-    _draw_part(-x, z)
+    _draw_part(y, z)
+    _draw_part(-y, z)  # pylint: disable=invalid-unary-operand-type
 
     limits = [-radius-height, radius+height]
     axes.set_xlim(limits)
@@ -396,6 +400,7 @@ def get_projection(projection):
         <https://en.wikipedia.org/wiki/Transverse_Mercator_projection#Ellipsoidal_transverse_Mercator>
         Should allow free movement in theta, but phi is distorted.
     """
+    # pylint: disable=unused-argument
     # TODO: try Kent distribution instead of a gaussian warped by projection
 
     if projection == 'equirectangular':  #define PROJECTION 1
@@ -533,7 +538,7 @@ def draw_mesh(axes, view, jitter, radius=1.2, n=11, dist='gaussian',
         raise ValueError("expected dist to be gaussian, rectangle or uniform")
 
     # mesh in theta, phi formed by rotating z
-    dtheta, dphi, dpsi = jitter
+    dtheta, dphi, dpsi = jitter  # pylint: disable=unused-variable
     z = np.matrix([[0], [0], [radius]])
     points = np.hstack([_rotate(theta_i, phi_j, z)
                         for theta_i in dtheta*dist_x
@@ -828,7 +833,7 @@ def draw_scattering(calculator, axes, view, jitter, dist='gaussian'):
     #vmin, vmax = Iqxy.min(), Iqxy.max()
     #print("range",(vmin,vmax))
     #qx, qy = np.meshgrid(qx, qy)
-    if 0:
+    if 0:  # pylint: disable=using-constant-test
         level = np.asarray(255*(Iqxy - vmin)/(vmax - vmin), 'i')
         level[level < 0] = 0
         from matplotlib import pylab as plt
@@ -840,7 +845,7 @@ def draw_scattering(calculator, axes, view, jitter, dist='gaussian'):
         colors[level <= 0, 3] = 0.  # set floor to transparent
         x, y = np.meshgrid(qx/qx.max(), qy/qy.max())
         axes.plot_surface(x, y, -1.1*np.ones_like(x), facecolors=colors)
-    elif 1:
+    elif 1:  # pylint: disable=using-constant-test
         axes.contourf(qx/qx.max(), qy/qy.max(), Iqxy, zdir='z', offset=-1.1,
                       levels=np.linspace(vmin, vmax, 24))
     else:
@@ -1018,7 +1023,8 @@ def run(model_name='parallelepiped', size=(10, 40, 100),
 def _mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection):
     # Note: travis-ci does not support mpl_toolkits.mplot3d, but this shouldn't be
     # an issue since we are lazy-loading the package on a path that isn't tested.
-    import mpl_toolkits.mplot3d  # Adds projection='3d' option to subplot
+    # Importing mplot3d adds projection='3d' option to subplot
+    import mpl_toolkits.mplot3d  # pylint: disable=unused-variable
     import matplotlib as mpl
     import matplotlib.pyplot as plt
     from matplotlib.widgets import Slider
@@ -1073,6 +1079,7 @@ def _mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection
 
     ## callback to draw the new view
     def _update(val, axis=None):
+        # pylint: disable=unused-argument
         view = stheta.val, sphi.val, spsi.val
         jitter = sdtheta.val, sdphi.val, sdpsi.val
         # set small jitter as 0 if multiple pd dims
@@ -1082,8 +1089,8 @@ def _mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection
         axes.cla()
 
         ## Visualize as person on globe
-        #draw_sphere(axes)
-        #draw_person_on_sphere(axes, view)
+        #draw_sphere(axes, radius=0.5)
+        #draw_person_on_sphere(axes, view, radius=0.5)
 
         ## Move beam instead of shape
         #draw_beam(axes, -view[:2])
@@ -1091,6 +1098,7 @@ def _mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection
 
         ## Move shape and draw scattering
         draw_beam(axes, (0, 0), alpha=1.)
+        #draw_person_on_sphere(axes, view, radius=1.2, height=0.5)
         draw_jitter(axes, view, jitter, dist=dist, size=size, alpha=1.,
                     draw_shape=draw_shape, projection=projection, views=3)
         draw_mesh(axes, view, jitter, dist=dist, n=mesh, projection=projection)
@@ -1207,10 +1215,11 @@ def ipv_axes():
     """
     import ipyvolume as ipv
 
-    class Axes:
+    class Axes(object):
         """
         Matplotlib Axes3D style interface to ipyvolume renderer.
         """
+        # pylint: disable=no-self-use,no-init
         # transparency can be achieved by setting the following:
         #    mesh.color = [r, g, b, alpha]
         #    mesh.material.transparent = True
@@ -1259,10 +1268,12 @@ def ipv_axes():
             return h
         def contourf(self, x, y, v, zdir='z', offset=0, levels=None, **kw):
             """mpl style contourf interface for ipyvolume"""
+            # pylint: disable=unused-argument
             # Don't use contour for now (although we might want to later)
             self.pcolor(x, y, v, zdir='z', offset=offset, **kw)
         def pcolor(self, x, y, v, zdir='z', offset=0, **kw):
             """mpl style pcolor interface for ipyvolume"""
+            # pylint: disable=unused-argument
             x, y, v = make_vec(x, y, v)
             image = make_image(v, kw)
             xmin, xmax = x.min(), x.max()
@@ -1316,8 +1327,8 @@ def _ipv_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection
 
         ## Visualize as person on globe
         #draw_beam(axes, (0, 0))
-        #draw_sphere(axes)
-        #draw_person_on_sphere(axes, view)
+        #draw_sphere(axes, radius=0.5)
+        #draw_person_on_sphere(axes, view, radius=0.5)
 
         ## Move beam instead of shape
         #draw_beam(axes, view=(-view[0], -view[1]))

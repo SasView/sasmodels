@@ -114,6 +114,7 @@ def fix_pyopencl_include():
     """
     Monkey patch pyopencl to allow spaces in include file path.
     """
+    # pylint: disable=protected-access
     import pyopencl
     if hasattr(pyopencl, '_DEFAULT_INCLUDE_OPTIONS'):
         pyopencl._DEFAULT_INCLUDE_OPTIONS = [
