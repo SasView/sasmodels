@@ -328,7 +328,7 @@ def _create_some_context():
         try:
             return [cl.create_some_context(interactive=False)]
         except Exception as exc:
-            # TODO: Should warnings instead by put into logging.warn?
+            # TODO: Should warnings instead be put into logging.warn?
             warnings.warn(str(exc))
             warnings.warn(
                 "pyopencl.create_some_context() failed.  The environment "
