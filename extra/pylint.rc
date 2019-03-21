@@ -68,11 +68,11 @@ disable=
     locally-disabled,
     #no-else-return,
     #invalid-name,
-    #fixme,
-    #too-many-lines,
-    #too-many-locals,
-    #too-many-branches,
-    #too-many-statements,
+    fixme,
+    too-many-lines,
+    too-many-locals,
+    too-many-branches,
+    too-many-statements,
     #too-many-instance-attributes,
     #too-many-return-statements,
     #no-self-use,
@@ -118,9 +118,9 @@ bad-functions=map,filter,input
 # Good variable names which should always be accepted, separated by a comma
 good-names=_,
     input, id,
-    h, i, j, k, n, p, u, v, w, x, y, z,
-    q, qx, qy, qz, Q, Qx, Qy, Qz,
-    dt, dx, dy, dz, dq,
+    h, i, j, k, n, p, u, v, w, x, y, z, r, dr,
+    q, qx, qy, qz, Q, Qx, Qy, Qz, nx, ny, nz, nq, nr,
+    dt, dx, dy, dz, dq, S, P, a, b, c,
     Iq, dIq, Iqxy, Iq_calc,
     ER, call_ER, VR, call_VR,
     Rmax, SElength,
@@ -142,7 +142,7 @@ function-rgx=[a-z_][a-z0-9_]{2,30}([123]D)?$
 function-name-hint=[a-z_][a-z0-9_]{2,30}$
 
 # Regular expression matching correct variable names
-variable-rgx=[a-z_][a-z0-9_{2D}{1D}]{2,30}$
+variable-rgx=[a-z_][a-z0-9_{2D}{1D}]{1,30}$
 
 # Naming hint for variable names
 variable-name-hint=[a-z_][a-z0-9_]{2,30}$
@@ -160,7 +160,7 @@ attr-rgx=[a-z_][a-z0-9__{2D}{1D}]{2,30}$
 attr-name-hint=[a-z_][a-z0-9_]{2,30}$
 
 # Regular expression matching correct argument names
-argument-rgx=[a-z_][a-z0-9_]{2,30}$
+argument-rgx=[a-z_][a-z0-9_]{1,30}$
 
 # Naming hint for argument names
 argument-name-hint=[a-z_][a-z0-9_]{2,30}$
