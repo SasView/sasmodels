@@ -20,7 +20,7 @@ Theory.__new__.__defaults__ = (None,) * len(Theory._fields)
 
 #Used to calculate F(q) for the cylinder, sphere, ellipsoid models
 # RKH adding vesicle and hollow_cylinder to test sasview special cases of ER and VR
-# BEWARE there are issues here if you run this from python3 (i.e. qt5 version of sasview), so do "source activate sasview"
+# There were issues here from python3 (i.e. qt5 version of sasview),fixed by Paul K (else do "source activate sasview")
 def sas_sinx_x(x):
     with np.errstate(all='ignore'):
         retvalue = sin(x)/x
@@ -274,7 +274,6 @@ def sphere_r(q,radius,sld,sld_solvent,
 
     if radius_effective is None:
         radius_effective = radius
-        print("radius_effective  ",radius_effective)
         average_volume = total_volume/total_weight
     if norm == 'sasfit':
         IQD = F2
@@ -284,6 +283,7 @@ def sphere_r(q,radius,sld,sld_solvent,
         F1 *= 1e-6  # Yun is using sld in 1/A^2, not 1e-6/A^2
         F2 *= 1e-12
         IQD = F2/average_volume*1e8*volfraction
+    print("in sphere_r : radius_effective  ",radius_effective,"  volfraction",volfraction)
     SQ = hardsphere_simple(q, radius_effective, volfraction)
     beta = F1**2/F2
     SQ_EFF = 1 + beta*(SQ - 1)
@@ -331,7 +331,7 @@ def vesicle_pe(q,radius=20, thickness=10, sld=4, sld_solvent=1, volfraction=0.03
     average_volume = total_volume/total_weight
     if radius_effective is None:
         radius_effective = radius_eff/total_weight
-        print("radius_effective  ",radius_effective)
+        print("in vesicle_pe : radius_effective  ",radius_effective)
     if norm == 'sasfit':
         IQD = F2
     elif norm == 'sasview':
@@ -347,9 +347,9 @@ def vesicle_pe(q,radius=20, thickness=10, sld=4, sld_solvent=1, volfraction=0.03
         F1 *= 1e-6  # Yun is using sld in 1/A^2, not 1e-6/A^2
         F2 *= 1e-12
         IQD = F2/average_volume*1e8*volfraction
-    # RKH SORT THIS OUT WHEN HAVE NEW MODEL
-    vfff=volfraction*(30./20.)**3
-    print("radius_effective, fudged volfaction for S(Q) ",radius_effective,vfff)
+    # RKH SORT THIS OUT WHEN HAVE NEW MODEL  Vtot/Vshell = (R+T)^3/ ( (R+T)^3 -R^3 )
+    vfff=volfraction*( 1.0/(1.0 - ( (radius/(radius+thickness))**3 )))
+    print("in vesicle_pe : radius_effective, fudged volfraction for S(Q) ",radius_effective,vfff)
     SQ = hardsphere_simple(q, radius_effective, vfff)
     beta = F1**2/F2
     SQ_EFF = 1 + beta*(SQ - 1)
@@ -358,9 +358,9 @@ def vesicle_pe(q,radius=20, thickness=10, sld=4, sld_solvent=1, volfraction=0.03
     return Theory(Q=q, F1=F1, F2=F2, P=IQD, S=SQ, I=IQSD, Seff=SQ_EFF, Ibeta=IQBD)
 #
 #polydispersity for hollow_cylinder
-def hollow_cylinder_pe(q,radius=20, thickness=10, sld=4, sld_solvent=1, volfraction=0.15,
-        radius_pd=0.1, thickness_pd=0.2, length_pd=0.05, radius_pd_type="gaussian", thickness_pd_type="gaussian",
-        radius_effective=None, background=0, scale=1,
+def hollow_cylinder_pe(q,radius=20, thickness=10, length=80, sld=4, sld_solvent=1, volfraction=0.15,
+        radius_pd=0.1, thickness_pd=0.2, length_pd=0.05, radius_pd_type="gaussian", length_pd_type="gaussian", 
+        thickness_pd_type="gaussian", radius_effective=None, background=0, scale=1,
                  norm='sasview'):
     if norm not in ['sasview', 'sasfit', 'yun']:
         raise TypeError("unknown norm "+norm)
@@ -373,7 +373,7 @@ def hollow_cylinder_pe(q,radius=20, thickness=10, sld=4, sld_solvent=1, volfract
     elif thickness_pd_type == 'schulz':
         T_val, T_prob = schulz_distribution(thickness, thickness_pd*thickness, 0, inf)
     if length_pd_type == 'gaussian':
-        T_val, T_prob = gaussian_distribution(length, length_pd*length, 0, inf)
+        L_val, L_prob = gaussian_distribution(length, length_pd*length, 0, inf)
     elif length_pd_type == 'schulz':
         L_val, L_prob = schulz_distribution(length, length_pd*length, 0, inf)
     total_weight = total_volume = total_shell = 0
@@ -401,7 +401,7 @@ def hollow_cylinder_pe(q,radius=20, thickness=10, sld=4, sld_solvent=1, volfract
     average_volume = total_volume/total_weight
     if radius_effective is None:
         radius_effective = radius_eff/total_weight
-        print("radius_effective  ",radius_effective)
+        print("in hollow_cylinder : radius_effective  ",radius_effective)
     if norm == 'sasfit':
         IQD = F2
     elif norm == 'sasview':
@@ -419,7 +419,7 @@ def hollow_cylinder_pe(q,radius=20, thickness=10, sld=4, sld_solvent=1, volfract
         IQD = F2/average_volume*1e8*volfraction
 # RKH SORT THIS OUT WHEN HAVE NEW MODEL
     vfff=volfraction
-    print("radius_effective, volfaction for S(Q) ",radius_effective,vfff)
+    print("in hollow_cylinder : radius_effective, volfaction for S(Q) ",radius_effective,vfff)
     SQ = hardsphere_simple(q, radius_effective, vfff)
     beta = F1**2/F2
     SQ_EFF = 1 + beta*(SQ - 1)
@@ -547,7 +547,7 @@ def sasmodels_theory(q, Pname, **pars):
     #Sq = Iq/Pq
     #Iq = None#= Sq = None
     r = dict(I._kernel.results())
-    #print(r)
+    print(r)
     return Theory(Q=q, F1=None, F2=None, P=Pq, S=None, I=None, Seff=r["S_eff(Q)"], Ibeta=Iq)
 
 def compare(title, target, actual, fields='F1 F2 P S I Seff Ibeta'):
@@ -590,7 +590,9 @@ def compare_sasview_sphere(pd_type='schulz'):
         background=0,
         radius_pd=.1, radius_pd_type=pd_type,
         volfraction=0.15,
-        radius_effective=12.59921049894873,  # equivalent average sphere radius
+        radius_effective=20  # equivalent average sphere radius
+#       NOTE sasview computes its own radius_effective in "target" (the print(r) at end of sasmodels_theory will reveal its value),
+#       this one is only used locally for "actual"
         )
     target = sasmodels_theory(q, model, effective_radius_mode=0, structure_factor_mode=1, **pars)
     actual = sphere_r(q, norm='sasview', **pars)
@@ -603,14 +605,15 @@ COMPARISON[('sasview', 'sphere', 'schulz')] = lambda: compare_sasview_sphere(pd_
 def compare_sasview_vesicle(pd_type='gaussian'):
     q = np.logspace(-5, 0, 250)
     model = 'vesicle'
-    print("F2 seems OK, but big issues with S(Q), wo work in progress")
-# NOTE parameers for vesicle model are soon to be changed to remove "volfraction"
+    print("F2 seems OK, but big issues with S(Q), so work in progress")
+# NOTE parameters for vesicle model are soon to be changed to remove "volfraction" (though still there in 5.0)
     pars = dict(
         radius=20, thickness=10, sld=4, sld_solvent=1, volfraction=0.03,
         background=0,
-        radius_pd=0.1, thickness_pd=0.0, radius_pd_type=pd_type, thickness_pd_type=pd_type
-        #,radius_effective=12.59921049894873,  # equivalent average sphere radius
-        )
+        radius_pd=0.01, thickness_pd=0.01, radius_pd_type=pd_type, thickness_pd_type=pd_type,
+        radius_effective=30. ) 
+        # equivalent average sphere radius for local "actual" to match what sasview uses, use None to compute average outer radius here,
+
     target = sasmodels_theory(q, model, effective_radius_mode=0, structure_factor_mode=1, **pars)
     actual = vesicle_pe(q, norm='sasview', **pars)
     title = " ".join(("sasmodels", model, pd_type))
@@ -628,9 +631,9 @@ def compare_sasview_hollow_cylinder(pd_type='gaussian'):
     pars = dict(
         radius=20, thickness=10, length=80, sld=4, sld_solvent=1,
         background=0,
-        radius_pd=0.1, thickness_pd=0.0, length_pd=0.0, radius_pd_type=pd_type, thickness_pd_type=pd_type, length_pd_type=pd_type
-        #,radius_effective=12.59921049894873,  # equivalent average sphere radius
-        )
+        radius_pd=0.1, thickness_pd=0.0, length_pd=0.0, radius_pd_type=pd_type, thickness_pd_type=pd_type, length_pd_type=pd_type,
+        radius_effective=40.687)  
+        # equivalent average sphere radius for local "actual" to match what sasview uses
     target = sasmodels_theory(q, model, effective_radius_mode=0, structure_factor_mode=1, **pars)
     actual = hollow_cylinder_pe(q, norm='sasview', **pars)
 # RKH monodisp was OK,    actual = hollow_cylinder_theta(q,radius=20, thickness=10, length=80, sld=4, sld_solvent=1 )
@@ -650,7 +653,7 @@ def compare_sasview_ellipsoid(pd_type='gaussian'):
         radius_equatorial_pd=0.1, radius_equatorial_pd_type=pd_type,
         volfraction=0.15,
         radius_effective=270.7543927018,
-        #radius_effective=12.59921049894873,
+# if change radius_effective to some other value, the S(Q) from sasview does not agree
         )
     target = sasmodels_theory(q, model, effective_radius_mode=0, structure_factor_mode=1, **pars)
     actual = ellipsoid_pe(q, norm='sasview', **pars)
