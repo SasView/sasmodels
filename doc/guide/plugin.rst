@@ -511,8 +511,9 @@ The structure factor calculation needs *form_volume* in order to properly
 scale the volume fraction parameter, so both functions are required for
 hollow shapes.
 
-Note: Pure python models do not yet support direct computation of the
-average of $F(q)$ and $F^2(q)$.
+**Note: Pure python models do not yet support direct computation of the**
+**average of $F(q)$ and $F^2(q)$. Neither do they support orientational**
+**distributions or magnetism (use C models if these are required).**
 
 Embedded C Models
 .................
@@ -613,7 +614,8 @@ be rotated into $(q_a, q_b, q_c)$ points relative to the sample in its
 canonical orientation with $a$-$b$-$c$ aligned with $x$-$y$-$z$ in the
 laboratory frame and beam travelling along $-z$.
 
-The oriented C model is called using *Iqabc(qa, qb, qc, par1, par2, ...)* where
+The oriented C model (oriented pure Python models are not supported) 
+is called using *Iqabc(qa, qb, qc, par1, par2, ...)* where
 *par1*, etc. are the parameters to the model.  If the shape is rotationally
 symmetric about *c* then *psi* is not needed, and the model is called
 as *Iqac(qab, qc, par1, par2, ...)*.  In either case, the orientation
@@ -717,6 +719,8 @@ them unmarked and provide your own magnetism and polarization parameters.
 For 2D measurements you will need $(q_x, q_y)$ values for the measurement
 to compute the proper magnetism and orientation, which you can implement
 using *Iqxy(qx, qy, par1, par2, ...)*.
+
+**Note: Magnetism is not supported in pure Python models.**
 
 Special Functions
 .................
