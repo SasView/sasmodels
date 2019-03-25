@@ -13,7 +13,7 @@ composed of a number of uniform shells with interfacial shells between them.
 
     Example SLD profile
 
-Unlike the <onion> model (using an analytical integration), the interfacial
+Unlike the :ref:`onion` model (using an analytical integration), the interfacial
 shells here are sub-divided and numerically integrated assuming each
 sub-shell is described by a line function, with *n_steps* sub-shells per
 interface. The form factor is normalized by the total volume of the sphere.
@@ -89,7 +89,7 @@ Exp:
     {\Delta t_{ \text{inter}_i }} \Big) +C  & \mbox{for } A = 0 \\
     \end{cases}
 
-Power-Law
+Power-Law:
 
 .. math::
 
@@ -102,6 +102,7 @@ Power-Law
 Erf:
 
 .. math::
+
     \rho_{{inter}_i} (r) = \begin{cases}
     B \text{erf} \Big( \frac { A(r - r_{\text{flat}_i})}
     {\sqrt{2} \Delta t_{ \text{inter}_i }} \Big) +C  & \mbox{for } A \neq 0 \\
@@ -184,6 +185,12 @@ References
 .. [#] L A Feigin and D I Svergun, Structure Analysis by Small-Angle X-Ray
    and Neutron Scattering, Plenum Press, New York, (1987)
 
+Source
+------
+
+`spherical_sld.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/spherical_sld.py>`_
+
+`spherical_sld.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/spherical_sld.c>`_
 
 Authorship and Verification
 ----------------------------
@@ -191,6 +198,7 @@ Authorship and Verification
 * **Author:** Jae-Hie Cho **Date:** Nov 1, 2010
 * **Last Modified by:** Paul Kienzle **Date:** Dec 20, 2016
 * **Last Reviewed by:** Paul Butler **Date:** September 8, 2018
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

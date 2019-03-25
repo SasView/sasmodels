@@ -38,7 +38,20 @@ For a 2D plot, the wave transfer is defined as
 References
 ----------
 
-J K Percus, J Yevick, *J. Phys. Rev.*, 110, (1958) 1
+.. [#] J K Percus, J Yevick, *J. Phys. Rev.*, 110, (1958) 1
+
+Source
+------
+
+`hardsphere.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/hardsphere.py>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

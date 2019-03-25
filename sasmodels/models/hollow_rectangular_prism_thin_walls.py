@@ -71,8 +71,14 @@ References
 ----------
 
 .. [#Nayuk2012] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
-L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949).
+.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
+Source
+------
+
+`hollow_rectangular_prism_thin_walls.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/hollow_rectangular_prism_thin_walls.py>`_
+
+`hollow_rectangular_prism_thin_walls.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/hollow_rectangular_prism_thin_walls.c>`_
 
 Authorship and Verification
 ----------------------------
@@ -80,6 +86,7 @@ Authorship and Verification
 * **Author:** Miguel Gonzales **Date:** February 26, 2016
 * **Last Modified by:** Paul Kienzle **Date:** October 15, 2016
 * **Last Reviewed by:** Paul Butler **Date:** September 07, 2018
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

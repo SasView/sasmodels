@@ -37,18 +37,32 @@ orientation of the $q$ vector.
 NB: The outer most radius (ie, = radius + thickness) is used as the
 effective radius for $S(Q)$ when $P(Q) \cdot S(Q)$ is applied.
 
-References
-----------
-
-A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*,
-John Wiley and Sons, New York, (1955)
-
 Validation
 ----------
 
 Validation of our code was done by comparing the output of the 1D model to
 the output of the software provided by NIST (Kline, 2006). Figure 1 shows a
 comparison of the output of our model and the output of the NIST software.
+
+References
+----------
+
+.. [#] A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*, John Wiley and Sons, New York, (1955)
+
+Source
+------
+
+`core_shell_sphere.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/core_shell_sphere.py>`_
+
+`core_shell_sphere.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/core_shell_sphere.c>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

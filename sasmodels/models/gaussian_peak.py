@@ -25,6 +25,19 @@ References
 ----------
 
 None.
+
+Source
+------
+
+`gaussian_peak.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/gaussian_peak.py>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

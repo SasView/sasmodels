@@ -62,7 +62,20 @@ as 1D, where the $q$ vector is defined as
 References
 ----------
 
-S V G Menon, C Manohar, and K S Rao, *J. Chem. Phys.*, 95(12) (1991) 9186-9190
+.. [#] S V G Menon, C Manohar, and K S Rao, *J. Chem. Phys.*, 95(12) (1991) 9186-9190
+
+Source
+------
+
+`stickyhardsphere.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/stickyhardsphere.py>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 # TODO: refactor so that we pull in the old sansmodels.c_extensions

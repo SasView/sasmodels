@@ -87,8 +87,16 @@ for further information.
 References
 ----------
 see for example:
-Kotlarchyk, M.; Chen, S.-H. J. Chem. Phys., 1983, 79, 2461.
-Berr, S.  J. Phys. Chem., 1987, 91, 4760.
+
+.. [#] Kotlarchyk, M.; Chen, S.-H. *J. Chem. Phys.*, 1983, 79, 2461
+.. [#] Berr, S. *J. Phys. Chem.*, 1987, 91, 4760
+
+Source
+------
+
+`core_shell_ellipsoid.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/core_shell_ellipsoid.py>`_
+
+`core_shell_ellipsoid.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/core_shell_ellipsoid.c>`_
 
 Authorship and Verification
 ----------------------------
@@ -96,6 +104,7 @@ Authorship and Verification
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Richard Heenan (reparametrised model) **Date:** 2015
 * **Last Reviewed by:** Richard Heenan **Date:** October 6, 2016
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

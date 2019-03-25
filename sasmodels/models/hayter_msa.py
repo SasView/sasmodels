@@ -36,9 +36,23 @@ where the $q$ vector is defined as
 References
 ----------
 
-J B Hayter and J Penfold, *Molecular Physics*, 42 (1981) 109-118
+.. [#] J B Hayter and J Penfold, *Molecular Physics*, 42 (1981) 109-118
+.. [#] J P Hansen and J B Hayter, *Molecular Physics*, 46 (1982) 651-656
 
-J P Hansen and J B Hayter, *Molecular Physics*, 46 (1982) 651-656
+Source
+------
+
+`hayter_msa.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/hayter_msa.py>`_
+
+`hayter_msa.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/hayter_msa.c>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

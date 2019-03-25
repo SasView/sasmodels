@@ -43,7 +43,20 @@ where the $q$ vector is defined as
 References
 ----------
 
-R V Sharma, K C Sharma, *Physica*, 89A (1977) 213.
+.. [#] R V Sharma, K C Sharma, *Physica*, 89A (1977) 213
+
+Source
+------
+
+`squarewell.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/squarewell.py>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

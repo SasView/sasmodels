@@ -179,7 +179,14 @@ References
 .. [#Mittelbach] P Mittelbach and G Porod, *Acta Physica Austriaca*,
    14 (1961) 185-211
 .. [#] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
-L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949).
+.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+
+Source
+------
+
+`parallelepiped.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/parallelepiped.py>`_
+
+`parallelepiped.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/parallelepiped.c>`_
 
 Authorship and Verification
 ----------------------------
@@ -188,6 +195,7 @@ Authorship and Verification
 * **Last Modified by:**  Paul Kienzle **Date:** April 05, 2017
 * **Last Reviewed by:**  Miguel Gonzales and Paul Butler **Date:** May 24,
   2018 - documentation updated
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

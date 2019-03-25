@@ -35,7 +35,22 @@ length density of particles.
 References
 ----------
 
-D Mildner and P Hall, *J. Phys. D: Appl. Phys.*, 19 (1986) 1535-1545
+.. [#] D Mildner and P Hall, *J. Phys. D: Appl. Phys.*, 19 (1986) 1535-1545
+
+Source
+------
+
+`surface_fractal.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/surface_fractal.py>`_
+
+`surface_fractal.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/surface_fractal.c>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

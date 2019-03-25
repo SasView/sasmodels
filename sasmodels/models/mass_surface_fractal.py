@@ -54,11 +54,20 @@ References
 .. [#] A J Hurd, D W Schaefer, J E Martin, *Phys. Rev. A*,
    35 (1987) 2361-2364 Equation(2)
 
+Source
+------
+
+`mass_surface_fractal.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/mass_surface_fractal.py>`_
+
+`mass_surface_fractal.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/mass_surface_fractal.c>`_
+
 Authorship and Verification
 ----------------------------
 
-* **Converted to sasmodels by:** Piotr Rozyczko **Date:** Jan 20, 2016
+* **Author:** Piotr Rozyczko **Date:** Jan 20, 2016
+* **Last Modified by:** 
 * **Last Reviewed by:** Richard Heenan **Date:** May 30, 2018
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

@@ -95,12 +95,24 @@ to the output of the existing :ref:`parallelepiped` model.
 References
 ----------
 
-P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
+.. [#] P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
+.. [#] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
-R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+Source
+------
 
-L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949).
+`rectangular_prism.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/rectangular_prism.py>`_
 
+`rectangular_prism.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/rectangular_prism.c>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

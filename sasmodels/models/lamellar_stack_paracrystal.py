@@ -87,10 +87,23 @@ of the $q$ vector which is defined as
 Reference
 ---------
 
-M Bergstrom, J S Pedersen, P Schurtenberger, S U Egelhaaf,
-*J. Phys. Chem. B*, 103 (1999) 9888-9897
-"""
+.. [#] M Bergstrom, J S Pedersen, P Schurtenberger, S U Egelhaaf, *J. Phys. Chem. B*, 103 (1999) 9888-9897
 
+Source
+------
+
+`lamellar_stack_paracrystal.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/lamellar_stack_paracrystal.py>`_
+
+`lamellar_stack_paracrystal.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/lamellar_stack_paracrystal.c>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
+"""
 import numpy as np
 from numpy import inf
 

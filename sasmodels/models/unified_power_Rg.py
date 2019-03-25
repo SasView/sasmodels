@@ -62,11 +62,22 @@ where the $q$ vector is defined as
 References
 ----------
 
-G Beaucage, *J. Appl. Cryst.*, 28 (1995) 717-728
+.. [#] G Beaucage, *J. Appl. Cryst.*, 28 (1995) 717-728
+.. [#] G Beaucage, *J. Appl. Cryst.*, 29 (1996) 134-146
+.. [#] B Hammouda, *Analysis of the Beaucage model, J. Appl. Cryst.*, (2010), 43, 1474-1478
 
-G Beaucage, *J. Appl. Cryst.*, 29 (1996) 134-146
+Source
+------
 
-B Hammouda, *Analysis of the Beaucage model, J. Appl. Cryst.*, (2010), 43, 1474-1478
+`unified_power_Rg.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/unified_power_Rg.py>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 from __future__ import division

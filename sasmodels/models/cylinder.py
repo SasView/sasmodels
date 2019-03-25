@@ -95,9 +95,24 @@ system, and then comparing to the 1D result.
 References
 ----------
 
-J. S. Pedersen, Adv. Colloid Interface Sci. 70, 171-210 (1997).
-G. Fournet, Bull. Soc. Fr. Mineral. Cristallogr. 74, 39-113 (1951).
-L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949).
+.. [#] J. Pedersen, *Adv. Colloid Interface Sci.*, 70 (1997) 171-210
+.. [#] G. Fournet, *Bull. Soc. Fr. Mineral. Cristallogr.*, 74 (1951) 39-113
+.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+
+Source
+------
+
+`cylinder.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/cylinder.py>`_
+
+`cylinder.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/cylinder.c>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np  # type: ignore

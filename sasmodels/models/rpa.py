@@ -62,12 +62,16 @@ USAGE NOTES:
 References
 ----------
 
-A Z Akcasu, R Klein and B Hammouda, *Macromolecules*, 26 (1993) 4136.
+.. [#] A Z Akcasu, R Klein and B Hammouda, *Macromolecules*, 26 (1993) 4136
+.. [#] B. Hammouda, *Advances in Polymer Science* 106 (1993) 87
+.. [#] B. Hammouda, *SANS Toolbox* https://www.ncnr.nist.gov/staff/hammouda/the_sans_toolbox.pdf.
 
-B. Hammouda, *Advances in Polymer Science* 106 (1993) 87.
+Source
+------
 
-B. Hammouda, *SANS Toolbox*
-https://www.ncnr.nist.gov/staff/hammouda/the_sans_toolbox.pdf.
+`rpa.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/rpa.py>`_
+
+`rpa.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/rpa.c>`_
 
 Authorship and Verification
 ----------------------------
@@ -76,6 +80,7 @@ Authorship and Verification
 * **Converted to sasmodels by:** Paul Kienzle **Date:** July 18, 2016
 * **Last Modified by:** Paul Butler **Date:** March 12, 2017
 * **Last Reviewed by:** Paul Butler **Date:** March 12, 2017
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 from numpy import inf

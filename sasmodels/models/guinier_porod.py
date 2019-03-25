@@ -59,9 +59,21 @@ where the q vector is defined as
 Reference
 ---------
 
-B Hammouda, *A new Guinier-Porod model, J. Appl. Cryst.*, (2010), 43, 716-719
+.. [#] B Hammouda, *A new Guinier-Porod model, J. Appl. Cryst.*, (2010), 43, 716-719
+.. [#] B Hammouda, *Analysis of the Beaucage model, J. Appl. Cryst.*, (2010), 43, 1474-1478
 
-B Hammouda, *Analysis of the Beaucage model, J. Appl. Cryst.*, (2010), 43, 1474-1478
+Source
+------
+
+`guinier_porod.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/guinier_porod.py>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

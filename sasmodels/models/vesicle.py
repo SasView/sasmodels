@@ -59,6 +59,12 @@ References
 .. [#Guinier1955] A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*, John Wiley and
    Sons, New York, (1955)
 
+Source
+------
+
+`vesicle.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/vesicle.py>`_
+
+`vesicle.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/vesicle.c>`_
 
 Authorship and Verification
 ----------------------------
@@ -66,6 +72,7 @@ Authorship and Verification
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Butler **Date:** March 20, 2016
 * **Last Reviewed by:** Paul Butler **Date:** September 7, 2018
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

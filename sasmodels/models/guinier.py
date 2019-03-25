@@ -45,8 +45,20 @@ negative value of $R_g^2$.
 References
 ----------
 
-A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*,
-John Wiley & Sons, New York (1955)
+.. [#] A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*, John Wiley & Sons, New York (1955)
+
+Source
+------
+
+`guinier.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/guinier.py>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

@@ -36,10 +36,22 @@ to the output of the software provided by the NIST (Kline, 2006).
 References
 ----------
 
-A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*,
-John Wiley and Sons, New York, (1955)
+.. [#] A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*, John Wiley and Sons, New York, (1955)
 
+Source
+------
+
+`sphere.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/sphere.py>`_
+
+`sphere.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/sphere.c>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
 * **Last Reviewed by:** S King and P Parker **Date:** 2013/09/09 and 2014/01/06
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
