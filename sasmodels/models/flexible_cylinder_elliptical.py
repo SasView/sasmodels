@@ -36,7 +36,7 @@ limit. See equations (13, 26-27) in the original reference for the details.
 .. note::
 
     There are several typos in the original reference that have been corrected
-    by WRC. Details of the corrections are in the reference below. Most notably
+    by WRC [2]. Details of the corrections are in the reference below. Most notably
 
     - Equation (13): the term $(1 - w(QR))$ should swap position with $w(QR)$
 
@@ -89,12 +89,14 @@ Source
 
 `flexible_cylinder_elliptical.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/flexible_cylinder_elliptical.c>`_
 
+`wrc_cyl.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/lib/wrc_cyl.c>`_
+
 Authorship and Verification
 ----------------------------
 
 * **Author:** 
 * **Last Modified by:** Richard Heenan **Date:** December, 2016
-* **Last Reviewed by:** 
+* **Last Reviewed by:** Steve King **Date:** March 26, 2019
 * **Source added by :** Steve King **Date:** March 25, 2019
 """
 
