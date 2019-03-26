@@ -61,8 +61,6 @@ The major radius is larger, so of course, **the axis ratio (parameter 5) must be
 greater than one.** Simple constraints should be applied during curve fitting to
 maintain this inequality.
 
-The returned value is in units of $cm^{-1}$, on absolute scale.
-
 In the parameters, the $sld$ and $sld\_solvent$ represent the SLD of the
 chain/cylinder and solvent respectively. The *scale*, and the contrast are both
 multiplicative factors in the model and are perfectly correlated. One or both of

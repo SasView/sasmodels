@@ -29,16 +29,11 @@ length (the length along the cylinder over which the flexible cylinder can be
 considered a rigid rod).
 The Kuhn length $(b = 2*l_p)$ is also used to describe the stiffness of a chain.
 
-The returned value is in units of $cm^{-1}$, on absolute scale.
-
 In the parameters, the sld and sld\_solvent represent the SLD of the cylinder
 and solvent respectively.
 
 Our model uses the form factor calculations implemented in a c-library provided
-by the NIST Center for Neutron Research (Kline, 2006).
-
-
-From the reference:
+by the NIST Center for Neutron Research (Kline, 2006). This states:
 
     'Method 3 With Excluded Volume' is used.
     The model is a parametrization of simulations of a discrete representation
@@ -75,7 +70,7 @@ import numpy as np
 from numpy import inf
 
 name = "flexible_cylinder"
-title = "Flexible cylinder where the form factor is normalized by the volume" \
+title = "Flexible cylinder where the form factor is normalized by the volume " \
         "of the cylinder."
 description = """Note : scale and contrast = (sld - sld_solvent) are both
                 multiplicative factors in the model and are perfectly
