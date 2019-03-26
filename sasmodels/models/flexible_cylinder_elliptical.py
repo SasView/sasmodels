@@ -93,7 +93,7 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** 
-* **Last Modified by:** 
+* **Last Modified by:** Richard Heenan **Date:** December, 2016
 * **Last Reviewed by:** 
 * **Source added by :** Steve King **Date:** March 25, 2019
 """
