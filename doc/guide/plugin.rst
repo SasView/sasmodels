@@ -1111,10 +1111,11 @@ Plugin Editor*), load your model, and then select *Run > Check Model* from
 the menu bar. An *Info* box will appear with the results of the compilation
 and a check that the model runs.
 
-If you are not using sasmodels from SasView, skip this step.
-
 Recommended Testing
 ...................
+
+**NB: For now, this more detailed testing is only possible if you have a 
+SasView build environment available!**
 
 If the model compiles and runs, you can next run the unit tests that
 you have added using the **test =** values.
