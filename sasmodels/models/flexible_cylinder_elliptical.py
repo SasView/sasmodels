@@ -44,8 +44,8 @@ limit. See equations (13, 26-27) in the original reference for the details.
       Mathematica and solved analytically. The results were then converted to
       code.
 
-    - Equation (27) should be $q0 = max(a3/sqrt(RgSquare),3)$ instead of
-      $max(a3*b/sqrt(RgSquare),3)$
+    - Equation (27) should be $q0 = max(a3/(Rg^2)^{1/2},3)$ instead of
+      $max(a3*b(Rg^2)^{1/2},3)$
 
     - The scattering function is negative for a range of parameter values and
       q-values that are experimentally accessible. A correction function has been
