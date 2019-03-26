@@ -31,8 +31,20 @@ where the $q$ vector is defined as
 References
 ----------
 
-G Evmenenko, E Theunissen, K Mortensen, H Reynaers, *Polymer*,
-42 (2001) 2907-2913
+.. [#] G Evmenenko, E Theunissen, K Mortensen, H Reynaers, *Polymer*, 42 (2001) 2907-2913
+
+Source
+------
+
+`gauss_lorentz_gel.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/gauss_lorentz_gel.py>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -88,6 +100,7 @@ Iq.vectorized = True  # Iq accepts an array of q values
 
 
 def random():
+    """Return a random parameter set for the model."""
     gauss_scale = 10**np.random.uniform(1, 3)
     lorentz_scale = 10**np.random.uniform(1, 3)
     cor_length_static = 10**np.random.uniform(0, 3)

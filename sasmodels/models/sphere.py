@@ -36,10 +36,22 @@ to the output of the software provided by the NIST (Kline, 2006).
 References
 ----------
 
-A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*,
-John Wiley and Sons, New York, (1955)
+.. [#] A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*, John Wiley and Sons, New York, (1955)
 
+Source
+------
+
+`sphere.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/sphere.py>`_
+
+`sphere.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/sphere.c>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
 * **Last Reviewed by:** S King and P Parker **Date:** 2013/09/09 and 2014/01/06
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -66,27 +78,12 @@ parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Sphere radius"],
              ]
 
-source = ["lib/sas_3j1x_x.c", "lib/sphere_form.c"]
-
-# No volume normalization despite having a volume parameter
-# This should perhaps be volume normalized?
-form_volume = """
-    return sphere_volume(radius);
-    """
-
-Iq = """
-    return sphere_form(q, radius, sld, sld_solvent);
-    """
-
-def ER(radius):
-    """
-    Return equivalent radius (ER)
-    """
-    return radius
-
-# VR defaults to 1.0
+source = ["lib/sas_3j1x_x.c", "sphere.c"]
+have_Fq = True
+effective_radius_type = ["radius"]
 
 def random():
+    """Return a random parameter set for the model."""
     radius = 10**np.random.uniform(1.3, 4)
     pars = dict(
         radius=radius,
@@ -98,6 +95,7 @@ tests = [
     [{"scale": 1., "background": 0., "sld": 6., "sld_solvent": 1.,
       "radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
      0.2, 0.228843],
-    [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45}, "ER", 120.],
-    [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45}, "VR", 1.],
+    [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
+     0.1, None, None, 120., None, 1.0],
+    [{"@S": "hardsphere"}, 0.1, None],
 ]

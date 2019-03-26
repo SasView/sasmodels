@@ -38,12 +38,20 @@ References
 .. [#] L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and
    Neutron Scattering*, Plenum Press, New York, 1987.
 
+Source
+------
+
+`core_multi_shell.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/core_multi_shell.py>`_
+
+`core_multi_shell.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/core_multi_shell.c>`_
+
 Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Kienzle **Date:** September 12, 2016
 * **Last Reviewed by:** Paul Kienzle **Date:** September 12, 2016
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 from __future__ import division
 
@@ -98,8 +106,11 @@ parameters = [["sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "sld",
              ]
 
 source = ["lib/sas_3j1x_x.c", "core_multi_shell.c"]
+have_Fq = True
+effective_radius_type = ["outer radius", "core radius"]
 
 def random():
+    """Return a random parameter set for the model."""
     num_shells = np.minimum(np.random.poisson(3)+1, 10)
     total_radius = 10**np.random.uniform(1.7, 4)
     thickness = np.random.exponential(size=num_shells+1)
@@ -141,11 +152,6 @@ def profile(sld_core, radius, sld_solvent, n, sld, thickness):
     rho.append(sld_solvent)
 
     return np.asarray(z), np.asarray(rho)
-
-def ER(radius, n, thickness):
-    """Effective radius"""
-    n = int(n[0]+0.5)  # n is a control parameter and is not polydisperse
-    return np.sum(thickness[:n], axis=0) + radius
 
 demo = dict(sld_core=6.4,
             radius=60,

@@ -29,16 +29,11 @@ length (the length along the cylinder over which the flexible cylinder can be
 considered a rigid rod).
 The Kuhn length $(b = 2*l_p)$ is also used to describe the stiffness of a chain.
 
-The returned value is in units of $cm^{-1}$, on absolute scale.
-
 In the parameters, the sld and sld\_solvent represent the SLD of the cylinder
 and solvent respectively.
 
 Our model uses the form factor calculations implemented in a c-library provided
-by the NIST Center for Neutron Research (Kline, 2006).
-
-
-From the reference:
+by the NIST Center for Neutron Research (Kline, 2006). This states:
 
     'Method 3 With Excluded Volume' is used.
     The model is a parametrization of simulations of a discrete representation
@@ -49,22 +44,33 @@ From the reference:
 References
 ----------
 
-J S Pedersen and P Schurtenberger. *Scattering functions of semiflexible
-polymers with and without excluded volume effects.* Macromolecules,
-29 (1996) 7602-7612
+.. [#] J S Pedersen and P Schurtenberger. *Scattering functions of semiflexible polymers with and without excluded volume effects.* Macromolecules, 29 (1996) 7602-7612
 
 Correction of the formula can be found in
 
-W R Chen, P D Butler and L J Magid, *Incorporating Intermicellar Interactions
-in the Fitting of SANS Data from Cationic Wormlike Micelles.* Langmuir,
-22(15) 2006 6539-6548
+.. [#] W R Chen, P D Butler and L J Magid, *Incorporating Intermicellar Interactions in the Fitting of SANS Data from Cationic Wormlike Micelles.* Langmuir, 22(15) 2006 6539-6548
+
+Source
+------
+
+`flexible_cylinder.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/flexible_cylinder.py>`_
+
+`flexible_cylinder.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/flexible_cylinder.c>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
 from numpy import inf
 
 name = "flexible_cylinder"
-title = "Flexible cylinder where the form factor is normalized by the volume" \
+title = "Flexible cylinder where the form factor is normalized by the volume " \
         "of the cylinder."
 description = """Note : scale and contrast = (sld - sld_solvent) are both
                 multiplicative factors in the model and are perfectly
@@ -88,6 +94,7 @@ parameters = [
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/wrc_cyl.c", "flexible_cylinder.c"]
 
 def random():
+    """Return a random parameter set for the model."""
     length = 10**np.random.uniform(2, 6)
     radius = 10**np.random.uniform(1, 3)
     kuhn_length = 10**np.random.uniform(-2, 0)*length

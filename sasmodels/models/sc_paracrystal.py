@@ -1,12 +1,17 @@
 r"""
+.. warning:: This model and this model description are under review following
+             concerns raised by SasView users. If you need to use this model,
+             please email help@sasview.org for the latest situation. *The
+             SasView Developers. September 2018.*
+
+Definition
+----------
+
 Calculates the scattering from a **simple cubic lattice** with
 paracrystalline distortion. Thermal vibrations are considered to be
 negligible, and the size of the paracrystal is infinitely large.
 Paracrystalline distortion is assumed to be isotropic and characterized
 by a Gaussian distribution.
-
-Definition
-----------
 
 The scattering intensity $I(q)$ is calculated as
 
@@ -19,8 +24,9 @@ the primary particle, $V_\text{lattice}$ is a volume correction for the crystal
 structure, $P(q)$ is the form factor of the sphere (normalized), and
 $Z(q)$ is the paracrystalline structure factor for a simple cubic structure.
 
-Equation (16) of the 1987 reference is used to calculate $Z(q)$, using
-equations (13)-(15) from the 1987 paper for Z1, Z2, and Z3.
+Equation (16) of the 1987 reference\ [#CIT1987]_ is used to calculate $Z(q)$,
+using equations (13)-(15) from the 1987 paper\ [#CIT1990]_ for $Z1$, $Z2$, and
+$Z3$.
 
 The lattice correction (the occupied volume of the lattice) for a simple cubic
 structure of particles of radius *R* and nearest neighbor separation *D* is
@@ -90,11 +96,24 @@ Note that we are not responsible for any incorrectness of the
 
 Reference
 ---------
-Hideki Matsuoka et. al. *Physical Review B,* 36 (1987) 1754-1765
-(Original Paper)
 
-Hideki Matsuoka et. al. *Physical Review B,* 41 (1990) 3854 -3856
-(Corrections to FCC and BCC lattice structure calculation)
+.. [#CIT1987] Hideki Matsuoka et. al. *Physical Review B*, 36 (1987) 1754-1765 (Original Paper)
+.. [#CIT1990] Hideki Matsuoka et. al. *Physical Review B*, 41 (1990) 3854 -3856 (Corrections to FCC and BCC lattice structure calculation)
+
+Source
+------
+
+`sc_paracrystal.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/sc_paracrystal.py>`_
+
+`sc_paracrystal.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/sc_paracrystal.c>`_
+
+Authorship and Verification
+---------------------------
+
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Steve King **Date:** March 25, 2019
+* **Last Reviewed by:** Richard Heenan **Date:** March 21, 2016
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -139,6 +158,7 @@ parameters = [["dnn",         "Ang",       220.0, [0.0, inf],  "",            "N
 source = ["lib/sas_3j1x_x.c", "lib/sphere_form.c", "lib/gauss150.c", "sc_paracrystal.c"]
 
 def random():
+    """Return a random parameter set for the model."""
     # copied from bcc_paracrystal
     radius = 10**np.random.uniform(1.3, 4)
     d_factor = 10**np.random.uniform(-2, -0.7)  # sigma_d in 0.01-0.7

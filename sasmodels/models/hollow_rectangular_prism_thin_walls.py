@@ -1,16 +1,14 @@
 # rectangular_prism model
 # Note: model title and parameter table are inserted automatically
 r"""
-
-This model provides the form factor, $P(q)$, for a hollow rectangular
-prism with infinitely thin walls. It computes only the 1D scattering, not the 2D.
-
-
 Definition
 ----------
 
+
+This model provides the form factor, $P(q)$, for a hollow rectangular
+prism with infinitely thin walls. It computes only the 1D scattering, not the 2D.
 The 1D scattering intensity for this model is calculated according to the
-equations given by Nayuk and Huber (Nayuk, 2012).
+equations given by Nayuk and Huber\ [#Nayuk2012]_.
 
 Assuming a hollow parallelepiped with infinitely thin walls, edge lengths
 $A \le B \le C$ and presenting an orientation with respect to the
@@ -54,10 +52,10 @@ The 1D scattering intensity is then calculated as
 
   I(q) = \text{scale} \times V \times (\rho_\text{p} - \rho_\text{solvent})^2 \times P(q)
 
-where $V$ is the volume of the rectangular prism, $\rho_\text{p}$
-is the scattering length of the parallelepiped, $\rho_\text{solvent}$
-is the scattering length of the solvent, and (if the data are in absolute
-units) *scale* represents the volume fraction (which is unitless).
+where $V$ is the surface area of the rectangular prism, $\rho_\text{p}$
+is the scattering length density of the parallelepiped, $\rho_\text{solvent}$
+is the scattering length density of the solvent, and (if the data are in
+absolute units) *scale* is related to the total surface area.
 
 **The 2D scattering intensity is not computed by this model.**
 
@@ -66,17 +64,33 @@ Validation
 ----------
 
 Validation of the code was conducted  by qualitatively comparing the output
-of the 1D model to the curves shown in (Nayuk, 2012).
+of the 1D model to the curves shown in (Nayuk, 2012\ [#Nayuk2012]_).
 
 
 References
 ----------
 
-R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+.. [#Nayuk2012] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+
+Source
+------
+
+`hollow_rectangular_prism_thin_walls.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/hollow_rectangular_prism_thin_walls.py>`_
+
+`hollow_rectangular_prism_thin_walls.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/hollow_rectangular_prism_thin_walls.c>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** Miguel Gonzales **Date:** February 26, 2016
+* **Last Modified by:** Paul Kienzle **Date:** October 15, 2016
+* **Last Reviewed by:** Paul Butler **Date:** September 07, 2018
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
-from numpy import pi, inf, sqrt
+from numpy import inf
 
 name = "hollow_rectangular_prism_thin_walls"
 title = "Hollow rectangular parallelepiped with thin walls."
@@ -101,32 +115,17 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
              ]
 
 source = ["lib/gauss76.c", "hollow_rectangular_prism_thin_walls.c"]
-
-def ER(length_a, b2a_ratio, c2a_ratio):
-    """
-        Return equivalent radius (ER)
-    """
-    b_side = length_a * b2a_ratio
-    c_side = length_a * c2a_ratio
-
-    # surface average radius (rough approximation)
-    surf_rad = sqrt(length_a * b_side / pi)
-
-    ddd = 0.75 * surf_rad * (2 * surf_rad * c_side + (c_side + surf_rad) * (c_side + pi * surf_rad))
-    return 0.5 * (ddd) ** (1. / 3.)
-
-def VR(length_a, b2a_ratio, c2a_ratio):
-    """
-        Return shell volume and total volume
-    """
-    b_side = length_a * b2a_ratio
-    c_side = length_a * c2a_ratio
-    vol_total = length_a * b_side * c_side
-    vol_shell = 2.0 * (length_a*b_side + length_a*c_side + b_side*c_side)
-    return vol_shell, vol_total
+have_Fq = True
+effective_radius_type = [
+    "equivalent cylinder excluded volume", "equivalent outer volume sphere",
+    "half length_a", "half length_b", "half length_c",
+    "equivalent outer circular cross-section",
+    "half ab diagonal", "half diagonal",
+    ]
 
 
 def random():
+    """Return a random parameter set for the model."""
     a, b, c = 10**np.random.uniform(1, 4.7, size=3)
     pars = dict(
         length_a=a,

@@ -48,12 +48,18 @@ References
 .. [#] S King, P Griffiths, J Hone, and T Cosgrove, *SANS from Adsorbed Polymer
    Layers*, *Macromol. Symp.*, 190 (2002) 33-42.
 
+Source
+------
+
+`adsorbed_layer.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/adsorbed_layer.py>`_
+
 Authorship and Verification
 ----------------------------
 
 * **Author:** Jae-Hi Cho **Date:** pre 2010
 * **Last Modified by:** Paul Kienzle **Date:** April 14, 2016
 * **Last Reviewed by:** Steve King **Date:** March 18, 2016
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -86,6 +92,7 @@ parameters = [
 # NB: Scale and Background are implicit parameters on every model
 def Iq(q, second_moment, adsorbed_amount, density_shell, radius,
        volfraction, sld_shell, sld_solvent):
+    """Return I(q) for adsorbed layer model."""
     with errstate(divide='ignore'):
         aa = ((sld_shell - sld_solvent)/density_shell * adsorbed_amount) / q
     bb = q * second_moment
@@ -95,6 +102,7 @@ def Iq(q, second_moment, adsorbed_amount, density_shell, radius,
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
+    """Return a random parameter set for the model."""
     # only care about the value of second_moment:
     #    curve = scale * e**(-second_moment^2 q^2)/q^2
     #    scale = 6 pi/100 (contrast/density*absorbed_amount)^2 * Vf/radius

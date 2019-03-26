@@ -26,9 +26,18 @@ References
 
 None.
 
+Source
+------
+
+`two_lorentzian.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/two_lorentzian.py>`_
+
+Authorship and Verification
+----------------------------
+
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Piotr rozyczko **Date:** January 29, 2016
 * **Last Reviewed by:** Paul Butler **Date:** March 21, 2016
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -86,12 +95,12 @@ def Iq(q,
     intensity += lorentz_scale_2/(1.0 +
                                   power(q*lorentz_length_2, lorentz_exp_2))
 # pylint: enable=bad-whitespace
-
     return intensity
 
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
+    """Return a random parameter set for the model."""
     scale = 10**np.random.uniform(0, 4, 2)
     length = 10**np.random.uniform(1, 4, 2)
     expon = np.random.uniform(1, 6, 2)

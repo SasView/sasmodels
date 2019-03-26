@@ -169,9 +169,22 @@ when $P(q) S(q)$ is applied.
 References
 ----------
 
-L A Feigin and D I Svergun,
-*Structure Analysis by Small-Angle X-Ray and Neutron Scattering*,
-Plenum Press, New York, 1987.
+.. [#] L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*, Plenum Press, New York, 1987.
+
+Source
+------
+
+`onion.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/onion.py>`_
+
+`onion.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/onion.c>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 #
@@ -314,6 +327,8 @@ parameters = [
 
 source = ["lib/sas_3j1x_x.c", "onion.c"]
 single = False
+have_Fq = True
+effective_radius_type = ["outer radius"]
 
 profile_axes = ['Radius (A)', 'SLD (1e-6/A^2)']
 def profile(sld_core, radius_core, sld_solvent, n_shells,
@@ -364,10 +379,7 @@ def profile(sld_core, radius_core, sld_solvent, n_shells,
 
     return np.asarray(z), np.asarray(rho)
 
-def ER(radius_core, n_shells, thickness):
-    """Effective radius"""
-    n = int(n_shells[0]+0.5)
-    return np.sum(thickness[:n], axis=0) + radius_core
+# TODO: no random parameter function for onion model
 
 demo = {
     "sld_solvent": 2.2,

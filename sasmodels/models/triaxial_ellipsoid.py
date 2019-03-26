@@ -113,9 +113,14 @@ over all possible angles.
 References
 ----------
 
-[1] Finnigan, J.A., Jacobs, D.J., 1971.
-*Light scattering by ellipsoidal particles in solution*,
-J. Phys. D: Appl. Phys. 4, 72-77. doi:10.1088/0022-3727/4/1/310
+.. [#] Finnigan, J.A., Jacobs, D.J., 1971. *Light scattering by ellipsoidal particles in solution*, J. Phys. D: Appl. Phys. 4, 72-77. doi:10.1088/0022-3727/4/1/310
+
+Source
+------
+
+`triaxial_ellipsoid.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/triaxial_ellipsoid.py>`_
+
+`triaxial_ellipsoid.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/triaxial_ellipsoid.c>`_
 
 Authorship and Verification
 ----------------------------
@@ -123,6 +128,7 @@ Authorship and Verification
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Kienzle (improved calculation) **Date:** April 4, 2017
 * **Last Reviewed by:** Paul Kienzle & Richard Heenan **Date:**  April 4, 2017
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -156,23 +162,14 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
              ]
 
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "triaxial_ellipsoid.c"]
-
-def ER(radius_equat_minor, radius_equat_major, radius_polar):
-    """
-    Returns the effective radius used in the S*P calculation
-    """
-    from .ellipsoid import ER as ellipsoid_ER
-
-    # now that radii can be in any size order, radii need sorting a,b,c
-    # where a~b and c is either much smaller or much larger
-    radii = np.vstack((radius_equat_major, radius_equat_minor, radius_polar))
-    radii = np.sort(radii, axis=0)
-    selector = (radii[1] - radii[0]) > (radii[2] - radii[1])
-    polar = np.where(selector, radii[0], radii[2])
-    equatorial = np.sqrt(np.where(~selector, radii[0]*radii[1], radii[1]*radii[2]))
-    return ellipsoid_ER(polar, equatorial)
+have_Fq = True
+effective_radius_type = [
+    "equivalent biaxial ellipsoid average curvature",
+    "equivalent volume sphere", "min radius", "max radius",
+    ]
 
 def random():
+    """Return a random parameter set for the model."""
     a, b, c = 10**np.random.uniform(1, 4.7, size=3)
     pars = dict(
         radius_equat_minor=a,

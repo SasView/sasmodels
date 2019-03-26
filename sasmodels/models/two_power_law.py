@@ -36,9 +36,18 @@ References
 
 None.
 
+Source
+------
+
+`two_power_law.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/two_power_law.py>`_
+
+Authorship and Verification
+----------------------------
+
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Wojciech Wpotrzebowski **Date:** February 18, 2016
 * **Last Reviewed by:** Paul Butler **Date:** March 21, 2016
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -77,7 +86,6 @@ def Iq(q,
        power_1=1.0,
        power_2=4.0,
       ):
-
     """
     :param q:                   Input q-value (float or [float, float])
     :param coefficent_1:        Scaling coefficent at low Q
@@ -97,6 +105,7 @@ def Iq(q,
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
+    """Return a random parameter set for the model."""
     coefficient_1 = 1
     crossover = 10**np.random.uniform(-3, -1)
     power_1 = np.random.uniform(1, 6)

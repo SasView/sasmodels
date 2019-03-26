@@ -87,8 +87,16 @@ for further information.
 References
 ----------
 see for example:
-Kotlarchyk, M.; Chen, S.-H. J. Chem. Phys., 1983, 79, 2461.
-Berr, S.  J. Phys. Chem., 1987, 91, 4760.
+
+.. [#] Kotlarchyk, M.; Chen, S.-H. *J. Chem. Phys.*, 1983, 79, 2461
+.. [#] Berr, S. *J. Phys. Chem.*, 1987, 91, 4760
+
+Source
+------
+
+`core_shell_ellipsoid.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/core_shell_ellipsoid.py>`_
+
+`core_shell_ellipsoid.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/core_shell_ellipsoid.c>`_
 
 Authorship and Verification
 ----------------------------
@@ -96,6 +104,7 @@ Authorship and Verification
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Richard Heenan (reparametrised model) **Date:** 2015
 * **Last Reviewed by:** Richard Heenan **Date:** October 6, 2016
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -144,17 +153,14 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "core_shell_ellipsoid.c"]
-
-def ER(radius_equat_core, x_core, thick_shell, x_polar_shell):
-    """
-        Returns the effective radius used in the S*P calculation
-    """
-    from .ellipsoid import ER as ellipsoid_ER
-    polar_outer = radius_equat_core*x_core + thick_shell*x_polar_shell
-    equat_outer = radius_equat_core + thick_shell
-    return ellipsoid_ER(polar_outer, equat_outer)
+have_Fq = True
+effective_radius_type = [
+    "average outer curvature", "equivalent volume sphere",
+    "min outer radius", "max outer radius",
+    ]
 
 def random():
+    """Return a random parameter set for the model."""
     volume = 10**np.random.uniform(5, 12)
     outer_polar = 10**np.random.uniform(1.3, 4)
     outer_equatorial = np.sqrt(volume/outer_polar) # ignore 4/3 pi

@@ -42,16 +42,25 @@ but where the $q$ vector is redefined as
 References
 ----------
 
-O Glatter and O Kratky (editors), *Small Angle X-ray Scattering*,
-Academic Press, (1982) Page 404.
+.. [#] O Glatter and O Kratky (editors), *Small Angle X-ray Scattering*, Academic Press, (1982) Page 404
+.. [#] J S Higgins, H C Benoit, *Polymers and Neutron Scattering*, Oxford Science Publications, (1996)
+.. [#] S M King, *Small Angle Neutron Scattering* in *Modern Techniques for Polymer Characterisation*, Wiley, (1999)
+.. [#] http://www.ncnr.nist.gov/staff/hammouda/distance_learning/chapter_28.pdf
 
-J S Higgins, H C Benoit, *Polymers and Neutron Scattering*,
-Oxford Science Publications, (1996).
+Source
+------
 
-S M King, *Small Angle Neutron Scattering* in *Modern Techniques for
-Polymer Characterisation*, Wiley, (1999).
+`poly_gauss_coil.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/poly_gauss_coil.py>`_
 
-http://www.ncnr.nist.gov/staff/hammouda/distance_learning/chapter_28.pdf
+`poly_gauss_coil.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/poly_gauss_coil.c>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -105,6 +114,7 @@ def Iq(q, i_zero, rg, polydispersity):
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
+    """Return a random parameter set for the model."""
     rg = 10**np.random.uniform(0, 4)
     #rg = 1e3
     polydispersity = 10**np.random.uniform(0, 3)

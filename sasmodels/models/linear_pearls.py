@@ -28,9 +28,22 @@ regardless of the orientation of the q vector.
 References
 ----------
 
-A V Dobrynin, M Rubinstein and S P Obukhov, *Macromol.*,
-29 (1996) 2974-2979
-"""
+.. [#] A V Dobrynin, M Rubinstein and S P Obukhov, *Macromol.*, 29 (1996) 2974-2979
+
+Source
+------
+
+`linear_pearls.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/linear_pearls.py>`_
+
+`linear_pearls.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/linear_pearls.c>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019"""
 
 import numpy as np
 from numpy import inf
@@ -65,6 +78,7 @@ single = False
 source = ["lib/sas_3j1x_x.c", "linear_pearls.c"]
 
 def random():
+    """Return a random parameter set for the model."""
     radius = 10**np.random.uniform(1, 3) # 1 - 1000
     edge_sep = 10**np.random.uniform(0, 3)  # 1 - 1000
     num_pearls = np.round(10**np.random.uniform(0.3, 3)) # 2 - 1000
@@ -75,7 +89,7 @@ def random():
     )
     return pars
 
-"""
+_ = """
 Tests temporarily disabled, until single-double precision accuracy issue solved.
 
 tests = [

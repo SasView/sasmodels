@@ -1,11 +1,11 @@
 double form_volume(void);
 
-double Iq(double q, 
+double Iq(double q,
     double lg_radius, double sm_radius,
     double lg_vol_frac, double sm_vol_frac,
     double lg_sld, double sm_sld, double solvent_sld
     );
-    
+
 void calculate_psfs(double qval,
     double r2, double nf2,
     double aa, double phi,
@@ -21,13 +21,12 @@ double Iq(double q,
     double lg_radius, double sm_radius,
     double lg_vol_frac, double sm_vol_frac,
     double lg_sld, double sm_sld, double solvent_sld)
-    
 {
     double r2,r1,nf2,phi,aa,rho2,rho1,rhos,inten;       //my local names
     double psf11,psf12,psf22;
     double phi1,phi2,phr,a3;
     double v1,v2,n1,n2,qr1,qr2,b1,b2,sc1,sc2;
-    
+
     r2 = lg_radius;
     r1 = sm_radius;
     phi2 = lg_vol_frac;
@@ -35,8 +34,8 @@ double Iq(double q,
     rho2 = lg_sld;
     rho1 = sm_sld;
     rhos = solvent_sld;
-    
-    
+
+
     phi = phi1 + phi2;
     aa = r1/r2;
     //calculate the number fraction of larger spheres (eqn 2 in reference)
@@ -45,15 +44,15 @@ double Iq(double q,
     nf2 = phr*a3/(1.0-phr+phr*a3);
     // calculate the PSF's here
     calculate_psfs(q,r2,nf2,aa,phi,&psf11,&psf22,&psf12);
-    
+
     // /* do form factor calculations  */
-    
+
     v1 = M_4PI_3*r1*r1*r1;
     v2 = M_4PI_3*r2*r2*r2;
-    
+
     n1 = phi1/v1;
     n2 = phi2/v2;
-    
+
     qr1 = r1*q;
     qr2 = r2*q;
 
@@ -67,7 +66,7 @@ double Iq(double q,
     ///* convert I(1/A) to (1/cm)  */
     inten *= 1.0e8;
     ///*convert rho^2 in 10^-6A to A*/
-    inten *= 1.0e-12;    
+    inten *= 1.0e-12;
     return(inten);
 }
 
@@ -76,17 +75,16 @@ void calculate_psfs(double qval,
     double r2, double nf2,
     double aa, double phi,
     double *s11, double *s22, double *s12)
-
 {
     //  variable qval,r2,nf2,aa,phi,&s11,&s22,&s12
-    
+
     //   calculate constant terms
     double s2,v,a3,v1,v2,g11,g12,g22,wmv,wmv3,wmv4;
     double a1,a2i,a2,b1,b2,b12,gm1,gm12;
     double yy,ay,ay2,ay3,t1,t2,t3,f11,y2,y3,tt1,tt2,tt3;
     double c11,c22,c12,f12,f22,ttt1,ttt2,ttt3,ttt4,yl,y13;
     double t21,t22,t23,t31,t32,t33,t41,t42,yl3,wma3,y1;
-    
+
     s2 = 2.0*r2;
 //    s1 = aa*s2;  why is this never used?  check original paper?
     v = phi;
@@ -107,11 +105,11 @@ void calculate_psfs(double qval,
     b12=-3.*aa*(1.+aa)*(v1*g11/aa/aa+v2*g22)*g12;
     gm1=(v1*a1+a3*v2*a2)*.5;
     gm12=2.*gm1*(1.-aa)/aa;
-    //c  
+    //c
     //c   calculate the direct correlation functions and print results
     //c
     //  do 20 j=1,npts
-    
+
     yy=qval*s2;
     //c   calculate direct correlation functions
     //c   ----c11
@@ -122,7 +120,7 @@ void calculate_psfs(double qval,
     t2=b1*(2.*ay*sin(ay)-(ay2-2.)*cos(ay)-2.)/ay;
     t3=gm1*((4.*ay*ay2-24.*ay)*sin(ay)-(ay2*ay2-12.*ay2+24.)*cos(ay)+24.)/ay3;
     f11=24.*v1*(t1+t2+t3)/ay3;
-    
+
     //c ------c22
     y2=yy*yy;
     y3=yy*y2;
@@ -130,7 +128,7 @@ void calculate_psfs(double qval,
     tt2=b2*(2.*yy*sin(yy)-(y2-2.)*cos(yy)-2.)/yy;
     tt3=gm1*((4.*y3-24.*yy)*sin(yy)-(y2*y2-12.*y2+24.)*cos(yy)+24.)/ay3;
     f22=24.*v2*(tt1+tt2+tt3)/y3;
-    
+
     //c   -----c12
     yl=.5*yy*(1.-aa);
     yl3=yl*yl*yl;
@@ -150,14 +148,13 @@ void calculate_psfs(double qval,
     ttt3=cos(yl)*(t31+t32+t33)/(y13*y1);
     ttt4=a1*(t41+t42)/y1;
     f12=ttt1+24.*v*sqrt(nf2)*sqrt(1.-nf2)*a3*(ttt2+ttt3+ttt4)/(nf2+(1.-nf2)*a3);
-    
+
     c11=f11;
     c22=f22;
     c12=f12;
     *s11=1./(1.+c11-(c12)*c12/(1.+c22));
-    *s22=1./(1.+c22-(c12)*c12/(1.+c11)); 
-    *s12=-c12/((1.+c11)*(1.+c22)-(c12)*(c12));   
-    
+    *s22=1./(1.+c22-(c12)*c12/(1.+c11));
+    *s12=-c12/((1.+c11)*(1.+c22)-(c12)*(c12));
+
     return;
 }
-

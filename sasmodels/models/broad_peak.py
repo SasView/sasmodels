@@ -32,12 +32,18 @@ References
 
 None.
 
+Source
+------
+
+`broad_peak.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/broad_peak.py>`_
+
 Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul kienle **Date:** July 24, 2016
 * **Last Reviewed by:** Richard Heenan **Date:** March 21, 2016
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -95,6 +101,7 @@ def Iq(q,
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
+    """Return a random parameter set for the model."""
     pars = dict(
         scale=1,
         porod_scale=10**np.random.uniform(-8, -5),

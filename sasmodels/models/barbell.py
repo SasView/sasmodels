@@ -75,9 +75,17 @@ The 2D scattering intensity is calculated similar to the 2D cylinder model.
 References
 ----------
 
-.. [#] H Kaya, *J. Appl. Cryst.*, 37 (2004) 37 223-230
+.. [#] H Kaya, *J. Appl. Cryst.*, 37 (2004) 223-230
 .. [#] H Kaya and N R deSouza, *J. Appl. Cryst.*, 37 (2004) 508-509 (addenda
    and errata)
+.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+
+Source
+------
+
+`barbell.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/barbell.py>`_
+
+`barbell.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/barbell.c>`_
 
 Authorship and Verification
 ----------------------------
@@ -85,6 +93,7 @@ Authorship and Verification
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Butler **Date:** March 20, 2016
 * **Last Reviewed by:** Richard Heenan **Date:** January 4, 2017
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -115,8 +124,14 @@ parameters = [["sld",         "1e-6/Ang^2",   4, [-inf, inf], "sld",         "Ba
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "barbell.c"]
+have_Fq = True
+effective_radius_type = [
+    "equivalent cylinder excluded volume", "equivalent volume sphere",
+    "radius", "half length", "half total length",
+    ]
 
 def random():
+    """Return a random parameter set for the model."""
     # TODO: increase volume range once problem with bell radius is fixed
     # The issue is that bell radii of more than about 200 fail at high q
     volume = 10**np.random.uniform(7, 9)

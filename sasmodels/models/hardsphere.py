@@ -38,7 +38,20 @@ For a 2D plot, the wave transfer is defined as
 References
 ----------
 
-J K Percus, J Yevick, *J. Phys. Rev.*, 110, (1958) 1
+.. [#] J K Percus, J Yevick, *J. Phys. Rev.*, 110, (1958) 1
+
+Source
+------
+
+`hardsphere.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/hardsphere.py>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -61,17 +74,11 @@ structure_factor = True
 single = False # TODO: check
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["radius_effective", "Ang", 50.0, [0, inf], "volume",
+parameters = [["radius_effective", "Ang", 50.0, [0, inf], "",
                "effective radius of hard sphere"],
               ["volfraction", "", 0.2, [0, 0.74], "",
                "volume fraction of hard spheres"],
              ]
-
-# No volume normalization despite having a volume parameter
-# This should perhaps be volume normalized?
-form_volume = """
-    return 1.0;
-    """
 
 Iq = r"""
       double D,A,B,G,X,X2,X4,S,C,FF,HARDSPH;
@@ -160,6 +167,7 @@ Iq = r"""
    """
 
 def random():
+    """Return a random parameter set for the model."""
     pars = dict(
         scale=1, background=0,
         radius_effective=10**np.random.uniform(1, 4),
@@ -167,11 +175,6 @@ def random():
     )
     return pars
 
-# ER defaults to 0.0
-# VR defaults to 1.0
-
-demo = dict(radius_effective=200, volfraction=0.2,
-            radius_effective_pd=0.1, radius_effective_pd_n=40)
 # Q=0.001 is in the Taylor series, low Q part, so add Q=0.1,
 # assuming double precision sasview is correct
 tests = [

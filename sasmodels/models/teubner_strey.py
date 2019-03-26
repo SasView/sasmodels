@@ -60,13 +60,24 @@ where the $q$ vector is defined as
 References
 ----------
 
-M Teubner, R Strey, *J. Chem. Phys.*, 87 (1987) 3195
+.. [#] M Teubner, R Strey, *J. Chem. Phys.*, 87 (1987) 3195
+.. [#] K V Schubert, R Strey, S R Kline and E W Kaler, *J. Chem. Phys.*, 101 (1994) 5343
+.. [#] H Endo, M Mihailescu, M. Monkenbusch, J Allgaier, G Gompper, D Richter, B Jakobs, T Sottmann, R Strey, and I Grillo, *J. Chem. Phys.*, 115 (2001), 580
 
-K V Schubert, R Strey, S R Kline and E W Kaler,
-*J. Chem. Phys.*, 101 (1994) 5343
+Source
+------
 
-H Endo, M Mihailescu, M. Monkenbusch, J Allgaier, G Gompper, D Richter,
-B Jakobs, T Sottmann, R Strey, and I Grillo, *J. Chem. Phys.*, 115 (2001), 580
+`teubner_strey.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/teubner_strey.py>`_
+
+`teubner_strey.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/teubner_strey.c>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 from __future__ import division
 
@@ -102,6 +113,7 @@ def Iq(q, volfraction_a, sld_a, sld_b, d, xi):
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
+    """Return a random parameter set for the model."""
     d = 10**np.random.uniform(1, 4)
     xi = 10**np.random.uniform(-0.3, 2)*d
     pars = dict(

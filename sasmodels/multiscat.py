@@ -102,7 +102,7 @@ except ImportError:
 PRECISION = np.dtype('f' if HAVE_OPENCL else 'd')  # 'f' or 'd'
 USE_FAST = True  # OpenCL faster, less accurate math
 
-class ICalculator:
+class ICalculator(object):
     """
     Multiple scattering calculator
     """
@@ -112,13 +112,13 @@ class ICalculator:
         """
         raise NotImplementedError()
 
-    def ifft(self, Iq):
+    def ifft(self, fourier_frame):
         """
         Compute the inverse FFT for an image, complex -> complex.
         """
         raise NotImplementedError()
 
-    def mulitple_scattering(self, Iq):
+    def multiple_scattering(self, Iq, p, coverage=0.99):
         r"""
         Compute multiple scattering for I(q) given scattering probability p.
 
@@ -249,7 +249,7 @@ class OpenclCalculator(ICalculator):
         gpu_data = cl_array.to_device(self.queue, frame)
         gpu_poly = cl_array.to_device(self.queue, poly)
         self.plan.execute(gpu_data.data)
-        degree, data_size= poly.shape[0], frame.shape[0]*frame.shape[1]
+        degree, data_size = poly.shape[0], frame.shape[0]*frame.shape[1]
         self.polyval1(
             self.queue, [data_size], None,
             np.int32(degree), gpu_poly.data, np.int32(data_size), gpu_data.data)
@@ -341,12 +341,10 @@ class MultipleScattering(Resolution):
     given it will use $n_q = 2^k$ such that $\Delta q < q_\mathrm{min}$.
 
     *probability* is related to the expected number of scattering
-    events in the sample $\lambda$ as $p = 1 = e^{-\lambda}$.  As a
-    hack to allow probability to be a fitted parameter, the "value"
-    can be a function that takes no parameters and returns the current
-    value of the probability.  *coverage* determines how many scattering
-    steps to consider.  The default is 0.99, which sets $n$ such that
-    $1 \ldots n$ covers 99% of the Poisson probability mass function.
+    events in the sample $\lambda$ as $p = 1 - e^{-\lambda}$.
+    *coverage* determines how many scattering steps to consider.  The
+    default is 0.99, which sets $n$ such that $1 \ldots n$ covers 99%
+    of the Poisson probability mass function.
 
     *is2d* is True then 2D scattering is used, otherwise it accepts
     and returns 1D scattering.
@@ -398,7 +396,7 @@ class MultipleScattering(Resolution):
         self.qmax = qmax
         self.qmin = qmin
         self.nq = nq
-        self.probability = probability
+        self.probability = 0. if probability is None else probability
         self.coverage = coverage
         self.is2d = is2d
         self.window = window
@@ -455,6 +453,11 @@ class MultipleScattering(Resolution):
         self.Iq = None # type: np.ndarray
         self.Iqxy = None # type: np.ndarray
 
+        # Label probability as a fittable parameter, and give its external name
+        # Note that the external name must be a valid python identifier, since
+        # is will be set as an experiment attribute.
+        self.fittable = {'probability': 'scattering_probability'}
+
     def apply(self, theory):
         if self.is2d:
             Iq_calc = theory
@@ -462,6 +465,7 @@ class MultipleScattering(Resolution):
             Iq_calc = np.interp(self._radius, self.q_calc[0], theory)
         Iq_calc = Iq_calc.reshape(self.nq, self.nq)
 
+        # CRUFT: don't need probability as a function anymore
         probability = self.probability() if callable(self.probability) else self.probability
         coverage = self.coverage
         #t0 = time.time()
@@ -570,6 +574,7 @@ def parse_pars(model, opts):
 
 
 def main():
+    """Command line interface to multiple scattering calculator."""
     parser = argparse.ArgumentParser(
         description="Compute multiple scattering",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -607,9 +612,10 @@ def main():
     pars['background'] = 0.0
     theory = call_kernel(kernel, pars)
     Iq = res.apply(theory) + bg
-    plot_and_save_powers(res, theory, Iq, outfile=opts.outfile, background=bg)
+    _plot_and_save_powers(res, theory, Iq, outfile=opts.outfile, background=bg)
 
-def plot_and_save_powers(res, theory, result, plot=True, outfile="", background=0.):
+def _plot_and_save_powers(res, theory, result, plot=True,
+                          outfile="", background=0.):
     import pylab
     probability, coverage = res.probability, res.coverage
     weights = scattering_coeffs(probability, coverage)
@@ -673,6 +679,7 @@ def plot_and_save_powers(res, theory, result, plot=True, outfile="", background=
     pylab.show()
 
 def plotxy(q, Iq):
+    """Plot q, Iq or (qx, qy), Iqxy."""
     import pylab
     # q is a tuple of (q,) or (qx, qy)
     if len(q) == 1:

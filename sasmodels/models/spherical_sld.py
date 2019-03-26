@@ -1,4 +1,7 @@
 r"""
+Definition
+----------
+
 Similarly to the onion, this model provides the form factor, $P(q)$, for
 a multi-shell sphere, where the interface between the each neighboring
 shells can be described by the error function, power-law, or exponential
@@ -10,21 +13,22 @@ composed of a number of uniform shells with interfacial shells between them.
 
     Example SLD profile
 
-Unlike the <onion> model (using an analytical integration), the interfacial
+Unlike the :ref:`onion` model (using an analytical integration), the interfacial
 shells here are sub-divided and numerically integrated assuming each
 sub-shell is described by a line function, with *n_steps* sub-shells per
 interface. The form factor is normalized by the total volume of the sphere.
 
-Interface shapes are as follows::
+Interface shapes are as follows:
 
     0: erf($\nu z$)
-    1: Rpow($z^\nu$)
-    2: Lpow($z^\nu$)
-    3: Rexp($-\nu z$)
-    4: Lexp($-\nu z$)
 
-Definition
-----------
+    1: Rpow($z^\nu$)
+
+    2: Lpow($z^\nu$)
+
+    3: Rexp($-\nu z$)
+
+    4: Lexp($-\nu z$)
 
 The form factor $P(q)$ in 1D is calculated by:
 
@@ -85,7 +89,7 @@ Exp:
     {\Delta t_{ \text{inter}_i }} \Big) +C  & \mbox{for } A = 0 \\
     \end{cases}
 
-Power-Law
+Power-Law:
 
 .. math::
 
@@ -98,6 +102,7 @@ Power-Law
 Erf:
 
 .. math::
+
     \rho_{{inter}_i} (r) = \begin{cases}
     B \text{erf} \Big( \frac { A(r - r_{\text{flat}_i})}
     {\sqrt{2} \Delta t_{ \text{inter}_i }} \Big) +C  & \mbox{for } A \neq 0 \\
@@ -173,10 +178,27 @@ where the $q$ vector is defined as
     The outer most radius is used as the effective radius for $S(Q)$
     when $P(Q) * S(Q)$ is applied.
 
+
 References
 ----------
-L A Feigin and D I Svergun, Structure Analysis by Small-Angle X-Ray
-and Neutron Scattering, Plenum Press, New York, (1987)
+
+.. [#] L A Feigin and D I Svergun, Structure Analysis by Small-Angle X-Ray
+   and Neutron Scattering, Plenum Press, New York, (1987)
+
+Source
+------
+
+`spherical_sld.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/spherical_sld.py>`_
+
+`spherical_sld.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/spherical_sld.c>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** Jae-Hie Cho **Date:** Nov 1, 2010
+* **Last Modified by:** Paul Kienzle **Date:** Dec 20, 2016
+* **Last Reviewed by:** Paul Butler **Date:** September 8, 2018
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -202,12 +224,14 @@ parameters = [["n_shells",             "",           1,      [1, 10],        "vo
               ["thickness[n_shells]",  "Ang",        100.0,  [0, inf],       "volume", "thickness shell"],
               ["interface[n_shells]",  "Ang",        50.0,   [0, inf],       "volume", "thickness of the interface"],
               ["shape[n_shells]",      "",           0,      [SHAPES],       "", "interface shape"],
-              ["nu[n_shells]",         "",           2.5,    [0, inf],       "", "interface shape exponent"],
+              ["nu[n_shells]",         "",           2.5,    [1, inf],       "", "interface shape exponent"],
               ["n_steps",              "",           35,     [0, inf],       "", "number of steps in each interface (must be an odd integer)"],
              ]
 # pylint: enable=bad-whitespace, line-too-long
 source = ["lib/polevl.c", "lib/sas_erf.c", "lib/sas_3j1x_x.c", "spherical_sld.c"]
 single = False  # TODO: fix low q behaviour
+have_Fq = True
+effective_radius_type = ["outer radius"]
 
 profile_axes = ['Radius (A)', 'SLD (1e-6/A^2)']
 
@@ -252,14 +276,7 @@ def profile(n_shells, sld_solvent, sld, thickness,
     # return sld profile (r, beta)
     return np.asarray(z), np.asarray(rho)
 
-
-def ER(n_shells, thickness, interface):
-    """Effective radius"""
-    n_shells = int(n_shells + 0.5)
-    total = (np.sum(thickness[:n_shells], axis=1)
-             + np.sum(interface[:n_shells], axis=1))
-    return total
-
+# TODO: no random parameter generator for spherical SLD.
 
 demo = {
     "n_shells": 5,

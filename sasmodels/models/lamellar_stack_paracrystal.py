@@ -87,10 +87,23 @@ of the $q$ vector which is defined as
 Reference
 ---------
 
-M Bergstrom, J S Pedersen, P Schurtenberger, S U Egelhaaf,
-*J. Phys. Chem. B*, 103 (1999) 9888-9897
-"""
+.. [#] M Bergstrom, J S Pedersen, P Schurtenberger, S U Egelhaaf, *J. Phys. Chem. B*, 103 (1999) 9888-9897
 
+Source
+------
+
+`lamellar_stack_paracrystal.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/lamellar_stack_paracrystal.py>`_
+
+`lamellar_stack_paracrystal.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/lamellar_stack_paracrystal.c>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
+"""
 import numpy as np
 from numpy import inf
 
@@ -132,6 +145,7 @@ form_volume = """
 """
 
 def random():
+    """Return a random parameter set for the model."""
     total_thickness = 10**np.random.uniform(2, 4.7)
     Nlayers = np.random.randint(2, 200)
     d_spacing = total_thickness / Nlayers
@@ -145,9 +159,6 @@ def random():
         sigma_d=sigma_d,
     )
     return pars
-
-# ER defaults to 0.0
-# VR defaults to 1.0
 
 demo = dict(scale=1, background=0,
             thickness=33, Nlayers=20, d_spacing=250, sigma_d=0.2,

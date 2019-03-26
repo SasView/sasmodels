@@ -1,6 +1,6 @@
 r"""
 For information about polarised and magnetic scattering, see
-the :doc:`magnetic help <../sasgui/perspectives/fitting/mag_help>` documentation.
+the :ref:`magnetism` documentation.
 
 Definition
 ----------
@@ -32,14 +32,25 @@ Validation
 Validation of our code was done by comparing the output of the 1D model
 to the output of the software provided by the NIST (Kline, 2006).
 
-
 References
 ----------
 
 A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*,
 John Wiley and Sons, New York, (1955)
 
+Source
+------
+
+`_spherepy.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/_spherepy.py>`_
+`sphere.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/sphere.c>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author: P Kienzle** 
+* **Last Modified by:** 
 * **Last Reviewed by:** S King and P Parker **Date:** 2013/09/09 and 2014/01/06
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -68,9 +79,15 @@ parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "",
 
 
 def form_volume(radius):
+    """Calculate volume for sphere"""
     return 1.333333333333333 * pi * radius ** 3
 
+def effective_radius(mode, radius):
+    """Calculate R_eff for sphere"""
+    return radius
+
 def Iq(q, sld, sld_solvent, radius):
+    """Calculate I(q) for sphere"""
     #print "q",q
     #print "sld,r",sld,sld_solvent,radius
     qr = q * radius
@@ -103,11 +120,6 @@ def sesans(z, sld, sld_solvent, radius):
               + dlow2/2.*(1 - dlow2/16.) * log(dlow / (2. + sqrt(4. - dlow2))))
     return g
 sesans.vectorized = True  # sesans accepts an array of z values
-
-def ER(radius):
-    return radius
-
-# VR defaults to 1.0
 
 demo = dict(scale=1, background=0,
             sld=6, sld_solvent=1,

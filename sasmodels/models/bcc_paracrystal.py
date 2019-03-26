@@ -1,4 +1,9 @@
 r"""
+.. warning:: This model and this model description are under review following
+             concerns raised by SasView users. If you need to use this model,
+             please email help@sasview.org for the latest situation. *The
+             SasView Developers. September 2018.*
+
 Definition
 ----------
 
@@ -12,7 +17,6 @@ The scattering intensity $I(q)$ is calculated as
 .. math::
 
     I(q) = \frac{\text{scale}}{V_p} V_\text{lattice} P(q) Z(q)
-
 
 where *scale* is the volume fraction of spheres, $V_p$ is the volume of the
 primary particle, $V_\text{lattice}$ is a volume correction for the crystal
@@ -95,12 +99,20 @@ References
 .. [#CIT1990] Hideki Matsuoka et. al. *Physical Review B*, 41 (1990) 3854 -3856
    (Corrections to FCC and BCC lattice structure calculation)
 
+Source
+------
+
+`bcc_paracrystal.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/bcc_paracrystal.py>`_
+
+`bcc_paracrystal.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/bcc_paracrystal.c>`_
+
 Authorship and Verification
-----------------------------
+---------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Butler **Date:** September 29, 2016
 * **Last Reviewed by:** Richard Heenan **Date:** March 21, 2016
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -136,6 +148,7 @@ parameters = [["dnn",         "Ang",       220,    [-inf, inf], "",            "
 source = ["lib/sas_3j1x_x.c", "lib/gauss150.c", "lib/sphere_form.c", "bcc_paracrystal.c"]
 
 def random():
+    """Return a random parameter set for the model."""
     # Define lattice spacing as a multiple of the particle radius
     # using the formulat a = 4 r/sqrt(3).  Systems which are ordered
     # are probably mostly filled, so use a distribution which goes from

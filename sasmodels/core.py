@@ -20,6 +20,7 @@ from . import modelinfo
 from . import product
 from . import mixture
 from . import kernelpy
+from . import kernelcuda
 from . import kernelcl
 from . import kerneldll
 from . import custom
@@ -36,8 +37,8 @@ except ImportError:
 CUSTOM_MODEL_PATH = os.environ.get('SAS_MODELPATH', "")
 if CUSTOM_MODEL_PATH == "":
     CUSTOM_MODEL_PATH = joinpath(os.path.expanduser("~"), ".sasmodels", "custom_models")
-    if not os.path.isdir(CUSTOM_MODEL_PATH):
-        os.makedirs(CUSTOM_MODEL_PATH)
+    #if not os.path.isdir(CUSTOM_MODEL_PATH):
+    #    os.makedirs(CUSTOM_MODEL_PATH)
 
 # TODO: refactor composite model support
 # The current load_model_info/build_model does not reuse existing model
@@ -62,14 +63,15 @@ def list_models(kind=None):
 
         * all: all models
         * py: python models only
-        * c: compiled models only
-        * single: models which support single precision
-        * double: models which require double precision
-        * opencl: controls if OpenCL is supperessed
-        * 1d: models which are 1D only, or 2D using abs(q)
-        * 2d: models which can be 2D
-        * magnetic: models with an sld
-        * nommagnetic: models without an sld
+        * c: c models only
+        * single: c models which support single precision
+        * double: c models which require double precision
+        * opencl: c models which run in opencl
+        * dll: c models which do not run in opencl
+        * 1d: models without orientation
+        * 2d: models with orientation
+        * magnetic: models supporting magnetic sld
+        * nommagnetic: models without magnetic parameter
 
     For multiple conditions, combine with plus.  For example, *c+single+2d*
     would return all oriented models implemented in C which can be computed
@@ -93,24 +95,28 @@ def _matches(name, kind):
         return True
     info = load_model_info(name)
     pars = info.parameters.kernel_parameters
-    if kind == "py" and callable(info.Iq):
-        return True
-    elif kind == "c" and not callable(info.Iq):
-        return True
-    elif kind == "double" and not info.single:
-        return True
-    elif kind == "single" and info.single:
-        return True
-    elif kind == "opencl" and info.opencl:
-        return True
-    elif kind == "2d" and any(p.type == 'orientation' for p in pars):
-        return True
-    elif kind == "1d" and all(p.type != 'orientation' for p in pars):
-        return True
-    elif kind == "magnetic" and any(p.type == 'sld' for p in pars):
-        return True
-    elif kind == "nonmagnetic" and any(p.type != 'sld' for p in pars):
-        return True
+    # TODO: may be adding Fq to the list at some point
+    is_pure_py = callable(info.Iq)
+    if kind == "py":
+        return is_pure_py
+    elif kind == "c":
+        return not is_pure_py
+    elif kind == "double":
+        return not info.single and not is_pure_py
+    elif kind == "single":
+        return info.single and not is_pure_py
+    elif kind == "opencl":
+        return info.opencl
+    elif kind == "dll":
+        return not info.opencl and not is_pure_py
+    elif kind == "2d":
+        return any(p.type == 'orientation' for p in pars)
+    elif kind == "1d":
+        return all(p.type != 'orientation' for p in pars)
+    elif kind == "magnetic":
+        return any(p.type == 'sld' for p in pars)
+    elif kind == "nonmagnetic":
+        return not any(p.type == 'sld' for p in pars)
     return False
 
 def load_model(model_name, dtype=None, platform='ocl'):
@@ -204,11 +210,12 @@ def build_model(model_info, dtype=None, platform="ocl"):
         return kernelpy.PyModel(model_info)
 
     numpy_dtype, fast, platform = parse_dtype(model_info, dtype, platform)
-
     source = generate.make_source(model_info)
     if platform == "dll":
         #print("building dll", numpy_dtype)
         return kerneldll.load_dll(source['dll'], model_info, numpy_dtype)
+    elif platform == "cuda":
+        return kernelcuda.GpuModel(source, model_info, numpy_dtype, fast=fast)
     else:
         #print("building ocl", numpy_dtype)
         return kernelcl.GpuModel(source, model_info, numpy_dtype, fast=fast)
@@ -232,19 +239,19 @@ def precompile_dlls(path, dtype="double"):
         model_info = load_model_info(model_name)
         if not callable(model_info.Iq):
             source = generate.make_source(model_info)['dll']
-            old_path = kerneldll.DLL_PATH
+            old_path = kerneldll.SAS_DLL_PATH
             try:
-                kerneldll.DLL_PATH = path
+                kerneldll.SAS_DLL_PATH = path
                 dll = kerneldll.make_dll(source, model_info, dtype=numpy_dtype)
             finally:
-                kerneldll.DLL_PATH = old_path
+                kerneldll.SAS_DLL_PATH = old_path
             compiled_dlls.append(dll)
     return compiled_dlls
 
 def parse_dtype(model_info, dtype=None, platform=None):
     # type: (ModelInfo, str, str) -> (np.dtype, bool, str)
     """
-    Interpret dtype string, returning np.dtype and fast flag.
+    Interpret dtype string, returning np.dtype, fast flag and platform.
 
     Possible types include 'half', 'single', 'double' and 'quad'.  If the
     type is 'fast', then this is equivalent to dtype 'single' but using
@@ -252,9 +259,12 @@ def parse_dtype(model_info, dtype=None, platform=None):
     guaranteed by the OpenCL standard.  'default' will choose the appropriate
     default for the model and platform.
 
-    Platform preference can be specfied ("ocl" vs "dll"), with the default
-    being OpenCL if it is availabe.  If the dtype name ends with '!' then
-    platform is forced to be DLL rather than OpenCL.
+    Platform preference can be specfied ("ocl", "cuda", "dll"), with the
+    default being OpenCL or CUDA if available, otherwise DLL.  If the dtype
+    name ends with '!' then platform is forced to be DLL rather than GPU.
+    The default platform is set by the environment variable SAS_OPENCL,
+    SAS_OPENCL=driver:device for OpenCL, SAS_OPENCL=cuda:device for CUDA
+    or SAS_OPENCL=none for DLL.
 
     This routine ignores the preferences within the model definition.  This
     is by design.  It allows us to test models in single precision even when
@@ -264,16 +274,21 @@ def parse_dtype(model_info, dtype=None, platform=None):
     """
     # Assign default platform, overriding ocl with dll if OpenCL is unavailable
     # If opencl=False OpenCL is switched off
-
     if platform is None:
         platform = "ocl"
-    if not kernelcl.use_opencl() or not model_info.opencl:
-        platform = "dll"
 
     # Check if type indicates dll regardless of which platform is given
     if dtype is not None and dtype.endswith('!'):
         platform = "dll"
         dtype = dtype[:-1]
+
+    # Make sure model allows opencl/gpu
+    if not model_info.opencl:
+        platform = "dll"
+
+    # Make sure opencl is available, or fallback to cuda then to dll
+    if platform == "ocl" and not kernelcl.use_opencl():
+        platform = "cuda" if kernelcuda.use_cuda() else "dll"
 
     # Convert special type names "half", "fast", and "quad"
     fast = (dtype == "fast")
@@ -284,34 +299,32 @@ def parse_dtype(model_info, dtype=None, platform=None):
     elif dtype == "half":
         dtype = "float16"
 
-    # Convert dtype string to numpy dtype.
+    # Convert dtype string to numpy dtype.  Use single precision for GPU
+    # if model allows it, otherwise use double precision.
     if dtype is None or dtype == "default":
-        numpy_dtype = (generate.F32 if platform == "ocl" and model_info.single
+        numpy_dtype = (generate.F32 if model_info.single and platform in ("ocl", "cuda")
                        else generate.F64)
     else:
         numpy_dtype = np.dtype(dtype)
 
-    # Make sure that the type is supported by opencl, otherwise use dll
+    # Make sure that the type is supported by GPU, otherwise use dll
     if platform == "ocl":
         env = kernelcl.environment()
-        if not env.has_type(numpy_dtype):
-            platform = "dll"
-            if dtype is None:
-                numpy_dtype = generate.F64
+    elif platform == "cuda":
+        env = kernelcuda.environment()
+    else:
+        env = None
+    if env is not None and not env.has_type(numpy_dtype):
+        platform = "dll"
+        if dtype is None:
+            numpy_dtype = generate.F64
 
     return numpy_dtype, fast, platform
 
-def list_models_main():
-    # type: () -> None
-    """
-    Run list_models as a main program.  See :func:`list_models` for the
-    kinds of models that can be requested on the command line.
-    """
-    import sys
-    kind = sys.argv[1] if len(sys.argv) > 1 else "all"
-    print("\n".join(list_models(kind)))
-
 def test_composite_order():
+    """
+    Check that mixture models produce the same result independent of ordder.
+    """
     def test_models(fst, snd):
         """Confirm that two models produce the same parameters"""
         fst = load_model(fst)
@@ -326,6 +339,7 @@ def test_composite_order():
         assert sorted(fst) == sorted(snd), "{} != {}".format(fst, snd)
 
     def build_test(first, second):
+        """Construct pair model test"""
         test = lambda description: test_models(first, second)
         description = first + " vs. " + second
         return test, description
@@ -364,9 +378,27 @@ def test_composite():
     #Test the the model produces the parameters that we would expect
     model = load_model("cylinder@hardsphere*sphere")
     actual = [p.name for p in model.info.parameters.kernel_parameters]
-    target = ("sld sld_solvent radius length theta phi volfraction"
+    target = ("sld sld_solvent radius length theta phi"
+              " radius_effective volfraction "
+              " structure_factor_mode radius_effective_mode"
               " A_sld A_sld_solvent A_radius").split()
     assert target == actual, "%s != %s"%(target, actual)
+
+def list_models_main():
+    # type: () -> int
+    """
+    Run list_models as a main program.  See :func:`list_models` for the
+    kinds of models that can be requested on the command line.
+    """
+    import sys
+    kind = sys.argv[1] if len(sys.argv) > 1 else "all"
+    try:
+        models = list_models(kind)
+        print("\n".join(models))
+    except Exception:
+        print(list_models.__doc__)
+        return 1
+    return 0
 
 if __name__ == "__main__":
     list_models_main()

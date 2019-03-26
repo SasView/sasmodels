@@ -62,7 +62,20 @@ as 1D, where the $q$ vector is defined as
 References
 ----------
 
-S V G Menon, C Manohar, and K S Rao, *J. Chem. Phys.*, 95(12) (1991) 9186-9190
+.. [#] S V G Menon, C Manohar, and K S Rao, *J. Chem. Phys.*, 95(12) (1991) 9186-9190
+
+Source
+------
+
+`stickyhardsphere.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/stickyhardsphere.py>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 # TODO: refactor so that we pull in the old sansmodels.c_extensions
@@ -99,6 +112,7 @@ parameters = [
     ]
 
 def random():
+    """Return a random parameter set for the model."""
     pars = dict(
         scale=1, background=0,
         radius_effective=10**np.random.uniform(1, 4.7),
@@ -180,9 +194,6 @@ Iq = """
 
     return(sq);
 """
-
-# ER defaults to 0.0
-# VR defaults to 1.0
 
 demo = dict(radius_effective=200, volfraction=0.2, perturb=0.05,
             stickiness=0.2, radius_effective_pd=0.1, radius_effective_pd_n=40)

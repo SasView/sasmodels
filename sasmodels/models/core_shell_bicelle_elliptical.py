@@ -98,7 +98,14 @@ Model verified using Monte Carlo simulation for 1D and 2D scattering.
 References
 ----------
 
-.. [#]
+.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+
+Source
+------
+
+`core_shell_bicelle_elliptical.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/core_shell_bicelle_elliptical.py>`_
+
+`core_shell_bicelle_elliptical.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/core_shell_bicelle_elliptical.c>`_
 
 Authorship and Verification
 ----------------------------
@@ -106,6 +113,7 @@ Authorship and Verification
 * **Author:** Richard Heenan **Date:** December 14, 2016
 * **Last Modified by:**  Richard Heenan **Date:** December 14, 2016
 * **Last Reviewed by:**  Paul Kienzle **Date:** Feb 28, 2018
+* **Source added by :**  Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -145,8 +153,15 @@ parameters = [
 
 source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c",
           "core_shell_bicelle_elliptical.c"]
+have_Fq = True
+effective_radius_type = [
+    "equivalent cylinder excluded volume", "equivalent volume sphere",
+    "outer rim average radius", "outer rim min radius",
+    "outer max radius", "half outer thickness", "half diagonal",
+    ]
 
 def random():
+    """Return a random parameter set for the model."""
     outer_major = 10**np.random.uniform(1, 4.7)
     outer_minor = 10**np.random.uniform(1, 4.7)
     # Use a distribution with a preference for thin shell or thin core,
@@ -178,10 +193,10 @@ qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
 
 tests = [
-    [{'radius': 30.0, 'x_core': 3.0,
-      'thick_rim': 8.0, 'thick_face': 14.0, 'length': 50.0}, 'ER', 1],
-    [{'radius': 30.0, 'x_core': 3.0,
-      'thick_rim': 8.0, 'thick_face': 14.0, 'length': 50.0}, 'VR', 1],
+    #[{'radius': 30.0, 'x_core': 3.0,
+    #  'thick_rim': 8.0, 'thick_face': 14.0, 'length': 50.0}, 'ER', 1],
+    #[{'radius': 30.0, 'x_core': 3.0,
+    #  'thick_rim': 8.0, 'thick_face': 14.0, 'length': 50.0}, 'VR', 1],
 
     [{'radius': 30.0, 'x_core': 3.0,
       'thick_rim': 8.0, 'thick_face': 14.0, 'length': 50.0,

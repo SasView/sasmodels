@@ -30,6 +30,7 @@ from . import weights
 from . import resolution
 from . import resolution2d
 from .details import make_kernel_args, dispersion_mesh
+from .product import RADIUS_MODE_ID
 
 # pylint: disable=unused-import
 try:
@@ -62,49 +63,30 @@ def call_kernel(calculator, pars, cutoff=0., mono=False):
     #print("values:", values)
     return calculator(call_details, values, cutoff, is_magnetic)
 
-def call_ER(model_info, pars):
-    # type: (ModelInfo, ParameterSet) -> float
+def call_Fq(calculator, pars, cutoff=0., mono=False):
+    # type: (Kernel, ParameterSet, float, bool) -> np.ndarray
     """
-    Call the model ER function using *values*.
+    Like :func:`call_kernel`, but returning F, F^2, R_eff, V_shell, V_form/V_shell.
 
-    *model_info* is either *model.info* if you have a loaded model,
-    or *kernel.info* if you have a model kernel prepared for evaluation.
+    For solid objects V_shell is equal to V_form and the volume ratio is 1.
+
+    Use parameter *radius_effective_mode* to select the effective radius
+    calculation.
     """
-    if model_info.ER is None:
-        return 1.0
-    elif not model_info.parameters.form_volume_parameters:
-        # handle the case where ER is provided but model is not polydisperse
-        return model_info.ER()
-    else:
-        value, weight = _vol_pars(model_info, pars)
-        individual_radii = model_info.ER(*value)
-        return np.sum(weight*individual_radii) / np.sum(weight)
+    R_eff_type = int(pars.pop(RADIUS_MODE_ID, 1.0))
+    mesh = get_mesh(calculator.info, pars, dim=calculator.dim, mono=mono)
+    #print("pars", list(zip(*mesh))[0])
+    call_details, values, is_magnetic = make_kernel_args(calculator, mesh)
+    #print("values:", values)
+    return calculator.Fq(call_details, values, cutoff, is_magnetic, R_eff_type)
 
-
-def call_VR(model_info, pars):
-    # type: (ModelInfo, ParameterSet) -> float
-    """
-    Call the model VR function using *pars*.
-
-    *model_info* is either *model.info* if you have a loaded model,
-    or *kernel.info* if you have a model kernel prepared for evaluation.
-    """
-    if model_info.VR is None:
-        return 1.0
-    elif not model_info.parameters.form_volume_parameters:
-        # handle the case where ER is provided but model is not polydisperse
-        return model_info.VR()
-    else:
-        value, weight = _vol_pars(model_info, pars)
-        whole, part = model_info.VR(*value)
-        return np.sum(weight*part)/np.sum(weight*whole)
-
-
-def call_profile(model_info, **pars):
-    # type: (ModelInfo, ...) -> Tuple[np.ndarray, np.ndarray, Tuple[str, str]]
+def call_profile(model_info, pars=None):
+    # type: (ModelInfo, ParameterSet) -> Tuple[np.ndarray, np.ndarray, Tuple[str, str]]
     """
     Returns the profile *x, y, (xlabel, ylabel)* representing the model.
     """
+    if pars is None:
+        pars = {}
     args = {}
     for p in model_info.parameters.kernel_parameters:
         if p.length > 1:
@@ -240,8 +222,6 @@ class DataMixin(object):
                 Iq, dIq = data.y, data.dy
             else:
                 Iq, dIq = None, None
-            #self._theory = np.zeros_like(q)
-            q_vectors = [res.q_calc]
         elif self.data_type == 'Iqxy':
             #if not model.info.parameters.has_2d:
             #    raise ValueError("not 2D without orientation or magnetic parameters")
@@ -249,7 +229,7 @@ class DataMixin(object):
             qmin = getattr(data, 'qmin', 1e-16)
             qmax = getattr(data, 'qmax', np.inf)
             accuracy = getattr(data, 'accuracy', 'Low')
-            index = ~data.mask & (q >= qmin) & (q <= qmax)
+            index = (data.mask == 0) & (q >= qmin) & (q <= qmax)
             if data.data is not None:
                 index &= ~np.isnan(data.data)
                 Iq = data.data[index]
@@ -258,10 +238,11 @@ class DataMixin(object):
                 Iq, dIq = None, None
             res = resolution2d.Pinhole2D(data=data, index=index,
                                          nsigma=3.0, accuracy=accuracy)
-            #self._theory = np.zeros_like(self.Iq)
-            q_vectors = res.q_calc
         elif self.data_type == 'Iq':
             index = (data.x >= data.qmin) & (data.x <= data.qmax)
+            mask = getattr(data, 'mask', None)
+            if mask is not None:
+                index &= (mask == 0)
             if data.y is not None:
                 index &= ~np.isnan(data.y)
                 Iq = data.y[index]
@@ -281,9 +262,6 @@ class DataMixin(object):
                                         qy_width=data.dxw[index])
             else:
                 res = resolution.Perfect1D(data.x[index])
-
-            #self._theory = np.zeros_like(self.Iq)
-            q_vectors = [res.q_calc]
         elif self.data_type == 'Iq-oriented':
             index = (data.x >= data.qmin) & (data.x <= data.qmax)
             if data.y is not None:
@@ -299,13 +277,11 @@ class DataMixin(object):
             res = resolution2d.Slit2D(data.x[index],
                                       qx_width=data.dxw[index],
                                       qy_width=data.dxl[index])
-            q_vectors = res.q_calc
         else:
             raise ValueError("Unknown data type") # never gets here
 
         # Remember function inputs so we can delay loading the function and
         # so we can save/restore state
-        self._kernel_inputs = q_vectors
         self._kernel = None
         self.Iq, self.dIq, self.index = Iq, dIq, index
         self.resolution = res
@@ -342,10 +318,17 @@ class DataMixin(object):
     def _calc_theory(self, pars, cutoff=0.0):
         # type: (ParameterSet, float) -> np.ndarray
         if self._kernel is None:
-            self._kernel = self._model.make_kernel(self._kernel_inputs)
+            # TODO: change interfaces so that resolution returns kernel inputs
+            # Maybe have resolution always return a tuple, or maybe have
+            # make_kernel accept either an ndarray or a pair of ndarrays.
+            kernel_inputs = self.resolution.q_calc
+            if isinstance(kernel_inputs, np.ndarray):
+                kernel_inputs = (kernel_inputs,)
+            self._kernel = self._model.make_kernel(kernel_inputs)
 
         # Need to pull background out of resolution for multiple scattering
-        background = pars.get('background', 0.)
+        default_background = self._model.info.parameters.common_parameters[1].default
+        background = pars.get('background', default_background)
         pars = pars.copy()
         pars['background'] = 0.
 
@@ -398,7 +381,7 @@ class DirectModel(DataMixin):
         """
         Generate a plottable profile.
         """
-        return call_profile(self.model.info, **pars)
+        return call_profile(self.model.info, pars)
 
 def main():
     # type: () -> None
@@ -414,22 +397,19 @@ def main():
         sys.exit(1)
     model_name = sys.argv[1]
     call = sys.argv[2].upper()
-    if call != "ER_VR":
-        try:
-            values = [float(v) for v in call.split(',')]
-        except ValueError:
-            values = []
-        if len(values) == 1:
-            q, = values
-            data = empty_data1D([q])
-        elif len(values) == 2:
-            qx, qy = values
-            data = empty_data2D([qx], [qy])
-        else:
-            print("use q or qx,qy or ER or VR")
-            sys.exit(1)
+    try:
+        values = [float(v) for v in call.split(',')]
+    except ValueError:
+        values = []
+    if len(values) == 1:
+        q, = values
+        data = empty_data1D([q])
+    elif len(values) == 2:
+        qx, qy = values
+        data = empty_data2D([qx], [qy])
     else:
-        data = empty_data1D([0.001])  # Data not used in ER/VR
+        print("use q or qx,qy")
+        sys.exit(1)
 
     model_info = load_model_info(model_name)
     model = build_model(model_info)
@@ -437,13 +417,8 @@ def main():
     pars = dict((k, (float(v) if not k.endswith("_pd_type") else v))
                 for pair in sys.argv[3:]
                 for k, v in [pair.split('=')])
-    if call == "ER_VR":
-        ER = call_ER(model_info, pars)
-        VR = call_VR(model_info, pars)
-        print(ER, VR)
-    else:
-        Iq = calculator(**pars)
-        print(Iq[0])
+    Iq = calculator(**pars)
+    print(Iq[0])
 
 if __name__ == "__main__":
     main()

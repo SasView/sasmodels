@@ -47,7 +47,10 @@ class SesansTransform(object):
         self._set_hankel(SElength, lam, zaccept, Rmax)
 
     def apply(self, Iq):
-        # tye: (np.ndarray) -> np.ndarray
+        # type: (np.ndarray) -> np.ndarray
+        """
+        Apply the SESANS transform to the computed I(q).
+        """
         G0 = np.dot(self._H0, Iq)
         G = np.dot(self._H.T, Iq)
         P = G - G0

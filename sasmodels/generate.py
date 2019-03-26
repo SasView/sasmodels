@@ -23,10 +23,12 @@ Small angle scattering models are defined by a set of kernel functions:
     *form_volume(p1, p2, ...)* returns the volume of the form with particular
     dimension, or 1.0 if no volume normalization is required.
 
-    *ER(p1, p2, ...)* returns the effective radius of the form with
-    particular dimensions.
+    *shell_volume(p1, p2, ...)* returns the volume of the shell for forms
+    which are hollow.
 
-    *VR(p1, p2, ...)* returns the volume ratio for core-shell style forms.
+    *effective_radius(mode, p1, p2, ...)* returns the effective radius of
+    the form with particular dimensions.  Mode determines the type of
+    effective radius returned, with mode=1 for equivalent volume.
 
     #define INVALID(v) (expr)  returns False if v.parameter is invalid
     for some parameter or other (e.g., v.bell_radius < v.radius).  If
@@ -71,9 +73,6 @@ effectively chopping the parameter weight distributions at the boundary
 of the infeasible region.  The resulting scattering will be set to
 background.  This will work correctly even when polydispersity is off.
 
-*ER* and *VR* are python functions which operate on parameter vectors.
-The constructor code will generate the necessary vectors for computing
-them with the desired polydispersity.
 The kernel module must set variables defining the kernel meta data:
 
     *id* is an implicit variable formed from the filename.  It will be
@@ -105,12 +104,6 @@ The kernel module must set variables defining the kernel meta data:
     *source* is the list of C-99 source files that must be joined to
     create the OpenCL kernel functions.  The files defining the functions
     need to be listed before the files which use the functions.
-
-    *ER* is a python function defining the effective radius.  If it is
-    not present, the effective radius is 0.
-
-    *VR* is a python function defining the volume ratio.  If it is not
-    present, the volume ratio is 1.
 
     *form_volume*, *Iq*, *Iqac*, *Iqabc* are strings containing
     the C source code for the body of the volume, Iq, and Iqac functions
@@ -196,6 +189,14 @@ logger = logging.getLogger(__name__)
 PROJECTION = 1
 
 def get_data_path(external_dir, target_file):
+    """
+    Search for the target file relative in the installed application.
+
+    Search first in the location of the generate module in case we are
+    running directly from the distribution.  Search next to the python
+    executable for windows installs.  Search in the ../Resources directory
+    next to the executable for Mac OS/X installs.
+    """
     path = abspath(dirname(__file__))
     if exists(joinpath(path, target_file)):
         return path
@@ -231,8 +232,8 @@ except TypeError:
 # code.  The macro itself needs to be defined in sasmodels/doc/rst_prolog.
 #
 # NOTE: there is an RST_PROLOG at the end of this file which is NOT
-# used for the bundled documentation. Still as long as we are defining the macros
-# in two places any new addition should define the macro in both places.
+# used for the bundled documentation. Still as long as we are defining the
+# macros in two places any new addition should define the macro in both places.
 RST_UNITS = {
     "Ang": "|Ang|",
     "1/Ang": "|Ang^-1|",
@@ -536,7 +537,7 @@ def _tag_float(source, constant_flag):
     return out
 
 def test_tag_float():
-    """check that floating point constants are properly identified and tagged with 'f'"""
+    """Check that floating point constants are identified and tagged with 'f'"""
 
     cases = """
 ZP  : 0.
@@ -670,8 +671,7 @@ def _call_pars(prefix, pars):
     return [p.as_call_reference(prefix) for p in pars]
 
 
-# type in IQXY pattern could be single, float, double, long double, ...
-_IQXY_PATTERN = re.compile(r"(^|\s)double\s+I(?P<mode>q(ab?c|xy))\s*[(]",
+_IQXY_PATTERN = re.compile(r"(^|\s)double\s+I(?P<mode>q(ac|abc|xy))\s*[(]",
                            flags=re.MULTILINE)
 def find_xy_mode(source):
     # type: (List[str]) -> bool
@@ -700,6 +700,31 @@ def find_xy_mode(source):
             return m.group('mode')
     return 'qa'
 
+# Note: not presently used.  Need to know whether Fq is available before
+# trying to compile the source.  Leave the code here in case we decide that
+# define have_Fq for each form factor is too tedious and error prone.
+_FQ_PATTERN = re.compile(r"(^|\s)void\s+Fq[(]", flags=re.MULTILINE)
+def contains_Fq(source):
+    # type: (List[str]) -> bool
+    """
+    Return True if C source defines "void Fq(".
+    """
+    for code in source:
+        if _FQ_PATTERN.search(code) is not None:
+            return True
+    return False
+
+_SHELL_VOLUME_PATTERN = re.compile(r"(^|\s)double\s+shell_volume[(]",
+                                   flags=re.MULTILINE)
+def contains_shell_volume(source):
+    # type: (List[str]) -> bool
+    """
+    Return True if C source defines "double shell_volume(".
+    """
+    for code in source:
+        if _SHELL_VOLUME_PATTERN.search(code) is not None:
+            return True
+    return False
 
 def _add_source(source, code, path, lineno=1):
     """
@@ -729,7 +754,6 @@ def make_source(model_info):
     # for the distribution rather than the absolute values used by angular
     # dispersion.  Need to be careful that necessary parameters are available
     # for computing volume even if we allow non-disperse volume parameters.
-
     partable = model_info.parameters
 
     # Load templates and user code
@@ -742,7 +766,6 @@ def make_source(model_info):
     _add_source(source, *kernel_header)
     for path, code in user_code:
         _add_source(source, code, path)
-
     if model_info.c_code:
         _add_source(source, model_info.c_code, model_info.filename,
                     lineno=model_info.lineno.get('c_code', 1))
@@ -750,10 +773,14 @@ def make_source(model_info):
     # Make parameters for q, qx, qy so that we can use them in declarations
     q, qx, qy, qab, qa, qb, qc \
         = [Parameter(name=v) for v in 'q qx qy qab qa qb qc'.split()]
+
     # Generate form_volume function, etc. from body only
     if isinstance(model_info.form_volume, str):
         pars = partable.form_volume_parameters
         source.append(_gen_fn(model_info, 'form_volume', pars))
+    if isinstance(model_info.shell_volume, str):
+        pars = partable.form_volume_parameters
+        source.append(_gen_fn(model_info, 'shell_volume', pars))
     if isinstance(model_info.Iq, str):
         pars = [q] + partable.iq_parameters
         source.append(_gen_fn(model_info, 'Iq', pars))
@@ -767,6 +794,9 @@ def make_source(model_info):
         pars = [qa, qb, qc] + partable.iq_parameters
         source.append(_gen_fn(model_info, 'Iqabc', pars))
 
+    # Check for shell_volume in source
+    is_hollow = contains_shell_volume(source)
+
     # What kind of 2D model do we need?  Is it consistent with the parameters?
     xy_mode = find_xy_mode(source)
     if xy_mode == 'qabc' and not partable.is_asymmetric:
@@ -779,7 +809,7 @@ def make_source(model_info):
         if xy_mode == 'qxy':
             logger.warn("oriented shapes should define Iqac or Iqabc")
         else:
-            raise ValueError("Expected function Iqac or Iqabc for oriented shape")
+            raise ValueError("Expected Iqac or Iqabc for oriented shape")
 
     # Define the parameter table
     lineno = getframeinfo(currentframe()).lineno + 2
@@ -788,21 +818,43 @@ def make_source(model_info):
     source.append("#define PARAMETER_TABLE \\")
     source.append("\\\n".join(p.as_definition()
                               for p in partable.kernel_parameters))
-
     # Define the function calls
+    call_effective_radius = "#define CALL_EFFECTIVE_RADIUS(_mode, _v) 0.0"
     if partable.form_volume_parameters:
         refs = _call_pars("_v.", partable.form_volume_parameters)
-        call_volume = "#define CALL_VOLUME(_v) form_volume(%s)"%(",".join(refs))
+        if is_hollow:
+            call_volume = (
+                "#define CALL_VOLUME(_form, _shell, _v) "
+                "do { _form = form_volume(%s); _shell = shell_volume(%s); } "
+                "while (0)") % ((",".join(refs),)*2)
+        else:
+            call_volume = (
+                "#define CALL_VOLUME(_form, _shell, _v) "
+                "do { _form = _shell = form_volume(%s); } "
+                "while (0)") % (",".join(refs))
+        if model_info.effective_radius_type:
+            call_effective_radius = (
+                "#define CALL_EFFECTIVE_RADIUS(_mode, _v) "
+                "effective_radius(_mode, %s)") % (",".join(refs))
     else:
         # Model doesn't have volume.  We could make the kernel run a little
         # faster by not using/transferring the volume normalizations, but
         # the ifdef's reduce readability more than is worthwhile.
-        call_volume = "#define CALL_VOLUME(v) 1.0"
+        call_volume = (
+            "#define CALL_VOLUME(_form, _shell, _v) "
+            "do { _form = _shell = 1.0; } while (0)")
     source.append(call_volume)
-
+    source.append(call_effective_radius)
     model_refs = _call_pars("_v.", partable.iq_parameters)
-    pars = ",".join(["_q"] + model_refs)
-    call_iq = "#define CALL_IQ(_q, _v) Iq(%s)" % pars
+
+    if model_info.have_Fq:
+        pars = ",".join(["_q", "&_F1", "&_F2",] + model_refs)
+        call_iq = "#define CALL_FQ(_q, _F1, _F2, _v) Fq(%s)" % pars
+        clear_iq = "#undef CALL_FQ"
+    else:
+        pars = ",".join(["_q"] + model_refs)
+        call_iq = "#define CALL_IQ(_q, _v) Iq(%s)" % pars
+        clear_iq = "#undef CALL_IQ"
     if xy_mode == 'qabc':
         pars = ",".join(["_qa", "_qb", "_qc"] + model_refs)
         call_iqxy = "#define CALL_IQ_ABC(_qa,_qb,_qc,_v) Iqabc(%s)" % pars
@@ -811,10 +863,18 @@ def make_source(model_info):
         pars = ",".join(["_qa", "_qc"] + model_refs)
         call_iqxy = "#define CALL_IQ_AC(_qa,_qc,_v) Iqac(%s)" % pars
         clear_iqxy = "#undef CALL_IQ_AC"
-    elif xy_mode == 'qa':
+    elif xy_mode == 'qa' and not model_info.have_Fq:
         pars = ",".join(["_qa"] + model_refs)
         call_iqxy = "#define CALL_IQ_A(_qa,_v) Iq(%s)" % pars
         clear_iqxy = "#undef CALL_IQ_A"
+    elif xy_mode == 'qa' and model_info.have_Fq:
+        pars = ",".join(["_qa", "&_F1", "&_F2",] + model_refs)
+        # Note: uses rare C construction (expr1, expr2) which computes
+        # expr1 then expr2 and evaluates to expr2.  This allows us to
+        # leave it looking like a function even though it is returning
+        # its values by reference.
+        call_iqxy = "#define CALL_FQ_A(_qa,_F1,_F2,_v) (Fq(%s),_F2)" % pars
+        clear_iqxy = "#undef CALL_FQ_A"
     elif xy_mode == 'qxy':
         orientation_refs = _call_pars("_v.", partable.orientation_parameters)
         pars = ",".join(["_qx", "_qy"] + model_refs + orientation_refs)
@@ -830,7 +890,6 @@ def make_source(model_info):
 
     magpars = [k-2 for k, p in enumerate(partable.call_parameters)
                if p.type == 'sld']
-
     # Fill in definitions for numbers of parameters
     source.append("#define MAX_PD %s"%partable.max_pd)
     source.append("#define NUM_PARS %d"%partable.npars)
@@ -838,20 +897,17 @@ def make_source(model_info):
     source.append("#define NUM_MAGNETIC %d" % partable.nmagnetic)
     source.append("#define MAGNETIC_PARS %s"%",".join(str(k) for k in magpars))
     source.append("#define PROJECTION %d"%PROJECTION)
+    wrappers = _kernels(kernel_code, call_iq, clear_iq,
+                        call_iqxy, clear_iqxy, model_info.name)
+    code = '\n'.join(source + wrappers[0] + wrappers[1] + wrappers[2])
 
-    # TODO: allow mixed python/opencl kernels?
-
-    ocl = _kernels(kernel_code, call_iq, call_iqxy, clear_iqxy, model_info.name)
-    dll = _kernels(kernel_code, call_iq, call_iqxy, clear_iqxy, model_info.name)
-    result = {
-        'dll': '\n'.join(source+dll[0]+dll[1]+dll[2]),
-        'opencl': '\n'.join(source+ocl[0]+ocl[1]+ocl[2]),
-    }
-
+    # Note: Identical code for dll and opencl.  This may not always be the case
+    # so leave them as separate entries in the returned value.
+    result = {'dll': code, 'opencl': code}
     return result
 
 
-def _kernels(kernel, call_iq, call_iqxy, clear_iqxy, name):
+def _kernels(kernel, call_iq, clear_iq, call_iqxy, clear_iqxy, name):
     # type: ([str,str], str, str, str) -> List[str]
     code = kernel[0]
     path = kernel[1].replace('\\', '\\\\')
@@ -861,7 +917,7 @@ def _kernels(kernel, call_iq, call_iqxy, clear_iqxy, name):
         call_iq,
         '#line 1 "%s Iq"' % path,
         code,
-        "#undef CALL_IQ",
+        clear_iq,
         "#undef KERNEL_NAME",
         ]
 
@@ -964,12 +1020,16 @@ def make_doc(model_info):
     Sq_units = "The returned value is a dimensionless structure factor, $S(q)$."
     docs = model_info.docs if model_info.docs is not None else ""
     docs = convert_section_titles_to_boldface(docs)
-    pars = make_partable(model_info.parameters.COMMON
-                         + model_info.parameters.kernel_parameters)
+    if model_info.structure_factor:
+        pars = model_info.parameters.kernel_parameters
+    else:
+        pars = (model_info.parameters.common_parameters
+                + model_info.parameters.kernel_parameters)
+    partable = make_partable(pars)
     subst = dict(id=model_info.id.replace('_', '-'),
                  name=model_info.name,
                  title=model_info.title,
-                 parameters=pars,
+                 parameters=partable,
                  returns=Sq_units if model_info.structure_factor else Iq_units,
                  docs=docs)
     return DOC_HEADER % subst

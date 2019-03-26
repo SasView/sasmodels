@@ -25,6 +25,21 @@ References
 ----------
 
 None.
+
+Source
+------
+
+`peak_lorentz.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/peak_lorentz.py>`_
+
+`peak_lorentz.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/peak_lorentz.c>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -59,6 +74,7 @@ def Iq(q, peak_pos, peak_hwhm):
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
+    """Return a random parameter set for the model."""
     peak_pos = 10**np.random.uniform(-3, -1)
     peak_hwhm = peak_pos * 10**np.random.uniform(-3, 0)
     pars = dict(

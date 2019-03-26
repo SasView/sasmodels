@@ -19,9 +19,20 @@ where the $q$ vector is defined as
 References
 ----------
 
-L.S. Qrnstein and F. Zernike, *Proc. Acad. Sci. Amsterdam* 17, 793 (1914), and
-*Z. Phys.* 19, 134 (1918), and 27, 761 {1926); referred to as QZ.
-"""
+.. [#] L.S. Qrnstein and F. Zernike, *Proc. Acad. Sci. Amsterdam* 17, 793 (1914), and *Z. Phys.* 19, 134 (1918), and 27, 761 {1926); referred to as QZ.
+
+Source
+------
+
+`lorentz.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/lorentz.py>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019"""
 
 import numpy as np
 from numpy import inf
@@ -49,6 +60,7 @@ Iq = """
 """
 
 def random():
+    """Return a random parameter set for the model."""
     pars = dict(
         #background=0,
         scale=10**np.random.uniform(1, 4),

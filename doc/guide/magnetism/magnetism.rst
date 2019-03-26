@@ -88,16 +88,16 @@ the figure above.
 The user input parameters are:
 
 ===========   ================================================================
- M0:sld       $D_M M_0$
- mtheta:sld   $\theta_M$
- mphi:sld     $\phi_M$
- up:angle     $\theta_\mathrm{up}$
- up:frac_i    $u_i$ = (spin up)/(spin up + spin down) *before* the sample
- up:frac_f    $u_f$ = (spin up)/(spin up + spin down) *after* the sample
+ sld_M0       $D_M M_0$
+ sld_mtheta   $\theta_M$
+ sld_mphi     $\phi_M$
+ up_frac_i    $u_i$ = (spin up)/(spin up + spin down) *before* the sample
+ up_frac_f    $u_f$ = (spin up)/(spin up + spin down) *after* the sample
+ up_angle     $\theta_\mathrm{up}$
 ===========   ================================================================
 
 .. note::
-    The values of the 'up:frac_i' and 'up:frac_f' must be in the range 0 to 1.
+    The values of the 'up_frac_i' and 'up_frac_f' must be in the range 0 to 1.
 
 *Document History*
 

@@ -35,6 +35,7 @@ also use these for your own data loader.
 import traceback
 
 import numpy as np  # type: ignore
+from numpy import sqrt, sin, cos, pi
 
 # pylint: disable=unused-import
 try:
@@ -181,6 +182,7 @@ class SesansData(Data1D):
 
     *x* is spin echo length and *y* is polarization (P/P0).
     """
+    isSesans = True
     def __init__(self, **kw):
         Data1D.__init__(self, **kw)
         self.lam = None # type: Optional[np.ndarray]
@@ -299,20 +301,42 @@ class Source(object):
         self.wavelength = np.NaN
         self.wavelength_unit = "A"
 
-
-def empty_data1D(q, resolution=0.0):
-    # type: (np.ndarray, float) -> Data1D
+class Sample(object):
     """
+    Sample attributes.
+    """
+    def __init__(self):
+        # type: () -> None
+        pass
+
+def empty_data1D(q, resolution=0.0, L=0., dL=0.):
+    # type: (np.ndarray, float) -> Data1D
+    r"""
     Create empty 1D data using the given *q* as the x value.
 
-    *resolution* dq/q defaults to 5%.
+    rms *resolution* $\Delta q/q$ defaults to 0%.  If wavelength *L* and rms
+    wavelength divergence *dL* are defined, then *resolution* defines
+    rms $\Delta \theta/\theta$ for the lowest *q*, with $\theta$ derived from
+    $q = 4\pi/\lambda \sin(\theta)$.
     """
 
     #Iq = 100 * np.ones_like(q)
     #dIq = np.sqrt(Iq)
     Iq, dIq = None, None
     q = np.asarray(q)
-    data = Data1D(q, Iq, dx=resolution * q, dy=dIq)
+    if L != 0 and resolution != 0:
+        theta = np.arcsin(q*L/(4*pi))
+        dtheta = theta[0]*resolution
+        ## Solving Gaussian error propagation from
+        ##   Dq^2 = (dq/dL)^2 DL^2 + (dq/dtheta)^2 Dtheta^2
+        ## gives
+        ##   (Dq/q)^2 = (DL/L)**2 + (Dtheta/tan(theta))**2
+        ## Take the square root and multiply by q, giving
+        ##   Dq = (4*pi/L) * sqrt((sin(theta)*dL/L)**2 + (cos(theta)*dtheta)**2)
+        dq = (4*pi/L) * sqrt((sin(theta)*dL/L)**2 + (cos(theta)*dtheta)**2)
+    else:
+        dq = resolution * q
+    data = Data1D(q, Iq, dx=dq, dy=dIq)
     data.filename = "fake data"
     return data
 
@@ -475,7 +499,7 @@ def _plot_result1D(data,         # type: Data1D
         if use_data:
             mdata = masked_array(data.y, data.mask.copy())
             mdata[~np.isfinite(mdata)] = masked
-            if view is 'log':
+            if view == 'log':
                 mdata[mdata <= 0] = masked
             plt.errorbar(data.x, scale*mdata, yerr=data.dy, fmt='.')
             all_positive = all_positive and (mdata > 0).all()
@@ -485,11 +509,13 @@ def _plot_result1D(data,         # type: Data1D
         if use_theory:
             # Note: masks merge, so any masked theory points will stay masked,
             # and the data mask will be added to it.
-            mtheory = masked_array(theory, data.mask.copy())
+            #mtheory = masked_array(theory, data.mask.copy())
+            theory_x = data.x[data.mask == 0]
+            mtheory = masked_array(theory)
             mtheory[~np.isfinite(mtheory)] = masked
-            if view is 'log':
+            if view == 'log':
                 mtheory[mtheory <= 0] = masked
-            plt.plot(data.x, scale*mtheory, '-')
+            plt.plot(theory_x, scale*mtheory, '-')
             all_positive = all_positive and (mtheory > 0).all()
             some_present = some_present or (mtheory.count() > 0)
 
@@ -525,13 +551,14 @@ def _plot_result1D(data,         # type: Data1D
         #plt.axis('equal')
 
     if use_resid:
-        mresid = masked_array(resid, data.mask.copy())
+        theory_x = data.x[data.mask == 0]
+        mresid = masked_array(resid)
         mresid[~np.isfinite(mresid)] = masked
         some_present = (mresid.count() > 0)
 
         if num_plots > 1:
             plt.subplot(1, num_plots, use_calc + 2)
-        plt.plot(data.x, mresid, '.')
+        plt.plot(theory_x, mresid, '.')
         plt.xlabel("$q$/A$^{-1}$")
         plt.ylabel('residuals')
         plt.title('(model - Iq)/dIq')
