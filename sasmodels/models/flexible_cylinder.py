@@ -32,14 +32,17 @@ The Kuhn length $(b = 2*l_p)$ is also used to describe the stiffness of a chain.
 In the parameters, the sld and sld\_solvent represent the SLD of the cylinder
 and solvent respectively.
 
-Our model uses the form factor calculations implemented in a c-library provided
-by the NIST Center for Neutron Research (Kline, 2006). This states:
+Our model uses the form factor calculations in reference [1] as implemented in a 
+c-library provided by the NIST Center for Neutron Research (Kline, 2006). This states:
 
     'Method 3 With Excluded Volume' is used.
     The model is a parametrization of simulations of a discrete representation
     of the worm-like chain model of Kratky and Porod applied in the
     pseudocontinuous limit.
     See equations (13,26-27) in the original reference for the details.
+
+**This is a model with complex behaviour depending on the ratio of** $L/b$ **and the 
+reader is strongly encouraged to read reference [1] before use.**
 
 References
 ----------
