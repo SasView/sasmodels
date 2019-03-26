@@ -37,7 +37,7 @@ else:
 #]
 
 STRUCTURE_MODE_ID = "structure_factor_mode"
-RADIUS_MODE_ID = "radius_effective_mode"
+RADIUS_MODE_ID = "effective_radius_mode"
 RADIUS_ID = "radius_effective"
 VOLFRAC_ID = "volfraction"
 def make_extra_pars(p_info):

@@ -391,6 +391,8 @@ def invalid_pars(partable, pars):
         # special handling of R_eff mode, which is not a usual parameter
         if par == product.RADIUS_MODE_ID:
             continue
+        if par == product.STRUCTURE_MODE_ID:
+            continue
         parts = par.split('_pd')
         if len(parts) > 1 and parts[1] not in ("", "_n", "nsigma", "type"):
             invalid.append(par)
