@@ -2,10 +2,11 @@ r"""
 Definition
 ----------
 
-Parameters for this model are the core axial ratio X and a shell thickness,
-which are more often what we would like to determine and makes the model
-better behaved, particularly when polydispersity is applied than the four
-independent radii used in the original parameterization of this model.
+Parameters for this model are the core axial ratio $X_{core}$ and a shell 
+thickness $t_{shell}$, which are more often what we would like to determine 
+and make the model better behaved, particularly when polydispersity is 
+applied, than the four independent radii used in the original parameterization 
+of this model.
 
 
 .. figure:: img/core_shell_ellipsoid_geometry.png
@@ -14,19 +15,21 @@ The geometric parameters of this model are shown in the diagram above, which
 shows (a) a cut through at the circular equator and (b) a cross section through
 the poles, of a prolate ellipsoid.
 
-When *X_core < 1* the core is oblate; when *X_core > 1* it is prolate.
-*X_core = 1* is a spherical core.
+When $X_{core}$ < 1 the core is oblate; when $X_{core}$ > 1 it is prolate.
+$X_{core}$ = 1 is a spherical core.
 
-For a fixed shell thickness *XpolarShell = 1*, to scale the shell thickness
-pro-rata with the radius set or constrain *XpolarShell = X_core*.
+For a fixed shell thickness $X_{polar shell}$ = 1, to scale $t_{shell}$ 
+pro-rata with the radius set or constrain $X_{polar shell}$ = $X_{core}$.
 
-When including an $S(q)$, the radius in $S(q)$ is calculated to be that of
-a sphere with the same 2nd virial coefficient of the outer surface of the
-ellipsoid. This may have some undesirable effects if the aspect ratio of the
-ellipsoid is large (ie, if $X << 1$ or $X >> 1$ ), when the $S(q)$
-- which assumes spheres - will not in any case be valid.  Generating a
-custom product model will enable separate effective volume fraction and
-effective radius in the $S(q)$.
+.. note::
+
+   When including an $S(q)$, the radius in $S(q)$ is calculated to be that of
+   a sphere with the same 2nd virial coefficient of the outer surface of the
+   ellipsoid. This may have some undesirable effects if the aspect ratio of the
+   ellipsoid is large (ie, if $X << 1$ or $X >> 1$), when the $S(q)$
+   - which assumes spheres - will not in any case be valid.  Generating a
+   custom product model will enable separate effective volume fraction and
+   effective radius in the $S(q)$.
 
 If SAS data are in absolute units, and the SLDs are correct, then scale should
 be the total volume fraction of the "outer particle". When $S(q)$ is introduced
@@ -42,13 +45,15 @@ with separate terms for the core-shell and shell-solvent boundaries.
 
 where
 
+.. In following equation SK changed radius\_equat\_core to R_e
+  
 .. math::
     :nowrap:
 
     \begin{align*}
-    F(q,\alpha) = &f(q,radius\_equat\_core,radius\_equat\_core.x\_core,\alpha) \\
-    &+ f(q,radius\_equat\_core + thick\_shell,
-         radius\_equat\_core.x\_core + thick\_shell.x\_polar\_shell,\alpha)
+    F(q,\alpha) = &f(q,R_e,R_e.x_{core},\alpha) \\
+    &+ f(q,R_e + t_{shell},
+         R_e.x_{core} + t_{shell}.x_{polar shell},\alpha)
     \end{align*}
 
 where
@@ -70,9 +75,10 @@ and
 $\alpha$ is the angle between the axis of the ellipsoid and $\vec q$,
 $V = (4/3)\pi R_pR_e^2$ is the volume of the ellipsoid , $R_p$ is the
 polar radius along the rotational axis of the ellipsoid, $R_e$ is the
-equatorial radius perpendicular to the rotational axis of the ellipsoid
-and $\Delta \rho$ (contrast) is the scattering length density difference,
-either $(sld\_core - sld\_shell)$ or $(sld\_shell - sld\_solvent)$.
+equatorial radius perpendicular to the rotational axis of the ellipsoid, 
+$t_{shell}$ is the thickness of the shell at the equator, 
+and $\Delta \rho$ (the contrast) is the scattering length density difference,
+either $(\rho_{core} - \rho_{shell})$ or $(\rho_{shell} - \rho_{solvent})$.
 
 For randomly oriented particles:
 
@@ -103,7 +109,7 @@ Authorship and Verification
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Richard Heenan (reparametrised model) **Date:** 2015
-* **Last Reviewed by:** Richard Heenan **Date:** October 6, 2016
+* **Last Reviewed by:** Steve King **Date:** March 27, 2019
 * **Source added by :** Steve King **Date:** March 25, 2019
 """
 
