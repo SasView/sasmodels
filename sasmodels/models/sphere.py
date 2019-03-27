@@ -98,14 +98,16 @@ tests = [
     [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
      0.1, None, None, 120., None, 1.0],
     [{"@S": "hardsphere"},
-       0.1, 0.7940350343881906], # this is current value, not verified elsewhere yet
+       0.1, 0.7940350343881906], # Q=0.1 this is current value, not verified elsewhere yet
 	[{"@S": "hardsphere",          # hard sphere structure factor
      "structure_factor_mode": 1,  # decoupling approximation
-     "effective_radius_type": 1, "radius_effective":27.0  # equivalent sphere   Currently have hardwired model_test to accept radius_effective BUT doe sit get passed to S(Q)???
+     "effective_radius_type": 1, "radius_effective":27.0 # equivalent sphere   Currently have hardwired model_test to accept radius_effective 
+     # direct_model has the name & value BUT does it get passed to S(Q)???  What about volfracion, plus the many parameters used by other S(Q) ?
+     # effective_radius_type does NOT appear in the list, has it been stripped out???
 	 }, 0.1, 0.7940350343881906],
-	[{"@S": "hardsphere",          # hard sphere structure factor
-     "structure_factor_mode": 2,  #  -  WHY same result?
-     "effective_radius_type": 2, "radius_effective":23.0    # 
-	 }, 0.1, 0.7940350343881906]
+#	[{"@S": "hardsphere",          # hard sphere structure factor
+#     "structure_factor_mode": 3,  #  -  WHY same result?
+#     "effective_radius_type": 3, "radius_effective":23.0    # 
+#	 }, 0.1, 0.7940350343881906]
 ]
 # putting None for expected result will pass the test if there are no errors from the routine, but without any check on the value of the result

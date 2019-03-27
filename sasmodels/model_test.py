@@ -241,6 +241,7 @@ def _hide_model_case_from_nose():
                     ps_test = [pars] + list(test[1:])
                     # build the P@S model
                     s_info = load_model_info(s_name)
+                    print("in run_all: s_info:", s_info)
                     ps_info = product.make_product_info(self.info, s_info)
                     ps_model = build_model(ps_info, dtype=self.dtype,
                                            platform=self.platform)

@@ -58,9 +58,9 @@ def call_kernel(calculator, pars, cutoff=0., mono=False):
     *mono* is True if polydispersity should be set to none on all parameters.
     """
     mesh = get_mesh(calculator.info, pars, dim=calculator.dim, mono=mono)
-    #print("pars", list(zip(*mesh))[0])
+    print("in call_kernel: pars:", list(zip(*mesh))[0])
     call_details, values, is_magnetic = make_kernel_args(calculator, mesh)
-    #print("values:", values)
+    #print("in call_kernel: values:", values)
     return calculator(call_details, values, cutoff, is_magnetic)
 
 def call_Fq(calculator, pars, cutoff=0., mono=False):
@@ -75,9 +75,9 @@ def call_Fq(calculator, pars, cutoff=0., mono=False):
     """
     R_eff_type = int(pars.pop(RADIUS_MODE_ID, 1.0))
     mesh = get_mesh(calculator.info, pars, dim=calculator.dim, mono=mono)
-    #print("pars", list(zip(*mesh))[0])
+    print("in call_Fq: pars", list(zip(*mesh))[0])
     call_details, values, is_magnetic = make_kernel_args(calculator, mesh)
-    #print("values:", values)
+    #print("in call_Fq: values:", values)
     return calculator.Fq(call_details, values, cutoff, is_magnetic, R_eff_type)
 
 def call_profile(model_info, pars=None):
@@ -117,7 +117,7 @@ def get_mesh(model_info, values, dim='1d', mono=False):
     else:
         active = lambda name: True
 
-    #print("pars",[p.id for p in parameters.call_parameters])
+    print("in get_mesh: pars:",[p.id for p in parameters.call_parameters])
     mesh = [_get_par_weights(p, values, active(p.name))
             for p in parameters.call_parameters]
     return mesh
