@@ -45,7 +45,7 @@ is the scattering length density of the core, $\rho_s$ is the scattering
 length density of the shell, $\rho_\text{solv}$ is the scattering length
 density of the solvent, and *background* is the background level.  The outer
 radius of the shell is given by $R+T$ and the total length of the outer
-shell is given by $L+2T$. $J1$ is the first order Bessel function.
+shell is given by $L+2T$. $J_1$ is the first order Bessel function.
 
 .. _core-shell-cylinder-geometry:
 
