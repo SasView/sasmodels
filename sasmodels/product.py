@@ -36,14 +36,14 @@ else:
 #    ["est_volume_ratio", "", 1.0, [0, np.inf], "", "Estimated volume ratio"],
 #]
 
-STRUCTURE_MODE_ID = "structure_factor_mode"
-RADIUS_MODE_ID = "effective_radius_mode"
+STRUCTURE_MODE_ID = "structure_factor_type"
+RADIUS_MODE_ID = "effective_radius_type"
 RADIUS_ID = "radius_effective"
 VOLFRAC_ID = "volfraction"
 def make_extra_pars(p_info):
     # type: (ModelInfo) -> List[Parameter]
     """
-    Create parameters for structure_factor_mode and radius_effective_mode.
+    Create parameters for structure_factor_type and radius_effective_type.
     """
     pars = []
     if p_info.have_Fq:

@@ -70,7 +70,7 @@ def call_Fq(calculator, pars, cutoff=0., mono=False):
 
     For solid objects V_shell is equal to V_form and the volume ratio is 1.
 
-    Use parameter *radius_effective_mode* to select the effective radius
+    Use parameter *radius_effective_type* to select the effective radius
     calculation.
     """
     R_eff_type = int(pars.pop(RADIUS_MODE_ID, 1.0))
