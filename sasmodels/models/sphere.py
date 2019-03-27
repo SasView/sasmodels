@@ -100,12 +100,12 @@ tests = [
     [{"@S": "hardsphere"},
        0.1, 0.7940350343881906], # this is current value, not verified elsewhere yet
 	[{"@S": "hardsphere",          # hard sphere structure factor
-     "structure_factor_type": 1,  # decoupling approximation
-     "effective_radius_type": 1   # equivalent sphere
+     "structure_factor_mode": 1,  # decoupling approximation
+     "effective_radius_type": 1, "radius_effective":27.0  # equivalent sphere   Currently have hardwired model_test to accept radius_effective BUT doe sit get passed to S(Q)???
 	 }, 0.1, 0.7940350343881906],
 	[{"@S": "hardsphere",          # hard sphere structure factor
-     "structure_factor_type": 2,  #  -  WHY same result?
-     "effective_radius_type": 2   # 
+     "structure_factor_mode": 2,  #  -  WHY same result?
+     "effective_radius_type": 2, "radius_effective":23.0    # 
 	 }, 0.1, 0.7940350343881906]
 ]
 # putting None for expected result will pass the test if there are no errors from the routine, but without any check on the value of the result

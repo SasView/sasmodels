@@ -380,7 +380,7 @@ def test_composite():
     actual = [p.name for p in model.info.parameters.kernel_parameters]
     target = ("sld sld_solvent radius length theta phi"
               " radius_effective volfraction "
-              " structure_factor_type effective_radius_type"
+              " structure_factor_mode effective_radius_type"
               " A_sld A_sld_solvent A_radius").split()
     assert target == actual, "%s != %s"%(target, actual)
 

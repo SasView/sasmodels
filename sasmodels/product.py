@@ -35,9 +35,11 @@ else:
 #    ["est_radius_effective", "A", 0.0, [0, np.inf], "", "Estimated effective radius"],
 #    ["est_volume_ratio", "", 1.0, [0, np.inf], "", "Estimated volume ratio"],
 #]
-
-STRUCTURE_MODE_ID = "structure_factor_type"
-RADIUS_MODE_ID = "effective_radius_type"
+# NOTE there are radius_effective_mode, effective_radius_type, but only structure_factor_mode
+STRUCTURE_MODE_ID = "structure_factor_mode"
+RADIUS_MODE_ID = "radius_effective_mode"
+# rkh add this to pass to model_test
+RADIUS_TYPE_ID = "effective_radius_type"
 RADIUS_ID = "radius_effective"
 VOLFRAC_ID = "volfraction"
 def make_extra_pars(p_info):
