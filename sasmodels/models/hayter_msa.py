@@ -1,24 +1,41 @@
 # Note: model title and parameter table are inserted automatically
 r"""
-This calculates the structure factor (the Fourier transform of the pair
-correlation function $g(r)$) for a system of charged, spheroidal objects
-in a dielectric medium. When combined with an appropriate form factor
-(such as sphere, core+shell, ellipsoid, etc), this allows for inclusion
-of the interparticle interference effects due to screened coulomb repulsion
-between charged particles.
+Calculates the interparticle structure factor for a system of charged, 
+spheroidal, objects in a dielectric medium [1,2]. When combined with an 
+appropriate form factor $P(q)$, this allows for inclusion of the 
+interparticle interference effects due to screened Coulombic 
+repulsion between the charged particles.
 
-**This routine only works for charged particles**. If the charge is set to
-zero the routine may self-destruct! For non-charged particles use a hard
-sphere potential.
+.. note::
+
+   This routine only works for charged particles! If the charge is set 
+   to zero the routine may self-destruct! For uncharged particles use 
+   the :ref:`hardsphere` $S(q)$ instead.
+   
+.. note::
+
+   Earlier versions of SasView did not incorporate the so-called 
+   $\beta(q)$ ("beta") correction [3] for polydispersity and non-sphericity. 
+   This is only available in SasView versions 4.2.2 and higher.
 
 The salt concentration is used to compute the ionic strength of the solution
-which in turn is used to compute the Debye screening length. At present
-there is no provision for entering the ionic strength directly nor for use
-of any multivalent salts, though it should be possible to simulate the effect
-of this by increasing the salt concentration. The counterions are also
-assumed to be monovalent.
+which in turn is used to compute the Debye screening length. There is no 
+provision for entering the ionic strength directly. **At present the 
+counterions are assumed to be monovalent**, though it should be possible 
+to simulate the effect of multivalent counterions by increasing the salt 
+concentration.
 
-In sasview the effective radius may be calculated from the parameters
+Over the range 0 - 100 C the dielectric constant $\kappa$ of water may be 
+approximated with a maximum deviation of 0.01 units by the empirical 
+formula [4]
+
+.. math::
+
+    \kappa = 87.740 - 0.40008 T + 9.398x10^{-4} T^2 - 1.410x10^{-6} T^3
+    
+where $T$ is the temperature in celsius.
+
+In SasView the effective radius may be calculated from the parameters
 used in the form factor $P(q)$ that this $S(q)$ is combined with.
 
 The computation uses a Taylor series expansion at very small rescaled $qR$, to
@@ -37,7 +54,12 @@ References
 ----------
 
 .. [#] J B Hayter and J Penfold, *Molecular Physics*, 42 (1981) 109-118
+
 .. [#] J P Hansen and J B Hayter, *Molecular Physics*, 46 (1982) 651-656
+
+.. [#] M Kotlarchyk and S-H Chen, *J. Chem. Phys.*, 79 (1983) 2461-2469
+
+.. [#] C G Malmberg and A A Maryott, *J. Res. Nat. Bureau Standards*, 56 (1956) 2641
 
 Source
 ------
@@ -51,7 +73,7 @@ Authorship and Verification
 
 * **Author:** 
 * **Last Modified by:** 
-* **Last Reviewed by:** 
+* **Last Reviewed by:** Steve King **Date:** March 27, 2019
 * **Source added by :** Steve King **Date:** March 25, 2019
 """
 
@@ -73,14 +95,13 @@ single = False  # double precision only!
 
 
 name = "hayter_msa"
-title = "Hayter-Penfold rescaled MSA, charged sphere, interparticle S(Q) structure factor"
+title = "Hayter-Penfold Rescaled Mean Spherical Approximation (RMSA) structure factor for charged spheres"
 description = """\
     [Hayter-Penfold RMSA charged sphere interparticle S(Q) structure factor]
-        Interparticle structure factor S(Q)for a charged hard spheres.
-        Routine takes absolute value of charge, use HardSphere if charge
-        goes to zero.
-        In sasview the effective radius and volume fraction may be calculated
-        from the parameters used in P(Q).
+        Interparticle structure factor S(Q) for charged hard spheres.
+    This routine only works for charged particles! For uncharged particles 
+    use the hardsphere S(q) instead. The "beta(q)" correction is available 
+    in versions 4.2.2 and higher.
 """
 
 
@@ -92,7 +113,7 @@ parameters = [
     ["charge",        "e",   19.0,    [0, 200],    "", "charge on sphere (in electrons)"],
     ["temperature",   "K",  318.16,   [0, 450],    "", "temperature, in Kelvin, for Debye length calculation"],
     ["concentration_salt",      "M",    0.0,    [0, inf], "", "conc of salt, moles/litre, 1:1 electolyte, for Debye length"],
-    ["dielectconst",  "None",    71.08,   [-inf, inf], "", "dielectric constant (relative permittivity) of solvent, default water, for Debye length"]
+    ["dielectconst",  "None",    71.08,   [-inf, inf], "", "dielectric constant (relative permittivity) of solvent, kappa, default water, for Debye length"]
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
