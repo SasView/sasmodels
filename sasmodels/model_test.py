@@ -328,15 +328,15 @@ def _hide_model_case_from_nose():
                 return actual
             else:
                 y1 = y
-                y2 = test[3] if not isinstance(test[3], list) else [test[3]]
-                F1, F2, R_eff, volume, volume_ratio = call_Fq(kernel, pars)
-                if F1 is not None:  # F1 is none for models with Iq instead of Fq
-                    self._check_vectors(x, y1, F1, 'F')
-                self._check_vectors(x, y2, F2, 'F^2')
+                y2 = test[3] if isinstance(test[3], list) else [test[3]]
+                F, Fsq, R_eff, volume, volume_ratio = call_Fq(kernel, pars)
+                if F is not None:  # F is none for models with Iq instead of Fq
+                    self._check_vectors(x, y1, F, 'F')
+                self._check_vectors(x, y2, Fsq, 'F^2')
                 self._check_scalar(test[4], R_eff, 'R_eff')
                 self._check_scalar(test[5], volume, 'volume')
                 self._check_scalar(test[6], volume_ratio, 'form:shell ratio')
-                return F2
+                return Fsq
 
         def _check_scalar(self, target, actual, name):
             if target is None:
@@ -413,6 +413,8 @@ def is_near(target, actual, digits=5):
     Returns true if *actual* is within *digits* significant digits of *target*.
     """
     import math
+    if target == 0.:
+        return actual == 0.
     shift = 10**math.ceil(math.log10(np.abs(target)))
     return np.abs(target-actual)/shift < 1.5*10**-digits
 
