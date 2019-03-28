@@ -343,21 +343,9 @@ def _hide_model_case_from_nose():
                 return Fsq
 
         def _check_scalar(self, target, actual, name):
-            if target is None:
-                # smoke test --- make sure it runs and produces a value
-                self.assertTrue(not np.isnan(actual),
-                                'invalid %s: %s' % (name, actual))
-            elif np.isnan(target):
-                # make sure nans match
-                self.assertTrue(np.isnan(actual),
-                                '%s: expected:%s; actual:%s'
-                                % (name, target, actual))
-            else:
-                # is_near does not work for infinite values, so also test
-                # for exact values.
-                self.assertTrue(target == actual or is_near(target, actual, 5),
-                                '%s: expected:%s; actual:%s'
-                                % (name, target, actual))
+            self.assertTrue(is_near(target, actual, 5),
+                            '%s: expected:%s; actual:%s'
+                            % (name, target, actual))
 
         def _check_vectors(self, x, target, actual, name='I'):
             self.assertTrue(len(actual) > 0,
@@ -367,21 +355,9 @@ def _hide_model_case_from_nose():
             self.assertEqual(len(target), len(actual),
                              '%s(...) returned wrong length'%name)
             for xi, yi, actual_yi in zip(x, target, actual):
-                if yi is None:
-                    # smoke test --- make sure it runs and produces a value
-                    self.assertTrue(not np.isnan(actual_yi),
-                                    'invalid %s(%s): %s' % (name, xi, actual_yi))
-                elif np.isnan(yi):
-                    # make sure nans match
-                    self.assertTrue(np.isnan(actual_yi),
-                                    '%s(%s): expected:%s; actual:%s'
-                                    % (name, xi, yi, actual_yi))
-                else:
-                    # is_near does not work for infinite values, so also test
-                    # for exact values.
-                    self.assertTrue(yi == actual_yi or is_near(yi, actual_yi, 5),
-                                    '%s(%s); expected:%s; actual:%s'
-                                    % (name, xi, yi, actual_yi))
+                self.assertTrue(is_near(yi, actual_yi, 5),
+                                '%s(%s): expected:%s; actual:%s'
+                                % (name, xi, target, actual))
 
     return ModelTestCase
 
@@ -412,12 +388,31 @@ def is_near(target, actual, digits=5):
     # type: (float, float, int) -> bool
     """
     Returns true if *actual* is within *digits* significant digits of *target*.
+
+    *taget* zero and inf should match *actual* zero and inf.  If you want to
+    accept eps for zero, choose a value such as 1e-10, which must match up to
+    +/- 1e-15 when *digits* is the default value of 5.
+
+    If *target* is None, then just make sure that *actual* is not NaN.
+
+    If *target* is NaN, make sure *actual* is NaN.
     """
-    import math
-    if target == 0.:
+    if target is None:
+        # target is None => actual cannot be NaN
+        return not np.isnan(actual)
+    elif target == 0.:
+        # target is 0. => actual must be 0.
+        # Note: if small values are allowed, then use maybe test zero against eps instead?
         return actual == 0.
-    shift = 10**math.ceil(math.log10(np.abs(target)))
-    return np.abs(target-actual)/shift < 1.5*10**-digits
+    elif np.isfinite(target):
+        shift = np.ceil(np.log10(abs(target)))
+        return abs(target-actual) < 1.5*10**(shift-digits)
+    elif target == actual:
+        # target is inf => actual must be inf of same sign
+        return True
+    else:
+        # target is NaN => actual must be NaN
+        return np.isnan(target) == np.isnan(actual)
 
 # CRUFT: old interface; should be deprecated and removed
 def run_one(model_name):
