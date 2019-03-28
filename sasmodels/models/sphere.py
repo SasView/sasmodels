@@ -74,7 +74,7 @@ parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Layer scattering length density"],
               ["sld_solvent", "1e-6/Ang^2", 6, [-inf, inf], "sld",
                "Solvent scattering length density"],
-              ["radius", "Ang", 45, [0, inf], "volume",
+              ["radius", "Ang", 50, [0, inf], "volume",
                "Sphere radius"],
              ]
 
@@ -91,14 +91,17 @@ def random():
     return pars
 
 tests = [
-   #  [{}, 0.2, 0.726362],
-   #  [{"scale": 1., "background": 0., "sld": 6., "sld_solvent": 1.,
-   #    "radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
-   #   0.2, 0.2288431],
-   # [{"radius": 120., "radius_pd": 0.02, "radius_pd_n":45},
-   #   0.2, 792.0646662454202, [1166737.0473152], 120.0, 7246723.820358589, 1.0], # the longer list here checks  F1, F2, R_eff, volume, volume_ratio = call_Fq(kernel, pars)
-   #  #          But note P(Q) = F2/volume,  F1 and F2 are vectors, for some reason only F2 needs square brackets
-   #  #          BUT what is scaling of F1 ???  At low Pd F2 ~ F1^2 ?
+     [{}, 0.2, 0.726362], # each test starts with default parameter values inside { }, unless modified. Then Q and expected value of I(Q)
+     [{"scale": 1., "background": 0., "sld": 6., "sld_solvent": 1.,
+       "radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
+      0.2, 0.2288431],
+    [{"radius": 120., "radius_pd": 0.02, "radius_pd_n":45},
+      0.2, 792.0646662454202, 1166737.0473152, 120.0, 7246723.820358589, 1.0], # the longer list here checks  F1, F2, R_eff, volume, volume_ratio = call_Fq(kernel, pars)
+   #  But note P(Q) = F2/volume
+   #  F and F^2 are "unscaled", with for  n <F F*>S(q) or for beta approx I(q) = n [<F F*> + <F><F*> (S(q) - 1)] 
+   #  for n the number density and <.> the orientation average, and F = integral rho(r) exp(i q . r) dr.  
+   #  The number density is volume fraction divided by particle volume.  
+   #  Effectively, this leaves F = V drho form, where form is the usual 3 j1(qr)/(qr) or whatever depending on the shape.
    # [{"@S": "hardsphere"},
    #    0.01, 55.881884232102124], # this is current value, not verified elsewhere yet
    # [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
@@ -110,15 +113,23 @@ tests = [
     [{"@S": "hardsphere",
      "radius": 120., "radius_pd": 0.2, "radius_pd_n":45,
      "volfraction":0.2,
-     "radius_effective":45.0,        # hard sphere structure factor
-     "structure_factor_mode": 1,  # decoupling approximation
-     #"effective_radius_type": 1 # equivalent sphere   Currently have hardwired model_test to accept radius_effective
-     # direct_model has the name & value BUT does it get passed to S(Q)???  What about volfracion, plus the many parameters used by other S(Q) ?
-     # effective_radius_type does NOT appear in the list, has it been stripped out???
-     }, 0.01, 0.7940350343881906],
-	# [{"@S": "hardsphere",          # hard sphere structure factor
-    # "structure_factor_mode": 2,  #  -  WHY same result?
-    # "effective_radius_type": 2, "radius_effective":23.0    #
-	#  }, 0.1, 0.7940350343881906]
+     "radius_effective":45.0,     # uses this (check)
+     "structure_factor_mode": 1,  # 0 = normal decoupling approximation, 1 = beta(Q) approx
+     "radius_effective_mode": 0   # equivalent sphere, there is only one valid mode for sphere. says -this used r_eff =0 or default 50?
+     }, 0.01, 1316.2990966463444 ],
+    [{"@S": "hardsphere",
+     "radius": 120., "radius_pd": 0.2, "radius_pd_n":45,
+     "volfraction":0.2,
+     "radius_effective":50.0,        # hard sphere structure factor
+     "structure_factor_mode": 1,  # 0 = normal decoupling approximation, 1 = beta(Q) approx
+     "radius_effective_mode": 0   # this used r_eff =0 or default 50?
+     }, 0.01, 1324.7375636587356 ],   
+    [{"@S": "hardsphere",
+     "radius": 120., "radius_pd": 0.2, "radius_pd_n":45,
+     "volfraction":0.2,
+     "radius_effective":50.0,        # hard sphere structure factor
+     "structure_factor_mode": 1,  # 0 = normal decoupling approximation, 1 = beta(Q) approx
+     "radius_effective_mode": 1   # this used 120 ???
+     }, 0.01, 1579.2858949296565 ]   
 ]
 # putting None for expected result will pass the test if there are no errors from the routine, but without any check on the value of the result

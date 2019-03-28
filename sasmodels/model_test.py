@@ -246,12 +246,9 @@ def _hide_model_case_from_nose():
                     ps_model = build_model(ps_info, dtype=self.dtype,
                                            platform=self.platform)
                     # run the tests
-<<<<<<< HEAD
                     #self.info = ps_model.info
                     #print("SELF.INFO PARAMS!!!",[p.id for p in self.info.parameters.call_parameters])
                     #print("PS MODEL PARAMETERS:",[p.id for p in ps_model.info.parameters.call_parameters])
-=======
->>>>>>> 2ed7de04217c5103c5fd8d7c14e29e04923269d5
                     results.append(self.run_one(ps_model, ps_test))
 
                 if self.stash:
