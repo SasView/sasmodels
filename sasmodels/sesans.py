@@ -13,7 +13,7 @@ from __future__ import division
 
 import numpy as np  # type: ignore
 from numpy import pi  # type: ignore
-from scipy.special import j1
+from scipy.special import j0
 
 
 class SesansTransform(object):
@@ -58,38 +58,26 @@ class SesansTransform(object):
 
     def _set_hankel(self, SElength, lam, zaccept, Rmax):
         # type: (np.ndarray, float, float) -> None
-        SElength = np.asarray(SElength, dtype='float64')
-
-        # Rmax = #value in text box somewhere in FitPage?
+        SElength = np.asarray(SElength)
         q_max = 2*pi / (SElength[1] - SElength[0])
         q_min = 0.1 * 2*pi / (np.size(SElength) * SElength[-1])
-        # q = np.arange(q_min, q_max, q_min, dtype='float32')
-        # q = np.exp(np.arange(np.log(q_min), np.log(q_max), np.log(2),
-        #                      dtype=np.float32))
-        q = np.exp(np.linspace(np.log(q_min), np.log(q_max), 10*SElength.size,
-                               dtype=np.float64))
-        q = np.hstack([[0], q])
+        q = np.exp(np.arange(np.log(q_min), np.log(q_max), np.log(1.0003)))
 
-        H0 = (q[1:]**2 - q[:-1]**2) / (2 * np.pi) / 2
+        dq = q[1:]-q[:-1]
+        dq = np.hstack([[dq[0]], dq])
 
-        # repq = np.tile(q, (SElength.size, 1)).T
+        H0 = dq/(2*pi) * q
+
         H = np.outer(q, SElength)
-        j1(H, out=H)
-        H *= q.reshape((-1, 1))
-        H = H[1:] - H[:-1]
-        H /= 2 * np.pi * SElength
+        j0(H, out=H)
+        H *= (dq * q).reshape((-1, 1))
+        H /= 2*pi
 
-        lam = np.asarray(lam, dtype=np.float64)
-        reptheta = np.outer(q[1:], lam)
-        reptheta /= np.float64(2*np.pi)
+        reptheta = np.outer(q, lam)
+        reptheta /= 2*np.pi
         np.arcsin(reptheta, out=reptheta)
-        # reptheta = np.arcsin(repq*replam/2*np.pi)
         mask = reptheta > zaccept
-        # H[mask] = 0
+        H[mask] = 0
 
-        # H = np.zeros((q.size, SElength.size), dtype=np.float32)
-        # H0 = q * 0
-        assert(H.shape == (q.size-1, SElength.size))
-
-        self.q_calc = q[1:]
+        self.q_calc = q
         self._H, self._H0 = H, H0
