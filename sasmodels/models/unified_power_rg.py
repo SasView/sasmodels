@@ -21,7 +21,7 @@ between 5/3 and 3. It should not be used for surface fractal systems. Hammouda
 transitioning between the Guinier and Porod regimes and which can create
 artefacts that appear as kinks in the fitted model function.
 
-Also see the Guinier_Porod model.
+Also see the :ref:`guinier-porod` model.
 
 The empirical fit function is:
 
