@@ -306,7 +306,7 @@ def _hide_model_case_from_nose():
             # type: (KernelModel, TestCondition) -> None
             """Run a single test case."""
             user_pars, x, y = test[:3]
-            print("PS MODEL PARAMETERS:",[p.id for p in model.info.parameters.call_parameters])
+            #print("PS MODEL PARAMETERS:",[p.id for p in model.info.parameters.call_parameters])
             pars = expand_pars(model.info.parameters, user_pars)
             invalid = invalid_pars(model.info.parameters, pars)
             if invalid:
