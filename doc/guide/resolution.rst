@@ -1,7 +1,7 @@
-.. sm_help.rst
+.. resolution.rst
 
-.. This is a port of the original SasView html help file to ReSTructured text
-.. by S King, ISIS, during SasView CodeCamp-III in Feb 2015.
+.. This is a port of the original SasView html help file sm_help to ReSTructured 
+.. text by S King, ISIS, during SasView CodeCamp-III in Feb 2015.
 
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
@@ -16,7 +16,8 @@ example, peaks or fringes might be slightly broadened. This is known as
 remove the resolution contribution - a process called *desmearing* - or add the
 resolution contribution into a model calculation/simulation (which by definition
 will be exact) to make it more representative of what has been measured
-experimentally - a process called *smearing*. Sasmodels does the latter.
+experimentally - a process called *smearing*. The Sasmodels component of SasView 
+does the latter.
 
 Both smearing and desmearing rely on functions to describe the resolution
 effect. Sasmodels provides three smearing algorithms:
@@ -28,6 +29,21 @@ effect. Sasmodels provides three smearing algorithms:
 The $Q$ resolution values should be determined by the data reduction software
 for the instrument and stored with the data file.  If not, they will need to
 be set manually before fitting.
+
+.. note::
+    Problems may be encountered if the data set loaded by SasView is a 
+    concatenation of SANS data from several detector distances where, of 
+    course, the worst Q resolution is next to the beam stop at each detector 
+    distance. (This will also be noticeable in the residuals plot where 
+    there will be poor overlap). SasView sensibly orders all the input 
+    data points by increasing Q for nicer-looking plots, however, the dQ 
+    data can then vary considerably from point to point. If 'Use dQ data' 
+    smearing is selected then spikes may appear in the model fits, whereas 
+    if 'None' or 'Custom Pinhole Smear' are selected the fits look normal.
+    
+    In such instances, possible solutions are to simply remove the data 
+    with poor Q resolution from the shorter detector distances, or to fit 
+    the data from different detector distances simultaneously.
 
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
