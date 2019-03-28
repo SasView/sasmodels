@@ -4,7 +4,7 @@ This is an empirical model that can be used to determine the size
 and dimensionality of scattering objects, including asymmetric objects
 such as rods or platelets, and shapes intermediate between spheres
 and rods or between rods and platelets, and overcomes some of the
-deficiencies of the (Beaucage) Unified_Power_Rg model (see Hammouda, 2010).
+deficiencies of the (Beaucage) :ref:`unified_power_rg` model (see Hammouda, 2010).
 
 Definition
 ----------
