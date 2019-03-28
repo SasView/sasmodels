@@ -48,8 +48,8 @@ Source
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
-* **Last Modified by:** 
+* **Author:**
+* **Last Modified by:**
 * **Last Reviewed by:** S King and P Parker **Date:** 2013/09/09 and 2014/01/06
 * **Source added by :** Steve King **Date:** March 25, 2019
 """
@@ -95,27 +95,33 @@ tests = [
     [{"scale": 1., "background": 0., "sld": 6., "sld_solvent": 1.,
       "radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
      0.2, 0.2288431],
-    [{"radius": 120., "radius_pd": 0.02, "radius_pd_n":45},
-     0.2, 792.0646662454202, [1166737.0473152], 120.0, 7246723.820358589, 1.0], # the longer list here checks  F1, F2, R_eff, volume, volume_ratio = call_Fq(kernel, pars)
-    #          But note P(Q) = F2/volume,  F1 and F2 are vectors, for some reason only F2 needs square brackets
-    #          BUT what is scaling of F1 ???  At low Pd F2 ~ F1^2 ?
-   [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
-     0.2, 1.233304061, [1850806.119736], 120.0, 8087664.1226, 1.0], # the longer list here checks  F1, F2, R_eff, volume, volume_ratio = call_Fq(kernel, pars)
+    [{"radius": 120., "radius_pd": 0.02, "radius_pd_n":45}, 0.2,
+     # F1, F2, R_eff, volume, volume_ratio = call_Fq(kernel, pars) at q=0.2
+     792.0646662454202, 1166737.0473152, 120.0, 7246723.820358589, 1.0],
+    #  But note P(Q) = F2/volume+background,  F1 and F2 are vectors
+    #  BUT what is scaling of F1 ???  At low Pd F2 ~ F1^2 ?
+   [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45}, 0.2,
+     # F1, F2, R_eff, volume, volume_ratio = call_Fq(kernel, pars) at q=0.2
+     1.233304061, 1850806.119736, 120.0, 8087664.1226, 1.0],
     [{"@S": "hardsphere"},
-       0.01, 55.881884232102124], # this is current value, not verified elsewhere yet
+       0.01, 55.881884232102124], # current value, not verified elsewhere yet
     [{"@S": "hardsphere"},
-       0.2, 0.14730859242492958], #  this is current value, not verified elsewhere yet
+       0.2, 0.14730859242492958], # current value, not verified elsewhere yet
     [{"@S": "hardsphere"},
-       0.1, 0.7940350343811906], #  this is current value, not verified elsewhere yet
-	[{"@S": "hardsphere",          # hard sphere structure factor
-     "structure_factor_mode": 1,  # decoupling approximation
-     "effective_radius_type": 1, "radius_effective":27.0 # equivalent sphere   Currently have hardwired model_test to accept radius_effective 
-     # direct_model has the name & value BUT does it get passed to S(Q)???  What about volfracion, plus the many parameters used by other S(Q) ?
+       0.1, 0.7940350343811906], # current value, not verified elsewhere yet
+    [{"@S": "hardsphere",        # hard sphere structure factor
+     "structure_factor_mode": 1, # decoupling approximation
+     "effective_radius_type": 1,
+     # Currently have hardwired model_test to accept radius_effective
+     "radius_effective": 27.0, # equivalent sphere
+     # direct_model has the name & value BUT does it get passed to S(Q)???
+     # What about volfracion, plus the many parameters used by other S(Q) ?
      # effective_radius_type does NOT appear in the list, has it been stripped out???
-	 }, 0.1, 0.7940350343881906],
-#	[{"@S": "hardsphere",          # hard sphere structure factor
+     }, 0.1, 0.7940350343881906],
+#    [{"@S": "hardsphere",          # hard sphere structure factor
 #     "structure_factor_mode": 3,  #  -  WHY same result?
-#     "effective_radius_type": 3, "radius_effective":23.0    # 
-#	 }, 0.1, 0.7940350343881906]
+#     "effective_radius_type": 3, "radius_effective": 23.0    #
+#     }, 0.1, 0.7940350343881906]
 ]
-# putting None for expected result will pass the test if there are no errors from the routine, but without any check on the value of the result
+# putting None for expected result will pass the test if there are no errors
+# from the routine, but without any check on the value of the result
