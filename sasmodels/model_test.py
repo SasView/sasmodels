@@ -239,13 +239,16 @@ def _hide_model_case_from_nose():
                     pars = test[0].copy()
                     s_name = pars.pop('@S')
                     ps_test = [pars] + list(test[1:])
+                    #print("PS TEST PARAMS!!!",ps_test)
                     # build the P@S model
                     s_info = load_model_info(s_name)
-                    #print("in run_all: s_info:", s_info)
                     ps_info = product.make_product_info(self.info, s_info)
                     ps_model = build_model(ps_info, dtype=self.dtype,
                                            platform=self.platform)
                     # run the tests
+                    self.info = ps_model.info
+                    #print("SELF.INFO PARAMS!!!",[p.id for p in self.info.parameters.call_parameters])
+                    #print("PS MODEL PARAMETERS:",[p.id for p in ps_model.info.parameters.call_parameters])
                     results.append(self.run_one(ps_model, ps_test))
 
                 if self.stash:
@@ -395,8 +398,6 @@ def invalid_pars(partable, pars):
         if par == product.RADIUS_TYPE_ID:
             continue
         if par == product.STRUCTURE_MODE_ID:
-            continue
-        if par == "radius_effective":    # test should not need this??
             continue
         parts = par.split('_pd')
         if len(parts) > 1 and parts[1] not in ("", "_n", "nsigma", "type"):
