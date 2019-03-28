@@ -38,8 +38,6 @@ else:
 # NOTE there are radius_effective_mode, effective_radius_type, but only structure_factor_mode
 STRUCTURE_MODE_ID = "structure_factor_mode"
 RADIUS_MODE_ID = "radius_effective_mode"
-# rkh add this to pass to model_test
-RADIUS_TYPE_ID = "effective_radius_type"
 RADIUS_ID = "radius_effective"
 VOLFRAC_ID = "volfraction"
 def make_extra_pars(p_info):

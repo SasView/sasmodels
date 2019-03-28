@@ -111,7 +111,7 @@ tests = [
        0.1, 0.7940350343811906], # current value, not verified elsewhere yet
     [{"@S": "hardsphere",        # hard sphere structure factor
      "structure_factor_mode": 1, # decoupling approximation
-     "effective_radius_type": 1,
+     "radius_effective_mode": 1,
      # Currently have hardwired model_test to accept radius_effective
      "radius_effective": 27.0, # equivalent sphere
      # direct_model has the name & value BUT does it get passed to S(Q)???
