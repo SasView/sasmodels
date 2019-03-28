@@ -72,14 +72,14 @@ class SesansTransform(object):
                                dtype=np.float32))
         q = np.hstack([[0], q])
 
-        H0 = np.pi * (q[1:]**2 - q[:-1]**2)
+        H0 = (q[1:]**2 - q[:-1]**2) / (2 * np.pi) / 2
 
         # repq = np.tile(q, (SElength.size, 1)).T
         H = np.outer(q, SElength)
         j1(H, out=H)
         H *= q.reshape((-1, 1))
         H = H[1:] - H[:-1]
-        H *= 2 * np.pi / SElength
+        H /= 2 * np.pi * SElength
 
         lam = np.asarray(lam, dtype=np.float32)
         reptheta = np.outer(q[1:], lam)
