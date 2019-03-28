@@ -241,7 +241,7 @@ def _hide_model_case_from_nose():
                     ps_test = [pars] + list(test[1:])
                     # build the P@S model
                     s_info = load_model_info(s_name)
-                    print("in run_all: s_info:", s_info)
+                    #print("in run_all: s_info:", s_info)
                     ps_info = product.make_product_info(self.info, s_info)
                     ps_model = build_model(ps_info, dtype=self.dtype,
                                            platform=self.platform)
@@ -413,8 +413,8 @@ def is_near(target, actual, digits=5):
     Returns true if *actual* is within *digits* significant digits of *target*.
     """
     import math
-    shift = 10**math.ceil(math.log10(abs(target)))
-    return abs(target-actual)/shift < 1.5*10**-digits
+    shift = 10**math.ceil(math.log10(np.abs(target)))
+    return np.abs(target-actual)/shift < 1.5*10**-digits
 
 # CRUFT: old interface; should be deprecated and removed
 def run_one(model_name):

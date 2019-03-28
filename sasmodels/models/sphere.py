@@ -94,11 +94,19 @@ tests = [
     [{}, 0.2, 0.726362],
     [{"scale": 1., "background": 0., "sld": 6., "sld_solvent": 1.,
       "radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
-     0.2, 0.228843],
-    [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
-     0.1, None, None, 120., None, 1.0],
+     0.2, 0.2288431],
+    [{"radius": 120., "radius_pd": 0.02, "radius_pd_n":45},
+     0.2, 792.0646662454202, [1166737.0473152], 120.0, 7246723.820358589, 1.0], # the longer list here checks  F1, F2, R_eff, volume, volume_ratio = call_Fq(kernel, pars)
+    #          But note P(Q) = F2/volume,  F1 and F2 are vectors, for some reason only F2 needs square brackets
+    #          BUT what is scaling of F1 ???  At low Pd F2 ~ F1^2 ?
+   [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
+     0.2, 1.233304061, [1850806.119736], 120.0, 8087664.1226, 1.0], # the longer list here checks  F1, F2, R_eff, volume, volume_ratio = call_Fq(kernel, pars)
     [{"@S": "hardsphere"},
-       0.1, 0.7940350343881906], # Q=0.1 this is current value, not verified elsewhere yet
+       0.01, 55.881884232102124], # this is current value, not verified elsewhere yet
+    [{"@S": "hardsphere"},
+       0.2, 0.14730859242492958], #  this is current value, not verified elsewhere yet
+    [{"@S": "hardsphere"},
+       0.1, 0.7940350343811906], #  this is current value, not verified elsewhere yet
 	[{"@S": "hardsphere",          # hard sphere structure factor
      "structure_factor_mode": 1,  # decoupling approximation
      "effective_radius_type": 1, "radius_effective":27.0 # equivalent sphere   Currently have hardwired model_test to accept radius_effective 
