@@ -1,5 +1,9 @@
 /*
-    Functions for WRC implementation of flexible cylinders
+    Functions for WRC implementation of flexible cylinders. See
+    W R Chen, P D Butler and L J Magid,
+    Incorporating Intermicellar Interactions in the Fitting of
+    SANS Data from Cationic Wormlike Micelles.
+    Langmuir, 22(15) 2006 6539-6548
 */
 
 static double

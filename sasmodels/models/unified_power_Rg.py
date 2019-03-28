@@ -21,7 +21,7 @@ between 5/3 and 3. It should not be used for surface fractal systems. Hammouda
 transitioning between the Guinier and Porod regimes and which can create
 artefacts that appear as kinks in the fitted model function.
 
-Also see the Guinier_Porod model.
+Also see the :ref:`guinier-porod` model.
 
 The empirical fit function is:
 
@@ -69,7 +69,7 @@ References
 Source
 ------
 
-`unified_power_Rg.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/unified_power_Rg.py>`_
+`unified_power_rg.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/unified_power_rg.py>`_
 
 Authorship and Verification
 ----------------------------
@@ -87,7 +87,7 @@ from numpy import inf, exp, sqrt, errstate
 from scipy.special import erf, gamma
 
 category = "shape-independent"
-name = "unified_power_Rg"
+name = "unified_power_rg"
 title = "Unified Power Rg"
 description = """
         The Beaucage model employs the empirical multiple level unified

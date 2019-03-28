@@ -3,6 +3,8 @@ This model calculates the form factor for a flexible cylinder with an
 elliptical cross section and a uniform scattering length density.
 The non-negligible diameter of the cylinder is included by accounting
 for excluded volume interactions within the walk of a single cylinder.
+**Inter-cylinder interactions are NOT provided for.**
+
 The form factor is normalized by the particle volume such that
 
 .. math::
@@ -23,8 +25,10 @@ of the q vector which is defined as
 Definitions
 -----------
 
-The function calculated in a similar way to that for the flexible_cylinder model
-from the reference given below using the author's "Method 3 With Excluded Volume".
+The function is calculated in a similar way to that for the
+:ref:`flexible-cylinder` model in reference [1] below using the author's
+"Method 3 With Excluded Volume".
+
 The model is a parameterization of simulations of a discrete representation of
 the worm-like chain model of Kratky and Porod applied in the pseudo-continuous
 limit. See equations (13, 26-27) in the original reference for the details.
@@ -32,7 +36,7 @@ limit. See equations (13, 26-27) in the original reference for the details.
 .. note::
 
     There are several typos in the original reference that have been corrected
-    by WRC. Details of the corrections are in the reference below. Most notably
+    by WRC [2]. Details of the corrections are in the reference below. Most notably
 
     - Equation (13): the term $(1 - w(QR))$ should swap position with $w(QR)$
 
@@ -40,8 +44,8 @@ limit. See equations (13, 26-27) in the original reference for the details.
       Mathematica and solved analytically. The results were then converted to
       code.
 
-    - Equation (27) should be $q0 = max(a3/sqrt(RgSquare),3)$ instead of
-      $max(a3*b/sqrt(RgSquare),3)$
+    - Equation (27) should be $q0 = max(a3/(Rg^2)^{1/2},3)$ instead of
+      $max(a3*b(Rg^2)^{1/2},3)$
 
     - The scattering function is negative for a range of parameter values and
       q-values that are experimentally accessible. A correction function has been
@@ -57,18 +61,17 @@ a rigid rod).
 The Kuhn length $(b = 2*l_p)$ is also used to describe the stiffness of a chain.
 
 The cross section of the cylinder is elliptical, with minor radius $a$ .
-The major radius is larger, so of course, **the axis ratio (parameter 5) must be
+The major radius is larger, so of course, **the axis_ratio must be
 greater than one.** Simple constraints should be applied during curve fitting to
 maintain this inequality.
-
-The returned value is in units of $cm^{-1}$, on absolute scale.
 
 In the parameters, the $sld$ and $sld\_solvent$ represent the SLD of the
 chain/cylinder and solvent respectively. The *scale*, and the contrast are both
 multiplicative factors in the model and are perfectly correlated. One or both of
 these parameters must be held fixed during model fitting.
 
-**No inter-cylinder interference effects are included in this calculation.**
+**This is a model with complex behaviour depending on the ratio of** $L/b$ **and the
+reader is strongly encouraged to read reference [1] before use.**
 
 References
 ----------
@@ -86,12 +89,14 @@ Source
 
 `flexible_cylinder_elliptical.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/flexible_cylinder_elliptical.c>`_
 
+`wrc_cyl.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/lib/wrc_cyl.c>`_
+
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
-* **Last Modified by:** 
-* **Last Reviewed by:** 
+* **Author:**
+* **Last Modified by:** Richard Heenan **Date:** December, 2016
+* **Last Reviewed by:** Steve King **Date:** March 26, 2019
 * **Source added by :** Steve King **Date:** March 25, 2019
 """
 
