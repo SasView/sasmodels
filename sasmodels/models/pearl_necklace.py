@@ -39,19 +39,19 @@ where
 where the mass *m*\ :sub:`i` is (SLD\ :sub:`i` - SLD\ :sub:`solvent`) \*
 (volume of the *N* pearls/rods). *V* is the total volume of the necklace.
 
+.. note::
+
+   *num_pearls* must be an integer.
+
 The 2D scattering intensity is the same as $P(q)$ above, regardless of the
 orientation of the *q* vector.
-
-The returned value is scaled to units of |cm^-1| and the parameters of the
-pearl_necklace model are the following
-
-NB: *num_pearls* must be an integer.
 
 References
 ----------
 
 .. [#] R Schweins and K Huber, *Particle Scattering Factor of Pearl Necklace Chains*,
-*Macromol. Symp.* 211 (2004) 25-42 2004
+       *Macromol. Symp.* 211 (2004) 25-42 2004
+
 .. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Source
@@ -65,8 +65,8 @@ Authorship and Verification
 ----------------------------
 
 * **Author:**
-* **Last Modified by:**
-* **Last Reviewed by:**
+* **Last Modified by:** Andrew Jackson **Date:** March 28, 2019
+* **Last Reviewed by:** Steve King **Date:** March 28, 2019
 * **Source added by :** Steve King **Date:** March 25, 2019
 """
 
