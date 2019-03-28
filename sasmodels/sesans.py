@@ -58,9 +58,7 @@ class SesansTransform(object):
 
     def _set_hankel(self, SElength, lam, zaccept, Rmax):
         # type: (np.ndarray, float, float) -> None
-        # Force float32 arrays, otherwise run into memory problems on
-        # some machines
-        SElength = np.asarray(SElength, dtype='float32')
+        SElength = np.asarray(SElength, dtype='float64')
 
         # Rmax = #value in text box somewhere in FitPage?
         q_max = 2*pi / (SElength[1] - SElength[0])
@@ -69,7 +67,7 @@ class SesansTransform(object):
         # q = np.exp(np.arange(np.log(q_min), np.log(q_max), np.log(2),
         #                      dtype=np.float32))
         q = np.exp(np.linspace(np.log(q_min), np.log(q_max), 10*SElength.size,
-                               dtype=np.float32))
+                               dtype=np.float64))
         q = np.hstack([[0], q])
 
         H0 = (q[1:]**2 - q[:-1]**2) / (2 * np.pi) / 2
@@ -81,9 +79,9 @@ class SesansTransform(object):
         H = H[1:] - H[:-1]
         H /= 2 * np.pi * SElength
 
-        lam = np.asarray(lam, dtype=np.float32)
+        lam = np.asarray(lam, dtype=np.float64)
         reptheta = np.outer(q[1:], lam)
-        reptheta /= np.float32(2*np.pi)
+        reptheta /= np.float64(2*np.pi)
         np.arcsin(reptheta, out=reptheta)
         # reptheta = np.arcsin(repq*replam/2*np.pi)
         mask = reptheta > zaccept
