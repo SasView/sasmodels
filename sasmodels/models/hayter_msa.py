@@ -10,7 +10,8 @@ repulsion between the charged particles.
 
    This routine only works for charged particles! If the charge is set 
    to zero the routine may self-destruct! For uncharged particles use 
-   the :ref:`hardsphere` $S(q)$ instead.
+   the :ref:`hardsphere` $S(q)$ instead. The upper limit for the charge
+   is limited to 200e to avoid numerical instabilities.
    
 .. note::
 
@@ -73,7 +74,7 @@ Authorship and Verification
 
 * **Author:** 
 * **Last Modified by:** 
-* **Last Reviewed by:** Steve King **Date:** March 27, 2019
+* **Last Reviewed by:** Steve King **Date:** March 28, 2019
 * **Source added by :** Steve King **Date:** March 25, 2019
 """
 
@@ -107,10 +108,17 @@ description = """\
 
 # pylint: disable=bad-whitespace, line-too-long
 #             [ "name", "units", default, [lower, upper], "type", "description" ],
+#
+# NOTE: SMK, 28Mar19 The upper limit for charge is set to 200 to avoid instabilities noted by PK in 
+#       Ticket #1152. Also see the thread in Ticket 859. The docs above also note that charge=0 will 
+#       cause problems, yet the default parameters allowed it! After discussions with PK I have
+#       changed it to (an arbitarily) small but non-zero value.  But I haven't changed the low limit 
+#       in function random() below.
+#
 parameters = [
     ["radius_effective", "Ang", 20.75,   [0, inf],    "volume", "effective radius of charged sphere"],
     ["volfraction",   "None",     0.0192, [0, 0.74],   "", "volume fraction of spheres"],
-    ["charge",        "e",   19.0,    [0, 200],    "", "charge on sphere (in electrons)"],
+    ["charge",        "e",   19.0,    [0.000001, 200],    "", "charge on sphere (in electrons)"],
     ["temperature",   "K",  318.16,   [0, 450],    "", "temperature, in Kelvin, for Debye length calculation"],
     ["concentration_salt",      "M",    0.0,    [0, inf], "", "conc of salt, moles/litre, 1:1 electolyte, for Debye length"],
     ["dielectconst",  "None",    71.08,   [-inf, inf], "", "dielectric constant (relative permittivity) of solvent, kappa, default water, for Debye length"]
