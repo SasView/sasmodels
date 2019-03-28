@@ -239,7 +239,7 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
 
 source = ["lib/gauss76.c", "parallelepiped.c"]
 have_Fq = True
-effective_radius_type = [
+radius_effective_modes = [
     "equivalent cylinder excluded volume", "equivalent volume sphere",
     "half length_a", "half length_b", "half length_c",
     "equivalent circular cross-section", "half ab diagonal", "half diagonal",

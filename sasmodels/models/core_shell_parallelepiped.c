@@ -74,7 +74,7 @@ radius_from_crosssection(double length_a, double length_b, double thick_rim_a, d
 }
 
 static double
-effective_radius(int mode, double length_a, double length_b, double length_c,
+radius_effective(int mode, double length_a, double length_b, double length_c,
                  double thick_rim_a, double thick_rim_b, double thick_rim_c)
 {
     switch (mode) {

@@ -31,7 +31,7 @@ radius_from_curvature(double radius_polar, double radius_equatorial)
 }
 
 static double
-effective_radius(int mode, double radius_polar, double radius_equatorial)
+radius_effective(int mode, double radius_polar, double radius_equatorial)
 {
     switch (mode) {
     default:

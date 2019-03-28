@@ -30,12 +30,12 @@ else:
     from .modelinfo import ParameterSet, Parameter
 # pylint: enable=unused-import
 
-# TODO: make estimates available to constraints
+# TODO: make shape averages available to constraints
 #ESTIMATED_PARAMETERS = [
-#    ["est_radius_effective", "A", 0.0, [0, np.inf], "", "Estimated effective radius"],
-#    ["est_volume_ratio", "", 1.0, [0, np.inf], "", "Estimated volume ratio"],
+#    ["mean_radius_effective", "A", 0.0, [0, np.inf], "", "mean effective radius"],
+#    ["mean_volume", "A", 0.0, [0, np.inf], "", "mean volume"],
+#    ["mean_volume_ratio", "", 1.0, [0, np.inf], "", "mean form: mean shell volume ratio"],
 #]
-# NOTE there are radius_effective_mode, effective_radius_type, but only structure_factor_mode
 STRUCTURE_MODE_ID = "structure_factor_mode"
 RADIUS_MODE_ID = "radius_effective_mode"
 RADIUS_ID = "radius_effective"
@@ -43,7 +43,7 @@ VOLFRAC_ID = "volfraction"
 def make_extra_pars(p_info):
     # type: (ModelInfo) -> List[Parameter]
     """
-    Create parameters for structure_factor_type and radius_effective_type.
+    Create parameters for structure factor and effective radius modes.
     """
     pars = []
     if p_info.have_Fq:
@@ -55,12 +55,12 @@ def make_extra_pars(p_info):
             "",
             "Structure factor calculation")
         pars.append(par)
-    if p_info.effective_radius_type is not None:
+    if p_info.radius_effective_modes is not None:
         par = parse_parameter(
             RADIUS_MODE_ID,
             "",
             1,
-            [["unconstrained"] + p_info.effective_radius_type],
+            [["unconstrained"] + p_info.radius_effective_modes],
             "",
             "Effective radius calculation")
         pars.append(par)
@@ -176,7 +176,7 @@ def _intermediates(
         F2,               # type: np.ndarray
         S,                # type: np.ndarray
         scale,            # type: float
-        effective_radius, # type: float
+        radius_effective, # type: float
         beta_mode,        # type: bool
     ):
     # type: (...) -> OrderedDict[str, Union[np.ndarray, float]]
@@ -192,14 +192,14 @@ def _intermediates(
             ("S(Q)", S),
             ("beta(Q)", F1**2 / F2),
             ("S_eff(Q)", 1 + (F1**2 / F2)*(S-1)),
-            ("effective_radius", effective_radius),
+            ("effective_radius", radius_effective),
             # ("I(Q)", scale*(F2 + (F1**2)*(S-1)) + bg),
         ))
     else:
         parts = OrderedDict((
             ("P(Q)", scale*F2),
             ("S(Q)", S),
-            ("effective_radius", effective_radius),
+            ("effective_radius", radius_effective),
         ))
     return parts
 
@@ -280,7 +280,7 @@ class ProductKernel(Kernel):
 
         # R_eff type parameter is the second parameter after P and S parameters
         # unless the model doesn't support beta mode, in which case it is first
-        have_radius_type = p_info.effective_radius_type is not None
+        have_radius_type = p_info.radius_effective_modes is not None
         #print(p_npars,s_npars)
         radius_type_offset = 2+p_npars+s_npars + (1 if have_beta_mode else 0)
         print(values[radius_type_offset])
@@ -332,7 +332,7 @@ class ProductKernel(Kernel):
 
         # Call the form factor kernel to compute <F> and <F^2>.
         # If the model doesn't support Fq the returned <F> will be None.
-        F1, F2, effective_radius, shell_volume, volume_ratio = self.p_kernel.Fq(
+        F1, F2, radius_effective, shell_volume, volume_ratio = self.p_kernel.Fq(
             p_details, p_values, cutoff, magnetic, radius_type)
 
         # Call the structure factor kernel to compute S.
@@ -342,10 +342,10 @@ class ProductKernel(Kernel):
         # polydispersity distribution slot in the values array due to
         # implementation details in kernel_iq.c.
         print("R_eff=%d:%g, volfrac=%g, volume ratio=%g"
-              % (radius_type, effective_radius, volfrac, volume_ratio))
+              % (radius_type, radius_effective, volfrac, volume_ratio))
         if radius_type > 0:
             # set the value to the model R_eff and set the weight to 1
-            s_values[2] = s_values[2+s_npars+s_offset[0]] = effective_radius
+            s_values[2] = s_values[2+s_npars+s_offset[0]] = radius_effective
             s_values[2+s_npars+s_offset[0]+nweights] = 1.0
         s_values[3] = s_values[2+s_npars+s_offset[1]] = volfrac*volume_ratio
         S = self.s_kernel.Iq(s_details, s_values, cutoff, False)
@@ -371,7 +371,7 @@ class ProductKernel(Kernel):
         # return value in the caller, though in that case we could return
         # the results directly rather than through a lazy evaluator.
         self.results = lambda: _intermediates(
-            F1, F2, S, combined_scale, effective_radius, beta_mode)
+            F1, F2, S, combined_scale, radius_effective, beta_mode)
 
         return final_result
 

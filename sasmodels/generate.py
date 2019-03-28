@@ -26,7 +26,7 @@ Small angle scattering models are defined by a set of kernel functions:
     *shell_volume(p1, p2, ...)* returns the volume of the shell for forms
     which are hollow.
 
-    *effective_radius(mode, p1, p2, ...)* returns the effective radius of
+    *radius_effective(mode, p1, p2, ...)* returns the effective radius of
     the form with particular dimensions.  Mode determines the type of
     effective radius returned, with mode=1 for equivalent volume.
 
@@ -819,7 +819,7 @@ def make_source(model_info):
     source.append("\\\n".join(p.as_definition()
                               for p in partable.kernel_parameters))
     # Define the function calls
-    call_effective_radius = "#define CALL_EFFECTIVE_RADIUS(_mode, _v) 0.0"
+    call_radius_effective = "#define CALL_RADIUS_EFFECTIVE(_mode, _v) 0.0"
     if partable.form_volume_parameters:
         refs = _call_pars("_v.", partable.form_volume_parameters)
         if is_hollow:
@@ -832,10 +832,10 @@ def make_source(model_info):
                 "#define CALL_VOLUME(_form, _shell, _v) "
                 "do { _form = _shell = form_volume(%s); } "
                 "while (0)") % (",".join(refs))
-        if model_info.effective_radius_type:
-            call_effective_radius = (
-                "#define CALL_EFFECTIVE_RADIUS(_mode, _v) "
-                "effective_radius(_mode, %s)") % (",".join(refs))
+        if model_info.radius_effective_modes:
+            call_radius_effective = (
+                "#define CALL_RADIUS_EFFECTIVE(_mode, _v) "
+                "radius_effective(_mode, %s)") % (",".join(refs))
     else:
         # Model doesn't have volume.  We could make the kernel run a little
         # faster by not using/transferring the volume normalizations, but
@@ -844,7 +844,7 @@ def make_source(model_info):
             "#define CALL_VOLUME(_form, _shell, _v) "
             "do { _form = _shell = 1.0; } while (0)")
     source.append(call_volume)
-    source.append(call_effective_radius)
+    source.append(call_radius_effective)
     model_refs = _call_pars("_v.", partable.iq_parameters)
 
     if model_info.have_Fq:

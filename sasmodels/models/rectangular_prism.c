@@ -13,7 +13,7 @@ radius_from_excluded_volume(double length_a, double b2a_ratio, double c2a_ratio)
 }
 
 static double
-effective_radius(int mode, double length_a, double b2a_ratio, double c2a_ratio)
+radius_effective(int mode, double length_a, double b2a_ratio, double c2a_ratio)
 {
     switch (mode) {
     default:

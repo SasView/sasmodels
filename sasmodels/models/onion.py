@@ -181,9 +181,9 @@ Source
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
-* **Last Modified by:** 
-* **Last Reviewed by:** 
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 * **Source added by :** Steve King **Date:** March 25, 2019
 """
 
@@ -328,7 +328,7 @@ parameters = [
 source = ["lib/sas_3j1x_x.c", "onion.c"]
 single = False
 have_Fq = True
-effective_radius_type = ["outer radius"]
+radius_effective_modes = ["outer radius"]
 
 profile_axes = ['Radius (A)', 'SLD (1e-6/A^2)']
 def profile(sld_core, radius_core, sld_solvent, n_shells,

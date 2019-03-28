@@ -130,7 +130,7 @@ parameters = [["radius_minor",     "Ang",        20.0,  [0, inf],    "volume",  
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "elliptical_cylinder.c"]
 have_Fq = True
-effective_radius_type = [
+radius_effective_modes = [
     "equivalent cylinder excluded volume",
     "equivalent volume sphere", "average radius", "min radius", "max radius",
     "equivalent circular cross-section",

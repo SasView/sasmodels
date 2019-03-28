@@ -402,7 +402,7 @@ class DllKernel(Kernel):
         self.result = np.empty(self.q_input.nq*nout + extra_q, dtype)
 
     def _call_kernel(self, call_details, values, cutoff, magnetic,
-                     effective_radius_type):
+                     radius_effective_mode):
         # type: (CallDetails, np.ndarray, float, bool, int) -> np.ndarray
 
         # Setup kernel function and arguments.
@@ -416,7 +416,7 @@ class DllKernel(Kernel):
             self.q_input.q.ctypes.data,  # Q values.
             self.result.ctypes.data,   # Result storage.
             self._as_dtype(cutoff),  # Probability cutoff.
-            effective_radius_type,  # R_eff mode.
+            radius_effective_mode,  # R_eff mode.
         ]
 
         # Call kernel and retrieve results.

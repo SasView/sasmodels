@@ -80,7 +80,7 @@ parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "sld",
 
 source = ["lib/sas_3j1x_x.c", "sphere.c"]
 have_Fq = True
-effective_radius_type = ["radius"]
+radius_effective_modes = ["radius"]
 
 def random():
     """Return a random parameter set for the model."""
@@ -98,9 +98,9 @@ tests = [
     [{"radius": 120., "radius_pd": 0.02, "radius_pd_n":45},
       0.2, 792.0646662454202, 1166737.0473152, 120.0, 7246723.820358589, 1.0], # the longer list here checks  F1, F2, R_eff, volume, volume_ratio = call_Fq(kernel, pars)
    #  But note P(Q) = F2/volume
-   #  F and F^2 are "unscaled", with for  n <F F*>S(q) or for beta approx I(q) = n [<F F*> + <F><F*> (S(q) - 1)] 
-   #  for n the number density and <.> the orientation average, and F = integral rho(r) exp(i q . r) dr.  
-   #  The number density is volume fraction divided by particle volume.  
+   #  F and F^2 are "unscaled", with for  n <F F*>S(q) or for beta approx I(q) = n [<F F*> + <F><F*> (S(q) - 1)]
+   #  for n the number density and <.> the orientation average, and F = integral rho(r) exp(i q . r) dr.
+   #  The number density is volume fraction divided by particle volume.
    #  Effectively, this leaves F = V drho form, where form is the usual 3 j1(qr)/(qr) or whatever depending on the shape.
    # [{"@S": "hardsphere"},
    #    0.01, 55.881884232102124], # this is current value, not verified elsewhere yet
@@ -123,13 +123,13 @@ tests = [
      "radius_effective":50.0,        # hard sphere structure factor
      "structure_factor_mode": 1,  # 0 = normal decoupling approximation, 1 = beta(Q) approx
      "radius_effective_mode": 0   # this used r_eff =0 or default 50?
-     }, 0.01, 1324.7375636587356 ],   
+     }, 0.01, 1324.7375636587356 ],
     [{"@S": "hardsphere",
      "radius": 120., "radius_pd": 0.2, "radius_pd_n":45,
      "volfraction":0.2,
      "radius_effective":50.0,        # hard sphere structure factor
      "structure_factor_mode": 1,  # 0 = normal decoupling approximation, 1 = beta(Q) approx
      "radius_effective_mode": 1   # this used 120 ???
-     }, 0.01, 1579.2858949296565 ]   
+     }, 0.01, 1579.2858949296565 ]
 ]
 # putting None for expected result will pass the test if there are no errors from the routine, but without any check on the value of the result
