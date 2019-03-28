@@ -246,9 +246,12 @@ def _hide_model_case_from_nose():
                     ps_model = build_model(ps_info, dtype=self.dtype,
                                            platform=self.platform)
                     # run the tests
+<<<<<<< HEAD
                     #self.info = ps_model.info
                     #print("SELF.INFO PARAMS!!!",[p.id for p in self.info.parameters.call_parameters])
                     #print("PS MODEL PARAMETERS:",[p.id for p in ps_model.info.parameters.call_parameters])
+=======
+>>>>>>> 2ed7de04217c5103c5fd8d7c14e29e04923269d5
                     results.append(self.run_one(ps_model, ps_test))
 
                 if self.stash:
@@ -393,12 +396,11 @@ def invalid_pars(partable, pars):
     names = set(p.id for p in partable.call_parameters)
     invalid = []
     for par in sorted(pars.keys()):
-        # special handling of R_eff mode, which is not a usual parameter
+        # Ignore the R_eff mode parameter when checking for valid parameters.
+        # It is an allowed parameter for a model even though it does not exist
+        # in the parameter table.  The call_Fq() function pops it from the
+        # parameter list and sends it directly to kernel.Fq().
         if par == product.RADIUS_MODE_ID:
-            continue
-        if par == product.RADIUS_TYPE_ID:
-            continue
-        if par == product.STRUCTURE_MODE_ID:
             continue
         parts = par.split('_pd')
         if len(parts) > 1 and parts[1] not in ("", "_n", "nsigma", "type"):

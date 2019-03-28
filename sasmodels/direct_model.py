@@ -75,7 +75,7 @@ def call_Fq(calculator, pars, cutoff=0., mono=False):
     """
     R_eff_type = int(pars.pop(RADIUS_MODE_ID, 1.0))
     mesh = get_mesh(calculator.info, pars, dim=calculator.dim, mono=mono)
-    print("in call_Fq: pars", list(zip(*mesh))[0])
+    #print("in call_Fq: pars", list(zip(*mesh))[0])
     call_details, values, is_magnetic = make_kernel_args(calculator, mesh)
     #print("in call_Fq: values:", values)
     return calculator.Fq(call_details, values, cutoff, is_magnetic, R_eff_type)
