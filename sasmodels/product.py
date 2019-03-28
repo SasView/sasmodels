@@ -283,7 +283,9 @@ class ProductKernel(Kernel):
         # R_eff type parameter is the second parameter after P and S parameters
         # unless the model doesn't support beta mode, in which case it is first
         have_radius_type = p_info.effective_radius_type is not None
+        #print(p_npars,s_npars)
         radius_type_offset = 2+p_npars+s_npars + (1 if have_beta_mode else 0)
+        print(values[radius_type_offset])
         radius_type = int(values[radius_type_offset]) if have_radius_type else 0
 
         # Retrieve the volume fraction, which is the second of the
@@ -341,8 +343,8 @@ class ProductKernel(Kernel):
         # needs to be both in the initial value slot as well as the
         # polydispersity distribution slot in the values array due to
         # implementation details in kernel_iq.c.
-        #print("R_eff=%d:%g, volfrac=%g, volume ratio=%g"
-        #      % (radius_type, effective_radius, volfrac, volume_ratio))
+        print("R_eff=%d:%g, volfrac=%g, volume ratio=%g"
+              % (radius_type, effective_radius, volfrac, volume_ratio))
         if radius_type > 0:
             # set the value to the model R_eff and set the weight to 1
             s_values[2] = s_values[2+s_npars+s_offset[0]] = effective_radius
@@ -357,7 +359,7 @@ class ProductKernel(Kernel):
         combined_scale = scale*volfrac/shell_volume
 
         # Combine form factor and structure factor
-        #print("beta", beta_mode, F1, F2, S)
+        print("beta", beta_mode, F1, F2, S)
         PS = F2 + F1**2*(S-1) if beta_mode else F2*S
         final_result = combined_scale*PS + background
 
