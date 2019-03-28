@@ -46,7 +46,6 @@ with separate terms for the core-shell and shell-solvent boundaries.
 where
 
 .. In following equation SK changed radius\_equat\_core to R_e
-
 .. math::
     :nowrap:
 
