@@ -69,7 +69,7 @@ References
 Source
 ------
 
-`unified_power_Rg.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/unified_power_Rg.py>`_
+`unified_power_rg.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/unified_power_rg.py>`_
 
 Authorship and Verification
 ----------------------------
@@ -87,7 +87,7 @@ from numpy import inf, exp, sqrt, errstate
 from scipy.special import erf, gamma
 
 category = "shape-independent"
-name = "unified_power_Rg"
+name = "unified_power_rg"
 title = "Unified Power Rg"
 description = """
         The Beaucage model employs the empirical multiple level unified
