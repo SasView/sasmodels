@@ -246,9 +246,6 @@ def _hide_model_case_from_nose():
                     ps_model = build_model(ps_info, dtype=self.dtype,
                                            platform=self.platform)
                     # run the tests
-                    self.info = ps_model.info
-                    #print("SELF.INFO PARAMS!!!",[p.id for p in self.info.parameters.call_parameters])
-                    #print("PS MODEL PARAMETERS:",[p.id for p in ps_model.info.parameters.call_parameters])
                     results.append(self.run_one(ps_model, ps_test))
 
                 if self.stash:
@@ -306,8 +303,8 @@ def _hide_model_case_from_nose():
             # type: (KernelModel, TestCondition) -> None
             """Run a single test case."""
             user_pars, x, y = test[:3]
-            pars = expand_pars(self.info.parameters, user_pars)
-            invalid = invalid_pars(self.info.parameters, pars)
+            pars = expand_pars(model.info.parameters, user_pars)
+            invalid = invalid_pars(model.info.parameters, pars)
             if invalid:
                 raise ValueError("Unknown parameters in test: " + ", ".join(invalid))
 
