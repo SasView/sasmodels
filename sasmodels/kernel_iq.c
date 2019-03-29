@@ -85,7 +85,7 @@ static double clip(double value, double low, double high)
 static void set_spin_weights(double in_spin, double out_spin, double weight[6])
 {
 
-  const double norm;
+  double norm;
   in_spin = clip(in_spin, 0.0, 1.0);
   out_spin = clip(out_spin, 0.0, 1.0);
   // Previous version of this function took the square root of the weights,
