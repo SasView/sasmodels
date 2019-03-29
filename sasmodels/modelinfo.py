@@ -530,7 +530,7 @@ class ParameterTable(object):
                 psi = k
                 if p.type != 'orientation':
                     raise TypeError("psi must be an orientation parameter")
-            elif p.type == 'orientation' and strict:
+            elif strict and p.type == 'orientation':
                 raise TypeError("only theta, phi and psi can be orientation parameters")
         if theta >= 0 and phi >= 0:
             last_par = len(self.kernel_parameters) - 1
@@ -539,10 +539,9 @@ class ParameterTable(object):
             if psi >= 0 and psi != phi+1:
                 raise TypeError("psi must follow phi")
             # TODO: Why must theta/phi/psi be at the end?  Consistency only?
-            if (psi >= 0 and psi != last_par) or (psi < 0 and phi != last_par):
-                if strict:
-                    raise TypeError("orientation parameters must appear at the "
-                                    "end of the parameter table")
+            if strict and phi != last_par and psi != last_par:
+                raise TypeError("orientation parameters must appear at the "
+                                "end of the parameter table")
         elif theta >= 0 or phi >= 0 or psi >= 0:
             raise TypeError("oriented shapes must have both theta and phi and maybe psi")
 
