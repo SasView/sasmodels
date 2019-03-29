@@ -294,6 +294,7 @@ def _intermediates(
     Returns intermediate results for beta approximation-enabled product.
     The result may be an array or a float.
     """
+    # CRUFT: remove effective_radius once SasView 5.0 is released.
     if beta_mode:
         # TODO: 1. include calculated Q vector
         # TODO: 2. consider implications if there are intermediate results in P(Q)
@@ -303,6 +304,7 @@ def _intermediates(
             ("beta(Q)", F**2 / Fsq),
             ("S_eff(Q)", 1 + (F**2 / Fsq)*(S-1)),
             ("effective_radius", radius_effective),
+            ("radius_effective", radius_effective),
             # ("I(Q)", scale*(Fsq + (F**2)*(S-1)) + bg),
         ))
     else:
@@ -310,6 +312,7 @@ def _intermediates(
             ("P(Q)", scale*Fsq),
             ("S(Q)", S),
             ("effective_radius", radius_effective),
+            ("radius_effective", radius_effective),
         ))
     return parts
 
