@@ -84,6 +84,8 @@ static double clip(double value, double low, double high)
 // weights for spin crosssections: dd du real, ud real, uu, du imag, ud imag
 static void set_spin_weights(double in_spin, double out_spin, double weight[6])
 {
+
+  double norm;
   in_spin = clip(in_spin, 0.0, 1.0);
   out_spin = clip(out_spin, 0.0, 1.0);
   // Previous version of this function took the square root of the weights,
@@ -93,14 +95,31 @@ static void set_spin_weights(double in_spin, double out_spin, double weight[6])
   //
   // However, since the weights are applied to the final intensity and
   // are not interned inside the I(q) function, we want the full
-  // weight and not the square root.  Any function using
-  // set_spin_weights as part of calculating an amplitude will need to
-  // manually take that square root, but there is currently no such
-  // function.
-  weight[0] = (1.0-in_spin) * (1.0-out_spin); // dd
-  weight[1] = (1.0-in_spin) * out_spin;       // du
-  weight[2] = in_spin * (1.0-out_spin);       // ud
-  weight[3] = in_spin * out_spin;             // uu
+  // weight and not the square root.  Anyway no function will ever use
+  // set_spin_weights as part of calculating an amplitude, as the weights are
+  // related to polarisation efficiency of the instrument. The weights serve to
+  // construct various magnet scattering cross sections, which are linear combinations
+  // of the spin-resolved cross sections. The polarisation efficiency e_in and e_out
+  // are parameters ranging from 0.5 (unpolarised) beam to 1 (perfect optics).
+  // For in_spin or out_spin <0.5 one assumes a CS, where the spin is reversed/flipped
+  // with respect to the initial supermirror polariser. The actual polarisation efficiency
+  // in this case is however e_in/out = 1-in/out_spin.
+
+  if (out_spin < 0.5){norm=1-out_spin;}
+  else{norm=out_spin;}
+
+
+// The norm is needed to make sure that the scattering cross sections are
+//correctly weighted, such that the sum of spin-resolved measurements adds up to
+// the unpolarised or half-polarised scattering cross section. No intensity weighting
+// needed on the incoming polariser side (assuming that a user), has normalised
+// to the incoming flux with polariser in for SANSPOl and unpolarised beam, respectively.
+
+
+  weight[0] = (1.0-in_spin) * (1.0-out_spin) / norm; // dd
+  weight[1] = (1.0-in_spin) * out_spin / norm;       // du
+  weight[2] = in_spin * (1.0-out_spin) / norm;       // ud
+  weight[3] = in_spin * out_spin / norm;             // uu
   weight[4] = weight[1]; // du.imag
   weight[5] = weight[2]; // ud.imag
 }
@@ -118,13 +137,13 @@ static double mag_sld(
     const double perp = qy*mx - qx*my;
     switch (xs) {
       default: // keep compiler happy; condition ensures xs in [0,1,2,3]
-      case 0: // uu => sld - D M_perpx
+      case 0: // dd => sld - D M_perpx
           return sld - px*perp;
-      case 1: // ud.real => -D M_perpy
+      case 1: // du.real => -D M_perpy
           return py*perp;
-      case 2: // du.real => -D M_perpy
+      case 2: // ud.real => -D M_perpy
           return py*perp;
-      case 3: // dd => sld + D M_perpx
+      case 3: // uu => sld + D M_perpx
           return sld + px*perp;
     }
   } else {
