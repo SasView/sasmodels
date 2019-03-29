@@ -457,7 +457,6 @@ class ParameterTable(object):
         self.defaults = self._get_defaults()
         #self._name_table= dict((p.id, p) for p in parameters)
 
-
         # Set the kernel parameters.  Assumes background and scale are the
         # first two parameters in the parameter list, but these are not sent
         # to the underlying kernel functions.
