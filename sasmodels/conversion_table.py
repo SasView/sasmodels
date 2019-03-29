@@ -853,7 +853,7 @@ CONVERSION_TABLE = {
             },
             "TwoPowerLawModel",
         ],
-        "unified_power_rg": [
+        "unified_power_Rg": [
             "UnifiedPowerRg",
             dict(((field_new+str(index), field_old+str(index))
                   for field_new, field_old in [("rg", "Rg"),

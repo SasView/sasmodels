@@ -605,7 +605,7 @@ def constrain_new_to_old(model_info, pars):
             pars['scale'] = 1
             if pars['volfraction_a'] > 0.5:
                 pars['volfraction_a'] = 1.0 - pars['volfraction_a']
-        elif name == 'unified_power_rg':
+        elif name == 'unified_power_Rg':
             pars['level'] = int(pars['level'])
 
 def _check_one(name, seed=None):
