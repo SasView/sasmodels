@@ -193,7 +193,7 @@ Source
 `spherical_sld.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/spherical_sld.c>`_
 
 Authorship and Verification
-----------------------------
+---------------------------
 
 * **Author:** Jae-Hie Cho **Date:** Nov 1, 2010
 * **Last Modified by:** Paul Kienzle **Date:** Dec 20, 2016
