@@ -69,7 +69,7 @@ def make_parameter_table(pars):
                              %str(p))
         processed.append(parse_parameter(*p))
     partable = ParameterTable(processed)
-    partable.check_angles()
+    partable.check_angles(strict=True)
     return partable
 
 def parse_parameter(name, units='', default=np.NaN,
@@ -445,7 +445,6 @@ class ParameterTable(object):
         # Need them to be unique to each model in case they have different
         # properties, such as default=0.0 for structure factor backgrounds.
         self.common_parameters = [Parameter(*p) for p in COMMON_PARAMETERS]
-
         self.kernel_parameters = parameters
         self._set_vector_lengths()
         self.npars = sum(p.length for p in self.kernel_parameters)
@@ -457,6 +456,7 @@ class ParameterTable(object):
         self.call_parameters = self._get_call_parameters()
         self.defaults = self._get_defaults()
         #self._name_table= dict((p.id, p) for p in parameters)
+
 
         # Set the kernel parameters.  Assumes background and scale are the
         # first two parameters in the parameter list, but these are not sent
@@ -494,6 +494,10 @@ class ParameterTable(object):
                          if p.polydisperse and p.type not in ('orientation', 'magnetic'))
         self.pd_2d = set(p.name for p in self.call_parameters if p.polydisperse)
 
+        # Final checks
+        self.check_duplicates()
+        self.check_angles()
+
     def set_zero_background(self):
         """
         Set the default background to zero for this model.  This is done for
@@ -505,9 +509,13 @@ class ParameterTable(object):
         self.common_parameters[1].default = 0.0
         self.defaults = self._get_defaults()
 
-    def check_angles(self):
+    def check_angles(self, strict=False):
         """
         Check that orientation angles are theta, phi and possibly psi.
+
+        *strict* should be True when checking a parameter table defined
+        in a model file, but False when checking from mixture models, etc.,
+        where the parameters aren't being passed to a calculator directly.
         """
         theta = phi = psi = -1
         for k, p in enumerate(self.kernel_parameters):
@@ -523,7 +531,7 @@ class ParameterTable(object):
                 psi = k
                 if p.type != 'orientation':
                     raise TypeError("psi must be an orientation parameter")
-            elif p.type == 'orientation':
+            elif p.type == 'orientation' and strict:
                 raise TypeError("only theta, phi and psi can be orientation parameters")
         if theta >= 0 and phi >= 0:
             last_par = len(self.kernel_parameters) - 1
@@ -531,11 +539,27 @@ class ParameterTable(object):
                 raise TypeError("phi must follow theta")
             if psi >= 0 and psi != phi+1:
                 raise TypeError("psi must follow phi")
+            # TODO: Why must theta/phi/psi be at the end?  Consistency only?
             if (psi >= 0 and psi != last_par) or (psi < 0 and phi != last_par):
-                raise TypeError("orientation parameters must appear at the "
-                                "end of the parameter table")
+                if strict:
+                    raise TypeError("orientation parameters must appear at the "
+                                    "end of the parameter table")
         elif theta >= 0 or phi >= 0 or psi >= 0:
             raise TypeError("oriented shapes must have both theta and phi and maybe psi")
+
+    def check_duplicates(self):
+        """
+        Check for duplicate parameter names
+        """
+        checked, dups = set(), set()
+        for p in self.call_parameters:
+            if p.id in checked:
+                dups.add(p.id)
+            else:
+                checked.add(p.id)
+        if dups:
+            raise TypeError("Duplicate parameters: {}"
+                            .format(", ".join(sorted(dups))))
 
     def __getitem__(self, key):
         # Find the parameter definition
