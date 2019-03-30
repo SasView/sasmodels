@@ -41,9 +41,10 @@ class SesansTransform(object):
     _H = None   # type: np.ndarray
     _H0 = None  # type: np.ndarray
 
-    def __init__(self, z, SElength, lam, zaccept, Rmax):
+    def __init__(self, z, SElength, lam, zaccept, Rmax, log_spacing=1.0003):
         # type: (np.ndarray, float, float) -> None
         self.q = z
+        self.log_spacing = log_spacing
         self._set_hankel(SElength, lam, zaccept, Rmax)
 
     def apply(self, Iq):
@@ -61,20 +62,19 @@ class SesansTransform(object):
         SElength = np.asarray(SElength)
         q_max = 2*pi / (SElength[1] - SElength[0])
         q_min = 0.1 * 2*pi / (np.size(SElength) * SElength[-1])
-        q = np.exp(np.arange(np.log(q_min), np.log(q_max), np.log(1.0003)))
+        q = np.exp(np.arange(np.log(q_min), np.log(q_max),
+                             np.log(self.log_spacing)))
 
-        dq = q[1:]-q[:-1]
-        dq = np.hstack([[dq[0]], dq])
+        dq = np.diff(q)
+        dq = np.insert(dq, 0, dq[0])
 
         H0 = dq/(2*pi) * q
 
         H = np.outer(q, SElength)
         j0(H, out=H)
-        H *= (dq * q).reshape((-1, 1))
-        H /= 2*pi
+        H *= (dq * q / (2*pi)).reshape((-1, 1))
 
-        reptheta = np.outer(q, lam)
-        reptheta /= 2*np.pi
+        reptheta = np.outer(q, lam/2*pi)
         np.arcsin(reptheta, out=reptheta)
         mask = reptheta > zaccept
         H[mask] = 0
