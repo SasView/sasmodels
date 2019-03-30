@@ -48,18 +48,12 @@ References
 .. [#] S King, P Griffiths, J Hone, and T Cosgrove, *SANS from Adsorbed Polymer
    Layers*, *Macromol. Symp.*, 190 (2002) 33-42.
 
-Source
-------
-
-`adsorbed_layer.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/adsorbed_layer.py>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:** Jae-Hi Cho **Date:** pre 2010
 * **Last Modified by:** Paul Kienzle **Date:** April 14, 2016
 * **Last Reviewed by:** Steve King **Date:** March 18, 2016
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

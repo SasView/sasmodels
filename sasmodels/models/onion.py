@@ -7,7 +7,7 @@ solvent. We currently provide up to 9 shells with this model.
 
 .. note::
 
-    *radius* represents the core radius $r_0$ and *thickness[k]* represents 
+    *radius* represents the core radius $r_0$ and *thickness[k]* represents
     the thickness of the shell, $r_{k+1} - r_k$.
 
 Definition
@@ -59,7 +59,7 @@ where the spherical bessel function $j_1$ is
 
 and the volume is $V(r) = \frac{4\pi}{3}r^3$.
 
-The volume of the particle is determined by the radius of the outer 
+The volume of the particle is determined by the radius of the outer
 shell, so $V_\text{particle} = V(r_N)$.
 
 Now consider the SLD of a shell defined by
@@ -103,10 +103,10 @@ where
     \begin{align*}
     B&=\frac{\rho_\text{out} - \rho_\text{in}}{e^A-1}
          & C &= \frac{\rho_\text{in}e^A - \rho_\text{out}}{e^A-1} \\
-         
+
     \alpha_\text{in} &= A\frac{r_{\text{shell}-1}}{\Delta t_\text{shell}}
          & \alpha_\text{out} &= A\frac{r_\text{shell}}{\Delta t_\text{shell}} \\
-         
+
     \beta_\text{in} &= qr_{\text{shell}-1}
         & \beta_\text{out} &= qr_\text{shell} \\
     \end{align*}
@@ -122,7 +122,7 @@ and
 
 **Linear SLD profile** ($A \sim 0$):
 
-For small $A$, say, $A = -0.0001$, the function converges to that of of a linear 
+For small $A$, say, $A = -0.0001$, the function converges to that of of a linear
 SLD profile with
 
      $\rho_\text{shell}(r) \approx A(r-r_{\text{shell}-1})/\Delta t_\text{shell})+B$,
@@ -158,7 +158,7 @@ which is equivalent to
 
 **Constant SLD** ($A = 0$):
 
-When $A = 0$ the exponential function has no dependence on the radius (meaning 
+When $A = 0$ the exponential function has no dependence on the radius (meaning
 $\rho_\text{out}$ is ignored in this case) and becomes flat. We set the constant
 to $\rho_\text{in}$ for convenience, and thus the form factor contributed by
 the shells is
@@ -186,20 +186,12 @@ References
 
 .. [#] L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*, Plenum Press, New York, 1987.
 
-Source
-------
-
-`onion.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/onion.py>`_
-
-`onion.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/onion.c>`_
-
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
-* **Last Modified by:** 
+* **Author:**
+* **Last Modified by:**
 * **Last Reviewed by:** Steve King **Date:** March 28, 2019
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 #

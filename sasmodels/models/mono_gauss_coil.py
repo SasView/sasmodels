@@ -48,20 +48,13 @@ References
 .. [#] R J Roe, *Methods of X-Ray and Neutron Scattering in Polymer Science*, Oxford University Press, New York (2000).
 .. [#] http://www.ncnr.nist.gov/staff/hammouda/distance_learning/chapter_28.pdf
 
-Source
-------
-
-`mono_gauss_coil.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/mono_gauss_coil.py>`_
-
-`mono_gauss_coil.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/mono_gauss_coil.c>`_
-
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
-* **Last Modified by:** 
-* **Last Reviewed by:** 
-* **Source added by :** Steve King **Date:** March 25, 2019"""
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
+"""
 
 import numpy as np
 from numpy import inf

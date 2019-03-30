@@ -31,18 +31,12 @@ References
 
 .. [#] B Hammouda, D L Ho and S R Kline, Insight into Clustering in Poly(ethylene oxide) Solutions, Macromolecules, 37 (2004) 6932-6937
 
-Source
-------
-
-`correlation_length.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/correlation_length.py>`_
-
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
-* **Last Modified by:** 
-* **Last Reviewed by:** 
-* **Source added by :** Steve King **Date:** March 25, 2019
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 from numpy import inf, errstate

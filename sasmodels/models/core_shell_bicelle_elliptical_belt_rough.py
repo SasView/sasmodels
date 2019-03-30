@@ -112,20 +112,12 @@ References
 
 .. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
-Source
-------
-
-`core_shell_bicelle_elliptical_belt_rough.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/core_shell_bicelle_elliptical_belt_rough.py>`_
-
-`core_shell_bicelle_elliptical_belt_rough.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/core_shell_bicelle_elliptical_belt_rough.c>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:** Richard Heenan **Date:** October 5, 2017
 * **Last Modified by:**  Richard Heenan new 2d orientation **Date:** October 5, 2017
 * **Last Reviewed by:**  Richard Heenan 2d calc seems agree with 1d **Date:** Nov 2, 2017
-* **Source added by :**  Steve King **Date:** March 25, 2019
 """
 
 from numpy import inf, sin, cos, pi

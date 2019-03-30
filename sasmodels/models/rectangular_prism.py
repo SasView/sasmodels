@@ -99,20 +99,12 @@ References
 .. [#] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
 .. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
-Source
-------
-
-`rectangular_prism.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/rectangular_prism.py>`_
-
-`rectangular_prism.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/rectangular_prism.c>`_
-
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
-* **Last Modified by:** 
-* **Last Reviewed by:** 
-* **Source added by :** Steve King **Date:** March 25, 2019
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 import numpy as np

@@ -99,13 +99,6 @@ References
    New Methods of Investigation*, Ch.2, Surfactant Science Series Vol. 22, Ed.
    R Zana and M Dekker, New York, (1987).
 
-Source
-------
-
-`multilayer_vesicle.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/multilayer_vesicle.py>`_
-
-`multilayer_vesicle.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/multilayer_vesicle.c>`_
-
 Authorship and Verification
 ----------------------------
 
@@ -113,7 +106,6 @@ Authorship and Verification
 * **Converted to sasmodels by:** Piotr Rozyczko **Date:** Feb 24, 2016
 * **Last Modified by:** Paul Kienzle **Date:** Feb 7, 2017
 * **Last Reviewed by:** Steve King **Date:** March 28, 2019
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

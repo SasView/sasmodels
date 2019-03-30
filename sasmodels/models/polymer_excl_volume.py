@@ -112,20 +112,12 @@ References
 .. [#] M Hore et al, *Co-Nonsolvency of Poly(n-isopropylacrylamide) in Deuterated Water/Ethanol Mixtures* 46 (2013) 7894-7901
 .. [#] B Hammouda & M-H Kim, *The empirical core-chain model* 247 (2017) 434-440
 
-Source
-------
-
-`polymer_excl_volume.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/polymer_excl_volume.py>`_
-
-`polymer_excl_volume.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/polymer_excl_volume.c>`_
-
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
-* **Last Modified by:** 
-* **Last Reviewed by:** 
-* **Source added by :** Steve King **Date:** March 25, 2019
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 import numpy as np

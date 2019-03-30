@@ -99,20 +99,12 @@ References
 .. [#] G. Fournet, *Bull. Soc. Fr. Mineral. Cristallogr.*, 74 (1951) 39-113
 .. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
-Source
-------
-
-`cylinder.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/cylinder.py>`_
-
-`cylinder.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/cylinder.c>`_
-
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
-* **Last Modified by:** 
-* **Last Reviewed by:** 
-* **Source added by :** Steve King **Date:** March 25, 2019
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 import numpy as np  # type: ignore

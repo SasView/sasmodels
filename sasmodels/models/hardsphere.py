@@ -2,19 +2,19 @@
 r"""
 Calculates the interparticle structure factor for monodisperse
 spherical particles interacting through hard sphere (excluded volume)
-interactions. This $S(q)$ may also be a reasonable approximation for 
-other particle shapes that freely rotate (but see the note below), 
+interactions. This $S(q)$ may also be a reasonable approximation for
+other particle shapes that freely rotate (but see the note below),
 and for moderately polydisperse systems.
 
 .. note::
 
-   This routine is intended for uncharged particles! For charged 
+   This routine is intended for uncharged particles! For charged
    particles try using the :ref:`hayter-msa` $S(q)$ instead.
-   
+
 .. note::
 
-   Earlier versions of SasView did not incorporate the so-called 
-   $\beta(q)$ ("beta") correction [1] for polydispersity and non-sphericity. 
+   Earlier versions of SasView did not incorporate the so-called
+   $\beta(q)$ ("beta") correction [1] for polydispersity and non-sphericity.
    This is only available in SasView versions 4.2.2 and higher.
 
 radius_effective is the effective hard sphere radius.
@@ -24,10 +24,10 @@ In SasView the effective radius may be calculated from the parameters
 used in the form factor $P(q)$ that this $S(q)$ is combined with.
 
 For numerical stability the computation uses a Taylor series expansion
-at very small $qR$, but there may be a very minor glitch at the 
+at very small $qR$, but there may be a very minor glitch at the
 transition point in some circumstances.
 
-This S(q) uses the Percus-Yevick closure relationship [2] where the 
+This S(q) uses the Percus-Yevick closure relationship [2] where the
 interparticle potential $U(r)$ is
 
 .. math::
@@ -53,18 +53,12 @@ References
 
 .. [#] J K Percus, J Yevick, *J. Phys. Rev.*, 110, (1958) 1
 
-Source
-------
-
-`hardsphere.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/hardsphere.py>`_
-
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
-* **Last Modified by:** 
-* **Last Reviewed by:** 
-* **Source added by :** Steve King **Date:** March 25, 2019
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 import numpy as np

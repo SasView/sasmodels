@@ -1,39 +1,39 @@
 # Note: model title and parameter table are inserted automatically
 r"""
-Calculates the interparticle structure factor for a system of charged, 
-spheroidal, objects in a dielectric medium [1,2]. When combined with an 
-appropriate form factor $P(q)$, this allows for inclusion of the 
-interparticle interference effects due to screened Coulombic 
+Calculates the interparticle structure factor for a system of charged,
+spheroidal, objects in a dielectric medium [1,2]. When combined with an
+appropriate form factor $P(q)$, this allows for inclusion of the
+interparticle interference effects due to screened Coulombic
 repulsion between the charged particles.
 
 .. note::
 
-   This routine only works for charged particles! If the charge is set 
-   to zero the routine may self-destruct! For uncharged particles use 
+   This routine only works for charged particles! If the charge is set
+   to zero the routine may self-destruct! For uncharged particles use
    the :ref:`hardsphere` $S(q)$ instead. The upper limit for the charge
    is limited to 200e to avoid numerical instabilities.
-   
+
 .. note::
 
-   Earlier versions of SasView did not incorporate the so-called 
-   $\beta(q)$ ("beta") correction [3] for polydispersity and non-sphericity. 
+   Earlier versions of SasView did not incorporate the so-called
+   $\beta(q)$ ("beta") correction [3] for polydispersity and non-sphericity.
    This is only available in SasView versions 4.2.2 and higher.
 
 The salt concentration is used to compute the ionic strength of the solution
-which in turn is used to compute the Debye screening length. There is no 
-provision for entering the ionic strength directly. **At present the 
-counterions are assumed to be monovalent**, though it should be possible 
-to simulate the effect of multivalent counterions by increasing the salt 
+which in turn is used to compute the Debye screening length. There is no
+provision for entering the ionic strength directly. **At present the
+counterions are assumed to be monovalent**, though it should be possible
+to simulate the effect of multivalent counterions by increasing the salt
 concentration.
 
-Over the range 0 - 100 C the dielectric constant $\kappa$ of water may be 
-approximated with a maximum deviation of 0.01 units by the empirical 
+Over the range 0 - 100 C the dielectric constant $\kappa$ of water may be
+approximated with a maximum deviation of 0.01 units by the empirical
 formula [4]
 
 .. math::
 
     \kappa = 87.740 - 0.40008 T + 9.398x10^{-4} T^2 - 1.410x10^{-6} T^3
-    
+
 where $T$ is the temperature in celsius.
 
 In SasView the effective radius may be calculated from the parameters
@@ -62,20 +62,12 @@ References
 
 .. [#] C G Malmberg and A A Maryott, *J. Res. Nat. Bureau Standards*, 56 (1956) 2641
 
-Source
-------
-
-`hayter_msa.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/hayter_msa.py>`_
-
-`hayter_msa.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/hayter_msa.c>`_
-
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
-* **Last Modified by:** 
+* **Author:**
+* **Last Modified by:**
 * **Last Reviewed by:** Steve King **Date:** March 28, 2019
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -100,8 +92,8 @@ title = "Hayter-Penfold Rescaled Mean Spherical Approximation (RMSA) structure f
 description = """\
     [Hayter-Penfold RMSA charged sphere interparticle S(Q) structure factor]
         Interparticle structure factor S(Q) for charged hard spheres.
-    This routine only works for charged particles! For uncharged particles 
-    use the hardsphere S(q) instead. The "beta(q)" correction is available 
+    This routine only works for charged particles! For uncharged particles
+    use the hardsphere S(q) instead. The "beta(q)" correction is available
     in versions 4.2.2 and higher.
 """
 
@@ -109,10 +101,10 @@ description = """\
 # pylint: disable=bad-whitespace, line-too-long
 #             [ "name", "units", default, [lower, upper], "type", "description" ],
 #
-# NOTE: SMK, 28Mar19 The upper limit for charge is set to 200 to avoid instabilities noted by PK in 
-#       Ticket #1152. Also see the thread in Ticket 859. The docs above also note that charge=0 will 
+# NOTE: SMK, 28Mar19 The upper limit for charge is set to 200 to avoid instabilities noted by PK in
+#       Ticket #1152. Also see the thread in Ticket 859. The docs above also note that charge=0 will
 #       cause problems, yet the default parameters allowed it! After discussions with PK I have
-#       changed it to (an arbitarily) small but non-zero value.  But I haven't changed the low limit 
+#       changed it to (an arbitarily) small but non-zero value.  But I haven't changed the low limit
 #       in function random() below.
 #
 parameters = [
