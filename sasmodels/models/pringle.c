@@ -110,7 +110,7 @@ radius_from_excluded_volume(double radius, double thickness)
 }
 
 static double
-effective_radius(int mode, double radius, double thickness, double alpha, double beta)
+radius_effective(int mode, double radius, double thickness, double alpha, double beta)
 {
     switch (mode) {
     default:

@@ -24,6 +24,19 @@ References
 ----------
 
 None.
+
+Source
+------
+
+`power_law.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/power_law.py>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -51,6 +64,7 @@ def Iq(q, power):
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
+    """Return a random parameter set for the model."""
     power = np.random.uniform(1, 6)
     pars = dict(
         scale=0.1**power*10**np.random.uniform(-4, 2),

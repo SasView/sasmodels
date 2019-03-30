@@ -18,7 +18,7 @@ static double form_volume(
 }
 
 static double
-effective_radius(int mode, double fp_n_shells, double thickness[], double interface[])
+radius_effective(int mode, double fp_n_shells, double thickness[], double interface[])
 {
     // case 1: outer radius
     return outer_radius(fp_n_shells, thickness, interface);

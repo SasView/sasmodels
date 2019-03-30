@@ -17,10 +17,21 @@ where the q vector is defined as
 References
 ----------
 
-G Porod. *Kolloid Zeit*. 124 (1951) 83.
+.. [#] G Porod. *Kolloid Zeit*. 124 (1951) 83
+.. [#] L A Feigin, D I Svergun, G W Taylor. *Structure Analysis by Small-Angle X-ray and Neutron Scattering*. Springer. (1987)
 
-L A Feigin, D I Svergun, G W Taylor. *Structure Analysis by Small-Angle
-X-ray and Neutron Scattering*. Springer. (1987)
+Source
+------
+
+`porod.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/porod.py>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -46,6 +57,7 @@ def Iq(q):
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
+    """Return a random parameter set for the model."""
     sld, solvent = np.random.uniform(-0.5, 12, size=2)
     radius = 10**np.random.uniform(1, 4.7)
     Vf = 10**np.random.uniform(-3, -1)

@@ -97,8 +97,14 @@ References
 ----------
 
 .. [#Nayuk2012] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
-L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949). 
+.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
+Source
+------
+
+`hollow_rectangular_prism.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/hollow_rectangular_prism.py>`_
+
+`hollow_rectangular_prism.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/hollow_rectangular_prism.c>`_
 
 Authorship and Verification
 ----------------------------
@@ -106,10 +112,11 @@ Authorship and Verification
 * **Author:** Miguel Gonzales **Date:** February 26, 2016
 * **Last Modified by:** Paul Kienzle **Date:** December 14, 2017
 * **Last Reviewed by:** Paul Butler **Date:** September 06, 2018
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
-from numpy import pi, inf, sqrt
+from numpy import inf
 
 name = "hollow_rectangular_prism"
 title = "Hollow rectangular parallelepiped with uniform scattering length density."
@@ -149,14 +156,15 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
 
 source = ["lib/gauss76.c", "hollow_rectangular_prism.c"]
 have_Fq = True
-effective_radius_type = [
-    "equivalent cylinder excluded volume", "equivalent outer volume sphere", 
+radius_effective_modes = [
+    "equivalent cylinder excluded volume", "equivalent outer volume sphere",
     "half length_a", "half length_b", "half length_c",
     "equivalent outer circular cross-section",
     "half ab diagonal", "half diagonal",
     ]
 
 def random():
+    """Return a random parameter set for the model."""
     a, b, c = 10**np.random.uniform(1, 4.7, size=3)
     # Thickness is limited to 1/2 the smallest dimension
     # Use a distribution with a preference for thin shell or thin core

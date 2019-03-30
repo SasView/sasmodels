@@ -25,6 +25,7 @@ try:
     from .data import Data1D, Data2D
     from .kernel import KernelModel
     from .modelinfo import ModelInfo
+    from .resolution import Resolution
     Data = Union[Data1D, Data2D]
 except ImportError:
     pass
@@ -179,10 +180,18 @@ class Experiment(DataMixin):
 
     @property
     def resolution(self):
+        # type: () -> Union[None, Resolution]
+        """
+        :class:`sasmodels.Resolution` applied to the data, if any.
+        """
         return self._resolution
 
     @resolution.setter
     def resolution(self, value):
+        # type: (Resolution) -> None
+        """
+        :class:`sasmodels.Resolution` applied to the data, if any.
+        """
         self._resolution = value
 
         # Remove old resolution fitting parameters from experiment
@@ -269,7 +278,7 @@ class Experiment(DataMixin):
         """
         Save the model parameters and data into a file.
 
-        Not Implemented.
+        Not Implemented except for sesans fits.
         """
         if self.data_type == "sesans":
             np.savetxt(basename+".dat", np.array([self._data.x, self.theory()]).T)

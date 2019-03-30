@@ -1,7 +1,7 @@
 r"""
-.. warning:: This model and this model description are under review following 
-             concerns raised by SasView users. If you need to use this model, 
-             please email help@sasview.org for the latest situation. *The 
+.. warning:: This model and this model description are under review following
+             concerns raised by SasView users. If you need to use this model,
+             please email help@sasview.org for the latest situation. *The
              SasView Developers. September 2018.*
 
 Definition
@@ -99,6 +99,13 @@ References
 .. [#CIT1990] Hideki Matsuoka et. al. *Physical Review B*, 41 (1990) 3854 -3856
    (Corrections to FCC and BCC lattice structure calculation)
 
+Source
+------
+
+`bcc_paracrystal.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/bcc_paracrystal.py>`_
+
+`bcc_paracrystal.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/bcc_paracrystal.c>`_
+
 Authorship and Verification
 ---------------------------
 
@@ -140,6 +147,7 @@ parameters = [["lattice_spacing",         "Ang",       220,    [-inf, inf], "", 
 source = ["lib/sas_3j1x_x.c", "lib/gauss150.c", "lib/sphere_form.c", "bcc_paracrystal.c"]
 
 def random():
+    """Return a random parameter set for the model."""
     # Define lattice spacing as a multiple of the particle radius
     # using the formulat a = 4 r/sqrt(3).  Systems which are ordered
     # are probably mostly filled, so use a distribution which goes from

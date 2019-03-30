@@ -499,7 +499,7 @@ def _plot_result1D(data,         # type: Data1D
         if use_data:
             mdata = masked_array(data.y, data.mask.copy())
             mdata[~np.isfinite(mdata)] = masked
-            if view is 'log':
+            if view == 'log':
                 mdata[mdata <= 0] = masked
             plt.errorbar(data.x, scale*mdata, yerr=data.dy, fmt='.')
             all_positive = all_positive and (mdata > 0).all()
@@ -513,7 +513,7 @@ def _plot_result1D(data,         # type: Data1D
             theory_x = data.x[data.mask == 0]
             mtheory = masked_array(theory)
             mtheory[~np.isfinite(mtheory)] = masked
-            if view is 'log':
+            if view == 'log':
                 mtheory[mtheory <= 0] = masked
             plt.plot(theory_x, scale*mtheory, '-')
             all_positive = all_positive and (mtheory > 0).all()

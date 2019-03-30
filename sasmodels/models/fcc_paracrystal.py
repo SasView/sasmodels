@@ -98,6 +98,13 @@ References
 .. [#CIT1990] Hideki Matsuoka et. al. *Physical Review B*, 41 (1990) 3854 -3856
    (Corrections to FCC and BCC lattice structure calculation)
 
+Source
+------
+
+`fcc_paracrystal.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/fcc_paracrystal.py>`_
+
+`fcc_paracrystal.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/fcc_paracrystal.c>`_
+
 Authorship and Verification
 ----------------------------
 
@@ -136,6 +143,7 @@ parameters = [["lattice_spacing", "Ang", 220, [-inf, inf], "", "Lattice spacing"
 source = ["lib/sas_3j1x_x.c", "lib/gauss150.c", "lib/sphere_form.c", "fcc_paracrystal.c"]
 
 def random():
+    """Return a random parameter set for the model."""
     # copied from bcc_paracrystal
     radius = 10**np.random.uniform(1.3, 4)
     lattice_distortion = 10**np.random.uniform(-2, -0.7)  # sigma_d in 0.01-0.7

@@ -67,8 +67,6 @@ $S(q)$ when $P(q) \cdot S(q)$ is applied.
 
 The $\theta$ and $\phi$ parameters are not used for the 1D output.
 
-
-
 Validation
 ----------
 
@@ -107,11 +105,15 @@ with polar radius equal to length and equatorial radius equal to radius.
 References
 ----------
 
-L A Feigin and D I Svergun.
-*Structure Analysis by Small-Angle X-Ray and Neutron Scattering*,
-Plenum Press, New York, 1987.
+.. [#] L A Feigin and D I Svergun. *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*, Plenum Press, New York, 1987
+.. [#] A. Isihara. *J. Chem. Phys.*, 18 (1950) 1446-1449
 
-A. Isihara. J. Chem. Phys. 18(1950) 1446-1449
+Source
+------
+
+`ellipsoid.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/ellipsoid.py>`_
+
+`ellipsoid.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/ellipsoid.c>`_
 
 Authorship and Verification
 ----------------------------
@@ -119,16 +121,12 @@ Authorship and Verification
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Converted to sasmodels by:** Helen Park **Date:** July 9, 2014
 * **Last Modified by:** Paul Kienzle **Date:** March 22, 2017
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 from __future__ import division
 
 import numpy as np
 from numpy import inf, sin, cos, pi
-
-try:
-    from numpy import cbrt
-except ImportError:
-    def cbrt(x): return x ** (1.0/3.0)
 
 name = "ellipsoid"
 title = "Ellipsoid of revolution with uniform scattering length density."
@@ -168,11 +166,12 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
 
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "ellipsoid.c"]
 have_Fq = True
-effective_radius_type = [
+radius_effective_modes = [
     "average curvature", "equivalent volume sphere", "min radius", "max radius",
     ]
 
 def random():
+    """Return a random parameter set for the model."""
     volume = 10**np.random.uniform(5, 12)
     radius_polar = 10**np.random.uniform(1.3, 4)
     radius_equatorial = np.sqrt(volume/radius_polar) # ignore 4/3 pi

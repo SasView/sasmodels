@@ -25,7 +25,7 @@ structure, $P(q)$ is the form factor of the sphere (normalized), and
 $Z(q)$ is the paracrystalline structure factor for a simple cubic structure.
 
 Equation (16) of the 1987 reference\ [#CIT1987]_ is used to calculate $Z(q)$,
-using equations (13)-(15) from the 1987 paper\ [#CIT1987]_ for $Z1$, $Z2$, and
+using equations (13)-(15) from the 1987 paper\ [#CIT1990]_ for $Z1$, $Z2$, and
 $Z3$.
 
 The lattice correction (the occupied volume of the lattice) for a simple cubic
@@ -97,10 +97,15 @@ Note that we are not responsible for any incorrectness of the
 Reference
 ---------
 
-.. [#CIT1987] Hideki Matsuoka et. al. *Physical Review B*, 36 (1987) 1754-1765
-   (Original Paper)
-.. [#CIT1990] Hideki Matsuoka et. al. *Physical Review B*, 41 (1990) 3854 -3856
-   (Corrections to FCC and BCC lattice structure calculation)
+.. [#CIT1987] Hideki Matsuoka et. al. *Physical Review B*, 36 (1987) 1754-1765 (Original Paper)
+.. [#CIT1990] Hideki Matsuoka et. al. *Physical Review B*, 41 (1990) 3854 -3856 (Corrections to FCC and BCC lattice structure calculation)
+
+Source
+------
+
+`sc_paracrystal.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/sc_paracrystal.py>`_
+
+`sc_paracrystal.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/sc_paracrystal.c>`_
 
 Authorship and Verification
 ----------------------------
@@ -152,6 +157,7 @@ parameters = [["lattice_spacing",         "Ang",       220.0, [0.0, inf],  "",  
 source = ["lib/sas_3j1x_x.c", "lib/sphere_form.c", "lib/gauss150.c", "sc_paracrystal.c"]
 
 def random():
+    """Return a random parameter set for the model."""
     # copied from bcc_paracrystal
     radius = 10**np.random.uniform(1.3, 4)
     lattice_distortion = 10**np.random.uniform(-2, -0.7)  # sigma_d in 0.01-0.7

@@ -45,7 +45,7 @@ is the scattering length density of the core, $\rho_s$ is the scattering
 length density of the shell, $\rho_\text{solv}$ is the scattering length
 density of the solvent, and *background* is the background level.  The outer
 radius of the shell is given by $R+T$ and the total length of the outer
-shell is given by $L+2T$. $J1$ is the first order Bessel function.
+shell is given by $L+2T$. $J_1$ is the first order Bessel function.
 
 .. _core-shell-cylinder-geometry:
 
@@ -69,7 +69,14 @@ Reference
 .. [#] see, for example, Ian Livsey  J. Chem. Soc., Faraday Trans. 2, 1987,83,
    1445-1452
 .. [#kline] S R Kline, *J Appl. Cryst.*, 39 (2006) 895
-L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949). 
+.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+
+Source
+------
+
+`core_shell_cylinder.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/core_shell_cylinder.py>`_
+
+`core_shell_cylinder.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/core_shell_cylinder.c>`_
 
 Authorship and Verification
 ----------------------------
@@ -77,6 +84,7 @@ Authorship and Verification
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Kienzle **Date:** Aug 8, 2016
 * **Last Reviewed by:** Richard Heenan **Date:** March 18, 2016
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -132,12 +140,13 @@ parameters = [["sld_core", "1e-6/Ang^2", 4, [-inf, inf], "sld",
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "core_shell_cylinder.c"]
 have_Fq = True
-effective_radius_type = [
+radius_effective_modes = [
     "excluded volume", "equivalent volume sphere", "outer radius", "half outer length",
     "half min outer dimension", "half max outer dimension", "half outer diagonal",
     ]
 
 def random():
+    """Return a random parameter set for the model."""
     outer_radius = 10**np.random.uniform(1, 4.7)
     # Use a distribution with a preference for thin shell or thin core
     # Avoid core,shell radii < 1

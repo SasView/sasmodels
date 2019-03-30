@@ -14,7 +14,7 @@ from copy import deepcopy
 import collections
 import traceback
 import logging
-from os.path import basename, splitext, abspath, getmtime
+from os.path import basename, splitext, abspath
 try:
     import _thread as thread
 except ImportError:
@@ -30,7 +30,6 @@ from . import generate
 from . import weights
 from . import modelinfo
 from .details import make_kernel_args, dispersion_mesh
-from .kernelcl import reset_environment
 
 # pylint: disable=unused-import
 try:
@@ -252,11 +251,14 @@ def _generate_model_attributes(model_info):
     # TODO: allow model to override axis labels input/output name/unit
 
     # Process multiplicity
+    control_pars = [p.id for p in model_info.parameters.kernel_parameters
+                    if p.is_control]
+    control_id = control_pars[0] if control_pars else None
     non_fittable = []  # type: List[str]
     xlabel = model_info.profile_axes[0] if model_info.profile is not None else ""
     variants = MultiplicityInfo(0, "", [], xlabel)
     for p in model_info.parameters.kernel_parameters:
-        if p.name == model_info.control:
+        if p.id == control_id:
             non_fittable.append(p.name)
             variants = MultiplicityInfo(
                 len(p.choices) if p.choices else int(p.limits[1]),
@@ -296,7 +298,7 @@ def _generate_model_attributes(model_info):
     attrs['description'] = model_info.description
     attrs['category'] = model_info.category
     attrs['is_structure_factor'] = model_info.structure_factor
-    attrs['is_form_factor'] = model_info.effective_radius_type is not None
+    attrs['is_form_factor'] = model_info.radius_effective_modes is not None
     attrs['is_multiplicity_model'] = variants[0] > 1
     attrs['multiplicity_info'] = variants
     attrs['orientation_params'] = tuple(orientation_params)
@@ -684,7 +686,7 @@ class SasviewModel(object):
     def calculate_Iq(self,
                      qx,     # type: Sequence[float]
                      qy=None # type: Optional[Sequence[float]]
-                     ):
+                    ):
         # type: (...) -> Tuple[np.ndarray, Callable[[], collections.OrderedDict[str, np.ndarray]]]
         """
         Calculate Iq for one set of q with the current parameters.
@@ -760,7 +762,7 @@ class SasviewModel(object):
         # extending _calculate_Iq so that it calls:
         #    if er_mode > 0:
         #        res = calculator.Fq(call_details, values, cutoff=self.cutoff,
-        #                            magnetic=False, effective_radius_type=mode)
+        #                            magnetic=False, radius_effective_mode=mode)
         #        R_eff, form_shell_ratio = res[2], res[4]
         #        return R_eff, form_shell_ratio
         # Then use the following in calculate_ER:
@@ -831,7 +833,7 @@ class SasviewModel(object):
         Return dispersion weights for parameter
         """
         if par.name not in self.params:
-            if par.name == self.multiplicity_info.control:
+            if par.id == self.multiplicity_info.control:
                 return self.multiplicity, [self.multiplicity], [1.0]
             else:
                 # For hidden parameters use default values.  This sets
@@ -934,7 +936,7 @@ def test_model_list():
 def test_old_name():
     # type: () -> None
     """
-    Load and run cylinder model as sas-models-CylinderModel
+    Load and run cylinder model as sas.models.CylinderModel
     """
     if not SUPPORT_OLD_STYLE_PLUGINS:
         return
@@ -976,6 +978,9 @@ def test_structure_factor_background():
 
 
 def magnetic_demo():
+    """
+    Demostrate call to magnetic model.
+    """
     Model = _make_standard_model('sphere')
     model = Model()
     model.setParam('sld_M0', 8)

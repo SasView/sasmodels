@@ -35,7 +35,7 @@ where:
 - $b_p$ and $b_s$ are **sum of the scattering lengths of the atoms**
   constituting the polymer monomer and the solvent molecules, respectively.
 
-- $v_p$ and $v_s$ are the partial molar volume of the polymer and the 
+- $v_p$ and $v_s$ are the partial molar volume of the polymer and the
   solvent, respectively.
 
 - $L_b$ is the Bjerrum length (|Ang|) - **Note:** This parameter needs to be
@@ -49,7 +49,7 @@ where:
 
 - $C_s$ is the concentration of monovalent salt(1/|Ang^3| - internally converted from mol/L).
 
-- $\alpha$ is the degree of ionization (the ratio of charged monomers to the total 
+- $\alpha$ is the degree of ionization (the ratio of charged monomers to the total
   number of monomers)
 
 - $C_a$ is the polymer molar concentration (1/|Ang^3| - internally converted from mol/L)
@@ -73,12 +73,12 @@ that in that implementation, while both the polymer concentration and salt
 concentration were converted from experimental units of mol/L to more
 dimensionally useful units of 1/|Ang^3|, only the converted version of the
 polymer concentration was actually being used in the calculation while the
-unconverted salt concentration (still in apparent units of mol/L) was being 
-used.  This was carried through to Sasmodels as used for SasView 4.1 (though 
-the line of code converting the salt concentration to the new units was removed 
-somewhere along the line). Simple dimensional analysis of the calculation shows 
-that the converted salt concentration should be used, which the original code 
-suggests was the intention, so this has now been corrected (for SasView 4.2). 
+unconverted salt concentration (still in apparent units of mol/L) was being
+used.  This was carried through to Sasmodels as used for SasView 4.1 (though
+the line of code converting the salt concentration to the new units was removed
+somewhere along the line). Simple dimensional analysis of the calculation shows
+that the converted salt concentration should be used, which the original code
+suggests was the intention, so this has now been corrected (for SasView 4.2).
 Once better validation has been performed this note will be removed.
 
 References
@@ -90,12 +90,18 @@ References
    II France*, 3 (1993) 573
 .. [#] E Raphael, J F Joanny, *Europhysics Letters*, 11 (1990) 179
 
+Source
+------
+
+`be_polyelectrolyte.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/be_polyelectrolyte.py>`_
+
 Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Butler **Date:** September 25, 2018
 * **Last Reviewed by:** Paul Butler **Date:** September 25, 2018
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -140,7 +146,7 @@ def Iq(q,
     """
     :params: see parameter table
     :return: 1-D form factor for polyelectrolytes in low salt
-    
+
     parameter names, units, default values, and behavior (volume, sld etc) are
     defined in the parameter table.  The concentrations are converted from
     experimental mol/L to dimensionaly useful 1/A3 in first two lines
@@ -166,6 +172,7 @@ def Iq(q,
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
+    """Return a random parameter set for the model."""
     # TODO: review random be_polyelectrolyte model generation
     pars = dict(
         scale=10000, #background=0,

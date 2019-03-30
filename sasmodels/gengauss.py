@@ -1,12 +1,16 @@
 #!/usr/bin/env python
+"""
+Generate the Gauss-Legendre integration points and save them as a C file.
+"""
 from __future__ import division, print_function
-
-import sys
 
 import numpy as np
 from numpy.polynomial.legendre import leggauss
 
 def gengauss(n, path):
+    """
+    Save the Gauss-Legendre integration points for length *n* into file *path*.
+    """
     z, w = leggauss(n)
 
     # Make sure array size is a multiple of 4

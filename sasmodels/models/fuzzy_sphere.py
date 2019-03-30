@@ -50,8 +50,22 @@ where the $q$ vector is defined as
 References
 ----------
 
-M Stieger, J. S Pedersen, P Lindner, W Richtering, *Langmuir*,
-20 (2004) 7283-7292
+.. [#] M Stieger, J. S Pedersen, P Lindner, W Richtering, *Langmuir*, 20 (2004) 7283-7292
+
+Source
+------
+
+`fuzzy_sphere.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/fuzzy_sphere.py>`_
+
+`fuzzy_sphere.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/fuzzy_sphere.c>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -81,11 +95,12 @@ parameters = [["sld",         "1e-6/Ang^2",  1, [-inf, inf], "sld",    "Particle
              ]
 # pylint: enable=bad-whitespace,line-too-long
 
-source = ["lib/sas_3j1x_x.c","fuzzy_sphere.c"]
+source = ["lib/sas_3j1x_x.c", "fuzzy_sphere.c"]
 have_Fq = True
-effective_radius_type = ["radius", "radius + fuzziness"]
+radius_effective_modes = ["radius", "radius + fuzziness"]
 
 def random():
+    """Return a random parameter set for the model."""
     radius = 10**np.random.uniform(1, 4.7)
     fuzziness = 10**np.random.uniform(-2, -0.5)*radius  # 1% to 31% fuzziness
     pars = dict(

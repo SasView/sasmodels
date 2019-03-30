@@ -99,7 +99,7 @@ except ImportError:
     pass
 # pylint: enable=unused-import
 
-# Compiler output is a byte stream that needs to be decode in python 3
+# Compiler output is a byte stream that needs to be decode in python 3.
 decode = (lambda s: s) if sys.version_info[0] < 3 else (lambda s: s.decode('utf8'))
 
 if "SAS_DLL_PATH" in os.environ:
@@ -114,24 +114,25 @@ elif os.name == 'nt':
     if tinycc is not None:
         COMPILER = "tinycc"
     elif "VCINSTALLDIR" in os.environ:
-        # If vcvarsall.bat has been called, then VCINSTALLDIR is in the environment
-        # and we can use the MSVC compiler.  Otherwise, if tinycc is available
-        # the use it.  Otherwise, hope that mingw is available.
+        # If vcvarsall.bat has been called, then VCINSTALLDIR is in the
+        # environment and we can use the MSVC compiler.  Otherwise, if
+        # tinycc is available then use it.  Otherwise, hope that mingw
+        # is available.
         COMPILER = "msvc"
     else:
         COMPILER = "mingw"
 else:
     COMPILER = "unix"
 
-ARCH = "" if ct.sizeof(ct.c_void_p) > 4 else "x86"  # 4 byte pointers on x86
+ARCH = "" if ct.sizeof(ct.c_void_p) > 4 else "x86"  # 4 byte pointers on x86.
 if COMPILER == "unix":
-    # Generic unix compile
-    # On mac users will need the X code command line tools installed
+    # Generic unix compile.
+    # On Mac users will need the X code command line tools installed.
     #COMPILE = "gcc-mp-4.7 -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm -lgomp"
     CC = "cc -shared -fPIC -std=c99 -O2 -Wall".split()
-    # add openmp support if not running on a mac
+    # Add OpenMP support if not running on a Mac.
     if sys.platform != "darwin":
-        # OpenMP seems to be broken on gcc 5.4.0 (ubuntu 16.04.9)
+        # OpenMP seems to be broken on gcc 5.4.0 (ubuntu 16.04.9).
         # Shut it off for all unix until we can investigate.
         #CC.append("-fopenmp")
         pass
@@ -143,10 +144,10 @@ elif COMPILER == "msvc":
     # MSVC compiler is available, so use it.  OpenMP requires a copy of
     # vcomp90.dll on the path.  One may be found here:
     #       C:/Windows/winsxs/x86_microsoft.vc90.openmp*/vcomp90.dll
-    # Copy this to the python directory and uncomment the OpenMP COMPILE
-    # TODO: remove intermediate OBJ file created in the directory
-    # TODO: maybe don't use randomized name for the c file
-    # TODO: maybe ask distutils to find MSVC
+    # Copy this to the python directory and uncomment the OpenMP COMPILE.
+    # TODO: Remove intermediate OBJ file created in the directory.
+    # TODO: Maybe don't use randomized name for the c file.
+    # TODO: Maybe ask distutils to find MSVC.
     CC = "cl /nologo /Ox /MD /W3 /GS- /DNDEBUG".split()
     if "SAS_OPENMP" in os.environ:
         CC.append("/openmp")
@@ -171,7 +172,8 @@ elif COMPILER == "mingw":
 
 ALLOW_SINGLE_PRECISION_DLLS = True
 
-def compile(source, output):
+
+def compile_model(source, output):
     # type: (str, str) -> None
     """
     Compile *source* producing *output*.
@@ -182,7 +184,7 @@ def compile(source, output):
     command_str = " ".join('"%s"'%p if ' ' in p else p for p in command)
     logging.info(command_str)
     try:
-        # need shell=True on windows to keep console box from popping up
+        # Need shell=True on windows to keep console box from popping up.
         shell = (os.name == 'nt')
         subprocess.check_output(command, shell=shell, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as exc:
@@ -190,6 +192,7 @@ def compile(source, output):
         raise RuntimeError("compile failed.\n%s\n%s"%(command_str, output))
     if not os.path.exists(output):
         raise RuntimeError("compile failed.  File is in %r"%source)
+
 
 def dll_name(model_info, dtype):
     # type: (ModelInfo, np.dtype) ->  str
@@ -201,7 +204,7 @@ def dll_name(model_info, dtype):
     basename = "sas%d_%s"%(bits, model_info.id)
     basename += ARCH + ".so"
 
-    # Hack to find precompiled dlls
+    # Hack to find precompiled dlls.
     path = joinpath(generate.DATA_PATH, '..', 'compiled_models', basename)
     if os.path.exists(path):
         return path
@@ -241,8 +244,8 @@ def make_dll(source, model_info, dtype=F64):
     if dtype == F16:
         raise ValueError("16 bit floats not supported")
     if dtype == F32 and not ALLOW_SINGLE_PRECISION_DLLS:
-        dtype = F64  # Force 64-bit dll
-    # Note: dtype may be F128 for long double precision
+        dtype = F64  # Force 64-bit dll.
+    # Note: dtype may be F128 for long double precision.
 
     dll = dll_path(model_info, dtype)
 
@@ -253,7 +256,7 @@ def make_dll(source, model_info, dtype=F64):
         newest_source = generate.dll_timestamp(model_info)
         need_recompile = dll_time < newest_source
     if need_recompile:
-        # Make sure the DLL path exists
+        # Make sure the DLL path exists.
         if not os.path.exists(SAS_DLL_PATH):
             os.makedirs(SAS_DLL_PATH)
         basename = splitext(os.path.basename(dll))[0] + "_"
@@ -261,9 +264,9 @@ def make_dll(source, model_info, dtype=F64):
         source = generate.convert_type(source, dtype)
         with os.fdopen(system_fd, "w") as file_handle:
             file_handle.write(source)
-        compile(source=filename, output=dll)
-        # comment the following to keep the generated c file
-        # Note: if there is a syntax error then compile raises an error
+        compile_model(source=filename, output=dll)
+        # Comment the following to keep the generated C file.
+        # Note: If there is a syntax error then compile raises an error
         # and the source file will not be deleted.
         os.unlink(filename)
         #print("saving compiled file in %r"%filename)
@@ -302,7 +305,7 @@ class DllModel(KernelModel):
         self.info = model_info
         self.dllpath = dllpath
         self._dll = None  # type: ct.CDLL
-        self._kernels = None # type: List[Callable, Callable]
+        self._kernels = None  # type: List[Callable, Callable]
         self.dtype = np.dtype(dtype)
 
     def _load_dll(self):
@@ -337,7 +340,7 @@ class DllModel(KernelModel):
     def make_kernel(self, q_vectors):
         # type: (List[np.ndarray]) -> DllKernel
         q_input = PyInput(q_vectors, self.dtype)
-        # Note: pickle not supported for DllKernel
+        # Note: DLL is lazy loaded.
         if self._dll is None:
             self._load_dll()
         is_2d = len(q_vectors) == 2
@@ -356,6 +359,7 @@ class DllModel(KernelModel):
             _ct.dlclose(dll_handle)
         del self._dll
         self._dll = None
+
 
 class DllKernel(Kernel):
     """
@@ -378,45 +382,63 @@ class DllKernel(Kernel):
     """
     def __init__(self, kernel, model_info, q_input):
         # type: (Callable[[], np.ndarray], ModelInfo, PyInput) -> None
-        #,model_info,q_input)
-        self.kernel = kernel
-        self.info = model_info
+        dtype = q_input.dtype
         self.q_input = q_input
-        self.dtype = q_input.dtype
-        self.dim = '2d' if q_input.is_2d else '1d'
-        # leave room for f1/f2 results in case we need to compute beta for 1d models
-        nout = 2 if self.info.have_Fq else 1
-        # +4 for total weight, shell volume, effective radius, form volume
-        self.result = np.empty(q_input.nq*nout + 4, self.dtype)
-        self.real = (np.float32 if self.q_input.dtype == generate.F32
-                     else np.float64 if self.q_input.dtype == generate.F64
-                     else np.float128)
+        self.kernel = kernel
 
-    def _call_kernel(self, call_details, values, cutoff, magnetic, effective_radius_type):
-        # type: (CallDetails, np.ndarray, np.ndarray, float, bool, int) -> np.ndarray
+        # Attributes accessed from the outside.
+        self.dim = '2d' if q_input.is_2d else '1d'
+        self.info = model_info
+        self.dtype = dtype
+
+        # Converter to translate input to target type.
+        self._as_dtype = (np.float32 if dtype == generate.F32
+                          else np.float64 if dtype == generate.F64
+                          else np.float128)
+
+        # Holding place for the returned value.
+        nout = 2 if self.info.have_Fq else 1
+        extra_q = 4  # Total weight, form volume, shell volume and R_eff.
+        self.result = np.empty(self.q_input.nq*nout + extra_q, dtype)
+
+    def _call_kernel(self, call_details, values, cutoff, magnetic,
+                     radius_effective_mode):
+        # type: (CallDetails, np.ndarray, float, bool, int) -> np.ndarray
+
+        # Setup kernel function and arguments.
         kernel = self.kernel[1 if magnetic else 0]
-        args = [
-            self.q_input.nq, # nq
-            None, # pd_start
-            None, # pd_stop pd_stride[MAX_PD]
-            call_details.buffer.ctypes.data, # problem
-            values.ctypes.data,  # pars
-            self.q_input.q.ctypes.data, # q
-            self.result.ctypes.data,   # results
-            self.real(cutoff), # cutoff
-            effective_radius_type, # cutoff
+        kernel_args = [
+            self.q_input.nq,  # Number of inputs.
+            None,  # Placeholder for pd_start.
+            None,  # Placeholder for pd_stop.
+            call_details.buffer.ctypes.data,  # Problem definition.
+            values.ctypes.data,  # Parameter values.
+            self.q_input.q.ctypes.data,  # Q values.
+            self.result.ctypes.data,   # Result storage.
+            self._as_dtype(cutoff),  # Probability cutoff.
+            radius_effective_mode,  # R_eff mode.
         ]
+
+        # Call kernel and retrieve results.
         #print("Calling DLL")
         #call_details.show(values)
         step = 100
+        # TODO: Do we need the explicit sleep like the OpenCL and CUDA loops?
         for start in range(0, call_details.num_eval, step):
             stop = min(start + step, call_details.num_eval)
-            args[1:3] = [start, stop]
-            kernel(*args) # type: ignore
+            kernel_args[1:3] = [start, stop]
+            kernel(*kernel_args) # type: ignore
 
     def release(self):
         # type: () -> None
         """
-        Release any resources associated with the kernel.
+        Release resources associated with the kernel.
         """
-        self.q_input.release()
+        # TODO: OpenCL/CUDA allocate q_input in __init__ and free it in release.
+        # Should we be doing the same for DLL?
+        #self.q_input.release()
+        pass
+
+    def __del__(self):
+        # type: () -> None
+        self.release()

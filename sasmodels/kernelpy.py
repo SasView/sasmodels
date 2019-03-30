@@ -15,7 +15,9 @@ from numpy import pi
 try:
     from numpy import cbrt
 except ImportError:
-    def cbrt(x): return x ** (1.0/3.0)
+    def cbrt(x):
+        """Return cubed root of x."""
+        return x ** (1.0/3.0)
 
 from .generate import F64
 from .kernel import KernelModel, Kernel
@@ -32,18 +34,20 @@ else:
 
 logger = logging.getLogger(__name__)
 
+
 class PyModel(KernelModel):
     """
     Wrapper for pure python models.
     """
     def __init__(self, model_info):
-        # Make sure Iq is available and vectorized
+        # Make sure Iq is available and vectorized.
         _create_default_functions(model_info)
         self.info = model_info
         self.dtype = np.dtype('d')
-        logger.info("make python model " + self.info.name)
+        logger.info("make python model %s", self.info.name)
 
     def make_kernel(self, q_vectors):
+        """Instantiate the python kernel with input *q_vectors*"""
         q_input = PyInput(q_vectors, dtype=F64)
         return PyKernel(self.info, q_input)
 
@@ -52,6 +56,7 @@ class PyModel(KernelModel):
         Free resources associated with the model.
         """
         pass
+
 
 class PyInput(object):
     """
@@ -89,6 +94,7 @@ class PyInput(object):
         Free resources associated with the model inputs.
         """
         self.q = None
+
 
 class PyKernel(Kernel):
     """
@@ -130,7 +136,7 @@ class PyKernel(Kernel):
         # an array of no dimensions acts like a scalar.
         parameter_vector = np.empty(len(partable.call_parameters)-2, 'd')
 
-        # Create views into the array to hold the arguments
+        # Create views into the array to hold the arguments.
         offset = 0
         kernel_args, volume_args = [], []
         for p in partable.kernel_parameters:
@@ -165,7 +171,7 @@ class PyKernel(Kernel):
         self._volume_args = volume_args
         volume = model_info.form_volume
         shell = model_info.shell_volume
-        radius = model_info.effective_radius
+        radius = model_info.radius_effective
         self._volume = ((lambda: (shell(*volume_args), volume(*volume_args))) if shell and volume
                         else (lambda: [volume(*volume_args)]*2) if volume
                         else (lambda: (1.0, 1.0)))
@@ -173,16 +179,14 @@ class PyKernel(Kernel):
                         else (lambda mode: cbrt(0.75/pi*volume(*volume_args))) if volume
                         else (lambda mode: 1.0))
 
-
-
-    def _call_kernel(self, call_details, values, cutoff, magnetic, effective_radius_type):
+    def _call_kernel(self, call_details, values, cutoff, magnetic, radius_effective_mode):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
         if magnetic:
             raise NotImplementedError("Magnetism not implemented for pure python models")
         #print("Calling python kernel")
         #call_details.show(values)
-        radius = ((lambda: 0.0) if effective_radius_type == 0
-                  else (lambda: self._radius(effective_radius_type)))
+        radius = ((lambda: 0.0) if radius_effective_mode == 0
+                  else (lambda: self._radius(radius_effective_mode)))
         self.result = _loops(
             self._parameter_vector, self._form, self._volume, radius,
             self.q_input.nq, call_details, values, cutoff)
@@ -194,6 +198,7 @@ class PyKernel(Kernel):
         """
         self.q_input.release()
         self.q_input = None
+
 
 def _loops(parameters,    # type: np.ndarray
            form,          # type: Callable[[], np.ndarray]
@@ -253,7 +258,7 @@ def _loops(parameters,    # type: np.ndarray
 
         total = np.zeros(nq, 'd')
         for loop_index in range(call_details.num_eval):
-            # update polydispersity parameter values
+            # Update polydispersity parameter values.
             if p0_index == p0_length:
                 pd_index = (loop_index//pd_stride)%pd_length
                 parameters[pd_par] = pd_value[pd_offset+pd_index]
@@ -264,7 +269,7 @@ def _loops(parameters,    # type: np.ndarray
             parameters[p0_par] = pd_value[p0_offset + p0_index]
             p0_index += 1
             if weight > cutoff:
-                # Call the scattering function
+                # Call the scattering function.
                 # Assume that NaNs are only generated if the parameters are bad;
                 # exclude all q for that NaN.  Even better would be to have an
                 # INVALID expression like the C models, but that is expensive.
@@ -272,7 +277,7 @@ def _loops(parameters,    # type: np.ndarray
                 if np.isnan(Iq).any():
                     continue
 
-                # update value and norm
+                # Update value and norm.
                 total += weight * Iq
                 weight_norm += weight
                 shell, form = form_volume()
@@ -292,7 +297,7 @@ def _create_default_functions(model_info):
     performs a similar role for Iq written in C.  This also vectorizes
     any functions that are not already marked as vectorized.
     """
-    # Note: must call create_vector_Iq before create_vector_Iqxy
+    # Note: Must call create_vector_Iq before create_vector_Iqxy.
     _create_vector_Iq(model_info)
     _create_vector_Iqxy(model_info)
 

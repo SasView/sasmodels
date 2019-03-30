@@ -104,8 +104,11 @@ def _get_translation_table(model_info, version=(3, 1, 2)):
                 if newid+str(k) not in translation:
                     translation[newid+str(k)] = oldid+str(k)
     # Remove control parameter from the result
-    if model_info.control:
-        translation[model_info.control] = "CONTROL"
+    control_pars = [p.id for p in model_info.parameters.kernel_parameters
+                    if p.is_control]
+    if control_pars:
+        control_id = control_pars[0]
+        translation[control_id] = "CONTROL"
     return translation
 
 # ========= FORWARD CONVERSION sasview 3.x => sasmodels ===========
@@ -387,6 +390,7 @@ def _revert_pars(pars, mapping):
     return newpars
 
 def revert_name(model_info):
+    """Translate model name back to the name used in SasView 3.x"""
     oldname, _ = CONVERSION_TABLE.get(model_info.id, [None, {}])
     return oldname
 
@@ -656,6 +660,9 @@ def _check_one(name, seed=None):
         assert k in pars, "%s: %r not converted"%(name, k)
 
 def test_backward_forward():
+    """
+    Test conversion of model parameters from 4.x to 3.x and back.
+    """
     from .core import list_models
     L = lambda name: _check_one(name, seed=1)
     for name in list_models('all'):

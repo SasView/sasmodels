@@ -25,7 +25,7 @@ form_volume(double core_radius, double fp_n, double thickness[])
 }
 
 static double
-effective_radius(int mode, double core_radius, double fp_n, double thickness[])
+radius_effective(int mode, double core_radius, double fp_n, double thickness[])
 {
   switch (mode) {
   default:

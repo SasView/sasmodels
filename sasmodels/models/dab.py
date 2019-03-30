@@ -30,13 +30,21 @@ where the $q$ vector is defined as
 References
 ----------
 
-P Debye, H R Anderson, H Brumberger, *Scattering by an Inhomogeneous Solid. II.
-The Correlation Function and its Application*, *J. Appl. Phys.*, 28(6) (1957) 679
+.. [#] P Debye, H R Anderson, H Brumberger, *Scattering by an Inhomogeneous Solid. II. The Correlation Function and its Application*, *J. Appl. Phys.*, 28(6) (1957) 679
+.. [#] P Debye, A M Bueche, *Scattering by an Inhomogeneous Solid*, *J. Appl. Phys.*, 20 (1949) 518
 
-P Debye, A M Bueche, *Scattering by an Inhomogeneous Solid*, *J. Appl. Phys.*,
-20 (1949) 518
+Source
+------
 
-*2013/09/09 - Description reviewed by King, S and Parker, P.*
+`dab.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/dab.py>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** Steve King & Peter Parker **Date:** September 09, 2013
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -65,10 +73,11 @@ Iq = """
     """
 
 def random():
+    """Return a random parameter set for the model."""
     pars = dict(
         scale=10**np.random.uniform(1, 4),
         cor_length=10**np.random.uniform(0.3, 3),
-        #background = 0,
+#        background = 0,
     )
     pars['scale'] /= pars['cor_length']**3
     return pars

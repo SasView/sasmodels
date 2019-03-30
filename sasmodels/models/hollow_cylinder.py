@@ -59,7 +59,14 @@ References
 
 .. [#] L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and
    Neutron Scattering*, Plenum Press, New York, (1987)
-L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949). 
+.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+
+Source
+------
+
+`hollow_cylinder.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/hollow_cylinder.py>`_
+
+`hollow_cylinder.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/hollow_cylinder.c>`_
 
 Authorship and Verification
 ----------------------------
@@ -68,6 +75,7 @@ Authorship and Verification
 * **Last Modified by:** Paul Butler **Date:** September 06, 2018
    (corrected VR calculation)
 * **Last Reviewed by:** Paul Butler **Date:** September 06, 2018
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 from __future__ import division
 
@@ -101,13 +109,15 @@ parameters = [
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "hollow_cylinder.c"]
 have_Fq = True
-effective_radius_type = [
-    "excluded volume", "equivalent outer volume sphere", "outer radius", "half length",
+radius_effective_modes = [
+    "excluded volume", "equivalent outer volume sphere",
+    "outer radius", "half length",
     "half outer min dimension", "half outer max dimension",
     "half outer diagonal",
     ]
 
 def random():
+    """Return a random parameter set for the model."""
     length = 10**np.random.uniform(1, 4.7)
     outer_radius = 10**np.random.uniform(1, 4.7)
     # Use a distribution with a preference for thin shell or thin core
@@ -129,22 +139,38 @@ demo = dict(scale=1.0, background=0.0, length=400.0, radius=20.0,
             radius_pd=.2, radius_pd_n=9,
             theta_pd=10, theta_pd_n=5,
            )
+
+def r_eff(radius, thickness, length):
+    """R_eff from excluded volume"""
+    radius += thickness
+    return (0.5*(0.75*radius*(2.0*radius*length
+                              + (radius + length)*(pi*radius + length))
+                )**(1./3.))
+
+def shell_volume(radius, thickness, length):
+    """shell volume for parameter set"""
+    return pi*((radius+thickness)**2-radius**2)*length
+
+def form_shell_ratio(radius, thickness, length):
+    """form:shell ratio"""
+    return (radius+thickness)**2/((radius+thickness)**2 - radius**2)
+
 q = 0.1
 # april 6 2017, rkh added a 2d unit test, assume correct!
 qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
-radius = parameters[0][2]
-thickness = parameters[1][2]
-length = parameters[2][2]
+test_pars = [
+    parameters[0][2], # radius
+    parameters[1][2], # thickness
+    parameters[2][2], # length
+]
 # Parameters for unit tests
 tests = [
     [{}, 0.00005, 1764.926],
     [{}, 0.1, None, None,
-     0.5*(0.75*(radius+thickness)*(2.0*(radius+thickness)*length + ((radius+thickness) + length)*(pi*(radius+thickness) + length)))**(1./3.),  # R_eff from excluded volume
-     pi*((radius+thickness)**2-radius**2)*length,  # shell volume
-     (radius+thickness)**2/((radius+thickness)**2 - radius**2), # form:shell ratio
+     r_eff(*test_pars), shell_volume(*test_pars), form_shell_ratio(*test_pars),
     ],
     [{}, 0.001, 1756.76],
     [{}, (qx, qy), 2.36885476192],
 ]
-del qx, qy  # not necessary to delete, but cleaner
+del qx, qy, test_pars  # not necessary to delete, but cleaner

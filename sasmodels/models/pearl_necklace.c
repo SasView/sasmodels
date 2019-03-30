@@ -85,7 +85,7 @@ radius_from_volume(double radius, double edge_sep, double thick_string, double f
 }
 
 static double
-effective_radius(int mode, double radius, double edge_sep, double thick_string, double fp_num_pearls)
+radius_effective(int mode, double radius, double edge_sep, double thick_string, double fp_num_pearls)
 {
     switch (mode) {
     default:

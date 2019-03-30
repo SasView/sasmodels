@@ -25,6 +25,19 @@ References
 ----------
 
 None.
+
+Source
+------
+
+`gaussian_peak.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/gaussian_peak.py>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -50,6 +63,7 @@ Iq = """
     """
 
 def random():
+    """Return a random parameter set for the model."""
     peak_pos = 10**np.random.uniform(-3, -1)
     sigma = 10**np.random.uniform(-1.3, -0.3)*peak_pos
     scale = 10**np.random.uniform(0, 4)

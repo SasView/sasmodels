@@ -50,16 +50,24 @@ References
 .. [#teixeira] J Teixeira, *J. Appl. Cryst.*, 21 (1988) 781-785
 .. [#Kline]  S R Kline, *J Appl. Cryst.*, 39 (2006) 895
 
+Source
+------
+
+`fractal_core_shell.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/fractal_core_shell.py>`_
+
+`fractal_core_shell.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/fractal_core_shell.c>`_
+
 Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Butler and Paul Kienzle **Date:** November 27, 2016
 * **Last Reviewed by:** Paul Butler and Paul Kienzle **Date:** November 27, 2016
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
-from numpy import pi, inf
+from numpy import inf
 
 name = "fractal_core_shell"
 title = "Scattering from a fractal structure formed from core shell spheres"
@@ -97,6 +105,7 @@ source = ["lib/sas_3j1x_x.c", "lib/sas_gamma.c", "lib/core_shell.c",
           "lib/fractal_sq.c", "fractal_core_shell.c"]
 
 def random():
+    """Return a random parameter set for the model."""
     outer_radius = 10**np.random.uniform(0.7, 4)
     # Use a distribution with a preference for thin shell or thin core
     # Avoid core,shell radii < 1
@@ -125,6 +134,7 @@ demo = dict(scale=0.05,
             fractal_dim=2.0,
             cor_length=100.0)
 
+# TODO: why is there an ER function here?
 def ER(radius, thickness):
     """
         Equivalent radius
@@ -135,20 +145,22 @@ def ER(radius, thickness):
 
 #tests = [[{'radius': 20.0, 'thickness': 10.0}, 'ER', 30.0],
 tests = [
-#         # At some point the SasView 3.x test result was deemed incorrect. The
-          #following tests were verified against NIST IGOR macros ver 7.850.
-          #NOTE: NIST macros do only provide for a polydispers core (no option
-          #for a poly shell or for a monodisperse core.  The results seemed
-          #extremely sensitive to the core PD, varying non monotonically all
-          #the way to a PD of 1e-6. From 1e-6 to 1e-9 no changes in the
-          #results were observed and the values below were taken using PD=1e-9.
-          #Non-monotonically = I(0.001)=188 to 140 to 177 back to 160 etc.
-         [{'radius': 20.0,
-           'thickness': 5.0,
-           'sld_core': 3.5,
-           'sld_shell': 1.0,
-           'sld_solvent': 6.35,
-           'volfraction': 0.05,
-           'background': 0.0},
-           [0.001,0.00291,0.0107944,0.029923,0.100726,0.476304],
-           [177.146,165.151,84.1596,20.1466,1.40906,0.00622666]]]
+    # At some point the SasView 3.x test result was deemed incorrect.  The
+    # following tests were verified against NIST IGOR macros ver 7.850.
+    # NOTE: NIST macros do only provide for a polydispers core (no option
+    # for a poly shell or for a monodisperse core.  The results seemed
+    # extremely sensitive to the core PD, varying non monotonically all
+    # the way to a PD of 1e-6. From 1e-6 to 1e-9 no changes in the
+    # results were observed and the values below were taken using PD=1e-9.
+    # Non-monotonically = I(0.001)=188 to 140 to 177 back to 160 etc.
+    [{'radius': 20.0,
+      'thickness': 5.0,
+      'sld_core': 3.5,
+      'sld_shell': 1.0,
+      'sld_solvent': 6.35,
+      'volfraction': 0.05,
+      'background': 0.0},
+     [0.001, 0.00291, 0.0107944, 0.029923, 0.100726, 0.476304],
+     [177.146, 165.151, 84.1596, 20.1466, 1.40906, 0.00622666]
+    ]
+]

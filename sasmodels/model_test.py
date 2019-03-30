@@ -4,9 +4,11 @@ Run model unit tests.
 
 Usage::
 
-    python -m sasmodels.model_test [opencl|cuda|dll] model1 model2 ...
+    python -m sasmodels.model_test [opencl|cuda|dll|all] model1 model2 ...
 
-    if model1 is 'all', then all except the remaining models will be tested
+If model1 is 'all', then all except the remaining models will be tested.
+Subgroups are also possible, such as 'py', 'single' or '1d'.  See
+:func:`core.list_models` for details.
 
 Each model is tested using the default parameters at q=0.1, (qx, qy)=(0.1, 0.1),
 and Fq is called to make sure R_eff, volume and volume ratio are computed.
@@ -44,6 +46,7 @@ Precision defaults to 5 digits (relative).
 """
 from __future__ import print_function
 
+import argparse
 import sys
 import unittest
 import traceback
@@ -57,7 +60,6 @@ except ImportError:
 
 import numpy as np  # type: ignore
 
-from . import core
 from .core import list_models, load_model_info, build_model
 from .direct_model import call_kernel, call_Fq
 from .exception import annotate_exception
@@ -88,10 +90,12 @@ def make_suite(loaders, models):
     """
     suite = unittest.TestSuite()
 
-    if models[0] in core.KINDS:
+    try:
+        # See if the first model parses as a model group
+        group = list_models(models[0])
         skip = models[1:]
-        models = list_models(models[0])
-    else:
+        models = group
+    except Exception:
         skip = []
     for model_name in models:
         if model_name not in skip:
@@ -131,10 +135,10 @@ def _add_model_to_suite(loaders, suite, model_info):
         test_name = "%s-python"%model_info.name
         test_method_name = "test_%s_python" % model_info.id
         test = ModelTestCase(test_name, model_info,
-                                test_method_name,
-                                platform="dll",  # so that
-                                dtype="double",
-                                stash=stash)
+                             test_method_name,
+                             platform="dll",  # so that
+                             dtype="double",
+                             stash=stash)
         suite.addTest(test)
     else:   # kernel implemented in C
 
@@ -143,10 +147,10 @@ def _add_model_to_suite(loaders, suite, model_info):
             test_name = "%s-dll"%model_info.name
             test_method_name = "test_%s_dll" % model_info.id
             test = ModelTestCase(test_name, model_info,
-                                    test_method_name,
-                                    platform="dll",
-                                    dtype="double",
-                                    stash=stash)
+                                 test_method_name,
+                                 platform="dll",
+                                 dtype="double",
+                                 stash=stash)
             suite.addTest(test)
 
         # test using opencl if desired and available
@@ -158,24 +162,24 @@ def _add_model_to_suite(loaders, suite, model_info):
             # single precision.  The choice is determined by the
             # presence of *single=False* in the model file.
             test = ModelTestCase(test_name, model_info,
-                                    test_method_name,
-                                    platform="ocl", dtype=None,
-                                    stash=stash)
+                                 test_method_name,
+                                 platform="ocl", dtype=None,
+                                 stash=stash)
             #print("defining", test_name)
             suite.addTest(test)
 
         # test using cuda if desired and available
         if 'cuda' in loaders and use_cuda():
-            test_name = "%s-cuda"%model_name
+            test_name = "%s-cuda" % model_info.id
             test_method_name = "test_%s_cuda" % model_info.id
             # Using dtype=None so that the models that are only
             # correct for double precision are not tested using
             # single precision.  The choice is determined by the
             # presence of *single=False* in the model file.
             test = ModelTestCase(test_name, model_info,
-                                    test_method_name,
-                                    platform="cuda", dtype=None,
-                                    stash=stash)
+                                 test_method_name,
+                                 platform="cuda", dtype=None,
+                                 stash=stash)
             #print("defining", test_name)
             suite.addTest(test)
 
@@ -235,12 +239,16 @@ def _hide_model_case_from_nose():
                     pars = test[0].copy()
                     s_name = pars.pop('@S')
                     ps_test = [pars] + list(test[1:])
+                    #print("PS TEST PARAMS!!!",ps_test)
                     # build the P@S model
                     s_info = load_model_info(s_name)
                     ps_info = product.make_product_info(self.info, s_info)
                     ps_model = build_model(ps_info, dtype=self.dtype,
                                            platform=self.platform)
                     # run the tests
+                    #self.info = ps_model.info
+                    #print("SELF.INFO PARAMS!!!",[p.id for p in self.info.parameters.call_parameters])
+                    #print("PS MODEL PARAMETERS:",[p.id for p in ps_model.info.parameters.call_parameters])
                     results.append(self.run_one(ps_model, ps_test))
 
                 if self.stash:
@@ -298,8 +306,9 @@ def _hide_model_case_from_nose():
             # type: (KernelModel, TestCondition) -> None
             """Run a single test case."""
             user_pars, x, y = test[:3]
-            pars = expand_pars(self.info.parameters, user_pars)
-            invalid = invalid_pars(self.info.parameters, pars)
+            #print("PS MODEL PARAMETERS:",[p.id for p in model.info.parameters.call_parameters])
+            pars = expand_pars(model.info.parameters, user_pars)
+            invalid = invalid_pars(model.info.parameters, pars)
             if invalid:
                 raise ValueError("Unknown parameters in test: " + ", ".join(invalid))
 
@@ -323,32 +332,20 @@ def _hide_model_case_from_nose():
                 return actual
             else:
                 y1 = y
-                y2 = test[3] if not isinstance(test[3], list) else [test[3]]
-                F1, F2, R_eff, volume, volume_ratio = call_Fq(kernel, pars)
-                if F1 is not None:  # F1 is none for models with Iq instead of Fq
-                    self._check_vectors(x, y1, F1, 'F')
-                self._check_vectors(x, y2, F2, 'F^2')
+                y2 = test[3] if isinstance(test[3], list) else [test[3]]
+                F, Fsq, R_eff, volume, volume_ratio = call_Fq(kernel, pars)
+                if F is not None:  # F is none for models with Iq instead of Fq
+                    self._check_vectors(x, y1, F, 'F')
+                self._check_vectors(x, y2, Fsq, 'F^2')
                 self._check_scalar(test[4], R_eff, 'R_eff')
                 self._check_scalar(test[5], volume, 'volume')
                 self._check_scalar(test[6], volume_ratio, 'form:shell ratio')
-                return F2
+                return Fsq
 
         def _check_scalar(self, target, actual, name):
-            if target is None:
-                # smoke test --- make sure it runs and produces a value
-                self.assertTrue(not np.isnan(actual),
-                                'invalid %s: %s' % (name, actual))
-            elif np.isnan(target):
-                # make sure nans match
-                self.assertTrue(np.isnan(actual),
-                                '%s: expected:%s; actual:%s'
-                                % (name, target, actual))
-            else:
-                # is_near does not work for infinite values, so also test
-                # for exact values.
-                self.assertTrue(target == actual or is_near(target, actual, 5),
-                                '%s: expected:%s; actual:%s'
-                                % (name, target, actual))
+            self.assertTrue(is_near(target, actual, 5),
+                            '%s: expected:%s; actual:%s'
+                            % (name, target, actual))
 
         def _check_vectors(self, x, target, actual, name='I'):
             self.assertTrue(len(actual) > 0,
@@ -358,21 +355,9 @@ def _hide_model_case_from_nose():
             self.assertEqual(len(target), len(actual),
                              '%s(...) returned wrong length'%name)
             for xi, yi, actual_yi in zip(x, target, actual):
-                if yi is None:
-                    # smoke test --- make sure it runs and produces a value
-                    self.assertTrue(not np.isnan(actual_yi),
-                                    'invalid %s(%s): %s' % (name, xi, actual_yi))
-                elif np.isnan(yi):
-                    # make sure nans match
-                    self.assertTrue(np.isnan(actual_yi),
-                                    '%s(%s): expected:%s; actual:%s'
-                                    % (name, xi, yi, actual_yi))
-                else:
-                    # is_near does not work for infinite values, so also test
-                    # for exact values.
-                    self.assertTrue(yi == actual_yi or is_near(yi, actual_yi, 5),
-                                    '%s(%s); expected:%s; actual:%s'
-                                    % (name, xi, yi, actual_yi))
+                self.assertTrue(is_near(yi, actual_yi, 5),
+                                '%s(%s): expected:%s; actual:%s'
+                                % (name, xi, target, actual))
 
     return ModelTestCase
 
@@ -384,7 +369,10 @@ def invalid_pars(partable, pars):
     names = set(p.id for p in partable.call_parameters)
     invalid = []
     for par in sorted(pars.keys()):
-        # special handling of R_eff mode, which is not a usual parameter
+        # Ignore the R_eff mode parameter when checking for valid parameters.
+        # It is an allowed parameter for a model even though it does not exist
+        # in the parameter table.  The call_Fq() function pops it from the
+        # parameter list and sends it directly to kernel.Fq().
         if par == product.RADIUS_MODE_ID:
             continue
         parts = par.split('_pd')
@@ -400,13 +388,42 @@ def is_near(target, actual, digits=5):
     # type: (float, float, int) -> bool
     """
     Returns true if *actual* is within *digits* significant digits of *target*.
+
+    *taget* zero and inf should match *actual* zero and inf.  If you want to
+    accept eps for zero, choose a value such as 1e-10, which must match up to
+    +/- 1e-15 when *digits* is the default value of 5.
+
+    If *target* is None, then just make sure that *actual* is not NaN.
+
+    If *target* is NaN, make sure *actual* is NaN.
     """
-    import math
-    shift = 10**math.ceil(math.log10(abs(target)))
-    return abs(target-actual)/shift < 1.5*10**-digits
+    if target is None:
+        # target is None => actual cannot be NaN
+        return not np.isnan(actual)
+    elif target == 0.:
+        # target is 0. => actual must be 0.
+        # Note: if small values are allowed, then use maybe test zero against eps instead?
+        return actual == 0.
+    elif np.isfinite(target):
+        shift = np.ceil(np.log10(abs(target)))
+        return abs(target-actual) < 1.5*10**(shift-digits)
+    elif target == actual:
+        # target is inf => actual must be inf of same sign
+        return True
+    else:
+        # target is NaN => actual must be NaN
+        return np.isnan(target) == np.isnan(actual)
 
 # CRUFT: old interface; should be deprecated and removed
 def run_one(model_name):
+    # type: (str) -> str
+    """
+    [Deprecated] Run the tests associated with *model_name*.
+
+    Use the following instead::
+
+        succss, output = check_model(load_model_info(model_name))
+    """
     # msg = "use check_model(model_info) rather than run_one(model_name)"
     # warnings.warn(msg, category=DeprecationWarning, stacklevel=2)
     try:
@@ -415,11 +432,11 @@ def run_one(model_name):
         output = traceback.format_exc()
         return output
 
-    success, output = check_model(model_info)
+    _, output = check_model(model_info)
     return output
 
 def check_model(model_info):
-    # type: (ModelInfo) -> str
+    # type: (ModelInfo) -> Tuple[bool, str]
     """
     Run the tests for a single model, capturing the output.
 
@@ -473,68 +490,6 @@ def check_model(model_info):
     return result.wasSuccessful(), output
 
 
-def main(*models):
-    # type: (*str) -> int
-    """
-    Run tests given is models.
-
-    Returns 0 if success or 1 if any tests fail.
-    """
-    try:
-        from xmlrunner import XMLTestRunner as TestRunner
-        test_args = {'output': 'logs'}
-    except ImportError:
-        from unittest import TextTestRunner as TestRunner
-        test_args = {}
-
-    if models and models[0] == '-v':
-        verbosity = 2
-        models = models[1:]
-    else:
-        verbosity = 1
-    if models and models[0] == 'opencl':
-        if not use_opencl():
-            print("opencl is not available")
-            return 1
-        loaders = ['opencl']
-        models = models[1:]
-    elif models and models[0] == 'cuda':
-        if not use_cuda():
-            print("cuda is not available")
-            return 1
-        loaders = ['cuda']
-        models = models[1:]
-    elif models and models[0] == 'dll':
-        # TODO: test if compiler is available?
-        loaders = ['dll']
-        models = models[1:]
-    else:
-        loaders = ['dll']
-        if use_opencl():
-            loaders.append('opencl')
-        if use_cuda():
-            loaders.append('cuda')
-    if not models:
-        print("""\
-usage:
-  python -m sasmodels.model_test [-v] [opencl|cuda|dll] model1 model2 ...
-
-If -v is included on the command line, then use verbose output.
-
-If no platform is specified, then models will be tested with dll, and
-if available, OpenCL and CUDA; the compute target is ignored for pure python models.
-
-If model1 is 'all', then all except the remaining models will be tested.
-
-""")
-
-        return 1
-
-    runner = TestRunner(verbosity=verbosity, **test_args)
-    result = runner.run(make_suite(loaders, models))
-    return 1 if result.failures or result.errors else 0
-
-
 def model_tests():
     # type: () -> Iterator[Callable[[], None]]
     """
@@ -548,7 +503,7 @@ def model_tests():
     if use_cuda():
         loaders.append('cuda')
     tests = make_suite(loaders, ['all'])
-    def build_test(test):
+    def _build_test(test):
         # In order for nosetest to show the test name, wrap the test.run_all
         # instance in function that takes the test name as a parameter which
         # will be displayed when the test is run.  Do this as a function so
@@ -566,8 +521,63 @@ def model_tests():
         #     return lambda name: test.run_all(), test.test_name
 
     for test in tests:
-        yield build_test(test)
+        yield _build_test(test)
+
+
+def main():
+    # type: (*str) -> int
+    """
+    Run tests given is models.
+
+    Returns 0 if success or 1 if any tests fail.
+    """
+    try:
+        from xmlrunner import XMLTestRunner as TestRunner
+        test_args = {'output': 'logs'}
+    except ImportError:
+        from unittest import TextTestRunner as TestRunner
+        test_args = {}
+
+    parser = argparse.ArgumentParser(description="Test SasModels Models")
+    parser.add_argument("-v", "--verbose", action="store_const",
+                        default=1, const=2, help="Use verbose output")
+    parser.add_argument("-e", "--engine", default="all",
+                        help="Engines on which to run the test.  "
+                        "Valid values are opencl, cuda, dll, and all. "
+                        "Defaults to all if no value is given")
+    parser.add_argument("models", nargs="*",
+                        help="The names of the models to be tested.  "
+                        "If the first model is 'all', then all but the listed "
+                        "models will be tested.  See core.list_models() for "
+                        "names of other groups, such as 'py' or 'single'.")
+    opts = parser.parse_args()
+
+    if opts.engine == "opencl":
+        if not use_opencl():
+            print("opencl is not available")
+            return 1
+        loaders = ['opencl']
+    elif opts.engine == "dll":
+        loaders = ["dll"]
+    elif opts.engine == "cuda":
+        if not use_cuda():
+            print("cuda is not available")
+            return 1
+        loaders = ['cuda']
+    elif opts.engine == "all":
+        loaders = ['dll']
+        if use_opencl():
+            loaders.append('opencl')
+        if use_cuda():
+            loaders.append('cuda')
+    else:
+        print("unknown engine " + opts.engine)
+        return 1
+
+    runner = TestRunner(verbosity=opts.verbose, **test_args)
+    result = runner.run(make_suite(loaders, opts.models))
+    return 1 if result.failures or result.errors else 0
 
 
 if __name__ == "__main__":
-    sys.exit(main(*sys.argv[1:]))
+    sys.exit(main())

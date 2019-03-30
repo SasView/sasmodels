@@ -107,15 +107,25 @@ where the $q$ vector is defined as
 References
 ----------
 
-H Benoit, *Comptes Rendus*, 245 (1957) 2244-2247
+.. [#] H Benoit, *Comptes Rendus*, 245 (1957) 2244-2247
+.. [#] B Hammouda, *SANS from Homogeneous Polymer Mixtures - A Unified Overview, Advances in Polym. Sci.* 106 (1993) 87-133
+.. [#] M Hore et al, *Co-Nonsolvency of Poly(n-isopropylacrylamide) in Deuterated Water/Ethanol Mixtures* 46 (2013) 7894-7901
+.. [#] B Hammouda & M-H Kim, *The empirical core-chain model* 247 (2017) 434-440
 
-B Hammouda, *SANS from Homogeneous Polymer Mixtures - A Unified Overview,
-Advances in Polym. Sci.* 106 (1993) 87-133
+Source
+------
 
-M Hore et al, *Co-Nonsolvency of Poly(n-isopropylacrylamide) in Deuterated
-Water/Ethanol Mixtures* 46 (2013) 7894-7901
+`polymer_excl_volume.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/polymer_excl_volume.py>`_
 
-B Hammouda & M-H Kim, *The empirical core-chain model* 247 (2017) 434-440
+`polymer_excl_volume.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/polymer_excl_volume.c>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:** 
+* **Last Modified by:** 
+* **Last Reviewed by:** 
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
@@ -162,6 +172,7 @@ def Iq(q, rg=60.0, porod_exp=3.0):
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
+    """Return a random parameter set for the model."""
     rg = 10**np.random.uniform(0, 4)
     porod_exp = np.random.uniform(1e-3, 6)
     scale = 10**np.random.uniform(1, 5)

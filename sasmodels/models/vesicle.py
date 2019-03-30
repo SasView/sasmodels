@@ -59,6 +59,12 @@ References
 .. [#Guinier1955] A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*, John Wiley and
    Sons, New York, (1955)
 
+Source
+------
+
+`vesicle.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/vesicle.py>`_
+
+`vesicle.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/vesicle.c>`_
 
 Authorship and Verification
 ----------------------------
@@ -66,10 +72,11 @@ Authorship and Verification
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Butler **Date:** March 20, 2016
 * **Last Reviewed by:** Paul Butler **Date:** September 7, 2018
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
-from numpy import pi, inf
+from numpy import inf
 
 name = "vesicle"
 title = "Vesicle model representing a hollow sphere"
@@ -99,9 +106,10 @@ parameters = [["sld", "1e-6/Ang^2", 0.5, [-inf, inf], "sld",
 
 source = ["lib/sas_3j1x_x.c", "vesicle.c"]
 have_Fq = True
-effective_radius_type = ["outer radius"]
+radius_effective_modes = ["outer radius"]
 
 def random():
+    """Return a random parameter set for the model."""
     total_radius = 10**np.random.uniform(1.3, 5)
     radius = total_radius * np.random.uniform(0, 1)
     thickness = total_radius - radius

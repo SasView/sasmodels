@@ -1,24 +1,30 @@
 # Note: model title and parameter table are inserted automatically
 r"""
-This calculates the interparticle structure factor for a square well fluid
-spherical particles. The mean spherical approximation (MSA) closure was
-used for this calculation, and is not the most appropriate closure for
-an attractive interparticle potential. This solution has been compared
-to Monte Carlo simulations for a square well fluid, showing this calculation
-to be limited in applicability to well depths $\epsilon < 1.5$ kT and
-volume fractions $\phi < 0.08$.
+Calculates the interparticle structure factor for a hard sphere fluid
+with a narrow, attractive, square well potential. **The Mean Spherical
+Approximation (MSA) closure relationship is used, but it is not the most
+appropriate closure for an attractive interparticle potential.** However,
+the solution has been compared to Monte Carlo simulations for a square
+well fluid and these show the MSA calculation to be limited to well
+depths $\epsilon < 1.5$ kT and volume fractions $\phi < 0.08$.
 
 Positive well depths correspond to an attractive potential well. Negative
 well depths correspond to a potential "shoulder", which may or may not be
-physically reasonable. The stickyhardsphere model may be a better choice in
-some circumstances. Computed values may behave badly at extremely small $qR$.
+physically reasonable. The :ref:`stickyhardsphere` model may be a better
+choice in some circumstances.
+
+Computed values may behave badly at extremely small $qR$.
+
+.. note::
+
+   Earlier versions of SasView did not incorporate the so-called
+   $\beta(q)$ ("beta") correction [2] for polydispersity and non-sphericity.
+   This is only available in SasView versions 4.2.2 and higher.
 
 The well width $(\lambda)$ is defined as multiples of the particle diameter
 $(2 R)$.
 
 The interaction potential is:
-
-  .. image:: img/squarewell.png
 
 .. math::
 
@@ -28,9 +34,9 @@ The interaction potential is:
     0 & r \geq 2R\lambda
     \end{cases}
 
-where $r$ is the distance from the center of the sphere of a radius $R$.
+where $r$ is the distance from the center of a sphere of a radius $R$.
 
-In sasview the effective radius may be calculated from the parameters
+In SasView the effective radius may be calculated from the parameters
 used in the form factor $P(q)$ that this $S(q)$ is combined with.
 
 For 2D data: The 2D scattering intensity is calculated in the same way as 1D,
@@ -43,21 +49,36 @@ where the $q$ vector is defined as
 References
 ----------
 
-R V Sharma, K C Sharma, *Physica*, 89A (1977) 213.
+.. [#] R V Sharma, K C Sharma, *Physica*, 89A (1977) 213
+
+.. [#] M Kotlarchyk and S-H Chen, *J. Chem. Phys.*, 79 (1983) 2461-2469
+
+Source
+------
+
+`squarewell.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/squarewell.py>`_
+
+Authorship and Verification
+----------------------------
+
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:** Steve King **Date:** March 27, 2019
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
 from numpy import inf
 
 name = "squarewell"
-title = "Square well structure factor, with MSA closure"
+title = "Square well structure factor with Mean Spherical Approximation closure"
 description = """\
     [Square well structure factor, with MSA closure]
-        Interparticle structure factor S(Q)for a hard sphere fluid with
-        a narrow attractive well. Fits are prone to deliver non-physical
-        parameters, use with care and read the references in the full manual.
-        In sasview the effective radius will be calculated from the
-        parameters used in P(Q).
+        Interparticle structure factor S(Q) for a hard sphere fluid
+    with a narrow attractive well. Fits are prone to deliver non-
+    physical parameters; use with care and read the references in
+    the model documentation.The "beta(q)" correction is available
+    in versions 4.2.2 and higher.
 """
 category = "structure-factor"
 structure_factor = True
@@ -130,6 +151,7 @@ Iq = """
 """
 
 def random():
+    """Return a random parameter set for the model."""
     pars = dict(
         scale=1, background=0,
         radius_effective=10**np.random.uniform(1, 4.7),

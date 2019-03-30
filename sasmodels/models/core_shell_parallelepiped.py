@@ -172,7 +172,14 @@ References
    lipid mixtures*, Johns Hopkins University Thesis (2009) 223-225. `Available
    from Proquest <http://search.proquest.com/docview/304915826?accountid
    =26379>`_
-L. Onsager, Ann. New York Acad. Sci. 51, 627-659 (1949). 
+.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+
+Source
+------
+
+`core_shell_parallelepiped.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/core_shell_parallelepiped.py>`_
+
+`core_shell_parallelepiped.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/core_shell_parallelepiped.c>`_
 
 Authorship and Verification
 ----------------------------
@@ -182,10 +189,11 @@ Authorship and Verification
 * **Last Modified by:** Paul Kienzle **Date:** October 17, 2017
 * **Last Reviewed by:** Paul Butler **Date:** May 24, 2018 - documentation
   updated
+* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
-from numpy import pi, inf, sqrt, cos, sin
+from numpy import inf
 
 name = "core_shell_parallelepiped"
 title = "Rectangular solid with a core-shell structure."
@@ -227,8 +235,8 @@ parameters = [["sld_core", "1e-6/Ang^2", 1, [-inf, inf], "sld",
 
 source = ["lib/gauss76.c", "core_shell_parallelepiped.c"]
 have_Fq = True
-effective_radius_type = [
-    "equivalent cylinder excluded volume", 
+radius_effective_modes = [
+    "equivalent cylinder excluded volume",
     "equivalent volume sphere",
     "half outer length_a", "half outer length_b", "half outer length_c",
     "equivalent circular cross-section",
@@ -236,6 +244,7 @@ effective_radius_type = [
     ]
 
 def random():
+    """Return a random parameter set for the model."""
     outer = 10**np.random.uniform(1, 4.7, size=3)
     thick = np.random.beta(0.5, 0.5, size=3)*(outer-2) + 1
     length = outer - thick
@@ -268,7 +277,7 @@ demo = dict(scale=1, background=0.0,
 # rkh 7/4/17 add random unit test for 2d, note make all params different,
 # 2d values not tested against other codes or models
 if 0:  # pak: model rewrite; need to update tests
-    qx, qy = 0.2 * cos(pi/6.), 0.2 * sin(pi/6.)
+    qx, qy = 0.2 * np.cos(np.pi/6.), 0.2 * np.sin(np.pi/6.)
     tests = [[{}, 0.2, 0.533149288477],
              [{}, [0.2], [0.533149288477]],
              [{'theta':10.0, 'phi':20.0}, (qx, qy), 0.0853299803222],
