@@ -99,7 +99,7 @@ parameters = [["sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "sld",
 
 source = ["lib/sas_3j1x_x.c", "core_multi_shell.c"]
 have_Fq = True
-effective_radius_type = ["outer radius", "core radius"]
+radius_effective_modes = ["outer radius", "core radius"]
 
 def random():
     """Return a random parameter set for the model."""

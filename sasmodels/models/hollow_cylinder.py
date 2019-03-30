@@ -101,7 +101,7 @@ parameters = [
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "hollow_cylinder.c"]
 have_Fq = True
-effective_radius_type = [
+radius_effective_modes = [
     "excluded volume", "equivalent outer volume sphere",
     "outer radius", "half length",
     "half outer min dimension", "half outer max dimension",

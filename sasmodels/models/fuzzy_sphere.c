@@ -4,7 +4,7 @@ static double form_volume(double radius, double fuzziness)
 }
 
 static double
-effective_radius(int mode, double radius, double fuzziness)
+radius_effective(int mode, double radius, double fuzziness)
 {
     switch (mode) {
     default:

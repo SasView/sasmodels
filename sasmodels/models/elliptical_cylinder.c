@@ -40,7 +40,7 @@ radius_from_diagonal(double radius_minor, double r_ratio, double length)
 }
 
 static double
-effective_radius(int mode, double radius_minor, double r_ratio, double length)
+radius_effective(int mode, double radius_minor, double r_ratio, double length)
 {
     switch (mode) {
     default:

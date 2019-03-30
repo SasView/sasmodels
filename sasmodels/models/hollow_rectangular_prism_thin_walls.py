@@ -108,7 +108,7 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
 
 source = ["lib/gauss76.c", "hollow_rectangular_prism_thin_walls.c"]
 have_Fq = True
-effective_radius_type = [
+radius_effective_modes = [
     "equivalent cylinder excluded volume", "equivalent outer volume sphere",
     "half length_a", "half length_b", "half length_c",
     "equivalent outer circular cross-section",

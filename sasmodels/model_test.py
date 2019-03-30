@@ -239,12 +239,16 @@ def _hide_model_case_from_nose():
                     pars = test[0].copy()
                     s_name = pars.pop('@S')
                     ps_test = [pars] + list(test[1:])
+                    #print("PS TEST PARAMS!!!",ps_test)
                     # build the P@S model
                     s_info = load_model_info(s_name)
                     ps_info = product.make_product_info(self.info, s_info)
                     ps_model = build_model(ps_info, dtype=self.dtype,
                                            platform=self.platform)
                     # run the tests
+                    #self.info = ps_model.info
+                    #print("SELF.INFO PARAMS!!!",[p.id for p in self.info.parameters.call_parameters])
+                    #print("PS MODEL PARAMETERS:",[p.id for p in ps_model.info.parameters.call_parameters])
                     results.append(self.run_one(ps_model, ps_test))
 
                 if self.stash:
@@ -302,8 +306,9 @@ def _hide_model_case_from_nose():
             # type: (KernelModel, TestCondition) -> None
             """Run a single test case."""
             user_pars, x, y = test[:3]
-            pars = expand_pars(self.info.parameters, user_pars)
-            invalid = invalid_pars(self.info.parameters, pars)
+            #print("PS MODEL PARAMETERS:",[p.id for p in model.info.parameters.call_parameters])
+            pars = expand_pars(model.info.parameters, user_pars)
+            invalid = invalid_pars(model.info.parameters, pars)
             if invalid:
                 raise ValueError("Unknown parameters in test: " + ", ".join(invalid))
 
@@ -327,32 +332,20 @@ def _hide_model_case_from_nose():
                 return actual
             else:
                 y1 = y
-                y2 = test[3] if not isinstance(test[3], list) else [test[3]]
-                F1, F2, R_eff, volume, volume_ratio = call_Fq(kernel, pars)
-                if F1 is not None:  # F1 is none for models with Iq instead of Fq
-                    self._check_vectors(x, y1, F1, 'F')
-                self._check_vectors(x, y2, F2, 'F^2')
+                y2 = test[3] if isinstance(test[3], list) else [test[3]]
+                F, Fsq, R_eff, volume, volume_ratio = call_Fq(kernel, pars)
+                if F is not None:  # F is none for models with Iq instead of Fq
+                    self._check_vectors(x, y1, F, 'F')
+                self._check_vectors(x, y2, Fsq, 'F^2')
                 self._check_scalar(test[4], R_eff, 'R_eff')
                 self._check_scalar(test[5], volume, 'volume')
                 self._check_scalar(test[6], volume_ratio, 'form:shell ratio')
-                return F2
+                return Fsq
 
         def _check_scalar(self, target, actual, name):
-            if target is None:
-                # smoke test --- make sure it runs and produces a value
-                self.assertTrue(not np.isnan(actual),
-                                'invalid %s: %s' % (name, actual))
-            elif np.isnan(target):
-                # make sure nans match
-                self.assertTrue(np.isnan(actual),
-                                '%s: expected:%s; actual:%s'
-                                % (name, target, actual))
-            else:
-                # is_near does not work for infinite values, so also test
-                # for exact values.
-                self.assertTrue(target == actual or is_near(target, actual, 5),
-                                '%s: expected:%s; actual:%s'
-                                % (name, target, actual))
+            self.assertTrue(is_near(target, actual, 5),
+                            '%s: expected:%s; actual:%s'
+                            % (name, target, actual))
 
         def _check_vectors(self, x, target, actual, name='I'):
             self.assertTrue(len(actual) > 0,
@@ -362,21 +355,9 @@ def _hide_model_case_from_nose():
             self.assertEqual(len(target), len(actual),
                              '%s(...) returned wrong length'%name)
             for xi, yi, actual_yi in zip(x, target, actual):
-                if yi is None:
-                    # smoke test --- make sure it runs and produces a value
-                    self.assertTrue(not np.isnan(actual_yi),
-                                    'invalid %s(%s): %s' % (name, xi, actual_yi))
-                elif np.isnan(yi):
-                    # make sure nans match
-                    self.assertTrue(np.isnan(actual_yi),
-                                    '%s(%s): expected:%s; actual:%s'
-                                    % (name, xi, yi, actual_yi))
-                else:
-                    # is_near does not work for infinite values, so also test
-                    # for exact values.
-                    self.assertTrue(yi == actual_yi or is_near(yi, actual_yi, 5),
-                                    '%s(%s); expected:%s; actual:%s'
-                                    % (name, xi, yi, actual_yi))
+                self.assertTrue(is_near(yi, actual_yi, 5),
+                                '%s(%s): expected:%s; actual:%s'
+                                % (name, xi, target, actual))
 
     return ModelTestCase
 
@@ -388,7 +369,10 @@ def invalid_pars(partable, pars):
     names = set(p.id for p in partable.call_parameters)
     invalid = []
     for par in sorted(pars.keys()):
-        # special handling of R_eff mode, which is not a usual parameter
+        # Ignore the R_eff mode parameter when checking for valid parameters.
+        # It is an allowed parameter for a model even though it does not exist
+        # in the parameter table.  The call_Fq() function pops it from the
+        # parameter list and sends it directly to kernel.Fq().
         if par == product.RADIUS_MODE_ID:
             continue
         parts = par.split('_pd')
@@ -404,10 +388,31 @@ def is_near(target, actual, digits=5):
     # type: (float, float, int) -> bool
     """
     Returns true if *actual* is within *digits* significant digits of *target*.
+
+    *taget* zero and inf should match *actual* zero and inf.  If you want to
+    accept eps for zero, choose a value such as 1e-10, which must match up to
+    +/- 1e-15 when *digits* is the default value of 5.
+
+    If *target* is None, then just make sure that *actual* is not NaN.
+
+    If *target* is NaN, make sure *actual* is NaN.
     """
-    import math
-    shift = 10**math.ceil(math.log10(abs(target)))
-    return abs(target-actual)/shift < 1.5*10**-digits
+    if target is None:
+        # target is None => actual cannot be NaN
+        return not np.isnan(actual)
+    elif target == 0.:
+        # target is 0. => actual must be 0.
+        # Note: if small values are allowed, then use maybe test zero against eps instead?
+        return actual == 0.
+    elif np.isfinite(target):
+        shift = np.ceil(np.log10(abs(target)))
+        return abs(target-actual) < 1.5*10**(shift-digits)
+    elif target == actual:
+        # target is inf => actual must be inf of same sign
+        return True
+    else:
+        # target is NaN => actual must be NaN
+        return np.isnan(target) == np.isnan(actual)
 
 # CRUFT: old interface; should be deprecated and removed
 def run_one(model_name):

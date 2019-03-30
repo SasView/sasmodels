@@ -81,7 +81,7 @@ from numpy import inf, exp, sqrt, errstate
 from scipy.special import erf, gamma
 
 category = "shape-independent"
-name = "unified_power_rg"
+name = "unified_power_Rg"
 title = "Unified Power Rg"
 description = """
         The Beaucage model employs the empirical multiple level unified

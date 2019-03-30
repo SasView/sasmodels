@@ -302,7 +302,7 @@ defines the parameters that form the model.
 
 **Note: The order of the parameters in the definition will be the order of the
 parameters in the user interface and the order of the parameters in Fq(), Iq(),
-Iqac(), Iqabc(), form_volume() and shell_volume().
+Iqac(), Iqabc(), radius_effective(), form_volume() and shell_volume().
 And** *scale* **and** *background* **parameters are implicit to all models,
 so they do not need to be included in the parameter table.**
 
@@ -386,7 +386,9 @@ pearl necklace model, or number of shells in the multi-layer vesicle model.
 The optimizers in BUMPS treat all parameters as floating point numbers which
 can take arbitrary values, even for integer parameters, so your model should
 round the incoming parameter value to the nearest integer inside your model
-you should round to the nearest integer.  In C code, you can do this using::
+you should round to the nearest integer.  In C code, you can do this using:
+
+.. code-block:: c
 
     static double
     Iq(double q, ..., double fp_n, ...)
@@ -453,6 +455,12 @@ the code in the `_randomize_one()` function from sasmodels/compare.py.
 Python Models
 .............
 
+.. note::
+
+   Pure python models do not yet support direct computation of $<F(Q)^2>$ or
+   $<F(Q)>^2$. Neither do they support orientational distributions or magnetism
+   (use C models if these are required).
+
 For pure python models, define the *Iq* function::
 
       import numpy as np
@@ -498,22 +506,21 @@ ignored, and not included in the calculation of the weighted polydispersity.
 
 Models should define *form_volume(par1, par2, ...)* where the parameter
 list includes the *volume* parameters in order.  This is used for a weighted
-volume normalization so that scattering is on an absolute scale.  If
-*form_volume* is not defined, then the default *form_volume = 1.0* will be
-used.
+volume normalization so that scattering is on an absolute scale.  For
+solid shapes, the *I(q)* function should use *form_volume* squared
+as its scale factor.  If *form_volume* is not defined, then the default
+*form_volume = 1.0* will be used.
 
 Hollow shapes, where the volume fraction of particle corresponds to the
 material in the shell rather than the volume enclosed by the shape, must
 also define a *shell_volume(par1, par2, ...)* function.  The parameters
-are the same as for *form_volume*.  The *I(q)* calculation should use
-*shell_volume* squared as its scale factor for the volume normalization.
-The structure factor calculation needs *form_volume* in order to properly
-scale the volume fraction parameter, so both functions are required for
-hollow shapes.
-
-**Note: Pure python models do not yet support direct computation of the**
-**average of $F(q)$ and $F^2(q)$. Neither do they support orientational**
-**distributions or magnetism (use C models if these are required).**
+are the same as for *form_volume*.  Here the *I(q)* function should use
+*shell_volume* squared instead of *form_volume* squared so that the scale
+parameter corresponds to the volume fraction of material in the sample.
+The structure factor calculation needs the volume fraction of the filled
+shapes for its calculation, so the volume fraction parameter in the model
+is automatically scaled by *form_volume/shell_volume* prior to calling the
+structure factor.
 
 Embedded C Models
 .................
@@ -524,7 +531,9 @@ Like pure python models, inline C models need to define an *Iq* function::
         return I(q, par1, par2, ...);
     """
 
-This expands into the equivalent C code::
+This expands into the equivalent C code:
+
+.. code-block:: c
 
     double Iq(double q, double par1, double par2, ...);
     double Iq(double q, double par1, double par2, ...)
@@ -535,7 +544,7 @@ This expands into the equivalent C code::
 *form_volume* defines the volume of the shape. As in python models, it
 includes only the volume parameters.
 
-*form_volume* defines the volume of the shell for hollow shapes. As in
+*shell_volume* defines the volume of the shell for hollow shapes. As in
 python models, it includes only the volume parameters.
 
 **source=['fn.c', ...]** includes the listed C source files in the
@@ -567,7 +576,9 @@ or the processor.
 
 Rather than returning NAN from Iq, you must define the *INVALID(v)*.  The
 *v* parameter lets you access all the parameters in the model using
-*v.par1*, *v.par2*, etc. For example::
+*v.par1*, *v.par2*, etc. For example:
+
+.. code-block:: c
 
     #define INVALID(v) (v.bell_radius < v.radius)
 
@@ -582,7 +593,9 @@ rather than $I(q)$.  This is used to compute $\beta = <F(q)>^2/<F^2(q)>$ in
 the decoupling approximation to the structure factor.
 
 Instead of defining the *Iq* function, models can define *Fq* as
-something like::
+something like:
+
+.. code-block:: c
 
     double Fq(double q, double *F1, double *F2, double par1, double par2, ...);
     double Fq(double q, double *F1, double *F2, double par1, double par2, ...)
@@ -614,7 +627,7 @@ be rotated into $(q_a, q_b, q_c)$ points relative to the sample in its
 canonical orientation with $a$-$b$-$c$ aligned with $x$-$y$-$z$ in the
 laboratory frame and beam travelling along $-z$.
 
-The oriented C model (oriented pure Python models are not supported) 
+The oriented C model (oriented pure Python models are not supported)
 is called using *Iqabc(qa, qb, qc, par1, par2, ...)* where
 *par1*, etc. are the parameters to the model.  If the shape is rotationally
 symmetric about *c* then *psi* is not needed, and the model is called
@@ -643,7 +656,9 @@ for
     q_c &= q \cos(\alpha) = q u
 
 Using the $z, w$ values for Gauss-Legendre integration in "lib/gauss76.c", the
-numerical integration is then::
+numerical integration is then:
+
+.. code-block:: c
 
     double outer_sum = 0.0;
     for (int i = 0; i < GAUSS_N; i++) {
@@ -986,7 +1001,9 @@ particular problems:
   following these rules can lead to unexpected values being loaded into
   memory, and wrong answers computed. The conclusion from a very long and
   strange debugging session was that any arrays that you declare in your
-  model should be a multiple of four. For example::
+  model should be a multiple of four. For example:
+
+  .. code-block:: c
 
       double Iq(q, p1, p2, ...)
       {
@@ -1018,43 +1035,77 @@ particle-particle interactions using $I(q) = P(q)*S(q)$ where $P(q)$
 is the form factor and $S(q)$ is the structure factor.  The simplest
 structure factor is the *hardsphere* interaction, which
 uses the effective radius of the form factor as an input to the structure
-factor model.  The effective radius is the average radius of the
-form averaged over all the polydispersity values.
+factor model.  The effective radius is the weighted average over all
+values of the shape in polydisperse systems.
 
-::
+There can be many notions of effective radius, depending on the shape.  For
+a sphere it is clearly just the radius, but for an ellipsoid of revolution
+we provide average curvature, equivalent sphere radius, minimum radius and
+maximum radius.  These options are listed as *radius_effective_modes* in
+the python model defintion, and must be computed by the *radius_effective*
+function which takes the *radius_effective_mode* parameter as an integer,
+along with the various model parameters.  Unlike normal C/Python arrays,
+the first mode is 1, the second is 2, etc.  Mode 0 indicates that the
+effective radius from the shape is to be ignored in favour of the the
+effective radius parameter in the structure factor model.
 
-    def ER(radius, thickness):
-        """Effective radius of a core-shell sphere."""
-        return radius + thickness
 
-Now consider the *core_shell_sphere*, which has a simple effective radius
-equal to the radius of the core plus the thickness of the shell, as
-shown above. Given polydispersity over *(r1, r2, ..., rm)* in radius and
-*(t1, t2, ..., tn)* in thickness, *ER* is called with a mesh
-grid covering all possible combinations of radius and thickness.
-That is, *radius* is *(r1, r2, ..., rm, r1, r2, ..., rm, ...)*
-and *thickness* is *(t1, t1, ... t1, t2, t2, ..., t2, ...)*.
-The *ER* function returns one effective radius for each combination.
-The effective radius calculator weights each of these according to
-the polydispersity distributions and calls the structure factor
-with the average *ER*.
+Consider the core-shell sphere, which defines the following effective radius
+modes in the python model::
 
-::
+    radius_effective_modes = [
+        "outer radius",
+        "core radius",
+    ]
 
-    def VR(radius, thickness):
-        """Sphere and shell volumes for a core-shell sphere."""
-        whole = 4.0/3.0 * pi * (radius + thickness)**3
-        core = 4.0/3.0 * pi * radius**3
-        return whole, whole - core
+and the following function in the C-file for the model:
 
-Core-shell type models have an additional volume ratio which scales
-the structure factor.  The *VR* function returns the volume of
-the whole sphere and the volume of the shell. Like *ER*, there is
-one return value for each point in the mesh grid.
+.. code-block:: c
 
-*NOTE: we may be removing or modifying this feature soon. As of the
-time of writing, core-shell sphere returns (1., 1.) for VR, giving a volume
-ratio of 1.0.*
+    static double
+    radius_effective(int mode, double radius, double thickness)
+    {
+        switch (mode) {
+            case 0: return radius + thickness;
+            case 1: return radius;
+            default: return 0.;
+        }
+    }
+
+    static double
+    form_volume(double radius, double thickness)
+    {
+        return M_4PI_3 * cube(radius + thickness);
+    }
+
+Given polydispersity over *(r1, r2, ..., rm)* in radius and *(t1, t2, ..., tn)*
+in thickness, *radius_effective* is called over a mesh grid covering all
+possible combinations of radius and thickness, with a single *(ri, tj)* pair
+in each call. The weights each of these results according to the
+polydispersity distributions and calls the structure factor with the average
+effective radius.  Similarly, for *form_volume*.
+
+Hollow models have an additional volume ratio which is needed to scale the
+structure factor.  The structure factor uses the volume fraction of the filled
+particles as part of its density estimate, but the scale factor for the
+scattering intensity (as non-solvent volume fraction / volume) is determined
+by the shell volume only.  Therefore the *shell_volume* function is
+needed to compute the form:shell volume ratio, which then scales the
+*volfraction* parameter prior to calling the structure factor calculator.
+In the case of a hollow sphere, this would be:
+
+.. code-block:: c
+
+    static double
+    shell_volume(double radius, double thickness)
+    {
+        double whole = M_4PI_3 * cube(radius + thickness);
+        double core = M_4PI_3 * cube(radius);
+        return whole - core;
+    }
+
+If *shell_volume* is not present, then *form_volume* and *shell_volume* are
+assumed to be equal, and the shape is considered solid.
 
 Unit Tests
 ..........
@@ -1114,7 +1165,7 @@ and a check that the model runs.
 Recommended Testing
 ...................
 
-**NB: For now, this more detailed testing is only possible if you have a 
+**NB: For now, this more detailed testing is only possible if you have a
 SasView build environment available!**
 
 If the model compiles and runs, you can next run the unit tests that
@@ -1252,3 +1303,4 @@ consider adding your model to the
 
 | 2016-10-25 Steve King
 | 2017-05-07 Paul Kienzle - Moved from sasview to sasmodels docs
+| 2019-03-28 Paul Kienzle - Update docs for radius_effective and shell_volume

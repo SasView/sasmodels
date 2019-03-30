@@ -67,7 +67,7 @@ radius_from_curvature(double radius_equat_core, double x_core, double thick_shel
 }
 
 static double
-effective_radius(int mode, double radius_equat_core, double x_core, double thick_shell, double x_polar_shell)
+radius_effective(int mode, double radius_equat_core, double x_core, double thick_shell, double x_polar_shell)
 {
     const double radius_equat_tot = radius_equat_core + thick_shell;
     const double radius_polar_tot = radius_equat_core*x_core + thick_shell*x_polar_shell;

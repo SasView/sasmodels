@@ -89,7 +89,7 @@ parameters = [["sld",         "1e-6/Ang^2",  1, [-inf, inf], "sld",    "Particle
 
 source = ["lib/sas_3j1x_x.c", "fuzzy_sphere.c"]
 have_Fq = True
-effective_radius_type = ["radius", "radius + fuzziness"]
+radius_effective_modes = ["radius", "radius + fuzziness"]
 
 def random():
     """Return a random parameter set for the model."""

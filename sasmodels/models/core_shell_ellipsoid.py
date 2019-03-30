@@ -46,7 +46,6 @@ with separate terms for the core-shell and shell-solvent boundaries.
 where
 
 .. In following equation SK changed radius\_equat\_core to R_e
-
 .. math::
     :nowrap:
 
@@ -152,7 +151,7 @@ parameters = [
 
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "core_shell_ellipsoid.c"]
 have_Fq = True
-effective_radius_type = [
+radius_effective_modes = [
     "average outer curvature", "equivalent volume sphere",
     "min outer radius", "max outer radius",
     ]

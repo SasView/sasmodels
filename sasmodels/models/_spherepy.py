@@ -75,9 +75,9 @@ def form_volume(radius):
     """Calculate volume for sphere"""
     return 1.333333333333333 * pi * radius ** 3
 
-def effective_radius(mode, radius):
+def radius_effective(mode, radius):
     """Calculate R_eff for sphere"""
-    return radius
+    return radius if mode else 0.
 
 def Iq(q, sld, sld_solvent, radius):
     """Calculate I(q) for sphere"""

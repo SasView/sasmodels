@@ -26,7 +26,7 @@
 //  MAGNETIC_PARS : a comma-separated list of indices to the sld
 //      parameters in the parameter table.
 //  CALL_VOLUME(form, shell, table) : assign form and shell values
-//  CALL_EFFECTIVE_RADIUS(type, table) : call the R_eff function
+//  CALL_RADIUS_EFFECTIVE(mode, table) : call the R_eff function
 //  CALL_IQ(q, table) : call the Iq function for 1D calcs.
 //  CALL_IQ_A(q, table) : call the Iq function with |q| for 2D data.
 //  CALL_FQ(q, F1, F2, table) : call the Fq function for 1D calcs.
@@ -303,7 +303,7 @@ void KERNEL_NAME(
     pglobal const double *q,      // nq q values, with padding to boundary
     pglobal double *result,       // nq+1 return values, again with padding
     const double cutoff,          // cutoff in the dispersity weight product
-    int32_t effective_radius_type // which effective radius to compute
+    int32_t radius_effective_mode // which effective radius to compute
     )
 {
 #if defined(USE_GPU)
@@ -721,8 +721,8 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
       weight_norm += weight;
       weighted_form += weight * form;
       weighted_shell += weight * shell;
-      if (effective_radius_type != 0) {
-        weighted_radius += weight * CALL_EFFECTIVE_RADIUS(effective_radius_type, local_values.table);
+      if (radius_effective_mode != 0) {
+        weighted_radius += weight * CALL_RADIUS_EFFECTIVE(radius_effective_mode, local_values.table);
       }
       BUILD_ROTATION();
 

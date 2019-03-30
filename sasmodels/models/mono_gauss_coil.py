@@ -78,7 +78,7 @@ parameters = [
 
 source = ["mono_gauss_coil.c"]
 have_Fq = False
-effective_radius_type = ["R_g", "2R_g", "3R_g", "sqrt(5/3)*R_g"]
+radius_effective_modes = ["R_g", "2R_g", "3R_g", "sqrt(5/3)*R_g"]
 
 
 def random():
