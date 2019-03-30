@@ -4,7 +4,7 @@
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
-.. _Product Models:
+.. _Product_Models:
 
 Fitting Models with Structure Factors
 -------------------------------------
