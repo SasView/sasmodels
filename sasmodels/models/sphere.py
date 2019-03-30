@@ -93,43 +93,56 @@ def random():
 tests = [
      [{}, 0.2, 0.726362], # each test starts with default parameter values inside { }, unless modified. Then Q and expected value of I(Q)
      [{"scale": 1., "background": 0., "sld": 6., "sld_solvent": 1.,
+       "radius": 120.}, [0.01,0.1,0.2], [1.34836265e+04, 6.20114062e+00, 1.04733914e-01]], # each test starts with default parameter values inside { }, unless modified. Then Q and expected value of I(Q)
+     [{"scale": 1., "background": 0., "sld": 6., "sld_solvent": 1.,  # careful tests here R=120 Pd=.2, 
+      #                                        then with S(Q) at default Reff=50 (but this gets changeded to 120) phi=0,2
        "radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
-      0.2, 0.2288431],
-    [{"radius": 120., "radius_pd": 0.02, "radius_pd_n":45},
-      0.2, 792.0646662454202, 1166737.0473152, 120.0, 7246723.820358589, 1.0], # the longer list here checks  F1, F2, R_eff, volume, volume_ratio = call_Fq(kernel, pars)
+      [0.01,0.1,0.2], [1.74395295e+04, 3.68016987e+00, 2.28843099e-01]],  # a list of Q values and list of expected results is also possible
+    [{"scale": 1., "background": 0., "sld": 6., "sld_solvent": 1.,"radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
+      0.01, 335839.88055473, 1.41045057e+11, 120.0, 8087664.122641933, 1.0], # the longer list here checks  F1, F2, R_eff, volume, volume_ratio = call_Fq(kernel, pars)
+    [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
+      0.1, 482.93824329, 29763977.79867414, 120.0, 8087664.122641933, 1.0], # the longer list here checks  F1, F2, R_eff, volume, volume_ratio = call_Fq(kernel, pars)
+    [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
+      0.2, 1.23330406, 1850806.1197361, 120.0, 8087664.122641933, 1.0], # the longer list here checks  F1, F2, R_eff, volume, volume_ratio = call_Fq(kernel, pars)
    #  But note P(Q) = F2/volume
    #  F and F^2 are "unscaled", with for  n <F F*>S(q) or for beta approx I(q) = n [<F F*> + <F><F*> (S(q) - 1)]
    #  for n the number density and <.> the orientation average, and F = integral rho(r) exp(i q . r) dr.
    #  The number density is volume fraction divided by particle volume.
    #  Effectively, this leaves F = V drho form, where form is the usual 3 j1(qr)/(qr) or whatever depending on the shape.
-   # [{"@S": "hardsphere"},
-   #    0.01, 55.881884232102124], # this is current value, not verified elsewhere yet
-   # [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
-   #   0.2, 1.233304061, [1850806.119736], 120.0, 8087664.1226, 1.0], # the longer list here checks  F1, F2, R_eff, volume, volume_ratio = call_Fq(kernel, pars)
-   # [{"@S": "hardsphere"},
-   #     0.2, 0.14730859242492958], #  this is current value, not verified elsewhere yet
-    # [{"@S": "hardsphere"},
-    #    0.1, 0.7940350343811906], #  this is current value, not verified elsewhere yet
+   # NOTE the @S multiplication by S(Q) also multiplies the answer by volfraction, thus you may like to put in scale at 1/volfraction
     [{"@S": "hardsphere",
      "radius": 120., "radius_pd": 0.2, "radius_pd_n":45,
      "volfraction":0.2,
-     "radius_effective":45.0,     # uses this (check)
+     "radius_effective":45.0,     # uses this as gives different answer to either 50 or 120 (check)
      "structure_factor_mode": 1,  # 0 = normal decoupling approximation, 1 = beta(Q) approx
      "radius_effective_mode": 0   # equivalent sphere, there is only one valid mode for sphere. says -this used r_eff =0 or default 50?
      }, 0.01, 1316.2990966463444 ],
     [{"@S": "hardsphere",
      "radius": 120., "radius_pd": 0.2, "radius_pd_n":45,
      "volfraction":0.2,
-     "radius_effective":50.0,        # hard sphere structure factor
+     #"radius_effective":50.0,        # hard sphere structure factor
      "structure_factor_mode": 1,  # 0 = normal decoupling approximation, 1 = beta(Q) approx
-     "radius_effective_mode": 0   # this used r_eff =0 or default 50?
-     }, 0.01, 1324.7375636587356 ],
+     "radius_effective_mode": 0   # this used default 50?
+     }, [0.01,0.1,0.2], [1.32473756e+03, 7.36633631e-01, 4.67686201e-02]  ],
     [{"@S": "hardsphere",
      "radius": 120., "radius_pd": 0.2, "radius_pd_n":45,
      "volfraction":0.2,
-     "radius_effective":50.0,        # hard sphere structure factor
+     "radius_effective":120.0,        # hard sphere structure factor
      "structure_factor_mode": 1,  # 0 = normal decoupling approximation, 1 = beta(Q) approx
-     "radius_effective_mode": 1   # this used 120 ???
-     }, 0.01, 1579.2858949296565 ]
-]
-# putting None for expected result will pass the test if there are no errors from the routine, but without any check on the value of the result
+     "radius_effective_mode": 0   # 1 uses 120, 
+     }, [0.01,0.1,0.2], [1.57928589e+03, 7.37067923e-01, 4.67686197e-02  ]],
+    [{"@S": "hardsphere",
+     "radius": 120., "radius_pd": 0.2, "radius_pd_n":45,
+     "volfraction":0.2,
+     #"radius_effective":120.0,        # hard sphere structure factor
+     "structure_factor_mode": 0,  # 0 = normal decoupling approximation, 1 = beta(Q) approx
+     "radius_effective_mode": 1   # this used 120 from the form factor
+     }, [0.01,0.1,0.2], [1.10112335e+03, 7.41366536e-01, 4.66630207e-02]],
+    [{"@S": "hardsphere",
+     "radius": 120., "radius_pd": 0.2, "radius_pd_n":45,
+     "volfraction":0.2,
+     #"radius_effective":50.0,        # hard sphere structure factor
+     "structure_factor_mode": 0,  # 0 = normal decoupling approximation, 1 = beta(Q) approx
+     "radius_effective_mode": 0   # this used 50 the default for hardsphere
+     }, [0.01,0.1,0.2], [7.82803598e+02, 6.85943611e-01, 4.71586457e-02 ]]
+]# putting None for expected result will pass the test if there are no errors from the routine, but without any check on the value of the result
