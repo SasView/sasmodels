@@ -109,9 +109,9 @@ Source
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
-* **Last Modified by:** 
-* **Last Reviewed by:** 
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 * **Source added by :** Steve King **Date:** March 25, 2019
 """
 
@@ -150,7 +150,7 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
 
 source = ["lib/gauss76.c", "rectangular_prism.c"]
 have_Fq = True
-effective_radius_type = [
+radius_effective_modes = [
     "equivalent cylinder excluded volume", "equivalent volume sphere",
     "half length_a", "half length_b", "half length_c",
     "equivalent circular cross-section", "half ab diagonal", "half diagonal",

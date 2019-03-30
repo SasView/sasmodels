@@ -59,7 +59,7 @@ radius_from_diagonal(double radius, double thick_rim, double thick_face, double 
 }
 
 static double
-effective_radius(int mode, double radius, double thick_rim, double thick_face, double length)
+radius_effective(int mode, double radius, double thick_rim, double thick_face, double length)
 {
     switch (mode) {
     default:

@@ -359,7 +359,7 @@ def vesicle_pe(q,radius=20, thickness=10, sld=4, sld_solvent=1, volfraction=0.03
 #
 #polydispersity for hollow_cylinder
 def hollow_cylinder_pe(q,radius=20, thickness=10, length=80, sld=4, sld_solvent=1, volfraction=0.15,
-        radius_pd=0.1, thickness_pd=0.2, length_pd=0.05, radius_pd_type="gaussian", length_pd_type="gaussian", 
+        radius_pd=0.1, thickness_pd=0.2, length_pd=0.05, radius_pd_type="gaussian", length_pd_type="gaussian",
         thickness_pd_type="gaussian", radius_effective=None, background=0, scale=1,
                  norm='sasview'):
     if norm not in ['sasview', 'sasfit', 'yun']:
@@ -594,7 +594,7 @@ def compare_sasview_sphere(pd_type='schulz'):
 #       NOTE sasview computes its own radius_effective in "target" (the print(r) at end of sasmodels_theory will reveal its value),
 #       this one is only used locally for "actual"
         )
-    target = sasmodels_theory(q, model, effective_radius_mode=0, structure_factor_mode=1, **pars)
+    target = sasmodels_theory(q, model, radius_effective_mode=0, structure_factor_mode=1, **pars)
     actual = sphere_r(q, norm='sasview', **pars)
     title = " ".join(("sasmodels", model, pd_type))
     compare(title, target, actual)
@@ -611,10 +611,10 @@ def compare_sasview_vesicle(pd_type='gaussian'):
         radius=20, thickness=10, sld=4, sld_solvent=1, volfraction=0.03,
         background=0,
         radius_pd=0.01, thickness_pd=0.01, radius_pd_type=pd_type, thickness_pd_type=pd_type,
-        radius_effective=30. ) 
+        radius_effective=30. )
         # equivalent average sphere radius for local "actual" to match what sasview uses, use None to compute average outer radius here,
 
-    target = sasmodels_theory(q, model, effective_radius_mode=0, structure_factor_mode=1, **pars)
+    target = sasmodels_theory(q, model, radius_effective_mode=0, structure_factor_mode=1, **pars)
     actual = vesicle_pe(q, norm='sasview', **pars)
     title = " ".join(("sasmodels", model, pd_type))
     compare(title, target, actual)
@@ -632,9 +632,9 @@ def compare_sasview_hollow_cylinder(pd_type='gaussian'):
         radius=20, thickness=10, length=80, sld=4, sld_solvent=1,
         background=0,
         radius_pd=0.1, thickness_pd=0.0, length_pd=0.0, radius_pd_type=pd_type, thickness_pd_type=pd_type, length_pd_type=pd_type,
-        radius_effective=40.687)  
+        radius_effective=40.687)
         # equivalent average sphere radius for local "actual" to match what sasview uses
-    target = sasmodels_theory(q, model, effective_radius_mode=0, structure_factor_mode=1, **pars)
+    target = sasmodels_theory(q, model, radius_effective_mode=0, structure_factor_mode=1, **pars)
     actual = hollow_cylinder_pe(q, norm='sasview', **pars)
 # RKH monodisp was OK,    actual = hollow_cylinder_theta(q,radius=20, thickness=10, length=80, sld=4, sld_solvent=1 )
     title = " ".join(("sasmodels", model, pd_type))
@@ -655,7 +655,7 @@ def compare_sasview_ellipsoid(pd_type='gaussian'):
         radius_effective=270.7543927018,
 # if change radius_effective to some other value, the S(Q) from sasview does not agree
         )
-    target = sasmodels_theory(q, model, effective_radius_mode=0, structure_factor_mode=1, **pars)
+    target = sasmodels_theory(q, model, radius_effective_mode=0, structure_factor_mode=1, **pars)
     actual = ellipsoid_pe(q, norm='sasview', **pars)
 # RKH test       actual = ellipsoid_theta(q, radius_polar=20, radius_equatorial=400, sld=4, sld_solvent=1, volfraction=0.15, radius_effective=270.)
     title = " ".join(("sasmodels", model, pd_type))

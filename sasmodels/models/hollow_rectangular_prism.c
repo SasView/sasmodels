@@ -29,7 +29,7 @@ radius_from_excluded_volume(double length_a, double b2a_ratio, double c2a_ratio)
 }
 
 static double
-effective_radius(int mode, double length_a, double b2a_ratio, double c2a_ratio, double thickness)
+radius_effective(int mode, double length_a, double b2a_ratio, double c2a_ratio, double thickness)
 // NOTE length_a is external dimension!
 {
     switch (mode) {

@@ -235,7 +235,7 @@ parameters = [["sld_core", "1e-6/Ang^2", 1, [-inf, inf], "sld",
 
 source = ["lib/gauss76.c", "core_shell_parallelepiped.c"]
 have_Fq = True
-effective_radius_type = [
+radius_effective_modes = [
     "equivalent cylinder excluded volume",
     "equivalent volume sphere",
     "half outer length_a", "half outer length_b", "half outer length_c",

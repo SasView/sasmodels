@@ -110,7 +110,7 @@ parameters = [["radius", "Ang", 80.0, [0, inf], "volume",
 
 source = ["lib/sas_Si.c", "lib/sas_3j1x_x.c", "pearl_necklace.c"]
 single = False  # use double precision unless told otherwise
-effective_radius_type = ["equivalent volume sphere"]
+radius_effective_modes = ["equivalent volume sphere"]
 
 def random():
     """Return a random parameter set for the model."""

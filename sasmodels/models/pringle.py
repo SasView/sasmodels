@@ -84,7 +84,7 @@ parameters = [
 
 source = ["lib/polevl.c", "lib/sas_J0.c", "lib/sas_J1.c",
           "lib/sas_JN.c", "lib/gauss76.c", "pringle.c"]
-effective_radius_type = [
+radius_effective_modes = [
     "equivalent cylinder excluded volume",
     "equivalent volume sphere",
     "radius"]

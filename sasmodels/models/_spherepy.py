@@ -47,8 +47,8 @@ Source
 Authorship and Verification
 ----------------------------
 
-* **Author: P Kienzle** 
-* **Last Modified by:** 
+* **Author: P Kienzle**
+* **Last Modified by:**
 * **Last Reviewed by:** S King and P Parker **Date:** 2013/09/09 and 2014/01/06
 * **Source added by :** Steve King **Date:** March 25, 2019
 """
@@ -82,9 +82,9 @@ def form_volume(radius):
     """Calculate volume for sphere"""
     return 1.333333333333333 * pi * radius ** 3
 
-def effective_radius(mode, radius):
+def radius_effective(mode, radius):
     """Calculate R_eff for sphere"""
-    return radius
+    return radius if mode else 0.
 
 def Iq(q, sld, sld_solvent, radius):
     """Calculate I(q) for sphere"""

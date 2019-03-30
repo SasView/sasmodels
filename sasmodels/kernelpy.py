@@ -171,7 +171,7 @@ class PyKernel(Kernel):
         self._volume_args = volume_args
         volume = model_info.form_volume
         shell = model_info.shell_volume
-        radius = model_info.effective_radius
+        radius = model_info.radius_effective
         self._volume = ((lambda: (shell(*volume_args), volume(*volume_args))) if shell and volume
                         else (lambda: [volume(*volume_args)]*2) if volume
                         else (lambda: (1.0, 1.0)))
@@ -179,14 +179,14 @@ class PyKernel(Kernel):
                         else (lambda mode: cbrt(0.75/pi*volume(*volume_args))) if volume
                         else (lambda mode: 1.0))
 
-    def _call_kernel(self, call_details, values, cutoff, magnetic, effective_radius_type):
+    def _call_kernel(self, call_details, values, cutoff, magnetic, radius_effective_mode):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
         if magnetic:
             raise NotImplementedError("Magnetism not implemented for pure python models")
         #print("Calling python kernel")
         #call_details.show(values)
-        radius = ((lambda: 0.0) if effective_radius_type == 0
-                  else (lambda: self._radius(effective_radius_type)))
+        radius = ((lambda: 0.0) if radius_effective_mode == 0
+                  else (lambda: self._radius(radius_effective_mode)))
         self.result = _loops(
             self._parameter_vector, self._form, self._volume, radius,
             self.q_input.nq, call_details, values, cutoff)

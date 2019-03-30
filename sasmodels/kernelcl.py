@@ -576,7 +576,7 @@ class GpuKernel(Kernel):
         self._result_b = cl.Buffer(context, mf.READ_WRITE, width)
 
     def _call_kernel(self, call_details, values, cutoff, magnetic,
-                     effective_radius_type):
+                     radius_effective_mode):
         # type: (CallDetails, np.ndarray, float, bool, int) -> np.ndarray
         env = environment()
         queue = env.queue[self._model.dtype]
@@ -600,7 +600,7 @@ class GpuKernel(Kernel):
             self.q_input.q_b,  # Q values.
             self._result_b,   # Result storage.
             self._as_dtype(cutoff),  # Probability cutoff.
-            np.uint32(effective_radius_type),  # R_eff mode.
+            np.uint32(radius_effective_mode),  # R_eff mode.
         ]
 
         # Call kernel and retrieve results.

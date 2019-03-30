@@ -2,10 +2,10 @@ r"""
 Definition
 ----------
 
-Parameters for this model are the core axial ratio $X_{core}$ and a shell 
-thickness $t_{shell}$, which are more often what we would like to determine 
-and make the model better behaved, particularly when polydispersity is 
-applied, than the four independent radii used in the original parameterization 
+Parameters for this model are the core axial ratio $X_{core}$ and a shell
+thickness $t_{shell}$, which are more often what we would like to determine
+and make the model better behaved, particularly when polydispersity is
+applied, than the four independent radii used in the original parameterization
 of this model.
 
 
@@ -18,7 +18,7 @@ the poles, of a prolate ellipsoid.
 When $X_{core}$ < 1 the core is oblate; when $X_{core}$ > 1 it is prolate.
 $X_{core}$ = 1 is a spherical core.
 
-For a fixed shell thickness $X_{polar shell}$ = 1, to scale $t_{shell}$ 
+For a fixed shell thickness $X_{polar shell}$ = 1, to scale $t_{shell}$
 pro-rata with the radius set or constrain $X_{polar shell}$ = $X_{core}$.
 
 .. note::
@@ -46,7 +46,6 @@ with separate terms for the core-shell and shell-solvent boundaries.
 where
 
 .. In following equation SK changed radius\_equat\_core to R_e
-  
 .. math::
     :nowrap:
 
@@ -75,8 +74,8 @@ and
 $\alpha$ is the angle between the axis of the ellipsoid and $\vec q$,
 $V = (4/3)\pi R_pR_e^2$ is the volume of the ellipsoid , $R_p$ is the
 polar radius along the rotational axis of the ellipsoid, $R_e$ is the
-equatorial radius perpendicular to the rotational axis of the ellipsoid, 
-$t_{shell}$ is the thickness of the shell at the equator, 
+equatorial radius perpendicular to the rotational axis of the ellipsoid,
+$t_{shell}$ is the thickness of the shell at the equator,
 and $\Delta \rho$ (the contrast) is the scattering length density difference,
 either $(\rho_{core} - \rho_{shell})$ or $(\rho_{shell} - \rho_{solvent})$.
 
@@ -160,7 +159,7 @@ parameters = [
 
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "core_shell_ellipsoid.c"]
 have_Fq = True
-effective_radius_type = [
+radius_effective_modes = [
     "average outer curvature", "equivalent volume sphere",
     "min outer radius", "max outer radius",
     ]

@@ -407,7 +407,7 @@ def compare_sasview_ellipsoid(pd_type='gaussian'):
         radius_effective=270.7543927018,
         #radius_effective=12.59921049894873,
         )
-    target = sasmodels_theory(q, model, effective_radius_mode=0, structure_factor_mode=1, **pars)
+    target = sasmodels_theory(q, model, radius_effective_mode=0, structure_factor_mode=1, **pars)
     actual = ellipsoid_pe(q, norm='sasview', **pars)
     title = " ".join(("sasmodels", model, pd_type))
     compare(title, target, actual)

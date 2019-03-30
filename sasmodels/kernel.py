@@ -77,14 +77,14 @@ class Kernel(object):
         built into the model, and do not need an additional scale.
         """
         _, F2, _, shell_volume, _ = self.Fq(call_details, values, cutoff,
-                                            magnetic, effective_radius_type=0)
+                                            magnetic, radius_effective_mode=0)
         combined_scale = values[0]/shell_volume
         background = values[1]
         return combined_scale*F2 + background
     __call__ = Iq
 
     def Fq(self, call_details, values, cutoff, magnetic,
-           effective_radius_type=0):
+           radius_effective_mode=0):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool, int) -> np.ndarray
         r"""
         Returns <F(q)>, <F(q)^2>, effective radius, shell volume and
@@ -142,7 +142,7 @@ class Kernel(object):
         The calculation of $S$ requires the effective radius and the
         volume fraction of the particles.  The model can have several
         different ways to compute effective radius, with the
-        *effective_radius_type* parameter used to select amongst them.  The
+        *radius_effective_mode* parameter used to select amongst them.  The
         volume fraction of particles should be determined from the total
         volume fraction of the form, not just the shell volume fraction.
         This makes a difference for hollow shapes, which need to scale
@@ -152,7 +152,7 @@ class Kernel(object):
         hollow and solid shapes.
         """
         self._call_kernel(call_details, values, cutoff, magnetic,
-                          effective_radius_type)
+                          radius_effective_mode)
         #print("returned",self.q_input.q, self.result)
         nout = 2 if self.info.have_Fq and self.dim == '1d' else 1
         total_weight = self.result[nout*self.q_input.nq + 0]
@@ -164,13 +164,13 @@ class Kernel(object):
         # Note: shell_volume == form_volume for solid objects
         form_volume = self.result[nout*self.q_input.nq + 1]/total_weight
         shell_volume = self.result[nout*self.q_input.nq + 2]/total_weight
-        effective_radius = self.result[nout*self.q_input.nq + 3]/total_weight
+        radius_effective = self.result[nout*self.q_input.nq + 3]/total_weight
         if shell_volume == 0.:
             shell_volume = 1.
         F1 = (self.result[1:nout*self.q_input.nq:nout]/total_weight
               if nout == 2 else None)
         F2 = self.result[0:nout*self.q_input.nq:nout]/total_weight
-        return F1, F2, effective_radius, shell_volume, form_volume/shell_volume
+        return F1, F2, radius_effective, shell_volume, form_volume/shell_volume
 
     def release(self):
         # type: () -> None
@@ -180,7 +180,7 @@ class Kernel(object):
         pass
 
     def _call_kernel(self, call_details, values, cutoff, magnetic,
-                     effective_radius_type):
+                     radius_effective_mode):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool, int) -> np.ndarray
         """
         Call the kernel.  Subclasses defining kernels for particular execution
