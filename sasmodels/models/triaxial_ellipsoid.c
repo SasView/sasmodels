@@ -75,7 +75,7 @@ radius_from_max_dimension(double radius_equat_minor, double radius_equat_major, 
 }
 
 static double
-effective_radius(int mode, double radius_equat_minor, double radius_equat_major, double radius_polar)
+radius_effective(int mode, double radius_equat_minor, double radius_equat_major, double radius_polar)
 {
     switch (mode) {
     default:

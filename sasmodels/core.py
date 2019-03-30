@@ -375,13 +375,13 @@ def test_composite_order():
 def test_composite():
     # type: () -> None
     """Check that model load works"""
+    from .product import RADIUS_ID, VOLFRAC_ID, STRUCTURE_MODE_ID, RADIUS_MODE_ID
     #Test the the model produces the parameters that we would expect
     model = load_model("cylinder@hardsphere*sphere")
     actual = [p.name for p in model.info.parameters.kernel_parameters]
-    target = ("sld sld_solvent radius length theta phi"
-              " radius_effective volfraction "
-              " structure_factor_mode radius_effective_mode"
-              " A_sld A_sld_solvent A_radius").split()
+    target = ["sld", "sld_solvent", "radius", "length", "theta", "phi",
+              RADIUS_ID, VOLFRAC_ID, STRUCTURE_MODE_ID, RADIUS_MODE_ID,
+              "A_sld", "A_sld_solvent", "A_radius"]
     assert target == actual, "%s != %s"%(target, actual)
 
 def list_models_main():

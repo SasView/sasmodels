@@ -264,7 +264,7 @@ class Parameter(object):
     will have a magnitude and a direction, which may be different from
     other sld parameters. The volume parameters are used for calls
     to form_volume within the kernel (required for volume normalization),
-    to shell_volume (for hollow shapes), and to effective_radius (for
+    to shell_volume (for hollow shapes), and to radius_effective (for
     structure factor interactions) respectively.
 
     *description* is a short description of the parameter.  This will
@@ -840,14 +840,14 @@ def make_model_info(kernel_module):
     info.category = getattr(kernel_module, 'category', None)
     info.structure_factor = getattr(kernel_module, 'structure_factor', False)
     # TODO: find Fq by inspection
-    info.effective_radius_type = getattr(kernel_module, 'effective_radius_type', None)
+    info.radius_effective_modes = getattr(kernel_module, 'radius_effective_modes', None)
     info.have_Fq = getattr(kernel_module, 'have_Fq', False)
     info.profile_axes = getattr(kernel_module, 'profile_axes', ['x', 'y'])
     # Note: custom.load_custom_kernel_module assumes the C sources are defined
     # by this attribute.
     info.source = getattr(kernel_module, 'source', [])
     info.c_code = getattr(kernel_module, 'c_code', None)
-    info.effective_radius = getattr(kernel_module, 'effective_radius', None)
+    info.radius_effective = getattr(kernel_module, 'radius_effective', None)
     # TODO: check the structure of the tests
     info.tests = getattr(kernel_module, 'tests', [])
     info.form_volume = getattr(kernel_module, 'form_volume', None) # type: ignore
@@ -960,7 +960,7 @@ class ModelInfo(object):
     have_Fq = False
     #: List of options for computing the effective radius of the shape,
     #: or None if the model is not usable as a form factor model.
-    effective_radius_type = None   # type: List[str]
+    radius_effective_modes = None   # type: List[str]
     #: List of C source files used to define the model.  The source files
     #: should define the *Iq* function, and possibly *Iqac* or *Iqabc* if the
     #: model defines orientation parameters. Files containing the most basic
@@ -988,7 +988,7 @@ class ModelInfo(object):
     #: Only needed for models defined in python that can be used for
     #: monodisperse approximation for non-dilute solutions, P@S.  The first
     #: argument is the integer effective radius mode, with default 0.
-    effective_radius = None  # type: Union[None, Callable[[int, np.ndarray], float]]
+    radius_effective = None  # type: Union[None, Callable[[int, np.ndarray], float]]
     #: Returns *I(q, a, b, ...)* for parameters *a*, *b*, etc. defined
     #: by the parameter table.  *Iq* can be defined as a python function, or
     #: as a C function.  If it is defined in C, then set *Iq* to the body of

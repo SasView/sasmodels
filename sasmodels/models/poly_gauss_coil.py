@@ -57,9 +57,9 @@ Source
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
-* **Last Modified by:** 
-* **Last Reviewed by:** 
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 * **Source added by :** Steve King **Date:** March 25, 2019
 """
 

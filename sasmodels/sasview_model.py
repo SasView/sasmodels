@@ -298,7 +298,7 @@ def _generate_model_attributes(model_info):
     attrs['description'] = model_info.description
     attrs['category'] = model_info.category
     attrs['is_structure_factor'] = model_info.structure_factor
-    attrs['is_form_factor'] = model_info.effective_radius_type is not None
+    attrs['is_form_factor'] = model_info.radius_effective_modes is not None
     attrs['is_multiplicity_model'] = variants[0] > 1
     attrs['multiplicity_info'] = variants
     attrs['orientation_params'] = tuple(orientation_params)
@@ -762,7 +762,7 @@ class SasviewModel(object):
         # extending _calculate_Iq so that it calls:
         #    if er_mode > 0:
         #        res = calculator.Fq(call_details, values, cutoff=self.cutoff,
-        #                            magnetic=False, effective_radius_type=mode)
+        #                            magnetic=False, radius_effective_mode=mode)
         #        R_eff, form_shell_ratio = res[2], res[4]
         #        return R_eff, form_shell_ratio
         # Then use the following in calculate_ER:

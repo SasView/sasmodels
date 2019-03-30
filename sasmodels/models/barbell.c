@@ -84,7 +84,7 @@ radius_from_totallength(double radius_bell, double radius, double length)
 }
 
 static double
-effective_radius(int mode, double radius_bell, double radius, double length)
+radius_effective(int mode, double radius_bell, double radius, double length)
 {
     switch (mode) {
     default:

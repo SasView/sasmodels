@@ -14,7 +14,7 @@ double form_volume(double radius_lg, double radius_sm, double penetration)
 }
 
 static double
-effective_radius(int mode, double radius_lg, double radius_sm, double penetration)
+radius_effective(int mode, double radius_lg, double radius_sm, double penetration)
 {
     switch (mode) {
     default:

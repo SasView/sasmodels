@@ -160,7 +160,7 @@ parameters = [["sld_lg", "1e-6/Ang^2", -0.4, [-inf, inf], "sld",
              ]
 
 source = ["lib/sas_3j1x_x.c", "raspberry.c"]
-effective_radius_type = ["radius_large", "radius_outer"]
+radius_effective_modes = ["radius_large", "radius_outer"]
 
 def random():
     """Return a random parameter set for the model."""

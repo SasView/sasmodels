@@ -25,8 +25,8 @@ of the q vector which is defined as
 Definitions
 -----------
 
-The function is calculated in a similar way to that for the 
-:ref:`flexible-cylinder` model in reference [1] below using the author's 
+The function is calculated in a similar way to that for the
+:ref:`flexible-cylinder` model in reference [1] below using the author's
 "Method 3 With Excluded Volume".
 
 The model is a parameterization of simulations of a discrete representation of
@@ -70,7 +70,7 @@ chain/cylinder and solvent respectively. The *scale*, and the contrast are both
 multiplicative factors in the model and are perfectly correlated. One or both of
 these parameters must be held fixed during model fitting.
 
-**This is a model with complex behaviour depending on the ratio of** $L/b$ **and the 
+**This is a model with complex behaviour depending on the ratio of** $L/b$ **and the
 reader is strongly encouraged to read reference [1] before use.**
 
 References
@@ -94,7 +94,7 @@ Source
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
+* **Author:**
 * **Last Modified by:** Richard Heenan **Date:** December, 2016
 * **Last Reviewed by:** Steve King **Date:** March 26, 2019
 * **Source added by :** Steve King **Date:** March 25, 2019

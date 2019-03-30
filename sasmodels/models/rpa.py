@@ -33,7 +33,7 @@ The models are based on the papers by Akcasu *et al.* [1] and by
 Hammouda [2] assuming the polymer follows Gaussian statistics such
 that $R_g^2 = n b^2/6$ where $b$ is the statistical segment length and $n$ is
 the number of statistical segment lengths. A nice tutorial on how these are
-constructed and implemented can be found in chapters 28, 31 and 34, and Part H, 
+constructed and implemented can be found in chapters 28, 31 and 34, and Part H,
 of Hammouda's 'SANS Toolbox' [3].
 
 In brief, the macroscopic cross sections are derived from the general forms

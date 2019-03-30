@@ -1,24 +1,24 @@
 # Note: model title and parameter table are inserted automatically
 r"""
-Calculates the interparticle structure factor for a hard sphere fluid 
-with a narrow, attractive, square well potential. **The Mean Spherical 
-Approximation (MSA) closure relationship is used, but it is not the most 
-appropriate closure for an attractive interparticle potential.** However, 
-the solution has been compared to Monte Carlo simulations for a square 
-well fluid and these show the MSA calculation to be limited to well 
+Calculates the interparticle structure factor for a hard sphere fluid
+with a narrow, attractive, square well potential. **The Mean Spherical
+Approximation (MSA) closure relationship is used, but it is not the most
+appropriate closure for an attractive interparticle potential.** However,
+the solution has been compared to Monte Carlo simulations for a square
+well fluid and these show the MSA calculation to be limited to well
 depths $\epsilon < 1.5$ kT and volume fractions $\phi < 0.08$.
 
 Positive well depths correspond to an attractive potential well. Negative
 well depths correspond to a potential "shoulder", which may or may not be
-physically reasonable. The :ref:`stickyhardsphere` model may be a better 
+physically reasonable. The :ref:`stickyhardsphere` model may be a better
 choice in some circumstances.
 
 Computed values may behave badly at extremely small $qR$.
 
 .. note::
 
-   Earlier versions of SasView did not incorporate the so-called 
-   $\beta(q)$ ("beta") correction [2] for polydispersity and non-sphericity. 
+   Earlier versions of SasView did not incorporate the so-called
+   $\beta(q)$ ("beta") correction [2] for polydispersity and non-sphericity.
    This is only available in SasView versions 4.2.2 and higher.
 
 The well width $(\lambda)$ is defined as multiples of the particle diameter
@@ -61,8 +61,8 @@ Source
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
-* **Last Modified by:** 
+* **Author:**
+* **Last Modified by:**
 * **Last Reviewed by:** Steve King **Date:** March 27, 2019
 * **Source added by :** Steve King **Date:** March 25, 2019
 """
@@ -74,10 +74,10 @@ name = "squarewell"
 title = "Square well structure factor with Mean Spherical Approximation closure"
 description = """\
     [Square well structure factor, with MSA closure]
-        Interparticle structure factor S(Q) for a hard sphere fluid 
+        Interparticle structure factor S(Q) for a hard sphere fluid
     with a narrow attractive well. Fits are prone to deliver non-
-    physical parameters; use with care and read the references in 
-    the model documentation.The "beta(q)" correction is available 
+    physical parameters; use with care and read the references in
+    the model documentation.The "beta(q)" correction is available
     in versions 4.2.2 and higher.
 """
 category = "structure-factor"
