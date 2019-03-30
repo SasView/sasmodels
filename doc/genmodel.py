@@ -178,10 +178,10 @@ def link_sources(model_info):
     #url = "https://github.com/SasView/sasmodels/blob/master"%sasmodels.__version__
     links = ["`%s <%s/sasmodels/models/%s>`_"%(path, url, path) for path in sources]
 
-    sep = u"\n\\ \u25E6 \\ "  # bullet
+    sep = "\n$\\ \\star\\ $ "  # bullet
     body = "\n**Source**\n"
-    #body += "\n\\ " + sep.join(links) + "\n\n"
-    body += "\n\\ " + sep.join(downloads) + "\n\n"
+    #body += "\n" + sep.join(links) + "\n\n"
+    body += "\n" + sep.join(downloads) + "\n\n"
     return body
 
 def gen_docs(model_info):
@@ -221,7 +221,7 @@ def gen_docs(model_info):
         print('------------------------------------------------------------------')
         docstr += insertion
 
-    open(sys.argv[2],'w').write(docstr)
+    open(sys.argv[2], 'w').write(docstr)
 
 def process_model(path):
     # type: (str) -> None
