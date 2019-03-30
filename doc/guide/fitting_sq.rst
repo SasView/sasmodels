@@ -2,7 +2,7 @@
 
 .. Much of the following text was scraped from product.py
 
-.. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
+.. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
 .. _Product Models:
 
@@ -13,48 +13,79 @@ Fitting Models with Structure Factors
 
    This help document is under development
 
-*Product models*, $P@S$ models for short, multiply the structure factor $S(q)$ by
-the form factor $P(q)$, modulated by the *effective radius* of the form factor.
+.. figure:: p_and_s_buttons.png
+
+**Product models**, or $P@S$ models for short, multiply the structure factor
+$S(Q)$ by the form factor $P(Q)$, modulated by the **effective radius** of the
+form factor.
 
 Many of the parameters in $P@S$ models take on specific meanings so that they
 can be handled correctly inside SasView:
 
 * *scale*:
 
-  The *scale* for $P@S$ models should usually be set to 1.0.
+  In simple $P(Q)$ models **scale** often represents the volume fraction of
+  material.
+  
+  In $P@S$ models **scale** should be set to 1.0, as the $P@S$ model contains a
+  **volfraction** parameter.
 
 * *volfraction*:
 
-  For hollow shapes, *volfraction* represents the volume fraction of
-  material but the $S(q)$ calculation needs the volume fraction *enclosed by*
+  The volume fraction of material.
+
+  For hollow shapes, **volfraction** still represents the volume fraction of
+  material but the $S(Q)$ calculation needs the volume fraction *enclosed by*
   *the shape.* SasView scales the user-specified volume fraction by the ratio
   form:shell computed from the average form volume and average shell volume
-  returned from the $P(q)$ calculation (the original *volfraction* is divided
-  by *shell_volume* to compute the number density, and then $P@S$ is scaled
-  by that to get the absolute scaling on the final $I(q)$).
+  returned from the $P(Q)$ calculation (the original volfraction is divided
+  by the shell volume to compute the number density, and then $P@S$ is scaled
+  by that to get the absolute scaling on the final $I(Q)$).
 
 * *radius_effective*:
 
-  If part of the $S(q)$ calculation, the value of *radius_effective* may be
-  polydisperse. If it is calculated by $P(q)$, then it will be the weighted
+  The radial distance determining the range of the $S(Q)$ interaction.
+  
+  This may, or may not, be the same as any "size" parameters describing the
+  form of the shape. For example, in a system containing freely-rotating
+  cylinders, the volume of space each cylinder requires to tumble will be
+  much larger than the volume of the cylinder itself. Thus the effective
+  radius will be larger than either the radius or half-length of the
+  cylinder. It may be sensible to tie or constrain **radius_effective** to one
+  or other of these "size" parameters.
+
+  If just part of the $S(Q)$ calculation, the value of **radius_effective** may
+  be polydisperse. If it is calculated by $P(Q)$, then it will be the weighted
   average of the effective radii computed for the polydisperse shape
   parameters.
 
 * *structure_factor_mode*:
 
-  If the $P@S$ model supports the $\beta(q)$ *correction* [1] then
-  *structure_factor_mode* will appear in the parameter table after the $S(q)$
-  parameters. This mode may be 0 for the local monodisperse approximation:
+  If the $P@S$ model supports the $\beta(Q)$ *decoupling correction* [1] then
+  **structure_factor_mode** will appear in the parameter table after the $S(Q)$
+  parameters.
+  
+  If **structure_factor_mode = 0** then the *local monodisperse approximation*
+  will be used, i.e.:
 
-    $I = (scale / volume)$ x $P$ x $S + background$
+    $I(Q)$ = $(scale$ / $volume)$ x $P(Q)$ x $S(Q)$ + $background$
 
-    or 1 for the beta correction:
+  If **structure_factor_mode = 1** then the $\beta(q)$ correction will be
+  used, i.e.:
 
-    $I = (scale$ x $volfraction / volume)$ x $( <FF>$ + $<F>^2 (S-1) ) + background$
+    $I(Q)$ = $(scale$ x $volfraction$ / $volume)$ x $( <F(Q)^2>$ + $<F(Q)>^2$ x $(S(Q)$ - $1) )$ + $background$
 
-    where $F$
+    where $P(Q)$ = $<|F(Q)|^2>$.
+    
+  This is equivalent to:
+  
+    $I(Q)$ = $(scale$ / $volume)$ x $P(Q)$ x $( 1$ + $\beta(Q)$ x $(S(Q)$ - $1) )$ + $background$
 
-  More options may appear here in future as more complicated operations are
+  The $\beta(Q)$ decoupling approximation has the effect of damping the
+  oscillations in the normal (local monodisperse) $S(Q)$. When $\beta(Q)$ = 1
+  the local monodisperse approximation is recovered.
+
+  More mode options may appear in future as more complicated operations are
   added.
 
 References
@@ -62,8 +93,8 @@ References
 
 .. [#] Kotlarchyk, M.; Chen, S.-H. *J. Chem. Phys.*, 1983, 79, 2461
 
-.. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
+.. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
 *Document History*
 
-| 2019-03-29 Paul Kienzle & Steve King
+| 2019-03-30 Paul Kienzle & Steve King
