@@ -156,6 +156,23 @@ def link_sources(model_info):
     # Link to local copy of the files
     downloads = [":download:`%s <src/%s>`"%(path, path) for path in sources]
 
+    # Could do syntax highlighting on the model files by creating a rst file
+    # beside each source file named containing source file with
+    #
+    #    src/path.rst:
+    #
+    #    .. {{ path.replace('/','_') }}:
+    #
+    #    .. literalinclude:: {{ src/path }}
+    #        :language: {{ "python" if path.endswith('.py') else "c" }}
+    #        :linenos:
+    #
+    # and link to it using
+    #
+    #     colors = [":ref:`%s`"%(path.replace('/','_')) for path in sources]
+    #
+    # Probably need to dump all the rst files into an index.rst to build them.
+
     # Link to github repo (either the tagged sasmodels version or master)
     url = "https://github.com/SasView/sasmodels/blob/v%s"%sasmodels.__version__
     #url = "https://github.com/SasView/sasmodels/blob/master"%sasmodels.__version__
