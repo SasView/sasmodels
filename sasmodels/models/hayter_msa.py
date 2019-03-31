@@ -17,7 +17,7 @@ repulsion between the charged particles.
 
    Earlier versions of SasView did not incorporate the so-called
    $\beta(q)$ ("beta") correction [3] for polydispersity and non-sphericity.
-   This is only available in SasView versions 4.2.2 and higher.
+   This is only available in SasView versions 5.0 and higher.
 
 The salt concentration is used to compute the ionic strength of the solution
 which in turn is used to compute the Debye screening length. There is no
