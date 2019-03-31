@@ -19,7 +19,7 @@ Computed values may behave badly at extremely small $qR$.
 
    Earlier versions of SasView did not incorporate the so-called
    $\beta(q)$ ("beta") correction [2] for polydispersity and non-sphericity.
-   This is only available in SasView versions 4.2.2 and higher.
+   This is only available in SasView versions 5.0 and higher.
 
 The well width $(\lambda)$ is defined as multiples of the particle diameter
 $(2 R)$.

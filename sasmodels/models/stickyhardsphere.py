@@ -55,7 +55,7 @@ the original sticky hard sphere (or "adhesive sphere") model of Baxter [2].
 
    Earlier versions of SasView did not incorporate the so-called
    $\beta(q)$ ("beta") correction [3] for polydispersity and non-sphericity.
-   This is only available in SasView versions 4.2.2 and higher.
+   This is only available in SasView versions 5.0 and higher.
 
 In SasView the effective radius may be calculated from the parameters
 used in the form factor $P(q)$ that this $S(q)$ is combined with.
