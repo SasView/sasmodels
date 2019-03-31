@@ -10,38 +10,41 @@
 Polydispersity & Orientational Distributions
 --------------------------------------------
 
-For some models we can calculate the average intensity for a population of 
-particles that possess size and/or orientational (ie, angular) distributions. 
-In SasView we call the former *polydispersity* but use the parameter *PD* to 
-parameterise both. In other words, the meaning of *PD* in a model depends on 
+For some models we can calculate the average intensity for a population of
+particles that possess size and/or orientational (ie, angular) distributions.
+In SasView we call the former *polydispersity* but use the parameter *PD* to
+parameterise both. In other words, the meaning of *PD* in a model depends on
 the actual parameter it is being applied too.
 
-The resultant intensity is then normalized by the average particle volume such 
+The resultant intensity is then normalized by the average particle volume such
 that
 
 .. math::
 
   P(q) = \text{scale} \langle F^* F \rangle / V + \text{background}
 
-where $F$ is the scattering amplitude and $\langle\cdot\rangle$ denotes an 
+where $F$ is the scattering amplitude and $\langle\cdot\rangle$ denotes an
 average over the distribution $f(x; \bar x, \sigma)$, giving
 
 .. math::
 
-  P(q) = \frac{\text{scale}}{V} \int_\mathbb{R} 
+  P(q) = \frac{\text{scale}}{V} \int_\mathbb{R}
   f(x; \bar x, \sigma) F^2(q, x)\, dx + \text{background}
 
 Each distribution is characterized by a center value $\bar x$ or
 $x_\text{med}$, a width parameter $\sigma$ (note this is *not necessarily*
-the standard deviation, so read the description of the distribution carefully), 
-the number of sigmas $N_\sigma$ to include from the tails of the distribution, 
-and the number of points used to compute the average. The center of the 
-distribution is set by the value of the model parameter.
+the standard deviation, so read the description carefully), the number of
+sigmas $N_\sigma$ to include from the tails of the distribution, and the
+number of points used to compute the average. The center of the distribution
+is set by the value of the model parameter. The meaning of a polydispersity
+parameter *PD* (not to be confused with a molecular weight distributions
+in polymer science) in a model depends on the type of parameter it is being
+applied too.
 
-The distribution width applied to *volume* (ie, shape-describing) parameters 
-is relative to the center value such that $\sigma = \mathrm{PD} \cdot \bar x$. 
-However, the distribution width applied to *orientation* parameters is just 
-$\sigma = \mathrm{PD}$.
+The distribution width applied to *volume* (ie, shape-describing) parameters
+is relative to the center value such that $\sigma = \mathrm{PD} \cdot \bar x$.
+However, the distribution width applied to *orientation* (ie, angle-describing)
+parameters is just $\sigma = \mathrm{PD}$.
 
 $N_\sigma$ determines how far into the tails to evaluate the distribution,
 with larger values of $N_\sigma$ required for heavier tailed distributions.
@@ -51,9 +54,9 @@ will not contribute much to the average may not hold when particles are large.
 This, too, will require increasing $N_\sigma$.
 
 Users should note that the averaging computation is very intensive. Applying
-polydispersion and/or orientational distributions to multiple parameters at 
-the same time, or increasing the number of points in the distribution, will 
-require patience! However, the calculations are generally more robust with 
+polydispersion and/or orientational distributions to multiple parameters at
+the same time, or increasing the number of points in the distribution, will
+require patience! However, the calculations are generally more robust with
 more data points or more angles.
 
 The following distribution functions are provided:
@@ -65,21 +68,21 @@ The following distribution functions are provided:
 *  *Lognormal Distribution*
 *  *Schulz Distribution*
 *  *Array Distribution*
+*  *User-defined Distributions*
 
 These are all implemented as *number-average* distributions.
 
-Additional distributions are under consideration.
 
 **Beware: when the Polydispersity & Orientational Distribution panel in SasView is**
 **first opened, the default distribution for all parameters is the Gaussian Distribution.**
 **This may not be suitable. See Suggested Applications below.**
 
-.. note:: In 2009 IUPAC decided to introduce the new term 'dispersity' to replace 
-           the term 'polydispersity' (see `Pure Appl. Chem., (2009), 81(2), 
-           351-353 <http://media.iupac.org/publications/pac/2009/pdf/8102x0351.pdf>`_ 
-           in order to make the terminology describing distributions of chemical 
-           properties unambiguous. However, these terms are unrelated to the 
-           proportional size distributions and orientational distributions used in 
+.. note:: In 2009 IUPAC decided to introduce the new term 'dispersity' to replace
+           the term 'polydispersity' (see `Pure Appl. Chem., (2009), 81(2),
+           351-353 <http://media.iupac.org/publications/pac/2009/pdf/8102x0351.pdf>`_
+           in order to make the terminology describing distributions of chemical
+           properties unambiguous. However, these terms are unrelated to the
+           proportional size distributions and orientational distributions used in
            SasView models.
 
 Suggested Applications
@@ -91,11 +94,13 @@ the Lognormal or Schulz distributions.
 If applying polydispersion to parameters describing interfacial thicknesses
 or angular orientations, consider using the Gaussian or Boltzmann distributions.
 
-If applying polydispersion to parameters describing angles, use the Uniform 
-distribution. Beware of using distributions that are always positive (eg, the 
+If applying polydispersion to parameters describing angles, use the Uniform
+distribution. Beware of using distributions that are always positive (eg, the
 Lognormal) because angles can be negative!
 
-The array distribution allows a user-defined distribution to be applied.
+The array distribution provides a very simple means of implementing a user-
+defined distribution, but without any fittable parameters. Greater flexibility
+is conferred by the user-defined distribution.
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
@@ -333,23 +338,111 @@ not be fitable.
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
+User-defined Distributions
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can also define your own distribution by creating a python file defining a
+*Distribution* object with a *_weights* method.  The *_weights* method takes
+*center*, *sigma*, *lb* and *ub* as arguments, and can access *self.npts*
+and *self.nsigmas* from the distribution.  They are interpreted as follows:
+
+* *center* the value of the shape parameter (for size dispersity) or zero
+  if it is an angular dispersity.  This parameter may be fitted.
+
+* *sigma* the width of the distribution, which is the polydispersity parameter
+  times the center for size dispersity, or the polydispersity parameter alone
+  for angular dispersity.  This parameter may be fitted.
+
+* *lb*, *ub* are the parameter limits (lower & upper bounds) given in the model
+  definition file.  For example, a radius parameter has *lb* equal to zero.  A
+  volume fraction parameter would have *lb* equal to zero and *ub* equal to one.
+
+* *self.nsigmas* the distance to go into the tails when evaluating the
+  distribution.  For a two parameter distribution, this value could be
+  co-opted to use for the second parameter, though it will not be available
+  for fitting.
+
+* *self.npts* the number of points to use when evaluating the distribution.
+  The user will adjust this to trade calculation time for accuracy, but the
+  distribution code is free to return more or fewer, or use it for the third
+  parameter in a three parameter distribution.
+
+As an example, the code following wraps the Laplace distribution from scipy stats::
+
+    import numpy as np
+    from scipy.stats import laplace
+
+    from sasmodels import weights
+
+    class Dispersion(weights.Dispersion):
+        r"""
+        Laplace distribution
+
+        .. math::
+
+            w(x) = e^{-\sigma |x - \mu|}
+        """
+        type = "laplace"
+        default = dict(npts=35, width=0, nsigmas=3)  # default values
+        def _weights(self, center, sigma, lb, ub):
+            x = self._linspace(center, sigma, lb, ub)
+            wx = laplace.pdf(x, center, sigma)
+            return x, wx
+
+You can plot the weights for a given value and width using the following::
+
+    from numpy import inf
+    from matplotlib import pyplot as plt
+    from sasmodels import weights
+
+    # reload the user-defined weights
+    weights.load_weights()
+    x, wx = weights.get_weights('laplace', n=35, width=0.1, nsigmas=3, value=50,
+                                limits=[0, inf], relative=True)
+
+    # plot the weights
+    plt.interactive(True)
+    plt.plot(x, wx, 'x')
+
+The *self.nsigmas* and *self.npts* parameters are normally used to control
+the accuracy of the distribution integral. The *self._linspace* function
+uses them to define the *x* values (along with the *center*, *sigma*,
+*lb*, and *ub* which are passed as parameters).  If you repurpose npts or
+nsigmas you will need to generate your own *x*.  Be sure to honour the
+limits *lb* and *ub*, for example to disallow a negative radius or constrain
+the volume fraction to lie between zero and one.
+
+To activate a user-defined distribution, put it in a file such as *distname.py*
+in the *SAS_WEIGHTS_PATH* folder.  This is defined with an environment
+variable, defaulting to::
+
+    SAS_WEIGHTS_PATH=~/.sasview/weights
+
+The weights path is loaded on startup.  To update the distribution definition
+in a running application you will need to enter the following python commands::
+
+    import sasmodels.weights
+    sasmodels.weights.load_weights('path/to/distname.py')
+
+.. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
+
 Note about DLS polydispersity
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Several measures of polydispersity abound in Dynamic Light Scattering (DLS) and 
-it should not be assumed that any of the following can be simply equated with 
+Several measures of polydispersity abound in Dynamic Light Scattering (DLS) and
+it should not be assumed that any of the following can be simply equated with
 the polydispersity *PD* parameter used in SasView.
 
-The dimensionless **Polydispersity Index (PI)** is a measure of the width of the 
-distribution of autocorrelation function decay rates (*not* the distribution of 
-particle sizes itself, though the two are inversely related) and is defined by 
+The dimensionless **Polydispersity Index (PI)** is a measure of the width of the
+distribution of autocorrelation function decay rates (*not* the distribution of
+particle sizes itself, though the two are inversely related) and is defined by
 ISO 22412:2017 as
 
 .. math::
 
     PI = \mu_{2} / \bar \Gamma^2
 
-where $\mu_\text{2}$ is the second cumulant, and $\bar \Gamma^2$ is the 
+where $\mu_\text{2}$ is the second cumulant, and $\bar \Gamma^2$ is the
 intensity-weighted average value, of the distribution of decay rates.
 
 *If the distribution of decay rates is Gaussian* then
@@ -358,25 +451,25 @@ intensity-weighted average value, of the distribution of decay rates.
 
     PI = \sigma^2 / 2\bar \Gamma^2
 
-where $\sigma$ is the standard deviation, allowing a **Relative Polydispersity (RP)** 
+where $\sigma$ is the standard deviation, allowing a **Relative Polydispersity (RP)**
 to be defined as
 
 .. math::
 
     RP = \sigma / \bar \Gamma = \sqrt{2 \cdot PI}
 
-PI values smaller than 0.05 indicate a highly monodisperse system. Values 
+PI values smaller than 0.05 indicate a highly monodisperse system. Values
 greater than 0.7 indicate significant polydispersity.
 
-The **size polydispersity P-parameter** is defined as the relative standard 
-deviation coefficient of variation  
+The **size polydispersity P-parameter** is defined as the relative standard
+deviation coefficient of variation
 
 .. math::
 
     P = \sqrt\nu / \bar R
 
 where $\nu$ is the variance of the distribution and $\bar R$ is the mean
-value of $R$. Here, the product $P \bar R$ is *equal* to the standard 
+value of $R$. Here, the product $P \bar R$ is *equal* to the standard
 deviation of the Lognormal distribution.
 
 P values smaller than 0.13 indicate a monodisperse system.

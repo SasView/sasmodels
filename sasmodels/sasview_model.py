@@ -31,6 +31,11 @@ from . import weights
 from . import modelinfo
 from .details import make_kernel_args, dispersion_mesh
 
+# Hack: load in any custom distributions
+# Uses ~/.sasview/weights/*.py unless SASMODELS_WEIGHTS is set in the environ.
+# Override with weights.load_weights(pattern="<weights_path>/*.py")
+weights.load_weights()
+
 # pylint: disable=unused-import
 try:
     from typing import (Dict, Mapping, Any, Sequence, Tuple, NamedTuple,
