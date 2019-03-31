@@ -13,12 +13,145 @@ Fitting Models with Structure Factors
 
    This help document is under development
 
-.. figure:: p_and_s_buttons.png
-
 **Product models**, or $P@S$ models for short, multiply the form factor
 $P(Q)$ by the structure factor $S(Q)$, modulated by the **effective radius**
-of the form factor.
+of the form factor. For the theory behind this, see :ref:`PStheory` later.
 
+**If writing your own** $P@S$ **models, DO NOT give your model parameters**
+**these names!**
+
+Parameters
+^^^^^^^^^^
+
+Many parameters are common amongst $P@S$ models, but take on specific meanings:
+
+* *scale*:
+
+    Overall model scale factor.
+
+    To compute number density $n$ the volume fraction $V_f$ (parameterised as
+    **volfraction**) is needed.  In most $P(Q)$ models $V_f$ is not defined and
+    **scale** is used instead. Some $P(Q)$ models, such as the *vesicle*, do
+    define **volfraction** and so can leave **scale** at 1.0.
+
+    Structure factor models $S(Q)$ contain **volfraction**. In $P@S$ models
+    this is *also* used as the volume fraction for the form factor model
+    $P(Q)$, *replacing* any **volfraction** parameter in $P(Q)$. This means
+    that $P@S$ models can also leave **scale** at 1.0.
+
+    If the volume fraction required for $S(Q)$ is *not* the volume fraction
+    needed to compute the $n$ for $P(Q)$, then leave **volfraction** as the
+    $V_f$ for $S(Q)$ and use **scale** to define the $V_f$ for $P(Q)$ as
+    $V_f$ = **scale**  $\cdot$  **volfraction**.  This situation may occur in
+    a mixed phase system where the effective volume fraction needed to compute
+    the structure is much higher than the true volume fraction.
+
+* *volfraction*:
+
+    The volume fraction of material, $V_f$.
+
+    For hollow shapes, **volfraction** still represents the volume fraction of
+    material but the $S(Q)$ calculation needs the volume fraction *enclosed by*
+    *the shape.*  To remedy this the user-specified **volfraction** is scaled
+    by the ratio form:shell computed from the average form volume and average
+    shell volume returned from the $P(Q)$ calculation when calculating $S(Q)$.
+    The original **volfraction** is divided by the shell volume to compute the
+    number density $n$ used in the $P@S$ model to get the absolute scaling on
+    the final $I(Q)$.
+
+* *radius_effective*:
+
+    The radial distance determining the range of the $S(Q)$ interaction.
+
+    This may be estimated from the "size" parameters $\mathbf \xi$ describing
+    the form of the shape.  For example, in a system containing freely-rotating
+    cylinders, the volume of space each cylinder requires to tumble will be
+    much larger than the volume of the cylinder itself. Thus the *effective*
+    radius of a cylinder will be larger than either its actual radius or half-
+    length.
+
+    In use, it may be sensible to tie or constrain **radius_effective**
+    to one or other of the "size" parameters describing the form of the shape.
+
+    **radius_effective** may also be specified directly, independent of the
+    estimate from $P(Q)$.
+
+    If **radius_effective** is calculated by $P(Q)$, it will be the
+    weighted average of the effective radii computed for the polydisperse
+    shape parameters, and that average is used to compute $S(Q)$. When
+    specified directly, the value of **radius_effective** may be
+    polydisperse, and $S(Q)$ will be averaged over a range of effective
+    radii. Whether this makes any physical sense will depend on the system.
+
+.. note::
+
+   The following additional parameters are only available in SasView 5.0 and
+   later.
+
+* *radius_effective_mode*:
+
+    Defines how the effective radius (parameter **radius_effective**) should
+    be computed from the parameters of the shape.
+
+    When **radius_effective_mode = 0** then unconstrained **radius_effective**
+    parameter in the $S(Q)$ model is used. *This is the default in SasView*
+    *versions 4.x and earlier*. Otherwise, in SasView 5.x and later,
+    **radius_effective_mode = k** represents an index in a list of alternative
+    **radius_effective** calculations which will appear in a drop-down box.
+
+    For example, the *ellipsoid* model defines the following
+    **radius_effective_modes**::
+
+        1 => average curvature
+        2 => equivalent volume sphere
+        3 => min radius
+        4 => max radius
+
+    Note: **radius_effective_mode** will only appear in the parameter table if
+    the model defines the list of modes, otherwise it will be set permanently
+    to 0 for the user-defined effective radius.
+    
+    **WARNING! If** $P(Q)$ **is multiplied by** $S(Q)$ **in the FitPage,**
+    **instead of being generated in the Sum|Multi dialog, the**
+    **radius_effective used is constrained (equivalent to**
+    **radius_effective_mode = 1)**.
+
+* *structure_factor_mode*:
+
+    The type of structure factor calculation to use.
+
+    If the $P@S$ model supports the $\beta(Q)$ *decoupling correction* [1]
+    then **structure_factor_mode** will appear in the parameter table after
+    the $S(Q)$ parameters.
+
+    If **structure_factor_mode = 0** then the
+    *local monodisperse approximation* will be used, i.e.:
+
+    .. math::
+        I(Q) = \text{scale} \frac{V_f}{V} P(Q) S(Q) + \text{background}
+
+    where $P(Q) = \langle F(Q)^2 \rangle$. *This is the default in SasView*
+    *versions 4.x and earlier*.
+
+    If **structure_factor_mode = 1** then the $\beta(Q)$ correction will be
+    used, i.e.:
+
+    .. math::
+        I(Q) = \text{scale} \frac{V_f}{V} P(Q) [ 1 + \beta(Q) (S(Q) - 1) ]
+        + \text{background}
+
+    The $\beta(Q)$ decoupling approximation has the effect of damping the
+    oscillations in the normal (local monodisperse) $S(Q)$. When $\beta(Q) = 1$
+    the local monodisperse approximation is recovered. *This mode is only*
+    *available in SasView 5.x and later*.
+
+    More mode options may appear in future as more complicated operations are
+    added.
+
+.. _PStheory:
+
+Theory
+^^^^^^
 
 Scattering at vector $\mathbf Q$ for an individual particle with
 shape parameters $\mathbf\xi$ and contrast $\rho_c(\mathbf r, \mathbf\xi)$
@@ -28,11 +161,11 @@ is computed from the square of the amplitude, $F(\mathbf Q, \mathbf\xi)$, as
     I(\mathbf Q) = F(\mathbf Q, \mathbf\xi) F^*(\mathbf Q, \mathbf\xi)
         \big/ V(\mathbf\xi)
 
-with particle volume $V(\mathbf \xi)$ and
+with the particle volume $V(\mathbf \xi)$ and
 
 .. math::
     F(\mathbf Q, \mathbf\xi) = \int_{\mathbb R^3} \rho_c(\mathbf r, \mathbf\xi)
-        e^{i \mathbf Q \cdot \mathbf r} \,\mathrm d \mathbf r
+        e^{i \mathbf Q \cdot \mathbf r} \,\mathrm d \mathbf r = F
 
 The 1-D scattering pattern for monodisperse particles uses the orientation
 average in spherical coordinates,
@@ -51,7 +184,7 @@ Here,
 
 .. math:: n = V_f/V(\mathbf\xi)
 
-is the number density of scatterers estimated from the volume fraction
+is the number density of scatterers estimated from the volume fraction $V_f$
 of particles in solution. In this formalism, each incoming
 wave interacts with exactly one particle before being scattered into the
 detector. All interference effects are within the particle itself.
@@ -76,7 +209,7 @@ with
 
 .. math:: I(Q) = n \langle F F^* \rangle S(Q)
 
-For particles without spherical symmetry, the decoupling approximation (DA)
+For particles without spherical symmetry, the decoupling approximation
 is more accurate, with
 
 .. math::
@@ -88,129 +221,25 @@ Or equivalently,
 
 .. math:: I(Q) = P(Q)[1 + \beta\,(S(Q) - 1)]
 
-with form factor $P(Q) = n \langle F F^* \rangle$ and
+with the form factor $P(Q) = n \langle F F^* \rangle$ and
 $\beta = \langle F \rangle \langle F \rangle^* \big/ \langle F F^* \rangle$.
 These approximations can be extended to heterogeneous systems using averages
 over size, $\langle \cdot \rangle_\mathbf\xi = \int_\Xi P_\mathbf\xi \langle\cdot\rangle\,\mathrm d\mathbf\xi \big/ \int_\Xi P_\mathbf\xi \,\mathrm d\mathbf\xi$ and setting
 $n = V_f\big/\langle V \rangle_\mathbf\xi$.
+
 Further improvements can be made using the local monodisperse
-approximation (LMA) or using partial structure factors, as described
-in \cite{bresler_sasfit:_2015}.
-
-Many parameters are common amongst $P@S$ models, and take on specific meanings:
-
-* *scale*:
-
-    Overall model scale factor.
-
-    To compute number density $n$ the volume fraction $V_f$ is needed.  In
-    most $P(Q)$ models $V_f$ is not defined and **scale** is used instead.
-    Some $P(Q)$ models, such as *vesicle*, do define **volfraction** and so
-    can leave **scale** at 1.0.
-
-    The structure factor model $S(Q)$ has **volfraction**.  This is also used
-    as the volume fraction for the form factor model $P(Q)$, replacing the
-    **volfraction** parameter if it exists in $P$. This means that
-    $P@S$ models can leave **scale** at 1.0.
-
-    If the volume fraction required for $S(Q)$ is *not* the volume fraction
-    needed to compute the number density for $P(Q)$, then leave
-    **volfraction** as the volume fraction for $S(Q)$ and use
-    **scale** to define the volume fraction for $P(Q)$ as
-    $V_f$ = **scale**  $\cdot$  **volfraction**.  This situation may
-    occur in a mixed phase system where the effective volume
-    fraction needed to compute the structure is much higher than the
-    true volume fraction.
-
-* *volfraction*:
-
-    The volume fraction of material.
-
-    For hollow shapes, **volfraction** still represents the volume fraction of
-    material but the $S(Q)$ calculation needs the volume fraction *enclosed by*
-    *the shape.*  Thus the user-specified **volfraction** is scaled by the ratio
-    form:shell computed from the average form volume and average shell volume
-    returned from the $P(Q)$ calculation when calculating $S(Q)$.  The original
-    **volfraction** is divided by the shell volume to compute the number
-    density $n$ used in $P@S$ to get the absolute scaling on the final $I(Q)$.
-
-* *radius_effective*:
-
-    The radial distance determining the range of the $S(Q)$ interaction.
-
-    This may be estimated from the "size" parameters $\mathbf \xi$ describing
-    the form of the shape.  For example, in a system containing freely-rotating
-    cylinders, the volume of space each cylinder requires to tumble will be
-    much larger than the volume of the cylinder itself.  Thus the effective
-    radius will be larger than either the radius or the half-length of the
-    cylinder.  It may be sensible to tie or constrain **radius_effective**
-    to one or other of these "size" parameters. **radius_effective** may
-    also be specified directly, independent of the estimate from $P(Q)$.
-
-    If it is calculated by $P(Q)$, **radius_effective** will be the
-    weighted average of the effective radii computed for the polydisperse
-    shape parameters, and that average used to compute $S(Q)$.  When
-    specified directly, the value of **radius_effective** may be
-    polydisperse, and $S(Q)$ will be averaged over a range of effective
-    radii.  Whether this makes any physical sense will depend on the system.
-
-* *radius_effective_mode*:
-
-    Selects the **radius_effective** value to use.
-
-    When **radius_effective_mode = 0** then the **radius_effective**
-    parameter in the $P@S$ model is used.  Otherwise
-    **radius_effective_mode = k** is the index into the list of
-    **radius_effective_modes** defined by the model indicating how the
-    effective radius should be computed from the parameters of the shape.
-    For example, the *ellipsoid* model defines the following::
-
-        1 => average curvature
-        2 => equivalent volume sphere
-        3 => min radius
-        4 => max radius
-
-    **radius_effective_mode** will only appear in the parameter table if
-    the model defines the list of modes, otherwise it will be set permanently
-    to 0 for user defined effective radius.
-
-* *structure_factor_mode*:
-
-    The type of structure factor calculation to use.
-
-    If the $P@S$ model supports the $\beta(Q)$ *decoupling correction* [1]
-    then **structure_factor_mode** will appear in the parameter table after
-    the $S(Q)$ parameters.
-
-    If **structure_factor_mode = 0** then the
-    *local monodisperse approximation* will be used, i.e.:
-
-    .. math::
-        I(Q) = \text{scale} \frac{V_f}{V} P(Q) S(Q) + \text{background}
-
-    where $P(Q) = \langle F(Q)^2 \rangle$.
-
-    If **structure_factor_mode = 1** then the $\beta(Q)$ correction will be
-    used, i.e.:
-
-    .. math::
-        I(Q) = \text{scale} \frac{V_f}{V} P(Q) [ 1 + \beta(Q) (S(Q) - 1) ]
-        + \text{background}
-
-    The $\beta(Q)$ decoupling approximation has the effect of damping the
-    oscillations in the normal (local monodisperse) $S(Q)$. When $\beta(Q) = 1$
-    the local monodisperse approximation is recovered.
-
-    More mode options may appear in future as more complicated operations are
-    added.
+approximation (LMA) or using partial structure factors [2].
 
 References
 ^^^^^^^^^^
 
 .. [#] Kotlarchyk, M.; Chen, S.-H. *J. Chem. Phys.*, 1983, 79, 2461
 
+.. [#] Bressler I., Kohlbrecher J., Thunemann A.F. *J. Appl. Crystallogr.*
+   48 (2015) 1587-1598
+
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
 *Document History*
 
-| 2019-03-30 Paul Kienzle & Steve King
+| 2019-03-31 Paul Kienzle, Steve King & Richard Heenan
