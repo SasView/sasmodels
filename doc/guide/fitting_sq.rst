@@ -95,7 +95,7 @@ Many parameters are common amongst $P@S$ models, but take on specific meanings:
 
     When **radius_effective_mode = 0** then unconstrained **radius_effective**
     parameter in the $S(Q)$ model is used. *This is the default in SasView*
-    *versions 4.x and earlier*. Otherwise, in SasView 5.x and later,
+    *versions 4.x and earlier*. Otherwise, in SasView 5.0 and later,
     **radius_effective_mode = k** represents an index in a list of alternative
     **radius_effective** calculations which will appear in a drop-down box.
 
@@ -143,7 +143,7 @@ Many parameters are common amongst $P@S$ models, but take on specific meanings:
     The $\beta(Q)$ decoupling approximation has the effect of damping the
     oscillations in the normal (local monodisperse) $S(Q)$. When $\beta(Q) = 1$
     the local monodisperse approximation is recovered. *This mode is only*
-    *available in SasView 5.x and later*.
+    *available in SasView 5.0 and later*.
 
     More mode options may appear in future as more complicated operations are
     added.
