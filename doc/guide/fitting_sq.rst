@@ -73,8 +73,9 @@ Many parameters are common amongst $P@S$ models, but take on specific meanings:
 
     If **radius_effective_mode = 0** (see below) it may be sensible to tie or
     constrain **radius_effective** to one or other of the "size" parameters
-    describing the form of the shape, although **radius_effective** may also
-    be specified directly, independent of the estimate from $P(Q)$.
+    describing the form of the shape (although the parameter cannot then be
+    polydisperse). But **radius_effective** may also be specified directly,
+    independent of the estimate from $P(Q)$.
 
     If **radius_effective** is calculated by $P(Q)$, it will be the
     weighted average of the effective radii computed for the polydisperse
