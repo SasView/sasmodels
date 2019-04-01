@@ -17,11 +17,11 @@ Fitting Models with Structure Factors
 $P(Q)$ by the structure factor $S(Q)$, modulated by the **effective radius**
 of the form factor. For the theory behind this, see :ref:`PStheory` later.
 
-**If writing your own** $P@S$ **models, DO NOT give your model parameters**
-**these names!**
-
 Parameters
 ^^^^^^^^^^
+
+**Except for volfraction, when writing your own** $P@S$ **models, DO NOT give**
+**your model parameters these names!**
 
 Many parameters are common amongst $P@S$ models, but take on specific meanings:
 
@@ -36,8 +36,9 @@ Many parameters are common amongst $P@S$ models, but take on specific meanings:
 
     Structure factor models $S(Q)$ contain **volfraction**. In $P@S$ models
     this is *also* used as the volume fraction for the form factor model
-    $P(Q)$, *replacing* any **volfraction** parameter in $P(Q)$. This means
-    that $P@S$ models can also leave **scale** at 1.0.
+    $P(Q)$, so these models can also leave **scale** at 1.0.  If $P(Q)$ already
+    has a **volfraction** parameter, it is tied to the **volfraction** for
+    $S(Q)$.
 
     If the volume fraction required for $S(Q)$ is *not* the volume fraction
     needed to compute the $n$ for $P(Q)$, then leave **volfraction** as the
@@ -70,11 +71,10 @@ Many parameters are common amongst $P@S$ models, but take on specific meanings:
     radius of a cylinder will be larger than either its actual radius or half-
     length.
 
-    In use, it may be sensible to tie or constrain **radius_effective**
-    to one or other of the "size" parameters describing the form of the shape.
-
-    **radius_effective** may also be specified directly, independent of the
-    estimate from $P(Q)$.
+    If **radius_effective_mode = 0** (see below) it may be sensible to tie or
+    constrain **radius_effective** to one or other of the "size" parameters
+    describing the form of the shape, although **radius_effective** may also
+    be specified directly, independent of the estimate from $P(Q)$.
 
     If **radius_effective** is calculated by $P(Q)$, it will be the
     weighted average of the effective radii computed for the polydisperse
@@ -85,7 +85,7 @@ Many parameters are common amongst $P@S$ models, but take on specific meanings:
 
 .. note::
 
-   The following additional parameters are only available in SasView 5.0 and
+   The following additional parameters are only available in SasView 4.3 and
    later.
 
 * *radius_effective_mode*:
@@ -93,11 +93,16 @@ Many parameters are common amongst $P@S$ models, but take on specific meanings:
     Defines how the effective radius (parameter **radius_effective**) should
     be computed from the parameters of the shape.
 
-    When **radius_effective_mode = 0** then unconstrained **radius_effective**
-    parameter in the $S(Q)$ model is used. *This is the default in SasView*
-    *versions 4.x and earlier*. Otherwise, in SasView 5.0 and later,
-    **radius_effective_mode = k** represents an index in a list of alternative
-    **radius_effective** calculations which will appear in a drop-down box.
+    When **radius_effective_mode = 0** then the unconstrained
+    **radius_effective** parameter in the $S(Q)$ model is used. *This is the*
+    *default in SasView versions 4.x and earlier*. Otherwise, in SasView 4.3
+    and later, **radius_effective_mode = k** represents an index in a list of
+    alternative **radius_effective** calculations.
+
+    In SasView 4.3 and later **k** must be entered as an integer (and it will
+    be necessary to read the source code file to discover what calculations the
+    modes represent), but in SasView 5.0 and later the options appear in a
+    drop-down box.
 
     For example, the *ellipsoid* model defines the following
     **radius_effective_modes**::
@@ -143,7 +148,7 @@ Many parameters are common amongst $P@S$ models, but take on specific meanings:
     The $\beta(Q)$ decoupling approximation has the effect of damping the
     oscillations in the normal (local monodisperse) $S(Q)$. When $\beta(Q) = 1$
     the local monodisperse approximation is recovered. *This mode is only*
-    *available in SasView 5.0 and later*.
+    *available in SasView 4.3 and later*.
 
     More mode options may appear in future as more complicated operations are
     added.
