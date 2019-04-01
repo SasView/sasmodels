@@ -16,13 +16,13 @@ calculations for different shapes, including the effects of resolution,
 polydispersity and orientational dispersion.
 
 .. only:: html
+
    :Release: |version|
    :Date:    |today|
 
    Download pdf version `here <SASModels.pdf>`_
 
 .. toctree::
-   :numbered:
    :maxdepth: 4
 
    guide/index.rst
@@ -37,4 +37,5 @@ Indices and Tables
 * :ref:`modindex`
 
 .. only:: html
+
   * :ref:`search`
