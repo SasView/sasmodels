@@ -13,15 +13,15 @@ Fitting Models with Structure Factors
 
    This help document is under development
 
-**Product models**, or $P@S$ models for short, multiply the form factor
+**Interaction models**, or $P@S$ models for short, multiply the form factor
 $P(Q)$ by the structure factor $S(Q)$, modulated by the **effective radius**
 of the form factor. For the theory behind this, see :ref:`PStheory` later.
 
 Parameters
 ^^^^^^^^^^
 
-**Except for volfraction, when writing your own** $P@S$ **models, DO NOT give**
-**your model parameters these names!**
+**Except for volfraction, when writing your own** $P$ **and** $S$ **models,**
+**DO NOT give your model parameters these names!**
 
 Many parameters are common amongst $P@S$ models, but take on specific meanings:
 
@@ -96,7 +96,7 @@ Many parameters are common amongst $P@S$ models, but take on specific meanings:
 
     When **radius_effective_mode = 0** then the unconstrained
     **radius_effective** parameter in the $S(Q)$ model is used. *This is the*
-    *default in SasView versions 4.x and earlier*. Otherwise, in SasView 4.3
+    *default in SasView versions 4.2 and earlier*. Otherwise, in SasView 4.3
     and later, **radius_effective_mode = k** represents an index in a list of
     alternative **radius_effective** calculations.
 
