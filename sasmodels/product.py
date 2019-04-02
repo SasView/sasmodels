@@ -209,7 +209,7 @@ def make_product_info(p_info, s_info):
     # Allow for the scenario in which each component has all its PD parameters
     # active simultaneously.  details.make_details() will throw an error if
     # too many are used from any one component.
-    parameters.Pumax_pd = p_pars.max_pd + s_pars.max_pd
+    parameters.max_pd = p_pars.max_pd + s_pars.max_pd
 
     # TODO: does user-defined polydisperse S.radius_effective make sense?
     # make sure effective radius is not a polydisperse parameter in product
