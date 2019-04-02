@@ -116,7 +116,7 @@ Many parameters are common amongst $P@S$ models, but take on specific meanings:
     Note: **radius_effective_mode** will only appear in the parameter table if
     the model defines the list of modes, otherwise it will be set permanently
     to 0 for the user-defined effective radius.
-    
+
     **WARNING! If** $P(Q)$ **is multiplied by** $S(Q)$ **in the FitPage,**
     **instead of being generated in the Sum|Multi dialog, the**
     **radius_effective used is constrained (equivalent to**
@@ -126,9 +126,9 @@ Many parameters are common amongst $P@S$ models, but take on specific meanings:
 
     The type of structure factor calculation to use.
 
-    If the $P@S$ model supports the $\beta(Q)$ *decoupling correction* [1]
-    then **structure_factor_mode** will appear in the parameter table after
-    the $S(Q)$ parameters.
+    If the $P@S$ model supports the $\beta(Q)$ *decoupling correction*
+    [#kotlarchyk]_ then **structure_factor_mode** will appear in the
+    parameter table after the $S(Q)$ parameters.
 
     If **structure_factor_mode = 0** then the
     *local monodisperse approximation* will be used, i.e.:
@@ -234,15 +234,16 @@ over size, $\langle \cdot \rangle_\mathbf\xi = \int_\Xi P_\mathbf\xi \langle\cdo
 $n = V_f\big/\langle V \rangle_\mathbf\xi$.
 
 Further improvements can be made using the local monodisperse
-approximation (LMA) or using partial structure factors [2].
+approximation (LMA) or using partial structure factors as done in [#bressler]_,
+but these are not implemented in this code.
 
 References
 ^^^^^^^^^^
 
-.. [#] Kotlarchyk, M.; Chen, S.-H. *J. Chem. Phys.*, 1983, 79, 2461
+.. [#kotlarchyk] Kotlarchyk, M.; Chen, S.-H. *J. Chem. Phys.*, 1983, 79, 2461
 
-.. [#] Bressler I., Kohlbrecher J., Thunemann A.F. *J. Appl. Crystallogr.*
-   48 (2015) 1587-1598
+.. [#bressler] Bressler I., Kohlbrecher J., Thunemann A.F.
+   *J. Appl. Crystallogr.* 48 (2015) 1587-1598
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 

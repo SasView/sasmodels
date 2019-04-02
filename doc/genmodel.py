@@ -251,7 +251,7 @@ def process_model(path):
 
     # Generate the RST file and the figure.  Order doesn't matter.
     gen_docs(model_info)
-    make_figure(model_info, opts)
+    #make_figure(model_info, opts)
 
 if __name__ == "__main__":
     process_model(sys.argv[1])
