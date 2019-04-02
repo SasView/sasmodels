@@ -100,20 +100,12 @@ References
 
 .. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
-Source
-------
-
-`core_shell_bicelle_elliptical.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/core_shell_bicelle_elliptical.py>`_
-
-`core_shell_bicelle_elliptical.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/core_shell_bicelle_elliptical.c>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:** Richard Heenan **Date:** December 14, 2016
 * **Last Modified by:**  Richard Heenan **Date:** December 14, 2016
 * **Last Reviewed by:**  Paul Kienzle **Date:** Feb 28, 2018
-* **Source added by :**  Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

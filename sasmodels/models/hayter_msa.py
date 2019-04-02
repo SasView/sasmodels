@@ -17,7 +17,7 @@ repulsion between the charged particles.
 
    Earlier versions of SasView did not incorporate the so-called
    $\beta(q)$ ("beta") correction [3] for polydispersity and non-sphericity.
-   This is only available in SasView versions 4.2.2 and higher.
+   This is only available in SasView versions 5.0 and higher.
 
 The salt concentration is used to compute the ionic strength of the solution
 which in turn is used to compute the Debye screening length. There is no
@@ -62,20 +62,12 @@ References
 
 .. [#] C G Malmberg and A A Maryott, *J. Res. Nat. Bureau Standards*, 56 (1956) 2641
 
-Source
-------
-
-`hayter_msa.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/hayter_msa.py>`_
-
-`hayter_msa.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/hayter_msa.c>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:**
 * **Last Modified by:**
 * **Last Reviewed by:** Steve King **Date:** March 28, 2019
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

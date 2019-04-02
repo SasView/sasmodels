@@ -50,20 +50,12 @@ References
 .. [#teixeira] J Teixeira, *J. Appl. Cryst.*, 21 (1988) 781-785
 .. [#Kline]  S R Kline, *J Appl. Cryst.*, 39 (2006) 895
 
-Source
-------
-
-`fractal_core_shell.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/fractal_core_shell.py>`_
-
-`fractal_core_shell.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/fractal_core_shell.c>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Butler and Paul Kienzle **Date:** November 27, 2016
 * **Last Reviewed by:** Paul Butler and Paul Kienzle **Date:** November 27, 2016
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

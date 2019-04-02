@@ -455,6 +455,12 @@ the code in the `_randomize_one()` function from sasmodels/compare.py.
 Python Models
 .............
 
+.. note::
+
+   Pure python models do not yet support direct computation of $<F(Q)^2>$ or
+   $<F(Q)>^2$. Neither do they support orientational distributions or magnetism
+   (use C models if these are required).
+
 For pure python models, define the *Iq* function::
 
       import numpy as np
@@ -515,10 +521,6 @@ The structure factor calculation needs the volume fraction of the filled
 shapes for its calculation, so the volume fraction parameter in the model
 is automatically scaled by *form_volume/shell_volume* prior to calling the
 structure factor.
-
-**Note: Pure python models do not yet support direct computation of the**
-**average of $F(q)$ and $F^2(q)$. Neither do they support orientational**
-**distributions or magnetism (use C models if these are required).**
 
 Embedded C Models
 .................

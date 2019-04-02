@@ -15,7 +15,7 @@ and for moderately polydisperse systems.
 
    Earlier versions of SasView did not incorporate the so-called
    $\beta(q)$ ("beta") correction [1] for polydispersity and non-sphericity.
-   This is only available in SasView versions 4.2.2 and higher.
+   This is only available in SasView versions 5.0 and higher.
 
 radius_effective is the effective hard sphere radius.
 volfraction is the volume fraction occupied by the spheres.
@@ -53,18 +53,12 @@ References
 
 .. [#] J K Percus, J Yevick, *J. Phys. Rev.*, 110, (1958) 1
 
-Source
-------
-
-`hardsphere.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/hardsphere.py>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:**
 * **Last Modified by:**
 * **Last Reviewed by:**
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

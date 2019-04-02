@@ -82,22 +82,12 @@ Correction of the formula can be found in
 
 .. [#] W R Chen, P D Butler and L J Magid, *Incorporating Intermicellar Interactions in the Fitting of SANS Data from Cationic Wormlike Micelles.* Langmuir, 22(15) 2006 6539-6548
 
-Source
-------
-
-`flexible_cylinder_elliptical.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/flexible_cylinder_elliptical.py>`_
-
-`flexible_cylinder_elliptical.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/flexible_cylinder_elliptical.c>`_
-
-`wrc_cyl.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/lib/wrc_cyl.c>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:**
 * **Last Modified by:** Richard Heenan **Date:** December, 2016
 * **Last Reviewed by:** Steve King **Date:** March 26, 2019
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

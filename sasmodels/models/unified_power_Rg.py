@@ -66,18 +66,12 @@ References
 .. [#] G Beaucage, *J. Appl. Cryst.*, 29 (1996) 134-146
 .. [#] B Hammouda, *Analysis of the Beaucage model, J. Appl. Cryst.*, (2010), 43, 1474-1478
 
-Source
-------
-
-`unified_power_Rg.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/unified_power_Rg.py>`_
-
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
-* **Last Modified by:** 
-* **Last Reviewed by:** 
-* **Source added by :** Steve King **Date:** March 25, 2019
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 from __future__ import division

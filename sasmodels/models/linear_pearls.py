@@ -30,20 +30,13 @@ References
 
 .. [#] A V Dobrynin, M Rubinstein and S P Obukhov, *Macromol.*, 29 (1996) 2974-2979
 
-Source
-------
-
-`linear_pearls.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/linear_pearls.py>`_
-
-`linear_pearls.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/linear_pearls.c>`_
-
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
-* **Last Modified by:** 
-* **Last Reviewed by:** 
-* **Source added by :** Steve King **Date:** March 25, 2019"""
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
+"""
 
 import numpy as np
 from numpy import inf

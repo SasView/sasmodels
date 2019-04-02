@@ -38,20 +38,12 @@ References
 .. [#] L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and
    Neutron Scattering*, Plenum Press, New York, 1987.
 
-Source
-------
-
-`core_multi_shell.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/core_multi_shell.py>`_
-
-`core_multi_shell.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/core_multi_shell.c>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Kienzle **Date:** September 12, 2016
 * **Last Reviewed by:** Paul Kienzle **Date:** September 12, 2016
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 from __future__ import division
 

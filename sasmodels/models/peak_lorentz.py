@@ -26,20 +26,12 @@ References
 
 None.
 
-Source
-------
-
-`peak_lorentz.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/peak_lorentz.py>`_
-
-`peak_lorentz.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/peak_lorentz.c>`_
-
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
-* **Last Modified by:** 
-* **Last Reviewed by:** 
-* **Source added by :** Steve King **Date:** March 25, 2019
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 import numpy as np

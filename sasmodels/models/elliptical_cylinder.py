@@ -88,20 +88,12 @@ References
 .. [#] L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*, Plenum, New York, (1987) [see table 3.4]
 .. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
-Source
-------
-
-`elliptical_cylinder.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/elliptical_cylinder.py>`_
-
-`elliptical_cylinder.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/elliptical_cylinder.c>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:**
 * **Last Modified by:**
 * **Last Reviewed by:**  Richard Heenan - corrected equation in docs **Date:** December 21, 2016
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

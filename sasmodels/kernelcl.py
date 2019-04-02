@@ -157,13 +157,13 @@ def use_opencl():
 
 ENV = None
 def reset_environment():
-    # type: () -> None
+    # type: () -> "GpuEnvironment"
     """
-    Call to create a new OpenCL context, such as after a change to SAS_OPENCL.
+    Return a new OpenCL context, such as after a change to SAS_OPENCL.
     """
     global ENV
     ENV = GpuEnvironment() if use_opencl() else None
-
+    return ENV
 
 def environment():
     # type: () -> "GpuEnvironment"

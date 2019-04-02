@@ -174,13 +174,6 @@ References
    =26379>`_
 .. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
-Source
-------
-
-`core_shell_parallelepiped.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/core_shell_parallelepiped.py>`_
-
-`core_shell_parallelepiped.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/core_shell_parallelepiped.c>`_
-
 Authorship and Verification
 ----------------------------
 
@@ -189,7 +182,6 @@ Authorship and Verification
 * **Last Modified by:** Paul Kienzle **Date:** October 17, 2017
 * **Last Reviewed by:** Paul Butler **Date:** May 24, 2018 - documentation
   updated
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

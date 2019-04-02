@@ -101,20 +101,12 @@ References
 .. [#] A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*,
    John Wiley and Sons, New York, 1955
 
-Source
-------
-
-`stacked_disks.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/stacked_disks.py>`_
-
-`stacked_disks.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/stacked_disks.c>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Butler and Paul Kienzle **Date:** November 26, 2016
 * **Last Reviewed by:** Paul Butler and Paul Kienzle **Date:** November 26, 2016
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

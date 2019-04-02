@@ -47,20 +47,12 @@ References
 .. [#] S M King, *Small Angle Neutron Scattering* in *Modern Techniques for Polymer Characterisation*, Wiley, (1999)
 .. [#] http://www.ncnr.nist.gov/staff/hammouda/distance_learning/chapter_28.pdf
 
-Source
-------
-
-`poly_gauss_coil.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/poly_gauss_coil.py>`_
-
-`poly_gauss_coil.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/poly_gauss_coil.c>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:**
 * **Last Modified by:**
 * **Last Reviewed by:**
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
