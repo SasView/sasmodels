@@ -62,20 +62,12 @@ References
 
 .. [#] C G Malmberg and A A Maryott, *J. Res. Nat. Bureau Standards*, 56 (1956) 2641
 
-Source
-------
-
-`hayter_msa.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/hayter_msa.py>`_
-
-`hayter_msa.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/hayter_msa.c>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:**
 * **Last Modified by:**
 * **Last Reviewed by:** Steve King **Date:** March 28, 2019
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

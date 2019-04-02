@@ -99,20 +99,12 @@ References
 .. [#CIT1990] Hideki Matsuoka et. al. *Physical Review B*, 41 (1990) 3854 -3856
    (Corrections to FCC and BCC lattice structure calculation)
 
-Source
-------
-
-`bcc_paracrystal.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/bcc_paracrystal.py>`_
-
-`bcc_paracrystal.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/bcc_paracrystal.c>`_
-
 Authorship and Verification
 ---------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Butler **Date:** September 29, 2016
 * **Last Reviewed by:** Richard Heenan **Date:** March 21, 2016
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

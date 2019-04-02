@@ -186,20 +186,12 @@ References
 
 .. [#] L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*, Plenum Press, New York, 1987.
 
-Source
-------
-
-`onion.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/onion.py>`_
-
-`onion.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/onion.c>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:**
 * **Last Modified by:**
 * **Last Reviewed by:** Steve King **Date:** March 28, 2019
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 #

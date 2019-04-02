@@ -64,20 +64,12 @@ References
 .. [#] K V Schubert, R Strey, S R Kline and E W Kaler, *J. Chem. Phys.*, 101 (1994) 5343
 .. [#] H Endo, M Mihailescu, M. Monkenbusch, J Allgaier, G Gompper, D Richter, B Jakobs, T Sottmann, R Strey, and I Grillo, *J. Chem. Phys.*, 115 (2001), 580
 
-Source
-------
-
-`teubner_strey.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/teubner_strey.py>`_
-
-`teubner_strey.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/teubner_strey.c>`_
-
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
-* **Last Modified by:** 
-* **Last Reviewed by:** 
-* **Source added by :** Steve King **Date:** March 25, 2019
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 from __future__ import division
 

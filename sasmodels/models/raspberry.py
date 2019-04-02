@@ -99,20 +99,12 @@ References
 
 .. [#] K Larson-Smith, A Jackson, and D C Pozzo, *Small angle scattering model for Pickering emulsions and raspberry particles*, *Journal of Colloid and Interface Science*, 343(1) (2010) 36-41
 
-Source
-------
-
-`raspberry.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/raspberry.py>`_
-
-`raspberry.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/raspberry.c>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:** Andrew Jackson **Date:** 2008
 * **Last Modified by:** Andrew Jackson **Date:** March 20, 2016
 * **Last Reviewed by:** Andrew Jackson **Date:** March 20, 2016
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

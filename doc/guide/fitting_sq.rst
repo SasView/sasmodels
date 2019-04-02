@@ -89,7 +89,7 @@ Many parameters are common amongst $P@S$ models, but take on specific meanings:
    The following additional parameters are only available in SasView 4.3 and
    later.
 
-* *radius_effective_mode*:
+ *radius_effective_mode*:
 
     Defines how the effective radius (parameter **radius_effective**) should
     be computed from the parameters of the shape.

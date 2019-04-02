@@ -38,19 +38,12 @@ References
 A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*,
 John Wiley and Sons, New York, (1955)
 
-Source
-------
-
-`_spherepy.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/_spherepy.py>`_
-`sphere.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/sphere.c>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author: P Kienzle**
 * **Last Modified by:**
 * **Last Reviewed by:** S King and P Parker **Date:** 2013/09/09 and 2014/01/06
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

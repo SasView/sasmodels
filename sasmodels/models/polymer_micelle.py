@@ -69,20 +69,12 @@ References
 
 .. [#] J Pedersen, *J. Appl. Cryst.*, 33 (2000) 637-640
 
-Source
-------
-
-`polymer_micelle.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/polymer_micelle.py>`_
-
-`polymer_micelle.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/polymer_micelle.c>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Translated by   :** Richard Heenan **Date:** March 20, 2016
 * **Last modified by:** Paul Kienzle **Date:** November 29, 2017
 * **Last reviewed by:** Steve King **Date:** November 30, 2017
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

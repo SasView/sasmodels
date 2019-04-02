@@ -45,13 +45,6 @@ References
 
 .. [#] J Teixeira, *J. Appl. Cryst.*, 21 (1988) 781-785
 
-Source
-------
-
-`fractal.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/fractal.py>`_
-
-`fractal.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/fractal.c>`_
-
 Authorship and Verification
 ----------------------------
 
@@ -59,7 +52,6 @@ Authorship and Verification
 * **Converted to sasmodels by:** Paul Butler **Date:** March 19, 2016
 * **Last Modified by:** Paul Butler **Date:** March 12, 2017
 * **Last Reviewed by:** Paul Butler **Date:** March 12, 2017
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 from __future__ import division
 

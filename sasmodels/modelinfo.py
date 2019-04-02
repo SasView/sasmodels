@@ -291,7 +291,7 @@ class Parameter(object):
 
     Control parameters are used for variant models such as :ref:`rpa` which
     have different cases with different parameters, as well as models
-    like :ref:`spherical_sld` with its user defined number of shells.
+    like *spherical_sld* with its user defined number of shells.
     The control parameter should appear in the parameter table along with the
     parameters it is is controlling.  For variant models, use *[CASES]* in
     place of the parameter limits Within the parameter definition table,
@@ -956,7 +956,7 @@ class ModelInfo(object):
     #: provided in the file.
     structure_factor = None # type: bool
     #: True if the model defines an Fq function with signature
-    #: void Fq(double q, double *F1, double *F2, ...)
+    #: ``void Fq(double q, double *F1, double *F2, ...)``
     have_Fq = False
     #: List of options for computing the effective radius of the shape,
     #: or None if the model is not usable as a form factor model.

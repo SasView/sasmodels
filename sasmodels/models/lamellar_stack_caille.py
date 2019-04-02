@@ -67,20 +67,12 @@ References
 .. [#] F Nallet, R Laversanne, and D Roux, *J. Phys. II France*, 3, (1993) 487-502
 .. [#] J Berghausen, J Zipfel, P Lindner, W Richtering, *J. Phys. Chem. B*, 105, (2001) 11081-11088
 
-Source
-------
-
-`lamellar_stack_caille.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/lamellar_stack_caille.py>`_
-
-`lamellar_stack_caille.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/lamellar_stack_caille.c>`_
-
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
-* **Last Modified by:** 
-* **Last Reviewed by:** 
-* **Source added by :** Steve King **Date:** March 25, 2019
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 import numpy as np
