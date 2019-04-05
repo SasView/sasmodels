@@ -66,13 +66,6 @@ References
 .. [#] B. Hammouda, *Advances in Polymer Science* 106 (1993) 87
 .. [#] B. Hammouda, *SANS Toolbox* https://www.ncnr.nist.gov/staff/hammouda/the_sans_toolbox.pdf.
 
-Source
-------
-
-`rpa.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/rpa.py>`_
-
-`rpa.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/rpa.c>`_
-
 Authorship and Verification
 ----------------------------
 
@@ -80,7 +73,6 @@ Authorship and Verification
 * **Converted to sasmodels by:** Paul Kienzle **Date:** July 18, 2016
 * **Last Modified by:** Paul Butler **Date:** March 12, 2017
 * **Last Reviewed by:** Steve King **Date:** March 27, 2019
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 from numpy import inf

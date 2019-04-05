@@ -32,18 +32,12 @@ References
 
 None.
 
-Source
-------
-
-`broad_peak.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/broad_peak.py>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul kienle **Date:** July 24, 2016
 * **Last Reviewed by:** Richard Heenan **Date:** March 21, 2016
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

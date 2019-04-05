@@ -43,18 +43,12 @@ References
 .. [#] H. Meier & G. Strobl. Small-Angle X-ray Scattering Study of Spinodal Decomposition in Polystyrene/Poly(styrene-co-bromostyrene) Blends. Macromolecules 20, 649-654 (1987).
 .. [#] T. Hashimoto, M. Takenaka & H. Jinnai. Scattering Studies of Self-Assembling Processes of Polymer Blends in Spinodal Decomposition. J. Appl. Cryst. 24, 457-466 (1991).
 
-Source
-------
-
-`spinodal.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/spinodal.py>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:** Dirk Honecker **Date:** Oct 7, 2016
 * **Last Modified by:** Steve King **Date:** Oct 25, 2018
 * **Last Reviewed by:** Steve King **Date:** Oct 25, 2018
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

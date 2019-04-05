@@ -108,20 +108,12 @@ References
 .. [#] L A Feigin and D I Svergun. *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*, Plenum Press, New York, 1987
 .. [#] A. Isihara. *J. Chem. Phys.*, 18 (1950) 1446-1449
 
-Source
-------
-
-`ellipsoid.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/ellipsoid.py>`_
-
-`ellipsoid.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/ellipsoid.c>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Converted to sasmodels by:** Helen Park **Date:** July 9, 2014
 * **Last Modified by:** Paul Kienzle **Date:** March 22, 2017
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 from __future__ import division
 

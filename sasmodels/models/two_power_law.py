@@ -36,18 +36,12 @@ References
 
 None.
 
-Source
-------
-
-`two_power_law.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/two_power_law.py>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Wojciech Wpotrzebowski **Date:** February 18, 2016
 * **Last Reviewed by:** Paul Butler **Date:** March 21, 2016
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
