@@ -190,12 +190,12 @@ tests = [
     [{}, 0.2, 0.042761386790780453],
     [{}, [0.2], [0.042761386790780453]],
     [{"scale": 1., "background": 0.}, [0.01,0.05,0.2],
-     # these numerical results NOT independently verified    
+     # these numerical results NOT independently verified
      [3.01823887e+02, 5.36661653e+01, 4.17613868e-02]],
     [{"scale": 1., "background": 0.},
-     # the longer list here checks  F1, F2=I(Q)*V, R_eff, volume, volume_ratio 
-     0.05, 2214.9614083, 26975556.88749548, 73.34013315261608, 
-     502654.8245743669, 1.0], 
+     # the longer list here checks  F1, F2=I(Q)*V, R_eff, volume, volume_ratio
+     0.05, 2214.9614083, 26975556.88749548, 73.34013315261608,
+     502654.8245743669, 1.0],
 #2345678901234567890123456789012345678901234567890123456789012345678901234567890
     [{"@S": "hardsphere",         # MONODISPERSE
      "scale": 5., "background": 0.,"volfraction":0.2,
@@ -209,13 +209,13 @@ tests = [
      }, [0.01,0.05,0.2], [8.29729770e+01, 5.44206752e+01, 4.17598382e-02] ],
     [{"@S": "hardsphere",         # POLYDISPERSE
      "scale": 5., "background": 0.,"volfraction":0.2,
-     "radius_pd":0.2,"radius_pd_n":15,"length_pd":0.1,"radius_pd_n":15, 
+     "radius_pd":0.2,"radius_pd_n":15,"length_pd":0.1,"radius_pd_n":15,
      "structure_factor_mode": 0,  # normal decoupling approx
      "radius_effective_mode": 1   # Reff "excluded volume"
      }, [0.01,0.05,0.2], [87.50350037, 63.95202427, 0.27889988] ],
     [{"@S": "hardsphere",
      "scale": 5., "background": 0.,"volfraction":0.2,
-     "radius_pd":0.2,"radius_pd_n":15,"length_pd":0.1,"radius_pd_n":15, 
+     "radius_pd":0.2,"radius_pd_n":15,"length_pd":0.1,"radius_pd_n":15,
      "structure_factor_mode": 1,  # beta approx
      "radius_effective_mode": 1   # Reff "excluded volume"
      }, [0.01,0.05,0.2], [132.2101165, 59.89948174, 0.28048784] ],
@@ -263,4 +263,4 @@ def _extend_with_reff_tests(radius, length):
 _extend_with_reff_tests(parameters[2][2], parameters[3][2])
 del _extend_with_reff_tests
 
-# ADDED by:  RKH  ON: 18Mar2016 renamed sld's etc 
+# ADDED by:  RKH  ON: 18Mar2016 renamed sld's etc

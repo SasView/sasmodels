@@ -202,6 +202,7 @@ def _hide_model_case_from_nose():
             self.platform = platform
             self.dtype = dtype
             self.stash = stash  # container for the results of the first run
+            self._failures = []  # Set of failed target values
 
             setattr(self, test_method_name, self.run_all)
             unittest.TestCase.__init__(self, test_method_name)
@@ -230,6 +231,7 @@ def _hide_model_case_from_nose():
                 tests += self.info.tests
             S_tests = [test for test in tests if '@S' in test[0]]
             P_tests = [test for test in tests if '@S' not in test[0]]
+            del self._failures[:]
             try:
                 model = build_model(self.info, dtype=self.dtype,
                                     platform=self.platform)
@@ -272,6 +274,11 @@ def _hide_model_case_from_nose():
             except:
                 annotate_exception(self.test_name)
                 raise
+
+            if self._failures:
+                msg = ("The following assertions failed for %s:\n  %s"
+                       % (self.test_name, "\n  ".join(self._failures)))
+                raise AssertionError(msg)
 
         def _find_missing_tests(self):
             # type: () -> None
@@ -343,21 +350,26 @@ def _hide_model_case_from_nose():
                 return Fsq
 
         def _check_scalar(self, target, actual, name):
-            self.assertTrue(is_near(target, actual, 5),
-                            '%s: expected:%s; actual:%s'
-                            % (name, target, actual))
+            if not is_near(target, actual, 5):
+                self._failures.append('%s: expected:%s; actual:%s'
+                                      % (name, target, actual))
 
         def _check_vectors(self, x, target, actual, name='I'):
-            self.assertTrue(len(actual) > 0,
-                            '%s(...) expected return'%name)
+            if not len(actual) > 0:
+                self._failures.append('%s(...) expected return value'%name)
+                return
             if target is None:
                 return
-            self.assertEqual(len(target), len(actual),
-                             '%s(...) returned wrong length'%name)
+            if len(target) != len(actual):
+                self._failures.append('%s(...) returned wrong length in %s'
+                                      % (name, str(actual)))
+                return
             for xi, yi, actual_yi in zip(x, target, actual):
-                self.assertTrue(is_near(yi, actual_yi, 5),
-                                '%s(%s): expected:%s; actual:%s'
-                                % (name, xi, target, actual))
+                if not is_near(yi, actual_yi, 5):
+                    self._failures.append('%s(%s): expected:%s; actual:%s'
+                                          % (name, xi, target, actual))
+                    # Whole list is printed on any error, so fail on first
+                    return
 
     return ModelTestCase
 
