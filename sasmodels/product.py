@@ -286,6 +286,8 @@ def _intermediates(
         Fsq,              # type: np.ndarray
         S,                # type: np.ndarray
         scale,            # type: float
+        volume,           # type: float
+        volume_ratio,     # type: float
         radius_effective, # type: float
         beta_mode,        # type: bool
     ):
@@ -303,6 +305,8 @@ def _intermediates(
             ("S(Q)", S),
             ("beta(Q)", F**2 / Fsq),
             ("S_eff(Q)", 1 + (F**2 / Fsq)*(S-1)),
+            ("volume", volume),
+            ("volume_ratio", volume_ratio),
             ("effective_radius", radius_effective),
             ("radius_effective", radius_effective),
             # ("I(Q)", scale*(Fsq + (F**2)*(S-1)) + bg),
@@ -311,6 +315,8 @@ def _intermediates(
         parts = OrderedDict((
             ("P(Q)", scale*Fsq),
             ("S(Q)", S),
+            ("volume", volume),
+            ("volume_ratio", volume_ratio),
             ("effective_radius", radius_effective),
             ("radius_effective", radius_effective),
         ))
@@ -539,7 +545,9 @@ class ProductKernel(Kernel):
         # return value in the caller, though in that case we could return
         # the results directly rather than through a lazy evaluator.
         self.results = lambda: _intermediates(
-            F, Fsq, S, combined_scale, radius_effective, beta_mode)
+            F, Fsq, S, combined_scale,
+            shell_volume, volume_ratio,
+            radius_effective, beta_mode)
 
         return final_result
 
