@@ -237,6 +237,58 @@ Further improvements can be made using the local monodisperse
 approximation (LMA) or using partial structure factors as done in [#bressler]_,
 but these are not implemented in this code.
 
+For hollow shapes, *volfraction* is computed from the material in the
+shell rather than the shell plus solvent inside the shell.  Using
+$V_e(\mathbf\xi)$ as the enclosed volume of the shell plus solvnt and
+$V_c(\mathbf\xi)$ as the core volume of solvent inside the shell, we
+can compute the average enclosed and shell volumes as
+
+.. math::
+    :nowrap:
+
+    \begin{align*}
+
+    \langle V_e \rangle &= \frac{
+        \int_\Xi P_\mathbf\xi V_e(\mathbf\xi)\,\mathrm d\mathbf\xi
+    }{ \int_\Xi P_\mathbf\xi\,\mathrm d\mathbf xi } \\
+
+    \langle V_s \rangle &= \frac{
+        \int_\Xi P_\mathbf\xi (V_e(\mathbf\xi) - V_c(\mathbf\xi))\,\mathrm d\mathbf\xi
+    }{ \int_\Xi P_\mathbf\xi\,\mathrm d\mathbf xi }
+
+    \end{align*}
+
+Given $n$ particles and a total solvent volume $V_\text{out}$ outside the
+shells, the volume fraction of the shell, $\phi_s$ and the shell plus
+enclosed solvent $\phi_e$ are
+
+.. math::
+    :nowrap:
+
+    \begin{align*}
+
+    \phi_s &= \frac{n \langle V_s \rangle}{n \langle V_s \rangle + n \langle V_c \rangle + V_\text{out}}
+           = \frac{n \langle V_s \rangle}{V_\text{total}} \\
+
+    \phi_e &= \frac{n \langle V_e \rangle}{n \langle V_e \rangle + V_\text{out}}
+           = \frac{n \langle V_e \rangle}{V_\text{total}}
+
+    \end{align*}
+
+Dividing gives
+
+.. math::
+
+    \frac{\phi_S}{\phi_P} = \frac{\langle V_e \rangle}{\langle V_s \rangle}
+
+so the enclosed volume fraction can be computed from the shell volume fraction
+and the form:shell volume ratio as
+
+.. math::
+
+    \phi_S = \phi_P \langle V_e \rangle \big/ \langle V_s \rangle
+
+
 References
 ^^^^^^^^^^
 
