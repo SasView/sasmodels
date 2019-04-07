@@ -1,5 +1,3 @@
-#define INVALID(p) (p.fractal_dim < 0.0)
-
  static double
  form_volume(double radius)
  {

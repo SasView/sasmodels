@@ -1,4 +1,3 @@
-#define INVALID(p) (p.fractal_dim_mass + p.fractal_dim_surf > 6.)
 static double
 Iq(double q,
           double fractal_dim_mass,

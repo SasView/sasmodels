@@ -118,6 +118,63 @@ Models that do not conform to these requirements will *never* be incorporated
 into the built-in library.
 
 
+Composite Models
+................
+
+The simplest way to define a new model is to combine existing models.  For
+example, *cyl_sphere.py* could contain::
+
+    import os.path
+    from sasmodels.core import load_model_info
+    model_info = load_model_info('cylinder+sphere@hardsphere')
+    model_info.name = os.path.basename(__file__).split('.')[0]
+
+This defines a mixture of :ref:`cylinder` and :ref:`sphere` shapes, with
+the spheres clustered closely enough to require an interaction effective
+with the :ref:`hardsphere` structure factor.
+
+The magic code at the end extracts the base filename, *cyl_sphere* from the
+model file path and assigns it to the model name.
+
+Reparameterized Models
+......................
+
+You can modify an existing model to use new parameters.  For example,
+to create an ellipsoid constrained by volume::
+
+    from numpy import inf
+    from sasmodels.core import reparameterize
+    parameters = [
+        # name, units, default, [min, max], type, description
+        ["volume", "Ang^3", 1e5, [0, inf], "volume", "ellipsoid volume"],
+        ["eccentricity", "", 1, [0, inf], "volume", "polar:equatorial radius"],
+    ]
+    translation = """
+        Re = cbrt(volume/eccentricity/M_4PI_3)
+        radius_polar = eccentricity*Re
+        radius_equatorial = Re  # python style comments allowed
+        """
+    model_info = reparameterize('ellipsoid', parameters, translation, __file__)
+
+Here, *volume* and *eccentricity* are new parameters which replace the
+*radius_polar* and *radius_equatorial* parameters in the :ref:`ellipsoid`
+model.  The parameter properties are described below.  Since *volume* and
+*eccentricity* are "volume" parameters they may be polydisperse.
+
+*translation* is a set of equations to compute the underlying ellipsoid
+parameters from the new parameters. *Re* is an intermediate value
+introduced to make the equations easier to write.
+
+The new parameters replace *radius_polar* and *radius_equatorial* in the
+parameter table.  To have more control over parameter placement, use an
+*insert_after={...}* argmument to :func:`reparameterize`.  For each
+insert location provide a list of new parameter names to insert at that
+location.  For example, *{'': 'eccentricity,volume'}* inserts them both
+at the beginning (before any parameter), whereas
+*{'radius_polar': 'eccentricty', 'radius_equatorial': 'volume'}* will
+place them after *radius_polar* and *radius_equatorial* in the final
+parameter table, before deleting *radius_polar* and *radius_equatorial*.
+
 Model Documentation
 ...................
 
@@ -574,16 +631,12 @@ The C model operates on a single $q$ value at a time.  The code will be
 run in parallel across different $q$ values, either on the graphics card
 or the processor.
 
-Rather than returning NAN from Iq, you must define the *INVALID(v)*.  The
-*v* parameter lets you access all the parameters in the model using
-*v.par1*, *v.par2*, etc. For example:
+Rather than returning NAN from Iq, you must provide a conditional expression
+which evaluates to True if the parameters are valid and False if they
+are not.  This is provided in the python model file as *valid = "expr"*,
+where *expr* is a C expression.  For example::
 
-.. code-block:: c
-
-    #define INVALID(v) (v.bell_radius < v.radius)
-
-The INVALID define can go into *Iq*, or *c_code*, or an external C file
-listed in *source*.
+    valid = "bell_radius >= radius && radius >= 0"
 
 Structure Factors
 .................

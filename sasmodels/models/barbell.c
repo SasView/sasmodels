@@ -1,5 +1,3 @@
-#define INVALID(v) (v.radius_bell < v.radius)
-
 //barbell kernel - same as dumbell
 static double
 _bell_kernel(double qab, double qc, double h, double radius_bell,

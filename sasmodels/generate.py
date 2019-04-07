@@ -30,10 +30,6 @@ Small angle scattering models are defined by a set of kernel functions:
     the form with particular dimensions.  Mode determines the type of
     effective radius returned, with mode=1 for equivalent volume.
 
-    #define INVALID(v) (expr)  returns False if v.parameter is invalid
-    for some parameter or other (e.g., v.bell_radius < v.radius).  If
-    necessary, the expression can call a function.
-
 These functions are defined in a kernel module .py script and an associated
 set of .c files.  The model constructor will use them to create models with
 polydispersity across volume and orientation parameters, and provide
@@ -63,15 +59,6 @@ previously declared *double* variables.  When compiled for systems without
 OpenCL, *SINCOS* will be replaced by *sin* and *cos* calls.   If *value* is
 an expression, it will appear twice in this case; whether or not it will be
 evaluated twice depends on the quality of the compiler.
-
-If the input parameters are invalid, the scattering calculator should
-return a negative number. Particularly with polydispersity, there are
-some sets of shape parameters which lead to nonsensical forms, such
-as a capped cylinder where the cap radius is smaller than the
-cylinder radius.  The polydispersity calculation will ignore these points,
-effectively chopping the parameter weight distributions at the boundary
-of the infeasible region.  The resulting scattering will be set to
-background.  This will work correctly even when polydispersity is off.
 
 The kernel module must set variables defining the kernel meta data:
 
@@ -115,7 +102,12 @@ The kernel module must set variables defining the kernel meta data:
     passed values one *q* at a time.  The performance improvement of
     this step is significant.
 
-    *demo* is a dictionary of parameter=value defining a set of
+    *valid* expression that evaluates to True if the input parameters
+    are valid (e.g., "bell_radius >= radius" for the barbell or capped
+    cylinder models).  The expression can call C functions, including
+    those defined in your model file.
+
+    **DEPRECATED** *demo* is a dictionary of parameter=value defining a set of
     parameters to use by default when *compare* is called.  Any
     parameter not set in *demo* gets the initial value from the
     parameter list.  *demo* is mostly needed to set the default
@@ -123,6 +115,19 @@ The kernel module must set variables defining the kernel meta data:
 
 A :class:`modelinfo.ModelInfo` structure is constructed from the kernel meta
 data and returned to the caller.
+
+Valid inputs should be identified by the *valid* expression.
+Particularly with polydispersity, there are some sets of shape parameters
+which lead to nonsensical forms, such as a capped cylinder where the
+cap radius is smaller than the cylinder radius.  The polydispersity
+calculation will ignore these points, effectively chopping the
+parameter weight distributions at the boundary of the infeasible region.
+The resulting scattering will be set to background, even for models with
+no polydispersity.  If the *valid* expression misses some parameter
+combinations and they reach the kernel, the kernel should probably return
+NaN rather than zero.  Even if the volume also evaluates to zero for
+these parameters, the distribution weights are still accumulated and the
+average volume calculation will be slightly off.
 
 The doc string at the start of the kernel module will be used to
 construct the model documentation web pages.  Embedded figures should
@@ -357,7 +362,7 @@ def model_sources(model_info):
     """
     Return a list of the sources file paths for the module.
     """
-    search_path = [dirname(model_info.filename), MODEL_PATH]
+    search_path = [dirname(model_info.basefile), MODEL_PATH]
     return [_search(search_path, f) for f in model_info.source]
 
 
@@ -367,12 +372,14 @@ def dll_timestamp(model_info):
     Return a timestamp for the model corresponding to the most recently
     changed file or dependency.
     """
+    # TODO: what about on-the-fly derived models---tag name with crc32
     # TODO: fails DRY; templates appear two places.
     model_templates = [joinpath(DATA_PATH, filename)
                        for filename in ('kernel_header.c', 'kernel_iq.c')]
+    # Note: basefile is probably filename, but duplicate doesn't hurt.
     source_files = (model_sources(model_info)
                     + model_templates
-                    + [model_info.filename])
+                    + [model_info.filename, model_info.basefile])
     # Note: file may not exist when it is a standard model from library.zip
     times = [getmtime(f) for f in source_files if exists(f)]
     newest = max(times) if times else 0
@@ -390,9 +397,10 @@ def ocl_timestamp(model_info):
     # TODO: fails DRY; templates appear two places.
     model_templates = [joinpath(DATA_PATH, filename)
                        for filename in ('kernel_header.c', 'kernel_iq.c')]
+    # Note: basefile is probably filename, but duplicate doesn't hurt.
     source_files = (model_sources(model_info)
                     + model_templates
-                    + [model_info.filename])
+                    + [model_info.filename, model_info.basefile])
     # Note: file may not exist when it is a standard model from library.zip
     times = [getmtime(f) for f in source_files if exists(f)]
     newest = max(times) if times else 0
@@ -652,7 +660,7 @@ def _gen_fn(model_info, name, pars):
     """
     par_decl = ', '.join(p.as_function_argument() for p in pars) if pars else 'void'
     body = getattr(model_info, name)
-    filename = model_info.filename
+    filename = model_info.basefile
     # Note: if symbol is defined strangely in the module then default it to 1
     lineno = model_info.lineno.get(name, 1)
     return _FN_TEMPLATE % {
@@ -661,15 +669,167 @@ def _gen_fn(model_info, name, pars):
     }
 
 
-def _call_pars(prefix, pars):
+def _call_pars(pars, subs):
     # type: (str, List[Parameter]) -> List[str]
     """
     Return a list of *prefix+parameter* from parameter items.
 
-    *prefix* should be "v." if v is a struct.
-    """
-    return [p.as_call_reference(prefix) for p in pars]
+    *pars* is the list of parameters from the base model.
 
+    *subs* contains the translation equations with references to parameters
+    from the new parameter table.  If there is no translation, then *subs*
+    is just a list of references into the base table.
+    """
+    return [subs[p.id] for p in pars]
+
+def _split_translation(translation):
+    r"""
+    Process the *translation* string, which is a sequence of assignments.
+
+    Blanks and comments (c-style and python-style) are stripped.
+
+    Conditional expressions should use C syntax (! || && ? :) not python.
+    """
+    # TODO: support translation for vector parameters
+    # TODO: security concerns when code stored in model file
+    assignments = []
+    for line in translation.split('\n'):
+        # strip comments and white space from line
+        code = line.split('#', 1)[0].split('//', 1)[0].strip()
+        if not code:
+            continue
+        # split assignment on first equals
+        parts = code.split('=', 1)
+        if len(parts) == 1:
+            raise ValueError("translation expected 'var=expr' but got %r", line)
+        # store parts without assessing whether they are correct
+        var, expr = parts
+        assignments.append((var.strip(), expr.strip()))
+    return assignments
+
+# The phrase "(?<![.0-9])" in the following re indicates negative look-behind,
+# designed to reject the like 314159e-5 and 1.0f
+_IDENT_RE = re.compile(r"(?<![.0-9])([A-Za-z_][A-Za-z0-9_]*)")
+
+def _build_translation(model_info, table_id="_v", var_prefix="_var_"):
+    """
+    Interpret parameter translation block, if any.
+
+    *model_info* contains the parameter table and any translation definition
+    for converting between model parameters and the base calculation model.
+
+    *table_id* is the internal label used for the parameter call table.  It
+    must be of the form "_table" matching whatever table variable name that
+    appears in the macros such as CALL_VOLUME() and CALL_IQ().
+
+    *var_prefix* is a tag to attach to intermediate variables to avoid
+    collision with variables used inside kernel_iq.
+
+    Returns:
+
+    * *subs* = {name: expr, ...} parameter substitution table for calling
+      into the kernel function
+    * *vars* = "#define TRANSLATION_VARS(_v) _var_name = expr ...."
+    * *validity* = "#define VALID(_v) ..."
+
+    The returned *subs* is used to generate the substitions for CALL_VOLUME
+    etc., parameters, via :func:`_call_pars`.
+
+    The returned *vars* and *validity* macros need to be included inside
+    the generated model files.  They are the same for all variants (1D, 2D,
+    magnetic) so can be defined once along side the parameter table.  Even
+    though they are expanded independently in each variant.
+    """
+    # Usual case of no translation.
+    call_table = model_info.parameters.kernel_parameters
+    if not model_info.translation:
+        # Simple substitution {name: table_id.name}, an empty
+        # TRANSLATION_VARS() macro and VALID() macro with simple subs.
+        subs = {p.id: table_id+'.'+p.id for p in call_table}
+        translation_vars = _build_translation_vars(table_id, [])
+        validity = _build_validity_check(model_info.valid, table_id, subs)
+        return subs, translation_vars, validity
+
+    # Translation case.
+    # Grab the list of assignment statements.
+    assigns = _split_translation(model_info.translation)
+
+    # Identify parameters and intermediates.  Parameters are from the calling
+    # table, not the base table.  Only these have values defined by the caller
+    # that can be used in expressions.  Need the list of base parameters to
+    # identify substitutions.  And LHS variables that are not base parameters
+    # are therefore intermediate parameters.  Note: leaving the main parameter
+    # table as the caller parameter table because the rest of the code uses it
+    # to build up and interpret the calling sequence.  The kernel functions
+    # themselves of course use the base table.
+    base_table = model_info.base.kernel_parameters
+    call_pars = set(p.id for p in call_table)
+    base_pars = set(p.id for p in base_table)
+    vars = set(name for name, expr in assigns
+               if name not in call_pars and name not in base_pars)
+
+    # Regular expression substition to tag the variables on each RHS.
+    # Don't want to translate all symbols since they include C constants and
+    # math functions.
+    def id_sub(match_obj):
+        name = match_obj.group(0)
+        if name in vars:
+            return var_prefix + name
+        if name in call_pars:
+            return table_id + '.' + name
+        return name
+    assigns = [(name, _IDENT_RE.sub(id_sub, eq)) for name, eq in assigns]
+
+    # Create a substituion table assuming all parameters are directly assigned,
+    # then update it with
+    subs = {p.id: table_id+'.'+p.id for p in base_table}
+    subs.update((name, eq) for name, eq in assigns if name in base_pars)
+
+    # Build TRANSLATION_VARS macros assignments to variables.
+    var_values = [(var_prefix+name, eq) for name, eq in assigns if name in vars]
+    translation_vars = _build_translation_vars(table_id, var_values)
+
+    # Build VALID macro, with expressions using caller parameters.
+    validity = _build_validity_check(model_info.valid, table_id, subs)
+
+    return subs, translation_vars, validity
+
+def _build_translation_vars(table_id, vars):
+    r"""
+    Build TRANSLATION_VARS macro for C which builds intermediate values.
+
+    E. g.,
+
+    ::
+
+        #define TRANSLATION_VARS(_v) \
+         const double _temporary_Re = cbrt(_v.volume/_v.eccentricity/M_4PI_3)
+    """
+    if vars:
+        # Leave comma off def since last def doesn't have comma
+        defs = ["const double %s = %s" % (name, eq)
+                for name, eq in vars]
+        return ("#define TRANSLATION_VARS(%s) \\\n  "%table_id
+                + "; \\\n  ".join(defs))
+    else:
+        return '#define TRANSLATION_VARS(%s) do {} while(0)'%table_id
+
+def _build_validity_check(eq, table_id, subs):
+    """
+    Substitute parameter expressions into validity test, returning the
+    VALID(_table) macro.
+    """
+    if not eq:  # None or empty string
+        return "#define VALID(%s) 1" % (table_id, )
+    else:
+        # TODO: maybe replace not/and/or with ! && ||
+        # TODO: (hard) replace (a if b else c) with (b ? a : c)
+        # TODO: reject a**n, or (hard) replace with pow(a, n)
+        def id_sub(match_obj):
+            name = match_obj.group(0)
+            return "(%s)"%subs[name] if name in subs else name
+        eq = _IDENT_RE.sub(id_sub, eq)
+        return "#define VALID(%s) (%s)" % (table_id, eq)
 
 _IQXY_PATTERN = re.compile(r"(^|\s)double\s+I(?P<mode>q(ac|abc|xy))\s*[(]",
                            flags=re.MULTILINE)
@@ -754,7 +914,12 @@ def make_source(model_info):
     # for the distribution rather than the absolute values used by angular
     # dispersion.  Need to be careful that necessary parameters are available
     # for computing volume even if we allow non-disperse volume parameters.
-    partable = model_info.parameters
+
+    # reference to table of calling parameters and table of called
+    # parameters, which may be different if the model is reparameterized
+    # by the caller.
+    call_table = model_info.parameters
+    base_table = model_info.base
 
     # Load templates and user code
     kernel_header = load_template('kernel_header.c')
@@ -767,49 +932,61 @@ def make_source(model_info):
     for path, code in user_code:
         _add_source(source, code, path)
     if model_info.c_code:
-        _add_source(source, model_info.c_code, model_info.filename,
+        _add_source(source, model_info.c_code, model_info.basefile,
                     lineno=model_info.lineno.get('c_code', 1))
 
     # Make parameters for q, qx, qy so that we can use them in declarations
     q, qx, qy, qab, qa, qb, qc \
         = [Parameter(name=v) for v in 'q qx qy qab qa qb qc'.split()]
 
-    # Generate form_volume function, etc. from body only
+    # Generate form_volume, etc., function definitions from strings
+    # given in the model.py file as the C function body only, such as
+    # one might for the volume of a sphere:
+    #     form_volume="return M_4PI_3*cube(radius)"
     if isinstance(model_info.form_volume, str):
-        pars = partable.form_volume_parameters
+        pars = call_table.form_volume_parameters
         source.append(_gen_fn(model_info, 'form_volume', pars))
     if isinstance(model_info.shell_volume, str):
-        pars = partable.form_volume_parameters
+        pars = call_table.form_volume_parameters
         source.append(_gen_fn(model_info, 'shell_volume', pars))
     if isinstance(model_info.Iq, str):
-        pars = [q] + partable.iq_parameters
+        pars = [q] + call_table.iq_parameters
         source.append(_gen_fn(model_info, 'Iq', pars))
     if isinstance(model_info.Iqxy, str):
-        pars = [qx, qy] + partable.iq_parameters + partable.orientation_parameters
+        pars = [qx, qy] + call_table.iq_parameters + call_table.orientation_parameters
         source.append(_gen_fn(model_info, 'Iqxy', pars))
     if isinstance(model_info.Iqac, str):
-        pars = [qab, qc] + partable.iq_parameters
+        pars = [qab, qc] + call_table.iq_parameters
         source.append(_gen_fn(model_info, 'Iqac', pars))
     if isinstance(model_info.Iqabc, str):
-        pars = [qa, qb, qc] + partable.iq_parameters
+        pars = [qa, qb, qc] + call_table.iq_parameters
         source.append(_gen_fn(model_info, 'Iqabc', pars))
 
-    # Check for shell_volume in source
+    # Check for shell_volume function in source code
     is_hollow = contains_shell_volume(source)
 
     # What kind of 2D model do we need?  Is it consistent with the parameters?
     xy_mode = find_xy_mode(source)
-    if xy_mode == 'qabc' and not partable.is_asymmetric:
+    if xy_mode == 'qabc' and not base_table.is_asymmetric:
         raise ValueError("asymmetric oriented models need to define Iqabc")
-    elif xy_mode == 'qac' and partable.is_asymmetric:
+    elif xy_mode == 'qac' and base_table.is_asymmetric:
         raise ValueError("symmetric oriented models need to define Iqac")
-    elif not partable.orientation_parameters and xy_mode in ('qac', 'qabc'):
+    elif not base_table.orientation_parameters and xy_mode in ('qac', 'qabc'):
         raise ValueError("Unexpected function I%s for unoriented shape"%xy_mode)
-    elif partable.orientation_parameters and xy_mode not in ('qac', 'qabc'):
+    elif base_table.orientation_parameters and xy_mode not in ('qac', 'qabc'):
         if xy_mode == 'qxy':
             logger.warn("oriented shapes should define Iqac or Iqabc")
         else:
             raise ValueError("Expected Iqac or Iqabc for oriented shape")
+
+    # Process parameter substitutions
+    subs, translation_vars, valid = _build_translation(model_info, '_v')
+
+    # Validity check macro.  Putting it here so that line number
+    # jiggering is short-lived.
+    source.append('#line %d "%s"'
+                  % (model_info.lineno.get('valid', 1), model_info.basefile))
+    source.append(valid)
 
     # Define the parameter table
     lineno = getframeinfo(currentframe()).lineno + 2
@@ -817,11 +994,12 @@ def make_source(model_info):
     #source.append('introduce breakage in generate to test lineno reporting')
     source.append("#define PARAMETER_TABLE \\")
     source.append("\\\n".join(p.as_definition()
-                              for p in partable.kernel_parameters))
+                              for p in call_table.kernel_parameters))
+
     # Define the function calls
     call_radius_effective = "#define CALL_RADIUS_EFFECTIVE(_mode, _v) 0.0"
-    if partable.form_volume_parameters:
-        refs = _call_pars("_v.", partable.form_volume_parameters)
+    if base_table.form_volume_parameters:
+        refs = _call_pars(base_table.form_volume_parameters, subs)
         if is_hollow:
             call_volume = (
                 "#define CALL_VOLUME(_form, _shell, _v) "
@@ -843,9 +1021,10 @@ def make_source(model_info):
         call_volume = (
             "#define CALL_VOLUME(_form, _shell, _v) "
             "do { _form = _shell = 1.0; } while (0)")
+    source.append(translation_vars)
     source.append(call_volume)
     source.append(call_radius_effective)
-    model_refs = _call_pars("_v.", partable.iq_parameters)
+    model_refs = _call_pars(base_table.iq_parameters, subs)
 
     if model_info.have_Fq:
         pars = ",".join(["_q", "&_F1", "&_F2",] + model_refs)
@@ -876,25 +1055,27 @@ def make_source(model_info):
         call_iqxy = "#define CALL_FQ_A(_qa,_F1,_F2,_v) (Fq(%s),_F2)" % pars
         clear_iqxy = "#undef CALL_FQ_A"
     elif xy_mode == 'qxy':
-        orientation_refs = _call_pars("_v.", partable.orientation_parameters)
-        pars = ",".join(["_qx", "_qy"] + model_refs + orientation_refs)
+        qxy_refs = _call_pars(base_table.orientation_parameters, subs)
+        pars = ",".join(["_qx", "_qy"] + model_refs + qxy_refs)
         call_iqxy = "#define CALL_IQ_XY(_qx,_qy,_v) Iqxy(%s)" % pars
         clear_iqxy = "#undef CALL_IQ_XY"
-        if partable.orientation_parameters:
+        if base_table.orientation_parameters:
             call_iqxy += "\n#define HAVE_THETA"
             clear_iqxy += "\n#undef HAVE_THETA"
-        if partable.is_asymmetric:
+        if base_table.is_asymmetric:
             call_iqxy += "\n#define HAVE_PSI"
             clear_iqxy += "\n#undef HAVE_PSI"
 
 
-    magpars = [k-2 for k, p in enumerate(partable.call_parameters)
+    # TODO: test magnetism with translated sld parameters
+    # By inspection it should work but intermediate variables aren't supported.
+    magpars = [k-2 for k, p in enumerate(call_table.call_parameters)
                if p.type == 'sld']
     # Fill in definitions for numbers of parameters
-    source.append("#define MAX_PD %s"%partable.max_pd)
-    source.append("#define NUM_PARS %d"%partable.npars)
-    source.append("#define NUM_VALUES %d" % partable.nvalues)
-    source.append("#define NUM_MAGNETIC %d" % partable.nmagnetic)
+    source.append("#define MAX_PD %s"%call_table.max_pd)
+    source.append("#define NUM_PARS %d"%call_table.npars)
+    source.append("#define NUM_VALUES %d" % call_table.nvalues)
+    source.append("#define NUM_MAGNETIC %d" % call_table.nmagnetic)
     source.append("#define MAGNETIC_PARS %s"%",".join(str(k) for k in magpars))
     source.append("#define PROJECTION %d"%PROJECTION)
     wrappers = _kernels(kernel_code, call_iq, clear_iq,

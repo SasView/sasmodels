@@ -12,6 +12,7 @@ import os
 from os.path import basename, join as joinpath
 from glob import glob
 import re
+import copy
 
 import numpy as np # type: ignore
 
@@ -174,6 +175,52 @@ def load_model_info(model_string):
     return modelinfo.make_model_info(kernel_module)
 
 
+_REPARAMETERIZE_DOCS = """\
+Definition
+----------
+
+Constrain :ref:`%(base)s` according to the following::
+
+    %(translation)s
+"""
+_LHS_RE = re.compile(r"^ *(?<![.0-9])([A-Za-z_][A-Za-z0-9_]+) *=",
+                     flags=re.MULTILINE)
+def reparameterize(
+        base, parameters, translation, filename=None,
+        title=None, insert_after=None, docs=None, name=None
+    ):
+    if not isinstance(base, ModelInfo):
+        base = load_model_info(base)
+    if name is None:
+        if filename is not None:
+            name = os.path.basename(filename).split('.')[0]
+        else:
+            name = "constrained_" + base.name
+    if filename is None:
+        filename = base.filename
+    if title is None:
+        titla = base.title + " (reparameterized)"
+    if docs is None:
+        lines = "\n    ".join(s.lstrip() for s in translation.split('\n'))
+        docs = _REPARAMETERIZE_DOCS%{'base': base.id, 'translation': lines}
+
+    # TODO: don't repeat code from generate._build_translation
+    base_pars = [par.id for par in base.parameters.kernel_parameters]
+    old_pars = [match.group(1) for match in _LHS_RE.finditer(translation)
+                if match.group(1) in base_pars]
+    new_pars = [modelinfo.parse_parameter(*p) for p in parameters]
+    table = modelinfo.derive_table(base.parameters, remove=old_pars,
+                                   insert=new_pars, insert_after=insert_after)
+
+    caller = copy.copy(base)
+    caller.translation = translation
+    caller.name = caller.id = name
+    caller.docs = docs
+    caller.filename = filename
+    caller.parameters = table
+    return caller
+
+
 def build_model(model_info, dtype=None, platform="ocl"):
     # type: (modelinfo.ModelInfo, str, str) -> KernelModel
     """
@@ -334,8 +381,10 @@ def test_composite_order():
         # the mixture model is tagged as e.g., A_sld, we ought to use a
         # regex subsitution s/^[A-Z]+_/_/, but removing all uppercase letters
         # is good enough.
-        fst = [[x for x in p.name if x == x.lower()] for p in fst.info.parameters.kernel_parameters]
-        snd = [[x for x in p.name if x == x.lower()] for p in snd.info.parameters.kernel_parameters]
+        fst = [[x for x in p.name if x == x.lower()]
+               for p in fst.info.parameters.kernel_parameters]
+        snd = [[x for x in p.name if x == x.lower()]
+               for p in snd.info.parameters.kernel_parameters]
         assert sorted(fst) == sorted(snd), "{} != {}".format(fst, snd)
 
     def build_test(first, second):
@@ -383,6 +432,7 @@ def test_composite():
               RADIUS_ID, VOLFRAC_ID, STRUCTURE_MODE_ID, RADIUS_MODE_ID,
               "A_sld", "A_sld_solvent", "A_radius"]
     assert target == actual, "%s != %s"%(target, actual)
+
 
 def list_models_main():
     # type: () -> int

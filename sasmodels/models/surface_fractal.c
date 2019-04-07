@@ -1,5 +1,3 @@
-// Don't need invalid test since fractal_dim_surf is not polydisperse
-// #define INVALID(v) (v.fractal_dim_surf <= 1.0 || v.fractal_dim_surf >= 3.0)
 
 double form_volume(double radius);
 

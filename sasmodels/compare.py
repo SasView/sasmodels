@@ -26,7 +26,7 @@ and tell you which string to use for the PYOPENCL_CTX variable.
 On Windows you will need to remove the quotes.
 """
 
-from __future__ import print_function
+from __future__ import print_function, division
 
 import sys
 import os

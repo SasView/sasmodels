@@ -1,5 +1,3 @@
-#define INVALID(v) (v.radius_cap < v.radius)
-
 // Integral over a convex lens kernel for t in [h/R,1].  See the docs for
 // the definition of the function being integrated.
 //   q is the magnitude of the q vector.

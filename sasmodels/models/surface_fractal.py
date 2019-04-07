@@ -82,6 +82,8 @@ parameters = [["radius",        "Ang", 10.0, [0, inf],   "",
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sas_3j1x_x.c", "lib/sas_gamma.c", "surface_fractal.c"]
+# Don't need validity test since fractal_dim_surf is not polydisperse
+#valid = "fractal_dim_surf > 1.0 && fractal_dim_surf < 3.0"
 
 def random():
     """Return a random parameter set for the model."""
