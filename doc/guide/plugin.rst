@@ -1146,7 +1146,7 @@ Each list is one test and contains, in order:
   $<F(q)>$ and $<F^2(q)>$.
 - for testing interaction between form factor and structure factor, specify
   the structure factor name in the parameters as *{"@S": "name", ...}* with
-  the remaining list of parameters defined by the *P@S* product model.
+  the remaining list of parameters defined by the *P@S* interaction model.
 
 .. _Test_Your_New_Model:
 
