@@ -187,19 +187,15 @@ _LHS_RE = re.compile(r"^ *(?<![.0-9])([A-Za-z_][A-Za-z0-9_]+) *=",
                      flags=re.MULTILINE)
 def reparameterize(
         base, parameters, translation, filename=None,
-        title=None, insert_after=None, docs=None, name=None
+        title=None, insert_after=None, docs=None, name=None,
     ):
     if not isinstance(base, modelinfo.ModelInfo):
         base = load_model_info(base)
     if name is None:
-        if filename is not None:
-            name = os.path.basename(filename).split('.')[0]
-        else:
-            name = "constrained_" + base.name
-    if filename is None:
-        filename = base.filename
+        name = filename if filename is not None else "constrained_" + base.name
+    name = os.path.basename(name).split('.')[0]
     if title is None:
-        titla = base.title + " (reparameterized)"
+        title = base.title + " (reparameterized)"
     if docs is None:
         lines = "\n    ".join(s.lstrip() for s in translation.split('\n'))
         docs = _REPARAMETERIZE_DOCS%{'base': base.id, 'translation': lines}

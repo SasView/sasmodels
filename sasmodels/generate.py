@@ -381,7 +381,8 @@ def dll_timestamp(model_info):
                     + model_templates
                     + [model_info.filename, model_info.basefile])
     # Note: file may not exist when it is a standard model from library.zip
-    times = [getmtime(f) for f in source_files if exists(f)]
+    # or when the model is generated dynamically.
+    times = [getmtime(f) for f in source_files if f and exists(f)]
     newest = max(times) if times else 0
     return newest
 
@@ -402,6 +403,7 @@ def ocl_timestamp(model_info):
                     + model_templates
                     + [model_info.filename, model_info.basefile])
     # Note: file may not exist when it is a standard model from library.zip
+    # or when the model is generated dynamically.
     times = [getmtime(f) for f in source_files if exists(f)]
     newest = max(times) if times else 0
     return newest

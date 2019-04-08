@@ -194,14 +194,14 @@ def compile_model(source, output):
         raise RuntimeError("compile failed.  File is in %r"%source)
 
 
-def dll_name(model_info, dtype):
-    # type: (ModelInfo, np.dtype) ->  str
+def dll_name(model_file, dtype):
+    # type: (str, np.dtype) ->  str
     """
     Name of the dll containing the model.  This is the base file name without
     any path or extension, with a form such as 'sas_sphere32'.
     """
     bits = 8*dtype.itemsize
-    basename = "sas%d_%s"%(bits, model_info.id)
+    basename = "sas%d_%s"%(bits, model_file)
     basename += ARCH + ".so"
 
     # Hack to find precompiled dlls.
@@ -212,13 +212,13 @@ def dll_name(model_info, dtype):
     return joinpath(SAS_DLL_PATH, basename)
 
 
-def dll_path(model_info, dtype):
-    # type: (ModelInfo, np.dtype) -> str
+def dll_path(model_file, dtype):
+    # type: (str, np.dtype) -> str
     """
     Complete path to the dll for the model.  Note that the dll may not
     exist yet if it hasn't been compiled.
     """
-    return os.path.join(SAS_DLL_PATH, dll_name(model_info, dtype))
+    return os.path.join(SAS_DLL_PATH, dll_name(model_file, dtype))
 
 
 def make_dll(source, model_info, dtype=F64):
@@ -247,7 +247,17 @@ def make_dll(source, model_info, dtype=F64):
         dtype = F64  # Force 64-bit dll.
     # Note: dtype may be F128 for long double precision.
 
-    dll = dll_path(model_info, dtype)
+    # TOOD: Tag each dll with the hash of the source to avoid collisions.
+    # TODO: Deal with ever-growing ~/.sasmodels/compiled_models.
+    # TODO: Is the GPU model cache growing without bound?
+    if model_info.filename is None:
+        model_file = model_info.id + "_" + generate.tag_source(source)
+    else:
+        # Don't need to tag models which have an associated file since the
+        # timestamps on the dependencies will let us know they need to be
+        # regenerated.
+        model_file = model_info.id
+    dll = dll_path(model_file, dtype)
 
     if not os.path.exists(dll):
         need_recompile = True
