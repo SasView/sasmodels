@@ -4,7 +4,7 @@
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
-.. _Product_Models:
+.. _Interaction_Models:
 
 Fitting Models with Structure Factors
 -------------------------------------
@@ -13,9 +13,10 @@ Fitting Models with Structure Factors
 
    This help document is under development
 
-**Interaction models**, or $P@S$ models for short, multiply the form factor
-$P(Q)$ by the structure factor $S(Q)$, modulated by the **effective radius**
-of the form factor. For the theory behind this, see :ref:`PStheory` later.
+**Interaction models** (previously called product models), or $P@S$ models
+for short, multiply the form factor $P(Q)$ by the structure factor $S(Q)$,
+modulated by the **effective radius** of the form factor. For the theory
+behind this, see :ref:`PStheory` later.
 
 Parameters
 ^^^^^^^^^^
