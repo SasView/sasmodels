@@ -189,7 +189,7 @@ def reparameterize(
         base, parameters, translation, filename=None,
         title=None, insert_after=None, docs=None, name=None
     ):
-    if not isinstance(base, ModelInfo):
+    if not isinstance(base, modelinfo.ModelInfo):
         base = load_model_info(base)
     if name is None:
         if filename is not None:
@@ -222,7 +222,7 @@ def reparameterize(
 
 
 def build_model(model_info, dtype=None, platform="ocl"):
-    # type: (modelinfo.ModelInfo, str, str) -> KernelModel
+    # type: (ModelInfo, str, str) -> KernelModel
     """
     Prepare the model for the default execution platform.
 
