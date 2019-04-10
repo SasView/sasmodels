@@ -172,38 +172,30 @@ def _tag_parameter(par):
     return par
 
 def _intermediates(
+        Q,                # type: np.ndarray
         F1,               # type: np.ndarray
         F2,               # type: np.ndarray
         S,                # type: np.ndarray
         scale,            # type: float
         radius_effective, # type: float
         beta_mode,        # type: bool
+        P_intermediate,   # type: Optional[Callable[[], OrderedDict]
     ):
     # type: (...) -> OrderedDict[str, Union[np.ndarray, float]]
     """
     Returns intermediate results for beta approximation-enabled product.
     The result may be an array or a float.
     """
-    # CRUFT: remove effective_radius once SasView 5.0 is released.
+    parts = OrderedDict()
+    parts["P(Q)"] = (Q, scale*F2)
+    if P_intermediate is not None:
+        parts["P(Q) parts"] = P_intermediate()
+    parts["radius_effective"] = radius_effective
+    parts["S(Q)"] = (Q, S)
     if beta_mode:
-        # TODO: 1. include calculated Q vector
-        # TODO: 2. consider implications if there are intermediate results in P(Q)
-        parts = OrderedDict((
-            ("P(Q)", scale*F2),
-            ("S(Q)", S),
-            ("beta(Q)", F1**2 / F2),
-            ("S_eff(Q)", 1 + (F1**2 / F2)*(S-1)),
-            ("effective_radius", radius_effective),
-            ("radius_effective", radius_effective),
-            # ("I(Q)", scale*(F2 + (F1**2)*(S-1)) + bg),
-        ))
-    else:
-        parts = OrderedDict((
-            ("P(Q)", scale*F2),
-            ("S(Q)", S),
-            ("effective_radius", radius_effective),
-            ("radius_effective", radius_effective),
-        ))
+        parts["beta(Q)"] = (Q, F1**2 / F2)
+        parts["S_eff(Q)"] = (Q, 1 + (F1**2 / F2)*(S-1))
+        #parts["I(Q)", scale*(F2 + (F1**2)*(S-1)) + bg
     return parts
 
 class ProductModel(KernelModel):
@@ -239,7 +231,7 @@ class ProductModel(KernelModel):
 
         p_kernel = self.P.make_kernel(q_vectors)
         s_kernel = self.S.make_kernel(q_vectors)
-        return ProductKernel(self.info, p_kernel, s_kernel)
+        return ProductKernel(self.info, p_kernel, s_kernel, q_vectors)
     make_kernel.__doc__ = KernelModel.make_kernel.__doc__
 
     def release(self):
@@ -255,13 +247,14 @@ class ProductKernel(Kernel):
     """
     Instantiated kernel for product model.
     """
-    def __init__(self, model_info, p_kernel, s_kernel):
-        # type: (ModelInfo, Kernel, Kernel) -> None
+    def __init__(self, model_info, p_kernel, s_kernel, q):
+        # type: (ModelInfo, Kernel, Kernel, Tuple[np.ndarray]) -> None
         self.info = model_info
+        self.q = q
         self.p_kernel = p_kernel
         self.s_kernel = s_kernel
         self.dtype = p_kernel.dtype
-        self.results = []  # type: List[np.ndarray]
+        self.results = None  # type: Callable[[], OrderedDict]
 
     def Iq(self, call_details, values, cutoff, magnetic):
         # type: (CallDetails, np.ndarray, float, bool) -> np.ndarray
@@ -337,6 +330,7 @@ class ProductKernel(Kernel):
         # If the model doesn't support Fq the returned <F> will be None.
         F1, F2, radius_effective, shell_volume, volume_ratio = self.p_kernel.Fq(
             p_details, p_values, cutoff, magnetic, radius_type)
+        p_intermediate = getattr(self.p_kernel, 'results', None)
 
         # Call the structure factor kernel to compute S.
         # Plug R_eff from the form factor into structure factor parameters
@@ -373,8 +367,9 @@ class ProductKernel(Kernel):
         # kernel calling interface.  Could do this as an "optional"
         # return value in the caller, though in that case we could return
         # the results directly rather than through a lazy evaluator.
-        self.results = lambda: _intermediates(
-            F1, F2, S, combined_scale, radius_effective, beta_mode)
+        self.results = lambda: _intermediates(self.q,
+            F1, F2, S, combined_scale, radius_effective, beta_mode,
+            p_intermediate)
 
         return final_result
 

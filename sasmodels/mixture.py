@@ -13,6 +13,8 @@ To use it, first load form factor P and structure factor S, then create
 from __future__ import print_function
 
 from copy import copy
+from collections import OrderedDict
+
 import numpy as np  # type: ignore
 
 from .modelinfo import Parameter, ParameterTable, ModelInfo
@@ -167,7 +169,7 @@ class MixtureModel(KernelModel):
         # in opencl; or both in opencl, but one in single precision and the
         # other in double precision).
         kernels = [part.make_kernel(q_vectors) for part in self.parts]
-        return MixtureKernel(self.info, kernels)
+        return MixtureKernel(self.info, kernels, q_vectors)
     make_kernel.__doc__ = KernelModel.make_kernel.__doc__
 
     def release(self):
@@ -178,25 +180,40 @@ class MixtureModel(KernelModel):
     release.__doc__ = KernelModel.release.__doc__
 
 
+def _intermediates(q, results):
+    # type: (List[Tuple[Kernel, np.ndarray, Optional[Callable]]]) -> OrderedDict[str, Any]
+    """
+    Returns intermediate results for mixture model.
+    """
+    parts = OrderedDict()
+    for part_num, (kernel, Iq, intermediates) in enumerate(results):
+        part_id = chr(ord('A') + part_num) + "_" + kernel.info.name + "(Q)"
+        parts[part_id] = (q, Iq)
+        if intermediates is not None:
+            parts[part_id + " parts"] = intermediates()
+    return parts
+
+
 class MixtureKernel(Kernel):
     """
     Instantiated kernel for mixture of models.
     """
-    def __init__(self, model_info, kernels):
-        # type: (ModelInfo, List[Kernel]) -> None
+    def __init__(self, model_info, kernels, q):
+        # type: (ModelInfo, List[Kernel], Tuple[np.ndarray]) -> None
         self.dim = kernels[0].dim
         self.info = model_info
+        self.q = q
         self.kernels = kernels
         self.dtype = self.kernels[0].dtype
         self.operation = model_info.operation
-        self.results = []  # type: List[np.ndarray]
+        self.results = None  # type: Callable[[], OrderedDict]
 
     def Iq(self, call_details, values, cutoff, magnetic):
         # type: (CallDetails, np.ndarray, np.ndarry, float, bool) -> np.ndarray
         scale, background = values[0:2]
         total = 0.0
         # remember the parts for plotting later
-        self.results = []  # type: List[np.ndarray]
+        results = []
         parts = _MixtureParts(self.info, self.kernels, call_details, values)
         for kernel, kernel_details, kernel_values in parts:
             #print("calling kernel", kernel.info.name)
@@ -210,7 +227,9 @@ class MixtureKernel(Kernel):
                     total = result
                 else:
                     total *= result
-            self.results.append(result)
+            results.append((kernel, result, getattr(kernel, 'results', None)))
+
+        self.results = lambda: _intermediates(self.q, results)
 
         return scale*total + background
 
