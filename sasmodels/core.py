@@ -338,37 +338,31 @@ def test_composite_order():
         snd = [[x for x in p.name if x == x.lower()] for p in snd.info.parameters.kernel_parameters]
         assert sorted(fst) == sorted(snd), "{} != {}".format(fst, snd)
 
-    def build_test(first, second):
-        """Construct pair model test"""
-        test = lambda description: test_models(first, second)
-        description = first + " vs. " + second
-        return test, description
-
-    yield build_test(
+    test_models(
         "cylinder+sphere",
         "sphere+cylinder")
-    yield build_test(
+    test_models(
         "cylinder*sphere",
         "sphere*cylinder")
-    yield build_test(
+    test_models(
         "cylinder@hardsphere*sphere",
         "sphere*cylinder@hardsphere")
-    yield build_test(
+    test_models(
         "barbell+sphere*cylinder@hardsphere",
         "sphere*cylinder@hardsphere+barbell")
-    yield build_test(
+    test_models(
         "barbell+cylinder@hardsphere*sphere",
         "cylinder@hardsphere*sphere+barbell")
-    yield build_test(
+    test_models(
         "barbell+sphere*cylinder@hardsphere",
         "barbell+cylinder@hardsphere*sphere")
-    yield build_test(
+    test_models(
         "sphere*cylinder@hardsphere+barbell",
         "cylinder@hardsphere*sphere+barbell")
-    yield build_test(
+    test_models(
         "barbell+sphere*cylinder@hardsphere",
         "cylinder@hardsphere*sphere+barbell")
-    yield build_test(
+    test_models(
         "barbell+cylinder@hardsphere*sphere",
         "sphere*cylinder@hardsphere+barbell")
 
