@@ -99,6 +99,7 @@ parameters = [["volfraction", "", 0.05, [0.0, 1], "",
 source = ["lib/sas_3j1x_x.c", "lib/sas_gamma.c", "lib/fractal_sq.c", "fractal.c"]
 
 def random():
+    """Return a random parameter set for the model."""
     radius = 10**np.random.uniform(0.7, 4)
     #radius = 5
     cor_length = 10**np.random.uniform(0.7, 2)*radius

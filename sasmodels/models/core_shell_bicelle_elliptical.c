@@ -10,7 +10,55 @@ form_volume(double r_minor,
 }
 
 static double
-Iq(double q,
+radius_from_excluded_volume(double r_minor, double x_core, double thick_rim, double thick_face, double length)
+{
+    const double r_equiv     = sqrt((r_minor + thick_rim)*(r_minor*x_core + thick_rim));
+    const double length_tot  = length + 2.0*thick_face;
+    return 0.5*cbrt(0.75*r_equiv*(2.0*r_equiv*length_tot + (r_equiv + length_tot)*(M_PI*r_equiv + length_tot)));
+}
+
+static double
+radius_from_volume(double r_minor, double x_core, double thick_rim, double thick_face, double length)
+{
+    const double volume_bicelle = form_volume(r_minor, x_core, thick_rim,thick_face,length);
+    return cbrt(volume_bicelle/M_4PI_3);
+}
+
+static double
+radius_from_diagonal(double r_minor, double x_core, double thick_rim, double thick_face, double length)
+{
+    const double radius_max = (x_core < 1.0 ? r_minor : x_core*r_minor);
+    const double radius_max_tot = radius_max + thick_rim;
+    const double length_tot = length + 2.0*thick_face;
+    return sqrt(radius_max_tot*radius_max_tot + 0.25*length_tot*length_tot);
+}
+
+static double
+radius_effective(int mode, double r_minor, double x_core, double thick_rim, double thick_face, double length)
+{
+    switch (mode) {
+    default:
+    case 1: // equivalent cylinder excluded volume
+        return radius_from_excluded_volume(r_minor, x_core, thick_rim, thick_face, length);
+    case 2: // equivalent volume sphere
+        return radius_from_volume(r_minor, x_core, thick_rim, thick_face, length);
+    case 3: // outer rim average radius
+        return 0.5*r_minor*(1.0 + x_core) + thick_rim;
+    case 4: // outer rim min radius
+        return (x_core < 1.0 ? x_core*r_minor+thick_rim : r_minor+thick_rim);
+    case 5: // outer max radius
+        return (x_core > 1.0 ? x_core*r_minor+thick_rim : r_minor+thick_rim);
+    case 6: // half outer thickness
+        return 0.5*length + thick_face;
+    case 7: // half diagonal
+        return radius_from_diagonal(r_minor,x_core,thick_rim,thick_face,length);
+    }
+}
+
+static void
+Fq(double q,
+    double *F1,
+    double *F2,
     double r_minor,
     double x_core,
     double thick_rim,
@@ -35,11 +83,10 @@ Iq(double q,
     const double dr3 = vol3*(sld_face-sld_rim);
 
     //initialize integral
-    double outer_sum = 0.0;
+    double outer_total_F1 = 0.0;
+    double outer_total_F2 = 0.0;
     for(int i=0;i<GAUSS_N;i++) {
         //setup inner integral over the ellipsoidal cross-section
-        //const double va = 0.0;
-        //const double vb = 1.0;
         //const double cos_theta = ( GAUSS_Z[i]*(vb-va) + va + vb )/2.0;
         const double cos_theta = ( GAUSS_Z[i] + 1.0 )/2.0;
         const double sin_theta = sqrt(1.0 - cos_theta*cos_theta);
@@ -47,26 +94,31 @@ Iq(double q,
         const double qc = q*cos_theta;
         const double si1 = sas_sinx_x(halfheight*qc);
         const double si2 = sas_sinx_x((halfheight+thick_face)*qc);
-        double inner_sum=0.0;
+        double inner_total_F1 = 0;
+        double inner_total_F2 = 0;
         for(int j=0;j<GAUSS_N;j++) {
             //76 gauss points for the inner integral (WAS 20 points,so this may make unecessarily slow, but playing safe)
-            // inner integral limits
-            //const double vaj=0.0;
-            //const double vbj=M_PI;
-            //const double phi = ( GAUSS_Z[j]*(vbj-vaj) + vaj + vbj )/2.0;
-            const double phi = ( GAUSS_Z[j] +1.0)*M_PI_2;
-            const double rr = sqrt(r2A - r2B*cos(phi));
+            //const double beta = ( GAUSS_Z[j]*(vbj-vaj) + vaj + vbj )/2.0;
+            const double beta = ( GAUSS_Z[j] +1.0)*M_PI_2;
+            const double rr = sqrt(r2A - r2B*cos(beta));
             const double be1 = sas_2J1x_x(rr*qab);
             const double be2 = sas_2J1x_x((rr+thick_rim)*qab);
-            const double fq = dr1*si1*be1 + dr2*si2*be2 + dr3*si2*be1;
+            const double f = dr1*si1*be1 + dr2*si2*be2 + dr3*si2*be1;
 
-            inner_sum += GAUSS_W[j] * fq * fq;
+            inner_total_F1 += GAUSS_W[j] * f;
+            inner_total_F2 += GAUSS_W[j] * f * f;
         }
         //now calculate outer integral
-        outer_sum += GAUSS_W[i] * inner_sum;
+        outer_total_F1 += GAUSS_W[i] * inner_total_F1;
+        outer_total_F2 += GAUSS_W[i] * inner_total_F2;
     }
+    // now complete change of integration variables (1-0)/(1-(-1))= 0.5
+    outer_total_F1 *= 0.25;
+    outer_total_F2 *= 0.25;
 
-    return outer_sum*2.5e-05;
+    //convert from [1e-12 A-1] to [cm-1]
+    *F1 = 1e-2*outer_total_F1;
+    *F2 = 1e-4*outer_total_F2;
 }
 
 static double

@@ -29,15 +29,15 @@ Case 9: A-B-C-D tetra-block copolymer
 .. note::
     These case numbers are different from those in the NIST SANS package!
 
-The models are based on the papers by Akcasu *et al.* and by
-Hammouda assuming the polymer follows Gaussian statistics such
+The models are based on the papers by Akcasu *et al.* [1] and by
+Hammouda [2] assuming the polymer follows Gaussian statistics such
 that $R_g^2 = n b^2/6$ where $b$ is the statistical segment length and $n$ is
 the number of statistical segment lengths. A nice tutorial on how these are
-constructed and implemented can be found in chapters 28 and 39 of Boualem
-Hammouda's 'SANS Toolbox'.
+constructed and implemented can be found in chapters 28, 31 and 34, and Part H,
+of Hammouda's 'SANS Toolbox' [3].
 
-In brief the macroscopic cross sections are derived from the general forms
-for homopolymer scattering and the multiblock cross-terms while the inter
+In brief, the macroscopic cross sections are derived from the general forms
+for homopolymer scattering and the multiblock cross-terms while the inter,
 polymer cross terms are described in the usual way by the $\chi$ parameter.
 
 USAGE NOTES:
@@ -47,7 +47,7 @@ USAGE NOTES:
   polymer mixture is in the homogeneous mixed-phase region.
 * **Component D is assumed to be the "background" component (ie, all contrasts
   are calculated with respect to component D).** So the scattering contrast
-  for a C/D blend = [SLD(component C) - SLD(component D)]\ :sup:`2`.
+  for a C/D blend $\rho_{C/D} = [\rho_C - \rho_D]$\ :sup:`2`.
 * Depending on which case is being used, the number of fitting parameters can
   vary.
 
@@ -62,12 +62,9 @@ USAGE NOTES:
 References
 ----------
 
-A Z Akcasu, R Klein and B Hammouda, *Macromolecules*, 26 (1993) 4136.
-
-B. Hammouda, *Advances in Polymer Science* 106 (1993) 87.
-
-B. Hammouda, *SANS Toolbox*
-https://www.ncnr.nist.gov/staff/hammouda/the_sans_toolbox.pdf.
+.. [#] A Z Akcasu, R Klein and B Hammouda, *Macromolecules*, 26 (1993) 4136
+.. [#] B. Hammouda, *Advances in Polymer Science* 106 (1993) 87
+.. [#] B. Hammouda, *SANS Toolbox* https://www.ncnr.nist.gov/staff/hammouda/the_sans_toolbox.pdf.
 
 Authorship and Verification
 ----------------------------
@@ -75,7 +72,7 @@ Authorship and Verification
 * **Author:** Boualem Hammouda - NIST IGOR/DANSE **Date:** pre 2010
 * **Converted to sasmodels by:** Paul Kienzle **Date:** July 18, 2016
 * **Last Modified by:** Paul Butler **Date:** March 12, 2017
-* **Last Reviewed by:** Paul Butler **Date:** March 12, 2017
+* **Last Reviewed by:** Steve King **Date:** March 27, 2019
 """
 
 from numpy import inf
@@ -149,3 +146,5 @@ def hidden(case_num):
         return HIDE_A
     else:
         return HIDE_ALL
+
+# TODO: no random parameters generated for RPA

@@ -22,7 +22,7 @@ class Dispersion(object):
     type = "base disperser"
     default = dict(npts=35, width=0, nsigmas=3)
     def __init__(self, npts=None, width=None, nsigmas=None):
-        self.npts = self.default['npts'] if npts is None else npts
+        self.npts = self.default['npts'] if npts is None else int(npts)
         self.width = self.default['width'] if width is None else width
         self.nsigmas = self.default['nsigmas'] if nsigmas is None else nsigmas
 
@@ -57,7 +57,6 @@ class Dispersion(object):
         if not relative:
             # For orientation, the jitter is relative to 0 not the angle
             center = 0
-            pass
         if sigma == 0 or self.npts < 2:
             if lb <= center <= ub:
                 return np.array([center], 'd'), np.array([1.], 'd')
@@ -122,9 +121,9 @@ class RectangleDispersion(Dispersion):
     type = "rectangle"
     default = dict(npts=35, width=0, nsigmas=1.73205)
     def _weights(self, center, sigma, lb, ub):
-         x = self._linspace(center, sigma, lb, ub)
-         x = x[np.fabs(x-center) <= np.fabs(sigma)*sqrt(3.0)]
-         return x, np.ones_like(x)
+        x = self._linspace(center, sigma, lb, ub)
+        x = x[np.fabs(x-center) <= np.fabs(sigma)*sqrt(3.0)]
+        return x, np.ones_like(x)
 
 class LogNormalDispersion(Dispersion):
     r"""
@@ -230,6 +229,28 @@ MODELS = OrderedDict((d.type, d) for d in (
     BoltzmannDispersion
 ))
 
+SAS_WEIGHTS_PATH = "~/.sasview/weights"
+def load_weights(pattern=None):
+    # type: (str) -> None
+    """
+    Load dispersion distributions matching the given glob pattern
+    """
+    import logging
+    import os
+    import os.path
+    import glob
+    import traceback
+    from .custom import load_custom_kernel_module
+    if pattern is None:
+        path = os.environ.get("SAS_WEIGHTS_PATH", SAS_WEIGHTS_PATH)
+        pattern = os.path.join(path, "*.py")
+    for filename in sorted(glob.glob(os.path.expanduser(pattern))):
+        try:
+            #print("loading weights from", filename)
+            module = load_custom_kernel_module(filename)
+            MODELS[module.Dispersion.type] = module.Dispersion
+        except Exception as exc:
+            logging.error(traceback.format_exc(exc))
 
 def get_weights(disperser, n, width, nsigmas, value, limits, relative):
     """

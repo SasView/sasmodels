@@ -67,8 +67,6 @@ $S(q)$ when $P(q) \cdot S(q)$ is applied.
 
 The $\theta$ and $\phi$ parameters are not used for the 1D output.
 
-
-
 Validation
 ----------
 
@@ -107,11 +105,8 @@ with polar radius equal to length and equatorial radius equal to radius.
 References
 ----------
 
-L A Feigin and D I Svergun.
-*Structure Analysis by Small-Angle X-Ray and Neutron Scattering*,
-Plenum Press, New York, 1987.
-
-A. Isihara. J. Chem. Phys. 18(1950) 1446-1449
+.. [#] L A Feigin and D I Svergun. *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*, Plenum Press, New York, 1987
+.. [#] A. Isihara. *J. Chem. Phys.*, 18 (1950) 1446-1449
 
 Authorship and Verification
 ----------------------------
@@ -160,30 +155,15 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "rotation about beam"],
              ]
 
+
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "ellipsoid.c"]
-
-def ER(radius_polar, radius_equatorial):
-    # see equation (26) in A.Isihara, J.Chem.Phys. 18(1950)1446-1449
-    ee = np.empty_like(radius_polar)
-    idx = radius_polar > radius_equatorial
-    ee[idx] = (radius_polar[idx] ** 2 - radius_equatorial[idx] ** 2) / radius_polar[idx] ** 2
-    idx = radius_polar < radius_equatorial
-    ee[idx] = (radius_equatorial[idx] ** 2 - radius_polar[idx] ** 2) / radius_equatorial[idx] ** 2
-    idx = radius_polar == radius_equatorial
-    ee[idx] = 2 * radius_polar[idx]
-    valid = (radius_polar * radius_equatorial != 0)
-    bd = 1.0 - ee[valid]
-    e1 = np.sqrt(ee[valid])
-    b1 = 1.0 + np.arcsin(e1) / (e1 * np.sqrt(bd))
-    bL = (1.0 + e1) / (1.0 - e1)
-    b2 = 1.0 + bd / 2 / e1 * np.log(bL)
-    delta = 0.75 * b1 * b2
-
-    ddd = np.zeros_like(radius_polar)
-    ddd[valid] = 2.0 * (delta + 1.0) * radius_polar * radius_equatorial ** 2
-    return 0.5 * ddd ** (1.0 / 3.0)
+have_Fq = True
+radius_effective_modes = [
+    "average curvature", "equivalent volume sphere", "min radius", "max radius",
+    ]
 
 def random():
+    """Return a random parameter set for the model."""
     volume = 10**np.random.uniform(5, 12)
     radius_polar = 10**np.random.uniform(1.3, 4)
     radius_equatorial = np.sqrt(volume/radius_polar) # ignore 4/3 pi

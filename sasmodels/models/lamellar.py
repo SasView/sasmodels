@@ -39,9 +39,15 @@ the $q$ vector is defined as
 References
 ----------
 
-F Nallet, R Laversanne, and D Roux, J. Phys. II France, 3, (1993) 487-502
+.. [#] F Nallet, R Laversanne, and D Roux, *J. Phys. II France*, 3, (1993) 487-502
+.. [#] J Berghausen, J Zipfel, P Lindner, W Richtering, *J. Phys. Chem. B*, 105, (2001) 11081-11088
 
-also in J. Phys. Chem. B, 105, (2001) 11081-11088
+Authorship and Verification
+----------------------------
+
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 import numpy as np
@@ -88,14 +94,12 @@ Iq = """
     """
 
 def random():
+    """Return a random parameter set for the model."""
     thickness = 10**np.random.uniform(1, 4)
     pars = dict(
         thickness=thickness,
     )
     return pars
-
-# ER defaults to 0.0
-# VR defaults to 1.0
 
 demo = dict(scale=1, background=0,
             sld=6, sld_solvent=1,

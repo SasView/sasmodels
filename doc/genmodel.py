@@ -6,6 +6,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 sys.path.insert(0, os.path.abspath('..'))
+import sasmodels
 from sasmodels import generate, core
 from sasmodels.direct_model import DirectModel, call_profile
 from sasmodels.data import empty_data1D, empty_data2D
@@ -126,6 +127,63 @@ def make_figure(model_info, opts):
     plt.savefig(path, bbox_inches='tight')
     #print("figure saved in",path)
 
+def copy_if_newer(src, dst):
+    from os.path import dirname, exists, getmtime
+    import shutil
+    if not exists(dst):
+        path = dirname(dst)
+        if not exists(path):
+            os.makedirs(path)
+        shutil.copy2(src, dst)
+    elif getmtime(src) > getmtime(dst):
+        shutil.copy2(src, dst)
+
+def link_sources(model_info):
+    from os.path import basename, dirname, realpath, join as joinpath
+
+    # List source files in reverse order of dependency.
+    model_file = basename(model_info.filename)
+    sources = list(reversed(model_info.source + [model_file]))
+
+    # Copy files to src dir under models directory.  Need to do this
+    # because sphinx can't link to an absolute path.
+    root = dirname(dirname(realpath(__file__)))
+    src = joinpath(root, "sasmodels", "models")
+    dst = joinpath(root, "doc", "model", "src")
+    for path in sources:
+        copy_if_newer(joinpath(src, path), joinpath(dst, path))
+
+    # Link to local copy of the files
+    downloads = [":download:`%s <src/%s>`"%(path, path) for path in sources]
+
+    # Could do syntax highlighting on the model files by creating a rst file
+    # beside each source file named containing source file with
+    #
+    #    src/path.rst:
+    #
+    #    .. {{ path.replace('/','_') }}:
+    #
+    #    .. literalinclude:: {{ src/path }}
+    #        :language: {{ "python" if path.endswith('.py') else "c" }}
+    #        :linenos:
+    #
+    # and link to it using
+    #
+    #     colors = [":ref:`%s`"%(path.replace('/','_')) for path in sources]
+    #
+    # Probably need to dump all the rst files into an index.rst to build them.
+
+    # Link to github repo (either the tagged sasmodels version or master)
+    url = "https://github.com/SasView/sasmodels/blob/v%s"%sasmodels.__version__
+    #url = "https://github.com/SasView/sasmodels/blob/master"%sasmodels.__version__
+    links = ["`%s <%s/sasmodels/models/%s>`_"%(path, url, path) for path in sources]
+
+    sep = "\n$\\ \\star\\ $ "  # bullet
+    body = "\n**Source**\n"
+    #body += "\n" + sep.join(links) + "\n\n"
+    body += "\n" + sep.join(downloads) + "\n\n"
+    return body
+
 def gen_docs(model_info):
     # type: (ModelInfo) -> None
     """
@@ -149,17 +207,21 @@ def gen_docs(model_info):
     pattern = '\*\*REFERENCE'
     match = re.search(pattern, docstr.upper())
 
+    sources = link_sources(model_info)
+
+    insertion = captionstr + sources
+
     if match:
         docstr1 = docstr[:match.start()]
         docstr2 = docstr[match.start():]
-        docstr = docstr1 + captionstr + docstr2
+        docstr = docstr1 + insertion + docstr2
     else:
         print('------------------------------------------------------------------')
         print('References NOT FOUND for model: ', model_info.id)
         print('------------------------------------------------------------------')
-        docstr += captionstr
+        docstr += insertion
 
-    open(sys.argv[2],'w').write(docstr)
+    open(sys.argv[2], 'w').write(docstr)
 
 def process_model(path):
     # type: (str) -> None

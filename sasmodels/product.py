@@ -12,33 +12,60 @@ To use it, first load form factor P and structure factor S, then create
 """
 from __future__ import print_function, division
 
+from collections import OrderedDict
+
 from copy import copy
 import numpy as np  # type: ignore
 
-from .modelinfo import ParameterTable, ModelInfo
+from .modelinfo import ParameterTable, ModelInfo, parse_parameter
 from .kernel import KernelModel, Kernel
-from .details import make_details, dispersion_mesh
+from .details import make_details
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple
+    from typing import Tuple, Callable, Union
 except ImportError:
     pass
 else:
-    from .modelinfo import ParameterSet
+    from .modelinfo import ParameterSet, Parameter
 # pylint: enable=unused-import
 
-# TODO: make estimates available to constraints
+# TODO: make shape averages available to constraints
 #ESTIMATED_PARAMETERS = [
-#    ["est_radius_effective", "A", 0.0, [0, np.inf], "", "Estimated effective radius"],
-#    ["est_volume_ratio", "", 1.0, [0, np.inf], "", "Estimated volume ratio"],
+#    ["mean_radius_effective", "A", 0.0, [0, np.inf], "", "mean effective radius"],
+#    ["mean_volume", "A", 0.0, [0, np.inf], "", "mean volume"],
+#    ["mean_volume_ratio", "", 1.0, [0, np.inf], "", "mean form: mean shell volume ratio"],
 #]
+STRUCTURE_MODE_ID = "structure_factor_mode"
+RADIUS_MODE_ID = "radius_effective_mode"
+RADIUS_ID = "radius_effective"
+VOLFRAC_ID = "volfraction"
+def make_extra_pars(p_info):
+    # type: (ModelInfo) -> List[Parameter]
+    """
+    Create parameters for structure factor and effective radius modes.
+    """
+    pars = []
+    if p_info.have_Fq:
+        par = parse_parameter(
+            STRUCTURE_MODE_ID,
+            "",
+            0,
+            [["P*S", "P*(1+beta*(S-1))"]],
+            "",
+            "Structure factor calculation")
+        pars.append(par)
+    if p_info.radius_effective_modes is not None:
+        par = parse_parameter(
+            RADIUS_MODE_ID,
+            "",
+            1,
+            [["unconstrained"] + p_info.radius_effective_modes],
+            "",
+            "Effective radius calculation")
+        pars.append(par)
+    return pars
 
-ER_ID = "radius_effective"
-VF_ID = "volfraction"
-
-# TODO: core_shell_sphere model has suppressed the volume ratio calculation
-# revert it after making VR and ER available at run time as constraints.
 def make_product_info(p_info, s_info):
     # type: (ModelInfo, ModelInfo) -> ModelInfo
     """
@@ -49,36 +76,40 @@ def make_product_info(p_info, s_info):
     # structure factor calculator.  Structure factors should not
     # have any magnetic parameters
     if not len(s_info.parameters.kernel_parameters) >= 2:
-        raise TypeError("S needs {} and {} as its first parameters".format(ER_ID, VF_ID))
-    if not s_info.parameters.kernel_parameters[0].id == ER_ID:
-        raise TypeError("S needs {} as first parameter".format(ER_ID))
-    if not s_info.parameters.kernel_parameters[1].id == VF_ID:
-        raise TypeError("S needs {} as second parameter".format(VF_ID))
+        raise TypeError("S needs {} and {} as its first parameters".format(RADIUS_ID, VOLFRAC_ID))
+    if not s_info.parameters.kernel_parameters[0].id == RADIUS_ID:
+        raise TypeError("S needs {} as first parameter".format(RADIUS_ID))
+    if not s_info.parameters.kernel_parameters[1].id == VOLFRAC_ID:
+        raise TypeError("S needs {} as second parameter".format(VOLFRAC_ID))
     if not s_info.parameters.magnetism_index == []:
         raise TypeError("S should not have SLD parameters")
     p_id, p_name, p_pars = p_info.id, p_info.name, p_info.parameters
     s_id, s_name, s_pars = s_info.id, s_info.name, s_info.parameters
 
-    # Create list of parameters for the combined model.  Skip the first
-    # parameter of S, which we verified above is effective radius.  If there
+    # Create list of parameters for the combined model.  If there
     # are any names in P that overlap with those in S, modify the name in S
     # to distinguish it.
     p_set = set(p.id for p in p_pars.kernel_parameters)
     s_list = [(_tag_parameter(par) if par.id in p_set else par)
-              for par in s_pars.kernel_parameters[1:]]
+              for par in s_pars.kernel_parameters]
     # Check if still a collision after renaming.  This could happen if for
     # example S has volfrac and P has both volfrac and volfrac_S.
     if any(p.id in p_set for p in s_list):
         raise TypeError("name collision: P has P.name and P.name_S while S has S.name")
 
+    # make sure effective radius is not a polydisperse parameter in product
+    s_list[0] = copy(s_list[0])
+    s_list[0].polydisperse = False
+
     translate_name = dict((old.id, new.id) for old, new
-                          in zip(s_pars.kernel_parameters[1:], s_list))
-    combined_pars = p_pars.kernel_parameters + s_list
+                          in zip(s_pars.kernel_parameters, s_list))
+    combined_pars = p_pars.kernel_parameters + s_list + make_extra_pars(p_info)
     parameters = ParameterTable(combined_pars)
     parameters.max_pd = p_pars.max_pd + s_pars.max_pd
     def random():
+        """Random set of model parameters for product model"""
         combined_pars = p_info.random()
-        s_names = set(par.id for par in s_pars.kernel_parameters[1:])
+        s_names = set(par.id for par in s_pars.kernel_parameters)
         combined_pars.update((translate_name[k], v)
                              for k, v in s_info.random().items()
                              if k in s_names)
@@ -99,14 +130,13 @@ def make_product_info(p_info, s_info):
     model_info.variant_info = None
     #model_info.tests = []
     #model_info.source = []
-    # Iq, Iqxy, form_volume, ER, VR and sesans
     # Remember the component info blocks so we can build the model
     model_info.composition = ('product', [p_info, s_info])
-    model_info.control = p_info.control
     model_info.hidden = p_info.hidden
     if getattr(p_info, 'profile', None) is not None:
         profile_pars = set(p.id for p in p_info.parameters.kernel_parameters)
         def profile(**kwargs):
+            """Return SLD profile of the form factor as a function of radius."""
             # extract the profile args
             kwargs = dict((k, v) for k, v in kwargs.items() if k in profile_pars)
             return p_info.profile(**kwargs)
@@ -141,7 +171,45 @@ def _tag_parameter(par):
     par.name = par.id + vector_length
     return par
 
+def _intermediates(
+        F1,               # type: np.ndarray
+        F2,               # type: np.ndarray
+        S,                # type: np.ndarray
+        scale,            # type: float
+        radius_effective, # type: float
+        beta_mode,        # type: bool
+    ):
+    # type: (...) -> OrderedDict[str, Union[np.ndarray, float]]
+    """
+    Returns intermediate results for beta approximation-enabled product.
+    The result may be an array or a float.
+    """
+    # CRUFT: remove effective_radius once SasView 5.0 is released.
+    if beta_mode:
+        # TODO: 1. include calculated Q vector
+        # TODO: 2. consider implications if there are intermediate results in P(Q)
+        parts = OrderedDict((
+            ("P(Q)", scale*F2),
+            ("S(Q)", S),
+            ("beta(Q)", F1**2 / F2),
+            ("S_eff(Q)", 1 + (F1**2 / F2)*(S-1)),
+            ("effective_radius", radius_effective),
+            ("radius_effective", radius_effective),
+            # ("I(Q)", scale*(F2 + (F1**2)*(S-1)) + bg),
+        ))
+    else:
+        parts = OrderedDict((
+            ("P(Q)", scale*F2),
+            ("S(Q)", S),
+            ("effective_radius", radius_effective),
+            ("radius_effective", radius_effective),
+        ))
+    return parts
+
 class ProductModel(KernelModel):
+    """
+    Model definition for product model.
+    """
     def __init__(self, model_info, P, S):
         # type: (ModelInfo, KernelModel, KernelModel) -> None
         #: Combined info plock for the product model
@@ -150,6 +218,7 @@ class ProductModel(KernelModel):
         self.P = P
         #: Structure factor modelling interaction between particles.
         self.S = S
+
         #: Model precision. This is not really relevant, since it is the
         #: individual P and S models that control the effective dtype,
         #: converting the q-vectors to the correct type when the kernels
@@ -167,9 +236,11 @@ class ProductModel(KernelModel):
         # separate q vectors are needed (e.g., form in python and structure
         # in opencl; or both in opencl, but one in single precision and the
         # other in double precision).
+
         p_kernel = self.P.make_kernel(q_vectors)
         s_kernel = self.S.make_kernel(q_vectors)
         return ProductKernel(self.info, p_kernel, s_kernel)
+    make_kernel.__doc__ = KernelModel.make_kernel.__doc__
 
     def release(self):
         # type: (None) -> None
@@ -181,6 +252,9 @@ class ProductModel(KernelModel):
 
 
 class ProductKernel(Kernel):
+    """
+    Instantiated kernel for product model.
+    """
     def __init__(self, model_info, p_kernel, s_kernel):
         # type: (ModelInfo, Kernel, Kernel) -> None
         self.info = model_info
@@ -189,9 +263,37 @@ class ProductKernel(Kernel):
         self.dtype = p_kernel.dtype
         self.results = []  # type: List[np.ndarray]
 
-    def __call__(self, call_details, values, cutoff, magnetic):
+    def Iq(self, call_details, values, cutoff, magnetic):
         # type: (CallDetails, np.ndarray, float, bool) -> np.ndarray
+
         p_info, s_info = self.info.composition[1]
+        p_npars = p_info.parameters.npars
+        p_length = call_details.length[:p_npars]
+        p_offset = call_details.offset[:p_npars]
+        s_npars = s_info.parameters.npars
+        s_length = call_details.length[p_npars:p_npars+s_npars]
+        s_offset = call_details.offset[p_npars:p_npars+s_npars]
+
+        # Beta mode parameter is the first parameter after P and S parameters
+        have_beta_mode = p_info.have_Fq
+        beta_mode_offset = 2+p_npars+s_npars
+        beta_mode = (values[beta_mode_offset] > 0) if have_beta_mode else False
+        if beta_mode and self.p_kernel.dim == '2d':
+            raise NotImplementedError("beta not yet supported for 2D")
+
+        # R_eff type parameter is the second parameter after P and S parameters
+        # unless the model doesn't support beta mode, in which case it is first
+        have_radius_type = p_info.radius_effective_modes is not None
+        #print(p_npars,s_npars)
+        radius_type_offset = 2+p_npars+s_npars + (1 if have_beta_mode else 0)
+        #print(values[radius_type_offset])
+        radius_type = int(values[radius_type_offset]) if have_radius_type else 0
+
+        # Retrieve the volume fraction, which is the second of the
+        # 'S' parameters in the parameter list, or 2+np in 0-origin,
+        # as well as the scale and background.
+        volfrac = values[3+p_npars]
+        scale, background = values[0], values[1]
 
         # if there are magnetic parameters, they will only be on the
         # form factor P, not the structure factor S.
@@ -206,112 +308,81 @@ class ProductKernel(Kernel):
         weights = values[nvalues:nvalues + 2*nweights]
 
         # Construct the calling parameters for P.
-        p_npars = p_info.parameters.npars
-        p_length = call_details.length[:p_npars]
-        p_offset = call_details.offset[:p_npars]
         p_details = make_details(p_info, p_length, p_offset, nweights)
-        # Set p scale to the volume fraction in s, which is the first of the
-        # 'S' parameters in the parameter list, or 2+np in 0-origin.
-        volfrac = values[2+p_npars]
-        p_values = [[volfrac, 0.0], values[2:2+p_npars], magnetism, weights]
+        p_values = [
+            [1., 0.], # scale=1, background=0,
+            values[2:2+p_npars],
+            magnetism,
+            weights]
         spacer = (32 - sum(len(v) for v in p_values)%32)%32
         p_values.append([0.]*spacer)
         p_values = np.hstack(p_values).astype(self.p_kernel.dtype)
 
-        # Call ER and VR for P since these are needed for S.
-        p_er, p_vr = calc_er_vr(p_info, p_details, p_values)
-        s_vr = (volfrac/p_vr if p_vr != 0. else volfrac)
-        #print("volfrac:%g p_er:%g p_vr:%g s_vr:%g"%(volfrac,p_er,p_vr,s_vr))
-
         # Construct the calling parameters for S.
-        # The  effective radius is not in the combined parameter list, so
-        # the number of 'S' parameters is one less than expected.  The
-        # computed effective radius needs to be added into the weights
-        # vector, especially since it is a polydisperse parameter in the
-        # stand-alone structure factor models.  We will added it at the
-        # end so the remaining offsets don't need to change.
-        s_npars = s_info.parameters.npars-1
-        s_length = call_details.length[p_npars:p_npars+s_npars]
-        s_offset = call_details.offset[p_npars:p_npars+s_npars]
-        s_length = np.hstack((1, s_length))
-        s_offset = np.hstack((nweights, s_offset))
-        s_details = make_details(s_info, s_length, s_offset, nweights+1)
-        v, w = weights[:nweights], weights[nweights:]
+        if radius_type > 0:
+            # If R_eff comes from form factor, make sure it is monodisperse.
+            # weight is set to 1 later, after the value array is created
+            s_length[0] = 1
+        s_details = make_details(s_info, s_length, s_offset, nweights)
         s_values = [
-            # scale=1, background=0, radius_effective=p_er, volfraction=s_vr
-            [1., 0., p_er, s_vr],
-            # structure factor parameters start after scale, background and
-            # all the form factor parameters.  Skip the volfraction parameter
-            # as well, since it is computed elsewhere, and go to the end of the
-            # parameter list.
-            values[2+p_npars+1:2+p_npars+s_npars],
-            # no magnetism parameters to include for S
-            # add er into the (value, weights) pairs
-            v, [p_er], w, [1.0]
+            [1., 0.], # scale=1, background=0,
+            values[2+p_npars:2+p_npars+s_npars],
+            weights,
         ]
         spacer = (32 - sum(len(v) for v in s_values)%32)%32
         s_values.append([0.]*spacer)
         s_values = np.hstack(s_values).astype(self.s_kernel.dtype)
 
-        # Call the kernels
-        p_result = self.p_kernel(p_details, p_values, cutoff, magnetic)
-        s_result = self.s_kernel(s_details, s_values, cutoff, False)
+        # Call the form factor kernel to compute <F> and <F^2>.
+        # If the model doesn't support Fq the returned <F> will be None.
+        F1, F2, radius_effective, shell_volume, volume_ratio = self.p_kernel.Fq(
+            p_details, p_values, cutoff, magnetic, radius_type)
 
-        #print("p_npars",p_npars,s_npars,p_er,s_vr,values[2+p_npars+1:2+p_npars+s_npars])
-        #call_details.show(values)
-        #print("values", values)
-        #p_details.show(p_values)
-        #print("=>", p_result)
-        #s_details.show(s_values)
-        #print("=>", s_result)
+        # Call the structure factor kernel to compute S.
+        # Plug R_eff from the form factor into structure factor parameters
+        # and scale volume fraction by form:shell volume ratio. These changes
+        # needs to be both in the initial value slot as well as the
+        # polydispersity distribution slot in the values array due to
+        # implementation details in kernel_iq.c.
+        #print("R_eff=%d:%g, volfrac=%g, volume ratio=%g"
+        #      % (radius_type, radius_effective, volfrac, volume_ratio))
+        if radius_type > 0:
+            # set the value to the model R_eff and set the weight to 1
+            s_values[2] = s_values[2+s_npars+s_offset[0]] = radius_effective
+            s_values[2+s_npars+s_offset[0]+nweights] = 1.0
+        s_values[3] = s_values[2+s_npars+s_offset[1]] = volfrac*volume_ratio
+        S = self.s_kernel.Iq(s_details, s_values, cutoff, False)
 
-        # remember the parts for plotting later
-        self.results = [p_result, s_result]
+        # Determine overall scale factor. Hollow shapes are weighted by
+        # shell_volume, so that is needed for volume normalization.  For
+        # solid shapes we can use shell_volume as well since it is equal
+        # to form volume.
+        combined_scale = scale*volfrac/shell_volume
 
-        #import pylab as plt
-        #plt.subplot(211); plt.loglog(self.p_kernel.q_input.q, p_result, '-')
-        #plt.subplot(212); plt.loglog(self.s_kernel.q_input.q, s_result, '-')
-        #plt.figure()
+        # Combine form factor and structure factor
+        #print("beta", beta_mode, F1, F2, S)
+        PS = F2 + F1**2*(S-1) if beta_mode else F2*S
+        final_result = combined_scale*PS + background
 
-        return values[0]*(p_result*s_result) + values[1]
+        # Capture intermediate values so user can see them.  These are
+        # returned as a lazy evaluator since they are only needed in the
+        # GUI, and not for each evaluation during a fit.
+        # TODO: return the results structure with the final results
+        # That way the model calcs are idempotent. Further, we can
+        # generalize intermediates to various other model types if we put it
+        # kernel calling interface.  Could do this as an "optional"
+        # return value in the caller, though in that case we could return
+        # the results directly rather than through a lazy evaluator.
+        self.results = lambda: _intermediates(
+            F1, F2, S, combined_scale, radius_effective, beta_mode)
+
+        return final_result
+
+    Iq.__doc__ = Kernel.Iq.__doc__
+    __call__ = Iq
 
     def release(self):
         # type: () -> None
+        """Free resources associated with the kernel."""
         self.p_kernel.release()
         self.s_kernel.release()
-
-
-def calc_er_vr(model_info, call_details, values):
-    # type: (ModelInfo, ParameterSet) -> Tuple[float, float]
-
-    if model_info.ER is None and model_info.VR is None:
-        return 1.0, 1.0
-
-    nvalues = model_info.parameters.nvalues
-    value = values[nvalues:nvalues + call_details.num_weights]
-    weight = values[nvalues + call_details.num_weights: nvalues + 2*call_details.num_weights]
-    npars = model_info.parameters.npars
-    # Note: changed from pairs ([v], [w]) to triples (p, [v], [w]), but the
-    # dispersion mesh code doesn't actually care about the nominal parameter
-    # value, p, so set it to None.
-    pairs = [(None, value[offset:offset+length], weight[offset:offset+length])
-             for p, offset, length
-             in zip(model_info.parameters.call_parameters[2:2+npars],
-                    call_details.offset,
-                    call_details.length)
-             if p.type == 'volume']
-    value, weight = dispersion_mesh(model_info, pairs)
-
-    if model_info.ER is not None:
-        individual_radii = model_info.ER(*value)
-        radius_effective = np.sum(weight*individual_radii) / np.sum(weight)
-    else:
-        radius_effective = 1.0
-
-    if model_info.VR is not None:
-        whole, part = model_info.VR(*value)
-        volume_ratio = np.sum(weight*part)/np.sum(weight*whole)
-    else:
-        volume_ratio = 1.0
-
-    return radius_effective, volume_ratio

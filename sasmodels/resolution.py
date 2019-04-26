@@ -19,7 +19,10 @@ __all__ = ["Resolution", "Perfect1D", "Pinhole1D", "Slit1D",
 
 MINIMUM_RESOLUTION = 1e-8
 MINIMUM_ABSOLUTE_Q = 0.02  # relative to the minimum q in the data
-PINHOLE_N_SIGMA = 2.5 # From: Barker & Pedersen 1995 JAC
+# According to (Barker & Pedersen 1995 JAC), 2.5 sigma is a good limit.
+# According to simulations with github.com:scattering/sansresolution.git
+# it is better to use asymmetric bounds (2.5, 3.0)
+PINHOLE_N_SIGMA = (2.5, 3.0)
 
 class Resolution(object):
     """
@@ -89,8 +92,8 @@ class Pinhole1D(Resolution):
         # values are trimmed even for broad resolution.  Although not possible
         # from the geometry, they may appear since we are using a truncated
         # gaussian to represent resolution rather than a skew distribution.
-        cutoff = MINIMUM_ABSOLUTE_Q*np.min(self.q)
-        self.q_calc = self.q_calc[self.q_calc >= cutoff]
+        #cutoff = MINIMUM_ABSOLUTE_Q*np.min(self.q)
+        #self.q_calc = self.q_calc[self.q_calc >= cutoff]
 
         # Build weight matrix from calculated q values
         self.weight_matrix = pinhole_resolution(
@@ -187,10 +190,14 @@ def pinhole_resolution(q_calc, q, q_width, nsigma=PINHOLE_N_SIGMA):
     #edges[edges < 0.0] = 0.0 # clip edges below zero
     cdf = erf((edges[:, None] - q[None, :]) / (sqrt(2.0)*q_width)[None, :])
     weights = cdf[1:] - cdf[:-1]
-    # Limit q range to +/- 2.5 sigma
-    qhigh = q + nsigma*q_width
-    #qlow = q - nsigma*q_width  # linear limits
-    qlow = q*q/qhigh  # log limits
+    # Limit q range to (-2.5,+3) sigma
+    try:
+        nsigma_low, nsigma_high = nsigma
+    except TypeError:
+        nsigma_low = nsigma_high = nsigma
+    qhigh = q + nsigma_high*q_width
+    qlow = q - nsigma_low*q_width  # linear limits
+    ##qlow = q*q/qhigh  # log limits
     weights[q_calc[:, None] < qlow[None, :]] = 0.
     weights[q_calc[:, None] > qhigh[None, :]] = 0.
     weights /= np.sum(weights, axis=0)[None, :]
@@ -364,13 +371,17 @@ def _q_perp_weights(q_edges, qi, w):
     return weights
 
 
-def pinhole_extend_q(q, q_width, nsigma=3):
+def pinhole_extend_q(q, q_width, nsigma=PINHOLE_N_SIGMA):
     """
     Given *q* and *q_width*, find a set of sampling points *q_calc* so
     that each point $I(q)$ has sufficient support from the underlying
     function.
     """
-    q_min, q_max = np.min(q - nsigma*q_width), np.max(q + nsigma*q_width)
+    try:
+        nsigma_low, nsigma_high = nsigma
+    except TypeError:
+        nsigma_low = nsigma_high = nsigma
+    q_min, q_max = np.min(q - nsigma_low*q_width), np.max(q + nsigma_high*q_width)
     return linear_extrapolation(q, q_min, q_max)
 
 
@@ -433,12 +444,12 @@ def linear_extrapolation(q, q_min, q_max):
     """
     q = np.sort(q)
     if q_min + 2*MINIMUM_RESOLUTION < q[0]:
-        n_low = np.ceil((q[0]-q_min) / (q[1]-q[0])) if q[1] > q[0] else 15
+        n_low = int(np.ceil((q[0]-q_min) / (q[1]-q[0]))) if q[1] > q[0] else 15
         q_low = np.linspace(q_min, q[0], n_low+1)[:-1]
     else:
         q_low = []
     if q_max - 2*MINIMUM_RESOLUTION > q[-1]:
-        n_high = np.ceil((q_max-q[-1]) / (q[-1]-q[-2])) if q[-1] > q[-2] else 15
+        n_high = int(np.ceil((q_max-q[-1]) / (q[-1]-q[-2]))) if q[-1] > q[-2] else 15
         q_high = np.linspace(q[-1], q_max, n_high+1)[1:]
     else:
         q_high = []
@@ -486,13 +497,13 @@ def geometric_extrapolation(q, q_min, q_max, points_per_decade=None):
     if q_min < q[0]:
         if q_min < 0:
             q_min = q[0]*MINIMUM_ABSOLUTE_Q
-        n_low = log_delta_q * (log(q[0])-log(q_min))
-        q_low = np.logspace(log10(q_min), log10(q[0]), np.ceil(n_low)+1)[:-1]
+        n_low = int(np.ceil(log_delta_q * (log(q[0])-log(q_min))))
+        q_low = np.logspace(log10(q_min), log10(q[0]), n_low+1)[:-1]
     else:
         q_low = []
     if q_max > q[-1]:
-        n_high = log_delta_q * (log(q_max)-log(q[-1]))
-        q_high = np.logspace(log10(q[-1]), log10(q_max), np.ceil(n_high)+1)[1:]
+        n_high = int(np.ceil(log_delta_q * (log(q_max)-log(q[-1]))))
+        q_high = np.logspace(log10(q[-1]), log10(q_max), n_high+1)[1:]
     else:
         q_high = []
     return np.concatenate([q_low, q, q_high])

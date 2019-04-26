@@ -21,6 +21,13 @@ References
 ----------
 
 None.
+
+Authorship and Verification
+----------------------------
+
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 import numpy as np
@@ -57,16 +64,17 @@ def Iq(q, intercept, slope):
 Iq.vectorized = True # Iq accepts an array of q values
 
 
-def Iqxy(qx, qy, *args):
+def Iqxy(qx, qy, intercept, slope):
     """
     :param qx:   Input q_x-value
     :param qy:   Input q_y-value
-    :param args: Remaining arguments
+    :param intercept:   Intrecept in linear model
+    :param slope:       Slope in linear model
     :return:     2D-Intensity
     """
     # TODO: SasView documents 2D intensity as Iq(qx)*Iq(qy), but returns Iq(qy)
     # Note: SasView.run([r, theta]) does return Iq(qx)*Iq(qy)
-    return Iq(qx, *args)*Iq(qy, *args)
+    return Iq(qx, intercept, slope)*Iq(qy, intercept, slope)
 
 Iqxy.vectorized = True  # Iqxy accepts an array of qx qy values
 
@@ -79,6 +87,7 @@ Iqxy.vectorized = True  # Iqxy accepts an array of qx qy values
 #"""
 
 def random():
+    """Return a random parameter set for the model."""
     scale = 10**np.random.uniform(0, 3)
     slope = np.random.uniform(-1, 1)*1e2
     offset = 1e-5 + (0 if slope > 0 else -slope)

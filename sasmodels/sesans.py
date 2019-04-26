@@ -15,6 +15,7 @@ import numpy as np  # type: ignore
 from numpy import pi  # type: ignore
 from scipy.special import j0
 
+
 class SesansTransform(object):
     """
     Spin-Echo SANS transform calculator.  Similar to a resolution function,
@@ -37,17 +38,20 @@ class SesansTransform(object):
     q_calc = None  # type: np.ndarray
 
     # transform arrays
-    _H = None  # type: np.ndarray
-    _H0 = None # type: np.ndarray
+    _H = None   # type: np.ndarray
+    _H0 = None  # type: np.ndarray
 
-    def __init__(self, z, SElength, lam, zaccept, Rmax):
+    def __init__(self, z, SElength, lam, zaccept, Rmax, log_spacing=1.0003):
         # type: (np.ndarray, float, float) -> None
-        #import logging; logging.info("creating SESANS transform")
         self.q = z
+        self.log_spacing = log_spacing
         self._set_hankel(SElength, lam, zaccept, Rmax)
 
     def apply(self, Iq):
-        # tye: (np.ndarray) -> np.ndarray
+        # type: (np.ndarray) -> np.ndarray
+        """
+        Apply the SESANS transform to the computed I(q).
+        """
         G0 = np.dot(self._H0, Iq)
         G = np.dot(self._H.T, Iq)
         P = G - G0
@@ -55,23 +59,23 @@ class SesansTransform(object):
 
     def _set_hankel(self, SElength, lam, zaccept, Rmax):
         # type: (np.ndarray, float, float) -> None
-        # Force float32 arrays, otherwise run into memory problems on some machines
-        SElength = np.asarray(SElength, dtype='float32')
-
-        #Rmax = #value in text box somewhere in FitPage?
+        SElength = np.asarray(SElength)
         q_max = 2*pi / (SElength[1] - SElength[0])
         q_min = 0.1 * 2*pi / (np.size(SElength) * SElength[-1])
-        q = np.arange(q_min, q_max, q_min, dtype='float32')
-        dq = q_min
+        q = np.exp(np.arange(np.log(q_min), np.log(q_max),
+                             np.log(self.log_spacing)))
 
-        H0 = np.float32(dq/(2*pi)) * q
+        dq = np.diff(q)
+        dq = np.insert(dq, 0, dq[0])
 
-        repq = np.tile(q, (SElength.size, 1)).T
-        repSE = np.tile(SElength, (q.size, 1))
-        H = np.float32(dq/(2*pi)) * j0(repSE*repq) * repq
+        H0 = dq/(2*pi) * q
 
-        replam = np.tile(lam, (q.size, 1))
-        reptheta = np.arcsin(repq*replam/2*np.pi)
+        H = np.outer(q, SElength)
+        j0(H, out=H)
+        H *= (dq * q / (2*pi)).reshape((-1, 1))
+
+        reptheta = np.outer(q, lam/(2*pi))
+        np.arcsin(reptheta, out=reptheta)
         mask = reptheta > zaccept
         H[mask] = 0
 

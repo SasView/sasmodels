@@ -97,13 +97,14 @@ model parameters as:
 References
 ----------
 
-K Larson-Smith, A Jackson, and D C Pozzo, *Small angle scattering model for
-Pickering emulsions and raspberry particles*, *Journal of Colloid and Interface
-Science*, 343(1) (2010) 36-41
+.. [#] K Larson-Smith, A Jackson, and D C Pozzo, *Small angle scattering model for Pickering emulsions and raspberry particles*, *Journal of Colloid and Interface Science*, 343(1) (2010) 36-41
+
+Authorship and Verification
+----------------------------
 
 * **Author:** Andrew Jackson **Date:** 2008
-* **Modified by:** Andrew Jackson **Date:** March 20, 2016
-* **Reviewed by:** Andrew Jackson **Date:** March 20, 2016
+* **Last Modified by:** Andrew Jackson **Date:** March 20, 2016
+* **Last Reviewed by:** Andrew Jackson **Date:** March 20, 2016
 """
 
 import numpy as np
@@ -144,15 +145,17 @@ parameters = [["sld_lg", "1e-6/Ang^2", -0.4, [-inf, inf], "sld",
                "fraction of small spheres at surface"],
               ["radius_lg", "Ang", 5000, [0, inf], "volume",
                "radius of large spheres"],
-              ["radius_sm", "Ang", 100, [0, inf], "",
+              ["radius_sm", "Ang", 100, [0, inf], "volume",
                "radius of small spheres"],
-              ["penetration", "Ang", 0, [-1, 1], "",
+              ["penetration", "Ang", 0, [-1, 1], "volume",
                "fractional penetration depth of small spheres into large sphere"],
              ]
 
 source = ["lib/sas_3j1x_x.c", "raspberry.c"]
+radius_effective_modes = ["radius_large", "radius_outer"]
 
 def random():
+    """Return a random parameter set for the model."""
     # Limit volume fraction to 20% each
     volfraction_lg = 10**np.random.uniform(-3, -0.3)
     volfraction_sm = 10**np.random.uniform(-3, -0.3)

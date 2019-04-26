@@ -36,11 +36,16 @@ In gels with significant hydrogen bonding $D$ has been reported to be
 References
 ----------
 
-Mitsuhiro Shibayama, Toyoichi Tanaka, Charles C Han,
-*J. Chem. Phys.* 1992, 97 (9), 6829-6841
+.. [#] Mitsuhiro Shibayama, Toyoichi Tanaka, Charles C Han, *J. Chem. Phys.* 1992, 97 (9), 6829-6841
 
-Simon Mallam, Ferenc Horkay, Anne-Marie Hecht, Adrian R Rennie, Erik Geissler,
-*Macromolecules* 1991, 24, 543-548
+.. [#] Simon Mallam, Ferenc Horkay, Anne-Marie Hecht, Adrian R Rennie, Erik Geissler, *Macromolecules* 1991, 24, 543-548
+
+Authorship and Verification
+----------------------------
+
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 import numpy as np
@@ -71,6 +76,7 @@ parameters = [["guinier_scale",    "cm^-1",   1.7, [-inf, inf], "", "Guinier len
 source = ["gel_fit.c"]
 
 def random():
+    """Return a random parameter set for the model."""
     guinier_scale = 10**np.random.uniform(1, 3)
     lorentz_scale = 10**np.random.uniform(1, 3)
     rg = 10**np.random.uniform(1, 5)

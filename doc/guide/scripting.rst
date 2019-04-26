@@ -9,17 +9,116 @@ them at given parameter values and run bumps fits.
 
 The key functions are :func:`sasmodels.core.load_model` for loading the
 model definition and compiling the kernel and
-:func:`sasmodels.data.load_data` for calling sasview to load the data. Need
-the data because that defines the resolution function and the q values to
-evaluate. If there is no data, then use :func:`sasmodels.data.empty_data1D`
-or :func:`sasmodels.data.empty_data2D` to create some data with a given $q$.
+:func:`sasmodels.data.load_data` for calling sasview to load the data.
 
-Using sasmodels through bumps
-=============================
+Preparing data
+==============
 
-With the data and the model, you can wrap it in a *bumps* model with
+Usually you will load data via the sasview loader, with the
+:func:`sasmodels.data.load_data` function.  For example::
+
+    from sasmodels.data import load_data
+    data = load_data("sasmodels/example/093191_201.dat")
+
+You may want to apply a data mask, such a beam stop, and trim high $q$::
+
+    from sasmodels.data import set_beam_stop
+    set_beam_stop(data, qmin, qmax)
+
+The :func:`sasmodels.data.set_beam_stop` method simply sets the *mask*
+attribute for the data.
+
+The data defines the resolution function and the q values to evaluate, so
+even if you simulating experiments prior to making measurements, you still
+need a data object for reference. Use :func:`sasmodels.data.empty_data1D`
+or :func:`sasmodels.data.empty_data2D` to create a container with a
+given $q$ and $\Delta q/q$.  For example::
+
+    import numpy as np
+    from sasmodels.data import empty_data1D
+
+    # 120 points logarithmically spaced from 0.005 to 0.2, with dq/q = 5%
+    q = np.logspace(np.log10(5e-3), np.log10(2e-1), 120)
+    data = empty_data1D(q, resolution=0.05)
+
+To use a more realistic model of resolution, or to load data from a file
+format not understood by SasView, you can use :class:`sasmodels.data.Data1D`
+or :class:`sasmodels.data.Data2D` directly.  The 1D data uses
+*x*, *y*, *dx* and *dy* for $x = q$ and $y = I(q)$, and 2D data uses
+*x*, *y*, *z*, *dx*, *dy*, *dz* for $x, y = qx, qy$ and $z = I(qx, qy)$.
+[Note: internally, the Data2D object uses SasView conventions,
+*qx_data*, *qy_data*, *data*, *dqx_data*, *dqy_data*, and *err_data*.]
+
+For USANS data, use 1D data, but set *dxl* and *dxw* attributes to
+indicate slit resolution::
+
+    data.dxl = 0.117
+
+See :func:`sasmodels.resolution.slit_resolution` for details.
+
+SESANS data is more complicated; if your SESANS format is not supported by
+SasView you need to define a number of attributes beyond *x*, *y*.  For
+example::
+
+    SElength = np.linspace(0, 2400, 61) # [A]
+    data = np.ones_like(SElength)
+    err_data = np.ones_like(SElength)*0.03
+
+    class Source:
+        wavelength = 6 # [A]
+        wavelength_unit = "A"
+    class Sample:
+        zacceptance = 0.1 # [A^-1]
+        thickness = 0.2 # [cm]
+
+    class SESANSData1D:
+        #q_zmax = 0.23 # [A^-1]
+        lam = 0.2 # [nm]
+        x = SElength
+        y = data
+        dy = err_data
+        sample = Sample()
+    data = SESANSData1D()
+
+    x, y = ... # create or load sesans
+    data = smd.Data
+
+The *data* module defines various data plotters as well.
+
+Using sasmodels directly
+========================
+
+Once you have a computational kernel and a data object, you can evaluate
+the model for various parameters using
+:class:`sasmodels.direct_model.DirectModel`.  The resulting object *f*
+will be callable as *f(par=value, ...)*, returning the $I(q)$ for the $q$
+values in the data.  For example::
+
+    import numpy as np
+    from sasmodels.data import empty_data1D
+    from sasmodels.core import load_model
+    from sasmodels.direct_model import DirectModel
+
+    # 120 points logarithmically spaced from 0.005 to 0.2, with dq/q = 5%
+    q = np.logspace(np.log10(5e-3), np.log10(2e-1), 120)
+    data = empty_data1D(q, resolution=0.05)
+    kernel = load_model("ellipsoid)
+    f = DirectModel(data, kernel)
+    Iq = f(radius_polar=100)
+
+Polydispersity information is set with special parameter names:
+
+    * *par_pd* for polydispersity width, $\Delta p/p$,
+    * *par_pd_n* for the number of points in the distribution,
+    * *par_pd_type* for the distribution type (as a string), and
+    * *par_pd_nsigmas* for the limits of the distribution.
+
+Using sasmodels through the bumps optimizer
+===========================================
+
+Like DirectModel, you can wrap data and a kernel in a *bumps* model with
 class:`sasmodels.bumps_model.Model` and create an
-class:`sasmodels.bump_model.Experiment` that you can fit with the *bumps*
+class:`sasmodels.bumps_model.Experiment` that you can fit with the *bumps*
 interface. Here is an example from the *example* directory such as
 *example/model.py*::
 
@@ -74,16 +173,8 @@ as follows::
 
     SasViewCom bumps.cli example/model.py --preview
 
-Using sasmodels directly
-========================
-
-Bumps has a notion of parameter boxes in which you can set and retrieve
-values.  Instead of using bumps, you can create a directly callable function
-with :class:`sasmodels.direct_model.DirectModel`.  The resulting object *f*
-will be callable as *f(par=value, ...)*, returning the $I(q)$ for the $q$
-values in the data.  Polydisperse parameters use the same naming conventions
-as in the bumps model, with e.g., radius_pd being the polydispersity associated
-with radius.
+Calling the computation kernel
+==============================
 
 Getting a simple function that you can call on a set of q values and return
 a result is not so simple.  Since the time critical use case (fitting) involves
@@ -96,21 +187,48 @@ object from the :class:`sasmodels.kernel.KernelModel` returned from
 does depends on whether it is running as a DLL, as OpenCL or as a pure
 python kernel.  Once the kernel is in hand, we can then marshal a set of
 parameters into a :class:`sasmodels.details.CallDetails` object and ship it to
-the kernel using the :func:`sansmodels.direct_model.call_kernel` function.  An
-example should help, *example/cylinder_eval.py*::
+the kernel using the :func:`sansmodels.direct_model.call_kernel` function.  To
+accesses the underlying $<F(q)>$ and $<F^2(q)>$, use
+:func:`sasmodels.direct_model.call_Fq` instead.
 
-    from numpy import logspace
+The following example should
+help, *example/cylinder_eval.py*::
+
+    from numpy import logspace, sqrt
     from matplotlib import pyplot as plt
     from sasmodels.core import load_model
-    from sasmodels.direct_model import call_kernel
+    from sasmodels.direct_model import call_kernel, call_Fq
 
     model = load_model('cylinder')
     q = logspace(-3, -1, 200)
     kernel = model.make_kernel([q])
-    Iq = call_kernel(kernel, dict(radius=200.))
-    plt.loglog(q, Iq)
+    pars = {'radius': 200, 'radius_pd': 0.1, 'scale': 2}
+    Iq = call_kernel(kernel, pars)
+    F, Fsq, Reff, V, Vratio = call_Fq(kernel, pars)
+
+    plt.loglog(q, Iq, label='2 I(q)')
+    plt.loglog(q, F**2/V, label='<F(q)>^2/V')
+    plt.loglog(q, Fsq/V, label='<F^2(q)>/V')
+    plt.xlabel('q (1/A)')
+    plt.ylabel('I(q) (1/cm)')
+    plt.title('Cylinder with radius 200.')
+    plt.legend()
     plt.show()
 
-On windows, this can be called from the cmd prompt using sasview as::
+.. figure:: direct_call.png
+
+    Comparison between $I(q)$, $<F(q)>$ and $<F^2(q)>$ for cylinder model.
+
+This compares $I(q)$ with $<F(q)>$ and $<F^2(q)>$ for a cylinder
+with *radius=200 +/- 20* and *scale=2*. Note that *call_Fq* does not
+include scale and background, nor does it normalize by the average volume.
+The definition of $F = \rho V \hat F$ scaled by the contrast and
+volume, compared to the canonical cylinder $\hat F$, with $\hat F(0) = 1$.
+Integrating over polydispersity and orientation, the returned values are
+$\sum_{r,w\in N(r_o, r_o/10)} \sum_\theta w F(q,r_o,\theta)\sin\theta$ and
+$\sum_{r,w\in N(r_o, r_o/10)} \sum_\theta w F^2(q,r_o,\theta)\sin\theta$.
+
+On windows, this example can be called from the cmd prompt using sasview as
+as the python interpreter::
 
     SasViewCom example/cylinder_eval.py

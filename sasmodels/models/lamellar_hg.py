@@ -37,14 +37,19 @@ the $q$ vector is defined as
 
 .. math:: q = \sqrt{q_x^2 + q_y^2}
 
+
 References
 ----------
 
-F Nallet, R Laversanne, and D Roux, J. Phys. II France, 3, (1993) 487-502
+.. [#] F Nallet, R Laversanne, and D Roux, *J. Phys. II France*, 3, (1993) 487-502
+.. [#] J Berghausen, J Zipfel, P Lindner, W Richtering, *J. Phys. Chem. B*, 105, (2001) 11081-11088
 
-also in J. Phys. Chem. B, 105, (2001) 11081-11088
+Authorship and Verification
+----------------------------
 
-*2014/04/17 - Description reviewed by S King and P Butler.*
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:** S King and P Butler **Date** April 17, 2014
 """
 
 import numpy as np
@@ -99,6 +104,7 @@ Iq = """
     """
 
 def random():
+    """Return a random parameter set for the model."""
     thickness = 10**np.random.uniform(1, 4)
     length_head = thickness * np.random.uniform(0, 1)
     length_tail = thickness - length_head
@@ -107,9 +113,6 @@ def random():
         length_tail=length_tail,
     )
     return pars
-
-# ER defaults to 0.0
-# VR defaults to 1.0
 
 demo = dict(scale=1, background=0,
             length_tail=15, length_head=10,

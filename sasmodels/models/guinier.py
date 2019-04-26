@@ -37,16 +37,22 @@ internal inter-domain "structure factor" within a single particle which gives
 rise to a peak in the scattering).
 
 To specify a negative value of $R_g^2$ in SasView, simply give $R_g$ a negative
-value ($R_g^2$ will be evaluated as $R_g |R_g|$). Note that the physical radius 
-of gyration, of the exterior of the particle, will still be large and positive. 
-It is only the apparent size from the small $Q$ data that will give a small or 
+value ($R_g^2$ will be evaluated as $R_g |R_g|$). Note that the physical radius
+of gyration, of the exterior of the particle, will still be large and positive.
+It is only the apparent size from the small $Q$ data that will give a small or
 negative value of $R_g^2$.
 
 References
 ----------
 
-A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*,
-John Wiley & Sons, New York (1955)
+.. [#] A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*, John Wiley & Sons, New York (1955)
+
+Authorship and Verification
+----------------------------
+
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 import numpy as np
@@ -73,6 +79,7 @@ Iq = """
 """
 
 def random():
+    """Return a random parameter set for the model."""
     scale = 10**np.random.uniform(1, 4)
     # Note: compare.py has Rg cutoff of 1e-30 at q=1 for guinier, so use that
     # log_10 Ae^(-(q Rg)^2/3) = log_10(A) - (q Rg)^2/ (3 ln 10) > -30
@@ -88,7 +95,7 @@ def random():
     return pars
 
 # parameters for demo
-demo = dict(scale=1.0,  background=0.001, rg=60.0 )
+demo = dict(scale=1.0, background=0.001, rg=60.0)
 
 # parameters for unit tests
 tests = [[{'rg' : 31.5}, 0.005, 0.992756]]

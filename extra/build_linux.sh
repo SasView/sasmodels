@@ -13,7 +13,7 @@ export PYTHONPATH=$WORKSPACE/utils:$PYTHONPATH
 
 # Run tests
 STATUS=0
-python -m sasmodels.model_test opencl_and_dll all || STATUS=$?
+python -m sasmodels.model_test -v all || STATUS=$?
 python -m sasmodels.resolution || STATUS=$?
 
 # Run lint

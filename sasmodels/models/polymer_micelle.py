@@ -67,12 +67,14 @@ model has not yet been independently validated.
 References
 ----------
 
-J Pedersen, *J. Appl. Cryst.*, 33 (2000) 637-640
+.. [#] J Pedersen, *J. Appl. Cryst.*, 33 (2000) 637-640
 
-* **Modified by:** Richard Heenan **Date:** March 20, 2016
-* **Verified by:** Paul Kienzle **Date:** November 29, 2017
-* **Description modified by:** Paul Kienzle **Date:** November 29, 2017
-* **Description reviewed by:** Steve King **Date:** November 30, 2017
+Authorship and Verification
+----------------------------
+
+* **Translated by   :** Richard Heenan **Date:** March 20, 2016
+* **Last modified by:** Paul Kienzle **Date:** November 29, 2017
+* **Last reviewed by:** Steve King **Date:** November 30, 2017
 """
 
 import numpy as np
@@ -112,6 +114,7 @@ single = False
 source = ["lib/sas_3j1x_x.c", "polymer_micelle.c"]
 
 def random():
+    """Return a random parameter set for the model."""
     radius_core = 10**np.random.uniform(1, 3)
     rg = radius_core * 10**np.random.uniform(-2, -0.3)
     d_penetration = np.random.randn()*0.05 + 1

@@ -31,8 +31,14 @@ where the $q$ vector is defined as
 References
 ----------
 
-G Evmenenko, E Theunissen, K Mortensen, H Reynaers, *Polymer*,
-42 (2001) 2907-2913
+.. [#] G Evmenenko, E Theunissen, K Mortensen, H Reynaers, *Polymer*, 42 (2001) 2907-2913
+
+Authorship and Verification
+----------------------------
+
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 import numpy as np
@@ -88,6 +94,7 @@ Iq.vectorized = True  # Iq accepts an array of q values
 
 
 def random():
+    """Return a random parameter set for the model."""
     gauss_scale = 10**np.random.uniform(1, 3)
     lorentz_scale = 10**np.random.uniform(1, 3)
     cor_length_static = 10**np.random.uniform(0, 3)

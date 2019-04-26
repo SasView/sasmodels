@@ -4,7 +4,13 @@ Definition
 
 The output of the 2D scattering intensity function for oriented core-shell
 cylinders is given by (Kline, 2006 [#kline]_). The form factor is normalized
-by the particle volume.
+by the particle volume. Note that in this model the shell envelops the entire
+core so that besides a "sleeve" around the core, the shell also provides two
+flat end caps of thickness = shell thickness. In other words the length of the
+total cyclinder is the length of the core cylinder plus twice the thickness of
+the shell. If no end caps are desired one should use the
+:ref:`core-shell-bicelle` and set the thickness of the end caps (in this case
+the "thick_face") to zero.
 
 .. math::
 
@@ -32,14 +38,14 @@ and
     V_s = \pi (R + T)^2 (L + 2T)
 
 and $\alpha$ is the angle between the axis of the cylinder and $\vec q$,
-$V_s$ is the volume of the outer shell (i.e. the total volume, including
-the shell), $V_c$ is the volume of the core, $L$ is the length of the core,
+$V_s$ is the total volume (i.e. including both the core and the outer shell),
+$V_c$ is the volume of the core, $L$ is the length of the core,
 $R$ is the radius of the core, $T$ is the thickness of the shell, $\rho_c$
 is the scattering length density of the core, $\rho_s$ is the scattering
 length density of the shell, $\rho_\text{solv}$ is the scattering length
 density of the solvent, and *background* is the background level.  The outer
 radius of the shell is given by $R+T$ and the total length of the outer
-shell is given by $L+2T$. $J1$ is the first order Bessel function.
+shell is given by $L+2T$. $J_1$ is the first order Bessel function.
 
 .. _core-shell-cylinder-geometry:
 
@@ -63,6 +69,7 @@ Reference
 .. [#] see, for example, Ian Livsey  J. Chem. Soc., Faraday Trans. 2, 1987,83,
    1445-1452
 .. [#kline] S R Kline, *J Appl. Cryst.*, 39 (2006) 895
+.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------
@@ -124,25 +131,14 @@ parameters = [["sld_core", "1e-6/Ang^2", 4, [-inf, inf], "sld",
              ]
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "core_shell_cylinder.c"]
-
-def ER(radius, thickness, length):
-    """
-    Returns the effective radius used in the S*P calculation
-    """
-    radius = radius + thickness
-    length = length + 2 * thickness
-    ddd = 0.75 * radius * (2 * radius * length + (length + radius) * (length + pi * radius))
-    return 0.5 * (ddd) ** (1. / 3.)
-
-def VR(radius, thickness, length):
-    """
-    Returns volume ratio
-    """
-    whole = pi * (radius + thickness) ** 2 * (length + 2 * thickness)
-    core = pi * radius ** 2 * length
-    return whole, whole - core
+have_Fq = True
+radius_effective_modes = [
+    "excluded volume", "equivalent volume sphere", "outer radius", "half outer length",
+    "half min outer dimension", "half max outer dimension", "half outer diagonal",
+    ]
 
 def random():
+    """Return a random parameter set for the model."""
     outer_radius = 10**np.random.uniform(1, 4.7)
     # Use a distribution with a preference for thin shell or thin core
     # Avoid core,shell radii < 1

@@ -26,6 +26,7 @@ from __future__ import print_function, division
 
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+import warnings
 
 import numpy as np
 import mpmath as mp
@@ -35,11 +36,6 @@ from scipy.integrate import dblquad, simps, romb, romberg
 import pylab
 
 import sasmodels.special as sp
-
-# Need to parse shape early since it determines the kernel function
-# that will be used for the various integrators
-shape = 'parallelepiped' if len(sys.argv) < 2 else sys.argv[1]
-Qstr = '0.005' if len(sys.argv) < 3 else sys.argv[2]
 
 DTYPE = 'd'
 
@@ -200,60 +196,90 @@ def make_paracrystal(radius, dnn, d_factor, lattice='bcc', env=NPenv):
     norm = CONTRAST**2*volume/10000*Vf
     return norm, Fq
 
-if shape == 'sphere':
-    RADIUS = 50  # integer for the sake of mpf
-    NORM, KERNEL = make_sphere(radius=RADIUS)
-    NORM_MP, KERNEL_MP = make_sphere(radius=RADIUS, env=MPenv)
-elif shape == 'cylinder':
-    #RADIUS, LENGTH = 10, 100000
-    RADIUS, LENGTH = 10, 300  # integer for the sake of mpf
-    NORM, KERNEL = make_cylinder(radius=RADIUS, length=LENGTH)
-    NORM_MP, KERNEL_MP = make_cylinder(radius=RADIUS, length=LENGTH, env=MPenv)
-elif shape == 'triaxial_ellipsoid':
-    #A, B, C = 4450, 14000, 47
-    A, B, C = 445, 140, 47  # integer for the sake of mpf
-    NORM, KERNEL = make_triaxial_ellipsoid(A, B, C)
-    NORM_MP, KERNEL_MP = make_triaxial_ellipsoid(A, B, C, env=MPenv)
-elif shape == 'parallelepiped':
-    #A, B, C = 4450, 14000, 47
-    A, B, C = 445, 140, 47  # integer for the sake of mpf
-    NORM, KERNEL = make_parallelepiped(A, B, C)
-    NORM_MP, KERNEL_MP = make_parallelepiped(A, B, C, env=MPenv)
-elif shape == 'core_shell_parallelepiped':
-    #A, B, C = 4450, 14000, 47
-    #A, B, C = 445, 140, 47  # integer for the sake of mpf
-    A, B, C = 114, 1380, 6800
-    DA, DB, DC = 21, 58, 2300
-    SLDA, SLDB, SLDC = "5", "-0.3", "11.5"
-    ## default parameters from sasmodels
-    #A,B,C,DA,DB,DC,SLDA,SLDB,SLDC = 400,75,35,10,10,10,2,4,2
-    ## swap A-B-C to C-B-A
-    #A, B, C, DA, DB, DC, SLDA, SLDB, SLDC = C, B, A, DC, DB, DA, SLDC, SLDB, SLDA
-    #A,B,C,DA,DB,DC,SLDA,SLDB,SLDC = 10,20,30,100,200,300,1,2,3
-    #SLD_SOLVENT,CONTRAST = 0, 4
-    if 1: # C shortest
-        B, C = C, B
-        DB, DC = DC, DB
-        SLDB, SLDC = SLDC, SLDB
-    elif 0: # C longest
-        A, C = C, A
-        DA, DC = DC, DA
-        SLDA, SLDC = SLDC, SLDA
-    #NORM, KERNEL = make_core_shell_parallelepiped(A, B, C, DA, DB, DC, SLDA, SLDB, SLDC)
-    NORM, KERNEL = make_core_shell_parallelepiped(A, B, C, DA, DB, DC, SLDA, SLDB, SLDC)
-    NORM_MP, KERNEL_MP = make_core_shell_parallelepiped(A, B, C, DA, DB, DC, SLDA, SLDB, SLDC, env=MPenv)
-elif shape == 'paracrystal':
-    LATTICE = 'bcc'
-    #LATTICE = 'fcc'
-    #LATTICE = 'sc'
-    DNN, D_FACTOR = 220, '0.06'  # mpmath needs to initialize floats from string
-    RADIUS = 40  # integer for the sake of mpf
-    NORM, KERNEL = make_paracrystal(
-        radius=RADIUS, dnn=DNN, d_factor=D_FACTOR, lattice=LATTICE)
-    NORM_MP, KERNEL_MP = make_paracrystal(
-        radius=RADIUS, dnn=DNN, d_factor=D_FACTOR, lattice=LATTICE, env=MPenv)
-else:
-    raise ValueError("Unknown shape %r"%shape)
+NORM = 1.0  # type: float
+KERNEL = None  # type: CALLABLE[[ndarray, ndarray, ndarray], ndarray]
+NORM_MP = 1  # type: mpf
+KERNEL = None  # type: CALLABLE[[mpf, mpf, mpf], mpf]
+
+SHAPES = [
+    'sphere',
+    'cylinder',
+    'triaxial_ellipsoid',
+    'parallelepiped',
+    'core_shell_parallelepiped',
+    'fcc_paracrystal',
+    'bcc_paracrystal',
+    'sc_paracrystal',
+]
+def build_shape(shape, **pars):
+    global NORM, KERNEL
+    global NORM_MP, KERNEL_MP
+
+    # Note: using integer or string defaults for the sake of mpf
+    if shape == 'sphere':
+        RADIUS = pars.get('radius', 50)
+        NORM, KERNEL = make_sphere(radius=RADIUS)
+        NORM_MP, KERNEL_MP = make_sphere(radius=RADIUS, env=MPenv)
+    elif shape == 'cylinder':
+        #RADIUS, LENGTH = 10, 100000
+        RADIUS = pars.get('radius', 10)
+        LENGTH = pars.get('radius', 300)
+        NORM, KERNEL = make_cylinder(radius=RADIUS, length=LENGTH)
+        NORM_MP, KERNEL_MP = make_cylinder(radius=RADIUS, length=LENGTH, env=MPenv)
+    elif shape == 'triaxial_ellipsoid':
+        #A, B, C = 4450, 14000, 47
+        A = pars.get('a', 445)
+        B = pars.get('b', 140)
+        C = pars.get('c', 47)
+        NORM, KERNEL = make_triaxial_ellipsoid(A, B, C)
+        NORM_MP, KERNEL_MP = make_triaxial_ellipsoid(A, B, C, env=MPenv)
+    elif shape == 'parallelepiped':
+        #A, B, C = 4450, 14000, 47
+        A = pars.get('a', 445)
+        B = pars.get('b', 140)
+        C = pars.get('c', 47)
+        NORM, KERNEL = make_parallelepiped(A, B, C)
+        NORM_MP, KERNEL_MP = make_parallelepiped(A, B, C, env=MPenv)
+    elif shape == 'core_shell_parallelepiped':
+        #A, B, C = 4450, 14000, 47
+        #A, B, C = 445, 140, 47  # integer for the sake of mpf
+        A = pars.get('a', 114)
+        B = pars.get('b', 1380)
+        C = pars.get('c', 6800)
+        DA = pars.get('da', 21)
+        DB = pars.get('db', 58)
+        DC = pars.get('dc', 2300)
+        SLDA = pars.get('slda', "5")
+        SLDB = pars.get('sldb', "-0.3")
+        SLDC = pars.get('sldc', "11.5")
+        ## default parameters from sasmodels
+        #A,B,C,DA,DB,DC,SLDA,SLDB,SLDC = 400,75,35,10,10,10,2,4,2
+        ## swap A-B-C to C-B-A
+        #A, B, C, DA, DB, DC, SLDA, SLDB, SLDC = C, B, A, DC, DB, DA, SLDC, SLDB, SLDA
+        #A,B,C,DA,DB,DC,SLDA,SLDB,SLDC = 10,20,30,100,200,300,1,2,3
+        #SLD_SOLVENT,CONTRAST = 0, 4
+        if 1: # C shortest
+            B, C = C, B
+            DB, DC = DC, DB
+            SLDB, SLDC = SLDC, SLDB
+        elif 0: # C longest
+            A, C = C, A
+            DA, DC = DC, DA
+            SLDA, SLDC = SLDC, SLDA
+        #NORM, KERNEL = make_core_shell_parallelepiped(A, B, C, DA, DB, DC, SLDA, SLDB, SLDC)
+        NORM, KERNEL = make_core_shell_parallelepiped(A, B, C, DA, DB, DC, SLDA, SLDB, SLDC)
+        NORM_MP, KERNEL_MP = make_core_shell_parallelepiped(A, B, C, DA, DB, DC, SLDA, SLDB, SLDC, env=MPenv)
+    elif shape.endswith('paracrystal'):
+        LATTICE, _ = shape.split('_')
+        DNN = pars.get('dnn', 220)
+        D_FACTOR = pars.get('d_factor', '0.06')
+        RADIUS = pars.get('radius', 40)
+        NORM, KERNEL = make_paracrystal(
+            radius=RADIUS, dnn=DNN, d_factor=D_FACTOR, lattice=LATTICE)
+        NORM_MP, KERNEL_MP = make_paracrystal(
+            radius=RADIUS, dnn=DNN, d_factor=D_FACTOR, lattice=LATTICE, env=MPenv)
+    else:
+        raise ValueError("Unknown shape %r"%shape)
 
 # Note: hardcoded in mp_quad
 THETA_LOW, THETA_HIGH = 0, pi
@@ -272,7 +298,7 @@ I[6/10^3, 63/10, 3, 445, 140, 47]
 """
 
 # 2D integration functions
-def mp_quad_2d(q, shape):
+def mp_quad_2d(q):
     evals = [0]
     def integrand(theta, phi):
         evals[0] += 1
@@ -393,6 +419,50 @@ def gridded_2d(q, n=300):
     print("simpson-%d"%n, n**2, simps(simps(Zq, dx=dx), dx=dy)*SCALE/(4*pi))
     print("romb-%d"%n, n**2, romb(romb(Zq, dx=dx), dx=dy)*SCALE/(4*pi))
 
+def quadpy_method(q, rule):
+    """
+    Use *rule*="name:index" where name and index are chosen from below.
+
+    Available rule names and the corresponding indices::
+
+        AlbrechtCollatz: [1-5]
+        BazantOh: 9, 11, 13
+        HeoXu: 13, 15, 17, 19-[1-2], 21-[1-6], 23-[1-3], 25-[1-2], 27-[1-3],
+            29, 31, 33, 35, 37, 39-[1-2]
+        FliegeMaier: 4, 9, 16, 25
+        Lebedev: 3[a-c], 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 35,
+            41, 47, 53, 59, 65, 71, 77 83, 89, 95, 101, 107, 113, 119, 125, 131
+        McLaren: [1-10]
+        Stroud: U3 3-1, U3 5-[1-5], U3 7-[1-2], U3 8-1, U3 9-[1-3],
+            U3 11-[1-3], U3 14-1
+    """
+    try:
+        import quadpy
+    except ImportError:
+        warnings.warn("use 'pip install quadpy' to enable quadpy.sphere tests")
+        return
+
+    from quadpy.sphere import (AlbrechtCollatz, BazantOh, HeoXu,
+        FliegeMaier, Lebedev, McLaren, Stroud, integrate_spherical)
+    RULES = {
+        'AlbrechtCollatz': AlbrechtCollatz,
+        'BazantOh': BazantOh,
+        'HeoXu': HeoXu,
+        'FliegeMaier': FliegeMaier,
+        'Lebedev': Lebedev,
+        'McLaren': McLaren,
+        'Stroud': Stroud,
+    }
+    int_index = 'AlbrechtCollatz', 'McLaren'
+
+    rule_name, rule_index = rule.split(':')
+    index = int(rule_index) if rule_name in int_index else rule_index
+    rule_obj = RULES[rule_name](index)
+    fn = lambda azimuthal, polar: kernel_2d(q=q, theta=polar, phi=azimuthal)
+    Iq = integrate_spherical(fn, rule=rule_obj)/(4*pi)
+    print("%s degree=%d points=%s => %.15g"
+          % (rule, rule_obj.degree, len(rule_obj.points), Iq))
+
 def plot_2d(q, n=300):
     """
     Plot the 2D surface that needs to be integrated in order to compute
@@ -413,31 +483,73 @@ def plot_2d(q, n=300):
     cbar.set_label('log10 S(q)')
     pylab.show()
 
-def main(Qstr):
-    Q = float(Qstr)
-    if shape == 'sphere':
+def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="asymmetric integration explorer",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        )
+    parser.add_argument('-s', '--shape', choices=SHAPES,
+                        default='parallelepiped',
+                        help='oriented shape')
+    parser.add_argument('-q', '--q_value', type=str, default='0.005',
+                        help='Q value to evaluate')
+    parser.add_argument('pars', type=str, nargs='*', default=[],
+                        help='p=val for p in shape parameters')
+    opts = parser.parse_args()
+    pars = {k: v for par in opts.pars for k, v in [par.split('=')]}
+    build_shape(opts.shape, **pars)
+
+    Q = float(opts.q_value)
+    if opts.shape == 'sphere':
         print("exact", NORM*sp.sas_3j1x_x(Q*RADIUS)**2)
-    print("gauss-20", *gauss_quad_2d(Q, n=20))
-    print("gauss-76", *gauss_quad_2d(Q, n=76))
-    print("gauss-150", *gauss_quad_2d(Q, n=150))
-    print("gauss-500", *gauss_quad_2d(Q, n=500))
-    print("gauss-1025", *gauss_quad_2d(Q, n=1025))
-    print("gauss-2049", *gauss_quad_2d(Q, n=2049))
-    print("gauss-20 usub", *gauss_quad_usub(Q, n=20))
-    print("gauss-76 usub", *gauss_quad_usub(Q, n=76))
-    print("gauss-150 usub", *gauss_quad_usub(Q, n=150))
+
+    # Methods from quadpy, if quadpy is available
+    #  AlbrechtCollatz: [1-5]
+    #  BazantOh: 9, 11, 13
+    #  HeoXu: 13, 15, 17, 19-[1-2], 21-[1-6], 23-[1-3], 25-[1-2], 27-[1-3],
+    #     29, 31, 33, 35, 37, 39-[1-2]
+    #  FliegeMaier: 4, 9, 16, 25
+    #  Lebedev: 3[a-c], 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 35,
+    #     41, 47, 53, 59, 65, 71, 77 83, 89, 95, 101, 107, 113, 119, 125, 131
+    #  McLaren: [1-10]
+    #  Stroud: U3 3-1, U3 5-[1-5], U3 7-[1-2], U3 8-1, U3 9-[1-3],
+    #     U3 11-[1-3], U3 14-1
+    quadpy_method(Q, "AlbrechtCollatz:5")
+    quadpy_method(Q, "HeoXu:39-2")
+    quadpy_method(Q, "FliegeMaier:25")
+    quadpy_method(Q, "Lebedev:19")
+    quadpy_method(Q, "Lebedev:131")
+    quadpy_method(Q, "McLaren:10")
+    quadpy_method(Q, "Stroud:U3 14-1")
+
+    print("gauss-20 points=%d => %.15g" % gauss_quad_2d(Q, n=20))
+    print("gauss-76 points=%d => %.15g" % gauss_quad_2d(Q, n=76))
+    print("gauss-150 points=%d => %.15g" % gauss_quad_2d(Q, n=150))
+    print("gauss-500 points=%d => %.15g" % gauss_quad_2d(Q, n=500))
+    print("gauss-1025 points=%d => %.15g" % gauss_quad_2d(Q, n=1025))
+    print("gauss-2049 points=%d => %.15g" % gauss_quad_2d(Q, n=2049))
+    print("gauss-20 usub points=%d => %.15g" % gauss_quad_usub(Q, n=20))
+    print("gauss-76 usub points=%d => %.15g" % gauss_quad_usub(Q, n=76))
+    print("gauss-150 usub points=%d => %.15g" % gauss_quad_usub(Q, n=150))
+
     #gridded_2d(Q, n=2**8+1)
     gridded_2d(Q, n=2**10+1)
     #gridded_2d(Q, n=2**12+1)
     #gridded_2d(Q, n=2**15+1)
-    if shape not in ('paracrystal', 'core_shell_parallelepiped'):
-        # adaptive forms on models for which the calculations are fast enough
+    # adaptive forms on models for which the calculations are fast enough
+    SLOW_SHAPES = {
+        'fcc_paracrystal', 'bcc_paracrystal', 'sc_paracrystal',
+        'core_shell_parallelepiped',
+    }
+    if opts.shape not in SLOW_SHAPES:
         print("dblquad", *scipy_dblquad_2d(Q))
         print("semi-romberg-100", *semi_romberg_2d(Q, n=100))
         print("romberg", *scipy_romberg_2d(Q))
         with mp.workprec(100):
-            print("mpmath", *mp_quad_2d(mp.mpf(Qstr), shape))
+            print("mpmath", *mp_quad_2d(mp.mpf(opts.q_value)))
     plot_2d(Q, n=200)
 
 if __name__ == "__main__":
-    main(Qstr)
+    main()

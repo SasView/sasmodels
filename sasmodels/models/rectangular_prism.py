@@ -31,7 +31,7 @@ and $\phi$
 
 .. math::
 
-  A_P\,(q) =
+    A_P\,(q) =
       \frac{\sin \left( \tfrac{1}{2}qC \cos\theta \right) }{\tfrac{1}{2} qC \cos\theta}
       \,\times\,
       \frac{\sin \left( \tfrac{1}{2}qA \cos\theta \right) }{\tfrac{1}{2} qA \cos\theta}
@@ -47,14 +47,14 @@ The normalized form factor in 1D is obtained averaging over all possible
 orientations
 
 .. math::
-  P(q) =  \frac{2}{\pi} \int_0^{\frac{\pi}{2}} \,
-  \int_0^{\frac{\pi}{2}} A_P^2(q) \, \sin\theta \, d\theta \, d\phi
+    P(q) =  \frac{2}{\pi} \int_0^{\frac{\pi}{2}} \,
+    \int_0^{\frac{\pi}{2}} A_P^2(q) \, \sin\theta \, d\theta \, d\phi
 
 And the 1D scattering intensity is calculated as
 
 .. math::
-  I(q) = \text{scale} \times V \times (\rho_\text{p} -
-  \rho_\text{solvent})^2 \times P(q)
+    I(q) = \text{scale} \times V \times (\rho_\text{p} -
+    \rho_\text{solvent})^2 \times P(q)
 
 where $V$ is the volume of the rectangular prism, $\rho_\text{p}$
 is the scattering length of the parallelepiped, $\rho_\text{solvent}$
@@ -95,13 +95,20 @@ to the output of the existing :ref:`parallelepiped` model.
 References
 ----------
 
-P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
+.. [#] P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
+.. [#] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
-R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+Authorship and Verification
+----------------------------
+
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 import numpy as np
-from numpy import pi, inf, sqrt
+from numpy import inf
 
 name = "rectangular_prism"
 title = "Rectangular parallelepiped with uniform scattering length density."
@@ -134,21 +141,15 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
              ]
 
 source = ["lib/gauss76.c", "rectangular_prism.c"]
-
-def ER(length_a, b2a_ratio, c2a_ratio):
-    """
-        Return equivalent radius (ER)
-    """
-    b_side = length_a * b2a_ratio
-    c_side = length_a * c2a_ratio
-
-    # surface average radius (rough approximation)
-    surf_rad = sqrt(length_a * b_side / pi)
-
-    ddd = 0.75 * surf_rad * (2 * surf_rad * c_side + (c_side + surf_rad) * (c_side + pi * surf_rad))
-    return 0.5 * (ddd) ** (1. / 3.)
+have_Fq = True
+radius_effective_modes = [
+    "equivalent cylinder excluded volume", "equivalent volume sphere",
+    "half length_a", "half length_b", "half length_c",
+    "equivalent circular cross-section", "half ab diagonal", "half diagonal",
+    ]
 
 def random():
+    """Return a random parameter set for the model."""
     a, b, c = 10**np.random.uniform(1, 4.7, size=3)
     pars = dict(
         length_a=a,

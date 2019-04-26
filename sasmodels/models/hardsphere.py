@@ -1,23 +1,34 @@
 # Note: model title and parameter table are inserted automatically
-r"""Calculate the interparticle structure factor for monodisperse
+r"""
+Calculates the interparticle structure factor for monodisperse
 spherical particles interacting through hard sphere (excluded volume)
-interactions.
-May be a reasonable approximation for other shapes of particles that
-freely rotate, and for moderately polydisperse systems. Though strictly
-the maths needs to be modified (no \Beta(Q) correction yet in sasview).
+interactions. This $S(q)$ may also be a reasonable approximation for
+other particle shapes that freely rotate (but see the note below),
+and for moderately polydisperse systems.
+
+.. note::
+
+   This routine is intended for uncharged particles! For charged
+   particles try using the :ref:`hayter-msa` $S(q)$ instead.
+
+.. note::
+
+   Earlier versions of SasView did not incorporate the so-called
+   $\beta(q)$ ("beta") correction [1] for polydispersity and non-sphericity.
+   This is only available in SasView versions 5.0 and higher.
 
 radius_effective is the effective hard sphere radius.
 volfraction is the volume fraction occupied by the spheres.
 
-In sasview the effective radius may be calculated from the parameters
+In SasView the effective radius may be calculated from the parameters
 used in the form factor $P(q)$ that this $S(q)$ is combined with.
 
 For numerical stability the computation uses a Taylor series expansion
-at very small $qR$, there may be a very minor glitch at the transition point
-in some circumstances.
+at very small $qR$, but there may be a very minor glitch at the
+transition point in some circumstances.
 
-The S(Q) uses the Percus-Yevick closure where the interparticle
-potential is
+This S(q) uses the Percus-Yevick closure relationship [2] where the
+interparticle potential $U(r)$ is
 
 .. math::
 
@@ -26,7 +37,7 @@ potential is
     0 & r \geq 2R
     \end{cases}
 
-where $r$ is the distance from the center of the sphere of a radius $R$.
+where $r$ is the distance from the center of a sphere of a radius $R$.
 
 For a 2D plot, the wave transfer is defined as
 
@@ -38,7 +49,16 @@ For a 2D plot, the wave transfer is defined as
 References
 ----------
 
-J K Percus, J Yevick, *J. Phys. Rev.*, 110, (1958) 1
+.. [#] M Kotlarchyk & S-H Chen, *J. Chem. Phys.*, 79 (1983) 2461-2469
+
+.. [#] J K Percus, J Yevick, *J. Phys. Rev.*, 110, (1958) 1
+
+Authorship and Verification
+----------------------------
+
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 import numpy as np
@@ -49,10 +69,10 @@ title = "Hard sphere structure factor, with Percus-Yevick closure"
 description = """\
     [Hard sphere structure factor, with Percus-Yevick closure]
         Interparticle S(Q) for random, non-interacting spheres.
-    May be a reasonable approximation for other shapes of
-    particles that freely rotate, and for moderately polydisperse
-        systems. Though strictly the maths needs to be modified -
-    which sasview does not do yet.
+    May be a reasonable approximation for other particle shapes
+    that freely rotate, and for moderately polydisperse systems
+    . The "beta(q)" correction is available in versions 4.2.2
+    and higher.
     radius_effective is the hard sphere radius
     volfraction is the volume fraction occupied by the spheres.
 """
@@ -61,17 +81,11 @@ structure_factor = True
 single = False # TODO: check
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["radius_effective", "Ang", 50.0, [0, inf], "volume",
+parameters = [["radius_effective", "Ang", 50.0, [0, inf], "",
                "effective radius of hard sphere"],
               ["volfraction", "", 0.2, [0, 0.74], "",
                "volume fraction of hard spheres"],
              ]
-
-# No volume normalization despite having a volume parameter
-# This should perhaps be volume normalized?
-form_volume = """
-    return 1.0;
-    """
 
 Iq = r"""
       double D,A,B,G,X,X2,X4,S,C,FF,HARDSPH;
@@ -160,6 +174,7 @@ Iq = r"""
    """
 
 def random():
+    """Return a random parameter set for the model."""
     pars = dict(
         scale=1, background=0,
         radius_effective=10**np.random.uniform(1, 4),
@@ -167,11 +182,6 @@ def random():
     )
     return pars
 
-# ER defaults to 0.0
-# VR defaults to 1.0
-
-demo = dict(radius_effective=200, volfraction=0.2,
-            radius_effective_pd=0.1, radius_effective_pd_n=40)
 # Q=0.001 is in the Taylor series, low Q part, so add Q=0.1,
 # assuming double precision sasview is correct
 tests = [

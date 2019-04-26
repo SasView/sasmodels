@@ -235,17 +235,17 @@ def make_kernel_args(kernel, # type: Kernel
     """
     npars = kernel.info.parameters.npars
     nvalues = kernel.info.parameters.nvalues
-    scalars = [value for value, _dispersity, _weight in mesh]
+    scalars = [value for value, dispersity, weight in mesh]
     # skipping scale and background when building values and weights
-    _values, dispersity, weights = zip(*mesh[2:npars+2]) if npars else ((), (), ())
-    #weights = correct_theta_weights(kernel.info.parameters, dispersity, weights)
-    length = np.array([len(w) for w in weights])
+    value, dispersity, weight = zip(*mesh[2:npars+2]) if npars else ((), (), ())
+    #weight = correct_theta_weights(kernel.info.parameters, dispersity, weight)
+    length = np.array([len(w) for w in weight])
     offset = np.cumsum(np.hstack((0, length)))
     call_details = make_details(kernel.info, length, offset[:-1], offset[-1])
     # Pad value array to a 32 value boundary
     data_len = nvalues + 2*sum(len(v) for v in dispersity)
     extra = (32 - data_len%32)%32
-    data = np.hstack((scalars,) + dispersity + weights + ZEROS[:extra])
+    data = np.hstack((scalars,) + dispersity + weight + ZEROS[:extra])
     data = data.astype(kernel.dtype)
     is_magnetic = convert_magnetism(kernel.info.parameters, data)
     #call_details.show()

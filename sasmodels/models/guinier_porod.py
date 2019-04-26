@@ -4,7 +4,7 @@ This is an empirical model that can be used to determine the size
 and dimensionality of scattering objects, including asymmetric objects
 such as rods or platelets, and shapes intermediate between spheres
 and rods or between rods and platelets, and overcomes some of the
-deficiencies of the (Beaucage) Unified_Power_Rg model (see Hammouda, 2010).
+deficiencies of the (Beaucage) :ref:`unified-power-rg` model (see Hammouda, 2010).
 
 Definition
 ----------
@@ -59,9 +59,15 @@ where the q vector is defined as
 Reference
 ---------
 
-B Hammouda, *A new Guinier-Porod model, J. Appl. Cryst.*, (2010), 43, 716-719
+.. [#] B Hammouda, *A new Guinier-Porod model, J. Appl. Cryst.*, (2010), 43, 716-719
+.. [#] B Hammouda, *Analysis of the Beaucage model, J. Appl. Cryst.*, (2010), 43, 1474-1478
 
-B Hammouda, *Analysis of the Beaucage model, J. Appl. Cryst.*, (2010), 43, 1474-1478
+Authorship and Verification
+----------------------------
+
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 import numpy as np
@@ -114,6 +120,7 @@ def Iq(q, rg, s, porod_exp):
 Iq.vectorized = True # Iq accepts an array of q values
 
 def random():
+    """Return a random parameter set for the model."""
     rg = 10**np.random.uniform(1, 5)
     s = np.random.uniform(0, 3)
     porod_exp = s + np.random.uniform(0, 3)

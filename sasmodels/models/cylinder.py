@@ -95,8 +95,16 @@ system, and then comparing to the 1D result.
 References
 ----------
 
-J. S. Pedersen, Adv. Colloid Interface Sci. 70, 171-210 (1997).
-G. Fournet, Bull. Soc. Fr. Mineral. Cristallogr. 74, 39-113 (1951).
+.. [#] J. Pedersen, *Adv. Colloid Interface Sci.*, 70 (1997) 171-210
+.. [#] G. Fournet, *Bull. Soc. Fr. Mineral. Cristallogr.*, 74 (1951) 39-113
+.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+
+Authorship and Verification
+----------------------------
+
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 import numpy as np  # type: ignore
@@ -137,15 +145,14 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
              ]
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "cylinder.c"]
-
-def ER(radius, length):
-    """
-        Return equivalent radius (ER)
-    """
-    ddd = 0.75 * radius * (2 * radius * length + (length + radius) * (length + pi * radius))
-    return 0.5 * (ddd) ** (1. / 3.)
+have_Fq = True
+radius_effective_modes = [
+    "excluded volume", "equivalent volume sphere", "radius",
+    "half length", "half min dimension", "half max dimension", "half diagonal",
+    ]
 
 def random():
+    """Return a random parameter set for the model."""
     volume = 10**np.random.uniform(5, 12)
     length = 10**np.random.uniform(-2, 2)*volume**0.333
     radius = np.sqrt(volume/length/np.pi)
@@ -168,17 +175,53 @@ demo = dict(scale=1, background=0,
             theta_pd=10, theta_pd_n=5,
             phi_pd=10, phi_pd_n=5)
 
+# Test 1-D and 2-D models
 qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
-# After redefinition of angles, find new tests values.  Was 10 10 in old coords
+theta, phi = 80.1534480601659, 10.1510817110481  # (10, 10) in sasview 3.x
 tests = [
     [{}, 0.2, 0.042761386790780453],
     [{}, [0.2], [0.042761386790780453]],
-    #  new coords
-    [{'theta':80.1534480601659, 'phi':10.1510817110481}, (qx, qy), 0.03514647218513852],
-    [{'theta':80.1534480601659, 'phi':10.1510817110481}, [(qx, qy)], [0.03514647218513852]],
-    # old coords
-    #[{'theta':10.0, 'phi':10.0}, (qx, qy), 0.03514647218513852],
-    #[{'theta':10.0, 'phi':10.0}, [(qx, qy)], [0.03514647218513852]],
+    [{'theta': theta, 'phi': phi}, (qx, qy), 0.03514647218513852],
+    [{'theta': theta, 'phi': phi}, [(qx, qy)], [0.03514647218513852]],
 ]
-del qx, qy  # not necessary to delete, but cleaner
+del qx, qy, theta, phi  # not necessary to delete, but cleaner
+
+def _extend_with_reff_tests(radius, length):
+    """Test R_eff and form volume calculations"""
+    # V and Vr are the same for each R_eff mode
+    V = pi*radius**2*length  # shell volume = form volume for solid objects
+    Vr = 1.0  # form:shell volume ratio
+    # Use test value for I(0.2) from above to check Fsq value.  Need to
+    # remove scale and background before testing.
+    q = 0.2
+    scale, background = V, 0.001
+    Fsq = (0.042761386790780453 - background)*scale
+    F = None  # Need target value for <F>
+    # Various values for R_eff, depending on mode
+    r_effs = [
+        0.,
+        0.5*(0.75*radius*(2.0*radius*length
+                          + (radius + length)*(pi*radius + length)))**(1./3.),
+        (0.75*radius**2*length)**(1./3.),
+        radius,
+        length/2.,
+        min(radius, length/2.),
+        max(radius, length/2.),
+        np.sqrt(4*radius**2 + length**2)/2.,
+    ]
+    tests.extend([
+        ({'radius_effective_mode': 0}, q, F, Fsq, r_effs[0], V, Vr),
+        ({'radius_effective_mode': 1}, q, F, Fsq, r_effs[1], V, Vr),
+        ({'radius_effective_mode': 2}, q, F, Fsq, r_effs[2], V, Vr),
+        ({'radius_effective_mode': 3}, q, F, Fsq, r_effs[3], V, Vr),
+        ({'radius_effective_mode': 4}, q, F, Fsq, r_effs[4], V, Vr),
+        ({'radius_effective_mode': 5}, q, F, Fsq, r_effs[5], V, Vr),
+        ({'radius_effective_mode': 6}, q, F, Fsq, r_effs[6], V, Vr),
+        ({'radius_effective_mode': 7}, q, F, Fsq, r_effs[7], V, Vr),
+    ])
+
+# Test Reff and volume with default model parameters
+_extend_with_reff_tests(parameters[2][2], parameters[3][2])
+del _extend_with_reff_tests
+
 # ADDED by:  RKH  ON: 18Mar2016 renamed sld's etc

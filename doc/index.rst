@@ -15,14 +15,14 @@ The sasmodels package provides theory functions for small angle scattering
 calculations for different shapes, including the effects of resolution,
 polydispersity and orientational dispersion.
 
-.. htmlonly::
+.. only:: html
+
    :Release: |version|
    :Date:    |today|
 
    Download pdf version `here <SASModels.pdf>`_
 
 .. toctree::
-   :numbered:
    :maxdepth: 4
 
    guide/index.rst
@@ -36,5 +36,6 @@ Indices and Tables
 * :ref:`genindex`
 * :ref:`modindex`
 
-.. htmlonly::
+.. only:: html
+
   * :ref:`search`

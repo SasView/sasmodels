@@ -1,18 +1,14 @@
 # rectangular_prism model
 # Note: model title and parameter table are inserted automatically
 r"""
-
-This model provides the form factor, $P(q)$, for a hollow rectangular
-parallelepiped with a wall of thickness $\Delta$.
-
-
 Definition
 ----------
 
-The 1D scattering intensity for this model is calculated by forming
-the difference of the amplitudes of two massive parallelepipeds
-differing in their outermost dimensions in each direction by the
-same length increment $2\Delta$ (Nayuk, 2012).
+This model provides the form factor, $P(q)$, for a hollow rectangular
+parallelepiped with a wall of thickness $\Delta$. The 1D scattering intensity
+for this model is calculated by forming the difference of the amplitudes of two
+massive parallelepipeds differing in their outermost dimensions in each
+direction by the same length increment $2\Delta$ (\ [#Nayuk2012]_ Nayuk, 2012).
 
 As in the case of the massive parallelepiped model (:ref:`rectangular-prism`),
 the scattering amplitude is computed for a particular orientation of the
@@ -60,10 +56,11 @@ The 1D scattering intensity is then calculated as
   I(q) = \text{scale} \times V \times (\rho_\text{p} -
   \rho_\text{solvent})^2 \times P(q) + \text{background}
 
-where $\rho_\text{p}$ is the scattering length of the parallelepiped,
-$\rho_\text{solvent}$ is the scattering length of the solvent,
+where $\rho_\text{p}$ is the scattering length density of the parallelepiped,
+$\rho_\text{solvent}$ is the scattering length density of the solvent,
 and (if the data are in absolute units) *scale* represents the volume fraction
-(which is unitless).
+(which is unitless) of the rectangular shell of material (i.e. not including
+the volume of the solvent filled core).
 
 For 2d data the orientation of the particle is required, described using
 angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further details
@@ -72,8 +69,9 @@ The angle $\Psi$ is the rotational angle around the long *C* axis. For example,
 $\Psi = 0$ when the *B* axis is parallel to the *x*-axis of the detector.
 
 For 2d, constraints must be applied during fitting to ensure that the inequality
-$A < B < C$ is not violated, and hence the correct definition of angles is preserved. The calculation will not report an error,
-but the results may be not correct.
+$A < B < C$ is not violated, and hence the correct definition of angles is
+preserved. The calculation will not report an error if the inequality is *not*
+preserved, but the results may be not correct.
 
 .. figure:: img/parallelepiped_angle_definition.png
 
@@ -98,11 +96,19 @@ of the 1D model to the curves shown in (Nayuk, 2012).
 References
 ----------
 
-R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+.. [#Nayuk2012] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+
+Authorship and Verification
+----------------------------
+
+* **Author:** Miguel Gonzales **Date:** February 26, 2016
+* **Last Modified by:** Paul Kienzle **Date:** December 14, 2017
+* **Last Reviewed by:** Paul Butler **Date:** September 06, 2018
 """
 
 import numpy as np
-from numpy import pi, inf, sqrt
+from numpy import inf
 
 name = "hollow_rectangular_prism"
 title = "Hollow rectangular parallelepiped with uniform scattering length density."
@@ -125,7 +131,7 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
               ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Solvent scattering length density"],
               ["length_a", "Ang", 35, [0, inf], "volume",
-               "Shorter side of the parallelepiped"],
+               "Shortest, external, size of the parallelepiped"],
               ["b2a_ratio", "Ang", 1, [0, inf], "volume",
                "Ratio sides b/a"],
               ["c2a_ratio", "Ang", 1, [0, inf], "volume",
@@ -141,37 +147,16 @@ parameters = [["sld", "1e-6/Ang^2", 6.3, [-inf, inf], "sld",
              ]
 
 source = ["lib/gauss76.c", "hollow_rectangular_prism.c"]
-
-def ER(length_a, b2a_ratio, c2a_ratio, thickness):
-    """
-    Return equivalent radius (ER)
-    thickness parameter not used
-    """
-    b_side = length_a * b2a_ratio
-    c_side = length_a * c2a_ratio
-
-    # surface average radius (rough approximation)
-    surf_rad = sqrt(length_a * b_side / pi)
-
-    ddd = 0.75 * surf_rad * (2 * surf_rad * c_side + (c_side + surf_rad) * (c_side + pi * surf_rad))
-    return 0.5 * (ddd) ** (1. / 3.)
-
-def VR(length_a, b2a_ratio, c2a_ratio, thickness):
-    """
-    Return shell volume and total volume
-    """
-    b_side = length_a * b2a_ratio
-    c_side = length_a * c2a_ratio
-    a_core = length_a - 2.0*thickness
-    b_core = b_side - 2.0*thickness
-    c_core = c_side - 2.0*thickness
-    vol_core = a_core * b_core * c_core
-    vol_total = length_a * b_side * c_side
-    vol_shell = vol_total - vol_core
-    return vol_total, vol_shell
-
+have_Fq = True
+radius_effective_modes = [
+    "equivalent cylinder excluded volume", "equivalent outer volume sphere",
+    "half length_a", "half length_b", "half length_c",
+    "equivalent outer circular cross-section",
+    "half ab diagonal", "half diagonal",
+    ]
 
 def random():
+    """Return a random parameter set for the model."""
     a, b, c = 10**np.random.uniform(1, 4.7, size=3)
     # Thickness is limited to 1/2 the smallest dimension
     # Use a distribution with a preference for thin shell or thin core

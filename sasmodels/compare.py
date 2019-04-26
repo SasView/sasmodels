@@ -38,12 +38,13 @@ import re
 import numpy as np  # type: ignore
 
 from . import core
+from . import weights
 from . import kerneldll
 from . import kernelcl
+from . import kernelcuda
 from .data import plot_theory, empty_data1D, empty_data2D, load_data
 from .direct_model import DirectModel, get_mesh
 from .generate import FLOAT_RE, set_integration_size
-from .weights import plot_weights
 
 # pylint: disable=unused-import
 try:
@@ -113,12 +114,13 @@ Options (* for default):
     -help/-html shows the model docs instead of running the model
 
     === environment variables ===
-    -DSAS_MODELPATH=path sets directory containing custom models
-    -DSAS_OPENCL=vendor:device|none sets the target OpenCL device
+    -DSAS_MODELPATH=~/.sasmodels/custom_models sets path to custom models
+    -DSAS_WEIGHTS_PATH=~/.sasview/weights sets path to custom distributions
+    -DSAS_OPENCL=vendor:device|cuda:device|none sets the target GPU device
     -DXDG_CACHE_HOME=~/.cache sets the pyopencl cache root (linux only)
     -DSAS_COMPILER=tinycc|msvc|mingw|unix sets the DLL compiler
-    -DSAS_OPENMP=1 turns on OpenMP for the DLLs
-    -DSAS_DLL_PATH=path sets the path to the compiled modules
+    -DSAS_OPENMP=0 set to 1 to turn on OpenMP for the DLLs
+    -DSAS_DLL_PATH=~/.sasmodels/compiled_models sets the DLL cache
 
 The interpretation of quad precision depends on architecture, and may
 vary from 64-bit to 128-bit, with 80-bit floats being common (1e-19 precision).
@@ -351,10 +353,9 @@ def _randomize_one(model_info, name, value):
         return 10**np.random.uniform(-3, -0.5)
 
     # If it is a list of choices, pick one at random with equal probability
-    # In practice, the model specific random generator will override.
     par = model_info.parameters[name]
-    if len(par.limits) > 2:  # choice list
-        return np.random.randint(len(par.limits))
+    if par.choices:  # choice list
+        return np.random.randint(len(par.choices))
 
     # If it is a fixed range, pick from it with equal probability.
     # For logarithmic ranges, the model will have to override.
@@ -367,7 +368,7 @@ def _randomize_one(model_info, name, value):
         return np.random.uniform(-0.5, 12)
 
     # Limit magnetic SLDs to a smaller range, from zero to iron=5/A^2
-    if par.name.startswith('M0:'):
+    if par.name.endswith('_M0'):
         return np.random.uniform(0, 5)
 
     # Guess at the random length/radius/thickness.  In practice, all models
@@ -537,7 +538,7 @@ def parlist(model_info, pars, is2d):
     magnetic = False
     magnetic_pars = []
     for p in parameters.user_parameters(pars, is2d):
-        if any(p.id.startswith(x) for x in ('M0:', 'mtheta:', 'mphi:')):
+        if any(p.id.endswith(x) for x in ('_M0', '_mtheta', '_mphi')):
             continue
         if p.id.startswith('up:'):
             magnetic_pars.append("%s=%s"%(p.id, pars.get(p.id, p.default)))
@@ -549,9 +550,9 @@ def parlist(model_info, pars, is2d):
             nsigma=pars.get(p.id+"_pd_nsgima", 3.),
             pdtype=pars.get(p.id+"_pd_type", 'gaussian'),
             relative_pd=p.relative_pd,
-            M0=pars.get('M0:'+p.id, 0.),
-            mphi=pars.get('mphi:'+p.id, 0.),
-            mtheta=pars.get('mtheta:'+p.id, 0.),
+            M0=pars.get(p.id+'_M0', 0.),
+            mphi=pars.get(p.id+'_mphi', 0.),
+            mtheta=pars.get(p.id+'_mtheta', 0.),
         )
         lines.append(_format_par(p.name, **fields))
         magnetic = magnetic or fields['M0'] != 0.
@@ -617,13 +618,13 @@ def suppress_magnetism(pars, suppress=True):
     pars = pars.copy()
     if suppress:
         for p in pars:
-            if p.startswith("M0:"):
+            if p.endswith("_M0"):
                 pars[p] = 0
     else:
         any_mag = False
         first_mag = None
         for p in pars:
-            if p.startswith("M0:"):
+            if p.endswith("_M0"):
                 any_mag |= (pars[p] != 0)
                 if first_mag is None:
                     first_mag = p
@@ -724,7 +725,8 @@ def make_engine(model_info, data, dtype, cutoff, ngauss=0):
     if ngauss:
         set_integration_size(model_info, ngauss)
 
-    if dtype != "default" and not dtype.endswith('!') and not kernelcl.use_opencl():
+    if (dtype != "default" and not dtype.endswith('!')
+            and not (kernelcl.use_opencl() or kernelcuda.use_cuda())):
         raise RuntimeError("OpenCL not available " + kernelcl.OPENCL_ERROR)
 
     model = core.build_model(model_info, dtype=dtype, platform="ocl")
@@ -770,7 +772,7 @@ def compare(opts, limits=None, maxdim=np.inf):
             np.random.seed(new_seed)
         opts['pars'] = parse_pars(opts, maxdim=maxdim)
         if opts['pars'] is None:
-            return
+            return limits
         result = run_models(opts, verbose=True)
         if opts['plot']:
             if opts['is2d'] and k > 0:
@@ -782,7 +784,7 @@ def compare(opts, limits=None, maxdim=np.inf):
             base_pars, _ = opts['pars']
             model_info = base._kernel.info
             dim = base._kernel.dim
-            plot_weights(model_info, get_mesh(model_info, base_pars, dim=dim))
+            weights.plot_weights(model_info, get_mesh(model_info, base_pars, dim=dim))
         if opts['show_profile']:
             import pylab
             base, comp = opts['engines']
@@ -820,8 +822,8 @@ def plot_profile(model_info, label='base', **args):
 
     args = dict((k, v) for k, v in args.items()
                 if "_pd" not in k
-                   and ":" not in k
-                   and k not in ("background", "scale", "theta", "phi", "psi"))
+                and ":" not in k
+                and k not in ("background", "scale", "theta", "phi", "psi"))
     args = args.copy()
 
     args.pop('scale', 1.)
@@ -894,7 +896,7 @@ def _print_stats(label, err):
     # type: (str, np.ma.ndarray) -> None
     # work with trimmed data, not the full set
     sorted_err = np.sort(abs(err.compressed()))
-    if len(sorted_err) == 0:
+    if sorted_err.size == 0:
         print(label + "  no valid values")
         return
 
@@ -1150,7 +1152,7 @@ def parse_opts(argv):
         'show_hist' : False,
         'rel_err'   : True,
         'explore'   : False,
-        'use_demo'  : True,
+        'use_demo'  : False,
         'zero'      : False,
         'html'      : False,
         'title'     : None,
@@ -1287,7 +1289,8 @@ def parse_opts(argv):
         opts['res'] = [float(opts['res'])]*2
 
     if opts['datafile'] is not None:
-        data = load_data(os.path.expanduser(opts['datafile']))
+        data0 = load_data(os.path.expanduser(opts['datafile']))
+        data = data0, data0
     else:
         # Hack around the fact that make_data doesn't take a pair of resolutions
         res = opts['res']
@@ -1437,6 +1440,14 @@ def parse_pars(opts, maxdim=np.inf):
     pars.update(presets)  # set value after random to control value
     pars2.update(presets2)  # set value after random to control value
     #import pprint; pprint.pprint(model_info)
+
+    # Hack to load user-defined distributions; run through all parameters
+    # and make sure any pd_type parameter is a defined distribution.
+    if (any(p.endswith('pd_type') and v not in weights.MODELS
+            for p, v in pars.items()) or
+        any(p.endswith('pd_type') and v not in weights.MODELS
+            for p, v in pars2.items())):
+       weights.load_weights()
 
     if opts['show_pars']:
         if model_info.name != model_info2.name or pars != pars2:

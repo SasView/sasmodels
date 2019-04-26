@@ -25,6 +25,13 @@ References
 ----------
 
 None.
+
+Authorship and Verification
+----------------------------
+
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 import numpy as np
@@ -49,9 +56,8 @@ Iq = """
     return exp(-0.5*scaled_dq*scaled_dq); //sqrt(2*M_PI*sigma*sigma);
     """
 
-# VR defaults to 1.0
-
 def random():
+    """Return a random parameter set for the model."""
     peak_pos = 10**np.random.uniform(-3, -1)
     sigma = 10**np.random.uniform(-1.3, -0.3)*peak_pos
     scale = 10**np.random.uniform(0, 4)

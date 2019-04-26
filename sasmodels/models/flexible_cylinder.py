@@ -29,16 +29,11 @@ length (the length along the cylinder over which the flexible cylinder can be
 considered a rigid rod).
 The Kuhn length $(b = 2*l_p)$ is also used to describe the stiffness of a chain.
 
-The returned value is in units of $cm^{-1}$, on absolute scale.
-
 In the parameters, the sld and sld\_solvent represent the SLD of the cylinder
 and solvent respectively.
 
-Our model uses the form factor calculations implemented in a c-library provided
-by the NIST Center for Neutron Research (Kline, 2006).
-
-
-From the reference:
+Our model uses the form factor calculations in reference [1] as implemented in a
+c-library provided by the NIST Center for Neutron Research (Kline, 2006). This states:
 
     'Method 3 With Excluded Volume' is used.
     The model is a parametrization of simulations of a discrete representation
@@ -46,25 +41,72 @@ From the reference:
     pseudocontinuous limit.
     See equations (13,26-27) in the original reference for the details.
 
+.. note::
+
+    There are several typos in the original reference that have been corrected
+    by WRC [2]. Details of the corrections are in the reference below. Most notably
+
+    - Equation (13): the term $(1 - w(QR))$ should swap position with $w(QR)$
+
+    - Equations (23) and (24) are incorrect; WRC has entered these into
+      Mathematica and solved analytically. The results were then converted to
+      code.
+
+    - Equation (27) should be $q0 = max(a3/(Rg^2)^{1/2},3)$ instead of
+      $max(a3*b(Rg^2)^{1/2},3)$
+
+    - The scattering function is negative for a range of parameter values and
+      q-values that are experimentally accessible. A correction function has been
+      added to give the proper behavior.
+
+
+**This is a model with complex behaviour depending on the ratio of** $L/b$ **and the
+reader is strongly encouraged to read reference [1] before use.**
+
+.. note::
+
+    There are several typos in the original reference that have been corrected
+    by WRC [2]. Details of the corrections are in the reference below. Most notably
+
+    - Equation (13): the term $(1 - w(QR))$ should swap position with $w(QR)$
+
+    - Equations (23) and (24) are incorrect; WRC has entered these into
+      Mathematica and solved analytically. The results were then converted to
+      code.
+
+    - Equation (27) should be $q0 = max(a3/(Rg^2)^{1/2},3)$ instead of
+      $max(a3*b(Rg^2)^{1/2},3)$
+
+    - The scattering function is negative for a range of parameter values and
+      q-values that are experimentally accessible. A correction function has been
+      added to give the proper behavior.
+
+
+**This is a model with complex behaviour depending on the ratio of** $L/b$ **and the
+reader is strongly encouraged to read reference [1] before use.**
+
 References
 ----------
 
-J S Pedersen and P Schurtenberger. *Scattering functions of semiflexible
-polymers with and without excluded volume effects.* Macromolecules,
-29 (1996) 7602-7612
+.. [#] J S Pedersen and P Schurtenberger. *Scattering functions of semiflexible polymers with and without excluded volume effects.* Macromolecules, 29 (1996) 7602-7612
 
 Correction of the formula can be found in
 
-W R Chen, P D Butler and L J Magid, *Incorporating Intermicellar Interactions
-in the Fitting of SANS Data from Cationic Wormlike Micelles.* Langmuir,
-22(15) 2006 6539-6548
+.. [#] W R Chen, P D Butler and L J Magid, *Incorporating Intermicellar Interactions in the Fitting of SANS Data from Cationic Wormlike Micelles.* Langmuir, 22(15) 2006 6539-6548
+
+Authorship and Verification
+----------------------------
+
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:** Steve King **Date:** March 26, 2019
 """
 
 import numpy as np
 from numpy import inf
 
 name = "flexible_cylinder"
-title = "Flexible cylinder where the form factor is normalized by the volume" \
+title = "Flexible cylinder where the form factor is normalized by the volume " \
         "of the cylinder."
 description = """Note : scale and contrast = (sld - sld_solvent) are both
                 multiplicative factors in the model and are perfectly
@@ -88,6 +130,7 @@ parameters = [
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/wrc_cyl.c", "flexible_cylinder.c"]
 
 def random():
+    """Return a random parameter set for the model."""
     length = 10**np.random.uniform(2, 6)
     radius = 10**np.random.uniform(1, 3)
     kuhn_length = 10**np.random.uniform(-2, 0)*length

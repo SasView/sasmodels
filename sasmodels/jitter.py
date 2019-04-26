@@ -1,38 +1,74 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Jitter Explorer
 ===============
 
 Application to explore orientation angle and angular dispersity.
+
+From the command line::
+
+    # Show docs
+    python -m sasmodels.jitter --help
+
+    # Guyou projection jitter, uniform over 20 degree theta and 10 in phi
+    python -m sasmodels.jitter --projection=guyou --dist=uniform --jitter=20,10,0
+
+From a jupyter cell::
+
+    import ipyvolume as ipv
+    from sasmodels import jitter
+    import importlib; importlib.reload(jitter)
+    jitter.set_plotter("ipv")
+
+    size = (10, 40, 100)
+    view = (20, 0, 0)
+
+    #size = (15, 15, 100)
+    #view = (60, 60, 0)
+
+    dview = (0, 0, 0)
+    #dview = (5, 5, 0)
+    #dview = (15, 180, 0)
+    #dview = (180, 15, 0)
+
+    projection = 'equirectangular'
+    #projection = 'azimuthal_equidistance'
+    #projection = 'guyou'
+    #projection = 'sinusoidal'
+    #projection = 'azimuthal_equal_area'
+
+    dist = 'uniform'
+    #dist = 'gaussian'
+
+    jitter.run(size=size, view=view, jitter=dview, dist=dist, projection=projection)
+    #filename = projection+('_theta' if dview[0] == 180 else '_phi' if dview[1] == 180 else '')
+    #ipv.savefig(filename+'.png')
 """
 from __future__ import division, print_function
 
 import argparse
 
-try: # CRUFT: travis-ci does not support mpl_toolkits.mplot3d
-    import mpl_toolkits.mplot3d  # Adds projection='3d' option to subplot
-except ImportError:
-    pass
-
-import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider
 import numpy as np
-from numpy import pi, cos, sin, sqrt, exp, degrees, radians
+from numpy import pi, cos, sin, sqrt, exp, log, degrees, radians, arccos, arctan2
 
-def draw_beam(axes, view=(0, 0)):
+# Too many complaints about variable names from pylint:
+#    a, b, c, u, v, x, y, z, dx, dy, dz, px, py, pz, R, Rx, Ry, Rz, ...
+# pylint: disable=invalid-name
+
+def draw_beam(axes, view=(0, 0), alpha=0.5, steps=25):
     """
     Draw the beam going from source at (0, 0, 1) to detector at (0, 0, -1)
     """
     #axes.plot([0,0],[0,0],[1,-1])
-    #axes.scatter([0]*100,[0]*100,np.linspace(1, -1, 100), alpha=0.8)
+    #axes.scatter([0]*100,[0]*100,np.linspace(1, -1, 100), alpha=alpha)
 
-    steps = 25
-    u = np.linspace(0, 2 * np.pi, steps)
-    v = np.linspace(-1, 1, steps)
+    u = np.linspace(0, 2 * pi, steps)
+    v = np.linspace(-1, 1, 2)
 
     r = 0.02
-    x = r*np.outer(np.cos(u), np.ones_like(v))
-    y = r*np.outer(np.sin(u), np.ones_like(v))
+    x = r*np.outer(cos(u), np.ones_like(v))
+    y = r*np.outer(sin(u), np.ones_like(v))
     z = 1.3*np.outer(np.ones_like(u), v)
 
     theta, phi = view
@@ -40,20 +76,31 @@ def draw_beam(axes, view=(0, 0)):
     points = np.matrix([x.flatten(), y.flatten(), z.flatten()])
     points = Rz(phi)*Ry(theta)*points
     x, y, z = [v.reshape(shape) for v in points]
+    axes.plot_surface(x, y, z, color='yellow', alpha=alpha)
 
-    axes.plot_surface(x, y, z, rstride=4, cstride=4, color='y', alpha=0.5)
+    # TODO: draw endcaps on beam
+    ## Drawing tiny balls on the end will work
+    #draw_sphere(axes, radius=0.02, center=(0, 0, 1.3), color='yellow', alpha=alpha)
+    #draw_sphere(axes, radius=0.02, center=(0, 0, -1.3), color='yellow', alpha=alpha)
+    ## The following does not work
+    #triangles = [(0, i+1, i+2) for i in range(steps-2)]
+    #x_cap, y_cap = x[:, 0], y[:, 0]
+    #for z_cap in z[:, 0], z[:, -1]:
+    #    axes.plot_trisurf(x_cap, y_cap, z_cap, triangles,
+    #                      color='yellow', alpha=alpha)
+
 
 def draw_ellipsoid(axes, size, view, jitter, steps=25, alpha=1):
     """Draw an ellipsoid."""
     a, b, c = size
-    u = np.linspace(0, 2 * np.pi, steps)
-    v = np.linspace(0, np.pi, steps)
-    x = a*np.outer(np.cos(u), np.sin(v))
-    y = b*np.outer(np.sin(u), np.sin(v))
-    z = c*np.outer(np.ones_like(u), np.cos(v))
+    u = np.linspace(0, 2 * pi, steps)
+    v = np.linspace(0, pi, steps)
+    x = a*np.outer(cos(u), sin(v))
+    y = b*np.outer(sin(u), sin(v))
+    z = c*np.outer(np.ones_like(u), cos(v))
     x, y, z = transform_xyz(view, jitter, x, y, z)
 
-    axes.plot_surface(x, y, z, rstride=4, cstride=4, color='w', alpha=alpha)
+    axes.plot_surface(x, y, z, color='w', alpha=alpha)
 
     draw_labels(axes, view, jitter, [
         ('c+', [+0, +0, +c], [+1, +0, +0]),
@@ -66,11 +113,13 @@ def draw_ellipsoid(axes, size, view, jitter, steps=25, alpha=1):
 
 def draw_sc(axes, size, view, jitter, steps=None, alpha=1):
     """Draw points for simple cubic paracrystal"""
+    # pylint: disable=unused-argument
     atoms = _build_sc()
     _draw_crystal(axes, size, view, jitter, atoms=atoms)
 
 def draw_fcc(axes, size, view, jitter, steps=None, alpha=1):
     """Draw points for face-centered cubic paracrystal"""
+    # pylint: disable=unused-argument
     # Build the simple cubic crystal
     atoms = _build_sc()
     # Define the centers for each face
@@ -86,6 +135,7 @@ def draw_fcc(axes, size, view, jitter, steps=None, alpha=1):
 
 def draw_bcc(axes, size, view, jitter, steps=None, alpha=1):
     """Draw points for body-centered cubic paracrystal"""
+    # pylint: disable=unused-argument
     # Build the simple cubic crystal
     atoms = _build_sc()
     # Define the centers for each octant
@@ -122,8 +172,26 @@ def _build_sc():
     atoms.insert(0, highlight)
     return atoms
 
-def draw_parallelepiped(axes, size, view, jitter, steps=None, alpha=1):
-    """Draw a parallelepiped."""
+def draw_box(axes, size, view):
+    """Draw a wireframe box at a particular view."""
+    a, b, c = size
+    x = a*np.array([+1, -1, +1, -1, +1, -1, +1, -1])
+    y = b*np.array([+1, +1, -1, -1, +1, +1, -1, -1])
+    z = c*np.array([+1, +1, +1, +1, -1, -1, -1, -1])
+    x, y, z = transform_xyz(view, None, x, y, z)
+    def _draw(i, j):
+        axes.plot([x[i], x[j]], [y[i], y[j]], [z[i], z[j]], color='black')
+    _draw(0, 1)
+    _draw(0, 2)
+    _draw(0, 3)
+    _draw(7, 4)
+    _draw(7, 5)
+    _draw(7, 6)
+
+def draw_parallelepiped(axes, size, view, jitter, steps=None,
+                        color=(0.6, 1.0, 0.6), alpha=1):
+    """Draw a parallelepiped surface, with view and jitter."""
+    # pylint: disable=unused-argument
     a, b, c = size
     x = a*np.array([+1, -1, +1, -1, +1, -1, +1, -1])
     y = b*np.array([+1, +1, -1, -1, +1, +1, -1, -1])
@@ -140,18 +208,20 @@ def draw_parallelepiped(axes, size, view, jitter, steps=None, alpha=1):
     ])
 
     x, y, z = transform_xyz(view, jitter, x, y, z)
-    axes.plot_trisurf(x, y, triangles=tri, Z=z, color='w', alpha=alpha)
+    axes.plot_trisurf(x, y, triangles=tri, Z=z, color=color, alpha=alpha,
+                      linewidth=0)
 
-    # Draw pink face on box.
+    # Colour the c+ face of the box.
     # Since I can't control face color, instead draw a thin box situated just
     # in front of the "c+" face.  Use the c face so that rotations about psi
     # rotate that face.
-    if 1:
+    if 0: # pylint: disable=using-constant-test
+        color = (1, 0.6, 0.6)  # pink
         x = a*np.array([+1, -1, +1, -1, +1, -1, +1, -1])
         y = b*np.array([+1, +1, -1, -1, +1, +1, -1, -1])
         z = c*np.array([+1, +1, +1, +1, -1, -1, -1, -1])
         x, y, z = transform_xyz(view, jitter, x, y, abs(z)+0.001)
-        axes.plot_trisurf(x, y, triangles=tri, Z=z, color=[1, 0.6, 0.6], alpha=alpha)
+        axes.plot_trisurf(x, y, triangles=tri, Z=z, color=color, alpha=alpha)
 
     draw_labels(axes, view, jitter, [
         ('c+', [+0, +0, +c], [+1, +0, +0]),
@@ -162,73 +232,111 @@ def draw_parallelepiped(axes, size, view, jitter, steps=None, alpha=1):
         ('b-', [+0, -b, +0], [-1, +0, +0]),
     ])
 
-def draw_sphere(axes, radius=10., steps=100):
+def draw_sphere(axes, radius=1.0, steps=25,
+                center=(0, 0, 0), color='w', alpha=1.):
     """Draw a sphere"""
-    u = np.linspace(0, 2 * np.pi, steps)
-    v = np.linspace(0, np.pi, steps)
+    u = np.linspace(0, 2 * pi, steps)
+    v = np.linspace(0, pi, steps)
 
-    x = radius * np.outer(np.cos(u), np.sin(v))
-    y = radius * np.outer(np.sin(u), np.sin(v))
-    z = radius * np.outer(np.ones(np.size(u)), np.cos(v))
-    axes.plot_surface(x, y, z, rstride=4, cstride=4, color='w')
+    x = radius * np.outer(cos(u), sin(v)) + center[0]
+    y = radius * np.outer(sin(u), sin(v)) + center[1]
+    z = radius * np.outer(np.ones(np.size(u)), cos(v)) + center[2]
+    axes.plot_surface(x, y, z, color=color, alpha=alpha)
+    #axes.plot_wireframe(x, y, z)
 
-def draw_jitter(axes, view, jitter, dist='gaussian', size=(0.1, 0.4, 1.0),
-                draw_shape=draw_parallelepiped):
+def draw_axes(axes, origin=(-1, -1, -1), length=(2, 2, 2)):
+    """Draw wireframe axes lines, with given origin and length"""
+    x, y, z = origin
+    dx, dy, dz = length
+    axes.plot([x, x+dx], [y, y], [z, z], color='black')
+    axes.plot([x, x], [y, y+dy], [z, z], color='black')
+    axes.plot([x, x], [y, y], [z, z+dz], color='black')
+
+def draw_person_on_sphere(axes, view, height=0.5, radius=1.0):
+    """
+    Draw a person on the surface of a sphere.
+
+    *view* indicates (latitude, longitude, orientation)
+    """
+    limb_offset = height * 0.05
+    head_radius = height * 0.10
+    head_height = height - head_radius
+    neck_length = head_radius * 0.50
+    shoulder_height = height - 2*head_radius - neck_length
+    torso_length = shoulder_height * 0.55
+    torso_radius = torso_length * 0.30
+    leg_length = shoulder_height - torso_length
+    arm_length = torso_length * 0.90
+
+    def _draw_part(y, z):
+        x = np.zeros_like(y)
+        xp, yp, zp = transform_xyz(view, None, x, y, z + radius)
+        axes.plot(xp, yp, zp, color='k')
+
+    # circle for head
+    u = np.linspace(0, 2 * pi, 40)
+    y = head_radius * cos(u)
+    z = head_radius * sin(u) + head_height
+    _draw_part(y, z)
+
+    # rectangle for body
+    y = np.array([-torso_radius, torso_radius, torso_radius, -torso_radius, -torso_radius])
+    z = np.array([0., 0, torso_length, torso_length, 0]) + leg_length
+    _draw_part(y, z)
+
+    # arms
+    y = np.array([-torso_radius - limb_offset, -torso_radius - limb_offset, -torso_radius])
+    z = np.array([shoulder_height - arm_length, shoulder_height, shoulder_height])
+    _draw_part(y, z)
+    _draw_part(-y, z)  # pylint: disable=invalid-unary-operand-type
+
+    # legs
+    y = np.array([-torso_radius + limb_offset, -torso_radius + limb_offset])
+    z = np.array([0, leg_length])
+    _draw_part(y, z)
+    _draw_part(-y, z)  # pylint: disable=invalid-unary-operand-type
+
+    limits = [-radius-height, radius+height]
+    axes.set_xlim(limits)
+    axes.set_ylim(limits)
+    axes.set_zlim(limits)
+    axes.set_axis_off()
+
+def draw_jitter(axes, view, jitter, dist='gaussian',
+                size=(0.1, 0.4, 1.0),
+                draw_shape=draw_parallelepiped,
+                projection='equirectangular',
+                alpha=0.8,
+                views=None):
     """
     Represent jitter as a set of shapes at different orientations.
     """
+    project, project_weight = get_projection(projection)
+
     # set max diagonal to 0.95
     scale = 0.95/sqrt(sum(v**2 for v in size))
     size = tuple(scale*v for v in size)
 
-    #np.random.seed(10)
-    #cloud = np.random.randn(10,3)
-    cloud = [
-        [-1, -1, -1],
-        [-1, -1, +0],
-        [-1, -1, +1],
-        [-1, +0, -1],
-        [-1, +0, +0],
-        [-1, +0, +1],
-        [-1, +1, -1],
-        [-1, +1, +0],
-        [-1, +1, +1],
-        [+0, -1, -1],
-        [+0, -1, +0],
-        [+0, -1, +1],
-        [+0, +0, -1],
-        [+0, +0, +0],
-        [+0, +0, +1],
-        [+0, +1, -1],
-        [+0, +1, +0],
-        [+0, +1, +1],
-        [+1, -1, -1],
-        [+1, -1, +0],
-        [+1, -1, +1],
-        [+1, +0, -1],
-        [+1, +0, +0],
-        [+1, +0, +1],
-        [+1, +1, -1],
-        [+1, +1, +0],
-        [+1, +1, +1],
-    ]
     dtheta, dphi, dpsi = jitter
-    if dtheta == 0:
-        cloud = [v for v in cloud if v[0] == 0]
-    if dphi == 0:
-        cloud = [v for v in cloud if v[1] == 0]
-    if dpsi == 0:
-        cloud = [v for v in cloud if v[2] == 0]
-    draw_shape(axes, size, view, [0, 0, 0], steps=100, alpha=0.8)
-    scale = {'gaussian':1, 'rectangle':1/sqrt(3), 'uniform':1/3}[dist]
-    for point in cloud:
-        delta = [scale*dtheta*point[0], scale*dphi*point[1], scale*dpsi*point[2]]
-        draw_shape(axes, size, view, delta, alpha=0.8)
+    base = {'gaussian':3, 'rectangle':sqrt(3), 'uniform':1}[dist]
+    def _steps(delta):
+        if views is None:
+            n = max(3, min(25, 2*int(base*delta/5)))
+        else:
+            n = views
+        return base*delta*np.linspace(-1, 1, n) if delta > 0 else [0.]
+    for theta in _steps(dtheta):
+        for phi in _steps(dphi):
+            for psi in _steps(dpsi):
+                w = project_weight(theta, phi, 1.0, 1.0)
+                if w > 0:
+                    dview = project(theta, phi, psi)
+                    draw_shape(axes, size, view, dview, alpha=alpha)
     for v in 'xyz':
         a, b, c = size
-        lim = np.sqrt(a**2 + b**2 + c**2)
+        lim = sqrt(a**2 + b**2 + c**2)
         getattr(axes, 'set_'+v+'lim')([-lim, lim])
-        getattr(axes, v+'axis').label.set_text(v)
+        #getattr(axes, v+'axis').label.set_text(v)
 
 PROJECTIONS = [
     # in order of PROJECTION number; do not change without updating the
@@ -236,12 +344,9 @@ PROJECTIONS = [
     'equirectangular', 'sinusoidal', 'guyou', 'azimuthal_equidistance',
     'azimuthal_equal_area',
 ]
-def draw_mesh(axes, view, jitter, radius=1.2, n=11, dist='gaussian',
-              projection='equirectangular'):
-    """
-    Draw the dispersion mesh showing the theta-phi orientations at which
-    the model will be evaluated.
+def get_projection(projection):
 
+    """
     jitter projections
     <https://en.wikipedia.org/wiki/List_of_map_projections>
 
@@ -295,52 +400,48 @@ def draw_mesh(axes, view, jitter, radius=1.2, n=11, dist='gaussian',
         <https://en.wikipedia.org/wiki/Transverse_Mercator_projection#Ellipsoidal_transverse_Mercator>
         Should allow free movement in theta, but phi is distorted.
     """
+    # pylint: disable=unused-argument
     # TODO: try Kent distribution instead of a gaussian warped by projection
 
-    dist_x = np.linspace(-1, 1, n)
-    weights = np.ones_like(dist_x)
-    if dist == 'gaussian':
-        dist_x *= 3
-        weights = exp(-0.5*dist_x**2)
-    elif dist == 'rectangle':
-        # Note: uses sasmodels ridiculous definition of rectangle width
-        dist_x *= sqrt(3)
-    elif dist == 'uniform':
-        pass
-    else:
-        raise ValueError("expected dist to be gaussian, rectangle or uniform")
-
     if projection == 'equirectangular':  #define PROJECTION 1
-        def _rotate(theta_i, phi_j):
-            return Rx(phi_j)*Ry(theta_i)
+        def _project(theta_i, phi_j, psi):
+            latitude, longitude = theta_i, phi_j
+            return latitude, longitude, psi, 'xyz'
+            #return Rx(phi_j)*Ry(theta_i)
         def _weight(theta_i, phi_j, w_i, w_j):
             return w_i*w_j*abs(cos(radians(theta_i)))
     elif projection == 'sinusoidal':  #define PROJECTION 2
-        def _rotate(theta_i, phi_j):
+        def _project(theta_i, phi_j, psi):
             latitude = theta_i
             scale = cos(radians(latitude))
             longitude = phi_j/scale if abs(phi_j) < abs(scale)*180 else 0
             #print("(%+7.2f, %+7.2f) => (%+7.2f, %+7.2f)"%(theta_i, phi_j, latitude, longitude))
-            return Rx(longitude)*Ry(latitude)
-        def _weight(theta_i, phi_j, w_i, w_j):
+            return latitude, longitude, psi, 'xyz'
+            #return Rx(longitude)*Ry(latitude)
+        def _project(theta_i, phi_j, w_i, w_j):
             latitude = theta_i
             scale = cos(radians(latitude))
             active = 1 if abs(phi_j) < abs(scale)*180 else 0
             return active*w_i*w_j
     elif projection == 'guyou':  #define PROJECTION 3  (eventually?)
-        def _rotate(theta_i, phi_j):
+        def _project(theta_i, phi_j, psi):
             from .guyou import guyou_invert
             #latitude, longitude = guyou_invert([theta_i], [phi_j])
             longitude, latitude = guyou_invert([phi_j], [theta_i])
-            return Rx(longitude[0])*Ry(latitude[0])
+            return latitude, longitude, psi, 'xyz'
+            #return Rx(longitude[0])*Ry(latitude[0])
         def _weight(theta_i, phi_j, w_i, w_j):
             return w_i*w_j
-    elif projection == 'azimuthal_equidistance':  # Note: Rz Ry, not Rx Ry
-        def _rotate(theta_i, phi_j):
+    elif projection == 'azimuthal_equidistance':
+        # Note that calculates angles for Rz Ry rather than Rx Ry
+        def _project(theta_i, phi_j, psi):
             latitude = sqrt(theta_i**2 + phi_j**2)
-            longitude = degrees(np.arctan2(phi_j, theta_i))
+            longitude = degrees(arctan2(phi_j, theta_i))
             #print("(%+7.2f, %+7.2f) => (%+7.2f, %+7.2f)"%(theta_i, phi_j, latitude, longitude))
-            return Rz(longitude)*Ry(latitude)
+            return latitude, longitude, psi-longitude, 'zyz'
+            #R = Rz(longitude)*Ry(latitude)*Rz(psi)
+            #return R_to_xyz(R)
+            #return Rz(longitude)*Ry(latitude)
         def _weight(theta_i, phi_j, w_i, w_j):
             # Weighting for each point comes from the integral:
             #     \int\int I(q, lat, log) sin(lat) dlat dlog
@@ -374,12 +475,16 @@ def draw_mesh(axes, view, jitter, radius=1.2, n=11, dist='gaussian',
             weight = sin(radians(latitude))/latitude if latitude != 0 else 1
             return weight*w_i*w_j if latitude < 180 else 0
     elif projection == 'azimuthal_equal_area':
-        def _rotate(theta_i, phi_j):
+        # Note that calculates angles for Rz Ry rather than Rx Ry
+        def _project(theta_i, phi_j, psi):
             radius = min(1, sqrt(theta_i**2 + phi_j**2)/180)
-            latitude = 180-degrees(2*np.arccos(radius))
-            longitude = degrees(np.arctan2(phi_j, theta_i))
+            latitude = 180-degrees(2*arccos(radius))
+            longitude = degrees(arctan2(phi_j, theta_i))
             #print("(%+7.2f, %+7.2f) => (%+7.2f, %+7.2f)"%(theta_i, phi_j, latitude, longitude))
-            return Rz(longitude)*Ry(latitude)
+            return latitude, longitude, psi, 'zyz'
+            #R = Rz(longitude)*Ry(latitude)*Rz(psi)
+            #return R_to_xyz(R)
+            #return Rz(longitude)*Ry(latitude)
         def _weight(theta_i, phi_j, w_i, w_j):
             latitude = sqrt(theta_i**2 + phi_j**2)
             weight = sin(radians(latitude))/latitude if latitude != 0 else 1
@@ -387,10 +492,55 @@ def draw_mesh(axes, view, jitter, radius=1.2, n=11, dist='gaussian',
     else:
         raise ValueError("unknown projection %r"%projection)
 
+    return _project, _weight
+
+def R_to_xyz(R):
+    """
+    Return phi, theta, psi Tait-Bryan angles corresponding to the given rotation matrix.
+
+    Extracting Euler Angles from a Rotation Matrix
+    Mike Day, Insomniac Games
+    https://d3cw3dd2w32x2b.cloudfront.net/wp-content/uploads/2012/07/euler-angles1.pdf
+    Based on: Shoemake’s "Euler Angle Conversion", Graphics Gems IV, pp.  222-229
+    """
+    phi = arctan2(R[1, 2], R[2, 2])
+    theta = arctan2(-R[0, 2], sqrt(R[0, 0]**2 + R[0, 1]**2))
+    psi = arctan2(R[0, 1], R[0, 0])
+    return degrees(phi), degrees(theta), degrees(psi)
+
+def draw_mesh(axes, view, jitter, radius=1.2, n=11, dist='gaussian',
+              projection='equirectangular'):
+    """
+    Draw the dispersion mesh showing the theta-phi orientations at which
+    the model will be evaluated.
+    """
+
+    _project, _weight = get_projection(projection)
+    def _rotate(theta, phi, z):
+        dview = _project(theta, phi, 0.)
+        if dview[3] == 'zyz':
+            return Rz(dview[1])*Ry(dview[0])*z
+        else:  # dview[3] == 'xyz':
+            return Rx(dview[1])*Ry(dview[0])*z
+
+
+    dist_x = np.linspace(-1, 1, n)
+    weights = np.ones_like(dist_x)
+    if dist == 'gaussian':
+        dist_x *= 3
+        weights = exp(-0.5*dist_x**2)
+    elif dist == 'rectangle':
+        # Note: uses sasmodels ridiculous definition of rectangle width
+        dist_x *= sqrt(3)
+    elif dist == 'uniform':
+        pass
+    else:
+        raise ValueError("expected dist to be gaussian, rectangle or uniform")
+
     # mesh in theta, phi formed by rotating z
-    dtheta, dphi, dpsi = jitter
+    dtheta, dphi, dpsi = jitter  # pylint: disable=unused-variable
     z = np.matrix([[0], [0], [radius]])
-    points = np.hstack([_rotate(theta_i, phi_j)*z
+    points = np.hstack([_rotate(theta_i, phi_j, z)
                         for theta_i in dtheta*dist_x
                         for phi_j in dphi*dist_x])
     dist_w = np.array([_weight(theta_i, phi_j, w_i, w_j)
@@ -468,8 +618,15 @@ def apply_jitter(jitter, points):
 
     Points are stored in a 3 x n numpy matrix, not a numpy array or tuple.
     """
-    dtheta, dphi, dpsi = jitter
-    points = Rx(dphi)*Ry(dtheta)*Rz(dpsi)*points
+    if jitter is None:
+        return points
+    # Hack to deal with the fact that azimuthal_equidistance uses euler angles
+    if len(jitter) == 4:
+        dtheta, dphi, dpsi, _ = jitter
+        points = Rz(dphi)*Ry(dtheta)*Rz(dpsi)*points
+    else:
+        dtheta, dphi, dpsi = jitter
+        points = Rx(dphi)*Ry(dtheta)*Rz(dpsi)*points
     return points
 
 def orient_relative_to_beam(view, points):
@@ -479,8 +636,126 @@ def orient_relative_to_beam(view, points):
     Points are stored in a 3 x n numpy matrix, not a numpy array or tuple.
     """
     theta, phi, psi = view
-    points = Rz(phi)*Ry(theta)*Rz(psi)*points
+    points = Rz(phi)*Ry(theta)*Rz(psi)*points # viewing angle
+    #points = Rz(psi)*Ry(pi/2-theta)*Rz(phi)*points # 1-D integration angles
+    #points = Rx(phi)*Ry(theta)*Rz(psi)*points  # angular dispersion angle
     return points
+
+def orient_relative_to_beam_quaternion(view, points):
+    """
+    Apply the view transform to a set of points.
+
+    Points are stored in a 3 x n numpy matrix, not a numpy array or tuple.
+
+    This variant uses quaternions rather than rotation matrices for the
+    computation.  It works but it is not used because it doesn't solve
+    any problems.  The challenge of mapping theta/phi/psi to SO(3) does
+    not disappear by calculating the transform differently.
+    """
+    theta, phi, psi = view
+    x, y, z = [1, 0, 0], [0, 1, 0], [0, 0, 1]
+    q = Quaternion(1, [0, 0, 0])
+    ## Compose a rotation about the three axes by rotating
+    ## the unit vectors before applying the rotation.
+    #q = Quaternion.from_angle_axis(theta, q.rot(x)) * q
+    #q = Quaternion.from_angle_axis(phi, q.rot(y)) * q
+    #q = Quaternion.from_angle_axis(psi, q.rot(z)) * q
+    ## The above turns out to be equivalent to reversing
+    ## the order of application, so ignore it and use below.
+    q = q * Quaternion.from_angle_axis(theta, x)
+    q = q * Quaternion.from_angle_axis(phi, y)
+    q = q * Quaternion.from_angle_axis(psi, z)
+    ## Reverse the order by post-multiply rather than pre-multiply
+    #q = Quaternion.from_angle_axis(theta, x) * q
+    #q = Quaternion.from_angle_axis(phi, y) * q
+    #q = Quaternion.from_angle_axis(psi, z) * q
+    #print("axes psi", q.rot(np.matrix([x, y, z]).T))
+    return q.rot(points)
+#orient_relative_to_beam = orient_relative_to_beam_quaternion
+
+# === Quaterion class definition === BEGIN
+# Simple stand-alone quaternion class
+
+# Note: this code works but isn't unused since quaternions didn't solve the
+# representation problem.  Leave it here in case we want to revisit this later.
+
+#import numpy as np
+class Quaternion(object):
+    r"""
+    Quaternion(w, r) = w + ir[0] + jr[1] + kr[2]
+
+    Quaternion.from_angle_axis(theta, r) for a rotation of angle theta about
+    an axis oriented toward the direction r.  This defines a unit quaternion,
+    normalizing $r$ to the unit vector $\hat r$, and setting quaternion
+    $Q = \cos \theta + \sin \theta \hat r$
+
+    Quaternion objects can be multiplied, which applies a rotation about the
+    given axis, allowing composition of rotations without risk of gimbal lock.
+    The resulting quaternion is applied to a set of points using *Q.rot(v)*.
+    """
+    def __init__(self, w, r):
+        self.w = w
+        self.r = np.asarray(r, dtype='d')
+
+    @staticmethod
+    def from_angle_axis(theta, r):
+        """Build quaternion as rotation theta about axis r"""
+        theta = np.radians(theta)/2
+        r = np.asarray(r)
+        w = np.cos(theta)
+        r = np.sin(theta)*r/np.dot(r, r)
+        return Quaternion(w, r)
+
+    def __mul__(self, other):
+        """Multiply quaterions"""
+        if isinstance(other, Quaternion):
+            w = self.w*other.w - np.dot(self.r, other.r)
+            r = self.w*other.r + other.w*self.r + np.cross(self.r, other.r)
+            return Quaternion(w, r)
+        raise NotImplementedError("Quaternion * non-quaternion not implemented")
+
+    def rot(self, v):
+        """Transform point *v* by quaternion"""
+        v = np.asarray(v).T
+        use_transpose = (v.shape[-1] != 3)
+        if use_transpose:
+            v = v.T
+        v = v + np.cross(2*self.r, np.cross(self.r, v) + self.w*v)
+        #v = v + 2*self.w*np.cross(self.r, v) + np.cross(2*self.r, np.cross(self.r, v))
+        if use_transpose:
+            v = v.T
+        return v.T
+
+    def conj(self):
+        """Conjugate quaternion"""
+        return Quaternion(self.w, -self.r)
+
+    def inv(self):
+        """Inverse quaternion"""
+        return self.conj()/self.norm()**2
+
+    def norm(self):
+        """Quaternion length"""
+        return np.sqrt(self.w**2 + np.sum(self.r**2))
+
+    def __str__(self):
+        return "%g%+gi%+gj%+gk"%(self.w, self.r[0], self.r[1], self.r[2])
+
+def test_qrot():
+    """Quaternion checks"""
+    # Define rotation of 60 degrees around an axis in y-z that is 60 degrees
+    # from y.  The rotation axis is determined by rotating the point [0, 1, 0]
+    # about x.
+    ax = Quaternion.from_angle_axis(60, [1, 0, 0]).rot([0, 1, 0])
+    q = Quaternion.from_angle_axis(60, ax)
+    # Set the point to be rotated, and its expected rotated position.
+    p = [1, -1, 2]
+    target = [(10+4*np.sqrt(3))/8, (1+2*np.sqrt(3))/8, (14-3*np.sqrt(3))/8]
+    #print(q, q.rot(p) - target)
+    assert max(abs(q.rot(p) - target)) < 1e-14
+#test_qrot()
+#import sys; sys.exit()
+# === Quaterion class definition === END
 
 # translate between number of dimension of dispersity and the number of
 # points along each dimension.
@@ -502,16 +777,17 @@ def clipped_range(data, portion=1.0, mode='central'):
     If *portion* is 1, use full range, otherwise use the center of the range
     or the top of the range, depending on whether *mode* is 'central' or 'top'.
     """
-    if portion == 1.0:
-        return data.min(), data.max()
-    elif mode == 'central':
-        data = np.sort(data.flatten())
-        offset = int(portion*len(data)/2 + 0.5)
-        return data[offset], data[-offset]
-    elif mode == 'top':
-        data = np.sort(data.flatten())
-        offset = int(portion*len(data) + 0.5)
-        return data[offset], data[-1]
+    if portion < 1.0:
+        if mode == 'central':
+            data = np.sort(data.flatten())
+            offset = int(portion*len(data)/2 + 0.5)
+            return data[offset], data[-offset]
+        if mode == 'top':
+            data = np.sort(data.flatten())
+            offset = int(portion*len(data) + 0.5)
+            return data[offset], data[-1]
+    # Default: full range
+    return data.min(), data.max()
 
 def draw_scattering(calculator, axes, view, jitter, dist='gaussian'):
     """
@@ -542,11 +818,11 @@ def draw_scattering(calculator, axes, view, jitter, dist='gaussian'):
     pars.update(calculator.pars)
 
     # compute the pattern
-    qx, qy = calculator._data.x_bins, calculator._data.y_bins
+    qx, qy = calculator.qxqy
     Iqxy = calculator(**pars).reshape(len(qx), len(qy))
 
     # scale it and draw it
-    Iqxy = np.log(Iqxy)
+    Iqxy = log(Iqxy)
     if calculator.limits:
         # use limits from orientation (0,0,0)
         vmin, vmax = calculator.limits
@@ -554,14 +830,22 @@ def draw_scattering(calculator, axes, view, jitter, dist='gaussian'):
         vmax = Iqxy.max()
         vmin = vmax*10**-7
         #vmin, vmax = clipped_range(Iqxy, portion=portion, mode='top')
+    #vmin, vmax = Iqxy.min(), Iqxy.max()
     #print("range",(vmin,vmax))
     #qx, qy = np.meshgrid(qx, qy)
-    if 0:
+    if 0:  # pylint: disable=using-constant-test
         level = np.asarray(255*(Iqxy - vmin)/(vmax - vmin), 'i')
         level[level < 0] = 0
+        from matplotlib import pylab as plt
         colors = plt.get_cmap()(level)
-        axes.plot_surface(qx, qy, -1.1, rstride=1, cstride=1, facecolors=colors)
-    elif 1:
+        #from matplotlib import cm
+        #colors = cm.coolwarm(level)
+        #colors = cm.gist_yarg(level)
+        #colors = cm.Wistia(level)
+        colors[level <= 0, 3] = 0.  # set floor to transparent
+        x, y = np.meshgrid(qx/qx.max(), qy/qy.max())
+        axes.plot_surface(x, y, -1.1*np.ones_like(x), facecolors=colors)
+    elif 1:  # pylint: disable=using-constant-test
         axes.contourf(qx/qx.max(), qy/qy.max(), Iqxy, zdir='z', offset=-1.1,
                       levels=np.linspace(vmin, vmax, 24))
     else:
@@ -592,6 +876,9 @@ def build_model(model_name, n=150, qmax=0.5, **pars):
     data = empty_data2D(q, q)
     calculator = DirectModel(data, model)
 
+    # Remember the data axes so we can plot the results
+    calculator.qxqy = (q, q)
+
     # stuff the values for non-orientation parameters into the calculator
     calculator.pars = pars.copy()
     calculator.pars.setdefault('backgound', 1e-3)
@@ -599,7 +886,7 @@ def build_model(model_name, n=150, qmax=0.5, **pars):
     # fix the data limits so that we can see if the pattern fades
     # under rotation or angular dispersion
     Iqxy = calculator(theta=0, phi=0, psi=0, **calculator.pars)
-    Iqxy = np.log(Iqxy)
+    Iqxy = log(Iqxy)
     vmin, vmax = clipped_range(Iqxy, 0.95, mode='top')
     calculator.limits = vmin, vmax+1
 
@@ -690,7 +977,9 @@ DIST_LIMITS = {
     'uniform': 90,
 }
 
+
 def run(model_name='parallelepiped', size=(10, 40, 100),
+        view=(0, 0, 0), jitter=(0, 0, 0),
         dist='gaussian', mesh=30,
         projection='equirectangular'):
     """
@@ -700,6 +989,10 @@ def run(model_name='parallelepiped', size=(10, 40, 100),
     parallelepiped, cylinder, or sc/fcc/bcc_paracrystal
 
     *size* gives the dimensions (a, b, c) of the shape.
+
+    *view* gives the initial view (theta, phi, psi) of the shape.
+
+    *view* gives the initial jitter (dtheta, dphi, dpsi) of the shape.
 
     *dist* is the type of dispersition: gaussian, rectangle, or uniform.
 
@@ -719,17 +1012,22 @@ def run(model_name='parallelepiped', size=(10, 40, 100),
     # set up calculator
     calculator, size = select_calculator(model_name, n=150, size=size)
     draw_shape = DRAW_SHAPES.get(model_name, draw_parallelepiped)
+    #draw_shape = draw_fcc
 
     ## uncomment to set an independent the colour range for every view
     ## If left commented, the colour range is fixed for all views
     calculator.limits = None
 
-    ## initial view
-    #theta, dtheta = 70., 10.
-    #phi, dphi = -45., 3.
-    #psi, dpsi = -45., 3.
-    theta, phi, psi = 0, 0, 0
-    dtheta, dphi, dpsi = 0, 0, 0
+    PLOT_ENGINE(calculator, draw_shape, size, view, jitter, dist, mesh, projection)
+
+def _mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection):
+    # Note: travis-ci does not support mpl_toolkits.mplot3d, but this shouldn't be
+    # an issue since we are lazy-loading the package on a path that isn't tested.
+    # Importing mplot3d adds projection='3d' option to subplot
+    import mpl_toolkits.mplot3d  # pylint: disable=unused-variable
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+    from matplotlib.widgets import Slider
 
     ## create the plot window
     #plt.hold(True)
@@ -745,59 +1043,380 @@ def run(model_name='parallelepiped', size=(10, 40, 100),
     except Exception:
         pass
 
-    axcolor = 'lightgoldenrodyellow'
+    # CRUFT: use axisbg instead of facecolor for matplotlib<2
+    facecolor_prop = 'facecolor' if mpl.__version__ > '2' else 'axisbg'
+    props = {facecolor_prop: 'lightgoldenrodyellow'}
 
     ## add control widgets to plot
-    axes_theta = plt.axes([0.1, 0.15, 0.45, 0.04], axisbg=axcolor)
-    axes_phi = plt.axes([0.1, 0.1, 0.45, 0.04], axisbg=axcolor)
-    axes_psi = plt.axes([0.1, 0.05, 0.45, 0.04], axisbg=axcolor)
-    stheta = Slider(axes_theta, 'Theta', -90, 90, valinit=theta)
-    sphi = Slider(axes_phi, 'Phi', -180, 180, valinit=phi)
-    spsi = Slider(axes_psi, 'Psi', -180, 180, valinit=psi)
+    axes_theta = plt.axes([0.05, 0.15, 0.50, 0.04], **props)
+    axes_phi = plt.axes([0.05, 0.10, 0.50, 0.04], **props)
+    axes_psi = plt.axes([0.05, 0.05, 0.50, 0.04], **props)
+    stheta = Slider(axes_theta, u'θ', -90, 90, valinit=0)
+    sphi = Slider(axes_phi, u'φ', -180, 180, valinit=0)
+    spsi = Slider(axes_psi, u'ψ', -180, 180, valinit=0)
 
-    axes_dtheta = plt.axes([0.75, 0.15, 0.15, 0.04], axisbg=axcolor)
-    axes_dphi = plt.axes([0.75, 0.1, 0.15, 0.04], axisbg=axcolor)
-    axes_dpsi = plt.axes([0.75, 0.05, 0.15, 0.04], axisbg=axcolor)
+    axes_dtheta = plt.axes([0.70, 0.15, 0.20, 0.04], **props)
+    axes_dphi = plt.axes([0.70, 0.1, 0.20, 0.04], **props)
+    axes_dpsi = plt.axes([0.70, 0.05, 0.20, 0.04], **props)
+
     # Note: using ridiculous definition of rectangle distribution, whose width
     # in sasmodels is sqrt(3) times the given width.  Divide by sqrt(3) to keep
     # the maximum width to 90.
     dlimit = DIST_LIMITS[dist]
-    sdtheta = Slider(axes_dtheta, 'dTheta', 0, 2*dlimit, valinit=dtheta)
-    sdphi = Slider(axes_dphi, 'dPhi', 0, 2*dlimit, valinit=dphi)
-    sdpsi = Slider(axes_dpsi, 'dPsi', 0, 2*dlimit, valinit=dpsi)
+    sdtheta = Slider(axes_dtheta, u'Δθ', 0, 2*dlimit, valinit=0)
+    sdphi = Slider(axes_dphi, u'Δφ', 0, 2*dlimit, valinit=0)
+    sdpsi = Slider(axes_dpsi, u'Δψ', 0, 2*dlimit, valinit=0)
 
+    ## initial view and jitter
+    theta, phi, psi = view
+    stheta.set_val(theta)
+    sphi.set_val(phi)
+    spsi.set_val(psi)
+    dtheta, dphi, dpsi = jitter
+    sdtheta.set_val(dtheta)
+    sdphi.set_val(dphi)
+    sdpsi.set_val(dpsi)
 
     ## callback to draw the new view
-    def update(val, axis=None):
+    def _update(val, axis=None):
+        # pylint: disable=unused-argument
         view = stheta.val, sphi.val, spsi.val
         jitter = sdtheta.val, sdphi.val, sdpsi.val
         # set small jitter as 0 if multiple pd dims
         dims = sum(v > 0 for v in jitter)
-        limit = [0, 0.5, 5][dims]
+        limit = [0, 0.5, 5, 5][dims]
         jitter = [0 if v < limit else v for v in jitter]
         axes.cla()
-        draw_beam(axes, (0, 0))
-        draw_jitter(axes, view, jitter, dist=dist, size=size, draw_shape=draw_shape)
-        #draw_jitter(axes, view, (0,0,0))
+
+        ## Visualize as person on globe
+        #draw_sphere(axes, radius=0.5)
+        #draw_person_on_sphere(axes, view, radius=0.5)
+
+        ## Move beam instead of shape
+        #draw_beam(axes, -view[:2])
+        #draw_jitter(axes, (0,0,0), (0,0,0), views=3)
+
+        ## Move shape and draw scattering
+        draw_beam(axes, (0, 0), alpha=1.)
+        #draw_person_on_sphere(axes, view, radius=1.2, height=0.5)
+        draw_jitter(axes, view, jitter, dist=dist, size=size, alpha=1.,
+                    draw_shape=draw_shape, projection=projection, views=3)
         draw_mesh(axes, view, jitter, dist=dist, n=mesh, projection=projection)
         draw_scattering(calculator, axes, view, jitter, dist=dist)
+
         plt.gcf().canvas.draw()
 
     ## bind control widgets to view updater
-    stheta.on_changed(lambda v: update(v, 'theta'))
-    sphi.on_changed(lambda v: update(v, 'phi'))
-    spsi.on_changed(lambda v: update(v, 'psi'))
-    sdtheta.on_changed(lambda v: update(v, 'dtheta'))
-    sdphi.on_changed(lambda v: update(v, 'dphi'))
-    sdpsi.on_changed(lambda v: update(v, 'dpsi'))
+    stheta.on_changed(lambda v: _update(v, 'theta'))
+    sphi.on_changed(lambda v: _update(v, 'phi'))
+    spsi.on_changed(lambda v: _update(v, 'psi'))
+    sdtheta.on_changed(lambda v: _update(v, 'dtheta'))
+    sdphi.on_changed(lambda v: _update(v, 'dphi'))
+    sdpsi.on_changed(lambda v: _update(v, 'dpsi'))
 
     ## initialize view
-    update(None, 'phi')
+    _update(None, 'phi')
 
     ## go interactive
     plt.show()
 
+
+def map_colors(z, kw):
+    """
+    Process matplotlib-style colour arguments.
+
+    Pulls 'cmap', 'alpha', 'vmin', and 'vmax' from th *kw* dictionary, setting
+    the *kw['color']* to an RGB array.  These are ignored if 'c' or 'color' are
+    set inside *kw*.
+    """
+    from matplotlib import cm
+
+    cmap = kw.pop('cmap', cm.coolwarm)
+    alpha = kw.pop('alpha', None)
+    vmin = kw.pop('vmin', z.min())
+    vmax = kw.pop('vmax', z.max())
+    c = kw.pop('c', None)
+    color = kw.pop('color', c)
+    if color is None:
+        znorm = ((z - vmin) / (vmax - vmin)).clip(0, 1)
+        color = cmap(znorm)
+    elif isinstance(color, np.ndarray) and color.shape == z.shape:
+        color = cmap(color)
+    if alpha is None:
+        if isinstance(color, np.ndarray):
+            color = color[..., :3]
+    else:
+        color[..., 3] = alpha
+    kw['color'] = color
+
+def make_vec(*args):
+    """Turn all elements of *args* into numpy arrays"""
+    #return [np.asarray(v, 'd').flatten() for v in args]
+    return [np.asarray(v, 'd') for v in args]
+
+def make_image(z, kw):
+    """Convert numpy array *z* into a *PIL* RGB image."""
+    import PIL.Image
+    from matplotlib import cm
+
+    cmap = kw.pop('cmap', cm.coolwarm)
+
+    znorm = (z-z.min())/z.ptp()
+    c = cmap(znorm)
+    c = c[..., :3]
+    rgb = np.asarray(c*255, 'u1')
+    image = PIL.Image.fromarray(rgb, mode='RGB')
+    return image
+
+
+_IPV_MARKERS = {
+    'o': 'sphere',
+}
+_IPV_COLORS = {
+    'w': 'white',
+    'k': 'black',
+    'c': 'cyan',
+    'm': 'magenta',
+    'y': 'yellow',
+    'r': 'red',
+    'g': 'green',
+    'b': 'blue',
+}
+def _ipv_fix_color(kw):
+    alpha = kw.pop('alpha', None)
+    color = kw.get('color', None)
+    if isinstance(color, str):
+        color = _IPV_COLORS.get(color, color)
+        kw['color'] = color
+    if alpha is not None:
+        color = kw['color']
+        #TODO: convert color to [r, g, b, a] if not already
+        if isinstance(color, (tuple, list)):
+            if len(color) == 3:
+                color = (color[0], color[1], color[2], alpha)
+            else:
+                color = (color[0], color[1], color[2], alpha*color[3])
+            color = np.array(color)
+        if isinstance(color, np.ndarray) and color.shape[-1] == 4:
+            color[..., 3] = alpha
+            kw['color'] = color
+
+def _ipv_set_transparency(kw, obj):
+    color = kw.get('color', None)
+    if (isinstance(color, np.ndarray)
+            and color.shape[-1] == 4
+            and (color[..., 3] != 1.0).any()):
+        obj.material.transparent = True
+        obj.material.side = "FrontSide"
+
+def ipv_axes():
+    """
+    Build a matplotlib style Axes interface for ipyvolume
+    """
+    import ipyvolume as ipv
+
+    class Axes(object):
+        """
+        Matplotlib Axes3D style interface to ipyvolume renderer.
+        """
+        # pylint: disable=no-self-use,no-init
+        # transparency can be achieved by setting the following:
+        #    mesh.color = [r, g, b, alpha]
+        #    mesh.material.transparent = True
+        #    mesh.material.side = "FrontSide"
+        # smooth(ish) rotation can be achieved by setting:
+        #    slide.continuous_update = True
+        #    figure.animation = 0.
+        #    mesh.material.x = x
+        #    mesh.material.y = y
+        #    mesh.material.z = z
+        # maybe need to synchronize update of x/y/z to avoid shimmy when moving
+        def plot(self, x, y, z, **kw):
+            """mpl style plot interface for ipyvolume"""
+            _ipv_fix_color(kw)
+            x, y, z = make_vec(x, y, z)
+            ipv.plot(x, y, z, **kw)
+        def plot_surface(self, x, y, z, **kw):
+            """mpl style plot_surface interface for ipyvolume"""
+            facecolors = kw.pop('facecolors', None)
+            if facecolors is not None:
+                kw['color'] = facecolors
+            _ipv_fix_color(kw)
+            x, y, z = make_vec(x, y, z)
+            h = ipv.plot_surface(x, y, z, **kw)
+            _ipv_set_transparency(kw, h)
+            #h.material.side = "DoubleSide"
+            return h
+        def plot_trisurf(self, x, y, triangles=None, Z=None, **kw):
+            """mpl style plot_trisurf interface for ipyvolume"""
+            kw.pop('linewidth', None)
+            _ipv_fix_color(kw)
+            x, y, z = make_vec(x, y, Z)
+            if triangles is not None:
+                triangles = np.asarray(triangles)
+            h = ipv.plot_trisurf(x, y, z, triangles=triangles, **kw)
+            _ipv_set_transparency(kw, h)
+            return h
+        def scatter(self, x, y, z, **kw):
+            """mpl style scatter interface for ipyvolume"""
+            x, y, z = make_vec(x, y, z)
+            map_colors(z, kw)
+            marker = kw.get('marker', None)
+            kw['marker'] = _IPV_MARKERS.get(marker, marker)
+            h = ipv.scatter(x, y, z, **kw)
+            _ipv_set_transparency(kw, h)
+            return h
+        def contourf(self, x, y, v, zdir='z', offset=0, levels=None, **kw):
+            """mpl style contourf interface for ipyvolume"""
+            # pylint: disable=unused-argument
+            # Don't use contour for now (although we might want to later)
+            self.pcolor(x, y, v, zdir='z', offset=offset, **kw)
+        def pcolor(self, x, y, v, zdir='z', offset=0, **kw):
+            """mpl style pcolor interface for ipyvolume"""
+            # pylint: disable=unused-argument
+            x, y, v = make_vec(x, y, v)
+            image = make_image(v, kw)
+            xmin, xmax = x.min(), x.max()
+            ymin, ymax = y.min(), y.max()
+            x = np.array([[xmin, xmax], [xmin, xmax]])
+            y = np.array([[ymin, ymin], [ymax, ymax]])
+            z = x*0 + offset
+            u = np.array([[0., 1], [0, 1]])
+            v = np.array([[0., 0], [1, 1]])
+            h = ipv.plot_mesh(x, y, z, u=u, v=v, texture=image, wireframe=False)
+            _ipv_set_transparency(kw, h)
+            h.material.side = "DoubleSide"
+            return h
+        def text(self, *args, **kw):
+            """mpl style text interface for ipyvolume"""
+            pass
+        def set_xlim(self, limits):
+            """mpl style set_xlim interface for ipyvolume"""
+            ipv.xlim(*limits)
+        def set_ylim(self, limits):
+            """mpl style set_ylim interface for ipyvolume"""
+            ipv.ylim(*limits)
+        def set_zlim(self, limits):
+            """mpl style set_zlim interface for ipyvolume"""
+            ipv.zlim(*limits)
+        def set_axes_on(self):
+            """mpl style set_axes_on interface for ipyvolume"""
+            ipv.style.axis_on()
+        def set_axis_off(self):
+            """mpl style set_axes_off interface for ipyvolume"""
+            ipv.style.axes_off()
+    return Axes()
+
+def _ipv_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection):
+    from IPython.display import display
+    import ipywidgets as widgets
+    import ipyvolume as ipv
+
+    axes = ipv_axes()
+
+    def _draw(view, jitter):
+        camera = ipv.gcf().camera
+        #print(ipv.gcf().__dict__.keys())
+        #print(dir(ipv.gcf()))
+        ipv.figure(animation=0.)  # no animation when updating object mesh
+
+        # set small jitter as 0 if multiple pd dims
+        dims = sum(v > 0 for v in jitter)
+        limit = [0, 0.5, 5, 5][dims]
+        jitter = [0 if v < limit else v for v in jitter]
+
+        ## Visualize as person on globe
+        #draw_beam(axes, (0, 0))
+        #draw_sphere(axes, radius=0.5)
+        #draw_person_on_sphere(axes, view, radius=0.5)
+
+        ## Move beam instead of shape
+        #draw_beam(axes, view=(-view[0], -view[1]))
+        #draw_jitter(axes, view=(0,0,0), jitter=(0,0,0))
+
+        ## Move shape and draw scattering
+        draw_beam(axes, (0, 0), steps=25)
+        draw_jitter(axes, view, jitter, dist=dist, size=size, alpha=1.0,
+                    draw_shape=draw_shape, projection=projection)
+        draw_mesh(axes, view, jitter, dist=dist, n=mesh, radius=0.95,
+                  projection=projection)
+        draw_scattering(calculator, axes, view, jitter, dist=dist)
+
+        draw_axes(axes, origin=(-1, -1, -1.1))
+        ipv.style.box_off()
+        ipv.style.axes_off()
+        ipv.xyzlabel(" ", " ", " ")
+
+        ipv.gcf().camera = camera
+        ipv.show()
+
+
+    trange, prange = (-180., 180., 1.), (-180., 180., 1.)
+    dtrange, dprange = (0., 180., 1.), (0., 180., 1.)
+
+    ## Super simple interfaca, but uses non-ascii variable namese
+    # θ φ ψ Δθ Δφ Δψ
+    #def update(**kw):
+    #    view = kw['θ'], kw['φ'], kw['ψ']
+    #    jitter = kw['Δθ'], kw['Δφ'], kw['Δψ']
+    #    draw(view, jitter)
+    #widgets.interact(update, θ=trange, φ=prange, ψ=prange, Δθ=dtrange, Δφ=dprange, Δψ=dprange)
+
+    def _update(theta, phi, psi, dtheta, dphi, dpsi):
+        _draw(view=(theta, phi, psi), jitter=(dtheta, dphi, dpsi))
+
+    def _slider(name, slice, init=0.):
+        return widgets.FloatSlider(
+            value=init,
+            min=slice[0],
+            max=slice[1],
+            step=slice[2],
+            description=name,
+            disabled=False,
+            #continuous_update=True,
+            continuous_update=False,
+            orientation='horizontal',
+            readout=True,
+            readout_format='.1f',
+            )
+    theta = _slider(u'θ', trange, view[0])
+    phi = _slider(u'φ', prange, view[1])
+    psi = _slider(u'ψ', prange, view[2])
+    dtheta = _slider(u'Δθ', dtrange, jitter[0])
+    dphi = _slider(u'Δφ', dprange, jitter[1])
+    dpsi = _slider(u'Δψ', dprange, jitter[2])
+    fields = {
+        'theta': theta, 'phi': phi, 'psi': psi,
+        'dtheta': dtheta, 'dphi': dphi, 'dpsi': dpsi,
+    }
+    ui = widgets.HBox([
+        widgets.VBox([theta, phi, psi]),
+        widgets.VBox([dtheta, dphi, dpsi])
+    ])
+
+    out = widgets.interactive_output(_update, fields)
+    display(ui, out)
+
+
+_ENGINES = {
+    "matplotlib": _mpl_plot,
+    "mpl": _mpl_plot,
+    #"plotly": _plotly_plot,
+    "ipvolume": _ipv_plot,
+    "ipv": _ipv_plot,
+}
+PLOT_ENGINE = _ENGINES["matplotlib"]
+def set_plotter(name):
+    """
+    Setting the plotting engine to matplotlib/ipyvolume or equivalently mpl/ipv.
+    """
+    global PLOT_ENGINE
+    PLOT_ENGINE = _ENGINES[name]
+
 def main():
+    """
+    Command line interface to the jitter viewer.
+    """
     parser = argparse.ArgumentParser(
         description="Display jitter",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -807,6 +1426,10 @@ def main():
                         help='coordinate projection')
     parser.add_argument('-s', '--size', type=str, default='10,40,100',
                         help='a,b,c lengths')
+    parser.add_argument('-v', '--view', type=str, default='0,0,0',
+                        help='initial view angles')
+    parser.add_argument('-j', '--jitter', type=str, default='0,0,0',
+                        help='initial angular dispersion')
     parser.add_argument('-d', '--distribution', choices=DISTRIBUTIONS,
                         default=DISTRIBUTIONS[0],
                         help='jitter distribution')
@@ -815,8 +1438,10 @@ def main():
     parser.add_argument('shape', choices=SHAPES, nargs='?', default=SHAPES[0],
                         help='oriented shape')
     opts = parser.parse_args()
-    size = tuple(int(v) for v in opts.size.split(','))
-    run(opts.shape, size=size,
+    size = tuple(float(v) for v in opts.size.split(','))
+    view = tuple(float(v) for v in opts.view.split(','))
+    jitter = tuple(float(v) for v in opts.jitter.split(','))
+    run(opts.shape, size=size, view=view, jitter=jitter,
         mesh=opts.mesh, dist=opts.distribution,
         projection=opts.projection)
 

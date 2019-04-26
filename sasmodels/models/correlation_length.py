@@ -29,8 +29,14 @@ where the q vector is defined as
 References
 ----------
 
-B Hammouda, D L Ho and S R Kline, Insight into Clustering in
-Poly(ethylene oxide) Solutions, Macromolecules, 37 (2004) 6932-6937
+.. [#] B Hammouda, D L Ho and S R Kline, Insight into Clustering in Poly(ethylene oxide) Solutions, Macromolecules, 37 (2004) 6932-6937
+
+Authorship and Verification
+----------------------------
+
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 from numpy import inf, errstate

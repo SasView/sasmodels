@@ -44,16 +44,20 @@ but where the *q* vector is redefined as
 References
 ----------
 
-P Debye, *J. Phys. Colloid. Chem.*, 51 (1947) 18.
+.. [#] P Debye, *J. Phys. Colloid. Chem.*, 51 (1947) 18.
+.. [#] R J Roe, *Methods of X-Ray and Neutron Scattering in Polymer Science*, Oxford University Press, New York (2000).
+.. [#] http://www.ncnr.nist.gov/staff/hammouda/distance_learning/chapter_28.pdf
 
-R J Roe, *Methods of X-Ray and Neutron Scattering in Polymer Science*,
-Oxford University Press, New York (2000).
+Authorship and Verification
+----------------------------
 
-http://www.ncnr.nist.gov/staff/hammouda/distance_learning/chapter_28.pdf
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 import numpy as np
-from numpy import inf, exp, errstate
+from numpy import inf
 
 name = "mono_gauss_coil"
 title = "Scattering from monodisperse polymer coils"
@@ -68,22 +72,17 @@ category = "shape-independent"
 #   ["name", "units", default, [lower, upper], "type", "description"],
 parameters = [
     ["i_zero", "1/cm", 70.0, [0.0, inf], "", "Intensity at q=0"],
-    ["rg", "Ang", 75.0, [0.0, inf], "", "Radius of gyration"],
+    ["rg", "Ang", 75.0, [0.0, inf], "volume", "Radius of gyration"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-# NB: Scale and Background are implicit parameters on every model
-def Iq(q, i_zero, rg):
-    # pylint: disable = missing-docstring
-    z = (q * rg)**2
+source = ["mono_gauss_coil.c"]
+have_Fq = False
+radius_effective_modes = ["R_g", "2R_g", "3R_g", "sqrt(5/3)*R_g"]
 
-    with errstate(invalid='ignore'):
-        inten = (i_zero * 2.0) * (exp(-z) + z - 1.0)/z**2
-        inten[q == 0] = i_zero
-    return inten
-Iq.vectorized = True # Iq accepts an array of q values
 
 def random():
+    """Return a random parameter set for the model."""
     rg = 10**np.random.uniform(0, 4)
     #rg = 1e3
     pars = dict(

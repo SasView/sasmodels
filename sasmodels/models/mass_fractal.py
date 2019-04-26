@@ -48,8 +48,14 @@ length density of particles.
 References
 ----------
 
-D Mildner and P Hall, *J. Phys. D: Appl. Phys.*,
-19 (1986) 1535-1545 Equation(9)
+.. [#] D Mildner and P Hall, *J. Phys. D: Appl. Phys.*, 19 (1986) 1535-1545 Equation(9)
+
+Authorship and Verification
+----------------------------
+
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 import numpy as np
@@ -87,6 +93,7 @@ parameters = [
 source = ["lib/sas_3j1x_x.c", "lib/sas_gamma.c", "mass_fractal.c"]
 
 def random():
+    """Return a random parameter set for the model."""
     radius = 10**np.random.uniform(0.7, 4)
     cutoff_length = 10**np.random.uniform(0.7, 2)*radius
     # TODO: fractal dimension should range from 1 to 6

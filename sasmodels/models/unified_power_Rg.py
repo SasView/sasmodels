@@ -21,7 +21,7 @@ between 5/3 and 3. It should not be used for surface fractal systems. Hammouda
 transitioning between the Guinier and Porod regimes and which can create
 artefacts that appear as kinks in the fitted model function.
 
-Also see the Guinier_Porod model.
+Also see the :ref:`guinier-porod` model.
 
 The empirical fit function is:
 
@@ -62,11 +62,16 @@ where the $q$ vector is defined as
 References
 ----------
 
-G Beaucage, *J. Appl. Cryst.*, 28 (1995) 717-728
+.. [#] G Beaucage, *J. Appl. Cryst.*, 28 (1995) 717-728
+.. [#] G Beaucage, *J. Appl. Cryst.*, 29 (1996) 134-146
+.. [#] B Hammouda, *Analysis of the Beaucage model, J. Appl. Cryst.*, (2010), 43, 1474-1478
 
-G Beaucage, *J. Appl. Cryst.*, 29 (1996) 134-146
+Authorship and Verification
+----------------------------
 
-B Hammouda, *Analysis of the Beaucage model, J. Appl. Cryst.*, (2010), 43, 1474-1478
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 from __future__ import division
@@ -95,6 +100,7 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 def Iq(q, level, rg, power, B, G):
+    """Return I(q) for unified power Rg model."""
     level = int(level + 0.5)
     if level == 0:
         with errstate(divide='ignore'):
@@ -117,6 +123,7 @@ def Iq(q, level, rg, power, B, G):
 Iq.vectorized = True
 
 def random():
+    """Return a random parameter set for the model."""
     level = np.minimum(np.random.poisson(0.5) + 1, 6)
     n = level
     power = np.random.uniform(1.6, 3, n)

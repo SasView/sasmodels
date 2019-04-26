@@ -105,14 +105,14 @@ Authorship and Verification
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Converted to sasmodels by:** Piotr Rozyczko **Date:** Feb 24, 2016
 * **Last Modified by:** Paul Kienzle **Date:** Feb 7, 2017
-* **Last Reviewed by:** Paul Butler **Date:** March 12, 2017
+* **Last Reviewed by:** Steve King **Date:** March 28, 2019
 """
 
 import numpy as np
 from numpy import inf
 
 name = "multilayer_vesicle"
-title = "P(Q) for a Multi-lamellar vesicle"
+title = "Calculate form factor for a multi-lamellar vesicle"
 description = """
     multilayer_vesicle model parameters;
     scale : scale factor for abs intensity if needed else 1.0
@@ -136,7 +136,7 @@ parameters = [
     ["thick_solvent", "Ang",        10.0, [0.0, inf],  "volume", "solvent thickness between shells"],
     ["sld_solvent",    "1e-6/Ang^2",  6.4, [-inf, inf], "sld", "solvent scattering length density"],
     ["sld",   "1e-6/Ang^2",  0.4, [-inf, inf], "sld", "Shell scattering length density"],
-    ["n_shells",     "",            2.0, [1.0, inf],  "volume", "Number of shell plus solvent layer pairs"],
+    ["n_shells",     "",            2.0, [1.0, inf],  "volume", "Number of shell plus solvent layer pairs (must be integer)"],
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
@@ -144,12 +144,11 @@ parameters = [
 #polydispersity = ["radius", "thick_shell"]
 
 source = ["lib/sas_3j1x_x.c", "multilayer_vesicle.c"]
-
-def ER(radius, thick_shell, thick_solvent, n_shells):
-    n_shells = int(n_shells+0.5)
-    return radius + n_shells * (thick_shell + thick_solvent) - thick_solvent
+have_Fq = True
+radius_effective_modes = ["outer radius"]
 
 def random():
+    """Return a random parameter set for the model."""
     volfraction = 10**np.random.uniform(-3, -0.5)  # scale from 0.1% to 30%
     radius = 10**np.random.uniform(0, 2.5) # core less than 300 A
     total_thick = 10**np.random.uniform(2, 4) # up to 10000 A of shells

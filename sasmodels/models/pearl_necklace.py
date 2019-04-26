@@ -24,14 +24,14 @@ where
 
 .. math::
 
-    S_{ss}(q) &= sm_s^2\psi^2(q)[\frac{N}{1-sin(qA)/qA}-\frac{N}{2}-
-        \frac{1-(sin(qA)/qA)^N}{(1-sin(qA)/qA)^2}\cdot\frac{sin(qA)}{qA}] \\
-    S_{ff}(q) &= sm_r^2[M\{2\Lambda(q)-(\frac{sin(ql/2)}{ql/2})\}+
+    S_{ss}(q) &= 2m_s^2\psi^2(q)\left[\frac{N}{1-sin(qA)/qA}-\frac{N}{2}-
+        \frac{1-(sin(qA)/qA)^N}{(1-sin(qA)/qA)^2}\cdot\frac{sin(qA)}{qA}\right] \\
+    S_{ff}(q) &= m_r^2\left[M\left\{2\Lambda(q)-\left(\frac{sin(ql/2)}{ql/2}\right)\right\}+
         \frac{2M\beta^2(q)}{1-sin(qA)/qA}-2\beta^2(q)\cdot
-        \frac{1-(sin(qA)/qA)^M}{(1-sin(qA)/qA)^2}] \\
-    S_{fs}(q) &= m_r \beta (q) \cdot m_s \psi (q) \cdot 4[
+        \frac{1-(sin(qA)/qA)^M}{(1-sin(qA)/qA)^2}\right] \\
+    S_{fs}(q) &= m_r \beta (q) \cdot m_s \psi (q) \cdot 4\left[
         \frac{N-1}{1-sin(qA)/qA}-\frac{1-(sin(qA)/qA)^{N-1}}{(1-sin(qA)/qA)^2}
-        \cdot \frac{sin(qA)}{qA}] \\
+        \cdot \frac{sin(qA)}{qA}\right] \\
     \psi(q) &= 3 \cdot \frac{sin(qR)-(qR)\cdot cos(qR)}{(qR)^3} \\
     \Lambda(q) &= \frac{\int_0^{ql}\frac{sin(t)}{t}dt}{ql} \\
     \beta(q) &= \frac{\int_{qR}^{q(A-R)}\frac{sin(t)}{t}dt}{ql}
@@ -39,23 +39,31 @@ where
 where the mass *m*\ :sub:`i` is (SLD\ :sub:`i` - SLD\ :sub:`solvent`) \*
 (volume of the *N* pearls/rods). *V* is the total volume of the necklace.
 
+.. note::
+
+   *num_pearls* must be an integer.
+
 The 2D scattering intensity is the same as $P(q)$ above, regardless of the
 orientation of the *q* vector.
-
-The returned value is scaled to units of |cm^-1| and the parameters of the
-pearl_necklace model are the following
-
-NB: *num_pearls* must be an integer.
 
 References
 ----------
 
-R Schweins and K Huber, *Particle Scattering Factor of Pearl Necklace Chains*,
-*Macromol. Symp.* 211 (2004) 25-42 2004
+.. [#] R Schweins and K Huber, *Particle Scattering Factor of Pearl Necklace Chains*,
+       *Macromol. Symp.* 211 (2004) 25-42 2004
+
+.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+
+Authorship and Verification
+----------------------------
+
+* **Author:**
+* **Last Modified by:** Andrew Jackson **Date:** March 28, 2019
+* **Last Reviewed by:** Steve King **Date:** March 28, 2019
 """
 
 import numpy as np
-from numpy import inf, pi
+from numpy import inf
 
 name = "pearl_necklace"
 title = "Colloidal spheres chained together with no preferential orientation"
@@ -94,30 +102,10 @@ parameters = [["radius", "Ang", 80.0, [0, inf], "volume",
 
 source = ["lib/sas_Si.c", "lib/sas_3j1x_x.c", "pearl_necklace.c"]
 single = False  # use double precision unless told otherwise
-
-def volume(radius, edge_sep, thick_string, num_pearls):
-    """
-    Calculates the total particle volume of the necklace.
-    Redundant with form_volume.
-    """
-    num_pearls = int(num_pearls + 0.5)
-    number_of_strings = num_pearls - 1.0
-    string_vol = edge_sep * pi * pow((thick_string / 2.0), 2.0)
-    pearl_vol = 4.0 /3.0 * pi * pow(radius, 3.0)
-    total_vol = number_of_strings * string_vol
-    total_vol += num_pearls * pearl_vol
-    return total_vol
-
-def ER(radius, edge_sep, thick_string, num_pearls):
-    """
-    Calculation for effective radius.
-    """
-    num_pearls = int(num_pearls + 0.5)
-    tot_vol = volume(radius, edge_sep, thick_string, num_pearls)
-    rad_out = (tot_vol/(4.0/3.0*pi)) ** (1./3.)
-    return rad_out
+radius_effective_modes = ["equivalent volume sphere"]
 
 def random():
+    """Return a random parameter set for the model."""
     radius = 10**np.random.uniform(1, 3) # 1 - 1000
     thick_string = 10**np.random.uniform(0, np.log10(radius)-1) # 1 - radius/10
     edge_sep = 10**np.random.uniform(0, 3)  # 1 - 1000
@@ -139,5 +127,8 @@ demo = dict(scale=1, background=0, radius=80.0, edge_sep=350.0,
             num_pearls_pd=0, num_pearls_pd_n=0,
             thick_string_pd=0.2, thick_string_pd_n=5,
            )
-
-tests = [[{}, 0.001, 17380.245], [{}, 'ER', 115.39502]]
+# ER function is not being used here, not that it is likely very sensible to
+# include an S(Q) with this model, the default in sasview 5.0 would be to the
+# "unconstrained" radius_effective.
+#tests = [[{}, 0.001, 17380.245], [{}, 'ER', 115.39502]]
+tests = [[{}, 0.001, 17380.245]]

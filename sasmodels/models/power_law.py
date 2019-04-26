@@ -24,6 +24,13 @@ References
 ----------
 
 None.
+
+Authorship and Verification
+----------------------------
+
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 import numpy as np
@@ -51,6 +58,7 @@ def Iq(q, power):
 Iq.vectorized = True  # Iq accepts an array of q values
 
 def random():
+    """Return a random parameter set for the model."""
     power = np.random.uniform(1, 6)
     pars = dict(
         scale=0.1**power*10**np.random.uniform(-4, 2),
