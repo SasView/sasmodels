@@ -116,6 +116,9 @@ def make_mixture_info(parts, operation='+'):
                 p.length_control = prefix + p.length_control
             combined_pars.append(p)
     parameters = ParameterTable(combined_pars)
+    # Allow for the scenario in which each component has all its PD parameters
+    # active simultaneously.  details.make_details() will throw an error if
+    # too many are used from any one component.
     parameters.max_pd = sum(part.parameters.max_pd for part in parts)
 
     def random():
