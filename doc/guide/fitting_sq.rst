@@ -248,15 +248,12 @@ can compute the average enclosed and shell volumes as
     :nowrap:
 
     \begin{align*}
-
     \langle V_e \rangle &= \frac{
         \int_\Xi P_\mathbf\xi V_e(\mathbf\xi)\,\mathrm d\mathbf\xi
     }{ \int_\Xi P_\mathbf\xi\,\mathrm d\mathbf xi } \\
-
     \langle V_s \rangle &= \frac{
         \int_\Xi P_\mathbf\xi (V_e(\mathbf\xi) - V_c(\mathbf\xi))\,\mathrm d\mathbf\xi
     }{ \int_\Xi P_\mathbf\xi\,\mathrm d\mathbf xi }
-
     \end{align*}
 
 Given $n$ particles and a total solvent volume $V_\text{out}$ outside the
@@ -267,13 +264,10 @@ enclosed solvent $\phi_e$ are
     :nowrap:
 
     \begin{align*}
-
     \phi_s &= \frac{n \langle V_s \rangle}{n \langle V_s \rangle + n \langle V_c \rangle + V_\text{out}}
            = \frac{n \langle V_s \rangle}{V_\text{total}} \\
-
     \phi_e &= \frac{n \langle V_e \rangle}{n \langle V_e \rangle + V_\text{out}}
            = \frac{n \langle V_e \rangle}{V_\text{total}}
-
     \end{align*}
 
 Dividing gives
