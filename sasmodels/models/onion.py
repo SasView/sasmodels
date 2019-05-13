@@ -106,7 +106,7 @@ where
     \alpha_\text{in} &= A\frac{r_{\text{shell}-1}}{\Delta t_\text{shell}}
          & \alpha_\text{out} &= A\frac{r_\text{shell}}{\Delta t_\text{shell}} \\
     \beta_\text{in} &= qr_{\text{shell}-1}
-        & \beta_\text{out} &= qr_\text{shell} \\
+        & \beta_\text{out} &= qr_\text{shell}
     \end{align*}
 
 and
