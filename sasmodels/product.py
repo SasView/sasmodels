@@ -299,7 +299,7 @@ def _intermediates(
     The result may be an array or a float.
     """
     parts = OrderedDict()
-    parts["P(Q)"] = (Q, scale*F2)
+    parts["P(Q)"] = (Q, scale*Fsq)
     if P_intermediate is not None:
         parts["P(Q) parts"] = P_intermediate()
     parts["volume"] = volume
@@ -307,9 +307,9 @@ def _intermediates(
     parts["radius_effective"] = radius_effective
     parts["S(Q)"] = (Q, S)
     if beta_mode:
-        parts["beta(Q)"] = (Q, F1**2 / F2)
-        parts["S_eff(Q)"] = (Q, 1 + (F1**2 / F2)*(S-1))
-        #parts["I(Q)", scale*(F2 + (F1**2)*(S-1)) + bg
+        parts["beta(Q)"] = (Q, F**2 / Fsq)
+        parts["S_eff(Q)"] = (Q, 1 + (F**2 / Fsq)*(S-1))
+        #parts["I(Q)", scale*(Fsq + (F**2)*(S-1)) + bg
     return parts
 
 class ProductModel(KernelModel):
