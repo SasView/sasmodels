@@ -44,18 +44,12 @@ References
 .. [#] F Nallet, R Laversanne, and D Roux, *J. Phys. II France*, 3, (1993) 487-502
 .. [#] J Berghausen, J Zipfel, P Lindner, W Richtering, *J. Phys. Chem. B*, 105, (2001) 11081-11088
 
-Source
-------
-
-`lamellar_hg.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/lamellar_hg.py>`_
-
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
-* **Last Modified by:** 
+* **Author:**
+* **Last Modified by:**
 * **Last Reviewed by:** S King and P Butler **Date** April 17, 2014
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

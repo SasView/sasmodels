@@ -40,20 +40,12 @@ References
 
 .. [#] Simon Mallam, Ferenc Horkay, Anne-Marie Hecht, Adrian R Rennie, Erik Geissler, *Macromolecules* 1991, 24, 543-548
 
-Source
-------
-
-`gel_fit.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/gel_fit.py>`_
-
-`gel_fit.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/gel_fit.c>`_
-
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
-* **Last Modified by:** 
-* **Last Reviewed by:** 
-* **Source added by :** Steve King **Date:** March 25, 2019
+* **Author:**
+* **Last Modified by:**
+* **Last Reviewed by:**
 """
 
 import numpy as np

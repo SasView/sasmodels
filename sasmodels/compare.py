@@ -38,13 +38,13 @@ import re
 import numpy as np  # type: ignore
 
 from . import core
+from . import weights
 from . import kerneldll
 from . import kernelcl
 from . import kernelcuda
 from .data import plot_theory, empty_data1D, empty_data2D, load_data
 from .direct_model import DirectModel, get_mesh
 from .generate import FLOAT_RE, set_integration_size
-from .weights import plot_weights
 
 # pylint: disable=unused-import
 try:
@@ -114,12 +114,13 @@ Options (* for default):
     -help/-html shows the model docs instead of running the model
 
     === environment variables ===
-    -DSAS_MODELPATH=path sets directory containing custom models
+    -DSAS_MODELPATH=~/.sasmodels/custom_models sets path to custom models
+    -DSAS_WEIGHTS_PATH=~/.sasview/weights sets path to custom distributions
     -DSAS_OPENCL=vendor:device|cuda:device|none sets the target GPU device
     -DXDG_CACHE_HOME=~/.cache sets the pyopencl cache root (linux only)
     -DSAS_COMPILER=tinycc|msvc|mingw|unix sets the DLL compiler
-    -DSAS_OPENMP=1 turns on OpenMP for the DLLs
-    -DSAS_DLL_PATH=path sets the path to the compiled modules
+    -DSAS_OPENMP=0 set to 1 to turn on OpenMP for the DLLs
+    -DSAS_DLL_PATH=~/.sasmodels/compiled_models sets the DLL cache
 
 The interpretation of quad precision depends on architecture, and may
 vary from 64-bit to 128-bit, with 80-bit floats being common (1e-19 precision).
@@ -783,7 +784,7 @@ def compare(opts, limits=None, maxdim=np.inf):
             base_pars, _ = opts['pars']
             model_info = base._kernel.info
             dim = base._kernel.dim
-            plot_weights(model_info, get_mesh(model_info, base_pars, dim=dim))
+            weights.plot_weights(model_info, get_mesh(model_info, base_pars, dim=dim))
         if opts['show_profile']:
             import pylab
             base, comp = opts['engines']
@@ -1439,6 +1440,14 @@ def parse_pars(opts, maxdim=np.inf):
     pars.update(presets)  # set value after random to control value
     pars2.update(presets2)  # set value after random to control value
     #import pprint; pprint.pprint(model_info)
+
+    # Hack to load user-defined distributions; run through all parameters
+    # and make sure any pd_type parameter is a defined distribution.
+    if (any(p.endswith('pd_type') and v not in weights.MODELS
+            for p, v in pars.items()) or
+        any(p.endswith('pd_type') and v not in weights.MODELS
+            for p, v in pars2.items())):
+       weights.load_weights()
 
     if opts['show_pars']:
         if model_info.name != model_info2.name or pars != pars2:

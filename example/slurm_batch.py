@@ -16,6 +16,11 @@ For example::
 
     slurm_batch.py model_ellipsoid_hayter_msa.py 09319*.dat --store=T1
 
+You may need to run in a particular python environment on the 
+compute nodes::
+
+    slurm_batch.py --python=path/to/env/bin/python ...
+
 This creates the T1 subdirectory to hold the fit results and 
 prints the real command that is submitted, as well as the job id.
 
@@ -98,6 +103,7 @@ def split_args():
     resume = None
     data_files = []
     time_limit = DEFAULT_TIME_LIMIT
+    interpreter = sys.executable
 
     # start with '-' arguments as slurm opts, then after
     # the model file any '-' arguments are bumps opts.
@@ -109,6 +115,8 @@ def split_args():
             resume = os.path.realpath(os.path.abspath(v[9:]))
         elif v.startswith('--time='):
             time_limit = float(v[7:])
+        elif v.startswith('--python='):
+            interpreter = v[9:]
         elif v[0] == '-':
             opts.append(v)
         elif model_file is None:
@@ -123,6 +131,7 @@ def split_args():
     bumps_opts.append('--time=%f'%(time_limit - 0.1))  # 6 min to stop cleanly
 
     return {
+        'python': interpreter,
         'slurm': slurm_opts, 
         'model_file': model_file, 
         'data_files': data_files, 
@@ -145,6 +154,7 @@ def submit_job():
     data_files = opts['data_files']
     bumps_opts = opts['bumps']
     slurm_opts = opts['slurm']
+    interpreter = opts['python']
 
     # make sure the store directory exists and save the order of the files, as well
     # as the model and the data files
@@ -190,6 +200,7 @@ def submit_job():
     # Remember the source root so we can reconstruct the correct python path
     # This is done after the model file so that it doesn't get interpreted
     # as a slurm option.
+    parts.append("--python=%s"%interpreter)
     parts.append("--source_root=%s"%SRC)
     parts.append(model_file)
     parts.extend(data_files)
@@ -219,7 +230,7 @@ def run_task(task_id):
     #task_store = "%s/%02d"%(opts['store'], task_id)
     task_store = "%02d"%task_id
     parts = [
-       "python", os.path.join(SRC, "bumps", "run.py"), "--batch",
+       opts['python'], os.path.join(SRC, "bumps", "run.py"), "--batch",
        "--view=log",
        opts['model_file'],
        opts['data_files'][task_id-1],

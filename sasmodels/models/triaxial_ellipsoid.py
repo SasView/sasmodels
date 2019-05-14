@@ -115,20 +115,12 @@ References
 
 .. [#] Finnigan, J.A., Jacobs, D.J., 1971. *Light scattering by ellipsoidal particles in solution*, J. Phys. D: Appl. Phys. 4, 72-77. doi:10.1088/0022-3727/4/1/310
 
-Source
-------
-
-`triaxial_ellipsoid.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/triaxial_ellipsoid.py>`_
-
-`triaxial_ellipsoid.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/triaxial_ellipsoid.c>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Kienzle (improved calculation) **Date:** April 4, 2017
 * **Last Reviewed by:** Paul Kienzle & Richard Heenan **Date:**  April 4, 2017
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

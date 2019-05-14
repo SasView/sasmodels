@@ -90,18 +90,12 @@ References
    II France*, 3 (1993) 573
 .. [#] E Raphael, J F Joanny, *Europhysics Letters*, 11 (1990) 179
 
-Source
-------
-
-`be_polyelectrolyte.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/be_polyelectrolyte.py>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
 * **Last Modified by:** Paul Butler **Date:** September 25, 2018
 * **Last Reviewed by:** Paul Butler **Date:** September 25, 2018
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

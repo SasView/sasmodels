@@ -49,20 +49,12 @@ References
 .. [#CITRichter] D Richter, B. Farago, J. S. Huang, L. J. Fetters,
    B Ewen *Macromolecules*, 22, 468-472 (1989)
 
-Source
-------
-
-`star_polymer.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/star_polymer.py>`_
-
-`star_polymer.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/star_polymer.c>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:** Kieran Campbell **Date:** July 24, 2012
 * **Last Modified by:** Paul Butler **Date:** Auguts 26, 2017
 * **Last Reviewed by:** Ziang Li and Richard Heenan **Date:** May 17, 2017
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

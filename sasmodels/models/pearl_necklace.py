@@ -54,20 +54,12 @@ References
 
 .. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
-Source
-------
-
-`pearl_necklace.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/pearl_necklace.py>`_
-
-`pearl_necklace.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/pearl_necklace.c>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:**
 * **Last Modified by:** Andrew Jackson **Date:** March 28, 2019
 * **Last Reviewed by:** Steve King **Date:** March 28, 2019
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np

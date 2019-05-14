@@ -103,12 +103,10 @@ where
     \begin{align*}
     B&=\frac{\rho_\text{out} - \rho_\text{in}}{e^A-1}
          & C &= \frac{\rho_\text{in}e^A - \rho_\text{out}}{e^A-1} \\
-
     \alpha_\text{in} &= A\frac{r_{\text{shell}-1}}{\Delta t_\text{shell}}
          & \alpha_\text{out} &= A\frac{r_\text{shell}}{\Delta t_\text{shell}} \\
-
     \beta_\text{in} &= qr_{\text{shell}-1}
-        & \beta_\text{out} &= qr_\text{shell} \\
+        & \beta_\text{out} &= qr_\text{shell}
     \end{align*}
 
 and
@@ -186,20 +184,12 @@ References
 
 .. [#] L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*, Plenum Press, New York, 1987.
 
-Source
-------
-
-`onion.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/onion.py>`_
-
-`onion.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/onion.c>`_
-
 Authorship and Verification
 ----------------------------
 
 * **Author:**
 * **Last Modified by:**
 * **Last Reviewed by:** Steve King **Date:** March 28, 2019
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 #

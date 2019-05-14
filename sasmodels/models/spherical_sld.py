@@ -186,20 +186,12 @@ References
 .. [#] L A Feigin and D I Svergun, Structure Analysis by Small-Angle X-Ray
    and Neutron Scattering, Plenum Press, New York, (1987)
 
-Source
-------
-
-`spherical_sld.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/spherical_sld.py>`_
-
-`spherical_sld.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/spherical_sld.c>`_
-
 Authorship and Verification
 ---------------------------
 
 * **Author:** Jae-Hie Cho **Date:** Nov 1, 2010
 * **Last Modified by:** Paul Kienzle **Date:** Dec 20, 2016
 * **Last Reviewed by:** Steve King **Date:** March 29, 2019
-* **Source added by :** Steve King **Date:** March 25, 2019
 """
 
 import numpy as np
