@@ -7,7 +7,11 @@ Overview
 ^^^^^^^^
 
 In addition to the models provided with the sasmodels package, you are free to
-create your own models.
+create your own models. This document describes how to create plugin models
+from first principles.
+
+If you are using SasView and simply want to combine existing models into a new
+plugin, see the :ref:`Sum|Multi(p1,p2)` tool instead.
 
 Models can be of three types:
 
@@ -20,6 +24,8 @@ Models can be of three types:
 - A python wrapper with separate C code : Example -
   `cylinder.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/cylinder.py>`_,
   `cylinder.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/cylinder.c>`_
+
+
 
 When using SasView, plugin models should be saved to the SasView
 *plugin_models* folder *C:\\Users\\{username}\\.sasview\\plugin_models*

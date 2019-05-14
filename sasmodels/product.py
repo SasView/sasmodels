@@ -9,6 +9,108 @@ and the module evaluator (with call, release, etc.).
 
 To use it, first load form factor P and structure factor S, then create
 *make_product_info(P, S)*.
+
+The P@S models is somewhat complicated because there are many special
+parameters that need to be handled in particular ways.  Much of the
+code is used to figure out what special parameters we have, where to
+find them in the P@S model inputs and how to distribute them to the underlying
+P and S model calculators.
+
+The parameter packet received by the P@S is a :class:`details.CallDetails`
+structure along with a data vector. The CallDetails structure indicates which
+parameters are polydisperse, the length of the distribution, and where to
+find it in the data vector.  The distributions are ordered from longest to
+shortest, with length 1 distributions filling out the distribution set.  That
+way the kernel calculator doesn't have to check if it needs another nesting
+level since it is always there.  The data vector consists of a list of target
+values for the parameters, followed by a concatenation of the distribution
+values, and then followed by a concatenation of the distribution weights.
+Given the combined details and data for P@S, we must decompose them in to
+details for P and details for S separately, which unfortunately requires
+intimate knowledge of the data structures and tricky code.
+
+The special parameters are:
+
+* *scale* and *background*:
+    First two parameters of the value list in each of P, S and P@S.
+    When decomposing P@S parameters, ignore *scale* and *background*,
+    instead using 1 and 0 for the first two slots of both P and S.
+    After calling P and S individually, the results are combined as
+    :code:`volfraction*scale*P*S + background`.  The *scale* and
+    *background* do not show up in the polydispersity structure so
+    they are easy to handle.
+
+* *volfraction*:
+    Always the first parameter of S, but it may also be in P. If it is in P,
+    then *P.volfraction* is used in the combined P@S list, and
+    *S.volfraction* is elided, otherwise *S.volfraction* is used. If we
+    are using *volfraction* from P we can treat it like all the other P
+    parameters when calling P, but when calling S we need to insert the
+    *P.volfraction* into data vector for S and assign a slot of length 1
+    in the distribution. Because we are using the original layout of the
+    distribution vectors from P@S, but copying it into private data
+    vectors for S and P, we are free to "borrow" a P slots to store the
+    missing *S.volfraction* distribution.  We use the *P.volfraction*
+    slot itself but any slot will work.
+
+    For hollow shapes, *volfraction* represents the volume fraction of
+    material but S needs the volume fraction enclosed by the shape. The
+    answer is to scale the user specified volume fraction by the form:shell
+    ratio computed from the average form volume and average shell volume
+    returned from P. Use the original *volfraction* divided by *shell_volume*
+    to compute the number density, and scale P@S by that to get absolute
+    scaling on the final *I(q)*. The *scale* for P@S should therefore usually
+    be one.
+
+* *radius_effective*:
+    Always the second parameter of S and always part of P@S, but never in P.
+    The value may be calculated using *P.radius_effective()* or it
+    may be set to the *radius_effective* value in P@S, depending on
+    *radius_effective_mode*.  If part of S, the value may be polydisperse.
+    If calculated by P, then it will be the weighted average of effective
+    radii computed for the polydisperse shape parameters.
+
+* *structure_factor_mode*
+    If P@S supports beta approximation (i.e., if it has the *Fq* function that
+    returns <FF*> and <F><F*>), then *structure_factor_mode* will be added
+    to the P@S parameters right after the S parameters.  This mode may be 0
+    for the monodisperse approximation or 1 for the beta approximation.  We
+    will add more values here as we implemented more complicated operations,
+    but for now P and S must be computed separately.  If beta, then we
+    return *I = scale volfrac/volume ( <FF> + <F>^2 (S-1)) + background*.
+    If not beta then return *I = scale/volume P S + background* .  In both
+    cases, return the appropriate immediate values.
+
+* *radius_effective_mode*
+    If P defines the *radius_effective* function (and therefore
+    *P.info.radius_effective_modes* is a list of effective radius modes),
+    then *radius_effective_mode* will be the final parameter in P@S.  Mode
+    will be zero if *radius_effective* is defined by the user using the S
+    parameter; any other value and the *radius_effective* parameter will be
+    filled in from the value computed in P.  In the latter case, the
+    polydispersity information for *S.radius_effective* will need to be
+    suppressed, with pd length set to 1, the first value set to the
+    effective radius and the first weight set to 1.  Do this after composing
+    the S data vector so the inputs are left untouched.
+
+* *regular parameters*
+    The regular P parameters form a block of length *P.info.npars* at the
+    start of the data vector (after scale and background).  These will be
+    followed by *S.effective_radius*, and *S.volfraction* (if *P.volfraction*
+    is absent), and then the regular S parameters.  The P and S blocks can
+    be copied as a group into the respective P and S data vectors.
+    We can copy the distribution value and weight vectors untouched to both
+    the P and S data vectors since they are referenced by offset and length.
+    We can update the radius_effective slots in the P data vector with
+    *P.radius_effective()* if needed.
+
+* *magnetic parameters*
+    For each P parameter that is an SLD there will be a set of three magnetic
+    parameters tacked on to P@S after the regular P and S and after the
+    special *structure_factor_mode* and *radius_effective_mode*.  These
+    can be copied as a group after the regular P parameters.  There won't
+    be any magnetic S parameters.
+
 """
 from __future__ import print_function, division
 
@@ -83,36 +185,44 @@ def make_product_info(p_info, s_info):
         raise TypeError("S needs {} as second parameter".format(VOLFRAC_ID))
     if not s_info.parameters.magnetism_index == []:
         raise TypeError("S should not have SLD parameters")
+    if RADIUS_ID in p_info.parameters:
+        raise TypeError("P should not have {}".format(RADIUS_ID))
     p_id, p_name, p_pars = p_info.id, p_info.name, p_info.parameters
     s_id, s_name, s_pars = s_info.id, s_info.name, s_info.parameters
+    p_has_volfrac = VOLFRAC_ID in p_info.parameters
 
-    # Create list of parameters for the combined model.  If there
-    # are any names in P that overlap with those in S, modify the name in S
-    # to distinguish it.
+    # Create list of parameters for the combined model.  If a name in
+    # S overlaps a name in P, tag the S parameter name to distinguish it.
+    # If the tagged name also collides it will be caught by the parameter
+    # table builder.  Similarly if any special names are abused.  Need the
+    # pairs to create the translation table for random model generation.
     p_set = set(p.id for p in p_pars.kernel_parameters)
-    s_list = [(_tag_parameter(par) if par.id in p_set else par)
-              for par in s_pars.kernel_parameters]
-    # Check if still a collision after renaming.  This could happen if for
-    # example S has volfrac and P has both volfrac and volfrac_S.
-    if any(p.id in p_set for p in s_list):
-        raise TypeError("name collision: P has P.name and P.name_S while S has S.name")
+    s_pairs = [(par, (_tag_parameter(par) if par.id in p_set else par))
+               for par in s_pars.kernel_parameters
+               # Note: exclude volfraction from s_list if volfraction in p
+               if par.id != VOLFRAC_ID or not p_has_volfrac]
+    s_list = [pair[0] for pair in s_pairs]
 
-    # make sure effective radius is not a polydisperse parameter in product
-    s_list[0] = copy(s_list[0])
-    s_list[0].polydisperse = False
-
-    translate_name = dict((old.id, new.id) for old, new
-                          in zip(s_pars.kernel_parameters, s_list))
+    # Build combined parameter table
     combined_pars = p_pars.kernel_parameters + s_list + make_extra_pars(p_info)
     parameters = ParameterTable(combined_pars)
+    # Allow for the scenario in which each component has all its PD parameters
+    # active simultaneously.  details.make_details() will throw an error if
+    # too many are used from any one component.
     parameters.max_pd = p_pars.max_pd + s_pars.max_pd
+
+    # TODO: does user-defined polydisperse S.radius_effective make sense?
+    # make sure effective radius is not a polydisperse parameter in product
+    #s_list[0] = copy(s_list[0])
+    #s_list[0].polydisperse = False
+
+    s_translate = {old.id: new.id for old, new in s_pairs}
     def random():
         """Random set of model parameters for product model"""
         combined_pars = p_info.random()
-        s_names = set(par.id for par in s_pars.kernel_parameters)
-        combined_pars.update((translate_name[k], v)
+        combined_pars.update((s_translate[k], v)
                              for k, v in s_info.random().items()
-                             if k in s_names)
+                             if k in s_translate)
         return combined_pars
 
     model_info = ModelInfo()
@@ -173,10 +283,12 @@ def _tag_parameter(par):
 
 def _intermediates(
         Q,                # type: np.ndarray
-        F1,               # type: np.ndarray
-        F2,               # type: np.ndarray
+        F,                # type: np.ndarray
+        Fsq,              # type: np.ndarray
         S,                # type: np.ndarray
         scale,            # type: float
+        volume,           # type: float
+        volume_ratio,     # type: float
         radius_effective, # type: float
         beta_mode,        # type: bool
         P_intermediate,   # type: Optional[Callable[[], OrderedDict]
@@ -190,6 +302,8 @@ def _intermediates(
     parts["P(Q)"] = (Q, scale*F2)
     if P_intermediate is not None:
         parts["P(Q) parts"] = P_intermediate()
+    parts["volume"] = volume
+    parts["volume_ratio"] = volume_ratio
     parts["radius_effective"] = radius_effective
     parts["S(Q)"] = (Q, S)
     if beta_mode:
@@ -256,83 +370,129 @@ class ProductKernel(Kernel):
         self.dtype = p_kernel.dtype
         self.results = None  # type: Callable[[], OrderedDict]
 
-    def Iq(self, call_details, values, cutoff, magnetic):
-        # type: (CallDetails, np.ndarray, float, bool) -> np.ndarray
+        # Find index of volfraction parameter in parameter list
+        for k, p in enumerate(model_info.parameters.call_parameters):
+            if p.id == VOLFRAC_ID:
+                self._volfrac_index = k
+                break
+        else:
+            raise RuntimeError("no %s parameter in %s"%(VOLFRAC_ID, self))
 
         p_info, s_info = self.info.composition[1]
         p_npars = p_info.parameters.npars
-        p_length = call_details.length[:p_npars]
-        p_offset = call_details.offset[:p_npars]
         s_npars = s_info.parameters.npars
-        s_length = call_details.length[p_npars:p_npars+s_npars]
-        s_offset = call_details.offset[p_npars:p_npars+s_npars]
 
-        # Beta mode parameter is the first parameter after P and S parameters
         have_beta_mode = p_info.have_Fq
-        beta_mode_offset = 2+p_npars+s_npars
-        beta_mode = (values[beta_mode_offset] > 0) if have_beta_mode else False
-        if beta_mode and self.p_kernel.dim == '2d':
-            raise NotImplementedError("beta not yet supported for 2D")
+        have_er_mode = p_info.radius_effective_modes is not None
+        volfrac_in_p = self._volfrac_index < p_npars + 2  # scale & background
 
-        # R_eff type parameter is the second parameter after P and S parameters
-        # unless the model doesn't support beta mode, in which case it is first
-        have_radius_type = p_info.radius_effective_modes is not None
-        #print(p_npars,s_npars)
-        radius_type_offset = 2+p_npars+s_npars + (1 if have_beta_mode else 0)
-        #print(values[radius_type_offset])
-        radius_type = int(values[radius_type_offset]) if have_radius_type else 0
+        # Slices into the details length/offset structure for P@S.
+        # Made complicated by the possibly missing volfraction in S.
+        self._p_detail_slice = slice(0, p_npars)
+        self._s_detail_slice = slice(p_npars, p_npars+s_npars-volfrac_in_p)
+        self._volfrac_in_p = volfrac_in_p
 
-        # Retrieve the volume fraction, which is the second of the
-        # 'S' parameters in the parameter list, or 2+np in 0-origin,
-        # as well as the scale and background.
-        volfrac = values[3+p_npars]
+        # P block from data vector, without scale and background
+        first_p = 2
+        last_p = p_npars + 2
+        self._p_value_slice = slice(first_p, last_p)
+
+        # radius_effective is the first parameter in S from the data vector.
+        self._er_index = last_p
+
+        # S block from data vector, without scale, background, volfrac or er.
+        first_s = last_p + 2 - volfrac_in_p
+        last_s = first_s + s_npars - 2
+        self._s_value_slice = slice(first_s, last_s)
+
+        # S distribution block in S data vector starts after all S values
+        self._s_dist_slice = slice(2 + s_npars, None)
+
+        # structure_factor_mode is the first parameter after P and S.  Skip
+        # 2 for scale and background, and subtract 1 in case there is no
+        # volfraction in S.
+        self._beta_mode_index = last_s if have_beta_mode else 0
+
+        # radius_effective_mode is the second parameter after P and S
+        # unless structure_factor_mode isn't available, in which case it
+        # is first.
+        self._er_mode_index = last_s + have_beta_mode if have_er_mode else 0
+
+        # Magnetic parameters are after everything else.  If they exist,
+        # they will only be for form factor P, not structure factor S.
+        first_mag = last_s + have_beta_mode + have_er_mode
+        mag_pars = 3*p_info.parameters.nmagnetic
+        last_mag = first_mag + (mag_pars + 3 if mag_pars else 0)
+        self._magentic_slice = slice(first_mag, last_mag)
+
+    def Iq(self, call_details, values, cutoff, magnetic):
+        # type: (CallDetails, np.ndarray, float, bool) -> np.ndarray
+        p_info, s_info = self.info.composition[1]
+
+        # Retrieve values from the data vector
         scale, background = values[0], values[1]
+        volfrac = values[self._volfrac_index]
+        er_mode = (int(values[self._er_mode_index])
+                   if self._er_mode_index > 0 else 0)
+        beta_mode = (values[self._beta_mode_index] > 0
+                     if self._beta_mode_index > 0 else False)
 
-        # if there are magnetic parameters, they will only be on the
-        # form factor P, not the structure factor S.
-        nmagnetic = len(self.info.parameters.magnetism_index)
-        if nmagnetic:
-            spin_index = self.info.parameters.npars + 2
-            magnetism = values[spin_index: spin_index+3+3*nmagnetic]
-        else:
-            magnetism = []
         nvalues = self.info.parameters.nvalues
         nweights = call_details.num_weights
         weights = values[nvalues:nvalues + 2*nweights]
 
+        # Can't do 2d and beta_mode just yet
+        if beta_mode and self.p_kernel.dim == '2d':
+            raise NotImplementedError("beta not yet supported for 2D")
+
         # Construct the calling parameters for P.
+        p_length = call_details.length[self._p_detail_slice]
+        p_offset = call_details.offset[self._p_detail_slice]
         p_details = make_details(p_info, p_length, p_offset, nweights)
         p_values = [
             [1., 0.], # scale=1, background=0,
-            values[2:2+p_npars],
-            magnetism,
+            values[self._p_value_slice],
+            values[self._magentic_slice],
             weights]
         spacer = (32 - sum(len(v) for v in p_values)%32)%32
         p_values.append([0.]*spacer)
         p_values = np.hstack(p_values).astype(self.p_kernel.dtype)
 
+        # Call the form factor kernel to compute <F> and <F^2>.
+        # If the model doesn't support Fq the returned <F> will be None.
+        F, Fsq, radius_effective, shell_volume, volume_ratio \
+            = self.p_kernel.Fq(p_details, p_values, cutoff, magnetic, er_mode)
+        p_intermediate = getattr(self.p_kernel, 'results', None)
+
+        # TODO: async call to the GPU
+
         # Construct the calling parameters for S.
-        if radius_type > 0:
-            # If R_eff comes from form factor, make sure it is monodisperse.
-            # weight is set to 1 later, after the value array is created
+        s_length = call_details.length[self._s_detail_slice]
+        s_offset = call_details.offset[self._s_detail_slice]
+        if self._volfrac_in_p:
+            # Volfrac is in P and missing from S so insert a slot for it.  Say
+            # the distribution is length 1 and use the slot for volfraction
+            # from the P distribution.
+            s_length = np.insert(s_length, 1, 1)
+            s_offset = np.insert(s_offset, 1, p_offset[self._volfrac_index - 2])
+        if er_mode > 0:
+            # If effective_radius comes from P, make sure it is monodisperse.
+            # Weight is set to 1 later, after the value array is created
             s_length[0] = 1
         s_details = make_details(s_info, s_length, s_offset, nweights)
         s_values = [
-            [1., 0.], # scale=1, background=0,
-            values[2+p_npars:2+p_npars+s_npars],
+            [1., # scale=1
+             0., # background=0,
+             values[self._er_index], # S.radius_effective; may be replaced by P
+             0.], # volfraction; will be replaced by volfrac * volume_ratio
+            # followed by S parameters after effective_radius and volfraction
+            values[self._s_value_slice],
             weights,
         ]
         spacer = (32 - sum(len(v) for v in s_values)%32)%32
         s_values.append([0.]*spacer)
         s_values = np.hstack(s_values).astype(self.s_kernel.dtype)
 
-        # Call the form factor kernel to compute <F> and <F^2>.
-        # If the model doesn't support Fq the returned <F> will be None.
-        F1, F2, radius_effective, shell_volume, volume_ratio = self.p_kernel.Fq(
-            p_details, p_values, cutoff, magnetic, radius_type)
-        p_intermediate = getattr(self.p_kernel, 'results', None)
-
-        # Call the structure factor kernel to compute S.
         # Plug R_eff from the form factor into structure factor parameters
         # and scale volume fraction by form:shell volume ratio. These changes
         # needs to be both in the initial value slot as well as the
@@ -340,23 +500,32 @@ class ProductKernel(Kernel):
         # implementation details in kernel_iq.c.
         #print("R_eff=%d:%g, volfrac=%g, volume ratio=%g"
         #      % (radius_type, radius_effective, volfrac, volume_ratio))
-        if radius_type > 0:
+        s_dist = s_values[self._s_dist_slice]
+        if er_mode > 0:
             # set the value to the model R_eff and set the weight to 1
-            s_values[2] = s_values[2+s_npars+s_offset[0]] = radius_effective
-            s_values[2+s_npars+s_offset[0]+nweights] = 1.0
-        s_values[3] = s_values[2+s_npars+s_offset[1]] = volfrac*volume_ratio
-        S = self.s_kernel.Iq(s_details, s_values, cutoff, False)
+            s_values[2] = s_dist[s_offset[0]] = radius_effective
+            s_dist[s_offset[0]+nweights] = 1.0
+        s_values[3] = s_dist[s_offset[1]] = volfrac*volume_ratio
+        s_dist[s_offset[1]+nweights] = 1.0
 
-        # Determine overall scale factor. Hollow shapes are weighted by
-        # shell_volume, so that is needed for volume normalization.  For
-        # solid shapes we can use shell_volume as well since it is equal
-        # to form volume.
-        combined_scale = scale*volfrac/shell_volume
+        # Call the structure factor kernel to compute S.
+        S = self.s_kernel.Iq(s_details, s_values, cutoff, False)
+        #print("P", Fsq[:10])
+        #print("S", S[:10])
+        #print(radius_effective, volfrac*volume_ratio)
 
         # Combine form factor and structure factor
-        #print("beta", beta_mode, F1, F2, S)
-        PS = F2 + F1**2*(S-1) if beta_mode else F2*S
-        final_result = combined_scale*PS + background
+        #print("beta", beta_mode, F, Fsq, S)
+        PS = Fsq + F**2*(S-1) if beta_mode else Fsq*S
+
+        # Determine overall scale factor. Hollow shapes are weighted by
+        # shell_volume, so that is needed for number density estimation.
+        # For solid shapes we can use shell_volume as well since it is
+        # equal to form volume.  If P already has a volfraction parameter,
+        # then assume that it is already on absolute scale, and don't
+        # include volfrac in the combined_scale.
+        combined_scale = scale*(volfrac if not self._volfrac_in_p else 1.0)
+        final_result = combined_scale/shell_volume*PS + background
 
         # Capture intermediate values so user can see them.  These are
         # returned as a lazy evaluator since they are only needed in the
@@ -367,9 +536,9 @@ class ProductKernel(Kernel):
         # kernel calling interface.  Could do this as an "optional"
         # return value in the caller, though in that case we could return
         # the results directly rather than through a lazy evaluator.
-        self.results = lambda: _intermediates(self.q,
-            F1, F2, S, combined_scale, radius_effective, beta_mode,
-            p_intermediate)
+        self.results = lambda: _intermediates(
+            self.q, F, Fsq, S, combined_scale, shell_volume, volume_ratio,
+            radius_effective, beta_mode, p_intermediate)
 
         return final_result
 

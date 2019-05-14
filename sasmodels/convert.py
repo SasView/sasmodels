@@ -657,6 +657,5 @@ def test_backward_forward():
     Test conversion of model parameters from 4.x to 3.x and back.
     """
     from .core import list_models
-    L = lambda name: _check_one(name, seed=1)
     for name in list_models('all'):
-        yield L, name
+        _check_one(name, seed=1)
