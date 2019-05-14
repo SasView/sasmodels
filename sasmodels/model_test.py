@@ -338,7 +338,7 @@ def _hide_model_case_from_nose():
                 self._check_vectors(x, y, actual, 'I')
                 if len(test) == 4:
                     results = getattr(kernel, 'results', lambda: {})
-                    self._check_struct(x, test[3], results(), "parts")
+                    self._check_struct(x, test[3], results())
                 return actual
             elif len(test) == 7:
                 y1 = y
@@ -372,37 +372,45 @@ def _hide_model_case_from_nose():
                 return
             for xi, yi, actual_yi in zip(x, target, actual):
                 if not is_near(yi, actual_yi, 5):
+                    # convert array to list so we have comma separated output
+                    actual = actual.tolist()
                     self._failures.append('%s(%s): expected:%s; actual:%s'
                                           % (name, xi, target, actual))
                     # Whole list is printed on any error, so fail on first
                     return
 
-        def _check_struct(self, x, target, actual, name):
+        def _check_struct(self, x, target, actual):
             for k, v in target.items():
-                name_k = "%s[%s]" % (name, k)
                 if k not in actual:
-                    self._failures.append('%s: missing %r in actual'
-                                          % (name_k, k))
+                    self._failures.append('key %r not in returned value' % k)
                     continue
                 target_k = v
                 actual_k = actual[k]
                 if np.isscalar(actual_k):  # number
-                    self._check_scalar(target_k, actual_k, name_k)
+                    self._check_scalar(target_k, actual_k, k)
                 elif isinstance(actual_k, np.ndarray): # vector
-                    self._check_vectors(x, target_k, actual_k, name_k)
+                    self._check_vectors(x, target_k, actual_k, k)
                 elif isinstance(actual_k, tuple) and len(actual_k) == 2:
-                    self._check_vectors(x, x, actual_k[0], name_k+"[0]")
-                    self._check_vectors(x, target_k, actual_k[1], name_k+"[1]")
+                    # Intermediate is returned as (Q, I(Q)) pair.  The test
+                    # is set up to use |Q| or (Qx, Qy) as input, but the
+                    # returned result has (|Q|,) or (Qx, Qy).  For now we will
+                    # ignore the first result.
+                    #self._check_vectors(x, x, actual_k[0], k+" (Q)")
+                    self._check_vectors(x, target_k, actual_k[1], k)
                 elif isinstance(actual_k, dict):
-                    self._check_struct(x, target_k, actual_k, name)
+                    self._check_struct(x, target_k, actual_k)
                 else:
-                    self._failures.append('%s: unexpected value %r'
-                                          % (name_k, actual_k))
+                    self._failures.append('key %s: unexpected value %r'
+                                          % (k, actual_k))
+            # Ignore effective_radius in returned result; it will be dropped
+            actual.pop('effective_radius', None)
             if any(k not in target for k in actual):
-                self._failures.append('missing the following intermediate values')
+                self._failures.append('intermediate results missing:')
                 for k, v in actual.items():
                     if k not in target:
-                        if isinstance(v, np.ndarray):
+                        if isinstance(v, tuple) and len(v) == 2:
+                            v = v[1].tolist()
+                        elif isinstance(v, np.ndarray):
                             v = v.tolist()
                         self._failures.append('  "%s": %r,' % (k, v))
 
