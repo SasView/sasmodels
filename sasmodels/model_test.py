@@ -333,11 +333,14 @@ def _hide_model_case_from_nose():
                 q_vectors = [np.array(x)]
 
             kernel = model.make_kernel(q_vectors)
-            if len(test) == 3:
+            if len(test) == 3 or len(test) == 4:
                 actual = call_kernel(kernel, pars)
                 self._check_vectors(x, y, actual, 'I')
+                if len(test) == 4:
+                    results = getattr(kernel, 'results', lambda: {})
+                    self._check_struct(x, test[3], results(), "parts")
                 return actual
-            else:
+            elif len(test) == 7:
                 y1 = y
                 y2 = test[3] if isinstance(test[3], list) else [test[3]]
                 F, Fsq, R_eff, volume, volume_ratio = call_Fq(kernel, pars)
@@ -348,6 +351,9 @@ def _hide_model_case_from_nose():
                 self._check_scalar(test[5], volume, 'volume')
                 self._check_scalar(test[6], volume_ratio, 'form:shell ratio')
                 return Fsq
+            else:
+                self._failures.append('wrong number or results for %s => %s'
+                                      % (str(user_pars), str(test[2:])))
 
         def _check_scalar(self, target, actual, name):
             if not is_near(target, actual, 5):
@@ -370,6 +376,35 @@ def _hide_model_case_from_nose():
                                           % (name, xi, target, actual))
                     # Whole list is printed on any error, so fail on first
                     return
+
+        def _check_struct(self, x, target, actual, name):
+            for k, v in target.items():
+                name_k = "%s[%s]" % (name, k)
+                if k not in actual:
+                    self._failures.append('%s: missing %r in actual'
+                                          % (name_k, k))
+                    continue
+                target_k = v
+                actual_k = actual[k]
+                if np.isscalar(actual_k):  # number
+                    self._check_scalar(target_k, actual_k, name_k)
+                elif isinstance(actual_k, np.ndarray): # vector
+                    self._check_vectors(x, target_k, actual_k, name_k)
+                elif isinstance(actual_k, tuple) and len(actual_k) == 2:
+                    self._check_vectors(x, x, actual_k[0], name_k+"[0]")
+                    self._check_vectors(x, target_k, actual_k[1], name_k+"[1]")
+                elif isinstance(actual_k, dict):
+                    self._check_struct(x, target_k, actual_k, name)
+                else:
+                    self._failures.append('%s: unexpected value %r'
+                                          % (name_k, actual_k))
+            if any(k not in target for k in actual):
+                self._failures.append('missing the following intermediate values')
+                for k, v in actual.items():
+                    if k not in target:
+                        if isinstance(v, np.ndarray):
+                            v = v.tolist()
+                        self._failures.append('  "%s": %r,' % (k, v))
 
     return ModelTestCase
 
