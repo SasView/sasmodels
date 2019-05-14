@@ -1183,6 +1183,7 @@ PLEASE make sure that the answer value is correct (i.e. not a random number).
         [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
          0.1, None, None, 120., None, 1.],  # q, F, F^2, R_eff, V, form:shell
         [{"@S": "hardsphere"}, 0.1, None],
+        [{"@S": "hardsphere"}, 0.1, None, {"S_eff(Q)": ...}],
     ]
 
 
@@ -1207,6 +1208,10 @@ Each list is one test and contains, in order:
 - for testing interaction between form factor and structure factor, specify
   the structure factor name in the parameters as *{"@S": "name", ...}* with
   the remaining list of parameters defined by the *P@S* interaction model.
+- for examining the intermediate results computed by the model, use the
+  extended form with *{"key": value}* pairs, one for each intermediate value
+  returned from the model.  Starting with an empty *{}* will produce a
+  complete list of computed intermediates.
 
 .. _Test_Your_New_Model:
 
