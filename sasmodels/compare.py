@@ -860,6 +860,7 @@ def run_models(opts, verbose=False):
             print("%s t=%.2f ms, intensity=%.0f"
                   % (base.engine, base_time, base_value.sum()))
         _show_invalid(base_data, base_value)
+        #if base.results is not None: print(base.results())
     except ImportError:
         traceback.print_exc()
 
