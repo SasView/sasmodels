@@ -12,8 +12,8 @@ the details of the geometry and restrictions on parameter values.
 
     Barbell geometry, where $r$ is *radius*, $R$ is *radius_bell* and
     $L$ is *length*. Since the end cap radius $R \geq r$ and by definition
-    for this geometry $h < 0$, $h$ is then defined by $r$ and $R$ as
-    $h = - \sqrt{R^2 - r^2}$
+    for this geometry $h \ge 0$, $h$ is then defined by $r$ and $R$ as
+    $h = \sqrt{R^2 - r^2}$
 
 The scattered intensity $I(q)$ is calculated as
 
@@ -48,18 +48,16 @@ The volume of the barbell is
 
     V = \pi r_c^2 L + 2\pi\left(\tfrac23R^3 + R^2h-\tfrac13h^3\right)
 
-
 and its radius of gyration is
 
 .. math::
 
-    R_g^2 =&\ \left[ \tfrac{12}{5}R^5
-        + R^4\left(6h+\tfrac32 L\right)
-        + R^2\left(4h^2 + L^2 + 4Lh\right)
-        + R^2\left(3Lh^2 + \tfrac32 L^2h\right) \right. \\
-        &\ \left. + \tfrac25 h^5 - \tfrac12 Lh^4 - \tfrac12 L^2h^3
-        + \tfrac14 L^3r^2 + \tfrac32 Lr^4 \right]
-        \left( 4R^3 6R^2h - 2h^3 + 3r^2L \right)^{-1}
+    R_g^2 =&\ \left[ \tfrac{12}{5}R^4
+        + R^3\left(3L + \tfrac{18}{5} h\right)
+        + R^2\left(L^2 + Lh + \tfrac25 h^2\right)
+        + R\left(\tfrac14 L^3 + \tfrac12 L^2h - Lh^2\right) \right. \\
+        &\ \left. + Lh^4 - \tfrac12 L^2h^3 - \tfrac14 L^3h + \tfrac25 h^4\right]
+        \left( 4R^2 + 3LR + 2Rh - 3Lh - 2h^2\right)^{-1}
 
 .. note::
     The requirement that $R \geq r$ is not enforced in the model! It is
