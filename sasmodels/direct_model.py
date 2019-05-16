@@ -286,6 +286,7 @@ class DataMixin(object):
         self._kernel = None
         self.Iq, self.dIq, self.index = Iq, dIq, index
         self.resolution = res
+        self.results = None  # type: Optional[Callable[[], OrderedDict]
 
     def _set_data(self, Iq, noise=None):
         # type: (np.ndarray, Optional[float]) -> None
@@ -334,6 +335,7 @@ class DataMixin(object):
         pars['background'] = 0.
 
         Iq_calc = call_kernel(self._kernel, pars, cutoff=cutoff)
+        self.results = getattr(self._kernel, 'results', None)
         # Storing the calculated Iq values so that they can be plotted.
         # Only applies to oriented USANS data for now.
         # TODO: extend plotting of calculate Iq to other measurement types

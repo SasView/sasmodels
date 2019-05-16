@@ -682,8 +682,8 @@ class SasviewModel(object):
                 _, lazy_results = self._calculate_Iq(qx)
                 # for compatibility with sasview 4.x
                 results = lazy_results()
-                pq_data = results.get("P(Q)")
-                sq_data = results.get("S(Q)")
+                pq_data = results.get("P(Q)")[1]
+                sq_data = results.get("S(Q)")[1]
                 return pq_data, sq_data
         else:
             return None
