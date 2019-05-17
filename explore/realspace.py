@@ -991,4 +991,11 @@ def main():
 
 
 if __name__ == "__main__":
+    # Make sure sasmodels in on the path
+    try:
+        import sasmodels
+    except ImportError:
+        import sys
+        from os.path import realpath, dirname, join as joinpath
+        sys.path.insert(0, dirname(dirname(realpath(__file__))))
     main()
