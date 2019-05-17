@@ -952,9 +952,9 @@ def main():
     parser.add_argument('-d', '--dim', type=int, default=1,
                         help='dimension 1 or 2')
     parser.add_argument('-m', '--mesh', type=int, default=100,
-                        help='number of mesh points')
+                        help='number of mesh points in the computed scattering')
     parser.add_argument('-s', '--samples', type=int, default=5000,
-                        help="number of sample points")
+                        help="number of sample points in the Monte Carlo estimate")
     parser.add_argument('-q', '--qmax', type=float, default=0.5,
                         help='max q')
     parser.add_argument('-v', '--view', type=str, default='0,0,0',
