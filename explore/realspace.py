@@ -215,6 +215,49 @@ class EllipticalBicelle(Shape):
         values[radius>1] = self.value_rim
         return values, self._adjust(self._scale*points)
 
+class TruncatedSphere(Shape):
+    """
+    Sphere of radius r, with points z < -h truncated.
+    """
+    def __init__(self, r, h, value, center=(0, 0, 0), orientation=(0, 0, 0)):
+        self.value = np.asarray(value)
+        self.rotate(*orientation)
+        self.shift(*center)
+        self.r, self.h = r, h
+        # Max distance between points in the shape is the maximum diameter
+        self.r_max = 2*r if h >= 0 else 2*sqrt(r**2 - h**2)
+        self.dims = self.r_max, self.r_max, r+h
+        self.volume = pi*(2*r**3/3 + r**2*h - h**3/3)
+        Vp = pi*(2*r**3/3 + r**2*h - h**3/3)
+        Vm = pi*(2*r**3/3 - r**2*h + h**3/3)
+        Vd = Vp + Vm - 4*pi*r**3/3
+
+    def sample(self, density):
+        num_points = poisson(density*np.prod(self.dims))
+        points = uniform(-1, 1, size=(num_points, 3))
+        # Translate U ~ [-1, 1] in x,y to [-r_trunc/r, r_trunc/r] when
+        # truncation starts above the equator, otherwise leave it at [-1, 1].
+        # This makes for more efficient sampling since we don't have to
+        # consider the maximum diameter.  We already calculated r_max as
+        # 2*r_trunc in this case, so just use the ratio of r_max to 2*r.
+        points[:, 0:2] *= 0.5*self.r_max/self.r
+        # Translate U ~ [-1, 1] in z to [-h/r, 1], with h representing
+        # distance below equator.  So:
+        #    (U + 1)/2 => [0, 1]
+        #    [0, 1] * (1+h/r) => [0, 1+h/r]
+        #    [0, 1+h/r] - h/r => [-h/r, 1]
+        # Combining:
+        #    (U + 1)/2 * (1+h/r) - h/r
+        #       = U*(1+h/r)/2 + (1+h/r)/2 - h/r
+        #       = U*(1/2 + h/2r) + 1/2 + h/2r - 2h/2r
+        ratio = 0.5*self.h/self.r
+        points[:, 2] *= (0.5 + ratio)
+        points[:, 2] += (0.5 - ratio)
+        radius = np.sum(points**2, axis=1)
+        points = self.r*points[radius<=1]
+        values = self.value.repeat(points.shape[0])
+        return values, self._adjust(points)
+
 class TriaxialEllipsoid(Shape):
     def __init__(self, ra, rb, rc,
                  value, center=(0, 0, 0), orientation=(0, 0, 0)):
@@ -302,6 +345,31 @@ def csbox(a=10, b=20, c=30, da=1, db=2, dc=3, slda=1, sldb=2, sldc=3, sld_core=4
     side_c2 = copy(side_c).shift(0, 0, -c-dc)
     shape = Composite((core, side_a, side_b, side_c, side_a2, side_b2, side_c2))
     shape.dims = 2*da+a, 2*db+b, 2*dc+c
+    return shape
+
+def barbell(r=20, rbell=50, length=20, rho=2):
+    h = sqrt(rbell**2 - r**2)
+    top = TruncatedSphere(rbell, h, value=rho, center=(0, 0, length/2+h))
+    rod = EllipticalCylinder(r, r, length, value=rho)
+    bottom = TruncatedSphere(rbell, h, value=rho, center=(0, 0, -length/2-h),
+                             orientation=(180, 0, 0))
+    shape = Composite((top, rod, bottom))
+    shape.dims = 2*rbell, 2*rbell, length+2*(rbell+h)
+    # r_max should be total length?
+    shape.r_max = (length + 2*(rbell + h))
+    return shape
+
+def capped_cylinder(r=20, rcap=50, length=20, rho=2):
+    h = -sqrt(rcap**2 - r**2)
+    top = TruncatedSphere(rcap, h, value=rho, center=(0, 0, length/2+h))
+    rod = EllipticalCylinder(r, r, length, value=rho)
+    bottom = TruncatedSphere(rcap, h, value=rho, center=(0, 0, -length/2-h),
+                             orientation=(180, 0, 0))
+    shape = Composite((top, rod, bottom))
+    shape.dims = 2*r, 2*r, length+2*(rcap+h)
+    # r_max is the length of the diagonal + height of the cap for safety.
+    # This is a bit larger than necessary, but that's better than truncation.
+    shape.r_max = sqrt(length**2 + 4*r**2) + (rcap + h)
     return shape
 
 def _Iqxy(values, x, y, z, qa, qb, qc):
@@ -471,10 +539,12 @@ def plot_calc(r, Pr, q, Iq, theory=None, title=None):
     plt.ylabel('Pr (1/A^2)')
     if title is not None:
         plt.title(title)
+    plt.grid(True)
     plt.subplot(212)
     plt.loglog(q, Iq, '-', label='from Pr')
     plt.xlabel('q (1/A')
     plt.ylabel('Iq')
+    plt.grid(True)
     if theory is not None:
         plt.loglog(theory[0], theory[1]/theory[1][0], '-', label='analytic')
         plt.legend()
@@ -484,7 +554,7 @@ def plot_calc_2d(qx, qy, Iqxy, theory=None, title=None):
     qx, qy = bin_edges(qx), bin_edges(qy)
     #qx, qy = np.meshgrid(qx, qy)
     if theory is not None:
-        plt.subplot(121)
+        plt.subplot(131)
     #plt.pcolor(qx, qy, np.log10(Iqxy))
     extent = [qx[0], qx[-1], qy[0], qy[-1]]
     plt.imshow(np.log10(Iqxy), extent=extent, interpolation="nearest",
@@ -497,12 +567,21 @@ def plot_calc_2d(qx, qy, Iqxy, theory=None, title=None):
     if title is not None:
         plt.title(title)
     if theory is not None:
-        plt.subplot(122)
+        plt.subplot(132)
         plt.imshow(np.log10(theory), extent=extent, interpolation="nearest",
                    origin='lower')
         plt.axis('equal')
         plt.axis(extent)
         plt.xlabel('qx (1/A)')
+
+    if theory is not None:
+        plt.subplot(133)
+        rel = (theory-Iqxy*(np.sum(theory)/np.sum(Iqxy)))/theory
+        plt.imshow(rel, extent=extent, interpolation="nearest", origin='lower')
+        plt.axis('equal')
+        plt.axis(extent)
+        plt.xlabel('qx (1/A)')
+        plt.title('max rel. err=%g' % np.max(abs(rel)))
 
 def plot_points(rho, points):
     import mpl_toolkits.mplot3d
@@ -655,7 +734,7 @@ def csbox_Iqxy(qx, qy, a, b, c, da, db, dc, slda, sldb, sldc, sld_core, view=(0,
     Iq = Fq**2
     return Iq.reshape(qx.shape)
 
-def sasmodels_Iq(kernel, q, pars):
+def _sasmodels_Iq(kernel, q, pars):
     from sasmodels.data import empty_data1D
     from sasmodels.direct_model import DirectModel
     data = empty_data1D(q)
@@ -663,7 +742,7 @@ def sasmodels_Iq(kernel, q, pars):
     Iq = calculator(**pars)
     return Iq
 
-def sasmodels_Iqxy(kernel, qx, qy, pars, view):
+def _sasmodels_Iqxy(kernel, qx, qy, pars, view):
     from sasmodels.data import Data2D
     from sasmodels.direct_model import DirectModel
     Iq = 100 * np.ones_like(qx)
@@ -681,8 +760,8 @@ def sasmodels_Iqxy(kernel, qx, qy, pars, view):
 def wrap_sasmodel(name, **pars):
     from sasmodels.core import load_model
     kernel = load_model(name)
-    fn = lambda q: sasmodels_Iq(kernel, q, pars)
-    fn_xy = lambda qx, qy, view: sasmodels_Iqxy(kernel, qx, qy, pars, view)
+    fn = lambda q: _sasmodels_Iq(kernel, q, pars)
+    fn_xy = lambda qx, qy, view: _sasmodels_Iqxy(kernel, qx, qy, pars, view)
     return fn, fn_xy
 
 
@@ -711,6 +790,34 @@ def build_csbox(a=10, b=20, c=30, da=1, db=2, dc=3, slda=1, sldb=2, sldc=3, sld_
     fn = lambda q: csbox_Iq(q, a, b, c, da, db, dc, slda, sldb, sldc, sld_core)
     fn_xy = lambda qx, qy, view: csbox_Iqxy(qx, qy, a, b, c, da, db, dc,
                                             slda, sldb, sldc, sld_core, view=view)
+    return shape, fn, fn_xy
+
+def build_barbell(r=20, rbell=50, length=20, rho=2.):
+    shape = barbell(r, rbell, length, rho)
+    fn, fn_xy = wrap_sasmodel(
+        'barbell',
+        scale=1,
+        background=0,
+        radius=r,
+        radius_bell=rbell,
+        length=length,
+        sld=rho,
+        sld_solvent=0,
+    )
+    return shape, fn, fn_xy
+
+def build_capcyl(r=20, rcap=50, length=20, rho=2.):
+    shape = capped_cylinder(r, rcap, length, rho)
+    fn, fn_xy = wrap_sasmodel(
+        'capped_cylinder',
+        scale=1,
+        background=0,
+        radius=r,
+        radius_cap=rcap,
+        length=length,
+        sld=rho,
+        sld_solvent=0,
+    )
     return shape, fn, fn_xy
 
 def build_ellcyl(ra=25, rb=50, length=125, rho=2.):
@@ -768,6 +875,8 @@ def build_cubic_lattice(shape, nx=1, ny=1, nz=1, dx=2, dy=2, dz=2,
 SHAPE_FUNCTIONS = OrderedDict([
     ("cyl", build_cylinder),
     ("ellcyl", build_ellcyl),
+    ("barbell", build_barbell),
+    ("capcyl", build_capcyl),
     ("sphere", build_sphere),
     ("box", build_box),
     ("csbox", build_csbox),
@@ -808,12 +917,15 @@ def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
     t0 = time.time()
     rho, points = shape.sample(sampling_density)
     print("point generation time", time.time() - t0)
+    #print("bounding box", points.min(axis=0), points.max(axis=0))
     t0 = time.time()
     Iqxy = calc_Iqxy(Qx, Qy, rho, points, view=view)
     print("calc Iqxy time", time.time() - t0)
     t0 = time.time()
     theory = fn(Qx, Qy, view) if fn is not None else None
     print("calc theory time", time.time() - t0)
+
+    # Add floor to limit colorbar range.
     Iqxy += 0.001 * Iqxy.max()
     if theory is not None:
         theory += 0.001 * theory.max()
@@ -823,6 +935,13 @@ def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
         plot_points(rho, points); pylab.figure()
     plot_calc_2d(qx, qy, Iqxy, theory=theory, title=title)
     pylab.gcf().canvas.set_window_title(title)
+
+    ## Histogram of point density in the z direction.
+    #pylab.figure()
+    ##bins = 100  # fixed number of bins
+    #limit=25; bins = np.arange(-limit, limit+0.001, 1) # particular limits
+    #pylab.hist(points[:,2], bins=bins)
+
     pylab.show()
 
 def main():

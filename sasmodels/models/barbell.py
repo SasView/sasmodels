@@ -152,7 +152,8 @@ demo = dict(scale=1, background=0,
             phi_pd=15, phi_pd_n=0,
            )
 q = 0.1
-# april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
+# 2017-04-06: rkh add unit tests, NOT compared with any other calc method, assume correct!
+# 2019-05-17: pak added barbell/capped cylinder to realspace sampling tests
 qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
 tests = [
