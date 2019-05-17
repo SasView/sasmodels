@@ -450,7 +450,7 @@ def _calc_Pr_uniform(r, rho, points):
     return Pr
 
     # Can get an additional 2x by going to C.  Cuda/OpenCL will allow even
-    # more speedup, though still bounded by the n^2 cose.
+    # more speedup, though still bounded by the O(n^2) cost.
     """
 void pdfcalc(int n, const double *pts, const double *rho,
 	     int nPr, double *Pr, double rstep)
