@@ -4,7 +4,7 @@
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
-.. _Product_Models:
+.. _Interaction_Models:
 
 Fitting Models with Structure Factors
 -------------------------------------
@@ -13,15 +13,16 @@ Fitting Models with Structure Factors
 
    This help document is under development
 
-**Product models**, or $P@S$ models for short, multiply the form factor
-$P(Q)$ by the structure factor $S(Q)$, modulated by the **effective radius**
-of the form factor. For the theory behind this, see :ref:`PStheory` later.
+**Interaction models** (previously called product models), or $P@S$ models
+for short, multiply the form factor $P(Q)$ by the structure factor $S(Q)$,
+modulated by the **effective radius** of the form factor. For the theory
+behind this, see :ref:`PStheory` later.
 
 Parameters
 ^^^^^^^^^^
 
-**Except for volfraction, when writing your own** $P@S$ **models, DO NOT give**
-**your model parameters these names!**
+**Except for volfraction, when writing your own** $P$ **and** $S$ **models,**
+**DO NOT give your model parameters these names!**
 
 Many parameters are common amongst $P@S$ models, but take on specific meanings:
 
@@ -96,7 +97,7 @@ Many parameters are common amongst $P@S$ models, but take on specific meanings:
 
     When **radius_effective_mode = 0** then the unconstrained
     **radius_effective** parameter in the $S(Q)$ model is used. *This is the*
-    *default in SasView versions 4.x and earlier*. Otherwise, in SasView 4.3
+    *default in SasView versions 4.2 and earlier*. Otherwise, in SasView 4.3
     and later, **radius_effective_mode = k** represents an index in a list of
     alternative **radius_effective** calculations.
 
@@ -116,7 +117,7 @@ Many parameters are common amongst $P@S$ models, but take on specific meanings:
     Note: **radius_effective_mode** will only appear in the parameter table if
     the model defines the list of modes, otherwise it will be set permanently
     to 0 for the user-defined effective radius.
-    
+
     **WARNING! If** $P(Q)$ **is multiplied by** $S(Q)$ **in the FitPage,**
     **instead of being generated in the Sum|Multi dialog, the**
     **radius_effective used is constrained (equivalent to**
@@ -126,9 +127,9 @@ Many parameters are common amongst $P@S$ models, but take on specific meanings:
 
     The type of structure factor calculation to use.
 
-    If the $P@S$ model supports the $\beta(Q)$ *decoupling correction* [1]
-    then **structure_factor_mode** will appear in the parameter table after
-    the $S(Q)$ parameters.
+    If the $P@S$ model supports the $\beta(Q)$ *decoupling correction*
+    [#kotlarchyk]_ then **structure_factor_mode** will appear in the
+    parameter table after the $S(Q)$ parameters.
 
     If **structure_factor_mode = 0** then the
     *local monodisperse approximation* will be used, i.e.:
@@ -234,15 +235,62 @@ over size, $\langle \cdot \rangle_\mathbf\xi = \int_\Xi P_\mathbf\xi \langle\cdo
 $n = V_f\big/\langle V \rangle_\mathbf\xi$.
 
 Further improvements can be made using the local monodisperse
-approximation (LMA) or using partial structure factors [2].
+approximation (LMA) or using partial structure factors as done in [#bressler]_,
+but these are not implemented in this code.
+
+For hollow shapes, *volfraction* is computed from the material in the
+shell rather than the shell plus solvent inside the shell.  Using
+$V_e(\mathbf\xi)$ as the enclosed volume of the shell plus solvnt and
+$V_c(\mathbf\xi)$ as the core volume of solvent inside the shell, we
+can compute the average enclosed and shell volumes as
+
+.. math::
+    :nowrap:
+
+    \begin{align*}
+    \langle V_e \rangle &= \frac{
+        \int_\Xi P_\mathbf\xi V_e(\mathbf\xi)\,\mathrm d\mathbf\xi
+    }{ \int_\Xi P_\mathbf\xi\,\mathrm d\mathbf xi } \\
+    \langle V_s \rangle &= \frac{
+        \int_\Xi P_\mathbf\xi (V_e(\mathbf\xi) - V_c(\mathbf\xi))\,\mathrm d\mathbf\xi
+    }{ \int_\Xi P_\mathbf\xi\,\mathrm d\mathbf xi }
+    \end{align*}
+
+Given $n$ particles and a total solvent volume $V_\text{out}$ outside the
+shells, the volume fraction of the shell, $\phi_s$ and the shell plus
+enclosed solvent $\phi_e$ are
+
+.. math::
+    :nowrap:
+
+    \begin{align*}
+    \phi_s &= \frac{n \langle V_s \rangle}{n \langle V_s \rangle + n \langle V_c \rangle + V_\text{out}}
+           = \frac{n \langle V_s \rangle}{V_\text{total}} \\
+    \phi_e &= \frac{n \langle V_e \rangle}{n \langle V_e \rangle + V_\text{out}}
+           = \frac{n \langle V_e \rangle}{V_\text{total}}
+    \end{align*}
+
+Dividing gives
+
+.. math::
+
+    \frac{\phi_S}{\phi_P} = \frac{\langle V_e \rangle}{\langle V_s \rangle}
+
+so the enclosed volume fraction can be computed from the shell volume fraction
+and the form:shell volume ratio as
+
+.. math::
+
+    \phi_S = \phi_P \langle V_e \rangle \big/ \langle V_s \rangle
+
 
 References
 ^^^^^^^^^^
 
-.. [#] Kotlarchyk, M.; Chen, S.-H. *J. Chem. Phys.*, 1983, 79, 2461
+.. [#kotlarchyk] Kotlarchyk, M.; Chen, S.-H. *J. Chem. Phys.*, 1983, 79, 2461
 
-.. [#] Bressler I., Kohlbrecher J., Thunemann A.F. *J. Appl. Crystallogr.*
-   48 (2015) 1587-1598
+.. [#bressler] Bressler I., Kohlbrecher J., Thunemann A.F.
+   *J. Appl. Crystallogr.* 48 (2015) 1587-1598
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
