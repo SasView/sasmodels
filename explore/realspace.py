@@ -792,6 +792,47 @@ def build_csbox(a=10, b=20, c=30, da=1, db=2, dc=3, slda=1, sldb=2, sldc=3, sld_
                                             slda, sldb, sldc, sld_core, view=view)
     return shape, fn, fn_xy
 
+def build_ellcyl(ra=25, rb=50, length=125, rho=2.):
+    shape = EllipticalCylinder(ra, rb, length, rho)
+    fn, fn_xy = wrap_sasmodel(
+        'elliptical_cylinder',
+        scale=1,
+        background=0,
+        radius_minor=ra,
+        axis_ratio=rb/ra,
+        length=length,
+        sld=rho,
+        sld_solvent=0,
+    )
+    return shape, fn, fn_xy
+
+def build_ellip(rab=125, rc=50, rho=2):
+    shape = TriaxialEllipsoid(rab, rab, rc, rho)
+    fn, fn_xy = wrap_sasmodel(
+        'ellipsoid',
+        scale=1,
+        background=0,
+        radius_equatorial=rab,
+        radius_polar=rc,
+        sld=rho,
+        sld_solvent=0,
+    )
+    return shape, fn, fn_xy
+
+def build_triell(ra=125, rb=200, rc=50, rho=2):
+    shape = TriaxialEllipsoid(ra, rb, rc, rho)
+    fn, fn_xy = wrap_sasmodel(
+        'triaxial_ellipsoid',
+        scale=1,
+        background=0,
+        radius_equat_minor=ra,
+        radius_equat_major=rb,
+        radius_polar=rc,
+        sld=rho,
+        sld_solvent=0,
+    )
+    return shape, fn, fn_xy
+
 def build_barbell(r=20, rbell=50, length=20, rho=2.):
     shape = barbell(r, rbell, length, rho)
     fn, fn_xy = wrap_sasmodel(
@@ -814,21 +855,6 @@ def build_capcyl(r=20, rcap=50, length=20, rho=2.):
         background=0,
         radius=r,
         radius_cap=rcap,
-        length=length,
-        sld=rho,
-        sld_solvent=0,
-    )
-    return shape, fn, fn_xy
-
-def build_ellcyl(ra=25, rb=50, length=125, rho=2.):
-    shape = EllipticalCylinder(ra, rb, length, rho)
-    fn, fn_xy = wrap_sasmodel(
-        'elliptical_cylinder',
-        scale=1,
-        background=0,
-        radius_minor=ra,
-        axis_ratio=rb/ra,
-        length=length,
         sld=rho,
         sld_solvent=0,
     )
@@ -871,10 +897,11 @@ def build_cubic_lattice(shape, nx=1, ny=1, nz=1, dx=2, dy=2, dz=2,
     lattice = Composite(shapes)
     return lattice
 
-
 SHAPE_FUNCTIONS = OrderedDict([
     ("cyl", build_cylinder),
     ("ellcyl", build_ellcyl),
+    ("ellip", build_ellip),
+    ("triell", build_triell),
     ("barbell", build_barbell),
     ("capcyl", build_capcyl),
     ("sphere", build_sphere),
