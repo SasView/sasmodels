@@ -4,7 +4,13 @@ import time
 from copy import copy
 import os
 import argparse
+import inspect
 from collections import OrderedDict
+
+try:
+    from inspect import getfullargspec
+except ImportError:
+    from inspect import getargspec as getfullargspec
 
 import numpy as np
 from numpy import pi, radians, sin, cos, sqrt, clip
@@ -1156,6 +1162,17 @@ def check_shape_mag(title, shape, fn=None, view=(0, 0, 0), show_points=False,
 
     pylab.show()
 
+
+def check_pars(function, pars, name):
+    spec = getfullargspec(function)
+    incorrect = [p for p in pars if p not in spec.args]
+    if any(incorrect):
+        print("realspace.py: error: invalid parameters to %s: [%s].  Available paramters are:"
+              % (name, ", ".join(incorrect)))
+        print("   ", "\n    ".join("%s: %g"%(k,v) for k,v in zip(spec.args, spec.defaults)))
+        return False
+    return True
+
 def main():
     parser = argparse.ArgumentParser(
         description="Compute scattering from realspace sampling",
@@ -1189,7 +1206,10 @@ def main():
     nx, ny, nz = [int(v) for v in opts.lattice.split(',')]
     dx, dy, dz = [float(v) for v in opts.spacing.split(',')]
     shuffle, rotate = opts.shuffle, opts.rotate
-    shape, fn, fn_xy = SHAPE_FUNCTIONS[opts.shape](**pars)
+    shape_generator = SHAPE_FUNCTIONS[opts.shape]
+    if not check_pars(shape_generator, pars, name=opts.shape):
+        return
+    shape, fn, fn_xy = shape_generator(**pars)
     if nx > 1 or ny > 1 or nz > 1:
         shape = build_cubic_lattice(shape, nx, ny, nz, dx, dy, dz, shuffle, rotate)
     title = "%s(%s)" % (opts.shape, " ".join(opts.pars))
