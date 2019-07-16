@@ -109,14 +109,17 @@ def make_mixture_info(parts, operation='+'):
                 scale_prefix = ''.join(sub_prefixes) + '_'
             scale = Parameter(scale_prefix + 'scale', default=1.0,
                               description="model intensity for " + part.name)
-            combined_pars.append(scale)
+            # Scale gets added in modelinfo ParameterInfo constructor!
+            if not part.composition:
+                combined_pars.append(scale)
         for p in part.parameters.kernel_parameters:
             p = copy(p)
             p.name = prefix + p.name
             p.id = prefix + p.id
             if p.length_control is not None:
                 p.length_control = prefix + p.length_control
-            combined_pars.append(p)
+            if p.name not in [par.name for par in combined_pars]:
+                combined_pars.append(p)
     parameters = ParameterTable(combined_pars)
     # Allow for the scenario in which each component has all its PD parameters
     # active simultaneously.  details.make_details() will throw an error if
