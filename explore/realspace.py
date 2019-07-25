@@ -21,7 +21,7 @@ from scipy.special import j1 as J1
 
 try:
     import numba
-    USE_NUMBA = True
+    USE_NUMBA = os.environ.get('SAS_NUMBA', "1") == "1"
 except ImportError:
     USE_NUMBA = False
 
@@ -401,18 +401,19 @@ def _Iqabc(values, x, y, z, qa, qb, qc):
     """I(q) = |sum V(r) rho(r) e^(1j q.r)|^2 / sum V(r)"""
     Iq = [abs(np.sum(values*np.exp(1j*(qa_k*x + qb_k*y + qc_k*z))))**2
           for qa_k, qb_k, qc_k in zip(qa.flat, qb.flat, qc.flat)]
-    return Iq
+    return np.asarray(Iq)
 
 if USE_NUMBA:
     # Override simple numpy solution with numba if available
-    from numba import njit
-    @njit("f8[:](f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:])")
+    from numba import njit, prange
+    @njit("f8[:](f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:])", parallel=True, fastmath=True)
     def _Iqabc(values, x, y, z, qa, qb, qc):
-        Iq = np.zeros_like(qa)
-        for j in range(len(Iq)):
-            total = 0. + 0j
-            for k in range(len(values)):
-                total += values[k]*np.exp(1j*(qa[j]*x[k] + qb[j]*y[k] + qc[j]*z[k]))
+        Iq = np.empty_like(qa)
+        for j in prange(len(Iq)):
+            #total = 0. + 0j
+            #for k in range(len(values)):
+            #    total += values[k]*np.exp(1j*(qa[j]*x[k] + qb[j]*y[k] + qc[j]*z[k]))
+            total = np.sum(values * np.exp(1j*(qa[j]*x + qb[j]*y + qc[j]*z)))
             Iq[j] = abs(total)**2
         return Iq
 
@@ -586,12 +587,12 @@ void pdfcalc(int n, const double *pts, const double *rho,
 
 if USE_NUMBA:
     # Override simple numpy solution with numba if available
-    @njit("f8[:](f8[:], f8[:], f8[:,:])")
+    @njit("f8[:](f8[:], f8[:], f8[:,:])", parallel=True, fastmath=True)
     def _calc_Pr_uniform(r, rho, points):
         dr = r[0]
         n_max = len(r)
         Pr = np.zeros_like(r)
-        for j in range(len(rho) - 1):
+        for j in prange(len(rho) - 1):
             x, y, z = points[j, 0], points[j, 1], points[j, 2]
             for k in range(j+1, len(rho)):
                 distance = sqrt((x - points[k, 0])**2
