@@ -21,9 +21,12 @@ from scipy.special import j1 as J1
 
 try:
     import numba
-    USE_NUMBA = os.environ.get('SAS_NUMBA', "1") == "1"
+    # SAS_NUMBA: 0=None, 1=CPU, 2=GPU
+    SAS_NUMBA = int(os.environ.get("SAS_NUMBA", "1"))
+    USE_NUMBA = SAS_NUMBA > 0
+    USE_CUDA = SAS_NUMBA > 1
 except ImportError:
-    USE_NUMBA = False
+    USE_NUMBA = USE_CUDA = False
 
 # Definition of rotation matrices comes from wikipedia:
 #    https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
@@ -399,15 +402,20 @@ def capped_cylinder(r=20, rcap=50, length=20, rho=2):
 
 def _Iqabc(values, x, y, z, qa, qb, qc):
     """I(q) = |sum V(r) rho(r) e^(1j q.r)|^2 / sum V(r)"""
+    #print("calling python")
     Iq = [abs(np.sum(values*np.exp(1j*(qa_k*x + qb_k*y + qc_k*z))))**2
           for qa_k, qb_k, qc_k in zip(qa.flat, qb.flat, qc.flat)]
     return np.asarray(Iq)
+_Iqabcf = _Iqabc
 
 if USE_NUMBA:
     # Override simple numpy solution with numba if available
     from numba import njit, prange
-    @njit("f8[:](f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:])", parallel=True, fastmath=True)
-    def _Iqabc(values, x, y, z, qa, qb, qc):
+    from numba import prange
+    from numba.cuda import jit
+    #@jit("f8[:](f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:])", parallel=True, fastmath=True)
+    def _Iqabc_py(values, x, y, z, qa, qb, qc):
+        #print("calling numba")
         Iq = np.empty_like(qa)
         for j in prange(len(Iq)):
             #total = 0. + 0j
@@ -416,18 +424,49 @@ if USE_NUMBA:
             total = np.sum(values * np.exp(1j*(qa[j]*x + qb[j]*y + qc[j]*z)))
             Iq[j] = abs(total)**2
         return Iq
+    sig = "f8[:](f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:])"
+    _Iqabc = njit(sig, parallel=True, fastmath=True)(_Iqabc_py)
+    _Iqabcf = njit(sig.replace("f8","f4"), parallel=True, fastmath=True)(_Iqabc_py)
 
-def calc_Iqxy(qx, qy, rho, points, volume=1.0, view=(0, 0, 0)):
+if USE_CUDA:  # assume have numba and cuda
+    #print("compiling for cuda")
+    from numba import cuda
+    import cmath
+    def _Iqabc_kernel_py(values, x, y, z, qa, qb, qc, Iq):
+        j = cuda.grid(1)
+        if j < Iq.size:
+            total = 0. + 0j
+            for k in range(values.size):
+                total += values[k]*cmath.exp(1j*(qa[j]*x[k] + qb[j]*y[k] + qc[j]*z[k]))
+            Iq[j] = abs(total)**2
+    sig = "void(f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:])"
+    _Iqabcf_kernel = cuda.jit(sig, parallel=True, fastmath=True)
+    _Iqabc_kernel = cuda.jit(sig.replace("f8","f4"), parallel=True, fastmath=True)
+
+    def _Iqabc(values, x, y, z, qa, qb, qc):
+        #print("calling cuda")
+        Iq = np.empty_like(qa)
+        threadsperblock = 32
+        blockspergrid = (qa.size + (threadsperblock - 1)) // threadsperblock
+        kernel = _Iqabc_kernel if qa.dtype == np.float64 else _Iqabcf_kernel
+        kernel[blockspergrid, threadsperblock](values, x, y, z, qa, qb, qc, Iq)
+        return Iq
+    _Iqabcf = _Iqabc
+
+def calc_Iqxy(qx, qy, rho, points, volume=1.0, view=(0, 0, 0), dtype='f'):
     qx, qy = np.broadcast_arrays(qx, qy)
     qa, qb, qc = invert_view(qx, qy, view)
     rho, volume = np.broadcast_arrays(rho, volume)
     values = rho*volume
     x, y, z = points.T
-    values, x, y, z, qa, qb, qc = [np.asarray(v, 'd')
-                                   for v in (values, x, y, z, qa, qb, qc)]
 
     # I(q) = |sum V(r) rho(r) e^(1j q.r)|^2 / sum V(r)
-    Iq = _Iqabc(values, x, y, z, qa.flatten(), qb.flatten(), qc.flatten())
+    if np.dtype(dtype) == np.float64:
+        values, x, y, z, qa, qb, qc = [np.asarray(v, 'd') for v in (values, x, y, z, qa, qb, qc)]
+        Iq = _Iqabc(values, x, y, z, qa.flatten(), qb.flatten(), qc.flatten())
+    else:  # float32
+        values, x, y, z, qa, qb, qc = [np.asarray(v, 'f') for v in (values, x, y, z, qa, qb, qc)]
+        Iq = _Iqabcf(values, x, y, z, qa.flatten(), qb.flatten(), qc.flatten())
     return np.asarray(Iq).reshape(qx.shape) / np.sum(volume)
 
 def spin_weights(in_spin, out_spin):
