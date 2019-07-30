@@ -169,14 +169,16 @@ model.  The parameter properties are described below.  Since *volume* and
 
 *translation* is a set of equations to compute the underlying ellipsoid
 parameters from the new parameters. *Re* is an intermediate value
-introduced to make the equations easier to write.
+introduced to make the equations easier to write.  Helper functions can
+be included in a C file as *source=['filename.c', ...]* in the same directory
+as the model file.
 
 The new parameters replace *radius_polar* and *radius_equatorial* in the
 parameter table.  To have more control over parameter placement, use an
-*insert_after={...}* argmument to :func:`reparameterize`.  For each
-insert location provide a list of new parameter names to insert at that
-location.  For example, *{'': 'eccentricity,volume'}* inserts them both
-at the beginning (before any parameter), whereas
+*insert_after={...}* argmument to :func:`sasmodels.core.reparameterize`.
+For each insert location provide a list of new parameter names to insert
+at that location.  For example, *{'': 'eccentricity,volume'}* inserts
+them both at the beginning (before any parameter), whereas
 *{'radius_polar': 'eccentricty', 'radius_equatorial': 'volume'}* will
 place them after *radius_polar* and *radius_equatorial* in the final
 parameter table, before deleting *radius_polar* and *radius_equatorial*.

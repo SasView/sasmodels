@@ -188,7 +188,52 @@ _LHS_RE = re.compile(r"^ *(?<![.0-9])([A-Za-z_][A-Za-z0-9_]+) *=",
 def reparameterize(
         base, parameters, translation, filename=None,
         title=None, insert_after=None, docs=None, name=None,
+        source=None,
     ):
+    """
+    Reparameterize an existing model.
+
+    *base* is the original modelinfo. This cannot be a reparameterized model;
+    only one level of reparameterization is supported.
+
+    *parameters* are the new parameter definitions that will be
+    included in the model info.
+
+    *translation* is a string each line containing *var = expr*.  The variable
+    *var* can be a new intermediate value, or it can be a parameter from
+    the base model that will be replace by the expression.  The expression
+    *expr* can be any C99 expression, including C-style if-expressions
+    *condition ? value1 : value2*.  Expressions can use any new or existing
+    parameter that is not being replaced including intermediate values that
+    are previously defined.  Parameters can only be assigned once, never
+    updated.  C99 math functions are available, as well as any functions
+    defined in the base model or included in *source* (see below).
+
+    *filename* is the filename for the replacement model.  This is usually
+    *__file__*, giving the path to the model file, but it could also be a
+    nominal filename for translations defined on-the-fly.
+
+    *title* is the model title, which defaults to *base.title* plus
+    " (reparameterized)".
+
+    *insert_after* controls parameter placement.  By default, the new
+    parameters replace the old parameters in their original position.
+    Instead, you can provide a dictionary *{'par': 'newpar1,newpar2'}*
+    indicating that new parameters named *newpar1* and *newpar2* should
+    be included in the table after the existing parameter *par*, or at
+    the beginning if *par* is the empty string.
+
+    *docs* constains the doc string for the translated model, which by default
+    references the base model and gives the *translation* text.
+
+    *name* is the model name, which defaults to "constrained_" + *base.name*.
+
+    *source* is a list any additional C source files that should be included to
+    define functions and constants used in the translation expressions.  This
+    will be included after all sources for the base model.  Sources will only
+    be included once, even if they are listed in both places, so feel free to
+    list all dependencies for the helper function, such as "lib/polevl.c".
+    """
     if not isinstance(base, modelinfo.ModelInfo):
         base = load_model_info(base)
     if name is None:
@@ -199,6 +244,10 @@ def reparameterize(
     if docs is None:
         lines = "\n    ".join(s.lstrip() for s in translation.split('\n'))
         docs = _REPARAMETERIZE_DOCS%{'base': base.id, 'translation': lines}
+    #source = merge_deps(base.source, source)
+    source = (base.source + [f for f in source if f not in base.source]
+              if source else base.source)
+
 
     # TODO: don't repeat code from generate._build_translation
     base_pars = [par.id for par in base.parameters.kernel_parameters]
@@ -214,7 +263,37 @@ def reparameterize(
     caller.docs = docs
     caller.filename = filename
     caller.parameters = table
+    caller.source = source
     return caller
+
+# Note: not used at the moment.
+def merge_deps(old, new):
+    """
+    Merge two dependency lists.  The lists are partially ordered, with
+    all dependents coming after the items they depend on, but otherwise
+    order doesn't matter.  The merged list preserves the partial ordering.
+    So if old and new both include the item "c", then all items that come
+    before "c" in old and new will come before "c" in the result, and all
+    items that come after "c" in old and new will come after "c" in the
+    result.
+    """
+    if new is None:
+        return old
+
+    result = []
+    for item in new:
+        try:
+            index = old.index(item)
+            #print(item,"found in",old,"at",index,"giving",old[:index])
+            result.extend(old[:index])
+            old = old[index+1:]
+        except ValueError:
+            #print(item, "not found in", old)
+            pass
+        result.append(item)
+        #print("after", item, "old", old, "result", result)
+    result.extend(old)
+    return result
 
 
 def build_model(model_info, dtype=None, platform="ocl"):

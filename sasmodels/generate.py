@@ -363,6 +363,11 @@ def model_sources(model_info):
     Return a list of the sources file paths for the module.
     """
     search_path = [dirname(model_info.basefile), MODEL_PATH]
+    # If it is a reparameterized model, include both to directory for the
+    # original model file and the directory for the reparameterized model file
+    # on the search path for dependent source files.
+    if model_info.filename is not model_info.basefile:
+        search_path.insert(0, dirname(model_info.filename))
     return [_search(search_path, f) for f in model_info.source]
 
 
