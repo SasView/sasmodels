@@ -629,6 +629,8 @@ def _plot_result2D(data,         # type: Data2D
     Plot the data and residuals for 2D data.
     """
     import matplotlib.pyplot as plt  # type: ignore
+    if view is None:
+        view = 'log'
     use_data = use_data and data.data is not None
     use_theory = theory is not None
     use_resid = resid is not None
@@ -702,29 +704,29 @@ def _plot_2d_signal(data,       # type: Data2D
 
     image = np.zeros_like(data.qx_data)
     image[~data.mask] = signal
-    valid = np.isfinite(image)
+    valid = np.isfinite(image) & ~data.mask
     if view == 'log':
-        valid[valid] = (image[valid] > 0)
+        valid &= image > 0
         if vmin is None:
-            vmin = image[valid & ~data.mask].min()
+            vmin = image[valid].min()
         if vmax is None:
-            vmax = image[valid & ~data.mask].max()
+            vmax = image[valid].max()
         image[valid] = np.log10(image[valid])
     elif view == 'q4':
         image[valid] *= (data.qx_data[valid]**2+data.qy_data[valid]**2)**2
         if vmin is None:
-            vmin = image[valid & ~data.mask].min()
+            vmin = image[valid].min()
         if vmax is None:
-            vmax = image[valid & ~data.mask].max()
+            vmax = image[valid].max()
     else:
         if vmin is None:
-            vmin = image[valid & ~data.mask].min()
+            vmin = image[valid].min()
         if vmax is None:
-            vmax = image[valid & ~data.mask].max()
+            vmax = image[valid].max()
 
-    image[~valid | data.mask] = 0
+    image[~valid] = 0
     #plottable = Iq
-    plottable = masked_array(image, ~valid | data.mask)
+    plottable = masked_array(image, ~valid)
     # Divide range by 10 to convert from angstroms to nanometers
     xmin, xmax = min(data.qx_data), max(data.qx_data)
     ymin, ymax = min(data.qy_data), max(data.qy_data)
