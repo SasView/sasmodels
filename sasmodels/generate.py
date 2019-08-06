@@ -381,10 +381,12 @@ def dll_timestamp(model_info):
     # TODO: fails DRY; templates appear two places.
     model_templates = [joinpath(DATA_PATH, filename)
                        for filename in ('kernel_header.c', 'kernel_iq.c')]
-    # Note: basefile is probably filename, but duplicate doesn't hurt.
     source_files = (model_sources(model_info)
                     + model_templates
-                    + [model_info.filename, model_info.basefile])
+                    + [model_info.basefile])
+    # Include filename if different from basefile.
+    if model_info.filename and model_info.filename is not model_info.basefile:
+        source_files.append(model_info.filename)
     # Note: file may not exist when it is a standard model from library.zip
     # or when the model is generated dynamically.
     times = [getmtime(f) for f in source_files if f and exists(f)]
@@ -403,10 +405,12 @@ def ocl_timestamp(model_info):
     # TODO: fails DRY; templates appear two places.
     model_templates = [joinpath(DATA_PATH, filename)
                        for filename in ('kernel_header.c', 'kernel_iq.c')]
-    # Note: basefile is probably filename, but duplicate doesn't hurt.
     source_files = (model_sources(model_info)
                     + model_templates
-                    + [model_info.filename, model_info.basefile])
+                    + [model_info.basefile])
+    # Include filename if different from basefile.
+    if model_info.filename and model_info.filename is not model_info.basefile:
+        source_files.append(model_info.filename)
     # Note: file may not exist when it is a standard model from library.zip
     # or when the model is generated dynamically.
     times = [getmtime(f) for f in source_files if exists(f)]
