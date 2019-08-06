@@ -4,10 +4,16 @@ import time
 from copy import copy
 import os
 import argparse
+import inspect
 from collections import OrderedDict
 
+try:
+    from inspect import getfullargspec
+except ImportError:
+    from inspect import getargspec as getfullargspec
+
 import numpy as np
-from numpy import pi, radians, sin, cos, sqrt
+from numpy import pi, radians, sin, cos, sqrt, clip
 from numpy.random import poisson, uniform, randn, rand
 from numpy.polynomial.legendre import leggauss
 from scipy.integrate import simps
@@ -15,9 +21,12 @@ from scipy.special import j1 as J1
 
 try:
     import numba
-    USE_NUMBA = True
+    # SAS_NUMBA: 0=None, 1=CPU, 2=GPU
+    SAS_NUMBA = int(os.environ.get("SAS_NUMBA", "1"))
+    USE_NUMBA = SAS_NUMBA > 0
+    USE_CUDA = SAS_NUMBA > 1
 except ImportError:
-    USE_NUMBA = False
+    USE_NUMBA = USE_CUDA = False
 
 # Definition of rotation matrices comes from wikipedia:
 #    https://en.wikipedia.org/wiki/Rotation_matrix#Basic_rotations
@@ -44,6 +53,16 @@ def Rz(angle):
          [+sin(a), +cos(a), 0],
          [0, 0, 1]]
     return np.matrix(R)
+
+def pol2rec(r, theta, phi):
+    """
+    Convert from 3D polar coordinates to rectangular coordinates.
+    """
+    theta, phi = radians(theta), radians(phi)
+    x = +r * cos(theta) * cos(phi)
+    y = +r * sin(theta)
+    z = -r * cos(theta) * sin(phi)
+    return x, y, z
 
 def rotation(theta, phi, psi):
     """
@@ -81,6 +100,7 @@ class Shape:
     rotation = np.matrix([[1., 0, 0], [0, 1, 0], [0, 0, 1]])
     center = np.array([0., 0., 0.])[:, None]
     r_max = None
+    is_magnetic = False
 
     def volume(self):
         # type: () -> float
@@ -260,8 +280,11 @@ class TruncatedSphere(Shape):
 
 class TriaxialEllipsoid(Shape):
     def __init__(self, ra, rb, rc,
-                 value, center=(0, 0, 0), orientation=(0, 0, 0)):
+                 value, center=(0, 0, 0), orientation=(0, 0, 0),
+                 magnetism=None):
+        self.is_magnetic = (magnetism is not None)
         self.value = np.asarray(value)
+        self.magnetism = magnetism if self.is_magnetic else (0., 0., 0.)
         self.rotate(*orientation)
         self.shift(*center)
         self.ra, self.rb, self.rc = ra, rb, rc
@@ -279,6 +302,11 @@ class TriaxialEllipsoid(Shape):
         points = self._scale*points[radius <= 1]
         values = self.value.repeat(points.shape[0])
         return values, self._adjust(points)
+
+    def sample_magnetic(self, density):
+        values, points = self.sample(density)
+        magnetism = np.tile(self.magnetism, (points.shape[0], 1)).T
+        return values, magnetism, points
 
 class Helix(Shape):
     def __init__(self, helix_radius, helix_pitch, tube_radius, tube_length,
@@ -372,37 +400,163 @@ def capped_cylinder(r=20, rcap=50, length=20, rho=2):
     shape.r_max = sqrt(length**2 + 4*r**2) + (rcap + h)
     return shape
 
-def _Iqxy(values, x, y, z, qa, qb, qc):
+def _Iqabc(values, x, y, z, qa, qb, qc):
     """I(q) = |sum V(r) rho(r) e^(1j q.r)|^2 / sum V(r)"""
+    #print("calling python")
     Iq = [abs(np.sum(values*np.exp(1j*(qa_k*x + qb_k*y + qc_k*z))))**2
-            for qa_k, qb_k, qc_k in zip(qa.flat, qb.flat, qc.flat)]
-    return Iq
+          for qa_k, qb_k, qc_k in zip(qa.flat, qb.flat, qc.flat)]
+    return np.asarray(Iq)
+_Iqabcf = _Iqabc
 
 if USE_NUMBA:
     # Override simple numpy solution with numba if available
-    from numba import njit
-    @njit("f8[:](f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:])")
-    def _Iqxy(values, x, y, z, qa, qb, qc):
-        Iq = np.zeros_like(qa)
-        for j in range(len(Iq)):
-            total = 0. + 0j
-            for k in range(len(values)):
-                total += values[k]*np.exp(1j*(qa[j]*x[k] + qb[j]*y[k] + qc[j]*z[k]))
+    from numba import njit, prange
+    from numba import prange
+    from numba.cuda import jit
+    #@jit("f8[:](f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:])", parallel=True, fastmath=True)
+    def _Iqabc_py(values, x, y, z, qa, qb, qc):
+        #print("calling numba")
+        Iq = np.empty_like(qa)
+        for j in prange(len(Iq)):
+            #total = 0. + 0j
+            #for k in range(len(values)):
+            #    total += values[k]*np.exp(1j*(qa[j]*x[k] + qb[j]*y[k] + qc[j]*z[k]))
+            total = np.sum(values * np.exp(1j*(qa[j]*x + qb[j]*y + qc[j]*z)))
             Iq[j] = abs(total)**2
         return Iq
+    sig = "f8[:](f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:])"
+    _Iqabc = njit(sig, parallel=True, fastmath=True)(_Iqabc_py)
+    _Iqabcf = njit(sig.replace("f8","f4"), parallel=True, fastmath=True)(_Iqabc_py)
 
-def calc_Iqxy(qx, qy, rho, points, volume=1.0, view=(0, 0, 0)):
+if USE_CUDA:  # assume have numba and cuda
+    #print("compiling for cuda")
+    from numba import cuda
+    import cmath
+    def _Iqabc_kernel_py(values, x, y, z, qa, qb, qc, Iq):
+        j = cuda.grid(1)
+        if j < Iq.size:
+            total = 0. + 0j
+            for k in range(values.size):
+                total += values[k]*cmath.exp(1j*(qa[j]*x[k] + qb[j]*y[k] + qc[j]*z[k]))
+            Iq[j] = abs(total)**2
+    sig = "void(f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:])"
+    _Iqabcf_kernel = cuda.jit(sig, parallel=True, fastmath=True)
+    _Iqabc_kernel = cuda.jit(sig.replace("f8","f4"), parallel=True, fastmath=True)
+
+    def _Iqabc(values, x, y, z, qa, qb, qc):
+        #print("calling cuda")
+        Iq = np.empty_like(qa)
+        threadsperblock = 32
+        blockspergrid = (qa.size + (threadsperblock - 1)) // threadsperblock
+        kernel = _Iqabc_kernel if qa.dtype == np.float64 else _Iqabcf_kernel
+        kernel[blockspergrid, threadsperblock](values, x, y, z, qa, qb, qc, Iq)
+        return Iq
+    _Iqabcf = _Iqabc
+
+def calc_Iqxy(qx, qy, rho, points, volume=1.0, view=(0, 0, 0), dtype='f'):
     qx, qy = np.broadcast_arrays(qx, qy)
     qa, qb, qc = invert_view(qx, qy, view)
     rho, volume = np.broadcast_arrays(rho, volume)
     values = rho*volume
     x, y, z = points.T
-    values, x, y, z, qa, qb, qc = [np.asarray(v, 'd')
-                                   for v in (values, x, y, z, qa, qb, qc)]
 
     # I(q) = |sum V(r) rho(r) e^(1j q.r)|^2 / sum V(r)
-    Iq = _Iqxy(values, x, y, z, qa.flatten(), qb.flatten(), qc.flatten())
+    if np.dtype(dtype) == np.float64:
+        values, x, y, z, qa, qb, qc = [np.asarray(v, 'd') for v in (values, x, y, z, qa, qb, qc)]
+        Iq = _Iqabc(values, x, y, z, qa.flatten(), qb.flatten(), qc.flatten())
+    else:  # float32
+        values, x, y, z, qa, qb, qc = [np.asarray(v, 'f') for v in (values, x, y, z, qa, qb, qc)]
+        Iq = _Iqabcf(values, x, y, z, qa.flatten(), qb.flatten(), qc.flatten())
     return np.asarray(Iq).reshape(qx.shape) / np.sum(volume)
+
+def spin_weights(in_spin, out_spin):
+    """
+    Compute spin cross sections given in_spin and out_spin
+    To convert spin cross sections to sld b:
+        uu * (sld - m_sigma_x);
+        dd * (sld + m_sigma_x);
+        ud * (m_sigma_y - 1j*m_sigma_z);
+        du * (m_sigma_y + 1j*m_sigma_z);
+    weights for spin crosssections: dd du real, ud real, uu, du imag, ud imag
+    """
+
+    in_spin = clip(in_spin, 0.0, 1.0)
+    out_spin = clip(out_spin, 0.0, 1.0)
+    # Previous version of this function took the square root of the weights,
+    # under the assumption that
+    #
+    #     w*I(q, rho1, rho2, ...) = I(q, sqrt(w)*rho1, sqrt(w)*rho2, ...)
+    #
+    # However, since the weights are applied to the final intensity and
+    # are not interned inside the I(q) function, we want the full
+    # weight and not the square root.  Anyway no function will ever use
+    # set_spin_weights as part of calculating an amplitude, as the weights are
+    # related to polarisation efficiency of the instrument. The weights serve to
+    # construct various magnet scattering cross sections, which are linear combinations
+    # of the spin-resolved cross sections. The polarisation efficiency e_in and e_out
+    # are parameters ranging from 0.5 (unpolarised) beam to 1 (perfect optics).
+    # For in_spin or out_spin <0.5 one assumes a CS, where the spin is reversed/flipped
+    # with respect to the initial supermirror polariser. The actual polarisation efficiency
+    # in this case is however e_in/out = 1-in/out_spin.
+
+    norm = 1 - out_spin if out_spin < 0.5 else out_spin
+
+    # The norm is needed to make sure that the scattering cross sections are
+    # correctly weighted, such that the sum of spin-resolved measurements adds up to
+    # the unpolarised or half-polarised scattering cross section. No intensity weighting
+    # needed on the incoming polariser side (assuming that a user), has normalised
+    # to the incoming flux with polariser in for SANSPOl and unpolarised beam, respectively.
+
+    weight = [
+        (1.0-in_spin) * (1.0-out_spin) / norm, # dd
+        (1.0-in_spin) * out_spin / norm,       # du
+        in_spin * (1.0-out_spin) / norm,       # ud
+        in_spin * out_spin / norm,             # uu
+    ]
+    return weight
+
+def magnetic_sld(qx, qy, up_angle, rho, rho_m):
+    """
+    Compute the complex sld for the magnetic spin states.
+
+    Returns effective rho for spin states [dd, du, ud, uu].
+    """
+    # Next three lines could be precomputed
+    qsq = qx**2 + qy**2
+    cos_spin, sin_spin = cos(-radians(up_angle)), sin(-radians(up_angle))
+    px, py = (qy*cos_spin + qx*sin_spin)/qsq, (qy*sin_spin - qx*cos_spin)/qsq
+    # If all points have the same magnetism, then these can be precomputed,
+    # otherwise need to be computed separately for each q.
+    mx, my, mz = rho_m
+    perp = qy*mx - qx*my
+    return [
+        rho - px*perp,   # dd => sld - D M_perpx
+        py*perp - 1j*mz, # du => -D (M_perpy + j M_perpz)
+        py*perp + 1j*mz, # ud => -D (M_perpy - j M_perpz)
+        rho + px*perp,   # uu => sld + D M_perpx
+    ]
+
+def calc_Iq_magnetic(qx, qy, rho, rho_m, points, volume=1.0, view=(0, 0, 0),
+                  up_frac_i=0, up_frac_f=0, up_angle=0.):
+    qx, qy = np.broadcast_arrays(qx, qy)
+    qa, qb, qc = invert_view(qx, qy, view)
+    rho, volume = np.broadcast_arrays(rho, volume)
+    x, y, z = points.T
+    weights = spin_weights(up_frac_i, up_frac_f)
+
+    # I(q) = |sum V(r) rho(r) e^(1j q.r)|^2 / sum V(r)
+    shape = qx.shape
+    Iq = np.zeros(qx.size, 'd')
+    x, y, z, qx, qy = (np.asarray(v, 'd') for v in (x, y, z, qx, qy))
+    qx, qy = (v.flatten() for v in (qx, qy))
+    for k in range(qx.size):
+        dd, du, ud, uu = magnetic_sld(qx[k], qy[k], up_angle, rho, rho_m)
+        for w, xs in zip(weights, (dd, du, ud, uu)):
+            if w == 0.0:
+                continue
+            Iq_k = abs(np.sum(xs*np.exp(1j*(qa[k]*x + qb[k]*y + qc[k]*z))))**2
+            Iq[k] += w * Iq_k
+    return np.asarray(Iq).reshape(shape) / np.sum(volume)
 
 def _calc_Pr_nonuniform(r, rho, points):
     # Make Pr a little be bigger than necessary so that only distances
@@ -472,12 +626,12 @@ void pdfcalc(int n, const double *pts, const double *rho,
 
 if USE_NUMBA:
     # Override simple numpy solution with numba if available
-    @njit("f8[:](f8[:], f8[:], f8[:,:])")
+    @njit("f8[:](f8[:], f8[:], f8[:,:])", parallel=True, fastmath=True)
     def _calc_Pr_uniform(r, rho, points):
         dr = r[0]
         n_max = len(r)
         Pr = np.zeros_like(r)
-        for j in range(len(rho) - 1):
+        for j in prange(len(rho) - 1):
             x, y, z = points[j, 0], points[j, 1], points[j, 2]
             for k in range(j+1, len(rho)):
                 distance = sqrt((x - points[k, 0])**2
@@ -767,18 +921,6 @@ def wrap_sasmodel(name, **pars):
 
 # --------- Test cases -----------
 
-def build_cylinder(radius=25, length=125, rho=2.):
-    shape = EllipticalCylinder(radius, radius, length, rho)
-    fn = lambda q: cylinder_Iq(q, radius, length)*rho**2
-    fn_xy = lambda qx, qy, view: cylinder_Iqxy(qx, qy, radius, length, view=view)*rho**2
-    return shape, fn, fn_xy
-
-def build_sphere(radius=125, rho=2):
-    shape = TriaxialEllipsoid(radius, radius, radius, rho)
-    fn = lambda q: sphere_Iq(q, radius)*rho**2
-    fn_xy = lambda qx, qy, view: sphere_Iq(np.sqrt(qx**2+qy**2), radius)*rho**2
-    return shape, fn, fn_xy
-
 def build_box(a=10, b=20, c=30, rho=2.):
     shape = Box(a, b, c, rho)
     fn = lambda q: box_Iq(q, a, b, c)*rho**2
@@ -792,6 +934,80 @@ def build_csbox(a=10, b=20, c=30, da=1, db=2, dc=3, slda=1, sldb=2, sldc=3, sld_
                                             slda, sldb, sldc, sld_core, view=view)
     return shape, fn, fn_xy
 
+def build_sphere(radius=125, rho=2,
+                 rho_m=0, theta_m=0, phi_m=0, up_i=0, up_f=0, up_angle=0):
+    magnetism = pol2rec(rho_m, theta_m, phi_m) if rho_m != 0.0 else None
+    shape = TriaxialEllipsoid(radius, radius, radius, rho, magnetism=magnetism)
+    shape.spin = (up_i, up_f, up_angle)
+    fn, fn_xy = wrap_sasmodel(
+        'sphere',
+        scale=1,
+        background=0,
+        radius=radius,
+        sld=rho,
+        sld_solvent=0,
+        sld_M0=rho_m,
+        sld_mtheta=theta_m,
+        sld_mphi=phi_m,
+        up_frac_i=up_i,
+        up_frac_f=up_f,
+        up_angle=up_angle,
+    )
+    return shape, fn, fn_xy
+
+def build_ellip(rab=125, rc=50, rho=2,
+                rho_m=0, theta_m=0, phi_m=0, up_i=0, up_f=0, up_angle=0):
+    magnetism = pol2rec(rho_m, theta_m, phi_m) if rho_m != 0.0 else None
+    shape = TriaxialEllipsoid(rab, rab, rc, rho, magnetism=magnetism)
+    # TODO: polarization spec doesn't belong in shape
+    # Put spin state info into the shape since we have it available.
+    shape.spin = (up_i, up_f, up_angle)
+    fn, fn_xy = wrap_sasmodel(
+        'ellipsoid',
+        scale=1,
+        background=0,
+        radius_equatorial=rab,
+        radius_polar=rc,
+        sld=rho,
+        sld_solvent=0,
+        sld_M0=rho_m,
+        sld_mtheta=theta_m,
+        sld_mphi=phi_m,
+        up_frac_i=up_i,
+        up_frac_f=up_f,
+        up_angle=up_angle,
+    )
+    return shape, fn, fn_xy
+
+def build_triell(ra=125, rb=200, rc=50, rho=2,
+                 rho_m=0, theta_m=0, phi_m=0, up_i=0, up_f=0, up_angle=0):
+    magnetism = pol2rec(rho_m, theta_m, phi_m) if rho_m != 0.0 else None
+    shape = TriaxialEllipsoid(ra, rb, rc, rho, magnetism=magnetism)
+    shape.spin = (up_i, up_f, up_angle)
+    fn, fn_xy = wrap_sasmodel(
+        'triaxial_ellipsoid',
+        scale=1,
+        background=0,
+        radius_equat_minor=ra,
+        radius_equat_major=rb,
+        radius_polar=rc,
+        sld=rho,
+        sld_solvent=0,
+        sld_M0=rho_m,
+        sld_mtheta=theta_m,
+        sld_mphi=phi_m,
+        up_frac_i=up_i,
+        up_frac_f=up_f,
+        up_angle=up_angle,
+    )
+    return shape, fn, fn_xy
+
+def build_cylinder(radius=25, length=125, rho=2.):
+    shape = EllipticalCylinder(radius, radius, length, rho)
+    fn = lambda q: cylinder_Iq(q, radius, length)*rho**2
+    fn_xy = lambda qx, qy, view: cylinder_Iqxy(qx, qy, radius, length, view=view)*rho**2
+    return shape, fn, fn_xy
+
 def build_ellcyl(ra=25, rb=50, length=125, rho=2.):
     shape = EllipticalCylinder(ra, rb, length, rho)
     fn, fn_xy = wrap_sasmodel(
@@ -801,33 +1017,6 @@ def build_ellcyl(ra=25, rb=50, length=125, rho=2.):
         radius_minor=ra,
         axis_ratio=rb/ra,
         length=length,
-        sld=rho,
-        sld_solvent=0,
-    )
-    return shape, fn, fn_xy
-
-def build_ellip(rab=125, rc=50, rho=2):
-    shape = TriaxialEllipsoid(rab, rab, rc, rho)
-    fn, fn_xy = wrap_sasmodel(
-        'ellipsoid',
-        scale=1,
-        background=0,
-        radius_equatorial=rab,
-        radius_polar=rc,
-        sld=rho,
-        sld_solvent=0,
-    )
-    return shape, fn, fn_xy
-
-def build_triell(ra=125, rb=200, rc=50, rho=2):
-    shape = TriaxialEllipsoid(ra, rb, rc, rho)
-    fn, fn_xy = wrap_sasmodel(
-        'triaxial_ellipsoid',
-        scale=1,
-        background=0,
-        radius_equat_minor=ra,
-        radius_equat_major=rb,
-        radius_polar=rc,
         sld=rho,
         sld_solvent=0,
     )
@@ -971,6 +1160,59 @@ def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
 
     pylab.show()
 
+def check_shape_mag(title, shape, fn=None, view=(0, 0, 0), show_points=False,
+                   mesh=100, qmax=1.0, samples=5000,
+                   up_frac_i=0, up_frac_f=0, up_angle=0):
+    rho_solvent = 0
+    #qx = np.linspace(0.0, qmax, mesh)
+    #qy = np.linspace(0.0, qmax, mesh)
+    qx = np.linspace(-qmax, qmax, mesh)
+    qy = np.linspace(-qmax, qmax, mesh)
+    Qx, Qy = np.meshgrid(qx, qy)
+    sampling_density = samples / shape.volume
+    t0 = time.time()
+    theory = fn(Qx, Qy, view) if fn is not None else None
+    print("calc theory time", time.time() - t0)
+    t0 = time.time()
+    rho, rho_m, points = shape.sample_magnetic(sampling_density)
+    print("point generation time", time.time() - t0)
+    #print("bounding box", points.min(axis=0), points.max(axis=0))
+    t0 = time.time()
+    Iqxy = calc_Iq_magnetic(Qx, Qy, rho, rho_m, points, view=view,
+                            up_frac_i=up_frac_i, up_frac_f=up_frac_f,
+                            up_angle=up_angle)
+    print("calc Imag time", time.time() - t0)
+
+    # Add floor to limit colorbar range.
+    Iqxy += 0.001 * Iqxy.max()
+    if theory is not None:
+        theory += 0.001 * theory.max()
+
+    import pylab
+    if show_points:
+        plot_points(rho, points); pylab.figure()
+    plot_calc_2d(qx, qy, Iqxy, theory=theory, title=title)
+    pylab.gcf().canvas.set_window_title(title)
+
+    ## Histogram of point density in the z direction.
+    #pylab.figure()
+    ##bins = 100  # fixed number of bins
+    #limit=25; bins = np.arange(-limit, limit+0.001, 1) # particular limits
+    #pylab.hist(points[:,2], bins=bins)
+
+    pylab.show()
+
+
+def check_pars(function, pars, name):
+    spec = getfullargspec(function)
+    incorrect = [p for p in pars if p not in spec.args]
+    if any(incorrect):
+        print("realspace.py: error: invalid parameters to %s: [%s].  Available paramters are:"
+              % (name, ", ".join(incorrect)))
+        print("   ", "\n    ".join("%s: %g"%(k,v) for k,v in zip(spec.args, spec.defaults)))
+        return False
+    return True
+
 def main():
     parser = argparse.ArgumentParser(
         description="Compute scattering from realspace sampling",
@@ -1004,11 +1246,21 @@ def main():
     nx, ny, nz = [int(v) for v in opts.lattice.split(',')]
     dx, dy, dz = [float(v) for v in opts.spacing.split(',')]
     shuffle, rotate = opts.shuffle, opts.rotate
-    shape, fn, fn_xy = SHAPE_FUNCTIONS[opts.shape](**pars)
+    shape_generator = SHAPE_FUNCTIONS[opts.shape]
+    if not check_pars(shape_generator, pars, name=opts.shape):
+        return
+    shape, fn, fn_xy = shape_generator(**pars)
     if nx > 1 or ny > 1 or nz > 1:
         shape = build_cubic_lattice(shape, nx, ny, nz, dx, dy, dz, shuffle, rotate)
     title = "%s(%s)" % (opts.shape, " ".join(opts.pars))
-    if opts.dim == 1:
+    if shape.is_magnetic:
+        view = tuple(float(v) for v in opts.view.split(','))
+        up_frac_i, up_frac_f, up_angle = shape.spin
+        check_shape_mag(title, shape, fn_xy, view=view, show_points=opts.plot,
+                       mesh=opts.mesh, qmax=opts.qmax, samples=opts.samples,
+                       up_frac_i=up_frac_i, up_frac_f=up_frac_f, up_angle=up_angle,
+                       )
+    elif opts.dim == 1:
         check_shape(title, shape, fn, show_points=opts.plot,
                     mesh=opts.mesh, qmax=opts.qmax, samples=opts.samples)
     else:
