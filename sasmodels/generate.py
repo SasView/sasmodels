@@ -366,7 +366,7 @@ def model_sources(model_info):
     # If it is a reparameterized model, include both to directory for the
     # original model file and the directory for the reparameterized model file
     # on the search path for dependent source files.
-    if model_info.filename is not model_info.basefile:
+    if model_info.filename and model_info.filename is not model_info.basefile:
         search_path.insert(0, dirname(model_info.filename))
     return [_search(search_path, f) for f in model_info.source]
 
