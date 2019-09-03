@@ -554,7 +554,7 @@ def calc_Iq_magnetic(qx, qy, rho, rho_m, points, volume=1.0, view=(0, 0, 0),
         for w, xs in zip(weights, (dd, du, ud, uu)):
             if w == 0.0:
                 continue
-            Iq_k = abs(np.sum(xs*np.exp(1j*(qa[k]*x + qb[k]*y + qc[k]*z))))**2
+            Iq_k = abs(np.sum(volume*xs*np.exp(1j*(qa[k]*x + qb[k]*y + qc[k]*z))))**2
             Iq[k] += w * Iq_k
     return np.asarray(Iq).reshape(shape) / np.sum(volume)
 
