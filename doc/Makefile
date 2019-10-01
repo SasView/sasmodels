@@ -4,7 +4,7 @@
 # You can set these variables from the command line.
 PYTHON       ?= python
 SPHINXOPTS    =
-SPHINXBUILD   = $(PYTHON) -m  sphinx.__init__
+SPHINXBUILD   = $(PYTHON) -m  sphinx
 PAPER        ?= letter
 BUILDDIR      = _build
 ifdef ComSpec
@@ -22,8 +22,8 @@ else
 endif
 
 # Internal variables.
-PAPEROPT_a4     = -D latex_paper_size=a4
-PAPEROPT_letter = -D latex_paper_size=letter
+PAPEROPT_a4     = -D latex_elements.papersize=a4
+PAPEROPT_letter = -D latex_elements.papersize=letter
 ALLSPHINXOPTS   = -d _build/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
 IMG_SOURCE = $(wildcard ../sasmodels/models/img/*)

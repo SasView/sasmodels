@@ -26,7 +26,6 @@ Models can be of three types:
   `cylinder.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/cylinder.c>`_
 
 
-
 When using SasView, plugin models should be saved to the SasView
 *plugin_models* folder *C:\\Users\\{username}\\.sasview\\plugin_models*
 (on Windows) or */Users/{username}/.sasview\\plugin_models* (on Mac).
