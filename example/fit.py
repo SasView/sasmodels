@@ -29,7 +29,7 @@ kernel = load_model(name, dtype="single")
 cutoff = 1e-3
 
 if name == "ellipsoid":
-    model = Model(kernel,
+    pars = dict(
         scale=0.08, background=35,
         radius_polar=15, radius_equatorial=800,
         sld=.291, sld_solvent=7.105,
@@ -37,8 +37,10 @@ if name == "ellipsoid":
         theta_pd=0, theta_pd_n=0, theta_pd_nsigma=3,
         phi_pd=0, phi_pd_n=20, phi_pd_nsigma=3,
         radius_polar_pd=0.222296, radius_polar_pd_n=1, radius_polar_pd_nsigma=0,
-        radius_equatorial_pd=.000128, radius_equatorial_pd_n=1, radius_equatorial_pd_nsigma=0,
+        radius_equatorial_pd=.000128, radius_equatorial_pd_n=1,
+        radius_equatorial_pd_nsigma=0,
         )
+    model = Model(kernel, **pars)
 
     # SET THE FITTING PARAMETERS
     model.radius_polar.range(15, 1000)
@@ -52,12 +54,13 @@ if name == "ellipsoid":
 
 
 elif name == "lamellar":
-    model = Model(kernel,
+    pars = dict(
         scale=0.08, background=0.003,
         thickness=19.2946,
         sld=5.38,sld_sol=7.105,
         thickness_pd= 0.37765, thickness_pd_n=10, thickness_pd_nsigma=3,
         )
+    model = Model(kernel, **pars)
 
     # SET THE FITTING PARAMETERS
     #model.thickness.range(0, 1000)
@@ -68,15 +71,6 @@ elif name == "lamellar":
 
 
 elif name == "cylinder":
-    """
-    pars = dict(scale=0.0023, radius=92.5, length=798.3,
-        sld=.29, solvent_sld=7.105, background=5,
-        theta=0, phi=phi,
-        theta_pd=22.11, theta_pd_n=5, theta_pd_nsigma=3,
-        radius_pd=.0084, radius_pd_n=10, radius_pd_nsigma=3,
-        length_pd=0.493, length_pd_n=10, length_pd_nsigma=3,
-        phi_pd=0, phi_pd_n=5 phi_pd_nsigma=3,)
-        """
     pars = dict(
         scale=.01, background=35,
         sld=.291, sld_solvent=5.77,
@@ -155,7 +149,7 @@ elif name == "capped_cylinder":
 
 
 elif name == "triaxial_ellipsoid":
-    model = Model(kernel,
+    pars = dict(
         scale=0.08, background=35,
         radius_equat_minor=15, radius_equat_major=20, radius_polar=500,
         sld=7.105, solvent_sld=.291,
@@ -167,6 +161,7 @@ elif name == "triaxial_ellipsoid":
         phi_pd=.1, phi_pd_n=1, phi_pd_nsigma=0,
         psi_pd=30, psi_pd_n=1, psi_pd_nsigma=0,
         )
+    model = Model(kernel, **pars)
 
     # SET THE FITTING PARAMETERS
     model.radius_equat_minor.range(15, 1000)
@@ -184,14 +179,14 @@ else:
 model.cutoff = cutoff
 M = Experiment(data=data, model=model)
 if section == "both":
-   tan_model = Model(model.sasmodel, **model.parameters())
-   tan_model.phi = model.phi - 90
-   tan_model.cutoff = cutoff
-   tan_M = Experiment(data=tan_data, model=tan_model)
-   problem = FitProblem([M, tan_M])
+    tan_model = Model(model.sasmodel, **model.parameters())
+    tan_model.phi = model.phi - 90
+    tan_model.cutoff = cutoff
+    tan_M = Experiment(data=tan_data, model=tan_model)
+    problem = FitProblem([M, tan_M])
 else:
-   problem = FitProblem(M)
+    problem = FitProblem(M)
 
 if __name__ == "__main__":
-   problem.plot()
-   import pylab; pylab.show()
+    problem.plot()
+    import pylab; pylab.show()
