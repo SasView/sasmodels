@@ -4,7 +4,9 @@ Multiple scattering calculator
 
 Calculate multiple scattering using 2D FFT convolution.
 
-Usage::
+Usage:
+
+.. code-block:: none
 
     python -m sasmodels.multiscat [options] model_name model_par=value ...
 
@@ -73,6 +75,9 @@ therefore we compute
     I(q) =
     \mathcal{F}^{-1}\left\{
         \sum_{l=1}^{n} \frac{P(k; \lambda)}{P(1; \lambda))} F^k \right\}
+    \, \int I_1(q) {\rm d}q
+    = \mathcal{F}^{-1}\left\{
+        \sum_{l=1}^{n} \frac{\lambda^{k-1}}{k!} F^k \right\}
     \, \int I_1(q) {\rm d}q
 
 For speed we may use the fast fourier transform with a power of two.
