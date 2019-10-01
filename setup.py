@@ -70,6 +70,7 @@ setup(
         'full': ['docutils', 'bumps', 'matplotlib'],
         'server': ['bumps'],
         'OpenCL': ["pyopencl"],
+        'CUDA': ["pycuda"],
     },
     build_requires=['setuptools'],
     test_requires=['pytest'],
