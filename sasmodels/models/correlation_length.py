@@ -34,8 +34,8 @@ References
 Authorship and Verification
 ----------------------------
 
-* **Author:**
-* **Last Modified by:**
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Steve King **Date:** September 24, 2019
 * **Last Reviewed by:**
 """
 
@@ -54,7 +54,7 @@ parameters = [
               ["porod_scale", "", 1e-06, [0, inf], "", "Porod Scaling Factor"],
               ["cor_length", "Ang", 50.0, [0, inf], "", "Correlation length, xi, in Lorentzian"],
               ["porod_exp", "", 3.0, [0, inf], "", "Porod Exponent, n, in q^-n"],
-              ["lorentz_exp", "1/Ang^2", 2.0, [0, inf], "", "Lorentzian Exponent, m, in 1/( 1 + (q.xi)^m)"],
+              ["lorentz_exp", "", 2.0, [0, inf], "", "Lorentzian Exponent, m, in 1/( 1 + (q.xi)^m)"],
              ]
 # pylint: enable=bad-continuation, line-too-long
 
