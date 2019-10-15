@@ -363,16 +363,6 @@ class Parameter(object):
         else:
             return "double *%s"%self.id
 
-    def as_call_reference(self, prefix=""):
-        # type: (str) -> str
-        """
-        Return *prefix* + parameter name.  For struct references, use "v."
-        as the prefix.
-        """
-        # Note: if the parameter is a struct type, then we will need to use
-        # &prefix+id.  For scalars and vectors we can just use prefix+id.
-        return prefix + self.id
-
     def __str__(self):
         # type: () -> str
         return "<%s>"%self.name
@@ -380,7 +370,6 @@ class Parameter(object):
     def __repr__(self):
         # type: () -> str
         return "P<%s>"%self.name
-
 
 class ParameterTable(object):
     """
@@ -767,6 +756,91 @@ class ParameterTable(object):
 
         return result
 
+def _simple_insert(parameters, insert, remove):
+    """
+    Build new parameters from old with insertion locations specified.
+
+    *parameters* is the existing parameter list.
+
+    *insert* is list of parameters to insert.
+
+    *remove* is list of parameter names to remove.
+
+    The new parameters are inserted as a block replacing the first removed
+    parameter.
+    """
+    remove = set(remove)
+    new_list = []
+    for par in parameters:
+        if par.id not in remove:
+            new_list.append(par)
+        if par.id in remove and insert:
+            new_list.extend(insert)
+            insert = []
+    return new_list
+
+def _insert_after(parameters, insert, remove, insert_after):
+    """
+    Build new parameters from old with insertion locations specified.
+
+    *parameters* is the existing parameter list.
+
+    *insert* is list of parameters to insert.
+
+    *remove* is list of parameter names to remove.
+
+    *insert_after* where to insert names, as {"old": "new,new,..."}
+    """
+    remove = set(remove)
+    new_list = []
+    lookup = {p.id: p for p in insert}
+    def _process_group(key):
+        items = insert_after.get(key, None)
+        if items is None:
+            return
+        for name in items.split(','):
+            # Make sure par is available
+            if name not in lookup:
+                raise ValueError("variable %s not in new parameters"
+                                 " when inserting %s after %r"
+                                 % (name, items, key))
+            # Make sure par hasn't be used
+            if lookup[name] is None:
+                raise ValueError("variable %s already processed"
+                                 " when inserting %s after %r"
+                                 % (name, items, key))
+            # Append par
+            new_list.append(lookup[name])
+            # Mark par as used
+            lookup[name] = None
+    _process_group("")
+    for par in parameters:
+        if par.id not in remove:
+            new_list.append(par)
+        _process_group(par.id)
+    for name, par in lookup.items():
+        if par is not None:
+            raise ValueError("parameter %s not listed in insert_after", name)
+
+    return new_list
+
+def derive_table(table, insert, remove, insert_after=None):
+    # type: (ParameterTable, List[str], List[Parameter], Optional[Dict[str, str]]) -> ParameterTable
+    """
+    Create a derived parameter table.
+
+    Parameters given in *insert* are added to the table and parameters
+    named in *remove* are deleted from the table. If *insert_after* is
+    provided, then it indicates where in the new parameter table the
+    parameters are inserted.
+    """
+    old = table.kernel_parameters
+    if insert_after is None:
+        new = _simple_insert(old, insert, remove)
+    else:
+        new = _insert_after(old, insert, remove, insert_after)
+    return ParameterTable(new)
+
 def isstr(x):
     # type: (Any) -> bool
     """
@@ -777,7 +851,8 @@ def isstr(x):
 
 
 #: Set of variables defined in the model that might contain C code
-C_SYMBOLS = ['Imagnetic', 'Iq', 'Iqxy', 'Iqac', 'Iqabc', 'form_volume', 'shell_volume', 'c_code']
+C_SYMBOLS = ['Imagnetic', 'Iq', 'Iqxy', 'Iqac', 'Iqabc',
+             'form_volume', 'shell_volume', 'c_code', 'valid']
 
 def _find_source_lines(model_info, kernel_module):
     # type: (ModelInfo, ModuleType) -> None
@@ -812,6 +887,7 @@ def _find_source_lines(model_info, kernel_module):
                 # Add 1 since some compilers complain about "#line 0"
                 model_info.lineno[name] = lineno + 1
                 break
+
 
 def make_model_info(kernel_module):
     # type: (module) -> ModelInfo
@@ -851,11 +927,12 @@ def make_model_info(kernel_module):
         name = " ".join(w.capitalize() for w in kernel_id.split('_'))
 
     info.id = kernel_id  # string used to load the kernel
-    info.filename = filename
+    info.basefile = info.filename = filename
     info.name = name
     info.title = getattr(kernel_module, 'title', name+" model")
     info.description = getattr(kernel_module, 'description', 'no description')
-    info.parameters = parameters
+    info.base = info.parameters = parameters
+    info.translation = None
     info.demo = demo
     info.composition = None
     info.docs = kernel_module.__doc__
@@ -872,6 +949,7 @@ def make_model_info(kernel_module):
     info.radius_effective = getattr(kernel_module, 'radius_effective', None)
     # TODO: check the structure of the tests
     info.tests = getattr(kernel_module, 'tests', [])
+    info.valid = getattr(kernel_module, 'valid', '')
     info.form_volume = getattr(kernel_module, 'form_volume', None) # type: ignore
     info.shell_volume = getattr(kernel_module, 'shell_volume', None) # type: ignore
     info.Iq = getattr(kernel_module, 'Iq', None) # type: ignore
@@ -912,6 +990,12 @@ class ModelInfo(object):
     """
     #: Full path to the file defining the kernel, if any.
     filename = None         # type: Optional[str]
+    #: Base file is usually filename, but not when a model has been
+    #: reparameterized, in which case it is the file containing the original
+    #: model definition.  This is needed to signal an additional dependency for
+    #: the model time stamp, and so that the compiler reports correct file
+    #: for syntax errors.
+    basefile = None         # type: Optional[str]
     #: Id of the kernel used to load it from the filesystem.
     id = None               # type: str
     #: Display name of the model, which defaults to the model id but with
@@ -929,6 +1013,13 @@ class ModelInfo(object):
     #: into a :class:`ParameterTable`, which provides various views into the
     #: parameter list.
     parameters = None       # type: ParameterTable
+    #: For reparameterized systems, *base* is the base parameter table.  For
+    #: normal systems it is simply a copy of *parameters*.
+    base = None             # type: ParameterTable
+    #: Parameter translation code to convert from *parameters* table from
+    #: caller to the *base* table used to evaluate the model.
+    translation = None      # type: str
+    #: **DEPRECATED**
     #: Demo parameters as a *parameter:value* map used as the default values
     #: for :mod:`compare`.  Any parameters not set in *demo* will use the
     #: defaults from the parameter table.  That means no polydispersity, and
@@ -991,6 +1082,12 @@ class ModelInfo(object):
     source = None           # type: List[str]
     #: inline source code, added after all elements of source
     c_code = None           # type: Optional[str]
+    #: Expression which evaluates to True if the input parameters are valid
+    #: and the model can be computed, or False otherwise.  Invalid parameter
+    #: sets will not be included in the weighted $I(Q)$ calculation or its
+    #: volume normalization.  Use C syntax for the expressions, with || for or
+    #: && for and and ! for not.  Any non-magnetic parameter can be used.
+    valid = None         # type: str
     #: Returns the form volume for python-based models.  Form volume is needed
     #: for volume normalization in the polydispersity integral.  If no
     #: parameters are *volume* parameters, then form volume is not needed.

@@ -1,5 +1,3 @@
-//#define INVALID(v) (v.radius_core >= v.radius)
-
 static double
 shell_volume(double radius, double thickness, double length)
 {

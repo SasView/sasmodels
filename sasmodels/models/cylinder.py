@@ -145,6 +145,7 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
              ]
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "cylinder.c"]
+valid = "radius >= 0.0 && length >= 0.0"
 have_Fq = True
 radius_effective_modes = [
     "excluded volume", "equivalent volume sphere", "radius",

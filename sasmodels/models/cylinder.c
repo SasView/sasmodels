@@ -1,5 +1,3 @@
-#define INVALID(v) (v.radius<0 || v.length<0)
-
 static double
 form_volume(double radius, double length)
 {
