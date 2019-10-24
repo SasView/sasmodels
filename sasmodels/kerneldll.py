@@ -72,6 +72,7 @@ import sys
 import os
 from os.path import join as joinpath, splitext
 import subprocess
+import shlex
 import tempfile
 import ctypes as ct  # type: ignore
 import _ctypes as _ct
@@ -129,7 +130,15 @@ if COMPILER == "unix":
     # Generic unix compile.
     # On Mac users will need the X code command line tools installed.
     #COMPILE = "gcc-mp-4.7 -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm -lgomp"
-    CC = "cc -shared -fPIC -std=c99 -O2 -Wall".split()
+    CC = os.environ.get("CC", "cc")
+    CPPFLAGS = os.environ.get("CPPFLAGS", "")
+    CFLAGS = os.environ.get("CFLAGS", "-std=c99 -O2 -Wall")
+    LDFLAGS = os.environ.get("LDFLAGS", "")
+    SOFLAGS = "-fPIC -shared"
+    compiler_vars = (CC, CPPFLAGS, CFLAGS, LDFLAGS, SOFLAGS)
+    compiler = [val for var in compiler_vars for val in shlex.split(var)]
+    LIBS = ["-lm" ] + shlex.split(os.environ.get("LIBS", ""))
+
     # Add OpenMP support if not running on a Mac.
     if sys.platform != "darwin":
         # OpenMP seems to be broken on gcc 5.4.0 (ubuntu 16.04.9).
@@ -138,7 +147,7 @@ if COMPILER == "unix":
         pass
     def compile_command(source, output):
         """unix compiler command"""
-        return CC + [source, "-o", output, "-lm"]
+        return compiler + [source, "-o", output] + LIBS
 elif COMPILER == "msvc":
     # Call vcvarsall.bat before compiling to set path, headers, libs, etc.
     # MSVC compiler is available, so use it.  OpenMP requires a copy of
