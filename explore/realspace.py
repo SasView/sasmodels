@@ -713,6 +713,7 @@ def plot_calc_2d(qx, qy, Iqxy, theory=None, title=None):
     extent = [qx[0], qx[-1], qy[0], qy[-1]]
     plt.imshow(np.log10(Iqxy), extent=extent, interpolation="nearest",
                origin='lower')
+    plt.colorbar()
     plt.xlabel('qx (1/A)')
     plt.ylabel('qy (1/A)')
     plt.axis('equal')
@@ -724,6 +725,7 @@ def plot_calc_2d(qx, qy, Iqxy, theory=None, title=None):
         plt.subplot(132)
         plt.imshow(np.log10(theory), extent=extent, interpolation="nearest",
                    origin='lower')
+        plt.colorbar()
         plt.axis('equal')
         plt.axis(extent)
         plt.xlabel('qx (1/A)')
@@ -732,6 +734,7 @@ def plot_calc_2d(qx, qy, Iqxy, theory=None, title=None):
         plt.subplot(133)
         rel = (theory-Iqxy*(np.sum(theory)/np.sum(Iqxy)))/theory
         plt.imshow(rel, extent=extent, interpolation="nearest", origin='lower')
+        plt.colorbar()
         plt.axis('equal')
         plt.axis(extent)
         plt.xlabel('qx (1/A)')
