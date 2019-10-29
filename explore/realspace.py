@@ -6,6 +6,7 @@ import os
 import argparse
 import inspect
 from collections import OrderedDict
+from timeit import default_timer as timer
 
 try:
     from inspect import getfullargspec
@@ -400,10 +401,10 @@ def capped_cylinder(r=20, rcap=50, length=20, rho=2):
     shape.r_max = sqrt(length**2 + 4*r**2) + (rcap + h)
     return shape
 
-def _Iqabc(values, x, y, z, qa, qb, qc):
+def _Iqabc(weight, x, y, z, qa, qb, qc):
     """I(q) = |sum V(r) rho(r) e^(1j q.r)|^2 / sum V(r)"""
     #print("calling python")
-    Iq = [abs(np.sum(values*np.exp(1j*(qa_k*x + qb_k*y + qc_k*z))))**2
+    Iq = [abs(np.sum(weight*np.exp(1j*(qa_k*x + qb_k*y + qc_k*z))))**2
           for qa_k, qb_k, qc_k in zip(qa.flat, qb.flat, qc.flat)]
     return np.asarray(Iq)
 _Iqabcf = _Iqabc
@@ -414,60 +415,79 @@ if USE_NUMBA:
     from numba import prange
     from numba.cuda import jit
     #@jit("f8[:](f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:])", parallel=True, fastmath=True)
-    def _Iqabc_py(values, x, y, z, qa, qb, qc):
+    def _Iqabc_py(weight, x, y, z, qa, qb, qc):
         #print("calling numba")
         Iq = np.empty_like(qa)
         for j in prange(len(Iq)):
             #total = 0. + 0j
-            #for k in range(len(values)):
-            #    total += values[k]*np.exp(1j*(qa[j]*x[k] + qb[j]*y[k] + qc[j]*z[k]))
-            total = np.sum(values * np.exp(1j*(qa[j]*x + qb[j]*y + qc[j]*z)))
+            #for k in range(len(weight)):
+            #    total += weight[k]*np.exp(1j*(qa[j]*x[k] + qb[j]*y[k] + qc[j]*z[k]))
+            total = np.sum(weight * np.exp(1j*(qa[j]*x + qb[j]*y + qc[j]*z)))
             Iq[j] = abs(total)**2
         return Iq
     sig = "f8[:](f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:])"
     _Iqabc = njit(sig, parallel=True, fastmath=True)(_Iqabc_py)
-    _Iqabcf = njit(sig.replace("f8","f4"), parallel=True, fastmath=True)(_Iqabc_py)
+    _Iqabcf = njit(sig.replace("f8", "f4"), parallel=True, fastmath=True)(_Iqabc_py)
 
 if USE_CUDA:  # assume have numba and cuda
     #print("compiling for cuda")
     from numba import cuda
     import cmath
-    def _Iqabc_kernel_py(values, x, y, z, qa, qb, qc, Iq):
+    def _Iqabc_kernel_py(weight, x, y, z, qa, qb, qc, Iq):
         j = cuda.grid(1)
         if j < Iq.size:
             total = 0. + 0j
-            for k in range(values.size):
-                total += values[k]*cmath.exp(1j*(qa[j]*x[k] + qb[j]*y[k] + qc[j]*z[k]))
+            for k in range(weight.size):
+                total += weight[k]*cmath.exp(1j*(qa[j]*x[k] + qb[j]*y[k] + qc[j]*z[k]))
             Iq[j] = abs(total)**2
     sig = "void(f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:])"
     _Iqabcf_kernel = cuda.jit(sig, parallel=True, fastmath=True)
-    _Iqabc_kernel = cuda.jit(sig.replace("f8","f4"), parallel=True, fastmath=True)
+    _Iqabc_kernel = cuda.jit(sig.replace("f8", "f4"), parallel=True, fastmath=True)
 
-    def _Iqabc(values, x, y, z, qa, qb, qc):
+    def _Iqabc(weight, x, y, z, qa, qb, qc):
         #print("calling cuda")
         Iq = np.empty_like(qa)
         threadsperblock = 32
         blockspergrid = (qa.size + (threadsperblock - 1)) // threadsperblock
         kernel = _Iqabc_kernel if qa.dtype == np.float64 else _Iqabcf_kernel
-        kernel[blockspergrid, threadsperblock](values, x, y, z, qa, qb, qc, Iq)
+        kernel[blockspergrid, threadsperblock](weight, x, y, z, qa, qb, qc, Iq)
         return Iq
     _Iqabcf = _Iqabc
 
 def calc_Iqxy(qx, qy, rho, points, volume=1.0, view=(0, 0, 0), dtype='f'):
+    """
+    *qx*, *qy* correspond to the detector pixels at which to calculate the
+    scattering, relative to the beam along the negative z axis.
+
+    *points* are three columns (x, y, z), one for each sample in the shape.
+
+    *rho* (1e-6/Ang) is the scattering length density of each point.
+
+    *volume* should be 1/number_density.  That is, each of n particles in the
+    total value represents volume/n contribution to the scattering.
+
+    *view* rotates the points about the axes using Euler angles for pitch
+    yaw and roll for a beam travelling along the negative z axis.
+
+    *dtype* is the numerical precision of the calculation.
+    """
+    # TODO: maybe slightly faster to rotate points, and drop qc*z
     qx, qy = np.broadcast_arrays(qx, qy)
     qa, qb, qc = invert_view(qx, qy, view)
     rho, volume = np.broadcast_arrays(rho, volume)
-    values = rho*volume
+    weight = rho*volume
     x, y, z = points.T
 
     # I(q) = |sum V(r) rho(r) e^(1j q.r)|^2 / sum V(r)
     if np.dtype(dtype) == np.float64:
-        values, x, y, z, qa, qb, qc = [np.asarray(v, 'd') for v in (values, x, y, z, qa, qb, qc)]
-        Iq = _Iqabc(values, x, y, z, qa.flatten(), qb.flatten(), qc.flatten())
+        weight, x, y, z, qa, qb, qc = [np.asarray(v, 'd') for v in (weight, x, y, z, qa, qb, qc)]
+        Iq = _Iqabc(weight, x, y, z, qa.flatten(), qb.flatten(), qc.flatten())
     else:  # float32
-        values, x, y, z, qa, qb, qc = [np.asarray(v, 'f') for v in (values, x, y, z, qa, qb, qc)]
-        Iq = _Iqabcf(values, x, y, z, qa.flatten(), qb.flatten(), qc.flatten())
-    return np.asarray(Iq).reshape(qx.shape) / np.sum(volume)
+        weight, x, y, z, qa, qb, qc = [np.asarray(v, 'f') for v in (weight, x, y, z, qa, qb, qc)]
+        Iq = _Iqabcf(weight, x, y, z, qa.flatten(), qb.flatten(), qc.flatten())
+    # The scale factor 1e-4 is due to the conversion from rho = 1e-6 squared
+    # times the conversion of 1e-8 from inverse angstroms to inverse cm.
+    return np.asarray(Iq).reshape(qx.shape) * (1e-4 / np.sum(volume))
 
 def spin_weights(in_spin, out_spin):
     """
@@ -521,23 +541,51 @@ def magnetic_sld(qx, qy, up_angle, rho, rho_m):
 
     Returns effective rho for spin states [dd, du, ud, uu].
     """
-    # Next three lines could be precomputed
-    qsq = qx**2 + qy**2
+    # Handle q=0 by setting px = py = 0
+    # Note: this is different from kernel_iq, which I(0,0) to 0
+    one_over_qsq = 1/(qx**2 + qy**2) if qx != 0. or qy != 0. else 0.
     cos_spin, sin_spin = cos(-radians(up_angle)), sin(-radians(up_angle))
-    px, py = (qy*cos_spin + qx*sin_spin)/qsq, (qy*sin_spin - qx*cos_spin)/qsq
+    perp = (qy*mx - qx*my)*one_over_qsq
+    px = perp*(qy*cos_spin + qx*sin_spin)
+    py = perp*(qy*sin_spin - qx*cos_spin)
     # If all points have the same magnetism, then these can be precomputed,
     # otherwise need to be computed separately for each q.
     mx, my, mz = rho_m
-    perp = qy*mx - qx*my
     return [
-        rho - px*perp,   # dd => sld - D M_perpx
-        py*perp - 1j*mz, # du => -D (M_perpy + j M_perpz)
-        py*perp + 1j*mz, # ud => -D (M_perpy - j M_perpz)
-        rho + px*perp,   # uu => sld + D M_perpx
+        rho - px,   # dd => sld - D M_perpx
+        py - 1j*mz, # du => -D (M_perpy + j M_perpz)
+        py + 1j*mz, # ud => -D (M_perpy - j M_perpz)
+        rho + px,   # uu => sld + D M_perpx
     ]
 
 def calc_Iq_magnetic(qx, qy, rho, rho_m, points, volume=1.0, view=(0, 0, 0),
-                  up_frac_i=0, up_frac_f=0, up_angle=0.):
+                     up_frac_i=0, up_frac_f=0, up_angle=0.):
+    """
+    *qx*, *qy* correspond to the detector pixels at which to calculate the
+    scattering, relative to the beam along the negative z axis.
+
+    *points* are three columns (x, y, z), one for each sample in the shape.
+
+    *rho* (1e-6/Ang) is the scattering length density of each point.
+
+    *rho_m* (1e-6/Ang) are the (mx, my, mz) components of the magnetic
+    scattering length density for each point.
+
+    *volume* should be 1/number_density.  That is, each of n particles in the
+    total value represents volume/n contribution to the scattering.
+
+    *view* rotates the points about the axes using Euler angles for pitch
+    yaw and roll for a beam travelling along the negative z axis.
+
+    *up_frac_i* is the portion of polarizer neutrons which are spin up.
+
+    *up_frac_f* is the portion of analyzer neutrons which are spin up.
+
+    *up_angle* is the angle of the spin up direction relative to the y axis.
+
+    *dtype* is the numerical precision of the calculation. [not implemented]
+    """
+    # TODO: maybe slightly faster to rotate points and rho_m, and drop qc*z
     qx, qy = np.broadcast_arrays(qx, qy)
     qa, qb, qc = invert_view(qx, qy, view)
     rho, volume = np.broadcast_arrays(rho, volume)
@@ -556,52 +604,54 @@ def calc_Iq_magnetic(qx, qy, rho, rho_m, points, volume=1.0, view=(0, 0, 0),
                 continue
             Iq_k = abs(np.sum(volume*xs*np.exp(1j*(qa[k]*x + qb[k]*y + qc[k]*z))))**2
             Iq[k] += w * Iq_k
-    return np.asarray(Iq).reshape(shape) / np.sum(volume)
+    # The scale factor 1e-4 is due to the conversion from rho = 1e-6 squared
+    # times the conversion of 1e-8 from inverse angstroms to inverse cm.
+    return np.asarray(Iq).reshape(shape) * (1e-4 / np.sum(volume))
 
-def _calc_Pr_nonuniform(r, rho, points):
+def _calc_Pr_nonuniform(r, rho, points, volume):
     # Make Pr a little be bigger than necessary so that only distances
     # min < d < max end up in Pr
     n_max = len(r)+1
     extended_Pr = np.zeros(n_max+1, 'd')
     # r refers to bin centers; find corresponding bin edges
     bins = bin_edges(r)
-    t_next = time.clock() + 3
+    t_next = timer() + 3
     for k, rho_k in enumerate(rho[:-1]):
-        distance = sqrt(np.sum((points[k] - points[k+1:])**2, axis=1))
-        weights = rho_k * rho[k+1:]
+        distance = np.linalg.norm(points[k] - points[k+1:], axis=1)
+        weights = (rho_k * volume[k]) * (rho[k+1:] * volume[k+1:])
+        #weights = (rho_k * volume[k]) * rho[k+1:]
         index = np.searchsorted(bins, distance)
         # Note: indices may be duplicated, so "Pr[index] += w" will not work!!
         extended_Pr += np.bincount(index, weights, n_max+1)
-        t = time.clock()
+        t = timer()
         if t > t_next:
             t_next = t + 3
             print("processing %d of %d"%(k, len(rho)-1))
     Pr = extended_Pr[1:-1]
     return Pr
 
-def _calc_Pr_uniform(r, rho, points):
+def _calc_Pr_uniform(r, rho, points, volume):
     # Make Pr a little be bigger than necessary so that only distances
     # min < d < max end up in Pr
     dr, n_max = r[0], len(r)
     extended_Pr = np.zeros(n_max+1, 'd')
-    t0 = time.clock()
+    t0 = timer()
     t_next = t0 + 3
     for k, rho_k in enumerate(rho[:-1]):
-        distances = sqrt(np.sum((points[k] - points[k+1:])**2, axis=1))
-        weights = rho_k * rho[k+1:]
-        index = np.minimum(np.asarray(distances/dr, 'i'), n_max)
+        distance = np.linalg.norm(points[k] - points[k+1:], axis=1)
+        #weights = (rho_k * volume[k]) * (rho[k+1:] * volume[k+1:])
+        weights = rho_k * rho[k+1:] * (volume[k] + volume[k+1:])
+        index = np.minimum(np.asarray(distance/dr, 'i'), n_max)
         # Note: indices may be duplicated, so "Pr[index] += w" will not work!!
         extended_Pr += np.bincount(index, weights, n_max+1)
-        t = time.clock()
+        t = timer()
         if t > t_next:
             t_next = t + 3
             print("processing %d of %d"%(k, len(rho)-1))
-    #print("time py:", time.clock() - t0)
+    #print("time py:", timer() - t0)
     Pr = extended_Pr[:-1]
-    # Make Pr independent of sampling density.  The factor of 2 comes because
-    # we are only accumulating the upper triangular distances.
-    #Pr = Pr * 2 / len(rho)**2
-    return Pr
+    #print("vol", np.sum(volume))
+    return Pr*1e-4
 
     # Can get an additional 2x by going to C.  Cuda/OpenCL will allow even
     # more speedup, though still bounded by the O(n^2) cost.
@@ -626,45 +676,75 @@ void pdfcalc(int n, const double *pts, const double *rho,
 
 if USE_NUMBA:
     # Override simple numpy solution with numba if available
-    @njit("f8[:](f8[:], f8[:], f8[:,:])", parallel=True, fastmath=True)
-    def _calc_Pr_uniform(r, rho, points):
+    #@njit("f8[:](f8[::1], f8[::1], f8[::1,:], f8[:])", parallel=True, fastmath=True)
+    @njit(parallel=True, fastmath=True)
+    def _calc_Pr_uniform(r, rho, points, volume):
         dr = r[0]
         n_max = len(r)
         Pr = np.zeros_like(r)
         for j in prange(len(rho) - 1):
             x, y, z = points[j, 0], points[j, 1], points[j, 2]
+            rho_j, volume_j = rho[j], volume[j]
             for k in range(j+1, len(rho)):
                 distance = sqrt((x - points[k, 0])**2
                                 + (y - points[k, 1])**2
                                 + (z - points[k, 2])**2)
                 index = int(distance/dr)
                 if index < n_max:
-                    Pr[index] += rho[j] * rho[k]
-        # Make Pr independent of sampling density.  The factor of 2 comes because
-        # we are only accumulating the upper triangular distances.
-        #Pr = Pr * 2 / len(rho)**2
+                    Pr[index] += rho_j*rho[k]*(volume_j + volume[k])
         return Pr
 
 
-def calc_Pr(r, rho, points):
+def calc_Pr(r, rho, points, volume):
     # P(r) with uniform steps in r is 3x faster; check if we are uniform
     # before continuing
-    r, rho, points = [np.asarray(v, 'd') for v in (r, rho, points)]
+    r, points = [np.asarray(v, 'd') for v in (r, points)]
+    rho = np.broadcast_to(np.asarray(rho, 'd'), points.shape[:1])
+    volume = np.broadcast_to(np.asarray(volume, 'd'), points.shape[:1])
     if np.max(np.abs(np.diff(r) - r[0])) > r[0]*0.01:
-        Pr = _calc_Pr_nonuniform(r, rho, points)
+        Pr = _calc_Pr_nonuniform(r, rho, points, volume)
     else:
-        Pr = _calc_Pr_uniform(r, rho, points)
-    return Pr / Pr.max()
+        Pr = _calc_Pr_uniform(r, rho, points, volume)
+    # Note: 1e-4 because (1e-6 rho)^2 = 1e-12 rho^2 time 1e-8 for 1/A to 1/cm
+    return Pr * 1e-4
 
 
 def j0(x):
+    # use q/pi since np.sinc = sin(pi x)/(pi x)
     return np.sinc(x/np.pi)
 
-def calc_Iq(q, r, Pr):
+
+def calc_Iq_from_Pr(q, r, Pr):
     Iq = np.array([simps(Pr * j0(qk*r), r) for qk in q])
     #Iq = np.array([np.trapz(Pr * j0(qk*r), r) for qk in q])
-    Iq /= Iq[0]
+    #Iq /= Iq[0]
     return Iq
+
+
+def _calc_Iq_avg(Iq, q, r, sld, volume):
+    weight = sld * volume
+    for i, qi in enumerate(q):
+        Fq = np.sum(weight * np.sinc((qi/np.pi)*r))
+        Iq[i] = Fq**2
+if USE_NUMBA:
+    #sig = njit('(f8[:], f8[:], f8[:], f8[:], f8[:])', parallel=True, fastmath=True)
+    sig = njit(parallel=True, fastmath=True)
+    _calc_Iq_avg = sig(_calc_Iq_avg)
+
+
+def calc_Iq_avg(q, rho, points, volume=1.0):
+    # Centralize the data
+    center = 0.5*(np.min(points, axis=0, keepdims=True)
+                  + np.max(points, axis=0, keepdims=True))
+    points = points - center
+    # Find distance from center
+    r = np.linalg.norm(points, axis=1)
+    # Call calculator
+    Iq = np.empty_like(q)
+    rho = np.broadcast_to(np.asarray(rho, 'd'), points.shape[:1])
+    volume = np.broadcast_to(np.asarray(volume, 'd'), points.shape[:1])
+    _calc_Iq_avg(Iq, q, r, rho, volume)
+    return Iq * (1e-4/np.sum(volume))
 
 # NOTE: copied from sasmodels/resolution.py
 def bin_edges(x):
@@ -685,7 +765,7 @@ def bin_edges(x):
     return edges
 
 # -------------- plotters ----------------
-def plot_calc(r, Pr, q, Iq, theory=None, title=None):
+def plot_calc(r, Pr, q, Iq, theory=None, title=None, Iq_avg=None):
     import matplotlib.pyplot as plt
     plt.subplot(211)
     plt.plot(r, Pr, '-', label="Pr")
@@ -696,11 +776,15 @@ def plot_calc(r, Pr, q, Iq, theory=None, title=None):
     plt.grid(True)
     plt.subplot(212)
     plt.loglog(q, Iq, '-', label='from Pr')
-    plt.xlabel('q (1/A')
+    #plt.loglog(q, Iq/theory[1], '-', label='Pr/theory')
+    if Iq_avg is not None:
+        plt.loglog(q, Iq_avg, '-', label='from Iq_avg')
+    plt.xlabel('q (1/A)')
     plt.ylabel('Iq')
     plt.grid(True)
     if theory is not None:
-        plt.loglog(theory[0], theory[1]/theory[1][0], '-', label='analytic')
+        #plt.loglog(theory[0], theory[1]/theory[1][0], '-', label='analytic')
+        plt.loglog(theory[0], theory[1], '-', label='analytic')
         plt.legend()
 
 def plot_calc_2d(qx, qy, Iqxy, theory=None, title=None):
@@ -732,7 +816,7 @@ def plot_calc_2d(qx, qy, Iqxy, theory=None, title=None):
 
     if theory is not None:
         plt.subplot(133)
-        rel = (theory-Iqxy*(np.sum(theory)/np.sum(Iqxy)))/theory
+        rel = (theory-Iqxy)/theory
         plt.imshow(rel, extent=extent, interpolation="nearest", origin='lower')
         plt.colorbar()
         plt.axis('equal')
@@ -904,8 +988,8 @@ def _sasmodels_Iqxy(kernel, qx, qy, pars, view):
     from sasmodels.direct_model import DirectModel
     Iq = 100 * np.ones_like(qx)
     data = Data2D(x=qx, y=qy, z=Iq, dx=None, dy=None, dz=np.sqrt(Iq))
-    data.x_bins = qx[0,:]
-    data.y_bins = qy[:,0]
+    data.x_bins = qx[0, :]
+    data.y_bins = qy[:, 0]
     data.filename = "fake data"
 
     calculator = DirectModel(data, kernel)
@@ -1076,7 +1160,7 @@ def build_cscyl(ra=30, rb=90, length=30, thick_rim=8, thick_face=14,
     return shape, fn, fn_xy
 
 def build_cubic_lattice(shape, nx=1, ny=1, nz=1, dx=2, dy=2, dz=2,
-                  shuffle=0, rotate=0):
+                        shuffle=0, rotate=0):
     a, b, c = shape.dims
     shapes = [copy(shape)
               .shift((ix+(randn() if shuffle < 0.3 else rand())*shuffle)*dx*a,
@@ -1111,16 +1195,20 @@ def check_shape(title, shape, fn=None, show_points=False,
     r = shape.r_bins(q, r_step=r_step)
     sampling_density = samples / shape.volume
     rho, points = shape.sample(sampling_density)
-    t0 = time.time()
-    Pr = calc_Pr(r, rho-rho_solvent, points)
-    print("calc Pr time", time.time() - t0)
-    Iq = calc_Iq(q, r, Pr)
+    volume = shape.volume / len(points)
+    t0 = timer()
+    Pr = calc_Pr(r, rho-rho_solvent, points, volume)
+    print("calc Pr time", timer() - t0)
+    Iq = calc_Iq_from_Pr(q, r, Pr)
+    t0 = timer()
+    Iq_avg = calc_Iq_avg(q, rho-rho_solvent, points, volume)
+    print("calc Iq_avg time", timer() - t0)
     theory = (q, fn(q)) if fn is not None else None
 
     import pylab
     if show_points:
          plot_points(rho, points); pylab.figure()
-    plot_calc(r, Pr, q, Iq, theory=theory, title=title)
+    plot_calc(r, Pr, q, Iq, theory=theory, title=title, Iq_avg=Iq_avg)
     pylab.gcf().canvas.set_window_title(title)
     pylab.show()
 
@@ -1133,16 +1221,20 @@ def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
     qy = np.linspace(-qmax, qmax, mesh)
     Qx, Qy = np.meshgrid(qx, qy)
     sampling_density = samples / shape.volume
-    t0 = time.time()
+    t0 = timer()
     rho, points = shape.sample(sampling_density)
-    print("point generation time", time.time() - t0)
+    # The volume of each sample is approximately 1/sampling_density, except
+    # that the number of points actually sampled may be slightly more or
+    # less due to nature of how points are sampled from the shape.
+    volume = shape.volume / len(rho)
+    print("point generation time", timer() - t0)
     #print("bounding box", points.min(axis=0), points.max(axis=0))
-    t0 = time.time()
-    Iqxy = calc_Iqxy(Qx, Qy, rho, points, view=view)
-    print("calc Iqxy time", time.time() - t0)
-    t0 = time.time()
+    t0 = timer()
+    Iqxy = calc_Iqxy(Qx, Qy, rho, points, volume=volume, view=view)
+    print("calc Iqxy time", timer() - t0)
+    t0 = timer()
     theory = fn(Qx, Qy, view) if fn is not None else None
-    print("calc theory time", time.time() - t0)
+    print("calc theory time", timer() - t0)
 
     # Add floor to limit colorbar range.
     Iqxy += 0.001 * Iqxy.max()
@@ -1164,8 +1256,8 @@ def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
     pylab.show()
 
 def check_shape_mag(title, shape, fn=None, view=(0, 0, 0), show_points=False,
-                   mesh=100, qmax=1.0, samples=5000,
-                   up_frac_i=0, up_frac_f=0, up_angle=0):
+                    mesh=100, qmax=1.0, samples=5000,
+                    up_frac_i=0, up_frac_f=0, up_angle=0):
     rho_solvent = 0
     #qx = np.linspace(0.0, qmax, mesh)
     #qy = np.linspace(0.0, qmax, mesh)
@@ -1173,18 +1265,22 @@ def check_shape_mag(title, shape, fn=None, view=(0, 0, 0), show_points=False,
     qy = np.linspace(-qmax, qmax, mesh)
     Qx, Qy = np.meshgrid(qx, qy)
     sampling_density = samples / shape.volume
-    t0 = time.time()
-    theory = fn(Qx, Qy, view) if fn is not None else None
-    print("calc theory time", time.time() - t0)
-    t0 = time.time()
+    t0 = timer()
     rho, rho_m, points = shape.sample_magnetic(sampling_density)
-    print("point generation time", time.time() - t0)
+    # The volume of each sample is approximately 1/sampling_density, except
+    # that the number of points actually sampled may be slightly more or
+    # less due to nature of how points are sampled from the shape.
+    volume = shape.volume / len(rho)
+    print("point generation time", timer() - t0)
     #print("bounding box", points.min(axis=0), points.max(axis=0))
-    t0 = time.time()
-    Iqxy = calc_Iq_magnetic(Qx, Qy, rho, rho_m, points, view=view,
+    t0 = timer()
+    Iqxy = calc_Iq_magnetic(Qx, Qy, rho, rho_m, points, volume=volume, view=view,
                             up_frac_i=up_frac_i, up_frac_f=up_frac_f,
                             up_angle=up_angle)
-    print("calc Imag time", time.time() - t0)
+    print("calc I_mag time", timer() - t0)
+    t0 = timer()
+    theory = fn(Qx, Qy, view) if fn is not None else None
+    print("calc theory time", timer() - t0)
 
     # Add floor to limit colorbar range.
     Iqxy += 0.001 * Iqxy.max()
