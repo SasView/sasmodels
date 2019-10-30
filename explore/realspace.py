@@ -127,12 +127,9 @@ class Shape:
         points = np.asarray(self.rotation * np.matrix(points.T)) + self.center
         return points.T
 
-    def r_bins(self, q, over_sampling=1, r_step=0.):
-        r_max = min(2 * pi / q[0], self.r_max)
-        if r_step == 0.:
-            r_step = 2 * pi / q[-1] / over_sampling
-        #r_step = 0.01
-        return np.arange(r_step, r_max, r_step)
+    def r_bins(self, q, over_sampling=1, r_step=None):
+        return r_bins(q, r_max=self.r_max, r_step=r_step,
+                      over_sampling=over_sampling)
 
 class Composite(Shape):
     def __init__(self, shapes, center=(0, 0, 0), orientation=(0, 0, 0)):
@@ -545,12 +542,10 @@ def magnetic_sld(qx, qy, up_angle, rho, rho_m):
     # Note: this is different from kernel_iq, which I(0,0) to 0
     one_over_qsq = 1/(qx**2 + qy**2) if qx != 0. or qy != 0. else 0.
     cos_spin, sin_spin = cos(-radians(up_angle)), sin(-radians(up_angle))
+    mx, my, mz = rho_m
     perp = (qy*mx - qx*my)*one_over_qsq
     px = perp*(qy*cos_spin + qx*sin_spin)
     py = perp*(qy*sin_spin - qx*cos_spin)
-    # If all points have the same magnetism, then these can be precomputed,
-    # otherwise need to be computed separately for each q.
-    mx, my, mz = rho_m
     return [
         rho - px,   # dd => sld - D M_perpx
         py - 1j*mz, # du => -D (M_perpy + j M_perpz)
@@ -699,14 +694,23 @@ def calc_Pr(r, rho, points, volume):
     # P(r) with uniform steps in r is 3x faster; check if we are uniform
     # before continuing
     r, points = [np.asarray(v, 'd') for v in (r, points)]
-    rho = np.broadcast_to(np.asarray(rho, 'd'), points.shape[:1])
-    volume = np.broadcast_to(np.asarray(volume, 'd'), points.shape[:1])
+    npoints = points.shape[0]
+    rho = np.broadcast_to(np.asarray(rho, 'd'), npoints)
+    volume = np.broadcast_to(np.asarray(volume, 'd'), npoints)
     if np.max(np.abs(np.diff(r) - r[0])) > r[0]*0.01:
         Pr = _calc_Pr_nonuniform(r, rho, points, volume)
     else:
         Pr = _calc_Pr_uniform(r, rho, points, volume)
     # Note: 1e-4 because (1e-6 rho)^2 = 1e-12 rho^2 time 1e-8 for 1/A to 1/cm
     return Pr * 1e-4
+
+
+def r_bins(q, r_max=None, r_step=None, over_sampling=1):
+    if r_max is None:
+        r_max = 2 * pi / q[0]
+    if r_step is None:
+        r_step = 2 * pi / q[-1] / over_sampling
+    return np.arange(r_step, r_max, r_step)
 
 
 def j0(x):
