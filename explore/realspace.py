@@ -593,12 +593,12 @@ def calc_Iq_magnetic(qx, qy, rho, rho_m, points, volume=1.0, view=(0, 0, 0),
     x, y, z, qx, qy = (np.asarray(v, 'd') for v in (x, y, z, qx, qy))
     qx, qy = (v.flatten() for v in (qx, qy))
     for k in range(qx.size):
+        ephase = volume*np.exp(1j*(qa[k]*x + qb[k]*y + qc[k]*z))
         dd, du, ud, uu = magnetic_sld(qx[k], qy[k], up_angle, rho, rho_m)
         for w, xs in zip(weights, (dd, du, ud, uu)):
             if w == 0.0:
                 continue
-            Iq_k = abs(np.sum(volume*xs*np.exp(1j*(qa[k]*x + qb[k]*y + qc[k]*z))))**2
-            Iq[k] += w * Iq_k
+            Iq[k] += w * abs(np.sum(xs*ephase))**2
     # The scale factor 1e-4 is due to the conversion from rho = 1e-6 squared
     # times the conversion of 1e-8 from inverse angstroms to inverse cm.
     return np.asarray(Iq).reshape(shape) * (1e-4 / np.sum(volume))
@@ -813,6 +813,7 @@ def plot_calc_2d(qx, qy, Iqxy, theory=None, title=None):
         plt.subplot(132)
         plt.imshow(np.log10(theory), extent=extent, interpolation="nearest",
                    origin='lower')
+        plt.title("theory")
         plt.colorbar()
         plt.axis('equal')
         plt.axis(extent)
@@ -990,7 +991,7 @@ def _sasmodels_Iq(kernel, q, pars):
 def _sasmodels_Iqxy(kernel, qx, qy, pars, view):
     from sasmodels.data import Data2D
     from sasmodels.direct_model import DirectModel
-    Iq = 100 * np.ones_like(qx)
+    Iq = np.full_like(qx, 100)
     data = Data2D(x=qx, y=qy, z=Iq, dx=None, dy=None, dz=np.sqrt(Iq))
     data.x_bins = qx[0, :]
     data.y_bins = qy[:, 0]
