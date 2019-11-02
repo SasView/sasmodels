@@ -17,9 +17,6 @@ matrix:
     language: generic
     env:
     - PY=3.7
-branches:
-  only:
-  - master
 addons:
   apt:
     packages: opencl-headers
