@@ -132,8 +132,7 @@ def copy_if_newer(src, dst):
     import shutil
     if not exists(dst):
         path = dirname(dst)
-        if not exists(path):
-            os.makedirs(path)
+        os.makedirs(path, exist_ok=True)
         shutil.copy2(src, dst)
     elif getmtime(src) > getmtime(dst):
         shutil.copy2(src, dst)
