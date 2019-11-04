@@ -132,8 +132,14 @@ def copy_if_newer(src, dst):
     import shutil
     if not exists(dst):
         path = dirname(dst)
-        if not exists(path):
+        # CRUFT: for python 3 change this to os.makedirs(path, exist_ok=True)
+        try:
             os.makedirs(path)
+        except Exception:
+            # Ignore directory creation errors.  If the directory couldn't be created then
+            # shutil.copy2() below will raise an error. We can't check if the directory exists
+            # beforehand because of a race condition in parallel builds.
+            pass
         shutil.copy2(src, dst)
     elif getmtime(src) > getmtime(dst):
         shutil.copy2(src, dst)
