@@ -143,8 +143,7 @@ def make_figure(model_info, opts):
         plot_profile_inset(model_info, ax1d)
 
     # Save image in model/img
-    path = joinpath('model', 'img')
-    makedirs(path, exist_ok=True)
+    makedirs(joinpath('model', 'img'), exist_ok=True)
     path = joinpath('model', 'img', figfile(model_info))
     plt.savefig(path, bbox_inches='tight')
     #print("figure saved in",path)

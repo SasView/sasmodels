@@ -44,14 +44,14 @@ help:
 	@echo "  linkcheck to check all external links for integrity"
 	@echo "  doctest   to run all doctests embedded in the documentation (if enabled)"
 
-model/img/%: ../sasmodels/models/img/%
+model/img/%: ../sasmodels/models/img/% model/img
 ifdef ComSpec
 	$(COPY) $(subst /,\,$<) $(subst /,\,$@)
 else
 	$(COPY) $< $@
 endif
 
-model/%.rst: ../sasmodels/models/%.py
+model/%.rst: ../sasmodels/models/%.py model/img genmodel.py
 	$(PYTHON) genmodel.py $< $@
 
 ref/models/index.rst: gentoc.py $(MODELS_PY)
@@ -65,6 +65,8 @@ api: genapi.py
 
 model:
 	$(MKDIR) model
+
+model/img: model
 ifdef ComSpec
 	$(MKDIR) model\img
 else
