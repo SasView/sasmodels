@@ -1,5 +1,6 @@
 from __future__ import division, print_function
 
+import cmath
 import time
 from copy import copy
 import os
@@ -21,7 +22,7 @@ from scipy.integrate import simps
 from scipy.special import j1 as J1
 
 try:
-    import numba
+    from numba import njit, prange, cuda
     # SAS_NUMBA: 0=None, 1=CPU, 2=GPU
     SAS_NUMBA = int(os.environ.get("SAS_NUMBA", "1"))
     USE_NUMBA = SAS_NUMBA > 0
@@ -408,10 +409,6 @@ _Iqabcf = _Iqabc
 
 if USE_NUMBA:
     # Override simple numpy solution with numba if available
-    from numba import njit, prange
-    from numba import prange
-    from numba.cuda import jit
-    #@jit("f8[:](f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:])", parallel=True, fastmath=True)
     def _Iqabc_py(weight, x, y, z, qa, qb, qc):
         #print("calling numba")
         Iq = np.empty_like(qa)
@@ -428,8 +425,6 @@ if USE_NUMBA:
 
 if USE_CUDA:  # assume have numba and cuda
     #print("compiling for cuda")
-    from numba import cuda
-    import cmath
     def _Iqabc_kernel_py(weight, x, y, z, qa, qb, qc, Iq):
         j = cuda.grid(1)
         if j < Iq.size:
@@ -442,7 +437,9 @@ if USE_CUDA:  # assume have numba and cuda
     _Iqabc_kernel = cuda.jit(sig.replace("f8", "f4"), parallel=True, fastmath=True)
 
     def _Iqabc(weight, x, y, z, qa, qb, qc):
-        #print("calling cuda")
+        if not cuda.list_devices():
+            raise RuntimeError("no CUDA devices found")
+        print("calling cuda", _Iqabc_kernel)
         Iq = np.empty_like(qa)
         threadsperblock = 32
         blockspergrid = (qa.size + (threadsperblock - 1)) // threadsperblock
