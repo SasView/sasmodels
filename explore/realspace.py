@@ -22,7 +22,7 @@ from scipy.integrate import simps
 from scipy.special import j1 as J1
 
 try:
-    from numba import njit, prange, cuda
+    from numba import njit, prange
     # SAS_NUMBA: 0=None, 1=CPU, 2=GPU
     SAS_NUMBA = int(os.environ.get("SAS_NUMBA", "1"))
     USE_NUMBA = SAS_NUMBA > 0
@@ -423,30 +423,98 @@ if USE_NUMBA:
     _Iqabc = njit(sig, parallel=True, fastmath=True)(_Iqabc_py)
     _Iqabcf = njit(sig.replace("f8", "f4"), parallel=True, fastmath=True)(_Iqabc_py)
 
-if USE_CUDA:  # assume have numba and cuda
-    #print("compiling for cuda")
-    def _Iqabc_kernel_py(weight, x, y, z, qa, qb, qc, Iq):
-        j = cuda.grid(1)
-        if j < Iq.size:
-            total = 0. + 0j
-            for k in range(weight.size):
-                total += weight[k]*cmath.exp(1j*(qa[j]*x[k] + qb[j]*y[k] + qc[j]*z[k]))
-            Iq[j] = abs(total)**2
-    sig = "void(f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:])"
-    _Iqabcf_kernel = cuda.jit(sig, parallel=True, fastmath=True)
-    _Iqabc_kernel = cuda.jit(sig.replace("f8", "f4"), parallel=True, fastmath=True)
+if USE_CUDA:
+    # delayed loading of cuda
+    _IQABC_CUDA_KERNELS = {}
+    def _get_Iqabc_kernel(dtype):
+        #print("calling cuda")
+        if not _IQABC_CUDA_KERNELS:
+            from numba import cuda
+            if not cuda.list_devices():
+                raise RuntimeError("no cuda devices found")
+            def _kernel_py(weight, x, y, z, qa, qb, qc, Iq):
+                j = cuda.grid(1)
+                if j < qa.size:
+                    total = 0. + 0j
+                    for k in range(x.size):
+                        total += weight[k]*cmath.exp(1j*(qa[j]*x[k] + qb[j]*y[k] + qc[j]*z[k]))
+                    Iq[j] = abs(total)**2
+            sig_d = "void(f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:])"
+            sig_f = sig_d.replace("f8", "f4")
+            kernel_f = cuda.jit(sig_f, parallel=True, fastmath=True)(_kernel_py)
+            kernel_d = cuda.jit(sig_d, parallel=True, fastmath=True)(_kernel_py)
+            _IQABC_CUDA_KERNELS['f'] = kernel_f
+            _IQABC_CUDA_KERNELS['d'] = kernel_d
+        kernel = _IQABC_CUDA_KERNELS[dtype.char]
+        return kernel
 
     def _Iqabc(weight, x, y, z, qa, qb, qc):
-        if not cuda.list_devices():
-            raise RuntimeError("no CUDA devices found")
-        print("calling cuda", _Iqabc_kernel)
         Iq = np.empty_like(qa)
+        # Apparently numba deals with all the necessary padding of vectors to nice boundaries
+        # before transfering to the GPU, so we don't need to do so by hand here.
         threadsperblock = 32
-        blockspergrid = (qa.size + (threadsperblock - 1)) // threadsperblock
-        kernel = _Iqabc_kernel if qa.dtype == np.float64 else _Iqabcf_kernel
+        blockspergrid = (Iq.size + (threadsperblock - 1)) // threadsperblock
+        kernel = _get_Iqabc_kernel(qa.dtype)
         kernel[blockspergrid, threadsperblock](weight, x, y, z, qa, qb, qc, Iq)
         return Iq
     _Iqabcf = _Iqabc
+
+
+if 0 and USE_CUDA:
+    ### *** DEPRECATED ***
+    ### Variant on the kernel with padding of vectors that is no faster and doesn't appear
+    ### to be more correct.  Leave it around for now in case we decide we don't trust numba.
+    _IQABC_CUDA_KERNELS = {}
+    def _get_Iqabc_kernel(dtype):
+        #print("calling cuda")
+        if not _IQABC_CUDA_KERNELS:
+            from numba import cuda
+            if not cuda.list_devices():
+                raise RuntimeError("no cuda devices found")
+            def _kernel_py(nx, nq, weight, x, y, z, qa, qb, qc, Iq):
+                j = cuda.grid(1)
+                if j < nq:
+                    total = 0. + 0j
+                    for k in range(nx):
+                        total += weight[k]*cmath.exp(1j*(qa[j]*x[k] + qb[j]*y[k] + qc[j]*z[k]))
+                    Iq[j] = abs(total)**2
+            sig_d = "void(i4,i4,f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:],f8[:])"
+            sig_f = sig_d.replace("f8", "f4")
+            kernel_f = cuda.jit(sig_f, parallel=True, fastmath=True)(_kernel_py)
+            kernel_d = cuda.jit(sig_d, parallel=True, fastmath=True)(_kernel_py)
+            _IQABC_CUDA_KERNELS['f'] = kernel_f
+            _IQABC_CUDA_KERNELS['d'] = kernel_d
+        kernel = _IQABC_CUDA_KERNELS[dtype.char]
+        return kernel
+
+    def _Iqabc(weight, x, y, z, qa, qb, qc):
+        kernel = _get_Iqabc_kernel(qa.dtype)
+        nx, nq = len(x), len(qa)
+        threadsperblock = 32
+        blockspergrid = (nq + (threadsperblock - 1)) // threadsperblock
+        weight, x, y, z = pad_vectors(4, weight, x, y, z)
+        qa, qb, qc = pad_vectors(threadsperblock, qa, qb, qc)
+        Iq = np.empty_like(qa)
+        kernel[blockspergrid, threadsperblock](nx, nq, weight, x, y, z, qa, qb, qc, Iq)
+        return Iq[:nq]
+    _Iqabcf = _Iqabc
+
+    def pad_vectors(boundary, *vectors):
+        """
+        Yields a list of vectors padded with NaN to a multiple of *boundary*.
+
+        Yields the original vector if the size is already a mulitple of *boundary*.
+        """
+        for old in vectors:
+            old_size = len(old)
+            new_size = ((old_size + boundary-1)//boundary)*boundary
+            if new_size > old_size:
+                new = np.empty(new_size, dtype=old.dtype)
+                new[:old_size] = old
+                new[old_size:] = np.NaN
+                yield new
+            else:
+                yield old
 
 def calc_Iqxy(qx, qy, rho, points, volume=1.0, view=(0, 0, 0), dtype='f'):
     """
@@ -808,6 +876,9 @@ def plot_calc_2d(qx, qy, Iqxy, theory=None, title=None):
         plt.title(title)
     if theory is not None:
         plt.subplot(132)
+        # Skip bad values in theory
+        index = np.isnan(theory)
+        theory[index] = Iqxy[index]
         plt.imshow(np.log10(theory), extent=extent, interpolation="nearest",
                    origin='lower')
         plt.title("theory")
@@ -998,7 +1069,11 @@ def _sasmodels_Iqxy(kernel, qx, qy, pars, view):
     pars_plus_view = pars.copy()
     pars_plus_view.update(theta=view[0], phi=view[1], psi=view[2])
     Iqxy = calculator(**pars_plus_view)
-    return Iqxy.reshape(qx.shape)
+    # calculator avoids masked values; instead set masked values to NaN
+    result = np.empty_like(qx)
+    result[calculator.index] = Iqxy
+    result[~calculator.index] = np.NaN
+    return result
 
 def wrap_sasmodel(name, **pars):
     from sasmodels.core import load_model
@@ -1231,6 +1306,8 @@ def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
     volume = shape.volume / len(rho)
     print("point generation time", timer() - t0)
     #print("bounding box", points.min(axis=0), points.max(axis=0))
+    # Call calculator with a trivial problem to hide compile times.
+    calc_Iqxy(Qx[:1,:1], Qy[:1,:1], rho[:1], points[:1])
     t0 = timer()
     Iqxy = calc_Iqxy(Qx, Qy, rho, points, volume=volume, view=view)
     print("calc Iqxy time", timer() - t0)
@@ -1241,7 +1318,7 @@ def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
     # Add floor to limit colorbar range.
     Iqxy += 0.001 * Iqxy.max()
     if theory is not None:
-        theory += 0.001 * theory.max()
+        theory += 0.001 * theory[~np.isnan(theory)].max()
 
     import pylab
     if show_points:
