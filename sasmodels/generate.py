@@ -676,7 +676,7 @@ def _gen_fn(model_info, name, pars):
     lineno = model_info.lineno.get(name, 1)
     return _FN_TEMPLATE % {
         'name': name, 'pars': par_decl, 'body': body,
-        'filename': filename.replace('\\', '\\\\'), 'line': lineno,
+        'filename': filename.replace('\\', '/'), 'line': lineno,
     }
 
 
@@ -901,7 +901,7 @@ def _add_source(source, code, path, lineno=1):
     """
     Add a file to the list of source code chunks, tagged with path and line.
     """
-    path = path.replace('\\', '\\\\')
+    path = path.replace('\\', '/')
     source.append('#line %d "%s"' % (lineno, path))
     source.append(code)
 
@@ -1102,7 +1102,7 @@ def make_source(model_info):
 def _kernels(kernel, call_iq, clear_iq, call_iqxy, clear_iqxy, name):
     # type: ([str,str], str, str, str) -> List[str]
     code = kernel[0]
-    path = kernel[1].replace('\\', '\\\\')
+    path = kernel[1].replace('\\', '/')
     iq = [
         # define the Iq kernel
         "#define KERNEL_NAME %s_Iq" % name,
