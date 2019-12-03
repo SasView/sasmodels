@@ -4,22 +4,19 @@ matrix:
   include:
   - os: linux
     env:
-    - PY=2.7
-    #- DEPLOY=True
+    - PY=3.6
   - os: linux
     env:
     - PY=3.7
+    - BUILDDOC=1
   - os: osx
     language: generic
     env:
-    - PY=2.7
+    - PY=3.6
   - os: osx
     language: generic
     env:
     - PY=3.7
-branches:
-  only:
-  - master
 addons:
   apt:
     packages: opencl-headers
@@ -36,7 +33,7 @@ before_install:
 - hash -r
 - conda update --yes conda
 - conda info -a
-- conda install --yes python=$PY numpy scipy matplotlib docutils setuptools pytest
+- conda install --yes python=$PY numpy scipy matplotlib docutils setuptools pytest sphinx
 install:
 - pip install bumps
 - pip install unittest-xml-reporting tinycc
@@ -45,6 +42,7 @@ script:
 #- python -m sasmodels.model_test -v dll all
 #- python -m pytest -v --cache-clear
 - python setup.py test --pytest-args -v
+- if [ -n "$BUILDDOC" ]; then make -j 4 -C doc html; fi
 before_deploy:
 - echo -e "Host danse.chem.utk.edu\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 deploy:
