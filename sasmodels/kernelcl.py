@@ -266,9 +266,11 @@ class GpuEnvironment(object):
         self.queue[F32] = cl.CommandQueue(context, context.devices[0])
         if self.context[F64] == self.context[F32]:
             self.queue[F64] = self.queue[F32]
-        else:
+        elif self.context[F64] is not None:
             context = self.context[F64]
             self.queue[F64] = cl.CommandQueue(context, context.devices[0])
+        else:
+            self.queue[F64] = None
 
         ## Byte boundary for data alignment.
         #self.data_boundary = max(context.devices[0].min_data_type_align_size
@@ -580,6 +582,9 @@ class GpuKernel(Kernel):
         # type: (CallDetails, np.ndarray, float, bool, int) -> np.ndarray
         env = environment()
         queue = env.queue[self._model.dtype]
+        if queue is None:
+            raise RuntimeError("No support for type %s in OpenCL"
+                               % str(self._model.dtype))
         context = queue.context
 
         # Arrange data transfer to card.

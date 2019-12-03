@@ -4,7 +4,7 @@
 # You can set these variables from the command line.
 PYTHON       ?= python
 SPHINXOPTS    =
-SPHINXBUILD   = $(PYTHON) -m  sphinx.__init__
+SPHINXBUILD   = $(PYTHON) -m  sphinx
 PAPER        ?= letter
 BUILDDIR      = _build
 ifdef ComSpec
@@ -22,8 +22,8 @@ else
 endif
 
 # Internal variables.
-PAPEROPT_a4     = -D latex_paper_size=a4
-PAPEROPT_letter = -D latex_paper_size=letter
+PAPEROPT_a4     = -D latex_elements.papersize=a4
+PAPEROPT_letter = -D latex_elements.papersize=letter
 ALLSPHINXOPTS   = -d _build/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
 IMG_SOURCE = $(wildcard ../sasmodels/models/img/*)
@@ -44,14 +44,14 @@ help:
 	@echo "  linkcheck to check all external links for integrity"
 	@echo "  doctest   to run all doctests embedded in the documentation (if enabled)"
 
-model/img/%: ../sasmodels/models/img/%
+model/img/%: ../sasmodels/models/img/% model/img
 ifdef ComSpec
 	$(COPY) $(subst /,\,$<) $(subst /,\,$@)
 else
 	$(COPY) $< $@
 endif
 
-model/%.rst: ../sasmodels/models/%.py
+model/%.rst: ../sasmodels/models/%.py model/img genmodel.py
 	$(PYTHON) genmodel.py $< $@
 
 ref/models/index.rst: gentoc.py $(MODELS_PY)
@@ -65,6 +65,8 @@ api: genapi.py
 
 model:
 	$(MKDIR) model
+
+model/img: model
 ifdef ComSpec
 	$(MKDIR) model\img
 else

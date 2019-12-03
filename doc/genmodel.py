@@ -1,11 +1,29 @@
 from __future__ import print_function
 
-import sys, os, math, re
+import sys
+import os
+from os.path import basename, dirname, realpath, join as joinpath, exists
+import math
+import re
+import shutil
+
+# CRUFT: python 2.7 backport of makedirs(path, exist_ok=False)
+if sys.version_info[0] >= 3:
+    from os import makedirs
+else:
+    def makedirs(path, exist_ok=False):
+        try:
+            os.makedirs(path)
+        except Exception:
+            if not exist_ok or not exists(path):
+                raise
+
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-sys.path.insert(0, os.path.abspath('..'))
+
+sys.path.insert(0, realpath(joinpath(dirname(__file__), '..')))
 import sasmodels
 from sasmodels import generate, core
 from sasmodels.direct_model import DirectModel, call_profile
@@ -13,13 +31,11 @@ from sasmodels.data import empty_data1D, empty_data2D
 
 try:
     from typing import Dict, Any
-except ImportError:
-    pass
-else:
     from matplotlib.axes import Axes
     from sasmodels.kernel import KernelModel
     from sasmodels.modelinfo import ModelInfo
-
+except ImportError:
+    pass
 
 def plot_1d(model, opts, ax):
     # type: (KernelModel, Dict[str, Any], Axes) -> None
@@ -60,6 +76,10 @@ def plot_2d(model, opts, ax):
     ax.set_ylabel(r'$Q_y \/(\AA^{-1})$')
 
 def plot_profile_inset(model_info, ax):
+    # type: (ModelInfo, Axes) -> None
+    """
+    Plot 1D radial profile as inset plot.
+    """
     p = ax.get_position()
     width, height = 0.4*(p.x1-p.x0), 0.4*(p.y1-p.y0)
     left, bottom = p.x1-width, p.y1-height
@@ -123,23 +143,28 @@ def make_figure(model_info, opts):
         plot_profile_inset(model_info, ax1d)
 
     # Save image in model/img
-    path = os.path.join('model', 'img', figfile(model_info))
+    makedirs(joinpath('model', 'img'), exist_ok=True)
+    path = joinpath('model', 'img', figfile(model_info))
     plt.savefig(path, bbox_inches='tight')
     #print("figure saved in",path)
 
 def copy_if_newer(src, dst):
-    from os.path import dirname, exists, getmtime
-    import shutil
+    # type: (str) -> str
+    """
+    Copy from *src* to *dst* if *src* is newer or *dst* doesn't exist.
+    """
     if not exists(dst):
         path = dirname(dst)
-        if not exists(path):
-            os.makedirs(path)
+        makedirs(path, exist_ok=True)
         shutil.copy2(src, dst)
-    elif getmtime(src) > getmtime(dst):
+    elif os.path.getmtime(src) > os.path.getmtime(dst):
         shutil.copy2(src, dst)
 
 def link_sources(model_info):
-    from os.path import basename, dirname, realpath, join as joinpath
+    # type: (ModelInfo) -> str
+    """
+    Add link to model sources from the doc tree.
+    """
 
     # List source files in reverse order of dependency.
     model_file = basename(model_info.filename)
@@ -174,9 +199,9 @@ def link_sources(model_info):
     # Probably need to dump all the rst files into an index.rst to build them.
 
     # Link to github repo (either the tagged sasmodels version or master)
-    url = "https://github.com/SasView/sasmodels/blob/v%s"%sasmodels.__version__
+    #url = "https://github.com/SasView/sasmodels/blob/v%s"%sasmodels.__version__
     #url = "https://github.com/SasView/sasmodels/blob/master"%sasmodels.__version__
-    links = ["`%s <%s/sasmodels/models/%s>`_"%(path, url, path) for path in sources]
+    #links = ["`%s <%s/sasmodels/models/%s>`_"%(path, url, path) for path in sources]
 
     sep = "\n$\\ \\star\\ $ "  # bullet
     body = "\n**Source**\n"
@@ -184,8 +209,8 @@ def link_sources(model_info):
     body += "\n" + sep.join(downloads) + "\n\n"
     return body
 
-def gen_docs(model_info):
-    # type: (ModelInfo) -> None
+def gen_docs(model_info, outfile):
+    # type: (ModelInfo, str) -> None
     """
     Generate the doc string with the figure inserted before the references.
     """
@@ -204,7 +229,7 @@ def gen_docs(model_info):
     captionstr += '\n'
 
     # Add figure reference and caption to documentation (at end, before References)
-    pattern = '\*\*REFERENCE'
+    pattern = r'\*\*REFERENCE'
     match = re.search(pattern, docstr.upper())
 
     sources = link_sources(model_info)
@@ -221,16 +246,16 @@ def gen_docs(model_info):
         print('------------------------------------------------------------------')
         docstr += insertion
 
-    open(sys.argv[2], 'w').write(docstr)
+    with open(outfile, 'w') as fid:
+        fid.write(docstr)
 
-def process_model(path):
-    # type: (str) -> None
+def process_model(infile, outfile):
+    # type: (str, str) -> None
     """
     Generate doc file and image file for the given model definition file.
     """
-
     # Load the model file
-    model_name = os.path.basename(path)[:-3]
+    model_name = basename(infile)[:-3]
     model_info = core.load_model_info(model_name)
 
     # Plotting ranges and options
@@ -250,8 +275,12 @@ def process_model(path):
     }
 
     # Generate the RST file and the figure.  Order doesn't matter.
-    gen_docs(model_info)
+    gen_docs(model_info, outfile)
     make_figure(model_info, opts)
 
+def main():
+    infile, outfile = sys.argv[1], sys.argv[2]
+    process_model(infile, outfile)
+
 if __name__ == "__main__":
-    process_model(sys.argv[1])
+    main()

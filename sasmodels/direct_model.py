@@ -20,7 +20,7 @@ direct parameter values and by :class:`bumps_model.Experiment` which wraps
 the parameter values in boxes so that the user can set fitting ranges, etc.
 on the individual parameters and send the model to the Bumps optimizers.
 """
-from __future__ import print_function
+from __future__ import print_function, division
 
 import numpy as np  # type: ignore
 
@@ -385,6 +385,61 @@ class DirectModel(DataMixin):
         Generate a plottable profile.
         """
         return call_profile(self.model.info, pars)
+
+def test_reparameterize():
+    # type: () -> None
+    """Check simple reparameterized models will load and build"""
+    from numpy import inf, pi
+    from numpy.linalg import norm
+    from .data import empty_data1D
+    from .core import load_model_info, build_model, reparameterize
+    parameters = [
+        ["volume", "Ang^3", 1e5, [0, inf], "volume", "ellipsoid volume"],
+        ["eccentricity", "", 1, [0, inf], "volume", "polar:equatorial radius"],
+    ]
+    translation = """
+        Re = cbrt(volume/eccentricity/M_4PI_3)
+        radius_polar = eccentricity*Re
+        radius_equatorial = Re  # python style comments allowed
+        """
+    info = reparameterize('ellipsoid', parameters, translation)
+
+    # Check translated parameters
+    actual = [p.name for p in info.parameters.kernel_parameters]
+    target = ["sld", "sld_solvent", "volume", "eccentricity", "theta", "phi"]
+    assert target == actual, "%s != %s"%(target, actual)
+
+    data = empty_data1D([0.01, 0.1])
+    Rp, Re = 30, 50
+
+    base_model = build_model(load_model_info('ellipsoid'), dtype='d')
+    base_calculator = DirectModel(data, base_model)
+    base_Iq = base_calculator(radius_polar=Rp, radius_equatorial=Re)
+
+    derived_model = build_model(info, dtype='d')
+    derived_calculator = DirectModel(data, derived_model)
+    derived_Iq = derived_calculator(volume=4*pi/3*Rp*Re**2, eccentricity=Rp/Re)
+    assert norm((base_Iq - derived_Iq)/base_Iq) < 1e-13
+
+    # Again using insert_after.
+    insert_after = {
+        '': 'eccentricity',
+        'radius_equatorial': 'volume',
+        }
+    info = reparameterize('ellipsoid', parameters, translation,
+                          insert_after=insert_after)
+    # Check translated parameters
+    actual = [p.name for p in info.parameters.kernel_parameters]
+    target = ["eccentricity", "sld", "sld_solvent", "volume", "theta", "phi"]
+    assert target == actual, "%s != %s"%(target, actual)
+
+    # Check calculation.
+    derived_model = build_model(info, dtype='d')
+    derived_calculator = DirectModel(data, derived_model)
+    derived_Iq = derived_calculator(volume=4*pi/3*Rp*Re**2, eccentricity=Rp/Re)
+    assert norm((base_Iq - derived_Iq)/base_Iq) < 1e-13
+
+
 
 def main():
     # type: () -> None

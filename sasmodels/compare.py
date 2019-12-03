@@ -26,7 +26,7 @@ and tell you which string to use for the PYOPENCL_CTX variable.
 On Windows you will need to remove the quotes.
 """
 
-from __future__ import print_function
+from __future__ import print_function, division
 
 import sys
 import os
@@ -121,6 +121,7 @@ Options (* for default):
     -DSAS_COMPILER=tinycc|msvc|mingw|unix sets the DLL compiler
     -DSAS_OPENMP=0 set to 1 to turn on OpenMP for the DLLs
     -DSAS_DLL_PATH=~/.sasmodels/compiled_models sets the DLL cache
+    -DPYOPENCL_NO_CACHE=1 turns off the PyOpenCL cache
 
 The interpretation of quad precision depends on architecture, and may
 vary from 64-bit to 128-bit, with 80-bit floats being common (1e-19 precision).

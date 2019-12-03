@@ -101,6 +101,7 @@ parameters = [["radius", "Ang", 80.0, [0, inf], "volume",
              ]
 
 source = ["lib/sas_Si.c", "lib/sas_3j1x_x.c", "pearl_necklace.c"]
+valid = "thick_string < radius && num_pearls > 0.0"
 single = False  # use double precision unless told otherwise
 radius_effective_modes = ["equivalent volume sphere"]
 

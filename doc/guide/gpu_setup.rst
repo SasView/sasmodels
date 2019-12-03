@@ -45,6 +45,20 @@ the system.
 However, OpenCL has had a rocky history on Macs. Apple provide a useful
 compatibility table at https://support.apple.com/en-us/HT202823
 
+Note: some versions of OS/X have an OpenCL driver for the Intel CPU that
+does support precompiled OpenCL program.  The first time that PyOpenCL
+compiles a program that only runs on the CPU (e.g., because the GPU does
+not support double precision programs), the program will run fine, but
+the next time it will give the unhelpful error:
+
+    pyopencl._cl.RuntimeError: clBuildProgram failed:
+    BUILD_PROGRAM_FAILURE - clBuildProgram failed: BUILD_PROGRAM_FAILURE -
+    clBuildProgram failed: BUILD_PROGRAM_FAILURE
+
+To prevent this you will need to set the environment variable
+*PYOPENCL_NO_CACHE=1* before reruning the program.  Only do this if needed
+since it will increase the time it takes to restart the program when the
+cache is disabled.
 
 Installation
 ============
@@ -118,16 +132,9 @@ Use that value as the value of *SAS_OPENCL=driver:device*.
 To use the default OpenCL device (rather than CUDA or None),
 set *SAS_OPENCL=opencl*.
 
-In batch queues, you may need to set *XDG_CACHE_HOME=~/.cache* 
-(Linux only) to a different directory, depending on how the filesystem 
+In batch queues, you may need to set *XDG_CACHE_HOME=~/.cache*
+(Linux only) to a different directory, depending on how the filesystem
 is configured.  You should also set *SAS_DLL_PATH* for CPU-only modules.
-
-    -DSAS_MODELPATH=path sets directory containing custom models
-    -DSAS_OPENCL=vendor:device|cuda:device|none sets the target GPU device
-    -DXDG_CACHE_HOME=~/.cache sets the pyopencl cache root (linux only)
-    -DSAS_COMPILER=tinycc|msvc|mingw|unix sets the DLL compiler
-    -DSAS_OPENMP=1 turns on OpenMP for the DLLs
-    -DSAS_DLL_PATH=path sets the path to the compiled modules
 
 
 **CUDA drivers**
@@ -145,7 +152,7 @@ number for *SAS_OPENCL=cuda*.  If not, then set
 need to set the CUDA cache directory to a folder accessible across the
 cluster with *PYCUDA_CACHE_DIR* (or *PYCUDA_DISABLE_CACHE* to disable
 caching), and you may need to set environment specific compiler flags
-with *PYCUDA_DEFAULT_NVCC_FLAGS*.  You should also set *SAS_DLL_PATH* 
+with *PYCUDA_DEFAULT_NVCC_FLAGS*.  You should also set *SAS_DLL_PATH*
 for CPU-only modules.
 
 **No GPU support**
@@ -191,7 +198,21 @@ will use the unix cc command to compile the model, with gcc style
 command line options.  For OS/X you will need to install the Xcode
 package to make the compiler available.
 
+Environment Variables
+=====================
+
+The following environment variables are used by the system::
+
+    SAS_MODELPATH=path - sets directory containing custom models
+    SAS_OPENCL=vendor:device|cuda:device|none - sets the target GPU device
+    XDG_CACHE_HOME=~/.cache - sets the pyopencl cache root (linux only)
+    SAS_COMPILER=tinycc|msvc|mingw|unix - sets the DLL compiler
+    SAS_OPENMP=1 - turns on OpenMP for the DLLs
+    SAS_DLL_PATH=path - sets the path to the compiled modules
+    SAS_NUMBA=1|2 - enables numba and numba.cuda calculations if available
+    PYOPENCL_NO_CACHE=1 - turns off caching for PyOpenCL
+
 
 *Document History*
 
-| 2018-10-15 Paul Kienzle
+| 2019-11-06 Paul Kienzle

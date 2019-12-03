@@ -1,5 +1,3 @@
-#define INVALID(v) (v.radius<0 || v.length<0)
-
 static double
 form_volume(double radius, double length)
 {
@@ -15,7 +13,8 @@ _fq(double qab, double qc, double radius, double length)
 static double
 radius_from_excluded_volume(double radius, double length)
 {
-    return 0.5*cbrt(0.75*radius*(2.0*radius*length + (radius + length)*(M_PI*radius + length)));
+    return 0.5*cbrt(0.75*radius*(2.0*radius*length
+           + (radius + length)*(M_PI*radius + length)));
 }
 
 static double

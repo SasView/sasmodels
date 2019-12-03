@@ -560,11 +560,9 @@ def sync():
 
 
 def partition(n):
-    '''
-    Overview:
-        Auto grids the thread blocks to achieve some level of calculation
-    efficiency.
-    '''
+    """
+    Constructs block and grid arguments for *n* elements.
+    """
     max_gx, max_gy = 65535, 65535
     blocksize = 32
     #max_gx, max_gy = 5, 65536

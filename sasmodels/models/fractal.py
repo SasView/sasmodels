@@ -97,6 +97,7 @@ parameters = [["volfraction", "", 0.05, [0.0, 1], "",
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sas_3j1x_x.c", "lib/sas_gamma.c", "lib/fractal_sq.c", "fractal.c"]
+valid = "fractal_dim >= 0.0"
 
 def random():
     """Return a random parameter set for the model."""

@@ -35,12 +35,15 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import numpy as np
-from numpy import pi, inf
+# Note: mpmath.pi and numpy.pi are not interchangeable; don't import pi from
+# numpy as we usually do, but instead be explicit about which one we want each
+# time it we use it.
+from numpy import inf
 import scipy.special
 try:
     from mpmath import mp
 except ImportError:
-    # CRUFT: mpmath split out into its own package
+    # CRUFT: mpmath used to be a package in sympy
     from sympy.mpmath import mp
 #import matplotlib; matplotlib.use('TkAgg')
 import pylab

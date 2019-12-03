@@ -6,55 +6,79 @@ Calculate multiple scattering using 2D FFT convolution.
 
 Usage:
 
-    -p, --probability: the scattering probability
-    -q, --qmax: that max q that you care about
-    -w, --window: the extension window (q is calculated for qmax*window)
+.. code-block:: none
+
+    python -m sasmodels.multiscat [options] model_name model_par=value ...
+
+    Options include:
+    -h, --help: show help and exit
     -n, --nq: the number of mesh points (dq = qmax*window/nq)
+    -o, --outfile: save results to outfile.txt and outfile_powers.txt
+    -p, --probability: the scattering probability (0.1)
+    -q, --qmax: that max q that you care about (0.5)
     -r, --random: generate a random parameter set
+    -s, --seed: generate a random parameter set with a given seed
+    -w, --window: the extension window (q is calculated for qmax*window)
     -2, --2d: perform the calculation for an oriented pattern
-    model_name
-    model_par=value ...
 
 Assume the probability of scattering is $p$. After each scattering event,
 $1-p$ neutrons will leave the system and go to the detector, and the remaining
 $p$ will scatter again.
 
 Let the scattering probability for $n$ scattering event at $q$ be $f_n(q)$,
-where
-.. math:: f_1(q) = \frac{I_1(q)}{\int I_1(q) dq}
+with
+
+.. math:: f_1(q) = \frac{I_1(q)}{\int I_1(q) {\rm d}q}
+
 for $I_1(q)$, the single scattering from the system. After two scattering
 events, the scattering probability will be the convolution of the first
 scattering and itself, or $f_2(q) = (f_1*f_1)(q)$.  After $n$ events it will be
 $f_n(q) = (f_1 * \cdots * f_1)(q)$.  The total scattering is calculated
 as the weighted sum of $f_k$, with weights following the Poisson distribution
+
 .. math:: P(k; \lambda) = \frac{\lambda^k e^{-\lambda}}{k!}
+
 for $\lambda$ determined by the total thickness divided by the mean
 free path between scattering, giving
-.. math::
-    I(q) = \sum_{k=0}^\infty P(k; \lambda) f_k(q)
+
+.. math:: I(q) = \sum_{k=0}^\infty P(k; \lambda) f_k(q)
+
 The $k=0$ term is ignored since it involves no scattering.
 We cut the series when cumulative probability is less than cutoff $C=99\%$,
 which is $\max n$ such that
-.. math::
-    \frac{\sum_{k=1}^n \frac{P(k; \lambda)}{1 - P(0; \lambda)} < C
 
-Using the convolution theorem, where
-$F = \mathcal{F}(f)$ is the Fourier transform,
+.. math:: \sum_{k=1}^n \frac{P(k; \lambda)}{1 - P(0; \lambda)} < C
+
+Using the convolution theorem, where $F = \mathcal{F}(f)$ is the
+Fourier transform,
+
 .. math:: f * g = \mathcal{F}^{-1}\{\mathcal{F}\{f\} \cdot \mathcal{F}\{g\}\}
+
 so
+
 .. math:: f * \ldots * f = \mathcal{F}^{-1}\{ F^n \}
+
 Since the Fourier transform is a linear operator, we can move the polynomial
 expression for the convolution into the transform, giving
+
 .. math::
     I(q) = \mathcal{F}^{-1}\left\{ \sum_{k=1}^{n} P(k; \lambda) F^k \right\}
-In the dilute limit $L \rightarrow 0$ only the $k=1$ term is active,
+
+In the dilute limit $\lambda \rightarrow 0$ only the $k=1$ term is active,
 and so
-.. math::
-    P(1; \lambda) = \lambda e{-\lambda} = \int I_1(q) dq
+
+.. math:: P(1; \lambda) = \lambda e^{-\lambda} = \int I_1(q) {\rm d}q
+
 therefore we compute
+
 .. math::
-    I(q) = \int I_1(q) dq \mathcal{F}^{-1}\left\{
+    I(q) =
+    \mathcal{F}^{-1}\left\{
         \sum_{l=1}^{n} \frac{P(k; \lambda)}{P(1; \lambda))} F^k \right\}
+    \, \int I_1(q) {\rm d}q
+    = \mathcal{F}^{-1}\left\{
+        \sum_{l=1}^{n} \frac{\lambda^{k-1}}{k!} F^k \right\}
+    \, \int I_1(q) {\rm d}q
 
 For speed we may use the fast fourier transform with a power of two.
 The resulting $I(q)$ will be linearly spaced and likely heavily oversampled.
@@ -123,7 +147,7 @@ class ICalculator(object):
         Compute multiple scattering for I(q) given scattering probability p.
 
         Given a probability p of scattering with the thickness, the expected
-        number of scattering events, $\lambda$ is $-\log(1 - p)$, giving a
+        number of scattering events, $\lambda = -\log(1 - p)$, giving a
         Poisson weighted sum of single, double, triple, etc. scattering patterns.
         The number of patterns used is based on coverage (default 99%).
         """
@@ -264,9 +288,9 @@ Calculator = OpenclCalculator if HAVE_OPENCL else NumpyCalculator
 
 def scattering_powers(Iq, n, dtype='f', transform=None):
     r"""
-    Calculate the scattering powers up to n.
+    Calculate the scattering powers up to *n*.
 
-    This includes 1 even though it should just be Iq itself
+    This includes *k=1* even though it should just be *Iq* itself
 
     The frames are unweighted; to weight scale by $\lambda^k e^{-\lambda}/k!$.
     """
@@ -342,6 +366,7 @@ class MultipleScattering(Resolution):
 
     *probability* is related to the expected number of scattering
     events in the sample $\lambda$ as $p = 1 - e^{-\lambda}$.
+
     *coverage* determines how many scattering steps to consider.  The
     default is 0.99, which sets $n$ such that $1 \ldots n$ covers 99%
     of the Poisson probability mass function.
@@ -594,7 +619,7 @@ def main():
     parser.add_argument('-r', '--random', action='store_true',
                         help='random pars with random seed')
     parser.add_argument('-o', '--outfile', type=str, default="",
-                        help='random pars with random seed')
+                        help='save to outfile.txt and outfile_powers.txt')
     parser.add_argument('model', type=str,
                         help='sas model name such as cylinder')
     parser.add_argument('pars', type=str, nargs='*',

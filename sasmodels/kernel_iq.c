@@ -25,8 +25,11 @@
 //  NUM_MAGNETIC : the number of magnetic parameters
 //  MAGNETIC_PARS : a comma-separated list of indices to the sld
 //      parameters in the parameter table.
-//  CALL_VOLUME(form, shell, table) : assign form and shell values
-//  CALL_RADIUS_EFFECTIVE(mode, table) : call the R_eff function
+//  TRANSLATION_VARS(table) : series of intermediate expressions used to
+//      compute parameter substitions when reparameterizing a model.
+//  VALID(table) : test if the current point is feesible to calculate.
+//  CALL_VOLUME(form, shell, table) : assign form and shell values.
+//  CALL_RADIUS_EFFECTIVE(mode, table) : call the R_eff function.
 //  CALL_IQ(q, table) : call the Iq function for 1D calcs.
 //  CALL_IQ_A(q, table) : call the Iq function with |q| for 2D data.
 //  CALL_FQ(q, F1, F2, table) : call the Fq function for 1D calcs.
@@ -34,8 +37,6 @@
 //  CALL_IQ_AC(qa, qc, table) : call the Iqxy function for symmetric shapes
 //  CALL_IQ_ABC(qa, qc, table) : call the Iqxy function for asymmetric shapes
 //  CALL_IQ_XY(qx, qy, table) : call the Iqxy function for arbitrary models
-//  INVALID(table) : test if the current point is feesible to calculate.  This
-//      will be defined in the kernel definition file.
 //  PROJECTION : equirectangular=1, sinusoidal=2
 //      see explore/jitter.py for definitions.
 
@@ -707,10 +708,9 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
 //if (q_index==0) {printf("step:%d of %d, pars:",step,pd_stop); for (int i=0; i < NUM_PARS; i++) printf("p%d=%g ",i, local_values.vector[i]); printf("\n");}
 
   // ====== loop body =======
-  #ifdef INVALID
-  if (!INVALID(local_values.table))
-  #endif
-  {
+  // Note: recalc all intermediates for each loop, because we don't know order
+  TRANSLATION_VARS(local_values.table);
+  if (VALID(local_values.table)) {
      APPLY_PROJECTION();
 
     // Accumulate I(q)
