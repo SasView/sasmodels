@@ -11,7 +11,7 @@ create your own models. This document describes how to create plugin models
 from first principles.
 
 If you are using SasView and simply want to combine existing models into a new
-plugin, see the :ref:`Sum|Multi(p1,p2)` tool instead.
+plugin, see the :ref:`Add/Multiply Models` tool instead.
 
 Models can be of three types:
 
