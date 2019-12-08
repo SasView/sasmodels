@@ -30,8 +30,8 @@ where the $q$ vector is defined as
 References
 ----------
 
-.. [#] P Debye, H R Anderson, H Brumberger, *Scattering by an Inhomogeneous Solid. II. The Correlation Function and its Application*, *J. Appl. Phys.*, 28(6) (1957) 679
-.. [#] P Debye, A M Bueche, *Scattering by an Inhomogeneous Solid*, *J. Appl. Phys.*, 20 (1949) 518
+#.  P Debye, H R Anderson, H Brumberger, *Scattering by an Inhomogeneous Solid. II. The Correlation Function and its Application*, *J. Appl. Phys.*, 28(6) (1957) 679
+#.  P Debye, A M Bueche, *Scattering by an Inhomogeneous Solid*, *J. Appl. Phys.*, 20 (1949) 518
 
 Source
 ------

@@ -60,9 +60,10 @@ See the references for details.
 References
 ----------
 
-.. [#] N W Ashcroft and D C Langreth, *Physical Review*, 156 (1967) 685-692
+#. N W Ashcroft and D C Langreth, *Physical Review*, 156 (1967) 685-692
    [Errata found in *Phys. Rev.* 166 (1968) 934]
-.. [#] S R Kline, *J Appl. Cryst.*, 39 (2006) 895
+
+#. S R Kline, *J Appl. Cryst.*, 39 (2006) 895
 
 Authorship and Verification
 ----------------------------

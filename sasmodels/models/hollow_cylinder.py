@@ -57,9 +57,9 @@ the axis of the cylinder using two angles $\theta$ and $\phi$
 References
 ----------
 
-.. [#] L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and
+#. L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and
    Neutron Scattering*, Plenum Press, New York, (1987)
-.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+#. L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------

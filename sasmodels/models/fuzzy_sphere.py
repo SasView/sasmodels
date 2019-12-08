@@ -50,7 +50,7 @@ where the $q$ vector is defined as
 References
 ----------
 
-.. [#] M Stieger, J. S Pedersen, P Lindner, W Richtering, *Langmuir*, 20 (2004) 7283-7292
+#.  M Stieger, J. S Pedersen, P Lindner, W Richtering, *Langmuir*, 20 (2004) 7283-7292
 
 Authorship and Verification
 ----------------------------

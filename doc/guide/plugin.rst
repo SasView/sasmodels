@@ -217,8 +217,8 @@ For example::
     References
     ----------
 
-    A Guinier, G Fournet, *Small-Angle Scattering of X-Rays*,
-    John Wiley and Sons, New York, (1955)
+    #. A Guinier, G Fournet, *Small-Angle Scattering of X-Rays*,
+       John Wiley and Sons, New York, (1955)
     """
 
 This is where the FULL documentation for the model goes (to be picked up by

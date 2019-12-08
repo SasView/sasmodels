@@ -5,7 +5,7 @@ Definition
 This model provides the form factor, $P(q)$, for stacked discs (tactoids)
 with a core/layer structure which is constructed itself as $P(q) S(Q)$
 multiplying a $P(q)$ for individual core/layer disks by a structure factor
-$S(q)$ proposed by Kratky and Porod in 1949\ [#CIT1949]_ assuming the next
+$S(q)$ proposed by Kratky and Porod in 1949\ [#Kratky1949]_ assuming the next
 neighbor distance (d-spacing) in the stack of parallel discs obeys a Gaussian
 distribution. As such the normalization of this "composite" form factor is
 relative to the individual disk volume, not the volume of the stack of disks.
@@ -89,16 +89,18 @@ see :ref:`orientation`.
 
 
 Our model is derived from the form factor calculations implemented in a
-c-library provided by the NIST Center for Neutron Research\ [#CIT_Kline]_
+C-library provided by the NIST Center for Neutron Research\ [#Kline2006]_
 
 References
 ----------
 
-.. [#CIT1949] O Kratky and G Porod, *J. Colloid Science*, 4, (1949) 35
-.. [#CIT_Kline] S R Kline, *J Appl. Cryst.*, 39 (2006) 895
-.. [#] J S Higgins and H C Benoit, *Polymers and Neutron Scattering*,
+See also Higgins and Benoit [#Higgins1994]_ and Guinier and Fournet [#Guinier1955]_.
+
+.. [#Kratky1949] O Kratky and G Porod, *J. Colloid Science*, 4, (1949) 35
+.. [#Kline2006] S R Kline, *J Appl. Cryst.*, 39 (2006) 895
+.. [#Higgins1994] J S Higgins and H C Benoit, *Polymers and Neutron Scattering*,
    Clarendon, Oxford, 1994
-.. [#] A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*,
+.. [#Guinier1955] A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*,
    John Wiley and Sons, New York, 1955
 
 Authorship and Verification

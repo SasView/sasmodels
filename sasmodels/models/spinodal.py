@@ -39,9 +39,9 @@ scattering, or to simply omit the low-angle scattering from the fit.
 References
 ----------
 
-.. [#] H. Furukawa. Dynamics-scaling theory for phase-separating unmixing mixtures: Growth rates of droplets and scaling properties of autocorrelation functions. Physica A 123, 497 (1984).
-.. [#] H. Meier & G. Strobl. Small-Angle X-ray Scattering Study of Spinodal Decomposition in Polystyrene/Poly(styrene-co-bromostyrene) Blends. Macromolecules 20, 649-654 (1987).
-.. [#] T. Hashimoto, M. Takenaka & H. Jinnai. Scattering Studies of Self-Assembling Processes of Polymer Blends in Spinodal Decomposition. J. Appl. Cryst. 24, 457-466 (1991).
+#.  H. Furukawa. Dynamics-scaling theory for phase-separating unmixing mixtures: Growth rates of droplets and scaling properties of autocorrelation functions. Physica A 123, 497 (1984).
+#.  H. Meier & G. Strobl. Small-Angle X-ray Scattering Study of Spinodal Decomposition in Polystyrene/Poly(styrene-co-bromostyrene) Blends. Macromolecules 20, 649-654 (1987).
+#.  T. Hashimoto, M. Takenaka & H. Jinnai. Scattering Studies of Self-Assembling Processes of Polymer Blends in Spinodal Decomposition. J. Appl. Cryst. 24, 457-466 (1991).
 
 Authorship and Verification
 ----------------------------

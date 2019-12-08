@@ -43,7 +43,7 @@ For 2D data: The 2D scattering intensity is calculated in the same way as
 References
 ----------
 
-.. [#] J Teixeira, *J. Appl. Cryst.*, 21 (1988) 781-785
+#.  J Teixeira, *J. Appl. Cryst.*, 21 (1988) 781-785
 
 Authorship and Verification
 ----------------------------

@@ -3,7 +3,8 @@ Definition
 ----------
 
 This model provides the form factor for an elliptical cylinder with a
-core-shell scattering length density profile. Thus this is a variation
+core-shell scattering length density profile [#Onsager1949]_.
+Thus this is a variation
 of the core-shell bicelle model, but with an elliptical cylinder for the core.
 In this version the "rim" or "belt" does NOT extend the full length of
 the particle, but has the same length as the core. Outer shells on the
@@ -110,7 +111,7 @@ and angular dispersions  see :ref:`orientation` .
 References
 ----------
 
-.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+.. [#Onsager1949] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------

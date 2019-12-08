@@ -62,9 +62,9 @@ USAGE NOTES:
 References
 ----------
 
-.. [#] A Z Akcasu, R Klein and B Hammouda, *Macromolecules*, 26 (1993) 4136
-.. [#] B. Hammouda, *Advances in Polymer Science* 106 (1993) 87
-.. [#] B. Hammouda, *SANS Toolbox* https://www.ncnr.nist.gov/staff/hammouda/the_sans_toolbox.pdf.
+#.  A Z Akcasu, R Klein and B Hammouda, *Macromolecules*, 26 (1993) 4136
+#.  B. Hammouda, *Advances in Polymer Science* 106 (1993) 87
+#.  B. Hammouda, *SANS Toolbox* https://www.ncnr.nist.gov/staff/hammouda/the_sans_toolbox.pdf.
 
 Authorship and Verification
 ----------------------------

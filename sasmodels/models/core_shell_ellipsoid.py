@@ -93,8 +93,9 @@ References
 ----------
 see for example:
 
-.. [#] Kotlarchyk, M.; Chen, S.-H. *J. Chem. Phys.*, 1983, 79, 2461
-.. [#] Berr, S. *J. Phys. Chem.*, 1987, 91, 4760
+#.  Kotlarchyk, M.; Chen, S.-H. *J. Chem. Phys.*, 1983, 79, 2461
+
+#.  Berr, S. *J. Phys. Chem.*, 1987, 91, 4760
 
 Authorship and Verification
 ----------------------------

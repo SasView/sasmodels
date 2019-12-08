@@ -28,7 +28,7 @@ regardless of the orientation of the q vector.
 References
 ----------
 
-.. [#] A V Dobrynin, M Rubinstein and S P Obukhov, *Macromol.*, 29 (1996) 2974-2979
+#.  A V Dobrynin, M Rubinstein and S P Obukhov, *Macromol.*, 29 (1996) 2974-2979
 
 Authorship and Verification
 ----------------------------

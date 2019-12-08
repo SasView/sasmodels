@@ -17,8 +17,8 @@ where the q vector is defined as
 References
 ----------
 
-.. [#] G Porod. *Kolloid Zeit*. 124 (1951) 83
-.. [#] L A Feigin, D I Svergun, G W Taylor. *Structure Analysis by Small-Angle X-ray and Neutron Scattering*. Springer. (1987)
+#.  G Porod. *Kolloid Zeit*. 124 (1951) 83
+#.  L A Feigin, D I Svergun, G W Taylor. *Structure Analysis by Small-Angle X-ray and Neutron Scattering*. Springer. (1987)
 
 Authorship and Verification
 ----------------------------

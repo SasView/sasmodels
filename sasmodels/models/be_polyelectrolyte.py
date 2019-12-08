@@ -84,11 +84,13 @@ Once better validation has been performed this note will be removed.
 References
 ----------
 
+For further details, see [#Joanny1990]_, [#Moussaid1993]_, [#Raphael1990]_.
+
 .. [#Borue] V Y Borue, I Y Erukhimovich, *Macromolecules*, 21 (1988) 3240
-.. [#] J F Joanny, L Leibler, *Journal de Physique*, 51 (1990) 545
-.. [#] A Moussaid, F Schosseler, J P Munch, S Candau, *J. Journal de Physique
+.. [#Joanny1990] J F Joanny, L Leibler, *Journal de Physique*, 51 (1990) 545
+.. [#Moussaid1993] A Moussaid, F Schosseler, J P Munch, S Candau, *J. Journal de Physique
    II France*, 3 (1993) 573
-.. [#] E Raphael, J F Joanny, *Europhysics Letters*, 11 (1990) 179
+.. [#Raphael1990] E Raphael, J F Joanny, *Europhysics Letters*, 11 (1990) 179
 
 Authorship and Verification
 ----------------------------

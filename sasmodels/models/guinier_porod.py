@@ -59,8 +59,8 @@ where the q vector is defined as
 Reference
 ---------
 
-.. [#] B Hammouda, *A new Guinier-Porod model, J. Appl. Cryst.*, (2010), 43, 716-719
-.. [#] B Hammouda, *Analysis of the Beaucage model, J. Appl. Cryst.*, (2010), 43, 1474-1478
+#.  B Hammouda, *A new Guinier-Porod model*, *J. Appl. Cryst.*, (2010), 43, 716-719
+#.  B Hammouda, *Analysis of the Beaucage model*, *J. Appl. Cryst.*, (2010), 43, 1474-1478
 
 Authorship and Verification
 ----------------------------

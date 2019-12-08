@@ -95,9 +95,9 @@ system, and then comparing to the 1D result.
 References
 ----------
 
-.. [#] J. Pedersen, *Adv. Colloid Interface Sci.*, 70 (1997) 171-210
-.. [#] G. Fournet, *Bull. Soc. Fr. Mineral. Cristallogr.*, 74 (1951) 39-113
-.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+#.  J. Pedersen, *Adv. Colloid Interface Sci.*, 70 (1997) 171-210
+#.  G. Fournet, *Bull. Soc. Fr. Mineral. Cristallogr.*, 74 (1951) 39-113
+#.  L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------

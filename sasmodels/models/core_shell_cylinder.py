@@ -3,7 +3,7 @@ Definition
 ----------
 
 The output of the 2D scattering intensity function for oriented core-shell
-cylinders is given by (Kline, 2006 [#kline]_). The form factor is normalized
+cylinders is given by Kline [#Kline2006]_. The form factor is normalized
 by the particle volume. Note that in this model the shell envelops the entire
 core so that besides a "sleeve" around the core, the shell also provides two
 flat end caps of thickness = shell thickness. In other words the length of the
@@ -66,10 +66,13 @@ The $\theta$ and $\phi$ parameters are not used for the 1D output.
 Reference
 ---------
 
-.. [#] see, for example, Ian Livsey  J. Chem. Soc., Faraday Trans. 2, 1987,83,
-   1445-1452
-.. [#kline] S R Kline, *J Appl. Cryst.*, 39 (2006) 895
-.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+See also Livsey [#Livsey1987]_ and Onsager [#Onsager1949]_.
+
+.. [#Livsey1987] I Livsey, *J. Chem. Soc., Faraday Trans. 2*, 83 (1987) 1445-1452
+
+.. [#Kline2006] S R Kline, *J Appl. Cryst.*, 39 (2006) 895
+
+.. [#Onsager1949] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------

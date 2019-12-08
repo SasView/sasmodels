@@ -96,8 +96,10 @@ of the 1D model to the curves shown in (Nayuk, 2012).
 References
 ----------
 
+See also Onsager [#Onsager1949]_.
+
 .. [#Nayuk2012] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
-.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+.. [#Onsager1949] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------

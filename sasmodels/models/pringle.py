@@ -39,8 +39,8 @@ Bessel function of the first kind.
 Reference
 ---------
 
-.. [#] Karen Edler, Universtiy of Bath, Private Communication. 2012. Derivation by Stefan Alexandru Rautu.
-.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+#.  Karen Edler, Universtiy of Bath, Private Communication. 2012. Derivation by Stefan Alexandru Rautu.
+#.  L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------
