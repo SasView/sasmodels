@@ -108,7 +108,7 @@ file in the order given, otherwise these functions will not be available.
         sorted from highest to lowest.
 
     sas_gamma(x):
-        Gamma function $\text{sas_gamma}(x) = \Gamma(x)$.
+        Gamma function sas_gamma\ $(x) = \Gamma(x)$.
 
         The standard math function, tgamma(x) is unstable for $x < 1$
         on some platforms.
@@ -127,35 +127,35 @@ file in the order given, otherwise these functions will not be available.
 
     sas_erf(x), sas_erfc(x):
         Error function
-        $\text{sas_erf}(x) = \frac{2}{\sqrt\pi}\int_0^x e^{-t^2}\,dt$
+        sas_erf\ $(x) = \frac{2}{\sqrt\pi}\int_0^x e^{-t^2}\,dt$
         and complementary error function
-        $\text{sas_erfc}(x) = \frac{2}{\sqrt\pi}\int_x^{\infty} e^{-t^2}\,dt$.
+        sas_erfc\ $(x) = \frac{2}{\sqrt\pi}\int_x^{\infty} e^{-t^2}\,dt$.
 
         The standard math functions erf(x) and erfc(x) are slower and broken
         on some platforms.
 
     sas_J0(x):
-        Bessel function of the first kind $\text{sas_J0}(x)=J_0(x)$ where
+        Bessel function of the first kind sas_J0\ $(x)=J_0(x)$ where
         $J_0(x) = \frac{1}{\pi}\int_0^\pi \cos(x\sin(\tau))\,d\tau$.
 
         The standard math function j0(x) is not available on all platforms.
 
     sas_J1(x):
-        Bessel function of the first kind  $\text{sas_J1}(x)=J_1(x)$ where
+        Bessel function of the first kind  sas_J1\ $(x)=J_1(x)$ where
         $J_1(x) = \frac{1}{\pi}\int_0^\pi \cos(\tau - x\sin(\tau))\,d\tau$.
 
         The standard math function j1(x) is not available on all platforms.
 
     sas_JN(n, x):
         Bessel function of the first kind and integer order $n$:
-        $\text{sas_JN}(n, x)=J_n(x)$ where
+        sas_JN\ $(n, x)=J_n(x)$ where
         $J_n(x) = \frac{1}{\pi}\int_0^\pi \cos(n\tau - x\sin(\tau))\,d\tau$.
         If $n$ = 0 or 1, it uses sas_J0(x) or sas_J1(x), respectively.
 
         The standard math function jn(n, x) is not available on all platforms.
 
     sas_Si(x):
-        Sine integral $\text{Si}(x) = \int_0^x \tfrac{\sin t}{t}\,dt$.
+        Sine integral sas_Si\ $(x) = \int_0^x \tfrac{\sin t}{t}\,dt$.
 
         This function uses Taylor series for small and large arguments:
 
@@ -179,7 +179,7 @@ file in the order given, otherwise these functions will not be available.
 
     sas_3j1x_x(x):
         Spherical Bessel form
-        $\text{sph_j1c}(x) = 3 j_1(x)/x = 3 (\sin(x) - x \cos(x))/x^3$,
+        sas_3j1x_x\ $(x) = 3 j_1(x)/x = 3 (\sin(x) - x \cos(x))/x^3$,
         with a limiting value of 1 at $x=0$, where $j_1(x)$ is the spherical
         Bessel function of the first kind and first order.
 
@@ -187,7 +187,7 @@ file in the order given, otherwise these functions will not be available.
 
 
     sas_2J1x_x(x):
-        Bessel form $\text{sas_J1c}(x) = 2 J_1(x)/x$, with a limiting value
+        Bessel form sas_2J1x_x\ $(x) = 2 J_1(x)/x$, with a limiting value
         of 1 at $x=0$, where $J_1(x)$ is the Bessel function of first kind
         and first order.
 
