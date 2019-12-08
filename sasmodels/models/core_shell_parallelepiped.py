@@ -170,8 +170,7 @@ References
    Equations (1), (13-14). (in German)
 #. D Singh (2009). *Small angle scattering studies of self assembly in
    lipid mixtures*, Johns Hopkins University Thesis (2009) 223-225. `Available
-   from Proquest <http://search.proquest.com/docview/304915826?accountid
-   =26379>`_
+   from Proquest <http://search.proquest.com/docview/304915826>`_
 #.  L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
