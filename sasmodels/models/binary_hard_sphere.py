@@ -47,7 +47,7 @@ wary of results for (total) volume fractions greater than approximately 40%.
 Depending on the size ratios or number fractions, the limit on total volume
 fraction may be lower.
 
-**NOTE 3:** The heavy arithmatic operations also mean that at present the
+**NOTE 3:** The heavy arithmetic operations also mean that at present the
 function is poorly behaved at very low qr.  In some cases very large qr may
 also be poorly behaved.  These should however be outside any useful region of
 qr.

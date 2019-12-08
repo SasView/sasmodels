@@ -7,7 +7,7 @@ cylinders is given by Kline [#Kline2006]_. The form factor is normalized
 by the particle volume. Note that in this model the shell envelops the entire
 core so that besides a "sleeve" around the core, the shell also provides two
 flat end caps of thickness = shell thickness. In other words the length of the
-total cyclinder is the length of the core cylinder plus twice the thickness of
+total cylinder is the length of the core cylinder plus twice the thickness of
 the shell. If no end caps are desired one should use the
 :ref:`core-shell-bicelle` and set the thickness of the end caps (in this case
 the "thick_face") to zero.

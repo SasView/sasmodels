@@ -3,7 +3,7 @@ Definition
 ----------
 
 Calculates the scattering from a barbell-shaped cylinder.  Like
-:ref:`capped-cylinder`, this is a sphereocylinder with spherical end
+:ref:`capped-cylinder`, this is a spherocylinder with spherical end
 caps that have a radius larger than that of the cylinder, but with the center
 of the end cap radius lying outside of the cylinder. See the diagram for
 the details of the geometry and restrictions on parameter values.
