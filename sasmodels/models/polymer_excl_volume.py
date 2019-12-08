@@ -108,9 +108,9 @@ References
 ----------
 
 #.  H Benoit, *Comptes Rendus*, 245 (1957) 2244-2247
-#.  B Hammouda, *SANS from Homogeneous Polymer Mixtures - A Unified Overview, Advances in Polym. Sci.* 106 (1993) 87-133
-#.  M Hore et al, *Co-Nonsolvency of Poly(n-isopropylacrylamide) in Deuterated Water/Ethanol Mixtures* 46 (2013) 7894-7901
-#.  B Hammouda & M-H Kim, *The empirical core-chain model* 247 (2017) 434-440
+#.  B Hammouda, *SANS from Homogeneous Polymer Mixtures - A Unified Overview*, *Advances in Polym. Sci.* 106 (1993) 87-133
+#.  M Hore et al, *Co-Nonsolvency of Poly(N-isopropylacrylamide) in Deuterated Water/Ethanol Mixtures*, *Macromolecules* 46 (2013) 7894-7901
+#.  B Hammouda & M-H Kim, *The empirical core-chain model*, *Journal of Molecular Liquids* 247 (2017) 434-440
 
 Authorship and Verification
 ----------------------------
