@@ -4,7 +4,7 @@
 # You can set these variables from the command line.
 PYTHON       ?= python
 SPHINXOPTS    =
-SPHINXBUILD   = $(PYTHON) -m  sphinx
+SPHINXBUILD   = "$(PYTHON)" -m sphinx
 PAPER        ?= letter
 BUILDDIR      = _build
 ifdef ComSpec
@@ -52,16 +52,16 @@ else
 endif
 
 model/%.rst: ../sasmodels/models/%.py model/img genmodel.py
-	$(PYTHON) genmodel.py $< $@
+	"$(PYTHON)" genmodel.py $< $@
 
 ref/models/index.rst: gentoc.py $(MODELS_PY)
-	$(PYTHON) gentoc.py $(MODELS_PY)
+	"$(PYTHON)" gentoc.py $(MODELS_PY)
 
 .PHONY: help clean html dirhtml pickle json htmlhelp qthelp latex changes linkcheck doctest build
 
 api: genapi.py
 	-$(RMDIR) api
-	$(PYTHON) genapi.py
+	"$(PYTHON)" genapi.py
 
 model:
 	$(MKDIR) model
