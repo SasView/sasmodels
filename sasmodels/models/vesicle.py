@@ -6,7 +6,7 @@ This model provides the form factor, *P(q)*, for an unilamellar vesicle and is
 effectively identical to the hollow sphere reparameterized to be
 more intuitive for a vesicle and normalizing the form factor by the volume of
 the shell. The 1D scattering intensity is calculated in the following way
-(Guinier,1955\ [#Guinier1955]_)
+[#Guinier1955]_:
 
 .. math::
 
@@ -56,8 +56,8 @@ radius for *S(Q)* when *P(Q)* \* *S(Q)* is applied.
 References
 ----------
 
-.. [#Guinier1955] A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*, John Wiley and
-   Sons, New York, (1955)
+.. [#Guinier1955] A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*,
+   John Wiley and Sons, New York, (1955)
 
 Authorship and Verification
 ----------------------------

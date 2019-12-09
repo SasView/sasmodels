@@ -62,9 +62,9 @@ where the $q$ vector is defined as
 References
 ----------
 
-.. [#] G Beaucage, *J. Appl. Cryst.*, 28 (1995) 717-728
-.. [#] G Beaucage, *J. Appl. Cryst.*, 29 (1996) 134-146
-.. [#] B Hammouda, *Analysis of the Beaucage model, J. Appl. Cryst.*, (2010), 43, 1474-1478
+#.  G Beaucage, *J. Appl. Cryst.*, 28 (1995) 717-728
+#.  G Beaucage, *J. Appl. Cryst.*, 29 (1996) 134-146
+#.  B Hammouda, *Analysis of the Beaucage model, J. Appl. Cryst.*, (2010), 43, 1474-1478
 
 Authorship and Verification
 ----------------------------

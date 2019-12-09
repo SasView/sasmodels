@@ -54,13 +54,13 @@ where the $q$ vector is defined as
 References
 ----------
 
-.. [#] J B Hayter and J Penfold, *Molecular Physics*, 42 (1981) 109-118
+#.  J B Hayter and J Penfold, *Molecular Physics*, 42 (1981) 109-118
 
-.. [#] J P Hansen and J B Hayter, *Molecular Physics*, 46 (1982) 651-656
+#.  J P Hansen and J B Hayter, *Molecular Physics*, 46 (1982) 651-656
 
-.. [#] M Kotlarchyk and S-H Chen, *J. Chem. Phys.*, 79 (1983) 2461-2469
+#.  M Kotlarchyk and S-H Chen, *J. Chem. Phys.*, 79 (1983) 2461-2469
 
-.. [#] C G Malmberg and A A Maryott, *J. Res. Nat. Bureau Standards*, 56 (1956) 2641
+#.  C G Malmberg and A A Maryott, *J. Res. Nat. Bureau Standards*, 56 (1956) 2641
 
 Authorship and Verification
 ----------------------------

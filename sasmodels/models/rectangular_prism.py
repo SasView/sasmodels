@@ -95,9 +95,9 @@ to the output of the existing :ref:`parallelepiped` model.
 References
 ----------
 
-.. [#] P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
-.. [#] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
-.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+#.  P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
+#.  R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+#.  L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------

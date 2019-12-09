@@ -183,7 +183,7 @@ where the $q$ vector is defined as
 References
 ----------
 
-.. [#] L A Feigin and D I Svergun, Structure Analysis by Small-Angle X-Ray
+#. L A Feigin and D I Svergun, Structure Analysis by Small-Angle X-Ray
    and Neutron Scattering, Plenum Press, New York, (1987)
 
 Authorship and Verification

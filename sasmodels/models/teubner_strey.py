@@ -60,9 +60,9 @@ where the $q$ vector is defined as
 References
 ----------
 
-.. [#] M Teubner, R Strey, *J. Chem. Phys.*, 87 (1987) 3195
-.. [#] K V Schubert, R Strey, S R Kline and E W Kaler, *J. Chem. Phys.*, 101 (1994) 5343
-.. [#] H Endo, M Mihailescu, M. Monkenbusch, J Allgaier, G Gompper, D Richter, B Jakobs, T Sottmann, R Strey, and I Grillo, *J. Chem. Phys.*, 115 (2001), 580
+#.  M Teubner, R Strey, *J. Chem. Phys.*, 87 (1987) 3195
+#.  K V Schubert, R Strey, S R Kline and E W Kaler, *J. Chem. Phys.*, 101 (1994) 5343
+#.  H Endo, M Mihailescu, M. Monkenbusch, J Allgaier, G Gompper, D Richter, B Jakobs, T Sottmann, R Strey, and I Grillo, *J. Chem. Phys.*, 115 (2001), 580
 
 Authorship and Verification
 ----------------------------

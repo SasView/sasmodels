@@ -3,7 +3,7 @@ Definition
 ----------
 
 Calculates the scattering from a barbell-shaped cylinder.  Like
-:ref:`capped-cylinder`, this is a sphereocylinder with spherical end
+:ref:`capped-cylinder`, this is a spherocylinder with spherical end
 caps that have a radius larger than that of the cylinder, but with the center
 of the end cap radius lying outside of the cylinder. See the diagram for
 the details of the geometry and restrictions on parameter values.
@@ -73,10 +73,12 @@ The 2D scattering intensity is calculated similar to the 2D cylinder model.
 References
 ----------
 
-.. [#] H Kaya, *J. Appl. Cryst.*, 37 (2004) 223-230
-.. [#] H Kaya and N R deSouza, *J. Appl. Cryst.*, 37 (2004) 508-509 (addenda
-   and errata)
-.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+#. H Kaya, *J. Appl. Cryst.*, 37 (2004) 223-230
+
+#. H Kaya and N R deSouza, *J. Appl. Cryst.*, 37 (2004) 508-509
+   (addenda and errata)
+
+#. L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------

@@ -50,7 +50,7 @@ and the $y$ axis) and the averaging $\left<\ldots\right>$ is applied over all
 orientations.
 
 Assuming $a = A/B < 1$, $b = B /B = 1$, and $c = C/B > 1$, the
-form factor is given by (Mittelbach and Porod, 1961 [#Mittelbach]_)
+form factor is given by (Mittelbach and Porod, 1961 [#Mittelbach1961]_)
 
 .. math::
 
@@ -176,10 +176,12 @@ angles.
 References
 ----------
 
-.. [#Mittelbach] P Mittelbach and G Porod, *Acta Physica Austriaca*,
+See also Nayuk [#Nayuk2012]_ and Onsager [#Onsager1949]_.
+
+.. [#Mittelbach1961] P Mittelbach and G Porod, *Acta Physica Austriaca*,
    14 (1961) 185-211
-.. [#] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
-.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+.. [#Nayuk2012] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+.. [#Onsager1949] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------

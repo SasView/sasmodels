@@ -97,7 +97,7 @@ model parameters as:
 References
 ----------
 
-.. [#] K Larson-Smith, A Jackson, and D C Pozzo, *Small angle scattering model for Pickering emulsions and raspberry particles*, *Journal of Colloid and Interface Science*, 343(1) (2010) 36-41
+#.  K Larson-Smith, A Jackson, and D C Pozzo, *Small angle scattering model for Pickering emulsions and raspberry particles*, *Journal of Colloid and Interface Science*, 343(1) (2010) 36-41
 
 Authorship and Verification
 ----------------------------

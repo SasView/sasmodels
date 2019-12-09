@@ -105,8 +105,8 @@ with polar radius equal to length and equatorial radius equal to radius.
 References
 ----------
 
-.. [#] L A Feigin and D I Svergun. *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*, Plenum Press, New York, 1987
-.. [#] A. Isihara. *J. Chem. Phys.*, 18 (1950) 1446-1449
+#.  L A Feigin and D I Svergun. *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*, Plenum Press, New York, 1987
+#.  A. Isihara. *J. Chem. Phys.*, 18 (1950) 1446-1449
 
 Authorship and Verification
 ----------------------------

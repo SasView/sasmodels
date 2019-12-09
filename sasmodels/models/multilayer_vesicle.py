@@ -95,7 +95,7 @@ the :ref:`magnetism` documentation.
 References
 ----------
 
-.. [#] B Cabane, *Small Angle Scattering Methods*, in *Surfactant Solutions:
+#. B Cabane, *Small Angle Scattering Methods*, in *Surfactant Solutions:
    New Methods of Investigation*, Ch.2, Surfactant Science Series Vol. 22, Ed.
    R Zana and M Dekker, New York, (1987).
 

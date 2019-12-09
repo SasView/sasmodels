@@ -5,7 +5,7 @@ the :ref:`magnetism` documentation.
 Definition
 ----------
 
-The 1D scattering intensity is calculated in the following way (Guinier, 1955)
+The 1D scattering intensity is calculated in the following way [Guinier1955]_
 
 .. math::
 
@@ -35,8 +35,8 @@ to the output of the software provided by the NIST (Kline, 2006).
 References
 ----------
 
-A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*,
-John Wiley and Sons, New York, (1955)
+.. [Guinier1955] A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*,
+   John Wiley and Sons, New York, (1955)
 
 Authorship and Verification
 ----------------------------

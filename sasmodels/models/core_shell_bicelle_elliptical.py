@@ -3,7 +3,8 @@ Definition
 ----------
 
 This model provides the form factor for an elliptical cylinder with a
-core-shell scattering length density profile. Thus this is a variation
+core-shell scattering length density profile [#Onsager1949]_.
+Thus this is a variation
 of the core-shell bicelle model, but with an elliptical cylinder for the core.
 Outer shells on the rims and flat ends may be of different thicknesses and
 scattering length densities. The form factor is normalized by the total
@@ -98,7 +99,7 @@ Model verified using Monte Carlo simulation for 1D and 2D scattering.
 References
 ----------
 
-.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+.. [#Onsager1949] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------

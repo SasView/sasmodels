@@ -47,7 +47,7 @@ wary of results for (total) volume fractions greater than approximately 40%.
 Depending on the size ratios or number fractions, the limit on total volume
 fraction may be lower.
 
-**NOTE 3:** The heavy arithmatic operations also mean that at present the
+**NOTE 3:** The heavy arithmetic operations also mean that at present the
 function is poorly behaved at very low qr.  In some cases very large qr may
 also be poorly behaved.  These should however be outside any useful region of
 qr.
@@ -60,9 +60,10 @@ See the references for details.
 References
 ----------
 
-.. [#] N W Ashcroft and D C Langreth, *Physical Review*, 156 (1967) 685-692
+#. N W Ashcroft and D C Langreth, *Physical Review*, 156 (1967) 685-692
    [Errata found in *Phys. Rev.* 166 (1968) 934]
-.. [#] S R Kline, *J Appl. Cryst.*, 39 (2006) 895
+
+#. S R Kline, *J Appl. Cryst.*, 39 (2006) 895
 
 Authorship and Verification
 ----------------------------

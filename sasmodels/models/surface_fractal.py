@@ -35,7 +35,7 @@ length density of particles.
 References
 ----------
 
-.. [#] D Mildner and P Hall, *J. Phys. D: Appl. Phys.*, 19 (1986) 1535-1545
+#.  D Mildner and P Hall, *J. Phys. D: Appl. Phys.*, 19 (1986) 1535-1545
 
 Authorship and Verification
 ----------------------------

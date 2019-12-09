@@ -50,8 +50,8 @@ and $\rho_{particle}$ is the scattering length density of particles.
 References
 ----------
 
-.. [#] P Schmidt, *J Appl. Cryst.*, 24 (1991) 414-435 Equation(19)
-.. [#] A J Hurd, D W Schaefer, J E Martin, *Phys. Rev. A*,
+#. P Schmidt, *J Appl. Cryst.*, 24 (1991) 414-435 Equation(19)
+#. A J Hurd, D W Schaefer, J E Martin, *Phys. Rev. A*,
    35 (1987) 2361-2364 Equation(2)
 
 Authorship and Verification

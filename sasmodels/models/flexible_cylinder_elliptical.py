@@ -76,11 +76,11 @@ reader is strongly encouraged to read reference [1] before use.**
 References
 ----------
 
-.. [#] J S Pedersen and P Schurtenberger. *Scattering functions of semiflexible polymers with and without excluded volume effects.* Macromolecules, 29 (1996) 7602-7612
+#.  J S Pedersen and P Schurtenberger. *Scattering functions of semiflexible polymers with and without excluded volume effects.* Macromolecules, 29 (1996) 7602-7612
 
 Correction of the formula can be found in
 
-.. [#] W R Chen, P D Butler and L J Magid, *Incorporating Intermicellar Interactions in the Fitting of SANS Data from Cationic Wormlike Micelles.* Langmuir, 22(15) 2006 6539-6548
+#.  W R Chen, P D Butler and L J Magid, *Incorporating Intermicellar Interactions in the Fitting of SANS Data from Cationic Wormlike Micelles.* Langmuir, 22(15) 2006 6539-6548
 
 Authorship and Verification
 ----------------------------

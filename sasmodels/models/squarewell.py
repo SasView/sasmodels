@@ -49,9 +49,9 @@ where the $q$ vector is defined as
 References
 ----------
 
-.. [#] R V Sharma, K C Sharma, *Physica*, 89A (1977) 213
+#.  R V Sharma, K C Sharma, *Physica*, 89A (1977) 213
 
-.. [#] M Kotlarchyk and S-H Chen, *J. Chem. Phys.*, 79 (1983) 2461-2469
+#.  M Kotlarchyk and S-H Chen, *J. Chem. Phys.*, 79 (1983) 2461-2469
 
 Authorship and Verification
 ----------------------------

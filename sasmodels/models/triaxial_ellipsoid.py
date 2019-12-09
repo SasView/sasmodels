@@ -113,7 +113,7 @@ over all possible angles.
 References
 ----------
 
-.. [#] Finnigan, J.A., Jacobs, D.J., 1971. *Light scattering by ellipsoidal particles in solution*, J. Phys. D: Appl. Phys. 4, 72-77. doi:10.1088/0022-3727/4/1/310
+#.  Finnigan, J.A., Jacobs, D.J., 1971. *Light scattering by ellipsoidal particles in solution*, J. Phys. D: Appl. Phys. 4, 72-77. doi:10.1088/0022-3727/4/1/310
 
 Authorship and Verification
 ----------------------------

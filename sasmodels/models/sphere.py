@@ -36,7 +36,7 @@ to the output of the software provided by the NIST (Kline, 2006).
 References
 ----------
 
-.. [#] A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*,
+#. A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*,
    John Wiley and Sons, New York, (1955)
 
 Authorship and Verification

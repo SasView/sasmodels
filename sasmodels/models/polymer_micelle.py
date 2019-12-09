@@ -67,7 +67,7 @@ model has not yet been independently validated.
 References
 ----------
 
-.. [#] J Pedersen, *J. Appl. Cryst.*, 33 (2000) 637-640
+#.  J Pedersen, *J. Appl. Cryst.*, 33 (2000) 637-640
 
 Authorship and Verification
 ----------------------------
