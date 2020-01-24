@@ -202,6 +202,7 @@ def _hide_model_case_from_nose():
             self.platform = platform
             self.dtype = dtype
             self.stash = stash  # container for the results of the first run
+            self._failures = []  # Set of failed target values
 
             setattr(self, test_method_name, self.run_all)
             unittest.TestCase.__init__(self, test_method_name)
@@ -230,6 +231,7 @@ def _hide_model_case_from_nose():
                 tests += self.info.tests
             S_tests = [test for test in tests if '@S' in test[0]]
             P_tests = [test for test in tests if '@S' not in test[0]]
+            del self._failures[:]
             try:
                 model = build_model(self.info, dtype=self.dtype,
                                     platform=self.platform)
@@ -272,6 +274,11 @@ def _hide_model_case_from_nose():
             except:
                 annotate_exception(self.test_name)
                 raise
+
+            if self._failures:
+                msg = ("The following assertions failed for %s:\n  %s"
+                       % (self.test_name, "\n  ".join(self._failures)))
+                raise AssertionError(msg)
 
         def _find_missing_tests(self):
             # type: () -> None
@@ -326,11 +333,14 @@ def _hide_model_case_from_nose():
                 q_vectors = [np.array(x)]
 
             kernel = model.make_kernel(q_vectors)
-            if len(test) == 3:
+            if len(test) == 3 or len(test) == 4:
                 actual = call_kernel(kernel, pars)
                 self._check_vectors(x, y, actual, 'I')
+                if len(test) == 4:
+                    results = getattr(kernel, 'results', lambda: {})
+                    self._check_struct(x, test[3], results())
                 return actual
-            else:
+            elif len(test) == 7:
                 y1 = y
                 y2 = test[3] if isinstance(test[3], list) else [test[3]]
                 F, Fsq, R_eff, volume, volume_ratio = call_Fq(kernel, pars)
@@ -341,23 +351,68 @@ def _hide_model_case_from_nose():
                 self._check_scalar(test[5], volume, 'volume')
                 self._check_scalar(test[6], volume_ratio, 'form:shell ratio')
                 return Fsq
+            else:
+                self._failures.append('wrong number or results for %s => %s'
+                                      % (str(user_pars), str(test[2:])))
 
         def _check_scalar(self, target, actual, name):
-            self.assertTrue(is_near(target, actual, 5),
-                            '%s: expected:%s; actual:%s'
-                            % (name, target, actual))
+            if not is_near(target, actual, 5):
+                self._failures.append('%s: expected:%s; actual:%s'
+                                      % (name, target, actual))
 
         def _check_vectors(self, x, target, actual, name='I'):
-            self.assertTrue(len(actual) > 0,
-                            '%s(...) expected return'%name)
+            if not len(actual) > 0:
+                self._failures.append('%s(...) expected return value'%name)
+                return
             if target is None:
                 return
-            self.assertEqual(len(target), len(actual),
-                             '%s(...) returned wrong length'%name)
+            if len(target) != len(actual):
+                self._failures.append('%s(...) returned wrong length in %s'
+                                      % (name, str(actual)))
+                return
             for xi, yi, actual_yi in zip(x, target, actual):
-                self.assertTrue(is_near(yi, actual_yi, 5),
-                                '%s(%s): expected:%s; actual:%s'
-                                % (name, xi, target, actual))
+                if not is_near(yi, actual_yi, 5):
+                    # convert array to list so we have comma separated output
+                    actual = actual.tolist()
+                    self._failures.append('%s(%s): expected:%s; actual:%s'
+                                          % (name, xi, target, actual))
+                    # Whole list is printed on any error, so fail on first
+                    return
+
+        def _check_struct(self, x, target, actual):
+            for k, v in target.items():
+                if k not in actual:
+                    self._failures.append('key %r not in returned value' % k)
+                    continue
+                target_k = v
+                actual_k = actual[k]
+                if np.isscalar(actual_k):  # number
+                    self._check_scalar(target_k, actual_k, k)
+                elif isinstance(actual_k, np.ndarray): # vector
+                    self._check_vectors(x, target_k, actual_k, k)
+                elif isinstance(actual_k, tuple) and len(actual_k) == 2:
+                    # Intermediate is returned as (Q, I(Q)) pair.  The test
+                    # is set up to use |Q| or (Qx, Qy) as input, but the
+                    # returned result has (|Q|,) or (Qx, Qy).  For now we will
+                    # ignore the first result.
+                    #self._check_vectors(x, x, actual_k[0], k+" (Q)")
+                    self._check_vectors(x, target_k, actual_k[1], k)
+                elif isinstance(actual_k, dict):
+                    self._check_struct(x, target_k, actual_k)
+                else:
+                    self._failures.append('key %s: unexpected value %r'
+                                          % (k, actual_k))
+            # Ignore effective_radius in returned result; it will be dropped
+            actual.pop('effective_radius', None)
+            if any(k not in target for k in actual):
+                self._failures.append('intermediate results missing:')
+                for k, v in actual.items():
+                    if k not in target:
+                        if isinstance(v, tuple) and len(v) == 2:
+                            v = v[1].tolist()
+                        elif isinstance(v, np.ndarray):
+                            v = v.tolist()
+                        self._failures.append('  "%s": %r,' % (k, v))
 
     return ModelTestCase
 

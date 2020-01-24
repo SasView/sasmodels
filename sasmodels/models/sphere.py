@@ -74,6 +74,7 @@ parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "sld",
 source = ["lib/sas_3j1x_x.c", "sphere.c"]
 have_Fq = True
 radius_effective_modes = ["radius"]
+#single = False
 
 def random():
     """Return a random parameter set for the model."""
@@ -125,39 +126,61 @@ tests = [
    #                        1 is use radius from F2(Q)
    #    (sphere only has two choices, other models may have more)
     [{"@S": "hardsphere",
-     "radius": 120., "radius_pd": 0.2, "radius_pd_n":45,"volfraction":0.2,
+     "radius": 120., "radius_pd": 0.2, "radius_pd_n": 45, "volfraction": 0.2,
      #"radius_effective":50.0,    # hard sphere structure factor
      "structure_factor_mode": 1,  # mode 0 = normal decoupling approx,
      #                                   1 = beta(Q) approx
      "radius_effective_mode": 0   # this used default hardsphere Reff=50
-     }, [0.01,0.1,0.2], [1.32473756e+03, 7.36633631e-01, 4.67686201e-02]  ],
+     }, [0.01, 0.1, 0.2], [1.32473756e+03, 7.36633631e-01, 4.67686201e-02]],
     [{"@S": "hardsphere",
-     "radius": 120., "radius_pd": 0.2, "radius_pd_n":45,
-     "volfraction":0.2,
-     "radius_effective":45.0,     # explicit Reff over rides either 50 or 120
+     "radius": 120., "radius_pd": 0.2, "radius_pd_n": 45,
+     "volfraction": 0.2,
+     "radius_effective": 45.0,     # explicit Reff over rides either 50 or 120
      "structure_factor_mode": 1,  # beta approx
      "radius_effective_mode": 0   #
-     }, 0.01, 1316.2990966463444 ],
+     }, 0.01, 1316.2990966463444
+     ],
     [{"@S": "hardsphere",
-     "radius": 120., "radius_pd": 0.2, "radius_pd_n":45,
-     "volfraction":0.2,
-     "radius_effective":120.0,    # over ride Reff
+     "radius": 120., "radius_pd": 0.2, "radius_pd_n": 45,
+     "volfraction": 0.2,
+     "radius_effective": 120.0,    # over ride Reff
      "structure_factor_mode": 1,  # beta approx
      "radius_effective_mode": 0   # (mode=1 here also uses 120)
-     }, [0.01,0.1,0.2], [1.57928589e+03, 7.37067923e-01, 4.67686197e-02  ]],
+     }, [0.01, 0.1, 0.2], [1.57928589e+03, 7.37067923e-01, 4.67686197e-02]],
     [{"@S": "hardsphere",
-     "radius": 120., "radius_pd": 0.2, "radius_pd_n":45,
-     "volfraction":0.2,
-     #"radius_effective":120.0,   # hard sphere structure factor
+     "radius": 120., "radius_pd": 0.2, "radius_pd_n": 45,
+     "volfraction": 0.2,
+     #"radius_effective": 120.0,   # hard sphere structure factor
      "structure_factor_mode": 0,  # normal decoupling approximation
      "radius_effective_mode": 1   # this uses 120 from the form factor
-     }, [0.01,0.1,0.2], [1.10112335e+03, 7.41366536e-01, 4.66630207e-02]],
+     }, [0.01, 0.1, 0.2], [1.10112335e+03, 7.41366536e-01, 4.66630207e-02]],
     [{"@S": "hardsphere",
-     "radius": 120., "radius_pd": 0.2, "radius_pd_n":45,
-     "volfraction":0.2,
-     #"radius_effective":50.0,    # hard sphere structure factor
+     "radius": 120., "radius_pd": 0.2, "radius_pd_n": 45,
+     "volfraction": 0.2,
+     #"radius_effective": 50.0,    # hard sphere structure factor
      "structure_factor_mode": 0,  # normal decoupling approximation
      "radius_effective_mode": 0   # this used 50 the default for hardsphere
-     }, [0.01,0.1,0.2], [7.82803598e+02, 6.85943611e-01, 4.71586457e-02 ]]
+     }, [0.01, 0.1, 0.2], [7.82803598e+02, 6.85943611e-01, 4.71586457e-02]],
+
+
+    # Check returned intermediate results.
+    # Note: Target values come from double precision dll calculation.
+    # TODO: Cross check results against other software.
+    [{"@S": "hardsphere",
+     "radius": 120., "radius_pd": 0.2, "radius_pd_n": 45,
+     "volfraction": 0.2,
+     "radius_effective": 120.0,   # hard sphere structure factor
+     "structure_factor_mode": 1,  # normal decoupling approximation
+     "radius_effective_mode": 0,  # mode 0 says ignore Reff from P
+     }, [0.01, 0.1, 0.2], [1.57928589e+03, 7.37067923e-01, 4.67686197e-02],
+     {
+      "P(Q)": [28209011371.91742, 5952795.559734829, 370161.2239472192],
+      "S(Q)": [0.31569726516764035, 1.005886362143737, 0.9976927625183415],
+      #"beta(Q)": [0.7996623765645325, 0.007835960247334845, 8.218250904154009e-07],
+      "beta(Q)": None,  # Single precision not good enough for 5 digits of beta
+      "S_eff(Q)": [0.4527888487743462, 1.0000461252997597, 0.9999999981038543],
+      "volume": 8087664.122641933,
+      "volume_ratio": 1.0,
+      "radius_effective": 0.0,  # zero since mode is 0, and Reff isn't computed
+     }],
 ]
-#
