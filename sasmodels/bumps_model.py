@@ -255,7 +255,7 @@ class Experiment(DataMixin):
     #def __call__(self):
     #    return 2 * self.nllf() / self.dof
 
-    def plot(self, view='log'):
+    def plot(self, view=None):
         # type: (str) -> None
         """
         Plot the data and residuals.

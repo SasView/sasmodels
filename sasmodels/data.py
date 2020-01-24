@@ -383,7 +383,7 @@ def empty_data2D(qx, qy=None, resolution=0.0):
     return data
 
 
-def plot_data(data, view='log', limits=None):
+def plot_data(data, view=None, limits=None):
     # type: (Data, str, Optional[Tuple[float, float]]) -> None
     """
     Plot data loaded by the sasview loader.
@@ -409,7 +409,7 @@ def plot_data(data, view='log', limits=None):
 def plot_theory(data,          # type: Data
                 theory,        # type: Optional[np.ndarray]
                 resid=None,    # type: Optional[np.ndarray]
-                view='log',    # type: str
+                view=None,    # type: str
                 use_data=True, # type: bool
                 limits=None,   # type: Optional[np.ndarray]
                 Iq_calc=None   # type: Optional[np.ndarray]
@@ -475,6 +475,10 @@ def _plot_result1D(data,         # type: Data1D
     import matplotlib.pyplot as plt  # type: ignore
     from numpy.ma import masked_array, masked  # type: ignore
 
+    # Default to 'log' view
+    if view is None:
+        view = 'log'
+
     if getattr(data, 'radial', False):
         data.x = data.q_data
         data.y = data.data
@@ -486,8 +490,7 @@ def _plot_result1D(data,         # type: Data1D
     num_plots = (use_data or use_theory) + use_calc + use_resid
     non_positive_x = (data.x <= 0.0).any()
 
-    scale = data.x**4 if view == 'q4' else 1.0
-    xscale = yscale = 'linear' if view == 'linear' else 'log'
+    scale = 1e8 * data.x**4 if view == 'q4' else 1.0
 
     if use_data or use_theory:
         if num_plots > 1:
@@ -501,21 +504,24 @@ def _plot_result1D(data,         # type: Data1D
             mdata[~np.isfinite(mdata)] = masked
             if view == 'log':
                 mdata[mdata <= 0] = masked
-            plt.errorbar(data.x, scale*mdata, yerr=data.dy, fmt='.')
+            plt.errorbar(data.x, scale*mdata, yerr=scale*data.dy, fmt='.')
             all_positive = all_positive and (mdata > 0).all()
             some_present = some_present or (mdata.count() > 0)
 
 
         if use_theory:
+            # Theory values are only calculated where the data is not masked,
+            # so restrict data.x and scale to only those points.
             # Note: masks merge, so any masked theory points will stay masked,
             # and the data mask will be added to it.
             #mtheory = masked_array(theory, data.mask.copy())
             theory_x = data.x[data.mask == 0]
+            theory_scale = scale if np.isscalar(scale) else scale[data.mask == 0]
             mtheory = masked_array(theory)
             mtheory[~np.isfinite(mtheory)] = masked
             if view == 'log':
                 mtheory[mtheory <= 0] = masked
-            plt.plot(theory_x, scale*mtheory, '-')
+            plt.plot(theory_x, theory_scale*mtheory, '-')
             all_positive = all_positive and (mtheory > 0).all()
             some_present = some_present or (mtheory.count() > 0)
 
@@ -523,17 +529,10 @@ def _plot_result1D(data,         # type: Data1D
             plt.ylim(*limits)
 
 
-        xscale = ('linear' if not some_present or non_positive_x
-                  else view if view is not None
-                  else 'log')
-        yscale = ('linear'
-                  if view == 'q4' or not some_present or not all_positive
-                  else view if view is not None
-                  else 'log')
-        plt.xscale(xscale)
+        plt.xscale('linear' if not some_present or non_positive_x else 'log')
+        plt.yscale('log' if some_present and view == 'log' else 'linear')
         plt.xlabel("$q$/A$^{-1}$")
-        plt.yscale(yscale)
-        plt.ylabel('$I(q)$')
+        plt.ylabel('$10^8 q^4 I(q)$' if view == 'q4' else '$I(q)$')
         title = ("data and model" if use_theory and use_data
                  else "data" if use_data
                  else "model")
@@ -562,7 +561,7 @@ def _plot_result1D(data,         # type: Data1D
         plt.xlabel("$q$/A$^{-1}$")
         plt.ylabel('residuals')
         plt.title('(model - Iq)/dIq')
-        plt.xscale(xscale)
+        plt.xscale('linear' if not some_present or non_positive_x else 'log')
         plt.yscale('linear')
 
 
@@ -690,7 +689,7 @@ def _plot_2d_signal(data,       # type: Data2D
                     signal,     # type: np.ndarray
                     vmin=None,  # type: Optional[float]
                     vmax=None,  # type: Optional[float]
-                    view='log'  # type: str
+                    view=None,  # type: str
                    ):
     # type: (...) -> Tuple[float, float]
     """
@@ -701,6 +700,9 @@ def _plot_2d_signal(data,       # type: Data2D
     """
     import matplotlib.pyplot as plt  # type: ignore
     from numpy.ma import masked_array  # type: ignore
+
+    if view is None:
+        view = 'log'
 
     image = np.zeros_like(data.qx_data)
     image[~data.mask] = signal
