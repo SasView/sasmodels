@@ -86,11 +86,12 @@ Options (* for default):
     -pars/-nopars* prints the parameter set or not
     -default/-demo* use demo vs default parameters
     -sphere[=150] set up spherical integration over theta/phi using n points
+    -mono*/-poly suppress or allow polydispersity on generated parameters
+    -magnetic/-nonmagnetic* suppress or allow magnetism on generated parameters
+    -maxdim[=inf] limit randomly generate particle dimensions to maxdim
 
     === calculation options ===
-    -mono*/-poly force monodisperse or allow polydisperse random parameters
     -cutoff=1e-5* cutoff value for including a point in polydispersity
-    -magnetic/-nonmagnetic* suppress magnetism
     -accuracy=Low accuracy of the resolution calculation Low, Mid, High, Xhigh
     -neval=1 sets the number of evals for more accurate timing
     -ngauss=0 overrides the number of points in the 1-D gaussian quadrature
@@ -443,8 +444,8 @@ def _random_pd(model_info, pars):
     #        print(name, value, pars.get(name[:-5], 0), pars.get(name[:-2], 0))
 
 
-def randomize_pars(model_info, pars):
-    # type: (ModelInfo, ParameterSet) -> ParameterSet
+def randomize_pars(model_info, pars, maxdim=np.inf):
+    # type: (ModelInfo, ParameterSet, float) -> ParameterSet
     """
     Generate random values for all of the parameters.
 
@@ -459,6 +460,7 @@ def randomize_pars(model_info, pars):
     if model_info.random is not None:
         random_pars.update(model_info.random())
     _random_pd(model_info, random_pars)
+    limit_dimensions(model_info, random_pars, maxdim)
     return random_pars
 
 
@@ -533,16 +535,17 @@ def parlist(model_info, pars, is2d):
     """
     Format the parameter list for printing.
     """
-    is2d = True
     lines = []
     parameters = model_info.parameters
     magnetic = False
     magnetic_pars = []
-    for p in parameters.user_parameters(pars, is2d):
+    for p in parameters.user_parameters(pars, True):
         if any(p.id.endswith(x) for x in ('_M0', '_mtheta', '_mphi')):
             continue
-        if p.id.startswith('up:'):
+        if p.id in set(('up_frac_i', 'up_frac_f', 'up_angle')):
             magnetic_pars.append("%s=%s"%(p.id, pars.get(p.id, p.default)))
+            continue
+        if not is2d and p.id in ('theta', 'phi', 'psi'):
             continue
         fields = dict(
             value=pars.get(p.id, p.default),
@@ -576,63 +579,27 @@ def _format_par(name, value=0., pd=0., n=0, nsigma=3., pdtype='gaussian',
         line += "  M0:%.3f  mtheta:%.1f  mphi:%.1f" % (M0, mtheta, mphi)
     return line
 
-def suppress_pd(pars, suppress=True):
+def suppress_pd(pars):
     # type: (ParameterSet) -> ParameterSet
     """
-    If suppress is True complete eliminate polydispersity of the model to test
-    models more quickly.  If suppress is False, make sure at least one
-    parameter is polydisperse, setting the first polydispersity parameter to
-    15% if no polydispersity is given (with no explicit demo parameters given
-    in the model, there will be no default polydispersity).
+    Complete eliminate polydispersity of the model to test models more quickly.
     """
     pars = pars.copy()
-    #print("pars=", pars)
-    if suppress:
-        for p in pars:
-            if p.endswith("_pd_n"):
-                pars[p] = 0
-    else:
-        any_pd = False
-        first_pd = None
-        for p in pars:
-            if p.endswith("_pd_n"):
-                pd = pars.get(p[:-2], 0.)
-                any_pd |= (pars[p] != 0 and pd != 0.)
-                if first_pd is None:
-                    first_pd = p
-        if not any_pd and first_pd is not None:
-            if pars[first_pd] == 0:
-                pars[first_pd] = 35
-            if first_pd[:-2] not in pars or pars[first_pd[:-2]] == 0:
-                pars[first_pd[:-2]] = 0.15
+    for p in pars:
+        if p.endswith("_pd_n"):
+            pars[p] = 0
     return pars
 
-def suppress_magnetism(pars, suppress=True):
+def suppress_magnetism(pars):
     # type: (ParameterSet) -> ParameterSet
     """
-    If suppress is True complete eliminate magnetism of the model to test
-    models more quickly.  If suppress is False, make sure at least one sld
-    parameter is magnetic, setting the first parameter to have a strong
-    magnetic sld (8/A^2) at 60 degrees (with no explicit demo parameters given
-    in the model, there will be no default magnetism).
+    Complete eliminate magnetism of the model to test models more quickly.
     """
     pars = pars.copy()
-    if suppress:
-        for p in pars:
-            if p.endswith("_M0"):
-                pars[p] = 0
-    else:
-        any_mag = False
-        first_mag = None
-        for p in pars:
-            if p.endswith("_M0"):
-                any_mag |= (pars[p] != 0)
-                if first_mag is None:
-                    first_mag = p
-        if not any_mag and first_mag is not None:
-            pars[first_mag] = 8.
+    for p in pars:
+        if p.endswith("_M0"):
+            pars[p] = 0
     return pars
-
 
 def time_calculation(calculator, pars, evals=1):
     # type: (Calculator, ParameterSet, int) -> Tuple[np.ndarray, float]
@@ -751,20 +718,23 @@ def _show_invalid(data, theory):
         print("   *** ", ", ".join("I(%g)=%g"%(x, y) for x, y in bad))
 
 
-def compare(opts, limits=None, maxdim=np.inf):
+def compare(opts, limits=None, maxdim=None):
     # type: (Dict[str, Any], Optional[Tuple[float, float]]) -> Tuple[float, float]
     """
     Preform a comparison using options from the command line.
 
-    *limits* are the limits on the values to use, either to set the y-axis
+    *limits* are the display limits on the graph, either to set the y-axis
     for 1D or to set the colormap scale for 2D.  If None, then they are
     inferred from the data and returned. When exploring using Bumps,
     the limits are set when the model is initially called, and maintained
     as the values are adjusted, making it easier to see the effects of the
     parameters.
 
-    *maxdim* is the maximum value for any parameter with units of Angstrom.
+    *maxdim* **DEPRECATED** Use opts['maxdim'] instead.
     """
+    # CRUFT: remove maxdim parameter
+    if maxdim is not None:
+        opts['maxdim'] = maxdim
     for k in range(opts['sets']):
         if k > 0:
             # print a separate seed for each dataset for better reproducibility
@@ -1024,11 +994,12 @@ OPTIONS = [
     'demo', 'default',  # TODO: remove demo/default
     'nopars', 'pars',
     'sphere', 'sphere=', # integrate over a sphere in 2d with n points
+    'poly', 'mono',
+    'magnetic', 'nonmagnetic',
+    'maxdim=',
 
     # Calculation options
-    'poly', 'mono', 'cutoff=',
-    'magnetic', 'nonmagnetic',
-    'accuracy=', 'ngauss=',
+    'cutoff=', 'accuracy=', 'ngauss=',
     'neval=',  # for timing...
 
     # Precision options
@@ -1150,6 +1121,7 @@ def parse_opts(argv):
         'mono'      : True,
         # Default to magnetic a magnetic moment is set on the command line
         'magnetic'  : False,
+        'maxdim'    : np.inf,
         'show_pars' : False,
         'show_hist' : False,
         'rel_err'   : True,
@@ -1202,6 +1174,8 @@ def parse_opts(argv):
         elif arg.startswith('-sphere'):
             opts['sphere'] = int(arg[8:]) if len(arg) > 7 else 150
             opts['is2d'] = True
+        elif arg.startswith('-maxdim'):
+            opts['maxdim'] = float(arg[8:])
         elif arg == '-preset':  opts['seed'] = -1
         elif arg == '-mono':    opts['mono'] = True
         elif arg == '-poly':    opts['mono'] = False
@@ -1357,18 +1331,63 @@ def set_spherical_integration_parameters(opts, steps):
             'psi_pd_type=rectangle',
         ])
 
-def parse_pars(opts, maxdim=np.inf):
+def parse_pars(opts, maxdim=None):
     # type: (Dict[str, Any], float) -> Tuple[Dict[str, float], Dict[str, float]]
     """
-    Generate a parameter set.
+    Generate parameter sets for base and comparison models.
 
-    The default values come from the model, or a randomized model if a seed
-    value is given.  Next, evaluate any parameter expressions, constraining
-    the value of the parameter within and between models.  If *maxdim* is
-    given, limit parameters with units of Angstrom to this value.
+    Returns a pair of parameter dictionaries.
 
-    Returns a pair of parameter dictionaries for base and comparison models.
+    The default parameter values come from the model, or a randomized model
+    if a seed value is given.  Next, evaluate any parameter expressions,
+    constraining the value of the parameter within and between models.
+
+    Note: When generating random parameters, **the seed must already be set**
+    with a call to *np.random.seed(opts['seed'])*.
+
+    *opts* controls the parameter generation::
+
+        opts = {
+            'info': (model_info 1, model_info 2),
+            'seed': -1,         # if seed>=0 then randomize parameters
+            'mono': False,      # force monodisperse random parameters
+            'magnetic': False,  # force nonmagetic random parameters
+            'maxdim': np.inf,   # limit particle size to maxdim for random pars
+            'values': ['par=expr', ...],  # override parameter values in model
+            'show_pars': False, # Show parameter values
+            'is2d': False,      # Show values for orientation parameters
+            'use_demo': False,  # **DEPRECATED** use model_info.demo pars
+        }
+
+    The values of *par=expr* are evaluated approximately as::
+
+        import numpy as np
+        from math import *
+        from parameter_set import *
+
+        parameter_set.par = eval(expr)
+
+    That is, you can use arbitrary python math expressions including the
+    functions defined in the math library and the numpy library.  You can
+    also use the existing parameter values, which will either be the model
+    defaults or the randomly generated values if seed is non-negative.
+
+    To compare different values of the same parameter, use *par=expr,expr*.
+    The first parameter set will have the values from the first expression
+    and the second parameter set will have the values from the second
+    expression.  Note that the second expression is evaluated using the
+    values from the first expression, which allows things like::
+
+        length=2*radius,length+3
+
+    which will compare length to length+3 when length is set to 2*radius.
+
+    *maxdim* **DEPRECATED** Use *opts['maxdim']* instead.
     """
+    # CRUFT: maxdim parameter is deprecated
+    if maxdim is not None:
+        opts['maxdim'] = maxdim
+
     model_info, model_info2 = opts['info']
 
     # Get demo parameters from model definition, or use default parameters
@@ -1379,11 +1398,9 @@ def parse_pars(opts, maxdim=np.inf):
     # randomize parameters
     #pars.update(set_pars)  # set value before random to control range
     if opts['seed'] > -1:
-        pars = randomize_pars(model_info, pars)
-        limit_dimensions(model_info, pars, maxdim)
-        if model_info != model_info2:
-            pars2 = randomize_pars(model_info2, pars2)
-            limit_dimensions(model_info2, pars2, maxdim)
+        pars = randomize_pars(model_info, pars, maxdim=opts['maxdim'])
+        if model_info.id != model_info2.id:
+            pars2 = randomize_pars(model_info2, pars2, maxdim=opts['maxdim'])
             # Share values for parameters with the same name
             for k, v in pars.items():
                 if k in pars2:
@@ -1392,10 +1409,14 @@ def parse_pars(opts, maxdim=np.inf):
             pars2 = pars.copy()
         constrain_pars(model_info, pars)
         constrain_pars(model_info2, pars2)
-    pars = suppress_pd(pars, opts['mono'])
-    pars2 = suppress_pd(pars2, opts['mono'])
-    pars = suppress_magnetism(pars, not opts['magnetic'])
-    pars2 = suppress_magnetism(pars2, not opts['magnetic'])
+
+    # Process -mono and -magnetic command line options.
+    if opts['mono']:
+        pars = suppress_pd(pars)
+        pars2 = suppress_pd(pars2)
+    if not opts['magnetic']:
+        pars = suppress_magnetism(pars)
+        pars2 = suppress_magnetism(pars2)
 
     # Fill in parameters given on the command line
     presets = {}
