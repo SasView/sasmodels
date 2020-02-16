@@ -389,6 +389,9 @@ def profile(sld_core, radius_core, sld_solvent, n_shells,
 
 # TODO: no random parameter function for onion model
 
+# One of the few cases where demo values are useful because the default
+# model is really boring. Leave these here for now even though they are
+# never used.
 demo = {
     "sld_solvent": 2.2,
     "sld_core": 1.0,

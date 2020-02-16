@@ -69,11 +69,6 @@ def Iq(q, lorentz_scale, porod_scale, cor_length, porod_exp, lorentz_exp):
     return inten
 Iq.vectorized = True
 
-# parameters for demo
-demo = dict(lorentz_scale=10.0, porod_scale=1.0e-06, cor_length=50.0,
-            porod_exp=3.0, lorentz_exp=2.0, background=0.1,
-           )
-
 tests = [[{}, 0.001, 1009.98],
          [{}, 0.150141, 0.175645],
          [{}, 0.442528, 0.0213957]]

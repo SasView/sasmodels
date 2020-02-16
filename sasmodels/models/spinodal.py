@@ -99,6 +99,3 @@ def random():
         q_0=10**np.random.uniform(-3, -1),
     )
     return pars
-
-demo = dict(scale=1, background=0,
-            gamma=1, q_0=0.1)

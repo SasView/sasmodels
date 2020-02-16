@@ -166,18 +166,6 @@ def random():
     )
     return pars
 
-demo = dict(background=0.001,
-            scale=0.01,
-            thick_core=10.0,
-            thick_layer=10.0,
-            radius=15.0,
-            n_stacking=1,
-            sigma_d=0,
-            sld_core=4,
-            sld_layer=0.0,
-            sld_solvent=5.0,
-            theta=90,
-            phi=0)
 # After redefinition of spherical coordinates -
 # tests had in old coords theta=0, phi=0; new coords theta=90, phi=0
 q = 0.1

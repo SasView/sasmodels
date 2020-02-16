@@ -101,7 +101,7 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
 
     is_2d = hasattr(data, 'qx_data')
     model_info = core.load_model_info(name)
-    pars = get_pars(model_info, use_demo=True)
+    pars = get_pars(model_info)
     header = ('\n"Model","%s","Count","%d","Dimension","%s"'
               % (name, N, "2D" if is_2d else "1D"))
     if not mono:
@@ -221,8 +221,7 @@ values are "1d100" for 1-D and "2d32" for 2-D.
 CUTOFF is the cutoff value to use for the polydisperse distribution. Weights
 below the cutoff will be ignored.  Use "mono" for monodisperse models.  The
 choice of polydisperse parameters, and the number of points in the distribution
-is set in compare.py defaults for each model.  Polydispersity is given in the
-"demo" attribute of each model.
+is set in compare.py defaults for each model.
 
 PRECISION is the floating point precision to use for comparisons.  If two
 precisions are given, then compare one to the other.  Precision is one of

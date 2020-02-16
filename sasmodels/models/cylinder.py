@@ -166,16 +166,6 @@ def random():
     return pars
 
 
-# parameters for demo
-demo = dict(scale=1, background=0,
-            sld=6, sld_solvent=1,
-            radius=20, length=300,
-            theta=60, phi=60,
-            radius_pd=.2, radius_pd_n=9,
-            length_pd=.2, length_pd_n=10,
-            theta_pd=10, theta_pd_n=5,
-            phi_pd=10, phi_pd_n=5)
-
 # Test 1-D and 2-D models
 qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
 theta, phi = 80.1534480601659, 10.1510817110481  # (10, 10) in sasview 3.x

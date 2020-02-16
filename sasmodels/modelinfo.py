@@ -166,16 +166,16 @@ def parse_parameter(name, units='', default=np.NaN,
     return parameter
 
 
-def expand_pars(partable, pars):
+def expand_pars(partable, pars=None):
     # type: (ParameterTable, ParameterSetUser) ->  ParameterSet
     """
-    Create demo parameter set from key-value pairs.
+    Create a parameter set from key-value pairs.
 
     *pars* are the key-value pairs to use for the parameters.  Any
     parameters not specified in *pars* are set from the *partable* defaults.
 
     If *pars* references vector fields, such as thickness[n], then support
-    different ways of assigning the demo values, including assigning a
+    different ways of assigning the parameter values, including assigning a
     specific value (e.g., thickness3=50.0), assigning a new value to all
     (e.g., thickness=50.0) or assigning values using list notation.
     """
@@ -914,12 +914,6 @@ def make_model_info(kernel_module):
     if structure_factor:
         parameters.set_zero_background()
 
-    # TODO: remove demo parameters
-    # The plots in the docs are generated from the model default values.
-    # Sascomp set parameters from the command line, and so doesn't need
-    # demo values for testing.
-    demo = expand_pars(parameters, getattr(kernel_module, 'demo', None))
-
     filename = abspath(kernel_module.__file__).replace('.pyc', '.py')
     kernel_id = splitext(basename(filename))[0]
     name = getattr(kernel_module, 'name', None)
@@ -933,7 +927,6 @@ def make_model_info(kernel_module):
     info.description = getattr(kernel_module, 'description', 'no description')
     info.base = info.parameters = parameters
     info.translation = None
-    info.demo = demo
     info.composition = None
     info.docs = kernel_module.__doc__
     info.category = getattr(kernel_module, 'category', None)
@@ -1019,13 +1012,6 @@ class ModelInfo(object):
     #: Parameter translation code to convert from *parameters* table from
     #: caller to the *base* table used to evaluate the model.
     translation = None      # type: str
-    #: **DEPRECATED**
-    #: Demo parameters as a *parameter:value* map used as the default values
-    #: for :mod:`compare`.  Any parameters not set in *demo* will use the
-    #: defaults from the parameter table.  That means no polydispersity, and
-    #: in the case of multiplicity models, a minimal model with no interesting
-    #: scattering.
-    demo = None             # type: Dict[str, float]
     #: Composition is None if this is an independent model, or it is a
     #: tuple with comoposition type ('product' or 'misture') and a list of
     #: :class:`ModelInfo` blocks for the composed objects.  This allows us

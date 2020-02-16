@@ -84,7 +84,6 @@ Options (* for default):
     -preset*/-random[=seed] preset or random parameters
     -sets=n generates n random datasets with the seed given by -random=seed
     -pars/-nopars* prints the parameter set or not
-    -default/-demo* use demo vs default parameters
     -sphere[=150] set up spherical integration over theta/phi using n points
     -mono*/-poly suppress or allow polydispersity on generated parameters
     -magnetic/-nonmagnetic* suppress or allow magnetism on generated parameters
@@ -991,7 +990,6 @@ OPTIONS = [
 
     # Parameter set
     'preset', 'random', 'random=', 'sets=',
-    'demo', 'default',  # TODO: remove demo/default
     'nopars', 'pars',
     'sphere', 'sphere=', # integrate over a sphere in 2d with n points
     'poly', 'mono',
@@ -1032,10 +1030,10 @@ def columnize(items, indent="", width=79):
     return output
 
 
-def get_pars(model_info, use_demo=False):
+def get_pars(model_info):
     # type: (ModelInfo, bool) -> ParameterSet
     """
-    Extract demo parameters from the model definition.
+    Extract default parameters from the model definition.
     """
     # Get the default values for the parameters
     pars = {}
@@ -1052,10 +1050,6 @@ def get_pars(model_info, use_demo=False):
                      for k in range(1, p.length+1))
             else:
                 pars[p.id + ext] = val
-
-    # Plug in values given in demo
-    if use_demo and model_info.demo:
-        pars.update(model_info.demo)
     return pars
 
 INTEGER_RE = re.compile("^[+-]?[1-9][0-9]*$")
@@ -1126,7 +1120,6 @@ def parse_opts(argv):
         'show_hist' : False,
         'rel_err'   : True,
         'explore'   : False,
-        'use_demo'  : False,
         'zero'      : False,
         'html'      : False,
         'title'     : None,
@@ -1195,8 +1188,6 @@ def parse_opts(argv):
         elif arg == '-double!': opts['engine'] = 'double!'
         elif arg == '-quad!':   opts['engine'] = 'quad!'
         elif arg == '-edit':    opts['explore'] = True
-        elif arg == '-demo':    opts['use_demo'] = True
-        elif arg == '-default': opts['use_demo'] = False
         elif arg == '-weights': opts['show_weights'] = True
         elif arg == '-profile': opts['show_profile'] = True
         elif arg == '-html':    opts['html'] = True
@@ -1356,7 +1347,6 @@ def parse_pars(opts, maxdim=None):
             'values': ['par=expr', ...],  # override parameter values in model
             'show_pars': False, # Show parameter values
             'is2d': False,      # Show values for orientation parameters
-            'use_demo': False,  # **DEPRECATED** use model_info.demo pars
         }
 
     The values of *par=expr* are evaluated approximately as::
@@ -1390,10 +1380,9 @@ def parse_pars(opts, maxdim=None):
 
     model_info, model_info2 = opts['info']
 
-    # Get demo parameters from model definition, or use default parameters
-    # if model does not define demo parameters
-    pars = get_pars(model_info, opts['use_demo'])
-    pars2 = get_pars(model_info2, opts['use_demo'])
+    # Get default parameters from model definition.
+    pars = get_pars(model_info)
+    pars2 = get_pars(model_info2)
     pars2.update((k, v) for k, v in pars.items() if k in pars2)
     # randomize parameters
     #pars.update(set_pars)  # set value before random to control range
