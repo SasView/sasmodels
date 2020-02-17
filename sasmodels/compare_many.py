@@ -19,9 +19,9 @@ import traceback
 import numpy as np  # type: ignore
 
 from . import core
-from .compare import (randomize_pars, suppress_pd, make_data,
-                      make_engine, get_pars, columnize,
-                      constrain_pars)
+from .compare import (
+    randomize_pars, suppress_pd, make_data, make_engine, get_pars, columnize,
+    constrain_pars, print_models)
 
 MODELS = core.list_models()
 
@@ -190,13 +190,6 @@ def print_usage():
           file=sys.stderr)
 
 
-def print_models():
-    """
-    Print the list of available models in columns.
-    """
-    print(columnize(MODELS, indent="  "))
-
-
 def print_help():
     """
     Print usage string, the option description and the list of available models.
@@ -227,10 +220,7 @@ PRECISION is the floating point precision to use for comparisons.  If two
 precisions are given, then compare one to the other.  Precision is one of
 fast, single, double for GPU or single!, double!, quad! for DLL.  If no
 precision is given, then use single and double! respectively.
-
-Available models:
 """)
-    print_models()
 
 def main(argv):
     """
@@ -244,9 +234,12 @@ def main(argv):
     try:
         model_list = [target] if target in MODELS else core.list_models(target)
     except ValueError:
-        print('Bad model %s.  Use model type or one of:' % target, file=sys.stderr)
-        print_models()
-        print('model types: all, py, c, double, single, opencl, 1d, 2d, nonmagnetic, magnetic')
+        msg = """\
+Bad model {target}. Use available model or model type.
+  available models: ./sascomp -models
+  model types: all, py, c, double, single, opencl, 1d, 2d, nonmagnetic, magnetic\
+""".format(target=target)
+        print(msg, file=sys.stderr)
         return
     try:
         count = int(argv[1])

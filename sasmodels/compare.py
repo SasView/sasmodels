@@ -113,6 +113,11 @@ Options (* for default):
     -edit starts the parameter explorer
     -help/-html shows the model docs instead of running the model
 
+    === help ===
+    -h/-? print this help
+    -models[=all] show all builtin models of a given type:
+        all, py, c, double, single, opencl, 1d, 2d, magnetic
+
     === environment variables ===
     -DSAS_MODELPATH=~/.sasmodels/custom_models sets path to custom models
     -DSAS_WEIGHTS_PATH=~/.sasview/weights sets path to custom distributions
@@ -1006,6 +1011,9 @@ OPTIONS = [
 
     # Output options
     'help', 'html', 'edit',
+
+    # Help options
+    'h', '?', 'models', 'models='
     ]
 
 NAME_OPTIONS = (lambda: set(k for k in OPTIONS if not k.endswith('=')))()
@@ -1060,6 +1068,13 @@ def isnumber(s):
     isfloat = (match and not s[match.end():])
     return isfloat or INTEGER_RE.match(s)
 
+def print_models(kind=None):
+    """
+    Print the list of available models in columns.
+    """
+    models = core.list_models(kind=kind)
+    print(columnize(models, indent="  "))
+
 # For distinguishing pairs of models for comparison
 # key-value pair separator =
 # shell characters  | & ; <> $ % ' " \ # `
@@ -1074,32 +1089,50 @@ def parse_opts(argv):
     """
     Parse command line options.
     """
-    MODELS = core.list_models()
+
     flags = [arg for arg in argv
              if arg.startswith('-')]
     values = [arg for arg in argv
               if not arg.startswith('-') and '=' in arg]
     positional_args = [arg for arg in argv
                        if not arg.startswith('-') and '=' not in arg]
-    models = "\n    ".join("%-15s"%v for v in MODELS)
-    if len(positional_args) == 0:
+
+    # First check if help requested anywhere on line
+    if '-h' in flags or '-?' in flags:
         print(USAGE)
-        print("\nAvailable models:")
-        print(columnize(MODELS, indent="  "))
         return None
 
+    # Next check that all flags are valid.
     invalid = [o[1:] for o in flags
                if not (o[1:] in NAME_OPTIONS
                        or any(o.startswith('-%s='%t) for t in VALUE_OPTIONS)
                        or o.startswith('-D'))]
     if invalid:
-        print("Invalid options: %s"%(", ".join(invalid)))
+        print("Invalid options: %s."%(", ".join(invalid)))
+        print("usage: ./sasmodels [-?] [-models] model")
         return None
 
+    # Check if requesting a list of models.  This is done after checking that
+    # the flags are valid so we know it is -models or -models=.
+    if any(v.startswith('-models') for v in flags):
+        # grab last -models entry
+        models = [v for v in flags if v.startswith('-models')][-1]
+        if models == '-models':
+            models = '-models=all'
+        _, kind = models.split('=', 1)
+        print_models(kind=kind)
+        return None
+
+    # Check that a model was given on the command line
+    if len(positional_args) == 0:
+        print("usage: ./sascomp [-?] [-models] model")
+        return None
+
+    # Only the last model on the command line is used.
     name = positional_args[-1]
 
-    # pylint: disable=bad-whitespace,C0321
     # Interpret the flags
+    # pylint: disable=bad-whitespace,C0321
     opts = {
         'plot'      : True,
         'view'      : 'log',
@@ -1221,8 +1254,8 @@ def parse_opts(argv):
     try:
         model_info = [core.load_model_info(k) for k in names]
     except ImportError as exc:
-        print(str(exc))
-        print("Could not find model; use one of:\n    " + models)
+        print(str(exc), "while loading", names)
+        print("usage: ./sasmodels [-?] [-models] model")
         return None
 
     if PAR_SPLIT in opts['ngauss']:
