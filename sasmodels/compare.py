@@ -1488,9 +1488,9 @@ def parse_pars(opts, maxdim=None):
 
     # Hack to load user-defined distributions; run through all parameters
     # and make sure any pd_type parameter is a defined distribution.
-    if (any(p.endswith('pd_type') and v not in weights.MODELS
+    if (any(p.endswith('pd_type') and v not in weights.DISTRIBUTIONS
             for p, v in pars.items()) or
-        any(p.endswith('pd_type') and v not in weights.MODELS
+        any(p.endswith('pd_type') and v not in weights.DISTRIBUTIONS
             for p, v in pars2.items())):
        weights.load_weights()
 
