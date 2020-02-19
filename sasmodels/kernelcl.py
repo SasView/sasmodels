@@ -487,6 +487,11 @@ class GpuInput(object):
     Call :meth:`release` when complete.  Even if not called directly, the
     buffer will be released when the data object is freed.
     """
+    nq = 0
+    dtype = generate.F32
+    is_2d = False
+    q = None
+    q_b = None
     def __init__(self, q_vectors, dtype=generate.F32):
         # type: (List[np.ndarray], np.dtype) -> None
         # TODO: Do we ever need double precision q?
