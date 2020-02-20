@@ -1014,13 +1014,24 @@ NAME_OPTIONS = (lambda: set(k for k in OPTIONS if not k.endswith('=')))()
 VALUE_OPTIONS = (lambda: [k[:-1] for k in OPTIONS if k.endswith('=')])()
 
 
-def columnize(items, indent="", width=79):
+def columnize(items, indent="", width=None):
     # type: (List[str], str, int) -> str
     """
     Format a list of strings into columns.
 
     Returns a string with carriage returns ready for printing.
     """
+    # Use the columnize package (pycolumize) if it is available
+    try:
+        from columnize import columnize as _columnize, default_opts
+        if width is None:
+            width = default_opts['displaywidth']
+        return _columnize(list(items), displaywidth=width, lineprefix=indent)
+    except ImportError:
+        pass
+    # Otherwise roll our own.
+    if width is None:
+        width = 120
     column_width = max(len(w) for w in items) + 1
     num_columns = (width - len(indent)) // column_width
     num_rows = len(items) // num_columns
