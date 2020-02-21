@@ -302,13 +302,15 @@ def make_figure_cached(model_info, opts):
         make_figure(model_info, opts)
         return
 
+    # TODO: changing default parameters won't trigger a rebuild.
     # build cache identifier
     if callable(model_info.Iq):
         with open(model_info.filename) as fid:
             source = fid.read()
     else:
         source = generate.make_source(model_info)["dll"]
-    code = source + str(sorted(opts.items()))
+    pars = str(sorted(model_info.parameters.defaults.items()))
+    code = source + pars + str(sorted(opts.items()))
     hash_id = hashlib.sha1(code.encode('utf-8')).hexdigest()
 
     # copy from cache or generate and copy to cache
@@ -318,6 +320,7 @@ def make_figure_cached(model_info, opts):
     if exists(cache_fig):
         copy_file(cache_fig, target_fig)
     else:
+        #print(f"==>regenerating png {model_info.id}")
         make_figure(model_info, opts)
         copy_file(target_fig, cache_fig)
 
