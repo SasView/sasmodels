@@ -13,7 +13,7 @@ is created from scratch each time.  Be sure to clear the cache from time
 to time so it doesn't get too large.  Also, the cache will need to be
 cleared if the image generation is updated, either because matplotib
 is upgraded or because this file changes.  To accomodate both these
-conditions set the path as the following in your build script:
+conditions set the path as the following in your build script::
 
     SASMODELS_BUILD_CACHE=/tmp/sasbuild_$(shasum genmodel.py)
 
@@ -23,6 +23,13 @@ a new cache will be created whenever the text of this file has changed,
 even if it is downloaded from a different branch of the repo.
 
 The release build should not use any caching.
+
+This program uses multiprocessing to build the jobs in parallel.  Use
+the following::
+
+    SASMODELS_BUILD_CPUS=0  # one per processor
+    SASMODELS_BUILD_CPUS=1  # don't use multiprocessing
+    SASMODELS_BUILD_CPUS=n  # use n processes
 """
 from __future__ import print_function
 
@@ -326,17 +333,29 @@ def copy_file(src, dst):
     elif os.path.getmtime(src) > os.path.getmtime(dst):
         shutil.copy2(src, dst)
 
-def process_model(infile, outfile):
-    # type: (str, str) -> None
+def process_model(py_file, force=False):
+    # type: (str) -> None
     """
     Generate doc file and image file for the given model definition file.
+
+    Does nothing if the corresponding rst file is newer than *py_file*.
+    Also checks the timestamp on the *genmodel.py* program (*__file__*),
+    since we want to rerun the generator on all files if we change this
+    code.
+
+    If *force* then generate the rst file regardless of time stamps.
     """
+    rst_file = joinpath('model', basename(py_file).replace('.py', '.rst'))
+    if not (force or newer(py_file, rst_file) or newer(__file__, rst_file)):
+        #print("skipping", rst_file)
+        return
+
     # Load the model file
-    model_name = basename(infile)[:-3]
+    model_name = basename(py_file)[:-3]
     model_info = core.load_model_info(model_name)
 
     # Plotting ranges and options
-    opts = {
+    PLOT_OPTS = {
         'xscale'    : 'log',
         'yscale'    : 'log' if not model_info.structure_factor else 'linear',
         'zscale'    : 'log' if not model_info.structure_factor else 'linear',
@@ -352,18 +371,31 @@ def process_model(infile, outfile):
     }
 
     # Generate the RST file and the figure.  Order doesn't matter.
-    gen_docs(model_info, outfile)
-    make_figure_cached(model_info, opts)
+    print("generating", rst_file)
+    gen_docs(model_info, rst_file)
+    make_figure_cached(model_info, PLOT_OPTS)
 
-def main():
+def main(cpus=None):
+    """
+    Process files listed on the command line via :func:`process_model`.
+
+    *cpus* indicates the number of parallel processes. Use *cpus=0* for one
+    process per cpu or *cpus=1* for no multiprocessing. If *cpus=None* then
+    use the value in SASMODELS_BUILD_CPUS from the environment, or 0 if no
+    environment variable is found.
+    """
     import matplotlib
     matplotlib.use('Agg')
 
-    for infile in sys.argv[1:]:
-        outfile = joinpath('model', basename(infile).replace('.py', '.rst'))
-        if newer(infile, outfile) or newer(__file__, outfile):
-            print("generating", outfile)
-            process_model(infile, outfile)
+    if cpus is None:
+        cpus = int(os.environ.get("SASMODELS_BUILD_CPUS", "0"))
+    if cpus != 1:
+        import multiprocessing
+        p = multiprocessing.Pool(cpus if cpus > 0 else None)
+        p.map(process_model, sys.argv[1:])
+    else:
+        for py_file in sys.argv[1:]:
+            process_model(py_file)
 
 if __name__ == "__main__":
     main()
