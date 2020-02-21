@@ -1,3 +1,29 @@
+"""
+Generate ReST docs with figures for each model.
+
+usage: python genmodels.py path/to/model1.py ...
+
+Output is placed in the directory model, with *model1.py* producing
+*model/model1.rst* and *model/img/model1.png*.
+
+Set the environment variable SASMODELS_BUILD_CACHE to the path for the
+build cache. That way the figure will only be regenerated if the kernel
+code has changed.  This is useful on a build server where the environment
+is created from scratch each time.  Be sure to clear the cache from time
+to time so it doesn't get too large.  Also, the cache will need to be
+cleared if the image generation is updated, either because matplotib
+is upgraded or because this file changes.  To accomodate both these
+conditions set the path as the following in your build script:
+
+    SASMODELS_BUILD_CACHE=/tmp/sasbuild_$(shasum genmodel.py)
+
+Putting the cache in /tmp allows temp-reaper to clean it up automatically.
+Putting the sha1 hash of this file in the cache directory name means that
+a new cache will be created whenever the text of this file has changed,
+even if it is downloaded from a different branch of the repo.
+
+The release build should not use any caching.
+"""
 from __future__ import print_function
 
 import sys
@@ -19,12 +45,8 @@ else:
                 raise
 
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 
 sys.path.insert(0, realpath(joinpath(dirname(__file__), '..')))
-import sasmodels
 from sasmodels import generate, core
 from sasmodels.direct_model import DirectModel, call_profile
 from sasmodels.data import empty_data1D, empty_data2D
@@ -80,6 +102,7 @@ def plot_profile_inset(model_info, ax):
     """
     Plot 1D radial profile as inset plot.
     """
+    import matplotlib.pyplot as plt
     p = ax.get_position()
     width, height = 0.4*(p.x1-p.x0), 0.4*(p.y1-p.y0)
     left, bottom = p.x1-width, p.y1-height
@@ -103,6 +126,8 @@ def make_figure(model_info, opts):
     """
     Generate the figure file to include in the docs.
     """
+    import matplotlib.pyplot as plt
+
     model = core.build_model(model_info)
 
     fig_height = 3.0 # in
@@ -146,18 +171,19 @@ def make_figure(model_info, opts):
     makedirs(joinpath('model', 'img'), exist_ok=True)
     path = joinpath('model', 'img', figfile(model_info))
     plt.savefig(path, bbox_inches='tight')
+    plt.close(fig)
     #print("figure saved in",path)
+
+def newer(src, dst):
+    return not exists(dst) or os.path.getmtime(src) > os.path.getmtime(dst)
 
 def copy_if_newer(src, dst):
     # type: (str) -> str
     """
     Copy from *src* to *dst* if *src* is newer or *dst* doesn't exist.
     """
-    if not exists(dst):
-        path = dirname(dst)
-        makedirs(path, exist_ok=True)
-        shutil.copy2(src, dst)
-    elif os.path.getmtime(src) > os.path.getmtime(dst):
+    if newer(src, dst):
+        makedirs(dirname(dst), exist_ok=True)
         shutil.copy2(src, dst)
 
 def link_sources(model_info):
@@ -214,7 +240,6 @@ def gen_docs(model_info, outfile):
     """
     Generate the doc string with the figure inserted before the references.
     """
-
     # Load the doc string from the module definition file and store it in rst
     docstr = generate.make_doc(model_info)
 
@@ -249,6 +274,58 @@ def gen_docs(model_info, outfile):
     with open(outfile, 'w') as fid:
         fid.write(docstr)
 
+def make_figure_cached(model_info, opts):
+    """
+    Cache sasmodels figures between independent builds.
+
+    To enable caching, set *SASMODELS_BUILD_CACHE* in the environment.
+    A (mostly) unique key will be created based on model source and opts.  If
+    the png file matching that key exists in the cache it will be copied into
+    the documentation tree, otherwise a new png file will be created and copied
+    into the cache.
+
+    Be sure to clear the cache from time to time.  Even though the model
+    source
+    """
+    import hashlib
+
+    # check if we are caching
+    cache_dir = os.environ.get('SASMODELS_BUILD_CACHE', None)
+    if cache_dir is None:
+        make_figure(model_info, opts)
+        return
+
+    # build cache identifier
+    if callable(model_info.Iq):
+        with open(model_info.filename) as fid:
+            source = fid.read()
+    else:
+        source = generate.make_source(model_info)["dll"]
+    code = source + str(sorted(opts.items()))
+    hash_id = hashlib.sha1(code.encode('utf-8')).hexdigest()
+
+    # copy from cache or generate and copy to cache
+    png_name = figfile(model_info)
+    target_fig = joinpath('model', 'img', png_name)
+    cache_fig = joinpath(cache_dir, f"{png_name}.{hash_id}.png")
+    if exists(cache_fig):
+        copy_file(cache_fig, target_fig)
+    else:
+        make_figure(model_info, opts)
+        copy_file(target_fig, cache_fig)
+
+def copy_file(src, dst):
+    # type: (str) -> str
+    """
+    Copy from *src* to *dst*, making the destination directory if needed.
+    """
+    if not exists(dst):
+        path = dirname(dst)
+        makedirs(path, exist_ok=True)
+        shutil.copy2(src, dst)
+    elif os.path.getmtime(src) > os.path.getmtime(dst):
+        shutil.copy2(src, dst)
+
 def process_model(infile, outfile):
     # type: (str, str) -> None
     """
@@ -276,11 +353,17 @@ def process_model(infile, outfile):
 
     # Generate the RST file and the figure.  Order doesn't matter.
     gen_docs(model_info, outfile)
-    make_figure(model_info, opts)
+    make_figure_cached(model_info, opts)
 
 def main():
-    infile, outfile = sys.argv[1], sys.argv[2]
-    process_model(infile, outfile)
+    import matplotlib
+    matplotlib.use('Agg')
+
+    for infile in sys.argv[1:]:
+        outfile = joinpath('model', basename(infile).replace('.py', '.rst'))
+        if newer(infile, outfile) or newer(__file__, outfile):
+            print("generating", outfile)
+            process_model(infile, outfile)
 
 if __name__ == "__main__":
     main()
