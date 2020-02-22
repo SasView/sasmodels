@@ -444,8 +444,8 @@ def _random_pd(model_info, pars, is2d):
         else:
             name.append(p.name)
             default.append(p.default)
-    weights = [pars.get(k, v) for k, v in zip(name, default)]
-    p = np.array(weights)/sum(weights) if weights else []  # normalize to p
+    p = [pars.get(k, v) for k, v in zip(name, default)]  # relative weight
+    p = np.array(p)/sum(p) if p else []  # normalize to probability
 
     # Select number of pd parameters to use.  The selection is biased
     # toward fewer pd parameters if there is already orientational pd
