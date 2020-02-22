@@ -462,7 +462,7 @@ def _random_pd(model_info, pars, is2d):
         pass
     elif u < 0.66 or n < 2:
         # 65% chance of pd on one value (35x cost)
-        choice = np.random.choice(n, size=2, replace=False, p=p)
+        choice = np.random.choice(n, size=1, replace=False, p=p)
         pars[name[choice[0]]+"_pd_n"] = 35 // (1 + num_oriented_pd)
     elif u < 0.99 or n < 3:
         # 33% chance of pd on two values (250x cost)
