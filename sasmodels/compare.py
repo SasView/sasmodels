@@ -369,7 +369,6 @@ def _randomize_one(model_info, name, value):
         return np.random.uniform(*par.limits)
 
     # If the paramter is marked as an sld use the range of neutron slds
-    # TODO: ought to randomly contrast match a pair of SLDs
     if par.type == 'sld':
         return np.random.uniform(-0.5, 12)
 
@@ -392,7 +391,7 @@ def _randomize_one(model_info, name, value):
     limits = (max(par.limits[0], low), min(par.limits[1], high))
     return np.random.uniform(*limits)
 
-def _random_pd(model_info, pars):
+def _random_pd(model_info, pars, is2d):
     # type: (ModelInfo, Dict[str, float]) -> None
     """
     Generate a random dispersity distribution for the model.
@@ -405,42 +404,82 @@ def _random_pd(model_info, pars):
     If oriented, then put dispersity in theta, add phi and psi dispersity
     with 10% probability for each.
     """
+    # Find the polydisperse parameters.
     pd = [p for p in model_info.parameters.kernel_parameters if p.polydisperse]
-    pd_volume = []
-    pd_oriented = []
-    for p in pd:
-        if p.type == 'orientation':
-            pd_oriented.append(p.name)
-        elif p.length_control is not None:
-            n = int(pars.get(p.length_control, 1) + 0.5)
-            pd_volume.extend(p.name+str(k+1) for k in range(n))
-        elif p.length > 1:
-            pd_volume.extend(p.name+str(k+1) for k in range(p.length))
-        else:
-            pd_volume.append(p.name)
-    u = np.random.rand()
-    n = len(pd_volume)
-    if u < 0.01 or n < 1:
-        pass  # 1% chance of no polydispersity
-    elif u < 0.86 or n < 2:
-        pars[np.random.choice(pd_volume)+"_pd_n"] = 35
-    elif u < 0.99 or n < 3:
-        choices = np.random.choice(len(pd_volume), size=2)
-        pars[pd_volume[choices[0]]+"_pd_n"] = 25
-        pars[pd_volume[choices[1]]+"_pd_n"] = 10
-    else:
-        choices = np.random.choice(len(pd_volume), size=3)
-        pars[pd_volume[choices[0]]+"_pd_n"] = 25
-        pars[pd_volume[choices[1]]+"_pd_n"] = 10
-        pars[pd_volume[choices[2]]+"_pd_n"] = 5
-    if pd_oriented:
-        pars['theta_pd_n'] = 20
+
+    # If the sample is oriented then add polydispersity to the orientation.
+    oriented = any(p.type == 'orientation' for p in pd)
+    num_oriented_pd = 0
+    if oriented:
+        if np.random.rand() < 0.8:
+            # 80% change of pd on long axis (20x cost)
+            pars['theta_pd_n'] = 20
+            num_oriented_pd += 1
         if np.random.rand() < 0.1:
+            # 10% change of pd on short axis (5x cost)
             pars['phi_pd_n'] = 5
-        if np.random.rand() < 0.1:
-            if any(p.name == 'psi' for p in model_info.parameters.kernel_parameters):
-                #print("generating psi_pd_n")
-                pars['psi_pd_n'] = 5
+            num_oriented_pd += 1
+        if any(p.name == 'psi' for p in pd) and np.random.rand() < 0.1:
+            # 10% change of pd on spin axis (5x cost)
+            #print("generating psi_pd_n")
+            pars['psi_pd_n'] = 5
+            num_oriented_pd += 1
+
+    # Process non-orientation parameters
+    pd = [p for p in pd if p.type != 'orientation']
+
+    # Find the remaining pd parameters, which are all volume parameters.
+    # Use the parameter value as the weight on the choice function for
+    # the polydispersity parameter. The I(Q) curve is more sensitive to
+    # pd on larger dimensions, so they should be preferred.
+    # TODO: choose better weights for parameters like num_pearls or num_disks.
+    name = [] # type: List[str]  # name of the next volume parameter
+    default = [] # type: List[float]  # default val for that volume parameter
+    for p in pd:
+        if p.length_control is not None:
+            slots = int(pars.get(p.length_control, 1) + 0.5)
+            name.extend(p.name+str(k+1) for k in range(slots))
+            default.extend(p.default for k in range(slots))
+        elif p.length > 1:
+            slots = p.length
+            name.extend(p.name+str(k+1) for k in range(slots))
+            default.extend(p.default for k in range(slots))
+        else:
+            name.append(p.name)
+            default.append(p.default)
+    p = [pars.get(k, v) for k, v in zip(name, default)]  # relative weight
+    p = np.array(p)/sum(p) if p else []  # normalize to probability
+
+    # Select number of pd parameters to use.  The selection is biased
+    # toward fewer pd parameters if there is already orientational pd
+    # (effectively allowing only one volume pd) and the number of pd steps
+    # is scaled down.  Ignore oriented if it is not 2d data.
+    if not is2d:
+        num_oriented_pd = 0
+    n = len(name)
+    u = np.random.rand()
+    if u < (1 - 1/(1+num_oriented_pd)):
+        # if lots of orientation dispersity then reject shape dispersity
+        pass
+    elif u < 0.01 or n < 1:
+        # 1% chance of no polydispersity (1x cost)
+        pass
+    elif u < 0.66 or n < 2:
+        # 65% chance of pd on one value (35x cost)
+        choice = np.random.choice(n, size=1, replace=False, p=p)
+        pars[name[choice[0]]+"_pd_n"] = 35 // (1 + num_oriented_pd)
+    elif u < 0.99 or n < 3:
+        # 33% chance of pd on two values (250x cost)
+        choice = np.random.choice(n, size=2, replace=False, p=p)
+        pars[name[choice[0]]+"_pd_n"] = 25 // (1 + num_oriented_pd)
+        pars[name[choice[1]]+"_pd_n"] = 10 // (1 + num_oriented_pd)
+    else:
+        # 1% chance of pd on three values (1250x cost)
+        choice = np.random.choice(n, size=3, replace=False, p=p)
+        pars[name[choice[0]]+"_pd_n"] = 25
+        pars[name[choice[1]]+"_pd_n"] = 10
+        pars[name[choice[2]]+"_pd_n"] = 5
+
 
     ## Show selected polydispersity
     #for name, value in pars.items():
@@ -448,7 +487,7 @@ def _random_pd(model_info, pars):
     #        print(name, value, pars.get(name[:-5], 0), pars.get(name[:-2], 0))
 
 
-def randomize_pars(model_info, pars, maxdim=np.inf):
+def randomize_pars(model_info, pars, maxdim=np.inf, is2d=False):
     # type: (ModelInfo, ParameterSet, float) -> ParameterSet
     """
     Generate random values for all of the parameters.
@@ -463,7 +502,7 @@ def randomize_pars(model_info, pars, maxdim=np.inf):
                        for p, v in sorted(pars.items()))
     if model_info.random is not None:
         random_pars.update(model_info.random())
-    _random_pd(model_info, random_pars)
+    _random_pd(model_info, random_pars, is2d)
     limit_dimensions(model_info, random_pars, maxdim)
     return random_pars
 
@@ -477,6 +516,27 @@ def limit_dimensions(model_info, pars, maxdim):
         value = pars[p.name]
         if p.units == 'Ang' and value > maxdim:
             pars[p.name] = maxdim*10**np.random.uniform(-3, 0)
+
+def _swap_pars(pars, a, b):
+    # type: (ModelInfo, str, str) -<> None
+    """
+    Swap polydispersity and magnetism when swapping parameters.
+
+    Assume the parameters are of the same basic type (volume, sld, or other),
+    so that if, for example, radius_pd is in pars but radius_bell_pd is not,
+    then after the swap radius_bell_pd will be the old radius_pd and radius_pd
+    will be removed.
+    """
+    for ext in ("", "_pd", "_pd_n", "_pd_nsigma", "_pd_type", "_M0", "_mphi", "_mtheta"):
+        ax, bx = a+ext, b+ext
+        if ax in pars and bx in pars:
+            pars[ax], pars[bx] = pars[bx], pars[ax]
+        elif ax in pars:
+            pars[bx] = pars[ax]
+            del pars[ax]
+        elif bx in pars:
+            pars[ax] = pars[bx]
+            del pars[bx]
 
 def constrain_pars(model_info, pars):
     # type: (ModelInfo, ParameterSet) -> None
@@ -502,11 +562,11 @@ def constrain_pars(model_info, pars):
 
     if name == 'barbell':
         if pars['radius_bell'] < pars['radius']:
-            pars['radius'], pars['radius_bell'] = pars['radius_bell'], pars['radius']
+            _swap_pars(pars, 'radius_bell', 'radius')
 
     elif name == 'capped_cylinder':
         if pars['radius_cap'] < pars['radius']:
-            pars['radius'], pars['radius_cap'] = pars['radius_cap'], pars['radius']
+            _swap_pars(pars, 'radius_cap', 'radius')
 
     elif name == 'guinier':
         # Limit guinier to an Rg such that Iq > 1e-30 (single precision cutoff)
@@ -521,7 +581,7 @@ def constrain_pars(model_info, pars):
 
     elif name == 'pearl_necklace':
         if pars['radius'] < pars['thick_string']:
-            pars['radius'], pars['thick_string'] = pars['thick_string'], pars['radius']
+            _swap_pars(pars, 'thick_string', 'radius')
 
     elif name == 'rpa':
         # Make sure phi sums to 1.0
@@ -1020,13 +1080,24 @@ NAME_OPTIONS = (lambda: set(k for k in OPTIONS if not k.endswith('=')))()
 VALUE_OPTIONS = (lambda: [k[:-1] for k in OPTIONS if k.endswith('=')])()
 
 
-def columnize(items, indent="", width=79):
+def columnize(items, indent="", width=None):
     # type: (List[str], str, int) -> str
     """
     Format a list of strings into columns.
 
     Returns a string with carriage returns ready for printing.
     """
+    # Use the columnize package (pycolumize) if it is available
+    try:
+        from columnize import columnize as _columnize, default_opts
+        if width is None:
+            width = default_opts['displaywidth']
+        return _columnize(list(items), displaywidth=width, lineprefix=indent)
+    except ImportError:
+        pass
+    # Otherwise roll our own.
+    if width is None:
+        width = 120
     column_width = max(len(w) for w in items) + 1
     num_columns = (width - len(indent)) // column_width
     num_rows = len(items) // num_columns
@@ -1431,6 +1502,7 @@ def parse_pars(opts, maxdim=None):
             pars2 = pars.copy()
         constrain_pars(model_info, pars)
         constrain_pars(model_info2, pars2)
+        # TODO: randomly contrast match a pair of SLDs with some probability
 
     # Process -mono and -magnetic command line options.
     if opts['mono']:

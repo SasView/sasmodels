@@ -29,7 +29,7 @@ ALLSPHINXOPTS   = -d _build/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 IMG_SOURCE = $(wildcard ../sasmodels/models/img/*)
 IMG_DEST = $(patsubst ../sasmodels/models/img/%,model/img/%,$(IMG_SOURCE))
 MODELS_PY = $(wildcard ../sasmodels/models/[a-z]*.py)
-MODELS_RST = $(patsubst ../sasmodels/models/%.py,model/%.rst,$(MODELS_PY))
+#MODELS_RST = $(patsubst ../sasmodels/models/%.py,model/%.rst,$(MODELS_PY))
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
@@ -51,10 +51,8 @@ else
 	$(COPY) $< $@
 endif
 
-model/%.rst: ../sasmodels/models/%.py model/img genmodel.py
-	"$(PYTHON)" genmodel.py $< $@
-
-ref/models/index.rst: gentoc.py $(MODELS_PY)
+ref/models/index.rst: gentoc.py genmodel.py $(MODELS_PY)
+	"$(PYTHON)" genmodel.py $(MODELS_PY)
 	"$(PYTHON)" gentoc.py $(MODELS_PY)
 
 .PHONY: help clean html dirhtml pickle json htmlhelp qthelp latex changes linkcheck doctest build
@@ -73,7 +71,7 @@ else
 	$(MKDIR) model/img
 endif
 
-build: model $(MODELS_RST) $(IMG_DEST) api ref/models/index.rst
+build: model $(IMG_DEST) api ref/models/index.rst
 ifdef ComSpec
 	rem cd ..\..
 	rem python setup.py build
