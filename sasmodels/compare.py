@@ -365,7 +365,6 @@ def _randomize_one(model_info, name, value):
         return np.random.uniform(*par.limits)
 
     # If the paramter is marked as an sld use the range of neutron slds
-    # TODO: ought to randomly contrast match a pair of SLDs
     if par.type == 'sld':
         return np.random.uniform(-0.5, 12)
 
@@ -559,11 +558,11 @@ def constrain_pars(model_info, pars):
 
     if name == 'barbell':
         if pars['radius_bell'] < pars['radius']:
-            _swap_pars('radius_bell', 'radius')
+            _swap_pars(pars, 'radius_bell', 'radius')
 
     elif name == 'capped_cylinder':
         if pars['radius_cap'] < pars['radius']:
-            _swap_pars('radius_cap', 'radius')
+            _swap_pars(pars, 'radius_cap', 'radius')
 
     elif name == 'guinier':
         # Limit guinier to an Rg such that Iq > 1e-30 (single precision cutoff)
@@ -578,7 +577,7 @@ def constrain_pars(model_info, pars):
 
     elif name == 'pearl_necklace':
         if pars['radius'] < pars['thick_string']:
-            _swap_pars('thick_string', 'radius')
+            _swap_pars(pars, 'thick_string', 'radius')
 
     elif name == 'rpa':
         # Make sure phi sums to 1.0
@@ -1481,6 +1480,7 @@ def parse_pars(opts, maxdim=None):
             pars2 = pars.copy()
         constrain_pars(model_info, pars)
         constrain_pars(model_info2, pars2)
+        # TODO: randomly contrast match a pair of SLDs with some probability
 
     # Process -mono and -magnetic command line options.
     if opts['mono']:
