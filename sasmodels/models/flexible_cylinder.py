@@ -60,30 +60,10 @@ c-library provided by the NIST Center for Neutron Research (Kline, 2006). This s
       added to give the proper behavior.
 
 
-**This is a model with complex behaviour depending on the ratio of** $L/b$ **and the
-reader is strongly encouraged to read reference [1] before use.**
-
-.. note::
-
-    There are several typos in the original reference that have been corrected
-    by WRC [2]. Details of the corrections are in the reference below. Most notably
-
-    - Equation (13): the term $(1 - w(QR))$ should swap position with $w(QR)$
-
-    - Equations (23) and (24) are incorrect; WRC has entered these into
-      Mathematica and solved analytically. The results were then converted to
-      code.
-
-    - Equation (27) should be $q0 = max(a3/(Rg^2)^{1/2},3)$ instead of
-      $max(a3*b(Rg^2)^{1/2},3)$
-
-    - The scattering function is negative for a range of parameter values and
-      q-values that are experimentally accessible. A correction function has been
-      added to give the proper behavior.
-
-
-**This is a model with complex behaviour depending on the ratio of** $L/b$ **and the
-reader is strongly encouraged to read reference [1] before use.**
+**This is a model with complex behaviour depending on the ratio of** $L/b$ **and
+the reader is strongly encouraged to read reference [1] before use. In particular,
+the cylinder form factor used as the limiting case for long narrow rods will not
+be exactly correct for short and/or wide rods.**
 
 References
 ----------
@@ -99,7 +79,7 @@ Authorship and Verification
 
 * **Author:**
 * **Last Modified by:**
-* **Last Reviewed by:** Steve King **Date:** March 26, 2019
+* **Last Reviewed by:** Steve King **Date:** March 6, 2020
 """
 
 import numpy as np
