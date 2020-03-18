@@ -15,7 +15,7 @@ cleared if the image generation is updated, either because matplotib
 is upgraded or because this file changes.  To accomodate both these
 conditions set the path as the following in your build script::
 
-    SASMODELS_BUILD_CACHE=/tmp/sasbuild_$(shasum genmodel.py)
+    SASMODELS_BUILD_CACHE=/tmp/sasbuild_$(shasum genmodel.py | cut -f 1 -d" ")
 
 Putting the cache in /tmp allows temp-reaper to clean it up automatically.
 Putting the sha1 hash of this file in the cache directory name means that
@@ -59,6 +59,7 @@ else:
 
 import numpy as np
 
+# TODO: Remove this line when genmodel is moved to the sasmodels directory.
 sys.path.insert(0, realpath(joinpath(dirname(__file__), '..')))
 from sasmodels import generate, core
 from sasmodels.direct_model import DirectModel, call_profile
@@ -66,7 +67,7 @@ from sasmodels.data import empty_data1D, empty_data2D
 
 try:
     from typing import Dict, Any
-    from matplotlib.axes import Axes
+    #from matplotlib.axes import Axes
     from sasmodels.kernel import KernelModel
     from sasmodels.modelinfo import ModelInfo
 except ImportError:

@@ -60,7 +60,7 @@ Docs are built by changing into the doc directory and typing::
 The model figure generation is controlled by a environment variables::
 
     # Cache figures in /tmp to avoid rebuilding after "clean" (default is none)
-    SASMODELS_BUILD_CACHE=/tmp/sascache_$(shasum genmodels.py)
+    SASMODELS_BUILD_CACHE=/tmp/sascache_$(shasum genmodels.py | cut -f1 -d" ")
 
     # Specify the number of figures that can be built in parallel, with
     # a value of zero indicating one per cpu (default is one per cpu).
