@@ -132,6 +132,4 @@ def random():
     )
     return pars
 
-demo = dict(scale=1.5, background=0.5, rg=60, s=1.0, porod_exp=3.0)
-
 tests = [[{'scale': 1.5, 'background':0.5}, 0.04, 5.290096890253155]]

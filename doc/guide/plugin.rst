@@ -1253,17 +1253,6 @@ To check whether single precision is good enough, type the following::
 This will pop up a plot showing the difference between single precision
 and double precision on a range of $q$ values.
 
-::
-
-  demo = dict(scale=1, background=0,
-              sld=6, sld_solvent=1,
-              radius=120,
-              radius_pd=.2, radius_pd_n=45)
-
-**demo={'par': value, ...}** in the model file sets the default values for
-the comparison. You can include polydispersity parameters such as
-*radius_pd=0.2, radius_pd_n=45* which would otherwise be zero.
-
 These commands can also be run directly in the python interpreter:
 
     $ python -m sasmodels.model_test -v ~/.sasview/plugin_models/model.py
@@ -1284,10 +1273,11 @@ For the random models,
 - angles (*theta, phi, psi*) will be in the range (-180,180),
 - angular dispersion will be in the range (0,45),
 - polydispersity will be in the range (0,1)
-- other values will be in the range (0, 2\ *v*), where *v* is the value
-  of the parameter in demo.
+- other values will be in the range (0, 2\ *v*), where *v* is the default
+  parameter value.
 
-Dispersion parameters *n*\, *sigma* and *type* will be unchanged from
+Dispersion parameters *n*\, *sigma* and *type* will be set to random
+values if "-poly" is included on the command line.  be unchanged from
 demo so that run times are more predictable (polydispersity calculated
 across multiple parameters can be very slow).
 

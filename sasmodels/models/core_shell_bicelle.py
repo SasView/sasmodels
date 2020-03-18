@@ -170,17 +170,6 @@ def random():
     )
     return pars
 
-demo = dict(scale=1, background=0,
-            radius=20.0,
-            thick_rim=10.0,
-            thick_face=10.0,
-            length=400.0,
-            sld_core=1.0,
-            sld_face=4.0,
-            sld_rim=4.0,
-            sld_solvent=1.0,
-            theta=90,
-            phi=0)
 q = 0.1
 # april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
 qx = q*cos(pi/6.0)

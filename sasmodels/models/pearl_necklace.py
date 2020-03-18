@@ -119,15 +119,6 @@ def random():
     )
     return pars
 
-# parameters for demo
-demo = dict(scale=1, background=0, radius=80.0, edge_sep=350.0,
-            num_pearls=3, sld=1, sld_solvent=6.3, sld_string=1,
-            thick_string=2.5,
-            radius_pd=.2, radius_pd_n=5,
-            edge_sep_pd=25.0, edge_sep_pd_n=5,
-            num_pearls_pd=0, num_pearls_pd_n=0,
-            thick_string_pd=0.2, thick_string_pd_n=5,
-           )
 # ER function is not being used here, not that it is likely very sensible to
 # include an S(Q) with this model, the default in sasview 5.0 would be to the
 # "unconstrained" radius_effective.

@@ -52,3 +52,16 @@ here.  It will be easiest to install the package in "develop" mode using::
 
 This will allow you to edit the files in the package and have the changes
 show up immediately in python the next time you load your program.
+
+Docs are built by changing into the doc directory and typing::
+
+    $ make clean html
+
+The model figure generation is controlled by a environment variables::
+
+    # Cache figures in /tmp to avoid rebuilding after "clean" (default is none)
+    SASMODELS_BUILD_CACHE=/tmp/sascache_$(shasum genmodels.py)
+
+    # Specify the number of figures that can be built in parallel, with
+    # a value of zero indicating one per cpu (default is one per cpu).
+    SASMODELS_BUILD_CPUS=0

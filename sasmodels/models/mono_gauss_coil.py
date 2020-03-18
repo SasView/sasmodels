@@ -92,8 +92,6 @@ def random():
     )
     return pars
 
-demo = dict(scale=1.0, i_zero=70.0, rg=75.0, background=0.0)
-
 # these unit test values taken from SasView 3.1.2
 tests = [
     [{'scale': 1.0, 'i_zero': 70.0, 'rg': 75.0, 'background': 0.0},
