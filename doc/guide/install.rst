@@ -64,4 +64,7 @@ The model figure generation is controlled by a environment variables::
 
     # Specify the number of figures that can be built in parallel, with
     # a value of zero indicating one per cpu (default is one per cpu).
-    SASMODELS_BUILD_CPUS=0
+    # Don't use too large a value since it won't help (sasmodels already
+    # uses all available processors when calculating a model) and it may
+    # overwhelm the GPU if you have one.
+    SASMODELS_BUILD_CPUS=4

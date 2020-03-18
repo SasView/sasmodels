@@ -30,6 +30,12 @@ the following::
     SASMODELS_BUILD_CPUS=0  # one per processor
     SASMODELS_BUILD_CPUS=1  # don't use multiprocessing
     SASMODELS_BUILD_CPUS=n  # use n processes
+
+Note that sasmodels with OpenCL is very good at using all the processors
+when generating the model plot, so you should only use a small amount
+of parallelism (maybe 2-4 processes), allowing matplotlib to run in
+parallel.  More parallelism won't help, and may overwhelm the GPU if you
+have one.
 """
 from __future__ import print_function
 
