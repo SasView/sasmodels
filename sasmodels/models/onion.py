@@ -370,9 +370,11 @@ def profile(sld_core, radius_core, sld_solvent, n_shells,
             rho.append(sld_in[k])
         else:
             # exponential shell
-            # num_steps must be at least 1, so use floor()+1 rather than ceil
-            # to protect against a thickness0.
-            num_steps = np.floor(thickness[k]/dz) + 1
+            # num_steps in the profile must be at least 1, so use 1+truncation
+            # to guess the number of bins rather than rounding or ceiling,
+            # even when the layer has zero thickness.  Also, num_steps must
+            # be an integer rather than a float for the linspace function.
+            num_steps = int(thickness[k]/dz) + 1
             slope = (sld_out[k] - sld_in[k]) / expm1(A[k])
             const = (sld_in[k] - slope)
             for z_shell in np.linspace(0, thickness[k], num_steps+1):
