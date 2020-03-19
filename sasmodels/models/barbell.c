@@ -1,13 +1,11 @@
-#define INVALID(v) (v.radius_bell < v.radius)
-
-//barbell kernel - same as dumbell
+//barbell kernel - same as dumbbell
 static double
 _bell_kernel(double qab, double qc, double h, double radius_bell,
              double half_length)
 {
     // translate a point in [-1,1] to a point in [lower,upper]
     const double upper = 1.0;
-    const double lower = h/radius_bell;
+    const double lower = -h/radius_bell;
     const double zm = 0.5*(upper-lower);
     const double zb = 0.5*(upper+lower);
 
@@ -19,7 +17,7 @@ _bell_kernel(double qab, double qc, double h, double radius_bell,
     //    m = q R cos(alpha)
     //    b = q(L/2-h) cos(alpha)
     const double m = radius_bell*qc; // cos argument slope
-    const double b = (half_length-h)*qc; // cos argument intercept
+    const double b = (half_length+h)*qc; // cos argument intercept
     const double qab_r = radius_bell*qab; // Q*R*sin(theta)
     double total = 0.0;
     for (int i = 0; i < GAUSS_N; i++){
@@ -53,20 +51,23 @@ form_volume(double radius_bell,
     double length)
 {
     // bell radius should never be less than radius when this is called
-    const double hdist = sqrt(square(radius_bell) - square(radius));
-    const double p1 = 2.0/3.0*cube(radius_bell);
-    const double p2 = square(radius_bell)*hdist;
-    const double p3 = cube(hdist)/3.0;
-
-    return M_PI*square(radius)*length + 2.0*M_PI*(p1+p2-p3);
+    const double h = sqrt(square(radius_bell) - square(radius));
+    const double slice = M_PI*(square(radius_bell)*h - cube(h)/3.0);
+    const double hemisphere = 2.0*M_PI/3.0*cube(radius_bell);
+    const double rod = M_PI*square(radius)*length;
+    // h > 0 so slice is added to hemisphere
+    return rod + 2.0*(hemisphere + slice);
 }
 
 static double
 radius_from_excluded_volume(double radius_bell, double radius, double length)
 {
-    const double hdist = sqrt(square(radius_bell) - square(radius));
-    const double length_tot = length + 2.0*(hdist+ radius);
-    return 0.5*cbrt(0.75*radius_bell*(2.0*radius_bell*length_tot + (radius_bell + length_tot)*(M_PI*radius_bell + length_tot)));
+    const double h = sqrt(square(radius_bell) - square(radius));
+    const double length_tot = length + 2.0*(radius + h);
+    // Use cylinder excluded volume with length' = length + caps and
+    // radius' = bell radius since the bell is bigger than the cylinder.
+    return 0.5*cbrt(0.75*radius_bell*(2.0*radius_bell*length_tot
+           + (radius_bell + length_tot)*(M_PI*radius_bell + length_tot)));
 }
 
 static double
@@ -79,8 +80,9 @@ radius_from_volume(double radius_bell, double radius, double length)
 static double
 radius_from_totallength(double radius_bell, double radius, double length)
 {
-    const double hdist = sqrt(square(radius_bell) - square(radius));
-    return 0.5*length + hdist + radius_bell;
+    const double h = sqrt(square(radius_bell) - square(radius));
+    const double half_length = 0.5*length;
+    return half_length + radius_bell + h;
 }
 
 static double
@@ -105,7 +107,7 @@ static void
 Fq(double q,double *F1, double *F2, double sld, double solvent_sld,
     double radius_bell, double radius, double length)
 {
-    const double h = -sqrt(radius_bell*radius_bell - radius*radius);
+    const double h = sqrt(square(radius_bell) - square(radius));
     const double half_length = 0.5*length;
 
     // translate a point in [-1,1] to a point in [0, pi/2]
@@ -114,16 +116,19 @@ Fq(double q,double *F1, double *F2, double sld, double solvent_sld,
     double total_F1 = 0.0;
     double total_F2 = 0.0;
     for (int i = 0; i < GAUSS_N; i++){
-        const double alpha= GAUSS_Z[i]*zm + zb;
-        double sin_alpha, cos_alpha; // slots to hold sincos function output
-        SINCOS(alpha, sin_alpha, cos_alpha);
-        const double Aq = _fq(q*sin_alpha, q*cos_alpha, h, radius_bell, radius, half_length);
-        total_F1 += GAUSS_W[i] * Aq * sin_alpha;
-        total_F2 += GAUSS_W[i] * Aq * Aq * sin_alpha;
+        const double theta = GAUSS_Z[i]*zm + zb;
+        double sin_theta, cos_theta; // slots to hold sincos function output
+        SINCOS(theta, sin_theta, cos_theta);
+        const double qab = q*sin_theta;
+        const double qc = q*cos_theta;
+        const double Aq = _fq(qab, qc, h, radius_bell, radius, half_length);
+        // scale by sin_theta for spherical coord integration
+        total_F1 += GAUSS_W[i] * Aq * sin_theta;
+        total_F2 += GAUSS_W[i] * Aq * Aq * sin_theta;
     }
     // translate dx in [-1,1] to dx in [lower,upper]
-    const double form_avg = total_F1*zm;
-    const double form_squared_avg = total_F2*zm;
+    const double form_avg = total_F1 * zm;
+    const double form_squared_avg = total_F2 * zm;
 
     //Contrast
     const double s = (sld - solvent_sld);
@@ -136,7 +141,7 @@ Iqac(double qab, double qc,
     double sld, double solvent_sld,
     double radius_bell, double radius, double length)
 {
-    const double h = -sqrt(square(radius_bell) - square(radius));
+    const double h = sqrt(square(radius_bell) - square(radius));
     const double Aq = _fq(qab, qc, h, radius_bell, radius, 0.5*length);
 
     // Multiply by contrast^2 and convert to cm-1

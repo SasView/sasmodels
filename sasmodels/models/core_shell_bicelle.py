@@ -84,12 +84,11 @@ use the c-library from NIST.
 References
 ----------
 
-.. [#] D Singh (2009). *Small angle scattering studies of self assembly in
+#. D Singh (2009). *Small angle scattering studies of self assembly in
    lipid mixtures*, John's Hopkins University Thesis (2009) 223-225. `Available
-   from Proquest <http://search.proquest.com/docview/304915826?accountid
-   =26379>`_
+   from Proquest <http://search.proquest.com/docview/304915826>`_
 
-.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+#.  L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------
@@ -171,17 +170,6 @@ def random():
     )
     return pars
 
-demo = dict(scale=1, background=0,
-            radius=20.0,
-            thick_rim=10.0,
-            thick_face=10.0,
-            length=400.0,
-            sld_core=1.0,
-            sld_face=4.0,
-            sld_rim=4.0,
-            sld_solvent=1.0,
-            theta=90,
-            phi=0)
 q = 0.1
 # april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
 qx = q*cos(pi/6.0)

@@ -113,7 +113,7 @@ over all possible angles.
 References
 ----------
 
-.. [#] Finnigan, J.A., Jacobs, D.J., 1971. *Light scattering by ellipsoidal particles in solution*, J. Phys. D: Appl. Phys. 4, 72-77. doi:10.1088/0022-3727/4/1/310
+#.  Finnigan, J.A., Jacobs, D.J., 1971. *Light scattering by ellipsoidal particles in solution*, J. Phys. D: Appl. Phys. 4, 72-77. doi:10.1088/0022-3727/4/1/310
 
 Authorship and Verification
 ----------------------------
@@ -154,6 +154,9 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
              ]
 
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "triaxial_ellipsoid.c"]
+# Equations do not require Ra <= Rb <= Rc so don't test for it.
+#valid = ("radius_equat_minor <= radius_equat_major"
+#         " && radius_equat_major <= radius_polar")
 have_Fq = True
 radius_effective_modes = [
     "equivalent biaxial ellipsoid average curvature",
@@ -169,18 +172,6 @@ def random():
         radius_polar=c,
     )
     return pars
-
-
-demo = dict(scale=1, background=0,
-            sld=6, sld_solvent=1,
-            theta=30, phi=15, psi=5,
-            radius_equat_minor=25, radius_equat_major=36, radius_polar=50,
-            radius_equat_minor_pd=0, radius_equat_minor_pd_n=1,
-            radius_equat_major_pd=0, radius_equat_major_pd_n=1,
-            radius_polar_pd=.2, radius_polar_pd_n=30,
-            theta_pd=15, theta_pd_n=45,
-            phi_pd=15, phi_pd_n=1,
-            psi_pd=15, psi_pd_n=1)
 
 q = 0.1
 # april 6 2017, rkh add unit tests

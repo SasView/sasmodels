@@ -36,9 +36,9 @@ In gels with significant hydrogen bonding $D$ has been reported to be
 References
 ----------
 
-.. [#] Mitsuhiro Shibayama, Toyoichi Tanaka, Charles C Han, *J. Chem. Phys.* 1992, 97 (9), 6829-6841
+#.  Mitsuhiro Shibayama, Toyoichi Tanaka, Charles C Han, *J. Chem. Phys.* 1992, 97 (9), 6829-6841
 
-.. [#] Simon Mallam, Ferenc Horkay, Anne-Marie Hecht, Adrian R Rennie, Erik Geissler, *Macromolecules* 1991, 24, 543-548
+#.  Simon Mallam, Ferenc Horkay, Anne-Marie Hecht, Adrian R Rennie, Erik Geissler, *Macromolecules* 1991, 24, 543-548
 
 Authorship and Verification
 ----------------------------
@@ -92,13 +92,6 @@ def random():
         cor_length=cor_length
     )
     return pars
-
-demo = dict(background=0.01,
-            guinier_scale=1.7,
-            lorentz_scale=3.5,
-            rg=104,
-            fractal_dim=2.0,
-            cor_length=16.0)
 
 tests = [[{'guinier_scale': 1.0,
            'lorentz_scale': 1.0,

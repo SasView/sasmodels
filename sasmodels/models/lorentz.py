@@ -19,7 +19,7 @@ where the $q$ vector is defined as
 References
 ----------
 
-.. [#] L.S. Qrnstein and F. Zernike, *Proc. Acad. Sci. Amsterdam* 17, 793 (1914), and *Z. Phys.* 19, 134 (1918), and 27, 761 {1926); referred to as QZ.
+#.  L.S. Qrnstein and F. Zernike, *Proc. Acad. Sci. Amsterdam* 17, 793 (1914), and *Z. Phys.* 19, 134 (1918), and 27, 761 {1926); referred to as QZ.
 
 Authorship and Verification
 ----------------------------
@@ -62,9 +62,6 @@ def random():
         cor_length=10**np.random.uniform(0, 3),
     )
     return pars
-
-# parameters for demo
-demo = dict(scale=1.0, background=0.0, cor_length=50.0)
 
 # parameters for unit tests
 tests = [[{'cor_length': 250}, 0.01, 0.138931]]

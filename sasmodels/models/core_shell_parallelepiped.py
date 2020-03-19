@@ -166,13 +166,12 @@ shape for non-uniform, non-overlapping sides.
 References
 ----------
 
-.. [#] P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
-    Equations (1), (13-14). (in German)
-.. [#] D Singh (2009). *Small angle scattering studies of self assembly in
+#. P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
+   Equations (1), (13-14). (in German)
+#. D Singh (2009). *Small angle scattering studies of self assembly in
    lipid mixtures*, Johns Hopkins University Thesis (2009) 223-225. `Available
-   from Proquest <http://search.proquest.com/docview/304915826?accountid
-   =26379>`_
-.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+   from Proquest <http://search.proquest.com/docview/304915826>`_
+#.  L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------
@@ -249,22 +248,6 @@ def random():
         thick_rim_c=thick[2],
     )
     return pars
-
-# parameters for demo
-demo = dict(scale=1, background=0.0,
-            sld_core=1, sld_a=2, sld_b=4, sld_c=2, sld_solvent=6,
-            length_a=35, length_b=75, length_c=400,
-            thick_rim_a=10, thick_rim_b=10, thick_rim_c=10,
-            theta=0, phi=0, psi=0,
-            length_a_pd=0.1, length_a_pd_n=1,
-            length_b_pd=0.1, length_b_pd_n=1,
-            length_c_pd=0.1, length_c_pd_n=1,
-            thick_rim_a_pd=0.1, thick_rim_a_pd_n=1,
-            thick_rim_b_pd=0.1, thick_rim_b_pd_n=1,
-            thick_rim_c_pd=0.1, thick_rim_c_pd_n=1,
-            theta_pd=10, theta_pd_n=1,
-            phi_pd=10, phi_pd_n=1,
-            psi_pd=10, psi_pd_n=1)
 
 # rkh 7/4/17 add random unit test for 2d, note make all params different,
 # 2d values not tested against other codes or models

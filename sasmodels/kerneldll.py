@@ -72,6 +72,7 @@ import sys
 import os
 from os.path import join as joinpath, splitext
 import subprocess
+import shlex
 import tempfile
 import ctypes as ct  # type: ignore
 import _ctypes as _ct
@@ -129,7 +130,15 @@ if COMPILER == "unix":
     # Generic unix compile.
     # On Mac users will need the X code command line tools installed.
     #COMPILE = "gcc-mp-4.7 -shared -fPIC -std=c99 -fopenmp -O2 -Wall %s -o %s -lm -lgomp"
-    CC = "cc -shared -fPIC -std=c99 -O2 -Wall".split()
+    CC = os.environ.get("CC", "cc")
+    CPPFLAGS = os.environ.get("CPPFLAGS", "")
+    CFLAGS = os.environ.get("CFLAGS", "-std=c99 -O2 -Wall")
+    LDFLAGS = os.environ.get("LDFLAGS", "")
+    SOFLAGS = "-fPIC -shared"
+    compiler_vars = (CC, CPPFLAGS, CFLAGS, LDFLAGS, SOFLAGS)
+    compiler = [val for var in compiler_vars for val in shlex.split(var)]
+    LIBS = ["-lm" ] + shlex.split(os.environ.get("LIBS", ""))
+
     # Add OpenMP support if not running on a Mac.
     if sys.platform != "darwin":
         # OpenMP seems to be broken on gcc 5.4.0 (ubuntu 16.04.9).
@@ -138,7 +147,7 @@ if COMPILER == "unix":
         pass
     def compile_command(source, output):
         """unix compiler command"""
-        return CC + [source, "-o", output, "-lm"]
+        return compiler + [source, "-o", output] + LIBS
 elif COMPILER == "msvc":
     # Call vcvarsall.bat before compiling to set path, headers, libs, etc.
     # MSVC compiler is available, so use it.  OpenMP requires a copy of
@@ -194,14 +203,14 @@ def compile_model(source, output):
         raise RuntimeError("compile failed.  File is in %r"%source)
 
 
-def dll_name(model_info, dtype):
-    # type: (ModelInfo, np.dtype) ->  str
+def dll_name(model_file, dtype):
+    # type: (str, np.dtype) ->  str
     """
     Name of the dll containing the model.  This is the base file name without
     any path or extension, with a form such as 'sas_sphere32'.
     """
     bits = 8*dtype.itemsize
-    basename = "sas%d_%s"%(bits, model_info.id)
+    basename = "sas%d_%s"%(bits, model_file)
     basename += ARCH + ".so"
 
     # Hack to find precompiled dlls.
@@ -212,13 +221,13 @@ def dll_name(model_info, dtype):
     return joinpath(SAS_DLL_PATH, basename)
 
 
-def dll_path(model_info, dtype):
-    # type: (ModelInfo, np.dtype) -> str
+def dll_path(model_file, dtype):
+    # type: (str, np.dtype) -> str
     """
     Complete path to the dll for the model.  Note that the dll may not
     exist yet if it hasn't been compiled.
     """
-    return os.path.join(SAS_DLL_PATH, dll_name(model_info, dtype))
+    return os.path.join(SAS_DLL_PATH, dll_name(model_file, dtype))
 
 
 def make_dll(source, model_info, dtype=F64):
@@ -247,7 +256,17 @@ def make_dll(source, model_info, dtype=F64):
         dtype = F64  # Force 64-bit dll.
     # Note: dtype may be F128 for long double precision.
 
-    dll = dll_path(model_info, dtype)
+    # TOOD: Tag each dll with the hash of the source to avoid collisions.
+    # TODO: Deal with ever-growing ~/.sasmodels/compiled_models.
+    # TODO: Is the GPU model cache growing without bound?
+    if model_info.filename is None:
+        model_file = model_info.id + "_" + generate.tag_source(source)
+    else:
+        # Don't need to tag models which have an associated file since the
+        # timestamps on the dependencies will let us know they need to be
+        # regenerated.
+        model_file = model_info.id
+    dll = dll_path(model_file, dtype)
 
     if not os.path.exists(dll):
         need_recompile = True

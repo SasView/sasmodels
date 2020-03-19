@@ -59,8 +59,8 @@ where the q vector is defined as
 Reference
 ---------
 
-.. [#] B Hammouda, *A new Guinier-Porod model, J. Appl. Cryst.*, (2010), 43, 716-719
-.. [#] B Hammouda, *Analysis of the Beaucage model, J. Appl. Cryst.*, (2010), 43, 1474-1478
+#.  B Hammouda, *A new Guinier-Porod model*, *J. Appl. Cryst.*, (2010), 43, 716-719
+#.  B Hammouda, *Analysis of the Beaucage model*, *J. Appl. Cryst.*, (2010), 43, 1474-1478
 
 Authorship and Verification
 ----------------------------
@@ -131,7 +131,5 @@ def random():
         porod_exp=porod_exp,
     )
     return pars
-
-demo = dict(scale=1.5, background=0.5, rg=60, s=1.0, porod_exp=3.0)
 
 tests = [[{'scale': 1.5, 'background':0.5}, 0.04, 5.290096890253155]]

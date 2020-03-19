@@ -67,9 +67,10 @@ setup(
     },
     install_requires=install_requires,
     extras_require={
-        'full': ['docutils', 'bumps', 'matplotlib'],
+        'full': ['docutils', 'bumps', 'matplotlib', 'columnize'],
         'server': ['bumps'],
         'OpenCL': ["pyopencl"],
+        'CUDA': ["pycuda"],
     },
     build_requires=['setuptools'],
     test_requires=['pytest'],

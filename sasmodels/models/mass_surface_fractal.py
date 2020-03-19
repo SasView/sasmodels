@@ -50,8 +50,8 @@ and $\rho_{particle}$ is the scattering length density of particles.
 References
 ----------
 
-.. [#] P Schmidt, *J Appl. Cryst.*, 24 (1991) 414-435 Equation(19)
-.. [#] A J Hurd, D W Schaefer, J E Martin, *Phys. Rev. A*,
+#. P Schmidt, *J Appl. Cryst.*, 24 (1991) 414-435 Equation(19)
+#. A J Hurd, D W Schaefer, J E Martin, *Phys. Rev. A*,
    35 (1987) 2361-2364 Equation(2)
 
 Authorship and Verification
@@ -94,6 +94,7 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["mass_surface_fractal.c"]
+valid = "fractal_dim_mass + fractal_dim_surf <= 6.0"
 
 def random():
     """Return a random parameter set for the model."""
@@ -114,12 +115,6 @@ def random():
     )
     return pars
 
-
-demo = dict(scale=1, background=0,
-            fractal_dim_mass=1.8,
-            fractal_dim_surf=2.3,
-            rg_cluster=4000.0,
-            rg_primary=86.7)
 
 tests = [
 

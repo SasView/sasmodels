@@ -29,13 +29,13 @@ where the q vector is defined as
 References
 ----------
 
-.. [#] B Hammouda, D L Ho and S R Kline, Insight into Clustering in Poly(ethylene oxide) Solutions, Macromolecules, 37 (2004) 6932-6937
+#.  B Hammouda, D L Ho and S R Kline, Insight into Clustering in Poly(ethylene oxide) Solutions, Macromolecules, 37 (2004) 6932-6937
 
 Authorship and Verification
 ----------------------------
 
-* **Author:**
-* **Last Modified by:**
+* **Author:** NIST IGOR/DANSE **Date:** pre 2010
+* **Last Modified by:** Steve King **Date:** September 24, 2019
 * **Last Reviewed by:**
 """
 
@@ -54,7 +54,7 @@ parameters = [
               ["porod_scale", "", 1e-06, [0, inf], "", "Porod Scaling Factor"],
               ["cor_length", "Ang", 50.0, [0, inf], "", "Correlation length, xi, in Lorentzian"],
               ["porod_exp", "", 3.0, [0, inf], "", "Porod Exponent, n, in q^-n"],
-              ["lorentz_exp", "1/Ang^2", 2.0, [0, inf], "", "Lorentzian Exponent, m, in 1/( 1 + (q.xi)^m)"],
+              ["lorentz_exp", "", 2.0, [0, inf], "", "Lorentzian Exponent, m, in 1/( 1 + (q.xi)^m)"],
              ]
 # pylint: enable=bad-continuation, line-too-long
 
@@ -68,11 +68,6 @@ def Iq(q, lorentz_scale, porod_scale, cor_length, porod_exp, lorentz_exp):
     inten = porod + lorentz
     return inten
 Iq.vectorized = True
-
-# parameters for demo
-demo = dict(lorentz_scale=10.0, porod_scale=1.0e-06, cor_length=50.0,
-            porod_exp=3.0, lorentz_exp=2.0, background=0.1,
-           )
 
 tests = [[{}, 0.001, 1009.98],
          [{}, 0.150141, 0.175645],

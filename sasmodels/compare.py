@@ -26,7 +26,7 @@ and tell you which string to use for the PYOPENCL_CTX variable.
 On Windows you will need to remove the quotes.
 """
 
-from __future__ import print_function
+from __future__ import print_function, division
 
 import sys
 import os
@@ -84,13 +84,13 @@ Options (* for default):
     -preset*/-random[=seed] preset or random parameters
     -sets=n generates n random datasets with the seed given by -random=seed
     -pars/-nopars* prints the parameter set or not
-    -default/-demo* use demo vs default parameters
     -sphere[=150] set up spherical integration over theta/phi using n points
+    -mono*/-poly suppress or allow polydispersity on generated parameters
+    -magnetic/-nonmagnetic* suppress or allow magnetism on generated parameters
+    -maxdim[=inf] limit randomly generate particle dimensions to maxdim
 
     === calculation options ===
-    -mono*/-poly force monodisperse or allow polydisperse random parameters
     -cutoff=1e-5* cutoff value for including a point in polydispersity
-    -magnetic/-nonmagnetic* suppress magnetism
     -accuracy=Low accuracy of the resolution calculation Low, Mid, High, Xhigh
     -neval=1 sets the number of evals for more accurate timing
     -ngauss=0 overrides the number of points in the 1-D gaussian quadrature
@@ -113,6 +113,11 @@ Options (* for default):
     -edit starts the parameter explorer
     -help/-html shows the model docs instead of running the model
 
+    === help ===
+    -h/-? print this help
+    -models[=all] show all builtin models of a given type:
+        all, py, c, double, single, opencl, 1d, 2d, magnetic
+
     === environment variables ===
     -DSAS_MODELPATH=~/.sasmodels/custom_models sets path to custom models
     -DSAS_WEIGHTS_PATH=~/.sasview/weights sets path to custom distributions
@@ -121,6 +126,7 @@ Options (* for default):
     -DSAS_COMPILER=tinycc|msvc|mingw|unix sets the DLL compiler
     -DSAS_OPENMP=0 set to 1 to turn on OpenMP for the DLLs
     -DSAS_DLL_PATH=~/.sasmodels/compiled_models sets the DLL cache
+    -DPYOPENCL_NO_CACHE=1 turns off the PyOpenCL cache
 
 The interpretation of quad precision depends on architecture, and may
 vary from 64-bit to 128-bit, with 80-bit floats being common (1e-19 precision).
@@ -363,7 +369,6 @@ def _randomize_one(model_info, name, value):
         return np.random.uniform(*par.limits)
 
     # If the paramter is marked as an sld use the range of neutron slds
-    # TODO: ought to randomly contrast match a pair of SLDs
     if par.type == 'sld':
         return np.random.uniform(-0.5, 12)
 
@@ -386,7 +391,7 @@ def _randomize_one(model_info, name, value):
     limits = (max(par.limits[0], low), min(par.limits[1], high))
     return np.random.uniform(*limits)
 
-def _random_pd(model_info, pars):
+def _random_pd(model_info, pars, is2d):
     # type: (ModelInfo, Dict[str, float]) -> None
     """
     Generate a random dispersity distribution for the model.
@@ -399,42 +404,82 @@ def _random_pd(model_info, pars):
     If oriented, then put dispersity in theta, add phi and psi dispersity
     with 10% probability for each.
     """
+    # Find the polydisperse parameters.
     pd = [p for p in model_info.parameters.kernel_parameters if p.polydisperse]
-    pd_volume = []
-    pd_oriented = []
-    for p in pd:
-        if p.type == 'orientation':
-            pd_oriented.append(p.name)
-        elif p.length_control is not None:
-            n = int(pars.get(p.length_control, 1) + 0.5)
-            pd_volume.extend(p.name+str(k+1) for k in range(n))
-        elif p.length > 1:
-            pd_volume.extend(p.name+str(k+1) for k in range(p.length))
-        else:
-            pd_volume.append(p.name)
-    u = np.random.rand()
-    n = len(pd_volume)
-    if u < 0.01 or n < 1:
-        pass  # 1% chance of no polydispersity
-    elif u < 0.86 or n < 2:
-        pars[np.random.choice(pd_volume)+"_pd_n"] = 35
-    elif u < 0.99 or n < 3:
-        choices = np.random.choice(len(pd_volume), size=2)
-        pars[pd_volume[choices[0]]+"_pd_n"] = 25
-        pars[pd_volume[choices[1]]+"_pd_n"] = 10
-    else:
-        choices = np.random.choice(len(pd_volume), size=3)
-        pars[pd_volume[choices[0]]+"_pd_n"] = 25
-        pars[pd_volume[choices[1]]+"_pd_n"] = 10
-        pars[pd_volume[choices[2]]+"_pd_n"] = 5
-    if pd_oriented:
-        pars['theta_pd_n'] = 20
+
+    # If the sample is oriented then add polydispersity to the orientation.
+    oriented = any(p.type == 'orientation' for p in pd)
+    num_oriented_pd = 0
+    if oriented:
+        if np.random.rand() < 0.8:
+            # 80% change of pd on long axis (20x cost)
+            pars['theta_pd_n'] = 20
+            num_oriented_pd += 1
         if np.random.rand() < 0.1:
+            # 10% change of pd on short axis (5x cost)
             pars['phi_pd_n'] = 5
-        if np.random.rand() < 0.1:
-            if any(p.name == 'psi' for p in model_info.parameters.kernel_parameters):
-                #print("generating psi_pd_n")
-                pars['psi_pd_n'] = 5
+            num_oriented_pd += 1
+        if any(p.name == 'psi' for p in pd) and np.random.rand() < 0.1:
+            # 10% change of pd on spin axis (5x cost)
+            #print("generating psi_pd_n")
+            pars['psi_pd_n'] = 5
+            num_oriented_pd += 1
+
+    # Process non-orientation parameters
+    pd = [p for p in pd if p.type != 'orientation']
+
+    # Find the remaining pd parameters, which are all volume parameters.
+    # Use the parameter value as the weight on the choice function for
+    # the polydispersity parameter. The I(Q) curve is more sensitive to
+    # pd on larger dimensions, so they should be preferred.
+    # TODO: choose better weights for parameters like num_pearls or num_disks.
+    name = [] # type: List[str]  # name of the next volume parameter
+    default = [] # type: List[float]  # default val for that volume parameter
+    for p in pd:
+        if p.length_control is not None:
+            slots = int(pars.get(p.length_control, 1) + 0.5)
+            name.extend(p.name+str(k+1) for k in range(slots))
+            default.extend(p.default for k in range(slots))
+        elif p.length > 1:
+            slots = p.length
+            name.extend(p.name+str(k+1) for k in range(slots))
+            default.extend(p.default for k in range(slots))
+        else:
+            name.append(p.name)
+            default.append(p.default)
+    p = [pars.get(k, v) for k, v in zip(name, default)]  # relative weight
+    p = np.array(p)/sum(p) if p else []  # normalize to probability
+
+    # Select number of pd parameters to use.  The selection is biased
+    # toward fewer pd parameters if there is already orientational pd
+    # (effectively allowing only one volume pd) and the number of pd steps
+    # is scaled down.  Ignore oriented if it is not 2d data.
+    if not is2d:
+        num_oriented_pd = 0
+    n = len(name)
+    u = np.random.rand()
+    if u < (1 - 1/(1+num_oriented_pd)):
+        # if lots of orientation dispersity then reject shape dispersity
+        pass
+    elif u < 0.01 or n < 1:
+        # 1% chance of no polydispersity (1x cost)
+        pass
+    elif u < 0.66 or n < 2:
+        # 65% chance of pd on one value (35x cost)
+        choice = np.random.choice(n, size=1, replace=False, p=p)
+        pars[name[choice[0]]+"_pd_n"] = 35 // (1 + num_oriented_pd)
+    elif u < 0.99 or n < 3:
+        # 33% chance of pd on two values (250x cost)
+        choice = np.random.choice(n, size=2, replace=False, p=p)
+        pars[name[choice[0]]+"_pd_n"] = 25 // (1 + num_oriented_pd)
+        pars[name[choice[1]]+"_pd_n"] = 10 // (1 + num_oriented_pd)
+    else:
+        # 1% chance of pd on three values (1250x cost)
+        choice = np.random.choice(n, size=3, replace=False, p=p)
+        pars[name[choice[0]]+"_pd_n"] = 25
+        pars[name[choice[1]]+"_pd_n"] = 10
+        pars[name[choice[2]]+"_pd_n"] = 5
+
 
     ## Show selected polydispersity
     #for name, value in pars.items():
@@ -442,8 +487,8 @@ def _random_pd(model_info, pars):
     #        print(name, value, pars.get(name[:-5], 0), pars.get(name[:-2], 0))
 
 
-def randomize_pars(model_info, pars):
-    # type: (ModelInfo, ParameterSet) -> ParameterSet
+def randomize_pars(model_info, pars, maxdim=np.inf, is2d=False):
+    # type: (ModelInfo, ParameterSet, float) -> ParameterSet
     """
     Generate random values for all of the parameters.
 
@@ -457,7 +502,8 @@ def randomize_pars(model_info, pars):
                        for p, v in sorted(pars.items()))
     if model_info.random is not None:
         random_pars.update(model_info.random())
-    _random_pd(model_info, random_pars)
+    _random_pd(model_info, random_pars, is2d)
+    limit_dimensions(model_info, random_pars, maxdim)
     return random_pars
 
 
@@ -470,6 +516,27 @@ def limit_dimensions(model_info, pars, maxdim):
         value = pars[p.name]
         if p.units == 'Ang' and value > maxdim:
             pars[p.name] = maxdim*10**np.random.uniform(-3, 0)
+
+def _swap_pars(pars, a, b):
+    # type: (ModelInfo, str, str) -<> None
+    """
+    Swap polydispersity and magnetism when swapping parameters.
+
+    Assume the parameters are of the same basic type (volume, sld, or other),
+    so that if, for example, radius_pd is in pars but radius_bell_pd is not,
+    then after the swap radius_bell_pd will be the old radius_pd and radius_pd
+    will be removed.
+    """
+    for ext in ("", "_pd", "_pd_n", "_pd_nsigma", "_pd_type", "_M0", "_mphi", "_mtheta"):
+        ax, bx = a+ext, b+ext
+        if ax in pars and bx in pars:
+            pars[ax], pars[bx] = pars[bx], pars[ax]
+        elif ax in pars:
+            pars[bx] = pars[ax]
+            del pars[ax]
+        elif bx in pars:
+            pars[ax] = pars[bx]
+            del pars[bx]
 
 def constrain_pars(model_info, pars):
     # type: (ModelInfo, ParameterSet) -> None
@@ -495,11 +562,11 @@ def constrain_pars(model_info, pars):
 
     if name == 'barbell':
         if pars['radius_bell'] < pars['radius']:
-            pars['radius'], pars['radius_bell'] = pars['radius_bell'], pars['radius']
+            _swap_pars(pars, 'radius_bell', 'radius')
 
     elif name == 'capped_cylinder':
         if pars['radius_cap'] < pars['radius']:
-            pars['radius'], pars['radius_cap'] = pars['radius_cap'], pars['radius']
+            _swap_pars(pars, 'radius_cap', 'radius')
 
     elif name == 'guinier':
         # Limit guinier to an Rg such that Iq > 1e-30 (single precision cutoff)
@@ -514,7 +581,7 @@ def constrain_pars(model_info, pars):
 
     elif name == 'pearl_necklace':
         if pars['radius'] < pars['thick_string']:
-            pars['radius'], pars['thick_string'] = pars['thick_string'], pars['radius']
+            _swap_pars(pars, 'thick_string', 'radius')
 
     elif name == 'rpa':
         # Make sure phi sums to 1.0
@@ -532,16 +599,17 @@ def parlist(model_info, pars, is2d):
     """
     Format the parameter list for printing.
     """
-    is2d = True
     lines = []
     parameters = model_info.parameters
     magnetic = False
     magnetic_pars = []
-    for p in parameters.user_parameters(pars, is2d):
+    for p in parameters.user_parameters(pars, True):
         if any(p.id.endswith(x) for x in ('_M0', '_mtheta', '_mphi')):
             continue
-        if p.id.startswith('up:'):
+        if p.id in set(('up_frac_i', 'up_frac_f', 'up_angle')):
             magnetic_pars.append("%s=%s"%(p.id, pars.get(p.id, p.default)))
+            continue
+        if not is2d and p.id in ('theta', 'phi', 'psi'):
             continue
         fields = dict(
             value=pars.get(p.id, p.default),
@@ -575,63 +643,27 @@ def _format_par(name, value=0., pd=0., n=0, nsigma=3., pdtype='gaussian',
         line += "  M0:%.3f  mtheta:%.1f  mphi:%.1f" % (M0, mtheta, mphi)
     return line
 
-def suppress_pd(pars, suppress=True):
+def suppress_pd(pars):
     # type: (ParameterSet) -> ParameterSet
     """
-    If suppress is True complete eliminate polydispersity of the model to test
-    models more quickly.  If suppress is False, make sure at least one
-    parameter is polydisperse, setting the first polydispersity parameter to
-    15% if no polydispersity is given (with no explicit demo parameters given
-    in the model, there will be no default polydispersity).
+    Complete eliminate polydispersity of the model to test models more quickly.
     """
     pars = pars.copy()
-    #print("pars=", pars)
-    if suppress:
-        for p in pars:
-            if p.endswith("_pd_n"):
-                pars[p] = 0
-    else:
-        any_pd = False
-        first_pd = None
-        for p in pars:
-            if p.endswith("_pd_n"):
-                pd = pars.get(p[:-2], 0.)
-                any_pd |= (pars[p] != 0 and pd != 0.)
-                if first_pd is None:
-                    first_pd = p
-        if not any_pd and first_pd is not None:
-            if pars[first_pd] == 0:
-                pars[first_pd] = 35
-            if first_pd[:-2] not in pars or pars[first_pd[:-2]] == 0:
-                pars[first_pd[:-2]] = 0.15
+    for p in pars:
+        if p.endswith("_pd_n"):
+            pars[p] = 0
     return pars
 
-def suppress_magnetism(pars, suppress=True):
+def suppress_magnetism(pars):
     # type: (ParameterSet) -> ParameterSet
     """
-    If suppress is True complete eliminate magnetism of the model to test
-    models more quickly.  If suppress is False, make sure at least one sld
-    parameter is magnetic, setting the first parameter to have a strong
-    magnetic sld (8/A^2) at 60 degrees (with no explicit demo parameters given
-    in the model, there will be no default magnetism).
+    Complete eliminate magnetism of the model to test models more quickly.
     """
     pars = pars.copy()
-    if suppress:
-        for p in pars:
-            if p.endswith("_M0"):
-                pars[p] = 0
-    else:
-        any_mag = False
-        first_mag = None
-        for p in pars:
-            if p.endswith("_M0"):
-                any_mag |= (pars[p] != 0)
-                if first_mag is None:
-                    first_mag = p
-        if not any_mag and first_mag is not None:
-            pars[first_mag] = 8.
+    for p in pars:
+        if p.endswith("_M0"):
+            pars[p] = 0
     return pars
-
 
 def time_calculation(calculator, pars, evals=1):
     # type: (Calculator, ParameterSet, int) -> Tuple[np.ndarray, float]
@@ -750,20 +782,23 @@ def _show_invalid(data, theory):
         print("   *** ", ", ".join("I(%g)=%g"%(x, y) for x, y in bad))
 
 
-def compare(opts, limits=None, maxdim=np.inf):
+def compare(opts, limits=None, maxdim=None):
     # type: (Dict[str, Any], Optional[Tuple[float, float]]) -> Tuple[float, float]
     """
     Preform a comparison using options from the command line.
 
-    *limits* are the limits on the values to use, either to set the y-axis
+    *limits* are the display limits on the graph, either to set the y-axis
     for 1D or to set the colormap scale for 2D.  If None, then they are
     inferred from the data and returned. When exploring using Bumps,
     the limits are set when the model is initially called, and maintained
     as the values are adjusted, making it easier to see the effects of the
     parameters.
 
-    *maxdim* is the maximum value for any parameter with units of Angstrom.
+    *maxdim* **DEPRECATED** Use opts['maxdim'] instead.
     """
+    # CRUFT: remove maxdim parameter
+    if maxdim is not None:
+        opts['maxdim'] = maxdim
     for k in range(opts['sets']):
         if k > 0:
             # print a separate seed for each dataset for better reproducibility
@@ -1020,14 +1055,14 @@ OPTIONS = [
 
     # Parameter set
     'preset', 'random', 'random=', 'sets=',
-    'demo', 'default',  # TODO: remove demo/default
     'nopars', 'pars',
     'sphere', 'sphere=', # integrate over a sphere in 2d with n points
+    'poly', 'mono',
+    'magnetic', 'nonmagnetic',
+    'maxdim=',
 
     # Calculation options
-    'poly', 'mono', 'cutoff=',
-    'magnetic', 'nonmagnetic',
-    'accuracy=', 'ngauss=',
+    'cutoff=', 'accuracy=', 'ngauss=',
     'neval=',  # for timing...
 
     # Precision options
@@ -1036,19 +1071,33 @@ OPTIONS = [
 
     # Output options
     'help', 'html', 'edit',
+
+    # Help options
+    'h', '?', 'models', 'models='
     ]
 
 NAME_OPTIONS = (lambda: set(k for k in OPTIONS if not k.endswith('=')))()
 VALUE_OPTIONS = (lambda: [k[:-1] for k in OPTIONS if k.endswith('=')])()
 
 
-def columnize(items, indent="", width=79):
+def columnize(items, indent="", width=None):
     # type: (List[str], str, int) -> str
     """
     Format a list of strings into columns.
 
     Returns a string with carriage returns ready for printing.
     """
+    # Use the columnize package (pycolumize) if it is available
+    try:
+        from columnize import columnize as _columnize, default_opts
+        if width is None:
+            width = default_opts['displaywidth']
+        return _columnize(list(items), displaywidth=width, lineprefix=indent)
+    except ImportError:
+        pass
+    # Otherwise roll our own.
+    if width is None:
+        width = 120
     column_width = max(len(w) for w in items) + 1
     num_columns = (width - len(indent)) // column_width
     num_rows = len(items) // num_columns
@@ -1060,10 +1109,10 @@ def columnize(items, indent="", width=79):
     return output
 
 
-def get_pars(model_info, use_demo=False):
+def get_pars(model_info):
     # type: (ModelInfo, bool) -> ParameterSet
     """
-    Extract demo parameters from the model definition.
+    Extract default parameters from the model definition.
     """
     # Get the default values for the parameters
     pars = {}
@@ -1080,10 +1129,6 @@ def get_pars(model_info, use_demo=False):
                      for k in range(1, p.length+1))
             else:
                 pars[p.id + ext] = val
-
-    # Plug in values given in demo
-    if use_demo and model_info.demo:
-        pars.update(model_info.demo)
     return pars
 
 INTEGER_RE = re.compile("^[+-]?[1-9][0-9]*$")
@@ -1093,6 +1138,13 @@ def isnumber(s):
     match = FLOAT_RE.match(s)
     isfloat = (match and not s[match.end():])
     return isfloat or INTEGER_RE.match(s)
+
+def print_models(kind=None):
+    """
+    Print the list of available models in columns.
+    """
+    models = core.list_models(kind=kind)
+    print(columnize(models, indent="  "))
 
 # For distinguishing pairs of models for comparison
 # key-value pair separator =
@@ -1108,32 +1160,50 @@ def parse_opts(argv):
     """
     Parse command line options.
     """
-    MODELS = core.list_models()
+
     flags = [arg for arg in argv
              if arg.startswith('-')]
     values = [arg for arg in argv
               if not arg.startswith('-') and '=' in arg]
     positional_args = [arg for arg in argv
                        if not arg.startswith('-') and '=' not in arg]
-    models = "\n    ".join("%-15s"%v for v in MODELS)
-    if len(positional_args) == 0:
+
+    # First check if help requested anywhere on line
+    if '-h' in flags or '-?' in flags:
         print(USAGE)
-        print("\nAvailable models:")
-        print(columnize(MODELS, indent="  "))
         return None
 
+    # Next check that all flags are valid.
     invalid = [o[1:] for o in flags
                if not (o[1:] in NAME_OPTIONS
                        or any(o.startswith('-%s='%t) for t in VALUE_OPTIONS)
                        or o.startswith('-D'))]
     if invalid:
-        print("Invalid options: %s"%(", ".join(invalid)))
+        print("Invalid options: %s."%(", ".join(invalid)))
+        print("usage: ./sasmodels [-?] [-models] model")
         return None
 
+    # Check if requesting a list of models.  This is done after checking that
+    # the flags are valid so we know it is -models or -models=.
+    if any(v.startswith('-models') for v in flags):
+        # grab last -models entry
+        models = [v for v in flags if v.startswith('-models')][-1]
+        if models == '-models':
+            models = '-models=all'
+        _, kind = models.split('=', 1)
+        print_models(kind=kind)
+        return None
+
+    # Check that a model was given on the command line
+    if len(positional_args) == 0:
+        print("usage: ./sascomp [-?] [-models] model")
+        return None
+
+    # Only the last model on the command line is used.
     name = positional_args[-1]
 
-    # pylint: disable=bad-whitespace,C0321
     # Interpret the flags
+    # pylint: disable=bad-whitespace,C0321
     opts = {
         'plot'      : True,
         'view'      : 'log',
@@ -1149,11 +1219,11 @@ def parse_opts(argv):
         'mono'      : True,
         # Default to magnetic a magnetic moment is set on the command line
         'magnetic'  : False,
+        'maxdim'    : np.inf,
         'show_pars' : False,
         'show_hist' : False,
         'rel_err'   : True,
         'explore'   : False,
-        'use_demo'  : False,
         'zero'      : False,
         'html'      : False,
         'title'     : None,
@@ -1201,6 +1271,8 @@ def parse_opts(argv):
         elif arg.startswith('-sphere'):
             opts['sphere'] = int(arg[8:]) if len(arg) > 7 else 150
             opts['is2d'] = True
+        elif arg.startswith('-maxdim'):
+            opts['maxdim'] = float(arg[8:])
         elif arg == '-preset':  opts['seed'] = -1
         elif arg == '-mono':    opts['mono'] = True
         elif arg == '-poly':    opts['mono'] = False
@@ -1220,8 +1292,6 @@ def parse_opts(argv):
         elif arg == '-double!': opts['engine'] = 'double!'
         elif arg == '-quad!':   opts['engine'] = 'quad!'
         elif arg == '-edit':    opts['explore'] = True
-        elif arg == '-demo':    opts['use_demo'] = True
-        elif arg == '-default': opts['use_demo'] = False
         elif arg == '-weights': opts['show_weights'] = True
         elif arg == '-profile': opts['show_profile'] = True
         elif arg == '-html':    opts['html'] = True
@@ -1255,8 +1325,8 @@ def parse_opts(argv):
     try:
         model_info = [core.load_model_info(k) for k in names]
     except ImportError as exc:
-        print(str(exc))
-        print("Could not find model; use one of:\n    " + models)
+        print(str(exc), "while loading", names)
+        print("usage: ./sasmodels [-?] [-models] model")
         return None
 
     if PAR_SPLIT in opts['ngauss']:
@@ -1356,33 +1426,74 @@ def set_spherical_integration_parameters(opts, steps):
             'psi_pd_type=rectangle',
         ])
 
-def parse_pars(opts, maxdim=np.inf):
+def parse_pars(opts, maxdim=None):
     # type: (Dict[str, Any], float) -> Tuple[Dict[str, float], Dict[str, float]]
     """
-    Generate a parameter set.
+    Generate parameter sets for base and comparison models.
 
-    The default values come from the model, or a randomized model if a seed
-    value is given.  Next, evaluate any parameter expressions, constraining
-    the value of the parameter within and between models.  If *maxdim* is
-    given, limit parameters with units of Angstrom to this value.
+    Returns a pair of parameter dictionaries.
 
-    Returns a pair of parameter dictionaries for base and comparison models.
+    The default parameter values come from the model, or a randomized model
+    if a seed value is given.  Next, evaluate any parameter expressions,
+    constraining the value of the parameter within and between models.
+
+    Note: When generating random parameters, **the seed must already be set**
+    with a call to *np.random.seed(opts['seed'])*.
+
+    *opts* controls the parameter generation::
+
+        opts = {
+            'info': (model_info 1, model_info 2),
+            'seed': -1,         # if seed>=0 then randomize parameters
+            'mono': False,      # force monodisperse random parameters
+            'magnetic': False,  # force nonmagetic random parameters
+            'maxdim': np.inf,   # limit particle size to maxdim for random pars
+            'values': ['par=expr', ...],  # override parameter values in model
+            'show_pars': False, # Show parameter values
+            'is2d': False,      # Show values for orientation parameters
+        }
+
+    The values of *par=expr* are evaluated approximately as::
+
+        import numpy as np
+        from math import *
+        from parameter_set import *
+
+        parameter_set.par = eval(expr)
+
+    That is, you can use arbitrary python math expressions including the
+    functions defined in the math library and the numpy library.  You can
+    also use the existing parameter values, which will either be the model
+    defaults or the randomly generated values if seed is non-negative.
+
+    To compare different values of the same parameter, use *par=expr,expr*.
+    The first parameter set will have the values from the first expression
+    and the second parameter set will have the values from the second
+    expression.  Note that the second expression is evaluated using the
+    values from the first expression, which allows things like::
+
+        length=2*radius,length+3
+
+    which will compare length to length+3 when length is set to 2*radius.
+
+    *maxdim* **DEPRECATED** Use *opts['maxdim']* instead.
     """
+    # CRUFT: maxdim parameter is deprecated
+    if maxdim is not None:
+        opts['maxdim'] = maxdim
+
     model_info, model_info2 = opts['info']
 
-    # Get demo parameters from model definition, or use default parameters
-    # if model does not define demo parameters
-    pars = get_pars(model_info, opts['use_demo'])
-    pars2 = get_pars(model_info2, opts['use_demo'])
+    # Get default parameters from model definition.
+    pars = get_pars(model_info)
+    pars2 = get_pars(model_info2)
     pars2.update((k, v) for k, v in pars.items() if k in pars2)
     # randomize parameters
     #pars.update(set_pars)  # set value before random to control range
     if opts['seed'] > -1:
-        pars = randomize_pars(model_info, pars)
-        limit_dimensions(model_info, pars, maxdim)
-        if model_info != model_info2:
-            pars2 = randomize_pars(model_info2, pars2)
-            limit_dimensions(model_info2, pars2, maxdim)
+        pars = randomize_pars(model_info, pars, maxdim=opts['maxdim'])
+        if model_info.id != model_info2.id:
+            pars2 = randomize_pars(model_info2, pars2, maxdim=opts['maxdim'])
             # Share values for parameters with the same name
             for k, v in pars.items():
                 if k in pars2:
@@ -1391,10 +1502,15 @@ def parse_pars(opts, maxdim=np.inf):
             pars2 = pars.copy()
         constrain_pars(model_info, pars)
         constrain_pars(model_info2, pars2)
-    pars = suppress_pd(pars, opts['mono'])
-    pars2 = suppress_pd(pars2, opts['mono'])
-    pars = suppress_magnetism(pars, not opts['magnetic'])
-    pars2 = suppress_magnetism(pars2, not opts['magnetic'])
+        # TODO: randomly contrast match a pair of SLDs with some probability
+
+    # Process -mono and -magnetic command line options.
+    if opts['mono']:
+        pars = suppress_pd(pars)
+        pars2 = suppress_pd(pars2)
+    if not opts['magnetic']:
+        pars = suppress_magnetism(pars)
+        pars2 = suppress_magnetism(pars2)
 
     # Fill in parameters given on the command line
     presets = {}
@@ -1444,9 +1560,9 @@ def parse_pars(opts, maxdim=np.inf):
 
     # Hack to load user-defined distributions; run through all parameters
     # and make sure any pd_type parameter is a defined distribution.
-    if (any(p.endswith('pd_type') and v not in weights.MODELS
+    if (any(p.endswith('pd_type') and v not in weights.DISTRIBUTIONS
             for p, v in pars.items()) or
-        any(p.endswith('pd_type') and v not in weights.MODELS
+        any(p.endswith('pd_type') and v not in weights.DISTRIBUTIONS
             for p, v in pars2.items())):
        weights.load_weights()
 

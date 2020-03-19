@@ -4,7 +4,7 @@
 # You can set these variables from the command line.
 PYTHON       ?= python
 SPHINXOPTS    =
-SPHINXBUILD   = $(PYTHON) -m  sphinx.__init__
+SPHINXBUILD   = "$(PYTHON)" -m sphinx
 PAPER        ?= letter
 BUILDDIR      = _build
 ifdef ComSpec
@@ -22,14 +22,14 @@ else
 endif
 
 # Internal variables.
-PAPEROPT_a4     = -D latex_paper_size=a4
-PAPEROPT_letter = -D latex_paper_size=letter
+PAPEROPT_a4     = -D latex_elements.papersize=a4
+PAPEROPT_letter = -D latex_elements.papersize=letter
 ALLSPHINXOPTS   = -d _build/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
 IMG_SOURCE = $(wildcard ../sasmodels/models/img/*)
 IMG_DEST = $(patsubst ../sasmodels/models/img/%,model/img/%,$(IMG_SOURCE))
 MODELS_PY = $(wildcard ../sasmodels/models/[a-z]*.py)
-MODELS_RST = $(patsubst ../sasmodels/models/%.py,model/%.rst,$(MODELS_PY))
+#MODELS_RST = $(patsubst ../sasmodels/models/%.py,model/%.rst,$(MODELS_PY))
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
@@ -44,34 +44,34 @@ help:
 	@echo "  linkcheck to check all external links for integrity"
 	@echo "  doctest   to run all doctests embedded in the documentation (if enabled)"
 
-model/img/%: ../sasmodels/models/img/%
+model/img/%: ../sasmodels/models/img/% model/img
 ifdef ComSpec
 	$(COPY) $(subst /,\,$<) $(subst /,\,$@)
 else
 	$(COPY) $< $@
 endif
 
-model/%.rst: ../sasmodels/models/%.py
-	$(PYTHON) genmodel.py $< $@
-
-ref/models/index.rst: gentoc.py $(MODELS_PY)
-	$(PYTHON) gentoc.py $(MODELS_PY)
+ref/models/index.rst: gentoc.py genmodel.py $(MODELS_PY)
+	"$(PYTHON)" genmodel.py $(MODELS_PY)
+	"$(PYTHON)" gentoc.py $(MODELS_PY)
 
 .PHONY: help clean html dirhtml pickle json htmlhelp qthelp latex changes linkcheck doctest build
 
 api: genapi.py
 	-$(RMDIR) api
-	$(PYTHON) genapi.py
+	"$(PYTHON)" genapi.py
 
 model:
 	$(MKDIR) model
+
+model/img: model
 ifdef ComSpec
 	$(MKDIR) model\img
 else
 	$(MKDIR) model/img
 endif
 
-build: model $(MODELS_RST) $(IMG_DEST) api ref/models/index.rst
+build: model $(IMG_DEST) api ref/models/index.rst
 ifdef ComSpec
 	rem cd ..\..
 	rem python setup.py build
@@ -84,7 +84,7 @@ upload:
 	scp _build/latex/SASModels.pdf reflectometry.org:web/danse/download
 
 clean:
-	-$(RMDIR) _build model api ref$(PATHSEP)models
+	-$(RMDIR) _build model api guide$(PATHSEP)models
 
 html: build
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) _build/html

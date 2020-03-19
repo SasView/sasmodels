@@ -183,7 +183,7 @@ where the $q$ vector is defined as
 References
 ----------
 
-.. [#] L A Feigin and D I Svergun, Structure Analysis by Small-Angle X-Ray
+#. L A Feigin and D I Svergun, Structure Analysis by Small-Angle X-Ray
    and Neutron Scattering, Plenum Press, New York, (1987)
 
 Authorship and Verification
@@ -271,6 +271,7 @@ def profile(n_shells, sld_solvent, sld, thickness,
 
 # TODO: no random parameter generator for spherical SLD.
 
+# Another interesting demo case, again because the default function is boring.
 demo = {
     "n_shells": 5,
     "n_steps": 35.0,

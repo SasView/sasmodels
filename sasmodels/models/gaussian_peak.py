@@ -65,6 +65,6 @@ def random():
         #background=1e-8,
         scale=scale,
         peak_pos=peak_pos,
-        sigam=sigma,
+        sigma=sigma,
     )
     return pars

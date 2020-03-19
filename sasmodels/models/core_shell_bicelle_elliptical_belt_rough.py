@@ -3,7 +3,8 @@ Definition
 ----------
 
 This model provides the form factor for an elliptical cylinder with a
-core-shell scattering length density profile. Thus this is a variation
+core-shell scattering length density profile [#Onsager1949]_.
+Thus this is a variation
 of the core-shell bicelle model, but with an elliptical cylinder for the core.
 In this version the "rim" or "belt" does NOT extend the full length of
 the particle, but has the same length as the core. Outer shells on the
@@ -110,7 +111,7 @@ and angular dispersions  see :ref:`orientation` .
 References
 ----------
 
-.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+.. [#Onsager1949] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------
@@ -166,21 +167,6 @@ radius_effective_modes = [
     ]
 
 # TODO: No random() for core-shell bicelle elliptical belt rough
-
-demo = dict(scale=1, background=0,
-            radius=30.0,
-            x_core=3.0,
-            thick_rim=8.0,
-            thick_face=14.0,
-            length=50.0,
-            sld_core=4.0,
-            sld_face=7.0,
-            sld_rim=1.0,
-            sld_solvent=6.0,
-            theta=90,
-            phi=0,
-            psi=0,
-            sigma=0)
 
 q = 0.1
 # april 6 2017, rkh added a 2d unit test, NOT READY YET pull #890 branch assume correct!

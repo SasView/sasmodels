@@ -1,5 +1,3 @@
-//#define INVALID(v) (v.radius_equat_minor > v.radius_equat_major || v.radius_equat_major > v.radius_polar)
-
 static double
 form_volume(double radius_equat_minor, double radius_equat_major, double radius_polar)
 {

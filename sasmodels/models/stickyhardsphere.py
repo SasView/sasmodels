@@ -71,11 +71,11 @@ as 1D, where the $q$ vector is defined as
 References
 ----------
 
-.. [#] S V G Menon, C Manohar, and K S Rao, *J. Chem. Phys.*, 95(12) (1991) 9186-9190
+#.  S V G Menon, C Manohar, and K S Rao, *J. Chem. Phys.*, 95(12) (1991) 9186-9190
 
-.. [#] R J Baxter, *J. Chem. Phys.*, 49 (1968), 2770-2774
+#.  R J Baxter, *J. Chem. Phys.*, 49 (1968), 2770-2774
 
-.. [#] M Kotlarchyk and S-H Chen, *J. Chem. Phys.*, 79 (1983) 2461-2469
+#.  M Kotlarchyk and S-H Chen, *J. Chem. Phys.*, 79 (1983) 2461-2469
 
 Authorship and Verification
 ----------------------------
@@ -202,8 +202,6 @@ Iq = """
     return(sq);
 """
 
-demo = dict(radius_effective=200, volfraction=0.2, perturb=0.05,
-            stickiness=0.2, radius_effective_pd=0.1, radius_effective_pd_n=40)
 #
 tests = [
     [{'scale': 1.0, 'background': 0.0, 'radius_effective': 50.0,

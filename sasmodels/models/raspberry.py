@@ -97,7 +97,7 @@ model parameters as:
 References
 ----------
 
-.. [#] K Larson-Smith, A Jackson, and D C Pozzo, *Small angle scattering model for Pickering emulsions and raspberry particles*, *Journal of Colloid and Interface Science*, 343(1) (2010) 36-41
+#.  K Larson-Smith, A Jackson, and D C Pozzo, *Small angle scattering model for Pickering emulsions and raspberry particles*, *Journal of Colloid and Interface Science*, 343(1) (2010) 36-41
 
 Authorship and Verification
 ----------------------------
@@ -173,13 +173,6 @@ def random():
         penetration=penetration,
     )
     return pars
-
-# parameters for demo
-demo = dict(scale=1, background=0.001,
-            sld_lg=-0.4, sld_sm=3.5, sld_solvent=6.36,
-            volfraction_lg=0.05, volfraction_sm=0.005, surface_fraction=0.4,
-            radius_lg=5000, radius_sm=100, penetration=0.0,
-            radius_lg_pd=.2, radius_lg_pd_n=10)
 
 # TODO: update tests so the parameters correspond to SasView parameters
 # The model was re-parameterized so the results have changed.

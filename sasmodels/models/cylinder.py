@@ -95,9 +95,9 @@ system, and then comparing to the 1D result.
 References
 ----------
 
-.. [#] J. Pedersen, *Adv. Colloid Interface Sci.*, 70 (1997) 171-210
-.. [#] G. Fournet, *Bull. Soc. Fr. Mineral. Cristallogr.*, 74 (1951) 39-113
-.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+#.  J. Pedersen, *Adv. Colloid Interface Sci.*, 70 (1997) 171-210
+#.  G. Fournet, *Bull. Soc. Fr. Mineral. Cristallogr.*, 74 (1951) 39-113
+#.  L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------
@@ -145,6 +145,7 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
              ]
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "cylinder.c"]
+valid = "radius >= 0.0 && length >= 0.0"
 have_Fq = True
 radius_effective_modes = [
     "excluded volume", "equivalent volume sphere", "radius",
@@ -165,22 +166,43 @@ def random():
     return pars
 
 
-# parameters for demo
-demo = dict(scale=1, background=0,
-            sld=6, sld_solvent=1,
-            radius=20, length=300,
-            theta=60, phi=60,
-            radius_pd=.2, radius_pd_n=9,
-            length_pd=.2, length_pd_n=10,
-            theta_pd=10, theta_pd_n=5,
-            phi_pd=10, phi_pd_n=5)
-
 # Test 1-D and 2-D models
 qx, qy = 0.2 * np.cos(2.5), 0.2 * np.sin(2.5)
 theta, phi = 80.1534480601659, 10.1510817110481  # (10, 10) in sasview 3.x
 tests = [
     [{}, 0.2, 0.042761386790780453],
     [{}, [0.2], [0.042761386790780453]],
+    [{"scale": 1., "background": 0.}, [0.01,0.05,0.2],
+     # these numerical results NOT independently verified
+     [3.01823887e+02, 5.36661653e+01, 4.17613868e-02]],
+    [{"scale": 1., "background": 0.},
+     # the longer list here checks  F1, F2=I(Q)*V, R_eff, volume, volume_ratio
+     0.05, 2214.9614083, 26975556.88749548, 73.34013315261608,
+     502654.8245743669, 1.0],
+#2345678901234567890123456789012345678901234567890123456789012345678901234567890
+    [{"@S": "hardsphere",         # MONODISPERSE
+     "scale": 5., "background": 0.,"volfraction":0.2,
+     "structure_factor_mode": 0,  # normal decoupling approx
+     "radius_effective_mode": 1   # Reff "excluded volume"
+     }, [0.01,0.05,0.2], [7.35571916e+01, 5.78147797e+01, 4.15623248e-02] ],
+    [{"@S": "hardsphere",
+     "scale": 5., "background": 0.,"volfraction":0.2,
+     "structure_factor_mode": 1,  # beta approx
+     "radius_effective_mode": 1   # Reff "excluded volume"
+     }, [0.01,0.05,0.2], [8.29729770e+01, 5.44206752e+01, 4.17598382e-02] ],
+    [{"@S": "hardsphere",         # POLYDISPERSE
+     "scale": 5., "background": 0.,"volfraction":0.2,
+     "radius_pd":0.2,"radius_pd_n":15,"length_pd":0.1,"radius_pd_n":15,
+     "structure_factor_mode": 0,  # normal decoupling approx
+     "radius_effective_mode": 1   # Reff "excluded volume"
+     }, [0.01,0.05,0.2], [87.50350037, 63.95202427, 0.27889988] ],
+    [{"@S": "hardsphere",
+     "scale": 5., "background": 0.,"volfraction":0.2,
+     "radius_pd":0.2,"radius_pd_n":15,"length_pd":0.1,"radius_pd_n":15,
+     "structure_factor_mode": 1,  # beta approx
+     "radius_effective_mode": 1   # Reff "excluded volume"
+     }, [0.01,0.05,0.2], [132.2101165, 59.89948174, 0.28048784] ],
+     #
     [{'theta': theta, 'phi': phi}, (qx, qy), 0.03514647218513852],
     [{'theta': theta, 'phi': phi}, [(qx, qy)], [0.03514647218513852]],
 ]

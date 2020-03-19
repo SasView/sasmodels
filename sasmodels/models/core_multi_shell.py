@@ -27,15 +27,17 @@ orientation of the $\vec q$ vector which is defined as
 For information about polarised and magnetic scattering, see
 the :ref:`magnetism` documentation.
 
-Our model uses the form factor calculations implemented in a c-library provided
-by the NIST Center for Neutron Research (Kline, 2006) [#kline]_.
+Our model uses the form factor calculations implemented in a C-library provided
+by the NIST Center for Neutron Research [#Kline2006]_.
 
 References
 ----------
 
-.. [#] See the :ref:`core-shell-sphere` model documentation.
-.. [#kline] S R Kline, *J Appl. Cryst.*, 39 (2006) 895
-.. [#] L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and
+Also see the :ref:`core-shell-sphere` model documentation and [#Feigin1987]_
+
+.. [#Kline2006] S R Kline, *J Appl. Cryst.*, 39 (2006) 895
+
+.. [#Feigin1987] L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and
    Neutron Scattering*, Plenum Press, New York, 1987.
 
 Authorship and Verification
@@ -144,15 +146,3 @@ def profile(sld_core, radius, sld_solvent, n, sld, thickness):
     rho.append(sld_solvent)
 
     return np.asarray(z), np.asarray(rho)
-
-demo = dict(sld_core=6.4,
-            radius=60,
-            sld_solvent=6.4,
-            n=2,
-            sld=[2.0, 3.0],
-            thickness=20,
-            thickness1_pd=0.3,
-            thickness2_pd=0.3,
-            thickness1_pd_n=10,
-            thickness2_pd_n=10,
-           )

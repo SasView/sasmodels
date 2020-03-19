@@ -50,7 +50,7 @@ where the $q$ vector is defined as
 References
 ----------
 
-.. [#] M Stieger, J. S Pedersen, P Lindner, W Richtering, *Langmuir*, 20 (2004) 7283-7292
+#.  M Stieger, J. S Pedersen, P Lindner, W Richtering, *Langmuir*, 20 (2004) 7283-7292
 
 Authorship and Verification
 ----------------------------
@@ -100,13 +100,6 @@ def random():
         fuzziness=fuzziness,
     )
     return pars
-
-demo = dict(scale=1, background=0.001,
-            sld=1, sld_solvent=3,
-            radius=60,
-            fuzziness=10,
-            radius_pd=.2, radius_pd_n=45,
-            fuzziness_pd=.2, fuzziness_pd_n=0)
 
 tests = [
     # Accuracy tests based on content in test/utest_models_new1_3.py

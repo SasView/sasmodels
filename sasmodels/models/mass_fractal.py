@@ -48,7 +48,7 @@ length density of particles.
 References
 ----------
 
-.. [#] D Mildner and P Hall, *J. Phys. D: Appl. Phys.*, 19 (1986) 1535-1545 Equation(9)
+#.  D Mildner and P Hall, *J. Phys. D: Appl. Phys.*, 19 (1986) 1535-1545 Equation(9)
 
 Authorship and Verification
 ----------------------------
@@ -91,6 +91,7 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sas_3j1x_x.c", "lib/sas_gamma.c", "mass_fractal.c"]
+valid = "fractal_dim_mass >= 1.0"
 
 def random():
     """Return a random parameter set for the model."""
@@ -107,11 +108,6 @@ def random():
         fractal_dim_mass=fractal_dim_mass,
     )
     return pars
-
-demo = dict(scale=1, background=0,
-            radius=10.0,
-            fractal_dim_mass=1.9,
-            cutoff_length=100.0)
 
 tests = [
 

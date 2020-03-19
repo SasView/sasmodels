@@ -11,7 +11,7 @@ create your own models. This document describes how to create plugin models
 from first principles.
 
 If you are using SasView and simply want to combine existing models into a new
-plugin, see the :ref:`Sum|Multi(p1,p2)` tool instead.
+plugin, see the :ref:`Add/Multiply Models` tool instead.
 
 Models can be of three types:
 
@@ -24,7 +24,6 @@ Models can be of three types:
 - A python wrapper with separate C code : Example -
   `cylinder.py <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/cylinder.py>`_,
   `cylinder.c <https://github.com/SasView/sasmodels/blob/master/sasmodels/models/cylinder.c>`_
-
 
 
 When using SasView, plugin models should be saved to the SasView
@@ -124,6 +123,65 @@ Models that do not conform to these requirements will *never* be incorporated
 into the built-in library.
 
 
+Composite Models
+................
+
+The simplest way to define a new model is to combine existing models.  For
+example, *cyl_sphere.py* could contain::
+
+    import os.path
+    from sasmodels.core import load_model_info
+    model_info = load_model_info('cylinder+sphere@hardsphere')
+    model_info.name = os.path.basename(__file__).split('.')[0]
+
+This defines a mixture of :ref:`cylinder` and :ref:`sphere` shapes, with
+the spheres clustered closely enough to require an interaction effective
+with the :ref:`hardsphere` structure factor.
+
+The magic code at the end extracts the base filename, *cyl_sphere* from the
+model file path and assigns it to the model name.
+
+Reparameterized Models
+......................
+
+You can modify an existing model to use new parameters.  For example,
+to create an ellipsoid constrained by volume::
+
+    from numpy import inf
+    from sasmodels.core import reparameterize
+    parameters = [
+        # name, units, default, [min, max], type, description
+        ["volume", "Ang^3", 1e5, [0, inf], "volume", "ellipsoid volume"],
+        ["eccentricity", "", 1, [0, inf], "volume", "polar:equatorial radius"],
+    ]
+    translation = """
+        Re = cbrt(volume/eccentricity/M_4PI_3)
+        radius_polar = eccentricity*Re
+        radius_equatorial = Re  # python style comments allowed
+        """
+    model_info = reparameterize('ellipsoid', parameters, translation, __file__)
+
+Here, *volume* and *eccentricity* are new parameters which replace the
+*radius_polar* and *radius_equatorial* parameters in the :ref:`ellipsoid`
+model.  The parameter properties are described below.  Since *volume* and
+*eccentricity* are "volume" parameters they may be polydisperse.
+
+*translation* is a set of equations to compute the underlying ellipsoid
+parameters from the new parameters. *Re* is an intermediate value
+introduced to make the equations easier to write.  Helper functions can
+be included in a C file as *source=['filename.c', ...]* in the same directory
+as the model file.
+
+The new parameters replace *radius_polar* and *radius_equatorial* in the
+parameter table.  To have more control over parameter placement, use an
+*insert_after={...}* argmument to :func:`sasmodels.core.reparameterize`.
+For each insert location provide a list of new parameter names to insert
+at that location.  For example, *{'': 'eccentricity,volume'}* inserts
+them both at the beginning (before any parameter), whereas
+*{'radius_polar': 'eccentricty', 'radius_equatorial': 'volume'}* will
+place them after *radius_polar* and *radius_equatorial* in the final
+parameter table, before deleting *radius_polar* and *radius_equatorial*.
+
 Model Documentation
 ...................
 
@@ -159,8 +217,8 @@ For example::
     References
     ----------
 
-    A Guinier, G Fournet, *Small-Angle Scattering of X-Rays*,
-    John Wiley and Sons, New York, (1955)
+    #. A Guinier, G Fournet, *Small-Angle Scattering of X-Rays*,
+       John Wiley and Sons, New York, (1955)
     """
 
 This is where the FULL documentation for the model goes (to be picked up by
@@ -580,16 +638,12 @@ The C model operates on a single $q$ value at a time.  The code will be
 run in parallel across different $q$ values, either on the graphics card
 or the processor.
 
-Rather than returning NAN from Iq, you must define the *INVALID(v)*.  The
-*v* parameter lets you access all the parameters in the model using
-*v.par1*, *v.par2*, etc. For example:
+Rather than returning NAN from Iq, you must provide a conditional expression
+which evaluates to True if the parameters are valid and False if they
+are not.  This is provided in the python model file as *valid = "expr"*,
+where *expr* is a C expression.  For example::
 
-.. code-block:: c
-
-    #define INVALID(v) (v.bell_radius < v.radius)
-
-The INVALID define can go into *Iq*, or *c_code*, or an external C file
-listed in *source*.
+    valid = "bell_radius >= radius && radius >= 0"
 
 Structure Factors
 .................
@@ -1129,6 +1183,7 @@ PLEASE make sure that the answer value is correct (i.e. not a random number).
         [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
          0.1, None, None, 120., None, 1.],  # q, F, F^2, R_eff, V, form:shell
         [{"@S": "hardsphere"}, 0.1, None],
+        [{"@S": "hardsphere"}, 0.1, None, {"S_eff(Q)": ...}],
     ]
 
 
@@ -1153,6 +1208,10 @@ Each list is one test and contains, in order:
 - for testing interaction between form factor and structure factor, specify
   the structure factor name in the parameters as *{"@S": "name", ...}* with
   the remaining list of parameters defined by the *P@S* interaction model.
+- for examining the intermediate results computed by the model, use the
+  extended form with *{"key": value}* pairs, one for each intermediate value
+  returned from the model.  Starting with an empty *{}* will produce a
+  complete list of computed intermediates.
 
 .. _Test_Your_New_Model:
 
@@ -1194,17 +1253,6 @@ To check whether single precision is good enough, type the following::
 This will pop up a plot showing the difference between single precision
 and double precision on a range of $q$ values.
 
-::
-
-  demo = dict(scale=1, background=0,
-              sld=6, sld_solvent=1,
-              radius=120,
-              radius_pd=.2, radius_pd_n=45)
-
-**demo={'par': value, ...}** in the model file sets the default values for
-the comparison. You can include polydispersity parameters such as
-*radius_pd=0.2, radius_pd_n=45* which would otherwise be zero.
-
 These commands can also be run directly in the python interpreter:
 
     $ python -m sasmodels.model_test -v ~/.sasview/plugin_models/model.py
@@ -1225,10 +1273,11 @@ For the random models,
 - angles (*theta, phi, psi*) will be in the range (-180,180),
 - angular dispersion will be in the range (0,45),
 - polydispersity will be in the range (0,1)
-- other values will be in the range (0, 2\ *v*), where *v* is the value
-  of the parameter in demo.
+- other values will be in the range (0, 2\ *v*), where *v* is the default
+  parameter value.
 
-Dispersion parameters *n*\, *sigma* and *type* will be unchanged from
+Dispersion parameters *n*\, *sigma* and *type* will be set to random
+values if "-poly" is included on the command line.  be unchanged from
 demo so that run times are more predictable (polydispersity calculated
 across multiple parameters can be very slow).
 

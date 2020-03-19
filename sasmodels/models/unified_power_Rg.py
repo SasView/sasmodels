@@ -62,9 +62,9 @@ where the $q$ vector is defined as
 References
 ----------
 
-.. [#] G Beaucage, *J. Appl. Cryst.*, 28 (1995) 717-728
-.. [#] G Beaucage, *J. Appl. Cryst.*, 29 (1996) 134-146
-.. [#] B Hammouda, *Analysis of the Beaucage model, J. Appl. Cryst.*, (2010), 43, 1474-1478
+#.  G Beaucage, *J. Appl. Cryst.*, 28 (1995) 717-728
+#.  G Beaucage, *J. Appl. Cryst.*, 29 (1996) 134-146
+#.  B Hammouda, *Analysis of the Beaucage model, J. Appl. Cryst.*, (2010), 43, 1474-1478
 
 Authorship and Verification
 ----------------------------
@@ -142,6 +142,7 @@ def random():
     pars.update(("G%d"%(k+1), v) for k, v in enumerate(G))
     return pars
 
+# multi-shell models want demo parameters
 demo = dict(
     level=2,
     rg=[15.8, 21],

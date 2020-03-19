@@ -44,9 +44,9 @@ but where the *q* vector is redefined as
 References
 ----------
 
-.. [#] P Debye, *J. Phys. Colloid. Chem.*, 51 (1947) 18.
-.. [#] R J Roe, *Methods of X-Ray and Neutron Scattering in Polymer Science*, Oxford University Press, New York (2000).
-.. [#] http://www.ncnr.nist.gov/staff/hammouda/distance_learning/chapter_28.pdf
+#.  P Debye, *J. Phys. Colloid. Chem.*, 51 (1947) 18.
+#.  R J Roe, *Methods of X-Ray and Neutron Scattering in Polymer Science*, Oxford University Press, New York (2000).
+#.  http://www.ncnr.nist.gov/staff/hammouda/distance_learning/chapter_28.pdf
 
 Authorship and Verification
 ----------------------------
@@ -91,8 +91,6 @@ def random():
         rg=rg,
     )
     return pars
-
-demo = dict(scale=1.0, i_zero=70.0, rg=75.0, background=0.0)
 
 # these unit test values taken from SasView 3.1.2
 tests = [

@@ -42,10 +42,10 @@ but where the $q$ vector is redefined as
 References
 ----------
 
-.. [#] O Glatter and O Kratky (editors), *Small Angle X-ray Scattering*, Academic Press, (1982) Page 404
-.. [#] J S Higgins, H C Benoit, *Polymers and Neutron Scattering*, Oxford Science Publications, (1996)
-.. [#] S M King, *Small Angle Neutron Scattering* in *Modern Techniques for Polymer Characterisation*, Wiley, (1999)
-.. [#] http://www.ncnr.nist.gov/staff/hammouda/distance_learning/chapter_28.pdf
+#.  O Glatter and O Kratky (editors), *Small Angle X-ray Scattering*, Academic Press, (1982) Page 404
+#.  J S Higgins, H C Benoit, *Polymers and Neutron Scattering*, Oxford Science Publications, (1996)
+#.  S M King, *Small Angle Neutron Scattering* in *Modern Techniques for Polymer Characterisation*, Wiley, (1999)
+#.  http://www.ncnr.nist.gov/staff/hammouda/distance_learning/chapter_28.pdf
 
 Authorship and Verification
 ----------------------------
@@ -117,12 +117,6 @@ def random():
         polydispersity=polydispersity,
     )
     return pars
-
-demo = dict(scale=1.0,
-            i_zero=70.0,
-            rg=75.0,
-            polydispersity=2.0,
-            background=0.0)
 
 # these unit test values taken from SasView 3.1.2
 tests = [

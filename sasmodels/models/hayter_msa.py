@@ -54,13 +54,13 @@ where the $q$ vector is defined as
 References
 ----------
 
-.. [#] J B Hayter and J Penfold, *Molecular Physics*, 42 (1981) 109-118
+#.  J B Hayter and J Penfold, *Molecular Physics*, 42 (1981) 109-118
 
-.. [#] J P Hansen and J B Hayter, *Molecular Physics*, 46 (1982) 651-656
+#.  J P Hansen and J B Hayter, *Molecular Physics*, 46 (1982) 651-656
 
-.. [#] M Kotlarchyk and S-H Chen, *J. Chem. Phys.*, 79 (1983) 2461-2469
+#.  M Kotlarchyk and S-H Chen, *J. Chem. Phys.*, 79 (1983) 2461-2469
 
-.. [#] C G Malmberg and A A Maryott, *J. Res. Nat. Bureau Standards*, 56 (1956) 2641
+#.  C G Malmberg and A A Maryott, *J. Res. Nat. Bureau Standards*, 56 (1956) 2641
 
 Authorship and Verification
 ----------------------------
@@ -112,6 +112,7 @@ parameters = [
     ["volfraction",   "None",     0.0192, [0, 0.74],   "", "volume fraction of spheres"],
     ["charge",        "e",   19.0,    [0.000001, 200],    "", "charge on sphere (in electrons)"],
     ["temperature",   "K",  318.16,   [0, 450],    "", "temperature, in Kelvin, for Debye length calculation"],
+    # TODO: demo parameters had concentration_salt=0.05
     ["concentration_salt",      "M",    0.0,    [0, inf], "", "conc of salt, moles/litre, 1:1 electolyte, for Debye length"],
     ["dielectconst",  "None",    71.08,   [-inf, inf], "", "dielectric constant (relative permittivity) of solvent, kappa, default water, for Debye length"]
     ]
@@ -142,22 +143,16 @@ def random():
     )
     return pars
 
-# default parameter set,  use  compare.sh -midQ -linear
-# note the calculation varies in different limiting cases so a wide range of
+# To run the demo use
+#   sascomp -midQ -linear conentration_salt=0.05 radius_effective_pd=0.1 \
+#       radius_effective_pd_n=40
+# Note the calculation varies in different limiting cases so a wide range of
 # parameters will be required for a thorough test!
-# odd that the default st has concentration_salt zero
-demo = dict(radius_effective=20.75,
-            charge=19.0,
-            volfraction=0.0192,
-            temperature=318.16,
-            concentration_salt=0.05,
-            dielectconst=71.08,
-            radius_effective_pd=0.1,
-            radius_effective_pd_n=40)
+# Odd that the default st has concentration_salt zero
 #
-# attempt to use same values as old sasview unit test at Q=.001 was 0.0712928,
+# Attempt to use same values as old sasview unit test at Q=.001 was 0.0712928,
 # then add lots new ones assuming values from new model are OK, need some
-# low Q values to test the small Q Taylor expansion
+# low Q values to test the small Q Taylor expansion.
 tests = [
     [{'scale': 1.0,
       'background': 0.0,

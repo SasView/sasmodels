@@ -43,7 +43,7 @@ For 2D data: The 2D scattering intensity is calculated in the same way as
 References
 ----------
 
-.. [#] J Teixeira, *J. Appl. Cryst.*, 21 (1988) 781-785
+#.  J Teixeira, *J. Appl. Cryst.*, 21 (1988) 781-785
 
 Authorship and Verification
 ----------------------------
@@ -97,6 +97,7 @@ parameters = [["volfraction", "", 0.05, [0.0, 1], "",
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sas_3j1x_x.c", "lib/sas_gamma.c", "lib/fractal_sq.c", "fractal.c"]
+valid = "fractal_dim >= 0.0"
 
 def random():
     """Return a random parameter set for the model."""
@@ -116,13 +117,6 @@ def random():
         fractal_dim=fractal_dim,
     )
     return pars
-
-demo = dict(volfraction=0.05,
-            radius=5.0,
-            fractal_dim=2.0,
-            cor_length=100.0,
-            sld_block=2.0,
-            sld_solvent=6.4)
 
 # NOTE: test results taken from values returned by SasView 3.1.2
 tests = [

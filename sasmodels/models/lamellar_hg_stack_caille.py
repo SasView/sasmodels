@@ -68,8 +68,8 @@ the $q$ vector is defined as
 References
 ----------
 
-.. [#] F Nallet, R Laversanne, and D Roux, *J. Phys. II France*, 3, (1993) 487-502
-.. [#] J Berghausen, J Zipfel, P Lindner, W Richtering, *J. Phys. Chem. B*, 105, (2001) 11081-11088
+#.  F Nallet, R Laversanne, and D Roux, *J. Phys. II France*, 3, (1993) 487-502
+#.  J Berghausen, J Zipfel, P Lindner, W Richtering, *J. Phys. Chem. B*, 105, (2001) 11081-11088
 
 Authorship and Verification
 ----------------------------
@@ -144,17 +144,6 @@ def random():
         Caille_parameter=Caille_parameter,
     )
     return pars
-
-demo = dict(
-    scale=1, background=0,
-    Nlayers=20, d_spacing=200., Caille_parameter=0.05,
-    length_tail=15, length_head=10,
-    #sld=-1, sld_head=4.0, sld_solvent=6.0,
-    sld=-1, sld_head=4.1, sld_solvent=6.0,
-    length_tail_pd=0.1, length_tail_pd_n=20,
-    length_head_pd=0.05, length_head_pd_n=30,
-    d_spacing_pd=0.2, d_spacing_pd_n=40,
-    )
 
 #
 tests = [[{'scale': 1.0, 'background': 0.0, 'length_tail': 10.0, 'length_head': 2.0,

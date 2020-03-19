@@ -41,8 +41,8 @@ the $q$ vector is defined as
 References
 ----------
 
-.. [#] F Nallet, R Laversanne, and D Roux, *J. Phys. II France*, 3, (1993) 487-502
-.. [#] J Berghausen, J Zipfel, P Lindner, W Richtering, *J. Phys. Chem. B*, 105, (2001) 11081-11088
+#.  F Nallet, R Laversanne, and D Roux, *J. Phys. II France*, 3, (1993) 487-502
+#.  J Berghausen, J Zipfel, P Lindner, W Richtering, *J. Phys. Chem. B*, 105, (2001) 11081-11088
 
 Authorship and Verification
 ----------------------------
@@ -113,12 +113,6 @@ def random():
         length_tail=length_tail,
     )
     return pars
-
-demo = dict(scale=1, background=0,
-            length_tail=15, length_head=10,
-            sld=0.4, sld_head=3.0, sld_solvent=6.0,
-            length_tail_pd=0.2, length_tail_pd_n=40,
-            length_head_pd=0.01, length_head_pd_n=40)
 
 #
 tests = [

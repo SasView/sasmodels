@@ -24,8 +24,8 @@ the primary particle, $V_\text{lattice}$ is a volume correction for the crystal
 structure, $P(q)$ is the form factor of the sphere (normalized), and
 $Z(q)$ is the paracrystalline structure factor for a simple cubic structure.
 
-Equation (16) of the 1987 reference\ [#CIT1987]_ is used to calculate $Z(q)$,
-using equations (13)-(15) from the 1987 paper\ [#CIT1990]_ for $Z1$, $Z2$, and
+Equation (16) of the 1987 reference\ [#Matsuoka1987]_ is used to calculate $Z(q)$,
+using equations (13)-(15) from the 1987 paper\ [#Matsuoka1990]_ for $Z1$, $Z2$, and
 $Z3$.
 
 The lattice correction (the occupied volume of the lattice) for a simple cubic
@@ -97,8 +97,8 @@ Note that we are not responsible for any incorrectness of the
 Reference
 ---------
 
-.. [#CIT1987] Hideki Matsuoka et. al. *Physical Review B*, 36 (1987) 1754-1765 (Original Paper)
-.. [#CIT1990] Hideki Matsuoka et. al. *Physical Review B*, 41 (1990) 3854 -3856 (Corrections to FCC and BCC lattice structure calculation)
+.. [#Matsuoka1987] Hideki Matsuoka et. al. *Physical Review B*, 36 (1987) 1754-1765 (Original Paper)
+.. [#Matsuoka1990] Hideki Matsuoka et. al. *Physical Review B*, 41 (1990) 3854 -3856 (Corrections to FCC and BCC lattice structure calculation)
 
 Authorship and Verification
 ----------------------------

@@ -47,7 +47,7 @@ wary of results for (total) volume fractions greater than approximately 40%.
 Depending on the size ratios or number fractions, the limit on total volume
 fraction may be lower.
 
-**NOTE 3:** The heavy arithmatic operations also mean that at present the
+**NOTE 3:** The heavy arithmetic operations also mean that at present the
 function is poorly behaved at very low qr.  In some cases very large qr may
 also be poorly behaved.  These should however be outside any useful region of
 qr.
@@ -60,9 +60,10 @@ See the references for details.
 References
 ----------
 
-.. [#] N W Ashcroft and D C Langreth, *Physical Review*, 156 (1967) 685-692
+#. N W Ashcroft and D C Langreth, *Physical Review*, 156 (1967) 685-692
    [Errata found in *Phys. Rev.* 166 (1968) 934]
-.. [#] S R Kline, *J Appl. Cryst.*, 39 (2006) 895
+
+#. S R Kline, *J Appl. Cryst.*, 39 (2006) 895
 
 Authorship and Verification
 ----------------------------
@@ -129,11 +130,6 @@ def random():
         volfraction_sm=volfraction_sm,
     )
     return pars
-
-# parameters for demo and documentation
-demo = dict(sld_lg=3.5, sld_sm=0.5, sld_solvent=6.36,
-            radius_lg=100, radius_sm=20,
-            volfraction_lg=0.1, volfraction_sm=0.2)
 
 # NOTE: test results taken from values returned by SasView 3.1.2
 tests = [[{}, 0.001, 25.8927262013]]

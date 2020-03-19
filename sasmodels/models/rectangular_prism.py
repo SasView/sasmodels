@@ -95,9 +95,9 @@ to the output of the existing :ref:`parallelepiped` model.
 References
 ----------
 
-.. [#] P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
-.. [#] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
-.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+#.  P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
+#.  R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+#.  L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------
@@ -157,14 +157,6 @@ def random():
         c2a_ratio=c/a,
     )
     return pars
-
-# parameters for demo
-demo = dict(scale=1, background=0,
-            sld=6.3, sld_solvent=1.0,
-            length_a=35, b2a_ratio=1, c2a_ratio=1,
-            length_a_pd=0.1, length_a_pd_n=10,
-            b2a_ratio_pd=0.1, b2a_ratio_pd_n=1,
-            c2a_ratio_pd=0.1, c2a_ratio_pd_n=1)
 
 tests = [[{}, 0.2, 0.375248406825],
          [{}, [0.2], [0.375248406825]],

@@ -182,7 +182,7 @@ when $P(q) S(q)$ is applied.
 References
 ----------
 
-.. [#] L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*, Plenum Press, New York, 1987.
+#.  L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*, Plenum Press, New York, 1987.
 
 Authorship and Verification
 ----------------------------
@@ -370,9 +370,11 @@ def profile(sld_core, radius_core, sld_solvent, n_shells,
             rho.append(sld_in[k])
         else:
             # exponential shell
-            # num_steps must be at least 1, so use floor()+1 rather than ceil
-            # to protect against a thickness0.
-            num_steps = np.floor(thickness[k]/dz) + 1
+            # num_steps in the profile must be at least 1, so use 1+truncation
+            # to guess the number of bins rather than rounding or ceiling,
+            # even when the layer has zero thickness.  Also, num_steps must
+            # be an integer rather than a float for the linspace function.
+            num_steps = int(thickness[k]/dz) + 1
             slope = (sld_out[k] - sld_in[k]) / expm1(A[k])
             const = (sld_in[k] - slope)
             for z_shell in np.linspace(0, thickness[k], num_steps+1):
@@ -389,6 +391,9 @@ def profile(sld_core, radius_core, sld_solvent, n_shells,
 
 # TODO: no random parameter function for onion model
 
+# One of the few cases where demo values are useful because the default
+# model is really boring. Leave these here for now even though they are
+# never used.
 demo = {
     "sld_solvent": 2.2,
     "sld_core": 1.0,

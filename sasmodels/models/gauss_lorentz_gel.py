@@ -31,7 +31,7 @@ where the $q$ vector is defined as
 References
 ----------
 
-.. [#] G Evmenenko, E Theunissen, K Mortensen, H Reynaers, *Polymer*, 42 (2001) 2907-2913
+#.  G Evmenenko, E Theunissen, K Mortensen, H Reynaers, *Polymer*, 42 (2001) 2907-2913
 
 Authorship and Verification
 ----------------------------
@@ -109,12 +109,6 @@ def random():
     )
     return pars
 
-
-demo = dict(scale=1, background=0.1,
-            gauss_scale=100.0,
-            cor_length_static=100.0,
-            lorentz_scale=50.0,
-            cor_length_dynamic=20.0)
 
 tests = [
 

@@ -49,9 +49,9 @@ where the $q$ vector is defined as
 References
 ----------
 
-.. [#] R V Sharma, K C Sharma, *Physica*, 89A (1977) 213
+#.  R V Sharma, K C Sharma, *Physica*, 89A (1977) 213
 
-.. [#] M Kotlarchyk and S-H Chen, *J. Chem. Phys.*, 79 (1983) 2461-2469
+#.  M Kotlarchyk and S-H Chen, *J. Chem. Phys.*, 79 (1983) 2461-2469
 
 Authorship and Verification
 ----------------------------
@@ -155,8 +155,6 @@ def random():
     )
     return pars
 
-demo = dict(radius_effective=50, volfraction=0.04, welldepth=1.5,
-            wellwidth=1.2, radius_effective_pd=0, radius_effective_pd_n=0)
 #
 tests = [
     [{'scale': 1.0, 'background': 0.0, 'radius_effective': 50.0,

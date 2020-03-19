@@ -12,17 +12,17 @@ import os
 from os.path import basename, join as joinpath
 from glob import glob
 import re
+import copy
 
 import numpy as np # type: ignore
 
+# NOTE: delay loading of kernelcl, kernelcuda, kerneldll and kernelpy
+# cl and cuda in particular take awhile since they try to establish a
+# connection with the card to verify that the environment works.
 from . import generate
 from . import modelinfo
 from . import product
 from . import mixture
-from . import kernelpy
-from . import kernelcuda
-from . import kernelcl
-from . import kerneldll
 from . import custom
 
 # pylint: disable=unused-import
@@ -174,8 +174,129 @@ def load_model_info(model_string):
     return modelinfo.make_model_info(kernel_module)
 
 
+_REPARAMETERIZE_DOCS = """\
+Definition
+----------
+
+Constrain :ref:`%(base)s` according to the following::
+
+    %(translation)s
+"""
+_LHS_RE = re.compile(r"^ *(?<![.0-9])([A-Za-z_][A-Za-z0-9_]+) *=",
+                     flags=re.MULTILINE)
+def reparameterize(
+        base, parameters, translation, filename=None,
+        title=None, insert_after=None, docs=None, name=None,
+        source=None,
+    ):
+    """
+    Reparameterize an existing model.
+
+    *base* is the original modelinfo. This cannot be a reparameterized model;
+    only one level of reparameterization is supported.
+
+    *parameters* are the new parameter definitions that will be
+    included in the model info.
+
+    *translation* is a string each line containing *var = expr*.  The variable
+    *var* can be a new intermediate value, or it can be a parameter from
+    the base model that will be replace by the expression.  The expression
+    *expr* can be any C99 expression, including C-style if-expressions
+    *condition ? value1 : value2*.  Expressions can use any new or existing
+    parameter that is not being replaced including intermediate values that
+    are previously defined.  Parameters can only be assigned once, never
+    updated.  C99 math functions are available, as well as any functions
+    defined in the base model or included in *source* (see below).
+
+    *filename* is the filename for the replacement model.  This is usually
+    *__file__*, giving the path to the model file, but it could also be a
+    nominal filename for translations defined on-the-fly.
+
+    *title* is the model title, which defaults to *base.title* plus
+    " (reparameterized)".
+
+    *insert_after* controls parameter placement.  By default, the new
+    parameters replace the old parameters in their original position.
+    Instead, you can provide a dictionary *{'par': 'newpar1,newpar2'}*
+    indicating that new parameters named *newpar1* and *newpar2* should
+    be included in the table after the existing parameter *par*, or at
+    the beginning if *par* is the empty string.
+
+    *docs* constains the doc string for the translated model, which by default
+    references the base model and gives the *translation* text.
+
+    *name* is the model name, which defaults to "constrained_" + *base.name*.
+
+    *source* is a list any additional C source files that should be included to
+    define functions and constants used in the translation expressions.  This
+    will be included after all sources for the base model.  Sources will only
+    be included once, even if they are listed in both places, so feel free to
+    list all dependencies for the helper function, such as "lib/polevl.c".
+    """
+    if not isinstance(base, modelinfo.ModelInfo):
+        base = load_model_info(base)
+    if name is None:
+        name = filename if filename is not None else "constrained_" + base.name
+    name = os.path.basename(name).split('.')[0]
+    if title is None:
+        title = base.title + " (reparameterized)"
+    if docs is None:
+        lines = "\n    ".join(s.lstrip() for s in translation.split('\n'))
+        docs = _REPARAMETERIZE_DOCS%{'base': base.id, 'translation': lines}
+    #source = merge_deps(base.source, source)
+    source = (base.source + [f for f in source if f not in base.source]
+              if source else base.source)
+
+
+    # TODO: don't repeat code from generate._build_translation
+    base_pars = [par.id for par in base.parameters.kernel_parameters]
+    old_pars = [match.group(1) for match in _LHS_RE.finditer(translation)
+                if match.group(1) in base_pars]
+    new_pars = [modelinfo.parse_parameter(*p) for p in parameters]
+    table = modelinfo.derive_table(base.parameters, remove=old_pars,
+                                   insert=new_pars, insert_after=insert_after)
+
+    caller = copy.copy(base)
+    caller.translation = translation
+    caller.name = caller.id = name
+    caller.docs = docs
+    caller.filename = filename
+    caller.parameters = table
+    caller.source = source
+    return caller
+
+# Note: not used at the moment.
+def merge_deps(old, new):
+    """
+    Merge two dependency lists.  The lists are partially ordered, with
+    all dependents coming after the items they depend on, but otherwise
+    order doesn't matter.  The merged list preserves the partial ordering.
+    So if old and new both include the item "c", then all items that come
+    before "c" in old and new will come before "c" in the result, and all
+    items that come after "c" in old and new will come after "c" in the
+    result.
+    """
+    if new is None:
+        return old
+
+    result = []
+    for item in new:
+        try:
+            index = old.index(item)
+            #print(item,"found in",old,"at",index,"giving",old[:index])
+            result.extend(old[:index])
+            old = old[index+1:]
+        except ValueError:
+            #print(item, "not found in", old)
+            pass
+        result.append(item)
+        #print("after", item, "old", old, "result", result)
+    result.extend(old)
+    return result
+
+
 def build_model(model_info, dtype=None, platform="ocl"):
-    # type: (modelinfo.ModelInfo, str, str) -> KernelModel
+    # type: (ModelInfo, str, str) -> KernelModel
     """
     Prepare the model for the default execution platform.
 
@@ -207,16 +328,20 @@ def build_model(model_info, dtype=None, platform="ocl"):
 
     # If it is a python model, return it immediately
     if callable(model_info.Iq):
+        from . import kernelpy
         return kernelpy.PyModel(model_info)
 
     numpy_dtype, fast, platform = parse_dtype(model_info, dtype, platform)
     source = generate.make_source(model_info)
     if platform == "dll":
+        from . import kerneldll
         #print("building dll", numpy_dtype)
         return kerneldll.load_dll(source['dll'], model_info, numpy_dtype)
     elif platform == "cuda":
+        from . import kernelcuda
         return kernelcuda.GpuModel(source, model_info, numpy_dtype, fast=fast)
     else:
+        from . import kernelcl
         #print("building ocl", numpy_dtype)
         return kernelcl.GpuModel(source, model_info, numpy_dtype, fast=fast)
 
@@ -231,6 +356,8 @@ def precompile_dlls(path, dtype="double"):
     This can be used when build the windows distribution of sasmodels
     which may be missing the OpenCL driver and the dll compiler.
     """
+    from . import kerneldll
+
     numpy_dtype = np.dtype(dtype)
     if not os.path.exists(path):
         os.makedirs(path)
@@ -287,8 +414,11 @@ def parse_dtype(model_info, dtype=None, platform=None):
         platform = "dll"
 
     # Make sure opencl is available, or fallback to cuda then to dll
-    if platform == "ocl" and not kernelcl.use_opencl():
-        platform = "cuda" if kernelcuda.use_cuda() else "dll"
+    if platform == "ocl":
+        from . import kernelcl
+        if not kernelcl.use_opencl():
+            from . import kernelcuda
+            platform = "cuda" if kernelcuda.use_cuda() else "dll"
 
     # Convert special type names "half", "fast", and "quad"
     fast = (dtype == "fast")
@@ -309,8 +439,10 @@ def parse_dtype(model_info, dtype=None, platform=None):
 
     # Make sure that the type is supported by GPU, otherwise use dll
     if platform == "ocl":
+        from . import kernelcl
         env = kernelcl.environment()
     elif platform == "cuda":
+        from . import kernelcuda
         env = kernelcuda.environment()
     else:
         env = None
@@ -334,8 +466,10 @@ def test_composite_order():
         # the mixture model is tagged as e.g., A_sld, we ought to use a
         # regex subsitution s/^[A-Z]+_/_/, but removing all uppercase letters
         # is good enough.
-        fst = [[x for x in p.name if x == x.lower()] for p in fst.info.parameters.kernel_parameters]
-        snd = [[x for x in p.name if x == x.lower()] for p in snd.info.parameters.kernel_parameters]
+        fst = [[x for x in p.name if x == x.lower()]
+               for p in fst.info.parameters.kernel_parameters]
+        snd = [[x for x in p.name if x == x.lower()]
+               for p in snd.info.parameters.kernel_parameters]
         assert sorted(fst) == sorted(snd), "{} != {}".format(fst, snd)
 
     test_models(
@@ -377,6 +511,7 @@ def test_composite():
               RADIUS_ID, VOLFRAC_ID, STRUCTURE_MODE_ID, RADIUS_MODE_ID,
               "A_sld", "A_sld_solvent", "A_radius"]
     assert target == actual, "%s != %s"%(target, actual)
+
 
 def list_models_main():
     # type: () -> int

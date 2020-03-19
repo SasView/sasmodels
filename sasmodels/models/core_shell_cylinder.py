@@ -3,11 +3,11 @@ Definition
 ----------
 
 The output of the 2D scattering intensity function for oriented core-shell
-cylinders is given by (Kline, 2006 [#kline]_). The form factor is normalized
+cylinders is given by Kline [#Kline2006]_. The form factor is normalized
 by the particle volume. Note that in this model the shell envelops the entire
 core so that besides a "sleeve" around the core, the shell also provides two
 flat end caps of thickness = shell thickness. In other words the length of the
-total cyclinder is the length of the core cylinder plus twice the thickness of
+total cylinder is the length of the core cylinder plus twice the thickness of
 the shell. If no end caps are desired one should use the
 :ref:`core-shell-bicelle` and set the thickness of the end caps (in this case
 the "thick_face") to zero.
@@ -66,10 +66,13 @@ The $\theta$ and $\phi$ parameters are not used for the 1D output.
 Reference
 ---------
 
-.. [#] see, for example, Ian Livsey  J. Chem. Soc., Faraday Trans. 2, 1987,83,
-   1445-1452
-.. [#kline] S R Kline, *J Appl. Cryst.*, 39 (2006) 895
-.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+See also Livsey [#Livsey1987]_ and Onsager [#Onsager1949]_.
+
+.. [#Livsey1987] I Livsey, *J. Chem. Soc., Faraday Trans. 2*, 83 (1987) 1445-1452
+
+.. [#Kline2006] S R Kline, *J Appl. Cryst.*, 39 (2006) 895
+
+.. [#Onsager1949] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------
@@ -152,15 +155,6 @@ def random():
     )
     return pars
 
-demo = dict(scale=1, background=0,
-            sld_core=6, sld_shell=8, sld_solvent=1,
-            radius=45, thickness=25, length=340,
-            theta=30, phi=15,
-            radius_pd=.2, radius_pd_n=1,
-            length_pd=.2, length_pd_n=10,
-            thickness_pd=.2, thickness_pd_n=10,
-            theta_pd=15, theta_pd_n=45,
-            phi_pd=15, phi_pd_n=1)
 q = 0.1
 # april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
 qx = q*cos(pi/6.0)

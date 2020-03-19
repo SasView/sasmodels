@@ -113,12 +113,6 @@ def random():
     )
     return pars
 
-demo = dict(scale=1, background=0.0,
-            coefficent_1=1.0,
-            crossover=0.04,
-            power_1=1.0,
-            power_2=4.0)
-
 tests = [
     # Accuracy tests based on content in test/utest_extra_models.py
     [{'coefficent_1':     1.0,

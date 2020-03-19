@@ -49,9 +49,9 @@ For a 2D plot, the wave transfer is defined as
 References
 ----------
 
-.. [#] M Kotlarchyk & S-H Chen, *J. Chem. Phys.*, 79 (1983) 2461-2469
+#.  M Kotlarchyk & S-H Chen, *J. Chem. Phys.*, 79 (1983) 2461-2469
 
-.. [#] J K Percus, J Yevick, *J. Phys. Rev.*, 110, (1958) 1
+#.  J K Percus, J Yevick, *J. Phys. Rev.*, 110, (1958) 1
 
 Authorship and Verification
 ----------------------------

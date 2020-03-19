@@ -45,7 +45,7 @@ negative value of $R_g^2$.
 References
 ----------
 
-.. [#] A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*, John Wiley & Sons, New York (1955)
+#.  A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*, John Wiley & Sons, New York (1955)
 
 Authorship and Verification
 ----------------------------
@@ -93,9 +93,6 @@ def random():
         rg=rg,
     )
     return pars
-
-# parameters for demo
-demo = dict(scale=1.0, background=0.001, rg=60.0)
 
 # parameters for unit tests
 tests = [[{'rg' : 31.5}, 0.005, 0.992756]]

@@ -5,7 +5,7 @@ the :ref:`magnetism` documentation.
 Definition
 ----------
 
-The 1D scattering intensity is calculated in the following way (Guinier, 1955)
+The 1D scattering intensity is calculated in the following way [Guinier1955]_
 
 .. math::
 
@@ -35,8 +35,8 @@ to the output of the software provided by the NIST (Kline, 2006).
 References
 ----------
 
-A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*,
-John Wiley and Sons, New York, (1955)
+.. [Guinier1955] A Guinier and G. Fournet, *Small-Angle Scattering of X-Rays*,
+   John Wiley and Sons, New York, (1955)
 
 Authorship and Verification
 ----------------------------
@@ -113,8 +113,3 @@ def sesans(z, sld, sld_solvent, radius):
               + dlow2/2.*(1 - dlow2/16.) * log(dlow / (2. + sqrt(4. - dlow2))))
     return g
 sesans.vectorized = True  # sesans accepts an array of z values
-
-demo = dict(scale=1, background=0,
-            sld=6, sld_solvent=1,
-            radius=120,
-            radius_pd=.2, radius_pd_n=45)

@@ -3,7 +3,7 @@ Definition
 ----------
 
 Calculates the scattering from a barbell-shaped cylinder.  Like
-:ref:`capped-cylinder`, this is a sphereocylinder with spherical end
+:ref:`capped-cylinder`, this is a spherocylinder with spherical end
 caps that have a radius larger than that of the cylinder, but with the center
 of the end cap radius lying outside of the cylinder. See the diagram for
 the details of the geometry and restrictions on parameter values.
@@ -12,8 +12,8 @@ the details of the geometry and restrictions on parameter values.
 
     Barbell geometry, where $r$ is *radius*, $R$ is *radius_bell* and
     $L$ is *length*. Since the end cap radius $R \geq r$ and by definition
-    for this geometry $h < 0$, $h$ is then defined by $r$ and $R$ as
-    $h = - \sqrt{R^2 - r^2}$
+    for this geometry $h \ge 0$, $h$ is then defined by $r$ and $R$ as
+    $h = \sqrt{R^2 - r^2}$
 
 The scattered intensity $I(q)$ is calculated as
 
@@ -48,18 +48,16 @@ The volume of the barbell is
 
     V = \pi r_c^2 L + 2\pi\left(\tfrac23R^3 + R^2h-\tfrac13h^3\right)
 
-
 and its radius of gyration is
 
 .. math::
 
-    R_g^2 =&\ \left[ \tfrac{12}{5}R^5
-        + R^4\left(6h+\tfrac32 L\right)
-        + R^2\left(4h^2 + L^2 + 4Lh\right)
-        + R^2\left(3Lh^2 + \tfrac32 L^2h\right) \right. \\
-        &\ \left. + \tfrac25 h^5 - \tfrac12 Lh^4 - \tfrac12 L^2h^3
-        + \tfrac14 L^3r^2 + \tfrac32 Lr^4 \right]
-        \left( 4R^3 6R^2h - 2h^3 + 3r^2L \right)^{-1}
+    R_g^2 =&\ \left[ \tfrac{12}{5}R^4
+        + R^3\left(3L + \tfrac{18}{5} h\right)
+        + R^2\left(L^2 + Lh + \tfrac25 h^2\right)
+        + R\left(\tfrac14 L^3 + \tfrac12 L^2h - Lh^2\right) \right. \\
+        &\ \left. + Lh^4 - \tfrac12 L^2h^3 - \tfrac14 L^3h + \tfrac25 h^4\right]
+        \left( 4R^2 + 3LR + 2Rh - 3Lh - 2h^2\right)^{-1}
 
 .. note::
     The requirement that $R \geq r$ is not enforced in the model! It is
@@ -75,10 +73,12 @@ The 2D scattering intensity is calculated similar to the 2D cylinder model.
 References
 ----------
 
-.. [#] H Kaya, *J. Appl. Cryst.*, 37 (2004) 223-230
-.. [#] H Kaya and N R deSouza, *J. Appl. Cryst.*, 37 (2004) 508-509 (addenda
-   and errata)
-.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+#. H Kaya, *J. Appl. Cryst.*, 37 (2004) 223-230
+
+#. H Kaya and N R deSouza, *J. Appl. Cryst.*, 37 (2004) 508-509
+   (addenda and errata)
+
+#. L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------
@@ -116,6 +116,7 @@ parameters = [["sld",         "1e-6/Ang^2",   4, [-inf, inf], "sld",         "Ba
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "barbell.c"]
+valid = "radius_bell >= radius"
 have_Fq = True
 radius_effective_modes = [
     "equivalent cylinder excluded volume", "equivalent volume sphere",
@@ -143,18 +144,9 @@ def random():
     )
     return pars
 
-# parameters for demo
-demo = dict(scale=1, background=0,
-            sld=6, sld_solvent=1,
-            radius_bell=40, radius=20, length=400,
-            theta=60, phi=60,
-            radius_pd=.2, radius_pd_n=5,
-            length_pd=.2, length_pd_n=5,
-            theta_pd=15, theta_pd_n=0,
-            phi_pd=15, phi_pd_n=0,
-           )
 q = 0.1
-# april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
+# 2017-04-06: rkh add unit tests, NOT compared with any other calc method, assume correct!
+# 2019-05-17: pak added barbell/capped cylinder to realspace sampling tests
 qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
 tests = [

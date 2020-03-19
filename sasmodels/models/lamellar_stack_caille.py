@@ -64,8 +64,8 @@ $q$ vector is defined as
 References
 ----------
 
-.. [#] F Nallet, R Laversanne, and D Roux, *J. Phys. II France*, 3, (1993) 487-502
-.. [#] J Berghausen, J Zipfel, P Lindner, W Richtering, *J. Phys. Chem. B*, 105, (2001) 11081-11088
+#.  F Nallet, R Laversanne, and D Roux, *J. Phys. II France*, 3, (1993) 487-502
+#.  J Berghausen, J Zipfel, P Lindner, W Richtering, *J. Phys. Chem. B*, 105, (2001) 11081-11088
 
 Authorship and Verification
 ----------------------------
@@ -126,12 +126,6 @@ def random():
 form_volume = """
     return 1.0;
     """
-
-demo = dict(scale=1, background=0,
-            thickness=67., Nlayers=3.75, d_spacing=200.,
-            Caille_parameter=0.268, sld=1.0, sld_solvent=6.34,
-            thickness_pd=0.1, thickness_pd_n=100,
-            d_spacing_pd=0.05, d_spacing_pd_n=40)
 
 #
 tests = [

@@ -4,8 +4,6 @@ double Iq(double q, double radius, double edge_sep,
     double thick_string, double fp_num_pearls, double sld,
     double string_sld, double solvent_sld);
 
-#define INVALID(v) (v.thick_string >= v.radius || v.num_pearls <= 0)
-
 // From Igor library
 static double
 pearl_necklace_kernel(double q, double radius, double edge_sep, double thick_string,

@@ -1,5 +1,3 @@
-#define INVALID(p) (p.fractal_dim_mass < 1.0)
-
 static double
 Iq(double q, double radius, double fractal_dim_mass, double cutoff_length)
 {

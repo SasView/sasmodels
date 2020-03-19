@@ -40,12 +40,12 @@ other shape models, no volume normalization is applied to this model (the
 calculation is exact).
 
 The code for this model is based originally on a a fortran implementation by
-Steve King at ISIS in the SANDRA package c. 1990.
+Steve King at ISIS in the SANDRA package c. 1990 [#King2002]_.
 
 References
 ----------
 
-.. [#] S King, P Griffiths, J Hone, and T Cosgrove, *SANS from Adsorbed Polymer
+.. [#King2002] S King, P Griffiths, J Hone, and T Cosgrove, *SANS from Adsorbed Polymer
    Layers*, *Macromol. Symp.*, 190 (2002) 33-42.
 
 Authorship and Verification

@@ -47,7 +47,7 @@ comparison of the output of our model and the output of the NIST software.
 References
 ----------
 
-.. [#] A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*, John Wiley and Sons, New York, (1955)
+#.  A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*, John Wiley and Sons, New York, (1955)
 
 Authorship and Verification
 ----------------------------
@@ -84,9 +84,6 @@ parameters = [["radius",      "Ang",        60.0, [0, inf],    "volume", "Sphere
 source = ["lib/sas_3j1x_x.c", "lib/core_shell.c", "core_shell_sphere.c"]
 have_Fq = True
 radius_effective_modes = ["outer radius", "core radius"]
-
-demo = dict(scale=1, background=0, radius=60, thickness=10,
-            sld_core=1.0, sld_shell=2.0, sld_solvent=0.0)
 
 def random():
     """Return a random parameter set for the model."""

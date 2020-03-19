@@ -3,7 +3,7 @@ Definition
 ----------
 Calculates the scattering from a fractal structure with a primary building
 block of core-shell spheres, as opposed to just homogeneous spheres in
-the fractal model. It is an extension of the well known Teixeira\ [#teixeira]_
+the fractal model. It is an extension of the well known Teixeira\ [#Teixeira1988]_
 fractal model replacing the $P(q)$ of a solid sphere with that of a core-shell
 sphere. This model could find use for aggregates of coated particles, or
 aggregates of vesicles for example.
@@ -13,7 +13,7 @@ aggregates of vesicles for example.
     I(q) = P(q)S(q) + \text{background}
 
 Where $P(q)$ is the core-shell form factor and $S(q)$ is the
-Teixeira\ [#teixeira]_ fractal structure factor both of which are given again
+Teixeira\ [#Teixeira1988]_ fractal structure factor both of which are given again
 below:
 
 .. math::
@@ -42,13 +42,13 @@ is calculated in the same way as 1D, where the $q$ vector is defined as
     q = \sqrt{q_x^2 + q_y^2}
 
 Our model is derived from the form factor calculations implemented in IGOR
-macros by the NIST Center for Neutron Research\ [#Kline]_
+macros by the NIST Center for Neutron Research\ [#Kline2006]_
 
 References
 ----------
 
-.. [#teixeira] J Teixeira, *J. Appl. Cryst.*, 21 (1988) 781-785
-.. [#Kline]  S R Kline, *J Appl. Cryst.*, 39 (2006) 895
+.. [#Teixeira1988] J Teixeira, *J. Appl. Cryst.*, 21 (1988) 781-785
+.. [#Kline2006]  S R Kline, *J Appl. Cryst.*, 39 (2006) 895
 
 Authorship and Verification
 ----------------------------
@@ -114,17 +114,6 @@ def random():
         fractal_dim=fractal_dim,
     )
     return pars
-
-demo = dict(scale=0.05,
-            background=0,
-            radius=20,
-            thickness=5,
-            sld_core=3.5,
-            sld_shell=1.0,
-            sld_solvent=6.35,
-            volfraction=0.05,
-            fractal_dim=2.0,
-            cor_length=100.0)
 
 # TODO: why is there an ER function here?
 def ER(radius, thickness):

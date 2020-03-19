@@ -85,8 +85,8 @@ varying the number of angular bins.
 References
 ----------
 
-.. [#] L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*, Plenum, New York, (1987) [see table 3.4]
-.. [#] L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+#.  L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*, Plenum, New York, (1987) [see table 3.4]
+#.  L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------
@@ -128,10 +128,6 @@ radius_effective_modes = [
     "equivalent circular cross-section",
     "half length", "half min dimension", "half max dimension", "half diagonal",
     ]
-
-demo = dict(scale=1, background=0, radius_minor=100, axis_ratio=1.5, length=400.0,
-            sld=4.0, sld_solvent=1.0, theta=10.0, phi=20, psi=30,
-            theta_pd=10, phi_pd=2, psi_pd=3)
 
 def random():
     """Return a random parameter set for the model."""
