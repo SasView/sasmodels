@@ -1420,9 +1420,10 @@ def check_shape(title, shape, fn=None, show_points=False,
     Pr = calc_Pr(r, rho-rho_solvent, points, volume)
     print("calc Pr time", timer() - t0)
     Iq = calc_Iq_from_Pr(q, r, Pr)
-    t0 = timer()
-    Iq_avg = calc_Iq_avg(q, rho-rho_solvent, points, volume)
-    print("calc Iq_avg time", timer() - t0)
+    #t0 = timer()
+    #Iq_avg = calc_Iq_avg(q, rho-rho_solvent, points, volume)
+    #print("calc Iq_avg time", timer() - t0)
+    Iq_avg = None # Suppress for now since it is giving incorrect results
     theory = (q, fn(q)) if fn is not None else None
 
     import pylab
