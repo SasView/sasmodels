@@ -38,7 +38,7 @@ def Rx(angle):
     R = [[1, 0, 0],
          [0, +cos(a), -sin(a)],
          [0, +sin(a), +cos(a)]]
-    return np.matrix(R)
+    return np.array(R)
 
 def Ry(angle):
     """Construct a matrix to rotate points about *y* by *angle* degrees."""
@@ -46,7 +46,7 @@ def Ry(angle):
     R = [[+cos(a), 0, +sin(a)],
          [0, 1, 0],
          [-sin(a), 0, +cos(a)]]
-    return np.matrix(R)
+    return np.array(R)
 
 def Rz(angle):
     """Construct a matrix to rotate points about *z* by *angle* degrees."""
@@ -54,7 +54,7 @@ def Rz(angle):
     R = [[+cos(a), -sin(a), 0],
          [+sin(a), +cos(a), 0],
          [0, 0, 1]]
-    return np.matrix(R)
+    return np.array(R)
 
 def pol2rec(r, theta, phi):
     """
@@ -72,7 +72,7 @@ def rotation(theta, phi, psi):
 
     Points are stored in a 3 x n numpy matrix, not a numpy array or tuple.
     """
-    return Rx(phi)*Ry(theta)*Rz(psi)
+    return Rx(phi)@Ry(theta)@Rz(psi)
 
 def apply_view(points, view):
     """
@@ -83,7 +83,7 @@ def apply_view(points, view):
     View angles are in degrees.
     """
     theta, phi, psi = view
-    return np.asarray((Rz(phi)*Ry(theta)*Rz(psi))*np.matrix(points.T)).T
+    return ((Rz(phi)@Ry(theta)@Rz(psi))@(points.T)).T
 
 
 def invert_view(qx, qy, view):
@@ -95,10 +95,10 @@ def invert_view(qx, qy, view):
     """
     theta, phi, psi = view
     q = np.vstack((qx.flatten(), qy.flatten(), 0*qx.flatten()))
-    return np.asarray((Rz(-psi)*Ry(-theta)*Rz(-phi))*np.matrix(q))
+    return (Rz(-psi)@Ry(-theta)@Rz(-phi))@q
 
 
-I3 = np.matrix([[1., 0, 0], [0, 1, 0], [0, 0, 1]])
+I3 = np.eye(3)
 
 class Shape:
     rotation = I3
@@ -125,7 +125,7 @@ class Shape:
 
     def rotate(self, theta, phi, psi):
         if theta != 0. or phi != 0. or psi != 0.:
-            self.rotation = rotation(theta, phi, psi) * self.rotation
+            self.rotation = rotation(theta, phi, psi) @ self.rotation
         return self
 
     def shift(self, x, y, z):
@@ -144,7 +144,7 @@ class Shape:
         if self.rotation is I3:
             points = points.T + self.center
         else:
-            points = np.asarray(self.rotation * np.matrix(points.T)) + self.center
+            points = self.rotation@(points.T) + self.center
         if self.lattice_type:
             points = self._apply_lattice(points)
         return points.T
@@ -200,8 +200,8 @@ class Shape:
 
         # Each lattice point has its own rotation.  Rotate the point prior to
         # applying any displacement.
-        # rotation = rotate*(randn(size=(shapes, 3)) if shuffle < 30 else rand(size=(nsamples, 3)))
-        # for k in shapes: points[k] = rotation[k]*points[k]
+        # rotation = rotate@(randn(size=(shapes, 3)) if shuffle < 30 else rand(size=(nsamples, 3)))
+        # for k in shapes: points[k] = rotation[k]@points[k]
         points += center*(np.array([spacing])*np.array(self.dims)).T
         return points
 
@@ -298,7 +298,7 @@ class EllipticalBicelle(Shape):
         radius = points[:, 0]**2 + points[:, 1]**2
         points = points[radius <= 1]
         # set all to core value first
-        values = np.ones_like(points[:, 0])*self.value
+        values = np.full_like(points[:, 0], self.value)
         # then set value to face value if |z| > face/(length/2))
         values[abs(points[:, 2]) > self.length/(self.length + 2*self.thick_face)] = self.value_face
         # finally set value to rim value if outside the core ellipse
