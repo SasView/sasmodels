@@ -133,12 +133,15 @@ class Shape:
         return self
 
     def lattice(self, size=(1, 1, 1), spacing=(2, 2, 2), type="sc",
-                distortion=0.0, rotation=0.0):
+                distortion=0.0, rotation=0.0, paracrystalline=False):
         self.lattice_size = np.asarray(size, 'i')
         self.lattice_spacing = np.asarray(spacing, 'd')
         self.lattice_type = type
         self.lattice_distortion = distortion
         self.lattice_rotation = rotation
+        if paracrystalline:
+            raise NotImplementedError("don't know how to simulate paracrystals")
+        self.paracrystalline = paracrystalline
 
     def _adjust(self, points):
         if self.rotation is I3:
@@ -151,10 +154,11 @@ class Shape:
 
     def r_bins(self, q, r_step=None, over_sampling=10):
         if self.lattice_type:
-            r_max = np.sqrt(np.sum(self.lattice_size*self.lattice_spacing*self.dims)**2)/2
+            # Length of the diagonal of the lattice
+            r_max = np.sqrt(np.sum((self.lattice_size*self.lattice_spacing*self.dims)**2))
         else:
             r_max = self.r_max
-        return r_bins(q, r_max=self.r_max, r_step=r_step,
+        return r_bins(q, r_max=r_max, r_step=r_step,
                       over_sampling=over_sampling)
 
     def _apply_lattice(self, points):
@@ -179,7 +183,7 @@ class Shape:
         nsamples = points.shape[1]
         lattice_point = randint(number_of_lattice_points, size=nsamples)
 
-        # Translate the cell index into the i,j,k coordinates of the senter
+        # Translate the cell index into the i,j,k coordinates of the center
         cell_index = lattice_point // shapes_per_cell
         center = np.vstack((cell_index//(size[1]*size[2]),
                             (cell_index%(size[1]*size[2]))//size[2],
@@ -192,6 +196,7 @@ class Shape:
             center[:, lattice_point % shapes_per_cell == 2] += [[0.5], [0.0], [0.5]]
             center[:, lattice_point % shapes_per_cell == 3] += [[0.5], [0.5], [0.0]]
 
+        # Thermal distortion of crystalline lattice
         # Each lattice point has its own displacement from the ideal position.
         # Not checking that shapes do not overlap if displacement is too large.
         offset = shuffle*(randn(3, number_of_lattice_points) if shuffle < 0.3
@@ -848,6 +853,7 @@ def r_bins(q, r_max=None, r_step=None, over_sampling=1):
         r_max = 2 * pi / q[0]
     if r_step is None:
         r_step = 2 * pi / q[-1] / over_sampling
+    #print(f"bins from {r_step} to {r_max} by {r_step}")
     return np.arange(r_step, r_max, r_step)
 
 
@@ -1553,13 +1559,13 @@ def main():
     parser.add_argument('-n', '--lattice', type=str, default='1,1,1',
                         help='lattice size')
     parser.add_argument('-z', '--spacing', type=str, default='2,2,2',
-                        help='lattice spacing (relative to shape)')
+                        help='lattice spacing (relative to shape dimensions)')
     parser.add_argument('-t', '--type', choices=LATTICE_TYPES,
                         default=LATTICE_TYPES[0],
                         help='lattice type')
     parser.add_argument('-r', '--rotate', type=float, default=0.,
                         help="rotation relative to lattice, gaussian < 30 degrees, uniform otherwise")
-    parser.add_argument('-w', '--shuffle', type=float, default=0.,
+    parser.add_argument('-w', '--shuffle', type=float, default=0.06,
                         help="position relative to lattice, gaussian < 0.3, uniform otherwise")
     parser.add_argument('-p', '--plot', action='store_true',
                         help='plot points')
@@ -1593,6 +1599,7 @@ def main():
             "phi": view[1],
             "psi": view[2],
         }
+        #print(f"using {model_name} with {model_pars}")
         fn, fn_xy = wrap_sasmodel(model_name, **model_pars)
     if nx*ny*nz > 1:
         if rotation != 0:
