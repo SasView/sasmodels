@@ -174,13 +174,6 @@ def random():
     )
     return pars
 
-# parameters for demo
-demo = dict(scale=1, background=0.001,
-            sld_lg=-0.4, sld_sm=3.5, sld_solvent=6.36,
-            volfraction_lg=0.05, volfraction_sm=0.005, surface_fraction=0.4,
-            radius_lg=5000, radius_sm=100, penetration=0.0,
-            radius_lg_pd=.2, radius_lg_pd_n=10)
-
 # TODO: update tests so the parameters correspond to SasView parameters
 # The model was re-parameterized so the results have changed.
 # NOTE: test results taken from values returned by SasView 3.1.2, with

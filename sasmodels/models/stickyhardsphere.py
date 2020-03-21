@@ -202,8 +202,6 @@ Iq = """
     return(sq);
 """
 
-demo = dict(radius_effective=200, volfraction=0.2, perturb=0.05,
-            stickiness=0.2, radius_effective_pd=0.1, radius_effective_pd_n=40)
 #
 tests = [
     [{'scale': 1.0, 'background': 0.0, 'radius_effective': 50.0,

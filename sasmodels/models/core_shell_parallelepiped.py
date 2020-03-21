@@ -249,22 +249,6 @@ def random():
     )
     return pars
 
-# parameters for demo
-demo = dict(scale=1, background=0.0,
-            sld_core=1, sld_a=2, sld_b=4, sld_c=2, sld_solvent=6,
-            length_a=35, length_b=75, length_c=400,
-            thick_rim_a=10, thick_rim_b=10, thick_rim_c=10,
-            theta=0, phi=0, psi=0,
-            length_a_pd=0.1, length_a_pd_n=1,
-            length_b_pd=0.1, length_b_pd_n=1,
-            length_c_pd=0.1, length_c_pd_n=1,
-            thick_rim_a_pd=0.1, thick_rim_a_pd_n=1,
-            thick_rim_b_pd=0.1, thick_rim_b_pd_n=1,
-            thick_rim_c_pd=0.1, thick_rim_c_pd_n=1,
-            theta_pd=10, theta_pd_n=1,
-            phi_pd=10, phi_pd_n=1,
-            psi_pd=10, psi_pd_n=1)
-
 # rkh 7/4/17 add random unit test for 2d, note make all params different,
 # 2d values not tested against other codes or models
 if 0:  # pak: model rewrite; need to update tests
