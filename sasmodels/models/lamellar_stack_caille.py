@@ -127,6 +127,12 @@ form_volume = """
     return 1.0;
     """
 
+demo = dict(scale=1, background=0,
+            thickness=67., Nlayers=3.75, d_spacing=200.,
+            Caille_parameter=0.268, sld=1.0, sld_solvent=6.34,
+            thickness_pd=0.1, thickness_pd_n=100,
+            d_spacing_pd=0.05, d_spacing_pd_n=40)
+
 #
 tests = [
     [{'scale': 1.0, 'background': 0.0, 'thickness': 30., 'Nlayers': 20.0,

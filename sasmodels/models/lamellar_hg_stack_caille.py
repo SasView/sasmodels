@@ -145,6 +145,17 @@ def random():
     )
     return pars
 
+demo = dict(
+    scale=1, background=0,
+    Nlayers=20, d_spacing=200., Caille_parameter=0.05,
+    length_tail=15, length_head=10,
+    #sld=-1, sld_head=4.0, sld_solvent=6.0,
+    sld=-1, sld_head=4.1, sld_solvent=6.0,
+    length_tail_pd=0.1, length_tail_pd_n=20,
+    length_head_pd=0.05, length_head_pd_n=30,
+    d_spacing_pd=0.2, d_spacing_pd_n=40,
+    )
+
 #
 tests = [[{'scale': 1.0, 'background': 0.0, 'length_tail': 10.0, 'length_head': 2.0,
            'Nlayers': 30.0, 'd_spacing': 40., 'Caille_parameter': 0.001, 'sld': 0.4,

@@ -115,6 +115,13 @@ def random():
     )
     return pars
 
+# parameters for demo
+demo = dict(sld=0.5, sld_solvent=6.36,
+            volfraction=0.05,
+            radius=100, thickness=30,
+            radius_pd=.2, radius_pd_n=10,
+            thickness_pd=.2, thickness_pd_n=10)
+
 # NOTE: test results taken from values returned by SasView 3.1.2, with
 # 0.001 added for a non-zero default background.
 tests = [[{}, 0.0005, 859.916526646],

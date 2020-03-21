@@ -155,6 +155,8 @@ def random():
     )
     return pars
 
+demo = dict(radius_effective=50, volfraction=0.04, welldepth=1.5,
+            wellwidth=1.2, radius_effective_pd=0, radius_effective_pd_n=0)
 #
 tests = [
     [{'scale': 1.0, 'background': 0.0, 'radius_effective': 50.0,

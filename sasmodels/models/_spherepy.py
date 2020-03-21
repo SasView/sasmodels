@@ -113,3 +113,8 @@ def sesans(z, sld, sld_solvent, radius):
               + dlow2/2.*(1 - dlow2/16.) * log(dlow / (2. + sqrt(4. - dlow2))))
     return g
 sesans.vectorized = True  # sesans accepts an array of z values
+
+demo = dict(scale=1, background=0,
+            sld=6, sld_solvent=1,
+            radius=120,
+            radius_pd=.2, radius_pd_n=45)

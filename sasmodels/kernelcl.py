@@ -421,12 +421,10 @@ class GpuModel(KernelModel):
 
     def __init__(self, source, model_info, dtype=generate.F32, fast=False):
         # type: (Dict[str,str], ModelInfo, np.dtype, bool) -> None
-        #print("create model", id(self))
         self.info = model_info
         self.source = source
         self.dtype = dtype
         self.fast = fast
-        # TODO: can a model be freed?
 
     def __getstate__(self):
         # type: () -> Tuple[ModelInfo, str, np.dtype, bool]
@@ -489,22 +487,12 @@ class GpuInput(object):
     Call :meth:`release` when complete.  Even if not called directly, the
     buffer will be released when the data object is freed.
     """
-    nq = 0
-    dtype = generate.F32
-    is_2d = False
-    q = None
-    q_b = None
     def __init__(self, q_vectors, dtype=generate.F32):
         # type: (List[np.ndarray], np.dtype) -> None
-        #print("create input", id(self))
         # TODO: Do we ever need double precision q?
         self.nq = q_vectors[0].size
         self.dtype = np.dtype(dtype)
         self.is_2d = (len(q_vectors) == 2)
-        if self.nq == 0:
-            raise ValueError("GpuInput vector length must be greater than zero")
-        if self.is_2d and q_vectors[1].shape != q_vectors[0].shape:
-            raise ValueError("GpuInput vectors must be the same shape")
         # TODO: Stretch input based on get_warp().
         # Not doing it now since warp depends on kernel, which is not known
         # at this point, so instead using 32, which is good on the set of
@@ -532,14 +520,12 @@ class GpuInput(object):
         """
         Free the buffer associated with the q value.
         """
-        #print("release input", id(self))
         if self.q_b is not None:
             self.q_b.release()
             self.q_b = None
 
     def __del__(self):
         # type: () -> None
-        #print("input deleted", id(self))
         self.release()
 
 
@@ -565,12 +551,9 @@ class GpuKernel(Kernel):
     dim = ""  # type: str
     #: Calculation results, updated after each call to :meth:`_call_kernel`.
     result = None  # type: np.ndarray
-    q_input = None # type: GpuInput
-    _result_b = None # type: cl.Bufferj
 
     def __init__(self, model, q_vectors):
         # type: (GpuModel, List[np.ndarray]) -> None
-        #print("create kernel", id(self))
         dtype = model.dtype
         self.q_input = GpuInput(q_vectors, dtype)
         self._model = model
@@ -656,15 +639,11 @@ class GpuKernel(Kernel):
         """
         Release resources associated with the kernel.
         """
-        #print("release kernel", id(self))
-        if self.q_input is not None:
-            self.q_input.release()
-            self.q_input = None
+        self.q_input.release()
         if self._result_b is not None:
             self._result_b.release()
             self._result_b = None
 
     def __del__(self):
         # type: () -> None
-        #print("delete kernel", id(self))
         self.release()

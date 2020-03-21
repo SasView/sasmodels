@@ -94,5 +94,8 @@ def random():
     )
     return pars
 
+# parameters for demo
+demo = dict(scale=1.0, background=0.001, rg=60.0)
+
 # parameters for unit tests
 tests = [[{'rg' : 31.5}, 0.005, 0.992756]]

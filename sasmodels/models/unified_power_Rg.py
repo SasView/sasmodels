@@ -142,7 +142,6 @@ def random():
     pars.update(("G%d"%(k+1), v) for k, v in enumerate(G))
     return pars
 
-# multi-shell models want demo parameters
 demo = dict(
     level=2,
     rg=[15.8, 21],

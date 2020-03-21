@@ -219,7 +219,7 @@ class BoltzmannDispersion(Dispersion):
 # dispersion name -> disperser lookup table.
 # Maintain order since this is used by sasview GUI to order the options in
 # the dispersion type combobox.
-DISTRIBUTIONS = OrderedDict((d.type, d) for d in (
+MODELS = OrderedDict((d.type, d) for d in (
     RectangleDispersion,
     UniformDispersion,
     ArrayDispersion,
@@ -228,8 +228,6 @@ DISTRIBUTIONS = OrderedDict((d.type, d) for d in (
     SchulzDispersion,
     BoltzmannDispersion
 ))
-# CRUFT: deprecated old name
-MODELS = DISTRIBUTIONS
 
 SAS_WEIGHTS_PATH = "~/.sasview/weights"
 def load_weights(pattern=None):
@@ -250,7 +248,7 @@ def load_weights(pattern=None):
         try:
             #print("loading weights from", filename)
             module = load_custom_kernel_module(filename)
-            DISTRIBUTIONS[module.Dispersion.type] = module.Dispersion
+            MODELS[module.Dispersion.type] = module.Dispersion
         except Exception as exc:
             logging.error(traceback.format_exc(exc))
 
@@ -278,7 +276,7 @@ def get_weights(disperser, n, width, nsigmas, value, limits, relative):
     if disperser == "array":
         raise NotImplementedError("Don't handle arrays through get_weights;"
                                   " use values and weights directly")
-    cls = DISTRIBUTIONS[disperser]
+    cls = MODELS[disperser]
     obj = cls(n, width, nsigmas)
     v, w = obj.get_weights(value, limits[0], limits[1], relative)
     return v, w/np.sum(w)

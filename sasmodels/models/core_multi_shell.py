@@ -146,3 +146,15 @@ def profile(sld_core, radius, sld_solvent, n, sld, thickness):
     rho.append(sld_solvent)
 
     return np.asarray(z), np.asarray(rho)
+
+demo = dict(sld_core=6.4,
+            radius=60,
+            sld_solvent=6.4,
+            n=2,
+            sld=[2.0, 3.0],
+            thickness=20,
+            thickness1_pd=0.3,
+            thickness2_pd=0.3,
+            thickness1_pd_n=10,
+            thickness2_pd_n=10,
+           )

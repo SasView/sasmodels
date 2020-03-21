@@ -173,6 +173,18 @@ def random():
     )
     return pars
 
+
+demo = dict(scale=1, background=0,
+            sld=6, sld_solvent=1,
+            theta=30, phi=15, psi=5,
+            radius_equat_minor=25, radius_equat_major=36, radius_polar=50,
+            radius_equat_minor_pd=0, radius_equat_minor_pd_n=1,
+            radius_equat_major_pd=0, radius_equat_major_pd_n=1,
+            radius_polar_pd=.2, radius_polar_pd_n=30,
+            theta_pd=15, theta_pd_n=45,
+            phi_pd=15, phi_pd_n=1,
+            psi_pd=15, psi_pd_n=1)
+
 q = 0.1
 # april 6 2017, rkh add unit tests
 #     NOT compared with any other calc method, assume correct!

@@ -19,9 +19,9 @@ import traceback
 import numpy as np  # type: ignore
 
 from . import core
-from .compare import (
-    randomize_pars, suppress_pd, make_data, make_engine, get_pars, columnize,
-    constrain_pars, print_models)
+from .compare import (randomize_pars, suppress_pd, make_data,
+                      make_engine, get_pars, columnize,
+                      constrain_pars)
 
 MODELS = core.list_models()
 
@@ -101,7 +101,7 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
 
     is_2d = hasattr(data, 'qx_data')
     model_info = core.load_model_info(name)
-    pars = get_pars(model_info)
+    pars = get_pars(model_info, use_demo=True)
     header = ('\n"Model","%s","Count","%d","Dimension","%s"'
               % (name, N, "2D" if is_2d else "1D"))
     if not mono:
@@ -190,6 +190,13 @@ def print_usage():
           file=sys.stderr)
 
 
+def print_models():
+    """
+    Print the list of available models in columns.
+    """
+    print(columnize(MODELS, indent="  "))
+
+
 def print_help():
     """
     Print usage string, the option description and the list of available models.
@@ -214,13 +221,17 @@ values are "1d100" for 1-D and "2d32" for 2-D.
 CUTOFF is the cutoff value to use for the polydisperse distribution. Weights
 below the cutoff will be ignored.  Use "mono" for monodisperse models.  The
 choice of polydisperse parameters, and the number of points in the distribution
-is set in compare.py defaults for each model.
+is set in compare.py defaults for each model.  Polydispersity is given in the
+"demo" attribute of each model.
 
 PRECISION is the floating point precision to use for comparisons.  If two
 precisions are given, then compare one to the other.  Precision is one of
 fast, single, double for GPU or single!, double!, quad! for DLL.  If no
 precision is given, then use single and double! respectively.
+
+Available models:
 """)
+    print_models()
 
 def main(argv):
     """
@@ -234,12 +245,9 @@ def main(argv):
     try:
         model_list = [target] if target in MODELS else core.list_models(target)
     except ValueError:
-        msg = """\
-Bad model {target}. Use available model or model type.
-  available models: ./sascomp -models
-  model types: all, py, c, double, single, opencl, 1d, 2d, nonmagnetic, magnetic\
-""".format(target=target)
-        print(msg, file=sys.stderr)
+        print('Bad model %s.  Use model type or one of:' % target, file=sys.stderr)
+        print_models()
+        print('model types: all, py, c, double, single, opencl, 1d, 2d, nonmagnetic, magnetic')
         return
     try:
         count = int(argv[1])

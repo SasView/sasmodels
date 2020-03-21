@@ -7,14 +7,13 @@
 *.def
 *.so
 *.obj
-__pycache__
 /doc/_build/
 /doc/api/
 /doc/model/
 /doc/guide/models
+.mplconfig
 /pylint_violations.txt
 /coverage.xml
-/.mplconfig
 /.coverage
 /.project
 /.pydevproject

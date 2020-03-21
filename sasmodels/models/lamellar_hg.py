@@ -114,6 +114,12 @@ def random():
     )
     return pars
 
+demo = dict(scale=1, background=0,
+            length_tail=15, length_head=10,
+            sld=0.4, sld_head=3.0, sld_solvent=6.0,
+            length_tail_pd=0.2, length_tail_pd_n=40,
+            length_head_pd=0.01, length_head_pd_n=40)
+
 #
 tests = [
     [{'scale': 1.0, 'background': 0.0, 'length_tail': 15.0, 'length_head': 10.0,

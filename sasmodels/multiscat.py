@@ -584,6 +584,7 @@ def parse_pars(model, opts):
     seed = np.random.randint(1000000) if opts.random and opts.seed < 0 else opts.seed
     compare_opts = {
         'info': (model.info, model.info),
+        'use_demo': False,
         'seed': seed,
         'mono': True,
         'magnetic': False,

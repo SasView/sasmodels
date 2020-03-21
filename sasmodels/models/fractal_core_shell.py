@@ -115,6 +115,17 @@ def random():
     )
     return pars
 
+demo = dict(scale=0.05,
+            background=0,
+            radius=20,
+            thickness=5,
+            sld_core=3.5,
+            sld_shell=1.0,
+            sld_solvent=6.35,
+            volfraction=0.05,
+            fractal_dim=2.0,
+            cor_length=100.0)
+
 # TODO: why is there an ER function here?
 def ER(radius, thickness):
     """
