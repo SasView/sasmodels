@@ -41,6 +41,7 @@ class KernelModel(object):
         """
         Free resources associated with the kernel.
         """
+        #print("null release model")
         pass
 
 
@@ -177,6 +178,7 @@ class Kernel(object):
         """
         Free resources associated with the kernel instance.
         """
+        #print("null release kernel")
         pass
 
     def _call_kernel(self, call_details, values, cutoff, magnetic,

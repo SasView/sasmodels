@@ -93,13 +93,6 @@ def random():
     )
     return pars
 
-demo = dict(background=0.01,
-            guinier_scale=1.7,
-            lorentz_scale=3.5,
-            rg=104,
-            fractal_dim=2.0,
-            cor_length=16.0)
-
 tests = [[{'guinier_scale': 1.0,
            'lorentz_scale': 1.0,
            'rg': 10.0,
