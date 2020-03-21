@@ -5,9 +5,9 @@ This model fits the Porod function
 
 to the data directly without any need for linearisation (cf. Log I(q) vs Log q).
 
-Here $C = 2\pi (\Delta\rho)^2 S_v$ is the scale factor where $S_v$ is
-the specific surface area (ie, surface area / volume) of the sample, and
-$\Delta\rho$ is the contrast factor.
+In the limit as q $\to \infty$ the scale factor $C = 2\pi (\Delta\rho)^2 S_v$
+where $S_v$ is the specific surface area (ie, surface area / volume) of the sample,
+and $\Delta\rho$ is the contrast factor.
 
 For 2D data: The 2D scattering intensity is calculated in the same way as 1D,
 where the q vector is defined as
@@ -24,7 +24,7 @@ Authorship and Verification
 ----------------------------
 
 * **Author:**
-* **Last Modified by:**
+* **Last Modified by: Steve King, 21Mar2020**
 * **Last Reviewed by:**
 """
 
