@@ -109,6 +109,11 @@ def random():
     )
     return pars
 
+demo = dict(scale=1, background=0,
+            radius=10.0,
+            fractal_dim_mass=1.9,
+            cutoff_length=100.0)
+
 tests = [
 
     # Accuracy tests based on content in test/utest_other_models.py

@@ -107,6 +107,12 @@ The kernel module must set variables defining the kernel meta data:
     cylinder models).  The expression can call C functions, including
     those defined in your model file.
 
+    **DEPRECATED** *demo* is a dictionary of parameter=value defining a set of
+    parameters to use by default when *compare* is called.  Any
+    parameter not set in *demo* gets the initial value from the
+    parameter list.  *demo* is mostly needed to set the default
+    polydispersity values for tests.
+
 A :class:`modelinfo.ModelInfo` structure is constructed from the kernel meta
 data and returned to the caller.
 

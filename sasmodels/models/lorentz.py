@@ -63,5 +63,8 @@ def random():
     )
     return pars
 
+# parameters for demo
+demo = dict(scale=1.0, background=0.0, cor_length=50.0)
+
 # parameters for unit tests
 tests = [[{'cor_length': 250}, 0.01, 0.138931]]

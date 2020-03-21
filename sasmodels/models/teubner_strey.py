@@ -119,4 +119,7 @@ def random():
     )
     return pars
 
+demo = dict(scale=1, background=0, volfraction_a=0.5,
+            sld_a=0.3, sld_b=6.3,
+            d=100.0, xi=30.0)
 tests = [[{}, 0.06, 41.5918888453]]

@@ -191,6 +191,15 @@ def random():
     )
     return pars
 
+demo = dict(scale=1, background=0.1,
+            contrast_factor=10.0,
+            bjerrum_length=7.1,
+            virial_param=12.0,
+            monomer_length=10.0,
+            salt_concentration=0.0,
+            ionization_degree=0.05,
+            polymer_concentration=0.7)
+
 tests = [
 
     # Accuracy tests based on content in test/utest_other_models.py

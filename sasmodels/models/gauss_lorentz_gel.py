@@ -110,6 +110,12 @@ def random():
     return pars
 
 
+demo = dict(scale=1, background=0.1,
+            gauss_scale=100.0,
+            cor_length_static=100.0,
+            lorentz_scale=50.0,
+            cor_length_dynamic=20.0)
+
 tests = [
 
     # Accuracy tests based on content in test/utest_extra_models.py

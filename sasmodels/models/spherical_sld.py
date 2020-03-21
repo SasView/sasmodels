@@ -271,7 +271,6 @@ def profile(n_shells, sld_solvent, sld, thickness,
 
 # TODO: no random parameter generator for spherical SLD.
 
-# Another interesting demo case, again because the default function is boring.
 demo = {
     "n_shells": 5,
     "n_steps": 35.0,

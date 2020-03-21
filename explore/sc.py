@@ -139,6 +139,16 @@ parameters = [["dnn",         "Ang",       220.0, [0.0, inf],  "",            "N
 
 source = ["lib/sas_3j1x_x.c", "lib/sphere_form.c", "lib/gauss150.c", "sc.c"]
 
+demo = dict(scale=1, background=0,
+            dnn=220.0,
+            d_factor=0.06,
+            radius=40.0,
+            sld=3.0,
+            sld_solvent=6.3,
+            theta=0.0,
+            phi=0.0,
+            psi=0.0)
+
 tests = [
     # Accuracy tests based on content in test/utest_extra_models.py, 2d tests added April 10, 2017
     [{}, 0.001, 10.3048],

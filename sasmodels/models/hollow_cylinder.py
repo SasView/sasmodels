@@ -123,8 +123,15 @@ def random():
     )
     return pars
 
-# Tests for structure factor support functions. These functions duplicate
-# the equivalent functions from the C code for the hollow cylinder model.
+# parameters for demo
+demo = dict(scale=1.0, background=0.0, length=400.0, radius=20.0,
+            thickness=10, sld=6.3, sld_solvent=1, theta=90, phi=0,
+            thickness_pd=0.2, thickness_pd_n=9,
+            length_pd=.2, length_pd_n=10,
+            radius_pd=.2, radius_pd_n=9,
+            theta_pd=10, theta_pd_n=5,
+           )
+
 def r_eff(radius, thickness, length):
     """R_eff from excluded volume"""
     radius += thickness

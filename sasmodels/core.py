@@ -16,13 +16,14 @@ import copy
 
 import numpy as np # type: ignore
 
-# NOTE: delay loading of kernelcl, kernelcuda, kerneldll and kernelpy
-# cl and cuda in particular take awhile since they try to establish a
-# connection with the card to verify that the environment works.
 from . import generate
 from . import modelinfo
 from . import product
 from . import mixture
+from . import kernelpy
+from . import kernelcuda
+from . import kernelcl
+from . import kerneldll
 from . import custom
 
 # pylint: disable=unused-import
@@ -328,20 +329,16 @@ def build_model(model_info, dtype=None, platform="ocl"):
 
     # If it is a python model, return it immediately
     if callable(model_info.Iq):
-        from . import kernelpy
         return kernelpy.PyModel(model_info)
 
     numpy_dtype, fast, platform = parse_dtype(model_info, dtype, platform)
     source = generate.make_source(model_info)
     if platform == "dll":
-        from . import kerneldll
         #print("building dll", numpy_dtype)
         return kerneldll.load_dll(source['dll'], model_info, numpy_dtype)
     elif platform == "cuda":
-        from . import kernelcuda
         return kernelcuda.GpuModel(source, model_info, numpy_dtype, fast=fast)
     else:
-        from . import kernelcl
         #print("building ocl", numpy_dtype)
         return kernelcl.GpuModel(source, model_info, numpy_dtype, fast=fast)
 
@@ -356,8 +353,6 @@ def precompile_dlls(path, dtype="double"):
     This can be used when build the windows distribution of sasmodels
     which may be missing the OpenCL driver and the dll compiler.
     """
-    from . import kerneldll
-
     numpy_dtype = np.dtype(dtype)
     if not os.path.exists(path):
         os.makedirs(path)
@@ -414,11 +409,8 @@ def parse_dtype(model_info, dtype=None, platform=None):
         platform = "dll"
 
     # Make sure opencl is available, or fallback to cuda then to dll
-    if platform == "ocl":
-        from . import kernelcl
-        if not kernelcl.use_opencl():
-            from . import kernelcuda
-            platform = "cuda" if kernelcuda.use_cuda() else "dll"
+    if platform == "ocl" and not kernelcl.use_opencl():
+        platform = "cuda" if kernelcuda.use_cuda() else "dll"
 
     # Convert special type names "half", "fast", and "quad"
     fast = (dtype == "fast")
@@ -439,10 +431,8 @@ def parse_dtype(model_info, dtype=None, platform=None):
 
     # Make sure that the type is supported by GPU, otherwise use dll
     if platform == "ocl":
-        from . import kernelcl
         env = kernelcl.environment()
     elif platform == "cuda":
-        from . import kernelcuda
         env = kernelcuda.environment()
     else:
         env = None
