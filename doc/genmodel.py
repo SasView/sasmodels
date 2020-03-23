@@ -323,7 +323,7 @@ def make_figure_cached(model_info, opts):
     # copy from cache or generate and copy to cache
     png_name = figfile(model_info)
     target_fig = joinpath('model', 'img', png_name)
-    cache_fig = joinpath(cache_dir, f"{png_name}.{hash_id}.png")
+    cache_fig = joinpath(cache_dir, ".".join((png_name, hash_id, "png")))
     if exists(cache_fig):
         copy_file(cache_fig, target_fig)
     else:
