@@ -144,16 +144,6 @@ def random():
     )
     return pars
 
-# parameters for demo
-demo = dict(scale=1, background=0,
-            sld=6, sld_solvent=1,
-            radius_bell=40, radius=20, length=400,
-            theta=60, phi=60,
-            radius_pd=.2, radius_pd_n=5,
-            length_pd=.2, length_pd_n=5,
-            theta_pd=15, theta_pd_n=0,
-            phi_pd=15, phi_pd_n=0,
-           )
 q = 0.1
 # 2017-04-06: rkh add unit tests, NOT compared with any other calc method, assume correct!
 # 2019-05-17: pak added barbell/capped cylinder to realspace sampling tests

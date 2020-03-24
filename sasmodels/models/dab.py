@@ -81,5 +81,3 @@ def random():
     )
     pars['scale'] /= pars['cor_length']**3
     return pars
-
-demo = dict(scale=1, background=0, cor_length=50)

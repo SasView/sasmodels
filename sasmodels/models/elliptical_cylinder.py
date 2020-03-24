@@ -129,10 +129,6 @@ radius_effective_modes = [
     "half length", "half min dimension", "half max dimension", "half diagonal",
     ]
 
-demo = dict(scale=1, background=0, radius_minor=100, axis_ratio=1.5, length=400.0,
-            sld=4.0, sld_solvent=1.0, theta=10.0, phi=20, psi=30,
-            theta_pd=10, phi_pd=2, psi_pd=3)
-
 def random():
     """Return a random parameter set for the model."""
     # V = pi * radius_major * radius_minor * length;

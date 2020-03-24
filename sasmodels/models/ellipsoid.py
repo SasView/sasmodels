@@ -174,14 +174,6 @@ def random():
     )
     return pars
 
-demo = dict(scale=1, background=0,
-            sld=6, sld_solvent=1,
-            radius_polar=50, radius_equatorial=30,
-            theta=30, phi=15,
-            radius_polar_pd=.2, radius_polar_pd_n=15,
-            radius_equatorial_pd=.2, radius_equatorial_pd_n=15,
-            theta_pd=15, theta_pd_n=45,
-            phi_pd=15, phi_pd_n=1)
 q = 0.1
 # april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
 qx = q*cos(pi/6.0)

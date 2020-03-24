@@ -109,7 +109,3 @@ def random():
     pars['lorentz_scale'] *= pars['porod_scale'] / pars['peak_pos']**pars['porod_exp']
     #pars['porod_scale'] = 0.
     return pars
-
-demo = dict(scale=1, background=0,
-            porod_scale=1.0e-05, porod_exp=3,
-            lorentz_scale=10, lorentz_length=50, peak_pos=0.1, lorentz_exp=2)
