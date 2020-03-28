@@ -27,20 +27,47 @@ where $S_v$ is the specific surface area (ie, surface area / volume) of the
 material under study, and $\Delta\rho$ is the contrast factor between the two
 phases.
 
-Thus, by extracting the Porod constant from experimental data, and
+Thus, by extracting the Porod Constant from experimental data, and
 knowing the contrast factor between the two phases, one can obtain the specific
 surface area for the material. This can be very useful for example in
 understanding porosoity in materials, particularly when used in conjunction
 with complementary techniques such as BET.
 
-.. Note:: The Invariant analysis panel will compute the Sv if the value of
-    the Porod constant (obtained for example from this fit) is entered into the
-    appropriate place.
+.. Note:: While it is straightforward to calculate the specific surface area,
+    $S_v$ of the material from the Porod Constant returned here, the Invariant
+    analysis panel will also compute the $S_v$ by entering the contrast term
+    and the Porod Constant obtained here into the appropriate entry boxes.
 
+    There are however several caveats regarding obtaining a good experimental
+    value of the Porod Constant.
 
-.. Note:: There are several caveats regarding obtaining a good experimental
-    value of the Porod constant. The first is that you must have sufficiently
-    large $q$ that you are in the Porod region.
+    * First, as it is the scale value, the data **must** be on an absolute scale.
+
+    * Next of course there must be a sufficiently large $q$ range that is in
+      the Porod region to be able to fit. Note that this is not always
+      possible: for example polymer coils in solution will often not reach that
+      limit within typical SAS ranges, nor even the $q$ ranges where the
+      continuum approach of using SLD is even valid.
+
+    * For highly monodisperse systems with limited resolution smearing, the
+      data will contain large oscillations which will make the estimate from
+      this fit unreliable.  It will vary depending on the exact range to fit
+      that is chosen. This is because, numerical integration over a finite
+      number of points cannot properly capture the exact area across these very
+      sharp dips.
+      
+    * Ironically, large resolution smearing, and/or polydispersity smearing
+      will make the value obtained much more consistant and reliable. Thus the
+      problem is less severe for typical real data than for simulated data that
+      does not simulate any resolution smearing.
+
+    * If in any doubt, using several values of $q_{min}$ in the fitting, and
+      comparing with the value obtained in a different manner, is advisable.
+      One such method uses the Porod plot ($I(q)* q^4$ vs. $q^4$).
+      Fitting the highest $q$ (strictly speaking $q^4$) data to a straight line
+      using as much of the high $q$ as fits well to a straight line, yields a
+      slope which is the flat background and an intercept which is the Porod
+      Constant.
 
 For 2D data: The 2D scattering intensity is calculated in the same way as 1D,
 where the q vector is defined as
@@ -57,7 +84,7 @@ Authorship and Verification
 ----------------------------
 
 * **Author:**
-* **Last Modified by: Steve King, 21Mar2020**
+* **Last Modified by: Paul Butler, 28Mar2020**
 * **Last Reviewed by:**
 """
 
