@@ -18,7 +18,7 @@ information left and all scattering is just reflections off the sharp
 interfaces.
 
 In the special case of a two phase system, the power law constant $C$ derived
-from the appropriate $Q$ limit portion of the data is known as the Porod
+from the appropriate $q$ limit portion of the data is known as the Porod
 Constant and can be written as:
 
 .. math:: C = 2\pi (\Delta\rho)^2 S_v
@@ -38,31 +38,31 @@ with complementary techniques such as BET.
     analysis panel will also compute the $S_v$ by entering the contrast term
     and the Porod Constant obtained here into the appropriate entry boxes.
 
-    There are however several caveats regarding obtaining a good experimental
+    There are, however, several caveats regarding obtaining a good experimental
     value of the Porod Constant.
 
     * First, as it is the scale value, the data **must** be on an absolute scale.
 
-    * Next of course there must be a sufficiently large $q$ range that is in
-      the Porod region to be able to fit. Note that this is not always
-      possible: for example polymer coils in solution will often not reach that
+    * Next of course, there must be a sufficiently large $q$ range that is in
+      the Porod region to be able to be fit. But this may not always be
+      possible: for example, polymer coils in solution will often not reach that
       limit within typical SAS ranges, nor even the $q$ ranges where the
-      continuum approach of using SLD is even valid.
+      continuum approach of using the SLD is even valid.
 
     * For highly monodisperse systems with limited resolution smearing, the
       data will contain large oscillations which will make the estimate from
-      this fit unreliable.  It will vary depending on the exact range to fit
-      that is chosen. This is because, numerical integration over a finite
-      number of points cannot properly capture the exact area across these very
-      sharp dips.
+      this fit unreliable.  It will vary depending on the exact range of the fit
+      that is chosen. This is because numerical integration using a finite
+      number of points cannot properly capture the exact area under the data
+      across these very sharp dips.
       
-    * Ironically, large resolution smearing, and/or polydispersity smearing
+    * Ironically, large resolution smearing, and/or polydispersity smearing,
       will make the value obtained much more consistant and reliable. Thus the
       problem is less severe for typical real data than for simulated data that
       does not simulate any resolution smearing.
 
     * If in any doubt, using several values of $q_{min}$ in the fitting, and
-      comparing with the value obtained in a different manner, is advisable.
+      comparing with the value obtained in a different manner, is highly advisable.
       One such method uses the Porod plot ($I(q)* q^4$ vs. $q^4$).
       Fitting the highest $q$ (strictly speaking $q^4$) data to a straight line
       using as much of the high $q$ as fits well to a straight line, yields a
