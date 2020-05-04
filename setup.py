@@ -1,6 +1,8 @@
 import sys
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
+# BRP added to avoid open files:
+from pathlib import Path
 
 class PyTest(TestCommand):
     user_options = [('pytest-args=', 'a', "Arguments to pass to pytest")]
@@ -38,7 +40,7 @@ setup(
     name='sasmodels',
     version=find_version('sasmodels'),
     description="sasmodels package",
-    long_description=open('README.rst').read(),
+    long_description=Path('README.rst').read_text(),
     author="SasView Collaboration",
     author_email="management@sasview.org",
     url="http://www.sasview.org",
