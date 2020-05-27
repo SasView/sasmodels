@@ -940,11 +940,23 @@ def make_model_info(kernel_module):
     info.source = getattr(kernel_module, 'source', [])
     info.c_code = getattr(kernel_module, 'c_code', None)
     info.radius_effective = getattr(kernel_module, 'radius_effective', None)
+    # CRUFT: support old-style ER() for effective radius
+    if info.radius_effective is None:
+        ER = getattr(kernel_module, 'ER', None)
+        if ER is not None:
+            info.radius_effective_modes = ['ER']
+            info.radius_effective = lambda mode, *args: ER(*args)
     # TODO: check the structure of the tests
     info.tests = getattr(kernel_module, 'tests', [])
     info.valid = getattr(kernel_module, 'valid', '')
     info.form_volume = getattr(kernel_module, 'form_volume', None) # type: ignore
     info.shell_volume = getattr(kernel_module, 'shell_volume', None) # type: ignore
+    ## --- untested, so left unsupported for now ---
+    ## CRUFT: support old-style VR for form/shell ratio
+    #if info.shell_volume is None:
+    #    VR = getattr(kernel_module, 'VR')
+    #    if VR is not None:
+    #        info.shell_volume = lambda *args: info.form_volume(*args)*VR(*args)
     info.Iq = getattr(kernel_module, 'Iq', None) # type: ignore
     info.Iqxy = getattr(kernel_module, 'Iqxy', None) # type: ignore
     info.Iqac = getattr(kernel_module, 'Iqac', None) # type: ignore
