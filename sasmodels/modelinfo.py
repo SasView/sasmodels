@@ -11,6 +11,7 @@ from __future__ import print_function
 from copy import copy
 from os.path import abspath, basename, splitext
 import inspect
+import logging
 
 import numpy as np  # type: ignore
 
@@ -31,6 +32,8 @@ else:
     TestValue = Union[float, List[float]]
     TestCondition = Tuple[ParameterSetUser, TestInput, TestValue]
 # pylint: enable=unused-import
+
+logger = logging.getLogger(__name__)
 
 # If MAX_PD changes, need to change the loop macros in kernel_iq.c
 MAX_PD = 5 #: Maximum number of simultaneously polydisperse parameters
@@ -940,23 +943,11 @@ def make_model_info(kernel_module):
     info.source = getattr(kernel_module, 'source', [])
     info.c_code = getattr(kernel_module, 'c_code', None)
     info.radius_effective = getattr(kernel_module, 'radius_effective', None)
-    # CRUFT: support old-style ER() for effective radius
-    if info.radius_effective is None:
-        ER = getattr(kernel_module, 'ER', None)
-        if ER is not None:
-            info.radius_effective_modes = ['ER']
-            info.radius_effective = lambda mode, *args: ER(*args)
     # TODO: check the structure of the tests
     info.tests = getattr(kernel_module, 'tests', [])
     info.valid = getattr(kernel_module, 'valid', '')
     info.form_volume = getattr(kernel_module, 'form_volume', None) # type: ignore
     info.shell_volume = getattr(kernel_module, 'shell_volume', None) # type: ignore
-    ## --- untested, so left unsupported for now ---
-    ## CRUFT: support old-style VR for form/shell ratio
-    #if info.shell_volume is None:
-    #    VR = getattr(kernel_module, 'VR')
-    #    if VR is not None:
-    #        info.shell_volume = lambda *args: info.form_volume(*args)*VR(*args)
     info.Iq = getattr(kernel_module, 'Iq', None) # type: ignore
     info.Iqxy = getattr(kernel_module, 'Iqxy', None) # type: ignore
     info.Iqac = getattr(kernel_module, 'Iqac', None) # type: ignore
@@ -977,6 +968,32 @@ def make_model_info(kernel_module):
 
     if callable(info.Iq) and parameters.has_2d:
         raise ValueError("oriented python models not supported")
+
+    # CRUFT: support old-style ER() for effective radius
+    # radius_effective(mode, ...), if it is present, should be a callable
+    # python function accepting the shape parameters, and have a corresponding
+    # Iq function in python (Fq in python is not suported at this time).
+    # If ER() is present, it might represent a 4.2 model that hasn't been
+    # converted, or it might represent a 4.2+5.0 model with both ER and
+    # radius_effective defined. Unfortunately, we can't easily tell whether
+    # radius_effective is defined in the C sources without loading them,
+    # so just issue a warning if we see ER in a C model.
+    ER = getattr(kernel_module, 'ER', None)
+    if ER is not None:
+        if callable(info.Iq) and info.radius_effective is None:
+            # TODO: deprecate ER() once sasview 4.2 is end of life.
+            info.radius_effective_modes = ['ER']
+            info.radius_effective = lambda mode, *args: ER(*args)
+        else:
+            logger.warn(
+                "ER(...) function ignored. Using radius_effective(mode, ...)"
+                " instead if it exists.")
+    ## --- untested, so left unsupported for now ---
+    ## CRUFT: support old-style VR for form/shell ratio
+    #if info.shell_volume is None:
+    #    VR = getattr(kernel_module, 'VR')
+    #    if VR is not None:
+    #        info.shell_volume = lambda *args: info.form_volume(*args)*VR(*args)
 
     info.lineno = {}
     _find_source_lines(info, kernel_module)
