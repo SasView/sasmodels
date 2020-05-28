@@ -280,9 +280,9 @@ def _loops(parameters,    # type: np.ndarray
                 # Update value and norm.
                 total += weight * Iq
                 weight_norm += weight
-                shell, form = form_volume()
-                weighted_form += weight * form
-                weighted_shell += weight * shell
+                unweighted_shell, unweighted_form = form_volume()
+                weighted_shell += weight * unweighted_shell
+                weighted_form += weight * unweighted_form
                 weighted_radius += weight * form_radius()
 
     result = np.hstack((total, weight_norm, weighted_form, weighted_shell, weighted_radius))
