@@ -115,15 +115,6 @@ def random():
     )
     return pars
 
-# TODO: why is there an ER function here?
-def ER(radius, thickness):
-    """
-        Equivalent radius
-        @param radius: core radius
-        @param thickness: shell thickness
-    """
-    return radius + thickness
-
 #tests = [[{'radius': 20.0, 'thickness': 10.0}, 'ER', 30.0],
 tests = [
     # At some point the SasView 3.x test result was deemed incorrect.  The
