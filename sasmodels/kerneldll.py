@@ -256,25 +256,17 @@ def make_dll(source, model_info, dtype=F64):
         dtype = F64  # Force 64-bit dll.
     # Note: dtype may be F128 for long double precision.
 
-    # TOOD: Tag each dll with the hash of the source to avoid collisions.
     # TODO: Deal with ever-growing ~/.sasmodels/compiled_models.
     # TODO: Is the GPU model cache growing without bound?
-    if model_info.filename is None:
-        model_file = model_info.id + "_" + generate.tag_source(source)
-    else:
-        # Don't need to tag models which have an associated file since the
-        # timestamps on the dependencies will let us know they need to be
-        # regenerated.
-        model_file = model_info.id
+    # Tag model name with hash so any change to the model or the wrapper
+    # will generate a new dll. Need to tag with dtype as well because
+    # double has not yet been converted to the target type in the source.
+    # Don't use time stamps for caching since they are not reliable, especially
+    # when multiple versions of the application are installed.
+    model_file = model_info.id + "_" + generate.tag_source(source)
     dll = dll_path(model_file, dtype)
 
     if not os.path.exists(dll):
-        need_recompile = True
-    else:
-        dll_time = os.path.getmtime(dll)
-        newest_source = generate.dll_timestamp(model_info)
-        need_recompile = dll_time < newest_source
-    if need_recompile:
         # Make sure the DLL path exists.
         if not os.path.exists(SAS_DLL_PATH):
             os.makedirs(SAS_DLL_PATH)
