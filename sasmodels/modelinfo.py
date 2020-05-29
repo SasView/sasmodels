@@ -975,17 +975,21 @@ def make_model_info(kernel_module):
     # Iq function in python (Fq in python is not suported at this time).
     # If ER() is present, it might represent a 4.2 model that hasn't been
     # converted, or it might represent a 4.2+5.0 model with both ER and
-    # radius_effective defined. Unfortunately, we can't easily tell whether
+    # radius_effective defined. Unfortunately we can't easily tell whether
     # radius_effective is defined in the C sources without loading them,
     # so just issue a warning if we see ER in a C model.
     ER = getattr(kernel_module, 'ER', None)
     if ER is not None:
         if callable(info.Iq) and info.radius_effective is None:
-            # TODO: deprecate ER() once sasview 4.2 is end of life.
             info.radius_effective_modes = ['ER']
             info.radius_effective = lambda mode, *args: ER(*args)
+            # TODO: uncomment the following for the sasview 4.3 release
+            #logger.warning(
+            #    "ER(...) deprecated. Replace with radius_effective(mode, ...)."
+            #    " See plugin model docs for details."
+            #)
         else:
-            logger.warn(
+            logger.warning(
                 "ER(...) function ignored. Using radius_effective(mode, ...)"
                 " instead if it exists.")
     ## --- untested, so left unsupported for now ---
