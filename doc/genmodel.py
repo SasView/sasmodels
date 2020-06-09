@@ -45,6 +45,7 @@ from os.path import basename, dirname, realpath, join as joinpath, exists
 import math
 import re
 import shutil
+import argparse
 
 # CRUFT: python 2.7 backport of makedirs(path, exist_ok=False)
 if sys.version_info[0] >= 3:
@@ -72,6 +73,11 @@ try:
     from sasmodels.modelinfo import ModelInfo
 except ImportError:
     pass
+
+# Destination directory for model docs
+#ROOT = dirname(dirname(realpath(__file__)))
+#TARGET_DIR = joinpath(ROOT, "doc", "model")
+TARGET_DIR = "model" # relative to current path
 
 def plot_1d(model, opts, ax):
     # type: (KernelModel, Dict[str, Any], Axes) -> None
@@ -182,8 +188,8 @@ def make_figure(model_info, opts):
         plot_profile_inset(model_info, ax1d)
 
     # Save image in model/img
-    makedirs(joinpath('model', 'img'), exist_ok=True)
-    path = joinpath('model', 'img', figfile(model_info))
+    makedirs(joinpath(TARGET_DIR, 'img'), exist_ok=True)
+    path = joinpath(TARGET_DIR, 'img', figfile(model_info))
     plt.savefig(path, bbox_inches='tight')
     plt.close(fig)
     #print("figure saved in",path)
@@ -205,21 +211,22 @@ def link_sources(model_info):
     """
     Add link to model sources from the doc tree.
     """
-
-    # List source files in reverse order of dependency.
-    model_file = basename(model_info.filename)
-    sources = list(reversed(model_info.source + [model_file]))
+    # List source files in order of dependency.
+    if model_info.source:
+        sources = generate.model_sources(model_info)
+    else:
+        sources = [model_info.basefile]
 
     # Copy files to src dir under models directory.  Need to do this
     # because sphinx can't link to an absolute path.
-    root = dirname(dirname(realpath(__file__)))
-    src = joinpath(root, "sasmodels", "models")
-    dst = joinpath(root, "doc", "model", "src")
+    dst = joinpath(TARGET_DIR, "src")
     for path in sources:
-        copy_if_newer(joinpath(src, path), joinpath(dst, path))
+        copy_if_newer(path, joinpath(dst, basename(path)))
 
-    # Link to local copy of the files
-    downloads = [":download:`%s <src/%s>`"%(path, path) for path in sources]
+    # Link to local copy of the files in reverse order of dependency
+    targets = [basename(path) for path in sources]
+    downloads = [":download:`%s <src/%s>`"%(filename, filename)
+                 for filename in reversed(targets)]
 
     # Could do syntax highlighting on the model files by creating a rst file
     # beside each source file named containing source file with
@@ -322,7 +329,7 @@ def make_figure_cached(model_info, opts):
 
     # copy from cache or generate and copy to cache
     png_name = figfile(model_info)
-    target_fig = joinpath('model', 'img', png_name)
+    target_fig = joinpath(TARGET_DIR, 'img', png_name)
     cache_fig = joinpath(cache_dir, ".".join((png_name, hash_id, "png")))
     if exists(cache_fig):
         copy_file(cache_fig, target_fig)
@@ -355,14 +362,15 @@ def process_model(py_file, force=False):
 
     If *force* then generate the rst file regardless of time stamps.
     """
-    rst_file = joinpath('model', basename(py_file).replace('.py', '.rst'))
+    rst_file = joinpath(TARGET_DIR, basename(py_file).replace('.py', '.rst'))
     if not (force or newer(py_file, rst_file) or newer(__file__, rst_file)):
         #print("skipping", rst_file)
-        return
+        return rst_file
 
     # Load the model file
-    model_name = basename(py_file)[:-3]
-    model_info = core.load_model_info(model_name)
+    model_info = core.load_model_info(py_file)
+    if model_info.basefile is None:
+        model_info.basefile = py_file
 
     # Plotting ranges and options
     PLOT_OPTS = {
@@ -383,29 +391,74 @@ def process_model(py_file, force=False):
     # Generate the RST file and the figure.  Order doesn't matter.
     print("generating", rst_file)
     gen_docs(model_info, rst_file)
-    make_figure_cached(model_info, PLOT_OPTS)
+    if force:
+        make_figure(model_info, PLOT_OPTS)
+    else:
+        make_figure_cached(model_info, PLOT_OPTS)
+    return rst_file
 
-def main(cpus=None):
+def run_sphinx(rst_files, output):
+    """
+    Use sphinx to build *rst_files*, storing the html in *output*.
+    """
+    conf_dir = dirname(realpath(__file__))
+    with open(joinpath(TARGET_DIR, 'index.rst'), 'w') as fid:
+        fid.write(".. toctree::\n\n")
+        for path in rst_files:
+            fid.write(f"    {basename(path)}\n")
+    command = [
+        sys.executable,
+        "-m", "sphinx",
+        "-c", conf_dir,
+        TARGET_DIR,
+        output,
+    ]
+    os.system(" ".join(repr(s) for s in command))
+
+def main():
     """
     Process files listed on the command line via :func:`process_model`.
-
-    *cpus* indicates the number of parallel processes. Use *cpus=0* for one
-    process per cpu or *cpus=1* for no multiprocessing. If *cpus=None* then
-    use the value in SASMODELS_BUILD_CPUS from the environment, or 0 if no
-    environment variable is found.
     """
     import matplotlib
     matplotlib.use('Agg')
 
-    if cpus is None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--cpus", type=int, default=-1, metavar="n",
+        help="number of cpus to use in build")
+    parser.add_argument("-f", "--force", action="store_true",
+        help="force rebuild (serial only)")
+    parser.add_argument("-r", "--rst", default="model", metavar="path",
+        help="path for the rst files")
+    parser.add_argument("-b", "--build", default="html", metavar="path",
+        help="path for the html files (if sphinx build)")
+    parser.add_argument("-s", "--sphinx", action="store_true",
+        help="build html docs for the model files")
+    parser.add_argument("files", nargs="+",
+        help="model files ")
+    args = parser.parse_args()
+
+    global TARGET_DIR
+    TARGET_DIR = os.path.expanduser(args.rst)
+    if not os.path.exists(TARGET_DIR) and not args.sphinx:
+        print(f"build directory '{TARGET_DIR}' does not exist")
+        sys.exit(1)
+    os.makedirs(TARGET_DIR, exist_ok=True)
+
+    if args.cpus == -1:
         cpus = int(os.environ.get("SASMODELS_BUILD_CPUS", "0"))
-    if cpus != 1:
+    else:
+        cpus = args.cpus
+    if cpus != 1 and not args.force:
         import multiprocessing
         p = multiprocessing.Pool(cpus if cpus > 0 else None)
-        p.map(process_model, sys.argv[1:])
+        rst_files = p.map(process_model, args.files)
     else:
-        for py_file in sys.argv[1:]:
-            process_model(py_file)
+        rst_files = [process_model(py_file, args.force)
+                     for py_file in args.files]
+
+    if args.sphinx:
+        run_sphinx(rst_files, args.build)
+
 
 if __name__ == "__main__":
     main()
