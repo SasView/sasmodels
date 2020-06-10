@@ -1,8 +1,6 @@
 import sys
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
-# BRP added to avoid open files:
-from pathlib import Path
 
 class PyTest(TestCommand):
     user_options = [('pytest-args=', 'a', "Arguments to pass to pytest")]
@@ -31,7 +29,11 @@ def find_version(package):
                 return version[1:-1]
     raise RuntimeError("Could not read version from %s/__init__.py"%package)
 
+
 install_requires = ['numpy', 'scipy']
+
+with open('README.rst') as fid:
+    long_description = fid.read()
 
 if sys.platform=='win32' or sys.platform=='cygwin':
     install_requires.append('tinycc')
@@ -40,7 +42,7 @@ setup(
     name='sasmodels',
     version=find_version('sasmodels'),
     description="sasmodels package",
-    long_description=Path('README.rst').read_text(),
+    long_description=long_description,
     author="SasView Collaboration",
     author_email="management@sasview.org",
     url="http://www.sasview.org",

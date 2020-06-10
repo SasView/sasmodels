@@ -405,7 +405,7 @@ def run_sphinx(rst_files, output):
     with open(joinpath(TARGET_DIR, 'index.rst'), 'w') as fid:
         fid.write(".. toctree::\n\n")
         for path in rst_files:
-            fid.write(f"    {basename(path)}\n")
+            fid.write("    %s\n"%basename(path))
     command = [
         sys.executable,
         "-m", "sphinx",

@@ -181,9 +181,6 @@ except ImportError:
     pass
 # pylint: enable=unused-import
 
-# BRP added to avoid open files:
-from pathlib import Path
-
 logger = logging.getLogger(__name__)
 
 # jitter projection to use in the kernel code.  See explore/jitter.py
@@ -902,6 +899,10 @@ def _add_source(source, code, path, lineno=1):
     source.append('#line %d "%s"' % (lineno, path))
     source.append(code)
 
+def read_text(f):
+    with open(f) as fid:
+        return fid.read()
+
 def make_source(model_info):
     # type: (ModelInfo) -> Dict[str, str]
     """
@@ -932,7 +933,7 @@ def make_source(model_info):
     # Load templates and user code
     kernel_header = load_template('kernel_header.c')
     kernel_code = load_template('kernel_iq.c')
-    user_code = [(f, Path(f).read_text()) for f in model_sources(model_info)]
+    user_code = [(f, read_text(f)) for f in model_sources(model_info)]
 
     # Build initial sources
     source = []
