@@ -992,8 +992,8 @@ def make_source(model_info):
 
     # Validity check macro.  Putting it here so that line number
     # jiggering is short-lived.
-    source.append('#line %d "%s"'
-                  % (model_info.lineno.get('valid', 1), model_info.basefile))
+    _add_source(source, valid, model_info.basefile,
+                lineno=model_info.lineno.get('valid', 1))
     source.append(valid)
 
     # Define the parameter table
