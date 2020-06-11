@@ -1,0 +1,40 @@
+name: Test
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  test:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+        python-version: [3.6, 3.7, 3.8]
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: setup apt dependencies
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: |
+        sudo apt-get update
+        sudo apt-get install opencl-headers ocl-icd-opencl-dev
+
+    - name: Install dependencies
+      run: |
+        python -m pip install numpy scipy matplotlib docutils setuptools pytest sphinx bumps unittest-xml-reporting tinycc pyopencl
+
+    - name: Test with pytest
+      run: |
+        # other CI uses the following, but `setup.py test` is a deprecated way
+        # of running tests
+        # python setup.py test --pytest-args -v
+
+        pytest -v
