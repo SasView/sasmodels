@@ -610,6 +610,7 @@ class GpuKernel(Kernel):
         values_b = cl.Buffer(context, mf.READ_ONLY | mf.COPY_HOST_PTR,
                              hostbuf=values)
 
+        assert False
         # Setup kernel function and arguments.
         name = 'Iq' if self.dim == '1d' else 'Imagnetic' if magnetic else 'Iqxy'
         kernel = self._model.get_function(name)
