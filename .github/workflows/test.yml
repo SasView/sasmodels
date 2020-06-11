@@ -29,7 +29,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install numpy scipy matplotlib docutils setuptools pytest sphinx bumps unittest-xml-reporting tinycc pyopencl
+        python -m pip install numpy scipy matplotlib docutils setuptools pytest sphinx bumps unittest-xml-reporting tinycc
+        # is pyopencl required?
 
     - name: Test with pytest
       run: |
