@@ -51,7 +51,9 @@ def pytest_pycollect_makeitem(collector, name, obj):
         tests = []
         for number, yielded in enumerate(obj()):
             index, call, args = split_yielded_test(yielded, number)
-            test = pytest.Function(name+index, collector, args=args, callobj=call)
+            description = getattr(call, 'description', name+index)
+            test = pytest.Function.from_parent(
+                collector, name=description, args=args, callobj=call)
             tests.append(test)
         return tests
 
