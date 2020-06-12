@@ -21,6 +21,9 @@ import inspect
 import pytest
 from _pytest.unittest import TestCaseFunction
 
+# CRUFT: pytest<5.4 does not have from_parent class method.
+function_test = getattr(pytest.Function, 'from_parent', pytest.Function)
+
 def pytest_pycollect_makeitem(collector, name, obj):
     """
     Convert test generator into list of function tests so that pytest doesn't
@@ -52,8 +55,8 @@ def pytest_pycollect_makeitem(collector, name, obj):
         for number, yielded in enumerate(obj()):
             index, call, args = split_yielded_test(yielded, number)
             description = getattr(call, 'description', name+index)
-            test = pytest.Function.from_parent(
-                collector, name=description, args=args, callobj=call)
+            test = function_test(
+                parent=collector, name=description, args=args, callobj=call)
             tests.append(test)
         return tests
 
