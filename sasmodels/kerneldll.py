@@ -93,7 +93,7 @@ from .generate import F16, F32, F64
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, Callable, Any
+    from typing import Tuple, Callable, Any, List
     from .modelinfo import ModelInfo
     from .details import CallDetails
 except ImportError:

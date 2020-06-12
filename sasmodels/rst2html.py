@@ -29,6 +29,13 @@ from docutils.core import publish_parts
 from docutils.writers.html4css1 import HTMLTranslator
 from docutils.nodes import SkipNode
 
+# pylint: disable=unused-import
+try:
+    from typing import Tuple
+except ImportError:
+    pass
+# pylint: enable=unused-import
+
 def rst2html(rst, part="whole", math_output="mathjax"):
     r"""
     Convert restructured text into simple html.

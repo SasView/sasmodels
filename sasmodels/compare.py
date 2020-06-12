@@ -48,7 +48,7 @@ from .generate import FLOAT_RE, set_integration_size
 
 # pylint: disable=unused-import
 try:
-    from typing import Optional, Dict, Any, Callable, Tuple
+    from typing import Optional, Dict, Any, Callable, Tuple, List
 except ImportError:
     pass
 else:
@@ -320,7 +320,6 @@ def parameter_range(p, v):
 
 def _randomize_one(model_info, name, value):
     # type: (ModelInfo, str, float) -> float
-    # type: (ModelInfo, str, str) -> str
     """
     Randomize a single parameter.
     """
@@ -392,7 +391,7 @@ def _randomize_one(model_info, name, value):
     return np.random.uniform(*limits)
 
 def _random_pd(model_info, pars, is2d):
-    # type: (ModelInfo, Dict[str, float]) -> None
+    # type: (ModelInfo, Dict[str, float], bool) -> None
     """
     Generate a random dispersity distribution for the model.
 
@@ -488,7 +487,7 @@ def _random_pd(model_info, pars, is2d):
 
 
 def randomize_pars(model_info, pars, maxdim=np.inf, is2d=False):
-    # type: (ModelInfo, ParameterSet, float) -> ParameterSet
+    # type: (ModelInfo, ParameterSet, float, bool) -> ParameterSet
     """
     Generate random values for all of the parameters.
 
@@ -518,7 +517,7 @@ def limit_dimensions(model_info, pars, maxdim):
             pars[p.name] = maxdim*10**np.random.uniform(-3, 0)
 
 def _swap_pars(pars, a, b):
-    # type: (ModelInfo, str, str) -<> None
+    # type: (ModelInfo, str, str) -> None
     """
     Swap polydispersity and magnetism when swapping parameters.
 
@@ -632,7 +631,7 @@ def parlist(model_info, pars, is2d):
 
 def _format_par(name, value=0., pd=0., n=0, nsigma=3., pdtype='gaussian',
                 relative_pd=False, M0=0., mphi=0., mtheta=0.):
-    # type: (str, float, float, int, float, str) -> str
+    # type: (str, float, float, int, float, str, bool, float, float, float) -> str
     line = "%s: %g"%(name, value)
     if pd != 0.  and n != 0:
         if relative_pd:
@@ -686,7 +685,7 @@ def time_calculation(calculator, pars, evals=1):
     return value, average_time
 
 def make_data(opts):
-    # type: (Dict[str, Any], float) -> Tuple[Data, np.ndarray]
+    # type: (Dict[str, Any]) -> (Data, np.ndarray)
     """
     Generate an empty dataset, used with the model to set Q points
     and resolution.
@@ -747,7 +746,7 @@ def eval_ctypes(model_info, data, dtype='double', cutoff=0.):
     return calculator
 
 def make_engine(model_info, data, dtype, cutoff, ngauss=0):
-    # type: (ModelInfo, Data, str, float) -> Calculator
+    # type: (ModelInfo, Data, str, float, int) -> Calculator
     """
     Generate the appropriate calculation engine for the given datatype.
 
@@ -783,7 +782,7 @@ def _show_invalid(data, theory):
 
 
 def compare(opts, limits=None, maxdim=None):
-    # type: (Dict[str, Any], Optional[Tuple[float, float]]) -> Tuple[float, float]
+    # type: (Dict[str, Any], Optional[Tuple[float, float]], Optional[float]) -> (float, float)
     """
     Preform a comparison using options from the command line.
 
@@ -843,15 +842,15 @@ def compare(opts, limits=None, maxdim=None):
     return limits
 
 def plot_profile(model_info, label='base', **args):
-    # type: (ModelInfo, List[Tuple[float, np.ndarray, np.ndarray]]) -> None
+    # type: (ModelInfo, List[Tuple[float, np.ndarray, np.ndarray]], float) -> None
     """
     Plot the profile returned by the model profile method.
 
     *model_info* defines model parameters, etc.
 
-    *mesh* is a list of tuples containing (*value*, *dispersity*, *weights*)
-    for each parameter, where (*dispersity*, *weights*) pairs are the
-    distributions to be plotted.
+    *label* is the legend label for the plotted line.
+
+    *args* are *parameter=value* pairs for the model profile function.
     """
     import pylab
 
@@ -872,7 +871,7 @@ def plot_profile(model_info, label='base', **args):
 
 
 def run_models(opts, verbose=False):
-    # type: (Dict[str, Any]) -> Dict[str, Any]
+    # type: (Dict[str, Any], bool) -> Dict[str, Any]
     """
     Process a parameter set, return calculation results and times.
     """
@@ -949,7 +948,7 @@ def _print_stats(label, err):
 
 
 def plot_models(opts, result, limits=None, setnum=0):
-    # type: (Dict[str, Any], Dict[str, Any], Optional[Tuple[float, float]]) -> Tuple[float, float]
+    # type: (Dict[str, Any], Dict[str, Any], Optional[Tuple[float, float]], int) -> Tuple[float, float]
     """
     Plot the results from :func:`run_model`.
     """
@@ -1110,7 +1109,7 @@ def columnize(items, indent="", width=None):
 
 
 def get_pars(model_info):
-    # type: (ModelInfo, bool) -> ParameterSet
+    # type: (ModelInfo) -> ParameterSet
     """
     Extract default parameters from the model definition.
     """

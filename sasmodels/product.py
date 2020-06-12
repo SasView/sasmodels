@@ -125,7 +125,7 @@ from .details import make_details
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, Callable, Union
+    from typing import Tuple, Callable, Union, List, Optional
 except ImportError:
     pass
 else:
@@ -291,7 +291,7 @@ def _intermediates(
         volume_ratio,     # type: float
         radius_effective, # type: float
         beta_mode,        # type: bool
-        P_intermediate,   # type: Optional[Callable[[], OrderedDict]
+        P_intermediate,   # type: Optional[Callable[[], OrderedDict]]
     ):
     # type: (...) -> OrderedDict[str, Union[np.ndarray, float]]
     """

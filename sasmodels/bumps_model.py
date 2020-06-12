@@ -21,7 +21,7 @@ from .direct_model import DataMixin
 
 # pylint: disable=unused-import
 try:
-    from typing import Dict, Union, Tuple, Any
+    from typing import Dict, Union, Tuple, Any, Optional
     from .data import Data1D, Data2D
     from .kernel import KernelModel
     from .modelinfo import ModelInfo
@@ -139,7 +139,7 @@ class Experiment(DataMixin):
     """
     _cache = None # type: Dict[str, np.ndarray]
     def __init__(self, data, model, cutoff=1e-5, name=None, extra_pars=None):
-        # type: (Data, Model, float) -> None
+        # type: (Data, Model, float, Optional[str], Optional[Dict[str, Parameter]]) -> None
         # Allow resolution function to define fittable parameters.  We do this
         # by creating reference parameters within the resolution object rather
         # than modifying the object itself to use bumps parameters.  We need

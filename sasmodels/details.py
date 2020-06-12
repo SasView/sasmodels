@@ -308,7 +308,7 @@ def convert_magnetism(parameters, values):
 
 
 def dispersion_mesh(model_info, mesh):
-    # type: (ModelInfo) -> Tuple[List[np.ndarray], List[np.ndarray]]
+    # type: (ModelInfo, List[Tuple[float, np.ndarray, np.ndarray]]) -> Tuple[List[np.ndarray], List[np.ndarray]]
     """
     Create a mesh grid of dispersion parameters and weights.
 

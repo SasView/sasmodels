@@ -13,6 +13,14 @@ import sys
 import os
 from os.path import basename, splitext, join as joinpath, exists, dirname
 
+# pylint: disable=unused-import
+try:
+    from typing import Dict, List
+except ImportError:
+    pass
+# pylint: enable=unused-import
+
+
 try:
     # Python 3.5 and up
     from importlib.util import spec_from_file_location, module_from_spec  # type: ignore
@@ -42,7 +50,7 @@ _MODULE_CACHE = {} # type: Dict[str, Tuple("module", int)]
 _MODULE_DEPENDS = {} # type: Dict[str, List[str]]
 _MODULE_DEPENDS_STACK = [] # type: List[str]
 def load_custom_kernel_module(path):
-    # type: str -> "module"
+    # type: (str) -> "module"
     """load SAS kernel from *path* as *sasmodels.custom.modelname*"""
     # Pull off the last .ext if it exists; there may be others
     name = basename(splitext(path)[0])
@@ -86,7 +94,7 @@ def load_custom_kernel_module(path):
     return _MODULE_CACHE[path][0]
 
 def need_reload(path):
-    # type: str -> bool
+    # type: (str) -> bool
     """
     Return True if any path dependencies have a timestamp newer than the time
     when the path was most recently loaded.

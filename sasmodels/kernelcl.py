@@ -88,7 +88,7 @@ from .kernel import KernelModel, Kernel
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, Callable, Any
+    from typing import Tuple, Callable, Any, List, Dict
     from .modelinfo import ModelInfo
     from .details import CallDetails
 except ImportError:
@@ -110,7 +110,7 @@ def quote_path(v):
 
 
 def fix_pyopencl_include():
-    # type: (None) -> None
+    # type: () -> None
     """
     Monkey patch pyopencl to allow spaces in include file path.
     """

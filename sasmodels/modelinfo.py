@@ -221,6 +221,7 @@ def prefix_parameter(par, prefix):
     new_par = copy(par)
     new_par.name = prefix + par.name
     new_par.id = prefix + par.id
+    return new_par
 
 def suffix_parameter(par, suffix):
     # type: (Parameter, str) -> Parameter
@@ -231,6 +232,7 @@ def suffix_parameter(par, suffix):
     # If name has the form x[n], replace with x_suffix[n]
     new_par.name = par.id + suffix + par.name[len(par.id):]
     new_par.id = par.id + suffix
+    return new_par
 
 class Parameter(object):
     """
@@ -490,11 +492,11 @@ class ParameterTable(object):
         self.check_angles()
 
     def set_zero_background(self):
+        # type: () -> None
         """
         Set the default background to zero for this model.  This is done for
         structure factor models.
         """
-        # type: () -> None
         # Make sure background is the second common parameter.
         assert self.common_parameters[1].id == "background"
         self.common_parameters[1].default = 0.0

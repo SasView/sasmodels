@@ -34,7 +34,7 @@ from .product import RADIUS_MODE_ID
 
 # pylint: disable=unused-import
 try:
-    from typing import Optional, Dict, Tuple
+    from typing import Optional, Dict, Tuple, List, Callable
 except ImportError:
     pass
 else:
@@ -125,7 +125,7 @@ def get_mesh(model_info, values, dim='1d', mono=False):
 
 
 def _get_par_weights(parameter, values, active=True):
-    # type: (Parameter, Dict[str, float]) -> Tuple[float, np.ndarray, np.ndarray]
+    # type: (Parameter, Dict[str, float], bool) -> Tuple[float, np.ndarray, np.ndarray]
     """
     Generate the distribution for parameter *name* given the parameter values
     in *pars*.
@@ -286,7 +286,7 @@ class DataMixin(object):
         self._kernel = None
         self.Iq, self.dIq, self.index = Iq, dIq, index
         self.resolution = res
-        self.results = None  # type: Optional[Callable[[], OrderedDict]
+        self.results = None  # type: Optional[Callable[[], OrderedDict]]
 
     def _set_data(self, Iq, noise=None):
         # type: (np.ndarray, Optional[float]) -> None

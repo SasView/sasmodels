@@ -91,7 +91,7 @@ from .kernel import KernelModel, Kernel
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, Callable, Any
+    from typing import Tuple, Callable, Any, Dict, List
     from .modelinfo import ModelInfo
     from .details import CallDetails
 except ImportError:
@@ -108,7 +108,7 @@ MAX_LOOPS = 2048
 
 
 def use_cuda():
-    # type: None -> bool
+    # type: () -> bool
     """Returns True if CUDA is the default compute engine."""
     sas_opencl = os.environ.get("SAS_OPENCL", "CUDA").lower()
     return HAVE_CUDA and sas_opencl.startswith("cuda")
@@ -116,6 +116,7 @@ def use_cuda():
 
 ENV = None
 def reset_environment():
+    # type: () -> None
     """
     Call to create a new OpenCL context, such as after a change to SAS_OPENCL.
     """

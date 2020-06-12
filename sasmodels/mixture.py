@@ -23,13 +23,13 @@ from .details import make_details
 
 # pylint: disable=unused-import
 try:
-    from typing import List
+    from typing import List, Tuple, Optional, Callable, Any
 except ImportError:
     pass
 # pylint: enable=unused-import
 
 def make_mixture_info(parts, operation='+'):
-    # type: (List[ModelInfo]) -> ModelInfo
+    # type: (List[ModelInfo], str) -> ModelInfo
     """
     Create info block for mixture model.
     """
@@ -184,7 +184,7 @@ class MixtureModel(KernelModel):
 
 
 def _intermediates(q, results):
-    # type: (List[Tuple[Kernel, np.ndarray, Optional[Callable]]]) -> OrderedDict[str, Any]
+    # type: (np.ndarray, List[Tuple[Kernel, np.ndarray, Optional[Callable]]]) -> OrderedDict[str, Any]
     """
     Returns intermediate results for mixture model.
     """

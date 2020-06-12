@@ -13,7 +13,7 @@ from __future__ import division, print_function
 
 # pylint: disable=unused-import
 try:
-    from typing import List
+    from typing import List, Any
 except ImportError:
     pass
 else:

@@ -70,7 +70,7 @@ from . import product
 
 # pylint: disable=unused-import
 try:
-    from typing import List, Iterator, Callable
+    from typing import List, Iterator, Callable, Any, Dict, Tuple
 except ImportError:
     pass
 else:
@@ -417,7 +417,7 @@ def _hide_model_case_from_nose():
     return ModelTestCase
 
 def invalid_pars(partable, pars):
-    # type: (ParameterTable, Dict[str, float])
+    # type: (ParameterTable, Dict[str, float]) -> List[str]
     """
     Return a list of parameter names that are not part of the model.
     """
@@ -580,7 +580,7 @@ def model_tests():
 
 
 def main():
-    # type: (*str) -> int
+    # type: () -> int
     """
     Run tests given is models.
 

@@ -39,7 +39,7 @@ from numpy import sqrt, sin, cos, pi
 
 # pylint: disable=unused-import
 try:
-    from typing import Union, Dict, List, Optional
+    from typing import Union, Dict, List, Optional, Tuple, Callable
 except ImportError:
     pass
 else:
@@ -47,7 +47,7 @@ else:
 # pylint: enable=unused-import
 
 def load_data(filename, index=0):
-    # type: (str) -> Data
+    # type: (str, int) -> Data
     """
     Load data using a sasview loader.
     """
@@ -310,7 +310,7 @@ class Sample(object):
         pass
 
 def empty_data1D(q, resolution=0.0, L=0., dL=0.):
-    # type: (np.ndarray, float) -> Data1D
+    # type: (np.ndarray, float, float, float) -> Data1D
     r"""
     Create empty 1D data using the given *q* as the x value.
 

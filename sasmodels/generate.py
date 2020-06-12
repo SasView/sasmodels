@@ -175,7 +175,7 @@ from .custom import load_custom_kernel_module
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, Sequence, Iterator, Dict
+    from typing import Tuple, Sequence, Iterator, Dict, List
     from .modelinfo import ModelInfo
 except ImportError:
     pass
@@ -1097,7 +1097,7 @@ def make_source(model_info):
 
 
 def _kernels(kernel, call_iq, clear_iq, call_iqxy, clear_iqxy, name):
-    # type: ([str,str], str, str, str) -> List[str]
+    # type: (Dict[str, str], str, str, str, str, str) -> List[str]
     code = kernel[0]
     path = kernel[1].replace('\\', '/')
     iq = [
