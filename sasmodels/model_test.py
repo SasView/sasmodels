@@ -70,12 +70,12 @@ from . import product
 
 # pylint: disable=unused-import
 try:
-    from typing import List, Iterator, Callable, Any, Dict, Tuple
-except ImportError:
-    pass
-else:
+    from typing import List, Iterator, Callable, Any, Dict, Tuple, Union
     from .modelinfo import ParameterTable, ParameterSet, TestCondition, ModelInfo
     from .kernel import KernelModel
+    DType = Union[None, str, np.dtype]
+except ImportError:
+    pass
 # pylint: enable=unused-import
 
 def make_suite(loaders, models):

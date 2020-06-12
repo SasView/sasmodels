@@ -25,11 +25,10 @@ from .kernel import KernelModel, Kernel
 # pylint: disable=unused-import
 try:
     from typing import Union, Callable, List
+    from .details import CallDetails
+    from .modelinfo import ModelInfo
 except ImportError:
     pass
-else:
-    from . import details
-    DType = Union[None, str, np.dtype]
 # pylint: enable=unused-import
 
 logger = logging.getLogger(__name__)
@@ -205,7 +204,7 @@ def _loops(parameters,    # type: np.ndarray
            form_volume,   # type: Callable[[], float]
            form_radius,   # type: Callable[[], float]
            nq,            # type: int
-           call_details,  # type: details.CallDetails
+           call_details,  # type: CallDetails
            values,        # type: np.ndarray
            cutoff,        # type: float
           ):

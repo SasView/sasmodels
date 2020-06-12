@@ -176,6 +176,7 @@ from .custom import load_custom_kernel_module
 # pylint: disable=unused-import
 try:
     from typing import Tuple, Sequence, Iterator, Dict, List
+    from types import ModuleType
     from .modelinfo import ModelInfo
 except ImportError:
     pass
@@ -1136,7 +1137,7 @@ def _kernels(kernel, call_iq, clear_iq, call_iqxy, clear_iqxy, name):
 
 
 def load_kernel_module(model_name):
-    # type: (str) -> module
+    # type: (str) -> ModuleType
     """
     Return the kernel module named in *model_name*.
 

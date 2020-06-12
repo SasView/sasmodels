@@ -27,7 +27,7 @@ from . import custom
 
 # pylint: disable=unused-import
 try:
-    from typing import List, Union, Optional, Any
+    from typing import List, Union, Optional, Any, Tuple
     from .kernel import KernelModel
     from .modelinfo import ModelInfo
 except ImportError:
@@ -376,7 +376,7 @@ def precompile_dlls(path, dtype="double"):
     return compiled_dlls
 
 def parse_dtype(model_info, dtype=None, platform=None):
-    # type: (ModelInfo, str, str) -> (np.dtype, bool, str)
+    # type: (ModelInfo, str, str) -> Tuple[np.dtype, bool, str]
     """
     Interpret dtype string, returning np.dtype, fast flag and platform.
 

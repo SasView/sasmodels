@@ -278,7 +278,7 @@ class GpuEnvironment(object):
         return has_type(dtype)
 
     def compile_program(self, name, source, dtype, fast, timestamp):
-        # type: (str, str, np.dtype, bool, float) -> cl.Program
+        # type: (str, str, np.dtype, bool, float) -> SourceModule
         """
         Compile the program for the device in the given context.
         """

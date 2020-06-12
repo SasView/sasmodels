@@ -31,11 +31,10 @@ except Exception:
 # pylint: disable=unused-import
 try:
     from typing import List, Tuple, Sequence
+    from .modelinfo import ModelInfo, ParameterTable
+    from .kernel import Kernel
 except ImportError:
     pass
-else:
-    from .modelinfo import ModelInfo
-    from .modelinfo import ParameterTable
 # pylint: enable=unused-import
 
 

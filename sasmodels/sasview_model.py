@@ -40,6 +40,7 @@ weights.load_weights()
 try:
     from typing import (Dict, Mapping, Any, Sequence, Tuple, NamedTuple,
                         List, Optional, Union, Callable)
+    from types import ModuleType
     from .modelinfo import ModelInfo, Parameter
     from .kernel import KernelModel
     MultiplicityInfoType = NamedTuple(
@@ -72,7 +73,7 @@ MODELS = {}  # type: Dict[str, SasviewModelType]
 MODEL_BY_PATH = {}  # type: Dict[str, SasviewModelType]
 #: Track modules that we have loaded so we can determine whether the model
 #: has changed since we last reloaded.
-_CACHED_MODULE = {}  # type: Dict[str, "module"]
+_CACHED_MODULE = {}  # type: Dict[str, ModuleType]
 
 def reset_environment():
     # type: () -> None
@@ -463,7 +464,7 @@ class SasviewModel(object):
 
 
     def getProfile(self):
-        # type: () -> (np.ndarray, np.ndarray)
+        # type: () -> Tuple[np.ndarray, np.ndarray]
         """
         Get SLD profile
 
@@ -563,7 +564,7 @@ class SasviewModel(object):
         return deepcopy(self)
 
     def run(self, x=0.0):
-        # type: (Union[float, (float, float), List[float]]) -> float
+        # type: (Union[float, Tuple[float, float], Sequence[float]]) -> float
         """
         Evaluate the model
 
@@ -584,7 +585,7 @@ class SasviewModel(object):
 
 
     def runXY(self, x=0.0):
-        # type: (Union[float, (float, float), List[float]]) -> float
+        # type: (Union[float, [float, float], Sequence[float]]) -> float
         """
         Evaluate the model in cartesian coordinates
 

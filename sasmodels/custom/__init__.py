@@ -15,7 +15,8 @@ from os.path import basename, splitext, join as joinpath, exists, dirname
 
 # pylint: disable=unused-import
 try:
-    from typing import Dict, List
+    from typing import Dict, List, Tuple
+    from types import ModuleType
 except ImportError:
     pass
 # pylint: enable=unused-import
@@ -25,7 +26,7 @@ try:
     # Python 3.5 and up
     from importlib.util import spec_from_file_location, module_from_spec  # type: ignore
     def load_module_from_path(fullname, path):
-        # type: (str, str) -> "module"
+        # type: (str, str) -> ModuleType
         """load module from *path* as *fullname*"""
         spec = spec_from_file_location(fullname, os.path.expanduser(path))
         module = module_from_spec(spec)
@@ -35,7 +36,7 @@ except ImportError:
     # CRUFT: python 2
     import imp
     def load_module_from_path(fullname, path):
-        # type: (str, str) -> "module"
+        # type: (str, str) -> ModuleType
         """load module from *path* as *fullname*"""
         # Clear out old definitions, if any
         if fullname in sys.modules:
@@ -46,11 +47,11 @@ except ImportError:
         module = imp.load_source(fullname, os.path.expanduser(path))
         return module
 
-_MODULE_CACHE = {} # type: Dict[str, Tuple("module", int)]
+_MODULE_CACHE = {} # type: Dict[str, Tuple[ModuleType, int]]
 _MODULE_DEPENDS = {} # type: Dict[str, List[str]]
 _MODULE_DEPENDS_STACK = [] # type: List[str]
 def load_custom_kernel_module(path):
-    # type: (str) -> "module"
+    # type: (str) -> ModuleType
     """load SAS kernel from *path* as *sasmodels.custom.modelname*"""
     # Pull off the last .ext if it exists; there may be others
     name = basename(splitext(path)[0])

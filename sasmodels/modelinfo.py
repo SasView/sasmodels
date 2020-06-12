@@ -896,7 +896,7 @@ def _find_source_lines(model_info, kernel_module):
 
 
 def make_model_info(kernel_module):
-    # type: (module) -> ModelInfo
+    # type: (ModuleType) -> ModelInfo
     """
     Extract the model definition from the loaded kernel module.
 

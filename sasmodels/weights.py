@@ -13,6 +13,7 @@ from scipy.special import gammaln  # type: ignore
 # pylint: disable=unused-import
 try:
     from typing import Tuple, List
+    from .modelinfo import ModelInfo
 except ImportError:
     pass
 # pylint: enable=unused-import

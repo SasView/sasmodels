@@ -127,6 +127,7 @@ except ImportError:
 # pylint: disable=unused-import
 try:
     from typing import Dict
+    from sasmodels.modelinfo import ModelInfo
 except ImportError:
     pass
 # pylint: enable=unused-import

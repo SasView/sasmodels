@@ -685,7 +685,7 @@ def time_calculation(calculator, pars, evals=1):
     return value, average_time
 
 def make_data(opts):
-    # type: (Dict[str, Any]) -> (Data, np.ndarray)
+    # type: (Dict[str, Any]) -> Tuple[Data, np.ndarray]
     """
     Generate an empty dataset, used with the model to set Q points
     and resolution.
@@ -782,7 +782,7 @@ def _show_invalid(data, theory):
 
 
 def compare(opts, limits=None, maxdim=None):
-    # type: (Dict[str, Any], Optional[Tuple[float, float]], Optional[float]) -> (float, float)
+    # type: (Dict[str, Any], Optional[Tuple[float, float]], Optional[float]) -> Tuple[float, float]
     """
     Preform a comparison using options from the command line.
 

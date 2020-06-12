@@ -125,11 +125,14 @@ from .details import make_details
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, Callable, Union, List, Optional
+    from typing import OrderedDict as OrderedDictType
+    import typing
+    from typing import Tuple, Callable, Union, List, Optional, Dict
+    from .modelinfo import ParameterSet, Parameter
+    from .details import CallDetails
+    Parts = Dict[str, Union[float, np.ndarray, Tuple[np.ndarray, np.ndarray]]]
 except ImportError:
     pass
-else:
-    from .modelinfo import ParameterSet, Parameter
 # pylint: enable=unused-import
 
 # TODO: make shape averages available to constraints
@@ -237,7 +240,6 @@ def make_product_info(p_info, s_info):
     model_info.random = random
     #model_info.single = p_info.single and s_info.single
     model_info.structure_factor = False
-    model_info.variant_info = None
     #model_info.tests = []
     #model_info.source = []
     # Remember the component info blocks so we can build the model
@@ -291,14 +293,14 @@ def _intermediates(
         volume_ratio,     # type: float
         radius_effective, # type: float
         beta_mode,        # type: bool
-        P_intermediate,   # type: Optional[Callable[[], OrderedDict]]
+        P_intermediate,   # type: Optional[Callable[[], Parts]]
     ):
-    # type: (...) -> OrderedDict[str, Union[np.ndarray, float]]
+    # type: (...) -> Parts
     """
     Returns intermediate results for beta approximation-enabled product.
     The result may be an array or a float.
     """
-    parts = OrderedDict()
+    parts = OrderedDict()  # type: Parts
     parts["P(Q)"] = (Q, scale*Fsq)
     if P_intermediate is not None:
         parts["P(Q) parts"] = P_intermediate()
@@ -316,6 +318,10 @@ class ProductModel(KernelModel):
     """
     Model definition for product model.
     """
+    info = None  # type: ModelInfo
+    P = None  # type: KernelModel
+    S = None  # type: KernelModel
+    dtype = None  # type: np.dtype
     def __init__(self, model_info, P, S):
         # type: (ModelInfo, KernelModel, KernelModel) -> None
         #: Combined info plock for the product model

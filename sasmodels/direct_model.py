@@ -35,12 +35,12 @@ from .product import RADIUS_MODE_ID
 # pylint: disable=unused-import
 try:
     from typing import Optional, Dict, Tuple, List, Callable
-except ImportError:
-    pass
-else:
+    from collections import OrderedDict
     from .data import Data
     from .kernel import Kernel, KernelModel
-    from .modelinfo import Parameter, ParameterSet
+    from .modelinfo import Parameter, ParameterSet, ModelInfo
+except ImportError:
+    pass
 # pylint: enable=unused-import
 
 def call_kernel(calculator, pars, cutoff=0., mono=False):
