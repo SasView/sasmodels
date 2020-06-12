@@ -18,19 +18,20 @@ import numpy as np  # type: ignore
 # Optional typing
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, List, Union, Dict, Optional, Any, Callable, Sequence, Set
+    from typing import (
+        Tuple, List, Union, Dict, Optional, Any, Callable, Sequence, Set,
+        Mapping)
     from types import ModuleType
-except ImportError:
-    pass
-else:
     Limits = Tuple[float, float]
     #LimitsOrChoice = Union[Limits, Tuple[Sequence[str]]]
     ParameterDef = Tuple[str, str, float, Limits, str, str]
-    ParameterSetUser = Dict[str, Union[float, List[float]]]
-    ParameterSet = Dict[str, float]
+    ParameterSetUser = Mapping[str, Union[float, List[float]]]
+    ParameterSet = Mapping[str, float]
     TestInput = Union[str, float, List[float], Tuple[float, float], List[Tuple[float, float]]]
     TestValue = Union[float, List[float]]
     TestCondition = Tuple[ParameterSetUser, TestInput, TestValue]
+except ImportError:
+    pass
 # pylint: enable=unused-import
 
 logger = logging.getLogger(__name__)
@@ -130,6 +131,7 @@ def parse_parameter(name, units='', default=np.NaN,
         raise ValueError("expected description to be a string")
 
     # Parameter id for name[n] does not include [n]
+    ref = None  # type: Optional[str]
     if "[" in name:
         if not name.endswith(']'):
             raise ValueError("Expected name[len] for vector parameter %s"%name)
@@ -186,7 +188,7 @@ def expand_pars(partable, pars=None):
         result = partable.defaults
     else:
         lookup = dict((p.id, p) for p in partable.kernel_parameters)
-        result = partable.defaults.copy()
+        result = dict(partable.defaults)
         scalars = dict((name, value) for name, value in pars.items()
                        if name not in lookup or lookup[name].length == 1)
         vectors = dict((name, value) for name, value in pars.items()
@@ -194,20 +196,19 @@ def expand_pars(partable, pars=None):
         #print("lookup", lookup)
         #print("scalars", scalars)
         #print("vectors", vectors)
-        if vectors:
-            for name, value in vectors.items():
-                if np.isscalar(value):
-                    # support for the form
-                    #    dict(thickness=0, thickness2=50)
-                    for k in range(1, lookup[name].length+1):
-                        key = name+str(k)
-                        if key not in scalars:
-                            scalars[key] = value
-                else:
-                    # supoprt for the form
-                    #    dict(thickness=[20,10,3])
-                    for (k, v) in enumerate(value):
-                        scalars[name+str(k+1)] = v
+        for name, value in vectors.items():
+            if np.isscalar(value):
+                # support for the form
+                #    dict(thickness=0, thickness2=50)
+                for k in range(1, lookup[name].length+1):
+                    key = name+str(k)
+                    if key not in scalars:
+                        scalars[key] = value
+            else:
+                # supoprt for the form
+                #    dict(thickness=[20,10,3])
+                for (k, v) in enumerate(value):
+                    scalars[name+str(k+1)] = v
         result.update(scalars)
         #print("expanded", result)
 
@@ -250,10 +251,10 @@ class Parameter(object):
     *units* should be one of *degrees* for angles, *Ang* for lengths,
     *1e-6/Ang^2* for SLDs.
 
-    *default value* will be the initial value for  the model when it
+    *default* will be the initial value for the model when it
     is selected, or when an initial value is not otherwise specified.
 
-    *limits = [lb, ub]* are the hard limits on the parameter value, used to
+    *limits ([lb, ub])* are the hard limits on the parameter value, used to
     limit the polydispersity density function.  In the fit, the parameter limits
     given to the fit are the limits  on the central value of the parameter.
     If there is polydispersity, it will evaluate parameter values outside
@@ -316,7 +317,7 @@ class Parameter(object):
     parameter table is built using :func:`make_parameter_table` and
     :func:`parse_parameter` therein.
     """
-    def __init__(self, name, units='', default=None, limits=(-np.inf, np.inf),
+    def __init__(self, name, units='', default=np.NaN, limits=(-np.inf, np.inf),
                  ptype='', description=''):
         # type: (str, str, float, Limits, str, str) -> None
         self.id = name.split('[')[0].strip() # type: str
@@ -567,7 +568,7 @@ class ParameterTable(object):
         return False
 
     def _set_vector_lengths(self):
-        # type: () -> List[str]
+        # type: () -> None
         """
         Walk the list of kernel parameters, setting the length field of the
         vector parameters from the upper limit of the reference parameter.
@@ -1046,7 +1047,7 @@ class ModelInfo(object):
     base = None             # type: ParameterTable
     #: Parameter translation code to convert from *parameters* table from
     #: caller to the *base* table used to evaluate the model.
-    translation = None      # type: str
+    translation = None      # type: Optional[str]
     #: Composition is None if this is an independent model, or it is a
     #: tuple with comoposition type ('product' or 'misture') and a list of
     #: :class:`ModelInfo` blocks for the composed objects.  This allows us
