@@ -49,7 +49,6 @@ jobs:
 
         choco install opencl-intel-cpu-runtime
         python -m pip install --only-binary=pyopencl --find-links http://www.silx.org/pub/wheelhouse/ --trusted-host www.silx.org pyopencl
-        python -m pip install pyopencl[pocl]
 
     - name: Test with pytest
       run: |
