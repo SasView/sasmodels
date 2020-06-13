@@ -45,9 +45,8 @@ jobs:
     - name: setup pyopencl
       if: ${{ matrix.os == 'windows-latest' }}
       run: |
-        python -c "import urllib.request;urllib.request.urlretrieve('https://www.silx.org/pub/wheelhouse/pyopencl-2019.1.2+cl21-cp38-cp38-win_amd64.whl')"
         python -m pip install pytools mako cffi
-
+        python -m pip install --only-binary=pyopencl --find-links http://www.silx.org/pub/wheelhouse/ --trusted-host www.silx.org pyopencl
 
     - name: Test with pytest
       run: |
