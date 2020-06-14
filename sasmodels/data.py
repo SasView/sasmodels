@@ -40,10 +40,11 @@ from numpy import sqrt, sin, cos, pi
 # pylint: disable=unused-import
 try:
     from typing import Union, Dict, List, Optional, Tuple, Callable
+    Data = Union["Data1D", "Data2D", "SesansData"]
+    OptArray = Optional[np.ndarray]
+    OptLimits = Optional[Tuple[float, float]]
 except ImportError:
     pass
-else:
-    Data = Union["Data1D", "Data2D", "SesansData"]
 # pylint: enable=unused-import
 
 def load_data(filename, index=0):
@@ -139,13 +140,8 @@ class Data1D(object):
 
     *_yaxis*, *_yunit*: label and units for the *y* axis
     """
-    def __init__(self,
-                 x=None,  # type: Optional[np.ndarray]
-                 y=None,  # type: Optional[np.ndarray]
-                 dx=None, # type: Optional[np.ndarray]
-                 dy=None  # type: Optional[np.ndarray]
-                ):
-        # type: (...) -> None
+    def __init__(self, x=None, y=None, dx=None, dy=None):
+        # type: (OptArray, OptArray, OptArray, OptArray) -> None
         self.x, self.y, self.dx, self.dy = x, y, dx, dy
         self.dxl = None
         self.filename = None
@@ -185,7 +181,7 @@ class SesansData(Data1D):
     isSesans = True
     def __init__(self, **kw):
         Data1D.__init__(self, **kw)
-        self.lam = None # type: Optional[np.ndarray]
+        self.lam = None # type: OptArray
 
 class Data2D(object):
     """
@@ -219,15 +215,8 @@ class Data2D(object):
 
     *x_bins*, *y_bins*: grid steps in *x* and *y* directions
     """
-    def __init__(self,
-                 x=None,   # type: Optional[np.ndarray]
-                 y=None,   # type: Optional[np.ndarray]
-                 z=None,   # type: Optional[np.ndarray]
-                 dx=None,  # type: Optional[np.ndarray]
-                 dy=None,  # type: Optional[np.ndarray]
-                 dz=None   # type: Optional[np.ndarray]
-                ):
-        # type: (...) -> None
+    def __init__(self, x=None, y=None, z=None, dx=None, dy=None, dz=None):
+        # type: (OptArray, OptArray, OptArray, OptArray, OptArray, OptArray) -> None
         self.qx_data, self.dqx_data = x, dx
         self.qy_data, self.dqy_data = y, dy
         self.data, self.err_data = z, dz
@@ -342,7 +331,7 @@ def empty_data1D(q, resolution=0.0, L=0., dL=0.):
 
 
 def empty_data2D(qx, qy=None, resolution=0.0):
-    # type: (np.ndarray, Optional[np.ndarray], float) -> Data2D
+    # type: (np.ndarray, OptArray, float) -> Data2D
     """
     Create empty 2D data using the given mesh.
 
@@ -384,7 +373,7 @@ def empty_data2D(qx, qy=None, resolution=0.0):
 
 
 def plot_data(data, view=None, limits=None):
-    # type: (Data, str, Optional[Tuple[float, float]]) -> None
+    # type: (Data, str, OptLimits) -> None
     """
     Plot data loaded by the sasview loader.
 
@@ -406,15 +395,9 @@ def plot_data(data, view=None, limits=None):
         _plot_result1D(data, None, None, view, use_data=True, limits=limits)
 
 
-def plot_theory(data,          # type: Data
-                theory,        # type: Optional[np.ndarray]
-                resid=None,    # type: Optional[np.ndarray]
-                view=None,    # type: str
-                use_data=True, # type: bool
-                limits=None,   # type: Optional[np.ndarray]
-                Iq_calc=None   # type: Optional[np.ndarray]
-               ):
-    # type: (...) -> None
+def plot_theory(data, theory, resid=None, view=None, use_data=True,
+                limits=None, Iq_calc=None):
+    # type: (Data, OptArray, OptArray, str, bool, OptLimits, OptArray) -> None
     """
     Plot theory calculation.
 
@@ -460,15 +443,9 @@ def protect(func):
 
 
 @protect
-def _plot_result1D(data,         # type: Data1D
-                   theory,       # type: Optional[np.ndarray]
-                   resid,        # type: Optional[np.ndarray]
-                   view,         # type: str
-                   use_data,     # type: bool
-                   limits=None,  # type: Optional[Tuple[float, float]]
-                   Iq_calc=None  # type: Optional[np.ndarray]
-                  ):
-    # type: (...) -> None
+def _plot_result1D(data, theory, resid, view, use_data,
+                   limits=None, Iq_calc=None):
+    # type: (Data1D, OptArray, OptArray, str, bool, OptLimits, OptArray) -> None
     """
     Plot the data and residuals for 1D data.
     """
@@ -566,13 +543,8 @@ def _plot_result1D(data,         # type: Data1D
 
 
 @protect
-def _plot_result_sesans(data,        # type: SesansData
-                        theory,      # type: Optional[np.ndarray]
-                        resid,       # type: Optional[np.ndarray]
-                        use_data,    # type: bool
-                        limits=None  # type: Optional[Tuple[float, float]]
-                       ):
-    # type: (...) -> None
+def _plot_result_sesans(data, theory, resid, use_data, limits=None):
+    # type: (SesansData, OptArray, OptArray, bool, OptLimits) -> None
     """
     Plot SESANS results.
     """
@@ -616,14 +588,8 @@ def _plot_result_sesans(data,        # type: SesansData
 
 
 @protect
-def _plot_result2D(data,         # type: Data2D
-                   theory,       # type: Optional[np.ndarray]
-                   resid,        # type: Optional[np.ndarray]
-                   view,         # type: str
-                   use_data,     # type: bool
-                   limits=None   # type: Optional[Tuple[float, float]]
-                  ):
-    # type: (...) -> None
+def _plot_result2D(data, theory, resid, view, use_data, limits=None):
+    # type: (Data2D, OptArray, OptArray, str, bool, OptLimits) -> None
     """
     Plot the data and residuals for 2D data.
     """
@@ -637,7 +603,7 @@ def _plot_result2D(data,         # type: Data2D
 
     # Put theory and data on a common colormap scale
     vmin, vmax = np.inf, -np.inf
-    target = None # type: Optional[np.ndarray]
+    target = None # type: OptArray
     if use_data:
         target = data.data[~data.mask]
         datamin = target[target > 0].min() if view == 'log' else target.min()
@@ -685,13 +651,8 @@ def _plot_result2D(data,         # type: Data2D
 
 
 @protect
-def _plot_2d_signal(data,       # type: Data2D
-                    signal,     # type: np.ndarray
-                    vmin=None,  # type: Optional[float]
-                    vmax=None,  # type: Optional[float]
-                    view=None,  # type: str
-                   ):
-    # type: (...) -> Tuple[float, float]
+def _plot_2d_signal(data, signal, vmin=None, vmax=None, view=None):
+    # type: (Data2D, np.ndarray, Optional[float], Optional[float], str) -> Tuple[float, float]
     """
     Plot the target value for the data.  This could be the data itself,
     the theory calculation, or the residuals.

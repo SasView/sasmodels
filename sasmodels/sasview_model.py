@@ -689,11 +689,8 @@ class SasviewModel(object):
         else:
             return None
 
-    def calculate_Iq(self,
-                     qx,     # type: Sequence[float]
-                     qy=None # type: Optional[Sequence[float]]
-                    ):
-        # type: (...) -> Tuple[np.ndarray, Callable[[], collections.OrderedDict[str, np.ndarray]]]
+    def calculate_Iq(self, qx, qy=None):
+        # type: (Sequence[float], Optional[Sequence[float]]) -> Tuple[np.ndarray, Callable[[], collections.OrderedDict[str, np.ndarray]]]
         """
         Calculate Iq for one set of q with the current parameters.
 

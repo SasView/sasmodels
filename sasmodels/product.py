@@ -283,19 +283,9 @@ def _tag_parameter(par):
     par.name = par.id + vector_length
     return par
 
-def _intermediates(
-        Q,                # type: np.ndarray
-        F,                # type: np.ndarray
-        Fsq,              # type: np.ndarray
-        S,                # type: np.ndarray
-        scale,            # type: float
-        volume,           # type: float
-        volume_ratio,     # type: float
-        radius_effective, # type: float
-        beta_mode,        # type: bool
-        P_intermediate,   # type: Optional[Callable[[], Parts]]
-    ):
-    # type: (...) -> Parts
+def _intermediates(Q, F, Fsq, S, scale, volume, volume_ratio, radius_effective,
+                   beta_mode, P_intermediate):
+    # type: (np.ndarray, np.ndarray, np.ndarray, np.ndarray, float, float, float, float, bool, Optiona[Callable[[], Parts]]) -> Parts
     """
     Returns intermediate results for beta approximation-enabled product.
     The result may be an array or a float.

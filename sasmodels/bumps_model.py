@@ -40,10 +40,8 @@ except ImportError:
     pass
 
 
-def create_parameters(model_info,  # type: ModelInfo
-                      **kwargs     # type: Union[float, str, Parameter]
-                     ):
-    # type: (...) -> Tuple[Dict[str, Parameter], Dict[str, str]]
+def create_parameters(model_info, **kwargs):
+    # type: (ModelInfo, Union[float, str, Parameter]) -> Tuple[Dict[str, Parameter], Dict[str, str]]
     """
     Generate Bumps parameters from the model info.
 

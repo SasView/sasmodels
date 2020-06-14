@@ -220,10 +220,8 @@ def make_details(model_info, length, offset, num_weights):
 
 
 ZEROS = tuple([0.]*31)
-def make_kernel_args(kernel, # type: Kernel
-                     mesh    # type: Tuple[List[np.ndarray], List[np.ndarray]]
-                    ):
-    # type: (...) -> Tuple[CallDetails, np.ndarray, bool]
+def make_kernel_args(kernel, mesh):
+    # type: (Kernel, Tuple[List[np.ndarray], List[np.ndarray]]) -> Tuple[CallDetails, np.ndarray, bool]
     """
     Converts (value, dispersity, weight) for each parameter into kernel pars.
 
@@ -251,11 +249,8 @@ def make_kernel_args(kernel, # type: Kernel
     #print("data", data)
     return call_details, data, is_magnetic
 
-def correct_theta_weights(parameters, # type: ParameterTable
-                          dispersity, # type: Sequence[np.ndarray]
-                          weights     # type: Sequence[np.ndarray]
-                         ):
-    # type: (...) -> Sequence[np.ndarray]
+def correct_theta_weights(parameters, dispersity, weights):
+    # type: (ParameterTable, Sequence[np.ndarray], Sequence[np.ndarray]) -> Sequence[np.ndarray]
     """
     **Deprecated** Theta weights will be computed in the kernel wrapper if
     they are needed.
