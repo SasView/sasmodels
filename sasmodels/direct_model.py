@@ -189,15 +189,15 @@ class DataMixin(object):
     currently used by :class:`.sasview_model.SasviewModel` since this will
     require a number of changes to SasView before we can do it.
 
-    :meth:`_interpret_data` initializes the data structures necessary
+    *_interpret_data* initializes the data structures necessary
     to manage the calculations.  This sets attributes in the child class
     such as *data_type* and *resolution*.
 
-    :meth:`_calc_theory` evaluates the model at the given control values.
+    *_calc_theory* evaluates the model at the given control values.
 
-    :meth:`_set_data` sets the intensity data in the data object,
+    *_set_data* sets the intensity data in the data object,
     possibly with random noise added.  This is useful for simulating a
-    dataset with the results from :meth:`_calc_theory`.
+    dataset with the results from *_calc_theory*.
     """
     def _interpret_data(self, data, model):
         # type: (Data, KernelModel) -> None
@@ -356,7 +356,7 @@ class DirectModel(DataMixin):
 
     *data* is 1D SAS, 2D SAS or SESANS data
 
-    *model* is a model calculator return from :func:`.generate.load_model`
+    *model* is a model calculator return from :func:`.core.load_model`
 
     *cutoff* is the polydispersity weight cutoff.
     """

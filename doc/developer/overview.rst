@@ -17,7 +17,7 @@ At the heart of *sasmodels* are the individual computational kernels.  These
 functions take a particular $q$ value and a set of parameter values and
 return the expected scattering for that $q$. The instructions for writing
 a kernel are documented in :ref:`Writing_a_Plugin`.  The source code for
-the kernels is stored in :mod:`.models`.
+the builtinkernels is stored in *sasmodels/models*.
 
 The primary interface to the models is through :mod:`.core`, which
 provides functions for listing available models, loading the model definition
@@ -82,7 +82,7 @@ $q_y$ values instead of $|q|$ as is the case for orientationally averaged
 USANS.  The :class:`.sesans.SesansTransform` class acts like a 1-D resolution,
 having a *q_calc* attribute that defines the calculated $q$ values for
 the SANS models that get converted to spin-echo values by the
-:meth:`.sesnas.SesansTransform.apply` method.
+:meth:`.sesans.SesansTransform.apply` method.
 
 Polydispersity is defined by :class:`.weights.Dispersion` classes,
 :class:`.weights.RectangleDispersion`, :class:`.weights.ArrayDispersion`,
@@ -109,10 +109,9 @@ setup. To make calling them a little easier, the *DirectModel* and
 for an example.
 
 The :class:`.direct_model.DirectModel` interface accepts a data object
-and a kernel model.  Within the class,
-the :meth:`.direct_model.DataMixin._interpret_data` method is called to
-query the data and set the resolution.
-The :meth:`.direct_model.DataMixin._calc_theory` takes a set of parameter
+and a kernel model.  Within the class, the *_interpret_data()* method
+of :class:`.direct_model.DataMixin` is called to query the data and set
+the resolution. The *_calc_theory()* method takes a set of parameter
 values, builds the kernel arguments, calls the kernel, and applies the
 resolution function, returning the predicted value for the data $q$ values.
 The :class:`.bumps_model.Experiment` class is like the DirectModel class,

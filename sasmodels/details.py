@@ -7,7 +7,7 @@ number of details that need to be sent to the caller.  This includes the
 list of polydisperse parameters, the number of points in the polydispersity
 weight distribution, and which parameter is the "theta" parameter for
 polar coordinate integration.  The :class:`CallDetails` object maintains
-this data.  Use :func:`build_details` to build a *details* object which
+this data.  Use :func:`make_details` to build a *details* object which
 can be passed to one of the computational kernels.
 """
 

@@ -1057,7 +1057,7 @@ class ModelInfo(object):
     #: *sphere*hardsphere* or *cylinder+sphere*.
     composition = None      # type: Optional[Tuple[str, List[ModelInfo]]]
     #: Different variants require different parameters.  In order to show
-    #: just the parameters needed for the variant selected by :attr:`control`,
+    #: just the parameters needed for the variant selected,
     #: you should provide a function *hidden(control) -> set(['a', 'b', ...])*
     #: indicating which parameters need to be hidden.  For multiplicity
     #: models, you need to use the complete name of the parameter, including
@@ -1068,7 +1068,7 @@ class ModelInfo(object):
     #: Doc string from the top of the model file.  This should be formatted
     #: using ReStructuredText format, with latex markup in ".. math"
     #: environments, or in dollar signs.  This will be automatically
-    #: extracted to a .rst file by :func:`.generate.make_docs`, then
+    #: extracted to a .rst file by :func:`.generate.make_doc`, then
     #: converted to HTML or PDF by Sphinx.
     docs = None             # type: str
     #: Location of the model description in the documentation.  This takes the
@@ -1113,7 +1113,7 @@ class ModelInfo(object):
     #: Returns the form volume for python-based models.  Form volume is needed
     #: for volume normalization in the polydispersity integral.  If no
     #: parameters are *volume* parameters, then form volume is not needed.
-    #: For C-based models, (with :attr:`sources` defined, or with :attr:`Iq`
+    #: For C-based models, (with :attr:`source` defined, or with :attr:`Iq`
     #: defined using a string containing C code), form_volume must also be
     #: C code, either defined as a string, or in the sources.
     form_volume = None      # type: Union[None, str, Callable[[np.ndarray], float]]
@@ -1121,7 +1121,7 @@ class ModelInfo(object):
     #: shell volume are needed for volume normalization in the polydispersity
     #: integral and structure interactions for hollow shapes.  If no
     #: parameters are *volume* parameters, then shell volume is not needed.
-    #: For C-based models, (with :attr:`sources` defined, or with :attr:`Iq`
+    #: For C-based models, (with :attr:`source` defined, or with :attr:`Iq`
     #: defined using a string containing C code), shell_volume must also be
     #: C code, either defined as a string, or in the sources.
     shell_volume = None      # type: Union[None, str, Callable[[np.ndarray], float]]
@@ -1136,7 +1136,7 @@ class ModelInfo(object):
     #: the C function, including the return statement.  This function takes
     #: values for *q* and each of the parameters as separate *double* values
     #: (which may be converted to float or long double by sasmodels).  All
-    #: source code files listed in :attr:`sources` will be loaded before the
+    #: source code files listed in :attr:`source` will be loaded before the
     #: *Iq* function is defined.  If *Iq* is not present, then sources should
     #: define *static double Iq(double q, double a, double b, ...)* which
     #: will return *I(q, a, b, ...)*.  Multiplicity parameters are sent as

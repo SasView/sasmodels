@@ -9,21 +9,21 @@ all available device numbers.
 TODO: docs are out of date
 
 There should be a single GPU environment running on the system.  This
-environment is constructed on the first call to :func:`env`, and the
+environment is constructed on the first call to :func:`environment`, and the
 same environment is returned on each call.
 
 After retrieving the environment, the next step is to create the kernel.
-This is done with a call to :meth:`GpuEnvironment.make_kernel`, which
+This is done with a call to :meth:`GpuEnvironment.compile_program`, which
 returns the type of data used by the kernel.
 
-Next a :class:`GpuData` object should be created with the correct kind
+Next a :class:`GpuInput` object should be created with the correct kind
 of data.  This data object can be used by multiple kernels, for example,
 if the target model is a weighted sum of multiple kernels.  The data
 should include any extra evaluation points required to compute the proper
 data smearing.  This need not match the square grid for 2D data if there
 is an index saying which q points are active.
 
-Together the GpuData, the program, and a device form a :class:`GpuKernel`.
+Together the GpuInput, the program, and a device form a :class:`GpuKernel`.
 This kernel is used during fitting, receiving new sets of parameters and
 evaluating them.  The output value is stored in an output buffer on the
 devices, where it can be combined with other structure factors and form
@@ -302,7 +302,7 @@ class GpuModel(KernelModel):
     GPU wrapper for a single model.
 
     *source* and *model_info* are the model source and interface as returned
-    from :func:`.generate.make_source` and :func:`.generate.make_model_info`.
+    from :func:`.generate.make_source` and :func:`.modelinfo.make_model_info`.
 
     *dtype* is the desired model precision.  Any numpy dtype for single
     or double precision floats will do, such as 'f', 'float32' or 'single'
@@ -380,9 +380,9 @@ class GpuInput(object):
 
     *dtype* is the data type for the q vectors. The data type should be
     set to match that of the kernel, which is an attribute of
-    :class:`GpuProgram`.  Note that not all kernels support double
+    :class:`GpuModel`.  Note that not all kernels support double
     precision, so even if the program was created for double precision,
-    the *GpuProgram.dtype* may be single precision.
+    the *GpuModel.dtype* may be single precision.
 
     Call :meth:`release` when complete.  Even if not called directly, the
     buffer will be released when the data object is freed.
@@ -432,9 +432,9 @@ class GpuKernel(Kernel):
 
     *model* is the GpuModel object to call
 
-    The kernel is derived from :class:`Kernel`, providing the
-    :meth:`call_kernel` method to evaluate the kernel for a given set of
-    parameters.  Because of the need to move the q values to the GPU before
+    The kernel is derived from :class:`.kernel.Kernel`, providing the
+    *_call_kernel()* method to evaluate the kernel for a given set of
+    parameters. Because of the need to move the q values to the GPU before
     evaluation, the kernel is instantiated for a particular set of q vectors,
     and can be called many times without transfering q each time.
 
@@ -446,7 +446,7 @@ class GpuKernel(Kernel):
     dtype = None  # type: np.dtype
     #: Kernel dimensions (1d or 2d).
     dim = ""  # type: str
-    #: Calculation results, updated after each call to :meth:`_call_kernel`.
+    #: Calculation results, updated after each call to *_call_kernel()*.
     result = None  # type: np.ndarray
 
     def __init__(self, model, q_vectors):
@@ -474,7 +474,7 @@ class GpuKernel(Kernel):
 
     def _call_kernel(self, call_details, values, cutoff, magnetic,
                      radius_effective_mode):
-        # type: (CallDetails, np.ndarray, float, bool, int) -> np.ndarray
+        # type: (CallDetails, np.ndarray, float, bool, int) -> None
 
         # Arrange data transfer to card.
         details_b = cuda.to_device(call_details.buffer)

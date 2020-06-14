@@ -145,7 +145,7 @@ Code follows the C99 standard with the following extensions and conditions::
 :func:`.modelinfo.make_model_info` parses it. :func:`make_source`
 converts C-based model definitions to C source code, including the
 polydispersity integral.  :func:`model_sources` returns the list of
-source files the model depends on, and :func:`timestamp` returns
+source files the model depends on, and :func:`ocl_timestamp` returns
 the latest time stamp amongst the source files (so you can check if
 the model needs to be rebuilt).
 
@@ -376,6 +376,7 @@ def dll_timestamp(model_info):
     changed file or dependency.
     """
     # TODO: what about on-the-fly derived models---tag name with crc32
+    # TODO: no longer used, and appears to be identical to ocl_timestamp
     # TODO: fails DRY; templates appear two places.
     model_templates = [joinpath(DATA_PATH, filename)
                        for filename in ('kernel_header.c', 'kernel_iq.c')]
@@ -1142,8 +1143,8 @@ def load_kernel_module(model_name):
     Return the kernel module named in *model_name*.
 
     If the name ends in *.py* then load it as a custom model using
-    :func:`.custom.load_custom_kernel_module`, otherwise
-    load it from :mod:`.models`.
+    :func:`.custom.__init__.load_custom_kernel_module`, otherwise
+    load it as a builtin from *sasmodels.models*.
     """
     if model_name.endswith('.py'):
         kernel_module = load_custom_kernel_module(model_name)

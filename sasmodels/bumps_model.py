@@ -124,7 +124,7 @@ class Experiment(DataMixin):
     Bumps wrapper for a SAS experiment.
 
     *data* is a :class:`.data.Data1D`, :class:`.data.Data2D` or
-    :class:`.data.Sesans` object.  Use :func:`.data.empty_data1D` or
+    :class:`.data.SesansData` object.  Use :func:`.data.empty_data1D` or
     :func:`.data.empty_data2D` to define $q, \Delta q$ calculation
     points for displaying the SANS curve when there is no measured data.
 
@@ -180,7 +180,7 @@ class Experiment(DataMixin):
     def resolution(self):
         # type: () -> Union[None, Resolution]
         """
-        :class:`.sasmodels.Resolution` applied to the data, if any.
+        :class:`.resolution.Resolution` applied to the data, if any.
         """
         return self._resolution
 
@@ -188,7 +188,7 @@ class Experiment(DataMixin):
     def resolution(self, value):
         # type: (Resolution) -> None
         """
-        :class:`.sasmodels.Resolution` applied to the data, if any.
+        :class:`.resolution.Resolution` applied to the data, if any.
         """
         self._resolution = value
 

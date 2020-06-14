@@ -940,7 +940,7 @@ def _print_stats(label, err):
 def plot_models(opts, result, limits=None, setnum=0):
     # type: (Dict[str, Any], Dict[str, Any], Optional[Tuple[float, float]], int) -> Tuple[float, float]
     """
-    Plot the results from :func:`run_model`.
+    Plot the results from :func:`run_models`.
     """
     import matplotlib.pyplot as plt
 

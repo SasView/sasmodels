@@ -749,7 +749,7 @@ class SasviewModel(object):
 
 
     def calculate_ER(self, mode=1):
-        # type: () -> float
+        # type: (int) -> float
         """
         Calculate the effective radius for P(q)*S(q)
 
