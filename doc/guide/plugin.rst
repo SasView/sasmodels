@@ -11,7 +11,7 @@ create your own models. This document describes how to create plugin models
 from first principles.
 
 If you are using SasView and simply want to combine existing models into a new
-plugin, see the :ref:`Add/Multiply Models` tool instead.
+plugin then use the "Add/Multiply Models" menu option instead.
 
 Models can be of three types:
 
@@ -37,7 +37,7 @@ The built-in modules are available in the *models* subdirectory
 of the sasmodels package.  For SasView on Windows, these will
 be found in *C:\\Program Files (x86)\\SasView\\sasmodels-data\\models*.
 On Mac OSX, these will be within the application bundle as
-*/Applications/SasView 4.0.app/Contents/Resources/sasmodels-data/models*.
+*/Applications/SasView.app/Contents/Resources/sasmodels-data/models*.
 
 Other models are available for download from the
 `Model Marketplace <http://marketplace.sasview.org/>`_. You can contribute your
