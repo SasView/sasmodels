@@ -10,19 +10,19 @@ trig, etc., and may not be completely IEEE 754 compliant.  This lets
 make sure that the model calculations are stable, or if you need to
 tag the model as double precision only.
 
-Run using ./compare.sh (Linux, Mac) or compare.bat (Windows) in the
-sasmodels root to see the command line options.
+Run using "./sascomp -h" in the sasmodels root to see the command
+line options. To run from from an installed version of sasmodels,
+use "python -m sasmodels.compare -h".
 
 Note that there is no way within sasmodels to select between an
 OpenCL CPU device and a GPU device, but you can do so by setting the
-PYOPENCL_CTX environment variable ahead of time.  Start a python
-interpreter and enter::
+SAS_OPENCL environment variable. Start a python interpreter and enter::
 
     import pyopencl as cl
     cl.create_some_context()
 
 This will prompt you to select from the available OpenCL devices
-and tell you which string to use for the PYOPENCL_CTX variable.
+and tell you which string to use for the SAS_OPENCL variable.
 On Windows you will need to remove the quotes.
 """
 
@@ -154,16 +154,6 @@ Examples:
     # model timing test requires multiple evals to perform the estimate
     sascomp pringle -engine=single,double -timing=100,100 -noplot
 """
-
-# Update docs with command line usage string.   This is separate from the usual
-# doc string so that we can display it at run time if there is an error.
-# lin
-__doc__ = (__doc__  # pylint: disable=redefined-builtin
-           + """
-Program description
--------------------
-
-""" + USAGE)
 
 kerneldll.ALLOW_SINGLE_PRECISION_DLLS = True
 
