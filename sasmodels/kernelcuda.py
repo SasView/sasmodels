@@ -302,7 +302,7 @@ class GpuModel(KernelModel):
     GPU wrapper for a single model.
 
     *source* and *model_info* are the model source and interface as returned
-    from :func:`generate.make_source` and :func:`generate.make_model_info`.
+    from :func:`.generate.make_source` and :func:`.generate.make_model_info`.
 
     *dtype* is the desired model precision.  Any numpy dtype for single
     or double precision floats will do, such as 'f', 'float32' or 'single'

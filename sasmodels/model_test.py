@@ -8,7 +8,7 @@ Usage::
 
 If model1 is 'all', then all except the remaining models will be tested.
 Subgroups are also possible, such as 'py', 'single' or '1d'.  See
-:func:`core.list_models` for details.
+:func:`.core.list_models` for details.
 
 Each model is tested using the default parameters at q=0.1, (qx, qy)=(0.1, 0.1),
 and Fq is called to make sure R_eff, volume and volume ratio are computed.

@@ -107,7 +107,7 @@ The kernel module must set variables defining the kernel meta data:
     cylinder models).  The expression can call C functions, including
     those defined in your model file.
 
-A :class:`modelinfo.ModelInfo` structure is constructed from the kernel meta
+A :class:`.modelinfo.ModelInfo` structure is constructed from the kernel meta
 data and returned to the caller.
 
 Valid inputs should be identified by the *valid* expression.
@@ -142,7 +142,7 @@ Code follows the C99 standard with the following extensions and conditions::
     FLOAT_SIZE is the number of bytes in the converted variables
 
 :func:`load_kernel_module` loads the model definition file and
-:func:`modelinfo.make_model_info` parses it. :func:`make_source`
+:func:`.modelinfo.make_model_info` parses it. :func:`make_source`
 converts C-based model definitions to C source code, including the
 polydispersity integral.  :func:`model_sources` returns the list of
 source files the model depends on, and :func:`timestamp` returns
@@ -1142,8 +1142,8 @@ def load_kernel_module(model_name):
     Return the kernel module named in *model_name*.
 
     If the name ends in *.py* then load it as a custom model using
-    :func:`sasmodels.custom.load_custom_kernel_module`, otherwise
-    load it from :mod:`sasmodels.models`.
+    :func:`.custom.load_custom_kernel_module`, otherwise
+    load it from :mod:`.models`.
     """
     if model_name.endswith('.py'):
         kernel_module = load_custom_kernel_module(model_name)

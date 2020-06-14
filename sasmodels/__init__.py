@@ -10,7 +10,7 @@ polydispersity, angular dispersion and resolution convolution.  SESANS
 patterns can be computed for any model.
 
 Models can be written in python or in C.  C models can run on the GPU if
-OpenCL drivers are available.  See :mod:`generate` for details on
+OpenCL drivers are available.  See :mod:`.generate` for details on
 defining new models.
 """
 __version__ = "1.0.2"

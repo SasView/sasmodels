@@ -16,7 +16,7 @@ code is used to figure out what special parameters we have, where to
 find them in the P@S model inputs and how to distribute them to the underlying
 P and S model calculators.
 
-The parameter packet received by the P@S is a :class:`details.CallDetails`
+The parameter packet received by the P@S is a :class:`.details.CallDetails`
 structure along with a data vector. The CallDetails structure indicates which
 parameters are polydisperse, the length of the distribution, and where to
 find it in the data vector.  The distributions are ordered from longest to

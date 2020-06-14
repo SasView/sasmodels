@@ -16,7 +16,7 @@ keyword arguments and returns the appropriate theory values for the data.
 
 :class:`DataMixin` does the real work of interpreting the data and calling
 the model calculator.  This is used by :class:`DirectModel`, which uses
-direct parameter values and by :class:`bumps_model.Experiment` which wraps
+direct parameter values and by :class:`.bumps_model.Experiment` which wraps
 the parameter values in boxes so that the user can set fitting ranges, etc.
 on the individual parameters and send the model to the Bumps optimizers.
 """
@@ -184,9 +184,9 @@ class DataMixin(object):
     particular data set, including calculating Iq and evaluating the
     resolution function.  It is used in particular by :class:`DirectModel`,
     which evaluates a SAS model parameters as key word arguments to the
-    calculator method, and by :class:`bumps_model.Experiment`, which wraps the
+    calculator method, and by :class:`.bumps_model.Experiment`, which wraps the
     model and data for use with the Bumps fitting engine.  It is not
-    currently used by :class:`sasview_model.SasviewModel` since this will
+    currently used by :class:`.sasview_model.SasviewModel` since this will
     require a number of changes to SasView before we can do it.
 
     :meth:`_interpret_data` initializes the data structures necessary
@@ -356,7 +356,7 @@ class DirectModel(DataMixin):
 
     *data* is 1D SAS, 2D SAS or SESANS data
 
-    *model* is a model calculator return from :func:`generate.load_model`
+    *model* is a model calculator return from :func:`.generate.load_model`
 
     *cutoff* is the polydispersity weight cutoff.
     """

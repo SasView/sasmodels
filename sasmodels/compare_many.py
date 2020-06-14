@@ -8,7 +8,7 @@ from standard output into a file and loaded into a spreadsheet.
 The models are compared for each parameter set and if the difference is
 greater than expected for that precision, the parameter set is labeled
 as bad and written to the output, along with the random seed used to
-generate that parameter value.  This seed can be used with :mod:`compare`
+generate that parameter value.  This seed can be used with :mod:`.compare`
 to reload and display the details of the model.
 """
 from __future__ import print_function

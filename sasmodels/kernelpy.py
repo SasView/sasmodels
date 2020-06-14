@@ -4,7 +4,7 @@ Python driver for python kernels
 Calls the kernel with a vector of $q$ values for a single parameter set.
 Polydispersity is supported by looping over different parameter sets and
 summing the results.  The interface to :class:`PyModel` matches those for
-:class:`kernelcl.GpuModel` and :class:`kerneldll.DllModel`.
+:class:`.kernelcl.GpuModel` and :class:`.kerneldll.DllModel`.
 """
 from __future__ import division, print_function
 

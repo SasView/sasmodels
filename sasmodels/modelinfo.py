@@ -1068,7 +1068,7 @@ class ModelInfo(object):
     #: Doc string from the top of the model file.  This should be formatted
     #: using ReStructuredText format, with latex markup in ".. math"
     #: environments, or in dollar signs.  This will be automatically
-    #: extracted to a .rst file by :func:`generate.make_docs`, then
+    #: extracted to a .rst file by :func:`.generate.make_docs`, then
     #: converted to HTML or PDF by Sphinx.
     docs = None             # type: str
     #: Location of the model description in the documentation.  This takes the
@@ -1141,7 +1141,7 @@ class ModelInfo(object):
     #: define *static double Iq(double q, double a, double b, ...)* which
     #: will return *I(q, a, b, ...)*.  Multiplicity parameters are sent as
     #: pointers to doubles.  Constants in floating point expressions should
-    #: include the decimal point. See :mod:`generate` for more details. If
+    #: include the decimal point. See :mod:`.generate` for more details. If
     #: *have_Fq* is True, then Iq should return an interleaved array of
     #: $[\sum F(q_1), \sum F^2(q_1), \ldots, \sum F(q_n), \sum F^2(q_n)]$.
     Iq = None               # type: Union[None, str, Callable[[...], np.ndarray]]
@@ -1169,7 +1169,7 @@ class ModelInfo(object):
     #: Line numbers for symbols defining C code
     lineno = None           # type: Dict[str, int]
     #: The set of tests that must pass.  The format of the tests is described
-    #: in :mod:`model_test`.
+    #: in :mod:`.model_test`.
     tests = None            # type: List[TestCondition]
 
     def __init__(self):

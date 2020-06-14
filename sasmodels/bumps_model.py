@@ -45,7 +45,7 @@ def create_parameters(model_info, **kwargs):
     """
     Generate Bumps parameters from the model info.
 
-    *model_info* is returned from :func:`generate.model_info` on the
+    *model_info* is returned from :func:`.generate.model_info` on the
     model definition module.
 
     Any additional *key=value* pairs are initial values for the parameters
@@ -84,7 +84,7 @@ class Model(object):
     """
     Bumps wrapper for a SAS model.
 
-    *model* is a runnable module as returned from :func:`core.load_model`.
+    *model* is a runnable module as returned from :func:`.core.load_model`.
 
     *cutoff* is the polydispersity weight cutoff.
 
@@ -123,9 +123,9 @@ class Experiment(DataMixin):
     r"""
     Bumps wrapper for a SAS experiment.
 
-    *data* is a :class:`data.Data1D`, :class:`data.Data2D` or
-    :class:`data.Sesans` object.  Use :func:`data.empty_data1D` or
-    :func:`data.empty_data2D` to define $q, \Delta q$ calculation
+    *data* is a :class:`.data.Data1D`, :class:`.data.Data2D` or
+    :class:`.data.Sesans` object.  Use :func:`.data.empty_data1D` or
+    :func:`.data.empty_data2D` to define $q, \Delta q$ calculation
     points for displaying the SANS curve when there is no measured data.
 
     *model* is a :class:`Model` object.
@@ -180,7 +180,7 @@ class Experiment(DataMixin):
     def resolution(self):
         # type: () -> Union[None, Resolution]
         """
-        :class:`sasmodels.Resolution` applied to the data, if any.
+        :class:`.sasmodels.Resolution` applied to the data, if any.
         """
         return self._resolution
 
@@ -188,7 +188,7 @@ class Experiment(DataMixin):
     def resolution(self, value):
         # type: (Resolution) -> None
         """
-        :class:`sasmodels.Resolution` applied to the data, if any.
+        :class:`.sasmodels.Resolution` applied to the data, if any.
         """
         self._resolution = value
 

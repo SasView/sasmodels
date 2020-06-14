@@ -288,7 +288,7 @@ def load_dll(source, model_info, dtype=F64):
     # type: (str, ModelInfo, np.dtype) -> "DllModel"
     """
     Create and load a dll corresponding to the source, info pair returned
-    from :func:`sasmodels.generate.make` compiled for the target precision.
+    from :func:`.generate.make` compiled for the target precision.
 
     See :func:`make_dll` for details on controlling the dll path and the
     allowed floating point precision.
@@ -302,7 +302,7 @@ class DllModel(KernelModel):
     ctypes wrapper for a single model.
 
     *source* and *model_info* are the model source and interface as returned
-    from :func:`gen.make`.
+    from :func:`.generate.make`.
 
     *dtype* is the desired model precision.  Any numpy dtype for single
     or double precision floats will do, such as 'f', 'float32' or 'single'

@@ -863,7 +863,7 @@ def build_model(model_name, n=150, qmax=0.5, **pars):
 
     Returns a *calculator* function which takes a dictionary or parameters and
     produces Iqxy.  The Iqxy value needs to be reshaped to an n x n matrix
-    for plotting.  See the :class:`sasmodels.direct_model.DirectModel` class
+    for plotting.  See the :class:`.direct_model.DirectModel` class
     for details.
     """
     from sasmodels.core import load_model_info, build_model as build_sasmodel
