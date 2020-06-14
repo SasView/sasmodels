@@ -42,7 +42,7 @@ script:
 #- python -m sasmodels.model_test -v dll all
 #- python -m pytest -v --cache-clear
 - python setup.py test --pytest-args -v
-- if [ -n "$BUILDDOC" ]; then make -j 4 -C doc html; fi
+- if [ -n "$BUILDDOC" ]; then make -j 4 -C doc SPHINXOPTS="-W --keep-going" html; fi
 before_deploy:
 - echo -e "Host danse.chem.utk.edu\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 deploy:
