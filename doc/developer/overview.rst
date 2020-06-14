@@ -17,7 +17,7 @@ At the heart of *sasmodels* are the individual computational kernels.  These
 functions take a particular $q$ value and a set of parameter values and
 return the expected scattering for that $q$. The instructions for writing
 a kernel are documented in :ref:`Writing_a_Plugin`.  The source code for
-the builtinkernels is stored in *sasmodels/models*.
+the builtin kernels is stored in *sasmodels/models*.
 
 The primary interface to the models is through :mod:`.core`, which
 provides functions for listing available models, loading the model definition
