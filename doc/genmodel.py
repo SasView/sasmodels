@@ -440,7 +440,7 @@ def main():
     global TARGET_DIR
     TARGET_DIR = os.path.expanduser(args.rst)
     if not os.path.exists(TARGET_DIR) and not args.sphinx:
-        print(f"build directory '{TARGET_DIR}' does not exist")
+        print("build directory %r does not exist"%TARGET_DIR)
         sys.exit(1)
     os.makedirs(TARGET_DIR, exist_ok=True)
 
