@@ -442,7 +442,7 @@ def main():
     if not os.path.exists(TARGET_DIR) and not args.sphinx:
         print("build directory %r does not exist"%TARGET_DIR)
         sys.exit(1)
-    os.makedirs(TARGET_DIR, exist_ok=True)
+    makedirs(TARGET_DIR, exist_ok=True)
 
     if args.cpus == -1:
         cpus = int(os.environ.get("SASMODELS_BUILD_CPUS", "0"))
