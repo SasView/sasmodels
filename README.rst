@@ -94,6 +94,8 @@ both radial and tangential simultaneously, use the word "both".
 See `bumps documentation <https://bumps.readthedocs.io/>`_ for detailed
 instructions on running the fit.
 
+![Test](https://github.com/SasView/sasmodels/workflows/Test/badge.svg)
+
 |TravisStatus|_
 
 .. |TravisStatus| image:: https://travis-ci.org/SasView/sasmodels.svg?branch=master
