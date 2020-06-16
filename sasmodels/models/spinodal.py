@@ -2,9 +2,8 @@ r"""
 Definition
 ----------
 
-This model calculates the SAS signal of a phase separating system
-undergoing spinodal decomposition. The scattering intensity $I(q)$ is calculated
-as
+This model calculates the SAS signal of a phase separating system undergoing
+spinodal decomposition. The scattering intensity $I(q)$ is calculated as
 
 .. math::
     I(q) = I_{max}\frac{(1+\gamma/2)x^2}{\gamma/2+x^{2+\gamma}}+B
