@@ -548,7 +548,6 @@ class MultipleScattering(Resolution):
         Iq = np.histogram(self._radius, bins=self._edges, weights=Iqxy)[0]/self._norm
         return Iq
 
-
     def plot_and_save_powers(self, theory, result, plot=True,
                               outfile="", background=0.):
         import pylab
@@ -602,13 +601,15 @@ class MultipleScattering(Resolution):
                 pylab.figure()
 
                 # Plot 1D pattern for partial scattering
-                pylab.loglog(q, self.Iq+background, label="total for p=%g"%probability)
+                pylab.loglog(q, self.Iq+background,
+                             label="total for p=%g" % probability)
                 if self.resolution is not None:
                     pylab.loglog(q, result, label="total with dQ")
                 #new_annulus = annular_average(self._radius, self.Iqxy, self._edges)
                 #pylab.loglog(q, new_annulus+background, label="new total for p=%g"%probability)
                 for n, (w, Ipower) in enumerate(zip(weights, Iq_powers)):
-                    pylab.loglog(q, w*Ipower+background, label="scattering^%d"%(n+1))
+                    pylab.loglog(q, w*Ipower+background,
+                                 label="scattering^%d" % (n+1))
                 pylab.legend()
                 pylab.title('total scattering for p=%g' % probability)
         pylab.show()

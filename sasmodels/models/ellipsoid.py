@@ -178,13 +178,13 @@ qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
 tests = [
     [{}, 0.05, 54.8525847025],
-    [{'theta':80., 'phi':10.}, (qx, qy), 1.74134670026],
+    [{'theta': 80., 'phi': 10.}, (qx, qy), 1.74134670026],
 
     # Test beta and the effective radius with the equivelent sphere (May 15, 2019)
     # Yun's matlab report [0.006,0.05,0.1], [330.0, 10.976, 1.369]
     # The values in the code here are calcualted results from SASVieww (May 15, 2019)
     [{"@S": "hardsphere",
-      "scale": 1., "background": 0., "volfraction":0.2,
+      "scale": 1., "background": 0., "volfraction": 0.2,
       "structure_factor_mode": 1,  # beta approx
       "radius_effective_mode": 2   # Reff "equivelent sphere"
      },
@@ -195,7 +195,7 @@ tests = [
     # Yun's matlab report [0.006,0.05,0.1], [273.67, 10.942, 1.3683]
     # The values in the code here are calcualted results from SASVieww (May 15, 2019)
     [{"@S": "hardsphere",
-      "scale": 1., "background": 0., "volfraction":0.2,
+      "scale": 1., "background": 0., "volfraction": 0.2,
       "structure_factor_mode": 1,  # beta approx
       "radius_effective_mode": 3   # Reff "equivelent sphere"
      },
@@ -206,7 +206,7 @@ tests = [
     # Yun's matlab report [0.006,0.05,0.1], [1062.37, 10.977, 1.369]
     # The values in the code here are calcualted results from SASVieww (May 15, 2019)
     [{"@S": "hardsphere",
-      "scale": 1., "background": 0., "volfraction":0.2,
+      "scale": 1., "background": 0., "volfraction": 0.2,
       "structure_factor_mode": 1,  # beta approx
       "radius_effective_mode": 4   # Reff "equivelent sphere"
      },
@@ -220,7 +220,7 @@ tests = [
     #     [0.006,0.05,0.1], [529.03,419.22, 10.977, 1.369]
     # The values in the code here are calcualted results from SASVieww (May 15, 2019)
     [{"@S": "hardsphere",
-      "scale": 1., "background": 0., "volfraction":0.2,
+      "scale": 1., "background": 0., "volfraction": 0.2,
       "structure_factor_mode": 1,  # beta approx
       "radius_effective_mode": 1   # Reff "equivelent sphere"
      },

@@ -181,7 +181,7 @@ class SesansData(Data1D):
     isSesans = True
     def __init__(self, **kw):
         Data1D.__init__(self, **kw)
-        self.lam = None # type: OptArray
+        self.lam = None  # type: OptArray
 
 class Data2D(object):
     """
@@ -603,7 +603,7 @@ def _plot_result2D(data, theory, resid, view, use_data, limits=None):
 
     # Put theory and data on a common colormap scale
     vmin, vmax = np.inf, -np.inf
-    target = None # type: OptArray
+    target = None  # type: OptArray
     if use_data:
         target = data.data[~data.mask]
         datamin = target[target > 0].min() if view == 'log' else target.min()

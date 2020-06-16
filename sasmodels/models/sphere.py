@@ -85,7 +85,7 @@ def random():
     return pars
 #2345678901234567890123456789012345678901234567890123456789012345678901234567890
 tests = [
-    [{}, 0.2, 0.726362], # each test starts with default parameter values
+    [{}, 0.2, 0.726362],  # each test starts with default parameter values
     #            inside { }, unless modified. Then Q and expected value of I(Q)
     # putting None for an expected result will pass the test if there are no
     # errors from the routine, but without any check on the value of the result
@@ -95,16 +95,16 @@ tests = [
     [{"scale": 1., "background": 0., "sld": 6., "sld_solvent": 1.,
       #  careful tests here R=120 Pd=.2, then with S(Q) at default Reff=50
       #  (but this gets changed to 120) phi=0,2
-      "radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
+      "radius": 120., "radius_pd": 0.2, "radius_pd_n": 45},
      [0.01, 0.1, 0.2], [1.74395295e+04, 3.68016987e+00, 2.28843099e-01]],
     # a list of Q values and list of expected results is also possible
     [{"scale": 1., "background": 0., "sld": 6., "sld_solvent": 1.,
-      "radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
+      "radius": 120., "radius_pd": 0.2, "radius_pd_n": 45},
      0.01, 335839.88055473, 1.41045057e+11, 120.0, 8087664.122641933, 1.0],
     # the longer list here checks  F1, F2, R_eff, volume, volume_ratio
-    [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
+    [{"radius": 120., "radius_pd": 0.2, "radius_pd_n": 45},
      0.1, 482.93824329, 29763977.79867414, 120.0, 8087664.122641933, 1.0],
-    [{"radius": 120., "radius_pd": 0.2, "radius_pd_n":45},
+    [{"radius": 120., "radius_pd": 0.2, "radius_pd_n": 45},
      0.2, 1.23330406, 1850806.1197361, 120.0, 8087664.122641933, 1.0],
     #  But note P(Q) = F2/volume
     #  F and F^2 are "unscaled", with for  n <F F*>S(q) or for beta approx
@@ -138,8 +138,7 @@ tests = [
       "radius_effective": 45.0,     # explicit Reff over rides either 50 or 120
       "structure_factor_mode": 1,  # beta approx
       "radius_effective_mode": 0   #
-     }, 0.01, 1316.2990966463444
-     ],
+      }, 0.01, 1316.2990966463444],
     [{"@S": "hardsphere",
       "radius": 120., "radius_pd": 0.2, "radius_pd_n": 45,
       "volfraction": 0.2,
@@ -182,4 +181,4 @@ tests = [
       "volume_ratio": 1.0,
       "radius_effective": 0.0,  # zero since mode is 0, and Reff isn't computed
      }],
-]
+    ]

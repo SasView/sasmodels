@@ -47,9 +47,9 @@ except ImportError:
         module = imp.load_source(fullname, os.path.expanduser(path))
         return module
 
-_MODULE_CACHE = {} # type: Dict[str, Tuple[ModuleType, int]]
-_MODULE_DEPENDS = {} # type: Dict[str, List[str]]
-_MODULE_DEPENDS_STACK = [] # type: List[str]
+_MODULE_CACHE = {}  # type: Dict[str, Tuple[ModuleType, int]]
+_MODULE_DEPENDS = {}  # type: Dict[str, List[str]]
+_MODULE_DEPENDS_STACK = []  # type: List[str]
 def load_custom_kernel_module(path):
     # type: (str) -> ModuleType
     """load SAS kernel from *path* as *sasmodels.custom.modelname*"""

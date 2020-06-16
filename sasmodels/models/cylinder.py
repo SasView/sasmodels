@@ -182,27 +182,31 @@ tests = [
      502654.8245743669, 1.0],
 #2345678901234567890123456789012345678901234567890123456789012345678901234567890
     [{"@S": "hardsphere",         # MONODISPERSE
-      "scale": 5., "background": 0., "volfraction":0.2,
+      "scale": 5., "background": 0., "volfraction": 0.2,
       "structure_factor_mode": 0,  # normal decoupling approx
       "radius_effective_mode": 1,  # Reff "excluded volume"
-     }, [0.01, 0.05, 0.2], [7.35571916e+01, 5.78147797e+01, 4.15623248e-2]],
+     }, [0.01, 0.05, 0.2], [7.35571916e+01, 5.78147797e+01, 4.15623248e-2]
+     ],
     [{"@S": "hardsphere",
-      "scale": 5., "background": 0., "volfraction":0.2,
+      "scale": 5., "background": 0., "volfraction": 0.2,
       "structure_factor_mode": 1,  # beta approx
       "radius_effective_mode": 1,  # Reff "excluded volume"
-     }, [0.01, 0.05, 0.2], [8.29729770e+01, 5.44206752e+01, 4.17598382e-2]],
+     }, [0.01, 0.05, 0.2], [8.29729770e+01, 5.44206752e+01, 4.17598382e-2]
+     ],
     [{"@S": "hardsphere",         # POLYDISPERSE
-      "scale": 5., "background": 0., "volfraction":0.2,
+      "scale": 5., "background": 0., "volfraction": 0.2,
       "radius_pd": 0.2, "radius_pd_n": 15, "length_pd": 0.1,
       "structure_factor_mode": 0,  # normal decoupling approx
       "radius_effective_mode": 1,  # Reff "excluded volume"
-     }, [0.01, 0.05, 0.2], [87.50350037, 63.95202427, 0.27889988]],
+     }, [0.01, 0.05, 0.2], [87.50350037, 63.95202427, 0.27889988]
+     ],
     [{"@S": "hardsphere",
       "scale": 5., "background": 0., "volfraction": 0.2,
       "radius_pd": 0.2, "radius_pd_n": 15, "length_pd": 0.1,
       "structure_factor_mode": 1,  # beta approx
       "radius_effective_mode": 1,  # Reff "excluded volume"
-     }, [0.01, 0.05, 0.2], [132.2101165, 59.89948174, 0.28048784]],
+     }, [0.01, 0.05, 0.2], [132.2101165, 59.89948174, 0.28048784]
+     ],
     #
     [{'theta': theta, 'phi': phi}, (qx, qy), 0.03514647218513852],
     [{'theta': theta, 'phi': phi}, [(qx, qy)], [0.03514647218513852]],

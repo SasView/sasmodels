@@ -174,7 +174,7 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
     max_diff = [0]
     for k in range(N):
         print("Model %s %d"%(name, k+1), file=sys.stderr)
-        seed = np.random.randint(1e6) # type: int
+        seed = np.random.randint(1e6)  # type: int
         np.random.seed(seed)
         pars_i = randomize_pars(model_info, pars)
         constrain_pars(model_info, pars_i)

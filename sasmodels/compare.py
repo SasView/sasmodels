@@ -761,7 +761,7 @@ def compare(opts, limits=None, maxdim=None):
         if k > 0:
             # print a separate seed for each dataset for better reproducibility
             new_seed = np.random.randint(1000000)  # type: int
-            print("=== Set %d uses -random=%d ==="%(k+1, new_seed))
+            print("=== Set %d uses -random=%d ===" % (k+1, new_seed))
             np.random.seed(new_seed)
         opts['pars'] = parse_pars(opts, maxdim=maxdim)
         if opts['pars'] is None:
