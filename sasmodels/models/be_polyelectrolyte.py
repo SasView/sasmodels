@@ -11,12 +11,10 @@ is calculated as
 
 .. math::
 
-    I(q) = K\frac{q^2+k^2}{4\pi L_b\alpha ^2}
-    \frac{1}{1+r_{0}^4(q^2+k^2)(q^2-12hC_a/b^2)} + background
-
-    k^2 = 4\pi L_b(2C_s + \alpha C_a)
-
-    r_{0}^2 = \frac{b}{\alpha \sqrt{C_a 48\pi L_b}}
+    I(q) &= K\frac{q^2+k^2}{4\pi L_b\alpha ^2}
+        \frac{1}{1+r_{0}^4(q^2+k^2)(q^2-12hC_a/b^2)} + \text{background} \\
+    k^2 &= 4\pi L_b(2C_s + \alpha C_a) \\
+    r_{0}^2 &= \frac{b}{\alpha \sqrt{C_a 48\pi L_b}}
 
 where
 
@@ -26,9 +24,8 @@ defined as:
 
 .. math::
 
-    K = a^2
-
-    a = b_p - (v_p/v_s) b_s
+    K &= a^2 \\
+    a &= b_p - (v_p/v_s) b_s
 
 where:
 
@@ -56,7 +53,7 @@ where:
 - $C_a$ is the polymer molar concentration (1/|Ang^3| - internally converted
   from mol/L)
 
-- $background$ is the incoherent background.
+- $\text{background}$ is the incoherent background.
 
 For 2D data the scattering intensity is calculated in the same way as 1D,
 where the $\vec q$ vector is defined as

@@ -34,21 +34,21 @@ of the parallelepiped, $\phi$ is the angle between the scattering vector
     {\left( q \frac{A}{2} \sin\theta \sin\phi \right)}\right]
     \left[\frac{\sin \bigl( q \frac{B}{2} \sin\theta \cos\phi \bigr)}
     {\left( q \frac{B}{2} \sin\theta \cos\phi \right)}\right] \\
-    & - 8
-    \left(\frac{A}{2}-\Delta\right) \left(\frac{B}{2}-\Delta\right) \left(\frac{C}{2}-\Delta\right)
-    \left[ \frac{\sin \bigl[ q \bigl(\frac{C}{2}-\Delta\bigr) \cos\theta \bigr]}
-    {q \bigl(\frac{C}{2}-\Delta\bigr) \cos\theta} \right]
-    \left[ \frac{\sin \bigl[ q \bigl(\frac{A}{2}-\Delta\bigr) \sin\theta \sin\phi \bigr]}
-    {q \bigl(\frac{A}{2}-\Delta\bigr) \sin\theta \sin\phi} \right]
-    \left[ \frac{\sin \bigl[ q \bigl(\frac{B}{2}-\Delta\bigr) \sin\theta \cos\phi \bigr]}
-    {q \bigl(\frac{B}{2}-\Delta\bigr) \sin\theta \cos\phi} \right]
+    & - A' B' C'
+    \left[ \frac{\sin \bigl[ q \frac{C'}{2} \cos\theta \bigr]}
+    {q \frac{C'}{2} \cos\theta} \right]
+    \left[ \frac{\sin \bigl[ q \frac{A'}{2} \sin\theta \sin\phi \bigr]}
+    {q \frac{A'}{2} \sin\theta \sin\phi} \right]
+    \left[ \frac{\sin \bigl[ q \frac{B'}{2} \sin\theta \cos\phi \bigr]}
+    {q \frac{B'}{2} \sin\theta \cos\phi} \right]
   \end{align*}
 
-where $A$, $B$ and $C$ are the external sides of the parallelepiped fulfilling
-$A \le B \le C$, and the volume $V$ of the parallelepiped is
+where $A = A' + 2\Delta$, $B = B' + 2\Delta$ and $C = C' + 2\Delta$ are the
+external sides of the parallelepiped fulfilling $A \le B \le C$, and the
+volume $V$ of the parallelepiped is
 
 .. math::
-  V = A B C \, - \, (A - 2\Delta) (B - 2\Delta) (C - 2\Delta)
+  V = A B C \, - \, A' B' C'
 
 The 1D scattering intensity is then calculated as
 
@@ -64,7 +64,7 @@ the volume of the solvent filled core).
 
 For 2d data the orientation of the particle is required, described using
 angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further details
-of the calculation and angular dispersions see :ref:`orientation` .
+of the calculation and angular dispersions see :ref:`orientation`.
 The angle $\Psi$ is the rotational angle around the long *C* axis. For example,
 $\Psi = 0$ when the *B* axis is parallel to the *x*-axis of the detector.
 
