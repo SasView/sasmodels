@@ -2,8 +2,8 @@ r"""
 Definition
 ----------
 Calculates the scattering from a fractal structure with a primary building
-block of core-shell spheres, as opposed to just homogeneous spheres in
-the fractal model. It is an extension of the well known Teixeira\ [#Teixeira1988]_
+block of core-shell spheres, as opposed to just homogeneous spheres in the
+fractal model. It is an extension of the well known Teixeira\ [#Teixeira1988]_
 fractal model replacing the $P(q)$ of a solid sphere with that of a core-shell
 sphere. This model could find use for aggregates of coated particles, or
 aggregates of vesicles for example.
@@ -13,8 +13,8 @@ aggregates of vesicles for example.
     I(q) = P(q)S(q) + \text{background}
 
 Where $P(q)$ is the core-shell form factor and $S(q)$ is the
-Teixeira\ [#Teixeira1988]_ fractal structure factor both of which are given again
-below:
+Teixeira\ [#Teixeira1988]_ fractal structure factor both of which are given
+again below:
 
 .. math::
 
@@ -28,9 +28,9 @@ below:
 where $\phi$ is the volume fraction of particles, $V_s$ is the volume of the
 whole particle, $V_c$ is the volume of the core, $\rho_c$, $\rho_s$, and
 $\rho_{solv}$ are the scattering length densities of the core, shell, and
-solvent respectively, $r_c$ and $r_s$ are the radius of the core and the radius
-of the whole particle respectively, $D_f$ is the fractal dimension, and $\xi$ the
-correlation length.
+solvent respectively, $r_c$ and $r_s$ are the radius of the core and the
+radius of the whole particle respectively, $D_f$ is the fractal dimension,
+and $\xi$ the correlation length.
 
 Polydispersity of radius and thickness are also provided for.
 

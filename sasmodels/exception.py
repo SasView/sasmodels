@@ -47,5 +47,5 @@ def annotate_exception(msg, exc=None):
         try:
             arg0 = " ".join((args[0], msg))
             exc.args = tuple([arg0] + list(args[1:]))
-        except:
+        except Exception:
             exc.args = (" ".join((str(exc), msg)),)

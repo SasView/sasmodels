@@ -47,12 +47,14 @@ where:
 
 - $b$ is the monomer length (|Ang|).
 
-- $C_s$ is the concentration of monovalent salt(1/|Ang^3| - internally converted from mol/L).
+- $C_s$ is the concentration of monovalent salt(1/|Ang^3| - internally
+  converted from mol/L).
 
-- $\alpha$ is the degree of ionization (the ratio of charged monomers to the total
-  number of monomers)
+- $\alpha$ is the degree of ionization (the ratio of charged monomers to the
+  total number of monomers)
 
-- $C_a$ is the polymer molar concentration (1/|Ang^3| - internally converted from mol/L)
+- $C_a$ is the polymer molar concentration (1/|Ang^3| - internally converted
+  from mol/L)
 
 - $background$ is the incoherent background.
 
@@ -88,8 +90,8 @@ For further details, see [#Joanny1990]_, [#Moussaid1993]_, [#Raphael1990]_.
 
 .. [#Borue] V Y Borue, I Y Erukhimovich, *Macromolecules*, 21 (1988) 3240
 .. [#Joanny1990] J F Joanny, L Leibler, *Journal de Physique*, 51 (1990) 545
-.. [#Moussaid1993] A Moussaid, F Schosseler, J P Munch, S Candau, *J. Journal de Physique
-   II France*, 3 (1993) 573
+.. [#Moussaid1993] A Moussaid, F Schosseler, J P Munch, S Candau,
+   *J. Journal de Physique II France*, 3 (1993) 573
 .. [#Raphael1990] E Raphael, J F Joanny, *Europhysics Letters*, 11 (1990) 179
 
 Authorship and Verification

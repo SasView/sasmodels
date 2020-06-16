@@ -234,7 +234,7 @@ def make_kernel_args(kernel, mesh):
     nvalues = kernel.info.parameters.nvalues
     scalars = [value for value, dispersity, weight in mesh]
     # skipping scale and background when building values and weights
-    value, dispersity, weight = zip(*mesh[2:npars+2]) if npars else ((), (), ())
+    _, dispersity, weight = zip(*mesh[2:npars+2]) if npars else ((), (), ())
     #weight = correct_theta_weights(kernel.info.parameters, dispersity, weight)
     length = np.array([len(w) for w in weight])
     offset = np.cumsum(np.hstack((0, length)))

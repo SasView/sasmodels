@@ -35,31 +35,33 @@ ellipse with respect to the vector $\vec q$. The angle $\alpha$ is the angle
 between the axis of the cylinder and $\vec q$.
 
 
-For 1D scattering, with no preferred orientation, the form factor is averaged over all possible orientations and normalized
-by the particle volume
+For 1D scattering, with no preferred orientation, the form factor is averaged
+over all possible orientations and normalized by the particle volume
 
 .. math::
 
     P(q) = \text{scale}  <F^2> / V
 
-For 2d data the orientation of the particle is required, described using a different set
-of angles as in the diagrams below, for further details of the calculation and angular
-dispersions  see :ref:`orientation` .
+For 2d data the orientation of the particle is required, described using a
+different set of angles as in the diagrams below, for further details of the
+calculation and angular dispersions see :ref:`orientation`.
 
 
 .. figure:: img/elliptical_cylinder_angle_definition.png
 
-    Note that the angles here are not the same as in the equations for the scattering function.
-    Rotation $\theta$, initially in the $xz$ plane, is carried out first, then
-    rotation $\phi$ about the $z$ axis, finally rotation $\Psi$ is now around the axis of the cylinder.
-    The neutron or X-ray beam is along the $z$ axis.
+    Note that the angles here are not the same as in the equations for the
+    scattering function. Rotation $\theta$, initially in the $xz$ plane, is
+    carried out first, then rotation $\phi$ about the $z$ axis, finally
+    rotation $\Psi$ is now around the axis of the cylinder. The neutron or
+    X-ray beam is along the $z$ axis.
 
 .. figure:: img/elliptical_cylinder_angle_projection.png
 
     Examples of the angles for oriented elliptical cylinders against the
     detector plane, with $\Psi$ = 0.
 
-The $\theta$ and $\phi$ parameters to orient the cylinder only appear in the model when fitting 2d data.
+The $\theta$ and $\phi$ parameters to orient the cylinder only appear in the
+model when fitting 2d data.
 
 
 NB: The 2nd virial coefficient of the cylinder is calculated based on the
@@ -85,8 +87,9 @@ varying the number of angular bins.
 References
 ----------
 
-#.  L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*, Plenum, New York, (1987) [see table 3.4]
-#.  L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+#. L A Feigin and D I Svergun, *Structure Analysis by Small-Angle
+   X-Ray and Neutron Scattering*, Plenum, New York, (1987) [see table 3.4]
+#. L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------

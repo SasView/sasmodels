@@ -441,7 +441,7 @@ class SasviewModel(object):
 
     def __set_state__(self, state):
         # type: (Dict[str, Any]) -> None
-        self.__dict__ = state
+        self.__dict__ = state  # pylint: disable=attribute-defined-outside-init
         self._model = None
 
     def __str__(self):
@@ -945,7 +945,7 @@ def test_old_name():
         return
     try:
         # if sasview is not on the path then don't try to test it
-        import sas
+        import sas  # pylint: disable=unused-import
     except ImportError:
         return
     load_standard_models()

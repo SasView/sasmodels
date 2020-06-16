@@ -49,10 +49,10 @@ orientation of the *q* vector.
 References
 ----------
 
-#.  R Schweins and K Huber, *Particle Scattering Factor of Pearl Necklace Chains*,
-    *Macromol. Symp.* 211 (2004) 25-42 2004
+#. R Schweins and K Huber, *Particle Scattering Factor of Pearl Necklace Chains*,
+   *Macromol. Symp.* 211 (2004) 25-42 2004
 
-#.  L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+#. L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------

@@ -92,8 +92,8 @@ parameters = [
     ["radius",      "Ang",     20.0, [0, inf],    "volume",      "Cylinder core radius"],
     ["thickness",   "Ang",     10.0, [0, inf],    "volume",      "Cylinder wall thickness"],
     ["length",      "Ang",    400.0, [0, inf],    "volume",      "Cylinder total length"],
-    ["sld",         "1e-6/Ang^2",  6.3, [-inf, inf], "sld",         "Cylinder sld"],
-    ["sld_solvent", "1e-6/Ang^2",  1,   [-inf, inf], "sld",         "Solvent sld"],
+    ["sld",         "1e-6/Ang^2",  6.3, [-inf, inf], "sld",      "Cylinder sld"],
+    ["sld_solvent", "1e-6/Ang^2",  1,   [-inf, inf], "sld",      "Solvent sld"],
     ["theta",       "degrees", 90,   [-360, 360], "orientation", "Cylinder axis to beam angle"],
     ["phi",         "degrees",  0,   [-360, 360], "orientation", "Rotation about beam"],
     ]

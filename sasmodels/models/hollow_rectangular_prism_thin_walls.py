@@ -3,10 +3,8 @@
 r"""
 Definition
 ----------
-
-
-This model provides the form factor, $P(q)$, for a hollow rectangular
-prism with infinitely thin walls. It computes only the 1D scattering, not the 2D.
+This model provides the form factor, $P(q)$, for a hollow rectangular prism
+with infinitely thin walls. It computes only the 1D scattering, not the 2D.
 The 1D scattering intensity for this model is calculated according to the
 equations given by Nayuk and Huber\ [#Nayuk2012]_.
 

@@ -137,7 +137,7 @@ if COMPILER == "unix":
     SOFLAGS = "-fPIC -shared"
     compiler_vars = (CC, CPPFLAGS, CFLAGS, LDFLAGS, SOFLAGS)
     compiler = [val for var in compiler_vars for val in shlex.split(var)]
-    LIBS = ["-lm" ] + shlex.split(os.environ.get("LIBS", ""))
+    LIBS = ["-lm"] + shlex.split(os.environ.get("LIBS", ""))
 
     # Add OpenMP support if not running on a Mac.
     if sys.platform != "darwin":

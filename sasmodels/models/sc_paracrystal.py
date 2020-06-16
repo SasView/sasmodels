@@ -19,14 +19,14 @@ The scattering intensity $I(q)$ is calculated as
 
     I(q) = \text{scale}\frac{V_\text{lattice}P(q)Z(q)}{V_p} + \text{background}
 
-where scale is the volume fraction of spheres, $V_p$ is the volume of
-the primary particle, $V_\text{lattice}$ is a volume correction for the crystal
-structure, $P(q)$ is the form factor of the sphere (normalized), and
-$Z(q)$ is the paracrystalline structure factor for a simple cubic structure.
+where scale is the volume fraction of spheres, $V_p$ is the volume of the
+primary particle, $V_\text{lattice}$ is a volume correction for the crystal
+structure, $P(q)$ is the form factor of the sphere (normalized), and $Z(q)$
+is the paracrystalline structure factor for a simple cubic structure.
 
-Equation (16) of the 1987 reference\ [#Matsuoka1987]_ is used to calculate $Z(q)$,
-using equations (13)-(15) from the 1987 paper\ [#Matsuoka1990]_ for $Z1$, $Z2$, and
-$Z3$.
+Equation (16) of the 1987 reference\ [#Matsuoka1987]_ is used to calculate
+$Z(q)$, using equations (13)-(15) from the 1987 paper\ [#Matsuoka1990]_ for
+$Z1$, $Z2$, and $Z3$.
 
 The lattice correction (the occupied volume of the lattice) for a simple cubic
 structure of particles of radius *R* and nearest neighbor separation *D* is
@@ -85,7 +85,7 @@ forbidden. Thus the peak positions correspond to (just the first 5)
 The 2D (Anisotropic model) is based on the reference below where *I(q)* is
 approximated for 1d scattering. Thus the scattering pattern for 2D may not
 be accurate particularly at low $q$. For general details of the calculation
-and angular dispersions for oriented particles see :ref:`orientation` .
+and angular dispersions for oriented particles see :ref:`orientation`.
 Note that we are not responsible for any incorrectness of the
 2D model computation.
 
@@ -97,8 +97,10 @@ Note that we are not responsible for any incorrectness of the
 Reference
 ---------
 
-.. [#Matsuoka1987] Hideki Matsuoka et. al. *Physical Review B*, 36 (1987) 1754-1765 (Original Paper)
-.. [#Matsuoka1990] Hideki Matsuoka et. al. *Physical Review B*, 41 (1990) 3854 -3856 (Corrections to FCC and BCC lattice structure calculation)
+.. [#Matsuoka1987] Hideki Matsuoka et. al. *Physical Review B*, 36 (1987)
+   1754-1765 (Original Paper)
+.. [#Matsuoka1990] Hideki Matsuoka et. al. *Physical Review B*, 41 (1990)
+   3854-3856 (Corrections to FCC and BCC lattice structure calculation)
 
 Authorship and Verification
 ---------------------------

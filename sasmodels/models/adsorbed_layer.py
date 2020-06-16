@@ -45,8 +45,8 @@ Steve King at ISIS in the SANDRA package c. 1990 [#King2002]_.
 References
 ----------
 
-.. [#King2002] S King, P Griffiths, J Hone, and T Cosgrove, *SANS from Adsorbed Polymer
-   Layers*, *Macromol. Symp.*, 190 (2002) 33-42.
+.. [#King2002] S King, P Griffiths, J Hone, and T Cosgrove, *SANS from
+   Adsorbed Polymer Layers*, *Macromol. Symp.*, 190 (2002) 33-42.
 
 Authorship and Verification
 ----------------------------

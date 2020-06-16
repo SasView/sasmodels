@@ -59,23 +59,29 @@ confidence=
 # Disable the message(s) with the given id(s).
 # http://pylint-messages.wikidot.com/all-codes
 disable=
-    multiple-statements,
-    bare-except,
+    #bare-except,
     broad-except,
-    star-args,
-    unbalanced-tuple-unpacking,
-    locally-enabled,
+    duplicate-code,
     locally-disabled,
-    #no-else-return,
-    #invalid-name,
+    locally-enabled,
+    #multiple-statements,
     fixme,
+    global-statement,
+    invalid-name,
+    no-else-raise,
+    no-else-return,
+    star-args,
     too-many-lines,
     too-many-locals,
     too-many-branches,
     too-many-statements,
-    #too-many-instance-attributes,
-    #too-many-return-statements,
+    too-many-instance-attributes,
+    too-many-return-statements,
+    #unbalanced-tuple-unpacking,
+    unnecessary-pass,
+    using-constant-test,
     #no-self-use,
+    useless-object-inheritance,
 
 [REPORTS]
 

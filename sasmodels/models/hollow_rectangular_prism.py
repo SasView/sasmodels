@@ -75,10 +75,11 @@ preserved, but the results may be not correct.
 
 .. figure:: img/parallelepiped_angle_definition.png
 
-    Definition of the angles for oriented hollow rectangular prism.
-    Note that rotation $\theta$, initially in the $xz$ plane, is carried out first, then
-    rotation $\phi$ about the $z$ axis, finally rotation $\Psi$ is now around the axis of the prism.
-    The neutron or X-ray beam is along the $z$ axis.
+    Definition of the angles for oriented hollow rectangular prism. Note that
+    rotation $\theta$, initially in the $xz$ plane, is carried out first,
+    then rotation $\phi$ about the $z$ axis, finally rotation $\Psi$ is now
+    around the axis of the prism. The neutron or X-ray beam is along the $z$
+    axis.
 
 .. figure:: img/parallelepiped_angle_projection.png
 

@@ -21,7 +21,8 @@ The scattered intensity $I(q)$ is calculated as
 
     I(q) = \frac{\Delta \rho^2}{V} \left<A^2(q,\alpha).sin(\alpha)\right>
 
-where the amplitude $A(q,\alpha)$ with the rod axis at angle $\alpha$ to $q$ is given as
+where the amplitude $A(q,\alpha)$ with the rod axis at angle $\alpha$ to $q$
+is given as
 
 .. math::
 
@@ -104,15 +105,16 @@ description = """
 """
 category = "shape:cylinder"
 # pylint: disable=bad-whitespace, line-too-long
-#             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["sld",         "1e-6/Ang^2",   4, [-inf, inf], "sld",         "Barbell scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2",   1, [-inf, inf], "sld",         "Solvent scattering length density"],
-              ["radius_bell", "Ang",         40, [0, inf],    "volume",      "Spherical bell radius"],
-              ["radius",      "Ang",         20, [0, inf],    "volume",      "Cylindrical bar radius"],
-              ["length",      "Ang",        400, [0, inf],    "volume",      "Cylinder bar length"],
-              ["theta",       "degrees",     60, [-360, 360], "orientation", "Barbell axis to beam angle"],
-              ["phi",         "degrees",     60, [-360, 360], "orientation", "Rotation about beam"],
-             ]
+#   ["name", "units", default, [lower, upper], "type","description"],
+parameters = [
+    ["sld",         "1e-6/Ang^2",   4, [-inf, inf], "sld",         "Barbell scattering length density"],
+    ["sld_solvent", "1e-6/Ang^2",   1, [-inf, inf], "sld",         "Solvent scattering length density"],
+    ["radius_bell", "Ang",         40, [0, inf],    "volume",      "Spherical bell radius"],
+    ["radius",      "Ang",         20, [0, inf],    "volume",      "Cylindrical bar radius"],
+    ["length",      "Ang",        400, [0, inf],    "volume",      "Cylinder bar length"],
+    ["theta",       "degrees",     60, [-360, 360], "orientation", "Barbell axis to beam angle"],
+    ["phi",         "degrees",     60, [-360, 360], "orientation", "Rotation about beam"],
+    ]
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "barbell.c"]

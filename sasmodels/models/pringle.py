@@ -26,7 +26,7 @@ where
     J_n\left( qr^2\beta \cos{\psi}\right)
     J_{2n}\left( qr \sin{\psi}\right)
 
-and $\Delta \rho \text{ is } \rho_{pringle}-\rho_{solvent}$, $V$ is the volume of
+and $\Delta\rho\text{ is }\rho_{pringle}-\rho_{solvent}$, $V$ is the volume of
 the disc, $\psi$ is the angle between the normal to the disc and the q vector,
 $d$ and $R$ are the "pringle" thickness and radius respectively, $\alpha$ and
 $\beta$ are the two curvature parameters, and $J_n$ is the n\ :sup:`th` order
@@ -39,8 +39,9 @@ Bessel function of the first kind.
 Reference
 ---------
 
-#.  Karen Edler, Universtiy of Bath, Private Communication. 2012. Derivation by Stefan Alexandru Rautu.
-#.  L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+#. Karen Edler, Universtiy of Bath, Private Communication. 2012.
+   Derivation by Stefan Alexandru Rautu.
+#. L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------

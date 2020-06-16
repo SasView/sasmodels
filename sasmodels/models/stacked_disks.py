@@ -94,7 +94,8 @@ C-library provided by the NIST Center for Neutron Research\ [#Kline2006]_
 References
 ----------
 
-See also Higgins and Benoit [#Higgins1994]_ and Guinier and Fournet [#Guinier1955]_.
+See also Higgins and Benoit [#Higgins1994]_ and Guinier and
+Fournet [#Guinier1955]_.
 
 .. [#Kratky1949] O Kratky and G Porod, *J. Colloid Science*, 4, (1949) 35
 .. [#Kline2006] S R Kline, *J Appl. Cryst.*, 39 (2006) 895

@@ -45,7 +45,8 @@ negative value of $R_g^2$.
 References
 ----------
 
-#.  A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*, John Wiley & Sons, New York (1955)
+#. A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*,
+   John Wiley & Sons, New York (1955)
 
 Authorship and Verification
 ----------------------------

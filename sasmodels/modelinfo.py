@@ -826,7 +826,7 @@ def _insert_after(parameters, insert, remove, insert_after):
         _process_group(par.id)
     for name, par in lookup.items():
         if par is not None:
-            raise ValueError("parameter %s not listed in insert_after", name)
+            raise ValueError("parameter %s not listed in insert_after" % name)
 
     return new_list
 

@@ -169,7 +169,7 @@ def _make_sesans_transform(data):
 
     theta_max = Converter("radians")(data.sample.zacceptance)[0]
     q_max = 2 * np.pi / np.max(data.source.wavelength) * np.sin(theta_max)
-    zaccept = Converter("1/A")(q_max, "1/" + data.source.wavelength_unit),
+    zaccept = Converter("1/A")(q_max, "1/" + data.source.wavelength_unit)
 
     Rmax = 10000000
     hankel = sesans.SesansTransform(data.x, SElength,

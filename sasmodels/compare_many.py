@@ -20,12 +20,22 @@ import numpy as np  # type: ignore
 
 from . import core
 from .compare import (
-    randomize_pars, suppress_pd, make_data, make_engine, get_pars, columnize,
-    constrain_pars, print_models)
+    randomize_pars, suppress_pd, make_data, make_engine, get_pars,
+    constrain_pars)
+
+# pylint: disable=unused-import
+try:
+    from typing import Tuple, Any, Dict, List
+except ImportError:
+    pass
+else:
+    from .data import Data
+# pylint: enable=unused-import
 
 MODELS = core.list_models()
 
 def calc_stats(target, value, index):
+    # type: (np. ndarrady, np.ndarray, Any) -> Tuple[float, float, float, float]
     """
     Calculate statistics between the target value and the computed value.
 
@@ -56,11 +66,13 @@ def calc_stats(target, value, index):
     return maxrel, rel95, maxabs, maxval
 
 def print_column_headers(pars, parts):
+    # type: (Dict[str, float], List[str]) -> None
     """
     Generate column headers for the differences and for the parameters,
     and print them to standard output.
     """
-    stats = list('Max rel err|95% rel err|Max abs err above 90% rel|Max value above 90% rel'.split('|'))
+    stats = list('Max rel err|95% rel err|Max abs err above 90% rel'
+                 '|Max value above 90% rel'.split('|'))
     groups = ['']
     for p in parts:
         groups.append(p)
@@ -82,6 +94,7 @@ PRECISION = {
 }
 def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
                      base='single', comp='double'):
+    # type: (str, Data, Any, int, bool, float, string, string) -> None
     r"""
     Compare the model under different calculation engines.
 
@@ -161,7 +174,7 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
     max_diff = [0]
     for k in range(N):
         print("Model %s %d"%(name, k+1), file=sys.stderr)
-        seed = np.random.randint(1e6)
+        seed = np.random.randint(1e6) # type: int
         np.random.seed(seed)
         pars_i = randomize_pars(model_info, pars)
         constrain_pars(model_info, pars_i)
@@ -183,6 +196,7 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
 
 
 def print_usage():
+    # type: () -> None
     """
     Print the command usage string.
     """
@@ -191,6 +205,7 @@ def print_usage():
 
 
 def print_help():
+    # type: () -> None
     """
     Print usage string, the option description and the list of available models.
     """
@@ -223,6 +238,7 @@ precision is given, then use single and double! respectively.
 """)
 
 def main(argv):
+    # type: (List[str]) -> None
     """
     Main program.
     """

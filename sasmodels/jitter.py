@@ -1024,7 +1024,7 @@ def _mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection
     # Note: travis-ci does not support mpl_toolkits.mplot3d, but this shouldn't be
     # an issue since we are lazy-loading the package on a path that isn't tested.
     # Importing mplot3d adds projection='3d' option to subplot
-    import mpl_toolkits.mplot3d  # pylint: disable=unused-variable
+    import mpl_toolkits.mplot3d  # pylint: disable=unused-import
     import matplotlib as mpl
     import matplotlib.pyplot as plt
     from matplotlib.widgets import Slider
@@ -1301,7 +1301,7 @@ def ipv_axes():
             ipv.zlim(*limits)
         def set_axes_on(self):
             """mpl style set_axes_on interface for ipyvolume"""
-            ipv.style.axis_on()
+            ipv.style.axes_on()
         def set_axis_off(self):
             """mpl style set_axes_off interface for ipyvolume"""
             ipv.style.axes_off()
@@ -1365,12 +1365,12 @@ def _ipv_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection
     def _update(theta, phi, psi, dtheta, dphi, dpsi):
         _draw(view=(theta, phi, psi), jitter=(dtheta, dphi, dpsi))
 
-    def _slider(name, slice, init=0.):
+    def _slider(name, steps, init=0.):
         return widgets.FloatSlider(
             value=init,
-            min=slice[0],
-            max=slice[1],
-            step=slice[2],
+            min=steps[0],
+            max=steps[1],
+            step=steps[2],
             description=name,
             disabled=False,
             #continuous_update=True,

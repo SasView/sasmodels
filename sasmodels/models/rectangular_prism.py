@@ -63,20 +63,22 @@ units) *scale* represents the volume fraction (which is unitless).
 
 For 2d data the orientation of the particle is required, described using
 angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further details
-of the calculation and angular dispersions see :ref:`orientation` .
+of the calculation and angular dispersions see :ref:`orientation`.
 The angle $\Psi$ is the rotational angle around the long *C* axis. For example,
 $\Psi = 0$ when the *B* axis is parallel to the *x*-axis of the detector.
 
-For 2d, constraints must be applied during fitting to ensure that the inequality
-$A < B < C$ is not violated, and hence the correct definition of angles is preserved. The calculation will not report an error,
-but the results may be not correct.
+For 2d, constraints must be applied during fitting to ensure that the
+inequality $A < B < C$ is not violated, and hence the correct definition of
+angles is preserved. The calculation will not report an error, but the
+results may be not correct.
 
 .. figure:: img/parallelepiped_angle_definition.png
 
-    Definition of the angles for oriented core-shell parallelepipeds.
-    Note that rotation $\theta$, initially in the $xz$ plane, is carried out first, then
-    rotation $\phi$ about the $z$ axis, finally rotation $\Psi$ is now around the axis of the cylinder.
-    The neutron or X-ray beam is along the $z$ axis.
+    Definition of the angles for oriented core-shell parallelepipeds. Note
+    that rotation $\theta$, initially in the $xz$ plane, is carried out
+    first, then rotation $\phi$ about the $z$ axis, finally rotation $\Psi$
+    is now around the axis of the cylinder. The neutron or X-ray beam is
+    along the $z$ axis.
 
 .. figure:: img/parallelepiped_angle_projection.png
 

@@ -64,11 +64,11 @@ The square of the radius-of-gyration is defined as
     R_{g}^2 = \frac{a^2n^{2\nu}}{(2\nu+1)(2\nu+2)}
 
 .. note::
-    This model applies only in the mass fractal range (ie, $5/3<=m<=3$ )
-    and **does not apply** to surface fractals ( $3<m<=4$ ).
-    It also does not reproduce the rigid rod limit (m=1) because it assumes chain
-    flexibility from the outset. It may cover a portion of the semi-flexible chain
-    range ( $1<m<5/3$ ).
+    This model applies only in the mass fractal range (ie, $5/3<=m<=3$)
+    and **does not apply** to surface fractals ($3<m<=4$).
+    It also does not reproduce the rigid rod limit (m=1) because it assumes
+    chain flexibility from the outset. It may cover a portion of the
+    semi-flexible chain range ($1<m<5/3$).
 
 A low-Q expansion yields the Guinier form and a high-Q expansion yields the
 Porod form which is given by
@@ -85,12 +85,13 @@ The asymptotic limit is dominated by the first term
 
 .. math::
 
-    P(Q\rightarrow \infty) \sim \frac{1}{\nu U^{1/2\nu}}\Gamma\left(\frac{1}{2\nu}\right) =
-    \frac{m}{\left(QR_{g}\right)^m}\left[\frac{6}{(2\nu +1)(2\nu +2)} \right]^{m/2}
-    \Gamma (m/2)
+    P(Q\rightarrow \infty)
+       \sim \frac{1}{\nu U^{1/2\nu}}\Gamma\left(\frac{1}{2\nu}\right) =
+    \frac{m}{\left(QR_{g}\right)^m}
+       \left[\frac{6}{(2\nu +1)(2\nu +2)} \right]^{m/2} \Gamma (m/2)
 
-The special case when $\nu=0.5$ (or $m=1/\nu=2$ ) corresponds to Gaussian chains for
-which the form factor is given by the familiar Debye function.
+The special case when $\nu=0.5$ (or $m=1/\nu=2$ ) corresponds to Gaussian
+chains for which the form factor is given by the familiar Debye function.
 
 .. math::
 
@@ -107,10 +108,13 @@ where the $q$ vector is defined as
 References
 ----------
 
-#.  H Benoit, *Comptes Rendus*, 245 (1957) 2244-2247
-#.  B Hammouda, *SANS from Homogeneous Polymer Mixtures - A Unified Overview*, *Advances in Polym. Sci.* 106 (1993) 87-133
-#.  M Hore et al, *Co-Nonsolvency of Poly(N-isopropylacrylamide) in Deuterated Water/Ethanol Mixtures*, *Macromolecules* 46 (2013) 7894-7901
-#.  B Hammouda & M-H Kim, *The empirical core-chain model*, *Journal of Molecular Liquids* 247 (2017) 434-440
+#. H Benoit, *Comptes Rendus*, 245 (1957) 2244-2247
+#. B Hammouda, *SANS from Homogeneous Polymer Mixtures - A Unified Overview*,
+   *Advances in Polym. Sci.* 106 (1993) 87-133
+#. M Hore et al, *Co-Nonsolvency of Poly(N-isopropylacrylamide) in Deuterated
+   Water/Ethanol Mixtures*, *Macromolecules* 46 (2013) 7894-7901
+#. B Hammouda & M-H Kim, *The empirical core-chain model*,
+   *Journal of Molecular Liquids* 247 (2017) 434-440
 
 Authorship and Verification
 ----------------------------

@@ -24,11 +24,11 @@ where
                 {\tfrac12 qL \cos \alpha}
            \frac{J_1 \left(q R \sin \alpha\right)}{q R \sin \alpha}
 
-and $\alpha$ is the angle between the axis of the cylinder and $\vec q$, $V =\pi R^2L$
-is the volume of the cylinder, $L$ is the length of the cylinder, $R$ is the
-radius of the cylinder, and $\Delta\rho$ (contrast) is the scattering length
-density difference between the scatterer and the solvent. $J_1$ is the
-first order Bessel function.
+and $\alpha$ is the angle between the axis of the cylinder and $\vec q$,
+$V =\pi R^2L$ is the volume of the cylinder, $L$ is the length of the cylinder,
+$R$ is the radius of the cylinder, and $\Delta\rho$ (contrast) is the
+scattering length density difference between the scatterer and the solvent.
+$J_1$ is the first order Bessel function.
 
 For randomly oriented particles:
 
@@ -37,8 +37,8 @@ For randomly oriented particles:
     F^2(q)=\int_{0}^{\pi/2}{F^2(q,\alpha)\sin(\alpha)d\alpha}=\int_{0}^{1}{F^2(q,u)du}
 
 
-Numerical integration is simplified by a change of variable to $u = cos(\alpha)$ with
-$sin(\alpha)=\sqrt{1-u^2}$.
+Numerical integration is simplified by a change of variable to $u = cos(\alpha)$
+with $sin(\alpha)=\sqrt{1-u^2}$.
 
 The output of the 1D scattering intensity function for randomly oriented
 cylinders is thus given by
@@ -54,25 +54,29 @@ radius and length values, and used as the effective radius for $S(q)$
 when $P(q) \cdot S(q)$ is applied.
 
 For 2d scattering from oriented cylinders, we define the direction of the
-axis of the cylinder using two angles $\theta$ (note this is not the
-same as the scattering angle used in q) and $\phi$. Those angles
-are defined in :numref:`cylinder-angle-definition` , for further details see :ref:`orientation` .
+axis of the cylinder using two angles $\theta$ (note this is not the same as
+the scattering angle used in q) and $\phi$. Those angles are defined in
+:numref:`cylinder-angle-definition` , for further details see
+:ref:`orientation`.
 
 .. _cylinder-angle-definition:
 
 .. figure:: img/cylinder_angle_definition.png
 
-    Angles $\theta$ and $\phi$ orient the cylinder relative
-    to the beam line coordinates, where the beam is along the $z$ axis. Rotation $\theta$, initially
-    in the $xz$ plane, is carried out first, then rotation $\phi$ about the $z$ axis. Orientation distributions
-    are described as rotations about two perpendicular axes $\delta_1$ and $\delta_2$
-    in the frame of the cylinder itself, which when $\theta = \phi = 0$ are parallel to the $Y$ and $X$ axes.
+    Angles $\theta$ and $\phi$ orient the cylinder relative to the beam line
+    coordinates, where the beam is along the $z$ axis. Rotation $\theta$,
+    initially in the $xz$ plane, is carried out first, then rotation $\phi$
+    about the $z$ axis. Orientation distributions are described as rotations
+    about two perpendicular axes $\delta_1$ and $\delta_2$ in the frame of
+    the cylinder itself, which when $\theta = \phi = 0$ are parallel to the
+    $Y$ and $X$ axes.
 
 .. figure:: img/cylinder_angle_projection.png
 
     Examples for oriented cylinders.
 
-The $\theta$ and $\phi$ parameters to orient the cylinder only appear in the model when fitting 2d data.
+The $\theta$ and $\phi$ parameters to orient the cylinder only appear in the
+model when fitting 2d data.
 
 Validation
 ----------
@@ -129,20 +133,17 @@ description = """
 """
 category = "shape:cylinder"
 
+# pylint: disable=bad-whitespace, line-too-long
 #             [ "name", "units", default, [lower, upper], "type", "description"],
-parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
-               "Cylinder scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "sld",
-               "Solvent scattering length density"],
-              ["radius", "Ang", 20, [0, inf], "volume",
-               "Cylinder radius"],
-              ["length", "Ang", 400, [0, inf], "volume",
-               "Cylinder length"],
-              ["theta", "degrees", 60, [-360, 360], "orientation",
-               "cylinder axis to beam angle"],
-              ["phi", "degrees", 60, [-360, 360], "orientation",
-               "rotation about beam"],
-             ]
+parameters = [
+    ["sld",         "1e-6/Ang^2",   4, [-inf, inf], "sld",         "Cylinder scattering length density"],
+    ["sld_solvent", "1e-6/Ang^2",   1, [-inf, inf], "sld",         "Solvent scattering length density"],
+    ["radius",      "Ang",         20, [0, inf],    "volume",      "Cylinder radius"],
+    ["length",      "Ang",        400, [0, inf],    "volume",      "Cylinder length"],
+    ["theta",       "degrees",     60, [-360, 360], "orientation", "cylinder axis to beam angle"],
+    ["phi",         "degrees",     60, [-360, 360], "orientation", "rotation about beam"],
+    ]
+# pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/polevl.c", "lib/sas_J1.c", "lib/gauss76.c", "cylinder.c"]
 valid = "radius >= 0.0 && length >= 0.0"
@@ -172,7 +173,7 @@ theta, phi = 80.1534480601659, 10.1510817110481  # (10, 10) in sasview 3.x
 tests = [
     [{}, 0.2, 0.042761386790780453],
     [{}, [0.2], [0.042761386790780453]],
-    [{"scale": 1., "background": 0.}, [0.01,0.05,0.2],
+    [{"scale": 1., "background": 0.}, [0.01, 0.05, 0.2],
      # these numerical results NOT independently verified
      [3.01823887e+02, 5.36661653e+01, 4.17613868e-02]],
     [{"scale": 1., "background": 0.},
@@ -181,28 +182,28 @@ tests = [
      502654.8245743669, 1.0],
 #2345678901234567890123456789012345678901234567890123456789012345678901234567890
     [{"@S": "hardsphere",         # MONODISPERSE
-     "scale": 5., "background": 0.,"volfraction":0.2,
-     "structure_factor_mode": 0,  # normal decoupling approx
-     "radius_effective_mode": 1   # Reff "excluded volume"
-     }, [0.01,0.05,0.2], [7.35571916e+01, 5.78147797e+01, 4.15623248e-02] ],
+      "scale": 5., "background": 0., "volfraction":0.2,
+      "structure_factor_mode": 0,  # normal decoupling approx
+      "radius_effective_mode": 1,  # Reff "excluded volume"
+     }, [0.01, 0.05, 0.2], [7.35571916e+01, 5.78147797e+01, 4.15623248e-2]],
     [{"@S": "hardsphere",
-     "scale": 5., "background": 0.,"volfraction":0.2,
-     "structure_factor_mode": 1,  # beta approx
-     "radius_effective_mode": 1   # Reff "excluded volume"
-     }, [0.01,0.05,0.2], [8.29729770e+01, 5.44206752e+01, 4.17598382e-02] ],
+      "scale": 5., "background": 0., "volfraction":0.2,
+      "structure_factor_mode": 1,  # beta approx
+      "radius_effective_mode": 1,  # Reff "excluded volume"
+     }, [0.01, 0.05, 0.2], [8.29729770e+01, 5.44206752e+01, 4.17598382e-2]],
     [{"@S": "hardsphere",         # POLYDISPERSE
-     "scale": 5., "background": 0.,"volfraction":0.2,
-     "radius_pd":0.2,"radius_pd_n":15,"length_pd":0.1,"radius_pd_n":15,
-     "structure_factor_mode": 0,  # normal decoupling approx
-     "radius_effective_mode": 1   # Reff "excluded volume"
-     }, [0.01,0.05,0.2], [87.50350037, 63.95202427, 0.27889988] ],
+      "scale": 5., "background": 0., "volfraction":0.2,
+      "radius_pd": 0.2, "radius_pd_n": 15, "length_pd": 0.1,
+      "structure_factor_mode": 0,  # normal decoupling approx
+      "radius_effective_mode": 1,  # Reff "excluded volume"
+     }, [0.01, 0.05, 0.2], [87.50350037, 63.95202427, 0.27889988]],
     [{"@S": "hardsphere",
-     "scale": 5., "background": 0.,"volfraction":0.2,
-     "radius_pd":0.2,"radius_pd_n":15,"length_pd":0.1,"radius_pd_n":15,
-     "structure_factor_mode": 1,  # beta approx
-     "radius_effective_mode": 1   # Reff "excluded volume"
-     }, [0.01,0.05,0.2], [132.2101165, 59.89948174, 0.28048784] ],
-     #
+      "scale": 5., "background": 0., "volfraction": 0.2,
+      "radius_pd": 0.2, "radius_pd_n": 15, "length_pd": 0.1,
+      "structure_factor_mode": 1,  # beta approx
+      "radius_effective_mode": 1,  # Reff "excluded volume"
+     }, [0.01, 0.05, 0.2], [132.2101165, 59.89948174, 0.28048784]],
+    #
     [{'theta': theta, 'phi': phi}, (qx, qy), 0.03514647218513852],
     [{'theta': theta, 'phi': phi}, [(qx, qy)], [0.03514647218513852]],
 ]
