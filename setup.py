@@ -75,7 +75,7 @@ setup(
         'OpenCL': ["pyopencl"],
         'CUDA': ["pycuda"],
     },
-    build_requires=['setuptools'],
-    test_requires=['pytest'],
-    cmdclass = {'test': PyTest},
+    #setup_requires=['setuptools'],
+    tests_require=['pytest'],
+    cmdclass={'test': PyTest},
 )
