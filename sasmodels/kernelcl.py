@@ -74,6 +74,10 @@ try:
     import pyopencl as cl  # type: ignore
     from pyopencl import mem_flags as mf
     from pyopencl.characterize import get_fast_inaccurate_build_options
+    # CRUFT: pyopencl<2019.1.2 is breaking on intel drivers for mac
+    from pyopencl.version import VERSION_TEXT
+    if sys.platform == 'darwin' and VERSION_TEXT < '2019.1.2':
+        os.environ['PYOPENCL_NO_CACHE'] = '1'
     # Ask OpenCL for the default context so that we know that one exists.
     cl.create_some_context(interactive=False)
     HAVE_OPENCL = True
