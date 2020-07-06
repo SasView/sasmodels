@@ -1,7 +1,7 @@
 Release notes
 =============
 
-v1.0.3 2020-07-??
+v1.0.3 2020-07-06
 ------------------
 * fix polydispersity for python models
 * fix dll cache so multiple versions can coexist
@@ -33,4 +33,4 @@ v1.0.1 2019-10-03
 
 v1.0.0 2019-05-20
 -----------------
-see git log for details
+* see git log for details
