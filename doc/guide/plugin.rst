@@ -1230,17 +1230,14 @@ change to *Show Plot*, and in the *Log Explorer* window something like
 this will appear, possibly followed by a report of the unit test in your
 plugin model:
 
-11:06:37 - INFO: make python model peak_voigt
-
-**NB: If your plugin model does not appear in the dropdown, try opening a
-new FitPage, or restarting SasView.**
+  11:06:37 - INFO: make python model peak_voigt
 
 If compilation of your plugin model fails, then Python traceback information
 will appear in the Log Explorer:
 
-11:32:47 - INFO: make python model dummy_voigt
+  11:32:47 - INFO: make python model dummy_voigt
 
-11:32:47 - ERROR: Traceback (most recent call last):
+  11:32:47 - ERROR: Traceback (most recent call last):
 
 If you look closely at traceback it should tell you why compilation is failing.
 A very common reason is simply that a variable name has been misspelt. Look for
