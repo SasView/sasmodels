@@ -1221,11 +1221,27 @@ Test Your New Model
 Minimal Testing
 ...............
 
-From SasView either open the Python shell (*Tools* > *Python Shell/Editor*)
-or the plugin editor (*Fitting* > *Plugin Model Operations* > *Advanced
-Plugin Editor*), load your model, and then select *Run > Check Model* from
-the menu bar. An *Info* box will appear with the results of the compilation
-and a check that the model runs.
+In SasView 5.x, plugin models are loaded 'on-the-fly'. So to test a plugin
+go to a FitPage (or create a new one with *Fitting* > *New Fit Page*),
+select *Category* > *Plugin Models*, and then select your model from the
+*Model Name* dropdown. Then click the *Calculate* button. If the model
+compiles succesfully, two things will happen: the *Calculate* button will
+change to *Show Plot*, and in the *Log Explorer* window something like
+this will appear, possibly followed by a report of the unit test in your
+plugin model:
+
+  11:06:37 - INFO: make python model peak_voigt
+
+If compilation of your plugin model fails, then Python traceback information
+will appear in the Log Explorer:
+
+  11:32:47 - INFO: make python model dummy_voigt
+
+  11:32:47 - ERROR: Traceback (most recent call last):
+
+If you look closely at traceback it should tell you why compilation is failing.
+A very common reason is simply that a variable name has been misspelt. Look for
+a line that begins *NameError*.
 
 Recommended Testing
 ...................
