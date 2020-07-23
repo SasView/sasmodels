@@ -1,6 +1,10 @@
 Release notes
 =============
 
+v1.0.4 2020-07-24
+------------------
+* doc update: how to test a plugin model in 5.x version
+
 v1.0.3 2020-07-06
 ------------------
 * fix polydispersity for python models
