@@ -132,7 +132,7 @@ def _add_model_to_suite(loaders, suite, model_info):
     stash = []
 
     if is_py:  # kernel implemented in python
-        test_name = "%s-python"%model_info.name
+        test_name = "%s[python]"%model_info.name
         test_method_name = "test_%s_python" % model_info.id
         test = ModelTestCase(test_name, model_info,
                              test_method_name,
@@ -144,7 +144,7 @@ def _add_model_to_suite(loaders, suite, model_info):
 
         # test using dll if desired
         if 'dll' in loaders or not use_opencl():
-            test_name = "%s-dll"%model_info.name
+            test_name = "%s[dll]"%model_info.name
             test_method_name = "test_%s_dll" % model_info.id
             test = ModelTestCase(test_name, model_info,
                                  test_method_name,
@@ -155,7 +155,7 @@ def _add_model_to_suite(loaders, suite, model_info):
 
         # test using opencl if desired and available
         if 'opencl' in loaders and use_opencl():
-            test_name = "%s-opencl"%model_info.name
+            test_name = "%s[opencl]"%model_info.name
             test_method_name = "test_%s_opencl" % model_info.id
             # Using dtype=None so that the models that are only
             # correct for double precision are not tested using
@@ -170,7 +170,7 @@ def _add_model_to_suite(loaders, suite, model_info):
 
         # test using cuda if desired and available
         if 'cuda' in loaders and use_cuda():
-            test_name = "%s-cuda" % model_info.id
+            test_name = "%s[cuda]" % model_info.id
             test_method_name = "test_%s_cuda" % model_info.id
             # Using dtype=None so that the models that are only
             # correct for double precision are not tested using
