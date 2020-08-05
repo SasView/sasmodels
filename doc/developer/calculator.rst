@@ -8,9 +8,9 @@ Calculator Interface
 This document describes the layer between the form factor kernels and the
 model calculator which implements the dispersity and magnetic SLD
 calculations.  There are three separate implementations of this layer,
-:mod:`kernelcl` for OpenCL, which operates on a single Q value at a time,
-:mod:`kerneldll` for the DLL, which loops over a vector of Q values, and
-:mod:`kernelpy` for python models which operates on vector Q values.
+:mod:`.kernelcl` for OpenCL, which operates on a single Q value at a time,
+:mod:`.kerneldll` for the DLL, which loops over a vector of Q values, and
+:mod:`.kernelpy` for python models which operates on vector Q values.
 
 Each implementation provides three different calls *Iq*, *Iqxy* and *Imagnetic*
 for 1-D, 2-D and 2-D magnetic kernels respectively. The C code is defined
@@ -49,7 +49,7 @@ system to show its windows, if a GPU kernel runs too long then it will be
 automatically killed and no results will be returned to the caller.
 
 The *ProblemDetails* structure is a direct map of the
-:class:`details.CallDetails` buffer.  This indicates which parameters have
+:class:`.details.CallDetails` buffer.  This indicates which parameters have
 dispersity, and where in the values vector the values and weights can be
 found.  For each parameter with dispersity there is a parameter id, the length
 of the dispersity loop for that parameter, the offset of the parameter
@@ -78,7 +78,7 @@ for each parameter is stored in the *pd_offset* field of the *ProblemDetails*
 structure, but the values do need to be contiguous.  After *num_weights*
 values, the pd weight vector is stored, with the same configuration as the
 pd value vector.  Note that the pd vectors can contain values that are not
-in the dispersity loop; this is used by :class:`mixture.MixtureKernel`
+in the dispersity loop; this is used by :class:`.mixture.MixtureKernel`
 to make it easier to call the various component kernels.
 
 The *q* vector contains one value for each q for *Iq* kernels, or a pair
@@ -94,7 +94,7 @@ loop is broken across several kernel calls.
 *cutoff* is a importance cutoff so that points which contribute negligibly
 to the total scattering can be skipped without calculating them.
 
-:func:`generate.make_source` defines the following C macros:
+:func:`.generate.make_source` defines the following C macros:
 
 - USE_OPENCL is defined if running in opencl
 - MAX_PD is the maximum depth of the dispersity loop [model specific]
@@ -266,7 +266,7 @@ along with the weights vector, since features such as the number of
 disperity points per pd parameter won't change between function evaluations.
 A new parameter vector must be sent for each I(q) evaluation.  This is
 not currently implemented, and would require some resturcturing of
-the :class:`sasview_model.SasviewModel` interface.
+the :class:`.sasview_model.SasviewModel` interface.
 
 The results array will be initialized to zero for dispersity loop
 entry zero, and preserved between calls to [start, stop] so that the

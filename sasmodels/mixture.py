@@ -23,13 +23,14 @@ from .details import make_details
 
 # pylint: disable=unused-import
 try:
-    from typing import List
+    from typing import List, Tuple, Optional, Callable, Any
+    from .details import CallDetails
 except ImportError:
     pass
 # pylint: enable=unused-import
 
 def make_mixture_info(parts, operation='+'):
-    # type: (List[ModelInfo]) -> ModelInfo
+    # type: (List[ModelInfo], str) -> ModelInfo
     """
     Create info block for mixture model.
     """
@@ -145,7 +146,6 @@ def make_mixture_info(parts, operation='+'):
     model_info.random = random
     #model_info.single = any(part['single'] for part in parts)
     model_info.structure_factor = False
-    model_info.variant_info = None
     #model_info.tests = []
     #model_info.source = []
     # Remember the component info blocks so we can build the model
@@ -184,7 +184,7 @@ class MixtureModel(KernelModel):
 
 
 def _intermediates(q, results):
-    # type: (List[Tuple[Kernel, np.ndarray, Optional[Callable]]]) -> OrderedDict[str, Any]
+    # type: (np.ndarray, List[Tuple[Kernel, np.ndarray, Optional[Callable]]]) -> OrderedDict[str, Any]
     """
     Returns intermediate results for mixture model.
     """
@@ -269,7 +269,7 @@ class _MixtureParts(object):
         #call_details.show(values)
 
     def __iter__(self):
-        # type: () -> PartIterable
+        # type: () -> _MixtureParts
         self.part_num = 0
         self.par_index = 2
         self.mag_index = self.spin_index + 3

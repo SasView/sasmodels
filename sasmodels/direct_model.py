@@ -16,7 +16,7 @@ keyword arguments and returns the appropriate theory values for the data.
 
 :class:`DataMixin` does the real work of interpreting the data and calling
 the model calculator.  This is used by :class:`DirectModel`, which uses
-direct parameter values and by :class:`bumps_model.Experiment` which wraps
+direct parameter values and by :class:`.bumps_model.Experiment` which wraps
 the parameter values in boxes so that the user can set fitting ranges, etc.
 on the individual parameters and send the model to the Bumps optimizers.
 """
@@ -34,13 +34,13 @@ from .product import RADIUS_MODE_ID
 
 # pylint: disable=unused-import
 try:
-    from typing import Optional, Dict, Tuple
-except ImportError:
-    pass
-else:
+    from typing import Optional, Dict, Tuple, List, Callable
+    from collections import OrderedDict
     from .data import Data
     from .kernel import Kernel, KernelModel
-    from .modelinfo import Parameter, ParameterSet
+    from .modelinfo import Parameter, ParameterSet, ModelInfo
+except ImportError:
+    pass
 # pylint: enable=unused-import
 
 def call_kernel(calculator, pars, cutoff=0., mono=False):
@@ -125,7 +125,7 @@ def get_mesh(model_info, values, dim='1d', mono=False):
 
 
 def _get_par_weights(parameter, values, active=True):
-    # type: (Parameter, Dict[str, float]) -> Tuple[float, np.ndarray, np.ndarray]
+    # type: (Parameter, Dict[str, float], bool) -> Tuple[float, np.ndarray, np.ndarray]
     """
     Generate the distribution for parameter *name* given the parameter values
     in *pars*.
@@ -184,20 +184,20 @@ class DataMixin(object):
     particular data set, including calculating Iq and evaluating the
     resolution function.  It is used in particular by :class:`DirectModel`,
     which evaluates a SAS model parameters as key word arguments to the
-    calculator method, and by :class:`bumps_model.Experiment`, which wraps the
+    calculator method, and by :class:`.bumps_model.Experiment`, which wraps the
     model and data for use with the Bumps fitting engine.  It is not
-    currently used by :class:`sasview_model.SasviewModel` since this will
+    currently used by :class:`.sasview_model.SasviewModel` since this will
     require a number of changes to SasView before we can do it.
 
-    :meth:`_interpret_data` initializes the data structures necessary
+    *_interpret_data* initializes the data structures necessary
     to manage the calculations.  This sets attributes in the child class
     such as *data_type* and *resolution*.
 
-    :meth:`_calc_theory` evaluates the model at the given control values.
+    *_calc_theory* evaluates the model at the given control values.
 
-    :meth:`_set_data` sets the intensity data in the data object,
+    *_set_data* sets the intensity data in the data object,
     possibly with random noise added.  This is useful for simulating a
-    dataset with the results from :meth:`_calc_theory`.
+    dataset with the results from *_calc_theory*.
     """
     def _interpret_data(self, data, model):
         # type: (Data, KernelModel) -> None
@@ -286,7 +286,7 @@ class DataMixin(object):
         self._kernel = None
         self.Iq, self.dIq, self.index = Iq, dIq, index
         self.resolution = res
-        self.results = None  # type: Optional[Callable[[], OrderedDict]
+        self.results = None  # type: Optional[Callable[[], OrderedDict]]
 
     def _set_data(self, Iq, noise=None):
         # type: (np.ndarray, Optional[float]) -> None
@@ -356,7 +356,7 @@ class DirectModel(DataMixin):
 
     *data* is 1D SAS, 2D SAS or SESANS data
 
-    *model* is a model calculator return from :func:`generate.load_model`
+    *model* is a model calculator return from :func:`.core.load_model`
 
     *cutoff* is the polydispersity weight cutoff.
     """

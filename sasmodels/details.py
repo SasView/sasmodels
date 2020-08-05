@@ -7,7 +7,7 @@ number of details that need to be sent to the caller.  This includes the
 list of polydisperse parameters, the number of points in the polydispersity
 weight distribution, and which parameter is the "theta" parameter for
 polar coordinate integration.  The :class:`CallDetails` object maintains
-this data.  Use :func:`build_details` to build a *details* object which
+this data.  Use :func:`make_details` to build a *details* object which
 can be passed to one of the computational kernels.
 """
 
@@ -31,11 +31,10 @@ except Exception:
 # pylint: disable=unused-import
 try:
     from typing import List, Tuple, Sequence
+    from .modelinfo import ModelInfo, ParameterTable
+    from .kernel import Kernel
 except ImportError:
     pass
-else:
-    from .modelinfo import ModelInfo
-    from .modelinfo import ParameterTable
 # pylint: enable=unused-import
 
 
@@ -221,10 +220,8 @@ def make_details(model_info, length, offset, num_weights):
 
 
 ZEROS = tuple([0.]*31)
-def make_kernel_args(kernel, # type: Kernel
-                     mesh    # type: Tuple[List[np.ndarray], List[np.ndarray]]
-                    ):
-    # type: (...) -> Tuple[CallDetails, np.ndarray, bool]
+def make_kernel_args(kernel, mesh):
+    # type: (Kernel, Tuple[List[np.ndarray], List[np.ndarray]]) -> Tuple[CallDetails, np.ndarray, bool]
     """
     Converts (value, dispersity, weight) for each parameter into kernel pars.
 
@@ -252,11 +249,8 @@ def make_kernel_args(kernel, # type: Kernel
     #print("data", data)
     return call_details, data, is_magnetic
 
-def correct_theta_weights(parameters, # type: ParameterTable
-                          dispersity, # type: Sequence[np.ndarray]
-                          weights     # type: Sequence[np.ndarray]
-                         ):
-    # type: (...) -> Sequence[np.ndarray]
+def correct_theta_weights(parameters, dispersity, weights):
+    # type: (ParameterTable, Sequence[np.ndarray], Sequence[np.ndarray]) -> Sequence[np.ndarray]
     """
     **Deprecated** Theta weights will be computed in the kernel wrapper if
     they are needed.
@@ -308,7 +302,7 @@ def convert_magnetism(parameters, values):
 
 
 def dispersion_mesh(model_info, mesh):
-    # type: (ModelInfo) -> Tuple[List[np.ndarray], List[np.ndarray]]
+    # type: (ModelInfo, List[Tuple[float, np.ndarray, np.ndarray]]) -> Tuple[List[np.ndarray], List[np.ndarray]]
     """
     Create a mesh grid of dispersion parameters and weights.
 

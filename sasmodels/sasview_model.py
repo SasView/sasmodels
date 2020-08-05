@@ -40,6 +40,7 @@ weights.load_weights()
 try:
     from typing import (Dict, Mapping, Any, Sequence, Tuple, NamedTuple,
                         List, Optional, Union, Callable)
+    from types import ModuleType
     from .modelinfo import ModelInfo, Parameter
     from .kernel import KernelModel
     MultiplicityInfoType = NamedTuple(
@@ -72,7 +73,7 @@ MODELS = {}  # type: Dict[str, SasviewModelType]
 MODEL_BY_PATH = {}  # type: Dict[str, SasviewModelType]
 #: Track modules that we have loaded so we can determine whether the model
 #: has changed since we last reloaded.
-_CACHED_MODULE = {}  # type: Dict[str, "module"]
+_CACHED_MODULE = {}  # type: Dict[str, ModuleType]
 
 def reset_environment():
     # type: () -> None
@@ -463,7 +464,7 @@ class SasviewModel(object):
 
 
     def getProfile(self):
-        # type: () -> (np.ndarray, np.ndarray)
+        # type: () -> Tuple[np.ndarray, np.ndarray]
         """
         Get SLD profile
 
@@ -563,7 +564,7 @@ class SasviewModel(object):
         return deepcopy(self)
 
     def run(self, x=0.0):
-        # type: (Union[float, (float, float), List[float]]) -> float
+        # type: (Union[float, Tuple[float, float], Sequence[float]]) -> float
         """
         Evaluate the model
 
@@ -584,7 +585,7 @@ class SasviewModel(object):
 
 
     def runXY(self, x=0.0):
-        # type: (Union[float, (float, float), List[float]]) -> float
+        # type: (Union[float, [float, float], Sequence[float]]) -> float
         """
         Evaluate the model in cartesian coordinates
 
@@ -688,11 +689,8 @@ class SasviewModel(object):
         else:
             return None
 
-    def calculate_Iq(self,
-                     qx,     # type: Sequence[float]
-                     qy=None # type: Optional[Sequence[float]]
-                    ):
-        # type: (...) -> Tuple[np.ndarray, Callable[[], collections.OrderedDict[str, np.ndarray]]]
+    def calculate_Iq(self, qx, qy=None):
+        # type: (Sequence[float], Optional[Sequence[float]]) -> Tuple[np.ndarray, Callable[[], collections.OrderedDict[str, np.ndarray]]]
         """
         Calculate Iq for one set of q with the current parameters.
 
@@ -751,7 +749,7 @@ class SasviewModel(object):
 
 
     def calculate_ER(self, mode=1):
-        # type: () -> float
+        # type: (int) -> float
         """
         Calculate the effective radius for P(q)*S(q)
 

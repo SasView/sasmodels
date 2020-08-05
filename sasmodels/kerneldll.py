@@ -93,7 +93,7 @@ from .generate import F16, F32, F64
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, Callable, Any
+    from typing import Tuple, Callable, Any, List
     from .modelinfo import ModelInfo
     from .details import CallDetails
 except ImportError:
@@ -287,8 +287,13 @@ def make_dll(source, model_info, dtype=F64):
 def load_dll(source, model_info, dtype=F64):
     # type: (str, ModelInfo, np.dtype) -> "DllModel"
     """
-    Create and load a dll corresponding to the source, info pair returned
-    from :func:`sasmodels.generate.make` compiled for the target precision.
+    Create and load a dll corresponding to the source.
+
+    *model_info* is the info object returned from
+    :func:`.modelinfo.make_model_info`.
+
+    *source* is returned from :func:`.generate.make_source`, as
+    *make_source(model_info)['dll']*.
 
     See :func:`make_dll` for details on controlling the dll path and the
     allowed floating point precision.
@@ -301,8 +306,10 @@ class DllModel(KernelModel):
     """
     ctypes wrapper for a single model.
 
-    *source* and *model_info* are the model source and interface as returned
-    from :func:`gen.make`.
+    *dllpath* is the stored path to the dll.
+
+    *model_info* is the model definition returned from
+    :func:`.modelinfo.make_model_info`.
 
     *dtype* is the desired model precision.  Any numpy dtype for single
     or double precision floats will do, such as 'f', 'float32' or 'single'
@@ -414,7 +421,7 @@ class DllKernel(Kernel):
 
     def _call_kernel(self, call_details, values, cutoff, magnetic,
                      radius_effective_mode):
-        # type: (CallDetails, np.ndarray, float, bool, int) -> np.ndarray
+        # type: (CallDetails, np.ndarray, float, bool, int)
 
         # Setup kernel function and arguments.
         kernel = self.kernel[1 if magnetic else 0]

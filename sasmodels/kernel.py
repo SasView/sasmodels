@@ -13,7 +13,7 @@ from __future__ import division, print_function
 
 # pylint: disable=unused-import
 try:
-    from typing import List
+    from typing import List, Any
 except ImportError:
     pass
 else:
@@ -49,8 +49,35 @@ class Kernel(object):
     """
     Instantiated model for the compute engine, applied to a particular *q*.
 
-    Subclasses should define :meth:`_call_kernel` to evaluate the kernel over
-    its inputs.
+    Subclasses should define *__init__()* to set up the kernel inputs, and
+    *_call_kernel()* to evaluate the kernel::
+
+        def __init__(self, ...):
+            ...
+            self.q_input = <q-value class with nq attribute>
+            self.info = <ModelInfo object>
+            self.dim = <'1d' or '2d'>
+            self.dtype = <kernel.dtype>
+            size = 2*self.q_input.nq+4 if self.info.have_Fq else self.q_input.nq+4
+            size = size + <extra padding if needed for kernel>
+            self.result = np.empty(size, dtype=self.dtype)
+
+        def _call_kernel(self, call_details, values, cutoff, magnetic,
+                        radius_effective_mode):
+            # type: (CallDetails, np.ndarray, np.ndarray, float, bool, int) -> None
+            ... # call <kernel>
+            nq = self.q_input.nq
+            if self.info.have_Fq:  # models that compute both F and F^2
+                end = 2*nq if have_Fq else nq
+                self.result[0:end:2] = F**2
+                self.result[1:end:2] = F
+            else:
+                end = nq
+                self.result[0:end] = Fsq
+            self.result[end + 0] = total_weight
+            self.result[end + 1] = form_volume
+            self.result[end + 2] = shell_volume
+            self.result[end + 3] = radius_effective
     """
     #: Kernel dimension, either "1d" or "2d".
     dim = None  # type: str
@@ -58,9 +85,9 @@ class Kernel(object):
     info = None  # type: ModelInfo
     #: Numerical precision for the computation.
     dtype = None  # type: np.dtype
-    #: q values at which the kernel is to be evaluated
+    #: Q values at which the kernel is to be evaluated.
     q_input = None  # type: Any
-    #: Place to hold result of :meth:`_call_kernel` for subclass.
+    #: Place to hold result of *_call_kernel()* for subclass.
     result = None # type: np.ndarray
 
     def Iq(self, call_details, values, cutoff, magnetic):
@@ -183,7 +210,7 @@ class Kernel(object):
 
     def _call_kernel(self, call_details, values, cutoff, magnetic,
                      radius_effective_mode):
-        # type: (CallDetails, np.ndarray, np.ndarray, float, bool, int) -> np.ndarray
+        # type: (CallDetails, np.ndarray, np.ndarray, float, bool, int) -> None
         """
         Call the kernel.  Subclasses defining kernels for particular execution
         engines need to provide an implementation for this.

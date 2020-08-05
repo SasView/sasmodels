@@ -5,7 +5,7 @@ from __future__ import print_function
 
 __all__ = [
     "list_models", "load_model", "load_model_info",
-    "build_model", "precompile_dlls",
+    "build_model", "precompile_dlls", "reparameterize",
     ]
 
 import os
@@ -27,7 +27,7 @@ from . import custom
 
 # pylint: disable=unused-import
 try:
-    from typing import List, Union, Optional, Any
+    from typing import List, Union, Optional, Any, Tuple
     from .kernel import KernelModel
     from .modelinfo import ModelInfo
 except ImportError:
@@ -225,7 +225,7 @@ def reparameterize(
     *docs* constains the doc string for the translated model, which by default
     references the base model and gives the *translation* text.
 
-    *name* is the model name, which defaults to "constrained_" + *base.name*.
+    *name* is the model name (default = :code:`"constrained_" + base.name`).
 
     *source* is a list any additional C source files that should be included to
     define functions and constants used in the translation expressions.  This
@@ -376,7 +376,7 @@ def precompile_dlls(path, dtype="double"):
     return compiled_dlls
 
 def parse_dtype(model_info, dtype=None, platform=None):
-    # type: (ModelInfo, str, str) -> (np.dtype, bool, str)
+    # type: (ModelInfo, str, str) -> Tuple[np.dtype, bool, str]
     """
     Interpret dtype string, returning np.dtype, fast flag and platform.
 

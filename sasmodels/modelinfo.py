@@ -18,19 +18,20 @@ import numpy as np  # type: ignore
 # Optional typing
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, List, Union, Dict, Optional, Any, Callable, Sequence, Set
+    from typing import (
+        Tuple, List, Union, Dict, Optional, Any, Callable, Sequence, Set,
+        Mapping)
     from types import ModuleType
-except ImportError:
-    pass
-else:
     Limits = Tuple[float, float]
     #LimitsOrChoice = Union[Limits, Tuple[Sequence[str]]]
     ParameterDef = Tuple[str, str, float, Limits, str, str]
-    ParameterSetUser = Dict[str, Union[float, List[float]]]
-    ParameterSet = Dict[str, float]
+    ParameterSetUser = Mapping[str, Union[float, List[float]]]
+    ParameterSet = Mapping[str, float]
     TestInput = Union[str, float, List[float], Tuple[float, float], List[Tuple[float, float]]]
     TestValue = Union[float, List[float]]
     TestCondition = Tuple[ParameterSetUser, TestInput, TestValue]
+except ImportError:
+    pass
 # pylint: enable=unused-import
 
 logger = logging.getLogger(__name__)
@@ -130,6 +131,7 @@ def parse_parameter(name, units='', default=np.NaN,
         raise ValueError("expected description to be a string")
 
     # Parameter id for name[n] does not include [n]
+    ref = None  # type: Optional[str]
     if "[" in name:
         if not name.endswith(']'):
             raise ValueError("Expected name[len] for vector parameter %s"%name)
@@ -186,7 +188,7 @@ def expand_pars(partable, pars=None):
         result = partable.defaults
     else:
         lookup = dict((p.id, p) for p in partable.kernel_parameters)
-        result = partable.defaults.copy()
+        result = dict(partable.defaults)
         scalars = dict((name, value) for name, value in pars.items()
                        if name not in lookup or lookup[name].length == 1)
         vectors = dict((name, value) for name, value in pars.items()
@@ -194,20 +196,19 @@ def expand_pars(partable, pars=None):
         #print("lookup", lookup)
         #print("scalars", scalars)
         #print("vectors", vectors)
-        if vectors:
-            for name, value in vectors.items():
-                if np.isscalar(value):
-                    # support for the form
-                    #    dict(thickness=0, thickness2=50)
-                    for k in range(1, lookup[name].length+1):
-                        key = name+str(k)
-                        if key not in scalars:
-                            scalars[key] = value
-                else:
-                    # supoprt for the form
-                    #    dict(thickness=[20,10,3])
-                    for (k, v) in enumerate(value):
-                        scalars[name+str(k+1)] = v
+        for name, value in vectors.items():
+            if np.isscalar(value):
+                # support for the form
+                #    dict(thickness=0, thickness2=50)
+                for k in range(1, lookup[name].length+1):
+                    key = name+str(k)
+                    if key not in scalars:
+                        scalars[key] = value
+            else:
+                # supoprt for the form
+                #    dict(thickness=[20,10,3])
+                for (k, v) in enumerate(value):
+                    scalars[name+str(k+1)] = v
         result.update(scalars)
         #print("expanded", result)
 
@@ -221,6 +222,7 @@ def prefix_parameter(par, prefix):
     new_par = copy(par)
     new_par.name = prefix + par.name
     new_par.id = prefix + par.id
+    return new_par
 
 def suffix_parameter(par, suffix):
     # type: (Parameter, str) -> Parameter
@@ -231,6 +233,7 @@ def suffix_parameter(par, suffix):
     # If name has the form x[n], replace with x_suffix[n]
     new_par.name = par.id + suffix + par.name[len(par.id):]
     new_par.id = par.id + suffix
+    return new_par
 
 class Parameter(object):
     """
@@ -248,10 +251,10 @@ class Parameter(object):
     *units* should be one of *degrees* for angles, *Ang* for lengths,
     *1e-6/Ang^2* for SLDs.
 
-    *default value* will be the initial value for  the model when it
+    *default* will be the initial value for the model when it
     is selected, or when an initial value is not otherwise specified.
 
-    *limits = [lb, ub]* are the hard limits on the parameter value, used to
+    *limits ([lb, ub])* are the hard limits on the parameter value, used to
     limit the polydispersity density function.  In the fit, the parameter limits
     given to the fit are the limits  on the central value of the parameter.
     If there is polydispersity, it will evaluate parameter values outside
@@ -314,7 +317,7 @@ class Parameter(object):
     parameter table is built using :func:`make_parameter_table` and
     :func:`parse_parameter` therein.
     """
-    def __init__(self, name, units='', default=None, limits=(-np.inf, np.inf),
+    def __init__(self, name, units='', default=np.NaN, limits=(-np.inf, np.inf),
                  ptype='', description=''):
         # type: (str, str, float, Limits, str, str) -> None
         self.id = name.split('[')[0].strip() # type: str
@@ -490,11 +493,11 @@ class ParameterTable(object):
         self.check_angles()
 
     def set_zero_background(self):
+        # type: () -> None
         """
         Set the default background to zero for this model.  This is done for
         structure factor models.
         """
-        # type: () -> None
         # Make sure background is the second common parameter.
         assert self.common_parameters[1].id == "background"
         self.common_parameters[1].default = 0.0
@@ -565,7 +568,7 @@ class ParameterTable(object):
         return False
 
     def _set_vector_lengths(self):
-        # type: () -> List[str]
+        # type: () -> None
         """
         Walk the list of kernel parameters, setting the length field of the
         vector parameters from the upper limit of the reference parameter.
@@ -893,7 +896,7 @@ def _find_source_lines(model_info, kernel_module):
 
 
 def make_model_info(kernel_module):
-    # type: (module) -> ModelInfo
+    # type: (ModuleType) -> ModelInfo
     """
     Extract the model definition from the loaded kernel module.
 
@@ -1044,7 +1047,7 @@ class ModelInfo(object):
     base = None             # type: ParameterTable
     #: Parameter translation code to convert from *parameters* table from
     #: caller to the *base* table used to evaluate the model.
-    translation = None      # type: str
+    translation = None      # type: Optional[str]
     #: Composition is None if this is an independent model, or it is a
     #: tuple with comoposition type ('product' or 'misture') and a list of
     #: :class:`ModelInfo` blocks for the composed objects.  This allows us
@@ -1054,7 +1057,7 @@ class ModelInfo(object):
     #: *sphere*hardsphere* or *cylinder+sphere*.
     composition = None      # type: Optional[Tuple[str, List[ModelInfo]]]
     #: Different variants require different parameters.  In order to show
-    #: just the parameters needed for the variant selected by :attr:`control`,
+    #: just the parameters needed for the variant selected,
     #: you should provide a function *hidden(control) -> set(['a', 'b', ...])*
     #: indicating which parameters need to be hidden.  For multiplicity
     #: models, you need to use the complete name of the parameter, including
@@ -1065,7 +1068,7 @@ class ModelInfo(object):
     #: Doc string from the top of the model file.  This should be formatted
     #: using ReStructuredText format, with latex markup in ".. math"
     #: environments, or in dollar signs.  This will be automatically
-    #: extracted to a .rst file by :func:`generate.make_docs`, then
+    #: extracted to a .rst file by :func:`.generate.make_doc`, then
     #: converted to HTML or PDF by Sphinx.
     docs = None             # type: str
     #: Location of the model description in the documentation.  This takes the
@@ -1110,7 +1113,7 @@ class ModelInfo(object):
     #: Returns the form volume for python-based models.  Form volume is needed
     #: for volume normalization in the polydispersity integral.  If no
     #: parameters are *volume* parameters, then form volume is not needed.
-    #: For C-based models, (with :attr:`sources` defined, or with :attr:`Iq`
+    #: For C-based models, (with :attr:`source` defined, or with :attr:`Iq`
     #: defined using a string containing C code), form_volume must also be
     #: C code, either defined as a string, or in the sources.
     form_volume = None      # type: Union[None, str, Callable[[np.ndarray], float]]
@@ -1118,7 +1121,7 @@ class ModelInfo(object):
     #: shell volume are needed for volume normalization in the polydispersity
     #: integral and structure interactions for hollow shapes.  If no
     #: parameters are *volume* parameters, then shell volume is not needed.
-    #: For C-based models, (with :attr:`sources` defined, or with :attr:`Iq`
+    #: For C-based models, (with :attr:`source` defined, or with :attr:`Iq`
     #: defined using a string containing C code), shell_volume must also be
     #: C code, either defined as a string, or in the sources.
     shell_volume = None      # type: Union[None, str, Callable[[np.ndarray], float]]
@@ -1133,12 +1136,12 @@ class ModelInfo(object):
     #: the C function, including the return statement.  This function takes
     #: values for *q* and each of the parameters as separate *double* values
     #: (which may be converted to float or long double by sasmodels).  All
-    #: source code files listed in :attr:`sources` will be loaded before the
+    #: source code files listed in :attr:`source` will be loaded before the
     #: *Iq* function is defined.  If *Iq* is not present, then sources should
     #: define *static double Iq(double q, double a, double b, ...)* which
     #: will return *I(q, a, b, ...)*.  Multiplicity parameters are sent as
     #: pointers to doubles.  Constants in floating point expressions should
-    #: include the decimal point. See :mod:`generate` for more details. If
+    #: include the decimal point. See :mod:`.generate` for more details. If
     #: *have_Fq* is True, then Iq should return an interleaved array of
     #: $[\sum F(q_1), \sum F^2(q_1), \ldots, \sum F(q_n), \sum F^2(q_n)]$.
     Iq = None               # type: Union[None, str, Callable[[...], np.ndarray]]
@@ -1166,7 +1169,7 @@ class ModelInfo(object):
     #: Line numbers for symbols defining C code
     lineno = None           # type: Dict[str, int]
     #: The set of tests that must pass.  The format of the tests is described
-    #: in :mod:`model_test`.
+    #: in :mod:`.model_test`.
     tests = None            # type: List[TestCondition]
 
     def __init__(self):

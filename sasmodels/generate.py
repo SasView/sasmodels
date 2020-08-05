@@ -107,7 +107,7 @@ The kernel module must set variables defining the kernel meta data:
     cylinder models).  The expression can call C functions, including
     those defined in your model file.
 
-A :class:`modelinfo.ModelInfo` structure is constructed from the kernel meta
+A :class:`.modelinfo.ModelInfo` structure is constructed from the kernel meta
 data and returned to the caller.
 
 Valid inputs should be identified by the *valid* expression.
@@ -142,10 +142,10 @@ Code follows the C99 standard with the following extensions and conditions::
     FLOAT_SIZE is the number of bytes in the converted variables
 
 :func:`load_kernel_module` loads the model definition file and
-:func:`modelinfo.make_model_info` parses it. :func:`make_source`
+:func:`.modelinfo.make_model_info` parses it. :func:`make_source`
 converts C-based model definitions to C source code, including the
 polydispersity integral.  :func:`model_sources` returns the list of
-source files the model depends on, and :func:`timestamp` returns
+source files the model depends on, and :func:`ocl_timestamp` returns
 the latest time stamp amongst the source files (so you can check if
 the model needs to be rebuilt).
 
@@ -175,7 +175,8 @@ from .custom import load_custom_kernel_module
 
 # pylint: disable=unused-import
 try:
-    from typing import Tuple, Sequence, Iterator, Dict
+    from typing import Tuple, Sequence, Iterator, Dict, List
+    from types import ModuleType
     from .modelinfo import ModelInfo
 except ImportError:
     pass
@@ -372,6 +373,7 @@ def dll_timestamp(model_info):
     changed file or dependency.
     """
     # TODO: what about on-the-fly derived models---tag name with crc32
+    # TODO: no longer used, and appears to be identical to ocl_timestamp
     # TODO: fails DRY; templates appear two places.
     model_templates = [joinpath(DATA_PATH, filename)
                        for filename in ('kernel_header.c', 'kernel_iq.c')]
@@ -1098,7 +1100,7 @@ def make_source(model_info):
 
 
 def _kernels(kernel, call_iq, clear_iq, call_iqxy, clear_iqxy, name):
-    # type: ([str,str], str, str, str) -> List[str]
+    # type: (Dict[str, str], str, str, str, str, str) -> List[str]
     code = kernel[0]
     path = kernel[1].replace('\\', '/')
     iq = [
@@ -1137,13 +1139,13 @@ def _kernels(kernel, call_iq, clear_iq, call_iqxy, clear_iqxy, name):
 
 
 def load_kernel_module(model_name):
-    # type: (str) -> module
+    # type: (str) -> ModuleType
     """
     Return the kernel module named in *model_name*.
 
     If the name ends in *.py* then load it as a custom model using
-    :func:`sasmodels.custom.load_custom_kernel_module`, otherwise
-    load it from :mod:`sasmodels.models`.
+    :func:`.custom.__init__.load_custom_kernel_module`, otherwise
+    load it as a builtin from *sasmodels.models*.
     """
     if model_name.endswith('.py'):
         kernel_module = load_custom_kernel_module(model_name)

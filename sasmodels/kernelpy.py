@@ -4,7 +4,7 @@ Python driver for python kernels
 Calls the kernel with a vector of $q$ values for a single parameter set.
 Polydispersity is supported by looping over different parameter sets and
 summing the results.  The interface to :class:`PyModel` matches those for
-:class:`kernelcl.GpuModel` and :class:`kerneldll.DllModel`.
+:class:`.kernelcl.GpuModel` and :class:`.kerneldll.DllModel`.
 """
 from __future__ import division, print_function
 
@@ -24,12 +24,11 @@ from .kernel import KernelModel, Kernel
 
 # pylint: disable=unused-import
 try:
-    from typing import Union, Callable
+    from typing import Union, Callable, List
+    from .details import CallDetails
+    from .modelinfo import ModelInfo
 except ImportError:
     pass
-else:
-    from . import details
-    DType = Union[None, str, np.dtype]
 # pylint: enable=unused-import
 
 logger = logging.getLogger(__name__)
@@ -70,7 +69,7 @@ class PyInput(object):
 
     *dtype* is the data type for the q vectors. The data type should be
     set to match that of the kernel, which is an attribute of
-    :class:`GpuProgram`.  Note that not all kernels support double
+    :class:`PyModel`.  Note that not all kernels support double
     precision, so even if the program was created for double precision,
     the *GpuProgram.dtype* may be single precision.
 
@@ -116,7 +115,7 @@ class PyKernel(Kernel):
     Call :meth:`release` when done with the kernel instance.
     """
     def __init__(self, model_info, q_input):
-        # type: (callable, ModelInfo, List[np.ndarray]) -> None
+        # type: (ModelInfo, List[np.ndarray]) -> None
         self.dtype = np.dtype('d')
         self.info = model_info
         self.q_input = q_input
@@ -180,7 +179,7 @@ class PyKernel(Kernel):
                         else (lambda mode: 1.0))
 
     def _call_kernel(self, call_details, values, cutoff, magnetic, radius_effective_mode):
-        # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
+        # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> None
         if magnetic:
             raise NotImplementedError("Magnetism not implemented for pure python models")
         #print("Calling python kernel")
@@ -200,16 +199,9 @@ class PyKernel(Kernel):
         self.q_input = None
 
 
-def _loops(parameters,    # type: np.ndarray
-           form,          # type: Callable[[], np.ndarray]
-           form_volume,   # type: Callable[[], float]
-           form_radius,   # type: Callable[[], float]
-           nq,            # type: int
-           call_details,  # type: details.CallDetails
-           values,        # type: np.ndarray
-           cutoff,        # type: float
-          ):
-    # type: (...) -> None
+def _loops(parameters, form, form_volume, form_radius, nq, call_details,
+           values, cutoff):
+    # type: (np.ndarray, Callable[[], np.ndarray], Callable[[], float], Callable[[], float], int, CallDetails, np.ndarray, float) -> None
     ################################################################
     #                                                              #
     #   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #

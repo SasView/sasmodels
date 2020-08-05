@@ -42,7 +42,7 @@ class SesansTransform(object):
     _H0 = None  # type: np.ndarray
 
     def __init__(self, z, SElength, lam, zaccept, Rmax, log_spacing=1.0003):
-        # type: (np.ndarray, float, float) -> None
+        # type: (np.ndarray, float, float, float, float, float) -> None
         self.q = z
         self.log_spacing = log_spacing
         self._set_hankel(SElength, lam, zaccept, Rmax)
@@ -58,7 +58,7 @@ class SesansTransform(object):
         return P
 
     def _set_hankel(self, SElength, lam, zaccept, Rmax):
-        # type: (np.ndarray, float, float) -> None
+        # type: (np.ndarray, float, float, float) -> None
         SElength = np.asarray(SElength)
         q_max = 2*pi / (SElength[1] - SElength[0])
         q_min = 0.1 * 2*pi / (np.size(SElength) * SElength[-1])

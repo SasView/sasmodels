@@ -10,7 +10,7 @@ correct alignment.
 
 :func:`align_empty` to create an empty array of the correct alignment.
 
-Set alignment to :func:`gpu.environment()` attribute *boundary*.
+Set alignment to gpu environment attribute *boundary*.
 
 Note:  This code is unused. So far, tests have not demonstrated any
 improvement from forcing correct alignment.  The tests should

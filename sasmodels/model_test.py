@@ -8,7 +8,7 @@ Usage::
 
 If model1 is 'all', then all except the remaining models will be tested.
 Subgroups are also possible, such as 'py', 'single' or '1d'.  See
-:func:`core.list_models` for details.
+:func:`.core.list_models` for details.
 
 Each model is tested using the default parameters at q=0.1, (qx, qy)=(0.1, 0.1),
 and Fq is called to make sure R_eff, volume and volume ratio are computed.
@@ -70,12 +70,12 @@ from . import product
 
 # pylint: disable=unused-import
 try:
-    from typing import List, Iterator, Callable
-except ImportError:
-    pass
-else:
+    from typing import List, Iterator, Callable, Any, Dict, Tuple, Union
     from .modelinfo import ParameterTable, ParameterSet, TestCondition, ModelInfo
     from .kernel import KernelModel
+    DType = Union[None, str, np.dtype]
+except ImportError:
+    pass
 # pylint: enable=unused-import
 
 def make_suite(loaders, models):
@@ -417,7 +417,7 @@ def _hide_model_case_from_nose():
     return ModelTestCase
 
 def invalid_pars(partable, pars):
-    # type: (ParameterTable, Dict[str, float])
+    # type: (ParameterTable, Dict[str, float]) -> List[str]
     """
     Return a list of parameter names that are not part of the model.
     """
@@ -580,7 +580,7 @@ def model_tests():
 
 
 def main():
-    # type: (*str) -> int
+    # type: () -> int
     """
     Run tests given is models.
 

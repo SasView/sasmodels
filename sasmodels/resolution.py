@@ -117,7 +117,7 @@ class Slit1D(Resolution):
     *q_calc* is the list of points to calculate, or None if this should
     be estimated from the *q* and *q_width*.
 
-    The *weight_matrix* is computed by :func:`slit1d_resolution`
+    The *weight_matrix* is computed by :func:`slit_resolution`
     """
     def __init__(self, q, qx_width, qy_width=0., q_calc=None):
         # Remember what width/dqy was used even though we won't need them

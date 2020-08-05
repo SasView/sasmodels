@@ -2,7 +2,7 @@
 Parameter conversion table
 
 *CONVERSION_TABLE* gives the old model name and a dictionary of old parameter
-names for each parameter in sasmodels.  This is used by :mod:`convert` to
+names for each parameter in sasmodels.  This is used by :mod:`.convert` to
 determine the equivalent parameter set when comparing a sasmodels model to
 the models defined in previous versions of SasView and sasmodels. This is now
 versioned based on the version number of SasView.

@@ -1,3 +1,5 @@
+.. py:currentmodule:: sasmodels
+
 .. _Scripting_Interface:
 
 *******************
@@ -7,15 +9,15 @@ Scripting Interface
 Need some basic details here of how to load models and data via script, evaluate
 them at given parameter values and run bumps fits.
 
-The key functions are :func:`sasmodels.core.load_model` for loading the
+The key functions are :func:`.core.load_model` for loading the
 model definition and compiling the kernel and
-:func:`sasmodels.data.load_data` for calling sasview to load the data.
+:func:`.data.load_data` for calling sasview to load the data.
 
 Preparing data
 ==============
 
 Usually you will load data via the sasview loader, with the
-:func:`sasmodels.data.load_data` function.  For example::
+:func:`.data.load_data` function.  For example::
 
     from sasmodels.data import load_data
     data = load_data("sasmodels/example/093191_201.dat")
@@ -25,13 +27,13 @@ You may want to apply a data mask, such a beam stop, and trim high $q$::
     from sasmodels.data import set_beam_stop
     set_beam_stop(data, qmin, qmax)
 
-The :func:`sasmodels.data.set_beam_stop` method simply sets the *mask*
+The :func:`.data.set_beam_stop` method simply sets the *mask*
 attribute for the data.
 
 The data defines the resolution function and the q values to evaluate, so
 even if you simulating experiments prior to making measurements, you still
-need a data object for reference. Use :func:`sasmodels.data.empty_data1D`
-or :func:`sasmodels.data.empty_data2D` to create a container with a
+need a data object for reference. Use :func:`.data.empty_data1D`
+or :func:`.data.empty_data2D` to create a container with a
 given $q$ and $\Delta q/q$.  For example::
 
     import numpy as np
@@ -42,8 +44,8 @@ given $q$ and $\Delta q/q$.  For example::
     data = empty_data1D(q, resolution=0.05)
 
 To use a more realistic model of resolution, or to load data from a file
-format not understood by SasView, you can use :class:`sasmodels.data.Data1D`
-or :class:`sasmodels.data.Data2D` directly.  The 1D data uses
+format not understood by SasView, you can use :class:`.data.Data1D`
+or :class:`.data.Data2D` directly.  The 1D data uses
 *x*, *y*, *dx* and *dy* for $x = q$ and $y = I(q)$, and 2D data uses
 *x*, *y*, *z*, *dx*, *dy*, *dz* for $x, y = qx, qy$ and $z = I(qx, qy)$.
 [Note: internally, the Data2D object uses SasView conventions,
@@ -54,7 +56,7 @@ indicate slit resolution::
 
     data.dxl = 0.117
 
-See :func:`sasmodels.resolution.slit_resolution` for details.
+See :func:`.resolution.slit_resolution` for details.
 
 SESANS data is more complicated; if your SESANS format is not supported by
 SasView you need to define a number of attributes beyond *x*, *y*.  For
@@ -90,7 +92,7 @@ Using sasmodels directly
 
 Once you have a computational kernel and a data object, you can evaluate
 the model for various parameters using
-:class:`sasmodels.direct_model.DirectModel`.  The resulting object *f*
+:class:`.direct_model.DirectModel`.  The resulting object *f*
 will be callable as *f(par=value, ...)*, returning the $I(q)$ for the $q$
 values in the data.  For example::
 
@@ -117,8 +119,8 @@ Using sasmodels through the bumps optimizer
 ===========================================
 
 Like DirectModel, you can wrap data and a kernel in a *bumps* model with
-class:`sasmodels.bumps_model.Model` and create an
-class:`sasmodels.bumps_model.Experiment` that you can fit with the *bumps*
+:class:`.bumps_model.Model` and create an
+:class:`.bumps_model.Experiment` that you can fit with the *bumps*
 interface. Here is an example from the *example* directory such as
 *example/model.py*::
 
@@ -180,16 +182,16 @@ Getting a simple function that you can call on a set of q values and return
 a result is not so simple.  Since the time critical use case (fitting) involves
 calling the function over and over with identical $q$ values, we chose to
 optimize the call by only transfering the $q$ values to the GPU once at the
-start of the fit.  We do this by creating a :class:`sasmodels.kernel.Kernel`
-object from the :class:`sasmodels.kernel.KernelModel` returned from
-:func:`sasmodels.core.load_model` using the
-:meth:`sasmodels.kernel.KernelModel.make_kernel` method.  What it actual
+start of the fit.  We do this by creating a :class:`.kernel.Kernel`
+object from the :class:`.kernel.KernelModel` returned from
+:func:`.core.load_model` using the
+:meth:`.kernel.KernelModel.make_kernel` method.  What it actual
 does depends on whether it is running as a DLL, as OpenCL or as a pure
 python kernel.  Once the kernel is in hand, we can then marshal a set of
-parameters into a :class:`sasmodels.details.CallDetails` object and ship it to
-the kernel using the :func:`sansmodels.direct_model.call_kernel` function.  To
+parameters into a :class:`.details.CallDetails` object and ship it to
+the kernel using the :func:`.direct_model.call_kernel` function.  To
 accesses the underlying $<F(q)>$ and $<F^2(q)>$, use
-:func:`sasmodels.direct_model.call_Fq` instead.
+:func:`.direct_model.call_Fq` instead.
 
 The following example should
 help, *example/cylinder_eval.py*::

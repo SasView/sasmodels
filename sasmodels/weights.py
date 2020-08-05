@@ -10,6 +10,14 @@ from collections import OrderedDict
 import numpy as np  # type: ignore
 from scipy.special import gammaln  # type: ignore
 
+# pylint: disable=unused-import
+try:
+    from typing import Tuple, List
+    from .modelinfo import ModelInfo
+except ImportError:
+    pass
+# pylint: enable=unused-import
+
 # TODO: include dispersion docs with the disperser models
 
 class Dispersion(object):

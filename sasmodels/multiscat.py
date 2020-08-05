@@ -123,6 +123,15 @@ try:
     HAVE_OPENCL = sasmodels.kernelcl.use_opencl()
 except ImportError:
     HAVE_OPENCL = False
+
+# pylint: disable=unused-import
+try:
+    from typing import Dict
+    from sasmodels.modelinfo import ModelInfo
+except ImportError:
+    pass
+# pylint: enable=unused-import
+
 PRECISION = np.dtype('f' if HAVE_OPENCL else 'd')  # 'f' or 'd'
 USE_FAST = True  # OpenCL faster, less accurate math
 

@@ -1,3 +1,5 @@
+.. py:currentmodule:: sasmodels
+
 .. _Writing_a_Plugin:
 
 Writing a Plugin Model
@@ -11,7 +13,7 @@ create your own models. This document describes how to create plugin models
 from first principles.
 
 If you are using SasView and simply want to combine existing models into a new
-plugin, see the :ref:`Add/Multiply Models` tool instead.
+plugin then use the "Add/Multiply Models" menu option instead.
 
 Models can be of three types:
 
@@ -37,7 +39,7 @@ The built-in modules are available in the *models* subdirectory
 of the sasmodels package.  For SasView on Windows, these will
 be found in *C:\\Program Files (x86)\\SasView\\sasmodels-data\\models*.
 On Mac OSX, these will be within the application bundle as
-*/Applications/SasView 4.0.app/Contents/Resources/sasmodels-data/models*.
+*/Applications/SasView.app/Contents/Resources/sasmodels-data/models*.
 
 Other models are available for download from the
 `Model Marketplace <http://marketplace.sasview.org/>`_. You can contribute your
@@ -174,7 +176,7 @@ as the model file.
 
 The new parameters replace *radius_polar* and *radius_equatorial* in the
 parameter table.  To have more control over parameter placement, use an
-*insert_after={...}* argmument to :func:`sasmodels.core.reparameterize`.
+*insert_after={...}* argmument to :func:`.core.reparameterize`.
 For each insert location provide a list of new parameter names to insert
 at that location.  For example, *{'': 'eccentricity,volume'}* inserts
 them both at the beginning (before any parameter), whereas
@@ -338,13 +340,13 @@ structure factor to account for interactions between particles.  See
 
 **model_info = ...** lets you define a model directly, for example, by
 loading and modifying existing models.  This is done implicitly by
-:func:`sasmodels.core.load_model_info`, which can create a mixture model
+:func:`.core.load_model_info`, which can create a mixture model
 from a pair of existing models.  For example::
 
     from sasmodels.core import load_model_info
     model_info = load_model_info('sphere+cylinder')
 
-See :class:`sasmodels.modelinfo.ModelInfo` for details about the model
+See :class:`.modelinfo.ModelInfo` for details about the model
 attributes that are defined.
 
 Model Parameters
