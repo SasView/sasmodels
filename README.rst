@@ -96,7 +96,7 @@ instructions on running the fit.
 
 |TestStatus|_ |TravisStatus|_
 
-.. |TestStatus| image::https://github.com/SasView/sasmodels/workflows/Test/badge.svg?branch=master
+.. |TestStatus| image:: https://github.com/SasView/sasmodels/workflows/Test/badge.svg?branch=master
 .. _TestStatus: https://github.com/SasView/sasmodels/actions?query=workflow%3ATest+branch%3Amaster
 
 .. |TravisStatus| image:: https://travis-ci.org/SasView/sasmodels.svg?branch=master
