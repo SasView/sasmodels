@@ -63,7 +63,7 @@ This states:
 
 
 **This is a model with complex behaviour depending on the ratio of** $L/b$
-***and the reader is strongly encouraged to read reference [1] before use. In
+**and the reader is strongly encouraged to read reference [1] before use. In
 particular, the cylinder form factor used as the limiting case for long
 narrow rods will not be exactly correct for short and/or wide rods.**
 
