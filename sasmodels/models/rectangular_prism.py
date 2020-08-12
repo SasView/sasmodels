@@ -16,11 +16,11 @@ to *a* will generate a distribution of cubes of different sizes).
 Definition
 ----------
 
-The 1D scattering intensity for this model was calculated by Mittelbach and
-Porod (Mittelbach, 1961), but the implementation here is closer to the
-equations given by Nayuk and Huber (Nayuk, 2012).
+The 1D scattering intensity for this model was calculated by (Mittelbach and
+Porod, 1961 [#Mittelbach1961]_), but the implementation here is closer to
+the equations given by (Nayuk and Huber, 2012 [Nayuk2012]_).
 Note also that the angle definitions used in the code and the present
-documentation correspond to those used in (Nayuk, 2012) (see Fig. 1 of
+documentation correspond to those used in Nayuk and Huber (see Fig. 1 of
 that reference), with $\theta$ corresponding to $\alpha$ in that paper,
 and not to the usual convention used for example in the
 :ref:`parallelepiped` model.
@@ -86,7 +86,6 @@ results may be not correct.
     detector plane.
 
 
-
 Validation
 ----------
 
@@ -97,9 +96,12 @@ to the output of the existing :ref:`parallelepiped` model.
 References
 ----------
 
-#.  P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
-#.  R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
-#.  L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+See also Onsager [#Onsager1949]_.
+
+.. [#Mittelbach1961] P Mittelbach and G Porod, *Acta Physica Austriaca*,
+   14 (1961) 185-211
+.. [#Nayuk2012] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+.. [#Onsager1949] L Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------
