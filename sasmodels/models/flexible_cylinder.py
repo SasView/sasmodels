@@ -45,8 +45,8 @@ This states:
 .. note::
 
     There are several typos in the original reference that have been
-    corrected by WRC [2]. Details of the corrections are in the reference
-    below. Most notably
+    corrected by Chen *et al* (WRC) [2]. Details of the corrections are in the
+    reference below. Most notably
 
     - Equation (13): the term $(1 - w(QR))$ should swap position with $w(QR)$
 
@@ -73,9 +73,6 @@ References
 #. J S Pedersen and P Schurtenberger. *Scattering functions of semiflexible
    polymers with and without excluded volume effects.*
    Macromolecules, 29 (1996) 7602-7612
-
-Correction of the formula can be found in
-
 #. W R Chen, P D Butler and L J Magid, *Incorporating Intermicellar
    Interactions in the Fitting of SANS Data from Cationic Wormlike Micelles.*
    Langmuir, 22(15) 2006 6539-6548
