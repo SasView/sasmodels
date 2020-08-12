@@ -2,8 +2,8 @@
 Model definition files
 ----------------------
 
-The models below are grouped by type.  The list is a snapshot at a particular
-time and may be out of date.
+The models below are grouped by type. The documentation build system collects
+and organizes the models automatically, so this list may be out of date.
 
 Models with pure form factor (all of which define *F(Q)*):
 
@@ -94,5 +94,4 @@ Other models:
     :mod:`teubner_strey`
     :mod:`two_lorentzian`
     :mod:`unified_power_Rg`
-
 """

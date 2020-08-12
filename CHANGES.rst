@@ -1,13 +1,20 @@
 Release notes
 =============
 
-v1.0.3 2020-05-??
+v1.0.4 2020-07-24
 ------------------
-* fix dll cache so multiple versions can coexist
-* fix polydispersity for python models
-* warn if ER function is present in model but not used
+* doc update: how to test a plugin model in 5.x version
 
-v1.0.2 2020-04-14
+v1.0.3 2020-07-06
+------------------
+* fix polydispersity for python models
+* fix dll cache so multiple versions can coexist
+* fix caching bug on pyopencl for Intel on OS/X
+* fix tinycc compilation bug on windows indicating bad backslash escape
+* warn if ER function is present in plugin model but not used
+* restore python 2.7 support
+
+v1.0.2 2020-04-24
 -----------------
 * doc updates: Porod
 * doc updates: change "Source intensity" to "Scale factor or Volume fraction"
@@ -30,4 +37,4 @@ v1.0.1 2019-10-03
 
 v1.0.0 2019-05-20
 -----------------
-see git log for details
+* see git log for details

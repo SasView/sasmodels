@@ -201,7 +201,7 @@ class PyKernel(Kernel):
 
 def _loops(parameters, form, form_volume, form_radius, nq, call_details,
            values, cutoff):
-    # type: (np.ndarray, Callable([], np.ndarray], Callable[[], float], Callable[[], float], int, CallDetails, np.ndarray, float) -> None
+    # type: (np.ndarray, Callable[[], np.ndarray], Callable[[], float], Callable[[], float], int, CallDetails, np.ndarray, float) -> None
     ################################################################
     #                                                              #
     #   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #

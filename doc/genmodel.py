@@ -405,7 +405,7 @@ def run_sphinx(rst_files, output):
     with open(joinpath(TARGET_DIR, 'index.rst'), 'w') as fid:
         fid.write(".. toctree::\n\n")
         for path in rst_files:
-            fid.write(f"    {basename(path)}\n")
+            fid.write("    %s\n"%basename(path))
     command = [
         sys.executable,
         "-m", "sphinx",
@@ -440,9 +440,9 @@ def main():
     global TARGET_DIR
     TARGET_DIR = os.path.expanduser(args.rst)
     if not os.path.exists(TARGET_DIR) and not args.sphinx:
-        print(f"build directory '{TARGET_DIR}' does not exist")
+        print("build directory %r does not exist"%TARGET_DIR)
         sys.exit(1)
-    os.makedirs(TARGET_DIR, exist_ok=True)
+    makedirs(TARGET_DIR, exist_ok=True)
 
     if args.cpus == -1:
         cpus = int(os.environ.get("SASMODELS_BUILD_CPUS", "0"))

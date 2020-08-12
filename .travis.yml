@@ -4,6 +4,9 @@ matrix:
   include:
   - os: linux
     env:
+    - PY=2.7
+  - os: linux
+    env:
     - PY=3.6
   - os: linux
     env:
@@ -34,6 +37,7 @@ before_install:
 - conda update --yes conda
 - conda info -a
 - conda install --yes python=$PY numpy scipy matplotlib docutils setuptools pytest sphinx
+- conda install --yes -c conda-forge pyopencl pocl
 install:
 - pip install bumps
 - pip install unittest-xml-reporting tinycc
