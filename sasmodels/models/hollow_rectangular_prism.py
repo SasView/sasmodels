@@ -19,7 +19,7 @@ possible orientations, giving
   P(q) =  \frac{1}{V^2} \frac{2}{\pi} \times \, \int_0^{\frac{\pi}{2}} \,
   \int_0^{\frac{\pi}{2}} A_{P\Delta}^2(q) \, \sin\theta \, d\theta \, d\phi
 
-where $\theta$ is the angle between the $z$ axis and the longest axis
+where $\theta$ is the angle between the $z$ axis and the $C$ axis
 of the parallelepiped, $\phi$ is the angle between the scattering vector
 (lying in the $xy$ plane) and the $y$ axis, and
 
@@ -34,7 +34,7 @@ of the parallelepiped, $\phi$ is the angle between the scattering vector
     {\left( q \frac{A}{2} \sin\theta \sin\phi \right)}\right]
     \left[\frac{\sin \bigl( q \frac{B}{2} \sin\theta \cos\phi \bigr)}
     {\left( q \frac{B}{2} \sin\theta \cos\phi \right)}\right] \\
-    & - A' B' C'
+    & {} - A' B' C'
     \left[ \frac{\sin \bigl[ q \frac{C'}{2} \cos\theta \bigr]}
     {q \frac{C'}{2} \cos\theta} \right]
     \left[ \frac{\sin \bigl[ q \frac{A'}{2} \sin\theta \sin\phi \bigr]}
@@ -43,12 +43,9 @@ of the parallelepiped, $\phi$ is the angle between the scattering vector
     {q \frac{B'}{2} \sin\theta \cos\phi} \right]
   \end{align*}
 
-where $A = A' + 2\Delta$, $B = B' + 2\Delta$ and $C = C' + 2\Delta$ are the
-external sides of the parallelepiped fulfilling $A \le B \le C$, and the
-volume $V$ of the parallelepiped is
-
-.. math::
-  V = A B C \, - \, A' B' C'
+$A'$, $B'$, $C'$ are the inner dimensions and $A = A' + 2Δ$,
+$B = B' + 2Δ$, $C = C' + 2Δ$ are the outer dimensions of the parallelepiped
+shell, giving a shell volume of $V = ABC - A'B'C'$.
 
 The 1D scattering intensity is then calculated as
 

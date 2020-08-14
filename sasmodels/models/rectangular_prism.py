@@ -40,7 +40,7 @@ and $\phi$
 
 where $A$, $B$ and $C$ are the sides of the parallelepiped and must fulfill
 $A \le B \le C$, $\theta$ is the angle between the $z$ axis and the
-longest axis of the parallelepiped $C$, and $\phi$ is the angle between the
+$C$ axis of the parallelepiped, and $\phi$ is the angle between the
 scattering vector (lying in the $xy$ plane) and the $y$ axis.
 
 The normalized form factor in 1D is obtained averaging over all possible
