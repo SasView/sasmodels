@@ -18,7 +18,7 @@ Definition
 
 The 1D scattering intensity for this model was calculated by (Mittelbach and
 Porod, 1961 [#Mittelbach1961]_), but the implementation here is closer to
-the equations given by (Nayuk and Huber, 2012 [Nayuk2012]_).
+the equations given by (Nayuk and Huber, 2012 [#Nayuk2012]_).
 Note also that the angle definitions used in the code and the present
 documentation correspond to those used in Nayuk and Huber (see Fig. 1 of
 that reference), with $\theta$ corresponding to $\alpha$ in that paper,
