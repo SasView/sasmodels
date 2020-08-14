@@ -43,9 +43,9 @@ of the parallelepiped, $\phi$ is the angle between the scattering vector
     {q \frac{B'}{2} \sin\theta \cos\phi} \right]
   \end{align*}
 
-$A'$, $B'$, $C'$ are the inner dimensions and $A = A' + 2Δ$,
-$B = B' + 2Δ$, $C = C' + 2Δ$ are the outer dimensions of the parallelepiped
-shell, giving a shell volume of $V = ABC - A'B'C'$.
+$A'$, $B'$, $C'$ are the inner dimensions and $A = A' + 2\Delta$,
+$B = B' + 2\Delta$, $C = C' + 2\Delta$ are the outer dimensions of the
+parallelepiped shell, giving a shell volume of $V = ABC - A'B'C'$.
 
 The 1D scattering intensity is then calculated as
 
