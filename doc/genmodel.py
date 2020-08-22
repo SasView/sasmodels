@@ -212,10 +212,8 @@ def link_sources(model_info):
     Add link to model sources from the doc tree.
     """
     # List source files in order of dependency.
-    if model_info.source:
-        sources = generate.model_sources(model_info)
-    else:
-        sources = [model_info.basefile]
+    sources = generate.model_sources(model_info) if model_info.source else []
+    sources.append(model_info.basefile)
 
     # Copy files to src dir under models directory.  Need to do this
     # because sphinx can't link to an absolute path.
