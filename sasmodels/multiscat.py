@@ -95,7 +95,7 @@ seem to seriously impact overall accuracy, though they look pretty bad.
 from __future__ import print_function, division
 
 import argparse
-import time
+#import time
 
 import numpy as np
 from numpy import pi
@@ -124,13 +124,13 @@ try:
 except ImportError:
     HAVE_OPENCL = False
 
-# pylint: disable=unused-import
+# pylint: disable=unused-import,ungrouped-imports
 try:
     from typing import Dict
     from sasmodels.modelinfo import ModelInfo
 except ImportError:
     pass
-# pylint: enable=unused-import
+# pylint: enable=unused-import,ungrouped-imports
 
 PRECISION = np.dtype('f' if HAVE_OPENCL else 'd')  # 'f' or 'd'
 USE_FAST = True  # OpenCL faster, less accurate math
@@ -230,8 +230,9 @@ class OpenclCalculator(ICalculator):
     polyval1f = None
     polyval1d = None
     def __init__(self, dims, dtype=PRECISION):
+        dtype = np.dtype(dtype)
         env = sasmodels.kernelcl.environment()
-        context = env.get_context(dtype)
+        context = env.context[dtype]
         if dtype == np.dtype('f'):
             if OpenclCalculator.polyval1f is None:
                 program = sasmodels.kernelcl.compile_model(
@@ -250,7 +251,7 @@ class OpenclCalculator(ICalculator):
             self.dtype = dtype
             self.complex_type = np.dtype('D')
             self.polyval1 = OpenclCalculator.polyval1d
-        self.queue = env.get_queue(dtype)
+        self.queue = env.queue[dtype]
         self.plan = pyfft.cl.Plan(dims, queue=self.queue)
 
     def fft(self, Iq):
@@ -547,6 +548,71 @@ class MultipleScattering(Resolution):
         Iq = np.histogram(self._radius, bins=self._edges, weights=Iqxy)[0]/self._norm
         return Iq
 
+    def plot_and_save_powers(self, theory, result, plot=True,
+                              outfile="", background=0.):
+        import pylab
+        probability, coverage = self.probability, self.coverage
+        weights = scattering_coeffs(probability, coverage)
+
+        # cribbed from MultipleScattering.apply
+        if self.is2d:
+            Iq_calc = theory
+        else:
+            Iq_calc = np.interp(self._radius, self.q_calc[0], theory)
+        Iq_calc = Iq_calc.reshape(self.nq, self.nq)
+
+        # Compute the scattering powers for 1, 2, ... n scattering events
+        powers = scattering_powers(Iq_calc, len(weights))
+
+        #plotxy(Iqxy); import pylab; pylab.figure()
+        if self.is2d:
+            if outfile:
+                data = np.vstack([Ipower.flatten() for Ipower in powers]).T
+                np.savetxt(outfile + "_powers.txt", data)
+                data = np.vstack(Iq_calc).T
+                np.savetxt(outfile + ".txt", data)
+            if plot:
+                plotxy((self._q_steps, self._q_steps), Iq_calc)
+                pylab.title("single scattering F")
+                for k, v in enumerate(powers[1:]):
+                    pylab.figure()
+                    plotxy((self._q_steps, self._q_steps), v+background)
+                    pylab.title("multiple scattering F^%d" % (k+2))
+                pylab.figure()
+                plotxy((self._q_steps, self._q_steps), self.Iqxy+background)
+                pylab.title("total scattering for p=%g" % probability)
+                if self.resolution is not None:
+                    pylab.figure()
+                    plotxy((self._q_steps, self._q_steps), result)
+                    pylab.title("total scattering with resolution")
+        else:
+            q = self._q
+            Iq_powers = [self.radial_profile(Iqxy) for Iqxy in powers]
+            if outfile:
+                data = np.vstack([q, theory, self.Iq]).T
+                np.savetxt(outfile + ".txt", data)
+                # circular average, no anti-aliasing for individual powers
+                data = np.vstack([q] + Iq_powers).T
+                np.savetxt(outfile + "_powers.txt", data)
+            if plot:
+                # Plot 2D pattern for total scattering
+                plotxy((self._q_steps, self._q_steps), self.Iqxy+background)
+                pylab.title("total scattering for p=%g" % probability)
+                pylab.figure()
+
+                # Plot 1D pattern for partial scattering
+                pylab.loglog(q, self.Iq+background,
+                             label="total for p=%g" % probability)
+                if self.resolution is not None:
+                    pylab.loglog(q, result, label="total with dQ")
+                #new_annulus = annular_average(self._radius, self.Iqxy, self._edges)
+                #pylab.loglog(q, new_annulus+background, label="new total for p=%g"%probability)
+                for n, (w, Ipower) in enumerate(zip(weights, Iq_powers)):
+                    pylab.loglog(q, w*Ipower+background,
+                                 label="scattering^%d" % (n+1))
+                pylab.legend()
+                pylab.title('total scattering for p=%g' % probability)
+        pylab.show()
 
 def annular_average(qxy, Iqxy, qbins):
     """
@@ -645,71 +711,7 @@ def main():
     pars['background'] = 0.0
     theory = call_kernel(kernel, pars)
     Iq = res.apply(theory) + bg
-    _plot_and_save_powers(res, theory, Iq, outfile=opts.outfile, background=bg)
-
-def _plot_and_save_powers(res, theory, result, plot=True,
-                          outfile="", background=0.):
-    import pylab
-    probability, coverage = res.probability, res.coverage
-    weights = scattering_coeffs(probability, coverage)
-
-    # cribbed from MultipleScattering.apply
-    if res.is2d:
-        Iq_calc = theory
-    else:
-        Iq_calc = np.interp(res._radius, res.q_calc[0], theory)
-    Iq_calc = Iq_calc.reshape(res.nq, res.nq)
-
-    # Compute the scattering powers for 1, 2, ... n scattering events
-    powers = scattering_powers(Iq_calc, len(weights))
-
-    #plotxy(Iqxy); import pylab; pylab.figure()
-    if res.is2d:
-        if outfile:
-            data = np.vstack([Ipower.flatten() for Ipower in powers]).T
-            np.savetxt(outfile + "_powers.txt", data)
-            data = np.vstack(Iq_calc).T
-            np.savetxt(outfile + ".txt", data)
-        if plot:
-            plotxy((res._q_steps, res._q_steps), Iq_calc)
-            pylab.title("single scattering F")
-            for k, v in enumerate(powers[1:]):
-                pylab.figure()
-                plotxy((res._q_steps, res._q_steps), v+background)
-                pylab.title("multiple scattering F^%d" % (k+2))
-            pylab.figure()
-            plotxy((res._q_steps, res._q_steps), res.Iqxy+background)
-            pylab.title("total scattering for p=%g" % probability)
-            if res.resolution is not None:
-                pylab.figure()
-                plotxy((res._q_steps, res._q_steps), result)
-                pylab.title("total scattering with resolution")
-    else:
-        q = res._q
-        Iq_powers = [res.radial_profile(Iqxy) for Iqxy in powers]
-        if outfile:
-            data = np.vstack([q, theory, res.Iq]).T
-            np.savetxt(outfile + ".txt", data)
-            # circular average, no anti-aliasing for individual powers
-            data = np.vstack([q] + Iq_powers).T
-            np.savetxt(outfile + "_powers.txt", data)
-        if plot:
-            # Plot 2D pattern for total scattering
-            plotxy((res._q_steps, res._q_steps), res.Iqxy+background)
-            pylab.title("total scattering for p=%g" % probability)
-            pylab.figure()
-
-            # Plot 1D pattern for partial scattering
-            pylab.loglog(q, res.Iq+background, label="total for p=%g"%probability)
-            if res.resolution is not None:
-                pylab.loglog(q, result, label="total with dQ")
-            #new_annulus = annular_average(res._radius, res.Iqxy, res._edges)
-            #pylab.loglog(q, new_annulus+background, label="new total for p=%g"%probability)
-            for n, (w, Ipower) in enumerate(zip(weights, Iq_powers)):
-                pylab.loglog(q, w*Ipower+background, label="scattering^%d"%(n+1))
-            pylab.legend()
-            pylab.title('total scattering for p=%g' % probability)
-    pylab.show()
+    res.plot_and_save_powers(theory, Iq, outfile=opts.outfile, background=bg)
 
 def plotxy(q, Iq):
     """Plot q, Iq or (qx, qy), Iqxy."""

@@ -37,8 +37,8 @@ Also see the :ref:`core-shell-sphere` model documentation and [#Feigin1987]_
 
 .. [#Kline2006] S R Kline, *J Appl. Cryst.*, 39 (2006) 895
 
-.. [#Feigin1987] L A Feigin and D I Svergun, *Structure Analysis by Small-Angle X-Ray and
-   Neutron Scattering*, Plenum Press, New York, 1987.
+.. [#Feigin1987] L A Feigin and D I Svergun, *Structure Analysis by
+   Small-Angle X-Ray and Neutron Scattering*, Plenum Press, New York, 1987.
 
 Authorship and Verification
 ----------------------------

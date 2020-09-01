@@ -181,7 +181,7 @@ class SesansData(Data1D):
     isSesans = True
     def __init__(self, **kw):
         Data1D.__init__(self, **kw)
-        self.lam = None # type: OptArray
+        self.lam = None  # type: OptArray
 
 class Data2D(object):
     """
@@ -603,7 +603,7 @@ def _plot_result2D(data, theory, resid, view, use_data, limits=None):
 
     # Put theory and data on a common colormap scale
     vmin, vmax = np.inf, -np.inf
-    target = None # type: OptArray
+    target = None  # type: OptArray
     if use_data:
         target = data.data[~data.mask]
         datamin = target[target > 0].min() if view == 'log' else target.min()
@@ -698,7 +698,7 @@ def _plot_2d_signal(data, signal, vmin=None, vmax=None, view=None):
     else:
         vmin_scaled, vmax_scaled = vmin, vmax
     #nx, ny = len(data.x_bins), len(data.y_bins)
-    x_bins, y_bins, image = _build_matrix(data, plottable)
+    _, _, image = _build_matrix(data, plottable)
     plt.imshow(image,
                interpolation='nearest', aspect=1, origin='lower',
                extent=[xmin, xmax, ymin, ymax],
@@ -719,8 +719,8 @@ def _build_matrix(self, plottable):
 
     """
     # No qx or qy given in a vector format
-    if self.qx_data is None or self.qy_data is None \
-            or self.qx_data.ndim != 1 or self.qy_data.ndim != 1:
+    if (self.qx_data is None or self.qy_data is None
+            or self.qx_data.ndim != 1 or self.qy_data.ndim != 1):
         return self.x_bins, self.y_bins, plottable
 
     # maximum # of loops to fillup_pixels
@@ -737,15 +737,13 @@ def _build_matrix(self, plottable):
     weights_data = np.ones([self.data.size])
     # get histogram of ones w/len(data); this will provide
     #the weights of data on each bins
-    weights, xedges, yedges = np.histogram2d(x=self.qy_data,
-                                             y=self.qx_data,
-                                             bins=[y_bins, x_bins],
-                                             weights=weights_data)
+    weights, _, _ = np.histogram2d(
+        x=self.qy_data, y=self.qx_data, bins=[y_bins, x_bins],
+        weights=weights_data)
     # get histogram of data, all points into a bin in a way of summing
-    image, xedges, yedges = np.histogram2d(x=self.qy_data,
-                                           y=self.qx_data,
-                                           bins=[y_bins, x_bins],
-                                           weights=plottable)
+    image, _, _ = np.histogram2d(
+        x=self.qy_data, y=self.qx_data, bins=[y_bins, x_bins],
+        weights=plottable)
     # Now, normalize the image by weights only for weights>1:
     # If weight == 1, there is only one data point in the bin so
     # that no normalization is required.
@@ -818,57 +816,54 @@ def _fillup_pixels(image=None, weights=None):
     :return: image (2d array )
 
     :TODO: Find better way to do for-loop below
-
     """
     # No image matrix given
-    if image is None or np.ndim(image) != 2 \
-            or np.isfinite(image).all() \
-            or weights is None:
+    if (image is None or np.ndim(image) != 2
+            or np.isfinite(image).all()
+            or weights is None):
         return image
     # Get bin size in y and x directions
-    len_y = len(image)
-    len_x = len(image[1])
+    len_x, len_y = image.shape[1], image.shape[0]
     temp_image = np.zeros([len_y, len_x])
     weit = np.zeros([len_y, len_x])
     # do for-loop for all pixels
-    for n_y in range(len(image)):
-        for n_x in range(len(image[1])):
+    for n_y in range(len_y):
+        for n_x in range(len_x):
             # find only null pixels
             if weights[n_y][n_x] > 0 or np.isfinite(image[n_y][n_x]):
                 continue
-            else:
-                # find 4 nearest neighbors
-                # check where or not it is at the corner
-                if n_y != 0 and np.isfinite(image[n_y - 1][n_x]):
-                    temp_image[n_y][n_x] += image[n_y - 1][n_x]
-                    weit[n_y][n_x] += 1
-                if n_x != 0 and np.isfinite(image[n_y][n_x - 1]):
-                    temp_image[n_y][n_x] += image[n_y][n_x - 1]
-                    weit[n_y][n_x] += 1
-                if n_y != len_y - 1 and np.isfinite(image[n_y + 1][n_x]):
-                    temp_image[n_y][n_x] += image[n_y + 1][n_x]
-                    weit[n_y][n_x] += 1
-                if n_x != len_x - 1 and np.isfinite(image[n_y][n_x + 1]):
-                    temp_image[n_y][n_x] += image[n_y][n_x + 1]
-                    weit[n_y][n_x] += 1
-                # go 4 next nearest neighbors when no non-zero
-                # neighbor exists
-                if n_y != 0 and n_x != 0 and \
-                        np.isfinite(image[n_y - 1][n_x - 1]):
-                    temp_image[n_y][n_x] += image[n_y - 1][n_x - 1]
-                    weit[n_y][n_x] += 1
-                if n_y != len_y - 1 and n_x != 0 and \
-                        np.isfinite(image[n_y + 1][n_x - 1]):
-                    temp_image[n_y][n_x] += image[n_y + 1][n_x - 1]
-                    weit[n_y][n_x] += 1
-                if n_y != len_y and n_x != len_x - 1 and \
-                        np.isfinite(image[n_y - 1][n_x + 1]):
-                    temp_image[n_y][n_x] += image[n_y - 1][n_x + 1]
-                    weit[n_y][n_x] += 1
-                if n_y != len_y - 1 and n_x != len_x - 1 and \
-                        np.isfinite(image[n_y + 1][n_x + 1]):
-                    temp_image[n_y][n_x] += image[n_y + 1][n_x + 1]
-                    weit[n_y][n_x] += 1
+            # find 4 nearest neighbors
+            # check where or not it is at the corner
+            if n_y != 0 and np.isfinite(image[n_y - 1][n_x]):
+                temp_image[n_y][n_x] += image[n_y - 1][n_x]
+                weit[n_y][n_x] += 1
+            if n_x != 0 and np.isfinite(image[n_y][n_x - 1]):
+                temp_image[n_y][n_x] += image[n_y][n_x - 1]
+                weit[n_y][n_x] += 1
+            if n_y != len_y - 1 and np.isfinite(image[n_y + 1][n_x]):
+                temp_image[n_y][n_x] += image[n_y + 1][n_x]
+                weit[n_y][n_x] += 1
+            if n_x != len_x - 1 and np.isfinite(image[n_y][n_x + 1]):
+                temp_image[n_y][n_x] += image[n_y][n_x + 1]
+                weit[n_y][n_x] += 1
+            # go 4 next nearest neighbors when no non-zero
+            # neighbor exists
+            if (n_y != 0 and n_x != 0
+                    and np.isfinite(image[n_y - 1][n_x - 1])):
+                temp_image[n_y][n_x] += image[n_y - 1][n_x - 1]
+                weit[n_y][n_x] += 1
+            if (n_y != len_y - 1 and n_x != 0
+                    and np.isfinite(image[n_y + 1][n_x - 1])):
+                temp_image[n_y][n_x] += image[n_y + 1][n_x - 1]
+                weit[n_y][n_x] += 1
+            if (n_y != len_y and n_x != len_x - 1
+                    and np.isfinite(image[n_y - 1][n_x + 1])):
+                temp_image[n_y][n_x] += image[n_y - 1][n_x + 1]
+                weit[n_y][n_x] += 1
+            if (n_y != len_y - 1 and n_x != len_x - 1
+                    and np.isfinite(image[n_y + 1][n_x + 1])):
+                temp_image[n_y][n_x] += image[n_y + 1][n_x + 1]
+                weit[n_y][n_x] += 1
 
     # get it normalized
     ind = (weit > 0)

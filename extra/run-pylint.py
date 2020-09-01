@@ -8,7 +8,7 @@ def main():
     extra = abspath(dirname(__file__))
     root = abspath(joinpath(extra, '..'))
 
-    envpath = os.environ.get('PYTHONPATH',None)
+    envpath = os.environ.get('PYTHONPATH', None)
     path = [envpath] if envpath else []
     path.append(extra)
 

@@ -35,8 +35,9 @@ limit. See equations (13, 26-27) in the original reference for the details.
 
 .. note::
 
-    There are several typos in the original reference that have been corrected
-    by WRC [2]. Details of the corrections are in the reference below. Most notably
+    There are several typos in the original reference that have been
+    corrected by Chen *et al* (WRC) [2]. Details of the corrections are in the
+    reference below. Most notably
 
     - Equation (13): the term $(1 - w(QR))$ should swap position with $w(QR)$
 
@@ -48,39 +49,40 @@ limit. See equations (13, 26-27) in the original reference for the details.
       $max(a3*b(Rg^2)^{1/2},3)$
 
     - The scattering function is negative for a range of parameter values and
-      q-values that are experimentally accessible. A correction function has been
-      added to give the proper behavior.
+      q-values that are experimentally accessible. A correction function has
+      been added to give the proper behavior.
 
 .. figure:: img/flexible_cylinder_ex_geometry.jpg
 
 
-The chain of contour length, $L$, (the total length) can be described as a chain
-of some number of locally stiff segments of length $l_p$, the persistence length
-(the length along the cylinder over which the flexible cylinder can be considered
-a rigid rod).
-The Kuhn length $(b = 2*l_p)$ is also used to describe the stiffness of a chain.
+The chain of contour length, $L$, (the total length) can be described as a
+chain of some number of locally stiff segments of length $l_p$, the
+persistence length (the length along the cylinder over which the flexible
+cylinder can be considered a rigid rod). The Kuhn length $(b = 2*l_p)$ is
+also used to describe the stiffness of a chain.
 
-The cross section of the cylinder is elliptical, with minor radius $a$ .
-The major radius is larger, so of course, **the axis_ratio must be
-greater than one.** Simple constraints should be applied during curve fitting to
-maintain this inequality.
+The cross section of the cylinder is elliptical, with minor radius $a$ . The
+major radius is larger, so of course, **the axis_ratio must be greater than
+one.** Simple constraints should be applied during curve fitting to maintain
+this inequality.
 
 In the parameters, the $sld$ and $sld\_solvent$ represent the SLD of the
-chain/cylinder and solvent respectively. The *scale*, and the contrast are both
-multiplicative factors in the model and are perfectly correlated. One or both of
-these parameters must be held fixed during model fitting.
+chain/cylinder and solvent respectively. The *scale*, and the contrast are
+both multiplicative factors in the model and are perfectly correlated. One or
+both of these parameters must be held fixed during model fitting.
 
-**This is a model with complex behaviour depending on the ratio of** $L/b$ **and the
-reader is strongly encouraged to read reference [1] before use.**
+**This is a model with complex behaviour depending on the ratio of** $L/b$
+**and the reader is strongly encouraged to read reference [1] before use.**
 
 References
 ----------
 
-#.  J S Pedersen and P Schurtenberger. *Scattering functions of semiflexible polymers with and without excluded volume effects.* Macromolecules, 29 (1996) 7602-7612
-
-Correction of the formula can be found in
-
-#.  W R Chen, P D Butler and L J Magid, *Incorporating Intermicellar Interactions in the Fitting of SANS Data from Cationic Wormlike Micelles.* Langmuir, 22(15) 2006 6539-6548
+#. J S Pedersen and P Schurtenberger. *Scattering functions of semiflexible
+   polymers with and without excluded volume effects.*
+   Macromolecules, 29 (1996) 7602-7612
+#. W R Chen, P D Butler and L J Magid, *Incorporating Intermicellar
+   Interactions in the Fitting of SANS Data from Cationic Wormlike Micelles.*
+   Langmuir, 22(15) 2006 6539-6548
 
 Authorship and Verification
 ----------------------------
@@ -97,10 +99,8 @@ name = "flexible_cylinder_elliptical"
 title = "Flexible cylinder wth an elliptical cross section and a uniform " \
         "scattering length density."
 description = """Note : scale and contrast=sldCyl-sldSolv are both multiplicative
-        factors in the
-        model and are perfectly correlated. One or
-        both of these parameters must be held fixed
-        during model fitting.
+        factors in the model and are perfectly correlated. One or both of
+        these parameters must be held fixed during model fitting.
         """
 single = False
 

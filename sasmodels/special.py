@@ -193,7 +193,7 @@ file in the order given, otherwise these functions will not be available.
 
 
     gauss76.n, gauss76.z[i], gauss76.w[i]:
-        Points $z_i$ and weights $w_i$ for 76-point Gaussian quadrature, respectively,
+        Points $z_i$ and weights $w_i$ for $n=76$ point Gaussian quadrature,
         computing $\int_{-1}^1 f(z)\,dz \approx \sum_{i=1}^{76} w_i\,f(z_i)$.
         When translating the model to C, include 'lib/gauss76.c' in the source
         and use :code:`GAUSS_N`, :code:`GAUSS_Z`, and :code:`GAUSS_W`.

@@ -80,11 +80,11 @@ def ellipticJi(u, v, m):
     return result[0, :] if scalar else result
 
 def _ellipticJi_real(u, m):
-    sn, cn, dn, phi = ellipticJ(u, m)
+    sn, cn, dn, _ = ellipticJ(u, m)
     return sn, cn, dn
 
 def _ellipticJi_imag(v, m):
-    sn, cn, dn, phi = ellipticJ(v, 1-m)
+    sn, cn, dn, _ = ellipticJ(v, 1-m)
     return 1j*sn/cn, 1/cn, dn/cn
 
 def _ellipticJi(u, v, m):

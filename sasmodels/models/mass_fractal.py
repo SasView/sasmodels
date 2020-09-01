@@ -34,9 +34,9 @@ The scattering intensity $I(q)$ is calculated as
     V = \frac{4}{3}\pi R^3
 
 where $R$ is the radius of the building block, $D_m$ is the **mass** fractal
-dimension, $\zeta$  is the cut-off length, $\rho_\text{solvent}$ is the scattering
-length density of the solvent, and $\rho_\text{particle}$ is the scattering
-length density of particles.
+dimension, $\zeta$ is the cut-off length, $\rho_\text{solvent}$ is the
+scattering length density of the solvent, and $\rho_\text{particle}$ is the
+scattering length density of particles.
 
 .. note::
 
@@ -48,7 +48,8 @@ length density of particles.
 References
 ----------
 
-#.  D Mildner and P Hall, *J. Phys. D: Appl. Phys.*, 19 (1986) 1535-1545 Equation(9)
+#. D Mildner and P Hall,
+   *J. Phys. D: Appl. Phys.*, 19 (1986) 1535-1545 Equation(9)
 
 Authorship and Verification
 ----------------------------

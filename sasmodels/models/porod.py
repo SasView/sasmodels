@@ -4,7 +4,7 @@ from the Porod Law which it models, where the power law exponent is fixed to -4.
 
 .. math:: I(q) = C/q^4 + Background
 
-Where the power law constant $C$ in this case is just the scale factor. 
+Where the power law constant $C$ in this case is just the scale factor.
 
 The Porod law, similar to the Guinier model, is a broadly applicable model to a
 very restricted portion of the data. While the Guinier model applies to any
@@ -55,15 +55,15 @@ with complementary techniques such as BET.
       that is chosen. This is because numerical integration using a finite
       number of points cannot properly capture the exact area under the data
       across these very sharp dips.
-      
+
     * Ironically, large resolution smearing, and/or polydispersity smearing,
       will make the value obtained much more consistant and reliable. Thus the
       problem is less severe for typical real data than for simulated data that
       does not simulate any resolution smearing.
 
     * If in any doubt, using several values of $q_{min}$ in the fitting, and
-      comparing with the value obtained in a different manner, is highly advisable.
-      One such method uses the Porod plot ($I(q)* q^4$ vs. $q^4$).
+      comparing with the value obtained in a different manner, is highly
+      advisable. One such method uses the Porod plot ($I(q)* q^4$ vs. $q^4$).
       Fitting the highest $q$ (strictly speaking $q^4$) data to a straight line
       using as much of the high $q$ as fits well to a straight line, yields a
       slope which is the flat background and an intercept which is the Porod
@@ -77,8 +77,9 @@ where the q vector is defined as
 References
 ----------
 
-#.  G Porod. *Kolloid Zeit*. 124 (1951) 83
-#.  L A Feigin, D I Svergun, G W Taylor. *Structure Analysis by Small-Angle X-ray and Neutron Scattering*. Springer. (1987)
+#. G Porod. *Kolloid Zeit*. 124 (1951) 83
+#. L A Feigin, D I Svergun, G W Taylor. *Structure Analysis by Small-Angle
+   X-ray and Neutron Scattering*. Springer. (1987)
 
 Authorship and Verification
 ----------------------------

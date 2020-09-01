@@ -704,37 +704,6 @@ def make_data(opts):
         index = slice(None, None)
     return data, index
 
-DTYPE_MAP = {
-    'half': '16',
-    'fast': 'fast',
-    'single': '32',
-    'double': '64',
-    'quad': '128',
-    'f16': '16',
-    'f32': '32',
-    'f64': '64',
-    'float16': '16',
-    'float32': '32',
-    'float64': '64',
-    'float128': '128',
-    'longdouble': '128',
-}
-def eval_opencl(model_info, data, dtype='single', cutoff=0.):
-    # type: (ModelInfo, Data, str, float) -> Calculator
-    """
-    Return a model calculator using the OpenCL calculation engine.
-    """
-
-def eval_ctypes(model_info, data, dtype='double', cutoff=0.):
-    # type: (ModelInfo, Data, str, float) -> Calculator
-    """
-    Return a model calculator using the DLL calculation engine.
-    """
-    model = core.build_model(model_info, dtype=dtype, platform="dll")
-    calculator = DirectModel(data, model, cutoff=cutoff)
-    calculator.engine = "OMP%s"%DTYPE_MAP[str(model.dtype)]
-    return calculator
-
 def make_engine(model_info, data, dtype, cutoff, ngauss=0):
     # type: (ModelInfo, Data, str, float, int) -> Calculator
     """
@@ -791,8 +760,8 @@ def compare(opts, limits=None, maxdim=None):
     for k in range(opts['sets']):
         if k > 0:
             # print a separate seed for each dataset for better reproducibility
-            new_seed = np.random.randint(1000000)
-            print("=== Set %d uses -random=%i ==="%(k+1, new_seed))
+            new_seed = np.random.randint(1000000)  # type: int
+            print("=== Set %d uses -random=%d ===" % (k+1, new_seed))
             np.random.seed(new_seed)
         opts['pars'] = parse_pars(opts, maxdim=maxdim)
         if opts['pars'] is None:
@@ -1184,7 +1153,7 @@ def parse_opts(argv):
         return None
 
     # Check that a model was given on the command line
-    if len(positional_args) == 0:
+    if not positional_args:
         print("usage: ./sascomp [-?] [-models] model")
         return None
 
@@ -1550,10 +1519,10 @@ def parse_pars(opts, maxdim=None):
     # Hack to load user-defined distributions; run through all parameters
     # and make sure any pd_type parameter is a defined distribution.
     if (any(p.endswith('pd_type') and v not in weights.DISTRIBUTIONS
-            for p, v in pars.items()) or
-        any(p.endswith('pd_type') and v not in weights.DISTRIBUTIONS
-            for p, v in pars2.items())):
-       weights.load_weights()
+            for p, v in pars.items())
+            or any(p.endswith('pd_type') and v not in weights.DISTRIBUTIONS
+                   for p, v in pars2.items())):
+        weights.load_weights()
 
     if opts['show_pars']:
         if model_info.name != model_info2.name or pars != pars2:

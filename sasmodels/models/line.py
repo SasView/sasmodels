@@ -11,7 +11,8 @@ The scattering intensity $I(q)$ is calculated as
     I(q) = \text{scale} (A + B \cdot q) + \text{background}
 
 .. note::
-    For 2D plots intensity has different definition than other shape independent models
+    For 2D plots intensity has different definition than other shape
+    independent models
 
 .. math::
 

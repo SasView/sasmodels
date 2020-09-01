@@ -28,9 +28,9 @@ where $\delta_T$ is *length_tail*, $\delta_H$ is *length_head*,
 $\Delta\rho_H$ is the head contrast (*sld_head* $-$ *sld_solvent*),
 and $\Delta\rho_T$ is tail contrast (*sld* $-$ *sld_solvent*).
 
-The total thickness of the lamellar sheet is $\delta_H + \delta_T + \delta_T + \delta_H$.
-Note that in a non aqueous solvent the chemical "head" group may be the
-"Tail region" and vice-versa.
+The total thickness of the lamellar sheet is
+a_H + \delta_T + \delta_T + \delta_H$. Note that in a non aqueous solvent
+the chemical "head" group may be the "Tail region" and vice-versa.
 
 The 2D scattering intensity is calculated in the same way as 1D, where
 the $q$ vector is defined as
@@ -41,8 +41,9 @@ the $q$ vector is defined as
 References
 ----------
 
-#.  F Nallet, R Laversanne, and D Roux, *J. Phys. II France*, 3, (1993) 487-502
-#.  J Berghausen, J Zipfel, P Lindner, W Richtering, *J. Phys. Chem. B*, 105, (2001) 11081-11088
+#. F Nallet, R Laversanne, and D Roux, *J. Phys. II France*, 3, (1993) 487-502
+#. J Berghausen, J Zipfel, P Lindner, W Richtering,
+   *J. Phys. Chem. B*, 105, (2001) 11081-11088
 
 Authorship and Verification
 ----------------------------

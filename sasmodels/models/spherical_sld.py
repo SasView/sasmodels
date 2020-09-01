@@ -54,28 +54,37 @@ so that individual terms can be calculated as follows:
 
 .. math::
 
-    f_\text{core} &= 4 \pi \int_{0}^{r_\text{core}} \rho_\text{core}
-    \frac{\sin(qr)} {qr} r^2 dr =
-    3 \rho_\text{core} V(r_\text{core})
-    \Big[ \frac{\sin(qr_\text{core}) - qr_\text{core} \cos(qr_\text{core})}
-    {qr_\text{core}^3} \Big] \\
-    f_{\text{inter}_i} &= 4 \pi \int_{\Delta t_{ \text{inter}_i } }
-    \rho_{ \text{inter}_i } \frac{\sin(qr)} {qr} r^2 dr \\
-    f_{\text{shell}_i} &= 4 \pi \int_{\Delta t_{ \text{inter}_i } }
-    \rho_{ \text{flat}_i } \frac{\sin(qr)} {qr} r^2 dr =
-    3 \rho_{ \text{flat}_i } V ( r_{ \text{inter}_i } +
-    \Delta t_{ \text{inter}_i } )
-    \Big[ \frac{\sin(qr_{\text{inter}_i} + \Delta t_{ \text{inter}_i } )
-    - q (r_{\text{inter}_i} + \Delta t_{ \text{inter}_i })
-    \cos(q( r_{\text{inter}_i} + \Delta t_{ \text{inter}_i } ) ) }
-    {q ( r_{\text{inter}_i} + \Delta t_{ \text{inter}_i } )^3 }  \Big]
-    -3 \rho_{ \text{flat}_i } V(r_{ \text{inter}_i })
-    \Big[ \frac{\sin(qr_{\text{inter}_i}) - qr_{\text{flat}_i}
-    \cos(qr_{\text{inter}_i}) } {qr_{\text{inter}_i}^3} \Big] \\
-    f_\text{solvent} &= 4 \pi \int_{r_N}^{\infty} \rho_\text{solvent}
-    \frac{\sin(qr)} {qr} r^2 dr =
-    3 \rho_\text{solvent} V(r_N)
-    \Big[ \frac{\sin(qr_N) - qr_N \cos(qr_N)} {qr_N^3} \Big]
+    f_\text{core}
+        &= 4 \pi \int_{0}^{r_\text{core}} \rho_\text{core}
+            \frac{\sin(qr)} {qr} r^2 dr \\
+        &= 3 \rho_\text{core} V(r_\text{core})
+          \left[ \frac{\sin(qr_\text{core}) - qr_\text{core} \cos(qr_\text{core})}
+                {qr_\text{core}^3} \right] \\
+    f_{\text{inter}_i}
+        &= 4 \pi \int_{\Delta t_{ \text{inter}_i } } \rho_{ \text{inter}_i }
+            \frac{\sin(qr)} {qr} r^2 dr \\
+    f_{\text{shell}_i}
+        &= 4 \pi \int_{\Delta t_{ \text{inter}_i } } \rho_{ \text{flat}_i }
+            \frac{\sin(qr)} {qr} r^2 dr \\
+        &= 3 \rho_{\text{flat}_i} V (r_{\text{inter}_i}
+                                       + \Delta t_{\text{inter}_i})
+            \left[
+                \frac{\sin(qr_{\text{inter}_i} + \Delta t_{\text{inter}_i})
+                    - q (r_{\text{inter}_i} + \Delta t_{ \text{inter}_i })
+                    \cos(q(r_{\text{inter}_i} + \Delta t_{\text{inter}_i}))}
+                {q ( r_{\text{inter}_i} + \Delta t_{\text{inter}_i} )^3 }
+            \right] \\
+        &\quad {} - 3 \rho_{ \text{flat}_i } V (r_{\text{inter}_i})
+            \left[
+                \frac{\sin(qr_{\text{inter}_i})
+                    - qr_{\text{flat}_i} \cos(qr_{\text{inter}_i})}
+                {qr_{\text{inter}_i}^3}
+            \right] \\
+    f_\text{solvent}
+        &= 4 \pi \int_{r_N}^{\infty} \rho_\text{solvent}
+            \frac{\sin(qr)} {qr} r^2 dr \\
+        &= 3 \rho_\text{solvent} V(r_N)
+            \left[ \frac{\sin(qr_N) - qr_N \cos(qr_N)} {qr_N^3} \right]
 
 Here we assumed that the SLDs of the core and solvent are constant in $r$.
 The SLD at the interface between shells, $\rho_{\text {inter}_i}$
@@ -85,32 +94,40 @@ Exp:
 
 .. math::
 
-    \rho_{{inter}_i} (r) &= \begin{cases}
-    B \exp\Big( \frac {\pm A(r - r_{\text{flat}_i})}
-    {\Delta t_{ \text{inter}_i }} \Big) +C  & \mbox{for } A \neq 0 \\
-    B \Big( \frac {(r - r_{\text{flat}_i})}
-    {\Delta t_{ \text{inter}_i }} \Big) +C  & \mbox{for } A = 0 \\
+    \rho_{{inter}_i}(r) &=
+    \begin{cases}
+        B\, \exp\left(
+            \frac{\pm A(r - r_{\text{flat}_i})}{\Delta t_{\text{inter}_i}}
+        \right) + C  & \mbox{for } A \neq 0 \\
+        B\, \left(
+            \frac{(r - r_{\text{flat}_i})}{\Delta t_{\text{inter}_i}}
+        \right) + C  & \mbox{for } A = 0 \\
     \end{cases}
 
 Power-Law:
 
 .. math::
 
-    \rho_{{inter}_i} (r) &= \begin{cases}
-    \pm B \Big( \frac {(r - r_{\text{flat}_i} )} {\Delta t_{ \text{inter}_i }}
-    \Big) ^A  +C  & \mbox{for } A \neq 0 \\
-    \rho_{\text{flat}_{i+1}}  & \mbox{for } A = 0 \\
+    \rho_{{inter}_i}(r) &=
+    \begin{cases}
+        \pm B\, \left(
+            \frac{(r - r_{\text{flat}_i})}{\Delta t_{ \text{inter}_i }}
+            \right) ^A  + C  & \mbox{for } A \neq 0 \\
+        \rho_{\text{flat}_{i+1}}  & \mbox{for } A = 0 \\
     \end{cases}
 
 Erf:
 
 .. math::
 
-    \rho_{{inter}_i} (r) = \begin{cases}
-    B \text{erf} \Big( \frac { A(r - r_{\text{flat}_i})}
-    {\sqrt{2} \Delta t_{ \text{inter}_i }} \Big) +C  & \mbox{for } A \neq 0 \\
-    B \Big( \frac {(r - r_{\text{flat}_i} )} {\Delta t_{ \text{inter}_i }}
-    \Big)  +C  & \mbox{for } A = 0 \\
+    \rho_{{inter}_i}(r) =
+    \begin{cases}
+        B\, \text{erf} \left(
+            \frac{A(r - r_{\text{flat}_i})}{\sqrt{2} \Delta t_{\text{inter}_i}}
+            \right) + C  & \mbox{for } A \neq 0 \\
+        B\, \left(
+            \frac{(r - r_{\text{flat}_i})}{\Delta t_{\text{inter}_i}}
+            \right)  +C  & \mbox{for } A = 0 \\
     \end{cases}
 
 The functions are normalized so that they vary between 0 and 1, and they are
@@ -122,29 +139,37 @@ interface, we can find its contribution to the form factor $P(q)$
 
 .. math::
 
-    f_{\text{inter}_i} &= 4 \pi \int_{\Delta t_{ \text{inter}_i } }
-    \rho_{ \text{inter}_i } \frac{\sin(qr)} {qr} r^2 dr =
-    4 \pi \sum_{j=1}^{n_\text{steps}}
-    \int_{r_j}^{r_{j+1}} \rho_{ \text{inter}_i } (r_j)
-    \frac{\sin(qr)} {qr} r^2 dr \\
-    \approx 4 \pi \sum_{j=1}^{n_\text{steps}} \Big[
-    3 ( \rho_{ \text{inter}_i } ( r_{j+1} ) - \rho_{ \text{inter}_i }
-    ( r_{j} ) V (r_j)
-    \Big[ \frac {r_j^2 \beta_\text{out}^2 \sin(\beta_\text{out})
-    - (\beta_\text{out}^2-2) \cos(\beta_\text{out}) }
-    {\beta_\text{out}^4 } \Big] \\
-    {} - 3 ( \rho_{ \text{inter}_i } ( r_{j+1} ) - \rho_{ \text{inter}_i }
-    ( r_{j} ) V ( r_{j-1} )
-    \Big[ \frac {r_{j-1}^2 \sin(\beta_\text{in})
-    - (\beta_\text{in}^2-2) \cos(\beta_\text{in}) }
-    {\beta_\text{in}^4 } \Big] \\
-    {} + 3 \rho_{ \text{inter}_i } ( r_{j+1} )  V ( r_j )
-    \Big[ \frac {\sin(\beta_\text{out}) - \cos(\beta_\text{out}) }
-    {\beta_\text{out}^4 } \Big]
-    - 3 \rho_{ \text{inter}_i } ( r_{j} )  V ( r_j )
-    \Big[ \frac {\sin(\beta_\text{in}) - \cos(\beta_\text{in}) }
-    {\beta_\text{in}^4 } \Big]
-    \Big]
+    f_{\text{inter}_i}
+        &= 4 \pi \int_{\Delta t_{\text{inter}_i} } \rho_{\text{inter}_i}
+            \frac{\sin(qr)}{qr} r^2 dr \\
+        &= 4 \pi \sum_{j=1}^{n_\text{steps}}
+            \int_{r_j}^{r_{j+1}} \rho_{\text{inter}_i}(r_j)
+                \frac{\sin(qr)}{qr} r^2 dr \\
+        &\approx 4 \pi \sum_{j=1}^{n_\text{steps}}
+        \Biggl[
+             3 (\rho_{\text{inter}_i}(r_{j+1}) - \rho_{\text{inter}_i}(r_{j})) V (r_j)
+            \left[
+                \frac{r_j^2 \beta_\text{out}^2 \sin(\beta_\text{out})
+                    - (\beta_\text{out}^2-2) \cos(\beta_\text{out})}
+                {\beta_\text{out}^4}
+            \right] \\
+        &\quad {} - 3 (\rho_{\text{inter}_i}(r_{j+1}) - \rho_{\text{inter}_i}(r_{j})) V(r_{j-1})
+            \left[
+                \frac{r_{j-1}^2 \sin(\beta_\text{in})
+                    - (\beta_\text{in}^2-2) \cos(\beta_\text{in})}
+                {\beta_\text{in}^4}
+            \right] \\
+        &\quad {} + 3 \rho_{\text{inter}_i}(r_{j+1})  V(r_j)
+            \left[
+                \frac{\sin(\beta_\text{out}) - \cos(\beta_\text{out})}
+                {\beta_\text{out}^4}
+            \right] \\
+        &\quad {} - 3 \rho_{\text{inter}_i}(r_{j})  V(r_j)
+            \left[
+                \frac{\sin(\beta_\text{in}) - \cos(\beta_\text{in})}
+                {\beta_\text{in}^4}
+            \right]
+        \Biggr]
 
 where
 
@@ -152,10 +177,12 @@ where
     :nowrap:
 
     \begin{align*}
-    V(a) &= \frac {4\pi}{3}a^3 && \\
-    a_\text{in} \sim \frac{r_j}{r_{j+1} -r_j} \text{, } & a_\text{out}
-    \sim \frac{r_{j+1}}{r_{j+1} -r_j} \\
-    \beta_\text{in} &= qr_j \text{, } & \beta_\text{out} &= qr_{j+1}
+    V(a) &= \frac {4\pi}{3}a^3
+        & {} & {} \\
+    a_\text{in} &\sim \frac{r_j}{r_{j+1} -r_j}
+        & a_\text{out} &\sim \frac{r_{j+1}}{r_{j+1} -r_j} \\
+    \beta_\text{in} &= qr_j
+        & \beta_\text{out} &= qr_{j+1}
     \end{align*}
 
 We assume $\rho_{\text{inter}_j} (r)$ is approximately linear

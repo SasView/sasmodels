@@ -16,11 +16,11 @@ to *a* will generate a distribution of cubes of different sizes).
 Definition
 ----------
 
-The 1D scattering intensity for this model was calculated by Mittelbach and
-Porod (Mittelbach, 1961), but the implementation here is closer to the
-equations given by Nayuk and Huber (Nayuk, 2012).
+The 1D scattering intensity for this model was calculated by (Mittelbach and
+Porod, 1961 [#Mittelbach1961]_), but the implementation here is closer to
+the equations given by (Nayuk and Huber, 2012 [#Nayuk2012]_).
 Note also that the angle definitions used in the code and the present
-documentation correspond to those used in (Nayuk, 2012) (see Fig. 1 of
+documentation correspond to those used in Nayuk and Huber (see Fig. 1 of
 that reference), with $\theta$ corresponding to $\alpha$ in that paper,
 and not to the usual convention used for example in the
 :ref:`parallelepiped` model.
@@ -40,7 +40,7 @@ and $\phi$
 
 where $A$, $B$ and $C$ are the sides of the parallelepiped and must fulfill
 $A \le B \le C$, $\theta$ is the angle between the $z$ axis and the
-longest axis of the parallelepiped $C$, and $\phi$ is the angle between the
+$C$ axis of the parallelepiped, and $\phi$ is the angle between the
 scattering vector (lying in the $xy$ plane) and the $y$ axis.
 
 The normalized form factor in 1D is obtained averaging over all possible
@@ -63,26 +63,27 @@ units) *scale* represents the volume fraction (which is unitless).
 
 For 2d data the orientation of the particle is required, described using
 angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, for further details
-of the calculation and angular dispersions see :ref:`orientation` .
+of the calculation and angular dispersions see :ref:`orientation`.
 The angle $\Psi$ is the rotational angle around the long *C* axis. For example,
 $\Psi = 0$ when the *B* axis is parallel to the *x*-axis of the detector.
 
-For 2d, constraints must be applied during fitting to ensure that the inequality
-$A < B < C$ is not violated, and hence the correct definition of angles is preserved. The calculation will not report an error,
-but the results may be not correct.
+For 2d, constraints must be applied during fitting to ensure that the
+inequality $A < B < C$ is not violated, and hence the correct definition of
+angles is preserved. The calculation will not report an error, but the
+results may be not correct.
 
 .. figure:: img/parallelepiped_angle_definition.png
 
-    Definition of the angles for oriented core-shell parallelepipeds.
-    Note that rotation $\theta$, initially in the $xz$ plane, is carried out first, then
-    rotation $\phi$ about the $z$ axis, finally rotation $\Psi$ is now around the axis of the cylinder.
-    The neutron or X-ray beam is along the $z$ axis.
+    Definition of the angles for oriented core-shell parallelepipeds. Note
+    that rotation $\theta$, initially in the $xz$ plane, is carried out
+    first, then rotation $\phi$ about the $z$ axis, finally rotation $\Psi$
+    is now around the axis of the cylinder. The neutron or X-ray beam is
+    along the $z$ axis.
 
 .. figure:: img/parallelepiped_angle_projection.png
 
     Examples of the angles for oriented rectangular prisms against the
     detector plane.
-
 
 
 Validation
@@ -95,9 +96,12 @@ to the output of the existing :ref:`parallelepiped` model.
 References
 ----------
 
-#.  P Mittelbach and G Porod, *Acta Physica Austriaca*, 14 (1961) 185-211
-#.  R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
-#.  L. Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
+See also Onsager [#Onsager1949]_.
+
+.. [#Mittelbach1961] P Mittelbach and G Porod, *Acta Physica Austriaca*,
+   14 (1961) 185-211
+.. [#Nayuk2012] R Nayuk and K Huber, *Z. Phys. Chem.*, 226 (2012) 837-854
+.. [#Onsager1949] L Onsager, *Ann. New York Acad. Sci.*, 51 (1949) 627-659
 
 Authorship and Verification
 ----------------------------

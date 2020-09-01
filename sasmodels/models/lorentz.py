@@ -19,7 +19,8 @@ where the $q$ vector is defined as
 References
 ----------
 
-#.  L.S. Qrnstein and F. Zernike, *Proc. Acad. Sci. Amsterdam* 17, 793 (1914), and *Z. Phys.* 19, 134 (1918), and 27, 761 {1926); referred to as QZ.
+#. L.S. Qrnstein and F. Zernike, *Proc. Acad. Sci. Amsterdam* 17, 793 (1914),
+   and *Z. Phys.* 19, 134 (1918), and 27, 761 {1926); referred to as QZ.
 
 Authorship and Verification
 ----------------------------

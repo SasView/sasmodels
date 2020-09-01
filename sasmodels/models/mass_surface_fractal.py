@@ -21,18 +21,20 @@ Ornstein-Zernicke equation
 
 .. math::
 
-    I(q) = scale \times P(q) + background \\
-    P(q) = \left\{ \left[ 1+(q^2a)\right]^{D_m/2} \times
+    I(q) &= \text{scale} \times P(q) + \text{background} \\
+    P(q) &= \left\{ \left[ 1+(q^2a)\right]^{D_m/2} \times
                    \left[ 1+(q^2b)\right]^{(6-D_s-D_m)/2}
            \right\}^{-1} \\
-    a = R_{g}^2/(3D_m/2) \\
-    b = r_{g}^2/[-3(D_s+D_m-6)/2] \\
-    scale = scale\_factor \times NV^2 (\rho_{particle} - \rho_{solvent})^2
+    a &= R_{g}^2/(3D_m/2) \\
+    b &= r_{g}^2/[-3(D_s+D_m-6)/2] \\
+    \text{scale} &= \text{scale factor}
+        \times NV^2 (\rho_\text{particle} - \rho_\text{solvent})^2
 
 where $R_g$ is the size of the cluster, $r_g$ is the size of the primary
 particle, $D_s$ is the surface fractal dimension, $D_m$ is the mass fractal
-dimension, $\rho_{solvent}$ is the scattering length density of the solvent,
-and $\rho_{particle}$ is the scattering length density of particles.
+dimension, $\rho_\text{solvent}$ is the scattering length density of the
+solvent, and $\rho_\text{particle}$ is the scattering length density of
+particles.
 
 .. note::
 

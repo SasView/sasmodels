@@ -549,7 +549,7 @@ def romberg_slit_1d(q, width, height, form, pars):
     """
     from scipy.integrate import romberg  # type: ignore
 
-    par_set = set([p.name for p in form.info.parameters.call_parameters])
+    par_set = {p.name for p in form.info.parameters.call_parameters}
     if any(k not in par_set for k in pars.keys()):
         extra = set(pars.keys()) - par_set
         raise ValueError("bad parameters: [%s] not in [%s]"
@@ -604,7 +604,7 @@ def romberg_pinhole_1d(q, q_width, form, pars, nsigma=2.5):
     """
     from scipy.integrate import romberg  # type: ignore
 
-    par_set = set([p.name for p in form.info.parameters.call_parameters])
+    par_set = {p.name for p in form.info.parameters.call_parameters}
     if any(k not in par_set for k in pars.keys()):
         extra = set(pars.keys()) - par_set
         raise ValueError("bad parameters: [%s] not in [%s]"
@@ -1107,7 +1107,7 @@ def _eval_demo_1d(resolution, title):
         pars = {'length':210, 'radius':500, 'background': 0}
     elif name == 'teubner_strey':
         pars = {'a2':0.003, 'c1':-1e4, 'c2':1e10, 'background':0.312643}
-    elif name == 'sphere' or name == 'spherepy':
+    elif name in ('sphere', 'spherepy'):
         pars = TEST_PARS_SLIT_SPHERE
     elif name == 'ellipsoid':
         pars = {

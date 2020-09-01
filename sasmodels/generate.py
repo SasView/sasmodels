@@ -708,7 +708,7 @@ def _split_translation(translation):
         # split assignment on first equals
         parts = code.split('=', 1)
         if len(parts) == 1:
-            raise ValueError("translation expected 'var=expr' but got %r", line)
+            raise ValueError("translation expected 'var=expr' but got %r"%line)
         # store parts without assessing whether they are correct
         var, expr = parts
         assignments.append((var.strip(), expr.strip()))
@@ -736,13 +736,13 @@ def _build_translation(model_info, table_id="_v", var_prefix="_var_"):
 
     * *subs* = {name: expr, ...} parameter substitution table for calling
       into the kernel function
-    * *vars* = "#define TRANSLATION_VARS(_v) _var_name = expr ...."
+    * *translation* = "#define TRANSLATION_VARS(_v) _var_name = expr ...."
     * *validity* = "#define VALID(_v) ..."
 
     The returned *subs* is used to generate the substitions for CALL_VOLUME
     etc., parameters, via :func:`_call_pars`.
 
-    The returned *vars* and *validity* macros need to be included inside
+    The returned *translation* and *validity* macros need to be included inside
     the generated model files.  They are the same for all variants (1D, 2D,
     magnetic) so can be defined once along side the parameter table.  Even
     though they are expanded independently in each variant.
@@ -772,15 +772,15 @@ def _build_translation(model_info, table_id="_v", var_prefix="_var_"):
     base_table = model_info.base.kernel_parameters
     call_pars = set(p.id for p in call_table)
     base_pars = set(p.id for p in base_table)
-    vars = set(name for name, expr in assigns
-               if name not in call_pars and name not in base_pars)
+    variables = set(name for name, expr in assigns
+                    if name not in call_pars and name not in base_pars)
 
     # Regular expression substition to tag the variables on each RHS.
     # Don't want to translate all symbols since they include C constants and
     # math functions.
     def id_sub(match_obj):
         name = match_obj.group(0)
-        if name in vars:
+        if name in variables:
             return var_prefix + name
         if name in call_pars:
             return table_id + '.' + name
@@ -793,7 +793,8 @@ def _build_translation(model_info, table_id="_v", var_prefix="_var_"):
     subs.update((name, eq) for name, eq in assigns if name in base_pars)
 
     # Build TRANSLATION_VARS macros assignments to variables.
-    var_values = [(var_prefix+name, eq) for name, eq in assigns if name in vars]
+    var_values = [(var_prefix+name, eq) for name, eq in assigns
+                  if name in variables]
     translation_vars = _build_translation_vars(table_id, var_values)
 
     # Build VALID macro, with expressions using caller parameters.
@@ -801,7 +802,7 @@ def _build_translation(model_info, table_id="_v", var_prefix="_var_"):
 
     return subs, translation_vars, validity
 
-def _build_translation_vars(table_id, vars):
+def _build_translation_vars(table_id, variables):
     r"""
     Build TRANSLATION_VARS macro for C which builds intermediate values.
 
@@ -812,10 +813,10 @@ def _build_translation_vars(table_id, vars):
         #define TRANSLATION_VARS(_v) \
          const double _temporary_Re = cbrt(_v.volume/_v.eccentricity/M_4PI_3)
     """
-    if vars:
+    if variables:
         # Leave comma off def since last def doesn't have comma
         defs = ["const double %s = %s" % (name, eq)
-                for name, eq in vars]
+                for name, eq in variables]
         return ("#define TRANSLATION_VARS(%s) \\\n  "%table_id
                 + "; \\\n  ".join(defs))
     else:
@@ -986,7 +987,7 @@ def make_source(model_info):
         raise ValueError("Unexpected function I%s for unoriented shape"%xy_mode)
     elif base_table.orientation_parameters and xy_mode not in ('qac', 'qabc'):
         if xy_mode == 'qxy':
-            logger.warn("oriented shapes should define Iqac or Iqabc")
+            logger.warning("oriented shapes should define Iqac or Iqabc")
         else:
             raise ValueError("Expected Iqac or Iqabc for oriented shape")
 

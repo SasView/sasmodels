@@ -58,7 +58,7 @@ the ellipsoid is defined using two angles $\theta$ and $\phi$ as for the
 For the ellipsoid, $\theta$ is the angle between the rotational axis
 and the $z$ -axis in the $xz$ plane followed by a rotation by $\phi$
 in the $xy$ plane, for further details of the calculation and angular
-dispersions see :ref:`orientation` .
+dispersions see :ref:`orientation`.
 
 NB: The 2nd virial coefficient of the solid ellipsoid is calculated based
 on the $R_p$ and $R_e$ values, and used as the effective radius for
@@ -105,8 +105,9 @@ with polar radius equal to length and equatorial radius equal to radius.
 References
 ----------
 
-#.  L A Feigin and D I Svergun. *Structure Analysis by Small-Angle X-Ray and Neutron Scattering*, Plenum Press, New York, 1987
-#.  A. Isihara. *J. Chem. Phys.*, 18 (1950) 1446-1449
+#. L. A. Feigin and D. I. Svergun. *Structure Analysis by Small-Angle X-Ray
+   and Neutron Scattering*, Plenum Press, New York, 1987
+#. A. Isihara. *J. Chem. Phys.*, 18 (1950) 1446-1449
 
 Authorship and Verification
 ----------------------------
@@ -140,20 +141,17 @@ P(q.alpha)= scale*f(q)^2 + background, where f(q)= 3*(sld
 """
 category = "shape:ellipsoid"
 
-#             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
-               "Ellipsoid scattering length density"],
-              ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "sld",
-               "Solvent scattering length density"],
-              ["radius_polar", "Ang", 20, [0, inf], "volume",
-               "Polar radius"],
-              ["radius_equatorial", "Ang", 400, [0, inf], "volume",
-               "Equatorial radius"],
-              ["theta", "degrees", 60, [-360, 360], "orientation",
-               "ellipsoid axis to beam angle"],
-              ["phi", "degrees", 60, [-360, 360], "orientation",
-               "rotation about beam"],
-             ]
+# pylint: disable=bad-whitespace, line-too-long
+#   ["name", "units", default, [lower, upper], "type","description"],
+parameters = [
+    ["sld",         "1e-6/Ang^2",   4, [-inf, inf], "sld",         "Ellipsoid scattering length density"],
+    ["sld_solvent", "1e-6/Ang^2",   1, [-inf, inf], "sld",         "Solvent scattering length density"],
+    ["radius_polar",       "Ang",  20, [0, inf],    "volume",      "Polar radius"],
+    ["radius_equatorial",  "Ang", 400, [0, inf],    "volume",      "Equatorial radius"],
+    ["theta",          "degrees",  60, [-360, 360], "orientation", "ellipsoid axis to beam angle"],
+    ["phi",            "degrees",  60, [-360, 360], "orientation", "rotation about beam"],
+    ]
+# pylint: enable=bad-whitespace, line-too-long
 
 
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "ellipsoid.c"]
@@ -180,44 +178,53 @@ qx = q*cos(pi/6.0)
 qy = q*sin(pi/6.0)
 tests = [
     [{}, 0.05, 54.8525847025],
-    [{'theta':80., 'phi':10.}, (qx, qy), 1.74134670026],
+    [{'theta': 80., 'phi': 10.}, (qx, qy), 1.74134670026],
 
-    #Test beta and the effective radius with the equivelent sphere (May 15, 2019)
-    #Yun's matlab report [0.006,0.05,0.1], [330.0, 10.976, 1.369]
-    #The values in the code here are the copy of the calcualted results from SASVieww (May 15, 2019)
+    # Test beta and the effective radius with the equivelent sphere (May 15, 2019)
+    # Yun's matlab report [0.006,0.05,0.1], [330.0, 10.976, 1.369]
+    # The values in the code here are calcualted results from SASVieww (May 15, 2019)
     [{"@S": "hardsphere",
-     "scale": 1., "background": 0.,"volfraction":0.2,
-     "structure_factor_mode": 1,  # beta approx
-     "radius_effective_mode": 2   # Reff "equivelent sphere"
-     }, [0.006,0.05,0.1], [330.0082676127404, 10.96932155837644, 1.35347369429977]],
+      "scale": 1., "background": 0., "volfraction": 0.2,
+      "structure_factor_mode": 1,  # beta approx
+      "radius_effective_mode": 2   # Reff "equivelent sphere"
+     },
+     [0.006, 0.05, 0.1],
+     [330.0082676127404, 10.96932155837644, 1.35347369429977]],
 
-    #Test beta and the effective radius with the minor radius (May 15, 2019)
-    #Yun's matlab report [0.006,0.05,0.1], [273.67, 10.942, 1.3683]
-    #The values in the code here are the copy of the calcualted results from SASVieww (May 15, 2019)
+    # Test beta and the effective radius with the minor radius (May 15, 2019)
+    # Yun's matlab report [0.006,0.05,0.1], [273.67, 10.942, 1.3683]
+    # The values in the code here are calcualted results from SASVieww (May 15, 2019)
     [{"@S": "hardsphere",
-     "scale": 1., "background": 0.,"volfraction":0.2,
-     "structure_factor_mode": 1,  # beta approx
-     "radius_effective_mode": 3   # Reff "equivelent sphere"
-     }, [0.006,0.05,0.1], [273.64522316236287, 10.93682961898512, 1.352864896244188]],
+      "scale": 1., "background": 0., "volfraction": 0.2,
+      "structure_factor_mode": 1,  # beta approx
+      "radius_effective_mode": 3   # Reff "equivelent sphere"
+     },
+     [0.006, 0.05, 0.1],
+     [273.64522316236287, 10.93682961898512, 1.352864896244188]],
 
-    #Test beta and the effective radius with the major radius (May 15, 2019)
-    #Yun's matlab report [0.006,0.05,0.1], [1062.37, 10.977, 1.369]
-    #The values in the code here are the copy of the calcualted results from SASVieww (May 15, 2019)
+    # Test beta and the effective radius with the major radius (May 15, 2019)
+    # Yun's matlab report [0.006,0.05,0.1], [1062.37, 10.977, 1.369]
+    # The values in the code here are calcualted results from SASVieww (May 15, 2019)
     [{"@S": "hardsphere",
-     "scale": 1., "background": 0.,"volfraction":0.2,
-     "structure_factor_mode": 1,  # beta approx
-     "radius_effective_mode": 4   # Reff "equivelent sphere"
-     }, [0.006,0.05,0.1], [1062.3690121068357, 10.970147034298845, 1.3534794742102454]],
+      "scale": 1., "background": 0., "volfraction": 0.2,
+      "structure_factor_mode": 1,  # beta approx
+      "radius_effective_mode": 4   # Reff "equivelent sphere"
+     },
+     [0.006, 0.05, 0.1],
+     [1062.3690121068357, 10.970147034298845, 1.3534794742102454]],
 
-    #Test beta and the effective radius with the average curvature (May 15, 2019)
-    #Effective radius is taken from the SASView calcuation.
+    # Test beta and the effective radius with the average curvature (May 15, 2019)
+    # Effective radius is taken from the SASView calcuation.
     # With defaul values, the effective radius is 270.745.
-    # The calculated values using Yun's Matlab code are [0.006,0.05,0.1], [529.03,419.22, 10.977, 1.369]
-    #The values in the code here are the copy of the calcualted results from SASVieww (May 15, 2019)
+    # The calculated values using Yun's Matlab code are
+    #     [0.006,0.05,0.1], [529.03,419.22, 10.977, 1.369]
+    # The values in the code here are calcualted results from SASVieww (May 15, 2019)
     [{"@S": "hardsphere",
-     "scale": 1., "background": 0.,"volfraction":0.2,
-     "structure_factor_mode": 1,  # beta approx
-     "radius_effective_mode": 1   # Reff "equivelent sphere"
-     }, [0.006,0.01, 0.05,0.1], [529.0109355849872,419.2280055002956, 10.970118278295908, 1.3534762023877278]]
+      "scale": 1., "background": 0., "volfraction": 0.2,
+      "structure_factor_mode": 1,  # beta approx
+      "radius_effective_mode": 1   # Reff "equivelent sphere"
+     },
+     [0.006, 0.01, 0.05, 0.1],
+     [529.0109355849872, 419.2280055002956, 10.970118278295908, 1.3534762023877278]]
 ]
 del qx, qy  # not necessary to delete, but cleaner

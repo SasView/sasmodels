@@ -8,12 +8,13 @@ in terms of "stickiness" as defined below.
 
 The perturbation parameter (perturb), $\tau$, should be fixed between 0.01
 and 0.1 and the "stickiness", $\epsilon$, allowed to vary to adjust the
-interaction strength. The "stickiness" is defined in the equation below and is
-a function of both the perturbation parameter and the interaction strength.
-$\epsilon$ and $\tau$ are defined in terms of the hard sphere diameter $(\sigma = 2 R)$,
-the width of the square well, $\Delta$ (having the same units as $R$\ ),
-and the depth of the well, $U_o$, in units of $kT$. From the definition, it
-is clear that smaller $\epsilon$ means a stronger attraction.
+interaction strength. The "stickiness" is defined in the equation below and
+is a function of both the perturbation parameter and the interaction
+strength. $\epsilon$ and $\tau$ are defined in terms of the hard sphere
+diameter $(\sigma = 2 R)$, the width of the square well, $\Delta$ (having the
+same units as $R$\ ), and the depth of the well, $U_o$, in units of $kT$.
+From the definition, it is clear that smaller $\epsilon$ means a stronger
+attraction.
 
 .. math::
 
@@ -71,11 +72,12 @@ as 1D, where the $q$ vector is defined as
 References
 ----------
 
-#.  S V G Menon, C Manohar, and K S Rao, *J. Chem. Phys.*, 95(12) (1991) 9186-9190
+#. S V G Menon, C Manohar, and K S Rao,
+   *J. Chem. Phys.*, 95(12) (1991) 9186-9190
 
-#.  R J Baxter, *J. Chem. Phys.*, 49 (1968), 2770-2774
+#. R J Baxter, *J. Chem. Phys.*, 49 (1968), 2770-2774
 
-#.  M Kotlarchyk and S-H Chen, *J. Chem. Phys.*, 79 (1983) 2461-2469
+#. M Kotlarchyk and S-H Chen, *J. Chem. Phys.*, 79 (1983) 2461-2469
 
 Authorship and Verification
 ----------------------------

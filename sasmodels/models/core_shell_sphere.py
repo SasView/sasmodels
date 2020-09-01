@@ -47,7 +47,8 @@ comparison of the output of our model and the output of the NIST software.
 References
 ----------
 
-#.  A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*, John Wiley and Sons, New York, (1955)
+#. A Guinier and G Fournet, *Small-Angle Scattering of X-Rays*,
+   John Wiley and Sons, New York, (1955)
 
 Authorship and Verification
 ----------------------------

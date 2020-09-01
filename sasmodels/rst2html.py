@@ -172,7 +172,7 @@ def view_html_wxapp(html, url=""):
     """HTML viewer app in wx"""
     import wx  # type: ignore
     app = wx.App()
-    frame = wxview(html, url)
+    frame = wxview(html, url)  # pylint: disable=unused-variable
     app.MainLoop()
 
 def view_url_wxapp(url):
@@ -210,7 +210,7 @@ def view_html_qtapp(html, url=""):
     except ImportError:
         from PyQt4.QtGui import QApplication
     app = QApplication([])
-    frame = qtview(html, url)
+    frame = qtview(html, url)  # pylint: disable=unused-variable
     sys.exit(app.exec_())
 
 def view_url_qtapp(url):
@@ -244,11 +244,11 @@ def can_use_qt():
     Checks first in PyQt5 then in PyQt4
     """
     try:
-        from PyQt5.QtWebKitWidgets import QWebView
+        from PyQt5.QtWebKitWidgets import QWebView  # pylint: disable=unused-import
         return True
     except ImportError:
         try:
-            from PyQt4.QtWebKit import QWebView
+            from PyQt4.QtWebKit import QWebView  # pylint: disable=unused-import
             return True
         except ImportError:
             return False

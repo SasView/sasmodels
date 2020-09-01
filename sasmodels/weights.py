@@ -309,7 +309,7 @@ def plot_weights(model_info, mesh):
         labels = [p.name for p in model_info.parameters.call_parameters]
         #pylab.interactive(True)
         pylab.figure()
-        for (v, x, w), s in zip(mesh, labels):
+        for (_, x, w), s in zip(mesh, labels):
             if len(x) > 1:
                 pylab.plot(x, w, '-o', label=s)
         pylab.grid(True)

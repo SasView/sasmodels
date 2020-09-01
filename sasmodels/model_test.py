@@ -354,6 +354,7 @@ def _hide_model_case_from_nose():
             else:
                 self._failures.append('wrong number or results for %s => %s'
                                       % (str(user_pars), str(test[2:])))
+                return None
 
         def _check_scalar(self, target, actual, name):
             if not is_near(target, actual, 5):

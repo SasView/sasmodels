@@ -87,7 +87,8 @@ of the $q$ vector which is defined as
 Reference
 ---------
 
-#.  M Bergstrom, J S Pedersen, P Schurtenberger, S U Egelhaaf, *J. Phys. Chem. B*, 103 (1999) 9888-9897
+#. M Bergstrom, J S Pedersen, P Schurtenberger, S U Egelhaaf,
+   *J. Phys. Chem. B*, 103 (1999) 9888-9897
 
 Authorship and Verification
 ----------------------------

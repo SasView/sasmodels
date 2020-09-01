@@ -30,8 +30,11 @@ where the $q$ vector is defined as
 References
 ----------
 
-#.  P Debye, H R Anderson, H Brumberger, *Scattering by an Inhomogeneous Solid. II. The Correlation Function and its Application*, *J. Appl. Phys.*, 28(6) (1957) 679
-#.  P Debye, A M Bueche, *Scattering by an Inhomogeneous Solid*, *J. Appl. Phys.*, 20 (1949) 518
+#. P Debye, H R Anderson, H Brumberger, *Scattering by an Inhomogeneous Solid.
+   II. The Correlation Function and its Application*,
+   *J. Appl. Phys.*, 28(6) (1957) 679
+#. P Debye, A M Bueche, *Scattering by an Inhomogeneous Solid*,
+   *J. Appl. Phys.*, 20 (1949) 518
 
 Source
 ------
@@ -41,8 +44,8 @@ Source
 Authorship and Verification
 ----------------------------
 
-* **Author:** 
-* **Last Modified by:** 
+* **Author:**
+* **Last Modified by:**
 * **Last Reviewed by:** Steve King & Peter Parker **Date:** September 09, 2013
 * **Source added by :** Steve King **Date:** March 25, 2019
 """
@@ -61,9 +64,10 @@ L: the correlation length
 """
 category = "shape-independent"
 
-#             ["name", "units", default, [lower, upper], "type", "description"],
-parameters = [["cor_length", "Ang", 50.0, [0, inf], "", "correlation length"],
-             ]
+#   ["name", "units", default, [lower, upper], "type", "description"],
+parameters = [
+    ["cor_length", "Ang", 50.0, [0, inf], "", "correlation length"],
+    ]
 
 Iq = """
     double numerator   = cube(cor_length);
@@ -77,7 +81,7 @@ def random():
     pars = dict(
         scale=10**np.random.uniform(1, 4),
         cor_length=10**np.random.uniform(0.3, 3),
-#        background = 0,
+        #background=0,
     )
     pars['scale'] /= pars['cor_length']**3
     return pars

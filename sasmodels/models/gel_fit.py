@@ -36,9 +36,11 @@ In gels with significant hydrogen bonding $D$ has been reported to be
 References
 ----------
 
-#.  Mitsuhiro Shibayama, Toyoichi Tanaka, Charles C Han, *J. Chem. Phys.* 1992, 97 (9), 6829-6841
+#. Mitsuhiro Shibayama, Toyoichi Tanaka, Charles C Han,
+   *J. Chem. Phys.* 1992, 97 (9), 6829-6841
 
-#.  Simon Mallam, Ferenc Horkay, Anne-Marie Hecht, Adrian R Rennie, Erik Geissler, *Macromolecules* 1991, 24, 543-548
+#. Simon Mallam, Ferenc Horkay, Anne-Marie Hecht, Adrian R Rennie,
+   Erik Geissler, *Macromolecules* 1991, 24, 543-548
 
 Authorship and Verification
 ----------------------------

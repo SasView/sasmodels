@@ -11,12 +11,10 @@ is calculated as
 
 .. math::
 
-    I(q) = K\frac{q^2+k^2}{4\pi L_b\alpha ^2}
-    \frac{1}{1+r_{0}^4(q^2+k^2)(q^2-12hC_a/b^2)} + background
-
-    k^2 = 4\pi L_b(2C_s + \alpha C_a)
-
-    r_{0}^2 = \frac{b}{\alpha \sqrt{C_a 48\pi L_b}}
+    I(q) &= K\frac{q^2+k^2}{4\pi L_b\alpha ^2}
+        \frac{1}{1+r_{0}^4(q^2+k^2)(q^2-12hC_a/b^2)} + \text{background} \\
+    k^2 &= 4\pi L_b(2C_s + \alpha C_a) \\
+    r_{0}^2 &= \frac{b}{\alpha \sqrt{C_a 48\pi L_b}}
 
 where
 
@@ -26,9 +24,8 @@ defined as:
 
 .. math::
 
-    K = a^2
-
-    a = b_p - (v_p/v_s) b_s
+    K &= a^2 \\
+    a &= b_p - (v_p/v_s) b_s
 
 where:
 
@@ -47,14 +44,16 @@ where:
 
 - $b$ is the monomer length (|Ang|).
 
-- $C_s$ is the concentration of monovalent salt(1/|Ang^3| - internally converted from mol/L).
+- $C_s$ is the concentration of monovalent salt(1/|Ang^3| - internally
+  converted from mol/L).
 
-- $\alpha$ is the degree of ionization (the ratio of charged monomers to the total
-  number of monomers)
+- $\alpha$ is the degree of ionization (the ratio of charged monomers to the
+  total number of monomers)
 
-- $C_a$ is the polymer molar concentration (1/|Ang^3| - internally converted from mol/L)
+- $C_a$ is the polymer molar concentration (1/|Ang^3| - internally converted
+  from mol/L)
 
-- $background$ is the incoherent background.
+- $\text{background}$ is the incoherent background.
 
 For 2D data the scattering intensity is calculated in the same way as 1D,
 where the $\vec q$ vector is defined as
@@ -88,8 +87,8 @@ For further details, see [#Joanny1990]_, [#Moussaid1993]_, [#Raphael1990]_.
 
 .. [#Borue] V Y Borue, I Y Erukhimovich, *Macromolecules*, 21 (1988) 3240
 .. [#Joanny1990] J F Joanny, L Leibler, *Journal de Physique*, 51 (1990) 545
-.. [#Moussaid1993] A Moussaid, F Schosseler, J P Munch, S Candau, *J. Journal de Physique
-   II France*, 3 (1993) 573
+.. [#Moussaid1993] A Moussaid, F Schosseler, J P Munch, S Candau,
+   *J. Journal de Physique II France*, 3 (1993) 573
 .. [#Raphael1990] E Raphael, J F Joanny, *Europhysics Letters*, 11 (1990) 179
 
 Authorship and Verification

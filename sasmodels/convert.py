@@ -487,7 +487,8 @@ def revert_pars(model_info, pars):
         elif name == 'rpa':
             # convert scattering lengths from femtometers to centimeters
             for p in "L1", "L2", "L3", "L4":
-                if p in oldpars: oldpars[p] *= 1e-13
+                if p in oldpars:
+                    oldpars[p] *= 1e-13
             if pars['case_num'] < 2:
                 for k in ("a", "b"):
                     for p in ("L", "N", "Phi", "b", "v"):
@@ -622,7 +623,7 @@ def _check_one(name, seed=None):
     if old_name is None:
         return
 
-    pars = compare.get_pars(model_info, use_demo=False)
+    pars = compare.get_pars(model_info)
     if seed is not None:
         np.random.seed(seed)
     pars = compare.randomize_pars(model_info, pars)
