@@ -46,7 +46,7 @@ USAGE NOTES
 * The outer-most shell radius $R_N$ is used as the effective radius
   for $P(Q)$ when $P(Q) * S(Q)$ is applied.
   calculations rather slow.
-* The number of shells is always rounded to an integer value as a non interger
+* The number of shells is always rounded to an integer value as a non integer
   number of layers is not physical.
 * Thus Polydispersity should only be applied to number of shells **VERY
   CAREFULLY**.  A possible legitimate use would be for mixed systems in which
