@@ -89,17 +89,17 @@ category = "shape:sphere"
 
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "", "Core scattering length density"],
+parameters = [["nuc_sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "", "Core scattering length density"],
               ["magnetic_sld_core",    "1e-6/Ang^2", 1.0,  [-inf, inf], "",    "Magnetic core scattering length density"],
               ["eta_core", "None", 3.0,  [0, inf], "",    "Langevin parameter of core"],
               ["radius", "Ang", 50., [0, inf], "volume", "Radius of the core"],
-              ["sld_solvent", "1e-6/Ang^2", 6.4, [-inf, inf], "", "Solvent scattering length density"],
+              ["nuc_sld_solvent", "1e-6/Ang^2", 6.4, [-inf, inf], "", "Solvent scattering length density"],
               ["magnetic_sld_solvent", "1e-6/Ang^2", 3.0,  [-inf, inf], "",    "Magnetic Solvent scattering length density"],
               ["eta_solvent", "None ", 3.0,  [0, inf], "",    "Langevin parameter of solvent of solvent"],
               ["delta_solvent", "None", 1.0,  [0, 1], "",    "Disorder coupling parameter of matrix to core"],
               ["n", "", 1, [0, 10], "volume", "Number of shells"],
-              ["sld[n]", "1e-6/Ang^2", 1.7, [-inf, inf], "", "Scattering length density of shell k"],
-              ["magnetic_sld[n]", "1e-6/Ang^2", 1.7, [-inf, inf], "", "Magnetic scattering length density of shell k"],
+              ["nuc_sld_shell[n]", "1e-6/Ang^2", 1.7, [-inf, inf], "", "Scattering length density of shell k"],
+              ["magnetic_sld_shell[n]", "1e-6/Ang^2", 1.7, [-inf, inf], "", "Magnetic scattering length density of shell k"],
               ["eta[n]", "None", 3.0,  [0, inf], "",    "Langevin parameter of shell k"],
               ["delta[n]", "None", 1.0,  [0, 1], "",    "Disorder coupling parameter of shell to core"],
               ["thickness[n]", "Ang", 40., [0, inf], "volume", "Thickness of shell k"],
@@ -115,8 +115,7 @@ source = ["lib/sas_3j1x_x.c","lib/gauss76.c", "magnetic_langevin_core_shell.c"]
 structure_factor = False
 have_Fq = False
 single=False
-is_magnetic = False
-profile =False
+
 
 effective_radius_type = ["outer radius", "core radius"]
 
@@ -135,7 +134,7 @@ def random():
         pars['thickness%d'%(k+1)] = v
     return pars
 
-def profile(sld_core, radius, sld_solvent, n, sld, thickness):
+def profile(nuc_sld_core, magnetic_sld_core,eta_core,radius, nuc_sld_solvent,magnetic_sld_solvent,eta_solvent,delta_solvent, n, nuc_sld_shell,magnetic_sld_shell,eta,delta, thickness,up_i,up_f):
     """
     Returns the SLD profile *r* (Ang), and *rho* (1e-6/Ang^2).
     """
@@ -145,22 +144,22 @@ def profile(sld_core, radius, sld_solvent, n, sld, thickness):
 
     # add in the core
     z.append(0)
-    rho.append(sld_core)
+    rho.append(nuc_sld_core)
     z.append(radius)
-    rho.append(sld_core)
+    rho.append(nuc_sld_core)
 
     # add in the shells
     for k in range(int(n)):
         # Left side of each shells
         z.append(z[-1])
-        rho.append(sld[k])
+        rho.append(nuc_sld_shell[k])
         z.append(z[-1] + thickness[k])
-        rho.append(sld[k])
+        rho.append(nuc_sld_shell[k])
     # add in the solvent
     z.append(z[-1])
-    rho.append(sld_solvent)
+    rho.append(nuc_sld_solvent)
     z.append(z[-1]*1.25)
-    rho.append(sld_solvent)
+    rho.append(nuc_sld_solvent)
 
     return np.asarray(z), np.asarray(rho)
     
