@@ -1,18 +1,14 @@
 r"""
 Definition
 ----------
-This model describes the SANS of individual (dilute), superparamagnetic particles. The magnetic field is along the horizontal direction.
+This model describes the SANS of individual (dilute), superparamagnetic particles. The magnetic field is oriented with an inclination of $alpha$ to the neutron beam ans rotated by $beta$.
 The model is based on spherical particles with a core multishell structure, see :ref:`core_multi_shell`.
 The magnetic scattering length density (SLD) is defined as $\rho_{\mathrm{mag}}=b_H M_S$, 
 where $b_H= 2.91*10^{8}A^{-1}m^{-1}$ and $M_S$ is the saturation magnetisation (in $A/m$).
 
 The alignment of the particle moments along the magnetic field is disturbed by thermal fluctuations like Brownian motion of freely rotating particles in a liquid. 
-The magnetic SLD $\rho_{\mathrm{mag}}_mag=b_H M_S$ is hence weighted for each magnetisation component with the corresponding average of a Boltzmann orientation distribution $p(\eta,\alpha)$ [#Wiedenmann2005]_:
-
-.. math::
-    p(L,\alpha) \propto \exp(\eta \cos(\alpha))
-where $\alpha$ is the angle between magnetisation and the applied magnetic field
-and $\eta=\mu_0 \mu H/ k_B T$ denotes the Langevin parameter with $\mu_0$ the vacuum permeability and $\mu$ the apparent magnetic moment, and $k_B T$ the thermal energy.
+The magnetic SLD $\rho_{\mathrm{mag}}_mag=b_H M_S$ is hence weighted for each magnetisation component with the corresponding average of a Boltzmann orientation distribution 
+with $\eta=\mu_0 \mu H/ k_B T$ denotes the Langevin parameter with $\mu_0$ the vacuum permeability and $\mu$ the apparent magnetic moment, and $k_B T$ the thermal energy  [#Wiedenmann2005]_.
 The model describes a magnetisation distribution that is equally distributed around the magnetic field direction (no effective prefered easy axis of the ensemble).
 In particular, the transversal magnetisation components are randomly oriented at least from one particle to the other.
 
@@ -73,7 +69,7 @@ Authorship and Verification
 import numpy as np
 from numpy import pi, inf
 
-name = "magnetic_langevin_core_shell_sphere"
+name = "magnetic_langevin_core_shell_sphere_3D"
 title = "Dilute magnetic core-shell particles in a matrix with the magnetisation relaxing with respect to magnetic field"
 description = """
     I(q) = A_ij (F_N^2(q)+ C_ij(L(H)) F_N F_M ) +B_ij(L(H)) F_M^2(q) 
@@ -105,13 +101,15 @@ parameters = [["nuc_sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "", "Core scatter
               ["thickness[n]", "Ang", 40., [0, inf], "volume", "Thickness of shell k"],
               ["up_i",          "None",  0, [0, 1], "", "Polarisation incoming beam"],
               ["up_f",          "None",  0, [0, 1], "", "Polarisation outgoing beam"],
+              ["alpha",          "None",  0, [0, 180], "", "inclination of field to neutron beam"],
+              ["beta",          "None",  0, [0, 360], "", "rotation of field around neutron beam"],             
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
 
 
 
-source = ["lib/sas_3j1x_x.c","lib/gauss76.c", "magnetic_langevin_core_shell.c"]
+source = ["lib/sas_3j1x_x.c","lib/gauss76.c", "magnetic_langevin_core_shell_3D.c"]
 structure_factor = False
 have_Fq = False
 single=False
@@ -134,7 +132,7 @@ def random():
         pars['thickness%d'%(k+1)] = v
     return pars
 
-def profile(nuc_sld_core, magnetic_sld_core,eta_core,radius, nuc_sld_solvent,magnetic_sld_solvent,eta_solvent,delta_solvent, n, nuc_sld_shell,magnetic_sld_shell,eta,delta, thickness,up_i,up_f):
+def profile(nuc_sld_core, magnetic_sld_core,eta_core,radius, nuc_sld_solvent,magnetic_sld_solvent,eta_solvent,delta_solvent, n, nuc_sld_shell,magnetic_sld_shell,eta,delta, thickness,up_i,up_f, alpha,beta):
     """
     Returns the SLD profile *r* (Ang), and *rho* (1e-6/Ang^2).
     """
