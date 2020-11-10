@@ -35,7 +35,6 @@ jobs:
         python -m pip install wheel setuptools
         python -m pip install mako
         python -m pip install numpy scipy matplotlib docutils "pytest<6" sphinx bumps unittest-xml-reporting tinycc
-        # is pyopencl required?
 
     - name: setup pyopencl on Linux + macOS
       if: ${{ matrix.os != 'windows-latest' }}
@@ -59,3 +58,8 @@ jobs:
         # python setup.py test --pytest-args -v
 
         pytest -v
+
+    - name: check that the docs build (linux only)
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: |
+        make -j 4 -C doc SPHINXOPTS="-W --keep-going" html
