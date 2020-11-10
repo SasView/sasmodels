@@ -70,6 +70,44 @@ typedef union {
 #if defined(MAGNETIC) && NUM_MAGNETIC > 0
 // ===== Helper functions for magnetism =====
 
+// vector algebra
+void SET_VEC(double *vector, double v0, double v1, double v2)
+{
+    vector[0] = v0;
+    vector[1] = v1;
+    vector[2] = v2;
+}
+
+void SCALE_VEC(double *vector, double a)
+{
+    vector[0] = a*vector[0];
+    vector[1] = a*vector[1];
+    vector[2] = a*vector[2];
+}
+
+void ADD_VEC(double *result_vec, double *vec1, double *vec2)
+{
+    result_vec[0] = vec1[0] + vec2[0];
+    result_vec[1] = vec1[1] + vec2[1];
+    result_vec[2] = vec1[2] + vec2[2];
+}
+
+static double SCALAR_VEC( double *vec1, double *vec2)
+{
+    return vec1[0] * vec2[0] + vec1[1] * vec2[1] + vec1[2] * vec2[2];
+}
+
+static double MAG_VEC( double *vec)
+{
+    return sqrt(SCALAR_VEC(vec,vec));
+}
+
+void ORTH_VEC(double *result_vec, double *vec1, double *vec2)
+{
+    result_vec[0] = vec1[0] - SCALAR_VEC(vec1,vec2) / SCALAR_VEC(vec2,vec2) * vec2[0];
+    result_vec[1] = vec1[1] - SCALAR_VEC(vec1,vec2) / SCALAR_VEC(vec2,vec2) * vec2[1];
+    result_vec[2] = vec1[2] - SCALAR_VEC(vec1,vec2) / SCALAR_VEC(vec2,vec2) * vec2[2];
+}
 // Return value restricted between low and high
 static double clip(double value, double low, double high)
 {
@@ -78,10 +116,11 @@ static double clip(double value, double low, double high)
 
 // Compute spin cross sections given in_spin and out_spin
 // To convert spin cross sections to sld b:
-//     uu * (sld - m_sigma_x);
-//     dd * (sld + m_sigma_x);
-//     ud * (m_sigma_y - 1j*m_sigma_z);
-//     du * (m_sigma_y + 1j*m_sigma_z);
+//     uu * (sld - m_perp_x);
+//     dd * (sld + m_perp_x);
+//     ud * (m_perp_y - 1j*m_perp_z);
+//     du * (m_perp_y + 1j*m_perp_z);
+//(x,y,z) is a local magnetic coordinate system. m_perp_x denotes the magnetic scattering vector along the polarisation and m_perp_y the component along the scattering vector, m_perpz is orthogonal to the others.
 // weights for spin crosssections: dd du real, ud real, uu, du imag, ud imag
 static void set_spin_weights(double in_spin, double out_spin, double weight[6])
 {
@@ -134,27 +173,45 @@ static double mag_sld(
   const double mx, const double my, const double mz
 )
 {
+  double qvector[3];
+  double Mvector[3];
+  double Pvector[3];
+  double Mperp[3];
+  double MperpP[3];
+  double MperpPperpQ[3];
+  const double qsq = qx*qx + qy*qy; ;
+
+  SET_VEC(qvector, qx/qsq, qy/qsq, 0);	
+	
+  SET_VEC(Mvector, mx, my, mz);
+  SET_VEC(Pvector, px, py, 0);
+  ORTH_VEC(Mperp, Mvector, qvector);
+  ORTH_VEC(MperpP, Mperp, Pvector);
+  ORTH_VEC(MperpPperpQ, MperpP, qvector);
+
   if (xs < 4) {
-    const double perp = qy*mx - qx*my;
+
     switch (xs) {
       default: // keep compiler happy; condition ensures xs in [0,1,2,3]
-      case 0: // dd => sld - D M_perpx
-          return sld - px*perp;
-      case 1: // du.real => -D M_perpy
-          return py*perp;
-      case 2: // ud.real => -D M_perpy
-          return py*perp;
-      case 3: // uu => sld + D M_perpx
-          return sld + px*perp;
+      case 0: // dd => sld - D Pvector \cdot Mperp
+          return sld - SCALAR_VEC(Pvector,Mperp); 
+      case 1: // du.real => length of vector MperpPperpQ:  | MperpP- (MperpP\cdot qvector)  qvector |
+          return MAG_VEC(MperpPperpQ);
+      case 2: // ud.real =>  length of vector MperpPperpQ
+          return MAG_VEC(MperpPperpQ);
+      case 3: // uu => sld + D Pvector \cdot Mperp
+          return sld + SCALAR_VEC(Pvector,Mperp); 
     }
   } else {
     if (xs== 4) {
-      return -mz;  // du.imag => +D M_perpz
+      return -SCALAR_VEC(MperpP,qvector);  // du.imag => - i MperpP \cdot qvector
     } else { // index == 5
-      return +mz;  // ud.imag => -D M_perpz
+      return +SCALAR_VEC(MperpP,qvector);  // du.imag => + i MperpP \cdot qvector
     }
   }
 }
+
+
 
 
 #endif
@@ -745,8 +802,8 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
           const double qsq = qx*qx + qy*qy;
           if (qsq > 1.e-16) {
             // TODO: what is the magnetic scattering at q=0
-            const double px = (qy*cos_mspin + qx*sin_mspin)/qsq;
-            const double py = (qy*sin_mspin - qx*cos_mspin)/qsq;
+            const double px = cos_mspin;
+            const double py = sin_mspin;
 
             // loop over uu, ud real, du real, dd, ud imag, du imag
             for (unsigned int xs=0; xs<6; xs++) {
