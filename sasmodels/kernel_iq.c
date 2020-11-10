@@ -25,8 +25,11 @@
 //  NUM_MAGNETIC : the number of magnetic parameters
 //  MAGNETIC_PARS : a comma-separated list of indices to the sld
 //      parameters in the parameter table.
-//  CALL_VOLUME(form, shell, table) : assign form and shell values
-//  CALL_EFFECTIVE_RADIUS(type, table) : call the R_eff function
+//  TRANSLATION_VARS(table) : series of intermediate expressions used to
+//      compute parameter substitions when reparameterizing a model.
+//  VALID(table) : test if the current point is feesible to calculate.
+//  CALL_VOLUME(form, shell, table) : assign form and shell values.
+//  CALL_RADIUS_EFFECTIVE(mode, table) : call the R_eff function.
 //  CALL_IQ(q, table) : call the Iq function for 1D calcs.
 //  CALL_IQ_A(q, table) : call the Iq function with |q| for 2D data.
 //  CALL_FQ(q, F1, F2, table) : call the Fq function for 1D calcs.
@@ -34,8 +37,6 @@
 //  CALL_IQ_AC(qa, qc, table) : call the Iqxy function for symmetric shapes
 //  CALL_IQ_ABC(qa, qc, table) : call the Iqxy function for asymmetric shapes
 //  CALL_IQ_XY(qx, qy, table) : call the Iqxy function for arbitrary models
-//  INVALID(table) : test if the current point is feesible to calculate.  This
-//      will be defined in the kernel definition file.
 //  PROJECTION : equirectangular=1, sinusoidal=2
 //      see explore/jitter.py for definitions.
 
@@ -69,22 +70,63 @@ typedef union {
 #if defined(MAGNETIC) && NUM_MAGNETIC > 0
 // ===== Helper functions for magnetism =====
 
+//vector algebra
+void SET_VEC(double *vector, double v0, double v1, double v2)
+{
+    vector[0] = v0;
+    vector[1] = v1;
+    vector[2] = v2;
+}
+
+void SCALE_VEC(double *vector, double a)
+{
+    vector[0] = a*vector[0];
+    vector[1] = a*vector[1];
+    vector[2] = a*vector[2];
+}
+
+void ADD_VEC(double *result_vec, double *vec1, double *vec2)
+{
+    result_vec[0] = vec1[0] + vec2[0];
+    result_vec[1] = vec1[1] + vec2[1];
+    result_vec[2] = vec1[2] + vec2[2];
+}
+
+static double SCALAR_VEC( double *vec1, double *vec2)
+{
+    return vec1[0] * vec2[0] + vec1[1] * vec2[1] + vec1[2] * vec2[2];
+}
+
+static double MAG_VEC( double *vec)
+{
+    return sqrt(SCALAR_VEC(vec,vec));
+}
+
+void ORTH_VEC(double *result_vec, double *vec1, double *vec2)
+{
+    result_vec[0] = vec1[0] - SCALAR_VEC(vec1,vec2) / SCALAR_VEC(vec2,vec2) * vec2[0];
+    result_vec[1] = vec1[1] - SCALAR_VEC(vec1,vec2) / SCALAR_VEC(vec2,vec2) * vec2[1];
+    result_vec[2] = vec1[2] - SCALAR_VEC(vec1,vec2) / SCALAR_VEC(vec2,vec2) * vec2[2];
+}
+
+
 // Return value restricted between low and high
 static double clip(double value, double low, double high)
 {
-  return (value < low ? low : (value > high ? high : value));
+    return (value < low ? low : (value > high ? high : value));
 }
 
 // Compute spin cross sections given in_spin and out_spin
 // To convert spin cross sections to sld b:
-//     uu * (sld - m_sigma_x);
-//     dd * (sld + m_sigma_x);
-//     ud * (m_sigma_y - 1j*m_sigma_z);
-//     du * (m_sigma_y + 1j*m_sigma_z);
+//     uu * (sld - m_perp_x);
+//     dd * (sld + m_perp_x);
+//     ud * (m_perp_y - 1j*m_perp_z);
+//     du * (m_perp_y + 1j*m_perp_z);
+//(x,y,z) is a local magnetic coordinate system. m_sigma_x denotes the magnetic scattering vector m_perp along the polarisation P
+// and m_sigma_y and m_sigma_z the perpendicular components (along and perpendicular to the scattering vector q).
 // weights for spin crosssections: dd du real, ud real, uu, du imag, ud imag
 static void set_spin_weights(double in_spin, double out_spin, double weight[6])
 {
-
   double norm;
   in_spin = clip(in_spin, 0.0, 1.0);
   out_spin = clip(out_spin, 0.0, 1.0);
@@ -125,32 +167,50 @@ static void set_spin_weights(double in_spin, double out_spin, double weight[6])
 }
 
 // Compute the magnetic sld
+//TODO: Generalise GUI/SASView for arbitrary orientation of P=(Px,Py,Pz) by introducing an azimuthal angle, currently only in the detectorplane
 static double mag_sld(
   const unsigned int xs, // 0=dd, 1=du.real, 2=ud.real, 3=uu, 4=du.imag, 5=ud.imag
   const double qx, const double qy,
-  const double px, const double py,
+  const double px, const double py, 
   const double sld,
   const double mx, const double my, const double mz
 )
 {
+  
+  double qvector[3];
+  double Mvector[3];
+  double Pvector[3];
+  double Mperp[3];
+  double MperpP[3];
+  double MperpPperpQ[3];
+  const double qsq = qx*qx + qy*qy; ;
+
+  SET_VEC(qvector, qx/qsq, qy/qsq, 0);	
+	
+  SET_VEC(Mvector, mx, my, mz);
+  SET_VEC(Pvector, px, py, 0);
+  ORTH_VEC(Mperp, Mvector, qvector);
+  ORTH_VEC(MperpP, Mperp, Pvector);
+  ORTH_VEC(MperpPperpQ, MperpP, qvector);
+  
   if (xs < 4) {
-    const double perp = qy*mx - qx*my;
+
     switch (xs) {
       default: // keep compiler happy; condition ensures xs in [0,1,2,3]
-      case 0: // dd => sld - D M_perpx
-          return sld - px*perp;
-      case 1: // du.real => -D M_perpy
-          return py*perp;
-      case 2: // ud.real => -D M_perpy
-          return py*perp;
-      case 3: // uu => sld + D M_perpx
-          return sld + px*perp;
+      case 0: // dd => sld - D Pvector \cdot Mperp
+          return sld - SCALAR_VEC(Pvector,Mperp); 
+      case 1: // du.real => length of vector MperpPperpQ:  | MperpP- (MperpP\cdot qvector)  qvector |
+          return MAG_VEC(MperpPperpQ);
+      case 2: // ud.real =>  length of vector MperpPperpQ
+          return MAG_VEC(MperpPperpQ);
+      case 3: // uu => sld + D Pvector \cdot Mperp
+          return sld + SCALAR_VEC(Pvector,Mperp); 
     }
   } else {
     if (xs== 4) {
-      return -mz;  // du.imag => +D M_perpz
+      return -SCALAR_VEC(MperpP,qvector);  // du.imag => - i MperpP \cdot qvector
     } else { // index == 5
-      return +mz;  // ud.imag => -D M_perpz
+      return +SCALAR_VEC(MperpP,qvector);  // du.imag => + i MperpP \cdot qvector
     }
   }
 }
@@ -303,7 +363,7 @@ void KERNEL_NAME(
     pglobal const double *q,      // nq q values, with padding to boundary
     pglobal double *result,       // nq+1 return values, again with padding
     const double cutoff,          // cutoff in the dispersity weight product
-    int32_t effective_radius_type // which effective radius to compute
+    int32_t radius_effective_mode // which effective radius to compute
     )
 {
 #if defined(USE_GPU)
@@ -403,7 +463,6 @@ void KERNEL_NAME(
 /*
 Based on the level of the loop, uses C preprocessor magic to construct
 level-specific looping variables, including these from loop level 3:
-
   int n3 : length of loop for mesh level 3
   int i3 : current position in the loop for level 3, which is calculated
        from a combination of pd_start, pd_stride[3] and pd_length[3].
@@ -413,42 +472,33 @@ level-specific looping variables, including these from loop level 3:
   double weight3 : the product of weights from levels 3 and up, computed
        as weight5*weight4*w3[i3].  Note that we need an outermost
        value weight5 set to 1.0 for this to work properly.
-
 After expansion, the loop struction will look like the following:
-
   // --- PD_INIT(4) ---
   const int n4 = pd_length[4];
   const int p4 = pd_par[4];
   pglobal const double *v4 = pd_value + pd_offset[4];
   pglobal const double *w4 = pd_weight + pd_offset[4];
   int i4 = (pd_start/pd_stride[4])%n4;  // position in level 4 at pd_start
-
   // --- PD_INIT(3) ---
   const int n3 = pd_length[3];
   ...
   int i3 = (pd_start/pd_stride[3])%n3;  // position in level 3 at pd_start
-
   PD_INIT(2)
   PD_INIT(1)
   PD_INIT(0)
-
   // --- PD_OUTERMOST_WEIGHT(5) ---
   const double weight5 = 1.0;
-
   // --- PD_OPEN(4,5) ---
   while (i4 < n4) {
     parameter[p4] = v4[i4];  // set the value for pd parameter 4 at this mesh point
     const double weight4 = w4[i4] * weight5;
-
     // from PD_OPEN(3,4)
     while (i3 < n3) {
       parameter[p3] = v3[i3];  // set the value for pd parameter 3 at this mesh point
       const double weight3 = w3[i3] * weight4;
-
       PD_OPEN(3,2)
       PD_OPEN(2,1)
       PD_OPEN(0,1)
-
       // ... main loop body ...
       APPLY_PROJECTION    // convert jitter values to spherical coords
       BUILD_ROTATION      // construct the rotation matrix qxy => qabc
@@ -456,25 +506,20 @@ After expansion, the loop struction will look like the following:
           FETCH_Q         // set qx,qy from the q input vector
           APPLY_ROTATION  // convert qx,qy to qa,qb,qc
           CALL_KERNEL     // F2 = Iqxy(qa, qb, qc, p1, p2, ...)
-
       ++step;  // increment counter representing position in dispersity mesh
-
       PD_CLOSE(0)
       PD_CLOSE(1)
       PD_CLOSE(2)
-
       // --- PD_CLOSE(3) ---
       if (step >= pd_stop) break;
       ++i3;
     }
     i3 = 0; // reset loop counter for next round through the loop
-
     // --- PD_CLOSE(4) ---
     if (step >= pd_stop) break;
     ++i4;
   }
   i4 = 0; // reset loop counter even though no more rounds through the loop
-
 */
 
 
@@ -707,10 +752,9 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
 //if (q_index==0) {printf("step:%d of %d, pars:",step,pd_stop); for (int i=0; i < NUM_PARS; i++) printf("p%d=%g ",i, local_values.vector[i]); printf("\n");}
 
   // ====== loop body =======
-  #ifdef INVALID
-  if (!INVALID(local_values.table))
-  #endif
-  {
+  // Note: recalc all intermediates for each loop, because we don't know order
+  TRANSLATION_VARS(local_values.table);
+  if (VALID(local_values.table)) {
      APPLY_PROJECTION();
 
     // Accumulate I(q)
@@ -721,8 +765,8 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
       weight_norm += weight;
       weighted_form += weight * form;
       weighted_shell += weight * shell;
-      if (effective_radius_type != 0) {
-        weighted_radius += weight * CALL_EFFECTIVE_RADIUS(effective_radius_type, local_values.table);
+      if (radius_effective_mode != 0) {
+        weighted_radius += weight * CALL_RADIUS_EFFECTIVE(radius_effective_mode, local_values.table);
       }
       BUILD_ROTATION();
 
@@ -745,8 +789,8 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
           const double qsq = qx*qx + qy*qy;
           if (qsq > 1.e-16) {
             // TODO: what is the magnetic scattering at q=0
-            const double px = (qy*cos_mspin + qx*sin_mspin)/qsq;
-            const double py = (qy*sin_mspin - qx*cos_mspin)/qsq;
+            const double px = cos_mspin;
+            const double py = sin_mspin; 
 
             // loop over uu, ud real, du real, dd, ud imag, du imag
             for (unsigned int xs=0; xs<6; xs++) {
