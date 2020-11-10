@@ -520,8 +520,10 @@ class ProductKernel(Kernel):
         # equal to form volume.  If P already has a volfraction parameter,
         # then assume that it is already on absolute scale, and don't
         # include volfrac in the combined_scale.
-        combined_scale = scale*(volfrac if not self._volfrac_in_p else 1.0)
-        final_result = combined_scale/shell_volume*PS + background
+        combined_scale = scale/shell_volume
+        if not self._volfrac_in_p:
+            combined_scale *= volfrac
+        final_result = combined_scale*PS + background
 
         # Capture intermediate values so user can see them.  These are
         # returned as a lazy evaluator since they are only needed in the
