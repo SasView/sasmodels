@@ -172,7 +172,7 @@ tests = [
       "structure_factor_mode": 1,  # normal decoupling approximation
       "radius_effective_mode": 0,  # mode 0 says ignore Reff from P
      }, [0.01, 0.1, 0.2], [1.57928589e+03, 7.37067923e-01, 4.67686197e-02],
-     {"P(Q)": [28209011371.91742, 5952795.559734829, 370161.2239472192],
+     {"P(Q)": [3487.905895219423, 0.7360339734027279, 0.04576861975646704],
       "S(Q)": [0.31569726516764035, 1.005886362143737, 0.9976927625183415],
       #"beta(Q)": [0.7996623765645325, 0.007835960247334845, 8.218250904154009e-07],
       "beta(Q)": None,  # Single precision not good enough for 5 digits of beta
