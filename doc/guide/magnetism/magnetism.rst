@@ -3,10 +3,6 @@
 Polarisation/Magnetic Scattering
 ================================
 
-Spherical Polarimetry in SANS: This description allows for freedom in
-field/polarisation axis away from the detector plane
-i.e. allows in-beam direction or AC or rotational fields.
-
 For magnetic systems, the scattering length density (SLD = $\beta$) is a combination
 of the nuclear and magnetic SLD. For polarised neutrons, the resulting effective SLD
 depends on the spin state of the neutron before and after being scattered in the sample.
@@ -19,7 +15,7 @@ magnitude, where $\gamma = -1.913$ is the gyromagnetic ratio, $\mu_B$ is the
 Bohr magneton, $r_0$ is the classical radius of electron.
 
 It is assumed that the magnetic SLD in each region of the model is uniformly for
-nuclear scattering and has one effective magnetisation orientation
+nuclear scattering and has one effective magnetisation orientation.
 
 The external field $\mathbf{H}=H \mathbf{P}$ coincides with the polarisation axis
 $\mathbf{P}=(\sin\theta_P \cos \phi_P, \sin \theta_P \sin \phi_P,\cos\theta_P )$ for the neutrons, which is the quantisation axis
@@ -29,20 +25,18 @@ for the Pauli spin operator.
     mag_img/M_angles_pic.png
 
 .. note::
-    The polarisation axis at the sample position is the determining factor and determines
-    the scattering geometry. Before and after the field at the sample position,
-    the polarisation turns adiabatically to the guide field of the instrument.
+    The polarisation axis at the sample position determines
+    the scattering geometry. The polarisation turns adiabatically to the guide field of the instrument, before and after the field at the sample position.
     This operation does not change the observed spin-resolved scattering at the detector.
-    Anyway the magnetic field is the vector defining a symmetry axis of the
-    system and the magnetisation vector will orient with respect to the field.
-
-
-.. note::
-    For AC oscillating/rotation field varying in space with time, you can coupling the magnetisation
+    The magnetic field defines (for random anisotropy systems) a symmetry axis and the magnetisation vector will be oriented symmetrically around the field.
+    For AC oscillating/rotation field varying in space and with time, you can couple the magnetisation
     with the field axis via a constrained fit. This will allow to easily parametrise
     a phase shift of the magnetisation lagging behind a magnetic field varying from time frame to time frame.
-    Anyway the magnetic field is the vector defining a symmetry axis of the
-    system and the magnetisation vector will most often orient symmetrically with respect to the field.
+
+
+
+
+
 
 
 The neutrons are polarised parallel (+) or antiparallel (-) to $\mathbf{P}$. One can
@@ -88,8 +82,7 @@ and the two SF channels:
 with $i=\sqrt{-1}$, and $^{\ast}$ denoting the complex conjugate quantity, and
 $\times$ and $\cdot$  the vector and scalar product, respectively.
 
-The polarisation axis at the sample position is the determining factor and determines
-the scattering geometry. For the NSF scattering the component of the Halpern-Johnson
+For the NSF scattering the component of the Halpern-Johnson
 vector parallel to $P$ contributes
 
 .. math::
@@ -107,34 +100,10 @@ and a third vector perpendicular to both $\mathbf{P}$ and $\mathbf{M}_{\perp,\pe
 
 .. math::
     \mathbf{O} = \mathbf{M}_{\perp} \times \mathbf{P} - \mathbf{M}_{\perp,\perp P }
-        = [\mathbf{n}\cdot(\mathbf{M}\times\mathbf{P})(\mathbf{n}-\mathbf{P}\times\mathbf{n})]
-
-
-For symmetric, collinear spin structures ($\mathbf{M}_{\perp}^{\ast}=\mathbf{M}_{\perp}^{\ast}$), $\mathbf{O}\cdot \mathbf{O}^{\ast}=0$
-since  $\mathbf{M}_{\perp} \times \mathbf{P} \cdot \mathbf{M}_{\perp} \times \mathbf{P} = \mathbf{M}_{\perp,\perp P }$.
-
-
-Depending on the spin state of the
-neutrons, the scattering length densities, including the nuclear scattering
-length density $(\beta{_N})$ are for the non-spin-flip states
-
-.. math::
-    \beta_{\pm\pm} =  \beta_N \mp b_H \mathbf{P}\cdot \mathbf{M}_{\perp }
-
-
-and for spin-flip states
-
-.. math::
-    \beta_{\pm\mp} =  -b_H (\lvert\mathbf{M}_{\perp,\perp P }\rvert \pm i \mathbf{n}\cdot (\mathbf{M}\times \mathbf{P}  (1-\mathbf{P}\cdot\mathbf{n}))
 
 
 
-with
-
-.. math::
-    \lvert\mathbf{M}_{\perp,\perp P }\rvert= (\mathbf{M}_{\perp,\perp P } \cdot \mathbf{M}_{\perp,\perp P })^{1/2}
-        =(M_{\perp,x}^2+M_{\perp,y}^2+M_{\perp,z}^2-(M_{\perp,x} P_x+ M_{\perp,y} P_y + M_{\perp,z} P_z   )^2 )^{1/2}.
-
+For symmetric, collinear spin structures ($\mathbf{M}_{\perp}^{\ast}=\mathbf{M}_{\perp}^{\ast}$).
 
 
 
@@ -171,16 +140,7 @@ The user input parameters are:
 ===========   ================================================================
 
 
-.. note::
-    P.S. of Dirk:
-    This is the most general description of magnetic SANS ever written and will supersede prior art!
-    Works for fully magnetically saturated systems. If you figure out how to
-    implement an isotropic ensemble of particle magnetisation ( similar for orientations).
-    This is needed to generate two populations with spin pointing in opposite directions in order to describe
-    field-dependence correctly, i.e. the different variation of mean magnetisation vs
-    square mean quantities.
-    With proper generalised orientation distribution, you cover all "normal" use cases
-   (except of the fancy stuff one have to simulate).
+
 
 
 References
@@ -193,4 +153,4 @@ References
 | 2015-05-02 Steve King
 | 2017-11-15 Paul Kienzle
 | 2018-06-02 Adam Washington
-| 2019-03-29 Dirk Honecker
+| 2020-12-08 Dirk Honecker
