@@ -447,7 +447,7 @@ class ParameterTable(object):
                              if p.type == 'sld')
         self.nvalues = 2 + self.npars
         if self.nmagnetic:
-            self.nvalues += 3 + 3*self.nmagnetic
+            self.nvalues += 4 + 3*self.nmagnetic
         self.call_parameters = self._get_call_parameters()
         self.defaults = self._get_defaults()
         #self._name_table= dict((p.id, p) for p in parameters)
@@ -755,7 +755,7 @@ class ParameterTable(object):
             else:
                 append_group(p.id)
 
-        if is2d and 'up_angle' in expanded_pars:
+        if is2d and 'up_angle' and 'up_phi' in expanded_pars:
             result.extend([
                 expanded_pars['up_frac_i'],
                 expanded_pars['up_frac_f'],

@@ -790,9 +790,9 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
           const double qsq = qx*qx + qy*qy;
           if (qsq > 1.e-16) {
             // TODO: what is the magnetic scattering at q=0
-            const double px = cos_mspin;
+            const double px = sin_mspin*cos_mphi;
              const double py = sin_mspin*sin_mphi;
-            const double pz = sin_mspin*cos_mphi;
+            const double pz = cos_mspin;
 
             // loop over uu, ud real, du real, dd, ud imag, du imag
             for (unsigned int xs=0; xs<6; xs++) {
@@ -802,7 +802,7 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
                 // to the effective slds for this cross section, call the
                 // kernel, and add according to weight.
                 for (int sk=0; sk<NUM_MAGNETIC; sk++) {
-                  const int32_t mag_index = NUM_PARS+5 + 3*sk;
+                  const int32_t mag_index = NUM_PARS+6 + 3*sk;
                   const int32_t sld_index = slds[sk];
                   const double mx = values[mag_index];
                   const double my = values[mag_index+1];

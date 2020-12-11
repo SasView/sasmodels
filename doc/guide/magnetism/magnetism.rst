@@ -18,7 +18,7 @@ It is assumed that the magnetic SLD in each region of the model is uniformly for
 nuclear scattering and has one effective magnetisation orientation.
 
 The external field $\mathbf{H}=H \mathbf{P}$ coincides with the polarisation axis
-$\mathbf{P}=(\cos\theta_P , \sin \theta_P \sin \phi_P,\sin\theta_P \cos \phi_P)$ for the neutrons, which is the quantisation axis
+$\mathbf{P}=(\sin\theta_P \cos \phi_P , \sin \theta_P \sin \phi_P,\cos\theta_P)$ for the neutrons, which is the quantisation axis
 for the Pauli spin operator.
 
 .. figure::
@@ -49,17 +49,17 @@ distinguish 4 spin-resolved cross sections:
 The spin-dependent magnetic scattering length densities are defined as (see Moon, Riste, Koehler)
 
 .. math::
-    \beta_{M, s_{in} s_{out}}  = b_H\sigma \cdot \mathbf{M_\perp}
+    \beta_{M, s_{in} s_{out}}  = b_H\sigma \cdot \mathbf{M}_{\perp}
 
 where  $\sigma$ is the Pauli spin, and $s_{in/out}$ describes the spin state of the neutron before and
 after the sample.
 
 For magnetic neutron scattering, only the magnetisation component or Halpern-Johnson vector
-$\mathbf{M_\perp}$ perpendicular to the scattering vector
+$\mathbf{M}_{\perp}$ perpendicular to the scattering vector
 $\mathbf{Q}=q \mathbf{n}=q (\cos\theta, \sin \theta,0)$ contributes to the magnetic scattering:
 
 .. math::
-    \mathbf{M_\perp} = \mathbf{n} [\mathbf{n} \cdot \mathbf{M}] -\mathbf{M}
+    \mathbf{M}_{\perp} = \mathbf{n} [\mathbf{n} \cdot \mathbf{M}] -\mathbf{M}
 
 with $\mathbf{n}$ the unit scattering vector and $\theta$ denotes the angle
 between $\mathbf{Q}$ and the x-axis.
@@ -69,14 +69,14 @@ between $\mathbf{Q}$ and the x-axis.
 The two NSF cross sections are given by
 
 .. math::
-    I^{\pm\pm} = N^2 \mp \mathbf{P}\cdot(N^{\ast}\mathbf{M_\perp} +N\mathbf{M_\perp}^{\ast})
-	+ (\mathbf{P}\cdot \mathbf{M_\perp})^2
+    I^{\pm\pm} = N^2 \mp \mathbf{P}\cdot(N^{\ast}\mathbf{M}_{\perp} +N\mathbf{M}_{\perp}^{\ast})
+	+ (\mathbf{P}\cdot \mathbf{M}_{\perp})^2
 
 and the two SF channels:
 
 .. math::
-    I^{\pm\mp} = \mathbf{M_\perp}\cdot \mathbf{M_\perp} - (\mathbf{P}\cdot \mathbf{M_\perp})^2
-	\mp i \mathbf{P}\cdot \mathbf{M_\perp} \times \mathbf{M_\perp}^{\ast}
+    I^{\pm\mp} = \mathbf{M}_{\perp}\cdot \mathbf{M}_{\perp} - (\mathbf{P}\cdot \mathbf{M}_{\perp})^2
+	\mp i \mathbf{P}\cdot \mathbf{M}_{\perp} \times \mathbf{M}_{\perp}^{\ast}
 
 with $i=\sqrt{-1}$, and $^{\ast}$ denoting the complex conjugate quantity, and
 $\times$ and $\cdot$  the vector and scalar product, respectively.
@@ -95,7 +95,7 @@ plane is constructed with the two vectors
     \mathbf{M}_{\perp,\perp P } = \mathbf{M}_{\perp } - (\mathbf{P}\cdot \mathbf{M}_{\perp }) \mathbf{P}
 
 
-and a third vector perpendicular to both $\mathbf{P}$ and $\mathbf{M}_{\perp,\perp P } $ :
+and a third vector perpendicular to both $\mathbf{P}$ and $ \mathbf{M}_{\perp,\perp P } $ :
 
 .. math::
     \mathbf{O} = \mathbf{M}_{\perp} \times \mathbf{P} - \mathbf{M}_{\perp,\perp P }

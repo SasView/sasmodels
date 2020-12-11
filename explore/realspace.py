@@ -598,9 +598,9 @@ def magnetic_sld(qx, qy, up_angle, up_phi, rho, rho_m):
     cos_spin, sin_spin = cos(-radians(up_angle)), sin(-radians(up_angle))
     cos_phi, sin_phi = cos(radians(up_phi)), sin(radians(up_phi))
     mx, my, mz = rho_m
-    px = cos_spin
+    px = sin_spin*cos_phi 
     py = sin_spin*sin_phi
-    pz = sin_spin*cos_phi   
+    pz = cos_spin  
     
     qvector = [qx*norm, qy*norm, 0]
     Mvector = [mx, my, mz]
@@ -1092,7 +1092,7 @@ def build_sphere(radius=125, rho=2,
                  rho_m=0, theta_m=0, phi_m=0, up_i=0, up_f=0, up_angle=0, up_phi=0):
     magnetism = pol2rec(rho_m, theta_m, phi_m) if rho_m != 0.0 else None
     shape = TriaxialEllipsoid(radius, radius, radius, rho, magnetism=magnetism)
-    shape.spin = (up_i, up_f, up_angle, up_rho)
+    shape.spin = (up_i, up_f, up_angle, up_phi)
     fn, fn_xy = wrap_sasmodel(
         'sphere',
         scale=1,
@@ -1106,17 +1106,17 @@ def build_sphere(radius=125, rho=2,
         up_frac_i=up_i,
         up_frac_f=up_f,
         up_angle=up_angle,
-        up_rho=up_rho,
+        up_phi=up_phi,
     )
     return shape, fn, fn_xy
 
 def build_ellip(rab=125, rc=50, rho=2,
-                rho_m=0, theta_m=0, phi_m=0, up_i=0, up_f=0, up_angle=0, up_rho=0):
+                rho_m=0, theta_m=0, phi_m=0, up_i=0, up_f=0, up_angle=0, up_phi=0):
     magnetism = pol2rec(rho_m, theta_m, phi_m) if rho_m != 0.0 else None
     shape = TriaxialEllipsoid(rab, rab, rc, rho, magnetism=magnetism)
     # TODO: polarization spec doesn't belong in shape
     # Put spin state info into the shape since we have it available.
-    shape.spin = (up_i, up_f, up_angle, up_rho)
+    shape.spin = (up_i, up_f, up_angle, up_phi)
     fn, fn_xy = wrap_sasmodel(
         'ellipsoid',
         scale=1,
@@ -1131,7 +1131,7 @@ def build_ellip(rab=125, rc=50, rho=2,
         up_frac_i=up_i,
         up_frac_f=up_f,
         up_angle=up_angle,
-        up_rho=up_rho,
+        up_phi=up_phi,
     )
     return shape, fn, fn_xy
 
@@ -1139,7 +1139,7 @@ def build_triell(ra=125, rb=200, rc=50, rho=2,
                  rho_m=0, theta_m=0, phi_m=0, up_i=0, up_f=0, up_angle=0, up_phi=0):
     magnetism = pol2rec(rho_m, theta_m, phi_m) if rho_m != 0.0 else None
     shape = TriaxialEllipsoid(ra, rb, rc, rho, magnetism=magnetism)
-    shape.spin = (up_i, up_f, up_angle, up_rho)
+    shape.spin = (up_i, up_f, up_angle, up_phi)
     fn, fn_xy = wrap_sasmodel(
         'triaxial_ellipsoid',
         scale=1,
@@ -1155,7 +1155,7 @@ def build_triell(ra=125, rb=200, rc=50, rho=2,
         up_frac_i=up_i,
         up_frac_f=up_f,
         up_angle=up_angle,
-        up_rho=up_rho,        
+        up_phi=up_phi,        
     )
     return shape, fn, fn_xy
 
@@ -1426,10 +1426,10 @@ def main():
     title = "%s(%s)" % (opts.shape, " ".join(opts.pars))
     if shape.is_magnetic:
         view = tuple(float(v) for v in opts.view.split(','))
-        up_frac_i, up_frac_f, up_angle, up_rho = shape.spin
+        up_frac_i, up_frac_f, up_angle, up_phi = shape.spin
         check_shape_mag(title, shape, fn_xy, view=view, show_points=opts.plot,
                        mesh=opts.mesh, qmax=opts.qmax, samples=opts.samples,
-                       up_frac_i=up_frac_i, up_frac_f=up_frac_f, up_angle=up_angle, up_rho=up_rho,
+                       up_frac_i=up_frac_i, up_frac_f=up_frac_f, up_angle=up_angle, up_phi=up_phi,
                        )
     elif opts.dim == 1:
         check_shape(title, shape, fn, show_points=opts.plot,
