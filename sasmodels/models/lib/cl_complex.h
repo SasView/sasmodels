@@ -1,8 +1,10 @@
+#ifndef _CL_COMPLEX_H
+#define _CL_COMPLEX_H
 /*
 Simple complex library for OpenCL
 
 TODO: use more robust algorithms for complex math functions
-TODO: implement inverse math functions for complex values
+TODO: implement inverse trig functions for complex values
 
 declare:     cdouble x
 define:      cplx(real, imag)
@@ -26,17 +28,25 @@ abs(x):      cabs(x)
 angle(x):    carg(x)
 
 Math functions:  f(x) -> cf(x)
-  sqrt, exp
+  sqrt, exp, pow, log, log10
   sin, cos, tan
   sinh, cosh, tanh
 
 */
 
-#ifndef USE_OPENCL
+// C99 environments without <complex.h> should define __STDC_NO_COMPLEX__
+// https://en.cppreference.com/w/c/numeric/complex
+#if !defined(USE_OPENCL) && !defined(__STD_NO_COMPLEX__)
+   #define HAVE_COMPLEX_H
+#endif
+
+#ifdef HAVE_COMPLEX_H
 
   // Use C99 complex support for all operations.
   #include <complex.h>
-  typedef complex double cdouble; // Note: extra space needed by double->float in cl_util.py
+  // Note: leave two spaces between double and cdouble because double->float
+  // in generate._convert_type is not clever enough.
+  typedef complex double  cdouble;
   inline cdouble cplx(const double x, const double y) { return x + y*I; }
   inline cdouble cneg(const cdouble a) { return -a; }
   inline cdouble radd(const double a, const cdouble b) { return a+b; }
@@ -198,6 +208,13 @@ inline cdouble ccosh(const cdouble z) {
 }
 inline cdouble ctan(const cdouble z) { return cdiv(csin(z),ccos(z)); }
 inline cdouble ctanh(const cdouble z) { return cdiv(csinh(z),ccosh(z)); }
-inline cdouble cexp(const cdouble a) { return cpolar(exp(a.x), a.y); }
+inline cdouble cexp(const cdouble z) { return cpolar(exp(z.x), z.y); }
+// z = re^iw => log(z) = log(r) + iw
+inline cdouble clog(const cdouble z) { return cplx(log(cabs(z)), carg(z)); }
+inline cdouble clog10(const cdouble z) { return cplx(log10(cabs(z)), carg(z)/2.30258509299405); }
+inline cdouble cpow(const cdouble a, const cdouble b) { return cexp(cmul(b, clog(a))); }
+inline cdouble cpowr(const cdouble a, const double b) { return cexp(rmul(b, clog(a))); }
+inline cdouble crpow(const double a, const cdouble b) { return cexp(rmul(log(a), b)); }
 
 #endif /* USE_OPENCL */
+#endif /* _CL_COMPLEX_H */

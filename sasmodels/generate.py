@@ -459,8 +459,8 @@ def _convert_type(source, type_name, constant_flag):
     """
     # Convert double keyword to float/long double/half.
     # Accept an 'n' # parameter for vector # values, where n is 2, 4, 8 or 16.
-    # Assume complex numbers are represented as cdouble which is typedef'd
-    # to double2.
+    # Assume complex numbers are represented as cdouble.
+    # TODO: use lookahead so that "typedef complex double cdouble;" converts.
     source = re.sub(r'(^|[^a-zA-Z0-9_]c?)double(([248]|16)?($|[^a-zA-Z0-9_]))',
                     r'\1%s\2'%type_name, source)
     source = _tag_float(source, constant_flag)
