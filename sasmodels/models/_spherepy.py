@@ -85,7 +85,7 @@ def Iq(q, sld, sld_solvent, radius):
     #print "sld,r",sld,sld_solvent,radius
     qr = q * radius
     sn, cn = sin(qr), cos(qr)
-    ## The natural expression for the bessel function is the following:
+    ## The natural expression for the Bessel function is the following:
     ##     bes = 3 * (sn-qr*cn)/qr**3 if qr>0 else 1
     ## however, to support vector q values we need to handle the conditional
     ## as a vector, which we do by first evaluating the full expression

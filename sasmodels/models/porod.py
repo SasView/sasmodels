@@ -12,7 +12,7 @@ dilute particulate system regardless of shape or size but only to the very low
 $q$ (being a taylor expansion around $q$ = 0), the Porod Law applies to any
 scattering system with sharp scattering length density interfaces between the
 phases but only at very high $q$ (technically in the limit as $q \to \infty$ ..
-except of course that, practically, the continum approach breaks down there).
+except of course that, practically, the continuum approach breaks down there).
 It is based on the idea that at sufficiently high $q$ there is no shape
 information left and all scattering is just reflections off the sharp
 interfaces.
@@ -30,7 +30,7 @@ phases.
 Thus, by extracting the Porod Constant from experimental data, and
 knowing the contrast factor between the two phases, one can obtain the specific
 surface area for the material. This can be very useful for example in
-understanding porosoity in materials, particularly when used in conjunction
+understanding porosity in materials, particularly when used in conjunction
 with complementary techniques such as BET.
 
 .. Note:: While it is straightforward to calculate the specific surface area,
@@ -57,7 +57,7 @@ with complementary techniques such as BET.
       across these very sharp dips.
 
     * Ironically, large resolution smearing, and/or polydispersity smearing,
-      will make the value obtained much more consistant and reliable. Thus the
+      will make the value obtained much more consistent and reliable. Thus the
       problem is less severe for typical real data than for simulated data that
       does not simulate any resolution smearing.
 

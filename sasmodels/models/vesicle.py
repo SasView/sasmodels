@@ -25,7 +25,7 @@ is the outer radius of the shell, $\rho_{\text{solvent}}$ is the scattering
 length density of the solvent (which is the same as for the core in this case),
 $\rho_{\text{scale}}$ is the scattering length density of the shell, background
 is a flat background level (due for example to incoherent scattering in the
-case of neutrons), and $j_1$ is the spherical bessel function
+case of neutrons), and $j_1$ is the spherical Bessel function
 $j_1 = (\sin(x) - x \cos(x))/ x^2$.
 
 The functional form is identical to a "typical" core-shell structure, except

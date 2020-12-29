@@ -119,7 +119,7 @@ def random():
 tests = [
     # At some point the SasView 3.x test result was deemed incorrect.  The
     # following tests were verified against NIST IGOR macros ver 7.850.
-    # NOTE: NIST macros do only provide for a polydispers core (no option
+    # NOTE: NIST macros do only provide for a polydisperse core (no option
     # for a poly shell or for a monodisperse core.  The results seemed
     # extremely sensitive to the core PD, varying non monotonically all
     # the way to a PD of 1e-6. From 1e-6 to 1e-9 no changes in the

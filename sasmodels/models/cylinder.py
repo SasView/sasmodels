@@ -124,7 +124,7 @@ description = """
             V: Volume of the cylinder
             R: Radius of the cylinder
             L: Length of the cylinder
-            J1: The bessel function
+            J1: The Bessel function
             alpha: angle between the axis of the
             cylinder and the q-vector for 1D
             :the ouput is P(q)=scale/V*integral

@@ -64,7 +64,7 @@ where
 where $V_t$ is the total volume of the bicelle, $V_c$ the volume of the core,
 $V_{c+f}$ the volume of the core plus the volume of the faces, $R$ is the radius
 of the core, $L$ the length of the core, $t_f$ the thickness of the face, $t_r$
-the thickness of the rim and $J_1$ the usual first order bessel function.
+the thickness of the rim and $J_1$ the usual first order Bessel function.
 
 The output of the 1D scattering intensity function for randomly oriented
 cylinders is then given by integrating over all possible $\theta$ and $\phi$.

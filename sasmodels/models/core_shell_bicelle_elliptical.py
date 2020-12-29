@@ -76,7 +76,7 @@ the bicelle, $V_c = \pi.Xcore.R^2.L$ the volume of the core,
 $V_{c+f} = \pi.Xcore.R^2.(L+2.t_f)$ the volume of the core plus the volume
 of the faces, $R$ is the radius of the core, $Xcore$ is the axial ratio of
 the core, $L$ the length of the core, $t_f$ the thickness of the face, $t_r$
-the thickness of the rim and $J_1$ the usual first order bessel function.
+the thickness of the rim and $J_1$ the usual first order Bessel function.
 The core has radii $R$ and $Xcore.R$ so is circular, as for the
 core_shell_bicelle model, for $Xcore$ =1. Note that you may need to
 limit the range of $Xcore$, especially if using the Monte-Carlo algorithm,

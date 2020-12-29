@@ -51,7 +51,7 @@ constant SLD within the core and solvent, so
         &= -3\rho_\text{solvent}V(r_N)\frac{j_1(q r_N)}{q r_N}
     \end{align*}
 
-where the spherical bessel function $j_1$ is
+where the spherical Bessel function $j_1$ is
 
 .. math::
 

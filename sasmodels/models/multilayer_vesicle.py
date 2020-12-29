@@ -48,10 +48,10 @@ USAGE NOTES
   calculations rather slow.
 * The number of shells is always rounded to an integer value as a non integer
   number of layers is not physical.
-* Thus Polydispersity should only be applied to number of shells **VERY
+* Thus polydispersity should only be applied to number of shells **VERY
   CAREFULLY**.  A possible legitimate use would be for mixed systems in which
   some vesicles have 1 shell, some have 2, etc. A polydispersity on $N$ can be
-  used to model the data by using the "array distriubtion" feature. First
+  used to model the data by using the "array distribution" feature. First
   create a file such as *shell_dist.txt* containing the relative portion
   of each vesicle size::
 
@@ -68,7 +68,7 @@ USAGE NOTES
   function complicated by the fact that the number of water/shell pairs must
   physically be an integer value, although the optimization treats it as a
   floating point value. Thus it may be that the resolution interpolation is not
-  sufficiently fine grained in certain cases. Please report any such occurences
+  sufficiently fine grained in certain cases. Please report any such occurrences
   to the SasView team. Generally, for the best possible experience:
 
  - Start with the best possible guess

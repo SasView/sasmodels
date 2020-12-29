@@ -141,7 +141,7 @@ source = ["lib/sas_3j1x_x.c", "lib/gauss150.c", "lib/sphere_form.c", "bcc_paracr
 def random():
     """Return a random parameter set for the model."""
     # Define lattice spacing as a multiple of the particle radius
-    # using the formulat a = 4 r/sqrt(3).  Systems which are ordered
+    # using the formula a = 4 r/sqrt(3).  Systems which are ordered
     # are probably mostly filled, so use a distribution which goes from
     # zero to one, but leaving 90% of them within 80% of the
     # maximum bcc packing.  Lattice distortion values are empirically

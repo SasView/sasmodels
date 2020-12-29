@@ -12,9 +12,9 @@ The scattering intensity $I(q)$ is calculated as
     \end{cases}
 
 where $q_c$ = the location of the crossover from one slope to the other,
-$A$ = the scaling coefficent that sets the overall intensity of the lower Q
+$A$ = the scaling coefficient that sets the overall intensity of the lower Q
 power law region, $m1$ = power law exponent at low Q, and $m2$ = power law
-exponent at high Q.  The scaling of the second power law region (coefficent C)
+exponent at high Q.  The scaling of the second power law region (coefficient C)
 is then automatically scaled to match the first by following formula:
 
 .. math::
@@ -55,7 +55,7 @@ description = """
             =C*pow(qval,-1.0*power2) + background for q>q_c
             where C=coef_A*pow(q_c,-1.0*power1)/pow(q_c,-1.0*power2).
 
-            coef_A = scaling coefficent
+            coef_A = scaling coefficient
             q_c = crossover location [1/A]
             power_1 (=m1) = power law exponent at low Q
             power_2 (=m2) = power law exponent at high Q
