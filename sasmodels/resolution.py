@@ -88,17 +88,18 @@ class Pinhole1D(Resolution):
                        if q_calc is None else np.sort(q_calc))
 
         # Protect against models which are not defined for very low q.  Limit
-        # the smallest q value evaluated to 0.02*min.  Note that negative q
-        # values are trimmed even for broad resolution.  Although not possible
-        # from the geometry, they may appear since we are using a truncated
-        # gaussian to represent resolution rather than a skew distribution.
-        #cutoff = MINIMUM_ABSOLUTE_Q*np.min(self.q)
-        #self.q_calc = self.q_calc[self.q_calc >= cutoff]
+        # the smallest q value evaluated (in absolute) to 0.02*min
+        cutoff = MINIMUM_ABSOLUTE_Q*np.min(self.q)
+        self.q_calc = self.q_calc[abs(self.q_calc) >= cutoff]
 
         # Build weight matrix from calculated q values
         self.weight_matrix = pinhole_resolution(
             self.q_calc, self.q, np.maximum(q_width, MINIMUM_RESOLUTION),
             nsigma=nsigma)
+
+        # Force positive q, even for events measured on the opposite side of
+        # the beam stop.
+        self.q_calc = abs(self.q_calc)
 
     def apply(self, theory):
         return apply_resolution_matrix(self.weight_matrix, theory)
