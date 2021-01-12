@@ -212,7 +212,7 @@ class MixtureKernel(Kernel):
         self.results = None  # type: Callable[[], OrderedDict]
 
     def Iq(self, call_details, values, cutoff, magnetic):
-        # type: (CallDetails, np.ndarray, np.ndarry, float, bool) -> np.ndarray
+        # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
         scale, background = values[0:2]
         total = 0.0
         # remember the parts for plotting later

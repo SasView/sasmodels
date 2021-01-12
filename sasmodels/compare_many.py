@@ -35,7 +35,7 @@ else:
 MODELS = core.list_models()
 
 def calc_stats(target, value, index):
-    # type: (np. ndarrady, np.ndarray, Any) -> Tuple[float, float, float, float]
+    # type: (np. ndarray, np.ndarray, Any) -> Tuple[float, float, float, float]
     """
     Calculate statistics between the target value and the computed value.
 
@@ -94,7 +94,7 @@ PRECISION = {
 }
 def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
                      base='single', comp='double'):
-    # type: (str, Data, Any, int, bool, float, string, string) -> None
+    # type: (str, Data, Any, int, bool, float, str, str) -> None
     r"""
     Compare the model under different calculation engines.
 
