@@ -25,6 +25,38 @@ print("\n".join(sys.path))
 import sasmodels
 
 
+nitpick_ignore = [
+    ('py:class', 'argparse.Namespace'),
+    ('py:class', 'bumps.parameter.Parameter'),
+    ('py:class', 'collections.OrderedDict'),
+    ('py:class', 'cuda.Context'),
+    ('py:class', 'cuda.Function'),
+    ('py:class', 'np.dtype'),
+    ('py:class', 'numpy.dtype'),
+    ('py:class', 'np.ndarray'),
+    ('py:class', 'numpy.ndarray'),
+    ('py:class', 'pyopencl.Program'),
+    ('py:class', 'pyopencl._cl.Context'),
+    ('py:class', 'pyopencl._cl.CommandQueue'),
+    ('py:class', 'pyopencl._cl.Device'),
+    ('py:class', 'pyopencl._cl.Kernel'),
+    ('py:class', 'QWebView'),
+    ('py:class', 'unittest.suite.TestSuite'),
+    ('py:class', 'wx.Frame'),
+    # autodoc and namedtuple is completely broken
+    ('py:class', 'integer -- return number of occurrences of value'),
+    ('py:class', 'integer -- return first index of value.'),
+    # autodoc doesn't handle these type definitions
+    ('py:class', 'Data'),
+    ('py:class', 'Data1D'),
+    ('py:class', 'Data2D'),
+    ('py:class', 'Kernel'),
+    ('py:class', 'ModelInfo'),
+    ('py:class', 'module'),
+    ('py:class', 'SesansData'),
+    ('py:class', 'SourceModule'),
+]
+
 # -- General configuration -----------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be extensions

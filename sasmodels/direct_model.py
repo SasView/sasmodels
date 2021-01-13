@@ -100,7 +100,7 @@ def call_profile(model_info, pars=None):
     return x, y, model_info.profile_axes
 
 def get_mesh(model_info, values, dim='1d', mono=False):
-    # type: (ModelInfo, Dict[str, float], str, bool) -> List[Tuple[float, np.ndarray, np.ndarry]]
+    # type: (ModelInfo, Dict[str, float], str, bool) -> List[Tuple[float, np.ndarray, np.ndarray]]
     """
     Retrieve the dispersity mesh described by the parameter set.
 
