@@ -53,10 +53,10 @@ def pytest_pycollect_makeitem(collector, name, obj):
     if collector.istestfunction(obj, name) and is_generator(obj):
         tests = []
         for number, yielded in enumerate(obj()):
-            index, call, args = split_yielded_test(yielded, number)
+            index, call = split_yielded_test(yielded, number)
             description = getattr(call, 'description', name+index)
             test = function_test(
-                parent=collector, name=description, args=args, callobj=call)
+                parent=collector, name=description, callobj=call)
             tests.append(test)
         return tests
 
@@ -74,13 +74,10 @@ def is_generator(func):
 def split_yielded_test(obj, number):
     if not isinstance(obj, (tuple, list)):
         obj = (obj,)
-    if not callable(obj[0]):
-        index = "['%s']"%obj[0]
-        obj = obj[1:]
-    else:
-        index = "[%d]"%number
-    call, args = obj[0], obj[1:]
-    return index, call, args
+    assert callable(obj[0])
+    index = "[%d]"%number
+    call = obj[0]
+    return index, call
 
 USE_DOCSTRING_AS_DESCRIPTION = True
 def pytest_collection_modifyitems(session, config, items):
