@@ -1,6 +1,12 @@
 Release notes
 =============
 
+v1.0.5 2021-01-26
+------------------
+* create model for superparamagnetic relaxing particles
+* re-describe source intensity in model parameter tables
+* use new orientation for magnetic models
+
 v1.0.4 2020-07-24
 ------------------
 * doc update: how to test a plugin model in 5.x version
