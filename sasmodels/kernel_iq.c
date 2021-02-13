@@ -179,7 +179,7 @@ static double mag_sld(
   double Mperp[3];
   double MperpP[3];
   double MperpPperpQ[3];
-  const double qsq = qx*qx + qy*qy; ;
+  const double qsq = sqrt(qx*qx + qy*qy) ;
 
   SET_VEC(qvector, qx/qsq, qy/qsq, 0);	
 	
