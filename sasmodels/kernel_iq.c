@@ -411,7 +411,7 @@ void KERNEL_NAME(
   double cos_mspin, sin_mspin;
   double cos_mphi, sin_mphi;
   set_spin_weights(values[NUM_PARS+2], values[NUM_PARS+3], xs_weights);
-  SINCOS(-values[NUM_PARS+4]*M_PI_180, sin_mspin, cos_mspin);
+  SINCOS(values[NUM_PARS+4]*M_PI_180, sin_mspin, cos_mspin);
   SINCOS(values[NUM_PARS+5]*M_PI_180, sin_mphi, cos_mphi);
 #endif // MAGNETIC
 
