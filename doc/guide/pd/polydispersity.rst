@@ -89,18 +89,39 @@ Suggested Applications
 ^^^^^^^^^^^^^^^^^^^^^^
 
 If applying polydispersion to parameters describing particle sizes, consider using
-the Lognormal or Schulz distributions.
+the *Lognormal* or *Schulz* distributions.
 
 If applying polydispersion to parameters describing interfacial thicknesses
-or angular orientations, consider using the Gaussian or Boltzmann distributions.
+or orientations, consider using the *Gaussian* or *Boltzmann* distributions.
 
-If applying polydispersion to parameters describing angles, use the Uniform
-distribution. Beware of using distributions that are always positive (eg, the
-Lognormal) because angles can be negative!
+If applying polydispersion to parameters describing angles, use the *Uniform*
+distribution.
 
-The array distribution provides a very simple means of implementing a user-
+The *Array* distribution provides a very simple means of implementing a user-
 defined distribution, but without any fittable parameters. Greater flexibility
-is conferred by the user-defined distribution.
+is conferred by the *User-defined* distribution.
+
+Usage Notes
+^^^^^^^^^^^
+
+Beware of using distributions that are always positive (eg, the *Lognormal*) for
+angles because angles can be negative! If in doubt, plot the polydispersity data
+for the model and check!
+
+The parameter bounds (ie, Min/Max) for polydispersion should be specified under the
+Polydispersity tab on the FitPage. They are not formally linked to the bounds for
+the parameter to which polydispersion is being applied that appear under the Model
+tab. In other words, bounds on a *radius* parameter under Model are not the same as
+bounds on a *distribution of radius* parameter under Polydispersity, and vice versa. 
+
+If a distribution exceeds its parameter bounds those weights outside the bounds are
+excluded and the distribution is normalized such that the sum of the remaining
+weights in the truncated distribution equal one.
+
+Whilst PD values for 'size' parameters will normally lie in the range 0 - 1, PD
+values for 'angular' parameters will often need to be much larger (perhaps >5 or
+even >10). Again, plotting the relevant polydispersity data will easily show if a
+sensible value is being used.
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
