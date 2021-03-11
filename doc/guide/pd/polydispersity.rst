@@ -118,10 +118,11 @@ If a distribution exceeds its parameter bounds those weights outside the bounds 
 excluded and the distribution is normalized such that the sum of the remaining
 weights in the truncated distribution equal one.
 
-Whilst PD values for 'size' parameters will normally lie in the range 0 - 1, PD
-values for 'angular' parameters will often need to be much larger (perhaps >5 or
-even >10). Again, plotting the relevant polydispersity data will easily show if a
-sensible value is being used.
+Whilst PD values for 'size' parameters are in proportion to the mean, with values
+normally lying in the range 0 – 1, PD values for 'angular' parameters represent the
+actual width of the distribution in degrees, so values as high as 5 or 10 degrees
+maybe necessary to describe oriented systems. Again, plotting the relevant
+polydispersity data will easily show if a sensible value is being used.
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
