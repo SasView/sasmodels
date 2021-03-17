@@ -61,9 +61,9 @@ def pol2rec(r, theta, phi):
     Convert from 3D polar coordinates to rectangular coordinates.
     """
     theta, phi = radians(theta), radians(phi)
-    x = +r * sin(theta) * cos(phi)
-    y = +r *sin(theta)*sin(phi) 
-    z = -r * cos(theta) 
+    x = +r * cos(theta) * cos(phi)
+    y = +r * sin(theta)
+    z = -r * cos(theta) * sin(phi)
     return x, y, z
 
 def rotation(theta, phi, psi):
@@ -587,9 +587,6 @@ def spin_weights(in_spin, out_spin):
     ]
     return weight
 
-def orth(A, b_hat): # A = 3 x n, and b_hat unit vector
- return A -np.sum(A*b_hat[:,None], axis=0)[None,:]*b_hat[:,None]    
-
 def magnetic_sld(qx, qy, up_angle, up_phi, rho, rho_m):
     """
     Compute the complex sld for the magnetic spin states.
@@ -597,32 +594,33 @@ def magnetic_sld(qx, qy, up_angle, up_phi, rho, rho_m):
     """
     # Handle q=0 by setting px = py = 0
     # Note: this is different from kernel_iq, which I(0,0) to 0
-    q_norm = 1/sqrt(qx**2 + qy**2) if qx != 0. or qy != 0. else 0.
-    cos_spin, sin_spin = cos(radians(up_angle)), sin(radians(up_angle))
+    norm = 1/(qx**2 + qy**2) if qx != 0. or qy != 0. else 0.
+    cos_spin, sin_spin = cos(-radians(up_angle)), sin(-radians(up_angle))
     cos_phi, sin_phi = cos(radians(up_phi)), sin(radians(up_phi))
-    M = rho_m
-    p_hat = np.array([sin_spin*cos_phi, sin_spin*sin_phi, cos_spin ])
+    mx, my, mz = rho_m
+    px = sin_spin*cos_phi 
+    py = sin_spin*sin_phi
+    pz = cos_spin  
+    
+    qvector = [qx*norm, qy*norm, 0]
+    Mvector = [mx, my, mz]
+    Pvector = [px, py, pz]
 
     
-    q_hat = np.array([qx, qy, 0])*q_norm
-    M_perp = orth(M,q_hat)
-    M_perpP = orth(M_perp,p_hat)
-    M_perpP_perpQ = orth(M_perpP,q_hat)
-
-    perpx = np.dot(p_hat, M_perp)
-    perpy = np.sqrt(np.sum(M_perpP_perpQ**2, axis=0))
-    perpz = np.dot(q_hat,M_perpP)
+    Mperp = Mvector-norm*np.dot(Mvector, qvector)*qvector 
+    MperpP = Mperp-(np.dot(Mperp, Pvector)*Pvector
+    MperpPperpQ = MperpP- norm*np.dot(MperpP, qvector)*qvector     
     
 
     return [
-        rho -perpx,   # dd => sld - D M_perpx
-        perpy - 1j*perpz, # du => -D (M_perpy + j M_perpz)
-        perpy + 1j*perpz, # ud => -D (M_perpy - j M_perpz)
-        rho + perpx,   # uu => sld + D M_perpx
+        rho - np.dot(Pvector,Mperp),   # dd => sld - D M_perpx
+        (np.sqrt(MperpPperpQ.dot(MperpPperpQ) - 1j*np.dot(MperpP,qvector), # du => -D (M_perpy + j M_perpz)
+        (np.sqrt(MperpPperpQ.dot(MperpPperpQ) + 1j*np.dot(MperpP,qvector), # ud => -D (M_perpy - j M_perpz)
+        rho + np.dot(Pvector,Mperp),   # uu => sld + D M_perpx
     ]
 
 def calc_Iq_magnetic(qx, qy, rho, rho_m, points, volume=1.0, view=(0, 0, 0),
-                     up_frac_i=0.5, up_frac_f=0.5, up_angle=0., up_phi=0.):
+                     up_frac_i=0, up_frac_f=0, up_angle=0., up_phi=0.):
     """
     *qx*, *qy* correspond to the detector pixels at which to calculate the
     scattering, relative to the beam along the negative z axis.
