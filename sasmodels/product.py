@@ -418,7 +418,7 @@ class ProductKernel(Kernel):
         # they will only be for form factor P, not structure factor S.
         first_mag = last_s + have_beta_mode + have_er_mode
         mag_pars = 3*p_info.parameters.nmagnetic
-        last_mag = first_mag + (mag_pars + 3 if mag_pars else 0)
+        last_mag = first_mag + (mag_pars + 4 if mag_pars else 0)
         self._magentic_slice = slice(first_mag, last_mag)
 
     def Iq(self, call_details, values, cutoff, magnetic):
