@@ -61,15 +61,14 @@ def pol2rec(r, theta, phi):
     Convert from 3D polar coordinates to rectangular coordinates.
     """
     theta, phi = radians(theta), radians(phi)
-    x = +r * cos(theta) * cos(phi)
-    y = +r * sin(theta)
-    z = -r * cos(theta) * sin(phi)
+    x = +r * sin(theta) * cos(phi)
+    y = +r * sin(theta)*sin(phi) 
+    z = +r * cos(theta) 
     return x, y, z
 
 def rotation(theta, phi, psi):
     """
     Apply the jitter transform to a set of points.
-
     Points are stored in a 3 x n numpy matrix, not a numpy array or tuple.
     """
     return Rx(phi)*Ry(theta)*Rz(psi)
@@ -77,9 +76,7 @@ def rotation(theta, phi, psi):
 def apply_view(points, view):
     """
     Apply the view transform (theta, phi, psi) to a set of points.
-
     Points are stored in a 3 x n numpy array.
-
     View angles are in degrees.
     """
     theta, phi, psi = view
@@ -90,7 +87,6 @@ def invert_view(qx, qy, view):
     """
     Return (qa, qb, qc) for the (theta, phi, psi) view angle at detector
     pixel (qx, qy).
-
     View angles are in degrees.
     """
     theta, phi, psi = view
@@ -502,7 +498,6 @@ if 0 and USE_CUDA:
     def pad_vectors(boundary, *vectors):
         """
         Yields a list of vectors padded with NaN to a multiple of *boundary*.
-
         Yields the original vector if the size is already a mulitple of *boundary*.
         """
         for old in vectors:
@@ -520,17 +515,12 @@ def calc_Iqxy(qx, qy, rho, points, volume=1.0, view=(0, 0, 0), dtype='f'):
     """
     *qx*, *qy* correspond to the detector pixels at which to calculate the
     scattering, relative to the beam along the negative z axis.
-
     *points* are three columns (x, y, z), one for each sample in the shape.
-
     *rho* (1e-6/Ang) is the scattering length density of each point.
-
     *volume* should be 1/number_density.  That is, each of n particles in the
     total value represents volume/n contribution to the scattering.
-
     *view* rotates the points about the axes using Euler angles for pitch
     yaw and roll for a beam travelling along the negative z axis.
-
     *dtype* is the numerical precision of the calculation.
     """
     # TODO: maybe slightly faster to rotate points, and drop qc*z
@@ -590,59 +580,64 @@ def spin_weights(in_spin, out_spin):
     # to the incoming flux with polariser in for SANSPOl and unpolarised beam, respectively.
 
     weight = [
-        (1.0-in_spin) * (1.0-out_spin) / norm, # dd
-        (1.0-in_spin) * out_spin / norm,       # du
-        in_spin * (1.0-out_spin) / norm,       # ud
+        (1.0 - in_spin) * (1.0 - out_spin) / norm, # dd
+        (1.0 - in_spin) * out_spin / norm,       # du
+        in_spin * (1.0 - out_spin) / norm,       # ud
         in_spin * out_spin / norm,             # uu
     ]
     return weight
 
-def magnetic_sld(qx, qy, up_angle, rho, rho_m):
+def orth(A, b_hat): # A = 3 x n, and b_hat unit vector
+ return A - np.sum(A*b_hat[:, None], axis=0)[None, :]*b_hat[:, None]    
+
+def magnetic_sld(qx, qy, up_angle, up_phi, rho, rho_m):
     """
     Compute the complex sld for the magnetic spin states.
-
     Returns effective rho for spin states [dd, du, ud, uu].
     """
     # Handle q=0 by setting px = py = 0
     # Note: this is different from kernel_iq, which I(0,0) to 0
-    one_over_qsq = 1/(qx**2 + qy**2) if qx != 0. or qy != 0. else 0.
-    cos_spin, sin_spin = cos(-radians(up_angle)), sin(-radians(up_angle))
-    mx, my, mz = rho_m
-    perp = (qy*mx - qx*my)*one_over_qsq
-    px = perp*(qy*cos_spin + qx*sin_spin)
-    py = perp*(qy*sin_spin - qx*cos_spin)
+    q_norm = 1/sqrt(qx**2 + qy**2) if qx != 0. or qy != 0. else 0.
+    cos_spin, sin_spin = cos(radians(up_angle)), sin(radians(up_angle))
+    cos_phi, sin_phi = cos(radians(up_phi)), sin(radians(up_phi))
+    M = rho_m
+    p_hat = np.array([sin_spin * cos_phi, sin_spin * sin_phi, cos_spin ])
+
+    
+    q_hat = np.array([qx, qy, 0]) * q_norm
+    M_perp = orth(M,q_hat)
+    M_perpP = orth(M_perp, p_hat)
+    M_perpP_perpQ = orth(M_perpP, q_hat)
+
+    perpx = np.dot(p_hat, M_perp)
+    perpy = np.sqrt(np.sum(M_perpP_perpQ**2, axis=0))
+    perpz = np.dot(q_hat, M_perpP)
+    
+
     return [
-        rho - px,   # dd => sld - D M_perpx
-        py - 1j*mz, # du => -D (M_perpy + j M_perpz)
-        py + 1j*mz, # ud => -D (M_perpy - j M_perpz)
-        rho + px,   # uu => sld + D M_perpx
+        rho - perpx,   # dd => sld - D M_perpx
+        perpy - 1j * perpz, # du => -D (M_perpy + j M_perpz)
+        perpy + 1j * perpz, # ud => -D (M_perpy - j M_perpz)
+        rho + perpx,   # uu => sld + D M_perpx
     ]
 
 def calc_Iq_magnetic(qx, qy, rho, rho_m, points, volume=1.0, view=(0, 0, 0),
-                     up_frac_i=0, up_frac_f=0, up_angle=0.):
+                     up_frac_i=0.5, up_frac_f=0.5, up_angle=0., up_phi=0.):
     """
     *qx*, *qy* correspond to the detector pixels at which to calculate the
     scattering, relative to the beam along the negative z axis.
-
     *points* are three columns (x, y, z), one for each sample in the shape.
-
     *rho* (1e-6/Ang) is the scattering length density of each point.
-
     *rho_m* (1e-6/Ang) are the (mx, my, mz) components of the magnetic
     scattering length density for each point.
-
     *volume* should be 1/number_density.  That is, each of n particles in the
     total value represents volume/n contribution to the scattering.
-
     *view* rotates the points about the axes using Euler angles for pitch
     yaw and roll for a beam travelling along the negative z axis.
-
     *up_frac_i* is the portion of polarizer neutrons which are spin up.
-
     *up_frac_f* is the portion of analyzer neutrons which are spin up.
-
-    *up_angle* is the angle of the spin up direction relative to the y axis.
-
+    *up_angle* and *up_phi* are the rotation angle of the spin up direction 
+    in the detector plane and the inclination from the beam direction (z-axis).
     *dtype* is the numerical precision of the calculation. [not implemented]
     """
     # TODO: maybe slightly faster to rotate points and rho_m, and drop qc*z
@@ -659,7 +654,7 @@ def calc_Iq_magnetic(qx, qy, rho, rho_m, points, volume=1.0, view=(0, 0, 0),
     qx, qy = (v.flatten() for v in (qx, qy))
     for k in range(qx.size):
         ephase = volume*np.exp(1j*(qa[k]*x + qb[k]*y + qc[k]*z))
-        dd, du, ud, uu = magnetic_sld(qx[k], qy[k], up_angle, rho, rho_m)
+        dd, du, ud, uu = magnetic_sld(qx[k], qy[k], up_angle, up_phi, rho, rho_m)
         for w, xs in zip(weights, (dd, du, ud, uu)):
             if w == 0.0:
                 continue
@@ -717,10 +712,9 @@ def _calc_Pr_uniform(r, rho, points, volume):
     # more speedup, though still bounded by the O(n^2) cost.
     """
 void pdfcalc(int n, const double *pts, const double *rho,
-	     int nPr, double *Pr, double rstep)
+         int nPr, double *Pr, double rstep)
 {
   int i,j;
-
   for (i=0; i<n-2; i++) {
     for (j=i+1; j<=n-1; j++) {
       const double dxx=pts[3*i]-pts[3*j];
@@ -820,7 +814,6 @@ def bin_edges(x):
     """
     Determine bin edges from bin centers, assuming that edges are centered
     between the bins.
-
     Note: this uses the arithmetic mean, which may not be appropriate for
     log-scaled data.
     """
@@ -1099,10 +1092,10 @@ def build_csbox(a=10, b=20, c=30, da=1, db=2, dc=3, slda=1, sldb=2, sldc=3, sld_
     return shape, fn, fn_xy
 
 def build_sphere(radius=125, rho=2,
-                 rho_m=0, theta_m=0, phi_m=0, up_i=0, up_f=0, up_angle=0):
+                 rho_m=0, theta_m=0, phi_m=0, up_i=0, up_f=0, up_angle=0, up_phi=0):
     magnetism = pol2rec(rho_m, theta_m, phi_m) if rho_m != 0.0 else None
     shape = TriaxialEllipsoid(radius, radius, radius, rho, magnetism=magnetism)
-    shape.spin = (up_i, up_f, up_angle)
+    shape.spin = (up_i, up_f, up_angle, up_phi)
     fn, fn_xy = wrap_sasmodel(
         'sphere',
         scale=1,
@@ -1116,16 +1109,17 @@ def build_sphere(radius=125, rho=2,
         up_frac_i=up_i,
         up_frac_f=up_f,
         up_angle=up_angle,
+        up_phi=up_phi,
     )
     return shape, fn, fn_xy
 
 def build_ellip(rab=125, rc=50, rho=2,
-                rho_m=0, theta_m=0, phi_m=0, up_i=0, up_f=0, up_angle=0):
+                rho_m=0, theta_m=0, phi_m=0, up_i=0, up_f=0, up_angle=0, up_phi=0):
     magnetism = pol2rec(rho_m, theta_m, phi_m) if rho_m != 0.0 else None
     shape = TriaxialEllipsoid(rab, rab, rc, rho, magnetism=magnetism)
     # TODO: polarization spec doesn't belong in shape
     # Put spin state info into the shape since we have it available.
-    shape.spin = (up_i, up_f, up_angle)
+    shape.spin = (up_i, up_f, up_angle, up_phi)
     fn, fn_xy = wrap_sasmodel(
         'ellipsoid',
         scale=1,
@@ -1140,14 +1134,15 @@ def build_ellip(rab=125, rc=50, rho=2,
         up_frac_i=up_i,
         up_frac_f=up_f,
         up_angle=up_angle,
+        up_phi=up_phi,
     )
     return shape, fn, fn_xy
 
 def build_triell(ra=125, rb=200, rc=50, rho=2,
-                 rho_m=0, theta_m=0, phi_m=0, up_i=0, up_f=0, up_angle=0):
+                 rho_m=0, theta_m=0, phi_m=0, up_i=0, up_f=0, up_angle=0, up_phi=0):
     magnetism = pol2rec(rho_m, theta_m, phi_m) if rho_m != 0.0 else None
     shape = TriaxialEllipsoid(ra, rb, rc, rho, magnetism=magnetism)
-    shape.spin = (up_i, up_f, up_angle)
+    shape.spin = (up_i, up_f, up_angle, up_phi)
     fn, fn_xy = wrap_sasmodel(
         'triaxial_ellipsoid',
         scale=1,
@@ -1163,6 +1158,7 @@ def build_triell(ra=125, rb=200, rc=50, rho=2,
         up_frac_i=up_i,
         up_frac_f=up_f,
         up_angle=up_angle,
+        up_phi=up_phi,        
     )
     return shape, fn, fn_xy
 
@@ -1336,7 +1332,7 @@ def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
 
 def check_shape_mag(title, shape, fn=None, view=(0, 0, 0), show_points=False,
                     mesh=100, qmax=1.0, samples=5000,
-                    up_frac_i=0, up_frac_f=0, up_angle=0):
+                    up_frac_i=0, up_frac_f=0, up_angle=0, up_phi=0):
     rho_solvent = 0
     #qx = np.linspace(0.0, qmax, mesh)
     #qy = np.linspace(0.0, qmax, mesh)
@@ -1355,7 +1351,7 @@ def check_shape_mag(title, shape, fn=None, view=(0, 0, 0), show_points=False,
     t0 = timer()
     Iqxy = calc_Iq_magnetic(Qx, Qy, rho, rho_m, points, volume=volume, view=view,
                             up_frac_i=up_frac_i, up_frac_f=up_frac_f,
-                            up_angle=up_angle)
+                            up_angle=up_angle, up_phi=up_phi)
     print("calc I_mag time", timer() - t0)
     t0 = timer()
     theory = fn(Qx, Qy, view) if fn is not None else None
@@ -1433,10 +1429,10 @@ def main():
     title = "%s(%s)" % (opts.shape, " ".join(opts.pars))
     if shape.is_magnetic:
         view = tuple(float(v) for v in opts.view.split(','))
-        up_frac_i, up_frac_f, up_angle = shape.spin
+        up_frac_i, up_frac_f, up_angle, up_phi = shape.spin
         check_shape_mag(title, shape, fn_xy, view=view, show_points=opts.plot,
                        mesh=opts.mesh, qmax=opts.qmax, samples=opts.samples,
-                       up_frac_i=up_frac_i, up_frac_f=up_frac_f, up_angle=up_angle,
+                       up_frac_i=up_frac_i, up_frac_f=up_frac_f, up_angle=up_angle, up_phi=up_phi,
                        )
     elif opts.dim == 1:
         check_shape(title, shape, fn, show_points=opts.plot,

@@ -447,7 +447,7 @@ class ParameterTable(object):
                              if p.type == 'sld')
         self.nvalues = 2 + self.npars
         if self.nmagnetic:
-            self.nvalues += 3 + 3*self.nmagnetic
+            self.nvalues += 4 + 3*self.nmagnetic
         self.call_parameters = self._get_call_parameters()
         self.defaults = self._get_defaults()
         #self._name_table= dict((p.id, p) for p in parameters)
@@ -641,7 +641,9 @@ class ParameterTable(object):
                 Parameter('up_frac_f', '', 0., [0., 1.],
                           'magnetic', 'fraction of spin up final'),
                 Parameter('up_angle', 'degrees', 0., [0., 360.],
-                          'magnetic', 'spin up angle'),
+                          'magnetic', 'polarization axis rotation angle'),
+                Parameter('up_phi', 'degrees', 0., [0., 180.],
+                          'magnetic', 'polarization axis inclination angle'),
             ])
             slds = [p for p in full_list if p.type == 'sld']
             for p in slds:
@@ -691,7 +693,7 @@ class ParameterTable(object):
 
         Parameters marked as sld will automatically have a set of associated
         magnetic parameters (p_M0, p_mtheta, p_mphi), as well as polarization
-        information (up_theta, up_frac_i, up_frac_f).
+        information (up_theta, up_phi, up_frac_i, up_frac_f).
         """
         # control parameters go first
         control = [p for p in self.kernel_parameters if p.is_control]
@@ -753,11 +755,12 @@ class ParameterTable(object):
             else:
                 append_group(p.id)
 
-        if is2d and 'up_angle' in expanded_pars:
+        if is2d and 'up_angle' and 'up_phi' in expanded_pars:
             result.extend([
                 expanded_pars['up_frac_i'],
                 expanded_pars['up_frac_f'],
                 expanded_pars['up_angle'],
+                expanded_pars['up_phi'],
             ])
 
         return result

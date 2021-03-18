@@ -293,9 +293,9 @@ def convert_magnetism(parameters, values):
     if np.any(mag[:, 0] != 0.0):
         M0 = mag[:, 0].copy()
         theta, phi = radians(mag[:, 1]), radians(mag[:, 2])
-        mag[:, 0] = +M0*cos(theta)*cos(phi)  # mx
-        mag[:, 1] = +M0*sin(theta) # my
-        mag[:, 2] = -M0*cos(theta)*sin(phi)  # mz
+        mag[:, 0] = M0 * sin(theta) * cos(phi)  # mx
+        mag[:, 1] = M0 * sin(theta) * sin(phi)  # my
+        mag[:, 2] = M0 * cos(theta) # mz
         return True
     else:
         return False

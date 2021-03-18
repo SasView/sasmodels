@@ -595,7 +595,7 @@ def parlist(model_info, pars, is2d):
     for p in parameters.user_parameters(pars, True):
         if any(p.id.endswith(x) for x in ('_M0', '_mtheta', '_mphi')):
             continue
-        if p.id in set(('up_frac_i', 'up_frac_f', 'up_angle')):
+        if p.id in set(('up_frac_i', 'up_frac_f', 'up_angle', 'up_phi')):
             magnetic_pars.append("%s=%s"%(p.id, pars.get(p.id, p.default)))
             continue
         if not is2d and p.id in ('theta', 'phi', 'psi'):
