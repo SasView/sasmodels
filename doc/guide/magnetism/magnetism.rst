@@ -137,17 +137,19 @@ efficiencies of the instrument.
     case is however  'e_in/out' = 1 -'up_frac_i/f'.
 
 
-The user input parameters are:
+User Input
+----------
 
-===========   ================================================================
-sld_M0       $b_H M_0$
-sld_mtheta   $\theta_M$
-sld_mphi     $\phi_M$
-up_frac_i    $u_i$ polarisation efficiency *before* the sample
-up_frac_f    $u_f$ polarisation efficiency *after* the sample
-p_theta      $\theta_P$
-p_phi        $\phi_P$
-===========   ================================================================
+The following user input parameters are used::
+
+    sld_M - the magnetic scattering length density $b_H M$
+    sld_mtheta - the polar angle $\theta_M$ of the magnetisation vector
+    sld_mphi - the azimuthal angle $\phi_M$ of the magnetisation vector
+    up_frac_i - polarisation efficiency $u_i$ *before* the sample
+    up_frac_f - polarisation efficiency $u_f$ *after* the sample
+    p_theta - the inclination $\theta_P$ of the polarisation from the beam axis
+    p_phi - the rotation angle $\phi_P$ around the incoming beam axis
+
 
 
 References 
