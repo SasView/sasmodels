@@ -114,7 +114,7 @@ tests = [
     #  The number density is volume fraction divided by particle volume.
     #  Effectively, this leaves F = V drho form, where form is the usual
     #  3 j1(qr)/(qr) or whatever depending on the shape.
-    # @S RESULTS using F1 and F2 from the longer test strng above:
+    # @S RESULTS using F1 and F2 from the longer test string above:
     #
     # I(Q) = (F2 + F1^2*(S(Q) -1))*volfraction*scale/Volume  + background
     #

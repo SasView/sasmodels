@@ -9,7 +9,7 @@ This model fits the Guinier function
     I(q) = \text{scale} \cdot \exp{\left[ \frac{-Q^2 R_g^2 }{3} \right]}
             + \text{background}
 
-to the data directly without any need for linearisation (*cf*. the usual
+to the data directly without any need for linearization (*cf*. the usual
 plot of $\ln I(q)$ vs $q^2$\ ). Note that you may have to restrict the data
 range to include small q only, where the Guinier approximation actually
 applies. See also the guinier_porod model.
@@ -19,8 +19,8 @@ where the $q$ vector is defined as
 
 .. math:: q = \sqrt{q_x^2 + q_y^2}
 
-In scattering, the radius of gyration $R_g$ quantifies the objects's
-distribution of SLD (not mass density, as in mechanics) from the objects's
+In scattering, the radius of gyration $R_g$ quantifies the object's
+distribution of SLD (not mass density, as in mechanics) from the object's
 SLD centre of mass. It is defined by
 
 .. math:: R_g^2 = \frac{\sum_i\rho_i\left(r_i-r_0\right)^2}{\sum_i\rho_i}
@@ -82,7 +82,7 @@ Iq = """
 def random():
     """Return a random parameter set for the model."""
     scale = 10**np.random.uniform(1, 4)
-    # Note: compare.py has Rg cutoff of 1e-30 at q=1 for guinier, so use that
+    # Note: compare.py has Rg cutoff of 1e-30 at q=1 for Guinier, so use that
     # log_10 Ae^(-(q Rg)^2/3) = log_10(A) - (q Rg)^2/ (3 ln 10) > -30
     #   => log_10(A) > Rg^2/(3 ln 10) - 30
     q_max = 1.0

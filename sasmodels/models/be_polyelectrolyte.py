@@ -144,7 +144,7 @@ def Iq(q,
 
     parameter names, units, default values, and behavior (volume, sld etc) are
     defined in the parameter table.  The concentrations are converted from
-    experimental mol/L to dimensionaly useful 1/A3 in first two lines
+    experimental mol/L to dimensionally useful 1/A3 in first two lines
     """
 
     concentration_pol = polymer_concentration * 6.022136e-4

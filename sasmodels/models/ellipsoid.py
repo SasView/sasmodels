@@ -99,7 +99,7 @@ to be stable over the range of $q$ shown for a number of points higher
 than 500.
 
 Model was also tested against the triaxial ellipsoid model with equal major
-and minor equatorial radii.  It is also consistent with the cyclinder model
+and minor equatorial radii.  It is also consistent with the cylinder model
 with polar radius equal to length and equatorial radius equal to radius.
 
 References
@@ -180,49 +180,49 @@ tests = [
     [{}, 0.05, 54.8525847025],
     [{'theta': 80., 'phi': 10.}, (qx, qy), 1.74134670026],
 
-    # Test beta and the effective radius with the equivelent sphere (May 15, 2019)
+    # Test beta and the effective radius with the equivalent sphere (May 15, 2019)
     # Yun's matlab report [0.006,0.05,0.1], [330.0, 10.976, 1.369]
-    # The values in the code here are calcualted results from SASVieww (May 15, 2019)
+    # The values in the code here are calculated results from SasView (May 15, 2019)
     [{"@S": "hardsphere",
       "scale": 1., "background": 0., "volfraction": 0.2,
       "structure_factor_mode": 1,  # beta approx
-      "radius_effective_mode": 2   # Reff "equivelent sphere"
+      "radius_effective_mode": 2   # Reff "equivalent sphere"
      },
      [0.006, 0.05, 0.1],
      [330.0082676127404, 10.96932155837644, 1.35347369429977]],
 
     # Test beta and the effective radius with the minor radius (May 15, 2019)
     # Yun's matlab report [0.006,0.05,0.1], [273.67, 10.942, 1.3683]
-    # The values in the code here are calcualted results from SASVieww (May 15, 2019)
+    # The values in the code here are calculated results from SasView (May 15, 2019)
     [{"@S": "hardsphere",
       "scale": 1., "background": 0., "volfraction": 0.2,
       "structure_factor_mode": 1,  # beta approx
-      "radius_effective_mode": 3   # Reff "equivelent sphere"
+      "radius_effective_mode": 3   # Reff "equivalent sphere"
      },
      [0.006, 0.05, 0.1],
      [273.64522316236287, 10.93682961898512, 1.352864896244188]],
 
     # Test beta and the effective radius with the major radius (May 15, 2019)
     # Yun's matlab report [0.006,0.05,0.1], [1062.37, 10.977, 1.369]
-    # The values in the code here are calcualted results from SASVieww (May 15, 2019)
+    # The values in the code here are calculated results from SasView (May 15, 2019)
     [{"@S": "hardsphere",
       "scale": 1., "background": 0., "volfraction": 0.2,
       "structure_factor_mode": 1,  # beta approx
-      "radius_effective_mode": 4   # Reff "equivelent sphere"
+      "radius_effective_mode": 4   # Reff "equivalent sphere"
      },
      [0.006, 0.05, 0.1],
      [1062.3690121068357, 10.970147034298845, 1.3534794742102454]],
 
     # Test beta and the effective radius with the average curvature (May 15, 2019)
-    # Effective radius is taken from the SASView calcuation.
-    # With defaul values, the effective radius is 270.745.
+    # Effective radius is taken from the SasView calculation.
+    # With default values, the effective radius is 270.745.
     # The calculated values using Yun's Matlab code are
     #     [0.006,0.05,0.1], [529.03,419.22, 10.977, 1.369]
-    # The values in the code here are calcualted results from SASVieww (May 15, 2019)
+    # The values in the code here are calculated results from SasView (May 15, 2019)
     [{"@S": "hardsphere",
       "scale": 1., "background": 0., "volfraction": 0.2,
       "structure_factor_mode": 1,  # beta approx
-      "radius_effective_mode": 1   # Reff "equivelent sphere"
+      "radius_effective_mode": 1   # Reff "equivalent sphere"
      },
      [0.006, 0.01, 0.05, 0.1],
      [529.0109355849872, 419.2280055002956, 10.970118278295908, 1.3534762023877278]]

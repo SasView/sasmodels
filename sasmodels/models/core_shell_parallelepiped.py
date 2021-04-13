@@ -120,7 +120,7 @@ FITTING NOTES
 
 #. For 2d data the orientation of the particle is required, described using
    angles $\theta$, $\phi$ and $\Psi$ as in the diagrams below, where $\theta$
-   and $\phi$ define the orientation of the director in the laboratry reference
+   and $\phi$ define the orientation of the director in the laboratory reference
    frame of the beam direction ($z$) and detector plane ($x-y$ plane), while
    the angle $\Psi$ is effectively the rotational angle around the particle
    $C$ axis. For $\theta = 0$ and $\phi = 0$, $\Psi = 0$ corresponds to the
@@ -131,7 +131,7 @@ FITTING NOTES
    axis (in the $x-y$ plane). Applying orientational distribution to the
    particle orientation (i.e  `jitter` to one or more of these angles) can get
    more confusing as `jitter` is defined **NOT** with respect to the laboratory
-   frame but the particle reference frame. It is thus highly recmmended to
+   frame but the particle reference frame. It is thus highly recommended to
    read :ref:`orientation` for further details of the calculation and angular
    dispersions.
 

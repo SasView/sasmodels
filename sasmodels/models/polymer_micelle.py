@@ -19,7 +19,7 @@ The Gaussian random coil tails, of gyration radius $R_g$, are imagined
 uniformly distributed around the spherical core, centred at a distance
 $r + d \cdot R_g$ from the micelle centre, where $d$ = *d_penetration* is
 of order unity. A volume $V_\text{corona}$ is defined for each coil. The
-model in detail seems to separately parametrise the terms for the shape
+model in detail seems to separately parameterize the terms for the shape
 of $I(Q)$ and the relative intensity of each term, so use with caution
 and check parameters for consistency. The spherical core is monodisperse,
 so it's intensity and the cross terms may have sharp oscillations (use $q$

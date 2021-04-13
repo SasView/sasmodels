@@ -80,7 +80,7 @@ plus the volume of the faces, $V_{c+r} = \pi (R+t_r)(X_\text{core} R+t_r) L$
 the volume of the core plus the rim, $R$ is the radius of the core,
 $X_\text{core}$ is the axial ratio of the core, $L$ the length of the core,
 $t_f$ the thickness of the face, $t_r$ the thickness of the rim and $J_1$ the
-usual first order bessel function. The core has radii $R$ and $X_\text{core} R$
+usual first order Bessel function. The core has radii $R$ and $X_\text{core} R$
 so is circular, as for the core_shell_bicelle model, for $X_\text{core}=1$.
 Note that you may need to limit the range of $X_\text{core}$, especially if
 using the Monte-Carlo algorithm, as setting radius to $R/X_\text{core}$ and

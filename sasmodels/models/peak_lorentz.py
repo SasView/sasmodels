@@ -40,7 +40,7 @@ from numpy import inf
 name = "peak_lorentz"
 title = "A Lorentzian peak on a flat background"
 description = """\
-      Class that evaluates a lorentzian  shaped peak.
+      Class that evaluates a Lorentzian shaped peak.
 
         F(q) = scale/(1+[(q-q0)/B]^2 ) + background
 
