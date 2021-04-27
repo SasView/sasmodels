@@ -1,6 +1,15 @@
 Release notes
 =============
 
+v1.0.5 2021-01-26
+------------------
+* fix probelm with P(Q) scaling when using a shell type form factors
+* fix problem with wide Gaussian approximation to resolution function at
+  very low Q which could sometimes extend into negative Q by truncating the
+  resolution contribution at Q = zero
+* added support for complex math using openCL
+* a number of doc updates
+
 v1.0.4 2020-07-24
 ------------------
 * doc update: how to test a plugin model in 5.x version
