@@ -240,7 +240,7 @@ but these are not implemented in this code.
 
 For hollow shapes, *volfraction* is computed from the material in the
 shell rather than the shell plus solvent inside the shell.  Using
-$V_e(\mathbf\xi)$ as the enclosed volume of the shell plus solvnt and
+$V_e(\mathbf\xi)$ as the enclosed volume of the shell plus solvent and
 $V_c(\mathbf\xi)$ as the core volume of solvent inside the shell, we
 can compute the average enclosed and shell volumes as
 
@@ -250,10 +250,10 @@ can compute the average enclosed and shell volumes as
     \begin{align*}
     \langle V_e \rangle &= \frac{
         \int_\Xi P_\mathbf\xi V_e(\mathbf\xi)\,\mathrm d\mathbf\xi
-    }{ \int_\Xi P_\mathbf\xi\,\mathrm d\mathbf xi } \\
+    }{ \int_\Xi P_\mathbf\xi\,\mathrm d\mathbf \xi } \\
     \langle V_s \rangle &= \frac{
         \int_\Xi P_\mathbf\xi (V_e(\mathbf\xi) - V_c(\mathbf\xi))\,\mathrm d\mathbf\xi
-    }{ \int_\Xi P_\mathbf\xi\,\mathrm d\mathbf xi }
+    }{ \int_\Xi P_\mathbf\xi\,\mathrm d\mathbf \xi }
     \end{align*}
 
 Given $n$ particles and a total solvent volume $V_\text{out}$ outside the
