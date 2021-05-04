@@ -240,7 +240,7 @@ but these are not implemented in this code.
 
 For hollow shapes, *volfraction* is computed from the material in the
 shell rather than the shell plus solvent inside the shell.  Using
-$V_e(\mathbf\xi)$ as the enclosed volume of the shell plus solvnt and
+$V_e(\mathbf\xi)$ as the enclosed volume of the shell plus solvent and
 $V_c(\mathbf\xi)$ as the core volume of solvent inside the shell, we
 can compute the average enclosed and shell volumes as
 
