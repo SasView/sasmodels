@@ -250,10 +250,10 @@ can compute the average enclosed and shell volumes as
     \begin{align*}
     \langle V_e \rangle &= \frac{
         \int_\Xi P_\mathbf\xi V_e(\mathbf\xi)\,\mathrm d\mathbf\xi
-    }{ \int_\Xi P_\mathbf\xi\,\mathrm d\mathbf xi } \\
+    }{ \int_\Xi P_\mathbf\xi\,\mathrm d\mathbf \xi } \\
     \langle V_s \rangle &= \frac{
         \int_\Xi P_\mathbf\xi (V_e(\mathbf\xi) - V_c(\mathbf\xi))\,\mathrm d\mathbf\xi
-    }{ \int_\Xi P_\mathbf\xi\,\mathrm d\mathbf xi }
+    }{ \int_\Xi P_\mathbf\xi\,\mathrm d\mathbf \xi }
     \end{align*}
 
 Given $n$ particles and a total solvent volume $V_\text{out}$ outside the
