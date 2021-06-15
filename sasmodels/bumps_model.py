@@ -12,7 +12,8 @@ how far the polydispersity integral extends.
 """
 from __future__ import print_function
 
-__all__ = ["Model", "Experiment"]
+# Note: exporting BumpsParameter so that the sphinx doc builder can pick it up.
+__all__ = ["Model", "Experiment", "BumpsParameter"]
 
 import numpy as np  # type: ignore
 
@@ -32,16 +33,18 @@ except ImportError:
 # pylint: enable=unused-import
 
 try:
-    # Optional import. This allows the doc builder and nosetests to run even
+    # Optional import. This allows the doc builder and tests to run even
     # when bumps is not on the path.
-    from bumps.names import Parameter # type: ignore
-    from bumps.parameter import Reference # type: ignore
+    from bumps.parameter import Parameter as BumpsParameter, Reference # type: ignore
 except ImportError:
-    pass
+    class BumpsParameter:
+        """See parameter.Parameter in the bumps documentation."""
+    class Reference:
+        """See parameter.Reference in the bumps documentation."""
 
 
 def create_parameters(model_info, **kwargs):
-    # type: (ModelInfo, Union[float, str, Parameter]) -> Tuple[Dict[str, Parameter], Dict[str, str]]
+    # type: (ModelInfo, Union[float, str, BumpsParameter]) -> Tuple[Dict[str, BumpsParameter], Dict[str, str]]
     """
     Generate Bumps parameters from the model info.
 
@@ -53,15 +56,15 @@ def create_parameters(model_info, **kwargs):
     value.  The value can be a float, a bumps parameter, or in the case
     of the distribution type parameter, a string.
 
-    Returns a dictionary of *{name: Parameter}* containing the bumps
+    Returns a dictionary of *{name: BumpsParameter}* containing the bumps
     parameters for each model parameter, and a dictionary of
     *{name: str}* containing the polydispersity distribution types.
     """
-    pars = {}     # type: Dict[str, Parameter]
+    pars = {}     # type: Dict[str, BumpsParameter]
     pd_types = {} # type: Dict[str, str]
     for p in model_info.parameters.call_parameters:
         value = kwargs.pop(p.name, p.default)
-        pars[p.name] = Parameter.default(value, name=p.name, limits=p.limits)
+        pars[p.name] = BumpsParameter.default(value, name=p.name, limits=p.limits)
         if p.polydisperse:
             for part, default, limits in [
                     ('_pd', 0., pars[p.name].limits),
@@ -70,7 +73,7 @@ def create_parameters(model_info, **kwargs):
                 ]:
                 name = p.name + part
                 value = kwargs.pop(name, default)
-                pars[name] = Parameter.default(value, name=name, limits=limits)
+                pars[name] = BumpsParameter.default(value, name=name, limits=limits)
             name = p.name + '_pd_type'
             pd_types[name] = str(kwargs.pop(name, 'gaussian'))
 
@@ -91,7 +94,7 @@ class Model(object):
     Any additional *key=value* pairs are model dependent parameters.
     """
     def __init__(self, model, **kwargs):
-        # type: (KernelModel, **Dict[str, Union[float, Parameter]]) -> None
+        # type: (KernelModel, **Dict[str, Union[float, BumpsParameter]]) -> None
         self.sasmodel = model
         pars, pd_types = create_parameters(model.info, **kwargs)
         for k, v in pars.items():
@@ -102,7 +105,7 @@ class Model(object):
         self._pd_type_names = list(pd_types.keys())
 
     def parameters(self):
-        # type: () -> Dict[str, Parameter]
+        # type: () -> Dict[str, BumpsParameter]
         """
         Return a dictionary of parameters objects for the parameters,
         excluding polydispersity distribution type.
@@ -110,7 +113,7 @@ class Model(object):
         return dict((k, getattr(self, k)) for k in self._parameter_names)
 
     def state(self):
-        # type: () -> Dict[str, Union[Parameter, str]]
+        # type: () -> Dict[str, Union[BumpsParameter, str]]
         """
         Return a dictionary of current values for all the parameters,
         including polydispersity distribution type.
@@ -137,7 +140,7 @@ class Experiment(DataMixin):
     """
     _cache = None # type: Dict[str, np.ndarray]
     def __init__(self, data, model, cutoff=1e-5, name=None, extra_pars=None):
-        # type: (Data, Model, float, Optional[str], Optional[Dict[str, Parameter]]) -> None
+        # type: (Data, Model, float, Optional[str], Optional[Dict[str, BumpsParameter]]) -> None
         # Allow resolution function to define fittable parameters.  We do this
         # by creating reference parameters within the resolution object rather
         # than modifying the object itself to use bumps parameters.  We need
@@ -208,7 +211,7 @@ class Experiment(DataMixin):
             setattr(self, name, ref)
 
     def parameters(self):
-        # type: () -> Dict[str, Parameter]
+        # type: () -> Dict[str, BumpsParameter]
         """
         Return a dictionary of parameters
         """
