@@ -27,7 +27,6 @@ import sasmodels
 
 nitpick_ignore = [
     ('py:class', 'argparse.Namespace'),
-    ('py:class', 'bumps.parameter.Parameter'),
     ('py:class', 'collections.OrderedDict'),
     ('py:class', 'cuda.Context'),
     ('py:class', 'cuda.Function'),
@@ -51,6 +50,7 @@ nitpick_ignore = [
     ('py:class', 'Data1D'),
     ('py:class', 'Data2D'),
     ('py:class', 'Kernel'),
+    ('py:class', 'KernelModel'),
     ('py:class', 'ModelInfo'),
     ('py:class', 'module'),
     ('py:class', 'SesansData'),
