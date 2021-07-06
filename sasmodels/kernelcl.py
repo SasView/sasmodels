@@ -570,7 +570,7 @@ class GpuKernel(Kernel):
     #: Calculation results, updated after each call to *_call_kernel()*.
     result = None  # type: np.ndarray
     q_input = None # type: GpuInput
-    _result_b = None # type: cl.Bufferj
+    _result_b = None # type: cl.Buffer
 
     def __init__(self, model, q_vectors):
         # type: (GpuModel, List[np.ndarray]) -> None
