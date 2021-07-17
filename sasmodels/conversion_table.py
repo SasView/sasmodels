@@ -874,5 +874,16 @@ CONVERSION_TABLE = {
                 "sld_solvent": "solv_sld"
             }
         ]
+    },
+    (5, 0, 4) : {
+        "broad_peak": [
+            "broad_peak",
+            {
+                "peak_scale": "lorentz_scale",
+                "correlation_length": "lorentz_length",
+                "shape_exp": : None,
+                "width_exp": "lorentz_exp",
+            }
+        ]
     }
 }
