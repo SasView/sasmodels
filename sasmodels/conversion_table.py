@@ -881,7 +881,7 @@ CONVERSION_TABLE = {
             {
                 "peak_scale": "lorentz_scale",
                 "correlation_length": "lorentz_length",
-                "shape_exp": : None,
+                "shape_exp": None,
                 "width_exp": "lorentz_exp",
             }
         ]
