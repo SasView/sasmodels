@@ -36,7 +36,7 @@ Interface shapes are as follows:
 
     5: Boucher ($(1-z^2)^(\nu/2-2)$)
 
-The form factor $P(q)$ in 1D is calculated by:
+The form factor $P(q)$ in 1D is calculated by [#Feigin1987]_:
 
 .. math::
 
@@ -225,11 +225,11 @@ where the $q$ vector is defined as
 References
 ----------
 
-#. L A Feigin and D I Svergun, Structure Analysis by Small-Angle X-Ray
+.. [#Feigin1987] L A Feigin and D I Svergun, Structure Analysis by Small-Angle X-Ray
    and Neutron Scattering, Plenum Press, New York, (1987)
 .. [#Boucher1983] B Boucher, P Chieux, P Convert, and M Tournarie,
    *Metal Physics*, 13,1339 (1983).
-   14 (1961) 185-211   
+  
 
 
 Authorship and Verification
