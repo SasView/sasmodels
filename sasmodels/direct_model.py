@@ -166,15 +166,14 @@ def _make_sesans_transform(data):
 
     # Pre-compute the Hankel matrix (H)
     SElength = Converter(data._xunit)(data.x, "A")
-
-    theta_max = Converter("radians")(data.sample.zacceptance)[0]
-    q_max = 2 * np.pi / np.max(data.source.wavelength) * np.sin(theta_max)
-    zaccept = Converter("1/A")(q_max, "1/" + data.source.wavelength_unit)
+    wavelength, wunits = data.source.wavelength, data.source.wavelength_unit
+    zacceptance, zunits = data.sample.zacceptance
+    wavelength = Converter("A")(wavelength, units=wunits)
+    theta_max = Converter("radian")(zacceptance, units=zunits)
+    zaccept = 2 * np.pi / np.max(wavelength) * np.sin(theta_max)
 
     Rmax = 10000000
-    hankel = sesans.SesansTransform(data.x, SElength,
-                                    data.source.wavelength,
-                                    zaccept, Rmax)
+    hankel = sesans.SesansTransform(data.x, SElength, wavelength, zaccept, Rmax)
     return hankel
 
 
@@ -207,7 +206,7 @@ class DataMixin(object):
         self._model = model
 
         # interpret data
-        if hasattr(data, 'isSesans') and data.isSesans:
+        if getattr(data, 'isSesans', False):
             self.data_type = 'sesans'
         elif hasattr(data, 'qx_data'):
             self.data_type = 'Iqxy'
