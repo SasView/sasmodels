@@ -329,7 +329,9 @@ class DataMixin(object):
 
         # Need to pull background out of resolution for multiple scattering
         default_background = self._model.info.parameters.common_parameters[1].default
-        background = pars.get('background', default_background)
+        background = (
+            pars.get('background', default_background)
+            if self.data_type != 'sesans' else 0.)
         pars = pars.copy()
         pars['background'] = 0.
 
