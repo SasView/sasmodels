@@ -76,10 +76,12 @@ def make_mixture_info(parts, operation='+'):
                 # Update the parameters of this constituent model to use the
                 # new prefix
                 for par in submodel_pars:
-                    par.id = prefix + par.id[NUM_COMMON_PARS:]
-                    par.name = prefix + par.name[NUM_COMMON_PARS:]
+                    # Strip {prefix}_ using par.name[2:], etc.
+                    # TODO: fails for AB_scale
+                    par.id = prefix + par.id[2:]
+                    par.name = prefix + par.name[2:]
                     if par.length_control is not None:
-                        par.length_control = prefix + par.length_control[NUM_COMMON_PARS:]
+                        par.length_control = prefix + par.length_control[2:]
                 i += npars
 
     for part in parts:
