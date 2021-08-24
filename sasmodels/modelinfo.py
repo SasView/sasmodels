@@ -53,7 +53,10 @@ COMMON_PARAMETERS = [
     ("scale", "", 1, (0.0, np.inf), "", "Scale factor or Volume fraction"),
     ("background", "1/cm", DEFAULT_BACKGROUND, (-np.inf, np.inf), "", "Source background"),
 ]
-assert (len(COMMON_PARAMETERS) == 2
+NUM_COMMON_PARS = 2
+NUM_MAGFIELD_PARS = 4
+NUM_MAGNETIC_PARS = 3  # per sld
+assert (len(COMMON_PARAMETERS) == NUM_COMMON_PARS
         and COMMON_PARAMETERS[0][0] == "scale"
         and COMMON_PARAMETERS[1][0] == "background"), "don't change common parameters"
 
@@ -445,9 +448,9 @@ class ParameterTable(object):
         self.npars = sum(p.length for p in self.kernel_parameters)
         self.nmagnetic = sum(p.length for p in self.kernel_parameters
                              if p.type == 'sld')
-        self.nvalues = 2 + self.npars
+        self.nvalues = NUM_COMMON_PARS + self.npars
         if self.nmagnetic:
-            self.nvalues += 4 + 3*self.nmagnetic
+            self.nvalues += NUM_MAGFIELD_PARS + NUM_MAGNETIC_PARS*self.nmagnetic
         self.call_parameters = self._get_call_parameters()
         self.defaults = self._get_defaults()
         #self._name_table= dict((p.id, p) for p in parameters)
