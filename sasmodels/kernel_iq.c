@@ -411,14 +411,14 @@ void KERNEL_NAME(
   // Interpret polarization cross section.
   //     up_frac_i = values[NUM_PARS+2];
   //     up_frac_f = values[NUM_PARS+3];
-  //     up_angle = values[NUM_PARS+4];
+  //     up_theta = values[NUM_PARS+4];
   //     up_phi = values[NUM_PARS+5];
   // TODO: could precompute more magnetism parameters before calling the kernel.
   double xs_weights[8];  // uu, ud real, du real, dd, ud imag, du imag, fill, fill
-  double cos_mspin, sin_mspin;
+  double cos_mtheta, sin_mtheta;
   double cos_mphi, sin_mphi;
   set_spin_weights(values[NUM_PARS+2], values[NUM_PARS+3], xs_weights);
-  SINCOS(values[NUM_PARS+4]*M_PI_180, sin_mspin, cos_mspin);
+  SINCOS(values[NUM_PARS+4]*M_PI_180, sin_mtheta, cos_mtheta);
   SINCOS(values[NUM_PARS+5]*M_PI_180, sin_mphi, cos_mphi);
 #endif // MAGNETIC
 
@@ -797,9 +797,9 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
           const double qsq = qx * qx + qy * qy;
           if (qsq > 1.e-16) {
             // TODO: what is the magnetic scattering at q = 0
-            const double px = sin_mspin * cos_mphi;
-             const double py = sin_mspin * sin_mphi;
-            const double pz = cos_mspin;
+            const double px = sin_mtheta * cos_mphi;
+             const double py = sin_mtheta * sin_mphi;
+            const double pz = cos_mtheta;
 
             // loop over uu, ud real, du real, dd, ud imag, du imag
             for (unsigned int xs = 0; xs < 6; xs++) {
