@@ -34,7 +34,9 @@ Interface shapes are as follows:
 
     4: Lexp($-\nu z$)
 
-The form factor $P(q)$ in 1D is calculated by:
+    5: Boucher ($(1-z^2)^(\nu/2-2)$)
+
+The form factor $P(q)$ in 1D is calculated by [#Feigin1987]_:
 
 .. math::
 
@@ -130,6 +132,19 @@ Erf:
             \right)  +C  & \mbox{for } A = 0 \\
     \end{cases}
 
+
+Boucher[#Boucher1983]_:
+
+.. math::
+
+    \rho_{{inter}_i}(r) =
+    \begin{cases}
+        \pm B\, \left(1-
+            (\frac{(r - r_{\text{flat}_i})}{\Delta t_{ \text{inter}_i }})^2
+            \right) ^(A/2-2)  + C  & \mbox{for } A \neq 0 \\
+        \rho_{\text{flat}_{i+1}}  & \mbox{for } A = 0 \\
+    \end{cases}  
+
 The functions are normalized so that they vary between 0 and 1, and they are
 constrained such that the SLD is continuous at the boundaries of the interface
 as well as each sub-shell. Thus B and C are determined.
@@ -210,8 +225,12 @@ where the $q$ vector is defined as
 References
 ----------
 
-#. L A Feigin and D I Svergun, Structure Analysis by Small-Angle X-Ray
+.. [#Feigin1987] L A Feigin and D I Svergun, Structure Analysis by Small-Angle X-Ray
    and Neutron Scattering, Plenum Press, New York, (1987)
+.. [#Boucher1983] B Boucher, P Chieux, P Convert, and M Tournarie,
+   *Metal Physics*, 13,1339 (1983).
+  
+
 
 Authorship and Verification
 ---------------------------
@@ -234,7 +253,7 @@ description = """
 category = "shape:sphere"
 
 SHAPES = ["erf(|nu|*z)", "Rpow(z^|nu|)", "Lpow(z^|nu|)",
-          "Rexp(-|nu|z)", "Lexp(-|nu|z)"]
+          "Rexp(-|nu|z)", "Lexp(-|nu|z)", "Boucher((1-z^2)^(1/2*nu-2))",]
 
 # pylint: disable=bad-whitespace, line-too-long
 #            ["name", "units", default, [lower, upper], "type", "description"],
@@ -261,6 +280,7 @@ SHAPE_FUNCTIONS = [
     lambda z, nu: 1 - (1-z)**nu,            # Lpow
     lambda z, nu: expm1(-nu*z)/expm1(-nu),  # Rexp
     lambda z, nu: expm1(nu*z)/expm1(nu),    # Lexp
+    lambda z, nu: 1 - (1 - z**2)**(0.5*nu-2.0), # Boucher    
 ]
 
 def profile(n_shells, sld_solvent, sld, thickness,
