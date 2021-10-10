@@ -180,7 +180,7 @@ demo = dict(scale=1, background=0,
 
 
 tests = [
-    [{}, 0.2, 0.7683],
+    [{}, 0.2, 0.76833],
     [{"length_a": 100., "exponent_p": 1, "sld": 6., "sld_solvent": 1.},
      0.2, 0.7263],
     [{"length_a": 100., "exponent_p": 1000, "sld": 6., "sld_solvent": 1.},
@@ -189,5 +189,5 @@ tests = [
      0.2, 0.2810],
     [{"length_a": 100., "exponent_p": 2.5, "sld": 6., "sld_solvent": 1.,
       "length_a_pd": 0.1, "length_a_pd_n": 10},
-     0.2, 0.4955],
+     0.2, 0.49551865],
 ]
