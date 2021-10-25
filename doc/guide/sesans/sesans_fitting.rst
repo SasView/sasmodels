@@ -1,10 +1,11 @@
 .. currentmodule:: sasmodels
 .. Wim Bouwman, DUT, written at codecamp-V, Oct2016
+.. Minor tweaks to accommodate updates in SasView, Steve King, Oct 2021
 
 .. _sesans_fitting:
 
-Fitting SESANS Data
-===================
+Fitting SESANS Data from the Command Line
+=========================================
 
 .. note::
 
@@ -12,7 +13,7 @@ Fitting SESANS Data
     (http://trac.sasview.org/wiki/AnacondaSetup) is a prerequisite for
     using these instructions.
 
-It is possible to fit SESANS measurements from the command line in Python.
+It is possible to fit SESANS date from the command line in Python.
 
 Simple Fits
 ...........
@@ -147,3 +148,5 @@ fitting problem with a structure factor::
 
  # Send to the fitting engine
  problem = sesansfit.sesans_fit(sesans_file, model_name, initial_vals, custom_params, param_range)
+
+ 

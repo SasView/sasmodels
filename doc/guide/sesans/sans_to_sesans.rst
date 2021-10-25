@@ -1,5 +1,6 @@
 .. currentmodule:: sasmodels
 .. Wim Bouwman, DUT, written at codecamp-V, Oct2016
+.. Reference added, Steve King, Oct 2021
 
 .. _SESANS:
 
@@ -7,7 +8,7 @@ SANS to SESANS conversion
 =========================
 
 The conversion from SANS into SESANS in absolute units is a simple Hankel
-transformation when all the small-angle scattered neutrons are detected.
+transformation when all the small-angle scattered neutrons are detected [#Bakker2020]_.
 First we calculate the Hankel transform including the absolute intensities by
 
 .. math:: G(\delta) = 2 \pi \int_0^{\infty} J_0(Q \delta) \frac{d \Sigma}{d \Omega} (Q) Q dQ \!,
@@ -30,3 +31,10 @@ From the equation above we can calculate the polarisation that we measure in a S
 .. math:: P(\delta) = e^{t \left( \frac{ \lambda}{2 \pi} \right)^2 \left(G(\delta) - G(0) \right)} \!,
 
 in which :math:`t` is the thickness of the sample and :math:`\lambda` is the wavelength of the neutrons.
+
+References
+----------
+
+.. [#Bakker2020] JH Bakker, AL Washington, SR Parnell, AA van Well, C Pappas,
+   WG Bouwman, *Analysis of SESANS data by numerical Hankel transform
+   implementation in SasView*, *Journal of Neutron Research*, 22 (2020) 57-70.
