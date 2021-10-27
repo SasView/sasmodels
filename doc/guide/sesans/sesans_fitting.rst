@@ -13,7 +13,7 @@ Fitting SESANS Data from the Command Line
     (http://trac.sasview.org/wiki/AnacondaSetup) is a prerequisite for
     using these instructions.
 
-It is possible to fit SESANS date from the command line in Python.
+It is possible to fit SESANS data from the command line in Python.
 
 Simple Fits
 ...........
