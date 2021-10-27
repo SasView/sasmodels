@@ -10,7 +10,7 @@ Fitting SESANS Data from the Command Line
 .. note::
 
     A proper installation of the developers setup of SasView
-    (http://trac.sasview.org/wiki/AnacondaSetup) is a prerequisite for
+    (http://trac.sasview.org/wiki/DevNotes/DevGuide) is a prerequisite for
     using these instructions.
 
 It is possible to fit SESANS data from the command line in Python.
