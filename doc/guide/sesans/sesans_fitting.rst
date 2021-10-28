@@ -11,7 +11,8 @@ Fitting SESANS Data from the Command Line
 
     A proper installation of the developers setup of SasView
     (http://trac.sasview.org/wiki/DevNotes/DevGuide) is a prerequisite for
-    using these instructions.
+    using these instructions. There is also separate help available on the
+    :ref:`Scripting_Interface` .
 
 Simple Fits
 ...........
