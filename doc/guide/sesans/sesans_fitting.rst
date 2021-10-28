@@ -13,8 +13,6 @@ Fitting SESANS Data from the Command Line
     (http://trac.sasview.org/wiki/DevNotes/DevGuide) is a prerequisite for
     using these instructions.
 
-It is possible to fit SESANS data from the command line in Python.
-
 Simple Fits
 ...........
 In the folder sasmodels/example the file sesans_sphere_2micron.py gives
@@ -82,10 +80,11 @@ Incorporating a Structure Factor
 ................................
 An example of how to also include a structure factor can be seen in the
 following example taken from Washington et al., *Soft Matter*\, (2014), 10, 3016
-(dx.doi.org/10.1039/C3SM53027B). These are time-of-flight measurements, which
-is the reason that not the polarisation is plotted, but the
-:math:`\frac{log(P/P_0)}{\lambda^2}` . The sample is a dispersion of
-core-shell colloids at a high volume fraction with hard sphere interactions.
+(`DOI 10.1039/C3SM53027B <https://doi.org/10.1039/C3SM53027B>`_). These are
+time-of-flight measurements, which is the reason that not the polarisation is
+plotted, but the :math:`\frac{log(P/P_0)}{\lambda^2}` . The sample is a
+dispersion of core-shell colloids at a high volume fraction with hard sphere
+interactions.
 
 The fit can be started by::
 
@@ -148,5 +147,3 @@ fitting problem with a structure factor::
 
  # Send to the fitting engine
  problem = sesansfit.sesans_fit(sesans_file, model_name, initial_vals, custom_params, param_range)
-
- 
