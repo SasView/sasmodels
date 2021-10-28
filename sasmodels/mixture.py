@@ -18,6 +18,7 @@ from collections import OrderedDict
 import numpy as np  # type: ignore
 
 from .modelinfo import Parameter, ParameterTable, ModelInfo
+from .modelinfo import NUM_MAGFIELD_PARS, NUM_MAGNETIC_PARS, NUM_COMMON_PARS
 from .kernel import KernelModel, Kernel
 from .details import make_details
 
@@ -75,6 +76,8 @@ def make_mixture_info(parts, operation='+'):
                 # Update the parameters of this constituent model to use the
                 # new prefix
                 for par in submodel_pars:
+                    # Strip {prefix}_ using par.name[2:], etc.
+                    # TODO: fails for AB_scale
                     par.id = prefix + par.id[2:]
                     par.name = prefix + par.name[2:]
                     if par.length_control is not None:
@@ -260,7 +263,7 @@ class _MixtureParts(object):
         self.kernels = kernels
         self.call_details = call_details
         self.values = values
-        self.spin_index = model_info.parameters.npars + 2
+        self.spin_index = model_info.parameters.npars + NUM_COMMON_PARS
         # The following are redefined by __iter__, but set them here so that
         # lint complains a little less.
         self.part_num = -1
@@ -271,8 +274,8 @@ class _MixtureParts(object):
     def __iter__(self):
         # type: () -> _MixtureParts
         self.part_num = 0
-        self.par_index = 2
-        self.mag_index = self.spin_index + 3
+        self.par_index = NUM_COMMON_PARS
+        self.mag_index = self.spin_index + NUM_MAGFIELD_PARS
         return self
 
     def __next__(self):
@@ -290,7 +293,7 @@ class _MixtureParts(object):
         self.par_index += info.parameters.npars
         if self.model_info.operation == '+':
             self.par_index += 1 # Account for each constituent model's scale param
-        self.mag_index += 3 * len(info.parameters.magnetism_index)
+        self.mag_index += NUM_MAGNETIC_PARS*len(info.parameters.magnetism_index)
 
         return kernel, call_details, values
 
@@ -307,7 +310,7 @@ class _MixtureParts(object):
         # building an addition model, each component has its own scale factor
         # which we need to skip when constructing the details for the kernel, so
         # add one, giving a net subtract one.
-        diff = 1 if self.model_info.operation == '+' else 2
+        diff = NUM_COMMON_PARS-1 if self.model_info.operation == '+' else NUM_COMMON_PARS
         index = slice(par_index - diff, par_index - diff + info.parameters.npars)
         length = full.length[index]
         offset = full.offset[index]
@@ -324,8 +327,8 @@ class _MixtureParts(object):
         pars = self.values[par_index + diff:par_index + info.parameters.npars + diff]
         nmagnetic = len(info.parameters.magnetism_index)
         if nmagnetic:
-            spin_state = self.values[self.spin_index:self.spin_index + 3]
-            mag_index = self.values[mag_index:mag_index + 3 * nmagnetic]
+            spin_state = self.values[self.spin_index:self.spin_index + NUM_MAGFIELD_PARS]
+            mag_index = self.values[mag_index:mag_index + NUM_MAGNETIC_PARS*nmagnetic]
         else:
             spin_state = []
             mag_index = []
