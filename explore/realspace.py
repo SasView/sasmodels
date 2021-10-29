@@ -12,6 +12,7 @@ from numpy.random import poisson, uniform, randn, rand
 from numpy.polynomial.legendre import leggauss
 from scipy.integrate import simps
 from scipy.special import j1 as J1
+from scipy.special import gamma
 
 try:
     import numba
@@ -152,6 +153,35 @@ class Box(Shape):
         values = self.value.repeat(points.shape[0])
         return values, self._adjust(points)
 
+class Superball(Shape):
+    def __init__(self, a, p,
+                 value, center=(0, 0, 0), orientation=(0, 0, 0)):
+        self.value = np.asarray(value)
+        self.rotate(*orientation)
+        self.shift(*center)
+        self.a, self.p = a, p
+        self._scale = a/2
+        # Solve for rounded corner radius x = y = z:
+        #    x^2p + y^2p + z^2p = 3 x^2p = (a/2)^2p
+        #    => x = a / 2 root[2p](3)
+        #    => d = 2r = 2x root(3) = root(3)/root[2p](3) a = 3^(p-1)/2p a
+        #self.r_max = 3**((p-1)/(2*p)) * a  # Too short---don't know why.
+        self.r_max = sqrt(3)*a
+        self.dims = a, a, a
+        g1 = gamma(1.0 / (2.0 * p))
+        g3 = gamma(3.0 / (2.0 * p))
+        self.volume = a**3 / 12.0 / p**2 * g1**3 / g3
+
+    def sample(self, density):
+        # Sample from cube[-a/2, a/2]
+        num_points = poisson(density*self.a**3)
+        points = uniform(-1, 1, size=(num_points, 3))
+        # Trim points outside maximum "squared radius", x^2p + y^2p + z^2p < 1 
+        radius_sq = np.sum((points**2)**self.p, axis=1)
+        points = points[radius_sq <= 1]
+        values = self.value.repeat(points.shape[0])
+        return values, self._adjust(self._scale*points)
+
 class EllipticalCylinder(Shape):
     def __init__(self, ra, rb, length,
                  value, center=(0, 0, 0), orientation=(0, 0, 0)):
@@ -169,8 +199,8 @@ class EllipticalCylinder(Shape):
         # not in the cylinder
         num_points = poisson(density*4*self.ra*self.rb*self.length)
         points = uniform(-1, 1, size=(num_points, 3))
-        radius = points[:, 0]**2 + points[:, 1]**2
-        points = points[radius <= 1]
+        radius_sq = points[:, 0]**2 + points[:, 1]**2
+        points = points[radius_sq <= 1]
         values = self.value.repeat(points.shape[0])
         return values, self._adjust(self._scale*points)
 
@@ -232,8 +262,8 @@ class TriaxialEllipsoid(Shape):
         # not in the ellipsoid
         num_points = poisson(density*8*self.ra*self.rb*self.rc)
         points = uniform(-1, 1, size=(num_points, 3))
-        radius = np.sum(points**2, axis=1)
-        points = self._scale*points[radius <= 1]
+        radius_sq = np.sum(points**2, axis=1)
+        points = self._scale*points[radius_sq <= 1]
         values = self.value.repeat(points.shape[0])
         return values, self._adjust(points)
 
@@ -257,8 +287,8 @@ class Helix(Shape):
     def points(self, density):
         num_points = poisson(density*4*self.tube_radius**2*self.tube_length)
         points = uniform(-1, 1, size=(num_points, 3))
-        radius = points[:, 0]**2 + points[:, 1]**2
-        points = points[radius <= 1]
+        radius_sq = points[:, 0]**2 + points[:, 1]**2
+        points = points[radius_sq <= 1]
 
         # Based on math stackexchange answer by Jyrki Lahtonen
         #     https://math.stackexchange.com/a/461637
@@ -706,6 +736,19 @@ def build_box(a=10, b=20, c=30, rho=2.):
     fn_xy = lambda qx, qy, view: box_Iqxy(qx, qy, a, b, c, view=view)*rho**2
     return shape, fn, fn_xy
 
+def build_superball(a=10, p=3, rho=2.):
+    shape = Superball(a, p, rho)
+    fn, fn_xy = wrap_sasmodel(
+        'superball',
+        scale=1,
+        background=0,
+        length_a=a,
+        exponent_p=p,
+        sld=rho,
+        sld_solvent=0,
+    )
+    return shape, fn, fn_xy
+
 def build_csbox(a=10, b=20, c=30, da=1, db=2, dc=3, slda=1, sldb=2, sldc=3, sld_core=4):
     shape = csbox(a, b, c, da, db, dc, slda, sldb, sldc, sld_core)
     fn = lambda q: csbox_Iq(q, a, b, c, da, db, dc, slda, sldb, sldc, sld_core)
@@ -772,6 +815,7 @@ SHAPE_FUNCTIONS = OrderedDict([
     ("box", build_box),
     ("csbox", build_csbox),
     ("cscyl", build_cscyl),
+    ("superball", build_superball),
 ])
 SHAPES = list(SHAPE_FUNCTIONS.keys())
 
