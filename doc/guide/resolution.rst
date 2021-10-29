@@ -27,11 +27,11 @@ effect. Sasmodels provides three smearing algorithms:
 *  *2D Smearing*
 
 The $Q$ resolution values should be determined by the data reduction software
-for the instrument and stored with the data file.  If not, they will need to
-be set manually before fitting.
+for the instrument and `stored with the data file <https://www.sasview.org/faq/#what-format-should-my-data-be-in>`_.
+If not, they will need to be set manually before fitting.
 
 .. note::
-    Problems may be encountered if the data set loaded by SasView is a
+    Problems may be encountered if the data set that is loaded is a
     concatenation of SANS data from several detector distances where, of
     course, the worst Q resolution is next to the beam stop at each detector
     distance. (This will also be noticeable in the residuals plot where
@@ -308,3 +308,4 @@ of $I_s$.
 
 | 2015-05-01 Steve King
 | 2017-05-08 Paul Kienzle
+| 2021-10-29 Steve King
