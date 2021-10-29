@@ -10,9 +10,9 @@ Fitting SESANS Data from the Command Line
 .. note::
 
     A proper installation of the developers setup of SasView
-    (http://trac.sasview.org/wiki/DevNotes/DevGuide) is a prerequisite for
-    using these instructions. There is also separate help available on the
-    :ref:`Scripting_Interface` .
+    (https://github.com/SasView/sasview/wiki/DevNotes_DevEnviroment) is a
+    prerequisite for using these instructions. There is also separate help
+    available on the :ref:`Scripting_Interface` .
 
 Simple Fits
 ...........
@@ -82,9 +82,9 @@ Incorporating a Structure Factor
 An example of how to also include a structure factor can be seen in the
 following example taken from Washington et al., *Soft Matter*\, (2014), 10, 3016
 (`DOI 10.1039/C3SM53027B <https://doi.org/10.1039/C3SM53027B>`_). These are
-time-of-flight measurements, which is the reason that not the polarisation is
-plotted, but the :math:`\frac{log(P/P_0)}{\lambda^2}` . The sample is a
-dispersion of core-shell colloids at a high volume fraction with hard sphere
+time-of-flight measurements, which is the reason that the polarisation is not
+plotted, but the function :math:`\frac{log(P/P_0)}{\lambda^2}` . The sample is
+a dispersion of core-shell colloids at a high volume fraction with hard sphere
 interactions.
 
 The fit can be started by::
