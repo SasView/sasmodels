@@ -38,6 +38,8 @@ static double blend(int shape, double nu, double z)
         return expm1(-nu*z)/expm1(-nu);
     } else if (shape==4) {
         return expm1(nu*z)/expm1(nu);
+    } else if (shape==5) {
+        return 1.0 - pow(1.0 - z*z, (0.5*nu-2.0));        
     } else {
         return NAN;
     }
