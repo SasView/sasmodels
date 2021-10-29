@@ -54,7 +54,7 @@ except ImportError:
 else:
     from .modelinfo import ModelInfo, Parameter, ParameterSet
     from .data import Data
-    Calculator = Callable[[float], np.ndarray]
+    #Calculator = Callable[[float], np.ndarray]
 # pylint: enable=unused-import
 
 USAGE = """
@@ -655,7 +655,7 @@ def suppress_magnetism(pars):
     return pars
 
 def time_calculation(calculator, pars, evals=1):
-    # type: (Calculator, ParameterSet, int) -> Tuple[np.ndarray, float]
+    # not type: (Calculator, ParameterSet, int) -> Tuple[np.ndarray, float]
     """
     Compute the average calculation time over N evaluations.
 
@@ -705,7 +705,7 @@ def make_data(opts):
     return data, index
 
 def make_engine(model_info, data, dtype, cutoff, ngauss=0):
-    # type: (ModelInfo, Data, str, float, int) -> Calculator
+    # not type: (ModelInfo, Data, str, float, int) -> Calculator
     """
     Generate the appropriate calculation engine for the given datatype.
 
