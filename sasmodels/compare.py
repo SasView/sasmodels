@@ -47,14 +47,19 @@ from .direct_model import DirectModel, get_mesh
 from .generate import FLOAT_RE, set_integration_size
 
 # pylint: disable=unused-import
+from typing import Optional, Dict, Any, Callable, Tuple, List
+from .modelinfo import ModelInfo, Parameter, ParameterSet
+from .data import Data
+
 try:
-    from typing import Optional, Dict, Any, Callable, Tuple, List
+    # With python 3.8+ we can indicate that calculator takes floats.
+    from typing import Protocol
+    class Calculator(Protocol):
+        """Kernel calculator takes *par=value* keyword arguments."""
+        def __call__(self, **par: float) -> np.ndarray: ...
 except ImportError:
-    pass
-else:
-    from .modelinfo import ModelInfo, Parameter, ParameterSet
-    from .data import Data
-    Calculator = Callable[[float], np.ndarray]
+    #: Kernel calculator takes *par=value* keyword arguments.
+    Calculator = Callable[..., np.ndarray]
 # pylint: enable=unused-import
 
 USAGE = """
@@ -654,8 +659,8 @@ def suppress_magnetism(pars):
             pars[p] = 0
     return pars
 
-def time_calculation(calculator, pars, evals=1):
-    # type: (Calculator, ParameterSet, int) -> Tuple[np.ndarray, float]
+def time_calculation(calculator: Calculator, pars: ParameterSet, evals: int=1):
+    # not type: (Calculator, ParameterSet, int) -> Tuple[np.ndarray, float]
     """
     Compute the average calculation time over N evaluations.
 
@@ -704,8 +709,10 @@ def make_data(opts):
         index = slice(None, None)
     return data, index
 
-def make_engine(model_info, data, dtype, cutoff, ngauss=0):
-    # type: (ModelInfo, Data, str, float, int) -> Calculator
+def make_engine(
+    model_info: ModelInfo, data: Data, dtype: str, cutoff: float, ngauss: int=0,
+    ) -> Calculator:
+    # not type: (ModelInfo, Data, str, float, int) -> Calculator
     """
     Generate the appropriate calculation engine for the given datatype.
 

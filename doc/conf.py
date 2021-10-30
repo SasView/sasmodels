@@ -55,6 +55,11 @@ nitpick_ignore = [
     ('py:class', 'module'),
     ('py:class', 'SesansData'),
     ('py:class', 'SourceModule'),
+    # KernelModel and Calculator breaking on git actions tests, even though
+    # KernelModel is already listed. astropy example sometimes includes full
+    # path to complaining symbol. Let's see if that helps here:
+    ('py:class', 'sasmodels.compare.Calculator'),
+    ('py:class', 'sasmodels.kernel.KernelModel'),
 ]
 
 # -- General configuration -----------------------------------------------------
