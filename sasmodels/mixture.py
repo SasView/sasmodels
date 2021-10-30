@@ -38,27 +38,16 @@ def make_mixture_info(parts, operation='+'):
     # Build new parameter list
     combined_pars = []
 
-    all_parts = copy(parts)
-    is_flat = False
-    while not is_flat:
-        is_flat = True
-        for part in all_parts:
-            if part.composition and part.composition[0] == 'mixture' and \
-                len(part.composition[1]) > 1:
-                all_parts += part.composition[1]
-                all_parts.remove(part)
-                is_flat = False
-
     # When creating a mixture model that is a sum of product models (ie (1*2)+(3*4))
     # the parameters for models 1 & 2 will be prefixed with A & B respectively,
     # but so will the parameters for models 3 & 4. We need to rename models 3 & 4
     # so that they are prefixed with C & D to avoid overlap of parameter names.
     used_prefixes = []
     for part in parts:
-        i = 0
         if part.composition and part.composition[0] == 'mixture':
-            npars_list = [info.parameters.npars for info in part.composition[1]]
-            for npars in npars_list:
+            i = 0
+            for submodel in part.composition[1]:
+                npars = len(submodel.parameters.kernel_parameters)
                 # List of params of one of the constituent models of part
                 submodel_pars = part.parameters.kernel_parameters[i:i+npars]
                 # Prefix of the constituent model
@@ -67,6 +56,13 @@ def make_mixture_info(parts, operation='+'):
                     used_prefixes.append(prefix)
                     i += npars
                     continue
+                # TODO: don't modify submodel --- it may be used elsewhere
+                # Existing code probably doesn't keep a handle on the model
+                # parts so its probably okay, but it's possible that a mix
+                # on user defined mixture models models will change the
+                # parameters used for the parts in the GUI. Even worse if the
+                # same plugin is used twice. For example, twosphere.py
+                # contains sphere+sphere and you create twosphere+twosphere.
                 while prefix in used_prefixes:
                     # This prefix has been already used, so change it to the
                     # next letter that hasn't been used
@@ -89,8 +85,8 @@ def make_mixture_info(parts, operation='+'):
         # Note that prefix must also be applied to id and length_control
         # to support vector parameters
         prefix = ''
-        if not part.composition:
-            # Model isn't a composition model, so it's parameters don't have a
+        if not part.composition or part.composition[0] == 'product':
+            # Model isn't a composition model, so its parameters don't have a
             # a prefix. Add the next available prefix
             prefix = chr(ord('A')+len(used_prefixes))
             used_prefixes.append(prefix)
@@ -101,7 +97,7 @@ def make_mixture_info(parts, operation='+'):
             scale_prefix = prefix
             if prefix == '' and getattr(part, "operation", '') == '*':
                 # `part` is a composition product model. Find the prefixes of
-                # it's parameters to form a new prefix for the scale.
+                # its parameters to form a new prefix for the scale.
                 # For example, a model with A*B*C will have ABC_scale.
                 sub_prefixes = []
                 for param in part.parameters.kernel_parameters:
