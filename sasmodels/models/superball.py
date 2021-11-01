@@ -40,7 +40,7 @@ The oriented form factor is determined by solving
             e^{i a (q_x x + q_y y + q_z z) / 2}\\
         =& \frac{a^2}{2 q_z} \int_{-1}^{1} \mathrm{d} x \int_{-\gamma}^{\gamma}
             \mathrm{d} y  e^{i a(q_x x + q_y y)/2}
-            \mathrm{sin}(q_z a \zeta / 2),\\
+            \sin(q_z a \zeta / 2),\\
 with
 
 .. math::
@@ -50,9 +50,9 @@ with
 The integral can be transformed to
 
 .. math::
-    p_o(\vec{q}) = \frac{2 a^2}{q_z} \int_{0}^{1} \mathrm{d} x \, \mathrm{cos}
+    p_o(\vec{q}) = \frac{2 a^2}{q_z} \int_{0}^{1} \mathrm{d} x \, \cos
         \biggl(\frac{a q_x x}{2} \biggr) \int_{0}^{\gamma} \mathrm{d} y \,
-        \mathrm{cos} \biggl( \frac{a q_y y}{2} \biggr) \mathrm{sin}
+        \cos \biggl( \frac{a q_y y}{2} \biggr) \sin
         \biggl( \frac{a q_z \zeta}{2} \biggr),
 
 which can be solved numerically.
@@ -61,14 +61,14 @@ The orientational average is then obtained by calculating
 
 .. math::
     P(q) = \int_0^{\tfrac{\pi}{2}} \mathrm{d} \varphi \int_0^{\tfrac{\pi}{2}}
-        \mathrm{d} \theta \, \mathrm{sin} (\theta) | p_o(\vec{q}) |^2
+        \mathrm{d} \theta \, \sin (\theta) | p_o(\vec{q}) |^2
 
 with
 
 .. math::
-    \vec{q} &= q \begin{pmatrix} \mathrm{cos} (\varphi) \mathrm{sin} (\theta)\\
-    \mathrm{sin} (\varphi) \mathrm{sin} (\theta)\\
-    \mathrm{cos} (\theta)\end{pmatrix}
+    \vec{q} &= q \begin{pmatrix} \cos (\varphi) \sin (\theta)\\
+    \sin (\varphi) \sin(\theta)\\
+    \cos (\theta)\end{pmatrix}
 
 The implemented orientationally averaged superball model is then fully given by
 [#DresenSuperball]_
