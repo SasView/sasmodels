@@ -354,10 +354,14 @@ Example of what an array distribution file should look like:
  41    0.9
 ====  =====
 
-Only these array values are used computation, therefore the parameter value
-given for the model will have no affect, and will be ignored when computing
-the average.  This means that any parameter with an array distribution will
-not be fitable.
+.. note:: Only these array values are used for computation, any other
+           polydispersity parameter values in the model have no effect and
+           will be ignored when computing the average.  **This also means that
+           any parameter with an array distribution cannot be fitted.**
+
+If representing continuous distributions, it is best to use a simple rectangle
+rule integration with equally spaced $x$ values and the weight $f(x)$ chosen at
+the center of each interval.
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
@@ -518,3 +522,4 @@ T Allen, in *Particle Size Measurement*, 4th Edition, Chapman & Hall, London (19
 | 2018-03-20 Steve King
 | 2018-04-04 Steve King
 | 2018-08-09 Steve King
+| 2021-11-01 Steve King
