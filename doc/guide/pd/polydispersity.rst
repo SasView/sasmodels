@@ -11,10 +11,11 @@ Polydispersity & Orientational Distributions
 --------------------------------------------
 
 For some models we can calculate the average intensity for a population of
-particles that possess size and/or orientational (ie, angular) distributions.
-In SasView we call the former *polydispersity* but use the parameter *PD* to
-parameterise both. In other words, the meaning of *PD* in a model depends on
-the actual parameter it is being applied too.
+particles that possess size and/or orientational (ie, angular) distributions
+(see :ref:`PStheory` for more details). In SasView we call the former
+*polydispersity* but use the parameter *PD* to parameterise both. In other
+words, the meaning of *PD* in a model depends on the actual parameter it is
+being applied too.
 
 The resultant intensity is then normalized by the average particle volume such
 that
@@ -70,12 +71,12 @@ The following distribution functions are provided:
 *  *Array Distribution*
 *  *User-defined Distributions*
 
-These are all implemented as *number-average* distributions.
+These distributions define the *number density* of the given population of
+scatterers. The resulting scattering is then the number average over the
+distribution.
 
-
-**Beware: when the Polydispersity & Orientational Distribution panel in SasView is**
-**first opened, the default distribution for all parameters is the Gaussian Distribution.**
-**This may not be suitable. See Suggested Applications below.**
+**Beware: the default distribution for all parameters is the Gaussian
+Distribution but this may not be suitable. See Suggested Applications below.**
 
 .. note:: In 2009 IUPAC decided to introduce the new term 'dispersity' to replace
            the term 'polydispersity' (see `Pure Appl. Chem., (2009), 81(2),
@@ -353,14 +354,10 @@ Example of what an array distribution file should look like:
  41    0.9
 ====  =====
 
-.. note:: Only these array values are used for computation, any other
-           polydispersity parameter values in the model have no effect and
-           will be ignored when computing the average.  **This also means that
-           any parameter with an array distribution cannot be fitted.**
-
-If representing continuous distributions, it is best to use a simple rectangle
-rule integration with equally spaced $x$ values and the weight $f(x)$ chosen at
-the center of each interval.
+Only these array values are used computation, therefore the parameter value
+given for the model will have no affect, and will be ignored when computing
+the average.  This means that any parameter with an array distribution will
+not be fitable.
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
@@ -521,4 +518,3 @@ T Allen, in *Particle Size Measurement*, 4th Edition, Chapman & Hall, London (19
 | 2018-03-20 Steve King
 | 2018-04-04 Steve King
 | 2018-08-09 Steve King
-| 2021-11-01 Steve King
