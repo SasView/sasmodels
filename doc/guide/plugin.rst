@@ -143,6 +143,8 @@ with the :ref:`hardsphere` structure factor.
 The magic code at the end extracts the base filename, *cyl_sphere* from the
 model file path and assigns it to the model name.
 
+.. _Reparameterized_Models:
+
 Reparameterized Models
 ......................
 
