@@ -17,7 +17,7 @@ radius_from_excluded_volume(double length_a, double exponent_p)
 }
 
 static double
-effective_radius(int mode, double length_a, double exponent_p)
+radius_effective(int mode, double length_a, double exponent_p)
 {
   switch (mode)
   {
