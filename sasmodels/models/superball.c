@@ -111,26 +111,25 @@ Fq(double q,
     for (int i_theta = 0; i_theta < GAUSS_N; i_theta++)
     {
 
-      const double theta = GAUSS_Z[i_theta]*zm + zb; // integrate 0, pi/2
-
-      double sin_theta, cos_theta;
-      SINCOS(theta, sin_theta, cos_theta);
+      const double cos_theta = GAUSS_Z[i_theta]*0.5 + 0.5; // integrate 0, 1
+      const double sin_theta = sqrt( 1.0 - square(cos_theta) );
+      
       const double qx = q * cos_phi * sin_theta;
       const double qy = q * sin_phi * sin_theta;
       const double qz = q * cos_theta;
 
       const double f_oriented = oriented_superball(qx, qy, qz, length_a, exponent_p);
 
-      orient_averaged_inner_total_F1 += GAUSS_W[i_theta] * f_oriented * sin_theta;
-      orient_averaged_inner_total_F2 += GAUSS_W[i_theta] * square(f_oriented) * sin_theta;
+      orient_averaged_inner_total_F1 += GAUSS_W[i_theta] * f_oriented;
+      orient_averaged_inner_total_F2 += GAUSS_W[i_theta] * square(f_oriented);
     }
     orient_averaged_outer_total_F1 += GAUSS_W[i_phi] * orient_averaged_inner_total_F1;
     orient_averaged_outer_total_F2 += GAUSS_W[i_phi] * orient_averaged_inner_total_F2;
   }
 
-  // translate dx in [-1,1] to dx in [lower,upper]
-  orient_averaged_outer_total_F1 *= 0.5 * zm;
-  orient_averaged_outer_total_F2 *= 0.5 * zm;
+  // integration factors for phi and theta integral, divided by solid angle of pi/2
+  orient_averaged_outer_total_F1 *= 0.25;
+  orient_averaged_outer_total_F2 *= 0.25;
   // Multiply by contrast^2 and convert from [1e-12 A-1] to [cm-1]
   const double s =  (sld - solvent_sld) ;
   *F1 = 1.0e-2 * s * orient_averaged_outer_total_F1;
