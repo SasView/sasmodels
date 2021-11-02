@@ -84,12 +84,19 @@ Fq(double q,
    double length_a,
    double exponent_p)
 {
+
+  // translate a point in [-1,1] to a point in [0, pi/2]
+  const double zm = M_PI_4;
+  const double zb = M_PI_4;
+
   double orient_averaged_outer_total_F1 = 0.0; //initialize integral
   double orient_averaged_outer_total_F2 = 0.0; //initialize integral
   // phi integral
   for (int i_phi = 0; i_phi < GAUSS_N; i_phi++)
   {
-    const double phi = (GAUSS_Z[i_phi] + 1.0) * M_PI_4; // integrate 0 .. pi/2
+
+    const double phi = GAUSS_Z[i_phi]*zm +zb; // integrate 0 .. pi/2
+
     double sin_phi, cos_phi;
     SINCOS(phi, sin_phi, cos_phi);
 
@@ -98,7 +105,9 @@ Fq(double q,
     // theta integral
     for (int i_theta = 0; i_theta < GAUSS_N; i_theta++)
     {
-      const double theta = (GAUSS_Z[i_theta] + 1.0) * M_PI_4; // integrate 0, pi/2
+
+      const double theta = GAUSS_Z[i_theta]*zm + zb; // integrate 0, pi/2
+
       double sin_theta, cos_theta;
       SINCOS(theta, sin_theta, cos_theta);
       const double qx = q * cos_phi * sin_theta;
@@ -113,11 +122,14 @@ Fq(double q,
     orient_averaged_outer_total_F1 += GAUSS_W[i_phi] * orient_averaged_inner_total_F1;
     orient_averaged_outer_total_F2 += GAUSS_W[i_phi] * orient_averaged_inner_total_F2;
   }
+
+  // translate dx in [-1,1] to dx in [lower,upper]
+  orient_averaged_outer_total_F1 *= 0.5 * zm;
+  orient_averaged_outer_total_F2 *= 0.5 * zm;
   // Multiply by contrast^2 and convert from [1e-12 A-1] to [cm-1]
-  const double contrast = (sld - solvent_sld);
-  const double s = 2.0 * contrast * square(length_a);
-  *F1 = 1.0e-2 * s * orient_averaged_outer_total_F1 * M_PI_4 * 0.5;
-  *F2 = 1.0e-4 * s * s * orient_averaged_outer_total_F2 * M_PI_4 * 0.5;
+  const double s =  2.0 *(sld - solvent_sld) * square(length_a);
+  *F1 = 1.0e-2 * s * orient_averaged_outer_total_F1;
+  *F2 = 1.0e-4 * s * s * orient_averaged_outer_total_F2;
 }
 
 static double
