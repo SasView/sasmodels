@@ -151,7 +151,7 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
 source = ["lib/gauss20.c", "lib/sas_gamma.c", "superball.c"]
 
 have_Fq = True
-effective_radius_type = [
+radius_effective_modes = [
     "radius of gyration",
     "equivalent volume sphere",
     "half length_a",
