@@ -69,8 +69,13 @@ static double oriented_superball(
 
     // integration factor for -1,1 quadrature to 0, gamma: gamma/2
     const double integration_factor = 0.5 * gamma;
-    outer_integral += GAUSS_W[i_x] * integration_factor * inner_integral * co;
+    // Eq. 21 in [Dresen2021]
+    outer_integral += GAUSS_W[i_x] * integration_factor * inner_integral * co * 2.0 * square(length_a);
+    
   }
+// Needed to normalise the oriented form factor, but would be reverted later with s = SLD contrast * volume
+// outer_integral /= form_volume(length_a, exponent_p); 
+
   // integration factor for -1,1 quadrature to 0, 1: 1/2
   return 0.5 * outer_integral;
 }
@@ -127,7 +132,7 @@ Fq(double q,
   orient_averaged_outer_total_F1 *= 0.5 * zm;
   orient_averaged_outer_total_F2 *= 0.5 * zm;
   // Multiply by contrast^2 and convert from [1e-12 A-1] to [cm-1]
-  const double s =  2.0 *(sld - solvent_sld) * square(length_a);
+  const double s =  (sld - solvent_sld) ;
   *F1 = 1.0e-2 * s * orient_averaged_outer_total_F1;
   *F2 = 1.0e-4 * s * s * orient_averaged_outer_total_F2;
 }
@@ -140,8 +145,7 @@ Iqabc(double qa, double qb, double qc,
       double exponent_p)
 {
   const double f_oriented = oriented_superball(qa, qb, qc, length_a, exponent_p);
-  const double contrast = (sld - solvent_sld);
-  const double s = 2.0 * contrast * square(length_a);
+  const double s = (sld - solvent_sld); 
 
   const double form = square(s * f_oriented);
   // Square and convert from [1e-12 A-1] to [cm-1]
