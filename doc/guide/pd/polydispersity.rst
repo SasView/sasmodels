@@ -445,6 +445,10 @@ variable, defaulting to::
 
     SAS_WEIGHTS_PATH=~/.sasview/weights
 
+or on Windows::
+
+    SAS_WEIGHTS_PATH=%USERPROFILE%\.sasview\weights
+
 The weights path is loaded on startup.  To update the distribution definition
 in a running application you will need to enter the following python commands::
 
@@ -522,4 +526,4 @@ T Allen, in *Particle Size Measurement*, 4th Edition, Chapman & Hall, London (19
 | 2018-03-20 Steve King
 | 2018-04-04 Steve King
 | 2018-08-09 Steve King
-| 2021-11-01 Steve King
+| 2021-11-03 Steve King
