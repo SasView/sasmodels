@@ -97,7 +97,8 @@ or orientations, consider using the `Gaussian Distribution`_ or
 `Boltzmann Distribution`_.
 
 If applying polydispersion to parameters describing angles, use the
-`Uniform Distribution`_.
+`Uniform Distribution`_ or a *Maier-Saupe* distribution or a *Cyclic Gaussian*
+distribution. 
 
 The `Array Distribution`_ provides a very simple means of implementing a
 user-defined distribution, but without any fittable parameters. Greater
@@ -128,6 +129,9 @@ polydispersity data will easily show if a sensible value is being used.
 
 When using an `Array Distribution`_, be aware that the polydispersity parameters,
 and the parameter to which the distribution is being applied, cannot be fitted.
+
+Additional distribution functions (and, indeed models) may be found on the
+`Sasview Model Marketplace <http://marketplace.sasview.org/>`_.
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
