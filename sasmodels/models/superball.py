@@ -128,7 +128,7 @@ description = """
         g = (1 - x^(2p))^(1/(2p))
         Ze = (1 - x^(2p) - y^(2p))^(1/(2p))
 """
-category = "shape:superball"
+category = "shape:sphere"
 
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
