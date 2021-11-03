@@ -62,21 +62,21 @@ more data points or more angles.
 
 The following distribution functions are provided:
 
-*  *Uniform Distribution*
-*  *Rectangular Distribution*
-*  *Gaussian Distribution*
-*  *Boltzmann Distribution*
-*  *Lognormal Distribution*
-*  *Schulz Distribution*
-*  *Array Distribution*
-*  *User-defined Distributions*
+*  `Uniform Distribution`_
+*  `Rectangular Distribution`_
+*  `Gaussian Distribution`_
+*  `Boltzmann Distribution`_
+*  `Lognormal Distribution`_
+*  `Schulz Distribution`_
+*  `Array Distribution`_
+*  `User-defined Distributions`_
 
 These distributions define the *number density* of the given population of
 scatterers. The resulting scattering is then the number average over the
 distribution.
 
 **Beware: the default distribution for all parameters is the Gaussian
-Distribution but this may not be suitable. See Suggested Applications below.**
+Distribution but this may not be suitable. See** `Suggested Applications`_ **below.**
 
 .. note:: In 2009 IUPAC decided to introduce the new term 'dispersity' to replace
            the term 'polydispersity' (see `Pure Appl. Chem., (2009), 81(2),
@@ -89,18 +89,19 @@ Distribution but this may not be suitable. See Suggested Applications below.**
 Suggested Applications
 ^^^^^^^^^^^^^^^^^^^^^^
 
-If applying polydispersion to parameters describing particle sizes, consider using
-the *Lognormal* or *Schulz* distributions.
+If applying polydispersion to parameters describing particle sizes, consider
+using the `Lognormal Distribution`_ or `Schulz Distribution`_.
 
 If applying polydispersion to parameters describing interfacial thicknesses
-or orientations, consider using the *Gaussian* or *Boltzmann* distributions.
+or orientations, consider using the `Gaussian Distribution`_ or
+`Boltzmann Distribution`_.
 
-If applying polydispersion to parameters describing angles, use the *Uniform*
-distribution.
+If applying polydispersion to parameters describing angles, use the
+`Uniform Distribution`_.
 
-The *Array* distribution provides a very simple means of implementing a user-
-defined distribution, but without any fittable parameters. Greater flexibility
-is conferred by the *User-defined* distribution.
+The `Array Distribution`_ provides a very simple means of implementing a
+user-defined distribution, but without any fittable parameters. Greater
+flexibility is conferred by using `User-defined Distributions`_.
 
 Usage Notes
 ^^^^^^^^^^^
@@ -124,6 +125,9 @@ normally lying in the range 0 – 1, PD values for 'angular' parameters represen
 actual width of the distribution in degrees, so values as high as 5 or 10 degrees
 maybe necessary to describe oriented systems. Again, plotting the relevant
 polydispersity data will easily show if a sensible value is being used.
+
+When using an `Array Distribution`_, be aware that the polydispersity parameters,
+and the parameter to which the distribution is being applied, cannot be fitted.
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
@@ -220,7 +224,7 @@ The polydispersity in sasmodels is given by
 Boltzmann Distribution
 ^^^^^^^^^^^^^^^^^^^^^^
 
-The Boltzmann Distribution is defined as
+The Boltzmann Distribution is defined here as
 
 .. math::
 
@@ -229,7 +233,9 @@ The Boltzmann Distribution is defined as
 
 where $\bar x$ ($x_\text{mean}$ in the figure) is the mean of the
 distribution and *Norm* is a normalization factor which is determined
-during the numerical calculation.
+during the numerical calculation. Strictly speaking, however, this
+function is a Laplace Distribution, of which the Boltzmann Distribution
+is but a limiting case.
 
 The width is defined as
 
@@ -289,7 +295,9 @@ and $N_\sigma$.
     Lognormal distribution for PD=0.1.
 
 For further information on the Lognormal distribution see:
-http://en.wikipedia.org/wiki/Log-normal_distribution and
+
+http://en.wikipedia.org/wiki/Log-normal_distribution
+
 http://mathworld.wolfram.com/LogNormalDistribution.html
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
@@ -330,8 +338,10 @@ Npts>=160 and Nsigmas>=15 are required.
     Schulz distribution.
 
 For further information on the Schulz distribution see:
-M Kotlarchyk & S-H Chen, *J Chem Phys*, (1983), 79, 2461 and
-M Kotlarchyk, RB Stephens, and JS Huang, *J Phys Chem*, (1988), 92, 1533
+
+`M Kotlarchyk & S-H Chen, J Chem Phys, (1983), 79, 2461 <https://doi.org/10.1063/1.446055>`_
+
+`M Kotlarchyk, RB Stephens, and JS Huang, J Phys Chem, (1988), 92, 1533 <https://doi.org/10.1021/j100317a032>`_.
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
@@ -513,7 +523,7 @@ For more information see:
 
 `Dynamic Light Scattering: Common Terms Defined, Whitepaper WP111214. Malvern Instruments (2011) <http://www.biophysics.bioc.cam.ac.uk/wp-content/uploads/2011/02/DLS_Terms_defined_Malvern.pdf>`_.
 
-S King, C Washington & R Heenan, *Phys Chem Chem Phys*, (2005), 7, 143.
+`S King, C Washington & R Heenan, Phys Chem Chem Phys, (2005), 7, 143 <https://doi.org/10.1039/B414175J>`_.
 
 T Allen, in *Particle Size Measurement*, 4th Edition, Chapman & Hall, London (1990).
 
