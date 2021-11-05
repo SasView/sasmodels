@@ -117,6 +117,7 @@ Authorship and Verification
 
 import numpy as np
 from numpy import inf
+# saved in utf-8 enconding for the odd umlaut (üö)
 
 name = "superball"
 title = "Superball with uniform scattering length density."
