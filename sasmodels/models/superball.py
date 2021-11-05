@@ -96,7 +96,7 @@ Validation
 References
 ----------
 
-.. [#WetterskogSuperball] E. Wetterskog, A. Klapper, S. Disch, E. Josten, R. P. Hermann, U. Ruecker, T. Brueckel, L. Bergstroem and G. Salazar-Alvarez, *Nanoscale*, 8 (2016) 15571
+.. [#WetterskogSuperball] E. Wetterskog, A. Klapper, S. Disch, E. Josten, R. P. Hermann, U. Rücker, T. Brückel, L. Bergström and G. Salazar-Alvarez, *Nanoscale*, 8 (2016) 15571
 
 .. [#DresenSuperball] D. Dresen, A. Qdemat, S. Ulusoy, F. Mees, D. Zakutna, E. Wetterskog, E. Kentzinger, G. Salazar-Alvarez, S. Disch, *J. Phys. Chem. C* (2021), doi: 10.1021/acs.jpcc.1c06082
 
@@ -112,7 +112,7 @@ Authorship and Verification
 
 * **Author:** Dominique Dresen **Date:** March 27, 2019
 * **Last Modified by:**  Dominique Dresen **Date:** March 27, 2019
-* **Last Reviewed by:** Dirk Honecker  **Date:**November 05, 2021
+* **Last Reviewed by:** Dirk Honecker  **Date:** November 05, 2021
 * **Source added by :** Dominique Dresen **Date:** March 27, 2019"""
 
 import numpy as np
