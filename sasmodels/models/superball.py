@@ -112,7 +112,7 @@ Authorship and Verification
 
 * **Author:** Dominique Dresen **Date:** March 27, 2019
 * **Last Modified by:**  Dominique Dresen **Date:** March 27, 2019
-* **Last Reviewed by:*Dirk Honecker*  **Date:**November 05, 2021
+* **Last Reviewed by:** Dirk Honecker  **Date:**November 05, 2021
 * **Source added by :** Dominique Dresen **Date:** March 27, 2019"""
 
 import numpy as np
