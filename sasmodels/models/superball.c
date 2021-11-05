@@ -69,8 +69,13 @@ static double oriented_superball(
 
     // integration factor for -1,1 quadrature to 0, gamma: gamma/2
     const double integration_factor = 0.5 * gamma;
-    outer_integral += GAUSS_W[i_x] * integration_factor * inner_integral * co;
+    // Eq. 21 in [Dresen2021]
+    outer_integral += GAUSS_W[i_x] * integration_factor * inner_integral * co * 2.0 * square(length_a);
+
   }
+// Needed to normalise the oriented form factor, but would be reverted later with s = SLD contrast * volume
+// outer_integral /= form_volume(length_a, exponent_p); 
+
   // integration factor for -1,1 quadrature to 0, 1: 1/2
   return 0.5 * outer_integral;
 }
@@ -84,6 +89,7 @@ Fq(double q,
    double length_a,
    double exponent_p)
 {
+
   // translate a point in [-1,1] to a point in [0, pi/2]
   const double zm = M_PI_4;
   const double zb = M_PI_4;
@@ -93,7 +99,9 @@ Fq(double q,
   // phi integral
   for (int i_phi = 0; i_phi < GAUSS_N; i_phi++)
   {
+
     const double phi = GAUSS_Z[i_phi]*zm +zb; // integrate 0 .. pi/2
+
     double sin_phi, cos_phi;
     SINCOS(phi, sin_phi, cos_phi);
 
@@ -102,26 +110,28 @@ Fq(double q,
     // theta integral
     for (int i_theta = 0; i_theta < GAUSS_N; i_theta++)
     {
-      const double theta = GAUSS_Z[i_theta]*zm + zb; // integrate 0, pi/2
-      double sin_theta, cos_theta;
-      SINCOS(theta, sin_theta, cos_theta);
+
+      const double cos_theta = GAUSS_Z[i_theta]*0.5 + 0.5; // integrate 0, 1
+      const double sin_theta = sqrt( 1.0 - square(cos_theta) );
+
       const double qx = q * cos_phi * sin_theta;
       const double qy = q * sin_phi * sin_theta;
       const double qz = q * cos_theta;
 
       const double f_oriented = oriented_superball(qx, qy, qz, length_a, exponent_p);
 
-      orient_averaged_inner_total_F1 += GAUSS_W[i_theta] * f_oriented * sin_theta;
-      orient_averaged_inner_total_F2 += GAUSS_W[i_theta] * square(f_oriented) * sin_theta;
+      orient_averaged_inner_total_F1 += GAUSS_W[i_theta] * f_oriented;
+      orient_averaged_inner_total_F2 += GAUSS_W[i_theta] * square(f_oriented);
     }
     orient_averaged_outer_total_F1 += GAUSS_W[i_phi] * orient_averaged_inner_total_F1;
     orient_averaged_outer_total_F2 += GAUSS_W[i_phi] * orient_averaged_inner_total_F2;
   }
-  // translate dx in [-1,1] to dx in [lower,upper]
-  orient_averaged_outer_total_F1 *= 0.5 * zm;
-  orient_averaged_outer_total_F2 *= 0.5 * zm;
+
+  // integration factors for phi and theta integral, divided by solid angle of pi/2
+  orient_averaged_outer_total_F1 *= 0.25;
+  orient_averaged_outer_total_F2 *= 0.25;
   // Multiply by contrast^2 and convert from [1e-12 A-1] to [cm-1]
-  const double s =  2*(sld - solvent_sld) * square(length_a);
+  const double s =  (sld - solvent_sld) ;
   *F1 = 1.0e-2 * s * orient_averaged_outer_total_F1;
   *F2 = 1.0e-4 * s * s * orient_averaged_outer_total_F2;
 }
@@ -134,8 +144,7 @@ Iqabc(double qa, double qb, double qc,
       double exponent_p)
 {
   const double f_oriented = oriented_superball(qa, qb, qc, length_a, exponent_p);
-  const double contrast = (sld - solvent_sld);
-  const double s = 2.0 * contrast * square(length_a);
+  const double s = (sld - solvent_sld); 
 
   const double form = square(s * f_oriented);
   // Square and convert from [1e-12 A-1] to [cm-1]
