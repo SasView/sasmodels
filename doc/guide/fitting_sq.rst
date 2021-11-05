@@ -9,10 +9,6 @@
 Fitting Models with Structure Factors
 -------------------------------------
 
-.. note::
-
-   This help document is under development
-
 **Interaction models** (previously called product models), or $P@S$ models
 for short, multiply the form factor $P(Q)$ by the structure factor $S(Q)$,
 modulated by the **effective radius** of the form factor. For the theory
@@ -283,6 +279,12 @@ and the form:shell volume ratio as
 
     \phi_S = \phi_P \langle V_e \rangle \big/ \langle V_s \rangle
 
+.. note::
+
+    Prior to Sasmodels v1.0.5 (Nov 2020), the intermediate $P(Q)$ returned by
+    the interaction calculator did not incorporate the volume normalization and
+    so $I(Q) \ne P(Q) S(Q)$. This became apparent when $P(Q)$ and $I(Q)$ were
+    plotted together. Further details can be found `here <https://github.com/SasView/sasview/issues/1698>`_.
 
 References
 ^^^^^^^^^^
@@ -297,3 +299,4 @@ References
 *Document History*
 
 | 2019-03-31 Paul Kienzle, Steve King & Richard Heenan
+| 2021-11-03 Steve King
