@@ -121,6 +121,9 @@ from numpy import inf
 
 name = "superball"
 title = "Superball with uniform scattering length density."
+
+single = False
+
 description = """
     I(q)= scale*V*(sld - sld_solvent)^2*P(q)+background
         P(q) = (2/pi) * double integral from 0 to pi/2 of ...
