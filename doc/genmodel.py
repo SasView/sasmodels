@@ -329,7 +329,7 @@ def make_figure_cached(model_info, opts):
     png_name = figfile(model_info)
     target_fig = joinpath(TARGET_DIR, 'img', png_name)
     cache_fig = joinpath(cache_dir, ".".join((png_name, hash_id, "png")))
-    if (exists(cache_fig) and os.access(cache_fig, os.R_OK)):
+    if exists(cache_fig):
         copy_file(cache_fig, target_fig)
     else:
         #print(f"==>regenerating png {model_info.id}")
