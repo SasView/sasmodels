@@ -750,7 +750,7 @@ class SasviewModel(object):
         #self._model.release()
 
         # Replace I and Q with there respective variable names in the code
-        expression = self.expression.replace("I", "result").replace("Q", "qx").replace("q", "qx")
+        expression = self.expression.replace("I", "result").replace("q", "qx").replace("Q", "qx")
 
         # Calculate the expression string like a line of code
         try:
