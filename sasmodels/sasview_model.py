@@ -414,6 +414,7 @@ class SasviewModel(object):
         self.params = collections.OrderedDict()
         self.dispersion = collections.OrderedDict()
         self.details = {}
+        self.expression = "I"
         for p in self._model_info.parameters.user_parameters({}, is2d=True):
             if p.name in hidden:
                 continue
@@ -429,6 +430,10 @@ class SasviewModel(object):
                     'nsigmas': 3,
                     'type': 'gaussian',
                 }
+
+    def set_expression(self, expression):
+        """Define the expression attribute"""
+        self.expression = expression
 
     def __get_state__(self):
         # type: () -> Dict[str, Any]
@@ -740,10 +745,19 @@ class SasviewModel(object):
                             magnetic=is_magnetic)
         lazy_results = getattr(calculator, 'results',
                                lambda: collections.OrderedDict())
-        #print("result", result)
 
         calculator.release()
         #self._model.release()
+
+        # Replace I and Q with there respective variable names in the code
+        expression = self.expression.replace("I", "result").replace("Q", "qx").replace("q", "qx")
+
+        # Calculate the expression string like a line of code
+        try:
+            result = eval(expression)
+        except NameError as e:
+            logging.error(f"Unknown symbol used in Y-axis Data, please only use I, Q and python mathematical operators"
+                          f"\n{e}")
 
         return result, lazy_results
 
