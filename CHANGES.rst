@@ -1,6 +1,9 @@
 Release notes
 =============
 
+v1.0.6 2022-xx-xx
+------------------
+
 v1.0.5 2021-01-26
 ------------------
 * fix probelm with P(Q) scaling when using a shell type form factors
