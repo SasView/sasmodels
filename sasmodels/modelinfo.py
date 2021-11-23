@@ -640,7 +640,7 @@ class ParameterTable(object):
                           'magnetic', 'fraction of spin up incident'),
                 Parameter('up_frac_f', '', 0., [0., 1.],
                           'magnetic', 'fraction of spin up final'),
-                Parameter('up_theta', 'degrees', 0., [0., 360.],
+                Parameter('up_theta', 'degrees', 90., [0., 360.],
                           'magnetic', 'polarization axis rotation angle'),
                 Parameter('up_phi', 'degrees', 0., [0., 180.],
                           'magnetic', 'polarization axis inclination angle'),
