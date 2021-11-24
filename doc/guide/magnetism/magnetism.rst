@@ -101,21 +101,37 @@ $P$ contributes
     \mathbf{M}_{\perp,\parallel P } = ( \mathbf{P}\cdot \mathbf{M}_{\perp})
                                       \mathbf{P}
 
-The component perpendicular to the polarisation gives rise to SF scattering. The
-perpendicular plane is constructed with the two vectors
+In SasView, form factor models expect a scattering length density (SLD) as parameter.
+For the NSF state, the effective SLD is simply
+
+.. math:: 
+
+    \rho_{\pm\pm } = \rho_N /mp b_H \mathbf{P}\cdot\mathbf{M}_{\perp}
+
+
+The magnetic scattering vector component perpendicular to the polarisation gives
+rise to SF scattering
 
 .. math:: 
 
     \mathbf{M}_{\perp,\perp P } = \mathbf{M}_{\perp } - (\mathbf{P} \cdot
                                   \mathbf{M}_{\perp }) \mathbf{P}
 
-and a third vector perpendicular to both $\mathbf{P}$ and $ \mathbf{M}_{\perp,
-\perp P } $ :
+This vector can itself again be decomposed in a contribution parallel and perpendicular
+ to $\mathbf{n}$. This allows to construct the purely magnetic SLD for the SF state as [#Sasview2022]_
 
-.. math::
+.. math:: 
 
-    \mathbf{O} = \mathbf{M}_{\perp} \times \mathbf{P} - \mathbf{M}_{\perp,
-                 \perp P }
+    \rho_{\pm\mp} = b_H |\mathbf{M}_{\perp,\perp P } - \mathbf{M}_{\perp,\perp P }\cdot
+                          \mathbf{n} \mathbf{n} |  \mp i b_H \mathbf{M}_{\perp,\perp P }\cdot
+                          \mathbf{n}
+
+Considering only centrosymmetric structures ($\mathbf{M}_{\perp} = \mathbf{M}_{\perp}^{\ast}$),
+the SF SLD simplifies to
+ 
+.. math:: 
+
+    \rho_{\pm\mp} = b_H |\mathbf{M}_{\perp,\perp P }|
 
 Every magnetic scattering cross section can be constructed from an incoherent
 mixture of the 4 spin-resolved spin states depending on the efficiency
@@ -157,6 +173,7 @@ References
 
     .. [#MRK1969] R. M. Moon and T. Riste and W. C. Koehler, *Phys. Rev.*, 181
        (1969) 920.
+    .. [#Sasview2022] SASview manuscript to be submitted
 
 *Document History*
 

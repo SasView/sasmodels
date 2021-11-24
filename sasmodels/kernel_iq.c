@@ -195,7 +195,7 @@ static double mag_sld(
     switch (xs) {
       default: // keep compiler happy; condition ensures xs in [0,1,2,3]
       case 0: // dd => sld - D Pvector \cdot Mperp
-          return sld - SCALAR_VEC(Pvector, Mperp);; 
+          return sld - SCALAR_VEC(Pvector, Mperp);
       case 1: // du.real => length of vector MperpPperpQ:  | MperpP - (MperpP \cdot qvector)  qvector | with MperpP= ORTH_VEC(MperpP, Mperp, Pvector);
           ORTH_VEC(rhom, Mperp, Pvector);
           ORTH_VEC(rhom, rhom, qvector);
