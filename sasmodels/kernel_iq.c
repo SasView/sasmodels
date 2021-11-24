@@ -109,6 +109,15 @@ void ORTH_VEC(double *result_vec, double *vec1, double *vec2)
     result_vec[1] = vec1[1] - scale * vec2[1];
     result_vec[2] = vec1[2] - scale * vec2[2];
 }
+
+void CROSS_VEC(double *result_vec, double *vec1, double *vec2) {
+   result_vec[0] = vec1[1] * vec2[2] - vec1[2] * vec2[1];
+   result_vec[1] = -(vec1[0] * vec2[2] - vec1[2] * vec2[0]);
+   result_vec[2] = vec1[0] * vec2[1] - vec1[1] * vec2[0];
+   result_vec = result_vec / MAG_VEC(result_vec)
+}
+
+
 // Return value restricted between low and high
 static double clip(double value, double low, double high)
 {
@@ -178,7 +187,7 @@ static double mag_sld(
   double Pvector[3]; 
   double qvector[3];
   double rhom[3]; 
-
+  double nperp[3];
   double Mperp[3];
 
   const double qsq = sqrt(qx*qx + qy*qy); 
@@ -196,14 +205,16 @@ static double mag_sld(
       default: // keep compiler happy; condition ensures xs in [0,1,2,3]
       case 0: // dd => sld - D Pvector \cdot Mperp
           return sld - SCALAR_VEC(Pvector, Mperp);
-      case 1: // du.real => length of vector MperpPperpQ:  | MperpP - (MperpP \cdot qvector)  qvector | with MperpP= ORTH_VEC(MperpP, Mperp, Pvector);
+      case 1: // du.real => length of vector MperpPperpQ:
+          CROSS_VEC(nperp, qvector, Pvector);
           ORTH_VEC(rhom, Mperp, Pvector);
           ORTH_VEC(rhom, rhom, qvector);
-          return MAG_VEC(rhom);
+          return SCALAR_VEC(nperp, rhom);
       case 2: // ud.real =>  length of vector MperpPperpQ
+          CROSS_VEC(nperp, qvector, Pvector);     
           ORTH_VEC(rhom, Mperp, Pvector);
           ORTH_VEC(rhom, rhom, qvector);
-          return MAG_VEC(rhom);
+          return SCALAR_VEC(nperp, rhom);
       case 3: // uu => sld + D Pvector \cdot Mperp
           return sld + SCALAR_VEC(Pvector, Mperp); 
     }

@@ -122,16 +122,14 @@ This vector can itself again be decomposed in a contribution parallel and perpen
 
 .. math:: 
 
-    \rho_{\pm\mp} = b_H |\mathbf{M}_{\perp,\perp P } - \mathbf{M}_{\perp,\perp P }\cdot
-                          \mathbf{n} \mathbf{n} |  \mp i b_H \mathbf{M}_{\perp,\perp P }\cdot
-                          \mathbf{n}
+    \rho_{\pm\mp} = b_H \frac{\mathbf{n} \times \mathbf{P}}{|\mathbf{n} \times \mathbf{P}|}
+                    (\mathbf{M}_{\perp,\perp P } - \mathbf{M}_{\perp,\perp P }\cdot
+                    \mathbf{n} \mathbf{n})   \mp i b_H \mathbf{M}_{\perp,\perp P }\cdot
+                    \mathbf{n}
 
 Considering only centrosymmetric structures ($\mathbf{M}_{\perp} = \mathbf{M}_{\perp}^{\ast}$),
-the SF SLD simplifies to
- 
-.. math:: 
+only the first, real contribution is relevant.
 
-    \rho_{\pm\mp} = b_H |\mathbf{M}_{\perp,\perp P }|
 
 Every magnetic scattering cross section can be constructed from an incoherent
 mixture of the 4 spin-resolved spin states depending on the efficiency
