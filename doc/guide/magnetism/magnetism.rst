@@ -117,15 +117,22 @@ rise to SF scattering
     \mathbf{M}_{\perp,\perp P } = \mathbf{M}_{\perp } - (\mathbf{P} \cdot
                                   \mathbf{M}_{\perp }) \mathbf{P}
 
-This vector can itself again be decomposed in a contribution parallel and perpendicular
- to $\mathbf{n}$. This allows to construct the purely magnetic SLD for the SF state as [#Sasview2022]_
+This vector can itself again be decomposed in a contribution of $\mathbf{n}$ and a vector
+perpendicular to $\mathbf{n}$ and $\mathbf{P}$. This allows to construct the purely magnetic
+SLD for the SF state as [#Sasview2022]_
 
 .. math:: 
 
     \rho_{\pm\mp} = b_H \frac{\mathbf{n} \times \mathbf{P}}{|\mathbf{n} \times \mathbf{P}|}
-                    (\mathbf{M}_{\perp,\perp P } - \mathbf{M}_{\perp,\perp P }\cdot
-                    \mathbf{n} \mathbf{n})   \mp i b_H \mathbf{M}_{\perp,\perp P }\cdot
-                    \mathbf{n}
+                    \cdot ( \mathbf{M}_{\perp}  \mp i b_H \mathbf{M}_{\perp}
+                    \cdot \mathbf{n}_{\perp P }
+
+with 
+
+.. math:: 
+
+    \mathbf{n}_{\perp P } = \frac{ \mathbf{q} - (\mathbf{q} \cdot \mathbf{P}) \mathbf{P}}
+                            { | \mathbf{q} - (\mathbf{q} \cdot \mathbf{P}) \mathbf{P}|}
 
 Considering only centrosymmetric structures ($\mathbf{M}_{\perp} = \mathbf{M}_{\perp}^{\ast}$),
 only the first, real contribution is relevant.

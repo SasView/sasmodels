@@ -114,8 +114,8 @@ void CROSS_VEC(double *result_vec, double *vec1, double *vec2) {
    result_vec[0] = vec1[1] * vec2[2] - vec1[2] * vec2[1];
    result_vec[1] = -(vec1[0] * vec2[2] - vec1[2] * vec2[0]);
    result_vec[2] = vec1[0] * vec2[1] - vec1[1] * vec2[0];
-   result_vec = result_vec / MAG_VEC(result_vec)
 }
+
 
 
 // Return value restricted between low and high
@@ -205,26 +205,26 @@ static double mag_sld(
       default: // keep compiler happy; condition ensures xs in [0,1,2,3]
       case 0: // dd => sld - D Pvector \cdot Mperp
           return sld - SCALAR_VEC(Pvector, Mperp);
-      case 1: // du.real => length of vector MperpPperpQ:
+      case 1: // du.real 
           CROSS_VEC(nperp, qvector, Pvector);
-          ORTH_VEC(rhom, Mperp, Pvector);
-          ORTH_VEC(rhom, rhom, qvector);
-          return SCALAR_VEC(nperp, rhom);
-      case 2: // ud.real =>  length of vector MperpPperpQ
-          CROSS_VEC(nperp, qvector, Pvector);     
-          ORTH_VEC(rhom, Mperp, Pvector);
-          ORTH_VEC(rhom, rhom, qvector);
-          return SCALAR_VEC(nperp, rhom);
+          SCALE_VEC(nperp, 1 / MAG_VEC(nperp));          
+          return SCALAR_VEC(nperp, Mperp);
+      case 2: // ud.real 
+          CROSS_VEC(nperp, qvector, Pvector);
+          SCALE_VEC(nperp, 1 / MAG_VEC(nperp));  
+          return SCALAR_VEC(nperp, Mperp);
       case 3: // uu => sld + D Pvector \cdot Mperp
           return sld + SCALAR_VEC(Pvector, Mperp); 
     }
   } else {
     if (xs== 4) {
-      ORTH_VEC(rhom, Mperp, Pvector);
-      return - SCALAR_VEC(rhom, qvector);  // du.imag => - i MperpP \cdot qvector
+      ORTH_VEC(nperp, qvector, Pvector);
+      SCALE_VEC(nperp, 1 / MAG_VEC(nperp));  
+      return - SCALAR_VEC(Mperp, nperp);  // du.imag => - i MperpP \cdot nperp
     } else { // index == 5
-      ORTH_VEC(rhom, Mperp, Pvector);
-      return + SCALAR_VEC(rhom, qvector);  // du.imag => + i MperpP \cdot qvector
+      ORTH_VEC(nperp, qvector, Pvector);
+      SCALE_VEC(nperp, 1 / MAG_VEC(nperp));  
+      return + SCALAR_VEC(Mperp, nperp);  // du.imag => + i MperpP \cdot nperp
     }
   }
 }

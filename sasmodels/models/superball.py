@@ -41,6 +41,7 @@ The oriented form factor is determined by solving
         =& \frac{a^2}{2 q_z} \int_{-1}^{1} \mathrm{d} x \int_{-\gamma}^{\gamma}
             \mathrm{d} y  e^{i a(q_x x + q_y y)/2}
             \sin(q_z a \zeta / 2),\\
+            
 with
 
 .. math::
