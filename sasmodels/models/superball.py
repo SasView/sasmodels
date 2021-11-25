@@ -20,7 +20,6 @@ the perfect cube shape as it is often observed experimentally
 with $a$ the cube edge length of the superball and $p$ a parameter that
 describes the roundness of the edges. In the limiting cases $p=1$ the superball
 corresponds to a sphere with radius $R = a/2$ and for $p = \infty$ to a cube
-
 with edge length $a$. The exponent $p$ is related to $a$ and the face diagonal
 $d$ via
 
@@ -99,9 +98,7 @@ References
 
 .. [#WetterskogSuperball] E. Wetterskog, A. Klapper, S. Disch, E. Josten, R. P. Hermann, U. Rücker, T. Brückel, L. Bergström and G. Salazar-Alvarez, *Nanoscale*, 8 (2016) 15571
 
-
 .. [#DresenSuperball] D. Dresen, A. Qdemat, S. Ulusoy, F. Mees, D. Zakutna, E. Wetterskog, E. Kentzinger, G. Salazar-Alvarez, S. Disch, *J. Phys. Chem. C* (2021), doi: 10.1021/acs.jpcc.1c06082
-
 
 Source
 ------
@@ -135,10 +132,7 @@ description = """
         g = (1 - x^(2p))^(1/(2p))
         Ze = (1 - x^(2p) - y^(2p))^(1/(2p))
 """
-
 category = "shape:sphere"
-
-
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Superball scattering length density"],
@@ -158,15 +152,12 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
 # lib/gauss76.c
 # lib/gauss20.c
 source = ["lib/gauss20.c", "lib/sas_gamma.c", "superball.c"]
-
 have_Fq = True
-
 radius_effective_modes = [
     "radius of gyration",
     "equivalent volume sphere",
     "half length_a",
 ]
-
 
 def random():
     """Return a random parameter set for the model."""
@@ -177,7 +168,6 @@ def random():
         exponent_p=exponent)
     return pars
 
-
 # parameters for demo
 demo = dict(scale=1, background=0,
             sld=6.3, sld_solvent=1.0,
@@ -187,7 +177,6 @@ demo = dict(scale=1, background=0,
             theta_pd=10, theta_pd_n=1,
             phi_pd=10, phi_pd_n=1,
             psi_pd=10, psi_pd_n=1)
-
 
 tests = [
     [{}, 0.2, 0.76833],
