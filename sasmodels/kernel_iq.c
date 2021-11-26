@@ -110,13 +110,6 @@ void ORTH_VEC(double *result_vec, double *vec1, double *vec2)
     result_vec[2] = vec1[2] - scale * vec2[2];
 }
 
-void CROSS_VEC(double *result_vec, double *vec1, double *vec2) {
-   result_vec[0] = vec1[1] * vec2[2] - vec1[2] * vec2[1];
-   result_vec[1] = -(vec1[0] * vec2[2] - vec1[2] * vec2[0]);
-   result_vec[2] = vec1[0] * vec2[1] - vec1[1] * vec2[0];
-}
-
-
 
 // Return value restricted between low and high
 static double clip(double value, double low, double high)
@@ -178,7 +171,8 @@ static void set_spin_weights(double in_spin, double out_spin, double weight[6])
 static double mag_sld(
   const unsigned int xs, // 0=dd, 1=du.real, 2=ud.real, 3=uu, 4=du.imag, 5=ud.imag
   const double qx, const double qy,
-  const double px, const double py, const double pz,
+  const double cos_mspin, const double sin_mspin,
+  const double cos_mphi, const double sin_mphi,
   const double sld,
   const double mx, const double my, const double mz
 )
@@ -187,14 +181,20 @@ static double mag_sld(
   double Pvector[3]; 
   double qvector[3];
   double rhom[3]; 
-  double nperp[3];
+  double perpy[3];
+  double perpz[3];  
   double Mperp[3];
 
   const double qsq = sqrt(qx*qx + qy*qy); 
   SET_VEC(qvector, qx / qsq, qy / qsq, 0);
   SET_VEC(Mvector, mx, my, mz);
-  SET_VEC(Pvector, px, py, pz);
-
+  //const double px = sin_mspin * cos_mphi;
+  //const double py = sin_mspin * sin_mphi;
+  //const double pz = cos_mspin;
+  SET_VEC(Pvector, sin_mspin * cos_mphi, sin_mspin * sin_mphi, cos_mspin);
+  //two unit vectors spanning up the plane perpendicular to polarisation for SF scattering
+  SET_VEC(perpy, -sin_mphi, cos_mphi, 0);
+  SET_VEC(perpz, -cos_mspin * cos_mphi, -cos_mspin * sin_mphi, sin_mspin);
   ORTH_VEC(Mperp, Mvector, qvector);
 
 
@@ -205,26 +205,18 @@ static double mag_sld(
       default: // keep compiler happy; condition ensures xs in [0,1,2,3]
       case 0: // dd => sld - D Pvector \cdot Mperp
           return sld - SCALAR_VEC(Pvector, Mperp);
-      case 1: // du.real 
-          CROSS_VEC(nperp, qvector, Pvector);
-          SCALE_VEC(nperp, 1 / MAG_VEC(nperp));          
-          return SCALAR_VEC(nperp, Mperp);
-      case 2: // ud.real 
-          CROSS_VEC(nperp, qvector, Pvector);
-          SCALE_VEC(nperp, 1 / MAG_VEC(nperp));  
-          return SCALAR_VEC(nperp, Mperp);
+      case 1: // du.real          
+          return SCALAR_VEC(perpy, Mperp);
+      case 2: // ud.real   
+          return SCALAR_VEC(perpy, Mperp);
       case 3: // uu => sld + D Pvector \cdot Mperp
           return sld + SCALAR_VEC(Pvector, Mperp); 
     }
   } else {
     if (xs== 4) {
-      ORTH_VEC(nperp, qvector, Pvector);
-      SCALE_VEC(nperp, 1 / MAG_VEC(nperp));  
-      return - SCALAR_VEC(Mperp, nperp);  // du.imag => - i MperpP \cdot nperp
-    } else { // index == 5
-      ORTH_VEC(nperp, qvector, Pvector);
-      SCALE_VEC(nperp, 1 / MAG_VEC(nperp));  
-      return + SCALAR_VEC(Mperp, nperp);  // du.imag => + i MperpP \cdot nperp
+      return - SCALAR_VEC(perpz, Mperp);  // du.imag => - i  nperp \cdot MperpP
+    } else { // index == 5 
+      return + SCALAR_VEC(perpz, Mperp);   // du.imag => + i nperp \cdot MperpP
     }
   }
 }
@@ -808,9 +800,9 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
           const double qsq = qx * qx + qy * qy;
           if (qsq > 1.e-16) {
             // TODO: what is the magnetic scattering at q = 0
-            const double px = sin_mspin * cos_mphi;
-             const double py = sin_mspin * sin_mphi;
-            const double pz = cos_mspin;
+            //const double px = sin_mspin * cos_mphi;
+            //const double py = sin_mspin * sin_mphi;
+            //const double pz = cos_mspin;
 
             // loop over uu, ud real, du real, dd, ud imag, du imag
             for (unsigned int xs = 0; xs < 6; xs++) {
@@ -826,7 +818,7 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
                   const double my = values[mag_index + 1];
                   const double mz = values[mag_index + 2];
                   local_values.vector[sld_index] =
-                    mag_sld(xs, qx, qy, px, py, pz, values[sld_index + 2], mx, my, mz);
+                    mag_sld(xs, qx, qy, cos_mspin, sin_mspin, cos_mphi, sin_mphi, values[sld_index + 2], mx, my, mz);
 //if (q_index==0) printf("%d: (qx,qy)=(%g,%g) xs=%d sld%d=%g p=(%g,%g) m=(%g,%g,%g)\n",
 //  q_index, qx, qy, xs, sk, local_values.vector[sld_index], px, py, mx, my, mz);
                 }

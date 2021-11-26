@@ -60,16 +60,16 @@ the neutron before and after the sample.
 
 For magnetic neutron scattering, only the magnetisation component or
 Halpern-Johnson vector $\mathbf{M}_{\perp}$ perpendicular to the scattering
-vector $\mathbf{Q}=q \mathbf{n}=q (\cos\theta, \sin \theta,0)$ contributes to
-the magnetic scattering:
+vector $\mathbf{Q}=q \hat{\mathbf{q}}=\hat{\mathbf{q}}q (\cos\theta, \sin \theta,0)$
+contributes to the magnetic scattering:
 
 .. math:: 
 
-    \mathbf{M}_{\perp} = \mathbf{n} [\mathbf{n} \cdot \mathbf{M}] -
+    \mathbf{M}_{\perp} = \hat{\mathbf{q}} [\hat{\mathbf{q}} \cdot \mathbf{M}] -
                          \mathbf{M}
 
-with $\mathbf{n}$ the unit scattering vector and $\theta$ denotes the angle
-between $\mathbf{Q}$ and the x-axis.
+with $\hat{\mathbf{q}}\mathbf{n}$ the unit scattering vector and $\theta$ denotes the
+angle between $\mathbf{Q}$ and the x-axis.
 
 The two NSF cross sections are given by
 
@@ -98,7 +98,7 @@ $P$ contributes
 
 .. math:: 
 
-    \mathbf{M}_{\perp,\parallel P } = ( \mathbf{P}\cdot \mathbf{M}_{\perp})
+    \mathbf{M}_{\perp,\parallel P } = ( \mathbf{P} \cdot \mathbf{M}_{\perp})
                                       \mathbf{P}
 
 In SasView, form factor models expect a scattering length density (SLD) as parameter.
@@ -106,7 +106,7 @@ For the NSF state, the effective SLD is simply
 
 .. math:: 
 
-    \rho_{\pm\pm } = \rho_N /mp b_H \mathbf{P}\cdot\mathbf{M}_{\perp}
+    \rho_{\pm\pm } = \rho_N /mp b_H \mathbf{P} \cdot \mathbf{M}_{\perp}
 
 
 The magnetic scattering vector component perpendicular to the polarisation gives
@@ -117,25 +117,9 @@ rise to SF scattering
     \mathbf{M}_{\perp,\perp P } = \mathbf{M}_{\perp } - (\mathbf{P} \cdot
                                   \mathbf{M}_{\perp }) \mathbf{P}
 
-This vector can itself again be decomposed in a contribution of $\mathbf{n}$ and a vector
-perpendicular to $\mathbf{n}$ and $\mathbf{P}$. This allows to construct the purely magnetic
-SLD for the SF state as [#Sasview2022]_
-
-.. math:: 
-
-    \rho_{\pm\mp} = b_H \frac{\mathbf{n} \times \mathbf{P}}{|\mathbf{n} \times \mathbf{P}|}
-                    \cdot ( \mathbf{M}_{\perp}  \mp i b_H \mathbf{M}_{\perp}
-                    \cdot \mathbf{n}_{\perp P }
-
-with 
-
-.. math:: 
-
-    \mathbf{n}_{\perp P } = \frac{ \mathbf{q} - (\mathbf{q} \cdot \mathbf{P}) \mathbf{P}}
-                            { | \mathbf{q} - (\mathbf{q} \cdot \mathbf{P}) \mathbf{P}|}
-
-Considering only centrosymmetric structures ($\mathbf{M}_{\perp} = \mathbf{M}_{\perp}^{\ast}$),
-only the first, real contribution is relevant.
+This vector can itself again be decomposed in two contributions from the base vectors spanning
+the plane perpendicular to $\mathbf{P}$. This allows to construct the purely magnetic
+SLD for the SF state.
 
 
 Every magnetic scattering cross section can be constructed from an incoherent
