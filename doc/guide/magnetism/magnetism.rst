@@ -60,7 +60,7 @@ the neutron before and after the sample.
 
 For magnetic neutron scattering, only the magnetisation component or
 Halpern-Johnson vector $\mathbf{M}_{\perp}$ perpendicular to the scattering
-vector $\mathbf{Q}=q \hat{\mathbf{q}}=\hat{\mathbf{q}}q (\cos\theta, \sin \theta,0)$
+vector $\mathbf{Q}= \hat{\mathbf{q}}=\hat{\mathbf{q}} (\cos\theta, \sin \theta,0)$
 contributes to the magnetic scattering:
 
 .. math:: 
@@ -68,7 +68,7 @@ contributes to the magnetic scattering:
     \mathbf{M}_{\perp} = \hat{\mathbf{q}} [\hat{\mathbf{q}} \cdot \mathbf{M}] -
                          \mathbf{M}
 
-with $\hat{\mathbf{q}}\mathbf{n}$ the unit scattering vector and $\theta$ denotes the
+with $\hat{\mathbf{q}}$ the unit scattering vector and $\theta$ denotes the
 angle between $\mathbf{Q}$ and the x-axis.
 
 The two NSF cross sections are given by
@@ -106,7 +106,7 @@ For the NSF state, the effective SLD is simply
 
 .. math:: 
 
-    \rho_{\pm\pm } = \rho_N /mp b_H \mathbf{P} \cdot \mathbf{M}_{\perp}
+    \rho_{\pm\pm } = \rho_N \mp b_H \mathbf{P} \cdot \mathbf{M}_{\perp}
 
 
 The magnetic scattering vector component perpendicular to the polarisation gives
@@ -162,7 +162,6 @@ References
 
     .. [#MRK1969] R. M. Moon and T. Riste and W. C. Koehler, *Phys. Rev.*, 181
        (1969) 920.
-    .. [#Sasview2022] SASview manuscript to be submitted
 
 *Document History*
 
