@@ -9,6 +9,8 @@ create a sasview model class to run that kernel as follows::
 """
 from __future__ import print_function
 
+import ast
+import operator as op
 import math
 from copy import deepcopy
 import collections
@@ -749,17 +751,57 @@ class SasviewModel(object):
         calculator.release()
         #self._model.release()
 
-        # Replace I and Q with there respective variable names in the code
-        expression = self.expression.replace("I", "result").replace("q", "qx").replace("Q", "qx")
-
         # Calculate the expression string like a line of code
         try:
-            result = eval(expression)
-        except NameError as e:
+            result = self.safeEval(ast.parse(self.expression, mode='eval').body, qx, result)
+        except TypeError as e:
             logging.error(f"Unknown symbol used in Y-axis Data, please only use I, Q and python mathematical operators"
                           f"\n{e}")
 
         return result, lazy_results
+
+
+    def safeEval(self, node, q_vals, I_vals):
+        """ Calculate a string as a line of code
+
+        A safe form of the eval command, only calculates mathematical operators, can accept I, Q, q as variables.
+
+        :param node: expression to calculate
+        :type node: string
+        :param q_vals: q values
+        :type q_vals: np.array
+        :param I_vals: Calculated I values
+        :type I_vals: np.array
+        :return: The calculation outlined in the node string
+        :rtype: np.array
+        :raises TypeError: Exception isn't a variable named I, Q, q; or a mathematical operators.
+        """
+
+        # Supported operators
+        operators = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
+                     ast.Div: op.truediv, ast.Pow: op.pow, ast.BitXor: op.xor,
+                     ast.USub: op.neg}
+
+        # If node is just a number
+        if isinstance(node, ast.Num):
+            return node.n
+        # If mathematical operator eg, <num> <operator> <num>
+        elif isinstance(node, ast.BinOp):
+            return operators[type(node.op)](self.safeEval(node.left, q_vals, I_vals),
+                                            self.safeEval(node.right, q_vals, I_vals))
+        # Special case eg -1
+        elif isinstance(node, ast.UnaryOp):
+            return operators[type(node.op)](self.safeEval(node.operand, q_vals, I_vals))
+        # Accepted variable name
+        elif isinstance(node, ast.Name):
+            if node.id == "I":
+                return I_vals
+            elif node.id == "Q":
+                return q_vals
+            elif node.id == "q":
+                return q_vals
+        else:
+            raise TypeError(node)
 
 
     def calculate_ER(self, mode=1):
