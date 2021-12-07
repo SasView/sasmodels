@@ -117,6 +117,7 @@ Authorship and Verification
 
 import numpy as np
 from numpy import inf
+
 # saved in utf-8 encoding for the German umlaut (üö)
 
 name = "superball"
@@ -132,7 +133,6 @@ description = """
         Ze = (1 - x^(2p) - y^(2p))^(1/(2p))
 """
 category = "shape:sphere"
-
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Superball scattering length density"],
@@ -152,14 +152,12 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
 # lib/gauss76.c
 # lib/gauss20.c
 source = ["lib/gauss20.c", "lib/sas_gamma.c", "superball.c"]
-
 have_Fq = True
 radius_effective_modes = [
     "radius of gyration",
     "equivalent volume sphere",
     "half length_a",
 ]
-
 
 def random():
     """Return a random parameter set for the model."""
@@ -170,7 +168,6 @@ def random():
         exponent_p=exponent)
     return pars
 
-
 # parameters for demo
 demo = dict(scale=1, background=0,
             sld=6.3, sld_solvent=1.0,
@@ -180,7 +177,6 @@ demo = dict(scale=1, background=0,
             theta_pd=10, theta_pd_n=1,
             phi_pd=10, phi_pd_n=1,
             psi_pd=10, psi_pd_n=1)
-
 
 tests = [
     [{}, 0.2, 0.76833],
