@@ -437,6 +437,10 @@ class SasviewModel(object):
         """Define the expression attribute"""
         self.expression = expression
 
+    def get_expression(self):
+        """Return the expression attribute"""
+        return self.expression
+
     def __get_state__(self):
         # type: () -> Dict[str, Any]
         state = self.__dict__.copy()
@@ -778,9 +782,8 @@ class SasviewModel(object):
         """
 
         # Supported operators
-        operators = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
-                     ast.Div: op.truediv, ast.Pow: op.pow, ast.BitXor: op.xor,
-                     ast.USub: op.neg}
+        operators = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul, ast.Div: op.truediv, ast.Pow: op.pow,
+                     ast.BitXor: op.xor, ast.USub: op.neg}
 
         # If node is just a number
         if isinstance(node, ast.Num):
