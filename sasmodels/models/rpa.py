@@ -1,4 +1,13 @@
 r"""
+.. warning:: This model is not functioning correctly in SasView and it
+             appears it has not done so for some time. Whilst the
+             problem is investigated, a workaround for Case 0 below
+             (the most common use case) is to use the binary_blend
+             model available on the `Model Maketplace 
+             <http://marketplace.sasview.org/models/124/>`_ . For further
+             information, please email help@sasview.org . *The
+             SasView Developers. February 2022.*
+
 Definition
 ----------
 
