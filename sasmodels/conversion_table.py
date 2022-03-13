@@ -136,7 +136,7 @@ CONVERSION_TABLE = {
                 "mphi:sld_solvent": "M_phi_solv",
                 "up:frac_i": "Up_frac_i",
                 "up:frac_f": "Up_frac_f",
-                "up:angle": "Up_theta",
+                "up:angle": "up_angle",
             }
         ],
         "core_shell_bicelle": [
@@ -226,7 +226,7 @@ CONVERSION_TABLE = {
                 "mphi:sld_solvent": "M_phi_solv",
                 "up:frac_i": "Up_frac_i",
                 "up:frac_f": "Up_frac_f",
-                "up:angle": "Up_theta"
+                "up:angle": "up_angle"
             }
         ],
         "correlation_length": [
@@ -255,7 +255,7 @@ CONVERSION_TABLE = {
                 "mphi:sld_solvent": "M_phi_solv",
                 "up:frac_i": "Up_frac_i",
                 "up:frac_f": "Up_frac_f",
-                "up:angle": "Up_theta"
+                "up:angle": "up_angle"
             }
         ],
         "dab": [
@@ -587,7 +587,7 @@ CONVERSION_TABLE = {
                 "mphi:sld_solvent": "M_phi_solv",
                 "up:frac_i": "Up_frac_i",
                 "up:frac_f": "Up_frac_f",
-                "up:angle": "Up_theta",
+                "up:angle": "up_angle",
             }
         ],
         "peak_lorentz": [
@@ -731,7 +731,7 @@ CONVERSION_TABLE = {
                 "mphi:sld_solvent": "M_phi_solv",
                 "up:frac_i": "Up_frac_i",
                 "up:frac_f": "Up_frac_f",
-                "up:angle": "Up_theta"
+                "up:angle": "up_angle"
             }
         ],
         "spherical_sld": [

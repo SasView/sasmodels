@@ -195,6 +195,7 @@ def _rename_magnetic_angles(pars):
     Change name of magnetic angle.
     """
     if 'up_angle' in pars:      
+        pars['up_theta'] = 90
         pars['up_phi'] = pars['up_angle']
         pars.pop('up_angle') 
     return pars    

@@ -609,7 +609,7 @@ def parlist(model_info, pars, is2d):
             relative_pd=p.relative_pd,
             M0=pars.get(p.id+'_M0', 0.),
             mphi=pars.get(p.id+'_mphi', 0.),
-            mtheta=pars.get(p.id+'_mtheta', 0.),
+            mtheta=pars.get(p.id+'_mtheta', 90.),
         )
         lines.append(_format_par(p.name, **fields))
         magnetic = magnetic or fields['M0'] != 0.
