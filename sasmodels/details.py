@@ -16,6 +16,8 @@ from __future__ import print_function
 import numpy as np  # type: ignore
 from numpy import cos, sin, radians
 
+from .modelinfo import NUM_MAGNETIC_PARS, NUM_COMMON_PARS
+
 try:
     np.meshgrid([])
     meshgrid = np.meshgrid
@@ -234,7 +236,9 @@ def make_kernel_args(kernel, mesh):
     nvalues = kernel.info.parameters.nvalues
     scalars = [value for value, dispersity, weight in mesh]
     # skipping scale and background when building values and weights
-    _, dispersity, weight = zip(*mesh[2:npars+2]) if npars else ((), (), ())
+    _, dispersity, weight = (
+        zip(*mesh[NUM_COMMON_PARS:npars+NUM_COMMON_PARS]) if npars
+        else ((), (), ()))
     #weight = correct_theta_weights(kernel.info.parameters, dispersity, weight)
     length = np.array([len(w) for w in weight])
     offset = np.cumsum(np.hstack((0, length)))
@@ -288,8 +292,9 @@ def convert_magnetism(parameters, values):
 
     Returns True if any magnetism is present.
     """
-    mag = values[parameters.nvalues-3*parameters.nmagnetic:parameters.nvalues]
-    mag = mag.reshape(-1, 3)
+    nmagpars = NUM_MAGNETIC_PARS*parameters.nmagnetic
+    mag = values[parameters.nvalues-nmagpars : parameters.nvalues]
+    mag = mag.reshape(-1, NUM_MAGNETIC_PARS)
     if np.any(mag[:, 0] != 0.0):
         M0 = mag[:, 0].copy()
         theta, phi = radians(mag[:, 1]), radians(mag[:, 2])
