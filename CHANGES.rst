@@ -1,14 +1,15 @@
 Release notes
 =============
 
-v1.0.6 2022-xx-xx
+v1.0.6 2022-03-17
 ------------------
-* Adding 3d polarisation in https://github.com/SasView/sasmodels/pull/437
-* Fixing Spherical boucher model in https://github.com/SasView/sasmodels/pull/476
-* Turning magic constants to named magic constants in https://github.com/SasView/sasmodels/pull/470
-* Allowing composite mixtures with multiplicity in https://github.com/SasView/sasmodels/pull/472
-* Improved superball model in https://github.com/SasView/sasmodels/pull/478
-* Bugfix in Magnetic SLD calculation and update of magnetic scattering documentation in https://github.com/SasView/sasmodels/pull/492
+* Generalized 3D description of magnetic SANS
+* Adding a Boucher-type SLD profile to the selection in the model spherical_sld.
+* Turning magic constants to named magic constants
+* Allowing composite mixtures models with multiplicity 
+* Improving superball model
+* Bugfix in Magnetic SLD calculation
+* A number of docunentation updates
 
 
 v1.0.5 2021-01-26
