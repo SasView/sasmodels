@@ -5,11 +5,11 @@ v1.0.6 2022-03-17
 ------------------
 * Generalized 3D description of magnetic SANS
 * Add Boucher-type SLD profile to the selection in the model spherical_sld.
-* Changed magic constants into named constants
+* Improved naming conventions of constants in magnetic SANS 
 * Composite mixture models with multiplicity are now allowed
 * Improved superball model
 * Fixed a bug in magnetic SLD calculations
-* A number of docunentation updates
+* Updated documentation
 
 
 v1.0.5 2021-01-26
