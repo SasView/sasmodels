@@ -643,7 +643,7 @@ class ParameterTable(object):
                           'magnetic', 'fraction of spin up incident'),
                 Parameter('up_frac_f', '', 0., [0., 1.],
                           'magnetic', 'fraction of spin up final'),
-                Parameter('up_angle', 'degrees', 0., [0., 360.],
+                Parameter('up_theta', 'degrees', 90., [0., 360.],
                           'magnetic', 'polarization axis rotation angle'),
                 Parameter('up_phi', 'degrees', 0., [0., 180.],
                           'magnetic', 'polarization axis inclination angle'),
@@ -758,11 +758,11 @@ class ParameterTable(object):
             else:
                 append_group(p.id)
 
-        if is2d and 'up_angle' and 'up_phi' in expanded_pars:
+        if is2d and 'up_theta' and 'up_phi' in expanded_pars:
             result.extend([
                 expanded_pars['up_frac_i'],
                 expanded_pars['up_frac_f'],
-                expanded_pars['up_angle'],
+                expanded_pars['up_theta'],
                 expanded_pars['up_phi'],
             ])
 

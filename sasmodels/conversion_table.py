@@ -134,9 +134,9 @@ CONVERSION_TABLE = {
                 "M0:sld_solvent": "M0_sld_solv",
                 "mtheta:sld_solvent": "M_theta_solv",
                 "mphi:sld_solvent": "M_phi_solv",
-                "up:frac_i": "Up_frac_i",
-                "up:frac_f": "Up_frac_f",
-                "up:angle": "Up_theta",
+                "up:frac_i": "up_frac_i",
+                "up:frac_f": "up_frac_f",
+                "up:angle": "up_angle",
             }
         ],
         "core_shell_bicelle": [
@@ -224,9 +224,9 @@ CONVERSION_TABLE = {
                 "M0:sld_solvent": "M0_sld_solv",
                 "mtheta:sld_solvent": "M_theta_solv",
                 "mphi:sld_solvent": "M_phi_solv",
-                "up:frac_i": "Up_frac_i",
-                "up:frac_f": "Up_frac_f",
-                "up:angle": "Up_theta"
+                "up:frac_i": "up_frac_i",
+                "up:frac_f": "up_frac_f",
+                "up:angle": "up_angle"
             }
         ],
         "correlation_length": [
@@ -253,9 +253,9 @@ CONVERSION_TABLE = {
                 "M0:sld_solvent": "M0_sld_solv",
                 "mtheta:sld_solvent": "M_theta_solv",
                 "mphi:sld_solvent": "M_phi_solv",
-                "up:frac_i": "Up_frac_i",
-                "up:frac_f": "Up_frac_f",
-                "up:angle": "Up_theta"
+                "up:frac_i": "up_frac_i",
+                "up:frac_f": "up_frac_f",
+                "up:angle": "up_angle"
             }
         ],
         "dab": [
@@ -585,9 +585,9 @@ CONVERSION_TABLE = {
                 "M0:sld_solvent": "M0_sld_solv",
                 "mtheta:sld_solvent": "M_theta_solv",
                 "mphi:sld_solvent": "M_phi_solv",
-                "up:frac_i": "Up_frac_i",
-                "up:frac_f": "Up_frac_f",
-                "up:angle": "Up_theta",
+                "up:frac_i": "up_frac_i",
+                "up:frac_f": "up_frac_f",
+                "up:angle": "up_angle",
             }
         ],
         "peak_lorentz": [
@@ -729,9 +729,9 @@ CONVERSION_TABLE = {
                 "M0:sld_solvent": "M0_sld_solv",
                 "mtheta:sld_solvent": "M_theta_solv",
                 "mphi:sld_solvent": "M_phi_solv",
-                "up:frac_i": "Up_frac_i",
-                "up:frac_f": "Up_frac_f",
-                "up:angle": "Up_theta"
+                "up:frac_i": "up_frac_i",
+                "up:frac_f": "up_frac_f",
+                "up:angle": "up_angle"
             }
         ],
         "spherical_sld": [
