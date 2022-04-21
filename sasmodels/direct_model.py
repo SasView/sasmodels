@@ -33,14 +33,11 @@ from .details import make_kernel_args, dispersion_mesh
 from .product import RADIUS_MODE_ID
 
 # pylint: disable=unused-import
-try:
-    from typing import Optional, Dict, Tuple, List, Callable
-    from collections import OrderedDict
-    from .data import Data
-    from .kernel import Kernel, KernelModel
-    from .modelinfo import Parameter, ParameterSet, ModelInfo
-except ImportError:
-    pass
+from typing import Optional, Dict, Tuple, List, Callable
+from collections import OrderedDict
+from .data import Data
+from .kernel import Kernel, KernelModel
+from .modelinfo import Parameter, ParameterSet, ModelInfo
 # pylint: enable=unused-import
 
 def call_kernel(calculator, pars, cutoff=0., mono=False):
@@ -199,8 +196,8 @@ class DataMixin(object):
     possibly with random noise added.  This is useful for simulating a
     dataset with the results from *_calc_theory*.
     """
-    def _interpret_data(self, data, model):
-        # type: (Data, KernelModel) -> None
+    def _interpret_data(self, data: Data, model: KernelModel) -> None:
+        # not type: (Data, KernelModel) -> None
         # pylint: disable=attribute-defined-outside-init
 
         self._data = data
@@ -362,8 +359,8 @@ class DirectModel(DataMixin):
 
     *cutoff* is the polydispersity weight cutoff.
     """
-    def __init__(self, data, model, cutoff=1e-5):
-        # type: (Data, KernelModel, float) -> None
+    def __init__(self, data: Data, model: KernelModel, cutoff: float=1e-5) -> None:
+        # not type: (Data, KernelModel, float) -> None
         self.model = model
         self.cutoff = cutoff
         # Note: _interpret_data defines the model attributes

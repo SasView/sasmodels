@@ -18,6 +18,7 @@ from collections import OrderedDict
 import numpy as np  # type: ignore
 
 from .modelinfo import Parameter, ParameterTable, ModelInfo
+from .modelinfo import NUM_MAGFIELD_PARS, NUM_MAGNETIC_PARS, NUM_COMMON_PARS
 from .kernel import KernelModel, Kernel
 from .details import make_details
 
@@ -37,27 +38,16 @@ def make_mixture_info(parts, operation='+'):
     # Build new parameter list
     combined_pars = []
 
-    all_parts = copy(parts)
-    is_flat = False
-    while not is_flat:
-        is_flat = True
-        for part in all_parts:
-            if part.composition and part.composition[0] == 'mixture' and \
-                len(part.composition[1]) > 1:
-                all_parts += part.composition[1]
-                all_parts.remove(part)
-                is_flat = False
-
     # When creating a mixture model that is a sum of product models (ie (1*2)+(3*4))
     # the parameters for models 1 & 2 will be prefixed with A & B respectively,
     # but so will the parameters for models 3 & 4. We need to rename models 3 & 4
     # so that they are prefixed with C & D to avoid overlap of parameter names.
     used_prefixes = []
     for part in parts:
-        i = 0
         if part.composition and part.composition[0] == 'mixture':
-            npars_list = [info.parameters.npars for info in part.composition[1]]
-            for npars in npars_list:
+            i = 0
+            for submodel in part.composition[1]:
+                npars = len(submodel.parameters.kernel_parameters)
                 # List of params of one of the constituent models of part
                 submodel_pars = part.parameters.kernel_parameters[i:i+npars]
                 # Prefix of the constituent model
@@ -66,6 +56,13 @@ def make_mixture_info(parts, operation='+'):
                     used_prefixes.append(prefix)
                     i += npars
                     continue
+                # TODO: don't modify submodel --- it may be used elsewhere
+                # Existing code probably doesn't keep a handle on the model
+                # parts so its probably okay, but it's possible that a mix
+                # on user defined mixture models models will change the
+                # parameters used for the parts in the GUI. Even worse if the
+                # same plugin is used twice. For example, twosphere.py
+                # contains sphere+sphere and you create twosphere+twosphere.
                 while prefix in used_prefixes:
                     # This prefix has been already used, so change it to the
                     # next letter that hasn't been used
@@ -75,6 +72,8 @@ def make_mixture_info(parts, operation='+'):
                 # Update the parameters of this constituent model to use the
                 # new prefix
                 for par in submodel_pars:
+                    # Strip {prefix}_ using par.name[2:], etc.
+                    # TODO: fails for AB_scale
                     par.id = prefix + par.id[2:]
                     par.name = prefix + par.name[2:]
                     if par.length_control is not None:
@@ -86,8 +85,8 @@ def make_mixture_info(parts, operation='+'):
         # Note that prefix must also be applied to id and length_control
         # to support vector parameters
         prefix = ''
-        if not part.composition:
-            # Model isn't a composition model, so it's parameters don't have a
+        if not part.composition or part.composition[0] == 'product':
+            # Model isn't a composition model, so its parameters don't have a
             # a prefix. Add the next available prefix
             prefix = chr(ord('A')+len(used_prefixes))
             used_prefixes.append(prefix)
@@ -98,7 +97,7 @@ def make_mixture_info(parts, operation='+'):
             scale_prefix = prefix
             if prefix == '' and getattr(part, "operation", '') == '*':
                 # `part` is a composition product model. Find the prefixes of
-                # it's parameters to form a new prefix for the scale.
+                # its parameters to form a new prefix for the scale.
                 # For example, a model with A*B*C will have ABC_scale.
                 sub_prefixes = []
                 for param in part.parameters.kernel_parameters:
@@ -260,7 +259,7 @@ class _MixtureParts(object):
         self.kernels = kernels
         self.call_details = call_details
         self.values = values
-        self.spin_index = model_info.parameters.npars + 2
+        self.spin_index = model_info.parameters.npars + NUM_COMMON_PARS
         # The following are redefined by __iter__, but set them here so that
         # lint complains a little less.
         self.part_num = -1
@@ -271,8 +270,8 @@ class _MixtureParts(object):
     def __iter__(self):
         # type: () -> _MixtureParts
         self.part_num = 0
-        self.par_index = 2
-        self.mag_index = self.spin_index + 3
+        self.par_index = NUM_COMMON_PARS
+        self.mag_index = self.spin_index + NUM_MAGFIELD_PARS
         return self
 
     def __next__(self):
@@ -290,7 +289,7 @@ class _MixtureParts(object):
         self.par_index += info.parameters.npars
         if self.model_info.operation == '+':
             self.par_index += 1 # Account for each constituent model's scale param
-        self.mag_index += 3 * len(info.parameters.magnetism_index)
+        self.mag_index += NUM_MAGNETIC_PARS*len(info.parameters.magnetism_index)
 
         return kernel, call_details, values
 
@@ -307,7 +306,7 @@ class _MixtureParts(object):
         # building an addition model, each component has its own scale factor
         # which we need to skip when constructing the details for the kernel, so
         # add one, giving a net subtract one.
-        diff = 1 if self.model_info.operation == '+' else 2
+        diff = NUM_COMMON_PARS-1 if self.model_info.operation == '+' else NUM_COMMON_PARS
         index = slice(par_index - diff, par_index - diff + info.parameters.npars)
         length = full.length[index]
         offset = full.offset[index]
@@ -324,8 +323,8 @@ class _MixtureParts(object):
         pars = self.values[par_index + diff:par_index + info.parameters.npars + diff]
         nmagnetic = len(info.parameters.magnetism_index)
         if nmagnetic:
-            spin_state = self.values[self.spin_index:self.spin_index + 3]
-            mag_index = self.values[mag_index:mag_index + 3 * nmagnetic]
+            spin_state = self.values[self.spin_index:self.spin_index + NUM_MAGFIELD_PARS]
+            mag_index = self.values[mag_index:mag_index + NUM_MAGNETIC_PARS*nmagnetic]
         else:
             spin_state = []
             mag_index = []
