@@ -162,17 +162,18 @@ def _vol_pars(model_info, values):
 
 
 def _make_sesans_transform(data):
-    from sas.sascalc.data_util.nxsunit import Converter
-
     # Pre-compute the Hankel matrix (H)
-    SElength = Converter(data._xunit)(data.x, "A")
+    SElength, SEunits = data.x, data._xunit
     wavelength, wunits = data.source.wavelength, data.source.wavelength_unit
-    zacceptance, zunits = data.sample.zacceptance
-    wavelength = Converter("A")(wavelength, units=wunits)
-    theta_max = Converter("radian")(zacceptance, units=zunits)
-    zaccept = 2 * np.pi / np.max(wavelength) * np.sin(theta_max)
+    theta_max, theta_units = data.sample.zacceptance
+    if SEunits != "A" or wunits != "A" or theta_units != "radians":
+        from sas.sascalc.data_util.nxsunit import Converter
+        SElength = Converter("A")(SElength, units=SEunits)
+        wavelength = Converter("A")(wavelength, units=wunits)
+        theta_max = Converter("radian")(theta_max, units=theta_units)
 
     Rmax = 10000000
+    zaccept = 2 * np.pi / np.max(wavelength) * np.sin(theta_max)
     hankel = sesans.SesansTransform(data.x, SElength, wavelength, zaccept, Rmax)
     return hankel
 

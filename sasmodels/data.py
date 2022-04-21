@@ -318,7 +318,7 @@ def empty_sesans(z, wavelength=None, zacceptance=None):
     if np.isscalar(wavelength):
         wavelength = np.full_like(z, wavelength)
     if zacceptance is None:
-        zacceptance = (90., 'degrees')
+        zacceptance = (np.pi/2, 'radians')
     source = Source()
     source.wavelength = wavelength
     source.wavelength_unit = "A"
