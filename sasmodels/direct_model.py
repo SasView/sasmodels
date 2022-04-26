@@ -159,19 +159,19 @@ def _vol_pars(model_info, values):
 
 
 def _make_sesans_transform(data):
-    from sas.sascalc.data_util.nxsunit import Converter
-
     # Pre-compute the Hankel matrix (H)
-    SElength = Converter(data._xunit)(data.x, "A")
-
-    theta_max = Converter("radians")(data.sample.zacceptance)[0]
-    q_max = 2 * np.pi / np.max(data.source.wavelength) * np.sin(theta_max)
-    zaccept = Converter("1/A")(q_max, "1/" + data.source.wavelength_unit)
+    SElength, SEunits = data.x, data._xunit
+    wavelength, wunits = data.source.wavelength, data.source.wavelength_unit
+    theta_max, theta_units = data.sample.zacceptance
+    if SEunits != "A" or wunits != "A" or theta_units != "radians":
+        from sas.sascalc.data_util.nxsunit import Converter
+        SElength = Converter("A")(SElength, units=SEunits)
+        wavelength = Converter("A")(wavelength, units=wunits)
+        theta_max = Converter("radian")(theta_max, units=theta_units)
 
     Rmax = 10000000
-    hankel = sesans.SesansTransform(data.x, SElength,
-                                    data.source.wavelength,
-                                    zaccept, Rmax)
+    zaccept = 2 * np.pi / np.max(wavelength) * np.sin(theta_max)
+    hankel = sesans.SesansTransform(data.x, SElength, wavelength, zaccept, Rmax)
     return hankel
 
 
@@ -204,7 +204,7 @@ class DataMixin(object):
         self._model = model
 
         # interpret data
-        if hasattr(data, 'isSesans') and data.isSesans:
+        if getattr(data, 'isSesans', False):
             self.data_type = 'sesans'
         elif hasattr(data, 'qx_data'):
             self.data_type = 'Iqxy'
@@ -327,7 +327,9 @@ class DataMixin(object):
 
         # Need to pull background out of resolution for multiple scattering
         default_background = self._model.info.parameters.common_parameters[1].default
-        background = pars.get('background', default_background)
+        background = (
+            pars.get('background', default_background)
+            if self.data_type != 'sesans' else 0.)
         pars = pars.copy()
         pars['background'] = 0.
 

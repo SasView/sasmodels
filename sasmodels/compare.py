@@ -42,7 +42,7 @@ from . import weights
 from . import kerneldll
 from . import kernelcl
 from . import kernelcuda
-from .data import plot_theory, empty_data1D, empty_data2D, load_data
+from .data import plot_theory, empty_data1D, empty_data2D, empty_sesans, load_data
 from .direct_model import DirectModel, get_mesh
 from .generate import FLOAT_RE, set_integration_size
 
@@ -80,9 +80,9 @@ Options (* for default):
     -noise=0 sets the measurement error dI/I
     -res=0 sets the resolution width dQ/Q if calculating with resolution
     -lowq*/-midq/-highq/-exq use q values up to 0.05, 0.2, 1.0, 10.0
-    -q=min:max alternative specification of qrange
+    -q=min:max alternative specification of qrange; sesans uses 1/qmax:1/qmin
     -nq=128 sets the number of Q points in the data set
-    -1d*/-2d computes 1d or 2d data
+    -1d*/-2d/-sesans computes 1d, 2d or sesans data
     -zero indicates that q=0 should be included
 
     === model parameters ===
@@ -685,7 +685,7 @@ def make_data(opts):
     Generate an empty dataset, used with the model to set Q points
     and resolution.
 
-    *opts* contains the options, with 'qmax', 'nq', 'res',
+    *opts* contains the options, with 'qmax', 'nq', 'sesans', 'res',
     'accuracy', 'is2d' and 'view' parsed from the command line.
     """
     qmin, qmax, nq, res = opts['qmin'], opts['qmax'], opts['nq'], opts['res']
@@ -695,6 +695,13 @@ def make_data(opts):
         data.accuracy = opts['accuracy']
         set_beam_stop(data, qmin)
         index = ~data.mask
+    elif opts['sesans']:
+        if opts['view'] == 'log':
+            z = np.logspace(-math.log10(qmax), -math.log10(qmin), nq)
+        else:
+            z = np.linspace(1/qmax, 1/qmin, nq)
+        data = empty_sesans(z)
+        index = slice(None, None)
     else:
         if opts['view'] == 'log' and not opts['zero']:
             q = np.logspace(math.log10(qmin), math.log10(qmax), nq)
@@ -761,6 +768,9 @@ def compare(opts, limits=None, maxdim=None):
 
     *maxdim* **DEPRECATED** Use opts['maxdim'] instead.
     """
+    if (opts['sesans'] and limits is None) or opts['sets'] > 1:
+        limits = (-np.inf, np.inf)
+
     # CRUFT: remove maxdim parameter
     if maxdim is not None:
         opts['maxdim'] = maxdim
@@ -1016,7 +1026,7 @@ OPTIONS = [
     # Data generation
     'data=', 'noise=', 'res=', 'nq=', 'q=',
     'lowq', 'midq', 'highq', 'exq', 'zero',
-    '2d', '1d',
+    '2d', '1d', 'sesans',
 
     # Parameter set
     'preset', 'random', 'random=', 'sets=',
@@ -1176,6 +1186,7 @@ def parse_opts(argv):
         'qmin'      : None,
         'qmax'      : 0.05,
         'nq'        : 128,
+        'sesans'    : False,
         'res'       : '0.0',
         'noise'     : 0.0,
         'accuracy'  : 'Low',
@@ -1213,6 +1224,7 @@ def parse_opts(argv):
         elif arg == '-highq':   opts['qmax'] = 1.0
         elif arg == '-midq':    opts['qmax'] = 0.2
         elif arg == '-lowq':    opts['qmax'] = 0.05
+        elif arg == '-sesans':  opts['sesans'] = True
         elif arg == '-zero':    opts['zero'] = True
         elif arg.startswith('-nq='):       opts['nq'] = int(arg[4:])
         elif arg.startswith('-q='):
