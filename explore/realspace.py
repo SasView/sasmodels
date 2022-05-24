@@ -15,7 +15,7 @@ except ImportError:
     from inspect import getargspec as getfullargspec
 
 import numpy as np
-from numpy import pi, radians, sin, cos, sqrt, clip
+from numpy import pi, radians, sin, cos, sqrt, clip, dot
 from numpy.random import poisson, uniform, randn, rand
 from numpy.polynomial.legendre import leggauss
 from scipy.integrate import simps
@@ -38,7 +38,7 @@ def Rx(angle):
     R = [[1, 0, 0],
          [0, +cos(a), -sin(a)],
          [0, +sin(a), +cos(a)]]
-    return np.matrix(R)
+    return np.array(R)
 
 def Ry(angle):
     """Construct a matrix to rotate points about *y* by *angle* degrees."""
@@ -46,7 +46,7 @@ def Ry(angle):
     R = [[+cos(a), 0, +sin(a)],
          [0, 1, 0],
          [-sin(a), 0, +cos(a)]]
-    return np.matrix(R)
+    return np.array(R)
 
 def Rz(angle):
     """Construct a matrix to rotate points about *z* by *angle* degrees."""
@@ -54,7 +54,7 @@ def Rz(angle):
     R = [[+cos(a), -sin(a), 0],
          [+sin(a), +cos(a), 0],
          [0, 0, 1]]
-    return np.matrix(R)
+    return np.array(R)
 
 def pol2rec(r, theta, phi):
     """
@@ -71,7 +71,8 @@ def rotation(theta, phi, psi):
     Apply the jitter transform to a set of points.
     Points are stored in a 3 x n numpy matrix, not a numpy array or tuple.
     """
-    return Rx(phi)*Ry(theta)*Rz(psi)
+    # CRUFT: py3 allows Rx(phi) @ Ry(theta) @ Rz(psi)
+    return dot(dot(Rx(phi), Ry(theta)), Rz(psi))
 
 def apply_view(points, view):
     """
@@ -80,8 +81,9 @@ def apply_view(points, view):
     View angles are in degrees.
     """
     theta, phi, psi = view
-    return np.asarray((Rz(phi)*Ry(theta)*Rz(psi))*np.matrix(points.T)).T
-
+    # CRUFT: py3 allows ((Rz(phi) @ Ry(theta) @ Rz(psi)) @ (points.T)).T
+    R = dot(dot(Rz(phi), Ry(theta)), Rz(psi))
+    return dot(R, points.T).T
 
 def invert_view(qx, qy, view):
     """
@@ -91,11 +93,14 @@ def invert_view(qx, qy, view):
     """
     theta, phi, psi = view
     q = np.vstack((qx.flatten(), qy.flatten(), 0*qx.flatten()))
-    return np.asarray((Rz(-psi)*Ry(-theta)*Rz(-phi))*np.matrix(q))
+    # CRUFT: py3 allows ((Rz(phi) @ Ry(theta) @ Rz(psi)) @ q
+    Rinv = dot(dot(Rz(-psi), Ry(-theta)), Rz(-phi))
+    return dot(Rinv, q)
 
+I3 = np.eye(3)
 
 class Shape:
-    rotation = np.matrix([[1., 0, 0], [0, 1, 0], [0, 0, 1]])
+    rotation = I3
     center = np.array([0., 0., 0.])[:, None]
     r_max = None
     is_magnetic = False
@@ -105,15 +110,16 @@ class Shape:
         raise NotImplementedError()
 
     def sample(self, density):
-        # type: (float) -> np.ndarray[N], np.ndarray[N, 3]
+        # type: (float) -> Tuple[np.ndarray[N], np.ndarray[N, 3]]
         raise NotImplementedError()
 
     def dims(self):
-        # type: () -> float, float, float
+        # type: () -> Tuple[float, float, float]
         raise NotImplementedError()
 
     def rotate(self, theta, phi, psi):
-        self.rotation = rotation(theta, phi, psi) * self.rotation
+        # CRUFT: py3 allows rotation(theta, phi, psi) @ self.rotation
+        self.rotation = dot(rotation(theta, phi, psi), self.rotation)
         return self
 
     def shift(self, x, y, z):
@@ -121,7 +127,8 @@ class Shape:
         return self
 
     def _adjust(self, points):
-        points = np.asarray(self.rotation * np.matrix(points.T)) + self.center
+        # CRUFT: py3 allows self.rotation @ (points.T) + self.center
+        points = dot(self.rotation, points.T) + self.center
         return points.T
 
     def r_bins(self, q, over_sampling=1, r_step=None):
@@ -221,7 +228,7 @@ class EllipticalBicelle(Shape):
         radius = points[:, 0]**2 + points[:, 1]**2
         points = points[radius <= 1]
         # set all to core value first
-        values = np.ones_like(points[:, 0])*self.value
+        values = np.full_like(points[:, 0], self.value)
         # then set value to face value if |z| > face/(length/2))
         values[abs(points[:, 2]) > self.length/(self.length + 2*self.thick_face)] = self.value_face
         # finally set value to rim value if outside the core ellipse
@@ -1280,7 +1287,7 @@ def check_shape(title, shape, fn=None, show_points=False,
     if show_points:
          plot_points(rho, points); pylab.figure()
     plot_calc(r, Pr, q, Iq, theory=theory, title=title, Iq_avg=Iq_avg)
-    pylab.gcf().canvas.set_window_title(title)
+    pylab.gcf().canvas.manager.set_window_title(title)
     pylab.show()
 
 def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
@@ -1318,7 +1325,7 @@ def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
     if show_points:
         plot_points(rho, points); pylab.figure()
     plot_calc_2d(qx, qy, Iqxy, theory=theory, title=title)
-    pylab.gcf().canvas.set_window_title(title)
+    pylab.gcf().canvas.manager.set_window_title(title)
 
     ## Histogram of point density in the z direction.
     #pylab.figure()
@@ -1364,7 +1371,7 @@ def check_shape_mag(title, shape, fn=None, view=(0, 0, 0), show_points=False,
     if show_points:
         plot_points(rho, points); pylab.figure()
     plot_calc_2d(qx, qy, Iqxy, theory=theory, title=title)
-    pylab.gcf().canvas.set_window_title(title)
+    pylab.gcf().canvas.manager.set_window_title(title)
 
     ## Histogram of point density in the z direction.
     #pylab.figure()
