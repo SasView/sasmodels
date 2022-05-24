@@ -62,8 +62,8 @@ def pol2rec(r, theta, phi):
     """
     theta, phi = radians(theta), radians(phi)
     x = +r * sin(theta) * cos(phi)
-    y = +r * sin(theta)*sin(phi) 
-    z = +r * cos(theta) 
+    y = +r * sin(theta) * sin(phi)
+    z = +r * cos(theta)
     return x, y, z
 
 def rotation(theta, phi, psi):
@@ -588,7 +588,7 @@ def spin_weights(in_spin, out_spin):
     return weight
 
 def orth(A, b_hat): # A = 3 x n, and b_hat unit vector
- return A - np.sum(A*b_hat[:, None], axis=0)[None, :]*b_hat[:, None]    
+    return A - np.sum(A*b_hat[:, None], axis=0)[None, :]*b_hat[:, None]
 
 def magnetic_sld(qx, qy, up_theta, up_phi, rho, rho_m):
     """
@@ -603,7 +603,6 @@ def magnetic_sld(qx, qy, up_theta, up_phi, rho, rho_m):
     M = rho_m
     p_hat = np.array([sin_theta * cos_phi, sin_theta * sin_phi, cos_theta ])
 
-    
     q_hat = np.array([qx, qy, 0]) * q_norm
     M_perp = orth(M,q_hat)
     M_perpP = orth(M_perp, p_hat)
@@ -612,7 +611,6 @@ def magnetic_sld(qx, qy, up_theta, up_phi, rho, rho_m):
     perpx = np.dot(p_hat, M_perp)
     perpy = np.sqrt(np.sum(M_perpP_perpQ**2, axis=0))
     perpz = np.dot(q_hat, M_perpP)
-    
 
     return [
         rho - perpx,   # dd => sld - D M_perpx
@@ -636,7 +634,7 @@ def calc_Iq_magnetic(qx, qy, rho, rho_m, points, volume=1.0, view=(0, 0, 0),
     yaw and roll for a beam travelling along the negative z axis.
     *up_frac_i* is the portion of polarizer neutrons which are spin up.
     *up_frac_f* is the portion of analyzer neutrons which are spin up.
-    *up_theta* and *up_phi* are the rotation angle of the spin up direction 
+    *up_theta* and *up_phi* are the rotation angle of the spin up direction
     in the detector plane and the inclination from the beam direction (z-axis).
     *dtype* is the numerical precision of the calculation. [not implemented]
     """
@@ -708,11 +706,11 @@ def _calc_Pr_uniform(r, rho, points, volume):
     #print("vol", np.sum(volume))
     return Pr*1e-4
 
-    # Can get an additional 2x by going to C.  Cuda/OpenCL will allow even
+    # Can get an additional 2x by going to C. Cuda/OpenCL will allow even
     # more speedup, though still bounded by the O(n^2) cost.
     """
 void pdfcalc(int n, const double *pts, const double *rho,
-         int nPr, double *Pr, double rstep)
+  int nPr, double *Pr, double rstep)
 {
   int i,j;
   for (i=0; i<n-2; i++) {
@@ -1158,7 +1156,7 @@ def build_triell(ra=125, rb=200, rc=50, rho=2,
         up_frac_i=up_i,
         up_frac_f=up_f,
         up_theta=up_theta,
-        up_phi=up_phi,        
+        up_phi=up_phi,
     )
     return shape, fn, fn_xy
 
