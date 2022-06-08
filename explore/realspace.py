@@ -15,7 +15,7 @@ except ImportError:
     from inspect import getargspec as getfullargspec
 
 import numpy as np
-from numpy import pi, radians, sin, cos, sqrt, clip, dot
+from numpy import pi, radians, sin, cos, sqrt, clip
 from numpy.random import poisson, uniform, randn, rand
 from numpy.polynomial.legendre import leggauss
 from scipy.integrate import simps
@@ -67,35 +67,34 @@ def pol2rec(r, theta, phi):
     return x, y, z
 
 def rotation(theta, phi, psi):
-    """
+    r"""
     Apply the jitter transform to a set of points.
     Points are stored in a 3 x n numpy matrix, not a numpy array or tuple.
+    View is in degrees using nautical angles with roll $\psi$ around $c$,
+    pitch $\theta$ around $b$ and yaw $\phi$ around $a$.
     """
-    # CRUFT: py3 allows Rx(phi) @ Ry(theta) @ Rz(psi)
-    return dot(dot(Rx(phi), Ry(theta)), Rz(psi))
+    return Rx(phi) @ Ry(theta) @ Rz(psi)
 
 def apply_view(points, view):
-    """
-    Apply the view transform (theta, phi, psi) to a set of points.
+    r"""
+    Apply the view transform $(\theta, \phi, \psi)$ to a set of points.
     Points are stored in a 3 x n numpy array.
-    View angles are in degrees.
+    View is in degrees using $z$-$y$-$z$ Euler angles $\phi$-$\theta$-$\psi$.
     """
     theta, phi, psi = view
-    # CRUFT: py3 allows ((Rz(phi) @ Ry(theta) @ Rz(psi)) @ (points.T)).T
-    R = dot(dot(Rz(phi), Ry(theta)), Rz(psi))
-    return dot(R, points.T).T
+    R = Rz(phi) @ Ry(theta) @ Rz(psi)
+    return (R @ points.T).T
 
 def invert_view(qx, qy, view):
-    """
-    Return (qa, qb, qc) for the (theta, phi, psi) view angle at detector
-    pixel (qx, qy).
-    View angles are in degrees.
+    r"""
+    Return $(q_a, q_b, q_c)$ for the $(\theta, \phi, \psi)$ view angle at
+    detector pixel corresponding to $(q_x, q_y)$.
+    View is in degrees using $z$-$y$-$z$ Euler angles $\phi$-$\theta$-$\psi$.
     """
     theta, phi, psi = view
+    Rinv = Rz(-psi) @ Ry(-theta) @ Rz(-phi)
     q = np.vstack((qx.flatten(), qy.flatten(), 0*qx.flatten()))
-    # CRUFT: py3 allows ((Rz(phi) @ Ry(theta) @ Rz(psi)) @ q
-    Rinv = dot(dot(Rz(-psi), Ry(-theta)), Rz(-phi))
-    return dot(Rinv, q)
+    return Rinv @ q
 
 I3 = np.eye(3)
 
@@ -118,8 +117,7 @@ class Shape:
         raise NotImplementedError()
 
     def rotate(self, theta, phi, psi):
-        # CRUFT: py3 allows rotation(theta, phi, psi) @ self.rotation
-        self.rotation = dot(rotation(theta, phi, psi), self.rotation)
+        self.rotation = rotation(theta, phi, psi) @ self.rotation
         return self
 
     def shift(self, x, y, z):
@@ -127,8 +125,7 @@ class Shape:
         return self
 
     def _adjust(self, points):
-        # CRUFT: py3 allows self.rotation @ (points.T) + self.center
-        points = dot(self.rotation, points.T) + self.center
+        points = self.rotation @ points.T + self.center
         return points.T
 
     def r_bins(self, q, over_sampling=1, r_step=None):
@@ -615,9 +612,9 @@ def magnetic_sld(qx, qy, up_theta, up_phi, rho, rho_m):
     M_perpP = orth(M_perp, p_hat)
     M_perpP_perpQ = orth(M_perpP, q_hat)
 
-    perpx = np.dot(p_hat, M_perp)
+    perpx = p_hat @ M_perp
     perpy = np.sqrt(np.sum(M_perpP_perpQ**2, axis=0))
-    perpz = np.dot(q_hat, M_perpP)
+    perpz = q_hat @ M_perpP
 
     return [
         rho - perpx,   # dd => sld - D M_perpx
