@@ -8,6 +8,7 @@ import argparse
 import inspect
 from collections import OrderedDict
 from timeit import default_timer as timer
+import warnings
 
 try:
     from inspect import getfullargspec
@@ -28,6 +29,7 @@ try:
     USE_NUMBA = SAS_NUMBA > 0
     USE_CUDA = SAS_NUMBA > 1
 except ImportError:
+    warnings.warn("Numba not available. Code will run more slowly.")
     USE_NUMBA = USE_CUDA = False
 
 # Definition of rotation matrices comes from wikipedia:
@@ -929,13 +931,16 @@ def plot_calc_2d(qx, qy, Iqxy, theory=None, title=None):
     import matplotlib.pyplot as plt
     qx, qy = bin_edges(qx), bin_edges(qy)
     #qx, qy = np.meshgrid(qx, qy)
-    if theory is not None:
-        plt.subplot(121)
+    if theory is None:
+        fig, ax = plt.subplots()
+    else:
+        fig, (ax, ax2) = plt.subplots(1, 2)
     #plt.pcolor(qx, qy, np.log10(Iqxy))
     extent = [qx[0], qx[-1], qy[0], qy[-1]]
-    plt.imshow(np.log10(Iqxy), extent=extent, interpolation="nearest",
-               origin='lower')
-    plt.colorbar()
+    im = ax.imshow(
+        np.log10(Iqxy), extent=extent, interpolation="nearest",
+        origin='lower')
+    plt.colorbar(im, ax=ax)
     plt.xlabel('qx (1/A)')
     plt.ylabel('qy (1/A)')
     plt.axis('equal')
@@ -948,10 +953,11 @@ def plot_calc_2d(qx, qy, Iqxy, theory=None, title=None):
         # Skip bad values in theory
         index = np.isnan(theory)
         theory[index] = Iqxy[index]
-        plt.imshow(np.log10(theory), extent=extent, interpolation="nearest",
-                   origin='lower')
+        im2 = ax2.imshow(
+            np.log10(theory), extent=extent, interpolation="nearest",
+            origin='lower')
         plt.title("theory")
-        plt.colorbar()
+        plt.colorbar(im2, ax=ax2)
         plt.axis('equal')
         plt.axis(extent)
         plt.xlabel('qx (1/A)')
