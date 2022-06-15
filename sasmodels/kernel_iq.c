@@ -171,7 +171,7 @@ static void set_spin_weights(double in_spin, double out_spin, double weight[6])
 static double mag_sld(
   const unsigned int xs, // 0=dd, 1=du.real, 2=ud.real, 3=uu, 4=du.imag, 5=ud.imag
   const double qx, const double qy,
-  const double cos_mspin, const double sin_mspin,
+  const double cos_mtheta, const double sin_mtheta,
   const double cos_mphi, const double sin_mphi,
   const double sld,
   const double mx, const double my, const double mz
@@ -188,13 +188,11 @@ static double mag_sld(
   const double qsq = sqrt(qx*qx + qy*qy); 
   SET_VEC(qvector, qx / qsq, qy / qsq, 0);
   SET_VEC(Mvector, mx, my, mz);
-  //const double px = sin_mspin * cos_mphi;
-  //const double py = sin_mspin * sin_mphi;
-  //const double pz = cos_mspin;
-  SET_VEC(Pvector, sin_mspin * cos_mphi, sin_mspin * sin_mphi, cos_mspin);
+
+  SET_VEC(Pvector, sin_mtheta * cos_mphi, sin_mtheta * sin_mphi, cos_mtheta);
   //two unit vectors spanning up the plane perpendicular to polarisation for SF scattering
   SET_VEC(perpy, -sin_mphi, cos_mphi, 0);
-  SET_VEC(perpz, -cos_mspin * cos_mphi, -cos_mspin * sin_mphi, sin_mspin);
+  SET_VEC(perpz, -cos_mtheta * cos_mphi, -cos_mtheta * sin_mphi, sin_mtheta);
   ORTH_VEC(Mperp, Mvector, qvector);
 
 
@@ -414,14 +412,14 @@ void KERNEL_NAME(
   // Interpret polarization cross section.
   //     up_frac_i = values[NUM_PARS+2];
   //     up_frac_f = values[NUM_PARS+3];
-  //     up_angle = values[NUM_PARS+4];
+  //     up_theta = values[NUM_PARS+4];
   //     up_phi = values[NUM_PARS+5];
   // TODO: could precompute more magnetism parameters before calling the kernel.
   double xs_weights[8];  // uu, ud real, du real, dd, ud imag, du imag, fill, fill
-  double cos_mspin, sin_mspin;
+  double cos_mtheta, sin_mtheta;
   double cos_mphi, sin_mphi;
   set_spin_weights(values[NUM_PARS+2], values[NUM_PARS+3], xs_weights);
-  SINCOS(values[NUM_PARS+4]*M_PI_180, sin_mspin, cos_mspin);
+  SINCOS(values[NUM_PARS+4]*M_PI_180, sin_mtheta, cos_mtheta);
   SINCOS(values[NUM_PARS+5]*M_PI_180, sin_mphi, cos_mphi);
 #endif // MAGNETIC
 
@@ -800,9 +798,7 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
           const double qsq = qx * qx + qy * qy;
           if (qsq > 1.e-16) {
             // TODO: what is the magnetic scattering at q = 0
-            //const double px = sin_mspin * cos_mphi;
-            //const double py = sin_mspin * sin_mphi;
-            //const double pz = cos_mspin;
+
 
             // loop over uu, ud real, du real, dd, ud imag, du imag
             for (unsigned int xs = 0; xs < 6; xs++) {
@@ -818,7 +814,7 @@ PD_OUTERMOST_WEIGHT(MAX_PD)
                   const double my = values[mag_index + 1];
                   const double mz = values[mag_index + 2];
                   local_values.vector[sld_index] =
-                    mag_sld(xs, qx, qy, cos_mspin, sin_mspin, cos_mphi, sin_mphi, values[sld_index + 2], mx, my, mz);
+                    mag_sld(xs, qx, qy, cos_mtheta, sin_mtheta, cos_mphi, sin_mphi, values[sld_index + 2], mx, my, mz);
 //if (q_index==0) printf("%d: (qx,qy)=(%g,%g) xs=%d sld%d=%g p=(%g,%g) m=(%g,%g,%g)\n",
 //  q_index, qx, qy, xs, sk, local_values.vector[sld_index], px, py, mx, my, mz);
                 }

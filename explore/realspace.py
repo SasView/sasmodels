@@ -620,7 +620,7 @@ def spin_weights(in_spin, out_spin):
 def orth(A, b_hat): # A = 3 x n, and b_hat unit vector
  return A - np.sum(A*b_hat[:, None], axis=0)[None, :]*b_hat[:, None]    
 
-def magnetic_sld(qx, qy, up_angle, up_phi, rho, rho_m):
+def magnetic_sld(qx, qy, up_theta, up_phi, rho, rho_m):
     """
     Compute the complex sld for the magnetic spin states.
     Returns effective rho for spin states [dd, du, ud, uu].
@@ -628,10 +628,10 @@ def magnetic_sld(qx, qy, up_angle, up_phi, rho, rho_m):
     # Handle q=0 by setting px = py = 0
     # Note: this is different from kernel_iq, which I(0,0) to 0
     q_norm = 1/sqrt(qx**2 + qy**2) if qx != 0. or qy != 0. else 0.
-    cos_spin, sin_spin = cos(radians(up_angle)), sin(radians(up_angle))
+    cos_theta, sin_theta = cos(radians(up_theta)), sin(radians(up_theta))
     cos_phi, sin_phi = cos(radians(up_phi)), sin(radians(up_phi))
     M = rho_m
-    p_hat = np.array([sin_spin * cos_phi, sin_spin * sin_phi, cos_spin ])
+    p_hat = np.array([sin_theta * cos_phi, sin_theta * sin_phi, cos_theta ])
 
     
     q_hat = np.array([qx, qy, 0]) * q_norm
@@ -652,7 +652,7 @@ def magnetic_sld(qx, qy, up_angle, up_phi, rho, rho_m):
     ]
 
 def calc_Iq_magnetic(qx, qy, rho, rho_m, points, volume=1.0, view=(0, 0, 0),
-                     up_frac_i=0.5, up_frac_f=0.5, up_angle=0., up_phi=0.):
+                     up_frac_i=0.5, up_frac_f=0.5, up_theta=0., up_phi=0.):
     """
     *qx*, *qy* correspond to the detector pixels at which to calculate the
     scattering, relative to the beam along the negative z axis.
@@ -666,7 +666,7 @@ def calc_Iq_magnetic(qx, qy, rho, rho_m, points, volume=1.0, view=(0, 0, 0),
     yaw and roll for a beam travelling along the negative z axis.
     *up_frac_i* is the portion of polarizer neutrons which are spin up.
     *up_frac_f* is the portion of analyzer neutrons which are spin up.
-    *up_angle* and *up_phi* are the rotation angle of the spin up direction 
+    *up_theta* and *up_phi* are the rotation angle of the spin up direction 
     in the detector plane and the inclination from the beam direction (z-axis).
     *dtype* is the numerical precision of the calculation. [not implemented]
     """
@@ -684,7 +684,7 @@ def calc_Iq_magnetic(qx, qy, rho, rho_m, points, volume=1.0, view=(0, 0, 0),
     qx, qy = (v.flatten() for v in (qx, qy))
     for k in range(qx.size):
         ephase = volume*np.exp(1j*(qa[k]*x + qb[k]*y + qc[k]*z))
-        dd, du, ud, uu = magnetic_sld(qx[k], qy[k], up_angle, up_phi, rho, rho_m)
+        dd, du, ud, uu = magnetic_sld(qx[k], qy[k], up_theta, up_phi, rho, rho_m)
         for w, xs in zip(weights, (dd, du, ud, uu)):
             if w == 0.0:
                 continue
@@ -1135,10 +1135,10 @@ def build_csbox(a=10, b=20, c=30, da=1, db=2, dc=3, slda=1, sldb=2, sldc=3, sld_
     return shape, fn, fn_xy
 
 def build_sphere(radius=125, rho=2,
-                 rho_m=0, theta_m=0, phi_m=0, up_i=0, up_f=0, up_angle=0, up_phi=0):
+                 rho_m=0, theta_m=0, phi_m=0, up_i=0, up_f=0, up_theta=0, up_phi=0):
     magnetism = pol2rec(rho_m, theta_m, phi_m) if rho_m != 0.0 else None
     shape = TriaxialEllipsoid(radius, radius, radius, rho, magnetism=magnetism)
-    shape.spin = (up_i, up_f, up_angle, up_phi)
+    shape.spin = (up_i, up_f, up_theta, up_phi)
     fn, fn_xy = wrap_sasmodel(
         'sphere',
         scale=1,
@@ -1151,18 +1151,18 @@ def build_sphere(radius=125, rho=2,
         sld_mphi=phi_m,
         up_frac_i=up_i,
         up_frac_f=up_f,
-        up_angle=up_angle,
+        up_theta=up_theta,
         up_phi=up_phi,
     )
     return shape, fn, fn_xy
 
 def build_ellip(rab=125, rc=50, rho=2,
-                rho_m=0, theta_m=0, phi_m=0, up_i=0, up_f=0, up_angle=0, up_phi=0):
+                rho_m=0, theta_m=0, phi_m=0, up_i=0, up_f=0, up_theta=0, up_phi=0):
     magnetism = pol2rec(rho_m, theta_m, phi_m) if rho_m != 0.0 else None
     shape = TriaxialEllipsoid(rab, rab, rc, rho, magnetism=magnetism)
     # TODO: polarization spec doesn't belong in shape
     # Put spin state info into the shape since we have it available.
-    shape.spin = (up_i, up_f, up_angle, up_phi)
+    shape.spin = (up_i, up_f, up_theta, up_phi)
     fn, fn_xy = wrap_sasmodel(
         'ellipsoid',
         scale=1,
@@ -1176,16 +1176,16 @@ def build_ellip(rab=125, rc=50, rho=2,
         sld_mphi=phi_m,
         up_frac_i=up_i,
         up_frac_f=up_f,
-        up_angle=up_angle,
+        up_theta=up_theta,
         up_phi=up_phi,
     )
     return shape, fn, fn_xy
 
 def build_triell(ra=125, rb=200, rc=50, rho=2,
-                 rho_m=0, theta_m=0, phi_m=0, up_i=0, up_f=0, up_angle=0, up_phi=0):
+                 rho_m=0, theta_m=0, phi_m=0, up_i=0, up_f=0, up_theta=0, up_phi=0):
     magnetism = pol2rec(rho_m, theta_m, phi_m) if rho_m != 0.0 else None
     shape = TriaxialEllipsoid(ra, rb, rc, rho, magnetism=magnetism)
-    shape.spin = (up_i, up_f, up_angle, up_phi)
+    shape.spin = (up_i, up_f, up_theta, up_phi)
     fn, fn_xy = wrap_sasmodel(
         'triaxial_ellipsoid',
         scale=1,
@@ -1200,7 +1200,7 @@ def build_triell(ra=125, rb=200, rc=50, rho=2,
         sld_mphi=phi_m,
         up_frac_i=up_i,
         up_frac_f=up_f,
-        up_angle=up_angle,
+        up_theta=up_theta,
         up_phi=up_phi,        
     )
     return shape, fn, fn_xy
@@ -1376,7 +1376,7 @@ def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
 
 def check_shape_mag(title, shape, fn=None, view=(0, 0, 0), show_points=False,
                     mesh=100, qmax=1.0, samples=5000,
-                    up_frac_i=0, up_frac_f=0, up_angle=0, up_phi=0):
+                    up_frac_i=0, up_frac_f=0, up_theta=0, up_phi=0):
     rho_solvent = 0
     #qx = np.linspace(0.0, qmax, mesh)
     #qy = np.linspace(0.0, qmax, mesh)
@@ -1395,7 +1395,7 @@ def check_shape_mag(title, shape, fn=None, view=(0, 0, 0), show_points=False,
     t0 = timer()
     Iqxy = calc_Iq_magnetic(Qx, Qy, rho, rho_m, points, volume=volume, view=view,
                             up_frac_i=up_frac_i, up_frac_f=up_frac_f,
-                            up_angle=up_angle, up_phi=up_phi)
+                            up_theta=up_theta, up_phi=up_phi)
     print("calc I_mag time", timer() - t0)
     t0 = timer()
     theory = fn(Qx, Qy, view) if fn is not None else None
@@ -1473,10 +1473,10 @@ def main():
     title = "%s(%s)" % (opts.shape, " ".join(opts.pars))
     if shape.is_magnetic:
         view = tuple(float(v) for v in opts.view.split(','))
-        up_frac_i, up_frac_f, up_angle, up_phi = shape.spin
+        up_frac_i, up_frac_f, up_theta, up_phi = shape.spin
         check_shape_mag(title, shape, fn_xy, view=view, show_points=opts.plot,
                        mesh=opts.mesh, qmax=opts.qmax, samples=opts.samples,
-                       up_frac_i=up_frac_i, up_frac_f=up_frac_f, up_angle=up_angle, up_phi=up_phi,
+                       up_frac_i=up_frac_i, up_frac_f=up_frac_f, up_theta=up_theta, up_phi=up_phi,
                        )
     elif opts.dim == 1:
         check_shape(title, shape, fn, show_points=opts.plot,
