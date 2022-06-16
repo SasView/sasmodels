@@ -99,16 +99,16 @@ def phi(q,R,sigma):
     - (3*np.cos(q*(R - sigma)))/(q**5*sigma**2) - (2*R*np.cos(q*R))/(q**4*sigma**2) + (6*np.sin(q*R)/(q**5*sigma**2))
     return phi
 
-def I(q,sld_core = 1,
+def Iq(q,sld_core = 0,
         sld_inner_shell = 1,
         sld_outer_shell = 1,
         sld_solvent =  3,
         core_radius = 60,
-        thick_inner_shell = 60,
-        thick_outer_shell = 60,
-        inner_fuzziness = 10,
-        inter_fuzziness = 10,
-        outer_fuzziness = 10,):
+        thick_inner_shell = 40,
+        thick_outer_shell = 40,
+        inner_fuzziness = 5,
+        inter_fuzziness = 5,
+        outer_fuzziness = 5,):
     contrast_core  = sld_core - sld_solvent
     contrast_outer_shell = sld_outer_shell - sld_solvent
     contrast_inner_shell  = sld_inner_shell - sld_solvent
@@ -119,6 +119,8 @@ def I(q,sld_core = 1,
                 + (contrast_core - contrast_inner_shell) * phi(q,core_radius,inner_fuzziness)
     inten = amplitude**2
     return inten
+
+Iq.vectorized = True
 
 def random():
     """Return a random parameter set for the model."""
