@@ -124,11 +124,20 @@ Iq.vectorized = True
 
 def random():
     """Return a random parameter set for the model."""
-    radius = 10**np.random.uniform(1, 4.7)
-    fuzziness = 10**np.random.uniform(-2, -0.5)*radius  # 1% to 31% fuzziness
+    core_radius = np.random.uniform(30,100)
+    thick_inner_shell = np.random.uniform(10,50)
+    thick_outer_shell = np.random.uniform(10,50)
+    radius = core_radius + thick_inner_shell + thick_outer_shell
+    inner_fuzziness = 10**np.random.uniform(-2, -0.5)*radius/3
+    inter_fuzziness = 10**np.random.uniform(-2, -0.5)*radius/3
+    outer_fuzziness = 10**np.random.uniform(-2, -0.5)*radius/3
     pars = dict(
-        radius=radius,
-        fuzziness=fuzziness,
+        core_radius=core_radius,
+        thick_inner_shell = thick_inner_shell,
+        thick_outer_shell = thick_outer_shell,
+        inner_fuzziness = inner_fuzziness,
+        inter_fuzziness = inter_fuzziness,
+        outer_fuzziness = outer_fuzziness
     )
     return pars
 
@@ -136,6 +145,6 @@ tests = [
     # Accuracy tests based on content in test/utest_models_new1_3.py
     #[{'background': 0.001}, 1.0, 0.001],
 
-    [{}, 0.00301005, 359.2315],
+    [{}, 0.01, 2.575188e+19],
 
     ]
