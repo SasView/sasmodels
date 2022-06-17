@@ -54,7 +54,10 @@ def load_data(filename, index=0):
     """
     Load data using a sasview loader.
     """
-    from sas.sascalc.dataloader.loader import Loader  # type: ignore
+    try:
+        from sas.sascalc.dataloader.loader import Loader  # type: ignore
+    except ImportError:
+        raise ImportError("Data loader is not available. Add sasview/src to the python path.")
     loader = Loader()
     # Allow for one part in multipart file
     if '[' in filename:
@@ -82,7 +85,10 @@ def set_beam_stop(data, radius, outer=None):
     """
     Add a beam stop of the given *radius*.  If *outer*, make an annulus.
     """
-    from sas.sascalc.dataloader.manipulations import Ringcut
+    try:
+        from sas.sascalc.dataloader.manipulations import Ringcut
+    except ImportError:
+        raise ImportError("Data loader is not available. Add sasview/src to the python path.")
     if hasattr(data, 'qx_data'):
         data.mask = Ringcut(0, radius)(data)
         if outer is not None:
@@ -98,7 +104,10 @@ def set_half(data, half):
     """
     Select half of the data, either "right" or "left".
     """
-    from sas.sascalc.dataloader.manipulations import Boxcut
+    try:
+        from sas.sascalc.dataloader.manipulations import Boxcut
+    except ImportError:
+        raise ImportError("Data loader is not available. Add sasview/src to the python path.")
     if half == 'right':
         data.mask += \
             Boxcut(x_min=-np.inf, x_max=0.0, y_min=-np.inf, y_max=np.inf)(data)
@@ -112,7 +121,10 @@ def set_top(data, cutoff):
     """
     Chop the top off the data, above *cutoff*.
     """
-    from sas.sascalc.dataloader.manipulations import Boxcut
+    try:
+        from sas.sascalc.dataloader.manipulations import Boxcut
+    except ImportError:
+        raise ImportError("Data loader is not available. Add sasview/src to the python path.")
     data.mask += \
         Boxcut(x_min=-np.inf, x_max=np.inf, y_min=-np.inf, y_max=cutoff)(data)
 
