@@ -56,8 +56,8 @@ def load_data(filename, index=0):
     """
     try:
         from sas.sascalc.dataloader.loader import Loader  # type: ignore
-    except ImportError:
-        raise ImportError("Data loader is not available. Add sasview/src to the python path.")
+    except ImportError as ie:
+        raise ImportError(f"{ie.name} is not available. Add sasview/src to the python path.")
     loader = Loader()
     # Allow for one part in multipart file
     if '[' in filename:
@@ -87,8 +87,8 @@ def set_beam_stop(data, radius, outer=None):
     """
     try:
         from sas.sascalc.dataloader.manipulations import Ringcut
-    except ImportError:
-        raise ImportError("Data loader is not available. Add sasview/src to the python path.")
+    except ImportError as ie:
+        raise ImportError(f"{ie.name} is not available. Add sasview/src to the python path.")
     if hasattr(data, 'qx_data'):
         data.mask = Ringcut(0, radius)(data)
         if outer is not None:
@@ -106,8 +106,8 @@ def set_half(data, half):
     """
     try:
         from sas.sascalc.dataloader.manipulations import Boxcut
-    except ImportError:
-        raise ImportError("Data loader is not available. Add sasview/src to the python path.")
+    except ImportError as ie:
+        raise ImportError(f"{ie.name} is not available. Add sasview/src to the python path.")
     if half == 'right':
         data.mask += \
             Boxcut(x_min=-np.inf, x_max=0.0, y_min=-np.inf, y_max=np.inf)(data)
@@ -123,8 +123,8 @@ def set_top(data, cutoff):
     """
     try:
         from sas.sascalc.dataloader.manipulations import Boxcut
-    except ImportError:
-        raise ImportError("Data loader is not available. Add sasview/src to the python path.")
+    except ImportError as ie:
+        raise ImportError(f"{ie.name} is not available. Add sasview/src to the python path.")
     data.mask += \
         Boxcut(x_min=-np.inf, x_max=np.inf, y_min=-np.inf, y_max=cutoff)(data)
 
