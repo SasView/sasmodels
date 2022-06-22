@@ -1,5 +1,6 @@
 from __future__ import division, print_function
 
+import warnings
 import cmath
 import time
 from copy import copy
@@ -8,7 +9,6 @@ import argparse
 import inspect
 from collections import OrderedDict
 from timeit import default_timer as timer
-import warnings
 
 try:
     from inspect import getfullargspec
