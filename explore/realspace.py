@@ -5,14 +5,10 @@ import time
 from copy import copy
 import os
 import argparse
-import inspect
 from collections import OrderedDict
 from timeit import default_timer as timer
-
-try:
-    from inspect import getfullargspec
-except ImportError:
-    from inspect import getargspec as getfullargspec
+from typing import Tuple
+from inspect import getfullargspec
 
 import numpy as np
 from numpy import pi, radians, sin, cos, sqrt, clip
@@ -66,24 +62,23 @@ def pol2rec(r, theta, phi):
     z = +r * cos(theta)
     return x, y, z
 
-def rotation(theta, phi, psi):
+def jitter(theta, phi, psi):
     r"""
-    Apply the jitter transform to a set of points.
-    Points are stored in a 3 x n numpy matrix, not a numpy array or tuple.
+    Return the jitter transform to rotate a set of points.
     View is in degrees using nautical angles with roll $\psi$ around $c$,
     pitch $\theta$ around $b$ and yaw $\phi$ around $a$.
+
+    **unused**
     """
     return Rx(phi) @ Ry(theta) @ Rz(psi)
 
-def apply_view(points, view):
+def rotation(theta, phi, psi):
     r"""
-    Apply the view transform $(\theta, \phi, \psi)$ to a set of points.
-    Points are stored in a 3 x n numpy array.
+    Return a rotation matrix to apply to a set of points.
     View is in degrees using $z$-$y$-$z$ Euler angles $\phi$-$\theta$-$\psi$.
+    The $c$-axis of the shape starts along $z$ and the $b$-axis starts along $y$.
     """
-    theta, phi, psi = view
-    R = Rz(phi) @ Ry(theta) @ Rz(psi)
-    return (R @ points.T).T
+    return Rz(phi) @ Ry(theta) @ Rz(psi)
 
 def invert_view(qx, qy, view):
     r"""
@@ -96,10 +91,8 @@ def invert_view(qx, qy, view):
     q = np.vstack((qx.flatten(), qy.flatten(), 0*qx.flatten()))
     return Rinv @ q
 
-I3 = np.eye(3)
-
 class Shape:
-    rotation = I3
+    rotation = np.eye(3)
     center = np.array([0., 0., 0.])[:, None]
     r_max = None
     is_magnetic = False
@@ -109,7 +102,10 @@ class Shape:
         raise NotImplementedError()
 
     def sample(self, density):
-        # type: (float) -> Tuple[np.ndarray[N], np.ndarray[N, 3]]
+        # type: (float) -> Tuple[np.ndarray, np.ndarray]
+        """
+        Returns arrays (rho[N], points[N, 3]).
+        """
         raise NotImplementedError()
 
     def dims(self):
@@ -117,6 +113,7 @@ class Shape:
         raise NotImplementedError()
 
     def rotate(self, theta, phi, psi):
+        """See :func:`rotation` for details on the rotation matrix."""
         self.rotation = rotation(theta, phi, psi) @ self.rotation
         return self
 
@@ -592,7 +589,9 @@ def spin_weights(in_spin, out_spin):
     return weight
 
 def orth(A, b_hat): # A = 3 x n, and b_hat unit vector
-    return A - np.sum(A*b_hat[:, None], axis=0)[None, :]*b_hat[:, None]
+    #return A - np.sum(A*b_hat[:, None], axis=0)[None, :]*b_hat[:, None]
+    return A - np.outer(b_hat, b_hat)@A
+
 
 def magnetic_sld(qx, qy, up_theta, up_phi, rho, rho_m):
     """
@@ -1282,7 +1281,8 @@ def check_shape(title, shape, fn=None, show_points=False,
 
     import pylab
     if show_points:
-         plot_points(rho, points); pylab.figure()
+        plot_points(rho, points)
+        pylab.figure()
     plot_calc(r, Pr, q, Iq, theory=theory, title=title, Iq_avg=Iq_avg)
     pylab.gcf().canvas.manager.set_window_title(title)
     pylab.show()
@@ -1295,8 +1295,15 @@ def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
     qx = np.linspace(-qmax, qmax, mesh)
     qy = np.linspace(-qmax, qmax, mesh)
     Qx, Qy = np.meshgrid(qx, qy)
-    sampling_density = samples / shape.volume
     t0 = timer()
+    theory = fn(Qx, Qy, view) if fn is not None else None
+    print("calc theory time", timer() - t0)
+
+    t0 = timer()
+    sampling_density = samples / shape.volume
+    if False: # point orientation test: rotate shape rather than view
+        shape.rotate(*view)
+        view = (0, 0, 0)
     rho, points = shape.sample(sampling_density)
     # The volume of each sample is approximately 1/sampling_density, except
     # that the number of points actually sampled may be slightly more or
@@ -1309,9 +1316,6 @@ def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
     t0 = timer()
     Iqxy = calc_Iqxy(Qx, Qy, rho, points, volume=volume, view=view)
     print("calc Iqxy time", timer() - t0)
-    t0 = timer()
-    theory = fn(Qx, Qy, view) if fn is not None else None
-    print("calc theory time", timer() - t0)
 
     # Add floor to limit colorbar range.
     Iqxy += 0.001 * Iqxy.max()
@@ -1320,7 +1324,8 @@ def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
 
     import pylab
     if show_points:
-        plot_points(rho, points); pylab.figure()
+        plot_points(rho, points)
+        pylab.figure()
     plot_calc_2d(qx, qy, Iqxy, theory=theory, title=title)
     pylab.gcf().canvas.manager.set_window_title(title)
 
@@ -1366,7 +1371,8 @@ def check_shape_mag(title, shape, fn=None, view=(0, 0, 0), show_points=False,
 
     import pylab
     if show_points:
-        plot_points(rho, points); pylab.figure()
+        plot_points(rho, points)
+        pylab.figure()
     plot_calc_2d(qx, qy, Iqxy, theory=theory, title=title)
     pylab.gcf().canvas.manager.set_window_title(title)
 
