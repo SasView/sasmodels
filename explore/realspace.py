@@ -603,6 +603,7 @@ def magnetic_sld(qx, qy, up_theta, up_phi, rho, rho_m):
     # Note: this is different from kernel_iq, which I(0,0) to 0
     q_norm = 1/sqrt(qx**2 + qy**2) if qx != 0. or qy != 0. else 0.
     q_hat = np.array([qx, qy, 0]) * q_norm
+    M_perp = orth(rho_m, q_hat)  # M = rho_m
 
     # perpy_hat and perpz_hat are unit vectors spanning up the plane
     # perpendicular to polarisation for SF scattering (avoiding
@@ -613,7 +614,6 @@ def magnetic_sld(qx, qy, up_theta, up_phi, rho, rho_m):
     perpy_hat = np.array([-sin_phi, cos_phi, 0])
     perpz_hat = np.array([-cos_theta * cos_phi, -cos_theta * sin_phi, sin_theta])
 
-    M_perp = orth(rho_m, q_hat)  # M = rho_m
     perpx = p_hat @ M_perp
     perpy = perpy_hat @ M_perp
     perpz = perpz_hat @ M_perp
