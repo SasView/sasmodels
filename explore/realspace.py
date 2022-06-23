@@ -75,16 +75,17 @@ def jitter(theta, phi, psi):
 def rotation(theta, phi, psi):
     r"""
     Return a rotation matrix to apply to a set of points.
-    View is in degrees using $z$-$y$-$z$ Euler angles $\phi$-$\theta$-$\psi$.
-    The $c$-axis of the shape starts along $z$ and the $b$-axis starts along $y$.
+    View is in degrees using a $z$-$y$-$z$ rotation sequence of Euler angles
+    $\phi$-$\theta$-$\psi$.  The $c$-axis of the shape starts along $z$ and
+    the $b$-axis starts along $y$.
     """
     return Rz(phi) @ Ry(theta) @ Rz(psi)
 
 def invert_view(qx, qy, view):
     r"""
     Return $(q_a, q_b, q_c)$ for the $(\theta, \phi, \psi)$ view angle at
-    detector pixel corresponding to $(q_x, q_y)$.
-    View is in degrees using $z$-$y$-$z$ Euler angles $\phi$-$\theta$-$\psi$.
+    detector pixel corresponding to $(q_x, q_y)$.  View is in degrees using
+    a $z$-$y$-$z$ sequence of Euler angles $\phi$-$\theta$-$\psi$.
     """
     theta, phi, psi = view
     Rinv = Rz(-psi) @ Ry(-theta) @ Rz(-phi)
@@ -601,19 +602,21 @@ def magnetic_sld(qx, qy, up_theta, up_phi, rho, rho_m):
     # Handle q=0 by setting px = py = 0
     # Note: this is different from kernel_iq, which I(0,0) to 0
     q_norm = 1/sqrt(qx**2 + qy**2) if qx != 0. or qy != 0. else 0.
+    q_hat = np.array([qx, qy, 0]) * q_norm
+
+    # perpy_hat and perpz_hat are unit vectors spanning up the plane
+    # perpendicular to polarisation for SF scattering (avoiding
+    # repetitive computation of orthogonal vectors)
     cos_theta, sin_theta = cos(radians(up_theta)), sin(radians(up_theta))
     cos_phi, sin_phi = cos(radians(up_phi)), sin(radians(up_phi))
-    M = rho_m
-    p_hat = np.array([sin_theta * cos_phi, sin_theta * sin_phi, cos_theta ])
+    p_hat = np.array([sin_theta * cos_phi, sin_theta * sin_phi, cos_theta])
+    perpy_hat = np.array([-sin_phi, cos_phi, 0])
+    perpz_hat = np.array([-cos_theta * cos_phi, -cos_theta * sin_phi, sin_theta])
 
-    q_hat = np.array([qx, qy, 0]) * q_norm
-    M_perp = orth(M,q_hat)
-    M_perpP = orth(M_perp, p_hat)
-    M_perpP_perpQ = orth(M_perpP, q_hat)
-
+    M_perp = orth(rho_m, q_hat)  # M = rho_m
     perpx = p_hat @ M_perp
-    perpy = np.sqrt(np.sum(M_perpP_perpQ**2, axis=0))
-    perpz = q_hat @ M_perpP
+    perpy = perpy_hat @ M_perp
+    perpz = perpz_hat @ M_perp
 
     return [
         rho - perpx,   # dd => sld - D M_perpx
@@ -637,8 +640,8 @@ def calc_Iq_magnetic(qx, qy, rho, rho_m, points, volume=1.0, view=(0, 0, 0),
     yaw and roll for a beam travelling along the negative z axis.
     *up_frac_i* is the portion of polarizer neutrons which are spin up.
     *up_frac_f* is the portion of analyzer neutrons which are spin up.
-    *up_theta* and *up_phi* are the rotation angle of the spin up direction
-    in the detector plane and the inclination from the beam direction (z-axis).
+    *up_theta* is the inclination from the beam direction (z-axis).
+    *up_phi* is the rotation in the detector plane.
     *dtype* is the numerical precision of the calculation. [not implemented]
     """
     # TODO: maybe slightly faster to rotate points and rho_m, and drop qc*z
