@@ -24,6 +24,8 @@ try:
     USE_NUMBA = SAS_NUMBA > 0
     USE_CUDA = SAS_NUMBA > 1
 except ImportError:
+    # Identity decorator @njit or @njit(...)
+    njit = lambda f, *args, **kw: f if callable(f) else (lambda k: k)
     USE_NUMBA = USE_CUDA = False
 
 # Definition of rotation matrices comes from wikipedia:
@@ -581,12 +583,12 @@ def spin_weights(in_spin, out_spin):
     # needed on the incoming polariser side (assuming that a user), has normalised
     # to the incoming flux with polariser in for SANSPOl and unpolarised beam, respectively.
 
-    weight = [
+    weight = (
         (1.0 - in_spin) * (1.0 - out_spin) / norm, # dd
         (1.0 - in_spin) * out_spin / norm,       # du
         in_spin * (1.0 - out_spin) / norm,       # ud
         in_spin * out_spin / norm,             # uu
-    ]
+    )
     return weight
 
 def orth(A, b_hat): # A = 3 x n, and b_hat unit vector
@@ -599,10 +601,15 @@ def magnetic_sld(qx, qy, up_theta, up_phi, rho, rho_m):
     Compute the complex sld for the magnetic spin states.
     Returns effective rho for spin states [dd, du, ud, uu].
     """
-    # Handle q=0 by setting px = py = 0
-    # Note: this is different from kernel_iq, which I(0,0) to 0
-    q_norm = 1/sqrt(qx**2 + qy**2) if qx != 0. or qy != 0. else 0.
-    q_hat = np.array([qx, qy, 0]) * q_norm
+    # For q=0 one would see the demagnetising field of the sample, equivalent
+    # to direction q_hat = [sqrt(1/2), sqrt(1/2), 0] for a disc shaped sample
+    # that is very thin along the beam.
+    # Note: This is different from kernel_iq.c, which sets I(0, 0) to zero.
+    q_norm = sqrt(qx**2 + qy**2)
+    if abs(q_norm) < 1.e-16:
+        q_hat = np.array([1., 1., 0.]) / np.sqrt(2)
+    else:
+        q_hat = np.array([qx, qy, 0]) / q_norm
     M_perp = orth(rho_m, q_hat)  # M = rho_m
 
     # perpy_hat and perpz_hat are unit vectors spanning up the plane
@@ -618,13 +625,14 @@ def magnetic_sld(qx, qy, up_theta, up_phi, rho, rho_m):
     perpy = perpy_hat @ M_perp
     perpz = perpz_hat @ M_perp
 
-    return [
+    return (
         rho - perpx,   # dd => sld - D M_perpx
         perpy - 1j * perpz, # du => -D (M_perpy + j M_perpz)
         perpy + 1j * perpz, # ud => -D (M_perpy - j M_perpz)
         rho + perpx,   # uu => sld + D M_perpx
-    ]
+    )
 
+# TODO: provide numba and cuda version
 def calc_Iq_magnetic(qx, qy, rho, rho_m, points, volume=1.0, view=(0, 0, 0),
                      up_frac_i=0.5, up_frac_f=0.5, up_theta=0., up_phi=0.):
     """
@@ -648,13 +656,12 @@ def calc_Iq_magnetic(qx, qy, rho, rho_m, points, volume=1.0, view=(0, 0, 0),
     qx, qy = np.broadcast_arrays(qx, qy)
     qa, qb, qc = invert_view(qx, qy, view)
     rho, volume = np.broadcast_arrays(rho, volume)
-    x, y, z = points.T
     weights = spin_weights(up_frac_i, up_frac_f)
 
     # I(q) = |sum V(r) rho(r) e^(1j q.r)|^2 / sum V(r)
     shape = qx.shape
     Iq = np.zeros(qx.size, 'd')
-    x, y, z, qx, qy = (np.asarray(v, 'd') for v in (x, y, z, qx, qy))
+    x, y, z = points.T
     qx, qy = (v.flatten() for v in (qx, qy))
     for k in range(qx.size):
         ephase = volume*np.exp(1j*(qa[k]*x + qb[k]*y + qc[k]*z))
