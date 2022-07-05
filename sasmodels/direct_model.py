@@ -164,7 +164,11 @@ def _make_sesans_transform(data):
     wavelength, wunits = data.source.wavelength, data.source.wavelength_unit
     theta_max, theta_units = data.sample.zacceptance
     if SEunits != "A" or wunits != "A" or theta_units != "radians":
-        from sas.sascalc.data_util.nxsunit import Converter
+        try:
+            from sas.sascalc.data_util.nxsunit import Converter
+        except ImportError as ie:
+            raise ImportError(f"{ie.name} is not available. Add sasview/src to the python path.")
+
         SElength = Converter("A")(SElength, units=SEunits)
         wavelength = Converter("A")(wavelength, units=wunits)
         theta_max = Converter("radian")(theta_max, units=theta_units)
