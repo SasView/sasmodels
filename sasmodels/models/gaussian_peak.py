@@ -51,10 +51,7 @@ parameters = [["peak_pos", "1/Ang", 0.05, [-inf, inf], "", "Peak position"],
                "Peak width (standard deviation)"],
              ]
 
-Iq = """
-    double scaled_dq = (q - peak_pos)/sigma;
-    return exp(-0.5*scaled_dq*scaled_dq); //sqrt(2*M_PI*sigma*sigma);
-    """
+source = ["gaussian_peak.c"]  
 
 def random():
     """Return a random parameter set for the model."""
