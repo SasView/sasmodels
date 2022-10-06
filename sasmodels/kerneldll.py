@@ -269,7 +269,7 @@ def make_dll(source, model_info, dtype=F64):
     if not os.path.exists(dll):
         # Make sure the DLL path exists.
         if not os.path.exists(SAS_DLL_PATH):
-            os.makedirs(SAS_DLL_PATH)
+            os.makedirs(SAS_DLL_PATH, exist_ok=True)
         basename = splitext(os.path.basename(dll))[0] + "_"
         system_fd, filename = tempfile.mkstemp(suffix=".c", prefix=basename)
         source = generate.convert_type(source, dtype)
