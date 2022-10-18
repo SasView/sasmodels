@@ -472,7 +472,7 @@ class MultipleScattering(Resolution):
             # 1-D radial profile is determined by the q values we need to
             # compute, either for the calculated q values for the resolution
             # function (if any) or for the raw q values desired
-            self._q = np.linspace(qmin, qmax, nq//(2*window))
+            self._q = np.linspace(qmin, qmax, nq//int(2*window))
             self._edges = bin_edges(self._q)
             self._norm, _ = np.histogram(self._radius, bins=self._edges)
             if resolution is not None:
