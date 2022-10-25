@@ -230,8 +230,8 @@ def dll_path(model_file, dtype):
     return os.path.join(SAS_DLL_PATH, dll_name(model_file, dtype))
 
 
-def make_dll(source, model_info, dtype=F64):
-    # type: (str, ModelInfo, np.dtype) -> str
+def make_dll(source, model_info, dtype=F64, system=False):
+    # type: (str, ModelInfo, np.dtype, bool) -> str
     """
     Returns the path to the compiled model defined by *kernel_module*.
 
@@ -249,6 +249,9 @@ def make_dll(source, model_info, dtype=F64):
     Set *sasmodels.kerneldll.SAS_DLL_PATH* to the compiled dll output path.
     Alternatively, set the environment variable *SAS_DLL_PATH*.
     The default is in ~/.sasmodels/compiled_models.
+
+    *system* is a bool that controls whether these are the precompiled DLLs
+    that would be shipped with a binary distribution.
     """
     if dtype == F16:
         raise ValueError("16 bit floats not supported")
@@ -265,22 +268,33 @@ def make_dll(source, model_info, dtype=F64):
     # when multiple versions of the application are installed.
     model_file = model_info.id + "_" + generate.tag_source(source)
     dll = dll_path(model_file, dtype)
+    logging.debug("make_dll: dll located %s as %s in %s",
+                  model_info.id, model_file, dll)
 
     if not os.path.exists(dll):
         # Make sure the DLL path exists.
         if not os.path.exists(SAS_DLL_PATH):
             os.makedirs(SAS_DLL_PATH)
-        basename = splitext(os.path.basename(dll))[0] + "_"
-        system_fd, filename = tempfile.mkstemp(suffix=".c", prefix=basename)
         source = generate.convert_type(source, dtype)
-        with os.fdopen(system_fd, "w") as file_handle:
-            file_handle.write(source)
+        if not system:
+            basename = splitext(os.path.basename(dll))[0] + "_"
+            system_fd, filename = tempfile.mkstemp(suffix=".c", prefix=basename)
+            logging.debug("make_dll: writing C for dll: %s", filename)
+            with os.fdopen(system_fd, "w") as file_handle:
+                file_handle.write(source)
+        else:
+            filename = splitext(dll)[0] + ".c"
+            logging.debug("make_dll: writing C for system dll: %s", filename)
+            with open(filename, 'w') as file_handle:
+                file_handle.write(source)
         compile_model(source=filename, output=dll)
         # Comment the following to keep the generated C file.
         # Note: If there is a syntax error then compile raises an error
         # and the source file will not be deleted.
         os.unlink(filename)
         #print("saving compiled file in %r"%filename)
+    else:
+        logging.debug("make_dll: cache hit for %s", dll)
     return dll
 
 
