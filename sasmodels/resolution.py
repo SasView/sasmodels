@@ -344,14 +344,14 @@ def slit_resolution(q_calc, q, width, length, n_length=30):
             # up qi in q_calc, then weighting the result by the relative
             # distance to the neighbouring points.
             weights[i, :] = (q_calc == qi)
-        elif h == 0:
+        elif l == 0:
             weights[i, :] = _q_perp_weights(q_edges, qi, w)
         elif w == 0:
             in_x = 1.0 * ((q_calc >= qi-l) & (q_calc <= qi+l))
             abs_x = 1.0*(q_calc < abs(qi - l)) if qi < l else 0.
             #print(qi - l, qi + l)
             #print(in_x + abs_x)
-            weights[i, :] = (in_x + abs_x) * np.diff(q_edges) / (2*h)
+            weights[i, :] = (in_x + abs_x) * np.diff(q_edges) / (2*l)
         else:
             for k in range(-n_length, n_length+1):
                 weights[i, :] += _q_perp_weights(q_edges, qi+k*l/n_length, w)
