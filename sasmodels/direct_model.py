@@ -22,6 +22,8 @@ on the individual parameters and send the model to the Bumps optimizers.
 """
 from __future__ import print_function, division
 
+import os
+
 import numpy as np  # type: ignore
 
 # TODO: fix sesans module
@@ -424,6 +426,12 @@ def test_reparameterize():
     derived_Iq = derived_calculator(volume=4*pi/3*Rp*Re**2, eccentricity=Rp/Re)
     assert norm((base_Iq - derived_Iq)/base_Iq) < 1e-13
 
+    # clean up the dll that was created in the cache as part of the test
+    try:
+        os.remove(derived_model.dllpath)
+    except Exception:
+        pass
+
     # Again using insert_after.
     insert_after = {
         '': 'eccentricity',
@@ -442,6 +450,11 @@ def test_reparameterize():
     derived_Iq = derived_calculator(volume=4*pi/3*Rp*Re**2, eccentricity=Rp/Re)
     assert norm((base_Iq - derived_Iq)/base_Iq) < 1e-13
 
+    # clean up the dll that was created in the cache as part of the test
+    try:
+        os.remove(derived_model.dllpath)
+    except Exception:
+        pass
 
 
 def main():
