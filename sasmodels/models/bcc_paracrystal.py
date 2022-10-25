@@ -1,9 +1,4 @@
 r"""
-.. warning:: This model and this model description are under review following
-             concerns raised by SasView users. If you need to use this model,
-             please email help@sasview.org for the latest situation. *The
-             SasView Developers. September 2018.*
-
 Definition
 ----------
 
@@ -18,10 +13,15 @@ The scattering intensity $I(q)$ is calculated as
 
     I(q) = \frac{\text{scale}}{V_p} V_\text{lattice} P(q) Z(q)
 
-where *scale* is the volume fraction of spheres, $V_p$ is the volume of the
-primary particle, $V_\text{lattice}$ is a volume correction for the crystal
-structure, $P(q)$ is the form factor of the sphere (normalized), and $Z(q)$
-is the paracrystalline structure factor for a body-centered cubic structure.
+where *scale* is the product of the volume fraction of crystal in the volume
+multiplied by $V_\text{lattice}$, the volume fraction of spheres in the crystal,
+$V_p$ is the volume of the primary particle, $P(q)$ is the form factor of the
+sphere (normalized), and $Z(q)$ is the paracrystalline structure factor for a
+body-centered cubic structure.
+
+.. note::
+    At this point the GUI does not return $V_\text{lattice}$ separately so that
+    user will need to calculate it from the equation given and the scale.
 
 Equation (1) of the 1990 reference\ [#Matsuoka1990]_ is used to calculate
 $Z(q)$, using equations (29)-(31) from the 1987 paper\ [#Matsuoka1987]_ for
@@ -33,7 +33,7 @@ separation $D$ is
 
 .. math::
 
-    V_\text{lattice} = \frac{16\pi}{3} \frac{R^3}{\left(D\sqrt{2}\right)^3}
+    V_\text{lattice} = \frac{\sqrt{3}\pi R^3}{D^3}
 
 
 The distortion factor (one standard deviation) of the paracrystal is included
@@ -54,7 +54,7 @@ For a crystal, diffraction peaks appear at reduced q-values given by
 
 .. math::
 
-    \frac{qD}{2\pi} = \sqrt{h^2 + k^2 + l^2}
+    \frac{qD}{\sqrt{3}\pi} = \sqrt{h^2 + k^2 + l^2}
 
 where for a body-centered cubic lattice, only reflections where
 $(h + k + l) = \text{even}$ are allowed and reflections where
@@ -102,8 +102,8 @@ Authorship and Verification
 ---------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
-* **Last Modified by:** Paul Butler **Date:** September 29, 2016
-* **Last Reviewed by:** Richard Heenan **Date:** March 21, 2016
+* **Last Modified by:** Jonathan Gaudet **Date:** September 26, 2022
+* **Last Reviewed by:** Paul Butler **Date:** November 2, 2022
 """
 
 import numpy as np

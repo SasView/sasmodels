@@ -106,6 +106,9 @@ static double Iq(double q, double dnn,
     const double Zq = outer_sum/(4.0*M_PI);
     const double Pq = sphere_form(q, radius, sld, solvent_sld);
     return bcc_volume_fraction(radius, dnn) * Pq * Zq;
+    // note that until we can return non fitable values to the GUI this
+    // can only be queried by a script. Otherwise we can drop the
+    // bcc_volume_fraction as it is effectively included in "scale."
 }
 
 
