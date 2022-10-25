@@ -6,9 +6,6 @@
 Scripting Interface
 *******************
 
-Need some basic details here of how to load models and data via script, evaluate
-them at given parameter values and run bumps fits.
-
 The key functions are :func:`.core.load_model` for loading the
 model definition and compiling the kernel and
 :func:`.data.load_data` for calling sasview to load the data.
@@ -118,6 +115,11 @@ Polydispersity information is set with special parameter names:
 Using sasmodels through the bumps optimizer
 ===========================================
 
+Both bumps and sasmodels are included as part of the SasView distribution. 
+The following assumes that bumps has been installed and the bumps command is
+available. Note that it may be necessary to set the path to sasmodels/sasview
+using *PYTHONPATH=path/to/sasmodels:path/to/sasview/src* to accomplish this.
+
 Like DirectModel, you can wrap data and a kernel in a *bumps* model with
 :class:`.bumps_model.Model` and create an
 :class:`.bumps_model.Experiment` that you can fit with the *bumps*
@@ -162,18 +164,18 @@ interface. Here is an example from the *example* directory such as
     M = Experiment(data=radial_data, model=model, cutoff=cutoff)
     problem = FitProblem(M)
 
-Assume that bumps has been installed and the bumps command is available.
-Maybe need to set the path to sasmodels/sasview
-using *PYTHONPATH=path/to/sasmodels:path/to/sasview/src*.
 To run the model use the *bumps* program::
 
     $ bumps example/model.py --preview
 
-Note that bumps and sasmodels are included as part of the SasView
-distribution.  On windows, bumps can be called from the cmd prompt
+Alternatively, on Windows, bumps can be called from the cmd prompt
 as follows::
 
     SasViewCom bumps.cli example/model.py --preview
+
+.. note:: The *from bumps.names import* * statement in this example will fail
+          in SasView versions 5.0.0, 5.0.1, 5.0.2, 5.0.3 and 5.0.4. Please use
+          version 4.2.2 or, better, version 5.0.5 or later.
 
 Calling the computation kernel
 ==============================
@@ -234,3 +236,17 @@ On windows, this example can be called from the cmd prompt using sasview as
 as the python interpreter::
 
     SasViewCom example/cylinder_eval.py
+
+Using sasmodels and bumps from a Jupyter notebook
+=================================================
+
+You can also use sasmodels/bumps to fit experimental data from a 
+`Jupyter notebook <https://docs.jupyter.org/en/latest/install.html>`_ .
+
+First install the necessary packages::
+
+    https://github.com/SasView/documents/blob/master/Notebooks/Installer.ipynb
+
+Then construct and compute the model in an analogous manner to that shown above::
+
+    https://github.com/SasView/documents/blob/master/Notebooks/sasmodels_fitting.ipynb
