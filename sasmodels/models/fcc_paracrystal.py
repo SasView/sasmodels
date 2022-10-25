@@ -2,11 +2,6 @@
 #note model title and parameter table are automatically inserted
 #note - calculation requires double precision
 r"""
-.. warning:: This model and this model description are under review following
-             concerns raised by SasView users. If you need to use this model,
-             please email help@sasview.org for the latest situation. *The
-             SasView Developers. September 2018.*
-
 Definition
 ----------
 
@@ -22,10 +17,15 @@ The scattering intensity $I(q)$ is calculated as
 
     I(q) = \frac{\text{scale}}{V_p} V_\text{lattice} P(q) Z(q)
 
-where *scale* is the volume fraction of spheres, $V_p$ is the volume of
-the primary particle, $V_\text{lattice}$ is a volume correction for the crystal
-structure, $P(q)$ is the form factor of the sphere (normalized), and $Z(q)$
-is the paracrystalline structure factor for a face-centered cubic structure.
+where *scale* is the product of the volume fraction of crystal in the volume
+multiplied by $V_\text{lattice}$, the volume fraction of spheres in the crystal,
+$V_p$ is the volume of the primary particle, $P(q)$ is the form factor of the
+sphere (normalized), and $Z(q)$ is the paracrystalline structure factor for a
+body-centered cubic structure.
+
+.. note::
+    At this point the GUI does not return $V_\text{lattice}$ separately so that
+    user will need to calculate it from the equation given and the scale.
 
 Equation (1) of the 1990 reference\ [#Matsuoka1990]_ is used to calculate
 $Z(q)$, using equations (23)-(25) from the 1987 paper\ [#Matsuoka1987]_ for
@@ -56,7 +56,7 @@ For a crystal, diffraction peaks appear at reduced q-values given by
 
 .. math::
 
-    \frac{qD}{2\pi} = \sqrt{h^2 + k^2 + l^2}
+    \frac{qD}{\sqrt{2}\pi} = \sqrt{h^2 + k^2 + l^2}
 
 where for a face-centered cubic lattice $h, k , l$ all odd or all
 even are allowed and reflections where $h, k, l$ are mixed odd/even
@@ -101,8 +101,8 @@ Authorship and Verification
 ---------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
-* **Last Modified by:** Paul Butler **Date:** September 29, 2016
-* **Last Reviewed by:** Richard Heenan **Date:** March 21, 2016
+* **Last Modified by:** Paul Butler **Date:** September 26, 2022
+* **Last Reviewed by:** Richard Heenan **Date:** Nov 2, 2022
 """
 
 import numpy as np
