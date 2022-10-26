@@ -17,15 +17,17 @@ The scattering intensity $I(q)$ is calculated as
 
     I(q) = \frac{\text{scale}}{V_p} V_\text{lattice} P(q) Z(q)
 
-where *scale* is the product of the volume fraction of crystal in the volume
-multiplied by $V_\text{lattice}$, the volume fraction of spheres in the crystal,
-$V_p$ is the volume of the primary particle, $P(q)$ is the form factor of the
-sphere (normalized), and $Z(q)$ is the paracrystalline structure factor for a
+where *scale* is the volume fraction of crystal in the volume,
+$V_\text{lattice}$, the volume fraction of spheres in the crystal, $V_p$ is
+the volume of the primary particle, $P(q)$ is the form factor of the sphere
+(normalized), and $Z(q)$ is the paracrystalline structure factor for a
 body-centered cubic structure.
 
 .. note::
     At this point the GUI does not return $V_\text{lattice}$ separately so that
-    user will need to calculate it from the equation given and the scale.
+    user will need to calculate it from the equation given and the appropriate
+    returned parameters.
+
 
 Equation (1) of the 1990 reference\ [#Matsuoka1990]_ is used to calculate
 $Z(q)$, using equations (23)-(25) from the 1987 paper\ [#Matsuoka1987]_ for
