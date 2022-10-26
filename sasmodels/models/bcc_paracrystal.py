@@ -13,52 +13,105 @@ The scattering intensity $I(q)$ is calculated as
 
     I(q) = \frac{\text{scale}}{V_p} V_\text{lattice} P(q) Z(q)
 
-where *scale* is the product of the volume fraction of crystal in the volume
-multiplied by $V_\text{lattice}$, the volume fraction of spheres in the crystal,
-$V_p$ is the volume of the primary particle, $P(q)$ is the form factor of the
-sphere (normalized), and $Z(q)$ is the paracrystalline structure factor for a
+where *scale* is the volume fraction of crystal in the volume,
+$V_\text{lattice}$, the volume fraction of spheres in the crystal, $V_p$ is
+the volume of the primary particle, $P(q)$ is the form factor of the sphere
+(normalized), and $Z(q)$ is the paracrystalline structure factor for a
 body-centered cubic structure.
 
 .. note::
     At this point the GUI does not return $V_\text{lattice}$ separately so that
-    user will need to calculate it from the equation given and the scale.
-
-Equation (1) of the 1990 reference\ [#Matsuoka1990]_ is used to calculate
-$Z(q)$, using equations (29)-(31) from the 1987 paper\ [#Matsuoka1987]_ for
-$Z1$, $Z2$, and $Z3$.
-
-The lattice correction (the occupied volume of the lattice) for a
-body-centered cubic structure of particles of radius $R$ and nearest neighbor
-separation $D$ is
-
-.. math::
-
-    V_\text{lattice} = \frac{\sqrt{3}\pi R^3}{D^3}
-
-
-The distortion factor (one standard deviation) of the paracrystal is included
-in the calculation of $Z(q)$
-
-.. math::
-
-    \Delta a = g D
-
-where $g$ is a fractional distortion based on the nearest neighbor distance.
-
+    user will need to calculate it from the equation given and the appropriate
+    returned parameters.
 
 .. figure:: img/bcc_geometry.jpg
 
-    Body-centered cubic lattice.
+    Body-centered cubic (BCC) lattice taken from reference\ [#Matsuoka1987]_.
 
-For a crystal, diffraction peaks appear at reduced q-values given by
+Following the derivation from reference [#Matsuoka1987]_, as corrected in
+reference\ [#Matsuoka1990]_, and based on the above figure, the
+primitive unit cell vectors $\vec{a_1},\vec{a_2}$, and $\vec{a_3}$, which
+enclose the smallest possible unit cell, are defined below:
 
 .. math::
+    \vec{a_1} &= \frac{1}{2}(-\vec{b_1} + \vec{b_2} + \vec{b_3}) \\
+    \vec{a_2} &= \frac{1}{2} (\vec{b_1} - \vec{b_2} + \vec{b_3}) \\
+    \vec{a_3} &= \frac{1}{2}(\vec{b_1} + \vec{b_2} -\vec{b_3}).
 
-    \frac{qD}{\sqrt{3}\pi} = \sqrt{h^2 + k^2 + l^2}
+where $\vec{b_1},\vec{b_2}$, and $\vec{b_3}$ are the unit cell vectors of the
+conventional unit cell, which is a unit cell that includes the full symmetry
+of the lattice. As defined by reference [#Matsuoka1987]_, the constant $a$ is the
+lattice parameter of the conventional unit cell with
+$|\vec{b_1}|=|\vec{b_2}|=|\vec{b_3}|=a$. Using this definition, the
+nearest-neighbor distance ($D$) is given by
+$D=|\vec{a_1}|=|\vec{a_2}|=|\vec{a_3}|=\sqrt{(a/2)^2+(a/2)^2+(a/2)^2}=\sqrt{\frac{3a^2}{4}}=\frac{\sqrt{3}a}{2}$.
 
-where for a body-centered cubic lattice, only reflections where
-$(h + k + l) = \text{even}$ are allowed and reflections where
-$(h + k + l) = \text{odd}$ are forbidden. Thus the peak positions
+The volume of the primitive unit cell $V_p$ is then given by:
+
+.. math::
+    V_p &= |(\vec{a_1}\times \vec{a_2})\cdot\vec{a_3}|\\
+    &= (\frac{a^2}{2},\frac{a^2}{2},0)\cdot(\frac{a}{2},\frac{a}{2},-\frac{a}{2})\\
+    &= a^3/2
+
+In this case, the volume fraction ($V_{latt}$) of spherical particles with
+radius $R$ sitting on the bcc lattice is given by:
+
+.. math::
+    V_{latt} &= \frac{4/3 \pi R^3}{a^3/2}\\
+    &= \frac{8\pi R^3}{3a^3}\\
+    &= \frac{\sqrt{3} \pi R^3}{D^3}
+
+Now, continuing to follow [#Matsuoka1987]_, we define the structure(lattice)
+factor $Z(\vec{q})$, which is related to the scattering intensity by
+$I(\vec{q})=N |f_0|^2 Z(\vec{q})$ where N is the number of particles in the bcc
+crystal, and $\vec{q}$ is the momentum transfer. For a 3D paracrystal:
+
+.. math::
+    Z(\vec{q}) = \prod_{k=1}^{3}Z_k(\vec{q})
+
+with
+
+.. math::
+    Z_k(\vec{q}) = \frac{1-|F_k|^2}{1-2|F_k|cos(\vec{a_k}\cdot\vec{q})+|F_k|^2}
+
+and where $F_k(\vec{q})$ is the structure factor of the primitive unit cell
+defined as:
+
+.. math::
+    F_k(\vec{q}) = e^{-\frac{1}{2} \Delta a^2_k q^2} \times e^{-i\vec{q}\cdot\vec{a_k}}.
+
+Here, $\vec{a_k}$ are the primitive unit cell vectors $\vec{a_1}$, $\vec{a_2}$,
+and $\vec{a_3}$. Furthermore, $\Delta a_k$ is the isotropic distortion of the
+lattice point from its ideal position and can be defined by a constant factor
+$g=\Delta a / |\vec{a_1}| = \Delta a / |\vec{a_2}| = \Delta a / |\vec{a_3}|=\Delta a/D$.
+
+Finally, assuming the definitions presented in this document, the authors of
+reference [#Matsuoka1987]_ have derived the lattice factors which are given by:
+
+.. math::
+    Z_1(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}cos[\frac{qa}{2}(sin\theta cos\phi + sin\theta sin\phi + cos\theta)] + e^{-q^2\Delta a^2}\}\\
+    Z_2(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}cos[\frac{qa}{2}(-sin\theta cos\phi - sin\theta sin\phi + cos\theta)] + e^{-q^2\Delta a^2}\}\\
+    Z_3(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}cos[\frac{qa}{2}(-sin\theta cos\phi + sin\theta sin\phi - cos\theta)] + e^{-q^2\Delta a^2}\}\\
+
+Note that Sasview is using the nearest-neighbor parameter ($D$) as an input
+instead of the conventional unit cell parameter $a$. In this case, using
+$a=\frac{2D}{\sqrt{3}}$, we rewrite $Z_1(q)$, $Z_2(q)$, and $Z_3(q)$ in terms
+of $D$ instead of $a$, which leads to:
+
+.. math::
+    Z_1(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}cos[\frac{qD}{\sqrt{3}}(sin\theta cos\phi + sin\theta sin\phi + cos\theta)] + e^{-q^2\Delta a^2}\}\\
+    Z_2(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}cos[\frac{qD}{\sqrt{3}}(-sin\theta cos\phi - sin\theta sin\phi + cos\theta)] + e^{-q^2\Delta a^2}\}\\
+    Z_3(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}cos[\frac{qD}{\sqrt{3}}(-sin\theta cos\phi + sin\theta sin\phi - cos\theta)] + e^{-q^2\Delta a^2}\}\\
+
+Finally note that the position of the Bragg peaks for the bcc lattice are
+indexed by (reduced q-values):
+
+.. math::
+    \frac{qa}{2\pi}=\frac{qD}{\sqrt{3}\pi}=\sqrt{h^2+k^2+l^2}.
+
+In the above equation, we used the conventional unit cell so not all
+permutations of h,k, and l will produce Bragg peaks. The Bragg scattering
+condition for bcc imposes that h+k+l = even. Thus the peak positions
 correspond to (just the first 5)
 
 .. math::
@@ -161,10 +214,14 @@ def random():
 
 # april 6 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
 # add 2d test later
+
+# October 26, 2022 PDB updated the 1D unit test after fixing the math. The values are again
+# assumed correct. It would be good to have an independent assessment. 2D tests remain
+# on the todo list
 # TODO: fix the 2d tests
 q = 4.*pi/220.
 tests = [
-    [{}, [0.001, q, 0.215268], [1.46601394721, 2.85851284174, 0.00866710287078]],
+    [{}, [0.001, q, 0.25], [0.6945817843046642, 1.6885157981411993, 0.005367008206852725]],
     #[{'theta': 20.0, 'phi': 30, 'psi': 40.0}, (-0.017, 0.035), 2082.20264399],
     #[{'theta': 20.0, 'phi': 30, 'psi': 40.0}, (-0.081, 0.011), 0.436323144781],
     ]
