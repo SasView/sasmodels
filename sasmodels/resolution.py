@@ -870,9 +870,9 @@ class IgorComparisonTest(unittest.TestCase):
             }
         form = load_model('ellipsoid', dtype='double')
         q = np.logspace(log10(4e-5), log10(2.5e-2), 68)
-        length, width = 0.,0.117
+        width, length = 0.,0.117
         resolution = Slit1D(q, q_length=length, q_width=width)
-        answer = romberg_slit_1d(q, width, length, form, pars)
+        answer = romberg_slit_1d(q, length, width, form, pars)
         output = resolution.apply(eval_form(resolution.q_calc, form, pars))
         # TODO: 10% is too much error; use better algorithm
         #print(np.max(abs(answer-output)/answer))
