@@ -122,7 +122,7 @@ class Slit1D(Resolution):
     The *weight_matrix* is computed by :func:`slit_resolution`
 
     """
-    
+
     def __init__(self, q, q_length, q_width=0., q_calc=None):
         # Remember what width/dqy was used even though we won't need them
         # after the weight matrix is constructed
@@ -331,11 +331,12 @@ def slit_resolution(q_calc, q, width, length, n_length=30):
 
 
     """
-    #np.set_printoptions(precision=6, linewidth=10000)
+
+    # np.set_printoptions(precision=6, linewidth=10000)
 
     # The current algorithm is a midpoint rectangle rule.
     q_edges = bin_edges(q_calc) # Note: requires q > 0
-    #q_edges[q_edges < 0.0] = 0.0 # clip edges below zero
+    # q_edges[q_edges < 0.0] = 0.0 # clip edges below zero
     weights = np.zeros((len(q), len(q_calc)), 'd')
 
     #print(q_calc)
@@ -1130,7 +1131,7 @@ def _eval_demo_1d(resolution, title):
     Iq = resolution.apply(theory)
 
     if isinstance(resolution, Slit1D):
-        width, length = resolution.qx_width, resolution.qy_width
+        width, length = resolution.q_width, resolution.q_length
         Iq_romb = romberg_slit_1d(resolution.q, width, length, model, pars)
     else:
         dq = resolution.q_width
