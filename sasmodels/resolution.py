@@ -649,7 +649,7 @@ class ResolutionTest(unittest.TestCase):
         """
         Slit smearing with perfect resolution.
         """
-        resolution = Slit1D(self.x, qx_width=0, qy_width=0, q_calc=self.x)
+        resolution = Slit1D(self.x, q_length=0, q_width=0, q_calc=self.x)
         theory = self.Iq(resolution.q_calc)
         output = resolution.apply(theory)
         np.testing.assert_equal(output, self.y)
@@ -659,7 +659,7 @@ class ResolutionTest(unittest.TestCase):
         """
         Slit smearing with length 0.005
         """
-        resolution = Slit1D(self.x, qx_width=0, qy_width=0.005, q_calc=self.x)
+        resolution = Slit1D(self.x, q_width=0, q_length=0.005, q_calc=self.x)
         theory = self.Iq(resolution.q_calc)
         output = resolution.apply(theory)
         answer = [
@@ -674,7 +674,7 @@ class ResolutionTest(unittest.TestCase):
         Slit smearing with width < 100*length.
         """
         q = np.logspace(-4, -1, 10)
-        resolution = Slit1D(q, qx_width=0.2, qy_width=np.inf)
+        resolution = Slit1D(q, q_width=0.2, q_length=np.inf)
         theory = 1000*self.Iq(resolution.q_calc**4)
         output = resolution.apply(theory)
         answer = [
@@ -688,7 +688,7 @@ class ResolutionTest(unittest.TestCase):
         """
         Slit smearing with width 0.0002
         """
-        resolution = Slit1D(self.x, qx_width=0.0002, qy_width=0, q_calc=self.x)
+        resolution = Slit1D(self.x, q_width=0.0002, q_length=0, q_calc=self.x)
         theory = self.Iq(resolution.q_calc)
         output = resolution.apply(theory)
         answer = [
@@ -701,7 +701,7 @@ class ResolutionTest(unittest.TestCase):
         """
         Slit smearing with width > 100*length.
         """
-        resolution = Slit1D(self.x, qx_width=0.0002, qy_width=0.000001,
+        resolution = Slit1D(self.x, q_width=0.0002, q_length=0.000001,
                             q_calc=self.x)
         theory = self.Iq(resolution.q_calc)
         output = resolution.apply(theory)
@@ -834,7 +834,7 @@ class IgorComparisonTest(unittest.TestCase):
 
         data = np.loadtxt(data_string.split('\n')).T
         q, delta_qv, _, answer = data
-        resolution = Slit1D(q, qx_width=delta_qv, qy_width=0)
+        resolution = Slit1D(q, q_length=delta_qv, q_width=0)
         output = self._eval_sphere(pars, resolution)
         # TODO: eliminate Igor test since it is too inaccurate to be useful.
         # This means we can eliminate the test data as well, and instead
@@ -853,7 +853,7 @@ class IgorComparisonTest(unittest.TestCase):
         answer = romberg_slit_1d(q, delta_qv, 0., self.model, pars)
         q_calc = slit_extend_q(interpolate(q, 2*np.pi/pars['radius']/20),
                                delta_qv[0], 0.)
-        resolution = Slit1D(q, qx_width=delta_qv, qy_width=0, q_calc=q_calc)
+        resolution = Slit1D(q, q_length=delta_qv, q_width=0, q_calc=q_calc)
         output = self._eval_sphere(pars, resolution)
         # TODO: relative error should be lower
         self._compare(q, output, answer, 0.025)
@@ -871,7 +871,7 @@ class IgorComparisonTest(unittest.TestCase):
         form = load_model('ellipsoid', dtype='double')
         q = np.logspace(log10(4e-5), log10(2.5e-2), 68)
         width, length = 0.117, 0.
-        resolution = Slit1D(q, qx_width=width, qy_width=length)
+        resolution = Slit1D(q, q_width=width, q_length=length)
         answer = romberg_slit_1d(q, width, length, form, pars)
         output = resolution.apply(eval_form(resolution.q_calc, form, pars))
         # TODO: 10% is too much error; use better algorithm
