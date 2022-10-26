@@ -6,12 +6,33 @@
 Scripting Interface
 *******************
 
-The key functions are :func:`.core.load_model` for loading the
+Preparing your environment
+==========================
+
+You can use python scripts to load and plot your data, create SAS models and fit parameters. You can save a script to a file such as `example/model.py` and run
+it later. However, this requires a scripting environment with the correct packages installed. Either use the SasView application itself (versions after 5.0.5), as
+both bumps and sasmodels are included as part of the distribution, so for
+example::
+
+    $ sasview model.py
+ 
+(Note that it may be necessary to set the path to sasmodels/sasview using *PYTHONPATH=path/to/sasmodels:path/to/sasview/src* for this to work)
+
+or by creating a Python environment with pip::
+
+    $ pip install sasmodels sasdata matplotlib bumps periodictable
+    $ python model.py
+
+The pip command also works within a `Jupyter notebook <https://docs.jupyter.org/en/latest/install.html>`_ ::
+
+    %pip install sasmodels sasdata matplotlib bumps periodictable
+
+The key functions are then :func:`.core.load_model` for loading the
 model definition and compiling the kernel and
 :func:`.data.load_data` for calling sasview to load the data.
 
-Preparing data
-==============
+Preparing your data
+===================
 
 Usually you will load data via the sasview loader, with the
 :func:`.data.load_data` function.  For example::
@@ -115,13 +136,8 @@ Polydispersity information is set with special parameter names:
 Using sasmodels through the bumps optimizer
 ===========================================
 
-Both bumps and sasmodels are included as part of the SasView distribution. 
-The following assumes that bumps has been installed and the bumps command is
-available. Note that it may be necessary to set the path to sasmodels/sasview
-using *PYTHONPATH=path/to/sasmodels:path/to/sasview/src* to accomplish this.
-
 Like DirectModel, you can wrap data and a kernel in a *bumps* model with
-:class:`.bumps_model.Model` and create an
+:class:`.bumps_model.Model` and create a
 :class:`.bumps_model.Experiment` that you can fit with the *bumps*
 interface. Here is an example from the *example* directory such as
 *example/model.py*::
@@ -164,18 +180,14 @@ interface. Here is an example from the *example* directory such as
     M = Experiment(data=radial_data, model=model, cutoff=cutoff)
     problem = FitProblem(M)
 
-To run the model use the *bumps* program::
+To run the model from your python environment use the installed *bumps* program::
 
     $ bumps example/model.py --preview
 
 Alternatively, on Windows, bumps can be called from the cmd prompt
 as follows::
 
-    SasViewCom bumps.cli example/model.py --preview
-
-.. note:: The *from bumps.names import* * statement in this example will fail
-          in SasView versions 5.0.0, 5.0.1, 5.0.2, 5.0.3 and 5.0.4. Please use
-          version 4.2.2 or, better, version 5.0.5 or later.
+    > sasview -m bumps.cli example/model.py --preview
 
 Calling the computation kernel
 ==============================
@@ -232,21 +244,17 @@ Integrating over polydispersity and orientation, the returned values are
 $\sum_{r,w\in N(r_o, r_o/10)} \sum_\theta w F(q,r_o,\theta)\sin\theta$ and
 $\sum_{r,w\in N(r_o, r_o/10)} \sum_\theta w F^2(q,r_o,\theta)\sin\theta$.
 
-On windows, this example can be called from the cmd prompt using sasview as
+On Windows, this example can be called from the cmd prompt using sasview as
 as the python interpreter::
 
-    SasViewCom example/cylinder_eval.py
+    > sasview example/cylinder_eval.py
 
 Using sasmodels and bumps from a Jupyter notebook
 =================================================
 
 You can also use sasmodels/bumps to fit experimental data from a 
-`Jupyter notebook <https://docs.jupyter.org/en/latest/install.html>`_ .
+`Jupyter notebook <https://docs.jupyter.org/en/latest/install.html>`_ by
+constructing and computing the model in an analogous manner to that shown above.
+For an example notebook see:
 
-First install the necessary packages::
-
-    https://github.com/SasView/documents/blob/master/Notebooks/Installer.ipynb
-
-Then construct and compute the model in an analogous manner to that shown above::
-
-    https://github.com/SasView/documents/blob/master/Notebooks/sasmodels_fitting.ipynb
+https://github.com/SasView/documents/blob/master/Notebooks/sasmodels_fitting.ipynb
