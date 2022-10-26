@@ -35,8 +35,8 @@ class Resolution(object):
 
     *apply* is the method to call with I(q_calc) to compute the resolution
     smeared theory I(q).
-
     """
+
     q = None  # type: np.ndarray
     q_calc = None  # type: np.ndarray
     def apply(self, theory):
@@ -122,6 +122,7 @@ class Slit1D(Resolution):
     The *weight_matrix* is computed by :func:`slit_resolution`
 
     """
+    
     def __init__(self, q, q_length, q_width=0., q_calc=None):
         # Remember what width/dqy was used even though we won't need them
         # after the weight matrix is constructed
