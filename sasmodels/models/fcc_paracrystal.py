@@ -154,6 +154,8 @@ def random():
     return pars
 
 # april 10 2017, rkh add unit tests, NOT compared with any other calc method, assume correct!
+#
+# October 26, 2022, PDB fixed unit tests to conform to new maths
 # TODO: fix the 2d tests
 q = 4.*pi/220.
 tests = [
