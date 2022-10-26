@@ -518,7 +518,7 @@ def eval_form(q, form, pars):
     """
     Return the SAS model evaluated at *q*.
 
-    *form* is the SAS model returned from :fun:`core.load_model`.
+    *form* is the SAS model returned from :func:`core.load_model`.
 
     *pars* are the parameter values to use when evaluating.
     """
