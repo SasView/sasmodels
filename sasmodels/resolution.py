@@ -35,6 +35,7 @@ class Resolution(object):
 
     *apply* is the method to call with I(q_calc) to compute the resolution
     smeared theory I(q).
+    
     """
 
     q = None  # type: np.ndarray
@@ -212,7 +213,7 @@ def slit_resolution(q_calc, q, width, length, n_length=30):
     r"""
     Build a weight matrix to compute *I_s(q)* from *I(q_calc)*, given
     $q_\perp$ = *width* (in the high-resolution axis) and $q_\parallel$
-     = *length* (in the low resolution axis).  *length* is the number
+    = *length* (in the low resolution axis).  *length* is the number
     of steps to use in the integration over $q_\parallel$ when both
     $q_\perp$ and $q_\parallel$ are non-zero.
 
