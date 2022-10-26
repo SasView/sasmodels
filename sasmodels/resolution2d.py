@@ -181,50 +181,50 @@ class Slit2D(Resolution):
 
     *q* points at which the data is measured.
 
-    *qx_width* slit width in qx
+    *q_length* slit length (long axis); assumed to be in the direction of qx
 
-    *qy_width* slit height in qy; current implementation requires a fixed
-    qy_width for all q points.
+    *q_width* slit width (short axis); assumed to be in the direction of qy; current implementation requires a fixed
+    q_width for all q points.
 
     *q_calc* is the list of q points to calculate, or None if this
     should be estimated from the *q* and *qx_width*.
 
-    *accuracy* determines the number of *qy* points to compute for each *q*.
+    *accuracy* determines the number of *q_width* points to compute for each *q*.
     The values are stored in sasmodels.resolution2d.N_SLIT_PERP.  The default
     values are: %s
     """
     __doc__ = __doc__%N_SLIT_PERP_DOC
-    def __init__(self, q, qx_width, qy_width=0., q_calc=None, accuracy='low'):
+    def __init__(self, q, q_length, q_width=0., q_calc=None, accuracy='low'):
         # Remember what q and width was used even though we won't need them
         # after the weight matrix is constructed
-        self.q, self.qx_width, self.qy_width = q, qx_width, qy_width
+        self.q, self.q_length, self.q_width = q, q_length, q_width
 
         # Allow independent resolution on each qx point even though it is not
         # needed in practice.  Set qy_width to the maximum qy width.
-        if np.isscalar(qx_width):
-            qx_width = np.ones(len(q))*qx_width
+        if np.isscalar(q_length):
+            q_length = np.ones(len(q))*q_length
         else:
-            qx_width = np.asarray(qx_width)
-        if not np.isscalar(qy_width):
-            qy_width = np.max(qy_width)
+            q_length = np.asarray(q_length)
+        if not np.isscalar(q_width):
+            q_width = np.max(q_width)
 
         # Build grid of qx, qy points
         if q_calc is not None:
             qx_calc = np.sort(q_calc)
         else:
-            qx_calc = resolution.pinhole_extend_q(q, qx_width, nsigma=3)
-        qy_min, qy_max = np.log10(np.min(q)), np.log10(qy_width)
+            qx_calc = resolution.pinhole_extend_q(q, q_length, nsigma=3)
+        qy_min, qy_max = np.log10(np.min(q)), np.log10(q_width)
         qy_calc = np.logspace(qy_min, qy_max, N_SLIT_PERP[accuracy])
         qy_calc = np.hstack((-qy_calc[::-1], 0, qy_calc))
         self.q_calc = [v.flatten() for v in np.meshgrid(qx_calc, qy_calc)]
         self.qx_calc, self.qy_calc = qx_calc, qy_calc
         self.nx, self.ny = len(qx_calc), len(qy_calc)
-        self.dy = 2*qy_width/self.ny
+        self.dy = 2*q_width/self.ny
 
         # Build weight matrix for resolution integration
-        if np.any(qx_width > 0):
+        if np.any(q_length > 0):
             self.weights = resolution.pinhole_resolution(
-                qx_calc, q, np.maximum(qx_width, resolution.MINIMUM_RESOLUTION))
+                qx_calc, q, np.maximum(q_length, resolution.MINIMUM_RESOLUTION))
         elif len(qx_calc) == len(q) and np.all(qx_calc == q):
             self.weights = None
         else:
