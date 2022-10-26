@@ -112,9 +112,9 @@ class Slit1D(Resolution):
 
     *q* points at which the data is measured.
 
-    *qx_width* slit width (short axis) in qx
+    *q_width* slit width (short axis); deprecated nomenclature qy
 
-    *qy_width* slit length (long axis) in qy
+    *q_length* slit length (long axis); deprecated nomenclature qx
 
     *q_calc* is the list of points to calculate, or None if this should
     be estimated from the *q* and *q_width*.
@@ -122,24 +122,24 @@ class Slit1D(Resolution):
     The *weight_matrix* is computed by :func:`slit_resolution`
 
     """
-    def __init__(self, q, qx_width, qy_width=0., q_calc=None):
+    def __init__(self, q, q_length, q_width=0., q_calc=None):
         # Remember what width/dqy was used even though we won't need them
         # after the weight matrix is constructed
-        self.qx_width, self.qy_width = qx_width, qy_width
+        self.q_length, self.q_width = q_length, q_width
 
         # Allow independent resolution on each point even though it is not
         # needed in practice.
-        if np.isscalar(qx_width):
-            qx_width = np.ones(len(q))*qx_width
+        if np.isscalar(q_width):
+            q_width = np.ones(len(q))*q_width
         else:
-            qx_width = np.asarray(qx_width)
-        if np.isscalar(qy_width):
-            qy_width = np.ones(len(q))*qy_width
+            q_width = np.asarray(q_width)
+        if np.isscalar(q_length):
+            q_length = np.ones(len(q))*q_length
         else:
-            qy_width = np.asarray(qy_width)
+            q_length = np.asarray(q_length)
 
         self.q = q.flatten()
-        self.q_calc = slit_extend_q(q, qx_width, qy_width) \
+        self.q_calc = slit_extend_q(q, q_width, q_length) \
             if q_calc is None else np.sort(q_calc)
 
         # Protect against models which are not defined for very low q.  Limit
@@ -149,7 +149,7 @@ class Slit1D(Resolution):
 
         # Build weight matrix from calculated q values
         self.weight_matrix = \
-            slit_resolution(self.q_calc, self.q, qx_width, qy_width)
+            slit_resolution(self.q_calc, self.q, q_length, q_width)
         self.q_calc = abs(self.q_calc)
 
     def apply(self, theory):
