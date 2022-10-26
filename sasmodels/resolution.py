@@ -565,7 +565,7 @@ def romberg_slit_1d(q, width, length, form, pars):
     if np.isscalar(length):
         length = [length]*len(q)
     _int_w = lambda w, qi: eval_form(sqrt(qi**2 + w**2), form, pars)
-    _int_h = lambda h, qi: eval_form(abs(qi+h), form, pars)
+    _int_l = lambda l, qi: eval_form(abs(qi+l), form, pars)
     # If both width and length are defined, then it is too slow to use dblquad.
     # Instead use trapz on a fixed grid, interpolated into the I(Q) for
     # the extended Q range.
@@ -584,11 +584,11 @@ def romberg_slit_1d(q, width, length, form, pars):
             result[i] = total/(2*l)
         else:
             w_grid = np.linspace(0, w, 21)[None, :]
-            h_grid = np.linspace(-l, l, 23)[:, None]
-            u_sub = sqrt((qi+h_grid)**2 + w_grid**2)
+            l_grid = np.linspace(-l, l, 23)[:, None]
+            u_sub = sqrt((qi+l_grid)**2 + w_grid**2)
             f_at_u = np.interp(u_sub, q_calc, Iq)
             #print(np.trapz(Iu, w_grid, axis=1))
-            total = np.trapz(np.trapz(f_at_u, w_grid, axis=1), h_grid[:, 0])
+            total = np.trapz(np.trapz(f_at_u, w_grid, axis=1), l_grid[:, 0])
             result[i] = total / (2*l*w)
             # from scipy.integrate import dblquad
             # r, err = dblquad(_int_wh, -h, h, lambda h: 0., lambda h: w,
