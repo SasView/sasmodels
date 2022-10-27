@@ -25,6 +25,10 @@ simple cubic structure.
     user will need to calculate it from the equation given and the appropriate
     returned parameters.
 
+.. warning::
+    As per the equations below, this model will return I(q)=0 for all q if the
+    distortion factor is equal to 0. The model is not meant to support perfect crystals.
+
 .. figure:: img/sc_crystal_geometry.jpg
 
     Simple cubic (SC) lattice taken from reference [#Matsuoka1987]_.
