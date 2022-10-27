@@ -273,9 +273,9 @@ class TruncatedSphere(Shape):
         self.r_max = 2*r if h >= 0 else 2*sqrt(r**2 - h**2)
         self.dims = self.r_max, self.r_max, r+h
         self.volume = pi*(2*r**3/3 + r**2*h - h**3/3)
-        Vp = pi*(2*r**3/3 + r**2*h - h**3/3)
-        Vm = pi*(2*r**3/3 - r**2*h + h**3/3)
-        Vd = Vp + Vm - 4*pi*r**3/3
+        #Vp = pi*(2*r**3/3 + r**2*h - h**3/3)
+        #Vm = pi*(2*r**3/3 - r**2*h + h**3/3)
+        #Vd = Vp + Vm - 4*pi*r**3/3
 
     def sample(self, density):
         num_points = poisson(density*np.prod(self.dims))
@@ -1211,6 +1211,10 @@ def build_cylinder(radius=25, length=125, rho=2.):
     fn_xy = lambda qx, qy, view: cylinder_Iqxy(qx, qy, radius, length, view=view)*rho**2
     return shape, fn, fn_xy
 
+def build_truncated_sphere(radius=25, h=0.5, rho=2.):
+    shape = TruncatedSphere(radius, h=radius*h, value=rho)
+    return shape, None, None
+
 def build_ellcyl(ra=25, rb=50, length=125, rho=2.):
     shape = EllipticalCylinder(ra, rb, length, rho)
     fn, fn_xy = wrap_sasmodel(
@@ -1297,6 +1301,7 @@ SHAPE_FUNCTIONS = OrderedDict([
     ("barbell", build_barbell),
     ("capcyl", build_capcyl),
     ("sphere", build_sphere),
+    ("tsphere", build_truncated_sphere),
     ("box", build_box),
     ("csbox", build_csbox),
     ("cscyl", build_cscyl),
@@ -1362,7 +1367,8 @@ def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
 
     import pylab
     if show_points:
-        plot_points(rho, points); pylab.figure()
+        plot_points(rho, apply_view(points, view))
+        pylab.figure()
     plot_calc_2d(qx, qy, Iqxy, theory=theory, title=title)
     pylab.gcf().canvas.set_window_title(title)
 
