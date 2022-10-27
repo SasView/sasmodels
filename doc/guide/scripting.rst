@@ -10,29 +10,35 @@ Preparing your environment
 ==========================
 
 You can use python scripts to load and plot your data, create SAS models and fit parameters. You can save a script to a file such as `example/model.py` and run
-it later. However, this requires a scripting environment with the correct packages installed. Either use the SasView application itself (versions after 5.0.5), as
+it later. However, this requires a scripting environment with the correct packages installed.
+
+You can *either* use the SasView application itself (versions after 5.0.5), as
 both bumps and sasmodels are included as part of the distribution, so for
 example::
 
-    $ sasview model.py
+    > sasview model.py
  
-(Note that it may be necessary to set the path to sasmodels/sasview using *PYTHONPATH=path/to/sasmodels:path/to/sasview/src* for this to work)
+(Note that it may be necessary to first add the folder path to sasmodels/sasview
+to your *Path* environment variable for this to work; set PATH=%PATH%;C:\\your\\path\\here\\)
 
-or by creating a Python environment with pip::
+*or* create a Python environment with pip::
 
-    $ pip install sasmodels sasdata matplotlib bumps periodictable
-    $ python model.py
+    > pip install sasmodels sasdata matplotlib bumps periodictable
+    > python model.py
+
+(You can also create a Python environment using conda, see:
+https://github.com/SasView/sasview/wiki/DevNotes_CondaDevEnviroment)
 
 The pip command also works within a `Jupyter notebook <https://docs.jupyter.org/en/latest/install.html>`_ ::
 
-    %pip install sasmodels sasdata matplotlib bumps periodictable
+    [1]: pip install sasmodels sasdata matplotlib bumps periodictable
+
+Preparing your data
+===================
 
 The key functions are then :func:`.core.load_model` for loading the
 model definition and compiling the kernel and
 :func:`.data.load_data` for calling sasview to load the data.
-
-Preparing your data
-===================
 
 Usually you will load data via the sasview loader, with the
 :func:`.data.load_data` function.  For example::
@@ -182,7 +188,7 @@ interface. Here is an example from the *example* directory such as
 
 To run the model from your python environment use the installed *bumps* program::
 
-    $ bumps example/model.py --preview
+    >>> bumps example/model.py --preview
 
 Alternatively, on Windows, bumps can be called from the cmd prompt
 as follows::
