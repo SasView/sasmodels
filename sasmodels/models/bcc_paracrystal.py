@@ -21,12 +21,13 @@ body-centered cubic structure.
 
 .. note::
     At this point the GUI does not return $V_\text{lattice}$ separately so that
-    user will need to calculate it from the equation given and the appropriate
-    returned parameters.
+    the user will need to calculate it from the equation given and the
+    appropriate returned parameters.
 
 .. warning::
     As per the equations below, this model will return I(q)=0 for all q if the
-    distortion factor is equal to 0. The model is not meant to support perfect crystals.
+    distortion factor is equal to 0. The model is not meant to support perfect
+    crystals.
 
 .. figure:: img/bcc_geometry.jpg
 
@@ -50,22 +51,22 @@ $|\vec{b_1}|=|\vec{b_2}|=|\vec{b_3}|=a$. Using this definition, the
 nearest-neighbor distance ($D$) is given by
 $D=|\vec{a_1}|=|\vec{a_2}|=|\vec{a_3}|=\sqrt{(a/2)^2+(a/2)^2+(a/2)^2}=\sqrt{\frac{3a^2}{4}}=\frac{\sqrt{3}a}{2}$.
 
-The volume of the primitive unit cell $V_p$ is then given by:
+The volume of the primitive unit cell $V_u$ is then given by:
 
 .. math::
-    V_p &= |(\vec{a_1}\times \vec{a_2})\cdot\vec{a_3}|\\
+    V_u &= |(\vec{a_1}\times \vec{a_2})\cdot\vec{a_3}|\\
     &= (\frac{a^2}{2},\frac{a^2}{2},0)\cdot(\frac{a}{2},\frac{a}{2},-\frac{a}{2})\\
     &= a^3/2
 
-In this case, the volume fraction ($V_{latt}$) of spherical particles with
+In this case, the volume fraction ($V_{lattice}$) of spherical particles with
 radius $R$ sitting on the bcc lattice is given by:
 
 .. math::
-    V_{latt} &= \frac{4/3 \pi R^3}{a^3/2}\\
+    V_{lattice} &= \frac{4/3 \pi R^3}{a^3/2}\\
     &= \frac{8\pi R^3}{3a^3}\\
     &= \frac{\sqrt{3} \pi R^3}{D^3}
 
-Now, continuing to follow [#Matsuoka1987]_, we define the structure(lattice)
+Now, continuing to follow [#Matsuoka1987]_, we define the structure (lattice)
 factor $Z(\vec{q})$, which is related to the scattering intensity by
 $I(\vec{q})=N |f_0|^2 Z(\vec{q})$ where N is the number of particles in the bcc
 crystal, and $\vec{q}$ is the momentum transfer. For a 3D paracrystal:
