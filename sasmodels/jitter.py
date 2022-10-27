@@ -73,8 +73,8 @@ def draw_beam(axes, view=(0, 0), alpha=0.5, steps=25):
 
     theta, phi = view
     shape = x.shape
-    points = np.matrix([x.flatten(), y.flatten(), z.flatten()])
-    points = Rz(phi)*Ry(theta)*points
+    points = np.array([x.flatten(), y.flatten(), z.flatten()])
+    points = Rz(phi)@Ry(theta)@points
     x, y, z = [v.reshape(shape) for v in points]
     axes.plot_surface(x, y, z, color='yellow', alpha=alpha)
 
@@ -407,7 +407,7 @@ def get_projection(projection):
         def _project(theta_i, phi_j, psi):
             latitude, longitude = theta_i, phi_j
             return latitude, longitude, psi, 'xyz'
-            #return Rx(phi_j)*Ry(theta_i)
+            #return Rx(phi_j)@Ry(theta_i)
         def _weight(theta_i, phi_j, w_i, w_j):
             return w_i*w_j*abs(cos(radians(theta_i)))
     elif projection == 'sinusoidal':  #define PROJECTION 2
@@ -417,7 +417,7 @@ def get_projection(projection):
             longitude = phi_j/scale if abs(phi_j) < abs(scale)*180 else 0
             #print("(%+7.2f, %+7.2f) => (%+7.2f, %+7.2f)"%(theta_i, phi_j, latitude, longitude))
             return latitude, longitude, psi, 'xyz'
-            #return Rx(longitude)*Ry(latitude)
+            #return Rx(longitude)@Ry(latitude)
         def _project(theta_i, phi_j, w_i, w_j):
             latitude = theta_i
             scale = cos(radians(latitude))
@@ -429,7 +429,7 @@ def get_projection(projection):
             #latitude, longitude = guyou_invert([theta_i], [phi_j])
             longitude, latitude = guyou_invert([phi_j], [theta_i])
             return latitude, longitude, psi, 'xyz'
-            #return Rx(longitude[0])*Ry(latitude[0])
+            #return Rx(longitude[0])@Ry(latitude[0])
         def _weight(theta_i, phi_j, w_i, w_j):
             return w_i*w_j
     elif projection == 'azimuthal_equidistance':
@@ -439,9 +439,9 @@ def get_projection(projection):
             longitude = degrees(arctan2(phi_j, theta_i))
             #print("(%+7.2f, %+7.2f) => (%+7.2f, %+7.2f)"%(theta_i, phi_j, latitude, longitude))
             return latitude, longitude, psi-longitude, 'zyz'
-            #R = Rz(longitude)*Ry(latitude)*Rz(psi)
+            #R = Rz(longitude)@Ry(latitude)@Rz(psi)
             #return R_to_xyz(R)
-            #return Rz(longitude)*Ry(latitude)
+            #return Rz(longitude)@Ry(latitude)
         def _weight(theta_i, phi_j, w_i, w_j):
             # Weighting for each point comes from the integral:
             #     \int\int I(q, lat, log) sin(lat) dlat dlog
@@ -482,9 +482,9 @@ def get_projection(projection):
             longitude = degrees(arctan2(phi_j, theta_i))
             #print("(%+7.2f, %+7.2f) => (%+7.2f, %+7.2f)"%(theta_i, phi_j, latitude, longitude))
             return latitude, longitude, psi, 'zyz'
-            #R = Rz(longitude)*Ry(latitude)*Rz(psi)
+            #R = Rz(longitude)@Ry(latitude)@Rz(psi)
             #return R_to_xyz(R)
-            #return Rz(longitude)*Ry(latitude)
+            #return Rz(longitude)@Ry(latitude)
         def _weight(theta_i, phi_j, w_i, w_j):
             latitude = sqrt(theta_i**2 + phi_j**2)
             weight = sin(radians(latitude))/latitude if latitude != 0 else 1
@@ -519,9 +519,9 @@ def draw_mesh(axes, view, jitter, radius=1.2, n=11, dist='gaussian',
     def _rotate(theta, phi, z):
         dview = _project(theta, phi, 0.)
         if dview[3] == 'zyz':
-            return Rz(dview[1])*Ry(dview[0])*z
+            return Rz(dview[1])@Ry(dview[0])@z
         else:  # dview[3] == 'xyz':
-            return Rx(dview[1])*Ry(dview[0])*z
+            return Rx(dview[1])@Ry(dview[0])@z
 
 
     dist_x = np.linspace(-1, 1, n)
@@ -539,7 +539,7 @@ def draw_mesh(axes, view, jitter, radius=1.2, n=11, dist='gaussian',
 
     # mesh in theta, phi formed by rotating z
     dtheta, dphi, dpsi = jitter  # pylint: disable=unused-variable
-    z = np.matrix([[0], [0], [radius]])
+    z = np.array([[0], [0], [radius]])
     points = np.hstack([_rotate(theta_i, phi_j, z)
                         for theta_i in dtheta*dist_x
                         for phi_j in dphi*dist_x])
@@ -623,10 +623,10 @@ def apply_jitter(jitter, points):
     # Hack to deal with the fact that azimuthal_equidistance uses euler angles
     if len(jitter) == 4:
         dtheta, dphi, dpsi, _ = jitter
-        points = Rz(dphi)*Ry(dtheta)*Rz(dpsi)*points
+        points = Rz(dphi)@Ry(dtheta)@Rz(dpsi)@points
     else:
         dtheta, dphi, dpsi = jitter
-        points = Rx(dphi)*Ry(dtheta)*Rz(dpsi)*points
+        points = Rx(dphi)@Ry(dtheta)@Rz(dpsi)@points
     return points
 
 def orient_relative_to_beam(view, points):
@@ -636,9 +636,9 @@ def orient_relative_to_beam(view, points):
     Points are stored in a 3 x n numpy matrix, not a numpy array or tuple.
     """
     theta, phi, psi = view
-    points = Rz(phi)*Ry(theta)*Rz(psi)*points # viewing angle
-    #points = Rz(psi)*Ry(pi/2-theta)*Rz(phi)*points # 1-D integration angles
-    #points = Rx(phi)*Ry(theta)*Rz(psi)*points  # angular dispersion angle
+    points = Rz(phi)@Ry(theta)@Rz(psi)@points # viewing angle
+    #points = Rz(psi)@Ry(pi/2-theta)@Rz(phi)@points # 1-D integration angles
+    #points = Rx(phi)@Ry(theta)@Rz(psi)@points  # angular dispersion angle
     return points
 
 def orient_relative_to_beam_quaternion(view, points):
@@ -969,7 +969,7 @@ DRAW_SHAPES = {
 }
 
 DISTRIBUTIONS = [
-    'gaussian', 'rectangle', 'uniform',
+    'gaussian', 'rectangle', 'uniform', 'cyclic',
 ]
 DIST_LIMITS = {
     'gaussian': 30,
@@ -1034,7 +1034,7 @@ def _mpl_plot(calculator, draw_shape, size, view, jitter, dist, mesh, projection
     plt.subplots(num=None, figsize=(5.5, 5.5))
     plt.set_cmap('gist_earth')
     plt.clf()
-    plt.gcf().canvas.set_window_title(projection)
+    plt.gcf().canvas.manager.set_window_title(projection)
     #gs = gridspec.GridSpec(2,1,height_ratios=[4,1])
     #axes = plt.subplot(gs[0], projection='3d')
     axes = plt.axes([0.0, 0.2, 1.0, 0.8], projection='3d')

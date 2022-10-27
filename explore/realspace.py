@@ -5,14 +5,10 @@ import time
 from copy import copy
 import os
 import argparse
-import inspect
 from collections import OrderedDict
 from timeit import default_timer as timer
-
-try:
-    from inspect import getfullargspec
-except ImportError:
-    from inspect import getargspec as getfullargspec
+from typing import Tuple
+from inspect import getfullargspec
 
 import numpy as np
 from numpy import pi, radians, sin, cos, sqrt, clip
@@ -29,6 +25,8 @@ try:
     USE_NUMBA = SAS_NUMBA > 0
     USE_CUDA = SAS_NUMBA > 1
 except ImportError:
+    # Identity decorator @njit or @njit(...)
+    njit = lambda f, *args, **kw: f if callable(f) else (lambda k: k)
     USE_NUMBA = USE_CUDA = False
 
 # Definition of rotation matrices comes from wikipedia:
@@ -39,7 +37,7 @@ def Rx(angle):
     R = [[1, 0, 0],
          [0, +cos(a), -sin(a)],
          [0, +sin(a), +cos(a)]]
-    return np.matrix(R)
+    return np.array(R)
 
 def Ry(angle):
     """Construct a matrix to rotate points about *y* by *angle* degrees."""
@@ -47,7 +45,7 @@ def Ry(angle):
     R = [[+cos(a), 0, +sin(a)],
          [0, 1, 0],
          [-sin(a), 0, +cos(a)]]
-    return np.matrix(R)
+    return np.array(R)
 
 def Rz(angle):
     """Construct a matrix to rotate points about *z* by *angle* degrees."""
@@ -55,7 +53,7 @@ def Rz(angle):
     R = [[+cos(a), -sin(a), 0],
          [+sin(a), +cos(a), 0],
          [0, 0, 1]]
-    return np.matrix(R)
+    return np.array(R)
 
 def pol2rec(r, theta, phi):
     """
@@ -63,40 +61,42 @@ def pol2rec(r, theta, phi):
     """
     theta, phi = radians(theta), radians(phi)
     x = +r * sin(theta) * cos(phi)
-    y = +r * sin(theta)*sin(phi) 
-    z = +r * cos(theta) 
+    y = +r * sin(theta) * sin(phi)
+    z = +r * cos(theta)
     return x, y, z
 
+def jitter(theta, phi, psi):
+    r"""
+    Return the jitter transform to rotate a set of points.
+    View is in degrees using nautical angles with roll $\psi$ around $c$,
+    pitch $\theta$ around $b$ and yaw $\phi$ around $a$.
+
+    **unused**
+    """
+    return Rx(phi) @ Ry(theta) @ Rz(psi)
+
 def rotation(theta, phi, psi):
+    r"""
+    Return a rotation matrix to apply to a set of points.
+    View is in degrees using a $z$-$y$-$z$ rotation sequence of Euler angles
+    $\phi$-$\theta$-$\psi$.  The $c$-axis of the shape starts along $z$ and
+    the $b$-axis starts along $y$.
     """
-    Apply the jitter transform to a set of points.
-    Points are stored in a 3 x n numpy matrix, not a numpy array or tuple.
-    """
-    return Rx(phi)*Ry(theta)*Rz(psi)
-
-def apply_view(points, view):
-    """
-    Apply the view transform (theta, phi, psi) to a set of points.
-    Points are stored in a 3 x n numpy array.
-    View angles are in degrees.
-    """
-    theta, phi, psi = view
-    return np.asarray((Rz(phi)*Ry(theta)*Rz(psi))*np.matrix(points.T)).T
-
+    return Rz(phi) @ Ry(theta) @ Rz(psi)
 
 def invert_view(qx, qy, view):
-    """
-    Return (qa, qb, qc) for the (theta, phi, psi) view angle at detector
-    pixel (qx, qy).
-    View angles are in degrees.
+    r"""
+    Return $(q_a, q_b, q_c)$ for the $(\theta, \phi, \psi)$ view angle at
+    detector pixel corresponding to $(q_x, q_y)$.  View is in degrees using
+    a $z$-$y$-$z$ sequence of Euler angles $\phi$-$\theta$-$\psi$.
     """
     theta, phi, psi = view
+    Rinv = Rz(-psi) @ Ry(-theta) @ Rz(-phi)
     q = np.vstack((qx.flatten(), qy.flatten(), 0*qx.flatten()))
-    return np.asarray((Rz(-psi)*Ry(-theta)*Rz(-phi))*np.matrix(q))
-
+    return Rinv @ q
 
 class Shape:
-    rotation = np.matrix([[1., 0, 0], [0, 1, 0], [0, 0, 1]])
+    rotation = np.eye(3)
     center = np.array([0., 0., 0.])[:, None]
     r_max = None
     is_magnetic = False
@@ -106,15 +106,19 @@ class Shape:
         raise NotImplementedError()
 
     def sample(self, density):
-        # type: (float) -> np.ndarray[N], np.ndarray[N, 3]
+        # type: (float) -> Tuple[np.ndarray, np.ndarray]
+        """
+        Returns arrays (rho[N], points[N, 3]).
+        """
         raise NotImplementedError()
 
     def dims(self):
-        # type: () -> float, float, float
+        # type: () -> Tuple[float, float, float]
         raise NotImplementedError()
 
     def rotate(self, theta, phi, psi):
-        self.rotation = rotation(theta, phi, psi) * self.rotation
+        """See :func:`rotation` for details on the rotation matrix."""
+        self.rotation = rotation(theta, phi, psi) @ self.rotation
         return self
 
     def shift(self, x, y, z):
@@ -122,7 +126,7 @@ class Shape:
         return self
 
     def _adjust(self, points):
-        points = np.asarray(self.rotation * np.matrix(points.T)) + self.center
+        points = self.rotation @ points.T + self.center
         return points.T
 
     def r_bins(self, q, over_sampling=1, r_step=None):
@@ -251,7 +255,7 @@ class EllipticalBicelle(Shape):
         radius = points[:, 0]**2 + points[:, 1]**2
         points = points[radius <= 1]
         # set all to core value first
-        values = np.ones_like(points[:, 0])*self.value
+        values = np.full_like(points[:, 0], self.value)
         # then set value to face value if |z| > face/(length/2))
         values[abs(points[:, 2]) > self.length/(self.length + 2*self.thick_face)] = self.value_face
         # finally set value to rim value if outside the core ellipse
@@ -609,48 +613,56 @@ def spin_weights(in_spin, out_spin):
     # needed on the incoming polariser side (assuming that a user), has normalised
     # to the incoming flux with polariser in for SANSPOl and unpolarised beam, respectively.
 
-    weight = [
+    weight = (
         (1.0 - in_spin) * (1.0 - out_spin) / norm, # dd
         (1.0 - in_spin) * out_spin / norm,       # du
         in_spin * (1.0 - out_spin) / norm,       # ud
         in_spin * out_spin / norm,             # uu
-    ]
+    )
     return weight
 
 def orth(A, b_hat): # A = 3 x n, and b_hat unit vector
- return A - np.sum(A*b_hat[:, None], axis=0)[None, :]*b_hat[:, None]    
+    #return A - np.sum(A*b_hat[:, None], axis=0)[None, :]*b_hat[:, None]
+    return A - np.outer(b_hat, b_hat)@A
+
 
 def magnetic_sld(qx, qy, up_theta, up_phi, rho, rho_m):
     """
     Compute the complex sld for the magnetic spin states.
     Returns effective rho for spin states [dd, du, ud, uu].
     """
-    # Handle q=0 by setting px = py = 0
-    # Note: this is different from kernel_iq, which I(0,0) to 0
-    q_norm = 1/sqrt(qx**2 + qy**2) if qx != 0. or qy != 0. else 0.
+    # For q=0 one would see the demagnetising field of the sample, equivalent
+    # to direction q_hat = [sqrt(1/2), sqrt(1/2), 0] for a disc shaped sample
+    # that is very thin along the beam.
+    # Note: This is different from kernel_iq.c, which sets I(0, 0) to zero.
+    q_norm = sqrt(qx**2 + qy**2)
+    if abs(q_norm) < 1.e-16:
+        q_hat = np.array([1., 1., 0.]) / np.sqrt(2)
+    else:
+        q_hat = np.array([qx, qy, 0]) / q_norm
+    M_perp = orth(rho_m, q_hat)  # M = rho_m
+
+    # perpy_hat and perpz_hat are unit vectors spanning up the plane
+    # perpendicular to polarisation for SF scattering (avoiding
+    # repetitive computation of orthogonal vectors)
     cos_theta, sin_theta = cos(radians(up_theta)), sin(radians(up_theta))
     cos_phi, sin_phi = cos(radians(up_phi)), sin(radians(up_phi))
-    M = rho_m
-    p_hat = np.array([sin_theta * cos_phi, sin_theta * sin_phi, cos_theta ])
+    p_hat = np.array([sin_theta * cos_phi, sin_theta * sin_phi, cos_theta])
+    perpy_hat = np.array([-sin_phi, cos_phi, 0])
+    perpz_hat = np.array([-cos_theta * cos_phi, -cos_theta * sin_phi, sin_theta])
 
-    
-    q_hat = np.array([qx, qy, 0]) * q_norm
-    M_perp = orth(M,q_hat)
-    M_perpP = orth(M_perp, p_hat)
-    M_perpP_perpQ = orth(M_perpP, q_hat)
+    perpx = p_hat @ M_perp
+    perpy = perpy_hat @ M_perp
+    perpz = perpz_hat @ M_perp
 
-    perpx = np.dot(p_hat, M_perp)
-    perpy = np.sqrt(np.sum(M_perpP_perpQ**2, axis=0))
-    perpz = np.dot(q_hat, M_perpP)
-    
-
-    return [
+    return (
         rho - perpx,   # dd => sld - D M_perpx
         perpy - 1j * perpz, # du => -D (M_perpy + j M_perpz)
         perpy + 1j * perpz, # ud => -D (M_perpy - j M_perpz)
         rho + perpx,   # uu => sld + D M_perpx
-    ]
+    )
 
+# TODO: provide numba and cuda version
 def calc_Iq_magnetic(qx, qy, rho, rho_m, points, volume=1.0, view=(0, 0, 0),
                      up_frac_i=0.5, up_frac_f=0.5, up_theta=0., up_phi=0.):
     """
@@ -666,21 +678,20 @@ def calc_Iq_magnetic(qx, qy, rho, rho_m, points, volume=1.0, view=(0, 0, 0),
     yaw and roll for a beam travelling along the negative z axis.
     *up_frac_i* is the portion of polarizer neutrons which are spin up.
     *up_frac_f* is the portion of analyzer neutrons which are spin up.
-    *up_theta* and *up_phi* are the rotation angle of the spin up direction 
-    in the detector plane and the inclination from the beam direction (z-axis).
+    *up_theta* is the inclination from the beam direction (z-axis).
+    *up_phi* is the rotation in the detector plane.
     *dtype* is the numerical precision of the calculation. [not implemented]
     """
     # TODO: maybe slightly faster to rotate points and rho_m, and drop qc*z
     qx, qy = np.broadcast_arrays(qx, qy)
     qa, qb, qc = invert_view(qx, qy, view)
     rho, volume = np.broadcast_arrays(rho, volume)
-    x, y, z = points.T
     weights = spin_weights(up_frac_i, up_frac_f)
 
     # I(q) = |sum V(r) rho(r) e^(1j q.r)|^2 / sum V(r)
     shape = qx.shape
     Iq = np.zeros(qx.size, 'd')
-    x, y, z, qx, qy = (np.asarray(v, 'd') for v in (x, y, z, qx, qy))
+    x, y, z = points.T
     qx, qy = (v.flatten() for v in (qx, qy))
     for k in range(qx.size):
         ephase = volume*np.exp(1j*(qa[k]*x + qb[k]*y + qc[k]*z))
@@ -738,11 +749,11 @@ def _calc_Pr_uniform(r, rho, points, volume):
     #print("vol", np.sum(volume))
     return Pr*1e-4
 
-    # Can get an additional 2x by going to C.  Cuda/OpenCL will allow even
+    # Can get an additional 2x by going to C. Cuda/OpenCL will allow even
     # more speedup, though still bounded by the O(n^2) cost.
     """
 void pdfcalc(int n, const double *pts, const double *rho,
-         int nPr, double *Pr, double rstep)
+  int nPr, double *Pr, double rstep)
 {
   int i,j;
   for (i=0; i<n-2; i++) {
@@ -1201,7 +1212,7 @@ def build_triell(ra=125, rb=200, rc=50, rho=2,
         up_frac_i=up_i,
         up_frac_f=up_f,
         up_theta=up_theta,
-        up_phi=up_phi,        
+        up_phi=up_phi,
     )
     return shape, fn, fn_xy
 
@@ -1329,9 +1340,10 @@ def check_shape(title, shape, fn=None, show_points=False,
 
     import pylab
     if show_points:
-         plot_points(rho, points); pylab.figure()
+        plot_points(rho, points)
+        pylab.figure()
     plot_calc(r, Pr, q, Iq, theory=theory, title=title, Iq_avg=Iq_avg)
-    pylab.gcf().canvas.set_window_title(title)
+    pylab.gcf().canvas.manager.set_window_title(title)
     pylab.show()
 
 def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
@@ -1342,8 +1354,15 @@ def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
     qx = np.linspace(-qmax, qmax, mesh)
     qy = np.linspace(-qmax, qmax, mesh)
     Qx, Qy = np.meshgrid(qx, qy)
-    sampling_density = samples / shape.volume
     t0 = timer()
+    theory = fn(Qx, Qy, view) if fn is not None else None
+    print("calc theory time", timer() - t0)
+
+    t0 = timer()
+    sampling_density = samples / shape.volume
+    if False: # point orientation test: rotate shape rather than view
+        shape.rotate(*view)
+        view = (0, 0, 0)
     rho, points = shape.sample(sampling_density)
     # The volume of each sample is approximately 1/sampling_density, except
     # that the number of points actually sampled may be slightly more or
@@ -1356,9 +1375,6 @@ def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
     t0 = timer()
     Iqxy = calc_Iqxy(Qx, Qy, rho, points, volume=volume, view=view)
     print("calc Iqxy time", timer() - t0)
-    t0 = timer()
-    theory = fn(Qx, Qy, view) if fn is not None else None
-    print("calc theory time", timer() - t0)
 
     # Add floor to limit colorbar range.
     Iqxy += 0.001 * Iqxy.max()
@@ -1370,7 +1386,7 @@ def check_shape_2d(title, shape, fn=None, view=(0, 0, 0), show_points=False,
         plot_points(rho, apply_view(points, view))
         pylab.figure()
     plot_calc_2d(qx, qy, Iqxy, theory=theory, title=title)
-    pylab.gcf().canvas.set_window_title(title)
+    pylab.gcf().canvas.manager.set_window_title(title)
 
     ## Histogram of point density in the z direction.
     #pylab.figure()
@@ -1414,9 +1430,10 @@ def check_shape_mag(title, shape, fn=None, view=(0, 0, 0), show_points=False,
 
     import pylab
     if show_points:
-        plot_points(rho, points); pylab.figure()
+        plot_points(rho, points)
+        pylab.figure()
     plot_calc_2d(qx, qy, Iqxy, theory=theory, title=title)
-    pylab.gcf().canvas.set_window_title(title)
+    pylab.gcf().canvas.manager.set_window_title(title)
 
     ## Histogram of point density in the z direction.
     #pylab.figure()
