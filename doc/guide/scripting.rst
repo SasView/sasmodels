@@ -31,7 +31,7 @@ https://github.com/SasView/sasview/wiki/DevNotes_CondaDevEnviroment)
 
 The pip command also works within a `Jupyter notebook <https://docs.jupyter.org/en/latest/install.html>`_ ::
 
-    [1]: pip install sasmodels sasdata matplotlib bumps periodictable
+    %pip install sasmodels sasdata matplotlib bumps periodictable
 
 Preparing your data
 ===================
