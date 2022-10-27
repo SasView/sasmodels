@@ -1161,13 +1161,13 @@ def demo_slit_1d():
     Show example of slit smearing.
     """
     q = np.logspace(-4, np.log10(0.2), 100)
-    w = h = 0.
+    w = l = 0.
     #w = 0.000000277790
     w = 0.0277790
-    #h = 0.00277790
-    #h = 0.0277790
-    resolution = Slit1D(q, w, h)
-    _eval_demo_1d(resolution, title="(%g,%g) Slit Resolution"%(w, h))
+    #l = 0.00277790
+    #l = 0.0277790
+    resolution = Slit1D(q, w, l)
+    _eval_demo_1d(resolution, title="(%g,%g) Slit Resolution"%(w, l))
 
 def demo():
     """

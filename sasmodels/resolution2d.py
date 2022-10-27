@@ -186,6 +186,11 @@ class Slit2D(Resolution):
     *q_width* slit width (short axis); assumed to be in the direction of qy; current implementation requires a fixed
     q_width for all q points.
 
+    Please note that this assumption of laboratory-frame qx and qy directions can be inverted by adding or subtracting
+    90 degrees from the model orientation.  For the particular case of USANS, which has a vertical slit of width
+    *q_width* sweeping through qx, add 90 degrees to the fitted phi angle to find the orientation relative to laboratory
+    frame.
+
     *q_calc* is the list of q points to calculate, or None if this
     should be estimated from the *q* and *qx_width*.
 
