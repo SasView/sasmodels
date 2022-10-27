@@ -13,7 +13,7 @@ The scattering intensity $I(q)$ is calculated as
 
     I(q) = \frac{\text{scale}}{V_p} V_\text{lattice} P(q) Z(q)
 
-where *scale* is the volume fraction of crystal in the volume,
+where *scale* is the volume fraction of crystal in the sample volume,
 $V_\text{lattice}$, the volume fraction of spheres in the crystal, $V_p$ is
 the volume of the primary particle, $P(q)$ is the form factor of the sphere
 (normalized), and $Z(q)$ is the paracrystalline structure factor for a
@@ -26,12 +26,12 @@ body-centered cubic structure.
 
 .. figure:: img/bcc_geometry.jpg
 
-    Body-centered cubic (BCC) lattice taken from reference\ [#Matsuoka1987]_.
+    Body-centered cubic (BCC) lattice taken from reference [#Matsuoka1987]_.
 
 Following the derivation from reference [#Matsuoka1987]_, as corrected in
-reference\ [#Matsuoka1990]_, and based on the above figure, the
+reference [#Matsuoka1990]_, and based on the above figure, the
 primitive unit cell vectors $\vec{a_1},\vec{a_2}$, and $\vec{a_3}$, which
-enclose the smallest possible unit cell, are defined below:
+enclose the smallest possible unit cell for the bcc lattice, are defined below:
 
 .. math::
     \vec{a_1} &= \frac{1}{2}(-\vec{b_1} + \vec{b_2} + \vec{b_3}) \\
