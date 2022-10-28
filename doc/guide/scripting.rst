@@ -43,6 +43,30 @@ or can be symlinked into your path, for example::
     mkdir ~/bin
     ln -s /path/to/Applications/SasView5.dmg/Contents/MacOS/sasview ~/bin
 
+Command line syntax
+^^^^^^^^^^^^^^^^^^^
+
+The following use cases are recognised:
+
+    sasview
+        *Start the sasview GUI*
+
+    sasview script [args...]
+        *Run a python script using the installed SasView libraries [passing
+        optional arguments]*
+
+    sasview -m module [args...]
+        *Run a SasView/Sasmodels/Bumps module as main [passing optional arguments]*
+
+    sasview -c "python statements"
+        *Execute python statements using the installed SasView libraries*
+
+    sasview -i 
+        *Start the iPython interpreter*
+
+However, on Windows, any console output gets written to NUL by default. If
+redirecting to STDOUT does not work, try writing output to file.
+
 Preparing your data
 ===================
 
