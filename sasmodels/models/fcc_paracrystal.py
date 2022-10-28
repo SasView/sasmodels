@@ -18,7 +18,7 @@ The scattering intensity $I(q)$ is calculated as
     I(q) = \frac{\text{scale}}{V_p} V_\text{lattice} P(q) Z(q)
 
 where *scale* is the volume fraction of crystal in the sample volume,
-$V_\text{lattice}$, the volume fraction of spheres in the crystal, $V_p$ is
+$V_\text{lattice}$ is the volume fraction of spheres in the crystal, $V_p$ is
 the volume of the primary particle, $P(q)$ is the form factor of the sphere
 (normalized), and $Z(q)$ is the paracrystalline structure factor for a
 face-centered cubic structure.
@@ -134,6 +134,8 @@ Thus the peak positions correspond to (just the first 5)
   peaks of the paracrystalline scattering. So be warned that the calculation
   is slow. Fitting of any experimental data must be resolution smeared for
   any meaningful fit. This makes a triple integral which may be very slow.
+  If a double-precision GPU with OpenCL support is available this may improve
+  the speed of the calculation.
 
 The 2D (Anisotropic model) is based on the reference below where $I(q)$ is
 approximated for 1d scattering. Thus the scattering pattern for 2D may not
