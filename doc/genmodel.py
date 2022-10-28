@@ -290,7 +290,7 @@ def gen_docs(model_info, outfile):
         print('------------------------------------------------------------------')
         docstr += insertion
 
-    with open(outfile, 'w') as fid:
+    with open(outfile, 'w', encoding='utf-8') as fid:
         fid.write(docstr)
 
 def make_figure_cached(model_info, opts):

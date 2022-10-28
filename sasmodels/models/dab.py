@@ -69,12 +69,7 @@ parameters = [
     ["cor_length", "Ang", 50.0, [0, inf], "", "correlation length"],
     ]
 
-Iq = """
-    double numerator   = cube(cor_length);
-    double denominator = square(1 + square(q*cor_length));
-
-    return numerator / denominator ;
-    """
+source = ["dab.c"]
 
 def random():
     """Return a random parameter set for the model."""

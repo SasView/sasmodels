@@ -2,7 +2,7 @@ import logging
 
 from bumps.names import *
 from sasmodels import core, bumps_model, sesans
-from sas.sascalc.dataloader.loader import Loader
+from sasdata.dataloader.loader import Loader
 
 def get_bumps_model(model_name):
     kernel = core.load_model(model_name)

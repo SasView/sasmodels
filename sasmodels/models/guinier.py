@@ -73,11 +73,8 @@ category = "shape-independent"
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["rg", "Ang", 60.0, [-inf, inf], "", "Radius of Gyration"]]
 
-Iq = """
-    double exponent = fabs(rg)*rg*q*q/3.0;
-    double value = exp(-exponent);
-    return value;
-"""
+source = ["guinier.c"] 
+
 
 def random():
     """Return a random parameter set for the model."""
