@@ -57,7 +57,7 @@ crystal, and $\vec{q}$ is the momentum transfer. For a 3D paracrystal:
 with
 
 .. math::
-    Z_k(\vec{q}) = \frac{1-|F_k|^2}{1-2|F_k|cos(\vec{a_k}\cdot\vec{q})+|F_k|^2}
+    Z_k(\vec{q}) = \frac{1-|F_k|^2}{1-2|F_k|\cos(\vec{a_k}\cdot\vec{q})+|F_k|^2}
 
 and where $F_k(\vec{q})$ is the structure factor of the primitive unit cell
 defined as:
@@ -74,18 +74,18 @@ Finally, assuming the definitions presented in this document, the authors of
 reference [#Matsuoka1987]_ have derived the lattice factors which are given by:
 
 .. math::
-    Z_1(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}cos[\frac{qa}{2}(sin\theta cos\phi + sin\theta sin\phi + cos\theta)] + e^{-q^2\Delta a^2}\}\\
-    Z_2(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}cos[\frac{qa}{2}(-sin\theta cos\phi - sin\theta sin\phi + cos\theta)] + e^{-q^2\Delta a^2}\}\\
-    Z_3(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}cos[\frac{qa}{2}(-sin\theta cos\phi + sin\theta sin\phi - cos\theta)] + e^{-q^2\Delta a^2}\}\\
+    Z_1(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}\cos[\frac{qa}{2}(\sin\theta \cos\phi + \sin\theta \sin\phi + \cos\theta)] + e^{-q^2\Delta a^2}\}\\
+    Z_2(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}\cos[\frac{qa}{2}(-\sin\theta \cos\phi - \sin\theta \sin\phi + \cos\theta)] + e^{-q^2\Delta a^2}\}\\
+    Z_3(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}\cos[\frac{qa}{2}(-\sin\theta \cos\phi + \sin\theta \sin\phi - \cos\theta)] + e^{-q^2\Delta a^2}\}\\
 
 Note that Sasview is using the nearest-neighbor parameter ($D$) as an input
 which in this case is the same as the conventional unit cell parameter $a$.
 By simple substitution leads to:
 
 .. math::
-    Z_1(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}cos[\frac{qD}{\sqrt{2}}(sin\theta cos\phi + sin\theta sin\phi + cos\theta)] + e^{-q^2\Delta a^2}\}\\
-    Z_2(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}cos[\frac{qD}{\sqrt{2}}(-sin\theta cos\phi - sin\theta sin\phi + cos\theta)] + e^{-q^2\Delta a^2}\}\\
-    Z_3(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}cos[\frac{qD}{\sqrt{2}}(-sin\theta cos\phi + sin\theta sin\phi - cos\theta)] + e^{-q^2\Delta a^2}\}\\
+    Z_1(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}\cos[\frac{qD}{\sqrt{2}}(\sin\theta \cos\phi + \sin\theta \sin\phi + \cos\theta)] + e^{-q^2\Delta a^2}\}\\
+    Z_2(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}\cos[\frac{qD}{\sqrt{2}}(-\sin\theta \cos\phi - \sin\theta \sin\phi + \cos\theta)] + e^{-q^2\Delta a^2}\}\\
+    Z_3(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}\cos[\frac{qD}{\sqrt{2}}(-\sin\theta \cos\phi + \sin\theta \sin\phi - \cos\theta)] + e^{-q^2\Delta a^2}\}\\
 
 Finally, the position of the Bragg peaks for the sc lattice are indexed by (reduced q-values):
 
