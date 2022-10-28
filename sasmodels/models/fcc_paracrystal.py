@@ -15,7 +15,7 @@ The scattering intensity $I(q)$ is calculated as
 
 .. math::
 
-    I(q) = \frac{\text{scale}}{V_p} V_\text{lattice} P(q) Z(q)
+    I(q) = \frac{\text{scale}}{V_p} V_\text{lattice} P(q) Z(q) + \text{background}
 
 where *scale* is the volume fraction of crystal in the sample volume,
 $V_\text{lattice}$ is the volume fraction of spheres in the crystal, $V_p$ is
