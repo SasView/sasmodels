@@ -35,12 +35,13 @@ The pip command also works within a `Jupyter notebook <https://docs.jupyter.org/
 
 On a Mac the command for invoking SasView will be something like::
 
-    /Applications/Sasview.app/Contents/MacOS/sasview
+    /Applications/Sasview5.dmg/Contents/MacOS/sasview
 
-This can either be used directly or can be symlinked into your path::
+depending on where it is actually installed. This can either be used directly
+or can be symlinked into your path, for example::
 
     mkdir ~/bin
-    ln -s /path/to/SasView.app/Contents/MacOS/sasview ~/bin
+    ln -s /path/to/Applications/SasView5.dmg/Contents/MacOS/sasview ~/bin
 
 Preparing your data
 ===================
