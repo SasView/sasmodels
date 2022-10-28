@@ -14,7 +14,7 @@ it later. However, this requires a scripting environment with the correct packag
 
 You can *either* use the SasView application itself (versions after 5.0.5), as
 both bumps and sasmodels are included as part of the distribution, so for
-example::
+example on Windows::
 
     > sasview model.py
  
@@ -32,6 +32,15 @@ https://github.com/SasView/sasview/wiki/DevNotes_CondaDevEnviroment)
 The pip command also works within a `Jupyter notebook <https://docs.jupyter.org/en/latest/install.html>`_ ::
 
     %pip install sasmodels sasdata matplotlib bumps periodictable
+
+On a Mac the command for invoking SasView will be something like::
+
+    /Applications/Sasview.app/Contents/MacOS/sasview
+
+This can either be used directly or can be symlinked into your path::
+
+    mkdir ~/bin
+    ln -s /path/to/SasView.app/Contents/MacOS/sasview ~/bin
 
 Preparing your data
 ===================
