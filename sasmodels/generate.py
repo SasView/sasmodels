@@ -896,9 +896,24 @@ def contains_shell_volume(source):
 
 def _clean_source_filename(path):
     # type: (str) -> str
-    base = dirname(__file__)
-    return path.replace(base, '.').replace('\\', '/')
+    """ Make the source filename into a canonical, relative form if possible
 
+    Remove the common start of the file path (if there is one), yielding
+    the path relative to this file, such as:
+
+     - ./kernel_iq.c
+     - ./models/sphere.c
+     - ./models/lib/sas_J0.c
+
+    This is a format that the compiler/debugger understand for indicating
+    included files with relative paths. Omitting the common parent to the
+    paths means that the irrelevant detail of the temporary directory where
+    the source was unpacked for compilation is not included in pre-compiled
+    models.
+    """
+    base = dirname(__file__).replace('\\', '/')
+    path = path.replace('\\', '/')
+    return path.replace(base, '.', 1) if path.startswith(base) else path
 
 def _add_source(source, code, path, lineno=1):
     """
