@@ -151,7 +151,7 @@ class Slit1D(Resolution):
 
         # Build weight matrix from calculated q values
         self.weight_matrix = \
-            slit_resolution(self.q_calc, self.q, q_length, q_width)
+            slit_resolution(self.q_calc, self.q, q_width, q_length)
         self.q_calc = abs(self.q_calc)
 
     def apply(self, theory):
@@ -332,7 +332,6 @@ def slit_resolution(q_calc, q, width, length, n_length=30):
 
 
     """
-
     # np.set_printoptions(precision=6, linewidth=10000)
 
     # The current algorithm is a midpoint rectangle rule.
@@ -349,29 +348,29 @@ def slit_resolution(q_calc, q, width, length, n_length=30):
             # up qi in q_calc, then weighting the result by the relative
             # distance to the neighbouring points.
             weights[i, :] = (q_calc == qi)
-        elif l == 0:
-            weights[i, :] = _q_perp_weights(q_edges, qi, w)
         elif w == 0:
-            in_x = 1.0 * ((q_calc >= qi-l) & (q_calc <= qi+l))
-            abs_x = 1.0*(q_calc < abs(qi - l)) if qi < l else 0.
-            #print(qi - l, qi + l)
+            weights[i, :] = _q_perp_weights(q_edges, qi, l)
+        elif l == 0:
+            in_x = 1.0 * ((q_calc >= qi-w) & (q_calc <= qi+w))
+            abs_x = 1.0*(q_calc < abs(qi - w)) if qi < w else 0.
+            #print(qi - w, qi + w)
             #print(in_x + abs_x)
-            weights[i, :] = (in_x + abs_x) * np.diff(q_edges) / (2*l)
+            weights[i, :] = (in_x + abs_x) * np.diff(q_edges) / (2*w)
         else:
             for k in range(-n_length, n_length+1):
-                weights[i, :] += _q_perp_weights(q_edges, qi+k*l/n_length, w)
+                weights[i, :] += _q_perp_weights(q_edges, qi+k*w/n_length, l)
             weights[i, :] /= 2*n_length + 1
 
     return weights.T
 
 
-def _q_perp_weights(q_edges, qi, w):
+def _q_perp_weights(q_edges, qi, l):
     # Convert bin edges from q to u
-    u_limit = np.sqrt(qi**2 + w**2)
+    u_limit = np.sqrt(qi**2 + l**2)
     u_edges = q_edges**2 - qi**2
     u_edges[q_edges < abs(qi)] = 0.
     u_edges[q_edges > u_limit] = u_limit**2 - qi**2
-    weights = np.diff(np.sqrt(u_edges))/w
+    weights = np.diff(np.sqrt(u_edges))/l
     #print("i, qi",i,qi,qi+width)
     #print(q_calc)
     #print(weights)
