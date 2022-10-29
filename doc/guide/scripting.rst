@@ -47,7 +47,7 @@ or can be symlinked into your path, for example::
 Command line syntax
 ^^^^^^^^^^^^^^^^^^^
 
-For details of the supported command syntax, see :mod:`sas.cli`.
+For details of the supported command syntax, see :mod:`sas.cli` .
 
 Preparing your data
 ===================
