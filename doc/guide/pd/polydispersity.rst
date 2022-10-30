@@ -8,7 +8,7 @@
 .. _polydispersityhelp:
 
 Polydispersity & Orientational Distributions
---------------------------------------------
+============================================
 
 For some models we can calculate the average intensity for a population of
 particles that possess size and/or orientational (ie, angular) distributions
@@ -22,14 +22,14 @@ that
 
 .. math::
 
-  P(q) = \text{scale} \langle F^* F \rangle / V + \text{background}
+  P(q) = \frac{\text{scale}}{\langle V \rangle} \langle F F^* \rangle + \text{background}
 
 where $F$ is the scattering amplitude and $\langle\cdot\rangle$ denotes an
 average over the distribution $f(x; \bar x, \sigma)$, giving
 
 .. math::
 
-  P(q) = \frac{\text{scale}}{V} \int_\mathbb{R}
+  P(q) = \frac{\text{scale}}{\langle V \rangle} \int_\mathbb{R}
   f(x; \bar x, \sigma) F^2(q, x)\, dx + \text{background}
 
 Each distribution is characterized by a center value $\bar x$ or
@@ -85,6 +85,82 @@ Distribution but this may not be suitable. See** `Suggested Applications`_ **bel
            properties unambiguous. However, these terms are unrelated to the
            proportional size distributions and orientational distributions used in
            SasView models.
+
+Calculation of I(q)
+^^^^^^^^^^^^^^^^^^^
+
+Let $w(r)$ be the *relative number* of particles of size $r$, **not the volume
+fraction of particles**. $w(r)$ scales with the number density, $n(r)$.
+
+The *volume fraction*, $φ$, is the integrated volume of all particles, $V_p$, divided
+by total volume, $V_t$
+
+.. math:: 
+     :label: eq1
+
+     φ = \frac{V_p}{V_t}
+
+where $V_p$ is the number of particles, $N$, multiplied by the average particle volume
+$\langle V(r) \rangle$
+
+.. math::
+     :label: eq2
+
+     Vp = N \langle V(r) \rangle
+
+The *number density* of particles, $n$, is the total number of particles divided by
+the total volume
+
+.. math::
+     :label: eq3
+
+     n = \frac{N}{V_t}
+
+Since $w(r)$ is a distribution on the number of particles that (ideally) sums to one,
+the number of particles of size $r$, $n(r)$, scales with $w(r)$ as
+
+.. math::
+     :label: eq4
+
+     n(r) = \frac{w(r)}{∫w(r)dr} \cdot \frac{N}{V_t}
+
+Rewriting :eq:`eq1` as $V_p =  φ V_t$ and substituting into :eq:`eq2` gives
+$φ V_t = N \langle V(r) \rangle$ which can then be solved for $N / V_t$
+
+.. math::
+     :label: eq5
+
+     \frac{N}{V_t} = \frac{φ}{\langle V(r) \rangle}
+
+Substituting :eq:`eq5` into :eq:`eq4`, we get
+
+.. math::
+     :label: eq6
+
+     n(r) = \frac{w(r)}{∫w(r)dr} \cdot \frac{φ}{\langle V(r) \rangle}
+
+Since $w(r)$ is the relative number of particles of size $r$, the average volume is
+
+.. math::
+     :label: eq7
+
+     \langle V(r) \rangle = \frac{∫ w(r)V(r)dr}{∫ w(r)dr}
+
+Substituting :eq:`eq7` into :eq:`eq6` then yields
+
+.. math::
+     :label: eq8
+
+     n(r) = w(r) \cdot  \frac{φ}{∫ w(r)V(r)dr}
+
+Note that the second half of :eq:`eq8` is independent of $r$ and can slip out of the
+integral, such that
+
+.. math::
+     :label: eq9
+
+     I(q) = ∫ n(r) \langle F F^* \rangle dr
+          = φ  ∫ w(r) \langle F F^* \rangle dr /  ∫ w(r)V(r) dr
 
 Suggested Applications
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -533,6 +609,21 @@ T Allen, in *Particle Size Measurement*, 4th Edition, Chapman & Hall, London (19
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
+Related sections
+^^^^^^^^^^^^^^^^
+
+See also:
+
+:ref:`PStheory`
+
+:ref:`Resolution_Smearing`
+
+:ref:`Interaction_Models`
+
+:ref:`orientation`
+
+.. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
+
 *Document History*
 
 | 2015-05-01 Steve King
@@ -541,3 +632,4 @@ T Allen, in *Particle Size Measurement*, 4th Edition, Chapman & Hall, London (19
 | 2018-04-04 Steve King
 | 2018-08-09 Steve King
 | 2021-11-03 Steve King
+| 2022-10-30 Steve King

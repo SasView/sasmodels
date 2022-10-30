@@ -1,9 +1,9 @@
 ********************
-sasmodels Setup
+Sasmodels setup
 ********************
 
 
-sasmodels Installation
+Sasmodels Installation
 **********************
 Sasmodels can be installed using a simple pip installation::
 
