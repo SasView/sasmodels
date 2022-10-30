@@ -44,11 +44,6 @@ or can be symlinked into your path, for example::
     mkdir ~/bin
     ln -s /path/to/Applications/SasView5.dmg/Contents/MacOS/sasview ~/bin
 
-Command line syntax
-^^^^^^^^^^^^^^^^^^^
-
-For details of the supported command syntax, see :mod:`sas.cli` .
-
 Preparing your data
 ===================
 
