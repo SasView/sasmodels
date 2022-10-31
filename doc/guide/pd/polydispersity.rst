@@ -92,13 +92,13 @@ Calculation of I(q)
 Let $w(r)$ be the *relative number* of particles of size $r$, **not the volume
 fraction of particles**. $w(r)$ scales with the number density, $n(r)$.
 
-The *volume fraction*, $φ$, is the integrated volume of all particles, $V_p$, divided
-by total volume, $V_t$
+The *volume fraction*, $\phi$, is the integrated volume of all particles, $V_p$,
+divided by total volume, $V_t$
 
 .. math:: 
      :label: eq1
 
-     φ = \frac{V_p}{V_t}
+     \phi = \frac{V_p}{V_t}
 
 where $V_p$ is the number of particles, $N$, multiplied by the average particle volume
 $\langle V(r) \rangle$
@@ -122,36 +122,36 @@ the number of particles of size $r$, $n(r)$, scales with $w(r)$ as
 .. math::
      :label: eq4
 
-     n(r) = \frac{w(r)}{∫w(r)dr} \cdot \frac{N}{V_t}
+     n(r) = \frac{w(r)}{\int w(r)dr} \cdot \frac{N}{V_t}
 
-Rewriting :eq:`eq1` as $V_p =  φ V_t$ and substituting into :eq:`eq2` gives
-$φ V_t = N \langle V(r) \rangle$ which can then be solved for $N / V_t$
+Rewriting :eq:`eq1` as $V_p =  \phi V_t$ and substituting into :eq:`eq2` gives
+$\phi V_t = N \langle V(r) \rangle$ which can then be solved for $N / V_t$
 
 .. math::
      :label: eq5
 
-     \frac{N}{V_t} = \frac{φ}{\langle V(r) \rangle}
+     \frac{N}{V_t} = \frac{\phi}{\langle V(r) \rangle}
 
 Substituting :eq:`eq5` into :eq:`eq4`, we get
 
 .. math::
      :label: eq6
 
-     n(r) = \frac{w(r)}{∫w(r)dr} \cdot \frac{φ}{\langle V(r) \rangle}
+     n(r) = \frac{w(r)}{\int w(r)dr} \cdot \frac{\phi}{\langle V(r) \rangle}
 
 Since $w(r)$ is the relative number of particles of size $r$, the average volume is
 
 .. math::
      :label: eq7
 
-     \langle V(r) \rangle = \frac{∫ w(r)V(r)dr}{∫ w(r)dr}
+     \langle V(r) \rangle = \frac{\int w(r)V(r)dr}{\int w(r)dr}
 
 Substituting :eq:`eq7` into :eq:`eq6` then yields
 
 .. math::
      :label: eq8
 
-     n(r) = w(r) \cdot  \frac{φ}{∫ w(r)V(r)dr}
+     n(r) = w(r) \cdot  \frac{\phi}{\int w(r)V(r)dr}
 
 Note that the second half of :eq:`eq8` is independent of $r$ and can slip out of the
 integral, such that
@@ -159,8 +159,8 @@ integral, such that
 .. math::
      :label: eq9
 
-     I(q) = ∫ n(r) \langle F F^* \rangle dr
-          = φ  ∫ w(r) \langle F F^* \rangle dr /  ∫ w(r)V(r) dr
+     I(q) = \int n(r) \langle F F^* \rangle dr
+          = \frac{\phi \int w(r) \langle F F^* \rangle dr}{\int w(r)V(r) dr}
 
 Suggested Applications
 ^^^^^^^^^^^^^^^^^^^^^^
