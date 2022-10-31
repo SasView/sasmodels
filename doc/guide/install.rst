@@ -1,5 +1,5 @@
 ********************
-Sasmodels setup
+Sasmodels Setup
 ********************
 
 
