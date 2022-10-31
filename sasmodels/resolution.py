@@ -340,37 +340,37 @@ def slit_resolution(q_calc, q, width, length, n_length=30):
     weights = np.zeros((len(q), len(q_calc)), 'd')
 
     #print(q_calc)
-    for i, (qi, w, l) in enumerate(zip(q, width, length)):
-        if w == 0. and l == 0.:
+    for i, (qi, wi, li) in enumerate(zip(q, width, length)):
+        if wi == 0. and li == 0.:
             # Perfect resolution, so return the theory value directly.
             # Note: assumes that q is a subset of q_calc.  If qi need not be
             # in q_calc, then we can do a weighted interpolation by looking
             # up qi in q_calc, then weighting the result by the relative
             # distance to the neighbouring points.
             weights[i, :] = (q_calc == qi)
-        elif w == 0:
-            weights[i, :] = _q_perp_weights(q_edges, qi, l)
-        elif l == 0:
-            in_x = 1.0 * ((q_calc >= qi-w) & (q_calc <= qi+w))
-            abs_x = 1.0*(q_calc < abs(qi - w)) if qi < w else 0.
+        elif wi == 0:
+            weights[i, :] = _q_perp_weights(q_edges, qi, li)
+        elif li == 0:
+            in_x = 1.0 * ((q_calc >= qi-wi) & (q_calc <= qi+wi))
+            abs_x = 1.0*(q_calc < abs(qi - wi)) if qi < wi else 0.
             #print(qi - w, qi + w)
             #print(in_x + abs_x)
-            weights[i, :] = (in_x + abs_x) * np.diff(q_edges) / (2*w)
+            weights[i, :] = (in_x + abs_x) * np.diff(q_edges) / (2*wi)
         else:
             for k in range(-n_length, n_length+1):
-                weights[i, :] += _q_perp_weights(q_edges, qi+k*w/n_length, l)
+                weights[i, :] += _q_perp_weights(q_edges, qi+k*wi/n_length, li)
             weights[i, :] /= 2*n_length + 1
 
     return weights.T
 
 
-def _q_perp_weights(q_edges, qi, l):
+def _q_perp_weights(q_edges, qi, length):
     # Convert bin edges from q to u
-    u_limit = np.sqrt(qi**2 + l**2)
+    u_limit = np.sqrt(qi**2 + length**2)
     u_edges = q_edges**2 - qi**2
     u_edges[q_edges < abs(qi)] = 0.
     u_edges[q_edges > u_limit] = u_limit**2 - qi**2
-    weights = np.diff(np.sqrt(u_edges))/l
+    weights = np.diff(np.sqrt(u_edges))/length
     #print("i, qi",i,qi,qi+width)
     #print(q_calc)
     #print(weights)
@@ -566,8 +566,8 @@ def romberg_slit_1d(q, width, length, form, pars):
         width = [width]*len(q)
     if np.isscalar(length):
         length = [length]*len(q)
-    _int_w = lambda w, qi: eval_form(sqrt(qi**2 + w**2), form, pars)
-    _int_l = lambda l, qi: eval_form(abs(qi+l), form, pars)
+    _int_w = lambda wi, qi: eval_form(sqrt(qi**2 + wi**2), form, pars)
+    _int_l = lambda li, qi: eval_form(abs(qi+li), form, pars)
     # If both width and length are defined, then it is too slow to use dblquad.
     # Instead use trapz on a fixed grid, interpolated into the I(Q) for
     # the extended Q range.
@@ -575,23 +575,23 @@ def romberg_slit_1d(q, width, length, form, pars):
     q_calc = slit_extend_q(q, np.asarray(width), np.asarray(length))
     Iq = eval_form(q_calc, form, pars)
     result = np.empty(len(q))
-    for i, (qi, w, l) in enumerate(zip(q, width, length)):
-        if l == 0.:
-            total = romberg(_int_w, 0, w, args=(qi,),
+    for i, (qi, wi, li) in enumerate(zip(q, width, length)):
+        if li == 0.:
+            total = romberg(_int_w, 0, wi, args=(qi,),
                             divmax=100, vec_func=True, tol=0, rtol=1e-8)
-            result[i] = total/w
-        elif w == 0.:
-            total = romberg(_int_l, -l, l, args=(qi,),
+            result[i] = total/wi
+        elif wi == 0.:
+            total = romberg(_int_l, -li, li, args=(qi,),
                             divmax=100, vec_func=True, tol=0, rtol=1e-8)
-            result[i] = total/(2*l)
+            result[i] = total/(2*li)
         else:
-            w_grid = np.linspace(0, w, 21)[None, :]
-            l_grid = np.linspace(-l, l, 23)[:, None]
+            w_grid = np.linspace(0, wi, 21)[None, :]
+            l_grid = np.linspace(-li, li, 23)[:, None]
             u_sub = sqrt((qi+l_grid)**2 + w_grid**2)
             f_at_u = np.interp(u_sub, q_calc, Iq)
             #print(np.trapz(Iu, w_grid, axis=1))
             total = np.trapz(np.trapz(f_at_u, w_grid, axis=1), l_grid[:, 0])
-            result[i] = total / (2*l*w)
+            result[i] = total / (2*li*wi)
             # from scipy.integrate import dblquad
             # r, err = dblquad(_int_wh, -h, h, lambda h: 0., lambda h: w,
             #                  args=(qi,))
@@ -1160,13 +1160,13 @@ def demo_slit_1d():
     Show example of slit smearing.
     """
     q = np.logspace(-4, np.log10(0.2), 100)
-    w = l = 0.
-    #w = 0.000000277790
-    w = 0.0277790
-    #l = 0.00277790
-    #l = 0.0277790
-    resolution = Slit1D(q, w, l)
-    _eval_demo_1d(resolution, title="(%g,%g) Slit Resolution"%(w, l))
+    width = length = 0.
+    #width = 0.000000277790
+    width = 0.0277790
+    #length = 0.00277790
+    #length = 0.0277790
+    resolution = Slit1D(q, width, length)
+    _eval_demo_1d(resolution, title="(%g,%g) Slit Resolution"%(width, length))
 
 def demo():
     """
