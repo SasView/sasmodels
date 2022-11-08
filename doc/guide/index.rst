@@ -1,6 +1,6 @@
-****************
-SAS Models Guide
-****************
+***************
+Sasmodels Guide
+***************
 
 .. toctree::
    :numbered: 4
@@ -8,14 +8,15 @@ SAS Models Guide
 
    intro.rst
    install.rst
+   scripting.rst
    gpu_setup.rst
+   theory.rst
    pd/polydispersity.rst
    resolution.rst
-   plugin.rst
    fitting_sq.rst
-   magnetism/magnetism.rst
    orientation/orientation.rst
+   magnetism/magnetism.rst
+   plugin.rst
    sesans/sans_to_sesans.rst
    sesans/sesans_fitting.rst
-   scripting.rst
    refs.rst
