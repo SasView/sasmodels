@@ -95,6 +95,15 @@ def invert_view(qx, qy, view):
     q = np.vstack((qx.flatten(), qy.flatten(), 0*qx.flatten()))
     return Rinv @ q
 
+def apply_view(points, view):
+    r"""
+    Return $(p_x, p_y, p_x)$ rotated by the $(\theta, \phi, \psi)$ view angle.
+    View is in degrees using a $z$-$y$-$z$ sequence of Euler angles
+    $\phi$-$\theta$-$\psi$.
+    """
+    R = rotation(*view)
+    return points @ R.T
+
 class Shape:
     rotation = np.eye(3)
     center = np.array([0., 0., 0.])[:, None]
