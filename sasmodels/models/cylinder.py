@@ -13,7 +13,7 @@ given by (Guinier, 1955)
 
 .. math::
 
-    P(q,\alpha) = \frac{\text{scale}}{V} F^2(q,\alpha).sin(\alpha) + \text{background}
+    I(q,\alpha) = \frac{\text{scale}}{V} F^2(q,\alpha) + \text{background}
 
 where
 
@@ -34,7 +34,7 @@ For randomly oriented particles:
 
 .. math::
 
-    F^2(q)=\int_{0}^{\pi/2}{F^2(q,\alpha)\sin(\alpha)d\alpha}=\int_{0}^{1}{F^2(q,u)du}
+    P(q)=F^2(q)=\int_{0}^{\pi/2}{F^2(q,\alpha)\sin(\alpha)d\alpha}=\int_{0}^{1}{F^2(q,u)du}
 
 
 Numerical integration is simplified by a change of variable to $u = cos(\alpha)$
@@ -45,7 +45,7 @@ cylinders is thus given by
 
 .. math::
 
-    P(q) = \frac{\text{scale}}{V}
+    I(q) = \frac{\text{scale}}{V}
         \int_0^{\pi/2} F^2(q,\alpha) \sin \alpha\ d\alpha + \text{background}
 
 
@@ -107,7 +107,7 @@ Authorship and Verification
 ----------------------------
 
 * **Author:**
-* **Last Modified by:**
+* **Last Modified by:** Paul Butler (docs only) November 10, 2022
 * **Last Reviewed by:**
 """
 
