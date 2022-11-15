@@ -272,9 +272,9 @@ def make_dll(source, model_info, dtype=F64, system=False):
                   model_info.id, model_file, dll)
 
     if not os.path.exists(dll):
-        # Make sure the DLL path exists.
-        if not os.path.exists(SAS_DLL_PATH):
-            os.makedirs(SAS_DLL_PATH)
+        # Make sure the DLL path exists. Use abspath since python docs warn
+        # that makedirs is not robust against '..' in path.
+        os.makedirs(os.path.abspath(SAS_DLL_PATH), exist_ok=True)
         source = generate.convert_type(source, dtype)
         if not system:
             basename = splitext(os.path.basename(dll))[0] + "_"
