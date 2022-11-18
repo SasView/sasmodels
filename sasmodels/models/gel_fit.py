@@ -18,8 +18,8 @@ The scattered intensity $I(q)$ is calculated as
 
 .. math::
 
-    I(Q) = I(0)_L \frac{1}{\left( 1+\left[ ((D+1/3)Q^2a_{1}^2
-    \right]\right)^{D/2}} + I(0)_G exp\left( -Q^2a_{2}^2\right) + B
+    I(Q) = \frac{I(0)_L}{\left(1+\left[(D+1)/3\right]Q^2a_{1}^2
+    \right)^{D/2}} + I(0)_G \cdot exp\left( -Q^2a_{2}^2\right) + B
 
 where
 
