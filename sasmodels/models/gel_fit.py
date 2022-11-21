@@ -3,9 +3,9 @@ r"""
 
 Unlike a concentrated polymer solution, the fine-scale polymer distribution
 in a gel involves at least two characteristic length scales,
-a shorter correlation length ( $a1$ ) to describe the rapid fluctuations
+a shorter correlation length ($\xi$) to describe the rapid fluctuations
 in the position of the polymer chains that ensure thermodynamic equilibrium,
-and a longer distance (denoted here as $a2$ ) needed to account for the static
+and a longer distance (denoted here as $R_g$) needed to account for the static
 accumulations of polymer pinned down by junction points or clusters of such
 points. The latter is derived from a simple Guinier function. Compare also the
 gauss_lorentz_gel model.
@@ -18,14 +18,8 @@ The scattered intensity $I(q)$ is calculated as
 
 .. math::
 
-    I(Q) = \frac{I(0)_L}{\left(1+\left[(D+1)/3\right]Q^2a_{1}^2
-    \right)^{D/2}} + I(0)_G \cdot exp\left( -Q^2a_{2}^2\right) + B
-
-where
-
-.. math::
-
-    a_{2}^2 \approx \frac{R_{g}^2}{3}
+    I(Q) \approx \frac{I_L(0)}{\left(1+\left[(D+1)/3\right]Q^2\xi^2
+    \right)^{D/2}} + I_G(0) \cdot \exp\left( -Q^2R_{g}^2/3\right) + B
 
 Note that the first term reduces to the Ornstein-Zernicke equation
 when $D = 2$; ie, when the Flory exponent is 0.5 (theta conditions).
@@ -46,8 +40,8 @@ Authorship and Verification
 ----------------------------
 
 * **Author:**
-* **Last Modified by:**
-* **Last Reviewed by:**
+* **Last Modified by:** Steve King **Date:** November 21, 2022
+* **Last Reviewed by:** Paul Kienzle **Date:** November 20, 2022
 """
 
 import numpy as np
@@ -67,8 +61,8 @@ category = "shape-independent"
 
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["guinier_scale",    "cm^-1",   1.7, [-inf, inf], "", "Guinier length scale"],
-              ["lorentz_scale", "cm^-1",   3.5, [-inf, inf], "", "Lorentzian length scale"],
+parameters = [["guinier_scale",    "cm^-1",   1.7, [-inf, inf], "", "Guinier term scale"],
+              ["lorentz_scale", "cm^-1",   3.5, [-inf, inf], "", "Lorentzian term scale"],
               ["rg",  "Ang",     104.0, [2, inf],    "", "Radius of gyration"],
               ["fractal_dim",      "",          2.0, [0, inf],    "", "Fractal exponent"],
               ["cor_length",       "Ang",      16.0, [0, inf],    "", "Correlation length"]
