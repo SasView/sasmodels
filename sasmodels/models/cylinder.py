@@ -34,11 +34,8 @@ For randomly oriented particles:
 
 .. math::
 
-    P(q)=F^2(q)=\int_{0}^{\pi/2}{F^2(q,\alpha)\sin(\alpha)d\alpha}=\int_{0}^{1}{F^2(q,u)du}
+    P(q)=F^2(q)=\int_{0}^{\pi/2}{F^2(q,\alpha)\sin(\alpha)d\alpha}
 
-
-Numerical integration is simplified by a change of variable to $u = cos(\alpha)$
-with $sin(\alpha)=\sqrt{1-u^2}$.
 
 The output of the 1D scattering intensity function for randomly oriented
 cylinders is thus given by
