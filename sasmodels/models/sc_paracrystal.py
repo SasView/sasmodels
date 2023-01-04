@@ -36,12 +36,21 @@ simple cubic structure.
 
 Following the derivation from reference [#Matsuoka1987]_, as corrected in
 reference [#Matsuoka1990]_, and based on the above figure, the
-primitive unit cell vectors are $\vec{a_1},\vec{a_2}$, and $\vec{a_3}$ and
-we define $a$ to be the lattice parameter which is also in this case the
-nearest-neighbor distance ($D$).
+primitive unit cell vectors are $\vec{a_1},\vec{a_2}$, and $\vec{a_3}$ which
+in this case are the same as the conventional unit cell vectors ($\vec{b_1}$,
+$\vec{b_2}$, and $\vec{b_3}$) so that
 
-In this case, the volume fraction ($V_{lattice}$) of spherical particles with
-radius $R$ sitting on the sc lattice is given by:
+.. math::
+    \vec{a_1} &= \vec{b_1} = a \hat{\textbf{x}} \\
+    \vec{a_2} &= \vec{b_2} = a \hat{\textbf{y}} \\
+    \vec{a_3} &= \vec{b_3} = a \hat{\textbf{z}}.
+
+
+where $a$ is the lattice parameter which is also in this case the nearest
+neighbor distance $D$.
+
+The volume fraction ($V_{lattice}$) of spherical particles with
+radius $R$ sitting on the sc lattice is then given by:
 
 .. math::
     V_{lattice} = \frac{4/3 \pi R^3}{D^3}
@@ -71,29 +80,23 @@ lattice point from its ideal position and can be defined by a constant factor
 $g=\Delta a / |\vec{a_1}| = \Delta a / |\vec{a_2}| = \Delta a / |\vec{a_3}|=\Delta a/D$.
 
 Finally, assuming the definitions presented in this document, the authors of
-reference [#Matsuoka1987]_ have derived the lattice factors which are given by:
+reference [#Matsuoka1987]_ have derived the lattice factors which, substituting
+$D$ for the lattice parameter $a$, are given by:
 
 .. math::
-    Z_1(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}\cos[\frac{qa}{2}(\sin\theta \cos\phi + \sin\theta \sin\phi + \cos\theta)] + e^{-q^2\Delta a^2}\}\\
-    Z_2(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}\cos[\frac{qa}{2}(-\sin\theta \cos\phi - \sin\theta \sin\phi + \cos\theta)] + e^{-q^2\Delta a^2}\}\\
-    Z_3(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}\cos[\frac{qa}{2}(-\sin\theta \cos\phi + \sin\theta \sin\phi - \cos\theta)] + e^{-q^2\Delta a^2}\}\\
+    Z_1(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}\cos(-qD \sin\theta \cos\phi ) + e^{-q^2\Delta a^2}\}\\
+    Z_2(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}\cos(qD \sin\theta \sin\phi) + e^{-q^2\Delta a^2}\}\\
+    Z_3(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}\cos(qD \cos\theta) + e^{-q^2\Delta a^2}\}.\\
 
-Note that Sasview is using the nearest-neighbor parameter ($D$) as an input
-which in this case is the same as the conventional unit cell parameter $a$.
-By simple substitution leads to:
-
-.. math::
-    Z_1(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}\cos[\frac{qD}{\sqrt{2}}(\sin\theta \cos\phi + \sin\theta \sin\phi + \cos\theta)] + e^{-q^2\Delta a^2}\}\\
-    Z_2(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}\cos[\frac{qD}{\sqrt{2}}(-\sin\theta \cos\phi - \sin\theta \sin\phi + \cos\theta)] + e^{-q^2\Delta a^2}\}\\
-    Z_3(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}\cos[\frac{qD}{\sqrt{2}}(-\sin\theta \cos\phi + \sin\theta \sin\phi - \cos\theta)] + e^{-q^2\Delta a^2}\}\\
 
 Finally, the position of the Bragg peaks for the sc lattice are indexed by (reduced q-values):
 
 .. math::
     \frac{qa}{2\pi}=\frac{qD}{2\pi} = \sqrt{h^2+k^2+l^2}
 
-where for a simple cubic lattice any h, k, l are allowed and none are
-forbidden. Thus the peak positions correspond to (just the first 5)
+where for a simple cubic lattice there are **no** selection rules for h, k, l
+so that all permutations of them give constructive interference. Thus the peak
+positions correspond to (just the first 5)
 
 .. math::
     :nowrap:
@@ -145,7 +148,7 @@ Authorship and Verification
 ---------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
-* **Last Modified by:** Paul Butler **Date:** October 27, 2022
+* **Last Modified by:** Paul Butler **Date:** Oct 27, 2022
 * **Last Reviewed by:** Jonathan Gaudet **Date:** Nov 2, 2022
 """
 
