@@ -70,10 +70,8 @@ radius $R$ sitting on the fcc lattice is given by:
     &= \frac{16\pi R^3}{3a^3}\\
     &= \frac{8 \pi R^3}{3\sqrt{2}D^3}.
 
-Now, continuing to follow [#Matsuoka1987]_, we define the structure (lattice)
-factor $Z(\vec{q})$, which is related to the scattering intensity by
-$I(\vec{q})=N |f_0|^2 Z(\vec{q})$ where N is the number of particles in the fcc
-crystal, and $\vec{q}$ is the momentum transfer. For a 3D paracrystal:
+Now, continuing to follow [#Matsuoka1987]_, the structure (lattice)
+factor $Z(\vec{q})$ for a 3D paracrystal can be written as:
 
 .. math::
     Z(\vec{q}) = \prod_{k=1}^{3}Z_k(\vec{q})
