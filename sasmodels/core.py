@@ -369,7 +369,8 @@ def precompile_dlls(path, dtype="double"):
             old_path = kerneldll.SAS_DLL_PATH
             try:
                 kerneldll.SAS_DLL_PATH = path
-                dll = kerneldll.make_dll(source, model_info, dtype=numpy_dtype)
+                dll = kerneldll.make_dll(source, model_info,
+                                         dtype=numpy_dtype, system=True)
             finally:
                 kerneldll.SAS_DLL_PATH = old_path
             compiled_dlls.append(dll)

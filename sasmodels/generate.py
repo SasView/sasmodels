@@ -672,7 +672,7 @@ def _gen_fn(model_info, name, pars):
     lineno = model_info.lineno.get(name, 1)
     return _FN_TEMPLATE % {
         'name': name, 'pars': par_decl, 'body': body,
-        'filename': filename.replace('\\', '/'), 'line': lineno,
+        'filename': _clean_source_filename(filename), 'line': lineno,
     }
 
 
@@ -894,11 +894,32 @@ def contains_shell_volume(source):
             return True
     return False
 
+def _clean_source_filename(path):
+    # type: (str) -> str
+    """ Make the source filename into a canonical, relative form if possible
+
+    Remove the common start of the file path (if there is one), yielding
+    the path relative to this file, such as:
+
+     - ./kernel_iq.c
+     - ./models/sphere.c
+     - ./models/lib/sas_J0.c
+
+    This is a format that the compiler/debugger understand for indicating
+    included files with relative paths. Omitting the common parent to the
+    paths means that the irrelevant detail of the temporary directory where
+    the source was unpacked for compilation is not included in pre-compiled
+    models.
+    """
+    base = dirname(__file__).replace('\\', '/')
+    path = path.replace('\\', '/')
+    return path.replace(base, '.', 1) if path.startswith(base) else path
+
 def _add_source(source, code, path, lineno=1):
     """
     Add a file to the list of source code chunks, tagged with path and line.
     """
-    path = path.replace('\\', '/')
+    path = _clean_source_filename(path)
     source.append('#line %d "%s"' % (lineno, path))
     source.append(code)
 
@@ -1103,7 +1124,7 @@ def make_source(model_info):
 def _kernels(kernel, call_iq, clear_iq, call_iqxy, clear_iqxy, name):
     # type: (Dict[str, str], str, str, str, str, str) -> List[str]
     code = kernel[0]
-    path = kernel[1].replace('\\', '/')
+    path = _clean_source_filename(kernel[1])
     iq = [
         # define the Iq kernel
         "#define KERNEL_NAME %s_Iq" % name,

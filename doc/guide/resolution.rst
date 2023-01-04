@@ -6,8 +6,10 @@
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
-Resolution Functions
-====================
+.. _Resolution_Smearing:
+
+Resolution (Smearing) Functions
+===============================
 
 Sometimes the instrumental geometry used to acquire the experimental data has
 an impact on the clarity of features in the reduced scattering curve. For
@@ -302,10 +304,23 @@ data points for a given model and slit/pinhole size. The *Norm* factor is
 found numerically with the weighting matrix and applied on the computation
 of $I_s$.
 
+Related sections
+----------------
+
+See also:
+
+:ref:`PStheory`
+
+:ref:`polydispersityhelp`
+
+:ref:`Interaction_Models`
+
+:ref:`orientation`
+
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
 *Document History*
 
 | 2015-05-01 Steve King
 | 2017-05-08 Paul Kienzle
-| 2021-10-29 Steve King
+| 2022-10-30 Steve King
