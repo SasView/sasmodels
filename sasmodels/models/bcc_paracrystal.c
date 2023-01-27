@@ -5,6 +5,7 @@ bcc_Zq(double qa, double qb, double qc, double dnn, double d_factor)
     const double a1 = (-qa + qb + qc)/2.0;
     const double a2 = (+qa - qb + qc)/2.0;
     const double a3 = (+qa + qb - qc)/2.0;
+    const double d_a = dnn/sqrt(0.75);
 
 #if 1
     // Matsuoka 29-30-31
@@ -19,9 +20,9 @@ bcc_Zq(double qa, double qb, double qc, double dnn, double d_factor)
     const double arg = -0.5*square(dnn*d_factor)*(a1*a1 + a2*a2 + a3*a3);
     const double exp_arg = exp(arg);
     const double Zq = -cube(expm1(2.0*arg))
-        / ( ((exp_arg - 2.0*cos(dnn*a1))*exp_arg + 1.0)
-          * ((exp_arg - 2.0*cos(dnn*a2))*exp_arg + 1.0)
-          * ((exp_arg - 2.0*cos(dnn*a3))*exp_arg + 1.0));
+        / ( ((exp_arg - 2.0*cos(d_a*a1))*exp_arg + 1.0)
+          * ((exp_arg - 2.0*cos(d_a*a2))*exp_arg + 1.0)
+          * ((exp_arg - 2.0*cos(d_a*a3))*exp_arg + 1.0));
 
 #elif 0
     // ** Alternate form, which perhaps is more approachable
@@ -38,16 +39,16 @@ bcc_Zq(double qa, double qb, double qc, double dnn, double d_factor)
     const double arg = 0.5*square(dnn*d_factor)*(a1*a1 + a2*a2 + a3*a3);
     const double sinh_qd = sinh(arg);
     const double cosh_qd = cosh(arg);
-    const double Zq = sinh_qd/(cosh_qd - cos(dnn*a1))
-                    * sinh_qd/(cosh_qd - cos(dnn*a2))
-                    * sinh_qd/(cosh_qd - cos(dnn*a3));
+    const double Zq = sinh_qd/(cosh_qd - cos(d_a*a1))
+                    * sinh_qd/(cosh_qd - cos(d_a*a2))
+                    * sinh_qd/(cosh_qd - cos(d_a*a3));
 #else
     const double arg = 0.5*square(dnn*d_factor)*(a1*a1 + a2*a2 + a3*a3);
     const double tanh_qd = tanh(arg);
     const double cosh_qd = cosh(arg);
-    const double Zq = tanh_qd/(1.0 - cos(dnn*a1)/cosh_qd)
-                    * tanh_qd/(1.0 - cos(dnn*a2)/cosh_qd)
-                    * tanh_qd/(1.0 - cos(dnn*a3)/cosh_qd);
+    const double Zq = tanh_qd/(1.0 - cos(d_a*a1)/cosh_qd)
+                    * tanh_qd/(1.0 - cos(d_a*a2)/cosh_qd)
+                    * tanh_qd/(1.0 - cos(d_a*a3)/cosh_qd);
 #endif
 
     return Zq;
@@ -59,6 +60,8 @@ static double
 bcc_volume_fraction(double radius, double dnn)
 {
     return 2.0*sphere_volume(sqrt(0.75)*radius/dnn);
+    // note that sqrt(0.75) = root3/2 and sqrt(0.75)/dnn=1/d_a
+    //Thus this is correct
 }
 
 static double
@@ -103,6 +106,9 @@ static double Iq(double q, double dnn,
     const double Zq = outer_sum/(4.0*M_PI);
     const double Pq = sphere_form(q, radius, sld, solvent_sld);
     return bcc_volume_fraction(radius, dnn) * Pq * Zq;
+    // note that until we can return non fitable values to the GUI this
+    // can only be queried by a script. Otherwise we can drop the
+    // bcc_volume_fraction as it is effectively included in "scale."
 }
 
 
