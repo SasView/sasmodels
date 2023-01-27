@@ -59,16 +59,15 @@ where
 
 .. math::
 
-    f(q,R_e,R_p,\alpha) = \frac{3 \Delta \rho V (\sin[qr(R_p,R_e,\alpha)]
-                - \cos[qr(R_p,R_e,\alpha)])}
-                {[qr(R_p,R_e,\alpha)]^3}
+    f(q,R_e,R_p,\alpha) = \frac{3 \Delta \rho V (\sin(qr)
+                - qr\cos(qr)}
+                {(qr)^3}
 
-and
+for
 
 .. math::
 
-    r(R_e,R_p,\alpha) = \left[ R_e^2 \sin^2 \alpha
-        + R_p^2 \cos^2 \alpha \right]^{1/2}
+    r = \left[ R_e^2 \sin^2 \alpha + R_p^2 \cos^2 \alpha \right]^{1/2}
 
 
 $\alpha$ is the angle between the axis of the ellipsoid and $\vec q$,

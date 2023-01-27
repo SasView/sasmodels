@@ -4,7 +4,7 @@ r"""
              problem is investigated, a workaround for Case 0 below
              (the most common use case) is to use the binary_blend
              model available on the `Model Maketplace 
-             <http://marketplace.sasview.org/models/124/>`_ . For further
+             <https://marketplace.sasview.org/models/124/>`_ . For further
              information, please email help@sasview.org . *The
              SasView Developers. February 2022.*
 
