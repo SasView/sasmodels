@@ -1,6 +1,17 @@
 Release notes
 =============
 
+v1.0.7 2023-02-??
+------------------
+* Doc upate: corefunc and optimizer documentation
+* Doc update: various models (cylinder, gel_fit, paracrystal, core_shell_ellipsoid)
+* Fix error in BCC and FCC paracrystaline models
+* Fix rare race condition causing errors
+* Fix to allow multiple scattering scripts to run
+* Fix problem with models containing complex amplitudes not compiling on the fly
+* Restructuring and cross-linking of sasmodels docs
+* Update web links and contributor list
+
 v1.0.6 2022-03-17
 ------------------
 * implements generalized 3D description of magnetic SANS
