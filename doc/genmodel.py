@@ -453,8 +453,10 @@ def main():
     else:
         rst_files = [process_model(py_file, args.force)
                      for py_file in args.files]
+        print(".rst file processing complete")
 
     if args.sphinx:
+        print("running sphinx")
         run_sphinx(rst_files, args.build)
 
 
