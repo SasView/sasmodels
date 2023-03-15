@@ -5,6 +5,7 @@ fcc_Zq(double qa, double qb, double qc, double dnn, double d_factor)
     const double a1 = ( qa + qb)/2.0;
     const double a2 = ( qa + qc)/2.0;
     const double a3 = ( qb + qc)/2.0;
+    const double d_a = dnn/sqrt(2);
 
     // Matsuoka 23-24-25
     //     Z_k numerator: 1 - exp(a)^2
@@ -18,9 +19,9 @@ fcc_Zq(double qa, double qb, double qc, double dnn, double d_factor)
     const double arg = -0.5*square(dnn*d_factor)*(a1*a1 + a2*a2 + a3*a3);
     const double exp_arg = exp(arg);
     const double Zq = -cube(expm1(2.0*arg))
-        / ( ((exp_arg - 2.0*cos(dnn*a1))*exp_arg + 1.0)
-          * ((exp_arg - 2.0*cos(dnn*a2))*exp_arg + 1.0)
-          * ((exp_arg - 2.0*cos(dnn*a3))*exp_arg + 1.0));
+        / ( ((exp_arg - 2.0*cos(d_a*a1))*exp_arg + 1.0)
+          * ((exp_arg - 2.0*cos(d_a*a2))*exp_arg + 1.0)
+          * ((exp_arg - 2.0*cos(d_a*a3))*exp_arg + 1.0));
 
     return Zq;
 }
