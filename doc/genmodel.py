@@ -321,6 +321,7 @@ def make_figure_cached(model_info, opts):
     if cache_dir is None:
         print("Nothing cashed, creating...")
         make_figure(model_info, opts)
+        print("Made a figure")
         return
 
     # TODO: changing default parameters won't trigger a rebuild.
@@ -406,7 +407,7 @@ def process_model(py_file, force=False):
     else:
         print(" (cached)")
         make_figure_cached(model_info, PLOT_OPTS)
-    print("Done")
+    print("Done process_model")
 
     return rst_file
 
@@ -482,13 +483,18 @@ def main():
     else:
         cpus = args.cpus
     if cpus != 1 and not args.force:
+        print("** 'multi' processing **")
         import multiprocessing
+        print("set up process pool")
         p = multiprocessing.Pool(cpus if cpus > 0 else None)
+        print("Process!!!!")
         rst_files = p.map(process_model, args.files)
+        print("multiprocess done!")
     else:
+        print("** 'Normal' processing **")
         rst_files = [process_model(py_file, args.force)
                      for py_file in args.files]
-        print(".rst file processing complete")
+        print("normal .rst file processing complete")
 
     if args.sphinx:
         print("running sphinx")
