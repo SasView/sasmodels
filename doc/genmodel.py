@@ -478,23 +478,10 @@ def main():
         sys.exit(1)
     makedirs(TARGET_DIR, exist_ok=True)
 
-    if args.cpus == -1:
-        cpus = int(os.environ.get("SASMODELS_BUILD_CPUS", "0"))
-    else:
-        cpus = args.cpus
-    if cpus != 1 and not args.force:
-        print("** 'multi' processing **")
-        import multiprocessing
-        print("set up process pool")
-        p = multiprocessing.Pool(cpus if cpus > 0 else None)
-        print("Process!!!!")
-        rst_files = p.map(process_model, args.files)
-        print("multiprocess done!")
-    else:
-        print("** 'Normal' processing **")
-        rst_files = [process_model(py_file, args.force)
+    print("** 'Normal' processing **")
+    rst_files = [process_model(py_file, args.force)
                      for py_file in args.files]
-        print("normal .rst file processing complete")
+    print("normal .rst file processing complete")
 
     if args.sphinx:
         print("running sphinx")
