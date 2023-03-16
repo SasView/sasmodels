@@ -149,8 +149,10 @@ def make_figure(model_info, opts):
     """
     import matplotlib.pyplot as plt
 
+    print("Build model")
     model = core.build_model(model_info)
 
+    print("Set up figure")
     fig_height = 3.0 # in
     fig_left = 0.6 # in
     fig_right = 0.5 # in
@@ -168,8 +170,10 @@ def make_figure(model_info, opts):
         ax_width = ax_height/ratio # square axes
         fig = plt.figure(figsize=aspect)
         ax2d = fig.add_axes([0.5+ax_left, ax_bottom, ax_width, ax_height])
+        print("2D plot")
         plot_2d(model, opts, ax2d)
         ax1d = fig.add_axes([ax_left, ax_bottom, ax_width, ax_height])
+        print("1D plot")
         plot_1d(model, opts, ax1d)
         #ax.set_aspect('square')
     else:
@@ -183,11 +187,14 @@ def make_figure(model_info, opts):
         aspect = (fig_width, fig_height)
         fig = plt.figure(figsize=aspect)
         ax1d = fig.add_axes([ax_left, ax_bottom, ax_width, ax_height])
+        print("1D plot")
         plot_1d(model, opts, ax1d)
 
     if model_info.profile:
+        print("Profile inset")
         plot_profile_inset(model_info, ax1d)
 
+    print("Save")
     # Save image in model/img
     makedirs(joinpath(TARGET_DIR, 'img'), exist_ok=True)
     path = joinpath(TARGET_DIR, 'img', figfile(model_info))
@@ -312,6 +319,7 @@ def make_figure_cached(model_info, opts):
     # check if we are caching
     cache_dir = os.environ.get('SASMODELS_BUILD_CACHE', None)
     if cache_dir is None:
+        print("Nothing cashed, creating...")
         make_figure(model_info, opts)
         return
 
@@ -398,6 +406,7 @@ def process_model(py_file, force=False):
     else:
         print(" (cached)")
         make_figure_cached(model_info, PLOT_OPTS)
+    print("Done")
 
     return rst_file
 
