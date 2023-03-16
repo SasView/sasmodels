@@ -46,6 +46,7 @@ import math
 import re
 import shutil
 import argparse
+import subprocess
 
 # CRUFT: python 2.7 backport of makedirs(path, exist_ok=False)
 if sys.version_info[0] >= 3:
@@ -399,11 +400,17 @@ def run_sphinx(rst_files, output):
     """
     Use sphinx to build *rst_files*, storing the html in *output*.
     """
+
+    print("Building index...")
+
     conf_dir = dirname(realpath(__file__))
     with open(joinpath(TARGET_DIR, 'index.rst'), 'w') as fid:
         fid.write(".. toctree::\n\n")
         for path in rst_files:
             fid.write("    %s\n"%basename(path))
+
+    print("Running sphinx command...")
+
     command = [
         sys.executable,
         "-m", "sphinx",
@@ -411,7 +418,21 @@ def run_sphinx(rst_files, output):
         TARGET_DIR,
         output,
     ]
-    os.system(" ".join(repr(s) for s in command))
+
+    process = subprocess.Popen(command, shell=False, stdout=subprocess.PIPE)
+
+    # Make sure we can see process output in real time
+    while True:
+
+        output = process.stdout.readline()
+
+        if process.poll() is not None:
+            break
+
+        if output:
+            print(output.strip())
+
+
 
 def main():
     """
@@ -453,8 +474,10 @@ def main():
     else:
         rst_files = [process_model(py_file, args.force)
                      for py_file in args.files]
+        print(".rst file processing complete")
 
     if args.sphinx:
+        print("running sphinx")
         run_sphinx(rst_files, args.build)
 
 
