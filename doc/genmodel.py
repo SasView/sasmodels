@@ -388,12 +388,17 @@ def process_model(py_file, force=False):
     }
 
     # Generate the RST file and the figure.  Order doesn't matter.
-    print("generating", rst_file)
+    print("generating rst", rst_file)
+    print("1: docs")
     gen_docs(model_info, rst_file)
+    print("2: figure", end='')
     if force:
+        print()
         make_figure(model_info, PLOT_OPTS)
     else:
+        print(" (cached)")
         make_figure_cached(model_info, PLOT_OPTS)
+
     return rst_file
 
 def run_sphinx(rst_files, output):
