@@ -451,12 +451,14 @@ def linear_extrapolation(q, q_min, q_max):
     """
     q = np.sort(q)
     if q_min + 2*MINIMUM_RESOLUTION < q[0]:
-        n_low = int(np.ceil((q[0]-q_min) / (q[1]-q[0]))) if q[1] > q[0] else 15
+        delta = q[1] - q[0] if len(q) > 1 else 0
+        n_low = int(np.ceil((q[0]-q_min) / delta)) if delta > 0 else 15
         q_low = np.linspace(q_min, q[0], n_low+1)[:-1]
     else:
         q_low = []
     if q_max - 2*MINIMUM_RESOLUTION > q[-1]:
-        n_high = int(np.ceil((q_max-q[-1]) / (q[-1]-q[-2]))) if q[-1] > q[-2] else 15
+        delta = q[-1] - q[-2] if len(q) > 1 else 0
+        n_high = int(np.ceil((q_max-q[-1]) / delta)) if delta > 0 else 15
         q_high = np.linspace(q[-1], q_max, n_high+1)[1:]
     else:
         q_high = []
@@ -496,21 +498,25 @@ def geometric_extrapolation(q, q_min, q_max, points_per_decade=None):
          n_\text{extend} = (n-1) (\log q_\text{max} - \log q_n)
             / (\log q_n - \log q_1)
     """
-    q = np.sort(q)
+    DEFAULT_POINTS_PER_DECADE = 10
+    data_min, data_max = q.min(), q.max()
     if points_per_decade is None:
-        log_delta_q = (len(q) - 1) / (log(q[-1]) - log(q[0]))
+        if data_max > data_min:
+            log_delta_q = (len(q) - 1) / (log(data_max) - log(data_min))
+        else:
+            log_delta_q = log(10.) / DEFAULT_POINTS_PER_DECADE
     else:
         log_delta_q = log(10.) / points_per_decade
-    if q_min < q[0]:
+    if q_min < data_min:
         if q_min < 0:
-            q_min = q[0]*MINIMUM_ABSOLUTE_Q
+            q_min = data_min*MINIMUM_ABSOLUTE_Q
         n_low = int(np.ceil(log_delta_q * (log(q[0])-log(q_min))))
         q_low = np.logspace(log10(q_min), log10(q[0]), n_low+1)[:-1]
     else:
         q_low = []
-    if q_max > q[-1]:
-        n_high = int(np.ceil(log_delta_q * (log(q_max)-log(q[-1]))))
-        q_high = np.logspace(log10(q[-1]), log10(q_max), n_high+1)[1:]
+    if q_max > data_max:
+        n_high = int(np.ceil(log_delta_q * (log(q_max)-log(data_max))))
+        q_high = np.logspace(log10(data_max), log10(q_max), n_high+1)[1:]
     else:
         q_high = []
     return np.concatenate([q_low, q, q_high])
