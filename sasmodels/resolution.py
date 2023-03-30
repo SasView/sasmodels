@@ -499,7 +499,8 @@ def geometric_extrapolation(q, q_min, q_max, points_per_decade=None):
             / (\log q_n - \log q_1)
     """
     DEFAULT_POINTS_PER_DECADE = 10
-    data_min, data_max = q.min(), q.max()
+    q = np.sort(q)
+    data_min, data_max = q[0], q[-1]
     if points_per_decade is None:
         if data_max > data_min:
             log_delta_q = (len(q) - 1) / (log(data_max) - log(data_min))
