@@ -721,7 +721,7 @@ def main():
         comparator = FUNCTIONS[k]
         comparator.run(xrange=xrange, diff=diff)
         if multiple:
-            raw_input()
+            input()
     if not multiple:
         pylab.show()
 
