@@ -102,7 +102,7 @@ def random():
 # assuming double precision sasview is correct
 tests = [
     [{'scale': 1.0, 'background' : 0.0, 'radius_effective' : 50.0,
-      'volfraction' : 0.2, 'radius_effective_pd' : 0},
+      'volfraction' : 0.2},
      [0.001, 0.1], [0.209128, 0.930587]],
 ]
 # ADDED by: RKH  ON: 16Mar2016  using equations from FISH as better than
