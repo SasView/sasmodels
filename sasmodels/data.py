@@ -167,7 +167,7 @@ class Data1D(object):
     def __init__(self, x=None, y=None, dx=None, dy=None):
         # type: (OptArray, OptArray, OptArray, OptArray) -> None
         self.x, self.dx = _as_numpy(x), _as_numpy(dx)
-        self.y, self.cy = _as_numpy(y), _as_numpy(dy)
+        self.y, self.dy = _as_numpy(y), _as_numpy(dy)
         self.dxl = None
         self.filename = None
         self.qmin = self.x.min() if self.x is not None else np.NaN

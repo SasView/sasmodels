@@ -124,25 +124,31 @@ class Slit1D(Resolution):
 
     """
 
-    def __init__(self, q, q_length, q_width=0., q_calc=None):
+    def __init__(self, q, q_length=None, q_width=None, q_calc=None):
         # Remember what width/dqy was used even though we won't need them
         # after the weight matrix is constructed
         self.q_length, self.q_width = q_length, q_width
 
         # Allow independent resolution on each point even though it is not
         # needed in practice.
-        if np.isscalar(q_width):
+        if q_width is None:
+            q_width = np.zeros(len(q))
+        elif np.isscalar(q_width):
             q_width = np.ones(len(q))*q_width
         else:
             q_width = np.asarray(q_width)
-        if np.isscalar(q_length):
+        if q_length is None:
+            q_length = np.zeros(len(q))
+        elif np.isscalar(q_length):
             q_length = np.ones(len(q))*q_length
         else:
             q_length = np.asarray(q_length)
 
         self.q = q.flatten()
-        self.q_calc = slit_extend_q(q, q_width, q_length) \
+        self.q_calc = (
+            slit_extend_q(q, q_width, q_length)
             if q_calc is None else np.sort(q_calc)
+        )
 
         # Protect against models which are not defined for very low q.  Limit
         # the smallest q value evaluated (in absolute) to 0.02*min
@@ -150,8 +156,9 @@ class Slit1D(Resolution):
         self.q_calc = self.q_calc[abs(self.q_calc) >= cutoff]
 
         # Build weight matrix from calculated q values
-        self.weight_matrix = \
+        self.weight_matrix = (
             slit_resolution(self.q_calc, self.q, q_length, q_width)
+        )
         self.q_calc = abs(self.q_calc)
 
     def apply(self, theory):

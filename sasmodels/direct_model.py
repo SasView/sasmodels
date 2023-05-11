@@ -156,16 +156,6 @@ def _pop_par_weights(parameter, values, active=True):
     return value, pd[0], pd[1]
 
 
-def _vol_pars(model_info, values):
-    # type: (ModelInfo, ParameterSet) -> Tuple[np.ndarray, np.ndarray]
-    vol_pars = [_get_par_weights(p, values)
-                for p in model_info.parameters.call_parameters
-                if p.type == 'volume']
-    #import pylab; pylab.plot(vol_pars[0][0],vol_pars[0][1]); pylab.show()
-    dispersity, weight = dispersion_mesh(model_info, vol_pars)
-    return dispersity, weight
-
-
 def _make_sesans_transform(data):
     # Pre-compute the Hankel matrix (H)
     SElength, SEunits = data.x, data._xunit
@@ -473,7 +463,7 @@ def _direct_calculate(model, data, pars):
 def Iq(model, q, dq=None, ql=None, qw=None, **pars):
     """
     Compute I(q) for *model*. Resolution is *dq* for pinhole or *ql* and *qw*
-    for slit geometry.
+    for slit geometry. Use 0 or None for infinite slits.
 
     Model is the name of a builtin or custom model, or a model expression, such
     as sphere+sphere for a mixture of spheres of different radii, or
@@ -595,5 +585,5 @@ def test_simple_interface():
 if __name__ == "__main__":
     import logging
     logging.disable(logging.ERROR)
-    #main()
-    test_simple_interface()
+    main()
+    #test_simple_interface()
