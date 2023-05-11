@@ -311,7 +311,7 @@ def plot_weights(model_info, mesh):
         for (_, x, w), s in zip(mesh, labels):
             if len(x) > 1:
                 # For plotting probability rather than weight scale by dx
-                #dx = np.hstack((x[1]-x[0], x[2:] - x[:-2], x[-1] - x[-2]))
+                #dx = np.hstack((x[1]-x[0], (x[2:] - x[:-2])/2, x[-1] - x[-2]))
                 #plt.plot(x, w/dx, '-o', label=s)
                 plt.plot(x, w, '-o', label=s)
         plt.title("Distributions for polydisperse parameters")
