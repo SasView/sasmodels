@@ -46,6 +46,7 @@ import math
 import re
 import shutil
 import argparse
+import subprocess
 
 # CRUFT: python 2.7 backport of makedirs(path, exist_ok=False)
 if sys.version_info[0] >= 3:
@@ -148,8 +149,10 @@ def make_figure(model_info, opts):
     """
     import matplotlib.pyplot as plt
 
+    print("Build model")
     model = core.build_model(model_info)
 
+    print("Set up figure")
     fig_height = 3.0 # in
     fig_left = 0.6 # in
     fig_right = 0.5 # in
@@ -167,8 +170,10 @@ def make_figure(model_info, opts):
         ax_width = ax_height/ratio # square axes
         fig = plt.figure(figsize=aspect)
         ax2d = fig.add_axes([0.5+ax_left, ax_bottom, ax_width, ax_height])
+        print("2D plot")
         plot_2d(model, opts, ax2d)
         ax1d = fig.add_axes([ax_left, ax_bottom, ax_width, ax_height])
+        print("1D plot")
         plot_1d(model, opts, ax1d)
         #ax.set_aspect('square')
     else:
@@ -182,11 +187,14 @@ def make_figure(model_info, opts):
         aspect = (fig_width, fig_height)
         fig = plt.figure(figsize=aspect)
         ax1d = fig.add_axes([ax_left, ax_bottom, ax_width, ax_height])
+        print("1D plot")
         plot_1d(model, opts, ax1d)
 
     if model_info.profile:
+        print("Profile inset")
         plot_profile_inset(model_info, ax1d)
 
+    print("Save")
     # Save image in model/img
     makedirs(joinpath(TARGET_DIR, 'img'), exist_ok=True)
     path = joinpath(TARGET_DIR, 'img', figfile(model_info))
@@ -311,7 +319,9 @@ def make_figure_cached(model_info, opts):
     # check if we are caching
     cache_dir = os.environ.get('SASMODELS_BUILD_CACHE', None)
     if cache_dir is None:
+        print("Nothing cashed, creating...")
         make_figure(model_info, opts)
+        print("Made a figure")
         return
 
     # TODO: changing default parameters won't trigger a rebuild.
@@ -387,23 +397,35 @@ def process_model(py_file, force=False):
     }
 
     # Generate the RST file and the figure.  Order doesn't matter.
-    print("generating", rst_file)
+    print("generating rst", rst_file)
+    print("1: docs")
     gen_docs(model_info, rst_file)
+    print("2: figure", end='')
     if force:
+        print()
         make_figure(model_info, PLOT_OPTS)
     else:
+        print(" (cached)")
         make_figure_cached(model_info, PLOT_OPTS)
+    print("Done process_model")
+
     return rst_file
 
 def run_sphinx(rst_files, output):
     """
     Use sphinx to build *rst_files*, storing the html in *output*.
     """
+
+    print("Building index...")
+
     conf_dir = dirname(realpath(__file__))
     with open(joinpath(TARGET_DIR, 'index.rst'), 'w') as fid:
         fid.write(".. toctree::\n\n")
         for path in rst_files:
             fid.write("    %s\n"%basename(path))
+
+    print("Running sphinx command...")
+
     command = [
         sys.executable,
         "-m", "sphinx",
@@ -411,7 +433,21 @@ def run_sphinx(rst_files, output):
         TARGET_DIR,
         output,
     ]
-    os.system(" ".join(repr(s) for s in command))
+
+    process = subprocess.Popen(command, shell=False, stdout=subprocess.PIPE)
+
+    # Make sure we can see process output in real time
+    while True:
+
+        output = process.stdout.readline()
+
+        if process.poll() is not None:
+            break
+
+        if output:
+            print(output.strip())
+
+
 
 def main():
     """
@@ -442,19 +478,13 @@ def main():
         sys.exit(1)
     makedirs(TARGET_DIR, exist_ok=True)
 
-    if args.cpus == -1:
-        cpus = int(os.environ.get("SASMODELS_BUILD_CPUS", "0"))
-    else:
-        cpus = args.cpus
-    if cpus != 1 and not args.force:
-        import multiprocessing
-        p = multiprocessing.Pool(cpus if cpus > 0 else None)
-        rst_files = p.map(process_model, args.files)
-    else:
-        rst_files = [process_model(py_file, args.force)
+    print("** 'Normal' processing **")
+    rst_files = [process_model(py_file, args.force)
                      for py_file in args.files]
+    print("normal .rst file processing complete")
 
     if args.sphinx:
+        print("running sphinx")
         run_sphinx(rst_files, args.build)
 
 

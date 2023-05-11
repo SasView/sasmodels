@@ -1,6 +1,6 @@
 .. _orientation:
 
-Oriented particles
+Oriented Particles
 ==================
 
 With two dimensional small angle diffraction data sasmodels will calculate
@@ -198,8 +198,27 @@ it difficult to control.  Now, rotation in $\theta$ modifies the spacings
 in the refraction pattern, and rotation in $\phi$ rotates it in the detector
 plane.
 
+.. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
+
+Related sections
+^^^^^^^^^^^^^^^^
+
+See also:
+
+**Orientation explorer** :mod:`sasmodels.jitter`
+
+:ref:`PStheory`
+
+:ref:`polydispersityhelp`
+
+:ref:`Resolution_Smearing`
+
+:ref:`Interaction_Models`
+
+.. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
 *Document History*
 
 | 2017-11-06 Richard Heenan
 | 2017-12-20 Paul Kienzle
+| 2022-10-30 Steve King
