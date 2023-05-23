@@ -303,15 +303,21 @@ def plot_weights(model_info, mesh):
     for each parameter, where (*dispersity*, *weights*) pairs are the
     distributions to be plotted.
     """
-    import pylab
-
+    import matplotlib.pyplot as plt
     if any(len(dispersity) > 1 for value, dispersity, weights in mesh):
         labels = [p.name for p in model_info.parameters.call_parameters]
-        #pylab.interactive(True)
-        pylab.figure()
+        #plt.interactive(True)
+        plt.figure()
         for (_, x, w), s in zip(mesh, labels):
             if len(x) > 1:
-                pylab.plot(x, w, '-o', label=s)
-        pylab.grid(True)
-        pylab.legend()
-        #pylab.show()
+                # For plotting probability rather than weight scale by dx
+                #dx = np.hstack((x[1]-x[0], (x[2:] - x[:-2])/2, x[-1] - x[-2]))
+                #plt.plot(x, w/dx, '-o', label=s)
+                plt.plot(x, w, '-o', label=s)
+        plt.title("Distributions for polydisperse parameters")
+        plt.xlabel("parameter value")
+        #plt.ylabel("probability")
+        plt.ylabel("relative weight")
+        plt.grid(True)
+        plt.legend()
+        #plt.show()
