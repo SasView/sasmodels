@@ -256,11 +256,11 @@ class DataMixin(object):
                 else:
                     res = resolution.Perfect1D(q)
             elif (getattr(data, 'dxl', None) is not None
-                  and getattr(data, 'dxw', None) is not None):
+                  or getattr(data, 'dxw', None) is not None):
                 res = resolution.Slit1D(
                     data.x[index],
-                    q_length=data.dxl[index],
-                    q_width=data.dxw[index])
+                    q_length=None if data.dxl is None else data.dxl[index],
+                    q_width=None if data.dxw is None else data.dxw[index])
             else:
                 res = resolution.Perfect1D(data.x[index])
         elif self.data_type == 'Iq-oriented':
@@ -275,9 +275,10 @@ class DataMixin(object):
                     or getattr(data, 'dxw', None) is None):
                 raise ValueError("oriented sample with 1D data needs slit resolution")
 
-            res = resolution2d.Slit2D(data.x[index],
-                                      qx_width=data.dxw[index],
-                                      qy_width=data.dxl[index])
+            res = resolution2d.Slit2D(
+                data.x[index],
+                qx_width=data.dxw[index],
+                qy_width=data.dxl[index])
         else:
             raise ValueError("Unknown data type") # never gets here
 
@@ -492,7 +493,12 @@ def Iq(model, q, dq=None, ql=None, qw=None, **pars):
     """
     from .data import Data1D, _as_numpy
     data = Data1D(x=q, dx=dq)
-    data.dxl, data.dxw = _as_numpy(ql), _as_numpy(qw)
+    def broadcast(v):
+        return (
+            None if v is None
+            else np.full(len(q), v) if np.isscalar(v)
+            else _as_numpy(v))
+    data.dxl, data.dxw = broadcast(ql), broadcast(qw)
     return _direct_calculate(model, data, pars)
 
 def Iqxy(model, qx, qy, dqx=None, dqy=None, **pars):
