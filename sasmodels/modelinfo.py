@@ -943,9 +943,7 @@ def make_model_info(kernel_module):
     info.docs = kernel_module.__doc__
     info.category = getattr(kernel_module, 'category', None)
     info.structure_factor = getattr(kernel_module, 'structure_factor', False)
-    # TODO: find Fq by inspection
     info.radius_effective_modes = getattr(kernel_module, 'radius_effective_modes', None)
-    info.have_Fq = getattr(kernel_module, 'have_Fq', False)
     info.profile_axes = getattr(kernel_module, 'profile_axes', ['x', 'y'])
     # Note: custom.load_custom_kernel_module assumes the C sources are defined
     # by this attribute.
@@ -958,6 +956,9 @@ def make_model_info(kernel_module):
     info.form_volume = getattr(kernel_module, 'form_volume', None) # type: ignore
     info.shell_volume = getattr(kernel_module, 'shell_volume', None) # type: ignore
     info.Iq = getattr(kernel_module, 'Iq', None) # type: ignore
+    info.Fq = getattr(kernel_module, 'Fq', None) # type: ignore
+    # TODO: We should be able to find Fq in C code by inspection.
+    info.have_Fq = getattr(kernel_module, 'have_Fq', (info.Fq is not None))
     info.Iqxy = getattr(kernel_module, 'Iqxy', None) # type: ignore
     info.Iqac = getattr(kernel_module, 'Iqac', None) # type: ignore
     info.Iqabc = getattr(kernel_module, 'Iqabc', None) # type: ignore
@@ -1096,9 +1097,6 @@ class ModelInfo(object):
     #: between form factor models.  This will default to False if it is not
     #: provided in the file.
     structure_factor = None # type: bool
-    #: True if the model defines an Fq function with signature
-    #: ``void Fq(double q, double *F1, double *F2, ...)``
-    have_Fq = False
     #: List of options for computing the effective radius of the shape,
     #: or None if the model is not usable as a form factor model.
     radius_effective_modes = None   # type: List[str]
@@ -1136,20 +1134,16 @@ class ModelInfo(object):
     #: monodisperse approximation for non-dilute solutions, P@S.  The first
     #: argument is the integer effective radius mode, with default 0.
     radius_effective = None  # type: Union[None, Callable[[int, np.ndarray], float]]
-    #: Returns *I(q, a, b, ...)* for parameters *a*, *b*, etc. defined
-    #: by the parameter table.  *Iq* can be defined as a python function, or
-    #: as a C function.  If it is defined in C, then set *Iq* to the body of
-    #: the C function, including the return statement.  This function takes
-    #: values for *q* and each of the parameters as separate *double* values
-    #: (which may be converted to float or long double by sasmodels).  All
-    #: source code files listed in :attr:`source` will be loaded before the
-    #: *Iq* function is defined.  If *Iq* is not present, then sources should
-    #: define *static double Iq(double q, double a, double b, ...)* which
-    #: will return *I(q, a, b, ...)*.  Multiplicity parameters are sent as
-    #: pointers to doubles.  Constants in floating point expressions should
-    #: include the decimal point. See :mod:`.generate` for more details. If
-    #: *have_Fq* is True, then Iq should return an interleaved array of
-    #: $[\sum F(q_1), \sum F^2(q_1), \ldots, \sum F(q_n), \sum F^2(q_n)]$.
+    #: Returns *I(q, a, b, ...)* for parameters *a*, *b*, etc. defined by the
+    #: parameter table. Multiplicity parameters such as the number of shells are
+    #: sent as floating point values. If the function can operate with a vector
+    #: of *q* values (that is, you aren't doing simple comparisons such as
+    #: *q > 0*), then set *Iq.vectorized = True* to make your code run faster.
+    #: You can also set *Iq* to a string containing the body of a C function.
+    #: For example, ``Iq = return (a*q + b)*q + c;`` will generate a quadratic.
+    #: All source code files listed in :attr:`source` will be loaded before the
+    #: C function is defined. Constants in floating point expressions should
+    #: include the decimal point. See :mod:`.generate` for more details.
     Iq = None               # type: Union[None, str, Callable[[...], np.ndarray]]
     #: Returns *I(qx, qy, a, b, ...)*.  The interface follows :attr:`Iq`.
     Iqxy = None             # type: Union[None, str, Callable[[...], np.ndarray]]
@@ -1159,6 +1153,13 @@ class ModelInfo(object):
     Iqabc = None            # type: Union[None, str, Callable[[...], np.ndarray]]
     #: Returns *I(qx, qy, a, b, ...)*.  The interface follows :attr:`Iq`.
     Imagnetic = None        # type: Union[None, str, Callable[[...], np.ndarray]]
+    #: Returns *F(q, a, b, ...), F^2(q, a, b, c, ...)*. Note: you cannot assign
+    #: a C source code body to *Fq*.
+    Fq = None               # type: Union[None, Callable[[...], Tuple[np.ndarray,np.ndarray]]]
+    #: True if the model defines an Fq function in C with signature
+    #: ``void Fq(double q, double *F1, double *F2, ...)``
+    #: or in python as ``Fq(q, ...) -> (fq, fq^2)``.
+    have_Fq = False
     #: Returns a model profile curve *x, y*.  If *profile* is defined, this
     #: curve will appear in response to the *Show* button in SasView.  Use
     #: :attr:`profile_axes` to set the axis labels.  Note that *y* values
