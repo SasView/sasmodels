@@ -935,9 +935,8 @@ def make_source(model_info):
     Uses source files found in the given search path.  Returns None if this
     is a pure python model, with no C source components.
     """
-    if callable(model_info.Iq):
+    if not model_info.compiled:
         raise ValueError("can't compile python model")
-        #return None
 
     # TODO: need something other than volume to indicate dispersion parameters
     # No volume normalization despite having a volume parameter.

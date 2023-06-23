@@ -862,6 +862,7 @@ def isstr(x):
     return isinstance(x, str)
 
 
+# Note: adding 'Fq' even though we can't yet use it to define C code in python.
 #: Set of variables defined in the model that might contain C code
 C_SYMBOLS = ['Imagnetic', 'Iq', 'Iqxy', 'Iqac', 'Iqabc',
              'form_volume', 'shell_volume', 'c_code', 'valid']
@@ -882,8 +883,7 @@ def _find_source_lines(model_info, kernel_module):
     """
     # Only need line numbers if we are creating a C module and the C symbols
     # are defined.
-    if (callable(model_info.Iq)
-            or not any(hasattr(model_info, s) for s in C_SYMBOLS)):
+    if not model_info.compiled:
         return
 
     # load the module source if we can
@@ -966,8 +966,9 @@ def make_model_info(kernel_module):
     info.profile = getattr(kernel_module, 'profile', None) # type: ignore
     info.sesans = getattr(kernel_module, 'sesans', None) # type: ignore
     # Default single and opencl to True for C models.  Python models have callable Iq.
-    info.opencl = getattr(kernel_module, 'opencl', not callable(info.Iq))
-    info.single = getattr(kernel_module, 'single', not callable(info.Iq))
+    info.compiled = not callable(info.Iq) and not callable(info.Fq)
+    info.opencl = getattr(kernel_module, 'opencl', info.compiled)
+    info.single = getattr(kernel_module, 'single', info.compiled)
     info.random = getattr(kernel_module, 'random', None)
     info.hidden = getattr(kernel_module, 'hidden', None) # type: ignore
 
@@ -976,7 +977,7 @@ def make_model_info(kernel_module):
     if control is not None:
         parameters[control].is_control = True
 
-    if callable(info.Iq) and parameters.has_2d:
+    if not info.compiled and parameters.has_2d:
         raise ValueError("oriented python models not supported")
 
     # CRUFT: support old-style ER() for effective radius
@@ -990,7 +991,7 @@ def make_model_info(kernel_module):
     # so just issue a warning if we see ER in a C model.
     ER = getattr(kernel_module, 'ER', None)
     if ER is not None:
-        if callable(info.Iq) and info.radius_effective is None:
+        if not info.compiled and info.radius_effective is None:
             info.radius_effective_modes = ['ER']
             info.radius_effective = lambda mode, *args: ER(*args)
             # TODO: uncomment the following for the sasview 4.3 release
@@ -1093,6 +1094,8 @@ class ModelInfo(object):
     #: the model cannot be run in opencl (e.g., because the model passes
     #: functions by reference), then set this to false.
     opencl = None           # type: bool
+    #: True if the model is compiled with C or OpenCL
+    compiled = None         # type: bool
     #: True if the model is a structure factor used to model the interaction
     #: between form factor models.  This will default to False if it is not
     #: provided in the file.
