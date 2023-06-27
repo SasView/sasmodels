@@ -514,7 +514,7 @@ def geometric_extrapolation(q, q_min, q_max, points_per_decade=None):
         else:
             log_delta_q = DEFAULT_POINTS_PER_DECADE / log(10.)
     else:
-        points_per_decade / log_delta_q = log(10.)
+        log_delta_q = points_per_decade / log(10.)
     if q_min < data_min:
         if q_min < 0:
             q_min = data_min*MINIMUM_ABSOLUTE_Q
