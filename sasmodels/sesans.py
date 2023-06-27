@@ -60,10 +60,18 @@ class SesansTransform(object):
     def _set_hankel(self, SElength, lam, zaccept, Rmax):
         # type: (np.ndarray, float, float, float) -> None
         SElength = np.asarray(SElength)
-        q_max = 2*pi / (SElength[1] - SElength[0])
-        q_min = 0.1 * 2*pi / (np.size(SElength) * SElength[-1])
+        if len(SElength) == 1:
+            # TODO: Do we care that this fails for xi = 0?
+            q_min, q_max = 0.01 * 2*pi/SElength[-1], 10*2*pi / SElength[0]
+        else:
+            # TODO: Why does q_min depend on the number of correlation lengths?
+            # TODO: Why does q_max depend on the correlation step size?
+            q_min = 0.1 * 2*pi / (np.size(SElength) * SElength[-1])
+            q_max = 2*pi / (SElength[1] - SElength[0])
+        #print("Hankel xi, Qmin, Qmax", SElength[0], q_min, q_max, len(SElength))
         q = np.exp(np.arange(np.log(q_min), np.log(q_max),
                              np.log(self.log_spacing)))
+        #print(q)
 
         dq = np.diff(q)
         dq = np.insert(dq, 0, dq[0])
@@ -75,9 +83,17 @@ class SesansTransform(object):
         H *= (dq * q / (2*pi)).reshape((-1, 1))
 
         reptheta = np.outer(q, lam/(2*pi))
-        np.arcsin(reptheta, out=reptheta)
-        mask = reptheta > zaccept
+        # Note: Using inplace update with reptheta => arcsin(reptheta).
+        # When q L / 2 pi > 1 that means wavelength is too large to
+        # reach that q value at any angle. These should produce theta = NaN
+        # without any warnings.
+        with np.errstate(invalid='ignore'):
+            np.arcsin(reptheta, out=reptheta)
+        # Reverse the condition to protect against NaN. We can't use
+        # theta > zaccept since all comparisons with NaN return False.
+        mask = ~(reptheta <= zaccept)
         H[mask] = 0
+        #print("number of masked points", np.sum(mask))
 
         self.q_calc = q
         self._H, self._H0 = H, H0
