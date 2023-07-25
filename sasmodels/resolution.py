@@ -124,25 +124,31 @@ class Slit1D(Resolution):
 
     """
 
-    def __init__(self, q, q_length, q_width=0., q_calc=None):
+    def __init__(self, q, q_length=None, q_width=None, q_calc=None):
         # Remember what width/dqy was used even though we won't need them
         # after the weight matrix is constructed
         self.q_length, self.q_width = q_length, q_width
 
         # Allow independent resolution on each point even though it is not
         # needed in practice.
-        if np.isscalar(q_width):
+        if q_width is None:
+            q_width = np.zeros(len(q))
+        elif np.isscalar(q_width):
             q_width = np.ones(len(q))*q_width
         else:
             q_width = np.asarray(q_width)
-        if np.isscalar(q_length):
+        if q_length is None:
+            q_length = np.zeros(len(q))
+        elif np.isscalar(q_length):
             q_length = np.ones(len(q))*q_length
         else:
             q_length = np.asarray(q_length)
 
         self.q = q.flatten()
-        self.q_calc = slit_extend_q(q, q_width, q_length) \
+        self.q_calc = (
+            slit_extend_q(q, q_width, q_length)
             if q_calc is None else np.sort(q_calc)
+        )
 
         # Protect against models which are not defined for very low q.  Limit
         # the smallest q value evaluated (in absolute) to 0.02*min
@@ -150,8 +156,9 @@ class Slit1D(Resolution):
         self.q_calc = self.q_calc[abs(self.q_calc) >= cutoff]
 
         # Build weight matrix from calculated q values
-        self.weight_matrix = \
+        self.weight_matrix = (
             slit_resolution(self.q_calc, self.q, q_width, q_length)
+        )
         self.q_calc = abs(self.q_calc)
 
     def apply(self, theory):
@@ -450,12 +457,14 @@ def linear_extrapolation(q, q_min, q_max):
     """
     q = np.sort(q)
     if q_min + 2*MINIMUM_RESOLUTION < q[0]:
-        n_low = int(np.ceil((q[0]-q_min) / (q[1]-q[0]))) if q[1] > q[0] else 15
+        delta = q[1] - q[0] if len(q) > 1 else 0
+        n_low = int(np.ceil((q[0]-q_min) / delta)) if delta > 0 else 15
         q_low = np.linspace(q_min, q[0], n_low+1)[:-1]
     else:
         q_low = []
     if q_max - 2*MINIMUM_RESOLUTION > q[-1]:
-        n_high = int(np.ceil((q_max-q[-1]) / (q[-1]-q[-2]))) if q[-1] > q[-2] else 15
+        delta = q[-1] - q[-2] if len(q) > 1 else 0
+        n_high = int(np.ceil((q_max-q[-1]) / delta)) if delta > 0 else 15
         q_high = np.linspace(q[-1], q_max, n_high+1)[1:]
     else:
         q_high = []
@@ -495,21 +504,26 @@ def geometric_extrapolation(q, q_min, q_max, points_per_decade=None):
          n_\text{extend} = (n-1) (\log q_\text{max} - \log q_n)
             / (\log q_n - \log q_1)
     """
+    DEFAULT_POINTS_PER_DECADE = 10
     q = np.sort(q)
+    data_min, data_max = q[0], q[-1]
     if points_per_decade is None:
-        log_delta_q = (len(q) - 1) / (log(q[-1]) - log(q[0]))
+        if data_max > data_min:
+            log_delta_q = (len(q) - 1) / (log(data_max) - log(data_min))
+        else:
+            log_delta_q = log(10.) / DEFAULT_POINTS_PER_DECADE
     else:
         log_delta_q = log(10.) / points_per_decade
-    if q_min < q[0]:
+    if q_min < data_min:
         if q_min < 0:
-            q_min = q[0]*MINIMUM_ABSOLUTE_Q
+            q_min = data_min*MINIMUM_ABSOLUTE_Q
         n_low = int(np.ceil(log_delta_q * (log(q[0])-log(q_min))))
         q_low = np.logspace(log10(q_min), log10(q[0]), n_low+1)[:-1]
     else:
         q_low = []
-    if q_max > q[-1]:
-        n_high = int(np.ceil(log_delta_q * (log(q_max)-log(q[-1]))))
-        q_high = np.logspace(log10(q[-1]), log10(q_max), n_high+1)[1:]
+    if q_max > data_max:
+        n_high = int(np.ceil(log_delta_q * (log(q_max)-log(data_max))))
+        q_high = np.logspace(log10(data_max), log10(q_max), n_high+1)[1:]
     else:
         q_high = []
     return np.concatenate([q_low, q, q_high])

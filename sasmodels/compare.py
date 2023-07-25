@@ -812,7 +812,7 @@ def compare(opts, limits=None, maxdim=None):
             if have_comp:
                 plot_profile(comp._kernel.info, label='comp', **comp_pars)
                 pylab.legend()
-    if opts['plot']:
+    if opts['plot'] or opts['show_weights'] or opts['show_profile']:
         import matplotlib.pyplot as plt
         plt.show()
     return limits
