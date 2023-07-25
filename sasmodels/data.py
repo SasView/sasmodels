@@ -54,7 +54,10 @@ def load_data(filename, index=0):
     """
     Load data using a sasview loader.
     """
-    from sas.sascalc.dataloader.loader import Loader  # type: ignore
+    try:
+        from sasdata.dataloader.loader import Loader  # type: ignore
+    except ImportError as ie:
+        raise ImportError(f"{ie.name} is not available. Add sasdata to the python path.")
     loader = Loader()
     # Allow for one part in multipart file
     if '[' in filename:
@@ -82,7 +85,10 @@ def set_beam_stop(data, radius, outer=None):
     """
     Add a beam stop of the given *radius*.  If *outer*, make an annulus.
     """
-    from sas.sascalc.dataloader.manipulations import Ringcut
+    try:
+        from sasdata.data_util.manipulations import Ringcut
+    except ImportError as ie:
+        raise ImportError(f"{ie.name} is not available. Add sasdata to the python path.")
     if hasattr(data, 'qx_data'):
         data.mask = Ringcut(0, radius)(data)
         if outer is not None:
@@ -98,7 +104,10 @@ def set_half(data, half):
     """
     Select half of the data, either "right" or "left".
     """
-    from sas.sascalc.dataloader.manipulations import Boxcut
+    try:
+        from sasdata.data_util.manipulations import Boxcut
+    except ImportError as ie:
+        raise ImportError(f"{ie.name} is not available. Add sasdata to the python path.")
     if half == 'right':
         data.mask += \
             Boxcut(x_min=-np.inf, x_max=0.0, y_min=-np.inf, y_max=np.inf)(data)
@@ -112,7 +121,10 @@ def set_top(data, cutoff):
     """
     Chop the top off the data, above *cutoff*.
     """
-    from sas.sascalc.dataloader.manipulations import Boxcut
+    try:
+        from sasdata.data_util.manipulations import Boxcut
+    except ImportError as ie:
+        raise ImportError(f"{ie.name} is not available. Add sasdata to the python path.")
     data.mask += \
         Boxcut(x_min=-np.inf, x_max=np.inf, y_min=-np.inf, y_max=cutoff)(data)
 
@@ -121,6 +133,9 @@ class Source:
     ...
 class Sample:
     ...
+
+def _as_numpy(data):
+    return None if data is None else np.asarray(data)
 
 class Data1D(object):
     """
@@ -151,11 +166,12 @@ class Data1D(object):
     """
     def __init__(self, x=None, y=None, dx=None, dy=None):
         # type: (OptArray, OptArray, OptArray, OptArray) -> None
-        self.x, self.y, self.dx, self.dy = x, y, dx, dy
+        self.x, self.dx = _as_numpy(x), _as_numpy(dx)
+        self.y, self.dy = _as_numpy(y), _as_numpy(dy)
         self.dxl = None
         self.filename = None
-        self.qmin = x.min() if x is not None else np.NaN
-        self.qmax = x.max() if x is not None else np.NaN
+        self.qmin = self.x.min() if self.x is not None else np.NaN
+        self.qmax = self.x.max() if self.x is not None else np.NaN
         # TODO: why is 1D mask False and 2D mask True?
         self.mask = (np.isnan(y) if y is not None
                      else np.zeros_like(x, 'b') if x is not None
@@ -228,13 +244,13 @@ class Data2D(object):
     """
     def __init__(self, x=None, y=None, z=None, dx=None, dy=None, dz=None):
         # type: (OptArray, OptArray, OptArray, OptArray, OptArray, OptArray) -> None
-        self.qx_data, self.dqx_data = x, dx
-        self.qy_data, self.dqy_data = y, dy
-        self.data, self.err_data = z, dz
+        self.qx_data, self.dqx_data = _as_numpy(x), _as_numpy(dx)
+        self.qy_data, self.dqy_data = _as_numpy(y), _as_numpy(dy)
+        self.data, self.err_data = _as_numpy(z), _as_numpy(dz)
         self.mask = (np.isnan(z) if z is not None
                      else np.zeros_like(x, dtype='bool') if x is not None
                      else None)
-        self.q_data = np.sqrt(x**2 + y**2)
+        self.q_data = np.sqrt(self.qx_data**2 + self.qy_data**2)
         self.qmin = 1e-16
         self.qmax = np.inf
         self.detector = []

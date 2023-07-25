@@ -50,10 +50,7 @@ category = "shape-independent"
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["cor_length", "Ang", 50.0, [0, inf], "", "Screening length"],]
 
-Iq = """
-    double denominator = 1 + (q*cor_length)*(q*cor_length);
-    return 1/denominator;
-"""
+source = ["lorentz.c"] 
 
 def random():
     """Return a random parameter set for the model."""

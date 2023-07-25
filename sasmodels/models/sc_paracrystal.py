@@ -1,9 +1,4 @@
 r"""
-.. warning:: This model and this model description are under review following
-             concerns raised by SasView users. If you need to use this model,
-             please email help@sasview.org for the latest situation. *The
-             SasView Developers. September 2018.*
-
 Definition
 ----------
 
@@ -17,45 +12,89 @@ The scattering intensity $I(q)$ is calculated as
 
 .. math::
 
-    I(q) = \text{scale}\frac{V_\text{lattice}P(q)Z(q)}{V_p} + \text{background}
+    I(q) = \frac{\text{scale}}{V_p} V_\text{lattice} P(q) Z(q) + \text{background}
 
-where scale is the volume fraction of spheres, $V_p$ is the volume of the
-primary particle, $V_\text{lattice}$ is a volume correction for the crystal
-structure, $P(q)$ is the form factor of the sphere (normalized), and $Z(q)$
-is the paracrystalline structure factor for a simple cubic structure.
+where *scale* is the volume fraction of crystal in the sample volume,
+$V_\text{lattice}$ is the volume fraction of spheres in the crystal, $V_p$ is
+the volume of the primary particle, $P(q)$ is the form factor of the sphere
+(normalized), and $Z(q)$ is the paracrystalline structure factor for a
+simple cubic structure.
 
-Equation (16) of the 1987 reference\ [#Matsuoka1987]_ is used to calculate
-$Z(q)$, using equations (13)-(15) from the 1987 paper\ [#Matsuoka1990]_ for
-$Z1$, $Z2$, and $Z3$.
+.. note::
+    At this point the GUI does not return $V_\text{lattice}$ separately so that
+    the user will need to calculate it from the equation given and the
+    appropriate returned parameters.
 
-The lattice correction (the occupied volume of the lattice) for a simple cubic
-structure of particles of radius *R* and nearest neighbor separation *D* is
-
-.. math::
-
-    V_\text{lattice}=\frac{4\pi}{3}\frac{R^3}{D^3}
-
-The distortion factor (one standard deviation) of the paracrystal is included
-in the calculation of $Z(q)$
-
-.. math::
-
-    \Delta a = gD
-
-where *g* is a fractional distortion based on the nearest neighbor distance.
-
-The simple cubic lattice is
+.. warning::
+    As per the equations below, this model will return I(q)=0 for all q if the
+    distortion factor is equal to 0. The model is not meant to support perfect
+    crystals.
 
 .. figure:: img/sc_crystal_geometry.jpg
 
-For a crystal, diffraction peaks appear at reduced q-values given by
+    Simple cubic (SC) lattice taken from reference [#Matsuoka1987]_.
+
+Following the derivation from reference [#Matsuoka1987]_, as corrected in
+reference [#Matsuoka1990]_, and based on the above figure, the
+primitive unit cell vectors are $\vec{a_1},\vec{a_2}$, and $\vec{a_3}$ which
+in this case are the same as the conventional unit cell vectors ($\vec{b_1}$,
+$\vec{b_2}$, and $\vec{b_3}$) so that
 
 .. math::
+    \vec{a_1} &= \vec{b_1} = a \hat{\textbf{x}} \\
+    \vec{a_2} &= \vec{b_2} = a \hat{\textbf{y}} \\
+    \vec{a_3} &= \vec{b_3} = a \hat{\textbf{z}}.
 
-    \frac{qD}{2\pi} = \sqrt{h^2+k^2+l^2}
 
-where for a simple cubic lattice any h, k, l are allowed and none are
-forbidden. Thus the peak positions correspond to (just the first 5)
+where $a$ is the lattice parameter which is also in this case the nearest
+neighbor distance $D$.
+
+The volume fraction ($V_{lattice}$) of spherical particles with
+radius $R$ sitting on the sc lattice is then given by:
+
+.. math::
+    V_{lattice} = \frac{4/3 \pi R^3}{D^3}
+
+Now, continuing to follow [#Matsuoka1987]_, the structure (lattice)
+factor $Z(\vec{q})$ for a 3D paracrystal can be written as:
+
+.. math::
+    Z(\vec{q}) = \prod_{k=1}^{3}Z_k(\vec{q})
+
+with
+
+.. math::
+    Z_k(\vec{q}) = \frac{1-|F_k|^2}{1-2|F_k|\cos(\vec{a_k}\cdot\vec{q})+|F_k|^2}
+
+and where $F_k(\vec{q})$ is the structure factor of the primitive unit cell
+defined as:
+
+.. math::
+    F_k(\vec{q}) = e^{-\frac{1}{2} \Delta a^2_k q^2} \times e^{-i\vec{q}\cdot\vec{a_k}}.
+
+Here, $\vec{a_k}$ are the primitive unit cell vectors $\vec{a_1}$, $\vec{a_2}$,
+and $\vec{a_3}$. Furthermore, $\Delta a_k$ is the isotropic distortion of the
+lattice point from its ideal position and can be defined by a constant factor
+$g=\Delta a / |\vec{a_1}| = \Delta a / |\vec{a_2}| = \Delta a / |\vec{a_3}|=\Delta a/D$.
+
+Finally, assuming the definitions presented in this document, the authors of
+reference [#Matsuoka1987]_ have derived the lattice factors which, substituting
+$D$ for the lattice parameter $a$, are given by:
+
+.. math::
+    Z_1(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}\cos(-qD \sin\theta \cos\phi ) + e^{-q^2\Delta a^2}\}\\
+    Z_2(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}\cos(qD \sin\theta \sin\phi) + e^{-q^2\Delta a^2}\}\\
+    Z_3(q,\theta,\phi)&=[1-e^{-q^2\Delta a^2}]/\{1-2e^{-\frac{1}{2}q^2\Delta a^2}\cos(qD \cos\theta) + e^{-q^2\Delta a^2}\}.\\
+
+
+Finally, the position of the Bragg peaks for the sc lattice are indexed by (reduced q-values):
+
+.. math::
+    \frac{qa}{2\pi}=\frac{qD}{2\pi} = \sqrt{h^2+k^2+l^2}
+
+where for a simple cubic lattice there are **no** selection rules for h, k, l
+so that all permutations of them give constructive interference. Thus the peak
+positions correspond to (just the first 5)
 
 .. math::
     :nowrap:
@@ -75,12 +114,13 @@ forbidden. Thus the peak positions correspond to (just the first 5)
 
 .. note::
 
-    The calculation of *Z(q)* is a double numerical integral that must be
-    carried out with a high density of points to properly capture the sharp
-    peaks of the paracrystalline scattering.
-    So be warned that the calculation is slow. Fitting of any experimental data
-    must be resolution smeared for any meaningful fit. This makes a triple
-    integral which may be very slow.
+  The calculation of $Z(q)$ is a double numerical integral that must be
+  carried out with a high density of points to properly capture the sharp
+  peaks of the paracrystalline scattering. So be warned that the calculation
+  is slow. Fitting of any experimental data must be resolution smeared for
+  any meaningful fit. This makes a triple integral which may be very slow.
+  If a double-precision GPU with OpenCL support is available this may improve
+  the speed of the calculation.
 
 The 2D (Anisotropic model) is based on the reference below where *I(q)* is
 approximated for 1d scattering. Thus the scattering pattern for 2D may not
@@ -106,8 +146,8 @@ Authorship and Verification
 ---------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
-* **Last Modified by:** Steve King **Date:** March 25, 2019
-* **Last Reviewed by:** Richard Heenan **Date:** March 21, 2016
+* **Last Modified by:** Paul Butler **Date:** Oct 27, 2022
+* **Last Reviewed by:** Jonathan Gaudet **Date:** Nov 2, 2022
 """
 
 import numpy as np

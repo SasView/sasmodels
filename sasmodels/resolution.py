@@ -35,7 +35,9 @@ class Resolution(object):
 
     *apply* is the method to call with I(q_calc) to compute the resolution
     smeared theory I(q).
+    
     """
+
     q = None  # type: np.ndarray
     q_calc = None  # type: np.ndarray
     def apply(self, theory):
@@ -111,34 +113,42 @@ class Slit1D(Resolution):
 
     *q* points at which the data is measured.
 
-    *qx_width* slit width in qx
+    *q_width* slit width (short axis); deprecated nomenclature qy
 
-    *qy_width* slit height in qy
+    *q_length* slit length (long axis); deprecated nomenclature qx
 
     *q_calc* is the list of points to calculate, or None if this should
     be estimated from the *q* and *q_width*.
 
     The *weight_matrix* is computed by :func:`slit_resolution`
+
     """
-    def __init__(self, q, qx_width, qy_width=0., q_calc=None):
+
+    def __init__(self, q, q_length=None, q_width=None, q_calc=None):
         # Remember what width/dqy was used even though we won't need them
         # after the weight matrix is constructed
-        self.qx_width, self.qy_width = qx_width, qy_width
+        self.q_length, self.q_width = q_length, q_width
 
         # Allow independent resolution on each point even though it is not
         # needed in practice.
-        if np.isscalar(qx_width):
-            qx_width = np.ones(len(q))*qx_width
+        if q_width is None:
+            q_width = np.zeros(len(q))
+        elif np.isscalar(q_width):
+            q_width = np.ones(len(q))*q_width
         else:
-            qx_width = np.asarray(qx_width)
-        if np.isscalar(qy_width):
-            qy_width = np.ones(len(q))*qy_width
+            q_width = np.asarray(q_width)
+        if q_length is None:
+            q_length = np.zeros(len(q))
+        elif np.isscalar(q_length):
+            q_length = np.ones(len(q))*q_length
         else:
-            qy_width = np.asarray(qy_width)
+            q_length = np.asarray(q_length)
 
         self.q = q.flatten()
-        self.q_calc = slit_extend_q(q, qx_width, qy_width) \
+        self.q_calc = (
+            slit_extend_q(q, q_width, q_length)
             if q_calc is None else np.sort(q_calc)
+        )
 
         # Protect against models which are not defined for very low q.  Limit
         # the smallest q value evaluated (in absolute) to 0.02*min
@@ -146,8 +156,9 @@ class Slit1D(Resolution):
         self.q_calc = self.q_calc[abs(self.q_calc) >= cutoff]
 
         # Build weight matrix from calculated q values
-        self.weight_matrix = \
-            slit_resolution(self.q_calc, self.q, qx_width, qy_width)
+        self.weight_matrix = (
+            slit_resolution(self.q_calc, self.q, q_length, q_width)
+        )
         self.q_calc = abs(self.q_calc)
 
     def apply(self, theory):
@@ -205,17 +216,18 @@ def pinhole_resolution(q_calc, q, q_width, nsigma=PINHOLE_N_SIGMA):
     return weights
 
 
-def slit_resolution(q_calc, q, width, height, n_height=30):
+def slit_resolution(q_calc, q, width, length, n_length=30):
     r"""
     Build a weight matrix to compute *I_s(q)* from *I(q_calc)*, given
-    $q_\perp$ = *width* and $q_\parallel$ = *height*.  *n_height* is
-    is the number of steps to use in the integration over $q_\parallel$
-    when both $q_\perp$ and $q_\parallel$ are non-zero.
+    $q_\perp$ = *width* (in the high-resolution axis) and $q_\parallel$
+    = *length* (in the low resolution axis).  *n_length* is the number
+    of steps to use in the integration over $q_\parallel$ when both
+    $q_\perp$ and $q_\parallel$ are non-zero.
 
-    Each $q$ can have an independent width and height value even though
+    Each $q$ can have an independent width and length value even though
     current instruments use the same slit setting for all measured points.
 
-    If slit height is large relative to width, use:
+    If slit length is large relative to width, use:
 
     .. math::
 
@@ -223,7 +235,7 @@ def slit_resolution(q_calc, q, width, height, n_height=30):
             \int_0^{\Delta q_\perp}
                 I\left(\sqrt{q_i^2 + q_\perp^2}\right) \,dq_\perp
 
-    If slit width is large relative to height, use:
+    If slit width is large relative to length, use:
 
     .. math::
 
@@ -231,7 +243,7 @@ def slit_resolution(q_calc, q, width, height, n_height=30):
             \int_{-\Delta q_\parallel}^{\Delta q_\parallel}
                 I\left(|q_i + q_\parallel|\right) \,dq_\parallel
 
-    For a mixture of slit width and height use:
+    For a mixture of slit width and length use:
 
     .. math::
 
@@ -317,7 +329,7 @@ def slit_resolution(q_calc, q, width, height, n_height=30):
         u_{jk} = \sqrt{q_j^2 - (q + (k\Delta q_\parallel/L))^2}
             \ \text{for}\ k = -L \ldots L
 
-    for $L$ = *n_height*.  This gives
+    for $L$ = *n_length*.  This gives
 
     .. math::
 
@@ -327,34 +339,35 @@ def slit_resolution(q_calc, q, width, height, n_height=30):
 
 
     """
-    #np.set_printoptions(precision=6, linewidth=10000)
+
+    # np.set_printoptions(precision=6, linewidth=10000)
 
     # The current algorithm is a midpoint rectangle rule.
     q_edges = bin_edges(q_calc) # Note: requires q > 0
-    #q_edges[q_edges < 0.0] = 0.0 # clip edges below zero
+    # q_edges[q_edges < 0.0] = 0.0 # clip edges below zero
     weights = np.zeros((len(q), len(q_calc)), 'd')
 
     #print(q_calc)
-    for i, (qi, w, h) in enumerate(zip(q, width, height)):
-        if w == 0. and h == 0.:
+    for i, (qi, w, l) in enumerate(zip(q, width, length)):
+        if w == 0. and l == 0.:
             # Perfect resolution, so return the theory value directly.
             # Note: assumes that q is a subset of q_calc.  If qi need not be
             # in q_calc, then we can do a weighted interpolation by looking
             # up qi in q_calc, then weighting the result by the relative
             # distance to the neighbouring points.
             weights[i, :] = (q_calc == qi)
-        elif h == 0:
+        elif l == 0:
             weights[i, :] = _q_perp_weights(q_edges, qi, w)
         elif w == 0:
-            in_x = 1.0 * ((q_calc >= qi-h) & (q_calc <= qi+h))
-            abs_x = 1.0*(q_calc < abs(qi - h)) if qi < h else 0.
-            #print(qi - h, qi + h)
+            in_x = 1.0 * ((q_calc >= qi-l) & (q_calc <= qi+l))
+            abs_x = 1.0*(q_calc < abs(qi - l)) if qi < l else 0.
+            #print(qi - l, qi + l)
             #print(in_x + abs_x)
-            weights[i, :] = (in_x + abs_x) * np.diff(q_edges) / (2*h)
+            weights[i, :] = (in_x + abs_x) * np.diff(q_edges) / (2*l)
         else:
-            for k in range(-n_height, n_height+1):
-                weights[i, :] += _q_perp_weights(q_edges, qi+k*h/n_height, w)
-            weights[i, :] /= 2*n_height + 1
+            for k in range(-n_length, n_length+1):
+                weights[i, :] += _q_perp_weights(q_edges, qi+k*l/n_length, w)
+            weights[i, :] /= 2*n_length + 1
 
     return weights.T
 
@@ -386,13 +399,13 @@ def pinhole_extend_q(q, q_width, nsigma=PINHOLE_N_SIGMA):
     return linear_extrapolation(q, q_min, q_max)
 
 
-def slit_extend_q(q, width, height):
+def slit_extend_q(q, width, length):
     """
-    Given *q*, *width* and *height*, find a set of sampling points *q_calc* so
+    Given *q*, *width* and *length*, find a set of sampling points *q_calc* so
     that each point I(q) has sufficient support from the underlying
     function.
     """
-    q_min, q_max = np.min(q-height), np.max(np.sqrt((q+height)**2 + width**2))
+    q_min, q_max = np.min(q-length), np.max(np.sqrt((q+length)**2 + width**2))
 
     return geometric_extrapolation(q, q_min, q_max)
 
@@ -445,12 +458,14 @@ def linear_extrapolation(q, q_min, q_max):
     """
     q = np.sort(q)
     if q_min + 2*MINIMUM_RESOLUTION < q[0]:
-        n_low = int(np.ceil((q[0]-q_min) / (q[1]-q[0]))) if q[1] > q[0] else 15
+        delta = q[1] - q[0] if len(q) > 1 else 0
+        n_low = int(np.ceil((q[0]-q_min) / delta)) if delta > 0 else 15
         q_low = np.linspace(q_min, q[0], n_low+1)[:-1]
     else:
         q_low = []
     if q_max - 2*MINIMUM_RESOLUTION > q[-1]:
-        n_high = int(np.ceil((q_max-q[-1]) / (q[-1]-q[-2]))) if q[-1] > q[-2] else 15
+        delta = q[-1] - q[-2] if len(q) > 1 else 0
+        n_high = int(np.ceil((q_max-q[-1]) / delta)) if delta > 0 else 15
         q_high = np.linspace(q[-1], q_max, n_high+1)[1:]
     else:
         q_high = []
@@ -490,21 +505,26 @@ def geometric_extrapolation(q, q_min, q_max, points_per_decade=None):
          n_\text{extend} = (n-1) (\log q_\text{max} - \log q_n)
             / (\log q_n - \log q_1)
     """
+    DEFAULT_POINTS_PER_DECADE = 10
     q = np.sort(q)
+    data_min, data_max = q[0], q[-1]
     if points_per_decade is None:
-        log_delta_q = (len(q) - 1) / (log(q[-1]) - log(q[0]))
+        if data_max > data_min:
+            log_delta_q = (len(q) - 1) / (log(data_max) - log(data_min))
+        else:
+            log_delta_q = log(10.) / DEFAULT_POINTS_PER_DECADE
     else:
         log_delta_q = log(10.) / points_per_decade
-    if q_min < q[0]:
+    if q_min < data_min:
         if q_min < 0:
-            q_min = q[0]*MINIMUM_ABSOLUTE_Q
+            q_min = data_min*MINIMUM_ABSOLUTE_Q
         n_low = int(np.ceil(log_delta_q * (log(q[0])-log(q_min))))
         q_low = np.logspace(log10(q_min), log10(q[0]), n_low+1)[:-1]
     else:
         q_low = []
-    if q_max > q[-1]:
-        n_high = int(np.ceil(log_delta_q * (log(q_max)-log(q[-1]))))
-        q_high = np.logspace(log10(q[-1]), log10(q_max), n_high+1)[1:]
+    if q_max > data_max:
+        n_high = int(np.ceil(log_delta_q * (log(q_max)-log(data_max))))
+        q_high = np.logspace(log10(data_max), log10(q_max), n_high+1)[1:]
     else:
         q_high = []
     return np.concatenate([q_low, q, q_high])
@@ -518,7 +538,7 @@ def eval_form(q, form, pars):
     """
     Return the SAS model evaluated at *q*.
 
-    *form* is the SAS model returned from :fun:`core.load_model`.
+    *form* is the SAS model returned from :func:`core.load_model`.
 
     *pars* are the parameter values to use when evaluating.
     """
@@ -541,7 +561,7 @@ def gaussian(q, q0, dq, nsigma=2.5):
     return exp(-0.5*((q-q0)/dq)**2)/(sqrt(2*pi)*dq)/(1-two_tail_density)
 
 
-def romberg_slit_1d(q, width, height, form, pars):
+def romberg_slit_1d(q, width, length, form, pars):
     """
     Romberg integration for slit resolution.
 
@@ -559,34 +579,34 @@ def romberg_slit_1d(q, width, height, form, pars):
 
     if np.isscalar(width):
         width = [width]*len(q)
-    if np.isscalar(height):
-        height = [height]*len(q)
+    if np.isscalar(length):
+        length = [length]*len(q)
     _int_w = lambda w, qi: eval_form(sqrt(qi**2 + w**2), form, pars)
-    _int_h = lambda h, qi: eval_form(abs(qi+h), form, pars)
-    # If both width and height are defined, then it is too slow to use dblquad.
+    _int_l = lambda l, qi: eval_form(abs(qi+l), form, pars)
+    # If both width and length are defined, then it is too slow to use dblquad.
     # Instead use trapz on a fixed grid, interpolated into the I(Q) for
     # the extended Q range.
     #_int_wh = lambda w, h, qi: eval_form(sqrt((qi+h)**2 + w**2), form, pars)
-    q_calc = slit_extend_q(q, np.asarray(width), np.asarray(height))
+    q_calc = slit_extend_q(q, np.asarray(width), np.asarray(length))
     Iq = eval_form(q_calc, form, pars)
     result = np.empty(len(q))
-    for i, (qi, w, h) in enumerate(zip(q, width, height)):
-        if h == 0.:
+    for i, (qi, w, l) in enumerate(zip(q, width, length)):
+        if l == 0.:
             total = romberg(_int_w, 0, w, args=(qi,),
                             divmax=100, vec_func=True, tol=0, rtol=1e-8)
             result[i] = total/w
         elif w == 0.:
-            total = romberg(_int_h, -h, h, args=(qi,),
+            total = romberg(_int_l, -l, l, args=(qi,),
                             divmax=100, vec_func=True, tol=0, rtol=1e-8)
-            result[i] = total/(2*h)
+            result[i] = total/(2*l)
         else:
             w_grid = np.linspace(0, w, 21)[None, :]
-            h_grid = np.linspace(-h, h, 23)[:, None]
-            u_sub = sqrt((qi+h_grid)**2 + w_grid**2)
+            l_grid = np.linspace(-l, l, 23)[:, None]
+            u_sub = sqrt((qi+l_grid)**2 + w_grid**2)
             f_at_u = np.interp(u_sub, q_calc, Iq)
             #print(np.trapz(Iu, w_grid, axis=1))
-            total = np.trapz(np.trapz(f_at_u, w_grid, axis=1), h_grid[:, 0])
-            result[i] = total / (2*h*w)
+            total = np.trapz(np.trapz(f_at_u, w_grid, axis=1), l_grid[:, 0])
+            result[i] = total / (2*l*w)
             # from scipy.integrate import dblquad
             # r, err = dblquad(_int_wh, -h, h, lambda h: 0., lambda h: w,
             #                  args=(qi,))
@@ -646,17 +666,17 @@ class ResolutionTest(unittest.TestCase):
         """
         Slit smearing with perfect resolution.
         """
-        resolution = Slit1D(self.x, qx_width=0, qy_width=0, q_calc=self.x)
+        resolution = Slit1D(self.x, q_length=0, q_width=0, q_calc=self.x)
         theory = self.Iq(resolution.q_calc)
         output = resolution.apply(theory)
         np.testing.assert_equal(output, self.y)
 
     @unittest.skip("not yet supported")
-    def test_slit_high(self):
+    def test_slit_long(self):
         """
-        Slit smearing with height 0.005
+        Slit smearing with length 0.005
         """
-        resolution = Slit1D(self.x, qx_width=0, qy_width=0.005, q_calc=self.x)
+        resolution = Slit1D(self.x, q_width=0, q_length=0.005, q_calc=self.x)
         theory = self.Iq(resolution.q_calc)
         output = resolution.apply(theory)
         answer = [
@@ -668,10 +688,10 @@ class ResolutionTest(unittest.TestCase):
     @unittest.skip("not yet supported")
     def test_slit_both_high(self):
         """
-        Slit smearing with width < 100*height.
+        Slit smearing with width < 100*length.
         """
         q = np.logspace(-4, -1, 10)
-        resolution = Slit1D(q, qx_width=0.2, qy_width=np.inf)
+        resolution = Slit1D(q, q_width=0.2, q_length=np.inf)
         theory = 1000*self.Iq(resolution.q_calc**4)
         output = resolution.apply(theory)
         answer = [
@@ -685,7 +705,7 @@ class ResolutionTest(unittest.TestCase):
         """
         Slit smearing with width 0.0002
         """
-        resolution = Slit1D(self.x, qx_width=0.0002, qy_width=0, q_calc=self.x)
+        resolution = Slit1D(self.x, q_width=0.0002, q_length=0, q_calc=self.x)
         theory = self.Iq(resolution.q_calc)
         output = resolution.apply(theory)
         answer = [
@@ -696,9 +716,9 @@ class ResolutionTest(unittest.TestCase):
     @unittest.skip("not yet supported")
     def test_slit_both_wide(self):
         """
-        Slit smearing with width > 100*height.
+        Slit smearing with width > 100*length.
         """
-        resolution = Slit1D(self.x, qx_width=0.0002, qy_width=0.000001,
+        resolution = Slit1D(self.x, q_width=0.0002, q_length=0.000001,
                             q_calc=self.x)
         theory = self.Iq(resolution.q_calc)
         output = resolution.apply(theory)
@@ -831,7 +851,7 @@ class IgorComparisonTest(unittest.TestCase):
 
         data = np.loadtxt(data_string.split('\n')).T
         q, delta_qv, _, answer = data
-        resolution = Slit1D(q, qx_width=delta_qv, qy_width=0)
+        resolution = Slit1D(q, q_length=delta_qv, q_width=0)
         output = self._eval_sphere(pars, resolution)
         # TODO: eliminate Igor test since it is too inaccurate to be useful.
         # This means we can eliminate the test data as well, and instead
@@ -850,7 +870,7 @@ class IgorComparisonTest(unittest.TestCase):
         answer = romberg_slit_1d(q, delta_qv, 0., self.model, pars)
         q_calc = slit_extend_q(interpolate(q, 2*np.pi/pars['radius']/20),
                                delta_qv[0], 0.)
-        resolution = Slit1D(q, qx_width=delta_qv, qy_width=0, q_calc=q_calc)
+        resolution = Slit1D(q, q_length=delta_qv, q_width=0, q_calc=q_calc)
         output = self._eval_sphere(pars, resolution)
         # TODO: relative error should be lower
         self._compare(q, output, answer, 0.025)
@@ -867,9 +887,9 @@ class IgorComparisonTest(unittest.TestCase):
             }
         form = load_model('ellipsoid', dtype='double')
         q = np.logspace(log10(4e-5), log10(2.5e-2), 68)
-        width, height = 0.117, 0.
-        resolution = Slit1D(q, qx_width=width, qy_width=height)
-        answer = romberg_slit_1d(q, width, height, form, pars)
+        width, length = 0.,0.117
+        resolution = Slit1D(q, q_length=length, q_width=width)
+        answer = romberg_slit_1d(q, length, width, form, pars)
         output = resolution.apply(eval_form(resolution.q_calc, form, pars))
         # TODO: 10% is too much error; use better algorithm
         #print(np.max(abs(answer-output)/answer))
@@ -1126,8 +1146,8 @@ def _eval_demo_1d(resolution, title):
     Iq = resolution.apply(theory)
 
     if isinstance(resolution, Slit1D):
-        width, height = resolution.qx_width, resolution.qy_width
-        Iq_romb = romberg_slit_1d(resolution.q, width, height, model, pars)
+        width, length = resolution.q_width, resolution.q_length
+        Iq_romb = romberg_slit_1d(resolution.q, width, length, model, pars)
     else:
         dq = resolution.q_width
         Iq_romb = romberg_pinhole_1d(resolution.q, dq, model, pars)
@@ -1155,13 +1175,13 @@ def demo_slit_1d():
     Show example of slit smearing.
     """
     q = np.logspace(-4, np.log10(0.2), 100)
-    w = h = 0.
+    w = l = 0.
     #w = 0.000000277790
     w = 0.0277790
-    #h = 0.00277790
-    #h = 0.0277790
-    resolution = Slit1D(q, w, h)
-    _eval_demo_1d(resolution, title="(%g,%g) Slit Resolution"%(w, h))
+    #l = 0.00277790
+    #l = 0.0277790
+    resolution = Slit1D(q, w, l)
+    _eval_demo_1d(resolution, title="(%g,%g) Slit Resolution"%(w, l))
 
 def demo():
     """

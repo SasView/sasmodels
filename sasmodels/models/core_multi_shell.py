@@ -53,13 +53,13 @@ import numpy as np
 from numpy import inf
 
 name = "core_multi_shell"
-title = "This model provides the scattering from a spherical core with 1 to 4 \
+title = "This model provides the scattering from a spherical core with 1 to 10 \
  concentric shell structures. The SLDs of the core and each shell are \
  individually specified."
 
 description = """\
-Form factor for a core muti-shell (up to 4) sphere normalized by the volume.
-Each shell can have a unique thickness and sld.
+Form factor for a core muti-shell sphere normalized by the volume.
+Each of up to 10 shells can have a unique thickness and sld.
 
 	background:background,
 	rad_core0: radius of sphere(core)
