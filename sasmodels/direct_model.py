@@ -121,8 +121,11 @@ def get_mesh(model_info, values, dim='1d', mono=False):
     values = values.copy()
     mesh = [_pop_par_weights(p, values, active(p.name))
             for p in parameters.call_parameters]
-    if values:
-        raise TypeError(f"Unused parameters in call: {', '.join(values.keys())}")
+
+    # TODO: This check has been removed because it currently prevents DirectModel from functioning correctly
+    # if values:
+    #     raise TypeError(f"Unused parameters in call: {', '.join(values.keys())}")
+
     return mesh
 
 
