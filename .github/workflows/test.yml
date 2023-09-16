@@ -59,3 +59,12 @@ jobs:
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
         make -j 4 -C doc SPHINXOPTS="-W --keep-going -n" html
+
+    - name: Publish samodels docs
+      if: ${{ matrix.installer }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: sasmodels-docs-${{ matrix.os }}-${{ matrix.python-version }}
+        path: |
+          docs/html
+        if-no-files-found: error
