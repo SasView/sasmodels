@@ -67,5 +67,5 @@ jobs:
       with:
         name: sasmodels-docs-${{ matrix.os }}-${{ matrix.python-version }}
         path: |
-          sasmodels_docs.tar.gz
+          sasmodels/sasmodels_docs.tar.gz
         if-no-files-found: error
