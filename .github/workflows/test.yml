@@ -59,7 +59,7 @@ jobs:
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
         make -j 4 -C doc SPHINXOPTS="-W --keep-going -n" html
-        tar zcf sasmodels-docs.tar.gz html
+        tar zcf sasmodels-docs.tar.gz _build/html
 
     - name: Publish samodels docs
       if: ${{ matrix.os == 'ubuntu-latest' }}
