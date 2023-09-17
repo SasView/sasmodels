@@ -60,6 +60,7 @@ jobs:
       run: |
         make -j 4 -C doc SPHINXOPTS="-W --keep-going -n" html
         tar zcf sasmodels-docs.tar.gz doc/_build/html
+        pwd
         ls -l sasmodels-docs.tar.gz
 
     - name: Publish samodels docs
