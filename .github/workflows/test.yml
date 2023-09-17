@@ -60,6 +60,7 @@ jobs:
       run: |
         make -j 4 -C doc SPHINXOPTS="-W --keep-going -n" html
         tar zcf sasmodels-docs.tar.gz doc/_build/html
+        ls -l sasmodels-docs.tar.gz
 
     - name: Publish samodels docs
       if: ${{ matrix.os == 'ubuntu-latest' }}
@@ -67,5 +68,5 @@ jobs:
       with:
         name: sasmodels-docs-${{ matrix.os }}-${{ matrix.python-version }}
         path: |
-          sasmodels/sasmodels_docs.tar.gz
+          sasmodels/sasmodels/sasmodels_docs.tar.gz
         if-no-files-found: error
