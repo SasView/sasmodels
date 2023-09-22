@@ -50,7 +50,7 @@ Authorship and Verification
 from __future__ import division
 
 import numpy as np
-from numpy import inf
+from numpy import pi, inf
 
 name = "core_multi_shell"
 title = "This model provides the scattering from a spherical core with 1 to 10 \
@@ -146,3 +146,11 @@ def profile(sld_core, radius, sld_solvent, n, sld, thickness):
     rho.append(sld_solvent)
 
     return np.asarray(z), np.asarray(rho)
+    
+# RKH 22Sept2023, copy in tests from core_shell_sphere, first tests the volume calc, second I(Q=0.4)
+# TODO needs more tests with further layers and S(Q)
+tests = [
+    [{'radius': 20.0, 'n':1, 'thickness': [10.0] }, 0.1, None, None, 30.0, 4.*pi/3*30**3, 1.0],
+    [{'radius': 60.0, 'n':1, 'thickness': [10.0], 'sld_core': 1.0, 'sld': [2.0],
+      'sld_solvent': 3.0, 'background': 0.001}, 0.4, .001698838]
+]

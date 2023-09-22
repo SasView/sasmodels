@@ -100,7 +100,8 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** NIST IGOR/DANSE **Date:** pre 2010
-* **Last Modified by:** Richard Heenan (reparametrised model) **Date:** 2015
+* **Modified by:** Richard Heenan (reparametrised model) **Date:** 2015
+* **Last Modified by:** Richard Heenan (share functions with _tied odel) **Date:** 2023
 * **Last Reviewed by:** Steve King **Date:** March 27, 2019
 """
 
@@ -149,7 +150,7 @@ parameters = [
     ]
 # pylint: enable=bad-whitespace, line-too-long
 
-source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "core_shell_ellipsoid.c"]
+source = ["lib/sas_3j1x_x.c", "lib/gauss76.c","lib/cs_ellipsoid_funcs.c", "core_shell_ellipsoid.c"]
 have_Fq = True
 radius_effective_modes = [
     "average outer curvature", "equivalent volume sphere",

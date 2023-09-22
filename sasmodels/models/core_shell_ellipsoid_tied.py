@@ -152,7 +152,7 @@ parameters = [
 
 source = ["lib/sas_3j1x_x.c", "lib/gauss76.c", "lib/cubic_solve_reparam3.c", "lib/cs_ellipsoid_funcs.c",
  "core_shell_ellipsoid_tied.c"]
-# TODO get core_shell_ellipsoid to use the new cs/_ellipsoid_funcs
+
 have_Fq = True
 radius_effective_modes = [
     "average outer curvature", "equivalent volume sphere",

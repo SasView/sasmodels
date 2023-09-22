@@ -2,7 +2,8 @@ r"""
 Definition
 ----------
 
-Core multi-shell cylinders or discs.
+Core multi-shell cylinders or discs, may be used for multi-walled tubes or
+a stck of discs.
 
 There must be a minumum of ONE shell (May set its sld to match solvent, 
 thickness1 and face1 to zero or very small so the shell does not contribute 
@@ -14,8 +15,8 @@ which are very large in some dimensions compared to others.
 
 2d scattering is so far only minimally tested.
 
-Use of S(Q) with this I(Q) currently not giving correct I(Q) in sasview, 
-(though passes unit tests), due to a more general sasview v5 bug.
+Use of S(Q) with this model currently may not give the correct I(Q) though 
+passes unit tests), due to a more general sasview v5 bug, so check carefully.
 
 The sld profile plot show profiles along both radius and half length 
 simultaneously! (A simple edit of the py code will change which is 
@@ -27,6 +28,14 @@ volume of the particle.
 $Louter = length\_core + 2*(face1 + face2 + face3 + ...)$
 
 $Router = radius\_core + thickness1 + thickness2 + thickness3 + ...$
+
+Each new shell must completely enclose the previous ones. Setting face1, 
+face2 etc. to very small values will give a multi-walled tube. By setting 
+some sld\_shell to match sld\_solvent then a hollow tube or multilammellar 
+tube may be generated. Conversely setting thickness1, thickness2 etc. to 
+very small values will generate a stack of discs, then by setting some 
+sld\_shell to match sld\_solvent a multilammellar disc stack.
+
 
 .. math::
 
@@ -83,10 +92,11 @@ and
 
 An approximation for the effects of "Gaussian interfacial roughness" $\sigma$
 is included, by multiplying $I(Q)$ by
-$\exp\left \{ -\frac{1}{2}Q^2\sigma^2 \right \}$. This applies, in some way, to
+$\exp\left \{ -\frac{1}{2}Q^2\sigma^2 \right \}$. This applies to
 all interfaces in the model not just the external ones. (Note that for a one
 dimensional system convolution of the scattering length density profile with
 a Gaussian of standard deviation $\sigma$ does exactly this multiplication.)
+To work well $\sigma$ must be much smaller than the particle size. 
 Leave $\sigma$ set to zero for the usual sharp interfaces.
 There is some debate as to whether the factor of 1/2 is needed or not.
 
@@ -120,8 +130,8 @@ Authorship and Verification
 ----------------------------
 
 * **Author:** Richard Heenan **Date:** April 2021
-* **Last Modified by:** Richard Heenan **Date:** April 2021
-* **Last Reviewed by:** Richard Heenan **Date:** April 2021
+* **Last Modified by:** Richard Heenan **Date:** Sept 2023
+* **Last Reviewed by:**   **Date:** 
 """
 
 from __future__ import division
