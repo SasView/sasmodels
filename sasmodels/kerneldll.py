@@ -135,16 +135,13 @@ if COMPILER == "unix":
     CFLAGS = os.environ.get("CFLAGS", "-std=c99 -O2 -Wall")
     LDFLAGS = os.environ.get("LDFLAGS", "")
     SOFLAGS = "-fPIC -shared"
+    LIBS = ["-lm"] + shlex.split(os.environ.get("LIBS", ""))
+    # Enabling it only for MacOS as the other platforms seemed to be broken anyway
+    if sys.platform == "darwin" and "SAS_OPENMP" in os.environ:
+        CFLAGS += (" -Xclang -fopenmp")
+        LIBS.append("-lomp")
     compiler_vars = (CC, CPPFLAGS, CFLAGS, LDFLAGS, SOFLAGS)
     compiler = [val for var in compiler_vars for val in shlex.split(var)]
-    LIBS = ["-lm"] + shlex.split(os.environ.get("LIBS", ""))
-
-    # Add OpenMP support if not running on a Mac.
-    if sys.platform != "darwin":
-        # OpenMP seems to be broken on gcc 5.4.0 (ubuntu 16.04.9).
-        # Shut it off for all unix until we can investigate.
-        #CC.append("-fopenmp")
-        pass
     def compile_command(source, output):
         """unix compiler command"""
         return compiler + [source, "-o", output] + LIBS
