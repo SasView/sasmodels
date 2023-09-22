@@ -1,5 +1,11 @@
 // some functions from core_shell_ellipsoid, also used by core_shell_ellipsoid_tied
 // RKH 19/09/2023
+// Converted from Igor function gfn4, using the same pattern as ellipsoid
+// for evaluating the parts of the integral.
+//     FUNCTION gfn4:    CONTAINS F(Q,A,B,MU)**2  AS GIVEN
+//                       BY (53) & (58-59) IN CHEN AND
+//                       KOTLARCHYK REFERENCE
+//
 
 static double
 _cs_ellipsoid_kernel(double qab, double qc,
