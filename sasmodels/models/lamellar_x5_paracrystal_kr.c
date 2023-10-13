@@ -1,6 +1,15 @@
-/*Lamellar_ParaCrystal - July 2019 RKH - hack previous sasview version to become Kotlarchyk & Ritzau 
-J.Appl.Cryst. 24(1991)753-758 with some "corrections" as per version from FISH .
-SHOULD put paraCryst_kr and rlayff_kr into a library as they are also used by the original lamellar_stack_paracrystal_kr.c
+/*Lamellar_ParaCrystal 
+July 2019 RKH - converted his FISH Fortran code for the Kotlarchyk & Ritzau form factor of sheets and structure factor
+for 1d paracrystals into c++ for sasview. Ref.  J.Appl.Cryst. 24(1991)753-758 with some "corrections" as per version from FISH .
+SHOULD put paraCryst_kr and rlayff_kr into a library as they could also be used by other routines
+12 June 2020 initial version of lamellar12345 type models, (released privately to two user groups).
+Sept 2023 this x5 version has explicit amounts of 1 through 5 layers, plus a stack with an adjustable number of layers
+BEWARE P(Q) equations divide by zero if sigma_t_by_t =0.0 (and may not then give results even when reset!)
+This is very flexible, particularly for mixtures of unilamellar and multilamellar particles.
+IF sigma_d_by_d = -1 ignore the S(Q), return only P(Q) for sheet, including (scale1 +scale2+ ...)(del rho)^2
+IF sigma_t_by_t = -1 ignore the P(Q), return only AVERAGE S(Q) sum(scale_n*S(Q,n) )/sum(scale_n), or of course a 
+single S(Q,n) if the other scale_n are set to zero. 
+
 */
 double paraCryst_kr(double qval, double RM, double D, double GD);
 double rlayff_kr(double qval, double RLBAR, double GL, double TT, double RSIG, double f1);
@@ -16,16 +25,19 @@ Iq(double qval,
    double scale3,
    double scale4,
    double scale5,
+   double scaleMadj,
+   double Madj,
    double davg,
    double sigma_d_by_d,
    double sld,
    double solvent_sld)
 {
-      double f1, Znq2,Znq3,Znq4,Znq5;
+      double f1, f2, Znq2, Znq3, Znq4, Znq5, ZnqM, sqsum, contr;
       const double fp_2 = 2.0;
       const double fp_3 = 3.0;
       const double fp_4 = 4.0;
       const double fp_5 = 5.0;
+      sqsum = 0.0;
       
 /*      //get the fractional part of Nlayers, to determine the "mixing" of N's
 // have removed this averaging of two values of Nlayers, as the pattern changes 
@@ -42,27 +54,41 @@ Iq(double qval,
       //calculate the n2 contribution
       Znq += (1.0-xn)*paraCryst_kr(qval,(double)n2,davg,sigma_d_by_d);
 */      
-       
-      Znq2 = paraCryst_kr(qval,fp_2,davg,sigma_d_by_d);
-      Znq3 = paraCryst_kr(qval,fp_3,davg,sigma_d_by_d);
-      Znq4 = paraCryst_kr(qval,fp_4,davg,sigma_d_by_d);
-      Znq5 = paraCryst_kr(qval,fp_5,davg,sigma_d_by_d);
-      //
-      // will one day separate the S(Q) and P(Q) here into individual models
+      // all these IF's will I'm told will reduce the efficiency of gpu code
+      if (sigma_d_by_d >= -0.999){
+          // normal route
+          if(scale2 > 0.0){sqsum += scale2*paraCryst_kr(qval,fp_2,davg,sigma_d_by_d);}
+          if(scale3 > 0.0){sqsum += scale3*paraCryst_kr(qval,fp_3,davg,sigma_d_by_d);}
+          if(scale4 > 0.0){sqsum += scale4*paraCryst_kr(qval,fp_4,davg,sigma_d_by_d);}
+          if(scale5 > 0.0){sqsum += scale5*paraCryst_kr(qval,fp_5,davg,sigma_d_by_d);}
+          if(scaleMadj > 0.0){sqsum += scaleMadj*paraCryst_kr(qval,Madj,davg,sigma_d_by_d);}
+      } else {
+          // return only scaled P(Q)
+          sqsum = scale2 +scale3 +scale4 +scale5 +scaleMadj;
+      }
+      // Could likely speed up a little with a bespoke paraCryst_kr for all five at once as parts of the
+      // calculation are repeated.
+      // One day separate the S(Q) and P(Q) here into individual models
       // meanwhile it should be relatively simple to make other versions with shell/core/shell layers etc.
       // I believe that <F> and F^2> are being properly averaged for the polydisperse layer
-      const double f2 = rlayff_kr(qval,thickness,sigma_t_by_t,interface_t,rsig_lorentz,f1);
+      
+      if (sigma_t_by_t < -0.999){
+          // return only average S(Q) which should tend to 1.0 at high Q
+           return sqsum/(scale2 +scale3 +scale4 +scale5 +scaleMadj);
+      } else if( sigma_t_by_t > 1.0e-08){
+      contr = sld - solvent_sld;
+           f2 = 0.25*contr*contr*rlayff_kr(qval,thickness,sigma_t_by_t,interface_t,rsig_lorentz,f1);
+      } else{ 
+      //  catch divide by zero when sigma_t_by_t = 0.0
+      // TODO: add proper P(Q) for monodisperse sheet
+      f2 =0.0;
+      }
       //
-      const double contr = sld - solvent_sld;
-      // BEWARE may need to rescale f1 also for sasview 5
-      // do not know yet why need a rescale of 0.25 here to get same scale parameter as FISH
-      // need check against lamellar model!
-      // 12June2020 add 5 terms 
-      const double inten = 0.25*contr*contr*(scale1 + scale2*Znq2 + scale3*Znq3 + scale4*Znq4 + scale5*Znq5)*f2;
+      return ( scale1 + sqsum )*f2*1.0e-04;
       
 }
 
-// functions for the lamellar paracrystal model, hacked from FISH fortran code, July 2019, RKH
+// functions for the lamellar paracrystal model, converted from my own FISH fortran code, July 2019, RKH
 double 
 paraCryst_kr(double QQ, double RM, double D, double GD) {
     // presume RMU is mu=1 = cos(angle between Q and axis of stack) in eqn (13)
@@ -109,6 +135,8 @@ rlayff_kr(double QQ, double RLBAR, double GL, double TT, double RSIG, double f1)
     // GL = SIGMA(L)/LBAR = (Z+1)**-0.5
     // 16/3/93 add extra parameter RSIG to model, as Lorentz factor,
     // see Skipper et.al. J.Chem.Phys 94(1991)5751-5760
+    // Sept 2023, divide by RLBAR.RSIG^2 to try to get volume fraction phi scaling correct
+    // should also reduce strong parameter correlation between these and scale parameters.
         double ZP1 = 1.0/square(GL);
         const double Z = ZP1 - 1.0;
         double ZM1 = Z - 1.0;
@@ -125,20 +153,24 @@ rlayff_kr(double QQ, double RLBAR, double GL, double TT, double RSIG, double f1)
         // I believe that <F> and F^2> are being properly averaged for the polydisperse layer
         double AL2SQ = square(AL2);
         // f1 = (1. + 1.0/AL2SQ)**(-0.5*ZP1)*sqrt(AL2SQ + 1)*sin(Z*atan(1.0/AL2))*exp(0.5*Q2S2)/Z;
-        f1 = pow( 1.0 + 1.0/AL2SQ, -0.5*ZP1);
-        f1 *= sqrt(AL2SQ + 1)*sin(Z*atan(1.0/AL2))*exp(0.5*Q2S2)/Z;
-        f1 /= sqrt(DEN);
-        
         //
+        f1 = 0.0;
+        // start of final code for f1, comment out here as we are not using it anywhere
+        //f1 = pow( 1.0 + 1.0/AL2SQ, -0.5*ZP1);
+        //f1 *= sqrt(AL2SQ + 1)*sin(Z*atan(1.0/AL2))*exp(0.5*Q2S2)/Z;
+        //f1 /= sqrt(DEN);
+        // end of code for f1
+        
+        // original fortran
         //     RLAYFF= (AL2**ZP1)*( (AL2**(1.0-Z)) -((AL2**2 +4.0)**(-0.5*ZM1))*
         //    >   COS( ZM1*atan(1.0/AL) ) )*EXP(Q2S2)/ (2.0*Z*ZM1*QQ*QQ)
         
         //rearrange to avoid overflows ( note AL can be 100, Z say 25 )
-        //included an extra factor of 4.0 to get beta(Q) to go to 1.0 at low
-        // Q and P(Q) to go to 1.0/Q**2
+        //included an extra factor of 4.0 to get beta(Q) to go to 1.0 at low Q and P(Q) to go to 1.0/Q**2
         // f2 = 4.0*(AL2SQ)*(1. - ((1. + 4.0/(AL2SQ))**(-0.5*ZM1))*cos(ZM1*atan(1.0/AL)))*exp(Q2S2)/(2.0*Z*ZM1);
+        
         double f2 = 4.0*(AL2SQ)*(1. - pow(1. + 4.0/AL2SQ,-0.5*ZM1)*cos(ZM1*atan(1.0/AL))) * exp(Q2S2)/(2.0*Z*ZM1);
         f2 /= DEN;
-        return f2;
+        return 1.0e-04*(1.0 + square(RSIG))*RLBAR*f2;
 }
 
