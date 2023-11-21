@@ -881,7 +881,7 @@ def build_model(model_name, n=150, qmax=0.5, **pars):
 
     # stuff the values for non-orientation parameters into the calculator
     calculator.pars = pars.copy()
-    calculator.pars.setdefault('backgound', 1e-3)
+    calculator.pars.setdefault('background', 1e-3)
 
     # fix the data limits so that we can see if the pattern fades
     # under rotation or angular dispersion
@@ -908,47 +908,53 @@ def select_calculator(model_name, n=150, size=(10, 40, 100)):
     a, b, c = size
     d_factor = 0.06  # for paracrystal models
     if model_name == 'sphere':
-        calculator = build_model('sphere', n=n, radius=c)
+        calculator = build_model(
+            'sphere', n=n, radius=c)
         a = b = c
     elif model_name == 'sc_paracrystal':
         a = b = c
         dnn = c
         radius = 0.5*c
-        calculator = build_model('sc_paracrystal', n=n, dnn=dnn,
-                                 d_factor=d_factor, radius=(1-d_factor)*radius,
-                                 background=0)
+        calculator = build_model(
+            'sc_paracrystal', n=n,
+            dnn=dnn, d_factor=d_factor, radius=(1-d_factor)*radius,
+            background=0)
     elif model_name == 'fcc_paracrystal':
         a = b = c
         # nearest neigbour distance dnn should be 2 radius, but I think the
         # model uses lattice spacing rather than dnn in its calculations
         dnn = 0.5*c
         radius = sqrt(2)/4 * c
-        calculator = build_model('fcc_paracrystal', n=n, dnn=dnn,
-                                 d_factor=d_factor, radius=(1-d_factor)*radius,
-                                 background=0)
+        calculator = build_model(
+            'fcc_paracrystal', n=n,
+            dnn=dnn, d_factor=d_factor, radius=(1-d_factor)*radius,
+            background=0)
     elif model_name == 'bcc_paracrystal':
         a = b = c
         # nearest neigbour distance dnn should be 2 radius, but I think the
         # model uses lattice spacing rather than dnn in its calculations
         dnn = 0.5*c
         radius = sqrt(3)/2 * c
-        calculator = build_model('bcc_paracrystal', n=n, dnn=dnn,
-                                 d_factor=d_factor, radius=(1-d_factor)*radius,
-                                 background=0)
+        calculator = build_model(
+            'bcc_paracrystal', n=n,
+            dnn=dnn, d_factor=d_factor, radius=(1-d_factor)*radius,
+            background=0)
     elif model_name == 'cylinder':
-        calculator = build_model('cylinder', n=n, qmax=0.3, radius=b, length=c)
+        calculator = build_model(
+            'cylinder', n=n, qmax=0.3, radius=b, length=c)
         a = b
     elif model_name == 'ellipsoid':
-        calculator = build_model('ellipsoid', n=n, qmax=1.0,
-                                 radius_polar=c, radius_equatorial=b)
+        calculator = build_model(
+            'ellipsoid', n=n, qmax=1.0,
+            radius_polar=c, radius_equatorial=b)
         a = b
     elif model_name == 'triaxial_ellipsoid':
-        calculator = build_model('triaxial_ellipsoid', n=n, qmax=0.5,
-                                 radius_equat_minor=a,
-                                 radius_equat_major=b,
-                                 radius_polar=c)
+        calculator = build_model(
+            'triaxial_ellipsoid', n=n, qmax=0.5,
+            radius_equat_minor=a, radius_equat_major=b, radius_polar=c)
     elif model_name == 'parallelepiped':
-        calculator = build_model('parallelepiped', n=n, a=a, b=b, c=c)
+        calculator = build_model(
+            'parallelepiped', n=n, length_a=a, length_b=b, length_c=c)
     else:
         raise ValueError("unknown model %s"%model_name)
 
