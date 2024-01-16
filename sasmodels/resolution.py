@@ -157,7 +157,7 @@ class Slit1D(Resolution):
 
         # Build weight matrix from calculated q values
         self.weight_matrix = (
-            slit_resolution(self.q_calc, self.q, q_width, q_length)
+            slit_resolution(self.q_calc, self.q, q_length, q_width)
         )
         self.q_calc = abs(self.q_calc)
 
@@ -216,7 +216,7 @@ def pinhole_resolution(q_calc, q, q_width, nsigma=PINHOLE_N_SIGMA):
     return weights
 
 
-def slit_resolution(q_calc, q, width, length, n_length=30):
+def slit_resolution(q_calc, q, length, width, n_length=30):
     r"""
     Build a weight matrix to compute *I_s(q)* from *I(q_calc)*, given
     $q_\perp$ = *width* (in the high-resolution axis) and $q_\parallel$
