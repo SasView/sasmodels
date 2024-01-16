@@ -1,3 +1,4 @@
+.. currentmodule:: sasmodels
 .. theory.rst
 
 .. Much of the following text was scraped from fitting_sq.py

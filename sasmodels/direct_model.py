@@ -121,8 +121,10 @@ def get_mesh(model_info, values, dim='1d', mono=False):
     values = values.copy()
     mesh = [_pop_par_weights(p, values, active(p.name))
             for p in parameters.call_parameters]
+
     if values:
         raise TypeError(f"Unused parameters in call: {', '.join(values.keys())}")
+
     return mesh
 
 
@@ -561,16 +563,17 @@ def test_simple_interface():
         return np.allclose(value, target, rtol=1e-6, atol=0, equal_nan=True)
     # Note: target values taken from running main() on parameters.
     # Resolution was 5% dq/q.
-    pars = dict(radius=200)
+    pars = dict(radius=200, background=0)  # default background=1e-3, scale=1
     # simple sphere in 1D (perfect, pinhole, slit)
-    assert near(Iq('sphere', [0.1], **pars), [0.6200146273894904])
-    assert near(Iq('sphere', [0.1], dq=[0.005], **pars), [2.3019224683980215])
-    assert near(Iq('sphere', [0.1], qw=[0.005], ql=[1.0], **pars), [0.3673431784535172])
+    perfect_target = 0.6190146273894904
+    assert near(Iq('sphere', [0.1], **pars), [perfect_target])
+    assert near(Iq('sphere', [0.1], dq=[0.005], **pars), [2.3009224683980215])
+    assert near(Iq('sphere', [0.1], qw=[0.005], ql=[1.0], **pars), [0.3663431784535172])
     # simple sphere in 2D (perfect, pinhole)
-    assert near(Iqxy('sphere', [0.1], [0.1], **pars), [1.1781532874802199])
+    assert near(Iqxy('sphere', [0.1], [0.1], **pars), [1.1771532874802199])
     assert near(Iqxy('sphere', [0.1], [0.1], dqx=[0.005], dqy=[0.005], **pars), 
-        [0.8177780778578667])
-    # sesans
+        [0.8167780778578667])
+    # sesans (no background or scale)
     assert near(Gxi('sphere', [100], **pars), [-0.19146959126623486])
     # Check that single point sesans matches value in an array
     xi = np.logspace(1, 3, 100)
@@ -587,6 +590,11 @@ def test_simple_interface():
         radius=200, radius_pd=0.1, radius_pd_n=15, radius_pd_nsigma=2.5,
         radius_pd_type="uniform")
     assert near(Iq('sphere', [0.1], **pars), [2.703169824954617])
+    # background and scale
+    background, scale = 1e-4, 0.1
+    pars = dict(radius=200, background=background, scale=scale)
+    assert near(Iq('sphere', [0.1], **pars), [perfect_target*scale + background])
+
 
 if __name__ == "__main__":
     import logging
