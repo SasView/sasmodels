@@ -146,7 +146,7 @@ class Slit1D(Resolution):
 
         self.q = q.flatten()
         self.q_calc = (
-            slit_extend_q(q, q_width, q_length)
+            slit_extend_q(q, q_length, q_width)
             if q_calc is None else np.sort(q_calc)
         )
 
@@ -398,13 +398,13 @@ def pinhole_extend_q(q, q_width, nsigma=PINHOLE_N_SIGMA):
     return linear_extrapolation(q, q_min, q_max)
 
 
-def slit_extend_q(q, width, length):
+def slit_extend_q(q, length, width):
     """
     Given *q*, *width* and *length*, find a set of sampling points *q_calc* so
     that each point I(q) has sufficient support from the underlying
     function.
     """
-    q_min, q_max = np.min(q-length), np.max(np.sqrt((q+length)**2 + width**2))
+    q_min, q_max = np.min(q-width), np.max(np.sqrt((q+width)**2 + length**2))
 
     return geometric_extrapolation(q, q_min, q_max)
 
@@ -560,7 +560,7 @@ def gaussian(q, q0, dq, nsigma=2.5):
     return exp(-0.5*((q-q0)/dq)**2)/(sqrt(2*pi)*dq)/(1-two_tail_density)
 
 
-def romberg_slit_1d(q, width, length, form, pars):
+def romberg_slit_1d(q, length, width, form, pars):
     """
     Romberg integration for slit resolution.
 
@@ -580,31 +580,31 @@ def romberg_slit_1d(q, width, length, form, pars):
         width = [width]*len(q)
     if np.isscalar(length):
         length = [length]*len(q)
-    _int_w = lambda wi, qi: eval_form(sqrt(qi**2 + wi**2), form, pars)
-    _int_l = lambda li, qi: eval_form(abs(qi+li), form, pars)
+    _int_l = lambda li, qi: eval_form(sqrt(qi**2 + li**2), form, pars)
+    _int_w = lambda wi, qi: eval_form(abs(qi+wi), form, pars)
     # If both width and length are defined, then it is too slow to use dblquad.
     # Instead use trapz on a fixed grid, interpolated into the I(Q) for
     # the extended Q range.
     #_int_wh = lambda w, h, qi: eval_form(sqrt((qi+h)**2 + w**2), form, pars)
-    q_calc = slit_extend_q(q, np.asarray(width), np.asarray(length))
+    q_calc = slit_extend_q(q, np.asarray(length), np.asarray(width))
     Iq = eval_form(q_calc, form, pars)
     result = np.empty(len(q))
     for i, (qi, wi, li) in enumerate(zip(q, width, length)):
-        if li == 0.:
-            total = romberg(_int_w, 0, wi, args=(qi,),
+        if wi == 0.:
+            total = romberg(_int_l, 0, li, args=(qi,),
                             divmax=100, vec_func=True, tol=0, rtol=1e-8)
-            result[i] = total/wi
-        elif wi == 0.:
-            total = romberg(_int_l, -li, li, args=(qi,),
+            result[i] = total/li
+        elif li == 0.:
+            total = romberg(_int_w, -wi, wi, args=(qi,),
                             divmax=100, vec_func=True, tol=0, rtol=1e-8)
-            result[i] = total/(2*li)
+            result[i] = total/(2*wi)
         else:
-            w_grid = np.linspace(0, wi, 21)[None, :]
-            l_grid = np.linspace(-li, li, 23)[:, None]
-            u_sub = sqrt((qi+l_grid)**2 + w_grid**2)
+            l_grid = np.linspace(0, li, 21)[None, :]
+            w_grid = np.linspace(-wi, wi, 23)[:, None]
+            u_sub = sqrt((qi+w_grid)**2 + l_grid**2)
             f_at_u = np.interp(u_sub, q_calc, Iq)
             #print(np.trapz(Iu, w_grid, axis=1))
-            total = np.trapz(np.trapz(f_at_u, w_grid, axis=1), l_grid[:, 0])
+            total = np.trapz(np.trapz(f_at_u, l_grid, axis=1), w_grid[:, 0])
             result[i] = total / (2*li*wi)
             # from scipy.integrate import dblquad
             # r, err = dblquad(_int_wh, -h, h, lambda h: 0., lambda h: w,
