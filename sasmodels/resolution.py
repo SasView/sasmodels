@@ -282,7 +282,7 @@ def slit_resolution(q_calc, q, length, width, n_length=30):
     where $I(u_j)$ is the value at the mid-point, and $\Delta u_j$ is the
     difference between consecutive edges which have been first converted
     to $u$.  Only $u_j \in [0, \Delta q_\perp]$ are used, which corresponds
-    to $q_j \in \left[q, \sqrt{q^2 + \Delta q_\perp}\right]$, so
+    to $q_j \in \left[q, \sqrt{q^2 + \Delta q_\perp^2}\right]$, so
 
     .. math::
 
