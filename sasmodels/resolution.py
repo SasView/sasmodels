@@ -1146,7 +1146,7 @@ def _eval_demo_1d(resolution, title):
 
     if isinstance(resolution, Slit1D):
         width, length = resolution.q_width, resolution.q_length
-        Iq_romb = romberg_slit_1d(resolution.q, width, length, model, pars)
+        Iq_romb = romberg_slit_1d(resolution.q, length, width, model, pars)
     else:
         dq = resolution.q_width
         Iq_romb = romberg_pinhole_1d(resolution.q, dq, model, pars)
@@ -1176,11 +1176,11 @@ def demo_slit_1d():
     q = np.logspace(-4, np.log10(0.2), 100)
     width = length = 0.
     #width = 0.000000277790
-    width = 0.0277790
+    length = 0.0277790
     #length = 0.00277790
     #length = 0.0277790
-    resolution = Slit1D(q, width, length)
-    _eval_demo_1d(resolution, title="(%g,%g) Slit Resolution"%(width, length))
+    resolution = Slit1D(q, length, width)
+    _eval_demo_1d(resolution, title="(%g,%g) Slit Resolution"%(length, width))
 
 def demo():
     """
