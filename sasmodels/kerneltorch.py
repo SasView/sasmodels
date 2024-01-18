@@ -108,6 +108,8 @@ class PyKernel(Kernel):
     *q_input* is the DllInput q vectors at which the kernel should be
     evaluated.
 
+    *device* : cpu or cuda for calculations with pytorch on CPUs or GPUs
+
     The resulting call method takes the *pars*, a list of values for
     the fixed parameters to the kernel, and *pd_pars*, a list of (value,weight)
     vectors for the polydisperse parameters.  *cutoff* determines the
@@ -116,8 +118,9 @@ class PyKernel(Kernel):
 
     Call :meth:`release` when done with the kernel instance.
     """
-    def __init__(self, model_info, q_input):
-        # type: (ModelInfo, List[np.ndarray]) -> None
+    def __init__(self, model_info, q_input, device):
+        # type: (ModelInfo, List[np.ndarray], str) -> None
+        self.device = device
         self.dtype = np.dtype('d')
         self.info = model_info
         self.q_input = q_input
@@ -184,13 +187,13 @@ class PyKernel(Kernel):
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> None
         if magnetic:
             raise NotImplementedError("Magnetism not implemented for pure python models")
-        #print("Calling python kernel")
+
         #call_details.show(values)
         radius = ((lambda: 0.0) if radius_effective_mode == 0
                   else (lambda: self._radius(radius_effective_mode)))
         self.result = _loops(
             self._parameter_vector, self._form, self._volume, radius,
-            self.q_input.nq, call_details, values, cutoff)
+            self.q_input.nq, call_details, values, cutoff,self.device)
 
     def release(self):
         # type: () -> None
@@ -202,8 +205,8 @@ class PyKernel(Kernel):
 
 
 def _loops(parameters, form, form_volume, form_radius, nq, call_details,
-           values, cutoff):
-    # type: (np.ndarray, Callable[[], np.ndarray], Callable[[], float], Callable[[], float], int, CallDetails, np.ndarray, float) -> None
+           values, cutoff,device = 'cpu'):
+    # type: (np.ndarray, Callable[[], np.ndarray], Callable[[], float], Callable[[], float], int, CallDetails, np.ndarray, float, str) -> None
     ################################################################
     #                                                              #
     #   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!   #
@@ -221,8 +224,12 @@ def _loops(parameters, form, form_volume, form_radius, nq, call_details,
     # mesh, we update the components with the polydispersity values before
     # calling the respective functions.
     n_pars = len(parameters)
-    parameters[:] = values[2:n_pars+2]
+    parameters = torch.DoubleTensor(parameters).to(device)
 
+    #parameters[:] = values[2:n_pars+2]
+    parameters[:] = torch.DoubleTensor(values[2:n_pars+2])
+
+    print("parameters",parameters)
     if call_details.num_active == 0:
         total = form()
         weight_norm = 1.0
@@ -230,8 +237,12 @@ def _loops(parameters, form, form_volume, form_radius, nq, call_details,
         weighted_radius = form_radius()
 
     else:
-        pd_value = values[2+n_pars:2+n_pars + call_details.num_weights]
-        pd_weight = values[2+n_pars + call_details.num_weights:]
+        #transform to tensor flow
+        pd_value = torch.DoubleTensor(values[2+n_pars:2+n_pars + call_details.num_weights])
+        pd_weight = torch.DoubleTensor(values[2+n_pars + call_details.num_weights:])
+
+        #print("pd_value",pd_value)
+        #print("pd_weight",pd_weight)
 
         weight_norm = 0.0
         weighted_form = 0.0
@@ -250,15 +261,26 @@ def _loops(parameters, form, form_volume, form_radius, nq, call_details,
         pd_stride = call_details.pd_stride[:call_details.num_active]
         pd_length = call_details.pd_length[:call_details.num_active]
 
-        total = np.zeros(nq, np.float64)
+        #total = np.zeros(nq, np.float64)
+        total = torch.zeros(nq, dtype= torch.float64).to(device)
+
+        #print("ll", range(call_details.num_eval))
+        #parallel for loop
+        # each look_index can be GPU/CPU thread: tid
+        # each thread has its own pd_index and p0_index
+
         for loop_index in range(call_details.num_eval):
             # Update polydispersity parameter values.
             if p0_index == p0_length:
                 pd_index = (loop_index//pd_stride)%pd_length
                 parameters[pd_par] = pd_value[pd_offset+pd_index]
-                partial_weight = np.prod(pd_weight[pd_offset+pd_index][1:])
+                #partial_weight = np.prod(pd_weight[pd_offset+pd_index][1:])
+                partial_weight = torch.prod(pd_weight[pd_offset+pd_index][1:])
+
                 p0_index = loop_index%p0_length
 
+            # weight can become and array of weights calculated in parallel.
+            # weights[tid] = partial_weight * pd_weight[p0_offset + p0_index] 
             weight = partial_weight * pd_weight[p0_offset + p0_index]
             parameters[p0_par] = pd_value[p0_offset + p0_index]
             p0_index += 1
@@ -267,8 +289,9 @@ def _loops(parameters, form, form_volume, form_radius, nq, call_details,
                 # Assume that NaNs are only generated if the parameters are bad;
                 # exclude all q for that NaN.  Even better would be to have an
                 # INVALID expression like the C models, but that is expensive.
-                Iq = np.asarray(form(), 'd')
-                if np.isnan(Iq).any():
+                #Iq = np.asarray(form(), 'd')
+                Iq = torch.asarray(form()).to(device)
+                if torch.isnan(Iq).any():
                     continue
 
                 # Update value and norm.
@@ -279,7 +302,9 @@ def _loops(parameters, form, form_volume, form_radius, nq, call_details,
                 weighted_form += weight * unweighted_form
                 weighted_radius += weight * form_radius()
 
-    result = np.hstack((total, weight_norm, weighted_form, weighted_shell, weighted_radius))
+    #result = np.hstack((total, weight_norm, weighted_form, weighted_shell, weighted_radius))
+    result = torch.hstack((total, weight_norm, weighted_form, weighted_shell, weighted_radius)).to(device)
+
     return result
 
 
