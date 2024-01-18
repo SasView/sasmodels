@@ -19,16 +19,18 @@ from sasmodels.details import make_kernel_args, dispersion_mesh
 
 import sasmodels.kerneltorch as kt
 
+device = torch.device('mps')
+
 def make_kernel(model, q_vectors):
     """Instantiate the python kernel with input *q_vectors*"""
-    q_input = kt.PyInput(q_vectors, dtype=torch.float64)
+    q_input = kt.PyInput(q_vectors, dtype=torch.float32)
     return kt.PyKernel(model.info, q_input)
 
 
 model = load_model('_spherepy')
-print(model.info)
 
-q = torch.logspace(-3, -1, 200)
+q = torch.logspace(-3, -1, 200).to(device)
+
 
 #qq = logspace(-3, -1, 200)
 
@@ -49,3 +51,5 @@ t0 = time.time()
 Iq = call_kernel(kernel, pars)
 elapsed = time.time() - t0
 print('Computation time:', elapsed)
+
+print(Iq)

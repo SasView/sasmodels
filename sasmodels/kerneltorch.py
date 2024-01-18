@@ -87,7 +87,7 @@ class PyInput(object):
             self.q[:, 1] = q_vectors[1]
         else:
             # Create empty tensor
-            self.q = torch.tensor(np.empty(self.nq, dtype=np.float64))
+            self.q = torch.tensor(np.empty(self.nq, dtype=np.float32))
             self.q[:self.nq] = q_vectors[0]
 
     def release(self):
@@ -124,7 +124,7 @@ class PyKernel(Kernel):
         self.dtype = np.dtype('d')
         self.info = model_info
         self.q_input = q_input
-        self.res = np.empty(q_input.nq, np.float64)
+        self.res = np.empty(q_input.nq, np.float32)
         self.dim = '2d' if q_input.is_2d else '1d'
 
         partable = model_info.parameters
@@ -224,10 +224,10 @@ def _loops(parameters, form, form_volume, form_radius, nq, call_details,
     # mesh, we update the components with the polydispersity values before
     # calling the respective functions.
     n_pars = len(parameters)
-    parameters = torch.DoubleTensor(parameters).to(device)
+    parameters = torch.tensor(parameters, dtype=torch.float32).to(device)
 
     #parameters[:] = values[2:n_pars+2]
-    parameters[:] = torch.DoubleTensor(values[2:n_pars+2])
+    parameters[:] = torch.tensor(values[2:n_pars+2], dtype=torch.float32)
 
     print("parameters",parameters)
     if call_details.num_active == 0:
@@ -238,8 +238,8 @@ def _loops(parameters, form, form_volume, form_radius, nq, call_details,
 
     else:
         #transform to tensor flow
-        pd_value = torch.DoubleTensor(values[2+n_pars:2+n_pars + call_details.num_weights])
-        pd_weight = torch.DoubleTensor(values[2+n_pars + call_details.num_weights:])
+        pd_value = torch.tensor(values[2+n_pars:2+n_pars + call_details.num_weights], dtype=torch.float32)
+        pd_weight = torch.tensor(values[2+n_pars + call_details.num_weights:], dtype=torch.float32)
 
         #print("pd_value",pd_value)
         #print("pd_weight",pd_weight)
@@ -262,7 +262,7 @@ def _loops(parameters, form, form_volume, form_radius, nq, call_details,
         pd_length = call_details.pd_length[:call_details.num_active]
 
         #total = np.zeros(nq, np.float64)
-        total = torch.zeros(nq, dtype= torch.float64).to(device)
+        total = torch.zeros(nq, dtype= torch.float32).to(device)
 
         #print("ll", range(call_details.num_eval))
         #parallel for loop

@@ -8,7 +8,9 @@ from sasmodels.details import make_kernel_args
 
 import sasmodels.kerneltorch as kt
 
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('mps')
 
 print("device",device)
 
@@ -24,7 +26,7 @@ q = logspace(-3, -1, 200)
 print("q",q[6])
 kernel = model.make_kernel([q])
 
-pars = {'radius': 200, 'radius_pd': 0.1, 'radius_pd_n':100, 'scale': 2}
+pars = {'radius': 200, 'radius_pd': 0.1, 'radius_pd_n':10000, 'scale': 2}
 
 t_before = time.time()
 Iq = call_kernel(kernel, pars)
