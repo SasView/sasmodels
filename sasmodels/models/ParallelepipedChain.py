@@ -44,7 +44,7 @@ from sasmodels.special import *
 from numpy import inf
 
 name = "ParallelepipedChain"
-title = "Base-script: Rectangular parallelepiped with uniform scattering length density. Add-on: Chain of parallelepipeds along x-direction, with uniform magnetic scattering length density (no applied magnetic field)"
+title = "Base-script: Rectangular parallelepiped. Add-on: Chain of parallelepipeds along x-direction"
 description = """User model for chains of parallelepipeds oriented along X-axis"""
 
 category = "shape:parallelepiped"
@@ -53,8 +53,6 @@ parameters = [["sld", "1e-6/Ang^2", 4, [-inf, inf], "sld",
                "Parallelepiped scattering length density"],
               ["sld_solvent", "1e-6/Ang^2", 1, [-inf, inf], "sld",
                "Solvent scattering length density"],
-              ["mag_sld", "1e-6/Ang^2", 1, [-inf, inf], "sld",
-               "magnetic scattering length density"],
               ["length_a", "Ang", 35, [0, inf], "length",
                "Shorter side of the parallelepiped"],
               ["length_b", "Ang", 75, [0, inf], "length",

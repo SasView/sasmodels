@@ -120,7 +120,6 @@ static double
 Iqabc(double qa, double qb, double qc,
     double sld,
     double solvent_sld,
-    double mag_sld,
     double length_a,
     double length_b,
     double length_c,
@@ -131,9 +130,7 @@ Iqabc(double qa, double qb, double qc,
     const double siC = sas_sinx_x(0.5*length_c*qc);
     const double V = form_volume(length_a, length_b, length_c);
     const double drho = (sld - solvent_sld);
-    const double mrho = mag_sld
     const double Amp = V * drho * siA * siB * siC;
-    const double MAmp = V * mrho * siA * siB * siC;
 
     // adding several particles in the chain:
     double VolumeFraction = 1.0;
@@ -147,15 +144,10 @@ Iqabc(double qa, double qb, double qc,
 
     // Just start parameters:
     double SingletIntensity = 0;
-    double MSingletIntensity = 0;
     double DimerIntensity = 0;
-    double MDimerIntensity = 0;
     double TrimerIntensity = 0;
-    double MTrimerIntensity = 0;
     double QuadramerIntensity = 0;
-    double MQuadramerIntensity = 0;
     double PentamerIntensity = 0;
-    double MPentamerIntensity = 0;
 
     // we take out: (i) polydispersity of chains (called "anglewt/sigma" before), (ii) orientation of chain (called "Viewing angle")
     // Now: chain only oriented along Qx
@@ -172,8 +164,6 @@ Iqabc(double qa, double qb, double qc,
 
     double real_phase = 1.0;
     double img_phase = 0.0;
-    double mreal_phase = 1.0;
-    double mimg_phase = 0.0;
 
     for(int k=1; k<5; k++){
         real_phase += cos(k*Length*(Q_X*ChainProjX + Q_Y*ChainProjY));
@@ -181,19 +171,15 @@ Iqabc(double qa, double qb, double qc,
 
     if(k==1){
     DimerIntensity  += pow(Amp*img_phase,2))/(2.0*Vol);
-    MDimerIntensity  += pow(MAmp*mimg_phase,2))/(2.0*Vol);
     }
     if(k==2){
     TrimerIntensity  += pow(Amp*img_phase,2))/(3.0*Vol);
-    MTrimerIntensity  += pow(MAmp*mimg_phase,2))/(3.0*Vol);
     }
     if(k==3){
     QuadramerIntensity  += pow(Amp*img_phase,2))/(4.0*Vol);
-    MQuadramerIntensity  += pow(MAmp*mimg_phase,2))/(4.0*Vol);
     }
     if(k==4){
     PentamerIntensity  += pow(Amp*img_phase,2))/(5.0*Vol);
-    MPentamerIntensity  += pow(MAmp*mimg_phase,2))/(5.0*Vol);
     }
     }
     //end k loop for dimers
@@ -202,15 +188,8 @@ Iqabc(double qa, double qb, double qc,
     if(FractionScale == 0){FractionScale = 1.0;}
 
     double SIntensity = SingletFraction*SingletIntensity + DimerFraction*DimerIntensity + TrimerFraction*TrimerIntensity + QuadramerFraction*QuadramerIntensity + PentamerFraction*PentamerIntensity;
-    double MIntensity = 0.0;
-    if(MVar <= 1){
-        MIntensity = MSingletIntensity*(SingletFraction + DimerFraction + TrimerFraction + QuadramerFraction + PentamerFraction);
-    }
-    else{
-        MIntensity = SingletFraction*MSingletIntensity + DimerFraction*MDimerIntensity + TrimerFraction*MTrimerIntensity + QuadramerFraction*MQuadramerIntensity + PentamerFraction*MPentamerIntensity;
-    }
 
-    double Intensity = (SIntensity+MIntensity)*(1E4)/FractionScale;
+    double Intensity = (SIntensity)*(1E4)/FractionScale;
 
     return Intensity;
 
