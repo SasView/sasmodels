@@ -139,10 +139,10 @@ class PyKernel(Kernel):
         # will use views into this vector, relying on the fact that a
         # an array of no dimensions acts like a scalar.
         parameter_vector = np.empty(len(partable.call_parameters)-2, np.double)
-
         # Create views into the array to hold the arguments.
         offset = 0
         kernel_args, volume_args = [], []
+        kernel_idx = []
         for p in partable.kernel_parameters:
             if p.length == 1:
                 # Scalar values are length 1 vectors with no dimensions.
@@ -150,26 +150,17 @@ class PyKernel(Kernel):
             else:
                 # Vector values are simple views.
                 v = parameter_vector[offset:offset+p.length]
-            offset += p.length
             if p in kernel_parameters:
                 kernel_args.append(v)
+                kernel_idx.append(offset)
             if p in volume_parameters:
                 volume_args.append(v)
+            offset += p.length
 
         # Hold on to the parameter vector so we can use it to call kernel later.
         # This may also be required to preserve the views into the vector.
         self._parameter_vector = parameter_vector
-
-        # Generate a closure which calls the kernel with the views into the
-        # parameter array.
-        if q_input.is_2d:
-            form = model_info.Iqxy
-            qx, qy = q_input.q[:, 0], q_input.q[:, 1]
-            self._form = lambda: form(qx, qy, *kernel_args)
-        else:
-            form = model_info.Iq
-            q = q_input.q
-            self._form = lambda: form(q, *kernel_args)
+        self._kernel_idx = kernel_idx
 
         # Generate a closure which calls the form_volume if it exists.
         self._volume_args = volume_args
@@ -191,9 +182,11 @@ class PyKernel(Kernel):
         #call_details.show(values)
         radius = ((lambda: 0.0) if radius_effective_mode == 0
                   else (lambda: self._radius(radius_effective_mode)))
+        
+        _form = self.info.Iqxy if self.q_input.is_2d else self.info.Iq
         self.result = _loops(
-            self._parameter_vector, self._form, self._volume, radius,
-            self.q_input.nq, call_details, values, cutoff,self.device)
+            self._parameter_vector, self._kernel_idx, _form, self._volume, radius,
+            self.q_input, call_details, values, cutoff, self.device)
 
     def release(self):
         # type: () -> None
@@ -204,7 +197,7 @@ class PyKernel(Kernel):
         self.q_input = None
 
 
-def _loops(parameters, form, form_volume, form_radius, nq, call_details,
+def _loops(parameters, kernel_idx, form, form_volume, form_radius, q_input, call_details,
            values, cutoff,device = 'cpu'):
     # type: (np.ndarray, Callable[[], np.ndarray], Callable[[], float], Callable[[], float], int, CallDetails, np.ndarray, float, str) -> None
     ################################################################
@@ -225,13 +218,14 @@ def _loops(parameters, form, form_volume, form_radius, nq, call_details,
     # calling the respective functions.
     n_pars = len(parameters)
     parameters = torch.DoubleTensor(parameters)
-    print(parameters)
+    q_values = torch.DoubleTensor(q_input.q)
     #parameters[:] = values[2:n_pars+2]
     parameters[:] = torch.DoubleTensor(values[2:n_pars+2]).to(device)
 
     print("parameters",parameters)
     if call_details.num_active == 0:
-        total = form()
+        kernel_args = [parameters[i] for i in kernel_idx]
+        total = form(q_values, *kernel_args)
         weight_norm = 1.0
         weighted_shell, weighted_form = form_volume()
         weighted_radius = form_radius()
@@ -259,7 +253,7 @@ def _loops(parameters, form, form_volume, form_radius, nq, call_details,
         pd_length = call_details.pd_length[:call_details.num_active]
 
         #total = np.zeros(nq, np.float64)
-        total = torch.zeros(nq, dtype= torch.double).to(device)
+        total = torch.zeros(q_input.nq, dtype= torch.double).to(device)
 
         #print("ll", range(call_details.num_eval))
         #parallel for loop
@@ -287,7 +281,10 @@ def _loops(parameters, form, form_volume, form_radius, nq, call_details,
                 # exclude all q for that NaN.  Even better would be to have an
                 # INVALID expression like the C models, but that is expensive.
                 #Iq = np.asarray(form(), 'd')
-                Iq = torch.asarray(form()).to(device)
+                #print(parameters)
+                #print("kernel_idx:", kernel_idx)
+                kernel_args = [parameters[i] for i in kernel_idx]
+                Iq = torch.asarray(form(q_values, *kernel_args)).to(device)
                 if torch.isnan(Iq).any():
                     continue
 

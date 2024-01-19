@@ -62,7 +62,7 @@ P(q)=(scale/V)*[3V(sld-sld_solvent)*(sin(qr)-qr cos(qr))
 category = "shape:sphere"
 
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "",
+parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "volume",
                "Layer scattering length density"],
               ["sld_solvent", "1e-6/Ang^2", 6, [-inf, inf], "",
                "Solvent scattering length density"],
@@ -71,7 +71,7 @@ parameters = [["sld", "1e-6/Ang^2", 1, [-inf, inf], "",
              ]
 
 
-def form_volume(radius):
+def form_volume(sld, radius):
     """Calculate volume for sphere"""
     return 1.333333333333333 * pi * radius ** 3
 
@@ -93,7 +93,7 @@ def Iq(q, sld, sld_solvent, radius):
     ## set numpy to ignore the 0/0 error before we do though...
     bes = 3 * (sn - qr * cn) / qr ** 3 # may be 0/0 but we fix that next line
     bes[qr == 0] = 1
-    fq = bes * (sld - sld_solvent) * form_volume(radius)
+    fq = bes * (sld - sld_solvent) * form_volume(sld, radius)
     return 1.0e-4 * fq ** 2
 Iq.vectorized = True  # Iq accepts an array of q values
 
