@@ -146,7 +146,7 @@ class Slit1D(Resolution):
 
         self.q = q.flatten()
         self.q_calc = (
-            slit_extend_q(q, q_width, q_length)
+            slit_extend_q(q, q_length, q_width)
             if q_calc is None else np.sort(q_calc)
         )
 
@@ -216,7 +216,7 @@ def pinhole_resolution(q_calc, q, q_width, nsigma=PINHOLE_N_SIGMA):
     return weights
 
 
-def slit_resolution(q_calc, q, width, length, n_length=30):
+def slit_resolution(q_calc, q, length, width, n_length=30):
     r"""
     Build a weight matrix to compute *I_s(q)* from *I(q_calc)*, given
     $q_\perp$ = *width* (in the high-resolution axis) and $q_\parallel$
@@ -282,7 +282,7 @@ def slit_resolution(q_calc, q, width, length, n_length=30):
     where $I(u_j)$ is the value at the mid-point, and $\Delta u_j$ is the
     difference between consecutive edges which have been first converted
     to $u$.  Only $u_j \in [0, \Delta q_\perp]$ are used, which corresponds
-    to $q_j \in \left[q, \sqrt{q^2 + \Delta q_\perp}\right]$, so
+    to $q_j \in \left[q, \sqrt{q^2 + \Delta q_\perp^2}\right]$, so
 
     .. math::
 
@@ -339,7 +339,6 @@ def slit_resolution(q_calc, q, width, length, n_length=30):
 
 
     """
-
     # np.set_printoptions(precision=6, linewidth=10000)
 
     # The current algorithm is a midpoint rectangle rule.
@@ -348,37 +347,37 @@ def slit_resolution(q_calc, q, width, length, n_length=30):
     weights = np.zeros((len(q), len(q_calc)), 'd')
 
     #print(q_calc)
-    for i, (qi, w, l) in enumerate(zip(q, width, length)):
-        if w == 0. and l == 0.:
+    for i, (qi, wi, li) in enumerate(zip(q, width, length)):
+        if wi == 0. and li == 0.:
             # Perfect resolution, so return the theory value directly.
             # Note: assumes that q is a subset of q_calc.  If qi need not be
             # in q_calc, then we can do a weighted interpolation by looking
             # up qi in q_calc, then weighting the result by the relative
             # distance to the neighbouring points.
             weights[i, :] = (q_calc == qi)
-        elif l == 0:
-            weights[i, :] = _q_perp_weights(q_edges, qi, w)
-        elif w == 0:
-            in_x = 1.0 * ((q_calc >= qi-l) & (q_calc <= qi+l))
-            abs_x = 1.0*(q_calc < abs(qi - l)) if qi < l else 0.
-            #print(qi - l, qi + l)
+        elif wi == 0:
+            weights[i, :] = _q_perp_weights(q_edges, qi, li)
+        elif li == 0:
+            in_x = 1.0 * ((q_calc >= qi-wi) & (q_calc <= qi+wi))
+            abs_x = 1.0*(q_calc < abs(qi - wi)) if qi < wi else 0.
+            #print(qi - w, qi + w)
             #print(in_x + abs_x)
-            weights[i, :] = (in_x + abs_x) * np.diff(q_edges) / (2*l)
+            weights[i, :] = (in_x + abs_x) * np.diff(q_edges) / (2*wi)
         else:
             for k in range(-n_length, n_length+1):
-                weights[i, :] += _q_perp_weights(q_edges, qi+k*l/n_length, w)
+                weights[i, :] += _q_perp_weights(q_edges, qi+k*wi/n_length, li)
             weights[i, :] /= 2*n_length + 1
 
     return weights.T
 
 
-def _q_perp_weights(q_edges, qi, w):
+def _q_perp_weights(q_edges, qi, length):
     # Convert bin edges from q to u
-    u_limit = np.sqrt(qi**2 + w**2)
+    u_limit = np.sqrt(qi**2 + length**2)
     u_edges = q_edges**2 - qi**2
     u_edges[q_edges < abs(qi)] = 0.
     u_edges[q_edges > u_limit] = u_limit**2 - qi**2
-    weights = np.diff(np.sqrt(u_edges))/w
+    weights = np.diff(np.sqrt(u_edges))/length
     #print("i, qi",i,qi,qi+width)
     #print(q_calc)
     #print(weights)
@@ -399,13 +398,13 @@ def pinhole_extend_q(q, q_width, nsigma=PINHOLE_N_SIGMA):
     return linear_extrapolation(q, q_min, q_max)
 
 
-def slit_extend_q(q, width, length):
+def slit_extend_q(q, length, width):
     """
     Given *q*, *width* and *length*, find a set of sampling points *q_calc* so
     that each point I(q) has sufficient support from the underlying
     function.
     """
-    q_min, q_max = np.min(q-length), np.max(np.sqrt((q+length)**2 + width**2))
+    q_min, q_max = np.min(q-width), np.max(np.sqrt((q+width)**2 + length**2))
 
     return geometric_extrapolation(q, q_min, q_max)
 
@@ -510,7 +509,7 @@ def geometric_extrapolation(q, q_min, q_max, points_per_decade=None):
     data_min, data_max = q[0], q[-1]
     if points_per_decade is None:
         if data_max > data_min:
-            log_delta_q = (len(q) - 1) / (log(data_max) - log(data_min))
+            log_delta_q = (log(data_max) - log(data_min)) / (len(q) - 1)
         else:
             log_delta_q = log(10.) / DEFAULT_POINTS_PER_DECADE
     else:
@@ -518,12 +517,12 @@ def geometric_extrapolation(q, q_min, q_max, points_per_decade=None):
     if q_min < data_min:
         if q_min < 0:
             q_min = data_min*MINIMUM_ABSOLUTE_Q
-        n_low = int(np.ceil(log_delta_q * (log(q[0])-log(q_min))))
+        n_low = int(np.ceil((log(q[0])-log(q_min)) / log_delta_q))
         q_low = np.logspace(log10(q_min), log10(q[0]), n_low+1)[:-1]
     else:
         q_low = []
     if q_max > data_max:
-        n_high = int(np.ceil(log_delta_q * (log(q_max)-log(data_max))))
+        n_high = int(np.ceil((log(q_max)-log(data_max)) / log_delta_q))
         q_high = np.logspace(log10(data_max), log10(q_max), n_high+1)[1:]
     else:
         q_high = []
@@ -561,7 +560,7 @@ def gaussian(q, q0, dq, nsigma=2.5):
     return exp(-0.5*((q-q0)/dq)**2)/(sqrt(2*pi)*dq)/(1-two_tail_density)
 
 
-def romberg_slit_1d(q, width, length, form, pars):
+def romberg_slit_1d(q, length, width, form, pars):
     """
     Romberg integration for slit resolution.
 
@@ -581,32 +580,32 @@ def romberg_slit_1d(q, width, length, form, pars):
         width = [width]*len(q)
     if np.isscalar(length):
         length = [length]*len(q)
-    _int_w = lambda w, qi: eval_form(sqrt(qi**2 + w**2), form, pars)
-    _int_l = lambda l, qi: eval_form(abs(qi+l), form, pars)
+    _int_l = lambda li, qi: eval_form(sqrt(qi**2 + li**2), form, pars)
+    _int_w = lambda wi, qi: eval_form(abs(qi+wi), form, pars)
     # If both width and length are defined, then it is too slow to use dblquad.
     # Instead use trapz on a fixed grid, interpolated into the I(Q) for
     # the extended Q range.
     #_int_wh = lambda w, h, qi: eval_form(sqrt((qi+h)**2 + w**2), form, pars)
-    q_calc = slit_extend_q(q, np.asarray(width), np.asarray(length))
+    q_calc = slit_extend_q(q, np.asarray(length), np.asarray(width))
     Iq = eval_form(q_calc, form, pars)
     result = np.empty(len(q))
-    for i, (qi, w, l) in enumerate(zip(q, width, length)):
-        if l == 0.:
-            total = romberg(_int_w, 0, w, args=(qi,),
+    for i, (qi, wi, li) in enumerate(zip(q, width, length)):
+        if wi == 0.:
+            total = romberg(_int_l, 0, li, args=(qi,),
                             divmax=100, vec_func=True, tol=0, rtol=1e-8)
-            result[i] = total/w
-        elif w == 0.:
-            total = romberg(_int_l, -l, l, args=(qi,),
+            result[i] = total/li
+        elif li == 0.:
+            total = romberg(_int_w, -wi, wi, args=(qi,),
                             divmax=100, vec_func=True, tol=0, rtol=1e-8)
-            result[i] = total/(2*l)
+            result[i] = total/(2*wi)
         else:
-            w_grid = np.linspace(0, w, 21)[None, :]
-            l_grid = np.linspace(-l, l, 23)[:, None]
-            u_sub = sqrt((qi+l_grid)**2 + w_grid**2)
+            l_grid = np.linspace(0, li, 21)[None, :]
+            w_grid = np.linspace(-wi, wi, 23)[:, None]
+            u_sub = sqrt((qi+w_grid)**2 + l_grid**2)
             f_at_u = np.interp(u_sub, q_calc, Iq)
             #print(np.trapz(Iu, w_grid, axis=1))
-            total = np.trapz(np.trapz(f_at_u, w_grid, axis=1), l_grid[:, 0])
-            result[i] = total / (2*l*w)
+            total = np.trapz(np.trapz(f_at_u, l_grid, axis=1), w_grid[:, 0])
+            result[i] = total / (2*li*wi)
             # from scipy.integrate import dblquad
             # r, err = dblquad(_int_wh, -h, h, lambda h: 0., lambda h: w,
             #                  args=(qi,))
@@ -1147,7 +1146,7 @@ def _eval_demo_1d(resolution, title):
 
     if isinstance(resolution, Slit1D):
         width, length = resolution.q_width, resolution.q_length
-        Iq_romb = romberg_slit_1d(resolution.q, width, length, model, pars)
+        Iq_romb = romberg_slit_1d(resolution.q, length, width, model, pars)
     else:
         dq = resolution.q_width
         Iq_romb = romberg_pinhole_1d(resolution.q, dq, model, pars)
@@ -1175,13 +1174,13 @@ def demo_slit_1d():
     Show example of slit smearing.
     """
     q = np.logspace(-4, np.log10(0.2), 100)
-    w = l = 0.
-    #w = 0.000000277790
-    w = 0.0277790
-    #l = 0.00277790
-    #l = 0.0277790
-    resolution = Slit1D(q, w, l)
-    _eval_demo_1d(resolution, title="(%g,%g) Slit Resolution"%(w, l))
+    width = length = 0.
+    #width = 0.000000277790
+    length = 0.0277790
+    #length = 0.00277790
+    #length = 0.0277790
+    resolution = Slit1D(q, length, width)
+    _eval_demo_1d(resolution, title="(%g,%g) Slit Resolution"%(length, width))
 
 def demo():
     """
