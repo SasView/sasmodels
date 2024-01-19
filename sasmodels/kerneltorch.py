@@ -97,6 +97,71 @@ class PyInput(object):
         self.q = None
 
 
+class FunnyKernel(Kernel):
+    def __init__(self, model_info, q_input, device):
+        self.device = device
+        self.dtype = np.dtype('d')
+        self.info = model_info
+        self.q_input = q_input
+        self.dim = '2d' if q_input.is_2d else '1d'
+
+
+    def Iq(self, pars, scale, background):
+        # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> np.ndarray
+        _, F2, _, shell_volume, _ = self.Fq(pars)
+        combined_scale = scale/shell_volume
+        background = background
+        return combined_scale*F2 + background
+    __call__ = Iq
+
+    def Fq(self, pars):
+        # type: (CallDetails, np.ndarray, np.ndarray, float, bool, int) -> np.ndarray
+
+        self._call_kernel(pars)
+        #print("returned",self.q_input.q, self.result)
+        nout = 2 if self.info.have_Fq and self.dim == '1d' else 1
+        total_weight = self.result[nout*self.q_input.nq + 0]
+        # Note: total_weight = sum(weight > cutoff), with cutoff >= 0, so it
+        # is okay to test directly against zero.  If weight is zero then I(q),
+        # etc. must also be zero.
+        if total_weight == 0.:
+            total_weight = 1.
+        # Note: shell_volume == form_volume for solid objects
+        form_volume = self.result[nout*self.q_input.nq + 1]/total_weight
+        shell_volume = self.result[nout*self.q_input.nq + 2]/total_weight
+        radius_effective = self.result[nout*self.q_input.nq + 3]/total_weight
+        if shell_volume == 0.:
+            shell_volume = 1.
+        F1 = (self.result[1:nout*self.q_input.nq:nout]/total_weight
+              if nout == 2 else None)
+        F2 = self.result[0:nout*self.q_input.nq:nout]/total_weight
+        return F1, F2, radius_effective, shell_volume, form_volume/shell_volume
+
+    def release(self):
+        # type: () -> None
+        """
+        Free resources associated with the kernel instance.
+        """
+        #print("null release kernel")
+        pass
+
+    def _call_kernel(self, kernel_args):
+        _form = self.info.Iqxy if self.q_input.is_2d else self.info.Iq
+
+        #kernel_args = [parameters[i] for i in kernel_idx]
+        q_values = torch.DoubleTensor(self.q_input.q)
+        total = _form(q_values, *kernel_args)
+        weight_norm = 1.0
+
+        volume = self.info.form_volume
+    
+        weighted_shell, weighted_form = volume(1, 200), volume(1, 200)
+        weighted_radius = 0
+ 
+        self.result = np.hstack((total, weight_norm, weighted_form, weighted_shell, weighted_radius))
+
+
+
 class PyKernel(Kernel):
     """
     Callable SAS kernel.
@@ -175,6 +240,7 @@ class PyKernel(Kernel):
                         else (lambda mode: 1.0))
 
     def _call_kernel(self, call_details, values, cutoff, magnetic, radius_effective_mode):
+        print("VALUES", values)
         # type: (CallDetails, np.ndarray, np.ndarray, float, bool) -> None
         if magnetic:
             raise NotImplementedError("Magnetism not implemented for pure python models")
@@ -223,13 +289,17 @@ def _loops(parameters, kernel_idx, form, form_volume, form_radius, q_input, call
     parameters[:] = torch.DoubleTensor(values[2:n_pars+2]).to(device)
 
     print("parameters",parameters)
+    print("num active", call_details.num_active)
     if call_details.num_active == 0:
         kernel_args = [parameters[i] for i in kernel_idx]
+        print(kernel_args)
         total = form(q_values, *kernel_args)
         weight_norm = 1.0
         weighted_shell, weighted_form = form_volume()
         weighted_radius = form_radius()
-
+        print(weighted_shell, weighted_form)
+        print(weighted_radius)
+        result = np.hstack((total, weight_norm, weighted_form, weighted_shell, weighted_radius))
     else:
         #transform to tensor flow
         pd_value = torch.DoubleTensor(values[2+n_pars:2+n_pars + call_details.num_weights]).to(device)
@@ -296,8 +366,8 @@ def _loops(parameters, kernel_idx, form, form_volume, form_radius, q_input, call
                 weighted_form += weight * unweighted_form
                 weighted_radius += weight * form_radius()
 
-    #result = np.hstack((total, weight_norm, weighted_form, weighted_shell, weighted_radius))
-    result = torch.hstack((total, weight_norm, weighted_form, weighted_shell, weighted_radius)).to(device)
+        #result = np.hstack((total, weight_norm, weighted_form, weighted_shell, weighted_radius))
+        result = torch.hstack((total, weight_norm, weighted_form, weighted_shell, weighted_radius)).to(device)
 
     return result
 

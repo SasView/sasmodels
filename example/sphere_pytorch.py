@@ -1,55 +1,77 @@
-"""
-Minimal example of calling a kernel for a specific set of q values.
-
-        npts = values.pop(parameter.name+'_pd_n', 0)
-        width = values.pop(parameter.name+'_pd', 0.0)
-        nsigma = values.pop(parameter.name+'_pd_nsigma', 3.0)
-        distribution = values.pop(parameter.name+'_pd_type', 'gaussian')
-
-"""
-import time
-
 import torch
-
+import time
 from numpy import logspace, sqrt
 from matplotlib import pyplot as plt
 from sasmodels.core import load_model
-from sasmodels.direct_model import call_kernel, get_mesh
-from sasmodels.details import make_kernel_args, dispersion_mesh
+from sasmodels.direct_model import call_kernel,get_mesh
+from sasmodels.details import make_kernel_args
 
 import sasmodels.kerneltorch as kt
 
-device = torch.device('mps')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+#device = torch.device('mps')
 
-def make_kernel(model, q_vectors):
+print("device",device)
+
+def make_kernel(model, q_vectors,device, new=False):
     """Instantiate the python kernel with input *q_vectors*"""
-    q_input = kt.PyInput(q_vectors, dtype=torch.float32)
-    return kt.PyKernel(model.info, q_input)
+    q_input = kt.PyInput(q_vectors, dtype=torch.double)
+    if new:
+        return kt.FunnyKernel(model.info, q_input, device = device)
+    else:
+        return kt.PyKernel(model.info, q_input, device = device)
 
 
 model = load_model('_spherepy')
+q = logspace(-3, -1, 200)
+print("q",q[6])
+kernel = model.make_kernel([q])
 
-q = torch.logspace(-3, -1, 200).to(device)
+pars = {'radius': 200, 'radius_pd': 0.1, 'radius_pd_n':1000, 'sld':2, 'sld_pd': 0.1, 'sld_pd_n':100, 'scale': 2, 'sld_solvent':1}
+pars = {'radius': 200, 'sld':2, 'scale': 2, 'sld_solvent':3}
 
-
-#qq = logspace(-3, -1, 200)
-
-kernel = make_kernel(model, [q])
-
-
-
-pars = {'radius': 200, 'radius_pd': 0.2, 'radius_pd_n':10000, 'scale': 2}
-
-#mesh = get_mesh(kernel.info, pars, dim=kernel.dim)
-#print(mesh)
-
-#call_details, values, is_magnetic = make_kernel_args(kernel, mesh)
-#print(call_details)
-#print(values)
-
-t0 = time.time()
+# Original
+t_before = time.time()
 Iq = call_kernel(kernel, pars)
-elapsed = time.time() - t0
-print('Computation time:', elapsed)
+t_after = time.time()
+total_np = t_after -t_before
+print("Iq",Iq[6])
+print("Tota Numpy: ",total_np)
 
-print(Iq)
+# PyTorch
+t_before = time.time()
+q_t = torch.logspace(start=-3, end=-1, steps=200).to(device)
+kernel = make_kernel(model, [q_t],device)
+Iq_t = call_kernel(kernel, pars)
+print("Iq_t",Iq_t[6])
+
+
+
+kernel = make_kernel(model, [q_t],device, new=True)
+Iq_t2 = kernel.Iq([pars['sld'], pars['sld_solvent'], pars['radius']], scale=pars['scale'], background=0)
+#Iq_t2 = call_kernel(kernel, pars)
+print("Iq_t",Iq_t[6])
+print("Iq_t2", Iq_t2[6])
+
+
+
+
+# call_kernel unwrap
+#calculator = kernel
+#cutoff=0.
+#mono=False
+
+#mesh = get_mesh(calculator.info, pars, dim=calculator.dim, mono=mono)
+#print("in call_kernel: pars:", list(zip(*mesh))[0])
+#call_details, values, is_magnetic = make_kernel_args(calculator, mesh)
+#print("in call_kernel: values:", values)
+#Iq_t = calculator(call_details, values, cutoff, is_magnetic)
+
+t_after = time.time()
+total_torch = t_after -t_before
+
+
+
+print("Total Pytorch: ",total_torch)
+
+
