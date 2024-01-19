@@ -10,13 +10,13 @@ import sasmodels.kerneltorch as kt
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-device = torch.device('mps')
+#device = torch.device('mps')
 
 print("device",device)
 
 def make_kernel(model, q_vectors,device):
     """Instantiate the python kernel with input *q_vectors*"""
-    q_input = kt.PyInput(q_vectors, dtype=torch.float64)
+    q_input = kt.PyInput(q_vectors, dtype=torch.double)
     return kt.PyKernel(model.info, q_input, device = device)
 
 
