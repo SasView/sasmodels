@@ -1,3 +1,5 @@
+static double checksum = 0.0;
+
 double Iq(
     double qexp, 
     double radius,
@@ -8,14 +10,37 @@ double Iq(
     double z2
     )
 {
-    double a;
-    double b;
-    double c1;
-    double c2;
-    double d1;
-    double d2;
+    static double a;
+    static double b;
+    static double c1;
+    static double c2;
+    static double d1;
+    static double d2;
+    static double last_radius = -2.0; // Radius is always greater than zero
+    static double last_volumefraction = -0.0;
+    static double last_k1 =  0.0;
+    static double last_k2 = 0.0;
+    static double last_z1 = 0.0;
+    static double last_z2 = 0.0;
     int debug;
     int checkFlag;
+
+    int changed = (
+        (last_radius != radius)
+        || (last_volumefraction != volumefraction)
+        || (last_k1 != k1)
+        || (last_k2 != k2)
+        || (last_z1 != z1)
+        || (last_z2 != z2)
+    );
+    if (changed) {
+
+        last_radius = radius;
+        last_volumefraction = volumefraction;
+        last_k1 = k1;
+        last_k2 = k2;
+        last_z1 = z1;
+        last_z2 = z2;
 
     a = 1.0;
     b = 1.0;
@@ -52,10 +77,10 @@ double Iq(
         k2 = temp;
     }
 
-  
-  
-    TY_SolveEquations(z1, z2, k1, k2, volumefraction, &a, &b, &c1, &c2, &d1, &d2,debug );
-    checkFlag = TY_CheckSolution( z1, z2, k1, k2, volumefraction, a, b, c1, c2, d1, d2 );
+
+        TY_SolveEquations(z1, z2, k1, k2, volumefraction, &a, &b, &c1, &c2, &d1, &d2,debug );
+        checkFlag = TY_CheckSolution( z1, z2, k1, k2, volumefraction, a, b, c1, c2, d1, d2 );
+    }
 
     return SqTwoYukawa( qexp * 2 * radius, z1, z2, k1, k2, volumefraction, a, b, c1, c2, d1, d2 );
 
