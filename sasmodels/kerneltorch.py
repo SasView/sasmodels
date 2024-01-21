@@ -104,6 +104,9 @@ class FunnyKernel(Kernel):
         self.info = model_info
         self.q_input = q_input
         self.dim = '2d' if q_input.is_2d else '1d'
+        
+        call_parameters = model_info.parameters.call_parameters
+        self.parameters =  np.empty(len(call_parameters)-2, np.double)
 
 
     def Iq(self, pars, scale, background):
@@ -322,13 +325,33 @@ def _loops(parameters, kernel_idx, form, form_volume, form_radius, q_input, call
         pd_stride = call_details.pd_stride[:call_details.num_active]
         pd_length = call_details.pd_length[:call_details.num_active]
 
-        #total = np.zeros(nq, np.float64)
         total = torch.zeros(q_input.nq, dtype= torch.double).to(device)
 
-        #print("ll", range(call_details.num_eval))
-        #parallel for loop
-        # each look_index can be GPU/CPU thread: tid
-        # each thread has its own pd_index and p0_index
+        # #parallel loop preparation
+        
+        # #for parameter in parameters:
+        # total_cells = call_details.num_eval
+        # cells = torch.range(0, total_cells-1,1)
+
+        # #parameters repeated at every p0_length!
+        # parameters_tensor = torch.range(pd_value[p0_offset], pd_value[p0_offset + p0_length-1],1)
+        # print(f"parameters_tensor = {parameters_tensor}")
+
+        # #weights for enevy call_details.num_eval
+        # pd_index_end = (total_cells//pd_stride)%pd_length
+        # partial_weights_tensor = torch.empty(p0_length,dtype= torch.double).to(device)
+        # weights_tensor = torch.ones(total_cells,dtype= torch.double).to(device)
+
+
+        # for index_i in range(p0_length):
+        #     partial_weight_start = torch.prod(pd_weight[pd_offset+index_i][1:]).to(device)
+        #     partial_weights_tensor[index_i] = partial_weight_start
+        #     weights_tensor[index_i*p0_length:(index_i+1)*p0_length] = torch.mul(pd_weight[p0_offset:p0_offset+p0_length],partial_weights_tensor[index_i])
+
+        # print(f"weights_tensor = {weights_tensor}")
+
+        # #end of parallel loop preparation
+
 
         for loop_index in range(call_details.num_eval):
             # Update polydispersity parameter values.
