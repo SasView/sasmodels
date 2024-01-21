@@ -7,13 +7,15 @@
  *
  */
 
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#if 0
 #include "TY_TwoYukawa.h"
 #include "TY_cpoly.h"
 #include "TY_utility.h"
 #include "TY_PairCorrelation.h"
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
+#endif
 
 /*
  ================================================================================================== 

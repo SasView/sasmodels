@@ -7,12 +7,14 @@
  *
  */
 
-#include "TY_PairCorrelation.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 //#include <gsl/gsl_errno.h> 
 //#include <gsl/gsl_fft_real.h>
+#if 0
+#include "TY_PairCorrelation.h"
+#endif
 
 /*
 =================================================================================================== 

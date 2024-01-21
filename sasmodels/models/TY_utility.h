@@ -7,5 +7,6 @@
  *
  */
 #include <math.h>
+#include <float.h>
 
 double chop( double x );

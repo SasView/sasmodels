@@ -48,7 +48,7 @@ parameters = [
 
 ## uncomment the following if Iq works for vector x
 
-source = ["TY_PairCorrelation.c", "TY_cpoly.c","TY_TwoYukawa.c", "TY_utility.c", "TY_YukawaSq.c"]
+source = ["TY_utility.h", "TY_PairCorrelation.h", "TY_cpoly.h", "TY_TwoYukawa.h", "TY_PairCorrelation.c", "TY_cpoly.c","TY_TwoYukawa.c", "TY_utility.c", "TY_YukawaSq.c"]
 
 #source = ["test2yv2_inc.c"]
 

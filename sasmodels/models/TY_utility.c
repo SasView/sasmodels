@@ -7,7 +7,9 @@
  *
  */
 
+#if 0
 #include "TY_utility.h"
+#endif
 double chop( double x )
 {
 	if ( fabs(x) < 1E-6 )
