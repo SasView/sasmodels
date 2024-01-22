@@ -188,15 +188,11 @@ def view_url_wxapp(url):
     app.MainLoop()
 
 def qtview(html, url=""):
-    # type: (str, str) -> "QWebView"
+    # type: (str, str) -> "QWebEngineView"
     """View HTML in a Qt dialog"""
-    try:
-        from PyQt5.QtWebKitWidgets import QWebView
-        from PyQt5.QtCore import QUrl
-    except ImportError:
-        from PyQt4.QtWebKit import QWebView
-        from PyQt4.QtCore import QUrl
-    helpView = QWebView()
+    from PySide6.QtWebEngineWidgets import QWebEngineView
+    from PySide6.QtCore import QUrl
+    helpView = QWebEngineView()
     helpView.setHtml(html, QUrl(url))
     helpView.show()
     return helpView
@@ -205,10 +201,7 @@ def view_html_qtapp(html, url=""):
     # type: (str, str) -> None
     """HTML viewer app in Qt"""
     import sys
-    try:
-        from PyQt5.QtWidgets import QApplication
-    except ImportError:
-        from PyQt4.QtGui import QApplication
+    from PySide6.QtWidgets import QApplication
     app = QApplication([])
     frame = qtview(html, url)  # pylint: disable=unused-variable
     sys.exit(app.exec_())
@@ -217,18 +210,11 @@ def view_url_qtapp(url):
     # type: (str) -> None
     """URL viewer app in Qt"""
     import sys
-    try:
-        from PyQt5.QtWidgets import QApplication
-    except ImportError:
-        from PyQt4.QtGui import QApplication
+    from PySide6.QtGui import QApplication
+    from PySide6.QtWebEngineWidgets import QWebEngineView
+    from PySide6.QtCore import QUrl
     app = QApplication([])
-    try:
-        from PyQt5.QtWebKitWidgets import QWebView
-        from PyQt5.QtCore import QUrl
-    except ImportError:
-        from PyQt4.QtWebKit import QWebView
-        from PyQt4.QtCore import QUrl
-    frame = QWebView()
+    frame = QWebEngineView()
     frame.load(QUrl(url))
     frame.show()
     sys.exit(app.exec_())
@@ -239,19 +225,15 @@ view_html = view_html_qtapp
 def can_use_qt():
     # type: () -> bool
     """
-    Return True if QWebView exists.
+    Return True if QWebEngineView exists.
 
     Checks first in PyQt5 then in PyQt4
     """
     try:
-        from PyQt5.QtWebKitWidgets import QWebView  # pylint: disable=unused-import
+        from PySide6.QtWebEngineWidgets import QWebEngineView
         return True
     except ImportError:
-        try:
-            from PyQt4.QtWebKit import QWebView  # pylint: disable=unused-import
-            return True
-        except ImportError:
-            return False
+        return False
 
 def view_help(filename, qt=False):
     # type: (str, bool) -> None
@@ -278,7 +260,7 @@ def main():
     # type: () -> None
     """Command line interface to rst or html viewer."""
     import sys
-    view_help(sys.argv[1], qt=False)
+    view_help(sys.argv[1], qt=True)
 
 if __name__ == "__main__":
     main()
