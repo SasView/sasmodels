@@ -196,10 +196,11 @@ double TY_NonlinearEquation_2( double Z1, double Z2, double K1, double K2, doubl
 								 - c2 * TY_tau( Z2, Z1, Z2, a, b, c1, c2 ) * exp( -Z2 ) );
 }
 
-// Check the computed solutions satisfy the system of equations 
+// Check the computed solutions satisfy the system of equations (tol=1e-6)
 int TY_CheckSolution( double Z1, double Z2, double K1, double K2, double phi, 
 				      double a, double b, double c1, double c2, double d1, double d2 )
 {
+	// The chop(x) function returns zero when |x| < 1e-6.
 	double eq_1 = chop( TY_LinearEquation_1( Z1, Z2, K1, K2, phi, a, b, c1, c2, d1, d2 ) );
 	double eq_2 = chop( TY_LinearEquation_2( Z1, Z2, K1, K2, phi, a, b, c1, c2, d1, d2 ) );
 	double eq_3 = chop( TY_LinearEquation_3( Z1, Z2, K1, K2, phi, a, b, c1, c2, d1, d2 ) );

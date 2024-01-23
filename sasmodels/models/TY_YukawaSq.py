@@ -75,8 +75,6 @@ Authorship and Verification
 * **Last Modified by:** Yun Liu **Date:** January 22, 2024
 * **Last Reviewed by:** Yun Liu **Date:** January 22, 2024
 """
-
-from sasmodels.special import *
 from numpy import inf
 
 name = "TY_YukawaSq"
@@ -85,51 +83,32 @@ description = """"""
 
 category = "structure-factor"
 structure_factor = True
-
-single = False
+single = False  # make sure that it has double digit precision
+opencl = False  # related with parallel computing
 
 parameters = [ 
 #   ["name", "units", default, [lower, upper], "type", "description"],
     ["radius_effective", "Ang", 50.0, [-inf, inf], '', ''],
     ['volfraction', '', 0.1, [-inf, inf], '', ''],
-    ['k1', '', 6, [-inf, inf], '', ''],
-    ['k2', '', -2.0, [-inf, inf], '', ''],
+    ['k1', '', -6, [-inf, inf], '', ''],
+    ['k2', '', 2.0, [-inf, inf], '', ''],
     ['z1', '', 10.0, [-inf, inf], '', ''],
     ['z2', '', 2.0, [-inf, inf], '', ''],
     ]
-#def Iq(x, radius, volumefraction, k1, k2, z1, z2):
-#    """Absolute scattering"""
-#    q=x
-#    
-#    
-#    return q
 
-
-## uncomment the following if Iq works for vector x
-
-source = ["TY_utility.h", "TY_PairCorrelation.h", "TY_cpoly.h", "TY_TwoYukawa.h", "TY_PairCorrelation.c", "TY_cpoly.c","TY_TwoYukawa.c", "TY_utility.c", "TY_YukawaSq.c"]
-
-#source = ["test2yv2_inc.c"]
-
-#haveFq = True   # for beta calculation
-#single = False  # make sure that it has double digit precision
-opencl = False  # related with parallel computing
-
-#Iq.vectorized = True
-
-#def Iqxy(x, y, radius, volumefraction, k1, k2, z1, z2):
-#    """Absolute scattering of oriented particles."""
-#    ...
-#    return oriented_form(x, y, args)
-## uncomment the following if Iqxy works for vector x, y
-#Iqxy.vectorized = True
+source = [
+    "TY_utility.h", "TY_utility.c",
+    "TY_cpoly.h", "TY_cpoly.c",
+    "TY_PairCorrelation.h", "TY_PairCorrelation.c",
+    "TY_TwoYukawa.h", "TY_TwoYukawa.c",
+    "TY_YukawaSq.c",
+    #"TY_YukawaSq_old.c",
+    ]
 
 # The test results were generated with MatLab Code (TYSQ22) (Jan. 22, 2024)
-# Note that this test follows the definition of the original code : k1 < 0 means repulsion and k1 > 0 means attraction.
-# Paul K. and Yun discussed to switch sign of k1 (and k2) so that negative values mean attraction and positive ones mean repulsion.
-# Once the code is changed, the input values for k1 and k2 of the unit test need to change the signs.
+# Note that this test reverses the definition of the original code : k1 > 0 means repulsion and k1 < 0 means attraction.
 tests = [
     [{'scale': 1.0, 'background' : 0.0, 'radius_effective' : 50.0,
-      'volfraction' : 0.2, 'k1' : 6, 'k2':-2.0, 'z1':10, 'z2':2.0,'radius_effective_pd' : 0},
+      'volfraction' : 0.2, 'k1' : -6, 'k2':2.0, 'z1':10, 'z2':2.0,'radius_effective_pd' : 0},
      [0.0009425, 0.029845], [0.126775, 0.631068]],
 ]
