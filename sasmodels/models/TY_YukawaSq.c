@@ -29,7 +29,6 @@ void translate(
     }
 
     TY_SolveEquations(*z1, *z2, *k1, *k2, *volumefraction, a, b, c1, c2, d1, d2, debug );
-
     int checkFlag = TY_CheckSolution( *z1, *z2, *k1, *k2, *volumefraction, *a, *b, *c1, *c2, *d1, *d2 );
     if (!checkFlag) {
         *a = NAN;
@@ -67,7 +66,7 @@ double Iq(
     )
 {
     if (isnan(a)) {
-          return a;
+          return NAN;
     } else {
         return SqTwoYukawa( qexp * 2 * radius, z1, z2, k1, k2, volumefraction, a, b, c1, c2, d1, d2 );
     }
