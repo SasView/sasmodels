@@ -38,9 +38,25 @@ void translate(
     //printf("=> (a=%g, b=%g, c1=%g, c2=%g, d1=%g, d2=%g)\n", *a, *b, *c1, *c2, *d1, *d2);
 }
 
-// Normally constructed in generate.py, but we are doing something special here
-// so create them ourselves.
-// Using k1, k2 negative from the values given in the the model parameters
+// Uses undocumented features of the generate program, which may break with
+// future updates to sasmdoels/kernel_iq.c. See sasmodels/generate.py for
+// more details.
+
+// In this case we are (ab)using the "reparameterize" infrastructure by
+// writing a specialized parameter translation function to solve the O-Z
+// equations, returning a set of coefficients that work across all Q. This
+// overrides the macros that sasmodels.generate would otherwise create.
+// This will only work for the DLL execution engine; the opencl/cuda engine
+// does not have an explicit Q loop.
+
+// It would be nice to return the S(q) of the two potentials as plottable
+// intermediate results along with their coefficients, but this is too hard
+// to do with the C infrastructure.
+
+// Note: using k1, k2 negative from the values given in the the model parameters.
+// Also sorting (z1, k1), (z2, k2) by z in translate so that we don't need to do
+// so for each q. [An alternative might be to swap them in the solver if they
+// are in the wrong order, then return the swapped (c1, d1) and (c2, d2).]
 #define TRANSLATION_VARS(_v) \
    double z1=_v.z1, z2=_v.z2, k1=-_v.k1, k2=-_v.k2, vf=_v.volfraction; \
    double a, b, c1, c2, d1, d2; \

@@ -149,6 +149,19 @@ source files the model depends on, and :func:`ocl_timestamp` returns
 the latest time stamp amongst the source files (so you can check if
 the model needs to be rebuilt).
 
+The generated code is very ugly, making heavy use of C macros to build its
+functions. See the source for kernel_iq.c for a list along with a brief
+description of each.
+
+The C code can override some of these macros, allowing an
+arbitrary translation of the input parameters prior to the loop over Q
+when running in a DLL. In particular, it can call an expensive precalcution
+function and pass the results to the underlying I(Q). Note that there is
+no post-loop cleanup call, so memory allocated by malloc() will not be freed.
+TRANSLATION_VARS, CALL_VOLUME, CALL_RADIUS_EFFECTIVE can be directly substituted.
+CALL_{IQ,FQ}* are substituted with OVERRIDE_{IQ,FQ}*. See models/TY_YukawaSq.c
+for an example.
+
 The function :func:`make_doc` extracts the doc string and adds the
 parameter table to the top.  *make_figure* in *sasmodels/doc/genmodel*
 creates the default figure for the model.  [These two sets of code
@@ -158,6 +171,8 @@ from __future__ import print_function
 
 # TODO: determine which functions are useful outside of generate
 #__all__ = ["model_info", "make_doc", "make_source", "convert_type"]
+
+# TODO: write out the full C code rather than relying on macro expansion.
 
 import sys
 from os import environ
