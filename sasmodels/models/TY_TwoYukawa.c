@@ -209,7 +209,14 @@ int TY_CheckSolution( double Z1, double Z2, double K1, double K2, double phi,
 	double eq_6 = chop( TY_NonlinearEquation_2( Z1, Z2, K1, K2, phi, a, b, c1, c2, d1, d2 ) );
 	
 	// check if all equation are zero
-	return eq_1 == 0 && eq_2 == 0 && eq_3 == 0 && eq_4 == 0 && eq_5 == 0 && eq_6 == 0;
+	int flags = (eq_1 != 0) 
+		| ((eq_2 != 0)<<1) 
+		| ((eq_3 != 0)<<2) 
+		| ((eq_4 != 0)<<3)
+	        | ((eq_5 != 0)<<4)
+		| ((eq_6 != 0)<<5);
+	return flags;
+	//return eq_1 == 0 && eq_2 == 0 && eq_3 == 0 && eq_4 == 0 && eq_5 == 0 && eq_6 == 0;
 }
 
 void TY_ReduceNonlinearSystem( double Z1, double Z2, double K1, double K2, double phi, int debug )

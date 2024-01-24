@@ -29,9 +29,18 @@ void translate(
     }
 
     TY_SolveEquations(*z1, *z2, *k1, *k2, *volumefraction, a, b, c1, c2, d1, d2, debug );
-    int checkFlag = TY_CheckSolution( *z1, *z2, *k1, *k2, *volumefraction, *a, *b, *c1, *c2, *d1, *d2 );
-    if (!checkFlag) {
+    int checkFlags = TY_CheckSolution( *z1, *z2, *k1, *k2, *volumefraction, *a, *b, *c1, *c2, *d1, *d2 );
+    if (checkFlags != 0) {
         *a = NAN;
+        // return;
+        printf("Failing tests for equations");
+        for (int k=0; checkFlags != 0; k++) {
+            if (checkFlags & 1) {
+                printf(" %d", k+1);
+            }
+            checkFlags >>= 1;
+        }
+        printf("\n");
         return;
     }
     //printf("Solving (z1=%g, z2=%g, k1=%g, k2=%g, Vf=%g)\n", *z1, *z2, *k1, *k2, *volumefraction);
