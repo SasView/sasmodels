@@ -45,11 +45,8 @@ jobs:
         choco install opencl-intel-cpu-runtime
         python -m pip install --only-binary=pyopencl --find-links http://www.silx.org/pub/wheelhouse/ --trusted-host www.silx.org pyopencl
 
-<<<<<<< HEAD
-    - name: Test with pytest
-=======
     - name: Test with pytest (only on Windows for now since PoCL is failing on Ubuntu)
->>>>>>> 6b80a438 (work around pocl problems (for now))
+
       env:
         PYOPENCL_COMPILER_OUTPUT: 1
         SAS_OPENCL: none
