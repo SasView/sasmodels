@@ -369,7 +369,8 @@ def precompile_dlls(path, dtype="double"):
             old_path = kerneldll.SAS_DLL_PATH
             try:
                 kerneldll.SAS_DLL_PATH = path
-                dll = kerneldll.make_dll(source, model_info, dtype=numpy_dtype)
+                dll = kerneldll.make_dll(source, model_info,
+                                         dtype=numpy_dtype, system=True)
             finally:
                 kerneldll.SAS_DLL_PATH = old_path
             compiled_dlls.append(dll)
@@ -466,6 +467,13 @@ def test_composite_order():
         # the mixture model is tagged as e.g., A_sld, we ought to use a
         # regex subsitution s/^[A-Z]+_/_/, but removing all uppercase letters
         # is good enough.
+        # TODO: check that the models produce the same results
+        # Note that compare.py will give a misleading answer. For
+        # "cylinder+sphere" the A_radius parameter will use the default
+        # cylinder radius, but for "sphere+cylinder" it will use the default
+        # sphere radius so a simple comparison of the two will appear to be
+        # different unless you explicitly set radius, solvent, and solvent_sld
+        # for the A and B models.
         fst = [[x for x in p.name if x == x.lower()]
                for p in fst.info.parameters.kernel_parameters]
         snd = [[x for x in p.name if x == x.lower()]
@@ -507,9 +515,10 @@ def test_composite():
     #Test the the model produces the parameters that we would expect
     model = load_model("cylinder@hardsphere*sphere")
     actual = [p.name for p in model.info.parameters.kernel_parameters]
-    target = ["sld", "sld_solvent", "radius", "length", "theta", "phi",
-              RADIUS_ID, VOLFRAC_ID, STRUCTURE_MODE_ID, RADIUS_MODE_ID,
-              "A_sld", "A_sld_solvent", "A_radius"]
+    a_parts = ("sld", "sld_solvent", "radius", "length", "theta", "phi",
+        RADIUS_ID, VOLFRAC_ID, STRUCTURE_MODE_ID, RADIUS_MODE_ID)
+    b_parts = ("sld", "sld_solvent", "radius")
+    target = [*(f"A_{p}" for p in a_parts), *(f"B_{p}" for p in b_parts)]
     assert target == actual, "%s != %s"%(target, actual)
 
 

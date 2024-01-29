@@ -33,6 +33,7 @@ also use these for your own data loader.
 
 """
 import traceback
+from functools import wraps
 
 import numpy as np  # type: ignore
 from numpy import sqrt, sin, cos, pi
@@ -43,6 +44,7 @@ try:
     Data = Union["Data1D", "Data2D", "SesansData"]
     OptArray = Optional[np.ndarray]
     OptLimits = Optional[Tuple[float, float]]
+    OptString = Optional[str]
 except ImportError:
     pass
 # pylint: enable=unused-import
@@ -52,7 +54,10 @@ def load_data(filename, index=0):
     """
     Load data using a sasview loader.
     """
-    from sas.sascalc.dataloader.loader import Loader  # type: ignore
+    try:
+        from sasdata.dataloader.loader import Loader  # type: ignore
+    except ImportError as ie:
+        raise ImportError(f"{ie.name} is not available. Add sasdata to the python path.")
     loader = Loader()
     # Allow for one part in multipart file
     if '[' in filename:
@@ -64,7 +69,9 @@ def load_data(filename, index=0):
     if not isinstance(datasets, list):
         datasets = [datasets]
     for data in datasets:
-        if hasattr(data, 'x'):
+        if getattr(data, 'isSesans', False):
+            pass
+        elif hasattr(data, 'x'):
             data.qmin, data.qmax = data.x.min(), data.x.max()
             data.mask = (np.isnan(data.y) if data.y is not None
                          else np.zeros_like(data.x, dtype='bool'))
@@ -78,7 +85,10 @@ def set_beam_stop(data, radius, outer=None):
     """
     Add a beam stop of the given *radius*.  If *outer*, make an annulus.
     """
-    from sas.sascalc.dataloader.manipulations import Ringcut
+    try:
+        from sasdata.data_util.manipulations import Ringcut
+    except ImportError as ie:
+        raise ImportError(f"{ie.name} is not available. Add sasdata to the python path.")
     if hasattr(data, 'qx_data'):
         data.mask = Ringcut(0, radius)(data)
         if outer is not None:
@@ -94,7 +104,10 @@ def set_half(data, half):
     """
     Select half of the data, either "right" or "left".
     """
-    from sas.sascalc.dataloader.manipulations import Boxcut
+    try:
+        from sasdata.data_util.manipulations import Boxcut
+    except ImportError as ie:
+        raise ImportError(f"{ie.name} is not available. Add sasdata to the python path.")
     if half == 'right':
         data.mask += \
             Boxcut(x_min=-np.inf, x_max=0.0, y_min=-np.inf, y_max=np.inf)(data)
@@ -108,10 +121,21 @@ def set_top(data, cutoff):
     """
     Chop the top off the data, above *cutoff*.
     """
-    from sas.sascalc.dataloader.manipulations import Boxcut
+    try:
+        from sasdata.data_util.manipulations import Boxcut
+    except ImportError as ie:
+        raise ImportError(f"{ie.name} is not available. Add sasdata to the python path.")
     data.mask += \
         Boxcut(x_min=-np.inf, x_max=np.inf, y_min=-np.inf, y_max=cutoff)(data)
 
+
+class Source:
+    ...
+class Sample:
+    ...
+
+def _as_numpy(data):
+    return None if data is None else np.asarray(data)
 
 class Data1D(object):
     """
@@ -142,11 +166,12 @@ class Data1D(object):
     """
     def __init__(self, x=None, y=None, dx=None, dy=None):
         # type: (OptArray, OptArray, OptArray, OptArray) -> None
-        self.x, self.y, self.dx, self.dy = x, y, dx, dy
+        self.x, self.dx = _as_numpy(x), _as_numpy(dx)
+        self.y, self.dy = _as_numpy(y), _as_numpy(dy)
         self.dxl = None
         self.filename = None
-        self.qmin = x.min() if x is not None else np.NaN
-        self.qmax = x.max() if x is not None else np.NaN
+        self.qmin = self.x.min() if self.x is not None else np.NaN
+        self.qmax = self.x.max() if self.x is not None else np.NaN
         # TODO: why is 1D mask False and 2D mask True?
         self.mask = (np.isnan(y) if y is not None
                      else np.zeros_like(x, 'b') if x is not None
@@ -182,6 +207,8 @@ class SesansData(Data1D):
     def __init__(self, **kw):
         Data1D.__init__(self, **kw)
         self.lam = None  # type: OptArray
+        self.xaxis("SE length", "A")
+        self.yaxis("log(P)/(t L^2)", "1/A^2 1/cm")
 
 class Data2D(object):
     """
@@ -217,13 +244,13 @@ class Data2D(object):
     """
     def __init__(self, x=None, y=None, z=None, dx=None, dy=None, dz=None):
         # type: (OptArray, OptArray, OptArray, OptArray, OptArray, OptArray) -> None
-        self.qx_data, self.dqx_data = x, dx
-        self.qy_data, self.dqy_data = y, dy
-        self.data, self.err_data = z, dz
+        self.qx_data, self.dqx_data = _as_numpy(x), _as_numpy(dx)
+        self.qy_data, self.dqy_data = _as_numpy(y), _as_numpy(dy)
+        self.data, self.err_data = _as_numpy(z), _as_numpy(dz)
         self.mask = (np.isnan(z) if z is not None
                      else np.zeros_like(x, dtype='bool') if x is not None
                      else None)
-        self.q_data = np.sqrt(x**2 + y**2)
+        self.q_data = np.sqrt(self.qx_data**2 + self.qy_data**2)
         self.qmin = 1e-16
         self.qmax = np.inf
         self.detector = []
@@ -297,6 +324,25 @@ class Sample(object):
     def __init__(self):
         # type: () -> None
         pass
+
+def empty_sesans(z, wavelength=None, zacceptance=None):
+    data = SesansData(x=z, y=None, dx=None, dy=None)
+    data.filename = "fake data"
+    DEFAULT_WAVELENGTH = 5
+    if wavelength is None:
+        wavelength = DEFAULT_WAVELENGTH
+    if np.isscalar(wavelength):
+        wavelength = np.full_like(z, wavelength)
+    if zacceptance is None:
+        zacceptance = (np.pi/2, 'radians')
+    source = Source()
+    source.wavelength = wavelength
+    source.wavelength_unit = "A"
+    sample = Sample()
+    sample.zacceptance = zacceptance
+    data.source = source
+    data.sample = sample
+    return data
 
 def empty_data1D(q, resolution=0.0, L=0., dL=0.):
     # type: (np.ndarray, float, float, float) -> Data1D
@@ -379,7 +425,7 @@ def plot_data(data, view=None, limits=None):
 
     *data* is a sasview data object, either 1D, 2D or SESANS.
 
-    *view* is log or linear.
+    *view* is log, linear or normed.
 
     *limits* sets the intensity limits on the plot; if None then the limits
     are inferred from the data.
@@ -388,7 +434,7 @@ def plot_data(data, view=None, limits=None):
     # data, but they already handle the masking and graph markup already, so
     # do not repeat.
     if hasattr(data, 'isSesans') and data.isSesans:
-        _plot_result_sesans(data, None, None, use_data=True, limits=limits)
+        _plot_result_sesans(data, None, None, view, use_data=True, limits=limits)
     elif hasattr(data, 'qx_data') and not getattr(data, 'radial', False):
         _plot_result2D(data, None, None, view, use_data=True, limits=limits)
     else:
@@ -397,7 +443,7 @@ def plot_data(data, view=None, limits=None):
 
 def plot_theory(data, theory, resid=None, view=None, use_data=True,
                 limits=None, Iq_calc=None):
-    # type: (Data, OptArray, OptArray, str, bool, OptLimits, OptArray) -> None
+    # type: (Data, OptArray, OptArray, OptString, bool, OptLimits, OptArray) -> None
     """
     Plot theory calculation.
 
@@ -406,17 +452,19 @@ def plot_theory(data, theory, resid=None, view=None, use_data=True,
 
     *theory* is a matrix of the same shape as the data.
 
-    *view* is log or linear
+    *view* is log, linear or normed
 
     *use_data* is True if the data should be plotted as well as the theory.
 
     *limits* sets the intensity limits on the plot; if None then the limits
-    are inferred from the data.
+    are inferred from the data. If (-inf, inf) then use auto limits.
 
     *Iq_calc* is the raw theory values without resolution smearing
     """
+    if limits is not None and np.isinf(limits[0]):
+        limits = None
     if hasattr(data, 'isSesans') and data.isSesans:
-        _plot_result_sesans(data, theory, resid, use_data=True, limits=limits)
+        _plot_result_sesans(data, theory, resid, view, use_data=True, limits=limits)
     elif hasattr(data, 'qx_data') and not getattr(data, 'radial', False):
         _plot_result2D(data, theory, resid, view, use_data, limits=limits)
     else:
@@ -430,14 +478,17 @@ def protect(func):
     Decorator to wrap calls in an exception trapper which prints the
     exception and continues.  Keyboard interrupts are ignored.
     """
+    @wraps(func)
     def wrapper(*args, **kw):
         """
         Trap and print errors from function.
         """
         try:
             return func(*args, **kw)
-        except Exception:
-            traceback.print_exc()
+        except Exception as exc:
+            print("Traceback (most recent call last):")
+            print("".join(traceback.format_list(traceback.extract_stack(limit=4)[:-1]))[:-1])
+            print(f"{exc.__class__.__name__}: {exc}")
 
     return wrapper
 
@@ -543,8 +594,8 @@ def _plot_result1D(data, theory, resid, view, use_data,
 
 
 @protect
-def _plot_result_sesans(data, theory, resid, use_data, limits=None):
-    # type: (SesansData, OptArray, OptArray, bool, OptLimits) -> None
+def _plot_result_sesans(data, theory, resid, view, use_data, limits=None):
+    # type: (SesansData, OptArray, OptArray, OptString, bool, OptLimits) -> None
     """
     Plot SESANS results.
     """
@@ -553,6 +604,12 @@ def _plot_result_sesans(data, theory, resid, use_data, limits=None):
     use_theory = theory is not None
     use_resid = resid is not None
     num_plots = (use_data or use_theory) + use_resid
+
+    normed = (view == "normed")
+    #normed = True
+    offset, scale = 0, 1
+    if normed and theory is not None:
+        offset, scale = theory[-1], theory[0] - theory[-1]
 
     if use_data or use_theory:
         is_tof = data.lam is not None and (data.lam != data.lam[0]).any()
@@ -563,20 +620,20 @@ def _plot_result_sesans(data, theory, resid, use_data, limits=None):
                 plt.errorbar(data.x, np.log(data.y)/(data.lam*data.lam),
                              yerr=data.dy/data.y/(data.lam*data.lam))
             else:
-                plt.errorbar(data.x, data.y, yerr=data.dy)
+                #plt.errorbar(data.x, data.y, yerr=data.dy)
+                plt.errorbar(data.x, (data.y-offset)/scale, yerr=data.dy/scale)
         if theory is not None:
             if is_tof:
                 plt.plot(data.x, np.log(theory)/(data.lam*data.lam), '-')
             else:
-                plt.plot(data.x, theory, '-')
+                #plt.plot(data.x, theory, '-')
+                plt.plot(data.x, (theory-offset)/scale, '-')
         if limits is not None:
             plt.ylim(*limits)
 
         plt.xlabel('spin echo length ({})'.format(data._xunit))
-        if is_tof:
-            plt.ylabel(r'(Log (P/P$_0$))/$\lambda^2$')
-        else:
-            plt.ylabel('polarization (P/P0)')
+        plt.ylabel(r'$\log(P)/(t\lambda^2) (\mathrm{A}^{-2}\mathrm{cm}^{-1})$')
+        plt.xscale('log')
 
 
     if resid is not None:
@@ -584,7 +641,8 @@ def _plot_result_sesans(data, theory, resid, use_data, limits=None):
             plt.subplot(1, num_plots, (use_data or use_theory) + 1)
         plt.plot(data.x, resid, 'x')
         plt.xlabel('spin echo length ({})'.format(data._xunit))
-        plt.ylabel('residuals (P/P0)')
+        plt.ylabel('polarization residuals')
+        plt.xscale('log')
 
 
 @protect

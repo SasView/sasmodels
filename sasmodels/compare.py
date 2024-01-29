@@ -42,19 +42,24 @@ from . import weights
 from . import kerneldll
 from . import kernelcl
 from . import kernelcuda
-from .data import plot_theory, empty_data1D, empty_data2D, load_data
+from .data import plot_theory, empty_data1D, empty_data2D, empty_sesans, load_data
 from .direct_model import DirectModel, get_mesh
 from .generate import FLOAT_RE, set_integration_size
 
 # pylint: disable=unused-import
+from typing import Optional, Dict, Any, Callable, Tuple, List
+from .modelinfo import ModelInfo, Parameter, ParameterSet
+from .data import Data
+
 try:
-    from typing import Optional, Dict, Any, Callable, Tuple, List
+    # With python 3.8+ we can indicate that calculator takes floats.
+    from typing import Protocol
+    class Calculator(Protocol):
+        """Kernel calculator takes *par=value* keyword arguments."""
+        def __call__(self, **par: float) -> np.ndarray: ...
 except ImportError:
-    pass
-else:
-    from .modelinfo import ModelInfo, Parameter, ParameterSet
-    from .data import Data
-    Calculator = Callable[[float], np.ndarray]
+    #: Kernel calculator takes *par=value* keyword arguments.
+    Calculator = Callable[..., np.ndarray]
 # pylint: enable=unused-import
 
 USAGE = """
@@ -75,9 +80,9 @@ Options (* for default):
     -noise=0 sets the measurement error dI/I
     -res=0 sets the resolution width dQ/Q if calculating with resolution
     -lowq*/-midq/-highq/-exq use q values up to 0.05, 0.2, 1.0, 10.0
-    -q=min:max alternative specification of qrange
+    -q=min:max alternative specification of qrange; sesans uses 1/qmax:1/qmin
     -nq=128 sets the number of Q points in the data set
-    -1d*/-2d computes 1d or 2d data
+    -1d*/-2d/-sesans computes 1d, 2d or sesans data
     -zero indicates that q=0 should be included
 
     === model parameters ===
@@ -595,7 +600,7 @@ def parlist(model_info, pars, is2d):
     for p in parameters.user_parameters(pars, True):
         if any(p.id.endswith(x) for x in ('_M0', '_mtheta', '_mphi')):
             continue
-        if p.id in set(('up_frac_i', 'up_frac_f', 'up_angle', 'up_phi')):
+        if p.id in set(('up_frac_i', 'up_frac_f', 'up_theta', 'up_phi')):
             magnetic_pars.append("%s=%s"%(p.id, pars.get(p.id, p.default)))
             continue
         if not is2d and p.id in ('theta', 'phi', 'psi'):
@@ -609,7 +614,7 @@ def parlist(model_info, pars, is2d):
             relative_pd=p.relative_pd,
             M0=pars.get(p.id+'_M0', 0.),
             mphi=pars.get(p.id+'_mphi', 0.),
-            mtheta=pars.get(p.id+'_mtheta', 0.),
+            mtheta=pars.get(p.id+'_mtheta', 90.),
         )
         lines.append(_format_par(p.name, **fields))
         magnetic = magnetic or fields['M0'] != 0.
@@ -654,8 +659,8 @@ def suppress_magnetism(pars):
             pars[p] = 0
     return pars
 
-def time_calculation(calculator, pars, evals=1):
-    # type: (Calculator, ParameterSet, int) -> Tuple[np.ndarray, float]
+def time_calculation(calculator: Calculator, pars: ParameterSet, evals: int=1):
+    # not type: (Calculator, ParameterSet, int) -> Tuple[np.ndarray, float]
     """
     Compute the average calculation time over N evaluations.
 
@@ -680,7 +685,7 @@ def make_data(opts):
     Generate an empty dataset, used with the model to set Q points
     and resolution.
 
-    *opts* contains the options, with 'qmax', 'nq', 'res',
+    *opts* contains the options, with 'qmax', 'nq', 'sesans', 'res',
     'accuracy', 'is2d' and 'view' parsed from the command line.
     """
     qmin, qmax, nq, res = opts['qmin'], opts['qmax'], opts['nq'], opts['res']
@@ -690,6 +695,13 @@ def make_data(opts):
         data.accuracy = opts['accuracy']
         set_beam_stop(data, qmin)
         index = ~data.mask
+    elif opts['sesans']:
+        if opts['view'] == 'log':
+            z = np.logspace(-math.log10(qmax), -math.log10(qmin), nq)
+        else:
+            z = np.linspace(1/qmax, 1/qmin, nq)
+        data = empty_sesans(z)
+        index = slice(None, None)
     else:
         if opts['view'] == 'log' and not opts['zero']:
             q = np.logspace(math.log10(qmin), math.log10(qmax), nq)
@@ -704,8 +716,10 @@ def make_data(opts):
         index = slice(None, None)
     return data, index
 
-def make_engine(model_info, data, dtype, cutoff, ngauss=0):
-    # type: (ModelInfo, Data, str, float, int) -> Calculator
+def make_engine(
+    model_info: ModelInfo, data: Data, dtype: str, cutoff: float, ngauss: int=0,
+    ) -> Calculator:
+    # not type: (ModelInfo, Data, str, float, int) -> Calculator
     """
     Generate the appropriate calculation engine for the given datatype.
 
@@ -754,6 +768,9 @@ def compare(opts, limits=None, maxdim=None):
 
     *maxdim* **DEPRECATED** Use opts['maxdim'] instead.
     """
+    if (opts['sesans'] and limits is None) or opts['sets'] > 1:
+        limits = (-np.inf, np.inf)
+
     # CRUFT: remove maxdim parameter
     if maxdim is not None:
         opts['maxdim'] = maxdim
@@ -795,7 +812,7 @@ def compare(opts, limits=None, maxdim=None):
             if have_comp:
                 plot_profile(comp._kernel.info, label='comp', **comp_pars)
                 pylab.legend()
-    if opts['plot']:
+    if opts['plot'] or opts['show_weights'] or opts['show_profile']:
         import matplotlib.pyplot as plt
         plt.show()
     return limits
@@ -1009,7 +1026,7 @@ OPTIONS = [
     # Data generation
     'data=', 'noise=', 'res=', 'nq=', 'q=',
     'lowq', 'midq', 'highq', 'exq', 'zero',
-    '2d', '1d',
+    '2d', '1d', 'sesans',
 
     # Parameter set
     'preset', 'random', 'random=', 'sets=',
@@ -1169,6 +1186,7 @@ def parse_opts(argv):
         'qmin'      : None,
         'qmax'      : 0.05,
         'nq'        : 128,
+        'sesans'    : False,
         'res'       : '0.0',
         'noise'     : 0.0,
         'accuracy'  : 'Low',
@@ -1206,6 +1224,7 @@ def parse_opts(argv):
         elif arg == '-highq':   opts['qmax'] = 1.0
         elif arg == '-midq':    opts['qmax'] = 0.2
         elif arg == '-lowq':    opts['qmax'] = 0.05
+        elif arg == '-sesans':  opts['sesans'] = True
         elif arg == '-zero':    opts['zero'] = True
         elif arg.startswith('-nq='):       opts['nq'] = int(arg[4:])
         elif arg.startswith('-q='):

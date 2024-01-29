@@ -22,6 +22,8 @@ on the individual parameters and send the model to the Bumps optimizers.
 """
 from __future__ import print_function, division
 
+import os
+
 import numpy as np  # type: ignore
 
 # TODO: fix sesans module
@@ -33,14 +35,11 @@ from .details import make_kernel_args, dispersion_mesh
 from .product import RADIUS_MODE_ID
 
 # pylint: disable=unused-import
-try:
-    from typing import Optional, Dict, Tuple, List, Callable
-    from collections import OrderedDict
-    from .data import Data
-    from .kernel import Kernel, KernelModel
-    from .modelinfo import Parameter, ParameterSet, ModelInfo
-except ImportError:
-    pass
+from typing import Optional, Dict, Tuple, List, Callable
+from collections import OrderedDict
+from .data import Data
+from .kernel import Kernel, KernelModel
+from .modelinfo import Parameter, ParameterSet, ModelInfo
 # pylint: enable=unused-import
 
 def call_kernel(calculator, pars, cutoff=0., mono=False):
@@ -119,12 +118,17 @@ def get_mesh(model_info, values, dim='1d', mono=False):
         active = lambda name: True
 
     #print("in get_mesh: pars:",[p.id for p in parameters.call_parameters])
-    mesh = [_get_par_weights(p, values, active(p.name))
+    values = values.copy()
+    mesh = [_pop_par_weights(p, values, active(p.name))
             for p in parameters.call_parameters]
+
+    if values:
+        raise TypeError(f"Unused parameters in call: {', '.join(values.keys())}")
+
     return mesh
 
 
-def _get_par_weights(parameter, values, active=True):
+def _pop_par_weights(parameter, values, active=True):
     # type: (Parameter, Dict[str, float], bool) -> Tuple[float, np.ndarray, np.ndarray]
     """
     Generate the distribution for parameter *name* given the parameter values
@@ -133,48 +137,45 @@ def _get_par_weights(parameter, values, active=True):
     Uses "name", "name_pd", "name_pd_type", "name_pd_n", "name_pd_sigma"
     from the *pars* dictionary for parameter value and parameter dispersion.
     """
-    value = float(values.get(parameter.name, parameter.default))
-    npts = values.get(parameter.name+'_pd_n', 0)
-    width = values.get(parameter.name+'_pd', 0.0)
-    relative = parameter.relative_pd
-    if npts == 0 or width == 0.0 or not active:
-        # Note: orientation parameters have the viewing angle as the parameter
-        # value and the jitter in the distribution, so be sure to set the
-        # empty pd for orientation parameters to 0.
-        pd = [value if relative or not parameter.polydisperse else 0.0], [1.0]
+    value = float(values.pop(parameter.name, parameter.default))
+    if parameter.polydisperse:
+        npts = values.pop(parameter.name+'_pd_n', 0)
+        width = values.pop(parameter.name+'_pd', 0.0)
+        nsigma = values.pop(parameter.name+'_pd_nsigma', 3.0)
+        distribution = values.pop(parameter.name+'_pd_type', 'gaussian')
+        relative = parameter.relative_pd
+        if npts == 0 or width == 0.0 or not active:
+            # Note: orientation parameters have the viewing angle as the parameter
+            # value and the jitter in the distribution, so be sure to set the
+            # empty pd for orientation parameters to 0.
+            pd = [value if relative else 0.0], [1.0]
+        else:
+            limits = parameter.limits
+            pd = weights.get_weights(distribution, npts, width, nsigma,
+                                    value, limits, relative)
     else:
-        limits = parameter.limits
-        disperser = values.get(parameter.name+'_pd_type', 'gaussian')
-        nsigma = values.get(parameter.name+'_pd_nsigma', 3.0)
-        pd = weights.get_weights(disperser, npts, width, nsigma,
-                                 value, limits, relative)
+        pd = [value], [1.0]
     return value, pd[0], pd[1]
 
 
-def _vol_pars(model_info, values):
-    # type: (ModelInfo, ParameterSet) -> Tuple[np.ndarray, np.ndarray]
-    vol_pars = [_get_par_weights(p, values)
-                for p in model_info.parameters.call_parameters
-                if p.type == 'volume']
-    #import pylab; pylab.plot(vol_pars[0][0],vol_pars[0][1]); pylab.show()
-    dispersity, weight = dispersion_mesh(model_info, vol_pars)
-    return dispersity, weight
-
-
 def _make_sesans_transform(data):
-    from sas.sascalc.data_util.nxsunit import Converter
-
     # Pre-compute the Hankel matrix (H)
-    SElength = Converter(data._xunit)(data.x, "A")
+    SElength, SEunits = data.x, data._xunit
+    wavelength, wunits = data.source.wavelength, data.source.wavelength_unit
+    theta_max, theta_units = data.sample.zacceptance
+    if SEunits != "A" or wunits != "A" or theta_units != "radians":
+        try:
+            from sasdata.data_util.nxsunit import Converter
+        except ImportError as ie:
+            raise ImportError(f"{ie.name} is not available. Add sasdata to the python path.")
 
-    theta_max = Converter("radians")(data.sample.zacceptance)[0]
-    q_max = 2 * np.pi / np.max(data.source.wavelength) * np.sin(theta_max)
-    zaccept = Converter("1/A")(q_max, "1/" + data.source.wavelength_unit)
+        SElength = Converter("A")(SElength, units=SEunits)
+        wavelength = Converter("A")(wavelength, units=wunits)
+        theta_max = Converter("radian")(theta_max, units=theta_units)
 
     Rmax = 10000000
-    hankel = sesans.SesansTransform(data.x, SElength,
-                                    data.source.wavelength,
-                                    zaccept, Rmax)
+    zaccept = 2 * np.pi / np.max(wavelength) * np.sin(theta_max)
+    hankel = sesans.SesansTransform(data.x, SElength, wavelength, zaccept, Rmax)
     return hankel
 
 
@@ -199,15 +200,15 @@ class DataMixin(object):
     possibly with random noise added.  This is useful for simulating a
     dataset with the results from *_calc_theory*.
     """
-    def _interpret_data(self, data, model):
-        # type: (Data, KernelModel) -> None
+    def _interpret_data(self, data: Data, model: KernelModel) -> None:
+        # not type: (Data, KernelModel) -> None
         # pylint: disable=attribute-defined-outside-init
 
         self._data = data
         self._model = model
 
         # interpret data
-        if hasattr(data, 'isSesans') and data.isSesans:
+        if getattr(data, 'isSesans', False):
             self.data_type = 'sesans'
         elif hasattr(data, 'qx_data'):
             self.data_type = 'Iqxy'
@@ -257,10 +258,11 @@ class DataMixin(object):
                 else:
                     res = resolution.Perfect1D(q)
             elif (getattr(data, 'dxl', None) is not None
-                  and getattr(data, 'dxw', None) is not None):
-                res = resolution.Slit1D(data.x[index],
-                                        qx_width=data.dxl[index],
-                                        qy_width=data.dxw[index])
+                  or getattr(data, 'dxw', None) is not None):
+                res = resolution.Slit1D(
+                    data.x[index],
+                    q_length=None if data.dxl is None else data.dxl[index],
+                    q_width=None if data.dxw is None else data.dxw[index])
             else:
                 res = resolution.Perfect1D(data.x[index])
         elif self.data_type == 'Iq-oriented':
@@ -275,9 +277,10 @@ class DataMixin(object):
                     or getattr(data, 'dxw', None) is None):
                 raise ValueError("oriented sample with 1D data needs slit resolution")
 
-            res = resolution2d.Slit2D(data.x[index],
-                                      qx_width=data.dxw[index],
-                                      qy_width=data.dxl[index])
+            res = resolution2d.Slit2D(
+                data.x[index],
+                qx_width=data.dxw[index],
+                qy_width=data.dxl[index])
         else:
             raise ValueError("Unknown data type") # never gets here
 
@@ -330,7 +333,9 @@ class DataMixin(object):
 
         # Need to pull background out of resolution for multiple scattering
         default_background = self._model.info.parameters.common_parameters[1].default
-        background = pars.get('background', default_background)
+        background = (
+            pars.get('background', default_background)
+            if self.data_type != 'sesans' else 0.)
         pars = pars.copy()
         pars['background'] = 0.
 
@@ -360,8 +365,8 @@ class DirectModel(DataMixin):
 
     *cutoff* is the polydispersity weight cutoff.
     """
-    def __init__(self, data, model, cutoff=1e-5):
-        # type: (Data, KernelModel, float) -> None
+    def __init__(self, data: Data, model: KernelModel, cutoff: float=1e-5) -> None:
+        # not type: (Data, KernelModel, float) -> None
         self.model = model
         self.cutoff = cutoff
         # Note: _interpret_data defines the model attributes
@@ -421,6 +426,12 @@ def test_reparameterize():
     derived_Iq = derived_calculator(volume=4*pi/3*Rp*Re**2, eccentricity=Rp/Re)
     assert norm((base_Iq - derived_Iq)/base_Iq) < 1e-13
 
+    # clean up the dll that was created in the cache as part of the test
+    try:
+        os.remove(derived_model.dllpath)
+    except Exception:
+        pass
+
     # Again using insert_after.
     insert_after = {
         '': 'eccentricity',
@@ -439,7 +450,76 @@ def test_reparameterize():
     derived_Iq = derived_calculator(volume=4*pi/3*Rp*Re**2, eccentricity=Rp/Re)
     assert norm((base_Iq - derived_Iq)/base_Iq) < 1e-13
 
+    # clean up the dll that was created in the cache as part of the test
+    try:
+        os.remove(derived_model.dllpath)
+    except Exception:
+        pass
 
+def _direct_calculate(model, data, pars):
+    from .core import load_model_info, build_model
+    model_info = load_model_info(model)
+    kernel = build_model(model_info)
+    calculator = DirectModel(data, kernel)
+    return calculator(**pars)
+
+def Iq(model, q, dq=None, ql=None, qw=None, **pars):
+    """
+    Compute I(q) for *model*. Resolution is *dq* for pinhole or *ql* and *qw*
+    for slit geometry. Use 0 or None for infinite slits.
+
+    Model is the name of a builtin or custom model, or a model expression, such
+    as sphere+sphere for a mixture of spheres of different radii, or
+    sphere@hardsphere for concentrated solutions where the dilute approximation
+    no longer applies.
+
+    Use additional keywords for model parameters, tagged with *_pd*, *_pd_n*,
+    *_pd_nsigma*, *_pd_type* to set polydispersity parameters, or *_M0*,
+    *_mphi*, *_mtheta* for magnetic parameters.
+
+    This is not intended for use when the same I(q) is evaluated many times
+    with different parameter values. For that you should set up the model
+    with `model = build_model(load_model_info(model_name))`, set up a data
+    object to define q values and resolution, then use
+    `calculator = DirectModel(data, model)` to set up a calculator, or
+    `problem = bumps.FitProblem(sasmodels.bumps_model.Experiment(data, model))`
+    to define a fit problem for uses with the bumps optimizer. Data can be
+    loaded using the `sasdata` package, or use one of the empty data generators
+    from `sasmodels.data`.
+
+    Models are cached. Custom models will not be reloaded even if the
+    underlying files have changed. If you are using this in a long running
+    application then you will need to call
+    `sasmodels.direct_model._model_cache.clear()` to reset the cache and force
+    custom model reload.
+    """
+    from .data import Data1D, _as_numpy
+    data = Data1D(x=q, dx=dq)
+    def broadcast(v):
+        return (
+            None if v is None
+            else np.full(len(q), v) if np.isscalar(v)
+            else _as_numpy(v))
+    data.dxl, data.dxw = broadcast(ql), broadcast(qw)
+    return _direct_calculate(model, data, pars)
+
+def Iqxy(model, qx, qy, dqx=None, dqy=None, **pars):
+    """
+    Compute I(qx, qy) for *model*. Resolution is *dqx* and *dqy*.
+    See :func:`Iq` for details on model and parameters.
+    """
+    from .data import Data2D
+    data = Data2D(x=qx, y=qy, dx=dqx, dy=dqy)
+    return _direct_calculate(model, data, pars)
+
+def Gxi(model, xi, **pars):
+    """
+    Compute SESANS correlation G' = G(xi) - G(0) for *model*.
+    See :func:`Iq` for details on model and parameters.
+    """
+    from .data import empty_sesans
+    data = empty_sesans(z=xi)
+    return _direct_calculate(model, data, pars)
 
 def main():
     # type: () -> None
@@ -447,36 +527,77 @@ def main():
     Program to evaluate a particular model at a set of q values.
     """
     import sys
-    from .data import empty_data1D, empty_data2D
-    from .core import load_model_info, build_model
 
     if len(sys.argv) < 3:
         print("usage: python -m sasmodels.direct_model modelname (q|qx,qy) par=val ...")
         sys.exit(1)
-    model_name = sys.argv[1]
+    model = sys.argv[1]
     call = sys.argv[2].upper()
+    pars = dict((k, (float(v) if not k.endswith("_pd_type") else v))
+                for pair in sys.argv[3:]
+                for k, v in [pair.split('=')])
     try:
         values = [float(v) for v in call.split(',')]
     except ValueError:
         values = []
     if len(values) == 1:
         q, = values
-        data = empty_data1D([q])
+        dq = dqw = dql = None
+        #dq = [q*0.05] # 5% pinhole resolution
+        #dqw, dql = [q*0.05], [1.0] # 5% horizontal slit resolution
+        print(Iq(model, [q], dq=dq, qw=dqw, ql=dql, **pars)[0])
+        #print(Gxi(model, [q], **pars)[0])
     elif len(values) == 2:
         qx, qy = values
-        data = empty_data2D([qx], [qy])
+        dq = None
+        #dq = [0.005] # 5% pinhole resolution at q = 0.1
+        print(Iqxy(model, [qx], [qy], dqx=dq, dqy=dq, **pars)[0])
     else:
         print("use q or qx,qy")
         sys.exit(1)
 
-    model_info = load_model_info(model_name)
-    model = build_model(model_info)
-    calculator = DirectModel(data, model)
-    pars = dict((k, (float(v) if not k.endswith("_pd_type") else v))
-                for pair in sys.argv[3:]
-                for k, v in [pair.split('=')])
-    Iq = calculator(**pars)
-    print(Iq[0])
+def test_simple_interface():
+    def near(value, target):
+        """Close enough in single precision"""
+        #print(f"value: {value}, target: {target}")
+        return np.allclose(value, target, rtol=1e-6, atol=0, equal_nan=True)
+    # Note: target values taken from running main() on parameters.
+    # Resolution was 5% dq/q.
+    pars = dict(radius=200, background=0)  # default background=1e-3, scale=1
+    # simple sphere in 1D (perfect, pinhole, slit)
+    perfect_target = 0.6190146273894904
+    assert near(Iq('sphere', [0.1], **pars), [perfect_target])
+    assert near(Iq('sphere', [0.1], dq=[0.005], **pars), [2.3009224683980215])
+    assert near(Iq('sphere', [0.1], qw=[0.005], ql=[1.0], **pars), [0.3663431784535172])
+    # simple sphere in 2D (perfect, pinhole)
+    assert near(Iqxy('sphere', [0.1], [0.1], **pars), [1.1771532874802199])
+    assert near(Iqxy('sphere', [0.1], [0.1], dqx=[0.005], dqy=[0.005], **pars), 
+        [0.8167780778578667])
+    # sesans (no background or scale)
+    assert near(Gxi('sphere', [100], **pars), [-0.19146959126623486])
+    # Check that single point sesans matches value in an array
+    xi = np.logspace(1, 3, 100)
+    y = Gxi('sphere', xi, **pars)
+    for k in (0, len(xi)//5, len(xi)//2, len(xi)-1):
+        ysingle = Gxi('sphere', [xi[k]], **pars)[0]
+        print(f"SESANS point check {k}: xi={xi[k]:.1f} single={ysingle:.4f} vector={y[k]:.4f}")
+        assert abs((ysingle-y[k])/y[k]) < 0.1, "SESANS point value not matching vector value within 10%"
+    # magnetic 2D
+    pars = dict(radius=200, sld_M0=3, sld_mtheta=30)
+    assert near(Iqxy('sphere', [0.1], [0.1], **pars), [1.5577852226925908])
+    # polydisperse 1D
+    pars = dict(
+        radius=200, radius_pd=0.1, radius_pd_n=15, radius_pd_nsigma=2.5,
+        radius_pd_type="uniform")
+    assert near(Iq('sphere', [0.1], **pars), [2.703169824954617])
+    # background and scale
+    background, scale = 1e-4, 0.1
+    pars = dict(radius=200, background=background, scale=scale)
+    assert near(Iq('sphere', [0.1], **pars), [perfect_target*scale + background])
+
 
 if __name__ == "__main__":
+    import logging
+    logging.disable(logging.ERROR)
     main()
+    #test_simple_interface()

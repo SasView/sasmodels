@@ -6,8 +6,10 @@
 
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
-Resolution Functions
-====================
+.. _Resolution_Smearing:
+
+Resolution (Smearing) Functions
+===============================
 
 Sometimes the instrumental geometry used to acquire the experimental data has
 an impact on the clarity of features in the reduced scattering curve. For
@@ -27,11 +29,11 @@ effect. Sasmodels provides three smearing algorithms:
 *  *2D Smearing*
 
 The $Q$ resolution values should be determined by the data reduction software
-for the instrument and stored with the data file.  If not, they will need to
-be set manually before fitting.
+for the instrument and `stored with the data file <https://www.sasview.org/faq/#what-format-should-my-data-be-in>`_.
+If not, they will need to be set manually before fitting.
 
 .. note::
-    Problems may be encountered if the data set loaded by SasView is a
+    Problems may be encountered if the data set that is loaded is a
     concatenation of SANS data from several detector distances where, of
     course, the worst Q resolution is next to the beam stop at each detector
     distance. (This will also be noticeable in the residuals plot where
@@ -69,7 +71,7 @@ where *Norm* is given by
 **[Equation 1]**
 
 The functions $W_v(v)$ and $W_u(u)$ refer to the slit width weighting
-function and the slit height weighting determined at the given $q$ point,
+function and the slit length weighting determined at the given $q$ point,
 respectively. It is assumed that the weighting function is described by a
 rectangular function, such that
 
@@ -86,7 +88,7 @@ and
 so that $\Delta q_\alpha = \int_0^\infty d\alpha\, W_\alpha(\alpha)$
 for $\alpha$ as $v$ and $u$.
 
-Here $\Delta q_u$ and $\Delta q_v$ stand for the the slit height (FWHM/2)
+Here $\Delta q_u$ and $\Delta q_v$ stand for the the slit length (FWHM/2)
 and the slit width (FWHM/2) in $q$ space.
 
 This simplifies the integral in Equation 1 to
@@ -152,13 +154,13 @@ Solution 3
 **For** $\Delta q_v = \text{constant}$ **and** $\Delta q_u = \text{constant}$
 
 In this case, the best way is to perform the integration of Equation 1
-numerically for both slit height and slit width. However, the numerical
+numerically for both slit length and slit width. However, the numerical
 integration is imperfect unless a large number of iterations, say, at
 least 10000 by 10000 for each element of the matrix $W$, is performed.
 This is usually too slow for routine use.
 
 An alternative approach is used in sasmodels which assumes
-slit width << slit height. This method combines Solution 1 with the
+slit width << slit length. This method combines Solution 1 with the
 numerical integration for the slit width. Then
 
 .. math::
@@ -302,9 +304,23 @@ data points for a given model and slit/pinhole size. The *Norm* factor is
 found numerically with the weighting matrix and applied on the computation
 of $I_s$.
 
+Related sections
+----------------
+
+See also:
+
+:ref:`PStheory`
+
+:ref:`polydispersityhelp`
+
+:ref:`Interaction_Models`
+
+:ref:`orientation`
+
 .. ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ
 
 *Document History*
 
 | 2015-05-01 Steve King
 | 2017-05-08 Paul Kienzle
+| 2022-10-30 Steve King

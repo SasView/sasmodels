@@ -27,7 +27,6 @@ import sasmodels
 
 nitpick_ignore = [
     ('py:class', 'argparse.Namespace'),
-    ('py:class', 'bumps.parameter.Parameter'),
     ('py:class', 'collections.OrderedDict'),
     ('py:class', 'cuda.Context'),
     ('py:class', 'cuda.Function'),
@@ -51,10 +50,16 @@ nitpick_ignore = [
     ('py:class', 'Data1D'),
     ('py:class', 'Data2D'),
     ('py:class', 'Kernel'),
+    ('py:class', 'KernelModel'),
     ('py:class', 'ModelInfo'),
     ('py:class', 'module'),
     ('py:class', 'SesansData'),
     ('py:class', 'SourceModule'),
+    # KernelModel and Calculator breaking on git actions tests, even though
+    # KernelModel is already listed. astropy example sometimes includes full
+    # path to complaining symbol. Let's see if that helps here:
+    ('py:class', 'sasmodels.compare.Calculator'),
+    ('py:class', 'sasmodels.kernel.KernelModel'),
 ]
 
 # -- General configuration -----------------------------------------------------

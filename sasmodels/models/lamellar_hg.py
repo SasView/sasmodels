@@ -29,7 +29,7 @@ $\Delta\rho_H$ is the head contrast (*sld_head* $-$ *sld_solvent*),
 and $\Delta\rho_T$ is tail contrast (*sld* $-$ *sld_solvent*).
 
 The total thickness of the lamellar sheet is
-a_H + \delta_T + \delta_T + \delta_H$. Note that in a non aqueous solvent
+$a_H + \delta_T + \delta_T + \delta_H$. Note that in a non aqueous solvent
 the chemical "head" group may be the "Tail region" and vice-versa.
 
 The 2D scattering intensity is calculated in the same way as 1D, where
@@ -86,23 +86,7 @@ form_volume = """
     return 1.0;
     """
 
-Iq = """
-    const double qsq = q*q;
-    const double drh = sld_head - sld_solvent;
-    const double drt = sld - sld_solvent;    //correction 13FEB06 by L.Porcar
-    const double qT = q*length_tail;
-    double Pq, inten;
-    Pq = drh*(sin(q*(length_head+length_tail))-sin(qT)) + drt*sin(qT);
-    Pq *= Pq;
-    Pq *= 4.0/(qsq);
-
-    inten = 2.0e-4*M_PI*Pq/qsq;
-
-    // normalize by the bilayer thickness
-    inten /= 2.0*(length_head+length_tail);
-
-    return inten;
-    """
+source = ["lamellar_hg.c"]
 
 def random():
     """Return a random parameter set for the model."""

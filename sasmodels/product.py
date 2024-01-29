@@ -120,6 +120,7 @@ from copy import copy
 import numpy as np  # type: ignore
 
 from .modelinfo import ParameterTable, ModelInfo, parse_parameter
+from .modelinfo import NUM_MAGFIELD_PARS, NUM_MAGNETIC_PARS, NUM_COMMON_PARS
 from .kernel import KernelModel, Kernel
 from .details import make_details
 
@@ -380,7 +381,7 @@ class ProductKernel(Kernel):
 
         have_beta_mode = p_info.have_Fq
         have_er_mode = p_info.radius_effective_modes is not None
-        volfrac_in_p = self._volfrac_index < p_npars + 2  # scale & background
+        volfrac_in_p = self._volfrac_index < p_npars + NUM_COMMON_PARS
 
         # Slices into the details length/offset structure for P@S.
         # Made complicated by the possibly missing volfraction in S.
@@ -389,20 +390,20 @@ class ProductKernel(Kernel):
         self._volfrac_in_p = volfrac_in_p
 
         # P block from data vector, without scale and background
-        first_p = 2
-        last_p = p_npars + 2
+        first_p = NUM_COMMON_PARS
+        last_p = p_npars + NUM_COMMON_PARS
         self._p_value_slice = slice(first_p, last_p)
 
         # radius_effective is the first parameter in S from the data vector.
         self._er_index = last_p
 
         # S block from data vector, without scale, background, volfrac or er.
-        first_s = last_p + 2 - volfrac_in_p
-        last_s = first_s + s_npars - 2
+        first_s = last_p + NUM_COMMON_PARS - volfrac_in_p
+        last_s = first_s + s_npars - NUM_COMMON_PARS
         self._s_value_slice = slice(first_s, last_s)
 
         # S distribution block in S data vector starts after all S values
-        self._s_dist_slice = slice(2 + s_npars, None)
+        self._s_dist_slice = slice(NUM_COMMON_PARS + s_npars, None)
 
         # structure_factor_mode is the first parameter after P and S.  Skip
         # 2 for scale and background, and subtract 1 in case there is no
@@ -417,8 +418,8 @@ class ProductKernel(Kernel):
         # Magnetic parameters are after everything else.  If they exist,
         # they will only be for form factor P, not structure factor S.
         first_mag = last_s + have_beta_mode + have_er_mode
-        mag_pars = 3*p_info.parameters.nmagnetic
-        last_mag = first_mag + (mag_pars + 4 if mag_pars else 0)
+        mag_pars = NUM_MAGNETIC_PARS*p_info.parameters.nmagnetic
+        last_mag = first_mag + (mag_pars + NUM_MAGFIELD_PARS if mag_pars else 0)
         self._magentic_slice = slice(first_mag, last_mag)
 
     def Iq(self, call_details, values, cutoff, magnetic):
@@ -499,9 +500,9 @@ class ProductKernel(Kernel):
         s_dist = s_values[self._s_dist_slice]
         if er_mode > 0:
             # set the value to the model R_eff and set the weight to 1
-            s_values[2] = s_dist[s_offset[0]] = radius_effective
+            s_values[NUM_COMMON_PARS] = s_dist[s_offset[0]] = radius_effective
             s_dist[s_offset[0]+nweights] = 1.0
-        s_values[3] = s_dist[s_offset[1]] = volfrac*volume_ratio
+        s_values[NUM_COMMON_PARS+1] = s_dist[s_offset[1]] = volfrac*volume_ratio
         s_dist[s_offset[1]+nweights] = 1.0
 
         # Call the structure factor kernel to compute S.

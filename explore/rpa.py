@@ -91,7 +91,7 @@ def matrix_form(q, case_num, polys,
     else:
         A, B, C, D = polys
 
-    rho = np.matrix([[drho(p, D)] for p in (A,B,C)])
+    rho = np.array([[drho(p, D)] for p in (A,B,C)])
     S0aa = S0_ii(q, A)
     S0bb = S0_ii(q, B)
     S0cc = S0_ii(q, C)
@@ -118,7 +118,7 @@ def matrix_form(q, case_num, polys,
         S0_k = S0[:,:,k].M
         v_k = v[:,:,k].M
         S_k = np.linalg.inv(1 + S0_k*v_k)*S0_k
-        Iq[k] = rho.T * S_k * rho
+        Iq[k] = rho.T @ S_k @ rho
 
 def build_pars(case_num, polys, **interactions):
     def set_poly(x, poly):

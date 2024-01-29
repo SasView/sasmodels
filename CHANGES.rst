@@ -1,6 +1,27 @@
 Release notes
 =============
 
+v1.0.7 2023-02-??
+------------------
+* Doc upate: corefunc and optimizer documentation
+* Doc update: various models (cylinder, gel_fit, paracrystal, core_shell_ellipsoid)
+* Fix error in BCC and FCC paracrystaline models
+* Fix rare race condition causing errors
+* Fix to allow multiple scattering scripts to run
+* Fix problem with models containing complex amplitudes not compiling on the fly
+* Restructuring and cross-linking of sasmodels docs
+* Update web links and contributor list
+
+v1.0.6 2022-03-17
+------------------
+* implements generalized 3D description of magnetic SANS
+* adds Boucher-type SLD profile to the selection in the model spherical_sld
+* improves naming conventions of constants in magnetic SANS
+* composite mixture models with multiplicity are now allowed
+* improvements to the superball model
+* fix to bug in magnetic SLD calculations
+* updates to documentation
+
 v1.0.5 2021-01-26
 ------------------
 * fix probelm with P(Q) scaling when using a shell type form factors
