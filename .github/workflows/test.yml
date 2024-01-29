@@ -58,6 +58,8 @@ jobs:
 
     - name: check that the docs build (linux only)
       if: ${{ matrix.os == 'ubuntu-latest' }}
+      env:
+        SAS_OPENCL: none
       run: |
         make -j 4 -C doc SPHINXOPTS="-W --keep-going -n" html
 
