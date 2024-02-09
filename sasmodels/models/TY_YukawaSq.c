@@ -34,10 +34,10 @@ void translate(
     //When some numbers, such as d1 and d2, are very large number, the correct solution may not pass the checking function.
     //It is recommended to comment out this line of code and simply assume that the TY_SolveEquation function returns a correct result.
     int checkFlags = TY_CheckSolution( *z1, *z2, *k1, *k2, *volumefraction, *a, *b, *c1, *c2, *d1, *d2 );
-    //int checkFlags = 1;
     
     if (checkFlags != 0) {
-        *a = NAN;
+        //next line was commented out on Feb. 08, 2024
+        //*a = NAN;
         // return;
         printf("Failing tests for equations");
         for (int k=0; checkFlags != 0; k++) {
@@ -51,6 +51,8 @@ void translate(
     }
     //printf("Solving (z1=%g, z2=%g, k1=%g, k2=%g, Vf=%g)\n", *z1, *z2, *k1, *k2, *volumefraction);
     //printf("=> (a=%g, b=%g, c1=%g, c2=%g, d1=%g, d2=%g)\n", *a, *b, *c1, *c2, *d1, *d2);
+
+    checkFlags = 0;
 }
 
 // Uses undocumented features of the generate program, which may break with
