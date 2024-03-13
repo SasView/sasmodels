@@ -391,8 +391,40 @@ add_function(
 add_function(
     name="(1-cos(x))/x^2",
     mp_function=lambda x: (1 - mp.cos(x))/(x*x),
-    np_function=lambda x: (1 - np.cos(x))/(x*x),
+    #np_function=lambda x: (1 - np.cos(x))/(x*x),
+    np_function=lambda x: (
+        (x>0.5)*(1 - np.cos(x))/(x*x)
+        +(x<=0.5)*(1.0/2.0 + x*x*(1./-24. + x*x*(1./720. + x*x*(1./-40320. + x*x*(1./3628800. + x*x*(1./-479001600. + x*x*1./87178291200.))))))
+    ),
     ocl_function=make_ocl("return (1-cos(q))/q/q;", "sas_1mcosx_x2"),
+)
+add_function(
+    # Note: this is just j1(x)/x
+    name="TY_pc_t1",
+    mp_function=lambda x: (mp.sin(x)/x - mp.cos(x))/(x*x),
+    np_function=lambda x: (
+        (x>0.5)*(np.sin(x)/x - np.cos(x))/(x*x)
+        +(x<=0.5)*(1.0/3.0 + x*x*(1./-30. + x*x*(1./840. + x*x*(1./-45360. + x*x*(1./3991680. + x*x*(1./-518918400. + x*x*(1./93405312000.)))))))
+    ),
+    ocl_function=make_ocl("return sas_3j1x_x(q)/3.;", "sas_j1x_x", ["lib/sas_3j1x_x.c"]),
+)
+add_function(
+    name="TY_pc_t2",
+    mp_function=lambda x: (2.*x*mp.sin(x) - (x*x - 2.)*mp.cos(x) - 2.)/x**4,
+    np_function=lambda x: (
+        (x>1.0)*(2.*x*np.sin(x) - (x*x - 2.)*np.cos(x) - 2.)/x**4
+        +(x<=1.0)*(1./4. + x*x*(1./-36 + x*x*(1./960. + x*x*(1./-50400. + x*x*(1./4354560. + x*x*(1./-558835200. + x*x*(1./99632332800.)))))))
+    ),
+    ocl_function=make_ocl("return (2.*q*sin(q) - (q*q - 2.)*cos(q) - 2.) / pown(q,4);","TY_pc_t2"),
+)
+add_function(
+    name="TY_pc_t3",
+    mp_function=lambda x: ( 4*x*(x*x - 6)*mp.sin(x)  - (x**4 - 12*x*x + 24)*mp.cos(x) + 24 ) / x**6,
+    np_function=lambda x: (
+      (x>1.0)*(4.*x*(x*x - 6.)*np.sin(x) - ((x*x - 12.)*x*x + 24.)*np.cos(x) + 24.) / x**6
+      +(x<=1.0)*(1/6 + x*x*(1./-48. + x*x*(1./1200. + x*x*(1./-60480. + x*x*(1./5080320. + x*x*(1./-638668800. + x*x*(1./112086374400.)))))))
+    ),
+    ocl_function=make_ocl("return (4*q*(q*q - 6)*sin(q)  - ((q*q - 12)*q*q + 24)*cos(q) + 24 ) / pown(q,6);","ty_pc_t2"),
 )
 add_function(
     name="(1-sin(x)/x)/x",
