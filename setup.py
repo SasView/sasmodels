@@ -65,7 +65,7 @@ setup(
         'sasmodels.custom'
     ],
     package_data={
-        'sasmodels.models': ['*.c', 'lib/*.c', 'lib/*.h'],
+        'sasmodels.models': ['*.c', '*.h', 'lib/*.c', 'lib/*.h'],
         'sasmodels': ['*.c', '*.cl'],
     },
     install_requires=install_requires,
