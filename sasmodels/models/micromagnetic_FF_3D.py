@@ -12,23 +12,23 @@ and on the applied magnetic field. As shown in [#Michels2016]_ near magnetic
 saturation the scattering cross-section can be evaluated by means of micromagnetic theory
 
 .. math::
-    I(mathbf{Q}) = I_nuc +I_res+ I_mag(mathbf{Q},H),
+    I(\mathbf{Q}) = I_{nuc} +I_{res}+ I_{mag}(\mathbf{Q},H),
 
 with the field-independent nuclear and magnetic residual SANS cross section (due
 to nanoscale spatial variations of the saturation magnetisation) measured at
-complete magnetic saturation. Commonly, a measurement at a high magnetic field
+complete magnetic saturation. Commonly, a measurement at a high magnetic field is
 taken as reference and subtracted from the scattering cross-section at lower
 field to obtain the so-called spin-misalignment scattering cross-section 
 
 .. math::
-    I_mag(mathbf{Q},H)= S_K(Q) R_K(mathbf{Q}, H_i) + S_M(Q) R_M(mathbf{Q}, H_i),
+    I_{mag}(\mathbf{Q},H)= S_K(Q) R_K(\mathbf{Q}, H_i) + S_M(Q) R_M(\mathbf{Q}, H_i),
 
 with $H_i$ the internal field, i.e. the external magnetic field corrected for
 demagnetizing effects and the influence of the magnetodipolar field and of the
 magnetic anisotropy [#Bick2013]_. This purely magnetic scattering reflects the
-sensitive response of the transversal magnetisation components with to an
-externally applied magnetic field with a contribution $S_K 	imes R_K$ due to
-perturbations around magnetic anisotropy fields and a term $S_M 	imes R_M$
+response of the transversal magnetisation components with to an
+externally applied magnetic field with a contribution $S_K \times R_K$ due to
+perturbations around magnetic anisotropy fields and a term $S_M \times R_M$
 related to magnetostatic fields. The alignment of the magnetic moments along
 the magnetic field is disturbed by perturbations in the microstructure. The
 anisotropy-field function $S_K$ depends on the Fourier transform of the magnetic
@@ -48,7 +48,7 @@ anisotropy and flucutations in the saturation magnetisation value.
 The micromagnetic response functions depend on magnetic material parameters $M_S$:
 average saturation magnetisation of the material, $H_i$: the internal magnetic
 field, $A$ the average exchange-stiffness constant. In the vicinity of lattice 
-imperfection in ferromagnetic materials,  antisymmetric Dzyaloshinskii–Moriya
+imperfection in ferromagnetic materials, antisymmetric Dzyaloshinskii–Moriya
 interaction (DMI) can occur due to the local structural inversion symmetry
 breaking [#Arrott1963]_. DMI with strength $D$ can give rise to nonuniform spin
 textures resulting in a polarization-dependent asymmetric scattering term for 
@@ -59,36 +59,36 @@ contributions of the magnetic microstructure only depend on the magnitude of $q$
 Considerations for a microstructure with a prefered orientation (texture) can be
 found in [#Weissmueller2001]_. In the code the averaging procedure over the random
 anisotropy is explicitely performed. A specific orientation distribution can be
-implemented. 
+implemented by rewriting the model. 
 
-The magnetic field is oriented with an inclination of $alpha$ to the neutron beam
-and rotated by $beta$. The model for the nuclear scattering amplitude, saturation
+The magnetic field is oriented with an inclination of $\alpha$ to the neutron beam
+and rotated by $\beta$. The model for the nuclear scattering amplitude, saturation
 magnetisation is based on spherical particles with a core shell structure. For
 simplicity, only the core has an effective anisotropy, that is varying randomly
 in direction from particle to particle. The effect of different, more complex 
-spatial profiles of the anisotropy can be seen in Michels PRB 82, 024433 (2010).
+spatial profiles of the anisotropy can be seen in [#Michels2010]_.
 The magnetic scattering length density (SLD) is defined as 
-$ho_{mathrm{mag}}=b_H M_S$, where $b_H= 2.91*10^{8}A^{-1}m^{-1}$ and $M_S$
+$\rho_{\mathrm{mag}}=b_H M_S$, where $b_H= 2.91*10^{8}A^{-1}m^{-1}$ and $M_S$
 is the saturation magnetisation (in $A/m$).
 
 The fraction of "upward" neutrons before ('up_frac_i') and after the sample 
 ('up_frac_f') must range between 0 to 1, with 0.5 denoting an unpolarised beam.
 Note that a fit may result in a negative magnetic SLD, and hence magnetisation, 
 when the polarisation state is inverted, i.e. if you have analysed for a $I_{00}$
- state wheras your data are $I_{11}$. The model allows to construct the 4 
- spin-resolved cross sections (non-spin-flip I_{00}, I_{11} and spin-flip, here
- I_{01}=I_{10}), half-polarised SANS (SANSpol, incoming polarised beam I_0 and
- I_1, no analysis after sample 'up_frac_f'$=0.5$), and unpolarised beam 
- ('up_frac_i'$=$'up_frac_f'$=0.5$). Differences and other combinations between
- polarised scattering cross section, e.g. to obtain the nuclear-magnetic 
- interference scattering, or subtraction of the residual scattering of the high
- field reference state can be constructed with a custom model (Fitting>
- Add/Multiply Model) and using approbriate scales. For dense systems, special
- care has to be taken as the nculear structure factor (arrangement of particles)
- does not need to be identical with the magnetic microstructure e.g. local 
- textures and correlations between easy axes (see [#Honecker2020]_ for further
- details). The use of structure model is therefore strongly discouraged. Better
- $I_nuc$, $S_K$ and $S_M$ are fit independent from each other in a model-free way. 
+state wheras your data are $I_{11}$. The model allows to construct the 4 
+spin-resolved cross sections (non-spin-flip $I_{00}$, $I_{11}$ and spin-flip, here
+$I_{01}=I_{10}$), half-polarised SANS (SANSpol, incoming polarised beam $I_0$ and
+$I_1$, no analysis after sample 'up_frac_f'$=0.5$), and unpolarised beam 
+('up_frac_i'$=$'up_frac_f'$=0.5$). Differences and other combinations between
+polarised scattering cross section, e.g. to obtain the nuclear-magnetic 
+interference scattering, or subtraction of the residual scattering of the high
+field reference state can be constructed with a custom model (Fitting>
+Add/Multiply Model) and using approbriate scales. For dense systems, special
+care has to be taken as the nculear structure factor (arrangement of particles)
+does not need to be identical with the magnetic microstructure e.g. local 
+textures and correlations between easy axes (see [#Honecker2020]_ for further
+details). The use of structure model is therefore strongly discouraged. Better
+$I_{nuc}$, $S_K$ and $S_M$ are fit independent from each other in a model-free way. 
 
 
 
@@ -105,6 +105,7 @@ References
 .. [#Arrott1963] A. Arrott, J. Appl. Phys. 34, 1108 (1963).
 .. [#Weissmueller2001] J. Weissmueller et al., *Phys. Rev. B* 63, 214414 (2001).
 .. [#Bick2013] J.-P. Bick et al., *Appl. Phys. Lett.* 102, 022415 (2013).
+.. [#Michels2010] A. Michels et al., *Phys. Rev. B* 82, 024433 (2010).
 .. [#Michels2014] A. Michels, *J. Phys.: Condens. Matter* 26, 383201 (2014).
 .. [#Michels2016] A. Michels et al., *Phys. Rev. B* 94, 054424 (2016).
 .. [#Honecker2020] D. Honecker, L. Fernandez Barguin, and P. Bender, *Phys. Rev. B* 101, 134401 (2020).
@@ -146,15 +147,15 @@ parameters = [["radius", "Ang", 50., [0, inf], "volume", "Radius of the core"],
               ["magnetic_sld_core",    "1e-6/Ang^2", 1.0,  [-inf, inf], "",    "Magnetic scattering length density of core"],
               ["magnetic_sld_shell", "1e-6/Ang^2", 1.7, [-inf, inf], "", "Magnetic scattering length density of shell"],
               ["magnetic_sld_solvent", "1e-6/Ang^2", 3.0,  [-inf, inf], "",  "Magnetic scattering length density of solvent"],
-              ["hk_core", "1e-6/Ang^2", 1.0,  [0, inf], "",    "anisotropy field of defect"],
-              ["Hi", "T", 2.0,  [0, inf], "",    "effective field inside the material"],
-              ["Ms", "T", 1.0,  [0, inf], "",    "volume averaged saturation magnetisation"], 
-              ["A", "pJ/m", 10.0,  [0, inf], "",    "average exchange stiffness constant"],  
-              ["D", "mJ/m^2", 0.0,  [0, inf], "",    "average DMI constant"],                          
+              ["hk_core", "1e-6/Ang^2", 1.0,  [0, inf], "",    "Anisotropy field of defect"],
+              ["Hi", "T", 2.0,  [0, inf], "",    "Effective field inside the material"],
+              ["Ms", "T", 1.0,  [0, inf], "",    "Volume averaged saturation magnetisation"], 
+              ["A", "pJ/m", 10.0,  [0, inf], "",    "Average exchange stiffness constant"],  
+              ["D", "mJ/m^2", 0.0,  [0, inf], "",    "Average DMI constant"],                          
               ["up_i",          "None",  0.5, [0, 1], "", "Polarisation incoming beam"],
               ["up_f",          "None",  0.5, [0, 1], "", "Polarisation outgoing beam"],
-              ["alpha",          "None",  90, [0, 180], "", "inclination of field to neutron beam"],
-              ["beta",          "None",  0, [0, 360], "", "rotation of field around neutron beam"],             
+              ["alpha",          "None",  90, [0, 180], "", "Inclination of field to neutron beam"],
+              ["beta",          "None",  0, [0, 360], "", "Rotation of field around neutron beam"],             
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
