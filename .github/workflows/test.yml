@@ -22,10 +22,6 @@ jobs:
     - name: Free Disk Space (Ubuntu)
       if: ${{ matrix.os == 'ubuntu-latest' }}
       uses: jlumbroso/free-disk-space@main
-      with:
-        # this might remove tools that are actually needed,
-        # when set to "true" but frees about 6 GB
-        tool-cache: true
 
     - name: setup apt dependencies for Linux
       if: ${{ matrix.os == 'ubuntu-latest' }}
@@ -69,7 +65,7 @@ jobs:
     - name: check that the docs build (linux only)
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
-        -make -j 4 -C doc SPHINXOPTS="-W --keep-going -n" html
+        make -j 4 -C doc SPHINXOPTS="-W --keep-going -n" html
 
     - name: Publish samodels docs
       if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.10'}}
