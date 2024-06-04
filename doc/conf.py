@@ -40,6 +40,7 @@ nitpick_ignore = [
     ('py:class', 'pyopencl._cl.Device'),
     ('py:class', 'pyopencl._cl.Kernel'),
     ('py:class', 'QWebView'),
+    ('py:class', 'types.ModuleType'),
     ('py:class', 'unittest.suite.TestSuite'),
     ('py:class', 'wx.Frame'),
     # autodoc and namedtuple is completely broken
