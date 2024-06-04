@@ -22,6 +22,9 @@ jobs:
     - name: Free Disk Space (Ubuntu)
       if: ${{ matrix.os == 'ubuntu-latest' }}
       uses: jlumbroso/free-disk-space@main
+      with:
+        haskell: false
+        large-packages: false
 
     - name: setup apt dependencies for Linux
       if: ${{ matrix.os == 'ubuntu-latest' }}
