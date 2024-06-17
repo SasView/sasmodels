@@ -79,7 +79,7 @@ def make_parameter_table(pars):
     partable.check_angles(strict=True)
     return partable
 
-def parse_parameter(name, units='', default=np.NaN,
+def parse_parameter(name, units='', default=np.nan,
                     user_limits=None, ptype='', description=''):
     # type: (str, str, float, Sequence[Any], str, str) -> Parameter
     """
@@ -320,7 +320,7 @@ class Parameter(object):
     parameter table is built using :func:`make_parameter_table` and
     :func:`parse_parameter` therein.
     """
-    def __init__(self, name, units='', default=np.NaN, limits=(-np.inf, np.inf),
+    def __init__(self, name, units='', default=np.nan, limits=(-np.inf, np.inf),
                  ptype='', description=''):
         # type: (str, str, float, Limits, str, str) -> None
         self.id = name.split('[')[0].strip() # type: str

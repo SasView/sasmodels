@@ -568,7 +568,7 @@ value at a time::
 
     Iq.vectorized = False
 
-Return np.NaN if the parameters are not valid (e.g., cap_radius < radius in
+Return np.nan if the parameters are not valid (e.g., cap_radius < radius in
 barbell).  If I(q; pars) is NaN for any $q$, then those parameters will be
 ignored, and not included in the calculation of the weighted polydispersity.
 

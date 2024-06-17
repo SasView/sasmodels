@@ -142,9 +142,9 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
             traceback.print_exc()
             print("when comparing %s for %d"%(name, seed))
             if hasattr(data, 'qx_data'):
-                result = np.NaN*data.data
+                result = np.nan*data.data
             else:
-                result = np.NaN*data.x
+                result = np.nan*data.x
         return result
     def check_model(pars):
         """
@@ -165,7 +165,7 @@ def compare_instance(name, data, index, N=1, mono=True, cutoff=1e-5,
     except Exception as exc:
         #raise
         print('"Error: %s"'%str(exc).replace('"', "'"))
-        print('"good","%d of %d","max diff",%g' % (0, N, np.NaN))
+        print('"good","%d of %d","max diff",%g' % (0, N, np.nan))
         return
     expected = max(PRECISION[base], PRECISION[comp])
 

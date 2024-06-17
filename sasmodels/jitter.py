@@ -1167,7 +1167,7 @@ def make_image(z, kw):
 
     cmap = kw.pop('cmap', cm.coolwarm)
 
-    znorm = (z-z.min())/z.ptp()
+    znorm = (z-z.min())/np.ptp(z)
     c = cmap(znorm)
     c = c[..., :3]
     rgb = np.asarray(c*255, 'u1')
