@@ -1,7 +1,13 @@
 Release notes
 =============
 
-v1.0.7 2023-02-??
+v1.0.8 2024-06-??
+-----------------
+* Doc update: Archive built docs on Github
+* Doc update: Display math correctly
+* Fix parameter name checking in kernel call
+
+v1.0.7 2023-03-23
 ------------------
 * Doc upate: corefunc and optimizer documentation
 * Doc update: various models (cylinder, gel_fit, paracrystal, core_shell_ellipsoid)
