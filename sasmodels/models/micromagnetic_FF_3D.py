@@ -162,7 +162,7 @@ parameters = [["radius", "Ang", 50., [0, inf], "volume", "Radius of the core"],
 
 
 
-source = ["lib/sas_3j1x_x.c", "lib/core_shell.c", "lib/gauss76.c", "magnetic_functions.c", "micromagnetic_FF_3D.c"]
+source = ["lib/sas_3j1x_x.c", "lib/core_shell.c", "lib/gauss76.c", "lib/magnetic_functions.c", "micromagnetic_FF_3D.c"]
 structure_factor = False
 have_Fq = False
 single=False
