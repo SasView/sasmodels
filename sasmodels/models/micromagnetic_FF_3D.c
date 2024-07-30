@@ -1,21 +1,15 @@
 //Core-shell form factor for anisotropy field (Hkx, Hky and Hkz), Nuc and lonitudinal magnetization Mz
 static double
-form_volume(double radius, double thickness)
+form_volume(double nuc_radius, double nuc_thickness, double mag_radius, double mag_thickness, double hk_radius)
 {
- return M_4PI_3 * cube(radius + thickness);
+  if( nuc_radius+nuc_thickness>mag_radius+ mag_thickness)
+    return M_4PI_3 * cube(nuc_radius + nuc_thickness);
+  else
+    return M_4PI_3 * cube(mag_radius + mag_thickness);
+
 }
 
-static double
-radius_effective(int mode, double radius, double thickness)
-{
- switch (mode) {
-    default:
-      case 1: // outer radius
-        return radius + thickness;
-      case 2: // core radius
-        return radius;
- }
-}
+
 
 static double fq(double q, double radius,
  double thickness, double core_sld, double shell_sld, double solvent_sld)
@@ -80,9 +74,8 @@ static double fqMyimag( double x, double y, double z, double Mz, double Hkx, dou
   return f;
 }
 
-//calculate 2D from _fq
 static double
-Iqxy(double qx, double qy, double radius, double thickness,double core_nuc, double shell_nuc, double solvent_nuc, double core_Ms, double shell_Ms, double solvent_Ms, double core_hk,  double Hi, double Ms, double A, double D,  double up_i, double up_f, double alpha, double beta)
+Iqxy(double qx, double qy, double nuc_radius, double nuc_thickness, double mag_radius, double mag_thickness, double hk_radius, double nuc_sld_core, double nuc_sld_shell, double nuc_sld_solvent, double mag_sld_core, double mag_sld_shell, double mag_sld_solvent, double hk_sld_core, double Hi, double Ms, double A, double D,  double up_i, double up_f, double alpha, double beta)
 {
   const double q=MAG_VEC(qx, qy, 0);    
   if (q > 1.0e-16 ) {
@@ -95,8 +88,9 @@ Iqxy(double qx, double qy, double radius, double thickness,double core_nuc, doub
     double weights[8];
     set_weights(up_i, up_f, weights);
    
-    double mz=fq(q, radius, thickness, core_Ms, shell_Ms, solvent_Ms);
-    double nuc=fq(q, radius, thickness, core_nuc, shell_nuc, solvent_nuc);
+    double mz=fq(q, mag_radius, mag_thickness, mag_sld_core, mag_sld_shell, mag_sld_solvent);
+    double nuc=fq(q, nuc_radius, nuc_thickness, nuc_sld_core, nuc_sld_shell, nuc_sld_solvent);
+	
 
     double cos_gamma, sin_gamma;
     double sld[8];
@@ -109,9 +103,9 @@ Iqxy(double qx, double qy, double radius, double thickness,double core_nuc, doub
       //Only the core of the defect/particle in the matrix has an effective
       //anisotropy (for simplicity), for the effect of different, more complex
       // spatial profile of the anisotropy see Michels PRB 82, 024433 (2010)
-      double Hkx= fq(q, radius, thickness, core_hk, 0, 0)*sin_gamma;
-      double Hky= fq(q, radius, thickness, core_hk, 0, 0)*cos_gamma;
-
+      double Hkx= fq(q, hk_radius, 0, hk_sld_core, 0, 0)*sin_gamma;
+      double Hky= fq(q, hk_radius, 0, hk_sld_core, 0, 0)*cos_gamma;
+	  
       double mxreal=fqMxreal(qrot[0], qrot[1], qrot[2], mz, Hkx, Hky, Hi, Ms, A, D);
       double mximag=fqMximag(qrot[0], qrot[1], qrot[2], mz, Hkx, Hky, Hi, Ms, A, D);
       double myreal=fqMyreal(qrot[0], qrot[1], qrot[2], mz, Hkx, Hky, Hi, Ms, A, D);
@@ -134,8 +128,9 @@ Iqxy(double qx, double qy, double radius, double thickness,double core_nuc, doub
   }  
 }
 
+
 static double
-Iq(double q, double radius, double thickness,double core_nuc, double shell_nuc, double solvent_nuc, double core_Ms, double shell_Ms, double solvent_Ms, double core_hk, double Hi, double Ms, double A, double D,  double up_i, double up_f, double alpha, double beta)
+Iq(double q, double nuc_radius, double nuc_thickness, double mag_radius, double mag_thickness, double hk_radius,double nuc_sld_core, double nuc_sld_shell, double nuc_sld_solvent, double mag_sld_core, double mag_sld_shell, double mag_sld_solvent, double hk_sld_core, double Hi, double Ms, double A, double D,  double up_i, double up_f, double alpha, double beta)
 {
   // slots to hold sincos function output of the orientation on the detector plane
   double sin_theta, cos_theta; 
@@ -151,8 +146,9 @@ Iq(double q, double radius, double thickness,double core_nuc, double shell_nuc, 
     double weights[8];  
     set_weights(up_i, up_f, weights);
    
-    double mz=fq(q, radius, thickness, core_Ms, shell_Ms, solvent_Ms);
-    double nuc=fq(q, radius, thickness, core_nuc, shell_nuc, solvent_nuc);
+    double mz=fq(q, mag_radius, mag_thickness, mag_sld_core, mag_sld_shell, mag_sld_solvent);
+    double nuc=fq(q, nuc_radius, nuc_thickness, nuc_sld_core, nuc_sld_shell, nuc_sld_solvent);
+
 
     double cos_gamma, sin_gamma;
     double sld[8];
@@ -166,8 +162,8 @@ Iq(double q, double radius, double thickness,double core_nuc, double shell_nuc, 
       //Only the core of the defect/particle in the matrix has an effective
       //anisotropy (for simplicity), for the effect of different, more complex
       //spatial profile of the anisotropy see Michels PRB 82, 024433 (2010).
-      double Hkx= fq(q, radius, thickness, core_hk, 0, 0)*sin_gamma;
-      double Hky= fq(q, radius, thickness, core_hk, 0, 0)*cos_gamma;
+  	  double Hkx= fq(q, hk_radius, 0, hk_sld_core, 0, 0)*sin_gamma;
+      double Hky= fq(q, hk_radius, 0, hk_sld_core, 0, 0)*cos_gamma;
 
       double mxreal=fqMxreal(qrot[0], qrot[1], qrot[2], mz, Hkx, Hky, Hi, Ms, A, D);
       double mximag=fqMximag(qrot[0], qrot[1], qrot[2], mz, Hkx, Hky, Hi, Ms, A, D);

@@ -124,7 +124,7 @@ Authorship and Verification
 import numpy as np
 from numpy import pi, inf
 
-name = "spin_structure_ferromagnets_3D"
+name = "micromagnetic_FF_3D"
 title = "Field-dependent magnetic microstructure around imperfections in bulk ferromagnets"
 description = """
     I(q) = A (F_N^2(q)+ C F_N F_M + D F_M^2) +B(H) I_mag(q,H) 
@@ -139,15 +139,18 @@ category = "shape:sphere"
 
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["radius", "Ang", 50., [0, inf], "volume", "Radius of the core"],
-              ["thickness", "Ang", 40., [0, inf], "volume", "Thickness of shell"],    
+parameters = [["nuc_radius", "Ang", 50., [0, inf], "volume", "Structural radius of the core"],
+              ["nuc_thickness", "Ang", 40., [0, inf], "volume", "Structural thickness of shell"],  
+              ["mag_radius", "Ang", 50., [0, inf], "volume", "Magnetic radius of the core"],
+              ["mag_thickness", "Ang", 40., [0, inf], "volume", "Magnetic thickness of shell"], 
+              ["hk_radius", "Ang", 50., [0, inf], "volume", "Anisotropy radius of the core"],            
               ["nuc_sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "", "Core scattering length density"],
               ["nuc_sld_shell", "1e-6/Ang^2", 1.7, [-inf, inf], "", "Scattering length density of shell"],
               ["nuc_sld_solvent", "1e-6/Ang^2", 6.4, [-inf, inf], "", "Solvent scattering length density"],
-              ["magnetic_sld_core",    "1e-6/Ang^2", 1.0,  [-inf, inf], "",    "Magnetic scattering length density of core"],
-              ["magnetic_sld_shell", "1e-6/Ang^2", 1.7, [-inf, inf], "", "Magnetic scattering length density of shell"],
-              ["magnetic_sld_solvent", "1e-6/Ang^2", 3.0,  [-inf, inf], "",  "Magnetic scattering length density of solvent"],
-              ["hk_core", "1e-6/Ang^2", 1.0,  [0, inf], "",    "Anisotropy field of defect"],
+              ["mag_sld_core",    "1e-6/Ang^2", 1.0,  [-inf, inf], "",    "Magnetic scattering length density of core"],
+              ["mag_sld_shell", "1e-6/Ang^2", 1.7, [-inf, inf], "", "Magnetic scattering length density of shell"],
+              ["mag_sld_solvent", "1e-6/Ang^2", 3.0,  [-inf, inf], "",  "Magnetic scattering length density of solvent"],
+              ["hk_sld_core", "1e-6/Ang^2", 1.0,  [0, inf], "",    "Anisotropy field of defect"],
               ["Hi", "T", 2.0,  [0, inf], "",    "Effective field inside the material"],
               ["Ms", "T", 1.0,  [0, inf], "",    "Volume averaged saturation magnetisation"], 
               ["A", "pJ/m", 10.0,  [0, inf], "",    "Average exchange stiffness constant"],  
@@ -168,8 +171,6 @@ have_Fq = False
 single=False
 
 
-effective_radius_type = ["outer radius", "core radius"]
-
 def random():
     """Return a random parameter set for the model."""
     outer_radius = 10**np.random.uniform(1.3, 4.3)
@@ -178,8 +179,12 @@ def random():
     radius = np.random.beta(0.5, 0.5)*(outer_radius-2) + 1
     thickness = outer_radius - radius
     pars = dict(
-        radius=radius,
-        thickness=thickness,
+        nuc_radius=radius,
+        nuc_thickness=thickness,
+        mag_radius=radius,
+        mag_thickness=thickness,
+        hk_radius=radius
+        
     )
     return pars
 
