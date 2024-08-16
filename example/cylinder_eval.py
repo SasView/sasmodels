@@ -4,11 +4,11 @@ Minimal example of calling a kernel for a specific set of q values.
 
 from numpy import logspace, sqrt
 from matplotlib import pyplot as plt
-from sasmodels.core import load_model
-from sasmodels.direct_model import call_kernel, call_Fq
+from ..sasmodels.core import load_model
+from ..sasmodels.direct_model import call_kernel, call_Fq
 
 model = load_model('cylinder')
-q = logspace(-3, -1, 200)
+q = logspace(-3, -1, 20)
 kernel = model.make_kernel([q])
 pars = {'radius': 200, 'radius_pd': 0.1, 'scale': 2}
 Iq = call_kernel(kernel, pars)
