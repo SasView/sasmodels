@@ -153,7 +153,7 @@ parameters = [
 # pylint: enable=bad-whitespace, line-too-long
 
 source = ["lib/sas_Si.c", "lib/polevl.c", "lib/sas_J1.c", "lib/kron.c", "lib/lookup_sin.c", "lib/lookup_cos.c",
-          "core_shell_bicelle2_integration.c", "core_shell_bicelle2.c"]
+          "integration/core_shell_bicelle2_integration.c", "core_shell_bicelle2.c"]
 have_Fq = True
 radius_effective_modes = [
     "excluded volume", "equivalent volume sphere", "outer rim radius",

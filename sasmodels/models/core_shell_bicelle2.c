@@ -125,60 +125,7 @@ integrand(double x, double q, double radius, double thick_radius, double thick_f
     const double form = bicelle_kernel(q*sin_theta, q*cos_theta, radius, thick_radius, thick_face, halflength, sld_core, sld_face, sld_rim, sld_solvent);
     *res1 = form * sin_theta;
     *res2 = form * form * sin_theta;
-
-
-void integrate2(
-    Integrand2 f, 
-    double a,
-    double b, 
-    double q,
-    double radius,
-    double thick_radius,
-    double thick_face,
-    double halflength,
-    double sld_core,
-    double sld_face,
-    double sld_rim,
-    double sld_solvent,
-    double* res1, 
-    double* res2
-    ){
-
-
-    const double A = q*halflength;
-    const double B = q*radius;
-    const double C = q*(halflength+thick_face);
-    const double D = q*(radius+thick_radius);
-    // Determine the number of points for the Gauss quadrature
-    int expo = (int)(eval_poly(
-        log2m(max(limits[0][0],min(limits[0][1], A))), 
-        log2m(max(limits[1][0],min(limits[1][1], B))),
-        log2m(max(limits[2][0],min(limits[2][1], C))),
-        log2m(max(limits[3][0],min(limits[3][1], D))),) + 1);
-    int n = (int)(pow(2, max(1, min(15, expo))));
-
-    double *xg, *wg;
-    get_gauss_points(n, &xg, &wg);
-
-    // Perform the integration
-    *res1 = 0;
-    *res2 = 0;
-
-    for (int i = 0; i < n; i++){
-        double t1, t2;
-        f(a + (b - a) * 0.5 * (xg[i] + 1), q, radius, thick_radius, thick_face, halflength, sld_core, sld_face, sld_rim, sld_solvent, &t1, &t2, n, i);
-        *res1 += t1 * wg[i];
-        *res2 += t2 * wg[i];
-    }
-
-    *res1 *= (b - a) * 0.5;
-    *res2 *= (b - a) * 0.5;
-  
-    
 }
-
-
-
 static void
 Fq(double q,
     double *F1,

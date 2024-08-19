@@ -28,38 +28,21 @@ double eval_poly(double var0, double var1){
     return 1 * coeffs[0] + var0 * coeffs[1] + var1 * coeffs[2] + (var0 * var0) * coeffs[3] + var0 * var1 * coeffs[4] + (var1 * var1) * coeffs[5] + (var0 * var0 * var0) * coeffs[6] + (var0 * var0) * var1 * coeffs[7] + var0 * (var1 * var1) * coeffs[8] + (var1 * var1 * var1) * coeffs[9] + (var0 * var0 * var0 * var0) * coeffs[10] + (var0 * var0 * var0) * var1 * coeffs[11] + (var0 * var0) * (var1 * var1) * coeffs[12] + var0 * (var1 * var1 * var1) * coeffs[13] + (var1 * var1 * var1 * var1) * coeffs[14] + (var0 * var0 * var0 * var0 * var0) * coeffs[15] + (var0 * var0 * var0 * var0) * var1 * coeffs[16] + (var0 * var0 * var0) * (var1 * var1) * coeffs[17] + (var0 * var0) * (var1 * var1 * var1) * coeffs[18] + var0 * (var1 * var1 * var1 * var1) * coeffs[19] + (var1 * var1 * var1 * var1 * var1) * coeffs[20] + (var0 * var0 * var0 * var0 * var0 * var0) * coeffs[21] + (var0 * var0 * var0 * var0 * var0) * var1 * coeffs[22] + (var0 * var0 * var0 * var0) * (var1 * var1) * coeffs[23] + (var0 * var0 * var0) * (var1 * var1 * var1) * coeffs[24] + (var0 * var0) * (var1 * var1 * var1 * var1) * coeffs[25] + var0 * (var1 * var1 * var1 * var1 * var1) * coeffs[26] + (var1 * var1 * var1 * var1 * var1 * var1) * coeffs[27] + intercept;
 }
     
-    
-typedef void (*Integrand)(double x, double , double , double* out, int n, int i);
 
-void integrate(Integrand f, double a, double b, double A, double B, double* res){
+typedef double (*Integrand2)(double x , double q, double radius, double length, double* res1, double* res2, int n, int i);
 
 
-    // Determine the number of points for the Gauss quadrature
-    int expo = (int)(eval_poly(log2m(max(limits[0][0],min(limits[0][1], A))), log2m(max(limits[1][0],min(limits[1][1], B)))) + 1);
-    int n = (int)(pow(2, max(1, min(15, expo))));
-    
-    double *xg, *wg;
-    get_gauss_points(n, &xg, &wg);
-    
-    // Perform the integration
-    *res = 0;
-    for (int i = 0; i < n; i++){
-        double temp;
-        f(a + (b - a) * 0.5 * (xg[i] + 1), A, B, &temp, n, i);
-        *res += temp * wg[i];
-    }
-    *res *= (b - a) * 0.5;
-  
-    
-}
-    
-typedef double (*Integrand2)(double x, double A, double B, double*, double*, int, int);
+void integrate2(
+Integrand2 f,
+double a,
+double b,
+double q,
+double radius,
+double length,
+double* res1, double* res2){
 
-
-
-void integrate2(Integrand2 f, double a, double b, double A, double B, double* res1, double* res2){
-
-
+    double A = q*length/2;
+    double B = q*radius;
     // Determine the number of points for the Gauss quadrature
     int expo = (int)(eval_poly(log2m(max(limits[0][0],min(limits[0][1], A))), log2m(max(limits[1][0],min(limits[1][1], B)))) + 1);
     int n = (int)(pow(2, max(1, min(15, expo))));
@@ -73,13 +56,11 @@ void integrate2(Integrand2 f, double a, double b, double A, double B, double* re
 
     for (int i = 0; i < n; i++){
         double t1, t2;
-        f(a + (b - a) * 0.5 * (xg[i] + 1), A, B, &t1, &t2, n, i);
+        f(a + (b - a) * 0.5 * (xg[i] + 1), q, radius, length,  &t1, &t2, n, i);
         *res1 += t1 * wg[i];
         *res2 += t2 * wg[i];
     }
 
     *res1 *= (b - a) * 0.5;
     *res2 *= (b - a) * 0.5;
-  
-    
 }

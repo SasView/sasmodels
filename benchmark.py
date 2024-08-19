@@ -25,9 +25,16 @@ except Exception as e:
     print(f"Model {model_name} not found. Please check if the model exists in sasmodels.")
     raise e
 
-q = np.linspace(0.001, 0.1, 200)
-kernel_cylinder = model_cylinder_accurate.make_kernel([q])
-
+# q = np.linspace(0.001, 0.1, 200)
+q = np.linspace(0.0005, 0.5, 1000)
+kernel_cylinder = load_model("ellipsoid2").make_kernel([q])
+Iq = call_kernel(kernel_cylinder, {"radius_polar": .2, "radius_equatorial": 60000})
+import matplotlib.pyplot as plt
+plt.plot(q, Iq)
+plt.xscale('log')
+plt.yscale('log')
+plt.show()
+exit()
 n = 30
 lengths = np.geomspace(10, 1000000, n)
 # lengths = lengths[::4]

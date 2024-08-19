@@ -51,16 +51,19 @@ radius_effective(int mode, double radius, double length)
     }
 }
 
-void integrandF1F2(double x, double A, double B, double *F1, double *F2, int n, int i){
+void integrandF1F2(
+double x,
+double q,
+double radius,
+double length,
+double *F1, double *F2, int n, int i){
     double sin_theta, cos_theta;
     get_sin_x(n, i, &sin_theta);
     get_cos_x(n, i, &cos_theta);
-//    SINCOS(x, sin_theta, cos_theta);
-    const double form = sas_sinx_x(A*cos_theta) *  sas_2J1x_x(B*sin_theta);
+    const double form = _fq(q*sin_theta, q*cos_theta, radius, length);
     *F1 = form * sin_theta;
     *F2 = form * form * sin_theta;
 }
-
 
 static void
 Fq(double q,
@@ -72,7 +75,7 @@ Fq(double q,
     double length)
 {
     double total_F1, total_F2;
-    integrate2(integrandF1F2, 0, M_PI_2, q*length/2, q*radius, &total_F1, &total_F2);
+    integrate2(integrandF1F2, 0, M_PI_2, q, radius, length, &total_F1, &total_F2);
 
     const double s = (sld - solvent_sld) * form_volume(radius, length);
     *F1 = 1e-2 * s * total_F1;
