@@ -74,8 +74,8 @@ double thickness,
 double length,
 double *F1, double *F2, int n, int i){
     double sin_theta, cos_theta;
-    get_sin_x(n, i, &sin_theta);
-    get_cos_x(n, i, &cos_theta);
+    cos_theta = x;
+    sin_theta = sqrt(1.0 - cos_theta*cos_theta);
     const double form = _fq(q*sin_theta, q*cos_theta, radius, thickness, length);
     *F1 = form;
     *F2 = form * form;
