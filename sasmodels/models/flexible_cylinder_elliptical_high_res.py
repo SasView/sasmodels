@@ -4,6 +4,15 @@ NOTE: This model is identical to the original flexible cylinder with an
 elliptical cross section and a uniform scattering length density model, but with a
 better integration system. 
 
+Upper Limits for the Parameters
+-------------------------------
+
+q*radius,(q*radius*axis_ratio)
+[1000000, 1000000]
+
+The likehood for getting accurate results is better within these limits. 
+Beyond this, the results may not be as accurate. Not unusable, but not as accurate.
+
 This model calculates the form factor for a flexible cylinder with an
 elliptical cross section and a uniform scattering length density.
 The non-negligible diameter of the cylinder is included by accounting

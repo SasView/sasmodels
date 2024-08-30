@@ -3,6 +3,14 @@ r"""
 NOTE: This model is identical to the original core-shell cylinder model, but with a
 better integration system. 
 
+Upper Limits for the Parameters
+-------------------------------
+q*core_r, q*core_h, q*core_vd, q*shell_r, q*shell_h,
+[1000000, 1000000, 1000000, 1000000]
+
+The likehood for getting accurate results is better within these limits. 
+As they are appreached and beyond them, the results may not be as accurate. Not unusable, but not as accurate.
+
 Definition
 ----------
 

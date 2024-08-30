@@ -8,6 +8,15 @@ the :ref:`magnetism` documentation.
 NOTE: This model is identical to the original cylinder model, but with a
 better integration system. 
 
+
+Upper Limits for the Parameters
+-------------------------------
+0.5*q*L, q*R
+[1000000, 1000000]
+
+The likehood for getting accurate results is better within these limits. 
+As they are appreached and beyond them, the results may not be as accurate. Not unusable, but not as accurate.
+
 Definition
 ----------
 

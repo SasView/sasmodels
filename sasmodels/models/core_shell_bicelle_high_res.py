@@ -4,6 +4,14 @@ NOTE: This model is identical to the original core-shell bicelle model, but with
 better integration system. 
 
 
+Upper Limits for the Parameters
+-------------------------------
+q*halflength, q*radius, q*(halflength+thick_face), q*(radius+thick_radius);
+[1000000, 1000000, 1000000, 1000000]
+
+The likehood for getting accurate results is better within these limits. 
+As they are appreached and beyond them, the results may not be as accurate. Not unusable, but not as accurate.
+
 Definition
 ----------
 

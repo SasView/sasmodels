@@ -3,6 +3,14 @@ r"""
 NOTE: This model is identical to the original core-shell ellipsoid model, but with a
 better integration system. 
 
+Upper Limits for the Parameters
+-------------------------------
+[q, radius_equat_core, polar_core, equat_shell, polar_shell]
+[.5, 1000000, 1000000, 1000000, 1000000
+
+The likehood for getting accurate results is better within these limits. 
+As they are appreached and beyond them, the results may not be as accurate. Not unusable, but not as accurate.
+
 Definition
 ----------
 

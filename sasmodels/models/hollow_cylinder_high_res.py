@@ -3,6 +3,15 @@ r"""
 NOTE: This model is identical to the original hollow cylinder model, but with a
 better integration system. 
 
+Upper Limits for the Parameters
+-------------------------------
+
+q, radius, thickness, length
+[.5, 1000000, 1000000, 1000000]
+
+The likehood for getting accurate results is better within these limits. 
+Beyond this, the results may not be as accurate. Not unusable, but not as accurate.
+
 Definition
 ----------
 
