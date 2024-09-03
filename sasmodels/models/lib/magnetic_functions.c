@@ -1,13 +1,3 @@
-static double clipp(double value, double low, double high) //from kernel_iq.c
-{
-  return (value < low ? low : (value > high ? high : value));
-} 
-
-static double length(double x, double y) 
-{
-  return sqrt(x*x + y*y);
-} 
-
 static double fq_core_shell(double q, double sld_core, double radius,
    double sld_solvent, double fp_n, double sld[], double thickness[])
 {
@@ -56,8 +46,8 @@ static void set_weights(double in_spin, double out_spin, double weight[8]) //fro
  double norm=out_spin;
 
 
-   in_spin = clipp(sqrt(square(in_spin)), 0.0, 1.0);//opencl has ambiguities for abs()
-   out_spin = clipp(sqrt(square(out_spin)), 0.0, 1.0);
+   in_spin = clip(sqrt(square(in_spin)), 0.0, 1.0);//opencl has ambiguities for abs()
+   out_spin = clip(sqrt(square(out_spin)), 0.0, 1.0);
 
    if (out_spin < 0.5){norm=1-out_spin;}
 

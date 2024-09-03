@@ -187,6 +187,11 @@
 #endif
 inline double square(double x) { return x*x; }
 inline double cube(double x) { return x*x*x; }
+// clip() follows numpy.clip() semantics, returning (x < low ? low : x > high ? high : x)
+// OpenCL/CUDA clamp() returns fmin(fmax(x, low), high)
+// C++(17) clamp() matches numpy.clip()
+// If x is NaN numpy.clip() returns NaN but OpenCL clamp() returns low.
+inline double clip(double x, double low, double high) { return x < low ? low : x > high ? high : x; }
 inline double sas_sinx_x(double x) { return x==0 ? 1.0 : sin(x)/x; }
 
 // CRUFT: support old style models with orientation received qx, qy and angles

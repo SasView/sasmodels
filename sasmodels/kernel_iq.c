@@ -111,12 +111,6 @@ void ORTH_VEC(double *result_vec, double *vec1, double *vec2)
 }
 
 
-// Return value restricted between low and high
-static double clip(double value, double low, double high)
-{
-  return (value < low ? low : (value > high ? high : value));
-}
-
 // Compute spin cross sections given in_spin and out_spin
 // To convert spin cross sections to sld b:
 //     uu * (sld - m_perp_x);
