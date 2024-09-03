@@ -71,21 +71,21 @@ typedef union {
 // ===== Helper functions for magnetism =====
 
 // vector algebra
-void SET_VEC(double *vector, double v0, double v1, double v2)
+static void SET_VEC(double *vector, double v0, double v1, double v2)
 {
     vector[0] = v0;
     vector[1] = v1;
     vector[2] = v2;
 }
 
-void SCALE_VEC(double *vector, double a)
+static void SCALE_VEC(double *vector, double a)
 {
     vector[0] = a*vector[0];
     vector[1] = a*vector[1];
     vector[2] = a*vector[2];
 }
 
-void ADD_VEC(double *result_vec, double *vec1, double *vec2)
+static void ADD_VEC(double *result_vec, double *vec1, double *vec2)
 {
     result_vec[0] = vec1[0] + vec2[0];
     result_vec[1] = vec1[1] + vec2[1];
@@ -102,7 +102,7 @@ static double MAG_VEC( double *vec)
     return sqrt(SCALAR_VEC(vec,vec));
 }
 
-void ORTH_VEC(double *result_vec, double *vec1, double *vec2)
+static void ORTH_VEC(double *result_vec, double *vec1, double *vec2)
 {
     double scale =  SCALAR_VEC(vec1,vec2) / SCALAR_VEC(vec2,vec2);
     result_vec[0] = vec1[0] - scale * vec2[0];
@@ -172,11 +172,10 @@ static double mag_sld(
 )
 {
   double Mvector[3];
-  double Pvector[3]; 
+  double Pvector[3];
   double qvector[3];
-  double rhom[3]; 
   double perpy[3];
-  double perpz[3];  
+  double perpz[3];
   double Mperp[3];
 
   const double qsq = sqrt(qx*qx + qy*qy); 
