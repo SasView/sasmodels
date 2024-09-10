@@ -48,36 +48,44 @@ static double reduced_field(double q, double Ms, double Hi,
 
 static double fqMxreal( double qx, double qy, double qz, double Mz, double Hkx, double Hky, double Hi, double Ms, double A, double D)
 {
-  const double q = sqrt(qx*qx + qy*qy + qz*qz); 
-  const double f = reduced_field(q, Ms, Hi, A)*(Hkx*(1.0+reduced_field(q, Ms, Hi, A)*qy*qy/q/q)-Ms*Mz*qx*qz/q/q*(1.0+reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,q)*DMI_length(Ms, D,q))-Hky*reduced_field(q, Ms, Hi, A)*qx*qy/q/q)/(1.0+reduced_field(q, Ms, Hi, A)*(qx*qx+qy*qy)/q/q-square(reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,qz)));
+  const double qsq = qx*qx + qy*qy + qz*qz;
+  const double q = sqrt(qsq); 
+  const double Hr = reduced_field(q, Ms, Hi, A);
+  const double f = Hr*(Hkx*(qsq+Hr*qy*qy)-Ms*Mz*qx*qz*(1.0+Hr*DMI_length(Ms, D,q)*DMI_length(Ms, D,q))-Hky*Hr*qx*qy)/(qsq+Hr*(qx*qx+qy*qy)-square(Hr*DMI_length(Ms, D,qz)*q));
   return f;
 }
 
 static double fqMximag(double qx, double qy, double qz, double Mz, double Hkx, double Hky, double Hi, double Ms, double A, double D)
 {
-  const double q = sqrt(qx*qx + qy*qy + qz*qz);   
-  const double f = -reduced_field(q, Ms, Hi, A)*(Ms*Mz*(1.0+reduced_field(q, Ms, Hi, A))*DMI_length(Ms, D,qy)+Hky*reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,qz))/(1.0+reduced_field(q, Ms, Hi, A)*(qx*qx+qy*qy)/q/q -square(reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,qz)));
+  const double qsq = qx*qx + qy*qy + qz*qz;
+  const double q = sqrt(qsq);   
+  double Hr = reduced_field(q, Ms, Hi, A);
+  const double f = -Hr*qsq*(Ms*Mz*(1.0+Hr)*DMI_length(Ms, D,qy)+Hky*Hr*DMI_length(Ms, D,qz))/(qsq+Hr*(qx*qx+qy*qy) -square(Hr*DMI_length(Ms, D,qz)*q));
   return f;
 }
 
 static double fqMyreal( double qx, double qy, double qz, double Mz, double Hkx, double Hky, double Hi, double Ms, double A, double D)
 {
-  const double q = sqrt(qx*qx + qy*qy + qz*qz); 
-  const double f = reduced_field(q, Ms, Hi, A)*(Hky*(1.0+reduced_field(q, Ms, Hi, A)*qx*qx/q/q)-Ms*Mz*qy*qz/q/q*(1.0+reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,q)*DMI_length(Ms, D,q))-Hkx*reduced_field(q, Ms, Hi, A)*qx*qy/q/q)/(1.0+reduced_field(q, Ms, Hi, A)*(qx*qx+qy*qy)/q/q -square(reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,qz)));
+  const double qsq = qx*qx + qy*qy + qz*qz;
+  const double q = sqrt(qsq); 
+  const double Hr = reduced_field(q, Ms, Hi, A);
+  const double f = Hr*(Hky*(qsq+Hr*qx*qx)-Ms*Mz*qy*qz*(1.0+Hr*DMI_length(Ms, D,q)*DMI_length(Ms, D,q))-Hkx*Hr*qx*qy)/(qsq+Hr*(qx*qx+qy*qy) -square(Hr*DMI_length(Ms, D,qz)*q));
   return f;
 }
 
 static double fqMyimag( double qx, double qy, double qz, double Mz, double Hkx, double Hky, double Hi, double Ms, double A, double D)
 {
-  const double q = sqrt(qx*qx + qy*qy + qz*qz);  
-  const double f = reduced_field(q, Ms, Hi, A)*(Ms*Mz*(1.0+reduced_field(q, Ms, Hi, A))*DMI_length(Ms, D,qx)-Hkx*reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,qz))/(1.0+reduced_field(q, Ms, Hi, A)*(qx*qx+qy*qy)/q/q -square(reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,qz)));
+  const double qsq = qx*qx + qy*qy + qz*qz;
+  const double q = sqrt(qsq);  
+  const double Hr = reduced_field(q, Ms, Hi, A);
+  const double f = Hr*qsq*(Ms*Mz*(1.0+Hr)*DMI_length(Ms, D,qx)-Hkx*Hr*DMI_length(Ms, D,qz))/(qsq+Hr*(qx*qx+qy*qy) -square(Hr*DMI_length(Ms, D,qz)*q));
   return f;
 }
 
 static double
 Iqxy(double qx, double qy, double nuc_radius, double nuc_thickness, double mag_radius, double mag_thickness, double hk_radius, double nuc_sld_core, double nuc_sld_shell, double nuc_sld_solvent, double mag_sld_core, double mag_sld_shell, double mag_sld_solvent, double hk_sld_core, double Hi, double Ms, double A, double D,  double up_i, double up_f, double alpha, double beta)
 {
-  const double q = sqrt(qx*qx + qy*qy );  
+  const double q = sqrt(qx*qx + qy*qy);  
   if (q > 1.0e-16 ) {
     const double cos_theta=qx/q;
     const double sin_theta=qy/q;
