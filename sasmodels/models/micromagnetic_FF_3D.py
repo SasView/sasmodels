@@ -12,27 +12,24 @@ and on the applied magnetic field. As shown in [#Michels2016]_ near magnetic
 saturation the scattering cross-section can be evaluated by means of micromagnetic theory
 
 .. math::
-    I(\mathbf{Q}) = I_{nuc} +I_{res}+ I_{mag}(\mathbf{Q},H),
+    I(\mathbf{Q}) = I_{nuc} + I_{mag}(\mathbf{Q},H),
 
-with the field-independent nuclear and magnetic residual SANS cross section (due
-to nanoscale spatial variations of the saturation magnetisation) measured at
-complete magnetic saturation. Commonly, a measurement at a high magnetic field is
-taken as reference and subtracted from the scattering cross-section at lower
-field to obtain the so-called spin-misalignment scattering cross-section 
+with the field-independent nuclear and magnetic SANS cross section (due
+to nanoscale spatial variations of the magnetisation).
 
 .. math::
     I_{mag}(\mathbf{Q},H)= S_K(Q) R_K(\mathbf{Q}, H_i) + S_M(Q) R_M(\mathbf{Q}, H_i),
 
 with $H_i$ the internal field, i.e. the external magnetic field corrected for
 demagnetizing effects and the influence of the magnetodipolar field and of the
-magnetic anisotropy [#Bick2013]_. This purely magnetic scattering reflects the
-response of the transversal magnetisation components with to an
+magnetic anisotropy [#Bick2013]_. This magnetic field dependence of the scattering 
+reflects the increasing magnetisation misalignment with decreasing
 externally applied magnetic field with a contribution $S_K \times R_K$ due to
 perturbations around magnetic anisotropy fields and a term $S_M \times R_M$
-related to magnetostatic fields. The alignment of the magnetic moments along
-the magnetic field is disturbed by perturbations in the microstructure. The
-anisotropy-field function $S_K$ depends on the Fourier transform of the magnetic
-anisotropy distribution (strength and orientation) in the material and the
+related to magnetostatic fields. The magnetic moments decorate perturbations in the
+microstructure (precipitates, grain boundaries etc).
+The anisotropy-field function $S_K$ depends on the Fourier transform of the magnetic
+anisotropy distribution (strength and orientation) in the material, and the
 scattering function of the longitudinal magnetisation $S_M$ reflects the
 variations of the saturation magnetisation, e.g. jumps at the particle-matrix
 interface. $R_K$ and $R_M$ denote the micromagnetic response functions that

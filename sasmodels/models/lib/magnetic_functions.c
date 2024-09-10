@@ -1,19 +1,6 @@
-static double fq_core_shell(double q, double sld_core, double radius,
-   double sld_solvent, double fp_n, double sld[], double thickness[])
-{
-  const int n = (int)(fp_n+0.5);
-  double f, r, last_sld;
-  r = radius;
-  last_sld = sld_core;
-  f = 0.;
-  for (int i=0; i<n; i++) {
-    f += M_4PI_3 * cube(r) * (sld[i] - last_sld) * sas_3j1x_x(q*r);
-    last_sld = sld[i];
-    r += thickness[i];
-  }
-  f += M_4PI_3 * cube(r) * (sld_solvent - last_sld) * sas_3j1x_x(q*r);
-  return f;
-}
+//These functions are required for magnetic analysis models. They are copies 
+//from sasmodels/kernel_iq.c, to enables magnetic parameters for 1D and 2D models.
+
 
 static double langevin(
     double x) {
@@ -39,6 +26,8 @@ static double langevinoverx(
         return langevin(x)/x;
     }
 }
+
+
 
 //weighting of spin resolved cross sections to reconstruct partially polarised beam with imperfect optics using up_i/up_f.
 static void set_weights(double in_spin, double out_spin, double weight[8]) //from kernel_iq.c
@@ -69,48 +58,6 @@ static void set_weights(double in_spin, double out_spin, double weight[8]) //fro
  }
 
 
-
-//some basic vector algebra
-
-void SET_VEC(double *vector, double v0, double v1, double v2)
-{
- vector[0] = v0;
- vector[1] = v1;
- vector[2] = v2;
-}
-
-void SCALE_VEC(double *vector, double a)
-{
- vector[0] = a*vector[0];
- vector[1] = a*vector[1];
- vector[2] = a*vector[2];
-}
-
-void ADD_VEC(double *result_vec, double *vec1, double *vec2)
-{
- result_vec[0] = vec1[0] + vec2[0];
- result_vec[1] = vec1[1] + vec2[1];
- result_vec[2] = vec1[2] + vec2[2];
-}
-
-static double SCALAR_VEC( double *vec1, double *vec2)
-{
- return vec1[0] * vec2[0] + vec1[1] * vec2[1] + vec1[2] * vec2[2];
-}
-
-static double MAG_VEC( double v0, double v1, double v2)
-{
- double vec[3];
- SET_VEC(vec, v0, v1, v2);   
- return sqrt(SCALAR_VEC(vec,vec));
-}
-
-void ORTH_VEC(double *result_vec, double *vec1, double *vec2)
-{
- result_vec[0] = vec1[0] - SCALAR_VEC(vec1,vec2) / SCALAR_VEC(vec2,vec2) * vec2[0];
- result_vec[1] = vec1[1] - SCALAR_VEC(vec1,vec2) / SCALAR_VEC(vec2,vec2) * vec2[1];
- result_vec[2] = vec1[2] - SCALAR_VEC(vec1,vec2) / SCALAR_VEC(vec2,vec2) * vec2[2];
-}
 
 //transforms scattering vector q in polarisation/magnetisation coordinate system
  static void set_scatvec(double *qrot, double q,

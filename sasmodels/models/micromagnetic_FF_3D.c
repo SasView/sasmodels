@@ -48,28 +48,28 @@ static double reduced_field(double q, double Ms, double Hi,
 
 static double fqMxreal( double x, double y, double z, double Mz, double Hkx, double Hky, double Hi, double Ms, double A, double D)
 {
-  const double q=MAG_VEC(x, y, z);  
+  const double q = sqrt(x*x + y*y + z*z); 
   const double f = reduced_field(q, Ms, Hi, A)*(Hkx*(1.0+reduced_field(q, Ms, Hi, A)*y*y/q/q)-Ms*Mz*x*z/q/q*(1.0+reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,q)*DMI_length(Ms, D,q))-Hky*reduced_field(q, Ms, Hi, A)*x*y/q/q)/(1.0+reduced_field(q, Ms, Hi, A)*(x*x+y*y)/q/q-square(reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,z)));
   return f;
 }
 
 static double fqMximag(double x, double y, double z, double Mz, double Hkx, double Hky, double Hi, double Ms, double A, double D)
 {
-  const double q=MAG_VEC(x, y, z);      
+  const double q = sqrt(x*x + y*y + z*z);   
   const double f = -reduced_field(q, Ms, Hi, A)*(Ms*Mz*(1.0+reduced_field(q, Ms, Hi, A))*DMI_length(Ms, D,y)+Hky*reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,z))/(1.0+reduced_field(q, Ms, Hi, A)*(x*x+y*y)/q/q -square(reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,z)));
   return f;
 }
 
 static double fqMyreal( double x, double y, double z, double Mz, double Hkx, double Hky, double Hi, double Ms, double A, double D)
 {
-  const double q=MAG_VEC(x, y, z);  
+  const double q = sqrt(x*x + y*y + z*z); 
   const double f = reduced_field(q, Ms, Hi, A)*(Hky*(1.0+reduced_field(q, Ms, Hi, A)*x*x/q/q)-Ms*Mz*y*z/q/q*(1.0+reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,q)*DMI_length(Ms, D,q))-Hkx*reduced_field(q, Ms, Hi, A)*x*y/q/q)/(1.0+reduced_field(q, Ms, Hi, A)*(x*x+y*y)/q/q -square(reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,z)));
   return f;
 }
 
 static double fqMyimag( double x, double y, double z, double Mz, double Hkx, double Hky, double Hi, double Ms, double A, double D)
 {
-  const double q=MAG_VEC(x, y, z);  
+  const double q = sqrt(x*x + y*y + z*z);  
   const double f = reduced_field(q, Ms, Hi, A)*(Ms*Mz*(1.0+reduced_field(q, Ms, Hi, A))*DMI_length(Ms, D,x)-Hkx*reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,z))/(1.0+reduced_field(q, Ms, Hi, A)*(x*x+y*y)/q/q -square(reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,z)));
   return f;
 }
@@ -77,7 +77,7 @@ static double fqMyimag( double x, double y, double z, double Mz, double Hkx, dou
 static double
 Iqxy(double qx, double qy, double nuc_radius, double nuc_thickness, double mag_radius, double mag_thickness, double hk_radius, double nuc_sld_core, double nuc_sld_shell, double nuc_sld_solvent, double mag_sld_core, double mag_sld_shell, double mag_sld_solvent, double hk_sld_core, double Hi, double Ms, double A, double D,  double up_i, double up_f, double alpha, double beta)
 {
-  const double q=MAG_VEC(qx, qy, 0);    
+  const double q = sqrt(qx*qx + qy*qy );  
   if (q > 1.0e-16 ) {
     const double cos_theta=qx/q;
     const double sin_theta=qy/q;
