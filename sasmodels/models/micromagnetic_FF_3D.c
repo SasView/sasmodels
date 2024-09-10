@@ -46,31 +46,31 @@ static double reduced_field(double q, double Ms, double Hi,
 //the two transversal magnetisation components, reacting to a magnetic field.
 //The micromagnetic solution for the magnetisation are from Michels et al. PRB 94, 054424 (2016).
 
-static double fqMxreal( double x, double y, double z, double Mz, double Hkx, double Hky, double Hi, double Ms, double A, double D)
+static double fqMxreal( double qx, double qy, double qz, double Mz, double Hkx, double Hky, double Hi, double Ms, double A, double D)
 {
-  const double q = sqrt(x*x + y*y + z*z); 
-  const double f = reduced_field(q, Ms, Hi, A)*(Hkx*(1.0+reduced_field(q, Ms, Hi, A)*y*y/q/q)-Ms*Mz*x*z/q/q*(1.0+reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,q)*DMI_length(Ms, D,q))-Hky*reduced_field(q, Ms, Hi, A)*x*y/q/q)/(1.0+reduced_field(q, Ms, Hi, A)*(x*x+y*y)/q/q-square(reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,z)));
+  const double q = sqrt(qx*qx + qy*qy + qz*qz); 
+  const double f = reduced_field(q, Ms, Hi, A)*(Hkx*(1.0+reduced_field(q, Ms, Hi, A)*qy*qy/q/q)-Ms*Mz*qx*qz/q/q*(1.0+reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,q)*DMI_length(Ms, D,q))-Hky*reduced_field(q, Ms, Hi, A)*qx*qy/q/q)/(1.0+reduced_field(q, Ms, Hi, A)*(qx*qx+qy*qy)/q/q-square(reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,qz)));
   return f;
 }
 
-static double fqMximag(double x, double y, double z, double Mz, double Hkx, double Hky, double Hi, double Ms, double A, double D)
+static double fqMximag(double qx, double qy, double qz, double Mz, double Hkx, double Hky, double Hi, double Ms, double A, double D)
 {
-  const double q = sqrt(x*x + y*y + z*z);   
-  const double f = -reduced_field(q, Ms, Hi, A)*(Ms*Mz*(1.0+reduced_field(q, Ms, Hi, A))*DMI_length(Ms, D,y)+Hky*reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,z))/(1.0+reduced_field(q, Ms, Hi, A)*(x*x+y*y)/q/q -square(reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,z)));
+  const double q = sqrt(qx*qx + qy*qy + qz*qz);   
+  const double f = -reduced_field(q, Ms, Hi, A)*(Ms*Mz*(1.0+reduced_field(q, Ms, Hi, A))*DMI_length(Ms, D,qy)+Hky*reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,qz))/(1.0+reduced_field(q, Ms, Hi, A)*(qx*qx+qy*qy)/q/q -square(reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,qz)));
   return f;
 }
 
-static double fqMyreal( double x, double y, double z, double Mz, double Hkx, double Hky, double Hi, double Ms, double A, double D)
+static double fqMyreal( double qx, double qy, double qz, double Mz, double Hkx, double Hky, double Hi, double Ms, double A, double D)
 {
-  const double q = sqrt(x*x + y*y + z*z); 
-  const double f = reduced_field(q, Ms, Hi, A)*(Hky*(1.0+reduced_field(q, Ms, Hi, A)*x*x/q/q)-Ms*Mz*y*z/q/q*(1.0+reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,q)*DMI_length(Ms, D,q))-Hkx*reduced_field(q, Ms, Hi, A)*x*y/q/q)/(1.0+reduced_field(q, Ms, Hi, A)*(x*x+y*y)/q/q -square(reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,z)));
+  const double q = sqrt(qx*qx + qy*qy + qz*qz); 
+  const double f = reduced_field(q, Ms, Hi, A)*(Hky*(1.0+reduced_field(q, Ms, Hi, A)*qx*qx/q/q)-Ms*Mz*qy*qz/q/q*(1.0+reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,q)*DMI_length(Ms, D,q))-Hkx*reduced_field(q, Ms, Hi, A)*qx*qy/q/q)/(1.0+reduced_field(q, Ms, Hi, A)*(qx*qx+qy*qy)/q/q -square(reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,qz)));
   return f;
 }
 
-static double fqMyimag( double x, double y, double z, double Mz, double Hkx, double Hky, double Hi, double Ms, double A, double D)
+static double fqMyimag( double qx, double qy, double qz, double Mz, double Hkx, double Hky, double Hi, double Ms, double A, double D)
 {
-  const double q = sqrt(x*x + y*y + z*z);  
-  const double f = reduced_field(q, Ms, Hi, A)*(Ms*Mz*(1.0+reduced_field(q, Ms, Hi, A))*DMI_length(Ms, D,x)-Hkx*reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,z))/(1.0+reduced_field(q, Ms, Hi, A)*(x*x+y*y)/q/q -square(reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,z)));
+  const double q = sqrt(qx*qx + qy*qy + qz*qz);  
+  const double f = reduced_field(q, Ms, Hi, A)*(Ms*Mz*(1.0+reduced_field(q, Ms, Hi, A))*DMI_length(Ms, D,qx)-Hkx*reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,qz))/(1.0+reduced_field(q, Ms, Hi, A)*(qx*qx+qy*qy)/q/q -square(reduced_field(q, Ms, Hi, A)*DMI_length(Ms, D,qz)));
   return f;
 }
 

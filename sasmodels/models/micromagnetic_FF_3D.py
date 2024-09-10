@@ -166,6 +166,7 @@ source = ["lib/sas_3j1x_x.c", "lib/core_shell.c", "lib/gauss76.c", "lib/magnetic
 structure_factor = False
 have_Fq = False
 single=False
+opencl = False
 
 
 def random():

@@ -8,7 +8,7 @@ static double langevin(
 
     if (x < 0.00001) {
         // avoid dividing by zero
-        return 1.0/3.0*x;
+        return 1.0/3.0*x-1.0/45.0 * pow(x, 3) + 2.0/945.0 * pow(x, 5) - 1.0/4725.0 * pow(x, 7);
     } else {
         return 1.0/tanh(x)-1/x;
     }
@@ -21,7 +21,7 @@ static double langevinoverx(
 
     if (x < 0.00001) {
         // avoid dividing by zero
-        return 1.0/3.0;
+        return 1.0/3.0-1.0/45.0 * pow(x, 2) + 2.0/945.0 * pow(x, 4) - 1.0/4725.0 * pow(x, 6);
     } else {
         return langevin(x)/x;
     }
@@ -84,7 +84,7 @@ static void set_weights(double in_spin, double out_spin, double weight[8]) //fro
 //Evaluating the magnetic scattering vector (Halpern Johnson vector) for general orientation of q and collecting terms for the spin-resolved (POLARIS) cross sections. Mz is along the applied magnetic field direction, which is also the polarisation direction.
 static void mag_sld(
    // 0=dd.real, 1=dd.imag, 2=uu.real, 3=uu.imag,  4=du.real, 5=du.imag,  6=ud.real, 7=ud.imag
- double x, double y, double z,
+ double qx, double qy, double qz,
   double mxreal, double mximag, double myreal,  double myimag, double mzreal,double mzimag, double nuc, double sld[8])
 {
   double vector[3];
@@ -100,8 +100,8 @@ static void mag_sld(
   double Mperpreal[3];
   double Mperpimag[3];
   
-  const double q = sqrt(x*x + y*y + z*z);
-  SET_VEC(vector, x/q, y/q, z/q); 
+  const double q = sqrt(qx*qx + qy*qy + qz*qz);
+  SET_VEC(vector, qx/q, qy/q, qz/q); 
 
   //Moon-Riste-Koehler notation choose z as pointing along field/polarisation axis
   //totally different to what is used in SASview (historical reasons)
