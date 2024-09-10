@@ -136,11 +136,8 @@ category = "shape:sphere"
 
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
-parameters = [["nuc_radius", "Ang", 50., [0, inf], "volume", "Structural radius of the core"],
-              ["nuc_thickness", "Ang", 40., [0, inf], "volume", "Structural thickness of shell"],  
-              ["mag_radius", "Ang", 50., [0, inf], "volume", "Magnetic radius of the core"],
-              ["mag_thickness", "Ang", 40., [0, inf], "volume", "Magnetic thickness of shell"], 
-              ["hk_radius", "Ang", 50., [0, inf], "volume", "Anisotropy radius of the core"],            
+parameters = [["radius", "Ang", 50., [0, inf], "volume", "Structural radius of the core"],
+              ["thickness", "Ang", 40., [0, inf], "volume", "Structural thickness of shell"],            
               ["nuc_sld_core", "1e-6/Ang^2", 1.0, [-inf, inf], "", "Core scattering length density"],
               ["nuc_sld_shell", "1e-6/Ang^2", 1.7, [-inf, inf], "", "Scattering length density of shell"],
               ["nuc_sld_solvent", "1e-6/Ang^2", 6.4, [-inf, inf], "", "Solvent scattering length density"],
@@ -177,11 +174,8 @@ def random():
     radius = np.random.beta(0.5, 0.5)*(outer_radius-2) + 1
     thickness = outer_radius - radius
     pars = dict(
-        nuc_radius=radius,
-        nuc_thickness=thickness,
-        mag_radius=radius,
-        mag_thickness=thickness,
-        hk_radius=radius
+        radius=radius,
+        thickness=thickness,
         
     )
     return pars
