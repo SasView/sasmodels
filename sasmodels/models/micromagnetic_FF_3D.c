@@ -2,7 +2,7 @@
 static double
 form_volume(double radius, double thickness)
 {
-  if( radius+thickness>radius+ thickness)
+  if( radius + thickness > radius + thickness)
     return M_4PI_3 * cube(radius + thickness);
   else
     return M_4PI_3 * cube(radius + thickness);
@@ -47,45 +47,51 @@ static double reduced_field(double q, double Ms, double Hi,
 
 static double fqMxreal( double qx, double qy, double qz, double Mz, double Hkx, double Hky, double Hi, double Ms, double A, double D)
 {
-  const double qsq = qx*qx + qy*qy + qz*qz;
-  const double q = sqrt(qsq); 
-  const double Hr = reduced_field(q, Ms, Hi, A);
-  const double DMI = DMI_length(Ms, D,q);
-  const double denominator = (qsq+Hr*(qx*qx+qy*qy)-square(Hr*DMI*q))/Hr;
-  const double f = (Hkx*(qsq+Hr*qy*qy)-Ms*Mz*qx*qz*(1.0+Hr*square(DMI))-Hky*Hr*qx*qy)/denominator;
+  double qsq = qx * qx + qy * qy + qz * qz;
+  double q = sqrt(qsq); 
+  double Hr = reduced_field(q, Ms, Hi, A);
+  double DMI = DMI_length(Ms, D,q);
+  double DMIz = DMI_length(Ms, D,qz);
+  double denominator = (qsq + Hr * (qx * qx + qy * qy) - square(Hr * DMIz * q)) / Hr;
+  double f = (Hkx * (qsq + Hr * qy * qy) - Ms * Mz * qx * qz * (1.0 + Hr * square(DMI)) - Hky * Hr * qx * qy) / denominator;
   return f;
 }
 
 static double fqMximag(double qx, double qy, double qz, double Mz, double Hkx, double Hky, double Hi, double Ms, double A, double D)
 {
-  const double qsq = qx*qx + qy*qy + qz*qz;
-  const double q = sqrt(qsq);   
+  double qsq = qx * qx + qy * qy + qz * qz;
+  double q = sqrt(qsq);   
   double Hr = reduced_field(q, Ms, Hi, A);
-  const double DMI = DMI_length(Ms, D,q);
-  const double denominator = (qsq+Hr*(qx*qx+qy*qy)-square(Hr*DMI*q))/Hr;
-  const double f = -qsq*(Ms*Mz*(1.0+Hr)*DMI+Hky*Hr*DMI)/denominator;
+  double DMI = DMI_length(Ms, D,q);
+  double DMIz = DMI_length(Ms, D,qz);
+  double DMIy = DMI_length(Ms, D,qy);
+  double denominator = (qsq + Hr * (qx * qx + qy * qy) - square(Hr * DMIz * q)) / Hr;
+  double f = - qsq * (Ms * Mz * (1.0 + Hr) * DMIy + Hky * Hr * DMIz) / denominator;
   return f;
 }
 
 static double fqMyreal( double qx, double qy, double qz, double Mz, double Hkx, double Hky, double Hi, double Ms, double A, double D)
 {
-  const double qsq = qx*qx + qy*qy + qz*qz;
-  const double q = sqrt(qsq); 
-  const double Hr = reduced_field(q, Ms, Hi, A);
-  const double DMI = DMI_length(Ms, D,q);
-  const double denominator = (qsq+Hr*(qx*qx+qy*qy)-square(Hr*DMI*q))/Hr;
-  const double f = (Hky*(qsq+Hr*qx*qx)-Ms*Mz*qy*qz*(1.0+Hr*square(DMI))-Hkx*Hr*qx*qy)/denominator;
+  double qsq = qx * qx + qy * qy + qz * qz;
+  double q = sqrt(qsq); 
+  double Hr = reduced_field(q, Ms, Hi, A);
+  double DMI = DMI_length(Ms, D,q);
+  double DMIz = DMI_length(Ms, D,qz);
+  double denominator = (qsq + Hr * (qx * qx + qy * qy) - square(Hr * DMIz * q))/Hr;
+  double f = (Hky * (qsq + Hr * qx * qx) - Ms * Mz * qy * qz * (1.0 + Hr * square(DMI)) - Hkx * Hr * qx * qy)/denominator;
   return f;
 }
 
 static double fqMyimag( double qx, double qy, double qz, double Mz, double Hkx, double Hky, double Hi, double Ms, double A, double D)
 {
-  const double qsq = qx*qx + qy*qy + qz*qz;
-  const double q = sqrt(qsq);  
-  const double Hr = reduced_field(q, Ms, Hi, A);
-  const double DMI = DMI_length(Ms, D,q);
-  const double denominator = (qsq+Hr*(qx*qx+qy*qy)-square(Hr*DMI*q))/Hr;
-  const double f = qsq*(Ms*Mz*(1.0+Hr)*DMI-Hkx*Hr*DMI)/denominator;
+  double qsq = qx * qx + qy * qy + qz * qz;
+  double q = sqrt(qsq);  
+  double Hr = reduced_field(q, Ms, Hi, A);
+  double DMI = DMI_length(Ms, D,q);
+  double DMIx = DMI_length(Ms, D,qx);
+  double DMIz = DMI_length(Ms, D,qz);
+  double denominator = (qsq + Hr * (qx * qx + qy * qy) - square(Hr * DMIz * q))/Hr;
+  double f = qsq * (Ms * Mz * (1.0 + Hr) * DMIx - Hkx * Hr * DMIz)/denominator;
   return f;
 }
 
@@ -98,38 +104,38 @@ Calculate_Scattering(double q, double cos_theta, double sin_theta, double radius
     double weights[8];
     set_weights(up_i, up_f, weights);
    
-    double mz=fq(q, radius, thickness, mag_sld_core, mag_sld_shell, mag_sld_solvent);
-    double nuc=fq(q, radius, thickness, nuc_sld_core, nuc_sld_shell, nuc_sld_solvent);
-	double hk=fq(q, radius, 0, hk_sld_core, 0, 0);
+    double mz = fq(q, radius, thickness, mag_sld_core, mag_sld_shell, mag_sld_solvent);
+    double nuc = fq(q, radius, thickness, nuc_sld_core, nuc_sld_shell, nuc_sld_solvent);
+	double hk = fq(q, radius, 0, hk_sld_core, 0, 0);
 
     double cos_gamma, sin_gamma;
     double sld[8];
     //loop over random anisotropy axis with isotropic orientation gamma for Hkx and Hky
     //To be modified for textured material see also Weissmueller et al. PRB 63, 214414 (2001)
     double total_F2 = 0.0;
-    for (int i=0; i<GAUSS_N ;i++) {
+    for (int i = 0; i<GAUSS_N ;i++) {
       const double gamma = M_PI * (GAUSS_Z[i] + 1.0); // 0 .. 2 pi
       SINCOS(gamma, sin_gamma, cos_gamma);	
       //Only the core of the defect/particle in the matrix has an effective
       //anisotropy (for simplicity), for the effect of different, more complex
       // spatial profile of the anisotropy see Michels PRB 82, 024433 (2010)
-      double Hkx= hk*sin_gamma;
-      double Hky= hk*cos_gamma;
+      double Hkx = hk * sin_gamma;
+      double Hky = hk * cos_gamma;
 
-      double mxreal=fqMxreal(qrot[0], qrot[1], qrot[2], mz, Hkx, Hky, Hi, Ms, A, D);
-      double mximag=fqMximag(qrot[0], qrot[1], qrot[2], mz, Hkx, Hky, Hi, Ms, A, D);
-      double myreal=fqMyreal(qrot[0], qrot[1], qrot[2], mz, Hkx, Hky, Hi, Ms, A, D);
-      double myimag=fqMyimag(qrot[0], qrot[1], qrot[2], mz, Hkx, Hky, Hi, Ms, A, D);
+      double mxreal = fqMxreal(qrot[0], qrot[1], qrot[2], mz, Hkx, Hky, Hi, Ms, A, D);
+      double mximag = fqMximag(qrot[0], qrot[1], qrot[2], mz, Hkx, Hky, Hi, Ms, A, D);
+      double myreal = fqMyreal(qrot[0], qrot[1], qrot[2], mz, Hkx, Hky, Hi, Ms, A, D);
+      double myimag = fqMyimag(qrot[0], qrot[1], qrot[2], mz, Hkx, Hky, Hi, Ms, A, D);
 
       mag_sld(qrot[0], qrot[1], qrot[2], mxreal, mximag, myreal, myimag, mz, 0, nuc, sld);
       double form = 0.0;
-      for (unsigned int xs=0; xs<8; xs++) {
+      for (unsigned int xs = 0; xs<8; xs++) {
         if (weights[xs] > 1.0e-8) {
           // Since the cross section weight is significant, set the slds
           // to the effective slds for this cross section, call the
           // kernel, and add according to weight.
           // loop over uu, ud real, du real, dd, ud imag, du imag 
-          form += weights[xs]*sld[xs]*sld[xs];
+          form += weights[xs] * sld[xs] * sld[xs];
         }
       }
       total_F2 += GAUSS_W[i] * form ;
@@ -141,18 +147,20 @@ Calculate_Scattering(double q, double cos_theta, double sin_theta, double radius
 static double
 Iqxy(double qx, double qy, double radius, double thickness, double nuc_sld_core, double nuc_sld_shell, double nuc_sld_solvent, double mag_sld_core, double mag_sld_shell, double mag_sld_solvent, double hk_sld_core, double Hi, double Ms, double A, double D,  double up_i, double up_f, double alpha, double beta)
 {
-  const double q = sqrt(qx*qx + qy*qy);  
+  double sin_theta, cos_theta;
+  const double q = sqrt(qx * qx + qy * qy);  
   if (q > 1.0e-16 ) {
-    const double cos_theta=qx/q;
-    const double sin_theta=qy/q;
+    cos_theta = qx/q;
+    sin_theta = qy/q;
   } else {
-    const double cos_theta=0.0;
-    const double sin_theta=0.0;
-    
-    double total_F2 = Calculate_Scattering(q, cos_theta, sin_theta, radius, thickness, nuc_sld_core, nuc_sld_shell, nuc_sld_solvent, mag_sld_core, mag_sld_shell, mag_sld_solvent, hk_sld_core, Hi, Ms, A, D,  up_i, up_f, alpha, beta);
-	
-    return 0.5*1.0e-4*total_F2;
+    cos_theta = 0.0;
+    sin_theta = 0.0;
   }  
+
+  double total_F2 = Calculate_Scattering(q, cos_theta, sin_theta, radius, thickness, nuc_sld_core, nuc_sld_shell, nuc_sld_solvent, mag_sld_core, mag_sld_shell, mag_sld_solvent, hk_sld_core, Hi, Ms, A, D,  up_i, up_f, alpha, beta);
+	
+  return 0.5 * 1.0e-4 * total_F2;
+    
 }
 
 
@@ -163,7 +171,7 @@ Iq(double q, double radius, double thickness, double nuc_sld_core, double nuc_sl
   // slots to hold sincos function output of the orientation on the detector plane
   double sin_theta, cos_theta; 
   double total_F1D = 0.0;
-  for (int j=0; j<GAUSS_N ;j++) {
+  for (int j = 0; j<GAUSS_N ;j++) {
 
     const double theta = M_PI * (GAUSS_Z[j] + 1.0); // 0 .. 2 pi
     SINCOS(theta, sin_theta, cos_theta);
@@ -172,7 +180,7 @@ Iq(double q, double radius, double thickness, double nuc_sld_core, double nuc_sl
     total_F1D += GAUSS_W[j] * total_F2 ;
   }
   //convert from [1e-12 A-1] to [cm-1]
-  return 0.25*1.0e-4*total_F1D;
+  return 0.25 * 1.0e-4 * total_F1D;
 }
 
 
