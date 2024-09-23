@@ -89,13 +89,6 @@ $I_{nuc}$, $S_K$ and $S_M$ are fit independent from each other in a model-free w
 
 
 
-Validation
-----------
-
-The model needs testing and validation. Your feedback is kindly requested.
-
-
-
 References
 ----------
 
@@ -112,8 +105,8 @@ References
 Authorship and Verification
 ----------------------------
 
-* **Author: Dirk Honecker **Date:** January 14, 2021
-* **Last Modified by:**
+* **Author:** Dirk Honecker **Date:** January 14, 2021
+* **Last Modified by:** Dirk Honecker **Date:** September 23, 2024
 * **Last Reviewed by:**
 
 """
