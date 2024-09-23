@@ -138,9 +138,9 @@ Calculate_Scattering(double q, double cos_theta, double sin_theta, double radius
           form += weights[xs] * sld[xs] * sld[xs];
         }
       }
-      total_F2 += GAUSS_W[i] * form ;
-      return total_F2;
+      total_F2 += GAUSS_W[i] * form ;      
     }
+    return total_F2;
 }
 
 

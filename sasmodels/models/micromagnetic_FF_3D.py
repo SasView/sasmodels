@@ -182,11 +182,7 @@ def random():
 
 
 
-
-# tests = [
-    # [{'radius': 20.0, 'thickness': 10.0}, 0.1, None, None, 30.0, 4.*pi/3*30**3, 1.0],
-
-    # # The SasView test result was 0.00169, with a background of 0.001
-    # [{'radius': 60.0, 'thickness': 10.0, 'sld_core': 1.0, 'sld_shell': 2.0,
-      # 'sld_solvent': 3.0, 'background': 0.0}, 0.4, 0.000698838],
-# ]
+tests = [
+     [{},1.002266990452620e-03, 7.461046163627724e+03],
+     [{},(0.0688124,  -0.0261013),  22.024],
+]
