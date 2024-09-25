@@ -29,7 +29,22 @@ jobs:
     - name: setup apt dependencies for Linux
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
-        sudo apt update
+        # update system packages
+        sudo apt update -y && sudo apt upgrade -y
+        # turn on devel and sources.
+        sudo apt-add-repository -y -s -s
+        sudo apt install -y "linux-headers-$(uname -r)" "linux-modules-extra-$(uname -r)"
+        sudo add-apt-repository ppa:deadsnakes/ppa -y
+        sudo mkdir --parents --mode=0755 /etc/apt/keyrings
+        wget https://repo.radeon.com/rocm/rocm.gpg.key -O - | gpg --dearmor | sudo tee /etc/apt/keyrings/rocm.gpg > /dev/null
+        echo 'deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/amdgpu/6.2.1/ubuntu noble main' \
+          | sudo tee /etc/apt/sources.list.d/amdgpu.list
+        sudo apt install amdgpu-dkms -y
+        echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/6.2.1 noble main" \
+            | sudo tee --append /etc/apt/sources.list.d/rocm.list
+        echo -e 'Package: *\nPin: release o=repo.radeon.com\nPin-Priority: 600' \
+            | sudo tee /etc/apt/preferences.d/rocm-pin-600
+        sudo apt update -y
 
     - name: Install Python dependencies
       run: |
