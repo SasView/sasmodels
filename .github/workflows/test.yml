@@ -29,22 +29,10 @@ jobs:
     - name: setup apt dependencies for Linux
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
-        sudo apt update
-        sudo mkdir --parents --mode=0755 /etc/apt/keyrings
-        wget https://repo.radeon.com/rocm/rocm.gpg.key -O - | \
-            gpg --dearmor | sudo tee /etc/apt/keyrings/rocm.gpg > /dev/null
-        echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/amdgpu/6.2.1/ubuntu jammy main" \
-            | sudo tee /etc/apt/sources.list.d/amdgpu.list
-        echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/6.2.1 jammy main" \
-            | sudo tee --append /etc/apt/sources.list.d/rocm.list
-        echo -e 'Package: *\nPin: release o=repo.radeon.com\nPin-Priority: 600' \
-            | sudo tee /etc/apt/preferences.d/rocm-pin-600
-        sudo apt update
-        sudo apt install amdgpu-dkms
-        sudo apt install rocm
-        sudo ldconfig
-        dkms status
-        sudo apt list --installed
+        sudo apt-get update
+        sudo apt-get dist-upgrade
+        wget https://repo.radeon.com/amdgpu-install/latest/ubuntu/jammy/amdgpu-install_6.2.60200-1_all.deb
+        sudo apt install amd-gpu-install --no-dkms --usecase=opencl
 
     - name: Install Python dependencies
       run: |
