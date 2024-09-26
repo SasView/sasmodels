@@ -32,7 +32,7 @@ jobs:
         sudo apt-get update
         sudo apt-get dist-upgrade
         wget https://repo.radeon.com/amdgpu-install/latest/ubuntu/jammy/amdgpu-install_6.2.60200-1_all.deb
-        sudo apt install amd-gpu-install --no-dkms --usecase=opencl
+        sudo apt install amdgpu-install --no-dkms --usecase=opencl
 
     - name: Install Python dependencies
       run: |
