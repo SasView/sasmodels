@@ -1,10 +1,12 @@
 Release notes
 =============
 
-v1.0.8 2024-06-??
+v1.0.8 2024-09-26
 -----------------
+* New model: Bulk ferromagnets model from marketplace
 * Doc update: Archive built docs on Github
 * Doc update: Display math correctly
+* Fix error in FCC paracrystaline models
 * Fix parameter name checking in kernel call
 
 v1.0.7 2023-03-23

@@ -58,6 +58,9 @@ Some non-standard constants and functions are also provided:
     cube(x):
         $x^3$
 
+    clip(a, a_min, a_max):
+        $\min(\max(a, a_\text{min}), a_\text{max})$, or NaN if $a$ is NaN.
+
     sas_sinx_x(x):
         $\sin(x)/x$, with limit $\sin(0)/0 = 1$.
 
@@ -215,7 +218,7 @@ from numpy import exp, log, power as pow, expm1, log1p, sqrt, cbrt
 from numpy import sin, cos, tan, arcsin as asin, arccos as acos, arctan as atan
 from numpy import sinh, cosh, tanh, arcsinh as asinh, arccosh as acosh, arctanh as atanh
 from numpy import arctan2 as atan2
-from numpy import fabs, fmin, fmax, trunc, rint
+from numpy import fabs, fmin, fmax, clip, trunc, rint
 from numpy import pi, nan, inf
 from scipy.special import gamma as sas_gamma
 from scipy.special import gammaln as sas_gammaln
