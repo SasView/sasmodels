@@ -44,8 +44,8 @@ jobs:
         sudo apt install rocm-opencl
         sudo ldconfig
         dkms status
-        /opt/rocm/bin/rocminfo
-        /opt/rocm/bin/clinfo
+        /opt/rocm-6.2.1/bin/rocminfo
+        /opt/rocm-6.2.1/bin/clinfo
         sudo apt list --installed
 
     - name: Install Python dependencies
