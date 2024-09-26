@@ -41,7 +41,6 @@ jobs:
             | sudo tee /etc/apt/preferences.d/rocm-pin-600
         sudo apt update
         sudo apt install amdgpu-dkms
-        sudo reboot
         sudo apt install rocm
 
     - name: Install Python dependencies
