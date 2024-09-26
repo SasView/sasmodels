@@ -29,11 +29,9 @@ jobs:
     - name: setup apt dependencies for Linux
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
-        sudo apt update
-        sudo dpkg -P amdgpu && sudo dpkg -P amdgpu-dkms 
-        wget https://repo.radeon.com/amdgpu-install/6.1.3/ubuntu/focal/amdgpu-install_6.1.60103-1_all.deb
-        sudo apt install ./amdgpu-install_6.1.60103-1_all.deb
-        sudo amdgpu-install --usecase=rocm
+        sudo dpkg -P amdgpu && sudo dpkg -P amdgpu-dkms
+        sudo apt install pocl-opencl-icd
+        sudo apt update -y
         sudo reboot
 
     - name: Install Python dependencies
