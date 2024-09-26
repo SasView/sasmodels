@@ -29,6 +29,7 @@ jobs:
     - name: setup apt dependencies for Linux
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
+        sudo apt update
         sudo mkdir --parents --mode=0755 /etc/apt/keyrings
         wget https://repo.radeon.com/rocm/rocm.gpg.key -O - | \
             gpg --dearmor | sudo tee /etc/apt/keyrings/rocm.gpg > /dev/null
@@ -41,7 +42,6 @@ jobs:
             | sudo tee /etc/apt/preferences.d/rocm-pin-600
         sudo apt install amdgpu-dkms
         sudo apt install rocm-opencl
-        sudo apt update
         sudo ldconfig
         dkms status
         sudo apt list --installed
