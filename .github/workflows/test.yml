@@ -41,16 +41,11 @@ jobs:
             | sudo tee /etc/apt/preferences.d/rocm-pin-600
         sudo apt update
         sudo apt install amdgpu-dkms
-        sudo apt install rocm
-        sudo tee --append /etc/ld.so.conf.d/rocm.conf <<EOF
-        /opt/rocm/lib
-        /opt/rocm/lib64
-        EOF
+        sudo apt install rocm-opencl
         sudo ldconfig
-        export PATH=$PATH:/opt/rocm-6.2.1/bin
         dkms status
-        /opt/rocm-6.2.1/bin/rocminfo
-        /opt/rocm-6.2.1/bin/clinfo
+        /opt/rocm/bin/rocminfo
+        /opt/rocm/bin/clinfo
         sudo apt list --installed
 
     - name: Install Python dependencies
