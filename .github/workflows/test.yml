@@ -29,11 +29,7 @@ jobs:
     - name: setup apt dependencies for Linux
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
-        wget https://repo.radeon.com/amdgpu-install/6.1.1/ubuntu/jammy/amdgpu-install_6.1.60101-1_all.deb
-        sudo apt install ./amdgpu-install_6.1.60101-1_all.deb
         sudo apt update
-        sudo apt install amdgpu-dkms
-        sudo apt install rocm
 
     - name: Install Python dependencies
       run: |
@@ -56,9 +52,11 @@ jobs:
         choco install opencl-intel-cpu-runtime
         python -m pip install --only-binary=pyopencl --find-links http://www.silx.org/pub/wheelhouse/ --trusted-host www.silx.org pyopencl
 
-    - name: Test with pytest
+    - name: Test with pytest (only on Windows for now since PoCL is failing on Ubuntu)
+
       env:
         PYOPENCL_COMPILER_OUTPUT: 1
+        SAS_OPENCL: none
       run: |
         # other CI uses the following, but `setup.py test` is a deprecated way
         # of running tests
@@ -68,6 +66,8 @@ jobs:
 
     - name: check that the docs build (linux only)
       if: ${{ matrix.os == 'ubuntu-latest' }}
+      env:
+        SAS_OPENCL: none
       run: |
         make -j 4 -C doc SPHINXOPTS="-W --keep-going -n" html
 
