@@ -9,28 +9,35 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.10", "3.11"]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+
+    - name: Free Disk Space (Ubuntu)
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      uses: jlumbroso/free-disk-space@main
+      with:
+        haskell: false
+        large-packages: false
 
     - name: setup apt dependencies for Linux
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
-        sudo apt-get update
-        sudo apt-get install opencl-headers ocl-icd-opencl-dev libpocl2
+        sudo apt update
 
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
         python -m pip install wheel setuptools
         python -m pip install mako
-        python -m pip install numpy scipy matplotlib docutils pytest sphinx bumps unittest-xml-reporting tinycc
+        python -m pip install numpy==1.*
+        python -m pip install scipy matplotlib docutils pytest sphinx bumps unittest-xml-reporting tinycc
 
     - name: setup pyopencl on Linux + macOS
       if: ${{ matrix.os != 'windows-latest' }}

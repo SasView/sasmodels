@@ -851,6 +851,8 @@ Some non-standard constants and functions are also provided:
         $x^2$
     cube(x):
         $x^3$
+    clip(a, a_min, a_max):
+        $\min(\max(a, a_\text{min}), a_\text{max})$, or NaN if $a$ is NaN.
     sas_sinx_x(x):
         $\sin(x)/x$, with limit $\sin(0)/0 = 1$.
     powr(x, y):
