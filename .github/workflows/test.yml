@@ -37,7 +37,7 @@ jobs:
         python -m pip install wheel setuptools
         python -m pip install mako
         python -m pip install numpy==1.*
-        python -m pip install scipy matplotlib docutils pytest sphinx bumps unittest-xml-reporting tinycc
+        python -m pip install scipy matplotlib docutils pytest sphinx bumps unittest-xml-reporting tinycc siphash
 
     - name: setup pyopencl on Linux + macOS
       if: ${{ matrix.os != 'windows-latest' }}
