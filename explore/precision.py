@@ -190,13 +190,13 @@ def plotdiff(x, target, actual, label, diff):
     if diff == "relative":
         err = np.array([(abs((t-a)/t) if t != 0 else a) for t, a in zip(target, actual)], 'd')
         #err = np.clip(err, 0, 1)
-        pylab.loglog(x, err, '-', label=label)
+        pylab.loglog(x, err, '-', label=label, alpha=0.7)
     elif diff == "absolute":
         err = np.array([abs((t-a)) for t, a in zip(target, actual)], 'd')
-        pylab.loglog(x, err, '-', label=label)
+        pylab.loglog(x, err, '-', label=label, alpha=0.7)
     else:
         limits = np.min(target), np.max(target)
-        pylab.semilogx(x, np.clip(actual, *limits), '-', label=label)
+        pylab.semilogx(x, np.clip(actual, *limits), '-', label=label, alpha=0.7)
 
 def make_ocl(function, name, source=[]):
     class Kernel(object):
@@ -411,6 +411,54 @@ add_function(
     mp_function=lambda x: mp.fmod(x, 2*mp.pi),
     np_function=lambda x: np.fmod(x, 2*np.pi),
     ocl_function=make_ocl("return fmod(q, 2*M_PI);", "sas_fmod"),
+)
+
+def sas_langevin(x):
+    scalar = np.isscalar(x)
+    if scalar:
+        x = np.array([x]) # should inherit dtype for single if given single
+    f = np.empty_like(x)
+    cutoff = 0.1 if f.dtype == np.float64 else 1.0
+    #cutoff *= 10
+    index = x < cutoff
+    xp = x[index]
+    xpsq = xp*xp
+    f[index] = xp / (3. + xpsq / (5. + xpsq/(7. + xpsq/(9.))))
+    # 4 terms gets to 1e-7 single, 1e-14 double. Can get to 1e-15 double by adding
+    # another 4 terms and setting cutoff at 1.0. Not worthwhile. Instead we would
+    # need an expansion about x somewhere between 1 and 10 for the interval [0.1, 100.]
+    #f[index] = xp / (3. + xpsq / (5. + xpsq/(7. + xpsq/(9. + xpsq/(11.0 + xpsq/(13. + xpsq/(15. + xpsq/17.)))))))
+    xp = x[~index]
+    f[~index] = 1/np.tanh(xp) - 1/xp
+    return f[0] if scalar else f
+
+def sas_langevin_x(x):
+    scalar = np.isscalar(x)
+    if scalar:
+        x = np.array([x]) # should inherit dtype for single if given single
+    f = np.empty_like(x)
+    cutoff = 0.1 if f.dtype == np.float64 else 1.0
+    index = x < cutoff
+    xp = x[index]
+    xpsq = xp*xp
+    f[index] = 1. / (3. + xpsq / (5. + xpsq/(7. + xpsq/(9.))))
+    xp = x[~index]
+    f[~index] = (1/np.tanh(xp) - 1/xp)/xp
+    return f[0] if scalar else f
+
+add_function(
+    name="langevin(x)",
+    mp_function=lambda x: (1/mp.tanh(x) - 1/x),
+    np_function=sas_langevin,
+    #ocl_function=make_ocl("return q < 0.7 ? q*(1./3. + q*q*(-1./45. + q*q*(2./945. + q*q*(-1./4725.) + q*q*(2./93555.)))) : 1/tanh(q) - 1/q;", "sas_langevin"),
+    ocl_function=make_ocl("return q < 1e-5 ? q/3. : 1/tanh(q) - 1/q;", "sas_langevin"),
+)
+add_function(
+    name="langevin(x)/x",
+    mp_function=lambda x: (1/mp.tanh(x) - 1/x)/x,
+    #np_function=lambda x: sas_langevin(x)/x, # Note: need to test for x=0
+    np_function=sas_langevin_x,
+    ocl_function=make_ocl("return q < 1e-5 ? 1./3. : (1/tanh(q) - 1/q)/q;", "sas_langevin_x"),
 )
 add_function(
     name="gauss_coil",

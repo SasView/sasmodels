@@ -75,7 +75,6 @@ source = ["lib/sas_3j1x_x.c", "sphere.c"]
 have_Fq = True
 radius_effective_modes = ["radius"]
 #single = False
-
 def random():
     """Return a random parameter set for the model."""
     radius = 10**np.random.uniform(1.3, 4)
@@ -106,6 +105,21 @@ tests = [
      0.1, 482.93824329, 29763977.79867414, 120.0, 8087664.122641933, 1.0],
     [{"radius": 120., "radius_pd": 0.2, "radius_pd_n": 45},
      0.2, 1.23330406, 1850806.1197361, 120.0, 8087664.122641933, 1.0],
+
+    # For 2-D data use (qx, qy) pairs. Since sphere is radial, just need the
+    # correct |q| value for the test, so use 3-4-5 triangle. The test code
+    # looks for tuples to detect 2-D data, so can't use simple numpy cheats.
+    [{"scale": 1., "background": 0., "sld": 6., "sld_solvent": 1.,
+      "radius": 120.},
+     [(0.006, 0.008), (0.06,0.08), (0.12, 0.16)],
+     [1.34836265e+04, 6.20114062e+00, 1.04733914e-01]],
+
+    # TODO: magnetism smoke test. Values not validated.
+    [dict(radius=120, sld_M0=4, sld_mphi=20, sld_mtheta=60,
+      up_frac_i=0.05, up_frac_f=0.1, up_theta=-15, up_phi=10),
+     [(0.0, 0.01), (0.0, 0.1), (0.0, 0.2)],
+     [20247.206006297125, 9.312720770235483, 0.15826993186001856]],
+
     #  But note P(Q) = F2/volume
     #  F and F^2 are "unscaled", with for  n <F F*>S(q) or for beta approx
     #          I(q) = n [<F F*> + <F><F*> (S(q) - 1)]

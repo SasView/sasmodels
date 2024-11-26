@@ -9,28 +9,34 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+
+    - name: Free Disk Space (Ubuntu)
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      uses: jlumbroso/free-disk-space@main
+      with:
+        haskell: false
+        large-packages: false
 
     - name: setup apt dependencies for Linux
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
-        sudo apt-get update
-        sudo apt-get install opencl-headers ocl-icd-opencl-dev libpocl2
+        sudo apt update
 
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
         python -m pip install wheel setuptools
         python -m pip install mako
-        python -m pip install numpy scipy matplotlib docutils pytest sphinx bumps unittest-xml-reporting tinycc
+        python -m pip install numpy scipy matplotlib docutils pytest sphinx bumps==0.* unittest-xml-reporting tinycc siphash24
 
     - name: setup pyopencl on Linux + macOS
       if: ${{ matrix.os != 'windows-latest' }}
@@ -45,9 +51,11 @@ jobs:
         choco install opencl-intel-cpu-runtime
         python -m pip install --only-binary=pyopencl --find-links http://www.silx.org/pub/wheelhouse/ --trusted-host www.silx.org pyopencl
 
-    - name: Test with pytest
+    - name: Test with pytest (only on Windows for now since PoCL is failing on Ubuntu)
+
       env:
         PYOPENCL_COMPILER_OUTPUT: 1
+        SAS_OPENCL: none
       run: |
         # other CI uses the following, but `setup.py test` is a deprecated way
         # of running tests
@@ -57,5 +65,16 @@ jobs:
 
     - name: check that the docs build (linux only)
       if: ${{ matrix.os == 'ubuntu-latest' }}
+      env:
+        SAS_OPENCL: none
       run: |
         make -j 4 -C doc SPHINXOPTS="-W --keep-going -n" html
+
+    - name: Publish samodels docs
+      if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.10'}}
+      uses: actions/upload-artifact@v3
+      with:
+        name: sasmodels-docs-${{ matrix.os }}-${{ matrix.python-version }}
+        path: |
+          doc/_build/html
+        if-no-files-found: error

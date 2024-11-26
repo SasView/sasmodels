@@ -70,8 +70,8 @@ setup(
     },
     install_requires=install_requires,
     extras_require={
-        'full': ['docutils', 'bumps', 'matplotlib', 'columnize'],
-        'server': ['bumps'],
+        'full': ['docutils', 'bumps==0.*', 'matplotlib', 'columnize', 'siphash24'],
+        'server': ['bumps==0.*'],
         'OpenCL': ["pyopencl"],
         'CUDA': ["pycuda"],
     },
