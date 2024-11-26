@@ -476,9 +476,9 @@ class SasviewModel(object):
             if p.id == self.multiplicity_info.control:
                 value = float(self.multiplicity)
             elif p.length == 1:
-                value = self.params.get(p.id, np.NaN)
+                value = self.params.get(p.id, np.nan)
             else:
-                value = np.array([self.params.get(p.id+str(k), np.NaN)
+                value = np.array([self.params.get(p.id+str(k), np.nan)
                                   for k in range(1, p.length+1)])
             args[p.id] = value
 
@@ -841,7 +841,7 @@ class SasviewModel(object):
             else:
                 # For hidden parameters use default values.  This sets
                 # scale=1 and background=0 for structure factors
-                default = self._model_info.parameters.defaults.get(par.name, np.NaN)
+                default = self._model_info.parameters.defaults.get(par.name, np.nan)
                 return default, [default], [1.0]
         elif par.polydisperse:
             value = self.params[par.name]

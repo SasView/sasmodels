@@ -29,7 +29,7 @@ def find_version(package):
                 return version[1:-1]
     raise RuntimeError("Could not read version from %s/__init__.py"%package)
 
-install_requires = ['numpy==1.*', 'scipy']
+install_requires = ['numpy', 'scipy']
 
 with open('README.rst') as fid:
     long_description = fid.read()
@@ -70,8 +70,8 @@ setup(
     },
     install_requires=install_requires,
     extras_require={
-        'full': ['docutils', 'bumps', 'matplotlib', 'columnize'],
-        'server': ['bumps'],
+        'full': ['docutils', 'bumps==0.*', 'matplotlib', 'columnize', 'siphash24'],
+        'server': ['bumps==0.*'],
         'OpenCL': ["pyopencl"],
         'CUDA': ["pycuda"],
     },

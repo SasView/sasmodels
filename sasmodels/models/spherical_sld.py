@@ -133,7 +133,7 @@ Erf:
     \end{cases}
 
 
-Boucher[#Boucher1983]_:
+Boucher [#Boucher1983]_:
 
 .. math::
 

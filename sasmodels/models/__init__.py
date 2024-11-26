@@ -94,4 +94,5 @@ Other models:
     :mod:`teubner_strey`
     :mod:`two_lorentzian`
     :mod:`unified_power_Rg`
+
 """
