@@ -15,7 +15,7 @@ import numpy as np
 from numpy import pi, radians, sin, cos, sqrt, clip
 from numpy.random import poisson, uniform, randn, rand, randint
 from numpy.polynomial.legendre import leggauss
-from scipy.integrate import simps
+from scipy.integrate import simpson
 from scipy.special import j1 as J1
 from scipy.special import gamma
 
@@ -904,7 +904,7 @@ def j0(x):
 
 
 def calc_Iq_from_Pr(q, r, Pr):
-    Iq = np.array([simps(Pr * j0(qk*r), r) for qk in q])
+    Iq = np.array([simpson(Pr * j0(qk*r), x=r) for qk in q])
     #Iq = np.array([np.trapz(Pr * j0(qk*r), r) for qk in q])
     #Iq /= Iq[0]
     return Iq
@@ -1669,8 +1669,8 @@ def main():
         model_pars = {
             "scale": 1.,
             "background": 0.,
-            #"dnn": NEAREST_NEIGHBOR[opts.type]*dx,
-            "dnn": dx,
+            "dnn": NEAREST_NEIGHBOR[opts.type]*dx,
+            #"dnn": dx,
             "d_factor": distortion,
             #"lattice_spacing": dx,
             #"lattice_distortion": distortion,
@@ -1681,7 +1681,7 @@ def main():
             "phi": view[1],
             "psi": view[2],
         }
-        #print(f"using {model_name} with {model_pars}")
+        #print(f"lattice {model_name} with {model_pars}")
         fn, fn_xy = wrap_sasmodel(model_name, **model_pars)
     if nx*ny*nz > 1:
         if rotation != 0:
