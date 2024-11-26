@@ -5,7 +5,7 @@ fcc_Zq(double qa, double qb, double qc, double dnn, double d_factor)
     const double a1 = ( qa + qb)/2.0;
     const double a2 = ( qa + qc)/2.0;
     const double a3 = ( qb + qc)/2.0;
-    const double d_a = dnn/sqrt(2);
+    const double d_a = dnn*sqrt(2);
 
     // Matsuoka 23-24-25
     //     Z_k numerator: 1 - exp(a)^2

@@ -170,8 +170,8 @@ class Data1D(object):
         self.y, self.dy = _as_numpy(y), _as_numpy(dy)
         self.dxl = None
         self.filename = None
-        self.qmin = self.x.min() if self.x is not None else np.NaN
-        self.qmax = self.x.max() if self.x is not None else np.NaN
+        self.qmin = self.x.min() if self.x is not None else np.nan
+        self.qmax = self.x.max() if self.x is not None else np.nan
         # TODO: why is 1D mask False and 2D mask True?
         self.mask = (np.isnan(y) if y is not None
                      else np.zeros_like(x, 'b') if x is not None
@@ -314,7 +314,7 @@ class Source(object):
     """
     def __init__(self):
         # type: () -> None
-        self.wavelength = np.NaN
+        self.wavelength = np.nan
         self.wavelength_unit = "A"
 
 class Sample(object):
