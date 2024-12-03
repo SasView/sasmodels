@@ -35,7 +35,7 @@ with open('README.rst') as fid:
     long_description = fid.read()
 
 if sys.platform=='win32' or sys.platform=='cygwin':
-    install_requires.append('tinycc')
+    install_requires.append('tccbox')
 
 setup(
     name='sasmodels',

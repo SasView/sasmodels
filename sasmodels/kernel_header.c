@@ -89,26 +89,8 @@
    #else // !__cplusplus
      #include <inttypes.h>  // C99 guarantees that int32_t types is here
      #include <stdio.h>
-     #if defined(__TINYC__)
-         typedef int int32_t;
-         #include <math.h>
-         // TODO: check isnan is correct
-         inline double _isnan(double x) { return x != x; } // hope this doesn't optimize away!
-         #undef isnan
-         #define isnan(x) _isnan(x)
-         // Defeat the double->float conversion since we don't have tgmath
-         inline SAS_DOUBLE trunc(SAS_DOUBLE x) { return x>=0?floor(x):-floor(-x); }
-         inline SAS_DOUBLE fmin(SAS_DOUBLE x, SAS_DOUBLE y) { return x>y ? y : x; }
-         inline SAS_DOUBLE fmax(SAS_DOUBLE x, SAS_DOUBLE y) { return x<y ? y : x; }
-         #define NEED_ERF
-         #define NEED_EXPM1
-         #define NEED_TGAMMA
-         #define NEED_CBRT
-         // expf missing from windows?
-         #define expf exp
-     #else
-         #include <tgmath.h> // C99 type-generic math, so sin(float) => sinf
-     #endif
+     #define NEED_ERF
+     #include <tgmath.h> // C99 type-generic math, so sin(float) => sinf
      // MSVC doesn't support C99, so no need for dllexport on C99 branch
      #define kernel
      #define SINCOS(angle,svar,cvar) do {const double _t_=angle; svar=sin(_t_);cvar=cos(_t_);} while (0)
