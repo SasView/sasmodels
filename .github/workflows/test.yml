@@ -52,7 +52,6 @@ jobs:
         python -m pip install --only-binary=pyopencl --find-links http://www.silx.org/pub/wheelhouse/ --trusted-host www.silx.org pyopencl
 
     - name: Test with pytest (only on Windows for now since PoCL is failing on Ubuntu)
-
       env:
         PYOPENCL_COMPILER_OUTPUT: 1
         SAS_OPENCL: none
