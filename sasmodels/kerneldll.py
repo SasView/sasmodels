@@ -301,7 +301,7 @@ def make_dll(source, model_info, dtype=F64, system=False):
         # Comment the following to keep the generated C file.
         # Note: If there is a syntax error then compile raises an error
         # and the source file will not be deleted.
-        # os.unlink(filename)
+        os.unlink(filename)
         #print("saving compiled file in %r"%filename)
     else:
         logging.debug("make_dll: cache hit for %s", dll)
