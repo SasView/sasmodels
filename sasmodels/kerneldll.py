@@ -147,7 +147,6 @@ if COMPILER == "unix":
         pass
     def compile_command(source, output):
         """unix compiler command"""
-        print(compiler + [source, "-o", output] + LIBS)
         return compiler + [source, "-o", output] + LIBS
 elif COMPILER == "msvc":
     # Call vcvarsall.bat before compiling to set path, headers, libs, etc.
@@ -167,7 +166,6 @@ elif COMPILER == "msvc":
         return CC + ["/Tp%s"%source] + LN + ["/OUT:%s"%output]
 elif COMPILER == "tinycc":
     # TinyCC compiler.
-    include = tccbox.tcc_dist_dir()
     CC = [
         tccbox.tcc_bin_path(),
         "-nostdinc",
