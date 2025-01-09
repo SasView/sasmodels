@@ -95,7 +95,7 @@ Authorship and Verification
 
 * **Author:**
 * **Last Modified by:**
-* **Last Reviewed by:**
+* **Last Reviewed by:** Oliver Hammond, **Date:**  January 9, 2025
 """
 import numpy as np
 from numpy import inf
