@@ -56,7 +56,7 @@ where
 
 .. math::
 
-    S_N(q) = \frac{a_N}{N}[1 + w^2 - 2 w \cos(q \langle D \rangle)]^2
+    S_N(q) = \frac{a_N}{N[1 + w^2 - 2 w \cos(q \langle D \rangle)]^2}
 
 and
 
@@ -105,7 +105,7 @@ title = "Random lamellar sheet with paracrystal structure factor"
 description = """\
     [Random lamellar phase with paracrystal structure factor]
         randomly oriented stacks of infinite sheets
-        with paracrytal S(Q), having polydisperse spacing.
+        with paracrystal S(Q), having polydisperse spacing.
         sld = sheet scattering length density
         sld_solvent = solvent scattering length density
         background = incoherent background
