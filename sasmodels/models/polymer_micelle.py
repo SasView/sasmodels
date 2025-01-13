@@ -10,7 +10,7 @@ Definition
 ----------
 
 The 1D scattering intensity for this model is calculated according to
-the equations given by Pedersen (Pedersen, 1996 and Pedersen, 2000), summarised briefly here.
+the equations given by Pedersen (1996, 2000), summarised briefly here.
 
 The micelle core is imagined as $N$ = *n_aggreg* polymer heads, each of volume
 $V_\text{core}$, which then defines a micelle core of radius $r$ = *r_core*,
@@ -76,7 +76,7 @@ Authorship and Verification
 
 * **Translated by   :** Richard Heenan **Date:** March 20, 2016
 * **Last modified by:** Paul Kienzle **Date:** November 29, 2017
-* **Last reviewed by:** Oliver Hammond **Date:** January 9, 2024
+* **Last reviewed by:** Oliver Hammond **Date:** January 13, 2024
 """
 
 import numpy as np
