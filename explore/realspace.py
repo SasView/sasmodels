@@ -549,7 +549,7 @@ if 0 and USE_CUDA:
             if new_size > old_size:
                 new = np.empty(new_size, dtype=old.dtype)
                 new[:old_size] = old
-                new[old_size:] = np.NaN
+                new[old_size:] = np.nan
                 yield new
             else:
                 yield old
@@ -1115,7 +1115,7 @@ def _sasmodels_Iqxy(kernel, qx, qy, pars, view):
     # calculator avoids masked values; instead set masked values to NaN
     result = np.empty_like(qx)
     result[calculator.index] = Iqxy
-    result[~calculator.index] = np.NaN
+    result[~calculator.index] = np.nan
     return result
 
 def wrap_sasmodel(name, **pars):

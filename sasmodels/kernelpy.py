@@ -235,8 +235,8 @@ def _loops(parameters, form, form_volume, form_radius, nq, call_details,
         weighted_form = 0.0
         weighted_shell = 0.0
         weighted_radius = 0.0
-        partial_weight = np.NaN
-        weight = np.NaN
+        partial_weight = np.nan
+        weight = np.nan
 
         p0_par = call_details.pd_par[0]
         p0_length = call_details.pd_length[0]

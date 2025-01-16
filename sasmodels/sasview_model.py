@@ -476,9 +476,9 @@ class SasviewModel(object):
             if p.id == self.multiplicity_info.control:
                 value = float(self.multiplicity)
             elif p.length == 1:
-                value = self.params.get(p.id, np.NaN)
+                value = self.params.get(p.id, np.nan)
             else:
-                value = np.array([self.params.get(p.id+str(k), np.NaN)
+                value = np.array([self.params.get(p.id+str(k), np.nan)
                                   for k in range(1, p.length+1)])
             args[p.id] = value
 
@@ -841,7 +841,7 @@ class SasviewModel(object):
             else:
                 # For hidden parameters use default values.  This sets
                 # scale=1 and background=0 for structure factors
-                default = self._model_info.parameters.defaults.get(par.name, np.NaN)
+                default = self._model_info.parameters.defaults.get(par.name, np.nan)
                 return default, [default], [1.0]
         elif par.polydisperse:
             value = self.params[par.name]
@@ -874,7 +874,8 @@ def test_cylinder():
     """
     Cylinder = _make_standard_model('cylinder')
     cylinder = Cylinder()
-    return cylinder.evalDistribution([0.1, 0.1])
+    # Smoke test: does it run without error?
+    cylinder.evalDistribution([0.1, 0.1])
 
 def test_structure_factor():
     # type: () -> float
@@ -909,7 +910,8 @@ def test_rpa():
     """
     RPA = _make_standard_model('rpa')
     rpa = RPA(3)
-    return rpa.evalDistribution([0.1, 0.1])
+    # Smoke test: does it run without error?
+    rpa.evalDistribution([0.1, 0.1])
 
 def test_empty_distribution():
     # type: () -> None
@@ -997,7 +999,7 @@ def magnetic_demo():
     pylab.show()
 
 if __name__ == "__main__":
-    print("cylinder(0.1,0.1)=%g"%test_cylinder())
+    test_cylinder()
     #magnetic_demo()
     #test_product()
     #test_structure_factor()
