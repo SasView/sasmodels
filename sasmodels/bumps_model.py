@@ -66,8 +66,9 @@ def create_parameters(model_info, **kwargs):
         value = kwargs.pop(p.name, p.default)
         pars[p.name] = BumpsParameter.default(value, name=p.name, limits=p.limits)
         if p.polydisperse:
+            pd_limits = (-360.0, 360.0) if p.type == "orientation" else (0., 1.)
             for part, default, limits in [
-                    ('_pd', 0., pars[p.name].limits),
+                    ('_pd', 0., pd_limits),
                     ('_pd_n', 35., (0, 1000)),
                     ('_pd_nsigma', 3., (0, 10)),
                 ]:
