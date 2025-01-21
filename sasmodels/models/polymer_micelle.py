@@ -2,15 +2,15 @@ r"""
 
 This model provides the form factor, $P(q)$, for a micelle with a spherical
 core and Gaussian polymer chains attached to the surface, thus may be applied
-to block copolymer micelles. To work well the Gaussian chains must be much
-smaller than the core, which is often not the case.  Please study the
-reference carefully.
+to block copolymer micelles. Take special care before use and read both of the 
+provided references carefully; this model typically only works well when the 
+Gaussian chains are much smaller than the core, which is often not the case. 
 
 Definition
 ----------
 
 The 1D scattering intensity for this model is calculated according to
-the equations given by Pedersen (Pedersen, 2000), summarised briefly here.
+the equations given by Pedersen (1996, 2000), summarised briefly here.
 
 The micelle core is imagined as $N$ = *n_aggreg* polymer heads, each of volume
 $V_\text{core}$, which then defines a micelle core of radius $r$ = *r_core*,
@@ -67,14 +67,16 @@ model has not yet been independently validated.
 References
 ----------
 
+#.  J Pedersen and M Gerstenberg, *Macromolecules*, 29 (1996) 1363–1365
 #.  J Pedersen, *J. Appl. Cryst.*, 33 (2000) 637-640
+
 
 Authorship and Verification
 ----------------------------
 
 * **Translated by   :** Richard Heenan **Date:** March 20, 2016
 * **Last modified by:** Paul Kienzle **Date:** November 29, 2017
-* **Last reviewed by:** Steve King **Date:** November 30, 2017
+* **Last reviewed by:** Oliver Hammond **Date:** January 13, 2024
 """
 
 import numpy as np
@@ -85,9 +87,9 @@ title = "Polymer micelle model"
 description = """
 This model provides the form factor, $P(q)$, for a micelle with a spherical
 core and Gaussian polymer chains attached to the surface, thus may be applied
-to block copolymer micelles. To work well the Gaussian chains must be much
-smaller than the core, which is often not the case.  Please study the
-reference to Pedersen and full documentation carefully.
+to block copolymer micelles. Take special care before use and read both of the 
+provided references carefully; this model typically only works well when the 
+Gaussian chains are much smaller than the core, which is often not the case. 
     """
 
 
