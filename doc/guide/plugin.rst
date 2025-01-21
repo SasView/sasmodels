@@ -590,6 +590,9 @@ shapes for its calculation, so the volume fraction parameter in the model
 is automatically scaled by *form_volume/shell_volume* prior to calling the
 structure factor.
 
+Special functions for scattering such as $3j_1(x)/x$ are available. See
+:mod:`sasmodels.special` for details.
+
 Embedded C Models
 .................
 
@@ -1033,6 +1036,9 @@ file in the order given, otherwise these functions will not be available.
 
         :code:`source = ["lib/gauss76.c", ...]`
         (`gauss76.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/gauss76.c>`_)
+
+Many of these functions are also available in :mod:`sasmodels.special` for
+models implemented in python.
 
 Complex numbers
 ...............
