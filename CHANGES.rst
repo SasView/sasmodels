@@ -1,6 +1,14 @@
 Release notes
 =============
 
+v1.0.9 2025-02-**
+-----------------
+* Package dependency: NumPy 2+ compatibility
+* Package dependency: Fix incompatibility between SciPy 1.15 and pytest
+* Doc update: Fixed broken links in README
+* Doc update: Clarity on the Polymer Micelle model
+* Doc update: Fix typo in equation in Lamellar Stack Paracrystal documentation
+
 v1.0.8 2024-09-26
 -----------------
 * New model: Bulk ferromagnets model from marketplace
