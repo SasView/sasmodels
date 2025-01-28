@@ -414,15 +414,17 @@ add_function(
 )
 add_function(
     name="expm1(x)/x",
+    # Note: should be 1 when x = 0
     mp_function=lambda x: mp.expm1(x)/x,
     np_function=lambda x: np.expm1(x)/x,
-    ocl_function=make_ocl("return expm1(q)/q;", "sas_exp1_x"),
+    ocl_function=make_ocl("return (q==0.) ? 1. : expm1(q)/q;", "sas_exp1_x"),
 )
 add_function(
     name="sq_expm1(x)/x",
+    # Note: should be 1 when x = 0
     mp_function=lambda x: (mp.expm1(x)/x)**2,
     np_function=lambda x: (np.expm1(x)/x)**2,
-    ocl_function=make_ocl("return square(expm1(q)/q);", "sas_square_exp1_x"),
+    ocl_function=make_ocl("return (q==0.) ? 1. : square(expm1(q)/q);", "sas_square_exp1_x"),
 )
 
 def sas_langevin(x):
@@ -522,12 +524,12 @@ add_function(
     """, "sas_debye"),
 )
 
-def mp_star_polymer(x, arms=3): # x  = (qRg)
+def mp_star_polymer(x, arms=3): # x = q*Rg
     from mpmath import expm1
     v = x * arms / (3*arms - 2)
     term1 = v + expm1(-v)
     term2 = (arms- 1)/2 * expm1(-v)**2
-    return 2 * (term1 + term2) / (arms * v**2)
+    return 2 * (term1 + term2) / (arms * v**2) if v > 0 else 1
 
 def np_star_polymer(x, arms=3):
     from numpy import expm1, polyval
@@ -539,12 +541,14 @@ def np_star_polymer(x, arms=3):
     #T2 = [1, -1, 7/12, -1/4, 31/360, -1/40][::-1]
     f = np.empty_like(x)
     cutoff = 0.03 if f.dtype == np.float64 else 1.0
-    index = x < cutoff
+    index = (x == 0.)
+    f[index] = 1.0
+    index = ~index & (x < cutoff)
     v = x * arms / (3*arms - 2)
     vi = v[index]
     #f[index] = polyval(T1, vi)/arms + (1 - 1/arms)*polyval(T2, vi)
-    f[index] = polyval(T1, vi)/arms + (1 - 1/arms)*(expm1(-vi)/vi)**2
     #f[index] = 2/(arms*vi)*(1 + expm1(-vi)/vi) + (1 - 1/arms)*polyval(T2, vi)
+    f[index] = polyval(T1, vi)/arms + (1 - 1/arms)*(expm1(-vi)/vi)**2
     #f[index] = 2/(arms*vi)*(1 + expm1(-vi)/vi) + (1 - 1/arms)*(expm1(-vi)/vi)**2
 
     term1 = v[~index] + expm1(-v[~index])
@@ -562,15 +566,17 @@ ocl_star_polymer = """
 #define STAR_POLYMER_CUTOFF 1.0
 #endif
 
-    if (q <= STAR_POLYMER_CUTOFF) {
-       double P1 = 1. + v*(-1./3. + v*(1./12. + v*(-1./60. + v*(1./360. + v*(-1./2520)))));
-       //double P2 = 1. + v*(-1. + v*(7./12. - v*(-1./4.)));
-       return P1/arms + (1. - 1./arms)*square(expm1(-v)/v);
+    if (q == 0.) {
+        return 1.;
+    } else if (q <= STAR_POLYMER_CUTOFF) {
+        double P1 = 1. + v*(-1./3. + v*(1./12. + v*(-1./60. + v*(1./360. + v*(-1./2520)))));
+        //double P2 = 1. + v*(-1. + v*(7./12. - v*(-1./4.)));
+        return P1/arms + (1. - 1./arms)*square(expm1(-v)/v);
+    } else {
+        double term1 = v + expm1(-v);
+        double term2 = ((arms - 1.0)/2.0) * square(expm1(-v));
+        return (2.0 * (term1 + term2)) / (arms * v * v);
     }
-    double term1 = v + expm1(-v);
-    double term2 = ((arms - 1.0)/2.0) * square(expm1(-v));
-
-    return (2.0 * (term1 + term2)) / (arms * v * v);
 """
 
 add_function(
