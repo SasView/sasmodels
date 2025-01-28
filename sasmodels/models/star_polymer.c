@@ -17,8 +17,8 @@ static double star_polymer_kernel(double q, double rg_sq, double arms)
     //    I = 1/a T1'(v) + (1 - 1/a) T2(v)
     //    T1' = [+1 -1/3 +1/12 -1/60 +1/360 -1/2520]
     // Substituting v=0 we get lim[q->0] I = 1/a + (1 - 1/a) = 1 as expected.
-    // After testing it turns out that term2 is numerically stable, so only
-    // use the Taylor series for T1'.
+    // After testing it turns out that term2 is numerically stable, so we
+    // only use the Taylor series for T1', and protect T2 against v = 0.
 
 #if FLOAT_SIZE>4
 #  define _SPLIM 0.03  // cutoff for (Q Rg)^2
@@ -26,11 +26,12 @@ static double star_polymer_kernel(double q, double rg_sq, double arms)
 #  define _SPLIM 1.0
 #endif
 
-    const double u_sq = rg_sq * q * q;
-    if (u_sq <= 0.) {
+    if (q == 0.) { // IEEE 754 has -0 == +0
         return 1.0;
     }
 
+    // Note: arms should be one or more
+    const double u_sq = rg_sq * q * q;
     const double v = u_sq * arms / (3.0 * arms - 2.0);
     double term1;
     if (u_sq < _SPLIM) {
@@ -38,8 +39,7 @@ static double star_polymer_kernel(double q, double rg_sq, double arms)
     } else {
         term1 = 2.0 * (v + expm1(-v)) / (v * v);
     }
-    double term2 = square(expm1(-v)/v);
-
+    double term2 = square(expm1(-v)/v); // we trap q == 0 above, so v > 0 here
     return term1/arms + term2*(1.0 - 1.0/arms);
 
 }
