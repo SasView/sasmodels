@@ -54,5 +54,5 @@ double Iq(double q, double rg_sq, double arms)
     // rounding: stacked_disk pearl_necklace multilayer_vesicle linear_pearls
     //      lamellar_stack_caille lamellar_hg_stack_caille
     // truncation: lamellar_stack_paracrystal
-    return star_polymer_kernel(q, rg_sq, int(arms + 0.5));
+    return star_polymer_kernel(q, rg_sq, (int)(arms + 0.5));
 }
