@@ -95,7 +95,11 @@ def random():
     return pars
 
 tests = [[{'rg_squared': 2.0,
-           'arms':    3.3,
+           'arms':    3.3, # should equal the value for arms=3 in the next test
+          }, 0.5, 0.8518871750393033],
+
+         [{'rg_squared': 2.0,
+           'arms':    3.0,
           }, 0.5, 0.8518871750393033],
 
          [{'rg_squared':    1.0,
