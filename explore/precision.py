@@ -413,6 +413,7 @@ add_function(
     ocl_function=make_ocl("return fmod(q, 2*M_PI);", "sas_fmod"),
 )
 
+# TODO: move to sas_special
 def sas_langevin(x):
     scalar = np.isscalar(x)
     if scalar:
@@ -451,14 +452,30 @@ add_function(
     mp_function=lambda x: (1/mp.tanh(x) - 1/x),
     np_function=sas_langevin,
     #ocl_function=make_ocl("return q < 0.7 ? q*(1./3. + q*q*(-1./45. + q*q*(2./945. + q*q*(-1./4725.) + q*q*(2./93555.)))) : 1/tanh(q) - 1/q;", "sas_langevin"),
-    ocl_function=make_ocl("return q < 1e-5 ? q/3. : 1/tanh(q) - 1/q;", "sas_langevin"),
+    #ocl_function=make_ocl("return q < 1e-5 ? q/3. : 1/tanh(q) - 1/q;", "sas_langevin"),
+    ocl_function=make_ocl("""
+#if FLOAT_SIZE>4  // DOUBLE_PRECISION
+#  define LANGEVIN_CUTOFF 0.1
+#else
+#  define LANGEVIN_CUTOFF 1.0
+#endif
+    const double qsq = q*q;
+    return (q < LANGEVIN_CUTOFF) ? q / (3. + qsq / (5. + qsq/(7. + qsq/(9.)))) : 1/tanh(q) - 1/q;
+    """, "sas_langevin"),
 )
 add_function(
     name="langevin(x)/x",
     mp_function=lambda x: (1/mp.tanh(x) - 1/x)/x,
-    #np_function=lambda x: sas_langevin(x)/x, # Note: need to test for x=0
     np_function=sas_langevin_x,
-    ocl_function=make_ocl("return q < 1e-5 ? 1./3. : (1/tanh(q) - 1/q)/q;", "sas_langevin_x"),
+    ocl_function=make_ocl("""
+#if FLOAT_SIZE>4  // DOUBLE_PRECISION
+#  define LANGEVIN_CUTOFF 0.1
+#else
+#  define LANGEVIN_CUTOFF 1.0
+#endif
+    const double qsq = q*q;
+    return (q < LANGEVIN_CUTOFF) ? 1. / (3. + qsq / (5. + qsq/(7. + qsq/(9.)))) : (1/tanh(q) - 1/q)/q;
+    """, "sas_langevin_x"),
 )
 add_function(
     name="gauss_coil",
