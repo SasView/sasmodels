@@ -169,7 +169,7 @@ void calculate_psfs(double qval,
         ttt3=cos(yl)*(t31+t32+t33)/(y13*y1);
         ttt4=a1*(t41+t42)/y1;
     } else {
-        // [PAK] note that y1 = ay and yl = (1-a)/2 y = (1-a)/2a y1
+        // [PAK] note that y1 = ay and yl = (1-a)/2a y1 = (1-a)/2 y
         // [PAK] rewrite ttt2 as sin(yl)/y1 * (t21/y1^3 + t22/y1^3 + t23/y1^3)
         // [PAK] lim y->0 sin(yl)/y1 = sin((1-a)/2 y)/(ay) = (1-a)/(2a)
         // [PAK] lim y->0 t21 / y1^3 = b12/3
