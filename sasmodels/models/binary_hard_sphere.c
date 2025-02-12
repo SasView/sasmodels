@@ -171,7 +171,7 @@ void calculate_psfs(double qval,
     } else {
         // [PAK] note that y1 = ay and yl = (1-a)/2 y = (1-a)/2a y1
         // [PAK] rewrite ttt2 as sin(yl)/y1 * (t21/y1^3 + t22/y1^3 + t23/y1^3)
-        // [PAK] lim y->0 sin(yl)/y1 = sin((1-a)/2 y)/(ya) = (1/a - 1)/2
+        // [PAK] lim y->0 sin(yl)/y1 = sin((1-a)/2 y)/(ay) = (1-a)/(2a)
         // [PAK] lim y->0 t21 / y1^3 = b12/3
         // [PAK] lim y->0 t22 / y1^3 = gm12/4
         // [PAK] lim y->0 t23 / y1^3 = gm1/5
@@ -180,11 +180,11 @@ void calculate_psfs(double qval,
         // [PAK] lim y->0 t31 / y1^4 = b12/4
         // [PAK] lim y->0 t32 / y1^4 = gm12/5
         // [PAK] lim y->0 t33 / y1^4 = gm1/6
-        // [PAK] rewrite ttt4 using A = (1-a)/2a and x = y1, so yl = Ax
-        // [PAK] lim x=>0 t41/x = cos(Ax) [ (sin x - x cos x)/x^3 + A (1 - cos x)/x^2] = 1/3 + A/2
-        // [PAK] lim x=>0 t42/x = sin(Ax)/x [(cos x + x sin x - 1)/x^2 + A sin(x)/x] = A (1/2 + A)
-        // [PAK] lim y=>0 (t41 + t42)/y1 = 1/3 + A + A^2 = 1/12 + 1/(4a^2)
-        ttt2 = (1./aa - 1.)/2. * (b12/3. + gm12/4. + gm1/5.);
+        // [PAK] rewrite ttt4 using A = (1-a)/(2a) and x = y1, so yl = Ax
+        // [PAK] lim y->0 t41/y1 = cos(Ax) [ (sin x - x cos x)/x^3 + A (1 - cos x)/x^2] = 1/3 + A/2
+        // [PAK] lim y->0 t42/y1 = sin(Ax)/x [(cos x + x sin x - 1)/x^2 + A sin(x)/x] = A (1/2 + A)
+        // [PAK] lim y->0 (t41 + t42)/y1 = 1/3 + A + A^2 = 1/12 + 1/(4a^2)
+        ttt2 = (1. - aa)/(2.*aa) * (b12/3. + gm12/4. + gm1/5.);
         ttt3 = b12/4. + gm12/5. + gm1/6.;
         ttt4 = a1 * (1./12. + 1./(4.*aa*aa));
     }
