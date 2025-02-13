@@ -590,6 +590,9 @@ shapes for its calculation, so the volume fraction parameter in the model
 is automatically scaled by *form_volume/shell_volume* prior to calling the
 structure factor.
 
+Special functions for scattering such as $3j_1(x)/x$ are available. See
+:mod:`sasmodels.special` for details.
+
 Embedded C Models
 .................
 
@@ -1034,7 +1037,41 @@ file in the order given, otherwise these functions will not be available.
         :code:`source = ["lib/gauss76.c", ...]`
         (`gauss76.c <https://github.com/SasView/sasmodels/tree/master/sasmodels/models/lib/gauss76.c>`_)
 
+Many of these functions are also available in :mod:`sasmodels.special` for
+models implemented in python.
 
+Complex numbers
+...............
+
+A small complex number library is available using :code:`source = ["lib/cl_complex.h", ...]`. 
+Numbers are defined as type cdouble, which can be passed to and returned  from
+functions. Operations are as follows:
+
+    |    declare:     cdouble x
+    |    define:      cplx(real, imag)
+    |    x.real:      creal(x)
+    |    x.imag:      cimag(x)
+    |    1j:          I
+    |    real + x:    radd(real, x)
+    |    real - x:    rsub(real, x)
+    |    real * x:    rmul(real, x)
+    |    real / x:    rdiv(real, x)
+    |    x + real:    radd(real, x)
+    |    x - real:    radd(-real, x)
+    |    x * real:    rmul(real, x)
+    |    x / real:    rmul(1.0/real, x)
+    |    x + y:       cadd(x, y)
+    |    x - y:       csub(x, y)
+    |    x * y:       cmul(x, y)
+    |    x / y:       cdiv(x, y)
+    |    -x:          cneg(x)
+    |    abs(x):      cabs(x)
+    |    angle(x):    carg(x)
+    |
+    |    special functions:
+    |        csqrt, cexp, cpow, clog, clog10
+    |        csin, ccos, ctan
+    |        csinh, ccosh, ctanh
 
 Problems with C models
 ......................
