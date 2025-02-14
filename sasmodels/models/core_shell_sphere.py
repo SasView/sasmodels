@@ -20,12 +20,12 @@ where
 
 .. math::
 
-    F(q) = \frac{3}{V_s}\left[
+    F(q) = 3\left[
        V_c(\rho_c-\rho_s)\frac{\sin(qr_c)-qr_c\cos(qr_c)}{(qr_c)^3} +
-       V_s(\rho_s-\rho_\text{solv})\frac{\sin(qr_s)-qr_s\cos(qr_s)}{(qr_s)^3}
+       V(\rho_s-\rho_\text{solv})\frac{\sin(qr_s)-qr_s\cos(qr_s)}{(qr_s)^3}
        \right]
 
-where $V_s$ is the volume of the whole particle, $V_c$ is the volume of the
+$V$ is the volume of the whole particle, $V_c$ is the volume of the
 core, $r_s$ = $radius$ + $thickness$ is the radius of the particle, $r_c$
 is the radius of the core, $\rho_c$ is the scattering length density of the
 core, $\rho_s$ is the scattering length density of the shell,
