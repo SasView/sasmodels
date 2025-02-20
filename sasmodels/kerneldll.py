@@ -81,9 +81,9 @@ import logging
 import numpy as np  # type: ignore
 
 try:
-    import tinycc
+    import tccbox
 except ImportError:
-    tinycc = None
+    tccbox = None
 
 from . import generate
 from .kernel import KernelModel, Kernel
@@ -112,7 +112,7 @@ else:
 if "SAS_COMPILER" in os.environ:
     COMPILER = os.environ["SAS_COMPILER"]
 elif os.name == 'nt':
-    if tinycc is not None:
+    if tccbox is not None:
         COMPILER = "tinycc"
     elif "VCINSTALLDIR" in os.environ:
         # If vcvarsall.bat has been called, then VCINSTALLDIR is in the
@@ -166,7 +166,17 @@ elif COMPILER == "msvc":
         return CC + ["/Tp%s"%source] + LN + ["/OUT:%s"%output]
 elif COMPILER == "tinycc":
     # TinyCC compiler.
-    CC = [tinycc.TCC] + "-shared -rdynamic -Wall".split()
+    CC = [
+        tccbox.tcc_bin_path(),
+        "-nostdinc",
+        "-std=c99",
+        f"-L{tccbox.tcc_lib_dir()}",
+        f"-L{joinpath(tccbox.tcc_lib_dir(), 'tcc')}",
+        f"-I{tccbox.tcc_dist_dir()}/include",
+        "-shared",
+        "-rdynamic",
+        "-Wall",
+    ]
     def compile_command(source, output):
         """tinycc compiler command"""
         return CC + [source, "-o", output]
