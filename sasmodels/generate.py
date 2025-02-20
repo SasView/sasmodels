@@ -977,22 +977,22 @@ def make_source(model_info):
     # one might for the volume of a sphere:
     #     form_volume="return M_4PI_3*cube(radius)"
     if isinstance(model_info.form_volume, str):
-        pars = call_table.form_volume_parameters
+        pars = base_table.form_volume_parameters
         source.append(_gen_fn(model_info, 'form_volume', pars))
     if isinstance(model_info.shell_volume, str):
-        pars = call_table.form_volume_parameters
+        pars = base_table.form_volume_parameters
         source.append(_gen_fn(model_info, 'shell_volume', pars))
     if isinstance(model_info.Iq, str):
-        pars = [q] + call_table.iq_parameters
+        pars = [q] + base_table.iq_parameters
         source.append(_gen_fn(model_info, 'Iq', pars))
     if isinstance(model_info.Iqxy, str):
-        pars = [qx, qy] + call_table.iq_parameters + call_table.orientation_parameters
+        pars = [qx, qy] + base_table.iq_parameters + base_table.orientation_parameters
         source.append(_gen_fn(model_info, 'Iqxy', pars))
     if isinstance(model_info.Iqac, str):
-        pars = [qab, qc] + call_table.iq_parameters
+        pars = [qab, qc] + base_table.iq_parameters
         source.append(_gen_fn(model_info, 'Iqac', pars))
     if isinstance(model_info.Iqabc, str):
-        pars = [qa, qb, qc] + call_table.iq_parameters
+        pars = [qa, qb, qc] + base_table.iq_parameters
         source.append(_gen_fn(model_info, 'Iqabc', pars))
 
     # Check for shell_volume function in source code
