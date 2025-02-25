@@ -1,36 +1,12 @@
 r"""
-Special Functions
-.................
+Special functions for implementing scattering models.
 
-To ease the transition between python and C models, the :ref:`Special_Functions`
-available in C models are reproduced in Python with the same names.
-For example, for the spherical form factor :code:`sas_3j1x_x` which you
-include as :code:`source = ["lib/sas_3j1x_x.c"]` in your C model definition
-file, you would include as :code:`from sasmodels.special import sas_3j1x_x`
-in your python model.
+Documentation for the special function library is in the
+:ref:`Special_Functions` section of the manual. These are all available
+for import from `sasmodels.special` even though most of them are not listed
+in the documentation for this module.
 
-Python functions operate on both scalars and arrays.
-
-Unlike C models where the constant :code:`FLOAT_SIZE` is 4 or 8 depending on
-whether the model is single or double precision,
-:code:`sasmodels.special.FLOAT_SIZE` is fixed at 8. Python models should check
-:code:`input.dtype == np.float32` or :code:`input.dtype == np.float64` instead.
-
-:code:`SAS_DOUBLE` is not needed for python models.
-
-:code:`sas_j1 = (sin(x) - x cos(x))/x**2` is not available for C.
-
-For Gauss-Lobatto integration points included as :code:`source ["lib/gauss76.c"]`
-instead use :code:`from sasmodels.special import gauss76 as gauss`, then
-replace the macros :code:`GAUSS_N`, :code:`GAUSS_Z` and :code:`GAUSS_W`
-with attributes :code:`gauss.n`, :code:`gauss.z` and :code:`gauss.w`.
-Similarly for :code:`gauss20` and :code:`gauss150`.
-
-The complex number support functions aren't needed in Python, and haven't been
-implemented.
-
-WARNING: The python functions do not yet have the same accuracy as the
-corresponding C functions.
+See section :ref:`Python_Functions` for differences from the C library.
 """
 # pylint: disable=unused-import
 
