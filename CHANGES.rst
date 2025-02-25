@@ -1,13 +1,19 @@
 Release notes
 =============
 
-v1.0.9 2025-02-**
+v1.0.9 2025-02-28
 -----------------
+* Fix precision and improve stability at low Q for both the star_polymer and binary_hard_sphere models
+* Fix C wrapper generation using proper parameter table when using inline C code
+* Remove two unused and redundant functions from the magnetic function library
 * Package dependency: NumPy 2+ compatibility
 * Package dependency: Fix incompatibility between SciPy 1.15 and pytest
+* Package dependency: Increment github action `upload-artifact` version
+* Package dependency: Add support for python 3.12
 * Doc update: Fixed broken links in README
 * Doc update: Clarity on the Polymer Micelle model
 * Doc update: Fix typo in equation in Lamellar Stack Paracrystal documentation
+* Doc update: Complex number support
 
 v1.0.8 2024-09-26
 -----------------
