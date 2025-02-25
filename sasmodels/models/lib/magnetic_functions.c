@@ -1,34 +1,6 @@
 //These functions are required for magnetic analysis models. They are copies 
 //from sasmodels/kernel_iq.c, to enables magnetic parameters for 1D and 2D models.
 
-
-static double langevin(
-    double x) {
-    // cotanh(x)-1\x
-
-    if (x < 0.00001) {
-        // avoid dividing by zero
-        return 1.0/3.0*x-1.0/45.0 * pow(x, 3) + 2.0/945.0 * pow(x, 5) - 1.0/4725.0 * pow(x, 7);
-    } else {
-        return 1.0/tanh(x)-1/x;
-    }
-}
-
-static double langevinoverx(
-    double x) 
-{
-    // cotanh(x)-1\x
-
-    if (x < 0.00001) {
-        // avoid dividing by zero
-        return 1.0/3.0-1.0/45.0 * pow(x, 2) + 2.0/945.0 * pow(x, 4) - 1.0/4725.0 * pow(x, 6);
-    } else {
-        return langevin(x)/x;
-    }
-}
-
-
-
 //weighting of spin resolved cross sections to reconstruct partially polarised beam with imperfect optics using up_i/up_f.
 static void set_weights(double in_spin, double out_spin, double weight[8]) //from kernel_iq.c
 {
