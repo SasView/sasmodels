@@ -590,8 +590,8 @@ shapes for its calculation, so the volume fraction parameter in the model
 is automatically scaled by *form_volume/shell_volume* prior to calling the
 structure factor.
 
-Special functions for scattering such as $3j_1(x)/x$ are available. See
-:mod:`sasmodels.special` for details.
+:ref:`Special_Functions` for scattering such as $3j_1(x)/x$
+are available in Python. See :mod:`sasmodels.special` for details.
 
 Embedded C Models
 .................
@@ -803,6 +803,8 @@ to compute the proper magnetism and orientation, which you can implement
 using *Iqxy(qx, qy, par1, par2, ...)*.
 
 **Note: Magnetism is not supported in pure Python models.**
+
+.. _Special_Functions:
 
 Special Functions
 .................

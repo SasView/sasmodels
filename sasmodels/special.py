@@ -2,209 +2,35 @@ r"""
 Special Functions
 .................
 
-This following standard C99 math functions are available:
+To ease the transition between python and C models, the :ref:`Special_Functions`
+available in C models are reproduced in Python with the same names.
+For example, for the spherical form factor :code:`sas_3j1x_x` which you
+include as :code:`source = ["lib/sas_3j1x_x.c"]` in your C model definition
+file, you would include as :code:`from sasmodels.special import sas_3j1x_x`
+in your python model.
 
-    M_PI, M_PI_2, M_PI_4, M_SQRT1_2, M_E:
-        $\pi$, $\pi/2$, $\pi/4$, $1/\sqrt{2}$ and Euler's constant $e$
+Python functions operate on both scalars and arrays.
 
-    exp, log, pow(x,y), expm1, log1p, sqrt, cbrt:
-        Power functions $e^x$, $\ln x$, $x^y$, $e^x - 1$, $\ln 1 + x$,
-        $\sqrt{x}$, $\sqrt[3]{x}$. The functions expm1(x) and log1p(x)
-        are accurate across all $x$, including $x$ very close to zero.
+Unlike C models where the constant :code:`FLOAT_SIZE` is 4 or 8 depending on
+whether the model is single or double precision,
+:code:`sasmodels.special.FLOAT_SIZE` is fixed at 8. Python models should check
+:code:`input.dtype == np.float32` or :code:`input.dtype == np.float64` instead.
 
-    sin, cos, tan, asin, acos, atan:
-        Trigonometry functions and inverses, operating on radians.
+:code:`SAS_DOUBLE` is not needed for python models.
 
-    sinh, cosh, tanh, asinh, acosh, atanh:
-        Hyperbolic trigonometry functions.
+:code:`sas_j1 = (sin(x) - x cos(x))/x**2` is not available for C.
 
-    atan2(y,x):
-        Angle from the $x$\ -axis to the point $(x,y)$, which is equal to
-        $\tan^{-1}(y/x)$ corrected for quadrant.  That is, if $x$ and $y$ are
-        both negative, then atan2(y,x) returns a value in quadrant III where
-        atan(y/x) would return a value in quadrant I. Similarly for
-        quadrants II and IV when $x$ and $y$ have opposite sign.
+For Gauss-Lobatto integration points included as :code:`source ["lib/gauss76.c"]`
+instead use :code:`from sasmodels.special import gauss76 as gauss`, then
+replace the macros :code:`GAUSS_N`, :code:`GAUSS_Z` and :code:`GAUSS_W`
+with attributes :code:`gauss.n`, :code:`gauss.z` and :code:`gauss.w`.
+Similarly for :code:`gauss20` and :code:`gauss150`.
 
-    fabs(x), fmin(x,y), fmax(x,y), trunc, rint:
-        Floating point functions.  rint(x) returns the nearest integer.
+The complex number support functions aren't needed in Python, and haven't been
+implemented.
 
-    NAN:
-        NaN, Not a Number, $0/0$.  Use isnan(x) to test for NaN.  Note that
-        you cannot use :code:`x == NAN` to test for NaN values since that
-        will always return false.  NAN does not equal NAN!  The alternative,
-        :code:`x != x` may fail if the compiler optimizes the test away.
-
-    INFINITY:
-        $\infty, 1/0$.  Use isinf(x) to test for infinity, or isfinite(x)
-        to test for finite and not NaN.
-
-    erf, erfc, tgamma, lgamma:  **do not use**
-        Special functions that should be part of the standard, but are missing
-        or inaccurate on some platforms. Use sas_erf, sas_erfc and sas_gamma
-        instead (see below). Note: lgamma(x) has not yet been tested.
-
-Some non-standard constants and functions are also provided:
-
-    M_PI_180, M_4PI_3:
-        $\frac{\pi}{180}$, $\frac{4\pi}{3}$
-
-    SINCOS(x, s, c):
-        Macro which sets s=sin(x) and c=cos(x). The variables *c* and *s*
-        must be declared first.
-
-    square(x):
-        $x^2$
-
-    cube(x):
-        $x^3$
-
-    clip(a, a_min, a_max):
-        $\min(\max(a, a_\text{min}), a_\text{max})$, or NaN if $a$ is NaN.
-
-    sas_sinx_x(x):
-        $\sin(x)/x$, with limit $\sin(0)/0 = 1$.
-
-    powr(x, y):
-        $x^y$ for $x \ge 0$; this is faster than general $x^y$ on some GPUs.
-
-    pown(x, n):
-        $x^n$ for $n$ integer; this is faster than general $x^n$ on some GPUs.
-
-    FLOAT_SIZE:
-        The number of bytes in a floating point value.  Even though all
-        variables are declared double, they may be converted to single
-        precision float before running. If your algorithm depends on
-        precision (which is not uncommon for numerical algorithms), use
-        the following::
-
-            #if FLOAT_SIZE>4
-            ... code for double precision ...
-            #else
-            ... code for single precision ...
-            #endif
-
-    SAS_DOUBLE:
-        A replacement for :code:`double` so that the declared variable will
-        stay double precision; this should generally not be used since some
-        graphics cards do not support double precision.  There is no provision
-        for forcing a constant to stay double precision.
-
-The following special functions and scattering calculations are defined.
-These functions have been tuned to be fast and numerically stable down
-to $q=0$ even in single precision.  In some cases they work around bugs
-which appear on some platforms but not others, so use them where needed.
-Add the files listed in :code:`source = ["lib/file.c", ...]` to your *model.py*
-file in the order given, otherwise these functions will not be available.
-
-    polevl(x, c, n):
-        Polynomial evaluation $p(x) = \sum_{i=0}^n c_i x^i$ using Horner's
-        method so it is faster and more accurate.
-
-        $c = \{c_n, c_{n-1}, \ldots, c_0 \}$ is the table of coefficients,
-        sorted from highest to lowest.
-
-    p1evl(x, c, n):
-        Evaluate normalized polynomial $p(x) = x^n + \sum_{i=0}^{n-1} c_i x^i$
-        using Horner's method so it is faster and more accurate.
-
-        $c = \{c_{n-1}, c_{n-2} \ldots, c_0 \}$ is the table of coefficients,
-        sorted from highest to lowest.
-
-    sas_gamma(x):
-        Gamma function sas_gamma\ $(x) = \Gamma(x)$.
-
-        The standard math function, tgamma(x) is unstable for $x < 1$
-        on some platforms.
-
-    sas_gammaln(x):
-        log gamma function sas_gammaln\ $(x) = \log \Gamma(|x|)$.
-
-        The standard math function, lgamma(x), is incorrect for single
-        precision on some platforms.
-
-    sas_gammainc(a, x), sas_gammaincc(a, x):
-        Incomplete gamma function
-        sas_gammainc\ $(a, x) = \int_0^x t^{a-1}e^{-t}\,dt / \Gamma(a)$
-        and complementary incomplete gamma function
-        sas_gammaincc\ $(a, x) = \int_x^\infty t^{a-1}e^{-t}\,dt / \Gamma(a)$
-
-    sas_erf(x), sas_erfc(x):
-        Error function
-        sas_erf\ $(x) = \frac{2}{\sqrt\pi}\int_0^x e^{-t^2}\,dt$
-        and complementary error function
-        sas_erfc\ $(x) = \frac{2}{\sqrt\pi}\int_x^{\infty} e^{-t^2}\,dt$.
-
-        The standard math functions erf(x) and erfc(x) are slower and broken
-        on some platforms.
-
-    sas_J0(x):
-        Bessel function of the first kind sas_J0\ $(x)=J_0(x)$ where
-        $J_0(x) = \frac{1}{\pi}\int_0^\pi \cos(x\sin(\tau))\,d\tau$.
-
-        The standard math function j0(x) is not available on all platforms.
-
-    sas_J1(x):
-        Bessel function of the first kind  sas_J1\ $(x)=J_1(x)$ where
-        $J_1(x) = \frac{1}{\pi}\int_0^\pi \cos(\tau - x\sin(\tau))\,d\tau$.
-
-        The standard math function j1(x) is not available on all platforms.
-
-    sas_JN(n, x):
-        Bessel function of the first kind and integer order $n$:
-        sas_JN\ $(n, x)=J_n(x)$ where
-        $J_n(x) = \frac{1}{\pi}\int_0^\pi \cos(n\tau - x\sin(\tau))\,d\tau$.
-        If $n$ = 0 or 1, it uses sas_J0(x) or sas_J1(x), respectively.
-
-        The standard math function jn(n, x) is not available on all platforms.
-
-    sas_Si(x):
-        Sine integral sas_Si\ $(x) = \int_0^x \tfrac{\sin t}{t}\,dt$.
-
-        This function uses Taylor series for small and large arguments:
-
-        For large arguments,
-
-        .. math::
-
-            \text{Si}(x) \sim \frac{\pi}{2}
-             - \frac{\cos(x)}{x}
-            \left(1 - \frac{2!}{x^2} + \frac{4!}{x^4} - \frac{6!}{x^6} \right)
-             - \frac{\sin(x)}{x}
-            \left(\frac{1}{x} - \frac{3!}{x^3} + \frac{5!}{x^5} - \frac{7!}{x^7}\right)
-
-        For small arguments,
-
-        .. math::
-
-           \text{Si}(x) \sim x
-           - \frac{x^3}{3\times 3!} + \frac{x^5}{5 \times 5!} - \frac{x^7}{7 \times 7!}
-           + \frac{x^9}{9\times 9!} - \frac{x^{11}}{11\times 11!}
-
-    sas_3j1x_x(x):
-        Spherical Bessel form
-        sas_3j1x_x\ $(x) = 3 j_1(x)/x = 3 (\sin(x) - x \cos(x))/x^3$,
-        with a limiting value of 1 at $x=0$, where $j_1(x)$ is the spherical
-        Bessel function of the first kind and first order.
-
-        This function uses a Taylor series for small $x$ for numerical accuracy.
-
-
-    sas_2J1x_x(x):
-        Bessel form sas_2J1x_x\ $(x) = 2 J_1(x)/x$, with a limiting value
-        of 1 at $x=0$, where $J_1(x)$ is the Bessel function of first kind
-        and first order.
-
-
-    gauss76.n, gauss76.z[i], gauss76.w[i]:
-        Points $z_i$ and weights $w_i$ for $n=76$ point Gaussian quadrature,
-        computing $\int_{-1}^1 f(z)\,dz \approx \sum_{i=1}^{76} w_i\,f(z_i)$.
-        When translating the model to C, include 'lib/gauss76.c' in the source
-        and use :code:`GAUSS_N`, :code:`GAUSS_Z`, and :code:`GAUSS_W`.
-
-        Similar arrays are available in :code:`gauss20` for 20-point quadrature
-        and :code:`gauss150.c` for 150-point quadrature. By using
-        :code:`import gauss76 as gauss` it is easy to change the number of
-        points in the integration.
+WARNING: The python functions do not yet have the same accuracy as the
+corresponding C functions.
 """
 # pylint: disable=unused-import
 
