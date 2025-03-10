@@ -133,12 +133,12 @@ def random():
         radius_effective=10**np.random.uniform(1, 4.7),
         volfraction=10**np.random.uniform(-2, 0),  # high volume fraction
         charge=min(int(10**np.random.uniform(0, 1.3)+0.5), 200),
-        temperature=10**np.random.uniform(0, np.log10(450)), # max T = 450
-        #concentration_salt=10**np.random.uniform(-3, 1),
-        dialectconst=10**np.random.uniform(0, 6),
+        temperature=np.random.uniform(270, 450), # max T = 450
+        concentration_salt=10**np.random.uniform(-3, 1),
+        dielectconst=10**np.random.uniform(0, 6),
         #charge=10,
         #temperature=318.16,
-        concentration_salt=0.0,
+        #concentration_salt=0.0,
         #dielectconst=71.08,
     )
     return pars
