@@ -412,7 +412,22 @@ add_function(
     np_function=lambda x: np.fmod(x, 2*np.pi),
     ocl_function=make_ocl("return fmod(q, 2*M_PI);", "sas_fmod"),
 )
+add_function(
+    name="expm1(x)/x",
+    # Note: should be 1 when x = 0
+    mp_function=lambda x: mp.expm1(x)/x,
+    np_function=lambda x: np.expm1(x)/x,
+    ocl_function=make_ocl("return (q==0.) ? 1. : expm1(q)/q;", "sas_exp1_x"),
+)
+add_function(
+    name="sq_expm1(x)/x",
+    # Note: should be 1 when x = 0
+    mp_function=lambda x: (mp.expm1(x)/x)**2,
+    np_function=lambda x: (np.expm1(x)/x)**2,
+    ocl_function=make_ocl("return (q==0.) ? 1. : square(expm1(q)/q);", "sas_square_exp1_x"),
+)
 
+# TODO: move to sas_special
 def sas_langevin(x):
     scalar = np.isscalar(x)
     if scalar:
@@ -451,14 +466,30 @@ add_function(
     mp_function=lambda x: (1/mp.tanh(x) - 1/x),
     np_function=sas_langevin,
     #ocl_function=make_ocl("return q < 0.7 ? q*(1./3. + q*q*(-1./45. + q*q*(2./945. + q*q*(-1./4725.) + q*q*(2./93555.)))) : 1/tanh(q) - 1/q;", "sas_langevin"),
-    ocl_function=make_ocl("return q < 1e-5 ? q/3. : 1/tanh(q) - 1/q;", "sas_langevin"),
+    #ocl_function=make_ocl("return q < 1e-5 ? q/3. : 1/tanh(q) - 1/q;", "sas_langevin"),
+    ocl_function=make_ocl("""
+#if FLOAT_SIZE>4  // DOUBLE_PRECISION
+#  define LANGEVIN_CUTOFF 0.1
+#else
+#  define LANGEVIN_CUTOFF 1.0
+#endif
+    const double qsq = q*q;
+    return (q < LANGEVIN_CUTOFF) ? q / (3. + qsq / (5. + qsq/(7. + qsq/(9.)))) : 1/tanh(q) - 1/q;
+    """, "sas_langevin"),
 )
 add_function(
     name="langevin(x)/x",
     mp_function=lambda x: (1/mp.tanh(x) - 1/x)/x,
-    #np_function=lambda x: sas_langevin(x)/x, # Note: need to test for x=0
     np_function=sas_langevin_x,
-    ocl_function=make_ocl("return q < 1e-5 ? 1./3. : (1/tanh(q) - 1/q)/q;", "sas_langevin_x"),
+    ocl_function=make_ocl("""
+#if FLOAT_SIZE>4  // DOUBLE_PRECISION
+#  define LANGEVIN_CUTOFF 0.1
+#else
+#  define LANGEVIN_CUTOFF 1.0
+#endif
+    const double qsq = q*q;
+    return (q < LANGEVIN_CUTOFF) ? 1. / (3. + qsq / (5. + qsq/(7. + qsq/(9.)))) : (1/tanh(q) - 1/q)/q;
+    """, "sas_langevin_x"),
 )
 add_function(
     name="gauss_coil",
@@ -509,6 +540,71 @@ add_function(
     }
     """, "sas_debye"),
 )
+
+def mp_star_polymer(x, arms=3): # x = q*Rg
+    from mpmath import expm1
+    v = x * arms / (3*arms - 2)
+    term1 = v + expm1(-v)
+    term2 = (arms- 1)/2 * expm1(-v)**2
+    return 2 * (term1 + term2) / (arms * v**2) if v > 0 else 1
+
+def np_star_polymer(x, arms=3):
+    from numpy import expm1, polyval
+    scalar = np.isscalar(x)
+    if scalar:
+        x = np.array([x]) # should inherit dtype for single if given single
+    #T1 = [1, -1/3, 1/12, -1/60, 1/360, -1/2520, 1/20160, -1/181440][::-1]
+    T1 = [1, -1/3, 1/12, -1/60, 1/360, -1/2520][::-1]
+    #T2 = [1, -1, 7/12, -1/4, 31/360, -1/40][::-1]
+    f = np.empty_like(x)
+    cutoff = 0.03 if f.dtype == np.float64 else 1.0
+    index = (x == 0.)
+    f[index] = 1.0
+    index = ~index & (x < cutoff)
+    v = x * arms / (3*arms - 2)
+    vi = v[index]
+    #f[index] = polyval(T1, vi)/arms + (1 - 1/arms)*polyval(T2, vi)
+    #f[index] = 2/(arms*vi)*(1 + expm1(-vi)/vi) + (1 - 1/arms)*polyval(T2, vi)
+    f[index] = polyval(T1, vi)/arms + (1 - 1/arms)*(expm1(-vi)/vi)**2
+    #f[index] = 2/(arms*vi)*(1 + expm1(-vi)/vi) + (1 - 1/arms)*(expm1(-vi)/vi)**2
+
+    term1 = v[~index] + expm1(-v[~index])
+    term2 = (arms - 1)/2 * expm1(-v[~index])**2
+    f[~index] = 2 * (term1 + term2) / (arms * v[~index]**2)
+    return f
+
+ocl_star_polymer = """
+    const int arms = 3;
+    const double v = q * arms / (3.0 * arms - 2.0);
+// Note: cutoff values are for (Q Rg)^2.
+#if FLOAT_SIZE>4
+#define STAR_POLYMER_CUTOFF 0.03
+#else
+#define STAR_POLYMER_CUTOFF 1.0
+#endif
+
+    if (q == 0.) {
+        return 1.;
+    } else if (q <= STAR_POLYMER_CUTOFF) {
+        double P1 = 1. + v*(-1./3. + v*(1./12. + v*(-1./60. + v*(1./360. + v*(-1./2520)))));
+        //double P2 = 1. + v*(-1. + v*(7./12. - v*(-1./4.)));
+        return P1/arms + (1. - 1./arms)*square(expm1(-v)/v);
+    } else {
+        double term1 = v + expm1(-v);
+        double term2 = ((arms - 1.0)/2.0) * square(expm1(-v));
+        return (2.0 * (term1 + term2)) / (arms * v * v);
+    }
+"""
+
+add_function(
+    name="star_polymer(arms=3)",
+    mp_function=mp_star_polymer,
+    np_function=np_star_polymer,
+    ocl_function=make_ocl(ocl_star_polymer, "star_polymer", []),
+    shortname="star_polymer",
+    xaxis="$(Q R_g)^2$ (unitless)",
+)
+
 
 RADIUS=3000
 LENGTH=30

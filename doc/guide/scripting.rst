@@ -199,7 +199,7 @@ interface. Here is an example from the *example* directory such as
 
 To run the model from your python environment use the installed *bumps* program::
 
-    >>> bumps example/model.py --preview
+    > bumps example/model.py --preview
 
 Alternatively, on Windows, bumps can be called from the cmd prompt
 as follows::

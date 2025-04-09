@@ -75,7 +75,6 @@ description = """
         Rg_arm^2 = R_g^2 * f/(3f-2)
         """
 category = "shape-independent"
-single = False
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["rg_squared", "Ang^2", 100.0, [0.0, inf], "", "Ensemble radius of gyration SQUARED of the full polymer"],
@@ -104,4 +103,5 @@ tests = [[{'rg_squared': 2.0,
            'background': 1.8,
           }, 1.0, 2.53575888234],
         ]
-# 23Mar2016  RKH edited docs, would this better use rg not rg^2 ? Numerical noise at extremely small q.rg
+# 2016-03-23 RKH edited docs, would this better use rg not rg^2 ? Numerical noise at extremely small q.rg
+# 2025-01-17 PAK Fixed numerical noise.
