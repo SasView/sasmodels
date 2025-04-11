@@ -220,15 +220,6 @@ def make_product_info(p_info, s_info):
     #s_list[0] = copy(s_list[0])
     #s_list[0].polydisperse = False
 
-    s_translate = {old.id: new.id for old, new in s_pairs}
-    def random():
-        """Random set of model parameters for product model"""
-        combined_pars = p_info.random()
-        combined_pars.update((s_translate[k], v)
-                             for k, v in s_info.random().items()
-                             if k in s_translate)
-        return combined_pars
-
     model_info = ModelInfo()
     model_info.id = '@'.join((p_id, s_id))
     model_info.name = '@'.join((p_name, s_name))
@@ -238,7 +229,7 @@ def make_product_info(p_info, s_info):
     model_info.docs = model_info.title
     model_info.category = "custom"
     model_info.parameters = parameters
-    model_info.random = random
+    model_info.random = _ProductRandom(p_info, s_info, s_pairs)
     #model_info.single = p_info.single and s_info.single
     model_info.structure_factor = False
     #model_info.tests = []
@@ -268,6 +259,19 @@ def make_product_info(p_info, s_info):
     #print(parlist(model_info, values, is2d=True))
     return model_info
 
+class _ProductRandom:
+    """Random set of model parameters for product model"""
+    def __init__(self, p_info, s_info, s_pairs):
+        self.p_info = p_info
+        self.s_info = s_info
+        self.s_translate = {old.id: new.id for old, new in s_pairs}
+    def __call__(self):
+        combined_pars = self.p_info.random()
+        combined_pars.update((self.s_translate[k], v)
+                             for k, v in self.s_info.random().items()
+                             if k in self.s_translate)
+        return combined_pars
+
 def _tag_parameter(par):
     """
     Tag the parameter name with _S to indicate that the parameter comes from
@@ -284,26 +288,30 @@ def _tag_parameter(par):
     par.name = par.id + vector_length
     return par
 
-def _intermediates(Q, F, Fsq, S, scale, volume, volume_ratio, radius_effective,
-                   beta_mode, P_intermediate):
-    # type: (np.ndarray, np.ndarray, np.ndarray, np.ndarray, float, float, float, float, bool, Optiona[Callable[[], Parts]]) -> Parts
+class _Intermediates:
     """
     Returns intermediate results for beta approximation-enabled product.
     The result may be an array or a float.
     """
-    parts = OrderedDict()  # type: Parts
-    parts["P(Q)"] = (Q, scale*Fsq)
-    if P_intermediate is not None:
-        parts["P(Q) parts"] = P_intermediate()
-    parts["volume"] = volume
-    parts["volume_ratio"] = volume_ratio
-    parts["radius_effective"] = radius_effective
-    parts["S(Q)"] = (Q, S)
-    if beta_mode:
-        parts["beta(Q)"] = (Q, F**2 / Fsq)
-        parts["S_eff(Q)"] = (Q, 1 + (F**2 / Fsq)*(S-1))
-        #parts["I(Q)", scale*(Fsq + (F**2)*(S-1)) + bg
-    return parts
+    def __init__(self, *args):
+        # type: (np.ndarray, np.ndarray, np.ndarray, np.ndarray, float, float, float, float, bool, Optiona[Callable[[], Parts]]) -> Parts
+        self.args = args
+    def __call__(self):
+        Q, F, Fsq, S, scale, volume, volume_ratio, radius_effective, \
+        beta_mode, P_intermediate = self.args
+        parts = OrderedDict()  # type: Parts
+        parts["P(Q)"] = (Q, scale*Fsq)
+        if P_intermediate is not None:
+            parts["P(Q) parts"] = P_intermediate()
+        parts["volume"] = volume
+        parts["volume_ratio"] = volume_ratio
+        parts["radius_effective"] = radius_effective
+        parts["S(Q)"] = (Q, S)
+        if beta_mode:
+            parts["beta(Q)"] = (Q, F**2 / Fsq)
+            parts["S_eff(Q)"] = (Q, 1 + (F**2 / Fsq)*(S-1))
+            #parts["I(Q)", scale*(Fsq + (F**2)*(S-1)) + bg
+        return parts
 
 class ProductModel(KernelModel):
     """
@@ -535,7 +543,9 @@ class ProductKernel(Kernel):
         # kernel calling interface.  Could do this as an "optional"
         # return value in the caller, though in that case we could return
         # the results directly rather than through a lazy evaluator.
-        self.results = lambda: _intermediates(
+        # TODO: why is pickle seeing self.results?
+        # Note: turned into a callable class because pickle didn't like it.
+        self.results = _Intermediates(
             self.q, F, Fsq, S, combined_scale, shell_volume, volume_ratio,
             radius_effective, beta_mode, p_intermediate)
 
