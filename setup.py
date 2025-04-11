@@ -29,13 +29,10 @@ def find_version(package):
                 return version[1:-1]
     raise RuntimeError("Could not read version from %s/__init__.py"%package)
 
-install_requires = ['numpy', 'scipy']
+install_requires = ['numpy', 'scipy', 'tccbox']
 
 with open('README.rst') as fid:
     long_description = fid.read()
-
-if sys.platform=='win32' or sys.platform=='cygwin':
-    install_requires.append('tinycc')
 
 setup(
     name='sasmodels',
