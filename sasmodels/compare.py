@@ -956,6 +956,8 @@ def plot_models(opts, result, limits=None, setnum=0):
         if have_comp:
             plt.subplot(131)
         plot_theory(base_data, base_value, view=view, use_data=use_data, limits=limits)
+        if setnum > 0:
+            plt.legend([f"Set {k+1}" for k in range(setnum+1)], loc='best')
         plt.title("%s t=%.2f ms"%(base.engine, base_time))
         #cbar_title = "log I"
     if have_comp:
@@ -984,7 +986,6 @@ def plot_models(opts, result, limits=None, setnum=0):
         # at each q
         plot_theory(base_data, None, resid=err, view=errview, use_data=use_data)
         plt.xscale('log' if view == 'log' and not opts['is2d'] else 'linear')
-        plt.legend(['P%d'%(k+1) for k in range(setnum+1)], loc='best')
         plt.title("max %s = %.3g"%(errstr, abs(err).max()))
         #cbar_title = errstr if errview=="linear" else "log "+errstr
     #if is2D:

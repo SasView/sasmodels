@@ -740,7 +740,7 @@ class SasviewModel(object):
                             magnetic=is_magnetic)
         lazy_results = getattr(calculator, 'results',
                                lambda: collections.OrderedDict())
-        #print("result", result)
+        #print("result", result, lazy_results())
 
         calculator.release()
         #self._model.release()
