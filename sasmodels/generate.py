@@ -149,6 +149,19 @@ source files the model depends on, and :func:`ocl_timestamp` returns
 the latest time stamp amongst the source files (so you can check if
 the model needs to be rebuilt).
 
+The generated code is very ugly, making heavy use of C macros to build its
+functions. See the source for kernel_iq.c for a list along with a brief
+description of each.
+
+The C code can override some of these macros, allowing an
+arbitrary translation of the input parameters prior to the loop over Q
+when running in a DLL. In particular, it can call an expensive precalcution
+function and pass the results to the underlying I(Q). Note that there is
+no post-loop cleanup call, so memory allocated by malloc() will not be freed.
+TRANSLATION_VARS, CALL_VOLUME, CALL_RADIUS_EFFECTIVE can be directly substituted.
+CALL_{IQ,FQ}* are substituted with OVERRIDE_{IQ,FQ}*. See models/TY_YukawaSq.c
+for an example.
+
 The function :func:`make_doc` extracts the doc string and adds the
 parameter table to the top.  *make_figure* in *sasmodels/doc/genmodel*
 creates the default figure for the model.  [These two sets of code
@@ -158,6 +171,8 @@ from __future__ import print_function
 
 # TODO: determine which functions are useful outside of generate
 #__all__ = ["model_info", "make_doc", "make_source", "convert_type"]
+
+# TODO: write out the full C code rather than relying on macro expansion.
 
 import sys
 from os import environ
@@ -1054,43 +1069,81 @@ def make_source(model_info):
         call_volume = (
             "#define CALL_VOLUME(_form, _shell, _v) "
             "do { _form = _shell = 1.0; } while (0)")
-    source.append(translation_vars)
-    source.append(call_volume)
-    source.append(call_radius_effective)
+    def add_macro(name, code):
+        source.append(f"#ifndef {name}\n{code}\n#endif")
+    add_macro("TRANSLATION_VARS", translation_vars)
+    add_macro("CALL_VOLUME", call_volume)
+    add_macro("CALL_RADIUS_EFFECTIVE", call_radius_effective)
     model_refs = _call_pars(base_table.iq_parameters, subs)
 
     if model_info.have_Fq:
         pars = ",".join(["_q", "&_F1", "&_F2",] + model_refs)
-        call_iq = "#define CALL_FQ(_q, _F1, _F2, _v) Fq(%s)" % pars
+        call_iq = f"""\
+#ifdef OVERRIDE_FQ
+# define CALL_FQ(_q, _F1, _F2, _v) OVERRIDE_FQ(_q, _F1, _F2, _v)
+#else
+# define CALL_FQ(_q, _F1, _F2, _v) Fq({pars})
+#endif"""
         clear_iq = "#undef CALL_FQ"
     else:
         pars = ",".join(["_q"] + model_refs)
-        call_iq = "#define CALL_IQ(_q, _v) Iq(%s)" % pars
+        call_iq = f"""\
+#ifdef OVERRIDE_IQ
+# define CALL_IQ(_q, _v) OVERRIDE_IQ(_q, _v)
+#else
+# define CALL_IQ(_q, _v) Iq({pars})
+#endif"""
         clear_iq = "#undef CALL_IQ"
     if xy_mode == 'qabc':
         pars = ",".join(["_qa", "_qb", "_qc"] + model_refs)
-        call_iqxy = "#define CALL_IQ_ABC(_qa,_qb,_qc,_v) Iqabc(%s)" % pars
+        call_iqxy = f"""\
+#ifdef OVERRIDE_IQ_ABC
+# define CALL_IQ_ABC(_qa,_qb,_qc,_v) OVERRIDE_IQ_ABC(_qa,_qb,_qc,_v)
+#else
+# define CALL_IQ_ABC(_qa,_qb,_qc,_v) Iqabc({pars})
+#endif"""
         clear_iqxy = "#undef CALL_IQ_ABC"
     elif xy_mode == 'qac':
         pars = ",".join(["_qa", "_qc"] + model_refs)
-        call_iqxy = "#define CALL_IQ_AC(_qa,_qc,_v) Iqac(%s)" % pars
+        call_iqxy = "#ifndef CALL_IQ_AC\n#define CALL_IQ_AC(_qa,_qc,_v) Iqac(%s)\ n#endif" % pars
+        call_iqxy = f"""\
+#ifdef OVERRIDE_IQ_AC
+# define CALL_IQ_AC(_qa,_qc,_v) OVERRIDE_IQ_AC(_qa,_qc,_v)
+#else
+# define CALL_IQ_AC(_qa,_qc,_v) Iqac({pars})
+#endif"""
         clear_iqxy = "#undef CALL_IQ_AC"
     elif xy_mode == 'qa' and not model_info.have_Fq:
         pars = ",".join(["_qa"] + model_refs)
-        call_iqxy = "#define CALL_IQ_A(_qa,_v) Iq(%s)" % pars
+        call_iqxy = f"""\
+#ifdef OVERRIDE_IQ
+# define CALL_IQ_A(_qa,_v) OVERRIDE_IQ(_qa,_v)
+#else
+# define CALL_IQ_A(_qa,_v) Iq({pars})
+#endif"""
         clear_iqxy = "#undef CALL_IQ_A"
     elif xy_mode == 'qa' and model_info.have_Fq:
-        pars = ",".join(["_qa", "&_F1", "&_F2",] + model_refs)
+        pars = ",".join(["_qa", "&_F1", "&_F2"] + model_refs)
         # Note: uses rare C construction (expr1, expr2) which computes
         # expr1 then expr2 and evaluates to expr2.  This allows us to
         # leave it looking like a function even though it is returning
         # its values by reference.
-        call_iqxy = "#define CALL_FQ_A(_qa,_F1,_F2,_v) (Fq(%s),_F2)" % pars
+        call_iqxy = f"""\
+#ifdef OVERRIDE_FQ
+# define CALL_FQ_A(_qa,_F1,_F2,_v) (OVERRIDE_FQ(_qa,_F1,_F2,v),_F2)
+#else
+# define CALL_FQ_A(_qa,_F1,_F2,_v) (Fq({pars}),_F2)
+#endif"""
         clear_iqxy = "#undef CALL_FQ_A"
     elif xy_mode == 'qxy':
         qxy_refs = _call_pars(base_table.orientation_parameters, subs)
         pars = ",".join(["_qx", "_qy"] + model_refs + qxy_refs)
-        call_iqxy = "#define CALL_IQ_XY(_qx,_qy,_v) Iqxy(%s)" % pars
+        call_iqxy = f"""\
+#ifdef OVERRIDE_IQ_XY
+# define CALL_IQ_XY(_qx,_qy,_v) OVERRIDE_IQ_XY(_qx,_qy,_v)
+#else
+# define CALL_IQ_XY(_qx,_qy,_v) Iqxy({pars})
+#endif"""
         clear_iqxy = "#undef CALL_IQ_XY"
         if base_table.orientation_parameters:
             call_iqxy += "\n#define HAVE_THETA"
@@ -1127,9 +1180,9 @@ def _kernels(kernel, call_iq, clear_iq, call_iqxy, clear_iqxy, name):
     path = _clean_source_filename(kernel[1])
     iq = [
         # define the Iq kernel
-        "#define KERNEL_NAME %s_Iq" % name,
+        f"#define KERNEL_NAME {name}_Iq",
         call_iq,
-        '#line 1 "%s Iq"' % path,
+        f'#line 1 "{path} Iq"',
         code,
         clear_iq,
         "#undef KERNEL_NAME",
@@ -1137,9 +1190,9 @@ def _kernels(kernel, call_iq, clear_iq, call_iqxy, clear_iqxy, name):
 
     iqxy = [
         # define the Iqxy kernel from the same source with different #defines
-        "#define KERNEL_NAME %s_Iqxy" % name,
+        f"#define KERNEL_NAME {name}_Iqxy",
         call_iqxy,
-        '#line 1 "%s Iqxy"' % path,
+        f'#line 1 "{path} Iqxy"',
         code,
         clear_iqxy,
         "#undef KERNEL_NAME",
@@ -1147,10 +1200,10 @@ def _kernels(kernel, call_iq, clear_iq, call_iqxy, clear_iqxy, name):
 
     imagnetic = [
         # define the Imagnetic kernel
-        "#define KERNEL_NAME %s_Imagnetic" % name,
+        f"#define KERNEL_NAME {name}_Imagnetic",
         "#define MAGNETIC 1",
         call_iqxy,
-        '#line 1 "%s Imagnetic"' % path,
+        f'#line 1 "{path} Imagnetic"',
         code,
         clear_iqxy,
         "#undef MAGNETIC",
