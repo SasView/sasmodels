@@ -1,0 +1,146 @@
+[build-system]
+requires = [
+    "hatchling",
+    "hatch-sphinx",
+    "bumps==0.*",
+    "matplotlib",
+    "columnize",
+    "numpy",
+    "scipy",
+    "tccbox",
+]
+build-backend = "hatchling.build"
+
+
+[project]
+name = "sasmodels"
+dynamic = [
+    "version",
+    "dependencies",
+]
+description = "SasModels small-angle scattering modelling"
+readme = "README.rst"
+requires-python = ">=3.9"
+license = { text = "Public domain" }
+authors = [
+  {name = "SasView Team", email = "developers@sasview.org"},
+]
+classifiers = [
+  'Development Status :: 4 - Beta',
+  'Environment :: Console',
+  'Intended Audience :: Science/Research',
+  'License :: Public Domain',
+  'Operating System :: OS Independent',
+  'Programming Language :: Python',
+  'Programming Language :: C',
+  'Topic :: Scientific/Engineering',
+  'Topic :: Scientific/Engineering :: Chemistry',
+  'Topic :: Scientific/Engineering :: Physics',
+]
+keywords = [
+  "small-angle",
+  "scattering",
+  "data analysis",
+  "neutron",
+  "X-ray",
+]
+
+[project.urls]
+Homepage = "http://sasview.org"
+Documentation = "https://www.sasview.org/docs/user/qtgui/Perspectives/Fitting/models/index.html"
+Repository = "https://github.com/SasView/sasmodels/"
+Issues = "https://github.com/SasView/sasmodels/issues"
+Changelog = "https://github.com/SasView/sasmodels/blob/master/CHANGES.rst"
+
+
+[project.optional-dependencies]
+test = [
+  "pytest",
+]
+server = [
+  "bumps==0.*",
+]
+OpenCL = [
+  "pyopencl",
+]
+CUDA = [
+  "pycuda",
+]
+docs = [
+  "sphinx",
+  "siphash24",
+]
+
+[tool.hatch.version]
+path = "sasmodels/__init__.py"
+
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "CHANGES.rst",
+  "conftest.py",
+  "README.rst",
+  "doc",
+  "example",
+  "explore",
+  "sasmodels",
+]
+exclude = [
+  "build",
+  "dist",
+]
+ignore-vcs = true
+
+
+[tool.hatch.build.targets.wheel]
+packages = [
+  "sasmodels",
+]
+exclude = [
+]
+
+[tool.hatch.build.targets.wheel.force-include]
+"doc/" = "sasmodels/docs-source"
+
+[[tool.hatch.build.targets.wheel.hooks.sphinx.tools]]
+tool = "custom"
+environment = { PYTHONPATH = ".." }
+out_dir = "model"
+expand_globs = true
+commands = [
+  "{python} genapi.py",
+  "{python} genmodel.py ../sasmodels/models/[a-z]*.py",
+  "{python} -c \"import shutil; shutil.copytree('../sasmodels/models/img/', 'model/img/', dirs_exist_ok=True)\"",
+  "{python} gentoc.py ../sasmodels/models/[a-z]*.py",
+]
+
+[[tool.hatch.build.targets.wheel.hooks.sphinx.tools]]
+tool = "build"
+format = "html"
+source = "."
+out_dir = "../build/doc"
+warnings = true
+keep_going = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = [
+  "--doctest-modules",
+  "-v",
+  "-rsx",
+]
+doctest_optionflags = "ELLIPSIS"
+testpaths = [
+  "sasmodels",
+]
+python_files = [
+  "sasmodels/**/*.py",
+]
+python_functions = [
+  "*_test",
+  "test_*",
+  "model_tests",
+]
+log_level = "DEBUG"
+filterwarnings = [
+]
