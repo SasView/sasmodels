@@ -19,12 +19,14 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Free Disk Space (Ubuntu)
-      if: ${{ matrix.os == 'ubuntu-latest' }}
-      uses: jlumbroso/free-disk-space@main
-      with:
-        haskell: false
-        large-packages: false
+    # If actions have problems with disk-space this can be re-enabled
+    # (The reports always show many GB in free space and it takes minutes to run)
+    # - name: Free Disk Space (Ubuntu)
+    #   if: ${{ matrix.os == 'ubuntu-latest' }}
+    #   uses: jlumbroso/free-disk-space@main
+    #   with:
+    #     haskell: false
+    #     large-packages: false
 
     - name: setup apt dependencies for Linux
       if: ${{ matrix.os == 'ubuntu-latest' }}
