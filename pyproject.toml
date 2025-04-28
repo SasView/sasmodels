@@ -1,13 +1,17 @@
 [build-system]
 requires = [
-    "hatchling",
-    "hatch-sphinx",
-    "bumps==0.*",
-    "matplotlib",
-    "columnize",
-    "numpy",
-    "scipy",
-    "tccbox",
+  "hatchling",
+  "hatch-requirements-txt",
+  "hatch-sphinx",
+  "bumps==0.*",
+  "docutils",
+  "matplotlib",
+  "columnize",
+  "numpy",
+  "scipy",
+  "siphash24",
+  "sphinx",
+  "tccbox",
 ]
 build-backend = "hatchling.build"
 
@@ -15,8 +19,9 @@ build-backend = "hatchling.build"
 [project]
 name = "sasmodels"
 dynamic = [
-    "version",
-    "dependencies",
+  "version",
+  "dependencies",
+  "optional-dependencies",
 ]
 description = "SasModels small-angle scattering modelling"
 readme = "README.rst"
@@ -52,24 +57,18 @@ Repository = "https://github.com/SasView/sasmodels/"
 Issues = "https://github.com/SasView/sasmodels/issues"
 Changelog = "https://github.com/SasView/sasmodels/blob/master/CHANGES.rst"
 
+[tool.hatch.metadata]
+allow-direct-references = true
 
-[project.optional-dependencies]
-test = [
-  "pytest",
-]
-server = [
-  "bumps==0.*",
-]
-OpenCL = [
-  "pyopencl",
-]
-CUDA = [
-  "pycuda",
-]
-docs = [
-  "sphinx",
-  "siphash24",
-]
+[tool.hatch.metadata.hooks.requirements_txt]
+files = [ "build_tools/requirements.txt" ]
+
+[tool.hatch.metadata.hooks.requirements_txt.optional-dependencies]
+test = [ "build_tools/requirements-test.txt" ]
+server = [ "build_tools/requirements-server.txt" ]
+OpenCL = [ "build_tools/requirements-opencl.txt" ]
+CUDA = [ "build_tools/requirements-cuda.txt" ]
+docs = [ "build_tools/requirements-docs.txt" ]
 
 [tool.hatch.version]
 path = "sasmodels/__init__.py"
@@ -77,6 +76,7 @@ path = "sasmodels/__init__.py"
 
 [tool.hatch.build.targets.sdist]
 include = [
+  "build_tools",
   "CHANGES.rst",
   "conftest.py",
   "README.rst",

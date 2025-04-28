@@ -36,36 +36,15 @@ jobs:
     #     haskell: false
     #     large-packages: false
 
-    - name: setup apt dependencies for Linux
-      if: ${{ matrix.os == 'ubuntu-latest' }}
-      run: |
-        sudo apt update
-
-    - name: Install Python dependencies (test)
+    - name: Install Python dependencies (tests)
       run: |
         python -m pip install --upgrade pip
-        python -m pip install bumps==0.* matplotlib columnize numpy scipy
-        python -m pip install pytest unittest-xml-reporting tccbox docutils siphash24
+        python -m pip install -r build_tools/requirements.txt -r build_tools/requirements-test.txt -r build_tools/requirements-opencl.txt
 
-    - name: Install Python dependencies (build)
+    - name: Install Python dependencies (build wheel)
       if: env.BUILD_WHEEL
       run: |
         python -m pip install build hatchling
-        python -m pip install git+https://github.com/llimeht/hatch-sphinx.git
-        python -m pip install sphinx
-
-    - name: setup pyopencl on Linux + macOS
-      if: ${{ matrix.os != 'windows-latest' }}
-      run: |
-        python -m pip install pyopencl
-
-    - name: setup pyopencl on Windows
-      if: ${{ matrix.os == 'windows-latest' }}
-      run: |
-        python -m pip install pytools mako cffi
-
-        choco install opencl-intel-cpu-runtime
-        python -m pip install --only-binary=pyopencl --find-links http://www.silx.org/pub/wheelhouse/ --trusted-host www.silx.org pyopencl
 
     ### Build and test sasmodels
 

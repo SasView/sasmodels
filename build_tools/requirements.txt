@@ -1,0 +1,7 @@
+bumps==0.*
+columnize
+matplotlib
+numpy
+scipy
+siphash24
+tccbox
