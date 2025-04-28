@@ -39,22 +39,13 @@ jobs:
     #     haskell: false
     #     large-packages: false
 
-    - name: Install Python dependencies (tests)
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install -r build_tools/requirements.txt -r build_tools/requirements-test.txt -r build_tools/requirements-opencl.txt
-
-    - name: Install Python dependencies (build wheel)
-      if: env.BUILD_WHEEL
-      run: |
-        python -m pip install build hatchling
-
-    ### Build and test sasmodels
+    ### Build sasmodels
 
     - name: Build sasmodels
       if: env.BUILD_WHEEL
       run: |
-        python -m build --no-isolation --sdist --wheel
+        python -m pip install build hatchling
+        python -m build --sdist --wheel
         python -m pip install dist/sasmodels*whl
 
     - name: Publish sdist and wheel package
@@ -67,12 +58,7 @@ jobs:
            dist/sasmodels*tar*
         if-no-files-found: ignore
 
-    - name: Test with pytest
-      env:
-        PYOPENCL_COMPILER_OUTPUT: 1
-        SAS_OPENCL: none
-      run: |
-        pytest -v
+    ### Publish documentation
 
     - name: Publish sasmodels docs
       if: env.BUILD_WHEEL
@@ -82,3 +68,19 @@ jobs:
         path: |
           build/doc/
         if-no-files-found: error
+
+    ### Install dependencies
+
+    - name: Install Python dependencies (tests)
+      run: |
+        python -m pip install -r build_tools/requirements.txt -r build_tools/requirements-test.txt -r build_tools/requirements-opencl.txt
+
+    ### Build and test sasmodels
+
+    - name: Test with pytest
+      env:
+        PYOPENCL_COMPILER_OUTPUT: 1
+        SAS_OPENCL: none
+      run: |
+        pytest -v
+
