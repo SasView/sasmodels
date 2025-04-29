@@ -20,7 +20,11 @@ jobs:
        BUILD_WHEEL: ${{ (matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12') && 'true' || '' }}
 
     steps:
-    - uses: actions/checkout@v4
+
+    - name: Obtain sasmodels source from git
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5

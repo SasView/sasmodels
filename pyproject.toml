@@ -3,6 +3,7 @@ requires = [
   "hatchling",
   "hatch-requirements-txt",
   "hatch-sphinx",
+  "hatch-vcs",
   "bumps==0.*",
   "docutils",
   "matplotlib",
@@ -70,8 +71,12 @@ OpenCL = [ "build_tools/requirements-opencl.txt" ]
 CUDA = [ "build_tools/requirements-cuda.txt" ]
 docs = [ "build_tools/requirements-docs.txt" ]
 
+
 [tool.hatch.version]
-path = "sasmodels/__init__.py"
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "sasmodels/_version.py"
 
 
 [tool.hatch.build.targets.sdist]

@@ -13,7 +13,12 @@ Models can be written in python or in C.  C models can run on the GPU if
 OpenCL drivers are available.  See :mod:`.generate` for details on
 defining new models.
 """
-__version__ = "1.0.9"
+
+try:
+    from _version import __version__
+except ImportError:
+    __version__ = "0.0.0.dev"
+
 
 def data_files():
     """
