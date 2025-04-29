@@ -88,6 +88,7 @@ include = [
 exclude = [
   "build",
   "dist",
+  "__pycache__",
 ]
 ignore-vcs = true
 
@@ -97,6 +98,7 @@ packages = [
   "sasmodels",
 ]
 exclude = [
+  "__pycache__",
 ]
 
 [tool.hatch.build.targets.wheel.force-include]
