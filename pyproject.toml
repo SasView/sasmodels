@@ -58,6 +58,10 @@ Repository = "https://github.com/SasView/sasmodels/"
 Issues = "https://github.com/SasView/sasmodels/issues"
 Changelog = "https://github.com/SasView/sasmodels/blob/master/CHANGES.rst"
 
+[project.entry-points.pyinstaller40]
+hook-dirs = "sasmodels.__pyinstaller:get_hook_dirs"
+
+
 [tool.hatch.metadata]
 allow-direct-references = true
 
