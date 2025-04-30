@@ -78,7 +78,7 @@ category = "shape-independent"
 # pylint: disable=bad-whitespace, line-too-long
 #             ["name", "units", default, [lower, upper], "type","description"],
 parameters = [["rg_squared", "Ang^2", 100.0, [0.0, inf], "", "Ensemble radius of gyration SQUARED of the full polymer"],
-              ["arms",    "",      3,   [1.0, 6.0], "", "Number of arms in the model"],
+              ["arms",    "",      3,   [1.0, 6.0], "", "Number of arms in the model (integer)"],
              ]
 # pylint: enable=bad-whitespace, line-too-long
 
@@ -95,8 +95,12 @@ def random():
     return pars
 
 tests = [[{'rg_squared': 2.0,
-           'arms':    3.3,
-          }, 0.5, 0.851646091108],
+           'arms':    3.3, # should equal the value for arms=3 in the next test
+          }, 0.5, 0.8518871750393033],
+
+         [{'rg_squared': 2.0,
+           'arms':    3.0,
+          }, 0.5, 0.8518871750393033],
 
          [{'rg_squared':    1.0,
            'arms':       2.0,
@@ -104,4 +108,4 @@ tests = [[{'rg_squared': 2.0,
           }, 1.0, 2.53575888234],
         ]
 # 2016-03-23 RKH edited docs, would this better use rg not rg^2 ? Numerical noise at extremely small q.rg
-# 2025-01-17 PAK Fixed numerical noise.
+# 2025-01-17 PAK Fixed numerical noise. Use nearest integer for number of arms.
