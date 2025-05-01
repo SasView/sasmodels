@@ -4,7 +4,7 @@ requires = [
   "hatch-requirements-txt",
   "hatch-sphinx",
   "hatch-vcs",
-  "bumps==0.*",
+  "bumps>=1",
   "docutils",
   "matplotlib",
   "columnize",
