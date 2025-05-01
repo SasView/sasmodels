@@ -1,7 +1,7 @@
-bumps>0.9.3
 columnize
 matplotlib
 numpy
 scipy
 siphash24
 tccbox
+-r requirements-experimental.txt
