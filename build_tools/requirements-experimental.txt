@@ -1,2 +1,2 @@
 --pre
-bumps>=1.0
+bumps>0.9.3
