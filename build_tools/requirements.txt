@@ -1,4 +1,4 @@
-bumps==0.*
+bumps>=1.0.0a0
 columnize
 matplotlib
 numpy
